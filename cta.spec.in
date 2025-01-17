@@ -104,7 +104,7 @@ cmake --build . -j@JOBS_COUNT@
 %{__rm} -rf ${RPM_BUILD_ROOT}
 
 cd build
-DESTDIR=${RPM_BUILD_ROOT} EXPORTMAN=${RPM_BUILD_ROOT}/usr/share/man cmake --build . --target install
+DESTDIR=${RPM_BUILD_ROOT} EXPORTMAN=${RPM_BUILD_ROOT}/usr/share/man cmake --build . --target install -j@JOBS_COUNT@
 
 %clean
 %{__rm} -rf $RPM_BUILD_ROOT
@@ -112,7 +112,7 @@ DESTDIR=${RPM_BUILD_ROOT} EXPORTMAN=${RPM_BUILD_ROOT}/usr/share/man cmake --buil
 
 %if "%{skip_unit_tests}" == "0"
 cd build
-cmake --build . --target shortunittests
+cmake --build . --target shortunittests -j@JOBS_COUNT@
 %endif
 
 # The main packages will be cta-taped, cta-frontend, cta-cli
@@ -353,8 +353,8 @@ The shared libraries
 %post -n cta-lib -p /sbin/ldconfig
 %postun -n cta-lib -p /sbin/ldconfig
 
-%package -n cta-systemtests
-Summary: CERN Tape Archive: unit and system tests with virtual tape drives
+%package -n cta-integrationtests
+Summary: CERN Tape Archive: unit and integration tests with virtual tape drives
 Group: Application/CTA
 Requires: valgrind >= 3.8.1
 Requires: (cta-lib-catalogue-postgres = %{version}-%{release} or cta-lib-catalogue-occi = %{version}-%{release})
@@ -365,19 +365,19 @@ Requires: moreutils
 Requires: libtirpc-devel
 Requires: xrootd-client-libs = %{xrootdVersion}
 Requires: gtest-devel >= 1.11.0
-%description -n cta-systemtests
+%description -n cta-integrationtests
 CERN Tape Archive:
-Unit tests and system tests with virtual tape drives
-%files -n cta-systemtests
+Unit tests and integration tests with virtual tape drives
+%files -n cta-integrationtests
 %defattr(0755,root,root,-)
-%{_libdir}/libsystemTestHelperTests.so*
-%{_libdir}/libcta-tapedSystemTests.so*
+%{_libdir}/libintegrationTestHelperTests.so*
+%{_libdir}/libcta-tapedIntegrationTests.so*
 %{_bindir}/cta-rdbmsUnitTests
 %{_bindir}/cta-rdbmsUnitTests-oracle.sh
 %{_bindir}/cta-unitTests
 %{_bindir}/cta-unitTests-multiProcess
 %{_bindir}/cta-valgrindUnitTests.sh
-%{_bindir}/cta-unitPlusSystemTests.sh
+%{_bindir}/cta-unitPlusIntegrationTests.sh
 %{_bindir}/cta-osmReaderTest
 %{_libdir}/libctacataloguecmdlineunittests.so*
 %{_libdir}/libctacommonunittests.so*
@@ -405,7 +405,7 @@ Unit tests and system tests with virtual tape drives
 %{_libdir}/libctadiskunittests.so*
 %{_libdir}/libctatapelabelunittests.so*
 %{_libdir}/libctatapeserverraounittests.so*
-%{_bindir}/cta-systemTests
+%{_bindir}/cta-integrationTests
 %{_libdir}/libctadaemonunittests-multiprocess.so*
 %attr(0644,root,root) %{_datadir}/%{name}-%{ctaVersion}/unittest/*.suppr
 %attr(0644,root,root) %{_datadir}/%{name}-%{ctaVersion}/unittest/parallelTestsMakefile
@@ -441,9 +441,9 @@ Tools allowing initialization and inspection of the object store.
 %attr(0755,root,root) %{_bindir}/cta-objectstore-create-missing-repack-index
 %endif
 
-#cta-systemtests installs libraries so we need ldconfig.
-%post -n cta-systemtests -p /sbin/ldconfig
-%postun -n cta-systemtests -p /sbin/ldconfig
+#cta-integrationtests installs libraries so we need ldconfig.
+%post -n cta-integrationtests -p /sbin/ldconfig
+%postun -n cta-integrationtests -p /sbin/ldconfig
 
 %package -n cta-catalogueutils
 Summary: Utilities to faciliate working with the CTA catalogue

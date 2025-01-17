@@ -31,7 +31,7 @@ ARG YUM_VERSIONLOCK_FILE=continuousintegration/docker/ctafrontend/alma9/etc/yum/
 
 
 # Install necessary packages
-RUN yum install -y \
+RUN dnf install -y \
       python3-dnf-plugin-versionlock \
       yum-utils \
       epel-release \
@@ -44,18 +44,18 @@ RUN yum install -y \
 
 
 # Install cta-release
-RUN yum-config-manager --enable epel --setopt="epel.priority=4" \
+RUN dnf config-manager --enable epel --setopt="epel.priority=4" \
   && \
-    yum-config-manager --enable cta-public-testing \
+    dnf config-manager --enable cta-public-testing \
   && \
-    yum install -y cta-release-${PUBLIC_REPO_VER}.el9 \
+    dnf install -y cta-release-${PUBLIC_REPO_VER}.el9 \
   && \
     rm /etc/yum/pluginconf.d/versionlock.cta \
   && \
-    yum clean all \
+    dnf clean all \
   && \
-    rm -rf /var/cache/yum \
-  ; \
+    rm -rf /var/cache/yum; \
+    rm -rf /var/cache/dnf; \
     rm -f /etc/rc.d/rc.local
 
 COPY ${YUM_VERSIONLOCK_FILE} /etc/dnf/plugins/versionlock.list

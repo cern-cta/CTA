@@ -42,7 +42,7 @@ fi
 
 # Install systest rpm that contains the osm reader test.
 echo "Installing cta systest rpms in ${CTA_TPSRV_POD} - taped-0 container... "
-kubectl -n ${NAMESPACE} exec ${CTA_TPSRV_POD} -c taped-0 -- bash -c "yum -y install cta-systemtests"
+kubectl -n ${NAMESPACE} exec ${CTA_TPSRV_POD} -c taped-0 -- bash -c "yum -y install cta-integrationtests"
 
 # Get the device to be used.
 echo "Obtaining drive device and name"

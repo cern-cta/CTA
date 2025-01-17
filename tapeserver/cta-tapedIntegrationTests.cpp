@@ -20,7 +20,7 @@
 
 #include <gtest/gtest.h>
 
-namespace systemTests {
+namespace integrationTests {
 TEST(cta_taped, InvocationTests) {
   {
     // Do we get help with -h or --help?
@@ -66,7 +66,7 @@ TEST(cta_taped, InvocationTests) {
       "general SchedulerBackendName dummyProdUser\n"
       "general ServiceName dummy-service-name\n");
 
-    cta::threading::SubProcess spNoDrive("/usr/bin/cta-taped", 
+    cta::threading::SubProcess spNoDrive("/usr/bin/cta-taped",
       std::list<std::string>({"/usr/bin/cta-taped", "-f", "-s", "-c", ctaConf.path()}));
     spNoDrive.wait();
     ASSERT_NE(std::string::npos, spNoDrive.stdout().find("In SourcedParameter::setFromConfigurationFile: mandatory parameter not found: category=taped key=DriveName"));

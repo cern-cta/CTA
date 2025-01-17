@@ -118,7 +118,7 @@ delete_instance() {
 
   # Parse command line arguments
   while [[ "$#" -gt 0 ]]; do
-    case $1 in
+    case "$1" in
       -h | --help) usage ;;
       -n|--namespace)
         namespace="$2"

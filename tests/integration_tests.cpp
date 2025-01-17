@@ -18,7 +18,7 @@
 #include <gtest/gtest.h>
 #include <gmock/gmock.h>
 
-// This is a simplified main for system tests. There is not point in using
+// This is a simplified main for integration tests. There is not point in using
 // valgrind with it, and we will not use gmock with it either (pure gtest).
 int main(int argc, char** argv) {
   int newArgc = argc;

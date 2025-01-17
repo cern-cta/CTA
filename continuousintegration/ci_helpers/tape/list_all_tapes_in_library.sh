@@ -31,7 +31,7 @@ usage() {
 
 # Parse command line arguments
 while [[ "$#" -gt 0 ]]; do
-  case $1 in
+  case "$1" in
     -h|--help) usage ;;
     -d|--library-device)
       library_device="$2"

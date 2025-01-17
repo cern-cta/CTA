@@ -6,7 +6,7 @@
   - cp -r build_rpm/RPM ${CTAREPODIR}
   - createrepo ${CTAREPODIR}
   - echo -e "[cta-artifacts]\nname=CTA artifacts\nbaseurl=file://${CTAREPODIR}\ngpgcheck=0\nenabled=1\npriority=2" > /etc/yum.repos.d/cta-artifacts.repo
-  - yum -y --nogpgcheck install cta-systemtests cta-debuginfo
+  - yum -y --nogpgcheck install cta-integrationtests cta-debuginfo
 
 test-cta-valgrind:
   stage: test
@@ -36,9 +36,9 @@ test-cta-valgrind:
   before_script:
     - *before-script-alma9
   script:
-    - /usr/bin/cta-unitPlusSystemTests.sh
+    - /usr/bin/cta-unitPlusIntegrationTests.sh
 
-system-test-cta:
+integration-test-cta:
   stage: test
   needs:
     - job: build-cta-rpm
@@ -58,7 +58,7 @@ system-test-cta:
   before_script:
     - *before-script-alma9
   script:
-    - /usr/bin/cta-systemTests
+    - /usr/bin/cta-integrationTests
 
 unit-test-postgresql:
   stage: test
