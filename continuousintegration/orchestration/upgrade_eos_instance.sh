@@ -99,7 +99,7 @@ upgrade_instance() {
   echo "Upgrading EOS chart..."
   log_run helm upgrade eos oci://registry.cern.ch/eos/charts/server --version 0.2.2-tape \
                       --namespace ${namespace} \
-                      --wait --timeout 6m \
+                      --wait --timeout 5m \
                       --reuse-values \
                       ${helm_flags}
 

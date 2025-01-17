@@ -75,8 +75,7 @@ update_chart_dependencies() {
     "cta/charts/tpsrv"
   )
   for chart in "${charts[@]}"; do
-    # We can do skip-refresh here as they are all local charts
-    helm dependency update helm/"$chart" --skip-refresh > /dev/null
+    helm dependency update helm/"$chart" > /dev/null
   done
 }
 
@@ -258,7 +257,7 @@ create_instance() {
                                 --set global.tag="${eos_image_tag}" \
                                 --set fst.tape.gcd.image.repository="${cta_image_repository}" \
                                 --set fst.tape.gcd.image.tag="${cta_image_tag}" \
-                                --wait --timeout 6m &
+                                --wait --timeout 5m &
   eos_pid=$!
 
   log_run helm ${helm_command} catalogue helm/catalogue \
@@ -291,7 +290,7 @@ create_instance() {
                                 --set global.catalogueSchemaVersion="${catalogue_schema_version}" \
                                 --set-file global.configuration.scheduler="${scheduler_config}" \
                                 --set-file tpsrv.tapeServers="${tapeservers_config}" \
-                                --wait --timeout 6m
+                                --wait --timeout 5m
   # At this point EOS should also be ready
   wait $eos_pid || exit 1
   if [ $dry_run == 1 ]; then

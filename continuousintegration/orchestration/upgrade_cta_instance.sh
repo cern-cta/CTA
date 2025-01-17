@@ -145,7 +145,7 @@ upgrade_instance() {
   echo "Upgrading cta chart..."
   log_run helm upgrade cta helm/cta \
                       --namespace ${namespace} \
-                      --wait --timeout 6m \
+                      --wait --timeout 5m \
                       --reuse-values \
                       ${helm_flags}
 

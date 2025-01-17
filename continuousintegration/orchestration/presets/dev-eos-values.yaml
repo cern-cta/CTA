@@ -36,6 +36,11 @@ mgm:
     taperestapi:
       sitename: cern-cta-ctaeosci
 
+  # This ensures there is a service available for the MGM with the same name
+  # As the disk instance
+  instanceService:
+    enabled: true
+
   extraEnv:
   - name: LD_PRELOAD
     value: "/usr/lib64/libjemalloc.so.1"
@@ -46,13 +51,19 @@ mgm:
 fst:
   replicaCount: 1
 
+  # Needed for the gcd image when built from CI
+  image:
+    pullSecrets:
+    - ctaregsecret
+    - reg-ctageneric
+
   tape:
     enabled: true
     wfe:
       endpoint: cta-frontend:10955
       resource: /ctafrontend
     gcd:
-      enabled: false
+      enabled: true
 
   extraEnv:
   - name: TZ
