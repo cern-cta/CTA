@@ -632,7 +632,6 @@ def main():
   gc.run()
 
 def get_logger(hostname, programname, logpath):
-  config = {}
 
   log_fmt = '%(asctime)s.%(msecs)03d000 ' + hostname + ' %(levelname)s ' + programname + \
     ':LVL="%(levelname)s" PID="%(process)d" TID="%(process)d" MSG="%(message)s"'
@@ -641,17 +640,16 @@ def get_logger(hostname, programname, logpath):
 
   log_handler = None
 
-  if logpath == False:
-    log_handler = logging.StreamHandler(stream = sys.stdout)
-  else:
+  if logpath:
     logging_dir = os.path.dirname(logpath)
     if not os.path.isdir(logging_dir):
       raise UserError('The logging directory {} is not a directory or does not exist'.format(logging_dir))
     if not os.access(logging_dir, os.W_OK):
       raise UserError('The logging directory {} cannot be written to'.format(logging_dir))
     log_handler = logging.handlers.TimedRotatingFileHandler(filename = logpath, when = 'midnight')
+  else:
+    log_handler = logging.StreamHandler(stream = sys.stdout)
 
-  log_handler = logging.handlers.TimedRotatingFileHandler(filename = logpath, when = 'midnight')
   log_handler.setLevel(logging.INFO)
   log_handler.setFormatter(log_formatter)
 
