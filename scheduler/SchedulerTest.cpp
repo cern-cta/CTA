@@ -5993,7 +5993,7 @@ TEST_P(SchedulerTest, repackRetrieveRequestsFailToFetchDiskSystem){
     auto diskSpaceReservedBefore = catalogue.DriveState()->getTapeDrive(driveName).value().reservedBytes;
     //Trying to reserve disk space should result in 10 jobs should fail
     // reserveDiskSpace will return true, because we did not manage to query for disk space using the script
-    ASSERT_EQ(retrieveMount->reserveDiskSpace(reservationRequest, lc), true);
+    ASSERT_TRUE(retrieveMount->reserveDiskSpace(reservationRequest, lc));
     //No extra disk space was reserved
     auto diskSpaceReservedAfter = catalogue.DriveState()->getTapeDrive(driveName).value().reservedBytes;
     ASSERT_EQ(diskSpaceReservedAfter, diskSpaceReservedBefore);

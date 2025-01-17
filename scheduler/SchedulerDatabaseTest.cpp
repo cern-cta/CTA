@@ -801,7 +801,7 @@ TEST_P(SchedulerDatabaseTest, popRetrieveRequestsWithBackpressure) {
       }
     }
     //reserving disk space will fail (not enough disk space, backpressure is triggered)
-    ASSERT_EQ(rm->reserveDiskSpace(reservationRequest, "", lc), false);
+    ASSERT_FALSE(rm->reserveDiskSpace(reservationRequest, "", lc));
   }
   auto mi = db.getMountInfoNoLock(cta::SchedulerDatabase::PurposeGetMountInfo::GET_NEXT_MOUNT,lc);
   ASSERT_EQ(1, mi->potentialMounts.size()); //all jobs were requeued
@@ -891,7 +891,7 @@ TEST_P(SchedulerDatabaseTest, popRetrieveRequestsWithDiskSystemNotFetcheable) {
     }
     // reserving disk space will fail because the script cannot be executed, no backpressure will be applied in this case
     // but reserveDiskSpace will return true, because this is due to a script error
-    ASSERT_EQ(rm->reserveDiskSpace(reservationRequest, "", lc), true);
+    ASSERT_TRUE(rm->reserveDiskSpace(reservationRequest, "", lc));
   }
   auto mi = db.getMountInfoNoLock(cta::SchedulerDatabase::PurposeGetMountInfo::GET_NEXT_MOUNT,lc);
   ASSERT_EQ(1, mi->potentialMounts.size());
