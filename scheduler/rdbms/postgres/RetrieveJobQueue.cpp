@@ -1,5 +1,5 @@
 /**
- * @project        The CERN Tape Archive (CTA)
+ * @project        The CERN Tape Retrieve (CTA)
  * @copyright	   Copyright © 2023 CERN
  * @license        This program is free software: you can redistribute it and/or modify
  *                 it under the terms of the GNU General Public License as published by
@@ -21,49 +21,696 @@
 
 namespace cta::schedulerdb::postgres {
 
-void RetrieveJobQueueRow::updateMountID(Transaction &txn, const std::list<RetrieveJobQueueRow>& rowList, uint64_t mountId) {
-  if(rowList.empty()) return;
-
-  try {
-    const char* const sqltt = R"SQL(
-      CREATE TEMPORARY TABLE TEMP_JOB_IDS (JOB_ID BIGINT) ON COMMIT DROP
-    )SQL";
-    txn.getConn().executeNonQuery(sqltt);
-  } catch(exception::Exception &ex) {
-    const char* const sqltrunc = R"SQL(
-      TRUNCATE TABLE TEMP_JOB_IDS
-    )SQL";
-    txn.getConn().executeNonQuery(sqltrunc);
-  }
-
-  const char* const sqlcopy = R"SQL(
-    COPY TEMP_JOB_IDS(JOB_ID) FROM STDIN --:JOB_ID
-  )SQL";
-
-  auto stmt = txn.getConn().createStmt(sqlcopy);
-  auto & postgresStmt = dynamic_cast<rdbms::wrapper::PostgresStmt &>(stmt.getStmt());
-
-  const size_t nbrows = rowList.size();
-  cta::rdbms::wrapper::PostgresColumn c1("JOB_ID", nbrows);
-  std::list<RetrieveJobQueueRow>::const_iterator itr;
-  size_t i;
-  for(i=0,itr=rowList.begin();i<nbrows;++i,++itr) {
-    c1.setFieldValue(i, std::to_string(itr->jobId));
-  }
-
-  postgresStmt.setColumn(c1);
-  postgresStmt.executeCopyInsert(nbrows);
-
+std::pair<rdbms::Rset, uint64_t>
+RetrieveJobQueueRow::moveJobsToDbQueue(Transaction& txn,
+                                       RetrieveJobStatus status,
+                                       const SchedulerDatabase::RetrieveMount::MountInfo& mountInfo,
+                                       uint64_t maxBytesRequested,
+                                       uint64_t limit) {
+  /* using write row lock FOR UPDATE for the select statement
+   * since it is the same lock used for UPDATE
+   */
+  /* for paritioned queue table replace CREATION TIME by: EXTRACT(EPOCH FROM CREATION_TIME)::BIGINT */
+  /* below I first apply the LIMIT on the selection to limit
+   * the number of rows and only after calculate the running cumulative sun of bytes in the consequent step */
   const char* const sql = R"SQL(
-    UPDATE RETRIEVE_JOB_QUEUE SET 
-      MOUNT_ID = :MOUNT_ID 
-    WHERE 
-       JOB_ID IN (SELECT JOB_ID FROM TEMP_JOB_IDS)
+    WITH SET_SELECTION AS (
+      SELECT JOB_ID, PRIORITY, SIZE_IN_BYTES
+      FROM RETRIEVE_INSERT_QUEUE
+      WHERE VID = :VID
+      AND STATUS = :STATUS
+      AND (MOUNT_ID IS NULL OR MOUNT_ID = :SAME_MOUNT_ID)
+      ORDER BY PRIORITY DESC, JOB_ID
+      LIMIT :LIMIT
+      FOR UPDATE SKIP LOCKED
+    ),
+    SELECTION_WITH_CUMULATIVE_SUMS AS (
+      SELECT JOB_ID, PRIORITY,
+             SUM(SIZE_IN_BYTES) OVER (ORDER BY PRIORITY DESC, JOB_ID) AS CUMULATIVE_SIZE
+      FROM SET_SELECTION
+    ),
+    CUMULATIVE_SELECTION AS (
+        SELECT JOB_ID, PRIORITY, CUMULATIVE_SIZE
+        FROM SELECTION_WITH_CUMULATIVE_SUMS
+        WHERE CUMULATIVE_SIZE <= :BYTES_REQUESTED
+    ),
+    MOVED_ROWS AS (
+        DELETE FROM RETRIEVE_INSERT_QUEUE RIQ
+        USING CUMULATIVE_SELECTION CSEL
+        WHERE RIQ.JOB_ID = CSEL.JOB_ID
+        RETURNING RIQ.*
+    )
+    INSERT INTO RETRIEVE_JOB_QUEUE (
+        JOB_ID,
+        RETRIEVE_REQUEST_ID,
+        REQUEST_JOB_COUNT,
+        STATUS,
+        TAPE_POOL,
+        MOUNT_POLICY,
+        PRIORITY,
+        MIN_RETRIEVE_REQUEST_AGE,
+        ARCHIVE_FILE_ID,
+        SIZE_IN_BYTES,
+        COPY_NB,
+        START_TIME,
+        CHECKSUMBLOB,
+        CREATION_TIME,
+        DISK_INSTANCE,
+        DISK_FILE_ID,
+        DISK_FILE_OWNER_UID,
+        DISK_FILE_GID,
+        DISK_FILE_PATH,
+        RETRIEVE_REPORT_URL,
+        RETRIEVE_ERROR_REPORT_URL,
+        REQUESTER_NAME,
+        REQUESTER_GROUP,
+        DST_URL,
+        STORAGE_CLASS,
+        RETRIES_WITHIN_MOUNT,
+        TOTAL_RETRIES,
+        LAST_MOUNT_WITH_FAILURE,
+        MAX_TOTAL_RETRIES,
+        MAX_RETRIES_WITHIN_MOUNT,
+        TOTAL_REPORT_RETRIES,
+        MAX_REPORT_RETRIES,
+        MOUNT_ID,
+        VID,
+        DRIVE,
+        HOST,
+        LOGICAL_LIBRARY,
+        ACTIVITY,
+        SRR_USERNAME,
+        SRR_HOST,
+        SRR_TIME,
+        SRR_MOUNT_POLICY,
+        SRR_ACTIVITY,
+        LIFECYCLE_CREATION_TIME,
+        LIFECYCLE_FIRST_SELECTED_TIME,
+        LIFECYCLE_COMPLETED_TIME,
+        DISK_SYSTEM_NAME
+    )
+    SELECT
+        M.JOB_ID,
+        M.RETRIEVE_REQUEST_ID,
+        M.REQUEST_JOB_COUNT,
+        M.STATUS,
+        M.TAPE_POOL,
+        M.MOUNT_POLICY,
+        M.PRIORITY,
+        M.MIN_RETRIEVE_REQUEST_AGE,
+        M.ARCHIVE_FILE_ID,
+        M.SIZE_IN_BYTES,
+        M.COPY_NB,
+        M.START_TIME,
+        M.CHECKSUMBLOB,
+        M.CREATION_TIME,
+        M.DISK_INSTANCE,
+        M.DISK_FILE_ID,
+        M.DISK_FILE_OWNER_UID,
+        M.DISK_FILE_GID,
+        M.DISK_FILE_PATH,
+        M.RETRIEVE_REPORT_URL,
+        M.RETRIEVE_ERROR_REPORT_URL,
+        M.REQUESTER_NAME,
+        M.REQUESTER_GROUP,
+        M.DST_URL,
+        M.STORAGE_CLASS,
+        M.RETRIES_WITHIN_MOUNT,
+        M.TOTAL_RETRIES,
+        M.LAST_MOUNT_WITH_FAILURE,
+        M.MAX_TOTAL_RETRIES,
+        M.MAX_RETRIES_WITHIN_MOUNT,
+        M.TOTAL_REPORT_RETRIES,
+        M.MAX_REPORT_RETRIES,
+        :MOUNT_ID AS MOUNT_ID,
+        M.VID AS VID,
+        :DRIVE AS DRIVE,
+        :HOST AS HOST,
+        :LOGICAL_LIBRARY AS LOGICAL_LIBRARY,
+        M.ACTIVITY,
+        M.SRR_USERNAME,
+        M.SRR_HOST,
+        M.SRR_TIME,
+        M.SRR_MOUNT_POLICY,
+        M.SRR_ACTIVITY,
+        M.LIFECYCLE_CREATION_TIME,
+        M.LIFECYCLE_FIRST_SELECTED_TIME,
+        M.LIFECYCLE_COMPLETED_TIME,
+        M.DISK_SYSTEM_NAME
+    FROM MOVED_ROWS M
+    RETURNING *;
   )SQL";
-
-  stmt = txn.getConn().createStmt(sql);
-  stmt.bindUint64(":MOUNT_ID", mountId);
-  stmt.executeQuery();
+  auto stmt = txn.getConn().createStmt(sql);
+  stmt.bindString(":VID", mountInfo.vid);
+  stmt.bindString(":STATUS", to_string(status));
+  stmt.bindUint32(":LIMIT", limit);
+  stmt.bindUint64(":MOUNT_ID", mountInfo.mountId);
+  stmt.bindUint64(":SAME_MOUNT_ID", mountInfo.mountId);
+  stmt.bindString(":DRIVE", mountInfo.drive);
+  stmt.bindString(":HOST", mountInfo.host);
+  stmt.bindString(":LOGICAL_LIBRARY", mountInfo.logicalLibrary);
+  stmt.bindUint64(":BYTES_REQUESTED", maxBytesRequested);
+  auto result = stmt.executeQuery();
+  auto nrows = stmt.getNbAffectedRows();
+  return std::make_pair(std::move(result), nrows);
 }
 
-} // namespace cta::schedulerdb::postgres
+
+uint64_t
+RetrieveJobQueueRow::updateJobStatus(Transaction& txn, RetrieveJobStatus status, const std::vector<std::string>& jobIDs) {
+  if (jobIDs.empty()) {
+    return 0;
+  }
+  std::string sqlpart;
+  for (const auto& piece : jobIDs) {
+    sqlpart += piece + ",";
+  }
+  if (!sqlpart.empty()) {
+    sqlpart.pop_back();
+  }
+  // DISABLE DELETION FOR DEBUGGING
+  if (status == RetrieveJobStatus::RJS_Complete || status == RetrieveJobStatus::RJS_Failed ||
+      status == RetrieveJobStatus::ReadyForDeletion) {
+    if (status == RetrieveJobStatus::RJS_Failed) {
+      return RetrieveJobQueueRow::moveJobBatchToFailedQueueTable(txn, jobIDs);
+    } else {
+      std::string sql = R"SQL(
+        DELETE FROM RETRIEVE_JOB_QUEUE
+        WHERE
+          JOB_ID IN (
+        )SQL";
+      sql += sqlpart + std::string(")");
+      auto stmt2 = txn.getConn().createStmt(sql);
+      stmt2.executeNonQuery();
+      return stmt2.getNbAffectedRows();
+    }
+  }
+  // END OF DISABLE DELETION FOR DEBUGGING
+  // the following is here for debugging purposes (row deletion gets disabled)
+  // if (status == RetrieveJobStatus::RJS_Complete) {
+  //   status = RetrieveJobStatus::ReadyForDeletion;
+  // } else if (status == RetrieveJobStatus::RJS_Failed) {
+  //   status = RetrieveJobStatus::ReadyForDeletion;
+  //   RetrieveJobQueueRow::copyToFailedJobTable(txn, jobIDs);
+  // }
+  std::string sql = "UPDATE RETRIEVE_JOB_QUEUE SET STATUS = :STATUS WHERE JOB_ID IN (" + sqlpart + ")";
+  auto stmt1 = txn.getConn().createStmt(sql);
+  stmt1.bindString(":STATUS", to_string(status));
+  stmt1.executeNonQuery();
+  return stmt1.getNbAffectedRows();
+};
+
+uint64_t RetrieveJobQueueRow::updateFailedJobStatus(Transaction& txn, RetrieveJobStatus status) {
+  std::string sql = R"SQL(
+      UPDATE RETRIEVE_JOB_QUEUE SET
+        STATUS = :STATUS,
+        TOTAL_RETRIES = :TOTAL_RETRIES,
+        RETRIES_WITHIN_MOUNT = :RETRIES_WITHIN_MOUNT,
+        LAST_MOUNT_WITH_FAILURE = :LAST_MOUNT_WITH_FAILURE,
+        FAILURE_LOG = FAILURE_LOG || :FAILURE_LOG
+        WHERE JOB_ID = :JOB_ID
+    )SQL";
+  auto stmt = txn.getConn().createStmt(sql);
+  stmt.bindString(":STATUS", to_string(status));
+  stmt.bindUint32(":TOTAL_RETRIES", totalRetries);
+  stmt.bindUint32(":RETRIES_WITHIN_MOUNT", retriesWithinMount);
+  stmt.bindUint64(":LAST_MOUNT_WITH_FAILURE", lastMountWithFailure);
+  stmt.bindString(":FAILURE_LOG", failureLogs.value_or(""));
+  stmt.bindUint64(":JOB_ID", jobId);
+  stmt.executeNonQuery();
+  return stmt.getNbAffectedRows();
+};
+
+// the job can stay in the RETRIEVE_INSERT_QUEUE in case the current Mount for this it was requeued
+// dies in the meantime and the same MOundID will not be picking up jobs anymore
+// this needs to be caught up in some cleaner process.
+uint64_t RetrieveJobQueueRow::requeueFailedJob(Transaction& txn,
+                                              RetrieveJobStatus status,
+                                              bool keepMountId,
+                                              std::optional<std::list<std::string>> jobIDs) {
+  std::string sql = R"SQL(
+    WITH MOVED_ROWS AS (
+        DELETE FROM RETRIEVE_JOB_QUEUE
+  )SQL";
+  bool userowjid = true;
+  if (jobIDs.has_value() && !jobIDs.value().empty()) {
+    userowjid = false;
+    std::string sqlpart;
+    for (const auto& jid : jobIDs.value()) {
+      sqlpart += jid + ",";
+    }
+    if (!sqlpart.empty()) {
+      sqlpart.pop_back();
+    }
+    sql += std::string("WHERE JOB_ID IN (") + sqlpart + std::string(")");
+  } else {
+    sql += R"SQL(
+        WHERE JOB_ID = :JOB_ID
+    )SQL";
+  }
+  sql += R"SQL(
+        RETURNING *
+    )
+    INSERT INTO RETRIEVE_INSERT_QUEUE (
+      RETRIEVE_REQUEST_ID,
+      REQUEST_JOB_COUNT,
+      TAPE_POOL,
+      MOUNT_POLICY,
+      PRIORITY,
+      MIN_RETRIEVE_REQUEST_AGE,
+      ARCHIVE_FILE_ID,
+      SIZE_IN_BYTES,
+      COPY_NB,
+      START_TIME,
+      CHECKSUMBLOB,
+      CREATION_TIME,
+      DISK_INSTANCE,
+      DISK_FILE_ID,
+      DISK_FILE_OWNER_UID,
+      DISK_FILE_GID,
+      DISK_FILE_PATH,
+      RETRIEVE_REPORT_URL,
+      RETRIEVE_ERROR_REPORT_URL,
+      REQUESTER_NAME,
+      REQUESTER_GROUP,
+      DST_URL,
+      STORAGE_CLASS,
+      MAX_TOTAL_RETRIES,
+      MAX_RETRIES_WITHIN_MOUNT,
+      TOTAL_REPORT_RETRIES,
+      MAX_REPORT_RETRIES,
+      VID,
+      DRIVE,
+      HOST,
+      LOGICAL_LIBRARY,
+      ACTIVITY,
+      SRR_USERNAME,
+      SRR_HOST,
+      SRR_TIME,
+      SRR_MOUNT_POLICY,
+      SRR_ACTIVITY,
+      LIFECYCLE_CREATION_TIME,
+      LIFECYCLE_FIRST_SELECTED_TIME,
+      LIFECYCLE_COMPLETED_TIME,
+      DISK_SYSTEM_NAME,
+      FAILURE_LOG,
+      RETRIES_WITHIN_MOUNT,
+      TOTAL_RETRIES,
+      LAST_MOUNT_WITH_FAILURE,
+      STATUS,
+      MOUNT_ID
+    )
+    SELECT
+      M.RETRIEVE_REQUEST_ID,
+      M.REQUEST_JOB_COUNT,
+      M.TAPE_POOL,
+      M.MOUNT_POLICY,
+      M.PRIORITY,
+      M.MIN_RETRIEVE_REQUEST_AGE,
+      M.ARCHIVE_FILE_ID,
+      M.SIZE_IN_BYTES,
+      M.COPY_NB,
+      M.START_TIME,
+      M.CHECKSUMBLOB,
+      M.CREATION_TIME,
+      M.DISK_INSTANCE,
+      M.DISK_FILE_ID,
+      M.DISK_FILE_OWNER_UID,
+      M.DISK_FILE_GID,
+      M.DISK_FILE_PATH,
+      M.RETRIEVE_REPORT_URL,
+      M.RETRIEVE_ERROR_REPORT_URL,
+      M.REQUESTER_NAME,
+      M.REQUESTER_GROUP,
+      M.DST_URL,
+      M.STORAGE_CLASS,
+      M.MAX_TOTAL_RETRIES,
+      M.MAX_RETRIES_WITHIN_MOUNT,
+      M.TOTAL_REPORT_RETRIES,
+      M.MAX_REPORT_RETRIES,
+      M.VID,
+      M.DRIVE,
+      M.HOST,
+      M.LOGICAL_LIBRARY,
+      M.ACTIVITY,
+      M.SRR_USERNAME,
+      M.SRR_HOST,
+      M.SRR_TIME,
+      M.SRR_MOUNT_POLICY,
+      M.SRR_ACTIVITY,
+      M.LIFECYCLE_CREATION_TIME,
+      M.LIFECYCLE_FIRST_SELECTED_TIME,
+      M.LIFECYCLE_COMPLETED_TIME,
+      M.DISK_SYSTEM_NAME,
+      M.FAILURE_LOG || :FAILURE_LOG AS FAILURE_LOG,
+      :RETRIES_WITHIN_MOUNT AS RETRIES_WITHIN_MOUNT,
+      :TOTAL_RETRIES AS TOTAL_RETRIES,
+      :LAST_MOUNT_WITH_FAILURE AS LAST_MOUNT_WITH_FAILURE,
+      :STATUS AS STATUS,
+  )SQL";
+  // Add MOUNT_ID to the query if mountId is provided
+  if (!keepMountId) {
+    sql += " NULL AS MOUNT_ID";
+  } else {
+    sql += " M.MOUNT_ID AS MOUNT_ID";
+  }
+  // Continue the query
+  sql += R"SQL(
+          FROM MOVED_ROWS M;
+  )SQL";
+  auto stmt = txn.getConn().createStmt(sql);
+  stmt.bindString(":STATUS", to_string(status));
+  stmt.bindUint32(":TOTAL_RETRIES", totalRetries);
+  stmt.bindUint32(":RETRIES_WITHIN_MOUNT", retriesWithinMount);
+  stmt.bindUint64(":LAST_MOUNT_WITH_FAILURE", lastMountWithFailure);
+  stmt.bindString(":FAILURE_LOG", failureLogs.value_or(""));
+  if (userowjid) {
+    stmt.bindUint64(":JOB_ID", jobId);
+  }
+  stmt.executeNonQuery();
+  return stmt.getNbAffectedRows();
+};
+
+uint64_t
+RetrieveJobQueueRow::requeueJobBatch(Transaction& txn, RetrieveJobStatus status, const std::list<std::string>& jobIDs) {
+  std::string sql = R"SQL(
+    WITH MOVED_ROWS AS (
+        DELETE FROM RETRIEVE_JOB_QUEUE
+  )SQL";
+  if (!jobIDs.empty()) {
+    std::string sqlpart;
+    for (const auto& jid : jobIDs) {
+      sqlpart += jid + ",";
+    }
+    if (!sqlpart.empty()) {
+      sqlpart.pop_back();
+    }
+    sql += std::string("WHERE JOB_ID IN (") + sqlpart + std::string(")");
+  } else {
+    return 0;
+  }
+  sql += R"SQL(
+        RETURNING *
+    )
+    INSERT INTO RETRIEVE_INSERT_QUEUE (
+      RETRIEVE_REQUEST_ID,
+      REQUEST_JOB_COUNT,
+      TAPE_POOL,
+      MOUNT_POLICY,
+      PRIORITY,
+      MIN_RETRIEVE_REQUEST_AGE,
+      ARCHIVE_FILE_ID,
+      SIZE_IN_BYTES,
+      COPY_NB,
+      START_TIME,
+      CHECKSUMBLOB,
+      CREATION_TIME,
+      DISK_INSTANCE,
+      DISK_FILE_ID,
+      DISK_FILE_OWNER_UID,
+      DISK_FILE_GID,
+      DISK_FILE_PATH,
+      RETRIEVE_REPORT_URL,
+      RETRIEVE_ERROR_REPORT_URL,
+      REQUESTER_NAME,
+      REQUESTER_GROUP,
+      DST_URL,
+      STORAGE_CLASS,
+      MAX_TOTAL_RETRIES,
+      MAX_RETRIES_WITHIN_MOUNT,
+      TOTAL_REPORT_RETRIES,
+      MAX_REPORT_RETRIES,
+      VID,
+      DRIVE,
+      HOST,
+      LOGICAL_LIBRARY,
+      ACTIVITY,
+      SRR_USERNAME,
+      SRR_HOST,
+      SRR_TIME,
+      SRR_MOUNT_POLICY,
+      SRR_ACTIVITY,
+      LIFECYCLE_CREATION_TIME,
+      LIFECYCLE_FIRST_SELECTED_TIME,
+      LIFECYCLE_COMPLETED_TIME,
+      DISK_SYSTEM_NAME,
+      FAILURE_LOG,
+      RETRIES_WITHIN_MOUNT,
+      TOTAL_RETRIES,
+      LAST_MOUNT_WITH_FAILURE,
+      STATUS,
+      MOUNT_ID
+    )
+    SELECT
+      M.RETRIEVE_REQUEST_ID,
+      M.REQUEST_JOB_COUNT,
+      M.TAPE_POOL,
+      M.MOUNT_POLICY,
+      M.PRIORITY,
+      M.MIN_RETRIEVE_REQUEST_AGE,
+      M.ARCHIVE_FILE_ID,
+      M.SIZE_IN_BYTES,
+      M.COPY_NB,
+      M.START_TIME,
+      M.CHECKSUMBLOB,
+      M.CREATION_TIME,
+      M.DISK_INSTANCE,
+      M.DISK_FILE_ID,
+      M.DISK_FILE_OWNER_UID,
+      M.DISK_FILE_GID,
+      M.DISK_FILE_PATH,
+      M.RETRIEVE_REPORT_URL,
+      M.RETRIEVE_ERROR_REPORT_URL,
+      M.REQUESTER_NAME,
+      M.REQUESTER_GROUP,
+      M.DST_URL,
+      M.STORAGE_CLASS,
+      M.MAX_TOTAL_RETRIES,
+      M.MAX_RETRIES_WITHIN_MOUNT,
+      M.TOTAL_REPORT_RETRIES,
+      M.MAX_REPORT_RETRIES,
+      M.VID,
+      M.DRIVE,
+      M.HOST,
+      M.LOGICAL_LIBRARY,
+      M.ACTIVITY,
+      M.SRR_USERNAME,
+      M.SRR_HOST,
+      M.SRR_TIME,
+      M.SRR_MOUNT_POLICY,
+      M.SRR_ACTIVITY,
+      M.LIFECYCLE_CREATION_TIME,
+      M.LIFECYCLE_FIRST_SELECTED_TIME,
+      M.LIFECYCLE_COMPLETED_TIME,
+      M.DISK_SYSTEM_NAME,
+      M.FAILURE_LOG || :FAILURE_LOG AS FAILURE_LOG,
+      M.RETRIES_WITHIN_MOUNT,
+      M.TOTAL_RETRIES,
+      M.LAST_MOUNT_WITH_FAILURE,
+      :STATUS AS STATUS,
+      NULL AS MOUNT_ID
+        FROM MOVED_ROWS M;
+  )SQL";
+  auto stmt = txn.getConn().createStmt(sql);
+  stmt.bindString(":STATUS", to_string(status));
+  stmt.bindString(":FAILURE_LOG", "UNPROCESSED_TASK_QUEUE_JOB_REQUEUED");
+  stmt.executeNonQuery();
+  return stmt.getNbAffectedRows();
+}
+
+uint64_t RetrieveJobQueueRow::moveJobToFailedQueueTable(Transaction& txn) {
+  // DISABLE DELETION FOR DEBUGGING
+  std::string sql = R"SQL(
+    WITH MOVED_ROWS AS (
+        DELETE FROM RETRIEVE_JOB_QUEUE
+          WHERE JOB_ID = :JOB_ID
+        RETURNING *
+    ) INSERT INTO RETRIEVE_FAILED_JOB_QUEUE SELECT * FROM MOVED_ROWS;
+  )SQL";
+  auto stmt = txn.getConn().createStmt(sql);
+  stmt.bindUint64(":JOB_ID", jobId);
+  stmt.executeQuery();
+  return stmt.getNbAffectedRows();
+}
+
+uint64_t RetrieveJobQueueRow::moveJobBatchToFailedQueueTable(Transaction& txn, const std::vector<std::string>& jobIDs) {
+  std::string sqlpart;
+  for (const auto& piece : jobIDs) {
+    sqlpart += piece + ",";
+  }
+  if (!sqlpart.empty()) {
+    sqlpart.pop_back();
+  }
+  std::string sql = R"SQL(
+    WITH MOVED_ROWS AS (
+        DELETE FROM RETRIEVE_JOB_QUEUE
+          WHERE JOB_ID IN (
+  )SQL";
+  sql += sqlpart + ")";
+  sql += R"SQL(
+        RETURNING *
+    ) INSERT INTO RETRIEVE_FAILED_JOB_QUEUE SELECT * FROM MOVED_ROWS;
+  )SQL";
+  auto stmt = txn.getConn().createStmt(sql);
+  //stmt.bindString(":STATUS", to_string(RetrieveJobStatus::RJS_Failed));
+  stmt.executeNonQuery();
+  return stmt.getNbAffectedRows();
+  ;
+}
+
+uint64_t RetrieveJobQueueRow::updateJobStatusForFailedReport(Transaction& txn, RetrieveJobStatus status) {
+  // if this was the final reporting failure,
+  // move the row to failed jobs and delete the entry from the queue
+  if (status == RetrieveJobStatus::ReadyForDeletion) {
+    return RetrieveJobQueueRow::moveJobToFailedQueueTable(txn);
+    // END OF DISABLING DELETION FOR DEBUGGING
+  }
+  // otherwise update the statistics and requeue the job
+  std::string sql = R"SQL(
+      UPDATE RETRIEVE_JOB_QUEUE SET
+        STATUS = :STATUS,
+        TOTAL_REPORT_RETRIES = :TOTAL_REPORT_RETRIES,
+        IS_REPORTING =:IS_REPORTING,
+        REPORT_FAILURE_LOG = REPORT_FAILURE_LOG || :REPORT_FAILURE_LOG
+      WHERE JOB_ID = :JOB_ID
+    )SQL";
+
+  auto stmt = txn.getConn().createStmt(sql);
+  stmt.bindString(":STATUS", to_string(status));
+  stmt.bindUint32(":TOTAL_REPORT_RETRIES", totalReportRetries);
+  stmt.bindBool(":IS_REPORTING", isReporting);
+  stmt.bindString(":REPORT_FAILURE_LOG", reportFailureLogs.value_or(""));
+  stmt.bindUint64(":JOB_ID", jobId);
+  stmt.executeNonQuery();
+  return stmt.getNbAffectedRows();
+};
+
+rdbms::Rset RetrieveJobQueueRow::flagReportingJobsByStatus(Transaction& txn,
+                                                          std::list<RetrieveJobStatus> statusList,
+                                                          uint64_t gc_delay,
+                                                          uint64_t limit) {
+  uint64_t gc_now_minus_delay = (uint64_t) cta::utils::getCurrentEpochTime() - gc_delay;
+  std::string sql = R"SQL(
+      WITH SET_SELECTION AS (
+        SELECT JOB_ID FROM RETRIEVE_JOB_QUEUE
+        WHERE STATUS = ANY(ARRAY[
+    )SQL";
+  // we can move this to new bindArray method for stmt
+  std::vector<std::string> statusVec;
+  std::vector<std::string> placeholderVec;
+  size_t j = 1;
+  for (const auto& jstatus : statusList) {
+    statusVec.push_back(to_string(jstatus));
+    std::string plch = std::string(":STATUS") + std::to_string(j);
+    placeholderVec.push_back(plch);
+    sql += plch;
+    if (&jstatus != &statusList.back()) {
+      sql += std::string(",");
+    }
+    j++;
+  }
+  sql += R"SQL(
+        ]::RETRIEVE_JOB_STATUS[]) AND IS_REPORTING IS FALSE
+        OR (IS_REPORTING IS TRUE AND LAST_UPDATE_TIME < :NOW_MINUS_DELAY)
+        ORDER BY PRIORITY DESC, JOB_ID
+        LIMIT :LIMIT FOR UPDATE SKIP LOCKED)
+      UPDATE RETRIEVE_JOB_QUEUE SET
+        IS_REPORTING = TRUE
+      FROM SET_SELECTION
+      WHERE RETRIEVE_JOB_QUEUE.JOB_ID = SET_SELECTION.JOB_ID
+      RETURNING RETRIEVE_JOB_QUEUE.*
+    )SQL";
+  auto stmt = txn.getConn().createStmt(sql);
+  // we can move the array binding to new bindArray method for STMT
+  size_t sz = statusVec.size();
+  for (size_t i = 0; i < sz; ++i) {
+    stmt.bindString(placeholderVec[i], statusVec[i]);
+  }
+  stmt.bindUint64(":LIMIT", limit);
+  stmt.bindUint64(":NOW_MINUS_DELAY", gc_now_minus_delay);
+
+  return stmt.executeQuery();
+}
+
+uint64_t RetrieveJobQueueRow::getNextRetrieveRequestID(rdbms::Conn& conn) {
+  try {
+    const char* const sql = R"SQL(
+          SELECT NEXTVAL('RETRIEVE_REQUEST_ID_SEQ') AS RETRIEVE_REQUEST_ID
+        )SQL";
+    auto stmt = conn.createStmt(sql);
+    auto rset = stmt.executeQuery();
+    if (!rset.next()) {
+      throw exception::Exception("Result set is unexpectedly empty");
+    }
+    return rset.columnUint64("RETRIEVE_REQUEST_ID");
+  } catch (exception::Exception& ex) {
+    ex.getMessage().str(std::string(__FUNCTION__) + ": " + ex.getMessage().str());
+    throw;
+  }
+}
+
+uint64_t
+RetrieveJobQueueRow::cancelRetrieveJob(Transaction& txn, const std::string& diskInstance, uint64_t archiveFileID) {
+  std::string sqlpart;
+  /* there is no mechanism to remove this form the queue in memory !!!
+   * might need to be invented if needed otherwise all the jobs in memory will be
+   * executed and will throw an error later as no DB job corresponding to them will exist !
+   *
+   flagging jobs ReadyForDeletion - alternative strategy
+     * for deletion by dropping partitions
+     std::string sql = R"SQL(
+      UPDATE RETRIEVE_JOB_QUEUE SET
+        STATUS = :NEWSTATUS
+      WHERE
+        DISK_INSTANCE = :DISK_INSTANCE AND
+        ARCHIVE_FILE_ID = :ARCHIVE_FILE_ID AND
+        STATUS NOT IN (:COMPLETE, :FAILED, :FORDELETION)
+    )SQL";
+    std::string sql = R"SQL(
+      UPDATE RETRIEVE_JOB_QUEUE SET
+        STATUS = :NEWSTATUS
+      WHERE
+        DISK_INSTANCE = :DISK_INSTANCE AND
+        ARCHIVE_FILE_ID = :ARCHIVE_FILE_ID AND
+        STATUS NOT IN (:COMPLETE, :FAILED, :FORDELETION)
+    )SQL";
+
+    stmt.bindString(":NEWSTATUS",
+                    to_string(RetrieveJobStatus::ReadyForDeletion));
+    stmt.bindString(":COMPLETE",
+                    to_string(RetrieveJobStatus::RJS_Complete));
+    stmt.bindString(":FORDELETION",
+                    to_string(RetrieveJobStatus::ReadyForDeletion));
+    stmt.bindString(":FAILED",
+                    to_string(RetrieveJobStatus::RJS_Failed));
+     */
+  // directly deleting the archive request irrespectively in which state it is
+  // this can result in attempts to update rows of the DB which will not exist anymore
+  // better strategy might be needed
+  std::string sql = R"SQL(
+      DELETE FROM RETRIEVE_JOB_QUEUE
+      WHERE
+        DISK_INSTANCE = :DISK_INSTANCE AND
+        ARCHIVE_FILE_ID = :ARCHIVE_FILE_ID
+    )SQL";
+  auto stmt = txn.getConn().createStmt(sql);
+  stmt.bindString(":DISK_INSTANCE", diskInstance);
+  stmt.bindUint64(":ARCHIVE_FILE_ID", archiveFileID);
+
+  stmt.executeNonQuery();
+  uint64_t nrows = stmt.getNbAffectedRows();
+  sql = R"SQL(
+    DELETE FROM RETRIEVE_INSERT_QUEUE
+    WHERE
+      DISK_INSTANCE = :DISK_INSTANCE AND
+      ARCHIVE_FILE_ID = :ARCHIVE_FILE_ID
+  )SQL";
+  stmt = txn.getConn().createStmt(sql);
+  stmt.bindString(":DISK_INSTANCE", diskInstance);
+  stmt.bindUint64(":ARCHIVE_FILE_ID", archiveFileID);
+  stmt.executeNonQuery();
+  nrows += stmt.getNbAffectedRows();
+  return nrows;
+}
+
+}  // namespace cta::schedulerdb::postgres
