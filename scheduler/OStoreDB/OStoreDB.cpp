@@ -4052,7 +4052,7 @@ bool OStoreDB::RetrieveMount::testReserveDiskSpace(const cta::DiskSpaceReservati
       cta::log::ScopedParamContainer(logContext)
         .add("diskSystemName", failedDiskSystem.first)
         .add("failureReason", failedDiskSystem.second.getMessageValue())
-        .log(cta::log::ERR,
+        .log(cta::log::WARNING,
             "In OStoreDB::RetrieveMount::testReserveDiskSpace(): unable to request EOS free space "
             "for disk system using external script, backpressure will not be applied");
     }
