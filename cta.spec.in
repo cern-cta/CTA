@@ -623,7 +623,7 @@ This package contains .repo files, gpg keys and yum-versionlock configuration fo
 %attr(0755,root,root) %{_bindir}/cta-versionlock
 
 %package -n cta-eosdf
-Summary: External script to get free disk space
+Summary: External script that allows cta-taped to gather free disk space for CTA disksystem concept for EOS managed buffers
 Group: Application/CTA
 # Don't need a stricly version-controlled version of eos-client,
 # we just require eos-client for getting disk stats
