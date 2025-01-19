@@ -42,8 +42,8 @@ struct ArchiveJobQueueRow {
   uint64_t minArchiveRequestAge = 0;
   uint8_t copyNb = 0;
   time_t startTime = 0;  //!< Time the job was inserted into the queue
-  std::string archiveReportUrl = "";
-  std::string archiveErrorReportUrl = "";
+  std::string archiveReportURL = "";
+  std::string archiveErrorReportURL = "";
   std::string requesterName = "";
   std::string requesterGroup = "";
   std::string srcUrl = "";
@@ -57,7 +57,7 @@ struct ArchiveJobQueueRow {
   std::optional<std::string> failureLogs = std::nullopt;
   std::optional<std::string> reportFailureLogs = std::nullopt;
   bool is_repack = false;
-  bool is_reporting = false;
+  bool isReporting = false;
   uint64_t repackId = 0;
   std::string repackFilebufUrl = "";
   uint64_t repackFseq = 0;
@@ -79,8 +79,8 @@ struct ArchiveJobQueueRow {
     archiveFile.creationTime = 0;
     tapePool.reserve(64);
     mountPolicy.reserve(64);
-    archiveReportUrl.reserve(2048);
-    archiveErrorReportUrl.reserve(2048);
+    archiveReportURL.reserve(2048);
+    archiveErrorReportURL.reserve(2048);
     requesterName.reserve(64);
     requesterGroup.reserve(64);
     srcUrl.reserve(2048);
@@ -101,8 +101,8 @@ struct ArchiveJobQueueRow {
   explicit ArchiveJobQueueRow(const rdbms::Rset& rset) {
     tapePool.reserve(64);
     mountPolicy.reserve(64);
-    archiveReportUrl.reserve(2048);
-    archiveErrorReportUrl.reserve(2048);
+    archiveReportURL.reserve(2048);
+    archiveErrorReportURL.reserve(2048);
     requesterName.reserve(64);
     requesterGroup.reserve(64);
     srcUrl.reserve(2048);
@@ -129,8 +129,8 @@ struct ArchiveJobQueueRow {
     minArchiveRequestAge = 0;
     copyNb = 0;
     startTime = 0;
-    archiveReportUrl.clear();
-    archiveErrorReportUrl.clear();
+    archiveReportURL.clear();
+    archiveErrorReportURL.clear();
     requesterName.clear();
     requesterGroup.clear();
     srcUrl.clear();
@@ -144,7 +144,7 @@ struct ArchiveJobQueueRow {
     failureLogs.reset();        // Resetting optional value
     reportFailureLogs.reset();  // Resetting optional value
     is_repack = false;
-    is_reporting = false;
+    isReporting = false;
     repackId = 0;
     repackFilebufUrl.clear();
     repackFseq = 0;
@@ -180,13 +180,13 @@ struct ArchiveJobQueueRow {
     archiveFile.diskFileInfo.owner_uid = rset.columnUint32NoOpt("DISK_FILE_OWNER_UID");
     archiveFile.diskFileInfo.gid = rset.columnUint32NoOpt("DISK_FILE_GID");
     archiveFile.diskFileInfo.path = rset.columnStringNoOpt("DISK_FILE_PATH");
-    archiveReportUrl = rset.columnStringNoOpt("ARCHIVE_REPORT_URL");
-    archiveErrorReportUrl = rset.columnStringNoOpt("ARCHIVE_ERROR_REPORT_URL");
+    archiveReportURL = rset.columnStringNoOpt("ARCHIVE_REPORT_URL");
+    archiveErrorReportURL = rset.columnStringNoOpt("ARCHIVE_ERROR_REPORT_URL");
     requesterName = rset.columnStringNoOpt("REQUESTER_NAME");
     requesterGroup = rset.columnStringNoOpt("REQUESTER_GROUP");
     srcUrl = rset.columnStringNoOpt("SRC_URL");
     archiveFile.storageClass = rset.columnStringNoOpt("STORAGE_CLASS");
-    is_reporting = rset.columnBoolNoOpt("IS_REPORTING");
+    isReporting = rset.columnBoolNoOpt("IS_REPORTING");
     vid = rset.columnStringNoOpt("VID");
     drive = rset.columnStringNoOpt("DRIVE");
     host = rset.columnStringNoOpt("HOST");
@@ -290,8 +290,8 @@ struct ArchiveJobQueueRow {
     stmt.bindUint32(":DISK_FILE_OWNER_UID", archiveFile.diskFileInfo.owner_uid);
     stmt.bindUint32(":DISK_FILE_GID", archiveFile.diskFileInfo.gid);
     stmt.bindString(":DISK_FILE_PATH", archiveFile.diskFileInfo.path);
-    stmt.bindString(":ARCHIVE_REPORT_URL", archiveReportUrl);
-    stmt.bindString(":ARCHIVE_ERROR_REPORT_URL", archiveErrorReportUrl);
+    stmt.bindString(":ARCHIVE_REPORT_URL", archiveReportURL);
+    stmt.bindString(":ARCHIVE_ERROR_REPORT_URL", archiveErrorReportURL);
     stmt.bindString(":REQUESTER_NAME", requesterName);
     stmt.bindString(":REQUESTER_GROUP", requesterGroup);
     stmt.bindString(":SRC_URL", srcUrl);
@@ -328,8 +328,8 @@ struct ArchiveJobQueueRow {
     params.add("diskFileOwnerUid", archiveFile.diskFileInfo.owner_uid);
     params.add("diskFileGid", archiveFile.diskFileInfo.gid);
     params.add("diskFilePath", archiveFile.diskFileInfo.path);
-    params.add("archiveReportUrl", archiveReportUrl);
-    params.add("archiveErrorReportUrl", archiveErrorReportUrl);
+    params.add("archiveReportURL", archiveReportURL);
+    params.add("archiveErrorReportURL", archiveErrorReportURL);
     params.add("requesterName", requesterName);
     params.add("requesterGroup", requesterGroup);
     params.add("srcUrl", srcUrl);
