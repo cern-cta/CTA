@@ -359,6 +359,11 @@ public:
     void requeueJobBatch(std::list<std::unique_ptr<SchedulerDatabase::RetrieveJob>>& jobBatch,
                          log::LogContext& logContext) override;
 
+    uint64_t requeueJobBatch(const std::list<std::string>& jobIDsList, log::LogContext& logContext) const override {
+      // Do nothing in this implementation, serves only PGSCHED implementation
+      return 0;
+    }
+
     bool reserveDiskSpace(const cta::DiskSpaceReservationRequest& request,
                           const std::string& externalFreeDiskSpaceScript,
                           log::LogContext& logContext) override;
@@ -413,6 +418,8 @@ public:
     void asyncSetSuccessful() override;
     void failTransfer(const std::string& failureReason, log::LogContext& lc) override;
     void failReport(const std::string& failureReason, log::LogContext& lc) override;
+    // initialize method is here with empty implementation only since it is needed by PGSCHED in the baseclass
+    void initialize(const rdbms::Rset& resultSet, log::LogContext& logContext) override {};
     void abort(const std::string& abortReason, log::LogContext& lc) override;
     void fail() override;
     ~RetrieveJob() override;
