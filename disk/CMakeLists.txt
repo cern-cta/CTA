@@ -48,4 +48,4 @@ set_property(TARGET ctadiskunittests PROPERTY   VERSION "${CTA_LIBVERSION}")
 install(TARGETS ctadisk DESTINATION usr/${CMAKE_INSTALL_LIBDIR})
 install(TARGETS ctadiskunittests DESTINATION usr/${CMAKE_INSTALL_LIBDIR})
 
-install(FILES scripts/eosdf.sh DESTINATION /usr/bin)
+install(FILES scripts/cta-eosdf.sh DESTINATION /usr/bin)
