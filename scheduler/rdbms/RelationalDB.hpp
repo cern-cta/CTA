@@ -54,6 +54,8 @@ class Catalogue;
 namespace schedulerdb {
 class ArchiveMount;
 class ArchiveRdbJob;
+class RetrieveMount;
+class RetrieveRdbJob;
 class TapeMountDecisionInfo;
 }  // namespace schedulerdb
 
@@ -68,6 +70,8 @@ public:
   ~RelationalDB() override;
   friend class cta::schedulerdb::ArchiveMount;
   friend class cta::schedulerdb::ArchiveRdbJob;
+  friend class cta::schedulerdb::RetrieveMount;
+  friend class cta::schedulerdb::RetrieveRdbJob;
   friend class cta::schedulerdb::TapeMountDecisionInfo;
   void waitSubthreadsComplete() override;
 

@@ -46,8 +46,8 @@ void ArchiveRequest::insert() {
       ajr.archiveFile.creationTime = m_entryLog.time;  // Time the job was received by the CTA Frontend
       ajr.copyNb = aj.copyNb;
       ajr.startTime = time(nullptr);  // Time the job was queued in the DB
-      ajr.archiveReportUrl = m_archiveReportURL;
-      ajr.archiveErrorReportUrl = m_archiveErrorReportURL;
+      ajr.archiveReportURL = m_archiveReportURL;
+      ajr.archiveErrorReportURL = m_archiveErrorReportURL;
       ajr.requesterName = m_requesterIdentity.name;
       ajr.requesterGroup = m_requesterIdentity.group;
       ajr.srcUrl = m_srcURL;

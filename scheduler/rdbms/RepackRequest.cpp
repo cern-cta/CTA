@@ -185,7 +185,7 @@ RepackRequest::addSubrequestsAndUpdateStats(std::list<Subrequest>& repackSubrequ
         common::dataStructures::RetrieveFileQueueCriteria fileQueueCriteria;
         fileQueueCriteria.archiveFile = rsr.archiveFile;
         fileQueueCriteria.mountPolicy = m_mountPolicy;
-        rr->setRetrieveFileQueueCriteria(fileQueueCriteria);
+        rr->fillJobsSetRetrieveFileQueueCriteria(fileQueueCriteria);
 
         // Decide of which vid we are going to retrieve from. Here, if we can retrieve from the repack VID, we
         // will set the initial recall on it. Retries will we requeue to best VID as usual if needed.

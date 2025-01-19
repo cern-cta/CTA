@@ -22,8 +22,9 @@
 
 namespace cta::schedulerdb {
 
-// Forward declaration of ArchiveRdbJob
+// Forward declarations
 class ArchiveRdbJob;
+class RetrieveRdbJob;
 
 template<typename T>
 class JobPool {

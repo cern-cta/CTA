@@ -62,7 +62,7 @@ set (CTA_SCHEDULER_PG_SRC_FILES ${CTA_SCHEDULER_SRC_FILES}
   rdbms/Helpers.cpp
   rdbms/RetrieveMount.cpp
   rdbms/RetrieveRequest.cpp
-  rdbms/RetrieveJob.cpp
+  rdbms/RetrieveRdbJob.cpp
   rdbms/RetrieveJobQueueItor.cpp
   rdbms/RepackRequestPromotionStatistics.cpp
   rdbms/RepackRequest.cpp
