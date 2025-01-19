@@ -512,6 +512,14 @@ public:
 
     virtual void requeueJobBatch(std::list<std::unique_ptr<SchedulerDatabase::RetrieveJob>>& jobBatch,
                                  log::LogContext& logContext) = 0;
+    /**
+     * Re-queue batch of jobs
+     * Serves PGSCHED purpose only
+     *
+     * @param jobIDsList
+     * @return number of jobs re-queued in the DB
+     */
+    virtual uint64_t requeueJobBatch(const std::list<std::string>& jobIDsList, log::LogContext& logContext) const = 0;
 
     virtual void setDriveStatus(common::dataStructures::DriveStatus status,
                                 common::dataStructures::MountType mountType,
@@ -542,6 +550,7 @@ public:
 
   public:
     std::string errorReportURL;
+    uint64_t jobID = 0;  // for schedulerdb model
     enum class ReportType : uint8_t {
       NoReportRequired,
       CompletionReport,
@@ -559,6 +568,7 @@ public:
     virtual void failTransfer(const std::string& failureReason, log::LogContext& lc) = 0;
     virtual void failReport(const std::string& failureReason, log::LogContext& lc) = 0;
     virtual void abort(const std::string& abortReason, log::LogContext& lc) = 0;
+    virtual void initialize(const rdbms::Rset& resultSet, log::LogContext& logContext) = 0;
     virtual void fail() = 0;
     virtual ~RetrieveJob() = default;
 

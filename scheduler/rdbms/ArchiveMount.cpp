@@ -37,14 +37,10 @@ const SchedulerDatabase::ArchiveMount::MountInfo& ArchiveMount::getMountInfo() {
 std::list<std::unique_ptr<SchedulerDatabase::ArchiveJob>>
 ArchiveMount::getNextJobBatch(uint64_t filesRequested, uint64_t bytesRequested, log::LogContext& logContext) {
   logContext.log(cta::log::DEBUG, "Entering ArchiveMount::getNextJobBatch()");
-  rdbms::Rset updatedJobIDset;
   using queueType = common::dataStructures::JobQueueType;
   ArchiveJobStatus queriedJobStatus = (m_queueType == queueType::JobsToTransferForUser) ?
                                         ArchiveJobStatus::AJS_ToTransferForUser :
                                         ArchiveJobStatus::AJS_ToTransferForRepack;
-  // mark the next job batch as owned by a specific mountId
-  // and return the list of JOB_IDs which we have modified
-  std::list<std::string> jobIDsList;
   // start a new transaction
   cta::schedulerdb::Transaction txn(m_connPool);
   // require tapePool named lock in order to minimise tapePool fragmentation of the rows
@@ -160,12 +156,12 @@ uint64_t ArchiveMount::requeueJobBatch(const std::list<std::string>& jobIDsList,
       params.add("jobCountToRequeue", jobIDsList.size());
       params.add("jobCountRequeued", nrows);
       logContext.log(cta::log::ERR,
-                     "In schedulerdb::ArchiveMount::failJobBatch(): requeueFailedJob failed to requeue all jobs !");
+                     "In schedulerdb::ArchiveMount::requeueJobBatch(): failed to requeue all jobs !");
     }
     txn.commit();
   } catch (exception::Exception& ex) {
     logContext.log(cta::log::ERR,
-                   "In schedulerdb::ArchiveMount::failJobBatch(): failed to update job status for failed task queue." +
+                   "In schedulerdb::ArchiveMount::requeueJobBatch(): failed to update job status for failed task queue." +
                      ex.getMessageValue());
     txn.abort();
     return 0;
