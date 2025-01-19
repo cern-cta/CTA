@@ -139,7 +139,7 @@ ArchiveJobQueueRow::moveJobsToDbQueue(Transaction& txn,
                 :DRIVE AS DRIVE,
                 :HOST AS HOST,
                 :MOUNT_TYPE AS MOUNT_TYPE,
-                :LOGICAL_LIB AS LOGICAL_LIBRARY
+                :LOGICAL_LIBRARY AS LOGICAL_LIBRARY
             FROM MOVED_ROWS M
     RETURNING *;
     )SQL";
@@ -154,7 +154,7 @@ ArchiveJobQueueRow::moveJobsToDbQueue(Transaction& txn,
   stmt.bindString(":DRIVE", mountInfo.drive);
   stmt.bindString(":HOST", mountInfo.host);
   stmt.bindString(":MOUNT_TYPE", cta::common::dataStructures::toString(mountInfo.mountType));
-  stmt.bindString(":LOGICAL_LIB", mountInfo.logicalLibrary);
+  stmt.bindString(":LOGICAL_LIBRARY", mountInfo.logicalLibrary);
   stmt.bindUint64(":BYTES_REQUESTED", maxBytesRequested);
   auto result = stmt.executeQuery();
   auto nrows = stmt.getNbAffectedRows();
@@ -237,9 +237,9 @@ uint64_t ArchiveJobQueueRow::requeueFailedJob(Transaction& txn,
     WITH MOVED_ROWS AS (
         DELETE FROM ARCHIVE_JOB_QUEUE
   )SQL";
-  bool keeprowjid = true;
+  bool userowjid = true;
   if (jobIDs.has_value() && !jobIDs.value().empty()) {
-    keeprowjid = false;
+    userowjid = false;
     std::string sqlpart;
     for (const auto& jid : jobIDs.value()) {
       sqlpart += jid + ",";
@@ -323,7 +323,7 @@ uint64_t ArchiveJobQueueRow::requeueFailedJob(Transaction& txn,
             M.RETRIES_WITHIN_MOUNT,
             M.MAX_RETRIES_WITHIN_MOUNT,
             M.MAX_TOTAL_RETRIES,
-            M.TOTAL_REPORT_RETRIES
+            M.TOTAL_REPORT_RETRIES,
             M.MAX_REPORT_RETRIES,
             M.VID AS VID,
             M.DRIVE AS DRIVE,
@@ -352,7 +352,7 @@ uint64_t ArchiveJobQueueRow::requeueFailedJob(Transaction& txn,
   stmt.bindUint32(":RETRIES_WITHIN_MOUNT", retriesWithinMount);
   stmt.bindUint64(":LAST_MOUNT_WITH_FAILURE", lastMountWithFailure);
   stmt.bindString(":FAILURE_LOG", failureLogs.value_or(""));
-  if (keeprowjid) {
+  if (userowjid) {
     stmt.bindUint64(":JOB_ID", jobId);
   }
   stmt.executeNonQuery();
@@ -503,7 +503,8 @@ uint64_t ArchiveJobQueueRow::moveJobBatchToFailedQueueTable(Transaction& txn, co
   auto stmt = txn.getConn().createStmt(sql);
   //stmt.bindString(":STATUS", to_string(ArchiveJobStatus::AJS_Failed));
   stmt.executeNonQuery();
-  return stmt.getNbAffectedRows();;
+  return stmt.getNbAffectedRows();
+  ;
 }
 
 uint64_t ArchiveJobQueueRow::updateJobStatusForFailedReport(Transaction& txn, ArchiveJobStatus status) {
@@ -526,7 +527,7 @@ uint64_t ArchiveJobQueueRow::updateJobStatusForFailedReport(Transaction& txn, Ar
   auto stmt = txn.getConn().createStmt(sql);
   stmt.bindString(":STATUS", to_string(status));
   stmt.bindUint32(":TOTAL_REPORT_RETRIES", totalReportRetries);
-  stmt.bindBool(":IS_REPORTING", is_reporting);
+  stmt.bindBool(":IS_REPORTING", isReporting);
   stmt.bindString(":REPORT_FAILURE_LOG", reportFailureLogs.value_or(""));
   stmt.bindUint64(":JOB_ID", jobId);
   stmt.executeNonQuery();

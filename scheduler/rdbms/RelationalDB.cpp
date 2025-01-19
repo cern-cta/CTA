@@ -28,6 +28,7 @@
 #include "scheduler/rdbms/ArchiveRequest.hpp"
 #include "scheduler/rdbms/TapeMountDecisionInfo.hpp"
 #include "scheduler/rdbms/Helpers.hpp"
+#include "scheduler/rdbms/RetrieveRdbJob.hpp"
 #include "scheduler/rdbms/RetrieveRequest.hpp"
 #include "scheduler/rdbms/RepackRequest.hpp"
 
@@ -332,16 +333,16 @@ RelationalDB::queueRetrieve(cta::common::dataStructures::RetrieveRequest& rqst,
                             log::LogContext& logContext) {
   SchedulerDatabase::RetrieveRequestInfo ret;
   try {
-    schedulerdb::Transaction txn(m_connPool);
-
     // Get the best vid from the cache
     std::set<std::string, std::less<>> candidateVids;
     for (auto& tf : criteria.archiveFile.tapeFiles) {
       candidateVids.insert(tf.vid);
     }
 
+    schedulerdb::Transaction txn(m_connPool);
+    /// it make a query for every single file to the scheduler db summary stats for existing queues ? no way ... very inefficient
+    // to-do option: query in batches and insert VIDs available in the info about the archive file from the catalogue and decide on the best during the getNextJobBatch phase !
     ret.selectedVid = cta::schedulerdb::Helpers::selectBestVid4Retrieve(candidateVids, m_catalogue, txn, false);
-
     uint8_t bestCopyNb = 0;
     for (auto& tf : criteria.archiveFile.tapeFiles) {
       if (tf.vid == ret.selectedVid) {
@@ -353,24 +354,48 @@ RelationalDB::queueRetrieve(cta::common::dataStructures::RetrieveRequest& rqst,
         break;
       }
     }
-    // In order to post the job, construct it first in memory.
+
+    // In order to queue the job, construct it first in memory.
     auto sqlconn = m_connPool.getConn();
-    auto rReq = std::make_unique<cta::schedulerdb::RetrieveRequest>(sqlconn, logContext);
+    auto rReq = std::make_unique<schedulerdb::RetrieveRequest>(sqlconn, logContext);
+    rReq->setActivityIfNeeded(rqst, criteria);
     ret.requestId = rReq->getIdStr();
     rReq->setSchedulerRequest(rqst);
-    rReq->setRetrieveFileQueueCriteria(criteria);
-    rReq->setActivityIfNeeded(rqst, criteria);
-    rReq->setCreationTime(rqst.creationLog.time);
+    rReq->fillJobsSetRetrieveFileQueueCriteria(criteria); // fills also m_jobs
+    rReq->setActiveCopyNumber(bestCopyNb);
     rReq->setIsVerifyOnly(rqst.isVerifyOnly);
     if (diskSystemName) {
       rReq->setDiskSystemName(diskSystemName.value());
     }
+    // rReq->setCreationTime(rqst.creationLog.time); // ? no reason for this method to exist ?
 
-    rReq->setActiveCopyNumber(bestCopyNb);
+
+
+
+    /* FROM OLD getNextJobBatch RETRIEVE method
+        schedulerdb::RetrieveRequest rr(logContext, j);
+        auto rj = std::make_unique<schedulerdb::RetrieveJob>( j.jobId );
+        rj->archiveFile = rr.m_archiveFile;
+        rj->diskSystemName = rr.m_diskSystemName;
+        rj->retrieveRequest = rr.m_schedRetrieveReq;
+        rj->selectedCopyNb = rr.m_actCopyNb;
+        rj->isRepack = rr.m_repackInfo.isRepack;
+        rj->m_repackInfo = rr.m_repackInfo;
+        //   rj->m_jobOwned = true;
+        rj->m_mountId = mountInfo.mountId;
+        END OF OLD getNextJobBatch */
+    //
+    //if (jl.empty()) {
+    //  throw schedulerdb::RetrieveRequestHasNoCopies("no tape file for requested vid. archiveId="
+    //                                                << criteria.archiveFile.archiveFileID );
+    //}
+    //{
+    //  std::stringstream err;
+    //  err << "In RelationalDB::queueRetrieve(): no job for requested copyNb. archiveId=" << criteria.archiveFile.archiveFileID
+    //      << " vid=" << ret.selectedVid << " copyNb=" << bestCopyNb;
+    //  throw RetrieveRequestHasNoCopies(err.str());
+    //}
     rReq->insert();
-
-    // Commit the transaction
-    rReq->commit();
     sqlconn.reset();
 
     return ret;

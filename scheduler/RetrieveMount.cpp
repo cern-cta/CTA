@@ -203,6 +203,20 @@ void cta::RetrieveMount::requeueJobBatch(std::vector<std::unique_ptr<cta::Retrie
 }
 
 //------------------------------------------------------------------------------
+// requeueJobBatch
+//------------------------------------------------------------------------------
+uint64_t cta::RetrieveMount::requeueJobBatch(const std::list<std::string>& jobIDsList,
+                                            cta::log::LogContext& logContext) const {
+  if (jobIDsList.empty()) {
+    logContext.log(cta::log::INFO, "In cta::RetrieveMount::requeueJobBatch(): no job IDs provided to fail.");
+    return 0;
+  }
+  // Forward the job IDs to the database handler's requeueJobBatch method.
+  uint64_t njobs = m_dbMount->requeueJobBatch(jobIDsList, logContext);
+  return njobs;
+}
+
+//------------------------------------------------------------------------------
 // reserveDiskSpace()
 //------------------------------------------------------------------------------
 bool cta::RetrieveMount::reserveDiskSpace(const cta::DiskSpaceReservationRequest &request, log::LogContext& logContext) {
