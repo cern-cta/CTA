@@ -17,7 +17,6 @@
 
 #include "common/exception/Exception.hpp"
 #include "scheduler/rdbms/ArchiveRdbJob.hpp"
-#include "scheduler/rdbms/postgres/ArchiveJobQueue.hpp"
 #include "scheduler/rdbms/postgres/Transaction.hpp"
 // includes for debug timings only below
 #include "common/log/TimingList.hpp"
@@ -35,13 +34,13 @@ ArchiveRdbJob::ArchiveRdbJob(rdbms::ConnPool& connPool, const rdbms::Rset& rset)
   // Copying relevant data from ArchiveJobQueueRow to ArchiveRdbJob
   jobID = m_jobRow.jobId;
   srcURL = m_jobRow.srcUrl;
-  archiveReportURL = m_jobRow.archiveReportUrl;
-  errorReportURL = m_jobRow.archiveErrorReportUrl;
+  archiveReportURL = m_jobRow.archiveReportURL;
+  errorReportURL = m_jobRow.archiveErrorReportURL;
   archiveFile = m_jobRow.archiveFile;
   tapeFile.vid = m_jobRow.vid;
   tapeFile.copyNb = m_jobRow.copyNb;
   // Set other attributes or perform any necessary initialization
-  // Setting the internal report type - in case is_reporting == false No Report type required
+  // Setting the internal report type - in case isReporting == false No Report type required
   if (m_jobRow.status == ArchiveJobStatus::AJS_ToReportToUserForTransfer) {
     reportType = ReportType::CompletionReport;
   } else if (m_jobRow.status == ArchiveJobStatus::AJS_ToReportToUserForFailure) {
@@ -59,13 +58,13 @@ ArchiveRdbJob::ArchiveRdbJob(rdbms::ConnPool& connPool)
   // Copying relevant data from ArchiveJobQueueRow to ArchiveRdbJob
   jobID = m_jobRow.jobId;
   srcURL = m_jobRow.srcUrl;
-  archiveReportURL = m_jobRow.archiveReportUrl;
-  errorReportURL = m_jobRow.archiveErrorReportUrl;
+  archiveReportURL = m_jobRow.archiveReportURL;
+  errorReportURL = m_jobRow.archiveErrorReportURL;
   archiveFile = m_jobRow.archiveFile;
   tapeFile.vid = m_jobRow.vid;
   tapeFile.copyNb = m_jobRow.copyNb;
   // Set other attributes or perform any necessary initialization
-  // Setting the internal report type - in case is_reporting == false No Report type required
+  // Setting the internal report type - in case isReporting == false No Report type required
   if (m_jobRow.status == ArchiveJobStatus::AJS_ToReportToUserForTransfer) {
     reportType = ReportType::CompletionReport;
   } else if (m_jobRow.status == ArchiveJobStatus::AJS_ToReportToUserForFailure) {
@@ -87,8 +86,8 @@ void ArchiveRdbJob::initialize(const rdbms::Rset& rset, log::LogContext& lc) {
   // Reset copied attributes
   jobID = m_jobRow.jobId;
   srcURL = m_jobRow.srcUrl;
-  archiveReportURL = m_jobRow.archiveReportUrl;
-  errorReportURL = m_jobRow.archiveErrorReportUrl;
+  archiveReportURL = m_jobRow.archiveReportURL;
+  errorReportURL = m_jobRow.archiveErrorReportURL;
   archiveFile = m_jobRow.archiveFile;
   tapeFile.vid = m_jobRow.vid;
   tapeFile.copyNb = m_jobRow.copyNb;
@@ -301,7 +300,7 @@ void ArchiveRdbJob::failReport(const std::string& failureReason, log::LogContext
       // requeue job to failure table !
     } else {
       // Status is unchanged, but we reset the IS_REPORTING flag to FALSE
-      m_jobRow.is_reporting = false;
+      m_jobRow.isReporting = false;
       uint64_t nrows = m_jobRow.updateJobStatusForFailedReport(txn, m_jobRow.status);
       if (nrows != 1) {
         log::ScopedParamContainer(lc)

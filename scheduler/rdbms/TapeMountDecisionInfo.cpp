@@ -109,7 +109,9 @@ TapeMountDecisionInfo::createRetrieveMount(const cta::SchedulerDatabase::Potenti
                                            const std::string& driveName,
                                            const std::string& logicalLibrary,
                                            const std::string& hostName) {
-  auto privateRet = std::make_unique<schedulerdb::RetrieveMount>(m_ownerId, *m_txn, mount.vid);
+
+  auto privateRet = std::make_unique<schedulerdb::RetrieveMount>(m_RelationalDB);
+  //auto privateRet = std::make_unique<schedulerdb::RetrieveMount>(m_ownerId, *m_txn, mount.vid);
   auto& rm = *privateRet;
   // Check we hold the scheduling lock
   if (!m_lockTaken) {

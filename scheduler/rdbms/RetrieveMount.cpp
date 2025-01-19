@@ -16,103 +16,146 @@
  */
 
 #include "scheduler/rdbms/RetrieveMount.hpp"
-#include "scheduler/rdbms/RetrieveJob.hpp"
-#include "scheduler/rdbms/RetrieveRequest.hpp"
 #include "common/exception/Exception.hpp"
+#include "common/log/TimingList.hpp"
+#include "common/utils/utils.hpp"
+#include "scheduler/rdbms/postgres/Transaction.hpp"
+#include "common/Timer.hpp"
 
 namespace cta::schedulerdb {
 
-const SchedulerDatabase::RetrieveMount::MountInfo &RetrieveMount::getMountInfo()
-{
-   throw cta::exception::Exception("Not implemented");
+const SchedulerDatabase::RetrieveMount::MountInfo& RetrieveMount::getMountInfo() {
+    return mountInfo;
 }
 
-std::list<std::unique_ptr<SchedulerDatabase::RetrieveJob>> RetrieveMount::getNextJobBatch(uint64_t filesRequested,
-     uint64_t bytesRequested, log::LogContext& logContext)
-{
+std::list<std::unique_ptr<SchedulerDatabase::RetrieveJob>>
+RetrieveMount::getNextJobBatch(uint64_t filesRequested, uint64_t bytesRequested, log::LogContext& logContext) {
+  logContext.log(cta::log::DEBUG, "Entering RetrieveMount::getNextJobBatch()");
+  RetrieveJobStatus queriedJobStatus = RetrieveJobStatus::RJS_ToTransfer;
 
-  rdbms::Rset resultSet;
-
-  // retrieve batch up to file limit
-  resultSet = cta::schedulerdb::postgres::RetrieveJobQueueRow::select(
-    m_txn, RetrieveJobStatus::RJS_ToTransfer, mountInfo.vid, filesRequested);
-
-  std::list<postgres::RetrieveJobQueueRow> jobs;
-  // filter retrieved batch up to size limit
-  uint64_t totalBytes = 0;
-  while(resultSet.next()) {
-    jobs.emplace_back(resultSet);
-    totalBytes += jobs.back().archiveFile.fileSize;
-    if(totalBytes >= bytesRequested) break;
-  }
-
-  // mark the jobs in the batch as owned
-  postgres::RetrieveJobQueueRow::updateMountID(m_txn, jobs, mountInfo.mountId);
-  m_txn.commit();
-
-  // Construct the return value
+  // start a new transaction
+  cta::schedulerdb::Transaction txn(m_connPool);
+  // require VID named lock in order to minimise tapePool fragmentation of the rows
+  txn.takeNamedLock(mountInfo.vid);
+  cta::log::TimingList timings;
+  cta::utils::Timer t;
   std::list<std::unique_ptr<SchedulerDatabase::RetrieveJob>> ret;
-  for (const auto &j : jobs) {
-    // each row represents an entire retreieverequest (including all jobs)
-    // and also the indication of which is the current active one
-    schedulerdb::RetrieveRequest rr(logContext, j);
-
-    auto rj = std::make_unique<schedulerdb::RetrieveJob>(/* j.jobId */);
-    rj->archiveFile = rr.m_archiveFile;
-    rj->diskSystemName = rr.m_diskSystemName;
-    rj->retrieveRequest = rr.m_schedRetrieveReq;
-    rj->selectedCopyNb = rr.m_actCopyNb;
-    rj->isRepack = rr.m_repackInfo.isRepack;
-    rj->m_repackInfo = rr.m_repackInfo;
- //   rj->m_jobOwned = true;
-    rj->m_mountId = mountInfo.mountId;
-    ret.emplace_back(std::move(rj));
+  std::vector<std::unique_ptr<SchedulerDatabase::RetrieveJob>> retVector;
+  try {
+    auto [queuedJobs, nrows] = postgres::RetrieveJobQueueRow::moveJobsToDbQueue(txn,
+                                                                                queriedJobStatus,
+                                                                                mountInfo,
+                                                                                bytesRequested,
+                                                                                filesRequested);
+    timings.insertAndReset("mountUpdateBatchTime", t);
+    cta::log::ScopedParamContainer params(logContext);
+    params.add("updateMountInfoRowCount", nrows);
+    params.add("MountID", mountInfo.mountId);
+    logContext.log(cta::log::INFO,
+                   "In postgres::RetrieveJobQueueRow::moveJobsToDbQueue: successfully assigned Mount ID to DB jobs.");
+    retVector.reserve(nrows);
+    // Fetch job info only in case there were jobs found and updated
+    if (!queuedJobs.isEmpty()) {
+      // Construct the return value
+      // Precompute the maximum value before the loop
+      //common::dataStructures::TapeFile tpfile;
+      //auto maxBlockId = std::numeric_limits<decltype(tpfile.blockId)>::max();
+      while (queuedJobs.next()) {
+        retVector.emplace_back(m_jobPool.acquireJob());
+        retVector.back()->initialize(queuedJobs, logContext);
+      }
+      timings.insertAndReset("mountJobInitBatchTime", t);
+      logContext.log(cta::log::INFO,
+                     "In postgres::RetrieveJobQueueRow::moveJobsToDbQueue: successfully prepared queueing for " +
+                       std::to_string(retVector.size()) + " jobs.");
+    } else {
+      logContext.log(cta::log::WARNING,
+                     "In postgres::RetrieveJobQueueRow::moveJobsToDbQueue: no DB jobs queued for Mount ID: " +
+                       std::to_string(mountInfo.mountId));
+      return ret;
+    }
+    txn.commit();
+  } catch (exception::Exception& ex) {
+    logContext.log(cta::log::ERR,
+                   "In postgres::RetrieveJobQueueRow::moveJobsToDbQueue: failed to queue jobs for given Mount ID. "
+                   "Aborting the transaction." +
+                     ex.getMessageValue());
+    txn.abort();
+    throw;
   }
+  // Convert vector to list (which is expected as return type)
+  ret.assign(std::make_move_iterator(retVector.begin()), std::make_move_iterator(retVector.end()));
+  cta::log::ScopedParamContainer logParams(logContext);
+  timings.insertAndReset("mountTransformBatchTime", t);
+  timings.addToLog(logParams);
+  logContext.log(cta::log::INFO, "In RetrieveMount::getNextJobBatch(): Finished fetching new jobs for execution.");
   return ret;
 }
 
-bool RetrieveMount::reserveDiskSpace(const cta::DiskSpaceReservationRequest &request,
-      const std::string &externalFreeDiskSpaceScript, log::LogContext& logContext)
-{
-   throw cta::exception::Exception("Not implemented");
+bool RetrieveMount::reserveDiskSpace(const cta::DiskSpaceReservationRequest& request,
+                                     const std::string& externalFreeDiskSpaceScript,
+                                     log::LogContext& logContext) {
+  throw cta::exception::Exception("Not implemented");
 }
 
-bool RetrieveMount::testReserveDiskSpace(const cta::DiskSpaceReservationRequest &request,
-      const std::string &externalFreeDiskSpaceScript, log::LogContext& logContext)
-{
-   throw cta::exception::Exception("Not implemented");
+bool RetrieveMount::testReserveDiskSpace(const cta::DiskSpaceReservationRequest& request,
+                                         const std::string& externalFreeDiskSpaceScript,
+                                         log::LogContext& logContext) {
+  throw cta::exception::Exception("Not implemented");
 }
 
-void RetrieveMount::requeueJobBatch(std::list<std::unique_ptr<SchedulerDatabase::RetrieveJob>>& jobBatch,
-      log::LogContext& logContext)
-{
-   throw cta::exception::Exception("Not implemented");
+
+uint64_t RetrieveMount::requeueJobBatch(const std::list<std::string>& jobIDsList,
+                                       cta::log::LogContext& logContext) const {
+  // here we will do the same as for ArchiveRdbJob::failTransfer but for bunch of jobs
+  cta::schedulerdb::Transaction txn(m_connPool);
+  uint64_t nrows = 0;
+  try {
+    nrows =
+      postgres::RetrieveJobQueueRow::requeueJobBatch(txn, RetrieveJobStatus::RJS_ToTransfer, jobIDsList);
+    if (nrows != jobIDsList.size()){
+      cta::log::ScopedParamContainer params(logContext);
+      params.add("jobCountToRequeue", jobIDsList.size());
+      params.add("jobCountRequeued", nrows);
+      logContext.log(cta::log::ERR,
+                     "In schedulerdb::RetrieveMount::requeueJobBatch(): failed to requeue all jobs !");
+    }
+    txn.commit();
+  } catch (exception::Exception& ex) {
+    logContext.log(cta::log::ERR,
+                   "In schedulerdb::RetrieveMount::requeueJobBatch(): failed to update job status for failed task queue." +
+                     ex.getMessageValue());
+    txn.abort();
+    return 0;
+  }
+  return nrows;
 }
 
-void RetrieveMount::setDriveStatus(common::dataStructures::DriveStatus status, common::dataStructures::MountType mountType,
-                                time_t completionTime, const std::optional<std::string> & reason)
-{
-   throw cta::exception::Exception("Not implemented");
+
+void RetrieveMount::setDriveStatus(common::dataStructures::DriveStatus status,
+                                   common::dataStructures::MountType mountType,
+                                   time_t completionTime,
+                                   const std::optional<std::string>& reason) {
+  throw cta::exception::Exception("Not implemented");
 }
 
-void RetrieveMount::setTapeSessionStats(const castor::tape::tapeserver::daemon::TapeSessionStats &stats)
-{
-   throw cta::exception::Exception("Not implemented");
+void RetrieveMount::setTapeSessionStats(const castor::tape::tapeserver::daemon::TapeSessionStats& stats) {
+  throw cta::exception::Exception("Not implemented");
 }
 
-void RetrieveMount::flushAsyncSuccessReports(std::list<SchedulerDatabase::RetrieveJob *> & jobsBatch, log::LogContext & lc)
-{
-   throw cta::exception::Exception("Not implemented");
+void RetrieveMount::flushAsyncSuccessReports(std::list<SchedulerDatabase::RetrieveJob*>& jobsBatch,
+                                             log::LogContext& lc) {
+  throw cta::exception::Exception("Not implemented");
 }
 
-void RetrieveMount::addDiskSystemToSkip(const DiskSystemToSkip &diskSystemToSkip)
-{
-   throw cta::exception::Exception("Not implemented");
+void RetrieveMount::addDiskSystemToSkip(const DiskSystemToSkip& diskSystemToSkip) {
+  throw cta::exception::Exception("Not implemented");
 }
 
-void RetrieveMount::putQueueToSleep(const std::string &diskSystemName, const uint64_t sleepTime, log::LogContext &logContext)
-{
-   throw cta::exception::Exception("Not implemented");
+void RetrieveMount::putQueueToSleep(const std::string& diskSystemName,
+                                    const uint64_t sleepTime,
+                                    log::LogContext& logContext) {
+  throw cta::exception::Exception("Not implemented");
 }
 
-} // namespace cta::schedulerdb
+}  // namespace cta::schedulerdb

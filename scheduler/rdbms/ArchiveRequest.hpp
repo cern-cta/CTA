@@ -98,7 +98,7 @@ public:
   std::string getArchiveErrorReportURL() const;
 
   /*
-   * Set this archive request's requestor identity
+   * Set this archive request's requester identity
    *
    * @param requester  The RequesterIdentity object
    *
@@ -107,7 +107,7 @@ public:
   void setRequester(const common::dataStructures::RequesterIdentity& requester);
 
   /*
-   * Get the archive request's requestor identity
+   * Get the archive request's requester identity
    *
    * @return The RequesterIdentity object
    */
