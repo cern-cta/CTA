@@ -32,11 +32,11 @@ REPORT_FILE_NAME="/var/eos/report/$(date +%Y)/$(date +%m)/$(date +%Y)$(date +%m)
 ARCHIVE_METADATA="$1"
 
 # Check that archivemetadata is present in the eos report logs
-ARCHIVE_METADATA_LOGLINE=$(grep "archivemetadata=" "${REPORT_FILE_NAME}")
-echo "  Archive metadata eosreport log line:"
-echo "  ${ARCHIVE_METADATA_LOGLINE}"
+ARCHIVE_METADATA_LOGLINES=$(grep "archivemetadata=" "${REPORT_FILE_NAME}")
+echo "  Archive metadata eosreport log lines:"
+echo "  ${ARCHIVE_METADATA_LOGLINES}"
 
-if grep -q "${ARCHIVE_METADATA}" <<<"${ARCHIVE_METADATA_LOGLINE}"; then
+if grep -q "${ARCHIVE_METADATA}" <<<"${ARCHIVE_METADATA_LOGLINES}"; then
   echo "  Archive metadata successfully ended up in eos report logs."
 else
   echo "  ERROR: Archive metadata log line not found."
