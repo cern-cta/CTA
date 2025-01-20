@@ -66,7 +66,7 @@ echo
 # 1
 #
 # invalid check:
-# [root@ctaeos /]# xrdfs root://eos-mgm.toto.svc.cluster.local:1095 query config tpc
+# [root@ctaeos /]# xrdfs root://ctaeos.toto.svc.cluster.local:1095 query config tpc
 # tpc
 
 FLIGHTTEST_TPC_RC=0

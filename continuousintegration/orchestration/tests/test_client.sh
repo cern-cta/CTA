@@ -64,8 +64,8 @@ EOS_MGM_HOST="ctaeos"
 echo
 echo "Copying test scripts to ${CLIENT_POD}, ${EOS_MGM_POD} and ${CTA_TPSRV_POD} pods."
 kubectl -n ${NAMESPACE} cp . ${CLIENT_POD}:/root/ -c client
-kubectl -n ${NAMESPACE} cp grep_xrdlog_mgm_for_error.sh "${EOS_MGM_POD}:/root/"
-kubectl -n ${NAMESPACE} cp grep_eosreport_for_archive_metadata.sh "${EOS_MGM_POD}:/root/"
+kubectl -n ${NAMESPACE} cp grep_xrdlog_mgm_for_error.sh "${EOS_MGM_POD}:/root/" -c eos-mgm
+kubectl -n ${NAMESPACE} cp grep_eosreport_for_archive_metadata.sh "${EOS_MGM_POD}:/root/" -c eos-mgm
 kubectl -n ${NAMESPACE} cp refresh_log_fd.sh "${CTA_TPSRV_POD}:/root/" -c taped-0
 
 NB_FILES=10000

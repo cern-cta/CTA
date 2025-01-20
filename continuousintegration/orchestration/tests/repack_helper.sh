@@ -67,6 +67,8 @@ writeTapeSummary(){
 }
 
 executeRepack() {
+    # This timeout should be enough for all tests to complete
+    # If tests are timing out because e.g. a lot of files are being repacked, increase this value
     WAIT_FOR_REPACK_FILE_TIMEOUT=120
     echo
     echo "Changing the tape $1 to FULL status"
