@@ -128,6 +128,21 @@ EOSDF_BUFFER_BASEDIR=/eos/ctaeos/eosdf
 EOSDF_BUFFER_URL=${EOSDF_BUFFER_BASEDIR}
 kubectl -n ${NAMESPACE} exec ctaeos -- eos mkdir ${EOSDF_BUFFER_URL}
 kubectl -n ${NAMESPACE} exec ctaeos -- eos chmod 1777 ${EOSDF_BUFFER_URL}
+# Test correct script execution
+echo "Launching eosdf_systemtest.sh, expecting script to run properly"
+kubectl -n ${NAMESPACE} exec ${CLIENT_POD} -c client -- bash -c "${TEST_PRERUN} && /root/eosdf_systemtest.sh ${TEST_POSTRUN}" || exit 1
+## Verify proper execution of script by grepping for the debug log line
+CTA_TPSRV_POD="cta-tpsrv01-0"
+# Set the TAPES and DRIVE_NAME based on the config in CTA_TPSRV_POD
+echo "Reading library configuration from ${CTA_TPSRV_POD}"
+DRIVE_NAME=$(kubectl exec -n ${NAMESPACE} ${CTA_TPSRV_POD} -c taped-0 -- printenv DRIVE_NAME)
+CTA_TAPED_LOG=/var/log/cta/cta-taped-${DRIVE_NAME}.log
+
+if kubectl -n ${NAMESPACE} exec cta-tpsrv01-0 -c taped-0 -- bash -c "grep -q 'unable to get the EOS free space with the script' ${CTA_TAPED_LOG}"; then
+  echo "Script unexpectedly failed to get free disk space"
+  exit 1
+fi
+
 ## The idea is that we run it once without script, and once without executable permission on the script
 ## Both times we should get a success, because when the script is the problem, we allow staging to continue
 echo "Launching eosdf_systemtest.sh with a nonexistent script"
@@ -142,9 +157,10 @@ kubectl -n ${NAMESPACE} exec ${CLIENT_POD} -c client -- bash -c "${TEST_PRERUN} 
 # Test what happens when we get an error from the eos client (fake instance not reachable by specifying a nonexistent instance name in the script)
 echo "Launching eosdf_systemtest.sh with script that throws an eos-client error"
 # fake instance not reachable
-kubectl -n ${NAMESPACE} exec cta-tpsrv01-0 -c taped-0 -- bash -c "sed -i \"s|root://$diskInstance|root://nonexistentinstance|g\" /usr/bin/cta-eosdf.sh" || exit 1
+kubectl -n ${NAMESPACE} exec cta-tpsrv01-0 -c taped-0 -- bash -c "sed -i 's|root://\$diskInstance|root://nonexistentinstance|g' /usr/bin/cta-eosdf.sh" || exit 1
 kubectl -n ${NAMESPACE} exec cta-tpsrv01-0 -c taped-0 -- bash -c "chmod +x /usr/bin/cta-eosdf.sh" || exit 1
 kubectl -n ${NAMESPACE} exec ${CLIENT_POD} -c client -- bash -c "${TEST_PRERUN} && /root/eosdf_systemtest.sh ${TEST_POSTRUN}" || exit 1
+kubectl -n ${NAMESPACE} exec cta-tpsrv01-0 -c taped-0 -- bash -c "sed -i 's|root://nonexistentinstance|root://\$diskInstance|g' /usr/bin/cta-eosdf.sh" || exit 1
 
 echo
 echo " Launching client_timestamp.sh on client pod"
