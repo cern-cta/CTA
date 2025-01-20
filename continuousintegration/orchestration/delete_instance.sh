@@ -87,9 +87,13 @@ save_logs() {
         | select(. == \"cta\" or . == \"eos\")" > /dev/null; then
         echo "Collecting /var/log from ${pod} - ${container}"
         mkdir -p "${tmpdir}/varlogs/${output_dir}"
-        # Which subdirectories in /var/log do we want to save?
-        subdirs_to_tar="cta eos tmp xrootd"
-        kubectl exec -n "${namespace}" "${pod}" -c "${container}" -- tar --warning=no-file-removed --ignore-failed-read -C /var/log -cf - ${subdirs_to_tar} \
+        # Only tar part of the logs
+        subdirs_to_tar=("cta" "eos" "tmp" "xrootd")
+        existing_dirs=$(kubectl exec -n "${namespace}" "${pod}" -c "${container}" -- \
+            bash -c "cd /var/log && find ${subdirs_to_tar[*]} -maxdepth 0 -type d 2>/dev/null || true")
+        kubectl exec -n "${namespace}" "${pod}" -c "${container}" -- \
+          tar --warning=no-file-removed --ignore-failed-read -C /var/log \
+              -cf - ${existing_dirs} \
           | tar -C "${tmpdir}/varlogs/${output_dir}" -xf - \
           || echo "Failed to collect /var/log from pod ${pod}, container ${container}"
         # Remove empty files and directories to prevent polluting the output logs
