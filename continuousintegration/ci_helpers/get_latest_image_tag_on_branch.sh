@@ -50,6 +50,9 @@ if [ -z "$branch" ]; then
   die "Please provide a branch to find the latest image tag for"
 fi
 
+# Navigate to script location
+cd "$(dirname "$0")"
+
 # Check if registry credentials are valid
 ./get_registry_credentials.sh --check > /dev/null || die "Error: Credential check failed."
 
