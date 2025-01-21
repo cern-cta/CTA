@@ -189,7 +189,7 @@ common::dataStructures::ArchiveFile RdbmsArchiveFileCatalogue::getArchiveFileCop
 
   auto vid = criteria.vid.value();
   try {
-    auto vidToTapeMap = m_rdbmsCatalogue->m_tape->getTapesByVid(vid)[vid].state;
+    auto vidToTapeMap = m_rdbmsCatalogue->m_tape->getTapesByVid(vid);
     if (auto tapeState = vidToTapeMap[vid].state;
       tapeState != common::dataStructures::Tape::REPACKING_DISABLED && tapeState != common::dataStructures::Tape::BROKEN) {
       std::ostringstream oss;
