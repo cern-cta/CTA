@@ -1,7 +1,7 @@
 .before-script-alma9: &before-script-alma9
-  - cp -f continuousintegration/docker/ctafrontend/alma9/etc/yum.repos.d/*.repo /etc/yum.repos.d/
-  - cp -f continuousintegration/docker/ctafrontend/alma9/etc/yum/pluginconf.d/versionlock.list /etc/yum/pluginconf.d/
-  - cp -f continuousintegration/docker/ctafrontend/alma9/etc/yum/pluginconf.d/versionlock.list /etc/dnf/plugins/versionlock.list
+  - cp -f continuousintegration/docker/alma9/etc/yum.repos.d/*.repo /etc/yum.repos.d/
+  - cp -f continuousintegration/docker/alma9/etc/yum/pluginconf.d/versionlock.list /etc/yum/pluginconf.d/
+  - cp -f continuousintegration/docker/alma9/etc/yum/pluginconf.d/versionlock.list /etc/dnf/plugins/versionlock.list
   - mkdir -p ${CTAREPODIR}
   - cp -r build_rpm/RPM ${CTAREPODIR}
   - createrepo ${CTAREPODIR}

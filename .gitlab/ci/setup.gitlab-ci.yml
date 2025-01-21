@@ -8,7 +8,7 @@ modify-versionlock:
     - if: $PIPELINE_TYPE == "EOS_REGR_AGAINST_CTA_TAG"
     - if: $PIPELINE_TYPE == "CTAGENERIC_IMAGE"
   script:
-    - versionlock_path_main="continuousintegration/docker/ctafrontend/alma9/etc/yum/pluginconf.d/"
+    - versionlock_path_main="continuousintegration/docker/alma9/etc/yum/pluginconf.d/"
     - versionlock_file="${versionlock_path_main}versionlock.list"
     - |
       if [ -n "${CUSTOM_CTA_TAG}" ]; then
@@ -54,7 +54,7 @@ modify-versionlock:
       fi
   artifacts:
     paths:
-      - continuousintegration/docker/ctafrontend/alma9/etc/yum/pluginconf.d/versionlock.list
+      - continuousintegration/docker/alma9/etc/yum/pluginconf.d/versionlock.list
       - cta.spec.in
   when: on_success
 

@@ -39,7 +39,7 @@ build-ctageneric-from-artifacts:
     - mkdir -p image_rpms
     - cp -r build_rpm/RPM/RPMS/x86_64 image_rpms
     - /kaniko/executor --context $CI_PROJECT_DIR
-                       --dockerfile continuousintegration/docker/ctafrontend/alma9/Dockerfile
+                       --dockerfile continuousintegration/docker/alma9/Dockerfile
                        --destination ${CI_REGISTRY}/cta/ctageneric:${CTA_BUILD_ID}
     - echo "Image pushed successfully to ${CI_REGISTRY}/cta/ctageneric:${CTA_BUILD_ID}"
 
@@ -60,7 +60,7 @@ build-ctageneric-from-repos:
     - echo "Building image with CTA ${CUSTOM_CTA_TAG} RPMs and EOS ${CUSTOM_EOS_TAG} RPMs"
     - echo "Image tag ${CI_REGISTRY}/cta/ctageneric:${CTA_BUILD_ID}"
     - /kaniko/executor --context $CI_PROJECT_DIR
-                       --dockerfile continuousintegration/docker/ctafrontend/alma9/tag.Dockerfile
+                       --dockerfile continuousintegration/docker/alma9/tag.Dockerfile
                        --destination ${CI_REGISTRY}/cta/ctageneric:${CTA_BUILD_ID}
                        --build-arg "PUBLIC_REPO_VER=${CUSTOM_CTA_TAG:1}"
     - echo "Image pushed successfully to ${CI_REGISTRY}/cta/ctageneric:${CTA_BUILD_ID}"

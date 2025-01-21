@@ -76,11 +76,11 @@ foreach(PNAME ${RESULTS})
     string(APPEND CTAVERSIONLOCK "${PNAME}-${CTA_VERSION}-${CTA_RELEASE}.${RPMTools_RPMBUILD_DIST}.*\n")
 endforeach()
 
-file(READ ../continuousintegration/docker/ctafrontend/${OS}/etc/yum/pluginconf.d/versionlock.list VERSIONLOCK)
+file(READ ../continuousintegration/docker/${OS}/etc/yum/pluginconf.d/versionlock.list VERSIONLOCK)
 
 # Repos files
 file (GLOB REPO_FILES
-  "${CMAKE_SOURCE_DIR}/continuousintegration/docker/ctafrontend/${OS}/etc/yum.repos.d-public/*.repo"
+  "${CMAKE_SOURCE_DIR}/continuousintegration/docker/${OS}/etc/yum.repos.d-public/*.repo"
 )
 
 string(APPEND CTAVERSIONLOCK "${VERSIONLOCK}")

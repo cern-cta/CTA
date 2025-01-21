@@ -15,5 +15,5 @@ $ ./update_repos.sh
 ```
 2. In the CTA repository, update the yum version lock list with the new EOS version:
 ```
-/CTA/continuousintegration/docker/ctafrontend/alma9/etc/yum/pluginconf.d/versionlock.list
+/CTA/continuousintegration/docker/alma9/etc/yum/pluginconf.d/versionlock.list
 ```

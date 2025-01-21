@@ -6,7 +6,7 @@ pipeline-variable-check:
     - if: $PIPELINE_TYPE != "COMMIT"
   script:
     - python3 ./continuousintegration/ci_helpers/ci_input_validate.py
-   
+
 # If the CTA tagged branch contains a locked EOS version that is different from
 # the one in the main branch, then, it is possible that some of the system tests
 # fail due to a change in an interface. This failure is expected, but does not
@@ -26,7 +26,7 @@ check-versionlock-diff:
     - pipeline-variable-check
   script:
     - echo "Checking if EOS locked versions match for tag and main."
-    - eos_main_v=$(grep -o 'eos-server-[0-9]\+\.[0-9]\+\.[0-9]\+' "continuousintegration/docker/ctafrontend/alma9/etc/yum/pluginconf.d/versionlock.list" | awk -F '-' '{print $3}' | head -1)
+    - eos_main_v=$(grep -o 'eos-server-[0-9]\+\.[0-9]\+\.[0-9]\+' "continuousintegration/docker/alma9/etc/yum/pluginconf.d/versionlock.list" | awk -F '-' '{print $3}' | head -1)
     - echo "Locked version for main branch $eos_main_v"
     - tag_versionlock_file=$(./continuousintegration/ci_helpers/find_versionlock_list.sh --tag "${CUSTOM_CTA_TAG}")
     - git checkout ${CUSTOM_CTA_TAG} -- "${tag_versionlock_file}"
