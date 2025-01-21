@@ -92,6 +92,12 @@
   tags: # Used to indicate that these jobs should run on our own cirunner machines
     - kubernetes
     - mhvtl
+  # Cache the helm dependencies as the dependency update is otherwise terribly slow
+  cache:
+    key: helm-deps
+    paths:
+      - continuousintegration/orchestration/helm/**/charts
+
 
 # Tests
 

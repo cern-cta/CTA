@@ -74,7 +74,7 @@ update_chart_dependencies() {
     "cta"
   )
   for chart in "${charts[@]}"; do
-    helm dependency build helm/"$chart" > /dev/null
+    helm dependency update helm/"$chart" > /dev/null
   done
 }
 
