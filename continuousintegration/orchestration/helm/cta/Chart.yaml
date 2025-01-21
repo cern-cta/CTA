@@ -1,20 +1,20 @@
 apiVersion: v2
 name: cta
-description: A Helm chart CTA. On itself it only contains configmaps that are used in the subcharts.
+description: Umbrella chart that spawns a fully fledged CTA instance. Requires a disk buffer instance to be spawned separately.
 type: application
 version: 0.2.0
 appVersion: "5.11.10.1"
 
 dependencies:
-- name: ctafrontend
-  alias: ctafrontend
+- name: frontend
+  repository: "file://../frontend"
   version: 0.2.0
-- name: ctacli
-  alias: ctacli
+- name: cli
+  repository: "file://../cli"
   version: 0.2.0
 - name: client
-  alias: client
+  repository: "file://../client"
   version: 0.2.0
 - name: tpsrv
-  alias: tpsrv
+  repository: "file://../tpsrv"
   version: 0.2.0

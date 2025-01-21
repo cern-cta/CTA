@@ -64,15 +64,10 @@ check_helm_installed() {
 update_chart_dependencies() {
   echo "Updating chart dependencies"
   charts=(
-    "common"
     "auth"
     "catalogue"
     "scheduler"
     "cta/"
-    "cta/charts/client"
-    "cta/charts/ctacli"
-    "cta/charts/ctafrontend"
-    "cta/charts/tpsrv"
   )
   for chart in "${charts[@]}"; do
     helm dependency update helm/"$chart" > /dev/null
