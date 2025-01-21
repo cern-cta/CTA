@@ -31,44 +31,32 @@ To understand each of these required configuration options, we will go through t
 
 Charts that have CTA-specific functionality (basically all of them), rely on an image `ctageneric`. This is the image built as specified in the `docker/` directory. This image contains all of the CTA RPMs, in addition to the startup-scripts required for each container.
 
-### Init
+The installation order of the charts details below is import. The order is as follows:
 
-The first chart that will be installed is the `init` chart. This chart sets up three important resources:
-- A persistent volume claim for the logs. The reason is that each pod in the namespace writes their log to the same persistent volume (so that they can all be collected in one place).
-- The Key Distribution Center (kdc) pod. This sets up everything necessary for authentication (both sss and kerberos). Runs the KDC server for authenticating EOS end-users and CTA tape operators.
-- If configured, it will spawn jobs that reset tapes that are still in the drives. For now, this is only supported for MHVTL. One job is spawned for each library device.
-
-The `init` chart expects the following required parameters:
-- `global.image.tag`: the tag for the `ctageneric` image to use. This is used by the `kdc` pod.
-- `global.image.repository`: while not technically required, this can be provided to change the image repository. Defaults to `gitlab-registry.cern.ch/cta/ctageneric` otherwise.
-- `tapeServers`: this contains the tape servers configuration. This details which tape servers should be spawned. For each tape server, it details the library type, library device, library name, and all the drives that this tape server is reponsible for. In this init stage, this configuration is only used to determine which library devices need to be cleaned up by the tape reset job.
-
-The tapeservers configuration is the first of three "main" configurations that determine the overall behaviour of the instance. The tapeservers configuration can be provided explicitly to `create_instance.sh` using `--tapeservers-config <config-file>`. Alternatively, if this file is not provided, the script will auto-generate one based on the (emulated) hardware it finds using `lsscsi` commands. Such a configuration looks as follows:
-
-```yaml
-tpsrv01:
-  libraryType: "MHVTL"
-  libraryDevice: "sg0"
-  libraryName: "VLSTK10"
-  drives:
-    - name: "VDSTK01"
-      device: "nst2"
-    - name: "VDSTK02"
-      device: "nst0"
-tpsrv02:
-  libraryType: "MHVTL"
-  libraryDevice: "sg0"
-  libraryName: "VLSTK10"
-  drives:
-    - name: "VDSTK03"
-      device: "nst1"
+```mermaid
+flowchart LR
+  Start --> Authentication
+  Start --> Catalogue
+  Start --> Scheduler
+  Authentication --> EOS
+  Authentication --> CTA
+  Catalogue --> CTA
+  Scheduler --> CTA
+  EOS --> Finish
+  CTA --> Finish
 ```
 
-Each Helm deployment of CTA will get an annotation to specify which libraries it is using. When spawning a new CTA instance, it will first check if there are libraries available by looking at all the available libraries and looking at what is deployed. If a config file is provided with a library that is already in use, the instance spawning will fail.
+### Authentication
+
+The first chart that will be installed is the `auth` chart. This chart sets up any required secrets (such as SSS and gRPC secrets) and a Key Distribution Center (KDC) which can be used to grant Kerberos tickets. In a production environment, this KDC would be a pre-existing centralized service somewhere. The Authentication chart must be installed first, because it creates the resources that other charts depend on.
+
+The `auth` chart expects the following required parameters:
+- `image.tag`: the tag for the `ctageneric` image to use. This is used by the `kdc` pod.
+- `image.repository`: The full name of the image. Defaults to `gitlab-registry.cern.ch/cta/ctageneric`
 
 ### Catalogue
 
-The `catalogue` chart is installed second and does a few things:
+The `catalogue` chart does a few things:
 - First and foremost, it will create a configmap with the database connection string, i.e. `cta-catalogue.conf`.
 - If configured, it will spawn a job that wipes the catalogue database (i.e. the one defined in `cta-catalogue.conf`).
 - If Postgres is used as a catalogue backend, it will spawn a local Postgres database.
@@ -106,7 +94,7 @@ Note that only one of these `*Config` fields needs to be provided (based on the 
 
 ### Scheduler
 
-The `scheduler` chart can also be installed as soon as the `init` chart is ready. At the moment, to keep the script simple this done sequentially, but it could in theory be installed at the same time as the `catalogue` chart. The `scheduler` chart:
+The `scheduler` chart:
 - Generates a a configmap containing `cta-objectstore-tools.conf`.
 - If CEPH is the configured backend, it will create an additional configmap with some CEPH configuration details
 - If configured, spawns a job that wipes the scheduler.
@@ -140,17 +128,16 @@ vfsConfig:
 
 Note that only one of these `*Config` fields needs to be provided (based on the backend).
 
+### Disk Buffer - EOS
+
+The CTA instance will need a disk buffer in front. This can be either dCache or EOS. The EOS disk buffer is spawned using the EOS charts provided [here](https://gitlab.cern.ch/eos/eos-charts). It uses the values file in `presets/dev-eos-values.yaml`. Note that once the EOS instance has been spawned it is not yet fully ready. To finalize the setup, the `setup/configure_eoscta_tape.sh` script will need to be executed on the mgm. This is done automatically by the `create_instance.sh` script.
+
+This chart requires the `authentication` chart to have been installed as there are init containers requiring access to the KDC, in addition to needing the secrets containing the EOS SSS keytab.
+
 ### CTA
 
 Finally, we have the `cta` chart. This chart spawns the different components required to get a running instance of CTA:
 
-- `ctaeos`
-  * One EOS mgm.
-  * One EOS fst.
-  * One EOS mq.
-  * The EOS Simple Shared Secret (SSS) to be used by the EOS mgm and EOS fst to authenticate each other.
-  * The CTA SSS to be used by the cta command-line tool to authenticate itself and therefore the EOS instance with the CTA front end.
-  * The tape server SSS to be used by the EOS mgm to authenticate file transfer requests from the tape servers.
 - `cta-cli`
   * The cta command-line tool to be used by tape operators.
   * This pod has the keytab of `ctaadmin1` who is allowed to type `cta` admin commands.
@@ -170,7 +157,30 @@ The `cta` chart expects the following required parameters:
 - `tapeConfig`: this is the library configuration. This details which libraries are available, which tapes, which drives etc. This configuration is used by the MHVTL cleanup job.
 - `global.catalogueSchemaVersion`: The schema version of the catalogue. This is not currently used, but once all the charts use Kubernetes deployments, this can be used to automatically redeploy the relevant pods when this version changes (the frontend and tape servers).
 - `global.configuration.scheduler`: The scheduler configuration (same as detailed above). This is required as some pods need to mount specific volumes to specific places when CEPH is used as a backend.
-- `tpsrv.tapeServers`: The tape servers configuration (same as detailed above) used to determine which tape servers to spawn.
+- `tpsrv.tapeServers`: This contains the tape servers configuration. This details which tape servers should be spawned. For each tape server, it details the library type, library device, library name, and all the drives that this tape server is reponsible for.
+
+The tapeservers configuration is the last of the three "main" configurations that determine the overall behaviour of the instance. The tapeservers configuration can be provided explicitly to `create_instance.sh` using `--tapeservers-config <config-file>`. Alternatively, if this file is not provided, the script will auto-generate one based on the (emulated) hardware it finds using `lsscsi` commands. Such a configuration looks as follows:
+
+```yaml
+tpsrv01:
+  libraryType: "MHVTL"
+  libraryDevice: "sg0"
+  libraryName: "VLSTK10"
+  drives:
+    - name: "VDSTK01"
+      device: "nst2"
+    - name: "VDSTK02"
+      device: "nst0"
+tpsrv02:
+  libraryType: "MHVTL"
+  libraryDevice: "sg0"
+  libraryName: "VLSTK10"
+  drives:
+    - name: "VDSTK03"
+      device: "nst1"
+```
+
+Each Helm deployment of CTA will get an annotation to specify which libraries it is using. When spawning a new CTA instance, it will first check if there are libraries available by looking at all the available libraries and looking at what is deployed. If a config file is provided with a library that is already in use, the instance spawning will fail.
 
 ### The whole process
 
@@ -178,11 +188,13 @@ To summarise, the `create_instance.sh` script does the following:
 
 1. Generate a library configuration if not provided.
 2. Check whether the requested library is not in use.
-3. Install the `init` chart, which cleans MHVTL, sets up the common storage space for the logs and sets up the authentication centre.
-4. Install the `catalogue` chart, which produces a configmap containing `cta-catalogue.conf` and spawns a job that wipes the catalogue. If Postgres is the provided backend, will also spawn a local Postgres DB.
-5. Install the `scheduler` chart, generating a configmap `cta-objectstore-tools.conf` and spawning a job to wipe the scheduler.
-6. Install the `cta` chart, spawning all the different CTA pods: a number of tape servers, an EOS MGM, a frontend, a client to communicate with the frontend, and an admin client (`cta-cli`).
-7. Perform some simple initialization of the EOS workflow rules and kerberos tickets on the client/cta-cli pods.
+3. Install the `authentication`, `catalogue`, and `scheduler` charts simultaneously.
+  - The `authentication` chart sets up a KDC and generates some required secrets (such as SSS)
+  - The `catalogue` chart produces a configmap containing `cta-catalogue.conf` and spawns a job that wipes the catalogue. If Postgres is the provided backend, will also spawn a local Postgres DB.
+  - The `scheduler` chart generates a configmap `cta-objectstore-tools.conf` and spawns a job to wipe the scheduler. If Postgres is the provided backend, will also spawn a local Postgres DB.
+4. Once the `authentication` chart is installed, it will start installing the `eos` chart, spawning components such as the MGM and FST.
+5. Once the `authentication`, `catalogue` and `scheduler` charts are installed, it will start installing the `cta` chart, spawning all the different CTA pods: a number of tape servers, a frontend, a client to communicate with the frontend, and an admin client (`cta-cli`). The EOS instance does not need to be deployed before the CTA instance starts.
+6. Wait for both `cta` and `eos` to be installed and then perform some simple initialization of the EOS workflow rules and kerberos tickets on the client/cta-cli pods.
 
 Note that once this is done, the instance is still relatively barebones. For example, you won't be able to execute any `cta-admin` commands on the `cta-cli` yet. To get something to play with, you are advised to run `tests/prepare_tests.sh`, which will setup some basic resources.
 
@@ -305,12 +317,7 @@ A small issue: by default, `gitlab-runner` service runs as `gitlab-runner` user,
 
 The current deployment of this CTA has a few limitations that make it unsuitable for a wider adoption. These limitations are listed below. Note that the list is not necessarily conclusive.
 
-- For the most part, the charts still use plain pod configurations. This should be moved to deployments at some point to ensure we can properly roll out upgrades.
 - It is not possible to define different schedulers for different tape servers (although this would be relatively easy to add support for).
-- The `ctaeos` chart is not exactly very pretty and also not very flexible. This is because it will be replaced by a more generic disk buffer chart at some point.
-- All the pods write their logs to the same mount (with no way to turn this off), making it unsuitable for a production usecase. It is relatively easy to make an option to turn this off though.
+- All the pods write their logs to the same mount (with no way to turn this off), making it unsuitable for a production usecase. Once the monitoring chart is updated to consume from pod logs instead, this can be removed.
 - The GRPC frontend configuration has not been tested/implemented yet.
-- There is no systemd support (do we even want this in a containerized setup?).
-- It is not yet possible to redeploy individual subcharts of the `cta` chart.
-- Authentication is currently somewhat hardcoded.
 - The `init_pod.sh` script requires every pod to run in priviledged mode

@@ -241,25 +241,17 @@ create_instance() {
 
   update_chart_dependencies
 
-  # This sets up the key distribution center and the necessary SSS secrets for communication with eos
+  # Note that some of these charts are installed in parallel
+  # See README.md for details on the order
+  echo "Installing Authentication, Catalogue and Scheduler charts..."
   log_run helm ${helm_command} auth helm/auth \
                                 --set image.repository="${cta_image_repository}" \
                                 --set image.tag="${cta_image_tag}" \
                                 --namespace "${namespace}" \
-                                --wait --timeout 2m
+                                --wait --timeout 2m &
+  auth_pid=$!
 
   echo "Deploying with catalogue schema version: ${catalogue_schema_version}"
-  echo "Installing EOS, catalogue and scheduler charts..."
-  log_run helm install eos oci://registry.cern.ch/eos/charts/server --version 0.2.2-tape \
-                                --namespace "${namespace}" \
-                                -f "${eos_config}" \
-                                --set global.repository="${eos_image_repository}" \
-                                --set global.tag="${eos_image_tag}" \
-                                --set fst.tape.gcd.image.repository="${cta_image_repository}" \
-                                --set fst.tape.gcd.image.tag="${cta_image_tag}" \
-                                --wait --timeout 5m &
-  eos_pid=$!
-
   log_run helm ${helm_command} catalogue helm/catalogue \
                                 --namespace "${namespace}" \
                                 --set resetImage.repository="${cta_image_repository}" \
@@ -278,6 +270,19 @@ create_instance() {
                                 --set-file configuration="${scheduler_config}" \
                                 --wait --wait-for-jobs --timeout 4m &
   scheduler_pid=$!
+
+  wait $auth_pid || exit 1
+
+  log_run helm install eos oci://registry.cern.ch/eos/charts/server --version 0.2.2-tape \
+                                --namespace "${namespace}" \
+                                -f "${eos_config}" \
+                                --set global.repository="${eos_image_repository}" \
+                                --set global.tag="${eos_image_tag}" \
+                                --set fst.tape.gcd.image.repository="${cta_image_repository}" \
+                                --set fst.tape.gcd.image.tag="${cta_image_tag}" \
+                                --wait --timeout 5m &
+  eos_pid=$!
+
   # Wait for the scheduler and catalogue charts to be installed (and exit if 1 failed)
   wait $catalogue_pid || exit 1
   wait $scheduler_pid || exit 1

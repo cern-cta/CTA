@@ -490,7 +490,7 @@ repackMoveAndAddCopies() {
   echo "Marking the tape ${VID_TO_REPACK} as REPACKING"
   modifyTapeStateAndWait ${VID_TO_REPACK} REPACKING
   echo "Launching the repack \"Move and add copies\" test on VID ${VID_TO_REPACK}"
-  kubectl -n ${NAMESPACE} exec ${CLIENT_POD} -c client -- bash /root/repack_systemtest.sh -v ${VID_TO_REPACK} -b ${REPACK_BUFFER_URL} -t 600 -r ${BASE_REPORT_DIRECTORY}/Step$1-MoveAndAddCopies -n repack_ctasystest  || exit 1
+  kubectl -n ${NAMESPACE} exec ${CLIENT_POD} -c client -- bash /root/repack_systemtest.sh -v ${VID_TO_REPACK} -b ${REPACK_BUFFER_URL} -t 150 -r ${BASE_REPORT_DIRECTORY}/Step$1-MoveAndAddCopies -n repack_ctasystest  || exit 1
 
   repackLsResult=`kubectl -n ${NAMESPACE} exec ${CTA_CLI_POD} -c cta-cli -- cta-admin --json repack ls --vid ${VID_TO_REPACK} | jq ". [0]"`
   totalFilesToRetrieve=`echo $repackLsResult | jq -r ".totalFilesToRetrieve"`
