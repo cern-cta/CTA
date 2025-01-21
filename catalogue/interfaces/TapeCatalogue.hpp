@@ -46,6 +46,7 @@ CTA_GENERATE_USER_EXCEPTION_CLASS(UserSpecifiedAnEmptyStringVid);
 CTA_GENERATE_USER_EXCEPTION_CLASS(UserSpecifiedANonEmptyTape);
 CTA_GENERATE_USER_EXCEPTION_CLASS(UserSpecifiedANonExistentTape);
 CTA_GENERATE_USER_EXCEPTION_CLASS(UserSpecifiedANonExistentTapeState);
+CTA_GENERATE_EXCEPTION_CLASS(TapeNotFound);
 
 class CreateTapeAttributes;
 class TapeForWriting;

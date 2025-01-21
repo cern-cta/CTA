@@ -39,7 +39,7 @@ ArchiveFileItor DummyArchiveFileCatalogue::getArchiveFilesItor(const TapeFileSea
   throw exception::Exception(std::string("In ")+__PRETTY_FUNCTION__+": not implemented");
 }
 
-common::dataStructures::ArchiveFile DummyArchiveFileCatalogue::getArchiveFileForDeletion(
+common::dataStructures::ArchiveFile DummyArchiveFileCatalogue::getArchiveFileCopyForDeletion(
   const TapeFileSearchCriteria &searchCriteria) const {
   throw exception::Exception(std::string("In ")+__PRETTY_FUNCTION__+": not implemented");
 }

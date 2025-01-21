@@ -56,14 +56,23 @@ void RdbmsTapeFileCatalogue::copyTapeFileToFileRecyleLogAndDelete(rdbms::Conn & 
   log::TimingList timingList;
   copyTapeFileToFileRecyleLogAndDeleteTransaction(conn, file, reason, &timer, &timingList, lc);
   timingList.insertAndReset("commitTime", timer);
-  log::ScopedParamContainer spc(lc);
-  spc.add("archiveFileId", file.archiveFileID);
-  spc.add("diskFileId", file.diskFileId);
-  spc.add("diskFilePath", file.diskFileInfo.path);
-  spc.add("diskInstance", file.diskInstance);
-  timingList.addToLog(spc);
-  lc.log(log::INFO, "In RdbmsFileRecycleLogCatalogue::copyArchiveFileToRecycleBinAndDelete: "
-    "ArchiveFile moved to the recycle-bin.");
+
+  for(auto &tapeFile: file.tapeFiles) {
+    log::ScopedParamContainer spc(lc);
+    spc.add("vid", tapeFile.vid);
+    spc.add("fSeq", tapeFile.fSeq);
+    spc.add("blockId", tapeFile.blockId);
+    spc.add("logicalSizeInBytes", tapeFile.fileSize);
+    spc.add("copyNb", tapeFile.copyNb);
+    spc.add("creationTime", tapeFile.creationTime);
+    spc.add("archiveFileId", file.archiveFileID);
+    spc.add("diskFileId", file.diskFileId);
+    spc.add("diskFilePath", file.diskFileInfo.path);
+    spc.add("diskInstance", file.diskInstance);
+    timingList.addToLog(spc);
+    lc.log(log::WARNING, "In RdbmsFileRecycleLogCatalogue::copyTapeFileToFileRecyleLogAndDelete: "
+      "Tape file copy moved to the recycle-bin.");
+  }
 }
 
 void RdbmsTapeFileCatalogue::checkTapeItemWrittenFieldsAreSet(const std::string& callingFunc,

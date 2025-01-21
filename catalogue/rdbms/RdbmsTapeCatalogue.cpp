@@ -331,10 +331,8 @@ common::dataStructures::VidToTapeMap RdbmsTapeCatalogue::getTapesByVid(const std
   stmt.bindString(":VID", vid);
   executeGetTapesByVidStmtAndCollectResults(stmt, vidToTapeMap);
 
-  if(vidToTapeMap.size() != 1) {
-    exception::Exception ex;
-    ex.getMessage() << "Not all tapes were found: expected=1 actual=" << vidToTapeMap.size();
-    throw ex;
+  if(vidToTapeMap.empty()){
+    throw TapeNotFound(std::string("Cannot find tape ") + vid);
   }
   return vidToTapeMap;
 }
@@ -393,9 +391,9 @@ common::dataStructures::VidToTapeMap RdbmsTapeCatalogue::getTapesByVid(const std
   }
 
   if(!ignoreMissingVids && vids.size() != vidToTapeMap.size()) {
-    exception::Exception ex;
-    ex.getMessage() << "Not all tapes were found: expected=" << vids.size() << " actual=" << vidToTapeMap.size();
-    throw ex;
+    std::ostringstream oss;
+    oss << "Not all tapes were found: expected=" << vids.size() << " actual=" << vidToTapeMap.size();
+    throw TapeNotFound(oss.str());
   }
 
   return vidToTapeMap;

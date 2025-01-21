@@ -175,7 +175,7 @@ ArchiveFileItor RdbmsArchiveFileCatalogue::getArchiveFilesItor(const TapeFileSea
   return ArchiveFileItor(impl);
 }
 
-common::dataStructures::ArchiveFile RdbmsArchiveFileCatalogue::getArchiveFileForDeletion(
+common::dataStructures::ArchiveFile RdbmsArchiveFileCatalogue::getArchiveFileCopyForDeletion(
   const TapeFileSearchCriteria &criteria) const {
   if (!criteria.diskFileIds && !criteria.archiveFileId) {
     throw exception::UserError("To delete a file copy either the diskFileId+diskInstanceName or archiveFileId must be specified");
@@ -188,6 +188,19 @@ common::dataStructures::ArchiveFile RdbmsArchiveFileCatalogue::getArchiveFileFor
   }
 
   auto vid = criteria.vid.value();
+  try {
+    auto vidToTapeMap = m_rdbmsCatalogue->m_tape->getTapesByVid(vid)[vid].state;
+    if (auto tapeState = vidToTapeMap[vid].state;
+      tapeState != common::dataStructures::Tape::REPACKING_DISABLED && tapeState != common::dataStructures::Tape::BROKEN) {
+      std::ostringstream oss;
+      oss << "Tape " << vid << " not in " << common::dataStructures::Tape::stateToString(common::dataStructures::Tape::REPACKING_DISABLED)
+          << " or " << common::dataStructures::Tape::stateToString(common::dataStructures::Tape::BROKEN) << " states";
+      throw exception::UserError(oss.str());
+    }
+  } catch (const TapeNotFound &ex) {
+    throw exception::UserError(std::string("Tape ") + vid + " not found");
+  }
+
   TapeFileSearchCriteria searchCriteria = criteria;
   searchCriteria.vid = std::nullopt; //unset vid, we want to get all copies of the archive file so we can check that it is not a one copy file
   auto itor = getArchiveFilesItor(searchCriteria);

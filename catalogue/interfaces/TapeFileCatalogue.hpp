@@ -32,7 +32,7 @@ struct RetrieveFileQueueCriteria;
 }
 
 namespace log {
-struct LogContext;
+class LogContext;
 }
 
 namespace catalogue {

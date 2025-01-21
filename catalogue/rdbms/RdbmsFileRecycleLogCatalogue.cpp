@@ -126,7 +126,9 @@ void RdbmsFileRecycleLogCatalogue::copyTapeFilesToFileRecycleLog(rdbms::Conn & c
     fileRecycleLog.copyNb = tapeFile.copyNb;
     fileRecycleLog.tapeFileCreationTime = tapeFile.creationTime;
     fileRecycleLog.archiveFileId = archiveFile.archiveFileID;
-    fileRecycleLog.diskFilePath = archiveFile.diskFileInfo.path;
+    if (!archiveFile.diskFileInfo.path.empty()) {
+      fileRecycleLog.diskFilePath = archiveFile.diskFileInfo.path;
+    }
     fileRecycleLog.reasonLog = "(Deleted using cta-admin tf rm) " + reason;
     fileRecycleLog.recycleLogTime = time(nullptr);
     insertFileInFileRecycleLog(conn, fileRecycleLog);
@@ -276,7 +278,9 @@ void RdbmsFileRecycleLogCatalogue::copyArchiveFileToFileRecycleLog(rdbms::Conn &
     fileRecycleLog.copyNb = tapeFile.copyNb;
     fileRecycleLog.tapeFileCreationTime = tapeFile.creationTime;
     fileRecycleLog.archiveFileId = archiveFile.archiveFileID;
-    fileRecycleLog.diskFilePath = request.diskFilePath;
+    if (!archiveFile.diskFileInfo.path.empty()) {
+      fileRecycleLog.diskFilePath = archiveFile.diskFileInfo.path;
+    }
     fileRecycleLog.reasonLog = InsertFileRecycleLog::getDeletionReasonLog(request.requester.name,request.diskInstance);
     fileRecycleLog.recycleLogTime = time(nullptr);
     insertFileInFileRecycleLog(conn,fileRecycleLog);

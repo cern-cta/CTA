@@ -35,7 +35,7 @@ public:
   ArchiveFileItor getArchiveFilesItor(
     const TapeFileSearchCriteria &searchCriteria = TapeFileSearchCriteria()) const override;
 
-  common::dataStructures::ArchiveFile getArchiveFileForDeletion(
+  common::dataStructures::ArchiveFile getArchiveFileCopyForDeletion(
     const TapeFileSearchCriteria &searchCriteria = TapeFileSearchCriteria()) const override;
 
   std::list<common::dataStructures::ArchiveFile> getFilesForRepack(const std::string &vid, const uint64_t startFSeq,

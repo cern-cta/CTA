@@ -55,10 +55,10 @@ ArchiveFileItor ArchiveFileCatalogueRetryWrapper::getArchiveFilesItor(
   }, m_maxTriesToConnect);
 }
 
-common::dataStructures::ArchiveFile ArchiveFileCatalogueRetryWrapper::getArchiveFileForDeletion(
+common::dataStructures::ArchiveFile ArchiveFileCatalogueRetryWrapper::getArchiveFileCopyForDeletion(
   const TapeFileSearchCriteria &searchCriteria) const {
   return retryOnLostConnection(m_log, [this,&searchCriteria] {
-    return m_catalogue->ArchiveFile()->getArchiveFileForDeletion(searchCriteria);
+    return m_catalogue->ArchiveFile()->getArchiveFileCopyForDeletion(searchCriteria);
   }, m_maxTriesToConnect);
 }
 

@@ -606,7 +606,7 @@ TEST_P(cta_catalogue_FileRecycleLogTest, RestoreTapeFileCopy) {
     criteria.diskFileIds = std::vector<std::string>();
     auto fid = std::to_string(strtol("BC614D", nullptr, 16));
     criteria.diskFileIds.value().push_back(fid);
-    auto archiveFileForDeletion = m_catalogue->ArchiveFile()->getArchiveFileForDeletion(criteria);
+    auto archiveFileForDeletion = m_catalogue->ArchiveFile()->getArchiveFileCopyForDeletion(criteria);
     archiveFileForDeletion.diskFileInfo.path = "/test/file1";
     m_catalogue->TapeFile()->deleteTapeFileCopy(archiveFileForDeletion, reason);
     auto archiveFile = m_catalogue->ArchiveFile()->getArchiveFileById(1);
@@ -756,7 +756,7 @@ TEST_P(cta_catalogue_FileRecycleLogTest, RestoreRewrittenTapeFileCopyFails) {
     criteria.diskFileIds = std::vector<std::string>();
     auto fid = std::to_string(strtol("BC614D", nullptr, 16));
     criteria.diskFileIds.value().push_back(fid);
-    auto archiveFileForDeletion = m_catalogue->ArchiveFile()->getArchiveFileForDeletion(criteria);
+    auto archiveFileForDeletion = m_catalogue->ArchiveFile()->getArchiveFileCopyForDeletion(criteria);
     archiveFileForDeletion.diskFileInfo.path = "/test/file1";
     m_catalogue->TapeFile()->deleteTapeFileCopy(archiveFileForDeletion, reason);
     auto archiveFile = m_catalogue->ArchiveFile()->getArchiveFileById(1);
@@ -961,7 +961,7 @@ TEST_P(cta_catalogue_FileRecycleLogTest, RestoreVariousDeletedTapeFileCopies) {
     criteria.diskFileIds = std::vector<std::string>();
     auto fid = std::to_string(strtol("BC614D", nullptr, 16));
     criteria.diskFileIds.value().push_back(fid);
-    auto archiveFileForDeletion = m_catalogue->ArchiveFile()->getArchiveFileForDeletion(criteria);
+    auto archiveFileForDeletion = m_catalogue->ArchiveFile()->getArchiveFileCopyForDeletion(criteria);
     archiveFileForDeletion.diskFileInfo.path = "/test/file1";
     m_catalogue->TapeFile()->deleteTapeFileCopy(archiveFileForDeletion, reason);
     auto archiveFile = m_catalogue->ArchiveFile()->getArchiveFileById(1);
@@ -976,7 +976,7 @@ TEST_P(cta_catalogue_FileRecycleLogTest, RestoreVariousDeletedTapeFileCopies) {
     criteria.diskFileIds = std::vector<std::string>();
     auto fid = std::to_string(strtol("BC614D", nullptr, 16));
     criteria.diskFileIds.value().push_back(fid);
-    auto archiveFileForDeletion = m_catalogue->ArchiveFile()->getArchiveFileForDeletion(criteria);
+    auto archiveFileForDeletion = m_catalogue->ArchiveFile()->getArchiveFileCopyForDeletion(criteria);
     archiveFileForDeletion.diskFileInfo.path = "/test/file1";
     m_catalogue->TapeFile()->deleteTapeFileCopy(archiveFileForDeletion, reason);
     auto archiveFile = m_catalogue->ArchiveFile()->getArchiveFileById(1);
