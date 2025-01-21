@@ -211,8 +211,16 @@ TEST_P(cta_catalogue_TapeFileTest, DeleteTapeFileCopyUsingArchiveID) {
 
   auto tape1 = m_tape1;
   auto tape2 = m_tape2;
+
   tape1.tapePoolName = tapePoolName1;
   tape2.tapePoolName = tapePoolName2;
+
+  // Tape must be in BROKEN or REPACKING_DISABLED tape file to be deleted
+  tape1.state = common::dataStructures::Tape::BROKEN;
+  tape2.state = common::dataStructures::Tape::BROKEN;
+
+  tape1.stateReason = "Testing tape file deletion";
+  tape2.stateReason = "Testing tape file deletion";
 
   m_catalogue->Tape()->createTape(m_admin, tape1);
   m_catalogue->Tape()->createTape(m_admin, tape2);
@@ -385,8 +393,16 @@ TEST_P(cta_catalogue_TapeFileTest, DeleteTapeFileCopyUsingFXID) {
 
   auto tape1 = m_tape1;
   auto tape2 = m_tape2;
+
   tape1.tapePoolName = tapePoolName1;
   tape2.tapePoolName = tapePoolName2;
+
+  // Tape must be in BROKEN or REPACKING_DISABLED tape file to be deleted
+  tape1.state = common::dataStructures::Tape::BROKEN;
+  tape2.state = common::dataStructures::Tape::BROKEN;
+
+  tape1.stateReason = "Testing tape file deletion";
+  tape2.stateReason = "Testing tape file deletion";
 
   m_catalogue->Tape()->createTape(m_admin, tape1);
   m_catalogue->Tape()->createTape(m_admin, tape2);

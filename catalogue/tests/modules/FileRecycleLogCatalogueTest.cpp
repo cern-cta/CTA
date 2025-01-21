@@ -525,6 +525,13 @@ TEST_P(cta_catalogue_FileRecycleLogTest, RestoreTapeFileCopy) {
   tape1.tapePoolName = tapePoolName1;
   tape2.tapePoolName = tapePoolName2;
 
+  // Tape must be in BROKEN or REPACKING_DISABLED tape file to be deleted
+  tape1.state = common::dataStructures::Tape::REPACKING_DISABLED;
+  tape2.state = common::dataStructures::Tape::REPACKING_DISABLED;
+
+  tape1.stateReason = "Testing restore tape file copy";
+  tape2.stateReason = "Testing restore tape file copy";
+
   m_catalogue->Tape()->createTape(m_admin, tape1);
   m_catalogue->Tape()->createTape(m_admin, tape2);
 
@@ -671,6 +678,13 @@ TEST_P(cta_catalogue_FileRecycleLogTest, RestoreRewrittenTapeFileCopyFails) {
   auto tape2 = m_tape2;
   tape1.tapePoolName = tapePoolName1;
   tape2.tapePoolName = tapePoolName2;
+
+  // Tape must be in BROKEN or REPACKING_DISABLED tape file to be deleted
+  tape1.state = common::dataStructures::Tape::REPACKING_DISABLED;
+  tape2.state = common::dataStructures::Tape::REPACKING_DISABLED;
+
+  tape1.stateReason = "Testing restore rewritten tape file copy fails";
+  tape2.stateReason = "Testing restore rewritten tape file copy fails";
 
   m_catalogue->Tape()->createTape(m_admin, tape1);
   m_catalogue->Tape()->createTape(m_admin, tape2);
@@ -843,9 +857,19 @@ TEST_P(cta_catalogue_FileRecycleLogTest, RestoreVariousDeletedTapeFileCopies) {
   auto tape1 = m_tape1;
   auto tape2 = m_tape2;
   auto tape3 = m_tape3;
+
   tape1.tapePoolName = tapePoolName1;
   tape2.tapePoolName = tapePoolName2;
   tape3.tapePoolName = tapePoolName3;
+
+  // Tape must be in BROKEN or REPACKING_DISABLED tape file to be deleted
+  tape1.state = common::dataStructures::Tape::REPACKING_DISABLED;
+  tape2.state = common::dataStructures::Tape::REPACKING_DISABLED;
+  tape3.state = common::dataStructures::Tape::REPACKING_DISABLED;
+
+  tape1.stateReason = "Testing restore various deleted tape file copies";
+  tape2.stateReason = "Testing restore various deleted tape file copies";
+  tape3.stateReason = "Testing restore various deleted tape file copies";
 
   m_catalogue->Tape()->createTape(m_admin, tape1);
   m_catalogue->Tape()->createTape(m_admin, tape2);
@@ -1020,6 +1044,13 @@ TEST_P(cta_catalogue_FileRecycleLogTest, RestoreArchiveFileAndCopy) {
   auto tape2 = m_tape2;
   tape1.tapePoolName = tapePoolName1;
   tape2.tapePoolName = tapePoolName2;
+
+  // Tape must be in BROKEN or REPACKING_DISABLED tape file to be deleted
+  tape1.state = common::dataStructures::Tape::REPACKING_DISABLED;
+  tape2.state = common::dataStructures::Tape::REPACKING_DISABLED;
+
+  tape1.stateReason = "Testing restore archive file and copy";
+  tape2.stateReason = "Testing restore archive file and copy";
 
   m_catalogue->Tape()->createTape(m_admin, tape1);
   m_catalogue->Tape()->createTape(m_admin, tape2);
