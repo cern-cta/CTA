@@ -93,7 +93,6 @@
     - kubernetes
     - mhvtl
 
-
 # Tests
 
 test-client:
