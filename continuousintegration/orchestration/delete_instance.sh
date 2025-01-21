@@ -79,11 +79,21 @@ save_logs() {
       # Collect stdout logs
       kubectl --namespace "${namespace}" logs "${pod}" -c "${container}" > "${tmpdir}/${output_dir}.log"
 
-      # Collect /var/log for any pod with the label "collect-varlog"
-      if echo "${pods}" | jq -e ".items[] | select(.metadata.name==\"${pod}\") | .metadata.labels[\"collect-varlog\"] == \"true\"" > /dev/null; then
+      # Collect /var/log for any pod part of the eos or cta instances
+      if echo "${pods}" | jq -e \
+        ".items[]
+        | select(.metadata.name == \"${pod}\")
+        | .metadata.labels[\"app.kubernetes.io/instance\"]
+        | select(. == \"cta\" or . == \"eos\")" > /dev/null; then
         echo "Collecting /var/log from ${pod} - ${container}"
         mkdir -p "${tmpdir}/varlogs/${output_dir}"
-        kubectl exec -n "${namespace}" "${pod}" -c "${container}" -- tar --warning=no-file-removed --ignore-failed-read -C /var/log -cf - . \
+        # Only tar part of the logs
+        subdirs_to_tar=("cta" "eos" "tmp" "xrootd")
+        existing_dirs=$(kubectl exec -n "${namespace}" "${pod}" -c "${container}" -- \
+            bash -c "cd /var/log && find ${subdirs_to_tar[*]} -maxdepth 0 -type d 2>/dev/null || true")
+        kubectl exec -n "${namespace}" "${pod}" -c "${container}" -- \
+          tar --warning=no-file-removed --ignore-failed-read -C /var/log \
+              -cf - ${existing_dirs} \
           | tar -C "${tmpdir}/varlogs/${output_dir}" -xf - \
           || echo "Failed to collect /var/log from pod ${pod}, container ${container}"
         # Remove empty files and directories to prevent polluting the output logs
@@ -161,7 +171,7 @@ delete_instance() {
 
   # Finally delete the actual namespace
   echo "Deleting ${namespace} instance"
-  kubectl delete namespace ${namespace}
+  kubectl delete namespace ${namespace} --now
   echo "Deletion finished"
 }
 

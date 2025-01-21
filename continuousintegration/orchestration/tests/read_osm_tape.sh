@@ -18,7 +18,7 @@
 
 
 # Download OSM sample tape
-yum -y install git git-lfs
+dnf install -y git git-lfs
 git lfs install --skip-repo
 git clone https://gitlab.desy.de/mwai.karimi/osm-mhvtl.git /osm-mhvtl
 

@@ -16,26 +16,42 @@ spec:
     metadata:
       labels:
         app.kubernetes.io/name: {{ $name }}
-        collect-varlog: "true"
+        {{- include "common.labels.withoutname" $ | nindent 8 }}
     spec:
       restartPolicy: Always
       imagePullSecrets:
       {{ include "ctacli.imagePullSecrets" . | nindent 6 }}
       initContainers:
+      - name: init1-get-krb5-keytab
+        image: {{ include "ctacli.image" . }}
+        imagePullPolicy: {{ include "ctacli.imagePullPolicy" . }}
+        command: ["/bin/bash", "-c"]
+        args:
+        - |
+          sukadmin() { echo {{ .Values.global.kerberos.adminPrinc.password }} | kadmin -r {{ .Values.global.kerberos.defaultRealm | upper }} -p {{ .Values.global.kerberos.adminPrinc.name }}/admin $@; };
+          sukadmin addprinc -randkey ctaadmin1;
+          sukadmin ktadd -k /root/ctaadmin1_keytab/output/ctaadmin1.keytab ctaadmin1;
+        volumeMounts:
+        - name: krb5-conf
+          mountPath: /etc/krb5.conf
+          subPath: krb5.conf
+        - name: ctaadmin1-keytab
+          mountPath: /root/ctaadmin1_keytab/output
       # Required until https://github.com/kubernetes/kubernetes/issues/81089 is merged
-      - name: fix-sss-keytab-ownership
-        image: busybox:latest
+      - name: init2-fix-sss-keytab-ownership
+        image: {{ include "common.images.busybox" . }}
+        imagePullPolicy: {{ include "common.images.defaultPullPolicy" . }}
         command: ["sh", "-c"]
         args:
-          - |
-            cp /root/sss_keytab/input/eos.keytab /root/sss_keytab/output/eos.keytab;
-            chmod 600 /root/sss_keytab/output/eos.keytab
+        - |
+          cp /root/sss_keytab/input/eos.keytab /root/sss_keytab/output/eos.keytab;
+          chmod 600 /root/sss_keytab/output/eos.keytab
         volumeMounts:
-          - name: eos-sss-keytab
-            mountPath: /root/sss_keytab/input/eos.keytab
-            subPath: eos.keytab
-          - name: eos-sss-keytab-fixedownership
-            mountPath: /root/sss_keytab/output
+        - name: eos-sss-keytab
+          mountPath: /root/sss_keytab/input/eos.keytab
+          subPath: eos.keytab
+        - name: eos-sss-keytab-fixedownership
+          mountPath: /root/sss_keytab/output
       containers:
       - name: {{ $name }}
         image: {{ include "ctacli.image" . }}
@@ -44,7 +60,7 @@ spec:
         command: ["/bin/bash", "/scripts/ctacli.sh"]
         readinessProbe:
           exec:
-            command: ["sh", "-c", "rpm -q cta-cli cta-debuginfo"]
+            command: ["sh", "-c", "rpm -q cta-cli"]
           initialDelaySeconds: 5
           periodSeconds: 2
           failureThreshold: 60
@@ -75,13 +91,13 @@ spec:
         - name: cta-conf-volume
           mountPath: /etc/cta/cta-cli.conf
           subPath: cta-cli.conf
-        - name: keytab
+        - name: ctaadmin1-keytab
           mountPath: /root/ctaadmin1.keytab
           subPath: ctaadmin1.keytab
         - name: eos-sss-keytab-fixedownership
           mountPath: /etc/eos.keytab
           subPath: eos.keytab
-        - name: krb5-config-volume
+        - name: krb5-conf
           mountPath: /etc/krb5.conf
           subPath: krb5.conf
         {{ include "ctacli.volumeMounts" . | nindent 8 }}
@@ -93,15 +109,14 @@ spec:
       - name: cta-conf-volume
         configMap:
           name: etc-cta-ctacli
-      - name: keytab
-        secret:
-          secretName: ctaadmin1-keytab
+      - name: ctaadmin1-keytab
+        emptyDir: {}
       - name: eos-sss-keytab
         secret:
           secretName: eos-sss-keytab
       - name: eos-sss-keytab-fixedownership
         emptyDir: {}
-      - name: krb5-config-volume
+      - name: krb5-conf
         configMap:
-          name: krb5-config
-      {{include "ctacli.volumes" . | nindent 6 }}
+          name: {{ .Values.global.kerberos.clientConfig.configMap }}
+      {{ include "ctacli.volumes" . | nindent 6 }}

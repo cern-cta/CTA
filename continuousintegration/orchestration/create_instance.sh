@@ -39,8 +39,8 @@ usage() {
   echo "  -o, --scheduler-config <file>:      Path to the scheduler configuration values file. Defaults to the VFS preset."
   echo "  -d, --catalogue-config <file>:      Path to the catalogue configuration values file. Defaults to the Postgres preset"
   echo "      --tapeservers-config <file>:    Path to the tapeservers configuration values file. If not provided, this file will be auto-generated."
-  echo "  -r, --cta-image-repository <repo>:  The Docker image. Defaults to \"gitlab-registry.cern.ch/cta/ctageneric\"."
-  echo "  -i, --cta-image-tag <tag>:          The Docker image tag."
+  echo "  -r, --cta-image-repository <repo>:  Docker image name for the CTA chart. Defaults to \"gitlab-registry.cern.ch/cta/ctageneric\"."
+  echo "  -i, --cta-image-tag <tag>:          Docker image tag for the CTA chart."
   echo "  -c, --catalogue-version <version>:  Set the catalogue schema version. Defaults to the latest version."
   echo "  -O, --reset-scheduler:              Reset scheduler datastore content during initialization phase. Defaults to false."
   echo "  -D, --reset-catalogue:              Reset catalogue content during initialization phase. Defaults to false."
@@ -48,6 +48,9 @@ usage() {
   echo "      --max-drives-per-tpsrv <n>:     If no tapeservers-config is provided, this will specifiy how many drives a single tape server (pod) can be responsible for."
   echo "      --max-tapservers <n>:           If no tapeservers-config is provided, this will specifiy the limit of the number of tape servers (pods)."
   echo "      --dry-run:                      Render the Helm-generated yaml files without touching any existing deployments."
+  echo "      --eos-image-tag <tag>:          Docker image tag for the EOS chart."
+  echo "      --eos-image-repository <repo>:  Docker image for EOS chart. Should be the full image name, e.g. \"gitlab-registry.cern.ch/dss/eos/eos-ci\"."
+  echo "      --eos-config <file>:            Values file to use for the EOS chart. Defaults to presets/dev-eos-values.yaml."
   exit 1
 }
 
@@ -62,13 +65,12 @@ update_chart_dependencies() {
   echo "Updating chart dependencies"
   charts=(
     "common"
-    "kdc"
+    "auth"
     "catalogue"
     "scheduler"
     "cta/"
     "cta/charts/client"
     "cta/charts/ctacli"
-    "cta/charts/ctaeos"
     "cta/charts/ctafrontend"
     "cta/charts/tpsrv"
   )
@@ -93,6 +95,10 @@ create_instance() {
   num_library_devices=1 # For the auto-generated tapeservers config
   max_drives_per_tpsrv=1
   max_tapeservers=2
+  # EOS related
+  eos_image_tag=5.2.27
+  eos_image_repository=gitlab-registry.cern.ch/dss/eos/eos-ci
+  eos_config=presets/dev-eos-values.yaml
 
   # Parse command line arguments
   while [[ "$#" -gt 0 ]]; do
@@ -133,6 +139,16 @@ create_instance() {
       -O|--reset-scheduler) reset_scheduler=true ;;
       -D|--reset-catalogue) reset_catalogue=true ;;
       --dry-run) dry_run=1 ;;
+      --eos-config)
+        eos_config="$2"
+        test -f "${eos_config}" || die "EOS config file ${eos_config} does not exist"
+        shift ;;
+      --eos-image-repository)
+        eos_image_repository="$2"
+        shift ;;
+      --eos--image-tag)
+        eos_image_tag="$2"
+        shift ;;
       *)
         echo "Unsupported argument: $1"
         usage
@@ -188,14 +204,14 @@ create_instance() {
   if [ -z "${tapeservers_config}" ]; then
     echo "Library configuration not provided. Auto-generating..."
     # This file is cleaned up again by delete_instance.sh
-    tapeservers_config=$(mktemp /tmp/${namespace}-tapeservers-XXXXXX-values.yaml)
+    tapeservers_config=$(mktemp "/tmp/${namespace}-tapeservers-XXXXXX-values.yaml")
     # Generate a comma separated list of library devices based on the number of library devices the user wants to generate
     library_devices=$(echo "$unused_devices" | head -n "$num_library_devices" | paste -sd ',' -)
-    ./../ci_helpers/tape/generate_tapeservers_config.sh --target-file $tapeservers_config  \
+    ./../ci_helpers/tape/generate_tapeservers_config.sh --target-file "${tapeservers_config}" \
                                                         --library-type "mhvtl" \
-                                                        --library-devices $library_devices \
-                                                        --max-drives-per-tpsrv $max_drives_per_tpsrv \
-                                                        --max-tapeservers $max_tapeservers
+                                                        --library-devices "${library_devices}" \
+                                                        --max-drives-per-tpsrv "${max_drives_per_tpsrv}" \
+                                                        --max-tapeservers "${max_tapeservers}"
   else
     # Check that all devices in the provided config are available
     for library_device in $(awk '/libraryDevice:/ {gsub("\"","",$2); print $2}' "$tapeservers_config"); do
@@ -205,18 +221,18 @@ create_instance() {
     done
   fi
   echo "---"
-  cat $tapeservers_config
+  cat "$tapeservers_config"
   echo "---"
 
   # Create the namespace if necessary
   if [ $dry_run == 0 ] ; then
     echo "Creating ${namespace} namespace"
-    kubectl create namespace ${namespace}
+    kubectl create namespace "${namespace}"
     echo "Copying secrets into ${namespace} namespace"
     for secret_name in ${registry_secrets}; do
       # If the secret exists...
-      if kubectl get secret ${secret_name} &> /dev/null; then
-        kubectl get secret ${secret_name} -o yaml | grep -v '^ *namespace:' | kubectl --namespace ${namespace} create -f -
+      if kubectl get secret "${secret_name}" &> /dev/null; then
+        kubectl get secret "${secret_name}" -o yaml | grep -v '^ *namespace:' | kubectl --namespace "${namespace}" create -f -
       else
         echo "Secret ${secret_name} not found. Skipping..."
       fi
@@ -225,62 +241,76 @@ create_instance() {
 
   update_chart_dependencies
 
+  # Note that some of these charts are installed in parallel
+  # See README.md for details on the order
+  echo "Installing Authentication, Catalogue and Scheduler charts..."
+  log_run helm ${helm_command} auth helm/auth \
+                                --set image.repository="${cta_image_repository}" \
+                                --set image.tag="${cta_image_tag}" \
+                                --namespace "${namespace}" \
+                                --wait --timeout 2m &
+  auth_pid=$!
+
   echo "Deploying with catalogue schema version: ${catalogue_schema_version}"
-  echo "Installing kdc, catalogue and scheduler charts..."
   log_run helm ${helm_command} catalogue helm/catalogue \
-                                --namespace ${namespace} \
+                                --namespace "${namespace}" \
                                 --set resetImage.repository="${cta_image_repository}" \
                                 --set resetImage.tag="${cta_image_tag}" \
                                 --set schemaVersion="${catalogue_schema_version}" \
-                                --set resetCatalogue=${reset_catalogue} \
-                                --set-file configuration=${catalogue_config} \
+                                --set resetCatalogue="${reset_catalogue}" \
+                                --set-file configuration="${catalogue_config}" \
                                 --wait --wait-for-jobs --timeout 4m &
   catalogue_pid=$!
 
   log_run helm ${helm_command} scheduler helm/scheduler \
-                                --namespace ${namespace} \
+                                --namespace "${namespace}" \
                                 --set resetImage.repository="${cta_image_repository}" \
                                 --set resetImage.tag="${cta_image_tag}" \
-                                --set resetScheduler=${reset_scheduler} \
-                                --set-file configuration=${scheduler_config} \
+                                --set resetScheduler="${reset_scheduler}" \
+                                --set-file configuration="${scheduler_config}" \
                                 --wait --wait-for-jobs --timeout 4m &
   scheduler_pid=$!
 
-  log_run helm ${helm_command} kdc helm/kdc \
-                                --namespace ${namespace} \
-                                --set image.repository="${cta_image_repository}" \
-                                --set image.tag="${cta_image_tag}" \
-                                --wait --wait-for-jobs --timeout 2m &
-  kdc_pid=$!
+  wait $auth_pid || exit 1
+
+  log_run helm install eos oci://registry.cern.ch/eos/charts/server --version 0.2.2-tape \
+                                --namespace "${namespace}" \
+                                -f "${eos_config}" \
+                                --set global.repository="${eos_image_repository}" \
+                                --set global.tag="${eos_image_tag}" \
+                                --set fst.tape.gcd.image.repository="${cta_image_repository}" \
+                                --set fst.tape.gcd.image.tag="${cta_image_tag}" \
+                                --wait --timeout 5m &
+  eos_pid=$!
 
   # Wait for the scheduler and catalogue charts to be installed (and exit if 1 failed)
   wait $catalogue_pid || exit 1
   wait $scheduler_pid || exit 1
-  wait $kdc_pid || exit 1
 
-  echo "Installing cta chart..."
+  echo "Installing CTA chart..."
   log_run helm ${helm_command} cta helm/cta \
-                                --namespace ${namespace} \
+                                --namespace "${namespace}" \
                                 --set global.image.repository="${cta_image_repository}" \
                                 --set global.image.tag="${cta_image_tag}" \
                                 --set global.catalogueSchemaVersion="${catalogue_schema_version}" \
-                                --set-file global.configuration.scheduler=${scheduler_config} \
+                                --set-file global.configuration.scheduler="${scheduler_config}" \
                                 --set-file tpsrv.tapeServers="${tapeservers_config}" \
-                                --wait --timeout 8m
-
+                                --wait --timeout 5m
+  # At this point EOS should also be ready
+  wait $eos_pid || exit 1
   if [ $dry_run == 1 ]; then
     exit 0
   fi
 }
 
 setup_system() {
-  ./setup/reset_tapes.sh -n ${namespace}
-  ./setup/init_kerberos.sh -n ${namespace}
-  ./setup/set_eos_workflows.sh -n ${namespace}
+  ./setup/reset_tapes.sh -n "${namespace}"
+  ./setup/kinit_clients.sh -n "${namespace}"
+  ./setup/configure_eos.sh -n "${namespace}" --mgm-name eos-mgm-0
 }
 
 check_helm_installed
 create_instance "$@"
 setup_system
 echo "Instance ${namespace} successfully created:"
-kubectl --namespace ${namespace} get pods
+kubectl --namespace "${namespace}" get pods

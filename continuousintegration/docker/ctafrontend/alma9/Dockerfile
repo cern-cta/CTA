@@ -36,6 +36,7 @@ RUN dnf install -y \
       createrepo epel-release \
       jq bc \
       sqlite \
+      krb5-workstation \
   && \
     # logrotate files must be 0644 or 0444
     # .rpmnew files are ignored %config (no replace)

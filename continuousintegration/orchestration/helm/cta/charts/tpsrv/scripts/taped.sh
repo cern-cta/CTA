@@ -19,11 +19,11 @@
 echo "$(date '+%Y-%m-%d %H:%M:%S') [$(basename "${BASH_SOURCE[0]}")] Started"
 
 # Install missing RPMs
-yum -y install mt-st lsscsi sg3_utils cta-taped cta-tape-label cta-debuginfo
+dnf install -y mt-st lsscsi sg3_utils cta-taped cta-tape-label cta-debuginfo cta-debugsource
 
 if [ "$SCHEDULER_BACKEND" == "ceph" ]; then
-  yum-config-manager --enable ceph
-  yum -y install  ceph-common
+  dnf config-manager --enable ceph
+  dnf install -y  ceph-common
 fi
 
 # cta-taped is ran with runuser to avoid a bug with Docker that prevents both

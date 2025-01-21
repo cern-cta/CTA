@@ -38,8 +38,8 @@ usage() {
   echo "  -n, --namespace <namespace>:        Specify the Kubernetes namespace."
   echo "  -o, --scheduler-config <file>:      Path to the scheduler configuration values file."
   echo "      --tapeservers-config <file>:    Path to the tapeservers configuration values file."
-  echo "  -r, --cta-image-repository <repo>:  The Docker image. Defaults to \"gitlab-registry.cern.ch/cta/ctageneric\"."
-  echo "  -i, --cta-image-tag <tag>:          The Docker image tag."
+  echo "  -r, --cta-image-repository <repo>:  The CTA Docker image name. Defaults to \"gitlab-registry.cern.ch/cta/ctageneric\"."
+  echo "  -i, --cta-image-tag <tag>:          The CTA Docker image tag."
   echo "  -c, --catalogue-version <version>:  Set the catalogue schema version."
   echo "      --force:                        Force redeploy all pods in the CTA chart."
   exit 1
@@ -59,7 +59,6 @@ update_chart_dependencies() {
     "cta/"
     "cta/charts/client"
     "cta/charts/ctacli"
-    "cta/charts/ctaeos"
     "cta/charts/ctafrontend"
     "cta/charts/tpsrv"
   )
@@ -146,7 +145,7 @@ upgrade_instance() {
   echo "Upgrading cta chart..."
   log_run helm upgrade cta helm/cta \
                       --namespace ${namespace} \
-                      --wait --timeout 8m \
+                      --wait --timeout 5m \
                       --reuse-values \
                       ${helm_flags}
 
@@ -155,11 +154,10 @@ upgrade_instance() {
 setup_system() {
   ./setup/reset_tapes.sh -n ${namespace}
   ./setup/init_kerberos.sh -n ${namespace}
-  ./setup/set_eos_workflows.sh -n ${namespace}
 }
 
 check_helm_installed
 upgrade_instance "$@"
 setup_system
-echo "Instance ${namespace} successfully upgraded:"
+echo "CTA instance in ${namespace} successfully upgraded:"
 kubectl --namespace ${namespace} get pods

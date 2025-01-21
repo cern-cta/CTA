@@ -56,7 +56,7 @@ fi
 CLIENT_POD="client-0"
 CTA_CLI_POD="cta-cli-0"
 CTA_FRONTEND_POD="cta-frontend-0"
-EOS_MGM_POD="ctaeos"
+EOS_MGM_POD="eos-mgm-0"
 EOS_MGM_HOST="ctaeos"
 TMP_DIR=$(mktemp -d)
 FILE_1=$(uuidgen)
@@ -106,8 +106,8 @@ kubectl -n ${NAMESPACE} exec ${CTA_FRONTEND_POD} -c cta-frontend -- bash ${TMP_D
 echo
 echo "ADD FRONTEND GATEWAY TO EOS"
 FRONTEND_IP=$(kubectl -n ${NAMESPACE} get pods cta-frontend -o json | jq .status.podIP | tr -d '"')
-echo "kubectl -n ${NAMESPACE} exec ${EOS_MGM_POD} -- eos root://${EOS_MGM_HOST} -r 0 0 vid add gateway ${FRONTEND_IP} grpc"
-kubectl -n ${NAMESPACE} exec ${EOS_MGM_POD} -- eos -r 0 0 vid add gateway ${FRONTEND_IP} grpc
+echo "kubectl -n ${NAMESPACE} exec ${EOS_MGM_POD} -c eos-mgm -- eos root://${EOS_MGM_HOST} -r 0 0 vid add gateway ${FRONTEND_IP} grpc"
+kubectl -n ${NAMESPACE} exec ${EOS_MGM_POD} -c eos-mgm -- eos -r 0 0 vid add gateway ${FRONTEND_IP} grpc
 
 echo
 echo "COPY REQUIRED FILES TO FRONTEND POD"

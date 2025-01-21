@@ -1,0 +1,43 @@
+nameOverride: auth-kdc
+isPriviliged: true
+component: kdc
+partOf: kdc
+
+terminationGracePeriodSeconds: 1 # This is low on purpose as the current process has no gracefull shutdown process
+
+image:
+  repository: gitlab-registry.cern.ch/cta/ctageneric
+  tag: ""
+  pullPolicy: IfNotPresent
+  pullSecrets:
+  - ctaregsecret
+  - reg-ctageneric
+
+# Additional environment variables
+env: []
+
+# Keytabs that should be generated as secrets
+keytabs:
+  # Generated using echo y | xrdsssadmin -k ctaeos+ -u daemon -g daemon add /tmp/eos.keytab
+  # Note that this hardcoded keytab is only for CI/dev purposes
+  - secretName: eos-sss-keytab
+    keytabName: eos.keytab
+    content: "0 u:daemon g:daemon n:ctaeos+ N:7449334094434926593 c:1734433252 e:0 f:0 k:32869bcee6fb7ccfb835e28b2622286260d93ea5b5ad5aa3d854ba59c8754e6"
+  # Same as above, but changing the user and group to the eos instance name
+  - secretName: cta-frontend-sss-keytab
+    keytabName: eos.sss.keytab
+    content: "0 u:ctaeos g:ctaeos n:ctaeos+ N:7449334094434926593 c:1734433252 e:0 f:0 k:32869bcee6fb7ccfb835e28b2622286260d93ea5b5ad5aa3d854ba59c8754e6"
+
+kerberos:
+  defaultRealm: TEST.CTA
+  adminPrinc:
+    name: root
+    password: "defaultcipassword"
+
+resources:
+  requests:
+    memory: "256Mi"
+    ephemeral-storage: "1Gi"
+  limits:
+    memory: "2Gi"
+    ephemeral-storage: "5Gi"

@@ -1,0 +1,75 @@
+{{- $namespace := .Release.Namespace }}
+{{- $name := include "kdc.name" . }}
+apiVersion: v1
+kind: Pod
+metadata:
+  name: {{ $name }}
+  namespace: {{ $namespace | quote }}
+  labels:
+    {{- include "common.labels.standard" . | nindent 4 }}
+spec:
+  restartPolicy: Never
+  terminationGracePeriodSeconds: {{ $.Values.terminationGracePeriodSeconds }}
+  containers:
+  - name: {{ $name }}
+    image: {{ include "kdc.image" . }}
+    imagePullPolicy: {{ include "kdc.imagePullPolicy" . }}
+    stdin: true
+    command: ["bash", "/scripts/kdc.sh"]
+    args: []
+    readinessProbe:
+      tcpSocket:
+        port: 749
+      initialDelaySeconds: 5
+      periodSeconds: 2
+    securityContext:
+      privileged: {{ .Values.isPriviliged }}
+    resources:
+      requests:
+        memory: {{ .Values.resources.requests.memory | quote }}
+        ephemeral-storage: {{ index .Values.resources.requests "ephemeral-storage" | quote }}
+      limits:
+        memory: {{ .Values.resources.limits.memory | quote }}
+        ephemeral-storage: {{ index .Values.resources.limits "ephemeral-storage" | quote }}
+    env:
+    - name: MY_NAME
+      value: {{ $name }}
+    - name: MY_NAMESPACE
+      value: {{ $namespace | quote }}
+    - name: INSTANCE_NAME
+      value: {{ $namespace | quote }}
+    - name: TERM
+      value: "xterm"
+    - name: KRB5_REALM
+      value: {{ .Values.kerberos.defaultRealm }}
+    - name: KRB5_KDC_PROFILE
+      value: /etc/krb5.conf
+    - name: KRB5_ADMIN_PRINC_NAME
+      value: {{ .Values.kerberos.adminPrinc.name }}
+    - name: KRB5_ADMIN_PRINC_PWD
+      value: {{ .Values.kerberos.adminPrinc.password }}
+    {{- if (.Values.env) }}
+        {{- .Values.env | toYaml | nindent 4}}
+    {{- end }}
+    volumeMounts:
+    - name: scripts-volume
+      mountPath: /scripts
+    - name: krb5-conf
+      mountPath: /etc/krb5.conf
+      subPath: krb5.conf
+    - name: kadm5-acl
+      mountPath: /var/kerberos/krb5kdc/kadm5.acl
+      subPath: kadm5.acl
+  volumes:
+  - name: scripts-volume
+    configMap:
+      name: scripts-kdc
+      defaultMode: 0777
+  - name: krb5-conf
+    configMap:
+      name: krb5-conf
+  - name: kadm5-acl
+    configMap:
+      name: kadm5-acl
+  imagePullSecrets:
+  {{- include "kdc.imagePullSecrets" . | nindent 2 }}

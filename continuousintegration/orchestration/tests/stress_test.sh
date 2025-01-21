@@ -45,7 +45,7 @@ fi
 CLIENT_POD="client-0"
 CTA_CLI_POD="cta-cli-0"
 CTA_FRONTEND_POD="cta-frontend-0"
-EOS_MGM_POD="ctaeos"
+EOS_MGM_POD="eos-mgm-0"
 
 kubectl -n ${NAMESPACE} cp client_helper.sh ${CLIENT_POD}:/root/client_helper.sh -c client
 
@@ -76,9 +76,9 @@ kubectl -n ${NAMESPACE} exec ${EOS_MGM_POD} -- eos fs config 1 scaninterval=0
 
 # install eos-debuginfo (600MB -> only for stress tests)
 # NEEDED because eos does not leave the coredump after a crash
-kubectl -n ${NAMESPACE} exec ${EOS_MGM_POD} -- yum install -y eos-debuginfo
+kubectl -n ${NAMESPACE} exec ${EOS_MGM_POD} -- dnf install -y eos-debuginfo
 
-kubectl -n ${NAMESPACE} exec ${CTA_FRONTEND_POD} -c cta-frontend -- yum install -y xrootd-debuginfo
+kubectl -n ${NAMESPACE} exec ${CTA_FRONTEND_POD} -c cta-frontend -- dnf install -y xrootd-debuginfo
 
 
 ls | xargs -I{} kubectl -n ${NAMESPACE} cp {} ${CLIENT_POD}:/root/{} -c client
@@ -125,6 +125,6 @@ echo "Launching client_delete.sh on client pod"
 echo " Deleting files:"
 kubectl -n ${NAMESPACE} exec ${CLIENT_POD} -c client -- bash -c "${TEST_PRERUN} && /root/client_delete.sh ${TEST_POSTRUN}" || exit 1
 
-kubectl -n ${NAMESPACE} exec ${EOS_MGM_POD} -- bash /root/grep_xrdlog_mgm_for_error.sh || exit 1
+kubectl -n ${NAMESPACE} exec ${EOS_MGM_POD} -c eos-mgm -- bash /root/grep_xrdlog_mgm_for_error.sh || exit 1
 
 exit 0

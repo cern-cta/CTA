@@ -8,6 +8,15 @@ global:
     - ctaregsecret
     - reg-ctageneric
 
+  # Must match the authentication chart
+  kerberos:
+    clientConfig:
+      configMap: krb5-conf
+    defaultRealm: TEST.CTA
+    adminPrinc:
+      name: root
+      password: "defaultcipassword"
+
   # This is not directly used by the pod yet. Once we have converted the pods into deployments,
   # the relevant pods can automatically redeploy on a schema version change.
   catalogueSchemaVersion: ""

@@ -6,7 +6,7 @@ nameOverride: cta-frontend
 isPriviliged: true
 
 frontendPort: 10955
-terminationGracePeriodSeconds: 0 # This is low on purpose as the current process has no gracefull shutdown process
+terminationGracePeriodSeconds: 1 # This is low on purpose as the current process has no gracefull shutdown process
 # Take care with increasing this number, as CTA has not been tested with multiple frontend replicas
 # Increasing this will most likely not work as expected
 replicase: 1
@@ -21,7 +21,6 @@ conf:
     zeroLengthFilesForbidden: "on"
     zeroLengthFilesForbiddenVoExceptionList: ""
     logUrl: "file:/var/log/cta/cta-frontend.log"
-    # repackBufferUrl: "root://ctaeos//eos/ctaeos/repack"
 
   schedulerdb:
     numberOfThreads: 500
@@ -42,15 +41,6 @@ conf:
   ns:
     config: "/etc/cta/eos.grpc.keytab"
 
-  xrootd:
-    # trace: "debug"
-    async: "off"
-    port: 10955
-
-  security:
-    krb5: "/etc/cta/cta-frontend.krb5.keytab cta/cta-frontend@TEST.CTA"
-    sss: "/etc/cta/eos.sss.keytab"
-    allowedProtocols: "sss krb5"
 
 # Additional environment variables
 env: []
