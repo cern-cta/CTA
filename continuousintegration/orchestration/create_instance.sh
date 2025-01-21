@@ -64,6 +64,7 @@ check_helm_installed() {
 update_chart_dependencies() {
   echo "Updating chart dependencies"
   charts=(
+    "common"
     "auth"
     "catalogue"
     "scheduler"
@@ -73,8 +74,9 @@ update_chart_dependencies() {
     "tpsrv"
     "cta"
   )
+  # Note that skip-refresh should only be used when all deps are local
   for chart in "${charts[@]}"; do
-    helm dependency update helm/"$chart" > /dev/null
+    helm dependency update helm/"$chart" --skip-refresh > /dev/null
   done
 }
 
