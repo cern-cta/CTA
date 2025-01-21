@@ -41,6 +41,10 @@ mgm:
   instanceService:
     enabled: true
 
+  # Liveness probes are disabled for all pods as we specifically do not want the pod to restart in case of an error for CI
+  probes:
+    liveness: false
+
   extraEnv:
   - name: LD_PRELOAD
     value: "/usr/lib64/libjemalloc.so.1"
@@ -65,6 +69,9 @@ fst:
     gcd:
       enabled: true
 
+  probes:
+    liveness: false
+
   extraEnv:
   - name: TZ
     value: "CET"
@@ -77,3 +84,5 @@ qdb:
   - name: TZ
     value: "CET"
 
+  probes:
+    liveness: false

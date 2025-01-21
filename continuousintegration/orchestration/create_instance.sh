@@ -61,22 +61,29 @@ check_helm_installed() {
   fi
 }
 
-update_chart_dependencies() {
+update_local_cta_chart_dependencies() {
+  # This is a hack to ensure we don't waste 30 seconds updating local dependencies
+  # Once helm dependency update gets some performance improvements this can be removed
+  TEMP_HELM_HOME=$(mktemp -d)
+  trap 'rm -rf "$TEMP_HELM_HOME"' EXIT
+  export HELM_CONFIG_HOME="$TEMP_HELM_HOME"
+
   echo "Updating chart dependencies"
   charts=(
     "common"
     "auth"
     "catalogue"
     "scheduler"
-    "cta/"
-    "cta/charts/client"
-    "cta/charts/ctacli"
-    "cta/charts/ctafrontend"
-    "cta/charts/tpsrv"
+    "client"
+    "cli"
+    "frontend"
+    "tpsrv"
+    "cta"
   )
   for chart in "${charts[@]}"; do
     helm dependency update helm/"$chart" > /dev/null
   done
+  unset HELM_CONFIG_HOME
 }
 
 create_instance() {
@@ -239,7 +246,7 @@ create_instance() {
     done
   fi
 
-  update_chart_dependencies
+  update_local_cta_chart_dependencies
 
   # Note that some of these charts are installed in parallel
   # See README.md for details on the order
