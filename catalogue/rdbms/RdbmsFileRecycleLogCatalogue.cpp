@@ -277,10 +277,7 @@ void RdbmsFileRecycleLogCatalogue::copyArchiveFileToFileRecycleLog(rdbms::Conn &
     fileRecycleLog.blockId = tapeFile.blockId;
     fileRecycleLog.copyNb = tapeFile.copyNb;
     fileRecycleLog.tapeFileCreationTime = tapeFile.creationTime;
-    fileRecycleLog.archiveFileId = archiveFile.archiveFileID;
-    if (!archiveFile.diskFileInfo.path.empty()) {
-      fileRecycleLog.diskFilePath = archiveFile.diskFileInfo.path;
-    }
+    fileRecycleLog.diskFilePath = request.diskFilePath;
     fileRecycleLog.reasonLog = InsertFileRecycleLog::getDeletionReasonLog(request.requester.name,request.diskInstance);
     fileRecycleLog.recycleLogTime = time(nullptr);
     insertFileInFileRecycleLog(conn,fileRecycleLog);
