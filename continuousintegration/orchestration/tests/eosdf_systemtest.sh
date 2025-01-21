@@ -48,20 +48,24 @@ else
 fi
 admin_cta ds ls
 
-echo "Archiving a file: testfile1_eosdf"
-echo
-## Archive a file, so we can then retrieve it
+## Archive a file, the first time the test is run, so we can then retrieve it
 TEST_FILE_NAME=testfile1_eosdf
-echo "foo" > /root/${TEST_FILE_NAME}
-echo
-echo "Doing xrdcp of ${TEST_FILE_NAME} in the path root://${EOS_INSTANCE_NAME}/${EOSDF_BUFFER_URL}/${TEST_FILE_NAME}"
-xrdcp /root/${TEST_FILE_NAME} root://${EOS_INSTANCE_NAME}/${EOSDF_BUFFER_URL}/${TEST_FILE_NAME}
-wait_for_archive ${EOS_INSTANCE_NAME} "${EOSDF_BUFFER_URL}/${TEST_FILE_NAME}"
+# Check whether it already exists, if not, archive it to tape
+file_exists_on_tape=$(eos root://${EOS_MGM_HOST} fileinfo ${EOSDF_BUFFER_URL}/${TEST_FILE_NAME})
+if [[ $? -ne 0 ]]; then
+    echo "Archiving a file: $TEST_FILE_NAME"
+    echo
+    echo "foo" > /root/${TEST_FILE_NAME}
+    echo
+    echo "Doing xrdcp of ${TEST_FILE_NAME} in the path root://${EOS_INSTANCE_NAME}/${EOSDF_BUFFER_URL}/${TEST_FILE_NAME}"
+    xrdcp /root/${TEST_FILE_NAME} root://${EOS_INSTANCE_NAME}/${EOSDF_BUFFER_URL}/${TEST_FILE_NAME}
+    wait_for_archive ${EOS_INSTANCE_NAME} "${EOSDF_BUFFER_URL}/${TEST_FILE_NAME}"
 
-echo "File ${TEST_FILE_NAME} archived to tape"
+    echo "File ${TEST_FILE_NAME} archived to tape"
+fi
 
-## Retrieve the file, this should have returned a script error, but still it will work because we don't want to prevent staging due to script missing or having insufficient permissions
-REQUEST_ID=$(KRB5CCNAME=/tmp/${EOSPOWER_USER}/krb5cc_0 XrdSecPROTOCOL=krb5 xrdfs ${EOS_MGM_HOST} prepare -s ${EOSDF_BUFFER_URL}/testfile1_eosdf)
+## Retrieve the file
+REQUEST_ID=$(KRB5CCNAME=/tmp/${EOSPOWER_USER}/krb5cc_0 XrdSecPROTOCOL=krb5 xrdfs ${EOS_MGM_HOST} prepare -s ${EOSDF_BUFFER_URL}/${TEST_FILE_NAME})
 # Wait for the copy to appear on disk
 wait_for_retrieve ${EOS_INSTANCE_NAME} "${EOSDF_BUFFER_URL}/${TEST_FILE_NAME}"
 
@@ -69,9 +73,8 @@ echo
 echo "File ${TEST_FILE_NAME} retrieved from disk"
 echo
 
-# remove the file so that it can be recreated in the next test run
-echo "eos root://${EOS_INSTANCE_NAME} rm ${EOSDF_BUFFER_URL}/${TEST_FILE_NAME}"
-eos root://${EOS_INSTANCE_NAME} rm ${EOSDF_BUFFER_URL}/${TEST_FILE_NAME}
+# do prepare evict so we can avoid archiving the file multiple times
+KRB5CCNAME=/tmp/${EOSPOWER_USER}/krb5cc_0 XrdSecPROTOCOL=krb5 xrdfs ${EOS_MGM_HOST} prepare -e ${EOSDF_BUFFER_URL}/${TEST_FILE_NAME}
 
 # Remove the disk system so it doesn't interfere with other tests
 admin_cta ds rm -n eosdfBuffer
