@@ -170,9 +170,9 @@ uint64_t DiskSystemFreeSpaceList::fetchConstantFreeSpace(const std::string& inst
 // DiskSystemFreeSpaceList::fetchFreeDiskSpaceWithScript()
 //------------------------------------------------------------------------------
 uint64_t DiskSystemFreeSpaceList::fetchFreeDiskSpaceWithScript(const std::string& scriptPath, std::string& diskInstanceName, std::string& spaceName, const std::string& jsonInput, log::LogContext& lc){
-  cta::threading::SubProcess *sp;
+  std::unique_ptr<cta::threading::SubProcess> sp;
   try {
-    sp = new cta::threading::SubProcess(scriptPath,{scriptPath, diskInstanceName, spaceName},jsonInput);
+    sp = std::make_unique<cta::threading::SubProcess>(scriptPath,std::list{scriptPath, diskInstanceName, spaceName},jsonInput);
   }
   // for example, if the executable is not found, this exception will not be caught here - spawning the subprocess will throw an exception
   catch (.../* cta::exception::Exception & ex */) {
