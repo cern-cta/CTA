@@ -67,7 +67,11 @@ update_chart_dependencies() {
     "auth"
     "catalogue"
     "scheduler"
-    "cta/"
+    "client"
+    "cli"
+    "frontend"
+    "tpsrv"
+    "cta"
   )
   for chart in "${charts[@]}"; do
     helm dependency update helm/"$chart" > /dev/null
