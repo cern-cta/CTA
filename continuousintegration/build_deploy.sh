@@ -16,7 +16,7 @@
 #               submit itself to any jurisdiction.
 
 set -e
-source "$(dirname "${BASH_SOURCE[0]}")/../ci_helpers/log_wrapper.sh"
+source "$(dirname "${BASH_SOURCE[0]}")/../utils/log_wrapper.sh"
 
 # Help message
 usage() {
@@ -272,7 +272,7 @@ build_deploy() {
       echo "Starting a new build pod: ${build_pod_name}..."
       case "${operating_system}" in
         alma9)
-          kubectl create -f ${src_dir}/CTA/continuousintegration/orchestration/pods/alma9-build-pod.yml -n ${build_namespace}
+          kubectl create -f ${src_dir}/CTA/continuousintegration/build/alma9-build-pod.yml -n ${build_namespace}
           ;;
         *)
           echo "Invalid operating system provided: ${operating_system}"
@@ -286,7 +286,7 @@ build_deploy() {
         build_srpm_flags+=" --clean-build-dir"
       fi
 
-      kubectl exec -it ${build_pod_name} -n ${build_namespace} -- ./shared/CTA/continuousintegration/ci_helpers/build_srpm.sh \
+      kubectl exec -it ${build_pod_name} -n ${build_namespace} -- ./shared/CTA/continuousintegration/build/build_srpm.sh \
         --build-dir /shared/CTA/build_srpm \
         --build-generator "${build_generator}" \
         --create-build-dir \
@@ -327,7 +327,7 @@ build_deploy() {
     fi
 
     echo "Building RPMs..."
-    kubectl exec -it ${build_pod_name} -n ${build_namespace} -- ./shared/CTA/continuousintegration/ci_helpers/build_rpm.sh \
+    kubectl exec -it ${build_pod_name} -n ${build_namespace} -- ./shared/CTA/continuousintegration/build/build_rpm.sh \
       --build-dir /shared/CTA/build_rpm \
       --build-generator "${build_generator}" \
       --create-build-dir \
@@ -379,11 +379,11 @@ build_deploy() {
     ## Create and load the new image
     local rpm_src=build_rpm/RPM/RPMS/x86_64
     echo "Building image from ${rpm_src}"
-    ./continuousintegration/ci_runner/build_image.sh --tag ${image_tag} \
-                                                     --rpm-src "${rpm_src}" \
-                                                     --operating-system "${operating_system}" \
-                                                     --load-into-minikube \
-                                                     ${extra_build_options}
+    ./continuousintegration/build/build_image.sh --tag ${image_tag} \
+                                                 --rpm-src "${rpm_src}" \
+                                                 --operating-system "${operating_system}" \
+                                                 --load-into-minikube \
+                                                 ${extra_build_options}
     if [ ${image_cleanup} = true ]; then
       # Pruning of unused images is done after image building to ensure we maintain caching
       podman image ls | grep ctageneric | grep -v "${image_tag}" | awk '{ print "localhost/ctageneric:" $2 }' | xargs -r podman rmi || true

@@ -16,7 +16,7 @@
 #               submit itself to any jurisdiction.
 
 set -e
-source "$(dirname "${BASH_SOURCE[0]}")/../ci_helpers/log_wrapper.sh"
+source "$(dirname "${BASH_SOURCE[0]}")/../utils/log_wrapper.sh"
 
 die() {
   echo "$@" 1>&2

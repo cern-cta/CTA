@@ -207,12 +207,12 @@ The deletion of an instance is relatively straightforward and can be done throug
 - Creating a test instance from a local build:
 
   ```sh
-  # Note that build_deploy.sh resides in ci_runner/
+  # Note that build_deploy.sh resides in build/
   ./build-deploy.sh
   ```
 - Redeploying a local build:
   ```sh
-  # Note that build_deploy.sh resides in ci_runner/
+  # Note that build_deploy.sh resides in build/
   ./build-deploy.sh --skip-build --skip-image-reload
   ```
 - Spawning a test instance from a tagged `ctageneric` image `gitlab-registry.cern.ch/cta/ctageneric` (Postgres catalogue + VFS scheduler):
