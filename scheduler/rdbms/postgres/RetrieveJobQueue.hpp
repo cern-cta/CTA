@@ -351,7 +351,6 @@ struct RetrieveJobQueueRow {
     )";
 
     auto stmt = conn.createStmt(sql);
-
     stmt.bindUint64(":RETRIEVE_REQUEST_ID", retrieveRequestId);
     stmt.bindUint32(":REQUEST_JOB_COUNT", reqJobCount);
     stmt.bindString(":STATUS", to_string(status));
@@ -402,7 +401,6 @@ struct RetrieveJobQueueRow {
     stmt.bindUint64(":LIFECYCLE_COMPLETED_TIME", lifecycleTimings_completed_time);
     stmt.bindString(":DISK_SYSTEM_NAME", diskSystemName);
     //stmt.bindBool(":IS_FAILED", isFailed);
-
     stmt.executeNonQuery();
   }
 
