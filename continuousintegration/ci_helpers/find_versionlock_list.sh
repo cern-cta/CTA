@@ -51,11 +51,11 @@ working_branch=$(git branch --show-current)
 git checkout tags/"${tag}" --quiet
 
 # Should match for version >= 5.11.1.0-1
-if [ -d "continuousintegration/docker/ctafrontend/alma9/etc/yum/pluginconf.d/" ]; then
-  echo "continuousintegration/docker/ctafrontend/alma9/etc/yum/pluginconf.d/versionlock.list"
+if [ -d "continuousintegration/docker/alma9/etc/yum/pluginconf.d/" ]; then
+  echo "continuousintegration/docker/alma9/etc/yum/pluginconf.d/versionlock.list"
 # should match for versions <= 5.11.0.1-1
-elif [ -d "continuousintegration/docker/ctafrontend/alma9/yum/pluginconf.d" ]; then
-  echo "continuousintegration/docker/ctafrontend/alma9/yum/pluginconf.d/versionlock.list"
+elif [ -d "continuousintegration/docker/alma9/yum/pluginconf.d" ]; then
+  echo "continuousintegration/docker/alma9/yum/pluginconf.d/versionlock.list"
 else
   die "ERROR: Could not find the version lock list."
 fi

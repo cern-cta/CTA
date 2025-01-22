@@ -16,7 +16,7 @@
 # CTA generic image containing all CTA RPMs
 FROM gitlab-registry.cern.ch/linuxsupport/alma9-base
 
-ENV BASEDIR="continuousintegration/docker/ctafrontend/alma9" \
+ENV BASEDIR="continuousintegration/docker/alma9" \
     CTAREPODIR="/opt/repo"
 
 # Add orchestration run scripts locally
@@ -27,7 +27,7 @@ COPY ${BASEDIR}/etc/yum.repos.d/ /etc/yum.repos.d/
 # Variable to specify the tag to be used for CTA RPMs from the cta-ci-repo
 # Format: X.YY.ZZ.A-B
 ARG PUBLIC_REPO_VER
-ARG YUM_VERSIONLOCK_FILE=continuousintegration/docker/ctafrontend/alma9/etc/yum/pluginconf.d/versionlock.list
+ARG YUM_VERSIONLOCK_FILE=continuousintegration/docker/alma9/etc/yum/pluginconf.d/versionlock.list
 
 
 # Install necessary packages
