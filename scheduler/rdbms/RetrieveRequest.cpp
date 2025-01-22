@@ -56,7 +56,7 @@ void RetrieveRequest::insert() {
     //std::optional<std::string> activity;
     // setActiveCopyNumber sets also vid and status;
     rjr.copyNb = m_actCopyNb;
-    rjr.status = m_status;
+    rjr.status = RetrieveJobStatus::RJS_ToTransfer; // m_status;
     rjr.vid = m_vid;
 
     ///
