@@ -138,7 +138,7 @@ echo "Reading library configuration from ${CTA_TPSRV_POD}"
 DRIVE_NAME=$(kubectl exec -n ${NAMESPACE} ${CTA_TPSRV_POD} -c taped-0 -- printenv DRIVE_NAME)
 CTA_TAPED_LOG=/var/log/cta/cta-taped-${DRIVE_NAME}.log
 
-if kubectl -n ${NAMESPACE} exec cta-tpsrv01-0 -c taped-0 -- bash -c "grep -q 'unable to get the EOS free space with the script' ${CTA_TAPED_LOG}"; then
+if kubectl -n ${NAMESPACE} exec cta-tpsrv01-0 -c taped-0 -- bash -c "grep -q 'unable to get the free disk space with the script' ${CTA_TAPED_LOG}"; then
   echo "Script unexpectedly failed to get free disk space"
   exit 1
 fi

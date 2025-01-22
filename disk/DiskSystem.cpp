@@ -126,7 +126,7 @@ void DiskSystemFreeSpaceList::fetchDiskSystemFreeSpace(const std::set<std::strin
           cta::log::ScopedParamContainer spc(lc);
           spc.add("exceptionMsg", ex.getMessageValue());
           spc.add("externalScript", m_systemList.getExternalFreeDiskSpaceScript());
-          const std::string errorMsg = "In DiskSystemFreeSpaceList::fetchDiskSystemFreeSpace(), unable to get the EOS free space with the script."
+          const std::string errorMsg = "In DiskSystemFreeSpaceList::fetchDiskSystemFreeSpace(), unable to get the free disk space with the script."
             "Script threw runtime exception.";
           lc.log(cta::log::WARNING, errorMsg);
           throw;
