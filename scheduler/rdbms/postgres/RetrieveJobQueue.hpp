@@ -353,7 +353,7 @@ struct RetrieveJobQueueRow {
     auto stmt = conn.createStmt(sql);
     stmt.bindUint64(":RETRIEVE_REQUEST_ID", retrieveRequestId);
     stmt.bindUint32(":REQUEST_JOB_COUNT", reqJobCount);
-    stmt.bindString(":STATUS", to_string(status));
+    stmt.bindString(":STATUS", to_string(RetrieveJobStatus::RJS_ToTransfer)); // status shoudl be here instead
     stmt.bindUint64(":CREATION_TIME", archiveFile.creationTime);
     stmt.bindString(":STORAGE_CLASS", archiveFile.storageClass);
     stmt.bindUint64(":SIZE_IN_BYTES", archiveFile.fileSize);

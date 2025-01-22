@@ -84,7 +84,7 @@ enum class RetrieveJobStatus : uint8_t {
   ReadyForDeletion
 };
 
-constexpr const std::array<const char*, 7> StringsRetrieveJobStatus = {"RJS_ToTransfer"
+constexpr const std::array<const char*, 7> StringsRetrieveJobStatus = {"RJS_ToTransfer",
                                                                        "RJS_ToReportToUserForFailure",
                                                                        "RJS_Failed",
                                                                        "RJS_Complete",
