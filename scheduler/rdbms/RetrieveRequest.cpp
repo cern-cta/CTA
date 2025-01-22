@@ -192,6 +192,7 @@ void RetrieveRequest::fillJobsSetRetrieveFileQueueCriteria(
     m_jobs.back().maxRetriesWithinMount = hardcodedRetriesWithinMount;
     m_jobs.back().maxTotalRetries = hardcodedTotalRetries;
     m_jobs.back().maxReportRetries = hardcodedReportRetries;
+    m_jobs.back().status = schedulerdb::RetrieveJobStatus::RJS_ToTransfer;
     // in case we need these for retrieval we should save them in DB as well somehow !
     //uint64_t fSeq = tf.fSeq;
     //uint64_t blockId = tf.blockId;
