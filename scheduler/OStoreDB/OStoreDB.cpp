@@ -4024,8 +4024,10 @@ void OStoreDB::RetrieveMount::requeueJobBatch(std::list<std::unique_ptr<Schedule
 // OStoreDB::RetrieveMount::testReserveDiskSpace()
 //------------------------------------------------------------------------------
 bool OStoreDB::RetrieveMount::testReserveDiskSpace(const cta::DiskSpaceReservationRequest& diskSpaceReservationRequest,
-                                                   const std::string& externalFreeDiskSpaceScript,
-                                                   log::LogContext& logContext) {
+  const std::string& externalFreeDiskSpaceScript, log::LogContext& logContext) {
+  // if the problem is that the script is throwing errors (and not that the disk space is insufficient),
+  // we will issue a warning, but otherwise we will not sleep the queues and we will act like no disk
+  // system was present 
   // Get the current file systems list from the catalogue
   cta::disk::DiskSystemList diskSystemList;
   diskSystemList = m_oStoreDB.m_catalogue.DiskSystem()->getAllDiskSystems();
@@ -4043,19 +4045,18 @@ bool OStoreDB::RetrieveMount::testReserveDiskSpace(const cta::DiskSpaceReservati
   try {
     diskSystemFreeSpace.fetchDiskSystemFreeSpace(diskSystemNames, m_oStoreDB.m_catalogue, logContext);
   } catch (const cta::disk::DiskSystemFreeSpaceListException& ex) {
-    // Could not get free space for one of the disk systems. Currently the retrieve mount will only query
-    // one disk system, so just log the failure and put the queue to sleep inside the loop.
+    // Could not get free space for one of the disk systems due to a script error.
+    // The queue will not be put to sleep (backpressure will not be applied), and we return true
+    // because we want to allow staging files for retrieve in case of script errors.
     for (const auto& failedDiskSystem : ex.m_failedDiskSystems) {
       cta::log::ScopedParamContainer(logContext)
         .add("diskSystemName", failedDiskSystem.first)
         .add("failureReason", failedDiskSystem.second.getMessageValue())
-        .log(cta::log::ERR,
-             "In OStoreDB::RetrieveMount::testReserveDiskSpace(): unable to request EOS free space "
-             "for disk system, putting queue to sleep");
-      auto sleepTime = diskSystemFreeSpace.getDiskSystemList().at(failedDiskSystem.first).sleepTime;
-      putQueueToSleep(failedDiskSystem.first, sleepTime, logContext);
+        .log(cta::log::WARNING,
+            "In OStoreDB::RetrieveMount::testReserveDiskSpace(): unable to request EOS free space "
+            "for disk system using external script, backpressure will not be applied");
     }
-    return false;
+    return true;
   } catch (std::exception& ex) {
     // Leave a log message before letting the possible exception go up the stack.
     cta::log::ScopedParamContainer(logContext)
@@ -4125,19 +4126,18 @@ bool OStoreDB::RetrieveMount::reserveDiskSpace(const cta::DiskSpaceReservationRe
   try {
     diskSystemFreeSpace.fetchDiskSystemFreeSpace(diskSystemNames, m_oStoreDB.m_catalogue, logContext);
   } catch (const cta::disk::DiskSystemFreeSpaceListException& ex) {
-    // Could not get free space for one of the disk systems. Currently the retrieve mount will only query
-    // one disk system, so just log the failure and put the queue to sleep inside the loop.
+    // Could not get free space for one of the disk systems due to a script error.
+    // The queue will not be put to sleep (backpressure will not be applied), and we return
+    // true, because we want to allow staging files for retrieve in case of script errors.
     for (const auto& failedDiskSystem : ex.m_failedDiskSystems) {
       cta::log::ScopedParamContainer(logContext)
         .add("diskSystemName", failedDiskSystem.first)
         .add("failureReason", failedDiskSystem.second.getMessageValue())
-        .log(cta::log::ERR,
-             "In OStoreDB::RetrieveMount::reserveDiskSpace(): unable to request EOS free space for "
-             "disk system, putting queue to sleep");
-      auto sleepTime = diskSystemFreeSpace.getDiskSystemList().at(failedDiskSystem.first).sleepTime;
-      putQueueToSleep(failedDiskSystem.first, sleepTime, logContext);
+        .log(cta::log::WARNING,
+            "In OStoreDB::RetrieveMount::reserveDiskSpace(): unable to request EOS free space for "
+            "disk system using external script, backpressure will not be applied");
     }
-    return false;
+    return true;
   } catch (std::exception& ex) {
     // Leave a log message before letting the possible exception go up the stack.
     cta::log::ScopedParamContainer(logContext)

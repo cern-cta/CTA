@@ -81,6 +81,11 @@ static int exceptionThrowingMain(const cta::daemon::CommandLineParams& commandLi
   // Parse /etc/cta/cta-taped-unitName.conf parameters
   const TapedConfiguration globalConfig = TapedConfiguration::createFromConfigPath(commandLine.configFileLocation, log);
 
+  // log a warning if the externalFreeDiskSpaceScript is not set
+  if (globalConfig.externalFreeDiskSpaceScript.value().empty()) {
+    log(log::WARNING, "externalFreeDiskSpaceScript not configured");
+  }
+
   // Set log lines to JSON format if configured and not overridden on command line
   if(commandLine.logFormat.empty()) {
     log.setLogFormat(globalConfig.logFormat.value());

@@ -146,7 +146,7 @@ taped externalEncryptionKeyScript /usr/local/bin/cta-get-encryption-key.sh
 #
 
 # Path to the external script used to determine free disk space in the retrieve buffer.
-taped externalFreeDiskSpaceScript /usr/local/bin/cta-get-free-disk-space.sh
+taped externalFreeDiskSpaceScript /usr/bin/cta-eosdf.sh
 
 #
 # RECOMMENDED ACCESS ORDER (RAO) OPTIONS

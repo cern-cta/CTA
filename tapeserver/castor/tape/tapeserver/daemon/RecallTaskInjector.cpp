@@ -128,14 +128,15 @@ bool RecallTaskInjector::testDiskSpaceReservationWorking() {
     }
   }
 
-  bool ret = m_retrieveMount.testReserveDiskSpace(necessaryReservedSpace, m_lc);
-  if (ret) {
+  bool reservationTestSuccessful = m_retrieveMount.testReserveDiskSpace(necessaryReservedSpace, m_lc);
+  if (reservationTestSuccessful) {
     m_lc.log(cta::log::INFO, "Disk space reservation test passed, can mount tape");
+    return true;
   } else {
     m_lc.log(cta::log::INFO, "Disk space reservation test failed, will not mount tape");
     m_retrieveMount.requeueJobBatch(m_jobs, m_lc);
+    return false;
   }
-  return ret;
 }
 
 //------------------------------------------------------------------------------
@@ -172,7 +173,7 @@ bool RecallTaskInjector::reserveSpaceForNextJobBatch(std::list<std::unique_ptr<c
     return true;
   }
 
-  if (!ret) {
+  if (ret == false) {
     for (auto &jobptr : nextJobBatch) {
       m_jobs.push_back(std::unique_ptr<cta::RetrieveJob>(jobptr.release()));
     }
@@ -182,10 +183,11 @@ bool RecallTaskInjector::reserveSpaceForNextJobBatch(std::list<std::unique_ptr<c
     m_lc.log(cta::log::WARNING, "In RecallTaskInjector::reserveSpaceForNextJobBatch(): Disk space reservation failed, "
       "requeued all pending jobs");
     m_diskSpaceReservationFailed = true;
+    return false;
   } else {
     m_lc.log(cta::log::INFO, "In RecallTaskInjector::reserveSpaceForNextJobBatch(): Disk space reservation for next job batch succeeded");
+    return true;
   }
-  return ret;
 }
 
 //------------------------------------------------------------------------------

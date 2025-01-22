@@ -889,15 +889,18 @@ TEST_P(SchedulerDatabaseTest, popRetrieveRequestsWithDiskSystemNotFetcheable) {
       ASSERT_EQ("ds-Error", rj->diskSystemName.value());
       reservationRequest.addRequest(rj->diskSystemName.value(), rj->archiveFile.fileSize);
     }
-    //reserving disk space will fail because the disk instance is not reachable, causing backpressure
-    ASSERT_FALSE(rm->reserveDiskSpace(reservationRequest, "", lc));
+    // reserving disk space will fail because the script cannot be executed, no backpressure will be applied in this case
+    // but reserveDiskSpace will return true, because this is due to a script error
+    ASSERT_TRUE(rm->reserveDiskSpace(reservationRequest, "", lc));
   }
   auto mi = db.getMountInfoNoLock(cta::SchedulerDatabase::PurposeGetMountInfo::GET_NEXT_MOUNT,lc);
   ASSERT_EQ(1, mi->potentialMounts.size());
   //did not requeue the job batch (the retrive mount normally does this, but cannot do it in the tests due to BackendVFS)
   ASSERT_EQ(1, mi->potentialMounts.begin()->filesQueued);
-  ASSERT_TRUE(mi->potentialMounts.begin()->sleepingMount);
-  ASSERT_EQ("ds-Error", mi->potentialMounts.begin()->diskSystemSleptFor);
+  // not a sleeping mount because we do not apply backpressure when we can't get the free disk space
+  ASSERT_FALSE(mi->potentialMounts.begin()->sleepingMount);
+  // diskSystemSleptFor is set in putQueuesToSleep, as we do not call this function anymore, value is not set
+  ASSERT_EQ("", mi->potentialMounts.begin()->diskSystemSleptFor);
 }
 
 #undef TEST_MOCK_DB

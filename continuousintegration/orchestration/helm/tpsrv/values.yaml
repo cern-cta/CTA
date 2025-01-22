@@ -18,6 +18,7 @@ conf:
     secProtocol: "sss"
     secSssktPath: "/etc/cta"
     ctaTapedSss: "cta-taped.sss.keytab"
+    externalFreeDiskSpaceScript: "/usr/bin/cta-eosdf.sh"
   general:
     instanceName: "CI"
 
