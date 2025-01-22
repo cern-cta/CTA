@@ -175,8 +175,14 @@ uint64_t DiskSystemFreeSpaceList::fetchFreeDiskSpaceWithScript(const std::string
     sp = std::make_unique<cta::threading::SubProcess>(scriptPath,std::list{scriptPath, diskInstanceName, spaceName},jsonInput);
   }
   // for example, if the executable is not found, this exception will not be caught here - spawning the subprocess will throw an exception
-  catch (.../* cta::exception::Exception & ex */) {
-    throw cta::disk::FreeDiskSpaceException("Error spawning the subprocess to run the free disk space script");
+  catch (cta::exception::Errnum & ex) {
+    throw cta::disk::FreeDiskSpaceException(ex.getMessage().str());
+  }
+  catch (cta::exception::Exception & ex) {
+    throw cta::disk::FreeDiskSpaceException(ex.what());
+  }
+  catch (...) {
+    throw cta::disk::FreeDiskSpaceException("Error spawning the subprocess to run the free disk space script.");
   }
   sp->wait();
   try {

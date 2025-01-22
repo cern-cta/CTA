@@ -146,15 +146,28 @@ fi
 ## The idea is that we run it once without script, and once without executable permission on the script
 ## Both times we should get a success, because when the script is the problem, we allow staging to continue
 echo "Launching eosdf_systemtest.sh with a nonexistent script"
-# rename the script on taped so that it cannot be found
+# rename the script on taped so that it cannot be found 
+# error to grep for in the logs is 'No such file or directory'
 kubectl -n ${NAMESPACE} exec cta-tpsrv01-0 -c taped-0 -- bash -c "mv /usr/bin/cta-eosdf.sh /usr/bin/eosdf_newname.sh" || exit 1
 kubectl -n ${NAMESPACE} exec ${CLIENT_POD} -c client -- bash -c "${TEST_PRERUN} && /root/eosdf_systemtest.sh ${TEST_POSTRUN}" || exit 1
+if kubectl -n ${NAMESPACE} exec cta-tpsrv01-0 -c taped-0 -- bash -c "grep -q 'No such file or directory' ${CTA_TAPED_LOG}"; then
+  echo "Subprocess threw 'No such file or directory', as expected"
+else
+  exit 1
+fi
 # now give it back its original name but remove the executable permission, should still succeed
+# now the error to grep for is 'Permission denied'
 echo "Launching eosdf_systemtest.sh with correct script without executable permissions"
 kubectl -n ${NAMESPACE} exec cta-tpsrv01-0 -c taped-0 -- bash -c "mv /usr/bin/eosdf_newname.sh /usr/bin/cta-eosdf.sh" || exit 1
 kubectl -n ${NAMESPACE} exec cta-tpsrv01-0 -c taped-0 -- bash -c "chmod -x /usr/bin/cta-eosdf.sh" || exit 1
 kubectl -n ${NAMESPACE} exec ${CLIENT_POD} -c client -- bash -c "${TEST_PRERUN} && /root/eosdf_systemtest.sh ${TEST_POSTRUN}" || exit 1
+if kubectl -n ${NAMESPACE} exec cta-tpsrv01-0 -c taped-0 -- bash -c "grep -q 'Permission denied' ${CTA_TAPED_LOG}"; then
+  echo "Subprocess threw 'Permission denied', as expected"
+else
+  exit 1
+fi
 # Test what happens when we get an error from the eos client (fake instance not reachable by specifying a nonexistent instance name in the script)
+# grep for 'could not be used to get the FreeSpace'
 echo "Launching eosdf_systemtest.sh with script that throws an eos-client error"
 # fake instance not reachable
 kubectl -n ${NAMESPACE} exec cta-tpsrv01-0 -c taped-0 -- bash -c "sed -i 's|root://\$diskInstance|root://nonexistentinstance|g' /usr/bin/cta-eosdf.sh" || exit 1
