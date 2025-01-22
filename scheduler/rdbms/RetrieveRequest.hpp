@@ -217,7 +217,7 @@ private:
  common::dataStructures::RetrieveRequest m_schedRetrieveReq;
  uint32_t m_actCopyNb {0};
  std::string m_vid;
- schedulerdb::RetrieveJobStatus m_status;
+ schedulerdb::RetrieveJobStatus m_status = schedulerdb::RetrieveJobStatus::RJS_ToTransfer;
  std::optional<std::string> m_activity;
  std::optional<std::string> m_diskSystemName;
  cta::common::dataStructures::ArchiveFile m_archiveFile;
