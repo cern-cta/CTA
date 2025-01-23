@@ -27,7 +27,11 @@ DriveHandlerProxy::~DriveHandlerProxy() {
     m_refreshLoggerClosing = true;
     // Send a signal to stop the waiting thread
     m_refreshLoggerClosingSock->send("stop_thread", server::SocketPair::Side::child);
-    m_refreshLoggerAsyncFut.wait();
+    try {
+      m_refreshLoggerAsyncFut.wait();
+    } catch (...) {
+      m_lc.log(log::ERR, "In DriveHandlerProxy::~DriveHandlerProxy(): uncaught exception thrown by m_refreshLoggerAsyncFut future.");
+    }
   }
 }
 
@@ -103,22 +107,19 @@ void DriveHandlerProxy::setRefreshLoggerHandler(std::function<void()> handler) {
             // Do nothing
             continue;
           }
-          m_socketPair.receive(server::SocketPair::Side::parent);
-          auto handler = m_refreshLoggerHandler.value();
-          handler();
+          if (m_socketPair.pollFlag()) {
+            m_socketPair.receive(server::SocketPair::Side::parent);
+            auto handler = m_refreshLoggerHandler.value();
+            handler();
+          }
         }
       } catch(cta::exception::Exception & ex) {
         log::ScopedParamContainer exParams(lc);
         exParams.add("exceptionMessage", ex.getMessageValue());
         lc.log(log::ERR, "In DriveHandlerProxy::setRefreshLoggerHandler(): received an exception. Backtrace follows.");
         lc.logBacktrace(log::INFO, ex.backtrace());
-        throw ex;
       } catch(std::exception &ex) {
         lc.log(log::ERR, "In DriveHandlerProxy::setRefreshLoggerHandler(): received a std::exception.");
-        throw ex;
-      } catch(...) {
-        lc.log(log::ERR, "In DriveHandlerProxy::setRefreshLoggerHandler(): received an unknown exception.");
-        throw;
       }
     });
   } else {
