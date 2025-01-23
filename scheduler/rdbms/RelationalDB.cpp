@@ -24,6 +24,7 @@
 #include "common/utils/utils.hpp"
 #include "scheduler/rdbms/postgres/Transaction.hpp"
 #include "scheduler/rdbms/postgres/ArchiveJobSummary.hpp"
+#include "scheduler/rdbms/postgres/RetrieveJobSummary.hpp"
 #include "scheduler/rdbms/ArchiveRdbJob.hpp"
 #include "scheduler/rdbms/ArchiveRequest.hpp"
 #include "scheduler/rdbms/TapeMountDecisionInfo.hpp"
@@ -31,6 +32,8 @@
 #include "scheduler/rdbms/RetrieveRdbJob.hpp"
 #include "scheduler/rdbms/RetrieveRequest.hpp"
 #include "scheduler/rdbms/RepackRequest.hpp"
+
+#include <vector>
 
 namespace cta {
 
@@ -361,16 +364,13 @@ RelationalDB::queueRetrieve(cta::common::dataStructures::RetrieveRequest& rqst,
     rReq->setActivityIfNeeded(rqst, criteria);
     ret.requestId = rReq->getIdStr();
     rReq->setSchedulerRequest(rqst);
-    rReq->fillJobsSetRetrieveFileQueueCriteria(criteria); // fills also m_jobs
+    rReq->fillJobsSetRetrieveFileQueueCriteria(criteria);  // fills also m_jobs
     rReq->setActiveCopyNumber(bestCopyNb);
     rReq->setIsVerifyOnly(rqst.isVerifyOnly);
     if (diskSystemName) {
       rReq->setDiskSystemName(diskSystemName.value());
     }
     // rReq->setCreationTime(rqst.creationLog.time); // ? no reason for this method to exist ?
-
-
-
 
     /* FROM OLD getNextJobBatch RETRIEVE method
         schedulerdb::RetrieveRequest rr(logContext, j);
@@ -706,17 +706,16 @@ void RelationalDB::fetchMountInfo(SchedulerDatabase::TapeMountDecisionInfo& tmdi
   auto& txn = static_cast<schedulerdb::TapeMountDecisionInfo*>(&tmdi)->m_txn;
 
   // Map of mount policies. getCachedMountPolicies() should be refactored to return a map instead of a list. In the meantime, copy the values into a local map.
-  std::map<std::string, common::dataStructures::MountPolicy, std::less<>> cachedMountPolicies;
+  std::map<std::string, common::dataStructures::MountPolicy, std::less<>> cachedMountPoliciesMap;
   for (const auto& mp : m_catalogue.MountPolicy()->getCachedMountPolicies()) {
-    cachedMountPolicies[mp.name] = mp;
+    cachedMountPoliciesMap[mp.name] = mp;
   }
-
   // Map of (mount type, tapepool/vid) -> PotentialMount to aggregate queue info
   std::map<std::pair<common::dataStructures::MountType, std::string>, SchedulerDatabase::PotentialMount>
     potentialMounts;
   timings.insertAndReset("fetchMountPolicyCatalogueTime", t);
   // Iterate over all archive queues
-  auto rset = cta::schedulerdb::postgres::ArchiveJobSummaryRow::selectJobsExceptDriveQueue(*txn);
+  auto rset = cta::schedulerdb::postgres::ArchiveJobSummaryRow::selectNewJobs(*txn);
   while (rset.next()) {
     cta::schedulerdb::postgres::ArchiveJobSummaryRow ajsr(rset);
     // Set the queue type
@@ -743,7 +742,7 @@ void RelationalDB::fetchMountInfo(SchedulerDatabase::TapeMountDecisionInfo& tmdi
     // we fall back to the mount policy values cached in the queue.
     uint64_t priority;
     time_t minRequestAge;
-    if (auto mpIt = cachedMountPolicies.find(ajsr.mountPolicy); mpIt != cachedMountPolicies.end()) {
+    if (auto mpIt = cachedMountPoliciesMap.find(ajsr.mountPolicy); mpIt != cachedMountPoliciesMap.end()) {
       priority = mpIt->second.archivePriority;
       minRequestAge = mpIt->second.archiveMinRequestAge;
     } else {
@@ -754,7 +753,90 @@ void RelationalDB::fetchMountInfo(SchedulerDatabase::TapeMountDecisionInfo& tmdi
     m.minRequestAge = minRequestAge < m.minRequestAge ? minRequestAge : m.minRequestAge;
     m.logicalLibrary = "";
   }
-  timings.insertAndReset("getScheduledJobSummariesTime", t);
+  timings.insertAndReset("getScheduledArchiveJobSummariesTime", t);
+
+  // Walk the retrieve queues for statistics
+  auto rrset = cta::schedulerdb::postgres::RetrieveJobSummaryRow::selectNewJobs(*txn);
+  int cnt = 0;
+  uint64_t highestPriority = 0;
+  uint64_t lowestRequestAge = 9999999999999;
+  std::optional<std::string> highestPriorityMountPolicyName;
+  std::optional<std::string> lowestRequestAgeMountPolicyName;
+  //std::list<std::string> queueMountPolicyNames;
+  //std::map<std::string, uint64_t, std::less<>> queueActivityNamesJobCounts;
+  std::vector<cta::schedulerdb::postgres::RetrieveJobSummaryRow> rjsr_vector;
+  // Set the queue type
+  common::dataStructures::MountType mountType = common::dataStructures::MountType::Retrieve;
+  // first we find out from all the mount policies in the queues
+  // which one has the highest priority and lowest request age which we need for later
+  while (rrset.next()) {
+    cnt++;
+    rjsr_vector.emplace_back(rrset);
+    if (cnt == 1) {
+      highestPriority = rjsr_vector.back().priority;
+      highestPriorityMountPolicyName = rjsr_vector.back().mountPolicy;
+      lowestRequestAge = rjsr_vector.back().minRetrieveRequestAge;
+      lowestRequestAgeMountPolicyName = rjsr_vector.back().mountPolicy;
+    } else {
+      if (rjsr_vector.back().priority > highestPriority) {
+        highestPriority = rjsr_vector.back().priority;
+        highestPriorityMountPolicyName = rjsr_vector.back().mountPolicy;
+      }
+      if (rjsr_vector.back().minRetrieveRequestAge < lowestRequestAge) {
+        lowestRequestAge = rjsr_vector.back().minRetrieveRequestAge;
+        lowestRequestAgeMountPolicyName = rjsr_vector.back().mountPolicy;
+      }
+    }
+  }
+
+  // for now we create a mount per summary row (assuming there would not be
+  // the same activity twice with 2 mount policies or 2 different VIDs selected)
+  for (const auto& rjsr : rjsr_vector) {
+    auto& m = potentialMounts[std::make_pair(mountType, rjsr.vid)];
+    // we check is higher priority and lower request age is not
+    // defined in the catalogue for the same mount policy name, if so we take the catalogue numbers
+    uint64_t priority;
+    time_t minRequestAge;
+    if (auto mpIt = cachedMountPoliciesMap.find(rjsr.mountPolicy); mpIt != cachedMountPoliciesMap.end()) {
+      priority = mpIt->second.archivePriority;
+      minRequestAge = mpIt->second.archiveMinRequestAge;
+    } else {
+      priority = rjsr.priority;
+      minRequestAge = rjsr.minRetrieveRequestAge;
+    }
+    m.priority = priority > m.priority ? priority : m.priority;
+    m.minRequestAge = minRequestAge < m.minRequestAge ? minRequestAge : m.minRequestAge;
+    m.vid = rjsr.vid;
+    m.type = cta::common::dataStructures::MountType::Retrieve;
+    m.bytesQueued = rjsr.jobsTotalSize;
+    m.filesQueued = rjsr.jobsCount;
+    m.oldestJobStartTime = rjsr.oldestJobStartTime;
+    m.youngestJobStartTime = rjsr.youngestJobStartTime;
+    m.highestPriorityMountPolicyName = highestPriorityMountPolicyName;
+    m.lowestRequestAgeMountPolicyName = lowestRequestAgeMountPolicyName;
+    m.logicalLibrary = "";         // The logical library is not known here, and will be determined by the caller.
+    m.tapePool = "";               // The tape pool is not know and will be determined by the caller.
+    m.vendor = "";                 // The vendor is not known here, and will be determined by the caller.
+    m.mediaType = "";              // The logical library is not known here, and will be determined by the caller.
+    m.vo = "";                     // The vo is not known here, and will be determined by the caller.
+    m.capacityInBytes = 0;         // The capacity is not known here, and will be determined by the caller.
+    m.labelFormat = std::nullopt;  // The labelFormat is not known here, and may be determined by the caller.
+    // not sure what mountPolicyNames is for ???
+    // are we mounting with multiple mount policies in the game ?
+    // m.mountPolicyNames = queueMountPolicyNames;
+    // sleepInfo - TO BE REVIEWED BEFORE IMPLEMENTING !
+    // We will display the sleep flag only if it is not expired (15 minutes timeout, hardcoded).
+    // This allows having a single decision point instead of implementing is at the consumer levels.
+    // if (rqSummary.sleepInfo && (::time(nullptr) < (rqSummary.sleepInfo.value().sleepStartTime +
+    //                                                (int64_t) rqSummary.sleepInfo.value().sleepTime))) {
+    //   m.sleepingMount = true;
+    //   m.sleepStartTime = rqSummary.sleepInfo.value().sleepStartTime;
+    //   m.diskSystemSleptFor = rqSummary.sleepInfo.value().diskSystemSleptFor;
+    //   m.sleepTime = rqSummary.sleepInfo.value().sleepTime;
+    // }
+  }
+
+  timings.insertAndReset("getScheduledRetrieveJobSummariesTime", t);
 
   // Copy the aggregated Potential Mounts into the TapeMountDecisionInfo
   for (const auto& [mt, pm] : potentialMounts) {
