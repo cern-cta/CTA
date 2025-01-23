@@ -4,7 +4,7 @@ metadata:
   labels:
     config: eoscta
   name: eos-grpc-keytab
-  namespace: {{.Release.Namespace}}
+  namespace: {{ .Release.Namespace }}
 data:
   eos.grpc.keytab: |-
     # instance  host:port       token

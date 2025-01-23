@@ -1,10 +1,10 @@
-{{- $name := include "kdc.name" .}}
-{{- $namespace := .Release.Namespace}}
+{{- $name := include "kdc.name" . }}
+{{- $namespace := .Release.Namespace }}
 apiVersion: v1
 kind: Service
 metadata:
   name: {{ $name }}
-  namespace: {{$namespace}}
+  namespace: {{ $namespace }}
 spec:
   selector:
     app.kubernetes.io/name: {{ $name }}

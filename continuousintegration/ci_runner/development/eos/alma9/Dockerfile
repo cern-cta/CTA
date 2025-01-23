@@ -13,7 +13,7 @@
 #               granted to it by virtue of its status as an Intergovernmental Organization or
 #               submit itself to any jurisdiction.
 
-FROM gitlab-registry.cern.ch/linuxsupport/alma9-base
+FROM gitlab-registry.cern.ch/linuxsupport/alma9-base:latest
 
 ARG EOS_VERSION=master
 RUN set -ex; \

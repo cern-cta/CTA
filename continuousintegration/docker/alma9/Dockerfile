@@ -14,7 +14,7 @@
 #               submit itself to any jurisdiction.
 
 # CTA generic image containing all CTA RPMs
-FROM gitlab-registry.cern.ch/linuxsupport/alma9-base
+FROM gitlab-registry.cern.ch/linuxsupport/alma9-base:latest
 
 ENV BASEDIR="continuousintegration/docker/alma9" \
     CTAREPODIR="/opt/repo"
@@ -33,33 +33,30 @@ COPY ${YUM_VERSIONLOCK_FILE} /etc/dnf/plugins/versionlock.list
 RUN dnf install -y \
       python3-dnf-plugin-versionlock \
       yum-utils \
-      createrepo epel-release \
-      jq bc \
+      createrepo \
+      epel-release \
+      jq \
+      bc \
       sqlite \
-      krb5-workstation \
-  && \
+      krb5-workstation && \
     # logrotate files must be 0644 or 0444
-    # .rpmnew files are ignored %config (no replace)
-    chmod 0644 /etc/logrotate.d/* \
-  && \
-    mkdir -p ${CTAREPODIR}/RPMS/x86_64
+    chmod 0644 /etc/logrotate.d/*
 
+# Copy pre-built RPMs into the local repository directory
 COPY image_rpms ${CTAREPODIR}/RPMS/x86_64
 
 # Populate local repository and enable it
-RUN dnf config-manager --enable epel --setopt="epel.priority=4" \
-  && \
-    createrepo ${CTAREPODIR} \
-  && \
-    echo -e "[cta-artifacts]\nname=CTA artifacts\nbaseurl=file://${CTAREPODIR}\ngpgcheck=0\nenabled=1\npriority=2" > /etc/yum.repos.d/cta-artifacts.repo \
-  && \
-    dnf clean all \
-  && \
-    rm -rf /var/cache/yum; \
-    rm -rf /var/cache/dnf; \
-    rm -f /etc/rc.d/rc.local
-
-# Check that CTA packages are in container (from previous artifacts)
-RUN find ${CTAREPODIR}/RPMS/x86_64 | grep cta-taped && echo "cta-taped rpm is present: artifacts seems OK" || (echo "cta-taped rpm was not added from previously built artifact: this is a gitlab issue that must be investigated" 1>&2; exit 1)
-
-RUN dnf config-manager --enable cta-artifacts
+RUN dnf config-manager --enable epel --setopt="epel.priority=4" && \
+    createrepo "${CTAREPODIR}" && \
+    echo -e "[cta-artifacts]\n\
+name=CTA artifacts\n\
+baseurl=file://${CTAREPODIR}\n\
+gpgcheck=0\n\
+enabled=1\n\
+priority=2" > /etc/yum.repos.d/cta-artifacts.repo && \
+    dnf clean all && \
+    dnf config-manager --enable cta-artifacts && \
+    rm -rf /var/cache/{yum,dnf} /etc/rc.d/rc.local && \
+    # Check that CTA packages are available
+    dnf list available cta-taped > /dev/null 2>&1 || \
+    (echo "cta-taped RPM is missing from the repository" 1>&2; exit 1)
