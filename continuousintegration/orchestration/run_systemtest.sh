@@ -92,9 +92,9 @@ run_systemtest() {
 
   orchestration_dir=${PWD} # orchestration directory so that we can come back here and launch delete_instance during cleanup
   create_instance_timeout=600 # time out for the create_instance.sh script
-  preflight_checks_script='tests/preflight_checks.sh'
+  preflight_checks_script="tests/preflight_checks.sh"
   preflight_checks_timeout=60 # default preflight checks timeout is 60 seconds
-  postrun_checks_script='tests/postrun_checks.sh'
+  postrun_checks_script="tests/postrun_checks.sh"
   postrun_checks_timeout=30 # default preflight checks timeout is 60 seconds
 
   # Argument defaults
