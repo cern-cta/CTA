@@ -50,7 +50,7 @@ struct RetrieveJobSummaryRow {
     activity = rset.columnOptionalString("ACTIVITY");
     jobsCount = rset.columnUint64("JOBS_COUNT");
     jobsTotalSize = rset.columnUint64("JOBS_TOTAL_SIZE");
-    priority = rset.columnUint64("RETRIEVE_PRIORITY");
+    priority = rset.columnUint64("PRIORITY");
     minRetrieveRequestAge = rset.columnUint64("RETRIEVE_MIN_REQUEST_AGE");
     mountPolicy = rset.columnString("MOUNT_POLICY");
     oldestJobStartTime = rset.columnUint64("OLDEST_JOB_START_TIME");
@@ -158,7 +158,7 @@ struct RetrieveJobSummaryRow {
         JOBS_TOTAL_SIZE,
         OLDEST_JOB_START_TIME,
         YOUNGEST_JOB_START_TIME,
-        RETRIEVE_PRIORITY,
+        PRIORITY,
         RETRIEVE_MIN_REQUEST_AGE,
         LAST_JOB_UPDATE_TIME
       FROM
