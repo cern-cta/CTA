@@ -148,6 +148,12 @@ TapeMountDecisionInfo::createRetrieveMount(const cta::SchedulerDatabase::Potenti
   rm.mountInfo.drive = driveName;
   rm.mountInfo.logicalLibrary = logicalLibrary;
   rm.mountInfo.host = hostName;
+  rm.mountInfo.tapePool = mount.tapePool;
+  rm.mountInfo.logicalLibrary = logicalLibrary;
+  rm.mountInfo.vendor = mount.vendor;
+  rm.mountInfo.capacityInBytes = mount.capacityInBytes;
+  rm.mountInfo.activity = mount.activity;
+  rm.mountInfo.encryptionKeyName = mount.encryptionKeyName;
 
   // Return the mount session object to the user
   std::unique_ptr<SchedulerDatabase::RetrieveMount> ret(privateRet.release());
