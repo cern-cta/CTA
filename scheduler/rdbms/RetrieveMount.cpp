@@ -15,17 +15,18 @@
  *               submit itself to any jurisdiction.
  */
 
-#include "scheduler/rdbms/RetrieveMount.hpp"
+#include "catalogue/Catalogue.hpp"
 #include "common/exception/Exception.hpp"
 #include "common/log/TimingList.hpp"
 #include "common/utils/utils.hpp"
 #include "scheduler/rdbms/postgres/Transaction.hpp"
 #include "common/Timer.hpp"
+#include "scheduler/rdbms/RetrieveMount.hpp"
 
 namespace cta::schedulerdb {
 
 const SchedulerDatabase::RetrieveMount::MountInfo& RetrieveMount::getMountInfo() {
-    return mountInfo;
+  return mountInfo;
 }
 
 std::list<std::unique_ptr<SchedulerDatabase::RetrieveJob>>
@@ -92,10 +93,88 @@ RetrieveMount::getNextJobBatch(uint64_t filesRequested, uint64_t bytesRequested,
   return ret;
 }
 
-bool RetrieveMount::reserveDiskSpace(const cta::DiskSpaceReservationRequest& request,
+bool RetrieveMount::reserveDiskSpace(const cta::DiskSpaceReservationRequest& diskSpaceReservationRequest,
                                      const std::string& externalFreeDiskSpaceScript,
                                      log::LogContext& logContext) {
-  throw cta::exception::Exception("Not implemented");
+  // Get the current file systems list from the catalogue
+  cta::disk::DiskSystemList diskSystemList;
+  diskSystemList = m_RelationalDB.m_catalogue.DiskSystem()->getAllDiskSystems();
+  diskSystemList.setExternalFreeDiskSpaceScript(externalFreeDiskSpaceScript);
+  cta::disk::DiskSystemFreeSpaceList diskSystemFreeSpace(diskSystemList);
+
+  // Get the existing reservation map from drives.
+  auto previousDrivesReservations = m_RelationalDB.m_catalogue.DriveState()->getDiskSpaceReservations();
+  // Get the free space from disk systems involved.
+  std::set<std::string> diskSystemNames;
+  for (const auto& dsrr : diskSpaceReservationRequest) {
+    diskSystemNames.insert(dsrr.first);
+  }
+
+  try {
+    diskSystemFreeSpace.fetchDiskSystemFreeSpace(diskSystemNames, m_RelationalDB.m_catalogue, logContext);
+  } catch (const cta::disk::DiskSystemFreeSpaceListException& ex) {
+    // Could not get free space for one of the disk systems. Currently the retrieve mount will only query
+    // one disk system, so just log the failure and put the queue to sleep inside the loop.
+    for (const auto& failedDiskSystem : ex.m_failedDiskSystems) {
+      cta::log::ScopedParamContainer(logContext)
+        .add("diskSystemName", failedDiskSystem.first)
+        .add("failureReason", failedDiskSystem.second.getMessageValue())
+        .log(cta::log::ERR,
+             "In RelationalDB::RetrieveMount::reserveDiskSpace(): unable to request EOS free space for "
+             "disk system, putting queue to sleep");
+      auto sleepTime = diskSystemFreeSpace.getDiskSystemList().at(failedDiskSystem.first).sleepTime;
+      putQueueToSleep(failedDiskSystem.first, sleepTime, logContext);
+    }
+    return false;
+  } catch (std::exception& ex) {
+    // Leave a log message before letting the possible exception go up the stack.
+    cta::log::ScopedParamContainer(logContext)
+      .add("exceptionWhat", ex.what())
+      .log(cta::log::ERR,
+           "In RelationalDB::RetrieveMount::reserveDiskSpace(): got an exception from "
+           "diskSystemFreeSpace.fetchDiskSystemFreeSpace().");
+    throw;
+  }
+
+  // If a file system does not have enough space fail the disk space reservation,  put the queue to sleep and
+  // the retrieve mount will immediately stop
+  for (const auto& ds : diskSystemNames) {
+    uint64_t previousDrivesReservationTotal = 0;
+    auto diskSystem = diskSystemFreeSpace.getDiskSystemList().at(ds);
+    // Compute previous drives reservation for the physical space of the current disk system.
+    for (auto previousDriveReservation : previousDrivesReservations) {
+      //avoid empty string when no disk space reservation exists for drive
+      if (previousDriveReservation.second != 0) {
+        auto previousDiskSystem = diskSystemFreeSpace.getDiskSystemList().at(previousDriveReservation.first);
+        if (diskSystem.diskInstanceSpace.freeSpaceQueryURL == previousDiskSystem.diskInstanceSpace.freeSpaceQueryURL) {
+          previousDrivesReservationTotal += previousDriveReservation.second;
+        }
+      }
+    }
+    if (diskSystemFreeSpace.at(ds).freeSpace < diskSpaceReservationRequest.at(ds) +
+                                                 diskSystemFreeSpace.at(ds).targetedFreeSpace +
+                                                 previousDrivesReservationTotal) {
+      cta::log::ScopedParamContainer(logContext)
+        .add("diskSystemName", ds)
+        .add("freeSpace", diskSystemFreeSpace.at(ds).freeSpace)
+        .add("existingReservations", previousDrivesReservationTotal)
+        .add("spaceToReserve", diskSpaceReservationRequest.at(ds))
+        .add("targetedFreeSpace", diskSystemFreeSpace.at(ds).targetedFreeSpace)
+        .log(cta::log::WARNING,
+             "In RelationalDB::RetrieveMount::reservediskSpace(): could not allocate disk space for job, "
+             "applying backpressure");
+
+      auto sleepTime = diskSystem.sleepTime;
+      putQueueToSleep(ds, sleepTime, logContext);
+      return false;
+    }
+  }
+
+  m_RelationalDB.m_catalogue.DriveState()->reserveDiskSpace(mountInfo.drive,
+                                                            mountInfo.mountId,
+                                                            diskSpaceReservationRequest,
+                                                            logContext);
+  return true;
 }
 
 bool RetrieveMount::testReserveDiskSpace(const cta::DiskSpaceReservationRequest& request,
@@ -104,39 +183,56 @@ bool RetrieveMount::testReserveDiskSpace(const cta::DiskSpaceReservationRequest&
   throw cta::exception::Exception("Not implemented");
 }
 
-
 uint64_t RetrieveMount::requeueJobBatch(const std::list<std::string>& jobIDsList,
-                                       cta::log::LogContext& logContext) const {
+                                        cta::log::LogContext& logContext) const {
   // here we will do the same as for ArchiveRdbJob::failTransfer but for bunch of jobs
   cta::schedulerdb::Transaction txn(m_connPool);
   uint64_t nrows = 0;
   try {
-    nrows =
-      postgres::RetrieveJobQueueRow::requeueJobBatch(txn, RetrieveJobStatus::RJS_ToTransfer, jobIDsList);
-    if (nrows != jobIDsList.size()){
+    nrows = postgres::RetrieveJobQueueRow::requeueJobBatch(txn, RetrieveJobStatus::RJS_ToTransfer, jobIDsList);
+    if (nrows != jobIDsList.size()) {
       cta::log::ScopedParamContainer params(logContext);
       params.add("jobCountToRequeue", jobIDsList.size());
       params.add("jobCountRequeued", nrows);
-      logContext.log(cta::log::ERR,
-                     "In schedulerdb::RetrieveMount::requeueJobBatch(): failed to requeue all jobs !");
+      logContext.log(cta::log::ERR, "In schedulerdb::RetrieveMount::requeueJobBatch(): failed to requeue all jobs !");
     }
     txn.commit();
   } catch (exception::Exception& ex) {
-    logContext.log(cta::log::ERR,
-                   "In schedulerdb::RetrieveMount::requeueJobBatch(): failed to update job status for failed task queue." +
-                     ex.getMessageValue());
+    logContext.log(
+      cta::log::ERR,
+      "In schedulerdb::RetrieveMount::requeueJobBatch(): failed to update job status for failed task queue." +
+        ex.getMessageValue());
     txn.abort();
     return 0;
   }
   return nrows;
 }
 
-
 void RetrieveMount::setDriveStatus(common::dataStructures::DriveStatus status,
                                    common::dataStructures::MountType mountType,
                                    time_t completionTime,
                                    const std::optional<std::string>& reason) {
-  throw cta::exception::Exception("Not implemented");
+  // We just report the drive status as instructed by the tape thread.
+  // Reset the drive state.
+  common::dataStructures::DriveInfo driveInfo;
+  driveInfo.driveName = mountInfo.drive;
+  driveInfo.logicalLibrary = mountInfo.logicalLibrary;
+  driveInfo.host = mountInfo.host;
+  ReportDriveStatusInputs inputs;
+  inputs.mountType = mountType;
+  inputs.mountSessionId = mountInfo.mountId;
+  inputs.reportTime = completionTime;
+  inputs.status = status;
+  inputs.vid = mountInfo.vid;
+  inputs.tapepool = mountInfo.tapePool;
+  inputs.vo = mountInfo.vo;
+  inputs.reason = reason;
+  inputs.activity = mountInfo.activity;
+  // TODO: statistics!
+  inputs.byteTransferred = 0;
+  inputs.filesTransferred = 0;
+  log::LogContext lc(m_RelationalDB.m_logger);
+  m_RelationalDB.m_tapeDrivesState->updateDriveStatus(driveInfo, inputs, lc);
 }
 
 void RetrieveMount::setTapeSessionStats(const castor::tape::tapeserver::daemon::TapeSessionStats& stats) {

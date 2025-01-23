@@ -31,7 +31,7 @@ struct RetrieveJobSummaryRow {
   std::string vid;
   std::optional<std::string> activity;
   uint64_t priority;
-  schedulerdb::RetrieveJobStatus status;
+  //schedulerdb::RetrieveJobStatus status;
   std::string mountPolicy;
   uint64_t minRetrieveRequestAge;
 
@@ -46,7 +46,7 @@ struct RetrieveJobSummaryRow {
 
   RetrieveJobSummaryRow& operator=(const rdbms::Rset& rset) {
     vid = rset.columnString("VID");
-    status = from_string<schedulerdb::RetrieveJobStatus>(rset.columnString("STATUS"));
+    //status = from_string<schedulerdb::RetrieveJobStatus>(rset.columnString("STATUS"));
     activity = rset.columnOptionalString("ACTIVITY");
     jobsCount = rset.columnUint64("JOBS_COUNT");
     jobsTotalSize = rset.columnUint64("JOBS_TOTAL_SIZE");
@@ -62,7 +62,12 @@ struct RetrieveJobSummaryRow {
     params.add("vid", vid);
     params.add("jobsCount", jobsCount);
     params.add("jobsTotalSize", jobsTotalSize);
+    params.add("activity", activity.value_or(""));
+    params.add("mountPolicy", mountPolicy);
     params.add("priority", priority);
+    params.add("minRetrieveRequestAge", minRetrieveRequestAge);
+    params.add("oldestJobStartTime", oldestJobStartTime);
+    params.add("youngestJobStartTime", youngestJobStartTime);
   }
 
   /**
@@ -71,17 +76,17 @@ struct RetrieveJobSummaryRow {
    * @return result set containing all rows in the table
    */
   static rdbms::Rset selectVid(const std::string& vid, common::dataStructures::JobQueueType type, Transaction& txn) {
+    // for the moment ignoring status as we will query only one table
+    // where all the jobs wait to be popped to the drive task queues
     const char* const sql = R"SQL(
       SELECT 
         VID,
-        STATUS,
         JOBS_COUNT,
         JOBS_TOTAL_SIZE
       FROM RETRIEVE_JOB_SUMMARY WHERE 
         VID = :VID AND 
-        STATUS = :STATUS
     )SQL";
-
+    /*
     std::string statusStr;
     switch (type) {
       case common::dataStructures::JobQueueType::JobsToTransferForUser:
@@ -105,10 +110,11 @@ struct RetrieveJobSummaryRow {
         statusStr = to_string(schedulerdb::RetrieveJobStatus::RJS_Failed);
         break;
     }
+     */
 
     auto stmt = txn.getConn().createStmt(sql);
     stmt.bindString(":VID", vid);
-    stmt.bindString(":STATUS", statusStr);
+    //stmt.bindString(":STATUS", statusStr);
     return stmt.executeQuery();
   }
   /**
@@ -150,15 +156,14 @@ struct RetrieveJobSummaryRow {
 
     const char* const sql = R"SQL(
       SELECT
-        STATUS,
         VID,
         MOUNT_POLICY,
         ACTIVITY,
+        PRIORITY,
         JOBS_COUNT,
         JOBS_TOTAL_SIZE,
         OLDEST_JOB_START_TIME,
         YOUNGEST_JOB_START_TIME,
-        PRIORITY,
         RETRIEVE_MIN_REQUEST_AGE,
         LAST_JOB_UPDATE_TIME
       FROM
