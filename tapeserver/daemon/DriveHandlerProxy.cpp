@@ -103,7 +103,12 @@ void DriveHandlerProxy::setRefreshLoggerHandler(std::function<void()> handler) {
             // Do nothing
             continue;
           }
-          m_socketPair.receive(server::SocketPair::Side::parent);
+          try {
+            m_socketPair.receive(server::SocketPair::Side::parent);
+          } catch (server::SocketPair::NothingToReceive &) {
+            // Despite poll() passing, it might still happen that there is nothing to receive, so just continue
+            continue;
+          }
           auto handler = m_refreshLoggerHandler.value();
           handler();
         }
