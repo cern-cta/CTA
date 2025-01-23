@@ -114,7 +114,7 @@ RetrieveJobQueueRow::moveJobsToDbQueue(Transaction& txn,
         M.RETRIEVE_REQUEST_ID,
         M.REQUEST_JOB_COUNT,
         M.STATUS,
-        M.TAPE_POOL,
+        :TAPE_POOL AS TAPE_POOL,
         M.MOUNT_POLICY,
         M.PRIORITY,
         M.MIN_RETRIEVE_REQUEST_AGE,
@@ -169,6 +169,7 @@ RetrieveJobQueueRow::moveJobsToDbQueue(Transaction& txn,
   stmt.bindString(":DRIVE", mountInfo.drive);
   stmt.bindString(":HOST", mountInfo.host);
   stmt.bindString(":LOGICAL_LIBRARY", mountInfo.logicalLibrary);
+  stmt.bindString(":TAPE_POOL",mountInfo.tapePool);
   stmt.bindUint64(":BYTES_REQUESTED", maxBytesRequested);
   auto result = stmt.executeQuery();
   auto nrows = stmt.getNbAffectedRows();
