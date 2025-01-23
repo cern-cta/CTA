@@ -92,10 +92,10 @@ run_systemtest() {
 
   orchestration_dir=${PWD} # orchestration directory so that we can come back here and launch delete_instance during cleanup
   create_instance_timeout=600 # time out for the create_instance.sh script
-  preflighttest_script='tests/preflighttest.sh'
-  preflighttest_timeout=60 # default preflight checks timeout is 60 seconds
-  postflighttest_script='tests/look_for_coredumps.sh'
-  postflighttest_timeout=30 # default preflight checks timeout is 60 seconds
+  preflight_checks_script='tests/preflight_checks.sh'
+  preflight_checks_timeout=60 # default preflight checks timeout is 60 seconds
+  postrun_checks_script='tests/postrun_checks.sh'
+  postrun_checks_timeout=30 # default preflight checks timeout is 60 seconds
 
   # Argument defaults
   keepnamespace=0 # keep or drop namespace after systemtest_script? By default drop it.
@@ -198,16 +198,16 @@ run_systemtest() {
   # create instance timeout after 10 minutes
   execute_cmd_with_log "./create_instance.sh -n ${namespace} ${spawn_options} ${extra_spawn_options}" "${log_dir}/create_instance.log" ${create_instance_timeout}
 
-  # Launch preflighttest and timeout after ${preflighttest_timeout} seconds
-  if [ -x ${preflighttest_script} ]; then
-    cd $(dirname "${preflighttest_script}")
-    echo "Launching preflight test: ${preflighttest_script}"
-    execute_cmd_with_log "./$(basename ${preflighttest_script}) -n ${namespace}" \
-                         "${log_dir}/$(basename ${preflighttest_script} | cut -d. -f1).log" \
-                         ${preflighttest_timeout}
+  # Launch preflight_checks and timeout after ${preflight_checks_timeout} seconds
+  if [ -x ${preflight_checks_script} ]; then
+    cd $(dirname "${preflight_checks_script}")
+    echo "Launching preflight checks: ${preflight_checks_script}"
+    execute_cmd_with_log "./$(basename ${preflight_checks_script}) -n ${namespace}" \
+                         "${log_dir}/$(basename ${preflight_checks_script} | cut -d. -f1).log" \
+                         ${preflight_checks_timeout}
     cd "${orchestration_dir}"
   else
-    echo "Skipping preflight test: ${preflighttest_script} not available"
+    echo "Skipping preflight checks: ${preflight_checks_script} not available"
   fi
 
   # launch system test and timeout after ${systemtestscript_timeout} seconds
@@ -218,11 +218,11 @@ run_systemtest() {
   cd "${orchestration_dir}"
 
   # Launch any final checks
-  cd $(dirname "${postflighttest_script}")
-  echo "Launching post-test checks: ${postflighttest_script}"
-  execute_cmd_with_log "./$(basename ${postflighttest_script}) -n ${namespace}" \
-                        "${log_dir}/$(basename ${postflighttest_script} | cut -d. -f1).log" \
-                        ${postflighttest_timeout}
+  cd $(dirname "${postrun_checks_script}")
+  echo "Launching postrun checks: ${postrun_checks_script}"
+  execute_cmd_with_log "./$(basename ${postrun_checks_script}) -n ${namespace}" \
+                        "${log_dir}/$(basename ${postrun_checks_script} | cut -d. -f1).log" \
+                        ${postrun_checks_timeout}
   cd "${orchestration_dir}"
 
   # delete instance?
