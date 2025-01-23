@@ -119,6 +119,8 @@ void DriveHandlerProxy::setRefreshLoggerHandler(std::function<void()> handler) {
         lc.log(log::ERR, "In DriveHandlerProxy::setRefreshLoggerHandler(): received an exception. Backtrace follows.");
         lc.logBacktrace(log::INFO, ex.backtrace());
       } catch(std::exception &ex) {
+        log::ScopedParamContainer exParams(lc);
+        exParams.add("exceptionMessage", ex.what());
         lc.log(log::ERR, "In DriveHandlerProxy::setRefreshLoggerHandler(): received a std::exception.");
       }
     });
