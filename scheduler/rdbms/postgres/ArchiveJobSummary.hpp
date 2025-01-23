@@ -80,7 +80,7 @@ struct ArchiveJobSummaryRow {
    *                   default is 1 hours
    * @return result set containing all rows in the table
    */
-  static rdbms::Rset selectJobsExceptDriveQueue(Transaction& txn, uint64_t gc_delay = 10800) {
+  static rdbms::Rset selectNewJobs(Transaction& txn, uint64_t gc_delay = 10800) {
     // locking the view until commit (DB lock released)
     // this is to prevent tape servers counting the rows all at the same time
     //const char* const lock_sql = R"SQL(

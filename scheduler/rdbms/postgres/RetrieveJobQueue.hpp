@@ -139,7 +139,7 @@ struct RetrieveJobQueueRow {
     jobId = 0;
     retrieveRequestId = 0;
     reqJobCount = 1;
-    mountId.reset();
+    mountId = std::nullopt;
     status = RetrieveJobStatus::RJS_ToTransfer;
     tapePool.clear();
     mountPolicy.clear();
@@ -160,8 +160,8 @@ struct RetrieveJobQueueRow {
     maxRetriesWithinMount = 0;
     maxReportRetries = 0;
     totalReportRetries = 0;
-    failureLogs.reset();
-    reportFailureLogs.reset();
+    failureLogs = std::nullopt;
+    reportFailureLogs = std::nullopt;
     isVerifyOnly = false;
     isReporting = false;
     vid.clear();
@@ -169,14 +169,13 @@ struct RetrieveJobQueueRow {
     drive.clear();
     host.clear();
     logical_library.clear();
-    activity.reset();
     srrUsername.clear();
     srrHost.clear();
     srrTime = 0;
     srrMountPolicy.clear();
     srrActivity.clear();
-    diskSystemName->clear();
-    activity->clear();
+    diskSystemName = std::nullopt;
+    activity = std::nullopt;
     archiveFile = common::dataStructures::ArchiveFile();
     lifecycleTimings_creation_time = 0;
     lifecycleTimings_first_selected_time = 0;
@@ -245,9 +244,9 @@ struct RetrieveJobQueueRow {
   }
 
   void insert(rdbms::Conn& conn) const {
-    // does not set mountId or jobId
-    const std::string sql = R"(
-        INSERT INTO RETRIEVE_JOB_QUEUE (
+    // does not set mountId and the following
+    std::string sql = R"(
+        INSERT INTO RETRIEVE_INSERT_QUEUE (
             RETRIEVE_REQUEST_ID,
             REQUEST_JOB_COUNT,
             STATUS,
@@ -261,7 +260,6 @@ struct RetrieveJobQueueRow {
             DISK_FILE_ID,
             DISK_FILE_GID,
             DISK_FILE_OWNER_UID,
-            TAPE_POOL,
             MOUNT_POLICY,
             VID,
             ALTERNATE_VIDS,
@@ -270,7 +268,6 @@ struct RetrieveJobQueueRow {
             COPY_NB,
             ALTERNATE_COPY_NBS,
             START_TIME,
-            RETRIEVE_REPORT_URL,
             RETRIEVE_ERROR_REPORT_URL,
             REQUESTER_NAME,
             REQUESTER_GROUP,
@@ -284,19 +281,25 @@ struct RetrieveJobQueueRow {
             TOTAL_REPORT_RETRIES,
             IS_VERIFY_ONLY,
             IS_REPORTING,
-            DRIVE,
-            HOST,
-            LOGICAL_LIBRARY,
-            ACTIVITY,
             SRR_USERNAME,
             SRR_HOST,
             SRR_TIME,
             SRR_MOUNT_POLICY,
-            SRR_ACTIVITY,
             LIFECYCLE_CREATION_TIME,
             LIFECYCLE_FIRST_SELECTED_TIME,
             LIFECYCLE_COMPLETED_TIME,
             DISK_SYSTEM_NAME
+    )";
+    if (!retrieveReportURL.empty()) {
+      sql += R"(,RETRIEVE_REPORT_URL )";
+    }
+    if (!activity.has_value()) {
+      sql += R"(,ACTIVITY )";
+    }
+    if (!srrActivity.empty()) {
+      sql += R"(,SRR_ACTIVITY )";
+    }
+    sql += R"(
         ) VALUES (
             :RETRIEVE_REQUEST_ID,
             :REQUEST_JOB_COUNT,
@@ -311,16 +314,14 @@ struct RetrieveJobQueueRow {
             :DISK_FILE_ID,
             :DISK_FILE_GID,
             :DISK_FILE_OWNER_UID,
-            :TAPE_POOL,
             :MOUNT_POLICY,
             :VID,
-            :ALTERNATE_VID,
+            :ALTERNATE_VIDS,
             :PRIORITY,
             :MIN_RETRIEVE_REQUEST_AGE,
             :COPY_NB,
             :ALTERNATE_COPY_NBS,
             :START_TIME,
-            :RETRIEVE_REPORT_URL,
             :RETRIEVE_ERROR_REPORT_URL,
             :REQUESTER_NAME,
             :REQUESTER_GROUP,
@@ -334,26 +335,30 @@ struct RetrieveJobQueueRow {
             :TOTAL_REPORT_RETRIES,
             :IS_VERIFY_ONLY,
             :IS_REPORTING,
-            :DRIVE,
-            :HOST,
-            :LOGICAL_LIBRARY,
-            :ACTIVITY,
             :SRR_USERNAME,
             :SRR_HOST,
             :SRR_TIME,
             :SRR_MOUNT_POLICY,
-            :SRR_ACTIVITY,
             :LIFECYCLE_CREATION_TIME,
             :LIFECYCLE_FIRST_SELECTED_TIME,
             :LIFECYCLE_COMPLETED_TIME,
             :DISK_SYSTEM_NAME
-        )
     )";
+    if (!retrieveReportURL.empty()) {
+      sql += R"(,:RETRIEVE_REPORT_URL )";
+    }
+    if (!activity.has_value()) {
+      sql += R"(,:ACTIVITY )";
+    }
+    if (!srrActivity.empty()) {
+      sql += R"(,:SRR_ACTIVITY )";
+    }
+    sql += R"(    ) )";
 
     auto stmt = conn.createStmt(sql);
     stmt.bindUint64(":RETRIEVE_REQUEST_ID", retrieveRequestId);
     stmt.bindUint32(":REQUEST_JOB_COUNT", reqJobCount);
-    stmt.bindString(":STATUS", to_string(RetrieveJobStatus::RJS_ToTransfer)); // status shoudl be here instead
+    stmt.bindString(":STATUS", to_string(status));
     stmt.bindUint64(":CREATION_TIME", archiveFile.creationTime);
     stmt.bindString(":STORAGE_CLASS", archiveFile.storageClass);
     stmt.bindUint64(":SIZE_IN_BYTES", archiveFile.fileSize);
@@ -364,14 +369,12 @@ struct RetrieveJobQueueRow {
     stmt.bindString(":DISK_FILE_ID", archiveFile.diskFileId);
     stmt.bindUint32(":DISK_FILE_GID", archiveFile.diskFileInfo.gid);
     stmt.bindUint32(":DISK_FILE_OWNER_UID", archiveFile.diskFileInfo.owner_uid);
-    stmt.bindString(":TAPE_POOL", tapePool);
     stmt.bindString(":MOUNT_POLICY", mountPolicy);
     stmt.bindUint32(":PRIORITY", priority);
     stmt.bindUint32(":MIN_RETRIEVE_REQUEST_AGE", minRetrieveRequestAge);
     stmt.bindUint8(":COPY_NB", copyNb);
     stmt.bindString(":ALTERNATE_COPY_NBS", alternateCopyNbs);
     stmt.bindUint64(":START_TIME", startTime);
-    stmt.bindString(":RETRIEVE_REPORT_URL", retrieveReportURL);
     stmt.bindString(":RETRIEVE_ERROR_REPORT_URL", retrieveErrorReportURL);
     stmt.bindString(":REQUESTER_NAME", requesterName);
     stmt.bindString(":REQUESTER_GROUP", requesterGroup);
@@ -387,20 +390,27 @@ struct RetrieveJobQueueRow {
     stmt.bindBool(":IS_REPORTING", isReporting);
     stmt.bindString(":VID", vid);
     stmt.bindString(":ALTERNATE_VIDS", alternateVids);
-    stmt.bindString(":DRIVE", drive);
-    stmt.bindString(":HOST", host);
-    stmt.bindString(":LOGICAL_LIBRARY", logical_library);
-    stmt.bindString(":ACTIVITY", activity);
+    // stmt.bindString(":DRIVE", drive);
+    // stmt.bindString(":HOST", host);
+    // stmt.bindString(":LOGICAL_LIBRARY", logical_library);
     stmt.bindString(":SRR_USERNAME", srrUsername);
     stmt.bindString(":SRR_HOST", srrHost);
     stmt.bindUint64(":SRR_TIME", srrTime);
     stmt.bindString(":SRR_MOUNT_POLICY", srrMountPolicy);
-    stmt.bindString(":SRR_ACTIVITY", srrActivity);
     stmt.bindUint64(":LIFECYCLE_CREATION_TIME", lifecycleTimings_creation_time);
     stmt.bindUint64(":LIFECYCLE_FIRST_SELECTED_TIME", lifecycleTimings_first_selected_time);
     stmt.bindUint64(":LIFECYCLE_COMPLETED_TIME", lifecycleTimings_completed_time);
     stmt.bindString(":DISK_SYSTEM_NAME", diskSystemName);
     //stmt.bindBool(":IS_FAILED", isFailed);
+    if (!retrieveReportURL.empty()) {
+      stmt.bindString(":RETRIEVE_REPORT_URL", retrieveReportURL);
+    }
+    if (!activity.has_value()) {
+      stmt.bindString(":ACTIVITY", activity);
+    }
+    if (!srrActivity.empty()) {
+      stmt.bindString(":SRR_ACTIVITY", srrActivity);
+    }
     stmt.executeNonQuery();
   }
 
@@ -412,7 +422,7 @@ struct RetrieveJobQueueRow {
     params.add("alternateVids", alternateVids);
     params.add("alternateCopyNbs", alternateCopyNbs);
     params.add("copyNb", copyNb);
-    params.add("activity", activity.value());
+    params.add("activity", activity.value_or(""));
     params.add("priority", priority);
     params.add("retMinReqAge", minRetrieveRequestAge);
     params.add("startTime", startTime);
@@ -423,7 +433,8 @@ struct RetrieveJobQueueRow {
     params.add("creationlog.ssername", srrUsername);
     params.add("creationlog.host", srrHost);
     params.add("creationlog.time", srrTime);
-    params.add("errorReportURL", retrieveErrorReportURL);
+    params.add("retrieveReportURL", retrieveReportURL);
+    params.add("retrieveErrorReportURL", retrieveErrorReportURL);
     params.add("isVerifyOnly", isVerifyOnly);
     params.add("retrieveRequest.mountPolicy", srrMountPolicy);
     params.add("retrieveRequest.activity", srrActivity);
