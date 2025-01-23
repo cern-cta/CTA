@@ -45,7 +45,7 @@ struct RetrieveJobQueueRow {
   uint8_t copyNb = 0;
   std::string alternateCopyNbs = "";
   time_t startTime = 0;  //!< Time the job was inserted into the queue
-  std::string retrieveReportURL = "";
+  std::string retrieveReportURL = "NOT_DEFINED";
   std::string retrieveErrorReportURL = "";
   std::string requesterName = "";
   std::string requesterGroup = "";
@@ -206,8 +206,8 @@ struct RetrieveJobQueueRow {
     maxRetriesWithinMount = rset.columnUint32NoOpt("MAX_RETRIES_WITHIN_MOUNT");
     maxReportRetries = rset.columnUint32NoOpt("MAX_REPORT_RETRIES");
     totalReportRetries = rset.columnUint32NoOpt("TOTAL_REPORT_RETRIES");
-    failureLogs = rset.columnOptionalString("FAILURE_LOGS");
-    reportFailureLogs = rset.columnOptionalString("REPORT_FAILURE_LOGS");
+    failureLogs = rset.columnOptionalString("FAILURE_LOG");
+    reportFailureLogs = rset.columnOptionalString("REPORT_FAILURE_LOG");
     isVerifyOnly = rset.columnBoolNoOpt("IS_VERIFY_ONLY");
     isReporting = rset.columnBoolNoOpt("IS_REPORTING");
     vid = rset.columnStringNoOpt("VID");
@@ -288,11 +288,9 @@ struct RetrieveJobQueueRow {
             LIFECYCLE_CREATION_TIME,
             LIFECYCLE_FIRST_SELECTED_TIME,
             LIFECYCLE_COMPLETED_TIME,
-            DISK_SYSTEM_NAME
+            DISK_SYSTEM_NAME,
+            RETRIEVE_REPORT_URL
     )";
-    if (!retrieveReportURL.empty()) {
-      sql += R"(,RETRIEVE_REPORT_URL )";
-    }
     if (!activity.has_value()) {
       sql += R"(,ACTIVITY )";
     }
@@ -342,11 +340,9 @@ struct RetrieveJobQueueRow {
             :LIFECYCLE_CREATION_TIME,
             :LIFECYCLE_FIRST_SELECTED_TIME,
             :LIFECYCLE_COMPLETED_TIME,
-            :DISK_SYSTEM_NAME
+            :DISK_SYSTEM_NAME,
+            :RETRIEVE_REPORT_URL
     )";
-    if (!retrieveReportURL.empty()) {
-      sql += R"(,:RETRIEVE_REPORT_URL )";
-    }
     if (!activity.has_value()) {
       sql += R"(,:ACTIVITY )";
     }
@@ -404,6 +400,8 @@ struct RetrieveJobQueueRow {
     //stmt.bindBool(":IS_FAILED", isFailed);
     if (!retrieveReportURL.empty()) {
       stmt.bindString(":RETRIEVE_REPORT_URL", retrieveReportURL);
+    } else {
+      stmt.bindString(":RETRIEVE_REPORT_URL", "NOT_PROVIDED");
     }
     if (!activity.has_value()) {
       stmt.bindString(":ACTIVITY", activity);

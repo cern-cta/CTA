@@ -37,21 +37,19 @@ namespace cta::schedulerdb {
 
 class RetrieveMount : public SchedulerDatabase::RetrieveMount {
   friend class cta::RelationalDB;
+  friend class TapeMountDecisionInfo;
 
 public:
   //RetrieveMount(const std::string& ownerId, Transaction& txn, const std::string &vid) :
   //   , m_txn(txn), m_vid(vid) { }
-  RetrieveMount(RelationalDB& pdb)
-      : m_RelationalDB(pdb),
-        m_connPool(pdb.m_connPool),
-        m_jobPool(pdb.m_connPool) {}
+  RetrieveMount(RelationalDB& pdb) : m_RelationalDB(pdb), m_connPool(pdb.m_connPool), m_jobPool(pdb.m_connPool) {}
 
   const MountInfo& getMountInfo() override;
 
   std::list<std::unique_ptr<SchedulerDatabase::RetrieveJob>>
   getNextJobBatch(uint64_t filesRequested, uint64_t bytesRequested, log::LogContext& logContext) override;
 
-  bool reserveDiskSpace(const cta::DiskSpaceReservationRequest& request,
+  bool reserveDiskSpace(const cta::DiskSpaceReservationRequest& diskSpaceReservationRequest,
                         const std::string& externalFreeDiskSpaceScript,
                         log::LogContext& logContext) override;
 
@@ -69,7 +67,7 @@ public:
   uint64_t requeueJobBatch(const std::list<std::string>& jobIDsList, cta::log::LogContext& logContext) const override;
 
   void requeueJobBatch(std::list<std::unique_ptr<SchedulerDatabase::RetrieveJob>>& jobBatch,
-                                      cta::log::LogContext& logContext) {
+                       cta::log::LogContext& logContext) {
     throw cta::exception::Exception("Not implemented");  // placeholder for OStoreDB
   }
 
