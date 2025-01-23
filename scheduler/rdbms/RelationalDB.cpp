@@ -788,7 +788,6 @@ void RelationalDB::fetchMountInfo(SchedulerDatabase::TapeMountDecisionInfo& tmdi
       }
     }
   }
-
   // for now we create a mount per summary row (assuming there would not be
   // the same activity twice with 2 mount policies or 2 different VIDs selected)
   for (const auto& rjsr : rjsr_vector) {
