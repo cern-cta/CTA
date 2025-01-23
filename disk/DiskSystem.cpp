@@ -123,7 +123,6 @@ void DiskSystemFreeSpaceList::fetchDiskSystemFreeSpace(const std::set<std::strin
           updateCatalogue = false; // if we update the catalogue at this point, we will update it with an old value, since we were not able to get a new one
           // but will still reset the last refresh time, so it will be essentially a "false" update; better to not update and let the lastRefreshTime reflect
           // the actual last time an up-to-date value was put in the catalogue
-          cta::log::ScopedParamContainer spc(lc);
           spc.add("exceptionMsg", ex.getMessageValue());
           spc.add("externalScript", m_systemList.getExternalFreeDiskSpaceScript());
           const std::string errorMsg = "In DiskSystemFreeSpaceList::fetchDiskSystemFreeSpace(), unable to get the free disk space with the script."
@@ -169,7 +168,11 @@ uint64_t DiskSystemFreeSpaceList::fetchConstantFreeSpace(const std::string& inst
 //------------------------------------------------------------------------------
 // DiskSystemFreeSpaceList::fetchFreeDiskSpaceWithScript()
 //------------------------------------------------------------------------------
-uint64_t DiskSystemFreeSpaceList::fetchFreeDiskSpaceWithScript(const std::string& scriptPath, std::string& diskInstanceName, std::string& spaceName, const std::string& jsonInput, log::LogContext& lc){
+uint64_t DiskSystemFreeSpaceList::fetchFreeDiskSpaceWithScript(const std::string& scriptPath,
+                                                               const std::string& diskInstanceName,
+                                                               const std::string& spaceName,
+                                                               const std::string& jsonInput,
+                                                               log::LogContext& lc) {
   std::unique_ptr<cta::threading::SubProcess> sp;
   try {
     sp = std::make_unique<cta::threading::SubProcess>(scriptPath,std::list{scriptPath, diskInstanceName, spaceName},jsonInput);
