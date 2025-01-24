@@ -55,7 +55,7 @@ if [ -d "continuousintegration/docker/alma9/etc/yum/pluginconf.d/" ]; then
   echo "continuousintegration/docker/alma9/etc/yum/pluginconf.d/versionlock.list"
 # Should match for version >= 5.11.1.0-1
 elif [ -d "continuousintegration/docker/ctafrontend/alma9/etc/yum/pluginconf.d/" ]; then
-  echo "continuousintegration/docker/alma9/etc/yum/pluginconf.d/versionlock.list"
+  echo "continuousintegration/docker/ctafrontend/alma9/etc/yum/pluginconf.d/versionlock.list"
 # should match for versions <= 5.11.0.1-1
 elif [ -d "continuousintegration/docker/ctafrontend/alma9/yum/pluginconf.d" ]; then
   echo "continuousintegration/docker/ctafrontend/alma9/yum/pluginconf.d/versionlock.list"
