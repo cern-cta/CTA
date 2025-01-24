@@ -35,7 +35,7 @@ struct RequesterIdentity;
 }
 
 namespace log {
-struct LogContext;
+class LogContext;
 }
 
 namespace catalogue {
@@ -101,12 +101,13 @@ public:
     const TapeFileSearchCriteria &searchCriteria = TapeFileSearchCriteria()) const = 0;
 
   /**
-   * Returns the specified archive file. If the search criteria result in more than one tape file being returned
-   * an exception is thrown.
+   * Returns the archive file, referencing a single tape copy for deletion. Should only work with multi-copy files.
+   * If only one tape file copy exists an exception is thrown.
+   * If the search criteria results in more than one tape file being returned an exception is thrown.
    * @param searchCriteria The search criteria.
    * @return The archive file.
    */
-  virtual common::dataStructures::ArchiveFile getArchiveFileForDeletion(
+  virtual common::dataStructures::ArchiveFile getArchiveFileCopyForDeletion(
     const TapeFileSearchCriteria &searchCriteria = TapeFileSearchCriteria()) const = 0;
 
   /**

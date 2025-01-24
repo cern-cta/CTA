@@ -1215,7 +1215,7 @@ void AdminCmd::processTapeFile_Rm(xrd::Response& response) {
     searchCriteria.diskInstance = instance.value();
   }
 
-  auto archiveFile = m_catalogue.ArchiveFile()->getArchiveFileForDeletion(searchCriteria);
+  auto archiveFile = m_catalogue.ArchiveFile()->getArchiveFileCopyForDeletion(searchCriteria);
 
   m_catalogue.TapeFile()->deleteTapeFileCopy(archiveFile, reason);
   response.set_type(xrd::Response::RSP_SUCCESS);

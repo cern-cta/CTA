@@ -43,6 +43,7 @@ cta_catalogue_TapeFileTest::cta_catalogue_TapeFileTest()
     m_mediaType(CatalogueTestUtils::getMediaType()),
     m_tape1(CatalogueTestUtils::getTape1()),
     m_tape2(CatalogueTestUtils::getTape2()),
+    m_tape3(CatalogueTestUtils::getTape3()),
     m_storageClassSingleCopy(CatalogueTestUtils::getStorageClass()),
     m_storageClassDualCopy(CatalogueTestUtils::getStorageClassDualCopy()) {
 }
@@ -211,8 +212,16 @@ TEST_P(cta_catalogue_TapeFileTest, DeleteTapeFileCopyUsingArchiveID) {
 
   auto tape1 = m_tape1;
   auto tape2 = m_tape2;
+
   tape1.tapePoolName = tapePoolName1;
   tape2.tapePoolName = tapePoolName2;
+
+  // Tape must be in BROKEN or REPACKING_DISABLED state for tape file to be deleted
+  tape1.state = common::dataStructures::Tape::BROKEN;
+  tape2.state = common::dataStructures::Tape::BROKEN;
+
+  tape1.stateReason = "Testing tape file deletion";
+  tape2.stateReason = "Testing tape file deletion";
 
   m_catalogue->Tape()->createTape(m_admin, tape1);
   m_catalogue->Tape()->createTape(m_admin, tape2);
@@ -293,7 +302,7 @@ TEST_P(cta_catalogue_TapeFileTest, DeleteTapeFileCopyUsingArchiveID) {
     cta::catalogue::TapeFileSearchCriteria criteria;
     criteria.vid = tape1.vid;
     criteria.archiveFileId = 1;
-    auto archiveFileForDeletion = m_catalogue->ArchiveFile()->getArchiveFileForDeletion(criteria);
+    auto archiveFileForDeletion = m_catalogue->ArchiveFile()->getArchiveFileCopyForDeletion(criteria);
     archiveFileForDeletion.diskFileInfo.path = "/test/file1";
     m_catalogue->TapeFile()->deleteTapeFileCopy(archiveFileForDeletion, reason);
     auto archiveFile = m_catalogue->ArchiveFile()->getArchiveFileById(1);
@@ -316,7 +325,209 @@ TEST_P(cta_catalogue_TapeFileTest, DeleteTapeFileCopyUsingArchiveID) {
     cta::catalogue::TapeFileSearchCriteria criteria;
     criteria.vid = tape2.vid;
     criteria.archiveFileId = 1;
-    ASSERT_THROW(m_catalogue->ArchiveFile()->getArchiveFileForDeletion(criteria), exception::UserError);
+    ASSERT_THROW(m_catalogue->ArchiveFile()->getArchiveFileCopyForDeletion(criteria), exception::UserError);
+  }
+}
+
+TEST_P(cta_catalogue_TapeFileTest, DeleteTapeFileCopyWithDisallowedTapeStates) {
+  using namespace cta;
+
+  const bool logicalLibraryIsDisabled= false;
+  std::optional<std::string> physicalLibraryName;
+  const std::string tapePoolName1 = "tape_pool_name_1";
+  const std::string tapePoolName2 = "tape_pool_name_2";
+  const std::string tapePoolName3 = "tape_pool_name_3";
+  const uint64_t nbPartialTapes = 1;
+  const bool isEncrypted = true;
+  const std::list<std::string> supply;
+  const std::string diskInstance = m_diskInstance.name;
+  const std::string tapeDrive = "tape_drive";
+  const std::string reason = "reason";
+
+  m_catalogue->MediaType()->createMediaType(m_admin, m_mediaType);
+  m_catalogue->LogicalLibrary()->createLogicalLibrary(m_admin, m_tape1.logicalLibraryName, logicalLibraryIsDisabled, physicalLibraryName, "Create logical library");
+  m_catalogue->DiskInstance()->createDiskInstance(m_admin, m_diskInstance.name, m_diskInstance.comment);
+  m_catalogue->VO()->createVirtualOrganization(m_admin, m_vo);
+  m_catalogue->TapePool()->createTapePool(m_admin, tapePoolName1, m_vo.name, nbPartialTapes, isEncrypted, supply, "Create tape pool");
+  m_catalogue->TapePool()->createTapePool(m_admin, tapePoolName2, m_vo.name, nbPartialTapes, isEncrypted, supply, "Create tape pool");
+  m_catalogue->TapePool()->createTapePool(m_admin, tapePoolName3, m_vo.name, nbPartialTapes, isEncrypted, supply, "Create tape pool");
+  m_catalogue->StorageClass()->createStorageClass(m_admin, m_storageClassDualCopy);
+
+  auto tape1 = m_tape1;
+  auto tape2 = m_tape2;
+  auto tape3 = m_tape3;
+
+  tape1.tapePoolName = tapePoolName1;
+  tape2.tapePoolName = tapePoolName2;
+  tape3.tapePoolName = tapePoolName3;
+
+  // Tape must be in BROKEN or REPACKING_DISABLED state for tape file to be deleted
+  tape1.state = common::dataStructures::Tape::ACTIVE;
+  tape2.state = common::dataStructures::Tape::ACTIVE;
+  tape3.state = common::dataStructures::Tape::ACTIVE;
+
+  tape1.stateReason = "Testing tape file deletion";
+  tape2.stateReason = "Testing tape file deletion";
+  tape3.stateReason = "Testing tape file deletion";
+
+  m_catalogue->Tape()->createTape(m_admin, tape1);
+  m_catalogue->Tape()->createTape(m_admin, tape2);
+  m_catalogue->Tape()->createTape(m_admin, tape3);
+
+  ASSERT_FALSE(m_catalogue->ArchiveFile()->getArchiveFilesItor().hasMore());
+  const uint64_t archiveFileSize = 2 * 1000 * 1000 * 1000;
+
+  // Write a file on tape 1
+  {
+    std::set<catalogue::TapeItemWrittenPointer> tapeFilesWrittenCopy1;
+
+    std::ostringstream diskFileId;
+    diskFileId << 12345677;
+
+    std::ostringstream diskFilePath;
+    diskFilePath << "/test/file1";
+
+    auto fileWrittenUP=std::make_unique<cta::catalogue::TapeFileWritten>();
+    auto & fileWritten = *fileWrittenUP;
+    fileWritten.archiveFileId = 1;
+    fileWritten.diskInstance = diskInstance;
+    fileWritten.diskFileId = diskFileId.str();
+    fileWritten.diskFilePath = diskFilePath.str();
+    fileWritten.diskFileOwnerUid = PUBLIC_DISK_USER;
+    fileWritten.diskFileGid = PUBLIC_DISK_GROUP;
+    fileWritten.size = archiveFileSize;
+    fileWritten.checksumBlob.insert(checksum::ADLER32, "1357");
+    fileWritten.storageClassName = m_storageClassDualCopy.name;
+    fileWritten.vid = tape1.vid;
+    fileWritten.fSeq = 1;
+    fileWritten.blockId = 1 * 100;
+    fileWritten.copyNb = 1;
+    fileWritten.tapeDrive = tapeDrive;
+    tapeFilesWrittenCopy1.emplace(fileWrittenUP.release());
+
+    m_catalogue->TapeFile()->filesWrittenToTape(tapeFilesWrittenCopy1);
+  }
+
+  // Write a second copy of file on tape 2
+  {
+    std::set<catalogue::TapeItemWrittenPointer> tapeFilesWrittenCopy1;
+
+    std::ostringstream diskFileId;
+    diskFileId << 12345677;
+
+    std::ostringstream diskFilePath;
+    diskFilePath << "/test/file1";
+
+    auto fileWrittenUP=std::make_unique<cta::catalogue::TapeFileWritten>();
+    auto & fileWritten = *fileWrittenUP;
+    fileWritten.archiveFileId = 1;
+    fileWritten.diskInstance = diskInstance;
+    fileWritten.diskFileId = diskFileId.str();
+    fileWritten.diskFilePath = diskFilePath.str();
+    fileWritten.diskFileOwnerUid = PUBLIC_DISK_USER;
+    fileWritten.diskFileGid = PUBLIC_DISK_GROUP;
+    fileWritten.size = archiveFileSize;
+    fileWritten.checksumBlob.insert(checksum::ADLER32, "1357");
+    fileWritten.storageClassName = m_storageClassDualCopy.name;
+    fileWritten.vid = tape2.vid;
+    fileWritten.fSeq = 1;
+    fileWritten.blockId = 1 * 100;
+    fileWritten.copyNb = 2;
+    fileWritten.tapeDrive = tapeDrive;
+    tapeFilesWrittenCopy1.emplace(fileWrittenUP.release());
+
+    m_catalogue->TapeFile()->filesWrittenToTape(tapeFilesWrittenCopy1);
+  }
+
+  // Write a third copy of file on tape 3
+  {
+    std::set<catalogue::TapeItemWrittenPointer> tapeFilesWrittenCopy1;
+
+    std::ostringstream diskFileId;
+    diskFileId << 12345677;
+
+    std::ostringstream diskFilePath;
+    diskFilePath << "/test/file1";
+
+    auto fileWrittenUP=std::make_unique<cta::catalogue::TapeFileWritten>();
+    auto & fileWritten = *fileWrittenUP;
+    fileWritten.archiveFileId = 1;
+    fileWritten.diskInstance = diskInstance;
+    fileWritten.diskFileId = diskFileId.str();
+    fileWritten.diskFilePath = diskFilePath.str();
+    fileWritten.diskFileOwnerUid = PUBLIC_DISK_USER;
+    fileWritten.diskFileGid = PUBLIC_DISK_GROUP;
+    fileWritten.size = archiveFileSize;
+    fileWritten.checksumBlob.insert(checksum::ADLER32, "1357");
+    fileWritten.storageClassName = m_storageClassDualCopy.name;
+    fileWritten.vid = tape3.vid;
+    fileWritten.fSeq = 1;
+    fileWritten.blockId = 1 * 100;
+    fileWritten.copyNb = 3;
+    fileWritten.tapeDrive = tapeDrive;
+    tapeFilesWrittenCopy1.emplace(fileWrittenUP.release());
+
+    m_catalogue->TapeFile()->filesWrittenToTape(tapeFilesWrittenCopy1);
+  }
+  {
+    //Assert both copies written
+    auto archiveFile = m_catalogue->ArchiveFile()->getArchiveFileById(1);
+    ASSERT_EQ(3, archiveFile.tapeFiles.size());
+  }
+
+  {
+    //delete copy from a tape in ACTIVE state, should fail
+    cta::catalogue::TapeFileSearchCriteria criteria;
+    criteria.vid = tape1.vid;
+    criteria.archiveFileId = 1;
+    ASSERT_THROW(m_catalogue->ArchiveFile()->getArchiveFileCopyForDeletion(criteria), exception::UserError);
+  }
+
+  {
+    // Test that tape file deletion fails unless tape is in BROKEN or REPACK_DISABLED states
+    cta::catalogue::TapeFileSearchCriteria criteria;
+    criteria.vid = tape1.vid;
+    criteria.archiveFileId = 1;
+
+    m_catalogue->Tape()->modifyTapeState(m_admin, tape1.vid, common::dataStructures::Tape::ACTIVE, std::nullopt, "Testing tape file deletion");
+    ASSERT_THROW(m_catalogue->ArchiveFile()->getArchiveFileCopyForDeletion(criteria), exception::UserError);
+
+    m_catalogue->Tape()->modifyTapeState(m_admin, tape1.vid, common::dataStructures::Tape::DISABLED, std::nullopt, "Testing tape file deletion");
+    ASSERT_THROW(m_catalogue->ArchiveFile()->getArchiveFileCopyForDeletion(criteria), exception::UserError);
+
+    m_catalogue->Tape()->modifyTapeState(m_admin, tape1.vid, common::dataStructures::Tape::EXPORTED, std::nullopt, "Testing tape file deletion");
+    ASSERT_THROW(m_catalogue->ArchiveFile()->getArchiveFileCopyForDeletion(criteria), exception::UserError);
+
+    m_catalogue->Tape()->modifyTapeState(m_admin, tape1.vid, common::dataStructures::Tape::EXPORTED_PENDING, std::nullopt, "Testing tape file deletion");
+    ASSERT_THROW(m_catalogue->ArchiveFile()->getArchiveFileCopyForDeletion(criteria), exception::UserError);
+
+    m_catalogue->Tape()->modifyTapeState(m_admin, tape1.vid, common::dataStructures::Tape::REPACKING, std::nullopt, "Testing tape file deletion");
+    ASSERT_THROW(m_catalogue->ArchiveFile()->getArchiveFileCopyForDeletion(criteria), exception::UserError);
+
+    m_catalogue->Tape()->modifyTapeState(m_admin, tape1.vid, common::dataStructures::Tape::REPACKING_PENDING, std::nullopt, "Testing tape file deletion");
+    ASSERT_THROW(m_catalogue->ArchiveFile()->getArchiveFileCopyForDeletion(criteria), exception::UserError);
+
+    m_catalogue->Tape()->modifyTapeState(m_admin, tape1.vid, common::dataStructures::Tape::BROKEN_PENDING, std::nullopt, "Testing tape file deletion");
+    ASSERT_THROW(m_catalogue->ArchiveFile()->getArchiveFileCopyForDeletion(criteria), exception::UserError);
+  }
+
+  {
+    // Test that it works with BROKEN tapes
+    cta::catalogue::TapeFileSearchCriteria criteria;
+    criteria.vid = tape2.vid;
+    criteria.archiveFileId = 1;
+
+    m_catalogue->Tape()->modifyTapeState(m_admin, tape2.vid, common::dataStructures::Tape::BROKEN, std::nullopt, "Testing tape file deletion");
+    ASSERT_NO_THROW(m_catalogue->ArchiveFile()->getArchiveFileCopyForDeletion(criteria));
+  }
+  {
+    // Test that it works with REPACKING_DISABLED tapes
+    cta::catalogue::TapeFileSearchCriteria criteria;
+    criteria.vid = tape3.vid;
+    criteria.archiveFileId = 1;
+
+    m_catalogue->Tape()->modifyTapeState(m_admin, tape3.vid, common::dataStructures::Tape::REPACKING_DISABLED, std::nullopt, "Testing tape file deletion");
+    ASSERT_NO_THROW(m_catalogue->ArchiveFile()->getArchiveFileCopyForDeletion(criteria));
   }
 }
 
@@ -355,7 +566,7 @@ TEST_P(cta_catalogue_TapeFileTest, DeleteTapeFileCopyDoesNotExist) {
     cta::catalogue::TapeFileSearchCriteria criteria;
     criteria.vid = tape2.vid;
     criteria.archiveFileId = 1;
-    ASSERT_THROW(m_catalogue->ArchiveFile()->getArchiveFileForDeletion(criteria), exception::UserError);
+    ASSERT_THROW(m_catalogue->ArchiveFile()->getArchiveFileCopyForDeletion(criteria), exception::UserError);
   }
 }
 
@@ -385,8 +596,16 @@ TEST_P(cta_catalogue_TapeFileTest, DeleteTapeFileCopyUsingFXID) {
 
   auto tape1 = m_tape1;
   auto tape2 = m_tape2;
+
   tape1.tapePoolName = tapePoolName1;
   tape2.tapePoolName = tapePoolName2;
+
+  // Tape must be in BROKEN or REPACKING_DISABLED state for tape file to be deleted
+  tape1.state = common::dataStructures::Tape::BROKEN;
+  tape2.state = common::dataStructures::Tape::BROKEN;
+
+  tape1.stateReason = "Testing tape file deletion";
+  tape2.stateReason = "Testing tape file deletion";
 
   m_catalogue->Tape()->createTape(m_admin, tape1);
   m_catalogue->Tape()->createTape(m_admin, tape2);
@@ -470,7 +689,7 @@ TEST_P(cta_catalogue_TapeFileTest, DeleteTapeFileCopyUsingFXID) {
     criteria.diskFileIds = std::vector<std::string>();
     auto fid = std::to_string(strtol("BC614D", nullptr, 16));
     criteria.diskFileIds.value().push_back(fid);
-    auto archiveFileForDeletion = m_catalogue->ArchiveFile()->getArchiveFileForDeletion(criteria);
+    auto archiveFileForDeletion = m_catalogue->ArchiveFile()->getArchiveFileCopyForDeletion(criteria);
     archiveFileForDeletion.diskFileInfo.path = "/test/file1";
     m_catalogue->TapeFile()->deleteTapeFileCopy(archiveFileForDeletion, reason);
     auto archiveFile = m_catalogue->ArchiveFile()->getArchiveFileById(1);
@@ -496,7 +715,7 @@ TEST_P(cta_catalogue_TapeFileTest, DeleteTapeFileCopyUsingFXID) {
     criteria.diskFileIds = std::vector<std::string>();
     auto fid = std::to_string(strtol("BC614D", nullptr, 16));
     criteria.diskFileIds.value().push_back(fid);
-    ASSERT_THROW(m_catalogue->ArchiveFile()->getArchiveFileForDeletion(criteria), exception::UserError);
+    ASSERT_THROW(m_catalogue->ArchiveFile()->getArchiveFileCopyForDeletion(criteria), exception::UserError);
   }
 }
 

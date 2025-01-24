@@ -46,7 +46,7 @@ void PostgresFileRecycleLogCatalogue::restoreEntryInRecycleLog(rdbms::Conn & con
   if (!fileRecycleLogItor.hasMore()) {
     throw cta::exception::UserError("No file in the recycle bin matches the parameters passed");
   }
-auto fileRecycleLog = fileRecycleLogItor.next();
+  auto fileRecycleLog = fileRecycleLogItor.next();
   if (fileRecycleLogItor.hasMore()) {
     // stop restoring more than one file at once
     throw cta::exception::UserError("More than one recycle bin file matches the parameters passed");
