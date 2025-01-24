@@ -247,8 +247,8 @@ void RetrieveRequest::setActiveCopyNumber(uint32_t activeCopyNb) {
   for (const auto& j : m_jobs) {
     if (j.copyNb == activeCopyNb) {
       activeJob = &j;
-      m_fSeq = tf.fSeq;
-      m_blockId = tf.blockId;
+      m_fSeq = j.fSeq;
+      m_blockId = j.blockId;
       break;
     }
   }
