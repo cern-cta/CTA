@@ -69,6 +69,13 @@ std::string cta::RetrieveJob::reportType() {
 }
 
 //------------------------------------------------------------------------------
+// RetrieveJob::getJobID
+//------------------------------------------------------------------------------
+std::string cta::RetrieveJob::getJobID() {
+  return std::to_string(m_dbJob->jobID);
+}
+
+//------------------------------------------------------------------------------
 // reportFailed
 //------------------------------------------------------------------------------
 void cta::RetrieveJob::reportFailed(const std::string &failureReason, log::LogContext &lc) {
