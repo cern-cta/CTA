@@ -364,8 +364,8 @@ RelationalDB::queueRetrieve(cta::common::dataStructures::RetrieveRequest& rqst,
     rReq->setActivityIfNeeded(rqst, criteria);
     ret.requestId = rReq->getIdStr();
     rReq->setSchedulerRequest(rqst);
-    rReq->fillJobsSetRetrieveFileQueueCriteria(criteria);  // fills also m_jobs
     rReq->setActiveCopyNumber(bestCopyNb);
+    rReq->fillJobsSetRetrieveFileQueueCriteria(criteria);  // fills also m_jobs
     rReq->setIsVerifyOnly(rqst.isVerifyOnly);
     if (diskSystemName) {
       rReq->setDiskSystemName(diskSystemName.value());
