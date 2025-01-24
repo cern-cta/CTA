@@ -206,6 +206,8 @@ private:
    uint32_t maxTotalRetries {0};
    uint32_t totalReportRetries {0};
    uint32_t maxReportRetries {0};
+   uint64_t fSeq {0};
+   uint64_t blockId {0};
  };
 
  // References to external objects
@@ -216,6 +218,8 @@ private:
  // RetrieveRequest metadata
  common::dataStructures::RetrieveRequest m_schedRetrieveReq;
  uint32_t m_actCopyNb {0};
+ uint64_t m_fSeq;
+ uint64_t m_blockId;
  std::string m_vid;
  schedulerdb::RetrieveJobStatus m_status = schedulerdb::RetrieveJobStatus::RJS_ToTransfer;
  std::optional<std::string> m_activity;

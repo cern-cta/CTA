@@ -251,6 +251,7 @@ std::string Scheduler::queueRetrieve(const std::string& instanceName,
   log::ScopedParamContainer spc(lc);
   spc.add("fileId", request.archiveFileID)
     .add("instanceName", instanceName)
+    .add("diskSystemName", diskSystemName.value_or(""))
     .add("diskFilePath", request.diskFileInfo.path)
     .add("diskFileOwnerUid", request.diskFileInfo.owner_uid)
     .add("diskFileGid", request.diskFileInfo.gid)

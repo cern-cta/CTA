@@ -48,6 +48,7 @@ public:
   RelationalDBQCR(catalogue::Catalogue& catalogue, RelationalDB& pgs) : m_conn(pgs.getConn()) {}
 
   void runOnePass(log::LogContext& lc) {
+
     /* cta::utils::Timer timer;
     // DELETE is implicit transaction in postgresql
 
