@@ -81,10 +81,17 @@ struct RetrieveJobSummaryRow {
     const char* const sql = R"SQL(
       SELECT 
         VID,
+        MOUNT_POLICY,
+        ACTIVITY,
+        PRIORITY,
         JOBS_COUNT,
-        JOBS_TOTAL_SIZE
+        JOBS_TOTAL_SIZE,
+        OLDEST_JOB_START_TIME,
+        YOUNGEST_JOB_START_TIME,
+        RETRIEVE_MIN_REQUEST_AGE,
+        LAST_JOB_UPDATE_TIME
       FROM RETRIEVE_JOB_SUMMARY WHERE 
-        VID = :VID AND 
+        VID = :VID
     )SQL";
     /*
     std::string statusStr;

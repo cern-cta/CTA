@@ -43,6 +43,10 @@ struct RetrieveJobQueueRow {
   uint32_t priority = 0;
   uint32_t minRetrieveRequestAge = 0;
   uint8_t copyNb = 0;
+  uint64_t fSeq = 0;
+  uint64_t blockId = 0;
+  std::string alternateFSeq = "";
+  std::string alternateBlockId = "";
   std::string alternateCopyNbs = "";
   time_t startTime = 0;  //!< Time the job was inserted into the queue
   std::string retrieveReportURL = "NOT_DEFINED";
@@ -102,6 +106,10 @@ struct RetrieveJobQueueRow {
     vid.reserve(64);
     alternateVids.reserve(128);
     alternateCopyNbs.reserve(20);
+    alternateFSeq.reserve(128);
+    alternateBlockId.reserve(128);
+    fSeq = 0;
+    blockId = 0;
     drive.reserve(64);
     host.reserve(64);
     srrUsername.reserve(128);
@@ -146,7 +154,11 @@ struct RetrieveJobQueueRow {
     priority = 0;
     minRetrieveRequestAge = 0;
     copyNb = 0;
+    fSeq = 0;
+    blockId = 0;
     alternateCopyNbs.clear();
+    alternateFSeq.reserve(128);
+    alternateBlockId.reserve(128);
     startTime = 0;
     retrieveReportURL.clear();
     retrieveErrorReportURL.clear();
@@ -193,6 +205,10 @@ struct RetrieveJobQueueRow {
     priority = rset.columnUint32NoOpt("PRIORITY");
     minRetrieveRequestAge = rset.columnUint32NoOpt("MIN_RETRIEVE_REQUEST_AGE");
     copyNb = rset.columnUint8NoOpt("COPY_NB");
+    fSeq = rset.columnUint64NoOpt("FSEQ");
+    blockId = rset.columnUint64NoOpt("BLOCK_ID");
+    alternateFSeq = rset.columnStringNoOpt("ALTERNATE_FSEQS");
+    alternateBlockId = rset.columnStringNoOpt("ALTERNATE_BLOCK_IDS");
     startTime = rset.columnUint64NoOpt("START_TIME");
     retrieveReportURL = rset.columnStringNoOpt("RETRIEVE_REPORT_URL");
     retrieveErrorReportURL = rset.columnStringNoOpt("RETRIEVE_ERROR_REPORT_URL");
@@ -240,6 +256,21 @@ struct RetrieveJobQueueRow {
     archiveFile.diskFileInfo.path = rset.columnStringNoOpt("DISK_FILE_PATH");
     archiveFile.storageClass = rset.columnStringNoOpt("STORAGE_CLASS");
 
+    fSeq = rset.columnUint64NoOpt("FSEQ");
+    blockId = rset.columnUint64NoOpt("BLOCK_ID");
+    alternateFSeq = rset.columnStringNoOpt("ALTERNATE_FSEQS");
+    alternateBlockId = rset.columnStringNoOpt("ALTERNATE_BLOCK_IDS");
+
+    cta::common::dataStructures::TapeFile tf;
+    tf.vid = vid;
+    tf.fSeq = fSeq;
+    tf.blockId = blockId;
+    tf.fileSize = archiveFile.fileSize;
+    tf.copyNb = copyNb;
+    tf.creationTime = archiveFile.creationTime;
+    tf.checksumBlob = archiveFile.checksumBlob;
+    archiveFile.tapeFiles.push_back(tf);
+
     return *this;
   }
 
@@ -255,6 +286,8 @@ struct RetrieveJobQueueRow {
             SIZE_IN_BYTES,
             ARCHIVE_FILE_ID,
             CHECKSUMBLOB,
+            FSEQ,
+            BLOCK_ID,
             DISK_INSTANCE,
             DISK_FILE_PATH,
             DISK_FILE_ID,
@@ -267,6 +300,8 @@ struct RetrieveJobQueueRow {
             MIN_RETRIEVE_REQUEST_AGE,
             COPY_NB,
             ALTERNATE_COPY_NBS,
+            ALTERNATE_FSEQS,
+            ALTERNATE_BLOCK_IDS,
             START_TIME,
             RETRIEVE_ERROR_REPORT_URL,
             REQUESTER_NAME,
@@ -288,10 +323,12 @@ struct RetrieveJobQueueRow {
             LIFECYCLE_CREATION_TIME,
             LIFECYCLE_FIRST_SELECTED_TIME,
             LIFECYCLE_COMPLETED_TIME,
-            DISK_SYSTEM_NAME,
             RETRIEVE_REPORT_URL
     )";
-    if (!activity.has_value()) {
+    if (diskSystemName) {
+      sql += R"(,DISK_SYSTEM_NAME )";
+    }
+    if (activity.has_value()) {
       sql += R"(,ACTIVITY )";
     }
     if (!srrActivity.empty()) {
@@ -307,6 +344,8 @@ struct RetrieveJobQueueRow {
             :SIZE_IN_BYTES,
             :ARCHIVE_FILE_ID,
             :CHECKSUMBLOB,
+            :FSEQ,
+            :BLOCK_ID,
             :DISK_INSTANCE,
             :DISK_FILE_PATH,
             :DISK_FILE_ID,
@@ -319,6 +358,8 @@ struct RetrieveJobQueueRow {
             :MIN_RETRIEVE_REQUEST_AGE,
             :COPY_NB,
             :ALTERNATE_COPY_NBS,
+            :ALTERNATE_FSEQS,
+            :ALTERNATE_BLOCK_IDS,
             :START_TIME,
             :RETRIEVE_ERROR_REPORT_URL,
             :REQUESTER_NAME,
@@ -340,10 +381,12 @@ struct RetrieveJobQueueRow {
             :LIFECYCLE_CREATION_TIME,
             :LIFECYCLE_FIRST_SELECTED_TIME,
             :LIFECYCLE_COMPLETED_TIME,
-            :DISK_SYSTEM_NAME,
             :RETRIEVE_REPORT_URL
     )";
-    if (!activity.has_value()) {
+    if (diskSystemName) {
+      sql += R"(,DISK_SYSTEM_NAME )";
+    }
+    if (activity.has_value()) {
       sql += R"(,:ACTIVITY )";
     }
     if (!srrActivity.empty()) {
@@ -360,6 +403,8 @@ struct RetrieveJobQueueRow {
     stmt.bindUint64(":SIZE_IN_BYTES", archiveFile.fileSize);
     stmt.bindUint64(":ARCHIVE_FILE_ID", archiveFile.archiveFileID);
     stmt.bindBlob(":CHECKSUMBLOB", archiveFile.checksumBlob.serialize());
+    stmt.bindUint64(":FSEQ", archiveFile.archiveFileID);
+    stmt.bindUint64(":BLOCK_ID", archiveFile.archiveFileID);
     stmt.bindString(":DISK_INSTANCE", archiveFile.diskInstance);
     stmt.bindString(":DISK_FILE_PATH", archiveFile.diskFileInfo.path);
     stmt.bindString(":DISK_FILE_ID", archiveFile.diskFileId);
@@ -370,6 +415,8 @@ struct RetrieveJobQueueRow {
     stmt.bindUint32(":MIN_RETRIEVE_REQUEST_AGE", minRetrieveRequestAge);
     stmt.bindUint8(":COPY_NB", copyNb);
     stmt.bindString(":ALTERNATE_COPY_NBS", alternateCopyNbs);
+    stmt.bindString(":ALTERNATE_FSEQS", alternateFSeq);
+    stmt.bindString(":ALTERNATE_BLOCK_IDS", alternateBlockId);
     stmt.bindUint64(":START_TIME", startTime);
     stmt.bindString(":RETRIEVE_ERROR_REPORT_URL", retrieveErrorReportURL);
     stmt.bindString(":REQUESTER_NAME", requesterName);
@@ -396,15 +443,17 @@ struct RetrieveJobQueueRow {
     stmt.bindUint64(":LIFECYCLE_CREATION_TIME", lifecycleTimings_creation_time);
     stmt.bindUint64(":LIFECYCLE_FIRST_SELECTED_TIME", lifecycleTimings_first_selected_time);
     stmt.bindUint64(":LIFECYCLE_COMPLETED_TIME", lifecycleTimings_completed_time);
-    stmt.bindString(":DISK_SYSTEM_NAME", diskSystemName);
+    if (diskSystemName) {
+      stmt.bindString(":DISK_SYSTEM_NAME", diskSystemName.value());
+    }
     //stmt.bindBool(":IS_FAILED", isFailed);
     if (!retrieveReportURL.empty()) {
       stmt.bindString(":RETRIEVE_REPORT_URL", retrieveReportURL);
     } else {
       stmt.bindString(":RETRIEVE_REPORT_URL", "NOT_PROVIDED");
     }
-    if (!activity.has_value()) {
-      stmt.bindString(":ACTIVITY", activity);
+    if (activity.has_value()) {
+      stmt.bindString(":ACTIVITY", activity.value());
     }
     if (!srrActivity.empty()) {
       stmt.bindString(":SRR_ACTIVITY", srrActivity);
@@ -419,7 +468,11 @@ struct RetrieveJobQueueRow {
     params.add("vid", vid);
     params.add("alternateVids", alternateVids);
     params.add("alternateCopyNbs", alternateCopyNbs);
+    params.add("alternateFSeqs", alternateFSeq);
+    params.add("alternateBlockIds", alternateBlockId);
     params.add("copyNb", copyNb);
+    params.add("fSeq", fSeq);
+    params.add("blockId", blockId);
     params.add("activity", activity.value_or(""));
     params.add("priority", priority);
     params.add("retMinReqAge", minRetrieveRequestAge);
@@ -461,7 +514,7 @@ struct RetrieveJobQueueRow {
     params.add("lifecycleTimings.creation_time", lifecycleTimings_creation_time);
     params.add("lifecycleTimings.first_selected_time", lifecycleTimings_first_selected_time);
     params.add("lifecycleTimings.completed_time", lifecycleTimings_completed_time);
-    params.add("diskSystemName", diskSystemName.value_or("unknownDiskSystemName"));
+    params.add("diskSystemName", diskSystemName.value_or(""));
     //params.add("isFailed", isFailed);
   }
 
