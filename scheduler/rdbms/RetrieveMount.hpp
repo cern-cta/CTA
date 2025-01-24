@@ -67,9 +67,7 @@ public:
   uint64_t requeueJobBatch(const std::list<std::string>& jobIDsList, cta::log::LogContext& logContext) const override;
 
   void requeueJobBatch(std::list<std::unique_ptr<SchedulerDatabase::RetrieveJob>>& jobBatch,
-                       cta::log::LogContext& logContext) {
-    throw cta::exception::Exception("Not implemented");  // placeholder for OStoreDB
-  }
+                       cta::log::LogContext& logContext) override;
 
   void setDriveStatus(common::dataStructures::DriveStatus status,
                       common::dataStructures::MountType mountType,
