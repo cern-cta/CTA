@@ -207,7 +207,7 @@ void RetrieveRequest::fillJobsSetRetrieveFileQueueCriteria(
     m_jobs.back().blockId = tf.blockId;
     if(tf.copyNb == m_actCopyNb){
       m_fSeq = tf.fSeq;
-      m_blockId = tf.fSeq;
+      m_blockId = tf.blockId;
     }
     //uint64_t fileSize = tf.fileSize;
     //uint8_t copyNb = tf.copyNb;
