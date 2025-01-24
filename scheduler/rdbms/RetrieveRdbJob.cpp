@@ -57,8 +57,12 @@ RetrieveRdbJob::RetrieveRdbJob(rdbms::ConnPool& connPool, const rdbms::Rset& rse
   retrieveRequest.lifecycleTimings.creation_time = m_jobRow.lifecycleTimings_creation_time;
   retrieveRequest.lifecycleTimings.first_selected_time = m_jobRow.lifecycleTimings_first_selected_time;
   retrieveRequest.lifecycleTimings.completed_time = m_jobRow.lifecycleTimings_completed_time;
-  retrieveRequest.activity = m_jobRow.activity.value_or("");
-  diskSystemName = m_jobRow.diskSystemName.value_or("");
+  if(m_jobRow.activity){
+    retrieveRequest.activity = m_jobRow.activity.value();
+  }
+  if(m_jobRow.diskSystemName){
+    diskSystemName = m_jobRow.diskSystemName.value();
+  }
 
   // Set other attributes or perform any necessary initialization
   // Setting the internal report type - in case isReporting == false No Report type required
@@ -101,7 +105,12 @@ RetrieveRdbJob::RetrieveRdbJob(rdbms::ConnPool& connPool)
   retrieveRequest.lifecycleTimings.first_selected_time = m_jobRow.lifecycleTimings_first_selected_time;
   retrieveRequest.lifecycleTimings.completed_time = m_jobRow.lifecycleTimings_completed_time;
   retrieveRequest.activity = m_jobRow.activity.value_or("");
-  diskSystemName = m_jobRow.diskSystemName.value_or("");
+  if(m_jobRow.activity){
+    retrieveRequest.activity = m_jobRow.activity.value();
+  }
+  if(m_jobRow.diskSystemName){
+    diskSystemName = m_jobRow.diskSystemName.value();
+  }
   // Set other attributes or perform any necessary initialization
   // Setting the internal report type - in case isReporting == false No Report type required
   if (m_jobRow.status == RetrieveJobStatus::RJS_ToTransfer) {
@@ -141,8 +150,12 @@ void RetrieveRdbJob::initialize(const rdbms::Rset& rset, log::LogContext& lc) {
   retrieveRequest.lifecycleTimings.creation_time = m_jobRow.lifecycleTimings_creation_time;
   retrieveRequest.lifecycleTimings.first_selected_time = m_jobRow.lifecycleTimings_first_selected_time;
   retrieveRequest.lifecycleTimings.completed_time = m_jobRow.lifecycleTimings_completed_time;
-  retrieveRequest.activity = m_jobRow.activity.value_or("");
-  diskSystemName = m_jobRow.diskSystemName.value_or("");
+  if(m_jobRow.activity){
+    retrieveRequest.activity = m_jobRow.activity.value();
+  }
+  if(m_jobRow.diskSystemName){
+    diskSystemName = m_jobRow.diskSystemName.value();
+  }
   /* rj retrieve job setting:
      rj->archiveFile = rr.m_archiveFile;
 
@@ -197,7 +210,7 @@ void RetrieveRdbJob::reset() {
   retrieveRequest.mountPolicy
     ->clear();  // limit retrieve requests to a specified mount policy (only used for verification requests)
   retrieveRequest.activity->clear();
-  diskSystemName->clear();
+  diskSystemName = std::nullopt;
   retrieveRequest.lifecycleTimings.creation_time = m_jobRow.lifecycleTimings_creation_time;
   retrieveRequest.lifecycleTimings.first_selected_time = m_jobRow.lifecycleTimings_first_selected_time;
   retrieveRequest.lifecycleTimings.completed_time = m_jobRow.lifecycleTimings_completed_time;
