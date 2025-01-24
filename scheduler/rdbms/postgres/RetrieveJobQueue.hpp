@@ -260,7 +260,8 @@ struct RetrieveJobQueueRow {
     blockId = rset.columnUint64NoOpt("BLOCK_ID");
     alternateFSeq = rset.columnStringNoOpt("ALTERNATE_FSEQS");
     alternateBlockId = rset.columnStringNoOpt("ALTERNATE_BLOCK_IDS");
-
+    // we should add here a method that will fill all
+    // the alternative tape files from the alternate columns (unless there is just one !)
     cta::common::dataStructures::TapeFile tf;
     tf.vid = vid;
     tf.fSeq = fSeq;
