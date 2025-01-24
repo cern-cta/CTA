@@ -205,10 +205,6 @@ void RetrieveRequest::fillJobsSetRetrieveFileQueueCriteria(
     // in case we need these for retrieval we should save them in DB as well somehow !
     m_jobs.back().fSeq = tf.fSeq;
     m_jobs.back().blockId = tf.blockId;
-    if(tf.copyNb == m_actCopyNb){
-      m_fSeq = tf.fSeq;
-      m_blockId = tf.blockId;
-    }
     //uint64_t fileSize = tf.fileSize;
     //uint8_t copyNb = tf.copyNb;
     //time_t creationTime = tf.creationTime;
@@ -251,6 +247,8 @@ void RetrieveRequest::setActiveCopyNumber(uint32_t activeCopyNb) {
   for (const auto& j : m_jobs) {
     if (j.copyNb == activeCopyNb) {
       activeJob = &j;
+      m_fSeq = tf.fSeq;
+      m_blockId = tf.blockId;
       break;
     }
   }
