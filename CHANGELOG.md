@@ -1,3 +1,39 @@
+## v5.11.3.0-1
+
+### Features
+
+- cta/CTA#570 - Add support for log rotation on CTA tape servers
+- cta/CTA#701 - Resolve "Remove cta-taped dependency on eos-client"
+- cta/CTA#891 - Resolve "CTA CI pipeline triggered by EOS can not test against latest CTA tag"
+- cta/CTA#960 - Update CTA charts to use statefulsets instead of plain pod definitions
+- cta/CTA#967 - Use EOS Helm chart in containerized CTA deployment.
+- cta/CTA#975 - Add base images for CI jobs reducing the need for yum install
+
+### Bug Fixes
+
+- cta/CTA#1010 - Add readiness probe to postgres pods to ensure reset-job does not fail when DB not ready
+- cta/CTA#1014 - Resolve "Fix archive route type string in `cta-admin ar ls` command"
+- cta/CTA#1023 - Fix taped core dumping due to logging concurrent modifications
+- cta/CTA#1026 - Fix cta-fst-gcd failing to log to stdout due to duplicated statement
+- cta/CTA#1029 - Resolve "Fix deletion of dual copy files"
+
+### Maintenance
+
+- cta/CTA#933 - Mount pod startup scripts in pods instead of baking them into the docker image
+- cta/CTA#941 - Rename docker/ctafrontend/ to docker/
+- cta/CTA#955 - Upgrade the cta-catalogue-updater chart to use the latest version
+- cta/CTA#995 - Upgrade Oracle instant client from 21 to 23
+- cta/CTA#1007 - Remove split between image registry and repository in Helm values
+- cta/CTA#1008 - Improve naming and referencing of pods
+- cta/CTA#1009 - Move CTA subcharts to be top-level charts and improve helm dependency update performance
+- cta/CTA#1011 - Improve readiness probes for CTA pods
+- cta/CTA#1012 - Move ownership of keytab fix to init containers
+- cta/CTA#1013 - Separate CI images by stage to allow for automatic tag updating
+- cta/CTA#1020 - Update deprecated docker build image to official kaniko debug image
+- cta/CTA#1022 - Resolve "Improve staging error message on repacking tapes"
+- cta/CTA#1024 - Fix test naming inconsistencies and minor CI QoL improvements
+
+
 ## v5.11.2.0-1
 
 ### Features
