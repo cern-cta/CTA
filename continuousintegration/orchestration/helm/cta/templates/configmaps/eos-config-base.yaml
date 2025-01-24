@@ -28,6 +28,7 @@ data:
     xrd.tlsca  certdir /etc/grid-security/certificates/
     all.sitename  cern_tape_archive_ctaeos_ci
     taperestapi.sitename cern-cta-ctaeosci
+    mgmofs.use_grpc true
 
   xrd.cf.fst: |
     xrd.protocol  XrdHttp:1140 libXrdHttp.so

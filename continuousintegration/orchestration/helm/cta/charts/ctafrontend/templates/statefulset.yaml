@@ -48,10 +48,19 @@ spec:
         image: {{ include "ctafrontend.image" . }}
         imagePullPolicy: {{ include "ctafrontend.imagePullPolicy" . }}
         stdin: true
+        {{- if ( .Values.useGrpcFrontend ) }}
+        command: ["bash", "/scripts/ctafrontend-grpc.sh"]
+        {{- else }}
         command: ["bash", "/scripts/ctafrontend.sh"]
+        {{- end}}
         readinessProbe:
+        {{- if not ( .Values.useGrpcFrontend ) }}
           tcpSocket:
-            port: {{ .Values.frontendPort }}
+            port: {{ .Values.conf.xrootd.port }}
+        {{- else }}
+          tcpSocket:
+            port: {{ .Values.conf.grpc.port }}
+        {{- end}}
           initialDelaySeconds: 5
           periodSeconds: 5
           timeoutSeconds: 3
@@ -103,9 +112,12 @@ spec:
           mountPath: /etc/cta/cta-objectstore-tools.conf
           subPath: cta-objectstore-tools.conf
         {{- end }}
-        - name: xrootd-config
-          mountPath: /etc/cta/cta-frontend-xrootd.conf
-          subPath: cta-frontend-xrootd.conf
+        # - name: xrootd-config
+        #   mountPath: /etc/cta/cta-frontend-xrootd.conf
+        #   subPath: cta-frontend-xrootd.conf
+        - name: grpc-config
+          mountPath: /etc/cta/cta-frontend-grpc.conf
+          subPath: cta-frontend-grpc.conf
         {{- if eq $schedulerConfig.backend "ceph" }}
         - name: cta-ceph-volume
           mountPath: /etc/ceph/ceph.conf
@@ -132,9 +144,12 @@ spec:
         configMap:
           name: scripts-ctafrontend
           defaultMode: 0777
-      - name: xrootd-config
+      # - name: xrootd-config
+      #   configMap:
+      #     name: cta-frontend-xrootd-conf
+      - name: grpc-config
         configMap:
-          name: cta-frontend-xrootd-conf
+          name: cta-frontend-grpc-conf
       - name: catalogue-config
         configMap:
           name: cta-catalogue-conf

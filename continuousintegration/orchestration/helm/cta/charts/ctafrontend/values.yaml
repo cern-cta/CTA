@@ -10,6 +10,7 @@ terminationGracePeriodSeconds: 0 # This is low on purpose as the current process
 # Take care with increasing this number, as CTA has not been tested with multiple frontend replicas
 # Increasing this will most likely not work as expected
 replicase: 1
+useGrpcFrontend: true
 
 conf:
   catalogue:
@@ -51,6 +52,9 @@ conf:
     krb5: "/etc/cta/cta-frontend.krb5.keytab cta/cta-frontend@TEST.CTA"
     sss: "/etc/cta/eos.sss.keytab"
     allowedProtocols: "sss krb5"
+
+  grpc:
+    port: 10955
 
 # Additional environment variables
 env: []

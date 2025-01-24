@@ -1,0 +1,67 @@
+{{- $schedulerConfig := include "scheduler.config" . | fromYaml -}}
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: cta-frontend-grpc-conf
+  labels:
+    {{- include "common.labels.standard" . | nindent 4 }}
+data:
+  cta-frontend-grpc.conf: |-
+    #
+    # CTA options
+    #
+
+    cta.instance_name {{ .Values.conf.frontend.instanceName }}
+    cta.schedulerdb.scheduler_backend_name {{ $schedulerConfig.backend }}
+
+    # CTA ObjectStore options
+    cta.objectstore.backendpath {{ include "global.schedulerUrl" . }}
+
+    # CTA Scheduler DB options
+    cta.schedulerdb.numberofthreads {{ .Values.conf.schedulerdb.numberOfThreads }}
+    cta.schedulerdb.threadstacksize_mb {{ .Values.conf.schedulerdb.threadStackSizeMb }}
+    cta.schedulerdb.enable_repack_requests {{ .Values.conf.schedulerdb.enableRepackRequests }}
+    cta.schedulerdb.enable_user_requests {{ .Values.conf.schedulerdb.enableUserRequests }}
+
+    # CTA Scheduler DB options - Cache timeout options (decreased for tests)
+    cta.schedulerdb.tape_cache_max_age_secs {{ .Values.conf.schedulerdb.tapeCacheMaxAgeSecs }}
+    cta.schedulerdb.retrieve_queue_cache_max_age_secs {{ .Values.conf.schedulerdb.retrieveQueueCacheMaxAgeSecs }}
+
+    # CTA Catalogue options
+    cta.catalogue.numberofconnections {{ .Values.conf.catalogue.numberOfConnections }}
+
+    # Maximum file size (in GB) that the CTA Frontend will accept for archiving
+    cta.archivefile.max_size_gb {{ .Values.conf.frontend.archiveFileMaxSizeGb }}
+
+    # CTA Frontend log URL
+    cta.log.url {{ .Values.conf.frontend.logUrl }}
+
+    # CTA Logger log level
+    # Valid log levels are EMERG, ALERT, CRIT, ERR, WARNING, NOTICE (==USERERR), INFO, DEBUG
+    cta.log.level {{ .Values.conf.logger.logLevel }}
+
+    # CTA Logger log format
+    # Valid formats are default, json
+    cta.log.format {{ .Values.conf.logger.logFormat }}
+
+    cta.log.log_header true
+
+    # CTA Repack buffer URL
+    # cta.repack.repack_buffer_url {{ .Values.conf.frontend.repackBufferUrl }}
+
+    # CTA Verification Mount Policy
+    cta.verification.mount_policy {{ .Values.conf.verification.mountPolicy }}
+
+    # Keytab containing gRPC endpoints and tokens for each disk instance
+    cta.ns.config {{ .Values.conf.ns.config }}
+
+    ### This is something leftover from the xrootd/ssi config, maybe unnecessary
+
+    # This does not always need to be added
+    cta.ns.config {{ .Values.conf.ns.config }}
+
+    # gRPC options
+    port {{ .Values.conf.grpc.port }}
+
+    # TLS related variables
+    TLS false
