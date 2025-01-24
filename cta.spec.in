@@ -638,6 +638,9 @@ the free disk space in the defalut namespace
 
 %changelog
 
+* Fri Jan 24 2025 Joao Afonso <joao.afonso@cern.ch> - 5.11.3.0-1
+- See CHANGELOG.md for details
+
 * Tue Dec 10 2024 Joao Afonso <joao.afonso@cern.ch> - 5.11.2.0-1
 - See CHANGELOG.md for details
 
