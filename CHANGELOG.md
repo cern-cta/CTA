@@ -170,6 +170,75 @@
 - cta/CTA#824 - Update gfal2-util rpm install name and remove DMC repo
 
 
+## 5.11.3.0-1 (2025-01-24)
+
+### Features
+
+-  #967 - Use EOS Helm chart in containerized CTA deployment.
+
+-  #975 - Add base images for CI jobs reducing the need for yum install
+
+-  #960 - Update CTA charts to use statefulsets instead of plain pod definitions
+
+-  #891 - Resolve "CTA CI pipeline triggered by EOS can not test against latest CTA tag"
+
+
+### Bug Fixes
+
+-  #102 - Resolve "Fix deletion of dual copy files"
+
+-  #1026 - Fix cta-fst-gcd failing to log to stdout due to duplicated statement
+
+-  #1023 - Fix taped core dumping due to logging concurrent modifications
+
+-  #1014 - Resolve "Fix archive route type string in `cta-admin ar ls` command"
+
+-  #1010 - Add readiness probe to postgres pods to ensure reset-job does not fail when DB not ready
+
+
+### Maintenance
+
+-  #941 - Rename docker/ctafrontend/ to docker/
+
+-  #1009 - Move CTA subcharts to be top-level charts and improve helm dependency update performance
+
+-  #1024 - Fix test naming inconsistencies and minor CI QoL improvements
+
+-  #1022 - Resolve "Improve staging error message on repacking tapes"
+
+-  #1020 - Update deprecated docker build image to official kaniko debug image
+
+-  #1012 - Move ownership of keytab fix to init containers
+
+-  #1013 - Separate CI images by stage to allow for automatic tag updating
+
+-  #1008 - Improve naming and referencing of pods
+
+-  #933 - Mount pod startup scripts in pods instead of baking them into the docker image
+
+-  #1011 - Improve readiness probes for CTA pods
+
+-  #1007 - Remove split between image registry and repository in Helm values
+
+-  #995 - Upgrade Oracle instant client from 21 to 23
+
+-  #955 - Upgrade the cta-catalogue-updater chart to use the latest version
+
+
+### feature/bug/maintenance
+
+-  <id> - Fix sonarcloud warnings after merging !547
+
+-  <id> - Resolve "Remove cta-taped dependency on eos-client"
+
+-  <id> - CI image tag update: 2025-01-21-9930133
+
+-  <id> - CI image tag update: 2025-01-17-9911846
+
+-  #570 - Add support for log rotation on CTA tape servers
+
+-  <id> - Fix sonarcloud warning
+
 ## 4.10.11.0-1 / 5.10.11.0-1
 
 ### Features
