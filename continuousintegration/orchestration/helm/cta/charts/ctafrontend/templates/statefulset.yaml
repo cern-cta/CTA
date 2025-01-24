@@ -53,19 +53,6 @@ spec:
         {{- else }}
         command: ["bash", "/scripts/ctafrontend.sh"]
         {{- end}}
-        readinessProbe:
-        {{- if not ( .Values.useGrpcFrontend ) }}
-          tcpSocket:
-            port: {{ .Values.conf.xrootd.port }}
-        {{- else }}
-          tcpSocket:
-            port: {{ .Values.conf.grpc.port }}
-        {{- end}}
-          initialDelaySeconds: 5
-          periodSeconds: 5
-          timeoutSeconds: 3
-          successThreshold: 1
-          failureThreshold: 60
         securityContext:
           privileged: {{ .Values.isPriviliged }}
         resources:
