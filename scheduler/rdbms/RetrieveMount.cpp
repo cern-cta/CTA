@@ -116,7 +116,7 @@ bool RetrieveMount::reserveDiskSpace(const cta::DiskSpaceReservationRequest& dis
     // Could not get free space for one of the disk systems. Currently the retrieve mount will only query
     // one disk system, so just log the failure and put the queue to sleep inside the loop.
     for (const auto& failedDiskSystem : ex.m_failedDiskSystems) {
-      cta::log::ScopedParamContainer(logContext)
+        cta::log::ScopedParamContainer(logContext)
         .add("diskSystemName", failedDiskSystem.first)
         .add("failureReason", failedDiskSystem.second.getMessageValue())
         .log(cta::log::ERR,
@@ -177,10 +177,83 @@ bool RetrieveMount::reserveDiskSpace(const cta::DiskSpaceReservationRequest& dis
   return true;
 }
 
-bool RetrieveMount::testReserveDiskSpace(const cta::DiskSpaceReservationRequest& request,
+bool RetrieveMount::testReserveDiskSpace(const cta::DiskSpaceReservationRequest& diskSpaceReservationRequest,
                                          const std::string& externalFreeDiskSpaceScript,
                                          log::LogContext& logContext) {
-  throw cta::exception::Exception("Not implemented");
+  // Get the current file systems list from the catalogue
+  cta::disk::DiskSystemList diskSystemList;
+  diskSystemList = m_RelationalDB.m_catalogue.DiskSystem()->getAllDiskSystems();
+  diskSystemList.setExternalFreeDiskSpaceScript(externalFreeDiskSpaceScript);
+  cta::disk::DiskSystemFreeSpaceList diskSystemFreeSpace(diskSystemList);
+
+  // Get the existing reservation map from drives.
+  auto previousDrivesReservations = m_RelationalDB.m_catalogue.DriveState()->getDiskSpaceReservations();
+  // Get the free space from disk systems involved.
+  std::set<std::string> diskSystemNames;
+  for (const auto& dsrr : diskSpaceReservationRequest) {
+    diskSystemNames.insert(dsrr.first);
+  }
+
+  try {
+    diskSystemFreeSpace.fetchDiskSystemFreeSpace(diskSystemNames, m_RelationalDB.m_catalogue, logContext);
+  } catch (const cta::disk::DiskSystemFreeSpaceListException& ex) {
+    // Could not get free space for one of the disk systems. Currently the retrieve mount will only query
+    // one disk system, so just log the failure and put the queue to sleep inside the loop.
+   for (const auto& failedDiskSystem : ex.m_failedDiskSystems) {
+      cta::log::ScopedParamContainer(logContext)
+        .add("diskSystemName", failedDiskSystem.first)
+        .add("failureReason", failedDiskSystem.second.getMessageValue())
+        .log(cta::log::ERR,
+             "In RelationalDB::RetrieveMount::testReserveDiskSpace(): unable to request EOS free space "
+             "for disk system, putting queue to sleep");
+      auto sleepTime = diskSystemFreeSpace.getDiskSystemList().at(failedDiskSystem.first).sleepTime;
+      putQueueToSleep(failedDiskSystem.first, sleepTime, logContext);
+    }
+    return false;
+  } catch (std::exception& ex) {
+    // Leave a log message before letting the possible exception go up the stack.
+    cta::log::ScopedParamContainer(logContext)
+      .add("exceptionWhat", ex.what())
+      .log(cta::log::ERR,
+           "In RelationalDB::RetrieveMount::testReserveDiskSpace(): got an exception from "
+           "diskSystemFreeSpace.fetchDiskSystemFreeSpace().");
+    throw;
+  }
+
+  // If a file system does not have enough space fail the disk space reservation,  put the queue to sleep and
+  // the retrieve mount will immediately stop
+  for (const auto& ds : diskSystemNames) {
+    uint64_t previousDrivesReservationTotal = 0;
+    auto diskSystem = diskSystemFreeSpace.getDiskSystemList().at(ds);
+    // Compute previous drives reservation for the physical space of the current disk system.
+    for (auto previousDriveReservation : previousDrivesReservations) {
+      //avoid empty string when no disk space reservation exists for drive
+      if (previousDriveReservation.second != 0) {
+        auto previousDiskSystem = diskSystemFreeSpace.getDiskSystemList().at(previousDriveReservation.first);
+        if (diskSystem.diskInstanceSpace.freeSpaceQueryURL == previousDiskSystem.diskInstanceSpace.freeSpaceQueryURL) {
+          previousDrivesReservationTotal += previousDriveReservation.second;
+        }
+      }
+    }
+    if (diskSystemFreeSpace.at(ds).freeSpace < diskSpaceReservationRequest.at(ds) +
+                                                 diskSystemFreeSpace.at(ds).targetedFreeSpace +
+                                                 previousDrivesReservationTotal) {
+      cta::log::ScopedParamContainer(logContext)
+        .add("diskSystemName", ds)
+        .add("freeSpace", diskSystemFreeSpace.at(ds).freeSpace)
+        .add("existingReservations", previousDrivesReservationTotal)
+        .add("spaceToReserve", diskSpaceReservationRequest.at(ds))
+        .add("targetedFreeSpace", diskSystemFreeSpace.at(ds).targetedFreeSpace)
+        .log(cta::log::WARNING,
+             "In RelationalDB::RetrieveMount::testReserveDiskSpace(): could not allocate disk space for job, "
+             "applying backpressure");
+
+      auto sleepTime = diskSystem.sleepTime;
+      putQueueToSleep(ds, sleepTime, logContext);
+      return false;
+    }
+  }
+  return true;
 }
 
 uint64_t RetrieveMount::requeueJobBatch(const std::list<std::string>& jobIDsList,
@@ -206,6 +279,26 @@ uint64_t RetrieveMount::requeueJobBatch(const std::list<std::string>& jobIDsList
     return 0;
   }
   return nrows;
+}
+
+void RetrieveMount::requeueJobBatch(std::list<std::unique_ptr<SchedulerDatabase::RetrieveJob>>& jobBatch,
+                                    cta::log::LogContext& logContext) {
+  std::list<std::string> jobIDsList;
+  for (auto& job : jobBatch) {
+    jobIDsList.push_back(std::to_string(job->jobID));
+  }
+  uint64_t njobs = RetrieveMount::requeueJobBatch(jobIDsList, logContext);
+  if (njobs != jobIDsList.size()) {
+    // handle the case of failed bunch update of the jobs !
+    std::string jobIDsString;
+    for (const auto& piece : jobIDsList) {
+      jobIDsString += piece;
+    }
+    logContext.log(cta::log::ERR,
+                   std::string("In RetrieveMount::requeueJobBatch(): Did not requeue all task jobs of "
+                               "the queue for this there was no space on disk, job IDs attempting to update were: ") +
+                     jobIDsString);
+  }
 }
 
 void RetrieveMount::setDriveStatus(common::dataStructures::DriveStatus status,
@@ -251,6 +344,23 @@ void RetrieveMount::addDiskSystemToSkip(const DiskSystemToSkip& diskSystemToSkip
 void RetrieveMount::putQueueToSleep(const std::string& diskSystemName,
                                     const uint64_t sleepTime,
                                     log::LogContext& logContext) {
+  // this method needs to know the getNextMountBatch to hold off fetching
+  // jobs with specific diskSystemNme for a limited period of sleetime set somewhere in the scheduling DB for this disk System
+  /*objectstore::RetrieveQueue rq(m_oStoreDB.m_objectStore);
+    objectstore::ScopedExclusiveLock lock;
+    auto queueType = cta::common::dataStructures::JobQueueType::JobsToTransferForUser;
+    std::optional<std::string> vid(mountInfo.vid);
+
+  Helpers::getLockedAndFetchedJobQueue<RetrieveQueue>(rq,
+                                                      lock,
+                                                      *m_oStoreDB.m_agentReference,
+                                                      vid,
+                                                      queueType,
+                                                      logContext);
+
+  rq.setSleepForFreeSpaceStartTimeAndName(::time(nullptr), diskSystemName, sleepTime);
+  rq.commit();
+  lock.release();*/
   throw cta::exception::Exception("Not implemented");
 }
 

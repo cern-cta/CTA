@@ -58,7 +58,12 @@ void RetrieveRequest::insert() {
     rjr.copyNb = m_actCopyNb;
     rjr.status = RetrieveJobStatus::RJS_ToTransfer; // m_status;
     rjr.vid = m_vid;
-
+//        uint64_t fSeq;
+//        uint64_t blockId;
+//        time_t creationTime;
+//        checksum::ChecksumBlob checksumBlob;
+    rjr.fSeq = m_fSeq;
+    rjr.blockId = m_blockId;
     ///
     // info from criteria passed to fillJobsSetRetrieveFileQueueCriteria()
     rjr.mountPolicy = m_mountPolicyName;
@@ -75,6 +80,9 @@ void RetrieveRequest::insert() {
       i++;
       rjr.alternateVids += rj.vid + std::string(",");
       rjr.alternateCopyNbs += std::to_string(rj.copyNb) + std::string(",");
+      rjr.alternateFSeq += std::to_string(rj.fSeq) + std::string(",");
+      rjr.alternateBlockId += std::to_string(rj.blockId) + std::string(",");
+
       //rjr.tapePool = rj.tapepool; // currently not sure if we have need for tape pool
       if (i == 1) {
         rjr.retriesWithinMount = rj.retriesWithinMount;
@@ -92,8 +100,14 @@ void RetrieveRequest::insert() {
     if (!rjr.alternateCopyNbs.empty()) {
       rjr.alternateCopyNbs.pop_back();
     }
+    if (!rjr.alternateFSeq.empty()) {
+      rjr.alternateFSeq.pop_back();
+    }
+    if (!rjr.alternateBlockId.empty()) {
+      rjr.alternateBlockId.pop_back();
+    }
     rjr.srrMountPolicy = "?";                       // ? what was this for ?
-    rjr.srrActivity = m_schedRetrieveReq.activity.value_or("");  // ? what was this for ?
+    rjr.srrActivity = m_schedRetrieveReq.activity.value_or("?");  // ? what was this for ?
     log::ScopedParamContainer params(m_lc);
     rjr.addParamsToLogContext(params);
     m_lc.log(log::INFO, "In RetrieveRequest::insert(): before insert row.");
@@ -107,11 +121,6 @@ void RetrieveRequest::insert() {
     throw;
   }
 }
-
-// isrepack & repackReqId are stored both individually in the row and inside
-// the repackinfo protobuf
-// row.isRepack = m_repackInfo.isRepack;
-// row.repackReqId = m_repackInfo.repackRequestId;
 
 /* [Protobuf to-be-replaced] keeping this logic in a comment to facilitate
      * future rewrite using DB columns directly instead of inserting Protobuf objects
@@ -194,8 +203,12 @@ void RetrieveRequest::fillJobsSetRetrieveFileQueueCriteria(
     m_jobs.back().maxReportRetries = hardcodedReportRetries;
     m_jobs.back().status = schedulerdb::RetrieveJobStatus::RJS_ToTransfer;
     // in case we need these for retrieval we should save them in DB as well somehow !
-    //uint64_t fSeq = tf.fSeq;
-    //uint64_t blockId = tf.blockId;
+    m_jobs.back().fSeq = tf.fSeq;
+    m_jobs.back().blockId = tf.blockId;
+    if(tf.copyNb == m_actCopyNb){
+      m_fSeq = tf.fSeq;
+      m_blockId = tf.fSeq;
+    }
     //uint64_t fileSize = tf.fileSize;
     //uint8_t copyNb = tf.copyNb;
     //time_t creationTime = tf.creationTime;
