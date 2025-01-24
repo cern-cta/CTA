@@ -403,8 +403,8 @@ struct RetrieveJobQueueRow {
     stmt.bindUint64(":SIZE_IN_BYTES", archiveFile.fileSize);
     stmt.bindUint64(":ARCHIVE_FILE_ID", archiveFile.archiveFileID);
     stmt.bindBlob(":CHECKSUMBLOB", archiveFile.checksumBlob.serialize());
-    stmt.bindUint64(":FSEQ", archiveFile.archiveFileID);
-    stmt.bindUint64(":BLOCK_ID", archiveFile.archiveFileID);
+    stmt.bindUint64(":FSEQ", fSeq);
+    stmt.bindUint64(":BLOCK_ID", blockId);
     stmt.bindString(":DISK_INSTANCE", archiveFile.diskInstance);
     stmt.bindString(":DISK_FILE_PATH", archiveFile.diskFileInfo.path);
     stmt.bindString(":DISK_FILE_ID", archiveFile.diskFileId);
