@@ -361,11 +361,13 @@ RelationalDB::queueRetrieve(cta::common::dataStructures::RetrieveRequest& rqst,
     // In order to queue the job, construct it first in memory.
     auto sqlconn = m_connPool.getConn();
     auto rReq = std::make_unique<schedulerdb::RetrieveRequest>(sqlconn, logContext);
+    // the order of the following calls in important - we should rewise
+    // the whole logic here and metadata object separation
     rReq->setActivityIfNeeded(rqst, criteria);
     ret.requestId = rReq->getIdStr();
     rReq->setSchedulerRequest(rqst);
-    rReq->setActiveCopyNumber(bestCopyNb);
     rReq->fillJobsSetRetrieveFileQueueCriteria(criteria);  // fills also m_jobs
+    rReq->setActiveCopyNumber(bestCopyNb);
     rReq->setIsVerifyOnly(rqst.isVerifyOnly);
     if (diskSystemName) {
       rReq->setDiskSystemName(diskSystemName.value());
