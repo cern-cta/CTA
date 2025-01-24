@@ -26,11 +26,15 @@ DriveHandlerProxy::~DriveHandlerProxy() {
   if (m_refreshLoggerClosingSock) {
     m_refreshLoggerClosing = true;
     // Send a signal to stop the waiting thread
-    m_refreshLoggerClosingSock->send("stop_thread", server::SocketPair::Side::child);
     try {
+      m_refreshLoggerClosingSock->send("stop_thread", server::SocketPair::Side::child);
       m_refreshLoggerAsyncFut.wait();
+    } catch (std::exception &ex) {
+      log::ScopedParamContainer exParams(m_lc);
+      exParams.add("exceptionMessage", ex.what());
+      m_lc.log(log::ERR, "In DriveHandlerProxy::~DriveHandlerProxy(): received a std::exception.");
     } catch (...) {
-      m_lc.log(log::ERR, "In DriveHandlerProxy::~DriveHandlerProxy(): uncaught exception thrown by m_refreshLoggerAsyncFut future.");
+      m_lc.log(log::ERR, "In DriveHandlerProxy::~DriveHandlerProxy(): received an unknown exception.");
     }
   }
 }
