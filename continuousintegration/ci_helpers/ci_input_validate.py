@@ -47,7 +47,7 @@ DEFINED_INPUT_VARS = [
     "BASH_LOGGING_ENABLED", "PIPELINE_TYPE", "CUSTOM_XRD_TAG",
     "CUSTOM_EOS_TAG", "CUSTOM_CTA_TAG", "CTA_BUILD_ID",
     "CTA_PIPELINE_NAME", "GIT_STRATEGY", "GIT_SUBMODULE_STRATEGY",
-    "GIT_DEPTH", "GIT_SUBMODULE_DEPTH", "IMAGE_PYTHON3",
+    "GIT_DEPTH", "GIT_SUBMODULE_DEPTH",
     "IMAGE_DOCKER_IMAGE_BUILDER", "IMAGE_CPPCHECK",
     "IMAGE_GITLAB_RELEASE_CLI", "IMAGE_BUILD", "IMAGE_TEST",
     "IMAGE_RELEASE", "IMAGE_ANALYSIS"
@@ -251,6 +251,9 @@ def main():
     # Get project defined CI variables from environment
     ci_input_vars = {}
     for var in DEFINED_INPUT_VARS:
+        if var not in os.environ:
+            print(f"Warning: input variable {var} was not found in the environment variables")
+            continue
         ci_input_vars[var] = os.environ[var]
 
     print(ci_input_vars)
