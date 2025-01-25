@@ -34,6 +34,8 @@
 #include "scheduler/rdbms/RepackRequest.hpp"
 
 #include <vector>
+#include <chrono>
+#include <mutex>
 
 namespace cta {
 
@@ -919,6 +921,28 @@ void RelationalDB::fetchMountInfo(SchedulerDatabase::TapeMountDecisionInfo& tmdi
 std::list<SchedulerDatabase::RetrieveQueueCleanupInfo>
 RelationalDB::getRetrieveQueuesCleanupInfo(log::LogContext& logContext) {
   throw cta::exception::Exception("Not implemented");
+}
+
+std::vector<std::string> RelationalDB::getActiveSleepDiskSystemNamesToFilter() {
+  std::lock_guard<std::mutex> lock(diskSystemSleepCacheMutex);
+  uint64_t currentTime = std::chrono::system_clock::to_time_t(std::chrono::system_clock::now());
+
+  std::vector<std::string> validDiskNames;
+
+  // Iterate over the map
+  for (auto it = diskSystemNameSleepCacheMap.begin(); it != diskSystemNameSleepCacheMap.end();) {
+    const std::string& diskName = it->first;
+    const DiskSleepEntry& entry = it->second;
+
+    // Check if the entry is expired
+    if (currentTime - entry.timestamp > entry.refreshInterval) {
+      it = diskSystemNameSleepCacheMap.erase(it);
+    } else {
+      validDiskNames.push_back(diskName);
+      ++it;
+    }
+  }
+  return validDiskNames;
 }
 
 void RelationalDB::setRetrieveQueueCleanupFlag(const std::string& vid, bool val, log::LogContext& logContext) {
