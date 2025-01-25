@@ -273,7 +273,7 @@ private:
    */
   struct DiskSleepEntry {
     uint64_t sleepTime;
-    uint64_t timestamp;
+    time_t timestamp;
     DiskSleepEntry() : sleepTime(0), timestamp(0) {}
     DiskSleepEntry(uint64_t st, time_t ts) : sleepTime(st), timestamp(ts) {}
   };
