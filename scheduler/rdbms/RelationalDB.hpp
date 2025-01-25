@@ -239,7 +239,14 @@ public:
    * Provides access to a connection from the connection pool
    */
   cta::rdbms::Conn getConn();
-
+  /*
+   * Get list of diskSystemNames for which the system should
+   * not be picking up jobs for retrieve
+   * due to insufficient disk space for a specified sleep time interval
+   *
+   * @return list of diskSystemName strings
+   */
+  std::vector<std::string> getActiveSleepDiskSystemNamesToFilter();
 private:
   /*
    * Get all the tape pools and tapes with queues (potential mounts)
@@ -265,20 +272,13 @@ private:
    * we put in place DiskSleepEntry, diskSystemSleepCacheMap and diskSystemSleepCacheMutex
    */
   struct DiskSleepEntry {
-    uint64_t refreshInterval; // In seconds
-    uint64_t timestamp;       // Epoch time of insertion
+    uint64_t sleepTime;
+    uint64_t timestamp;
+    DiskSleepEntry() : sleepTime(0), timestamp(0) {}
+    DiskSleepEntry(uint64_t st, time_t ts) : sleepTime(st), timestamp(ts) {}
   };
   std::unordered_map<std::string, DiskSleepEntry> diskSystemSleepCacheMap;
   std::mutex diskSystemSleepCacheMutex;
-  /*
-   * Get list of diskSystemNames for which the system should
-   * not be picking up jobs for retrieve
-   * due to insufficient disk space for a specified sleep time interval
-   *
-   * @return list of diskSystemName strings
-   */
-  std::vector<std::string> getActiveSleepDiskSystemNamesToFilter(
-    std::unordered_map<std::string, RelationalDB::DiskSleepEntry>& diskSystemNameSleepCacheMap)
   /**
   * Candidate for redesign/removal once we start improving Scheduler algorithm
   * A class holding a lock on the pending repack request queue. This is the first
