@@ -234,16 +234,6 @@ void RetrieveRdbJob::failTransfer(const std::string& failureReason, log::LogCont
     .add("failureReason", m_jobRow.failureLogs.value_or(""))
     .log(log::INFO, "In schedulerdb::RetrieveRdbJob::failTransfer(): received failed job to be reported.");
 
-  // For multiple jobs existing more might need to be done to ensure the file on EOS
-  // is deleted only when both requests succeed !
-  //if (m_jobRow.reqJobCount > 1){
-  //query
-  //}
-
-  // I need to add handling of multiple JOBS OF THE SAME REQUEST in cases when
-  // not all jobs succeeded - do we report failure for all ? - I guess so,
-  // check how this case is handled in the objectstore
-
   if (m_jobRow.lastMountWithFailure == m_mountId) {
     m_jobRow.retriesWithinMount += 1;
   } else {
@@ -251,10 +241,7 @@ void RetrieveRdbJob::failTransfer(const std::string& failureReason, log::LogCont
     m_jobRow.lastMountWithFailure = m_mountId;
   }
   m_jobRow.totalRetries += 1;
-  // for now we do not pur failure log into the DB just log it
-  // not sure if this is necessary
-  //m_jobRow.failureLogs.emplace_back(failureReason);
-  //cta::rdbms::Conn txn_conn = m_connPool.getConn();
+
   cta::schedulerdb::Transaction txn(m_connPool);
   // here we either decide if we report the failure to user or requeue the job
   if (m_jobRow.totalRetries >= m_jobRow.maxTotalRetries) {
@@ -289,15 +276,8 @@ void RetrieveRdbJob::failTransfer(const std::string& failureReason, log::LogCont
       txn.abort();
     }
   } else {
-    // decide if the failure comes from full tape or failed task queue - then avoid re-queueing to the same mount
-    // for the moment this is driven by failureReason - needs more robust design in the future !
-    std::string substring = "In TapeWriteSingleThread::run(): cleaning failed task queue";
-    bool failedtaskqueuejob = false;
-    if (failureReason.find(substring) != std::string::npos) {
-      failedtaskqueuejob = true;
-    }
     // Decide if we want the job to have a chance to come back to this mount (requeue) or not.
-    if (m_jobRow.retriesWithinMount >= m_jobRow.maxRetriesWithinMount || failedtaskqueuejob) {
+    if (m_jobRow.retriesWithinMount >= m_jobRow.maxRetriesWithinMount) {
       try {
         // requeue by changing status, reset the mount_id to NULL and updating all other stat fields
         m_jobRow.retriesWithinMount = 0;
@@ -425,10 +405,21 @@ void RetrieveRdbJob::abort(const std::string& abortReason, log::LogContext& lc) 
 }
 
 void RetrieveRdbJob::asyncSetSuccessful() {
-  throw cta::exception::Exception("Not implemented");
+  // since the RecalReportPacker calling this method does bunch the successful
+  // jobs in int member m_successfulRetrieveJobs,
+  //    m_successfulRetrieveJob->asyncSetSuccessful();
+  //    parent.m_successfulRetrieveJobs.push(std::move(m_successfulRetrieveJob));
+  // we do not contact the DB here for every job,
+  // we will make the operation on the bunch of jobs directly in flushAsyncSuccessReports
+  // called by the mount itself
+  // any jobs that might be missed being reported need to be spotted by the garbage collection
+
+  // This method intentionally does nothing, but needs to be here
+  // for the compatibility with OStoreDB Scheduler
 }
 
 void RetrieveRdbJob::fail() {
+  // it seems this method was just internal for OStoreDB and not needed here since we cover the use case in failTransfer
   throw cta::exception::Exception("Not implemented");
 }
 
