@@ -24,6 +24,8 @@
 #include <string>
 #include <tuple>
 #include <vector>
+#include <unordered_map>
+#include <mutex>
 
 #include "catalogue/TapeDrivesCatalogueState.hpp"
 #include "common/dataStructures/ArchiveFileQueueCriteriaAndFileId.hpp"
@@ -258,7 +260,25 @@ private:
   std::unique_ptr<TapeDrivesCatalogueState> m_tapeDrivesState;
 
   void populateRepackRequestsStatistics(SchedulerDatabase::RepackRequestStatistics& stats);
-
+  /*
+   * for retrieve queue sleep mechanism (filter out disk systems which do not have space)
+   * we put in place DiskSleepEntry, diskSystemSleepCacheMap and diskSystemSleepCacheMutex
+   */
+  struct DiskSleepEntry {
+    uint64_t refreshInterval; // In seconds
+    uint64_t timestamp;       // Epoch time of insertion
+  };
+  std::unordered_map<std::string, DiskSleepEntry> diskSystemSleepCacheMap;
+  std::mutex diskSystemSleepCacheMutex;
+  /*
+   * Get list of diskSystemNames for which the system should
+   * not be picking up jobs for retrieve
+   * due to insufficient disk space for a specified sleep time interval
+   *
+   * @return list of diskSystemName strings
+   */
+  std::vector<std::string> getActiveSleepDiskSystemNamesToFilter(
+    std::unordered_map<std::string, RelationalDB::DiskSleepEntry>& diskSystemNameSleepCacheMap)
   /**
   * Candidate for redesign/removal once we start improving Scheduler algorithm
   * A class holding a lock on the pending repack request queue. This is the first
