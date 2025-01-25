@@ -1,4 +1,4 @@
-{{- $name := include "kdc.name" .}}
+{{- $name := include "kdc.name" . }}
 apiVersion: v1
 kind: ConfigMap
 metadata:

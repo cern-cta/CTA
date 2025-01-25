@@ -9,7 +9,7 @@ spec:
   restartPolicy: Never
   containers:
   - name: cta-build
-    image: gitlab-registry.cern.ch/linuxsupport/alma9-base
+    image: gitlab-registry.cern.ch/linuxsupport/alma9-base:latest
     stdin: true
     command: ["sleep", "infinity"]
     resources:
