@@ -29,6 +29,8 @@
 
 #include <string>
 #include <set>
+#include <unordered_map>
+#include <vector>
 
 namespace cta::schedulerdb::postgres {
 
@@ -554,6 +556,7 @@ struct RetrieveJobQueueRow {
    * @param txn        Transaction to use for this query
    * @param status     Retrieve Job Status to select on
    * @param mountInfo  mountInfo object
+   * @param noSpaceDiskSystemNames list of diskSystemNames where there is no space left for more retrieves
    * @param maxBytesRequested  the maximum cumulative size of the files in the bunch requested
    * @param limit      Maximum number of rows to return
    *
@@ -563,6 +566,7 @@ struct RetrieveJobQueueRow {
   moveJobsToDbQueue(Transaction& txn,
                     RetrieveJobStatus status,
                     const SchedulerDatabase::RetrieveMount::MountInfo& mountInfo,
+                    std::vector<std::string> noSpaceDiskSystemNames,
                     uint64_t maxBytesRequested,
                     uint64_t limit);
   /**

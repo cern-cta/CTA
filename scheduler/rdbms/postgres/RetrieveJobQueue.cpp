@@ -25,6 +25,7 @@ std::pair<rdbms::Rset, uint64_t>
 RetrieveJobQueueRow::moveJobsToDbQueue(Transaction& txn,
                                        RetrieveJobStatus status,
                                        const SchedulerDatabase::RetrieveMount::MountInfo& mountInfo,
+                                       std::vector<std::string> noSpaceDiskSystemNames,
                                        uint64_t maxBytesRequested,
                                        uint64_t limit) {
   /* using write row lock FOR UPDATE for the select statement
@@ -33,13 +34,39 @@ RetrieveJobQueueRow::moveJobsToDbQueue(Transaction& txn,
   /* for paritioned queue table replace CREATION TIME by: EXTRACT(EPOCH FROM CREATION_TIME)::BIGINT */
   /* below I first apply the LIMIT on the selection to limit
    * the number of rows and only after calculate the running cumulative sun of bytes in the consequent step */
-  const char* const sql = R"SQL(
+  //
+
+  // we first check if there are any disk systems
+  // we should avoid querying jobs for
+  std::string sql_dsn_exclusion_part = "";
+  std::vector<std::string> dsnVec;
+  std::vector<std::string> dsnPlaceholderVec;
+  if (!noSpaceDiskSystemNames.empty()){
+    sql_dsn_exclusion_part = R"SQL( AND DISK_SYSTEM_NAME != ALL(ARRAY[)SQL";
+    size_t j = 1;
+    for (const auto& dsn : noSpaceDiskSystemNames) {
+      dsnVec.push_back(dsn);
+      std::string plch = std::string(":DSN") + std::to_string(j);
+      dsnPlaceholderVec.push_back(plch);
+      sql_dsn_exclusion_part += plch;
+      if (&dsn != &noSpaceDiskSystemNames.back()) {
+        sql_dsn_exclusion_part += std::string(",");
+      }
+      j++;
+    }
+    sql_dsn_exclusion_part += R"SQL( ]) )SQL";
+  }
+
+  std::string sql = R"SQL(
     WITH SET_SELECTION AS (
       SELECT JOB_ID, PRIORITY, SIZE_IN_BYTES
       FROM RETRIEVE_INSERT_QUEUE
       WHERE VID = :VID
       AND STATUS = :STATUS
       AND (MOUNT_ID IS NULL OR MOUNT_ID = :SAME_MOUNT_ID)
+      )SQL";
+  sql += sql_dsn_exclusion_part;
+  sql += R"SQL(
       ORDER BY PRIORITY DESC, JOB_ID
       LIMIT :LIMIT
       FOR UPDATE SKIP LOCKED
@@ -178,6 +205,10 @@ RetrieveJobQueueRow::moveJobsToDbQueue(Transaction& txn,
   stmt.bindUint32(":LIMIT", limit);
   stmt.bindUint64(":MOUNT_ID", mountInfo.mountId);
   stmt.bindUint64(":SAME_MOUNT_ID", mountInfo.mountId);
+  size_t sz = dsnPlaceholderVec.size();
+  for (size_t i = 0; i < sz; ++i) {
+    stmt.bindString(dsnPlaceholderVec[i], dsnVec[i]);
+  }
   stmt.bindString(":DRIVE", mountInfo.drive);
   stmt.bindString(":HOST", mountInfo.host);
   stmt.bindString(":LOGICAL_LIBRARY", mountInfo.logicalLibrary);
