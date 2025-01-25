@@ -337,33 +337,33 @@ void RetrieveMount::setTapeSessionStats(const castor::tape::tapeserver::daemon::
 void RetrieveMount::flushAsyncSuccessReports(std::list<SchedulerDatabase::RetrieveJob*>& jobsBatch,
                                              log::LogContext& lc) {
   // this method will remove the rows of the jobs from the DB
-  if (isRepack) {
+  //if (isRepack) {
     // If the job is from a repack subrequest, we change its status (to report
     // for repack success). Queueing will be done in batch in
     // REPACK USE CASE TO-BE-DONE
-  }
+  // }
   // we update/release the space reservation of the drive in the catalogue
   cta::DiskSpaceReservationRequest diskSpaceReservationRequest;
   common::dataStructures::MountPolicy mountPolicy;
   std::vector<std::string> jobIDsList_success;
   jobIDsList_success.reserve(jobsBatch.size());
   for (auto& rdbJob : jobsBatch) {
-    if (rdbJob.diskSystemName) {
-      diskSpaceReservationRequest.addRequest(rdbJob.diskSystemName.value(), rdbJob.archiveFile.fileSize);
+    if (rdbJob->diskSystemName) {
+      diskSpaceReservationRequest.addRequest(rdbJob->diskSystemName.value(), rdbJob->archiveFile.fileSize);
     }
-    jobIDsList_success.emplace_back(std::to_string(rdbJob.jobID));
+    jobIDsList_success.emplace_back(std::to_string(rdbJob->jobID));
     // we collect the jobIDs to delete form the JOB table since they are done successfully
   }
   this->m_RelationalDB.m_catalogue.DriveState()->releaseDiskSpace(mountInfo.drive,
                                                                   mountInfo.mountId,
                                                                   diskSpaceReservationRequest,
                                                                   lc);
+  cta::schedulerdb::Transaction txn(m_connPool);
   try {
-    cta::schedulerdb::Transaction txn(m_connPool);
     if (jobIDsList_success.size() > 0) {
       uint64_t nrows = schedulerdb::postgres::RetrieveJobQueueRow::updateJobStatus(
         txn,
-        cta::schedulerdb::ArchiveJobStatus::ReadyForDeletion,
+        cta::schedulerdb::RetrieveJobStatus::ReadyForDeletion,
         jobIDsList_success);
       if (nrows != jobIDsList_success.size()) {
         log::ScopedParamContainer(lc)
@@ -394,9 +394,9 @@ void RetrieveMount::addDiskSystemToSkip(const DiskSystemToSkip& diskSystemToSkip
 void RetrieveMount::putQueueToSleep(const std::string& diskSystemName,
                                     const uint64_t sleepTime,
                                     log::LogContext& logContext) {
-  m_RelationalDB.DiskSleepEntry dse {sleepTime, time(nullptr)};
+  RelationalDB::DiskSleepEntry dse(sleepTime, time(nullptr));
   std::lock_guard<std::mutex> lock(m_RelationalDB.diskSystemSleepCacheMutex);
-  m_RelationalDB.diskSystemNameSleepCacheMap[diskSystemName] = dse;
+  m_RelationalDB.diskSystemSleepCacheMap[diskSystemName] = dse;
 }
 
 }  // namespace cta::schedulerdb
