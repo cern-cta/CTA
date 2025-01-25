@@ -930,13 +930,13 @@ std::vector<std::string> RelationalDB::getActiveSleepDiskSystemNamesToFilter() {
   std::vector<std::string> validDiskNames;
 
   // Iterate over the map
-  for (auto it = diskSystemNameSleepCacheMap.begin(); it != diskSystemNameSleepCacheMap.end();) {
+  for (auto it = diskSystemSleepCacheMap.begin(); it != diskSystemSleepCacheMap.end();) {
     const std::string& diskName = it->first;
     const DiskSleepEntry& entry = it->second;
 
     // Check if the entry is expired
-    if (currentTime - entry.timestamp > entry.refreshInterval) {
-      it = diskSystemNameSleepCacheMap.erase(it);
+    if (currentTime - entry.timestamp > entry.sleepTime) {
+      it = diskSystemSleepCacheMap.erase(it);
     } else {
       validDiskNames.push_back(diskName);
       ++it;
