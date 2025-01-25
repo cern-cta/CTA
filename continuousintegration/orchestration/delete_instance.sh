@@ -15,7 +15,7 @@
 #                 You should have received a copy of the GNU General Public License
 #                 along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-source "$(dirname "${BASH_SOURCE[0]}")/../ci_helpers/log_wrapper.sh"
+source "$(dirname "${BASH_SOURCE[0]}")/../utils/log_wrapper.sh"
 
 die() {
   echo "$@" 1>&2

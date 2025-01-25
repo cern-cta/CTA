@@ -16,7 +16,7 @@
 #               submit itself to any jurisdiction.
 
 set -e
-source "$(dirname "${BASH_SOURCE[0]}")/../ci_helpers/log_wrapper.sh"
+source "$(dirname "${BASH_SOURCE[0]}")/../utils/log_wrapper.sh"
 
 die() {
   echo "$@" 1>&2
@@ -200,7 +200,7 @@ create_instance() {
 
   # This is where the actual scripting starts. All of the above is just initializing some variables, error checking and producing debug output
 
-  devices_all=$(./../ci_helpers/tape/list_all_libraries.sh)
+  devices_all=$(./../utils/tape/list_all_libraries.sh)
   devices_in_use=$(kubectl get all --all-namespaces -l cta/library-device -o jsonpath='{.items[*].metadata.labels.cta/library-device}' | tr ' ' '\n' | sort | uniq)
   unused_devices=$(comm -23 <(echo "$devices_all") <(echo "$devices_in_use"))
   if [ -z "$unused_devices" ]; then
@@ -214,7 +214,7 @@ create_instance() {
     tapeservers_config=$(mktemp "/tmp/${namespace}-tapeservers-XXXXXX-values.yaml")
     # Generate a comma separated list of library devices based on the number of library devices the user wants to generate
     library_devices=$(echo "$unused_devices" | head -n "$num_library_devices" | paste -sd ',' -)
-    ./../ci_helpers/tape/generate_tapeservers_config.sh --target-file "${tapeservers_config}" \
+    ./../utils/tape/generate_tapeservers_config.sh --target-file "${tapeservers_config}" \
                                                         --library-type "mhvtl" \
                                                         --library-devices "${library_devices}" \
                                                         --max-drives-per-tpsrv "${max_drives_per_tpsrv}" \

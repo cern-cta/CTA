@@ -55,7 +55,7 @@ echo "Reading library configuration from ${CTA_TPSRV_POD}"
 DRIVE_NAME=$(kubectl exec -n ${NAMESPACE} ${CTA_TPSRV_POD} -c taped-0 -- printenv DRIVE_NAME)
 LIBRARY_DEVICE=$(kubectl exec -n ${NAMESPACE} ${CTA_TPSRV_POD} -c taped-0 -- printenv LIBRARY_DEVICE)
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-mapfile -t TAPES < <(${SCRIPT_DIR}/../../ci_helpers/tape/list_all_tapes_in_library.sh -d $LIBRARY_DEVICE)
+mapfile -t TAPES < <(${SCRIPT_DIR}/../../utils/tape/list_all_tapes_in_library.sh -d $LIBRARY_DEVICE)
 echo "Using drive: $DRIVE_NAME"
 echo "Using tapes:"
 for VID in "${TAPES[@]}"; do
