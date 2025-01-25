@@ -43,9 +43,11 @@ RetrieveMount::getNextJobBatch(uint64_t filesRequested, uint64_t bytesRequested,
   std::list<std::unique_ptr<SchedulerDatabase::RetrieveJob>> ret;
   std::vector<std::unique_ptr<SchedulerDatabase::RetrieveJob>> retVector;
   try {
+    std::vector<std::string> noSpaceDiskSystemNames = m_RelationalDB.getActiveSleepDiskSystemNamesToFilter();
     auto [queuedJobs, nrows] = postgres::RetrieveJobQueueRow::moveJobsToDbQueue(txn,
                                                                                 queriedJobStatus,
                                                                                 mountInfo,
+                                                                                noSpaceDiskSystemNames,
                                                                                 bytesRequested,
                                                                                 filesRequested);
     timings.insertAndReset("mountUpdateBatchTime", t);
@@ -116,7 +118,7 @@ bool RetrieveMount::reserveDiskSpace(const cta::DiskSpaceReservationRequest& dis
     // Could not get free space for one of the disk systems. Currently the retrieve mount will only query
     // one disk system, so just log the failure and put the queue to sleep inside the loop.
     for (const auto& failedDiskSystem : ex.m_failedDiskSystems) {
-        cta::log::ScopedParamContainer(logContext)
+      cta::log::ScopedParamContainer(logContext)
         .add("diskSystemName", failedDiskSystem.first)
         .add("failureReason", failedDiskSystem.second.getMessageValue())
         .log(cta::log::ERR,
@@ -199,7 +201,7 @@ bool RetrieveMount::testReserveDiskSpace(const cta::DiskSpaceReservationRequest&
   } catch (const cta::disk::DiskSystemFreeSpaceListException& ex) {
     // Could not get free space for one of the disk systems. Currently the retrieve mount will only query
     // one disk system, so just log the failure and put the queue to sleep inside the loop.
-   for (const auto& failedDiskSystem : ex.m_failedDiskSystems) {
+    for (const auto& failedDiskSystem : ex.m_failedDiskSystems) {
       cta::log::ScopedParamContainer(logContext)
         .add("diskSystemName", failedDiskSystem.first)
         .add("failureReason", failedDiskSystem.second.getMessageValue())
@@ -334,7 +336,55 @@ void RetrieveMount::setTapeSessionStats(const castor::tape::tapeserver::daemon::
 
 void RetrieveMount::flushAsyncSuccessReports(std::list<SchedulerDatabase::RetrieveJob*>& jobsBatch,
                                              log::LogContext& lc) {
-  throw cta::exception::Exception("Not implemented");
+  // this method will remove the rows of the jobs from the DB
+  if (isRepack) {
+    // If the job is from a repack subrequest, we change its status (to report
+    // for repack success). Queueing will be done in batch in
+    // REPACK USE CASE TO-BE-DONE
+  }
+  // we update/release the space reservation of the drive in the catalogue
+  cta::DiskSpaceReservationRequest diskSpaceReservationRequest;
+  common::dataStructures::MountPolicy mountPolicy;
+  std::vector<std::string> jobIDsList_success;
+  jobIDsList_success.reserve(jobsBatch.size());
+  for (auto& rdbJob : jobsBatch) {
+    if (rdbJob.diskSystemName) {
+      diskSpaceReservationRequest.addRequest(rdbJob.diskSystemName.value(), rdbJob.archiveFile.fileSize);
+    }
+    jobIDsList_success.emplace_back(std::to_string(rdbJob.jobID));
+    // we collect the jobIDs to delete form the JOB table since they are done successfully
+  }
+  this->m_RelationalDB.m_catalogue.DriveState()->releaseDiskSpace(mountInfo.drive,
+                                                                  mountInfo.mountId,
+                                                                  diskSpaceReservationRequest,
+                                                                  lc);
+  try {
+    cta::schedulerdb::Transaction txn(m_connPool);
+    if (jobIDsList_success.size() > 0) {
+      uint64_t nrows = schedulerdb::postgres::RetrieveJobQueueRow::updateJobStatus(
+        txn,
+        cta::schedulerdb::ArchiveJobStatus::ReadyForDeletion,
+        jobIDsList_success);
+      if (nrows != jobIDsList_success.size()) {
+        log::ScopedParamContainer(lc)
+          .add("updatedRows", nrows)
+          .add("jobListSize", jobIDsList_success.size())
+          .log(log::ERR,
+               "In RetrieveMount::flushAsyncSuccessReports(): Failed to RetrieveJobQueueRow::updateJobStatus() - job "
+               "deletion - "
+               "for the full entire list of successful retrieve jobs. Aborting the transaction.");
+        txn.abort();
+      } else {
+        txn.commit();
+      }
+    }
+  } catch (exception::Exception& ex) {
+    lc.log(cta::log::ERR,
+           "In schedulerdb::RetrieveMount::flushAsyncSuccessReports(): Failed to delete jobs. "
+           "Aborting the transaction." +
+             ex.getMessageValue());
+    txn.abort();
+  }
 }
 
 void RetrieveMount::addDiskSystemToSkip(const DiskSystemToSkip& diskSystemToSkip) {
@@ -344,24 +394,9 @@ void RetrieveMount::addDiskSystemToSkip(const DiskSystemToSkip& diskSystemToSkip
 void RetrieveMount::putQueueToSleep(const std::string& diskSystemName,
                                     const uint64_t sleepTime,
                                     log::LogContext& logContext) {
-  // this method needs to know the getNextMountBatch to hold off fetching
-  // jobs with specific diskSystemNme for a limited period of sleetime set somewhere in the scheduling DB for this disk System
-  /*objectstore::RetrieveQueue rq(m_oStoreDB.m_objectStore);
-    objectstore::ScopedExclusiveLock lock;
-    auto queueType = cta::common::dataStructures::JobQueueType::JobsToTransferForUser;
-    std::optional<std::string> vid(mountInfo.vid);
-
-  Helpers::getLockedAndFetchedJobQueue<RetrieveQueue>(rq,
-                                                      lock,
-                                                      *m_oStoreDB.m_agentReference,
-                                                      vid,
-                                                      queueType,
-                                                      logContext);
-
-  rq.setSleepForFreeSpaceStartTimeAndName(::time(nullptr), diskSystemName, sleepTime);
-  rq.commit();
-  lock.release();*/
-  throw cta::exception::Exception("Not implemented");
+  m_RelationalDB.DiskSleepEntry dse {sleepTime, time(nullptr)};
+  std::lock_guard<std::mutex> lock(m_RelationalDB.diskSystemSleepCacheMutex);
+  m_RelationalDB.diskSystemNameSleepCacheMap[diskSystemName] = dse;
 }
 
 }  // namespace cta::schedulerdb
