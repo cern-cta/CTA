@@ -331,7 +331,20 @@ void RetrieveMount::setDriveStatus(common::dataStructures::DriveStatus status,
 }
 
 void RetrieveMount::setTapeSessionStats(const castor::tape::tapeserver::daemon::TapeSessionStats& stats) {
-  throw cta::exception::Exception("Not implemented");
+  // We just report tthe tape session statistics as instructed by the tape thread.
+  // Reset the drive state.
+  common::dataStructures::DriveInfo driveInfo;
+  driveInfo.driveName = mountInfo.drive;
+  driveInfo.logicalLibrary = mountInfo.logicalLibrary;
+  driveInfo.host = mountInfo.host;
+
+  ReportDriveStatsInputs inputs;
+  inputs.reportTime = time(nullptr);
+  inputs.bytesTransferred = stats.dataVolume;
+  inputs.filesTransferred = stats.filesCount;
+
+  log::LogContext lc(m_oStoreDB.m_logger);
+  m_RelationalDB.m_tapeDrivesState->updateDriveStatistics(driveInfo, inputs, lc);
 }
 
 void RetrieveMount::flushAsyncSuccessReports(std::list<SchedulerDatabase::RetrieveJob*>& jobsBatch,
@@ -387,6 +400,7 @@ void RetrieveMount::flushAsyncSuccessReports(std::list<SchedulerDatabase::Retrie
 }
 
 void RetrieveMount::addDiskSystemToSkip(const DiskSystemToSkip& diskSystemToSkip) {
+  // This method is actually not being used anywhere, not even in the OStoreDB code - we should remove it
   throw cta::exception::Exception("Not implemented");
 }
 
