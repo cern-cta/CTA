@@ -338,13 +338,12 @@ void RetrieveMount::flushAsyncSuccessReports(std::list<SchedulerDatabase::Retrie
                                              log::LogContext& lc) {
   // this method will remove the rows of the jobs from the DB
   //if (isRepack) {
-    // If the job is from a repack subrequest, we change its status (to report
-    // for repack success). Queueing will be done in batch in
-    // REPACK USE CASE TO-BE-DONE
+  // If the job is from a repack subrequest, we change its status (to report
+  // for repack success). Queueing will be done in batch in
+  // REPACK USE CASE TO-BE-DONE
   // }
   // we update/release the space reservation of the drive in the catalogue
   cta::DiskSpaceReservationRequest diskSpaceReservationRequest;
-  common::dataStructures::MountPolicy mountPolicy;
   std::vector<std::string> jobIDsList_success;
   jobIDsList_success.reserve(jobsBatch.size());
   for (auto& rdbJob : jobsBatch) {
@@ -394,9 +393,11 @@ void RetrieveMount::addDiskSystemToSkip(const DiskSystemToSkip& diskSystemToSkip
 void RetrieveMount::putQueueToSleep(const std::string& diskSystemName,
                                     const uint64_t sleepTime,
                                     log::LogContext& logContext) {
-  RelationalDB::DiskSleepEntry dse(sleepTime, time(nullptr));
-  std::lock_guard<std::mutex> lock(m_RelationalDB.diskSystemSleepCacheMutex);
-  m_RelationalDB.diskSystemSleepCacheMap[diskSystemName] = dse;
+  if (!diskSystemName.empty()) {
+    RelationalDB::DiskSleepEntry dse(sleepTime, time(nullptr));
+    std::lock_guard<std::mutex> lock(m_RelationalDB.diskSystemSleepCacheMutex);
+    m_RelationalDB.diskSystemSleepCacheMap[diskSystemName] = dse;
+  }
 }
 
 }  // namespace cta::schedulerdb
