@@ -343,7 +343,7 @@ void RetrieveMount::setTapeSessionStats(const castor::tape::tapeserver::daemon::
   inputs.bytesTransferred = stats.dataVolume;
   inputs.filesTransferred = stats.filesCount;
 
-  log::LogContext lc(m_oStoreDB.m_logger);
+  log::LogContext lc(m_RelationalDB.m_logger);
   m_RelationalDB.m_tapeDrivesState->updateDriveStatistics(driveInfo, inputs, lc);
 }
 
