@@ -22,6 +22,7 @@
 #include "common/exception/Exception.hpp"
 #include "common/log/TimingList.hpp"
 #include "common/utils/utils.hpp"
+#include "common/threading/MutexLocker.hpp"
 #include "scheduler/rdbms/postgres/Transaction.hpp"
 #include "scheduler/rdbms/postgres/ArchiveJobSummary.hpp"
 #include "scheduler/rdbms/postgres/RetrieveJobSummary.hpp"
@@ -924,7 +925,8 @@ RelationalDB::getRetrieveQueuesCleanupInfo(log::LogContext& logContext) {
 }
 
 std::vector<std::string> RelationalDB::getActiveSleepDiskSystemNamesToFilter() {
-  std::lock_guard<std::mutex> lock(diskSystemSleepCacheMutex);
+
+  cta::threading::MutexLocker ml(m_diskSystemSleepCacheMutex);
   uint64_t currentTime = std::chrono::system_clock::to_time_t(std::chrono::system_clock::now());
 
   std::vector<std::string> validDiskNames;

@@ -41,6 +41,7 @@
 #include "common/dataStructures/RetrieveRequest.hpp"
 #include "common/dataStructures/SecurityIdentity.hpp"
 #include "common/log/Logger.hpp"
+#include "common/threading/Mutex.hpp"
 #include "common/utils/utils.hpp"
 #include "rdbms/ConnPool.hpp"
 #include "rdbms/Login.hpp"
@@ -278,7 +279,7 @@ private:
     DiskSleepEntry(uint64_t st, time_t ts) : sleepTime(st), timestamp(ts) {}
   };
   std::unordered_map<std::string, DiskSleepEntry> diskSystemSleepCacheMap;
-  std::mutex diskSystemSleepCacheMutex;
+  cta::threading::Mutex m_diskSystemSleepCacheMutex;
   /**
   * Candidate for redesign/removal once we start improving Scheduler algorithm
   * A class holding a lock on the pending repack request queue. This is the first
