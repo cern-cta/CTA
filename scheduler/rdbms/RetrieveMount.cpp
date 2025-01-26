@@ -22,6 +22,7 @@
 #include "scheduler/rdbms/postgres/Transaction.hpp"
 #include "common/Timer.hpp"
 #include "scheduler/rdbms/RetrieveMount.hpp"
+#include "common/threading/MutexLocker.hpp"
 
 namespace cta::schedulerdb {
 
@@ -409,7 +410,7 @@ void RetrieveMount::putQueueToSleep(const std::string& diskSystemName,
                                     log::LogContext& logContext) {
   if (!diskSystemName.empty()) {
     RelationalDB::DiskSleepEntry dse(sleepTime, time(nullptr));
-    std::lock_guard<std::mutex> lock(m_RelationalDB.diskSystemSleepCacheMutex);
+    cta::threading::MutexLocker ml(m_RelationalDB.m_diskSystemSleepCacheMutex);
     m_RelationalDB.diskSystemSleepCacheMap[diskSystemName] = dse;
   }
 }
