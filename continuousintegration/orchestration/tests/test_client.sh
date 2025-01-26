@@ -119,6 +119,11 @@ echo "Sleeping 10 seconds to allow MGM-FST communication to settle after disk co
 sleep 10
 echo "###"
 
+echo
+echo "Launching client_retrieve.sh on client pod"
+echo " Retrieving files: xrdfs as poweruser1"
+kubectl -n ${NAMESPACE} exec client -- bash -c "${TEST_PRERUN} && /root/client_retrieve.sh ${TEST_POSTRUN}" || exit 1
+
 echo "Setting up client pod for HTTPs REST API test"
 echo " Copying CA certificates to client pod from ctaeos pod."
 kubectl -n ${NAMESPACE} cp ctaeos:etc/grid-security/certificates/ /tmp/certificates/
@@ -141,11 +146,6 @@ kubectl -n ${NAMESPACE} exec ctaeos -- bash /root/grep_eosreport_for_archive_met
 echo
 echo "Launching immutable file test on client pod"
 kubectl -n ${NAMESPACE} exec client -- bash -c "${TEST_PRERUN} && echo yes | cta-immutable-file-test root://\${EOSINSTANCE}/\${EOS_DIR}/immutable_file ${TEST_POSTRUN} || die 'The cta-immutable-file-test failed.'" || exit 1
-
-echo
-echo "Launching client_retrieve.sh on client pod"
-echo " Retrieving files: xrdfs as poweruser1"
-kubectl -n ${NAMESPACE} exec client -- bash -c "${TEST_PRERUN} && /root/client_retrieve.sh ${TEST_POSTRUN}" || exit 1
 
 kubectl -n ${NAMESPACE} exec $EOSINSTANCE -- bash /root/grep_xrdlog_mgm_for_error.sh || exit 1
 
