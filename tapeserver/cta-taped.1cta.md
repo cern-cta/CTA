@@ -248,17 +248,6 @@ taped RAOLTOAlgorithmOptions *cost_heuristic_name:cta*
 :   Options for the software RAO algorithm specified by
     **RAOLTOAlgorithm**, above.
 
-## Maintenance process configuration options
-
-taped UseRepackManagement *yes*
-
-:   Enable RepackRequestManager for repack-related operations.
-
-taped UseMaintenanceProcess *yes*
-
-:   Enable MaintenanceProcess for repack-related operations, garbage
-    collection and disk reporting.
-
 ## Timeout options
 
 taped TapeLoadTimeout *300*
