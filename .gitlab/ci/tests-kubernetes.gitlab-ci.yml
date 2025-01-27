@@ -16,22 +16,19 @@ setup-k8s-test-variables:
       when: never
     - when: on_success
   script:
-    # Which scheduler to use
-    - |
+    - | # Which scheduler to use
       if [ $SCHED_TYPE == "objectstore" ]; then
         SCHEDULER_CONFIG=/opt/kubernetes/CTA/scheduler/ci-ceph-values.yaml
       else
         SCHEDULER_CONFIG=presets/dev-scheduler-postgres-values.yaml
       fi
-    # Which catalogue to use
-    - |
+    - | # Which catalogue to use
       if [ $ORACLE_SUPPORT == "ON" ]; then
         CATALOGUE_CONFIG=/opt/kubernetes/CTA/catalogue/ci-oracle-values.yaml
       else
         CATALOGUE_CONFIG=presets/dev-catalogue-postgres-values.yaml
       fi
-    # Which image tag to use
-    - |
+    - | # Which image tag to use
       if [ $SYSTEMTESTS_ONLY == "TRUE" ]; then
         if [ -z "$SYSTEMTESTS_IMAGETAG" ]; then
           IMAGE_TAG=$(./continuousintegration/utils/get_latest_image_tag_on_branch.sh --branch $CI_DEFAULT_BRANCH)
@@ -51,7 +48,7 @@ setup-k8s-test-variables:
         EXTRA_SPAWN_ARGS="${EXTRA_SPAWN_ARGS} --catalogue-version ${CATALOGUE_VERSION}.0"
       fi
     # Export all variables here so that it is clear which ones are available
-    - export NAMESPACE SCHEDULER_CONFIG CATALOGUE_CONFIG IMAGE_TAG EXTRA_SPAWN_ARGS
+    - export SCHEDULER_CONFIG CATALOGUE_CONFIG IMAGE_TAG EXTRA_SPAWN_ARGS
     reports:
       dotenv: vars.env
 
@@ -193,8 +190,7 @@ test-liquibase-update:
     EXTRA_ARGS: "--test-timeout 2400"
   before_script:
     - !reference [.kubernetes-test, before_script]
-    # Yes this is ugly, hopefully we can improve this if we have a project.json where we specify these kinds of values
-    - |
+    - | # Yes this is ugly, hopefully we can improve this if we have a project.json where we specify these kinds of values
       CURRENT_VERSION=$(grep -E '^[^#]*set\(CTA_CATALOGUE_REF_SCHEMA_VERSION_CURR' catalogue/CTARefCatalogueSchemaVersion.cmake | grep -oP 'CTA_CATALOGUE_REF_SCHEMA_VERSION_CURR \K[0-9]+')
       PREVIOUS_VERSION=$(grep -E '^[^#]*set\(CTA_CATALOGUE_REF_SCHEMA_VERSION_PREV' catalogue/CTARefCatalogueSchemaVersion.cmake | grep -oP 'CTA_CATALOGUE_REF_SCHEMA_VERSION_PREV \K[0-9]+')
       if [ "$CURRENT_VERSION" = "$PREVIOUS_VERSION" ]; then
