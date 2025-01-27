@@ -1,0 +1,24 @@
+# If required, the user can specify a custom image here
+image:
+component: maintenance
+partOf: cta
+
+terminationGracePeriodSeconds: 1 # This is low on purpose as the current process has no gracefull shutdown process
+
+conf:
+  maintenance:
+    secProtocol: "sss"
+    secSssktPath: "/etc/cta"
+    ctaTapedSss: "cta-taped.sss.keytab"
+    externalFreeDiskSpaceScript: "/usr/bin/cta-eosdf.sh"
+  general:
+    instanceName: "CI"
+
+maintenance:
+  resources:
+    requests:
+      memory: "256Mi"
+      ephemeral-storage: "1Gi"
+    limits:
+      memory: "4Gi"
+      ephemeral-storage: "8Gi"

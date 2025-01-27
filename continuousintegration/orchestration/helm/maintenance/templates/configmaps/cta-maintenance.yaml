@@ -1,0 +1,19 @@
+{{- $schedulerConfig := include "scheduler.config" . | fromYaml -}}
+# Generate unique config map for the
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  # The name cannot use the drivename as this contains uppercase letters
+  name: cta-maintenance-conf
+  labels:
+    {{-  include "common.labels.standard" $ | nindent 4 }}
+data:
+  cta-maintenance.conf: |-
+    # General
+    general InstanceName {{ $.Values.conf.general.instanceName }}
+    general SchedulerBackendName {{ $schedulerConfig.backend }}
+    # Maintenance
+    maintenance useRepackRequestManagement
+    maintenance repackMaxRequestToExpand
+---
+{{- end }}
