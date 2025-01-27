@@ -21,7 +21,7 @@ conf:
     archiveFileMaxSizeGb: 1000
     zeroLengthFilesForbidden: "on"
     zeroLengthFilesForbiddenVoExceptionList: ""
-    logUrl: "file:/var/log/cta/cta-frontend.log"
+    logUrl: "file:/var/log/cta/cta-frontend-grpc.log"
     # repackBufferUrl: "root://ctaeos//eos/ctaeos/repack"
 
   schedulerdb:
