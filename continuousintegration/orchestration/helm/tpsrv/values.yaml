@@ -10,7 +10,6 @@ conf:
     retrieveQueueCacheMaxAgeSecs: 1
     externalFreeDiskSpaceScript: "/usr/bin/cta-eosdf.sh"
 
-
 # tapeServers: {}
 # The following is an example format of tapeServers
 #
