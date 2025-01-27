@@ -16,9 +16,6 @@ setup-k8s-test-variables:
       when: never
     - when: on_success
   script:
-    # Keep the namespace name under 64 characters;
-    # Otherwise the eos mgm fqdn becomes too long and things start failing
-    - NAMESPACE="${CI_JOB_NAME_SLUG:0:18}-${CI_PIPELINE_ID}"
     # Which scheduler to use
     - |
       if [ $SCHED_TYPE == "objectstore" ]; then
@@ -85,6 +82,9 @@ setup-k8s-test-variables:
   before_script:
     - bash ./continuousintegration/utils/install_helm.sh
   script:
+    # Keep the namespace name under 64 characters;
+    # Otherwise the eos mgm fqdn becomes too long and things start failing
+    - NAMESPACE="${CI_JOB_NAME_SLUG:0:18}-${CI_PIPELINE_ID}"
     # Set up the additional arguments array to pass to the run_systemtest.sh script
     - extra_args=($EXTRA_ARGS)
     - if [[ -n "${EXTRA_SPAWN_ARGS}" ]]; then extra_args+=(--spawn-options "${EXTRA_SPAWN_ARGS}"); fi
@@ -109,6 +109,8 @@ setup-k8s-test-variables:
                           "${extra_args[@]}"
                           ${EXTRA_RUN_ARGS}
   after_script:
+    # Repeat the namespace declaration here as the after_script does not have access to previously exported variables
+    - NAMESPACE="${CI_JOB_NAME_SLUG:0:18}-${CI_PIPELINE_ID}"
     # This also gets called if the job is cancelled to ensure we properly clean up after ourselves
     - cd continuousintegration/orchestration/
     - ./delete_instance.sh --namespace ${NAMESPACE}
@@ -243,6 +245,8 @@ stress-test:
   before_script:
     - bash ./continuousintegration/utils/install_helm.sh
   script:
+    # Repeat the namespace declaration here as the after_script does not have access to previously exported variables
+    - NAMESPACE="stress-test-${CI_PIPELINE_ID}"
     # Set up the additional arguments array to pass to the run_systemtest.sh script
     - if [[ -n "${EXTRA_SPAWN_ARGS}" ]]; then extra_args+=(--spawn-options "${EXTRA_SPAWN_ARGS}"); fi
     # Set up stress test
@@ -262,6 +266,8 @@ stress-test:
     # Run the actual stress test
     - ./tests/stress_test.sh -n ${NAMESPACE}
   after_script:
+    # Repeat the namespace declaration here as the after_script does not have access to previously exported variables
+    - NAMESPACE="stress-test-${CI_PIPELINE_ID}"
     # This also gets called if the job is cancelled to ensure we properly clean up after ourselves
     - cd continuousintegration/orchestration/
     - ./delete_instance.sh --namespace ${NAMESPACE} --discard-logs
