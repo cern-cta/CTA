@@ -1,7 +1,7 @@
 # All of the below tests use only the docker image generated in the build:image stage
 # These are also the only tests executed on our personal cirunners instead of the GitLab runners
 
-setup-k8s-test-variables:
+.setup-k8s-test-variables: &setup-k8s-test-variables
   stage: system-test
   needs:
     - job: prepare
@@ -40,7 +40,6 @@ setup-k8s-test-variables:
         IMAGE_TAG=$CTA_BUILD_ID
       fi
     # If we are testing from a CTA tag, get the Catalogue version for that tag
-    # TODO: EXTRA_SPAWN_ARGS might be overriden by other jobs; change this name or the way this is done
     - |
       if [ -n "${CUSTOM_CTA_TAG}" ]; then
         git fetch --tags --force
@@ -50,9 +49,6 @@ setup-k8s-test-variables:
       fi
     # Export all variables here so that it is clear which ones are available
     - export SCHEDULER_CONFIG CATALOGUE_CONFIG IMAGE_TAG EXTRA_SPAWN_ARGS
-  artifacts:
-    reports:
-      dotenv: vars.env
 
 
 .kubernetes-test:
@@ -61,7 +57,10 @@ setup-k8s-test-variables:
       optional: true # Otherwise the SYSTEMTESTS_ONLY flag won't work
     - job: build-ctageneric-from-repos
       optional: true
-    - job: setup-k8s-test-variables
+    - job: prepare
+      optional: true
+    - job: modify-catalogue-version
+      optional: true
   rules:
     - if: $CI_PIPELINE_SOURCE == "merge_request_event"
       when: never
@@ -80,6 +79,7 @@ setup-k8s-test-variables:
     EXTRA_TEST_ARGS: ""
   before_script:
     - bash ./continuousintegration/utils/install_helm.sh
+    - *setup-k8s-test-variables
   script:
     # Keep the namespace name under 64 characters;
     # Otherwise the eos mgm fqdn becomes too long and things start failing
@@ -231,7 +231,6 @@ stress-test:
   # At least test-client should have passed before it makes sense to run a stress test
   needs:
     - job: test-client
-    - job: setup-k8s-test-variables
   rules:
     - if: $CI_PIPELINE_SOURCE == "merge_request_event"
       when: never
@@ -243,6 +242,7 @@ stress-test:
       allow_failure: true # Otherwise this blocks the pipeline
   before_script:
     - bash ./continuousintegration/utils/install_helm.sh
+    - *setup-k8s-test-variables
   script:
     # Repeat the namespace declaration here as the after_script does not have access to previously exported variables
     - NAMESPACE="stress-test-${CI_PIPELINE_ID}"
