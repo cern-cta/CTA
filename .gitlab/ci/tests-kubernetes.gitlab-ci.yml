@@ -228,7 +228,6 @@ test-regression-dCache:
 stress-test:
   # At least test-client should have passed before it makes sense to run a stress test
   needs:
-    - job: test-client
     - job: setup-k8s-test-variables
   rules:
     - if: $CI_PIPELINE_SOURCE == "merge_request_event"
