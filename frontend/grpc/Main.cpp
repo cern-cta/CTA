@@ -107,7 +107,7 @@ int main(const int argc, char *const *const argv) {
     // use castor config to avoid dependency on xroot-ssi
     // Configuration config(config_file);
 
-    lc.log(log::INFO, "Starting cta-frontend-grpc- " + std::string(CTA_VERSION));
+    lc.log(log::INFO, "Starting cta-frontend-grpc- " + std::string(CTA_VERSION)); // yes this was indeed printed in the logs
 
     // try to update port from config
     if (svc.getFrontendService().getPort().has_value())
