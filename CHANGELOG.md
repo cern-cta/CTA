@@ -16,9 +16,11 @@
 - cta/CTA#1023 - Fix taped core dumping due to logging concurrent modifications
 - cta/CTA#1026 - Fix cta-fst-gcd failing to log to stdout due to duplicated statement
 - cta/CTA#1029 - Resolve "Fix deletion of dual copy files"
+- cta/CTA#1047 - Fix the CI input variable check crashing if a supported variable is not found
 
 ### Maintenance
 
+- cta/CTA#908 - Reorganize ci_helpers and ci_runner in continuousintegration directory
 - cta/CTA#933 - Mount pod startup scripts in pods instead of baking them into the docker image
 - cta/CTA#941 - Rename docker/ctafrontend/ to docker/
 - cta/CTA#955 - Upgrade the cta-catalogue-updater chart to use the latest version
@@ -32,6 +34,8 @@
 - cta/CTA#1020 - Update deprecated docker build image to official kaniko debug image
 - cta/CTA#1022 - Resolve "Improve staging error message on repacking tapes"
 - cta/CTA#1024 - Fix test naming inconsistencies and minor CI QoL improvements
+- cta/CTA#1038 - Upgrade XRootD from 5.6.1 to 5.7.1
+- cta/CTA#1040 - Fix SonarCloud issues in CI
 
 
 ## v5.11.2.0-1
