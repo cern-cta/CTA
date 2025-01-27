@@ -2,21 +2,6 @@
 # These are also the only tests executed on our personal cirunners instead of the GitLab runners
 
 .setup-k8s-test-variables: &setup-k8s-test-variables
-  stage: system-test
-  needs:
-    - job: prepare
-      optional: true
-    - job: modify-catalogue-version
-      optional: true
-  rules:
-    - if: $CI_PIPELINE_SOURCE == "merge_request_event"
-      when: never
-    - if: $CI_COMMIT_TAG
-      when: never
-    - if: $PIPELINE_TYPE == "CTAGENERIC_IMAGE"
-      when: never
-    - when: on_success
-  script:
     - | # Which scheduler to use
       if [ $SCHED_TYPE == "objectstore" ]; then
         SCHEDULER_CONFIG=/opt/kubernetes/CTA/scheduler/ci-ceph-values.yaml
