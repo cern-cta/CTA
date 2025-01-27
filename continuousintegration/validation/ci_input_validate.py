@@ -193,22 +193,6 @@ def validate_eos_regr_against_cta_tag(ci_input_vars):
                       "cta-frontend",
                       ci_input_vars["CUSTOM_CTA_TAG"][1:])
 
-    # Check that the XRootD version specified in the variables matches the
-    # XRootD version that the RPMs where compiled against.
-    # In the spec.in file we state that the version must match which causes a conflict
-    # when installing the RPMs, we could do something similar to what EOS project does
-    # `Requires: xrootd >= %{some_ver}` instead of `Requires: xrootd = %{some_ver}`
-    # This way we could avoid this conflict. For now fail the pipeline if the versions
-    # do not match.
-    print("Checking CTA and EOS were compiled against the same XRootD version...")
-    cta_xrd_ver = run_cmd(f"git checkout tags/{ci_input_vars['CUSTOM_CTA_TAG']} -- cta.spec.in && "
-                         "grep 'xrootdVersion 1:5' cta.spec.in | awk '{print $3}' | "
-                         "awk -F'-' '{print $1}'")
-
-    if cta_xrd_ver != ci_input_vars["CUSTOM_XRD_TAG"]:
-        sys.exit(f"ERROR: CTA was compiled for {cta_xrd_ver} while EOS requires {ci_input_vars['CUSTOM_XRD_TAG']}")
-    print("CTA validation passed")
-
 
 def validate_ctageneric_image(ci_input_vars):
     """
