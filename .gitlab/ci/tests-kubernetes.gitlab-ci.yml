@@ -49,8 +49,9 @@ setup-k8s-test-variables:
       fi
     # Export all variables here so that it is clear which ones are available
     - export SCHEDULER_CONFIG CATALOGUE_CONFIG IMAGE_TAG EXTRA_SPAWN_ARGS
-  reports:
-    dotenv: vars.env
+  artifacts:
+    reports:
+      dotenv: vars.env
 
 
 .kubernetes-test:
