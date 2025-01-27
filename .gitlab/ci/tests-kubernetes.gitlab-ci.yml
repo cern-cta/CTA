@@ -2,6 +2,7 @@
 # These are also the only tests executed on our personal cirunners instead of the GitLab runners
 
 setup-k8s-test-variables:
+  stage: system-test
   needs:
     - job: prepare
       optional: true
@@ -226,8 +227,10 @@ test-regression-dCache:
     - xlarge
 
 stress-test:
+  stage: system-test
   # At least test-client should have passed before it makes sense to run a stress test
   needs:
+    - job: test-client
     - job: setup-k8s-test-variables
   rules:
     - if: $CI_PIPELINE_SOURCE == "merge_request_event"
