@@ -20,7 +20,7 @@
 # From commit 15c6bdccbee313df5601ce8df34fc4455fe92905
 #
 # Copies provided artifacts and launch an additional hook
-# Based on the script by Borja Aparicio April 2016 
+# Based on the script by Borja Aparicio April 2016
 
 set -e
 
@@ -127,9 +127,6 @@ upload_to_eos() {
     echo "ERROR: Source directory $source_dir doesn't exist"
     exit 1
   fi
-
-  dnf install -y epel-release
-  dnf install -y krb5-workstation rsync openssh-clients xrootd-client
 
   # Get credentials
   echo "$eos_account_password" | kinit $eos_account_username@CERN.CH 2>&1 >/dev/null
