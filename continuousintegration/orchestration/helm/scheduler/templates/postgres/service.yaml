@@ -14,5 +14,6 @@ spec:
   ports:
     - name: {{ $name }}
       port: 5433
+      targetPort: 5432 # Poostgres starts on port 5432 internally
       protocol: TCP
 {{- end }}
