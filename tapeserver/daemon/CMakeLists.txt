@@ -32,7 +32,6 @@ add_library(ctatapedaemon
   DriveHandler.cpp
   DriveHandlerProxy.cpp
   DriveHandlerStateReporter.cpp
-  MaintenanceHandler.cpp
   ProcessManager.cpp
   SignalHandler.cpp
   TapeDaemon.cpp
