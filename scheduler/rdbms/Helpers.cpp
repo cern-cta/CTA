@@ -45,7 +45,7 @@ std::string Helpers::selectBestVid4Retrieve
 (
   const std::set<std::string, std::less<>>  &candidateVids,
   cta::catalogue::Catalogue                 &catalogue,
-  schedulerdb::Transaction                  &txn,
+    rdbms::Conn& conn,
   bool                                       isRepack
 )
 {
@@ -169,7 +169,7 @@ std::string Helpers::selectBestVid4Retrieve
       tf.copyNb = 1;
       tf.vid = v;
       rfqc.archiveFile.tapeFiles.push_back(tf);
-      auto queuesStats=Helpers::getRetrieveQueueStatistics(rfqc, {v}, txn);
+      auto queuesStats=Helpers::getRetrieveQueueStatistics(rfqc, {v}, conn);
 
       // We now have the data we need. Update the cache.
       grqsmLock.lock();
@@ -256,7 +256,7 @@ std::list<SchedulerDatabase::RetrieveQueueStatistics> Helpers::getRetrieveQueueS
 (
   const cta::common::dataStructures::RetrieveFileQueueCriteria &criteria,
   const std::set<std::string, std::less<>>                     &vidsToConsider,
-  schedulerdb::Transaction                                     &txn)
+                                    rdbms::Conn& conn)
 {
 
   std::list<SchedulerDatabase::RetrieveQueueStatistics> ret;
@@ -268,7 +268,7 @@ std::list<SchedulerDatabase::RetrieveQueueStatistics> Helpers::getRetrieveQueueS
       cta::schedulerdb::postgres::RetrieveJobSummaryRow::selectVid(
           tf.vid,
           common::dataStructures::JobQueueType::JobsToTransferForUser,
-          txn
+          conn
       );
 
     if (!summary.next()) {

@@ -222,6 +222,7 @@ std::string Scheduler::queueRetrieve(const std::string& instanceName,
                                                                 request.activity,
                                                                 lc,
                                                                 request.mountPolicy);
+  lc.log(log::INFO, "Got retrieve queue criteria");
   queueCriteria.archiveFile.diskFileInfo = request.diskFileInfo;
 
   auto diskSystemList = m_catalogue.DiskSystem()->getAllDiskSystems();
@@ -237,6 +238,7 @@ std::string Scheduler::queueRetrieve(const std::string& instanceName,
       throw ex;
     }
   }
+  lc.log(log::INFO, "Checked disk system and tape copy existing in catalogue");
 
   // Determine disk system for this request, if any
   std::optional<std::string> diskSystemName;
@@ -246,7 +248,9 @@ std::string Scheduler::queueRetrieve(const std::string& instanceName,
     // If there is no match the function throws an out of range exception.
     // Not a real out of range exception.
   }
+  lc.log(log::INFO, "Queueing retrieve request.");
   auto requestInfo = m_db.queueRetrieve(request, queueCriteria, diskSystemName, lc);
+  lc.log(log::INFO, "DONE queueing retrieve request.");
   auto schedulerDbTime = t.secs();
   log::ScopedParamContainer spc(lc);
   spc.add("fileId", request.archiveFileID)
