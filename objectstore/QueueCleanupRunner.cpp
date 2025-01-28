@@ -185,11 +185,12 @@ void QueueCleanupRunner::runOnePass(log::LogContext &logContext) {
       try {
         auto vidToTapesMapRefreshed = m_catalogue.Tape()->getTapesByVid(queueVid); //throws an exception if the vid is not found on the database
         tapeDataRefreshed = vidToTapesMapRefreshed.at(queueVid);
-      } catch (const catalogue::TapeNotFound &ex) {
+      } catch (const catalogue::TapeNotFound& ex) {
         log::ScopedParamContainer params(logContext);
         params.add("tapeVid", queueVid)
               .add("exceptionMessage", ex.getMessageValue());
-        logContext.log(log::WARNING, "In QueueCleanupRunner::runOnePass(): Failed to find a tape in the database. Unable to update tape state.");
+        logContext.log(log::WARNING,
+                       "In QueueCleanupRunner::runOnePass(): Failed to find a tape in the database. Unable to update tape state.");
         continue; // Ignore queue
       }
 
