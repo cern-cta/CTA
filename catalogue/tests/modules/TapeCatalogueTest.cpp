@@ -1377,7 +1377,7 @@ TEST_P(cta_catalogue_TapeTest, modifyTapeState_wrongPrevState) {
   cta::common::dataStructures::Tape::State nextState = cta::common::dataStructures::Tape::State::DISABLED;
   std::string reason = "modify for testing";
   m_catalogue->Tape()->modifyTapeState(m_admin, m_tape1.vid, prevState, std::nullopt, std::nullopt);
-  ASSERT_THROW(m_catalogue->Tape()->modifyTapeState(m_admin, m_tape1.vid,nextState,prevStateGuess,reason),
+  ASSERT_THROW(m_catalogue->Tape()->modifyTapeState(m_admin, m_tape1.vid, nextState, prevStateGuess, reason),
                cta::catalogue::UserSpecifiedAWrongPrevState);
 }
 
