@@ -77,6 +77,23 @@ std::string DiskSystemList::getExternalFreeDiskSpaceScript() const{
 }
 
 //------------------------------------------------------------------------------
+// DiskSystemFreeSpaceList::updateFreeSpaceEntry()
+//------------------------------------------------------------------------------
+void DiskSystemFreeSpaceList::updateFreeSpaceEntry(const std::string& diskSystemName, uint64_t freeSpace, cta::catalogue::Catalogue &catalogue, bool updateCatalogue){
+  DiskSystemFreeSpace & entry = operator[](diskSystemName);
+  auto &diskSystem = m_systemList.at(diskSystemName);
+  auto &diskInstanceSpace = diskSystem.diskInstanceSpace;
+  entry.freeSpace = freeSpace;
+  entry.fetchTime = ::time(nullptr);
+  entry.targetedFreeSpace = diskSystem.targetedFreeSpace;
+
+  if (updateCatalogue) {
+    catalogue.DiskInstanceSpace()->modifyDiskInstanceSpaceFreeSpace(diskInstanceSpace.name,
+      diskInstanceSpace.diskInstance, freeSpace);
+  }
+}
+
+//------------------------------------------------------------------------------
 // DiskSystemFreeSpaceList::fetchFileSystemFreeSpace()
 //------------------------------------------------------------------------------
 void DiskSystemFreeSpaceList::fetchDiskSystemFreeSpace(const std::set<std::string>& diskSystems, cta::catalogue::Catalogue &catalogue, log::LogContext & lc) {
@@ -100,24 +117,13 @@ void DiskSystemFreeSpaceList::fetchDiskSystemFreeSpace(const std::set<std::strin
     bool updateCatalogue = false;
     auto &diskSystem = m_systemList.at(ds);
     auto &diskInstanceSpace = diskSystem.diskInstanceSpace;
-    auto updateFreeSpaceEntry = [&]() {
-      DiskSystemFreeSpace & entry = operator[](ds);
-      entry.freeSpace = freeSpace;
-      entry.fetchTime = ::time(nullptr);
-      entry.targetedFreeSpace = m_systemList.at(ds).targetedFreeSpace;
-
-      if (updateCatalogue) {
-        catalogue.DiskInstanceSpace()->modifyDiskInstanceSpaceFreeSpace(diskInstanceSpace.name,
-          diskInstanceSpace.diskInstance, freeSpace);
-      }
-    };
     try {
       std::vector<std::string> regexResult;
       const auto currentTime = static_cast<uint64_t>(time(nullptr));
       if (diskInstanceSpace.lastRefreshTime + diskInstanceSpace.refreshInterval >= currentTime) {
         // use the value in the catalogue, it is still fresh
         freeSpace = diskSystem.diskInstanceSpace.freeSpace;
-        updateFreeSpaceEntry();
+        updateFreeSpaceEntry(ds, freeSpace, catalogue, updateCatalogue);
         continue;
       }
       updateCatalogue = true;
@@ -130,7 +136,7 @@ void DiskSystemFreeSpaceList::fetchDiskSystemFreeSpace(const std::set<std::strin
           std::string diskInstanceName = regexResult.at(1);
           std::string spaceName = regexResult.at(2);
           freeSpace = fetchFreeDiskSpaceWithScript(m_systemList.getExternalFreeDiskSpaceScript(), diskInstanceName, spaceName, jsoncDiskSystem.getJSON(), lc);
-          updateFreeSpaceEntry();
+          updateFreeSpaceEntry(ds, freeSpace, catalogue, updateCatalogue);
           continue;
         } catch (const cta::disk::FreeDiskSpaceException &ex) {
           updateCatalogue = false; // if we update the catalogue at this point, we will update it with an old value, since we were not able to get a new one
@@ -147,13 +153,14 @@ void DiskSystemFreeSpaceList::fetchDiskSystemFreeSpace(const std::set<std::strin
       regexResult = constantFreeSpaceDiskSystem.exec(freeSpaceQueryUrl);
       if (regexResult.size()) {
         freeSpace = fetchConstantFreeSpace(regexResult.at(1), lc);
-        updateFreeSpaceEntry();
-        continue;
+        updateFreeSpaceEntry(ds, freeSpace, catalogue, updateCatalogue);
       }
-      throw cta::disk::FreeDiskSpaceException("In DiskSystemFreeSpaceList::fetchDiskSystemFreeSpace(): could not interpret free space query URL.");
+      else {
+        throw cta::disk::FreeDiskSpaceException("In DiskSystemFreeSpaceList::fetchDiskSystemFreeSpace(): could not interpret free space query URL.");
+      }
     } catch (const cta::disk::FreeDiskSpaceException &ex) {
       failedToFetchDiskSystems[ds] = ex;
-      updateFreeSpaceEntry();
+      updateFreeSpaceEntry(ds, freeSpace, catalogue, updateCatalogue);
     }
   }
   if(failedToFetchDiskSystems.size()){
