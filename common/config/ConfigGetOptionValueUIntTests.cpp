@@ -19,7 +19,7 @@
 #include <string>
 #include <sstream>
 
-#include "frontend/common/Config.hpp"
+#include "Config.hpp"
 #include "tests/TempFile.hpp"
 
 namespace unitTests {
@@ -41,7 +41,7 @@ TEST(FrontendConfig, HandlesUInt) {
 
   tf.stringFill(strFile.str());
 
-  cta::frontend::Config config(tf.path());
+  cta::common::Config config(tf.path());
   
   EXPECT_EQ(1, config.getOptionValueUInt("cta.val.a"));
   EXPECT_THROW(config.getOptionValueUInt("cta.val.b"), std::out_of_range);

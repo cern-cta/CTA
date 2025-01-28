@@ -16,8 +16,8 @@
 cmake_minimum_required (VERSION 3.17)
 
 set (FRONTEND_COMMON_CONFUG_UNIT_TESTS_LIB_SRC_FILES
-  Config.cpp
-  ConfigGetOptionValueUIntTests.cpp
+  ../../common/config/Config.cpp
+  ../../common/config/ConfigGetOptionValueUIntTests.cpp
 )
 
 add_library (ctafrontendcommonconfigunittests SHARED

@@ -21,7 +21,7 @@
  * the path the backend store and exit
  */
 
-#include "common/Configuration.hpp"
+#include "common/config/Config.hpp"
 #include "BackendFactory.hpp"
 #include "common/log/DummyLogger.hpp"
 #include "common/log/LogContext.hpp"
@@ -39,8 +39,8 @@ int main(int argc, char ** argv) {
       be.reset(cta::objectstore::BackendFactory::createBackend(argv[1], dl).release());
       objectName = argv[2];
     } else if (2 == argc ){
-      cta::common::Configuration m_ctaConf("/etc/cta/cta-objectstore-tools.conf");
-      be=std::move(cta::objectstore::BackendFactory::createBackend(m_ctaConf.getConfEntString("ObjectStore", "BackendPath", nullptr), dl));
+      cta::common::Config m_ctaConf("/etc/cta/cta-objectstore-tools.conf");
+      be=std::move(cta::objectstore::BackendFactory::createBackend(m_ctaConf.getOptionValueStr("BackendPath").value(), dl));
       objectName = argv[1];
     } else {
       throw std::runtime_error("Wrong number of arguments: expected 1 or 2: [objectstoreURL] objectname");

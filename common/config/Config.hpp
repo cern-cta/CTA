@@ -20,8 +20,9 @@
 #include <map>
 #include <optional>
 #include <sstream>
+#include <vector>
 
-namespace cta::frontend {
+namespace cta::common {
 
 /*!
  * Interface to the CTA Frontend configuration file
@@ -97,4 +98,4 @@ private:
   std::map<std::string, optionlist_t> m_configuration;     //!< Parsed configuration options
 };
 
-} // namespace cta::frontend
+} // namespace cta::common

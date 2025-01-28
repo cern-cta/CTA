@@ -25,7 +25,7 @@
 #include "common/exception/UserError.hpp"
 #include "Config.hpp"
 
-namespace cta::frontend {
+namespace cta::common {
 
 //! Configuration option list type
 using optionlist_t = std::vector<std::string>;

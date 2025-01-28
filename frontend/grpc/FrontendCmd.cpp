@@ -33,7 +33,7 @@
 #include "common/log/StdoutLogger.hpp"
 #include "common/log/Logger.hpp"
 #include "common/log/LogContext.hpp"
-#include "common/Configuration.hpp"
+#include "common/config/Config.hpp"
 #include "common/utils/utils.hpp"
 #include "common/exception/Exception.hpp"
 #include "common/exception/Errnum.hpp"
@@ -182,21 +182,21 @@ int cta::frontend::grpc::server::FrontendCmd::main(const int argc, char** argv) 
   //
   lc.log(log::INFO, "Starting " +  FRONTEND_NAME + " " + std::string(CTA_VERSION));
   // Reading configuration file
-  cta::common::Configuration config(strConFile);
+  cta::common::Config config(strConFile);
   try {
     if (!uiPort) {
-      uiPort = config.getConfEntInt<unsigned int>("gRPC", "port", DEFAULT_PORT, upLog.get());
+      uiPort = config.getOptionValueUInt("gRPCPort").value_or(DEFAULT_PORT);
     }
-    cta::frontend::grpc::utils::read(config.getConfEntString("gRPC", "SslRoot", upLog.get()), strSslRoot);
-    cta::frontend::grpc::utils::read(config.getConfEntString("gRPC", "SslKey", upLog.get()), strSslKey);
-    cta::frontend::grpc::utils::read(config.getConfEntString("gRPC", "SslCert", upLog.get()), strSslCert);
+    strSslRoot = config.getOptionValueStr("gRPCSslRoot").value();
+    strSslKey  = config.getOptionValueStr("gRPCSslKey").value();
+    strSslCert = config.getOptionValueStr("gRPCSslCert").value();
   } catch(const cta::exception::Exception &ex) {
     m_err << m_strExecName << ": problem while reading a configuration file - " << ex.getMessage().str() << std::endl;
     return EXIT_FAILURE;
   }
   
   if(strKeytab.empty()) {
-    strKeytab = config.getConfEntString("gRPC", "Keytab", "");
+    strKeytab = config.getOptionValueStr("gRPCKeytab").value_or("");
     // and check again
     if(strKeytab.empty()) {
       m_err << m_strExecName << ": the keytab file is unspecified" << std::endl
