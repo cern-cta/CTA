@@ -87,7 +87,7 @@ kubectl -n ${NAMESPACE} exec ${CLIENT_POD} -c client -- bash -c "/root/client_se
 TEST_PRERUN=". /root/client_env "
 TEST_POSTRUN=""
 
-VERBOSE=1
+VERBOSE=0
 if [[ $VERBOSE == 1 ]]; then
   TEST_PRERUN="tail -v -f /mnt/logs/cta-tpsrv*/rmcd/cta/cta-rmcd.log & export TAILPID=\$! && ${TEST_PRERUN}"
   TEST_POSTRUN=" && kill \${TAILPID} &> /dev/null"
@@ -126,19 +126,18 @@ kubectl -n ${NAMESPACE} exec ${EOS_MGM_POD} -c eos-mgm -- bash /root/grep_xrdlog
 
 EOSDF_BUFFER_BASEDIR=/eos/ctaeos/eosdf
 EOSDF_BUFFER_URL=${EOSDF_BUFFER_BASEDIR}
-kubectl -n ${NAMESPACE} exec ctaeos -- eos mkdir ${EOSDF_BUFFER_URL}
-kubectl -n ${NAMESPACE} exec ctaeos -- eos chmod 1777 ${EOSDF_BUFFER_URL}
+kubectl -n ${NAMESPACE} exec ${EOS_MGM_POD} -c eos-mgm -- eos mkdir ${EOSDF_BUFFER_URL}
+kubectl -n ${NAMESPACE} exec ${EOS_MGM_POD} -c eos-mgm -- eos chmod 1777 ${EOSDF_BUFFER_URL}
 # Test correct script execution
 echo "Launching eosdf_systemtest.sh, expecting script to run properly"
 kubectl -n ${NAMESPACE} exec ${CLIENT_POD} -c client -- bash -c "${TEST_PRERUN} && /root/eosdf_systemtest.sh ${TEST_POSTRUN}" || exit 1
 ## Verify proper execution of script by grepping for the debug log line
-CTA_TPSRV_POD="cta-tpsrv01-0"
 # Set the TAPES and DRIVE_NAME based on the config in CTA_TPSRV_POD
 echo "Reading library configuration from ${CTA_TPSRV_POD}"
 DRIVE_NAME=$(kubectl exec -n ${NAMESPACE} ${CTA_TPSRV_POD} -c taped-0 -- printenv DRIVE_NAME)
 CTA_TAPED_LOG=/var/log/cta/cta-taped-${DRIVE_NAME}.log
 
-if kubectl -n ${NAMESPACE} exec cta-tpsrv01-0 -c taped-0 -- bash -c "grep -q 'unable to get the free disk space with the script' ${CTA_TAPED_LOG}"; then
+if kubectl -n ${NAMESPACE} exec ${CTA_TPSRV_POD} -c taped-0 -- bash -c "grep -q 'unable to get the free disk space with the script' ${CTA_TAPED_LOG}"; then
   echo "Script unexpectedly failed to get free disk space"
   exit 1
 fi
@@ -146,11 +145,11 @@ fi
 ## The idea is that we run it once without script, and once without executable permission on the script
 ## Both times we should get a success, because when the script is the problem, we allow staging to continue
 echo "Launching eosdf_systemtest.sh with a nonexistent script"
-# rename the script on taped so that it cannot be found 
+# rename the script on taped so that it cannot be found
 # error to grep for in the logs is 'No such file or directory'
-kubectl -n ${NAMESPACE} exec cta-tpsrv01-0 -c taped-0 -- bash -c "mv /usr/bin/cta-eosdf.sh /usr/bin/eosdf_newname.sh" || exit 1
+kubectl -n ${NAMESPACE} exec ${CTA_TPSRV_POD} -c taped-0 -- bash -c "mv /usr/bin/cta-eosdf.sh /usr/bin/eosdf_newname.sh" || exit 1
 kubectl -n ${NAMESPACE} exec ${CLIENT_POD} -c client -- bash -c "${TEST_PRERUN} && /root/eosdf_systemtest.sh ${TEST_POSTRUN}" || exit 1
-if kubectl -n ${NAMESPACE} exec cta-tpsrv01-0 -c taped-0 -- bash -c "grep -q 'No such file or directory' ${CTA_TAPED_LOG}"; then
+if kubectl -n ${NAMESPACE} exec ${CTA_TPSRV_POD} -c taped-0 -- bash -c "grep -q 'No such file or directory' ${CTA_TAPED_LOG}"; then
   echo "Subprocess threw 'No such file or directory', as expected"
 else
   exit 1
@@ -158,10 +157,10 @@ fi
 # now give it back its original name but remove the executable permission, should still succeed
 # now the error to grep for is 'Permission denied'
 echo "Launching eosdf_systemtest.sh with correct script without executable permissions"
-kubectl -n ${NAMESPACE} exec cta-tpsrv01-0 -c taped-0 -- bash -c "mv /usr/bin/eosdf_newname.sh /usr/bin/cta-eosdf.sh" || exit 1
-kubectl -n ${NAMESPACE} exec cta-tpsrv01-0 -c taped-0 -- bash -c "chmod -x /usr/bin/cta-eosdf.sh" || exit 1
+kubectl -n ${NAMESPACE} exec ${CTA_TPSRV_POD} -c taped-0 -- bash -c "mv /usr/bin/eosdf_newname.sh /usr/bin/cta-eosdf.sh" || exit 1
+kubectl -n ${NAMESPACE} exec ${CTA_TPSRV_POD} -c taped-0 -- bash -c "chmod -x /usr/bin/cta-eosdf.sh" || exit 1
 kubectl -n ${NAMESPACE} exec ${CLIENT_POD} -c client -- bash -c "${TEST_PRERUN} && /root/eosdf_systemtest.sh ${TEST_POSTRUN}" || exit 1
-if kubectl -n ${NAMESPACE} exec cta-tpsrv01-0 -c taped-0 -- bash -c "grep -q 'Permission denied' ${CTA_TAPED_LOG}"; then
+if kubectl -n ${NAMESPACE} exec ${CTA_TPSRV_POD} -c taped-0 -- bash -c "grep -q 'Permission denied' ${CTA_TAPED_LOG}"; then
   echo "Subprocess threw 'Permission denied', as expected"
 else
   exit 1
@@ -170,10 +169,10 @@ fi
 # grep for 'could not be used to get the FreeSpace'
 echo "Launching eosdf_systemtest.sh with script that throws an eos-client error"
 # fake instance not reachable
-kubectl -n ${NAMESPACE} exec cta-tpsrv01-0 -c taped-0 -- bash -c "sed -i 's|root://\$diskInstance|root://nonexistentinstance|g' /usr/bin/cta-eosdf.sh" || exit 1
-kubectl -n ${NAMESPACE} exec cta-tpsrv01-0 -c taped-0 -- bash -c "chmod +x /usr/bin/cta-eosdf.sh" || exit 1
+kubectl -n ${NAMESPACE} exec ${CTA_TPSRV_POD} -c taped-0 -- bash -c "sed -i 's|root://\$diskInstance|root://nonexistentinstance|g' /usr/bin/cta-eosdf.sh" || exit 1
+kubectl -n ${NAMESPACE} exec ${CTA_TPSRV_POD} -c taped-0 -- bash -c "chmod +x /usr/bin/cta-eosdf.sh" || exit 1
 kubectl -n ${NAMESPACE} exec ${CLIENT_POD} -c client -- bash -c "${TEST_PRERUN} && /root/eosdf_systemtest.sh ${TEST_POSTRUN}" || exit 1
-kubectl -n ${NAMESPACE} exec cta-tpsrv01-0 -c taped-0 -- bash -c "sed -i 's|root://nonexistentinstance|root://\$diskInstance|g' /usr/bin/cta-eosdf.sh" || exit 1
+kubectl -n ${NAMESPACE} exec ${CTA_TPSRV_POD} -c taped-0 -- bash -c "sed -i 's|root://nonexistentinstance|root://\$diskInstance|g' /usr/bin/cta-eosdf.sh" || exit 1
 
 echo
 echo " Launching client_timestamp.sh on client pod"
