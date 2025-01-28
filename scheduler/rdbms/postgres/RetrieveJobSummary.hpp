@@ -75,7 +75,7 @@ struct RetrieveJobSummaryRow {
    *
    * @return result set containing all rows in the table
    */
-  static rdbms::Rset selectVid(const std::string& vid, common::dataStructures::JobQueueType type, Transaction& txn) {
+  static rdbms::Rset selectVid(const std::string& vid, common::dataStructures::JobQueueType type, rdbms::Conn& conn) {
     // for the moment ignoring status as we will query only one table
     // where all the jobs wait to be popped to the drive task queues
     const char* const sql = R"SQL(
@@ -119,7 +119,7 @@ struct RetrieveJobSummaryRow {
     }
      */
 
-    auto stmt = txn.getConn().createStmt(sql);
+    auto stmt = conn.createStmt(sql);
     stmt.bindString(":VID", vid);
     //stmt.bindString(":STATUS", statusStr);
     return stmt.executeQuery();
