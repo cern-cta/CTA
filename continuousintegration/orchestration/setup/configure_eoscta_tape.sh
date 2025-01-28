@@ -6,11 +6,14 @@
 eos vid enable unix
 eos vid enable https
 eos space config default space.filearchivedgc=on
+eos space config default space.tapeawaregc.minfreebytes=0
 eos space config default space.wfe=on
 eos space config default space.wfe.ntx=100
 eos space config default taperestapi.status=on
 eos space config default taperestapi.stage=on
 eos space config default space.token.generation=1
+eos space config default space.scanrate=0
+eos space config default space.scaninterval=0
 eos attr -r set default=replica /eos
 eos attr -r set sys.forced.nstripes=1 /eos
 
@@ -62,6 +65,11 @@ eos chmod 555 ${CTA_PREPROD_DIR}
 eos attr set sys.acl=g:eosusers:rwx!d,u:poweruser1:rwx+dp,u:poweruser2:rwx+dp,z:'!'u'!'d ${CTA_PREPROD_DIR}
 eos attr set sys.archive.storage_class=${CTA_STORAGE_CLASS} ${CTA_PREPROD_DIR}
 eos attr link ${CTA_WF_DIR} ${CTA_PREPROD_DIR} # Link workflows
+
+# create tmp disk only directory for tests
+EOS_TMP_DIR=/eos/${EOS_INSTANCE}/tmp
+eos mkdir ${EOS_TMP_DIR}
+eos chmod 777 ${EOS_TMP_DIR}
 
 # ${CTA_TEST_DIR} must be writable by eosusers and powerusers
 # but as there is no sticky bit in eos, we need to remove deletion for non owner to eosusers members
