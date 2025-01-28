@@ -100,13 +100,25 @@ void DiskSystemFreeSpaceList::fetchDiskSystemFreeSpace(const std::set<std::strin
     bool updateCatalogue = false;
     auto &diskSystem = m_systemList.at(ds);
     auto &diskInstanceSpace = diskSystem.diskInstanceSpace;
+    auto updateFreeSpaceEntry = [&]() {
+      DiskSystemFreeSpace & entry = operator[](ds);
+      entry.freeSpace = freeSpace;
+      entry.fetchTime = ::time(nullptr);
+      entry.targetedFreeSpace = m_systemList.at(ds).targetedFreeSpace;
+
+      if (updateCatalogue) {
+        catalogue.DiskInstanceSpace()->modifyDiskInstanceSpaceFreeSpace(diskInstanceSpace.name,
+          diskInstanceSpace.diskInstance, freeSpace);
+      }
+    };
     try {
       std::vector<std::string> regexResult;
       const auto currentTime = static_cast<uint64_t>(time(nullptr));
       if (diskInstanceSpace.lastRefreshTime + diskInstanceSpace.refreshInterval >= currentTime) {
         // use the value in the catalogue, it is still fresh
         freeSpace = diskSystem.diskInstanceSpace.freeSpace;
-        goto found;
+        updateFreeSpaceEntry();
+        continue;
       }
       updateCatalogue = true;
       const auto &freeSpaceQueryUrl = getDiskSystemFreeSpaceQueryURL(diskSystem);
@@ -118,7 +130,8 @@ void DiskSystemFreeSpaceList::fetchDiskSystemFreeSpace(const std::set<std::strin
           std::string diskInstanceName = regexResult.at(1);
           std::string spaceName = regexResult.at(2);
           freeSpace = fetchFreeDiskSpaceWithScript(m_systemList.getExternalFreeDiskSpaceScript(), diskInstanceName, spaceName, jsoncDiskSystem.getJSON(), lc);
-          goto found;
+          updateFreeSpaceEntry();
+          continue;
         } catch (const cta::disk::FreeDiskSpaceException &ex) {
           updateCatalogue = false; // if we update the catalogue at this point, we will update it with an old value, since we were not able to get a new one
           // but will still reset the last refresh time, so it will be essentially a "false" update; better to not update and let the lastRefreshTime reflect
@@ -134,21 +147,13 @@ void DiskSystemFreeSpaceList::fetchDiskSystemFreeSpace(const std::set<std::strin
       regexResult = constantFreeSpaceDiskSystem.exec(freeSpaceQueryUrl);
       if (regexResult.size()) {
         freeSpace = fetchConstantFreeSpace(regexResult.at(1), lc);
-        goto found;
+        updateFreeSpaceEntry();
+        continue;
       }
       throw cta::disk::FreeDiskSpaceException("In DiskSystemFreeSpaceList::fetchDiskSystemFreeSpace(): could not interpret free space query URL.");
     } catch (const cta::disk::FreeDiskSpaceException &ex) {
       failedToFetchDiskSystems[ds] = ex;
-    }
-  found:
-    DiskSystemFreeSpace & entry = operator[](ds);
-    entry.freeSpace = freeSpace;
-    entry.fetchTime = ::time(nullptr);
-    entry.targetedFreeSpace = m_systemList.at(ds).targetedFreeSpace;
-
-    if (updateCatalogue) {
-      catalogue.DiskInstanceSpace()->modifyDiskInstanceSpaceFreeSpace(diskInstanceSpace.name,
-        diskInstanceSpace.diskInstance, freeSpace);
+      updateFreeSpaceEntry();
     }
   }
   if(failedToFetchDiskSystems.size()){
