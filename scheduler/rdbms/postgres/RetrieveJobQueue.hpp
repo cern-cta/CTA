@@ -328,7 +328,7 @@ struct RetrieveJobQueueRow {
             LIFECYCLE_COMPLETED_TIME,
             RETRIEVE_REPORT_URL
     )";
-    if (diskSystemName) {
+    if (diskSystemName.has_value()) {
       sql += R"(,DISK_SYSTEM_NAME )";
     }
     if (activity.has_value()) {
@@ -386,8 +386,8 @@ struct RetrieveJobQueueRow {
             :LIFECYCLE_COMPLETED_TIME,
             :RETRIEVE_REPORT_URL
     )";
-    if (diskSystemName) {
-      sql += R"(,DISK_SYSTEM_NAME )";
+    if (diskSystemName.has_value()) {
+      sql += R"(,:DISK_SYSTEM_NAME )";
     }
     if (activity.has_value()) {
       sql += R"(,:ACTIVITY )";
@@ -446,7 +446,7 @@ struct RetrieveJobQueueRow {
     stmt.bindUint64(":LIFECYCLE_CREATION_TIME", lifecycleTimings_creation_time);
     stmt.bindUint64(":LIFECYCLE_FIRST_SELECTED_TIME", lifecycleTimings_first_selected_time);
     stmt.bindUint64(":LIFECYCLE_COMPLETED_TIME", lifecycleTimings_completed_time);
-    if (diskSystemName) {
+    if (diskSystemName.has_value()) {
       stmt.bindString(":DISK_SYSTEM_NAME", diskSystemName.value());
     }
     //stmt.bindBool(":IS_FAILED", isFailed);
