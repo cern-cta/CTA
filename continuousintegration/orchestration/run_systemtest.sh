@@ -186,14 +186,19 @@ run_systemtest() {
     rm -rf "${log_dir:?}/"*
   fi
 
+  old_namespaces=$(kubectl get namespace -o json | jq -r '.items[].metadata.name | select(. != "default" and (test("^kube-") | not))')
   if [ $cleanup_namespaces == 1 ]; then
-      echo "Cleaning up old namespaces:"
-      kubectl get namespace -o json | jq '.items[].metadata | select(.name != "default" and .name != "kube-system") | .name' | grep "test-"
-      kubectl get namespace -o json | jq '.items[].metadata | select(.name != "default" and .name != "kube-system") | .name' | grep "test-" | xargs -itoto ./delete_instance.sh -n toto -D
-      echo "Cleanup complete"
+    echo "Cleaning up old namespaces"
+    echo $old_namespaces
+    echo $old_namespaces | xargs -itoto ./delete_instance.sh -n toto -D
+    echo "Cleanup complete"
   elif kubectl get namespace ${namespace} > /dev/null 2>&1; then
     die "Namespace ${namespace} already exists"
+  elif [ -n "$old_namespaces" ]; then
+    echo "Error: Other namespaces exist: $old_namespaces"
+    exit 1
   fi
+
 
   # create instance timeout after 10 minutes
   execute_cmd_with_log "./create_instance.sh -n ${namespace} ${spawn_options} ${extra_spawn_options}" "${log_dir}/create_instance.log" ${create_instance_timeout}
