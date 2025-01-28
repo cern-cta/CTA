@@ -199,7 +199,7 @@ RepackRequest::addSubrequestsAndUpdateStats(std::list<Subrequest>& repackSubrequ
             if (tc.vid == repackInfo.vid) {
               try {
                 // Try to select the repack VID from a one-vid list.
-                Helpers::selectBestVid4Retrieve({repackInfo.vid}, m_catalogue, *m_txn, true);
+                Helpers::selectBestVid4Retrieve({repackInfo.vid}, m_catalogue, m_txn->getConn(), true);
                 bestVid = repackInfo.vid;
                 activeCopyNumber = tc.copyNb;
               } catch (Helpers::NoTapeAvailableForRetrieve&) {}
@@ -215,7 +215,7 @@ RepackRequest::addSubrequestsAndUpdateStats(std::list<Subrequest>& repackSubrequ
             candidateVids.insert(tc.vid);
           }
           try {
-            bestVid = Helpers::selectBestVid4Retrieve(candidateVids, m_catalogue, *m_txn, true);
+            bestVid = Helpers::selectBestVid4Retrieve(candidateVids, m_catalogue, m_txn->getConn(), true);
           } catch (Helpers::NoTapeAvailableForRetrieve&) {
             // Count the failure for this subrequest.
             notCreatedSubrequests.emplace_back(rsr);
