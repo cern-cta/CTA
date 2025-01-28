@@ -859,8 +859,12 @@ void RdbmsTapeCatalogue::modifyTapeState(const common::dataStructures::SecurityI
   stmt.executeNonQuery();
 
   if (0 == stmt.getNbAffectedRows()) {
-    throw UserSpecifiedANonExistentTape(std::string("Cannot modify the state of the tape ") + vid
-      + " because it does not exist or because a recent state change has been detected");
+    if (prev_state.has_value() && RdbmsCatalogueUtils::tapeExists(conn, vid)) {
+      throw UserSpecifiedAWrongPrevState(std::string("Cannot modify the state of the tape ") + vid +
+                                         " because a recent state change has been detected");
+    }
+    throw UserSpecifiedANonExistentTape(std::string("Cannot modify the state of the tape ") + vid +
+                                        " because it does not exist");
   }
 }
 
