@@ -20,13 +20,18 @@
 namespace cta::schedulerdb {
 
 void RetrieveRequest::insert() {
+  m_lc.log(log::INFO, "In RetrieveRequest::insert(): getting request ID from DB.");
   uint64_t rreq_id = cta::schedulerdb::postgres::RetrieveJobQueueRow::getNextRetrieveRequestID(m_conn);
   uint32_t rreq_job_count = m_jobs.size();
+  m_lc.log(log::INFO, "In RetrieveRequest::insert(): creating jobs.");
+
   // Inserting the jobs to the DB
   try {
     cta::schedulerdb::postgres::RetrieveJobQueueRow rjr;
     rjr.retrieveRequestId = rreq_id;
     rjr.reqJobCount = rreq_job_count;
+    m_lc.log(log::INFO, "In RetrieveRequest::insert(): creating jobs XC1.");
+
     // rdbms request members
     rjr.diskSystemName = m_diskSystemName;
     // m_schedRetrieveReq metadata fields
@@ -36,6 +41,8 @@ void RetrieveRequest::insert() {
     rjr.retrieveReportURL = m_schedRetrieveReq.retrieveReportURL;
     rjr.retrieveErrorReportURL = m_schedRetrieveReq.errorReportURL;
     rjr.isVerifyOnly = m_isVerifyOnly;
+    m_lc.log(log::INFO, "In RetrieveRequest::insert(): creating jobs XC2.");
+
     // m_schedRetrieveReq.isVerifyOnly; // request to retrieve file from tape but do not write a disk copy
     // from archive file - uint64_t archiveFileID;
     //  DiskFileInfo diskFileInfo;
@@ -49,6 +56,7 @@ void RetrieveRequest::insert() {
     rjr.lifecycleTimings_first_selected_time = m_schedRetrieveReq.lifecycleTimings.first_selected_time;
     rjr.lifecycleTimings_completed_time = m_schedRetrieveReq.lifecycleTimings.completed_time;
     rjr.activity = m_activity;  // from m_schedRetrieveReq.activity; set if needed only
+    m_lc.log(log::INFO, "In RetrieveRequest::insert(): creating jobs XC3.");
 
     // think about when to register this and when to put another vid found in queueRetrieve
     // std::optional<std::string> m_schedRetrieveReq.vid;    // limit retrieve requests to the specified vid (in the case of dual-copy files)
@@ -75,6 +83,8 @@ void RetrieveRequest::insert() {
     rjr.startTime = time(nullptr);  // Time the job was queued in the DB
 
     // For each tape file concatenate the copyNb and vids into alternate strings to save for retrial/requeueing
+    m_lc.log(log::INFO, "In RetrieveRequest::insert(): creating jobs XC4.");
+
     int i = 0;
     for (const auto& rj : m_jobs) {
       i++;
@@ -82,6 +92,7 @@ void RetrieveRequest::insert() {
       rjr.alternateCopyNbs += std::to_string(rj.copyNb) + std::string(",");
       rjr.alternateFSeq += std::to_string(rj.fSeq) + std::string(",");
       rjr.alternateBlockId += std::to_string(rj.blockId) + std::string(",");
+      m_lc.log(log::INFO, "In RetrieveRequest::insert(): creating jobs XC5.");
 
       //rjr.tapePool = rj.tapepool; // currently not sure if we have need for tape pool
       if (i == 1) {
