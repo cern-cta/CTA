@@ -67,7 +67,7 @@ eos attr set sys.archive.storage_class=${CTA_STORAGE_CLASS} ${CTA_PREPROD_DIR}
 eos attr link ${CTA_WF_DIR} ${CTA_PREPROD_DIR} # Link workflows
 
 # create tmp disk only directory for tests
-EOS_TMP_DIR=/eos/${EOS_INSTANCE}/tmp
+EOS_TMP_DIR=/eos/${EOS_INSTANCE_NAME}/tmp
 eos mkdir ${EOS_TMP_DIR}
 eos chmod 777 ${EOS_TMP_DIR}
 
