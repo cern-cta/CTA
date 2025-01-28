@@ -337,18 +337,24 @@ RelationalDB::queueRetrieve(cta::common::dataStructures::RetrieveRequest& rqst,
                             const cta::common::dataStructures::RetrieveFileQueueCriteria& criteria,
                             const std::optional<std::string> diskSystemName,
                             log::LogContext& logContext) {
+  auto rreqMutex = std::make_unique<cta::threading::Mutex>();
+  cta::threading::MutexLocker rreqMutexLock(*rreqMutex);
   SchedulerDatabase::RetrieveRequestInfo ret;
   try {
+    logContext.log(cta::log::INFO, "In schedulerdb::RelationalDB::queueRetrieve(): before candidateVids. ");
+
     // Get the best vid from the cache
     std::set<std::string, std::less<>> candidateVids;
     for (auto& tf : criteria.archiveFile.tapeFiles) {
       candidateVids.insert(tf.vid);
     }
-
-    schedulerdb::Transaction txn(m_connPool);
+    logContext.log(cta::log::INFO, "In schedulerdb::RelationalDB::queueRetrieve(): before sqlconn selection. ");
+    auto sqlconn = m_connPool.getConn();
     /// it make a query for every single file to the scheduler db summary stats for existing queues ? no way ... very inefficient
     // to-do option: query in batches and insert VIDs available in the info about the archive file from the catalogue and decide on the best during the getNextJobBatch phase !
-    ret.selectedVid = cta::schedulerdb::Helpers::selectBestVid4Retrieve(candidateVids, m_catalogue, txn, false);
+    ret.selectedVid = cta::schedulerdb::Helpers::selectBestVid4Retrieve(candidateVids, m_catalogue, sqlconn, false);
+    logContext.log(cta::log::INFO, "In schedulerdb::RelationalDB::queueRetrieve(): after selectBestVid4Retrieve. ");
+
     uint8_t bestCopyNb = 0;
     for (auto& tf : criteria.archiveFile.tapeFiles) {
       if (tf.vid == ret.selectedVid) {
@@ -360,9 +366,9 @@ RelationalDB::queueRetrieve(cta::common::dataStructures::RetrieveRequest& rqst,
         break;
       }
     }
+    logContext.log(cta::log::INFO, "In schedulerdb::RelationalDB::queueRetrieve(): after bestCopyNb selection. ");
 
     // In order to queue the job, construct it first in memory.
-    auto sqlconn = m_connPool.getConn();
     auto rReq = std::make_unique<schedulerdb::RetrieveRequest>(sqlconn, logContext);
     // the order of the following calls in important - we should rewise
     // the whole logic here and metadata object separation
@@ -400,6 +406,7 @@ RelationalDB::queueRetrieve(cta::common::dataStructures::RetrieveRequest& rqst,
     //      << " vid=" << ret.selectedVid << " copyNb=" << bestCopyNb;
     //  throw RetrieveRequestHasNoCopies(err.str());
     //}
+    rreqMutex.release();
     rReq->insert();
     sqlconn.reset();
 
@@ -925,7 +932,6 @@ RelationalDB::getRetrieveQueuesCleanupInfo(log::LogContext& logContext) {
 }
 
 std::vector<std::string> RelationalDB::getActiveSleepDiskSystemNamesToFilter() {
-
   cta::threading::MutexLocker ml(m_diskSystemSleepCacheMutex);
   uint64_t currentTime = std::chrono::system_clock::to_time_t(std::chrono::system_clock::now());
 

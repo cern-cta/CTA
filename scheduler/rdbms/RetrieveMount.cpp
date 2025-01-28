@@ -119,13 +119,14 @@ bool RetrieveMount::reserveDiskSpace(const cta::DiskSpaceReservationRequest& dis
     // Could not get free space for one of the disk systems. Currently the retrieve mount will only query
     // one disk system, so just log the failure and put the queue to sleep inside the loop.
     for (const auto& failedDiskSystem : ex.m_failedDiskSystems) {
+      auto sleepTime = diskSystemFreeSpace.getDiskSystemList().at(failedDiskSystem.first).sleepTime;
       cta::log::ScopedParamContainer(logContext)
         .add("diskSystemName", failedDiskSystem.first)
         .add("failureReason", failedDiskSystem.second.getMessageValue())
+        .add("sleepTime", sleepTime)
         .log(cta::log::ERR,
-             "In RelationalDB::RetrieveMount::reserveDiskSpace(): unable to request EOS free space for "
-             "disk system, putting queue to sleep");
-      auto sleepTime = diskSystemFreeSpace.getDiskSystemList().at(failedDiskSystem.first).sleepTime;
+           "In RelationalDB::RetrieveMount::reserveDiskSpace(): unable to request EOS free space for "
+           "disk system, putting queue to sleep");
       putQueueToSleep(failedDiskSystem.first, sleepTime, logContext);
     }
     return false;
@@ -203,13 +204,14 @@ bool RetrieveMount::testReserveDiskSpace(const cta::DiskSpaceReservationRequest&
     // Could not get free space for one of the disk systems. Currently the retrieve mount will only query
     // one disk system, so just log the failure and put the queue to sleep inside the loop.
     for (const auto& failedDiskSystem : ex.m_failedDiskSystems) {
+      auto sleepTime = diskSystemFreeSpace.getDiskSystemList().at(failedDiskSystem.first).sleepTime;
       cta::log::ScopedParamContainer(logContext)
         .add("diskSystemName", failedDiskSystem.first)
         .add("failureReason", failedDiskSystem.second.getMessageValue())
+        .add("sleepTime", sleepTime)
         .log(cta::log::ERR,
              "In RelationalDB::RetrieveMount::testReserveDiskSpace(): unable to request EOS free space "
              "for disk system, putting queue to sleep");
-      auto sleepTime = diskSystemFreeSpace.getDiskSystemList().at(failedDiskSystem.first).sleepTime;
       putQueueToSleep(failedDiskSystem.first, sleepTime, logContext);
     }
     return false;

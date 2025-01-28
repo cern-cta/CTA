@@ -34,31 +34,27 @@
 namespace cta::schedulerdb {
 
 class Helpers {
- public:
+public:
   CTA_GENERATE_EXCEPTION_CLASS(NoTapeAvailableForRetrieve);
 
-  static std::string selectBestVid4Retrieve(
-                const std::set<std::string, std::less<>>  &candidateVids,
-                cta::catalogue::Catalogue                 &catalogue,
-                schedulerdb::Transaction                  &txn,
-                bool                                       isRepack);
+  static std::string selectBestVid4Retrieve(const std::set<std::string, std::less<>>& candidateVids,
+                                            cta::catalogue::Catalogue& catalogue,
+                                            cta::rdbms::Conn& conn,
+                                            bool isRepack);
 
-  static std::list<SchedulerDatabase::RetrieveQueueStatistics> getRetrieveQueueStatistics(
-                const cta::common::dataStructures::RetrieveFileQueueCriteria &criteria,
-                const std::set<std::string, std::less<>>                     &vidsToConsider,
-                schedulerdb::Transaction                                     &txn);
+  static std::list<SchedulerDatabase::RetrieveQueueStatistics>
+  getRetrieveQueueStatistics(const cta::common::dataStructures::RetrieveFileQueueCriteria& criteria,
+                             const std::set<std::string, std::less<>>& vidsToConsider,
+                             cta::rdbms::Conn& conn);
 
   /*
    * Opportunistic updating of the queue stats cache as we access it. This implies the
    * tape is not disabled (full status not fetched).
    */
-  static void updateRetrieveQueueStatisticsCache(
-                const std::string & vid,
-                uint64_t files,
-                uint64_t bytes,
-                uint64_t priority);
+  static void
+  updateRetrieveQueueStatisticsCache(const std::string& vid, uint64_t files, uint64_t bytes, uint64_t priority);
 
-  static void flushStatisticsCacheForVid(const std::string & vid);
+  static void flushStatisticsCacheForVid(const std::string& vid);
 
   static void setTapeCacheMaxAgeSecs(int cacheMaxAgeSecs);
   static void setRetrieveQueueCacheMaxAgeSecs(int cacheMaxAgeSecs);
@@ -75,14 +71,13 @@ class Helpers {
   };
 
 private:
-
   /** A struct holding together tape statistics and an update time */
   struct TapeStatusWithTime {
     common::dataStructures::Tape tapeStatus;
     time_t updateTime;
   };
 
-   /** Cache for tape statistics */
+  /** Cache for tape statistics */
   static std::map<std::string, TapeStatusWithTime, std::less<>> g_tapeStatuses;
 
   /** Lock for the retrieve queues stats */
@@ -95,10 +90,9 @@ private:
   static time_t g_tapeCacheMaxAge;
   static time_t g_retrieveQueueCacheMaxAge;
 
-  static void logUpdateCacheIfNeeded(
-                const bool                             entryCreation,
-                const RetrieveQueueStatisticsWithTime &tapeStatistic,
-                std::string_view                      message = "");
+  static void logUpdateCacheIfNeeded(const bool entryCreation,
+                                     const RetrieveQueueStatisticsWithTime& tapeStatistic,
+                                     std::string_view message = "");
 };
 
-} // namespace cta::schedulerdb
+}  // namespace cta::schedulerdb
