@@ -199,39 +199,52 @@ void QueueCleanupRunner::runOnePass(log::LogContext &logContext) {
       try {
         switch (tapeDataRefreshed.state) {
         case common::dataStructures::Tape::REPACKING_PENDING:
-          m_catalogue.Tape()->modifyTapeState(admin, queueVid, common::dataStructures::Tape::REPACKING, common::dataStructures::Tape::REPACKING_PENDING, prevReason.value_or("QueueCleanupRunner: changed tape state to REPACKING"));
+          m_catalogue.Tape()->modifyTapeState(admin, queueVid, common::dataStructures::Tape::REPACKING,
+                                              common::dataStructures::Tape::REPACKING_PENDING,
+                                              prevReason.value_or(
+                                                "QueueCleanupRunner: changed tape state to REPACKING"));
           m_db.clearStatisticsCache(queueVid);
           break;
         case common::dataStructures::Tape::BROKEN_PENDING:
-          m_catalogue.Tape()->modifyTapeState(admin, queueVid, common::dataStructures::Tape::BROKEN, common::dataStructures::Tape::BROKEN_PENDING, prevReason.value_or("QueueCleanupRunner: changed tape state to BROKEN"));
+          m_catalogue.Tape()->modifyTapeState(admin, queueVid, common::dataStructures::Tape::BROKEN,
+                                              common::dataStructures::Tape::BROKEN_PENDING,
+                                              prevReason.value_or("QueueCleanupRunner: changed tape state to BROKEN"));
           m_db.clearStatisticsCache(queueVid);
           break;
         case common::dataStructures::Tape::EXPORTED_PENDING:
-          m_catalogue.Tape()->modifyTapeState(admin, queueVid, common::dataStructures::Tape::EXPORTED, common::dataStructures::Tape::EXPORTED_PENDING, prevReason.value_or("QueueCleanupRunner: changed tape state to EXPORTED"));
+          m_catalogue.Tape()->modifyTapeState(admin, queueVid, common::dataStructures::Tape::EXPORTED,
+                                              common::dataStructures::Tape::EXPORTED_PENDING,
+                                              prevReason.value_or(
+                                                "QueueCleanupRunner: changed tape state to EXPORTED"));
           m_db.clearStatisticsCache(queueVid);
           break;
         default:
           log::ScopedParamContainer paramsWarnMsg(logContext);
           paramsWarnMsg.add("tapeVid", queueVid)
-                       .add("expectedPrevState", common::dataStructures::Tape::stateToString(tapeData.state))
-                       .add("actualPrevState", common::dataStructures::Tape::stateToString(tapeDataRefreshed.state));
-          logContext.log(log::WARNING, "In QueueCleanupRunner::runOnePass(): Cleaned up tape is not in a PENDING state. Unable to change it to its corresponding final state.");
+              .add("expectedPrevState", common::dataStructures::Tape::stateToString(tapeData.state))
+              .add("actualPrevState", common::dataStructures::Tape::stateToString(tapeDataRefreshed.state));
+          logContext.log(log::WARNING,
+                         "In QueueCleanupRunner::runOnePass(): Cleaned up tape is not in a PENDING state. Unable to change it to its corresponding final state.");
           break;
         }
-      } catch (const catalogue::UserSpecifiedAWrongPrevState & ex) {
+      } catch (const catalogue::UserSpecifiedAWrongPrevState &ex) {
         auto tapeDataRefreshedUpdated = m_catalogue.Tape()->getTapesByVid(queueVid).at(queueVid);
         log::ScopedParamContainer paramsWarnMsg(logContext);
         paramsWarnMsg.add("tapeVid", queueVid)
-                     .add("expectedPrevState", common::dataStructures::Tape::stateToString(tapeDataRefreshed.state))
-                     .add("actualPrevState", common::dataStructures::Tape::stateToString(tapeDataRefreshedUpdated.state));
+            .add("expectedPrevState", common::dataStructures::Tape::stateToString(tapeDataRefreshed.state))
+            .add("actualPrevState", common::dataStructures::Tape::stateToString(tapeDataRefreshedUpdated.state));
         {
           using common::dataStructures::Tape;
           if ((tapeDataRefreshed.state == Tape::REPACKING_PENDING && tapeDataRefreshedUpdated.state == Tape::REPACKING)
-            || (tapeDataRefreshed.state == Tape::BROKEN_PENDING && tapeDataRefreshedUpdated.state == Tape::BROKEN)
-            || (tapeDataRefreshed.state == Tape::EXPORTED_PENDING && tapeDataRefreshedUpdated.state == Tape::EXPORTED)) {
-            logContext.log(log::WARNING, "In QueueCleanupRunner::runOnePass(): Tape already moved into it's final state, probably by another agent.");
+              || (tapeDataRefreshed.state == Tape::BROKEN_PENDING && tapeDataRefreshedUpdated.state == Tape::BROKEN)
+              || (tapeDataRefreshed.state == Tape::EXPORTED_PENDING && tapeDataRefreshedUpdated.state == Tape::EXPORTED)) {
+            logContext.log(
+              log::WARNING,
+              "In QueueCleanupRunner::runOnePass(): Tape already moved into it's final state, probably by another agent.");
           } else {
-            logContext.log(log::ERR, "In QueueCleanupRunner::runOnePass(): Tape moved into an unexpected final state, probably by another agent.");
+            logContext.log(
+              log::ERR,
+              "In QueueCleanupRunner::runOnePass(): Tape moved into an unexpected final state, probably by another agent.");
           }
         }
       }
