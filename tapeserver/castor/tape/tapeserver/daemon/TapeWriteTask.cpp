@@ -180,7 +180,10 @@ void TapeWriteTask::execute(const std::unique_ptr<castor::tape::tapeFile::WriteS
     lc.log(cta::log::DEBUG,
            "TapeWriteTask: a previous file has failed for migration "
            "Do nothing except circulating blocks");
+#ifndef CTA_PGSCHED
+    // we remove the task from the memory only for OStoreDB case
     circulateMemBlocks();
+#endif
 
     // We throw again because we want TWST to stop all tasks from execution
     // and go into a degraded mode operation.
@@ -189,7 +192,10 @@ void TapeWriteTask::execute(const std::unique_ptr<castor::tape::tapeFile::WriteS
     // We failed to read anything from the file. We can get rid of any block from the queue to
     // recycle them, and pass the report to the report packer. After than, we can carry on with
     // the write session->
+#ifndef CTA_PGSCHED
+    // we remove the task from the memory only for OStoreDB case
     circulateMemBlocks();
+#endif
     watchdog.addToErrorCount("Info_fileSkipped");
     m_taskStats.readWriteTime += timer.secs(cta::utils::Timer::resetCounter);
     m_taskStats.headerVolume += TapeSessionStats::trailerVolumePerFile;
@@ -211,7 +217,10 @@ void TapeWriteTask::execute(const std::unique_ptr<castor::tape::tapeFile::WriteS
     LogContext::ScopedParam sp(lc, Param("exceptionCode", cta::log::ERR));
     LogContext::ScopedParam sp1(lc, Param("exceptionMessage", e.getMessageValue()));
     lc.log(cta::log::ERR, "An error occurred for this file, but migration will proceed as error is recoverable");
+#ifndef CTA_PGSCHED
+    // we remove the task from the memory only for OStoreDB case
     circulateMemBlocks();
+#endif
     // Record the fSeq in the tape session
     session->reportWrittenFSeq(m_archiveJob->tapeFile.fSeq);
     reportPacker.reportFailedJob(std::move(m_archiveJob), e, lc);
@@ -257,12 +266,15 @@ void TapeWriteTask::execute(const std::unique_ptr<castor::tape::tapeFile::WriteS
     // This is how we communicate the fact that a tape is full to the client.
     // We also change the log level to INFO for the case of end of tape.
     int errorLevel = cta::log::ERR;
-    if(!doReportJobError){
+    if (!doReportJobError) {
       errorLevel = cta::log::INFO;
     };
     LogContext::ScopedParam sp1(lc, Param("exceptionMessage", e.getMessageValue()));
     lc.log(errorLevel, "An error occurred for this file. End of migrations.");
+#ifndef CTA_PGSCHED
+    // we remove the task from the memory only for OStoreDB case
     circulateMemBlocks();
+#endif
     if (doReportJobError) {
       reportPacker.reportFailedJob(std::move(m_archiveJob), e, lc);
     }
