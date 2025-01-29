@@ -19,9 +19,6 @@
 
 #include "Logger.hpp"
 #include "common/log/Param.hpp"
-#include "common/log/IPAddress.hpp"
-#include "common/log/TimeStamp.hpp"
-//#include "common/Cuuid.h"
 
 #include <list>
 #include <syslog.h>
@@ -111,7 +108,3 @@ namespace cta::log {
 
 } // namespace cta::log
 
-/**
- * non-member operator to stream a Cuuid_t
- */
-//////std::ostream& operator<<(std::ostream& out, const Cuuid_t& uuid);

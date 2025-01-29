@@ -23,7 +23,7 @@
 namespace cta::log {
 
 /**
- * Class implementaing the API of the CTA logging system
+ * Class implementing the API of the CTA logging system
  */
 class FileLogger: public Logger {
 public:

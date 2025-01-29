@@ -42,8 +42,8 @@ public:
   /**
    * Destructor
    */
-  virtual ~LogContext() = default;
-  
+  virtual ~LogContext() noexcept = default;
+
   /**
    * Access to the logger object.
    * @return  reference to this context's logger
@@ -56,11 +56,11 @@ public:
    * @param param
    */
   void pushOrReplace(const Param & param) noexcept;
-  
+
   /**
-   * Move a parameter with a given name to the end of the container it it 
+   * Move a parameter with a given name to the end of the container it it
    * present.
-   * 
+   *
    * @param paramName  The name of the parameter to check and move.
    */
   void moveToTheEndIfPresent(const std::string& paramName) noexcept;
@@ -74,9 +74,9 @@ public:
   /**
    * Clears the context content.
    */
-  
-  void clear();
-  
+
+  void clear() noexcept;
+
   /**
    * Writes a message into the CTA logging system. Note that no exception
    * will ever be thrown in case of failure. Failures will actually be
@@ -84,14 +84,14 @@ public:
    *
    * Note that this version of logMsg() implicitly uses the current time as
    * the time stamp of the message.
-   * 
+   *
    * All the parameters present in the context will be added to the log message.
    *
    * @param priority the priority of the message as defined by the syslog API.
    * @param msg the message.
    */
   virtual void log(int priority, std::string_view msg) noexcept;
-  
+
   /**
    * Logs a multiline backtrace as multiple entries in the logs, without
    * the context
@@ -99,12 +99,12 @@ public:
    * @param backtrace the multi-line (\n separated) stack trace
    */
   virtual void logBacktrace(int priority, std::string_view backtrace) noexcept;
-  
+
   /**
    * Small introspection function to help in tests
    * @return size
    */
-  size_t size() const { return m_params.size(); }
+  size_t size() const noexcept { return m_params.size(); }
 
   /**
    * Helper class to find parameters by name
@@ -118,7 +118,7 @@ public:
   private:
     const std::set<std::string> m_names;
   };
-  
+
   /**
    * Scoped parameter addition to the context. Constructor adds the parameter,
    * destructor erases it.
@@ -139,12 +139,12 @@ private:
 class ScopedParamContainer {
 public:
   explicit ScopedParamContainer(LogContext& context) : m_context(context) {}
-  ~ScopedParamContainer() {
+  ~ScopedParamContainer() noexcept {
     m_context.erase(m_names);
   }
 
   template <class T>
-  ScopedParamContainer& add(const std::string& s, const T& t) {
+  ScopedParamContainer& add(const std::string& s, const T& t) noexcept {
     m_context.pushOrReplace(Param(s,t));
     m_names.insert(s);
     return *this;
@@ -159,6 +159,6 @@ private:
   std::set<std::string> m_names;
 };
 
-std::ostream& operator << (std::ostream& os, const LogContext& lc);
+std::ostream& operator << (std::ostream& os, const LogContext& lc) noexcept;
 
 } // namespace cta::log
