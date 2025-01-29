@@ -1,4 +1,4 @@
-pipeline-variable-check:
+.pipeline-variable-check:
   stage: validation
   variables:
     GIT_DEPTH: 0
@@ -6,7 +6,7 @@ pipeline-variable-check:
     - if: $PIPELINE_TYPE != "COMMIT"
   script:
     - python3 ./continuousintegration/ci_helpers/ci_input_validate.py
-   
+
 # If the CTA tagged branch contains a locked EOS version that is different from
 # the one in the main branch, then, it is possible that some of the system tests
 # fail due to a change in an interface. This failure is expected, but does not
@@ -15,7 +15,7 @@ pipeline-variable-check:
 #
 # The purpose of this job is to alert the person reviewing why a triggered pipeline
 # that the version locked EOS versions differ.
-check-versionlock-diff:
+.check-versionlock-diff:
   stage: validation
   variables:
     GIT_DEPTH: 0

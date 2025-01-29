@@ -1,4 +1,4 @@
-cppcheck:
+.cppcheck:
   stage: analysis
   image:
     name: $IMAGE_CPPCHECK

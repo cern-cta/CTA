@@ -1,5 +1,5 @@
 # Job to modify the version lock list file for external triggers
-modify-versionlock:
+.modify-versionlock:
   stage: setup
   variables:
     GIT_DEPTH: 0
