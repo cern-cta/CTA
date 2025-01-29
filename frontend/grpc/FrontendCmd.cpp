@@ -200,7 +200,7 @@ int cta::frontend::grpc::server::FrontendCmd::main(const int argc, char** argv) 
   }
 
   if(strKeytab.empty()) {
-    strKeytab = config.getOptionValueStr("gRPCKeytab").value_or("");
+    strKeytab = config.getOptionValueStr("Keytab").value_or("");
     // and check again
     if(strKeytab.empty()) {
       m_err << m_strExecName << ": the keytab file is unspecified" << std::endl
