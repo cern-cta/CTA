@@ -174,6 +174,49 @@ change_tape_state() {
   sleep 1 # Wait for a bit, to take in account caching latencies
 }
 
+# The cta-admin commands are async, so they might return before the command has fully passed
+# These functions will retry (up to a limit) to ensure we don't end up with a race condition
+check_tape_in_queue() {
+  local retries=10
+  local delay=1
+  local count=0
+  local tape_vid="$1"
+
+  while true; do
+    if test "1" == "$(admin_cta --json sq | jq -r --arg VID "$tape_vid" '.[] | select(.vid == $VID) | .queuedFiles')"; then
+      return 0  # Success (item found in queue)
+    fi
+
+    count=$((count + 1))
+    if [[ $count -ge $retries ]]; then
+      echo "ERROR: Queue does not contain a user request for tape ${tape_vid}, when one was expected."
+      return 1
+    fi
+
+    sleep "$delay"
+  done
+}
+
+check_tape_not_in_queue() {
+  local retries=10
+  local delay=1
+  local count=0
+  local tape_vid="$1"
+
+  while true; do
+    if test -z "$(admin_cta --json sq | jq -r --arg VID "$tape_vid" '.[] | select(.vid == $VID) | .queuedFiles')"; then
+      return 0  # Success (nothing in the queue)
+    fi
+
+    count=$((count + 1))
+    if [[ $count -ge $retries ]]; then
+      echo "ERROR: Queue contains a user request for tape ${tape_vid}, when none was expected."
+      return 1
+    fi
+
+    sleep "$delay"
+  done
+}
 
 ################################################################################
 # Test queueing priority between different tape states
@@ -217,19 +260,11 @@ test_tape_state_queueing_priority() {
   for i in ${!TAPE_LIST_3[@]}; do
     echo "Checking tape ${TAPE_LIST_3[$i]}..."
     if [ $i -eq $EXPECTED_SELECTED_QUEUE ]; then
-      if test "1" != "$(admin_cta --json sq | jq -r --arg VID "${TAPE_LIST_3[$i]}" '.[] | select(.vid == $VID) | .queuedFiles')"; then
-        echo "ERROR: Queue ${TAPE_LIST_3[$i]} does not contain a user request, when one was expected."
-        exit 1
-      else
-        echo "Request found on ${TAPE_STATE_LIST[$i]} queue ${TAPE_LIST_3[$i]}, as expected."
-      fi
+      check_tape_in_queue "${TAPE_LIST_3[$i]}"
+      echo "Request found on ${TAPE_STATE_LIST[$i]} queue ${TAPE_LIST_3[$i]}, as expected."
     else
-      if test ! -z "$(admin_cta --json sq | jq -r --arg VID "${TAPE_LIST_3[$i]}" '.[] | select(.vid == $VID) | .queuedFiles')"; then
-        echo "ERROR: Queue ${TAPE_LIST_3[$i]} contains a user request, when none was expected."
-        exit 1
-      else
-        echo "Request not found on ${TAPE_STATE_LIST[$i]} queue ${TAPE_LIST_3[$i]}, as expected."
-      fi
+      check_tape_not_in_queue "${TAPE_LIST_3[$i]}"
+      echo "Request not found on ${TAPE_STATE_LIST[$i]} queue ${TAPE_LIST_3[$i]}, as expected."
     fi
   done
 
@@ -285,10 +320,7 @@ test_tape_state_change_queue_removed() {
     exit 1
   fi
 
-  if test "1" != "$(admin_cta --json sq | jq -r --arg VID "$TAPE_0" '.[] | select(.vid == $VID) | .queuedFiles')"; then
-    echo "ERROR: Request non found on $TAPE_0 queue."
-    exit 1
-  fi
+  check_tape_in_queue "$TAPE_0"
 
   echo "Changing $TAPE_0 queue to ${STATE_END}..."
 
@@ -313,10 +345,7 @@ test_tape_state_change_queue_removed() {
     exit 1
   fi
 
-  if test ! -z "$(admin_cta --json sq | jq -r --arg VID "$TAPE_0" '.[] | select(.vid == $VID) | .queuedFiles')"; then
-    echo "ERROR: Queue $TAPE_0 contains a user request, when none was expected."
-    exit 1
-  fi
+  check_tape_not_in_queue "$TAPE_0"
 
   echo "Request removed and error reported back to user, as expected."
 
@@ -372,11 +401,7 @@ test_tape_state_change_queue_preserved() {
     exit 1
   fi
 
-  if test "1" != "$(admin_cta --json sq | jq -r --arg VID "$TAPE_0" '.[] | select(.vid == $VID) | .queuedFiles')"; then
-    echo "ERROR: Request non found on $TAPE_0 queue."
-    exit 1
-  fi
-
+  check_tape_in_queue "$TAPE_0"
   echo "Changing $TAPE_0 queue to ${STATE_END}..."
 
   change_tape_state $TAPE_0 $STATE_END
@@ -398,10 +423,7 @@ test_tape_state_change_queue_preserved() {
     exit 1
   fi
 
-  if test "1" != "$(admin_cta --json sq | jq -r --arg VID "$TAPE_0" '.[] | select(.vid == $VID) | .queuedFiles')"; then
-    echo "ERROR: Request not preserved on $TAPE_0 queue."
-    exit 1
-  fi
+  check_tape_in_queue "$TAPE_0"
 
   echo "Queue preserved, as expected."
 
@@ -481,23 +503,11 @@ test_tape_state_change_queue_moved() {
   fi
 
   if test "0" == "${EXPECTED_QUEUE_START}"; then
-    if test "1" != "$(admin_cta --json sq | jq -r --arg VID "$TAPE_0" '.[] | select(.vid == $VID) | .queuedFiles')"; then
-      echo "ERROR: Request non found on $TAPE_0 queue."
-      exit 1
-    fi
-    if test ! -z "$(admin_cta --json sq | jq -r --arg VID "$TAPE_1" '.[] | select(.vid == $VID) | .queuedFiles')"; then
-      echo "ERROR: Queue $TAPE_1 contains a user request, when none was expected."
-      exit 1
-    fi
+    check_tape_in_queue "$TAPE_0"
+    check_tape_not_in_queue "$TAPE_1"
   else
-    if test ! -z "$(admin_cta --json sq | jq -r --arg VID "$TAPE_0" '.[] | select(.vid == $VID) | .queuedFiles')"; then
-      echo "ERROR: Queue $TAPE_0 contains a user request, when none was expected."
-      exit 1
-    fi
-    if test "1" != "$(admin_cta --json sq | jq -r --arg VID "$TAPE_1" '.[] | select(.vid == $VID) | .queuedFiles')"; then
-      echo "ERROR: Request non found on $TAPE_1 queue."
-      exit 1
-    fi
+    check_tape_in_queue "$TAPE_1"
+    check_tape_not_in_queue "$TAPE_0"
   fi
 
   # Change tape states, starting by the tape without queue
@@ -519,23 +529,11 @@ test_tape_state_change_queue_moved() {
     echo "Checking that the request was moved from the queue ${TAPE_LIST_2[$EXPECTED_QUEUE_START]} to the queue ${TAPE_LIST_2[$EXPECTED_QUEUE_END]}..."
 
     if test "0" == "${EXPECTED_QUEUE_END}"; then
-      if test "1" != "$(admin_cta --json sq | jq -r --arg VID "$TAPE_0" '.[] | select(.vid == $VID) | .queuedFiles')"; then
-        echo "ERROR: Request non found on $TAPE_0 queue."
-        exit 1
-      fi
-      if test ! -z "$(admin_cta --json sq | jq -r --arg VID "$TAPE_1" '.[] | select(.vid == $VID) | .queuedFiles')"; then
-        echo "ERROR: Queue $TAPE_1 contains a user request, when none was expected."
-        exit 1
-      fi
+      check_tape_in_queue "$TAPE_0"
+      check_tape_not_in_queue "$TAPE_1"
     else
-      if test ! -z "$(admin_cta --json sq | jq -r --arg VID "$TAPE_0" '.[] | select(.vid == $VID) | .queuedFiles')"; then
-        echo "ERROR: Queue $TAPE_0 contains a user request, when none was expected."
-        exit 1
-      fi
-      if test "1" != "$(admin_cta --json sq | jq -r --arg VID "$TAPE_1" '.[] | select(.vid == $VID) | .queuedFiles')"; then
-        echo "ERROR: Request non found on $TAPE_1 queue."
-        exit 1
-      fi
+      check_tape_in_queue "$TAPE_1"
+      check_tape_not_in_queue "$TAPE_0"
     fi
 
     echo "Request moved to new queue, as expected."
@@ -561,15 +559,8 @@ test_tape_state_change_queue_moved() {
       exit 1
     fi
 
-    if test ! -z "$(admin_cta --json sq | jq -r --arg VID "$TAPE_0" '.[] | select(.vid == $VID) | .queuedFiles')"; then
-      echo "ERROR: Queue $TAPE_0 contains a user request, when none was expected."
-      exit 1
-    fi
-    if test ! -z "$(admin_cta --json sq | jq -r --arg VID "$TAPE_1" '.[] | select(.vid == $VID) | .queuedFiles')"; then
-      echo "ERROR: Queue $TAPE_1 contains a user request, when none was expected."
-      exit 1
-    fi
-
+    check_tape_not_in_queue "$TAPE_0"
+    check_tape_not_in_queue "$TAPE_1"
     echo "Request removed and error reported back to user, as expected."
   fi
 
