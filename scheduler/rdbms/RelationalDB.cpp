@@ -409,11 +409,12 @@ RelationalDB::queueRetrieve(cta::common::dataStructures::RetrieveRequest& rqst,
     rreqMutex.release();
     rReq->insert();
     sqlconn.reset();
-
+    logContext.log(cta::log::INFO,
+                   "In RelationalDB::queueRetrieve(): finished enqueueing retrieve job.");
     return ret;
   } catch (exception::Exception& ex) {
     logContext.log(cta::log::ERR,
-                   "In schedulerdb::RelationalDB::queueRetrieve(): failed to queue retrieve. " + ex.getMessageValue());
+                   "In schedulerdb::RelationalDB::queueRetrieve(): failed to queue retrieve." + ex.getMessageValue());
     return ret;
   }
 }

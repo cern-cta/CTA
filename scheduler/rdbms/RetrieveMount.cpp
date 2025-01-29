@@ -116,8 +116,9 @@ bool RetrieveMount::reserveDiskSpace(const cta::DiskSpaceReservationRequest& dis
   try {
     diskSystemFreeSpace.fetchDiskSystemFreeSpace(diskSystemNames, m_RelationalDB.m_catalogue, logContext);
   } catch (const cta::disk::DiskSystemFreeSpaceListException& ex) {
-    // Could not get free space for one of the disk systems. Currently the retrieve mount will only query
-    // one disk system, so just log the failure and put the queue to sleep inside the loop.
+    // Could not get free space for one of the disk systems due to a script error.
+    // The queue will not be put to sleep (backpressure will not be applied), and we return
+    // true, because we want to allow staging files for retrieve in case of script errors.
     for (const auto& failedDiskSystem : ex.m_failedDiskSystems) {
       auto sleepTime = diskSystemFreeSpace.getDiskSystemList().at(failedDiskSystem.first).sleepTime;
       cta::log::ScopedParamContainer(logContext)
@@ -129,7 +130,7 @@ bool RetrieveMount::reserveDiskSpace(const cta::DiskSpaceReservationRequest& dis
            "disk system, putting queue to sleep");
       putQueueToSleep(failedDiskSystem.first, sleepTime, logContext);
     }
-    return false;
+    return true;
   } catch (std::exception& ex) {
     // Leave a log message before letting the possible exception go up the stack.
     cta::log::ScopedParamContainer(logContext)
@@ -184,6 +185,9 @@ bool RetrieveMount::reserveDiskSpace(const cta::DiskSpaceReservationRequest& dis
 bool RetrieveMount::testReserveDiskSpace(const cta::DiskSpaceReservationRequest& diskSpaceReservationRequest,
                                          const std::string& externalFreeDiskSpaceScript,
                                          log::LogContext& logContext) {
+  // if the problem is that the script is throwing errors (and not that the disk space is insufficient),
+  // we will issue a warning, but otherwise we will not sleep the queues and we will act like no disk
+  // system was present
   // Get the current file systems list from the catalogue
   cta::disk::DiskSystemList diskSystemList;
   diskSystemList = m_RelationalDB.m_catalogue.DiskSystem()->getAllDiskSystems();
@@ -201,8 +205,9 @@ bool RetrieveMount::testReserveDiskSpace(const cta::DiskSpaceReservationRequest&
   try {
     diskSystemFreeSpace.fetchDiskSystemFreeSpace(diskSystemNames, m_RelationalDB.m_catalogue, logContext);
   } catch (const cta::disk::DiskSystemFreeSpaceListException& ex) {
-    // Could not get free space for one of the disk systems. Currently the retrieve mount will only query
-    // one disk system, so just log the failure and put the queue to sleep inside the loop.
+    // Could not get free space for one of the disk systems due to a script error.
+    // The queue will not be put to sleep (backpressure will not be applied), and we return true
+    // because we want to allow staging files for retrieve in case of script errors.
     for (const auto& failedDiskSystem : ex.m_failedDiskSystems) {
       auto sleepTime = diskSystemFreeSpace.getDiskSystemList().at(failedDiskSystem.first).sleepTime;
       cta::log::ScopedParamContainer(logContext)
@@ -212,9 +217,8 @@ bool RetrieveMount::testReserveDiskSpace(const cta::DiskSpaceReservationRequest&
         .log(cta::log::ERR,
              "In RelationalDB::RetrieveMount::testReserveDiskSpace(): unable to request EOS free space "
              "for disk system, putting queue to sleep");
-      putQueueToSleep(failedDiskSystem.first, sleepTime, logContext);
     }
-    return false;
+    return true;
   } catch (std::exception& ex) {
     // Leave a log message before letting the possible exception go up the stack.
     cta::log::ScopedParamContainer(logContext)
