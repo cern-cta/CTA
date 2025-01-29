@@ -185,17 +185,17 @@ int cta::frontend::grpc::server::FrontendCmd::main(const int argc, char** argv) 
   cta::common::Config config(strConFile);
   try {
     if (!uiPort) {
-      uiPort = config.getOptionValueUInt("gRPCPort").value_or(DEFAULT_PORT);
+      uiPort = config.getOptionValueUInt("port").value_or(DEFAULT_PORT);
     }
-    strSslRoot = config.getOptionValueStr("gRPCSslRoot").value();
-    strSslKey  = config.getOptionValueStr("gRPCSslKey").value();
-    strSslCert = config.getOptionValueStr("gRPCSslCert").value();
+    strSslRoot = config.getOptionValueStr("SslRoot").value();
+    strSslKey  = config.getOptionValueStr("SslKey").value();
+    strSslCert = config.getOptionValueStr("SslCert").value();
   } catch(const cta::exception::Exception &ex) {
     m_err << m_strExecName << ": problem while reading a configuration file - " << ex.getMessage().str() << std::endl;
     return EXIT_FAILURE;
   } catch (const std::bad_optional_access&) {
     m_err << m_strExecName << ": something went wrong while parsing the config file, "
-          << strConFile << ", for the gRPCSsl[Root|Key|Cert] keys" << std::endl;
+          << strConFile << ", for the Ssl[Root|Key|Cert] keys" << std::endl;
     return EXIT_FAILURE;
   }
   
