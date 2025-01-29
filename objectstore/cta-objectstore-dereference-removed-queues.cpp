@@ -23,6 +23,7 @@
 
 #include <iostream>
 #include <stdexcept>
+#include <optional>
 
 #include "Agent.hpp"
 #include "AgentRegister.hpp"
@@ -123,6 +124,8 @@ int main(int argc, char ** argv) {
     } else {
       std::cout << "Nothing to clean up from root entry." << std::endl;
     }
+  } catch (std::bad_optional_access) {
+    std::cerr << "Config file '/etc/cta/cta-objectstore-tools.conf' does not contain the BackendPath entry.";
   } catch (std::exception & e) {
     std::cerr << "Failed to cleanup root entry: "
         << std::endl << e.what() << std::endl;
