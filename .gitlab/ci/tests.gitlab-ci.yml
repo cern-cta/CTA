@@ -169,6 +169,7 @@ test-cta-release:
     - echo -e "[cta-artifacts]\nname=CTA artifacts\nbaseurl=file://${CTAREPODIR}\ngpgcheck=0\nenabled=1\npriority=2" > /etc/yum.repos.d/cta-artifacts.repo
     - yum install --nogpgcheck -y cta-release
     - cta-versionlock apply
+    - dnf clean all
     - yum install --nogpgcheck -y cta-frontend
     - yum install --nogpgcheck -y cta-taped
     - yum install --nogpgcheck -y cta-rmcd
