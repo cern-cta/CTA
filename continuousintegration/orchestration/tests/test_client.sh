@@ -74,7 +74,7 @@ NB_PROCS=100
 
 echo
 echo "Setting up environment for tests."
-kubectl -n ${NAMESPACE} exec ${CLIENT_POD} -c client -- bash -c "/root/client_setup.sh -n ${NB_FILES} -s ${FILE_SIZE_KB} -p ${NB_PROCS} -d /eos/ctaeos/preprod -v -r -c xrd" || exit 1
+kubectl -n ${NAMESPACE} exec ${CLIENT_POD} -c client -- bash -c "/root/client_setup.sh -n ${NB_FILES} -s ${FILE_SIZE_KB} -p ${NB_PROCS} -d /eos/ctaeos/preprod -r -c xrd" || exit 1
 
 # Test are run under the cta user account which doesn't have a login
 # option so to be able to export the test setup we need to source the file

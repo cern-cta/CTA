@@ -94,7 +94,6 @@ fst:
       - name: varlog-tmp
         emptyDir: {}
 
-
 qdb:
   replicaCount: 1
   extraEnv:

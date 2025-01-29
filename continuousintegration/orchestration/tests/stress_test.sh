@@ -62,7 +62,8 @@ kubectl -n ${NAMESPACE} exec ${EOS_MGM_POD} -c eos-mgm -- eos fs config 1 scanin
 
 # install eos-debuginfo (600MB -> only for stress tests)
 # NEEDED because eos does not leave the coredump after a crash
-kubectl -n ${NAMESPACE} exec ${EOS_MGM_POD} -c eos-mgm -- yum install -y eos-debuginfo
+# Commented out for now as the EOS images do not provide debuginfo
+# kubectl -n ${NAMESPACE} exec ${EOS_MGM_POD} -c eos-mgm -- yum install -y eos-debuginfo
 
 kubectl -n ${NAMESPACE} exec ${CTA_FRONTEND_POD} -c cta-frontend -- yum install -y xrootd-debuginfo
 
