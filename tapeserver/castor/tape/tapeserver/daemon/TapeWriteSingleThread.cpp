@@ -426,9 +426,6 @@ void castor::tape::tapeserver::daemon::TapeWriteSingleThread::run() {
       uint64_t files = 0;
       // Tasks handle their error logging themselves.
       currentErrorToCount = "";
-#ifndef CTA_PGSCHED
-      std::unique_ptr<TapeWriteTask> task;
-#endif
       m_reportPacker.reportDriveStatus(cta::common::dataStructures::DriveStatus::Transferring,
                                        std::nullopt,
                                        m_logContext);
@@ -523,6 +520,8 @@ void castor::tape::tapeserver::daemon::TapeWriteSingleThread::run() {
     std::list<std::string> jobIDsList;  // !!! serves for BUNCH FAILURE IMPLEMENTATION BY ArchiveMount
     if (nullptr != task) {
       jobIDsList.emplace_back(task->getArchiveJob().getJobID());
+      // here is where I remove this task object from memory (not in TaskWriteTask as for OStoreDB)
+      task->circulateMemBlocks();
       //task->getArchiveJob().reportFailed(failureReason, m_logContext); // !!! will be decomissioned
     }
 #endif
@@ -537,27 +536,9 @@ void castor::tape::tapeserver::daemon::TapeWriteSingleThread::run() {
 #endif
       remaining_task->circulateMemBlocks();
     }
-#ifdef CTA_PGSCHED
-    uint64_t njobs =
-      m_archiveMount.requeueJobBatch(jobIDsList, m_logContext);  // BUNCH FAILURE IMPLEMENTATION BY ArchiveMount
-    cta::log::ScopedParamContainer requeueparam(m_logContext);
-    requeueparam.add("requeuedTaskQueueJobs", njobs);
-    m_logContext.log(
-      cta::log::INFO,
-      std::string(
-        "In TapeWriteSingleThread::run(): Requeued all remaining unprocessed task jobs of the failed queue."));
 
-    if (njobs != jobIDsList.size()) {
-      // handle the case of failed bunch update of the jobs !
-      std::string jobIDsString;
-      for (const auto& piece : jobIDsList) {
-        jobIDsString += piece;
-      }
-      m_logContext.log(cta::log::ERR,
-                       std::string("In TapeWriteSingleThread::run(): Did not requeue all task jobs of "
-                                   "the failed queue, job IDs attempting to update were: ") +
-                         jobIDsString);
-    }
+#ifdef CTA_PGSCHED
+    requeueFailedTasks(jobIDsList, m_logContext);
 #endif
     // Prepare the standard error codes for the session
     std::string errorMessage(e.getMessageValue());
@@ -606,6 +587,29 @@ void castor::tape::tapeserver::daemon::TapeWriteSingleThread::logWithStats(int l
          m_stats.totalTime ? 1.0 * (m_stats.dataVolume + m_stats.headerVolume) / 1000 / 1000 / m_stats.totalTime : 0.0);
   m_logContext.moveToTheEndIfPresent("status");
   m_logContext.log(level, msg);
+}
+
+//------------------------------------------------------------------------------
+//   requeueFailedTask - for PGCHED
+//------------------------------------------------------------------------------
+void castor::tape::tapeserver::daemon::TapeWriteSingleThread::requeueFailedTasks(std::list<std::string> jobIDsList,
+                                                                                 cta::log::LogContext& lc) const {
+  uint64_t njobs = m_archiveMount.requeueJobBatch(jobIDsList, lc);
+  cta::log::ScopedParamContainer requeueparam(lc);
+  requeueparam.add("requeuedTaskQueueJobs", njobs);
+  lc.log(cta::log::INFO, std::string("In TapeWriteTask::execute(): Requeued failed task."));
+
+  if (njobs != 1) {
+    // handle the case of failed bunch update of the jobs !
+    std::string jobIDsString;
+    for (const auto& piece : jobIDsList) {
+      jobIDsString += piece;
+    }
+    lc.log(cta::log::ERR,
+           std::string("In TapeWriteSingleThread::run(): Did not requeue all task jobs of "
+                       "the failed queue, job IDs attempting to update were: ") +
+             jobIDsString);
+  }
 }
 
 //------------------------------------------------------------------------------
