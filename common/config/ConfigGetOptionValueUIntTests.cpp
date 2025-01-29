@@ -25,7 +25,6 @@
 namespace unitTests {
 
 TEST(FrontendConfig, HandlesUInt) {
-
   TempFile tf;
   std::ostringstream strFile;
 
@@ -42,7 +41,7 @@ TEST(FrontendConfig, HandlesUInt) {
   tf.stringFill(strFile.str());
 
   cta::common::Config config(tf.path());
-  
+
   EXPECT_EQ(1, config.getOptionValueUInt("cta.val.a"));
   EXPECT_THROW(config.getOptionValueUInt("cta.val.b"), std::out_of_range);
   EXPECT_THROW(config.getOptionValueUInt("cta.val.c"), std::invalid_argument);
@@ -52,8 +51,6 @@ TEST(FrontendConfig, HandlesUInt) {
   EXPECT_EQ(std::numeric_limits<uint32_t>::max(), config.getOptionValueUInt("cta.val.g"));
   EXPECT_THROW(config.getOptionValueUInt("cta.val.h"), std::out_of_range);
   EXPECT_THROW(config.getOptionValueUInt("cta.val.i"), std::out_of_range);
-
 }
 
-} // namespace unitTests
-
+}  // namespace unitTests

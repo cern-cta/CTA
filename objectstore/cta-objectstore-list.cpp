@@ -38,7 +38,8 @@ int main(int argc, char ** argv) {
     std::unique_ptr<cta::objectstore::Backend> be;
     if (1 == argc) {
       cta::common::Config m_ctaConf("/etc/cta/cta-objectstore-tools.conf");
-      be = std::move(cta::objectstore::BackendFactory::createBackend(m_ctaConf.getOptionValueStr("BackendPath").value(), dl));
+      be = std::move(
+        cta::objectstore::BackendFactory::createBackend(m_ctaConf.getOptionValueStr("BackendPath").value(), dl));
     } else if (2 == argc) {
       be.reset(cta::objectstore::BackendFactory::createBackend(argv[1], dl).release());
     } else {
@@ -56,7 +57,7 @@ int main(int argc, char ** argv) {
     }
   } catch (const std::bad_optional_access&) {
     std::cerr << "Config file '/etc/cta/cta-objectstore-tools.conf' does not contain the BackendPath entry.";
-  } catch (std::exception & e) {
+  } catch (std::exception& e) {
     std::cerr << "Failed to list backend store: "
         << std::endl << e.what() << std::endl;
   }

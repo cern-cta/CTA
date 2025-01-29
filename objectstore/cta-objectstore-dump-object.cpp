@@ -41,7 +41,8 @@ int main(int argc, char ** argv) {
       objectName = argv[2];
     } else if (2 == argc ){
       cta::common::Config m_ctaConf("/etc/cta/cta-objectstore-tools.conf");
-      be=std::move(cta::objectstore::BackendFactory::createBackend(m_ctaConf.getOptionValueStr("BackendPath").value(), dl));
+      be = std::move(
+        cta::objectstore::BackendFactory::createBackend(m_ctaConf.getOptionValueStr("BackendPath").value(), dl));
       objectName = argv[1];
     } else {
       throw std::runtime_error("Wrong number of arguments: expected 1 or 2: [objectstoreURL] objectname");
@@ -57,8 +58,9 @@ int main(int argc, char ** argv) {
     ge.fetchNoLock();
     std::cout << ge.dump() << std::endl;
   } catch (const std::bad_optional_access&) {
-    std::cerr << "Config file '/etc/cta/cta-objectstore-tools.conf' does not contain the BackendPath entry." << std::endl;
-  } catch (std::exception & e) {
+    std::cerr << "Config file '/etc/cta/cta-objectstore-tools.conf' does not contain the BackendPath entry."
+              << std::endl;
+  } catch (std::exception& e) {
     std::cerr << "Failed to dump object: "
         << std::endl << e.what() << std::endl;
   }
