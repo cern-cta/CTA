@@ -69,7 +69,7 @@ int cta::frontend::grpc::server::FrontendCmd::main(const int argc, char** argv) 
   unsigned int uiThreads = 2;
   std::string strService = "";
   std::string strKeytab = "";
-  std::string strConFile = "/etc/cta/cta.conf";
+  std::string strConFile = "/etc/cta/cta-frontend-grpc.conf";
   // SSL
   std::string strSslRoot;
   std::string strSslKey;

@@ -20,14 +20,14 @@
 #
 # Unique string to identify CTA's instance the frontend is serving (i.e: production, preproduction).
 # Each of these instances should be associated with a specific CTA catalogue instance.
-general InstanceName CI_local
+InstanceName CI_local
 
 # Unique string to identify the backend scheduler resources. As an exmple, it can be structured as:
 # "[ceph|postgres|vfs][User|Repack]".
-general SchedulerBackendName vfsCI
+SchedulerBackendName vfsCI
 
 # Scheduler endpoint
-ObjectStore BackendPath /path/to/local/objectstore
+BackendPath /path/to/local/objectstore
 
 
 ####################################
@@ -62,13 +62,13 @@ ObjectStore BackendPath /path/to/local/objectstore
 #port 17017
 
 # The ca-cert file path
-#gRPC SslRoot /path/to/ca/cert
+#SslRoot /path/to/ca/cert
 
 # Ssl Key file
-#gRPC SslKey /path/to/ssl/key
+#SslKey /path/to/ssl/key
 
 # Ssl certificate file
-#gRPC SslCert /path/to/ssl/cert
+#SslCert /path/to/ssl/cert
 
 # keytab file
-#gRPC Keytab /path/to/keytab
+#Keytab /path/to/keytab

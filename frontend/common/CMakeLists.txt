@@ -15,13 +15,13 @@
 
 cmake_minimum_required (VERSION 3.17)
 
-set (FRONTEND_COMMON_CONFUG_UNIT_TESTS_LIB_SRC_FILES
+set (FRONTEND_COMMON_CONFIG_UNIT_TESTS_LIB_SRC_FILES
   ../../common/config/Config.cpp
   ../../common/config/ConfigGetOptionValueUIntTests.cpp
 )
 
 add_library (ctafrontendcommonconfigunittests SHARED
-  ${FRONTEND_COMMON_CONFUG_UNIT_TESTS_LIB_SRC_FILES})
+  ${FRONTEND_COMMON_CONFIG_UNIT_TESTS_LIB_SRC_FILES})
 set_property(TARGET ctafrontendcommonconfigunittests PROPERTY SOVERSION "${CTA_SOVERSION}")
 set_property(TARGET ctafrontendcommonconfigunittests PROPERTY   VERSION "${CTA_LIBVERSION}")
 
