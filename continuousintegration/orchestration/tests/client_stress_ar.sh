@@ -147,11 +147,6 @@ while getopts "d:e:n:N:s:p:vS:rAPGt:m:" o; do
 done
 shift $((OPTIND-1))
 
-if [ ! -z "${error}" ]; then
-    echo -e "ERROR:\n${error}"
-    exit 1
-fi
-
 if [ "x${COMMENT}" = "x" ]; then
     echo "No annotation will be pushed to Influxdb"
 fi
@@ -303,7 +298,7 @@ while test 0 != ${ARCHIVING}; do
   echo "${ARCHIVED}/${TO_BE_ARCHIVED} archived"
 
   ARCHIVING=$((${TO_BE_ARCHIVED} - ${ARCHIVED}))
-  NB_TAPE_NOT_FULL=`admin_cta --json ta ls --all | jq "[.[] | select(.full == false)] | length"`
+  NB_TAPE_NOT_FULL=$(admin_cta --json ta ls --all | jq "[.[] | select(.full == false)] | length")
   if [[ ${NB_TAPE_NOT_FULL} == 0 ]]
   then
     echo "$(date +%s): All tapes are full, exiting archiving loop"
@@ -385,7 +380,7 @@ while test 0 -lt ${RETRIEVING}; do
 
   RETRIEVED=0
   for ((subdir=0; subdir < ${NB_DIRS}; subdir++)); do
-    RETRIEVED=$(( ${RETRIEVED} + $(eos root://${EOS_MGM_HOST} ls -y ${EOS_DIR}/${subdir} | egrep '^d[1-9][0-9]*::t1' | wc -l) ))
+    RETRIEVED=$(( ${RETRIEVED} + $(eos root://${EOS_MGM_HOST} ls -y ${EOS_DIR}/${subdir} | grep -E '^d[1-9][0-9]*::t1' | wc -l) ))
     sleep 1 # do not hammer eos too hard
   done
 
@@ -407,7 +402,7 @@ echo "###"
 rm -f ${STATUS_FILE}
 touch ${STATUS_FILE}
 for ((subdir=0; subdir < ${NB_DIRS}; subdir++)); do
-  eos root://${EOS_MGM_HOST} ls -y ${EOS_DIR}/${subdir} | egrep 'd[1-9][0-9]*::t1' | sed -e "s%\s\+% %g;s%.* \([^ ]\+\)$%${subdir}/\1%" >> ${STATUS_FILE}
+  eos root://${EOS_MGM_HOST} ls -y ${EOS_DIR}/${subdir} | grep -E 'd[1-9][0-9]*::t1' | sed -e "s%\s\+% %g;s%.* \([^ ]\+\)$%${subdir}/\1%" >> ${STATUS_FILE}
 done
 
 TO_EVICT=$(cat ${STATUS_FILE} | wc -l)
@@ -419,7 +414,7 @@ cat ${STATUS_FILE} | sed -e "s%^%${EOS_DIR}/%" | XrdSecPROTOCOL=krb5 KRB5CCNAME=
 
 LEFTOVER=0
 for ((subdir=0; subdir < ${NB_DIRS}; subdir++)); do
-  LEFTOVER=$(( ${LEFTOVER} + $(eos root://${EOS_MGM_HOST} ls -y ${EOS_DIR}/${subdir} | egrep '^d[1-9][0-9]*::t1' | wc -l) ))
+  LEFTOVER=$(( ${LEFTOVER} + $(eos root://${EOS_MGM_HOST} ls -y ${EOS_DIR}/${subdir} | grep -E '^d[1-9][0-9]*::t1' | wc -l) ))
 done
 
 EVICTED=$((${TO_EVICT}-${LEFTOVER}))
@@ -431,30 +426,30 @@ LASTCOUNT=${EVICTED}
 rm -f ${STATUS_FILE}
 touch ${STATUS_FILE}
 for ((subdir=0; subdir < ${NB_DIRS}; subdir++)); do
-  eos root://${EOS_MGM_HOST} ls -y ${EOS_DIR}/${subdir} | egrep 'd0::t[^0]' | sed -e "s%\s\+% %g;s%.* \([^ ]\+\)$%${subdir}/\1%" >> ${STATUS_FILE}
+  eos root://${EOS_MGM_HOST} ls -y ${EOS_DIR}/${subdir} | grep -E 'd0::t[^0]' | sed -e "s%\s\+% %g;s%.* \([^ ]\+\)$%${subdir}/\1%" >> ${STATUS_FILE}
 done
 
 # Put all tape drives down
 echo "Sleeping 3 seconds to let previous sessions finish."
 sleep 3
-INITIAL_DRIVES_STATE=`admin_cta --json dr ls`
+INITIAL_DRIVES_STATE=$(admin_cta --json dr ls)
 echo INITIAL_DRIVES_STATE:
 echo ${INITIAL_DRIVES_STATE} | jq -r '.[] | [ .driveName, .driveStatus] | @tsv' | column -t
 echo -n "Will put down those drives : "
-drivesToSetDown=`echo ${INITIAL_DRIVES_STATE} | jq -r '.[] | select (.driveStatus == "UP") | .driveName'`
+drivesToSetDown=$(echo ${INITIAL_DRIVES_STATE} | jq -r '.[] | select (.driveStatus == "UP") | .driveName')
 echo $drivesToSetDown
-for d in `echo $drivesToSetDown`; do
+for d in $(echo $drivesToSetDown); do
   admin_cta drive down $d --reason "PUTTING DRIVE DOWN FOR TESTS"
 done
 
 echo "$(date +%s): Waiting for the drives to be down"
 SECONDS_PASSED=0
 WAIT_FOR_DRIVES_DOWN_TIMEOUT=$((10))
-while [[ $SECONDS_PASSED < WAIT_FOR_DRIVES_DOWN_TIMEOUT ]]; do
+while [[ $SECONDS_PASSED -lt WAIT_FOR_DRIVES_DOWN_TIMEOUT ]]; do
   sleep 1
   oneStatusUpRemaining=0
-  for d in `echo $drivesToSetDown`; do
-    status=`admin_cta --json drive ls | jq -r ". [] | select(.driveName == \"$d\") | .driveStatus"`
+  for d in $(echo $drivesToSetDown); do
+    status=$(admin_cta --json drive ls | jq -r ". [] | select(.driveName == \"$d\") | .driveStatus")
     if [[ $status == "UP" ]]; then
       oneStatusUpRemaining=1
     fi;
@@ -493,9 +488,9 @@ if [ "0" != "$(ls ${ERROR_DIR} 2> /dev/null | wc -l)" ]; then
 fi
 
 # Ensure all requests files are queued
-requestsTotal=`admin_cta --json sq | jq 'map(select (.mountType == "RETRIEVE") | .queuedFiles | tonumber) | add'`
+requestsTotal=$(admin_cta --json sq | jq 'map(select (.mountType == "RETRIEVE") | .queuedFiles | tonumber) | add')
 echo "Retrieve requests count: ${requestsTotal}"
-filesCount=`cat ${STATUS_FILE} | wc -l`
+filesCount=$(cat ${STATUS_FILE} | wc -l)
 if [ ${requestsTotal} -ne ${filesCount} ]; then
   echo "ERROR: Retrieve queue(s) size mismatch: ${requestsTotal} requests queued for ${filesCount} files."
 fi
@@ -513,7 +508,7 @@ done
 # Put drive(s) back up to clear the queue
 echo -n "Will put back up those drives : "
 echo ${INITIAL_DRIVES_STATE} | jq -r '.[] | select (.driveStatus == "UP") | .driveName'
-for d in `echo ${INITIAL_DRIVES_STATE} | jq -r '.[] | select (.driveStatus == "UP") | .driveName'`; do
+for d in $(echo ${INITIAL_DRIVES_STATE} | jq -r '.[] | select (.driveStatus == "UP") | .driveName'); do
   admin_cta dr up $d
 done
 
@@ -521,11 +516,11 @@ done
 echo "$(date +%s): Waiting for retrieve queues to be cleared:"
 SECONDS_PASSED=0
 WAIT_FOR_RETRIEVE_QUEUES_CLEAR_TIMEOUT=$((60))
-REMAINING_REQUESTS=`admin_cta --json sq | jq -r 'map(select (.mountType == "RETRIEVE") | .queuedFiles | tonumber) | add'`
+REMAINING_REQUESTS=$(admin_cta --json sq | jq -r 'map(select (.mountType == "RETRIEVE") | .queuedFiles | tonumber) | add')
 echo "${REMAINING_REQUESTS} requests remaining."
 # Prevent the result from being empty
 if [ -z "$REMAINING_REQUESTS" ]; then REMAINING_REQUESTS='0'; fi
-while [[ ${REMAINING_REQUESTS} > 0 ]]; do
+while [[ ${REMAINING_REQUESTS} -gt 0 ]]; do
   echo "$(date +%s): Waiting for retrieve queues to be cleared: Seconds passed = ${SECONDS_PASSED}"
   sleep 1
   let SECONDS_PASSED=SECONDS_PASSED+1
@@ -535,7 +530,7 @@ while [[ ${REMAINING_REQUESTS} > 0 ]]; do
     break
   fi
 
-  REMAINING_REQUESTS=`admin_cta --json sq | jq -r 'map(select (.mountType == "RETRIEVE") | .queuedFiles | tonumber) | add'`;
+  REMAINING_REQUESTS=$(admin_cta --json sq | jq -r 'map(select (.mountType == "RETRIEVE") | .queuedFiles | tonumber) | add');
   # Prevent the result from being empty
   if [ -z "$REMAINING_REQUEST" ]; then REMAINING_REQUESTS='0'; fi
   echo "${REMAINING_REQUESTS} requests remaining."
@@ -545,7 +540,7 @@ done
 echo "Checking restaged files..."
 RESTAGEDFILES=0
 for ((subdir=0; subdir < ${NB_DIRS}; subdir++)); do
-  RF=$(eos root://${EOS_MGM_HOST} ls -y ${EOS_DIR}/${subdir} | egrep '^d[1-9][0-9]*::t1' | wc -l)
+  RF=$(eos root://${EOS_MGM_HOST} ls -y ${EOS_DIR}/${subdir} | grep -E '^d[1-9][0-9]*::t1' | wc -l)
   echo "Restaged files in directory ${subdir}: ${RF}"
   (( RESTAGEDFILES += ${RF} ))
 done
