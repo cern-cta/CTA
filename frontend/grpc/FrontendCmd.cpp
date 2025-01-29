@@ -193,6 +193,10 @@ int cta::frontend::grpc::server::FrontendCmd::main(const int argc, char** argv) 
   } catch(const cta::exception::Exception &ex) {
     m_err << m_strExecName << ": problem while reading a configuration file - " << ex.getMessage().str() << std::endl;
     return EXIT_FAILURE;
+  } catch (const std::bad_optional_access&) {
+    m_err << m_strExecName << ": something went wrong while parsing the config file, "
+          << strConFile << ", for the gRPCSsl[Root|Key|Cert] keys" << std::endl;
+    return EXIT_FAILURE;
   }
   
   if(strKeytab.empty()) {

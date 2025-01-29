@@ -54,7 +54,7 @@ int main(int argc, char ** argv) {
     for (auto o=l.begin(); o!=l.end(); o++) {
       std::cout << *o << std::endl;
     }
-  } catch (std::bad_optional_access) {
+  } catch (const std::bad_optional_access&) {
     std::cerr << "Config file '/etc/cta/cta-objectstore-tools.conf' does not contain the BackendPath entry.";
   } catch (std::exception & e) {
     std::cerr << "Failed to list backend store: "
