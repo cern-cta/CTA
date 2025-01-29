@@ -170,7 +170,7 @@ test-cta-release:
     - yum install --nogpgcheck -y cta-release
     - cta-versionlock apply
     # This is to test if it will fix the release
-    - dnf clean all && dnf makecache && dnf update
+    - dnf clean all && dnf makecache
     - yum install --nogpgcheck -y cta-frontend
     - yum install --nogpgcheck -y cta-taped
     - yum install --nogpgcheck -y cta-rmcd
