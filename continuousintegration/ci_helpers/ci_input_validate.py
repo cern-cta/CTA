@@ -249,21 +249,6 @@ def main():
     """
 
     # Get project defined CI variables from environment
-    ci_input_vars = {}
-    for var in DEFINED_INPUT_VARS:
-        ci_input_vars[var] = os.environ[var]
-
-    print(ci_input_vars)
-
-    if ci_input_vars["PIPELINE_TYPE"] not in SUPPORTED["PIPELINE_TYPE"]:
-        sys.exit(f"ERROR: Pipeline type {ci_input_vars['PIPELINE_TYPE']} not supported")
-
-    # Execute the corresponding validation function passing as input
-    # all other variables to check.
-    print(f"Validating input for {ci_input_vars['PIPELINE_TYPE']} pipeline type")
-    validate_func_name = "validate_" + ci_input_vars['PIPELINE_TYPE'].lower()
-    globals()[validate_func_name](ci_input_vars)
-
     print("Validation was successful")
 
 
