@@ -64,11 +64,8 @@ for pod in $(echo "${pods}" | jq -r '.items[] | .metadata.name'); do
 done
 
 if [ "${core_dump_counter}" -gt 0 ]; then
-  echo "Failure: found ${core_dump_counter} core dumps."
-  echo "This problem should be investigated."
-  # Eventually this should exit with an error, but currently too many tests are still producing coredumps
-  # So test failure for this is disabled until those are fixed
-  exit 0
+  echo "Found ${core_dump_counter} core dumps. Failing..."
+  exit 1
 fi
 
 echo "No core dumps found"
