@@ -296,9 +296,7 @@ void castor::tape::tapeserver::daemon::TapeWriteSingleThread::run() {
   // We will not record errors for an empty string. This will allow us to
   // prevent counting where error happened upstream.
   std::string currentErrorToCount = "Error_tapeMountForWrite";
-#ifdef CTA_PGSCHED
   std::unique_ptr<TapeWriteTask> task;
-#endif
   try {
     // Report the parameters of the session to the main thread
     typedef cta::log::Param Param;
