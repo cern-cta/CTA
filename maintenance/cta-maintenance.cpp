@@ -16,7 +16,9 @@
  */
 
 #include "common/Configuration.hpp"
-#include ""
+#include "tapeserver/daemon/CommandLineParams.hpp"
+#include "common/log/FileLogger.hpp"
+#include "common/log/StdoutLogger.hpp"
 
 namespace cta::maintenance {
 
@@ -50,7 +52,13 @@ const std::string gHelpString =
     "\t--help                   or -h         \tPrint this help and exit\n";
 
 static int exceptionThrowingMain(const cta::daemon::CommandLineParams& commandLine, cta::log::Logger& log) {
-
+      return 0;
     }
+
+int main(const int argc, char **const argv) {
+    using namespace cta;
+
+    return exceptionThrowingMain();
+}
 
 }

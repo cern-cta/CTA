@@ -15,8 +15,15 @@
 cmake_minimum_required (VERSION 3.17)
 
 include_directories (${PROTOBUF3_INCLUDE_DIRS})
+
+add_library(ctamaintenance SHARED
+  QueueCleanupRunner.cpp
+  DiskReporterRunner.cpp
+  RepackRequestManager.cpp
+)
+
 add_executable (cta-maintenance cta-maintenance.cpp)
-target_link_libraries(cta-maintenance  ctacommon)
+target_link_libraries(cta-maintenance ctacommon)
 
 add_manpage(cta-maintenance)
 
@@ -27,13 +34,13 @@ install (FILES cta-maintenance.sysconfig DESTINATION /etc/sysconfig RENAME cta-m
 install (FILES cta-maintenance.service DESTINATION /etc/systemd/system)
 
 # CTA's cta-taped integration tests.
-add_library(cta-maintenanceIntegrationTests SHARED
-  cta-maintenanceIntegrationTests.cpp)
-set_property(TARGET cta-maintenanceIntegrationTests PROPERTY SOVERSION "${CTA_SOVERSION}")
-set_property(TARGET cta-maintenanceIntegrationTests PROPERTY   VERSION "${CTA_LIBVERSION}")
+#add_library(cta-maintenanceIntegrationTests SHARED
+#  cta-maintenanceIntegrationTests.cpp)
+#set_property(TARGET cta-maintenanceIntegrationTests PROPERTY SOVERSION "${CTA_SOVERSION}")
+#set_property(TARGET cta-maintenanceIntegrationTests PROPERTY   VERSION "${CTA_LIBVERSION}")
 
-target_link_libraries(cta-maintenanceIntegrationTests
-  unitTestHelper
-  ctacommon)
+#target_link_libraries(cta-maintenanceIntegrationTests
+#  unitTestHelper
+#  ctacommon)
 
-install(TARGETS cta-maintenanceIntegrationTests DESTINATION usr/${CMAKE_INSTALL_LIBDIR})
+#install(TARGETS cta-maintenanceIntegrationTests DESTINATION usr/${CMAKE_INSTALL_LIBDIR})
