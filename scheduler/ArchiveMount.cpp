@@ -156,15 +156,12 @@ cta::ArchiveMount::getNextJobBatch(uint64_t filesRequested, uint64_t bytesReques
   }
   // try and get a new job from the DB side
   utils::Timer t;
-  std::list<std::unique_ptr<cta::SchedulerDatabase::ArchiveJob>> dbJobBatch(
-    m_dbMount->getNextJobBatch(filesRequested, bytesRequested, logContext));
-  std::vector<std::unique_ptr<ArchiveJob>> retVector;
-  retVector.reserve(dbJobBatch.size());
+  auto dbJobBatch = m_dbMount->getNextJobBatch(filesRequested, bytesRequested, logContext);
+  std::list<std::unique_ptr<ArchiveJob>> ret;
   // We prepare the response
   for (auto& sdaj : dbJobBatch) {
-    retVector.emplace_back(
-      std::unique_ptr<ArchiveJob>(new ArchiveJob(this, m_catalogue, sdaj->archiveFile, sdaj->srcURL, sdaj->tapeFile)));
-    retVector.back()->m_dbJob.reset(sdaj.release());
+    ret.emplace_back(new ArchiveJob(this, m_catalogue, sdaj->archiveFile, sdaj->srcURL, sdaj->tapeFile));
+    ret.back()->m_dbJob.reset(sdaj.release());
   }
   log::ScopedParamContainer(logContext)
     .add("filesRequested", filesRequested)
@@ -173,8 +170,6 @@ cta::ArchiveMount::getNextJobBatch(uint64_t filesRequested, uint64_t bytesReques
     .add("getNextJobBatchTime", t.secs())
     .log(log::INFO, "In SchedulerDB::ArchiveMount::getNextJobBatch(): Finished getting next job batch.");
   // Convert vector to list (which is expected as return type, to be revised in the future)
-  std::list<std::unique_ptr<cta::ArchiveJob>> ret;
-  ret.assign(std::make_move_iterator(retVector.begin()), std::make_move_iterator(retVector.end()));
   return ret;
 }
 
