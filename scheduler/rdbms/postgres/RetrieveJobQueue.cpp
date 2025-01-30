@@ -572,13 +572,14 @@ RetrieveJobQueueRow::requeueJobBatch(Transaction& txn, RetrieveJobStatus status,
       M.LIFECYCLE_COMPLETED_TIME,
       M.DISK_SYSTEM_NAME,
       M.FAILURE_LOG || :FAILURE_LOG AS FAILURE_LOG,
-      M.RETRIES_WITHIN_MOUNT,
-      M.TOTAL_RETRIES,
+      M.RETRIES_WITHIN_MOUNT + 1 AS RETRIES_WITHIN_MOUNT,
+      M.TOTAL_RETRIES + 1 AS TOTAL_RETRIES,
       M.LAST_MOUNT_WITH_FAILURE,
       :STATUS AS STATUS,
       NULL AS MOUNT_ID
         FROM MOVED_ROWS M;
   )SQL";
+
   auto stmt = txn.getConn().createStmt(sql);
   stmt.bindString(":STATUS", to_string(status));
   stmt.bindString(":FAILURE_LOG", "UNPROCESSED_TASK_QUEUE_JOB_REQUEUED");
