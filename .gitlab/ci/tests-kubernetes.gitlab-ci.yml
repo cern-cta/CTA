@@ -67,14 +67,10 @@
         EXTRA_SPAWN_ARGS="${EXTRA_SPAWN_ARGS} --catalogue-version ${CATALOGUE_VERSION}.0"
       fi
     # Set up the additional arguments array to pass to the run_systemtest.sh script
-    - |
-      if [[ -n "${EXTRA_SPAWN_ARGS}" ]]; then
-        extra_args+=(--spawn-options "${EXTRA_SPAWN_ARGS}")
-      fi
-    - |
-      if [[ -n "${EXTRA_TEST_ARGS}" ]]; then
-        extra_args+=(--test-options "${EXTRA_TEST_ARGS}")
-      fi
+    - extra_args=($EXTRA_ARGS)
+    - if [[ -n "${CUSTOM_EOS_TAG}" ]];   then extra_args+=(--eos-image-tag "${CUSTOM_EOS_TAG}"); fi
+    - if [[ -n "${EXTRA_SPAWN_ARGS}" ]]; then extra_args+=(--spawn-options "${EXTRA_SPAWN_ARGS}"); fi
+    - if [[ -n "${EXTRA_TEST_ARGS}" ]];  then extra_args+=(--test-options "${EXTRA_TEST_ARGS}"); fi
     # Run test
     - cd continuousintegration/orchestration/
     - ./run_systemtest.sh --namespace ${NAMESPACE} --cta-image-tag ${IMAGE_TAG} --test-script ${TEST_SCRIPT} --cleanup-namespaces --keep-namespace --catalogue-config ${CATALOGUE_CONFIG} --scheduler-config ${SCHEDULER_CONFIG} "${extra_args[@]}"
