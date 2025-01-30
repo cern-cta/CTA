@@ -41,6 +41,11 @@ EOS_INSTANCE_NAME=ctaeos
 CTA_STORAGE_CLASS=ctaStorageClass
 CTA_PROC_DIR=/eos/${EOS_INSTANCE_NAME}/proc/cta
 CTA_WF_DIR=${CTA_PROC_DIR}/workflow
+EOS_TMP_DIR=/eos/${EOS_INSTANCE_NAME}/tmp
+
+
+eos mkdir ${EOS_TMP_DIR}
+eos chmod 777 ${EOS_TMP_DIR}
 
 # Test specific
 
