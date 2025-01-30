@@ -91,7 +91,6 @@ add_library (ctaobjectstore SHARED
   ProtocolBuffersAlgorithms.cpp
   GenericObject.cpp
   GarbageCollector.cpp
-  QueueCleanupRunner.cpp
   SchedulerGlobalLock.cpp
   ValueCountMap.cpp
   Helpers.cpp
@@ -111,9 +110,6 @@ set(ObjectStoreUnitTests
   RootEntryTest.cpp
   RetrieveQueueTest.cpp
   GarbageCollectorTest.cpp
-  QueueCleanupRunnerTestUtils.cpp
-  QueueCleanupRunnerTest.cpp
-  QueueCleanupRunnerConcurrentTest.cpp
   AlgorithmsTest.cpp
   SorterTest.cpp
 )

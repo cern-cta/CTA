@@ -138,7 +138,7 @@ The tape server daemon
 %systemdDaemonReload
 
 %package -n cta-maintenance
-Summay: CERN Tape Archive: maintenance daemon
+Summary: CERN Tape Archive: maintenance daemon
 Group: Application/CTA
 Requires: logrotate
 Requires: cta-common = %{version}-%{release}
