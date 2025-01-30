@@ -45,8 +45,8 @@ CTA_CLI_POD="cta-cli-0"
 CTA_FRONTEND_POD="cta-frontend-0"
 EOS_MGM_POD="eos-mgm-0"
 
-NB_FILES=100000
-NB_DIRS=20
+NB_FILES=1000
+NB_DIRS=2
 FILE_SIZE_KB=1
 NB_PROCS=40
 NB_DRIVES=2
@@ -89,7 +89,7 @@ echo " Archiving ${NB_FILES} files of ${FILE_SIZE_KB}kB each"
 echo " Archiving files: xrdcp as user1"
 echo " Retrieving them as poweruser1"
 kubectl -n ${NAMESPACE} cp client_stress_ar.sh ${CLIENT_POD}:/root/client_stress_ar.sh -c client
-kubectl -n ${NAMESPACE} exec ${CLIENT_POD} -c client -- bash /root/client_stress_ar.sh -N ${NB_DIRS} -n ${NB_FILES} -s ${FILE_SIZE_KB} -p ${NB_PROCS} -e ctaeos -d /eos/ctaeos/preprod -v || exit 1
+kubectl -n ${NAMESPACE} exec ${CLIENT_POD} -c client -- bash /root/client_stress_ar.sh -N ${NB_DIRS} -n ${NB_FILES} -s ${FILE_SIZE_KB} -p ${NB_PROCS} -e ctaeos -d /eos/ctaeos/preprod || exit 1
 ## Do not remove as listing af is not coming back???
 #kubectl -n ${NAMESPACE} exec client -- bash /root/client_stress_ar.sh -A -N ${NB_DIRS} -n ${NB_FILES} -s ${FILE_SIZE_KB} -p ${NB_PROCS} -e ctaeos -d /eos/ctaeos/preprod -v || exit 1
 

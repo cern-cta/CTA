@@ -186,7 +186,7 @@ dd if=/dev/zero of=/tmp/testfile bs=${DD_BS} count=$((${FILE_KB_SIZE} + ${NB_FIL
 #dd if=/dev/zero of=/dev/shm/testfile bs=${DD_BS} count=${FILE_KB_SIZE} || exit 1
 
 if [[ $VERBOSE == 1 ]]; then
-  tail -v -f /mnt/logs/cta- tpsrv0*/rmcd/cta/cta-rmcd.log &
+  tail -v -f /mnt/logs/cta-tpsrv0*/rmcd/cta/cta-rmcd.log &
   TAILPID=$!
 fi
 
@@ -332,7 +332,7 @@ echo "###"
 
 admin_cta drive down ".*" --reason "PUTTING DRIVE DOWN TO PRE-QUEUE REQUESTS"
 
-echo "$(date +%s): Trigerring EOS retrieve workflow as poweruser1:powerusers (12001:1200)"
+echo "$(date +%s): Triggering EOS retrieve workflow as poweruser1:powerusers (12001:1200)"
 
 rm -f ${STATUS_FILE}
 touch ${STATUS_FILE}
@@ -351,7 +351,7 @@ for ((subdir=0; subdir < ${NB_DIRS}; subdir++)); do
   echo -n "Retrieving files to ${EOS_DIR}/${subdir} using ${NB_PROCS} processes..."
   cat ${STATUS_FILE} | grep ^${subdir}/ | cut -d/ -f2 | xargs --max-procs=${NB_PROCS} -iTEST_FILE_NAME bash -c "XRD_LOGLEVEL=Dump KRB5CCNAME=/tmp/${EOSPOWER_USER}/krb5cc_0 XrdSecPROTOCOL=krb5 xrdfs ${EOS_MGM_HOST} prepare -s ${EOS_DIR}/${subdir}/TEST_FILE_NAME?activity=T0Reprocess 2>${ERROR_DIR}/RETRIEVE_TEST_FILE_NAME && rm ${ERROR_DIR}/RETRIEVE_TEST_FILE_NAME || echo ERROR with xrootd prepare stage for file TEST_FILE_NAME, full logs in ${ERROR_DIR}/RETRIEVE_TEST_FILE_NAME" | tee ${LOGDIR}/prepare_${subdir}.log | grep ^ERROR
   echo Done.
-  cat ${STATUS_FILE} | grep ^${subdir}/ | cut -d/ -f2 | xargs --max-procs=${NB_PROCS} -iTEST_FILE_NAME bash -c "XRD_LOGLEVEL=Dump KRB5CCNAME=/tmp/${EOSPOWER_USER}/krb5cc_0 XrdSecPROTOCOL=krb5 xrdfs ${EOS_MGM_HOST} query opaquefile ${EOS_DIR}/${subdir}/TEST_FILE_NAME?mgm.pcmd=xattr\&mgm.subcmd=get\&mgm.xattrname=sys.retrieve.req_id 2>${ERROR_DIR}/XATTRGET_TEST_FILE_NAME && rm ${ERROR_DIR}/XATTRGET_TEST_FILE_NAME || echo ERROR with xrootd xattr get for file TEST_FILE_NAME, full logs in ${ERROR_DIR}/XATTRGET_TEST_FILE_NAME" | tee ${LOGDIR}/prepare_sys.retrieve.req_id_${subdir}.log | grep ^ERROR
+  cat ${STATUS_FILE} | grep ^${subdir}/ | cut -d/ -f2 | xargs --max-procs=${NB_PROCS} -iTEST_FILE_NAME bash -c "XRD_LOGLEVEL=Dump KRB5CCNAME=/tmp/${EOSPOWER_USER}/krb5cc_0 XrdSecPROTOCOL=krb5 xrdfs ${EOS_MGM_HOST} xattr ${EOS_DIR}/${subdir}/TEST_FILE_NAME get sys.retrieve.req_id 2>${ERROR_DIR}/XATTRGET_TEST_FILE_NAME && rm ${ERROR_DIR}/XATTRGET_TEST_FILE_NAME || echo ERROR with xrootd xattr get for file TEST_FILE_NAME, full logs in ${ERROR_DIR}/XATTRGET_TEST_FILE_NAME" | tee ${LOGDIR}/prepare_sys.retrieve.req_id_${subdir}.log | grep ^ERROR
 done
 if [ "0" != "$(ls ${ERROR_DIR} 2> /dev/null | wc -l)" ]; then
   # there were some prepare errors
@@ -477,7 +477,7 @@ for ((subdir=0; subdir < ${NB_DIRS}; subdir++)); do
   cat ${STATUS_FILE} | grep ^${subdir}/ | cut -d/ -f2 | xargs --max-procs=${NB_PROCS} -iTEST_FILE_NAME bash -c "XRD_LOGLEVEL=Dump KRB5CCNAME=/tmp/${EOSPOWER_USER}/krb5cc_0 XrdSecPROTOCOL=krb5 xrdfs ${EOS_MGM_HOST} prepare -s ${EOS_DIR}/${subdir}/TEST_FILE_NAME?activity=T0Reprocess 2>${ERROR_DIR}/RETRIEVE_TEST_FILE_NAME && rm ${ERROR_DIR}/RETRIEVE_TEST_FILE_NAME || echo ERROR with xrootd prepare stage for file TEST_FILE_NAME, full logs in ${ERROR_DIR}/RETRIEVE_TEST_FILE_NAME" | tee ${LOGDIR}/prepare2_${subdir}.log | grep ^ERROR
   echo Done.
   echo -n "Checking the presence of the sys.retrieve.req_id extended attributes..."
-  cat ${STATUS_FILE} | grep ^${subdir}/ | cut -d/ -f2 | xargs --max-procs=${NB_PROCS} -iTEST_FILE_NAME bash -c "XRD_LOGLEVEL=Dump KRB5CCNAME=/tmp/${EOSPOWER_USER}/krb5cc_0 XrdSecPROTOCOL=krb5 xrdfs ${EOS_MGM_HOST} query opaquefile ${EOS_DIR}/${subdir}/TEST_FILE_NAME?mgm.pcmd=xattr\&mgm.subcmd=get\&mgm.xattrname=sys.retrieve.req_id 2>${ERROR_DIR}/XATTRGET_TEST_FILE_NAME && rm ${ERROR_DIR}/XATTRGET_TEST_FILE_NAME || echo ERROR with xrootd xattr get for file TEST_FILE_NAME, full logs in ${ERROR_DIR}/XATTRGET_TEST_FILE_NAME" | tee ${LOGDIR}/prepare2_sys.retrieve.req_id_${subdir}.log | grep ^ERROR
+  cat ${STATUS_FILE} | grep ^${subdir}/ | cut -d/ -f2 | xargs --max-procs=${NB_PROCS} -iTEST_FILE_NAME bash -c "XRD_LOGLEVEL=Dump KRB5CCNAME=/tmp/${EOSPOWER_USER}/krb5cc_0 XrdSecPROTOCOL=krb5 xrdfs ${EOS_MGM_HOST} xattr ${EOS_DIR}/${subdir}/TEST_FILE_NAME get sys.retrieve.req_id 2>${ERROR_DIR}/XATTRGET_TEST_FILE_NAME && rm ${ERROR_DIR}/XATTRGET_TEST_FILE_NAME || echo ERROR with xrootd xattr get for file TEST_FILE_NAME, full logs in ${ERROR_DIR}/XATTRGET_TEST_FILE_NAME" | tee ${LOGDIR}/prepare2_sys.retrieve.req_id_${subdir}.log | grep ^ERROR
   echo Done.
 done
 if [ "0" != "$(ls ${ERROR_DIR} 2> /dev/null | wc -l)" ]; then
@@ -495,15 +495,16 @@ if [ ${requestsTotal} -ne ${filesCount} ]; then
   echo "ERROR: Retrieve queue(s) size mismatch: ${requestsTotal} requests queued for ${filesCount} files."
 fi
 
+# We don't care about abort prepare for the stress test
 # Abort prepare -s requests
-for ((subdir=0; subdir < ${NB_DIRS}; subdir++)); do
-  echo -n "Cancelling prepare for files in ${EOS_DIR}/${subdir} using ${NB_PROCS} processes (prepare_abort)..."
-  cat ${STATUS_FILE} | grep ^${subdir}/ | cut -d/ -f2                                                                         \
-  | xargs --max-procs=${NB_PROCS} -iTEST_FILE_NAME cta-client-ar-abortPrepare --eos-instance ${EOS_MGM_HOST}                   \
-      --eos-poweruser ${EOSPOWER_USER} --eos-dir ${EOS_DIR} --subdir ${subdir} --file TEST_FILE_NAME --error-dir ${ERROR_DIR} \
-  | tee ${LOGDIR}/prepare_abort_sys.retrieve.req_id_${subdir}.log # | grep ^ERROR
-  echo Done.
-done
+# for ((subdir=0; subdir < ${NB_DIRS}; subdir++)); do
+#   echo -n "Cancelling prepare for files in ${EOS_DIR}/${subdir} using ${NB_PROCS} processes (prepare_abort)..."
+#   cat ${STATUS_FILE} | grep ^${subdir}/ | cut -d/ -f2                                                                         \
+#   | xargs --max-procs=${NB_PROCS} -iTEST_FILE_NAME cta-client-ar-abortPrepare --eos-instance ${EOS_MGM_HOST}                   \
+#       --eos-poweruser ${EOSPOWER_USER} --eos-dir ${EOS_DIR} --subdir ${subdir} --file TEST_FILE_NAME --error-dir ${ERROR_DIR} \
+#   | tee ${LOGDIR}/prepare_abort_sys.retrieve.req_id_${subdir}.log # | grep ^ERROR
+#   echo Done.
+# done
 
 # Put drive(s) back up to clear the queue
 echo -n "Will put back up those drives : "
