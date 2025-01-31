@@ -19,12 +19,13 @@
 #include "catalogue/Catalogue.hpp"
 #include "catalogue/CatalogueFactory.hpp"
 #include "catalogue/CatalogueFactoryFactory.hpp"
-#include "rdbms/Login.hpp"
+#include "common/config/Config.hpp"
 #include "common/log/FileLogger.hpp"
 #include "common/log/LogLevel.hpp"
 #include "common/log/StdoutLogger.hpp"
+#include "rdbms/Login.hpp"
+
 #include "FrontendService.hpp"
-#include "Config.hpp"
 
 #include <fstream>
 
@@ -37,7 +38,7 @@ FrontendService::FrontendService(const std::string& configFilename) : m_archiveF
   std::string logFilePath = "";
 
   // Read CTA namespaced configuration options from XRootD config file
-  Config config(configFilename);
+  cta::common::Config config(configFilename);
 
   // Instantiate the CTA logging system
   try {

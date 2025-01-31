@@ -23,7 +23,6 @@
 #include <XrdSsiPbLog.hpp>
 
 #include "catalogue/Catalogue.hpp"
-#include "common/Configuration.hpp"
 #include "common/utils/utils.hpp"
 #include "scheduler/Scheduler.hpp"
 #ifdef CTA_PGSCHED

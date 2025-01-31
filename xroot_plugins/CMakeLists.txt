@@ -37,7 +37,7 @@ include_directories(${CMAKE_BINARY_DIR}/eos_cta ${PROTOBUF3_INCLUDE_DIRS})
 add_library(XrdSsiCta MODULE XrdSsiCtaServiceProvider.cpp XrdSsiCtaRequestProc.cpp XrdSsiCtaRequestMessage.cpp
                              AdminCmdStream.cpp
                              ../cmdline/CtaAdminCmdParse.cpp
-                             ../frontend/common/Config.cpp
+                             ../common/config/Config.cpp
                              ../frontend/common/FrontendService.cpp
                              ../frontend/common/WorkflowEvent.cpp
                              ../frontend/common/AdminCmd.cpp)

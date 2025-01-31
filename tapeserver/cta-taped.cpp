@@ -15,7 +15,6 @@
  *               submit itself to any jurisdiction.
  */
 
-#include "common/Configuration.hpp"
 #include "common/exception/Errnum.hpp"
 #include "common/log/FileLogger.hpp"
 #include "common/log/StdoutLogger.hpp"

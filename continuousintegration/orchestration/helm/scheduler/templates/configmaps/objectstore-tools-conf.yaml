@@ -6,5 +6,5 @@ metadata:
   name: cta-objectstore-conf
 data:
   cta-objectstore-tools.conf: |-
-    ObjectStore BackendPath {{ include "scheduler.url" . }}
+    BackendPath {{ include "scheduler.url" . }}
 {{- end }}

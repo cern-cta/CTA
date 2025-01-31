@@ -21,7 +21,7 @@
  * the path the backend store and exit
  */
 
-#include "common/Configuration.hpp"
+#include "common/config/Config.hpp"
 #include "BackendVFS.hpp"
 #include "BackendFactory.hpp"
 #include "common/log/DummyLogger.hpp"
@@ -30,30 +30,34 @@
 #include "Agent.hpp"
 #include <iostream>
 #include <stdexcept>
+#include <optional>
 
 int main(int argc, char ** argv) {
   try {
     cta::log::DummyLogger dl("", "");
     std::unique_ptr<cta::objectstore::Backend> be;
     if (1 == argc) {
-      cta::common::Configuration m_ctaConf("/etc/cta/cta-objectstore-tools.conf");
-      be = std::move(cta::objectstore::BackendFactory::createBackend(m_ctaConf.getConfEntString("ObjectStore", "BackendPath", nullptr), dl));      
+      cta::common::Config m_ctaConf("/etc/cta/cta-objectstore-tools.conf");
+      be = std::move(
+        cta::objectstore::BackendFactory::createBackend(m_ctaConf.getOptionValueStr("BackendPath").value(), dl));
     } else if (2 == argc) {
       be.reset(cta::objectstore::BackendFactory::createBackend(argv[1], dl).release());
     } else {
       throw std::runtime_error("Wrong number of arguments: expected 0 or 1: [objectstoreURL]");
     }
     // If the backend is a VFS, make sure we don't delete it on exit.
-    // If not, nevermind.
     try {
       dynamic_cast<cta::objectstore::BackendVFS &>(*be).noDeleteOnExit();
     } catch (std::bad_cast &){}
+    // If not, nevermind.
     std::cout << "Object store path: " << be->getParams()->toURL() << std::endl;
     auto l = be->list();
     for (auto o=l.begin(); o!=l.end(); o++) {
       std::cout << *o << std::endl;
     }
-  } catch (std::exception & e) {
+  } catch (const std::bad_optional_access&) {
+    std::cerr << "Config file '/etc/cta/cta-objectstore-tools.conf' does not contain the BackendPath entry.";
+  } catch (std::exception& e) {
     std::cerr << "Failed to list backend store: "
         << std::endl << e.what() << std::endl;
   }

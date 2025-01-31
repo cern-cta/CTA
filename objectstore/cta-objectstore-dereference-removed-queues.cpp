@@ -23,12 +23,13 @@
 
 #include <iostream>
 #include <stdexcept>
+#include <optional>
 
 #include "Agent.hpp"
 #include "AgentRegister.hpp"
 #include "BackendFactory.hpp"
 #include "BackendVFS.hpp"
-#include "common/Configuration.hpp"
+#include "common/config/Config.hpp"
 #include "common/dataStructures/JobQueueType.hpp"
 #include "common/log/LogContext.hpp"
 #include "common/log/StdoutLogger.hpp"
@@ -90,8 +91,9 @@ int main(int argc, char ** argv) {
     if (2 == argc) {
       be.reset(cta::objectstore::BackendFactory::createBackend(argv[1], logger).release());
     } else if (1 == argc) {
-      cta::common::Configuration m_ctaConf("/etc/cta/cta-objectstore-tools.conf");
-      be = std::move(cta::objectstore::BackendFactory::createBackend(m_ctaConf.getConfEntString("ObjectStore", "BackendPath", nullptr), logger));
+      cta::common::Config m_ctaConf("/etc/cta/cta-objectstore-tools.conf");
+      be = std::move(
+        cta::objectstore::BackendFactory::createBackend(m_ctaConf.getOptionValueStr("BackendPath").value(), logger));
     } else {
       throw std::runtime_error("Wrong number of arguments: expected 0 or 1: [objectstoreURL]");
     }
@@ -123,7 +125,10 @@ int main(int argc, char ** argv) {
     } else {
       std::cout << "Nothing to clean up from root entry." << std::endl;
     }
-  } catch (std::exception & e) {
+  } catch (const std::bad_optional_access&) {
+    std::cerr << "Config file '/etc/cta/cta-objectstore-tools.conf' does not contain the BackendPath entry."
+              << std::endl;
+  } catch (std::exception& e) {
     std::cerr << "Failed to cleanup root entry: "
         << std::endl << e.what() << std::endl;
   }
