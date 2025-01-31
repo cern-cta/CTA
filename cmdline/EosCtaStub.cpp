@@ -105,7 +105,7 @@ void fillNotification(cta::eos::Notification &notification, int argc, const char
       else if(argstr == "--reportURL")           notification.mutable_transport()->set_report_url(argval); // for archive WF
       else if(argstr == "--dsturl")              notification.mutable_transport()->set_dst_url(argval); // for retrieve WF
 
-      else if(argstr == "--diskid")              notification.mutable_file()->set_fid(std::stoi(argval));
+      else if(argstr == "--diskid")              notification.mutable_file()->set_disk_file_id(argval);
       else if(argstr == "--diskfileowner")       notification.mutable_file()->mutable_owner()->set_uid(std::stoi(argval));
       else if(argstr == "--diskfilegroup")       notification.mutable_file()->mutable_owner()->set_gid(std::stoi(argval));
       else if(argstr == "--size")                notification.mutable_file()->set_size(std::stoi(argval));
