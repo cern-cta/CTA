@@ -73,7 +73,7 @@ spec:
           mountPath: /scripts/maintenance.sh
           subPath: maintenance.sh
         - name: cta-maintenance-config
-          mountPath: /etc/cta/cta-maintenane.conf
+          mountPath: /etc/cta/cta-maintenance.conf
           subPath: cta-maintenance.conf
         - name: catalogue-config
           mountPath: /etc/cta/cta-catalogue.conf
@@ -93,7 +93,6 @@ spec:
         {{- if $.Values.global.volumeMounts }}
         {{ $.Values.global.volumeMounts | toYaml | nindent 8 }}
         {{- end }}
-      {{- end }} # End of containers loop
       volumes:
       - name: scripts-volume
         configMap:
@@ -116,6 +115,9 @@ spec:
         configMap:
           name: ceph-conf
       {{- end }}
+      - name: cta-maintenance-config
+        configMap:
+          name: cta-maintenance-conf
       - name: eos-sss-keytab
         secret:
           secretName: eos-sss-keytab
@@ -124,5 +126,3 @@ spec:
       {{- if $.Values.global.volumes }}
       {{ $.Values.global.volumes | toYaml | nindent 6 }}
       {{- end }}
----
-{{- end }}
