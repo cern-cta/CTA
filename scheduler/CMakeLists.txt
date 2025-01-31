@@ -26,7 +26,6 @@ set (CTA_SCHEDULER_SRC_FILES
   MountType.cpp
   MountType.cpp
   PositioningMethod.cpp
-  RepackReportThread.cpp
   RepackRequest.cpp
   RetrieveJob.cpp
   RetrieveMount.cpp

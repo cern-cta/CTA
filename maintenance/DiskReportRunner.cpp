@@ -16,9 +16,9 @@
  */
 
 #include "DiskReportRunner.hpp"
-#include "Scheduler.hpp"
-#include "ArchiveJob.hpp"
-#include "RetrieveJob.hpp"
+#include "scheduler/Scheduler.hpp"
+#include "scheduler/ArchiveJob.hpp"
+#include "scheduler/RetrieveJob.hpp"
 #include "common/log/TimingList.hpp"
 
 namespace cta {

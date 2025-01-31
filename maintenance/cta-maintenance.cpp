@@ -15,7 +15,7 @@
  *               submit itself to any jurisdiction.
  */
 
-#include "common/Configuration.hpp"
+#include "common/config/Config.hpp"
 #include "tapeserver/daemon/CommandLineParams.hpp"
 #include "common/log/FileLogger.hpp"
 #include "common/log/StdoutLogger.hpp"
@@ -55,10 +55,18 @@ static int exceptionThrowingMain(const cta::daemon::CommandLineParams& commandLi
       return 0;
     }
 
+} // namespace cta::maintenance
+
 int main(const int argc, char **const argv) {
     using namespace cta;
 
-    return exceptionThrowingMain();
+    std::unique_ptr<daemon::CommandLineParams> cmd; 
+    std::unique_ptr<log::Logger> logPtr;
+    logPtr.reset(new log::StdoutLogger("my-machine", "cta-maintenance"));
+
+    log::Logger& log = *logPtr;
+
+
+    return maintenance::exceptionThrowingMain(*cmd, log);
 }
 
-}

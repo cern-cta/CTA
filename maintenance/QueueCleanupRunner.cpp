@@ -15,11 +15,11 @@
  *               submit itself to any jurisdiction.
  */
 
-#include "objectstore/QueueCleanupRunner.hpp"
+#include "QueueCleanupRunner.hpp"
 
-namespace cta::objectstore {
+namespace cta::maintenance {
 
-QueueCleanupRunner::QueueCleanupRunner(AgentReference &agentReference, SchedulerDatabase & oStoreDb, catalogue::Catalogue &catalogue,
+QueueCleanupRunner::QueueCleanupRunner(objectstore::AgentReference &agentReference, SchedulerDatabase & oStoreDb, catalogue::Catalogue &catalogue,
                                        std::optional<double> heartBeatTimeout, std::optional<int> batchSize) :
         m_catalogue(catalogue), m_db(oStoreDb),
         m_batchSize(batchSize.value_or(DEFAULT_BATCH_SIZE)), m_heartBeatTimeout(heartBeatTimeout.value_or(DEFAULT_HEARTBEAT_TIMEOUT)) {
@@ -260,4 +260,4 @@ void QueueCleanupRunner::runOnePass(log::LogContext &logContext) {
   }
 }
 
-} // namespace cta::objectstore
+} // namespace cta::maintenance

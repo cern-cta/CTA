@@ -1,0 +1,13 @@
+# Arguments for the tape server daemon
+#   -f             keep process in the foreground, do not fork
+#   -h             display help and exit
+#   -c             config file location (cta.conf)
+#
+#CTA_TAPED_OPTIONS="--config=/etc/cta/cta.conf"
+
+# Environment variables to configue the libXrdCl.so linked with cta-taped
+#
+# These two variables set the authentication mechanism to Simple Shared Secret
+# (SSS) and set the SSS key to be that of the tape server
+XrdSecPROTOCOL=sss
+XrdSecSSSKT=/etc/cta/cta-taped.sss.keytab
