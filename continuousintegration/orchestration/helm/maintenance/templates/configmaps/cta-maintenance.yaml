@@ -1,3 +1,4 @@
+
 {{- $schedulerConfig := include "scheduler.config" . | fromYaml -}}
 # Generate unique config map for the
 apiVersion: v1
@@ -15,5 +16,3 @@ data:
     # Maintenance
     maintenance useRepackRequestManagement
     maintenance repackMaxRequestToExpand
----
-{{- end }}
