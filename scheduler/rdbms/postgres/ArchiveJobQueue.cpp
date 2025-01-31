@@ -38,7 +38,7 @@ ArchiveJobQueueRow::moveJobsToDbQueue(Transaction& txn,
   const char* const sql = R"SQL(
     WITH SET_SELECTION AS (
       SELECT JOB_ID, PRIORITY, SIZE_IN_BYTES
-      FROM ARCHIVE_INSERT_QUEUE
+      FROM ARCHIVE_PENDING_QUEUE
       WHERE TAPE_POOL = :TAPE_POOL
       AND STATUS = :STATUS
       AND ( MOUNT_ID IS NULL OR MOUNT_ID = :SAME_MOUNT_ID )
@@ -57,12 +57,12 @@ ArchiveJobQueueRow::moveJobsToDbQueue(Transaction& txn,
         WHERE CUMULATIVE_SIZE <= :BYTES_REQUESTED
     ),
     MOVED_ROWS AS (
-        DELETE FROM ARCHIVE_INSERT_QUEUE AIQ
+        DELETE FROM ARCHIVE_PENDING_QUEUE AIQ
         USING CUMULATIVE_SELECTION CSEL
         WHERE AIQ.JOB_ID = CSEL.JOB_ID
         RETURNING AIQ.*
     )
-    INSERT INTO ARCHIVE_JOB_QUEUE (
+    INSERT INTO ARCHIVE_ACTIVE_QUEUE (
         JOB_ID,
         ARCHIVE_REQUEST_ID,
         REQUEST_JOB_COUNT,
@@ -180,7 +180,7 @@ ArchiveJobQueueRow::updateJobStatus(Transaction& txn, ArchiveJobStatus status, c
       return ArchiveJobQueueRow::moveJobBatchToFailedQueueTable(txn, jobIDs);
     } else {
       std::string sql = R"SQL(
-        DELETE FROM ARCHIVE_JOB_QUEUE
+        DELETE FROM ARCHIVE_ACTIVE_QUEUE
         WHERE
           JOB_ID IN (
         )SQL";
@@ -198,7 +198,7 @@ ArchiveJobQueueRow::updateJobStatus(Transaction& txn, ArchiveJobStatus status, c
   //   status = ArchiveJobStatus::ReadyForDeletion;
   //   ArchiveJobQueueRow::copyToFailedJobTable(txn, jobIDs);
   // }
-  std::string sql = "UPDATE ARCHIVE_JOB_QUEUE SET STATUS = :STATUS WHERE JOB_ID IN (" + sqlpart + ")";
+  std::string sql = "UPDATE ARCHIVE_ACTIVE_QUEUE SET STATUS = :STATUS WHERE JOB_ID IN (" + sqlpart + ")";
   auto stmt1 = txn.getConn().createStmt(sql);
   stmt1.bindString(":STATUS", to_string(status));
   stmt1.executeNonQuery();
@@ -207,7 +207,7 @@ ArchiveJobQueueRow::updateJobStatus(Transaction& txn, ArchiveJobStatus status, c
 
 uint64_t ArchiveJobQueueRow::updateFailedJobStatus(Transaction& txn, ArchiveJobStatus status) {
   std::string sql = R"SQL(
-      UPDATE ARCHIVE_JOB_QUEUE SET
+      UPDATE ARCHIVE_ACTIVE_QUEUE SET
         STATUS = :STATUS,
         TOTAL_RETRIES = :TOTAL_RETRIES,
         RETRIES_WITHIN_MOUNT = :RETRIES_WITHIN_MOUNT,
@@ -226,7 +226,7 @@ uint64_t ArchiveJobQueueRow::updateFailedJobStatus(Transaction& txn, ArchiveJobS
   return stmt.getNbAffectedRows();
 };
 
-// the job can stay in the ARCHIVE_INSERT_QUEUE in case the current Mount for this it was requeued
+// the job can stay in the ARCHIVE_PENDING_QUEUE in case the current Mount for this it was requeued
 // dies in the meantime and the same MOundID will not be picking up jobs anymore
 // this needs to be caught up in some cleaner process.
 uint64_t ArchiveJobQueueRow::requeueFailedJob(Transaction& txn,
@@ -235,7 +235,7 @@ uint64_t ArchiveJobQueueRow::requeueFailedJob(Transaction& txn,
                                               std::optional<std::list<std::string>> jobIDs) {
   std::string sql = R"SQL(
     WITH MOVED_ROWS AS (
-        DELETE FROM ARCHIVE_JOB_QUEUE
+        DELETE FROM ARCHIVE_ACTIVE_QUEUE
   )SQL";
   bool userowjid = true;
   if (jobIDs.has_value() && !jobIDs.value().empty()) {
@@ -256,7 +256,7 @@ uint64_t ArchiveJobQueueRow::requeueFailedJob(Transaction& txn,
   sql += R"SQL(
         RETURNING *
     )
-    INSERT INTO ARCHIVE_INSERT_QUEUE (
+    INSERT INTO ARCHIVE_PENDING_QUEUE (
     ARCHIVE_REQUEST_ID,
     REQUEST_JOB_COUNT,
     TAPE_POOL,
@@ -363,7 +363,7 @@ uint64_t
 ArchiveJobQueueRow::requeueJobBatch(Transaction& txn, ArchiveJobStatus status, const std::list<std::string>& jobIDs) {
   std::string sql = R"SQL(
     WITH MOVED_ROWS AS (
-        DELETE FROM ARCHIVE_JOB_QUEUE
+        DELETE FROM ARCHIVE_ACTIVE_QUEUE
   )SQL";
   if (!jobIDs.empty()) {
     std::string sqlpart;
@@ -380,7 +380,7 @@ ArchiveJobQueueRow::requeueJobBatch(Transaction& txn, ArchiveJobStatus status, c
   sql += R"SQL(
         RETURNING *
     )
-    INSERT INTO ARCHIVE_INSERT_QUEUE (
+    INSERT INTO ARCHIVE_PENDING_QUEUE (
                 ARCHIVE_REQUEST_ID,
     REQUEST_JOB_COUNT,
     TAPE_POOL,
@@ -471,10 +471,10 @@ uint64_t ArchiveJobQueueRow::moveJobToFailedQueueTable(Transaction& txn) {
   // DISABLE DELETION FOR DEBUGGING
   std::string sql = R"SQL(
     WITH MOVED_ROWS AS (
-        DELETE FROM ARCHIVE_JOB_QUEUE
+        DELETE FROM ARCHIVE_ACTIVE_QUEUE
           WHERE JOB_ID = :JOB_ID
         RETURNING *
-    ) INSERT INTO ARCHIVE_FAILED_JOB_QUEUE SELECT * FROM MOVED_ROWS;
+    ) INSERT INTO ARCHIVE_FAILED_QUEUE SELECT * FROM MOVED_ROWS;
   )SQL";
   auto stmt = txn.getConn().createStmt(sql);
   stmt.bindUint64(":JOB_ID", jobId);
@@ -492,13 +492,13 @@ uint64_t ArchiveJobQueueRow::moveJobBatchToFailedQueueTable(Transaction& txn, co
   }
   std::string sql = R"SQL(
     WITH MOVED_ROWS AS (
-        DELETE FROM ARCHIVE_JOB_QUEUE
+        DELETE FROM ARCHIVE_ACTIVE_QUEUE
           WHERE JOB_ID IN (
   )SQL";
   sql += sqlpart + ")";
   sql += R"SQL(
         RETURNING *
-    ) INSERT INTO ARCHIVE_FAILED_JOB_QUEUE SELECT * FROM MOVED_ROWS;
+    ) INSERT INTO ARCHIVE_FAILED_QUEUE SELECT * FROM MOVED_ROWS;
   )SQL";
   auto stmt = txn.getConn().createStmt(sql);
   //stmt.bindString(":STATUS", to_string(ArchiveJobStatus::AJS_Failed));
@@ -516,7 +516,7 @@ uint64_t ArchiveJobQueueRow::updateJobStatusForFailedReport(Transaction& txn, Ar
   }
   // otherwise update the statistics and requeue the job
   std::string sql = R"SQL(
-      UPDATE ARCHIVE_JOB_QUEUE SET
+      UPDATE ARCHIVE_ACTIVE_QUEUE SET
         STATUS = :STATUS,
         TOTAL_REPORT_RETRIES = :TOTAL_REPORT_RETRIES,
         IS_REPORTING =:IS_REPORTING,
@@ -541,7 +541,7 @@ rdbms::Rset ArchiveJobQueueRow::flagReportingJobsByStatus(Transaction& txn,
   uint64_t gc_now_minus_delay = (uint64_t) cta::utils::getCurrentEpochTime() - gc_delay;
   std::string sql = R"SQL(
       WITH SET_SELECTION AS (
-        SELECT JOB_ID FROM ARCHIVE_JOB_QUEUE
+        SELECT JOB_ID FROM ARCHIVE_ACTIVE_QUEUE
         WHERE STATUS = ANY(ARRAY[
     )SQL";
   // we can move this to new bindArray method for stmt
@@ -563,11 +563,11 @@ rdbms::Rset ArchiveJobQueueRow::flagReportingJobsByStatus(Transaction& txn,
         OR (IS_REPORTING IS TRUE AND LAST_UPDATE_TIME < :NOW_MINUS_DELAY)
         ORDER BY PRIORITY DESC, JOB_ID
         LIMIT :LIMIT FOR UPDATE SKIP LOCKED)
-      UPDATE ARCHIVE_JOB_QUEUE SET
+      UPDATE ARCHIVE_ACTIVE_QUEUE SET
         IS_REPORTING = TRUE
       FROM SET_SELECTION
-      WHERE ARCHIVE_JOB_QUEUE.JOB_ID = SET_SELECTION.JOB_ID
-      RETURNING ARCHIVE_JOB_QUEUE.*
+      WHERE ARCHIVE_ACTIVE_QUEUE.JOB_ID = SET_SELECTION.JOB_ID
+      RETURNING ARCHIVE_ACTIVE_QUEUE.*
     )SQL";
   auto stmt = txn.getConn().createStmt(sql);
   // we can move the array binding to new bindArray method for STMT
@@ -604,7 +604,7 @@ ArchiveJobQueueRow::cancelArchiveJob(Transaction& txn, const std::string& diskIn
   /* flagging jobs ReadyForDeletion - alternative strategy
      * for deletion by dropping partitions
      std::string sql = R"SQL(
-      UPDATE ARCHIVE_JOB_QUEUE SET
+      UPDATE ARCHIVE_ACTIVE_QUEUE SET
         STATUS = :NEWSTATUS
       WHERE
         DISK_INSTANCE = :DISK_INSTANCE AND
@@ -612,7 +612,7 @@ ArchiveJobQueueRow::cancelArchiveJob(Transaction& txn, const std::string& diskIn
         STATUS NOT IN (:COMPLETE, :FAILED, :FORDELETION)
     )SQL";
     std::string sql = R"SQL(
-      UPDATE ARCHIVE_JOB_QUEUE SET
+      UPDATE ARCHIVE_ACTIVE_QUEUE SET
         STATUS = :NEWSTATUS
       WHERE
         DISK_INSTANCE = :DISK_INSTANCE AND
@@ -633,7 +633,7 @@ ArchiveJobQueueRow::cancelArchiveJob(Transaction& txn, const std::string& diskIn
   // this can result in attempts to update rows of the DB which will not exist anymore
   // better strategy might be needed
   std::string sql = R"SQL(
-      DELETE FROM ARCHIVE_JOB_QUEUE
+      DELETE FROM ARCHIVE_ACTIVE_QUEUE
       WHERE
         DISK_INSTANCE = :DISK_INSTANCE AND
         ARCHIVE_FILE_ID = :ARCHIVE_FILE_ID
@@ -645,7 +645,7 @@ ArchiveJobQueueRow::cancelArchiveJob(Transaction& txn, const std::string& diskIn
   stmt.executeNonQuery();
   uint64_t nrows = stmt.getNbAffectedRows();
   sql = R"SQL(
-    DELETE FROM ARCHIVE_INSERT_QUEUE
+    DELETE FROM ARCHIVE_PENDING_QUEUE
     WHERE
       DISK_INSTANCE = :DISK_INSTANCE AND
       ARCHIVE_FILE_ID = :ARCHIVE_FILE_ID

@@ -206,7 +206,7 @@ struct ArchiveJobQueueRow {
   void insert(rdbms::Conn& conn) const {
     // does not set mountId or jobId
     const char* const sql = R"SQL(
-      INSERT INTO ARCHIVE_INSERT_QUEUE(
+      INSERT INTO ARCHIVE_PENDING_QUEUE(
         ARCHIVE_REQUEST_ID,
         REQUEST_JOB_COUNT,
         STATUS,
@@ -403,7 +403,7 @@ struct ArchiveJobQueueRow {
         HOST AS HOST,
         MOUNT_TYPE AS MOUNT_TYPE,
         LOGICAL_LIBRARY AS LOGICAL_LIBRARY
-      FROM ARCHIVE_JOB_QUEUE 
+      FROM ARCHIVE_ACTIVE_QUEUE
       WHERE 
         JOB_ID IN (
     )SQL" + sqlpart + R"SQL(
@@ -479,7 +479,7 @@ struct ArchiveJobQueueRow {
   uint64_t updateFailedJobStatus(Transaction& txn, ArchiveJobStatus status);
 
   /**
-   * Move from ARCHIVE_JOB_QUEUE to ARCHIVE_INSERT_QUEUE
+   * Move from ARCHIVE_ACTIVE_QUEUE to ARCHIVE_PENDING_QUEUE
    * a failed job so that it can be to drive queues requeued.
    * This method updates also the retry statistics
    *
@@ -494,7 +494,7 @@ struct ArchiveJobQueueRow {
                             std::optional<std::list<std::string>> jobIDs = std::nullopt);
 
   /**
-   * Move from ARCHIVE_JOB_QUEUE to ARCHIVE_INSERT_QUEUE
+   * Move from ARCHIVE_ACTIVE_QUEUE to ARCHIVE_PENDING_QUEUE
    * a batch of jobs so that they can be requeued to drive queues later
    * This methos is static and does not udate any retry statistics
    * It is used for batch of jobs not processed, returning from the task queue

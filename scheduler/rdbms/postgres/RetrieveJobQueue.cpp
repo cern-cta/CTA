@@ -60,7 +60,7 @@ RetrieveJobQueueRow::moveJobsToDbQueue(Transaction& txn,
   std::string sql = R"SQL(
     WITH SET_SELECTION AS (
       SELECT JOB_ID, PRIORITY, SIZE_IN_BYTES
-      FROM RETRIEVE_INSERT_QUEUE
+      FROM RETRIEVE_PENDING_QUEUE
       WHERE VID = :VID
       AND STATUS = :STATUS
       AND (MOUNT_ID IS NULL OR MOUNT_ID = :SAME_MOUNT_ID)
@@ -82,12 +82,12 @@ RetrieveJobQueueRow::moveJobsToDbQueue(Transaction& txn,
         WHERE CUMULATIVE_SIZE <= :BYTES_REQUESTED
     ),
     MOVED_ROWS AS (
-        DELETE FROM RETRIEVE_INSERT_QUEUE RIQ
+        DELETE FROM RETRIEVE_PENDING_QUEUE RIQ
         USING CUMULATIVE_SELECTION CSEL
         WHERE RIQ.JOB_ID = CSEL.JOB_ID
         RETURNING RIQ.*
     )
-    INSERT INTO RETRIEVE_JOB_QUEUE (
+    INSERT INTO RETRIEVE_ACTIVE_QUEUE (
         JOB_ID,
         RETRIEVE_REQUEST_ID,
         REQUEST_JOB_COUNT,
@@ -239,7 +239,7 @@ RetrieveJobQueueRow::updateJobStatus(Transaction& txn, RetrieveJobStatus status,
       return RetrieveJobQueueRow::moveJobBatchToFailedQueueTable(txn, jobIDs);
     } else {
       std::string sql = R"SQL(
-        DELETE FROM RETRIEVE_JOB_QUEUE
+        DELETE FROM RETRIEVE_ACTIVE_QUEUE
         WHERE
           JOB_ID IN (
         )SQL";
@@ -257,7 +257,7 @@ RetrieveJobQueueRow::updateJobStatus(Transaction& txn, RetrieveJobStatus status,
   //   status = RetrieveJobStatus::ReadyForDeletion;
   //   RetrieveJobQueueRow::copyToFailedJobTable(txn, jobIDs);
   // }
-  std::string sql = "UPDATE RETRIEVE_JOB_QUEUE SET STATUS = :STATUS WHERE JOB_ID IN (" + sqlpart + ")";
+  std::string sql = "UPDATE RETRIEVE_ACTIVE_QUEUE SET STATUS = :STATUS WHERE JOB_ID IN (" + sqlpart + ")";
   auto stmt1 = txn.getConn().createStmt(sql);
   stmt1.bindString(":STATUS", to_string(status));
   stmt1.executeNonQuery();
@@ -266,7 +266,7 @@ RetrieveJobQueueRow::updateJobStatus(Transaction& txn, RetrieveJobStatus status,
 
 uint64_t RetrieveJobQueueRow::updateFailedJobStatus(Transaction& txn, RetrieveJobStatus status) {
   std::string sql = R"SQL(
-      UPDATE RETRIEVE_JOB_QUEUE SET
+      UPDATE RETRIEVE_ACTIVE_QUEUE SET
         STATUS = :STATUS,
         TOTAL_RETRIES = :TOTAL_RETRIES,
         RETRIES_WITHIN_MOUNT = :RETRIES_WITHIN_MOUNT,
@@ -285,7 +285,7 @@ uint64_t RetrieveJobQueueRow::updateFailedJobStatus(Transaction& txn, RetrieveJo
   return stmt.getNbAffectedRows();
 };
 
-// the job can stay in the RETRIEVE_INSERT_QUEUE in case the current Mount for this it was requeued
+// the job can stay in the RETRIEVE_PENDING_QUEUE in case the current Mount for this it was requeued
 // dies in the meantime and the same MOundID will not be picking up jobs anymore
 // this needs to be caught up in some cleaner process.
 uint64_t RetrieveJobQueueRow::requeueFailedJob(Transaction& txn,
@@ -294,7 +294,7 @@ uint64_t RetrieveJobQueueRow::requeueFailedJob(Transaction& txn,
                                               std::optional<std::list<std::string>> jobIDs) {
   std::string sql = R"SQL(
     WITH MOVED_ROWS AS (
-        DELETE FROM RETRIEVE_JOB_QUEUE
+        DELETE FROM RETRIEVE_ACTIVE_QUEUE
   )SQL";
   bool userowjid = true;
   if (jobIDs.has_value() && !jobIDs.value().empty()) {
@@ -315,7 +315,7 @@ uint64_t RetrieveJobQueueRow::requeueFailedJob(Transaction& txn,
   sql += R"SQL(
         RETURNING *
     )
-    INSERT INTO RETRIEVE_INSERT_QUEUE (
+    INSERT INTO RETRIEVE_PENDING_QUEUE (
       RETRIEVE_REQUEST_ID,
       REQUEST_JOB_COUNT,
       TAPE_POOL,
@@ -451,7 +451,7 @@ uint64_t
 RetrieveJobQueueRow::requeueJobBatch(Transaction& txn, RetrieveJobStatus status, const std::list<std::string>& jobIDs) {
   std::string sql = R"SQL(
     WITH MOVED_ROWS AS (
-        DELETE FROM RETRIEVE_JOB_QUEUE
+        DELETE FROM RETRIEVE_ACTIVE_QUEUE
   )SQL";
   if (!jobIDs.empty()) {
     std::string sqlpart;
@@ -468,7 +468,7 @@ RetrieveJobQueueRow::requeueJobBatch(Transaction& txn, RetrieveJobStatus status,
   sql += R"SQL(
         RETURNING *
     )
-    INSERT INTO RETRIEVE_INSERT_QUEUE (
+    INSERT INTO RETRIEVE_PENDING_QUEUE (
       RETRIEVE_REQUEST_ID,
       REQUEST_JOB_COUNT,
       TAPE_POOL,
@@ -591,10 +591,10 @@ uint64_t RetrieveJobQueueRow::moveJobToFailedQueueTable(Transaction& txn) {
   // DISABLE DELETION FOR DEBUGGING
   std::string sql = R"SQL(
     WITH MOVED_ROWS AS (
-        DELETE FROM RETRIEVE_JOB_QUEUE
+        DELETE FROM RETRIEVE_ACTIVE_QUEUE
           WHERE JOB_ID = :JOB_ID
         RETURNING *
-    ) INSERT INTO RETRIEVE_FAILED_JOB_QUEUE SELECT * FROM MOVED_ROWS;
+    ) INSERT INTO RETRIEVE_FAILED_QUEUE SELECT * FROM MOVED_ROWS;
   )SQL";
   auto stmt = txn.getConn().createStmt(sql);
   stmt.bindUint64(":JOB_ID", jobId);
@@ -612,13 +612,13 @@ uint64_t RetrieveJobQueueRow::moveJobBatchToFailedQueueTable(Transaction& txn, c
   }
   std::string sql = R"SQL(
     WITH MOVED_ROWS AS (
-        DELETE FROM RETRIEVE_JOB_QUEUE
+        DELETE FROM RETRIEVE_ACTIVE_QUEUE
           WHERE JOB_ID IN (
   )SQL";
   sql += sqlpart + ")";
   sql += R"SQL(
         RETURNING *
-    ) INSERT INTO RETRIEVE_FAILED_JOB_QUEUE SELECT * FROM MOVED_ROWS;
+    ) INSERT INTO RETRIEVE_FAILED_QUEUE SELECT * FROM MOVED_ROWS;
   )SQL";
   auto stmt = txn.getConn().createStmt(sql);
   //stmt.bindString(":STATUS", to_string(RetrieveJobStatus::RJS_Failed));
@@ -636,7 +636,7 @@ uint64_t RetrieveJobQueueRow::updateJobStatusForFailedReport(Transaction& txn, R
   }
   // otherwise update the statistics and requeue the job
   std::string sql = R"SQL(
-      UPDATE RETRIEVE_JOB_QUEUE SET
+      UPDATE RETRIEVE_ACTIVE_QUEUE SET
         STATUS = :STATUS,
         TOTAL_REPORT_RETRIES = :TOTAL_REPORT_RETRIES,
         IS_REPORTING =:IS_REPORTING,
@@ -661,7 +661,7 @@ rdbms::Rset RetrieveJobQueueRow::flagReportingJobsByStatus(Transaction& txn,
   uint64_t gc_now_minus_delay = (uint64_t) cta::utils::getCurrentEpochTime() - gc_delay;
   std::string sql = R"SQL(
       WITH SET_SELECTION AS (
-        SELECT JOB_ID FROM RETRIEVE_JOB_QUEUE
+        SELECT JOB_ID FROM RETRIEVE_ACTIVE_QUEUE
         WHERE STATUS = ANY(ARRAY[
     )SQL";
   // we can move this to new bindArray method for stmt
@@ -683,11 +683,11 @@ rdbms::Rset RetrieveJobQueueRow::flagReportingJobsByStatus(Transaction& txn,
         OR (IS_REPORTING IS TRUE AND LAST_UPDATE_TIME < :NOW_MINUS_DELAY)
         ORDER BY PRIORITY DESC, JOB_ID
         LIMIT :LIMIT FOR UPDATE SKIP LOCKED)
-      UPDATE RETRIEVE_JOB_QUEUE SET
+      UPDATE RETRIEVE_ACTIVE_QUEUE SET
         IS_REPORTING = TRUE
       FROM SET_SELECTION
-      WHERE RETRIEVE_JOB_QUEUE.JOB_ID = SET_SELECTION.JOB_ID
-      RETURNING RETRIEVE_JOB_QUEUE.*
+      WHERE RETRIEVE_ACTIVE_QUEUE.JOB_ID = SET_SELECTION.JOB_ID
+      RETURNING RETRIEVE_ACTIVE_QUEUE.*
     )SQL";
   auto stmt = txn.getConn().createStmt(sql);
   // we can move the array binding to new bindArray method for STMT
@@ -728,7 +728,7 @@ RetrieveJobQueueRow::cancelRetrieveJob(Transaction& txn, const std::string& disk
    flagging jobs ReadyForDeletion - alternative strategy
      * for deletion by dropping partitions
      std::string sql = R"SQL(
-      UPDATE RETRIEVE_JOB_QUEUE SET
+      UPDATE RETRIEVE_ACTIVE_QUEUE SET
         STATUS = :NEWSTATUS
       WHERE
         DISK_INSTANCE = :DISK_INSTANCE AND
@@ -736,7 +736,7 @@ RetrieveJobQueueRow::cancelRetrieveJob(Transaction& txn, const std::string& disk
         STATUS NOT IN (:COMPLETE, :FAILED, :FORDELETION)
     )SQL";
     std::string sql = R"SQL(
-      UPDATE RETRIEVE_JOB_QUEUE SET
+      UPDATE RETRIEVE_ACTIVE_QUEUE SET
         STATUS = :NEWSTATUS
       WHERE
         DISK_INSTANCE = :DISK_INSTANCE AND
@@ -757,7 +757,7 @@ RetrieveJobQueueRow::cancelRetrieveJob(Transaction& txn, const std::string& disk
   // this can result in attempts to update rows of the DB which will not exist anymore
   // better strategy might be needed
   std::string sql = R"SQL(
-      DELETE FROM RETRIEVE_JOB_QUEUE
+      DELETE FROM RETRIEVE_ACTIVE_QUEUE
       WHERE
         DISK_INSTANCE = :DISK_INSTANCE AND
         ARCHIVE_FILE_ID = :ARCHIVE_FILE_ID
@@ -769,7 +769,7 @@ RetrieveJobQueueRow::cancelRetrieveJob(Transaction& txn, const std::string& disk
   stmt.executeNonQuery();
   uint64_t nrows = stmt.getNbAffectedRows();
   sql = R"SQL(
-    DELETE FROM RETRIEVE_INSERT_QUEUE
+    DELETE FROM RETRIEVE_PENDING_QUEUE
     WHERE
       DISK_INSTANCE = :DISK_INSTANCE AND
       ARCHIVE_FILE_ID = :ARCHIVE_FILE_ID

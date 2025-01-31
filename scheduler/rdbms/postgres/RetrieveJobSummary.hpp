@@ -90,7 +90,7 @@ struct RetrieveJobSummaryRow {
         YOUNGEST_JOB_START_TIME,
         RETRIEVE_MIN_REQUEST_AGE,
         LAST_JOB_UPDATE_TIME
-      FROM RETRIEVE_JOB_SUMMARY WHERE 
+      FROM RETRIEVE_QUEUE_SUMMARY WHERE
         VID = :VID
     )SQL";
     /*
@@ -138,11 +138,11 @@ struct RetrieveJobSummaryRow {
     // locking the view until commit (DB lock released)
     // this is to prevent tape servers counting the rows all at the same time
     //const char* const lock_sql = R"SQL(
-    //LOCK TABLE ARCHIVE_JOB_SUMMARY IN ACCESS EXCLUSIVE MODE
+    //LOCK TABLE ARCHIVE_QUEUE_SUMMARY IN ACCESS EXCLUSIVE MODE
     //)SQL";
     //auto stmt = txn.getConn().createStmt(lock_sql);
     //stmt.executeNonQuery();
-    //update archive_job_queue set in_drive_queue='f',mount_id=NULL; for all which
+    //update ARCHIVE_ACTIVE_QUEUE set in_drive_queue='f',mount_id=NULL; for all which
     // are pending since a defined period of time
     // gc_delay logic and liberating stuck mounts should be later moved elsewhere !
     // this is currently responsible for reprocessing of tasks which were sent to task queue
@@ -150,7 +150,7 @@ struct RetrieveJobSummaryRow {
     // we could make a queue cleaner doing something much smarter than this
     /* uint64_t gc_now_minus_delay = (uint64_t) cta::utils::getCurrentEpochTime() - gc_delay;
     const char* const update_sql = R"SQL(
-    UPDATE ARCHIVE_JOB_QUEUE SET
+    UPDATE ARCHIVE_ACTIVE_QUEUE SET
       MOUNT_ID = NULL,
       IN_DRIVE_QUEUE = FALSE
     WHERE MOUNT_ID IS NOT NULL AND IN_DRIVE_QUEUE = TRUE AND STATUS = :STATUS AND LAST_UPDATE_TIME < :NOW_MINUS_DELAY
@@ -174,7 +174,7 @@ struct RetrieveJobSummaryRow {
         RETRIEVE_MIN_REQUEST_AGE,
         LAST_JOB_UPDATE_TIME
       FROM
-        RETRIEVE_JOB_SUMMARY
+        RETRIEVE_QUEUE_SUMMARY
     )SQL";
 
     auto stmt = txn.getConn().createStmt(sql);
