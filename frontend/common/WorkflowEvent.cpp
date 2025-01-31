@@ -40,8 +40,7 @@ WorkflowEvent::WorkflowEvent(const frontend::FrontendService& frontendService,
   const std::string& eventTypeName = Workflow_EventType_Name(event.wf().event());
   const std::string& eosInstanceName = event.wf().instance().name();
   const std::string& diskFilePath = event.file().lpath();
-  const std::string& diskFileId = event.file().disk_file_id().empty() ?
-    std::to_string(event.file().fid()) : event.file().disk_file_id();
+  const std::string& diskFileId = event.file().disk_file_id();
   log::ScopedParamContainer params(m_lc);
   params.add("eventType", eventTypeName)
         .add("eosInstance", eosInstanceName)
@@ -181,8 +180,7 @@ void WorkflowEvent::processCREATE(xrd::Response& response) {
 
   // Create a log entry
   log::ScopedParamContainer params(m_lc);
-  params.add("diskFileId", m_event.file().disk_file_id().empty() ?
-          std::to_string(m_event.file().fid()) : m_event.file().disk_file_id())
+  params.add("diskFileId", m_event.file().disk_file_id())
         .add("diskFilePath", m_event.file().lpath())
         .add("fileId", archiveFileId)
         .add("schedulerTime", t.secs());
@@ -248,8 +246,7 @@ void WorkflowEvent::processCLOSEW(xrd::Response& response) {
   request.diskFileInfo.owner_uid = m_event.file().owner().uid();
   request.diskFileInfo.gid       = m_event.file().owner().gid();
   request.diskFileInfo.path      = m_event.file().lpath();
-  request.diskFileID             = m_event.file().disk_file_id().empty() ?
-                                    std::to_string(m_event.file().fid()) : m_event.file().disk_file_id();
+  request.diskFileID             = m_event.file().disk_file_id();
   request.fileSize               = m_event.file().size();
   request.requester.name         = m_event.cli().user().username();
   request.requester.group        = m_event.cli().user().groupname();
@@ -484,8 +481,7 @@ void WorkflowEvent::processDELETE(xrd::Response& response) {
   request.requester.group   = m_event.cli().user().groupname();
   std::string lpath         = m_event.file().lpath();
   request.diskFilePath      = lpath;
-  request.diskFileId        = m_event.file().disk_file_id().empty() ?
-                                std::to_string(m_event.file().fid()) : m_event.file().disk_file_id();
+  request.diskFileId        = m_event.file().disk_file_id();
   request.diskInstance      = m_cliIdentity.username;
   // If the archive_file_id atrribute is set, it takes priority over the extended attributes
   if (const auto& archiveFileIdInt = m_event.file().archive_file_id(); archiveFileIdInt != 0) {
@@ -559,8 +555,7 @@ void WorkflowEvent::processUPDATE_FID(xrd::Response& response) {
   // Unpack message
   const std::string &diskInstance = m_cliIdentity.username;
   const std::string &diskFilePath = m_event.file().lpath();
-  const std::string diskFileId = m_event.file().disk_file_id().empty() ?
-                                  std::to_string(m_event.file().fid()) : m_event.file().disk_file_id();
+  const std::string diskFileId = m_event.file().disk_file_id();
 
   // CTA Archive ID is an EOS extended attribute, i.e. it is stored as a string, which must be
   // converted to a valid uint64_t
