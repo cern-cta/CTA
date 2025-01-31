@@ -283,10 +283,10 @@ kubectl -n ${NAMESPACE} exec ${EOS_MGM_POD} -c eos-mgm -- bash /root/grep_xrdlog
 setup_tapes_for_multicopy_test
 
 echo
-echo "Launching retrieve_queue_cleanup.sh on client pod"
+echo "Launching client_retrieve_queue_cleanup.sh on client pod"
 echo " Archiving file: xrdcp as user1"
 echo " Retrieving it as poweruser1"
-kubectl -n ${NAMESPACE} exec ${CLIENT_POD} -c client -- bash /root/retrieve_queue_cleanup.sh || exit 1
+kubectl -n ${NAMESPACE} exec ${CLIENT_POD} -c client -- bash /root/client_retrieve_queue_cleanup.sh || exit 1
 kubectl -n ${NAMESPACE} exec ${EOS_MGM_POD} -c eos-mgm -- bash /root/grep_xrdlog_mgm_for_error.sh || exit 1
 
 echo
