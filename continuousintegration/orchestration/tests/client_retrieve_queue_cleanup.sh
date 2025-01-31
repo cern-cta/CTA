@@ -176,20 +176,24 @@ change_tape_state() {
 
 # The cta-admin commands are async, so they might return before the command has fully passed
 # These functions will retry (up to a limit) to ensure we don't end up with a race condition
-check_tape_in_queue() {
-  local retries=10
-  local delay=1
+# Between retries there is a 1 second delay
+# usage: assert_number_of_files_in_queue <vid> <expected_files> <retries>
+assert_number_of_files_in_queue() {
+  local delay=1 # in seconds
   local count=0
   local tape_vid="$1"
+  local expected_file_count="$2"
+  local retries=$3
 
   while true; do
-    if test "1" == "$(admin_cta --json sq | jq -r --arg VID "$tape_vid" '.[] | select(.vid == $VID) | .queuedFiles')"; then
-      return 0  # Success (item found in queue)
+    actual_file_count=$(admin_cta --json sq | jq -r --arg VID "$tape_vid" '.[] | select(.vid == $VID) | .queuedFiles')
+    if [[ "$expected_file_count" -eq "$actual_file_count" ]]; then
+      return 0
     fi
 
     count=$((count + 1))
     if [[ $count -ge $retries ]]; then
-      echo "ERROR: Queue does not contain a user request for tape ${tape_vid}, when one was expected."
+      echo "ERROR: Queue for for tape ${tape_vid} contains $actual_file_count files, while $expected_file_count were expected."
       return 1
     fi
 
@@ -197,26 +201,6 @@ check_tape_in_queue() {
   done
 }
 
-check_tape_not_in_queue() {
-  local retries=10
-  local delay=1
-  local count=0
-  local tape_vid="$1"
-
-  while true; do
-    if test -z "$(admin_cta --json sq | jq -r --arg VID "$tape_vid" '.[] | select(.vid == $VID) | .queuedFiles')"; then
-      return 0  # Success (nothing in the queue)
-    fi
-
-    count=$((count + 1))
-    if [[ $count -ge $retries ]]; then
-      echo "ERROR: Queue contains a user request for tape ${tape_vid}, when none was expected."
-      return 1
-    fi
-
-    sleep "$delay"
-  done
-}
 
 ################################################################################
 # Test queueing priority between different tape states
@@ -260,10 +244,10 @@ test_tape_state_queueing_priority() {
   for i in ${!TAPE_LIST_3[@]}; do
     echo "Checking tape ${TAPE_LIST_3[$i]}..."
     if [ $i -eq $EXPECTED_SELECTED_QUEUE ]; then
-      check_tape_in_queue "${TAPE_LIST_3[$i]}"
+      assert_number_of_files_in_queue "${TAPE_LIST_3[$i]}" 1 2
       echo "Request found on ${TAPE_STATE_LIST[$i]} queue ${TAPE_LIST_3[$i]}, as expected."
     else
-      check_tape_not_in_queue "${TAPE_LIST_3[$i]}"
+      assert_number_of_files_in_queue "${TAPE_LIST_3[$i]}" 0 2
       echo "Request not found on ${TAPE_STATE_LIST[$i]} queue ${TAPE_LIST_3[$i]}, as expected."
     fi
   done
@@ -320,7 +304,7 @@ test_tape_state_change_queue_removed() {
     exit 1
   fi
 
-  check_tape_in_queue "$TAPE_0"
+  assert_number_of_files_in_queue "$TAPE_0" 1 2
 
   echo "Changing $TAPE_0 queue to ${STATE_END}..."
 
@@ -345,7 +329,7 @@ test_tape_state_change_queue_removed() {
     exit 1
   fi
 
-  check_tape_not_in_queue "$TAPE_0"
+  assert_number_of_files_in_queue "$TAPE_0" 0 2
 
   echo "Request removed and error reported back to user, as expected."
 
@@ -401,7 +385,7 @@ test_tape_state_change_queue_preserved() {
     exit 1
   fi
 
-  check_tape_in_queue "$TAPE_0"
+  assert_number_of_files_in_queue "$TAPE_0" 1 2
   echo "Changing $TAPE_0 queue to ${STATE_END}..."
 
   change_tape_state $TAPE_0 $STATE_END
@@ -423,7 +407,7 @@ test_tape_state_change_queue_preserved() {
     exit 1
   fi
 
-  check_tape_in_queue "$TAPE_0"
+  assert_number_of_files_in_queue "$TAPE_0" 1 2
 
   echo "Queue preserved, as expected."
 
@@ -503,11 +487,11 @@ test_tape_state_change_queue_moved() {
   fi
 
   if test "0" == "${EXPECTED_QUEUE_START}"; then
-    check_tape_in_queue "$TAPE_0"
-    check_tape_not_in_queue "$TAPE_1"
+    assert_number_of_files_in_queue "$TAPE_0" 1 2
+    assert_number_of_files_in_queue "$TAPE_1" 0 2
   else
-    check_tape_in_queue "$TAPE_1"
-    check_tape_not_in_queue "$TAPE_0"
+    assert_number_of_files_in_queue "$TAPE_0" 0 2
+    assert_number_of_files_in_queue "$TAPE_1" 1 2
   fi
 
   # Change tape states, starting by the tape without queue
@@ -529,11 +513,11 @@ test_tape_state_change_queue_moved() {
     echo "Checking that the request was moved from the queue ${TAPE_LIST_2[$EXPECTED_QUEUE_START]} to the queue ${TAPE_LIST_2[$EXPECTED_QUEUE_END]}..."
 
     if test "0" == "${EXPECTED_QUEUE_END}"; then
-      check_tape_in_queue "$TAPE_0"
-      check_tape_not_in_queue "$TAPE_1"
+      assert_number_of_files_in_queue "$TAPE_0" 1 2
+      assert_number_of_files_in_queue "$TAPE_1" 0 2
     else
-      check_tape_in_queue "$TAPE_1"
-      check_tape_not_in_queue "$TAPE_0"
+      assert_number_of_files_in_queue "$TAPE_0" 0 2
+      assert_number_of_files_in_queue "$TAPE_1" 1 2
     fi
 
     echo "Request moved to new queue, as expected."
@@ -559,8 +543,8 @@ test_tape_state_change_queue_moved() {
       exit 1
     fi
 
-    check_tape_not_in_queue "$TAPE_0"
-    check_tape_not_in_queue "$TAPE_1"
+    assert_number_of_files_in_queue "$TAPE_0" 0 2
+    assert_number_of_files_in_queue "$TAPE_1" 0 2
     echo "Request removed and error reported back to user, as expected."
   fi
 
