@@ -55,7 +55,7 @@ public:
   void takeNamedLock(std::string_view lockIdString);
 
   /**
-   * Take out a exclusive access lock on ARCHIVE_JOB_QUEUE and RETRIEVE_JOB_QUEUE
+   * Take out a exclusive access lock on ARCHIVE_ACTIVE_QUEUE and RETRIEVE_ACTIVE_QUEUE
    *
    * The lock will be automatically released when the transaction ends
    * (or the connection is terminated).
