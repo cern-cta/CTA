@@ -280,7 +280,7 @@ struct RetrieveJobQueueRow {
   void insert(rdbms::Conn& conn) const {
     // does not set mountId and the following
     std::string sql = R"(
-        INSERT INTO RETRIEVE_INSERT_QUEUE (
+        INSERT INTO RETRIEVE_PENDING_QUEUE (
             RETRIEVE_REQUEST_ID,
             REQUEST_JOB_COUNT,
             STATUS,
@@ -589,7 +589,7 @@ struct RetrieveJobQueueRow {
   uint64_t updateFailedJobStatus(Transaction& txn, RetrieveJobStatus status);
 
   /**
-   * Move from ARCHIVE_JOB_QUEUE to ARCHIVE_INSERT_QUEUE
+   * Move from ARCHIVE_ACTIVE_QUEUE to ARCHIVE_PENDING_QUEUE
    * a failed job so that it can be to drive queues requeued.
    * This method updates also the retry statistics
    *
@@ -604,7 +604,7 @@ struct RetrieveJobQueueRow {
                             std::optional<std::list<std::string>> jobIDs = std::nullopt);
 
   /**
-   * Move from ARCHIVE_JOB_QUEUE to ARCHIVE_INSERT_QUEUE
+   * Move from ARCHIVE_ACTIVE_QUEUE to ARCHIVE_PENDING_QUEUE
    * a batch of jobs so that they can be requeued to drive queues later
    * This methos is static and does not udate any retry statistics
    * It is used for batch of jobs not processed, returning from the task queue
