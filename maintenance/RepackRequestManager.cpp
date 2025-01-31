@@ -18,7 +18,7 @@
 #include "common/exception/NoSuchObject.hpp"
 #include "RepackReportThread.hpp"
 #include "RepackRequestManager.hpp"
-#include "Scheduler.hpp"
+#include "scheduler/Scheduler.hpp"
 
 namespace cta {
 

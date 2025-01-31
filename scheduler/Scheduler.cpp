@@ -46,7 +46,6 @@
 #include "disk/DiskFileImplementations.hpp"
 #include "disk/RadosStriperPool.hpp"
 #include "scheduler/ArchiveMount.hpp"
-#include "scheduler/DiskReportRunner.hpp"
 #include "scheduler/RetrieveMount.hpp"
 #include "scheduler/RetrieveRequestDump.hpp"
 #include "scheduler/Scheduler.hpp"

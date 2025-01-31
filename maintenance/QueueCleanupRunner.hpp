@@ -31,7 +31,7 @@
  * If there is no other queue available, the request should be aborted and reported back to the user.
  */
 
-namespace cta::objectstore {
+namespace cta::maintenance {
 
 class RetrieveRequest;
 
@@ -42,7 +42,7 @@ public:
   static constexpr int DEFAULT_BATCH_SIZE = 500;
   static constexpr double DEFAULT_HEARTBEAT_TIMEOUT = 120;
 
-  QueueCleanupRunner(AgentReference &agentReference, SchedulerDatabase & oStoreDb, catalogue::Catalogue &catalogue,
+  QueueCleanupRunner(objectstore::AgentReference &agentReference, SchedulerDatabase & oStoreDb, catalogue::Catalogue &catalogue,
                      std::optional<double> heartBeatTimeout = std::nullopt, std::optional<int> batchSize = std::nullopt);
 
   ~QueueCleanupRunner() = default;
@@ -66,4 +66,4 @@ private:
   double m_heartBeatTimeout;
 };
 
-} // namespace cta::objectstore
+} // namespace cta::maintenance
