@@ -77,6 +77,23 @@ std::string DiskSystemList::getExternalFreeDiskSpaceScript() const{
 }
 
 //------------------------------------------------------------------------------
+// DiskSystemFreeSpaceList::updateFreeSpaceEntry()
+//------------------------------------------------------------------------------
+void DiskSystemFreeSpaceList::updateFreeSpaceEntry(const std::string& diskSystemName, uint64_t freeSpace, cta::catalogue::Catalogue &catalogue, bool updateCatalogue){
+  DiskSystemFreeSpace & entry = operator[](diskSystemName);
+  auto &diskSystem = m_systemList.at(diskSystemName);
+  auto &diskInstanceSpace = diskSystem.diskInstanceSpace;
+  entry.freeSpace = freeSpace;
+  entry.fetchTime = ::time(nullptr);
+  entry.targetedFreeSpace = diskSystem.targetedFreeSpace;
+
+  if (updateCatalogue) {
+    catalogue.DiskInstanceSpace()->modifyDiskInstanceSpaceFreeSpace(diskInstanceSpace.name,
+      diskInstanceSpace.diskInstance, freeSpace);
+  }
+}
+
+//------------------------------------------------------------------------------
 // DiskSystemFreeSpaceList::fetchFileSystemFreeSpace()
 //------------------------------------------------------------------------------
 void DiskSystemFreeSpaceList::fetchDiskSystemFreeSpace(const std::set<std::string>& diskSystems, cta::catalogue::Catalogue &catalogue, log::LogContext & lc) {
@@ -106,7 +123,8 @@ void DiskSystemFreeSpaceList::fetchDiskSystemFreeSpace(const std::set<std::strin
       if (diskInstanceSpace.lastRefreshTime + diskInstanceSpace.refreshInterval >= currentTime) {
         // use the value in the catalogue, it is still fresh
         freeSpace = diskSystem.diskInstanceSpace.freeSpace;
-        goto found;
+        updateFreeSpaceEntry(ds, freeSpace, catalogue, updateCatalogue);
+        continue;
       }
       updateCatalogue = true;
       const auto &freeSpaceQueryUrl = getDiskSystemFreeSpaceQueryURL(diskSystem);
@@ -118,7 +136,8 @@ void DiskSystemFreeSpaceList::fetchDiskSystemFreeSpace(const std::set<std::strin
           std::string diskInstanceName = regexResult.at(1);
           std::string spaceName = regexResult.at(2);
           freeSpace = fetchFreeDiskSpaceWithScript(m_systemList.getExternalFreeDiskSpaceScript(), diskInstanceName, spaceName, jsoncDiskSystem.getJSON(), lc);
-          goto found;
+          updateFreeSpaceEntry(ds, freeSpace, catalogue, updateCatalogue);
+          continue;
         } catch (const cta::disk::FreeDiskSpaceException &ex) {
           updateCatalogue = false; // if we update the catalogue at this point, we will update it with an old value, since we were not able to get a new one
           // but will still reset the last refresh time, so it will be essentially a "false" update; better to not update and let the lastRefreshTime reflect
@@ -134,21 +153,14 @@ void DiskSystemFreeSpaceList::fetchDiskSystemFreeSpace(const std::set<std::strin
       regexResult = constantFreeSpaceDiskSystem.exec(freeSpaceQueryUrl);
       if (regexResult.size()) {
         freeSpace = fetchConstantFreeSpace(regexResult.at(1), lc);
-        goto found;
+        updateFreeSpaceEntry(ds, freeSpace, catalogue, updateCatalogue);
       }
-      throw cta::disk::FreeDiskSpaceException("In DiskSystemFreeSpaceList::fetchDiskSystemFreeSpace(): could not interpret free space query URL.");
+      else {
+        throw cta::disk::FreeDiskSpaceException("In DiskSystemFreeSpaceList::fetchDiskSystemFreeSpace(): could not interpret free space query URL.");
+      }
     } catch (const cta::disk::FreeDiskSpaceException &ex) {
       failedToFetchDiskSystems[ds] = ex;
-    }
-  found:
-    DiskSystemFreeSpace & entry = operator[](ds);
-    entry.freeSpace = freeSpace;
-    entry.fetchTime = ::time(nullptr);
-    entry.targetedFreeSpace = m_systemList.at(ds).targetedFreeSpace;
-
-    if (updateCatalogue) {
-      catalogue.DiskInstanceSpace()->modifyDiskInstanceSpaceFreeSpace(diskInstanceSpace.name,
-        diskInstanceSpace.diskInstance, freeSpace);
+      updateFreeSpaceEntry(ds, freeSpace, catalogue, updateCatalogue);
     }
   }
   if(failedToFetchDiskSystems.size()){

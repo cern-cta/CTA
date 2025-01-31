@@ -117,6 +117,7 @@ private:
                                         const std::string& spaceName,
                                         const std::string& jsonInput,
                                         log::LogContext& lc);
+  void updateFreeSpaceEntry(const std::string& diskSystemName, uint64_t freeSpace, cta::catalogue::Catalogue &catalogue, bool updateCatalogue);
 };
 
 }} // namespace cta::disk
