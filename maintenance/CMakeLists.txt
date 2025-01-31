@@ -18,8 +18,9 @@ include_directories (${PROTOBUF3_INCLUDE_DIRS})
 
 add_library(ctamaintenance SHARED
   QueueCleanupRunner.cpp
-  DiskReporterRunner.cpp
+  RepackReportThread.cpp
   RepackRequestManager.cpp
+  DiskReportRunner.cpp
 )
 
 add_executable (cta-maintenance cta-maintenance.cpp)
@@ -29,9 +30,12 @@ add_manpage(cta-maintenance)
 
 install (TARGETS cta-maintenance DESTINATION usr/bin)
 install (FILES ${CMAKE_CURRENT_BINARY_DIR}/cta-maintenance.1cta DESTINATION /usr/share/man/man1)
-install (FILES cta-manitenance.logrotate DESTINATION /etc/logrotate.d RENAME cta-maintenance)
+install (FILES cta-maintenance.logrotate DESTINATION /etc/logrotate.d RENAME cta-maintenance)
 install (FILES cta-maintenance.sysconfig DESTINATION /etc/sysconfig RENAME cta-maintenance)
 install (FILES cta-maintenance.service DESTINATION /etc/systemd/system)
+install (FILES cta-maintenance.conf.example 
+  DESTINATION ${CMAKE_INSTALL_SYSCONFDIR}/cta
+  PERMISSIONS OWNER_READ OWNER_WRITE GROUP_READ WORLD_READ)
 
 # CTA's cta-taped integration tests.
 #add_library(cta-maintenanceIntegrationTests SHARED
