@@ -229,13 +229,12 @@ ERROR_DIR="/dev/shm/$(basename ${EOS_DIR})"
 mkdir ${ERROR_DIR}
 echo "$(date +%s): ERROR_DIR=${ERROR_DIR}"
 # not more than 100k files per directory so that we can rm and find as a standard user
-for ((subdir=0; subdir < ${NB_DIRS}; subdir++)); do
+for ((subdir=15; subdir < ${NB_DIRS}; subdir++)); do
   eos root://${EOS_MGM_HOST} mkdir -p ${EOS_DIR}/${subdir} || die "Cannot create directory ${EOS_DIR}/{subdir} in eos instance ${EOS_MGM_HOST}."
   echo -n "Copying files to ${EOS_DIR}/${subdir} using ${NB_PROCS} processes..."
   TEST_FILE_NAME_SUBDIR=${TEST_FILE_NAME_BASE}$(printf %.2d ${subdir}) # this is the target filename of xrdcp processes just need to add the filenumber in each directory
   # xargs must iterate on the individual file number no subshell can be spawned even for a simple addition in xargs
-  admin_kdestroy &>/dev/null
-  admin_kinit &>/dev/null
+  echo "Starting to queue the files for the subdir."
   for ((i=0;i<${NB_FILES};i++)); do
     echo $(printf %.6d $i)
 #done | xargs --max-procs=${NB_PROCS} -iTEST_FILE_NUM bash -c "dd if=/tmp/testfile bs=${DD_BS} 2>/dev/null | (dd bs=$((${subdir}*${NB_FILES})) count=1 of=/dev/null 2>/dev/null; dd bs=TEST_FILE_NUM count=1 of=/dev/null 2>/dev/null; dd bs=${DD_BS} count=${FILE_KB_SIZE} 2>/dev/null) | XRD_LOGLEVEL=Dump xrdcp - root://${EOS_MGM_HOST}/${EOS_DIR}/${subdir}/${TEST_FILE_NAME_SUBDIR}TEST_FILE_NUM 2>${ERROR_DIR}/${TEST_FILE_NAME_SUBDIR}TEST_FILE_NUM && rm ${ERROR_DIR}/${TEST_FILE_NAME_SUBDIR}TEST_FILE_NUM || echo ERROR with xrootd transfer for file ${TEST_FILE_NAME_SUBDIR}TEST_FILE_NUM, full logs in ${ERROR_DIR}/${TEST_FILE_NAME_SUBDIR}TEST_FILE_NUM"
@@ -250,7 +249,8 @@ done |  xargs --max-procs=${NB_PROCS} -iTEST_FILE_NUM bash -c "
   #done | xargs --max-procs=${NB_PROCS} -iTEST_FILE_NAME xrdcp --silent /tmp/testfile root://${EOS_MGM_HOST}/${EOS_DIR}/${subdir}/TEST_FILE_NAME
   #  done | xargs -n ${BATCH_SIZE} --max-procs=${NB_BATCH_PROCS} ./batch_xrdcp /tmp/testfile root://${EOS_MGM_HOST}/${EOS_DIR}/${subdir}
   # Check if the product of (subdir + 1) and NB_FILES exceeds 1 million
-  if (( (subdir + 1)  > 10 )); then
+  if (( subdir == 16 )); then
+    echo "Putting drives up"
     admin_cta drive up ".*" --reason "PUTTING DRIVE UP FOR TESTS"
   fi
   echo Done.
@@ -345,7 +345,7 @@ done
 # cat ${STATUS_FILE} | KRB5CCNAME=/tmp/${EOSPOWER_USER}/krb5cc_0 XrdSecPROTOCOL=krb5 xargs --max-procs=${NB_PROCS} -iTEST_FILE_NAME xrdfs ${EOS_MGM_HOST} prepare -s ${EOS_DIR}/TEST_FILE_NAME 2>&1 | tee ${ERROR_FILE}
 # CAREFULL HERE: ${STATUS_FILE} contains lines like: 99/test9900001
 for ((subdir=0; subdir < ${NB_DIRS}; subdir++)); do
- if (( (subdir + 1)  > 10 )); then
+ if (( subdir == 10 )); then
     admin_cta drive up ".*" --reason "PUTTING DRIVE UP FOR TESTS"
   fi
   echo -n "Retrieving files to ${EOS_DIR}/${subdir} using ${NB_PROCS} processes..."
