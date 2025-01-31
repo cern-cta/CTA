@@ -180,11 +180,6 @@ echo "$(date +%s): ERROR_FILE=${ERROR_FILE}"
 EOS_BATCHFILE=$(mktemp --suffix=.eosh)
 echo "$(date +%s): EOS_BATCHFILE=${EOS_BATCHFILE}"
 
-# As we are skipping n bytes per file we need a bit more than the file size to accomodate dd to read ${FILE_KB_SIZE} skipping the n first bytes
-#dd if=/dev/urandom of=/tmp/testfile bs=${DD_BS} count=$((${FILE_KB_SIZE} + ${NB_FILES}*${NB_DIRS}/${DD_BS} + 1)) || exit 1
-dd if=/dev/zero of=/tmp/testfile bs=${DD_BS} count=$((${FILE_KB_SIZE} + ${NB_FILES}*${NB_DIRS} + 1)) || exit 1
-#dd if=/dev/zero of=/dev/shm/testfile bs=${DD_BS} count=${FILE_KB_SIZE} || exit 1
-
 if [[ $VERBOSE == 1 ]]; then
   tail -v -f /mnt/logs/cta-tpsrv0*/rmcd/cta/cta-rmcd.log &
   TAILPID=$!
@@ -200,11 +195,9 @@ klist -s || die "Cannot get kerberos credentials for user ${USER}"
 # Get kerberos credentials for poweruser1
 eospower_kdestroy
 eospower_kinit
+admin_kinit &>/dev/null
 
 echo "Starting test ${TESTID}: ${COMMENT}"
-
-#echo "$(date +%s): Dumping objectstore list"
-#ssh root@ctappsfrontend cta-objectstore-list
 
 test -z ${COMMENT} || annotate "test ${TESTID} STARTED" "comment: ${COMMENT}<br/>files: $((${NB_DIRS}*${NB_FILES}))<br/>filesize: ${FILE_KB_SIZE}kB" 'test,start'
 
@@ -212,9 +205,6 @@ test -z ${COMMENT} || annotate "test ${TESTID} STARTED" "comment: ${COMMENT}<br/
 if [[ $DONOTARCHIVE == 0 ]]; then
 
 echo "$(date +%s): Creating test dir in eos: ${EOS_DIR}"
-# uuid should be unique no need to remove dir before...
-# XrdSecPROTOCOL=sss eos -r 0 0 root://${EOS_MGM_HOST} rm -Fr ${EOS_DIR}
-
 
 eos root://${EOS_MGM_HOST} mkdir -p "${EOS_DIR}" || die "Cannot create directory ${EOS_DIR} in eos instance ${EOS_MGM_HOST}."
 echo
@@ -229,25 +219,21 @@ ERROR_DIR="/dev/shm/$(basename ${EOS_DIR})"
 mkdir ${ERROR_DIR}
 echo "$(date +%s): ERROR_DIR=${ERROR_DIR}"
 # not more than 100k files per directory so that we can rm and find as a standard user
-for ((subdir=15; subdir < ${NB_DIRS}; subdir++)); do
+for ((subdir=0; subdir < ${NB_DIRS}; subdir++)); do
   eos root://${EOS_MGM_HOST} mkdir -p ${EOS_DIR}/${subdir} || die "Cannot create directory ${EOS_DIR}/{subdir} in eos instance ${EOS_MGM_HOST}."
   echo -n "Copying files to ${EOS_DIR}/${subdir} using ${NB_PROCS} processes..."
   TEST_FILE_NAME_SUBDIR=${TEST_FILE_NAME_BASE}$(printf %.2d ${subdir}) # this is the target filename of xrdcp processes just need to add the filenumber in each directory
   # xargs must iterate on the individual file number no subshell can be spawned even for a simple addition in xargs
   echo "Starting to queue the files for the subdir."
-  for ((i=0;i<${NB_FILES};i++)); do
-    echo $(printf %.6d $i)
-#done | xargs --max-procs=${NB_PROCS} -iTEST_FILE_NUM bash -c "dd if=/tmp/testfile bs=${DD_BS} 2>/dev/null | (dd bs=$((${subdir}*${NB_FILES})) count=1 of=/dev/null 2>/dev/null; dd bs=TEST_FILE_NUM count=1 of=/dev/null 2>/dev/null; dd bs=${DD_BS} count=${FILE_KB_SIZE} 2>/dev/null) | XRD_LOGLEVEL=Dump xrdcp - root://${EOS_MGM_HOST}/${EOS_DIR}/${subdir}/${TEST_FILE_NAME_SUBDIR}TEST_FILE_NUM 2>${ERROR_DIR}/${TEST_FILE_NAME_SUBDIR}TEST_FILE_NUM && rm ${ERROR_DIR}/${TEST_FILE_NAME_SUBDIR}TEST_FILE_NUM || echo ERROR with xrootd transfer for file ${TEST_FILE_NAME_SUBDIR}TEST_FILE_NUM, full logs in ${ERROR_DIR}/${TEST_FILE_NAME_SUBDIR}TEST_FILE_NUM"
 
-done |  xargs --max-procs=${NB_PROCS} -iTEST_FILE_NUM bash -c "
+  for ((i=0;i<${NB_FILES};i++)); do
+    printf "%.6d\n" $i
+  done | xargs --max-procs=${NB_PROCS} -iTEST_FILE_NUM bash -c "
     {
-      dd if=/tmp/testfile bs=${DD_BS} skip=$((${subdir} * ${NB_FILES} + TEST_FILE_NUM)) count=${FILE_KB_SIZE} 2>/dev/null ;
+      dd if=/dev/zero bs=${DD_BS} count=${FILE_KB_SIZE} 2>/dev/null ;
       echo UNIQUE_${subdir}_TEST_FILE_NUM;
     } | XRD_LOGLEVEL=Dump xrdcp - root://${EOS_MGM_HOST}/${EOS_DIR}/${subdir}/${TEST_FILE_NAME_SUBDIR}TEST_FILE_NUM_$(date +%s%N) 2>${ERROR_DIR}/${TEST_FILE_NAME_SUBDIR}TEST_FILE_NUM && rm ${ERROR_DIR}/${TEST_FILE_NAME_SUBDIR}TEST_FILE_NUM || echo ERROR with xrootd transfer for file ${TEST_FILE_NAME_SUBDIR}TEST_FILE_NUM, full logs in ${ERROR_DIR}/${TEST_FILE_NAME_SUBDIR}TEST_FILE_NUM"
 
-#done | xargs --max-procs=${NB_PROCS} -iTEST_FILE_NUM bash -c "dd if=/tmp/testfile bs=${DD_BS} 2>/dev/null | (dd bs=$((${subdir}*${NB_FILES})) count=1 of=/dev/null 2>/dev/null; dd bs=TEST_FILE_NUM count=1 of=/dev/null 2>/dev/null; dd bs=${DD_BS} count=${FILE_KB_SIZE} 2>/dev/null; echo UNIQUE_${TEST_FILE_NUM}) | XRD_LOGLEVEL=Dump xrdcp - root://${EOS_MGM_HOST}/${EOS_DIR}/${subdir}/${TEST_FILE_NAME_SUBDIR}TEST_FILE_NUM 2>${ERROR_DIR}/${TEST_FILE_NAME_SUBDIR}TEST_FILE_NUM && rm ${ERROR_DIR}/${TEST_FILE_NAME_SUBDIR}TEST_FILE_NUM || echo ERROR with xrootd transfer for file ${TEST_FILE_NAME_SUBDIR}TEST_FILE_NUM, full logs in ${ERROR_DIR}/${TEST_FILE_NAME_SUBDIR}TEST_FILE_NUM"
-  #done | xargs --max-procs=${NB_PROCS} -iTEST_FILE_NAME xrdcp --silent /tmp/testfile root://${EOS_MGM_HOST}/${EOS_DIR}/${subdir}/TEST_FILE_NAME
-  #  done | xargs -n ${BATCH_SIZE} --max-procs=${NB_BATCH_PROCS} ./batch_xrdcp /tmp/testfile root://${EOS_MGM_HOST}/${EOS_DIR}/${subdir}
   # Check if the product of (subdir + 1) and NB_FILES exceeds 1 million
   if (( subdir == 16 )); then
     echo "Putting drives up"
@@ -272,8 +258,6 @@ done
 # Only not empty files are archived by CTA
 TO_BE_ARCHIVED=$((${COPIED} - ${COPIED_EMPTY}))
 
-
-
 ARCHIVING=${TO_BE_ARCHIVED}
 ARCHIVED=0
 echo "$(date +%s): Waiting for files to be on tape:"
@@ -282,7 +266,7 @@ WAIT_FOR_ARCHIVED_FILE_TIMEOUT=$((40+${NB_FILES}/5))
 while test 0 != ${ARCHIVING}; do
   echo "$(date +%s): Waiting for files to be archived to tape: Seconds passed = ${SECONDS_PASSED}"
   sleep 3
-  let SECONDS_PASSED=SECONDS_PASSED+1
+  let SECONDS_PASSED=SECONDS_PASSED+3
 
   if test ${SECONDS_PASSED} == ${WAIT_FOR_ARCHIVED_FILE_TIMEOUT}; then
     echo "$(date +%s): Timed out after ${WAIT_FOR_ARCHIVED_FILE_TIMEOUT} seconds waiting for file to be archived to tape"
@@ -371,6 +355,7 @@ WAIT_FOR_RETRIEVED_FILE_TIMEOUT=$((40+${NB_FILES}/5))
 while test 0 -lt ${RETRIEVING}; do
   echo "$(date +%s): Waiting for files to be retrieved from tape: Seconds passed = ${SECONDS_PASSED}"
   sleep 3
+  # This seconds passed thing is rather dumb as it clearly does not represent the actual seconds passed
   let SECONDS_PASSED=SECONDS_PASSED+1
 
   if test ${SECONDS_PASSED} == ${WAIT_FOR_RETRIEVED_FILE_TIMEOUT}; then
@@ -671,5 +656,7 @@ if [ $(ls ${LOGDIR}/xrd_errors | wc -l) -ne 0 ]; then
     echo "ERROR several xrootd failures occured during this run, please check client dumps in ${LOGDIR}/xrd_errors."
   fi
 fi
+
+echo "Archive retrieve test completed successfully"
 
 exit ${RC}
