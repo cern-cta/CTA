@@ -3,7 +3,7 @@
 # Catalogue
 catalogue/AllCatalogueSchema.hpp
 
-# cta-release
+# CTA-release
 cta-release/RPM-GPG-KEY-*
 cta-release/versionlock.cta
 
