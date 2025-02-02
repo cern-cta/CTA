@@ -410,7 +410,7 @@ RelationalDB::queueRetrieve(cta::common::dataStructures::RetrieveRequest& rqst,
     rReq->insert();
     sqlconn.reset();
     logContext.log(cta::log::INFO,
-                   "In RelationalDB::queueRetrieve(): finished enqueueing retrieve job.");
+                   "In RelationalDB::queueRetrieve(): Finished enqueueing request.");
     return ret;
   } catch (exception::Exception& ex) {
     logContext.log(cta::log::ERR,
