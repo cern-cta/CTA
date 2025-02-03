@@ -54,9 +54,9 @@ baseurl=file://${CTAREPODIR}\n\
 gpgcheck=0\n\
 enabled=1\n\
 priority=2" > /etc/yum.repos.d/cta-artifacts.repo && \
-    dnf clean all && \
     dnf config-manager --enable cta-artifacts && \
-    rm -rf /var/cache/{yum,dnf} /etc/rc.d/rc.local && \
+    dnf clean all --enablerepo=\* && \
+    rm -rf /etc/rc.d/rc.local && \
     # Check that CTA packages are available
     dnf list available cta-taped > /dev/null 2>&1 || \
     (echo "cta-taped RPM is missing from the repository" 1>&2; exit 1)
