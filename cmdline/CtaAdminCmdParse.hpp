@@ -343,7 +343,8 @@ const std::map<std::string, OptionString::Key> strOptions = {
   {"--guiurl",              OptionString::GUI_URL                    },
   {"--webcamurl",           OptionString::WEBCAM_URL                 },
   {"--location",            OptionString::LIBRARY_LOCATION           },
-  {"--archiveroutetype",    OptionString::ARCHIVE_ROUTE_TYPE         }
+  {"--archiveroutetype",    OptionString::ARCHIVE_ROUTE_TYPE         },
+  {"--diskfileid",          OptionString::DISK_FILE_ID               }
 };
 
 /*!
@@ -401,6 +402,7 @@ const Option opt_drivename_cmd {Option::OPT_CMD, "--drive", "", "<drive_name>"};
 const Option opt_encrypted {Option::OPT_BOOL, "--encrypted", "-e", R"( <"true" or "false">)"};
 const Option opt_encryptionkeyname {Option::OPT_STR, "--encryptionkeyname", "-k", " <encryption_key_name>"};
 const Option opt_fid {Option::OPT_STR, "--fxid", "-f", " <eos_fxid>"};
+const Option opt_diskfileid {Option::OPT_STR, "--diskfileid", "--dfid", " <disk_file_id>"};
 const Option opt_fidfile {Option::OPT_STR_LIST, "--fxidfile", "-F", " <filename>"};
 const Option opt_filename {Option::OPT_STR, "--file", "-f", " <filename>"};
 const Option opt_force {Option::OPT_BOOL, "--force", "-f", R"( <"true" or "false">)"};
@@ -883,6 +885,7 @@ recycletf (rtf)
   {{AdminCmd::CMD_RECYCLETAPEFILE, AdminCmd::SUBCMD_LS},
    {opt_vid.optional(),
     opt_fid.optional(),
+    opt_diskfileid.optional(),
     opt_fidfile.optional(),
     opt_copynb.optional(),
     opt_archivefileid.optional(),
@@ -1060,10 +1063,11 @@ tapefile (tf)
    {opt_vid.optional(),
     opt_instance.optional(),
     opt_fid.optional(),
+    opt_diskfileid.optional(),
     opt_fidfile.optional(),
     opt_archivefileid.optional()}                                                                                            },
   {{AdminCmd::CMD_TAPEFILE, AdminCmd::SUBCMD_RM},
-   {opt_vid, opt_instance.optional(), opt_fid.optional(), opt_archivefileid.optional(), opt_reason}                          },
+   {opt_vid, opt_instance.optional(), opt_fid.optional(), opt_diskfileid.optional(), opt_archivefileid.optional(), opt_reason}                          },
 
   /**md
 tapepool (tp)
@@ -1151,10 +1155,10 @@ virtualorganization (vo)
 
   // Used by cta-change-storageclass and cta-eos-namespace-inject
   {{AdminCmd::CMD_ARCHIVEFILE, AdminCmd::SUBCMD_CH},
-   {opt_storageclass.optional(), opt_archive_file_ids, opt_fid.optional(), opt_diskinstance.optional()}                      },
+   {opt_storageclass.optional(), opt_archive_file_ids, opt_fid.optional(), opt_diskfileid.optional(), opt_diskinstance.optional()}                      },
   // Used by cta-restore-deleted-files
   {{AdminCmd::CMD_RECYCLETAPEFILE, AdminCmd::SUBCMD_RESTORE},
-   {opt_vid.optional(), opt_fid, opt_copynb.optional(), opt_archivefileid.optional(), opt_instance.optional()}               },
+   {opt_vid.optional(), opt_fid.optional(), opt_diskfileid.optional(), opt_copynb.optional(), opt_archivefileid.optional(), opt_instance.optional()}               },
   /*-------------------------------------------------------------------------------------------------------------------------*/
 };
 
