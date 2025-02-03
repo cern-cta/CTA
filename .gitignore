@@ -78,12 +78,6 @@ Pipfile.lock
 # Pytest
 .pytest_cache
 
-# Packaging
-dist/
-build/
-*.egg-info/
-*.eggs/
-
 # --- Miscellaneous ignores ---
 
 # Logs and temporary files
