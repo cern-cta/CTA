@@ -47,7 +47,6 @@ fi
 CLIENT_POD="client-0"
 CTA_CLI_POD="cta-cli-0"
 EOS_MGM_POD="eos-mgm-0"
-EOS_INSTANCE_NAME="ctaeos"
 
 echo "Preparing namespace for the tests"
 ./prepare_tests.sh -n ${NAMESPACE}
@@ -595,7 +594,7 @@ repackTapeRepair() {
     for i in $(seq 0 $(( nbFileToInject - 1)) )
     do
       fseqFile=`echo $tfls | jq -r ". [] | select(.df.diskId == \"${diskIds[$i]}\") | .tf.fSeq"` || break
-      kubectl -n ${NAMESPACE} exec ${CLIENT_POD} -c client -- eos root://${EOS_INSTANCE_NAME} cp ${pathOfFilesToInject[$i]} $bufferDirectory/`printf "%9d\n" $fseqFile | tr ' ' 0`
+      kubectl -n ${NAMESPACE} exec ${EOS_MGM_POD} -c eos-mgm -- eos cp ${pathOfFilesToInject[$i]} $bufferDirectory/`printf "%9d\n" $fseqFile | tr ' ' 0`
     done
 
     echo "Marking the tape ${VID_TO_REPACK} as REPACKING"
@@ -704,7 +703,7 @@ repackTapeRepairNoRecall() {
     for i in $(seq 0 $(( nbFileToInject - 1)) )
     do
       fseqFile=`echo $tfls | jq -r ". [] | select(.df.diskId == \"${diskIds[$i]}\") | .tf.fSeq"` || break
-      kubectl -n ${NAMESPACE} exec ${CLIENT_POD} -c client -- eos root://${EOS_INSTANCE_NAME} cp ${pathOfFilesToInject[$i]} $bufferDirectory/`printf "%9d\n" $fseqFile | tr ' ' 0`
+      kubectl -n ${NAMESPACE} exec ${EOS_MGM_POD} -c eos-mgm -- eos cp ${pathOfFilesToInject[$i]} $bufferDirectory/`printf "%9d\n" $fseqFile | tr ' ' 0`
     done
 
     echo "Marking the tape ${VID_TO_REPACK} as REPACKING"
