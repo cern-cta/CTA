@@ -1,4 +1,4 @@
-from typing import Protocol, Any
+from typing import Protocol
 
 class RemoteConnection(Protocol):
     def run(self, command: str) -> bool:

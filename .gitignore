@@ -23,7 +23,7 @@ Chart.lock
 
 # --- IDE-specific ignores ---
 
-# JetBrains (CLion, PyCharm, IntelliJ)
+# JetBrains
 .idea/
 *.iml
 *.iws
@@ -33,20 +33,6 @@ workspace.xml
 # VSCode
 .vscode/
 *.code-workspace
-
-# Eclipse
-.metadata/
-*.class
-*.project
-*.settings/
-*.prefs
-
-# Xcode
-*.xcworkspace/
-*.xcuserstate
-*.xcuserdatad/
-DerivedData/
-*.pbxuser
 
 # --- C++ ignores ---
 
@@ -89,10 +75,9 @@ venv/
 .venv/
 env/
 Pipfile.lock
-poetry.lock
 
-# Jupyter Notebooks
-.ipynb_checkpoints/
+# Pytest
+.pytest_cache
 
 # Packaging
 dist/
@@ -113,5 +98,4 @@ build/
 *.swd
 
 # OS-specific files
-.DS_Store    # macOS
-Thumbs.db    # Windows
+.DS_Store

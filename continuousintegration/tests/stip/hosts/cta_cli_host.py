@@ -1,4 +1,4 @@
-from remote_host import RemoteHost
+from .remote_host import RemoteHost
 
 class CtaCliHost(RemoteHost):
     def __init__(self, conn):

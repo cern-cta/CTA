@@ -1,5 +1,6 @@
-from remote_connection import RemoteConnection
 import subprocess
+
+from .remote_connection import RemoteConnection
 
 class K8sConnection(RemoteConnection):
 
@@ -11,15 +12,15 @@ class K8sConnection(RemoteConnection):
 
     def run(self, command: str) -> bool:
         full_command = f"kubectl exec -n {self.namespace} {self.pod} -c {self.container} -- bash -c \"{command}\""
-        result = subprocess.run(full_command, shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+        result = subprocess.run(full_command, shell=True)
         return result.returncode == 0
 
     def copyTo(self, src_path: str, dst_path: str) -> bool:
         full_command = f"kubectl cp {src_path} {self.namespace}/{self.pod}:{dst_path} -c {self.container}"
-        result = subprocess.run(full_command, shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+        result = subprocess.run(full_command, shell=True)
         return result.returncode == 0
 
     def copyFrom(self, src_path: str, dst_path: str) -> bool:
         full_command = f"kubectl cp {self.namespace}/{self.pod}:{src_path} {dst_path} -c {self.container}"
-        result = subprocess.run(full_command, shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+        result = subprocess.run(full_command, shell=True)
         return result.returncode == 0
