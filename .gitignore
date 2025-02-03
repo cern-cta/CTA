@@ -1,8 +1,9 @@
+# --- Project-specific ignores ---
 
-# catalogue
+# Catalogue
 catalogue/AllCatalogueSchema.hpp
 
-# cta-release
+# CTA-release
 cta-release/RPM-GPG-KEY-*
 cta-release/versionlock.cta
 
@@ -13,9 +14,88 @@ image_rpms/
 pod_logs/
 tmp/
 
-# helm files
+# Helm files
 Chart.lock
 **/get_helm.sh
 
 # Archive files
-**/*.tgz
+
+# --- IDE-specific ignores ---
+
+# JetBrains
+.idea/
+*.iml
+*.iws
+out/
+workspace.xml
+
+# VSCode
+.vscode/
+*.code-workspace
+
+# --- C++ ignores ---
+
+# Build files
+*.o
+*.obj
+*.so
+*.dylib
+*.dll
+*.a
+*.lib
+*.exe
+*.out
+*.exp
+*.pdb
+
+# CMake
+CMakeCache.txt
+CMakeFiles/
+cmake_install.cmake
+Makefile
+
+# Debug files
+*.dSYM/
+*.gcda
+*.gcno
+*.gcov
+
+# --- Python ignores ---
+
+# Bytecode files
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+
+# Virtual environments
+venv/
+.env/
+.venv/
+env/
+Pipfile.lock
+
+# Pytest
+.pytest_cache
+
+# Packaging
+dist/
+build/
+*.egg-info/
+*.eggs/
+
+# --- Miscellaneous ignores ---
+
+# Logs and temporary files
+*.log
+*.tmp
+*.bak
+*.swp
+*.swo
+*.swn
+*.swm
+*.swd
+*.tgz
+
+# OS-specific files
+.DS_Store
