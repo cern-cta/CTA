@@ -47,7 +47,7 @@ RUN dnf config-manager --enable epel --setopt="epel.priority=4" && \
     dnf config-manager --enable cta-public-testing && \
     dnf install -y "cta-release-${PUBLIC_REPO_VER}.el9" && \
     rm -f /etc/yum/pluginconf.d/versionlock.cta && \
-    dnf clean all && \
-    rm -rf /var/cache/{yum,dnf} /etc/rc.d/rc.local
+    dnf clean all --enablerepo=\* && \
+    rm -rf /etc/rc.d/rc.local
 
 COPY ${YUM_VERSIONLOCK_FILE} /etc/dnf/plugins/versionlock.list
