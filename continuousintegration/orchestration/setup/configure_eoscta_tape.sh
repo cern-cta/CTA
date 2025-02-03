@@ -5,11 +5,14 @@
 # General settings
 eos vid enable unix
 eos vid enable https
+eos space set default on
 eos space config default space.filearchivedgc=on
 eos space config default space.wfe=on
 eos space config default space.wfe.ntx=100
 eos space config default taperestapi.status=on
 eos space config default taperestapi.stage=on
+eos space config default space.scanrate=0
+eos space config default space.scaninterval=0
 eos space config default space.token.generation=1
 eos attr -r set default=replica /eos
 eos attr -r set sys.forced.nstripes=1 /eos
@@ -31,12 +34,24 @@ useradd --uid 14002 --gid 1400 eosadmin2
 eos vid set membership "$(id -u eosadmin1)" +sudo
 eos vid set membership "$(id -u eosadmin2)" +sudo
 
-# Configure directories
 
 EOS_INSTANCE_NAME=ctaeos
 CTA_STORAGE_CLASS=ctaStorageClass
 CTA_PROC_DIR=/eos/${EOS_INSTANCE_NAME}/proc/cta
 CTA_WF_DIR=${CTA_PROC_DIR}/workflow
+
+# Test specific
+
+TAPE_FS_ID=65535
+eos space define tape
+eos fs add -m ${TAPE_FS_ID} tape localhost:1234 /does_not_exist tape
+
+# create tmp disk only directory for tests
+EOS_TMP_DIR=/eos/${EOS_INSTANCE_NAME}/tmp
+eos mkdir ${EOS_TMP_DIR}
+eos chmod 777 ${EOS_TMP_DIR}
+
+# Configure directories
 
 eos mkdir -p ${CTA_PROC_DIR}
 eos mkdir -p ${CTA_WF_DIR}
@@ -80,8 +95,3 @@ eos attr link ${CTA_WF_DIR} ${CTA_TEST_DIR} # Link workflows
 CTA_TEST_NO_P_DIR=${CTA_TEST_DIR}/no_prepare
 eos mkdir ${CTA_TEST_NO_P_DIR}
 eos attr set sys.acl=g:eosusers:rwx!d,u:poweruser1:rwx+d,u:poweruser2:rwx+d,z:'!'u'!'d ${CTA_TEST_NO_P_DIR}
-
-# Test specific
-TAPE_FS_ID=65535
-eos space define tape
-eos fs add -m ${TAPE_FS_ID} tape localhost:1234 /does_not_exist tape

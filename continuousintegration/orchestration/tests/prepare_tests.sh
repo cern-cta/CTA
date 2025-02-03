@@ -314,12 +314,6 @@ kubectl --namespace ${NAMESPACE} exec ${CTA_CLI_POD} -c cta-cli -- cta-admin act
     --activityregex ^T0Reprocess$                                    \
     --mountpolicy ctasystest --comment "ctasystest"
 
-# Clear power on sense generate during boot.
-for SG_DEVICE in $(lsscsi -g | grep tape | awk '{print $7}'); do
-  sg_modes $SG_DEVICE
-done
-
-
 echo "Labeling tapes:"
 # add all tapes
 for VID in "${TAPES[@]}"; do

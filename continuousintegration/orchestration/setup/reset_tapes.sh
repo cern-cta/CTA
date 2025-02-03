@@ -58,3 +58,9 @@ for library_device in $devices; do
     mtx -f /dev/${library_device} unload $(echo ${unload} | sed -e 's/^.*-slot//') $(echo ${unload} | sed -e 's/drive//;s/-.*//') || echo "COULD NOT UNLOAD TAPE"
   done
 done
+
+# Clear power on sense generate during boot.
+echo "Running SCSI MODE SENSE"
+for SG_DEVICE in $(lsscsi -g | grep tape | awk '{print $7}'); do
+  sg_modes $SG_DEVICE > /dev/null
+done

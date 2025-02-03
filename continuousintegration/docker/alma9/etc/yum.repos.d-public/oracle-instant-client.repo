@@ -1,4 +1,3 @@
-# Repository is disabled since there is no v21 version available for alma9
 [cta-oracle-instant-client]
 name=Oracle instant client
 baseurl=https://yum.oracle.com/repo/OracleLinux/OL9/oracle/instantclient23/$basearch
