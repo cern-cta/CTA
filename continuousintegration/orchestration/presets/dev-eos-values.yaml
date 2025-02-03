@@ -1,8 +1,8 @@
 
 global:
   # Note that the repository and tag are manually overriden by the create_instance script
-  repository: gitlab-registry.cern.ch/dss/eos/eos-ci
-  tag: 5.2.27
+  repository:
+  tag:
   pullPolicy: IfNotPresent
 
   eos:
@@ -47,10 +47,20 @@ mgm:
 
   extraEnv:
   - name: LD_PRELOAD
-    value: "/usr/lib64/libjemalloc.so.1"
+    value: "/usr/lib64/libjemalloc.so.2"
   # For some reason EOS is on another time zone, so set this to CET
   - name: TZ
     value: "CET"
+
+  # This is where the core dumps end up; this directory does not exist by default
+  extraVolumes:
+    volumeMounts:
+      - name: varlog-tmp
+        mountPath: /var/log/tmp
+    volumes:
+      - name: varlog-tmp
+        emptyDir: {}
+
 
 fst:
   replicaCount: 1
@@ -76,11 +86,20 @@ fst:
   - name: TZ
     value: "CET"
 
+  extraVolumes:
+    volumeMounts:
+      - name: varlog-tmp
+        mountPath: /var/log/tmp
+    volumes:
+      - name: varlog-tmp
+        emptyDir: {}
+
+
 qdb:
   replicaCount: 1
   extraEnv:
   - name: LD_PRELOAD
-    value: "/usr/lib64/libjemalloc.so.1"
+    value: "/usr/lib64/libjemalloc.so.2"
   - name: TZ
     value: "CET"
 
