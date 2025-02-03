@@ -18,21 +18,6 @@ tmp/
 Chart.lock
 **/get_helm.sh
 
-# Archive files
-
-# --- IDE-specific ignores ---
-
-# JetBrains
-.idea/
-*.iml
-*.iws
-out/
-workspace.xml
-
-# VSCode
-.vscode/
-*.code-workspace
-
 # --- C++ ignores ---
 
 # Build files
