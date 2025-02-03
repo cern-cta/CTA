@@ -29,17 +29,26 @@ namespace cta::common::dataStructures {
  * This struct holds location information of a specific tape file 
  */
 struct TapeFile {
-
   TapeFile();
 
-  TapeFile(const std::string& vid, uint64_t fSeq, uint64_t blockId, uint64_t fileSize,
-           uint8_t copyNb, time_t creationTime, const checksum::ChecksumBlob& checksumBlob)
-      : vid(vid), fSeq(fSeq), blockId(blockId), fileSize(fileSize),
-        copyNb(copyNb), creationTime(creationTime), checksumBlob(std::move(checksumBlob)) {}
+  TapeFile(const std::string& tpid,
+           uint64_t seq,
+           uint64_t blkId,
+           uint64_t flsize,
+           uint8_t cpNb,
+           time_t cTime,
+           const checksum::ChecksumBlob& checksum)
+      : vid(tpid),
+        fSeq(seq),
+        blockId(blkId),
+        fileSize(flsize),
+        copyNb(cpNb),
+        creationTime(cTime),
+        checksumBlob(std::move(checksum)) {}
 
-  bool operator==(const TapeFile &rhs) const;
+  bool operator==(const TapeFile& rhs) const;
 
-  bool operator!=(const TapeFile &rhs) const;
+  bool operator!=(const TapeFile& rhs) const;
 
   /**
    * The volume identifier of the tape on which the file has been written. 
@@ -71,19 +80,19 @@ struct TapeFile {
    * The time the file recorded in the catalogue. 
    */
   time_t creationTime;
-  
+
   /**
    * Set of checksum (type, value) pairs
    */
   checksum::ChecksumBlob checksumBlob;
-  
+
   /**
    * Returns true if this tape file matches the copy number passed in parameter.
    */
   bool matchesCopyNb(uint8_t copyNb) const;
 
-}; // struct TapeFile
+};  // struct TapeFile
 
-std::ostream &operator<<(std::ostream &os, const TapeFile &obj);
+std::ostream& operator<<(std::ostream& os, const TapeFile& obj);
 
-} // namespace cta::common::dataStructures
+}  // namespace cta::common::dataStructures
