@@ -32,6 +32,11 @@ struct TapeFile {
 
   TapeFile();
 
+  TapeFile(const std::string& vid, uint64_t fSeq, uint64_t blockId, uint64_t fileSize,
+           uint8_t copyNb, time_t creationTime, const checksum::ChecksumBlob& checksumBlob)
+      : vid(vid), fSeq(fSeq), blockId(blockId), fileSize(fileSize),
+        copyNb(copyNb), creationTime(creationTime), checksumBlob(std::move(checksumBlob)) {}
+
   bool operator==(const TapeFile &rhs) const;
 
   bool operator!=(const TapeFile &rhs) const;

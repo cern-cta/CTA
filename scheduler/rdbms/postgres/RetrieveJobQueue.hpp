@@ -249,7 +249,7 @@ struct RetrieveJobQueueRow {
 
     archiveFile.archiveFileID = rset.columnUint64NoOpt("ARCHIVE_FILE_ID");
     archiveFile.fileSize = rset.columnUint64NoOpt("SIZE_IN_BYTES");
-    archiveFile.checksumBlob.deserialize(rset.columnBlob("CHECKSUMBLOB"));
+    archiveFile.checksumBlob.deserialize(std::move(rset.columnBlob("CHECKSUMBLOB")));
     archiveFile.creationTime = rset.columnUint64NoOpt("CREATION_TIME");
     archiveFile.diskInstance = rset.columnStringNoOpt("DISK_INSTANCE");
     archiveFile.diskFileId = rset.columnStringNoOpt("DISK_FILE_ID");
@@ -264,16 +264,13 @@ struct RetrieveJobQueueRow {
     alternateBlockId = rset.columnStringNoOpt("ALTERNATE_BLOCK_IDS");
     // we should add here a method that will fill all
     // the alternative tape files from the alternate columns (unless there is just one !)
-    cta::common::dataStructures::TapeFile tf;
-    tf.vid = vid;
-    tf.fSeq = fSeq;
-    tf.blockId = blockId;
-    tf.fileSize = archiveFile.fileSize;
-    tf.copyNb = copyNb;
-    tf.creationTime = archiveFile.creationTime;
-    tf.checksumBlob = archiveFile.checksumBlob;
-    archiveFile.tapeFiles.push_back(tf);
-
+    archiveFile.tapeFiles.emplace_back(std::move(vid),
+                                       fSeq,
+                                       blockId,
+                                       archiveFile.fileSize,
+                                       copyNb,
+                                       archiveFile.creationTime,
+                                       std::move(archiveFile.checksumBlob));
     return *this;
   }
 
