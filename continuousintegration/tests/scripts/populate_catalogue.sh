@@ -1,20 +1,32 @@
 #!/bin/bash
+
+# Exit on first failure
+set -e
+
+# Usage ./populate_catalogue.sh <disk instance name>
+
+if [ "$#" -ne 1 ]; then
+    echo "Please provide a diskinstance name"
+    exit 1
+fi
+DISK_INSTANCE_NAME="$1"
+
 cta-admin diskinstance add \
-    --name "${EOS_INSTANCE_NAME}" \
+    --name "${DISK_INSTANCE_NAME}" \
     --comment "di"
 
 cta-admin virtualorganization add \
     --vo vo \
     --readmaxdrives 1 \
     --writemaxdrives 1 \
-    --diskinstance "${EOS_INSTANCE_NAME}" \
+    --diskinstance "${DISK_INSTANCE_NAME}" \
     --comment "vo"
 
 cta-admin virtualorganization add \
     --vo vo_repack \
     --readmaxdrives 1 \
     --writemaxdrives 1 \
-    --diskinstance "${EOS_INSTANCE_NAME}" \
+    --diskinstance "${DISK_INSTANCE_NAME}" \
     --comment "vo_repack" \
     --isrepackvo true
 
@@ -152,20 +164,20 @@ cta-admin mountpolicy add \
     --comment "ctasystest"
 
 cta-admin requestermountrule add \
-    --instance "${EOS_INSTANCE_NAME}" \
+    --instance "${DISK_INSTANCE_NAME}" \
     --name adm \
     --mountpolicy ctasystest --comment "ctasystest"
 
 ###
 # This rule exists to allow users from eosusers group to migrate files to tapes
 cta-admin groupmountrule add \
-    --instance "${EOS_INSTANCE_NAME}" \
+    --instance "${DISK_INSTANCE_NAME}" \
     --name eosusers \
     --mountpolicy ctasystest --comment "ctasystest"
 ###
 # This rule exists to allow users from powerusers group to recall files from tapes
 cta-admin groupmountrule add \
-    --instance "${EOS_INSTANCE_NAME}" \
+    --instance "${DISK_INSTANCE_NAME}" \
     --name powerusers \
     --mountpolicy ctasystest --comment "ctasystest"
 ###
@@ -181,22 +193,7 @@ cta-admin mountpolicy add \
 ###
 # This rule if for retrieves, and matches the retrieve activity used in the tests only
 cta-admin activitymountrule add \
-    --instance "${EOS_INSTANCE_NAME}" \
+    --instance "${DISK_INSTANCE_NAME}" \
     --name powerusers \
     --activityregex ^T0Reprocess$ \
     --mountpolicy ctasystest --comment "ctasystest"
-
-# add all tapes to default tape pool
-for ((i = 0; i < ${#TAPES[@]}; i++)); do
-    VID=${TAPES[${i}]}
-    cta-admin tape add \
-        --mediatype "LTO8" \
-        --purchaseorder "order" \
-        --vendor vendor \
-        --logicallibrary ${TAPEDRIVES_IN_USE[${i} % ${NB_TAPEDRIVES_IN_USE}]} \
-        --tapepool ctasystest \
-        --comment "ctasystest" \
-        --vid ${VID} \
-        --full false \
-        --comment "ctasystest"
-done

@@ -1,7 +1,6 @@
 import pytest
-import sys
-import time
-from stip.test_env import TestEnv
+from pathlib import Path
+from .helpers.test_env import TestEnv
 
 # In case we ever want to support ssh, simply add another option and do some parsing here
 # Return a different environment in that case
@@ -28,4 +27,16 @@ def env(request):
 def pytest_addoption(parser):
     parser.addoption("--namespace", action="store", help="Namespace for tests")
     parser.addoption("--connection-config", action="store", help="A yaml connection file specifying how to connect to each host")
+    parser.addoption("--no-setup", action="store_true", help="Skip the execution of test_setup")
 
+def pytest_collection_modifyitems(config, items):
+    """Automatically include test_setup.py every time pytest runs."""
+    if not config.getoption("--no-setup"):
+        setup_path = Path("system_tests/test_setup.py").resolve()
+        if not setup_path.exists():
+            raise FileNotFoundError(f"Required test suite '{setup_path}' not found!")
+        # Import test_setup.py to ensure pytest collects its tests
+        setup_module = pytest.Module.from_parent(items[0].session, path=setup_path)
+        setup_module.collect()
+        # Insert test_setup at the beginning to ensure it is executed first
+        items[:0] = setup_module.collect()
