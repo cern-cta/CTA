@@ -182,6 +182,13 @@ void EosNamespaceInjection::updateFxidAndDiskInstanceInCatalogue(const std::stri
   }
 
   {
+    const auto key = cta::admin::OptionString::DISK_FILE_ID;
+    const auto new_opt = admincmd->add_option_str();
+    new_opt->set_key(key);
+    new_opt->set_value(fxId);
+  }
+
+  {
     const auto key = cta::admin::OptionString::DISK_INSTANCE;
     const auto new_opt = admincmd->add_option_str();
     new_opt->set_key(key);

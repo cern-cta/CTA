@@ -1004,6 +1004,17 @@ std::string decimalToHexadecimal(const std::string& decimalNumber) {
   return fxIdStream.str();
 }
 
+std::string hexadecimalToDecimal(const std::string& hexadecimalNumber) {
+  try {
+    auto decimalNum = stol(hexadecimalNumber, nullptr, 16);
+    return std::to_string(decimalNum);
+  } catch (std::invalid_argument & ex) {
+    throw cta::exception::Exception(hexadecimalNumber + " is not a valid hexadecimal number.");
+  } catch (std::out_of_range & ex) {
+    throw cta::exception::Exception(hexadecimalNumber + " is out of range.");
+  }
+}
+
 // Check if uuid is correct
 bool isValidUUID(const std::string& uuid) {
   if (uuid.empty()) {

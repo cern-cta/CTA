@@ -64,15 +64,29 @@ TapeFileLsStream::TapeFileLsStream(const frontend::AdminCmdStream& requestMsg,
   cta::catalogue::TapeFileSearchCriteria searchCriteria;
 
   searchCriteria.vid = requestMsg.getOptional(OptionString::VID, &has_any);
-  // Disk file IDs can be a list or a single ID
-  auto diskFileId = requestMsg.getOptional(OptionString::FXID, &has_any);
-  searchCriteria.diskFileIds = requestMsg.getOptional(OptionStrList::FILE_ID, &has_any);
-  if(diskFileId.has_value()) {
-    if (auto fid = diskFileId.value(); !utils::isValidID(fid)) {
-      throw cta::exception::UserError(fid + " is not a valid file ID");
+
+  auto diskFileIdHex = requestMsg.getOptional(OptionString::FXID, &has_any);
+  auto diskFileIdStr = requestMsg.getOptional(OptionString::DISK_FILE_ID, &has_any);
+  if(diskFileIdHex && diskFileIdStr) {
+    throw exception::UserError("File ID can't be received in both string (" + diskFileIdStr.value() + ") and hexadecimal (" + diskFileIdHex.value() + ") formats");
+  }
+  if(diskFileIdHex) {
+    try {
+      diskFileIdStr = utils::hexadecimalToDecimal(diskFileIdHex.value());
+    } catch (exception::Exception &) {
+      throw cta::exception::UserError(diskFileIdHex.value() + " is not a valid hexadecimal file ID value");
     }
+  } else if(diskFileIdStr) {
+    if (!utils::isValidDecimal(diskFileIdStr.value()) && !utils::isValidUUID(diskFileIdStr.value())) {
+      throw cta::exception::UserError(diskFileIdStr.value() + " is not a valid decimal or UUID file ID value");
+    }
+  }
+
+  // Disk file IDs can be a list or a single ID
+  searchCriteria.diskFileIds = requestMsg.getOptional(OptionStrList::FILE_ID, &has_any);
+  if(diskFileIdStr) {
     if(!searchCriteria.diskFileIds) searchCriteria.diskFileIds = std::vector<std::string>();
-    searchCriteria.diskFileIds->push_back(diskFileId.value());
+    searchCriteria.diskFileIds->push_back(diskFileIdStr.value());
   }
   searchCriteria.diskInstance = requestMsg.getOptional(OptionString::INSTANCE, &has_any);
 

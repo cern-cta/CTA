@@ -508,6 +508,13 @@ std::string listToCommaSeparatedString(const std::list<std::string>& list);
 std::string decimalToHexadecimal(const std::string& decimalNumber);
 
 /**
+ * Converts a number from a hexadecimal number to a decimal number
+ * @param hexadecimalNumber The number that will be transformed
+ * @return the hexadecimal version of the number
+ */
+std::string hexadecimalToDecimal(const std::string& hexadecimalNumber);
+
+/**
  * Checks if a string is a valid UUID.
  * 
  * A valid UUID is a string that is exactly 36 characters long and adheres to the
