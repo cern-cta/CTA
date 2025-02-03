@@ -1,43 +1,50 @@
 import yaml
 from typing import Any
+import subprocess
 
-from hosts.client_host import ClientHost
-from hosts.cta_cli_host import CtaCliHost
-from hosts.cta_frontend_host import CtaFrontendHost
-from hosts.cta_rmcd_host import CtaRmcdHost
-from hosts.cta_taped_host import CtaTapedHost
-from hosts.eos_mgm_host import EosMgmHost
-from connections.remote_connection import RemoteConnection
-from connections.k8s_connection import K8sConnection
-from connections.ssh_connection import SSHConnection
+from .hosts.client_host import ClientHost
+from .hosts.cta_cli_host import CtaCliHost
+from .hosts.cta_frontend_host import CtaFrontendHost
+from .hosts.cta_rmcd_host import CtaRmcdHost
+from .hosts.cta_taped_host import CtaTapedHost
+from .hosts.eos_mgm_host import EosMgmHost
+from .connections.remote_connection import RemoteConnection
+from .connections.k8s_connection import K8sConnection
+from .connections.ssh_connection import SSHConnection
 
 
 # TODO: think about how to deal multiple replicas cleanly
 # Right now this doesn't extend nicely in case tests need different replicas
 # Maybe a dict and a sensible default?
 class TestEnv:
-    def __init__(self, client_conn: RemoteConnection,
-                        cta_cli_conn: RemoteConnection,
-                        cta_frontend_conn: RemoteConnection,
-                        cta_rmcd_conn: RemoteConnection,
-                        cta_taped_conn: RemoteConnection,
-                        eos_mgm_conn: RemoteConnection
-                        ):
+    def __init__(self,
+                 namespace: str,
+                 client_conn: RemoteConnection,
+                 cta_cli_conn: RemoteConnection,
+                 cta_frontend_conn: RemoteConnection,
+                 cta_rmcd_conn: RemoteConnection,
+                 cta_taped_conn: RemoteConnection,
+                 eos_mgm_conn: RemoteConnection
+                 ):
         self.client = ClientHost(client_conn)
         self.ctacli = CtaCliHost(cta_cli_conn)
         self.ctafrontend = CtaFrontendHost(cta_frontend_conn)
         self.ctarmcd = CtaRmcdHost(cta_rmcd_conn)
         self.ctataped = CtaTapedHost(cta_taped_conn)
         self.eosmgm = EosMgmHost(eos_mgm_conn)
+         # This is necessary until we have migrated all the current scripts
+         # Of course it doesn't make sense to have a single namespace when in theory pods can reside in different ones
+        self.namespace = namespace
 
     @staticmethod
     def fromNamespace(namespace: str):
         return TestEnv(
+            namespace=namespace,
             client_conn=K8sConnection(namespace, "client-0", "client"),
-            cta_cli_conn=K8sConnection(namespace, "cta-cli-0", "client"),
-            cta_frontend_conn=K8sConnection(namespace, "cta-frontend-0", "client"),
+            cta_cli_conn=K8sConnection(namespace, "cta-cli-0", "cta-cli"),
+            cta_frontend_conn=K8sConnection(namespace, "cta-frontend-0", "cta-frontend"),
             cta_rmcd_conn=K8sConnection(namespace, "cta-tpsrv01-0", "rmcd"),
-            cta_taped_conn=K8sConnection(namespace, "cta-tpsrv01-0", "taped"),
+            cta_taped_conn=K8sConnection(namespace, "cta-tpsrv01-0", "taped-0"),
             eos_mgm_conn=K8sConnection(namespace, "eos-mgm-0", "eos-mgm"),
         )
 
@@ -73,6 +80,7 @@ class TestEnv:
                 raise ValueError("Invalid connection configuration: must specify either 'k8s' or 'ssh'")
 
         return TestEnv(
+            namespace="not-supported",
             client_conn=create_connection(config, "client"),
             cta_cli_conn=create_connection(config, "ctacli"),
             cta_frontend_conn=create_connection(config, "ctafrontend"),
@@ -80,3 +88,7 @@ class TestEnv:
             cta_taped_conn=create_connection(config, "ctataped"),
             eos_mgm_conn=create_connection(config, "eosmgm"),
         )
+
+    # Convenience function
+    def runCommand(self, command: str) -> subprocess.CompletedProcess[bytes]:
+        return subprocess.run(command, shell=True)

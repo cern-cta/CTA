@@ -1,6 +1,6 @@
-from typing import Any
 import subprocess
-from remote_connection import RemoteConnection
+
+from .remote_connection import RemoteConnection
 
 class SSHConnection(RemoteConnection):
 

@@ -1,11 +1,11 @@
-from connections.remote_connection import RemoteConnection
+from ..connections.remote_connection import RemoteConnection
 from abc import ABC
 
 class RemoteHost(ABC):
     def __init__(self, conn: RemoteConnection):
         self.conn = conn
 
-    def run(self, command: str) -> bool:
+    def exec(self, command: str) -> bool:
         return self.conn.run(command)
 
     def copyTo(self, src_path: str, dst_path: str) -> bool:
