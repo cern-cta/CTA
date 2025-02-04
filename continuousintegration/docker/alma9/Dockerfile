@@ -42,6 +42,11 @@ RUN dnf install -y \
     # logrotate files must be 0644 or 0444
     chmod 0644 /etc/logrotate.d/*
 
+# We add the cta user and tape group here so that we can consistently reference them in the Helm chart
+# when changing keytab ownership
+RUN groupadd -g 33 tape && \
+    useradd -m -u 1000 -g tape cta
+
 # Copy pre-built RPMs into the local repository directory
 COPY image_rpms ${CTAREPODIR}/RPMS/x86_64
 
