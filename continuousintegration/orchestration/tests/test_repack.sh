@@ -633,6 +633,8 @@ repackTapeRepair() {
        echo "archivedFiles ($archivedFiles) == totalFilesToArchive ($totalFilesToArchive), OK"
     fi
 
+    # For now manually remove the files in EOS; they were copied there by root so it seems that the tape daemon is not allowed to remove them even though the permissions are set 1777
+    kubectl -n ${NAMESPACE} exec ${EOS_MGM_POD} -c eos-mgm -- eos rm -rf $bufferDirectory
     removeRepackRequest ${VID_TO_REPACK}
     echo "Setting the tape ${VID_TO_REPACK} back to ACTIVE"
     modifyTapeState ${VID_TO_REPACK} ACTIVE
@@ -742,6 +744,9 @@ repackTapeRepairNoRecall() {
     else
        echo "archivedFiles ($archivedFiles) == totalFilesToArchive ($totalFilesToArchive), OK"
     fi
+
+    # For now manually remove the files in EOS; they were copied there by root so it seems that the tape daemon is not allowed to remove them
+    kubectl -n ${NAMESPACE} exec ${EOS_MGM_POD} -c eos-mgm -- eos rm -rf $bufferDirectory
 
     removeRepackRequest ${VID_TO_REPACK}
     echo "Setting the tape ${VID_TO_REPACK} back to ACTIVE"
