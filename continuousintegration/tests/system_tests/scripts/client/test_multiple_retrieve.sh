@@ -15,6 +15,7 @@
 #               granted to it by virtue of its status as an Intergovernmental Organization or
 #               submit itself to any jurisdiction.
 
+set -e
 
 ################################################################################
 # DESCRIPTION
@@ -60,7 +61,7 @@ fi
 # get some common useful helpers for krb5
 . /root/client_helper.sh
 
-eospower_kdestroy
+eospower_kdestroy &>/dev/null || true
 eospower_kinit
 
 FAILED_LIST=$(mktemp)

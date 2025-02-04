@@ -33,6 +33,8 @@ class TestEnv:
         self.namespace = namespace
         # TODO: this should eventually be defined elsewhere
         self.disk_instance_name="ctaeos"
+        self.eos_base_dir="/eos/ctaeos"
+        self.eos_preprod_dir=f"{self.eos_base_dir}/preprod"
 
     @staticmethod
     def fromNamespace(namespace: str):
@@ -92,3 +94,11 @@ class TestEnv:
             cta_taped_conn=create_connections(config, "ctataped"),
             eos_mgm_conn=create_connections(config, "eosmgm"),
         )
+
+    # Mostly a convenience function that is arguably not very clean, but that is for later
+    def execLocal(self, command: str, capture_output = False, throw_on_failure = True):
+        full_command = f"bash -c \"{command}\""
+        result = subprocess.run(full_command, shell=True, capture_output=capture_output)
+        if throw_on_failure and result.returncode != 0:
+            raise RuntimeError(f"local exec of {full_command} failed with exit code {result.returncode}: {result.stderr}")
+        return result

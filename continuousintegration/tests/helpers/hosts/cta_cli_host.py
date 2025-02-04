@@ -26,7 +26,7 @@ class CtaCliHost(RemoteHost):
         seconds_passed = 0
 
         while seconds_passed < timeout:
-            drives_info = json.loads(self.exec("cta-admin --json drive ls"))
+            drives_info = json.loads(self.execWithOutput("cta-admin --json drive ls"))
             all_in_desired_status: bool = True
             for drive in drives_info:
                 if drive["driveStatus"] != desired_status:

@@ -15,6 +15,7 @@
 #               granted to it by virtue of its status as an Intergovernmental Organization or
 #               submit itself to any jurisdiction.
 
+set -e
 
 ################################################################################
 # DESCRIPTION
@@ -29,7 +30,7 @@ EOS_MGM_HOST="ctaeos"
 CTA_TEST_DIR=/eos/ctaeos/cta
 TEST_FILE_NAME="empty_file"
 
-eosadmin_kdestroy
+eosadmin_kdestroy &>/dev/null || true
 eosadmin_kinit
 
 echo "Trying to archive a 0-length"

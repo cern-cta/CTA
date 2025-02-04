@@ -15,6 +15,7 @@
 #               granted to it by virtue of its status as an Intergovernmental Organization or
 #               submit itself to any jurisdiction.
 
+set -e
 
 # Get list of files currently on tape.
 INITIALFILESONTAPE=$((${NB_FILES}*${NB_DIRS}))

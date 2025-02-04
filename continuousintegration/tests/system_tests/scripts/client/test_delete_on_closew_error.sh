@@ -15,6 +15,7 @@
 #               granted to it by virtue of its status as an Intergovernmental Organization or
 #               submit itself to any jurisdiction.
 
+set -e
 
 ################################################################################
 # DESCRIPTION
@@ -47,7 +48,7 @@ error()
 
 # get Krb5 credentials
 . /root/client_helper.sh
-eosadmin_kdestroy
+eosadmin_kdestroy &>/dev/null || true
 eosadmin_kinit
 
 

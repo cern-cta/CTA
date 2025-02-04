@@ -15,6 +15,8 @@
 #               granted to it by virtue of its status as an Intergovernmental Organization or
 #               submit itself to any jurisdiction.
 
+set -e
+
 compare_timestamps() {
   local ts1="$1"
   local ts2="$2"
@@ -44,7 +46,7 @@ TEST_FILE_NAME=$(uuidgen | sed 's/-//g')
 TEST_DIR=/eos/ctaeos/cta
 
 # get some common useful helpers for krb5
-eospower_kdestroy
+eospower_kdestroy &>/dev/null || true
 eospower_kinit
 
 # Archive a file

@@ -56,7 +56,7 @@ NB_PROCS=200
 NB_DRIVES=10
 
 # Need CTAADMIN_USER krb5
-admin_kdestroy &>/dev/null
+admin_kdestroy &>/dev/null || true
 admin_kinit &>/dev/null
 
 echo "Putting all tape drives up"

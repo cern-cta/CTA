@@ -15,6 +15,8 @@
 #               granted to it by virtue of its status as an Intergovernmental Organization or
 #               submit itself to any jurisdiction.
 
+set -e
+
 ################################################################################
 # DESCRIPTION
 #
@@ -63,10 +65,10 @@ EOS_NONE_BASEDIR=$EOS_BASEDIR/none              # Does not exist: for testing no
 # get some common useful helpers for krb5
 . /root/client_helper.sh
 
-eospower_kdestroy &>/dev/null
+eospower_kdestroy &>/dev/null || true
 eospower_kinit &>/dev/null
 
-admin_kdestroy &>/dev/null
+admin_kdestroy &>/dev/null || true
 admin_kinit &>/dev/null
 
 

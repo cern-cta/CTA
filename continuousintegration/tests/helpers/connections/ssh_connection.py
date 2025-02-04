@@ -23,7 +23,7 @@ class SSHConnection(RemoteConnection):
         if throw_on_failure and result.returncode != 0:
             raise RuntimeError(f"scp failed with exit code {result.returncode}: {result.stderr}")
         if permissions:
-            self.exec(f"chmod {permissions} {dst_path}")
+            self.exec(f"chmod -R {permissions} {dst_path}")
 
     def copyFrom(self, src_path: str, dst_path: str, throw_on_failure = True) -> None:
         full_command = f"scp {self.user}@{self.host}:{src_path} {dst_path}"

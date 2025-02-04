@@ -15,6 +15,7 @@
 #               granted to it by virtue of its status as an Intergovernmental Organization or
 #               submit itself to any jurisdiction.
 
+set -e
 
 # Quick function to abort the prepare of files.
 # $1: file containing even number of lines, odd lines == req id; even lines == file_name
@@ -30,7 +31,7 @@ export -f abortFile
 # Put drives down.
 echo "$(date +%s): Sleeping 3 seconds to let previous sessions finish."
 sleep 3
-admin_kdestroy &>/dev/null
+admin_kdestroy &>/dev/null || true
 admin_kinit &>/dev/null
 INITIAL_DRIVES_STATE=$(admin_cta --json dr ls)
 echo INITIAL_DRIVES_STATE:

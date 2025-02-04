@@ -203,10 +203,9 @@ echo "$(date +%s): ERROR_DIR=${ERROR_DIR}"
 
 # Get kerberos credentials for user1
 user_kinit
-klist -s || die "Cannot get kerberos credentials for user ${USER}"
 
 # Get kerberos credentials for poweruser1
-eospower_kdestroy
+eospower_kdestroy &>/dev/null || true
 eospower_kinit
 
 # Get kerberos credentials for ctaadmin2

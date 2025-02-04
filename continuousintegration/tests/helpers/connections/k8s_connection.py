@@ -24,7 +24,7 @@ class K8sConnection(RemoteConnection):
         if throw_on_failure and result.returncode != 0:
             raise RuntimeError(f"kubectl cp failed with exit code {result.returncode}: {result.stderr}")
         if permissions:
-            self.exec(f"chmod {permissions} {dst_path}")
+            self.exec(f"chmod -R {permissions} {dst_path}")
 
     def copyFrom(self, src_path: str, dst_path: str, throw_on_failure = True) -> None:
         full_command = f"kubectl cp {self.namespace}/{self.pod}:{src_path} {dst_path} -c {self.container}"

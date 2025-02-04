@@ -19,11 +19,11 @@
 if [[ "${CLI_TARGET}" == "xrd" ]]; then
   archive='XRD_LOGLEVEL=Dump xrdcp - root://${EOS_MGM_HOST}/${EOS_DIR}/${subdir}/${subdir}TEST_FILE_NUM'
 
-  retrieve='XRD_LOGLEVEL=Dump KRB5CCNAME=/tmp/${EOSPOWER_USER}/krb5cc_0 XrdSecPROTOCOL=krb5 xrdfs ${EOS_MGM_HOST} prepare -s ${EOS_DIR}/${subdir}/${subdir}TEST_FILE_NAME?activity=T0Reprocess'
+  retrieve='XRD_LOGLEVEL=Dump KRB5CCNAME=/tmp/${EOSPOWER_USER}/krb5cc_0 XrdSecPROTOCOL=krb5 xrdfs root://${EOS_MGM_HOST} prepare -s ${EOS_DIR}/${subdir}/${subdir}TEST_FILE_NAME?activity=T0Reprocess'
 
   evict_prefix='${EOS_DIR}/${subdir}/${subdir}'
   evict_count=40
-  evict='XrdSecPROTOCOL=krb5 KRB5CCNAME=/tmp/${EOSPOWER_USER}/krb5cc_0  xrdfs ${EOS_MGM_HOST} prepare -e FILE_LIST'
+  evict='XrdSecPROTOCOL=krb5 KRB5CCNAME=/tmp/${EOSPOWER_USER}/krb5cc_0  xrdfs root://${EOS_MGM_HOST} prepare -e FILE_LIST'
 
   delete='KRB5CCNAME=/tmp/${EOSPOWER_USER}/krb5cc_0 XrdSecPROTOCOL=krb5 eos root://${EOS_MGM_HOST} rm -Fr ${EOS_DIR} &'
 

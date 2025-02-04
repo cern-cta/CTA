@@ -15,6 +15,7 @@
 #               granted to it by virtue of its status as an Intergovernmental Organization or
 #               submit itself to any jurisdiction.
 
+set -e
 
 echo "$(date +%s): Trigerring EOS evict workflow as poweruser1:powerusers (12001:1200)"
 
