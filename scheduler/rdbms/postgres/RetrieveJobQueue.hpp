@@ -563,7 +563,7 @@ struct RetrieveJobQueueRow {
   moveJobsToDbQueue(Transaction& txn,
                     RetrieveJobStatus status,
                     const SchedulerDatabase::RetrieveMount::MountInfo& mountInfo,
-                    std::vector<std::string> noSpaceDiskSystemNames,
+                    std::vector<std::string>& noSpaceDiskSystemNames,
                     uint64_t maxBytesRequested,
                     uint64_t limit);
   /**
