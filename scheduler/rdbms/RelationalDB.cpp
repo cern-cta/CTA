@@ -409,8 +409,7 @@ RelationalDB::queueRetrieve(cta::common::dataStructures::RetrieveRequest& rqst,
     rreqMutex.release();
     rReq->insert();
     sqlconn.reset();
-    logContext.log(cta::log::INFO,
-                   "In RelationalDB::queueRetrieve(): Finished enqueueing request.");
+    logContext.log(cta::log::INFO, "In RelationalDB::queueRetrieve(): Finished enqueueing request.");
     return ret;
   } catch (exception::Exception& ex) {
     logContext.log(cta::log::ERR,
@@ -933,24 +932,28 @@ RelationalDB::getRetrieveQueuesCleanupInfo(log::LogContext& logContext) {
 }
 
 std::vector<std::string> RelationalDB::getActiveSleepDiskSystemNamesToFilter() {
+  std::vector<std::string> validDiskNames;
+  if (diskSystemSleepCacheMap.empty()) {
+    return validDiskNames;
+  }
   cta::threading::MutexLocker ml(m_diskSystemSleepCacheMutex);
   uint64_t currentTime = std::chrono::system_clock::to_time_t(std::chrono::system_clock::now());
 
-  std::vector<std::string> validDiskNames;
+  validDiskNames.reserve(diskSystemSleepCacheMap.size());
 
-  // Iterate over the map
-  for (auto it = diskSystemSleepCacheMap.begin(); it != diskSystemSleepCacheMap.end();) {
+  auto it = diskSystemSleepCacheMap.begin();
+  while (it != diskSystemSleepCacheMap.end()) {
     const std::string& diskName = it->first;
     const DiskSleepEntry& entry = it->second;
-
-    // Check if the entry is expired
     if (currentTime - entry.timestamp > entry.sleepTime) {
+      // erase; iterator is invalidated, but the next one is returned
       it = diskSystemSleepCacheMap.erase(it);
     } else {
       validDiskNames.push_back(diskName);
       ++it;
     }
   }
+
   return validDiskNames;
 }
 

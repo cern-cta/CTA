@@ -25,7 +25,7 @@ std::pair<rdbms::Rset, uint64_t>
 RetrieveJobQueueRow::moveJobsToDbQueue(Transaction& txn,
                                        RetrieveJobStatus status,
                                        const SchedulerDatabase::RetrieveMount::MountInfo& mountInfo,
-                                       std::vector<std::string> noSpaceDiskSystemNames,
+                                       std::vector<std::string>& noSpaceDiskSystemNames,
                                        uint64_t maxBytesRequested,
                                        uint64_t limit) {
   /* using write row lock FOR UPDATE for the select statement
@@ -39,17 +39,11 @@ RetrieveJobQueueRow::moveJobsToDbQueue(Transaction& txn,
   // we first check if there are any disk systems
   // we should avoid querying jobs for
   std::string sql_dsn_exclusion_part = "";
-  std::vector<std::string> dsnVec;
-  std::vector<std::string> dsnPlaceholderVec;
   if (!noSpaceDiskSystemNames.empty()){
-    dsnVec.reserve(noSpaceDiskSystemNames.size());
-    dsnPlaceholderVec.reserve(noSpaceDiskSystemNames.size());
     sql_dsn_exclusion_part = R"SQL( AND DISK_SYSTEM_NAME != ALL(ARRAY[)SQL";
     size_t j = 1;
     for (const auto& dsn : noSpaceDiskSystemNames) {
-      dsnVec.push_back(dsn);
-      std::string plch = std::string(":DSN") + std::to_string(j);
-      dsnPlaceholderVec.push_back(plch);
+      std::string plch = std::string(":") + dsn + std::to_string(j);
       sql_dsn_exclusion_part += plch;
       if (j != noSpaceDiskSystemNames.size()) {
         sql_dsn_exclusion_part += std::string(",");
@@ -207,9 +201,12 @@ RetrieveJobQueueRow::moveJobsToDbQueue(Transaction& txn,
   stmt.bindUint32(":LIMIT", limit);
   stmt.bindUint64(":MOUNT_ID", mountInfo.mountId);
   stmt.bindUint64(":SAME_MOUNT_ID", mountInfo.mountId);
-  size_t sz = dsnPlaceholderVec.size();
-  for (size_t i = 0; i < sz; ++i) {
-    stmt.bindString(dsnPlaceholderVec[i], dsnVec[i]);
+  size_t j = 1;
+  for (const auto& dsn : noSpaceDiskSystemNames) {
+    std::string plch = std::string(":") + dsn + std::to_string(j);
+    stmt.bindString(plch, dsn);
+    sql_dsn_exclusion_part += plch;
+    j++;
   }
   stmt.bindString(":DRIVE", mountInfo.drive);
   stmt.bindString(":HOST", mountInfo.host);
