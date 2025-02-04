@@ -17,13 +17,13 @@
 
 #pragma once
 
-#include "../cmdline/CtaAdminCmdParse.hpp"
+#include "cmdline/CtaAdminCmdParse.hpp"
 #include "version.h"
 #include <grpcpp/grpcpp.h>
 // #include <grpcpp/resource_quota.h>
 // #include <grpcpp/security/server_credentials.h>
 
-// #include <scheduler/Scheduler.hpp>
+// #include <scheduler/Scheduler.hpp> // what happens if I skip this?
 // #include "common/log/Logger.hpp"
 #include "cta_frontend.pb.h"
 #include "cta_frontend.grpc.pb.h"

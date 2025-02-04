@@ -65,9 +65,10 @@ target_link_libraries(cta-admin-grpc-nonstream
   ${PROTOBUF3_LIBRARIES}
   ${GRPC_GRPC++_LIBRARY}
   ${GRPC_LIBRARY}
-  ProtoCtaFrontend ctacommon stdc++fs ctatapedaemoncommon ctaobjectstore
+  ProtoCtaFrontend ctacommon stdc++fs ctatapedaemoncommon ctascheduler ctaobjectstore ctacatalogue
 )
-set_property (TARGET cta-admin APPEND PROPERTY INSTALL_RPATH ${PROTOBUF3_RPATH})
+set_property (TARGET cta-admin-grpc-nonstream APPEND PROPERTY INSTALL_RPATH ${PROTOBUF3_RPATH})
+install(TARGETS cta-admin-grpc-nonstream DESTINATION usr/bin)
 
 ##
 ## cta-frontend-grpc-stream-server
