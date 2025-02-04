@@ -42,6 +42,8 @@ RetrieveJobQueueRow::moveJobsToDbQueue(Transaction& txn,
   std::vector<std::string> dsnVec;
   std::vector<std::string> dsnPlaceholderVec;
   if (!noSpaceDiskSystemNames.empty()){
+    dsnVec.reserve(noSpaceDiskSystemNames.size());
+    dsnPlaceholderVec.reserve(noSpaceDiskSystemNames.size());
     sql_dsn_exclusion_part = R"SQL( AND DISK_SYSTEM_NAME != ALL(ARRAY[)SQL";
     size_t j = 1;
     for (const auto& dsn : noSpaceDiskSystemNames) {
@@ -49,7 +51,7 @@ RetrieveJobQueueRow::moveJobsToDbQueue(Transaction& txn,
       std::string plch = std::string(":DSN") + std::to_string(j);
       dsnPlaceholderVec.push_back(plch);
       sql_dsn_exclusion_part += plch;
-      if (&dsn != &noSpaceDiskSystemNames.back()) {
+      if (j != noSpaceDiskSystemNames.size()) {
         sql_dsn_exclusion_part += std::string(",");
       }
       j++;
