@@ -27,17 +27,18 @@ def test_version_info(env):
 @pytest.mark.order(4)
 def test_populate_catalogue(env):
     print("Populating catalogue")
-    env.ctacli[0].copyTo("scripts/populate_catalogue.sh", "/root/populate_catalogue.sh", permissions="+x")
+    # TODO: figure out a nice way to do these paths
+    env.ctacli[0].copyTo("system_tests/scripts/populate_catalogue.sh", "/root/populate_catalogue.sh", permissions="+x")
     env.ctacli[0].exec(f"./root/populate_catalogue.sh {env.disk_instance_name}")
 
 @pytest.mark.order(5)
 def test_populate_catalogue_tapes(env):
-    tape_drives_in_use: list[str] = [taped.execWithOutput("printenv DRIVE_NAME") for taped in env.ctataped]
+    tape_drives_in_use: list[str] = [taped.drive_name() for taped in env.ctataped]
     print("Using drives:")
     for drive in tape_drives_in_use:
         print(f"  - {drive}")
 
-    libraries_in_use: list[str] = [taped.execWithOutput("printenv LIBRARY_DEVICE") for taped in env.ctataped]
+    libraries_in_use: list[str] = [taped.library_device() for taped in env.ctataped]
     print("Using libraries:")
     for lib in libraries_in_use:
         print(f"  - {lib}")
@@ -75,3 +76,4 @@ def test_populate_catalogue_tapes(env):
 @pytest.mark.order(6)
 def test_set_all_drives_up(env):
     env.ctacli[0].set_all_drives_up()
+

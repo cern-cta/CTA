@@ -47,7 +47,7 @@ fi
 # get some common useful helpers for krb5
 . /root/client_helper.sh
 
-eospower_kdestroy
+eospower_kdestroy &>/dev/null || true
 eospower_kinit
 
 echo "xrdcp /etc/group root://${EOS_MGM_HOST}//eos/ctaeos/cta/${TEST_FILE_NAME}"

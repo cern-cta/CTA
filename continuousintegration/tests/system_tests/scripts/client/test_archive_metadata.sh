@@ -15,6 +15,8 @@
 #               granted to it by virtue of its status as an Intergovernmental Organization or
 #               submit itself to any jurisdiction.
 
+set -e
+
 usage() {
   echo "Usage: $0 <metadata>"
   echo ""
@@ -29,10 +31,10 @@ fi
 
 . /root/client_helper.sh
 
-admin_kdestroy &>/dev/null
+admin_kdestroy &>/dev/null || true
 admin_kinit &>/dev/null
 
-eospower_kdestroy &>/dev/null
+eospower_kdestroy &>/dev/null || true
 eospower_kinit &>/dev/null
 
 FILE_LOCATION=eos/ctaeos/preprod/test_archive-metadata
@@ -52,7 +54,7 @@ echo
 
 # Delete the file in case it exists
 echo "Removing potentially existing file"
-eos root://${EOS_MGM_HOST} rm ${FILE_LOCATION} 2>/dev/null
+eos root://${EOS_MGM_HOST} rm ${FILE_LOCATION} 2>/dev/null || true
 
 # Do a curl request
 TMP_FILE=$(mktemp)

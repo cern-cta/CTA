@@ -23,7 +23,6 @@ def env(request):
         print(f"Using connection config: {connection_config}")
         return TestEnv.fromConfig(connection_config)
 
-
 def pytest_addoption(parser):
     parser.addoption("--namespace", action="store", help="Namespace for tests")
     parser.addoption("--connection-config", action="store", help="A yaml connection file specifying how to connect to each host")

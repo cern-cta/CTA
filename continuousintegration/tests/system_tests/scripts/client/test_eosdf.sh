@@ -13,6 +13,8 @@
 #               granted to it by virtue of its status as an Intergovernmental Organization or
 #               submit itself to any jurisdiction.
 
+set -e
+
 #default CI EOS instance
 EOS_MGM_HOST="ctaeos"
 EOS_INSTANCE_NAME="ctaeos"
@@ -29,7 +31,7 @@ FULL_EOSDF_BUFFER_URL=root://${EOS_INSTANCE_NAME}/${EOSDF_BUFFER_BASEDIR}
 . /root/client_helper.sh ## wait_for_archive is defined in this file
 
 # get some common useful helpers for krb5
-eospower_kdestroy
+eospower_kdestroy &>/dev/null || true
 eospower_kinit
 
 # Get kerberos credentials for user1

@@ -162,10 +162,10 @@ touch ${log_file}
 EOS_INSTANCE_NAME="ctaeos"
 EOS_MGM_HOST="ctaeos"
 
-admin_kdestroy &>/dev/null
+admin_kdestroy &>/dev/null || true
 admin_kinit &>/dev/null
 
-eospower_kdestroy &>/dev/null
+eospower_kdestroy &>/dev/null || true
 eospower_kinit &>/dev/null
 
 admin_cta() {

@@ -15,7 +15,7 @@
 #               granted to it by virtue of its status as an Intergovernmental Organization or
 #               submit itself to any jurisdiction.
 
-
+set -e
 
 TEST_DIR=${EOS_BASEDIR}
 TEST_FILE_NAME=$(uuidgen)

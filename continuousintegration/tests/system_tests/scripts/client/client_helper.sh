@@ -31,6 +31,9 @@
 # admin_kdestroy: kdestroy for CTAADMIN_USER
 # admin_cta: runs a cta command as CTAADMIN_USER
 
+
+# TODO: this should be moved to the client host python class
+
 EOSPOWER_USER="poweruser1"
 CTAADMIN_USER="ctaadmin2"
 EOSADMIN_USER="eosadmin1"
