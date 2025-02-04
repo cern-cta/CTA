@@ -41,7 +41,8 @@ spec:
         - |
           cp /root/sss_keytab/input/eos.keytab /root/sss_keytab/output/cta-taped.sss.keytab;
           chmod 400 /root/sss_keytab/output/cta-taped.sss.keytab;
-          chown -R cta:tape /root/sss_keytab/output/cta-taped.sss.keytab
+          # Make CTA user owner (group 33 is tape)
+          chown -R 1000:33 /root/sss_keytab/output/cta-taped.sss.keytab
         volumeMounts:
           - name: eos-sss-keytab
             mountPath: /root/sss_keytab/input/eos.keytab
