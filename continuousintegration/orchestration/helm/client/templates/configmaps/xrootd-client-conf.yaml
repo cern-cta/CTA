@@ -6,4 +6,4 @@ metadata:
     {{- include "common.labels.standard" . | nindent 4 }}
 data:
   client.conf: |-
-    XrdSecPROTOCOL=krb5,unix
+    sec.protocol krb5,unix
