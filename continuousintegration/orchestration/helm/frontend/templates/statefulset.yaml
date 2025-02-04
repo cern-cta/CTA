@@ -57,9 +57,6 @@ spec:
           # Make CTA user owner (group 33 is tape)
           chown -R 1000:33 /root/sss_keytab/output/eos.sss.keytab
         volumeMounts:
-        - name: eos-sss-keytab
-          mountPath: /root/sss_keytab/input/eos.sss.keytab
-          subPath: eos.sss.keytab
         - name: eos-sss-keytab-fixedownership
           mountPath: /root/sss_keytab/output
       containers:
