@@ -257,6 +257,7 @@ uint64_t ArchiveJobQueueRow::requeueFailedJob(Transaction& txn,
         RETURNING *
     )
     INSERT INTO ARCHIVE_PENDING_QUEUE (
+    JOB_ID,
     ARCHIVE_REQUEST_ID,
     REQUEST_JOB_COUNT,
     TAPE_POOL,
@@ -297,6 +298,7 @@ uint64_t ArchiveJobQueueRow::requeueFailedJob(Transaction& txn,
     FAILURE_LOG,
     MOUNT_ID)
         SELECT
+            M.JOB_ID,
             M.ARCHIVE_REQUEST_ID,
             M.REQUEST_JOB_COUNT,
             M.TAPE_POOL,
@@ -381,7 +383,8 @@ ArchiveJobQueueRow::requeueJobBatch(Transaction& txn, ArchiveJobStatus status, c
         RETURNING *
     )
     INSERT INTO ARCHIVE_PENDING_QUEUE (
-                ARCHIVE_REQUEST_ID,
+    JOB_ID,
+    ARCHIVE_REQUEST_ID,
     REQUEST_JOB_COUNT,
     TAPE_POOL,
     MOUNT_POLICY,
@@ -420,6 +423,7 @@ ArchiveJobQueueRow::requeueJobBatch(Transaction& txn, ArchiveJobStatus status, c
     MOUNT_ID,
     FAILURE_LOG)
         SELECT
+            M.JOB_ID,
             M.ARCHIVE_REQUEST_ID,
             M.REQUEST_JOB_COUNT,
             M.TAPE_POOL,
