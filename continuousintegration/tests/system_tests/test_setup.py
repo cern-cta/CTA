@@ -55,7 +55,7 @@ def test_populate_catalogue_tapes(env):
     for tape in tapes:
         print(f"  - {tape}")
 
-    # TODO: collect and execute at once
+    # TODO: collect and execute at once?
 
     for idx, tape in enumerate(tapes):
         # The logical libraries correspond to the tape drive names by design.
@@ -77,3 +77,16 @@ def test_populate_catalogue_tapes(env):
 def test_set_all_drives_up(env):
     env.ctacli[0].set_all_drives_up()
 
+
+
+# For some mightily mysterious reason, EOS does not want to recursively remove files (really?)
+# Which makes this not work
+# Which makes my life annoying
+# Thanks EOS
+# @pytest.mark.order(0)
+# def test_cleanup_eos(env):
+    # env.eosmgm[0].exec("eos rm -rf /eos/ctaeos/cta/* 2>/dev/null")
+    # env.eosmgm[0].exec("eos rm -rf /eos/ctaeos/preprod/* 2>/dev/null")
+
+# At some point the cleanup should be in a separate suite. This allows for skipping of the cleanup
+# As this can potentially take some extra time and is completely unnecessary with a fresh instance
