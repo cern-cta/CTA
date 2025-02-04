@@ -11,6 +11,7 @@
 #include "cta_frontend.pb.h"
 #include "cta_frontend.grpc.pb.h"
 #include "frontend/common/FrontendService.hpp"
+#include "frontend/common/AdminCmd.hpp"
 
 using cta::Scheduler;
 using cta::catalogue::Catalogue;
@@ -43,5 +44,7 @@ public:
   Status CancelRetrieve(::grpc::ServerContext* context, const cta::xrd::Request* request, cta::xrd::Response* response) noexcept;
   Status Delete(::grpc::ServerContext* context, const cta::xrd::Request* request, cta::xrd::Response* response) noexcept;
   Status GenericRequest(::grpc::ServerContext* context, const cta::xrd::Request* request, cta::xrd::Response* response);
+  // Non-streaming cta-admin commands interface
+  Status Admin(::grpc::ServerContext* context, const cta::xrd::Request* request, cta::xrd::Response* response);
 };
 } // namespace cta::frontend::grpc

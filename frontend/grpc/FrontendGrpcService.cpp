@@ -32,8 +32,13 @@ namespace cta::frontend::grpc {
 
 Status
 CtaRpcImpl::GenericRequest(::grpc::ServerContext* context, const cta::xrd::Request* request, cta::xrd::Response* response) {
+  // add a log line here, ok?
   try {
     cta::eos::Client client = request->notification().cli();
+    // apparently I do not properly setup the clientIdentity stuff - username is not setup, should match event.wf().instance().name()
+    // where event == request->notification()
+    // this client.sec().name() is empty for the gRPC calls apparently
+    // where does xrootd/ssi fill this in?? I think it is taken care of by the framework
     cta::common::dataStructures::SecurityIdentity clientIdentity(client.sec().name(), cta::utils::getShortHostname(),
                                                                   client.sec().host(), client.sec().prot());
     cta::frontend::WorkflowEvent wfe(*m_frontendService, clientIdentity, request->notification());
@@ -174,6 +179,51 @@ Status CtaRpcImpl::CancelRetrieve(::grpc::ServerContext* context,
 
   // field verification done, now try to call the process method
   return GenericRequest(context, request, response);
+}
+
+// Admin command should be implemented here
+// for the XRootD framework the admin command is implemented in
+Status CtaRpcImpl::Admin(::grpc::ServerContext* context,
+                                  const cta::xrd::Request* request,
+                                  cta::xrd::Response* response) {
+  cta::log::ScopedParamContainer sp(m_lc);
+
+  sp.add("remoteHost", context->peer());
+
+  m_lc.log(cta::log::DEBUG, "CTA-Admin non-streaming command");
+  // sp.add("request", "admin");
+  // process the admin command
+  // create a securityIdentity cli_Identity
+  try {
+    cta::common::dataStructures::SecurityIdentity clientIdentity;
+    cta::frontend::AdminCmd adminCmd(*m_frontendService, clientIdentity, request->admincmd());
+    *response = adminCmd.process(); // success response code will be set in here if processing goes well
+  } catch (cta::exception::PbException &ex) {
+    m_lc.log(cta::log::ERR, ex.getMessageValue());
+    response->set_type(cta::xrd::Response::RSP_ERR_PROTOBUF);
+    response->set_message_txt(ex.getMessageValue());
+    return ::grpc::Status(::grpc::StatusCode::INTERNAL, ex.getMessageValue());
+  } catch (cta::exception::UserError &ex) {
+    m_lc.log(cta::log::ERR, ex.getMessageValue());
+    response->set_type(cta::xrd::Response::RSP_ERR_USER);
+    response->set_message_txt(ex.getMessageValue());
+    return ::grpc::Status(::grpc::StatusCode::INVALID_ARGUMENT, ex.getMessageValue());
+  } catch (cta::exception::Exception &ex) {
+    m_lc.log(cta::log::ERR, ex.getMessageValue());
+    response->set_type(cta::xrd::Response::RSP_ERR_CTA);
+    response->set_message_txt(ex.getMessageValue());
+    return ::grpc::Status(::grpc::StatusCode::UNKNOWN, ex.getMessageValue());
+  } catch (std::runtime_error &ex) {
+    m_lc.log(cta::log::ERR, ex.what());
+    response->set_type(cta::xrd::Response::RSP_ERR_CTA);
+    response->set_message_txt(ex.what());
+    return ::grpc::Status(::grpc::StatusCode::UNKNOWN, ex.what());
+  } catch (...) {
+    response->set_type(cta::xrd::Response::RSP_ERR_CTA);
+    return ::grpc::Status(::grpc::StatusCode::UNKNOWN, "Error processing gRPC Admin request");
+  }
+
+  return Status::OK;
 }
 
 /* initialize the frontend service

@@ -23,10 +23,15 @@ include_directories(${PROTOBUF3_INCLUDE_DIRS})
 # depends on CTA_EOS definitions
 include_directories(${CMAKE_BINARY_DIR}/eos_cta ${PROTOBUF3_INCLUDE_DIRS})
 
+## need AdminCmd here because 
 add_executable(cta-frontend-grpc Main.cpp FrontendGrpcService.cpp
   ../common/WorkflowEvent.cpp
   ../common/FrontendService.cpp
-  ../common/Config.cpp)
+  ../common/Config.cpp
+  ../common/AdminCmd.cpp
+  ${PROJECT_SOURCE_DIR}/cmdline/CtaAdminTextFormatter.cpp
+  ${PROJECT_SOURCE_DIR}/cmdline/CtaAdminCmdParse.cpp
+)
 target_link_libraries(cta-frontend-grpc ProtoCtaFrontend)
 
 if(CTA_USE_PGSCHED)
@@ -44,6 +49,25 @@ install(TARGETS cta-frontend-grpc DESTINATION usr/bin)
 install (FILES cta-frontend-grpc.service DESTINATION etc/systemd/system)
 install (FILES cta-frontend-grpc.sysconfig DESTINATION /etc/sysconfig RENAME cta-frontend-grpc)
 install (FILES ${CMAKE_CURRENT_BINARY_DIR}/cta-frontend-grpc.1cta DESTINATION /usr/share/man/man1)
+
+##
+## cta-admin-grpc-nonstream
+##
+add_executable(cta-admin-grpc-nonstream
+  CtaAdminCmdNonStreaming.cpp
+  ${PROJECT_SOURCE_DIR}/frontend/common/AdminCmd.cpp
+  ${PROJECT_SOURCE_DIR}/cmdline/CtaAdminTextFormatter.cpp
+  ${PROJECT_SOURCE_DIR}/cmdline/CtaAdminCmdParse.cpp
+)
+
+# add_executable(cta-admin CtaAdminCmd.cpp CtaAdminCmdParse.cpp CtaAdminTextFormatter.cpp)
+target_link_libraries(cta-admin-grpc-nonstream
+  ${PROTOBUF3_LIBRARIES}
+  ${GRPC_GRPC++_LIBRARY}
+  ${GRPC_LIBRARY}
+  ProtoCtaFrontend ctacommon stdc++fs ctatapedaemoncommon ctaobjectstore
+)
+set_property (TARGET cta-admin APPEND PROPERTY INSTALL_RPATH ${PROTOBUF3_RPATH})
 
 ##
 ## cta-frontend-grpc-stream-server
