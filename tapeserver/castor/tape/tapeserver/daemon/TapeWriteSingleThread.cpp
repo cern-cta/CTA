@@ -297,6 +297,13 @@ void castor::tape::tapeserver::daemon::TapeWriteSingleThread::run() {
   // prevent counting where error happened upstream.
   std::string currentErrorToCount = "Error_tapeMountForWrite";
   std::unique_ptr<TapeWriteTask> task;
+#ifdef CTA_PGSCHED
+  // This is used for tapeFlush which is done for OStoreDB only for
+  // these params goign out of limits or in case there are no more tasks
+  // for hitting tape end, this is not done AFAICS - implementing it for PGSCHED
+  uint64_t bytes = 0;
+  uint64_t files = 0;
+#endif
   try {
     // Report the parameters of the session to the main thread
     typedef cta::log::Param Param;
@@ -420,8 +427,10 @@ void castor::tape::tapeserver::daemon::TapeWriteSingleThread::run() {
       }
 
       m_stats.waitReportingTime += timer.secs(cta::utils::Timer::resetCounter);
+#ifndef CTA_PGSCHED
       uint64_t bytes = 0;
       uint64_t files = 0;
+#endif
       // Tasks handle their error logging themselves.
       currentErrorToCount = "";
       m_reportPacker.reportDriveStatus(cta::common::dataStructures::DriveStatus::Transferring,
@@ -472,8 +481,7 @@ void castor::tape::tapeserver::daemon::TapeWriteSingleThread::run() {
     m_watchdog.updateStats(m_stats);
     //end of session + log
     m_reportPacker.reportEndOfSession(m_logContext);
-  }  //end of try
-  catch (const cta::exception::Exception& e) {
+  } catch (const cta::exception::Exception& e) {
     //we end there because write session could not be opened
     //or because a task failed or because flush failed
 
@@ -534,9 +542,18 @@ void castor::tape::tapeserver::daemon::TapeWriteSingleThread::run() {
 #endif
       remaining_task->circulateMemBlocks();
     }
-
+    // prepare logging params
+    cta::log::ScopedParamContainer params(m_logContext);
 #ifdef CTA_PGSCHED
+    // requeue failed tasks
     requeueFailedTasks(jobIDsList, m_logContext);
+    // attempt tapeFlush to report any remaining jobs
+    try {
+      tapeFlush("Final tape flush after Tape Write Single Thread threw exception", bytes, files, timer);
+    } catch (const cta::exception::Exception& etf) {
+      std::string tapeFlushErrorMessage(etf.getMessageValue());
+      params.add("status", "error").add("tapeFlushErrorMessage", tapeFlushErrorMessage);
+    }
 #endif
     // Prepare the standard error codes for the session
     std::string errorMessage(e.getMessageValue());
@@ -547,7 +564,6 @@ void castor::tape::tapeserver::daemon::TapeWriteSingleThread::run() {
       logLevel = cta::log::INFO;
     }
     // then log the end of write thread
-    cta::log::ScopedParamContainer params(m_logContext);
     params.add("status", "error").add("ErrorMessage", errorMessage);
     m_stats.totalTime = totalTimer.secs();
     logWithStats(logLevel, "Tape thread complete for writing", params);
