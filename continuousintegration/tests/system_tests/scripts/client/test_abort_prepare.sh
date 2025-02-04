@@ -16,6 +16,7 @@
 #               submit itself to any jurisdiction.
 
 set -e
+set -x
 
 # Quick function to abort the prepare of files.
 # $1: file containing even number of lines, odd lines == req id; even lines == file_name
@@ -23,7 +24,7 @@ abortFile() {
   while read -r REQ_ID; do
     read -r FILE_PATH
     FILE_NAME=$(echo ${FILE_PATH} | cut -d/ -f2)
-    XRD_LOGLEVEL=Dump KRB5CCNAME=/tmp/${EOSPOWER_USER}/krb5cc_0 XrdSecPROTOCOL=krb5 xrdfs ${EOS_MGM_HOST} prepare -a ${REQ_ID} ${EOS_DIR}/${FILE_PATH} 2>${ERROR_DIR}/RETRIEVE_${FILE_NAME} && rm ${ERROR_DIR}/RETRIEVE_${FILE_NAME} || echo ERROR with xrootd prepare stage for file ${FILE_NAME}, full logs in ${ERROR_DIR}/RETRIEVE_${FILE_NAME} | grep ^ERROR
+    KRB5CCNAME=/tmp/${EOSPOWER_USER}/krb5cc_0 XrdSecPROTOCOL=krb5 xrdfs ${EOS_MGM_HOST} prepare -a ${REQ_ID} ${EOS_DIR}/${FILE_PATH} 2>${ERROR_DIR}/RETRIEVE_${FILE_NAME} && rm ${ERROR_DIR}/RETRIEVE_${FILE_NAME} || echo ERROR with xrootd prepare stage for file ${FILE_NAME}, full logs in ${ERROR_DIR}/RETRIEVE_${FILE_NAME} | ( grep ^ERROR || true)
   done < $1
 }
 export -f abortFile
@@ -33,51 +34,15 @@ echo "$(date +%s): Sleeping 3 seconds to let previous sessions finish."
 sleep 3
 admin_kdestroy &>/dev/null || true
 admin_kinit &>/dev/null
-INITIAL_DRIVES_STATE=$(admin_cta --json dr ls)
-echo INITIAL_DRIVES_STATE:
-echo ${INITIAL_DRIVES_STATE} | jq -r '.[] | [ .driveName, .driveStatus] | @tsv' | column -t
-echo -n "$(date +%s): Will put down those drives : "
-drivesToSetDown=$(echo ${INITIAL_DRIVES_STATE} | jq -r '.[] | select (.driveStatus == "UP") | .driveName')
-echo $drivesToSetDown
-for d in $(echo $drivesToSetDown); do
-  admin_cta drive down $d --reason "PUTTING DRIVE DOWN FOR TESTS"
-done
 
-# Wait for drives to be down.
-echo "$(date +%s): Waiting for the drives to be down"
-SECONDS_PASSED=0
-WAIT_FOR_DRIVES_DOWN_TIMEOUT=$((10))
-while [[ $SECONDS_PASSED -lt WAIT_FOR_DRIVES_DOWN_TIMEOUT ]]; do
-  sleep 1
-  oneStatusUpRemaining=0
-  for d in $(echo $drivesToSetDown); do
-    status=$(admin_cta --json drive ls | jq -r ". [] | select(.driveName == \"$d\") | .driveStatus")
-    if [[ $status == "UP" ]]; then
-      oneStatusUpRemaining=1
-    fi;
-  done
-  if [[ $oneStatusUpRemaining -eq 0 ]]; then
-    echo "$(date +%s): Drives $drivesToSetDown are down"
-    break;
-  fi
-  echo -n "."
-  SECONDS_PASSED=$SECONDS_PASSED+1
-  if [[ $SECONDS_PASSED -gt $WAIT_FOR_DRIVES_DOWN_TIMEOUT ]]; then
-    die "$(date +%s): ERROR: Timeout reach for trying to put all drives down"
-  fi
-done
+put_all_drives_down
 
 # Stage.
+retrieve='KRB5CCNAME=/tmp/${EOSPOWER_USER}/krb5cc_0 XrdSecPROTOCOL=krb5 xrdfs root://${EOS_MGM_HOST} prepare -s ${EOS_DIR}/${subdir}/${subdir}TEST_FILE_NAME?activity=T0Reprocess'
 for ((subdir=0; subdir < ${NB_DIRS}; subdir++)); do
-  echo -n "Retrieving files to ${EOS_DIR}/${subdir} using ${NB_PROCS} processes (prepare2)..."
-
-  seq -w 0 $((${NB_FILES} - 1)) | xargs --process-slot-var=index --max-procs=${NB_PROCS} -iTEST_FILE_NAME bash -c "XRD_LOGLEVEL=Dump `
-   `KRB5CCNAME=/tmp/${EOSPOWER_USER}/krb5cc_0 `
-   `XrdSecPROTOCOL=krb5 `
-   `xrdfs ${EOS_MGM_HOST} prepare -s ${EOS_DIR}/${subdir}/${subdir}TEST_FILE_NAME?activity=T0Reprocess `
-   `2>${ERROR_DIR}/${subdir}RETRIEVE_TEST_FILE_NAME | tee -a reqid_\"\${index}\" && echo ${subdir}/${subdir}TEST_FILE_NAME >> reqid_\"\${index}\" && rm ${ERROR_DIR}/${subdir}RETRIEVE_TEST_FILE_NAME `
-   `|| echo ERROR with xrootd prepare stage for file ${subdir}/TEST_FILE_NAME, full logs in ${ERROR_DIR}/${subdir}RETRIEVE_TEST_FILE_NAME" \
-     | grep ^ERROR
+  echo -n "Retrieving files to ${EOS_DIR}/${subdir} using ${NB_PROCS} processes..."
+  xrdfs_call=$(eval echo "${retrieve}")
+  seq -w 0 $((${NB_FILES}-1)) | xargs --max-procs=${NB_PROCS} bash -c "$xrdfs_call"
 done
 
 # Wait for requests to be generated
@@ -87,12 +52,13 @@ sleep 1
 requestsTotal=$(admin_cta --json sq | jq 'map(select (.mountType == "RETRIEVE") | .queuedFiles | tonumber) | add')
 echo "Retrieve requests count: ${requestsTotal}"
 filesCount=${NB_FILES}
-if [ ${requestsTotal} -ne ${filesCount} ]; then
+if [[ ${requestsTotal} -ne ${filesCount} ]]; then
     echo "ERROR: Retrieve queue(s) size mismatch: ${requestsTotal} requests queued for ${filesCount} files."
-  fi
+    exit 1
+fi
 
-  # Cancel Stage
-  # Abort prepare -s requests
+# Cancel Stage
+# Abort prepare -s requests
 for ((subdir=0; subdir < ${NB_DIRS}; subdir++)); do
   echo -n "Cancelling prepare for files in ${EOS_DIR}/${subdir} using ${NB_PROCS} processes (prepare_abort)..."
   ls reqid_* | xargs --max-procs=${NB_PROCS} -I{} bash -c "abortFile {}"
@@ -110,14 +76,10 @@ if [[ ${REMAINING_REQUESTS} -ne $((NB_FILES * NB_DIRS)) ]]; then
 fi
 
 # Put drive(s) back up to clear the queue
-echo -n "Will put back up those drives : "
-echo ${INITIAL_DRIVES_STATE} | jq -r '.[] | select (.driveStatus == "UP") | .driveName'
-for d in $(echo ${INITIAL_DRIVES_STATE} | jq -r '.[] | select (.driveStatus == "UP") | .driveName'); do
-  admin_cta dr up $d
-done
+put_all_drives_up
 
 echo "$(date +%s): Waiting for retrieve queues to be cleared:"
-sleep 10
+sleep 5
 
 SECONDS_PASSED=0
 WAIT_FOR_RETRIEVE_QUEUES_CLEAR_TIMEOUT=$((60))

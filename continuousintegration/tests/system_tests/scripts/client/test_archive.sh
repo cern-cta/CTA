@@ -41,15 +41,10 @@ for ((subdir=0; subdir < ${NB_DIRS}; subdir++)); do
   # The `archive` variable is sourced from cli_calls.sh without parameter
   # expansion, to be able to expand the variable afterwards we need `eval echo`
   xrdcp_call=$(eval echo "${archive}")
-  xrdcp_call+=" 2>${ERROR_DIR}/${subdir}TEST_FILE_NUM"
-  xrdcp_succes=" rm ${ERROR_DIR}/${subdir}TEST_FILE_NUM"
-
-  xrdcp_error="ERROR with xrootd transfer for file ${subdir}/TEST_FILE_NUM, full logs in ${ERROR_DIR}/${subdir}TEST_FILE_NUM"
-
-  command_str="${file_creation} | ${xrdcp_call} && ${xrdcp_succes} || (echo ${xrdcp_error} && exit 1)"
+  command_str="${file_creation} | ${xrdcp_call}"
   start=$(date +%s)
   echo "Starting at ${start}"
-  seq -w 0 $((${NB_FILES} - 1)) | xargs --max-procs=${NB_PROCS} -iTEST_FILE_NUM bash -c "$command_str"
+  seq -w 0 $((${NB_FILES} - 1)) | xargs --max-procs=${NB_PROCS} bash -c "$command_str"
   end=$(date +%s)
   duration=$((end - start))
   echo "All file copies to disk for subdir ${subdir} took ${duration} seconds."

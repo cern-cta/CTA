@@ -53,9 +53,8 @@ admin_cta ds ls
 ## Archive a file, the first time the test is run, so we can then retrieve it
 TEST_FILE_NAME=testfile1_eosdf
 # Check whether it already exists, if not, archive it to tape
-file_exists_on_tape=$(eos root://${EOS_MGM_HOST} fileinfo ${EOSDF_BUFFER_URL}/${TEST_FILE_NAME})
-if [[ $? -ne 0 ]]; then
-    echo "Archiving a file: $TEST_FILE_NAME"
+if eos root://${EOS_MGM_HOST} fileinfo ${EOSDF_BUFFER_URL}/${TEST_FILE_NAME}; then
+    echo "File does not exist on tape. Archiving a file: $TEST_FILE_NAME"
     echo
     echo "foo" > /root/${TEST_FILE_NAME}
     echo

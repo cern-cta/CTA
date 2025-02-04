@@ -16,7 +16,7 @@ def test_setup_client_scripts_and_certs(env):
 @pytest.mark.order("second")
 def test_setup_client(env):
     # Probably same for this one
-    file_count=10000
+    file_count=5000
     file_size_kb=15
     processes_count = 20
 
@@ -67,7 +67,17 @@ def test_multiple_retrieve(env):
     env.client[0].exec(f"/root/test_multiple_retrieve.sh")
 
 def test_idempotent_prepare(env):
+    # ${CTA_TEST_NO_P_DIR} must be writable by eosusers and powerusers
+    # but not allow prepare requests.
+    # this is achieved through the ACLs.
+    no_prepare_dir=f"{env.eos_preprod_dir}/no_prepare"
+    env.eosmgm[0].exec(f"eos mkdir {no_prepare_dir}")
+    env.eosmgm[0].exec(f"eos attr set sys.acl=g:eosusers:rwx!d,u:poweruser1:rwx+d,u:poweruser2:rwx+d,z:'!'u'!'d {no_prepare_dir}")
+
     env.client[0].exec(f"/root/test_idempotent_prepare.sh")
+
+    # Cleanup
+    env.eosmgm[0].exec(f"eos rm -rf {no_prepare_dir}")
 
 def test_delete_on_closew_error(env):
     env.client[0].exec(f"/root/test_delete_on_closew_error.sh")

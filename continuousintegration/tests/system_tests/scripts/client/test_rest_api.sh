@@ -150,15 +150,12 @@ echo "Evict start counter: ${EVICT_INIT}"
 
 
 #    2. Put drive down
-IFS=' ' read -r -a dr_names <<< $(admin_cta --json dr ls | jq -r '.[] | select(.driveStatus=="UP") | .driveName')
-IFS=' ' read -r -a dr_names_down <<< $(admin_cta --json dr ls | jq -r '.[] | select(.driveStatus=="DOWN") | .driveName')
+
 echo "$(date +%s): Putting drives down."
 
-for drive in "${dr_names[@]}"; do
-  echo "Putting drive $drive down."
-  admin_cta dr down "$drive" -r "Tape Rest API abort prepare test"
-  sleep 3
-done
+echo "Putting drive $drive down."
+admin_cta dr down ".*" -r "Tape Rest API abort prepare test"
+sleep 3
 
 
 #    3. Do request.
@@ -183,11 +180,10 @@ echo "$(date +%s): Request id 2 - ${REQ_ID}"
 curl ${CURL_OPTS} -L -X DELETE --capath /etc/grid-security/certificates -H "Accept: application/json" -H "Authorization: Bearer ${TOKEN_EOSPOWER}" "${HTTPS_URI}/stage/${REQ_ID}"
 
 #    5. Put drive up.
-for drive in "${dr_names[@]}"; do
-  echo "Putting drive $drive up."
-  admin_cta dr up "$drive"
-  sleep 3
-done
+echo "$(date +%s): Putting drives up."
+
+admin_cta dr up ".*"
+sleep 3
 
 #    6. Check evict counter reamins the same.
 tmp=$(eos root://"${EOS_MGM_HOST}" ls -y /eos/ctaeos/preprod | grep test_http-rest-api | awk '{ print $1 }')

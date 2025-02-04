@@ -88,10 +88,8 @@ eos chmod 555 ${CTA_TEST_DIR}
 eos attr set sys.acl=g:eosusers:rwx!d,u:poweruser1:rwx+dp,u:poweruser2:rwx+dp,z:'!'u'!'d ${CTA_TEST_DIR}
 eos attr set sys.archive.storage_class=ctaStorageClass ${CTA_TEST_DIR}
 eos attr link ${CTA_WF_DIR} ${CTA_TEST_DIR} # Link workflows
-# ${CTA_TEST_NO_P_DIR} must be writable by eosusers and powerusers
-# but not allow prepare requests.
-# this is achieved through the ACLs.
-# This directory is created inside ${CTA_TEST_DIR}.
-CTA_TEST_NO_P_DIR=${CTA_TEST_DIR}/no_prepare
-eos mkdir ${CTA_TEST_NO_P_DIR}
-eos attr set sys.acl=g:eosusers:rwx!d,u:poweruser1:rwx+d,u:poweruser2:rwx+d,z:'!'u'!'d ${CTA_TEST_NO_P_DIR}
+
+# Test specific
+TAPE_FS_ID=65535
+eos space define tape
+eos fs add -m ${TAPE_FS_ID} tape localhost:1234 /does_not_exist tape
