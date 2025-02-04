@@ -316,6 +316,7 @@ uint64_t RetrieveJobQueueRow::requeueFailedJob(Transaction& txn,
         RETURNING *
     )
     INSERT INTO RETRIEVE_PENDING_QUEUE (
+      JOB_ID,
       RETRIEVE_REQUEST_ID,
       REQUEST_JOB_COUNT,
       TAPE_POOL,
@@ -371,6 +372,7 @@ uint64_t RetrieveJobQueueRow::requeueFailedJob(Transaction& txn,
       MOUNT_ID
     )
     SELECT
+      M.JOB_ID,
       M.RETRIEVE_REQUEST_ID,
       M.REQUEST_JOB_COUNT,
       M.TAPE_POOL,
@@ -469,6 +471,7 @@ RetrieveJobQueueRow::requeueJobBatch(Transaction& txn, RetrieveJobStatus status,
         RETURNING *
     )
     INSERT INTO RETRIEVE_PENDING_QUEUE (
+      JOB_ID,
       RETRIEVE_REQUEST_ID,
       REQUEST_JOB_COUNT,
       TAPE_POOL,
@@ -524,6 +527,7 @@ RetrieveJobQueueRow::requeueJobBatch(Transaction& txn, RetrieveJobStatus status,
       MOUNT_ID
     )
     SELECT
+      M.JOB_ID,
       M.RETRIEVE_REQUEST_ID,
       M.REQUEST_JOB_COUNT,
       M.TAPE_POOL,
