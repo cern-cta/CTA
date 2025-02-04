@@ -13,6 +13,7 @@ def test_add_admins(env):
 
     print("Adding super client capabilities")
     env.ctacli[0].exec("cta-admin admin add --username ctaadmin2 --comment ctaadmin2")
+    # TODO: this should go together with the kinit stuff, then this file can be renamed to test_setup_catalogue
     env.client[0].exec("mkdir -p /tmp/ctaadmin2")
     env.client[0].exec("mkdir -p /tmp/poweruser1")
     env.client[0].exec("mkdir -p /tmp/eosadmin1")
