@@ -613,7 +613,7 @@ void castor::tape::tapeserver::daemon::TapeWriteSingleThread::requeueFailedTasks
   requeueparam.add("requeuedTaskQueueJobs", njobs);
   lc.log(cta::log::INFO, std::string("In TapeWriteTask::execute(): Requeued failed task."));
 
-  if (njobs != 1) {
+  if (njobs != jobIDsList.size()) {
     // handle the case of failed bunch update of the jobs !
     std::string jobIDsString;
     for (const auto& piece : jobIDsList) {
