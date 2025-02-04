@@ -369,20 +369,22 @@ void CtaAdminCmdNonStreaming::throwUsage(const std::string& error_txt) const {
 int main(int argc, const char** argv) {
   using namespace cta::admin;
 
- try {
-   // Parse the command line arguments
-   CtaAdminCmdNonStreaming cmd(argc, argv);
+  try {
+    // Parse the command line arguments
+    CtaAdminCmdNonStreaming cmd(argc, argv); // this will throw the usage, which is runtime_error
 
-   // Send the protocol buffer
-   cmd.send();
+    // Send the protocol buffer
+    cmd.send();
 
-   // Delete all global objects allocated by libprotobuf
-   google::protobuf::ShutdownProtobufLibrary();
+    // Delete all global objects allocated by libprotobuf
+    google::protobuf::ShutdownProtobufLibrary();
 
-   return 0;
- } catch (...) {
-   std::cerr << "Caught some exception" << std::endl;
- }
+    return 0;
+  } catch (std::runtime_error& ex) {
+    std::cerr << ex.what() << std::endl;
+  } catch (...) {
+    std::cerr << "Caught some exception" << std::endl;
+  }
 
  return 1;
 }
