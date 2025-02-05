@@ -195,7 +195,8 @@ Status CtaRpcImpl::Admin(::grpc::ServerContext* context,
   // process the admin command
   // create a securityIdentity cli_Identity
   try {
-    cta::common::dataStructures::SecurityIdentity clientIdentity;
+    // for this one here we need to fill in the admin username, otherwise we'll get an SQL error
+    cta::common::dataStructures::SecurityIdentity clientIdentity(context->peer(), context->peer()); /* username, hostname */
     cta::frontend::AdminCmd adminCmd(*m_frontendService, clientIdentity, request->admincmd());
     *response = adminCmd.process(); // success response code will be set in here if processing goes well
   } catch (cta::exception::PbException &ex) {
