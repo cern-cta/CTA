@@ -404,6 +404,28 @@ void RetrieveMount::flushAsyncSuccessReports(std::list<SchedulerDatabase::Retrie
              ex.getMessageValue());
     txn.abort();
   }
+  // After processing - we free the memory object
+  // in case the flush and DB update failed, we still want to clean the jobs from memory
+  // (they need to be garbage collected in case of a crash)
+  try {
+    for (auto& job : jobsBatch) {
+      // Attempt to release the job back to the pool
+      auto castedJob = std::unique_ptr<RetrieveRdbJob>(static_cast<RetrieveRdbJob*>(job));
+      m_jobPool.releaseJob(std::move(castedJob));
+    }
+    jobsBatch.clear();  // Clear the container after all jobs are successfully processed
+  } catch (const exception::Exception& ex) {
+    lc.log(cta::log::ERR,
+           "In RetrieveMount::flushAsyncSuccessReports(): Failed to recycle all job objects for the job pool: " +
+             ex.getMessageValue());
+
+    // Destroy all remaining jobs in case of failure
+    for (auto& job : jobsBatch) {
+      // Release the unique_ptr ownership and delete the underlying object
+      delete job;
+    }
+    jobsBatch.clear();  // Ensure the container is emptied
+  }
 }
 
 void RetrieveMount::addDiskSystemToSkip(const DiskSystemToSkip& diskSystemToSkip) {

@@ -541,6 +541,8 @@ void castor::tape::tapeserver::daemon::TapeWriteSingleThread::run() {
       //remaining_task->getArchiveJob().reportFailed(failureReason, m_logContext);
 #endif
       remaining_task->circulateMemBlocks();
+      // TO-DO FOR CTA_PGSCHED MAKE A LIST OF JOB OBJECTS AND RELESE THEM FROM THE JOB POOL OF THE MOUNT AFTER CIRCULATE IS DONE !!!
+
     }
     // prepare logging params
     cta::log::ScopedParamContainer params(m_logContext);
