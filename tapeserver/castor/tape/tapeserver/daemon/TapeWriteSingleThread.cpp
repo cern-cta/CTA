@@ -531,6 +531,13 @@ void castor::tape::tapeserver::daemon::TapeWriteSingleThread::run() {
         logLevel = cta::log::INFO;
       }
     } catch (...) {}
+    // It may happen that some of the reports were not flushed, flush them
+    try {
+      m_reportPacker.reportFlush(m_drive.getCompression(), m_logContext);
+    } catch (const cta::exception::Exception& erf) {
+      std::string reportFlushErrorMessage(erf.getMessageValue());
+      params.add("status", "error").add("reportFlushErrorMessage", reportFlushErrorMessage);
+    }
     // then log the end of write thread
     cta::log::ScopedParamContainer params(m_logContext);
     params.add("status", "error").add("ErrorMessage", errorMessage);
