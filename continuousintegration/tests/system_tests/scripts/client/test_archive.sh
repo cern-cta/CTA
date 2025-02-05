@@ -44,7 +44,7 @@ for ((subdir=0; subdir < ${NB_DIRS}; subdir++)); do
   command_str="${file_creation} | ${xrdcp_call}"
   start=$(date +%s)
   echo "Starting at ${start}"
-  seq -w 0 $((${NB_FILES} - 1)) | xargs --max-procs=${NB_PROCS} bash -c "$command_str"
+  seq -w 0 $((${NB_FILES} - 1)) | xargs --max-procs=${NB_PROCS} -iTEST_FILE_NUM bash -c "$command_str"
   end=$(date +%s)
   duration=$((end - start))
   echo "All file copies to disk for subdir ${subdir} took ${duration} seconds."
@@ -87,7 +87,7 @@ while test ${TO_BE_ARCHIVED} != ${ARCHIVED}; do
   ARCHIVED=0
   for ((subdir=0; subdir < ${NB_DIRS}; subdir++)); do
     ARCHIVED=$(( ${ARCHIVED} + $(eos root://${EOS_MGM_HOST} ls -y ${EOS_DIR}/${subdir} | grep '^d0::t1' | wc -l) ))
-    sleep 1 # do not hammer eos too hard
+    # sleep 1 # do not hammer eos too hard
     let SECONDS_PASSED=SECONDS_PASSED+1
   done
   end_check=$(date +%s)
