@@ -204,7 +204,7 @@ put_all_drives () {
   INITIAL_DRIVES_STATE=$(admin_cta --json dr ls)
   echo INITIAL_DRIVES_STATE:
   echo ${INITIAL_DRIVES_STATE} | jq -r '.[] | [ .driveName, .driveStatus] | @tsv' | column -t
-  echo -n "Will put $next_state those drives : "
+  echo "Will put $next_state those drives : "
   drivesToModify=$(echo ${INITIAL_DRIVES_STATE} | jq -r ".[].driveName")
   echo $drivesToModify
   for d in $(echo $drivesToModify); do

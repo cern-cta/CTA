@@ -61,7 +61,7 @@ done
 
 
 # kill eos rm command that may run in the background
-kill ${EOSRMPID} &> /dev/null
+timeout 1s wait ${EOSRMPID} || kill ${EOSRMPID} || true &> /dev/null
 
 # As we deleted the directory we may have deleted more files than the ones we retrieved
 # therefore we need to take the smallest of the 2 values to decide if the system test was

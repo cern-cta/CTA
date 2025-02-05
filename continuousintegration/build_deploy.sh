@@ -450,7 +450,7 @@ build_deploy() {
                           ${extra_spawn_options}
     fi
   fi
-  print_header "DONE"
+  print_header "$(date): DONE"
 }
 
 build_deploy "$@"

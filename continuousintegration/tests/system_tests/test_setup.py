@@ -2,12 +2,10 @@ from ..helpers.tape import list_all_tapes_in_libraries
 import pytest
 
 
-@pytest.mark.order(1)
 def test_check_catalogue(env):
     env.ctafrontend[0].exec("cta-catalogue-schema-verify /etc/cta/cta-catalogue.conf")
 
 
-@pytest.mark.order(2)
 def test_add_admins(env):
     env.ctafrontend[0].exec("cta-catalogue-admin-user-create /etc/cta/cta-catalogue.conf --username ctaadmin1 --comment ctaadmin1")
 
@@ -18,21 +16,17 @@ def test_add_admins(env):
     env.client[0].exec("mkdir -p /tmp/poweruser1")
     env.client[0].exec("mkdir -p /tmp/eosadmin1")
 
-@pytest.mark.order(3)
 def test_version_info(env):
     print("Versions:")
     env.ctacli[0].exec("cta-admin version")
     env.eosmgm[0].exec("eos version")
 
-
-@pytest.mark.order(4)
 def test_populate_catalogue(env):
     print("Populating catalogue")
     # TODO: figure out a nice way to do these paths
     env.ctacli[0].copyTo("system_tests/scripts/populate_catalogue.sh", "/root/populate_catalogue.sh", permissions="+x")
     env.ctacli[0].exec(f"./root/populate_catalogue.sh {env.disk_instance_name}")
 
-@pytest.mark.order(5)
 def test_populate_catalogue_tapes(env):
     tape_drives_in_use: list[str] = [taped.drive_name() for taped in env.ctataped]
     print("Using drives:")
@@ -74,7 +68,6 @@ def test_populate_catalogue_tapes(env):
                                 --comment ctasystest"
         env.ctacli[0].exec(add_tape_cmd)
 
-@pytest.mark.order(6)
 def test_set_all_drives_up(env):
     env.ctacli[0].set_all_drives_up()
 
@@ -84,10 +77,9 @@ def test_set_all_drives_up(env):
 # Which makes this not work
 # Which makes my life annoying
 # Thanks EOS
-# @pytest.mark.order(0)
-# def test_cleanup_eos(env):
-    # env.eosmgm[0].exec("eos rm -rf /eos/ctaeos/cta/* 2>/dev/null")
-    # env.eosmgm[0].exec("eos rm -rf /eos/ctaeos/preprod/* 2>/dev/null")
+def test_cleanup_eos(env):
+    env.eosmgm[0].exec("eos rm -rF /eos/ctaeos/cta/* 2>/dev/null")
+    env.eosmgm[0].exec("eos rm -rF /eos/ctaeos/preprod/* 2>/dev/null")
 
 # At some point the cleanup should be in a separate suite. This allows for skipping of the cleanup
 # As this can potentially take some extra time and is completely unnecessary with a fresh instance
