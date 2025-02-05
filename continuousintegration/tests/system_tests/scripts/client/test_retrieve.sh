@@ -35,18 +35,11 @@ for ((subdir=0; subdir < ${NB_DIRS}; subdir++)); do
   # - Errors for EOS 5.2.8 - CTA#615
   # Broken if eos >= 5.2.8
   # default to xrootd 5 call tested with eos >= 5.2.17
-  xrdfs_call="XRD_LOGLEVEL=Dump KRB5CCNAME=/tmp/${EOSPOWER_USER}/krb5cc_0 XrdSecPROTOCOL=krb5 /opt/eos/xrootd/bin/xrdfs ${EOS_MGM_HOST} xattr ${EOS_DIR}/${subdir}/${subdir}TEST_FILE_NAME get sys.retrieve.req_id 2>${ERROR_DIR}/XATTRGET_${subdir}TEST_FILE_NAME && rm ${ERROR_DIR}/XATTRGET_${subdir}TEST_FILE_NAME"
+  xrdfs_call="KRB5CCNAME=/tmp/${EOSPOWER_USER}/krb5cc_0 XrdSecPROTOCOL=krb5 /opt/eos/xrootd/bin/xrdfs ${EOS_MGM_HOST} xattr ${EOS_DIR}/${subdir}/${subdir}TEST_FILE_NAME get sys.retrieve.req_id"
   seq -w 0 $((${NB_FILES}-1)) | xargs --max-procs=${NB_PROCS} -iTEST_FILE_NAME bash -c "$xrdfs_call"
 done
 
-if [ "0" != "$(ls ${ERROR_DIR} 2> /dev/null | wc -l)" ]; then
-  # there were some prepare errors
-  echo "Several prepare errors occured during retrieval!"
-  echo "Please check client pod logs in artifacts"
-  mv ${ERROR_DIR}/* ${LOGDIR}/xrd_errors/
-fi
-
-TO_BE_RETRIEVED=$(( ${NB_FILES} * ${NB_DIRS} - $(ls ${ERROR_DIR}/RETRIEVE_* 2>/dev/null | wc -l) ))
+TO_BE_RETRIEVED=$(( ${NB_FILES} * ${NB_DIRS}))
 RETRIEVING=${TO_BE_RETRIEVED}
 RETRIEVED=0
 # Wait for the copy to appear on disk
@@ -67,7 +60,7 @@ while test 0 -lt ${RETRIEVING}; do
   for ((subdir=0; subdir < ${NB_DIRS}; subdir++)); do
     RETRIEVED=$(( ${RETRIEVED} + $( eos root://${EOS_MGM_HOST} ls -y ${EOS_DIR}/${subdir} | grep -E '^d[1-9][0-9]*::t1' | wc -l) ))
 
-    sleep 1 # do not hammer eos too hard
+    # sleep 1 # do not hammer eos too hard
   done
   RETRIEVING=$((${TO_BE_RETRIEVED} - ${RETRIEVED}))
 
