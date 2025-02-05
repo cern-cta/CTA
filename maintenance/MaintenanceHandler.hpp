@@ -17,6 +17,7 @@
 
 #pragma once
 
+#include "DiskReportRunner.hpp"
 #include "configuration/MaintenanceConfiguration.hpp"
 
 namespace cta::maintenance {
@@ -25,15 +26,21 @@ namespace cta::maintenance {
  * Handler for garbage collector subprocesses. This long lived process should live
  * as long as the main process, but will be respawned in case of crash.
  */
-class MaintenanceHandler {
+class MaintenanceServer {
 public:
-  MaintenanceHandler(const common::MaintenanceConfiguration & maintenanceConfig);
-  ~MaintenanceHandler();
-private:
-  void exceptionThrowingMain();
+  MaintenanceServer(const common::MaintenanceConfiguration & maintenanceConfig);
+  ~MaintenanceServer();
 
-  /** The parameters */
-  const common::TapedConfiguration & m_maintenanceConfig;
+  // Loop mode
+  void maintenanceLoop(bool mode);
+private:
+  std::unique_ptr<cta::catalogue::Catalogue> catalogue;
+  std::unique_ptr<cta::SchedulerDB_t> sched_db;
+  std::unique_ptr<cta::Scheduler> scheduler;
+
+  std::list<MaintenanceTask>
+
+
   /** The poll period for the garbage collector */
   static const time_t s_pollInterval = 10;
 };
