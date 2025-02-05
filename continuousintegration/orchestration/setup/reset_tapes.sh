@@ -62,5 +62,5 @@ done
 # Clear power on sense generate during boot.
 echo "Running SCSI MODE SENSE"
 for SG_DEVICE in $(lsscsi -g | grep tape | awk '{print $7}'); do
-  sg_modes $SG_DEVICE > /dev/null
+  sg_modes $SG_DEVICE > /dev/null || true
 done
