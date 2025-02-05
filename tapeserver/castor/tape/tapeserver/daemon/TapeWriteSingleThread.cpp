@@ -550,7 +550,8 @@ void castor::tape::tapeserver::daemon::TapeWriteSingleThread::run() {
     requeueFailedTasks(jobIDsList, m_logContext);
     // attempt tapeFlush to report any remaining jobs
     try {
-      tapeFlush("Final tape flush after Tape Write Single Thread threw exception", bytes, files, timer);
+      m_reportPacker.reportFlush(m_drive.getCompression(), m_logContext);
+      //tapeFlush("Final tape flush after Tape Write Single Thread threw exception", bytes, files, timer);
     } catch (const cta::exception::Exception& etf) {
       std::string tapeFlushErrorMessage(etf.getMessageValue());
       params.add("status", "error").add("tapeFlushErrorMessage", tapeFlushErrorMessage);
