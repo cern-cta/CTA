@@ -27,7 +27,7 @@
 #include "scheduler/DiskReportRunner.hpp"
 #include "scheduler/RepackRequestManager.hpp"
 #include "scheduler/Scheduler.hpp"
-#include "maintenance/MaintenanceHandler.hpp"
+#include "maintenance/MaintenanceServer.hpp"
 
 #ifdef CTA_PGSCHED
 #include "scheduler/rdbms/RelationalDBInit.hpp"
@@ -40,15 +40,8 @@ namespace cta::maintenance {
 //------------------------------------------------------------------------------
 // constructor
 //------------------------------------------------------------------------------
-MaintenanceHandler::MaintenanceHandler(const configuration::MaintenanceConfiguration& maintenanceConfig):
-SubprocessHandler("maintenanceHandler"), m_maintenanceConfig(maintenanceConfig) {
-}
-
-void MaintenanceHandler::exceptionThrowingMain(){
+void MaintenanceServer::exceptionThrowingMain(){
   // Open connections to the catalogue and object store, and run the garbage collector.
-
-  // Set the thread name for process ID:
-  prctl(PR_SET_NAME, "cta-maintenance");
 
   // Before anything, we will check for access to the scheduler's central storage.
   SchedulerDBInit_t sched_db_init("Maintenance", m_tapedConfig.backendPath.value(), m_processManager.logContext().logger());
@@ -84,7 +77,7 @@ void MaintenanceHandler::exceptionThrowingMain(){
     log::ScopedParamContainer exParams(m_processManager.logContext());
     exParams.add("errorMessage", ex.getMessageValue());
     m_processManager.logContext().log(log::CRIT,
-          "In MaintenanceHandler::exceptionThrowingMain(): failed to contact central storage. Exiting.");
+          "In MaintenanceServer::exceptionThrowingMain(): failed to contact central storage. Exiting.");
     throw ex;
   }
 
