@@ -15,6 +15,7 @@
  *                 You should have received a copy of the GNU General Public License
  *                 along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
+#include <unistd.h>
 #include "FrontendGrpcService.h"
 
 #include "catalogue/Catalogue.hpp"
@@ -23,6 +24,32 @@
 #include "common/dataStructures/SecurityIdentity.hpp"
 #include "frontend/common/FrontendService.hpp"
 #include "frontend/common/WorkflowEvent.hpp"
+// #include "common/CmdLineTool.hpp"
+
+
+//------------------------------------------------------------------------------
+// getUsername
+//------------------------------------------------------------------------------
+static std::string getUsername() {
+  char buf[256];
+
+  if (getlogin_r(buf, sizeof(buf)) != 0) {
+    return "UNKNOWN";
+  }
+  return std::string(buf);
+}
+
+//------------------------------------------------------------------------------
+// getHostname
+//------------------------------------------------------------------------------
+static std::string getHostname() {
+  char buf[256];
+
+  if (gethostname(buf, sizeof(buf)) != 0) {
+    return "UNKNOWN";
+  }
+  return std::string(buf);
+}
 
 /*
  * Validate the storage class and issue the archive ID which should be used for the Archive request
@@ -196,7 +223,7 @@ Status CtaRpcImpl::Admin(::grpc::ServerContext* context,
   // create a securityIdentity cli_Identity
   try {
     // for this one here we need to fill in the admin username, otherwise we'll get an SQL error
-    cta::common::dataStructures::SecurityIdentity clientIdentity(context->peer(), context->peer()); /* username, hostname */
+    cta::common::dataStructures::SecurityIdentity clientIdentity(getUsername(), getHostname()); /* username, hostname */
     cta::frontend::AdminCmd adminCmd(*m_frontendService, clientIdentity, request->admincmd());
     *response = adminCmd.process(); // success response code will be set in here if processing goes well
   } catch (cta::exception::PbException &ex) {

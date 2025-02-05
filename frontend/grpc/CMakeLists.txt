@@ -31,6 +31,7 @@ add_executable(cta-frontend-grpc Main.cpp FrontendGrpcService.cpp
   ../common/AdminCmd.cpp
   ${PROJECT_SOURCE_DIR}/cmdline/CtaAdminTextFormatter.cpp
   ${PROJECT_SOURCE_DIR}/cmdline/CtaAdminCmdParse.cpp
+  # ${PROJECT_SOURCE_DIR}/common/CmdLineTool.cpp
 )
 target_link_libraries(cta-frontend-grpc ProtoCtaFrontend)
 
