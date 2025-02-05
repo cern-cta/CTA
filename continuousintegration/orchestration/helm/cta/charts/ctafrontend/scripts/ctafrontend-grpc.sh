@@ -18,6 +18,10 @@
 . /opt/run/bin/init_pod.sh
 echo "$(date '+%Y-%m-%d %H:%M:%S') [$(basename "${BASH_SOURCE[0]}")] Started"
 
+## maybe install go here?
+# dnf install go
+# go install github.com/fullstorydev/grpcurl/cmd/grpcurl@latest
+
 # Install missing RPMs
 yum -y install cta-frontend-grpc cta-debuginfo
 if [ "$SCHEDULER_BACKEND" == "ceph" ]; then

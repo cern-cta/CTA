@@ -34,6 +34,7 @@
 
 #include <getopt.h>
 #include <fstream>
+// #include <grpc++/reflection.h>
 
 using namespace cta;
 using namespace cta::common;
@@ -185,8 +186,11 @@ int main(const int argc, char *const *const argv) {
     // clients. In this case it corresponds to an *synchronous* service.
     builder.RegisterService(&svc);
 
+    // add reflection
+    // grpc::reflection::InitProtoReflectionServerBuilderPlugin();
     std::unique_ptr <Server> server(builder.BuildAndStart());
 
     lc.log(cta::log::INFO, "Listening on socket address: " + server_address);
     server->Wait();
+    lc.log(cta::log::INFO, "After calling server->Wait(), istening on socket address: " + server_address);
 }

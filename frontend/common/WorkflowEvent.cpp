@@ -62,7 +62,7 @@ WorkflowEvent::WorkflowEvent(const frontend::FrontendService& frontendService,
       m_cliIdentity.username = event.wf().instance().name();
     } else {
       throw exception::PbException("Instance name \"" + event.wf().instance().name() +
-        "\" does not match key identifier \"" + m_cliIdentity.username + "\"");
+        "\" does not match key identifier \"" + m_cliIdentity.username + "\""); // apparently m_cliIdentiy.username is empty
     }
   }
   // Refuse any workflow events for files in /eos/INSTANCE_NAME/proc/

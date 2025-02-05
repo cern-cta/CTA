@@ -85,7 +85,7 @@ make rpm
 
 In order to make the RPMs available to the host dev machine, copy them to the `shared` directory (mounted volume):
 ```bash
-cp eos_rpm/RPMS/x86_64/* /root/shared/
+cp eos_rpm/RPMS/x86_64/* /shared/
 ```
 
 #### 4. Other notes

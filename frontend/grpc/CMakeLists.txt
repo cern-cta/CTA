@@ -29,6 +29,7 @@ add_executable(cta-frontend-grpc Main.cpp FrontendGrpcService.cpp
   ../common/Config.cpp)
 target_link_libraries(cta-frontend-grpc ProtoCtaFrontend)
 
+# I would like to add server reflection because that would help with debugging
 if(CTA_USE_PGSCHED)
   target_link_libraries(cta-frontend-grpc ${PROTOBUF3_LIBRARIES} ${GRPC_GRPC++_LIBRARY}
     ctascheduler ctacommon ctacatalogue)

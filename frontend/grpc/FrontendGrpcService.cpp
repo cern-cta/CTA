@@ -28,14 +28,42 @@
  * Validate the storage class and issue the archive ID which should be used for the Archive request
  */
 
+//------------------------------------------------------------------------------
+// getUsername
+//------------------------------------------------------------------------------
+static std::string getUsername() {
+  char buf[256];
+
+  if (getlogin_r(buf, sizeof(buf)) != 0) {
+    return "UNKNOWN";
+  }
+  return std::string(buf);
+}
+
+//------------------------------------------------------------------------------
+// getHostname
+//------------------------------------------------------------------------------
+static std::string getHostname() {
+  char buf[256];
+
+  if (gethostname(buf, sizeof(buf)) != 0) {
+    return "UNKNOWN";
+  }
+  return std::string(buf);
+}
+
 namespace cta::frontend::grpc {
 
 Status
 CtaRpcImpl::GenericRequest(::grpc::ServerContext* context, const cta::xrd::Request* request, cta::xrd::Response* response) {
+  // add a log line here, ok?
   try {
     cta::eos::Client client = request->notification().cli();
-    cta::common::dataStructures::SecurityIdentity clientIdentity(client.sec().name(), cta::utils::getShortHostname(),
-                                                                  client.sec().host(), client.sec().prot());
+    // apparently I do not properly setup the clientIdentity stuff - username is not setup, should match event.wf().instance().name()
+    // where event == request->notification()
+    // this client.sec().name() is empty for the gRPC calls apparently, nevermind, use the getUsername, getHostname calls
+    // where does xrootd/ssi fill this in?? I think it is taken care of by the framework
+    cta::common::dataStructures::SecurityIdentity clientIdentity(getUsername(), getHostname());
     cta::frontend::WorkflowEvent wfe(*m_frontendService, clientIdentity, request->notification());
     *response = wfe.process();
   } catch (cta::exception::PbException &ex) {
