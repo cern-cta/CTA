@@ -36,7 +36,8 @@ spec:
           sukadmin() { echo {{ .Values.global.kerberos.adminPrinc.password }} | kadmin -r {{ .Values.global.kerberos.defaultRealm | upper }} -p {{ .Values.global.kerberos.adminPrinc.name }}/admin $@; };
           sukadmin addprinc -randkey cta/cta-frontend;
           sukadmin ktadd -k /root/ctafrontend_keytab/output/cta-frontend.krb5.keytab cta/cta-frontend;
-          # Make CTA user owner
+          chmod 400 /root/ctafrontend_keytab/output/cta-frontend.krb5.keytab
+          # Make CTA user owner (group 33 is tape)
           chown -R 1000:33 /root/ctafrontend_keytab/output/cta-frontend.krb5.keytab
         volumeMounts:
         - name: krb5-conf
@@ -53,7 +54,7 @@ spec:
         - |
           cp /root/sss_keytab/input/eos.sss.keytab /root/sss_keytab/output/eos.sss.keytab;
           chmod 400 /root/sss_keytab/output/eos.sss.keytab;
-          # Make CTA user owner
+          # Make CTA user owner (group 33 is tape)
           chown -R 1000:33 /root/sss_keytab/output/eos.sss.keytab
         volumeMounts:
         - name: eos-sss-keytab

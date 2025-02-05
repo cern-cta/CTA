@@ -42,6 +42,9 @@ RUN dnf install -y \
     # logrotate files must be 0644 or 0444
     chmod 0644 /etc/logrotate.d/*
 
+# We add the cta user so that we can consistently reference it in the Helm chart when changing keytab ownership
+RUN useradd -m -u 1000 -g tape cta
+
 # Install cta-release and clean up
 RUN dnf config-manager --enable epel --setopt="epel.priority=4" && \
     dnf config-manager --enable cta-public-testing && \
