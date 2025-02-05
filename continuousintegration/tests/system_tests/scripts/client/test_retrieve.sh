@@ -27,7 +27,7 @@ for ((subdir=0; subdir < ${NB_DIRS}; subdir++)); do
   echo -n "Retrieving files to ${EOS_DIR}/${subdir} using ${NB_PROCS} processes..."
 
   xrdfs_call=$(eval echo "${retrieve}")
-  seq -w 0 $((${NB_FILES}-1)) | xargs --max-procs=${NB_PROCS} -iTEST_FILE_NAME bash -c "$xrdfs_call"
+  seq -w 0 $((${NB_FILES}-1)) | xargs --max-procs=${NB_PROCS} -iTEST_FILE_NAME bash -c "$xrdfs_call > /dev/null"
   echo Done.
 
   # DANGER: compatibility matrix hell... See:
@@ -36,7 +36,7 @@ for ((subdir=0; subdir < ${NB_DIRS}; subdir++)); do
   # Broken if eos >= 5.2.8
   # default to xrootd 5 call tested with eos >= 5.2.17
   xrdfs_call="KRB5CCNAME=/tmp/${EOSPOWER_USER}/krb5cc_0 XrdSecPROTOCOL=krb5 /opt/eos/xrootd/bin/xrdfs ${EOS_MGM_HOST} xattr ${EOS_DIR}/${subdir}/${subdir}TEST_FILE_NAME get sys.retrieve.req_id"
-  seq -w 0 $((${NB_FILES}-1)) | xargs --max-procs=${NB_PROCS} -iTEST_FILE_NAME bash -c "$xrdfs_call"
+  seq -w 0 $((${NB_FILES}-1)) | xargs --max-procs=${NB_PROCS} -iTEST_FILE_NAME bash -c "$xrdfs_call > /dev/null"
 done
 
 TO_BE_RETRIEVED=$(( ${NB_FILES} * ${NB_DIRS}))

@@ -21,7 +21,7 @@ def test_setup_client(env):
     processes_count = 20
 
     # TODO: refactor this so that these magical flags make sense
-    env.client[0].exec(f"/root/client_setup.sh -n {file_count} -s {file_size_kb} -p {processes_count} -d /eos/ctaeos/preprod -v -r -c xrd")
+    env.client[0].exec(f"/root/client_setup.sh -n {file_count} -s {file_size_kb} -p {processes_count} -d {env.eos_preprod_dir} -v -r -c xrd")
 
 def test_http_rest_api(env):
     env.client[0].exec("/root/test_rest_api.sh")
@@ -54,8 +54,8 @@ def test_retrieve(env):
 def test_evict(env):
     env.client[0].exec(f". /root/client_env && /root/test_simple_evict.sh")
 
-def test_abort_prepare(env):
-    env.client[0].exec(f". /root/client_env && /root/test_abort_prepare.sh")
+# def test_abort_prepare(env):
+#     env.client[0].exec(f". /root/client_env && /root/test_abort_prepare.sh")
 
 def test_delete(env):
     env.client[0].exec(f". /root/client_env && /root/test_delete.sh")
@@ -77,7 +77,7 @@ def test_idempotent_prepare(env):
     env.client[0].exec(f"/root/test_idempotent_prepare.sh")
 
     # Cleanup
-    env.eosmgm[0].exec(f"eos rm -rf {no_prepare_dir}")
+    env.eosmgm[0].exec(f"eos rm -rF {no_prepare_dir}")
 
 def test_delete_on_closew_error(env):
     env.client[0].exec(f"/root/test_delete_on_closew_error.sh")

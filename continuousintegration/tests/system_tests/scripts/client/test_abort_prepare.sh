@@ -29,12 +29,10 @@ abortFile() {
 }
 export -f abortFile
 
-# Put drives down.
-echo "$(date +%s): Sleeping 3 seconds to let previous sessions finish."
-sleep 3
 admin_kdestroy &>/dev/null || true
 admin_kinit &>/dev/null
 
+# Put drives down.
 put_all_drives_down
 
 # Stage.
@@ -42,7 +40,7 @@ retrieve='KRB5CCNAME=/tmp/${EOSPOWER_USER}/krb5cc_0 XrdSecPROTOCOL=krb5 xrdfs ro
 for ((subdir=0; subdir < ${NB_DIRS}; subdir++)); do
   echo -n "Retrieving files to ${EOS_DIR}/${subdir} using ${NB_PROCS} processes..."
   xrdfs_call=$(eval echo "${retrieve}")
-  seq -w 0 $((${NB_FILES}-1)) | xargs --max-procs=${NB_PROCS} bash -c "$xrdfs_call"
+  seq -w 0 $((${NB_FILES}-1)) | xargs --max-procs=${NB_PROCS} -iTEST_FILE_NAME bash -c "$xrdfs_call > /dev/null"
 done
 
 # Wait for requests to be generated
