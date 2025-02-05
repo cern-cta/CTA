@@ -569,7 +569,7 @@ repackTapeRepair() {
   if [[ $nbFileToInject != 0 ]]
   then
     echo "Will inject $nbFileToInject files into the repack buffer directory"
-    bufferDirectory=${REPACK_BUFFER_URL}/${VID_TO_REPACK}
+    bufferDirectory=${REPACK_BUFFER_URL}/TapeRepair-${VID_TO_REPACK}
     echo "Creating buffer directory in \"$bufferDirectory\""
     kubectl -n ${NAMESPACE} exec ${EOS_MGM_POD} -c eos-mgm -- eos mkdir $bufferDirectory
     kubectl -n ${NAMESPACE} exec ${EOS_MGM_POD} -c eos-mgm -- eos chmod 1777 $bufferDirectory
@@ -674,7 +674,7 @@ repackTapeRepairNoRecall() {
   if [[ $nbFileToInject != 0 ]]
   then
     echo "Will inject $nbFileToInject files into the repack buffer directory"
-    bufferDirectory=${REPACK_BUFFER_URL}/${VID_TO_REPACK}
+    bufferDirectory=${REPACK_BUFFER_URL}/TapeRepairNoRecall-${VID_TO_REPACK}
     echo "Creating buffer directory in \"$bufferDirectory\""
     kubectl -n ${NAMESPACE} exec ${EOS_MGM_POD} -c eos-mgm -- eos mkdir $bufferDirectory
     kubectl -n ${NAMESPACE} exec ${EOS_MGM_POD} -c eos-mgm -- eos chmod 1777 $bufferDirectory
