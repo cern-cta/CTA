@@ -55,7 +55,8 @@ RelationalDB::RelationalDB(const std::string& ownerId,
 RelationalDB::~RelationalDB() = default;
 
 void RelationalDB::waitSubthreadsComplete() {
-  throw cta::exception::Exception("Not implemented");
+  // This method is only used by unit tests so calling usleep() is good enough
+  ::usleep(1000000);
 }
 
 void RelationalDB::ping() {
