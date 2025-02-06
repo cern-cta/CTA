@@ -483,6 +483,15 @@ void castor::tape::tapeserver::daemon::TapeWriteSingleThread::run() {
     //end of session + log
     m_reportPacker.reportEndOfSession(m_logContext);
   } catch (const cta::exception::Exception& e) {
+    // prepare logging params
+    cta::log::ScopedParamContainer params(m_logContext);
+    // attempt reportFlush to report any jobs that were successfully archives before the exception
+    try {
+      m_reportPacker.reportFlush(m_drive.getCompression(), m_logContext);
+    } catch (const cta::exception::Exception& erf) {
+      std::string reportFlushErrorMessage(erf.getMessageValue());
+      params.add("status", "error").add("reportFlushErrorMessage", reportFlushErrorMessage);
+    }
     //we end there because write session could not be opened
     //or because a task failed or because flush failed
 
@@ -545,19 +554,9 @@ void castor::tape::tapeserver::daemon::TapeWriteSingleThread::run() {
       // TO-DO FOR CTA_PGSCHED MAKE A LIST OF JOB OBJECTS AND RELESE THEM FROM THE JOB POOL OF THE MOUNT AFTER CIRCULATE IS DONE !!!
 
     }
-    // prepare logging params
-    cta::log::ScopedParamContainer params(m_logContext);
 #ifdef CTA_PGSCHED
     // requeue failed tasks
     requeueFailedTasks(jobIDsList, m_logContext);
-    // attempt tapeFlush to report any remaining jobs
-    try {
-      m_reportPacker.reportFlush(m_drive.getCompression(), m_logContext);
-      //tapeFlush("Final tape flush after Tape Write Single Thread threw exception", bytes, files, timer);
-    } catch (const cta::exception::Exception& erf) {
-      std::string reportFlushErrorMessage(erf.getMessageValue());
-      params.add("status", "error").add("reportFlushErrorMessage", reportFlushErrorMessage);
-    }
 #endif
     // Prepare the standard error codes for the session
     std::string errorMessage(e.getMessageValue());
