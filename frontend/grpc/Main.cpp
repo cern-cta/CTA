@@ -35,6 +35,7 @@
 #include "callback_api/CtaAdminServer.hpp" // for the impl of the streaming service
 #include <getopt.h>
 #include <fstream>
+#include <grpcpp/ext/proto_server_reflection_plugin.h>
 
 using namespace cta;
 using namespace cta::common;
@@ -173,6 +174,8 @@ int main(const int argc, char *const *const argv) {
         creds = grpc::InsecureServerCredentials();
     }
 
+    // add reflection
+    grpc::reflection::InitProtoReflectionServerBuilderPlugin();
     // Listen on the given address without any authentication mechanism.
     builder.AddListeningPort(server_address, creds);
 
