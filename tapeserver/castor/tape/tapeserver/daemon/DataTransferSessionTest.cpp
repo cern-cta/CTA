@@ -3053,7 +3053,7 @@ TEST_P(DataTransferSessionTest, DataTransferSessionTapeFullMigration) {
   auto afsItor = catalogue.ArchiveFile()->getArchiveFilesItor(criteria);
   for (size_t i = 1; i <= sourceFiles.size(); ++i) {
     // Only the first files made it through.
-    if (i <= 3) {
+    if (i <= 4) {
       ASSERT_TRUE(afsItor.hasMore());
       auto afs = afsItor.next();
       ASSERT_EQ(1, afs.tapeFiles.size());
@@ -3225,7 +3225,7 @@ TEST_P(DataTransferSessionTest, DataTransferSessionTapeFullOnFlushMigration) {
   auto afsItor = catalogue.ArchiveFile()->getArchiveFilesItor(criteria);
   for (size_t i = 1; i <= sourceFiles.size(); ++i) {
     // Only the first files made it through.
-    if (i <= 3) {
+    if (i <= 4) {
       ASSERT_TRUE(afsItor.hasMore());
       auto afs = afsItor.next();
       ASSERT_EQ(1, afs.tapeFiles.size());
