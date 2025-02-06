@@ -167,7 +167,7 @@ void fillNotification(cta::eos::Notification &notification, const std::string &w
   }
 
   // File
-  notification.mutable_file()->set_fid(std::strtoul(attr["id"].c_str(), nullptr, 0));
+  notification.mutable_file()->set_disk_file_id(attr["id"]);
   notification.mutable_file()->mutable_owner()->set_uid(std::stoi(attr["uid"]));
   notification.mutable_file()->mutable_owner()->set_gid(std::stoi(attr["gid"]));
   notification.mutable_file()->set_size(std::strtoul(attr["size"].c_str(), nullptr, 0));
