@@ -31,10 +31,10 @@ target_link_libraries(cta-frontend-grpc ProtoCtaFrontend)
 
 # I would like to add server reflection because that would help with debugging
 if(CTA_USE_PGSCHED)
-  target_link_libraries(cta-frontend-grpc ${PROTOBUF3_LIBRARIES} ${GRPC_GRPC++_LIBRARY}
+  target_link_libraries(cta-frontend-grpc ${PROTOBUF3_LIBRARIES} ${GRPC_GRPC++_LIBRARY} ${GRPC_GRPC++_REFLECTION_LIBRARY}
     ctascheduler ctacommon ctacatalogue)
 else()
-  target_link_libraries(cta-frontend-grpc ${PROTOBUF3_LIBRARIES} ${GRPC_GRPC++_LIBRARY}
+  target_link_libraries(cta-frontend-grpc ${PROTOBUF3_LIBRARIES} ${GRPC_GRPC++_LIBRARY} ${GRPC_GRPC++_REFLECTION_LIBRARY}
     ctascheduler ctacommon ctaobjectstore ctacatalogue)
 endif()
 set_property(TARGET cta-frontend-grpc APPEND PROPERTY INSTALL_RPATH ${PROTOBUF3_RPATH})

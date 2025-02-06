@@ -34,7 +34,7 @@
 
 #include <getopt.h>
 #include <fstream>
-// #include <grpc++/reflection.h>
+#include <grpcpp/ext/proto_server_reflection_plugin.h>
 
 using namespace cta;
 using namespace cta::common;
@@ -173,6 +173,8 @@ int main(const int argc, char *const *const argv) {
         creds = grpc::InsecureServerCredentials();
     }
 
+    // add reflection
+    grpc::reflection::InitProtoReflectionServerBuilderPlugin();
     // Listen on the given address without any authentication mechanism.
     builder.AddListeningPort(server_address, creds);
 
@@ -186,8 +188,6 @@ int main(const int argc, char *const *const argv) {
     // clients. In this case it corresponds to an *synchronous* service.
     builder.RegisterService(&svc);
 
-    // add reflection
-    // grpc::reflection::InitProtoReflectionServerBuilderPlugin();
     std::unique_ptr <Server> server(builder.BuildAndStart());
 
     lc.log(cta::log::INFO, "Listening on socket address: " + server_address);
