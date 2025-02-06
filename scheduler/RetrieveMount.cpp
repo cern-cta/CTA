@@ -265,9 +265,9 @@ void cta::RetrieveMount::flushAsyncSuccessReports(std::queue<std::unique_ptr<cta
   std::list<std::unique_ptr<cta::RetrieveJob>>
     validatedSuccessfulRetrieveJobs;  //List to ensure the destruction of the retrieve jobs at the end of this method
 #ifdef CTA_PGSCHED
-  std::list<cta::SchedulerDatabase::RetrieveJob *> validatedSuccessfulDBRetrieveJobs;
-#else
   std::list<std::unique_ptr<cta::SchedulerDatabase::RetrieveJob>> validatedSuccessfulDBRetrieveJobs;
+#else
+  std::list<cta::SchedulerDatabase::RetrieveJob *> validatedSuccessfulDBRetrieveJobs;
 #endif
   std::unique_ptr<cta::RetrieveJob> job;
   double waitUpdateCompletionTime = 0;
