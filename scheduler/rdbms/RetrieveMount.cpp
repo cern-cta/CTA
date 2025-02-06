@@ -354,7 +354,7 @@ void RetrieveMount::setTapeSessionStats(const castor::tape::tapeserver::daemon::
   m_RelationalDB.m_tapeDrivesState->updateDriveStatistics(driveInfo, inputs, lc);
 }
 
-void RetrieveMount::flushAsyncSuccessReports(std::list<SchedulerDatabase::RetrieveJob*>& jobsBatch,
+void RetrieveMount::flushAsyncSuccessReports(std::list<std::unique_ptr<SchedulerDatabase::RetrieveJob>>& jobsBatch,
                                              log::LogContext& lc) {
   // this method will remove the rows of the jobs from the DB
   //if (isRepack) {
@@ -410,7 +410,7 @@ void RetrieveMount::flushAsyncSuccessReports(std::list<SchedulerDatabase::Retrie
   try {
     for (auto& job : jobsBatch) {
       // Attempt to release the job back to the pool
-      auto castedJob = std::unique_ptr<RetrieveRdbJob>(static_cast<RetrieveRdbJob*>(job));
+      auto castedJob = std::unique_ptr<RetrieveRdbJob>(static_cast<RetrieveRdbJob*>(job.release()));
       m_jobPool.releaseJob(std::move(castedJob));
     }
     jobsBatch.clear();  // Clear the container after all jobs are successfully processed
@@ -422,7 +422,7 @@ void RetrieveMount::flushAsyncSuccessReports(std::list<SchedulerDatabase::Retrie
     // Destroy all remaining jobs in case of failure
     for (auto& job : jobsBatch) {
       // Release the unique_ptr ownership and delete the underlying object
-      delete job;
+      delete job.release();
     }
     jobsBatch.clear();  // Ensure the container is emptied
   }
