@@ -76,7 +76,14 @@ public:
 
   void setTapeSessionStats(const castor::tape::tapeserver::daemon::TapeSessionStats& stats) override;
 
-  void flushAsyncSuccessReports(std::list<SchedulerDatabase::RetrieveJob*>& jobsBatch, log::LogContext& lc) override;
+  void flushAsyncSuccessReports(std::list<std::unique_ptr<SchedulerDatabase::RetrieveJob>>& jobsBatch,
+                                log::LogContext& lc) override;
+
+  //------------------------------------------------------------------------------
+  // for compliance with OStoreDB only
+  //------------------------------------------------------------------------------
+  void flushAsyncSuccessReports(std::list<cta::SchedulerDatabase::RetrieveJob*>& jobsBatch,
+                                cta::log::LogContext& lc) override {};
 
   void addDiskSystemToSkip(const DiskSystemToSkip& diskSystemToSkip) override;
 
