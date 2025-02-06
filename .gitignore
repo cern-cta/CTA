@@ -96,6 +96,7 @@ build/
 *.swn
 *.swm
 *.swd
+*.core
 
 # OS-specific files
 .DS_Store
