@@ -3052,9 +3052,8 @@ TEST_P(DataTransferSessionTest, DataTransferSessionTapeFullMigration) {
   cta::catalogue::TapeFileSearchCriteria criteria;
   auto afsItor = catalogue.ArchiveFile()->getArchiveFilesItor(criteria);
   for (size_t i = 1; i <= sourceFiles.size(); ++i) {
-    // Only the first 4 files shall make it through since we have a tape of 5000 bytes and we try to
-    // archive 10 files of 1000 bytes. This is because the tape was labeled before by few bytes of VID string,
-    // so maximum we can write 4 complete file before hitting the end of the tape.
+    // Only the first 4 files shall make it through. This is because we have a tape capacity of 5000 bytes,
+    // we try to archive 10 files of 1000 bytes each and the tape was labeled before by few bytes of VID string.
     // The filemark is set ot empty string and not written.
     if (i <= 4) {
       ASSERT_TRUE(afsItor.hasMore());
@@ -3227,9 +3226,8 @@ TEST_P(DataTransferSessionTest, DataTransferSessionTapeFullOnFlushMigration) {
   cta::catalogue::TapeFileSearchCriteria criteria;
   auto afsItor = catalogue.ArchiveFile()->getArchiveFilesItor(criteria);
   for (size_t i = 1; i <= sourceFiles.size(); ++i) {
-    // Only the first 4 files shall make it through since we have a tape of 5000 bytes and we try to
-    // archive 10 files of 1000 bytes. This is because the tape was labeled before by few bytes of VID string,
-    // so maximum we can write 4 complete file before hitting the end of the tape.
+    // Only the first 4 files shall make it through. This is because we have a tape capacity of 5000 bytes,
+    // we try to archive 10 files of 1000 bytes each and the tape was labeled before by few bytes of VID string.
     // The filemark is set ot empty string and not written.
     if (i <= 4) {
       ASSERT_TRUE(afsItor.hasMore());
