@@ -264,7 +264,11 @@ void cta::RetrieveMount::flushAsyncSuccessReports(std::queue<std::unique_ptr<cta
                                                   cta::log::LogContext& logContext) {
   std::list<std::unique_ptr<cta::RetrieveJob>>
     validatedSuccessfulRetrieveJobs;  //List to ensure the destruction of the retrieve jobs at the end of this method
+#ifdef CTA_PGSCHED
+  std::list<cta::SchedulerDatabase::RetrieveJob *> validatedSuccessfulDBRetrieveJobs;
+#else
   std::list<std::unique_ptr<cta::SchedulerDatabase::RetrieveJob>> validatedSuccessfulDBRetrieveJobs;
+#endif
   std::unique_ptr<cta::RetrieveJob> job;
   double waitUpdateCompletionTime = 0;
   double jobBatchFinishingTime = 0;
@@ -282,7 +286,11 @@ void cta::RetrieveMount::flushAsyncSuccessReports(std::queue<std::unique_ptr<cta
       }
       files++;
       bytes += job->archiveFile.fileSize;
-      validatedSuccessfulDBRetrieveJobs.emplace_back(std::move(job->m_dbJob.get()));
+#ifdef CTA_PGSCHED
+      validatedSuccessfulDBRetrieveJobs.emplace_back(std::move(job->m_dbJob));
+#else
+      validatedSuccessfulDBRetrieveJobs.emplace_back(job->m_dbJob.get());
+#endif
       validatedSuccessfulRetrieveJobs.emplace_back(std::move(job));
       job.reset();
     }
