@@ -401,6 +401,8 @@ public:
     void addDiskSystemToSkip(const SchedulerDatabase::RetrieveMount::DiskSystemToSkip& diskSystemToSkip) override;
     void flushAsyncSuccessReports(std::list<cta::SchedulerDatabase::RetrieveJob*>& jobsBatch,
                                   log::LogContext& lc) override;
+    void flushAsyncSuccessReports(std::list<std::unique_ptr<cta::SchedulerDatabase::RetrieveJob>>& jobsBatch,
+                                  log::LogContext& lc) override { /* empty implementaion, for CTA_PGSCHED only */  }
   };
   friend class RetrieveMount;
 
