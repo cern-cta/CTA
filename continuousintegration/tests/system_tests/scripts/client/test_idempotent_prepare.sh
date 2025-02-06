@@ -128,7 +128,7 @@ echo "Trigering EOS retrieve workflow as poweruser1:powerusers (expects error)..
 # We need the -s as we are staging the files from tape (see xrootd prepare definition)
 
 
-if REQUEST_ID=$(KRB5CCNAME=/tmp/${EOSPOWER_USER}/krb5cc_0 XrdSecPROTOCOL=krb5 xrdfs ${EOS_MGM_HOST} prepare -s ${TEMP_FILE_FAIL}); then
+if KRB5CCNAME=/tmp/${EOSPOWER_USER}/krb5cc_0 XrdSecPROTOCOL=krb5 xrdfs ${EOS_MGM_HOST} prepare -s ${TEMP_FILE_FAIL}; then
   echo "ERROR: Preparing a single file that does not exist (all files failec) should return an error."
   exit 1
 fi
@@ -165,8 +165,6 @@ QUERY_RSP=$(KRB5CCNAME=/tmp/${EOSPOWER_USER}/krb5cc_0 XrdSecPROTOCOL=krb5 xrdfs 
 PATH_EXISTS=$(echo ${QUERY_RSP} | jq ".responses[] | select(.path == \"${TEMP_FILE}\").path_exists")
 REQUESTED=$(  echo ${QUERY_RSP} | jq ".responses[] | select(.path == \"${TEMP_FILE}\").requested")
 HAS_REQID=$(  echo ${QUERY_RSP} | jq ".responses[] | select(.path == \"${TEMP_FILE}\").has_reqid")
-
-OK_FILE_ERROR_TEXT=$(echo ${QUERY_RSP} | jq ".responses[] | select(.path == \"${TEMP_FILE_OK}\").error_text")
 
 if [[ "true" != "${PATH_EXISTS}" ||
       "false" != "${REQUESTED}" ||

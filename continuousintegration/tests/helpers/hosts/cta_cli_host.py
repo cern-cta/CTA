@@ -22,23 +22,13 @@ class CtaCliHost(RemoteHost):
         raise RuntimeError(f"Failing to find drive status for drive: {drive_name}")
 
     def wait_for_all_drives_status(self, desired_status: str, timeout: int = 10):
-        print(f"Waiting for drives to be {desired_status}")
-        seconds_passed = 0
-
-        while seconds_passed < timeout:
+        print(f"Waiting for all drives to be {desired_status}")
+        for _ in range(timeout):
             drives_info = json.loads(self.execWithOutput("cta-admin --json drive ls"))
-            all_in_desired_status: bool = True
-            for drive in drives_info:
-                if drive["driveStatus"] != desired_status:
-                    all_in_desired_status = False
-                    break
-
-            if all_in_desired_status:
+            if not any(drive["driveStatus"] != desired_status for drive in drives_info):
                 print(f"Drives are set {desired_status}")
                 return
-            seconds_passed += 1
             time.sleep(1)
-
         raise RuntimeError(f"Timeout reached while trying to put drives to: {desired_status}")
 
     def wait_for_all_drives_down(self):
