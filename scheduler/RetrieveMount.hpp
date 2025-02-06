@@ -214,7 +214,7 @@ public:
     * @param jobs The job batch
     * @param logContext
     */
-  virtual void requeueJobBatch(std::vector<std::unique_ptr<cta::RetrieveJob>> &jobs, log::LogContext &logContext);
+  virtual void requeueJobBatch(std::vector<std::unique_ptr<cta::RetrieveJob>>& jobs, log::LogContext& logContext);
   /**
   * Re-queues batch of jobs
   * Serves PGSCHED purpose only
