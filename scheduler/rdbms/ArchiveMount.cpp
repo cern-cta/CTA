@@ -78,15 +78,14 @@ ArchiveMount::getNextJobBatch(uint64_t filesRequested, uint64_t bytesRequested, 
       logContext.log(cta::log::INFO,
                      "In postgres::ArchiveJobQueueRow::moveJobsToDbQueue: successfully queued to the DB.");
     } else {
-      logContext.log(cta::log::WARNING,
-                     "In postgres::ArchiveJobQueueRow::moveJobsToDbQueue: no jobs queued.");
+      logContext.log(cta::log::WARNING, "In postgres::ArchiveJobQueueRow::moveJobsToDbQueue: no jobs queued.");
       txn.commit();
       return ret;
     }
-    catch (exception::Exception& ex) {
-      params.add("exceptionMessage",  ex.getMessageValue());
-      logContext.log(cta::log::ERR,
-                   "In postgres::ArchiveJobQueueRow::moveJobsToDbQueue: failed to queue jobs. Aborting the transaction.");
+  } catch (exception::Exception& ex) {
+    params.add("exceptionMessage", ex.getMessageValue());
+    logContext.log(cta::log::ERR,
+                   "In postgres::ArchiveJobQueueRow::moveJobsToDbQueue: failed to queue jobs." + ex.getMessageValue());
     txn.abort();
     throw;
   }
@@ -148,20 +147,19 @@ uint64_t ArchiveMount::requeueJobBatch(const std::list<std::string>& jobIDsList,
   cta::schedulerdb::Transaction txn(m_connPool);
   uint64_t nrows = 0;
   try {
-    nrows =
-      postgres::ArchiveJobQueueRow::requeueJobBatch(txn, ArchiveJobStatus::AJS_ToTransferForUser, jobIDsList);
-    if (nrows != jobIDsList.size()){
+    nrows = postgres::ArchiveJobQueueRow::requeueJobBatch(txn, ArchiveJobStatus::AJS_ToTransferForUser, jobIDsList);
+    if (nrows != jobIDsList.size()) {
       cta::log::ScopedParamContainer params(logContext);
       params.add("jobCountToRequeue", jobIDsList.size());
       params.add("jobCountRequeued", nrows);
-      logContext.log(cta::log::ERR,
-                     "In schedulerdb::ArchiveMount::requeueJobBatch(): failed to requeue all jobs !");
+      logContext.log(cta::log::ERR, "In schedulerdb::ArchiveMount::requeueJobBatch(): failed to requeue all jobs !");
     }
     txn.commit();
   } catch (exception::Exception& ex) {
-    logContext.log(cta::log::ERR,
-                   "In schedulerdb::ArchiveMount::requeueJobBatch(): failed to update job status for failed task queue." +
-                     ex.getMessageValue());
+    logContext.log(
+      cta::log::ERR,
+      "In schedulerdb::ArchiveMount::requeueJobBatch(): failed to update job status for failed task queue." +
+        ex.getMessageValue());
     txn.abort();
     return 0;
   }
