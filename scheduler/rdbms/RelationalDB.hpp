@@ -270,7 +270,7 @@ private:
   void populateRepackRequestsStatistics(SchedulerDatabase::RepackRequestStatistics& stats);
   /*
    * for retrieve queue sleep mechanism (filter out disk systems which do not have space)
-   * we put in place DiskSleepEntry, diskSystemSleepCacheMap and diskSystemSleepCacheMutex
+   * we put in place DiskSleepEntry, m_diskSystemSleepCacheMap and diskSystemSleepCacheMutex
    */
   struct DiskSleepEntry {
     uint64_t sleepTime;
@@ -278,7 +278,7 @@ private:
     DiskSleepEntry() : sleepTime(0), timestamp(0) {}
     DiskSleepEntry(uint64_t st, time_t ts) : sleepTime(st), timestamp(ts) {}
   };
-  std::unordered_map<std::string, DiskSleepEntry> diskSystemSleepCacheMap;
+  std::unordered_map<std::string, DiskSleepEntry> m_diskSystemSleepCacheMap;
   cta::threading::Mutex m_diskSystemSleepCacheMutex;
   /**
   * Candidate for redesign/removal once we start improving Scheduler algorithm

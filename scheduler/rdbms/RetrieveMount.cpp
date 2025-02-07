@@ -68,22 +68,21 @@ RetrieveMount::getNextJobBatch(uint64_t filesRequested, uint64_t bytesRequested,
         retVector.emplace_back(m_jobPool.acquireJob());
         retVector.back()->initialize(queuedJobs, logContext);
       }
+      txn.commit();
+      params.add("queuedJobCount", retVector.size());
       timings.insertAndReset("mountJobInitBatchTime", t);
       logContext.log(cta::log::INFO,
-                     "In postgres::RetrieveJobQueueRow::moveJobsToDbQueue: successfully prepared queueing for " +
-                       std::to_string(retVector.size()) + " jobs.");
+                     "In postgres::RetrieveJobQueueRow::moveJobsToDbQueue: successfully queued to the DB.");
     } else {
       logContext.log(cta::log::WARNING,
-                     "In postgres::RetrieveJobQueueRow::moveJobsToDbQueue: no DB jobs queued for Mount ID: " +
-                       std::to_string(mountInfo.mountId));
+                     "In postgres::RetrieveJobQueueRow::moveJobsToDbQueue: no jobs queued.");
+      txn.commit();
       return ret;
     }
-    txn.commit();
   } catch (exception::Exception& ex) {
+    params.add("exceptionMessage",  ex.getMessageValue());
     logContext.log(cta::log::ERR,
-                   "In postgres::RetrieveJobQueueRow::moveJobsToDbQueue: failed to queue jobs for given Mount ID. "
-                   "Aborting the transaction." +
-                     ex.getMessageValue());
+                   "In postgres::RetrieveJobQueueRow::moveJobsToDbQueue: failed to queue jobs. Aborting the transaction.");
     txn.abort();
     throw;
   }
@@ -439,7 +438,7 @@ void RetrieveMount::putQueueToSleep(const std::string& diskSystemName,
   if (!diskSystemName.empty()) {
     RelationalDB::DiskSleepEntry dse(sleepTime, time(nullptr));
     cta::threading::MutexLocker ml(m_RelationalDB.m_diskSystemSleepCacheMutex);
-    m_RelationalDB.diskSystemSleepCacheMap[diskSystemName] = dse;
+    m_RelationalDB.m_diskSystemSleepCacheMap[diskSystemName] = dse;
   }
 }
 
