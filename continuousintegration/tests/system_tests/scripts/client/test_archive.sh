@@ -26,25 +26,22 @@ echo "Listing the EOS extended attributes of ${EOS_DIR}"
 eos root://${EOS_MGM_HOST} attr ls ${EOS_DIR}
 echo
 
-# As we are skipping n bytes per file we need a bit more than the file size to accomodate dd to read ${FILE_KB_SIZE} skipping the n first bytes
-dd if=/dev/urandom of=/tmp/testfile bs=1k count=$((${FILE_KB_SIZE} + ${NB_FILES}*${NB_DIRS}/1024 + 1)) || exit 1
-
-
 # not more than 100k files per directory so that we can rm and find as a standard user
 for ((subdir=0; subdir < ${NB_DIRS}; subdir++)); do
-  eos root://${EOS_MGM_HOST} mkdir -p ${EOS_DIR}/${subdir} || die "Cannot create directory ${EOS_DIR}/{subdir} in eos instance ${EOS_MGM_HOST}."
+  eos root://${EOS_MGM_HOST} mkdir -p ${EOS_DIR}/${subdir}
 
   echo -n "Copying ${NB_FILES} files to ${EOS_DIR}/${subdir} using ${NB_PROCS} processes..."
 
-  file_creation="dd if=/tmp/testfile bs=1k 2>/dev/null | (dd bs=$((${subdir}*${NB_FILES})) count=1 of=/dev/null 2>/dev/null; dd bs=TEST_FILE_NUM count=1 of=/dev/null 2>/dev/null; dd bs=1k count=${FILE_KB_SIZE} 2>/dev/null) "
-
   # The `archive` variable is sourced from cli_calls.sh without parameter
   # expansion, to be able to expand the variable afterwards we need `eval echo`
+  # TODO: find a better way of doing this ugly archive expansion
   xrdcp_call=$(eval echo "${archive}")
-  command_str="${file_creation} | ${xrdcp_call}"
+  command_str="(dd if=/dev/zero bs=1k count=${FILE_KB_SIZE} status=none; echo UNIQUE_TEST_FILE_NUM) | ${xrdcp_call}"
   start=$(date +%s)
   echo "Starting at ${start}"
-  seq -w 0 $((${NB_FILES} - 1)) | xargs --max-procs=${NB_PROCS} -iTEST_FILE_NUM bash -c "$command_str"
+  seq -w 0 $((NB_FILES - 1)) | xargs --max-procs=${NB_PROCS} -iTEST_FILE_NUM bash -c "$command_str"
+
+
   end=$(date +%s)
   duration=$((end - start))
   echo "All file copies to disk for subdir ${subdir} took ${duration} seconds."
@@ -52,12 +49,6 @@ for ((subdir=0; subdir < ${NB_DIRS}; subdir++)); do
 done
 start=$(date +%s)
 echo "Timestamp after all files copied ${start}"
-if [ "0" != "$(ls ${ERROR_DIR} 2> /dev/null | wc -l)" ]; then
-  # there were some xrdcp errors
-  echo "Several xrdcp errors occured during archival!"
-  echo "Please check client pod logs in artifacts"
-  mv ${ERROR_DIR}/* ${LOGDIR}/xrd_errors/
-fi
 
 COPIED=0
 COPIED_EMPTY=0

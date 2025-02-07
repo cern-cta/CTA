@@ -1,5 +1,7 @@
 #!/usr/bin/bash
 
+set -e
+
 # This script is meant to be executed on the EOS MGM
 
 # General settings
@@ -8,7 +10,7 @@ eos vid enable https
 eos space set default on
 eos space config default space.filearchivedgc=on
 eos space config default space.wfe=on
-eos space config default space.wfe.ntx=100
+eos space config default space.wfe.ntx=50
 eos space config default taperestapi.status=on
 eos space config default taperestapi.stage=on
 eos space config default space.scanrate=0
@@ -89,7 +91,13 @@ eos attr set sys.acl=g:eosusers:rwx!d,u:poweruser1:rwx+dp,u:poweruser2:rwx+dp,z:
 eos attr set sys.archive.storage_class=ctaStorageClass ${CTA_TEST_DIR}
 eos attr link ${CTA_WF_DIR} ${CTA_TEST_DIR} # Link workflows
 
-# Test specific
-TAPE_FS_ID=65535
+# Configure CTA file lookups
+LOOKUPS_UID=99 # nobody is enough for lookups
+LOOKUPS_CONFIG_LINE=$(cat /etc/cta/eos.grpc.keytab | grep "${EOS_INSTANCE_NAME}" | head -1)
+LOOKUPS_TOKEN=$(echo ${LOOKUPS_CONFIG_LINE} | awk '{print $3}')
+eos vid add gateway [:1] grpc
+eos vid set map -grpc key:${LOOKUPS_TOKEN} vuid:${LOOKUPS_UID} vgid:${LOOKUPS_UID}
+
+tape_fs_id=65535
 eos space define tape
-eos fs add -m ${TAPE_FS_ID} tape localhost:1234 /does_not_exist tape
+eos fs add -m ${tape_fs_id} tape localhost:1234 /does_not_exist tape

@@ -5,7 +5,7 @@ import time
 import json
 import glob
 
-@pytest.mark.order("first")
+# For now this is here so that we can easily update new scripts without running the setup again
 def test_setup_client_scripts_and_certs(env):
     env.client[0].copyTo("system_tests/scripts/client/", "/root/", permissions="+x")
     env.client[0].exec("mv /root/client/* /root && rm -d /root/client")
@@ -13,12 +13,11 @@ def test_setup_client_scripts_and_certs(env):
     env.client[0].copyTo("/tmp/certificates/", "/etc/grid-security/")
     env.execLocal("rm -rf /tmp/certificates")
 
-@pytest.mark.order("second")
 def test_setup_client(env):
     # Probably same for this one
     file_count=5000
-    file_size_kb=15
-    processes_count = 20
+    file_size_kb=2
+    processes_count=20
 
     # TODO: refactor this so that these magical flags make sense
     env.client[0].exec(f"/root/client_setup.sh -n {file_count} -s {file_size_kb} -p {processes_count} -d {env.eos_preprod_dir} -v -r -c xrd")
