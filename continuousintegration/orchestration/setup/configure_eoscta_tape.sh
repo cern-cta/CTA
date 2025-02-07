@@ -42,17 +42,6 @@ CTA_STORAGE_CLASS=ctaStorageClass
 CTA_PROC_DIR=/eos/${EOS_INSTANCE_NAME}/proc/cta
 CTA_WF_DIR=${CTA_PROC_DIR}/workflow
 
-# Test specific
-
-TAPE_FS_ID=65535
-eos space define tape
-eos fs add -m ${TAPE_FS_ID} tape localhost:1234 /does_not_exist tape
-
-# create tmp disk only directory for tests
-EOS_TMP_DIR=/eos/${EOS_INSTANCE_NAME}/tmp
-eos mkdir ${EOS_TMP_DIR}
-eos chmod 777 ${EOS_TMP_DIR}
-
 # Configure directories
 
 eos mkdir -p ${CTA_PROC_DIR}
@@ -98,6 +87,7 @@ LOOKUPS_TOKEN=$(echo ${LOOKUPS_CONFIG_LINE} | awk '{print $3}')
 eos vid add gateway [:1] grpc
 eos vid set map -grpc key:${LOOKUPS_TOKEN} vuid:${LOOKUPS_UID} vgid:${LOOKUPS_UID}
 
+# Configure tape space
 tape_fs_id=65535
 eos space define tape
 eos fs add -m ${tape_fs_id} tape localhost:1234 /does_not_exist tape

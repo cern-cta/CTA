@@ -19,13 +19,8 @@ set -e
 EOS_MGM_HOST="ctaeos"
 EOS_INSTANCE_NAME="ctaeos"
 
-REPORT_DIRECTORY=/var/log
-
 # would be eosdf but apparently this will not archive stuff to tape
 EOSDF_BUFFER_BASEDIR=/eos/ctaeos/cta
-EOSDF_BUFFER_URL=${EOSDF_BUFFER_BASEDIR}
-
-FULL_EOSDF_BUFFER_URL=root://${EOS_INSTANCE_NAME}/${EOSDF_BUFFER_BASEDIR}
 
 # get some common useful helpers for krb5
 . /root/client_helper.sh ## wait_for_archive is defined in this file
@@ -36,12 +31,10 @@ eospower_kinit
 
 # Get kerberos credentials for user1
 admin_kinit
-admin_klist > /dev/null 2>&1 || die "Cannot get kerberos credentials for user ${USER}"
 
 ## All this is executed from within the client pod
 # This should be idempotent as we will be called several times
 if [[ $( admin_cta --json ds ls | jq '.[] | select(.name=="eosdfBuffer") | .name') != '"eosdfBuffer"' ]]; then
-    admin_cta di add -n ${EOS_INSTANCE_NAME} -m toto
     admin_cta dis add -n eosdfDiskInstanceSpace --di ${EOS_INSTANCE_NAME} -u "eosSpace:default" -i 1 -m toto
     admin_cta ds add -n eosdfBuffer --di ${EOS_INSTANCE_NAME} --dis eosdfDiskInstanceSpace -r ".*/eos/.*" -f 1 -s 20 -m toto # "root://${EOS_INSTANCE_NAME}/${EOSDF_BUFFER_BASEDIR}"
 else
@@ -51,31 +44,25 @@ fi
 admin_cta ds ls
 
 ## Archive a file, the first time the test is run, so we can then retrieve it
-TEST_FILE_NAME=testfile1_eosdf
+TEST_FILE=${EOSDF_BUFFER_BASEDIR}/eosdf/$(uuidgen)
 # Check whether it already exists, if not, archive it to tape
-if eos root://${EOS_MGM_HOST} fileinfo ${EOSDF_BUFFER_URL}/${TEST_FILE_NAME}; then
-    echo "File does not exist on tape. Archiving a file: $TEST_FILE_NAME"
-    echo
-    echo "foo" > /root/${TEST_FILE_NAME}
-    echo
-    echo "Doing xrdcp of ${TEST_FILE_NAME} in the path root://${EOS_INSTANCE_NAME}/${EOSDF_BUFFER_URL}/${TEST_FILE_NAME}"
-    xrdcp /root/${TEST_FILE_NAME} root://${EOS_INSTANCE_NAME}/${EOSDF_BUFFER_URL}/${TEST_FILE_NAME}
-    wait_for_archive ${EOS_INSTANCE_NAME} "${EOSDF_BUFFER_URL}/${TEST_FILE_NAME}"
-
-    echo "File ${TEST_FILE_NAME} archived to tape"
-fi
+echo "File does not exist on tape. Archiving a file: $TEST_FILE_NAME"
+echo "Doing xrdcp of ${TEST_FILE_NAME} in the path root://${EOS_INSTANCE_NAME}/${TEST_FILE}"
+xrdcp /etc/group root://${EOS_INSTANCE_NAME}/${TEST_FILE}
+wait_for_archive ${EOS_INSTANCE_NAME} "${TEST_FILE}"
+echo "File ${TEST_FILE_NAME} archived to tape"
 
 ## Retrieve the file
-REQUEST_ID=$(KRB5CCNAME=/tmp/${EOSPOWER_USER}/krb5cc_0 XrdSecPROTOCOL=krb5 xrdfs ${EOS_MGM_HOST} prepare -s ${EOSDF_BUFFER_URL}/${TEST_FILE_NAME})
+KRB5CCNAME=/tmp/${EOSPOWER_USER}/krb5cc_0 XrdSecPROTOCOL=krb5 xrdfs ${EOS_MGM_HOST} prepare -s ${TEST_FILE}
 # Wait for the copy to appear on disk
-wait_for_retrieve ${EOS_INSTANCE_NAME} "${EOSDF_BUFFER_URL}/${TEST_FILE_NAME}"
+wait_for_retrieve ${EOS_INSTANCE_NAME} "${TEST_FILE}"
 
 echo
 echo "File ${TEST_FILE_NAME} retrieved from disk"
 echo
 
-# do prepare evict so we can avoid archiving the file multiple times
-KRB5CCNAME=/tmp/${EOSPOWER_USER}/krb5cc_0 XrdSecPROTOCOL=krb5 xrdfs ${EOS_MGM_HOST} prepare -e ${EOSDF_BUFFER_URL}/${TEST_FILE_NAME}
+KRB5CCNAME=/tmp/${EOSPOWER_USER}/krb5cc_0 XrdSecPROTOCOL=krb5 xrdfs ${EOS_MGM_HOST} prepare -e ${TEST_FILE}
+wait_for_evict ${EOS_INSTANCE_NAME} "${TEST_FILE}"
 
 # Remove the disk system so it doesn't interfere with other tests
 admin_cta ds rm -n eosdfBuffer

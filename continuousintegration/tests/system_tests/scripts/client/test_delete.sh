@@ -60,8 +60,10 @@ while test 0 != ${FILESONTAPE}; do
 done
 
 
-# kill eos rm command that may run in the background
-timeout 1s wait ${EOSRMPID} || kill ${EOSRMPID} || true &> /dev/null
+# kill eos rm command if it's still running for whatever reason
+if kill -0 ${EOSRMPID} &> /dev/null; then
+    timeout 1s wait ${EOSRMPID} || kill ${EOSRMPID} &> /dev/null || true
+fi
 
 # As we deleted the directory we may have deleted more files than the ones we retrieved
 # therefore we need to take the smallest of the 2 values to decide if the system test was

@@ -21,28 +21,29 @@ class CtaCliHost(RemoteHost):
 
         raise RuntimeError(f"Failing to find drive status for drive: {drive_name}")
 
-    def wait_for_all_drives_status(self, desired_status: str, timeout: int = 10):
-        print(f"Waiting for all drives to be {desired_status}")
+    def wait_for_drive_status(self, drive_name: str, desired_status: str, timeout: int = 10):
+        print(f"Waiting for drives {drive_name} to be {desired_status}")
         for _ in range(timeout):
-            drives_info = json.loads(self.execWithOutput("cta-admin --json drive ls"))
+            drives_info = json.loads(self.execWithOutput(f"cta-admin --json drive ls '{drive_name}'"))
             if not any(drive["driveStatus"] != desired_status for drive in drives_info):
-                print(f"Drives are set {desired_status}")
+                print(f"Drives {drive_name} are set {desired_status}")
                 return
             time.sleep(1)
         raise RuntimeError(f"Timeout reached while trying to put drives to: {desired_status}")
 
-    def wait_for_all_drives_down(self):
-        self.wait_for_all_drives_status("DOWN")
+    def set_drive_up(self, drive_name: str, wait: bool = True):
+        self.exec(f"cta-admin dr up '{drive_name}' --reason 'Setting drive up'")
+        if wait:
+            self.wait_for_drive_status(drive_name, "UP")
 
-    def wait_for_all_drives_up(self):
-        self.wait_for_all_drives_status("UP")
+    def set_drive_down(self, drive_name: str, wait: bool = True):
+        self.exec(f"cta-admin dr down '{drive_name}' --reason 'Setting drive down'")
+        if wait:
+            self.wait_for_drive_status(drive_name, "DOWN")
 
     def set_all_drives_up(self, wait: bool = True):
-        self.exec("cta-admin dr up '.*' --reason 'Setting all drives up'")
-        if wait:
-            self.wait_for_all_drives_up()
+        self.set_drive_up(".*", wait=wait)
 
     def set_all_drives_down(self, wait: bool = True):
-        self.exec("cta-admin dr down '.*' --reason 'Setting all drives down'")
-        if wait:
-            self.wait_for_all_drives_down()
+        self.set_drive_down(".*", wait=wait)
+

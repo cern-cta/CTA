@@ -41,11 +41,10 @@ set -e
 ################################################################################
 
 set -e
-set -x
 
 EOS_MGM_HOST="ctaeos"
 
-EOS_BASEDIR=/eos/ctaeos/preprod/
+EOS_BASEDIR=/eos/ctaeos
 EOS_TAPE_BASEDIR=$EOS_BASEDIR/cta
 
 # get some common useful helpers for krb5
@@ -117,7 +116,7 @@ echo "Putting all drives up. File will finally be written to tape and removed fr
 put_all_drives_up
 
 echo "Waiting for archival of ${TEMP_FILE}..."
-wait_for_archive ${TEMP_FILE}
+wait_for_archive ${EOS_MGM_HOST} ${TEMP_FILE}
 
 # 10. Check that disk replica was deleted and that new tape replica exists
 echo "Checking that ${TEMP_FILE} replica no longer exists on disk..."

@@ -16,6 +16,7 @@
 #               submit itself to any jurisdiction.
 
 set -e
+set -x
 
 ################################################################################
 # DESCRIPTION
