@@ -934,21 +934,21 @@ RelationalDB::getRetrieveQueuesCleanupInfo(log::LogContext& logContext) {
 
 std::vector<std::string> RelationalDB::getActiveSleepDiskSystemNamesToFilter() {
   std::vector<std::string> validDiskNames;
-  if (diskSystemSleepCacheMap.empty()) {
+  if (m_diskSystemSleepCacheMap.empty()) {
     return validDiskNames;
   }
   cta::threading::MutexLocker ml(m_diskSystemSleepCacheMutex);
   uint64_t currentTime = std::chrono::system_clock::to_time_t(std::chrono::system_clock::now());
 
-  validDiskNames.reserve(diskSystemSleepCacheMap.size());
+  validDiskNames.reserve(m_diskSystemSleepCacheMap.size());
 
-  auto it = diskSystemSleepCacheMap.begin();
-  while (it != diskSystemSleepCacheMap.end()) {
+  auto it = m_diskSystemSleepCacheMap.begin();
+  while (it != m_diskSystemSleepCacheMap.end()) {
     const std::string& diskName = it->first;
     const DiskSleepEntry& entry = it->second;
     if (currentTime - entry.timestamp > entry.sleepTime) {
       // erase; iterator is invalidated, but the next one is returned
-      it = diskSystemSleepCacheMap.erase(it);
+      it = m_diskSystemSleepCacheMap.erase(it);
     } else {
       validDiskNames.push_back(diskName);
       ++it;

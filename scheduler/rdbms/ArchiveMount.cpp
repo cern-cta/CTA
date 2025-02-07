@@ -49,15 +49,15 @@ ArchiveMount::getNextJobBatch(uint64_t filesRequested, uint64_t bytesRequested, 
   cta::utils::Timer t;
   std::list<std::unique_ptr<SchedulerDatabase::ArchiveJob>> ret;
   std::vector<std::unique_ptr<SchedulerDatabase::ArchiveJob>> retVector;
+  cta::log::ScopedParamContainer params(logContext);
   try {
     auto [queuedJobs, nrows] =
       postgres::ArchiveJobQueueRow::moveJobsToDbQueue(txn, queriedJobStatus, mountInfo, bytesRequested, filesRequested);
     timings.insertAndReset("mountUpdateBatchTime", t);
-    cta::log::ScopedParamContainer params(logContext);
     params.add("updateMountInfoRowCount", nrows);
     params.add("MountID", mountInfo.mountId);
-    logContext.log(cta::log::INFO,
-                   "In postgres::ArchiveJobQueueRow::moveJobsToDbQueue: successfully assigned Mount ID to DB jobs.");
+    //logContext.log(cta::log::INFO,
+    //               "In postgres::ArchiveJobQueueRow::moveJobsToDbQueue: successfully assigned Mount ID to DB jobs.");
     retVector.reserve(nrows);
     // Fetch job info only in case there were jobs found and updated
     if (!queuedJobs.isEmpty()) {
@@ -72,22 +72,21 @@ ArchiveMount::getNextJobBatch(uint64_t filesRequested, uint64_t bytesRequested, 
         tapeFile.fSeq = ++nbFilesCurrentlyOnTape;
         tapeFile.blockId = maxBlockId;
       }
+      txn.commit();
+      params.add("queuedJobCount", retVector.size());
       timings.insertAndReset("mountJobInitBatchTime", t);
       logContext.log(cta::log::INFO,
-                     "In postgres::ArchiveJobQueueRow::moveJobsToDbQueue: successfully prepared queueing for " +
-                       std::to_string(retVector.size()) + " jobs.");
+                     "In postgres::ArchiveJobQueueRow::moveJobsToDbQueue: successfully queued to the DB.");
     } else {
       logContext.log(cta::log::WARNING,
-                     "In postgres::ArchiveJobQueueRow::moveJobsToDbQueue: no DB jobs queued for Mount ID: " +
-                       std::to_string(mountInfo.mountId));
+                     "In postgres::ArchiveJobQueueRow::moveJobsToDbQueue: no jobs queued.");
+      txn.commit();
       return ret;
     }
-    txn.commit();
-  } catch (exception::Exception& ex) {
-    logContext.log(cta::log::ERR,
-                   "In postgres::ArchiveJobQueueRow::moveJobsToDbQueue: failed to queue jobs for given Mount ID. "
-                   "Aborting the transaction." +
-                     ex.getMessageValue());
+    catch (exception::Exception& ex) {
+      params.add("exceptionMessage",  ex.getMessageValue());
+      logContext.log(cta::log::ERR,
+                   "In postgres::ArchiveJobQueueRow::moveJobsToDbQueue: failed to queue jobs. Aborting the transaction.");
     txn.abort();
     throw;
   }

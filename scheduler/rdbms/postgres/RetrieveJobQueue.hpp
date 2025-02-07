@@ -98,6 +98,8 @@ struct RetrieveJobQueueRow {
     lifecycleTimings_creation_time = 0;
     lifecycleTimings_first_selected_time = 0;
     lifecycleTimings_completed_time = 0;
+    fSeq = 0;
+    blockId = 0;
     tapePool.reserve(64);
     mountPolicy.reserve(64);
     retrieveReportURL.reserve(2048);
@@ -106,18 +108,17 @@ struct RetrieveJobQueueRow {
     requesterGroup.reserve(64);
     dstURL.reserve(2048);
     vid.reserve(64);
-    alternateVids.reserve(128);
-    alternateCopyNbs.reserve(20);
-    alternateFSeq.reserve(128);
-    alternateBlockId.reserve(128);
-    fSeq = 0;
-    blockId = 0;
-    drive.reserve(64);
+    drive.reserve(128);
+    logical_library.reserve(128);
     host.reserve(64);
     srrUsername.reserve(128);
     srrHost.reserve(64);
     srrMountPolicy.reserve(64);
     srrActivity.reserve(64);
+    alternateVids.reserve(128);
+    alternateCopyNbs.reserve(20);
+    alternateFSeq.reserve(256);
+    alternateBlockId.reserve(256);
   }
 
   /**
@@ -134,14 +135,17 @@ struct RetrieveJobQueueRow {
     requesterGroup.reserve(64);
     dstURL.reserve(2048);
     vid.reserve(64);
-    alternateVids.reserve(128);
-    alternateCopyNbs.reserve(20);
-    drive.reserve(64);
+    drive.reserve(128);
+    logical_library.reserve(128);
     host.reserve(64);
     srrUsername.reserve(128);
     srrHost.reserve(64);
     srrMountPolicy.reserve(64);
     srrActivity.reserve(64);
+    alternateVids.reserve(128);
+    alternateCopyNbs.reserve(20);
+    alternateFSeq.reserve(256);
+    alternateBlockId.reserve(256);
     *this = rset;
   }
 
@@ -159,8 +163,8 @@ struct RetrieveJobQueueRow {
     fSeq = 0;
     blockId = 0;
     alternateCopyNbs.clear();
-    alternateFSeq.reserve(128);
-    alternateBlockId.reserve(128);
+    alternateFSeq.clear();
+    alternateBlockId.clear();
     startTime = 0;
     retrieveReportURL.clear();
     retrieveErrorReportURL.clear();
