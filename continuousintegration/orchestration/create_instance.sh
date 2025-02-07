@@ -153,7 +153,7 @@ create_instance() {
       --eos-image-repository)
         eos_image_repository="$2"
         shift ;;
-      --eos--image-tag)
+      --eos-image-tag)
         eos_image_tag="$2"
         shift ;;
       *)
