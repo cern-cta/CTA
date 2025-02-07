@@ -3052,7 +3052,12 @@ TEST_P(DataTransferSessionTest, DataTransferSessionTapeFullMigration) {
   cta::catalogue::TapeFileSearchCriteria criteria;
   auto afsItor = catalogue.ArchiveFile()->getArchiveFilesItor(criteria);
   for (size_t i = 1; i <= sourceFiles.size(); ++i) {
-    // Only the first files made it through.
+    /* Only the first 3 files shall make it through. For the full explanation
+     * please see the DataTransferSessionTapeFullOnFlushMigration
+     * In this case, the FakeDrive write of the last file that does not fit is not allowed,
+     * nor reported and will not be seen in the catalogue - only 3 files fit to tape
+     * (with all the headers per file)
+     */
     if (i <= 3) {
       ASSERT_TRUE(afsItor.hasMore());
       auto afs = afsItor.next();
@@ -3224,8 +3229,41 @@ TEST_P(DataTransferSessionTest, DataTransferSessionTapeFullOnFlushMigration) {
   cta::catalogue::TapeFileSearchCriteria criteria;
   auto afsItor = catalogue.ArchiveFile()->getArchiveFilesItor(criteria);
   for (size_t i = 1; i <= sourceFiles.size(); ++i) {
-    // Only the first files made it through.
-    if (i <= 3) {
+    /* Only the first 4 files shall make it through DataTransferSessionTapeFullOnFlushMigration.
+     * It could seem as if this is because we have a tape capacity of 5000 bytes,
+     * we try to archive 10 files of 1000 bytes each and the tape was labeled before
+     * by few bytes of VID string, but this is still far from the full story.
+     * This would make it 4 files, if we tested for fitting the files without the additional
+     * 3 header objects (HDR1, HDR2, UH1 via init of FileWriter) taking additional space.
+     * The filemark is set to an empty string so does not consume additional space.
+     * Since the drive session config in this test has defaults: maxBytesBeforeFlush = 0;
+     *                                                           maxFilesBeforeFlush = 0;
+     * the TapeWriteSingleThread is calling FakeDrive flush() after each successful TapeWriteTask / file write !
+     * Files are being written to tape and reported/flushed each time. Then when the last file,
+     * for which there is not enough space, hits the tape write, the FakeDrive will set the m_tapeOverflow flag
+     * of the drive to true. The TapeWriteTask wil succeed the last write as if the file would fit
+     * to the tape and reports it in reportPacker.reportCompletedJob() queue
+     * and once the task successfully returns to TapeWriteSingleThread, it will call FakeDrive flush(),
+     * this will throw ENOSPC exception caught later in TapeWriteSingleThread, where the additional reportFlush()
+     * will report the last non-tape-fitting job to the catalogue and disk buffer.
+     * So in this DataTransferSessionTapeFullOnFlushMigration
+     * test we expect to see always one file more in the catalogue than in
+     * DataTransferSessionTapeFullMigration which throws the exception before the reportPacker.reportCompletedJob()
+     * is queued (does not write the last non-fitting file).
+     * To get to the concrete count, assuming the 3 headers (FileWriter init 3x writeBlock call, writing raw memory
+     * representation of the 2 header class objects)
+     * we write can easily count to more than >=250 bytes (to be confirmed)
+     * + initial label offset, we can proceed as follows:
+     * first label 5B  + file headers of 250 B + data 1000B = consumes 1255B, second 2505, third 3755B,
+     * fourth file headers will get us to 4005 B used and then in case of DataTransferSessionTapeFullMigration
+     * we crash here in the file data write, TapeWriteTask not pushing this 4th file to report queue
+     * and there is nothing to flush in this report queue after the exception is caught in TapeWriteSingleThread.
+     * Hence, in case of this DataTransferSessionTapeFullMigration we can expect only 3 files in the catalogue.
+     * In case of DataTransferSessionTapeFullOnFlushMigration we are actually succeeding the write of the 4th file
+     * and pushing it to the report queue even if it should not 'fit', but we mock the crash on flush not on write.
+     * This is why we expect here 4 files in the catalogue.
+     */
+    if (i <= 4) {
       ASSERT_TRUE(afsItor.hasMore());
       auto afs = afsItor.next();
       ASSERT_EQ(1, afs.tapeFiles.size());

@@ -78,7 +78,8 @@ public:
    */
   virtual void reportFlush(drive::compressionStats compressStats, cta::log::LogContext& lc);
 
-  /**
+  virtual void reportJobsToScheduler();
+    /**
    * Create into the MigrationReportPacker a report of reaching the end of the tape.
    * @param lc log context provided by the calling thread.
    */
