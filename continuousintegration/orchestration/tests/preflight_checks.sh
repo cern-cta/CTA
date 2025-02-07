@@ -15,6 +15,8 @@
 #               granted to it by virtue of its status as an Intergovernmental Organization or
 #               submit itself to any jurisdiction.
 
+set -e
+
 source "$(dirname "${BASH_SOURCE[0]}")/../../utils/log_wrapper.sh"
 
 usage() { cat <<EOF 1>&2
@@ -121,6 +123,7 @@ echo "-${INPUT_FILE_LIST}-"
 echo "# -OUTPUT-:"
 echo "-${OUTPUT_FILE_LIST}-"
 
+kubectl -n ${NAMESPACE} exec ${EOS_MGM_POD} -c eos-mgm -- bash -c "eos rm -rF ${TESTDIR}"
 
 ###
 #

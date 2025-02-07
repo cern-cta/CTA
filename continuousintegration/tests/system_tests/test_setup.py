@@ -68,6 +68,12 @@ def test_populate_catalogue_tapes(env):
                                 --comment ctasystest"
         env.ctacli[0].exec(add_tape_cmd)
 
+def test_label_tapes(env):
+    libraries_in_use: list[str] = [taped.library_device() for taped in env.ctataped]
+    tapes: list[str] = list_all_tapes_in_libraries(libraries_in_use)
+    for tape in tapes:
+        env.ctataped[0].exec(f"cta-tape-label --vid {tape} --force")
+
 def test_set_all_drives_up(env):
     env.ctacli[0].set_all_drives_up()
 

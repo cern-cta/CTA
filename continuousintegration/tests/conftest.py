@@ -17,10 +17,8 @@ def env(request):
 
     if connection_config is None:
         # No connection configuration provided, so assume everything is running in a cluster
-        print(f"Setting up namespace: {namespace}")
         return TestEnv.fromNamespace(namespace)
     else:
-        print(f"Using connection config: {connection_config}")
         return TestEnv.fromConfig(connection_config)
 
 def pytest_addoption(parser):

@@ -23,8 +23,7 @@ set -x
 abortFile() {
   while read -r REQ_ID; do
     read -r FILE_PATH
-    FILE_NAME=$(echo ${FILE_PATH} | cut -d/ -f2)
-    KRB5CCNAME=/tmp/${EOSPOWER_USER}/krb5cc_0 XrdSecPROTOCOL=krb5 xrdfs ${EOS_MGM_HOST} prepare -a ${REQ_ID} ${EOS_DIR}/${FILE_PATH} 2>${ERROR_DIR}/RETRIEVE_${FILE_NAME} && rm ${ERROR_DIR}/RETRIEVE_${FILE_NAME} || echo ERROR with xrootd prepare stage for file ${FILE_NAME}, full logs in ${ERROR_DIR}/RETRIEVE_${FILE_NAME} | ( grep ^ERROR || true)
+    KRB5CCNAME=/tmp/${EOSPOWER_USER}/krb5cc_0 XrdSecPROTOCOL=krb5 xrdfs ${EOS_MGM_HOST} prepare -a ${REQ_ID} ${EOS_DIR}/${FILE_PATH}
   done < $1
 }
 export -f abortFile
@@ -36,11 +35,18 @@ admin_kinit &>/dev/null
 put_all_drives_down
 
 # Stage.
-retrieve='KRB5CCNAME=/tmp/${EOSPOWER_USER}/krb5cc_0 XrdSecPROTOCOL=krb5 xrdfs root://${EOS_MGM_HOST} prepare -s ${EOS_DIR}/${subdir}/${subdir}TEST_FILE_NAME?activity=T0Reprocess'
+# Note that this relies on any previous files being on tape and NOT being on disk
+# This part is also disgusting, but it will be rewritten later
 for ((subdir=0; subdir < ${NB_DIRS}; subdir++)); do
-  echo -n "Retrieving files to ${EOS_DIR}/${subdir} using ${NB_PROCS} processes..."
-  xrdfs_call=$(eval echo "${retrieve}")
-  seq -w 0 $((${NB_FILES}-1)) | xargs --max-procs=${NB_PROCS} -iTEST_FILE_NAME bash -c "$xrdfs_call > /dev/null"
+  echo -n "Retrieving files to ${EOS_DIR}/${subdir} using ${NB_PROCS} processes (prepare2)..."
+
+  seq -w 0 $((${NB_FILES} - 1)) | xargs --process-slot-var=index --max-procs=${NB_PROCS} -iTEST_FILE_NAME bash -c "XRD_LOGLEVEL=Dump `
+   `KRB5CCNAME=/tmp/${EOSPOWER_USER}/krb5cc_0 `
+   `XrdSecPROTOCOL=krb5 `
+   `xrdfs ${EOS_MGM_HOST} prepare -s ${EOS_DIR}/${subdir}/${subdir}TEST_FILE_NAME?activity=T0Reprocess `
+   `2>${ERROR_DIR}/${subdir}RETRIEVE_TEST_FILE_NAME | tee -a reqid_\"\${index}\" && echo ${subdir}/${subdir}TEST_FILE_NAME >> reqid_\"\${index}\" && rm ${ERROR_DIR}/${subdir}RETRIEVE_TEST_FILE_NAME `
+   `|| echo ERROR with xrootd prepare stage for file ${subdir}/TEST_FILE_NAME, full logs in ${ERROR_DIR}/${subdir}RETRIEVE_TEST_FILE_NAME" \
+     | (grep ^ERROR || true)
 done
 
 # Wait for requests to be generated
@@ -102,18 +108,11 @@ done
 echo "Checking restaged files..."
 RESTAGEDFILES=0
 for ((subdir=0; subdir < ${NB_DIRS}; subdir++)); do
-  RF=$(eos root://${EOS_MGM_HOST} ls -y ${EOS_DIR}/${subdir} | grep -E '^d[1-9][0-9]*::t1' | wc -l)
+  RF=$(eos root://${EOS_MGM_HOST} ls -y ${EOS_DIR}/${subdir} | grep -E '^d[1-9][0-9]*::t1' | wc -l || true)
   echo "Restaged files in directory ${subdir}: ${RF}"
-  (( RESTAGEDFILES += ${RF} ))
+  (( RESTAGEDFILES += RF ))
 done
 echo "Total restaged files found: ${RESTAGEDFILES}"
-
-if [ "0" != "$(ls ${ERROR_DIR} 2> /dev/null | wc -l)" ]; then
-  # there were some prepare errors
-  echo "Several errors occured during prepare cancel test!"
-  echo "Please check client pod logs in artifacts"
-  mv ${ERROR_DIR}/* ${LOGDIR}/xrd_errors/
-fi
 
 if [ ${RESTAGEDFILES} -ne "0" ]; then
   echo "ERROR some files were retrieved in spite of retrieve cancellation."
