@@ -35,6 +35,8 @@
 #include <getopt.h>
 #include <fstream>
 #include <grpcpp/ext/proto_server_reflection_plugin.h>
+// #include <grpcpp/ext/channelz_service_plugin.h> // this is experimental but should work according to https://stackoverflow.com/questions/66382094/grpc-c-channelz-example
+#include <cstdlib> // for setenv
 
 using namespace cta;
 using namespace cta::common;
@@ -74,6 +76,9 @@ std::string file2string(std::string filename){
 }
 
 int main(const int argc, char *const *const argv) {
+    // enable gRPC channel debugging
+    setenv("GRPC_VERBOSITY", "debug", 1);
+    setenv("GRPC_TRACE", "all", 1);  
 
     std::string config_file("/etc/cta/cta-frontend-grpc.conf");
 
@@ -124,7 +129,7 @@ int main(const int argc, char *const *const argv) {
     // start gRPC service
 
     ServerBuilder builder;
-
+    // grpc::AddAdminServices(&builder);
     std::shared_ptr<grpc::ServerCredentials> creds;
 
     // read TLS value from config

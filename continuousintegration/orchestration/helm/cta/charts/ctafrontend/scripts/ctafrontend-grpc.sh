@@ -25,6 +25,7 @@ go install github.com/fullstorydev/grpcurl/cmd/grpcurl@latest
 # Then run it like this:
 # root/go/bin/grpcurl -plaintext localhost:10955 list cta.xrd.CtaRpc
 # root/go/bin/grpcurl -plaintext localhost:10955 list
+# grpcurl -plaintext cta-frontend:10955 cta.xrd.CtaRpc/GenericRequest
 
 
 # Install missing RPMs
