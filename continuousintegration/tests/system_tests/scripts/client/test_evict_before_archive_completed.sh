@@ -40,9 +40,12 @@ set -e
 #
 ################################################################################
 
+set -e
+set -x
+
 EOS_MGM_HOST="ctaeos"
 
-EOS_BASEDIR=/eos/ctaeos
+EOS_BASEDIR=/eos/ctaeos/preprod/
 EOS_TAPE_BASEDIR=$EOS_BASEDIR/cta
 
 # get some common useful helpers for krb5
@@ -128,7 +131,7 @@ echo "Checking that ${TEMP_FILE} replica no longer exists on disk..."
 if test 0 == $(KRB5CCNAME=/tmp/${EOSPOWER_USER}/krb5cc_0 XrdSecPROTOCOL=krb5 eos root://${EOS_MGM_HOST} info ${TEMP_FILE} | grep -F "tape" | wc -l); then
   error "Tape replica does not exist, when it should have been created after archival"
 else
-  echo "Tape replica creted, as expected"
+  echo "Tape replica created, as expected"
 fi
 
 

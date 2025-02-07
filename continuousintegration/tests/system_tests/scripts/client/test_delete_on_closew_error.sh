@@ -65,8 +65,8 @@ TEST_FILE_NAME=$(uuidgen)
 # Create a subdirectory with a different storage class for the delete on CLOSEW test
 
 echo "Creating ${CTA_TEST_DIR}/fail_on_closew_test event"
-eosadmin_eos root://${EOS_MGM_HOST} mkdir ${CTA_TEST_DIR}/fail_on_closew_test || error "Failed to create directory ${CTA_TEST_DIR}/fail_on_closew_test"
-eosadmin_eos root://${EOS_MGM_HOST} attr set sys.archive.storage_class=fail_on_closew_test ${CTA_TEST_DIR}/fail_on_closew_test || error "Failed to set sys.archive.storage_class=fail_on_closew_test on ${CTA_TEST_DIR}/fail_on_closew_test"
+eosadmin_eos root://${EOS_MGM_HOST} mkdir ${CTA_TEST_DIR}/fail_on_closew_test
+eosadmin_eos root://${EOS_MGM_HOST} attr set sys.archive.storage_class=fail_on_closew_test ${CTA_TEST_DIR}/fail_on_closew_test
 
 echo "xrdcp /etc/group root://${EOS_MGM_HOST}/${CTA_TEST_DIR}/fail_on_closew_test/${TEST_FILE_NAME}"
 
@@ -81,12 +81,10 @@ fi
 # Check that the EOS namespace entry has been removed
 # This means all replicas are deleted from tape and disks
 
-eos root://${EOS_MGM_HOST} fileinfo ${CTA_TEST_DIR}/fail_on_closew_test/${TEST_FILE_NAME}
-if [ $? -eq 2 ]
-then
-  echo "Success: EOS namespace entry was removed"
-else
+if eos root://${EOS_MGM_HOST} fileinfo ${CTA_TEST_DIR}/fail_on_closew_test/${TEST_FILE_NAME}; then
   error "EOS namespace entry is still present"
+else
+  echo "Success: EOS namespace entry was removed"
 fi
 
 

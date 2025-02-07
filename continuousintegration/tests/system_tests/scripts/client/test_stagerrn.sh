@@ -37,8 +37,6 @@ FSID_DUMMY_3_VALUE=103
 FSID_DUMMY_3_NAME="dummy_3"
 FSID_NOT_SET_VALUE=200
 
-FSID_TAPE=65535
-
 # get some common useful helpers for krb5
 . /root/client_helper.sh
 

@@ -58,8 +58,7 @@ CLIENT_POD="client-0"
 CTA_CLI_POD="cta-cli-0"
 
 # Set up kerberos
+# TODO: this is a bit silly to do here probably, because you can't do much useful with it yet
 echo "Running kinit for ${CTA_CLI_POD} and ${CLIENT_POD}"
 kubectl --namespace "${NAMESPACE}" exec ${CTA_CLI_POD} -c cta-cli -- kinit -kt /root/ctaadmin1.keytab ctaadmin1@${KRB5_REALM}
-kubectl --namespace "${NAMESPACE}" exec ${CTA_CLI_POD} -c cta-cli -- klist
 kubectl --namespace "${NAMESPACE}" exec ${CLIENT_POD} -c client -- kinit -kt /root/user1.keytab user1@${KRB5_REALM}
-kubectl --namespace "${NAMESPACE}" exec ${CLIENT_POD} -c client -- klist

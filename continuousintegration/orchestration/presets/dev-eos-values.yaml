@@ -57,10 +57,15 @@ mgm:
     volumeMounts:
       - name: varlog-tmp
         mountPath: /var/log/tmp
+      - name: eos-grpc-keytab
+        mountPath: /etc/cta/eos.grpc.keytab
+        subPath: eos.grpc.keytab
     volumes:
       - name: varlog-tmp
         emptyDir: {}
-
+      - name: eos-grpc-keytab
+        configMap:
+          name: eos-grpc-keytab
 
 fst:
   replicaCount: 1
