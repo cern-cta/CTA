@@ -1,25 +1,23 @@
 /**
- * @project        The CERN Tape Retrieve (CTA)
- * @copyright      Copyright © 2021-2023 CERN
- * @license        This program is free software: you can redistribute it and/or modify
- *                 it under the terms of the GNU General Public License as published by
- *                 the Free Software Foundation, either version 3 of the License, or
- *                 (at your option) any later version.
- *
- *                 This program is distributed in the hope that it will be useful,
- *                 but WITHOUT ANY WARRANTY; without even the implied warranty of
- *                 MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- *                 GNU General Public License for more details.
- *
- *                 You should have received a copy of the GNU General Public License
- *                 along with this program.  If not, see <http://www.gnu.org/licenses/>.
- */
+* @project        The CERN Tape Retrieve (CTA)
+* @copyright      Copyright © 2021-2023 CERN
+* @license        This program is free software: you can redistribute it and/or modify
+*                 it under the terms of the GNU General Public License as published by
+*                 the Free Software Foundation, either version 3 of the License, or
+*                 (at your option) any later version.
+*
+*                 This program is distributed in the hope that it will be useful,
+*                 but WITHOUT ANY WARRANTY; without even the implied warranty of
+*                 MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+*                 GNU General Public License for more details.
+*
+*                 You should have received a copy of the GNU General Public License
+*                 along with this program.  If not, see <http://www.gnu.org/licenses/>.
+*/
 
 #pragma once
 
 #include "common/log/LogContext.hpp"
-#include "common/dataStructures/ArchiveFile.hpp"
-#include "common/dataStructures/RetrieveRequest.hpp"
 #include "common/checksum/ChecksumBlob.hpp"
 #include "scheduler/SchedulerDatabase.hpp"
 #include "scheduler/rdbms/postgres/Transaction.hpp"
@@ -51,6 +49,7 @@ struct RetrieveJobQueueRow {
   std::string alternateBlockId = "";
   std::string alternateCopyNbs = "";
   time_t startTime = 0;  //!< Time the job was inserted into the queue
+  time_t creationTime = 0;
   std::string retrieveReportURL = "NOT_DEFINED";
   std::string retrieveErrorReportURL = "";
   std::string requesterName = "";
@@ -78,23 +77,32 @@ struct RetrieveJobQueueRow {
   uint64_t srrTime = 0;
   std::string srrMountPolicy = "";
   std::string srrActivity = "";
+  uint64_t archiveFileID = 0;
+  std::string diskFileId = "";
+  std::string diskInstance = "";
+  uint64_t fileSize = 0;
+  std::string storageClass = "";
+  std::string diskFileInfoPath = "";
+  uint32_t diskFileInfoOwnerUid = 0;
+  uint32_t diskFileInfoGid = 0;
 
-  common::dataStructures::ArchiveFile archiveFile;
+  checksum::ChecksumBlob checksumBlob;
+
   time_t lifecycleTimings_creation_time = 0;
   time_t lifecycleTimings_first_selected_time = 0;
   time_t lifecycleTimings_completed_time = 0;
   std::optional<std::string> diskSystemName = std::nullopt;
 
   RetrieveJobQueueRow() {
-    archiveFile.archiveFileID = 0;
-    archiveFile.diskFileId.reserve(128);
-    archiveFile.diskInstance.reserve(128);
-    archiveFile.fileSize = 0;
-    archiveFile.storageClass.reserve(128);
-    archiveFile.diskFileInfo.path.reserve(2048);
-    archiveFile.diskFileInfo.owner_uid = 0;
-    archiveFile.diskFileInfo.gid = 0;
-    archiveFile.creationTime = 0;
+    archiveFileID = 0;
+    diskFileId.reserve(128);
+    diskInstance.reserve(128);
+    fileSize = 0;
+    storageClass.reserve(128);
+    diskFileInfoPath.reserve(2048);
+    diskFileInfoOwnerUid = 0;
+    diskFileInfoGid = 0;
+    creationTime = 0;
     lifecycleTimings_creation_time = 0;
     lifecycleTimings_first_selected_time = 0;
     lifecycleTimings_completed_time = 0;
@@ -122,10 +130,10 @@ struct RetrieveJobQueueRow {
   }
 
   /**
-   * Constructor from row
-   *
-   * @param row  A single row from the current row of the rset
-   */
+  * Constructor from row
+  *
+  * @param row  A single row from the current row of the rset
+  */
   explicit RetrieveJobQueueRow(const rdbms::Rset& rset) {
     tapePool.reserve(64);
     mountPolicy.reserve(64);
@@ -194,10 +202,18 @@ struct RetrieveJobQueueRow {
     srrActivity.clear();
     diskSystemName = std::nullopt;
     activity = std::nullopt;
-    archiveFile = common::dataStructures::ArchiveFile();
+    archiveFileID = 0;
+    diskFileId = "";
+    diskInstance = "";
+    fileSize = 0;
+    storageClass = "";
+    diskFileInfoPath = "";
+    diskFileInfoOwnerUid = 0;
+    diskFileInfoGid = 0;
     lifecycleTimings_creation_time = 0;
     lifecycleTimings_first_selected_time = 0;
     lifecycleTimings_completed_time = 0;
+    checksumBlob.clear();
   }
 
   RetrieveJobQueueRow& operator=(const rdbms::Rset& rset) {
@@ -251,84 +267,76 @@ struct RetrieveJobQueueRow {
 
     diskSystemName = rset.columnOptionalString("DISK_SYSTEM_NAME");
 
-    archiveFile.archiveFileID = rset.columnUint64NoOpt("ARCHIVE_FILE_ID");
-    archiveFile.fileSize = rset.columnUint64NoOpt("SIZE_IN_BYTES");
-    archiveFile.checksumBlob.deserialize(std::move(rset.columnBlob("CHECKSUMBLOB")));
-    archiveFile.creationTime = rset.columnUint64NoOpt("CREATION_TIME");
-    archiveFile.diskInstance = rset.columnStringNoOpt("DISK_INSTANCE");
-    archiveFile.diskFileId = rset.columnStringNoOpt("DISK_FILE_ID");
-    archiveFile.diskFileInfo.owner_uid = rset.columnUint32NoOpt("DISK_FILE_OWNER_UID");
-    archiveFile.diskFileInfo.gid = rset.columnUint32NoOpt("DISK_FILE_GID");
-    archiveFile.diskFileInfo.path = rset.columnStringNoOpt("DISK_FILE_PATH");
-    archiveFile.storageClass = rset.columnStringNoOpt("STORAGE_CLASS");
+    archiveFileID = rset.columnUint64NoOpt("ARCHIVE_FILE_ID");
+    fileSize = rset.columnUint64NoOpt("SIZE_IN_BYTES");
+    checksumBlob.deserialize(std::move(rset.columnBlob("CHECKSUMBLOB")));
+    creationTime = rset.columnUint64NoOpt("CREATION_TIME");
+    diskInstance = rset.columnStringNoOpt("DISK_INSTANCE");
+    diskFileId = rset.columnStringNoOpt("DISK_FILE_ID");
+    diskFileInfoOwnerUid = rset.columnUint32NoOpt("DISK_FILE_OWNER_UID");
+    diskFileInfoGid = rset.columnUint32NoOpt("DISK_FILE_GID");
+    diskFileInfoPath = rset.columnStringNoOpt("DISK_FILE_PATH");
+    storageClass = rset.columnStringNoOpt("STORAGE_CLASS");
 
     fSeq = rset.columnUint64NoOpt("FSEQ");
     blockId = rset.columnUint64NoOpt("BLOCK_ID");
     alternateFSeq = rset.columnStringNoOpt("ALTERNATE_FSEQS");
     alternateBlockId = rset.columnStringNoOpt("ALTERNATE_BLOCK_IDS");
-    // we should add here a method that will fill all
-    // the alternative tape files from the alternate columns (unless there is just one !)
-    archiveFile.tapeFiles.emplace_back(std::move(vid),
-                                       fSeq,
-                                       blockId,
-                                       archiveFile.fileSize,
-                                       copyNb,
-                                       archiveFile.creationTime,
-                                       std::move(archiveFile.checksumBlob));
+
     return *this;
   }
 
   void insert(rdbms::Conn& conn) const {
     // does not set mountId and the following
     std::string sql = R"(
-        INSERT INTO RETRIEVE_PENDING_QUEUE (
-            RETRIEVE_REQUEST_ID,
-            REQUEST_JOB_COUNT,
-            STATUS,
-            CREATION_TIME,
-            STORAGE_CLASS,
-            SIZE_IN_BYTES,
-            ARCHIVE_FILE_ID,
-            CHECKSUMBLOB,
-            FSEQ,
-            BLOCK_ID,
-            DISK_INSTANCE,
-            DISK_FILE_PATH,
-            DISK_FILE_ID,
-            DISK_FILE_GID,
-            DISK_FILE_OWNER_UID,
-            MOUNT_POLICY,
-            VID,
-            ALTERNATE_VIDS,
-            PRIORITY,
-            MIN_RETRIEVE_REQUEST_AGE,
-            COPY_NB,
-            ALTERNATE_COPY_NBS,
-            ALTERNATE_FSEQS,
-            ALTERNATE_BLOCK_IDS,
-            START_TIME,
-            RETRIEVE_ERROR_REPORT_URL,
-            REQUESTER_NAME,
-            REQUESTER_GROUP,
-            DST_URL,
-            RETRIES_WITHIN_MOUNT,
-            TOTAL_RETRIES,
-            LAST_MOUNT_WITH_FAILURE,
-            MAX_TOTAL_RETRIES,
-            MAX_RETRIES_WITHIN_MOUNT,
-            MAX_REPORT_RETRIES,
-            TOTAL_REPORT_RETRIES,
-            IS_VERIFY_ONLY,
-            IS_REPORTING,
-            SRR_USERNAME,
-            SRR_HOST,
-            SRR_TIME,
-            SRR_MOUNT_POLICY,
-            LIFECYCLE_CREATION_TIME,
-            LIFECYCLE_FIRST_SELECTED_TIME,
-            LIFECYCLE_COMPLETED_TIME,
-            RETRIEVE_REPORT_URL
-    )";
+       INSERT INTO RETRIEVE_PENDING_QUEUE (
+           RETRIEVE_REQUEST_ID,
+           REQUEST_JOB_COUNT,
+           STATUS,
+           CREATION_TIME,
+           STORAGE_CLASS,
+           SIZE_IN_BYTES,
+           ARCHIVE_FILE_ID,
+           CHECKSUMBLOB,
+           FSEQ,
+           BLOCK_ID,
+           DISK_INSTANCE,
+           DISK_FILE_PATH,
+           DISK_FILE_ID,
+           DISK_FILE_GID,
+           DISK_FILE_OWNER_UID,
+           MOUNT_POLICY,
+           VID,
+           ALTERNATE_VIDS,
+           PRIORITY,
+           MIN_RETRIEVE_REQUEST_AGE,
+           COPY_NB,
+           ALTERNATE_COPY_NBS,
+           ALTERNATE_FSEQS,
+           ALTERNATE_BLOCK_IDS,
+           START_TIME,
+           RETRIEVE_ERROR_REPORT_URL,
+           REQUESTER_NAME,
+           REQUESTER_GROUP,
+           DST_URL,
+           RETRIES_WITHIN_MOUNT,
+           TOTAL_RETRIES,
+           LAST_MOUNT_WITH_FAILURE,
+           MAX_TOTAL_RETRIES,
+           MAX_RETRIES_WITHIN_MOUNT,
+           MAX_REPORT_RETRIES,
+           TOTAL_REPORT_RETRIES,
+           IS_VERIFY_ONLY,
+           IS_REPORTING,
+           SRR_USERNAME,
+           SRR_HOST,
+           SRR_TIME,
+           SRR_MOUNT_POLICY,
+           LIFECYCLE_CREATION_TIME,
+           LIFECYCLE_FIRST_SELECTED_TIME,
+           LIFECYCLE_COMPLETED_TIME,
+           RETRIEVE_REPORT_URL
+   )";
     if (diskSystemName.has_value()) {
       sql += R"(,DISK_SYSTEM_NAME )";
     }
@@ -339,54 +347,54 @@ struct RetrieveJobQueueRow {
       sql += R"(,SRR_ACTIVITY )";
     }
     sql += R"(
-        ) VALUES (
-            :RETRIEVE_REQUEST_ID,
-            :REQUEST_JOB_COUNT,
-            :STATUS,
-            :CREATION_TIME,
-            :STORAGE_CLASS,
-            :SIZE_IN_BYTES,
-            :ARCHIVE_FILE_ID,
-            :CHECKSUMBLOB,
-            :FSEQ,
-            :BLOCK_ID,
-            :DISK_INSTANCE,
-            :DISK_FILE_PATH,
-            :DISK_FILE_ID,
-            :DISK_FILE_GID,
-            :DISK_FILE_OWNER_UID,
-            :MOUNT_POLICY,
-            :VID,
-            :ALTERNATE_VIDS,
-            :PRIORITY,
-            :MIN_RETRIEVE_REQUEST_AGE,
-            :COPY_NB,
-            :ALTERNATE_COPY_NBS,
-            :ALTERNATE_FSEQS,
-            :ALTERNATE_BLOCK_IDS,
-            :START_TIME,
-            :RETRIEVE_ERROR_REPORT_URL,
-            :REQUESTER_NAME,
-            :REQUESTER_GROUP,
-            :DST_URL,
-            :RETRIES_WITHIN_MOUNT,
-            :TOTAL_RETRIES,
-            :LAST_MOUNT_WITH_FAILURE,
-            :MAX_TOTAL_RETRIES,
-            :MAX_RETRIES_WITHIN_MOUNT,
-            :MAX_REPORT_RETRIES,
-            :TOTAL_REPORT_RETRIES,
-            :IS_VERIFY_ONLY,
-            :IS_REPORTING,
-            :SRR_USERNAME,
-            :SRR_HOST,
-            :SRR_TIME,
-            :SRR_MOUNT_POLICY,
-            :LIFECYCLE_CREATION_TIME,
-            :LIFECYCLE_FIRST_SELECTED_TIME,
-            :LIFECYCLE_COMPLETED_TIME,
-            :RETRIEVE_REPORT_URL
-    )";
+       ) VALUES (
+           :RETRIEVE_REQUEST_ID,
+           :REQUEST_JOB_COUNT,
+           :STATUS,
+           :CREATION_TIME,
+           :STORAGE_CLASS,
+           :SIZE_IN_BYTES,
+           :ARCHIVE_FILE_ID,
+           :CHECKSUMBLOB,
+           :FSEQ,
+           :BLOCK_ID,
+           :DISK_INSTANCE,
+           :DISK_FILE_PATH,
+           :DISK_FILE_ID,
+           :DISK_FILE_GID,
+           :DISK_FILE_OWNER_UID,
+           :MOUNT_POLICY,
+           :VID,
+           :ALTERNATE_VIDS,
+           :PRIORITY,
+           :MIN_RETRIEVE_REQUEST_AGE,
+           :COPY_NB,
+           :ALTERNATE_COPY_NBS,
+           :ALTERNATE_FSEQS,
+           :ALTERNATE_BLOCK_IDS,
+           :START_TIME,
+           :RETRIEVE_ERROR_REPORT_URL,
+           :REQUESTER_NAME,
+           :REQUESTER_GROUP,
+           :DST_URL,
+           :RETRIES_WITHIN_MOUNT,
+           :TOTAL_RETRIES,
+           :LAST_MOUNT_WITH_FAILURE,
+           :MAX_TOTAL_RETRIES,
+           :MAX_RETRIES_WITHIN_MOUNT,
+           :MAX_REPORT_RETRIES,
+           :TOTAL_REPORT_RETRIES,
+           :IS_VERIFY_ONLY,
+           :IS_REPORTING,
+           :SRR_USERNAME,
+           :SRR_HOST,
+           :SRR_TIME,
+           :SRR_MOUNT_POLICY,
+           :LIFECYCLE_CREATION_TIME,
+           :LIFECYCLE_FIRST_SELECTED_TIME,
+           :LIFECYCLE_COMPLETED_TIME,
+           :RETRIEVE_REPORT_URL
+   )";
     if (diskSystemName.has_value()) {
       sql += R"(,:DISK_SYSTEM_NAME )";
     }
@@ -402,18 +410,18 @@ struct RetrieveJobQueueRow {
     stmt.bindUint64(":RETRIEVE_REQUEST_ID", retrieveRequestId);
     stmt.bindUint32(":REQUEST_JOB_COUNT", reqJobCount);
     stmt.bindString(":STATUS", to_string(status));
-    stmt.bindUint64(":CREATION_TIME", archiveFile.creationTime);
-    stmt.bindString(":STORAGE_CLASS", archiveFile.storageClass);
-    stmt.bindUint64(":SIZE_IN_BYTES", archiveFile.fileSize);
-    stmt.bindUint64(":ARCHIVE_FILE_ID", archiveFile.archiveFileID);
-    stmt.bindBlob(":CHECKSUMBLOB", archiveFile.checksumBlob.serialize());
+    stmt.bindUint64(":CREATION_TIME", creationTime);
+    stmt.bindString(":STORAGE_CLASS", storageClass);
+    stmt.bindUint64(":SIZE_IN_BYTES", fileSize);
+    stmt.bindUint64(":ARCHIVE_FILE_ID", archiveFileID);
+    stmt.bindBlob(":CHECKSUMBLOB", checksumBlob.serialize());
     stmt.bindUint64(":FSEQ", fSeq);
     stmt.bindUint64(":BLOCK_ID", blockId);
-    stmt.bindString(":DISK_INSTANCE", archiveFile.diskInstance);
-    stmt.bindString(":DISK_FILE_PATH", archiveFile.diskFileInfo.path);
-    stmt.bindString(":DISK_FILE_ID", archiveFile.diskFileId);
-    stmt.bindUint32(":DISK_FILE_GID", archiveFile.diskFileInfo.gid);
-    stmt.bindUint32(":DISK_FILE_OWNER_UID", archiveFile.diskFileInfo.owner_uid);
+    stmt.bindString(":DISK_INSTANCE", diskInstance);
+    stmt.bindString(":DISK_FILE_PATH", diskFileInfoPath);
+    stmt.bindString(":DISK_FILE_ID", diskFileId);
+    stmt.bindUint32(":DISK_FILE_GID", diskFileInfoGid);
+    stmt.bindUint32(":DISK_FILE_OWNER_UID", diskFileInfoOwnerUid);
     stmt.bindString(":MOUNT_POLICY", mountPolicy);
     stmt.bindUint32(":PRIORITY", priority);
     stmt.bindUint32(":MIN_RETRIEVE_REQUEST_AGE", minRetrieveRequestAge);
@@ -494,17 +502,17 @@ struct RetrieveJobQueueRow {
     params.add("retrieveRequest.mountPolicy", srrMountPolicy);
     params.add("retrieveRequest.activity", srrActivity);
     // archiveFile fields
-    params.add("archiveFileID", archiveFile.archiveFileID);
-    params.add("diskFileInfo.owner_uid", archiveFile.diskFileInfo.owner_uid);
-    params.add("diskFileInfo.gid", archiveFile.diskFileInfo.gid);
-    params.add("diskFileInfo.path", archiveFile.diskFileInfo.path);
+    params.add("archiveFileID", archiveFileID);
+    params.add("diskFileInfoOwnerUid", diskFileInfoOwnerUid);
+    params.add("diskFileInfoGid", diskFileInfoGid);
+    params.add("diskFileInfoPath", diskFileInfoPath);
     params.add("mountPolicyName", mountPolicy);
-    params.add("fileSize", archiveFile.fileSize);
-    params.add("diskFileId", archiveFile.diskFileId);
-    params.add("diskInstance", archiveFile.diskInstance);
-    params.add("checksumBlob", archiveFile.checksumBlob);
-    params.add("creationTime", archiveFile.creationTime);
-    params.add("storageClass", archiveFile.storageClass);
+    params.add("fileSize", fileSize);
+    params.add("diskFileId", diskFileId);
+    params.add("diskInstance", diskInstance);
+    params.add("checksumBlob", checksumBlob);
+    params.add("creationTime", creationTime);
+    params.add("storageClass", storageClass);
 
     params.add("retrieveErrorReportURL", retrieveErrorReportURL);
     params.add("failureLogs", failureLogs.value_or(""));
@@ -512,9 +520,9 @@ struct RetrieveJobQueueRow {
     //params.add("repackReqId", repackReqId);
 
     /* Columns to be replaced by other DB columns than protobuf filled columns
-     * params.add("retrieveJobsProtoBuf", retrieveJobsProtoBuf);
-     * params.add("repackInfoProtoBuf", repackInfoProtoBuf);
-     */
+    * params.add("retrieveJobsProtoBuf", retrieveJobsProtoBuf);
+    * params.add("repackInfoProtoBuf", repackInfoProtoBuf);
+    */
     params.add("lifecycleTimings.creation_time", lifecycleTimings_creation_time);
     params.add("lifecycleTimings.first_selected_time", lifecycleTimings_first_selected_time);
     params.add("lifecycleTimings.completed_time", lifecycleTimings_completed_time);
@@ -523,46 +531,46 @@ struct RetrieveJobQueueRow {
   }
 
   /**
-   * When CTA received the deleteRetrieve request from the disk buffer,
-   * this ensures removal from the queue
-   *
-   * @param txn           Transaction handling the connection to the backend database
-   * @param diskInstance  Name of the disk instance where the retrieve request was issued from
-   * @param archiveFileID The retrieve file ID assigned originally
-   *
-   * @return  The number of affected jobs
-   */
+  * When CTA received the deleteRetrieve request from the disk buffer,
+  * this ensures removal from the queue
+  *
+  * @param txn           Transaction handling the connection to the backend database
+  * @param diskInstance  Name of the disk instance where the retrieve request was issued from
+  * @param archiveFileID The retrieve file ID assigned originally
+  *
+  * @return  The number of affected jobs
+  */
   static uint64_t cancelRetrieveJob(Transaction& txn, const std::string& diskInstance, uint64_t archiveFileID);
   /**
-     * Select any jobs with specified status(es) from the report,
-     * flag them as being reported and return the job IDs
-     *
-     * @param txn       Transaction handlign the connection to the backend database
-     * @param statusList List of Retrieve Job Status to select on
-     * @param limit      Maximum number of rows to return
-     *
-     * @return  result set of job IDs
-     */
+    * Select any jobs with specified status(es) from the report,
+    * flag them as being reported and return the job IDs
+    *
+    * @param txn       Transaction handlign the connection to the backend database
+    * @param statusList List of Retrieve Job Status to select on
+    * @param limit      Maximum number of rows to return
+    *
+    * @return  result set of job IDs
+    */
   static rdbms::Rset flagReportingJobsByStatus(Transaction& txn,
                                                std::list<RetrieveJobStatus> statusList,
                                                uint64_t gc_delay,
                                                uint64_t limit);
 
   /**
-   * Assign a mount ID and VID to a selection of rows
-   * which will be moved from Insert queue
-   * to Job queue table in the DB
-   *
-   *
-   * @param txn        Transaction to use for this query
-   * @param status     Retrieve Job Status to select on
-   * @param mountInfo  mountInfo object
-   * @param noSpaceDiskSystemNames list of diskSystemNames where there is no space left for more retrieves
-   * @param maxBytesRequested  the maximum cumulative size of the files in the bunch requested
-   * @param limit      Maximum number of rows to return
-   *
-   * @return  result set containing job IDs of the rows which were updated
-   */
+  * Assign a mount ID and VID to a selection of rows
+  * which will be moved from Insert queue
+  * to Job queue table in the DB
+  *
+  *
+  * @param txn        Transaction to use for this query
+  * @param status     Retrieve Job Status to select on
+  * @param mountInfo  mountInfo object
+  * @param noSpaceDiskSystemNames list of diskSystemNames where there is no space left for more retrieves
+  * @param maxBytesRequested  the maximum cumulative size of the files in the bunch requested
+  * @param limit      Maximum number of rows to return
+  *
+  * @return  result set containing job IDs of the rows which were updated
+  */
   static std::pair<rdbms::Rset, uint64_t>
   moveJobsToDbQueue(Transaction& txn,
                     RetrieveJobStatus status,
@@ -571,85 +579,85 @@ struct RetrieveJobQueueRow {
                     uint64_t maxBytesRequested,
                     uint64_t limit);
   /**
-   * Update job status
-   *
-   * @param txn        Transaction to use for this query
-   * @param status     Retrieve Job Status to select on
-   * @param jobIDs     List of jobID strings to select
-   * @return           Number of updated rows
-   */
+  * Update job status
+  *
+  * @param txn        Transaction to use for this query
+  * @param status     Retrieve Job Status to select on
+  * @param jobIDs     List of jobID strings to select
+  * @return           Number of updated rows
+  */
   static uint64_t updateJobStatus(Transaction& txn, RetrieveJobStatus status, const std::vector<std::string>& jobIDs);
 
   /**
-   * Update failed job status
-   *
-   * @param txn                  Transaction to use for this query
-   * @param status               Retrieve Job Status to select on
-   * @return                     Number of updated rows
-   */
+  * Update failed job status
+  *
+  * @param txn                  Transaction to use for this query
+  * @param status               Retrieve Job Status to select on
+  * @return                     Number of updated rows
+  */
   uint64_t updateFailedJobStatus(Transaction& txn, RetrieveJobStatus status);
 
   /**
-   * Move from ARCHIVE_ACTIVE_QUEUE to ARCHIVE_PENDING_QUEUE
-   * a failed job so that it can be to drive queues requeued.
-   * This method updates also the retry statistics
-   *
-   * @param txn                  Transaction to use for this query
-   * @param status               Retrieve Job Status to select on
-   * @param keepMountId          true or false
-   * @return                     Number of updated rows
-   */
+  * Move from ARCHIVE_ACTIVE_QUEUE to ARCHIVE_PENDING_QUEUE
+  * a failed job so that it can be to drive queues requeued.
+  * This method updates also the retry statistics
+  *
+  * @param txn                  Transaction to use for this query
+  * @param status               Retrieve Job Status to select on
+  * @param keepMountId          true or false
+  * @return                     Number of updated rows
+  */
   uint64_t requeueFailedJob(Transaction& txn,
                             RetrieveJobStatus status,
                             bool keepMountId,
                             std::optional<std::list<std::string>> jobIDs = std::nullopt);
 
   /**
-   * Move from ARCHIVE_ACTIVE_QUEUE to ARCHIVE_PENDING_QUEUE
-   * a batch of jobs so that they can be requeued to drive queues later
-   * This methos is static and does not udate any retry statistics
-   * It is used for batch of jobs not processed, returning from the task queue
-   * (e.g. in case of a full tape)
-   *
-   * @param txn                  Transaction to use for this query
-   * @param status               Retrieve Job Status to select on
-   * @param keepMountId          true or false
-   * @return                     Number of updated rows
-   */
+  * Move from ARCHIVE_ACTIVE_QUEUE to ARCHIVE_PENDING_QUEUE
+  * a batch of jobs so that they can be requeued to drive queues later
+  * This methos is static and does not udate any retry statistics
+  * It is used for batch of jobs not processed, returning from the task queue
+  * (e.g. in case of a full tape)
+  *
+  * @param txn                  Transaction to use for this query
+  * @param status               Retrieve Job Status to select on
+  * @param keepMountId          true or false
+  * @return                     Number of updated rows
+  */
   static uint64_t requeueJobBatch(Transaction& txn, RetrieveJobStatus status, const std::list<std::string>& jobIDs);
 
   /**
-   * Update job status when job report failed
-   *
-   * @param txn                  Transaction to use for this query
-   * @param status               Retrieve Job Status to select on
-   * @return                     Number of updated rows
-   */
+  * Update job status when job report failed
+  *
+  * @param txn                  Transaction to use for this query
+  * @param status               Retrieve Job Status to select on
+  * @return                     Number of updated rows
+  */
   uint64_t updateJobStatusForFailedReport(Transaction& txn, RetrieveJobStatus status);
 
   /**
-   * Move the job row to the ARCHIVE FAILED JOB TABLE
-   *
-   * @param txn                  Transaction to use for this query
-   * @return nrows               The number of rows moved.
-   */
+  * Move the job row to the ARCHIVE FAILED JOB TABLE
+  *
+  * @param txn                  Transaction to use for this query
+  * @return nrows               The number of rows moved.
+  */
   uint64_t moveJobToFailedQueueTable(Transaction& txn);
 
   /**
-   * Move the job rows to the ARCHIVE FAILED JOB TABLE (static alternate for multiple jobs)
-   *
-   * @param txn                  Transaction to use for this query
-   * @return nrows               The number of rows moved.
-   */
+  * Move the job rows to the ARCHIVE FAILED JOB TABLE (static alternate for multiple jobs)
+  *
+  * @param txn                  Transaction to use for this query
+  * @return nrows               The number of rows moved.
+  */
   static uint64_t moveJobBatchToFailedQueueTable(Transaction& txn, const std::vector<std::string>& jobIDs);
 
   /**
-   * Increment Retrieve Request ID and return the new value
-   *
-   * @param conn  DB connection to use for this query
-   *
-   * @return     Retrieve Request ID
-   */
+  * Increment Retrieve Request ID and return the new value
+  *
+  * @param conn  DB connection to use for this query
+  *
+  * @return     Retrieve Request ID
+  */
   static uint64_t getNextRetrieveRequestID(rdbms::Conn& conn);
 };
 };  // namespace cta::schedulerdb::postgres

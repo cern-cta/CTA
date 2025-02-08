@@ -42,6 +42,7 @@ struct ArchiveJobQueueRow {
   uint64_t minArchiveRequestAge = 0;
   uint8_t copyNb = 0;
   time_t startTime = 0;  //!< Time the job was inserted into the queue
+  time_t creationTime = 0;
   std::string archiveReportURL = "";
   std::string archiveErrorReportURL = "";
   std::string requesterName = "";
@@ -68,15 +69,19 @@ struct ArchiveJobQueueRow {
   std::string mount_type = "";
   std::string logical_library = "";
 
-  common::dataStructures::ArchiveFile archiveFile;
+  //common::dataStructures::ArchiveFile archiveFile;
+
+  uint64_t archiveFileID = 0;
+  std::string diskFileId = "";
+  std::string diskInstance = "";
+  uint64_t fileSize = 0;
+  std::string storageClass = "";
+  std::string diskFileInfoPath = "";
+  uint32_t diskFileInfoOwnerUid = 0;
+  uint32_t diskFileInfoGid = 0;
+  checksum::ChecksumBlob checksumBlob;
 
   ArchiveJobQueueRow() {
-    archiveFile.reconciliationTime = 0;
-    archiveFile.archiveFileID = 0;
-    archiveFile.fileSize = 0;
-    archiveFile.diskFileInfo.owner_uid = 0;
-    archiveFile.diskFileInfo.gid = 0;
-    archiveFile.creationTime = 0;
     tapePool.reserve(64);
     mountPolicy.reserve(64);
     archiveReportURL.reserve(2048);
@@ -91,6 +96,10 @@ struct ArchiveJobQueueRow {
     host.reserve(64);
     mount_type.reserve(64);
     logical_library.reserve(64);
+    diskFileId.reserve(128);
+    diskInstance.reserve(128);
+    storageClass.reserve(128);
+    diskFileInfoPath.reserve(2048);
   }
 
   /**
@@ -99,20 +108,6 @@ struct ArchiveJobQueueRow {
      * @param row  A single row from the current row of the rset
      */
   explicit ArchiveJobQueueRow(const rdbms::Rset& rset) {
-    tapePool.reserve(64);
-    mountPolicy.reserve(64);
-    archiveReportURL.reserve(2048);
-    archiveErrorReportURL.reserve(2048);
-    requesterName.reserve(64);
-    requesterGroup.reserve(64);
-    srcUrl.reserve(2048);
-    repackFilebufUrl.reserve(2048);
-    repackDestVid.reserve(64);
-    vid.reserve(64);
-    drive.reserve(64);
-    host.reserve(64);
-    mount_type.reserve(64);
-    logical_library.reserve(64);
     *this = rset;
   }
 
@@ -154,9 +149,17 @@ struct ArchiveJobQueueRow {
     host.clear();
     mount_type.clear();
     logical_library.clear();
+    archiveFileID = 0;
+    creationTime = 0;
+    diskFileId.clear();
+    diskInstance.clear();
+    fileSize = 0;
+    storageClass.clear();
+    diskFileInfoPath.clear();
+    diskFileInfoOwnerUid = 0;
+    diskFileInfoGid = 0;
+    checksumBlob.clear();
 
-    // Reset archiveFile struct
-    archiveFile = common::dataStructures::ArchiveFile();
   }
 
   ArchiveJobQueueRow& operator=(const rdbms::Rset& rset) {
@@ -169,23 +172,23 @@ struct ArchiveJobQueueRow {
     mountPolicy = rset.columnStringNoOpt("MOUNT_POLICY");
     priority = rset.columnUint16NoOpt("PRIORITY");
     minArchiveRequestAge = rset.columnUint32NoOpt("MIN_ARCHIVE_REQUEST_AGE");
-    archiveFile.archiveFileID = rset.columnUint64NoOpt("ARCHIVE_FILE_ID");
-    archiveFile.fileSize = rset.columnUint64NoOpt("SIZE_IN_BYTES");
+    archiveFileID = rset.columnUint64NoOpt("ARCHIVE_FILE_ID");
+    fileSize = rset.columnUint64NoOpt("SIZE_IN_BYTES");
     copyNb = rset.columnUint16NoOpt("COPY_NB");
     startTime = rset.columnUint64NoOpt("START_TIME");
-    archiveFile.checksumBlob.deserialize(std::move(rset.columnBlob("CHECKSUMBLOB")));
-    archiveFile.creationTime = rset.columnUint64NoOpt("CREATION_TIME");
-    archiveFile.diskInstance = rset.columnStringNoOpt("DISK_INSTANCE");
-    archiveFile.diskFileId = rset.columnStringNoOpt("DISK_FILE_ID");
-    archiveFile.diskFileInfo.owner_uid = rset.columnUint32NoOpt("DISK_FILE_OWNER_UID");
-    archiveFile.diskFileInfo.gid = rset.columnUint32NoOpt("DISK_FILE_GID");
-    archiveFile.diskFileInfo.path = rset.columnStringNoOpt("DISK_FILE_PATH");
+    checksumBlob.deserialize(std::move(rset.columnBlob("CHECKSUMBLOB")));
+    creationTime = rset.columnUint64NoOpt("CREATION_TIME");
+    diskInstance = rset.columnStringNoOpt("DISK_INSTANCE");
+    diskFileId = rset.columnStringNoOpt("DISK_FILE_ID");
+    diskFileInfoOwnerUid = rset.columnUint32NoOpt("DISK_FILE_OWNER_UID");
+    diskFileInfoGid = rset.columnUint32NoOpt("DISK_FILE_GID");
+    diskFileInfoPath = rset.columnStringNoOpt("DISK_FILE_PATH");
     archiveReportURL = rset.columnStringNoOpt("ARCHIVE_REPORT_URL");
     archiveErrorReportURL = rset.columnStringNoOpt("ARCHIVE_ERROR_REPORT_URL");
     requesterName = rset.columnStringNoOpt("REQUESTER_NAME");
     requesterGroup = rset.columnStringNoOpt("REQUESTER_GROUP");
     srcUrl = rset.columnStringNoOpt("SRC_URL");
-    archiveFile.storageClass = rset.columnStringNoOpt("STORAGE_CLASS");
+    storageClass = rset.columnStringNoOpt("STORAGE_CLASS");
     isReporting = rset.columnBoolNoOpt("IS_REPORTING");
     vid = rset.columnStringNoOpt("VID");
     drive = rset.columnStringNoOpt("DRIVE");
@@ -279,23 +282,23 @@ struct ArchiveJobQueueRow {
     stmt.bindString(":MOUNT_POLICY", mountPolicy);
     stmt.bindUint16(":PRIORITY", priority);
     stmt.bindUint32(":MIN_ARCHIVE_REQUEST_AGE", minArchiveRequestAge);
-    stmt.bindUint64(":ARCHIVE_FILE_ID", archiveFile.archiveFileID);
-    stmt.bindUint64(":SIZE_IN_BYTES", archiveFile.fileSize);
+    stmt.bindUint64(":ARCHIVE_FILE_ID", archiveFileID);
+    stmt.bindUint64(":SIZE_IN_BYTES", fileSize);
     stmt.bindUint16(":COPY_NB", copyNb);
     stmt.bindUint64(":START_TIME", startTime);
-    stmt.bindBlob(":CHECKSUMBLOB", archiveFile.checksumBlob.serialize());
-    stmt.bindUint64(":CREATION_TIME", archiveFile.creationTime);
-    stmt.bindString(":DISK_INSTANCE", archiveFile.diskInstance);
-    stmt.bindString(":DISK_FILE_ID", archiveFile.diskFileId);
-    stmt.bindUint32(":DISK_FILE_OWNER_UID", archiveFile.diskFileInfo.owner_uid);
-    stmt.bindUint32(":DISK_FILE_GID", archiveFile.diskFileInfo.gid);
-    stmt.bindString(":DISK_FILE_PATH", archiveFile.diskFileInfo.path);
+    stmt.bindBlob(":CHECKSUMBLOB", checksumBlob.serialize());
+    stmt.bindUint64(":CREATION_TIME", creationTime);
+    stmt.bindString(":DISK_INSTANCE", diskInstance);
+    stmt.bindString(":DISK_FILE_ID", diskFileId);
+    stmt.bindUint32(":DISK_FILE_OWNER_UID", diskFileInfoOwnerUid);
+    stmt.bindUint32(":DISK_FILE_GID", diskFileInfoGid);
+    stmt.bindString(":DISK_FILE_PATH", diskFileInfoPath);
     stmt.bindString(":ARCHIVE_REPORT_URL", archiveReportURL);
     stmt.bindString(":ARCHIVE_ERROR_REPORT_URL", archiveErrorReportURL);
     stmt.bindString(":REQUESTER_NAME", requesterName);
     stmt.bindString(":REQUESTER_GROUP", requesterGroup);
     stmt.bindString(":SRC_URL", srcUrl);
-    stmt.bindString(":STORAGE_CLASS", archiveFile.storageClass);
+    stmt.bindString(":STORAGE_CLASS", storageClass);
     stmt.bindUint16(":RETRIES_WITHIN_MOUNT", retriesWithinMount);
     stmt.bindUint16(":MAX_RETRIES_WITHIN_MOUNT", maxRetriesWithinMount);
     stmt.bindUint16(":TOTAL_RETRIES", totalRetries);
@@ -317,23 +320,23 @@ struct ArchiveJobQueueRow {
     params.add("mountPolicy", mountPolicy);
     params.add("priority", priority);
     params.add("minArchiveRequestAge", minArchiveRequestAge);
-    params.add("archiveFileId", archiveFile.archiveFileID);
-    params.add("sizeInBytes", archiveFile.fileSize);
+    params.add("archiveFileId", archiveFileID);
+    params.add("sizeInBytes", fileSize);
     params.add("copyNb", copyNb);
     params.add("startTime", startTime);
-    params.add("checksumBlob", archiveFile.checksumBlob);
-    params.add("creationTime", archiveFile.creationTime);
-    params.add("diskInstance", archiveFile.diskInstance);
-    params.add("diskFileId", archiveFile.diskFileId);
-    params.add("diskFileOwnerUid", archiveFile.diskFileInfo.owner_uid);
-    params.add("diskFileGid", archiveFile.diskFileInfo.gid);
-    params.add("diskFilePath", archiveFile.diskFileInfo.path);
+    params.add("checksumBlob", checksumBlob);
+    params.add("creationTime", creationTime);
+    params.add("diskInstance", diskInstance);
+    params.add("diskFileId", diskFileId);
+    params.add("diskFileOwnerUid", diskFileInfoOwnerUid);
+    params.add("diskFileGid", diskFileInfoGid);
+    params.add("diskFilePath", diskFileInfoPath);
     params.add("archiveReportURL", archiveReportURL);
     params.add("archiveErrorReportURL", archiveErrorReportURL);
     params.add("requesterName", requesterName);
     params.add("requesterGroup", requesterGroup);
     params.add("srcUrl", srcUrl);
-    params.add("storageClass", archiveFile.storageClass);
+    params.add("storageClass", storageClass);
     params.add("retriesWithinMount", retriesWithinMount);
     params.add("totalRetries", totalRetries);
     params.add("lastMountWithFailure", lastMountWithFailure);
