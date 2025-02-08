@@ -99,20 +99,6 @@ struct ArchiveJobQueueRow {
      * @param row  A single row from the current row of the rset
      */
   explicit ArchiveJobQueueRow(const rdbms::Rset& rset) {
-    tapePool.reserve(64);
-    mountPolicy.reserve(64);
-    archiveReportURL.reserve(2048);
-    archiveErrorReportURL.reserve(2048);
-    requesterName.reserve(64);
-    requesterGroup.reserve(64);
-    srcUrl.reserve(2048);
-    repackFilebufUrl.reserve(2048);
-    repackDestVid.reserve(64);
-    vid.reserve(64);
-    drive.reserve(64);
-    host.reserve(64);
-    mount_type.reserve(64);
-    logical_library.reserve(64);
     *this = rset;
   }
 
@@ -156,7 +142,18 @@ struct ArchiveJobQueueRow {
     logical_library.clear();
 
     // Reset archiveFile struct
-    archiveFile = common::dataStructures::ArchiveFile();
+
+    archiveFile.archiveFileID = 0;
+    archiveFile.diskFileId.clear();
+    archiveFile.diskInstance.clear();
+    archiveFile.fileSize = 0;
+    archiveFile.storageClass.clear();
+    archiveFile.diskFileInfo.path.clear();
+    archiveFile.diskFileInfo.owner_uid = 0;
+    archiveFile.diskFileInfo.gid = 0;
+    archiveFile.checksumBlob.clear();
+    archiveFile.tapeFiles.clear();  // Clearing vector to reset it
+
   }
 
   ArchiveJobQueueRow& operator=(const rdbms::Rset& rset) {

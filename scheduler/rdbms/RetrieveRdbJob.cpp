@@ -27,121 +27,34 @@
 
 namespace cta::schedulerdb {
 
-RetrieveRdbJob::RetrieveRdbJob(rdbms::ConnPool& connPool, const rdbms::Rset& rset)
-    : m_jobRow(rset),
-      m_jobOwned((m_jobRow.mountId.value_or(0) != 0)),
-      m_mountId(m_jobRow.mountId.value_or(0)),  // use mountId or 0 if not set
-      m_tapePool(m_jobRow.tapePool),
-      m_connPool(connPool) {
-  // Copying relevant data from RetrieveJobQueueRow to RetrieveRdbJob
-  jobID = m_jobRow.jobId;
-  errorReportURL = m_jobRow.retrieveErrorReportURL;
-  archiveFile = m_jobRow.archiveFile;
-  selectedCopyNb = m_jobRow.copyNb;
-  isRepack = false;  // for the moment hardcoded as repqck is not implemented
-  retrieveRequest.requester.name = m_jobRow.requesterName;
-  retrieveRequest.requester.group = m_jobRow.requesterGroup;
-  retrieveRequest.archiveFileID = m_jobRow.archiveFile.archiveFileID;
-  retrieveRequest.dstURL = m_jobRow.dstURL;
-  retrieveRequest.retrieveReportURL = m_jobRow.retrieveReportURL;
-  retrieveRequest.errorReportURL = m_jobRow.retrieveErrorReportURL;
-  retrieveRequest.diskFileInfo = m_jobRow.archiveFile.diskFileInfo;
-  retrieveRequest.creationLog.username = m_jobRow.srrUsername;  // EntryLog
-  retrieveRequest.creationLog.host = m_jobRow.srrHost;
-  retrieveRequest.creationLog.time = m_jobRow.srrTime;
-  retrieveRequest.isVerifyOnly =
-    m_jobRow.isVerifyOnly;             // request to retrieve file from tape but do not write a disk copy
-  retrieveRequest.vid = m_jobRow.vid;  // limit retrieve requests to the specified vid (in the case of dual-copy files)
-  retrieveRequest.mountPolicy =
-    m_jobRow.mountPolicy;  // limit retrieve requests to a specified mount policy (only used for verification requests)
-  retrieveRequest.lifecycleTimings.creation_time = m_jobRow.lifecycleTimings_creation_time;
-  retrieveRequest.lifecycleTimings.first_selected_time = m_jobRow.lifecycleTimings_first_selected_time;
-  retrieveRequest.lifecycleTimings.completed_time = m_jobRow.lifecycleTimings_completed_time;
-  if(m_jobRow.activity){
-    retrieveRequest.activity = m_jobRow.activity.value();
-  }
-  if(m_jobRow.diskSystemName){
-    diskSystemName = m_jobRow.diskSystemName.value();
-  }
-
-  // Set other attributes or perform any necessary initialization
-  // Setting the internal report type - in case isReporting == false No Report type required
-  if (m_jobRow.status == RetrieveJobStatus::RJS_ToTransfer) {
-    reportType = ReportType::CompletionReport;
-  } else if (m_jobRow.status == RetrieveJobStatus::RJS_ToReportToUserForFailure) {
-    reportType = ReportType::FailureReport;
-  } else {
-    reportType = ReportType::NoReportRequired;
-  }
-};
-
 RetrieveRdbJob::RetrieveRdbJob(rdbms::ConnPool& connPool)
     : m_jobOwned((m_jobRow.mountId.value_or(0) != 0)),
       m_mountId(m_jobRow.mountId.value_or(0)),  // use mountId or 0 if not set
       m_tapePool(m_jobRow.tapePool),
       m_connPool(connPool) {
   // Copying relevant data from RetrieveJobQueueRow to RetrieveRdbJob
-  jobID = m_jobRow.jobId;
-  errorReportURL = m_jobRow.retrieveErrorReportURL;
-  archiveFile = m_jobRow.archiveFile;
-  selectedCopyNb = m_jobRow.copyNb;
-  isRepack = false;  // for the moment hardcoded as repqck is not implemented
-  retrieveRequest.requester.name = m_jobRow.requesterName;
-  retrieveRequest.requester.group = m_jobRow.requesterGroup;
-  retrieveRequest.archiveFileID = m_jobRow.archiveFile.archiveFileID;
-  retrieveRequest.dstURL = m_jobRow.dstURL;
-  retrieveRequest.retrieveReportURL = m_jobRow.retrieveReportURL;
-  retrieveRequest.errorReportURL = m_jobRow.retrieveErrorReportURL;
-  retrieveRequest.diskFileInfo = m_jobRow.archiveFile.diskFileInfo;
-  retrieveRequest.creationLog.username = m_jobRow.srrUsername;  // EntryLog
-  retrieveRequest.creationLog.host = m_jobRow.srrHost;
-  retrieveRequest.creationLog.time = m_jobRow.srrTime;
-  retrieveRequest.isVerifyOnly =
-    m_jobRow.isVerifyOnly;             // request to retrieve file from tape but do not write a disk copy
-  retrieveRequest.vid = m_jobRow.vid;  // limit retrieve requests to the specified vid (in the case of dual-copy files)
-  retrieveRequest.mountPolicy =
-    m_jobRow.mountPolicy;  // limit retrieve requests to a specified mount policy (only used for verification requests)
-  retrieveRequest.lifecycleTimings.creation_time = m_jobRow.lifecycleTimings_creation_time;
-  retrieveRequest.lifecycleTimings.first_selected_time = m_jobRow.lifecycleTimings_first_selected_time;
-  retrieveRequest.lifecycleTimings.completed_time = m_jobRow.lifecycleTimings_completed_time;
-  retrieveRequest.activity = m_jobRow.activity.value_or("");
-  if(m_jobRow.activity){
-    retrieveRequest.activity = m_jobRow.activity.value();
-  }
-  if(m_jobRow.diskSystemName){
-    diskSystemName = m_jobRow.diskSystemName.value();
-  }
-  // Set other attributes or perform any necessary initialization
-  // Setting the internal report type - in case isReporting == false No Report type required
-  if (m_jobRow.status == RetrieveJobStatus::RJS_ToTransfer) {
-    reportType = ReportType::CompletionReport;
-  } else if (m_jobRow.status == RetrieveJobStatus::RJS_ToReportToUserForFailure) {
-    reportType = ReportType::FailureReport;
-  } else {
-    reportType = ReportType::NoReportRequired;
-  }
+  archiveFile = cta::common::dataStructures::ArchiveFile();
+  reset();
 };
 
-void RetrieveRdbJob::initialize(const rdbms::Rset& rset, log::LogContext& lc) {
+void RetrieveRdbJob::initialize(const rdbms::Rset& rset) {
   //cta::log::TimingList timings;
   //cta::utils::Timer t;
+  // we can safely move the values from m_jobRow since any further DB
+  // operations are based on jobID if performed directly on this job/row itself
   m_jobRow = rset;
   // Copying relevant data from RetrieveJobQueueRow to RetrieveRdbJob
   jobID = m_jobRow.jobId;
-  errorReportURL = m_jobRow.retrieveErrorReportURL;
-  archiveFile = m_jobRow.archiveFile;
-  selectedCopyNb = m_jobRow.copyNb;
-  isRepack = false;  // for the moment hardcoded as repqck is not implemented
-  retrieveRequest.requester.name = m_jobRow.requesterName;
-  retrieveRequest.requester.group = m_jobRow.requesterGroup;
-  retrieveRequest.archiveFileID = m_jobRow.archiveFile.archiveFileID;
-  retrieveRequest.dstURL = m_jobRow.dstURL;
-  retrieveRequest.retrieveReportURL = m_jobRow.retrieveReportURL;
-  retrieveRequest.errorReportURL = m_jobRow.retrieveErrorReportURL;
-  retrieveRequest.diskFileInfo = m_jobRow.archiveFile.diskFileInfo;
-  retrieveRequest.creationLog.username = m_jobRow.srrUsername;  // EntryLog
-  retrieveRequest.creationLog.host = m_jobRow.srrHost;
-  retrieveRequest.creationLog.time = m_jobRow.srrTime;
+  retrieveRequest.requester.name = std::move(m_jobRow.requesterName);
+  retrieveRequest.requester.group = std::move(m_jobRow.requesterGroup);
+  retrieveRequest.archiveFileID = m_jobRow.archiveFileID;
+  retrieveRequest.dstURL = std::move(m_jobRow.dstURL);
+  retrieveRequest.retrieveReportURL = std::move(m_jobRow.retrieveReportURL);
+  retrieveRequest.errorReportURL = std::move(m_jobRow.retrieveErrorReportURL);
+  retrieveRequest.diskFileInfo = archiveFile.diskFileInfo;
+  retrieveRequest.creationLog.username = std::move(m_jobRow.srrUsername);  // EntryLog
+  retrieveRequest.creationLog.host = std::move(m_jobRow.srrHost);
+  retrieveRequest.creationLog.time = std::move(m_jobRow.srrTime);
   retrieveRequest.isVerifyOnly =
     m_jobRow.isVerifyOnly;             // request to retrieve file from tape but do not write a disk copy
   retrieveRequest.vid = m_jobRow.vid;  // limit retrieve requests to the specified vid (in the case of dual-copy files)
@@ -150,6 +63,31 @@ void RetrieveRdbJob::initialize(const rdbms::Rset& rset, log::LogContext& lc) {
   retrieveRequest.lifecycleTimings.creation_time = m_jobRow.lifecycleTimings_creation_time;
   retrieveRequest.lifecycleTimings.first_selected_time = m_jobRow.lifecycleTimings_first_selected_time;
   retrieveRequest.lifecycleTimings.completed_time = m_jobRow.lifecycleTimings_completed_time;
+
+  archiveFile.archiveFileID = m_jobRow.archiveFileID;
+  archiveFile.diskFileId = std::move(m_jobRow.diskFileId);
+  archiveFile.diskInstance = std::move(m_jobRow.diskInstance);
+  archiveFile.fileSize = m_jobRow.fileSize;
+  archiveFile.storageClass = std::move(m_jobRow.storageClass);
+  archiveFile.diskFileInfo.path = std::move(m_jobRow.diskFileInfoPath);
+  archiveFile.diskFileInfo.owner_uid = m_jobRow.diskFileInfoOwnerUid;
+  archiveFile.diskFileInfo.gid = m_jobRow.diskFileInfoGid;
+  archiveFile.checksumBlob = m_jobRow.checksumBlob;
+  // we should later iterate through all the alternate fields to
+  // get all the possible tape files for this archive file
+  archiveFile.tapeFiles.emplace_back(
+    std::move(m_jobRow.vid),
+    m_jobRow.fSeq,
+    m_jobRow.blockId,
+    m_jobRow.fileSize,
+    m_jobRow.copyNb,
+    m_jobRow.creationTime,
+    std::move(m_jobRow.checksumBlob)
+  );
+  errorReportURL = std::move(m_jobRow.retrieveErrorReportURL);
+  selectedCopyNb = m_jobRow.copyNb;
+  isRepack = false;  // for the moment hardcoded as repqck is not implemented
+
   if(m_jobRow.activity){
     retrieveRequest.activity = m_jobRow.activity.value();
   }
@@ -185,36 +123,54 @@ void RetrieveRdbJob::initialize(const rdbms::Rset& rset, log::LogContext& lc) {
   //lc.log(cta::log::INFO, "In RetrieveRdbJob::initialize(): Finished initializing job object with new values.");
 }
 
+// contructor for get next job batch to report
+RetrieveRdbJob::RetrieveRdbJob(rdbms::ConnPool& connPool, const rdbms::Rset& rset) : RetrieveRdbJob(connPool) {
+  initialize(rset);
+};
+
 void RetrieveRdbJob::reset() {
-  // Reset job row state
-  m_jobRow.reset();  // Reset the entire job row
-  // Reset the core job-specific fields
   jobID = 0;
+
+  archiveFile.archiveFileID = 0;
+  archiveFile.diskFileId.clear();
+  archiveFile.diskInstance.clear();
+  archiveFile.fileSize = 0;
+  archiveFile.storageClass.clear();
+  archiveFile.diskFileInfo.path.clear();
+  archiveFile.diskFileInfo.owner_uid = 0;
+  archiveFile.diskFileInfo.gid = 0;
+  archiveFile.checksumBlob.clear();
+  archiveFile.tapeFiles.clear();  // Clearing vector to reset it
+
   errorReportURL.clear();
-  archiveFile = m_jobRow.archiveFile;
   selectedCopyNb = 0;
-  isRepack = false;  // for the moment hardcoded as repqck is not implemented
+  isRepack = false;
+
   retrieveRequest.requester.name.clear();
   retrieveRequest.requester.group.clear();
   retrieveRequest.archiveFileID = 0;
   retrieveRequest.dstURL.clear();
   retrieveRequest.retrieveReportURL.clear();
   retrieveRequest.errorReportURL.clear();
-  retrieveRequest.diskFileInfo = m_jobRow.archiveFile.diskFileInfo;
-  retrieveRequest.creationLog.username.clear();  // EntryLog
+  retrieveRequest.diskFileInfo.path.clear();
+  retrieveRequest.diskFileInfo.owner_uid = 0;
+  retrieveRequest.diskFileInfo.gid = 0;
+
+  retrieveRequest.creationLog.username.clear();
   retrieveRequest.creationLog.host.clear();
-  retrieveRequest.creationLog.time = m_jobRow.srrTime;
-  retrieveRequest.isVerifyOnly =
-    m_jobRow.isVerifyOnly;      // request to retrieve file from tape but do not write a disk copy
-  retrieveRequest.vid->clear();  // limit retrieve requests to the specified vid (in the case of dual-copy files)
-  retrieveRequest.mountPolicy
-    ->clear();  // limit retrieve requests to a specified mount policy (only used for verification requests)
-  retrieveRequest.activity->clear();
-  diskSystemName = std::nullopt;
-  retrieveRequest.lifecycleTimings.creation_time = m_jobRow.lifecycleTimings_creation_time;
-  retrieveRequest.lifecycleTimings.first_selected_time = m_jobRow.lifecycleTimings_first_selected_time;
-  retrieveRequest.lifecycleTimings.completed_time = m_jobRow.lifecycleTimings_completed_time;
-  reportType = ReportType::NoReportRequired;  // Resetting report type
+  retrieveRequest.creationLog.time = 0;
+
+  retrieveRequest.isVerifyOnly = false;
+  retrieveRequest.vid = std::nullopt;
+  retrieveRequest.mountPolicy = std::nullopt;
+  retrieveRequest.lifecycleTimings.creation_time = 0;
+  retrieveRequest.lifecycleTimings.first_selected_time = 0;
+  retrieveRequest.lifecycleTimings.completed_time = 0;
+
+  retrieveRequest.activity.reset();
+  diskSystemName.reset();
+
+  reportType = ReportType::NoReportRequired;
 }
 
 void RetrieveRdbJob::failTransfer(const std::string& failureReason, log::LogContext& lc) {
