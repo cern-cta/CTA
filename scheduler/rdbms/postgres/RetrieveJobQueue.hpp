@@ -87,11 +87,11 @@ struct RetrieveJobQueueRow {
 
   RetrieveJobQueueRow() {
     archiveFile.archiveFileID = 0;
-    archiveFile.diskFileId = "";
-    archiveFile.diskInstance = "";
+    archiveFile.diskFileId.reserve(128);
+    archiveFile.diskInstance.reserve(128);
     archiveFile.fileSize = 0;
-    archiveFile.storageClass = "";
-    archiveFile.diskFileInfo.path = "";
+    archiveFile.storageClass.reserve(128);
+    archiveFile.diskFileInfo.path.reserve(2048);
     archiveFile.diskFileInfo.owner_uid = 0;
     archiveFile.diskFileInfo.gid = 0;
     archiveFile.creationTime = 0;
