@@ -77,7 +77,16 @@ void RetrieveRequest::insert() {
     rjr.mountPolicy = m_mountPolicyName;
     rjr.priority = m_priority;
     rjr.minRetrieveRequestAge = m_retrieveMinReqAge;
-    rjr.archiveFile = m_archiveFile;
+
+    rjr.archiveFileID = m_archiveFile.archiveFileID;
+    rjr.diskFileId = std::move(m_archiveFile.diskFileId);
+    rjr.diskInstance = std::move(m_archiveFile.diskInstance);
+    rjr.fileSize = m_archiveFile.fileSize;
+    rjr.storageClass = std::move(m_archiveFile.storageClass);
+    rjr.diskFileInfoPath = std::move(m_archiveFile.diskFileInfo.path);
+    rjr.diskFileInfoOwnerUid = m_archiveFile.diskFileInfo.owner_uid;
+    rjr.diskFileInfoGid = m_archiveFile.diskFileInfo.gid;
+    rjr.checksumBlob = std::move(m_archiveFile.checksumBlob);
     //
     // rjr.archiveFile.creationTime = m_entryLog.time;  // Time the job was received by the CTA Frontend
     rjr.startTime = time(nullptr);  // Time the job was queued in the DB

@@ -42,8 +42,18 @@ void ArchiveRequest::insert() {
       ajr.mountPolicy = m_mountPolicy.name;
       ajr.priority = m_mountPolicy.archivePriority;
       ajr.minArchiveRequestAge = m_mountPolicy.archiveMinRequestAge;
-      ajr.archiveFile = m_archiveFile;
-      ajr.archiveFile.creationTime = m_entryLog.time;  // Time the job was received by the CTA Frontend
+      // ajr.archiveFile = m_archiveFile;
+      ajr.archiveFileID = m_archiveFile.archiveFileID;
+      ajr.diskFileId = std::move(m_archiveFile.diskFileId);
+      ajr.diskInstance = std::move(m_archiveFile.diskInstance);
+      ajr.fileSize = m_archiveFile.fileSize;
+      ajr.storageClass = std::move(m_archiveFile.storageClass);
+      ajr.diskFileInfoPath = std::move(m_archiveFile.diskFileInfo.path);
+      ajr.diskFileInfoOwnerUid = m_archiveFile.diskFileInfo.owner_uid;
+      ajr.diskFileInfoGid = m_archiveFile.diskFileInfo.gid;
+      ajr.checksumBlob = std::move(m_archiveFile.checksumBlob);
+
+      ajr.creationTime = m_entryLog.time;  // Time the job was received by the CTA Frontend
       ajr.copyNb = aj.copyNb;
       ajr.startTime = time(nullptr);  // Time the job was queued in the DB
       ajr.archiveReportURL = m_archiveReportURL;

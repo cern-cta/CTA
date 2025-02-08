@@ -25,56 +25,16 @@
 
 namespace cta::schedulerdb {
 
-ArchiveRdbJob::ArchiveRdbJob(rdbms::ConnPool& connPool, const rdbms::Rset& rset)
-    : m_jobRow(rset),
-      m_jobOwned((m_jobRow.mountId.value_or(0) != 0)),
-      m_mountId(m_jobRow.mountId.value_or(0)),  // use mountId or 0 if not set
-      m_tapePool(m_jobRow.tapePool),
-      m_connPool(connPool) {
-  // Copying relevant data from ArchiveJobQueueRow to ArchiveRdbJob
-  jobID = m_jobRow.jobId;
-  srcURL = m_jobRow.srcUrl;
-  archiveReportURL = m_jobRow.archiveReportURL;
-  errorReportURL = m_jobRow.archiveErrorReportURL;
-  archiveFile = m_jobRow.archiveFile;
-  tapeFile.vid = m_jobRow.vid;
-  tapeFile.copyNb = m_jobRow.copyNb;
-  // Set other attributes or perform any necessary initialization
-  // Setting the internal report type - in case isReporting == false No Report type required
-  if (m_jobRow.status == ArchiveJobStatus::AJS_ToReportToUserForTransfer) {
-    reportType = ReportType::CompletionReport;
-  } else if (m_jobRow.status == ArchiveJobStatus::AJS_ToReportToUserForFailure) {
-    reportType = ReportType::FailureReport;
-  } else {
-    reportType = ReportType::NoReportRequired;
-  }
-};
-
 ArchiveRdbJob::ArchiveRdbJob(rdbms::ConnPool& connPool)
-    : m_jobOwned((m_jobRow.mountId.value_or(0) != 0)),
-      m_mountId(m_jobRow.mountId.value_or(0)),  // use mountId or 0 if not set
-      m_tapePool(m_jobRow.tapePool),
+    : m_jobRow(),
+      m_jobOwned(0),
+      m_mountId(0),  // use mountId or 0 if not set
+      m_tapePool(""),
       m_connPool(connPool) {
-  // Copying relevant data from ArchiveJobQueueRow to ArchiveRdbJob
-  jobID = m_jobRow.jobId;
-  srcURL = m_jobRow.srcUrl;
-  archiveReportURL = m_jobRow.archiveReportURL;
-  errorReportURL = m_jobRow.archiveErrorReportURL;
-  archiveFile = m_jobRow.archiveFile;
-  tapeFile.vid = m_jobRow.vid;
-  tapeFile.copyNb = m_jobRow.copyNb;
-  // Set other attributes or perform any necessary initialization
-  // Setting the internal report type - in case isReporting == false No Report type required
-  if (m_jobRow.status == ArchiveJobStatus::AJS_ToReportToUserForTransfer) {
-    reportType = ReportType::CompletionReport;
-  } else if (m_jobRow.status == ArchiveJobStatus::AJS_ToReportToUserForFailure) {
-    reportType = ReportType::FailureReport;
-  } else {
-    reportType = ReportType::NoReportRequired;
-  }
+  reset();
 };
 
-void ArchiveRdbJob::initialize(const rdbms::Rset& rset, log::LogContext& lc) {
+void ArchiveRdbJob::initialize(const rdbms::Rset& rset) {
   //cta::log::TimingList timings;
   //cta::utils::Timer t;
   m_jobRow = rset;
@@ -82,14 +42,26 @@ void ArchiveRdbJob::initialize(const rdbms::Rset& rset, log::LogContext& lc) {
   // Reset or update other member variables as necessary
   m_jobOwned = (m_jobRow.mountId.value_or(0) != 0);
   m_mountId = m_jobRow.mountId.value_or(0);  // use mountId or 0 if not set
-  m_tapePool = m_jobRow.tapePool;
+  m_tapePool = std::move(m_jobRow.tapePool);
   // Reset copied attributes
   jobID = m_jobRow.jobId;
-  srcURL = m_jobRow.srcUrl;
-  archiveReportURL = m_jobRow.archiveReportURL;
-  errorReportURL = m_jobRow.archiveErrorReportURL;
-  archiveFile = m_jobRow.archiveFile;
-  tapeFile.vid = m_jobRow.vid;
+  srcURL = std::move(m_jobRow.srcUrl);
+  archiveReportURL = std::move(m_jobRow.archiveReportURL);
+  errorReportURL = std::move(m_jobRow.archiveErrorReportURL);
+
+  // archiveFile = std::move(m_jobRow.archiveFile);
+  archiveFile.archiveFileID = m_jobRow.archiveFileID;
+  archiveFile.creationTime = m_jobRow.creationTime;
+  archiveFile.diskFileId = std::move(m_jobRow.diskFileId);
+  archiveFile.diskInstance = std::move(m_jobRow.diskInstance);
+  archiveFile.fileSize = m_jobRow.fileSize;
+  archiveFile.storageClass = std::move(m_jobRow.storageClass);
+  archiveFile.diskFileInfo.path = std::move(m_jobRow.diskFileInfoPath);
+  archiveFile.diskFileInfo.owner_uid = m_jobRow.diskFileInfoOwnerUid;
+  archiveFile.diskFileInfo.gid = m_jobRow.diskFileInfoGid;
+  archiveFile.checksumBlob = std::move(m_jobRow.checksumBlob);
+
+  tapeFile.vid = std::move(m_jobRow.vid);
   tapeFile.copyNb = m_jobRow.copyNb;
   //timings.insOrIncAndReset("ArchiveRdbJob_dbjobmembers_init", t);
   // Re-initialize report type
@@ -106,6 +78,10 @@ void ArchiveRdbJob::initialize(const rdbms::Rset& rset, log::LogContext& lc) {
   //lc.log(cta::log::INFO, "In ArchiveRdbJob::initialize(): Finished initializing job object with new values.");
 }
 
+ArchiveRdbJob::ArchiveRdbJob(rdbms::ConnPool& connPool, const rdbms::Rset& rset) : ArchiveRdbJob(connPool) {
+  initialize(rset);
+};
+
 void ArchiveRdbJob::reset() {
   // Reset job row state
   m_jobRow.reset();  // Reset the entire job row
@@ -114,7 +90,18 @@ void ArchiveRdbJob::reset() {
   srcURL.clear();            // Clearing source URL
   archiveReportURL.clear();  // Clearing the archive report URL
   errorReportURL.clear();    // Clearing the error report URL
-  archiveFile = m_jobRow.archiveFile;
+
+  archiveFile.archiveFileID = 0;
+  archiveFile.diskFileId.clear();
+  archiveFile.diskInstance.clear();
+  archiveFile.fileSize = 0;
+  archiveFile.storageClass.clear();
+  archiveFile.diskFileInfo.path.clear();
+  archiveFile.diskFileInfo.owner_uid = 0;
+  archiveFile.diskFileInfo.gid = 0;
+  archiveFile.checksumBlob.clear();
+  archiveFile.tapeFiles.clear();  // Clearing vector to reset it
+
   tapeFile = common::dataStructures::TapeFile();
   m_mountId = 0;                              // Resetting mount ID to default
   m_tapePool.clear();                         // Clearing the tape pool name
