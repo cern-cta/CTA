@@ -66,7 +66,7 @@ RetrieveMount::getNextJobBatch(uint64_t filesRequested, uint64_t bytesRequested,
       //auto maxBlockId = std::numeric_limits<decltype(tpfile.blockId)>::max();
       while (queuedJobs.next()) {
         retVector.emplace_back(m_jobPool.acquireJob());
-        retVector.back()->initialize(queuedJobs, logContext);
+        retVector.back()->initialize(queuedJobs);
       }
       txn.commit();
       params.add("queuedJobCount", retVector.size());
