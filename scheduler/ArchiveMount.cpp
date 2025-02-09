@@ -160,8 +160,9 @@ cta::ArchiveMount::getNextJobBatch(uint64_t filesRequested, uint64_t bytesReques
   std::list<std::unique_ptr<ArchiveJob>> ret;
   // We prepare the response
   for (auto& sdaj : dbJobBatch) {
-    ret.emplace_back(new ArchiveJob(this, m_catalogue, sdaj->archiveFile, sdaj->srcURL, sdaj->tapeFile));
-    ret.back()->m_dbJob.reset(sdaj.release());
+    ret.emplace_back(std::make_unique<ArchiveJob>(this, m_catalogue, std::move(sdaj)));
+    //ret.emplace_back(new ArchiveJob(this, m_catalogue, sdaj->archiveFile, sdaj->srcURL, sdaj->tapeFile));
+    //ret.back()->m_dbJob.reset(sdaj.release());
   }
   log::ScopedParamContainer(logContext)
     .add("filesRequested", filesRequested)
