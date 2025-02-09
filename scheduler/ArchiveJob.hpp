@@ -69,6 +69,16 @@ protected:
              const common::dataStructures::TapeFile& tapeFile);
 
 public:
+  ArchiveJob(ArchiveMount* mount,
+             catalogue::Catalogue& catalogue,
+             std::unique_ptr<SchedulerDatabase::ArchiveJob> dbJob)
+      : m_dbJob(std::move(dbJob)),
+        m_mount(mount),
+        m_catalogue(catalogue),
+        archiveFile(m_dbJob->archiveFile),
+        srcURL(m_dbJob->srcURL),
+        tapeFile(m_dbJob->tapeFile) { }
+
   /**
    * Destructor
    */
