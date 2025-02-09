@@ -187,12 +187,9 @@ cta::RetrieveMount::getNextJobBatch(uint64_t filesRequested, uint64_t bytesReque
   std::list<std::unique_ptr<RetrieveJob>> ret;
   // We prepare the response
   for (auto& sdrj : dbJobBatch) {
-    ret.emplace_back(new RetrieveJob(this,
-                                     sdrj->retrieveRequest,
-                                     sdrj->archiveFile,
-                                     sdrj->selectedCopyNb,
-                                     PositioningMethod::ByBlock));
-    ret.back()->m_dbJob.reset(sdrj.release());
+    ret.emplace_back(std::make_unique<RetrieveJob>(this, std::move(sdrj)));
+    // ret.back()->m_dbJob.reset(sdrj.release());
+    // ret.back()->m_dbJob = std::move(sdrj);
   }
   log::ScopedParamContainer(logContext)
     .add("filesRequested", filesRequested)
