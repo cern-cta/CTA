@@ -11,6 +11,12 @@ class K8sConnection(RemoteConnection):
         self.pod = pod
         self.container = container
 
+    def get_name(self) -> str:
+        return f"{self.pod}-{self.container}"
+
+    def get_short_description(self) -> str:
+        return f"Kubernetes pod {self.pod}, container {self.container} in namespace {self.namespace}"
+
     def exec(self, command: str, capture_output = False, throw_on_failure = True) -> subprocess.CompletedProcess[bytes]:
         full_command = f"kubectl exec -n {self.namespace} {self.pod} -c {self.container} -- bash -c \"{command}\""
         result = subprocess.run(full_command, shell=True, capture_output=capture_output)
