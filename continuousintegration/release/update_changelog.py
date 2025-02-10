@@ -37,7 +37,7 @@ def create_new_branch(api: GitLabAPI, branch: str, source_branch: str) -> bool:
     result: str | None = api.post("repository/branches", params=params)
     if result is not None:
         print("Branch created successfully")
-        print(f"\t To view the created branch, visit: {result["web_url"]}")
+        print(f"\t To view the created branch, visit: {result['web_url']}")
         return True
     else:
         print(f"Failed to create branch {branch} from source {args.source_branch}")
@@ -116,7 +116,7 @@ def create_merge_request(
     result: str | None = api.post("merge_requests", json=data)
     if result is not None:
         print("Merge request created successfully")
-        print(f"Merge request is ready for review. Please visit: {result["web_url"]}")
+        print(f"Merge request is ready for review. Please visit: {result['web_url']}")
         return result["iid"]
     else:
         print(f"Failed to create merge request")
@@ -147,7 +147,7 @@ def add_mr_review_comment(
         tries += 1
         time.sleep(1)
     print(f"Adding review comment for {file_path} at line {line_number}:")
-    print(f"{textwrap.indent(comment, "\t")}")
+    print(f"{textwrap.indent(comment, '\t')}")
     data: dict = {
         "position[position_type]": "text",
         "position[base_sha]": versions[0]["base_commit_sha"],
@@ -201,7 +201,7 @@ def insert_rpm_changelog_entry(
     updated_content = content[:insertion_index] + "\n" + changelog_entry + content[insertion_index:]
 
     print(f"Pushing {spec_path} changelog updates to branch: {branch_name}...")
-    print(f"{textwrap.indent(changelog_entry, "\t")}")
+    print(f"{textwrap.indent(changelog_entry, '\t')}")
 
     commit_msg: str = f"Added changelog entry for release: {release_version}"
     update_rpm_spec(api, spec_path, branch, updated_content, commit_msg)
@@ -316,7 +316,7 @@ if __name__ == "__main__":
     # Update spec.in
     spec_path: str = "cta.spec.in"
     changelog_entry = (
-        f"* {datetime.now().strftime("%a %b %d %Y")} {args.user_name} <{args.user_email}> - {release_version}\n"
+        f"* {datetime.now().strftime('%a %b %d %Y')} {args.user_name} <{args.user_email}> - {release_version}\n"
     )
     changelog_entry += f"- See CHANGELOG.md for details\n"
     line_number: int = insert_rpm_changelog_entry(api, branch_name, release_version, spec_path, changelog_entry)
