@@ -81,6 +81,15 @@ def test_cleanup_eos(env):
     env.eosmgm[0].exec("eos rm -rF --no-confirmation /eos/ctaeos/cta/* 2>/dev/null")
     env.eosmgm[0].exec("eos rm -rF --no-confirmation /eos/ctaeos/preprod/* 2>/dev/null")
 
+# For now this is here so that we can easily update new scripts without running the setup again
+# This should at some point just be part of the setup
+def test_setup_client_scripts_and_certs(env):
+    env.client[0].copyTo("system_tests/scripts/client/", "/root/", permissions="+x")
+    env.client[0].exec("mv /root/client/* /root && rm -d /root/client")
+    env.eosmgm[0].copyFrom("etc/grid-security/certificates/", "/tmp/certificates/")
+    env.client[0].copyTo("/tmp/certificates/", "/etc/grid-security/")
+    env.execLocal("rm -rf /tmp/certificates")
+
 # At some point the cleanup should be in a separate suite. This allows for skipping of the cleanup
 # As this can potentially take some extra time and is completely unnecessary with a fresh instance
 # We also still need to add the cleanup of the catalogue here
