@@ -36,34 +36,36 @@ protected:
 TEST_F(cta_rdbms_LoginTest, default_constructor) {
   using namespace cta::rdbms;
 
-  const Login login;
+  const auto login = Login::createLoginNone();
 
   ASSERT_EQ(Login::DBTYPE_NONE, login.dbType);
-  ASSERT_TRUE(login.username.empty());
-  ASSERT_TRUE(login.password.empty());
-  ASSERT_TRUE(login.database.empty());
+  ASSERT_THROW(std::get<Login::OracleConnectionConfig>(login.connectionConfig), std::bad_variant_access);
+
+  auto config = std::get<Login::DefaultConnectionConfig>(login.connectionConfig);
+  ASSERT_TRUE(login.connectionString.empty());
 }
 
 TEST_F(cta_rdbms_LoginTest, constructor) {
   using namespace cta::rdbms;
 
-  const Login inMemoryLogin(Login::DBTYPE_IN_MEMORY, "", "", "", "", 0);
+  const auto inMemoryLogin = Login::createLoginInMemory("");
   ASSERT_EQ(Login::DBTYPE_IN_MEMORY, inMemoryLogin.dbType);
-  ASSERT_TRUE(inMemoryLogin.username.empty());
-  ASSERT_TRUE(inMemoryLogin.password.empty());
-  ASSERT_TRUE(inMemoryLogin.database.empty());
+  ASSERT_THROW(std::get<Login::OracleConnectionConfig>(inMemoryLogin.connectionConfig), std::bad_variant_access);
+  auto inMemoryConfig = std::get<Login::DefaultConnectionConfig>(inMemoryLogin.connectionConfig);
+  ASSERT_TRUE(inMemoryConfig.connectionStringWithPassword.empty());
 
-  const Login oracleLogin(Login::DBTYPE_ORACLE, "username", "password", "database", "", 0);
+  const auto oracleLogin = Login::createLoginOracle("username", "password", "database", "", 0);
   ASSERT_EQ(Login::DBTYPE_ORACLE, oracleLogin.dbType);
-  ASSERT_EQ(std::string("username"), oracleLogin.username);
-  ASSERT_EQ(std::string("password"), oracleLogin.password);
-  ASSERT_EQ(std::string("database"), oracleLogin.database);
+  ASSERT_THROW(std::get<Login::DefaultConnectionConfig>(oracleLogin.connectionConfig), std::bad_variant_access);
+  auto oracleConfig = std::get<Login::OracleConnectionConfig>(oracleLogin.connectionConfig);
+  ASSERT_EQ(std::string("username"), oracleConfig.username);
+  ASSERT_EQ(std::string("password"), oracleConfig.password);
+  ASSERT_EQ(std::string("database"), oracleConfig.database);
 
-  const Login sqliteLogin(Login::DBTYPE_SQLITE, "", "", "filename", "", 0);
+  const auto sqliteLogin = Login::createLoginSqlite("filename");
   ASSERT_EQ(Login::DBTYPE_SQLITE, sqliteLogin.dbType);
-  ASSERT_TRUE(sqliteLogin.username.empty());
-  ASSERT_TRUE(sqliteLogin.password.empty());
-  ASSERT_EQ(std::string("filename"), sqliteLogin.database);
+  ASSERT_THROW(std::get<Login::OracleConnectionConfig>(inMemoryLogin.connectionConfig), std::bad_variant_access);
+  auto sqliteConfig = std::get<Login::DefaultConnectionConfig>(inMemoryLogin.connectionConfig);
 }
 
 TEST_F(cta_rdbms_LoginTest, parseStream_in_memory) {
@@ -82,9 +84,7 @@ TEST_F(cta_rdbms_LoginTest, parseStream_in_memory) {
 
   const Login login = Login::parseStream(inputStream);
   ASSERT_EQ(Login::DBTYPE_IN_MEMORY, login.dbType);
-  ASSERT_TRUE(login.username.empty());
-  ASSERT_TRUE(login.password.empty());
-  ASSERT_TRUE(login.database.empty());
+  auto inMemoryConfig = std::get<Login::DefaultConnectionConfig>(login.connectionConfig);
 }
 
 TEST_F(cta_rdbms_LoginTest, parseStream_invalid_in_memory) {
@@ -121,9 +121,10 @@ TEST_F(cta_rdbms_LoginTest, parseStream_oracle) {
 
   const Login login = Login::parseStream(inputStream);
   ASSERT_EQ(Login::DBTYPE_ORACLE, login.dbType);
-  ASSERT_EQ(std::string("username"), login.username);
-  ASSERT_EQ(std::string("password"), login.password);
-  ASSERT_EQ(std::string("database"), login.database);
+  auto oracleConfig = std::get<Login::OracleConnectionConfig>(login.connectionConfig);
+  ASSERT_EQ(std::string("username"), oracleConfig.username);
+  ASSERT_EQ(std::string("password"), oracleConfig.password);
+  ASSERT_EQ(std::string("database"), oracleConfig.database);
 }
 
 TEST_F(cta_rdbms_LoginTest, parseStream_invalid_oracle) {
@@ -160,9 +161,10 @@ TEST_F(cta_rdbms_LoginTest, parseStream_oracle_password_with_a_hash) {
 
   const Login login = Login::parseStream(inputStream);
   ASSERT_EQ(Login::DBTYPE_ORACLE, login.dbType);
-  ASSERT_EQ(std::string("username"), login.username);
-  ASSERT_EQ(std::string("password_with_a_hash#"), login.password);
-  ASSERT_EQ(std::string("database"), login.database);
+  auto oracleConfig = std::get<Login::OracleConnectionConfig>(login.connectionConfig);
+  ASSERT_EQ(std::string("username"), oracleConfig.username);
+  ASSERT_EQ(std::string("password_with_a_hash#"), oracleConfig.password);
+  ASSERT_EQ(std::string("database"), oracleConfig.database);
 }
 
 TEST_F(cta_rdbms_LoginTest, parseStream_sqlite) {
@@ -181,9 +183,8 @@ TEST_F(cta_rdbms_LoginTest, parseStream_sqlite) {
 
   const Login login = Login::parseStream(inputStream);
   ASSERT_EQ(Login::DBTYPE_SQLITE, login.dbType);
-  ASSERT_TRUE(login.username.empty());
-  ASSERT_TRUE(login.password.empty());
-  ASSERT_EQ(std::string("filename"), login.database);
+  auto sqliteConfig = std::get<Login::DefaultConnectionConfig>(login.connectionConfig);
+  ASSERT_EQ(std::string("filename"), sqliteConfig.connectionStringWithPassword);
 }
 
 TEST_F(cta_rdbms_LoginTest, parseStream_invalid_sqlite) {
@@ -297,7 +298,7 @@ TEST_F(cta_rdbms_LoginTest, parseStringConnectionString_InMemory) {
 
   Login login = Login::parseInMemory(connectionDetails);
 
-  ASSERT_EQ(expectedConnectionString,login.connectionString);
+  ASSERT_EQ(expectedConnectionString,login.connectionStringNoPassword);
 }
 
 TEST_F(cta_rdbms_LoginTest, parseStringConnectionString_Sqlite) {
@@ -309,7 +310,7 @@ TEST_F(cta_rdbms_LoginTest, parseStringConnectionString_Sqlite) {
 
   Login login = Login::parseSqlite(connectionDetails);
 
-  ASSERT_EQ(expectedConnectionString,login.connectionString);
+  ASSERT_EQ(expectedConnectionString,login.connectionStringNoPassword);
 }
 
 TEST_F(cta_rdbms_LoginTest, parseStringConnectionString_Oracle) {
@@ -321,7 +322,7 @@ TEST_F(cta_rdbms_LoginTest, parseStringConnectionString_Oracle) {
   std::string expectedConnectionString = Login::DbTypeAndConnectionDetails::oracle+":"+username+"/"+Login::s_hiddenPassword+"@" + database;
 
   Login login = Login::parseOracle(connectionDetails);
-  ASSERT_EQ(expectedConnectionString,login.connectionString);
+  ASSERT_EQ(expectedConnectionString,login.connectionStringNoPassword);
 }
 
 TEST_F(cta_rdbms_LoginTest, parseStringConnectionString_Postgresql) {
@@ -338,29 +339,36 @@ TEST_F(cta_rdbms_LoginTest, parseStringConnectionString_Postgresql) {
   std::string expectedConnectionString = Login::DbTypeAndConnectionDetails::postgresql + ":postgresql://" + username + ":" + Login::s_hiddenPassword + "@" + host+ "/" + database;
   {
     Login login = Login::parsePostgresql(connectionString);
+    ASSERT_EQ(expectedConnectionString,login.connectionStringNoPassword);
+  }
 
-    ASSERT_EQ(expectedConnectionString,login.connectionString);
+  connectionString = "postgresql://cta:P_EWV7DubMK4CmHgNfUf1A@ifdb11.fnal.gov:5468/cta_prd";
+  expectedConnectionString = "postgresql:postgresql://cta:" + Login::s_hiddenPassword + "@ifdb11.fnal.gov:5468/cta_prd";
+  {
+    Login login = Login::parsePostgresql(connectionString);
+    ASSERT_EQ(expectedConnectionString,login.connectionStringNoPassword);
+    std::cout << login.connectionStringNoPassword << std::endl;
   }
 
   connectionString = Login::DbTypeAndConnectionDetails::postgresql+"://"+username+"@"+host+"/"+database;
   expectedConnectionString = Login::DbTypeAndConnectionDetails::postgresql+":"+connectionString;
   {
     Login login = Login::parsePostgresql(connectionString);
-    ASSERT_EQ(expectedConnectionString,login.connectionString);
+    ASSERT_EQ(expectedConnectionString,login.connectionStringNoPassword);
   }
 
   connectionString = Login::DbTypeAndConnectionDetails::postgresql+"://"+host;
   expectedConnectionString = Login::DbTypeAndConnectionDetails::postgresql+":"+connectionString;
   {
     Login login = Login::parsePostgresql(connectionString);
-    ASSERT_EQ(expectedConnectionString,login.connectionString);
+    ASSERT_EQ(expectedConnectionString,login.connectionStringNoPassword);
   }
 
   connectionString = Login::DbTypeAndConnectionDetails::postgresql + "://" + host + ":" + port;
   expectedConnectionString = Login::DbTypeAndConnectionDetails::postgresql+":"+connectionString;
   {
     Login login = Login::parsePostgresql(connectionString);
-    ASSERT_EQ(expectedConnectionString,login.connectionString);
+    ASSERT_EQ(expectedConnectionString,login.connectionStringNoPassword);
   }
 }
 

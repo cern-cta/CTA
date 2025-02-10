@@ -48,41 +48,46 @@ std::unique_ptr<ConnFactory> ConnFactoryFactory::create(const Login &login) {
       });
 
     switch (login.dbType) {
-    case Login::DBTYPE_IN_MEMORY:
-    {
-      const std::string FILE_NAME = "file::memory:?cache=shared";
-      pm.load("libctardbmssqlite.so");
-      if (!pm.isRegistered("ctardbmssqlite")) {
-        pm.bootstrap("factory");
+      case Login::DBTYPE_IN_MEMORY: {
+        const std::string FILE_NAME = "file::memory:?cache=shared";
+        pm.load("libctardbmssqlite.so");
+        if (!pm.isRegistered("ctardbmssqlite")) {
+          pm.bootstrap("factory");
+        }
+        return pm.plugin("ctardbmssqlite").make("SqliteConnFactory", FILE_NAME);
       }
-      return pm.plugin("ctardbmssqlite").make("SqliteConnFactory", FILE_NAME);
-    }
-    case Login::DBTYPE_ORACLE:
-#ifdef SUPPORT_OCCI
-      pm.load("libctardbmsocci.so");
-      if (!pm.isRegistered("ctardbmsocci")) {
-        pm.bootstrap("factory");
+      case Login::DBTYPE_ORACLE: {
+  #ifdef SUPPORT_OCCI
+        pm.load("libctardbmsocci.so");
+        if (!pm.isRegistered("ctardbmsocci")) {
+          pm.bootstrap("factory");
+        }
+        auto config = std::get<Login::OracleConnectionConfig>(login.connectionConfig);
+        return pm.plugin("ctardbmsocci").make("OcciConnFactory", config.username, config.password, config.database);
+  #else
+        throw exception::NoSupportedDB("Oracle Catalogue Schema is not supported. Compile CTA with Oracle support.");
+  #endif
       }
-      return pm.plugin("ctardbmsocci").make("OcciConnFactory", login.username, login.password, login.database);
-#else
-      throw exception::NoSupportedDB("Oracle Catalogue Schema is not supported. Compile CTA with Oracle support.");
-#endif
-    case Login::DBTYPE_SQLITE:
-      pm.load("libctardbmssqlite.so");
-      if (!pm.isRegistered("ctardbmssqlite")) {
-        pm.bootstrap("factory");
+      case Login::DBTYPE_SQLITE: {
+        pm.load("libctardbmssqlite.so");
+        if (!pm.isRegistered("ctardbmssqlite")) {
+          pm.bootstrap("factory");
+        }
+        auto [connectionString] = std::get<Login::DefaultConnectionConfig>(login.connectionConfig);
+        return pm.plugin("ctardbmssqlite").make("SqliteConnFactory", connectionString);
       }
-      return pm.plugin("ctardbmssqlite").make("SqliteConnFactory", login.database);
-    case Login::DBTYPE_POSTGRESQL:
-      pm.load("libctardbmspostgres.so");
-      if (!pm.isRegistered("ctardbmspostgres")) {
-        pm.bootstrap("factory");
+      case Login::DBTYPE_POSTGRESQL: {
+        pm.load("libctardbmspostgres.so");
+        if (!pm.isRegistered("ctardbmspostgres")) {
+          pm.bootstrap("factory");
+        }
+        auto [connectionString] = std::get<Login::DefaultConnectionConfig>(login.connectionConfig);
+        return pm.plugin("ctardbmspostgres").make("PostgresConnFactory", connectionString);
       }
-      return pm.plugin("ctardbmspostgres").make("PostgresConnFactory", login.database);
-    case Login::DBTYPE_NONE:
-      throw exception::Exception("Cannot create a catalogue without a database type");
-    default:
-      {
+      case Login::DBTYPE_NONE: {
+        throw exception::Exception("Cannot create a catalogue without a database type");
+      }
+      default: {
         exception::Exception ex;
         ex.getMessage() << "Unknown database type: value=" << login.dbType;
         throw ex;

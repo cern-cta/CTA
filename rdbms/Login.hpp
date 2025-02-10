@@ -20,6 +20,7 @@
 #include <istream>
 #include <list>
 #include <string>
+#include <variant>
 
 namespace cta::rdbms {
 
@@ -54,28 +55,33 @@ struct Login {
     }
   }
 
-  /**
-   * Constructor.
-   */
-  Login();
-
-  /**
-   * Constructor.
-   *
-   * @param type The type of the database.
-   * @param user The username.
-   * @param passwd The password.
-   * @param db The database name.
-   * @param host The hostname of the database server.
-   * @param p The TCP/IP port on which the database server is listening.
-   */
-  Login(
-    const DbType type,
+  static Login createLoginInMemory(const std::string &connString);
+  static Login createLoginOracle(
     const std::string &user,
     const std::string &passwd,
     const std::string &db,
     const std::string &host,
-    const uint16_t p);
+    uint16_t port);
+  static Login createLoginSqlite(const std::string &connString);
+  static Login createLoginPostgresql(const std::string &connString);
+  static Login createLoginNone();
+
+  /**
+   * Default constructor not needed.
+   */
+  Login() = delete;
+
+  struct OracleConnectionConfig {
+    std::string username; // The user name
+    std::string password; // The password
+    std::string database; // The database name
+    std::string hostname; // The hostname of the database server
+    uint16_t port; // The TCP/IP port on which the database server is listening
+  };
+
+  struct DefaultConnectionConfig {
+    std::string connectionStringWithPassword; // The connection string of the database (with password included)
+  };
 
   /**
    * The type of the database.
@@ -83,34 +89,19 @@ struct Login {
   DbType dbType;
 
   /**
-   * The user name.
+   * The configuration to connect to the database.
    */
-  std::string username;
+  std::variant<OracleConnectionConfig, DefaultConnectionConfig> connectionConfig;
 
   /**
-   * The password.
+   * The connection string of the database (with password included)
    */
-  std::string password;
-
-  /**
-   * The database name.
-   */
-  std::string database;
-
-  /**
-   * The hostname of the database server.
-   */
-  std::string hostname;
-
-  /**
-   * The TCP/IP port on which the database server is listening.
-   */
-  uint16_t port;
+  std::string connectionString;
 
   /**
    * The connection string of the database (with hidden password)
    */
-  std::string connectionString;
+  std::string connectionStringNoPassword;
 
   /**
    * Reads and parses the database login information from the specified file.
@@ -250,6 +241,35 @@ struct Login {
   static const std::string s_hiddenPassword;
 
  private:
+
+  /**
+   * Constructor.
+   *
+   * @param type The type of the database.
+   * @param user The username.
+   * @param passwd The password.
+   * @param db The database name.
+   * @param host The hostname of the database server.
+   * @param p The TCP/IP port on which the database server is listening.
+   */
+  Login(
+    const DbType type,
+    const std::string &user,
+    const std::string &passwd,
+    const std::string &db,
+    const std::string &host,
+    const uint16_t p);
+
+  /**
+   * Constructor.
+   *
+   * @param type The type of the database.
+   * @param connString The full connection string.
+   */
+  Login(
+    const DbType type,
+    const std::string &connString);
+
   /**
    * Sets the connection string of an in_memory database
    */

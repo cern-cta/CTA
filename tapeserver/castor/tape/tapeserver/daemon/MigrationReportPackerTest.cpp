@@ -56,7 +56,7 @@ const uint32_t TEST_GROUP_2 = 9754;
       using namespace cta;
       using namespace cta::catalogue;
 
-      rdbms::Login catalogueLogin(rdbms::Login::DBTYPE_IN_MEMORY, "", "", "", "", 0);
+      auto catalogueLogin = rdbms::Login::createLoginInMemory("");
       const uint64_t nbConns = 1;
       const uint64_t nbArchiveFileListingConns = 0;
       auto catalogueFactory = CatalogueFactoryFactory::create(m_dummyLog, catalogueLogin, nbConns,

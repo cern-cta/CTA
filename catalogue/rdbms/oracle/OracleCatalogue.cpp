@@ -41,7 +41,7 @@ OracleCatalogue::OracleCatalogue(
   const uint64_t nbArchiveFileListingConns):
   RdbmsCatalogue(
     log,
-    rdbms::Login(rdbms::Login::DBTYPE_ORACLE, username, password, database, "", 0),
+    rdbms::Login::createLoginOracle(username, password, database, "", 0),
     nbConns,
     nbArchiveFileListingConns) {
   RdbmsCatalogue::m_fileRecycleLog = std::make_unique<OracleFileRecycleLogCatalogue>(m_log, m_connPool, this);

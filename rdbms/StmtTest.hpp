@@ -30,7 +30,7 @@ protected:
   /**
    * The database login.
    */
-  cta::rdbms::Login m_login;
+  cta::rdbms::Login m_login = cta::rdbms::Login::createLoginNone();
 
   /**
    * The database connection pool.

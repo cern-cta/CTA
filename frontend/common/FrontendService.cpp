@@ -159,7 +159,7 @@ FrontendService::FrontendService(const std::string& configFilename) : m_archiveF
     }
   }
 
-  m_catalogue_conn_string = catalogueLogin.connectionString;
+  m_catalogue_conn_string = catalogueLogin.connectionStringNoPassword;
 
   // Initialise the Scheduler DB
   const std::string DB_CONN_PARAM = "cta.objectstore.backendpath";

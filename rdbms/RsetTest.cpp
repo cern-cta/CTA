@@ -46,7 +46,7 @@ TEST_F(cta_rdbms_RsetTest, constructor) {
 TEST_F(cta_rdbms_RsetTest, next) {
   using namespace cta::rdbms;
 
-  const Login login(Login::DBTYPE_SQLITE, "", "", "file::memory:?cache=shared", "", 0);
+  const auto login = Login::createLoginInMemory("file::memory:?cache=shared");
   auto connFactory = wrapper::ConnFactoryFactory::create(login);
   auto conn = connFactory->create();
   StmtPool pool;

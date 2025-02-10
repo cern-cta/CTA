@@ -137,13 +137,16 @@ void ReadtpCmd::readAndSetConfiguration(const std::string& userName, const Readt
   m_catalogue = catalogueFactory->create();
 
   std::list<cta::log::Param> params;
-  params.push_back(cta::log::Param("catalogueDbType", catalogueLogin.dbTypeToString(catalogueLogin.dbType)));
-  params.push_back(cta::log::Param("catalogueDatabase", catalogueLogin.database));
-  params.push_back(cta::log::Param("catalogueUsername", catalogueLogin.username));
-  params.push_back(cta::log::Param("devFilename", m_devFilename));
-  params.push_back(cta::log::Param("rawLibrarySlot", m_rawLibrarySlot));
-  params.push_back(cta::log::Param("logicalLibrary", m_logicalLibrary));
-  params.push_back(cta::log::Param("unitName", m_unitName));
+  params.emplace_back("catalogueDbType", catalogueLogin.dbTypeToString(catalogueLogin.dbType));
+  if (catalogueLogin.dbType == rdbms::Login::DBTYPE_ORACLE) {
+    auto oracleConfig = std::get<rdbms::Login::OracleConnectionConfig>(catalogueLogin.connectionConfig);
+    params.emplace_back("catalogueDatabase", oracleConfig.database);
+    params.emplace_back("catalogueUsername", oracleConfig.username);
+  }
+  params.emplace_back("devFilename", m_devFilename);
+  params.emplace_back("rawLibrarySlot", m_rawLibrarySlot);
+  params.emplace_back("logicalLibrary", m_logicalLibrary);
+  params.emplace_back("unitName", m_unitName);
   m_log(cta::log::INFO, "Read configuration", params);
 }
 

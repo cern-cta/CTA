@@ -29,7 +29,7 @@ protected:
   /**
    * The login object used to create database connections.
    */
-  cta::rdbms::Login m_login;
+  cta::rdbms::Login m_login = cta::rdbms::Login::createLoginNone();
 
   virtual void SetUp();
 

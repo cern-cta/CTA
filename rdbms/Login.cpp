@@ -46,11 +46,31 @@ const std::string Login::DbTypeAndConnectionDetails::sqlite = "sqlite";
 const std::string Login::DbTypeAndConnectionDetails::postgresql = "postgresql";
 
 //------------------------------------------------------------------------------
-// constructor
+// Create functions
 //------------------------------------------------------------------------------
-Login::Login():
-  dbType(DBTYPE_NONE),
-  port(0) {
+Login Login::createLoginInMemory(const std::string &connString) {
+  return Login{DBTYPE_IN_MEMORY, connString};
+}
+
+Login Login::createLoginOracle(
+  const std::string &user,
+  const std::string &passwd,
+  const std::string &db,
+  const std::string &host,
+  const uint16_t port) {
+  return Login{DBTYPE_ORACLE, user, passwd, db, host, port};
+}
+
+Login Login::createLoginSqlite(const std::string &connString) {
+  return Login{DBTYPE_SQLITE, connString};
+}
+
+Login Login::createLoginPostgresql(const std::string &connString) {
+  return Login{DBTYPE_POSTGRESQL, connString};
+}
+
+Login Login::createLoginNone() {
+  return Login{DBTYPE_NONE, ""};
 }
 
 //------------------------------------------------------------------------------
@@ -64,11 +84,18 @@ Login::Login(
   const std::string &host,
   const uint16_t p):
   dbType(type),
-  username(user),
-  password(passwd),
-  database(db),
-  hostname(host),
-  port(p) {
+  connectionConfig(OracleConnectionConfig{user, passwd, db, host, p}) {
+  if (type != DBTYPE_ORACLE) {
+    throw cta::exception::Exception("Setting up an Oracle login config without a Oracle DB type (" + dbTypeToString(type) + ")");
+  }
+}
+
+Login::Login(
+  const DbType type,
+  const std::string &connString):
+  dbType(type),
+  connectionConfig(DefaultConnectionConfig{connString}),
+  connectionString(connString) {
 }
 
 //------------------------------------------------------------------------------
@@ -185,13 +212,13 @@ Login Login::parseInMemory(const std::string &connectionDetails) {
   if (!connectionDetails.empty()) {
     throw exception::Exception(std::string("Invalid connection string: Correct format is ") + s_fileFormat);
   }
-  Login login(DBTYPE_IN_MEMORY, "", "", "", "", 0);
+  Login login(DBTYPE_IN_MEMORY, Login::DbTypeAndConnectionDetails::in_memory);
   login.setInMemoryConnectionString();
   return login;
 }
 
 void Login::setInMemoryConnectionString() {
-  connectionString = Login::DbTypeAndConnectionDetails::in_memory;
+  connectionStringNoPassword = Login::DbTypeAndConnectionDetails::in_memory;
 }
 
 //------------------------------------------------------------------------------
@@ -220,7 +247,7 @@ Login Login::parseOracle(const std::string &connectionDetails) {
 }
 
 void Login::setOracleConnectionString(const std::string & user, const std::string & db) {
-  connectionString = Login::DbTypeAndConnectionDetails::oracle+":"+user+"/"+s_hiddenPassword+"@"+db;
+  connectionStringNoPassword = Login::DbTypeAndConnectionDetails::oracle+":"+user+"/"+s_hiddenPassword+"@"+db;
 }
 
 //------------------------------------------------------------------------------
@@ -233,36 +260,37 @@ Login Login::parseSqlite(const std::string &connectionDetails) {
     throw exception::Exception(std::string("Invalid connection string: Correct format is ") + s_fileFormat);
   }
 
-  Login login(DBTYPE_SQLITE, "", "", filename, "", 0);
+  Login login(DBTYPE_SQLITE, filename);
   login.setSqliteConnectionString(filename);
   return login;
 }
 
 void Login::setSqliteConnectionString(const std::string & filename) {
-  connectionString = Login::DbTypeAndConnectionDetails::sqlite+":"+filename;
+  connectionStringNoPassword = Login::DbTypeAndConnectionDetails::sqlite+":"+filename;
 }
 
 //------------------------------------------------------------------------------
 // parsePostgresql
 //------------------------------------------------------------------------------
 Login Login::parsePostgresql(const std::string &connectionDetails) {
-  Login login(DBTYPE_POSTGRESQL, "", "", connectionDetails, "", 0);
+  Login login(DBTYPE_POSTGRESQL, connectionDetails);
   login.setPostgresqlConnectionString(connectionDetails);
   return login;
 }
 
 void Login::setPostgresqlConnectionString(const std::string& connectionDetails) {
-  connectionString = Login::DbTypeAndConnectionDetails::postgresql+":";
+  connectionStringNoPassword = Login::DbTypeAndConnectionDetails::postgresql+":";
   if (!postgresqlHasPassword(connectionDetails)) {
     // No password displayed so no need to hide it
-    connectionString += connectionDetails;
+    connectionStringNoPassword += connectionDetails;
   } else {
     cta::utils::Regex regex2("(postgresql://.*:)(.*)(@.*)");
+    //cta::utils::Regex regex2("(postgresql://[^:]*:)([^@]*)(@.*)");
     std::vector<std::string> result2 = regex2.exec(connectionDetails);
     if (result2.size() < 4) {
       throw exception::Exception(std::string("Invalid connection string: Correct format is ") + s_fileFormat);
     }
-    connectionString += result2[1] + s_hiddenPassword + result2[3];
+    connectionStringNoPassword += result2[1] + s_hiddenPassword + result2[3];
   }
 }
 
@@ -272,6 +300,7 @@ bool Login::postgresqlHasPassword(const std::string& connectionDetails) {
     return false;
   }
   cta::utils::Regex regex("postgresql://(.*)@");
+  //cta::utils::Regex regex("postgresql://([^@]*)@");
   std::vector<std::string> result = regex.exec(connectionDetails);
   if (result.size() < 2) {
     throw exception::Exception(std::string("Invalid connection string: Correct format is ") + s_fileFormat);

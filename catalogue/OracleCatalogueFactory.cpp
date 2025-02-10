@@ -54,7 +54,8 @@ OracleCatalogueFactory::OracleCatalogueFactory(
 //------------------------------------------------------------------------------
 std::unique_ptr<Catalogue> OracleCatalogueFactory::create() {
   try {
-    auto c = std::make_unique<OracleCatalogue>(m_log, m_login.username, m_login.password, m_login.database, m_nbConns,
+    auto config = std::get<rdbms::Login::OracleConnectionConfig>(m_login.connectionConfig);
+    auto c = std::make_unique<OracleCatalogue>(m_log, config.username, config.password, config.database, m_nbConns,
       m_nbArchiveFileListingConns);
     return std::make_unique<CatalogueRetryWrapper>(m_log, std::move(c), m_maxTriesToConnect);
   } catch(exception::Exception &ex) {

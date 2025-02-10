@@ -79,7 +79,7 @@ bool DropSchemaCmd::userConfirmsDropOfSchema(const rdbms::Login &dbLogin) {
   m_out << "WARNING" << std::endl;
 
   m_out << "You are about to drop ALL tables and sequences from the following database:" << std::endl;
-  m_out << "    Database name: " << dbLogin.database << std::endl;
+  m_out << "    Database: " << dbLogin.connectionStringNoPassword << std::endl;
   m_out << "Are you sure you want to continue?" << std::endl;
 
   std::string userResponse;
