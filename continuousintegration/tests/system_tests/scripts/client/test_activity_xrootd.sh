@@ -15,6 +15,8 @@
 #               granted to it by virtue of its status as an Intergovernmental Organization or
 #               submit itself to any jurisdiction.
 
+set -e
+
 # Archive some files.
 dd if=/dev/urandom of=/root/test_act_xrd bs=15K count=1
 xrdcp /root/test_act_xrd root://${EOS_MGM_HOST}/${EOS_DIR}/test_act_xrd

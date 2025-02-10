@@ -77,15 +77,10 @@ def test_label_tapes(env):
 def test_set_all_drives_up(env):
     env.ctacli[0].set_all_drives_up()
 
-
-
-# For some mightily mysterious reason, EOS does not want to recursively remove files (really?)
-# Which makes this not work
-# Which makes my life annoying
-# Thanks EOS
 def test_cleanup_eos(env):
-    env.eosmgm[0].exec("eos rm -rF /eos/ctaeos/cta/* 2>/dev/null")
-    env.eosmgm[0].exec("eos rm -rF /eos/ctaeos/preprod/* 2>/dev/null")
+    env.eosmgm[0].exec("eos rm -rF --no-confirmation /eos/ctaeos/cta/* 2>/dev/null")
+    env.eosmgm[0].exec("eos rm -rF --no-confirmation /eos/ctaeos/preprod/* 2>/dev/null")
 
 # At some point the cleanup should be in a separate suite. This allows for skipping of the cleanup
 # As this can potentially take some extra time and is completely unnecessary with a fresh instance
+# We also still need to add the cleanup of the catalogue here
