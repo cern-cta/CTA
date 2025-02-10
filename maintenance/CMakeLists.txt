@@ -16,15 +16,14 @@ cmake_minimum_required (VERSION 3.17)
 
 include_directories (${PROTOBUF3_INCLUDE_DIRS})
 
-add_library(ctamaintenance SHARED
-  QueueCleanupRunner.cpp
-  RepackReportThread.cpp
-  RepackRequestManager.cpp
-  DiskReportRunner.cpp
+add_executable (cta-maintenance 
+	cta-maintenance.cpp
+	QueueCleanup/QueueCleanupRunner.cpp
+	RepackRequestManager/RepackReportThread.cpp
+	RepackRequestManager/RepackRequestManager.cpp
+	DiskReporting/DiskReportRunner.cpp
 )
-
-add_executable (cta-maintenance cta-maintenance.cpp)
-target_link_libraries(cta-maintenance ctacommon)
+target_link_libraries(cta-maintenance ctacommon ctaobjectstore ctardbms ctacatalogue ctascheduler)
 
 add_manpage(cta-maintenance)
 

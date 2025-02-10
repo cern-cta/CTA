@@ -15,6 +15,7 @@
  *               submit itself to any jurisdiction.
  */
 
+
 #include <getopt.h>
 
 #include "common/exception/Errnum.hpp"
@@ -23,22 +24,24 @@
 #include "common/log/StdoutLogger.hpp"
 #include "common/utils/utils.hpp"
 
+
+#include "DiskReporting/DiskReportRunner.hpp"
+#include "RepackRequestManager/RepackRequestManager.hpp"
+#include "QueueCleanup/QueueCleanupRunner.hpp"
+
+#include "scheduler/Scheduler.hpp"
+#include "catalogue/Catalogue.hpp"
+#include "catalogue/CatalogueFactory.hpp"
+#include "catalogue/CatalogueFactoryFactory.hpp"
+#include "rdbms/Login.hpp"
+
+#ifdef CTA_PGSCHED
+#include "scheduler/rdbms/RelationalDBInit.hpp"
+#else
+#include "scheduler/OStoreDB/OStoreDBInit.hpp"
+#endif
+
 #include <string>
-
-namespace cta::maintenance {
-
-//------------------------------------------------------------------------------
-// exceptionThrowingMain
-//
-// The main() function delegates the bulk of its implementation to this
-// exception throwing version.
-//
-// @param argc The number of command-line arguments.
-// @param argv The command-line arguments.
-// @param log The logging system.
-//------------------------------------------------------------------------------
-static int exceptionThrowingMain(const cta::daemon::CommandLineParams & commandLine,
-  cta::log::Logger &log);
 
 
 //------------------------------------------------------------------------------
@@ -69,37 +72,56 @@ static struct option longopts[] = {
 
 
 
+namespace cta::maintenance {
+
+//------------------------------------------------------------------------------
+// exceptionThrowingMain
+//
+// The main() function delegates the bulk of its implementation to this
+// exception throwing version.
+//
+// @param argc The number of command-line arguments.
+// @param argv The command-line arguments.
+// @param log The logging system.
+//------------------------------------------------------------------------------
+static int exceptionThrowingMain(const common::Config config,
+  cta::log::Logger &log);
+
+
+
 //------------------------------------------------------------------------------
 // The help string
 //------------------------------------------------------------------------------
 void maintenanceLoop(DiskReportRunner drr, RepackRequestManager rrm,
-                     QueueCleanupRunner qcr, GarbaceCollector gc,
+                    QueueCleanupRunner qcr, objectstore::GarbageCollector gc,
                      log::LogContext& lc) {
   // Run the maintenance in a loop: queue cleanup, garbage collector and disk reporter
   try {
     do {
       utils::Timer t;
-      qcr.runOnePass(lc());
-      gc.runOnePass(lc());
-      drr.runOnePass(lc());
-      rrm.runOnePass(lc(), 2);
+      qcr.runOnePass(lc);
+      gc.runOnePass(lc);
+      drr.runOnePass(lc);
+      rrm.runOnePass(lc, 2);
+      lc.log(log::INFO, "Did one round of cleaning. Sleeping for X seconds.");
+      sleep(1);
     } while (true);
-    lc().log(log::INFO, "In Maintenance::maintenanceLoop(): Received shutdown message. Exiting.");
+    lc.log(log::INFO, "In Maintenance::maintenanceLoop(): Received shutdown message. Exiting.");
   } catch(cta::exception::Exception & ex) {
-    log::ScopedParamContainer exParams(lc());
+    log::ScopedParamContainer exParams(lc);
     exParams.add("exceptionMessage", ex.getMessageValue());
-    lc().log(log::ERR,
+    lc.log(log::ERR,
         "In Maintenance::maintenanceLoop(): received an exception. Backtrace follows.");
 
-    lc().logBacktrace(log::INFO, ex.backtrace());
+    lc.logBacktrace(log::INFO, ex.backtrace());
     throw ex;
   } catch(std::exception &ex) {
-    log::ScopedParamContainer exParams(lc());
+    log::ScopedParamContainer exParams(lc);
     exParams.add("exceptionMessage", ex.what());
-    lc().log(log::ERR, "In Maintenance::maintenanceLoop(): received a std::exception.");
+    lc.log(log::ERR, "In Maintenance::maintenanceLoop(): received a std::exception.");
     throw ex;
   } catch(...) {
-    lc().log(log::ERR, "In Maintenance::maintenanceLoop(): received an unknown exception.");
+    lc.log(log::ERR, "In Maintenance::maintenanceLoop(): received an unknown exception.");
     throw;
   }
 }
@@ -108,18 +130,18 @@ void maintenanceLoop(DiskReportRunner drr, RepackRequestManager rrm,
   static int exceptionThrowingMain(const common::Config config, cta::log::Logger& log) {
     log::LogContext lc(log);
 
-// Before anything, we will check for access to the scheduler's central storage.
-  SchedulerDBInit_t sched_db_init("Maintenance", config.getOptionValueStr("backendPath").value(), lc().logger());
+  // Before anything, we will check for access to the scheduler's central storage.
+  SchedulerDBInit_t sched_db_init("Maintenance", config.getOptionValueStr("BackendPath").value(), lc.logger());
 
   std::unique_ptr<cta::SchedulerDB_t> sched_db;
   std::unique_ptr<cta::catalogue::Catalogue> catalogue;
   std::unique_ptr<cta::Scheduler> scheduler;
   try {
-    const cta::rdbms::Login catalogueLogin = cta::rdbms::Login::parseFile(config.getOptionValueStr("CatalogueConfigFile").value());
+    const rdbms::Login catalogueLogin = rdbms::Login::parseFile(config.getOptionValueStr("CatalogueConfigFile").value());
     const uint64_t nbConns = 1;
     const uint64_t nbArchiveFileListingConns = 1;
     auto catalogueFactory = cta::catalogue::CatalogueFactoryFactory::create(
-      lc().logger(),
+      lc.logger(),
       catalogueLogin,
       nbConns,
       nbArchiveFileListingConns);
@@ -127,22 +149,22 @@ void maintenanceLoop(DiskReportRunner drr, RepackRequestManager rrm,
     catalogue = catalogueFactory->create();
     sched_db = sched_db_init.getSchedDB(
       *catalogue,
-      lc().logger());
+      lc.logger());
 
     // Set Scheduler DB cache timeouts
     SchedulerDatabase::StatisticsCacheConfig statisticsCacheConfig;
-    statisticsCacheConfig.tapeCacheMaxAgeSecs = config.getOptionValueInt("tapeCacheMaxAgeSecs").value();
-    statisticsCacheConfig.retrieveQueueCacheMaxAgeSecs = config.getOptionValueInt("retrieveQueueCacheMaxAgeSecs").value();
+    statisticsCacheConfig.tapeCacheMaxAgeSecs = config.getOptionValueInt("TapeCacheMaxAgeSecs").value();
+    statisticsCacheConfig.retrieveQueueCacheMaxAgeSecs = config.getOptionValueInt("RetrieveQueueCacheMaxAgeSecs").value();
     sched_db->setStatisticsCacheConfig(statisticsCacheConfig);
     // TODO: we have hardcoded the mount policy parameters here temporarily we will remove them once we know where to put them
     scheduler = std::make_unique<cta::Scheduler>(*catalogue, *sched_db, 5, 2*1000*1000);
 
     // Before launching the maintenance loop, we validate that the scheduler is reachable.
-    scheduler->ping(lc());
+    scheduler->ping(lc);
   } catch(cta::exception::Exception &ex) {
-    log::ScopedParamContainer exParams(lc());
+    log::ScopedParamContainer exParams(lc);
     exParams.add("errorMessage", ex.getMessageValue());
-    lc().log(log::CRIT,
+    lc.log(log::CRIT,
           "In MaintenanceServer::exceptionThrowingMain(): failed to contact central storage. Exiting.");
     throw ex;
   }
@@ -150,9 +172,10 @@ void maintenanceLoop(DiskReportRunner drr, RepackRequestManager rrm,
   auto gc = sched_db_init.getGarbageCollector(*catalogue);
   auto cleanupRunner = sched_db_init.getQueueCleanupRunner(*catalogue, *sched_db);
   DiskReportRunner diskReportRunner(*scheduler);
-  RepackRequestManager repackRequestManager(*scheduler)
+  RepackRequestManager repackRequestManager(*scheduler);
 
-  maintenanceLoop(drr, rrm, qcr, gc, lc);
+  maintenanceLoop(diskReportRunner, repackRequestManager, cleanupRunner, gc, lc);
+  return 0;
 }
 
 } // namespace cta::maintenance
@@ -165,8 +188,9 @@ int main(const int argc, char **const argv) {
   // Options
   bool foreground = false;
   bool logToStdout = false;
+  bool logToFile = false;
   std::string logFilePath;
-  std::sting logFormat;
+  std::string logFormat;
   std::string configFileLocation;
 
   char c;
@@ -187,10 +211,11 @@ int main(const int argc, char **const argv) {
       configFileLocation = optarg;
       break;
     case 'h':
-      std::cout << cta::maintenance::gHelpString << std:: endl;
-      return EXIT_SUCESS;
+      std::cout << gHelpString << std:: endl;
+      return EXIT_SUCCESS;
     case 'l':
       logFilePath = optarg;
+      logToFile = true;
       break;
     case 'o':
       logFormat = optarg;
@@ -199,6 +224,9 @@ int main(const int argc, char **const argv) {
       break;
     }
   }
+
+  if(foreground)
+	  return EXIT_FAILURE;
 
   std::string shortHostName;
   try {
@@ -213,7 +241,9 @@ int main(const int argc, char **const argv) {
 
   try {
     if(logToFile) {
-      logPtr.reset(new log::GileLogger(shortHostName, "cta-maintenance", logFilePath, log::DEBUG));
+      logPtr.reset(new log::FileLogger(shortHostName, "cta-maintenance", logFilePath, log::DEBUG));
+    } else if(logToStdout) {
+      logPtr.reset(new log::StdoutLogger(shortHostName, "cta-maintenance"));
     }
     if (! logFormat.empty()) {
       logPtr->setLogFormat(logFormat);
@@ -225,10 +255,12 @@ int main(const int argc, char **const argv) {
 
   log::Logger& log = *logPtr;
 
+  const common::Config config(configFileLocation);
+
   int programRc = EXIT_FAILURE;
 
   try {
-    programRc = maintenance::exceptionThrowingMain(, log);
+    programRc = maintenance::exceptionThrowingMain(config, log);
   }  catch(exception::Exception &ex) {
     std::list<cta::log::Param> params = {
       cta::log::Param("exceptionMessage", ex.getMessage().str())};

@@ -33,10 +33,10 @@ spec:
         command: ["sh", "-c"]
         args:
         - |
-          cp /root/sss_keytab/input/eos.keytab /root/sss_keytab/output/cta-taped.sss.keytab;
-          chmod 600 /root/sss_keytab/output/cta-taped.sss.keytab;
+          cp /root/sss_keytab/input/eos.keytab /root/sss_keytab/output/cta-maintenance.sss.keytab;
+          chmod 600 /root/sss_keytab/output/cta-maintenance.sss.keytab;
           # Make CTA user owner
-          chown -R 1000:33 /root/sss_keytab/output/cta-taped.sss.keytab
+          chown -R 1000:33 /root/sss_keytab/output/cta-maintenance.sss.keytab
         volumeMounts:
           - name: eos-sss-keytab
             mountPath: /root/sss_keytab/input/eos.keytab
@@ -57,6 +57,10 @@ spec:
           timeoutSeconds: 3
           successThreshold: 1
           failureThreshold: 60
+        securityContext:
+          privileged: {{ .Values.isPrivileged }}
+          capabilities:
+            add: ["CAP_SYS_PTRACE"]
         env:
         - name: MY_NAME
           value: {{ $name }}
@@ -68,6 +72,10 @@ spec:
           value: "xterm"
         - name: SCHEDULER_BACKEND
           value: {{ $schedulerConfig.backend | quote }}
+        - name: XrdSecPROTOCOL
+          value: {{ $.Values.conf.maintenance.secProtocol }}
+        - name: XrdSecSSSKT
+          value: {{ $.Values.conf.maintenance.secSssktPath }}/{{ $.Values.conf.maintenance.ctaMaintenanceSss }}
         volumeMounts:
         - name: scripts-volume
           mountPath: /scripts/maintenance.sh

@@ -25,7 +25,7 @@ QueueCleanupRunner::QueueCleanupRunner(objectstore::AgentReference &agentReferen
         m_batchSize(batchSize.value_or(DEFAULT_BATCH_SIZE)), m_heartBeatTimeout(heartBeatTimeout.value_or(DEFAULT_HEARTBEAT_TIMEOUT)) {
 }
 
-void QueueCleanupRunner::runOnePass(log::LogContext &logContext) {
+void cta::maintenance::QueueCleanupRunner::runOnePass(log::LogContext &logContext) {
 
   cta::common::dataStructures::SecurityIdentity admin;
   // TODO: Check if these parameters make sense, mainly the username
