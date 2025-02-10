@@ -26,15 +26,15 @@ changelog-preview:
       if [ -z "${FROM_REF}" ]; then
         FROM_REF=$(git describe --tags --abbrev=0 ${TO_COMMIT})
       fi
-    - python3 continuousintegration/release/check_commits.py --api-url ${CI_SERVER_URL}
-                                                             --project-id ${CI_PROJECT_ID}
-                                                             --api-token ${CI_API_TOKEN}
-                                                             --from ${FROM_REF}
-                                                             --to ${TO_COMMIT}
-                                                             --release-version ${RELEASE_VERSION}
-                                                             --markdown-output changelog_report.md
-                                                             --verbose
-                                                             --preview
+    - python3 continuousintegration/release/preview_changelog.py --api-url ${CI_SERVER_URL}
+                                                                 --project-id ${CI_PROJECT_ID}
+                                                                 --api-token ${CI_API_TOKEN}
+                                                                 --from ${FROM_REF}
+                                                                 --to ${TO_COMMIT}
+                                                                 --release-version ${RELEASE_VERSION}
+                                                                 --markdown-output changelog_report.md
+                                                                 --verbose
+                                                                 --preview
     # Pass on variables so that the update_changelog job does not have to re-initialise them
     - echo -e "ENV_TO_COMMIT=${TO_COMMIT}\nENV_FROM_REF=${FROM_REF}\nENV_RELEASE_VERSION=${RELEASE_VERSION}" > vars.env
   artifacts:
