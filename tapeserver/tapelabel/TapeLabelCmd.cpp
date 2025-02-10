@@ -427,7 +427,6 @@ void TapeLabelCmd::readAndSetConfiguration(const std::string &userName,
   std::list<cta::log::Param> params;
   params.push_back(cta::log::Param("catalogueDbType", catalogueLogin.dbTypeToString(catalogueLogin.dbType)));
   params.push_back(cta::log::Param("connectionString", catalogueLogin.connectionString));
-  params.push_back(cta::log::Param("catalogueUsername", catalogueLogin.username));
   params.push_back(cta::log::Param("devFilename", m_devFilename));
   params.push_back(cta::log::Param("rawLibrarySlot", m_rawLibrarySlot));
   params.push_back(cta::log::Param("logicalLibrary", m_logicalLibrary));
