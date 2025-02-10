@@ -11,8 +11,12 @@ metadata:
 data:
   cta-maintenance.conf: |-
     # General
-    general InstanceName {{ $.Values.conf.general.instanceName }}
-    general SchedulerBackendName {{ $schedulerConfig.backend }}
+    General InstanceName {{ $.Values.conf.general.instanceName }}
+    General SchedulerBackendName {{ $schedulerConfig.backend }}
     # Maintenance
-    maintenance useRepackRequestManagement
-    maintenance repackMaxRequestToExpand
+    BackendPath {{ include "global.schedulerUrl" $ }}
+    CatalogueConfigFile {{ $.Values.conf.maintenance.catalogueConfigPath }}
+    RepackMaxRequestToExpand {{ $.Values.conf.maintenance.repackMaxRequestsToExpand }}
+    TapeCacheMaxAgeSecs {{ $.Values.conf.maintenance.tapeCacheMaxAgeSecs }}
+    RetrieveQueueCacheMaxAgeSecs {{ $.Values.conf.maintenance.retrieveQueueCacheMaxAgeSecs }}
+ 
