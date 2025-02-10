@@ -10,7 +10,7 @@ cppcheck:
       when: never
     - if: $SYSTEMTESTS_ONLY == "TRUE"
       when: never
-    - if: $CI_PIPELINE_SOURCE == "trigger"
+    - if: $PIPELINE_TYPE != "COMMIT"
       when: never
     - when: always
   dependencies: [] # Ensure no artifacts are downloaded
