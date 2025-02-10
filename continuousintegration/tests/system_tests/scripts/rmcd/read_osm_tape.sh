@@ -15,7 +15,7 @@
 #               granted to it by virtue of its status as an Intergovernmental Organization or
 #               submit itself to any jurisdiction.
 
-
+set -e
 
 # Download OSM sample tape
 dnf install -y git git-lfs

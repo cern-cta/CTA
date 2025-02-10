@@ -3,21 +3,13 @@ import base64
 import time
 import json
 
-# For now this is here so that we can easily update new scripts without running the setup again
-# This should at some point just be part of the setup
-def test_setup_client_scripts_and_certs(env):
-    env.client[0].copyTo("system_tests/scripts/client/", "/root/", permissions="+x")
-    env.client[0].exec("mv /root/client/* /root && rm -d /root/client")
-    env.eosmgm[0].copyFrom("etc/grid-security/certificates/", "/tmp/certificates/")
-    env.client[0].copyTo("/tmp/certificates/", "/etc/grid-security/")
-    env.execLocal("rm -rf /tmp/certificates")
+# For now simple global variables
+# Should go into env at some point
+file_count=2000
+file_size_kb=10
+processes_count=20
 
 def test_setup_client(env):
-    # Probably same for this one
-    file_count=2000
-    file_size_kb=10
-    processes_count=20
-
     env.client[0].exec(f"/root/client_setup.sh -n {file_count} -s {file_size_kb} -p {processes_count} -d {env.eos_preprod_dir} -v -r -c xrd")
 
 def test_http_rest_api(env):

@@ -7,6 +7,9 @@ class CtaTapedHost(RemoteHost):
     def drive_name(self) -> str:
         return self.execWithOutput("printenv DRIVE_NAME")
 
+    def drive_device(self) -> str:
+        return self.execWithOutput("printenv DRIVE_DEVICE")
+
     def library_device(self) -> str:
         return self.execWithOutput("printenv LIBRARY_DEVICE")
 
