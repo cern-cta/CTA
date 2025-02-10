@@ -22,3 +22,7 @@ To skip the setup (initialization of the catalogue), add the `--no-setup` flag:
 ```sh
 pytest system_tests/test_client.py --namespace dev -s --no-setup
 ```
+
+## Note on Test Execution Order
+
+By default in `pytest`, tests are executed (within a file) in the order that they are defined. As such, be careful with moving methods around as some of our system tests rely on previous tests.

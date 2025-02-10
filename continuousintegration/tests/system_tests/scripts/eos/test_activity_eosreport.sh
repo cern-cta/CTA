@@ -15,11 +15,9 @@
 #               granted to it by virtue of its status as an Intergovernmental Organization or
 #               submit itself to any jurisdiction.
 
-
+set -e
 
 echo "Looking for HTTP staging activity..."
-activity_http=$(cat $(find /var/eos/report/$(date +%Y)/$(date +%m)/ | grep '.eosreport') | grep 'event=stage' | grep 'activity=CTA-Test-HTTP-CI-TEST-activity-passing')
-
 report_file_name="/var/eos/report/$(date +%Y)/$(date +%m)/$(date +%Y)$(date +%m)$(date +%d).eosreport"
 
 # Check that activity is set for staging of file `test_valid_instance`
@@ -59,4 +57,3 @@ else
 fi
 
 echo "Activity test: OK"
-exit 0

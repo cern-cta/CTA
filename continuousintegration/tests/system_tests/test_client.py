@@ -1,11 +1,10 @@
 import uuid
 import base64
-import pytest
 import time
 import json
-import glob
 
 # For now this is here so that we can easily update new scripts without running the setup again
+# This should at some point just be part of the setup
 def test_setup_client_scripts_and_certs(env):
     env.client[0].copyTo("system_tests/scripts/client/", "/root/", permissions="+x")
     env.client[0].exec("mv /root/client/* /root && rm -d /root/client")
@@ -34,33 +33,33 @@ def test_immutable_files(env):
     test_dir = f"{env.eos_preprod_dir}/{uuid.uuid4()}"
     env.client[0].exec(f". /root/client_env && echo yes | cta-immutable-file-test root://{env.disk_instance_name}/{test_dir}/immutable_file")
     # Cleanup
-    env.eosmgm[0].exec(f"eos rm -rf {test_dir}")
+    env.eosmgm[0].exec(f"eos rm -rF --no-confirmation {test_dir}")
 
 def test_simple_archive_retrieve(env):
-    env.client[0].exec(f". /root/client_env && /root/test_simple_ar.sh")
+    env.client[0].exec(". /root/client_env && /root/test_simple_ar.sh")
 
 def test_archive(env):
-    env.client[0].exec(f". /root/client_env && /root/test_archive.sh")
+    env.client[0].exec(". /root/client_env && /root/test_archive.sh")
     # TODO: replace by something more deterministic
     time.sleep(10)
 
 def test_retrieve(env):
-    env.client[0].exec(f". /root/client_env && /root/test_retrieve.sh")
+    env.client[0].exec(". /root/client_env && /root/test_retrieve.sh")
 
 def test_simple_evict(env):
-    env.client[0].exec(f". /root/client_env && /root/test_simple_evict.sh")
+    env.client[0].exec(". /root/client_env && /root/test_simple_evict.sh")
 
 def test_abort_prepare(env):
-    env.client[0].exec(f". /root/client_env && /root/test_abort_prepare.sh")
+    env.client[0].exec(". /root/client_env && /root/test_abort_prepare.sh")
 
 def test_delete(env):
-    env.client[0].exec(f". /root/client_env && /root/test_delete.sh")
+    env.client[0].exec(". /root/client_env && /root/test_delete.sh")
 
 def test_archive_retrieve_timestamps_are_correct(env):
-    env.client[0].exec(f". /root/client_env && /root/test_timestamp.sh")
+    env.client[0].exec(". /root/client_env && /root/test_timestamp.sh")
 
 def test_multiple_retrieve(env):
-    env.client[0].exec(f"/root/test_multiple_retrieve.sh")
+    env.client[0].exec("/root/test_multiple_retrieve.sh")
 
 def test_idempotent_prepare(env):
     # ${CTA_TEST_NO_P_DIR} must be writable by eosusers and powerusers
@@ -70,25 +69,25 @@ def test_idempotent_prepare(env):
     env.eosmgm[0].exec(f"eos mkdir {no_prepare_dir}")
     env.eosmgm[0].exec(f"eos attr set sys.acl=g:eosusers:rwx!d,u:poweruser1:rwx+d,u:poweruser2:rwx+d,z:'!'u'!'d {no_prepare_dir}")
 
-    env.client[0].exec(f"/root/test_idempotent_prepare.sh")
+    env.client[0].exec("/root/test_idempotent_prepare.sh")
 
     # Cleanup
-    env.eosmgm[0].exec(f"eos rm -rF {no_prepare_dir}")
+    env.eosmgm[0].exec(f"eos rm -rF --no-confirmation {no_prepare_dir}")
 
 def test_delete_on_closew_error(env):
-    env.client[0].exec(f"/root/test_delete_on_closew_error.sh")
+    env.client[0].exec("/root/test_delete_on_closew_error.sh")
 
 def test_archive_zero_length_file(env):
-    env.client[0].exec(f"/root/test_archive_zero_length_file.sh")
+    env.client[0].exec("/root/test_archive_zero_length_file.sh")
 
 def test_stagerrm(env):
-    env.client[0].exec(f"/root/test_stagerrm.sh")
+    env.client[0].exec("/root/test_stagerrm.sh")
 
 def test_evict(env):
-    env.client[0].exec(f"/root/test_evict.sh")
+    env.client[0].exec("/root/test_evict.sh")
 
 def test_evict_before_archive_completed(env):
-    env.client[0].exec(f"/root/test_evict_before_archive_completed.sh")
+    env.client[0].exec("/root/test_evict_before_archive_completed.sh")
 
 def test_taped_log_rotation(env):
     env.ctataped[0].copyTo("system_tests/scripts/taped/", "/root/", permissions="+x")
@@ -104,7 +103,7 @@ def test_eosdf_runs_correctly(env):
     env.eosmgm[0].exec(f"eos mkdir {eosdf_buffer_basedir}")
     env.eosmgm[0].exec(f"eos chmod 1777 {eosdf_buffer_basedir}")
 
-    env.client[0].exec(f". /root/client_env && /root/test_eosdf.sh")
+    env.client[0].exec(". /root/client_env && /root/test_eosdf.sh")
     taped_log_file_loc = env.ctataped[0].taped_log_file_location()
     env.ctataped[0].exec(f"! grep -q 'unable to get the free disk space with the script' {taped_log_file_loc}")
 
@@ -112,7 +111,7 @@ def test_eosdf_runs_correctly(env):
 def test_eosdf_runs_correctly_without_script_present(env):
     env.ctataped[0].exec("mv /usr/bin/cta-eosdf.sh /usr/bin/eosdf_newname.sh")
 
-    env.client[0].exec(f". /root/client_env && /root/test_eosdf.sh")
+    env.client[0].exec(". /root/client_env && /root/test_eosdf.sh")
     taped_log_file_loc = env.ctataped[0].taped_log_file_location()
     env.ctataped[0].exec(f"grep -q 'No such file or directory' {taped_log_file_loc}")
 
@@ -122,7 +121,7 @@ def test_eosdf_runs_correctly_without_script_present(env):
 def test_eosdf_runs_correctly_with_incorrect_permissions(env):
     env.ctataped[0].exec("chmod -x /usr/bin/cta-eosdf.sh")
 
-    env.client[0].exec(f". /root/client_env && /root/test_eosdf.sh")
+    env.client[0].exec(". /root/client_env && /root/test_eosdf.sh")
     taped_log_file_loc = env.ctataped[0].taped_log_file_location()
     env.ctataped[0].exec(f"grep -q 'Permission denied' {taped_log_file_loc}")
 
@@ -133,7 +132,7 @@ def test_eosdf_runs_correctly_with_eos_unreachable(env):
     eosdf_buffer_basedir = f"{env.eos_base_dir}/eosdf"
     env.ctataped[0].exec(r"sed -i 's|root://\$diskInstance|root://nonexistentinstance|g' /usr/bin/cta-eosdf.sh")
 
-    env.client[0].exec(f". /root/client_env && /root/test_eosdf.sh")
+    env.client[0].exec(". /root/client_env && /root/test_eosdf.sh")
     taped_log_file_loc = env.ctataped[0].taped_log_file_location()
     env.ctataped[0].exec(f"grep -q 'Permission denied' {taped_log_file_loc}")
 
@@ -159,8 +158,8 @@ def test_retrieve_queue_cleanup(env):
         letter = chr(65 + i) # 0 = A, 1 = B, etc
         env.ctacli[0].exec(f"cta-admin tape ch --vid {non_full_tapes[i]} --tapepool ctasystest_{letter}")
 
-    env.client[0].exec(f"/root/test_retrieve_queue_cleanup.sh")
+    env.client[0].exec("/root/test_retrieve_queue_cleanup.sh")
 
     # Cleanup
     for dir in copy_dirs:
-        env.eosmgm[0].exec(f"eos rm -rF {dir}")
+        env.eosmgm[0].exec(f"eos rm -rF --no-confirmation {dir}")

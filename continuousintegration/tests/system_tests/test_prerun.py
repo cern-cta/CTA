@@ -15,7 +15,7 @@ def test_xrootd_tcp_capabilities_on_fsts(env):
     # invalid check:
     # [root@ctaeos /]# xrdfs root://ctaeos.toto.svc.cluster.local:1095 query config tpc
     # tpc
-    fst_hosts = env.eosmgm[0].execWithOutput("eos node ls -m | grep status=online | sed -e 's/.*hostport=//;s/ .*//' ").splitlines()
+    fst_hosts = env.eosmgm[0].execWithOutput(r"eos node ls -m | grep status=online | sed -e 's/.*hostport=//;s/ .*//' ").splitlines()
     for fst_host in fst_hosts:
         env.eosmgm[0].exec(f"xrdfs root://{fst_host} query config tpc | grep -q 1")
 
