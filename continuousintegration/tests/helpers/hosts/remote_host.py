@@ -1,9 +1,8 @@
 from ..connections.remote_connection import RemoteConnection
 from subprocess import CompletedProcess
 from typing import Optional
-from abc import ABC
 
-class RemoteHost(ABC):
+class RemoteHost():
     def __init__(self, conn: RemoteConnection):
         self.conn = conn
 
