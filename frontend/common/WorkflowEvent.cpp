@@ -61,6 +61,7 @@ WorkflowEvent::WorkflowEvent(const frontend::FrontendService& frontendService,
       m_scheduler.authorizeAdmin(m_cliIdentity, m_lc);
       m_cliIdentity.username = event.wf().instance().name();
     } else {
+      // instance name is ctaeos and m_cliIdentity.username is cta
       throw exception::PbException("Instance name \"" + event.wf().instance().name() +
         "\" does not match key identifier \"" + m_cliIdentity.username + "\""); // apparently m_cliIdentiy.username is empty
     }

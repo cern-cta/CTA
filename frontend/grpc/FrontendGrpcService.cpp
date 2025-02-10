@@ -57,13 +57,15 @@ namespace cta::frontend::grpc {
 Status
 CtaRpcImpl::GenericRequest(::grpc::ServerContext* context, const cta::xrd::Request* request, cta::xrd::Response* response) {
   // add a log line here, ok?
+  // log the hostname and the username
+  m_lc.log(cta::log::INFO, "username is " + getUsername() + " and hostname is " + getHostname());
   try {
     cta::eos::Client client = request->notification().cli();
     // apparently I do not properly setup the clientIdentity stuff - username is not setup, should match event.wf().instance().name()
     // where event == request->notification()
     // this client.sec().name() is empty for the gRPC calls apparently, nevermind, use the getUsername, getHostname calls
     // where does xrootd/ssi fill this in?? I think it is taken care of by the framework
-    cta::common::dataStructures::SecurityIdentity clientIdentity(getUsername(), getHostname());
+    cta::common::dataStructures::SecurityIdentity clientIdentity(request->notification().wf().instance().name(), getHostname());
     cta::frontend::WorkflowEvent wfe(*m_frontendService, clientIdentity, request->notification());
     *response = wfe.process();
   } catch (cta::exception::PbException &ex) {
