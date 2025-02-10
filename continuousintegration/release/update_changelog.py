@@ -17,7 +17,7 @@
 
 from datetime import datetime
 import sys
-from typing import Any, Union
+from typing import Any, Optional
 import argparse
 import base64
 from gitlabapi import GitLabAPI
@@ -34,10 +34,10 @@ def create_new_branch(api: GitLabAPI, branch: str, source_branch: str) -> bool:
         "branch": branch,
         "ref": source_branch,
     }
-    result: str | None = api.post("repository/branches", params=params)
+    result: Optional[str] = api.post("repository/branches", params=params)
     if result is not None:
         print("Branch created successfully")
-        print(f"\t To view the created branch, visit: {result["web_url"]}")
+        print(f"\t To view the created branch, visit: {result['web_url']}")
         return True
     else:
         print(f"Failed to create branch {branch} from source {args.source_branch}")
@@ -56,7 +56,7 @@ def update_changelog(api: GitLabAPI, release_version: str, from_commit: str, to_
         "from": from_commit,
         "to": to_commit,
     }
-    result: str | None = api.post("repository/changelog", params=params)
+    result: Optional[str] = api.post("repository/changelog", params=params)
     if result is not None:
         print("Changelog update pushed successfully")
         return True
@@ -80,7 +80,7 @@ def update_rpm_spec(api: GitLabAPI, spec_path: str, branch: str, content: str, c
         "content": content,
         "commit_message": commit_msg,
     }
-    result: str | None = api.put(f"repository/files/{spec_path}", json=data)
+    result: Optional[str] = api.put(f"repository/files/{spec_path}", json=data)
     if result is not None:
         print(f"Update of {spec_path} pushed successfully")
         return True
@@ -99,7 +99,7 @@ def create_merge_request(
     description: str,
     reviewers: list[str],
     labels: list[str],
-) -> Union[int, None]:
+) -> Optional[int]:
     print(f"Creating Merge Request from branch {source_branch} into branch: {target_branch}")
     print(f"\tTitle: {title}")
     data: dict = {
@@ -113,10 +113,10 @@ def create_merge_request(
         "remove_source_branch": True,
         "squash": True,
     }
-    result: str | None = api.post("merge_requests", json=data)
+    result: Optional[str] = api.post("merge_requests", json=data)
     if result is not None:
         print("Merge request created successfully")
-        print(f"Merge request is ready for review. Please visit: {result["web_url"]}")
+        print(f"Merge request is ready for review. Please visit: {result['web_url']}")
         return result["iid"]
     else:
         print(f"Failed to create merge request")
@@ -134,10 +134,10 @@ def add_mr_review_comment(
     print(f"Getting version for Merge Request with id: {mr_id}")
     tries: int = 0
     max_tries: int = 20
-    versions: list[dict[str, Any]] | None = []
+    versions: Optional[list[dict[str, Any]]] = []
     # There seems to be a bit of a delay between the creation of the MR and this api request succeeding
     while versions == []:
-        versions: dict | None = api.get(f"merge_requests/{mr_id}/versions")
+        versions: Optional[dict] = api.get(f"merge_requests/{mr_id}/versions")
         if versions is None:
             print("Failed to retrieve versions")
             return False
@@ -147,7 +147,7 @@ def add_mr_review_comment(
         tries += 1
         time.sleep(1)
     print(f"Adding review comment for {file_path} at line {line_number}:")
-    print(f"{textwrap.indent(comment, "\t")}")
+    print(f"{textwrap.indent(comment, '\t')}")
     data: dict = {
         "position[position_type]": "text",
         "position[base_sha]": versions[0]["base_commit_sha"],
@@ -158,7 +158,7 @@ def add_mr_review_comment(
         "position[new_line]": line_number,
         "body": comment,
     }
-    result: str | None = api.post(f"merge_requests/{mr_id}/discussions", json=data)
+    result: Optional[str] = api.post(f"merge_requests/{mr_id}/discussions", json=data)
     if result is not None:
         print("Comment added successfully")
         return True
@@ -184,7 +184,7 @@ def find_line_number(content: str, section: str):
 def insert_rpm_changelog_entry(
     api: GitLabAPI, branch: str, release_version: str, spec_path: str, changelog_entry: str
 ) -> int:
-    file_info: dict[str, Any] | None = get_file(api, spec_path, branch)
+    file_info: Optional[dict[str, Any]] = get_file(api, spec_path, branch)
     if file_info is None:
         sys.exit(1)
     content = base64.b64decode(file_info["content"]).decode("utf-8")
@@ -201,7 +201,7 @@ def insert_rpm_changelog_entry(
     updated_content = content[:insertion_index] + "\n" + changelog_entry + content[insertion_index:]
 
     print(f"Pushing {spec_path} changelog updates to branch: {branch_name}...")
-    print(f"{textwrap.indent(changelog_entry, "\t")}")
+    print(f"{textwrap.indent(changelog_entry, '\t')}")
 
     commit_msg: str = f"Added changelog entry for release: {release_version}"
     update_rpm_spec(api, spec_path, branch, updated_content, commit_msg)
@@ -316,7 +316,7 @@ if __name__ == "__main__":
     # Update spec.in
     spec_path: str = "cta.spec.in"
     changelog_entry = (
-        f"* {datetime.now().strftime("%a %b %d %Y")} {args.user_name} <{args.user_email}> - {release_version}\n"
+        f"* {datetime.now().strftime('%a %b %d %Y')} {args.user_name} <{args.user_email}> - {release_version}\n"
     )
     changelog_entry += f"- See CHANGELOG.md for details\n"
     line_number: int = insert_rpm_changelog_entry(api, branch_name, release_version, spec_path, changelog_entry)
@@ -325,7 +325,7 @@ if __name__ == "__main__":
     mr_title: str = f"Changelog update for release {release_version}"
     reviewers: list[str] = [args.reviewer]
     labels: list[str] = ["workflow::in review"]
-    mr_id: int | None = create_merge_request(
+    mr_id: Optional[int] = create_merge_request(
         api,
         source_branch=branch_name,
         target_branch=args.source_branch,

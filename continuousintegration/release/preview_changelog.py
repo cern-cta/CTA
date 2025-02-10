@@ -19,6 +19,7 @@ import sys
 from datetime import datetime
 import argparse
 from gitlabapi import GitLabAPI, Commit
+from typing import Optional
 import re
 
 
@@ -39,7 +40,7 @@ changelog_cats: list[str] = ["feature", "bug", "maintenance", "documentation", "
 
 
 def changelog_preview(
-    api: GitLabAPI, from_commit_sha: str, to_commit_sha: str | None, release_version: str, markdown: bool = False
+    api: GitLabAPI, from_commit_sha: str, to_commit_sha: Optional[str], release_version: str, markdown: bool = False
 ) -> str:
     if to_commit_sha is not None:
         to_commit_sha = "HEAD"
@@ -55,7 +56,7 @@ def changelog_preview(
     return res
 
 
-def get_commits_in_range(api: GitLabAPI, since_sha: str, until_sha: str | None) -> list[Commit]:
+def get_commits_in_range(api: GitLabAPI, since_sha: str, until_sha: Optional[str]) -> list[Commit]:
     commit_range: str = since_sha
     if until_sha is not None:
         commit_range += ".." + until_sha
@@ -72,7 +73,7 @@ def get_commits_in_range(api: GitLabAPI, since_sha: str, until_sha: str | None) 
     return res
 
 
-def get_commit(api: GitLabAPI, commit_sha: str) -> Commit | None:
+def get_commit(api: GitLabAPI, commit_sha: str) -> Optional[Commit]:
     return api.get(f"repository/commits/{commit_sha}")
 
 
@@ -125,7 +126,7 @@ def generate_report(commits: list[Commit], verbose: bool) -> dict[str, list[str]
                 warn_string += f"\n{commit_summary(commit)}"
             report["warnings"].append(warn_string)
             continue
-        report["success"].append(f"({commit_id}) {commit["title"]}")
+        report["success"].append(f"({commit_id}) {commit['title']}")
     return report
 
 
@@ -144,7 +145,7 @@ def header(title: str, markdown: bool) -> str:
 
 
 def commit_summary(commit: Commit) -> str:
-    return f"\t- Title: {commit["title"]}\n\t- Trailers: {commit["trailers"]}"
+    return f"\t- Title: {commit['title']}\n\t- Trailers: {commit['trailers']}"
 
 
 def report_summary(report: dict[str, list[str]], markdown: bool = False) -> str:
@@ -196,8 +197,8 @@ def report_summary(report: dict[str, list[str]], markdown: bool = False) -> str:
 
 def commit_range_summary(api: GitLabAPI, from_commit_sha: str, to_commit_sha: str) -> str:
 
-    from_commit: Commit | None = get_commit(api, from_commit_sha)
-    to_commit: Commit | None = get_commit(api, to_commit_sha)
+    from_commit: Optional[Commit] = get_commit(api, from_commit_sha)
+    to_commit: Optional[Commit] = get_commit(api, to_commit_sha)
     if from_commit is None:
         print(f"Failure: {from_commit_sha} is not a valid commit")
         sys.exit(1)
@@ -207,15 +208,15 @@ def commit_range_summary(api: GitLabAPI, from_commit_sha: str, to_commit_sha: st
     if datetime.fromisoformat(from_commit["authored_date"]) > datetime.fromisoformat(to_commit["authored_date"]):
         print(f"Failure: to-commit cannot be before from-commit")
         sys.exit(1)
-    res = f"Start commit (exclusive): ({from_commit["short_id"]}) {from_commit["title"]}\n"
-    res += f"End commit   (inclusive): ({to_commit["short_id"]}) {to_commit["title"]}\n"
+    res = f"Start commit (exclusive): ({from_commit['short_id']}) {from_commit['title']}\n"
+    res += f"End commit   (inclusive): ({to_commit['short_id']}) {to_commit['title']}\n"
     return res
 
 
 def commit_list_summary(commits: list[Commit]) -> str:
     res: str = f"\nFound {len(commits)} commits:\n"
     for commit in commits:
-        res += f"- ({commit["short_id"]}) {commit["title"]}\n"
+        res += f"- ({commit['short_id']}) {commit['title']}\n"
     return res
 
 

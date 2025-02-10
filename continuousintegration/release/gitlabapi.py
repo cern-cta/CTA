@@ -14,7 +14,7 @@
 #               submit itself to any jurisdiction.
 
 import requests
-from typing import Union, Any
+from typing import Any, Optional
 
 
 Commit = dict[str, Any]
@@ -35,10 +35,10 @@ class GitLabAPI:
         self,
         endpoint: str,
         method: str,
-        params: dict[str, str] | None = None,
-        data: Any | None = None,
-        json: Any | None = None,
-    ) -> Union[Any, None]:
+        params: Optional[dict[str, str]] = None,
+        data: Optional[Any] = None,
+        json: Optional[Any] = None,
+    ) -> Optional[Any]:
         api_url = f"{self.gitlab_url}/api/v4/projects/{self.project_id}/{endpoint}"
         headers = {
             "Private-Token": self.api_token,
@@ -60,18 +60,18 @@ class GitLabAPI:
             print(f"ERROR: GitLab API request failed:\n{e}")
             return None
 
-    def get(self, endpoint: str, params: dict[str, str] | None = None) -> Union[Any, None]:
+    def get(self, endpoint: str, params: Optional[dict[str, str]] = None) -> Optional[Any]:
         return self.__api_request(endpoint, "GET", params)
 
     def post(
-        self, endpoint: str, params: dict[str, str] | None = None, data: Any | None = None, json: Any | None = None
-    ) -> Union[Any, None]:
+        self, endpoint: str, params: Optional[dict[str, str]] = None, data: Optional[Any] = None, json: Optional[Any] = None
+    ) -> Optional[Any]:
         return self.__api_request(endpoint, "POST", params, data=data, json=json)
 
     def put(
-        self, endpoint: str, params: dict[str, str] | None = None, data: Any | None = None, json: Any | None = None
-    ) -> Union[Any, None]:
+        self, endpoint: str, params: Optional[dict[str, str]] = None, data: Optional[Any] = None, json: Optional[Any] = None
+    ) -> Optional[Any]:
         return self.__api_request(endpoint, "PUT", params, data=data, json=json)
 
-    def delete(self, endpoint: str, params: dict[str, str] | None = None) -> Union[Any, None]:
+    def delete(self, endpoint: str, params: Optional[dict[str, str]] = None) -> Optional[Any]:
         return self.__api_request(endpoint, "DELETE", params)
