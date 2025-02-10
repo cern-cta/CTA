@@ -35,6 +35,7 @@ class TestEnv:
         self.disk_instance_name="ctaeos"
         self.eos_base_dir="/eos/ctaeos"
         self.eos_preprod_dir=f"{self.eos_base_dir}/preprod"
+        self.eos_cta_test_dir=f"{self.eos_base_dir}/cta"
 
     @staticmethod
     def fromNamespace(namespace: str):

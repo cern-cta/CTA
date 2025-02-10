@@ -494,7 +494,7 @@ wait_for_archive ${EOS_MGM_HOST} ${TEMP_FILE}
 
 echo "Trigering EOS retrieve workflow as poweruser1:powerusers, for ${TEMP_FILE}..."
 # We need the -s as we are staging the files from tape (see xrootd prepare definition)
-REQUEST_ID=$(KRB5CCNAME=/tmp/${EOSPOWER_USER}/krb5cc_0 XrdSecPROTOCOL=krb5 xrdfs ${EOS_MGM_HOST} prepare -s ${TEMP_FILE})
+KRB5CCNAME=/tmp/${EOSPOWER_USER}/krb5cc_0 XrdSecPROTOCOL=krb5 xrdfs ${EOS_MGM_HOST} prepare -s ${TEMP_FILE}
 wait_for_retrieve ${EOS_MGM_HOST} ${TEMP_FILE}
 
 echo "Trigering EOS evict workflow as poweruser1:powerusers..."
@@ -526,7 +526,7 @@ wait_for_archive ${EOS_MGM_HOST} ${TEMP_FILE_TAPE}
 
 echo "Trigering EOS retrieve workflow as poweruser1:powerusers, for ${TEMP_FILE_TAPE}..."
 # We need the -s as we are staging the files from tape (see xrootd prepare definition)
-REQUEST_ID=$(KRB5CCNAME=/tmp/${EOSPOWER_USER}/krb5cc_0 XrdSecPROTOCOL=krb5 xrdfs ${EOS_MGM_HOST} prepare -s ${TEMP_FILE_TAPE})
+KRB5CCNAME=/tmp/${EOSPOWER_USER}/krb5cc_0 XrdSecPROTOCOL=krb5 xrdfs ${EOS_MGM_HOST} prepare -s ${TEMP_FILE_TAPE}
 wait_for_retrieve ${EOS_MGM_HOST} ${TEMP_FILE_TAPE}
 
 echo "Trigering EOS abort workflow as poweruser1:powerusers..."

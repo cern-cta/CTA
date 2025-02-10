@@ -2,6 +2,7 @@
 # These are also the only tests executed on our personal cirunners instead of the GitLab runners
 
 .kubernetes-test:
+  stage: system-test
   needs:
     - job: build-ctageneric-from-artifacts
       optional: true # Otherwise the SYSTEMTESTS_ONLY flag won't work
@@ -20,13 +21,12 @@
       when: never
     - when: on_success
   variables:
-    TEST_SCRIPT:
-    # Passed to the run_systemtest.sh script verbatim
-    EXTRA_ARGS: ""
+    # Which tests to run
+    TESTS:
     # Passed to the create_instance.sh script verbatim
     EXTRA_SPAWN_ARGS: ""
-    # Passed to the test script verbatim
-    EXTRA_TEST_ARGS: ""
+    # Passed to the pytest verbatim
+    EXTRA_PYTEST_ARGS: ""
   before_script:
     - bash ./continuousintegration/utils/install_helm.sh
   script:
@@ -66,14 +66,18 @@
         CATALOGUE_VERSION=$(cat catalogue/CTARefCatalogueSchemaVersion.cmake | grep -v '#' | grep 'CTA_CATALOGUE_REF_SCHEMA_VERSION_CURR' | awk '{print $2}' | awk -F ')' '{ print $1}')
         EXTRA_SPAWN_ARGS="${EXTRA_SPAWN_ARGS} --catalogue-version ${CATALOGUE_VERSION}.0"
       fi
-    # Set up the additional arguments array to pass to the run_systemtest.sh script
-    - extra_args=($EXTRA_ARGS)
-    - if [[ -n "${CUSTOM_EOS_TAG}" ]];   then extra_args+=(--eos-image-tag "${CUSTOM_EOS_TAG}"); fi
-    - if [[ -n "${EXTRA_SPAWN_ARGS}" ]]; then extra_args+=(--spawn-options "${EXTRA_SPAWN_ARGS}"); fi
-    - if [[ -n "${EXTRA_TEST_ARGS}" ]];  then extra_args+=(--test-options "${EXTRA_TEST_ARGS}"); fi
+    - if [[ -n "${CUSTOM_EOS_TAG}" ]];   then EXTRA_SPAWN_ARGS="${EXTRA_SPAWN_ARGS} --eos-image-tag ${CUSTOM_EOS_TAG}"; fi
     # Run test
     - cd continuousintegration/orchestration/
-    - ./run_systemtest.sh --namespace ${NAMESPACE} --cta-image-tag ${IMAGE_TAG} --test-script ${TEST_SCRIPT} --cleanup-namespaces --keep-namespace --catalogue-config ${CATALOGUE_CONFIG} --scheduler-config ${SCHEDULER_CONFIG} "${extra_args[@]}"
+    - ./delete_old_namespaces.sh
+    - ./create_instance.sh --namespace ${NAMESPACE}
+                           --cta-image-tag ${IMAGE_TAG}
+                           --catalogue-config ${CATALOGUE_CONFIG}
+                           --scheduler-config ${SCHEDULER_CONFIG}
+                           ${EXTRA_SPAWN_ARGS}
+    - cd ../tests
+    # TODO: create venv
+    - pytest ${TESTS} --namespace ${NAMESPACE} -s ${EXTRA_PYTEST_ARGS}
   after_script:
     # The namespace exported before is not visible, so export it again
     - export NAMESPACE="${CI_JOB_NAME_SLUG:0:18}-${CI_PIPELINE_ID}"
@@ -92,31 +96,24 @@
 # Tests
 
 test-client:
-  stage: system-test
   extends:
     - .kubernetes-test
   variables:
-    TEST_SCRIPT: "tests/test_client.sh"
-    EXTRA_ARGS: "--test-timeout 2400"
+    TESTS: "system_tests/test_client.py"
 
 test-client-gfal2:
-  stage: system-test
   extends:
     - .kubernetes-test
   variables:
-    TEST_SCRIPT: "tests/test_client_gfal2.sh"
-    EXTRA_ARGS: "--test-timeout 2400"
+    TESTS: "system_tests/test_client_gfal2.py"
 
 test-repack:
-  stage: system-test
   extends:
     - .kubernetes-test
   variables:
-    TEST_SCRIPT: "tests/test_repack.sh"
-    EXTRA_ARGS: "--test-timeout 2400"
+    TESTS: "system_tests/test_repack.py"
 
 test-cta-admin:
-  stage: system-test
   extends:
     - .kubernetes-test
   rules:
@@ -126,8 +123,7 @@ test-cta-admin:
       when: never
     - !reference [.kubernetes-test, rules]
   variables:
-    TEST_SCRIPT: "tests/test_cta_admin.sh"
-    EXTRA_ARGS: "--test-timeout 2400"
+    TESTS: "system_tests/test_cta_admin.py"
 
 # Manually triggered
 
@@ -149,14 +145,12 @@ test-cta-admin:
       when: on_success
 
 test-liquibase-update:
-  stage: system-test
   extends:
     - .kubernetes-test
   rules:
     - !reference [.manual-rules, rules]
   variables:
-    TEST_SCRIPT: "tests/test_liquibase_update.sh"
-    EXTRA_ARGS: "--test-timeout 2400"
+    TESTS: "system_tests/test_liquibase_update.py"
   before_script:
     - !reference [.kubernetes-test, before_script]
     # Yes this is ugly, hopefully we can improve this if we have a project.json where we specify these kinds of values
@@ -172,24 +166,17 @@ test-liquibase-update:
     - export EXTRA_SPAWN_ARGS="--catalogue-version ${PREV_CATALOGUE_VERSION}"
 
 test-external-tape-formats:
-  stage: system-test
   extends:
     - .kubernetes-test
   rules:
     - !reference [.manual-rules, rules]
   variables:
-    TEST_SCRIPT: "tests/test_external_tape_formats.sh"
-    EXTRA_OPTIONS: "--test-timeout 2400"
+    TESTS: "system_tests/test_external_tape_formats.py"
 
 test-regression-dCache:
-  stage: system-test
   extends:
     - .kubernetes-test
   rules:
     - !reference [.manual-rules, rules]
   variables:
-    TEST_SCRIPT: "tests/test_regression_dCache.sh"
-    EXTRA_OPTIONS: "--test-timeout 2400"
-  tags:
-    - kubernetes
-    - xlarge
+    TESTS: "system_tests/test_regression_dcache.py"
