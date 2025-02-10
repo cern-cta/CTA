@@ -22,7 +22,7 @@
 #include <objectstore/AgentHeartbeatThread.hpp>
 #include <objectstore/BackendVFS.hpp>
 #include <objectstore/GarbageCollector.hpp>
-#include <maintenance/QueueCleanupRunner.hpp>
+#include <maintenance/QueueCleanup/QueueCleanupRunner.hpp>
 #include <scheduler/OStoreDB/OStoreDBWithAgent.hpp>
 
 namespace cta {
