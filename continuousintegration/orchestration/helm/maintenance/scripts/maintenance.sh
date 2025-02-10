@@ -24,4 +24,5 @@ dnf install -y cta-maintenance
 # to get rmcd logs to stdout
 tail -F /var/log/cta/cta-maintenance.log &
 echo "$(date '+%Y-%m-%d %H:%M:%S') [$(basename "${BASH_SOURCE[0]}")] Ready"
-runuser --user cta -- /usr/bin/cta-maintenance
+runuser --shell='/bin/bash' --session-command="/usr/bin/cta-maintenance --stdout --log-format json --config /etc/cta/cta-maintenance.conf" cta
+sleep infinity

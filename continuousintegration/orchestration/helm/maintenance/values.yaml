@@ -2,6 +2,8 @@
 image:
 component: maintenance
 partOf: cta
+nameOverride: cta-maintenance
+isPrivileged: true
 
 terminationGracePeriodSeconds: 1 # This is low on purpose as the current process has no gracefull shutdown process
 
@@ -9,8 +11,11 @@ conf:
   maintenance:
     secProtocol: "sss"
     secSssktPath: "/etc/cta"
-    ctaTapedSss: "cta-taped.sss.keytab"
-    externalFreeDiskSpaceScript: "/usr/bin/cta-eosdf.sh"
+    ctaMaintenanceSss: "cta-maintenance.sss.keytab"
+    catalogueConfigPath: "/etc/cta/cta-catalogue.conf"
+    repackMaxRequestsToExpand: 2
+    tapeCacheMaxAgeSecs: 600
+    retrieveQueueCacheMaxAgeSecs: 10
   general:
     instanceName: "CI"
 
