@@ -4,6 +4,13 @@ from typing import Optional
 from subprocess import CompletedProcess
 
 class RemoteConnection(Protocol):
+
+    def get_name(self) -> str:
+        ...
+
+    def get_short_description(self) -> str:
+        ...
+
     def exec(self, command: str, capture_output = False, throw_on_failure = True) -> CompletedProcess[bytes]:
         ...
 

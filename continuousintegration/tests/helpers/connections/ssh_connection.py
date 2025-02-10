@@ -10,6 +10,12 @@ class SSHConnection(RemoteConnection):
         self.host = host
         self.user = user
 
+    def get_name(self) -> str:
+        return f"{self.host}"
+
+    def get_short_description(self) -> str:
+        return f"SSH connection {self.get_name}"
+
     def exec(self, command: str, capture_output = False, throw_on_failure = True) -> subprocess.CompletedProcess[bytes]:
         full_command = f"ssh {self.user}@{self.host} \"{command}\""
         result = subprocess.run(full_command, shell=True, capture_output=capture_output)
