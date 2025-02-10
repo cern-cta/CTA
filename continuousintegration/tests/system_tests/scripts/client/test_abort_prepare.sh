@@ -16,7 +16,6 @@
 #               submit itself to any jurisdiction.
 
 set -e
-set -x
 
 # Quick function to abort the prepare of files.
 # $1: file containing even number of lines, odd lines == req id; even lines == file_name
@@ -110,7 +109,7 @@ RESTAGEDFILES=0
 for ((subdir=0; subdir < ${NB_DIRS}; subdir++)); do
   RF=$(eos root://${EOS_MGM_HOST} ls -y ${EOS_DIR}/${subdir} | grep -E '^d[1-9][0-9]*::t1' | wc -l || true)
   echo "Restaged files in directory ${subdir}: ${RF}"
-  (( RESTAGEDFILES += RF ))
+  (( RESTAGEDFILES += RF )) || true
 done
 echo "Total restaged files found: ${RESTAGEDFILES}"
 
