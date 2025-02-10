@@ -125,7 +125,7 @@ def generate_report(commits: list[Commit], verbose: bool) -> dict[str, list[str]
                 warn_string += f"\n{commit_summary(commit)}"
             report["warnings"].append(warn_string)
             continue
-        report["success"].append(f"({commit_id}) {commit["title"]}")
+        report["success"].append(f"({commit_id}) {commit['title']}")
     return report
 
 
@@ -144,7 +144,7 @@ def header(title: str, markdown: bool) -> str:
 
 
 def commit_summary(commit: Commit) -> str:
-    return f"\t- Title: {commit["title"]}\n\t- Trailers: {commit["trailers"]}"
+    return f"\t- Title: {commit['title']}\n\t- Trailers: {commit['trailers']}"
 
 
 def report_summary(report: dict[str, list[str]], markdown: bool = False) -> str:
@@ -207,15 +207,15 @@ def commit_range_summary(api: GitLabAPI, from_commit_sha: str, to_commit_sha: st
     if datetime.fromisoformat(from_commit["authored_date"]) > datetime.fromisoformat(to_commit["authored_date"]):
         print(f"Failure: to-commit cannot be before from-commit")
         sys.exit(1)
-    res = f"Start commit (exclusive): ({from_commit["short_id"]}) {from_commit["title"]}\n"
-    res += f"End commit   (inclusive): ({to_commit["short_id"]}) {to_commit["title"]}\n"
+    res = f"Start commit (exclusive): ({from_commit['short_id']}) {from_commit['title']}\n"
+    res += f"End commit   (inclusive): ({to_commit['short_id']}) {to_commit['title']}\n"
     return res
 
 
 def commit_list_summary(commits: list[Commit]) -> str:
     res: str = f"\nFound {len(commits)} commits:\n"
     for commit in commits:
-        res += f"- ({commit["short_id"]}) {commit["title"]}\n"
+        res += f"- ({commit['short_id']}) {commit['title']}\n"
     return res
 
 
