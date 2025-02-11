@@ -1,0 +1,1797 @@
+--
+-- PostgreSQL database dump
+--
+
+-- Dumped from database version 14.10 (Debian 14.10-1.pgdg120+1)
+-- Dumped by pg_dump version 14.10 (Debian 14.10-1.pgdg120+1)
+
+-- First drop all the tables, otherwise we get errors due to their constraints
+do $$ declare
+    r record;
+begin
+    for r in (select tablename from pg_tables where schemaname = 'public') loop
+        execute 'drop table if exists ' || quote_ident(r.tablename) || ' cascade';
+    end loop;
+end $$;
+
+SET statement_timeout = 0;
+SET lock_timeout = 0;
+SET idle_in_transaction_session_timeout = 0;
+SET client_encoding = 'UTF8';
+SET standard_conforming_strings = on;
+SELECT pg_catalog.set_config('search_path', '', false);
+SET check_function_bodies = false;
+SET xmloption = content;
+SET client_min_messages = warning;
+SET row_security = off;
+
+SET default_tablespace = '';
+
+SET default_table_access_method = heap;
+
+--
+-- Name: admin_user; Type: TABLE; Schema: public; Owner: cta
+--
+
+CREATE TABLE public.admin_user (
+    admin_user_name character varying(100) NOT NULL,
+    user_comment character varying(1000) NOT NULL,
+    creation_log_user_name character varying(100) NOT NULL,
+    creation_log_host_name character varying(100) NOT NULL,
+    creation_log_time numeric(20,0) NOT NULL,
+    last_update_user_name character varying(100) NOT NULL,
+    last_update_host_name character varying(100) NOT NULL,
+    last_update_time numeric(20,0) NOT NULL
+);
+
+
+ALTER TABLE public.admin_user OWNER TO cta;
+
+--
+-- Name: archive_file; Type: TABLE; Schema: public; Owner: cta
+--
+
+CREATE TABLE public.archive_file (
+    archive_file_id numeric(20,0) NOT NULL,
+    disk_instance_name character varying(100) NOT NULL,
+    disk_file_id character varying(100) NOT NULL,
+    disk_file_uid numeric(10,0) NOT NULL,
+    disk_file_gid numeric(10,0) NOT NULL,
+    size_in_bytes numeric(20,0) NOT NULL,
+    checksum_blob bytea,
+    checksum_adler32 numeric(10,0) NOT NULL,
+    storage_class_id numeric(20,0) NOT NULL,
+    creation_time numeric(20,0) NOT NULL,
+    reconciliation_time numeric(20,0) NOT NULL,
+    is_deleted character(1) DEFAULT '0'::bpchar NOT NULL,
+    collocation_hint character varying(100),
+    CONSTRAINT archive_file_id_bool_ck CHECK ((is_deleted = ANY (ARRAY['0'::bpchar, '1'::bpchar])))
+);
+
+
+ALTER TABLE public.archive_file OWNER TO cta;
+
+--
+-- Name: archive_file_id_seq; Type: SEQUENCE; Schema: public; Owner: cta
+--
+
+CREATE SEQUENCE public.archive_file_id_seq
+    START WITH 4294967296
+    INCREMENT BY 1
+    NO MINVALUE
+    NO MAXVALUE
+    CACHE 20;
+
+
+ALTER TABLE public.archive_file_id_seq OWNER TO cta;
+
+--
+-- Name: archive_route; Type: TABLE; Schema: public; Owner: cta
+--
+
+CREATE TABLE public.archive_route (
+    storage_class_id numeric(20,0) NOT NULL,
+    copy_nb numeric(3,0) NOT NULL,
+    archive_route_type character varying(100) DEFAULT 'DEFAULT'::character varying NOT NULL,
+    tape_pool_id numeric(20,0) NOT NULL,
+    user_comment character varying(1000) NOT NULL,
+    creation_log_user_name character varying(100) NOT NULL,
+    creation_log_host_name character varying(100) NOT NULL,
+    creation_log_time numeric(20,0) NOT NULL,
+    last_update_user_name character varying(100) NOT NULL,
+    last_update_host_name character varying(100) NOT NULL,
+    last_update_time numeric(20,0) NOT NULL,
+    CONSTRAINT archive_route_art_string_ck CHECK (((archive_route_type)::text = ANY ((ARRAY['DEFAULT'::character varying, 'REPACK'::character varying])::text[]))),
+    CONSTRAINT archive_route_copy_nb_gt_0_ck CHECK ((copy_nb > (0)::numeric))
+);
+
+
+ALTER TABLE public.archive_route OWNER TO cta;
+
+--
+-- Name: cta_catalogue; Type: TABLE; Schema: public; Owner: cta
+--
+
+CREATE TABLE public.cta_catalogue (
+    schema_version_major numeric(20,0) NOT NULL,
+    schema_version_minor numeric(20,0) NOT NULL,
+    next_schema_version_major numeric(20,0),
+    next_schema_version_minor numeric(20,0),
+    status character varying(100),
+    is_production character(1) DEFAULT '0'::bpchar NOT NULL,
+    CONSTRAINT catalogue_status_content_ck CHECK ((((next_schema_version_major IS NULL) AND (next_schema_version_minor IS NULL) AND ((status)::text = 'PRODUCTION'::text)) OR ((status)::text = 'UPGRADING'::text))),
+    CONSTRAINT cta_catalogue_ip_bool_ck CHECK ((is_production = ANY (ARRAY['0'::bpchar, '1'::bpchar])))
+);
+
+
+ALTER TABLE public.cta_catalogue OWNER TO cta;
+
+--
+-- Name: disk_instance; Type: TABLE; Schema: public; Owner: cta
+--
+
+CREATE TABLE public.disk_instance (
+    disk_instance_name character varying(100) NOT NULL,
+    user_comment character varying(1000) NOT NULL,
+    creation_log_user_name character varying(100) NOT NULL,
+    creation_log_host_name character varying(100) NOT NULL,
+    creation_log_time numeric(20,0) NOT NULL,
+    last_update_user_name character varying(100) NOT NULL,
+    last_update_host_name character varying(100) NOT NULL,
+    last_update_time numeric(20,0) NOT NULL
+);
+
+
+ALTER TABLE public.disk_instance OWNER TO cta;
+
+--
+-- Name: disk_instance_space; Type: TABLE; Schema: public; Owner: cta
+--
+
+CREATE TABLE public.disk_instance_space (
+    disk_instance_name character varying(100) NOT NULL,
+    disk_instance_space_name character varying(100) NOT NULL,
+    free_space_query_url character varying(1000) NOT NULL,
+    refresh_interval numeric(20,0) NOT NULL,
+    last_refresh_time numeric(20,0) NOT NULL,
+    free_space numeric(20,0) NOT NULL,
+    user_comment character varying(1000) NOT NULL,
+    creation_log_user_name character varying(100) NOT NULL,
+    creation_log_host_name character varying(100) NOT NULL,
+    creation_log_time numeric(20,0) NOT NULL,
+    last_update_user_name character varying(100) NOT NULL,
+    last_update_host_name character varying(100) NOT NULL,
+    last_update_time numeric(20,0) NOT NULL
+);
+
+
+ALTER TABLE public.disk_instance_space OWNER TO cta;
+
+--
+-- Name: disk_system; Type: TABLE; Schema: public; Owner: cta
+--
+
+CREATE TABLE public.disk_system (
+    disk_system_name character varying(100) NOT NULL,
+    disk_instance_name character varying(100) NOT NULL,
+    disk_instance_space_name character varying(100) NOT NULL,
+    file_regexp character varying(100) NOT NULL,
+    targeted_free_space numeric(20,0) NOT NULL,
+    sleep_time numeric(20,0) NOT NULL,
+    user_comment character varying(1000) NOT NULL,
+    creation_log_user_name character varying(100) NOT NULL,
+    creation_log_host_name character varying(100) NOT NULL,
+    creation_log_time numeric(20,0) NOT NULL,
+    last_update_user_name character varying(100) NOT NULL,
+    last_update_host_name character varying(100) NOT NULL,
+    last_update_time numeric(20,0) NOT NULL
+);
+
+
+ALTER TABLE public.disk_system OWNER TO cta;
+
+--
+-- Name: drive_config; Type: TABLE; Schema: public; Owner: cta
+--
+
+CREATE TABLE public.drive_config (
+    drive_name character varying(100) NOT NULL,
+    category character varying(100) NOT NULL,
+    key_name character varying(100) NOT NULL,
+    value character varying(1000) NOT NULL,
+    source character varying(100) NOT NULL
+);
+
+
+ALTER TABLE public.drive_config OWNER TO cta;
+
+--
+-- Name: drive_state; Type: TABLE; Schema: public; Owner: cta
+--
+
+CREATE TABLE public.drive_state (
+    drive_name character varying(100) NOT NULL,
+    host character varying(100) NOT NULL,
+    logical_library character varying(100) NOT NULL,
+    session_id numeric(20,0),
+    bytes_transfered_in_session numeric(20,0),
+    files_transfered_in_session numeric(20,0),
+    session_start_time numeric(20,0),
+    session_elapsed_time numeric(20,0),
+    mount_start_time numeric(20,0),
+    transfer_start_time numeric(20,0),
+    unload_start_time numeric(20,0),
+    unmount_start_time numeric(20,0),
+    draining_start_time numeric(20,0),
+    down_or_up_start_time numeric(20,0),
+    probe_start_time numeric(20,0),
+    cleanup_start_time numeric(20,0),
+    start_start_time numeric(20,0),
+    shutdown_time numeric(20,0),
+    mount_type character varying(100) DEFAULT 'NO_MOUNT'::character varying NOT NULL,
+    drive_status character varying(100) DEFAULT 'UNKNOWN'::character varying NOT NULL,
+    desired_up character(1) DEFAULT '0'::bpchar NOT NULL,
+    desired_force_down character(1) DEFAULT '0'::bpchar NOT NULL,
+    reason_up_down character varying(1000),
+    current_vid character varying(100),
+    cta_version character varying(100),
+    current_priority numeric(20,0),
+    current_activity character varying(100),
+    current_tape_pool character varying(100),
+    next_mount_type character varying(100) DEFAULT 'NO_MOUNT'::character varying NOT NULL,
+    next_vid character varying(100),
+    next_priority numeric(20,0),
+    next_activity character varying(100),
+    next_tape_pool character varying(100),
+    dev_file_name character varying(100),
+    raw_library_slot character varying(100),
+    current_vo character varying(100),
+    next_vo character varying(100),
+    user_comment character varying(1000),
+    creation_log_user_name character varying(100),
+    creation_log_host_name character varying(100),
+    creation_log_time numeric(20,0),
+    last_update_user_name character varying(100),
+    last_update_host_name character varying(100),
+    last_update_time numeric(20,0),
+    disk_system_name character varying(100),
+    reserved_bytes numeric(20,0),
+    reservation_session_id numeric(20,0),
+    CONSTRAINT drive_dfd_bool_ck CHECK ((desired_force_down = ANY (ARRAY['0'::bpchar, '1'::bpchar]))),
+    CONSTRAINT drive_ds_string_ck CHECK (((drive_status)::text = ANY ((ARRAY['DOWN'::character varying, 'UP'::character varying, 'PROBING'::character varying, 'STARTING'::character varying, 'MOUNTING'::character varying, 'TRANSFERING'::character varying, 'UNLOADING'::character varying, 'UNMOUNTING'::character varying, 'DRAININGTODISK'::character varying, 'CLEANINGUP'::character varying, 'SHUTDOWN'::character varying, 'UNKNOWN'::character varying])::text[]))),
+    CONSTRAINT drive_du_bool_ck CHECK ((desired_up = ANY (ARRAY['0'::bpchar, '1'::bpchar]))),
+    CONSTRAINT drive_mt_string_ck CHECK (((mount_type)::text = ANY ((ARRAY['NO_MOUNT'::character varying, 'ARCHIVE_FOR_USER'::character varying, 'ARCHIVE_FOR_REPACK'::character varying, 'RETRIEVE'::character varying, 'LABEL'::character varying, 'ARCHIVE_ALL_TYPES'::character varying])::text[]))),
+    CONSTRAINT drive_nmt_string_ck CHECK (((next_mount_type)::text = ANY ((ARRAY['NO_MOUNT'::character varying, 'ARCHIVE_FOR_USER'::character varying, 'ARCHIVE_FOR_REPACK'::character varying, 'RETRIEVE'::character varying, 'LABEL'::character varying, 'ARCHIVE_ALL_TYPES'::character varying])::text[])))
+);
+
+
+ALTER TABLE public.drive_state OWNER TO cta;
+
+--
+-- Name: file_recycle_log; Type: TABLE; Schema: public; Owner: cta
+--
+
+CREATE TABLE public.file_recycle_log (
+    file_recycle_log_id numeric(20,0) NOT NULL,
+    vid character varying(100) NOT NULL,
+    fseq numeric(20,0) NOT NULL,
+    block_id numeric(20,0) NOT NULL,
+    copy_nb numeric(3,0) NOT NULL,
+    tape_file_creation_time numeric(20,0) NOT NULL,
+    archive_file_id numeric(20,0) NOT NULL,
+    disk_instance_name character varying(100) NOT NULL,
+    disk_file_id character varying(100) NOT NULL,
+    disk_file_id_when_deleted character varying(100) NOT NULL,
+    disk_file_uid numeric(20,0) NOT NULL,
+    disk_file_gid numeric(20,0) NOT NULL,
+    size_in_bytes numeric(20,0) NOT NULL,
+    checksum_blob bytea,
+    checksum_adler32 numeric(10,0) NOT NULL,
+    storage_class_id numeric(20,0) NOT NULL,
+    archive_file_creation_time numeric(20,0) NOT NULL,
+    reconciliation_time numeric(20,0) NOT NULL,
+    collocation_hint character varying(100),
+    disk_file_path character varying(2000),
+    reason_log character varying(1000) NOT NULL,
+    recycle_log_time numeric(20,0) NOT NULL
+);
+
+
+ALTER TABLE public.file_recycle_log OWNER TO cta;
+
+--
+-- Name: file_recycle_log_id_seq; Type: SEQUENCE; Schema: public; Owner: cta
+--
+
+CREATE SEQUENCE public.file_recycle_log_id_seq
+    START WITH 1
+    INCREMENT BY 1
+    NO MINVALUE
+    NO MAXVALUE
+    CACHE 20;
+
+
+ALTER TABLE public.file_recycle_log_id_seq OWNER TO cta;
+
+--
+-- Name: logical_library; Type: TABLE; Schema: public; Owner: cta
+--
+
+CREATE TABLE public.logical_library (
+    logical_library_id numeric(20,0) NOT NULL,
+    logical_library_name character varying(100) NOT NULL,
+    is_disabled character(1) DEFAULT '0'::bpchar NOT NULL,
+    disabled_reason character varying(1000),
+    user_comment character varying(1000) NOT NULL,
+    creation_log_user_name character varying(100) NOT NULL,
+    creation_log_host_name character varying(100) NOT NULL,
+    creation_log_time numeric(20,0) NOT NULL,
+    last_update_user_name character varying(100) NOT NULL,
+    last_update_host_name character varying(100) NOT NULL,
+    last_update_time numeric(20,0) NOT NULL,
+    physical_library_id numeric(20,0),
+    CONSTRAINT logical_library_id_bool_ck CHECK ((is_disabled = ANY (ARRAY['0'::bpchar, '1'::bpchar])))
+);
+
+
+ALTER TABLE public.logical_library OWNER TO cta;
+
+--
+-- Name: logical_library_id_seq; Type: SEQUENCE; Schema: public; Owner: cta
+--
+
+CREATE SEQUENCE public.logical_library_id_seq
+    START WITH 1
+    INCREMENT BY 1
+    NO MINVALUE
+    NO MAXVALUE
+    CACHE 20;
+
+
+ALTER TABLE public.logical_library_id_seq OWNER TO cta;
+
+--
+-- Name: media_type; Type: TABLE; Schema: public; Owner: cta
+--
+
+CREATE TABLE public.media_type (
+    media_type_id numeric(20,0) NOT NULL,
+    media_type_name character varying(100) NOT NULL,
+    cartridge character varying(100) NOT NULL,
+    capacity_in_bytes numeric(20,0) NOT NULL,
+    primary_density_code numeric(3,0),
+    secondary_density_code numeric(3,0),
+    nb_wraps numeric(10,0),
+    min_lpos numeric(20,0),
+    max_lpos numeric(20,0),
+    user_comment character varying(1000) NOT NULL,
+    creation_log_user_name character varying(100) NOT NULL,
+    creation_log_host_name character varying(100) NOT NULL,
+    creation_log_time numeric(20,0) NOT NULL,
+    last_update_user_name character varying(100) NOT NULL,
+    last_update_host_name character varying(100) NOT NULL,
+    last_update_time numeric(20,0) NOT NULL
+);
+
+
+ALTER TABLE public.media_type OWNER TO cta;
+
+--
+-- Name: media_type_id_seq; Type: SEQUENCE; Schema: public; Owner: cta
+--
+
+CREATE SEQUENCE public.media_type_id_seq
+    START WITH 1
+    INCREMENT BY 1
+    NO MINVALUE
+    NO MAXVALUE
+    CACHE 20;
+
+
+ALTER TABLE public.media_type_id_seq OWNER TO cta;
+
+--
+-- Name: mount_policy; Type: TABLE; Schema: public; Owner: cta
+--
+
+CREATE TABLE public.mount_policy (
+    mount_policy_name character varying(100) NOT NULL,
+    archive_priority numeric(20,0) NOT NULL,
+    archive_min_request_age numeric(20,0) NOT NULL,
+    retrieve_priority numeric(20,0) NOT NULL,
+    retrieve_min_request_age numeric(20,0) NOT NULL,
+    user_comment character varying(1000) NOT NULL,
+    creation_log_user_name character varying(100) NOT NULL,
+    creation_log_host_name character varying(100) NOT NULL,
+    creation_log_time numeric(20,0) NOT NULL,
+    last_update_user_name character varying(100) NOT NULL,
+    last_update_host_name character varying(100) NOT NULL,
+    last_update_time numeric(20,0) NOT NULL
+);
+
+
+ALTER TABLE public.mount_policy OWNER TO cta;
+
+--
+-- Name: physical_library; Type: TABLE; Schema: public; Owner: cta
+--
+
+CREATE TABLE public.physical_library (
+    physical_library_id numeric(20,0) NOT NULL,
+    physical_library_name character varying(100) NOT NULL,
+    physical_library_manufacturer character varying(100) NOT NULL,
+    physical_library_model character varying(100) NOT NULL,
+    physical_library_type character varying(100),
+    gui_url character varying(1000),
+    webcam_url character varying(1000),
+    physical_location character varying(100),
+    nb_physical_cartridge_slots numeric(20,0) NOT NULL,
+    nb_available_cartridge_slots numeric(20,0),
+    nb_physical_drive_slots numeric(20,0) NOT NULL,
+    is_disabled character(1) DEFAULT '0'::bpchar NOT NULL,
+    disabled_reason character varying(1000),
+    user_comment character varying(1000),
+    creation_log_user_name character varying(100) NOT NULL,
+    creation_log_host_name character varying(100) NOT NULL,
+    creation_log_time numeric(20,0) NOT NULL,
+    last_update_user_name character varying(100) NOT NULL,
+    last_update_host_name character varying(100) NOT NULL,
+    last_update_time numeric(20,0) NOT NULL,
+    CONSTRAINT physical_library_id_bool_ck CHECK ((is_disabled = ANY (ARRAY['0'::bpchar, '1'::bpchar])))
+);
+
+
+ALTER TABLE public.physical_library OWNER TO cta;
+
+--
+-- Name: physical_library_id_seq; Type: SEQUENCE; Schema: public; Owner: cta
+--
+
+CREATE SEQUENCE public.physical_library_id_seq
+    START WITH 1
+    INCREMENT BY 1
+    NO MINVALUE
+    NO MAXVALUE
+    CACHE 20;
+
+
+ALTER TABLE public.physical_library_id_seq OWNER TO cta;
+
+--
+-- Name: requester_activity_mount_rule; Type: TABLE; Schema: public; Owner: cta
+--
+
+CREATE TABLE public.requester_activity_mount_rule (
+    disk_instance_name character varying(100) NOT NULL,
+    requester_name character varying(100) NOT NULL,
+    activity_regex character varying(100) NOT NULL,
+    mount_policy_name character varying(100) NOT NULL,
+    user_comment character varying(1000) NOT NULL,
+    creation_log_user_name character varying(100) NOT NULL,
+    creation_log_host_name character varying(100) NOT NULL,
+    creation_log_time numeric(20,0) NOT NULL,
+    last_update_user_name character varying(100) NOT NULL,
+    last_update_host_name character varying(100) NOT NULL,
+    last_update_time numeric(20,0) NOT NULL
+);
+
+
+ALTER TABLE public.requester_activity_mount_rule OWNER TO cta;
+
+--
+-- Name: requester_group_mount_rule; Type: TABLE; Schema: public; Owner: cta
+--
+
+CREATE TABLE public.requester_group_mount_rule (
+    disk_instance_name character varying(100) NOT NULL,
+    requester_group_name character varying(100) NOT NULL,
+    mount_policy_name character varying(100) NOT NULL,
+    user_comment character varying(1000) NOT NULL,
+    creation_log_user_name character varying(100) NOT NULL,
+    creation_log_host_name character varying(100) NOT NULL,
+    creation_log_time numeric(20,0) NOT NULL,
+    last_update_user_name character varying(100) NOT NULL,
+    last_update_host_name character varying(100) NOT NULL,
+    last_update_time numeric(20,0) NOT NULL
+);
+
+
+ALTER TABLE public.requester_group_mount_rule OWNER TO cta;
+
+--
+-- Name: requester_mount_rule; Type: TABLE; Schema: public; Owner: cta
+--
+
+CREATE TABLE public.requester_mount_rule (
+    disk_instance_name character varying(100) NOT NULL,
+    requester_name character varying(100) NOT NULL,
+    mount_policy_name character varying(100) NOT NULL,
+    user_comment character varying(1000) NOT NULL,
+    creation_log_user_name character varying(100) NOT NULL,
+    creation_log_host_name character varying(100) NOT NULL,
+    creation_log_time numeric(20,0) NOT NULL,
+    last_update_user_name character varying(100) NOT NULL,
+    last_update_host_name character varying(100) NOT NULL,
+    last_update_time numeric(20,0) NOT NULL
+);
+
+
+ALTER TABLE public.requester_mount_rule OWNER TO cta;
+
+--
+-- Name: storage_class; Type: TABLE; Schema: public; Owner: cta
+--
+
+CREATE TABLE public.storage_class (
+    storage_class_id numeric(20,0) NOT NULL,
+    storage_class_name character varying(100) NOT NULL,
+    nb_copies numeric(3,0) NOT NULL,
+    virtual_organization_id numeric(20,0) NOT NULL,
+    user_comment character varying(1000) NOT NULL,
+    creation_log_user_name character varying(100) NOT NULL,
+    creation_log_host_name character varying(100) NOT NULL,
+    creation_log_time numeric(20,0) NOT NULL,
+    last_update_user_name character varying(100) NOT NULL,
+    last_update_host_name character varying(100) NOT NULL,
+    last_update_time numeric(20,0) NOT NULL
+);
+
+
+ALTER TABLE public.storage_class OWNER TO cta;
+
+--
+-- Name: storage_class_id_seq; Type: SEQUENCE; Schema: public; Owner: cta
+--
+
+CREATE SEQUENCE public.storage_class_id_seq
+    START WITH 10000
+    INCREMENT BY 1
+    NO MINVALUE
+    NO MAXVALUE
+    CACHE 20;
+
+
+ALTER TABLE public.storage_class_id_seq OWNER TO cta;
+
+--
+-- Name: tape; Type: TABLE; Schema: public; Owner: cta
+--
+
+CREATE TABLE public.tape (
+    vid character varying(100) NOT NULL,
+    media_type_id numeric(20,0) NOT NULL,
+    vendor character varying(100) NOT NULL,
+    purchase_order character varying(100),
+    logical_library_id numeric(20,0) NOT NULL,
+    tape_pool_id numeric(20,0) NOT NULL,
+    encryption_key_name character varying(100),
+    data_in_bytes numeric(20,0) NOT NULL,
+    last_fseq numeric(20,0) NOT NULL,
+    nb_master_files numeric(20,0) DEFAULT 0 NOT NULL,
+    master_data_in_bytes numeric(20,0) DEFAULT 0 NOT NULL,
+    is_full character(1) NOT NULL,
+    is_from_castor character(1) NOT NULL,
+    dirty character(1) DEFAULT '1'::bpchar NOT NULL,
+    nb_copy_nb_1 numeric(20,0) DEFAULT 0 NOT NULL,
+    copy_nb_1_in_bytes numeric(20,0) DEFAULT 0 NOT NULL,
+    nb_copy_nb_gt_1 numeric(20,0) DEFAULT 0 NOT NULL,
+    copy_nb_gt_1_in_bytes numeric(20,0) DEFAULT 0 NOT NULL,
+    label_format character(1),
+    label_drive character varying(100),
+    label_time numeric(20,0),
+    last_read_drive character varying(100),
+    last_read_time numeric(20,0),
+    last_write_drive character varying(100),
+    last_write_time numeric(20,0),
+    read_mount_count numeric(20,0) DEFAULT 0 NOT NULL,
+    write_mount_count numeric(20,0) DEFAULT 0 NOT NULL,
+    user_comment character varying(1000),
+    tape_state character varying(100) NOT NULL,
+    state_reason character varying(1000),
+    state_update_time numeric(20,0) NOT NULL,
+    state_modified_by character varying(100) NOT NULL,
+    creation_log_user_name character varying(100) NOT NULL,
+    creation_log_host_name character varying(100) NOT NULL,
+    creation_log_time numeric(20,0) NOT NULL,
+    last_update_user_name character varying(100) NOT NULL,
+    last_update_host_name character varying(100) NOT NULL,
+    last_update_time numeric(20,0) NOT NULL,
+    verification_status character varying(1000),
+    CONSTRAINT tape_dirty_bool_ck CHECK ((dirty = ANY (ARRAY['0'::bpchar, '1'::bpchar]))),
+    CONSTRAINT tape_is_from_castor_bool_ck CHECK ((is_from_castor = ANY (ARRAY['0'::bpchar, '1'::bpchar]))),
+    CONSTRAINT tape_is_full_bool_ck CHECK ((is_full = ANY (ARRAY['0'::bpchar, '1'::bpchar]))),
+    CONSTRAINT tape_state_ck CHECK (((tape_state)::text = ANY ((ARRAY['ACTIVE'::character varying, 'REPACKING_PENDING'::character varying, 'REPACKING'::character varying, 'REPACKING_DISABLED'::character varying, 'DISABLED'::character varying, 'BROKEN_PENDING'::character varying, 'BROKEN'::character varying, 'EXPORTED_PENDING'::character varying, 'EXPORTED'::character varying])::text[]))),
+    CONSTRAINT tape_vid_ck CHECK (((vid)::text = upper((vid)::text)))
+);
+
+
+ALTER TABLE public.tape OWNER TO cta;
+
+--
+-- Name: tape_file; Type: TABLE; Schema: public; Owner: cta
+--
+
+CREATE TABLE public.tape_file (
+    vid character varying(100) NOT NULL,
+    fseq numeric(20,0) NOT NULL,
+    block_id numeric(20,0) NOT NULL,
+    logical_size_in_bytes numeric(20,0) NOT NULL,
+    copy_nb numeric(3,0) NOT NULL,
+    creation_time numeric(20,0) NOT NULL,
+    archive_file_id numeric(20,0) NOT NULL,
+    CONSTRAINT tape_file_copy_nb_gt_0_ck CHECK ((copy_nb > (0)::numeric))
+);
+
+
+ALTER TABLE public.tape_file OWNER TO cta;
+
+--
+-- Name: tape_pool; Type: TABLE; Schema: public; Owner: cta
+--
+
+CREATE TABLE public.tape_pool (
+    tape_pool_id numeric(20,0) NOT NULL,
+    tape_pool_name character varying(100) NOT NULL,
+    virtual_organization_id numeric(20,0) NOT NULL,
+    nb_partial_tapes numeric(20,0) NOT NULL,
+    is_encrypted character(1) NOT NULL,
+    encryption_key_name character varying(100),
+    supply character varying(100),
+    user_comment character varying(1000) NOT NULL,
+    creation_log_user_name character varying(100) NOT NULL,
+    creation_log_host_name character varying(100) NOT NULL,
+    creation_log_time numeric(20,0) NOT NULL,
+    last_update_user_name character varying(100) NOT NULL,
+    last_update_host_name character varying(100) NOT NULL,
+    last_update_time numeric(20,0) NOT NULL,
+    CONSTRAINT tape_pool_is_encrypted_bool_ck CHECK ((is_encrypted = ANY (ARRAY['0'::bpchar, '1'::bpchar])))
+);
+
+
+ALTER TABLE public.tape_pool OWNER TO cta;
+
+--
+-- Name: tape_pool_id_seq; Type: SEQUENCE; Schema: public; Owner: cta
+--
+
+CREATE SEQUENCE public.tape_pool_id_seq
+    START WITH 1
+    INCREMENT BY 1
+    NO MINVALUE
+    NO MAXVALUE
+    CACHE 20;
+
+
+ALTER TABLE public.tape_pool_id_seq OWNER TO cta;
+
+--
+-- Name: tape_pool_supply; Type: TABLE; Schema: public; Owner: cta
+--
+
+CREATE TABLE public.tape_pool_supply (
+    supply_source_tape_pool_id numeric(20,0) NOT NULL,
+    supply_destination_tape_pool_id numeric(20,0) NOT NULL,
+    CONSTRAINT no_self_supply_ck CHECK ((supply_source_tape_pool_id <> supply_destination_tape_pool_id))
+);
+
+
+ALTER TABLE public.tape_pool_supply OWNER TO cta;
+
+--
+-- Name: virtual_organization; Type: TABLE; Schema: public; Owner: cta
+--
+
+CREATE TABLE public.virtual_organization (
+    virtual_organization_id numeric(20,0) NOT NULL,
+    virtual_organization_name character varying(100) NOT NULL,
+    read_max_drives numeric(20,0) NOT NULL,
+    write_max_drives numeric(20,0) NOT NULL,
+    max_file_size numeric(20,0) NOT NULL,
+    is_repack_vo character(1),
+    user_comment character varying(1000) NOT NULL,
+    creation_log_user_name character varying(100) NOT NULL,
+    creation_log_host_name character varying(100) NOT NULL,
+    creation_log_time numeric(20,0) NOT NULL,
+    last_update_user_name character varying(100) NOT NULL,
+    last_update_host_name character varying(100) NOT NULL,
+    last_update_time numeric(20,0) NOT NULL,
+    disk_instance_name character varying(100) NOT NULL,
+    CONSTRAINT virtual_organization_is_repack_vo_bool_ck CHECK (((is_repack_vo = '1'::bpchar) OR (is_repack_vo IS NULL)))
+);
+
+
+ALTER TABLE public.virtual_organization OWNER TO cta;
+
+--
+-- Name: virtual_organization_id_seq; Type: SEQUENCE; Schema: public; Owner: cta
+--
+
+CREATE SEQUENCE public.virtual_organization_id_seq
+    START WITH 1
+    INCREMENT BY 1
+    NO MINVALUE
+    NO MAXVALUE
+    CACHE 20;
+
+
+ALTER TABLE public.virtual_organization_id_seq OWNER TO cta;
+
+--
+-- Data for Name: admin_user; Type: TABLE DATA; Schema: public; Owner: cta
+--
+
+COPY public.admin_user (admin_user_name, user_comment, creation_log_user_name, creation_log_host_name, creation_log_time, last_update_user_name, last_update_host_name, last_update_time) FROM stdin;
+ctaadmin1	docker cli	cta	cta-frontend-0	1739269853	cta	cta-frontend-0	1739269853
+ctaadmin2	ctaadmin2	ctaadmin1	cta-frontend-0	1739269877	ctaadmin1	cta-frontend-0	1739269877
+\.
+
+
+--
+-- Data for Name: archive_file; Type: TABLE DATA; Schema: public; Owner: cta
+--
+
+COPY public.archive_file (archive_file_id, disk_instance_name, disk_file_id, disk_file_uid, disk_file_gid, size_in_bytes, checksum_blob, checksum_adler32, storage_class_id, creation_time, reconciliation_time, is_deleted, collocation_hint) FROM stdin;
+\.
+
+
+--
+-- Data for Name: archive_route; Type: TABLE DATA; Schema: public; Owner: cta
+--
+
+COPY public.archive_route (storage_class_id, copy_nb, archive_route_type, tape_pool_id, user_comment, creation_log_user_name, creation_log_host_name, creation_log_time, last_update_user_name, last_update_host_name, last_update_time) FROM stdin;
+10000	1	DEFAULT	1	ctasystest	ctaadmin1	cta-frontend-0	1739269857	ctaadmin1	cta-frontend-0	1739269857
+10001	1	DEFAULT	2	ctasystest	ctaadmin1	cta-frontend-0	1739269857	ctaadmin1	cta-frontend-0	1739269857
+10002	1	DEFAULT	2	ctasystest	ctaadmin1	cta-frontend-0	1739269858	ctaadmin1	cta-frontend-0	1739269858
+10002	2	DEFAULT	3	ctasystest	ctaadmin1	cta-frontend-0	1739269858	ctaadmin1	cta-frontend-0	1739269858
+10003	1	DEFAULT	2	ctasystest	ctaadmin1	cta-frontend-0	1739269858	ctaadmin1	cta-frontend-0	1739269858
+10003	2	DEFAULT	3	ctasystest	ctaadmin1	cta-frontend-0	1739269858	ctaadmin1	cta-frontend-0	1739269858
+10003	3	DEFAULT	4	ctasystest	ctaadmin1	cta-frontend-0	1739269859	ctaadmin1	cta-frontend-0	1739269859
+\.
+
+
+--
+-- Data for Name: cta_catalogue; Type: TABLE DATA; Schema: public; Owner: cta
+--
+
+COPY public.cta_catalogue (schema_version_major, schema_version_minor, next_schema_version_major, next_schema_version_minor, status, is_production) FROM stdin;
+15	0	\N	\N	PRODUCTION	0
+\.
+
+
+--
+-- Data for Name: disk_instance; Type: TABLE DATA; Schema: public; Owner: cta
+--
+
+COPY public.disk_instance (disk_instance_name, user_comment, creation_log_user_name, creation_log_host_name, creation_log_time, last_update_user_name, last_update_host_name, last_update_time) FROM stdin;
+ctaeos	di	ctaadmin1	cta-frontend-0	1739269855	ctaadmin1	cta-frontend-0	1739269855
+\.
+
+
+--
+-- Data for Name: disk_instance_space; Type: TABLE DATA; Schema: public; Owner: cta
+--
+
+COPY public.disk_instance_space (disk_instance_name, disk_instance_space_name, free_space_query_url, refresh_interval, last_refresh_time, free_space, user_comment, creation_log_user_name, creation_log_host_name, creation_log_time, last_update_user_name, last_update_host_name, last_update_time) FROM stdin;
+\.
+
+
+--
+-- Data for Name: disk_system; Type: TABLE DATA; Schema: public; Owner: cta
+--
+
+COPY public.disk_system (disk_system_name, disk_instance_name, disk_instance_space_name, file_regexp, targeted_free_space, sleep_time, user_comment, creation_log_user_name, creation_log_host_name, creation_log_time, last_update_user_name, last_update_host_name, last_update_time) FROM stdin;
+\.
+
+
+--
+-- Data for Name: drive_config; Type: TABLE DATA; Schema: public; Owner: cta
+--
+
+COPY public.drive_config (drive_name, category, key_name, value, source) FROM stdin;
+VDSTK02	taped	DaemonUserName	cta	Compile time default
+VDSTK02	taped	DaemonGroupName	tape	Compile time default
+VDSTK02	taped	LogMask	INFO	/etc/cta/cta-taped-VDSTK02.conf:11
+VDSTK02	taped	BufferSizeBytes	262144	/etc/cta/cta-taped-VDSTK02.conf:2
+VDSTK02	taped	BufferCount	200	/etc/cta/cta-taped-VDSTK02.conf:3
+VDSTK02	taped	ArchiveFetchFiles	4000	Compile time default
+VDSTK02	taped	ArchiveFetchBytes	80000000000	Compile time default
+VDSTK02	taped	ArchiveFlushFiles	200	Compile time default
+VDSTK02	taped	ArchiveFlushBytes	32000000000	Compile time default
+VDSTK02	taped	RetrieveFetchFiles	4000	Compile time default
+VDSTK02	taped	RetrieveFetchBytes	80000000000	Compile time default
+VDSTK02	taped	MountCriteriaFiles	100	/etc/cta/cta-taped-VDSTK02.conf:4
+VDSTK02	taped	MountCriteriaBytes	2000000	/etc/cta/cta-taped-VDSTK02.conf:4
+VDSTK02	taped	NbDiskThreads	10	Compile time default
+VDSTK02	taped	UseRAO	yes	Compile time default
+VDSTK02	taped	RAOLTOAlgorithm	sltf	Compile time default
+VDSTK02	taped	UseEncryption	no	/etc/cta/cta-taped-VDSTK02.conf:6
+VDSTK02	taped	externalEncryptionKeyScript	NULL	Compile time default
+VDSTK02	taped	RAOLTOAlgorithmOptions	cost_heuristic_name:cta	Compile time default
+VDSTK02	taped	WatchdogScheduleMaxSecs	300	Compile time default
+VDSTK02	taped	WatchdogMountMaxSecs	600	Compile time default
+VDSTK02	taped	WatchdogNoBlockMoveMaxSecs	600	Compile time default
+VDSTK02	taped	WatchdogIdleSessionTimer	2	/etc/cta/cta-taped-VDSTK02.conf:5
+VDSTK02	ObjectStore	BackendPath	/shared/dev/objectstore	/etc/cta/cta-taped-VDSTK02.conf:16
+VDSTK02	taped	CatalogueConfigFile	/etc/cta/cta-catalogue.conf	Compile time default
+VDSTK02	environment	XrdSecPROTOCOL	sss	Environment variable
+VDSTK02	environment	XrdSecSSSKT	/etc/cta/cta-taped.sss.keytab	Environment variable
+VDSTK02	taped	UseRepackManagement	yes	Compile time default
+VDSTK02	taped	UseMaintenanceProcess	yes	Compile time default
+VDSTK02	taped	RepackMaxRequestsToExpand	2	Compile time default
+VDSTK02	taped	externalFreeDiskSpaceScript	/usr/bin/cta-eosdf.sh	/etc/cta/cta-taped-VDSTK02.conf:20
+VDSTK02	taped	TapeLoadTimeout	300	Compile time default
+VDSTK02	taped	WatchdogGetNextMountMaxSecs	900	Compile time default
+VDSTK02	general	SchedulerBackendName	VFS	/etc/cta/cta-taped-VDSTK02.conf:19
+VDSTK01	taped	DaemonUserName	cta	Compile time default
+VDSTK01	taped	DaemonGroupName	tape	Compile time default
+VDSTK01	taped	LogMask	INFO	/etc/cta/cta-taped-VDSTK01.conf:11
+VDSTK01	taped	BufferSizeBytes	262144	/etc/cta/cta-taped-VDSTK01.conf:2
+VDSTK01	taped	BufferCount	200	/etc/cta/cta-taped-VDSTK01.conf:3
+VDSTK01	taped	ArchiveFetchFiles	4000	Compile time default
+VDSTK01	taped	ArchiveFetchBytes	80000000000	Compile time default
+VDSTK01	taped	ArchiveFlushFiles	200	Compile time default
+VDSTK01	taped	ArchiveFlushBytes	32000000000	Compile time default
+VDSTK01	taped	RetrieveFetchFiles	4000	Compile time default
+VDSTK01	taped	RetrieveFetchBytes	80000000000	Compile time default
+VDSTK01	taped	MountCriteriaFiles	100	/etc/cta/cta-taped-VDSTK01.conf:4
+VDSTK01	taped	MountCriteriaBytes	2000000	/etc/cta/cta-taped-VDSTK01.conf:4
+VDSTK01	taped	NbDiskThreads	10	Compile time default
+VDSTK01	taped	UseRAO	yes	Compile time default
+VDSTK01	taped	RAOLTOAlgorithm	sltf	Compile time default
+VDSTK01	taped	UseEncryption	no	/etc/cta/cta-taped-VDSTK01.conf:6
+VDSTK01	taped	externalEncryptionKeyScript	NULL	Compile time default
+VDSTK01	taped	RAOLTOAlgorithmOptions	cost_heuristic_name:cta	Compile time default
+VDSTK01	taped	WatchdogScheduleMaxSecs	300	Compile time default
+VDSTK01	taped	WatchdogMountMaxSecs	600	Compile time default
+VDSTK01	taped	WatchdogNoBlockMoveMaxSecs	600	Compile time default
+VDSTK01	taped	WatchdogIdleSessionTimer	2	/etc/cta/cta-taped-VDSTK01.conf:5
+VDSTK01	ObjectStore	BackendPath	/shared/dev/objectstore	/etc/cta/cta-taped-VDSTK01.conf:16
+VDSTK01	taped	CatalogueConfigFile	/etc/cta/cta-catalogue.conf	Compile time default
+VDSTK01	environment	XrdSecPROTOCOL	sss	Environment variable
+VDSTK01	environment	XrdSecSSSKT	/etc/cta/cta-taped.sss.keytab	Environment variable
+VDSTK01	taped	UseRepackManagement	yes	Compile time default
+VDSTK01	taped	UseMaintenanceProcess	yes	Compile time default
+VDSTK01	taped	RepackMaxRequestsToExpand	2	Compile time default
+VDSTK01	taped	externalFreeDiskSpaceScript	/usr/bin/cta-eosdf.sh	/etc/cta/cta-taped-VDSTK01.conf:20
+VDSTK01	taped	TapeLoadTimeout	300	Compile time default
+VDSTK01	taped	WatchdogGetNextMountMaxSecs	900	Compile time default
+VDSTK01	general	SchedulerBackendName	VFS	/etc/cta/cta-taped-VDSTK01.conf:19
+\.
+
+
+--
+-- Data for Name: drive_state; Type: TABLE DATA; Schema: public; Owner: cta
+--
+
+COPY public.drive_state (drive_name, host, logical_library, session_id, bytes_transfered_in_session, files_transfered_in_session, session_start_time, session_elapsed_time, mount_start_time, transfer_start_time, unload_start_time, unmount_start_time, draining_start_time, down_or_up_start_time, probe_start_time, cleanup_start_time, start_start_time, shutdown_time, mount_type, drive_status, desired_up, desired_force_down, reason_up_down, current_vid, cta_version, current_priority, current_activity, current_tape_pool, next_mount_type, next_vid, next_priority, next_activity, next_tape_pool, dev_file_name, raw_library_slot, current_vo, next_vo, user_comment, creation_log_user_name, creation_log_host_name, creation_log_time, last_update_user_name, last_update_host_name, last_update_time, disk_system_name, reserved_bytes, reservation_session_id) FROM stdin;
+VDSTK02	cta-tpsrv02-0	VDSTK02	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	1739269779	\N	\N	\N	\N	NO_MOUNT	DOWN	0	0	[cta-taped] INFO Startup	\N	5-dev	\N	\N	\N	NO_MOUNT	\N	\N	\N	\N	/dev/nst2	smc1	\N	\N	\N	NO_USER	cta-tpsrv02-0	1739269779	NO_USER	cta-tpsrv02-0	1739270299	\N	\N	\N
+VDSTK01	cta-tpsrv01-0	VDSTK01	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	1739269876	\N	\N	\N	\N	NO_MOUNT	UP	1	0		\N	5-dev	\N	\N	\N	NO_MOUNT	\N	\N	\N	\N	/dev/nst0	smc0	\N	\N	\N	NO_USER	cta-tpsrv01-0	1739269781	NO_USER	cta-tpsrv01-0	1739270301	\N	\N	\N
+\.
+
+
+--
+-- Data for Name: file_recycle_log; Type: TABLE DATA; Schema: public; Owner: cta
+--
+
+COPY public.file_recycle_log (file_recycle_log_id, vid, fseq, block_id, copy_nb, tape_file_creation_time, archive_file_id, disk_instance_name, disk_file_id, disk_file_id_when_deleted, disk_file_uid, disk_file_gid, size_in_bytes, checksum_blob, checksum_adler32, storage_class_id, archive_file_creation_time, reconciliation_time, collocation_hint, disk_file_path, reason_log, recycle_log_time) FROM stdin;
+\.
+
+
+--
+-- Data for Name: logical_library; Type: TABLE DATA; Schema: public; Owner: cta
+--
+
+COPY public.logical_library (logical_library_id, logical_library_name, is_disabled, disabled_reason, user_comment, creation_log_user_name, creation_log_host_name, creation_log_time, last_update_user_name, last_update_host_name, last_update_time, physical_library_id) FROM stdin;
+1	VDSTK01	0	\N	ctasystest library mapped to drive VDSTK01	ctaadmin1	cta-frontend-0	1739269855	ctaadmin1	cta-frontend-0	1739269855	\N
+2	VDSTK02	0	\N	ctasystest library mapped to drive VDSTK02	ctaadmin1	cta-frontend-0	1739269855	ctaadmin1	cta-frontend-0	1739269855	\N
+\.
+
+
+--
+-- Data for Name: media_type; Type: TABLE DATA; Schema: public; Owner: cta
+--
+
+COPY public.media_type (media_type_id, media_type_name, cartridge, capacity_in_bytes, primary_density_code, secondary_density_code, nb_wraps, min_lpos, max_lpos, user_comment, creation_log_user_name, creation_log_host_name, creation_log_time, last_update_user_name, last_update_host_name, last_update_time) FROM stdin;
+1	T10K500G	T10000	500000000000	74	\N	\N	\N	\N	Oracle T10000 cartridge formated at 500 GB (for developers only)	ctaadmin1	cta-frontend-0	1739269856	ctaadmin1	cta-frontend-0	1739269856
+2	3592JC7T	3592JC	7000000000000	84	\N	\N	\N	\N	IBM 3592JC cartridge formated at 7 TB	ctaadmin1	cta-frontend-0	1739269856	ctaadmin1	cta-frontend-0	1739269856
+3	3592JD15T	3592JD	15000000000000	85	\N	\N	\N	\N	IBM 3592JD cartridge formated at 15 TB	ctaadmin1	cta-frontend-0	1739269856	ctaadmin1	cta-frontend-0	1739269856
+4	3592JE20T	3592JE	20000000000000	87	\N	\N	\N	\N	IBM 3592JE cartridge formated at 20 TB	ctaadmin1	cta-frontend-0	1739269856	ctaadmin1	cta-frontend-0	1739269856
+5	LTO7M	LTO-7	9000000000000	93	\N	\N	\N	\N	LTO-7 M8 cartridge formated at 9 TB	ctaadmin1	cta-frontend-0	1739269856	ctaadmin1	cta-frontend-0	1739269856
+6	LTO8	LTO-8	12000000000000	94	\N	\N	\N	\N	LTO-8 cartridge formated at 12 TB	ctaadmin1	cta-frontend-0	1739269856	ctaadmin1	cta-frontend-0	1739269856
+\.
+
+
+--
+-- Data for Name: mount_policy; Type: TABLE DATA; Schema: public; Owner: cta
+--
+
+COPY public.mount_policy (mount_policy_name, archive_priority, archive_min_request_age, retrieve_priority, retrieve_min_request_age, user_comment, creation_log_user_name, creation_log_host_name, creation_log_time, last_update_user_name, last_update_host_name, last_update_time) FROM stdin;
+ctasystest	1	1	1	1	ctasystest	ctaadmin1	cta-frontend-0	1739269860	ctaadmin1	cta-frontend-0	1739269860
+repack_ctasystest	2	1	2	1	repack mountpolicy for ctasystest	ctaadmin1	cta-frontend-0	1739269861	ctaadmin1	cta-frontend-0	1739269861
+\.
+
+
+--
+-- Data for Name: physical_library; Type: TABLE DATA; Schema: public; Owner: cta
+--
+
+COPY public.physical_library (physical_library_id, physical_library_name, physical_library_manufacturer, physical_library_model, physical_library_type, gui_url, webcam_url, physical_location, nb_physical_cartridge_slots, nb_available_cartridge_slots, nb_physical_drive_slots, is_disabled, disabled_reason, user_comment, creation_log_user_name, creation_log_host_name, creation_log_time, last_update_user_name, last_update_host_name, last_update_time) FROM stdin;
+\.
+
+
+--
+-- Data for Name: requester_activity_mount_rule; Type: TABLE DATA; Schema: public; Owner: cta
+--
+
+COPY public.requester_activity_mount_rule (disk_instance_name, requester_name, activity_regex, mount_policy_name, user_comment, creation_log_user_name, creation_log_host_name, creation_log_time, last_update_user_name, last_update_host_name, last_update_time) FROM stdin;
+ctaeos	powerusers	^T0Reprocess$	ctasystest	ctasystest	ctaadmin1	cta-frontend-0	1739269861	ctaadmin1	cta-frontend-0	1739269861
+\.
+
+
+--
+-- Data for Name: requester_group_mount_rule; Type: TABLE DATA; Schema: public; Owner: cta
+--
+
+COPY public.requester_group_mount_rule (disk_instance_name, requester_group_name, mount_policy_name, user_comment, creation_log_user_name, creation_log_host_name, creation_log_time, last_update_user_name, last_update_host_name, last_update_time) FROM stdin;
+ctaeos	eosusers	ctasystest	ctasystest	ctaadmin1	cta-frontend-0	1739269860	ctaadmin1	cta-frontend-0	1739269860
+ctaeos	powerusers	ctasystest	ctasystest	ctaadmin1	cta-frontend-0	1739269860	ctaadmin1	cta-frontend-0	1739269860
+\.
+
+
+--
+-- Data for Name: requester_mount_rule; Type: TABLE DATA; Schema: public; Owner: cta
+--
+
+COPY public.requester_mount_rule (disk_instance_name, requester_name, mount_policy_name, user_comment, creation_log_user_name, creation_log_host_name, creation_log_time, last_update_user_name, last_update_host_name, last_update_time) FROM stdin;
+ctaeos	adm	ctasystest	ctasystest	ctaadmin1	cta-frontend-0	1739269860	ctaadmin1	cta-frontend-0	1739269860
+\.
+
+
+--
+-- Data for Name: storage_class; Type: TABLE DATA; Schema: public; Owner: cta
+--
+
+COPY public.storage_class (storage_class_id, storage_class_name, nb_copies, virtual_organization_id, user_comment, creation_log_user_name, creation_log_host_name, creation_log_time, last_update_user_name, last_update_host_name, last_update_time) FROM stdin;
+10000	ctaStorageClass	1	1	ctasystest	ctaadmin1	cta-frontend-0	1739269857	ctaadmin1	cta-frontend-0	1739269857
+10001	ctaStorageClass_1_copy	1	1	ctasystest	ctaadmin1	cta-frontend-0	1739269857	ctaadmin1	cta-frontend-0	1739269857
+10002	ctaStorageClass_2_copy	2	1	ctasystest	ctaadmin1	cta-frontend-0	1739269858	ctaadmin1	cta-frontend-0	1739269858
+10003	ctaStorageClass_3_copy	1	1	ctasystest	ctaadmin1	cta-frontend-0	1739269858	ctaadmin1	cta-frontend-0	1739269858
+\.
+
+
+--
+-- Data for Name: tape; Type: TABLE DATA; Schema: public; Owner: cta
+--
+
+COPY public.tape (vid, media_type_id, vendor, purchase_order, logical_library_id, tape_pool_id, encryption_key_name, data_in_bytes, last_fseq, nb_master_files, master_data_in_bytes, is_full, is_from_castor, dirty, nb_copy_nb_1, copy_nb_1_in_bytes, nb_copy_nb_gt_1, copy_nb_gt_1_in_bytes, label_format, label_drive, label_time, last_read_drive, last_read_time, last_write_drive, last_write_time, read_mount_count, write_mount_count, user_comment, tape_state, state_reason, state_update_time, state_modified_by, creation_log_user_name, creation_log_host_name, creation_log_time, last_update_user_name, last_update_host_name, last_update_time, verification_status) FROM stdin;
+V00101	6	vendor	order	1	1	\N	0	0	0	0	0	0	1	0	0	0	0	\N	VDSTK01	1739269862	\N	\N	\N	\N	0	0	ctasystest	ACTIVE	\N	1739269859	ctaadmin1@cta-frontend-0	ctaadmin1	cta-frontend-0	1739269859	ctaadmin1	cta-frontend-0	1739269859	\N
+V00102	6	vendor	order	2	1	\N	0	0	0	0	0	0	1	0	0	0	0	\N	VDSTK01	1739269863	\N	\N	\N	\N	0	0	ctasystest	ACTIVE	\N	1739269859	ctaadmin1@cta-frontend-0	ctaadmin1	cta-frontend-0	1739269859	ctaadmin1	cta-frontend-0	1739269859	\N
+V00103	6	vendor	order	1	1	\N	0	0	0	0	0	0	1	0	0	0	0	\N	VDSTK01	1739269865	\N	\N	\N	\N	0	0	ctasystest	ACTIVE	\N	1739269859	ctaadmin1@cta-frontend-0	ctaadmin1	cta-frontend-0	1739269859	ctaadmin1	cta-frontend-0	1739269859	\N
+V00104	6	vendor	order	2	1	\N	0	0	0	0	0	0	1	0	0	0	0	\N	VDSTK01	1739269866	\N	\N	\N	\N	0	0	ctasystest	ACTIVE	\N	1739269859	ctaadmin1@cta-frontend-0	ctaadmin1	cta-frontend-0	1739269859	ctaadmin1	cta-frontend-0	1739269859	\N
+V00105	6	vendor	order	1	1	\N	0	0	0	0	0	0	1	0	0	0	0	\N	VDSTK01	1739269867	\N	\N	\N	\N	0	0	ctasystest	ACTIVE	\N	1739269859	ctaadmin1@cta-frontend-0	ctaadmin1	cta-frontend-0	1739269859	ctaadmin1	cta-frontend-0	1739269859	\N
+V00106	6	vendor	order	2	1	\N	0	0	0	0	0	0	1	0	0	0	0	\N	VDSTK01	1739269869	\N	\N	\N	\N	0	0	ctasystest	ACTIVE	\N	1739269859	ctaadmin1@cta-frontend-0	ctaadmin1	cta-frontend-0	1739269859	ctaadmin1	cta-frontend-0	1739269859	\N
+V00107	6	vendor	order	1	1	\N	0	0	0	0	0	0	1	0	0	0	0	\N	VDSTK01	1739269870	\N	\N	\N	\N	0	0	ctasystest	ACTIVE	\N	1739269860	ctaadmin1@cta-frontend-0	ctaadmin1	cta-frontend-0	1739269860	ctaadmin1	cta-frontend-0	1739269860	\N
+V00108	6	vendor	order	2	1	\N	0	0	0	0	0	0	1	0	0	0	0	\N	VDSTK01	1739269871	\N	\N	\N	\N	0	0	ctasystest	ACTIVE	\N	1739269860	ctaadmin1@cta-frontend-0	ctaadmin1	cta-frontend-0	1739269860	ctaadmin1	cta-frontend-0	1739269860	\N
+\.
+
+
+--
+-- Data for Name: tape_file; Type: TABLE DATA; Schema: public; Owner: cta
+--
+
+COPY public.tape_file (vid, fseq, block_id, logical_size_in_bytes, copy_nb, creation_time, archive_file_id) FROM stdin;
+\.
+
+
+--
+-- Data for Name: tape_pool; Type: TABLE DATA; Schema: public; Owner: cta
+--
+
+COPY public.tape_pool (tape_pool_id, tape_pool_name, virtual_organization_id, nb_partial_tapes, is_encrypted, encryption_key_name, supply, user_comment, creation_log_user_name, creation_log_host_name, creation_log_time, last_update_user_name, last_update_host_name, last_update_time) FROM stdin;
+1	ctasystest	1	5	0	\N	\N	ctasystest	ctaadmin1	cta-frontend-0	1739269856	ctaadmin1	cta-frontend-0	1739269856
+2	ctasystest_A	1	5	0	\N	\N	ctasystest_A	ctaadmin1	cta-frontend-0	1739269857	ctaadmin1	cta-frontend-0	1739269857
+3	ctasystest_B	1	5	0	\N	\N	ctasystest_B	ctaadmin1	cta-frontend-0	1739269857	ctaadmin1	cta-frontend-0	1739269857
+4	ctasystest_C	1	5	0	\N	\N	ctasystest_C	ctaadmin1	cta-frontend-0	1739269857	ctaadmin1	cta-frontend-0	1739269857
+\.
+
+
+--
+-- Data for Name: tape_pool_supply; Type: TABLE DATA; Schema: public; Owner: cta
+--
+
+COPY public.tape_pool_supply (supply_source_tape_pool_id, supply_destination_tape_pool_id) FROM stdin;
+\.
+
+
+--
+-- Data for Name: virtual_organization; Type: TABLE DATA; Schema: public; Owner: cta
+--
+
+COPY public.virtual_organization (virtual_organization_id, virtual_organization_name, read_max_drives, write_max_drives, max_file_size, is_repack_vo, user_comment, creation_log_user_name, creation_log_host_name, creation_log_time, last_update_user_name, last_update_host_name, last_update_time, disk_instance_name) FROM stdin;
+1	vo	1	1	1000000000000	\N	vo	ctaadmin1	cta-frontend-0	1739269855	ctaadmin1	cta-frontend-0	1739269855	ctaeos
+2	vo_repack	1	1	1000000000000	1	vo_repack	ctaadmin1	cta-frontend-0	1739269855	ctaadmin1	cta-frontend-0	1739269855	ctaeos
+\.
+
+
+--
+-- Name: archive_file_id_seq; Type: SEQUENCE SET; Schema: public; Owner: cta
+--
+
+SELECT pg_catalog.setval('public.archive_file_id_seq', 4294967296, false);
+
+
+--
+-- Name: file_recycle_log_id_seq; Type: SEQUENCE SET; Schema: public; Owner: cta
+--
+
+SELECT pg_catalog.setval('public.file_recycle_log_id_seq', 1, false);
+
+
+--
+-- Name: logical_library_id_seq; Type: SEQUENCE SET; Schema: public; Owner: cta
+--
+
+SELECT pg_catalog.setval('public.logical_library_id_seq', 20, true);
+
+
+--
+-- Name: media_type_id_seq; Type: SEQUENCE SET; Schema: public; Owner: cta
+--
+
+SELECT pg_catalog.setval('public.media_type_id_seq', 20, true);
+
+
+--
+-- Name: physical_library_id_seq; Type: SEQUENCE SET; Schema: public; Owner: cta
+--
+
+SELECT pg_catalog.setval('public.physical_library_id_seq', 1, false);
+
+
+--
+-- Name: storage_class_id_seq; Type: SEQUENCE SET; Schema: public; Owner: cta
+--
+
+SELECT pg_catalog.setval('public.storage_class_id_seq', 10019, true);
+
+
+--
+-- Name: tape_pool_id_seq; Type: SEQUENCE SET; Schema: public; Owner: cta
+--
+
+SELECT pg_catalog.setval('public.tape_pool_id_seq', 20, true);
+
+
+--
+-- Name: virtual_organization_id_seq; Type: SEQUENCE SET; Schema: public; Owner: cta
+--
+
+SELECT pg_catalog.setval('public.virtual_organization_id_seq', 20, true);
+
+
+--
+-- Name: admin_user admin_user_pk; Type: CONSTRAINT; Schema: public; Owner: cta
+--
+
+ALTER TABLE ONLY public.admin_user
+    ADD CONSTRAINT admin_user_pk PRIMARY KEY (admin_user_name);
+
+
+--
+-- Name: archive_file archive_file_din_dfi_un; Type: CONSTRAINT; Schema: public; Owner: cta
+--
+
+ALTER TABLE ONLY public.archive_file
+    ADD CONSTRAINT archive_file_din_dfi_un UNIQUE (disk_instance_name, disk_file_id) DEFERRABLE;
+
+
+--
+-- Name: archive_file archive_file_pk; Type: CONSTRAINT; Schema: public; Owner: cta
+--
+
+ALTER TABLE ONLY public.archive_file
+    ADD CONSTRAINT archive_file_pk PRIMARY KEY (archive_file_id);
+
+
+--
+-- Name: archive_route archive_route_pk; Type: CONSTRAINT; Schema: public; Owner: cta
+--
+
+ALTER TABLE ONLY public.archive_route
+    ADD CONSTRAINT archive_route_pk PRIMARY KEY (storage_class_id, copy_nb, archive_route_type);
+
+
+--
+-- Name: archive_route archive_route_sci_tpi_un; Type: CONSTRAINT; Schema: public; Owner: cta
+--
+
+ALTER TABLE ONLY public.archive_route
+    ADD CONSTRAINT archive_route_sci_tpi_un UNIQUE (storage_class_id, tape_pool_id);
+
+
+--
+-- Name: disk_instance disk_instance_pk; Type: CONSTRAINT; Schema: public; Owner: cta
+--
+
+ALTER TABLE ONLY public.disk_instance
+    ADD CONSTRAINT disk_instance_pk PRIMARY KEY (disk_instance_name);
+
+
+--
+-- Name: disk_instance_space disk_instance_space_pk; Type: CONSTRAINT; Schema: public; Owner: cta
+--
+
+ALTER TABLE ONLY public.disk_instance_space
+    ADD CONSTRAINT disk_instance_space_pk PRIMARY KEY (disk_instance_name, disk_instance_space_name);
+
+
+--
+-- Name: drive_config drive_config_dn_pk; Type: CONSTRAINT; Schema: public; Owner: cta
+--
+
+ALTER TABLE ONLY public.drive_config
+    ADD CONSTRAINT drive_config_dn_pk PRIMARY KEY (key_name, drive_name);
+
+
+--
+-- Name: drive_state drive_dn_pk; Type: CONSTRAINT; Schema: public; Owner: cta
+--
+
+ALTER TABLE ONLY public.drive_state
+    ADD CONSTRAINT drive_dn_pk PRIMARY KEY (drive_name);
+
+
+--
+-- Name: file_recycle_log file_recycle_log_pk; Type: CONSTRAINT; Schema: public; Owner: cta
+--
+
+ALTER TABLE ONLY public.file_recycle_log
+    ADD CONSTRAINT file_recycle_log_pk PRIMARY KEY (file_recycle_log_id);
+
+
+--
+-- Name: logical_library logical_library_pk; Type: CONSTRAINT; Schema: public; Owner: cta
+--
+
+ALTER TABLE ONLY public.logical_library
+    ADD CONSTRAINT logical_library_pk PRIMARY KEY (logical_library_id);
+
+
+--
+-- Name: media_type media_type_pk; Type: CONSTRAINT; Schema: public; Owner: cta
+--
+
+ALTER TABLE ONLY public.media_type
+    ADD CONSTRAINT media_type_pk PRIMARY KEY (media_type_id);
+
+
+--
+-- Name: mount_policy mount_policy_pk; Type: CONSTRAINT; Schema: public; Owner: cta
+--
+
+ALTER TABLE ONLY public.mount_policy
+    ADD CONSTRAINT mount_policy_pk PRIMARY KEY (mount_policy_name);
+
+
+--
+-- Name: disk_system name_pk; Type: CONSTRAINT; Schema: public; Owner: cta
+--
+
+ALTER TABLE ONLY public.disk_system
+    ADD CONSTRAINT name_pk PRIMARY KEY (disk_system_name);
+
+
+--
+-- Name: physical_library physical_library_pk; Type: CONSTRAINT; Schema: public; Owner: cta
+--
+
+ALTER TABLE ONLY public.physical_library
+    ADD CONSTRAINT physical_library_pk PRIMARY KEY (physical_library_id);
+
+
+--
+-- Name: requester_activity_mount_rule rqster_act_rule_pk; Type: CONSTRAINT; Schema: public; Owner: cta
+--
+
+ALTER TABLE ONLY public.requester_activity_mount_rule
+    ADD CONSTRAINT rqster_act_rule_pk PRIMARY KEY (disk_instance_name, requester_name, activity_regex);
+
+
+--
+-- Name: requester_group_mount_rule rqster_grp_rule_pk; Type: CONSTRAINT; Schema: public; Owner: cta
+--
+
+ALTER TABLE ONLY public.requester_group_mount_rule
+    ADD CONSTRAINT rqster_grp_rule_pk PRIMARY KEY (disk_instance_name, requester_group_name);
+
+
+--
+-- Name: requester_mount_rule rqster_rule_pk; Type: CONSTRAINT; Schema: public; Owner: cta
+--
+
+ALTER TABLE ONLY public.requester_mount_rule
+    ADD CONSTRAINT rqster_rule_pk PRIMARY KEY (disk_instance_name, requester_name);
+
+
+--
+-- Name: storage_class storage_class_pk; Type: CONSTRAINT; Schema: public; Owner: cta
+--
+
+ALTER TABLE ONLY public.storage_class
+    ADD CONSTRAINT storage_class_pk PRIMARY KEY (storage_class_id);
+
+
+--
+-- Name: tape_pool_supply supply_pk; Type: CONSTRAINT; Schema: public; Owner: cta
+--
+
+ALTER TABLE ONLY public.tape_pool_supply
+    ADD CONSTRAINT supply_pk PRIMARY KEY (supply_source_tape_pool_id, supply_destination_tape_pool_id);
+
+
+--
+-- Name: tape_file tape_file_pk; Type: CONSTRAINT; Schema: public; Owner: cta
+--
+
+ALTER TABLE ONLY public.tape_file
+    ADD CONSTRAINT tape_file_pk PRIMARY KEY (vid, fseq);
+
+
+--
+-- Name: tape_file tape_file_vid_block_id_un; Type: CONSTRAINT; Schema: public; Owner: cta
+--
+
+ALTER TABLE ONLY public.tape_file
+    ADD CONSTRAINT tape_file_vid_block_id_un UNIQUE (vid, block_id);
+
+
+--
+-- Name: tape tape_pk; Type: CONSTRAINT; Schema: public; Owner: cta
+--
+
+ALTER TABLE ONLY public.tape
+    ADD CONSTRAINT tape_pk PRIMARY KEY (vid);
+
+
+--
+-- Name: tape_pool tape_pool_pk; Type: CONSTRAINT; Schema: public; Owner: cta
+--
+
+ALTER TABLE ONLY public.tape_pool
+    ADD CONSTRAINT tape_pool_pk PRIMARY KEY (tape_pool_id);
+
+
+--
+-- Name: virtual_organization virtual_organization_pk; Type: CONSTRAINT; Schema: public; Owner: cta
+--
+
+ALTER TABLE ONLY public.virtual_organization
+    ADD CONSTRAINT virtual_organization_pk PRIMARY KEY (virtual_organization_id);
+
+
+--
+-- Name: admin_user_aun_ci_un_idx; Type: INDEX; Schema: public; Owner: cta
+--
+
+CREATE UNIQUE INDEX admin_user_aun_ci_un_idx ON public.admin_user USING btree (lower((admin_user_name)::text));
+
+
+--
+-- Name: archive_file_dfi_idx; Type: INDEX; Schema: public; Owner: cta
+--
+
+CREATE INDEX archive_file_dfi_idx ON public.archive_file USING btree (disk_file_id);
+
+
+--
+-- Name: archive_file_din_idx; Type: INDEX; Schema: public; Owner: cta
+--
+
+CREATE INDEX archive_file_din_idx ON public.archive_file USING btree (disk_instance_name);
+
+
+--
+-- Name: archive_file_sci_idx; Type: INDEX; Schema: public; Owner: cta
+--
+
+CREATE INDEX archive_file_sci_idx ON public.archive_file USING btree (storage_class_id);
+
+
+--
+-- Name: disk_instance_din_ci_un_idx; Type: INDEX; Schema: public; Owner: cta
+--
+
+CREATE UNIQUE INDEX disk_instance_din_ci_un_idx ON public.disk_instance USING btree (lower((disk_instance_name)::text));
+
+
+--
+-- Name: disk_instance_space_disn_ci_un_idx; Type: INDEX; Schema: public; Owner: cta
+--
+
+CREATE UNIQUE INDEX disk_instance_space_disn_ci_un_idx ON public.disk_instance_space USING btree (lower((disk_instance_space_name)::text));
+
+
+--
+-- Name: disk_instance_space_disn_un_idx; Type: INDEX; Schema: public; Owner: cta
+--
+
+CREATE UNIQUE INDEX disk_instance_space_disn_un_idx ON public.disk_instance_space USING btree (disk_instance_space_name);
+
+
+--
+-- Name: disk_system_din_disn_idx; Type: INDEX; Schema: public; Owner: cta
+--
+
+CREATE INDEX disk_system_din_disn_idx ON public.disk_system USING btree (disk_instance_name, disk_instance_space_name);
+
+
+--
+-- Name: disk_system_dsn_ci_un_idx; Type: INDEX; Schema: public; Owner: cta
+--
+
+CREATE UNIQUE INDEX disk_system_dsn_ci_un_idx ON public.disk_system USING btree (lower((disk_system_name)::text));
+
+
+--
+-- Name: drive_state_dn_ci_un_idx; Type: INDEX; Schema: public; Owner: cta
+--
+
+CREATE UNIQUE INDEX drive_state_dn_ci_un_idx ON public.drive_state USING btree (lower((drive_name)::text));
+
+
+--
+-- Name: file_recycle_log_afi_idx; Type: INDEX; Schema: public; Owner: cta
+--
+
+CREATE INDEX file_recycle_log_afi_idx ON public.file_recycle_log USING btree (archive_file_id);
+
+
+--
+-- Name: file_recycle_log_dfi_idx; Type: INDEX; Schema: public; Owner: cta
+--
+
+CREATE INDEX file_recycle_log_dfi_idx ON public.file_recycle_log USING btree (disk_file_id);
+
+
+--
+-- Name: file_recycle_log_din_idx; Type: INDEX; Schema: public; Owner: cta
+--
+
+CREATE INDEX file_recycle_log_din_idx ON public.file_recycle_log USING btree (disk_instance_name);
+
+
+--
+-- Name: file_recycle_log_rlt_idx; Type: INDEX; Schema: public; Owner: cta
+--
+
+CREATE INDEX file_recycle_log_rlt_idx ON public.file_recycle_log USING btree (recycle_log_time);
+
+
+--
+-- Name: file_recycle_log_scd_idx; Type: INDEX; Schema: public; Owner: cta
+--
+
+CREATE INDEX file_recycle_log_scd_idx ON public.file_recycle_log USING btree (storage_class_id);
+
+
+--
+-- Name: file_recycle_log_vid_idx; Type: INDEX; Schema: public; Owner: cta
+--
+
+CREATE INDEX file_recycle_log_vid_idx ON public.file_recycle_log USING btree (vid);
+
+
+--
+-- Name: logical_library_lln_ci_un_idx; Type: INDEX; Schema: public; Owner: cta
+--
+
+CREATE UNIQUE INDEX logical_library_lln_ci_un_idx ON public.logical_library USING btree (lower((logical_library_name)::text));
+
+
+--
+-- Name: logical_library_lln_un_idx; Type: INDEX; Schema: public; Owner: cta
+--
+
+CREATE UNIQUE INDEX logical_library_lln_un_idx ON public.logical_library USING btree (logical_library_name);
+
+
+--
+-- Name: logical_library_pli_idx; Type: INDEX; Schema: public; Owner: cta
+--
+
+CREATE INDEX logical_library_pli_idx ON public.logical_library USING btree (physical_library_id);
+
+
+--
+-- Name: media_type_mtn_ci_un_idx; Type: INDEX; Schema: public; Owner: cta
+--
+
+CREATE UNIQUE INDEX media_type_mtn_ci_un_idx ON public.media_type USING btree (lower((media_type_name)::text));
+
+
+--
+-- Name: media_type_mtn_un_idx; Type: INDEX; Schema: public; Owner: cta
+--
+
+CREATE UNIQUE INDEX media_type_mtn_un_idx ON public.media_type USING btree (media_type_name);
+
+
+--
+-- Name: mount_policy_mpn_ci_un_idx; Type: INDEX; Schema: public; Owner: cta
+--
+
+CREATE UNIQUE INDEX mount_policy_mpn_ci_un_idx ON public.mount_policy USING btree (lower((mount_policy_name)::text));
+
+
+--
+-- Name: physical_library_pln_ci_un_idx; Type: INDEX; Schema: public; Owner: cta
+--
+
+CREATE UNIQUE INDEX physical_library_pln_ci_un_idx ON public.physical_library USING btree (lower((physical_library_name)::text));
+
+
+--
+-- Name: req_act_mnt_rule_din_idx; Type: INDEX; Schema: public; Owner: cta
+--
+
+CREATE INDEX req_act_mnt_rule_din_idx ON public.requester_activity_mount_rule USING btree (disk_instance_name);
+
+
+--
+-- Name: req_act_mnt_rule_mpn_idx; Type: INDEX; Schema: public; Owner: cta
+--
+
+CREATE INDEX req_act_mnt_rule_mpn_idx ON public.requester_activity_mount_rule USING btree (mount_policy_name);
+
+
+--
+-- Name: req_grp_mnt_rule_din_idx; Type: INDEX; Schema: public; Owner: cta
+--
+
+CREATE INDEX req_grp_mnt_rule_din_idx ON public.requester_group_mount_rule USING btree (disk_instance_name);
+
+
+--
+-- Name: req_grp_mnt_rule_mpn_idx; Type: INDEX; Schema: public; Owner: cta
+--
+
+CREATE INDEX req_grp_mnt_rule_mpn_idx ON public.requester_group_mount_rule USING btree (mount_policy_name);
+
+
+--
+-- Name: req_mnt_rule_din_idx; Type: INDEX; Schema: public; Owner: cta
+--
+
+CREATE INDEX req_mnt_rule_din_idx ON public.requester_mount_rule USING btree (disk_instance_name);
+
+
+--
+-- Name: req_mnt_rule_mpn_idx; Type: INDEX; Schema: public; Owner: cta
+--
+
+CREATE INDEX req_mnt_rule_mpn_idx ON public.requester_mount_rule USING btree (mount_policy_name);
+
+
+--
+-- Name: storage_class_scn_ci_un_idx; Type: INDEX; Schema: public; Owner: cta
+--
+
+CREATE UNIQUE INDEX storage_class_scn_ci_un_idx ON public.storage_class USING btree (lower((storage_class_name)::text));
+
+
+--
+-- Name: storage_class_scn_un_idx; Type: INDEX; Schema: public; Owner: cta
+--
+
+CREATE UNIQUE INDEX storage_class_scn_un_idx ON public.storage_class USING btree (storage_class_name);
+
+
+--
+-- Name: storage_class_voi_idx; Type: INDEX; Schema: public; Owner: cta
+--
+
+CREATE INDEX storage_class_voi_idx ON public.storage_class USING btree (virtual_organization_id);
+
+
+--
+-- Name: tape_file_archive_file_id_idx; Type: INDEX; Schema: public; Owner: cta
+--
+
+CREATE INDEX tape_file_archive_file_id_idx ON public.tape_file USING btree (archive_file_id);
+
+
+--
+-- Name: tape_file_vid_idx; Type: INDEX; Schema: public; Owner: cta
+--
+
+CREATE INDEX tape_file_vid_idx ON public.tape_file USING btree (vid);
+
+
+--
+-- Name: tape_lli_idx; Type: INDEX; Schema: public; Owner: cta
+--
+
+CREATE INDEX tape_lli_idx ON public.tape USING btree (logical_library_id);
+
+
+--
+-- Name: tape_mti_idx; Type: INDEX; Schema: public; Owner: cta
+--
+
+CREATE INDEX tape_mti_idx ON public.tape USING btree (media_type_id);
+
+
+--
+-- Name: tape_pool_tpn_ci_un_idx; Type: INDEX; Schema: public; Owner: cta
+--
+
+CREATE UNIQUE INDEX tape_pool_tpn_ci_un_idx ON public.tape_pool USING btree (lower((tape_pool_name)::text));
+
+
+--
+-- Name: tape_pool_tpn_un_idx; Type: INDEX; Schema: public; Owner: cta
+--
+
+CREATE UNIQUE INDEX tape_pool_tpn_un_idx ON public.tape_pool USING btree (tape_pool_name);
+
+
+--
+-- Name: tape_pool_voi_idx; Type: INDEX; Schema: public; Owner: cta
+--
+
+CREATE INDEX tape_pool_voi_idx ON public.tape_pool USING btree (virtual_organization_id);
+
+
+--
+-- Name: tape_state_idx; Type: INDEX; Schema: public; Owner: cta
+--
+
+CREATE INDEX tape_state_idx ON public.tape USING btree (tape_state);
+
+
+--
+-- Name: tape_tape_pool_id_idx; Type: INDEX; Schema: public; Owner: cta
+--
+
+CREATE INDEX tape_tape_pool_id_idx ON public.tape USING btree (tape_pool_id);
+
+
+--
+-- Name: tape_vid_ci_un_idx; Type: INDEX; Schema: public; Owner: cta
+--
+
+CREATE UNIQUE INDEX tape_vid_ci_un_idx ON public.tape USING btree (lower((vid)::text));
+
+
+--
+-- Name: virtual_org_din_idx; Type: INDEX; Schema: public; Owner: cta
+--
+
+CREATE INDEX virtual_org_din_idx ON public.virtual_organization USING btree (disk_instance_name);
+
+
+--
+-- Name: virtual_org_irvo_un_idx; Type: INDEX; Schema: public; Owner: cta
+--
+
+CREATE UNIQUE INDEX virtual_org_irvo_un_idx ON public.virtual_organization USING btree (is_repack_vo);
+
+
+--
+-- Name: virtual_org_von_ci_un_idx; Type: INDEX; Schema: public; Owner: cta
+--
+
+CREATE UNIQUE INDEX virtual_org_von_ci_un_idx ON public.virtual_organization USING btree (lower((virtual_organization_name)::text));
+
+
+--
+-- Name: virtual_org_von_un_idx; Type: INDEX; Schema: public; Owner: cta
+--
+
+CREATE UNIQUE INDEX virtual_org_von_un_idx ON public.virtual_organization USING btree (virtual_organization_name);
+
+
+--
+-- Name: archive_file archive_file_din_fk; Type: FK CONSTRAINT; Schema: public; Owner: cta
+--
+
+ALTER TABLE ONLY public.archive_file
+    ADD CONSTRAINT archive_file_din_fk FOREIGN KEY (disk_instance_name) REFERENCES public.disk_instance(disk_instance_name);
+
+
+--
+-- Name: archive_file archive_file_storage_class_fk; Type: FK CONSTRAINT; Schema: public; Owner: cta
+--
+
+ALTER TABLE ONLY public.archive_file
+    ADD CONSTRAINT archive_file_storage_class_fk FOREIGN KEY (storage_class_id) REFERENCES public.storage_class(storage_class_id);
+
+
+--
+-- Name: archive_route archive_route_storage_class_fk; Type: FK CONSTRAINT; Schema: public; Owner: cta
+--
+
+ALTER TABLE ONLY public.archive_route
+    ADD CONSTRAINT archive_route_storage_class_fk FOREIGN KEY (storage_class_id) REFERENCES public.storage_class(storage_class_id);
+
+
+--
+-- Name: archive_route archive_route_tape_pool_fk; Type: FK CONSTRAINT; Schema: public; Owner: cta
+--
+
+ALTER TABLE ONLY public.archive_route
+    ADD CONSTRAINT archive_route_tape_pool_fk FOREIGN KEY (tape_pool_id) REFERENCES public.tape_pool(tape_pool_id);
+
+
+--
+-- Name: disk_instance_space disk_instance_space_din_fk; Type: FK CONSTRAINT; Schema: public; Owner: cta
+--
+
+ALTER TABLE ONLY public.disk_instance_space
+    ADD CONSTRAINT disk_instance_space_din_fk FOREIGN KEY (disk_instance_name) REFERENCES public.disk_instance(disk_instance_name);
+
+
+--
+-- Name: disk_system disk_system_din_disn_fk; Type: FK CONSTRAINT; Schema: public; Owner: cta
+--
+
+ALTER TABLE ONLY public.disk_system
+    ADD CONSTRAINT disk_system_din_disn_fk FOREIGN KEY (disk_instance_name, disk_instance_space_name) REFERENCES public.disk_instance_space(disk_instance_name, disk_instance_space_name);
+
+
+--
+-- Name: file_recycle_log file_recycle_log_sc_fk; Type: FK CONSTRAINT; Schema: public; Owner: cta
+--
+
+ALTER TABLE ONLY public.file_recycle_log
+    ADD CONSTRAINT file_recycle_log_sc_fk FOREIGN KEY (storage_class_id) REFERENCES public.storage_class(storage_class_id);
+
+
+--
+-- Name: file_recycle_log file_recycle_log_vid_fk; Type: FK CONSTRAINT; Schema: public; Owner: cta
+--
+
+ALTER TABLE ONLY public.file_recycle_log
+    ADD CONSTRAINT file_recycle_log_vid_fk FOREIGN KEY (vid) REFERENCES public.tape(vid);
+
+
+--
+-- Name: logical_library logical_library_pli_fk; Type: FK CONSTRAINT; Schema: public; Owner: cta
+--
+
+ALTER TABLE ONLY public.logical_library
+    ADD CONSTRAINT logical_library_pli_fk FOREIGN KEY (physical_library_id) REFERENCES public.physical_library(physical_library_id);
+
+
+--
+-- Name: requester_activity_mount_rule rqster_act_rule_din_fk; Type: FK CONSTRAINT; Schema: public; Owner: cta
+--
+
+ALTER TABLE ONLY public.requester_activity_mount_rule
+    ADD CONSTRAINT rqster_act_rule_din_fk FOREIGN KEY (disk_instance_name) REFERENCES public.disk_instance(disk_instance_name);
+
+
+--
+-- Name: requester_activity_mount_rule rqster_act_rule_mnt_plc_fk; Type: FK CONSTRAINT; Schema: public; Owner: cta
+--
+
+ALTER TABLE ONLY public.requester_activity_mount_rule
+    ADD CONSTRAINT rqster_act_rule_mnt_plc_fk FOREIGN KEY (mount_policy_name) REFERENCES public.mount_policy(mount_policy_name);
+
+
+--
+-- Name: requester_group_mount_rule rqster_grp_rule_din_fk; Type: FK CONSTRAINT; Schema: public; Owner: cta
+--
+
+ALTER TABLE ONLY public.requester_group_mount_rule
+    ADD CONSTRAINT rqster_grp_rule_din_fk FOREIGN KEY (disk_instance_name) REFERENCES public.disk_instance(disk_instance_name);
+
+
+--
+-- Name: requester_group_mount_rule rqster_grp_rule_mnt_plc_fk; Type: FK CONSTRAINT; Schema: public; Owner: cta
+--
+
+ALTER TABLE ONLY public.requester_group_mount_rule
+    ADD CONSTRAINT rqster_grp_rule_mnt_plc_fk FOREIGN KEY (mount_policy_name) REFERENCES public.mount_policy(mount_policy_name);
+
+
+--
+-- Name: requester_mount_rule rqster_rule_din_fk; Type: FK CONSTRAINT; Schema: public; Owner: cta
+--
+
+ALTER TABLE ONLY public.requester_mount_rule
+    ADD CONSTRAINT rqster_rule_din_fk FOREIGN KEY (disk_instance_name) REFERENCES public.disk_instance(disk_instance_name);
+
+
+--
+-- Name: requester_mount_rule rqster_rule_mnt_plc_fk; Type: FK CONSTRAINT; Schema: public; Owner: cta
+--
+
+ALTER TABLE ONLY public.requester_mount_rule
+    ADD CONSTRAINT rqster_rule_mnt_plc_fk FOREIGN KEY (mount_policy_name) REFERENCES public.mount_policy(mount_policy_name);
+
+
+--
+-- Name: storage_class storage_class_voi_fk; Type: FK CONSTRAINT; Schema: public; Owner: cta
+--
+
+ALTER TABLE ONLY public.storage_class
+    ADD CONSTRAINT storage_class_voi_fk FOREIGN KEY (virtual_organization_id) REFERENCES public.virtual_organization(virtual_organization_id);
+
+
+--
+-- Name: tape_pool_supply supply_destination_fk; Type: FK CONSTRAINT; Schema: public; Owner: cta
+--
+
+ALTER TABLE ONLY public.tape_pool_supply
+    ADD CONSTRAINT supply_destination_fk FOREIGN KEY (supply_destination_tape_pool_id) REFERENCES public.tape_pool(tape_pool_id) ON DELETE CASCADE;
+
+
+--
+-- Name: tape_pool_supply supply_source_fk; Type: FK CONSTRAINT; Schema: public; Owner: cta
+--
+
+ALTER TABLE ONLY public.tape_pool_supply
+    ADD CONSTRAINT supply_source_fk FOREIGN KEY (supply_source_tape_pool_id) REFERENCES public.tape_pool(tape_pool_id);
+
+
+--
+-- Name: tape_file tape_file_archive_file_fk; Type: FK CONSTRAINT; Schema: public; Owner: cta
+--
+
+ALTER TABLE ONLY public.tape_file
+    ADD CONSTRAINT tape_file_archive_file_fk FOREIGN KEY (archive_file_id) REFERENCES public.archive_file(archive_file_id);
+
+
+--
+-- Name: tape_file tape_file_tape_fk; Type: FK CONSTRAINT; Schema: public; Owner: cta
+--
+
+ALTER TABLE ONLY public.tape_file
+    ADD CONSTRAINT tape_file_tape_fk FOREIGN KEY (vid) REFERENCES public.tape(vid);
+
+
+--
+-- Name: tape tape_logical_library_fk; Type: FK CONSTRAINT; Schema: public; Owner: cta
+--
+
+ALTER TABLE ONLY public.tape
+    ADD CONSTRAINT tape_logical_library_fk FOREIGN KEY (logical_library_id) REFERENCES public.logical_library(logical_library_id);
+
+
+--
+-- Name: tape tape_media_type_fk; Type: FK CONSTRAINT; Schema: public; Owner: cta
+--
+
+ALTER TABLE ONLY public.tape
+    ADD CONSTRAINT tape_media_type_fk FOREIGN KEY (media_type_id) REFERENCES public.media_type(media_type_id);
+
+
+--
+-- Name: tape_pool tape_pool_vo_fk; Type: FK CONSTRAINT; Schema: public; Owner: cta
+--
+
+ALTER TABLE ONLY public.tape_pool
+    ADD CONSTRAINT tape_pool_vo_fk FOREIGN KEY (virtual_organization_id) REFERENCES public.virtual_organization(virtual_organization_id);
+
+
+--
+-- Name: tape tape_tape_pool_fk; Type: FK CONSTRAINT; Schema: public; Owner: cta
+--
+
+ALTER TABLE ONLY public.tape
+    ADD CONSTRAINT tape_tape_pool_fk FOREIGN KEY (tape_pool_id) REFERENCES public.tape_pool(tape_pool_id);
+
+
+--
+-- Name: virtual_organization virtual_organization_din_fk; Type: FK CONSTRAINT; Schema: public; Owner: cta
+--
+
+ALTER TABLE ONLY public.virtual_organization
+    ADD CONSTRAINT virtual_organization_din_fk FOREIGN KEY (disk_instance_name) REFERENCES public.disk_instance(disk_instance_name);
+
+
+--
+-- PostgreSQL database dump complete
+--
+
