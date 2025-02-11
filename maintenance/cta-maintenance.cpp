@@ -89,44 +89,6 @@ static int exceptionThrowingMain(const common::Config config,
 
 
 
-//------------------------------------------------------------------------------
-// The help string
-//------------------------------------------------------------------------------
-void maintenanceLoop(DiskReportRunner drr, RepackRequestManager rrm,
-                    QueueCleanupRunner qcr, objectstore::GarbageCollector gc,
-                     log::LogContext& lc) {
-  // Run the maintenance in a loop: queue cleanup, garbage collector and disk reporter
-  try {
-    do {
-      utils::Timer t;
-      qcr.runOnePass(lc);
-      gc.runOnePass(lc);
-      drr.runOnePass(lc);
-      rrm.runOnePass(lc, 2);
-      lc.log(log::INFO, "Did one round of cleaning. Sleeping for X seconds.");
-      sleep(1);
-    } while (true);
-    lc.log(log::INFO, "In Maintenance::maintenanceLoop(): Received shutdown message. Exiting.");
-  } catch(cta::exception::Exception & ex) {
-    log::ScopedParamContainer exParams(lc);
-    exParams.add("exceptionMessage", ex.getMessageValue());
-    lc.log(log::ERR,
-        "In Maintenance::maintenanceLoop(): received an exception. Backtrace follows.");
-
-    lc.logBacktrace(log::INFO, ex.backtrace());
-    throw ex;
-  } catch(std::exception &ex) {
-    log::ScopedParamContainer exParams(lc);
-    exParams.add("exceptionMessage", ex.what());
-    lc.log(log::ERR, "In Maintenance::maintenanceLoop(): received a std::exception.");
-    throw ex;
-  } catch(...) {
-    lc.log(log::ERR, "In Maintenance::maintenanceLoop(): received an unknown exception.");
-    throw;
-  }
-}
-
-
   static int exceptionThrowingMain(const common::Config config, cta::log::Logger& log) {
     log::LogContext lc(log);
 
@@ -174,7 +136,35 @@ void maintenanceLoop(DiskReportRunner drr, RepackRequestManager rrm,
   DiskReportRunner diskReportRunner(*scheduler);
   RepackRequestManager repackRequestManager(*scheduler);
 
-  maintenanceLoop(diskReportRunner, repackRequestManager, cleanupRunner, gc, lc);
+try {
+    do {
+      utils::Timer t;
+      cleanupRunner.runOnePass(lc);
+      gc.runOnePass(lc);
+      diskReportRunner.runOnePass(lc);
+      repackRequestManager.runOnePass(lc, 2);
+      lc.log(log::INFO, "Did one round of cleaning. Sleeping for X seconds.");
+      sleep(1);
+    } while (true);
+    lc.log(log::INFO, "In Maintenance::maintenanceLoop(): Received shutdown message. Exiting.");
+  } catch(cta::exception::Exception & ex) {
+    log::ScopedParamContainer exParams(lc);
+    exParams.add("exceptionMessage", ex.getMessageValue());
+    lc.log(log::ERR,
+        "In Maintenance::maintenanceLoop(): received an exception. Backtrace follows.");
+
+    lc.logBacktrace(log::INFO, ex.backtrace());
+    throw ex;
+  } catch(std::exception &ex) {
+    log::ScopedParamContainer exParams(lc);
+    exParams.add("exceptionMessage", ex.what());
+    lc.log(log::ERR, "In Maintenance::maintenanceLoop(): received a std::exception.");
+    throw ex;
+  } catch(...) {
+    lc.log(log::ERR, "In Maintenance::maintenanceLoop(): received an unknown exception.");
+    throw;
+  }
+
   return 0;
 }
 
