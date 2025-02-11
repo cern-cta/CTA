@@ -489,6 +489,10 @@ void castor::tape::tapeserver::daemon::TapeWriteSingleThread::run() {
     // should have been updated by the RAII cleaner/unmounter).
     m_watchdog.updateStatsWithoutDeliveryTime(m_stats);
 
+    // report last batch of files which were written but not flushed
+    // (no file marks on tape) as failure
+    m_reportPacker.reportLastBatchError(e, m_logContext);
+
     // If we reached the end of tape, this is not an error (ENOSPC)
     try {
       // If it's not the error we're looking for, we will go about our business

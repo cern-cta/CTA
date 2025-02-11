@@ -255,21 +255,23 @@ void TapeWriteTask::execute(const std::unique_ptr<castor::tape::tapeFile::WriteS
     // This is how we communicate the fact that a tape is full to the client.
     // We also change the log level to INFO for the case of end of tape.
     int errorLevel = cta::log::ERR;
-    bool doReportJobError = true;
+    // bool doReportJobError = true; no need for this
+    // we always want the error to be reported for this
+    // job which threw exception
     try {
       const auto& errnum = dynamic_cast<const cta::exception::Errnum&>(e);
       if (ENOSPC == errnum.errorNumber()) {
         errorLevel = cta::log::INFO;
-        doReportJobError = false;
+        // doReportJobError = false;
       }
     } catch (...) {}
     LogContext::ScopedParam sp1(lc, Param("exceptionMessage", e.getMessageValue()));
     lc.log(errorLevel, "An error occurred for this file. End of migrations.");
     circulateMemBlocks();
-    if (doReportJobError) {
+    // we should report job failure for exception
+    if (m_archiveJob != nullptr) {
       reportPacker.reportFailedJob(std::move(m_archiveJob), e, lc);
     }
-
     // We throw again because we want TWST to stop all tasks from execution
     // and go into a degraded mode operation.
     throw;
