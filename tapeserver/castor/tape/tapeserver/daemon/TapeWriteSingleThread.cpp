@@ -485,6 +485,7 @@ void castor::tape::tapeserver::daemon::TapeWriteSingleThread::run() {
   } catch (const cta::exception::Exception& e) {
     // prepare logging params
     cta::log::ScopedParamContainer params(m_logContext);
+    // THIS IS WRONG FLUSHING REPORTS ONLY THAT SHALL BE REPORTED AS FAILED !
     // attempt reportFlush to report any jobs that were successfully archives before the exception
     try {
       m_reportPacker.reportFlush(m_drive.getCompression(), m_logContext);
