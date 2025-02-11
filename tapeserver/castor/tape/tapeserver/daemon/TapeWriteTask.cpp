@@ -276,9 +276,9 @@ void TapeWriteTask::execute(const std::unique_ptr<castor::tape::tapeFile::WriteS
     circulateMemBlocks();
 #endif
     if (doReportJobError) {
+      // we should report job failure for exception
       reportPacker.reportFailedJob(std::move(m_archiveJob), e, lc);
     }
-
     // We throw again because we want TWST to stop all tasks from execution
     // and go into a degraded mode operation.
     throw;
