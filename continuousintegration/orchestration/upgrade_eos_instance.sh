@@ -105,12 +105,8 @@ upgrade_instance() {
 
 }
 
-setup_system() {
-  ./setup/configure_eos.sh -n "${namespace}" --mgm-name eos-mgm-0
-}
-
 check_helm_installed
 upgrade_instance "$@"
-setup_system
+./setup/configure_eos.sh -n "${namespace}" --mgm-name eos-mgm-0
 echo "EOS instance in ${namespace} successfully upgraded:"
 kubectl --namespace ${namespace} get pods
