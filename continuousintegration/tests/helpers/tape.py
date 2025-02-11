@@ -1,17 +1,11 @@
-import subprocess
 import re
 
-def list_all_tapes_in_libraries(library_devices: list[str]) -> list[str]:
+def list_all_tapes_in_libraries(ctataped_hosts) -> list[str]:
     """Lists unique volume tags from multiple tape libraries."""
     volume_tags = set()
-    for library_device in library_devices:
-        # Ensure the library device path is correctly formatted
-        library_device_full = library_device if library_device.startswith("/dev/") else f"/dev/{library_device}"
-        cmd = ["mtx", "-f", library_device_full, "status"]
-        process = subprocess.run(cmd, capture_output=True, text=True)
-        if process.returncode != 0:
-            raise RuntimeError(f"Command failed on {library_device_full} with exit code {process.returncode}: {process.stderr}")
-        output = process.stdout.splitlines()
+    for ctataped in ctataped_hosts:
+        library_device = ctataped.library_device()
+        output: list[str] = ctataped.execWithOutput(f"mtx -f {library_device} status").splitlines()
         # Extract tape VIDs
         for line in output:
             if "Storage Element" in line and "Full" in line:
@@ -21,3 +15,24 @@ def list_all_tapes_in_libraries(library_devices: list[str]) -> list[str]:
 
     return sorted(volume_tags)
 
+
+def get_loaded_drives(ctarmcd):
+    """Retrieves a list of loaded drives and their corresponding slots for the library device associated with the provided ctarmcd host."""
+    status_output = ctarmcd.execWithOutput(f"mtx -f {ctarmcd.library_device()} status").splitlines()
+    loaded_drives = []
+
+    for line in status_output:
+        match = re.search(r'Data Transfer Element (\d+):Full \(Storage Element (\d+) Loaded\)', line)
+        if match:
+            drive = int(match.group(1))
+            slot = int(match.group(2))
+            loaded_drives.append((drive, slot))
+
+    return loaded_drives
+
+def unload_tapes(ctarmcd):
+    """Unloads all loaded tapes from their drives for the library device associated with the provided rmcd host."""
+    library_device = ctarmcd.library_device()
+    loaded_drives = get_loaded_drives(ctarmcd)
+    for drive, slot in loaded_drives:
+        ctarmcd.exec(f"mtx -f {library_device} unload {slot} {drive}")

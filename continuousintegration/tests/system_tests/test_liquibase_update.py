@@ -1,10 +1,9 @@
 import pytest
 import os
+import re
 
 from ..helpers.hosts.remote_host import RemoteHost
 from ..helpers.connections.k8s_connection import K8sConnection
-
-# TODO: this is incomplete
 
 @pytest.fixture(scope="module")
 def liquibase_host(request):
@@ -15,11 +14,18 @@ def liquibase_host(request):
 
 @pytest.fixture
 def destination_schema_version(env):
-    ...
+    catalogue_major_ver=env.execLocal(r"grep CTA_CATALOGUE_SCHEMA_VERSION_MAJOR ../../../catalogue/cta-catalogue-schema/CTACatalogueSchemaVersion.cmake | sed 's/[^0-9]*//g'").stdout.strip()
+    catalogue_minor_ver=env.execLocal(r"grep CTA_CATALOGUE_SCHEMA_VERSION_MINOR ../../../catalogue/cta-catalogue-schema/CTACatalogueSchemaVersion.cmake | sed 's/[^0-9]*//g'").stdout.strip()
+    return f"{catalogue_major_ver}.{catalogue_minor_ver}"
 
 @pytest.fixture
-def source_catalogue_version(env):
-    ...
+def source_catalogue_version(env, destination_schema_version):
+    migration_files = env.execLocal(f"find ../../../catalogue/cta-catalogue-schema -name \"*to${destination_schema_version}.sql\"").stdout.strip().splitlines()
+    for file in migration_files:
+        match = re.match(r'(\d+\.\d+)to(\d+\.\d+)\.sql', file)
+        if match and match.group(2) == destination_schema_version:
+            return match.group(1)
+    pytest.fail(f"Failed to find a source version for destination version {destination_schema_version}")
 
 def test_current_schema_version_is_previous(env, source_catalogue_version):
     assert env.ctafrontend[0].get_schema_version() == source_catalogue_version

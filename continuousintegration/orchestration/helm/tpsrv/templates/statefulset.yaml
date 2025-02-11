@@ -23,7 +23,7 @@ spec:
       labels:
         app.kubernetes.io/name: {{ $tpsrvName }}
         {{- include "common.labels.withoutname" $ | nindent 8 }}
-        cta/library-device: {{ .libraryDevice }}
+        cta/library-device: {{ trimPrefix "/dev/" .libraryDevice }}
       annotations:
         catalogue-schema-version: {{ $.Values.global.catalogueSchemaVersion | quote }}
     spec:

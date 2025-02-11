@@ -75,8 +75,7 @@ generate_tpsrvs_config_for_library() {
   mapfile -t driveDevices < <(echo "$lsscsi_g" | \
                         grep "^.${scsi_host}:${scsi_channel}:" | \
                         grep tape | \
-                        awk '{print $6}' | \
-                        sed -e 's%/dev/%n%')
+                        awk '{print $6}')
 
   # Split driveNames and driveDevices into chunks of size max_drives
   for ((i=0; i < ${#driveNames[@]}; i+=max_drives)); do
