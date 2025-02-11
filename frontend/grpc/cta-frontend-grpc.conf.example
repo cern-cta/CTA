@@ -20,14 +20,51 @@
 #
 # Unique string to identify CTA's instance the frontend is serving (i.e: production, preproduction).
 # Each of these instances should be associated with a specific CTA catalogue instance.
-InstanceName CI_local
+cta.instance_name CI_local
 
 # Unique string to identify the backend scheduler resources. As an exmple, it can be structured as:
 # "[ceph|postgres|vfs][User|Repack]".
-SchedulerBackendName vfsCI
+cta.schedulerdb.scheduler_backend_name vfsCI
 
+# CTA ObjectStore options
 # Scheduler endpoint
-BackendPath /path/to/local/objectstore
+#cta.objectstore.backendpath /path/to/local/objectstore
+
+# CTA Scheduler DB - thread options
+cta.schedulerdb.numberofthreads 500
+cta.schedulerdb.threadstacksize_mb 1
+
+# Maximum file size (in GB) that the CTA Frontend will accept for archiving
+# cta.archivefile.max_size_gb 1000
+
+# Disallow 0-length files
+# cta.archivefile.zero_length_files_forbidden on
+# Tapepools exempted from this check (if enabled)
+# cta.archivefile.zero_length_files_forbidden_vo_exception_list vo1 vo2 vo3
+
+# CTA Repack buffer URL
+# cta.repack.repack_buffer_url root://ctaeos//eos/ctaeos/repack
+
+# CTA Verification Mount Policy
+# cta.verification.mount_policy verification
+
+# Keytab containing gRPC endpoints and tokens for each disk instance
+#cta.ns.config /etc/cta/eos.grpc.keytab
+
+
+# CTA Frontend log URL
+cta.log.url file:/var/log/cta/cta-frontend.log
+
+# CTA Logger log level
+# Valid log levels are EMERG, ALERT, CRIT, ERR, WARNING, NOTICE (==USERERR), INFO, DEBUG
+# cta.log.level DEBUG
+
+# CTA Logger log format
+# Valid formats are default, json
+# cta.log.format json
+
+# CTA Log header
+# cta.log.log_header true
 
 
 ####################################
@@ -51,14 +88,18 @@ BackendPath /path/to/local/objectstore
 ####################################
 # CTA Scheduler DB cache timeout options
 ####################################
-#SchedulerDB TapeCacheMaxAgeSecs 600
-#SchedulerDB RetrieveQueueCacheMaxAgeSecs 10
+# cta.schedulerdb.tape_cache_max_age_secs 600
+# cta.schedulerdb.retrieve_queue_cache_max_age_secs 10
+
+# CTA Scheduler DB - enable requests for user or repack
+# cta.schedulerdb.enable_repack_requests on
+# cta.schedulerdb.enable_user_requests on
 
 
 ####################################
 # Variables used by cta-frontend-async-grpc
 ####################################
-# The port the gRPC frotnend is listening to
+# The port the gRPC frontend is listening to
 #port 17017
 
 # The ca-cert file path
