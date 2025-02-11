@@ -86,6 +86,9 @@ spec:
         - name: catalogue-config
           mountPath: /etc/cta/cta-catalogue.conf
           subPath: cta-catalogue.conf
+        - name: eos-sss-keytab-fixedownership
+          mountPath: /etc/cta/cta-maintenance.sss.keytab
+          subPath: cta-maintenance.sss.keytab
         {{- if eq $schedulerConfig.backend "postgres" }}
         - name: scheduler-config
           mountPath: /etc/cta/cta-scheduler.conf
