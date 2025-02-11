@@ -522,7 +522,7 @@ void castor::tape::tapeserver::daemon::TapeWriteSingleThread::run() {
     std::string errorMessage(e.getMessageValue());
     int logLevel = cta::log::ERR;
     bool isTapeFull = false;
-    // Override if we got an ENOSPC error (end of tape)
+    // Override if we got en ENOSPC error (end of tape)
     try {
       const auto& errnum = dynamic_cast<const cta::exception::Errnum&>(e);
       if (ENOSPC == errnum.errorNumber()) {
