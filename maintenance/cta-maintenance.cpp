@@ -29,6 +29,8 @@
 #include "RepackRequestManager/RepackRequestManager.hpp"
 #include "QueueCleanup/QueueCleanupRunner.hpp"
 
+#include "objectstore/GarbageCollector.hpp"
+
 #include "scheduler/Scheduler.hpp"
 #include "catalogue/Catalogue.hpp"
 #include "catalogue/CatalogueFactory.hpp"
@@ -84,13 +86,45 @@ namespace cta::maintenance {
 // @param argv The command-line arguments.
 // @param log The logging system.
 //------------------------------------------------------------------------------
-static int exceptionThrowingMain(const common::Config config,
-  cta::log::Logger &log);
+static int exceptionThrowingMain(const common::Config config, cta::log::Logger &log);
+void maintenanceLoop(DiskReportRunner& drr, RepackRequestManager& rrm, QueueCleanupRunner& qcr, objectstore::GarbageCollector& gc, log::LogContext& lc);
 
 
+void maintenanceLoop(DiskReportRunner& drr, RepackRequestManager& rrm, QueueCleanupRunner& qcr, objectstore::GarbageCollector& gc, log::LogContext& lc){
+  // Run the maintenance in a loop: queue cleanup, garbage collector and disk reporter
+  try {
+    do {
+      utils::Timer t;
+      qcr.runOnePass(lc);
+      gc.runOnePass(lc);
+      drr.runOnePass(lc);
+      rrm.runOnePass(lc, 2);
+      lc.log(log::INFO, "Did one round of cleaning. Sleeping for X seconds.");
+      sleep(1);
+    } while (true);
+    lc.log(log::INFO, "In Maintenance::maintenanceLoop(): Received shutdown message. Exiting.");
+  } catch(cta::exception::Exception & ex) {
+    log::ScopedParamContainer exParams(lc);
+    exParams.add("exceptionMessage", ex.getMessageValue());
+    lc.log(log::ERR,
+        "In Maintenance::maintenanceLoop(): received an exception. Backtrace follows.");
 
-  static int exceptionThrowingMain(const common::Config config, cta::log::Logger& log) {
-    log::LogContext lc(log);
+    lc.logBacktrace(log::INFO, ex.backtrace());
+    throw ex;
+  } catch(std::exception &ex) {
+    log::ScopedParamContainer exParams(lc);
+    exParams.add("exceptionMessage", ex.what());
+    lc.log(log::ERR, "In Maintenance::maintenanceLoop(): received a std::exception.");
+    throw ex;
+  } catch(...) {
+    lc.log(log::ERR, "In Maintenance::maintenanceLoop(): received an unknown exception.");
+    throw;
+  }
+}
+
+
+static int exceptionThrowingMain(const common::Config config, cta::log::Logger& log) {
+  log::LogContext lc(log);
 
   // Before anything, we will check for access to the scheduler's central storage.
   SchedulerDBInit_t sched_db_init("Maintenance", config.getOptionValueStr("BackendPath").value(), lc.logger());
@@ -135,36 +169,8 @@ static int exceptionThrowingMain(const common::Config config,
   auto cleanupRunner = sched_db_init.getQueueCleanupRunner(*catalogue, *sched_db);
   DiskReportRunner diskReportRunner(*scheduler);
   RepackRequestManager repackRequestManager(*scheduler);
-
-try {
-    do {
-      utils::Timer t;
-      cleanupRunner.runOnePass(lc);
-      gc.runOnePass(lc);
-      diskReportRunner.runOnePass(lc);
-      repackRequestManager.runOnePass(lc, 2);
-      lc.log(log::INFO, "Did one round of cleaning. Sleeping for X seconds.");
-      sleep(1);
-    } while (true);
-    lc.log(log::INFO, "In Maintenance::maintenanceLoop(): Received shutdown message. Exiting.");
-  } catch(cta::exception::Exception & ex) {
-    log::ScopedParamContainer exParams(lc);
-    exParams.add("exceptionMessage", ex.getMessageValue());
-    lc.log(log::ERR,
-        "In Maintenance::maintenanceLoop(): received an exception. Backtrace follows.");
-
-    lc.logBacktrace(log::INFO, ex.backtrace());
-    throw ex;
-  } catch(std::exception &ex) {
-    log::ScopedParamContainer exParams(lc);
-    exParams.add("exceptionMessage", ex.what());
-    lc.log(log::ERR, "In Maintenance::maintenanceLoop(): received a std::exception.");
-    throw ex;
-  } catch(...) {
-    lc.log(log::ERR, "In Maintenance::maintenanceLoop(): received an unknown exception.");
-    throw;
-  }
-
+  
+  maintenanceLoop(diskReportRunner, repackRequestManager, cleanupRunner, gc ,lc);
   return 0;
 }
 
