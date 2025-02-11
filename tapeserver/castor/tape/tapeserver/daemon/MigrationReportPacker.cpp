@@ -116,6 +116,20 @@ void MigrationReportPacker::reportTapeFull(cta::log::LogContext& lc) {
 }
 
 //------------------------------------------------------------------------------
+//reportErrorLastBatch
+//------------------------------------------------------------------------------
+void MigrationReportPacker::reportLastBatchError(const cta::exception::Exception& ex, cta::log::LogContext& lc) {
+  cta::log::ScopedParamContainer params(lc);
+  std::string failureLog =
+    cta::utils::getCurrentLocalTime() + " " + cta::utils::getShortHostname() + " " + ex.getMessageValue();
+  params.add("type", "ReportLastBatchError");
+  lc.log(cta::log::DEBUG, "In MigrationReportPacker::reportLastBatchError(), pushing a report.");
+  cta::threading::MutexLocker ml(m_producterProtection);
+  std::unique_ptr<Report> rep(new ReportLastBatchError(failureLog));
+  m_fifo.push(std::move(rep));
+}
+
+//------------------------------------------------------------------------------
 //reportEndOfSession
 //------------------------------------------------------------------------------
 void MigrationReportPacker::reportEndOfSession(cta::log::LogContext& lc) {
@@ -220,6 +234,42 @@ void MigrationReportPacker::ReportDriveStatus::execute(MigrationReportPacker& pa
   params.add("status", cta::common::dataStructures::toString(m_status));
   parent.m_lc.log(cta::log::DEBUG, "In MigrationReportPacker::ReportDriveStatus::execute(): reporting drive status.");
   parent.m_archiveMount->setDriveStatus(m_status, m_reason);
+}
+
+//------------------------------------------------------------------------------
+//ReportLastBatchError::execute
+//------------------------------------------------------------------------------
+void MigrationReportPacker::ReportLastBatchError::execute(MigrationReportPacker& reportPacker) {
+  // in case there are no remaining jobs, we refrain from sending an empty report to the client in this case.
+  if (reportPacker.m_successfulArchiveJobs.empty() && reportPacker.m_skippedFiles.empty()) {
+    reportPacker.m_lc.log(cta::log::INFO,
+                          "Received a flush report from tape, but had no file to report to client. Doing nothing.");
+    return;
+  }
+  std::unique_ptr<cta::ArchiveJob> job;
+  while (!reportPacker.m_successfulArchiveJobs.empty()) {
+    job = std::move(reportPacker.m_successfulArchiveJobs.front());
+    reportPacker.m_successfulArchiveJobs.pop();
+    if (!job) {
+      continue;
+    }
+    try {
+      job->transferFailed(m_failureLog, reportPacker.m_lc);
+    } catch (cta::exception::NoSuchObject& ex) {
+      cta::log::ScopedParamContainer params(reportPacker.m_lc);
+      params.add("ExceptionMSG", ex.getMessageValue()).add("fileId", job->archiveFile.archiveFileID);
+      reportPacker.m_lc.log(cta::log::WARNING,
+                            "In MigrationReportPacker::ReportLastBatchError::execute(): call to job->failed(), job "
+                            "does not exist in the objectstore.");
+    } catch (cta::exception::Exception& ex) {
+      cta::log::ScopedParamContainer params(reportPacker.m_lc);
+      params.add("ExceptionMSG", ex.getMessageValue()).add("fileId", job->archiveFile.archiveFileID);
+      reportPacker.m_lc.log(
+        cta::log::ERR,
+        "In MigrationReportPacker::ReportLastBatchError::execute(): call to job->failed() threw an exception.");
+      reportPacker.m_lc.logBacktrace(cta::log::INFO, ex.backtrace());
+    }
+  }
 }
 
 //------------------------------------------------------------------------------
