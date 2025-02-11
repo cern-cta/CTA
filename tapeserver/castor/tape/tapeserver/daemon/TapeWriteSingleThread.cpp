@@ -484,16 +484,6 @@ void castor::tape::tapeserver::daemon::TapeWriteSingleThread::run() {
   } catch (const cta::exception::Exception& e) {
     // prepare logging params
     cta::log::ScopedParamContainer params(m_logContext);
-#ifdef CTA_PGSCHED
-    // THIS IS WRONG FLUSHING REPORTS ONLY THAT SHALL BE REPORTED AS FAILED !
-    // attempt reportFlush to report any jobs that were successfully archives before the exception
-    try {
-      m_reportPacker.reportFlush(m_drive.getCompression(), m_logContext);
-    } catch (const cta::exception::Exception& erf) {
-      std::string reportFlushErrorMessage(erf.getMessageValue());
-      params.add("status", "error").add("reportFlushErrorMessage", reportFlushErrorMessage);
-    }
-#endif
     //we end there because write session could not be opened
     //or because a task failed or because flush failed
 
@@ -507,6 +497,11 @@ void castor::tape::tapeserver::daemon::TapeWriteSingleThread::run() {
     // We can still update the session stats one last time (unmount timings
     // should have been updated by the RAII cleaner/unmounter).
     m_watchdog.updateStatsWithoutDeliveryTime(m_stats);
+#ifdef CTA_PGSCHED
+    // report last batch of files which were written but not flushed
+    // (no file marks on tape) as failure
+    m_reportPacker.reportLastBatchError(e, m_logContext);
+#endif
 
     // If we reached the end of tape, this is not an error (ENOSPC)
     bool isTapeFull = false;
@@ -533,7 +528,10 @@ void castor::tape::tapeserver::daemon::TapeWriteSingleThread::run() {
     }
 //first empty all the tasks and circulate mem blocks
 #ifdef CTA_PGSCHED
-    // fail the job of the last task which threw exception
+    // fail the job of the last task which threw exception unless
+    // If isTapeFull is true, final flushTape() is possible to run ( no space fot eh file marks)
+    // so even in this case, we need to declare this last job as failed and requeue it !
+    // same for all the previously declared reportCompletedJob() jobs and for all the taks in the queue
     //std::string failureReason = "In TapeWriteSingleThread::run(): cleaning failed task queue after failure or end of tape; failing job";
     std::list<std::string> jobIDsList;  // !!! serves for BUNCH FAILURE IMPLEMENTATION BY ArchiveMount
     if (nullptr != task) {
