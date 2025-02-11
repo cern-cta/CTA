@@ -66,7 +66,11 @@ ArchiveMount::getNextJobBatch(uint64_t filesRequested, uint64_t bytesRequested, 
       common::dataStructures::TapeFile tpfile;
       auto maxBlockId = std::numeric_limits<decltype(tpfile.blockId)>::max();
       while (queuedJobs.next()) {
-        retVector.emplace_back(m_jobPool.acquireJob());
+        auto job = m_jobPool.acquireJob();
+        if (!job) {
+          throw exception::Exception("In ArchiveMount::getNextJobBatch(): Failed to acquire job from pool.");
+        }
+        retVector.emplace_back(std::move(job));
         retVector.back()->initialize(queuedJobs);
         auto& tapeFile = retVector.back()->tapeFile;
         tapeFile.fSeq = ++nbFilesCurrentlyOnTape;
