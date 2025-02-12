@@ -16,14 +16,20 @@ cmake_minimum_required (VERSION 3.17)
 
 include_directories (${PROTOBUF3_INCLUDE_DIRS})
 
-add_executable (cta-maintenance 
-	cta-maintenance.cpp
-	QueueCleanup/QueueCleanupRunner.cpp
-	RepackRequestManager/RepackReportThread.cpp
-	RepackRequestManager/RepackRequestManager.cpp
-	DiskReporting/DiskReportRunner.cpp
+add_subdirectory(diskbufferrunners)
+add_subdirectory(osrunners)
+add_subdirectory(repackrequestrunner)
+
+add_executable (cta-maintenance cta-maintenance.cpp )
+target_link_libraries(cta-maintenance 
+	ctacommon 
+	ctardbms 
+	ctacatalogue 
+	ctascheduler
+	ctaosdbrunner
+	ctadiskbufferrunner 
+	ctarepackrequestrunner
 )
-target_link_libraries(cta-maintenance ctacommon ctaobjectstore ctardbms ctacatalogue ctascheduler)
 
 add_manpage(cta-maintenance)
 
