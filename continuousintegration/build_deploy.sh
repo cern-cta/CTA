@@ -54,7 +54,7 @@ usage() {
   echo "      --tapeservers-config <path>:      Path to the yaml file containing the tapeservers config. If not provided, this will be auto-generated."
   echo "      --upgrade-cta:                    Upgrades the existing CTA instance with a new image instead of spawning an instance from scratch."
   echo "      --upgrade-eos:                    Upgrades the existing EOS instance with a new image instead of spawning an instance from scratch."
-  echo "      --eos-version:                    Version of EOS to spawn. If not provided, will default to the version specified in the create_instance script."
+  echo "      --eos-image-tag:                  Image tag of EOS to use for the EOS Helm chart. If not provided, will default to the tag specified in the create_instance script."
   exit 1
 }
 
@@ -99,7 +99,7 @@ build_deploy() {
   local extra_spawn_options=""
   local extra_build_options=""
   local catalogue_config="presets/dev-catalogue-postgres-values.yaml"
-  local eos_version=""
+  local eos_image_tag=""
 
   # Defaults
   local num_jobs=$(nproc)
@@ -132,12 +132,12 @@ build_deploy() {
       --force-install) force_install=true ;;
       --upgrade-cta) upgrade_cta=true ;;
       --upgrade-eos) upgrade_eos=true ;;
-      --eos-version)
+      --eos-image-tag)
         if [[ $# -gt 1 ]]; then
-          eos_version="$2"
+          eos_image_tag="$2"
           shift
         else
-          echo "Error: --eos-version requires an argument"
+          echo "Error: --eos-image-tag requires an argument"
           usage
         fi
         ;;
@@ -415,7 +415,7 @@ build_deploy() {
       print_header "UPGRADING EOS INSTANCE"
       cd continuousintegration/orchestration
       ./upgrade_eos_instance.sh --namespace ${deploy_namespace} \
-                                --eos-image-tag ${eos_version}
+                                --eos-image-tag ${eos_image_tag}
     else
       print_header "DEPLOYING CTA INSTANCE"
       # By default we discard the logs from deletion as this is not very useful during development
@@ -426,8 +426,8 @@ build_deploy() {
         extra_spawn_options+=" --tapeservers-config ${tapeservers_config}"
       fi
 
-      if [ -n "${eos_version}" ]; then
-        extra_spawn_options+=" --eos-image-tag ${eos_version}"
+      if [ -n "${eos_image_tag}" ]; then
+        extra_spawn_options+=" --eos-image-tag ${eos_image_tag}"
       fi
 
       if [ -z "${scheduler_config}" ]; then
