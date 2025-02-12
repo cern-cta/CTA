@@ -51,3 +51,4 @@ data:
     xrd.tls  /etc/grid-security/daemon/hostcert.pem /etc/grid-security/daemon/hostkey.pem
     xrd.tlsca  certdir /etc/grid-security/certificates/
     http.trace  all -debug
+    fstofs.use_grpc true
