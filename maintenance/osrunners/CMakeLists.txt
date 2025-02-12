@@ -16,16 +16,17 @@ cmake_minimum_required (VERSION 3.17)
 
 add_library(ctaosdbrunner 
 	QueueCleanupRunner.cpp
+	GarbageCollector.cpp
 )
 
 target_link_libraries(ctaosdbrunner
 	ctaobjectstore
-	ctacatalogue)
+	ctacatalogue
+)
 
 #set_property(TARGET ctaosdbrunner PROPERTY SOVERSION "${cta_soversion}")
 #set_property(TARGET ctaosdbrunner PROPERTY   VERSION "${cta_libversion}")
 #install(TARGETS ctaosdbrunner DESTINATION usr/${CMAKE_INSTALL_LIBDIR})
-
 
 add_library(ctaosdbrunnerunittests SHARED
         QueueCleanupRunnerTestUtils.cpp

@@ -17,33 +17,28 @@
 
 
 #include <getopt.h>
+#include <string>
 
+#include "diskbufferrunners/DiskReportRunner.hpp"
+#include "repackrequestrunner/RepackRequestManager.hpp"
+#include "osrunners/QueueCleanupRunner.hpp"
+#include "osrunners/GarbageCollector.hpp"
+
+#include "catalogue/Catalogue.hpp"
+#include "catalogue/CatalogueFactory.hpp"
+#include "catalogue/CatalogueFactoryFactory.hpp"
 #include "common/exception/Errnum.hpp"
 #include "common/config/Config.hpp"
 #include "common/log/FileLogger.hpp"
 #include "common/log/StdoutLogger.hpp"
 #include "common/utils/utils.hpp"
-
-
-#include "DiskReporting/DiskReportRunner.hpp"
-#include "RepackRequestManager/RepackRequestManager.hpp"
-#include "QueueCleanup/QueueCleanupRunner.hpp"
-
-#include "objectstore/GarbageCollector.hpp"
-
-#include "scheduler/Scheduler.hpp"
-#include "catalogue/Catalogue.hpp"
-#include "catalogue/CatalogueFactory.hpp"
-#include "catalogue/CatalogueFactoryFactory.hpp"
 #include "rdbms/Login.hpp"
-
+#include "scheduler/Scheduler.hpp"
 #ifdef CTA_PGSCHED
 #include "scheduler/rdbms/RelationalDBInit.hpp"
 #else
 #include "scheduler/OStoreDB/OStoreDBInit.hpp"
 #endif
-
-#include <string>
 
 
 //------------------------------------------------------------------------------

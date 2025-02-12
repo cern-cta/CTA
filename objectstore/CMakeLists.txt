@@ -92,7 +92,6 @@ add_library (ctaobjectstore SHARED
   BackendFactory.cpp
   ProtocolBuffersAlgorithms.cpp
   GenericObject.cpp
-  GarbageCollector.cpp
   SchedulerGlobalLock.cpp
   ValueCountMap.cpp
   Helpers.cpp
@@ -111,7 +110,6 @@ set(ObjectStoreUnitTests
   BackendTest.cpp
   RootEntryTest.cpp
   RetrieveQueueTest.cpp
-  GarbageCollectorTest.cpp
   AlgorithmsTest.cpp
   SorterTest.cpp
 )

@@ -36,8 +36,6 @@
 #include "catalogue/dummy/DummyTapeCatalogue.hpp"
 #include "common/log/StdoutLogger.hpp"
 #include "objectstore/BackendVFS.hpp"
-#include "objectstore/GarbageCollector.hpp"
-#include "objectstore/ObjectStoreFixture.hpp"
 #include "QueueCleanupRunner.hpp"
 #include "QueueCleanupRunnerTestUtils.hpp"
 #include "scheduler/OStoreDB/OStoreDBFactory.hpp"
