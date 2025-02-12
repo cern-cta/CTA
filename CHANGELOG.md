@@ -1,4 +1,4 @@
-## 5.11.4.0-1
+## v5.11.4.0-1
 
 ### Bug Fixes
 
@@ -228,6 +228,7 @@
 ### Continuous Integration
 
 - cta/CTA#824 - Update gfal2-util rpm install name and remove DMC repo
+
 
 ## 4.10.11.0-1 / 5.10.11.0-1
 
