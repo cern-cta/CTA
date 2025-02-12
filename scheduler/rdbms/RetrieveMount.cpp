@@ -78,15 +78,15 @@ RetrieveMount::getNextJobBatch(uint64_t filesRequested, uint64_t bytesRequested,
       logContext.log(cta::log::INFO,
                      "In postgres::RetrieveJobQueueRow::moveJobsToDbQueue: successfully queued to the DB.");
     } else {
-      logContext.log(cta::log::WARNING,
-                     "In postgres::RetrieveJobQueueRow::moveJobsToDbQueue: no jobs queued.");
+      logContext.log(cta::log::WARNING, "In postgres::RetrieveJobQueueRow::moveJobsToDbQueue: no jobs queued.");
       txn.commit();
       return ret;
     }
   } catch (exception::Exception& ex) {
-    params.add("exceptionMessage",  ex.getMessageValue());
-    logContext.log(cta::log::ERR,
-                   "In postgres::RetrieveJobQueueRow::moveJobsToDbQueue: failed to queue jobs. Aborting the transaction.");
+    params.add("exceptionMessage", ex.getMessageValue());
+    logContext.log(
+      cta::log::ERR,
+      "In postgres::RetrieveJobQueueRow::moveJobsToDbQueue: failed to queue jobs. Aborting the transaction.");
     txn.abort();
     throw;
   }
@@ -129,8 +129,8 @@ bool RetrieveMount::reserveDiskSpace(const cta::DiskSpaceReservationRequest& dis
         .add("failureReason", failedDiskSystem.second.getMessageValue())
         .add("sleepTime", sleepTime)
         .log(cta::log::ERR,
-           "In RelationalDB::RetrieveMount::reserveDiskSpace(): unable to request EOS free space for "
-           "disk system, putting queue to sleep");
+             "In RelationalDB::RetrieveMount::reserveDiskSpace(): unable to request EOS free space for "
+             "disk system, putting queue to sleep");
       putQueueToSleep(failedDiskSystem.first, sleepTime, logContext);
     }
     return true;
@@ -382,11 +382,14 @@ void RetrieveMount::flushAsyncSuccessReports(std::list<std::unique_ptr<Scheduler
                                                                   lc);
   cta::schedulerdb::Transaction txn(m_connPool);
   try {
+    uint64_t deletionCount = 0;
+    cta::utils::Timer t;
     if (jobIDsList_success.size() > 0) {
       uint64_t nrows = schedulerdb::postgres::RetrieveJobQueueRow::updateJobStatus(
         txn,
         cta::schedulerdb::RetrieveJobStatus::ReadyForDeletion,
         jobIDsList_success);
+      deletionCount = nrows;
       if (nrows != jobIDsList_success.size()) {
         log::ScopedParamContainer(lc)
           .add("updatedRows", nrows)
@@ -398,6 +401,10 @@ void RetrieveMount::flushAsyncSuccessReports(std::list<std::unique_ptr<Scheduler
         txn.abort();
       } else {
         txn.commit();
+        log::ScopedParamContainer(lc)
+          .add("rowDeletionCount", deletionCount)
+          .add("rowDeletionTime", t.secs())
+          .log(log::INFO, "In RetrieveMount::flushAsyncSuccessReports(): deleted jobs.");
       }
     }
   } catch (exception::Exception& ex) {
