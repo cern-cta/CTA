@@ -21,7 +21,7 @@
 #include <objectstore/BackendFactory.hpp>
 #include <objectstore/AgentHeartbeatThread.hpp>
 #include <objectstore/BackendVFS.hpp>
-#include <objectstore/GarbageCollector.hpp>
+#include <maintenance/GarbageCollector.hpp>
 #include <maintenance/QueueCleanup/QueueCleanupRunner.hpp>
 #include <scheduler/OStoreDB/OStoreDBWithAgent.hpp>
 
@@ -57,8 +57,8 @@ public:
     return std::make_unique<OStoreDBWithAgent>(*m_backend, m_backendPopulator->getAgentReference(), catalogue, log);
   }
 
-  objectstore::GarbageCollector getGarbageCollector(catalogue::Catalogue& catalogue) {
-    return objectstore::GarbageCollector(*m_backend, m_backendPopulator->getAgentReference(), catalogue);
+  maintenance::GarbageCollector getGarbageCollector(catalogue::Catalogue& catalogue) {
+    return maintenance::GarbageCollector(*m_backend, m_backendPopulator->getAgentReference(), catalogue);
   }
 
   maintenance::QueueCleanupRunner getQueueCleanupRunner(catalogue::Catalogue& catalogue, SchedulerDatabase& oStoreDb) {
