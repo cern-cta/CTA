@@ -167,6 +167,7 @@ CERN Tape Archive:
 %attr(0644,root,root) %config(noreplace) /etc/sysconfig/cta-maintenance
 %attr(0644,root,root) %config(noreplace) /etc/systemd/system/cta-maintenance.service
 
+
 %post -n cta-maintenance
 %systemd_post cta-maintenance.service
 %systemdDaemonReload
@@ -437,6 +438,7 @@ Unit tests and integration tests with virtual tape drives
 %{_libdir}/libctatapeserverraounittests.so*
 %{_bindir}/cta-integrationTests
 %{_libdir}/libctadaemonunittests-multiprocess.so*
+%{_libdir}/libctaosdbrunnerunittests.so*
 %attr(0644,root,root) %{_datadir}/%{name}-%{ctaVersion}/unittest/*.suppr
 %attr(0644,root,root) %{_datadir}/%{name}-%{ctaVersion}/unittest/parallelTestsMakefile
 
