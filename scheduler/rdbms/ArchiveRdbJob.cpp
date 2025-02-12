@@ -270,9 +270,12 @@ void ArchiveRdbJob::failReport(const std::string& failureReason, log::LogContext
   // due to an exception, for example if the file was deleted on close.
   cta::schedulerdb::Transaction txn(m_connPool);
   try {
+    cta::utils::Timer t;
+    uint64_t deletionCount = 0 ;
     if (reportType == ReportType::NoReportRequired || m_jobRow.totalReportRetries >= m_jobRow.maxReportRetries) {
       //m_jobRow.updateJobStatusForFailedReport(txn, ArchiveJobStatus::AJS_Failed);
       uint64_t nrows = m_jobRow.updateJobStatusForFailedReport(txn, ArchiveJobStatus::ReadyForDeletion);
+      deletionCount = nrows;
       if (nrows != 1) {
         log::ScopedParamContainer(lc)
           .add("jobID", jobID)
@@ -303,6 +306,9 @@ void ArchiveRdbJob::failReport(const std::string& failureReason, log::LogContext
       }
     }
     txn.commit();
+    if(reportType == ReportType::NoReportRequired || m_jobRow.totalReportRetries >= m_jobRow.maxReportRetries){
+      log::ScopedParamContainer(lc).add("rowDeletionTime", t.secs()).add("rowDeletionCount", deletionCount).log(log::INFO, "ArchiveRdbJob::failReport(): deleted job.");
+    }
   } catch (exception::Exception& ex) {
     lc.log(cta::log::WARNING,
            "In schedulerdb::ArchiveRdbJob::failReport(): failed to update job status for failed "
