@@ -4,7 +4,7 @@ categories:
   bug: Bug Fixes
   maintenance: Maintenance
   documentation: Documentation
-  other: Other # While technically supported here, we don't advertise it 
+  other: Other # While technically supported here, we don't advertise it
 template: |
   {% if categories %}
   {% each categories %}

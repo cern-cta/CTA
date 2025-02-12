@@ -208,7 +208,7 @@ def commit_range_summary(api: GitLabAPI, from_commit_sha: str, to_commit_sha: st
     if datetime.fromisoformat(from_commit["authored_date"]) > datetime.fromisoformat(to_commit["authored_date"]):
         print(f"Failure: to-commit cannot be before from-commit")
         sys.exit(1)
-    res = f"Start commit (exclusive): ({from_commit['short_id']}) {from_commit['title']}\n"
+    res = f"Start commit (exclusive): ({from_commit['short_id']}) {from_commit['title']}\n\n"
     res += f"End commit   (inclusive): ({to_commit['short_id']}) {to_commit['title']}\n"
     return res
 
