@@ -14,8 +14,6 @@
 #               submit itself to any jurisdiction.
 cmake_minimum_required (VERSION 3.17)
 
-include_directories (${PROTOBUF3_INCLUDE_DIRS})
-
 add_subdirectory(diskbufferrunners)
 add_subdirectory(osrunners)
 add_subdirectory(repackrequestrunner)
@@ -31,7 +29,7 @@ target_link_libraries(cta-maintenance
 	ctarepackrequestrunner
 )
 
-add_manpage(cta-maintenance)
+add_manpage (cta-maintenance)
 
 install (TARGETS cta-maintenance DESTINATION usr/bin)
 install (FILES ${CMAKE_CURRENT_BINARY_DIR}/cta-maintenance.1cta DESTINATION /usr/share/man/man1)

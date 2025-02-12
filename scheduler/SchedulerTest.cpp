@@ -41,9 +41,9 @@
 #include "common/Timer.hpp"
 #include "objectstore/Algorithms.hpp"
 #include "objectstore/BackendRadosTestSwitch.hpp"
-#include "objectstore/GarbageCollector.hpp"
 #include "objectstore/RepackIndex.hpp"
 #include "objectstore/RootEntry.hpp"
+#include "maintenance/GarbageCollector.hpp"
 #include "scheduler/ArchiveMount.hpp"
 #include "scheduler/LogicalLibrary.hpp"
 #include "scheduler/OStoreDB/OStoreDBFactory.hpp"
@@ -1849,7 +1849,7 @@ TEST_P(SchedulerTest, archive_and_retrieve_failure) {
       gcAgent.initialize();
       gcAgent.insertAndRegisterSelf(lc);
       {
-        cta::objectstore::GarbageCollector gc(getSchedulerDB().getBackend(), gcAgentRef, catalogue);
+        cta::maintenance::GarbageCollector gc(getSchedulerDB().getBackend(), gcAgentRef, catalogue);
         gc.runOnePass(lc);
       }
       // Assign a new agent to replace the stale agent reference in the DB
@@ -2102,7 +2102,7 @@ TEST_P(SchedulerTest, archive_and_retrieve_report_failure) {
       gcAgent.initialize();
       gcAgent.insertAndRegisterSelf(lc);
       {
-        cta::objectstore::GarbageCollector gc(getSchedulerDB().getBackend(), gcAgentRef, catalogue);
+        cta::maintenance::GarbageCollector gc(getSchedulerDB().getBackend(), gcAgentRef, catalogue);
         gc.runOnePass(lc);
       }
       // Assign a new agent to replace the stale agent reference in the DB
