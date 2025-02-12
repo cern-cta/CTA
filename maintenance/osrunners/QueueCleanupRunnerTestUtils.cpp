@@ -28,7 +28,6 @@
 
 #include "objectstore/ObjectStoreFixture.hpp"
 #include "objectstore/BackendVFS.hpp"
-#include "objectstore/GarbageCollector.hpp"
 #include "scheduler/Scheduler.hpp"
 
 namespace unitTests {
