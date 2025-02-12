@@ -484,6 +484,7 @@ void castor::tape::tapeserver::daemon::TapeWriteSingleThread::run() {
   } catch (const cta::exception::Exception& e) {
     // prepare logging params
     cta::log::ScopedParamContainer params(m_logContext);
+#ifdef CTA_PGSCHED
     // THIS IS WRONG FLUSHING REPORTS ONLY THAT SHALL BE REPORTED AS FAILED !
     // attempt reportFlush to report any jobs that were successfully archives before the exception
     try {
@@ -492,6 +493,7 @@ void castor::tape::tapeserver::daemon::TapeWriteSingleThread::run() {
       std::string reportFlushErrorMessage(erf.getMessageValue());
       params.add("status", "error").add("reportFlushErrorMessage", reportFlushErrorMessage);
     }
+#endif
     //we end there because write session could not be opened
     //or because a task failed or because flush failed
 
