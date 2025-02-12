@@ -147,7 +147,9 @@ def add_mr_review_comment(
         tries += 1
         time.sleep(1)
     print(f"Adding review comment for {file_path} at line {line_number}:")
-    print(f"{textwrap.indent(comment, r'\t')}")
+    # Limitation of the current Python version; backslash not allowed in f-string
+    indented_comment = textwrap.indent(comment, "\t")
+    print(f"{indented_comment}")
     data: dict = {
         "position[position_type]": "text",
         "position[base_sha]": versions[0]["base_commit_sha"],
@@ -201,7 +203,9 @@ def insert_rpm_changelog_entry(
     updated_content = content[:insertion_index] + "\n" + changelog_entry + content[insertion_index:]
 
     print(f"Pushing {spec_path} changelog updates to branch: {branch_name}...")
-    print(f"{textwrap.indent(changelog_entry, r'\t')}")
+    # Limitation of the current Python version; backslash not allowed in f-string
+    indented_changelog_entry = textwrap.indent(changelog_entry, "\t")
+    print(f"{indented_changelog_entry}")
 
     commit_msg: str = f"Added changelog entry for release: {release_version}"
     update_rpm_spec(api, spec_path, branch, updated_content, commit_msg)
