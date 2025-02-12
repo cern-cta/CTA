@@ -76,23 +76,21 @@ void RetrieveRdbJob::initialize(const rdbms::Rset& rset) {
   archiveFile.checksumBlob = m_jobRow.checksumBlob;
   // we should later iterate through all the alternate fields to
   // get all the possible tape files for this archive file
-  archiveFile.tapeFiles.emplace_back(
-    std::move(m_jobRow.vid),
-    m_jobRow.fSeq,
-    m_jobRow.blockId,
-    m_jobRow.fileSize,
-    m_jobRow.copyNb,
-    m_jobRow.creationTime,
-    std::move(m_jobRow.checksumBlob)
-  );
+  archiveFile.tapeFiles.emplace_back(std::move(m_jobRow.vid),
+                                     m_jobRow.fSeq,
+                                     m_jobRow.blockId,
+                                     m_jobRow.fileSize,
+                                     m_jobRow.copyNb,
+                                     m_jobRow.creationTime,
+                                     std::move(m_jobRow.checksumBlob));
   errorReportURL = std::move(m_jobRow.retrieveErrorReportURL);
   selectedCopyNb = m_jobRow.copyNb;
   isRepack = false;  // for the moment hardcoded as repqck is not implemented
 
-  if(m_jobRow.activity){
+  if (m_jobRow.activity) {
     retrieveRequest.activity = m_jobRow.activity.value();
   }
-  if(m_jobRow.diskSystemName){
+  if (m_jobRow.diskSystemName) {
     diskSystemName = m_jobRow.diskSystemName.value();
   }
   /* rj retrieve job setting:
@@ -313,9 +311,12 @@ void RetrieveRdbJob::failReport(const std::string& failureReason, log::LogContex
   // due to an exception, for example if the file was deleted on close.
   cta::schedulerdb::Transaction txn(m_connPool);
   try {
+    cta::utils::Timer t;
+    uint64_t nrowsdeleted = 0;
     if (reportType == ReportType::NoReportRequired || m_jobRow.totalReportRetries >= m_jobRow.maxReportRetries) {
       //m_jobRow.updateJobStatusForFailedReport(txn, RetrieveJobStatus::RJS_Failed);
       uint64_t nrows = m_jobRow.updateJobStatusForFailedReport(txn, RetrieveJobStatus::ReadyForDeletion);
+      nrowsdeleted = nrows;
       if (nrows != 1) {
         log::ScopedParamContainer(lc)
           .add("jobID", jobID)
@@ -347,6 +348,12 @@ void RetrieveRdbJob::failReport(const std::string& failureReason, log::LogContex
       }
     }
     txn.commit();
+    if (reportType == ReportType::NoReportRequired || m_jobRow.totalReportRetries >= m_jobRow.maxReportRetries) {
+       log::ScopedParamContainer(lc)
+        .add("rowDeletionCount", nrowsdeleted)
+        .add("rowDeletionTime", t.secs())
+        .log(log::INFO, "In schedulerdb::RetrieveJobQueueRow::updateJobStatusForFailedReport(): deleted jobs");
+    }
   } catch (exception::Exception& ex) {
     lc.log(cta::log::WARNING,
            "In schedulerdb::RetrieveRdbJob::failReport(): failed to update job status for failed "
