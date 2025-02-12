@@ -38,12 +38,12 @@
 #include "objectstore/BackendVFS.hpp"
 #include "objectstore/GarbageCollector.hpp"
 #include "objectstore/ObjectStoreFixture.hpp"
-#include "objectstore/QueueCleanupRunner.hpp"
+#include "QueueCleanupRunner.hpp"
 #include "scheduler/OStoreDB/OStoreDBFactory.hpp"
 #include "scheduler/OStoreDB/OStoreDBWithAgent.hpp"
 #include "scheduler/Scheduler.hpp"
 
-#include "objectstore/QueueCleanupRunnerTestUtils.hpp"
+#include "QueueCleanupRunnerTestUtils.hpp"
 
 //#define STDOUT_LOGGING
 
@@ -347,8 +347,8 @@ TEST_P(QueueCleanupRunnerConcurrentTest, CleanupRunnerParameterizedTest) {
 
   // Execute cleanup runner
   {
-    cta::objectstore::QueueCleanupRunner qCleanupRunnerBroken(agentForCleanupRef, brokenOStore, catalogue, GetParam().cleanupTimeout);
-    cta::objectstore::QueueCleanupRunner qCleanupRunnerOk(agentForCleanupRef, oKOStore, catalogue, GetParam().cleanupTimeout);
+    cta::maintenance::QueueCleanupRunner qCleanupRunnerBroken(agentForCleanupRef, brokenOStore, catalogue, GetParam().cleanupTimeout);
+    cta::maintenance::QueueCleanupRunner qCleanupRunnerOk(agentForCleanupRef, oKOStore, catalogue, GetParam().cleanupTimeout);
 
     // We now run the GarbageCollector to clear the CleanupInfo 
     cta::objectstore::GarbageCollector gc(be, agentForCleanupRef, catalogue);

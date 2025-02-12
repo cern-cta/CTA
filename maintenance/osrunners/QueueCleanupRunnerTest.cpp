@@ -38,8 +38,8 @@
 #include "objectstore/BackendVFS.hpp"
 #include "objectstore/GarbageCollector.hpp"
 #include "objectstore/ObjectStoreFixture.hpp"
-#include "objectstore/QueueCleanupRunner.hpp"
-#include "objectstore/QueueCleanupRunnerTestUtils.hpp"
+#include "QueueCleanupRunner.hpp"
+#include "QueueCleanupRunnerTestUtils.hpp"
 #include "scheduler/OStoreDB/OStoreDBFactory.hpp"
 #include "scheduler/Scheduler.hpp"
 
@@ -315,7 +315,7 @@ TEST_P(QueueCleanupRunnerTest, CleanupRunnerParameterizedTest) {
 
   // Execute cleanup runner
   {
-    cta::objectstore::QueueCleanupRunner qcr(agentForCleanupRef, oStore, catalogue);
+    cta::maintenance::QueueCleanupRunner qcr(agentForCleanupRef, oStore, catalogue);
     qcr.runOnePass(lc); // RUNNER
   }
 
