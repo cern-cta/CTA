@@ -1,3 +1,23 @@
+## 5.11.4.0-1
+
+### Bug Fixes
+
+- cta/CTA#1050 - Relax XRootD requirements and fix custom EOS tag not being passed to deployment in CI
+- cta/CTA#1054 - Fix handling of `UserSpecifiedANonExistentTape` inside `QueueCleanupRunner`
+- cta/CTA#1055 - Fix incorrect pod names in test_client script
+- cta/CTA#1056 - Fix race condition in tests with queue inspection
+- cta/CTA#1064 - Fix bug with manual dnf cache removal in Dockerfile resulting in download failures
+- cta/CTA#1066 - Fix ownership of taped EOS SSS keytab in CI
+- cta/CTA#1069 - Prevent cta-tape-label logging from exposing database credentials
+- cta/CTA#1073 - Remove extra hyphen in `--eos--image-tag` in `create_instance .sh`
+- cta/CTA#1074 - Fix for EOS image tag being different from EOS docker tag on triggered pipeline
+- cta/CTA#1076 - Fix preview_changelog CI procedure 
+
+### Maintenance
+
+- cta/CTA#896 - Resolve "Consolidate config file parsing"
+- cta/CTA#1059 - Deprecated usage of fid protobuf field in CTA
+
 ## v5.11.3.0-1
 
 ### Features
@@ -208,49 +228,6 @@
 ### Continuous Integration
 
 - cta/CTA#824 - Update gfal2-util rpm install name and remove DMC repo
-
-
-## 5.11.4.0-1 (2025-02-12)
-
-### Bug Fixes
-
--  #1076 - Fix preview_changelog CI procedure
-
--  #1069 - Prevent cta-tape-label logging from exposing database credentials
-
--  #1074 - Fix for EOS image tag being different from EOS docker tag on triggered pipeline
-
--  #1073 - Remove extra hyphen in `--eos--image-tag` in `create_instance .sh`
-
--  #1066 - Fix ownership of taped EOS SSS keytab in CI
-
--  #1064 - Fix bug with manual dnf cache removal in Dockerfile resulting in download failures
-
--  #1056 - Fix race condition in tests with queue inspection
-
--  #1050 - Relax XRootD requirements and fix custom EOS tag not being passed to deployment in CI
-
--  #1055 - Fix incorrect pod names in test_client script
-
--  #1054 - Fix handling of `UserSpecifiedANonExistentTape` inside `QueueCleanupRunner`
-
-
-### Maintenance
-
--  #1059 - Deprecated usage of fid protobuf field in CTA
-
--  #896 - Resolve "Consolidate config file parsing"
-
-
-### feature/bug/maintenance
-
--  <id> - Revert "Resolve "Missing reportFlush after tape full or any other exception thrown..."
-
--  <id> - Resolve "Missing reportFlush after tape full or any other exception thrown...
-
--  <id> - CI image tag update: 2025-02-04-10130340
-
--  <id> - Remove goto label in DiskSystem.cpp
 
 ## 4.10.11.0-1 / 5.10.11.0-1
 
