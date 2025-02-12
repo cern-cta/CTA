@@ -2500,19 +2500,19 @@ void Scheduler::reportArchiveJobsBatch(std::list<std::unique_ptr<ArchiveJob>>& a
       }
     }
   }
-  timingList.insertAndReset("reportCompletionTime", t);
   std::list<SchedulerDatabase::ArchiveJob*> reportedDbJobs;
   for (auto& j : reportedJobs) {
     reportedDbJobs.push_back(j->m_dbJob.get());
   }
+  timingList.insertAndReset("reportCompletionTime", t);
   m_db.setArchiveJobBatchReported(reportedDbJobs, timingList, t, lc);
+  timingList.insertAndReset("reportRecordingInSchedDbTime", t);
   // Log the successful reports.
   for (auto& j : reportedJobs) {
     log::ScopedParamContainer params(lc);
     params.add("fileId", j->archiveFile.archiveFileID).add("reportType", j->reportType());
     lc.log(log::INFO, "In Scheduler::reportArchiveJobsBatch(): report successful.");
   }
-  timingList.insertAndReset("reportRecordingInSchedDbTime", t);
   log::ScopedParamContainer params(lc);
   params.add("totalReports", archiveJobsBatch.size())
     .add("failedReports", archiveJobsBatch.size() - reportedJobs.size())
