@@ -24,22 +24,33 @@ ARCHIVEONLY=0 # Only archive files or do the full test?
 DONOTARCHIVE=0 # files were already archived in a previous run NEED TARGETDIR
 TARGETDIR=''
 LOGDIR='/var/log'
-
+SKIP_WAIT_FOR_ARCHIVE=0
+SKIP_ARCHIVE=0
+SKIP_GET_XATTRS=1
+SKIP_EVICT=0
+RELAUNCH=0
+RELAUNCH_EOS_DIR="${EOS_BASEDIR}/552e70f9-93fd-4792-95e9-c87023c56ad9/"
 COMMENT=''
 # id of the test so that we can track it
 TESTID="$(date +%y%m%d%H%M)"
 
+#DRIVE_UP=".*"
+DRIVE_UP="VDSTK01"
+# if you wish to disable pre-queueing, set DRIVE_UP_SUBDIR_NUMBER=0
+DRIVE_UP_SUBDIR_NUMBER=0 # 20
+SLEEP_BEFORE_SUBDIR_NUMBER=1000 # more then NB_DIRS means never
+SLEEP_TIME_AFTER_SUBDIR_NUMBER=6300 # 1h45m sleep time
 NB_PROCS=1
 NB_FILES=1
 NB_DIRS=1
 FILE_KB_SIZE=1 # NB bs for dd
-DD_BS=112 # DD bs option DO NOT USE SHORTNAME: NO 1k BUT 1024!!!
+DD_BS=16 # DD bs option DO NOT USE SHORTNAME: NO 1k BUT 1024!!!
 VERBOSE=0
 REMOVE=0
 TAILPID=''
 TAPEAWAREGC=0
 
-NB_BATCH_PROCS=20  # number of parallel batch processes
+NB_BATCH_PROCS=10  # number of parallel batch processes
 BATCH_SIZE=100    # number of files per batch process
 
 SSH_OPTIONS='-o BatchMode=yes -o ConnectTimeout=10'
@@ -169,6 +180,10 @@ if [[ "x${TARGETDIR}" = "x" ]]; then
 else
     EOS_DIR="${EOS_BASEDIR}/${TARGETDIR}"
 fi
+#RERUN WITH SAME DIR AS PREVIOUS RUN
+if [[ $RELAUNCH == 1 ]]; then
+  EOS_DIR="${EOS_BASEDIR}/${RELAUNCH_EOS_DIR}"
+fi
 LOGDIR="${LOGDIR}/$(basename ${EOS_DIR})"
 mkdir -p ${LOGDIR} || die "Cannot create directory LOGDIR: ${LOGDIR}"
 mkdir -p ${LOGDIR}/xrd_errors || die "Cannot create directory LOGDIR/xrd_errors: ${LOGDIR}/xrd_errors"
@@ -216,41 +231,160 @@ echo yes | cta-immutable-file-test root://${EOS_MGM_HOST}/${EOS_DIR}/immutable_f
 
 # Create directory for xrootd error reports
 ERROR_DIR="/dev/shm/$(basename ${EOS_DIR})"
-mkdir ${ERROR_DIR}
+#ERROR_DIR="/var/log/client-0/$(basename ${EOS_DIR})"
+mkdir -p ${ERROR_DIR}
 echo "$(date +%s): ERROR_DIR=${ERROR_DIR}"
 # not more than 100k files per directory so that we can rm and find as a standard user
-for ((subdir=0; subdir < ${NB_DIRS}; subdir++)); do
-  eos root://${EOS_MGM_HOST} mkdir -p ${EOS_DIR}/${subdir} || die "Cannot create directory ${EOS_DIR}/{subdir} in eos instance ${EOS_MGM_HOST}."
-  echo -n "Copying files to ${EOS_DIR}/${subdir} using ${NB_PROCS} processes..."
-  TEST_FILE_NAME_SUBDIR=${TEST_FILE_NAME_BASE}$(printf %.2d ${subdir}) # this is the target filename of xrdcp processes just need to add the filenumber in each directory
-  # xargs must iterate on the individual file number no subshell can be spawned even for a simple addition in xargs
-  echo "Starting to queue the files for the subdir."
-
-  for ((i=0;i<${NB_FILES};i++)); do
-    printf "%.6d\n" $i
-  done | xargs --max-procs=${NB_PROCS} -iTEST_FILE_NUM bash -c "
-    {
-      dd if=/dev/zero bs=${DD_BS} count=${FILE_KB_SIZE} 2>/dev/null ;
-      echo UNIQUE_${subdir}_TEST_FILE_NUM;
-    } | XRD_LOGLEVEL=Dump xrdcp - root://${EOS_MGM_HOST}/${EOS_DIR}/${subdir}/${TEST_FILE_NAME_SUBDIR}TEST_FILE_NUM_$(date +%s%N) 2>${ERROR_DIR}/${TEST_FILE_NAME_SUBDIR}TEST_FILE_NUM && rm ${ERROR_DIR}/${TEST_FILE_NAME_SUBDIR}TEST_FILE_NUM || echo ERROR with xrootd transfer for file ${TEST_FILE_NAME_SUBDIR}TEST_FILE_NUM, full logs in ${ERROR_DIR}/${TEST_FILE_NAME_SUBDIR}TEST_FILE_NUM"
-
-  # Check if the product of (subdir + 1) and NB_FILES exceeds 1 million
-  if (( subdir == 16 )); then
-    echo "Putting drives up"
-    admin_cta drive up ".*" --reason "PUTTING DRIVE UP FOR TESTS"
+DD_COMMAND="dd if=/dev/zero bs=${DD_BS} count=${FILE_KB_SIZE} 2>/dev/null"
+if (( DD_BS <= 16 )); then
+  DD_COMMAND=":"
+fi
+echo "${DD_COMMAND}"
+TEST_FILE_NUMS=()
+echo "Generating array of padded file numbers for later processing"
+for (( j=0; j < NB_FILES; j++ )); do
+  if (( SKIP_ARCHIVE == 1 )); then
+    break
   fi
-  echo Done.
+  TEST_FILE_NUMS[j]=$(printf "%.7d" $j)
 done
-if [ "0" != "$(ls ${ERROR_DIR} 2> /dev/null | wc -l)" ]; then
+echo "Generating array of padded subdirs"
+TEST_SUBDIRS=()
+for (( j=0; j < NB_DIRS; j++ )); do
+  if (( SKIP_ARCHIVE == 1 )); then
+    break
+  fi
+  TEST_SUBDIRS[j]=$(printf "%.3d" $j)
+done
+if (( 0 != DRIVE_UP_SUBDIR_NUMBER )); then
+  admin_cta drive down ".*" --reason "PUTTING DRIVE DOWN TO PRE-QUEUE REQUESTS"
+fi
+for ((subdir=0; subdir < ${NB_DIRS}; subdir++)); do
+  if (( SKIP_ARCHIVE == 1 )); then
+    break
+  fi
+  if (( subdir == DRIVE_UP_SUBDIR_NUMBER )); then
+    echo "Putting drives up"
+    admin_cta drive up "${DRIVE_UP}" --reason "PUTTING DRIVE UP FOR TESTS"
+  fi
+  if (( subdir == SLEEP_BEFORE_SUBDIR_NUMBER )); then
+    echo "OStoreDB can not queue, sleeping for ${SLEEP_TIME_AFTER_SUBDIR_NUMBER}"
+    # Loop over the sleep time, printing a message every 60 seconds
+    sleep_interval=60
+    while (( SLEEP_TIME_AFTER_SUBDIR_NUMBER > 0 )); do
+      # If remaining sleep time is more than the interval, sleep for the interval and print a message
+      if (( SLEEP_TIME_AFTER_SUBDIR_NUMBER > sleep_interval )); then
+        echo "Slept for ${sleep_interval} seconds."
+        sleep $sleep_interval
+        (( SLEEP_TIME_AFTER_SUBDIR_NUMBER -= sleep_interval ))
+        echo "Slept for ${sleep_interval} seconds, remaining $SLEEP_TIME_AFTER_SUBDIR_NUMBER."
+      else
+        # Sleep for the remaining time
+        echo "Slept for remaining ${SLEEP_TIME_AFTER_SUBDIR_NUMBER} seconds."
+        sleep $SLEEP_TIME_AFTER_SUBDIR_NUMBER
+        echo "Sleeping finished"
+        break
+      fi
+    done
+  fi
+  echo "XRootD report error dir: $(date +%s): ERROR_DIR=${ERROR_DIR}"
+  eos root://${EOS_MGM_HOST} mkdir -p ${EOS_DIR}/${subdir}
+  eos_exit_status=$?
+  echo "eos mkdir exit status: ${eos_exit_status}"
+  if [ $eos_exit_status -ne 0 ]; then
+    die "Cannot create directory ${EOS_DIR}/${subdir} in eos instance ${EOS_MGM_HOST}."
+  fi
+  TEST_FILE_NAME_WITH_SUBDIR="${TEST_FILE_NAME_BASE}${TEST_SUBDIRS[${subdir}]}" # this is the target filename of xrdcp processes just need to add the filenumber in each directory
+  echo "Starting to queue the ${NB_FILES} files to ${EOS_DIR}/${subdir} (file base name: ${TEST_FILE_NAME_WITH_SUBDIR})\
+        for the subdir ${subdir}/${NB_DIRS} using ${NB_PROCS} processes."
+  TEST_FILE_PATH_BASE="root://${EOS_MGM_HOST}/${EOS_DIR}/${subdir}/${TEST_FILE_NAME_WITH_SUBDIR}_"
+  ERROR_LOG="${ERROR_DIR}/${TEST_FILE_NAME_WITH_SUBDIR}_error"
+  OUTPUT_LOG="${ERROR_DIR}/${TEST_FILE_NAME_WITH_SUBDIR}_output"
+  touch "${ERROR_LOG}"
+  touch "${OUTPUT_LOG}"
+  PADDED_SUBDIR="${TEST_SUBDIRS[${subdir}]}"
+  echo "Starting parallel processes."
+  echo "In case of OStoreDB prequeueing the drives processing block further queueing, this is why \
+        as soon as we spot jobs taking more then 5 minutes we put them to sleep for next \
+        15 minutes before queueing next file on that thread"
+  # xargs must iterate on the individual file number no subshell can be spawned even for a simple addition in xargs
+  printf "%s\n" "${TEST_FILE_NUMS[@]}" | xargs --max-procs=${NB_PROCS} -iTEST_FILE_NUM bash -c "START=\$(date +%s); (${DD_COMMAND}; \
+         printf \"%s\" \"UNIQ_${PADDED_SUBDIR}_TEST_FILE_NUM\";) \
+         | if ! XRD_LOGLEVEL=Error XRD_STREAMTIMEOUT=10800 xrdcp - \"${TEST_FILE_PATH_BASE}TEST_FILE_NUM\" \
+         2>\"${ERROR_LOG}_TEST_FILE_NUM\" > \"${OUTPUT_LOG}_TEST_FILE_NUM\"; then  \
+         if ! XRD_LOGLEVEL=Error XRD_STREAMTIMEOUT=10800 xrdcp - \"${TEST_FILE_PATH_BASE}TEST_FILE_NUM\" \
+         2>>\"${ERROR_LOG}_TEST_FILE_NUM\" >> \"${OUTPUT_LOG}_TEST_FILE_NUM\"; then \
+         if ! XRD_LOGLEVEL=Error XRD_STREAMTIMEOUT=10800 xrdcp - \"${TEST_FILE_PATH_BASE}TEST_FILE_NUM\" \
+         2>>\"${ERROR_LOG}_TEST_FILE_NUM\" >> \"${OUTPUT_LOG}_TEST_FILE_NUM\"; then :; fi; fi; fi; \
+         tail -n 50 \"${ERROR_LOG}_TEST_FILE_NUM\" >>\"${ERROR_LOG}\"; \
+         tail -n 50 \"${OUTPUT_LOG}_TEST_FILE_NUM\" >>\"${OUTPUT_LOG}\"; \
+         rm -f \"${ERROR_LOG}_TEST_FILE_NUM\"; \
+         rm -f \"${OUTPUT_LOG}_TEST_FILE_NUM\"; \
+         END=\$(date +%s); DURATION=\$((END - START)); \
+         (( DURATION > 300 )) && sleep 900 || :" || echo "xargs failed !!!"
+  if [[ -s "$ERROR_LOG" ]]; then
+    LINE_COUNT=$(wc -l < "$ERROR_LOG")
+    TMP_FILE=$(mktemp)
+    {
+       echo "Original line count: $LINE_COUNT"
+       tail -n 250 "$ERROR_LOG"
+    } > "$TMP_FILE"
+    mv -f "$TMP_FILE" "$ERROR_LOG"
+  fi
+  if [[ -s "$OUTPUT_LOG" ]]; then
+    LINE_COUNT=$(wc -l < "$OUTPUT_LOG")
+    TMP_FILE=$(mktemp)
+    {
+       echo "Original line count: $LINE_COUNT"
+       tail -n 250 "$OUTPUT_LOG"
+    } > "$TMP_FILE"
+    mv -f "$TMP_FILE" "$OUTPUT_LOG"
+  fi
+  # move the files to make space in the small memory buffer /dev/shm for logs
+  mv ${ERROR_LOG} ${LOGDIR}/xrd_errors/
+  echo "Done."
+done
+# aternative while loop for parallele processing 
+#i=0
+#running_jobs=0
+#
+#while (( i < NB_FILES )); do
+#    TEST_FILE_NUM=$(printf "%.6d" $i)
+#    TEST_FILE_PATH="root://${EOS_MGM_HOST}/${EOS_DIR}/${subdir}/${TEST_FILE_NAME_SUBDIR}_${TEST_FILE_NUM}_$(date +%s%N)"
+#    ERROR_LOG="${ERROR_DIR}/${TEST_FILE_NAME_SUBDIR}_${TEST_FILE_NUM}.log"
+#
+#    # Launch the process in the background and pass variables
+#    {
+#      dd if=/dev/zero bs=${DD_BS} count=${FILE_KB_SIZE} 2>/dev/null &&
+#      echo "UNIQUE_${subdir}_${TEST_FILE_NUM}"
+#    } | XRD_LOGLEVEL=Dump XRD_STREAMTIMEOUT=7200 xrdcp - "$TEST_FILE_PATH" 2>"$ERROR_LOG" &
+#
+#    ((running_jobs++))
+#
+#    # Limit the number of background jobs
+#    if (( running_jobs >= NB_PROCS )); then
+#      # Wait for at least one process to finish before continuing
+#      wait -n
+#      ((running_jobs--))
+#    fi
+#
+#    ((i++))
+#done
+
+
+if [ "0" != "$(ls ${LOGDIR}/xrd_errors/ 2> /dev/null | wc -l)" ]; then
   # there were some xrdcp errors
   echo "Several xrdcp errors occured during archival!"
   echo "Please check client pod logs in artifacts"
-  mv ${ERROR_DIR}/* ${LOGDIR}/xrd_errors/
 fi
+
 
 COPIED=0
 COPIED_EMPTY=0
 for ((subdir=0; subdir < ${NB_DIRS}; subdir++)); do
+  if (( SKIP_WAIT_FOR_ARCHIVE == 1 )); then
+    break
+  fi
   COPIED=$(( ${COPIED} + $(eos root://${EOS_MGM_HOST} find -f ${EOS_DIR}/${subdir} | wc -l) ))
   COPIED_EMPTY=$(( ${COPIED_EMPTY} + $(eos root://${EOS_MGM_HOST} find -0 ${EOS_DIR}/${subdir} | wc -l) ))
 done
@@ -262,32 +396,36 @@ ARCHIVING=${TO_BE_ARCHIVED}
 ARCHIVED=0
 echo "$(date +%s): Waiting for files to be on tape:"
 SECONDS_PASSED=0
-WAIT_FOR_ARCHIVED_FILE_TIMEOUT=$((40+${NB_FILES}/5))
+WAIT_FOR_ARCHIVED_FILE_TIMEOUT=$((40+${NB_FILES}/10))
+START_TIME=$(date +%s)
+END_TIME=$(date +%s)
 while test 0 != ${ARCHIVING}; do
-  echo "$(date +%s): Waiting for files to be archived to tape: Seconds passed = ${SECONDS_PASSED}"
-  sleep 3
-  let SECONDS_PASSED=SECONDS_PASSED+3
-
-  if test ${SECONDS_PASSED} == ${WAIT_FOR_ARCHIVED_FILE_TIMEOUT}; then
-    echo "$(date +%s): Timed out after ${WAIT_FOR_ARCHIVED_FILE_TIMEOUT} seconds waiting for file to be archived to tape"
+  if (( SKIP_WAIT_FOR_ARCHIVE == 1 )); then
     break
   fi
-
+  NOW=$(date +%s)
+  SECONDS_PASSED=$((NOW - START_TIME))
+  # Stop waiting if timeout is reached
+  if (( SECONDS_PASSED >= WAIT_FOR_ARCHIVED_FILE_TIMEOUT )); then
+    echo "$(date +%s): Timed out after ${WAIT_FOR_ARCHIVED_FILE_TIMEOUT} seconds waiting for files to be archived to tape."
+    break
+  fi
+  echo "$(date +%s): Waiting for files to be archived to tape: Seconds passed = ${SECONDS_PASSED}"
   ARCHIVED=0
   for ((subdir=0; subdir < ${NB_DIRS}; subdir++)); do
     ARCHIVED=$(( ${ARCHIVED} + $(eos root://${EOS_MGM_HOST} ls -y ${EOS_DIR}/${subdir} | grep '^d0::t1' | wc -l) ))
-    sleep 1 # do not hammer eos too hard
+    sleep 5 # do not hammer eos too hard
   done
 
-  echo "${ARCHIVED}/${TO_BE_ARCHIVED} archived"
-
   ARCHIVING=$((${TO_BE_ARCHIVED} - ${ARCHIVED}))
+  echo "${ARCHIVED}/${TO_BE_ARCHIVED} archived; Remaining ${ARCHIVING}"
   NB_TAPE_NOT_FULL=$(admin_cta --json ta ls --all | jq "[.[] | select(.full == false)] | length")
   if [[ ${NB_TAPE_NOT_FULL} == 0 ]]
   then
     echo "$(date +%s): All tapes are full, exiting archiving loop"
     break
   fi
+  sleep 10
 done
 
 
@@ -310,35 +448,131 @@ fi
 echo "###"
 echo "${TAPEONLY}/${ARCHIVED} on tape only"
 echo "###"
-echo "Sleeping 10 seconds to allow MGM-FST communication to settle after disk copy deletion."
-sleep 10
+echo "Sleeping 60 seconds to allow MGM-FST communication to settle after disk copy deletion."
+sleep 60
 echo "###"
 
-admin_cta drive down ".*" --reason "PUTTING DRIVE DOWN TO PRE-QUEUE REQUESTS"
+if (( 0 != DRIVE_UP_SUBDIR_NUMBER )); then
+  admin_cta drive down ".*" --reason "PUTTING DRIVE DOWN TO PRE-QUEUE REQUESTS"
+fi
 
 echo "$(date +%s): Triggering EOS retrieve workflow as poweruser1:powerusers (12001:1200)"
 
 rm -f ${STATUS_FILE}
 touch ${STATUS_FILE}
 for ((subdir=0; subdir < ${NB_DIRS}; subdir++)); do
+  echo "Retrieving file names for subdir ${subdir}/${NB_DIRS}"
   eos root://${EOS_MGM_HOST} ls -y ${EOS_DIR}/${subdir} | grep 'd0::t1' | sed -e "s%\s\+% %g;s%.* \([^ ]\+\)$%${subdir}/\1%" >> ${STATUS_FILE}
-  # sleep 3 # do not hammer eos too hard
 done
+echo "Number of file names to be retrieved:"
+wc -l ${STATUS_FILE}
 
 # We need the -s as we are staging the files from tape (see xrootd prepare definition)
 # cat ${STATUS_FILE} | KRB5CCNAME=/tmp/${EOSPOWER_USER}/krb5cc_0 XrdSecPROTOCOL=krb5 xargs --max-procs=${NB_PROCS} -iTEST_FILE_NAME xrdfs ${EOS_MGM_HOST} prepare -s ${EOS_DIR}/TEST_FILE_NAME 2>&1 | tee ${ERROR_FILE}
 # CAREFULL HERE: ${STATUS_FILE} contains lines like: 99/test9900001
 for ((subdir=0; subdir < ${NB_DIRS}; subdir++)); do
- if (( subdir == 10 )); then
-    admin_cta drive up ".*" --reason "PUTTING DRIVE UP FOR TESTS"
+  if (( subdir == DRIVE_UP_SUBDIR_NUMBER )); then
+    echo "Putting drives up"
+    admin_cta drive up "${DRIVE_UP}" --reason "PUTTING DRIVE UP FOR TESTS"
   fi
-  echo -n "Retrieving files to ${EOS_DIR}/${subdir} using ${NB_PROCS} processes..."
-  cat ${STATUS_FILE} | grep ^${subdir}/ | cut -d/ -f2 | xargs --max-procs=${NB_PROCS} -iTEST_FILE_NAME bash -c "XRD_LOGLEVEL=Dump KRB5CCNAME=/tmp/${EOSPOWER_USER}/krb5cc_0 XrdSecPROTOCOL=krb5 xrdfs ${EOS_MGM_HOST} prepare -s ${EOS_DIR}/${subdir}/TEST_FILE_NAME?activity=T0Reprocess 2>${ERROR_DIR}/RETRIEVE_TEST_FILE_NAME && rm ${ERROR_DIR}/RETRIEVE_TEST_FILE_NAME || echo ERROR with xrootd prepare stage for file TEST_FILE_NAME, full logs in ${ERROR_DIR}/RETRIEVE_TEST_FILE_NAME" | tee ${LOGDIR}/prepare_${subdir}.log | grep ^ERROR
+  if (( subdir == SLEEP_BEFORE_SUBDIR_NUMBER )); then
+    echo "OStoreDB can not queue, sleeping for ${SLEEP_TIME_AFTER_SUBDIR_NUMBER}"
+    # Loop over the sleep time, printing a message every 60 seconds
+    sleep_interval=60
+    while (( SLEEP_TIME_AFTER_SUBDIR_NUMBER > 0 )); do
+      # If remaining sleep time is more than the interval, sleep for the interval and print a message
+      if (( SLEEP_TIME_AFTER_SUBDIR_NUMBER > sleep_interval )); then
+        echo "Slept for ${sleep_interval} seconds."
+        sleep $sleep_interval
+        (( SLEEP_TIME_AFTER_SUBDIR_NUMBER -= sleep_interval ))
+       	echo "Slept for ${sleep_interval} seconds, remaining $SLEEP_TIME_AFTER_SUBDIR_NUMBER."
+      else
+        # Sleep for the remaining time
+        echo "Slept for remaining ${SLEEP_TIME_AFTER_SUBDIR_NUMBER} seconds."
+        sleep $SLEEP_TIME_AFTER_SUBDIR_NUMBER
+       	echo "Sleeping finished"
+        break
+      fi
+    done
+  fi
+  ERROR_LOG="${ERROR_DIR}/subdir_${subdir}_error"
+  OUTPUT_LOG="${ERROR_DIR}/subdir_${subdir}_output"
+  #OUTPUT_LOG="/dev/null"
+  touch ${OUTPUT_LOG}
+  touch ${ERROR_LOG}
+  echo -n "Retrieving files to ${EOS_DIR}/${subdir} using ${NB_PROCS} processes...${subdir}, ${EOS_DIR}/${subdir}/, ${ERROR_LOG},  ${OUTPUT_LOG}, ${EOS_MGM_HOST}"
+  awk -F '/' -v subdir="${subdir}" '$1 == subdir { print $2 }' "${STATUS_FILE}" | \
+    xargs -P ${NB_PROCS} -I{} bash -c \
+    "START=\$(date +%s); if ! XRD_LOGLEVEL=Error KRB5CCNAME=/tmp/${EOSPOWER_USER}/krb5cc_0 XrdSecPROTOCOL=krb5,unix \
+    xrdfs ${EOS_MGM_HOST} prepare -s \"${EOS_DIR}/${subdir}/{}?activity=T0Reprocess\" 2> ${ERROR_LOG}_{}  > ${OUTPUT_LOG}_{}; then  \
+    if ! XRD_LOGLEVEL=Error KRB5CCNAME=/tmp/${EOSPOWER_USER}/krb5cc_0 XrdSecPROTOCOL=krb5,unix \
+    xrdfs ${EOS_MGM_HOST} prepare -s \"${EOS_DIR}/${subdir}/{}?activity=T0Reprocess\" 2>> ${ERROR_LOG}_{}  >> ${OUTPUT_LOG}_{}; then \
+    if ! XRD_LOGLEVEL=Error KRB5CCNAME=/tmp/${EOSPOWER_USER}/krb5cc_0 XrdSecPROTOCOL=krb5,unix \
+    xrdfs ${EOS_MGM_HOST} prepare -s \"${EOS_DIR}/${subdir}/{}?activity=T0Reprocess\" 2>> ${ERROR_LOG}_{}  >> ${OUTPUT_LOG}_{}; then :; fi; fi; fi; \
+    tail -n 50 ${ERROR_LOG}_{} >>${ERROR_LOG}; \
+    tail -n 50 ${OUTPUT_LOG}_{} >>${OUTPUT_LOG}; \
+    rm -f ${ERROR_LOG}_{}; \
+    rm -f ${OUTPUT_LOG}_{}; \
+    END=\$(date +%s); DURATION=\$((END - START)); \
+    (( DURATION > 300 )) && sleep 900 || :" || echo "xargs for prepare failed !!!"
+  # letting the traffic settle
+  sleep 2
+  # Limit the logging output not to run out of space
+  if [[ -s "$ERROR_LOG" ]]; then
+    LINE_COUNT=$(wc -l < "$ERROR_LOG")
+    TMP_FILE=$(mktemp)
+    {
+       echo "Original line count: $LINE_COUNT"
+       tail -n 200 "$ERROR_LOG"
+    } > "$TMP_FILE"
+    mv -f "$TMP_FILE" "$ERROR_LOG"
+  fi
+  if [[ -s "$OUTPUT_LOG" ]]; then
+    LINE_COUNT=$(wc -l < "$OUTPUT_LOG")
+    TMP_FILE=$(mktemp)
+    {
+       echo "Original line count: $LINE_COUNT"
+       tail -n 200 "$OUTPUT_LOG"
+    } > "$TMP_FILE"
+    mv -f "$TMP_FILE" "$OUTPUT_LOG"
+  fi
+  # move the files to make space in the small memory buffer for logs
+  mv ${ERROR_LOG} ${LOGDIR}/xrd_errors/
+  #cat ${STATUS_FILE} | grep ^${subdir}/ | cut -d/ -f2 | xargs --max-procs=${NB_PROCS} -iTEST_FILE_NAME bash -c "XRD_LOGLEVEL=Dump KRB5CCNAME=/tmp/${EOSPOWER_USER}/krb5cc_0 XrdSecPROTOCOL=krb5 xrdfs ${EOS_MGM_HOST} prepare -s ${EOS_DIR}/${subdir}/TEST_FILE_NAME?activity=T0Reprocess 2>${ERROR_DIR}/RETRIEVE_TEST_FILE_NAME && rm ${ERROR_DIR}/RETRIEVE_TEST_FILE_NAME || echo ERROR with xrootd prepare stage for file TEST_FILE_NAME, full logs in ${ERROR_DIR}/RETRIEVE_TEST_FILE_NAME" | tee ${LOGDIR}/prepare_${subdir}.log | grep ^ERROR
   echo Done.
-  cat ${STATUS_FILE} | grep ^${subdir}/ | cut -d/ -f2 | xargs --max-procs=${NB_PROCS} -iTEST_FILE_NAME bash -c "XRD_LOGLEVEL=Dump KRB5CCNAME=/tmp/${EOSPOWER_USER}/krb5cc_0 XrdSecPROTOCOL=krb5 xrdfs ${EOS_MGM_HOST} xattr ${EOS_DIR}/${subdir}/TEST_FILE_NAME get sys.retrieve.req_id 2>${ERROR_DIR}/XATTRGET_TEST_FILE_NAME && rm ${ERROR_DIR}/XATTRGET_TEST_FILE_NAME || echo ERROR with xrootd xattr get for file TEST_FILE_NAME, full logs in ${ERROR_DIR}/XATTRGET_TEST_FILE_NAME" | tee ${LOGDIR}/prepare_sys.retrieve.req_id_${subdir}.log | grep ^ERROR
+done
+echo 'Checking the request ID in extended attributes'
+for ((subdir=0; subdir < ${NB_DIRS}; subdir++)); do
+  if (( SKIP_GET_XATTRS == 1 )); then
+    break
+  fi
+  # for the moment commenting out getting the attributes since
+  #cat ${STATUS_FILE} | grep ^${subdir}/ | cut -d/ -f2 | xargs --max-procs=${NB_PROCS} -iTEST_FILE_NAME bash -c "XRD_LOGLEVEL=Dump KRB5CCNAME=/tmp/${EOSPOWER_USER}/krb5cc_0 XrdSecPROTOCOL=krb5 xrdfs ${EOS_MGM_HOST} xattr ${EOS_DIR}/${subdir}/TEST_FILE_NAME get sys.retrieve.req_id 2>${ERROR_DIR}/XATTRGET_TEST_FILE_NAME && rm ${ERROR_DIR}/XATTRGET_TEST_FILE_NAME || echo ERROR with xrootd xattr get for file TEST_FILE_NAME, full logs in ${ERROR_DIR}/XATTRGET_TEST_FILE_NAME" | tee ${LOGDIR}/prepare_sys.retrieve.req_id_${subdir}.log | grep ^ERROR
+  #OUTPUT_LOG="${LOGDIR}/xattrget_${subdir}.log"
+  OUTPUT_LOG="/dev/null"
+  ERROR_LOG="${ERROR_DIR}/XATTRGET_${subdir}".log
+  touch ${ERROR_LOG}
+  awk -F '/' -v subdir="${subdir}" '$1 == subdir { print $2 }' "${STATUS_FILE}" | \
+    xargs -P ${NB_PROCS} -I{} bash -c \
+    "START=$(date +%s); XRD_LOGLEVEL=Error KRB5CCNAME=/tmp/\"${EOSPOWER_USER}\"/krb5cc_0 XrdSecPROTOCOL=krb5 \
+    xrdfs \"${EOS_MGM_HOST}\" xattr \"${EOS_DIR}/${subdir}\"/{} get sys.retrieve.req_id 2>>\"${ERROR_LOG}\"  >>\"${OUTPUT_LOG}\" || \
+    echo \"ERROR: Failed to get xattr for file {}\" >> \"${ERROR_LOG}\"; \
+    END=$(date +%s); DURATION=$((END - START)); \
+        (( DURATION > 300 )) && sleep 900 || :" || echo "xargs for xattr failed !!!"
+  sleep 2
+  # Limit the logging output not to run out of space
+  if [[ -s "$ERROR_LOG" ]]; then
+    LINE_COUNT=$(wc -l < "$ERROR_LOG")
+    TMP_FILE=$(mktemp)
+    {
+       echo "Original line count: $LINE_COUNT"
+       tail -n 50 "$ERROR_LOG"
+    } > "$TMP_FILE"
+    mv -f "$TMP_FILE" "$ERROR_LOG"
+  fi
 done
 if [ "0" != "$(ls ${ERROR_DIR} 2> /dev/null | wc -l)" ]; then
-  # there were some prepare errors
+   # there were some prepare errors
   echo "Several prepare errors occured during retrieval!"
   echo "Please check client pod logs in artifacts"
   mv ${ERROR_DIR}/* ${LOGDIR}/xrd_errors/
@@ -351,18 +585,16 @@ RETRIEVED=0
 # Wait for the copy to appear on disk
 echo "$(date +%s): Waiting for files to be back on disk:"
 SECONDS_PASSED=0
-WAIT_FOR_RETRIEVED_FILE_TIMEOUT=$((40+${NB_FILES}/5))
+WAIT_FOR_RETRIEVED_FILE_TIMEOUT=$((40+${NB_FILES}/10))
 while test 0 -lt ${RETRIEVING}; do
+  NOW=$(date +%s)
+  SECONDS_PASSED=$((NOW - START_TIME))
   echo "$(date +%s): Waiting for files to be retrieved from tape: Seconds passed = ${SECONDS_PASSED}"
-  sleep 3
-  # This seconds passed thing is rather dumb as it clearly does not represent the actual seconds passed
-  let SECONDS_PASSED=SECONDS_PASSED+1
-
-  if test ${SECONDS_PASSED} == ${WAIT_FOR_RETRIEVED_FILE_TIMEOUT}; then
-    echo "$(date +%s): Timed out after ${WAIT_FOR_RETRIEVED_FILE_TIMEOUT} seconds waiting for file to be retrieved tape"
+  # Stop waiting if timeout is reached
+  if (( SECONDS_PASSED >= WAIT_FOR_RETRIEVED_FILE_TIMEOUT )); then
+    echo "$(date +%s): Timed out after ${WAIT_FOR_RETRIEVED_FILE_TIMEOUT} seconds waiting for files to be retrieved from tape."
     break
   fi
-
   RETRIEVED=0
   for ((subdir=0; subdir < ${NB_DIRS}; subdir++)); do
     RETRIEVED=$(( ${RETRIEVED} + $(eos root://${EOS_MGM_HOST} ls -y ${EOS_DIR}/${subdir} | grep -E '^d[1-9][0-9]*::t1' | wc -l) ))
@@ -371,14 +603,18 @@ while test 0 -lt ${RETRIEVING}; do
 
   RETRIEVING=$((${TO_BE_RETRIEVED} - ${RETRIEVED}))
 
-  echo "${RETRIEVED}/${TO_BE_RETRIEVED} retrieved"
+  echo "${RETRIEVED}/${TO_BE_RETRIEVED} retrieved; Remaining ${RETRIEVING}"
+  sleep 10
 done
 
 echo "###"
 echo "${RETRIEVED}/${TO_BE_RETRIEVED} retrieved files"
 echo "###"
 
-
+if (( SKIP_EVICT == 1 )); then
+  echo "As SKIP_EVICT is ${SKIP_EVICT}, we skip the rest of the stress test."
+  exit 0
+fi
 #echo "$(date +%s): Dumping objectstore list"
 #ssh root@ctappsfrontend cta-objectstore-list
 
@@ -388,6 +624,7 @@ rm -f ${STATUS_FILE}
 touch ${STATUS_FILE}
 for ((subdir=0; subdir < ${NB_DIRS}; subdir++)); do
   eos root://${EOS_MGM_HOST} ls -y ${EOS_DIR}/${subdir} | grep -E 'd[1-9][0-9]*::t1' | sed -e "s%\s\+% %g;s%.* \([^ ]\+\)$%${subdir}/\1%" >> ${STATUS_FILE}
+  sleep 2
 done
 
 TO_EVICT=$(cat ${STATUS_FILE} | wc -l)
