@@ -224,6 +224,7 @@ stress-test:
       allow_failure: true # Otherwise this blocks the pipeline
   variables:
     NAMESPACE: stress-${CI_COMMIT_SHORT_SHA}-${CI_PIPELINE_ID}
+    CLONE_TOKEN: $CI_CTA_DEPLOY_TOKEN_READONLY
   before_script:
     - bash ./continuousintegration/utils/install_helm.sh
     - *setup-k8s-test-variables
@@ -239,7 +240,7 @@ stress-test:
                           --scheduler-config ${SCHEDULER_CONFIG}
                           --test-script tests/prepare_tests.sh
     # Set up monitoring
-    - git clone https://gitlab.cern.ch/cta/sandbox/ci_monitoring.git
+    - git clone https://gitlab-ci-token:${CLONE_TOKEN}@gitlab.cern.ch/cta/sandbox/ci_monitoring.git
     - helm install --namespace ${NAMESPACE} ci-monitoring ci_monitoring/ci-monitoring --wait --timeout 5m
     # Run the actual stress test
     - ./tests/stress_test.sh -n ${NAMESPACE}
