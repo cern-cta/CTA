@@ -45,8 +45,8 @@ CTA_CLI_POD="cta-cli-0"
 CTA_FRONTEND_POD="cta-frontend-0"
 EOS_MGM_POD="eos-mgm-0"
 
-NB_FILES=100
-NB_DIRS=20
+NB_FILES=50000
+NB_DIRS=40
 FILE_SIZE_KB=1
 NB_PROCS=40
 NB_DRIVES=2
@@ -58,8 +58,13 @@ kubectl -n ${NAMESPACE} cp client_helper.sh ${CLIENT_POD}:/root/client_helper.sh
 admin_kdestroy &>/dev/null
 admin_kinit &>/dev/null
 
+echo " Copying CA certificates to client pod from ${EOS_MGM_POD} pod."
+kubectl -n ${NAMESPACE} cp "${EOS_MGM_POD}:etc/grid-security/certificates/" /tmp/certificates/ -c eos-mgm
+kubectl -n ${NAMESPACE} cp /tmp/certificates ${CLIENT_POD}:/etc/grid-security/ -c client
+rm -rf /tmp/certificates
+
 echo "Putting all tape drives down - to queue the files first since the processing is faster than the queueing capabilities of EOS, we hold it half-way and only then put drives up in the client_stress_ar.sh script"
-kubectl -n ${NAMESPACE} exec ${CTA_CLI_POD} -c cta-cli -- cta-admin dr down '.*' --reason "prequeue"
+kubectl -n ${NAMESPACE} exec ${CTA_CLI_POD} -c cta-cli -- cta-admin dr down '.*' --reason "pre-queue jobs"
 
 #echo "Putting all tape drives up"
 #kubectl -n ${NAMESPACE} exec ctacli -- cta-admin dr up '.*'
