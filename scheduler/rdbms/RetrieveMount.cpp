@@ -45,7 +45,7 @@ RetrieveMount::getNextJobBatch(uint64_t filesRequested, uint64_t bytesRequested,
   std::vector<std::unique_ptr<SchedulerDatabase::RetrieveJob>> retVector;
   cta::log::ScopedParamContainer params(logContext);
   try {
-    std::vector<std::string> noSpaceDiskSystemNames = m_RelationalDB.getActiveSleepDiskSystemNamesToFilter();
+    std::vector<std::string> noSpaceDiskSystemNames; // disabling this method = m_RelationalDB.getActiveSleepDiskSystemNamesToFilter();
     auto [queuedJobs, nrows] = postgres::RetrieveJobQueueRow::moveJobsToDbQueue(txn,
                                                                                 queriedJobStatus,
                                                                                 mountInfo,

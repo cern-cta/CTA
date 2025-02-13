@@ -44,7 +44,7 @@ ArchiveJobQueueRow::moveJobsToDbQueue(Transaction& txn,
       AND ( MOUNT_ID IS NULL OR MOUNT_ID = :SAME_MOUNT_ID )
       ORDER BY PRIORITY DESC, JOB_ID
       LIMIT :LIMIT
-      FOR UPDATE SKIP LOCKED
+      FOR UPDATE
     ),
     SELECTION_WITH_CUMULATIVE_SUMS AS (
       SELECT JOB_ID, PRIORITY,
