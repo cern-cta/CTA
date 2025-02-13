@@ -242,7 +242,8 @@ stress-test:
     - git clone https://gitlab+deploy-token-3624:${CI_CTA_DEPLOY_TOKEN_READONLY}@gitlab.cern.ch/cta/sandbox/ci_monitoring.git
     - helm install --namespace ${NAMESPACE} ci-monitoring ci_monitoring/ci-monitoring --wait --timeout 5m
     # Run the actual stress test
-    - ./tests/stress_test.sh -n ${NAMESPACE}
+    - cd tests
+    - ./stress_test.sh -n ${NAMESPACE}
   after_script:
     # This also gets called if the job is cancelled to ensure we properly clean up after ourselves
     - cd continuousintegration/orchestration/
