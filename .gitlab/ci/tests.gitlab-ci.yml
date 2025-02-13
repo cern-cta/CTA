@@ -7,7 +7,6 @@
   - createrepo ${CTAREPODIR}
   - echo -e "[cta-artifacts]\nname=CTA artifacts\nbaseurl=file://${CTAREPODIR}\ngpgcheck=0\nenabled=1\npriority=2" > /etc/yum.repos.d/cta-artifacts.repo
   - yum -y --nogpgcheck install cta-integrationtests cta-debuginfo
-  - yum clean all # This enforces a metadata refresh
 
 test-cta-valgrind:
   stage: test
@@ -146,7 +145,6 @@ unit-test-oracle:
   resource_group: oracle-centralized-db-cta-dev04
 
 test-cta-release:
-  allow_failure: true # Something weird going on with the Oracle repodata
   stage: test
   needs:
     - job: build-cta-rpm

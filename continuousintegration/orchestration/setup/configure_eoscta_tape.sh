@@ -44,21 +44,12 @@ CTA_WF_DIR=${CTA_PROC_DIR}/workflow
 EOS_TMP_DIR=/eos/${EOS_INSTANCE_NAME}/tmp
 
 # Test specific
-TAPE_FS_ID=65535
-eos space define tape
-eos fs add -m ${TAPE_FS_ID} tape localhost:1234 /does_not_exist tape
-
-eos mkdir ${EOS_TMP_DIR}
-eos chmod 777 ${EOS_TMP_DIR}
-
-# Test specific
 
 TAPE_FS_ID=65535
 eos space define tape
 eos fs add -m ${TAPE_FS_ID} tape localhost:1234 /does_not_exist tape
 
 # create tmp disk only directory for tests
-EOS_TMP_DIR=/eos/${EOS_INSTANCE_NAME}/tmp
 eos mkdir ${EOS_TMP_DIR}
 eos chmod 777 ${EOS_TMP_DIR}
 
