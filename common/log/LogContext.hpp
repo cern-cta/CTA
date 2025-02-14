@@ -139,14 +139,13 @@ private:
 class ScopedParamContainer {
 public:
   explicit ScopedParamContainer(LogContext& context) : m_context(context) {}
-  ~ScopedParamContainer() noexcept {
-    m_context.erase(m_names);
-  }
 
-  template <class T>
+  ~ScopedParamContainer() noexcept { m_context.erase(m_names); }
+
+  template<class T>
   ScopedParamContainer& add(const std::string& s, const T& t) noexcept {
     try {
-      m_context.pushOrReplace(Param(s,t));
+      m_context.pushOrReplace(Param(s, t));
       m_names.insert(s);
     } catch (...) {
       log(log::ERR, "In ScopedParamContainer::add: failed to add parameter " + s);

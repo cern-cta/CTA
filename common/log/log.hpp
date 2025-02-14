@@ -107,4 +107,3 @@ namespace cta::log {
   std::string getProgramName();
 
 } // namespace cta::log
-

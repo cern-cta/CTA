@@ -36,7 +36,7 @@ void LogContext::pushOrReplace(const Param& param) noexcept {
     } else {
       m_params.push_back(param);
     }
-  } catch(...) {
+  } catch (...) {
     log(log::ERR, "In LogContext::pushOrReplace: failed to pushOrReplace param " + param.getName());
   }
 }
@@ -50,7 +50,7 @@ void LogContext::moveToTheEndIfPresent(const std::string& paramName) noexcept {
       m_params.erase(i);
       m_params.push_back(param);
     }
-  } catch(...) {
+  } catch (...) {
     log(log::ERR, "In LogContext::moveToTheEndIfPresent: failed to moveToTheEndIfPresent paramName " + paramName);
   }
 }
@@ -59,7 +59,7 @@ void LogContext::erase(const std::set<std::string>& paramNamesSet) noexcept {
   try {
     ParamNameMatcher match(paramNamesSet);
     m_params.erase(std::remove_if(m_params.begin(), m_params.end(), match), m_params.end());
-  } catch(...) {
+  } catch (...) {
     log(log::ERR, "In LogContext::erase: failed to erase parameter names set");
   }
 }
@@ -82,7 +82,7 @@ void LogContext::logBacktrace(const int priority, std::string_view backtrace) no
   while(stillGoing) {
     size_t next = backtrace.find_first_of("\n", position);
     std::string line;
-    if(next != std::string::npos) {
+    if (next != std::string::npos) {
       line = backtrace.substr(position, next - position);
       // If our position is out of range, substr would throw an exception
       // so we check here if we would get out of range.
@@ -101,10 +101,9 @@ void LogContext::logBacktrace(const int priority, std::string_view backtrace) no
   }
 }
 
-LogContext::ScopedParam::ScopedParam(
-    LogContext& context,
-    const Param& param) noexcept:
-    m_context(context), m_name(param.getName()) {
+LogContext::ScopedParam::ScopedParam(LogContext& context, const Param& param) noexcept
+    : m_context(context),
+      m_name(param.getName()) {
   m_context.pushOrReplace(param);
 }
 
@@ -112,10 +111,9 @@ LogContext::ScopedParam::~ScopedParam() noexcept {
    m_context.erase({m_name});
 }
 
-std::ostream & operator << (std::ostream & os, const LogContext & lc) {
+std::ostream& operator<<(std::ostream& os, const LogContext& lc) {
   bool first=true;
-  for (std::list<Param>::const_iterator p = lc.m_params.begin();
-      p != lc.m_params.end(); ++p) {
+  for (std::list<Param>::const_iterator p = lc.m_params.begin(); p != lc.m_params.end(); ++p) {
     if (!first) {
       os << " ";
     } else {
