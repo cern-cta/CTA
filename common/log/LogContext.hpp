@@ -30,7 +30,7 @@ namespace cta::log {
  * parameter value per parameter name.
  */
 class LogContext {
-  friend std::ostream & operator << (std::ostream & os , const LogContext & lc) noexcept;
+  friend std::ostream & operator << (std::ostream & os , const LogContext & lc);
 public:
   /**
    * Constructor
@@ -42,7 +42,7 @@ public:
   /**
    * Destructor
    */
-  virtual ~LogContext() noexcept = default;
+  virtual ~LogContext() = default;
 
   /**
    * Access to the logger object.
@@ -98,7 +98,7 @@ public:
    * @param priority the logging priority
    * @param backtrace the multi-line (\n separated) stack trace
    */
-  virtual void logBacktrace(int priority, std::string_view backtrace) noexcept;
+  virtual void logBacktrace(int priority, std::string_view backtrace);
 
   /**
    * Small introspection function to help in tests
@@ -145,8 +145,12 @@ public:
 
   template <class T>
   ScopedParamContainer& add(const std::string& s, const T& t) noexcept {
-    m_context.pushOrReplace(Param(s,t));
-    m_names.insert(s);
+    try {
+      m_context.pushOrReplace(Param(s,t));
+      m_names.insert(s);
+    } catch (...) {
+      log(log::ERR, "In ScopedParamContainer::add: failed to add parameter " + s); // TODO
+    }
     return *this;
   }
 
@@ -159,6 +163,6 @@ private:
   std::set<std::string> m_names;
 };
 
-std::ostream& operator << (std::ostream& os, const LogContext& lc) noexcept;
+std::ostream& operator << (std::ostream& os, const LogContext& lc);
 
 } // namespace cta::log

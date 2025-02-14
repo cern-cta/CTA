@@ -28,28 +28,40 @@ namespace cta::log {
 LogContext::LogContext(Logger& logger) noexcept : m_log(logger) {}
 
 void LogContext::pushOrReplace(const Param& param) noexcept {
-  ParamNameMatcher match(param.getName());
-  std::list<Param>::iterator i = std::find_if(m_params.begin(), m_params.end(), match);
-  if (i != m_params.end()) {
-    i->setValue(param.getValueVariant());
-  } else {
-    m_params.push_back(param);
+  try {
+    ParamNameMatcher match(param.getName());
+    std::list<Param>::iterator i = std::find_if(m_params.begin(), m_params.end(), match);
+    if (i != m_params.end()) {
+      i->setValue(param.getValueVariant());
+    } else {
+      m_params.push_back(param);
+    }
+  } catch(...) {
+    log(log::ERR, "In LogContext::pushOrReplace: failed to pushOrReplace Param " + param.getName()); // TODO
   }
 }
 
 void LogContext::moveToTheEndIfPresent(const std::string& paramName) noexcept {
-  ParamNameMatcher match(paramName);
-  std::list<Param>::iterator i = std::find_if(m_params.begin(), m_params.end(), match);
-  if (i != m_params.end()) {
-    const Param param(paramName, i->getValueVariant());
-    m_params.erase(i);
-    m_params.push_back(param);
+  try {
+    ParamNameMatcher match(paramName);
+    std::list<Param>::iterator i = std::find_if(m_params.begin(), m_params.end(), match);
+    if (i != m_params.end()) {
+      const Param param(paramName, i->getValueVariant());
+      m_params.erase(i);
+      m_params.push_back(param);
+    }
+  } catch(...) {
+    log(log::ERR, "In LogContext::moveToTheEndIfPresent: failed to moveToTheEndIfPresent paramName " + paramName); // TODO
   }
 }
 
 void LogContext::erase(const std::set<std::string>& paramNamesSet) noexcept {
-  ParamNameMatcher match(paramNamesSet);
-  m_params.erase(std::remove_if(m_params.begin(), m_params.end(), match), m_params.end());
+  try {
+    ParamNameMatcher match(paramNamesSet);
+    m_params.erase(std::remove_if(m_params.begin(), m_params.end(), match), m_params.end());
+  } catch(...) {
+    log(log::ERR, "In LogContext::erase: failed to erase parameter names set"); // TODO
+  }
 }
 
 void LogContext::clear() noexcept {
@@ -60,7 +72,7 @@ void LogContext::log(int priority, std::string_view msg) noexcept {
   m_log(priority, msg, m_params);
 }
 
-void LogContext::logBacktrace(const int priority, std::string_view backtrace) noexcept {
+void LogContext::logBacktrace(const int priority, std::string_view backtrace) {
   // Sanity check to prevent substr from throwing exceptions
   if (!backtrace.size())
     return;
@@ -100,7 +112,7 @@ LogContext::ScopedParam::~ScopedParam() noexcept {
    m_context.erase({m_name});
 }
 
-std::ostream & operator << (std::ostream & os, const LogContext & lc) noexcept {
+std::ostream & operator << (std::ostream & os, const LogContext & lc) {
   bool first=true;
   for (std::list<Param>::const_iterator p = lc.m_params.begin();
       p != lc.m_params.end(); ++p) {

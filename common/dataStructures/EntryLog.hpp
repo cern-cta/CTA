@@ -25,15 +25,15 @@
 namespace cta::common::dataStructures {
 
 /**
- * This struct is used across almost all administrative metadata, specifying 
- * who, when, where created and modified a given metadata object 
+ * This struct is used across almost all administrative metadata, specifying
+ * who, when, where created and modified a given metadata object
  */
 struct EntryLog {
   EntryLog();
-  EntryLog(const EntryLog& other) = default;
+  EntryLog(const EntryLog& other) noexcept = default;
   EntryLog(const std::string& username, const std::string& host, const time_t time);
 
-  EntryLog& operator=(const EntryLog& other) = default;
+  EntryLog& operator=(const EntryLog& other) noexcept = default;
   bool operator==(const EntryLog& rhs) const;
   bool operator!=(const EntryLog& rhs) const;
 

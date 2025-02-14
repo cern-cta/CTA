@@ -362,7 +362,6 @@ void BackendRados::LockWatcher::wait(const durationUs& timeout) {
 }
 
 BackendRados::LockWatcher::~LockWatcher() {
-  auto name=m_internal->m_name;
   librados::AioCompletion *completion = librados::Rados::aio_create_completion(m_internal.release(), nullptr, Internal::deleter);
   try {
     throwOnReturnedErrnoOrThrownStdException([this, &completion]() {
