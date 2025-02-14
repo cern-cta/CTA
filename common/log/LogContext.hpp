@@ -30,7 +30,7 @@ namespace cta::log {
  * parameter value per parameter name.
  */
 class LogContext {
-  friend std::ostream & operator << (std::ostream & os , const LogContext & lc);
+  friend std::ostream & operator << (std::ostream & os , const LogContext & lc) noexcept;
 public:
   /**
    * Constructor
