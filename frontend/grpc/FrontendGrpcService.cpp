@@ -107,8 +107,12 @@ CtaRpcImpl::Create(::grpc::ServerContext* context, const cta::xrd::Request* requ
 Status
 CtaRpcImpl::Archive(::grpc::ServerContext* context, const cta::xrd::Request* request, cta::xrd::Response* response) noexcept {
   // check validate request args
+  m_lc.log(cta::log::INFO, "In grpc Archive method");
   const std::string storageClass = request->notification().file().storage_class();
   if (storageClass.empty()) {
+    m_lc.log(cta::log::INFO, "In grpc Archive method, storage_class argument is empty");
+    response->set_type(cta::xrd::Response::RSP_ERR_USER);
+    response->set_message_txt("Storage class is not set");
     return ::grpc::Status(::grpc::StatusCode::INVALID_ARGUMENT, "Storage class is not set.");
   }
 
@@ -146,6 +150,7 @@ CtaRpcImpl::Retrieve(::grpc::ServerContext* context, const cta::xrd::Request* re
 
   sp.add("remoteHost", context->peer());
   sp.add("request", "retrieve");
+  m_lc.log(cta::log::INFO, "In grpc Retrieve method");
 
   auto event = request->notification().wf().event();
   if (event != cta::eos::Workflow::PREPARE)

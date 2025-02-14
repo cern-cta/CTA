@@ -214,6 +214,7 @@ void WorkflowEvent::processCLOSEW(xrd::Response& response) {
   // if it is not set
   std::string storageClassStr = m_event.file().storage_class();
   if (storageClassStr.empty()) {
+    m_lc.log(log::INFO, "Using the storage_class extended attribute");
     // Unpack message
     const auto storageClassItor = m_event.file().xattr().find("sys.archive.storage_class");
     if (m_event.file().xattr().end() == storageClassItor) {
@@ -271,6 +272,7 @@ void WorkflowEvent::processCLOSEW(xrd::Response& response) {
   uint64_t archiveFileId = 0;
   archiveFileId = m_event.file().archive_file_id();
   if (archiveFileId == 0) {
+    m_lc.log(log::INFO, "Using the archiveFileId from the extended attributes");
     // CTA Archive ID is an EOS extended attribute, i.e. it is stored as a string, which
     // must be converted to a valid uint64_t
     const auto archiveFileIdItor = m_event.file().xattr().find("sys.archive.file_id");
