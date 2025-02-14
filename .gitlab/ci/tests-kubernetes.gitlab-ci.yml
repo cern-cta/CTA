@@ -22,13 +22,14 @@
     - when: on_success
   variables:
     # Which tests to run
-    TESTS:
+    PYTESTS:
     # Passed to the create_instance.sh script verbatim
     EXTRA_SPAWN_ARGS: ""
     # Passed to the pytest verbatim
     EXTRA_PYTEST_ARGS: ""
   before_script:
     - bash ./continuousintegration/utils/install_helm.sh
+    - python3 -m ensurepip && python3 -m venv venv && source venv/bin/activate && pip install pytest
   script:
     # Keep the namespace name under 64 characters;
     # Otherwise the eos mgm fqdn becomes too long and things start failing
@@ -87,8 +88,7 @@
                            --scheduler-config ${SCHEDULER_CONFIG}
                            ${EXTRA_SPAWN_ARGS}
     - cd ../tests
-    # TODO: create venv
-    - pytest ${TESTS} --namespace ${NAMESPACE} ${EXTRA_PYTEST_ARGS}
+    - pytest ${PYTESTS} --namespace ${NAMESPACE} ${EXTRA_PYTEST_ARGS}
   after_script:
     # The namespace exported before is not visible, so export it again
     - export NAMESPACE="${CI_JOB_NAME_SLUG:0:18}-${CI_PIPELINE_ID}"
@@ -110,19 +110,19 @@ test-client:
   extends:
     - .kubernetes-test
   variables:
-    TESTS: "system_tests/test_client.py"
+    PYTESTS: "system_tests/test_client.py"
 
 test-client-gfal2:
   extends:
     - .kubernetes-test
   variables:
-    TESTS: "system_tests/test_client_gfal2.py"
+    PYTESTS: "system_tests/test_client_gfal2.py"
 
 test-repack:
   extends:
     - .kubernetes-test
   variables:
-    TESTS: "system_tests/test_repack.py"
+    PYTESTS: "system_tests/test_repack.py"
 
 test-cta-admin:
   extends:
@@ -134,7 +134,7 @@ test-cta-admin:
       when: never
     - !reference [.kubernetes-test, rules]
   variables:
-    TESTS: "system_tests/test_cta_admin.py"
+    PYTESTS: "system_tests/test_cta_admin.py"
 
 # Manually triggered
 
@@ -161,7 +161,7 @@ test-liquibase-update:
   rules:
     - !reference [.manual-rules, rules]
   variables:
-    TESTS: "system_tests/test_liquibase_update.py"
+    PYTESTS: "system_tests/test_liquibase_update.py"
   before_script:
     - !reference [.kubernetes-test, before_script]
     # Yes this is ugly, hopefully we can improve this if we have a project.json where we specify these kinds of values
@@ -182,7 +182,7 @@ test-external-tape-formats:
   rules:
     - !reference [.manual-rules, rules]
   variables:
-    TESTS: "system_tests/test_external_tape_formats.py"
+    PYTESTS: "system_tests/test_external_tape_formats.py"
 
 test-regression-dCache:
   extends:
@@ -190,4 +190,4 @@ test-regression-dCache:
   rules:
     - !reference [.manual-rules, rules]
   variables:
-    TESTS: "system_tests/test_regression_dcache.py"
+    PYTESTS: "system_tests/test_regression_dcache.py"
