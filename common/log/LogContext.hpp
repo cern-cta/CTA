@@ -98,7 +98,7 @@ public:
    * @param priority the logging priority
    * @param backtrace the multi-line (\n separated) stack trace
    */
-  virtual void logBacktrace(int priority, std::string_view backtrace);
+  virtual void logBacktrace(int priority, std::string_view backtrace) noexcept;
 
   /**
    * Small introspection function to help in tests
@@ -149,7 +149,7 @@ public:
       m_context.pushOrReplace(Param(s,t));
       m_names.insert(s);
     } catch (...) {
-      log(log::ERR, "In ScopedParamContainer::add: failed to add parameter " + s); // TODO
+      log(log::ERR, "In ScopedParamContainer::add: failed to add parameter " + s);
     }
     return *this;
   }

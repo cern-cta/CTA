@@ -37,7 +37,7 @@ void LogContext::pushOrReplace(const Param& param) noexcept {
       m_params.push_back(param);
     }
   } catch(...) {
-    log(log::ERR, "In LogContext::pushOrReplace: failed to pushOrReplace Param " + param.getName()); // TODO
+    log(log::ERR, "In LogContext::pushOrReplace: failed to pushOrReplace param " + param.getName());
   }
 }
 
@@ -51,7 +51,7 @@ void LogContext::moveToTheEndIfPresent(const std::string& paramName) noexcept {
       m_params.push_back(param);
     }
   } catch(...) {
-    log(log::ERR, "In LogContext::moveToTheEndIfPresent: failed to moveToTheEndIfPresent paramName " + paramName); // TODO
+    log(log::ERR, "In LogContext::moveToTheEndIfPresent: failed to moveToTheEndIfPresent paramName " + paramName);
   }
 }
 
@@ -60,7 +60,7 @@ void LogContext::erase(const std::set<std::string>& paramNamesSet) noexcept {
     ParamNameMatcher match(paramNamesSet);
     m_params.erase(std::remove_if(m_params.begin(), m_params.end(), match), m_params.end());
   } catch(...) {
-    log(log::ERR, "In LogContext::erase: failed to erase parameter names set"); // TODO
+    log(log::ERR, "In LogContext::erase: failed to erase parameter names set");
   }
 }
 
@@ -72,7 +72,7 @@ void LogContext::log(int priority, std::string_view msg) noexcept {
   m_log(priority, msg, m_params);
 }
 
-void LogContext::logBacktrace(const int priority, std::string_view backtrace) {
+void LogContext::logBacktrace(const int priority, std::string_view backtrace) noexcept {
   // Sanity check to prevent substr from throwing exceptions
   if (!backtrace.size())
     return;
