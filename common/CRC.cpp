@@ -254,8 +254,9 @@ bool verifyCrc32cForMemoryBlockWithCrc32c(
     (start[cnt-2] << 16) |
     (start[cnt-1] << 24);
 
-  if (crccmp != crcblk)
+  if (crccmp != crcblk){
     return false; //block CRC is incorrect
+  }
   return true;
 }
 

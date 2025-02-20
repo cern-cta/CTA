@@ -1307,8 +1307,8 @@ void drive::DriveGeneric::readExactBlock(void * data, size_t count, const std::s
             delete[] dataWithCrc32c;
         } else {
           delete[] dataWithCrc32c;
-          throw cta::exception::Exception(context + "Failed checksum verification for ST read"
-                                                    " in DriveGeneric::readBlock");
+          throw cta::exception::Exception(context+" Failed checksum verification for ST read"
+            " in DriveGeneric::readBlock.");
         }
         break;
       }
