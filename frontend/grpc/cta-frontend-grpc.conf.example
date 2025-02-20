@@ -45,6 +45,8 @@ cta.schedulerdb.threadstacksize_mb 1
 # CTA Repack buffer URL
 # cta.repack.repack_buffer_url root://ctaeos//eos/ctaeos/repack
 
+# cta.repack.repack_max_files_to_select 100
+
 # CTA Verification Mount Policy
 # cta.verification.mount_policy verification
 
@@ -71,19 +73,19 @@ cta.log.url file:/var/log/cta/cta-frontend.log
 #  TLS related variables. Only used when TLS is true
 ####################################
 # Use TLS (previously the command-line option --tls)
-#TLS true/false
+#grpc.TLS true/false
 #  TLS service key file
-#TlsKey /path/to/key
+#grpc.tls.key /path/to/key
 #
 #  TLS service certificate file
-#TlsCert /path/to/cert
+#grpc.tls.cert /path/to/cert
 #
 #  TLS CA chain file
-#TlsChain /path/to/CA/chain
+#grpc.tls.chain /path/to/CA/chain
 #
 
 # gRPC number of threads
-#threads nthreads
+#grpc.numberofthreads nthreads
 
 ####################################
 # CTA Scheduler DB cache timeout options
@@ -95,21 +97,24 @@ cta.log.url file:/var/log/cta/cta-frontend.log
 # cta.schedulerdb.enable_repack_requests on
 # cta.schedulerdb.enable_user_requests on
 
+# CTA Catalogue options
+cta.catalogue.numberofconnections 10
+
 
 ####################################
 # Variables used by cta-frontend-async-grpc
 ####################################
 # The port the gRPC frontend is listening to
-#port 17017
+#grpc.port 17017
 
 # The ca-cert file path
-#SslRoot /path/to/ca/cert
+#grpc.SslRoot /path/to/ca/cert
 
 # Ssl Key file
-#SslKey /path/to/ssl/key
+#grpc.SslKey /path/to/ssl/key
 
 # Ssl certificate file
-#SslCert /path/to/ssl/cert
+#grpc.SslCert /path/to/ssl/cert
 
 # keytab file
-#Keytab /path/to/keytab
+#grpc.Keytab /path/to/keytab

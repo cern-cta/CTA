@@ -374,25 +374,25 @@ FrontendService::FrontendService(const std::string& configFilename) : m_archiveF
   // Get the mount policy name for verification requests
 
   // Get the gRPC-specific values, if they are set (getOptionValue returns an std::optional)
-  std::optional<bool> TLS = config.getOptionValueBool("TLS");
+  std::optional<bool> TLS = config.getOptionValueBool("grpc.TLS");
   m_Tls = TLS.has_value() ? TLS.value() : false;  // default value is false
-  auto TlsKey = config.getOptionValueStr("TlsKey");
+  auto TlsKey = config.getOptionValueStr("grpc.TlsKey");
   if (TlsKey.has_value()) {
     m_TlsKey = TlsKey.value();
   }
-  auto TlsCert = config.getOptionValueStr("TlsCert");
+  auto TlsCert = config.getOptionValueStr("grpc.TlsCert");
   if (TlsCert.has_value()) {
     m_TlsCert = TlsCert.value();
   }
-  auto TlsChain = config.getOptionValueStr("TlsChain");
+  auto TlsChain = config.getOptionValueStr("grpc.TlsChain");
   if (TlsChain.has_value()) {
     m_TlsChain = TlsChain.value();
   }
-  auto port = config.getOptionValueStr("port");
+  auto port = config.getOptionValueStr("grpc.port");
   if (port.has_value()) {
     m_port = port.value();
   }
-  auto threads = config.getOptionValueInt("threads");
+  auto threads = config.getOptionValueInt("grpc.numberofthreads");
   if (threads.has_value()) {
     m_threads = threads.value();
   }
