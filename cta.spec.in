@@ -206,6 +206,7 @@ dCache frontend
 %attr(0755,root,root) %{_bindir}/cta-frontend-grpc
 %attr(0644,root,root) /etc/systemd/system/cta-frontend-grpc.service
 %attr(0644,root,root) /etc/sysconfig/cta-frontend-grpc
+%attr(0644,root,root) %config(noreplace) %{_sysconfdir}/cta/cta-frontend-grpc.conf.example
 %attr(0644,root,root) %doc /usr/share/man/man1/cta-frontend-grpc.1cta.gz
 
 %post -n cta-frontend-grpc
@@ -219,6 +220,13 @@ dCache frontend
 %postun -n cta-frontend-grpc
 %systemd_postun cta-frontend-grpc.service
 %systemdDaemonReload
+
+%posttrans -n cta-frontend-grpc
+MISSING_CONF=%{_sysconfdir}/cta/cta-frontend-grpc.conf
+if [[ ! -f "${MISSING_CONF}" ]] && [[ -f "${MISSING_CONF}.rpmsave" ]]
+then
+  mv ${MISSING_CONF}.rpmsave ${MISSING_CONF}
+fi
 
 %package -n cta-cli
 Summary: CERN Tape Archive: command line interface
