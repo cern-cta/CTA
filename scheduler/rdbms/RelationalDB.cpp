@@ -346,6 +346,7 @@ RelationalDB::queueRetrieve(cta::common::dataStructures::RetrieveRequest& rqst,
                             const cta::common::dataStructures::RetrieveFileQueueCriteria& criteria,
                             const std::optional<std::string> diskSystemName,
                             log::LogContext& logContext) {
+  utils::Timer timeTotal;
   auto rreqMutex = std::make_unique<cta::threading::Mutex>();
   cta::threading::MutexLocker rreqMutexLock(*rreqMutex);
   SchedulerDatabase::RetrieveRequestInfo ret;
@@ -418,7 +419,9 @@ RelationalDB::queueRetrieve(cta::common::dataStructures::RetrieveRequest& rqst,
     rreqMutex.release();
     rReq->insert();
     sqlconn.reset();
-    logContext.log(cta::log::INFO, "In RelationalDB::queueRetrieve(): Finished enqueueing request.");
+    log::ScopedParamContainer(logContext)
+      .add("totalTime", timeTotal.secs())
+      .log(cta::log::INFO, "In RelationalDB::queueRetrieve(): Finished enqueueing request.");
     return ret;
   } catch (exception::Exception& ex) {
     logContext.log(cta::log::ERR,
