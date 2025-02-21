@@ -502,17 +502,17 @@ std::string listToCommaSeparatedString(const std::list<std::string>& list);
 
 /**
  * Converts a number from a decimal number to a hexidecimal number
- * @param decimalNumber The number that will be transformed
+ * @param decimalNumberStr The number that will be transformed
  * @return the hexadecimal version of the number
  */
-std::string decimalToHexadecimal(const std::string& decimalNumber);
+std::string decimalToHexadecimal(const std::string& decimalNumberStr);
 
 /**
  * Converts a number from a hexadecimal number to a decimal number
- * @param hexadecimalNumber The number that will be transformed
- * @return the hexadecimal version of the number
+ * @param hexadecimalNumberStr The number that will be transformed
+ * @return the decimal version of the number
  */
-std::string hexadecimalToDecimal(const std::string& hexadecimalNumber);
+std::string hexadecimalToDecimal(const std::string& hexadecimalNumberStr);
 
 /**
  * Checks if a string is a valid UUID.

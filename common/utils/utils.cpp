@@ -998,21 +998,18 @@ std::string listToCommaSeparatedString(const std::list<std::string>& list) {
   return oss.str();
 }
 
-std::string decimalToHexadecimal(const std::string& decimalNumber) {
-  std::stringstream fxIdStream;
-  fxIdStream << std::hex << decimalNumber;
-  return fxIdStream.str();
+std::string decimalToHexadecimal(const std::string& decimalNumberStr) {
+  std::stringstream fxidStream;
+  const auto decimalNumber = stol(decimalNumberStr);
+  fxidStream << std::hex << decimalNumber;
+  return fxidStream.str();
 }
 
-std::string hexadecimalToDecimal(const std::string& hexadecimalNumber) {
-  try {
-    auto decimalNum = stol(hexadecimalNumber, nullptr, 16);
-    return std::to_string(decimalNum);
-  } catch (std::invalid_argument & ex) {
-    throw cta::exception::Exception(hexadecimalNumber + " is not a valid hexadecimal number.");
-  } catch (std::out_of_range & ex) {
-    throw cta::exception::Exception(hexadecimalNumber + " is out of range.");
-  }
+std::string hexadecimalToDecimal(const std::string& hexadecimalNumberStr) {
+  std::stringstream fidStream;
+  const auto decimalNumber = stol(hexadecimalNumberStr, nullptr, 16);
+  fidStream << std::dec << decimalNumber;
+  return fidStream.str();
 }
 
 // Check if uuid is correct

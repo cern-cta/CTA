@@ -68,22 +68,7 @@ RecycleTapeFileLsStream::RecycleTapeFileLsStream(const frontend::AdminCmdStream&
   
   searchCriteria.vid = requestMsg.getOptional(OptionString::VID, &has_any);
   
-  auto diskFileIdHex = requestMsg.getOptional(OptionString::FXID, &has_any);
-  auto diskFileIdStr = requestMsg.getOptional(OptionString::DISK_FILE_ID, &has_any);
-  if(diskFileIdHex && diskFileIdStr) {
-    throw exception::UserError("File ID can't be received in both string (" + diskFileIdStr.value() + ") and hexadecimal (" + diskFileIdHex.value() + ") formats");
-  }
-  if(diskFileIdHex) {
-    try {
-      diskFileIdStr = utils::hexadecimalToDecimal(diskFileIdHex.value());
-    } catch (exception::Exception &) {
-      throw cta::exception::UserError(diskFileIdHex.value() + " is not a valid hexadecimal file ID value");
-    }
-  } else if(diskFileIdStr) {
-    if (!utils::isValidDecimal(diskFileIdStr.value()) && !utils::isValidUUID(diskFileIdStr.value())) {
-      throw cta::exception::UserError(diskFileIdStr.value() + " is not a valid decimal or UUID file ID value");
-    }
-  }
+  auto diskFileIdStr = requestMsg.getAndValidateDiskFileIdOptional(&has_any);
 
   searchCriteria.diskFileIds = requestMsg.getOptional(OptionStrList::FILE_ID, &has_any);
   if (diskFileIdStr){

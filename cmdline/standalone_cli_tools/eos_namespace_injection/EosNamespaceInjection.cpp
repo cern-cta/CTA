@@ -76,7 +76,7 @@ void IStreamBuffer<cta::xrd::Data>::DataCallback(cta::xrd::Data record) const {
       g_metaDataObjectCatalogue.size          = std::to_string(item.af().size());
       g_metaDataObjectCatalogue.storageClass  = item.af().storage_class();
       g_metaDataObjectCatalogue.creationTime  = std::to_string(item.af().creation_time());
-      g_metaDataObjectCatalogue.fxId          = item.df().disk_id();
+      g_metaDataObjectCatalogue.diskId          = item.df().disk_id();
       g_metaDataObjectCatalogue.diskInstance  = item.df().disk_instance();
 
       std::string checksumType("NONE");
@@ -152,10 +152,10 @@ int EosNamespaceInjection::exceptionThrowingMain(const int argc, char *const *co
     const auto newFid = createFileInEos(metaDataFromUser, parentId, uid, gid);
     checkFileCreated(newFid);
 
-    std::string newFxId = cta::utils::decimalToHexadecimal(std::to_string(newFid));
-    updateFxidAndDiskInstanceInCatalogue(metaDataFromUser.archiveId, newFxId, metaDataFromUser.diskInstance);
+    auto diskFileId = std::to_string(newFid);
+    updateDiskFileIdAndDiskInstanceInCatalogue(metaDataFromUser.archiveId, diskFileId, metaDataFromUser.diskInstance);
 
-    checkEosCtaConsistency(archiveId, newFxId, metaDataFromUser);
+    checkEosCtaConsistency(archiveId, diskFileId, metaDataFromUser);
   }
   createTxtFileWithSkippedMetadata();
   return 0;
@@ -164,7 +164,7 @@ int EosNamespaceInjection::exceptionThrowingMain(const int argc, char *const *co
 //------------------------------------------------------------------------------
 // updateFxidAndDiskInstanceInCatalogue
 //------------------------------------------------------------------------------
-void EosNamespaceInjection::updateFxidAndDiskInstanceInCatalogue(const std::string &archiveId, const std::string &fxId, const std::string &diskInstance) const {
+void EosNamespaceInjection::updateDiskFileIdAndDiskInstanceInCatalogue(const std::string &archiveId, const std::string &diskFileId, const std::string &diskInstance) const {
   cta::xrd::Request request;
 
   const auto admincmd = request.mutable_admincmd();
@@ -175,28 +175,21 @@ void EosNamespaceInjection::updateFxidAndDiskInstanceInCatalogue(const std::stri
   admincmd->set_subcmd(cta::admin::AdminCmd::SUBCMD_CH);
 
   {
-    const auto key = cta::admin::OptionString::FXID;
+    constexpr auto key = cta::admin::OptionString::DISK_FILE_ID;
     const auto new_opt = admincmd->add_option_str();
     new_opt->set_key(key);
-    new_opt->set_value(fxId);
+    new_opt->set_value(diskFileId);
   }
 
   {
-    const auto key = cta::admin::OptionString::DISK_FILE_ID;
-    const auto new_opt = admincmd->add_option_str();
-    new_opt->set_key(key);
-    new_opt->set_value(fxId);
-  }
-
-  {
-    const auto key = cta::admin::OptionString::DISK_INSTANCE;
+    constexpr auto key = cta::admin::OptionString::DISK_INSTANCE;
     const auto new_opt = admincmd->add_option_str();
     new_opt->set_key(key);
     new_opt->set_value(diskInstance);
   }
 
   {
-    const auto key = cta::admin::OptionStrList::FILE_ID;
+    constexpr auto key = cta::admin::OptionStrList::FILE_ID;
     const auto new_opt = admincmd->add_option_str_list();
     new_opt->set_key(key);
     new_opt->add_item(archiveId);
@@ -386,14 +379,15 @@ uint64_t EosNamespaceInjection::createFileInEos(const MetaDataObject &metaDataFr
 // getArchiveFileIdFromEOS
 //------------------------------------------------------------------------------
 std::pair<ArchiveId, Checksum> EosNamespaceInjection::getArchiveFileIdAndChecksumFromEOS(
-  const std::string& diskInstance, const std::string& fxId) {
-  auto fid = strtoul(fxId.c_str(), nullptr, 10);
+  const std::string& diskInstance, const std::string& diskFileId) const {
+  const auto fid = strtoul(diskFileId.c_str(), nullptr, 10);
   if(fid < 1) {
-    throw std::runtime_error(fid + " (base 10) is not a valid disk file ID");
+    throw std::runtime_error(diskFileId + " is not a valid EOS base-10 disk file ID");
   }
   {
     std::list<cta::log::Param> params;
     params.push_back(cta::log::Param("diskInstance", diskInstance));
+    params.push_back(cta::log::Param("diskFileId", diskFileId));
     params.push_back(cta::log::Param("fid", fid));
     std::stringstream ss;
     ss << std::hex << fid;
@@ -443,18 +437,18 @@ void EosNamespaceInjection::setCmdLineArguments(const int argc, char *const *con
 //------------------------------------------------------------------------------
 // checkEosCtaConsistency
 //------------------------------------------------------------------------------
-bool EosNamespaceInjection::checkEosCtaConsistency(const uint64_t& archiveId, const std::string& newFxIdEos, const MetaDataObject &metaDataFromUser) {
+bool EosNamespaceInjection::checkEosCtaConsistency(const uint64_t& archiveId, const std::string& newDiskFileId, const MetaDataObject &metaDataFromUser) {
   getMetaDataFromCatalogue(archiveId);
-  const auto [eosArchiveFileId, eosChecksumDecimal] = getArchiveFileIdAndChecksumFromEOS(metaDataFromUser.diskInstance, newFxIdEos);
+  const auto [eosArchiveFileId, eosChecksumDecimal] = getArchiveFileIdAndChecksumFromEOS(metaDataFromUser.diskInstance, newDiskFileId);
   const std::string eosChecksum = cta::utils::decimalToHexadecimal(eosChecksumDecimal);
   const auto& ctaChecksum = g_metaDataObjectCatalogue.checksumValue;
   std::list<cta::log::Param> params;
   params.push_back(cta::log::Param("archiveFileId", archiveId));
-  params.push_back(cta::log::Param("diskFileId in EOS for new file", newFxIdEos));
-  params.push_back(cta::log::Param("diskFileId in Catalogue", g_metaDataObjectCatalogue.fxId));
+  params.push_back(cta::log::Param("diskFileId in EOS for new file", newDiskFileId));
+  params.push_back(cta::log::Param("diskFileId in Catalogue", g_metaDataObjectCatalogue.diskId));
   params.push_back(cta::log::Param("diskInstance in Catalogue", g_metaDataObjectCatalogue.diskInstance));
   params.push_back(cta::log::Param("checksum", ctaChecksum));
-  if(eosArchiveFileId == archiveId && eosChecksum == ctaChecksum && g_metaDataObjectCatalogue.fxId == newFxIdEos) {
+  if(eosArchiveFileId == archiveId && eosChecksum == ctaChecksum && g_metaDataObjectCatalogue.diskId == newDiskFileId) {
     m_log(cta::log::INFO, "File metadata in EOS and CTA matches", params);
     return true;
   } else {
@@ -510,8 +504,7 @@ void EosNamespaceInjection::checkArchiveIdExistsInCatalogue(const uint64_t &arch
 // checkExistingPathHasInvalidMetadata
 //------------------------------------------------------------------------------
 void EosNamespaceInjection::checkExistingPathHasInvalidMetadata(const uint64_t &archiveId, const uint64_t& fid, const MetaDataObject& metaDataFromUser) {
-  const std::string fxId = cta::utils::decimalToHexadecimal(std::to_string(fid));
-  if(!checkEosCtaConsistency(archiveId, fxId, metaDataFromUser)) {
+  if(!checkEosCtaConsistency(archiveId, std::to_string(fid), metaDataFromUser)) {
     throw cta::cliTool::EosNameSpaceInjectionError("The file with path " + metaDataFromUser.eosPath + " already exists for instance " + metaDataFromUser.diskInstance + ". This tool does not overwrite existing files");
   }
 }

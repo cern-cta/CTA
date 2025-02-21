@@ -64,23 +64,7 @@ TapeFileLsStream::TapeFileLsStream(const frontend::AdminCmdStream& requestMsg,
   cta::catalogue::TapeFileSearchCriteria searchCriteria;
 
   searchCriteria.vid = requestMsg.getOptional(OptionString::VID, &has_any);
-
-  auto diskFileIdHex = requestMsg.getOptional(OptionString::FXID, &has_any);
-  auto diskFileIdStr = requestMsg.getOptional(OptionString::DISK_FILE_ID, &has_any);
-  if(diskFileIdHex && diskFileIdStr) {
-    throw exception::UserError("File ID can't be received in both string (" + diskFileIdStr.value() + ") and hexadecimal (" + diskFileIdHex.value() + ") formats");
-  }
-  if(diskFileIdHex) {
-    try {
-      diskFileIdStr = utils::hexadecimalToDecimal(diskFileIdHex.value());
-    } catch (exception::Exception &) {
-      throw cta::exception::UserError(diskFileIdHex.value() + " is not a valid hexadecimal file ID value");
-    }
-  } else if(diskFileIdStr) {
-    if (!utils::isValidDecimal(diskFileIdStr.value()) && !utils::isValidUUID(diskFileIdStr.value())) {
-      throw cta::exception::UserError(diskFileIdStr.value() + " is not a valid decimal or UUID file ID value");
-    }
-  }
+  auto diskFileIdStr = requestMsg.getAndValidateDiskFileIdOptional(&has_any);
 
   // Disk file IDs can be a list or a single ID
   searchCriteria.diskFileIds = requestMsg.getOptional(OptionStrList::FILE_ID, &has_any);
@@ -93,7 +77,7 @@ TapeFileLsStream::TapeFileLsStream(const frontend::AdminCmdStream& requestMsg,
   searchCriteria.archiveFileId = requestMsg.getOptional(OptionUInt64::ARCHIVE_FILE_ID, &has_any);
 
   if(!has_any) {
-    throw cta::exception::UserError("Must specify at least one of the following search options: vid, fxid, fxidfile or archiveFileId");
+    throw cta::exception::UserError("Must specify at least one of the following search options: vid, fxid, diskfileid, fxidfile or archiveFileId");
   }
 
   m_tapeFileItor = m_catalogue.ArchiveFile()->getArchiveFilesItor(searchCriteria);
