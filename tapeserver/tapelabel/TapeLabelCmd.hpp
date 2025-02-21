@@ -130,7 +130,7 @@ private:
   /**
    * Use Logical Block Protection?
    */
-  const bool m_useLbp = true;
+  bool m_useLbp = true;
   
   /**
    * Does the drive support Logical Block Protection?
