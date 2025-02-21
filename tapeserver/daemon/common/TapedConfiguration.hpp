@@ -209,6 +209,13 @@ struct TapedConfiguration {
   };
 
   //----------------------------------------------------------------------------
+  // Tape encryption support
+  //----------------------------------------------------------------------------
+  cta::SourcedParameter<std::string> useLbp {
+    "taped", "UseLBP", "yes", "Compile time default"
+  };
+
+  //----------------------------------------------------------------------------
   // RMC Connection Options
   //----------------------------------------------------------------------------  
   cta::SourcedParameter<uint16_t> rmcPort {

@@ -1015,7 +1015,7 @@ castor::tape::tapeserver::daemon::Session::EndOfSessionAction DriveHandler::exec
   dataTransferConfig.maxFilesBeforeFlush = m_tapedConfig.archiveFlushBytesFiles.value().maxFiles;
   dataTransferConfig.nbBufs = m_tapedConfig.bufferCount.value();
   dataTransferConfig.nbDiskThreads = m_tapedConfig.nbDiskThreads.value();
-  dataTransferConfig.useLbp = true;
+  dataTransferConfig.useLbp = (m_tapedConfig.useLbp.value() == "yes");
   dataTransferConfig.useRAO = (m_tapedConfig.useRAO.value() == "yes");
   dataTransferConfig.raoLtoAlgorithm = m_tapedConfig.raoLtoAlgorithm.value();
   dataTransferConfig.raoLtoAlgorithmOptions = m_tapedConfig.raoLtoOptions.value();
