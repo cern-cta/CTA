@@ -432,6 +432,7 @@ void TapeLabelCmd::readAndSetConfiguration(const std::string &userName,
   params.push_back(cta::log::Param("rawLibrarySlot", m_rawLibrarySlot));
   params.push_back(cta::log::Param("logicalLibrary", m_logicalLibrary));
   params.push_back(cta::log::Param("unitName", m_unitName));
+  params.push_back(cta::log::Param("useLbp", m_useLbp));
   m_log(cta::log::INFO, "Label session read configuration", params);
 }
 
