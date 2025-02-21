@@ -53,7 +53,7 @@ drive::DriveInterface * drive::createDrive(SCSI::DeviceInfo di,
     sw.close(fd);
   }
 
-  if (std::string::npos != serialNumber.find("MHVTL")) {
+  if (std::string::npos != di.product.find("MHVTL") || std::string::npos != serialNumber.find("MHVTL")) {
     return new DriveMHVTL(di, sw);
   } else if (std::string::npos != di.product.find("T10000")) {
     return new DriveT10000(di, sw);
