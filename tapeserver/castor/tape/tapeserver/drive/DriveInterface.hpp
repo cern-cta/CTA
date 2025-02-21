@@ -281,4 +281,9 @@ class DriveInterface {
 
 DriveInterface * createDrive(SCSI::DeviceInfo di, System::virtualWrapper & sw);
 
+
+std::string getSerialNumber(const int& fd);
+
+
+
 } // namespace castor::tape::tapeserver::drive
