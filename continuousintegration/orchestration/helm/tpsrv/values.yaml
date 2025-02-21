@@ -13,6 +13,7 @@ conf:
     watchdogIdleSessionTimer: 2 # Make tape servers more responsive, thus improving CI test speed
     logMask: "INFO"
     useEncryption: "no"
+    useLBP: "no" # Disable LBP for dev/CI/stress environments
     tapeCacheMaxAgeSecs: 1
     retrieveQueueCacheMaxAgeSecs: 1
     secProtocol: "sss"
