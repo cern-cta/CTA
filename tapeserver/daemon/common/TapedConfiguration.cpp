@@ -128,6 +128,7 @@ TapedConfiguration TapedConfiguration::createFromConfigPath(
   ret.logFormat.setFromConfigurationFile(cf, driveTapedConfigPath);
   ret.externalEncryptionKeyScript.setFromConfigurationFile(cf, driveTapedConfigPath);
   ret.useEncryption.setFromConfigurationFile(cf, driveTapedConfigPath);
+  ret.useLbp.setFromConfigurationFile(cf, driveTapedConfigPath);
   // Memory management
   ret.bufferSizeBytes.setFromConfigurationFile(cf, driveTapedConfigPath);
   ret.bufferCount.setFromConfigurationFile(cf, driveTapedConfigPath);
@@ -189,6 +190,7 @@ TapedConfiguration TapedConfiguration::createFromConfigPath(
   ret.logMask.log(log);
   ret.externalEncryptionKeyScript.log(log);
   ret.useEncryption.log(log);
+  ret.useLbp.log(log);
 
   ret.bufferSizeBytes.log(log);
   ret.bufferCount.log(log);

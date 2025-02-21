@@ -141,6 +141,13 @@ ObjectStore BackendPath rados://cta@tapecta:cta
 # Path to the external script used to obtain encryption keys.
 taped externalEncryptionKeyScript /usr/local/bin/cta-get-encryption-key.sh
 
+#
+# LOGICAL BLOCK PROTECTION (LBP) SUPPORT
+#
+
+# Force the use of LBP is the drive supports it. Defaults to 'yes' if not set.
+# taped UseLBP yes
+
 # 
 # DISK SPACE MANAGEMENT OPTIONS
 #
