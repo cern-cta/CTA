@@ -41,13 +41,18 @@ drive::DriveInterface * drive::createDrive(SCSI::DeviceInfo di,
     std::string serialNumber = "";
 
     try {
-      cta::exception::Errnum::thrownOnMinusOne(
-        fd = sw.open(m_SCSIInfo.nst_dev.c_str(), O_RDWR | O_NONBLOCK),
-        std::string("Could not open device file: ") + m_SCSIInfo.nst_dev);
-      serialNumber = getSerialNumber(fd);
-    } catch(cta::excetion::Errnum) {
+      cta::exception::Errnum::throwOnMinusOne(
+        fd = sw.open(di.nst_dev.c_str(), O_RDWR | O_NONBLOCK),
+        std::string("Could not open device file: ") + di.nst_dev);
+      serialNumber = getSerialNumber(fd, sw);
+    } catch(cta::exception::Errnum& ) {
       // This code can throw in case we are dealing with a VIRTUAL drive.
       // Do nothing and continue.
+    }
+
+    // Close the fd
+    if(fd != -1){
+      sw.close(fd);
     }
 
     if (std::string::npos != serialNumber.find("MHVTL") ) {
@@ -72,7 +77,7 @@ drive::DriveInterface * drive::createDrive(SCSI::DeviceInfo di,
   }
 }
 
-std::string drive::getSerialNumber(const int& fd){
+std::string drive::getSerialNumber(const int& fd, System::virtualWrapper& sw){
   SCSI::Structures::inquiryCDB_t cdb;
   SCSI::Structures::inquiryUnitSerialNumberData_t inquirySerialData;
   SCSI::Structures::senseData_t<255> senseBuff;
@@ -89,7 +94,7 @@ std::string drive::getSerialNumber(const int& fd){
 
   /* Manage both system error and SCSI errors. */
   cta::exception::Errnum::throwOnMinusOne(
-      m_sysWrapper.ioctl(fd, SG_IO, &sgh),
+      sw.ioctl(fd, SG_IO, &sgh),
       "Failed SG_IO ioctl in DriveGeneric::getSerialNumber");
   SCSI::ExceptionLauncher(sgh, "SCSI error in getSerialNumber:");
   std::string serialNumber;
