@@ -113,6 +113,7 @@ void ReadtpCmd::readAndSetConfiguration(const std::string& userName, const Readt
   m_rawLibrarySlot = driveConfig.driveControlPath.value();
   m_logicalLibrary = driveConfig.driveLogicalLibrary.value();
   m_unitName = driveConfig.driveName.value();
+  m_useLbp = (driveConfig.useLbp.value() == "yes");
 
   // Configure rmc
   m_rmcProxy = std::make_unique<cta::mediachanger::RmcProxy>(
