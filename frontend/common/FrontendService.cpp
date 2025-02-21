@@ -324,24 +324,36 @@ FrontendService::FrontendService(const std::string& configFilename) : m_archiveF
 
   // Configure allowed requests
   {
-    m_acceptRepackRequests =
-      config.getOptionValueStr("cta.schedulerdb.enable_repack_requests").value() == "on" ? true : false;
-    std::list<log::Param> params;
-    params.push_back(log::Param("source", configFilename));
-    params.push_back(log::Param("category", "cta.schedulerdb"));
-    params.push_back(log::Param("key", "enable_repack_requests"));
-    params.push_back(log::Param("value", config.getOptionValueStr("cta.schedulerdb.enable_repack_requests").value()));
-    log(log::INFO, "Configuration entry", params);
+    // default value for both repack and user requests is "on"
+    auto acceptRepackRequests = config.getOptionValueStr("cta.schedulerdb.enable_repack_requests");
+    if (!acceptRepackRequests.has_value()) {
+      log(log::INFO, "'cta.schedulerdb.enable_repack_requests' not specified in config, defaulting to \"on\"");
+      m_acceptRepackRequests = true;
+    } else {
+      m_acceptRepackRequests = (acceptRepackRequests.value() == "on");
+      std::list<log::Param> params;
+      params.push_back(log::Param("source", configFilename));
+      params.push_back(log::Param("category", "cta.schedulerdb"));
+      params.push_back(log::Param("key", "enable_repack_requests"));
+      params.push_back(log::Param("value", config.getOptionValueStr("cta.schedulerdb.enable_repack_requests").value()));
+      log(log::INFO, "Configuration entry", params);
+    }
   }
 
   {
-    m_acceptUserRequests = config.getOptionValueStr("cta.schedulerdb.enable_user_requests") == "on" ? true : false;
-    std::list<log::Param> params;
-    params.push_back(log::Param("source", configFilename));
-    params.push_back(log::Param("category", "cta.schedulerdb"));
-    params.push_back(log::Param("key", "enable_user_requests"));
-    params.push_back(log::Param("value", config.getOptionValueStr("cta.schedulerdb.enable_user_requests").value()));
-    log(log::INFO, "Configuration entry", params);
+    auto acceptUserRequests = config.getOptionValueStr("cta.schedulerdb.enable_user_requests");
+    if (!acceptUserRequests.has_value()) {
+      log(log::INFO, "'cta.schedulerdb.enable_user_requests' not specified in config, defaulting to \"on\"");
+      m_acceptUserRequests = true;
+    } else {
+      m_acceptUserRequests = (acceptUserRequests.value() == "on");
+      std::list<log::Param> params;
+      params.push_back(log::Param("source", configFilename));
+      params.push_back(log::Param("category", "cta.schedulerdb"));
+      params.push_back(log::Param("key", "enable_user_requests"));
+      params.push_back(log::Param("value", config.getOptionValueStr("cta.schedulerdb.enable_user_requests").value()));
+      log(log::INFO, "Configuration entry", params);
+    }
   }
 
   {
