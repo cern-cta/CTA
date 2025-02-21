@@ -208,6 +208,12 @@ taped externalEncryptionKeyScript (no default)
 
 :   Path to the external script used to obtain encryption keys.
 
+## Logical Block Protection (LBP) options
+
+taped UseLBP *yes*
+
+:   If set  to *yes* force the use of LBP if the drive supports it.
+
 ## Disk space management options
 
 taped externalFreeDiskSpaceScript (no default)

@@ -18,6 +18,7 @@ data:
     taped MountCriteria {{ $.Values.conf.taped.mountCriteria }}
     taped WatchdogIdleSessionTimer {{ $.Values.conf.taped.watchdogIdleSessionTimer }}
     taped UseEncryption {{ $.Values.conf.taped.useEncryption }}
+    taped UseLBP {{ $.Values.conf.taped.useLBP }}
     taped DriveName {{ $drive.name }}
     taped DriveLogicalLibrary {{ $drive.name }}
     taped DriveDevice /dev/{{ $drive.device }}
