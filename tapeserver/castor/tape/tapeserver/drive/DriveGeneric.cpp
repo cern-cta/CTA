@@ -33,7 +33,24 @@ namespace castor::tape::tapeserver {
 
 drive::DriveInterface * drive::createDrive(SCSI::DeviceInfo di,
     System::virtualWrapper& sw) {
-    if (std::string::npos != di.product.find("MHVTL") || std::string::npos != di.vendor.find("MHVTL") || std::string::npos != getSerialNumber().find("MHVTL")) {
+
+    // For now we need this code as we can only determine that the drive
+    // is an mhVTL drive from the serial number and that information is
+    // not available in the sysfs of the device.
+    int fd = -1;
+    std::string serialNumber = "";
+
+    try {
+      cta::exception::Errnum::thrownOnMinusOne(
+        fd = sw.open(m_SCSIInfo.nst_dev.c_str(), O_RDWR | O_NONBLOCK),
+        std::string("Could not open device file: ") + m_SCSIInfo.nst_dev);
+      serialNumber = getSerialNumber(fd);
+    } catch(cta::excetion::Errnum) {
+      // This code can throw in case we are dealing with a VIRTUAL drive.
+      // Do nothing and continue.
+    }
+
+    if (std::string::npos != serialNumber.find("MHVTL") ) {
     return new DriveMHVTL(di, sw);
   } else if (std::string::npos != di.product.find("T10000")) {
     return new DriveT10000(di, sw);
@@ -53,6 +70,32 @@ drive::DriveInterface * drive::createDrive(SCSI::DeviceInfo di,
   } else {
     throw cta::exception::Exception(std::string("Unsupported drive type: ") + di.product);
   }
+}
+
+std::string drive::getSerialNumber(const int& fd){
+  SCSI::Structures::inquiryCDB_t cdb;
+  SCSI::Structures::inquiryUnitSerialNumberData_t inquirySerialData;
+  SCSI::Structures::senseData_t<255> senseBuff;
+  SCSI::Structures::LinuxSGIO_t sgh;
+
+  cdb.EVPD = 1; /* Enable Vital Product Data */
+  cdb.pageCode = SCSI::inquiryVPDPages::unitSerialNumber;
+  SCSI::Structures::setU16(cdb.allocationLength, sizeof(inquirySerialData));
+
+  sgh.setCDB(&cdb);
+  sgh.setDataBuffer(&inquirySerialData);
+  sgh.setSenseBuffer(&senseBuff);
+  sgh.dxfer_direction = SG_DXFER_FROM_DEV;
+
+  /* Manage both system error and SCSI errors. */
+  cta::exception::Errnum::throwOnMinusOne(
+      m_sysWrapper.ioctl(fd, SG_IO, &sgh),
+      "Failed SG_IO ioctl in DriveGeneric::getSerialNumber");
+  SCSI::ExceptionLauncher(sgh, "SCSI error in getSerialNumber:");
+  std::string serialNumber;
+  serialNumber.append(inquirySerialData.productSerialNumber, inquirySerialData.pageLength);
+
+  return serialNumber;
 }
 
 drive::DriveGeneric::DriveGeneric(SCSI::DeviceInfo di, System::virtualWrapper& sw) : m_SCSIInfo(di),
