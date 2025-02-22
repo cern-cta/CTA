@@ -75,7 +75,7 @@ build-cta-rpm:
       if [ "${SKIP_UNIT_TEST}" == "TRUE" ]; then
         UNIT_TEST_OPTION="--skip-unit-tests"
       fi
-    - ./continuousintegration/ci_helpers/build_rpm.sh --build-dir build_rpm
+    - ./continuousintegration/build/build_rpm.sh --build-dir build_rpm
                                                       --build-generator "${BUILD_GENERATOR}"
                                                       --create-build-dir
                                                       --srpm-dir build_srpm/RPM/SRPMS
