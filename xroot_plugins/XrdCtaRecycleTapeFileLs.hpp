@@ -68,18 +68,12 @@ RecycleTapeFileLsStream::RecycleTapeFileLsStream(const frontend::AdminCmdStream&
   
   searchCriteria.vid = requestMsg.getOptional(OptionString::VID, &has_any);
   
-  auto diskFileId = requestMsg.getOptional(OptionString::FXID, &has_any);
+  auto diskFileIdStr = requestMsg.getAndValidateDiskFileIdOptional(&has_any);
 
   searchCriteria.diskFileIds = requestMsg.getOptional(OptionStrList::FILE_ID, &has_any);
-  
-  if (diskFileId){
-    if (auto fid = diskFileId.value(); !utils::isValidID(fid)) {
-      throw cta::exception::UserError(fid + " is not a valid file ID");
-    }
-
-    // single option on the command line we need to do the conversion ourselves.
+  if (diskFileIdStr){
     if(!searchCriteria.diskFileIds) searchCriteria.diskFileIds = std::vector<std::string>();
-    searchCriteria.diskFileIds->push_back(diskFileId.value());
+    searchCriteria.diskFileIds->push_back(diskFileIdStr.value());
   }
   searchCriteria.diskInstance = requestMsg.getOptional(OptionString::INSTANCE, &has_any);
   searchCriteria.archiveFileId = requestMsg.getOptional(OptionUInt64::ARCHIVE_FILE_ID, &has_any);

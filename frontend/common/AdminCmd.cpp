@@ -1195,7 +1195,7 @@ void AdminCmd::processTapeFile_Rm(xrd::Response& response) {
   auto& reason        = getRequired(OptionString::REASON);
   auto archiveFileId  = getOptional(OptionUInt64::ARCHIVE_FILE_ID);
   auto instance       = getOptional(OptionString::INSTANCE);
-  auto diskFileId     = getOptional(OptionString::FXID);
+  auto diskFileIdStr  = getAndValidateDiskFileIdOptional();
 
   catalogue::TapeFileSearchCriteria searchCriteria;
   searchCriteria.vid = vid;
@@ -1203,14 +1203,12 @@ void AdminCmd::processTapeFile_Rm(xrd::Response& response) {
   if(archiveFileId) {
     searchCriteria.archiveFileId = archiveFileId.value();
   }
-  if(diskFileId) {
-    auto fid = strtol(diskFileId.value().c_str(), nullptr, 16);
-    if(fid < 1 || fid == LONG_MAX) {
-      throw exception::UserError(diskFileId.value() + " is not a valid file ID");
-    }
+
+  if(diskFileIdStr) {
     searchCriteria.diskFileIds = std::vector<std::string>();
-    searchCriteria.diskFileIds.value().push_back(std::to_string(fid));
+    searchCriteria.diskFileIds.value().push_back(diskFileIdStr.value());
   }
+
   if(instance) {
     searchCriteria.diskInstance = instance.value();
   }
@@ -1591,6 +1589,33 @@ std::string AdminCmd::setDriveState(const std::string& regex, const common::data
   return cmdlineOutput.str();
 }
 
+std::optional<std::string> AdminCmd::getAndValidateDiskFileIdOptional(bool* has_any) const {
+  using namespace cta::admin;
+  auto diskFileIdHex  = getOptional(OptionString::FXID, has_any);
+  auto diskFileIdStr  = getOptional(OptionString::DISK_FILE_ID, has_any);
+
+  if(diskFileIdHex && diskFileIdStr) {
+    throw exception::UserError("File ID can't be received in both string (" + diskFileIdStr.value() + ") and hexadecimal (" + diskFileIdHex.value() + ") formats");
+  }
+
+  if(diskFileIdHex) {
+    // If provided, convert FXID (hexadecimal) to DISK_FILE_ID (decimal)
+    if (!utils::isValidHex(diskFileIdHex.value())) {
+      throw cta::exception::UserError(diskFileIdHex.value() + " is not a valid hexadecimal file ID value");
+    }
+    return utils::hexadecimalToDecimal(diskFileIdHex.value());
+  }
+
+  if(diskFileIdStr) {
+    if (!utils::isValidDecimal(diskFileIdStr.value()) && !utils::isValidUUID(diskFileIdStr.value())) {
+      throw cta::exception::UserError(diskFileIdStr.value() + " is not a valid decimal or UUID file ID value");
+    }
+    return diskFileIdStr;
+  }
+
+  return std::nullopt;
+}
+
 void AdminCmd::processRecycleTapeFile_Restore(xrd::Response& response) {
   using namespace cta::admin;
 
@@ -1600,11 +1625,10 @@ void AdminCmd::processRecycleTapeFile_Restore(xrd::Response& response) {
   catalogue::RecycleTapeFileSearchCriteria searchCriteria;
 
   searchCriteria.vid = getOptional(OptionString::VID, &has_any);
-  auto diskFileId = getRequired(OptionString::FXID);
-  
-  auto fid = strtol(diskFileId.c_str(), nullptr, 16);
-  if(fid < 1 || fid == LONG_MAX) {
-    throw exception::UserError(diskFileId + " is not a valid file ID");
+
+  const auto diskFileIdStr = getAndValidateDiskFileIdOptional();
+  if(!diskFileIdStr) {
+    throw exception::UserError("Must specify at least one of the following search options: fxid, diskfileid");
   }
 
   // Disk instance on its own does not give a valid set of search criteria (no &has_any)
@@ -1616,7 +1640,7 @@ void AdminCmd::processRecycleTapeFile_Restore(xrd::Response& response) {
   if(!has_any) {
     throw exception::UserError("Must specify at least one of the following search options: vid, fxid, fxidfile or archiveFileId");
   }
-  m_catalogue.FileRecycleLog()->restoreFileInRecycleLog(searchCriteria, std::to_string(fid));
+  m_catalogue.FileRecycleLog()->restoreFileInRecycleLog(searchCriteria, diskFileIdStr.value());
   response.set_type(xrd::Response::RSP_SUCCESS);
 }
 
@@ -1625,7 +1649,8 @@ void AdminCmd::processModifyArchiveFile(xrd::Response& response) {
 
   try {
     std::optional<std::string> newStorageClassName = getOptional(OptionString::STORAGE_CLASS);
-    std::optional<std::string> fxId = getOptional(OptionString::FXID);
+
+    std::optional<std::string> diskFileIdStr = getAndValidateDiskFileIdOptional();
     std::optional<std::string> diskInstance = getOptional(OptionString::DISK_INSTANCE);
 
     auto archiveFileIds = getRequired(OptionStrList::FILE_ID);
@@ -1638,9 +1663,9 @@ void AdminCmd::processModifyArchiveFile(xrd::Response& response) {
       }
     }
     // call is from cta-eos-namespace-inject
-    else if(fxId && diskInstance) {
+    else if(diskFileIdStr && diskInstance) {
       m_catalogue.ArchiveFile()->modifyArchiveFileFxIdAndDiskInstance(utils::toUint64(archiveFileIds[0]),
-        fxId.value(), diskInstance.value());
+        diskFileIdStr.value(), diskInstance.value());
     } else {
       throw exception::UserError("Must specify either Storage Class or Disk File ID and Disk Instance");
     }

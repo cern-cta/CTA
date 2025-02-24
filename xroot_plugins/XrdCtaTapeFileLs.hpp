@@ -64,22 +64,20 @@ TapeFileLsStream::TapeFileLsStream(const frontend::AdminCmdStream& requestMsg,
   cta::catalogue::TapeFileSearchCriteria searchCriteria;
 
   searchCriteria.vid = requestMsg.getOptional(OptionString::VID, &has_any);
+  auto diskFileIdStr = requestMsg.getAndValidateDiskFileIdOptional(&has_any);
+
   // Disk file IDs can be a list or a single ID
-  auto diskFileId = requestMsg.getOptional(OptionString::FXID, &has_any);
   searchCriteria.diskFileIds = requestMsg.getOptional(OptionStrList::FILE_ID, &has_any);
-  if(diskFileId.has_value()) {
-    if (auto fid = diskFileId.value(); !utils::isValidID(fid)) {
-      throw cta::exception::UserError(fid + " is not a valid file ID");
-    }
+  if(diskFileIdStr) {
     if(!searchCriteria.diskFileIds) searchCriteria.diskFileIds = std::vector<std::string>();
-    searchCriteria.diskFileIds->push_back(diskFileId.value());
+    searchCriteria.diskFileIds->push_back(diskFileIdStr.value());
   }
   searchCriteria.diskInstance = requestMsg.getOptional(OptionString::INSTANCE, &has_any);
 
   searchCriteria.archiveFileId = requestMsg.getOptional(OptionUInt64::ARCHIVE_FILE_ID, &has_any);
 
   if(!has_any) {
-    throw cta::exception::UserError("Must specify at least one of the following search options: vid, fxid, fxidfile or archiveFileId");
+    throw cta::exception::UserError("Must specify at least one of the following search options: vid, fxid, diskfileid, fxidfile or archiveFileId");
   }
 
   m_tapeFileItor = m_catalogue.ArchiveFile()->getArchiveFilesItor(searchCriteria);

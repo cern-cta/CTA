@@ -317,37 +317,36 @@ void RestoreFilesCmd::restoreDeletedFileCopyCta(const cta::admin::RecycleTapeFil
   admincmd.set_subcmd(cta::admin::AdminCmd::SUBCMD_RESTORE);
 
   {
-    auto key = cta::admin::OptionString::VID;
-    auto new_opt = admincmd.add_option_str();
+    constexpr auto key = cta::admin::OptionString::VID;
+    const auto new_opt = admincmd.add_option_str();
     new_opt->set_key(key);
     new_opt->set_value(file.vid());
   }
   {
-    auto key = cta::admin::OptionString::INSTANCE;
-    auto new_opt = admincmd.add_option_str();
+    constexpr auto key = cta::admin::OptionString::INSTANCE;
+    const auto new_opt = admincmd.add_option_str();
     new_opt->set_key(key);
     new_opt->set_value(file.disk_instance());
   }
   {
-    auto key = cta::admin::OptionUInt64::ARCHIVE_FILE_ID;
-    auto new_opt = admincmd.add_option_uint64();
+    constexpr auto key = cta::admin::OptionUInt64::ARCHIVE_FILE_ID;
+    const auto new_opt = admincmd.add_option_uint64();
     new_opt->set_key(key);
     new_opt->set_value(file.archive_file_id());
   }
   {
-    auto key = cta::admin::OptionUInt64::COPY_NUMBER;
-    auto new_opt = admincmd.add_option_uint64();
+    constexpr auto key = cta::admin::OptionUInt64::COPY_NUMBER;
+    const auto new_opt = admincmd.add_option_uint64();
     new_opt->set_key(key);
     new_opt->set_value(file.copy_nb());
   }
   {
-    auto key = cta::admin::OptionString::FXID;
-    auto new_opt = admincmd.add_option_str();
+    constexpr auto key = cta::admin::OptionString::DISK_FILE_ID;
+    const auto new_opt = admincmd.add_option_str();
 
-    if (!utils::isValidID(file.disk_file_id())) {
+    if (!utils::isValidDecimal(file.disk_file_id()) && !utils::isValidUUID(file.disk_file_id())) {
       throw std::runtime_error(file.disk_file_id() + " is not a valid disk file ID");
     }
-    params.emplace_back("fid", file.disk_file_id());
     new_opt->set_key(key);
     new_opt->set_value(file.disk_file_id());
   }

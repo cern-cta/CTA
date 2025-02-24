@@ -112,6 +112,19 @@ public:
     return opt_it != m_option_bool.end() && opt_it->second;
   }
 
+  /*!
+   * Both parameters FXID and DISK_FILE_ID expect the same information but with different formats.
+   * They can't both be set simultaneously, to avoid inconsistencies.
+   *
+   * This function tries to parse one of these values and return it as a string (integer or UUID).
+   *
+   * @throws UserError if both FXID and DISK_FILE_ID are defined
+   * @throws UserError if format of FXID or DISK_FILE_ID is wrong
+   *
+   * @return       The disk file ID as a string (integer or UUID), or nullopt if none defined.
+   */
+  std::optional<std::string> getAndValidateDiskFileIdOptional(bool* has_any = nullptr) const;
+
 protected:
   /*!
    * Convert AdminCmd <Cmd, SubCmd> pair to an integer so that it can be used in a switch statement

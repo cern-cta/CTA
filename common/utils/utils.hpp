@@ -501,11 +501,18 @@ std::list<std::string> commaSeparatedStringToList(const std::string& commaSepara
 std::string listToCommaSeparatedString(const std::list<std::string>& list);
 
 /**
- * Converts a number from a decimal number to a hexidecimal number
- * @param decimalNumber The number that will be transformed
- * @return the hexadecimal version of the number
+ * Converts a number from decimal to hexadecimal representation
+ * @param decimalNumberStr String containing the decimal number that will be transformed
+ * @return the hexadecimal representation of the number
  */
-std::string decimalToHexadecimal(const std::string& decimalNumber);
+std::string decimalToHexadecimal(const std::string& decimalNumberStr);
+
+/**
+ * Converts a number from hexadecimal to decimal representation
+ * @param hexadecimalNumberStr String containing the hexadecimal number that will be transformed
+ * @return the decimal representation of the number
+ */
+std::string hexadecimalToDecimal(const std::string& hexadecimalNumberStr);
 
 /**
  * Checks if a string is a valid UUID.

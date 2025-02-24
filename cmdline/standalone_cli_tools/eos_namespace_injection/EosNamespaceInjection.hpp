@@ -74,12 +74,12 @@ class EosNamespaceInjection final: public CmdLineTool {
     bool getMetaDataFromCatalogue(const uint64_t &archiveId) const;
 
     /**
-    * Updates the fxid and the disk instance in the catalogue.
+    * Updates the disk file ID and the disk instance in the catalogue.
     * @param archiveId the archive file id to check
-    * @param fxId The new fxId
-    * @param diskInstnace The new disk instance
+    * @param diskFileId The new diskFileID
+    * @param diskInstance The new disk instance
     */
-    void updateFxidAndDiskInstanceInCatalogue(const std::string &archiveId, const std::string &fxId, const std::string &diskInstance) const;
+    void updateDiskFileIdAndDiskInstanceInCatalogue(const std::string &archiveId, const std::string &diskFileId, const std::string &diskInstance) const;
 
     /**
     * Compares the meta data from the provided json and from the Catalogue
@@ -113,9 +113,9 @@ class EosNamespaceInjection final: public CmdLineTool {
     /**
     * Gets the archive file id and checksum from eos
     * @param diskInstance The eos disk instance
-    * @param fxId The eos file id
+    * @param diskFileId The eos disk file id
     */
-    std::pair<ArchiveId, Checksum> getArchiveFileIdAndChecksumFromEOS(const std::string& diskInstance, const std::string& fxId);
+    std::pair<ArchiveId, Checksum> getArchiveFileIdAndChecksumFromEOS(const std::string& diskInstance, const std::string& diskFileId) const;
 
     /**
     * Validates the command line arguments

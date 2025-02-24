@@ -28,7 +28,7 @@ namespace cta::cliTool {
 struct MetaDataObject {
   std::string eosPath;
   std::string diskInstance;
-  std::string fxId;
+  std::string diskFileId;
   std::string creationTime;
   std::string archiveId;
   std::string size;
