@@ -76,7 +76,7 @@ void IStreamBuffer<cta::xrd::Data>::DataCallback(cta::xrd::Data record) const {
       g_metaDataObjectCatalogue.size          = std::to_string(item.af().size());
       g_metaDataObjectCatalogue.storageClass  = item.af().storage_class();
       g_metaDataObjectCatalogue.creationTime  = std::to_string(item.af().creation_time());
-      g_metaDataObjectCatalogue.diskId          = item.df().disk_id();
+      g_metaDataObjectCatalogue.diskFileId    = item.df().disk_id();
       g_metaDataObjectCatalogue.diskInstance  = item.df().disk_instance();
 
       std::string checksumType("NONE");
@@ -445,10 +445,10 @@ bool EosNamespaceInjection::checkEosCtaConsistency(const uint64_t& archiveId, co
   std::list<cta::log::Param> params;
   params.push_back(cta::log::Param("archiveFileId", archiveId));
   params.push_back(cta::log::Param("diskFileId in EOS for new file", newDiskFileId));
-  params.push_back(cta::log::Param("diskFileId in Catalogue", g_metaDataObjectCatalogue.diskId));
+  params.push_back(cta::log::Param("diskFileId in Catalogue", g_metaDataObjectCatalogue.diskFileId));
   params.push_back(cta::log::Param("diskInstance in Catalogue", g_metaDataObjectCatalogue.diskInstance));
   params.push_back(cta::log::Param("checksum", ctaChecksum));
-  if(eosArchiveFileId == archiveId && eosChecksum == ctaChecksum && g_metaDataObjectCatalogue.diskId == newDiskFileId) {
+  if(eosArchiveFileId == archiveId && eosChecksum == ctaChecksum && g_metaDataObjectCatalogue.diskFileId == newDiskFileId) {
     m_log(cta::log::INFO, "File metadata in EOS and CTA matches", params);
     return true;
   } else {
