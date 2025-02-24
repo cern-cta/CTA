@@ -49,7 +49,7 @@ build_srpm() {
   local create_build_dir=false
   local clean_build_dir=false
   local install=false
-  local num_jobs=$(nproc)
+  local num_jobs=$(nproc --ignore=2)
   local oracle_support=true
   local cmake_build_type=""
 
