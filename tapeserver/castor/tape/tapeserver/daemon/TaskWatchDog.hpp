@@ -200,12 +200,12 @@ protected:
       paramList.push_back(Param("driveTransferSpeedMBps", totalTime?1.0*(m_stats.dataVolume+m_stats.headerVolume)
                 /1000/1000/totalTime:0.0));
       if(m_mount.getMountType() == cta::common::dataStructures::MountType::Retrieve){
-	paramList.push_back(Param("repackFilesCount",m_stats.repackFilesCount));
-	paramList.push_back(Param("userFilesCount",m_stats.userFilesCount));
-	paramList.push_back(Param("verifiedFilesCount",m_stats.verifiedFilesCount));
-	paramList.push_back(Param("repackBytesCount",m_stats.repackBytesCount));
-	paramList.push_back(Param("userBytesCount",m_stats.userBytesCount));
-	paramList.push_back(Param("verifiedBytesCount",m_stats.verifiedBytesCount));
+	      paramList.push_back(Param("repackFilesCount",m_stats.repackFilesCount));
+	      paramList.push_back(Param("userFilesCount",m_stats.userFilesCount));
+	      paramList.push_back(Param("verifiedFilesCount",m_stats.verifiedFilesCount));
+	      paramList.push_back(Param("repackBytesCount",m_stats.repackBytesCount));
+	      paramList.push_back(Param("userBytesCount",m_stats.userBytesCount));
+	      paramList.push_back(Param("verifiedBytesCount",m_stats.verifiedBytesCount));
       }
       // Ship the logs to the initial process
       m_initialProcess.addLogParams(paramList);
@@ -231,7 +231,7 @@ protected:
     // Flush the one-of parameters to delete
     while (m_toDeleteParamsQueue.size())
       paramsToDelete.push_back(m_toDeleteParamsQueue.pop());
-    if (params.size()) {
+    if (paramsToDelete.size()) {
       m_initialProcess.deleteLogParams(paramsToDelete);
     }
   }
