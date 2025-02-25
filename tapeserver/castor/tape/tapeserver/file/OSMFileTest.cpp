@@ -57,7 +57,8 @@ protected:
      */
     m_strTestName = {pTestInfo->name()};
 
-    m_block_size = 262144;
+    //m_block_size = 262144;
+    m_block_size = 16777216;
     m_label = "K00001";
     m_fileToRecall.selectedCopyNb = 1;
     cta::common::dataStructures::TapeFile tf;
