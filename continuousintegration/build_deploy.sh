@@ -102,7 +102,7 @@ build_deploy() {
   local eos_version=""
 
   # Defaults
-  local num_jobs=$(nproc)
+  local num_jobs=$(nproc --ignore=2)
   local restarted=false
   local build_namespace="build"
   local deploy_namespace="dev"

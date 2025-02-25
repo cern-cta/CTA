@@ -59,7 +59,7 @@ build_rpm() {
   local enable_ccache=false
   local install=false
   local install_srpms=false
-  local num_jobs=$(nproc)
+  local num_jobs=$(nproc --ignore=2)
   local cmake_build_type=""
   local clean_build_dir=false
   local create_build_dir=false
