@@ -219,20 +219,56 @@ protected:
     // Shortcut definitions
     typedef cta::log::Param Param;
 
-    // Flush the one-of parameters
-    std::list<Param> params;
-    while (m_toAddParamsQueue.size())
-      params.push_back(m_toAddParamsQueue.pop());
-    if (params.size()) {
-      m_initialProcess.addLogParams(params);
+    // Pop all the params to add and to delete
+    std::list<Param> paramsToAddList;
+    std::list<std::string> paramsToDeleteList;
+    std::set<std::string> paramsToAddSet, paramsToDeleteSet;
+
+    while (m_toAddParamsQueue.size()) {
+      auto param = m_toAddParamsQueue.pop();
+      paramsToAddList.push_back(param);
+      paramsToAddSet.insert(param.getName());
+    }
+    while (m_toDeleteParamsQueue.size()) {
+      auto paramName = m_toDeleteParamsQueue.pop();
+      paramsToDeleteList.push_back(paramName);
+      paramsToDeleteSet.insert(paramName);
     }
 
-    std::list<std::string> paramsToDelete;
+    // We don't need to send params that were both added and deleted
+    // Get the symmetric difference of both sets
+    std::set<std::string> paramsToReportFilter;
+    for (auto & paramAdd : paramsToAddSet) {
+      paramsToReportFilter.insert(paramAdd);
+    }
+    for (auto & paramDel : paramsToDeleteSet) {
+      if (paramsToReportFilter.erase(paramDel) == 0) {
+        paramsToReportFilter.insert(paramDel);
+      }
+    }
+
+    // Flush the one-of parameters to add
+    for (auto it = paramsToAddList.begin(); it != paramsToAddList.end();) {
+      if (!paramsToReportFilter.count(it->getName())) {
+        it = paramsToAddList.erase(it);
+      } else {
+        ++it;
+      }
+    }
+    if (!paramsToAddList.empty()) {
+      m_initialProcess.addLogParams(paramsToAddList);
+    }
+
     // Flush the one-of parameters to delete
-    while (m_toDeleteParamsQueue.size())
-      paramsToDelete.push_back(m_toDeleteParamsQueue.pop());
-    if (paramsToDelete.size()) {
-      m_initialProcess.deleteLogParams(paramsToDelete);
+    for (auto it = paramsToDeleteList.begin(); it != paramsToDeleteList.end();) {
+      if (!paramsToReportFilter.count(*it)) {
+        it = paramsToDeleteList.erase(it);
+      } else {
+        ++it;
+      }
+    }
+    if (!paramsToDeleteList.empty()) {
+      m_initialProcess.deleteLogParams(paramsToDeleteList);
     }
   }
   
