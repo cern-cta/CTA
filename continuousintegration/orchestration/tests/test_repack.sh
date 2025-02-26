@@ -490,7 +490,7 @@ repackMoveAndAddCopies() {
   echo "Marking the tape ${VID_TO_REPACK} as REPACKING"
   modifyTapeStateAndWait ${VID_TO_REPACK} REPACKING
   echo "Launching the repack \"Move and add copies\" test on VID ${VID_TO_REPACK}"
-  kubectl -n ${NAMESPACE} exec ${CLIENT_POD} -c client -- bash /root/repack_systemtest.sh -v ${VID_TO_REPACK} -b ${REPACK_BUFFER_URL} -t 150 -r ${BASE_REPORT_DIRECTORY}/Step$1-MoveAndAddCopies -n repack_ctasystest  || exit 1
+  kubectl -n ${NAMESPACE} exec ${CLIENT_POD} -c client -- bash /root/repack_systemtest.sh -v ${VID_TO_REPACK} -b ${REPACK_BUFFER_URL} -t 300 -r ${BASE_REPORT_DIRECTORY}/Step$1-MoveAndAddCopies -n repack_ctasystest  || exit 1
 
   repackLsResult=`kubectl -n ${NAMESPACE} exec ${CTA_CLI_POD} -c cta-cli -- cta-admin --json repack ls --vid ${VID_TO_REPACK} | jq ". [0]"`
   totalFilesToRetrieve=`echo $repackLsResult | jq -r ".totalFilesToRetrieve"`
@@ -569,7 +569,7 @@ repackTapeRepair() {
   if [[ $nbFileToInject != 0 ]]
   then
     echo "Will inject $nbFileToInject files into the repack buffer directory"
-    bufferDirectory=${REPACK_BUFFER_URL}/${VID_TO_REPACK}
+    bufferDirectory=${REPACK_BUFFER_URL}/TapeRepair-${VID_TO_REPACK}
     echo "Creating buffer directory in \"$bufferDirectory\""
     kubectl -n ${NAMESPACE} exec ${EOS_MGM_POD} -c eos-mgm -- eos mkdir $bufferDirectory
     kubectl -n ${NAMESPACE} exec ${EOS_MGM_POD} -c eos-mgm -- eos chmod 1777 $bufferDirectory
@@ -633,6 +633,8 @@ repackTapeRepair() {
        echo "archivedFiles ($archivedFiles) == totalFilesToArchive ($totalFilesToArchive), OK"
     fi
 
+    # For now manually remove the files in EOS; they were copied there by root so it seems that the tape daemon is not allowed to remove them even though the permissions are set 1777
+    kubectl -n ${NAMESPACE} exec ${EOS_MGM_POD} -c eos-mgm -- eos rm -rF $bufferDirectory
     removeRepackRequest ${VID_TO_REPACK}
     echo "Setting the tape ${VID_TO_REPACK} back to ACTIVE"
     modifyTapeState ${VID_TO_REPACK} ACTIVE
@@ -672,7 +674,7 @@ repackTapeRepairNoRecall() {
   if [[ $nbFileToInject != 0 ]]
   then
     echo "Will inject $nbFileToInject files into the repack buffer directory"
-    bufferDirectory=${REPACK_BUFFER_URL}/${VID_TO_REPACK}
+    bufferDirectory=${REPACK_BUFFER_URL}/TapeRepairNoRecall-${VID_TO_REPACK}
     echo "Creating buffer directory in \"$bufferDirectory\""
     kubectl -n ${NAMESPACE} exec ${EOS_MGM_POD} -c eos-mgm -- eos mkdir $bufferDirectory
     kubectl -n ${NAMESPACE} exec ${EOS_MGM_POD} -c eos-mgm -- eos chmod 1777 $bufferDirectory
@@ -742,6 +744,9 @@ repackTapeRepairNoRecall() {
     else
        echo "archivedFiles ($archivedFiles) == totalFilesToArchive ($totalFilesToArchive), OK"
     fi
+
+    # For now manually remove the files in EOS; they were copied there by root so it seems that the tape daemon is not allowed to remove them
+    kubectl -n ${NAMESPACE} exec ${EOS_MGM_POD} -c eos-mgm -- eos rm -rF $bufferDirectory
 
     removeRepackRequest ${VID_TO_REPACK}
     echo "Setting the tape ${VID_TO_REPACK} back to ACTIVE"

@@ -211,6 +211,10 @@ while test 0 = $(admin_cta --json repack ls --vid ${VID_TO_REPACK} | jq -r '.[0]
 
   if test ${SECONDS_PASSED} == ${WAIT_FOR_REPACK_TIMEOUT}; then
     echo "Timed out after ${WAIT_FOR_REPACK_TIMEOUT} seconds waiting for tape ${VID_TO_REPACK} to be repacked"
+    echo "Result of show queues"
+    admin_cta sq
+    echo "Result of dr ls"
+    admin_cta dr ls
     echo "Result of Repack ls"
     admin_cta repack ls --vid ${VID_TO_REPACK}
     destinationInfos=$(admin_cta --json repack ls --vid ${VID_TO_REPACK} | jq -r ". [0] | .destinationInfos")
