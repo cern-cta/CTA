@@ -58,7 +58,7 @@ void DriveHandlerProxy::addLogParams(const std::list<cta::log::Param> &params) {
   } catch (cta::exception::Exception& e) {
       log::ScopedParamContainer exParams(m_lc);
       exParams.add("bufferLength", buffer.length());
-      exParams.add("bufferMsg", buffer.substr(0, 4096));
+      exParams.add("bufferMsg", buffer);
       m_lc.log(log::ERR, "In DriveHandlerProxy::addLogParams(): Socket send failed.");
       throw e;
   }
@@ -82,7 +82,7 @@ void DriveHandlerProxy::deleteLogParams(const std::list<std::string> &paramNames
   } catch (cta::exception::Exception& e) {
       log::ScopedParamContainer exParams(m_lc);
       exParams.add("bufferLength", buffer.length());
-      exParams.add("bufferMsg", buffer.substr(0, 4096));
+      exParams.add("bufferMsg", buffer);
       m_lc.log(log::ERR, "In DriveHandlerProxy::deleteLogParams(): Socket send failed.");
       throw e;
   }
@@ -103,7 +103,7 @@ void DriveHandlerProxy::resetLogParams() {
   } catch (cta::exception::Exception& e) {
       log::ScopedParamContainer exParams(m_lc);
       exParams.add("bufferLength", buffer.length());
-      exParams.add("bufferMsg", buffer.substr(0, 4096));
+      exParams.add("bufferMsg", buffer);
       m_lc.log(log::ERR, "In DriveHandlerProxy::resetLogParams(): Socket send failed.");
       throw e;
   }
@@ -173,7 +173,7 @@ void DriveHandlerProxy::reportHeartbeat(uint64_t totalTapeBytesMoved, uint64_t t
   } catch (cta::exception::Exception& e) {
       log::ScopedParamContainer exParams(m_lc);
       exParams.add("bufferLength", buffer.length());
-      exParams.add("bufferMsg", buffer.substr(0, 4096));
+      exParams.add("bufferMsg", buffer);
       m_lc.log(log::ERR, "In DriveHandlerProxy::reportHeartbeat(): Socket send failed.");
       throw e;
   }
@@ -198,7 +198,7 @@ void DriveHandlerProxy::reportState(const cta::tape::session::SessionState state
   } catch (cta::exception::Exception& e) {
       log::ScopedParamContainer exParams(m_lc);
       exParams.add("bufferLength", buffer.length());
-      exParams.add("bufferMsg", buffer.substr(0, 4096));
+      exParams.add("bufferMsg", buffer);
       m_lc.log(log::ERR, "In DriveHandlerProxy::reportState(): Socket send failed.");
       throw e;
   }

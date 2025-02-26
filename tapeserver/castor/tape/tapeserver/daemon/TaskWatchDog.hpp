@@ -29,6 +29,7 @@
 #include "DataTransferSession.hpp"
 
 #include <map>
+#include <unordered_set>
 #include <unistd.h>
 
 namespace castor::tape::tapeserver::daemon {
@@ -222,51 +223,45 @@ protected:
     // Pop all the params to add and to delete
     std::list<Param> paramsToAddList;
     std::list<std::string> paramsToDeleteList;
-    std::set<std::string> paramsToAddSet, paramsToDeleteSet;
 
     while (m_toAddParamsQueue.size()) {
       auto param = m_toAddParamsQueue.pop();
       paramsToAddList.push_back(param);
-      paramsToAddSet.insert(param.getName());
     }
     while (m_toDeleteParamsQueue.size()) {
       auto paramName = m_toDeleteParamsQueue.pop();
       paramsToDeleteList.push_back(paramName);
-      paramsToDeleteSet.insert(paramName);
     }
 
     // We don't need to send params that were both added and deleted
-    // Get the symmetric difference of both sets
-    std::set<std::string> paramsToReportFilter;
-    for (auto & paramAdd : paramsToAddSet) {
-      paramsToReportFilter.insert(paramAdd);
-    }
-    for (auto & paramDel : paramsToDeleteSet) {
-      if (paramsToReportFilter.erase(paramDel) == 0) {
-        paramsToReportFilter.insert(paramDel);
+    // Get params that were both added and deleted
+    std::unordered_set<std::string> paramsAddedAndDeleted;
+    if (!paramsToDeleteList.empty()) {
+      std::set<std::string> paramsToAddSet;
+      for (const auto & param : paramsToAddList) {
+        paramsToAddSet.insert(param.getName());
       }
+      std::set<std::string> paramsToDeleteSet(paramsToDeleteList.begin(), paramsToDeleteList.end());
+
+      std::set_intersection(paramsToAddSet.begin(),
+                            paramsToAddSet.end(),
+                            paramsToDeleteSet.begin(),
+                            paramsToDeleteSet.end(),
+                            std::inserter(paramsAddedAndDeleted, paramsAddedAndDeleted.begin()));
     }
 
-    // Flush the one-of parameters to add
-    for (auto it = paramsToAddList.begin(); it != paramsToAddList.end();) {
-      if (!paramsToReportFilter.count(it->getName())) {
-        it = paramsToAddList.erase(it);
-      } else {
-        ++it;
-      }
-    }
+    // Flush the one-of parameters to add, after removing params both added and deleted
+    paramsToAddList.remove_if([&paramsAddedAndDeleted](const Param & param) {
+      return paramsAddedAndDeleted.find(param.getName()) != paramsAddedAndDeleted.end();
+    });
     if (!paramsToAddList.empty()) {
       m_initialProcess.addLogParams(paramsToAddList);
     }
 
-    // Flush the one-of parameters to delete
-    for (auto it = paramsToDeleteList.begin(); it != paramsToDeleteList.end();) {
-      if (!paramsToReportFilter.count(*it)) {
-        it = paramsToDeleteList.erase(it);
-      } else {
-        ++it;
-      }
-    }
+    // Flush the one-of parameters to delete, after removing params both added and deleted
+    paramsToDeleteList.remove_if([&paramsAddedAndDeleted](const std::string & paramName) {
+      return paramsAddedAndDeleted.find(paramName) != paramsAddedAndDeleted.end();
+    });
     if (!paramsToDeleteList.empty()) {
       m_initialProcess.deleteLogParams(paramsToDeleteList);
     }
