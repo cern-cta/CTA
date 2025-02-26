@@ -29,7 +29,7 @@
 #include "DataTransferSession.hpp"
 
 #include <map>
-#include <unordered_set>
+#include <set>
 #include <unistd.h>
 
 namespace castor::tape::tapeserver::daemon {
@@ -221,48 +221,38 @@ protected:
     typedef cta::log::Param Param;
 
     // Pop all the params to add and to delete
-    std::list<Param> paramsToAddList;
-    std::list<std::string> paramsToDeleteList;
-
-    while (m_toAddParamsQueue.size()) {
-      auto param = m_toAddParamsQueue.pop();
-      paramsToAddList.push_back(param);
-    }
-    while (m_toDeleteParamsQueue.size()) {
-      auto paramName = m_toDeleteParamsQueue.pop();
-      paramsToDeleteList.push_back(paramName);
-    }
+    // We only need to send the last value updated on each parameter
 
     // The function 'DriveHandler::processLogs(..)' adds all the params added by 'TaskWatchDog' and then deletes all parameters deleted by 'TaskWatchDog'.
     // Therefore, there is no point in sending params that are both added and deleted.
-    std::unordered_set<std::string> paramsAddedAndDeleted;
-    if (!paramsToDeleteList.empty()) {
-      std::set<std::string> paramsToAddSet;
-      for (const auto & param : paramsToAddList) {
-        paramsToAddSet.insert(param.getName());
-      }
-      std::set<std::string> paramsToDeleteSet(paramsToDeleteList.begin(), paramsToDeleteList.end());
 
-      std::set_intersection(paramsToAddSet.begin(),
-                            paramsToAddSet.end(),
-                            paramsToDeleteSet.begin(),
-                            paramsToDeleteSet.end(),
-                            std::inserter(paramsAddedAndDeleted, paramsAddedAndDeleted.begin()));
+    std::map<std::string, Param> paramsToAdd;
+    std::set<std::string> paramsToDelete;
+
+    while (m_toAddParamsQueue.size()) {
+      auto param = m_toAddParamsQueue.pop();
+      paramsToAdd.insert_or_assign(param.getName(), param);
+    }
+    while (m_toDeleteParamsQueue.size()) {
+      auto paramName = m_toDeleteParamsQueue.pop();
+      if (paramsToAdd.find(paramName) != paramsToAdd.end()) {
+        // Remove and ignore if parameter has been added before
+        paramsToAdd.erase(paramName);
+      } else {
+        paramsToDelete.insert(paramName);
+      }
     }
 
-    // Flush the one-of parameters to add, after removing params both added and deleted
-    paramsToAddList.remove_if([&paramsAddedAndDeleted](const Param & param) {
-      return paramsAddedAndDeleted.find(param.getName()) != paramsAddedAndDeleted.end();
-    });
-    if (!paramsToAddList.empty()) {
+    // Flush the one-of parameters to add
+    if (!paramsToAdd.empty()) {
+      std::list<Param> paramsToAddList;
+      std::transform(paramsToAdd.begin(), paramsToAdd.end(), std::back_inserter(paramsToAddList), [](auto & keyPair) { return keyPair.second; });
       m_initialProcess.addLogParams(paramsToAddList);
     }
 
-    // Flush the one-of parameters to delete, after removing params both added and deleted
-    paramsToDeleteList.remove_if([&paramsAddedAndDeleted](const std::string & paramName) {
-      return paramsAddedAndDeleted.find(paramName) != paramsAddedAndDeleted.end();
-    });
-    if (!paramsToDeleteList.empty()) {
+    // Flush the one-of parameters to delete
+    if (!paramsToDelete.empty()) {
+      std::list<std::string> paramsToDeleteList{paramsToDelete.begin(), paramsToDelete.end()};
       m_initialProcess.deleteLogParams(paramsToDeleteList);
     }
   }

@@ -91,10 +91,10 @@ TEST(castor_tape_tapeserver_daemon, MigrationWatchdog_DoNotReportParamsAddedAndD
 
   std::list<cta::log::Param> paramsToAdd {
       {"param1", 10},
-      {"param1", 11}, // Repeated intentionally
+      {"param1", 11}, // Will override the first param1 entry
       {"param2", 20},
-      {"param3", 30}, // Repeated intentionally
-      {"param3", 31},
+      {"param3", 30},
+      {"param3", 31}, // Will override the first param3 entry
       {"param4", 40}
   };
 
@@ -126,19 +126,16 @@ TEST(castor_tape_tapeserver_daemon, MigrationWatchdog_DoNotReportParamsAddedAndD
 
   // Should only be adding "param3" (twice with value 30 and 31) and "param4" (once with value 40)
   {
-    ASSERT_EQ(capturedParamsToAdd.size(), 3);
-    auto paramA = capturedParamsToAdd.front();
+    ASSERT_EQ(capturedParamsToAdd.size(), 2);
+    std::map<std::string, cta::log::Param> paramsToAddMap;
+    paramsToAddMap.emplace(capturedParamsToAdd.front().getName(), capturedParamsToAdd.front());
     capturedParamsToAdd.pop_front();
-    auto paramB = capturedParamsToAdd.front();
+    paramsToAddMap.emplace(capturedParamsToAdd.front().getName(), capturedParamsToAdd.front());
     capturedParamsToAdd.pop_front();
-    auto paramC = capturedParamsToAdd.front();
-    capturedParamsToAdd.pop_front();
-    ASSERT_EQ(paramA.getName(), "param3");
-    ASSERT_EQ(std::get<int64_t>(paramA.getValueVariant().value()), 30);
-    ASSERT_EQ(paramB.getName(), "param3");
-    ASSERT_EQ(std::get<int64_t>(paramB.getValueVariant().value()), 31);
-    ASSERT_EQ(paramC.getName(), "param4");
-    ASSERT_EQ(std::get<int64_t>(paramC.getValueVariant().value()), 40);
+    ASSERT_TRUE(paramsToAddMap.find("param3") != paramsToAddMap.end());
+    ASSERT_EQ(std::get<int64_t>(paramsToAddMap.at("param3").getValueVariant().value()), 31);
+    ASSERT_TRUE(paramsToAddMap.find("param4") != paramsToAddMap.end());
+    ASSERT_EQ(std::get<int64_t>(paramsToAddMap.at("param4").getValueVariant().value()), 40);
   }
 
   // Should only be adding "param0" (only one that was not added before)
