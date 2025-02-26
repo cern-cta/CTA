@@ -554,14 +554,6 @@ public:
 class DriveMHVTL: public DriveT10000 {
 public:
   DriveMHVTL(SCSI::DeviceInfo di, System::virtualWrapper & sw) : DriveT10000(di, sw) {}
-  void disableLogicalBlockProtection() override;
-  void enableCRC32CLogicalBlockProtectionReadOnly() override;
-  void enableCRC32CLogicalBlockProtectionReadWrite() override;
-  drive::LBPInfo getLBPInfo() override;
-  lbpToUse getLbpToUse() override;
-  void setLogicalBlockProtection(const unsigned char method,
-    unsigned char methodLength, const bool enableLPBforRead,
-    const bool enableLBBforWrite) override;
   void setEncryptionKey(const std::string &encryption_key) override;
   bool clearEncryptionKey() override;
   bool isEncryptionCapEnabled() override;

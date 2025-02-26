@@ -1500,38 +1500,6 @@ drive::compressionStats drive::DriveT10000::getCompressionStats() {
   return driveCompressionStats;
 }
 
-void drive::DriveMHVTL::disableLogicalBlockProtection() { }
-
-void drive::DriveMHVTL::enableCRC32CLogicalBlockProtectionReadOnly() {
-  throw cta::exception::Exception(
-    "In DriveMHVTL::enableCRC32CLogicalBlockProtectionReadOnly(): not supported");
-}
-
-void drive::DriveMHVTL::enableCRC32CLogicalBlockProtectionReadWrite() {
-  throw cta::exception::Exception(
-    "In DriveMHVTL::enableCRC32CLogicalBlockProtectionReadWrite(): not supported");
-}
-
-drive::LBPInfo drive::DriveMHVTL::getLBPInfo() {
-  drive::LBPInfo ret;
-  ret.enableLBPforRead = false;
-  ret.enableLBPforWrite = false;
-  ret.method = 0;
-  ret.methodLength = 0;
-  return ret;
-}
-
-drive::lbpToUse drive::DriveMHVTL::getLbpToUse() {
-  return lbpToUse::disabled;
-}
-
-void drive::DriveMHVTL::setLogicalBlockProtection(const unsigned char method,
-  unsigned char methodLength, const bool enableLPBforRead,
-  const bool enableLBBforWrite) {
-  if (method != 0 || methodLength != 0 || enableLBBforWrite || enableLPBforRead)
-    throw cta::exception::Exception("In DriveMHVTL::setLogicalBlockProtection:: LBP cannot be enabled");
-}
-
 drive::compressionStats drive::DriveLTO::getCompression()  {
   SCSI::Structures::LinuxSGIO_t sgh;
   SCSI::Structures::logSenseCDB_t cdb;
