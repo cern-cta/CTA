@@ -43,7 +43,7 @@ public:
 
 private:
   //const size_t PAYLOAD_BOLCK_SIZE = 262144;
-  const size_t PAYLOAD_BOLCK_SIZE = 16777216;
+  const size_t PAYLOAD_BOLCK_SIZE = 262152;
   /*
    * Set to true if 64k_FORMAT detected
    */
