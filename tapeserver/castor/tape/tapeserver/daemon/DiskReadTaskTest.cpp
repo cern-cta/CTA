@@ -22,7 +22,7 @@
 #include "disk/RadosStriperPool.hpp"
 #include "common/log/LogContext.hpp"
 #include "common/log/StringLogger.hpp"
-#include "castor/messages/TapeserverProxyDummy.hpp"
+#include "castor/tape/tapeserver/daemon/TapeserverProxyMock.hpp"
 #include "scheduler/ArchiveMount.hpp"
 #include "scheduler/TapeMountDummy.hpp"
 
@@ -134,7 +134,7 @@ namespace unitTests{
     cta::disk::RadosStriperPool striperPool;
     DiskFileFactory fileFactory(0, striperPool);
 
-    castor::messages::TapeserverProxyDummy tspd;
+    cta::tape::daemon::TapeserverProxyMock tspd;
     cta::TapeMountDummy tmd;
     MockMigrationWatchDog mmwd(1.0, 1.0, tspd, tmd, "", lc);
     drt.execute(lc,fileFactory,mmwd, 0);

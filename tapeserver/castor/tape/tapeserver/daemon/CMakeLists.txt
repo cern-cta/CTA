@@ -58,7 +58,6 @@ add_library(ctatapeserverdaemonunittests SHARED
   RecallReportPackerTest.cpp
   RecallTaskInjectorTest.cpp
   TaskWatchDogTest.cpp
-  ../../../messages/TapeserverProxyDummy.cpp
 )
 set_property(TARGET ctatapeserverdaemonunittests PROPERTY SOVERSION "${CTA_SOVERSION}")
 set_property(TARGET ctatapeserverdaemonunittests PROPERTY   VERSION "${CTA_LIBVERSION}")

@@ -17,7 +17,7 @@
 
 #include <gtest/gtest.h>
 
-#include "castor/messages/TapeserverProxyDummy.hpp"
+#include "castor/tape/tapeserver/daemon/TapeserverProxyMock.hpp"
 #include "castor/tape/tapeserver/daemon/DiskWriteThreadPool.hpp"
 #include "castor/tape/tapeserver/daemon/RecallTaskInjector.hpp"
 #include "castor/tape/tapeserver/daemon/TapeReadSingleThread.hpp"
@@ -154,7 +154,7 @@ namespace unitTests
     trm.createRetrieveJobs(nbJobs);
     //EXPECT_CALL(trm, internalGetNextJob()).Times(nbJobs+1);
 
-    castor::messages::TapeserverProxyDummy tspd;
+    cta::tape::daemon::TapeserverProxyMock tspd;
     cta::TapeMountDummy tmd;
     RecallWatchDog rwd(1,1,tspd,tmd,"",lc);
     std::unique_ptr<cta::SchedulerDatabase::RetrieveMount> dbrm(new TestingDatabaseRetrieveMount());
@@ -163,7 +163,7 @@ namespace unitTests
     cta::log::DummyLogger dummyLog("dummy","dummy");
     cta::mediachanger::RmcProxy rmcProxy;
     cta::mediachanger::MediaChangerFacade mc(rmcProxy, dummyLog);
-    castor::messages::TapeserverProxyDummy initialProcess;
+    cta::tape::daemon::TapeserverProxyMock initialProcess;
     castor::tape::tapeserver::daemon::VolumeInfo volume;
     volume.vid="V12345";
     volume.mountType=cta::common::dataStructures::MountType::Retrieve;
@@ -220,7 +220,7 @@ namespace unitTests
     trm.createRetrieveJobs(0);
     //EXPECT_CALL(trm, internalGetNextJob()).Times(1); //no work: single call to getnextjob
 
-    castor::messages::TapeserverProxyDummy tspd;
+    cta::tape::daemon::TapeserverProxyMock tspd;
     cta::TapeMountDummy tmd;
     RecallWatchDog rwd(1,1,tspd,tmd,"",lc);
     std::unique_ptr<cta::SchedulerDatabase::RetrieveMount> dbrm(new TestingDatabaseRetrieveMount());
@@ -229,7 +229,7 @@ namespace unitTests
     cta::log::DummyLogger dummyLog("dummy","dummy");
     cta::mediachanger::RmcProxy rmcProxy;
     cta::mediachanger::MediaChangerFacade mc(rmcProxy, dummyLog);
-    castor::messages::TapeserverProxyDummy initialProcess;
+    cta::tape::daemon::TapeserverProxyMock initialProcess;
     castor::tape::tapeserver::daemon::VolumeInfo volume;
     volume.vid="V12345";
     volume.mountType=cta::common::dataStructures::MountType::Retrieve;

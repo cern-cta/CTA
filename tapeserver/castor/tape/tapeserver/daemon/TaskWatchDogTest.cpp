@@ -15,6 +15,8 @@
  *               submit itself to any jurisdiction.
  */
 
+#include <castor/tape/tapeserver/daemon/TapeserverProxyMock.hpp>
+
 #include "castor/tape/tapeserver/daemon/TaskWatchDog.hpp"
 #include "castor/tape/tapeserver/daemon/ReportPackerInterface.hpp"
 #include "common/log/StringLogger.hpp"
@@ -27,30 +29,19 @@
 namespace unitTests {
   using namespace castor::tape;
   using ::testing::_;
-
-class TapedProxyMock final : public cta::tape::daemon::TapedProxy {
-public:
-  MOCK_METHOD(void, reportState, (const cta::tape::session::SessionState state, const cta::tape::session::SessionType type, const std::string& vid), (override));
-  MOCK_METHOD(void, reportHeartbeat, (uint64_t totalTapeBytesMoved, uint64_t totalDiskBytesMoved), (override));
-  MOCK_METHOD(void, addLogParams, (const std::list<cta::log::Param>& params), (override));
-  MOCK_METHOD(void, deleteLogParams, (const std::list<std::string>& paramNames), (override));
-  MOCK_METHOD(void, resetLogParams, (), (override));
-  MOCK_METHOD(void, labelError, (const std::string& unitName, const std::string& message), (override));
-  MOCK_METHOD(void, setRefreshLoggerHandler, (std::function<void()> handler), (override));
-};
   
 TEST(castor_tape_tapeserver_daemon, WatchdogTestStuckWithNothing) {
-  const double periodToReport = 10; // We wont report in practice
+  const double reportPeriodSecs = 10; // We wont report in practice
   const double stuckPeriod = 0.01;
   const double pollPeriod = 0.01;
-  
+
   cta::log::StringLogger log("dummy","castor_tape_tapeserver_daemon_WatchdogTestStuck",cta::log::DEBUG);
   cta::log::LogContext lc(log);
-  
-  TapedProxyMock dummyInitialProcess;
+
+  cta::tape::daemon::TapeserverProxyMock dummyInitialProcess;
   cta::TapeMountDummy dummyTapeMount;
 
-  tapeserver::daemon::RecallWatchDog watchdog(periodToReport,
+  tapeserver::daemon::RecallWatchDog watchdog(reportPeriodSecs,
     stuckPeriod,dummyInitialProcess,dummyTapeMount,"testTapeDrive",lc,pollPeriod);
   
   watchdog.startThread();
@@ -62,18 +53,18 @@ TEST(castor_tape_tapeserver_daemon, WatchdogTestStuckWithNothing) {
 }
 
 TEST(castor_tape_tapeserver_daemon, MigrationWatchdogTestStuck) {
-  const double reportPeriod = 10; // We wont report in practice
+  const double reportPeriodSecs = 10; // We wont report in practice
   const double stuckPeriod = 0.01;
   const double pollPeriod = 0.01;
-  
+
   cta::log::StringLogger log("dummy","castor_tape_tapeserver_daemon_WatchdogTestStuck",cta::log::DEBUG);
   cta::log::LogContext lc(log);
-  
-  TapedProxyMock dummyInitialProcess;
+
+  cta::tape::daemon::TapeserverProxyMock dummyInitialProcess;
   cta::TapeMountDummy dummyTapeMount;
-  
-  // We will poll for a 
-  tapeserver::daemon::MigrationWatchDog watchdog(reportPeriod,stuckPeriod,
+
+  // We will poll for a
+  tapeserver::daemon::MigrationWatchDog watchdog(reportPeriodSecs,stuckPeriod,
     dummyInitialProcess, dummyTapeMount, "testTapeDrive",  lc, pollPeriod);
   
   watchdog.startThread();
@@ -85,17 +76,17 @@ TEST(castor_tape_tapeserver_daemon, MigrationWatchdogTestStuck) {
 }
 
 TEST(castor_tape_tapeserver_daemon, MigrationWatchdog_DoNotReportParamsAddedAndDeleted) {
-  const double reportPeriod = 10; // We wont report in practice
+  const double reportPeriodSecs = 10; // We wont report in practice
   const double stuckPeriod = 0.01;
   const double pollPeriod = 0.01;
 
   cta::log::StringLogger log("dummy","castor_tape_tapeserver_daemon_DoNotReportParamsAddedAndDeleted",cta::log::DEBUG);
   cta::log::LogContext lc(log);
 
-  TapedProxyMock dummyInitialProcess;
+  cta::tape::daemon::TapeserverProxyMock dummyInitialProcess;
   cta::TapeMountDummy dummyTapeMount;
 
-  tapeserver::daemon::RecallWatchDog watchdog(reportPeriod,
+  tapeserver::daemon::RecallWatchDog watchdog(reportPeriodSecs,
     stuckPeriod,dummyInitialProcess,dummyTapeMount,"testTapeDrive",lc,pollPeriod);
 
   std::list<cta::log::Param> paramsToAdd {
