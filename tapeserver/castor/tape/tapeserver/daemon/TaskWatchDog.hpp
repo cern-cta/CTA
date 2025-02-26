@@ -233,8 +233,8 @@ protected:
       paramsToDeleteList.push_back(paramName);
     }
 
-    // We don't need to send params that were both added and deleted
-    // Get params that were both added and deleted
+    // The function 'DriveHandler::processLogs(..)' adds all the params added by 'TaskWatchDog' and then deletes all parameters deleted by 'TaskWatchDog'.
+    // Therefore, there is no point in sending params that are both added and deleted.
     std::unordered_set<std::string> paramsAddedAndDeleted;
     if (!paramsToDeleteList.empty()) {
       std::set<std::string> paramsToAddSet;
