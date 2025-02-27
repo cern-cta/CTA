@@ -72,12 +72,12 @@ def test_populate_catalogue_tapes(env):
         env.ctacli[0].exec(add_tape_cmd)
 
 def test_reset_tapes(env):
-    print("Unloading tapes")
     for ctarmcd in env.ctarmcd:
         unload_tapes(ctarmcd)
-    print("Running SCSI MODE SENSE")
+
+def test_reset_drive_devices(env):
     for ctataped in env.ctataped:
-        ctataped.exec(f"sg_modes {ctataped.drive_device()} > /dev/null")
+        ctataped.exec(f"sg_turs {ctataped.drive_device()} 2>&1 > /dev/null")
 
 def test_label_tapes(env):
     tapes: list[str] = list_all_tapes_in_libraries(env.ctarmcd)
