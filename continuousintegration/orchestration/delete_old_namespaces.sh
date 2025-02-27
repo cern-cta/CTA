@@ -18,6 +18,6 @@
 set -e
 
 echo "Cleaning up old namespaces:"
-kubectl get namespace -o json | jq '.items[].metadata | select(.name != "default" and .name != "kube-system") | .name' | grep "test-"
-kubectl get namespace -o json | jq '.items[].metadata | select(.name != "default" and .name != "kube-system") | .name' | grep "test-" | xargs -itoto kubectl delete namespace -n toto
+old_namespaces=$(kubectl get namespace -o json | jq -r '.items[].metadata.name | select(. != "default" and (test("^kube-") | not))')
+echo $old_namespaces | xargs -itoto ./delete_instance.sh --namespace toto --discard-logs
 echo "Cleanup complete"
