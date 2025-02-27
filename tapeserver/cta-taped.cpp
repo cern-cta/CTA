@@ -19,7 +19,6 @@
 #include "common/log/FileLogger.hpp"
 #include "common/log/StdoutLogger.hpp"
 #include "common/processCap/ProcessCap.hpp"
-#include "common/threading/System.hpp"
 #include "tapeserver/daemon/CommandLineParams.hpp"
 #include "tapeserver/daemon/common/TapedConfiguration.hpp"
 #include "tapeserver/daemon/TapeDaemon.hpp"
@@ -195,12 +194,6 @@ int main(const int argc, char **const argv) {
   try {
     (*logPtr)(log::INFO, "Setting user name and group name of current process",
                   {{"userName", userName}, {"groupName", groupName}});
-    cta::System::setUserAndGroup(userName, groupName);
-    // There is no longer any need for the process to be able to change user,
-    // however the process should still be permitted to make the raw IO
-    // capability effective in the future when needed.
-    cta::server::ProcessCap::setProcText("cap_sys_rawio+p");
-
   } catch (exception::Exception& ex) {
     std::list<log::Param> params = {
       log::Param("exceptionMessage", ex.getMessage().str())};
