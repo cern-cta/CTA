@@ -82,6 +82,8 @@
                            --cta-image-tag ${IMAGE_TAG}
                            --catalogue-config ${CATALOGUE_CONFIG}
                            --scheduler-config ${SCHEDULER_CONFIG}
+                           --reset-scheduler
+                           --reset-catalogue
                            ${EXTRA_SPAWN_ARGS}
     - cd ../tests
     - pytest ${PYTESTS} --namespace ${NAMESPACE} --color=yes ${EXTRA_PYTEST_ARGS}
