@@ -29,7 +29,7 @@
     EXTRA_PYTEST_ARGS: ""
   before_script:
     - bash ./continuousintegration/utils/install_helm.sh
-    - python3 -m ensurepip && python3 -m venv venv && source venv/bin/activate && pip install pytest
+    - python3 -m ensurepip && python3 -m venv venv && source venv/bin/activate && pip install pytest pyyaml
   script:
     # Keep the namespace name under 64 characters;
     # Otherwise the eos mgm fqdn becomes too long and things start failing
