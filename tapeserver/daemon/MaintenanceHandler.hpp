@@ -45,7 +45,7 @@ public:
   ProcessingStatus processTimeout() override;
 private:
   void exceptionThrowingRunChild();
-  
+
   /**
    * Returns true if the RepackRequestManager will be ran on this tapeserver,
    * false otherwise
@@ -64,7 +64,7 @@ private:
   /** A socketpair to ask the child process to gracefully shut down */
   std::unique_ptr<cta::server::SocketPair> m_socketPair;
   /** The poll period for the garbage collector */
-  static const time_t s_pollInterval = 10;
+  static const time_t s_pollInterval = 1;
 
   static constexpr const char* const SHUTDOWN_MSG = "SHUTDOWN";
   static constexpr const char* const REFRESH_LOGGER_MSG = "REFRESH_LOGGER";
