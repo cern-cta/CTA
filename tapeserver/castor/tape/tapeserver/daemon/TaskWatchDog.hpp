@@ -29,6 +29,7 @@
 #include "DataTransferSession.hpp"
 
 #include <map>
+#include <set>
 #include <unistd.h>
 
 namespace castor::tape::tapeserver::daemon {
@@ -200,12 +201,12 @@ protected:
       paramList.push_back(Param("driveTransferSpeedMBps", totalTime?1.0*(m_stats.dataVolume+m_stats.headerVolume)
                 /1000/1000/totalTime:0.0));
       if(m_mount.getMountType() == cta::common::dataStructures::MountType::Retrieve){
-	paramList.push_back(Param("repackFilesCount",m_stats.repackFilesCount));
-	paramList.push_back(Param("userFilesCount",m_stats.userFilesCount));
-	paramList.push_back(Param("verifiedFilesCount",m_stats.verifiedFilesCount));
-	paramList.push_back(Param("repackBytesCount",m_stats.repackBytesCount));
-	paramList.push_back(Param("userBytesCount",m_stats.userBytesCount));
-	paramList.push_back(Param("verifiedBytesCount",m_stats.verifiedBytesCount));
+        paramList.push_back(Param("repackFilesCount",m_stats.repackFilesCount));
+        paramList.push_back(Param("userFilesCount",m_stats.userFilesCount));
+        paramList.push_back(Param("verifiedFilesCount",m_stats.verifiedFilesCount));
+        paramList.push_back(Param("repackBytesCount",m_stats.repackBytesCount));
+        paramList.push_back(Param("userBytesCount",m_stats.userBytesCount));
+        paramList.push_back(Param("verifiedBytesCount",m_stats.verifiedBytesCount));
       }
       // Ship the logs to the initial process
       m_initialProcess.addLogParams(paramList);
@@ -219,20 +220,40 @@ protected:
     // Shortcut definitions
     typedef cta::log::Param Param;
 
-    // Flush the one-of parameters
-    std::list<Param> params;
-    while (m_toAddParamsQueue.size())
-      params.push_back(m_toAddParamsQueue.pop());
-    if (params.size()) {
-      m_initialProcess.addLogParams(params);
+    // Pop all the params to add and to delete
+    // We only need to send the last value updated on each parameter
+
+    // The function 'DriveHandler::processLogs(..)' adds all the params added by 'TaskWatchDog' and then deletes all parameters deleted by 'TaskWatchDog'.
+    // Therefore, there is no point in sending params that are both added and deleted.
+
+    std::map<std::string, Param> paramsToAdd;
+    std::set<std::string> paramsToDelete;
+
+    while (m_toAddParamsQueue.size()) {
+      auto param = m_toAddParamsQueue.pop();
+      paramsToAdd.insert_or_assign(param.getName(), param);
+    }
+    while (m_toDeleteParamsQueue.size()) {
+      auto paramName = m_toDeleteParamsQueue.pop();
+      if (paramsToAdd.find(paramName) != paramsToAdd.end()) {
+        // Remove and ignore if parameter has been added before
+        paramsToAdd.erase(paramName);
+      } else {
+        paramsToDelete.insert(paramName);
+      }
     }
 
-    std::list<std::string> paramsToDelete;
+    // Flush the one-of parameters to add
+    if (!paramsToAdd.empty()) {
+      std::list<Param> paramsToAddList;
+      std::transform(paramsToAdd.begin(), paramsToAdd.end(), std::back_inserter(paramsToAddList), [](auto & keyPair) { return keyPair.second; });
+      m_initialProcess.addLogParams(paramsToAddList);
+    }
+
     // Flush the one-of parameters to delete
-    while (m_toDeleteParamsQueue.size())
-      paramsToDelete.push_back(m_toDeleteParamsQueue.pop());
-    if (params.size()) {
-      m_initialProcess.deleteLogParams(paramsToDelete);
+    if (!paramsToDelete.empty()) {
+      std::list<std::string> paramsToDeleteList{paramsToDelete.begin(), paramsToDelete.end()};
+      m_initialProcess.deleteLogParams(paramsToDeleteList);
     }
   }
   
