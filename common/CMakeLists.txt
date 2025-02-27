@@ -126,7 +126,6 @@ set (COMMON_LIB_SRC_FILES
   remoteFS/RemotePath.cpp
   remoteFS/RemotePathAndStatus.cpp
   SourcedParameter.cpp
-  threading/ChildProcess.cpp
   threading/CondVar.cpp
   threading/Daemon.cpp
   threading/Mutex.cpp
@@ -136,7 +135,6 @@ set (COMMON_LIB_SRC_FILES
   threading/Semaphores.cpp
   threading/SocketPair.cpp
   threading/SubProcess.cpp
-  threading/System.cpp
   threading/Thread.cpp
   Timer.cpp
   utils/GetOptThreadSafe.cpp
@@ -179,11 +177,9 @@ set (COMMON_UNIT_TESTS_LIB_SRC_FILES
   remoteFS/RemotePathTest.cpp
   CRCTest.cpp
   threading/CondVarTest.cpp
-  threading/DaemonTest.cpp
   threading/RWLockTest.cpp
   threading/SocketPairTest.cpp
   threading/ThreadingBlockingQTests.cpp
-# threading/ThreadingMPTests.cpp is commented out because of errors caused by libust
   threading/ThreadingMTTests.cpp
   threading/ThreadingTests.cpp
   utils/GetOptThreadSafeTest.cpp
