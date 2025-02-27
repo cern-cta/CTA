@@ -84,7 +84,7 @@
                            --scheduler-config ${SCHEDULER_CONFIG}
                            ${EXTRA_SPAWN_ARGS}
     - cd ../tests
-    - pytest ${PYTESTS} --namespace ${NAMESPACE} ${EXTRA_PYTEST_ARGS}
+    - pytest ${PYTESTS} --namespace ${NAMESPACE} --color=always ${EXTRA_PYTEST_ARGS}
   after_script:
     # The namespace exported before is not visible, so export it again
     - export NAMESPACE="${CI_JOB_NAME_SLUG:0:18}-${CI_PIPELINE_ID}"
