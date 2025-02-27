@@ -22,14 +22,6 @@
 
 namespace cta::server::ProcessCap {
 
-   /**
-   * C++ wrapper around the C functions cap_get_proc() and cap_to_text().
-   *
-   * @return The string representation the capabilities of the current
-   * process.
-   */
-  std::string getProcText();
-
   /**
    * C++ wrapper around the C functions cap_from_text() and cap_set_proc().
    *
