@@ -17,7 +17,6 @@
 
 #include "common/threading/MutexLocker.hpp"
 #include "common/threading/Thread.hpp"
-#include "common/threading/ChildProcess.hpp"
 #include "common/threading/Semaphores.hpp"
 
 #include <gtest/gtest.h>
