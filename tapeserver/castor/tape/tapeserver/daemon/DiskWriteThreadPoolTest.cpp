@@ -22,7 +22,7 @@
 #include "common/log/StringLogger.hpp"
 #include "castor/tape/tapeserver/daemon/MigrationMemoryManager.hpp"
 #include "castor/tape/tapeserver/daemon/MemBlock.hpp"
-#include "castor/messages/TapeserverProxyDummy.hpp"
+#include "castor/tape/tapeserver/daemon/TapeserverProxyMock.hpp"
 #include "scheduler/TapeMountDummy.hpp"
 #include "catalogue/dummy/DummyCatalogue.hpp"
 #include <gtest/gtest.h>
@@ -128,7 +128,7 @@ namespace unitTests{
     
     RecallMemoryManager mm(10,100,lc);
     
-    castor::messages::TapeserverProxyDummy tspd;
+    cta::tape::daemon::TapeserverProxyMock tspd;
     cta::TapeMountDummy tmd;
     RecallWatchDog rwd(1,1,tspd,tmd,"", lc);
 

@@ -27,7 +27,7 @@
 #include "common/log/StringLogger.hpp"
 #include "castor/tape/tapeserver/daemon/MigrationMemoryManager.hpp"
 #include "castor/tape/tapeserver/daemon/MemBlock.hpp"
-#include "castor/messages/TapeserverProxyDummy.hpp"
+#include "castor/tape/tapeserver/daemon/TapeserverProxyMock.hpp"
 #include "scheduler/TapeMountDummy.hpp"
 #include "scheduler/SchedulerDatabase.hpp"
 #include "scheduler/Scheduler.hpp"
@@ -151,7 +151,7 @@ namespace unitTests{
 
     t.pushDataBlock(mb);
     t.pushDataBlock(nullptr);
-    castor::messages::TapeserverProxyDummy tspd;
+    cta::tape::daemon::TapeserverProxyMock tspd;
     cta::TapeMountDummy tmd;
     RecallWatchDog rwd(1,1,tspd,tmd,"", lc);
     t.execute(report,lc,fileFactory,rwd, 0);
