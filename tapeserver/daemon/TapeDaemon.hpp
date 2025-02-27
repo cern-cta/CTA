@@ -17,7 +17,7 @@
 
 #pragma once
 
-#include "common/threading/Daemon.hpp"
+#include "common/threading/OldDaemon.hpp"
 #include "tapeserver/daemon/CommandLineParams.hpp"
 #include "tapeserver/daemon/common/TapedConfiguration.hpp"
 #include <signal.h>

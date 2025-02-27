@@ -1,6 +1,6 @@
 /*
  * @project      The CERN Tape Archive (CTA)
- * @copyright    Copyright © 2021-2022 CERN
+ * @copyright    Copyright © 2021-2025 CERN
  * @license      This program is free software, distributed under the terms of the GNU General Public
  *               Licence version 3 (GPL Version 3), copied verbatim in the file "COPYING". You can
  *               redistribute it and/or modify it under the terms of the GPL Version 3, or (at your
@@ -15,18 +15,42 @@
  *               submit itself to any jurisdiction.
  */
 
-#pragma once
+#include <signal.h>
 
-#include <string>
-#include <sys/capability.h>
+namespace cta::server {
+class SignalHandlerThread : private cta::threading::Thread {
 
-namespace cta::server::ProcessCap {
+public:
 
   /**
-   * C++ wrapper around the C functions cap_from_text() and cap_set_proc().
-   *
-   * @text The string representation the capabilities that the current
-   * process should have.
+   * Constructor
+   * @param logContext The log context used to
    */
-  void setProcText(const std::string &text);
-} // namespace cta::server::ProcessCap
+  SignalHandlerThread(const cta::log::LogContext& logContext);
+
+  /**
+   * Destructor
+   */
+  ~SignalHandlerThread() noexcept;
+
+  /**
+   * Thread routine: loop waiting for signals to be available, then, sets the
+   * signal flag to be handled by the daemonn. The thread oops until SIGTERM or
+   * SIGINT is received.
+   */
+  void run() override;
+
+private:
+
+    /**
+     * Log
+     */
+    const cta::log::LogContext m_logContext;
+
+    /**
+     * File descriptor to read signals from the blocked signals.
+     */
+    int m_sigFd;
+};
+
+}

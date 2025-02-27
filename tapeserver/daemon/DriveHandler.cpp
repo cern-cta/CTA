@@ -28,7 +28,6 @@
 #include "catalogue/CatalogueFactoryFactory.hpp"
 #include "common/exception/Errnum.hpp"
 #include "common/log/LogContext.hpp"
-#include "common/processCap/ProcessCap.hpp"
 #include "rdbms/Login.hpp"
 #include "tapeserver/castor/tape/tapeserver/daemon/CleanerSession.hpp"
 #include "tapeserver/castor/tape/tapeserver/daemon/DataTransferSession.hpp"

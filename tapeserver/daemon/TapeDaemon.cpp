@@ -22,7 +22,6 @@
 #include "catalogue/Catalogue.hpp"
 #include "common/exception/Errnum.hpp"
 #include "common/exception/NoSuchObject.hpp"
-#include "common/processCap/ProcessCap.hpp"
 #include "common/utils/utils.hpp"
 #include "tapeserver/daemon/CommandLineParams.hpp"
 #include "tapeserver/daemon/DriveHandler.hpp"

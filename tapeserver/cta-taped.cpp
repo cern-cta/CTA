@@ -18,8 +18,6 @@
 #include "common/exception/Errnum.hpp"
 #include "common/log/FileLogger.hpp"
 #include "common/log/StdoutLogger.hpp"
-#include "common/processCap/ProcessCap.hpp"
-#include "common/threading/System.hpp"
 #include "tapeserver/daemon/CommandLineParams.hpp"
 #include "tapeserver/daemon/common/TapedConfiguration.hpp"
 #include "tapeserver/daemon/TapeDaemon.hpp"
@@ -171,40 +169,6 @@ int main(const int argc, char **const argv) {
     std::list<cta::log::Param> params = {
       cta::log::Param("exceptionMessage", ex.getMessage().str())};
     (*logPtr)(log::ERR, "Caught an unexpected CTA exception, cta-taped cannot start", params);
-    return EXIT_FAILURE;
-  }
-
-  // Change process capabilities.
-  // process must be able to change user and group now.
-  // rawio cap must be permitted now to be able to perform raw IO once we are no longer root.
-  try {
-    cta::server::ProcessCap::setProcText("cap_setgid,cap_setuid+ep cap_sys_rawio+p");
-    (*logPtr)(log::INFO, "Set process capabilities",
-                  {{"capabilites", cta::server::ProcessCap::getProcText()}});
-  } catch (const cta::exception::Exception &ex) {
-    std::list<cta::log::Param> params = {
-      cta::log::Param("exceptionMessage", ex.getMessage().str())};
-    (*logPtr)(log::ERR, "Caught an unexpected CTA exception, cta-taped cannot start", params);
-    return EXIT_FAILURE;
-  }
-
-  // Change user and group
-  const std::string userName = globalConfig.daemonUserName.value();
-  const std::string groupName = globalConfig.daemonGroupName.value();
-
-  try {
-    (*logPtr)(log::INFO, "Setting user name and group name of current process",
-                  {{"userName", userName}, {"groupName", groupName}});
-    cta::System::setUserAndGroup(userName, groupName);
-    // There is no longer any need for the process to be able to change user,
-    // however the process should still be permitted to make the raw IO
-    // capability effective in the future when needed.
-    cta::server::ProcessCap::setProcText("cap_sys_rawio+p");
-
-  } catch (exception::Exception& ex) {
-    std::list<log::Param> params = {
-      log::Param("exceptionMessage", ex.getMessage().str())};
-    (*logPtr)(log::ERR, "Caught an unexpected CTA, cta-taped cannot start", params);
     return EXIT_FAILURE;
   }
 

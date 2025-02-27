@@ -1,6 +1,6 @@
 /*
  * @project      The CERN Tape Archive (CTA)
- * @copyright    Copyright © 2021-2022 CERN
+ * @copyright    Copyright © 2021-2025 CERN
  * @license      This program is free software, distributed under the terms of the GNU General Public
  *               Licence version 3 (GPL Version 3), copied verbatim in the file "COPYING". You can
  *               redistribute it and/or modify it under the terms of the GPL Version 3, or (at your
@@ -77,11 +77,12 @@ protected:
   void daemonizeIfNotRunInForeground();
 
   /**
-   * Object representing the API of the CASTOR logging system.
+   * Object representing the API of the CTA logging system.
    */
- cta::log::Logger &m_log;
+  cta::log::Logger &m_log;
 
 private:
+
 
   /**
    * Flag indicating whether the server should run in foreground or background
@@ -93,6 +94,7 @@ private:
    * True if the command-line has been parsed.
    */
   bool m_commandLineHasBeenParsed;
+
 
 }; // class Daemon
 
