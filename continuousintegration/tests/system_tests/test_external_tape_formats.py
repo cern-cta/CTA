@@ -1,5 +1,5 @@
 def test_install_systest_roms(env):
-    env.ctataped[0].exec("dnf -y install cta-integrationtests")
+    env.ctarmcd[0].exec("dnf -y install cta-integrationtests")
 
 def test_read_osm_tapes(env):
     env.ctarmcd[0].copyTo("system_tests/scripts/rmcd/", "/root/", permissions="+x")
