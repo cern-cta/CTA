@@ -28,6 +28,10 @@
  #include "cta_frontend.pb.h"
  #include "cta_frontend.grpc.pb.h"
 
+constexpr unsigned int cmd_pair(cta::admin::AdminCmd::Cmd cmd, cta::admin::AdminCmd::SubCmd subcmd) {
+    return (cmd << 16) + subcmd;
+}
+
 // This is a virtual (maybe not all of its methods) class, each command implementation will inherit from this
 class CtaAdminClientReadReactor : public grpc::ClientReadReactor<cta::xrd::StreamResponse> {
 public:
@@ -42,12 +46,66 @@ public:
         cv_.wait(l, [this] { return done_; });
         return std::move(status_);
     }
+    // with a Completion Queue, we would have a state machine transitioning header -> data
+    // do I need to check for header/data here?
     virtual void OnReadDone(bool ok) override {
         if (ok) {
             // just read the next input from the server until done (ok is false)
             StartRead(&m_response);
-        }
+            // if this is the header, print the formatted header I guess?
+            if (m_response.has_header()) {
+                switch (m_response.header().type()) {
+                    case cta::xrd::Response::RSP_SUCCESS:
+                        switch (m_response.header().show_header()) {
+                            case HeaderType::TAPE_LS:
+                                m_textFormatter.printTapeLsHeader();
+                                break;
+                            case HeaderType::STORAGECLASS_LS:
+                                m_textFormatter.printStorageClassLsHeader();
+                                break;
+                        }
+                    case cta::xrd::Response::RSP_ERR_PROTOBUF:
+                    case cta::xrd::Response::RSP_ERR_USER:
+                    case cta::xrd::Response::RSP_ERR_CTA:
+                    default:
+                        strErrorMsg = m_response.header().message_txt();
+
+                }
+            } else if (response.has_data()) {
+                switch (m_response.data().data_case()) {
+                    case cta::xrd::Data::kTalsItem:
+                        const cta::admin::TapeLsItem& tapeLsItem = m_response.data().tals_item();
+                        m_textFormatter.print(tapeLsItem);
+                    case cta::xrd::Data::kSclsItem:
+                        const cta::admin::StorageClassLsItem& storageClassLsItem = m_response.data().scls_item();
+                        m_textFormatter.print(storageClassLsItem);
+                }
+            }
+        } // if (ok)
     }
+
+    CtaAdminClientReadReactor(CtaRpcStream::Stub* client_stub, const cta::xrd::Request* request) {
+        // or Otherwise, I can have a generic method
+        stub->async()->GenericAdminStream(context, request, this);
+        switch (cmd_pair(request.admincmd().cmd(), request.admincmd().subcmd())) {
+            case cmd_pair(cta::admin::AdminCmd::CMD_TAPE, cta::admin::AdminCmd::SUBCMD_LS):
+                stub->async()->TapeLs(context, request, this); 
+                break;
+            case cmd_pair(cta::admin::AdminCmd::CMD_STORAGECLASS, cta::admin::AdminCmd::SUBCMD_LS):
+                stub->async()->StorageClassLs(context, request, this);
+                break;
+        }
+        // stub->async()->TapeLs(context, request, this); // all these steps I will do in the respective call path
+        StartRead(&m_response); // where to store the received response?
+        StartCall(); // activate the RPC!
+    }
+    // This method I will put in a separate class, that will inherit from CtaAdminClientReactor
+    // void ProcessTapeLs() {
+    //     stub->async()->TapeLs(context, request, this); // all these steps I will do in the respective call path
+    //     StartRead(&m_response); // where to store the received response?
+    //     StartCall(); // activate the RPC!
+    //     // the onReadDone method should be implemented separately for each of the commands
+    // }
 
 private:
     ClientContext context_;
@@ -56,4 +114,5 @@ private:
     std::condition_variable cv_;
     Status status_;
     bool done_ = false;
+    cta::admin::TextFormatter m_textFormatter;
 }
