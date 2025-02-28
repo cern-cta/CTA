@@ -50,7 +50,7 @@ COPY image_rpms ${CTAREPODIR}/RPMS/x86_64
 
 # Populate local repository and enable it
 RUN dnf config-manager --enable epel --setopt="epel.priority=4" && \
-    createrepo_c "${CTAREPODIR}" && \
+    createrepo_c --workers="$(nproc)" "${CTAREPODIR}" && \
     echo -e "[cta-artifacts]\n\
 name=CTA artifacts\n\
 baseurl=file://${CTAREPODIR}\n\
