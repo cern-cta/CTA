@@ -20,7 +20,7 @@
 #include <iostream>
 
 // #include "frontend/common/AdminCmd.hpp"
-#include "CtaAdminCmdStreamingClient.hpp"
+#include "CtaAdminCmdStreaming.hpp"
 #include <cmdline/CtaAdminTextFormatter.hpp>
 #include "tapeserver/daemon/common/TapedConfiguration.hpp"
 
@@ -44,12 +44,12 @@ class UserException : public std::runtime_error {
 
 namespace cta::admin {
 
-std::atomic<bool> CtaAdminCmdStreamingClient::is_json(false);
-std::atomic<bool> CtaAdminCmdStreamingClient::is_first_record(true);
+std::atomic<bool> CtaAdminCmdStreaming::is_json(false);
+std::atomic<bool> CtaAdminCmdStreaming::is_first_record(true);
 
 /* This is just parsing / preparation of the command, no actual execution
  Execution is done via the send() method - Jacek calls it exe */
-CtaAdminCmdStreamingClient::CtaAdminCmdStreamingClient(int argc, const char* const* const argv) : m_execname(argv[0]) {
+CtaAdminCmdStreaming::CtaAdminCmdStreaming(int argc, const char* const* const argv) : m_execname(argv[0]) {
   auto& admincmd = *(m_request.mutable_admincmd());
 
   admincmd.set_client_version(CTA_VERSION);
@@ -125,7 +125,7 @@ CtaAdminCmdStreamingClient::CtaAdminCmdStreamingClient(int argc, const char* con
   parseOptions(has_subcommand ? argno + 1 : argno, argc, argv, option_list_it->second); // parseOptions will populate m_request.admincmd member fields
 }
 
-const std::string CtaAdminCmdStreamingClient::getConfigFilePath() const {
+const std::string CtaAdminCmdStreaming::getConfigFilePath() const {
   std::filesystem::path config_file = DEFAULT_CLI_CONFIG;
 
   if (std::getenv("HOME")) {
@@ -142,7 +142,7 @@ const std::string CtaAdminCmdStreamingClient::getConfigFilePath() const {
 }
 
 // Implement the send() method here, by wrapping the Admin rpc call
-void CtaAdminCmdStreamingClient::send() {
+void CtaAdminCmdStreaming::send() {
   // Validate the Protocol Buffer
   try {
     cta::admin::validateCmd(m_request.admincmd());
@@ -160,9 +160,11 @@ void CtaAdminCmdStreamingClient::send() {
   std::string endpoint("cta-frontend:10955");
   // I guess here we do not need the CtaRpc class, we need the CtaRpcStream class, or a new one, or whatever
   std::unique_ptr<cta::xrd::CtaRpcStream::Stub> client_stub = cta::xrd::CtaRpcStream::NewStub(grpc::CreateChannel(endpoint, grpc::InsecureChannelCredentials()));
+  // Also create a ClientReadReactor instance to handle the command
 
   switch (cmd_pair(m_request.admincmd().cmd(), m_request.admincmd().subcmd())) {
     case cmd_pair(cta::admin::AdminCmd::CMD_TAPE, cta::admin::AdminCmd::SUBCMD_LS):
+      
       client_stub->async()->TapeLs(context, m_request, CtaAdminClientReadReactorPtr);
       break;
     case cmd_pair(admin::AdminCmd::CMD_STORAGECLASS, admin::AdminCmd::SUBCMD_LS):
@@ -184,7 +186,7 @@ void CtaAdminCmdStreamingClient::send() {
   }
 }
 
-void CtaAdminCmdStreamingClient::parseOptions(int start, int argc, const char* const* const argv, const cmd_val_t& options) {
+void CtaAdminCmdStreaming::parseOptions(int start, int argc, const char* const* const argv, const cmd_val_t& options) {
   for (int i = start; i < argc; ++i) {
     int opt_num = i - start;
 
@@ -226,7 +228,7 @@ void CtaAdminCmdStreamingClient::parseOptions(int start, int argc, const char* c
   }
 }
 
-void CtaAdminCmdStreamingClient::addOption(const Option& option, const std::string& value) {
+void CtaAdminCmdStreaming::addOption(const Option& option, const std::string& value) {
   auto admincmd_ptr = m_request.mutable_admincmd();
 
   switch (option.get_type()) {
@@ -287,7 +289,7 @@ void CtaAdminCmdStreamingClient::addOption(const Option& option, const std::stri
   }
 }
 
-void CtaAdminCmdStreamingClient::readListFromFile(cta::admin::OptionStrList& str_list, const std::string& filename) {
+void CtaAdminCmdStreaming::readListFromFile(cta::admin::OptionStrList& str_list, const std::string& filename) {
   std::ifstream file(filename);
   if (file.fail()) {
     throw std::runtime_error("Unable to open file " + filename);
@@ -333,7 +335,7 @@ void CtaAdminCmdStreamingClient::readListFromFile(cta::admin::OptionStrList& str
   }
 }
 
-void CtaAdminCmdStreamingClient::throwUsage(const std::string& error_txt) const {
+void CtaAdminCmdStreaming::throwUsage(const std::string& error_txt) const {
   std::stringstream help;
   const auto& admincmd = m_request.admincmd().cmd();
 
@@ -382,7 +384,7 @@ int main(int argc, const char** argv) {
 
   try {
     // Parse the command line arguments
-    CtaAdminCmdStreamingClient cmd(argc, argv); // this will throw the usage, which is runtime_error
+    CtaAdminCmdStreaming cmd(argc, argv); // this will throw the usage, which is runtime_error
 
     // Send the protocol buffer
     cmd.send();
