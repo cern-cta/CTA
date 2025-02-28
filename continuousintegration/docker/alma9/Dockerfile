@@ -33,7 +33,7 @@ COPY ${YUM_VERSIONLOCK_FILE} /etc/dnf/plugins/versionlock.list
 RUN dnf install -y \
       python3-dnf-plugin-versionlock \
       yum-utils \
-      createrepo \
+      createrepo_c \
       epel-release \
       jq \
       bc \
@@ -50,7 +50,7 @@ COPY image_rpms ${CTAREPODIR}/RPMS/x86_64
 
 # Populate local repository and enable it
 RUN dnf config-manager --enable epel --setopt="epel.priority=4" && \
-    createrepo "${CTAREPODIR}" && \
+    createrepo_c "${CTAREPODIR}" && \
     echo -e "[cta-artifacts]\n\
 name=CTA artifacts\n\
 baseurl=file://${CTAREPODIR}\n\
