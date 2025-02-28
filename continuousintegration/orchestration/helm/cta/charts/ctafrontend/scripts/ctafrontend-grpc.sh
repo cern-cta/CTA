@@ -19,7 +19,7 @@
 echo "$(date '+%Y-%m-%d %H:%M:%S') [$(basename "${BASH_SOURCE[0]}")] Started"
 
 # Install missing RPMs
-yum -y install cta-frontend cta-debuginfo
+yum -y install cta-frontend-grpc cta-debuginfo
 if [ "$SCHEDULER_BACKEND" == "ceph" ]; then
   yum-config-manager --enable ceph
   yum -y install ceph-common

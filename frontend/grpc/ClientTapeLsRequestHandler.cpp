@@ -81,6 +81,7 @@ bool cta::frontend::grpc::client::TapeLsRequestHandler::next(const bool bOk) {
   switch (m_streamState) {
     case StreamState::NEW:
       // CMD: prepare TapeLS stream
+      // m_upReader is of type std::unique_ptr<::grpc::ClientAsyncReader<cta::xrd::StreamResponse>>
       m_upReader = m_stub.PrepareAsyncTapeLs(&m_ctx, m_request, &m_completionQueue);
       m_streamState = StreamState::REQUEST;
       m_upReader->StartCall(m_tag);
