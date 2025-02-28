@@ -162,28 +162,33 @@ void CtaAdminCmdStreaming::send() {
   std::unique_ptr<cta::xrd::CtaRpcStream::Stub> client_stub = cta::xrd::CtaRpcStream::NewStub(grpc::CreateChannel(endpoint, grpc::InsecureChannelCredentials()));
   // Also create a ClientReadReactor instance to handle the command
 
-  switch (cmd_pair(m_request.admincmd().cmd(), m_request.admincmd().subcmd())) {
-    case cmd_pair(cta::admin::AdminCmd::CMD_TAPE, cta::admin::AdminCmd::SUBCMD_LS):
-      
-      client_stub->async()->TapeLs(context, m_request, CtaAdminClientReadReactorPtr);
-      break;
-    case cmd_pair(admin::AdminCmd::CMD_STORAGECLASS, admin::AdminCmd::SUBCMD_LS):
-    client_stub->async()->StorageClassLs(context, m_request, CtaAdminClientReadReactorPtr);
-      // processStorageClass_Ls(response);
-      break;
+  // we could also have the switch-case logic inside the ClientReadReactor?
+  try {
+    auto client_reactor = CtaAdminClientReadReactor(std::move(client_stub), m_request);
+    status = client_reactor.Await();
   }
+  // switch (cmd_pair(m_request.admincmd().cmd(), m_request.admincmd().subcmd())) {
+  //   case cmd_pair(cta::admin::AdminCmd::CMD_TAPE, cta::admin::AdminCmd::SUBCMD_LS):
+      
+  //     client_stub->async()->TapeLs(context, m_request, CtaAdminClientReadReactorPtr);
+  //     break;
+  //   case cmd_pair(admin::AdminCmd::CMD_STORAGECLASS, admin::AdminCmd::SUBCMD_LS):
+  //   client_stub->async()->StorageClassLs(context, m_request, CtaAdminClientReadReactorPtr);
+  //     // processStorageClass_Ls(response);
+  //     break;
+  // }
   
   // then check the response result, if it's not an error response we are good to continue
-  if (!status.ok()) {
-    switch (response.type()) {
-      case cta::xrd::Response::RSP_ERR_PROTOBUF:
-      case cta::xrd::Response::RSP_ERR_CTA:
-      case cta::xrd::Response::RSP_ERR_USER:
-      default:
-       throw std::runtime_error(response.message_txt());
-       break;
-    }
-  }
+  // if (!status.ok()) {
+  //   switch (response.type()) {
+  //     case cta::xrd::Response::RSP_ERR_PROTOBUF:
+  //     case cta::xrd::Response::RSP_ERR_CTA:
+  //     case cta::xrd::Response::RSP_ERR_USER:
+  //     default:
+  //      throw std::runtime_error(response.message_txt());
+  //      break;
+  //   }
+  // }
 }
 
 void CtaAdminCmdStreaming::parseOptions(int start, int argc, const char* const* const argv, const cmd_val_t& options) {
