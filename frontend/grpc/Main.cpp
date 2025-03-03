@@ -184,7 +184,10 @@ int main(const int argc, char *const *const argv) {
     // Register "service" as the instance through which we'll communicate with
     // clients. In this case it corresponds to an *synchronous* service.
     builder.RegisterService(&svc);
-
+    // I need to also register the CtaRpcStream service
+    // but need to make it so it has its own catalogue? logger etc?
+    // frontend::grpc::CtaRpcStreamImpl svc(config_file);
+    // builder.RegisterService(&streamSvc);
     std::unique_ptr <Server> server(builder.BuildAndStart());
 
     lc.log(cta::log::INFO, "Listening on socket address: " + server_address);
