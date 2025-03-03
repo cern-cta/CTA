@@ -29,17 +29,7 @@ namespace castor::tape::tapeserver::daemon {
  */
 class MemBlock {
   
-  struct AlterationContext{
-    //provide an enumation of type, thus we can 
-    //overload the constructor on those types
-    struct Failed_t{};
-    static Failed_t Failed ;
-    
-    struct Cancelled_t{}; 
-    static Cancelled_t Cancelled;
-
-    struct VerifyOnly_t{};
-    static VerifyOnly_t VerifyOnly;
+  struct AlterationContext {
 
     /** Flag indicating to the receiver that the file read failed */
     bool m_failed;
@@ -50,19 +40,31 @@ class MemBlock {
 
     /** Flag indicating that the transfer is verify only, no disk file
      should be written. */
-    bool m_verifyonly;
+    bool m_verifyOnly;
 
     /**
      * in case of error, the error message 
      */
     std::string m_errorMsg;
-    
-    AlterationContext(const std::string& msg, Failed_t) : m_failed(true),m_cancelled(false),m_verifyonly(false),m_errorMsg(msg) { }
-    explicit AlterationContext(Cancelled_t)  : m_failed(false),m_cancelled(true),m_verifyonly(false) { }
-    explicit AlterationContext(VerifyOnly_t) : m_failed(false),m_cancelled(false),m_verifyonly(true) { }
+
+    static AlterationContext Failed(const std::string& msg) {
+      return {true, false, false, msg};
+    }
+
+    static AlterationContext Cancelled() {
+      return {false, true, false, ""};
+    }
+
+    static AlterationContext VerifyOnly() {
+      return {false, false, true, ""};
+    }
+
+  private:
+    AlterationContext(const bool failed, const bool cancelled, const bool verifyOnly, const std::string &msg):
+                      m_failed(failed), m_cancelled(cancelled), m_verifyOnly(verifyOnly), m_errorMsg(msg) {};
   };
   
-  std::unique_ptr<AlterationContext> m_context;
+  std::optional<AlterationContext> m_context;
 public:
   /**
    * Constructor 
@@ -90,7 +92,7 @@ public:
    * @return 
    */
   bool isFailed() const {
-    return m_context.get() && m_context->m_failed;
+    return m_context.has_value() && m_context->m_failed;
   }
   
   /**
@@ -98,7 +100,7 @@ public:
    * @return 
    */
   bool isCanceled() const {
-    return m_context.get() && m_context->m_cancelled;
+    return m_context.has_value() && m_context->m_cancelled;
   }
     
   /**
@@ -106,7 +108,7 @@ public:
    * @return 
    */
   bool isVerifyOnly() const {
-    return m_context.get() && m_context->m_verifyonly;
+    return m_context.has_value() && m_context->m_verifyOnly;
   }
     
   /**
@@ -115,9 +117,9 @@ public:
    * Other members do not change
    */
   void markAsFailed(const std::string& msg){
-    m_context.reset(new AlterationContext(msg,AlterationContext::Failed));
-    m_fileBlock = -1;
-    m_tapeFileBlock = -1;
+    m_context = AlterationContext::Failed(msg);
+    m_fileBlock.reset();
+    m_tapeFileBlock.reset();
   }
   /**
    * Mark the block as canceled: this indicates the writer thread that
@@ -127,26 +129,26 @@ public:
    * (when positioning by fSeq, there's nothing we can do).
    */
   void markAsCancelled(){
-    m_context.reset(new AlterationContext(AlterationContext::Cancelled));
-    m_fileBlock = -1;
-    m_tapeFileBlock = -1;
+    m_context = AlterationContext::Cancelled();
+    m_fileBlock.reset();
+    m_tapeFileBlock.reset();
   }
   /**
    * Mark the block as verify only: no disk file will be written but the
    * file should otherwise be processed normally
    */
   void markAsVerifyOnly(){
-    m_context.reset(new AlterationContext(AlterationContext::VerifyOnly));
+    m_context = AlterationContext::VerifyOnly();
   }
   /**
    * Reset all the members.
    * Numerical ones are set at -1.and m_failed to false.
    */
   void reset() noexcept {
-    m_fileid = -1;
-    m_fileBlock = -1;
-    m_fSeq = -1;
-    m_tapeFileBlock = -1;
+    m_fileid.reset();
+    m_fileBlock.reset();
+    m_fSeq.reset();
+    m_tapeFileBlock.reset();
     m_payload.reset();
     
     //delete the previous m_context (if allocated) 
@@ -160,19 +162,19 @@ public:
   Payload m_payload;
   
   /** CASTOR NsFileId file concerned */
-  uint64_t m_fileid;
+  std::optional<uint64_t> m_fileid;
 
   /** number of the memory-chunk of the current file we are manipulating */
-  uint64_t m_fileBlock;
+  std::optional<uint64_t> m_fileBlock;
   
   /** order of file on the tape */
-  uint64_t m_fSeq;
+  std::optional<uint64_t> m_fSeq;
   
   /** Sequence number of the first tape block file in this memory block */
-  size_t m_tapeFileBlock;
+  std::optional<size_t> m_tapeFileBlock;
   
   /** Size of the tape blocks, allowing sanity checks on the disk write side in recalls */
-  size_t m_tapeBlockSize;
+  std::optional<size_t> m_tapeBlockSize;
   
 };
 
