@@ -18,12 +18,9 @@
 # As a result, any installs on this image will also pull from public yum repos instead of private ones
 FROM gitlab-registry.cern.ch/linuxsupport/alma9-base:latest
 
-ENV BASEDIR="continuousintegration/docker/alma9" \
-    CTAREPODIR="/opt/repo"
-
 # Add orchestration run scripts locally
-COPY ${BASEDIR}/../opt /opt
-COPY ${BASEDIR}/etc/yum.repos.d/ /etc/yum.repos.d/
+COPY continuousintegration/docker/opt/run/bin/init_pod.sh /opt/run/bin/init_pod.sh
+COPY continuousintegration/docker/alma9/etc/yum.repos.d/ /etc/yum.repos.d/
 
 # Variable to specify the tag to be used for CTA RPMs from the cta-ci-repo
 # Format: X.YY.ZZ.A-B
@@ -39,10 +36,9 @@ RUN dnf install -y \
       bc \
       krb5-workstation && \
     # logrotate files must be 0644 or 0444
-    chmod 0644 /etc/logrotate.d/*
-
-# We add the cta user so that we can consistently reference it in the Helm chart when changing keytab ownership
-RUN useradd -m -u 1000 -g tape cta
+    chmod 0644 /etc/logrotate.d/* && \
+    # We add the cta user so that we can consistently reference it in the Helm chart when changing keytab ownership
+    useradd -m -u 1000 -g tape cta
 
 # Install cta-release and clean up
 RUN dnf config-manager --enable epel --setopt="epel.priority=4" && \
