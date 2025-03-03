@@ -28,6 +28,7 @@ def test_xrootd_api_fts_compliance(env):
     test_dir=f"{env.eos_base_dir}/tmp"
     env.eosmgm[0].exec(f"eos mkdir {test_dir} && eos chmod 777 {test_dir}")
     files_to_write=[f"{test_dir}/{file}" for file in ["test1", "test2", "test3"]]
+    env.eosmgm[0].exec(f"eos fs ls")
     for test_file in files_to_write:
         # TODO: why does this sometimes fail with "no space left on device?"
         env.eosmgm[0].exec(f"eos touch {test_file} || true")
