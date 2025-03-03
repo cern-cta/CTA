@@ -1428,7 +1428,7 @@ std::list<common::dataStructures::Tape> RdbmsTapeCatalogue::getTapes(rdbms::Conn
     )SQL";
     addedAWhereConstraint = true;
   }
-  if (searchCriteria.checkIncompleteFileCopies) {
+  if (searchCriteria.checkIncompleteFileCopies.value_or(false)) {
     if (addedAWhereConstraint) {
       sql += R"SQL( AND )SQL";
     }

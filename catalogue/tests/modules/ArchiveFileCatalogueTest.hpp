@@ -46,6 +46,7 @@ protected:
 
   const cta::catalogue::CreateTapeAttributes m_tape1;
   const cta::catalogue::CreateTapeAttributes m_tape2;
+  const cta::catalogue::CreateTapeAttributes m_tape3;
   const cta::catalogue::MediaType m_mediaType;
   const cta::common::dataStructures::SecurityIdentity m_admin;
   const cta::common::dataStructures::DiskInstance m_diskInstance;

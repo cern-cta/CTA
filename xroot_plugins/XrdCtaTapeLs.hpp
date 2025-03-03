@@ -80,7 +80,7 @@ TapeLsStream::TapeLsStream(const frontend::AdminCmdStream& requestMsg, cta::cata
   searchCriteria.purchaseOrder             = requestMsg.getOptional(OptionString::MEDIA_PURCHASE_ORDER_NUMBER, &has_any);
   searchCriteria.physicalLibraryName       = requestMsg.getOptional(OptionString::PHYSICAL_LIBRARY,            &has_any);
   searchCriteria.diskFileIds               = requestMsg.getOptional(OptionStrList::FILE_ID,                    &has_any);
-  searchCriteria.checkIncompleteFileCopies = requestMsg.getOptional(OptionBoolean::INCOMPLETE_FILE_COPIES,         &has_any);
+  searchCriteria.checkIncompleteFileCopies = requestMsg.getOptional(OptionBoolean::INCOMPLETE_FILE_COPIES,     &has_any);
   auto stateOpt                      = requestMsg.getOptional(OptionString::STATE,                       &has_any);
 
   if(stateOpt){
