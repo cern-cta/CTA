@@ -69,7 +69,6 @@ public:
                     case cta::xrd::Response::RSP_ERR_CTA:
                     default:
                         strErrorMsg = m_response.header().message_txt();
-
                 }
             } else if (response.has_data()) {
                 switch (m_response.data().data_case()) {
