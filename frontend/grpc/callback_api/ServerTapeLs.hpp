@@ -1,4 +1,4 @@
-#include "CtaAdminServerWriteReactor.hpp"
+#include "CtaAdminServer.hpp"
 #include <catalogue/Catalogue.hpp>
 #include <scheduler/Scheduler.hpp>
 
@@ -17,6 +17,8 @@ class TapeLsWriteReactor : public CtaAdminServerWriteReactor {
         bool m_isHeaderSent; // or could be a static variable in the function NextWrite()
 };
 
+// constructor does not make the first call to write, currently.
+// In the example's Lister case, the first call to write is made in the constructor
 TapeLsWriteReactor::TapeLsWriteReactor(cta::catalogue::Catalogue &catalogue, cta::Scheduler &scheduler) : m_isHeaderSent(false) {
     // all this will go into a common method in a base class called
     // getTapesList or something
@@ -51,6 +53,7 @@ TapeLsWriteReactor::TapeLsWriteReactor(cta::catalogue::Catalogue &catalogue, cta
     }
 
     m_tapeList = m_catalogue.Tape()->getTapes(searchCriteria);
+    NextWrite();
 }
 
 void TapeLsWriteReactor::NextWrite() {
@@ -60,8 +63,8 @@ void TapeLsWriteReactor::NextWrite() {
         response.mutable_header()->set_type(cta::xrd::Response::RSP_SUCCESS);
         response.mutable_header()->set_show_header(cta::admin::HeaderType::TAPE_LS);
         m_isHeaderSent = true;
-        StartWrite(&response);
-        return;
+        StartWrite(&response); // this will trigger the OnWriteDone method
+        return; // because we'll be called in a loop by OnWriteDone
     } else {
         for(; !m_tapeList.empty(); m_tapeList.pop_front()) {
             Data record;
@@ -122,7 +125,7 @@ void TapeLsWriteReactor::NextWrite() {
                 tape_item->set_verification_status(tape.verificationStatus.value());
             }
             StartWrite(&record);
-            return;
+            return; // because we will be called in a loop by OnWriteDone()
         } // end for
         // did not write anything
         if (m_tapeList.empty()) {

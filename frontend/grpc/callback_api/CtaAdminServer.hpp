@@ -15,20 +15,21 @@
  *               submit itself to any jurisdiction.
  */
  
- #pragma once
+#pragma once
 
- #include "cta_frontend.pb.h"
- #include "cta_frontend.grpc.pb.h"
- #include "common/log/Logger.hpp"
- #include "common/log/LogContext.hpp"
- #include "common/exception/Exception.hpp"
- 
- #include <grpcpp/grpcpp.h>
- 
- #include <string>
- #include <memory>
- #include <mutex>
- #include <thread>
+#include "cta_frontend.pb.h"
+#include "cta_frontend.grpc.pb.h"
+#include "common/log/Logger.hpp"
+#include "common/log/LogContext.hpp"
+#include "common/exception/Exception.hpp"
+#include "ServerTapeLs.hpp" // and all the rest of them
+
+#include <grpcpp/grpcpp.h>
+
+#include <string>
+#include <memory>
+#include <mutex>
+#include <thread>
 
 namespace cta::frontend::grpc {
 
@@ -42,6 +43,7 @@ class CtaRpcStreamImpl : public CtaRpcStream::CallbackService {
     /* CtaAdminServerWriteReactor is what the type of GenericAdminStream could be */
     grpc::ServerWriteReactor<cta::xrd::Response>* GenericAdminStream(CallbackServerContext* context, const cta::xrd::Request* request);
     grpc::ServerWriteReactor<cta::xrd::Response>* TapeLs(CallbackServerContext* context, const cta::xrd::Request* request);
+    grpc::ServerWriteReactor<cta::xrd::Response>* StorageClassLs(CallbackServerContext* context, const cta::xrd::Request* request);
 
   private:
     cta::log::LogContext m_lc;
@@ -71,63 +73,30 @@ class CtaAdminServerWriteReactor : public grpc::ServerWriteReactor<cta::xrd::Str
 
 // request object will be filled in by the Parser of the command on the client-side.
 // Currently I am calling this class CtaAdminCmdStreamingClient
-grpc::ServerWriteReactor<StreamResponse>* GenericAdminStream(
-    CallbackServerContext* context,
-    const cta::xrd::Request* request) override {
-  class Lister : public grpc::ServerWriteReactor<Feature> {
-   public:
-    Lister(const routeguide::Rectangle* rectangle,
-           const std::vector<Feature>* feature_list)
-        : left_((std::min)(rectangle->lo().longitude(),
-                           rectangle->hi().longitude())),
-          right_((std::max)(rectangle->lo().longitude(),
-                            rectangle->hi().longitude())),
-          top_((std::max)(rectangle->lo().latitude(),
-                          rectangle->hi().latitude())),
-          bottom_((std::min)(rectangle->lo().latitude(),
-                             rectangle->hi().latitude())),
-          feature_list_(feature_list),
-          next_feature_(feature_list_->begin()) {
-      NextWrite();
-    }
-
-    void OnWriteDone(bool ok) override {
-      if (!ok) {
-        Finish(Status(grpc::StatusCode::UNKNOWN, "Unexpected Failure"));
-      }
-      NextWrite();
-    }
-
-    void OnDone() override {
-      LOG(INFO) << "RPC Completed";
-      delete this;
-    }
-
-    void OnCancel() override { LOG(ERROR) << "RPC Cancelled"; }
-
-   private:
-    void NextWrite() {
-      while (next_feature_ != feature_list_->end()) {
-        const Feature& f = *next_feature_;
-        next_feature_++;
-        if (f.location().longitude() >= left_ &&
-            f.location().longitude() <= right_ &&
-            f.location().latitude() >= bottom_ &&
-            f.location().latitude() <= top_) {
-          StartWrite(&f);
-          return;
-        }
-      }
-      // Didn't write anything, all is done.
-      Finish(Status::OK);
-    }
-    const long left_;
-    const long right_;
-    const long top_;
-    const long bottom_;
-    const std::vector<Feature>* feature_list_;
-    std::vector<Feature>::const_iterator next_feature_;
-  };
-  return new Lister(rectangle, &feature_list_);
+grpc::ServerWriteReactor<StreamResponse>*
+CtaAdminServer::GenericAdminStream(CallbackServerContext* context, const cta::xrd::Request* request) override {
+  // lister class implements all the overriden methods
+  // its constructor calls the NextWrite() function to begin writing
+  // return new Lister(rectangle, &feature_list_);
+  // so I could here, based on the request, have a switch statement calling the constructor of the appropriate child class
+  switch(cmd_pair(m_request.admincmd().cmd(), m_request.admincmd().subcmd())) {
+    case cmd_pair(cta::admin::AdminCmd::CMD_TAPE, cta::admin::AdminCmd::SUBCMD_LS):
+      return new TapeLsWriteReactor(catalogue, scheduler);
+    case cmd_pair(cta::admin::AdminCmd::CMD_TAPE, cta::admin::AdminCmd::SUBCMD_LS):
+      return new StorageClassLsWriteReactor(catalogue, scheduler);
+    default:
+      // should return an error that we have not implemented this, but this function does not return errors..?
+      // Open question, what do I do for errors? This API is really not clear on this
+  }
 }
 } // namespace cta::frontend::grpc
+
+// XXXXX TODO:
+// What are these functions: StartWriteLast etc that I see in test_service_impl.cc in test/cpp/end2end/test_service_impl of grpc source code?
+// check also this resource: https://lastviking.eu/fun_with_gRPC_and_C++/callback-server.html
+/* Important notice: 
+ * 
+ *
+ * One thing to keep in mind is that the callback's may be called simultaneously from different threads.
+ * Our implementation must be thread-safe.
+ */
