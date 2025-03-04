@@ -259,18 +259,18 @@ const std::map<std::string, OptionBoolean::Key> boolOptions = {
   {"--fromcastor",      OptionBoolean::FROM_CASTOR     },
 
   // hasOption options
-  {"--disabledtape",         OptionBoolean::DISABLED               },
-  {"--justarchive",          OptionBoolean::JUSTARCHIVE            },
-  {"--justmove",             OptionBoolean::JUSTMOVE               },
-  {"--justaddcopies",        OptionBoolean::JUSTADDCOPIES          },
-  {"--justretrieve",         OptionBoolean::JUSTRETRIEVE           },
-  {"--log",                  OptionBoolean::SHOW_LOG_ENTRIES       },
-  {"--lookupnamespace",      OptionBoolean::LOOKUP_NAMESPACE       },
-  {"--summary",              OptionBoolean::SUMMARY                },
-  {"--no-recall",            OptionBoolean::NO_RECALL              },
-  {"--dirtybit",             OptionBoolean::DIRTY_BIT              },
-  {"--isrepackvo",           OptionBoolean::IS_REPACK_VO           },
-  {"--incompletefilecopies", OptionBoolean::INCOMPLETE_FILE_COPIES },
+  {"--disabledtape",         OptionBoolean::DISABLED            },
+  {"--justarchive",          OptionBoolean::JUSTARCHIVE         },
+  {"--justmove",             OptionBoolean::JUSTMOVE            },
+  {"--justaddcopies",        OptionBoolean::JUSTADDCOPIES       },
+  {"--justretrieve",         OptionBoolean::JUSTRETRIEVE        },
+  {"--log",                  OptionBoolean::SHOW_LOG_ENTRIES    },
+  {"--lookupnamespace",      OptionBoolean::LOOKUP_NAMESPACE    },
+  {"--summary",              OptionBoolean::SUMMARY             },
+  {"--no-recall",            OptionBoolean::NO_RECALL           },
+  {"--dirtybit",             OptionBoolean::DIRTY_BIT           },
+  {"--isrepackvo",           OptionBoolean::IS_REPACK_VO        },
+  {"--missingfilecopies",    OptionBoolean::MISSING_FILE_COPIES },
 };
 
 /*!
@@ -517,7 +517,7 @@ const Option opt_archive_route_type {Option::OPT_STR,
                                      std::string(R"( <")") +
                                        cta::common::dataStructures::toString(ArchiveRouteType::DEFAULT) + R"(" or ")" +
                                        cta::common::dataStructures::toString(ArchiveRouteType::REPACK) + R"(">)"};
-const Option opt_incompletefilecopes {Option::OPT_FLAG, "--incompletefilecopies", "--ifc", ""};
+const Option opt_missingfilecopes {Option::OPT_FLAG, "--missingfilecopies", "--ifc", ""};
 
 /*!
  * Subset of commands that return streaming output
@@ -1037,7 +1037,7 @@ tape (ta)
     opt_fromcastor.optional(),
     opt_purchase_order.optional(),
     opt_physical_library.optional(),
-    opt_incompletefilecopes.optional()}                                                                                         },
+    opt_missingfilecopes.optional()}                                                                                         },
 
   /**md
 tapefile (tf)

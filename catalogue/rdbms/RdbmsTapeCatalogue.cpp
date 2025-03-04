@@ -1300,7 +1300,7 @@ std::list<common::dataStructures::Tape> RdbmsTapeCatalogue::getTapes(rdbms::Conn
       searchCriteria.fromCastor ||
       searchCriteria.purchaseOrder ||
       searchCriteria.physicalLibraryName ||
-      searchCriteria.checkIncompleteFileCopies) {
+      searchCriteria.checkMissingFileCopies) {
     sql += R"SQL( WHERE )SQL";
   }
 
@@ -1428,7 +1428,7 @@ std::list<common::dataStructures::Tape> RdbmsTapeCatalogue::getTapes(rdbms::Conn
     )SQL";
     addedAWhereConstraint = true;
   }
-  if (searchCriteria.checkIncompleteFileCopies.value_or(false)) {
+  if (searchCriteria.checkMissingFileCopies.value_or(false)) {
     if (addedAWhereConstraint) {
       sql += R"SQL( AND )SQL";
     }

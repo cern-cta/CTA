@@ -5068,7 +5068,7 @@ TEST_P(cta_catalogue_ArchiveFileTest, getTapesWithMissingTapeFileCopies) {
   // Tape 1 and 2 should be identified as missing a 2nd copy
   {
     cta::catalogue::TapeSearchCriteria searchCriteria;
-    searchCriteria.checkIncompleteFileCopies = true;
+    searchCriteria.checkMissingFileCopies = true;
     const std::list<cta::common::dataStructures::Tape> tapes = m_catalogue->Tape()->getTapes(searchCriteria);
 
     ASSERT_EQ(2, tapes.size());
@@ -5109,7 +5109,7 @@ TEST_P(cta_catalogue_ArchiveFileTest, getTapesWithMissingTapeFileCopies) {
   // Only tape 2 should now be identified as missing a 2nd copy
   {
     cta::catalogue::TapeSearchCriteria searchCriteria;
-    searchCriteria.checkIncompleteFileCopies = true;
+    searchCriteria.checkMissingFileCopies = true;
     const std::list<cta::common::dataStructures::Tape> tapes = m_catalogue->Tape()->getTapes(searchCriteria);
 
     ASSERT_EQ(1, tapes.size());
@@ -5148,7 +5148,7 @@ TEST_P(cta_catalogue_ArchiveFileTest, getTapesWithMissingTapeFileCopies) {
   // No tapes should now be identified as missing a 2nd copy
   {
     cta::catalogue::TapeSearchCriteria searchCriteria;
-    searchCriteria.checkIncompleteFileCopies = true;
+    searchCriteria.checkMissingFileCopies = true;
     const std::list<cta::common::dataStructures::Tape> tapes = m_catalogue->Tape()->getTapes(searchCriteria);
 
     ASSERT_TRUE(tapes.empty());
