@@ -325,33 +325,33 @@ FrontendService::FrontendService(const std::string& configFilename) : m_archiveF
   // Configure allowed requests
   {
     // default value for both repack and user requests is "on"
-    auto acceptRepackRequests = config.getOptionValueStr("cta.schedulerdb.enable_repack_requests");
-    if (!acceptRepackRequests.has_value()) {
-      log(log::INFO, "'cta.schedulerdb.enable_repack_requests' not specified in config, defaulting to \"on\"");
+    std::optional<bool> disableRepackRequests = config.getOptionValueBool("cta.schedulerdb.disable_repack_requests");
+    if (!disableRepackRequests.has_value()) {
+      log(log::INFO, "'cta.schedulerdb.disable_repack_requests' not specified in config, defaulting to false");
       m_acceptRepackRequests = true;
     } else {
-      m_acceptRepackRequests = (acceptRepackRequests.value() == "on");
+      m_acceptRepackRequests = !disableRepackRequests;
       std::list<log::Param> params;
       params.push_back(log::Param("source", configFilename));
       params.push_back(log::Param("category", "cta.schedulerdb"));
-      params.push_back(log::Param("key", "enable_repack_requests"));
-      params.push_back(log::Param("value", config.getOptionValueStr("cta.schedulerdb.enable_repack_requests").value()));
+      params.push_back(log::Param("key", "disable_repack_requests"));
+      params.push_back(log::Param("value", config.getOptionValueStr("cta.schedulerdb.disable_repack_requests").value()));
       log(log::INFO, "Configuration entry", params);
     }
   }
 
   {
-    auto acceptUserRequests = config.getOptionValueStr("cta.schedulerdb.enable_user_requests");
-    if (!acceptUserRequests.has_value()) {
-      log(log::INFO, "'cta.schedulerdb.enable_user_requests' not specified in config, defaulting to \"on\"");
+    auto disableUserRequests = config.getOptionValueBool("cta.schedulerdb.disable_user_requests");
+    if (!disableUserRequests.has_value()) {
+      log(log::INFO, "'cta.schedulerdb.disable_user_requests' not specified in config, defaulting to false");
       m_acceptUserRequests = true;
     } else {
-      m_acceptUserRequests = (acceptUserRequests.value() == "on");
+      m_acceptUserRequests = !disableUserRequests;
       std::list<log::Param> params;
       params.push_back(log::Param("source", configFilename));
       params.push_back(log::Param("category", "cta.schedulerdb"));
-      params.push_back(log::Param("key", "enable_user_requests"));
-      params.push_back(log::Param("value", config.getOptionValueStr("cta.schedulerdb.enable_user_requests").value()));
+      params.push_back(log::Param("key", "disable_user_requests"));
+      params.push_back(log::Param("value", config.getOptionValueStr("cta.schedulerdb.disable_user_requests").value()));
       log(log::INFO, "Configuration entry", params);
     }
   }

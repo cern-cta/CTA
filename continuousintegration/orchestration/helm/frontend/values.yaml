@@ -25,8 +25,8 @@ conf:
   schedulerdb:
     numberOfThreads: 500
     threadStackSizeMb: 1
-    enableRepackRequests: "on"
-    enableUserRequests: "on"
+    disableRepackRequests: false
+    disableUserRequests: false
     tapeCacheMaxAgeSecs: 1
     retrieveQueueCacheMaxAgeSecs: 1
 

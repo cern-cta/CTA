@@ -94,8 +94,8 @@ cta.log.url file:/var/log/cta/cta-frontend.log
 # cta.schedulerdb.retrieve_queue_cache_max_age_secs 10
 
 # CTA Scheduler DB - enable requests for user or repack
-# cta.schedulerdb.enable_repack_requests on
-# cta.schedulerdb.enable_user_requests on
+# cta.schedulerdb.disable_repack_requests false
+# cta.schedulerdb.disable_user_requests false
 
 # CTA Catalogue options
 cta.catalogue.numberofconnections 10
