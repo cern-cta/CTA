@@ -187,9 +187,9 @@ int cta::frontend::grpc::server::FrontendCmd::main(const int argc, char** argv) 
     if (!uiPort) {
       uiPort = config.getOptionValueUInt("grpc.port").value_or(DEFAULT_PORT);
     }
-    strSslRoot = config.getOptionValueStr("grpc.SslRoot").value();
-    strSslKey = config.getOptionValueStr("grpc.SslKey").value();
-    strSslCert = config.getOptionValueStr("grpc.SslCert").value();
+    strSslRoot = config.getOptionValueStr("grpc.ssl.root").value();
+    strSslKey = config.getOptionValueStr("grpc.ssl.key").value();
+    strSslCert = config.getOptionValueStr("grpc.ssl.cert").value();
   } catch(const cta::exception::Exception &ex) {
     m_err << m_strExecName << ": problem while reading a configuration file - " << ex.getMessage().str() << std::endl;
     return EXIT_FAILURE;
@@ -200,7 +200,7 @@ int cta::frontend::grpc::server::FrontendCmd::main(const int argc, char** argv) 
   }
 
   if(strKeytab.empty()) {
-    strKeytab = config.getOptionValueStr("grpc.Keytab").value_or("");
+    strKeytab = config.getOptionValueStr("grpc.keytab").value_or("");
     // and check again
     if(strKeytab.empty()) {
       m_err << m_strExecName << ": the keytab file is unspecified" << std::endl
