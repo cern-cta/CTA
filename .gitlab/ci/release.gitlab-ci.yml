@@ -97,10 +97,29 @@ release-cta:
                                                        --eos-path /eos/user/c/ctareg/www/cta-repo
                                                        --hook /eos/user/c/ctareg/www/cta-repo/update_repos.sh
 
+release-cta-unstable:
+  stage: release:external
+  needs:
+    - release-cta
+  image: $IMAGE_RELEASE
+  rules:
+    - if: $CI_COMMIT_TAG
+      when: manual
+      allow_failure: true
+  script:
+    - echo "Publishing to unstable CTA repository"
+    - export CTA_VERSION=$(echo ${CI_COMMIT_TAG} | awk -F '[v-]' '{print $2}')
+    - ./continuousintegration/release/upload_to_eos.sh --eos-username ${DOCKER_LOGIN_USERNAME}
+                                                       --eos-password ${DOCKER_LOGIN_PASSWORD}
+                                                       --eos-source-dir /eos/user/c/ctareg/www/cta-repo
+                                                       --eos-path /eos/user/c/ctareg/www/public/cta-public-repo/unstable/cta-5/el9/cta
+                                                       --hook /eos/user/c/ctareg/www/public/update_repos.sh
+                                                       --tag ${CTA_VERSION}
+
 release-cta-testing:
   stage: release:external
   needs:
-    - build-cta-rpm
+    - release-cta
   image: $IMAGE_RELEASE
   rules:
     - if: $CI_COMMIT_TAG
@@ -110,14 +129,15 @@ release-cta-testing:
     - echo "Publishing to testing CTA repository"
     - ./continuousintegration/release/upload_to_eos.sh --eos-username ${DOCKER_LOGIN_USERNAME}
                                                        --eos-password ${DOCKER_LOGIN_PASSWORD}
-                                                       --source-dir build_rpm/RPM/RPMS/x86_64
+                                                       --eos-source-dir /eos/user/c/ctareg/www/cta-repo
                                                        --eos-path /eos/user/c/ctareg/www/public/cta-public-repo/testing/cta-5/el9/cta
                                                        --hook /eos/user/c/ctareg/www/public/update_repos.sh
+                                                       --tag ${CTA_VERSION}
 
 release-cta-stable:
   stage: release:external
   needs:
-    - build-cta-rpm
+    - release-cta
   image: $IMAGE_RELEASE
   rules:
     - if: $CI_COMMIT_TAG
@@ -127,9 +147,10 @@ release-cta-stable:
     - echo "Publishing to public CTA repository"
     - ./continuousintegration/release/upload_to_eos.sh --eos-username ${DOCKER_LOGIN_USERNAME}
                                                        --eos-password ${DOCKER_LOGIN_PASSWORD}
-                                                       --source-dir build_rpm/RPM/RPMS/x86_64
+                                                       --eos-source-dir /eos/user/c/ctareg/www/cta-repo
                                                        --eos-path /eos/user/c/ctareg/www/public/cta-public-repo/stable/cta-5/el9/cta
                                                        --hook /eos/user/c/ctareg/www/public/update_repos.sh
+                                                       --tag ${CTA_VERSION}
 
 release-cta-gitlab-prepare:
   stage: release:external

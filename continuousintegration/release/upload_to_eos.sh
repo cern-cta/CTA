@@ -28,10 +28,12 @@ usage() {
   echo "Usage: $0 [options] --eos-username <username> --eos-password <password> --eos-path <path> --source-dir <dir>"
   echo ""
   echo "Uploads to $EOS_PATH in the EOS namespace the files found in CI_WEBSITE_DIR."
-  echo "  --eos-username  <username>:             Account username for EOS."
-  echo "  --eos-password  <password>:             Account password for EOS."
-  echo "  --eos-path      <path>:                 Path on EOS where to upload the files to."
-  echo "  --source-dir    <dir>:                  Directory that will be uploaded to the provided eos-path."
+  echo "  --eos-username   <username>:             Account username for EOS."
+  echo "  --eos-password   <password>:             Account password for EOS."
+  echo "  --eos-path       <path>:                 Path on EOS where to upload the files to."
+  echo "  --source-dir     <dir>:                  Local directory that will be uploaded to the provided eos-path."
+  echo "  --eos-source-dir <dir>:                  EOS directory that will be copied to the provided eos-path."
+  echo "  --tag            <tag>:                  CTA release tag"
   echo ""
   echo "options:"
   echo "  --hook          <hook>:                 Hook to run on lxplus."
@@ -44,6 +46,8 @@ upload_to_eos() {
   local eos_account_password=""
   local eos_path=""
   local source_dir=""
+  local eos_source_dir=""
+  local tag=""
   local hook=""
 
   # Parse command line arguments
@@ -94,6 +98,24 @@ upload_to_eos() {
           usage
         fi
         ;;
+      --eos-source-dir)
+        if [[ $# -gt 1 ]]; then
+          eos_source_dir="$2"
+          shift
+        else
+          echo "Error: --eos-source-dir requires an argument"
+          usage
+        fi
+        ;;
+      --tag)
+        if [[ $# -gt 1 ]]; then
+          tag="$2"
+          shift
+        else
+          echo "Error: --tag requires an argument"
+          usage
+        fi
+        ;;
       *)
         echo "Invalid argument: $1"
         usage
@@ -117,14 +139,25 @@ upload_to_eos() {
     usage
   fi
 
-  if [ -z "${source_dir}" ]; then
-    echo "Failure: Missing mandatory argument --source-dir"
+  if [ -z "${source_dir}" ] && [ -z "${eos_source_dir}" ]; then
+    echo "Failure: Missing mandatory argument --source-dir or --eos-source-dir"
+    usage
+  fi
+
+  if [ -n "${source_dir}" ] && [ -n "${eos_source_dir}" ]; then
+    echo "Failure: Do not use both arguments --source-dir and --eos-source-dir"
     usage
   fi
 
   # Check the source directory exists
-  if [ ! -d $source_dir ]; then
-    echo "ERROR: Source directory $source_dir doesn't exist"
+  if [ -n "${source_dir}" ] && [ ! -d "${source_dir}" ]; then
+    echo "ERROR: Source directory ${source_dir} doesn't exist"
+    exit 1
+  fi
+
+  # Check the tag argument was received
+  if [ -n "${eos_source_dir}" ] && [ -z "${tag}" ]; then
+    echo "ERROR: Argument --eos-source-dir should be used with --tag"
     exit 1
   fi
 
@@ -135,11 +168,25 @@ upload_to_eos() {
     exit 1
   fi
 
-  # Rely in xrootd to do the copy of files to EOS
-  xrdcp --force --recursive $source_dir/ root://eoshome.cern.ch/$eos_path/ 2>&1 >/dev/null
-  if [ $? -ne 0 ]; then
-    echo "ERROR: Failed to copy files to $eos_path via xrdcp"
-    exit 1
+  if [ -n "${source_dir}" ]; then
+    # Rely in xrootd to do the copy of files to EOS
+    xrdcp --force --recursive "${source_dir}"/ root://eoshome.cern.ch/"${eos_path}"/ 2>&1 >/dev/null
+    if [ $? -ne 0 ]; then
+      echo "ERROR: Failed to copy files to $eos_path via xrdcp"
+      exit 1
+    fi
+  fi
+
+  if [ -n "${eos_source_dir}" ]; then
+    # Rely in xrootd to do the copy of files to EOS
+    xrdfs root://eoshome.cern.ch/ ls -R "${eos_source_dir}" \
+      | grep "${tag}" \
+      | sed "s|^${eos_source_dir}||" \
+      | xargs -I {} xrdcp --force --recursive root://eoshome.cern.ch/"${eos_source_dir}"/{} root://eoshome.cern.ch/"${eos_path}"/ 2>&1 >/dev/null
+    if [ $? -ne 0 ]; then
+      echo "ERROR: Failed to copy release ${tag} files from ${eos_source_dir} to ${eos_path} via xrdcp"
+      exit 1
+    fi
   fi
 
   # Run the provided hook on lxplus
