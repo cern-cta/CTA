@@ -83,17 +83,18 @@ bool cta::frontend::grpc::server::TapeLsRequestHandler::next(const bool bOk) {
 
             // Get the search criteria from the optional options
 
-            m_searchCriteria.full            = requestMsg.getOptional(cta::admin::OptionBoolean::FULL,                       &bHasAny);
-            m_searchCriteria.fromCastor      = requestMsg.getOptional(cta::admin::OptionBoolean::FROM_CASTOR,                &bHasAny);
-            m_searchCriteria.capacityInBytes = requestMsg.getOptional(cta::admin::OptionUInt64::CAPACITY,                    &bHasAny);
-            m_searchCriteria.logicalLibrary  = requestMsg.getOptional(cta::admin::OptionString::LOGICAL_LIBRARY,             &bHasAny);
-            m_searchCriteria.tapePool        = requestMsg.getOptional(cta::admin::OptionString::TAPE_POOL,                   &bHasAny);
-            m_searchCriteria.vo              = requestMsg.getOptional(cta::admin::OptionString::VO,                          &bHasAny);
-            m_searchCriteria.vid             = requestMsg.getOptional(cta::admin::OptionString::VID,                         &bHasAny);
-            m_searchCriteria.mediaType       = requestMsg.getOptional(cta::admin::OptionString::MEDIA_TYPE,                  &bHasAny);
-            m_searchCriteria.vendor          = requestMsg.getOptional(cta::admin::OptionString::VENDOR,                      &bHasAny);
-            m_searchCriteria.purchaseOrder   = requestMsg.getOptional(cta::admin::OptionString::MEDIA_PURCHASE_ORDER_NUMBER, &bHasAny);
-            m_searchCriteria.diskFileIds     = requestMsg.getOptional(cta::admin::OptionStrList::FILE_ID,                    &bHasAny);
+            m_searchCriteria.full                   = requestMsg.getOptional(cta::admin::OptionBoolean::FULL,                       &bHasAny);
+            m_searchCriteria.fromCastor             = requestMsg.getOptional(cta::admin::OptionBoolean::FROM_CASTOR,                &bHasAny);
+            m_searchCriteria.capacityInBytes        = requestMsg.getOptional(cta::admin::OptionUInt64::CAPACITY,                    &bHasAny);
+            m_searchCriteria.logicalLibrary         = requestMsg.getOptional(cta::admin::OptionString::LOGICAL_LIBRARY,             &bHasAny);
+            m_searchCriteria.tapePool               = requestMsg.getOptional(cta::admin::OptionString::TAPE_POOL,                   &bHasAny);
+            m_searchCriteria.vo                     = requestMsg.getOptional(cta::admin::OptionString::VO,                          &bHasAny);
+            m_searchCriteria.vid                    = requestMsg.getOptional(cta::admin::OptionString::VID,                         &bHasAny);
+            m_searchCriteria.mediaType              = requestMsg.getOptional(cta::admin::OptionString::MEDIA_TYPE,                  &bHasAny);
+            m_searchCriteria.vendor                 = requestMsg.getOptional(cta::admin::OptionString::VENDOR,                      &bHasAny);
+            m_searchCriteria.purchaseOrder          = requestMsg.getOptional(cta::admin::OptionString::MEDIA_PURCHASE_ORDER_NUMBER, &bHasAny);
+            m_searchCriteria.diskFileIds            = requestMsg.getOptional(cta::admin::OptionStrList::FILE_ID,                    &bHasAny);
+            m_searchCriteria.checkMissingFileCopies = requestMsg.getOptional(cta::admin::OptionBoolean::MISSING_FILE_COPIES,        &bHasAny);
             auto stateOpt                    = requestMsg.getOptional(cta::admin::OptionString::STATE,                       &bHasAny);
             if(stateOpt){
               m_searchCriteria.state = common::dataStructures::Tape::stringToState(stateOpt.value());

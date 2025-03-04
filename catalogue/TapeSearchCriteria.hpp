@@ -96,6 +96,11 @@ struct TapeSearchCriteria {
   std::optional<std::vector<std::string>> diskFileIds;
 
   /**
+   * Check tapes with missing tape file copies
+   */
+  std::optional<bool> checkMissingFileCopies;
+
+  /**
    * The state of the tapes to look for
    */
   std::optional<common::dataStructures::Tape::State> state;

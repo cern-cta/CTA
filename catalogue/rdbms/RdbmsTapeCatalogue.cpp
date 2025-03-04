@@ -1299,7 +1299,8 @@ std::list<common::dataStructures::Tape> RdbmsTapeCatalogue::getTapes(rdbms::Conn
       searchCriteria.state ||
       searchCriteria.fromCastor ||
       searchCriteria.purchaseOrder ||
-      searchCriteria.physicalLibraryName) {
+      searchCriteria.physicalLibraryName ||
+      searchCriteria.checkMissingFileCopies) {
     sql += R"SQL( WHERE )SQL";
   }
 
@@ -1424,6 +1425,30 @@ std::list<common::dataStructures::Tape> RdbmsTapeCatalogue::getTapes(rdbms::Conn
     }
     sql += R"SQL(
       PHYSICAL_LIBRARY.PHYSICAL_LIBRARY_NAME = :PHYSICAL_LIBRARY_NAME
+    )SQL";
+    addedAWhereConstraint = true;
+  }
+  if (searchCriteria.checkMissingFileCopies.value_or(false)) {
+    if (addedAWhereConstraint) {
+      sql += R"SQL( AND )SQL";
+    }
+    sql += R"SQL(
+      VID IN (
+        SELECT TF.VID FROM (
+          SELECT AF.ARCHIVE_FILE_ID, SC.NB_COPIES, COUNT(TF.ARCHIVE_FILE_ID) AS NB_TAPE_COPIES
+          FROM
+            ARCHIVE_FILE AF
+            INNER JOIN STORAGE_CLASS SC ON AF.STORAGE_CLASS_ID = SC.STORAGE_CLASS_ID
+            INNER JOIN TAPE_FILE TF ON AF.ARCHIVE_FILE_ID = TF.ARCHIVE_FILE_ID
+          WHERE
+            SC.NB_COPIES > 1
+          GROUP BY
+            AF.ARCHIVE_FILE_ID, SC.NB_COPIES
+          HAVING
+            SC.NB_COPIES <> COUNT(TF.ARCHIVE_FILE_ID)
+        ) MISSING_COPIES
+        INNER JOIN TAPE_FILE TF ON MISSING_COPIES.ARCHIVE_FILE_ID = TF.ARCHIVE_FILE_ID
+      )
     )SQL";
   }
 

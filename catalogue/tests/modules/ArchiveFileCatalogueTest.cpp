@@ -42,6 +42,7 @@ cta_catalogue_ArchiveFileTest::cta_catalogue_ArchiveFileTest()
   : m_dummyLog("dummy", "dummy"),
     m_tape1(CatalogueTestUtils::getTape1()),
     m_tape2(CatalogueTestUtils::getTape2()),
+    m_tape3(CatalogueTestUtils::getTape3()),
     m_mediaType(CatalogueTestUtils::getMediaType()),
     m_admin(CatalogueTestUtils::getAdmin()),
     m_diskInstance(CatalogueTestUtils::getDiskInstance()),
@@ -4985,6 +4986,173 @@ TEST_P(cta_catalogue_ArchiveFileTest, getArchiveFileQueueCriteria_ignore_repack_
   copyToPoolMap_it++;
   ASSERT_EQ(copyNb_2, copyToPoolMap_it->first);
   ASSERT_EQ(tapePoolName_default_2, copyToPoolMap_it->second);
+}
+
+TEST_P(cta_catalogue_ArchiveFileTest, getTapesWithMissingTapeFileCopies) {
+  const bool logicalLibraryIsDisabled= false;
+  const uint64_t nbPartialTapes = 2;
+  const bool isEncrypted = true;
+  const std::list<std::string> supply;
+  const std::string diskInstance = m_diskInstance.name;
+  std::optional<std::string> physicalLibraryName;
+
+  m_catalogue->MediaType()->createMediaType(m_admin, m_mediaType);
+  m_catalogue->LogicalLibrary()->createLogicalLibrary(m_admin, m_tape1.logicalLibraryName, logicalLibraryIsDisabled, physicalLibraryName, "Create logical library");
+  m_catalogue->DiskInstance()->createDiskInstance(m_admin, m_diskInstance.name, m_diskInstance.comment);
+  m_catalogue->VO()->createVirtualOrganization(m_admin, m_vo);
+  m_catalogue->TapePool()->createTapePool(m_admin, m_tape1.tapePoolName, m_vo.name, nbPartialTapes, isEncrypted, supply, "Create tape pool");
+  m_catalogue->Tape()->createTape(m_admin, m_tape1);
+  m_catalogue->Tape()->createTape(m_admin, m_tape2);
+  m_catalogue->Tape()->createTape(m_admin, m_tape3);
+  m_catalogue->StorageClass()->createStorageClass(m_admin, m_storageClassDualCopy);
+
+  // Storage class 'm_storageClassDualCopy' expects two tape copies for each file
+  // 1.1. Write 1 single file copy of 'archiveFileId_1' on 'm_tape1'
+  // 1.2. Write 1 single file copy of 'archiveFileId_2' on 'm_tape2' (different file)
+  // 2. Check that both tapes are identified as missing a second tape file copy
+
+  constexpr uint64_t archiveFileId_1 = 1234;
+  constexpr uint64_t archiveFileId_2 = 5678;
+
+  constexpr uint64_t archiveFileSize = 1;
+  const std::string tapeDrive = "tape_drive";
+
+  {
+    auto tapeFileWrittenPtr = std::make_unique<cta::catalogue::TapeFileWritten>();
+    auto & tapeFileWritten = *tapeFileWrittenPtr;
+
+    tapeFileWritten.archiveFileId        = archiveFileId_1;
+    tapeFileWritten.diskInstance         = diskInstance;
+    tapeFileWritten.diskFileId           = "12340000";
+
+    tapeFileWritten.diskFileOwnerUid     = PUBLIC_DISK_USER;
+    tapeFileWritten.diskFileGid          = PUBLIC_DISK_GROUP;
+    tapeFileWritten.size                 = archiveFileSize;
+    tapeFileWritten.checksumBlob.insert(cta::checksum::ADLER32, "1234");
+    tapeFileWritten.storageClassName     = m_storageClassDualCopy.name;
+    tapeFileWritten.vid                  = m_tape1.vid;
+    tapeFileWritten.fSeq                 = 1;
+    tapeFileWritten.blockId              = 4321;
+    tapeFileWritten.copyNb               = 1;
+    tapeFileWritten.tapeDrive            = tapeDrive;
+
+    std::set<cta::catalogue::TapeItemWrittenPointer> fileWrittenSet;
+    fileWrittenSet.insert(tapeFileWrittenPtr.release());
+    m_catalogue->TapeFile()->filesWrittenToTape(fileWrittenSet);
+  }
+
+  {
+    auto tapeFileWrittenPtr = std::make_unique<cta::catalogue::TapeFileWritten>();
+    auto & tapeFileWritten = *tapeFileWrittenPtr;
+
+    tapeFileWritten.archiveFileId        = archiveFileId_2;
+    tapeFileWritten.diskInstance         = diskInstance;
+    tapeFileWritten.diskFileId           = "56780000";
+
+    tapeFileWritten.diskFileOwnerUid     = PUBLIC_DISK_USER;
+    tapeFileWritten.diskFileGid          = PUBLIC_DISK_GROUP;
+    tapeFileWritten.size                 = archiveFileSize;
+    tapeFileWritten.checksumBlob.insert(cta::checksum::ADLER32, "8765");
+    tapeFileWritten.storageClassName     = m_storageClassDualCopy.name;
+    tapeFileWritten.vid                  = m_tape2.vid;
+    tapeFileWritten.fSeq                 = 1;
+    tapeFileWritten.blockId              = 5678;
+    tapeFileWritten.copyNb               = 1;
+    tapeFileWritten.tapeDrive            = tapeDrive;
+
+    std::set<cta::catalogue::TapeItemWrittenPointer> fileWrittenSet;
+    fileWrittenSet.insert(tapeFileWrittenPtr.release());
+    m_catalogue->TapeFile()->filesWrittenToTape(fileWrittenSet);
+  }
+
+  // Tape 1 and 2 should be identified as missing a 2nd copy
+  {
+    cta::catalogue::TapeSearchCriteria searchCriteria;
+    searchCriteria.checkMissingFileCopies = true;
+    const std::list<cta::common::dataStructures::Tape> tapes = m_catalogue->Tape()->getTapes(searchCriteria);
+
+    ASSERT_EQ(2, tapes.size());
+
+    const auto vidToTape = CatalogueTestUtils::tapeListToMap(tapes);
+    const cta::common::dataStructures::Tape & tape_1 = vidToTape.at(m_tape1.vid);
+    ASSERT_EQ(m_tape1.vid, tape_1.vid);
+    const cta::common::dataStructures::Tape & tape_2 = vidToTape.at(m_tape2.vid);
+    ASSERT_EQ(m_tape2.vid, tape_2.vid);
+  }
+
+  // 1.1. Write 1 new file copy of 'archiveFileId_1' on 'm_tape3'
+  // 2. Only 'm_tape3' should now be identified as missing a second tape file copy
+  {
+    auto tapeFileWrittenPtr = std::make_unique<cta::catalogue::TapeFileWritten>();
+    auto & tapeFileWritten = *tapeFileWrittenPtr;
+
+    tapeFileWritten.archiveFileId        = archiveFileId_1;
+    tapeFileWritten.diskInstance         = diskInstance;
+    tapeFileWritten.diskFileId           = "12340000";
+
+    tapeFileWritten.diskFileOwnerUid     = PUBLIC_DISK_USER;
+    tapeFileWritten.diskFileGid          = PUBLIC_DISK_GROUP;
+    tapeFileWritten.size                 = archiveFileSize;
+    tapeFileWritten.checksumBlob.insert(cta::checksum::ADLER32, "1234");
+    tapeFileWritten.storageClassName     = m_storageClassDualCopy.name;
+    tapeFileWritten.vid                  = m_tape3.vid;
+    tapeFileWritten.fSeq                 = 1;
+    tapeFileWritten.blockId              = 4321;
+    tapeFileWritten.copyNb               = 2;
+    tapeFileWritten.tapeDrive            = tapeDrive;
+
+    std::set<cta::catalogue::TapeItemWrittenPointer> fileWrittenSet;
+    fileWrittenSet.insert(tapeFileWrittenPtr.release());
+    m_catalogue->TapeFile()->filesWrittenToTape(fileWrittenSet);
+  }
+
+  // Only tape 2 should now be identified as missing a 2nd copy
+  {
+    cta::catalogue::TapeSearchCriteria searchCriteria;
+    searchCriteria.checkMissingFileCopies = true;
+    const std::list<cta::common::dataStructures::Tape> tapes = m_catalogue->Tape()->getTapes(searchCriteria);
+
+    ASSERT_EQ(1, tapes.size());
+
+    const auto vidToTape = CatalogueTestUtils::tapeListToMap(tapes);
+    const cta::common::dataStructures::Tape & tape_2 = vidToTape.at(m_tape2.vid);
+    ASSERT_EQ(m_tape2.vid, tape_2.vid);
+  }
+
+  // 1.1. Write 1 new file copy of 'archiveFileId_2' on 'm_tape3'
+  // 2. No tapes should now be identified as missing a second tape file copy
+  {
+    auto tapeFileWrittenPtr = std::make_unique<cta::catalogue::TapeFileWritten>();
+    auto & tapeFileWritten = *tapeFileWrittenPtr;
+
+    tapeFileWritten.archiveFileId        = archiveFileId_2;
+    tapeFileWritten.diskInstance         = diskInstance;
+    tapeFileWritten.diskFileId           = "56780000";
+
+    tapeFileWritten.diskFileOwnerUid     = PUBLIC_DISK_USER;
+    tapeFileWritten.diskFileGid          = PUBLIC_DISK_GROUP;
+    tapeFileWritten.size                 = archiveFileSize;
+    tapeFileWritten.checksumBlob.insert(cta::checksum::ADLER32, "8765");
+    tapeFileWritten.storageClassName     = m_storageClassDualCopy.name;
+    tapeFileWritten.vid                  = m_tape3.vid;
+    tapeFileWritten.fSeq                 = 2;
+    tapeFileWritten.blockId              = 5678;
+    tapeFileWritten.copyNb               = 2;
+    tapeFileWritten.tapeDrive            = tapeDrive;
+
+    std::set<cta::catalogue::TapeItemWrittenPointer> fileWrittenSet;
+    fileWrittenSet.insert(tapeFileWrittenPtr.release());
+    m_catalogue->TapeFile()->filesWrittenToTape(fileWrittenSet);
+  }
+
+  // No tapes should now be identified as missing a 2nd copy
+  {
+    cta::catalogue::TapeSearchCriteria searchCriteria;
+    searchCriteria.checkMissingFileCopies = true;
+    const std::list<cta::common::dataStructures::Tape> tapes = m_catalogue->Tape()->getTapes(searchCriteria);
+
+    ASSERT_TRUE(tapes.empty());
+  }
 }
 
 } // namespace unitTests
