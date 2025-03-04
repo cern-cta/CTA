@@ -24,12 +24,6 @@ def test_version_info(env):
     env.ctacli[0].exec("cta-admin version")
     env.eosmgm[0].exec("eos version")
 
-def test_populate_catalogue(env):
-    print("Populating catalogue")
-    # TODO: figure out a nice way to do these paths
-    env.ctacli[0].copyTo("system_tests/scripts/populate_catalogue.sh", "/root/populate_catalogue.sh", permissions="+x")
-    env.ctacli[0].exec(f"./root/populate_catalogue.sh {env.disk_instance_name}")
-
 def test_populate_catalogue_tapes(env):
     tape_drives_in_use: list[str] = [taped.drive_name() for taped in env.ctataped]
     print("Using drives:")
@@ -70,6 +64,12 @@ def test_populate_catalogue_tapes(env):
                                 --full false \
                                 --comment ctasystest"
         env.ctacli[0].exec(add_tape_cmd)
+
+def test_populate_catalogue(env):
+    print("Populating catalogue")
+    # TODO: figure out a nice way to do these paths
+    env.ctacli[0].copyTo("system_tests/scripts/populate_catalogue.sh", "/root/populate_catalogue.sh", permissions="+x")
+    env.ctacli[0].exec(f"./root/populate_catalogue.sh {env.disk_instance_name}")
 
 def test_reset_tapes(env):
     for ctarmcd in env.ctarmcd:

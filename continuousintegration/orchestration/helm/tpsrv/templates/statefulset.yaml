@@ -150,7 +150,7 @@ spec:
           subPath: cta-objectstore-tools.conf
         {{- end }}
         - name: eos-sss-keytab-fixedownership
-          mountPath: /etc/cta/cta-taped.sss.keytab
+          mountPath: {{ $.Values.conf.taped.secSssktPath }}/{{ $.Values.conf.taped.ctaTapedSss }}
           subPath: cta-taped.sss.keytab
         {{- if eq $schedulerConfig.backend "ceph" }}
         - name: cta-ceph-volume
