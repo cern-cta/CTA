@@ -1,12 +1,45 @@
+/*
+ * @project      The CERN Tape Archive (CTA)
+ * @copyright    Copyright © 2021-2023 CERN
+ * @license      This program is free software, distributed under the terms of the GNU General Public
+ *               Licence version 3 (GPL Version 3), copied verbatim in the file "COPYING". You can
+ *               redistribute it and/or modify it under the terms of the GPL Version 3, or (at your
+ *               option) any later version.
+ *
+ *               This program is distributed in the hope that it will be useful, but WITHOUT ANY
+ *               WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A
+ *               PARTICULAR PURPOSE. See the GNU General Public License for more details.
+ *
+ *               In applying this licence, CERN does not waive the privileges and immunities
+ *               granted to it by virtue of its status as an Intergovernmental Organization or
+ *               submit itself to any jurisdiction.
+ */
+ 
+ #pragma once
 
+ #include "cta_frontend.pb.h"
+ #include "cta_frontend.grpc.pb.h"
+ #include "common/log/Logger.hpp"
+ #include "common/log/LogContext.hpp"
+ #include "common/exception/Exception.hpp"
+ 
+ #include <grpcpp/grpcpp.h>
+ 
+ #include <string>
+ #include <memory>
+ #include <mutex>
+ #include <thread>
 
+// callbackService class is the one that must implement the rpc methods
+// a streaming rpc method must have return type ServerWriteReactor
 class CtaRpcStreamImpl : public CtaRpcStream::CallbackService {
   public:
     cta::log::LogContext getLogContext() const { return m_lc; }
-    CtaRpcStreamImpl();
-    CtaRpcStreamImpl(cta::catalogue::Catalogue &catalogue) : m_catalogue(catalogue) {}
+    // CtaRpcStreamImpl() = delete;
+    CtaRpcStreamImpl(cta::catalogue::Catalogue &catalogue, cta::Scheduler &scheduler) : m_catalogue(catalogue), m_scheduler(scheduler) {}
     /* CtaAdminServerWriteReactor is what the type of GenericAdminStream could be */
     grpc::ServerWriteReactor<cta::xrd::Response>* GenericAdminStream(CallbackServerContext* context, const cta::xrd::Request* request);
+    grpc::ServerWriteReactor<cta::xrd::Response>* TapeLs(CallbackServerContext* context, const cta::xrd::Request* request);
 
   private:
     cta::log::LogContext m_lc;
