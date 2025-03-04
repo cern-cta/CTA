@@ -30,6 +30,8 @@
  #include <mutex>
  #include <thread>
 
+namespace cta::frontend::grpc {
+
 // callbackService class is the one that must implement the rpc methods
 // a streaming rpc method must have return type ServerWriteReactor
 class CtaRpcStreamImpl : public CtaRpcStream::CallbackService {
@@ -45,7 +47,9 @@ class CtaRpcStreamImpl : public CtaRpcStream::CallbackService {
     cta::log::LogContext m_lc;
     cta::catalogue::Catalogue &m_catalogue;    //!< Reference to CTA Catalogue
     cta::Scheduler            &m_scheduler;    //!< Reference to CTA Scheduler
-}
+    // I do not think a reactor could be a member of this class because it must be reinitialized upon each call
+    // CtaAdminServerWriteReactor *m_reactor;      // this will have to be initialized to TapeLs or StorageClassLs or whatever...
+};
 
 // serverWriteReactor<Feature> is the RETURN TYPE of the function which is server-side streaming!!!
 // Is serverWriteReactor a class? yes it is
@@ -126,3 +130,4 @@ grpc::ServerWriteReactor<StreamResponse>* GenericAdminStream(
   };
   return new Lister(rectangle, &feature_list_);
 }
+} // namespace cta::frontend::grpc

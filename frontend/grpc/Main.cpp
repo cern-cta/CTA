@@ -32,6 +32,7 @@
 #include "scheduler/OStoreDB/OStoreDBInit.hpp"
 #endif
 
+#include "callback_api/CtaAdminServer.hpp" // for the impl of the streaming service
 #include <getopt.h>
 #include <fstream>
 
@@ -186,8 +187,8 @@ int main(const int argc, char *const *const argv) {
     builder.RegisterService(&svc);
     // I need to also register the CtaRpcStream service
     // but need to make it so it has its own catalogue? logger etc?
-    // frontend::grpc::CtaRpcStreamImpl svc(config_file);
-    // builder.RegisterService(&streamSvc);
+    frontend::grpc::CtaRpcStreamImpl streamSvc(svc.getFrontendService().getCatalogue(), svc.getFrontendService().getScheduler());
+    builder.RegisterService(&streamSvc);
     std::unique_ptr <Server> server(builder.BuildAndStart());
 
     lc.log(cta::log::INFO, "Listening on socket address: " + server_address);
