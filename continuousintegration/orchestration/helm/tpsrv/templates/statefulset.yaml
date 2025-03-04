@@ -130,6 +130,8 @@ spec:
           value: {{ $.Values.conf.taped.secProtocol }}
         - name: XrdSecSSSKT
           value: {{ $.Values.conf.taped.secSssktPath }}/{{ $.Values.conf.taped.ctaTapedSss }}
+        - name: XrdSecDEBUG
+          value: "1"
         volumeMounts:
         - name: scripts-volume
           mountPath: /scripts/taped.sh
