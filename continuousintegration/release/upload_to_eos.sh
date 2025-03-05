@@ -182,7 +182,7 @@ upload_to_eos() {
     xrdfs root://eoshome.cern.ch/ ls -R "${eos_source_dir}" \
       | grep "${tag}" \
       | sed "s|^${eos_source_dir}||" \
-      | xargs -I {} xrdcp --force --recursive root://eoshome.cern.ch/"${eos_source_dir}"/{} root://eoshome.cern.ch/"${eos_path}"/ 2>&1 >/dev/null
+      | xargs -I {} xrdcp --force --recursive root://eoshome.cern.ch/"${eos_source_dir}"/{} root://eoshome.cern.ch/"${eos_path}"/{} 2>&1 >/dev/null
     if [ $? -ne 0 ]; then
       echo "ERROR: Failed to copy release ${tag} files from ${eos_source_dir} to ${eos_path} via xrdcp"
       exit 1
