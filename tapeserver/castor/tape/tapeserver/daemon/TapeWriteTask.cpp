@@ -228,13 +228,18 @@ void TapeWriteTask::execute(const std::unique_ptr<castor::tape::tapeFile::WriteS
     m_errorFlag.set();
 
     // If we reached the end of tape, this is not an error (ENOSPC)
+    bool doReportJobError = true;
     try {
       // If it's not the error we're looking for, we will go about our business
       // in the catch section. dynamic cast will throw, and we'll do ourselves
       // if the error code is not the one we want.
+      int errorLevel = cta::log::ERR;
       const auto& en = dynamic_cast<const cta::exception::Errnum&>(e);
       if (en.errorNumber() != ENOSPC) {
         throw;
+      } else {
+        doReportJobError = false;
+        errorLevel = cta::log::INFO;
       }
       // This is indeed the end of the tape. Not an error.
       watchdog.setErrorCount("Info_tapeFilledUp", 1);
@@ -254,23 +259,18 @@ void TapeWriteTask::execute(const std::unique_ptr<castor::tape::tapeFile::WriteS
     // if of type Errnum AND the errorCode is ENOSPC, we will propagate it.
     // This is how we communicate the fact that a tape is full to the client.
     // We also change the log level to INFO for the case of end of tape.
-    int errorLevel = cta::log::ERR;
-    // bool doReportJobError = true; no need for this
-    // we always want the error to be reported for this
-    // job which threw exception
-    try {
-      const auto& errnum = dynamic_cast<const cta::exception::Errnum&>(e);
-      if (ENOSPC == errnum.errorNumber()) {
-        errorLevel = cta::log::INFO;
-        // doReportJobError = false;
-      }
-    } catch (...) {}
     LogContext::ScopedParam sp1(lc, Param("exceptionMessage", e.getMessageValue()));
     lc.log(errorLevel, "An error occurred for this file. End of migrations.");
     circulateMemBlocks();
     // we should report job failure for exception
-    if (m_archiveJob != nullptr) {
+    if (doReportJobError) {
+      // in case the
       reportPacker.reportFailedJob(std::move(m_archiveJob), e, lc);
+    } else {
+      // this is for the last job where ENOSPC was thrown;
+      // shall be requeued from m_successfulArchiveJobs later since
+      // no tapeFlush will be called in TWST
+      reportPacker.reportCompletedJob(std::move(m_archiveJob), lc);
     }
     // We throw again because we want TWST to stop all tasks from execution
     // and go into a degraded mode operation.
