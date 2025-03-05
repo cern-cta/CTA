@@ -15,12 +15,14 @@
 #               granted to it by virtue of its status as an Intergovernmental Organization or
 #               submit itself to any jurisdiction.
 
+set -e
+
 EOS_MGM_HOST="ctaeos"
 TEST_FILE_NAME=$(uuidgen | sed 's/-//g')
 TEST_DIR=/eos/ctaeos/cta
 
 # get some common useful helpers for krb5
-eospower_kdestroy
+eospower_kdestroy &>/dev/null || true
 eospower_kinit
 
 echo "xrdcp /etc/group root://${EOS_MGM_HOST}/${TEST_DIR}/${TEST_FILE_NAME}"
@@ -36,9 +38,9 @@ eos root://${EOS_MGM_HOST} info ${TEST_DIR}/${TEST_FILE_NAME}
 echo
 echo "Information about the testing file:"
 echo "********"
-  eos root://${EOS_MGM_HOST} attr ls ${TEST_DIR}/${TEST_FILE_NAME}
-  eos root://${EOS_MGM_HOST} ls -l ${TEST_DIR}/${TEST_FILE_NAME}
-  eos root://${EOS_MGM_HOST} info ${TEST_DIR}/${TEST_FILE_NAME}
+eos root://${EOS_MGM_HOST} attr ls ${TEST_DIR}/${TEST_FILE_NAME}
+eos root://${EOS_MGM_HOST} ls -l ${TEST_DIR}/${TEST_FILE_NAME}
+eos root://${EOS_MGM_HOST} info ${TEST_DIR}/${TEST_FILE_NAME}
 
 echo
 echo "Removing disk replica as poweruser1:powerusers (12001:1200)"
@@ -47,8 +49,8 @@ XrdSecPROTOCOL=sss eos -r 0 0 root://${EOS_MGM_HOST} file drop "${TEST_DIR}/${TE
 
 echo
 echo "Information about the testing file without disk replica"
-  eos root://${EOS_MGM_HOST} ls -l ${TEST_DIR}/${TEST_FILE_NAME}
-  eos root://${EOS_MGM_HOST} info ${TEST_DIR}/${TEST_FILE_NAME}
+eos root://${EOS_MGM_HOST} ls -l ${TEST_DIR}/${TEST_FILE_NAME}
+eos root://${EOS_MGM_HOST} info ${TEST_DIR}/${TEST_FILE_NAME}
 
 
 echo
@@ -64,9 +66,9 @@ echo "FILE RETRIEVED FROM DISK"
 echo
 echo "Information about the testing file:"
 echo "********"
-  eos root://${EOS_MGM_HOST} attr ls ${TEST_DIR}/${TEST_FILE_NAME}
-  eos root://${EOS_MGM_HOST} ls -l ${TEST_DIR}/${TEST_FILE_NAME}
-  eos root://${EOS_MGM_HOST} info ${TEST_DIR}/${TEST_FILE_NAME}
+eos root://${EOS_MGM_HOST} attr ls ${TEST_DIR}/${TEST_FILE_NAME}
+eos root://${EOS_MGM_HOST} ls -l ${TEST_DIR}/${TEST_FILE_NAME}
+eos root://${EOS_MGM_HOST} info ${TEST_DIR}/${TEST_FILE_NAME}
 
 # Delete the file so it doesn't interfere with tests in client_ar.sh
 echo "eos root://${EOS_MGM_HOST} rm ${TEST_DIR}/${TEST_FILE_NAME}"

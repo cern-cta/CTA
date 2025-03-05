@@ -1,5 +1,7 @@
 #!/usr/bin/bash
 
+set -e
+
 # This script is meant to be executed on the EOS MGM
 
 # General settings
@@ -95,3 +97,10 @@ eos attr link ${CTA_WF_DIR} ${CTA_TEST_DIR} # Link workflows
 CTA_TEST_NO_P_DIR=${CTA_TEST_DIR}/no_prepare
 eos mkdir ${CTA_TEST_NO_P_DIR}
 eos attr set sys.acl=g:eosusers:rwx!d,u:poweruser1:rwx+d,u:poweruser2:rwx+d,z:'!'u'!'d ${CTA_TEST_NO_P_DIR}
+
+# Configure CTA file lookups
+LOOKUPS_UID=99 # nobody is enough for lookups
+LOOKUPS_CONFIG_LINE=$(cat /etc/cta/eos.grpc.keytab | grep "${EOS_INSTANCE_NAME}" | head -1)
+LOOKUPS_TOKEN=$(echo ${LOOKUPS_CONFIG_LINE} | awk '{print $3}')
+eos vid add gateway [:1] grpc
+eos vid set map -grpc key:${LOOKUPS_TOKEN} vuid:${LOOKUPS_UID} vgid:${LOOKUPS_UID}

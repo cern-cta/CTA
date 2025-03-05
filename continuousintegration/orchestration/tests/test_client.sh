@@ -14,6 +14,9 @@
 #               In applying this licence, CERN does not waive the privileges and immunities
 #               granted to it by virtue of its status as an Intergovernmental Organization or
 #               submit itself to any jurisdiction.
+
+set -e
+
 PREPARE=1 # run prepare by default
 
 usage() { cat <<EOF 1>&2
@@ -74,7 +77,7 @@ NB_PROCS=100
 
 echo
 echo "Setting up environment for tests."
-kubectl -n ${NAMESPACE} exec ${CLIENT_POD} -c client -- bash -c "/root/client_setup.sh -n ${NB_FILES} -s ${FILE_SIZE_KB} -p ${NB_PROCS} -d /eos/ctaeos/preprod -v -r -c xrd" || exit 1
+kubectl -n ${NAMESPACE} exec ${CLIENT_POD} -c client -- bash -c "/root/client_setup.sh -n ${NB_FILES} -s ${FILE_SIZE_KB} -p ${NB_PROCS} -d /eos/ctaeos/preprod -v -r -c xrd"
 
 # Test are run under the cta user account which doesn't have a login
 # option so to be able to export the test setup we need to source the file
@@ -104,25 +107,24 @@ rm -rf /tmp/certificates
 # We just test the .well-known/wlcg-tape-rest-api endpoint and REST API compliance
 # with the specification.
 echo " Launching client_rest_api.sh on client pod"
-kubectl -n ${NAMESPACE} exec ${CLIENT_POD} -c client -- bash /root/client_rest_api.sh || exit 1
+kubectl -n ${NAMESPACE} exec ${CLIENT_POD} -c client -- bash /root/client_rest_api.sh
 
 # Note that this test simply tests whether the base64 encoded string ends up in the eos report logs verbatim
 TEST_METADATA=$(echo "{\"scheduling_hints\": \"test 4\"}" | base64)
 echo " Launching client_archive_metadata.sh on client pod"
-kubectl -n ${NAMESPACE} exec ${CLIENT_POD} -c client -- bash /root/client_archive_metadata.sh ${TEST_METADATA} || exit 1
+kubectl -n ${NAMESPACE} exec ${CLIENT_POD} -c client -- bash /root/client_archive_metadata.sh ${TEST_METADATA}
 echo " Launching grep_eosreport_for_archive_metadata.sh on ${EOS_MGM_POD} pod"
-kubectl -n ${NAMESPACE} exec ${EOS_MGM_POD} -c eos-mgm -- bash /root/grep_eosreport_for_archive_metadata.sh ${TEST_METADATA} || exit 1
+kubectl -n ${NAMESPACE} exec ${EOS_MGM_POD} -c eos-mgm -- bash /root/grep_eosreport_for_archive_metadata.sh ${TEST_METADATA}
 
 echo
 echo "Launching immutable file test on client pod"
-kubectl -n ${NAMESPACE} exec ${CLIENT_POD} -c client -- bash -c "${TEST_PRERUN} && echo yes | cta-immutable-file-test root://${EOS_MGM_HOST}/\${EOS_DIR}/immutable_file ${TEST_POSTRUN} || die 'The cta-immutable-file-test failed.'" || exit 1
+kubectl -n ${NAMESPACE} exec ${CLIENT_POD} -c client -- bash -c "${TEST_PRERUN} && echo yes | cta-immutable-file-test root://${EOS_MGM_HOST}/\${EOS_DIR}/immutable_file ${TEST_POSTRUN} || die 'The cta-immutable-file-test failed.'"
 
 echo
 echo "Launching client_simple_ar.sh on client pod"
 echo " Archiving file: xrdcp as user1"
 echo " Retrieving it as poweruser1"
-kubectl -n ${NAMESPACE} exec ${CLIENT_POD} -c client -- bash -c "${TEST_PRERUN} && /root/client_simple_ar.sh ${TEST_POSTRUN}" || exit 1
-kubectl -n ${NAMESPACE} exec ${EOS_MGM_POD} -c eos-mgm -- bash /root/grep_xrdlog_mgm_for_error.sh || exit 1
+kubectl -n ${NAMESPACE} exec ${CLIENT_POD} -c client -- bash -c "${TEST_PRERUN} && /root/client_simple_ar.sh ${TEST_POSTRUN}"
 
 EOSDF_BUFFER_BASEDIR=/eos/ctaeos/eosdf
 EOSDF_BUFFER_URL=${EOSDF_BUFFER_BASEDIR}
@@ -130,7 +132,7 @@ kubectl -n ${NAMESPACE} exec ${EOS_MGM_POD} -c eos-mgm -- eos mkdir ${EOSDF_BUFF
 kubectl -n ${NAMESPACE} exec ${EOS_MGM_POD} -c eos-mgm -- eos chmod 1777 ${EOSDF_BUFFER_URL}
 # Test correct script execution
 echo "Launching eosdf_systemtest.sh, expecting script to run properly"
-kubectl -n ${NAMESPACE} exec ${CLIENT_POD} -c client -- bash -c "${TEST_PRERUN} && /root/eosdf_systemtest.sh ${TEST_POSTRUN}" || exit 1
+kubectl -n ${NAMESPACE} exec ${CLIENT_POD} -c client -- bash -c "${TEST_PRERUN} && /root/eosdf_systemtest.sh ${TEST_POSTRUN}"
 ## Verify proper execution of script by grepping for the debug log line
 # Set the TAPES and DRIVE_NAME based on the config in CTA_TPSRV_POD
 echo "Reading library configuration from ${CTA_TPSRV_POD}"
@@ -147,8 +149,8 @@ fi
 echo "Launching eosdf_systemtest.sh with a nonexistent script"
 # rename the script on taped so that it cannot be found
 # error to grep for in the logs is 'No such file or directory'
-kubectl -n ${NAMESPACE} exec ${CTA_TPSRV_POD} -c taped-0 -- bash -c "mv /usr/bin/cta-eosdf.sh /usr/bin/eosdf_newname.sh" || exit 1
-kubectl -n ${NAMESPACE} exec ${CLIENT_POD} -c client -- bash -c "${TEST_PRERUN} && /root/eosdf_systemtest.sh ${TEST_POSTRUN}" || exit 1
+kubectl -n ${NAMESPACE} exec ${CTA_TPSRV_POD} -c taped-0 -- bash -c "mv /usr/bin/cta-eosdf.sh /usr/bin/eosdf_newname.sh"
+kubectl -n ${NAMESPACE} exec ${CLIENT_POD} -c client -- bash -c "${TEST_PRERUN} && /root/eosdf_systemtest.sh ${TEST_POSTRUN}"
 if kubectl -n ${NAMESPACE} exec ${CTA_TPSRV_POD} -c taped-0 -- bash -c "grep -q 'No such file or directory' ${CTA_TAPED_LOG}"; then
   echo "Subprocess threw 'No such file or directory', as expected"
 else
@@ -157,9 +159,9 @@ fi
 # now give it back its original name but remove the executable permission, should still succeed
 # now the error to grep for is 'Permission denied'
 echo "Launching eosdf_systemtest.sh with correct script without executable permissions"
-kubectl -n ${NAMESPACE} exec ${CTA_TPSRV_POD} -c taped-0 -- bash -c "mv /usr/bin/eosdf_newname.sh /usr/bin/cta-eosdf.sh" || exit 1
-kubectl -n ${NAMESPACE} exec ${CTA_TPSRV_POD} -c taped-0 -- bash -c "chmod -x /usr/bin/cta-eosdf.sh" || exit 1
-kubectl -n ${NAMESPACE} exec ${CLIENT_POD} -c client -- bash -c "${TEST_PRERUN} && /root/eosdf_systemtest.sh ${TEST_POSTRUN}" || exit 1
+kubectl -n ${NAMESPACE} exec ${CTA_TPSRV_POD} -c taped-0 -- bash -c "mv /usr/bin/eosdf_newname.sh /usr/bin/cta-eosdf.sh"
+kubectl -n ${NAMESPACE} exec ${CTA_TPSRV_POD} -c taped-0 -- bash -c "chmod -x /usr/bin/cta-eosdf.sh"
+kubectl -n ${NAMESPACE} exec ${CLIENT_POD} -c client -- bash -c "${TEST_PRERUN} && /root/eosdf_systemtest.sh ${TEST_POSTRUN}"
 if kubectl -n ${NAMESPACE} exec ${CTA_TPSRV_POD} -c taped-0 -- bash -c "grep -q 'Permission denied' ${CTA_TAPED_LOG}"; then
   echo "Subprocess threw 'Permission denied', as expected"
 else
@@ -169,14 +171,14 @@ fi
 # grep for 'could not be used to get the FreeSpace'
 echo "Launching eosdf_systemtest.sh with script that throws an eos-client error"
 # fake instance not reachable
-kubectl -n ${NAMESPACE} exec ${CTA_TPSRV_POD} -c taped-0 -- bash -c "sed -i 's|root://\$diskInstance|root://nonexistentinstance|g' /usr/bin/cta-eosdf.sh" || exit 1
-kubectl -n ${NAMESPACE} exec ${CTA_TPSRV_POD} -c taped-0 -- bash -c "chmod +x /usr/bin/cta-eosdf.sh" || exit 1
-kubectl -n ${NAMESPACE} exec ${CLIENT_POD} -c client -- bash -c "${TEST_PRERUN} && /root/eosdf_systemtest.sh ${TEST_POSTRUN}" || exit 1
-kubectl -n ${NAMESPACE} exec ${CTA_TPSRV_POD} -c taped-0 -- bash -c "sed -i 's|root://nonexistentinstance|root://\$diskInstance|g' /usr/bin/cta-eosdf.sh" || exit 1
+kubectl -n ${NAMESPACE} exec ${CTA_TPSRV_POD} -c taped-0 -- bash -c "sed -i 's|root://\$diskInstance|root://nonexistentinstance|g' /usr/bin/cta-eosdf.sh"
+kubectl -n ${NAMESPACE} exec ${CTA_TPSRV_POD} -c taped-0 -- bash -c "chmod +x /usr/bin/cta-eosdf.sh"
+kubectl -n ${NAMESPACE} exec ${CLIENT_POD} -c client -- bash -c "${TEST_PRERUN} && /root/eosdf_systemtest.sh ${TEST_POSTRUN}"
+kubectl -n ${NAMESPACE} exec ${CTA_TPSRV_POD} -c taped-0 -- bash -c "sed -i 's|root://nonexistentinstance|root://\$diskInstance|g' /usr/bin/cta-eosdf.sh"
 
 echo
 echo " Launching client_timestamp.sh on client pod"
-kubectl -n ${NAMESPACE} exec ${CLIENT_POD} -c client -- bash -c "${TEST_PRERUN} && /root/client_timestamp.sh ${TEST_POSTRUN}" || exit 1
+kubectl -n ${NAMESPACE} exec ${CLIENT_POD} -c client -- bash -c "${TEST_PRERUN} && /root/client_timestamp.sh ${TEST_POSTRUN}"
 
 echo
 echo "Track progress of test"
@@ -188,9 +190,7 @@ echo
 echo "Launching client_archive.sh on client pod"
 echo " Archiving ${NB_FILES} files of ${FILE_SIZE_KB}kB each"
 echo " Archiving files: xrdcp as user1"
-kubectl -n ${NAMESPACE} exec ${CLIENT_POD} -c client -- bash -c "${TEST_PRERUN} && /root/client_archive.sh ${TEST_POSTRUN}" || exit 1
-
-kubectl -n ${NAMESPACE} exec ${EOS_MGM_POD} -c eos-mgm -- bash /root/grep_xrdlog_mgm_for_error.sh || exit 1
+kubectl -n ${NAMESPACE} exec ${CLIENT_POD} -c client -- bash -c "${TEST_PRERUN} && /root/client_archive.sh ${TEST_POSTRUN}"
 
 echo "###"
 echo "Sleeping 10 seconds to allow MGM-FST communication to settle after disk copy deletion."
@@ -200,30 +200,23 @@ echo "###"
 echo
 echo "Launching client_retrieve.sh on client pod"
 echo " Retrieving files: xrdfs as poweruser1"
-kubectl -n ${NAMESPACE} exec ${CLIENT_POD} -c client -- bash -c "${TEST_PRERUN} && /root/client_retrieve.sh ${TEST_POSTRUN}" || exit 1
-
-kubectl -n ${NAMESPACE} exec ${EOS_MGM_POD} -c eos-mgm -- bash /root/grep_xrdlog_mgm_for_error.sh || exit 1
+kubectl -n ${NAMESPACE} exec ${CLIENT_POD} -c client -- bash -c "${TEST_PRERUN} && /root/client_retrieve.sh ${TEST_POSTRUN}"
 
 echo
 echo "Launching client_evict.sh on client pod"
 echo " Evicting files: xrdfs as poweruser1"
-kubectl -n ${NAMESPACE} exec ${CLIENT_POD} -c client -- bash -c "${TEST_PRERUN} && /root/client_evict.sh ${TEST_POSTRUN}" || exit 1
-
-kubectl -n ${NAMESPACE} exec ${EOS_MGM_POD} -c eos-mgm -- bash /root/grep_xrdlog_mgm_for_error.sh || exit 1
+kubectl -n ${NAMESPACE} exec ${CLIENT_POD} -c client -- bash -c "${TEST_PRERUN} && /root/client_evict.sh ${TEST_POSTRUN}"
 
 echo
 echo "Launching client_abortPrepare.sh on client pod"
 echo "  Retrieving files: xrdfs as poweruser1"
 echo "  Aborting prepare: xrdfs as poweruser1"
-kubectl -n ${NAMESPACE} exec ${CLIENT_POD} -c client -- bash -c "${TEST_PRERUN} && /root/client_abortPrepare.sh ${TEST_POSTRUN}" || exit 1
-
-kubectl -n ${NAMESPACE} exec ${EOS_MGM_POD} -c eos-mgm -- bash /root/grep_xrdlog_mgm_for_error.sh || exit 1
+kubectl -n ${NAMESPACE} exec ${CLIENT_POD} -c client -- bash -c "${TEST_PRERUN} && /root/client_abortPrepare.sh ${TEST_POSTRUN}"
 
 echo
 echo "Launching client_delete.sh on client pod"
 echo " Deleting files:"
-kubectl -n ${NAMESPACE} exec ${CLIENT_POD} -c client -- bash -c "${TEST_PRERUN} && /root/client_delete.sh ${TEST_POSTRUN}" || exit 1
-kubectl -n ${NAMESPACE} exec ${EOS_MGM_POD} -c eos-mgm -- bash /root/grep_xrdlog_mgm_for_error.sh || exit 1
+kubectl -n ${NAMESPACE} exec ${CLIENT_POD} -c client -- bash -c "${TEST_PRERUN} && /root/client_delete.sh ${TEST_POSTRUN}"
 
 echo "$(date +%s): Waiting for tracker process to finish. "
 wait "${TRACKER_PID}"
@@ -236,49 +229,42 @@ echo
 echo "Launching client_multiple_retrieve.sh on client pod"
 echo " Archiving file: xrdcp as user1"
 echo " Retrieving it as poweruser1"
-kubectl -n ${NAMESPACE} exec ${CLIENT_POD} -c client -- bash /root/client_multiple_retrieve.sh || exit 1
-kubectl -n ${NAMESPACE} exec ${EOS_MGM_POD} -c eos-mgm -- bash /root/grep_xrdlog_mgm_for_error.sh || exit 1
+kubectl -n ${NAMESPACE} exec ${CLIENT_POD} -c client -- bash /root/client_multiple_retrieve.sh
 
 echo
 echo "Launching idempotent_prepare.sh on client pod"
 echo " Archiving file: xrdcp as user1"
 echo " Retrieving it as poweruser1"
-kubectl -n ${NAMESPACE} exec ${CLIENT_POD} -c client -- bash /root/idempotent_prepare.sh || exit 1
-kubectl -n ${NAMESPACE} exec ${EOS_MGM_POD} -c eos-mgm -- bash /root/grep_xrdlog_mgm_for_error.sh || exit 1
+kubectl -n ${NAMESPACE} exec ${CLIENT_POD} -c client -- bash /root/idempotent_prepare.sh
 
 echo
 echo "Launching delete_on_closew_error.sh on client pod"
 echo " Archiving file: xrdcp as user1"
 echo " Retrieving it as poweruser1"
-kubectl -n ${NAMESPACE} exec ${CLIENT_POD} -c client -- bash /root/delete_on_closew_error.sh || exit 1
-kubectl -n ${NAMESPACE} exec ${EOS_MGM_POD} -c eos-mgm -- bash /root/grep_xrdlog_mgm_for_error.sh || exit 1
+kubectl -n ${NAMESPACE} exec ${CLIENT_POD} -c client -- bash /root/delete_on_closew_error.sh
 
 echo
 echo "Launching archive_zero_length_file.sh on client pod"
-kubectl -n ${NAMESPACE} exec ${CLIENT_POD} -c client -- bash /root/archive_zero_length_file.sh || exit 1
-kubectl -n ${NAMESPACE} exec ${EOS_MGM_POD} -c eos-mgm -- bash /root/grep_xrdlog_mgm_for_error.sh || exit 1
+kubectl -n ${NAMESPACE} exec ${CLIENT_POD} -c client -- bash /root/archive_zero_length_file.sh
 
 echo
 echo "Launching try_evict_before_archive_completed.sh on client pod"
 echo " Archiving file: xrdcp as user1"
 echo " Retrieving it as poweruser1"
-kubectl -n ${NAMESPACE} exec ${CLIENT_POD} -c client -- bash /root/try_evict_before_archive_completed.sh || exit 1
-kubectl -n ${NAMESPACE} exec ${EOS_MGM_POD} -c eos-mgm -- bash /root/grep_xrdlog_mgm_for_error.sh || exit 1
+kubectl -n ${NAMESPACE} exec ${CLIENT_POD} -c client -- bash /root/try_evict_before_archive_completed.sh
 
 # TODO: Remove the stagerrm tests once the command is removed from EOS
 echo
 echo "Launching stagerrm_tests.sh on client pod"
 echo " Archiving file: xrdcp as user1"
 echo " Retrieving it as poweruser1"
-kubectl -n ${NAMESPACE} exec ${CLIENT_POD} -c client -- bash /root/stagerrm_tests.sh || exit 1
-kubectl -n ${NAMESPACE} exec ${EOS_MGM_POD} -c eos-mgm -- bash /root/grep_xrdlog_mgm_for_error.sh || exit 1
+kubectl -n ${NAMESPACE} exec ${CLIENT_POD} -c client -- bash /root/stagerrm_tests.sh
 
 echo
 echo "Launching evict_tests.sh on client pod"
 echo " Archiving file: xrdcp as user1"
 echo " Retrieving it as poweruser1"
-kubectl -n ${NAMESPACE} exec ${CLIENT_POD} -c client -- bash /root/evict_tests.sh || exit 1
-kubectl -n ${NAMESPACE} exec ${EOS_MGM_POD} -c eos-mgm -- bash /root/grep_xrdlog_mgm_for_error.sh || exit 1
+kubectl -n ${NAMESPACE} exec ${CLIENT_POD} -c client -- bash /root/evict_tests.sh
 
 setup_tapes_for_multicopy_test
 
@@ -286,11 +272,10 @@ echo
 echo "Launching client_retrieve_queue_cleanup.sh on client pod"
 echo " Archiving file: xrdcp as user1"
 echo " Retrieving it as poweruser1"
-kubectl -n ${NAMESPACE} exec ${CLIENT_POD} -c client -- bash /root/client_retrieve_queue_cleanup.sh || exit 1
-kubectl -n ${NAMESPACE} exec ${EOS_MGM_POD} -c eos-mgm -- bash /root/grep_xrdlog_mgm_for_error.sh || exit 1
+kubectl -n ${NAMESPACE} exec ${CLIENT_POD} -c client -- bash /root/client_retrieve_queue_cleanup.sh
 
 echo
 echo "Launching refresh_log_fd.sh on ${CTA_TPSRV_POD} pod"
-kubectl -n ${NAMESPACE} exec ${CTA_TPSRV_POD} -c taped-0 -- bash /root/refresh_log_fd.sh || exit 1
+kubectl -n ${NAMESPACE} exec ${CTA_TPSRV_POD} -c taped-0 -- bash /root/refresh_log_fd.sh
 
 exit 0

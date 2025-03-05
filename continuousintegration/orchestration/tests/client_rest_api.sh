@@ -15,14 +15,16 @@
 #               granted to it by virtue of its status as an Intergovernmental Organization or
 #               submit itself to any jurisdiction.
 
+set -e
+
 # Test CTA Tape Rest API compliance.
 
 . /root/client_helper.sh
 
-admin_kdestroy &>/dev/null
+admin_kdestroy &>/dev/null || true
 admin_kinit &>/dev/null
 
-eospower_kdestroy &>/dev/null
+eospower_kdestroy &>/dev/null || true
 eospower_kinit &>/dev/null
 
 #NOTE: In this context it should be eos service names.
@@ -62,11 +64,11 @@ test $(echo ${WELL_KNOWN} | jq -r .sitename | wc -l) -eq 1 && echo "Site name:  
 echo "Description: $(echo ${WELL_KNOWN} | jq -r .description)"
 test   $(echo ${WELL_KNOWN} | jq -r .endpoints[0].uri | wc -l) -eq 1 && echo "URI:       $(echo ${WELL_KNOWN} | jq -r .endpoints[0].uri)" || { echo "ERROR: URI not found in the response from .well-known."; exit 1; }
 test $(echo ${WELL_KNOWN} | jq -r .endpoints[0].version | wc -l) -eq 1 && echo "Version:   $(echo ${WELL_KNOWN} | jq -r .endpoints[0].version)" || { echo "ERROR: Metadata not found in the response from .well-known"; exit 1;}
-echo "Metadata: $(echo ${WELL_KNOWN} | jq -r .endpoints[0].metadata)"
+echo "Metadata: $(echo ${WELL_KNOWN} | jq -r .endpoints[0].metadata)" || true
 
 # Archive the file.
 
-eos root://"${EOS_MGM_HOST}" rm /eos/ctaeos/preprod/test_http-rest-api 2>/dev/null # Delete the file if present so that we can run the test multiple times
+eos root://"${EOS_MGM_HOST}" rm /eos/ctaeos/preprod/test_http-rest-api 2>/dev/null || true # Delete the file if present so that we can run the test multiple times
 INIT_COUNT=$(eos root://"${EOS_MGM_HOST}" ls -y /eos/ctaeos/preprod/ | grep test_http-rest-api | wc -l)
 test "${INIT_COUNT}" -eq 0 || { echo "Test file test_http-rest-api already in EOS before archiving."; exit 1; }
 tmp_file=$(mktemp)
@@ -148,15 +150,12 @@ echo "Evict start counter: ${EVICT_INIT}"
 
 
 #    2. Put drive down
-IFS=' ' read -r -a dr_names <<< $(admin_cta --json dr ls | jq -r '.[] | select(.driveStatus=="UP") | .driveName')
-IFS=' ' read -r -a dr_names_down <<< $(admin_cta --json dr ls | jq -r '.[] | select(.driveStatus=="DOWN") | .driveName')
+
 echo "$(date +%s): Putting drives down."
 
-for drive in "${dr_names[@]}"; do
-  echo "Putting drive $drive down."
-  admin_cta dr down "$drive" -r "Tape Rest API abort prepare test"
-  sleep 3
-done
+echo "Putting drive $drive down."
+admin_cta dr down ".*" -r "Tape Rest API abort prepare test"
+sleep 3
 
 
 #    3. Do request.
@@ -181,11 +180,7 @@ echo "$(date +%s): Request id 2 - ${REQ_ID}"
 curl ${CURL_OPTS} -L -X DELETE --capath /etc/grid-security/certificates -H "Accept: application/json" -H "Authorization: Bearer ${TOKEN_EOSPOWER}" "${HTTPS_URI}/stage/${REQ_ID}"
 
 #    5. Put drive up.
-for drive in "${dr_names[@]}"; do
-  echo "Putting drive $drive up."
-  admin_cta dr up "$drive"
-  sleep 3
-done
+put_all_drives_up
 
 #    6. Check evict counter reamins the same.
 tmp=$(eos root://"${EOS_MGM_HOST}" ls -y /eos/ctaeos/preprod | grep test_http-rest-api | awk '{ print $1 }')

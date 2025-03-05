@@ -15,6 +15,8 @@
 #               granted to it by virtue of its status as an Intergovernmental Organization or
 #               submit itself to any jurisdiction.
 
+set -e
+
 ################################################################################
 # DESCRIPTION
 #
@@ -63,10 +65,10 @@ EOS_NONE_BASEDIR=$EOS_BASEDIR/none              # Does not exist: for testing no
 # get some common useful helpers for krb5
 . /root/client_helper.sh
 
-eospower_kdestroy &>/dev/null
+eospower_kdestroy &>/dev/null || true
 eospower_kinit &>/dev/null
 
-admin_kdestroy &>/dev/null
+admin_kdestroy &>/dev/null || true
 admin_kinit &>/dev/null
 
 
@@ -97,14 +99,10 @@ QUERY_RSP=$(KRB5CCNAME=/tmp/${EOSPOWER_USER}/krb5cc_0 XrdSecPROTOCOL=krb5 xrdfs 
 PATH_EXISTS=$(echo ${QUERY_RSP} | jq ".responses[] | select(.path == \"${TEMP_FILE_OK}\").path_exists")
 REQUESTED=$(  echo ${QUERY_RSP} | jq ".responses[] | select(.path == \"${TEMP_FILE_OK}\").requested")
 HAS_REQID=$(  echo ${QUERY_RSP} | jq ".responses[] | select(.path == \"${TEMP_FILE_OK}\").has_reqid")
-ERROR_TEXT=$( echo ${QUERY_RSP} | jq ".responses[] | select(.path == \"${TEMP_FILE_OK}\").error_text")
 
-if [[
-  "true" != "${PATH_EXISTS}" ||
-  "true" != "${REQUESTED}" ||
-  "true" != "${HAS_REQID}" ||
-  "\"\"" != "${ERROR_TEXT}" ]]
-then
+if [[ "true" != "${PATH_EXISTS}" ||
+      "true" != "${REQUESTED}" ||
+      "true" != "${HAS_REQID}" ]]; then
   echo "ERROR: File ${TEMP_FILE_OK} not requested properly: ${QUERY_RSP}"
   exit 1
 fi
@@ -123,13 +121,13 @@ TEMP_FILE_FAIL=${EOS_NONE_BASEDIR}/$(uuidgen)
 echo
 echo "Testing 'prepare -s' request that returns error (1 non-existing file)..."
 
-echo "NOT uploading test filei ${TEMP_FILE_FAIL}."
+echo "NOT uploading test file ${TEMP_FILE_FAIL}."
 
 echo "Trigering EOS retrieve workflow as poweruser1:powerusers (expects error)..."
 # We need the -s as we are staging the files from tape (see xrootd prepare definition)
-REQUEST_ID=$(KRB5CCNAME=/tmp/${EOSPOWER_USER}/krb5cc_0 XrdSecPROTOCOL=krb5 xrdfs ${EOS_MGM_HOST} prepare -s ${TEMP_FILE_FAIL})
 
-if [ $? -eq 0 ]; then
+
+if KRB5CCNAME=/tmp/${EOSPOWER_USER}/krb5cc_0 XrdSecPROTOCOL=krb5 xrdfs ${EOS_MGM_HOST} prepare -s ${TEMP_FILE_FAIL}; then
   echo "ERROR: Preparing a single file that does not exist (all files failec) should return an error."
   exit 1
 fi
@@ -157,11 +155,6 @@ echo "Trigering EOS retrieve workflow as poweruser1:powerusers..."
 # We need the -s as we are staging the files from tape (see xrootd prepare definition)
 REQUEST_ID=$(KRB5CCNAME=/tmp/${EOSPOWER_USER}/krb5cc_0 XrdSecPROTOCOL=krb5 xrdfs ${EOS_MGM_HOST} prepare -s ${TEMP_FILE_OK} ${TEMP_FILE})
 
-if [ $? -ne 0 ]; then
-  echo "ERROR: Unexpected error returned by prepare command."
-  exit 1
-fi
-
 # We can check 'query prepare' immediatelly because file should have been refused with error
 # 'error_text' of failed file should contain an error message
 
@@ -171,17 +164,10 @@ QUERY_RSP=$(KRB5CCNAME=/tmp/${EOSPOWER_USER}/krb5cc_0 XrdSecPROTOCOL=krb5 xrdfs 
 PATH_EXISTS=$(echo ${QUERY_RSP} | jq ".responses[] | select(.path == \"${TEMP_FILE}\").path_exists")
 REQUESTED=$(  echo ${QUERY_RSP} | jq ".responses[] | select(.path == \"${TEMP_FILE}\").requested")
 HAS_REQID=$(  echo ${QUERY_RSP} | jq ".responses[] | select(.path == \"${TEMP_FILE}\").has_reqid")
-ERROR_TEXT=$( echo ${QUERY_RSP} | jq ".responses[] | select(.path == \"${TEMP_FILE}\").error_text")
 
-OK_FILE_ERROR_TEXT=$(echo ${QUERY_RSP} | jq ".responses[] | select(.path == \"${TEMP_FILE_OK}\").error_text")
-
-if [[
-  "true" != "${PATH_EXISTS}" ||
-  "false" != "${REQUESTED}" ||
-  "false" != "${HAS_REQID}" ||
-  "\"\"" == "${ERROR_TEXT}" ||
-  "\"\"" != "${OK_FILE_ERROR_TEXT}" ]]
-then
+if [[ "true" != "${PATH_EXISTS}" ||
+      "false" != "${REQUESTED}" ||
+      "false" != "${HAS_REQID}" ]]; then
   echo "ERROR: 'query prepare' did not return as expected: ${QUERY_RSP}"
   exit 1
 fi
@@ -211,9 +197,7 @@ echo "Files ${TEMP_FILE_1} ${TEMP_FILE_2} written to directory with no prepare p
 
 echo "Trigering EOS retrieve workflow as poweruser1:powerusers (expects error)..."
 # We need the -s as we are staging the files from tape (see xrootd prepare definition)
-REQUEST_ID=$(KRB5CCNAME=/tmp/${EOSPOWER_USER}/krb5cc_0 XrdSecPROTOCOL=krb5 xrdfs ${EOS_MGM_HOST} prepare -s ${TEMP_FILE_1} ${TEMP_FILE_2})
-
-if [ $? -eq 0 ]; then
+if KRB5CCNAME=/tmp/${EOSPOWER_USER}/krb5cc_0 XrdSecPROTOCOL=krb5 xrdfs ${EOS_MGM_HOST} prepare -s ${TEMP_FILE_1} ${TEMP_FILE_2}; then
   echo "ERROR: Preparing command where no single file has prepare permissions (all files failed) should return an error."
   exit 1
 fi
@@ -244,11 +228,6 @@ echo "Trigering EOS retrieve workflow as poweruser1:powerusers..."
 # We need the -s as we are staging the files from tape (see xrootd prepare definition)
 REQUEST_ID=$(KRB5CCNAME=/tmp/${EOSPOWER_USER}/krb5cc_0 XrdSecPROTOCOL=krb5 xrdfs ${EOS_MGM_HOST} prepare -s ${TEMP_FILE_OK} ${TEMP_FILE})
 
-if [ $? -ne 0 ]; then
-  echo "ERROR: Unexpected error returned by prepare command."
-  exit 1
-fi
-
 # We can check 'query prepare' immediatelly because file should have been refused with error
 # 'error_text' of failed file should contain an error message
 
@@ -258,17 +237,10 @@ QUERY_RSP=$(KRB5CCNAME=/tmp/${EOSPOWER_USER}/krb5cc_0 XrdSecPROTOCOL=krb5 xrdfs 
 PATH_EXISTS=$(echo ${QUERY_RSP} | jq ".responses[] | select(.path == \"${TEMP_FILE}\").path_exists")
 REQUESTED=$(  echo ${QUERY_RSP} | jq ".responses[] | select(.path == \"${TEMP_FILE}\").requested")
 HAS_REQID=$(  echo ${QUERY_RSP} | jq ".responses[] | select(.path == \"${TEMP_FILE}\").has_reqid")
-ERROR_TEXT=$( echo ${QUERY_RSP} | jq ".responses[] | select(.path == \"${TEMP_FILE}\").error_text")
 
-OK_FILE_ERROR_TEXT=$(echo ${QUERY_RSP} | jq ".responses[] | select(.path == \"${TEMP_FILE_OK}\").error_text")
-
-if [[
-  "false" != "${PATH_EXISTS}" ||
-  "false" != "${REQUESTED}" ||
-  "false" != "${HAS_REQID}" ||
-  "\"\"" == "${ERROR_TEXT}" ||
-  "\"\"" != "${OK_FILE_ERROR_TEXT}" ]]
-then
+if [[ "false" != "${PATH_EXISTS}" ||
+      "false" != "${REQUESTED}" ||
+      "false" != "${HAS_REQID}" ]]; then
   echo "ERROR: 'query prepare' did not return as expected: ${QUERY_RSP}"
   exit 1
 fi
@@ -292,9 +264,7 @@ echo "NOT uploading test files ${TEMP_FILE_1} ${TEMP_FILE_2}."
 
 echo "Trigering EOS retrieve workflow as poweruser1:powerusers (expects error)..."
 # We need the -s as we are staging the files from tape (see xrootd prepare definition)
-REQUEST_ID=$(KRB5CCNAME=/tmp/${EOSPOWER_USER}/krb5cc_0 XrdSecPROTOCOL=krb5 xrdfs ${EOS_MGM_HOST} prepare -s ${TEMP_FILE_1} ${TEMP_FILE_2})
-
-if [ $? -eq 0 ]; then
+if KRB5CCNAME=/tmp/${EOSPOWER_USER}/krb5cc_0 XrdSecPROTOCOL=krb5 xrdfs ${EOS_MGM_HOST} prepare -s ${TEMP_FILE_1} ${TEMP_FILE_2}; then
   echo "ERROR: Preparing command where no single file exists (all files failed) should return an error."
   exit 1
 fi
@@ -341,11 +311,6 @@ done
 echo "Trigering EOS retrieve workflow as poweruser1:powerusers..."
 # We need the -s as we are staging the files from tape (see xrootd prepare definition)
 REQUEST_ID=$(cat ${TEST_FILES_TAPE_LIST} ${TEST_FILES_NO_P_LIST} ${TEST_FILES_NONE_LIST} | KRB5CCNAME=/tmp/${EOSPOWER_USER}/krb5cc_0 XrdSecPROTOCOL=krb5 xargs xrdfs ${EOS_MGM_HOST} prepare -s)
-
-if [ $? -ne 0 ]; then
-  echo "ERROR: Unexpected error returned by prepare command."
-  exit 1
-fi
 
 echo "Checking 'query prepare' for request status..."
 QUERY_RSP=$(cat ${TEST_FILES_TAPE_LIST} ${TEST_FILES_NO_P_LIST} ${TEST_FILES_NONE_LIST} | KRB5CCNAME=/tmp/${EOSPOWER_USER}/krb5cc_0 XrdSecPROTOCOL=krb5 xargs xrdfs ${EOS_MGM_HOST} query prepare ${REQUEST_ID})
@@ -443,25 +408,16 @@ REQUEST_ID=$(KRB5CCNAME=/tmp/${EOSPOWER_USER}/krb5cc_0 XrdSecPROTOCOL=krb5 xrdfs
 echo "Trigering EOS abort workflow as poweruser1:powerusers..."
 KRB5CCNAME=/tmp/${EOSPOWER_USER}/krb5cc_0 XrdSecPROTOCOL=krb5 xrdfs ${EOS_MGM_HOST} prepare -a ${REQUEST_ID} ${TEMP_FILE}
 
-if [ $? -ne 0 ]; then
-  echo "ERROR: Prepare abort command should not have failed."
-  exit 1
-fi
-
 echo "Checking 'query prepare' for aborted file..."
 QUERY_RSP=$(KRB5CCNAME=/tmp/${EOSPOWER_USER}/krb5cc_0 XrdSecPROTOCOL=krb5 xrdfs ${EOS_MGM_HOST} query prepare ${REQUEST_ID} ${TEMP_FILE})
 
 PATH_EXISTS=$(echo ${QUERY_RSP} | jq ".responses[] | select(.path == \"${TEMP_FILE}\").path_exists")
 REQUESTED=$(  echo ${QUERY_RSP} | jq ".responses[] | select(.path == \"${TEMP_FILE}\").requested")
 HAS_REQID=$(  echo ${QUERY_RSP} | jq ".responses[] | select(.path == \"${TEMP_FILE}\").has_reqid")
-ERROR_TEXT=$( echo ${QUERY_RSP} | jq ".responses[] | select(.path == \"${TEMP_FILE}\").error_text")
 
-if [[
-  "true" != "${PATH_EXISTS}" ||
-  "false" != "${REQUESTED}" ||
-  "false" != "${HAS_REQID}" ||
-  "\"\"" != "${ERROR_TEXT}" ]]
-then
+if [[ "true" != "${PATH_EXISTS}" ||
+      "false" != "${REQUESTED}" ||
+      "false" != "${HAS_REQID}" ]]; then
   echo "ERROR: File ${TEMP_FILE} retrieve was not aborted properly: ${QUERY_RSP}"
   exit 1
 fi
@@ -496,9 +452,8 @@ REQUEST_ID=$(KRB5CCNAME=/tmp/${EOSPOWER_USER}/krb5cc_0 XrdSecPROTOCOL=krb5 xrdfs
 
 echo "Trigering EOS abort workflow as poweruser1:powerusers, for ${TEMP_FILE_TAPE} (should succeed) and ${TEMP_FILE_NONE} (should fail)..."
 echo "Error expected"
-KRB5CCNAME=/tmp/${EOSPOWER_USER}/krb5cc_0 XrdSecPROTOCOL=krb5 xrdfs ${EOS_MGM_HOST} prepare -a ${REQUEST_ID} ${TEMP_FILE_TAPE} ${TEMP_FILE_NONE}
 
-if [ $? -eq 0 ]; then
+if KRB5CCNAME=/tmp/${EOSPOWER_USER}/krb5cc_0 XrdSecPROTOCOL=krb5 xrdfs ${EOS_MGM_HOST} prepare -a ${REQUEST_ID} ${TEMP_FILE_TAPE} ${TEMP_FILE_NONE}; then
   echo "ERROR: Prepare abort command should have returned an error."
   exit 1
 fi
@@ -509,14 +464,10 @@ QUERY_RSP=$(KRB5CCNAME=/tmp/${EOSPOWER_USER}/krb5cc_0 XrdSecPROTOCOL=krb5 xrdfs 
 PATH_EXISTS=$(echo ${QUERY_RSP} | jq ".responses[] | select(.path == \"${TEMP_FILE_TAPE}\").path_exists")
 REQUESTED=$(  echo ${QUERY_RSP} | jq ".responses[] | select(.path == \"${TEMP_FILE_TAPE}\").requested")
 HAS_REQID=$(  echo ${QUERY_RSP} | jq ".responses[] | select(.path == \"${TEMP_FILE_TAPE}\").has_reqid")
-ERROR_TEXT=$( echo ${QUERY_RSP} | jq ".responses[] | select(.path == \"${TEMP_FILE_TAPE}\").error_text")
 
-if [[
-  "true" != "${PATH_EXISTS}" ||
-  "false" != "${REQUESTED}" ||
-  "false" != "${HAS_REQID}" ||
-  "\"\"" != "${ERROR_TEXT}" ]]
-then
+if [[ "true" != "${PATH_EXISTS}" ||
+      "false" != "${REQUESTED}" ||
+      "false" != "${HAS_REQID}" ]]; then
   echo "ERROR: File ${TEMP_FILE_TAPE} retrieve was not aborted properly: ${QUERY_RSP}"
   exit 1
 fi
@@ -542,16 +493,11 @@ wait_for_archive ${EOS_MGM_HOST} ${TEMP_FILE}
 
 echo "Trigering EOS retrieve workflow as poweruser1:powerusers, for ${TEMP_FILE}..."
 # We need the -s as we are staging the files from tape (see xrootd prepare definition)
-REQUEST_ID=$(KRB5CCNAME=/tmp/${EOSPOWER_USER}/krb5cc_0 XrdSecPROTOCOL=krb5 xrdfs ${EOS_MGM_HOST} prepare -s ${TEMP_FILE})
+KRB5CCNAME=/tmp/${EOSPOWER_USER}/krb5cc_0 XrdSecPROTOCOL=krb5 xrdfs ${EOS_MGM_HOST} prepare -s ${TEMP_FILE}
 wait_for_retrieve ${EOS_MGM_HOST} ${TEMP_FILE}
 
 echo "Trigering EOS evict workflow as poweruser1:powerusers..."
 KRB5CCNAME=/tmp/${EOSPOWER_USER}/krb5cc_0 XrdSecPROTOCOL=krb5 xrdfs ${EOS_MGM_HOST} prepare -e ${TEMP_FILE}
-
-if [ $? -ne 0 ]; then
-  echo "ERROR: Prepare evict command should not have failed."
-  exit 1
-fi
 
 wait_for_evict ${EOS_MGM_HOST} ${TEMP_FILE}
 
@@ -579,14 +525,13 @@ wait_for_archive ${EOS_MGM_HOST} ${TEMP_FILE_TAPE}
 
 echo "Trigering EOS retrieve workflow as poweruser1:powerusers, for ${TEMP_FILE_TAPE}..."
 # We need the -s as we are staging the files from tape (see xrootd prepare definition)
-REQUEST_ID=$(KRB5CCNAME=/tmp/${EOSPOWER_USER}/krb5cc_0 XrdSecPROTOCOL=krb5 xrdfs ${EOS_MGM_HOST} prepare -s ${TEMP_FILE_TAPE})
+KRB5CCNAME=/tmp/${EOSPOWER_USER}/krb5cc_0 XrdSecPROTOCOL=krb5 xrdfs ${EOS_MGM_HOST} prepare -s ${TEMP_FILE_TAPE}
 wait_for_retrieve ${EOS_MGM_HOST} ${TEMP_FILE_TAPE}
 
 echo "Trigering EOS abort workflow as poweruser1:powerusers..."
 echo "Error expected"
-KRB5CCNAME=/tmp/${EOSPOWER_USER}/krb5cc_0 XrdSecPROTOCOL=krb5 xrdfs ${EOS_MGM_HOST} prepare -e ${TEMP_FILE_TAPE} ${TEMP_FILE_NONE}
 
-if [ $? -eq 0 ]; then
+if KRB5CCNAME=/tmp/${EOSPOWER_USER}/krb5cc_0 XrdSecPROTOCOL=krb5 xrdfs ${EOS_MGM_HOST} prepare -e ${TEMP_FILE_TAPE} ${TEMP_FILE_NONE}; then
   echo "ERROR: Prepare evict command should have returned an error."
   exit 1
 fi

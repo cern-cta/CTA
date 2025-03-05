@@ -15,6 +15,8 @@
 #               granted to it by virtue of its status as an Intergovernmental Organization or
 #               submit itself to any jurisdiction.
 
+set -e
+
 usage() { cat <<EOF 1>&2
 Usage: $0 -n <namespace>
 EOF

@@ -15,6 +15,7 @@
 #               granted to it by virtue of its status as an Intergovernmental Organization or
 #               submit itself to any jurisdiction.
 
+set -e
 
 # Get list of files currently on tape.
 INITIALFILESONTAPE=$((${NB_FILES}*${NB_DIRS}))
@@ -58,9 +59,11 @@ while test 0 != ${FILESONTAPE}; do
   echo "${DELETED}/${INITIALFILESONTAPE} deleted"
 done
 
+# kill eos rm command if it's still running for whatever reason
+if kill -0 ${EOSRMPID} &> /dev/null; then
+    timeout 1s wait ${EOSRMPID} || kill ${EOSRMPID} &> /dev/null || true
+fi
 
-# kill eos rm command that may run in the background
-kill ${EOSRMPID} &> /dev/null
 
 # As we deleted the directory we may have deleted more files than the ones we retrieved
 # therefore we need to take the smallest of the 2 values to decide if the system test was

@@ -15,6 +15,8 @@
 #               granted to it by virtue of its status as an Intergovernmental Organization or
 #               submit itself to any jurisdiction.
 
+set -e
+
 ################################################################################
 # DESCRIPTION
 #
@@ -35,8 +37,6 @@ FSID_DUMMY_3_VALUE=103
 FSID_DUMMY_3_NAME="dummy_3"
 FSID_NOT_SET_VALUE=200
 
-FSID_TAPE=65535
-
 # get some common useful helpers for krb5
 . /root/client_helper.sh
 
@@ -46,10 +46,10 @@ error()
   exit 1
 }
 
-eospower_kdestroy &>/dev/null
+eospower_kdestroy &>/dev/null || true
 eospower_kinit &>/dev/null
 
-admin_kdestroy &>/dev/null
+admin_kdestroy &>/dev/null || true
 admin_kinit &>/dev/null
 
 ################################################################
@@ -68,8 +68,8 @@ xrdcp /etc/group root://${EOS_MGM_HOST}/${TEMP_FILE}
 
 # 3.1. Check that stagerrm fails when there is no tape replica
 echo "Testing 'eos root://${EOS_MGM_HOST} stagerrm ${TEMP_FILE}'..."
-KRB5CCNAME=/tmp/${EOSPOWER_USER}/krb5cc_0 XrdSecPROTOCOL=krb5 eos root://${EOS_MGM_HOST} stagerrm ${TEMP_FILE}
-if [ $? -eq 0 ]; then
+
+if KRB5CCNAME=/tmp/${EOSPOWER_USER}/krb5cc_0 XrdSecPROTOCOL=krb5 eos root://${EOS_MGM_HOST} stagerrm ${TEMP_FILE}; then
   error "'eos stagerrm' command succeeded where it should have failed"
 else
   echo "'eos stagerrm' command failed as expected"
@@ -132,11 +132,7 @@ fi
 # 10. Test removing all remaining replicas
 echo "Trying to remove all disk replicas..."
 KRB5CCNAME=/tmp/${EOSPOWER_USER}/krb5cc_0 XrdSecPROTOCOL=krb5 eos root://${EOS_MGM_HOST} stagerrm ${TEMP_FILE}
-if [ $? -ne 0 ]; then
-  error "'eos stagerrm' command failed where it should have succeeded"
-else
-  echo "'eos stagerrm' command succeeded as expected"
-fi
+
 if test 1 != "$(KRB5CCNAME=/tmp/${EOSPOWER_USER}/krb5cc_0 XrdSecPROTOCOL=krb5 eos --json root://${EOS_MGM_HOST} info ${TEMP_FILE} | jq -r '.locations[] | .schedgroup' | wc -l)"; then
   error "The number of replicas is not the expected one"
 else

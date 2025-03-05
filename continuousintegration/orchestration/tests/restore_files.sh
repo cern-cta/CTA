@@ -15,6 +15,8 @@
 #               granted to it by virtue of its status as an Intergovernmental Organization or
 #               submit itself to any jurisdiction.
 
+set -e
+
 EOS_INSTANCE_NAME="ctaeos"
 EOS_MGM_HOST="ctaeos"
 LOGFILE_PATH=$(mktemp -d)/restore_files.log

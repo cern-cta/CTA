@@ -29,15 +29,8 @@ done
 
 sleep 1
 
-LEFTOVER=0
 for ((subdir=0; subdir < ${NB_DIRS}; subdir++)); do
-  LEFTOVER=$(( ${LEFTOVER} + $(eos root://${EOS_MGM_HOST} ls -y ${EOS_DIR}/${subdir} | grep -E '^d[1-9][0-9]*::t1' | wc -l) ))
+  wait_for_evict ${EOS_MGM_HOST} ${EOS_DIR}/${subdir}
 done
 
-EVICTED=$((${TO_EVICT}-${LEFTOVER}))
-echo "$(date +%s): $EVICTED/$TO_EVICT files evicted from EOS ${evict}"
-
-if [[ ${EVICTED} -ne ${TO_EVICT} ]]; then
-  echo "ERROR: some files were not evicted"
-  exit 1
-fi
+echo "Files evicted from EOS ${evict}"

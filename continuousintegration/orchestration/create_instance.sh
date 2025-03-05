@@ -201,7 +201,12 @@ create_instance() {
   # This is where the actual scripting starts. All of the above is just initializing some variables, error checking and producing debug output
 
   devices_all=$(./../utils/tape/list_all_libraries.sh)
-  devices_in_use=$(kubectl get all --all-namespaces -l cta/library-device -o jsonpath='{.items[*].metadata.labels.cta/library-device}' | tr ' ' '\n' | sort | uniq)
+  devices_in_use=$(kubectl get all --all-namespaces -l cta/library-device -o jsonpath='{.items[*].metadata.labels.cta/library-device}' \
+                  | tr ' ' '\n' \
+                  | sort \
+                  | uniq \
+                  | sed 's|^|/dev/|')
+
   unused_devices=$(comm -23 <(echo "$devices_all") <(echo "$devices_in_use"))
   if [ -z "$unused_devices" ]; then
     die "No unused library devices available. All the following libraries are in use: $devices_in_use"

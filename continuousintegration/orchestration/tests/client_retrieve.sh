@@ -15,6 +15,7 @@
 #               granted to it by virtue of its status as an Intergovernmental Organization or
 #               submit itself to any jurisdiction.
 
+set -e
 
 echo "$(date +%s): Trigerring EOS retrieve workflow as poweruser1:powerusers (12001:1200)"
 
@@ -24,18 +25,8 @@ echo "$(date +%s): Trigerring EOS retrieve workflow as poweruser1:powerusers (12
 # We need the -s as we are staging the files from tape (see xrootd prepare definition)
 for ((subdir=0; subdir < ${NB_DIRS}; subdir++)); do
   echo -n "Retrieving files to ${EOS_DIR}/${subdir} using ${NB_PROCS} processes..."
-
   xrdfs_call=$(eval echo "${retrieve}")
-  xrdfs_call+=" 2>${ERROR_DIR}/RETRIEVE_${subdir}TEST_FILE_NAME"
-
-  xrdfs_success="rm ${ERROR_DIR}/RETRIEVE_${subdir}TEST_FILE_NAME "
-
-  xrdfs_error=" echo ERROR with xrootd prepare stage for file ${subdir}/${subdir}TEST_FILE_NAME, full logs in ${ERROR_DIR}/RETRIEVE_${subdir}TEST_FILE_NAME "
-
-  command_str="${xrdfs_call} && ${xrdfs_success} || ${xrdfs_error}"
-
-  seq -w 0 $((${NB_FILES}-1)) | xargs --max-procs=${NB_PROCS} -iTEST_FILE_NAME bash -c "$command_str" | tee ${LOGDIR}/prepare_${subdir}.log | grep ^ERROR
-
+  seq -w 0 $((NB_FILES - 1)) | xargs --max-procs=${NB_PROCS} -iTEST_FILE_NAME bash -c "$xrdfs_call > /dev/null"
   echo Done.
 
   # DANGER: compatibility matrix hell... See:
@@ -43,27 +34,11 @@ for ((subdir=0; subdir < ${NB_DIRS}; subdir++)); do
   # - Errors for EOS 5.2.8 - CTA#615
   # Broken if eos >= 5.2.8
   # default to xrootd 5 call tested with eos >= 5.2.17
-  xrdfs4_call="XRD_LOGLEVEL=Dump KRB5CCNAME=/tmp/${EOSPOWER_USER}/krb5cc_0 XrdSecPROTOCOL=krb5 /opt/eos/xrootd/bin/xrdfs ${EOS_MGM_HOST} query opaquefile ${EOS_DIR}/${subdir}/${subdir}TEST_FILE_NAME?mgm.pcmd=xattr\&mgm.subcmd=get\&mgm.xattrname=sys.retrieve.req_id 2>${ERROR_DIR}/XATTRGET_${subdir}TEST_FILE_NAME && rm ${ERROR_DIR}/XATTRGET_${subdir}TEST_FILE_NAME"
-  xrdfs_call="XRD_LOGLEVEL=Dump KRB5CCNAME=/tmp/${EOSPOWER_USER}/krb5cc_0 XrdSecPROTOCOL=krb5 /opt/eos/xrootd/bin/xrdfs ${EOS_MGM_HOST} xattr ${EOS_DIR}/${subdir}/${subdir}TEST_FILE_NAME get sys.retrieve.req_id 2>${ERROR_DIR}/XATTRGET_${subdir}TEST_FILE_NAME && rm ${ERROR_DIR}/XATTRGET_${subdir}TEST_FILE_NAME"
-
-  (/opt/eos/xrootd/bin/xrdcp -V 2>&1 | grep -q -e '^v*4\.') && xrdfs_call=${xrdfs4_call}
-
-  xrdfs_error=" echo ERROR with xrootd xattr get for file ${subdir}TEST_FILE_NAME, full logs in ${ERROR_DIR}/XATTRGET_${subdir}TEST_FILE_NAME"
-
-  command_str="${xrdfs_call} || ${xrdfs_error}"
-
-  # We should better deal with errors
-  seq -w 0 $((${NB_FILES}-1)) | xargs --max-procs=${NB_PROCS} -iTEST_FILE_NAME bash -c "$command_str" | tee ${LOGDIR}/prepare_sys.retrieve.req_id_${subdir}.log | grep ^ERROR
+  xrdfs_call="KRB5CCNAME=/tmp/${EOSPOWER_USER}/krb5cc_0 XrdSecPROTOCOL=krb5 /opt/eos/xrootd/bin/xrdfs ${EOS_MGM_HOST} xattr ${EOS_DIR}/${subdir}/${subdir}TEST_FILE_NAME get sys.retrieve.req_id"
+  seq -w 0 $((NB_FILES - 1)) | xargs --max-procs=${NB_PROCS} -iTEST_FILE_NAME bash -c "$xrdfs_call > /dev/null"
 done
 
-if [ "0" != "$(ls ${ERROR_DIR} 2> /dev/null | wc -l)" ]; then
-  # there were some prepare errors
-  echo "Several prepare errors occured during retrieval!"
-  echo "Please check client pod logs in artifacts"
-  mv ${ERROR_DIR}/* ${LOGDIR}/xrd_errors/
-fi
-
-TO_BE_RETRIEVED=$(( ${NB_FILES} * ${NB_DIRS} - $(ls ${ERROR_DIR}/RETRIEVE_* 2>/dev/null | wc -l) ))
+TO_BE_RETRIEVED=$((NB_FILES * NB_DIRS))
 RETRIEVING=${TO_BE_RETRIEVED}
 RETRIEVED=0
 # Wait for the copy to appear on disk

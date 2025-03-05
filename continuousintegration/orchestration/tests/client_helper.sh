@@ -46,7 +46,6 @@ die() {
 
 user_kinit() {
   kinit -kt /root/${USER}.keytab ${USER}@${KRB5_REALM}
-  klist
 }
 
 admin_cta() {
@@ -59,12 +58,10 @@ admin_klist() {
 
 admin_kinit() {
   KRB5CCNAME=/tmp/${CTAADMIN_USER}/krb5cc_0 kinit -kt /root/${CTAADMIN_USER}.keytab ${CTAADMIN_USER}@${KRB5_REALM}
-  admin_klist
 }
 
 admin_kdestroy() {
   KRB5CCNAME=/tmp/${CTAADMIN_USER}/krb5cc_0 kdestroy
-  admin_klist
 }
 
 eospower_eos() {
@@ -77,12 +74,10 @@ eospower_klist() {
 
 eospower_kinit() {
   KRB5CCNAME=/tmp/${EOSPOWER_USER}/krb5cc_0 kinit -kt /root/${EOSPOWER_USER}.keytab ${EOSPOWER_USER}@${KRB5_REALM}
-  eospower_klist
 }
 
 eospower_kdestroy() {
   KRB5CCNAME=/tmp/${EOSPOWER_USER}/krb5cc_0 kdestroy
-  eospower_klist
 }
 
 eosadmin_eos() {
@@ -95,12 +90,10 @@ eosadmin_klist() {
 
 eosadmin_kinit() {
   KRB5CCNAME=/tmp/${EOSADMIN_USER}/krb5cc_0 kinit -kt /root/${EOSADMIN_USER}.keytab ${EOSADMIN_USER}@${KRB5_REALM}
-  eosadmin_klist
 }
 
 eosadmin_kdestroy() {
   KRB5CCNAME=/tmp/${EOSADMIN_USER}/krb5cc_0 kdestroy
-  eosadmin_klist
 }
 
 ################################################################
@@ -111,11 +104,11 @@ eosadmin_kdestroy() {
 # This sciprt fails if there are files stored in the target directory as it just counts the lines.
 wait_for_archive () {
 
-  EOS_MGM_HOST=$1
-  SECONDS_PASSED=0
-  WAIT_FOR_ARCHIVED_FILE_TIMEOUT=90
+  local wait_for_archive_eos_loc=$1
+  local SECONDS_PASSED=0
+  local WAIT_FOR_ARCHIVED_FILE_TIMEOUT=90
 
-  while test $(($# - 1)) != $(echo "${@:2}" | tr " " "\n" | xargs -iFILE eos root://${EOS_MGM_HOST} info FILE | awk '{print $4;}' | grep tape | wc -l); do
+  while test $(($# - 1)) != $(echo "${@:2}" | tr " " "\n" | xargs -iFILE eos root://${wait_for_archive_eos_loc} info FILE | awk '{print $4;}' | grep tape | wc -l); do
     echo "$(date +%s) Waiting for files to be archived to tape: seconds passed = ${SECONDS_PASSED}"
     sleep 1
     let SECONDS_PASSED=SECONDS_PASSED+1
@@ -132,10 +125,10 @@ wait_for_archive () {
 
 wait_for_retrieve () {
 
-  EOS_MGM_HOST=$1
-  SECONDS_PASSED=0
-  WAIT_FOR_RETRIEVED_FILE_TIMEOUT=90
-  while test $(($# - 1)) != $(echo "${@:2}" | tr " " "\n" | xargs -iFILE eos root://${EOS_MGM_HOST} info FILE | awk '{print $4;}' | grep -F "default.0" | wc -l); do
+  local wait_for_retrieve_eos_loc=$1
+  local SECONDS_PASSED=0
+  local WAIT_FOR_RETRIEVED_FILE_TIMEOUT=90
+  while test $(($# - 1)) != $(echo "${@:2}" | tr " " "\n" | xargs -iFILE eos root://${wait_for_retrieve_eos_loc} info FILE | awk '{print $4;}' | grep -F "default.0" | wc -l); do
     echo "$(date +%s) Waiting for files to be retrieved from tape: Seconds passed = ${SECONDS_PASSED}"
     sleep 1
     let SECONDS_PASSED=SECONDS_PASSED+1
@@ -152,10 +145,10 @@ wait_for_retrieve () {
 
 wait_for_evict () {
 
-  EOS_MGM_HOST=$1
-  SECONDS_PASSED=0
-  WAIT_FOR_EVICTED_FILE_TIMEOUT=90
-  while test 0 != $(echo "${@:2}" | tr " " "\n" | xargs -iFILE eos root://${EOS_MGM_HOST} info FILE | awk '{print $4;}' | grep -F "default.0" | wc -l); do
+  local wait_for_evict_eos_loc=$1
+  local SECONDS_PASSED=0
+  local WAIT_FOR_EVICTED_FILE_TIMEOUT=90
+  while test 0 != $(echo "${@:2}" | tr " " "\n" | xargs -iFILE eos root://${wait_for_evict_eos_loc} info FILE | awk '{print $4;}' | grep -F "default.0" | wc -l); do
     echo "$(date +%s) Waiting for files to be evicted from disk: Seconds passed = ${SECONDS_PASSED}"
     sleep 1
     let SECONDS_PASSED=SECONDS_PASSED+1
@@ -172,8 +165,8 @@ wait_for_evict () {
 
 wait_for_tape_state() {
 
-  SECONDS_PASSED=0
-  WAIT_FOR_EVICTED_FILE_TIMEOUT=90
+  local SECONDS_PASSED=0
+  local WAIT_FOR_EVICTED_FILE_TIMEOUT=90
   echo "$(date +%s) Waiting for tape $1 state to change to $2: Seconds passed = ${SECONDS_PASSED}"
   while test $2 != $(admin_cta --json tape ls --vid $1 | jq -r '.[] | .state'); do
     sleep 1
@@ -201,7 +194,7 @@ put_all_drives () {
   INITIAL_DRIVES_STATE=$(admin_cta --json dr ls)
   echo INITIAL_DRIVES_STATE:
   echo ${INITIAL_DRIVES_STATE} | jq -r '.[] | [ .driveName, .driveStatus] | @tsv' | column -t
-  echo -n "Will put $next_state those drives : "
+  echo "Will put $next_state those drives : "
   drivesToModify=$(echo ${INITIAL_DRIVES_STATE} | jq -r ".[].driveName")
   echo $drivesToModify
   for d in $(echo $drivesToModify); do

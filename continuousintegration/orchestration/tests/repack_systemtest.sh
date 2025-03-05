@@ -15,6 +15,8 @@
 #               granted to it by virtue of its status as an Intergovernmental Organization or
 #               submit itself to any jurisdiction.
 
+set -e
+
 #default CI EOS instance
 EOS_MGM_HOST="ctaeos"
 EOS_INSTANCE_NAME="ctaeos"

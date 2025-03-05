@@ -15,6 +15,8 @@
 #               granted to it by virtue of its status as an Intergovernmental Organization or
 #               submit itself to any jurisdiction.
 
+set -e
+
 EOS_MGM_HOST="ctaeos"
 
 usage() { cat <<EOF 1>&2
@@ -47,7 +49,7 @@ fi
 # get some common useful helpers for krb5
 . /root/client_helper.sh
 
-eospower_kdestroy
+eospower_kdestroy &>/dev/null || true
 eospower_kinit
 
 echo "xrdcp /etc/group root://${EOS_MGM_HOST}//eos/ctaeos/cta/${TEST_FILE_NAME}"
