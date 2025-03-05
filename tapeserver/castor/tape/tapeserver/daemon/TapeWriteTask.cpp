@@ -278,6 +278,11 @@ void TapeWriteTask::execute(const std::unique_ptr<castor::tape::tapeFile::WriteS
     if (doReportJobError) {
       // we should report job failure for exception
       reportPacker.reportFailedJob(std::move(m_archiveJob), e, lc);
+    } else {
+      // this is for the last job where ENOSPC was thrown;
+      // shall be requeued from m_successfulArchiveJobs later since
+      // no tapeFlush will be called in TWST
+      reportPacker.reportCompletedJob(std::move(m_archiveJob), lc);
     }
     // We throw again because we want TWST to stop all tasks from execution
     // and go into a degraded mode operation.
