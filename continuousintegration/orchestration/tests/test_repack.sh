@@ -51,7 +51,7 @@ CTA_CLI_POD="cta-cli-0"
 EOS_MGM_POD="eos-mgm-0"
 
 echo "Preparing namespace for the tests"
-./prepare_tests.sh -n ${NAMESPACE}
+./prepare_tests.sh -n ${NAMESPACE} || true
 
 kubectl -n ${NAMESPACE} cp client_helper.sh ${CLIENT_POD}:/root/client_helper.sh -c client
 kubectl -n ${NAMESPACE} cp client_prepare_file.sh ${CLIENT_POD}:/root/client_prepare_file.sh -c client

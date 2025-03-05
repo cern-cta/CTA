@@ -46,7 +46,7 @@ if [ -n "${error}" ]; then
 fi
 
 echo "Preparing namespace for the tests"
-  . prepare_tests.sh -n "${NAMESPACE}"
+  . prepare_tests.sh -n "${NAMESPACE}" || true
 if [ $? -ne 0 ]; then
   echo "ERROR: failed to prepare namespace for the tests"
   exit 1
