@@ -2,8 +2,6 @@
   stage: build:image
   retry: 1
   rules:
-    - if: $CI_PIPELINE_SOURCE == "merge_request_event"
-      when: never
     - if: $SYSTEMTESTS_ONLY == "TRUE"
       when: never
     # For pivot CTA releases: vX.Y.0

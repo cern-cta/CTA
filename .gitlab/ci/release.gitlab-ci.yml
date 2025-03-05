@@ -4,10 +4,8 @@ changelog-preview:
   rules:
     - if: $SYSTEMTESTS_ONLY == "TRUE"
       when: never
-    - if: $CI_PIPELINE_SOURCE == "push"
-      when: manual
+    - when: manual
       allow_failure: true
-    - when: never
   image: $IMAGE_RELEASE
   variables:
     GIT_DEPTH: 0 # Ensure we don't do a shallow clone here as we might need to find the latest tag
@@ -51,10 +49,8 @@ changelog-update:
   rules:
     - if: $SYSTEMTESTS_ONLY == "TRUE"
       when: never
-    - if: $CI_PIPELINE_SOURCE == "push"
-      when: manual
+    - when: manual
       allow_failure: true
-    - when: never
   image: $IMAGE_RELEASE
   variables:
     SOURCE_BRANCH: ""
