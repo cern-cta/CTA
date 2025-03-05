@@ -24,6 +24,8 @@ build-cta-srpm:
   needs:
     - job: modify-versionlock
       optional: true
+    - job: continue-pipeline
+      optional: true
   rules:
     - !reference [.build-cta, rules]
     - when: on_success
