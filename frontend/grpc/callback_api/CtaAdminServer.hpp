@@ -56,20 +56,23 @@ class CtaRpcStreamImpl : public CtaRpcStream::CallbackService {
 // serverWriteReactor<Feature> is the RETURN TYPE of the function which is server-side streaming!!!
 // Is serverWriteReactor a class? yes it is
 // but clientReadReactor is a class
-class CtaAdminServerWriteReactor : public grpc::ServerWriteReactor<cta::xrd::StreamResponse> {
-  public:
-    void OnWriteDone(bool ok) override {
-      if (!ok) {
-        Finish(Status(grpc::StatusCode::UNKNOWN, "Unexpected Failure in OnWriteDone"));
-      }
-      NextWrite();
-    }
-  private:
-    // bool isHeaderSent = false;
-    xrd::cta::Response stream_item_;
-    std::vector<> // will hold the database query, each protobuf sent as the response is of the type cta::xrd::Response (which is either Header or Data)
-    // for tapeLS for example, we hold the results in std::list<common::dataStructures::Tape> m_tapeList; - XrdCtaTapeLs.hpp implementation
-}
+// ServerWriteReactor class defined in server_callback.h
+// methods: StartWrite(), StartWriteAndFinish(), StartSendInitialMetadata(), StartWriteLast,
+// Finish(), OnSendInitialMetadata(), OnWriteDone(), OnDone(), OnCancel()
+// class CtaAdminServerWriteReactor : public grpc::ServerWriteReactor<cta::xrd::StreamResponse> {
+//   public:
+//     void OnWriteDone(bool ok) override {
+//       if (!ok) {
+//         Finish(Status(grpc::StatusCode::UNKNOWN, "Unexpected Failure in OnWriteDone")); // Finish is a method of the parent class
+//       }
+//       NextWrite();
+//     }
+//   private:
+//     // bool isHeaderSent = false;
+//     xrd::cta::Response stream_item_;
+//     std::vector<> // will hold the database query, each protobuf sent as the response is of the type cta::xrd::Response (which is either Header or Data)
+//     // for tapeLS for example, we hold the results in std::list<common::dataStructures::Tape> m_tapeList; - XrdCtaTapeLs.hpp implementation
+// }
 
 // request object will be filled in by the Parser of the command on the client-side.
 // Currently I am calling this class CtaAdminCmdStreamingClient
@@ -79,12 +82,17 @@ CtaAdminServer::GenericAdminStream(CallbackServerContext* context, const cta::xr
   // its constructor calls the NextWrite() function to begin writing
   // return new Lister(rectangle, &feature_list_);
   // so I could here, based on the request, have a switch statement calling the constructor of the appropriate child class
-  switch(cmd_pair(m_request.admincmd().cmd(), m_request.admincmd().subcmd())) {
+  switch(cmd_pair(request.admincmd().cmd(), request.admincmd().subcmd())) {
     case cmd_pair(cta::admin::AdminCmd::CMD_TAPE, cta::admin::AdminCmd::SUBCMD_LS):
       return new TapeLsWriteReactor(catalogue, scheduler);
-    case cmd_pair(cta::admin::AdminCmd::CMD_TAPE, cta::admin::AdminCmd::SUBCMD_LS):
-      return new StorageClassLsWriteReactor(catalogue, scheduler);
+    // case cmd_pair(cta::admin::AdminCmd::CMD_TAPE, cta::admin::AdminCmd::SUBCMD_LS):
+    //   return new StorageClassLsWriteReactor(catalogue, scheduler);
     default:
+      // make the compiler happy maybe and return
+      return new TapeLsWriteReactor(catalogue, scheduler);
+    // dCache impl. prints unrecognized Request message
+      // Finish(::grpc::Status(::grpc::StatusCode::UNIMPLEMENTED	, "Method to handle this command is not implemented")); // we will not get into the unimplemented path,
+      // as it will be detected earlier on by the client at the time of making the rpc call. But, still need a way to return an error here
       // should return an error that we have not implemented this, but this function does not return errors..?
       // Open question, what do I do for errors? This API is really not clear on this
   }

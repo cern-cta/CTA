@@ -1,8 +1,11 @@
-#include "CtaAdminServer.hpp"
+// #include "CtaAdminServer.hpp" // need this for the class CtaAdminServerWriteReactor, nothing else
 #include <catalogue/Catalogue.hpp>
 #include <scheduler/Scheduler.hpp>
 
-class TapeLsWriteReactor : public CtaAdminServerWriteReactor {
+#include "cta_frontend.pb.h"
+#include "cta_frontend.grpc.pb.h"
+
+class TapeLsWriteReactor : public grpc::ServerWriteReactor<cta::xrd::StreamResponse> /* CtaAdminServerWriteReactor */ {
     public:
         void OnWriteDone(bool ok) override {
             if (!ok) {
@@ -16,6 +19,13 @@ class TapeLsWriteReactor : public CtaAdminServerWriteReactor {
         std::list<common::dataStructures::Tape> m_tapeList;
         bool m_isHeaderSent; // or could be a static variable in the function NextWrite()
 };
+
+void TapeLsWriteReactor::OnDone() override {
+    LOG(INFO) << "TapeLs call Completed";
+    delete this;
+}
+
+// maybe also override the OnCancel method - Jacek implemented this
 
 // constructor does not make the first call to write, currently.
 // In the example's Lister case, the first call to write is made in the constructor
