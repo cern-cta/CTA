@@ -229,11 +229,11 @@ void TapeWriteTask::execute(const std::unique_ptr<castor::tape::tapeFile::WriteS
 
     // If we reached the end of tape, this is not an error (ENOSPC)
     bool doReportJobError = true;
+    int errorLevel = cta::log::ERR;
     try {
       // If it's not the error we're looking for, we will go about our business
       // in the catch section. dynamic cast will throw, and we'll do ourselves
       // if the error code is not the one we want.
-      int errorLevel = cta::log::ERR;
       const auto& en = dynamic_cast<const cta::exception::Errnum&>(e);
       if (en.errorNumber() != ENOSPC) {
         throw;
@@ -252,7 +252,6 @@ void TapeWriteTask::execute(const std::unique_ptr<castor::tape::tapeFile::WriteS
         watchdog.addToErrorCount(currentErrorToCount);
       }
     }
-
     // Log and circulate blocks
     // We want to report internal error most of the time to avoid wrong
     // interpretation down the chain. Nevertheless, if the exception
