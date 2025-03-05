@@ -33,10 +33,17 @@ namespace castor::tape::tapeserver {
 
 drive::DriveInterface * drive::createDrive(SCSI::DeviceInfo di,
     System::virtualWrapper& sw) {
+#ifdef CTA_PGSCHED
   std::string dgserialNumber = DriveMHVTL(di, sw).getSerialNumber();
   if (std::string::npos != di.product.find("MHVTL") || std::string::npos != di.vendor.find("MHVTL") || std::string::npos != dgserialNumber.find("MHVTL")) {
     return new DriveMHVTL(di, sw);
-  } else if (std::string::npos != di.product.find("T10000")) {
+  }
+#else
+  if (std::string::npos != di.product.find("MHVTL") || std::string::npos != di.vendor.find("MHVTL")) {
+    return new DriveMHVTL(di, sw);
+  }
+#endif
+  else if (std::string::npos != di.product.find("T10000")) {
     return new DriveT10000(di, sw);
   } else if (std::string::npos != di.product.find("ULT") || std::string::npos != di.product.find("Ultrium")) {
     return new DriveLTO(di, sw);
