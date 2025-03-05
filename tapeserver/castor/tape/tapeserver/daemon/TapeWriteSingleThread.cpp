@@ -499,7 +499,8 @@ void castor::tape::tapeserver::daemon::TapeWriteSingleThread::run() {
     m_watchdog.updateStatsWithoutDeliveryTime(m_stats);
 #ifdef CTA_PGSCHED
     // report last batch of files which were written but not flushed
-    // (no file marks on tape) as failure
+    // (no file marks on tape) as failure (last file written to tape when ENOSPC
+    // (end of space) was thrown will be included here)
     m_reportPacker.reportLastBatchError(e, m_logContext);
 #endif
 
