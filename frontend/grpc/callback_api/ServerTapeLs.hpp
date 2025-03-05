@@ -4,24 +4,29 @@
 
 #include "cta_frontend.pb.h"
 #include "cta_frontend.grpc.pb.h"
+#include "catalogue/TapeSearchCriteria.hpp"
+#include <grpcpp/grpcpp.h>
 
-class TapeLsWriteReactor : public grpc::ServerWriteReactor<cta::xrd::StreamResponse> /* CtaAdminServerWriteReactor */ {
+namespace cta::frontend::grpc {
+
+class TapeLsWriteReactor : public ::grpc::ServerWriteReactor<cta::xrd::StreamResponse> /* CtaAdminServerWriteReactor */ {
     public:
+        TapeLsWriteReactor(cta::catalogue::Catalogue &catalogue, cta::Scheduler &scheduler);
         void OnWriteDone(bool ok) override {
             if (!ok) {
-                Finish(Status(grpc::StatusCode::UNKNOWN, "Unexpected Failure in OnWriteDone"));
+                Finish(Status(::grpc::StatusCode::UNKNOWN, "Unexpected Failure in OnWriteDone"));
             }
             NextWrite();
         }
-        // void OnDone() override
+        void OnDone() override;
         void NextWrite();
     private:
         std::list<common::dataStructures::Tape> m_tapeList;
         bool m_isHeaderSent; // or could be a static variable in the function NextWrite()
 };
 
-void TapeLsWriteReactor::OnDone() override {
-    LOG(INFO) << "TapeLs call Completed";
+void TapeLsWriteReactor::OnDone() {
+    // add a log line here
     delete this;
 }
 
@@ -29,7 +34,7 @@ void TapeLsWriteReactor::OnDone() override {
 
 // constructor does not make the first call to write, currently.
 // In the example's Lister case, the first call to write is made in the constructor
-TapeLsWriteReactor::TapeLsWriteReactor(cta::catalogue::Catalogue &catalogue, cta::Scheduler &scheduler) : m_isHeaderSent(false) {
+TapeLsWriteReactor::TapeLsWriteReactor(cta::catalogue::Catalogue &catalogue, cta::Scheduler &scheduler, const cta::xrd::Request* requestMsg) : m_isHeaderSent(false) {
     // all this will go into a common method in a base class called
     // getTapesList or something
     using namespace cta::admin;
@@ -67,7 +72,7 @@ TapeLsWriteReactor::TapeLsWriteReactor(cta::catalogue::Catalogue &catalogue, cta
 }
 
 void TapeLsWriteReactor::NextWrite() {
-    cta::xrd::Response response;
+    cta::xrd::StreamResponse response;
     // is this the first item? Then write the header
     if (!m_isHeaderSent) {
         response.mutable_header()->set_type(cta::xrd::Response::RSP_SUCCESS);
@@ -144,3 +149,4 @@ void TapeLsWriteReactor::NextWrite() {
         }
     }
 }
+} // namespace cta::frontend::grpc

@@ -35,15 +35,15 @@ namespace cta::frontend::grpc {
 
 // callbackService class is the one that must implement the rpc methods
 // a streaming rpc method must have return type ServerWriteReactor
-class CtaRpcStreamImpl : public CtaRpcStream::CallbackService {
+class CtaRpcStreamImpl : public cta::xrd::CtaRpcStream::CallbackService {
   public:
     cta::log::LogContext getLogContext() const { return m_lc; }
     // CtaRpcStreamImpl() = delete;
     CtaRpcStreamImpl(cta::catalogue::Catalogue &catalogue, cta::Scheduler &scheduler) : m_catalogue(catalogue), m_scheduler(scheduler) {}
     /* CtaAdminServerWriteReactor is what the type of GenericAdminStream could be */
-    grpc::ServerWriteReactor<cta::xrd::Response>* GenericAdminStream(CallbackServerContext* context, const cta::xrd::Request* request);
-    grpc::ServerWriteReactor<cta::xrd::Response>* TapeLs(CallbackServerContext* context, const cta::xrd::Request* request);
-    grpc::ServerWriteReactor<cta::xrd::Response>* StorageClassLs(CallbackServerContext* context, const cta::xrd::Request* request);
+    ::grpc::ServerWriteReactor<cta::xrd::Response>* GenericAdminStream(::grpc::CallbackServerContext* context, const cta::xrd::Request* request);
+    ::grpc::ServerWriteReactor<cta::xrd::Response>* TapeLs(::grpc::CallbackServerContext* context, const cta::xrd::Request* request);
+    ::grpc::ServerWriteReactor<cta::xrd::Response>* StorageClassLs(::grpc::CallbackServerContext* context, const cta::xrd::Request* request);
 
   private:
     cta::log::LogContext m_lc;
@@ -76,20 +76,20 @@ class CtaRpcStreamImpl : public CtaRpcStream::CallbackService {
 
 // request object will be filled in by the Parser of the command on the client-side.
 // Currently I am calling this class CtaAdminCmdStreamingClient
-grpc::ServerWriteReactor<StreamResponse>*
-CtaAdminServer::GenericAdminStream(CallbackServerContext* context, const cta::xrd::Request* request) override {
+::grpc::ServerWriteReactor<StreamResponse>*
+CtaAdminServer::GenericAdminStream(::grpc::CallbackServerContext* context, const cta::xrd::Request* request) override {
   // lister class implements all the overriden methods
   // its constructor calls the NextWrite() function to begin writing
   // return new Lister(rectangle, &feature_list_);
   // so I could here, based on the request, have a switch statement calling the constructor of the appropriate child class
   switch(cmd_pair(request.admincmd().cmd(), request.admincmd().subcmd())) {
     case cmd_pair(cta::admin::AdminCmd::CMD_TAPE, cta::admin::AdminCmd::SUBCMD_LS):
-      return new TapeLsWriteReactor(catalogue, scheduler);
+      return new TapeLsWriteReactor(catalogue, scheduler, request);
     // case cmd_pair(cta::admin::AdminCmd::CMD_TAPE, cta::admin::AdminCmd::SUBCMD_LS):
     //   return new StorageClassLsWriteReactor(catalogue, scheduler);
     default:
       // make the compiler happy maybe and return
-      return new TapeLsWriteReactor(catalogue, scheduler);
+      return new TapeLsWriteReactor(catalogue, scheduler, request);
     // dCache impl. prints unrecognized Request message
       // Finish(::grpc::Status(::grpc::StatusCode::UNIMPLEMENTED	, "Method to handle this command is not implemented")); // we will not get into the unimplemented path,
       // as it will be detected earlier on by the client at the time of making the rpc call. But, still need a way to return an error here
