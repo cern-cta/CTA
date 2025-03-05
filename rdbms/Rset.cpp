@@ -70,38 +70,38 @@ Rset& Rset::operator=(Rset&& rhs) {
 //------------------------------------------------------------------------------
 
 uint8_t Rset::columnUint8NoOpt(const std::string& colName) const {
-  return callImpl(&wrapper::RsetWrapper::columnUint8NoOpt, colName);
+  return delegateToImpl(&wrapper::RsetWrapper::columnUint8NoOpt, colName);
 }
 
 uint16_t Rset::columnUint16NoOpt(const std::string& colName) const {
-  return callImpl(&wrapper::RsetWrapper::columnUint16NoOpt, colName);
+  return delegateToImpl(&wrapper::RsetWrapper::columnUint16NoOpt, colName);
 }
 
 uint32_t Rset::columnUint32NoOpt(const std::string& colName) const {
-  return callImpl(&wrapper::RsetWrapper::columnUint32NoOpt, colName);
+  return delegateToImpl(&wrapper::RsetWrapper::columnUint32NoOpt, colName);
 }
 
 uint64_t Rset::columnUint64NoOpt(const std::string& colName) const {
-  return callImpl(&wrapper::RsetWrapper::columnUint64NoOpt, colName);
+  return delegateToImpl(&wrapper::RsetWrapper::columnUint64NoOpt, colName);
 }
 
 std::string Rset::columnStringNoOpt(const std::string& colName) const {
-  return callImpl(&wrapper::RsetWrapper::columnStringNoOpt, colName);
+  return delegateToImpl(&wrapper::RsetWrapper::columnStringNoOpt, colName);
 }
 
 double Rset::columnDoubleNoOpt(const std::string& colName) const {
-  return callImpl(&wrapper::RsetWrapper::columnDoubleNoOpt, colName);
+  return delegateToImpl(&wrapper::RsetWrapper::columnDoubleNoOpt, colName);
 }
 
 bool Rset::columnBoolNoOpt(const std::string& colName) const {
-  return callImpl(&wrapper::RsetWrapper::columnBoolNoOpt, colName);
+  return delegateToImpl(&wrapper::RsetWrapper::columnBoolNoOpt, colName);
 }
 
 //------------------------------------------------------------------------------
 // columnString
 //------------------------------------------------------------------------------
 std::string Rset::columnBlob(const std::string& colName) const {
-  return callImpl(&wrapper::RsetWrapper::columnBlob, colName);
+  return delegateToImpl(&wrapper::RsetWrapper::columnBlob, colName);
 }
 
 //------------------------------------------------------------------------------
@@ -115,7 +115,7 @@ std::string Rset::columnString(const std::string& colName) const {
 
     const std::optional<std::string> col = columnOptionalString(colName);
     if (col) {
-      return std::move(col.value());
+      return col.value();
     } else {
       throw NullDbValue(std::string("Database column ") + colName + " contains a null value");
     }
@@ -318,42 +318,42 @@ bool Rset::isEmpty() const {
 // columnIsNull
 //------------------------------------------------------------------------------
 bool Rset::columnIsNull(const std::string& colName) const {
-  return callImpl(&wrapper::RsetWrapper::columnIsNull, colName);
+  return delegateToImpl(&wrapper::RsetWrapper::columnIsNull, colName);
 }
 
 //------------------------------------------------------------------------------
 // columnOptionalString
 //------------------------------------------------------------------------------
 std::optional<std::string> Rset::columnOptionalString(const std::string& colName) const {
-  return callImpl(&wrapper::RsetWrapper::columnOptionalString, colName);
+  return delegateToImpl(&wrapper::RsetWrapper::columnOptionalString, colName);
 }
 
 //------------------------------------------------------------------------------
 // columnOptionalUint8
 //------------------------------------------------------------------------------
 std::optional<uint8_t> Rset::columnOptionalUint8(const std::string& colName) const {
-  return callImpl(&wrapper::RsetWrapper::columnOptionalUint8, colName);
+  return delegateToImpl(&wrapper::RsetWrapper::columnOptionalUint8, colName);
 }
 
 //------------------------------------------------------------------------------
 // columnOptionalUint16
 //------------------------------------------------------------------------------
 std::optional<uint16_t> Rset::columnOptionalUint16(const std::string& colName) const {
-  return callImpl(&wrapper::RsetWrapper::columnOptionalUint16, colName);
+  return delegateToImpl(&wrapper::RsetWrapper::columnOptionalUint16, colName);
 }
 
 //------------------------------------------------------------------------------
 // columnOptionalUint32
 //------------------------------------------------------------------------------
 std::optional<uint32_t> Rset::columnOptionalUint32(const std::string& colName) const {
-  return callImpl(&wrapper::RsetWrapper::columnOptionalUint32, colName);
+  return delegateToImpl(&wrapper::RsetWrapper::columnOptionalUint32, colName);
 }
 
 //------------------------------------------------------------------------------
 // columnOptionalUint64
 //------------------------------------------------------------------------------
 std::optional<uint64_t> Rset::columnOptionalUint64(const std::string& colName) const {
-  return callImpl(&wrapper::RsetWrapper::columnOptionalUint64, colName);
+  return delegateToImpl(&wrapper::RsetWrapper::columnOptionalUint64, colName);
 }
 
 //------------------------------------------------------------------------------
@@ -381,7 +381,7 @@ double Rset::columnDouble(const std::string& colName) const {
 // columnOptionalDouble
 //------------------------------------------------------------------------------
 std::optional<double> Rset::columnOptionalDouble(const std::string& colName) const {
-  return callImpl(&wrapper::RsetWrapper::columnOptionalDouble, colName);
+  return delegateToImpl(&wrapper::RsetWrapper::columnOptionalDouble, colName);
 }
 
 }  // namespace cta::rdbms
