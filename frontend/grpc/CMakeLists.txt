@@ -23,10 +23,12 @@ include_directories(${PROTOBUF3_INCLUDE_DIRS})
 # depends on CTA_EOS definitions
 include_directories(${CMAKE_BINARY_DIR}/eos_cta ${PROTOBUF3_INCLUDE_DIRS})
 
+# include stuff from the callback api here because we need to serve the streaming commands by registering their service class impl
 add_executable(cta-frontend-grpc Main.cpp FrontendGrpcService.cpp
   ../common/WorkflowEvent.cpp
   ../common/FrontendService.cpp
-  ../common/Config.cpp)
+  ../common/Config.cpp
+  callback_api/CtaAdminServer.hpp)
 target_link_libraries(cta-frontend-grpc ProtoCtaFrontend)
 
 if(CTA_USE_PGSCHED)

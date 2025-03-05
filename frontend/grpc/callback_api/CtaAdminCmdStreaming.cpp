@@ -23,6 +23,8 @@
 #include "CtaAdminCmdStreaming.hpp"
 #include <cmdline/CtaAdminTextFormatter.hpp>
 #include "tapeserver/daemon/common/TapedConfiguration.hpp"
+#include "CtaAdminClientReadReactor.hpp"
+#include "cmdline/CtaAdminCmdParse.hpp"
 
 // GLOBAL VARIABLES : used to pass information between main thread and stream handler thread
 
