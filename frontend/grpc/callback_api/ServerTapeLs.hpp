@@ -6,12 +6,14 @@
 #include "cta_frontend.grpc.pb.h"
 #include "catalogue/TapeSearchCriteria.hpp"
 #include <grpcpp/grpcpp.h>
+#include "../RequestMessage.hpp"
+#include "common/dataStructures/LabelFormatSerDeser.hpp"
 
 namespace cta::frontend::grpc {
 
 class TapeLsWriteReactor : public ::grpc::ServerWriteReactor<cta::xrd::StreamResponse> /* CtaAdminServerWriteReactor */ {
     public:
-        TapeLsWriteReactor(cta::catalogue::Catalogue &catalogue, cta::Scheduler &scheduler);
+        TapeLsWriteReactor(cta::catalogue::Catalogue &catalogue, cta::Scheduler &scheduler, const cta::xrd::Request* request);
         void OnWriteDone(bool ok) override {
             if (!ok) {
                 Finish(Status(::grpc::StatusCode::UNKNOWN, "Unexpected Failure in OnWriteDone"));
@@ -34,12 +36,13 @@ void TapeLsWriteReactor::OnDone() {
 
 // constructor does not make the first call to write, currently.
 // In the example's Lister case, the first call to write is made in the constructor
-TapeLsWriteReactor::TapeLsWriteReactor(cta::catalogue::Catalogue &catalogue, cta::Scheduler &scheduler, const cta::xrd::Request* requestMsg) : m_isHeaderSent(false) {
+TapeLsWriteReactor::TapeLsWriteReactor(cta::catalogue::Catalogue &catalogue, cta::Scheduler &scheduler, const cta::xrd::Request* request) : m_isHeaderSent(false) {
     // all this will go into a common method in a base class called
     // getTapesList or something
     using namespace cta::admin;
 
     cta::catalogue::TapeSearchCriteria searchCriteria;
+    request::RequestMessage requestMsg(*request);
 
     bool has_any = false; // set to true if at least one optional option is set
 
@@ -61,13 +64,13 @@ TapeLsWriteReactor::TapeLsWriteReactor(cta::catalogue::Catalogue &catalogue, cta
     if(stateOpt){
     searchCriteria.state = common::dataStructures::Tape::stringToState(stateOpt.value(), true);
     }
-    if(!(requestMsg.has_flag(OptionBoolean::ALL) || has_any)) {
+    if(!(requestMsg.hasFlag(OptionBoolean::ALL) || has_any)) {
     throw cta::exception::UserError("Must specify at least one search option, or --all");
-    } else if(requestMsg.has_flag(OptionBoolean::ALL) && has_any) {
+    } else if(requestMsg.hasFlag(OptionBoolean::ALL) && has_any) {
     throw cta::exception::UserError("Cannot specify --all together with other search options");
     }
 
-    m_tapeList = m_catalogue.Tape()->getTapes(searchCriteria);
+    m_tapeList = catalogue.Tape()->getTapes(searchCriteria);
     NextWrite();
 }
 
@@ -82,9 +85,9 @@ void TapeLsWriteReactor::NextWrite() {
         return; // because we'll be called in a loop by OnWriteDone
     } else {
         for(; !m_tapeList.empty(); m_tapeList.pop_front()) {
-            Data record;
+            // cta::xrd::Data record;
             auto &tape = m_tapeList.front();
-            auto tape_item = record.mutable_tals_item();
+            auto tape_item = response.mutable_data()->mutable_tals_item();
 
             tape_item->set_vid(tape.vid);
             tape_item->set_media_type(tape.mediaType);
@@ -139,7 +142,7 @@ void TapeLsWriteReactor::NextWrite() {
             if (tape.verificationStatus) {
                 tape_item->set_verification_status(tape.verificationStatus.value());
             }
-            StartWrite(&record);
+            StartWrite(&response);
             return; // because we will be called in a loop by OnWriteDone()
         } // end for
         // did not write anything
