@@ -1,0 +1,12 @@
+{{- $name := include "rpmserver.name" . }}
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: cta-artefacts-repo
+data:
+  cta-artefacts.repo: |
+    [cta-artefacts-repo]
+    name=CTA Artefacts Repo
+    baseurl=http://{{ $name }}/
+    enabled=1
+    gpgcheck=0

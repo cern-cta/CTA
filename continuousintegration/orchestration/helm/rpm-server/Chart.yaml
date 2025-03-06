@@ -1,0 +1,10 @@
+apiVersion: v2
+name: rpm-repo-server
+description: A simple HTTP server to serve CTA RPM packages
+version: 0.1.0
+appVersion: "1.0"
+
+dependencies:
+- name: common
+  version: 0.1.0
+  repository: "file://../common"
