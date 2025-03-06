@@ -1,0 +1,31 @@
+{{- $name := include "rpmserver.name" . }}
+{{- $namespace := .Release.Namespace -}}
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ $name }}
+  namespace: {{ $namespace | quote }}
+spec:
+  replicas: {{ .Values.replicaCount }}
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: {{ $name }}
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/name: {{ $name }}
+        {{- include "common.labels.withoutname" $ | nindent 8 }}
+    spec:
+      terminationGracePeriodSeconds: {{ .Values.terminationGracePeriodSeconds }}
+      imagePullSecrets:
+      {{ include "rpmserver.imagePullSecrets" . | nindent 6 }}
+      containers:
+        - name: rpm-server
+          image: {{ include "rpmserver.image" . }}
+          imagePullPolicy: {{ include "rpmserver.imagePullPolicy" . }}
+          command:
+            - sh
+            - -c
+            - "python3 -m http.server {{ .Values.server.port }} --directory {{ .Values.server.repoPath }}"
+          ports:
+            - containerPort: {{ .Values.server.port }}
