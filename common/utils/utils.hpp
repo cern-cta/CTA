@@ -25,9 +25,21 @@
 #include <vector>
 #include <chrono>
 
+#include "common/utils/StringConversions.hpp"
 #include "Regex.hpp"
 
+
 namespace cta::utils {
+
+/**
+ * Determines the string representation of the specified error number.
+ *
+ * Please note this method is thread safe.
+ *
+ * @param errnoValue The errno value.
+ * @return The string representation.
+ */
+//std::string errnoToString(const int errnoValue);
 
 /**
  * Returns true if the hostname is a valid IPv4 or IPv6 address.
@@ -189,19 +201,6 @@ std::string generateUuid();
 bool endsWith(const std::string& str, const char c);
 
 /**
- * Returns the string reprsentation of the specified value.
- *
- * @param value The value whose string representation is to be returned.
- * @return The string reprsentation of the specified value.
- */
-template<typename T>
-std::string toString(const T& value) {
-  std::ostringstream oss;
-  oss << value;
-  return oss.str();
-}
-
-/**
  * Creates and returns an std::string which is the result of replacing each
  * occurance of whitespace (a collection of on or more space and tab
  * characters) with a single space character.
@@ -228,159 +227,6 @@ void setXattr(const std::string& path, const std::string& name, const std::strin
  * @return The value of the extended attribute.
  */
 std::string getXattr(const std::string& path, const std::string& name);
-
-/**
- * Determines the string representation of the specified error number.
- *
- * Please note this method is thread safe.
- *
- * @param errnoValue The errno value.
- * @return The string representation.
- */
-std::string errnoToString(const int errnoValue);
-
-/**
-   * Converts the specified string to an unsigned integer.
-   *
-   * @param str The string.
-   * @return The unisgned integer.
-   */
-uint8_t toPGUint8(std::string_view str);
-
-/**
-   * Converts the specified string to an unsigned integer.
-   *
-   * @param str The string.
-   * @return The unisgned integer.
-   */
-uint16_t toPGUint16(std::string_view str);
-
-/**
-   * Converts the specified string to an unsigned integer.
-   *
-   * @param str The string.
-   * @return The unsigned integer.
-   */
-uint32_t toPGUint32(std::string_view str);
-
-/**
-   * Parses the specified string representation of an unsigned 64-bit integer.
-   *
-   * Please note that "-1" is a valid string and will parse successfully.
-   *
-   * @return The parsed unsigned 64-bit integer.
-   */
-uint64_t toPGUint64(std::string_view str);
-
-/**
-   * Parses the specified string representation of a double.
-   *
-   * @return The parsed double.
-   */
-double toPGDouble(std::string_view str);
-
-/**
-   * Parses the specified string representation of an unsigned 64-bit integer.
-   *
-   * Please note that "-1" is a valid string and will parse successfully.
-   *
-   * @return The parsed unsigned 64-bit integer.
-   */
-uint64_t toUint64(const std::string& str);
-
-/**
- * Converts the specified string to an unsigned integer.
- *
- * @param str The string.
- * @return The unisgned integer.
- */
-uint8_t toUint8(const std::string& str);
-
-/**
- * Converts the specified string to an unsigned integer.
- *
- * @param str The string.
- * @return The unisgned integer.
- */
-uint16_t toUint16(const std::string& str);
-
-/**
- * Converts the specified string to an unsigned integer.
- *
- * @param str The string.
- * @return The unsigned integer.
- */
-uint32_t toUint32(const std::string& str);
-
-/**
- * Converts the specified string to a uid.
- *
- * @param str The string.
- * @return The uid.
- */
-uid_t toUid(const std::string& str);
-
-/**
- * Converts the specified string to a gid.
- *
- * @param str The string.
- * @return The gid.
- */
-gid_t toGid(const std::string& str);
-
-/**
- * Checks if the specified string is a valid unsigned integer.
- *
- * @param str The string to be checked.
- * @returns true if the string is a valid unsigned integer, else false.
- */
-bool isValidUInt(const std::string& str);
-
-/**
- * Parses the specified string representation of an unsigned 64-bit integer.
- *
- * Please note that "-1" is a valid string and will parse successfully.
- *
- * @return The parsed unsigned 64-bit integer.
- */
-uint64_t toUint64(const std::string& str);
-
-/**
- * Checks if the specified string is a valid decimal.
- *
- * @param str The string to be checked.
- * @returns true if the string is a valid decimal, else false.
- */
-bool isValidDecimal(const std::string& str);
-
-/**
- * Parses the specified string representation of a double.
- *
- * @return The parsed double.
- */
-double toDouble(const std::string& str);
-
-/**
- * Converts the specified string to uppercase.
- *
- * @param In/out parameter: The string to be converted.
- */
-void toUpper(std::string& str);
-
-/**
- * Checks if the specified string is uppercase.
- *
- *  @param In/out parameter: The string to be checked.
- *  @return true if the string is uppercase.
- */
-bool isUpper(const std::string& str);
-
-/**
- * Converts the specified string to lowercase.
- *
- * @param In/out parameter: The string to be converted.
- */
-void toLower(std::string& str);
 
 /**
  * Gets the short host name from the system
