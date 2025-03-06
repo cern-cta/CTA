@@ -93,8 +93,8 @@ release-cta:
     - echo "Publishing to internal CTA repository"
     - ./continuousintegration/release/upload_to_eos.sh --eos-username ${DOCKER_LOGIN_USERNAME}
                                                        --eos-password ${DOCKER_LOGIN_PASSWORD}
-                                                       --source-dir build_rpm/RPM/RPMS
-                                                       --eos-path /eos/user/c/ctareg/www/cta-repo
+                                                       --local-source-dir build_rpm/RPM/RPMS
+                                                       --eos-target-dir /eos/user/c/ctareg/www/cta-repo
                                                        --hook /eos/user/c/ctareg/www/cta-repo/update_repos.sh
 
 release-cta-unstable:
@@ -112,9 +112,9 @@ release-cta-unstable:
     - ./continuousintegration/release/upload_to_eos.sh --eos-username ${DOCKER_LOGIN_USERNAME}
                                                        --eos-password ${DOCKER_LOGIN_PASSWORD}
                                                        --eos-source-dir /eos/user/c/ctareg/www/cta-repo/RPMS
-                                                       --eos-path /eos/user/c/ctareg/www/public/cta-public-repo/unstable/cta-5/el9/cta
+                                                       --eos-target-dir /eos/user/c/ctareg/www/public/cta-public-repo/unstable/cta-5/el9/cta
                                                        --hook /eos/user/c/ctareg/www/public/update_repos.sh
-                                                       --tag ${CTA_VERSION}
+                                                       --cta-version ${CTA_VERSION}
 
 release-cta-testing:
   stage: release:external
@@ -130,9 +130,9 @@ release-cta-testing:
     - ./continuousintegration/release/upload_to_eos.sh --eos-username ${DOCKER_LOGIN_USERNAME}
                                                        --eos-password ${DOCKER_LOGIN_PASSWORD}
                                                        --eos-source-dir /eos/user/c/ctareg/www/cta-repo/RPMS
-                                                       --eos-path /eos/user/c/ctareg/www/public/cta-public-repo/testing/cta-5/el9/cta
+                                                       --eos-target-dir /eos/user/c/ctareg/www/public/cta-public-repo/testing/cta-5/el9/cta
                                                        --hook /eos/user/c/ctareg/www/public/update_repos.sh
-                                                       --tag ${CTA_VERSION}
+                                                       --cta-version ${CTA_VERSION}
 
 release-cta-stable:
   stage: release:external
@@ -148,9 +148,9 @@ release-cta-stable:
     - ./continuousintegration/release/upload_to_eos.sh --eos-username ${DOCKER_LOGIN_USERNAME}
                                                        --eos-password ${DOCKER_LOGIN_PASSWORD}
                                                        --eos-source-dir /eos/user/c/ctareg/www/cta-repo/RPMS
-                                                       --eos-path /eos/user/c/ctareg/www/public/cta-public-repo/stable/cta-5/el9/cta
+                                                       --eos-target-dir /eos/user/c/ctareg/www/public/cta-public-repo/stable/cta-5/el9/cta
                                                        --hook /eos/user/c/ctareg/www/public/update_repos.sh
-                                                       --tag ${CTA_VERSION}
+                                                       --cta-version ${CTA_VERSION}
 
 release-cta-gitlab-prepare:
   stage: release:external

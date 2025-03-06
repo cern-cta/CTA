@@ -25,18 +25,20 @@
 set -e
 
 usage() {
-  echo "Usage: $0 [options] --eos-username <username> --eos-password <password> --eos-path <path> --source-dir <dir>"
+  echo "Usage: $0 [arguments]"
   echo ""
-  echo "Uploads to $EOS_PATH in the EOS namespace the files found in CI_WEBSITE_DIR."
-  echo "  --eos-username   <username>:             Account username for EOS."
-  echo "  --eos-password   <password>:             Account password for EOS."
-  echo "  --eos-path       <path>:                 Path on EOS where to upload the files to."
-  echo "  --source-dir     <dir>:                  Local directory that will be uploaded to the provided eos-path."
-  echo "  --eos-source-dir <dir>:                  EOS directory that will be copied to the provided eos-path."
-  echo "  --tag            <tag>:                  CTA release tag"
+  echo "Credentials:"
+  echo "  --eos-username     <username>    :    Account username for EOS."
+  echo "  --eos-password     <password>    :    Account password for EOS."
   echo ""
-  echo "options:"
-  echo "  --hook          <hook>:                 Hook to run on lxplus."
+  echo "Directory selection:"
+  echo "  --local-source-dir <dir>         :    Local directory that will be uploaded to the provided --eos-target-dir."
+  echo "  --eos-source-dir   <dir>         :    EOS directory that will be copied to the provided --eos-target-dir. Must be used with --cta-version."
+  echo "  --eos-target-dir   <dir>         :    EOS directory where to upload the files to."
+  echo "  --cta-version      <cta_version> :    CTA release version."
+  echo ""
+  echo "Other:"
+  echo "  --hook             <hook>        :    Hook to run on lxplus."
   exit 1
 }
 
@@ -44,10 +46,10 @@ upload_to_eos() {
 
   local eos_account_username=""
   local eos_account_password=""
-  local eos_path=""
-  local source_dir=""
-  local eos_source_dir=""
-  local tag=""
+  local eos_target_dir=""
+  local local_source_dir=""
+  local eos_local_source_dir=""
+  local cta_version=""
   local hook=""
 
   # Parse command line arguments
@@ -71,12 +73,12 @@ upload_to_eos() {
           usage
         fi
         ;;
-      --eos-path)
+      --eos-target-dir)
         if [[ $# -gt 1 ]]; then
-          eos_path="$2"
+          eos_target_dir="$2"
           shift
         else
-          echo "Error: --eos-path requires an argument"
+          echo "Error: --eos-target-dir requires an argument"
           usage
         fi
         ;;
@@ -89,30 +91,30 @@ upload_to_eos() {
           usage
         fi
         ;;
-      --source-dir)
+      --local-source-dir)
         if [[ $# -gt 1 ]]; then
-          source_dir="$2"
+          local_source_dir="$2"
           shift
         else
-          echo "Error: --source-dir requires an argument"
+          echo "Error: --local-source-dir requires an argument"
           usage
         fi
         ;;
       --eos-source-dir)
         if [[ $# -gt 1 ]]; then
-          eos_source_dir="$2"
+          eos_local_source_dir="$2"
           shift
         else
           echo "Error: --eos-source-dir requires an argument"
           usage
         fi
         ;;
-      --tag)
+      --cta-version)
         if [[ $# -gt 1 ]]; then
-          tag="$2"
+          cta_version="$2"
           shift
         else
-          echo "Error: --tag requires an argument"
+          echo "Error: --cta-version requires an argument"
           usage
         fi
         ;;
@@ -134,30 +136,30 @@ upload_to_eos() {
     usage
   fi
 
-  if [ -z "${eos_path}" ]; then
-    echo "Failure: Missing mandatory argument --eos-path"
+  if [ -z "${eos_target_dir}" ]; then
+    echo "Failure: Missing mandatory argument --eos-target-dir"
     usage
   fi
 
-  if [ -z "${source_dir}" ] && [ -z "${eos_source_dir}" ]; then
-    echo "Failure: Missing mandatory argument --source-dir or --eos-source-dir"
+  if [ -z "${local_source_dir}" ] && [ -z "${eos_local_source_dir}" ]; then
+    echo "Failure: Missing mandatory argument --local-source-dir or --eos-source-dir"
     usage
   fi
 
-  if [ -n "${source_dir}" ] && [ -n "${eos_source_dir}" ]; then
-    echo "Failure: Do not use both arguments --source-dir and --eos-source-dir"
+  if [ -n "${local_source_dir}" ] && [ -n "${eos_local_source_dir}" ]; then
+    echo "Failure: Do not use both arguments --local-source-dir and --eos-source-dir"
     usage
   fi
 
   # Check the source directory exists
-  if [ -n "${source_dir}" ] && [ ! -d "${source_dir}" ]; then
-    echo "ERROR: Source directory ${source_dir} doesn't exist"
+  if [ -n "${local_source_dir}" ] && [ ! -d "${local_source_dir}" ]; then
+    echo "ERROR: Source directory ${local_source_dir} doesn't exist"
     exit 1
   fi
 
-  # Check the tag argument was received
-  if [ -n "${eos_source_dir}" ] && [ -z "${tag}" ]; then
-    echo "ERROR: Argument --eos-source-dir should be used with --tag"
+  # Check the cta_version argument was received
+  if [ -n "${eos_local_source_dir}" ] && [ -z "${cta_version}" ]; then
+    echo "ERROR: Argument --eos-source-dir should be used with --cta-version"
     exit 1
   fi
 
@@ -168,23 +170,23 @@ upload_to_eos() {
     exit 1
   fi
 
-  if [ -n "${source_dir}" ]; then
-    # Rely in xrootd to do the copy of files to EOS
-    xrdcp --force --recursive "${source_dir}"/ root://eoshome.cern.ch/"${eos_path}"/ 2>&1 >/dev/null
+  if [ -n "${local_source_dir}" ]; then
+    # Rely on xrootd to do the copy of files to EOS
+    xrdcp --force --recursive "${local_source_dir}"/ root://eoshome.cern.ch/"${eos_target_dir}"/ 2>&1 >/dev/null
     if [ $? -ne 0 ]; then
-      echo "ERROR: Failed to copy files to $eos_path via xrdcp"
+      echo "ERROR: Failed to copy files to ${eos_target_dir} via xrdcp"
       exit 1
     fi
   fi
 
-  if [ -n "${eos_source_dir}" ]; then
-    # Rely in xrootd to do the copy of files to EOS
-    xrdfs root://eoshome.cern.ch/ ls -R "${eos_source_dir}" \
-      | grep "${tag}" \
-      | sed "s|^${eos_source_dir}||" \
-      | xargs -I {} xrdcp --force --recursive root://eoshome.cern.ch/"${eos_source_dir}"/{} root://eoshome.cern.ch/"${eos_path}"/{} 2>&1 >/dev/null
+  if [ -n "${eos_local_source_dir}" ]; then
+    # Rely on xrootd to copy the files, inside EOS, with the provided cta-version
+    xrdfs root://eoshome.cern.ch/ ls -R "${eos_local_source_dir}" \
+      | grep "${cta_version}" \
+      | sed "s|^${eos_local_source_dir}||" \
+      | xargs -I {} xrdcp --force --recursive root://eoshome.cern.ch/"${eos_local_source_dir}"/{} root://eoshome.cern.ch/"${eos_target_dir}"/{} 2>&1 >/dev/null
     if [ $? -ne 0 ]; then
-      echo "ERROR: Failed to copy release ${tag} files from ${eos_source_dir} to ${eos_path} via xrdcp"
+      echo "ERROR: Failed to copy release ${cta_version} files from ${eos_local_source_dir} to ${eos_target_dir} via xrdcp"
       exit 1
     fi
   fi
