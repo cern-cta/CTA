@@ -86,15 +86,14 @@ public:
     CtaAdminClientReadReactor(CtaRpcStream::Stub* client_stub, const cta::xrd::Request* request) {
         // or Otherwise, I can have a generic method
         stub->async()->GenericAdminStream(context, request, this);
-        switch (cmd_pair(request.admincmd().cmd(), request.admincmd().subcmd())) {
-            case cmd_pair(cta::admin::AdminCmd::CMD_TAPE, cta::admin::AdminCmd::SUBCMD_LS):
-                stub->async()->TapeLs(context, request, this); 
-                break;
-            case cmd_pair(cta::admin::AdminCmd::CMD_STORAGECLASS, cta::admin::AdminCmd::SUBCMD_LS):
-                stub->async()->StorageClassLs(context, request, this);
-                break;
-        }
-        // stub->async()->TapeLs(context, request, this); // all these steps I will do in the respective call path
+        // switch (cmd_pair(request.admincmd().cmd(), request.admincmd().subcmd())) {
+        //     case cmd_pair(cta::admin::AdminCmd::CMD_TAPE, cta::admin::AdminCmd::SUBCMD_LS):
+        //         stub->async()->TapeLs(context, request, this); 
+        //         break;
+        //     case cmd_pair(cta::admin::AdminCmd::CMD_STORAGECLASS, cta::admin::AdminCmd::SUBCMD_LS):
+        //         stub->async()->StorageClassLs(context, request, this);
+        //         break;
+        // }
         StartRead(&m_response); // where to store the received response?
         StartCall(); // activate the RPC!
     }

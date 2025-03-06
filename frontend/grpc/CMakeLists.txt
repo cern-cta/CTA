@@ -28,6 +28,8 @@ add_executable(cta-frontend-grpc Main.cpp FrontendGrpcService.cpp
   ../common/WorkflowEvent.cpp
   ../common/FrontendService.cpp
   ../common/Config.cpp
+  RequestMessage.cpp # This is needed for the Impl Class that serves the streaming commands
+  ${PROJECT_SOURCE_DIR}/cmdline/CtaAdminCmdParse.cpp # needed by RequestMessage.cpp
   callback_api/CtaAdminServer.hpp)
 target_link_libraries(cta-frontend-grpc ProtoCtaFrontend)
 

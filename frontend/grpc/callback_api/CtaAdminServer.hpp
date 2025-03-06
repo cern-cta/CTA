@@ -52,7 +52,7 @@ class CtaRpcStreamImpl : public cta::xrd::CtaRpcStream::CallbackService {
       m_scheduler(scheduler) {}
     /* CtaAdminServerWriteReactor is what the type of GenericAdminStream could be */
     ::grpc::ServerWriteReactor<cta::xrd::StreamResponse>* GenericAdminStream(::grpc::CallbackServerContext* context, const cta::xrd::Request* request);
-    ::grpc::ServerWriteReactor<cta::xrd::StreamResponse>* TapeLs(::grpc::CallbackServerContext* context, const cta::xrd::Request* request);
+    // ::grpc::ServerWriteReactor<cta::xrd::StreamResponse>* TapeLs(::grpc::CallbackServerContext* context, const cta::xrd::Request* request);
     // ::grpc::ServerWriteReactor<cta::xrd::Response>* StorageClassLs(::grpc::CallbackServerContext* context, const cta::xrd::Request* request);
 
   private:
