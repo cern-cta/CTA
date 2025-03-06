@@ -48,7 +48,7 @@ upload_to_eos() {
   local eos_account_password=""
   local eos_target_dir=""
   local local_source_dir=""
-  local eos_local_source_dir=""
+  local eos_source_dir=""
   local cta_version=""
   local hook=""
 
@@ -102,7 +102,7 @@ upload_to_eos() {
         ;;
       --eos-source-dir)
         if [[ $# -gt 1 ]]; then
-          eos_local_source_dir="$2"
+          eos_source_dir="$2"
           shift
         else
           echo "Error: --eos-source-dir requires an argument"
@@ -141,12 +141,12 @@ upload_to_eos() {
     usage
   fi
 
-  if [ -z "${local_source_dir}" ] && [ -z "${eos_local_source_dir}" ]; then
+  if [ -z "${local_source_dir}" ] && [ -z "${eos_source_dir}" ]; then
     echo "Failure: Missing mandatory argument --local-source-dir or --eos-source-dir"
     usage
   fi
 
-  if [ -n "${local_source_dir}" ] && [ -n "${eos_local_source_dir}" ]; then
+  if [ -n "${local_source_dir}" ] && [ -n "${eos_source_dir}" ]; then
     echo "Failure: Do not use both arguments --local-source-dir and --eos-source-dir"
     usage
   fi
@@ -158,7 +158,7 @@ upload_to_eos() {
   fi
 
   # Check the cta_version argument was received
-  if [ -n "${eos_local_source_dir}" ] && [ -z "${cta_version}" ]; then
+  if [ -n "${eos_source_dir}" ] && [ -z "${cta_version}" ]; then
     echo "ERROR: Argument --eos-source-dir should be used with --cta-version"
     exit 1
   fi
@@ -179,14 +179,14 @@ upload_to_eos() {
     fi
   fi
 
-  if [ -n "${eos_local_source_dir}" ]; then
+  if [ -n "${eos_source_dir}" ]; then
     # Rely on xrootd to copy the files, inside EOS, with the provided cta-version
-    xrdfs root://eoshome.cern.ch/ ls -R "${eos_local_source_dir}" \
+    xrdfs root://eoshome.cern.ch/ ls -R "${eos_source_dir}" \
       | grep "${cta_version}" \
-      | sed "s|^${eos_local_source_dir}||" \
-      | xargs -I {} xrdcp --force --recursive root://eoshome.cern.ch/"${eos_local_source_dir}"/{} root://eoshome.cern.ch/"${eos_target_dir}"/{} 2>&1 >/dev/null
+      | sed "s|^${eos_source_dir}||" \
+      | xargs -I {} xrdcp --force --recursive root://eoshome.cern.ch/"${eos_source_dir}"/{} root://eoshome.cern.ch/"${eos_target_dir}"/{} 2>&1 >/dev/null
     if [ $? -ne 0 ]; then
-      echo "ERROR: Failed to copy release ${cta_version} files from ${eos_local_source_dir} to ${eos_target_dir} via xrdcp"
+      echo "ERROR: Failed to copy release ${cta_version} files from ${eos_source_dir} to ${eos_target_dir} via xrdcp"
       exit 1
     fi
   fi
