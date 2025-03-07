@@ -37,8 +37,8 @@ QueueAndMountSummary* QueueAndMountSummary::getOrCreateEntry(std::list<QueueAndM
       summaryList.back().mountType=mountType;
       summaryList.back().tapePool=tapePool;
       if (MountType::ArchiveForUser==mountType || MountType::ArchiveForRepack == mountType) {
-        summaryList.back().vid="-";
-        summaryList.back().logicalLibrary="-";
+        summaryList.back().vid="";
+        summaryList.back().logicalLibrary="";
       } else {
         summaryList.back().vid=vid;
         summaryList.back().logicalLibrary=vid_to_logical_library.at(vid);

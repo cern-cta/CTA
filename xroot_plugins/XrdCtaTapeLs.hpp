@@ -108,7 +108,7 @@ int TapeLsStream::fillBuffer(XrdSsiPb::OStreamBuffer<Data> *streambuf) {
     tape_item->set_logical_library(tape.logicalLibraryName);
     tape_item->set_tapepool(tape.tapePoolName);
     tape_item->set_vo(tape.vo);
-    tape_item->set_encryption_key_name((bool)tape.encryptionKeyName ? tape.encryptionKeyName.value() : "-");
+    tape_item->set_encryption_key_name(tape.encryptionKeyName.value_or(""));
     tape_item->set_capacity(tape.capacityInBytes);
     tape_item->set_occupancy(tape.dataOnTapeInBytes);
     tape_item->set_last_fseq(tape.lastFSeq);
