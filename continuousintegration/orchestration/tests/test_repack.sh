@@ -44,7 +44,7 @@ if [ ! -z "${error}" ]; then
     exit 1
 fi
 
-CLIENT_POD="client-0"
+CLIENT_POD="cta-client-0"
 CTA_CLI_POD="cta-cli-0"
 EOS_MGM_POD="eos-mgm-0"
 

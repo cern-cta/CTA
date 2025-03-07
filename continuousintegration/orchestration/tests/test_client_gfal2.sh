@@ -50,7 +50,7 @@ if [ $? -ne 0 ]; then
   exit 1
 fi
 
-CLIENT_POD="client-0"
+CLIENT_POD="cta-client-0"
 EOS_MGM_POD="eos-mgm-0"
 
 echo "Installing gfal2 utility"

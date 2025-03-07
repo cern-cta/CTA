@@ -10,9 +10,11 @@ metadata:
     app.kubernetes.io/name: {{ $name }}
     {{- include "common.labels.withoutname" $ | nindent 4 }}
 spec:
-  restartPolicy: Never
+  {{- if .Values.pod.extraSpec }}
+  {{ .Values.pod.extraSpec | toYaml | nindent 2 }}
+  {{- end }}
   containers:
-  - name: {{ $name }}
+  - name: cta-catalogue-postgres
     image: docker.io/postgres:14.10
     stdin: true
     command: []

@@ -1,12 +1,3 @@
-# If required, the user can specify a custom image here
-image:
-component: tpsrv
-partOf: cta
-
-pod:
-  extraSpec:
-    terminationGracePeriodSeconds: 1 # This is low on purpose as the current process has no gracefull shutdown process
-
 conf:
   taped:
     bufferSizeBytes: 262144
@@ -45,20 +36,11 @@ conf:
 #     - name: "VDSTK03"
 #       device: "nst1"
 
-taped:
-  resources:
-    requests:
-      memory: "256Mi"
-      ephemeral-storage: "1Gi"
-    limits:
-      memory: "4Gi"
-      ephemeral-storage: "8Gi"
+pod:
+  extraSpec:
 
-rmcd:
-  resources:
-    requests:
-      memory: "256Mi"
-      ephemeral-storage: "1Gi"
-    limits:
-      memory: "8Gi"
-      ephemeral-storage: "10Gi"
+extraEnv:
+
+extraVolumes:
+  volumes:
+  volumeMounts:

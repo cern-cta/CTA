@@ -1,8 +1,4 @@
-
-nameOverride: scheduler
 resetScheduler: false
-component: scheduler
-partOf: cta
 
 resetImage:
   repository: gitlab-registry.cern.ch/cta/ctageneric
@@ -29,11 +25,10 @@ resetImage:
 #   vfsConfig:
 #     path: ""
 
-# Only for the local postgres scheduler pod
-resources:
-  requests:
-    memory: "512Mi"
-    ephemeral-storage: "1Gi"
-  limits:
-    memory: "8Gi"
-    ephemeral-storage: "20Gi"
+# This is only for the postgres pod
+pod:
+  extraSpec:
+    # We want to know if something went wrong in CI
+    restartPolicy: Never
+
+extraEnv:

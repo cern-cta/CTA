@@ -50,7 +50,7 @@ if [ $? -ne 0 ]; then
   exit 1
 fi
 
-CLIENT_POD="client-0"
+CLIENT_POD="cta-client-0"
 echo
 echo "Copying test scripts to pods..."
 kubectl -n "${NAMESPACE}" cp . ${CLIENT_POD}:/root/ -c client || exit 1

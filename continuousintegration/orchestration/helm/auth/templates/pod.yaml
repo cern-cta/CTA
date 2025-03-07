@@ -25,8 +25,6 @@ spec:
       periodSeconds: 2
     securityContext:
       allowPrivilegeEscalation: {{ include "common.securityContext.allowPrivilegeEscalation" . }}
-      # As long as we have init_pod, it will need to be privileged
-      privileged: True
     {{- if $.Values.resources }}
     resources:
       {{-  toYaml $.Values.resources | nindent 10 }}

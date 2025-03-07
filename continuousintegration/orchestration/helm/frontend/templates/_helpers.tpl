@@ -1,5 +1,5 @@
-{{- define "ctafrontend.name" -}}
-  {{ include "common.names.name" . }}
+{{- define "ctafrontend.fullname" -}}
+  {{ include "common.names.fullname" . }}
 {{- end }}
 
 {{- define "ctafrontend.image" -}}
@@ -13,14 +13,6 @@
 {{- define "ctafrontend.imagePullSecrets" -}}
   {{ include "common.images.pullSecrets" (dict "imageRoot" .Values.image "global" .Values.global.image) }}
 {{- end }}
-
-{{- define "ctafrontend.volumes" -}}
-  {{ include "common.volumes" . }}
-{{- end -}}
-
-{{- define "ctafrontend.volumeMounts" -}}
-  {{ include "common.volumeMounts" . }}
-{{- end -}}
 
 {{- define "scheduler.config" -}}
   {{- $schedulerConfig := .Values.global.configuration.scheduler }}
