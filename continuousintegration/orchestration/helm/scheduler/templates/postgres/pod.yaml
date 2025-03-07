@@ -1,6 +1,6 @@
 {{- $schedulerConfig := include "scheduler.config" . | fromYaml }}
 {{- if and (eq $schedulerConfig.backend "postgres") (not $schedulerConfig.postgresConfig.remote) }}
-{{- $name := "cta-scheduler-postgres" -}}
+{{- $name := include "schedulerPostgres.fullname" . }}
 apiVersion: v1
 kind: Pod
 metadata:
@@ -10,12 +10,11 @@ metadata:
     app.kubernetes.io/name: {{ $name }}
     {{- include "common.labels.withoutname" $ | nindent 4 }}
 spec:
-  restartPolicy: Never
   {{- if .Values.pod.extraSpec }}
   {{ .Values.pod.extraSpec | toYaml | nindent 2 }}
   {{- end }}
   containers:
-  - name: {{ $name }}
+  - name: cta-scheduler-postgres
     image: docker.io/postgres:14.10
     stdin: true
     command: []
@@ -23,15 +22,18 @@ spec:
     readinessProbe:
       exec:
         command:
-        - sh
-        - -c
-        - >
-          pg_isready -U {{ $schedulerConfig.postgresConfig.username }} -d {{ $schedulerConfig.postgresConfig.database }} -h 127.0.0.1 -p 5433
+        - pg_isready -U {{ $schedulerConfig.postgresConfig.username }} -d {{ $schedulerConfig.postgresConfig.database }} -h 127.0.0.1 -p 5433
       initialDelaySeconds: 5
       periodSeconds: 5
       timeoutSeconds: 3
       successThreshold: 1
       failureThreshold: 5
+    securityContext:
+      allowPrivilegeEscalation: {{ include "common.securityContext.allowPrivilegeEscalation" . }}
+    {{- if $.Values.resources }}
+    resources:
+      {{-  toYaml $.Values.resources | nindent 10 }}
+    {{- end }}
     env:
     - name: MY_NAME
       value: {{ $name }}
@@ -47,11 +49,7 @@ spec:
       value: {{ $schedulerConfig.postgresConfig.password }}
     - name: POSTGRES_DB
       value: {{ $schedulerConfig.postgresConfig.database }}
-    resources:
-      requests:
-        memory: {{ .Values.resources.requests.memory | quote }}
-        ephemeral-storage: {{ index .Values.resources.requests "ephemeral-storage" | quote }}
-      limits:
-        memory: {{ .Values.resources.limits.memory | quote }}
-        ephemeral-storage: {{ index .Values.resources.limits "ephemeral-storage" | quote }}
+    {{- with .Values.extraEnv }}
+    {{- include "common.extraEnv" . | nindent 4 }}
+    {{- end }}
 {{- end }}

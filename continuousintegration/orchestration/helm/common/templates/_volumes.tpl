@@ -11,11 +11,11 @@
    Outputs the volume definitions from `.Values.global.extraVolumes` and `.Values.extraVolumes`.
 */}}
 {{- define "common.extraVolumes" -}}
-  {{- if .Values.global.extraVolumes -}}
-{{ .Values.global.extraVolumes | toYaml }}
+  {{- if .Values.global.extraVolumes.volumes -}}
+{{ .Values.global.extraVolumes.volumes | toYaml }}
   {{- end }}
-  {{- if .Values.extraVolumes }}
-{{ .Values.extraVolumes | toYaml }}
+  {{- if .Values.extraVolumes.volumes }}
+{{ .Values.extraVolumes.volumes | toYaml }}
   {{- end }}
 {{- end }}
 
@@ -24,10 +24,10 @@
    Outputs the volume mount definitions from `.Values.global.extraVolumeMounts` and `.Values.extraVolumeMounts`.
 */}}
 {{- define "common.extraVolumeMounts" -}}
-  {{- if .Values.global.extraVolumeMounts -}}
-{{ .Values.global.extraVolumeMounts | toYaml }}
+  {{- if .Values.global.extraVolumes.volumeMounts -}}
+{{ .Values.global.extraVolumes.volumeMounts | toYaml }}
   {{- end }}
-  {{- if .Values.extraVolumeMounts }}
-{{ .Values.extraVolumeMounts | toYaml }}
+  {{- if .Values.extraVolumes.volumeMounts }}
+{{ .Values.extraVolumes.volumeMounts | toYaml }}
   {{- end }}
 {{- end }}

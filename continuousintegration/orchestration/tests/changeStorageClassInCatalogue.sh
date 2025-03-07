@@ -27,7 +27,7 @@ if [ -n "${error}" ]; then
     exit 1
 fi
 
-CLIENT_POD="client-0"
+CLIENT_POD="cta-client-0"
 CTA_CLI_POD="cta-cli-0"
 # This should be the service name; not the pod name
 EOS_INSTANCE_NAME="ctaeos"

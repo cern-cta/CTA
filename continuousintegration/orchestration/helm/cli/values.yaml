@@ -1,6 +1,3 @@
-component: cli
-partOf: cta
-
 replicaCount: 1
 
 conf:
@@ -12,5 +9,12 @@ conf:
       user: adm
       group: powerusers
 
+pod:
+  extraSpec:
+
 # Additional Extra environment variables
-extraEnv: {}
+extraEnv:
+
+extraVolumes:
+  volumes:
+  volumeMounts:

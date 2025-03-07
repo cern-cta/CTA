@@ -37,7 +37,7 @@ if [ -z "${NAMESPACE}" ]; then
     usage
 fi
 
-CLIENT_POD="client-0"
+CLIENT_POD="cta-client-0"
 CTA_CLI_POD="cta-cli-0"
 CTA_FRONTEND_POD="cta-frontend-0"
 # eos instance identified by SSS username
@@ -52,8 +52,8 @@ CTA_TPSRV_POD="cta-tpsrv01-0"
 
 # Set the TAPES and DRIVE_NAME based on the config in CTA_TPSRV_POD
 echo "Reading library configuration from ${CTA_TPSRV_POD}"
-DRIVE_NAME=$(kubectl exec -n ${NAMESPACE} ${CTA_TPSRV_POD} -c taped-0 -- printenv DRIVE_NAME)
-LIBRARY_DEVICE=$(kubectl exec -n ${NAMESPACE} ${CTA_TPSRV_POD} -c taped-0 -- printenv LIBRARY_DEVICE)
+DRIVE_NAME=$(kubectl exec -n ${NAMESPACE} ${CTA_TPSRV_POD} -c cta-taped-0 -- printenv DRIVE_NAME)
+LIBRARY_DEVICE=$(kubectl exec -n ${NAMESPACE} ${CTA_TPSRV_POD} -c cta-taped-0 -- printenv LIBRARY_DEVICE)
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 mapfile -t TAPES < <(${SCRIPT_DIR}/../../utils/tape/list_all_tapes_in_library.sh -d $LIBRARY_DEVICE)
 echo "Using drive: $DRIVE_NAME"
@@ -65,7 +65,7 @@ done
 # Get list of tape drives that have a tape server
 TAPEDRIVES_IN_USE=()
 for tapeserver in $(kubectl --namespace ${NAMESPACE} get pods | grep tpsrv | awk '{print $1}'); do
-  TAPEDRIVES_IN_USE+=($(kubectl --namespace ${NAMESPACE} exec ${tapeserver} -c taped-0 -- bash -c "find /etc/cta | grep cta-taped- | xargs cat" | grep LogicalLibrary | awk 'NR==1 {print $3}'))
+  TAPEDRIVES_IN_USE+=($(kubectl --namespace ${NAMESPACE} exec ${tapeserver} -c cta-taped-0 -- bash -c "find /etc/cta | grep cta-taped- | xargs cat" | grep LogicalLibrary | awk 'NR==1 {print $3}'))
 done
 NB_TAPEDRIVES_IN_USE=${#TAPEDRIVES_IN_USE[@]}
 
@@ -319,10 +319,10 @@ echo "Labeling tapes:"
 for VID in "${TAPES[@]}"; do
   echo "  cta-tape-label --vid ${VID} --force"
   # for debug use
-  # kubectl --namespace ${NAMESPACE} exec ${CTA_TPSRV_POD} -c taped-0  -- cta-tape-label --vid ${VID} --debug
+  # kubectl --namespace ${NAMESPACE} exec ${CTA_TPSRV_POD} -c cta-taped-0  -- cta-tape-label --vid ${VID} --debug
   # The external tape format test leaves data inside of the tape, then the tapes for labeling are not empty between
   # tests. That's why we need to force cta-tape-label, but only for CI testing.
-  kubectl --namespace ${NAMESPACE} exec ${CTA_TPSRV_POD} -c taped-0  -- cta-tape-label --vid ${VID} --force
+  kubectl --namespace ${NAMESPACE} exec ${CTA_TPSRV_POD} -c cta-taped-0  -- cta-tape-label --vid ${VID} --force
   if [ $? -ne 0 ]; then
     echo "ERROR: failed to label the tape ${VID}"
     exit 1

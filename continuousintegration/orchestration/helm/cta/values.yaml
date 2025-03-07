@@ -17,23 +17,24 @@ global:
       name: root
       password: "defaultcipassword"
 
-  # This is not directly used by the pod yet. Once we have converted the pods into deployments,
-  # the relevant pods can automatically redeploy on a schema version change.
-  catalogueSchemaVersion: ""
-
-  volumes:
-  - name: shared
-    hostPath:
-      path: /opt/cta
-  - name: logstorage
-    persistentVolumeClaim:
-      claimName: claimlogs
-
-  volumeMounts:
-  - name: shared
-    mountPath: /shared
-  - name: logstorage
-    mountPath: /mnt/logs
+  extraVolumes:
+    volumes:
+    - name: shared
+      hostPath:
+        path: /opt/cta
+    - name: logstorage
+      persistentVolumeClaim:
+        claimName: claimlogs
+    volumeMounts:
+    - name: shared
+      mountPath: /shared
+    - name: logstorage
+      mountPath: /mnt/logs
 
   # Storage for the shared logs of the deployment
   logStorage: "8Gi"
+
+  # While we have init_pod.sh, we need pods to be privileged :(
+  securityContext:
+    allowPrivilegeEscalation: True
+    privileged: True
