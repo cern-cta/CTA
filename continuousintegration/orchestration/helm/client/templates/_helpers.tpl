@@ -1,5 +1,5 @@
-{{- define "client.name" -}}
-  {{ include "common.names.name" . }}
+{{- define "client.fullname" -}}
+  {{ include "common.names.fullname" . }}
 {{- end }}
 
 {{- define "client.image" -}}
@@ -13,11 +13,3 @@
 {{- define "client.imagePullSecrets" -}}
   {{ include "common.images.pullSecrets" (dict "imageRoot" .Values.image "global" .Values.global.image) }}
 {{- end }}
-
-{{- define "client.volumes" -}}
-  {{ include "common.volumes" . }}
-{{- end -}}
-
-{{- define "client.volumeMounts" -}}
-  {{ include "common.volumeMounts" . }}
-{{- end -}}

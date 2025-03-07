@@ -1,8 +1,7 @@
-
-nameOverride: catalogue
-resetCatalogue: false
 component: catalogue
 partOf: cta
+
+resetCatalogue: false
 
 resetImage:
   repository: gitlab-registry.cern.ch/cta/ctageneric
@@ -28,12 +27,3 @@ schemaVersion: ""
 #     database: ""
 #   sqliteConfig:
 #     filepath: ""
-
-# Note that this is only used if a postgres pod is spawned
-resources:
-  requests:
-    memory: "256Mi"
-    ephemeral-storage: "1Gi"
-  limits:
-    memory: "8Gi"
-    ephemeral-storage: "20Gi"

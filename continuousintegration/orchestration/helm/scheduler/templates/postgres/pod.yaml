@@ -1,17 +1,19 @@
 {{- $schedulerConfig := include "scheduler.config" . | fromYaml }}
 {{- if and (eq $schedulerConfig.backend "postgres") (not $schedulerConfig.postgresConfig.remote) }}
-{{- $namespace := .Release.Namespace -}}
 {{- $name := "cta-scheduler-postgres" -}}
 apiVersion: v1
 kind: Pod
 metadata:
   name: {{ $name }}
-  namespace: {{ $namespace | quote }}
+  namespace: {{ .Release.Namespace | quote }}
   labels:
     app.kubernetes.io/name: {{ $name }}
     {{- include "common.labels.withoutname" $ | nindent 4 }}
 spec:
   restartPolicy: Never
+  {{- if .Values.pod.extraSpec }}
+  {{ .Values.pod.extraSpec | toYaml | nindent 2 }}
+  {{- end }}
   containers:
   - name: {{ $name }}
     image: docker.io/postgres:14.10
@@ -34,9 +36,9 @@ spec:
     - name: MY_NAME
       value: {{ $name }}
     - name: MY_NAMESPACE
-      value: {{ $namespace | quote }}
+      value: {{ .Release.Namespace | quote }}
     - name: INSTANCE_NAME
-      value: {{ $namespace | quote }}
+      value: {{ .Release.Namespace | quote }}
     - name: PGDATA
       value: {{ $schedulerConfig.postgresConfig.path }}
     - name: POSTGRES_USER

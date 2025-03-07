@@ -1,12 +1,11 @@
 {{- if .Values.resetScheduler -}}
-{{- $namespace := .Release.Namespace }}
 {{- $name := "cta-scheduler-reset" }}
 {{- $schedulerConfig := include "scheduler.config" . | fromYaml }}
 apiVersion: batch/v1
 kind: Job
 metadata:
   name: {{ $name }}-job
-  namespace: {{ $namespace | quote }}
+  namespace: {{ .Release.Namespace | quote }}
   labels:
     {{- include "common.labels.standard" . | nindent 4 }}
   annotations:
@@ -39,9 +38,9 @@ spec:
             - name: MY_NAME
               value: {{ $name }}
             - name: MY_NAMESPACE
-              value: {{ $namespace | quote }}
+              value: {{ .Release.Namespace | quote }}
             - name: INSTANCE_NAME
-              value: {{ $namespace | quote }}
+              value: {{ .Release.Namespace | quote }}
             - name: SCHEDULER_BACKEND
               value: {{ $schedulerConfig.backend | quote }}
             - name: SCHEDULER_URL

@@ -1,14 +1,13 @@
-{{- $namespace := .Release.Namespace }}
-{{- $name := include "client.name" . }}
+{{- $name := include "client.fullname" . }}
 apiVersion: apps/v1
 kind: StatefulSet
 metadata:
   name: {{ $name }}
-  namespace: {{ $namespace | quote }}
+  namespace: {{ .Release.Namespace | quote }}
   labels:
     {{- include "common.labels.standard" . | nindent 4 }}
 spec:
-  replicas: {{ .Values.replicas }}
+  replicas: {{ .Values.replicaCount }}
   selector:
     matchLabels:
       app.kubernetes.io/name: {{ $name }}
@@ -21,10 +20,15 @@ spec:
       restartPolicy: Always
       imagePullSecrets:
       {{ include "client.imagePullSecrets" . | nindent 6 }}
+      {{- if .Values.pod.extraSpec }}
+      {{ .Values.pod.extraSpec | toYaml | nindent 6 }}
+      {{- end }}
       initContainers:
       - name: init1-get-krb5-keytabs
         image: {{ include "client.image" . }}
         imagePullPolicy: {{ include "client.imagePullPolicy" . }}
+        securityContext:
+          allowPrivilegeEscalation: {{ include "utils.securityContext.allowPrivilegeEscalation" . }}
         command: ["/bin/bash", "-c"]
         args:
         - |
@@ -53,6 +57,8 @@ spec:
       - name: init2-fix-sss-keytab-ownership
         image: {{ include "common.images.busybox" . }}
         imagePullPolicy: {{ include "common.images.defaultPullPolicy" . }}
+        securityContext:
+          allowPrivilegeEscalation: {{ include "utils.securityContext.allowPrivilegeEscalation" . }}
         command: ["sh", "-c"]
         args:
         - |
@@ -65,7 +71,7 @@ spec:
         - name: eos-sss-keytab-fixedownership
           mountPath: /root/sss_keytab/output
       containers:
-      - name: {{ $name }}
+      - name: client
         image: {{ include "client.image" . }}
         imagePullPolicy: {{ include "client.imagePullPolicy" . }}
         stdin: true
@@ -77,25 +83,24 @@ spec:
           periodSeconds: 2
           failureThreshold: 60
         securityContext:
-          privileged: {{ .Values.isPriviliged }}
+          allowPrivilegeEscalation: {{ include "common.securityContext.allowPrivilegeEscalation" . }}
+          # As long as we have init_pod, it will need to be privileged
+          privileged: True
+        {{- if $.Values.resources }}
         resources:
-          requests:
-            memory: {{ .Values.resources.requests.memory | quote }}
-            ephemeral-storage: {{ index .Values.resources.requests "ephemeral-storage" | quote }}
-          limits:
-            memory: {{ .Values.resources.limits.memory | quote }}
-            ephemeral-storage: {{ index .Values.resources.limits "ephemeral-storage" | quote }}
+          {{-  toYaml $.Values.resources | nindent 10 }}
+        {{- end }}
         env:
         - name: MY_NAME
           value: {{ $name }}
         - name: MY_NAMESPACE
-          value: {{ $namespace | quote }}
+          value: {{ .Release.Namespace | quote }}
         - name: INSTANCE_NAME
-          value: {{ $namespace | quote }}
+          value: {{ .Release.Namespace | quote }}
         - name: TERM
           value: "xterm"
-        {{- if (.Values.env) }}
-            {{- .Values.env | toYaml | nindent 8 }}
+        {{- with .Values.extraEnv }}
+        {{- include "common.extraEnv" . | nindent 8 }}
         {{- end }}
         volumeMounts:
         - name: scripts-volume
