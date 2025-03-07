@@ -221,7 +221,6 @@ dCache frontend
 %systemd_postun cta-frontend-grpc.service
 %systemdDaemonReload
 
-
 %package -n cta-cli
 Summary: CERN Tape Archive: command line interface
 Group: Application/CTA

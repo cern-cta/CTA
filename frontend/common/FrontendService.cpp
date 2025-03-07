@@ -330,7 +330,7 @@ FrontendService::FrontendService(const std::string& configFilename) : m_archiveF
       log(log::INFO, "'cta.schedulerdb.disable_repack_requests' not specified in config, defaulting to false");
       m_acceptRepackRequests = true;
     } else {
-      m_acceptRepackRequests = !disableRepackRequests;
+      m_acceptRepackRequests = !disableRepackRequests.value();
       std::list<log::Param> params;
       params.push_back(log::Param("source", configFilename));
       params.push_back(log::Param("category", "cta.schedulerdb"));
@@ -346,7 +346,7 @@ FrontendService::FrontendService(const std::string& configFilename) : m_archiveF
       log(log::INFO, "'cta.schedulerdb.disable_user_requests' not specified in config, defaulting to false");
       m_acceptUserRequests = true;
     } else {
-      m_acceptUserRequests = !disableUserRequests;
+      m_acceptUserRequests = !disableUserRequests.value();
       std::list<log::Param> params;
       params.push_back(log::Param("source", configFilename));
       params.push_back(log::Param("category", "cta.schedulerdb"));
