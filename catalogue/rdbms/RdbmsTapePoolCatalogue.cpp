@@ -626,6 +626,32 @@ void RdbmsTapePoolCatalogue::modifyTapePoolComment(const common::dataStructures:
   }
 }
 
+void RdbmsTapePoolCatalogue::modifyTapeEncryptionKeyName(const common::dataStructures::SecurityIdentity &admin,
+  const std::string &name, const std::string &encryptionKeyName) {
+    const time_t now = time(nullptr);
+    const char* const sql = R"SQL(
+    UPDATE TAPE_POOL SET
+      ENCRYPTION_KEY_NAME = :ENCRYPTION_KEY_NAME,
+      LAST_UPDATE_USER_NAME = :LAST_UPDATE_USER_NAME,
+      LAST_UPDATE_HOST_NAME = :LAST_UPDATE_HOST_NAME,
+      LAST_UPDATE_TIME = :LAST_UPDATE_TIME
+    WHERE
+      TAPE_POOL_NAME = :TAPE_POOL_NAME
+  )SQL";
+  auto conn = m_connPool->getConn();
+  auto stmt = conn.createStmt(sql);
+  stmt.bindString(":ENCRYPTION_KEY_NAME", encryptionKeyName);
+  stmt.bindString(":LAST_UPDATE_USER_NAME", admin.username);
+  stmt.bindString(":LAST_UPDATE_HOST_NAME", admin.host);
+  stmt.bindUint64(":LAST_UPDATE_TIME", now);
+  stmt.bindString(":TAPE_POOL_NAME", name);
+  stmt.executeNonQuery();
+
+  if(0 == stmt.getNbAffectedRows()) {
+    throw exception::UserError(std::string("Cannot modify tape pool '") + name + "' because it does not exist");
+  }
+}
+
 void RdbmsTapePoolCatalogue::setTapePoolEncryption(const common::dataStructures::SecurityIdentity &admin,
   const std::string &name, const bool encryptionValue) {
   const time_t now = time(nullptr);

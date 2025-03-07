@@ -67,6 +67,11 @@ void DummyTapePoolCatalogue::setTapePoolEncryption(const common::dataStructures:
   throw exception::Exception(std::string("In ")+__PRETTY_FUNCTION__+": not implemented");
 }
 
+void DummyTapePoolCatalogue::modifyTapeEncryptionKeyName(const common::dataStructures::SecurityIdentity &admin,
+  const std::string &name, const std::string &encryptionKeyName) {
+  throw exception::Exception(std::string("In ")+__PRETTY_FUNCTION__+": not implemented");
+}
+
 void DummyTapePoolCatalogue::modifyTapePoolSupply(const common::dataStructures::SecurityIdentity& admin,
                                                   const std::string& name,
                                                   const std::list<std::string>& supply_list) {

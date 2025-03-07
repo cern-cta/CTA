@@ -52,6 +52,9 @@ public:
   void setTapePoolEncryption(const common::dataStructures::SecurityIdentity &admin, const std::string &name,
     const bool encryptionValue) override;
 
+  void modifyTapeEncryptionKeyName(const common::dataStructures::SecurityIdentity &admin,
+    const std::string &name, const std::string &encryptionKeyName) override;
+
   void modifyTapePoolSupply(const common::dataStructures::SecurityIdentity& admin,
                             const std::string& name,
                             const std::list<std::string>& supply_list) override;
