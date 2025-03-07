@@ -78,6 +78,10 @@ int main(const int argc, char *const *const argv) {
 
     std::string config_file("/etc/cta/cta-frontend-grpc.conf");
 
+    // enable gRPC channel debugging
+    setenv("GRPC_VERBOSITY", "debug", 1);
+    setenv("GRPC_TRACE", "all", 1); 
+
     char c;
     int option_index = 0;
     const std::string shortHostName = utils::getShortHostname();
