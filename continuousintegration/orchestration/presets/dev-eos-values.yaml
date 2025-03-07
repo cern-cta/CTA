@@ -57,6 +57,7 @@ mgm:
       name: root
       password: "defaultcipassword"
 
+  # Ensure we can delete the pods quickly in CI
   pod:
     extraSpec:
       terminationGracePeriodSeconds: 1
@@ -66,6 +67,7 @@ mgm:
     macaroonsSecretKey: ZjZsMWxPT1lEc1poNFBKRTJiK05aaEhMdC9iUzdsSmxxNGZXT1Z4dE9PWElsR2I0MHhqZ3RnRDNzWnhVTW5iZAp1YWFSYmR6d0hSL3FMem1ncDNCWHFRPT0K
 
   xrd:
+    # Additional tape-specific config
     extraConfig: |
       xrootd.chksum  adler32
       mgmofs.archivedir /var/eos/archive
@@ -102,9 +104,9 @@ mgm:
     - name: grid-security
       mountPath: /etc/grid-security
 
-  # varlog-tmp is the location where core dumps will end up
   extraVolumes:
     volumeMounts:
+    # varlog-tmp is the location where core dumps will end up
     - name: varlog-tmp
       mountPath: /var/log/tmp
     - name: grid-security
@@ -118,12 +120,6 @@ mgm:
 
 fst:
   replicaCount: 1
-
-  # Needed for the gcd image when built from CI
-  image:
-    pullSecrets:
-    - ctaregsecret
-    - reg-ctageneric
 
   pod:
     extraSpec:
@@ -146,16 +142,15 @@ fst:
 
   # As we only get to specify 1 custom init container, this container sets up both
   # the certificates and runs the cta-fst-gcd
-  # Note that init containers with restartpolicy always are sidecar containers
+  # Note that init containers with restartpolicy: Always are sidecar containers
   initContainer:
     enabled: true
     script: |
       #!/usr/bin/bash
       /mkcert-ssl.sh
       chown -R daemon:daemon /etc/grid-security/certificates
-      dnf install cta-fst-gcd
-      /usr/bin/cta-fst-gcd --stdout
-    # TODO: maybe the above needs to be run as daemon
+      dnf install -y cta-fst-gcd
+      runuser -u daemon -- /usr/bin/cta-fst-gcd --stdout
     volumeMounts:
     - name: grid-security
       mountPath: /etc/grid-security
@@ -165,6 +160,15 @@ fst:
     - name: cta-artefacts-repo
       mountPath: /etc/yum.repos.d/cta-artefacts.repo
       subPath: cta-artefacts.repo
+    - name: fst-cfgmap-xrd-cf-fst
+      mountPath: /etc/xrd.cf.fst
+      subPath: xrd.cf.fst
+    - name: eos-sss-keytab-fixedownership
+      mountPath: /etc/eos.keytab
+      subPath: eos.keytab
+    - name: fst-storage
+      # Note that if the storageMountPath in the configuration is updated, this value should change accordingly
+      mountPath: /fst_storage
     spec:
       restartPolicy: Always
 
@@ -180,10 +184,10 @@ fst:
     - name: varlog-tmp
       emptyDir: {}
     - name: grid-security
-      emptyDir:
+      emptyDir: {}
     - name: cta-fst-gcd
       configMap:
-        name: cta-fst-gcd.conf
+        name: cfgmap-cta-fst-gcd
         defaultMode: 0755
     - name: cta-artefacts-repo
       configMap:
