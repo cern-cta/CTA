@@ -26,7 +26,6 @@ spec:
           args: []
           securityContext:
             allowPrivilegeEscalation: {{ include "common.securityContext.allowPrivilegeEscalation" . }}
-            privileged: true
           {{- if $.Values.resources }}
           resources:
             {{-  toYaml $.Values.resources | nindent 10 }}

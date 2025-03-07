@@ -1,8 +1,3 @@
-component: catalogue
-partOf: cta
-
-resetCatalogue: false
-
 resetImage:
   repository: gitlab-registry.cern.ch/cta/ctageneric
   tag: ""
@@ -11,7 +6,17 @@ resetImage:
   - ctaregsecret
   - reg-ctageneric
 
+resetCatalogue: false
+
 schemaVersion: ""
+
+# This is only for the postgres pod
+pod:
+  extraSpec:
+    # We want to know if something went wrong in CI
+    restartPolicy: Never
+
+extraEnv:
 
 # This can either be provided via --set-file or specified directly here
 # configuration:

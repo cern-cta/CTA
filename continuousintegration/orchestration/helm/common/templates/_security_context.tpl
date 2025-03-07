@@ -5,7 +5,7 @@ Privileged flag definition
   Defaults to "false", i.e., not privileged,
   but can be overridden by local or global values.
 */}}
-{{- define "utils.securityContext.privileged" }}
+{{- define "common.securityContext.privileged" }}
 {{- $privilegedGlobal := "" -}}
 {{- $privilegedLocal := "" -}}
 {{- if .Values.global -}}
@@ -30,7 +30,7 @@ Allow Privilege Escalation flag definition
   Defaults to "false", i.e., escalation is not allowed,
   but can be overridden by local or global values.
 */}}
-{{- define "utils.securityContext.allowPrivilegeEscalation" -}}
+{{- define "common.securityContext.allowPrivilegeEscalation" -}}
 {{- $apeGlobal := "" -}}
 {{- $apeLocal := "" -}}
 {{- if .Values.global -}}

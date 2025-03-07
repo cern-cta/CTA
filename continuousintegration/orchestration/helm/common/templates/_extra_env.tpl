@@ -3,11 +3,11 @@
 Output YAML formatted EnvVar entries for use in a containers.extraEnv field.
   Credits to JupyterHub chart -- https://github.com/jupyterhub/helm-chart
 */}}
-{{- define "utils.extraEnv" -}}
-{{- include "utils.extraEnv.withTrailingNewLine" . | trimSuffix "\n" }}
+{{- define "common.extraEnv" -}}
+{{- include "common.extraEnv.withTrailingNewLine" . | trimSuffix "\n" }}
 {{- end }}
 
-{{- define "utils.extraEnv.withTrailingNewLine" -}}
+{{- define "common.extraEnv.withTrailingNewLine" -}}
 {{- if . }}
 {{- /* If extraEnv is a list, we inject it as it is. */}}
 {{- if eq (typeOf .) "[]interface {}" }}

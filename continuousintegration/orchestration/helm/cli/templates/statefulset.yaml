@@ -16,7 +16,6 @@ spec:
       labels:
         {{- include "common.labels.standard" $ | nindent 8 }}
     spec:
-      restartPolicy: Always
       imagePullSecrets:
       {{ include "ctacli.imagePullSecrets" . | nindent 6 }}
       {{- if .Values.pod.extraSpec }}
@@ -27,7 +26,7 @@ spec:
         image: {{ include "ctacli.image" . }}
         imagePullPolicy: {{ include "ctacli.imagePullPolicy" . }}
         securityContext:
-          allowPrivilegeEscalation: {{ include "utils.securityContext.allowPrivilegeEscalation" . }}
+          allowPrivilegeEscalation: {{ include "common.securityContext.allowPrivilegeEscalation" . }}
         command: ["/bin/bash", "-c"]
         args:
         - |
@@ -45,7 +44,7 @@ spec:
         image: {{ include "common.images.busybox" . }}
         imagePullPolicy: {{ include "common.images.defaultPullPolicy" . }}
         securityContext:
-          allowPrivilegeEscalation: {{ include "utils.securityContext.allowPrivilegeEscalation" . }}
+          allowPrivilegeEscalation: {{ include "common.securityContext.allowPrivilegeEscalation" . }}
         command: ["sh", "-c"]
         args:
         - |
@@ -71,8 +70,7 @@ spec:
           failureThreshold: 60
         securityContext:
           allowPrivilegeEscalation: {{ include "common.securityContext.allowPrivilegeEscalation" . }}
-          # As long as we have init_pod, it will need to be privileged
-          privileged: True
+          privileged: {{ include "common.securityContext.privileged" . }}
         {{- if $.Values.resources }}
         resources:
           {{-  toYaml $.Values.resources | nindent 10 }}

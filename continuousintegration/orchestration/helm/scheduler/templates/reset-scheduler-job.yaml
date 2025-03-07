@@ -1,5 +1,5 @@
 {{- if .Values.resetScheduler -}}
-{{- $name := "cta-scheduler-reset" }}
+{{- $name := include "schedulerReset.fullname" . }}
 {{- $schedulerConfig := include "scheduler.config" . | fromYaml }}
 apiVersion: batch/v1
 kind: Job
@@ -25,7 +25,7 @@ spec:
           command: ["bash", "/scripts/reset_scheduler.sh"]
           args: []
           securityContext:
-            privileged: true
+            allowPrivilegeEscalation: {{ include "common.securityContext.allowPrivilegeEscalation" . }}
           stdin: true
           resources:
             requests:
