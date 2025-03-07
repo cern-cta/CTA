@@ -41,6 +41,8 @@ TapeLsWriteReactor::TapeLsWriteReactor(cta::catalogue::Catalogue &catalogue, cta
     // getTapesList or something
     using namespace cta::admin;
 
+    std::cout << "In TapeLsWriteReactor constructor, just entered!" << std::endl;
+
     cta::catalogue::TapeSearchCriteria searchCriteria;
     request::RequestMessage requestMsg(*request);
 
@@ -75,6 +77,7 @@ TapeLsWriteReactor::TapeLsWriteReactor(cta::catalogue::Catalogue &catalogue, cta
 }
 
 void TapeLsWriteReactor::NextWrite() {
+    std::cout << "In TapeLsWriteReactor::NextWrite(), just entered!" << std::endl;
     cta::xrd::StreamResponse response;
     // is this the first item? Then write the header
     if (!m_isHeaderSent) {

@@ -100,6 +100,7 @@ public:
 
     CtaAdminClientReadReactor(std::unique_ptr<cta::xrd::CtaRpcStream::Stub> client_stub, const cta::xrd::Request* request) {
         // or Otherwise, I can have a generic method
+        std::cout << "In CtaAdminClientReadReactor, about to call the async GenericAdminStream" << std::endl;
         client_stub->async()->GenericAdminStream(&m_context, request, this);
         // switch (cmd_pair(request.admincmd().cmd(), request.admincmd().subcmd())) {
         //     case cmd_pair(cta::admin::AdminCmd::CMD_TAPE, cta::admin::AdminCmd::SUBCMD_LS):

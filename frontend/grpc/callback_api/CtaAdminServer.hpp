@@ -88,6 +88,7 @@ class CtaRpcStreamImpl : public cta::xrd::CtaRpcStream::CallbackService {
 // Currently I am calling this class CtaAdminCmdStreamingClient
 ::grpc::ServerWriteReactor<cta::xrd::StreamResponse>*
 CtaRpcStreamImpl::GenericAdminStream(::grpc::CallbackServerContext* context, const cta::xrd::Request* request) {
+  std::cout << "In GenericAdminStream, just entered" << std::endl;
   // lister class implements all the overriden methods
   // its constructor calls the NextWrite() function to begin writing
   // return new Lister(rectangle, &feature_list_);

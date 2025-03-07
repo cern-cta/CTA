@@ -141,6 +141,7 @@ const std::string CtaAdminCmdStreaming::getConfigFilePath() const {
 
 // Implement the send() method here, by wrapping the Admin rpc call
 void CtaAdminCmdStreaming::send() {
+  std::cout << "In the send() method of cta-admin-grpc-stream" << std::endl;
   // Validate the Protocol Buffer
   try {
     cta::admin::validateCmd(m_request.admincmd());
@@ -166,6 +167,7 @@ void CtaAdminCmdStreaming::send() {
     status = client_reactor.Await();
   } catch (std::exception &ex) {
     // what to do in catch? Maybe print an error?
+    std::cout << "An exception was thrown in CtaAdminClientReactor" << std::endl;
     throw ex;
   }
   // switch (cmd_pair(m_request.admincmd().cmd(), m_request.admincmd().subcmd())) {
