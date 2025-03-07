@@ -2,11 +2,11 @@
 apiVersion: v1
 kind: ConfigMap
 metadata:
-  name: cta-artefacts-repo
+  name: {{ .Values.repoName }}-repo
 data:
-  cta-artefacts.repo: |
-    [cta-artefacts-repo]
-    name=CTA Artefacts Repo
+  {{ .Values.repoName }}.repo: |
+    [{{ .Values.repoName }}-repo]
+    name={{ .Values.repoName }} repo
     baseurl=http://{{ $name }}/
     enabled=1
     gpgcheck=0

@@ -23,9 +23,10 @@ spec:
         - name: rpm-server
           image: {{ include "rpmserver.image" . }}
           imagePullPolicy: {{ include "rpmserver.imagePullPolicy" . }}
-          command:
-            - sh
-            - -c
-            - "python3 -m http.server {{ .Values.server.port }} --directory {{ .Values.server.repoPath }}"
+          command: ["sh", "-c"]
+          args:
+          - |
+            createrepo_c {{ .Values.server.repoPath }}
+            python3 -m http.server {{ .Values.server.port }} --directory {{ .Values.server.repoPath }}
           ports:
             - containerPort: {{ .Values.server.port }}

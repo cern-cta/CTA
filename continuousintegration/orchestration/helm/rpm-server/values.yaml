@@ -10,6 +10,9 @@ image:
 
 terminationGracePeriodSeconds: 1
 
+repoName: cta-artefacts
+
+# Details of the service running inside the container
 server:
   port: 8080
   # Path to RPMs inside the container
