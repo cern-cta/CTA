@@ -3,7 +3,9 @@ image:
 component: tpsrv
 partOf: cta
 
-terminationGracePeriodSeconds: 1 # This is low on purpose as the current process has no gracefull shutdown process
+pod:
+  extraSpec:
+    terminationGracePeriodSeconds: 1 # This is low on purpose as the current process has no gracefull shutdown process
 
 conf:
   taped:

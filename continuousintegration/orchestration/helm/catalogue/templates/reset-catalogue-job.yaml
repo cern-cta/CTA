@@ -1,12 +1,11 @@
 {{- if .Values.resetCatalogue -}}
 {{- $catalogueConfig := include "catalogue.config" . | fromYaml }}
-{{- $namespace := .Release.Namespace }}
-{{- $name := "cta-catalogue-reset" }}
+{{- $name := include "catalogueReset.fullname" . }}
 apiVersion: batch/v1
 kind: Job
 metadata:
   name: {{ $name }}-job
-  namespace: {{ $namespace | quote }}
+  namespace: {{ .Release.Namespace | quote }}
   labels:
     {{- include "common.labels.standard" . | nindent 4 }}
   annotations:
@@ -20,28 +19,26 @@ spec:
       imagePullSecrets:
       {{- include "catalogueReset.imagePullSecrets" . | nindent 6 }}
       containers:
-        - name: {{ $name }}
+        - name: catalogue-reset
           image: {{ include "catalogueReset.image" . }}
           imagePullPolicy: {{ include "catalogueReset.imagePullPolicy" . }}
           command: ["bash", "/scripts/reset_catalogue.sh"]
           args: []
           securityContext:
+            allowPrivilegeEscalation: {{ include "common.securityContext.allowPrivilegeEscalation" . }}
             privileged: true
-          stdin: true
+          {{- if $.Values.resources }}
           resources:
-            requests:
-              memory: "256Mi"
-              ephemeral-storage: "128Mi"
-            limits:
-              memory: "2Gi"
-              ephemeral-storage: "1Gi"
+            {{-  toYaml $.Values.resources | nindent 10 }}
+          {{- end }}
+          stdin: true
           env:
           - name: MY_NAME
             value: {{ $name }}
           - name: MY_NAMESPACE
-            value: {{ $namespace | quote }}
+            value: {{ .Release.Namespace | quote }}
           - name: INSTANCE_NAME
-            value: {{ $namespace | quote }}
+            value: {{ .Release.Namespace | quote }}
           - name: SCHEMA_VERSION
             value: {{ .Values.schemaVersion | quote }}
           - name: CATALOGUE_BACKEND
