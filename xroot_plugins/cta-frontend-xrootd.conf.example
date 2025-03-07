@@ -19,8 +19,8 @@ cta.schedulerdb.numberofthreads 500
 cta.schedulerdb.threadstacksize_mb 1
 
 # CTA Scheduler DB - enable requests for user or repack
-cta.schedulerdb.disable_repack_requests false
-cta.schedulerdb.disable_user_requests false
+# cta.schedulerdb.disable_repack_requests false
+# cta.schedulerdb.disable_user_requests false
 
 # CTA Scheduler DB - cache timeout options
 # cta.schedulerdb.tape_cache_max_age_secs 600
