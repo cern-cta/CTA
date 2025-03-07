@@ -9,7 +9,8 @@ frontendPort: 10955
 terminationGracePeriodSeconds: 1 # This is low on purpose as the current process has no gracefull shutdown process
 # Take care with increasing this number, as CTA has not been tested with multiple frontend replicas
 # Increasing this will most likely not work as expected
-replicase: 1
+replicaCount: 1
+
 
 conf:
   catalogue:

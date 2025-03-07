@@ -1,11 +1,7 @@
-# If required, the user can specify a custom image here
-image:
 component: cli
 partOf: cta
-nameOverride: cta-cli
-isPriviliged: true
 
-replicas: 1
+replicaCount: 1
 
 conf:
   cta:
@@ -16,13 +12,5 @@ conf:
       user: adm
       group: powerusers
 
-# Additional environment variables
-env: []
-
-resources:
-  requests:
-    memory: "256Mi"
-    ephemeral-storage: "1Gi"
-  limits:
-    memory: "4Gi"
-    ephemeral-storage: "5Gi"
+# Additional Extra environment variables
+extraEnv: {}

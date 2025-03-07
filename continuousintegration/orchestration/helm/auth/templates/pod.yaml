@@ -1,17 +1,18 @@
-{{- $namespace := .Release.Namespace }}
-{{- $name := include "kdc.name" . }}
+{{- $name := include "kdc.fullname" . }}
 apiVersion: v1
 kind: Pod
 metadata:
   name: {{ $name }}
-  namespace: {{ $namespace | quote }}
+  namespace: {{ .Release.Namespace | quote }}
   labels:
     {{- include "common.labels.standard" . | nindent 4 }}
 spec:
   restartPolicy: Never
-  terminationGracePeriodSeconds: {{ $.Values.terminationGracePeriodSeconds }}
+  {{- if .Values.pod.extraSpec }}
+  {{ .Values.pod.extraSpec | toYaml | nindent 2 }}
+  {{- end }}
   containers:
-  - name: {{ $name }}
+  - name: auth-kdc
     image: {{ include "kdc.image" . }}
     imagePullPolicy: {{ include "kdc.imagePullPolicy" . }}
     stdin: true
@@ -23,21 +24,20 @@ spec:
       initialDelaySeconds: 5
       periodSeconds: 2
     securityContext:
-      privileged: {{ .Values.isPriviliged }}
+      allowPrivilegeEscalation: {{ include "common.securityContext.allowPrivilegeEscalation" . }}
+      # As long as we have init_pod, it will need to be privileged
+      privileged: True
+    {{- if $.Values.resources }}
     resources:
-      requests:
-        memory: {{ .Values.resources.requests.memory | quote }}
-        ephemeral-storage: {{ index .Values.resources.requests "ephemeral-storage" | quote }}
-      limits:
-        memory: {{ .Values.resources.limits.memory | quote }}
-        ephemeral-storage: {{ index .Values.resources.limits "ephemeral-storage" | quote }}
+      {{-  toYaml $.Values.resources | nindent 10 }}
+    {{- end }}
     env:
     - name: MY_NAME
       value: {{ $name }}
     - name: MY_NAMESPACE
-      value: {{ $namespace | quote }}
+      value: {{ .Release.Namespace | quote }}
     - name: INSTANCE_NAME
-      value: {{ $namespace | quote }}
+      value: {{ .Release.Namespace | quote }}
     - name: TERM
       value: "xterm"
     - name: KRB5_REALM
@@ -48,8 +48,8 @@ spec:
       value: {{ .Values.kerberos.adminPrinc.name }}
     - name: KRB5_ADMIN_PRINC_PWD
       value: {{ .Values.kerberos.adminPrinc.password }}
-    {{- if (.Values.env) }}
-        {{- .Values.env | toYaml | nindent 4 }}
+    {{- with .Values.extraEnv }}
+    {{- include "common.extraEnv" . | nindent 4 }}
     {{- end }}
     volumeMounts:
     - name: scripts-volume

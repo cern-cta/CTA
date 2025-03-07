@@ -16,6 +16,14 @@ sqlite:{{ $catalogueConfig.sqliteConfig.filepath | replace "%NAMESPACE" .Release
 {{- end }}
 {{- end }}
 
+{{- define "cataloguePostgres.fullname" -}}
+  {{- printf "%s-%s" .Release.Name "catalogue-postgres" | trunc 63 | trimSuffix "-" -}}
+{{- end }}
+
+{{- define "catalogueReset.fullname" -}}
+  {{- printf "%s-%s" .Release.Name "catalogue-reset" | trunc 63 | trimSuffix "-" -}}
+{{- end }}
+
 {{- define "catalogueReset.image" -}}
   {{ include "common.images.image" (dict "imageRoot" .Values.resetImage ) }}
 {{- end }}
