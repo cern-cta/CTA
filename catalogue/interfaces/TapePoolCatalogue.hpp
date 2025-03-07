@@ -70,6 +70,9 @@ public:
   virtual void setTapePoolEncryption(const common::dataStructures::SecurityIdentity &admin, const std::string &name,
     const bool encryptionValue) = 0;
 
+  virtual void modifyTapeEncryptionKeyName(const common::dataStructures::SecurityIdentity &admin,
+    const std::string &name, const std::string &encryptionKeyName) = 0;
+
   virtual void modifyTapePoolSupply(const common::dataStructures::SecurityIdentity& admin,
                                     const std::string& name,
                                     const std::list<std::string>& supply_list) = 0;

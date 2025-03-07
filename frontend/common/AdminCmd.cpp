@@ -1261,6 +1261,7 @@ void AdminCmd::processTapePool_Ch(xrd::Response& response) {
   if(encrypted) {
     m_catalogue.TapePool()->setTapePoolEncryption(m_cliIdentity, name, encrypted.value());
   }
+  modifyTapeEncryptionKeyName
   if(supply) {
     m_catalogue.TapePool()->modifyTapePoolSupply(m_cliIdentity, name,
                                                  cta::utils::commaSeparatedStringToList(supply.value()));

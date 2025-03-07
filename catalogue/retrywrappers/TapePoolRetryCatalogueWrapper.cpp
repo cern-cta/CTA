@@ -91,6 +91,13 @@ void TapePoolCatalogueRetryWrapper::setTapePoolEncryption(const common::dataStru
   }, m_maxTriesToConnect);
 }
 
+void TapePoolCatalogueRetryWrapper::modifyTapeEncryptionKeyName(const common::dataStructures::SecurityIdentity &admin,
+  const std::string &name, const std::string &encryptionKeyName) {
+  return retryOnLostConnection(m_log, [this,&admin,&name,&encryptionKeyName] {
+    return m_catalogue->TapePool()->modifyTapeEncryptionKeyName(admin, name, encryptionKeyName);
+  }, m_maxTriesToConnect);
+}
+
 void TapePoolCatalogueRetryWrapper::modifyTapePoolSupply(const common::dataStructures::SecurityIdentity& admin,
                                                          const std::string& name,
                                                          const std::list<std::string>& supply_list) {
