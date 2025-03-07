@@ -109,3 +109,5 @@ else()
           ${GRPC_LIBRARY}
           ctascheduler ctacommon ctatapedaemoncommon ctaobjectstore ctacatalogue cryptopp gssapi_krb5)
 endif()
+
+add_subdirectory(callback_api)

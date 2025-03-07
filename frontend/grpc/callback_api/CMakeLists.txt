@@ -15,9 +15,6 @@
 
 cmake_minimum_required (VERSION 3.17)
 
-find_package(Protobuf3 REQUIRED)
-find_package(GRPC REQUIRED)
-
 include_directories(${PROTOBUF3_INCLUDE_DIRS})
 
 # depends on CTA_EOS definitions
@@ -59,3 +56,5 @@ else()
           ${GRPC_LIBRARY}
           ctascheduler ctacommon ctatapedaemoncommon ctaobjectstore ctacatalogue cryptopp)
 endif()
+
+install(TARGETS cta-admin-grpc-stream DESTINATION usr/bin)

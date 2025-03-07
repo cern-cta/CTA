@@ -35,13 +35,13 @@ constexpr unsigned int cmd_pair(cta::admin::AdminCmd::Cmd cmd, cta::admin::Admin
 // This is a virtual (maybe not all of its methods) class, each command implementation will inherit from this
 class CtaAdminClientReadReactor : public grpc::ClientReadReactor<cta::xrd::StreamResponse> {
 public:
-    void OnDone(const Status &s) override {
+    void OnDone(const ::grpc::Status &s) override {
         std::unique_lock<std::mutex> l(mu_);
         status_ = s;
         done_ = true;
         cv_.notify_one();
     }
-    Status Await() {
+    ::grpc::Status Await() {
         std::unique_lock<std::mutex> l(mu_);
         cv_.wait(l, [this] { return done_; });
         return std::move(status_);
@@ -50,42 +50,57 @@ public:
     // do I need to check for header/data here?
     virtual void OnReadDone(bool ok) override {
         if (ok) {
-            // just read the next input from the server until done (ok is false)
-            StartRead(&m_response);
             // if this is the header, print the formatted header I guess?
             if (m_response.has_header()) {
                 switch (m_response.header().type()) {
                     case cta::xrd::Response::RSP_SUCCESS:
                         switch (m_response.header().show_header()) {
-                            case HeaderType::TAPE_LS:
+                            case cta::admin::HeaderType::TAPE_LS:
                                 m_textFormatter.printTapeLsHeader();
                                 break;
-                            case HeaderType::STORAGECLASS_LS:
+                            case cta::admin::HeaderType::STORAGECLASS_LS:
                                 m_textFormatter.printStorageClassLsHeader();
                                 break;
+                            default:
+                                // keep compiler happy
+                                break;
+
                         }
                     case cta::xrd::Response::RSP_ERR_PROTOBUF:
                     case cta::xrd::Response::RSP_ERR_USER:
                     case cta::xrd::Response::RSP_ERR_CTA:
                     default:
-                        strErrorMsg = m_response.header().message_txt();
+                        break;
+                        // strErrorMsg = m_response.header().message_txt();
+                        // need to log an ERROR here, but figure out later how to do this
                 }
-            } else if (response.has_data()) {
+            } else if (m_response.has_data()) {
                 switch (m_response.data().data_case()) {
                     case cta::xrd::Data::kTalsItem:
+                    {
                         const cta::admin::TapeLsItem& tapeLsItem = m_response.data().tals_item();
                         m_textFormatter.print(tapeLsItem);
+                        break;
+                    }
                     case cta::xrd::Data::kSclsItem:
+                    {
                         const cta::admin::StorageClassLsItem& storageClassLsItem = m_response.data().scls_item();
                         m_textFormatter.print(storageClassLsItem);
+                        break;
+                    }
+                    default:
+                        // keep compiler happy
+                        break;
                 }
             }
+            // just read the next input from the server until done (ok is false)
+            StartRead(&m_response); // consume the next response, maybe do this at the end or you will lose one?
         } // if (ok)
     }
 
-    CtaAdminClientReadReactor(CtaRpcStream::Stub* client_stub, const cta::xrd::Request* request) {
+    CtaAdminClientReadReactor(std::unique_ptr<cta::xrd::CtaRpcStream::Stub> client_stub, const cta::xrd::Request* request) {
         // or Otherwise, I can have a generic method
-        stub->async()->GenericAdminStream(context, request, this);
+        client_stub->async()->GenericAdminStream(&m_context, request, this);
         // switch (cmd_pair(request.admincmd().cmd(), request.admincmd().subcmd())) {
         //     case cmd_pair(cta::admin::AdminCmd::CMD_TAPE, cta::admin::AdminCmd::SUBCMD_LS):
         //         stub->async()->TapeLs(context, request, this); 
@@ -106,11 +121,11 @@ public:
     // }
 
 private:
-    ClientContext context_;
+    ::grpc::ClientContext m_context;
     cta::xrd::StreamResponse m_response;
-    std::mutex mtx_;
+    std::mutex mu_;
     std::condition_variable cv_;
-    Status status_;
+    ::grpc::Status status_;
     bool done_ = false;
     cta::admin::TextFormatter m_textFormatter;
-}
+};

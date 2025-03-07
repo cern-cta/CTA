@@ -26,13 +26,9 @@
 #include "CtaAdminClientReadReactor.hpp"
 #include "cmdline/CtaAdminCmdParse.hpp"
 
-// GLOBAL VARIABLES : used to pass information between main thread and stream handler thread
-
-// global synchronisation flag
-std::atomic<bool> isHeaderSent(false);
 
 // initialise an output buffer of 1000 lines
-cta::admin::TextFormatter formattedText(1000);
+// cta::admin::TextFormatter formattedText(1000);
 
 const std::filesystem::path DEFAULT_CLI_CONFIG = "/etc/cta/cta-cli.conf"; // should this be anything different for the grpc frontend?
 
@@ -166,8 +162,11 @@ void CtaAdminCmdStreaming::send() {
 
   // we could also have the switch-case logic inside the ClientReadReactor?
   try {
-    auto client_reactor = CtaAdminClientReadReactor(std::move(client_stub), m_request);
+    auto client_reactor = CtaAdminClientReadReactor(std::move(client_stub), &m_request);
     status = client_reactor.Await();
+  } catch (std::exception &ex) {
+    // what to do in catch? Maybe print an error?
+    throw ex;
   }
   // switch (cmd_pair(m_request.admincmd().cmd(), m_request.admincmd().subcmd())) {
   //   case cmd_pair(cta::admin::AdminCmd::CMD_TAPE, cta::admin::AdminCmd::SUBCMD_LS):
