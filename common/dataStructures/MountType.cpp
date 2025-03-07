@@ -52,7 +52,7 @@ std::string toCamelCaseString(cta::common::dataStructures::MountType type) {
     case MountType::Label:
       return "Label";
     case MountType::NoMount:
-      return "-";
+      return "NoMount";
     default:
       return "Unknown";
   }

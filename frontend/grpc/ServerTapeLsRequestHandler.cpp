@@ -155,7 +155,7 @@ bool cta::frontend::grpc::server::TapeLsRequestHandler::next(const bool bOk) {
         pTapeLsItem->set_logical_library(tape.logicalLibraryName);
         pTapeLsItem->set_tapepool(tape.tapePoolName);
         pTapeLsItem->set_vo(tape.vo);
-        pTapeLsItem->set_encryption_key_name((bool)tape.encryptionKeyName ? tape.encryptionKeyName.value() : "-");
+        pTapeLsItem->set_encryption_key_name(tape.encryptionKeyName.value_or(""));
         pTapeLsItem->set_capacity(tape.capacityInBytes);
         pTapeLsItem->set_occupancy(tape.dataOnTapeInBytes);
         pTapeLsItem->set_last_fseq(tape.lastFSeq);
@@ -166,7 +166,7 @@ bool cta::frontend::grpc::server::TapeLsRequestHandler::next(const bool bOk) {
         pTapeLsItem->set_write_mount_count(tape.writeMountCount);
         pTapeLsItem->set_nb_master_files(tape.nbMasterFiles);
         pTapeLsItem->set_master_data_in_bytes(tape.masterDataInBytes);
-        pTapeLsItem->set_purchase_order((bool)tape.purchaseOrder ? tape.purchaseOrder.value() : "-");
+        pTapeLsItem->set_purchase_order(tape.purchaseOrder.value_or(""));
 
         if(tape.labelLog) {
           ::cta::common::TapeLog* pLabelLog = pTapeLsItem->mutable_label_log();
