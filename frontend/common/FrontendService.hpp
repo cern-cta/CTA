@@ -119,22 +119,22 @@ public:
   /*
    * Get the TLS value
    */
-  bool getTls() const { return m_Tls; }
+  bool getTls() const { return m_tls; }
 
   /*
    * Get the TlsKey
    */
-  const std::optional<std::string> getTlsKey() const { return m_TlsKey; }
+  const std::optional<std::string> getTlsKey() const { return m_tlsKey; }
 
   /*
    * Get the TlsCert
    */
-  const std::optional<std::string> getTlsCert() const { return m_TlsCert; }
+  const std::optional<std::string> getTlsCert() const { return m_tlsCert; }
 
   /*
    * Get the TlsChain
    */
-  const std::optional<std::string> getTlsChain() const { return m_TlsChain; }
+  const std::optional<std::string> getTlsChain() const { return m_tlsChain; }
 
   /*
    * Get the gRPC server port
@@ -182,10 +182,10 @@ private:
   cta::NamespaceMap_t                           m_namespaceMap;                 //!< Endpoints for namespace queries  // gRPC-frontend specific variables
   std::optional<std::string>                    m_port;                         //!< The port for the gRPC server
   std::optional<int>                            m_threads;                      //!< The number of threads used by the gRPC server
-  bool                                          m_Tls;                          //!< Use TLS encryption for gRPC
-  std::optional<std::string>                    m_TlsKey;                       //!< The TLS service key file
-  std::optional<std::string>                    m_TlsCert;                      //!< The TLS service certificate file
-  std::optional<std::string>                    m_TlsChain;                     //!< The TLS CA chain file
+  bool                                          m_tls;                          //!< Use TLS encryption for gRPC
+  std::optional<std::string>                    m_tlsKey;                       //!< The TLS service key file
+  std::optional<std::string>                    m_tlsCert;                      //!< The TLS service certificate file
+  std::optional<std::string>                    m_tlsChain;                     //!< The TLS CA chain file
   // clang-format on
 };
 

@@ -324,23 +324,27 @@ FrontendService::FrontendService(const std::string& configFilename) : m_archiveF
 
   // Configure allowed requests
   {
-    m_acceptRepackRequests =
-      config.getOptionValueStr("cta.schedulerdb.enable_repack_requests").value() == "on" ? true : false;
+    // default value for both repack and user requests is "on"
+    std::optional<bool> disableRepackRequests = config.getOptionValueBool("cta.schedulerdb.disable_repack_requests");
+    m_acceptRepackRequests = disableRepackRequests.has_value() ? (!disableRepackRequests.value()) : true;
+
     std::list<log::Param> params;
-    params.push_back(log::Param("source", configFilename));
+    params.push_back(log::Param("source", disableRepackRequests.has_value() ? configFilename : "Compile time default"));
     params.push_back(log::Param("category", "cta.schedulerdb"));
-    params.push_back(log::Param("key", "enable_repack_requests"));
-    params.push_back(log::Param("value", config.getOptionValueStr("cta.schedulerdb.enable_repack_requests").value()));
+    params.push_back(log::Param("key", "disable_repack_requests"));
+    params.push_back(log::Param("value", config.getOptionValueStr("cta.schedulerdb.disable_repack_requests").value()));
     log(log::INFO, "Configuration entry", params);
   }
 
   {
-    m_acceptUserRequests = config.getOptionValueStr("cta.schedulerdb.enable_user_requests") == "on" ? true : false;
+    auto disableUserRequests = config.getOptionValueBool("cta.schedulerdb.disable_user_requests");
+    m_acceptUserRequests = disableUserRequests.has_value() ? (!disableUserRequests.value()) : true;
+
     std::list<log::Param> params;
-    params.push_back(log::Param("source", configFilename));
+    params.push_back(log::Param("source", disableUserRequests.has_value() ? configFilename : "Compile time default"));
     params.push_back(log::Param("category", "cta.schedulerdb"));
-    params.push_back(log::Param("key", "enable_user_requests"));
-    params.push_back(log::Param("value", config.getOptionValueStr("cta.schedulerdb.enable_user_requests").value()));
+    params.push_back(log::Param("key", "disable_user_requests"));
+    params.push_back(log::Param("value", config.getOptionValueStr("cta.schedulerdb.disable_user_requests").value()));
     log(log::INFO, "Configuration entry", params);
   }
 
@@ -374,25 +378,25 @@ FrontendService::FrontendService(const std::string& configFilename) : m_archiveF
   // Get the mount policy name for verification requests
 
   // Get the gRPC-specific values, if they are set (getOptionValue returns an std::optional)
-  std::optional<bool> TLS = config.getOptionValueBool("TLS");
-  m_Tls = TLS.has_value() ? TLS.value() : false;  // default value is false
-  auto TlsKey = config.getOptionValueStr("TlsKey");
+  std::optional<bool> tls = config.getOptionValueBool("grpc.tls");
+  m_tls = tls.has_value() ? tls.value() : false;  // default value is false
+  auto TlsKey = config.getOptionValueStr("grpc.tls.key");
   if (TlsKey.has_value()) {
-    m_TlsKey = TlsKey.value();
+    m_tlsKey = TlsKey.value();
   }
-  auto TlsCert = config.getOptionValueStr("TlsCert");
+  auto TlsCert = config.getOptionValueStr("grpc.tls.cert");
   if (TlsCert.has_value()) {
-    m_TlsCert = TlsCert.value();
+    m_tlsCert = TlsCert.value();
   }
-  auto TlsChain = config.getOptionValueStr("TlsChain");
+  auto TlsChain = config.getOptionValueStr("grpc.tls.chain");
   if (TlsChain.has_value()) {
-    m_TlsChain = TlsChain.value();
+    m_tlsChain = TlsChain.value();
   }
-  auto port = config.getOptionValueStr("port");
+  auto port = config.getOptionValueStr("grpc.port");
   if (port.has_value()) {
     m_port = port.value();
   }
-  auto threads = config.getOptionValueInt("threads");
+  auto threads = config.getOptionValueInt("grpc.numberofthreads");
   if (threads.has_value()) {
     m_threads = threads.value();
   }

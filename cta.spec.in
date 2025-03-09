@@ -206,6 +206,7 @@ dCache frontend
 %attr(0755,root,root) %{_bindir}/cta-frontend-grpc
 %attr(0644,root,root) /etc/systemd/system/cta-frontend-grpc.service
 %attr(0644,root,root) /etc/sysconfig/cta-frontend-grpc
+%attr(0644,root,root) %config(noreplace) %{_sysconfdir}/cta/cta-frontend-grpc.conf.example
 %attr(0644,root,root) %doc /usr/share/man/man1/cta-frontend-grpc.1cta.gz
 
 %post -n cta-frontend-grpc
