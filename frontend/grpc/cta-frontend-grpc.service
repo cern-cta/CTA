@@ -4,7 +4,7 @@ After=syslog.target network-online.target
 
 [Service]
 EnvironmentFile=/etc/sysconfig/cta-frontend-grpc
-ExecStart=/usr/bin/cta-frontend-grpc --no-log-header ${GRPC_USE_TLS} --port ${GRPC_PORT}
+ExecStart=/usr/bin/cta-frontend-grpc
 Type=simple
 Restart=always
 User=cta
