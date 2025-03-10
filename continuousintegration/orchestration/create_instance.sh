@@ -289,8 +289,7 @@ create_instance() {
 
   wait $auth_pid || exit 1
 
-  # log_run helm install eos oci://registry.cern.ch/eos/charts/server --version 0.2.2-tape \
-  log_run helm ${helm_command} eos ../../../eos-charts/server \
+  log_run helm ${helm_command} eos oci://registry.cern.ch/eos/charts/server --version 0.5.1 \
                                 --namespace "${namespace}" \
                                 -f "${eos_config}" \
                                 --set global.repository="${eos_image_repository}" \
