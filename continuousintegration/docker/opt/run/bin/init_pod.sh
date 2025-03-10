@@ -17,33 +17,11 @@
 #               granted to it by virtue of its status as an Intergovernmental Organization or
 #               submit itself to any jurisdiction.
 
-echo "$(date '+%Y-%m-%d %H:%M:%S') [$(basename "${BASH_SOURCE[0]}")] Started"
-
-LOGMOUNT=/mnt/logs
-
-PV_PATH=""
-
-if [ "-${MY_CONTAINER}-" != "--" ]; then
-  PV_PATH="${LOGMOUNT}/${MY_NAME}/${MY_CONTAINER}"
-else
-  PV_PATH="${LOGMOUNT}/${MY_NAME}"
-fi
-mkdir -p ${PV_PATH}
-
-echo "Copying initial /var/log content to ${PV_PATH}"
-cd /var/log
-tar -c . | tar -C ${PV_PATH} -xv
-
-echo "Mounting logs volume ${PV_PATH} in /var/log"
-mount --bind ${PV_PATH} /var/log
-
-# all core dumps will go there as all the pods AND kubelet are sharing the same kernel.core_pattern
-mkdir -p /var/log/tmp
-chmod 1777 /var/log/tmp
-echo '/var/log/tmp/%h-%t-%e-%p-%s.core' > /proc/sys/kernel/core_pattern
+# TODO: make this a daemonset
+# Set kernel core pattern
+echo "Setting kernel core pattern to redirect core dumps to /var/log/tmp"
+echo "/var/log/tmp/%h-%t-%e-%p-%s.core" > /proc/sys/kernel/core_pattern
 
 echo -n "Fixing reverse DNS for $(hostname) for xrootd: "
 sed -i -c "s/^\($(hostname -i)\)\s\+.*$/\1 $(hostname -s).$(grep search /etc/resolv.conf | cut -d\  -f2) $(hostname -s)/" /etc/hosts
 echo "DONE"
-
-echo "$(date '+%Y-%m-%d %H:%M:%S') [$(basename "${BASH_SOURCE[0]}")] Finished"
