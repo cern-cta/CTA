@@ -5,7 +5,6 @@ If you are reading this, then you are most likely interesting in setting up a lo
 
 - It install and configures MHVTL (virtual tape library)
 - It installs and configures Minikube (for running a local cluster)
-- It sets up a number of persistent volumes. Specifically claimlogs (for the logs) and claimstg (for the EOS FSTs).
 - Finally, it allows you to set up the necessary secrets to pull from the private registry.
 
 Note that we are working on improving this setup and making it more portable. For specific details on how to get a local instance up and running, see [the development setup docs](https://eoscta.docs.cern.ch/latest/dev/development_setup/).
