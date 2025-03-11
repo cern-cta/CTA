@@ -28,13 +28,11 @@ class CtaRpcImpl : public CtaRpc::Service {
 
 private:
   std::unique_ptr<cta::frontend::FrontendService> m_frontendService;
-  log::LogContext m_lc;
 
 public:
   CtaRpcImpl(const std::string& config);
 
   FrontendService& getFrontendService() const { return *m_frontendService; }
-  log::LogContext getLogContext() const { return m_lc; }
 
   // Archive/Retrieve interface
   Status Create(::grpc::ServerContext* context, const cta::xrd::Request* request, cta::xrd::Response* response) noexcept;

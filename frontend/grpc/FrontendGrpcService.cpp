@@ -32,6 +32,9 @@ namespace cta::frontend::grpc {
 
 Status
 CtaRpcImpl::GenericRequest(::grpc::ServerContext* context, const cta::xrd::Request* request, cta::xrd::Response* response) {
+  
+  cta::log::LogContext lc(m_frontendService->getLogContext());
+
   try {
     cta::eos::Client client = request->notification().cli();
     cta::common::dataStructures::SecurityIdentity clientIdentity(client.sec().name(), cta::utils::getShortHostname(),
@@ -39,22 +42,22 @@ CtaRpcImpl::GenericRequest(::grpc::ServerContext* context, const cta::xrd::Reque
     cta::frontend::WorkflowEvent wfe(*m_frontendService, clientIdentity, request->notification());
     *response = wfe.process();
   } catch (cta::exception::PbException &ex) {
-    m_lc.log(cta::log::ERR, ex.getMessageValue());
+    lc.log(cta::log::ERR, ex.getMessageValue());
     response->set_type(cta::xrd::Response::RSP_ERR_PROTOBUF);
     response->set_message_txt(ex.getMessageValue());
     return ::grpc::Status(::grpc::StatusCode::INTERNAL, ex.getMessageValue());
   } catch (cta::exception::UserError &ex) {
-    m_lc.log(cta::log::ERR, ex.getMessageValue());
+    lc.log(cta::log::ERR, ex.getMessageValue());
     response->set_type(cta::xrd::Response::RSP_ERR_USER);
     response->set_message_txt(ex.getMessageValue());
     return ::grpc::Status(::grpc::StatusCode::INVALID_ARGUMENT, ex.getMessageValue());
   } catch (cta::exception::Exception &ex) {
-    m_lc.log(cta::log::ERR, ex.getMessageValue());
+    lc.log(cta::log::ERR, ex.getMessageValue());
     response->set_type(cta::xrd::Response::RSP_ERR_CTA);
     response->set_message_txt(ex.getMessageValue());
     return ::grpc::Status(::grpc::StatusCode::UNKNOWN, ex.getMessageValue());
   } catch (std::runtime_error &ex) {
-    m_lc.log(cta::log::ERR, ex.what());
+    lc.log(cta::log::ERR, ex.what());
     response->set_type(cta::xrd::Response::RSP_ERR_CTA);
     response->set_message_txt(ex.what());
     return ::grpc::Status(::grpc::StatusCode::UNKNOWN, ex.what());
@@ -91,7 +94,8 @@ CtaRpcImpl::Archive(::grpc::ServerContext* context, const cta::xrd::Request* req
 
 Status
 CtaRpcImpl::Delete(::grpc::ServerContext* context, const cta::xrd::Request* request, cta::xrd::Response* response) noexcept {
-  cta::log::ScopedParamContainer sp(m_lc);
+  cta::log::LogContext lc(m_frontendService->getLogContext());
+  cta::log::ScopedParamContainer sp(lc);
 
   sp.add("remoteHost", context->peer());
   sp.add("request", "delete");
@@ -102,7 +106,7 @@ CtaRpcImpl::Delete(::grpc::ServerContext* context, const cta::xrd::Request* requ
     return ::grpc::Status(::grpc::StatusCode::INVALID_ARGUMENT, "Unexpected workflow event type. Expected DELETE, found " + cta::eos::Workflow_EventType_Name(event));
 
   if (request->notification().file().archive_file_id() == 0) {
-    m_lc.log(cta::log::WARNING, "Invalid archive file id");
+    lc.log(cta::log::WARNING, "Invalid archive file id");
     return ::grpc::Status(::grpc::StatusCode::INVALID_ARGUMENT, "Invalid archive file id.");
   }
 
@@ -112,7 +116,8 @@ CtaRpcImpl::Delete(::grpc::ServerContext* context, const cta::xrd::Request* requ
 
 Status
 CtaRpcImpl::Retrieve(::grpc::ServerContext* context, const cta::xrd::Request* request, cta::xrd::Response* response) noexcept {
-  cta::log::ScopedParamContainer sp(m_lc);
+  cta::log::LogContext lc(m_frontendService->getLogContext());
+  cta::log::ScopedParamContainer sp(lc);
 
   sp.add("remoteHost", context->peer());
   sp.add("request", "retrieve");
@@ -128,7 +133,7 @@ CtaRpcImpl::Retrieve(::grpc::ServerContext* context, const cta::xrd::Request* re
 
   // check validate request args
   if (request->notification().file().archive_file_id() == 0) {
-    m_lc.log(cta::log::WARNING, "Invalid archive file id");
+    lc.log(cta::log::WARNING, "Invalid archive file id");
     return ::grpc::Status(::grpc::StatusCode::INVALID_ARGUMENT, "Invalid archive file id.");
   }
 
@@ -147,11 +152,12 @@ CtaRpcImpl::Retrieve(::grpc::ServerContext* context, const cta::xrd::Request* re
 Status CtaRpcImpl::CancelRetrieve(::grpc::ServerContext* context,
                                   const cta::xrd::Request* request,
                                   cta::xrd::Response* response) noexcept {
-  cta::log::ScopedParamContainer sp(m_lc);
+  cta::log::LogContext lc(m_frontendService->getLogContext());
+  cta::log::ScopedParamContainer sp(lc);
 
   sp.add("remoteHost", context->peer());
 
-  m_lc.log(cta::log::DEBUG, "CancelRetrieve request");
+  lc.log(cta::log::DEBUG, "CancelRetrieve request");
   sp.add("request", "cancel");
 
   // check validate request args
@@ -160,7 +166,7 @@ Status CtaRpcImpl::CancelRetrieve(::grpc::ServerContext* context,
     return ::grpc::Status(::grpc::StatusCode::INVALID_ARGUMENT, "Unexpected workflow event type. Expected ABORT_PREPARE, found " + cta::eos::Workflow_EventType_Name(event));
 
   if (!request->notification().file().archive_file_id()) {
-    m_lc.log(cta::log::WARNING, "Invalid archive file id");
+    lc.log(cta::log::WARNING, "Invalid archive file id");
     return ::grpc::Status(::grpc::StatusCode::INVALID_ARGUMENT, "Invalid archive file id.");
   }
 
@@ -181,7 +187,6 @@ Status CtaRpcImpl::CancelRetrieve(::grpc::ServerContext* context,
  * and makes the rpc calls available through this class
  */
 CtaRpcImpl::CtaRpcImpl(const std::string& config)
-    : m_frontendService(std::make_unique<cta::frontend::FrontendService>(config))
-    , m_lc(m_frontendService->getLogContext()) {}
+    : m_frontendService(std::make_unique<cta::frontend::FrontendService>(config)) {}
 
 } // namespace cta::frontend::grpc
