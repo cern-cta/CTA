@@ -22,6 +22,6 @@
 echo "Setting kernel core pattern to redirect core dumps to /var/log/tmp"
 echo "/var/log/tmp/%h-%t-%e-%p-%s.core" > /proc/sys/kernel/core_pattern
 
-echo -n "Fixing reverse DNS for $(hostname) for xrootd: "
-sed -i -c "s/^\($(hostname -i)\)\s\+.*$/\1 $(hostname -s).$(grep search /etc/resolv.conf | cut -d\  -f2) $(hostname -s)/" /etc/hosts
-echo "DONE"
+# echo -n "Fixing reverse DNS for $(hostname) for xrootd: "
+# sed -i -c "s/^\($(hostname -i)\)\s\+.*$/\1 $(hostname -s).$(grep search /etc/resolv.conf | cut -d\  -f2) $(hostname -s)/" /etc/hosts
+# echo "DONE"
