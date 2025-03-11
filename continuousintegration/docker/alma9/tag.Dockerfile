@@ -21,8 +21,6 @@ FROM gitlab-registry.cern.ch/linuxsupport/alma9-base:latest
 ENV BASEDIR="continuousintegration/docker/alma9" \
     CTAREPODIR="/opt/repo"
 
-# Add orchestration run scripts locally
-COPY ${BASEDIR}/../opt /opt
 COPY ${BASEDIR}/etc/yum.repos.d/ /etc/yum.repos.d/
 
 # Variable to specify the tag to be used for CTA RPMs from the cta-ci-repo

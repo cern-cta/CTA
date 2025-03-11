@@ -317,6 +317,4 @@ A small issue: by default, `gitlab-runner` service runs as `gitlab-runner` user,
 The current deployment of this CTA has a few limitations that make it unsuitable for a wider adoption. These limitations are listed below. Note that the list is not necessarily conclusive.
 
 - It is not possible to define different schedulers for different tape servers (although this would be relatively easy to add support for).
-- All the pods write their logs to the same mount (with no way to turn this off), making it unsuitable for a production usecase. Once the monitoring chart is updated to consume from pod logs instead, this can be removed.
 - The GRPC frontend configuration has not been tested/implemented yet.
-- The `init_pod.sh` script requires every pod to run in priviledged mode
