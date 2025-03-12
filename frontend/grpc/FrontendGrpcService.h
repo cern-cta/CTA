@@ -35,11 +35,12 @@ public:
   FrontendService& getFrontendService() const { return *m_frontendService; }
 
   // Archive/Retrieve interface
-  Status Create(::grpc::ServerContext* context, const cta::xrd::Request* request, cta::xrd::Response* response) noexcept;
-  Status Archive(::grpc::ServerContext* context, const cta::xrd::Request* request, cta::xrd::Response* response) noexcept;
-  Status Retrieve(::grpc::ServerContext* context, const cta::xrd::Request* request, cta::xrd::Response* response) noexcept;
-  Status CancelRetrieve(::grpc::ServerContext* context, const cta::xrd::Request* request, cta::xrd::Response* response) noexcept;
-  Status Delete(::grpc::ServerContext* context, const cta::xrd::Request* request, cta::xrd::Response* response) noexcept;
-  Status GenericRequest(::grpc::ServerContext* context, const cta::xrd::Request* request, cta::xrd::Response* response);
+  Status Create(::grpc::ServerContext* context, const cta::xrd::Request* request, cta::xrd::Response* response);
+  Status Archive(::grpc::ServerContext* context, const cta::xrd::Request* request, cta::xrd::Response* response);
+  Status Retrieve(::grpc::ServerContext* context, const cta::xrd::Request* request, cta::xrd::Response* response);
+  Status CancelRetrieve(::grpc::ServerContext* context, const cta::xrd::Request* request, cta::xrd::Response* response);
+  Status Delete(::grpc::ServerContext* context, const cta::xrd::Request* request, cta::xrd::Response* response);
+private:
+  Status ProcessGrpcRequest(::grpc::ServerContext* context, const cta::xrd::Request* request, cta::xrd::Response* response, cta::log::LogContext &lc);
 };
 } // namespace cta::frontend::grpc
