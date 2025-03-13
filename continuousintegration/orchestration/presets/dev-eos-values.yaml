@@ -142,7 +142,10 @@ fst:
 
   # As we only get to specify 1 custom init container, this container sets up both
   # the certificates and runs the cta-fst-gcd
-  # Note that init containers with restartpolicy: Always are sidecar containers
+  # Note that init containers with "restartpolicy: Always" are sidecar containers
+  # As a result of this being a sidecar container, the main FST container does not wait for it anymore
+  # This causes it to restart 1 or 2 times at startup since the certificates might not be ready
+  # This is nothing to worry about
   initContainer:
     enabled: true
     script: |

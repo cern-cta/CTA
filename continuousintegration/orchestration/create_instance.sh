@@ -104,7 +104,7 @@ create_instance() {
   max_drives_per_tpsrv=1
   max_tapeservers=2
   # EOS related
-  eos_image_tag=105fc481.el9 # This tag is EOS 5.3.9
+  eos_image_tag=2b9e951f # This tag is EOS 5.2.27 but with an alma9 image
   eos_image_repository=gitlab-registry.cern.ch/dss/eos/eos-ci
   eos_config=presets/dev-eos-values.yaml
 
@@ -250,8 +250,8 @@ create_instance() {
   update_local_cta_chart_dependencies
 
   # Set up local RPM server so that EOS can download cta-fst-gcd
+  # This is how we get RPMs from our CTA image into the EOS image
   # Note that we do not wait for it to be fully complete, as the startup is quick enough
-  # that by the time it is indeed, they will be available
   log_run helm ${helm_command} cta-artefacts helm/rpm-server \
                                 --set image.repository="${cta_image_repository}" \
                                 --set image.tag="${cta_image_tag}" \
