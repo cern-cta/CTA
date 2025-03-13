@@ -22,10 +22,7 @@ spec:
     readinessProbe:
       exec:
         command:
-        - sh
-        - -c
-        - >
-          pg_isready -U {{ $catalogueConfig.postgresConfig.username }} -d {{ $catalogueConfig.postgresConfig.database }} -h 127.0.0.1 -p 5432
+        - pg_isready -U {{ $catalogueConfig.postgresConfig.username }} -d {{ $catalogueConfig.postgresConfig.database }} -h 127.0.0.1 -p 5432
       initialDelaySeconds: 5
       periodSeconds: 5
       timeoutSeconds: 3
