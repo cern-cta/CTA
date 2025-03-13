@@ -417,11 +417,11 @@ build_deploy() {
       ./upgrade_eos_instance.sh --namespace ${deploy_namespace} \
                                 --eos-image-tag ${eos_version}
     else
-      print_header "DEPLOYING CTA INSTANCE"
+      print_header "DELETING OLD CTA INSTANCES"
       # By default we discard the logs from deletion as this is not very useful during development
       # and polutes the dev machine
       ./continuousintegration/orchestration/delete_instance.sh -n ${deploy_namespace} --discard-logs
-
+      print_header "DEPLOYING CTA INSTANCE"
       if [ -n "${tapeservers_config}" ]; then
         extra_spawn_options+=" --tapeservers-config ${tapeservers_config}"
       fi

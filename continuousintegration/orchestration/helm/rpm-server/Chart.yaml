@@ -1,0 +1,5 @@
+apiVersion: v2
+name: rpm-server
+description: A simple HTTP server to serve RPM packages local to the provided Docker image
+version: 0.1.0
+appVersion: "1.0"
