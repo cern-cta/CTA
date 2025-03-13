@@ -85,6 +85,8 @@ unit-test-postgresql:
     - chown -R postgres:postgres ${POSTGRESQL_DATA_DIR}
     - mkdir -p ${POSTGRESQL_LOG_DIR}
     - chown -R postgres:postgres ${POSTGRESQL_LOG_DIR}
+    - mkdir /var/run/postgresql
+    - chown -R postgres:postgres /var/run/postgresql/
     - runuser -u postgres -- initdb -D ${POSTGRESQL_DATA_DIR}
     - runuser -u postgres -- pg_ctl start -w -t 10 -D ${POSTGRESQL_DATA_DIR} -l ${POSTGRESQL_LOG_DIR}/cta_test_postgres.log
     - runuser -u postgres -- createdb cta
