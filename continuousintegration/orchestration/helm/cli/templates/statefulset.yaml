@@ -40,22 +40,22 @@ spec:
         - name: ctaadmin1-keytab
           mountPath: /root/ctaadmin1_keytab/output
       # Required until https://github.com/kubernetes/kubernetes/issues/81089 is merged
-      - name: init2-fix-sss-keytab-ownership
-        image: {{ include "common.images.busybox" . }}
-        imagePullPolicy: {{ include "common.images.defaultPullPolicy" . }}
-        securityContext:
-          allowPrivilegeEscalation: {{ include "common.securityContext.allowPrivilegeEscalation" . }}
-        command: ["sh", "-c"]
-        args:
-        - |
-          cp /root/sss_keytab/input/eos.keytab /root/sss_keytab/output/eos.keytab;
-          chmod 600 /root/sss_keytab/output/eos.keytab
-        volumeMounts:
-        - name: eos-sss-keytab
-          mountPath: /root/sss_keytab/input/eos.keytab
-          subPath: eos.keytab
-        - name: eos-sss-keytab-fixedownership
-          mountPath: /root/sss_keytab/output
+      # - name: init2-fix-sss-keytab-ownership
+      #   image: {{ include "common.images.busybox" . }}
+      #   imagePullPolicy: {{ include "common.images.defaultPullPolicy" . }}
+      #   securityContext:
+      #     allowPrivilegeEscalation: {{ include "common.securityContext.allowPrivilegeEscalation" . }}
+      #   command: ["sh", "-c"]
+      #   args:
+      #   - |
+      #     cp /root/sss_keytab/input/eos.keytab /root/sss_keytab/output/eos.keytab;
+      #     chmod 600 /root/sss_keytab/output/eos.keytab
+      #   volumeMounts:
+      #   - name: eos-sss-keytab
+      #     mountPath: /root/sss_keytab/input/eos.keytab
+      #     subPath: eos.keytab
+      #   - name: eos-sss-keytab-fixedownership
+      #     mountPath: /root/sss_keytab/output
       containers:
       - name: cta-cli
         image: {{ include "ctacli.image" . }}
@@ -97,9 +97,9 @@ spec:
         - name: ctaadmin1-keytab
           mountPath: /root/ctaadmin1.keytab
           subPath: ctaadmin1.keytab
-        - name: eos-sss-keytab-fixedownership
-          mountPath: /etc/eos.keytab
-          subPath: eos.keytab
+        # - name: eos-sss-keytab-fixedownership
+        #   mountPath: /etc/eos.keytab
+          # subPath: eos.keytab
         - name: krb5-conf
           mountPath: /etc/krb5.conf
           subPath: krb5.conf
@@ -114,11 +114,11 @@ spec:
           name: etc-cta-ctacli
       - name: ctaadmin1-keytab
         emptyDir: {}
-      - name: eos-sss-keytab
-        secret:
-          secretName: eos-sss-keytab
-      - name: eos-sss-keytab-fixedownership
-        emptyDir: {}
+      # - name: eos-sss-keytab
+      #   secret:
+      #     secretName: eos-sss-keytab
+      # - name: eos-sss-keytab-fixedownership
+      #   emptyDir: {}
       - name: krb5-conf
         configMap:
           name: {{ .Values.global.kerberos.clientConfig.configMap }}
