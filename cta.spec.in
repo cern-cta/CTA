@@ -60,9 +60,10 @@ BuildRequires: cmake3 >= 3.17 redhat-rpm-config
 %define oracleVersionMax 24.0
 %define xrootdVersion 1:5.7.1-1.el9
 %define radosVersion 2:17.2.7
-%define requirementsOS protobuf-compiler >= 3.3.1 protobuf-devel >= 3.3.1 oracle-instantclient-devel >= %{oracleVersionMin} oracle-instantclient-devel < %{oracleVersionMax}
-%define requiredProtobuf protobuf
-BuildRequires: %{requirementsOS}
+BuildRequires: protobuf-compiler >= 3.3.1
+BuildRequires: protobuf-devel >= 3.3.1
+BuildRequires: (oracle-instantclient-devel >= %{oracleVersionMin} and oracle-instantclient-devel < %{oracleVersionMax})
+Conflicts: oracle-instantclient-devel >= %{oracleVersionMax}
 BuildRequires: grpc, grpc-devel, grpc-plugins
 BuildRequires: xrootd-client-devel  >= %{xrootdVersion}
 BuildRequires: xrootd-devel         >= %{xrootdVersion}
@@ -254,7 +255,7 @@ fi
 Summary: CERN Tape Archive libraries
 Group: Application/CTA
 # Explicity require protobuf to avoid clash with eos-protobuf
-Requires: %{requiredProtobuf}
+Requires: protobuf
 Requires: xrootd-client-libs >= %{xrootdVersion}
 %description -n cta-lib-common
 CERN Tape Archive:
@@ -268,8 +269,8 @@ The shared libraries base
 %package -n cta-lib-catalogue-occi
 Summary: CERN Tape Archive libraries
 Group: Application/CTA
-Requires: oracle-instantclient-basic >= %{oracleVersionMin}
-Requires: oracle-instantclient-basic < %{oracleVersionMax}
+Requires: (oracle-instantclient-basic >= %{oracleVersionMin} and oracle-instantclient-basic < %{oracleVersionMax})
+Conflicts: oracle-instantclient-basic >= %{oracleVersionMax}
 %description -n cta-lib-catalogue-occi
 CERN Tape Archive:
 Shared libraries required to access the Oracle-based CTA catalogue
@@ -332,7 +333,7 @@ Requires: postgresql-libs
 %endif
 Requires: xrootd-client-libs >= %{xrootdVersion}
 # Explicity require protobuf to avoid clash with eos-protobuf
-Requires: %{requiredProtobuf}
+Requires: protobuf
 Requires: cta-lib-common = %{version}-%{release}
 %description -n cta-lib
 CERN Tape Archive:
