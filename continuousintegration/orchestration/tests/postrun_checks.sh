@@ -75,10 +75,10 @@ for pod in $(echo "${pods}" | jq -r '.metadata.name'); do
   containers=$(echo "${pods}" | jq -r " select(.metadata.name==\"${pod}\") | .spec.containers[].name")
   for container in ${containers}; do
     # Check for core dumps
-    # Note that we ignore core dumps of xrdcp on the client pod
+    # We ignore core dumps of xrdcp on the client pod (see #1113)
     coredumpfiles=$(kubectl --namespace "${NAMESPACE}" exec "${pod}" -c "${container}" -- \
                       bash -c "find /var/log/tmp/ -type f -name '*.core' 2>/dev/null \
-                               | grep -v -E 'client-0-[0-9]+-xrdcp'
+                               | grep -v -E 'client-0-[0-9]+-xrdcp-.*\.core$'
                                || true")
     if [ -n "${coredumpfiles}" ]; then
       num_files=$(wc -l <<< "${coredumpfiles}")
