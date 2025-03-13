@@ -17,11 +17,11 @@ postgresql:postgresql://{{ $schedulerConfig.postgresConfig.username }}:{{ $sched
 {{- end }}
 
 {{- define "schedulerPostgres.fullname" -}}
-  {{- printf "%s-%s" .Release.Name "postgres-db" | trunc 63 | trimSuffix "-" -}}
+  {{- printf "%s-%s" "cta-scheduler" "postgres-db" | trunc 63 | trimSuffix "-" -}}
 {{- end }}
 
 {{- define "schedulerReset.fullname" -}}
-  {{- printf "%s-%s" .Release.Name "reset" | trunc 63 | trimSuffix "-" -}}
+  {{- printf "%s-%s" "cta-scheduler" "reset" | trunc 63 | trimSuffix "-" -}}
 {{- end }}
 
 {{- define "schedulerReset.image" -}}

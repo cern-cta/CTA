@@ -160,9 +160,9 @@ fst:
     - name: cta-fst-gcd
       mountPath: /etc/cta/cta-fst-gcd.conf
       subPath: cta-fst-gcd.conf
-    - name: cta-artefacts-repo
-      mountPath: /etc/yum.repos.d/cta-artefacts.repo
-      subPath: cta-artefacts.repo
+    - name: cta-artifacts-repo
+      mountPath: /etc/yum.repos.d/cta-artifacts.repo
+      subPath: cta-artifacts.repo
     - name: fst-cfgmap-xrd-cf-fst
       mountPath: /etc/xrd.cf.fst
       subPath: xrd.cf.fst
@@ -192,9 +192,9 @@ fst:
       configMap:
         name: cfgmap-cta-fst-gcd
         defaultMode: 0755
-    - name: cta-artefacts-repo
+    - name: cta-artifacts-repo
       configMap:
-        name: cta-artefacts-repo
+        name: cta-artifacts-repo
         defaultMode: 0755
 
 qdb:
