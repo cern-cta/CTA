@@ -1,4 +1,5 @@
 {{- $schedulerConfig := include "scheduler.config" . | fromYaml -}}
+{{- $name := include "ctafrontend.fullname" . }}
 apiVersion: v1
 kind: ConfigMap
 metadata:
@@ -79,7 +80,7 @@ data:
     # Security protocol specification
     #
     # Note: the XRootD process needs to be able to read the keytab file
-    sec.protocol krb5 /etc/cta/cta-frontend.krb5.keytab cta/cta-frontend@{{ .Values.global.kerberos.defaultRealm }}
+    sec.protocol krb5 /etc/cta/cta-frontend.krb5.keytab cta/{{ $name }}@{{ .Values.global.kerberos.defaultRealm }}
     sec.protocol sss -s /etc/cta/eos.sss.keytab
 
     # Only Kerberos 5 and sss are allowed
