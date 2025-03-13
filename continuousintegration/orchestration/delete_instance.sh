@@ -157,6 +157,8 @@ delete_instance() {
     echo "Namespace $namespace does not exist. Nothing to delete"
     exit 0
   fi
+  echo "Namespace to be deleted:"
+  kubectl get pods --namespace ${namespace}
 
   # Optional log collection
   if [ "$collect_logs" = true ]; then

@@ -1,0 +1,12 @@
+{{- $name := include "rpmserver.name" . }}
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: {{ .Values.repoName }}-repo
+data:
+  {{ .Values.repoName }}.repo: |
+    [{{ .Values.repoName }}-repo]
+    name={{ .Values.repoName }} repo
+    baseurl=http://{{ $name }}/
+    enabled=1
+    gpgcheck=0
