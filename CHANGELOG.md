@@ -58,6 +58,13 @@
 - cta/CTA#1040 - Fix SonarCloud issues in CI
 
 
+## v5.11.2.1-1
+
+### Bug Fixes
+
+- cta/#1110 - Fix gRPC Frontend crash when multiple Retrieve requests are submitted simultaneously
+
+
 ## v5.11.2.0-1
 
 ### Features
