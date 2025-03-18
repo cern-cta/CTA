@@ -33,13 +33,13 @@ void TapePoolCatalogueRetryWrapper::createTapePool(const common::dataStructures:
                                                    const std::string& name,
                                                    const std::string& vo,
                                                    const uint64_t nbPartialTapes,
-                                                   const bool encryptionValue,
+                                                   const std::optional<std::string>& encryptionKeyNameOpt,
                                                    const std::list<std::string>& supply_list,
                                                    const std::string& comment) {
   return retryOnLostConnection(
     m_log,
-    [this, &admin, &name, &vo, &nbPartialTapes, &encryptionValue, &supply_list, &comment] {
-      return m_catalogue->TapePool()->createTapePool(admin, name, vo, nbPartialTapes, encryptionValue, supply_list,
+    [this, &admin, &name, &vo, &nbPartialTapes, &encryptionKeyNameOpt, &supply_list, &comment] {
+      return m_catalogue->TapePool()->createTapePool(admin, name, vo, nbPartialTapes, encryptionKeyNameOpt, supply_list,
                                                      comment);
     },
     m_maxTriesToConnect);
@@ -85,16 +85,9 @@ void TapePoolCatalogueRetryWrapper::modifyTapePoolComment(const common::dataStru
 }
 
 void TapePoolCatalogueRetryWrapper::setTapePoolEncryption(const common::dataStructures::SecurityIdentity &admin,
-  const std::string &name, const bool encryptionValue) {
-  return retryOnLostConnection(m_log, [this,&admin,&name,&encryptionValue] {
-    return m_catalogue->TapePool()->setTapePoolEncryption(admin, name, encryptionValue);
-  }, m_maxTriesToConnect);
-}
-
-void TapePoolCatalogueRetryWrapper::modifyTapeEncryptionKeyName(const common::dataStructures::SecurityIdentity &admin,
-  const std::string &name, const std::string &encryptionKeyName) {
-  return retryOnLostConnection(m_log, [this,&admin,&name,&encryptionKeyName] {
-    return m_catalogue->TapePool()->modifyTapeEncryptionKeyName(admin, name, encryptionKeyName);
+  const std::string &name, const std::optional<std::string>& encryptionKeyNameOpt) {
+  return retryOnLostConnection(m_log, [this,&admin,&name,&encryptionKeyNameOpt] {
+    return m_catalogue->TapePool()->setTapePoolEncryption(admin, name, encryptionKeyNameOpt);
   }, m_maxTriesToConnect);
 }
 

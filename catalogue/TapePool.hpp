@@ -75,6 +75,11 @@ struct TapePool {
   bool encryption = false;
 
   /**
+ * Tape pool encryption key name.
+ */
+  std::optional<std::string> encryptionKeyName;
+
+  /**
    * The total number of tapes in the pool.
    */
   uint64_t nbTapes = 0;

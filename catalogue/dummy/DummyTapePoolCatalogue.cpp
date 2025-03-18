@@ -29,7 +29,7 @@ void DummyTapePoolCatalogue::createTapePool(const common::dataStructures::Securi
                                             const std::string& name,
                                             const std::string& vo,
                                             const uint64_t nbPartialTapes,
-                                            const bool encryptionValue,
+                                            const std::optional<std::string>& encryptionKeyNameOpt,
                                             const std::list<std::string>& supply_list,
                                             const std::string& comment) {
   throw exception::Exception(std::string("In ")+__PRETTY_FUNCTION__+": not implemented");
@@ -63,12 +63,7 @@ void DummyTapePoolCatalogue::modifyTapePoolComment(const common::dataStructures:
 }
 
 void DummyTapePoolCatalogue::setTapePoolEncryption(const common::dataStructures::SecurityIdentity &admin,
-  const std::string &name, const bool encryptionValue) {
-  throw exception::Exception(std::string("In ")+__PRETTY_FUNCTION__+": not implemented");
-}
-
-void DummyTapePoolCatalogue::modifyTapeEncryptionKeyName(const common::dataStructures::SecurityIdentity &admin,
-  const std::string &name, const std::string &encryptionKeyName) {
+  const std::string &name, const std::optional<std::string>& encryptionKeyNameOpt) {
   throw exception::Exception(std::string("In ")+__PRETTY_FUNCTION__+": not implemented");
 }
 

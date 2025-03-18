@@ -1222,19 +1222,25 @@ void AdminCmd::processTapeFile_Rm(xrd::Response& response) {
 void AdminCmd::processTapePool_Add(xrd::Response& response) {
   using namespace cta::admin;
 
-  auto& name      = getRequired(OptionString::TAPE_POOL);
-  auto& vo        = getRequired(OptionString::VO);
-  auto& ptn       = getRequired(OptionUInt64::PARTIAL_TAPES_NUMBER);
-  auto& comment   = getRequired(OptionString::COMMENT);
-  auto& encrypted = getRequired(OptionBoolean::ENCRYPTED);
-  auto  supply    = getOptional(OptionString::SUPPLY);
+  auto& name              = getRequired(OptionString::TAPE_POOL);
+  auto& vo                = getRequired(OptionString::VO);
+  auto& ptn               = getRequired(OptionUInt64::PARTIAL_TAPES_NUMBER);
+  auto& comment           = getRequired(OptionString::COMMENT);
+  auto encrypted          = getOptional(OptionBoolean::ENCRYPTED);
+  auto& encryptionKeyName = getRequired(OptionString::ENCRYPTION_KEY_NAME);
+  auto supply             = getOptional(OptionString::SUPPLY);
+
+  if(encrypted) {
+    throw exception::UserError("The parameter '--encrypted' has been deprecated. Use '--encryptionkeyname'.");
+  }
 
   std::list<std::string> supply_list;
   if (supply) {
     supply_list = cta::utils::commaSeparatedStringToList(supply.value());
   }
 
-  m_catalogue.TapePool()->createTapePool(m_cliIdentity, name, vo, ptn, encrypted, supply_list, comment);
+  std::optional<std::string> encryptionKeyNameOpt = encryptionKeyName.empty() ? std::nullopt : encryptionKeyName;
+  m_catalogue.TapePool()->createTapePool(m_cliIdentity, name, vo, ptn, encryptionKeyNameOpt, supply_list, comment);
 
   response.set_type(xrd::Response::RSP_SUCCESS);
 }
@@ -1242,13 +1248,17 @@ void AdminCmd::processTapePool_Add(xrd::Response& response) {
 void AdminCmd::processTapePool_Ch(xrd::Response& response) {
   using namespace cta::admin;
 
-  auto& name      = getRequired(OptionString::TAPE_POOL);
-  auto  vo        = getOptional(OptionString::VO);
-  auto  ptn       = getOptional(OptionUInt64::PARTIAL_TAPES_NUMBER);
-  auto  comment   = getOptional(OptionString::COMMENT);
-  auto  encrypted = getOptional(OptionBoolean::ENCRYPTED);
-  auto  supply    = getOptional(OptionString::SUPPLY);
+  auto& name              = getRequired(OptionString::TAPE_POOL);
+  auto  vo                = getOptional(OptionString::VO);
+  auto  ptn               = getOptional(OptionUInt64::PARTIAL_TAPES_NUMBER);
+  auto  comment           = getOptional(OptionString::COMMENT);
+  auto  encrypted         = getOptional(OptionBoolean::ENCRYPTED);
+  auto  encryptionKeyName = getOptional(OptionString::ENCRYPTION_KEY_NAME);
+  auto  supply            = getOptional(OptionString::SUPPLY);
 
+  if(encrypted) {
+    throw exception::UserError("The parameter '--encrypted' has been deprecated. Use '--encryptionkeyname'.");
+  }
   if(comment) {
     m_catalogue.TapePool()->modifyTapePoolComment(m_cliIdentity, name, comment.value());
   }
@@ -1258,10 +1268,12 @@ void AdminCmd::processTapePool_Ch(xrd::Response& response) {
   if(ptn) {
     m_catalogue.TapePool()->modifyTapePoolNbPartialTapes(m_cliIdentity, name, ptn.value());
   }
-  if(encrypted) {
-    m_catalogue.TapePool()->setTapePoolEncryption(m_cliIdentity, name, encrypted.value());
+  if(encryptionKeyName) {
+    if (encryptionKeyName.value().empty()) {
+      encryptionKeyName.reset();
+    }
+    m_catalogue.TapePool()->setTapePoolEncryption(m_cliIdentity, name, encryptionKeyName);
   }
-  modifyTapeEncryptionKeyName
   if(supply) {
     m_catalogue.TapePool()->modifyTapePoolSupply(m_cliIdentity, name,
                                                  cta::utils::commaSeparatedStringToList(supply.value()));

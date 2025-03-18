@@ -46,7 +46,7 @@ void RdbmsTapePoolCatalogue::createTapePool(const common::dataStructures::Securi
                                             const std::string& name,
                                             const std::string& vo,
                                             const uint64_t nbPartialTapes,
-                                            const bool encryptionValue,
+                                            const std::optional<std::string>& encryptionKeyNameOpt,
                                             const std::list<std::string>& supply_list,
                                             const std::string& comment) {
   if(name.empty()) {
@@ -100,6 +100,7 @@ void RdbmsTapePoolCatalogue::createTapePool(const common::dataStructures::Securi
       VIRTUAL_ORGANIZATION_ID,
       NB_PARTIAL_TAPES,
       IS_ENCRYPTED,
+      ENCRYPTION_KEY_NAME,
       SUPPLY,
 
       USER_COMMENT,
@@ -117,6 +118,7 @@ void RdbmsTapePoolCatalogue::createTapePool(const common::dataStructures::Securi
       VIRTUAL_ORGANIZATION_ID,
       :NB_PARTIAL_TAPES,
       :IS_ENCRYPTED,
+      :ENCRYPTION_KEY_NAME,
       :SUPPLY,
 
       :USER_COMMENT,
@@ -135,11 +137,14 @@ void RdbmsTapePoolCatalogue::createTapePool(const common::dataStructures::Securi
   )SQL";
   auto stmt = conn.createStmt(sql);
 
+  bool isEncrypted = encryptionKeyNameOpt.has_value();
+
   stmt.bindUint64(":TAPE_POOL_ID", tapePoolId);
   stmt.bindString(":TAPE_POOL_NAME", name);
   stmt.bindString(":VO", vo);
   stmt.bindUint64(":NB_PARTIAL_TAPES", nbPartialTapes);
-  stmt.bindBool(":IS_ENCRYPTED", encryptionValue);
+  stmt.bindBool(":IS_ENCRYPTED", isEncrypted);
+  stmt.bindString(":ENCRYPTION_KEY_NAME", encryptionKeyNameOpt);
   stmt.bindString(":SUPPLY", optionalSupplyString);
 
   stmt.bindString(":USER_COMMENT", trimmedComment);
@@ -279,6 +284,7 @@ std::list<TapePool> RdbmsTapePoolCatalogue::getTapePools(rdbms::Conn &conn,
       VIRTUAL_ORGANIZATION.VIRTUAL_ORGANIZATION_NAME AS VO,
       TAPE_POOL.NB_PARTIAL_TAPES AS NB_PARTIAL_TAPES,
       TAPE_POOL.IS_ENCRYPTED AS IS_ENCRYPTED,
+      TAPE_POOL.ENCRYPTION_KEY_NAME AS ENCRYPTION_KEY_NAME,
       TAPE_POOL.SUPPLY AS SUPPLY,
 
       COALESCE(COUNT(TAPE.VID), 0) AS NB_TAPES,
@@ -347,6 +353,7 @@ std::list<TapePool> RdbmsTapePoolCatalogue::getTapePools(rdbms::Conn &conn,
       VIRTUAL_ORGANIZATION.VIRTUAL_ORGANIZATION_NAME,
       TAPE_POOL.NB_PARTIAL_TAPES,
       TAPE_POOL.IS_ENCRYPTED,
+      TAPE_POOL.ENCRYPTION_KEY_NAME,
       TAPE_POOL.SUPPLY,
       TAPE_POOL.USER_COMMENT,
       TAPE_POOL.CREATION_LOG_USER_NAME,
@@ -382,6 +389,7 @@ std::list<TapePool> RdbmsTapePoolCatalogue::getTapePools(rdbms::Conn &conn,
     pool.vo.name = rset.columnString("VO");
     pool.nbPartialTapes = rset.columnUint64("NB_PARTIAL_TAPES");
     pool.encryption = rset.columnBool("IS_ENCRYPTED");
+    pool.encryptionKeyName = rset.columnOptionalString("ENCRYPTION_KEY_NAME");
     pool.supply = rset.columnOptionalString("SUPPLY");
     pool.nbTapes = rset.columnUint64("NB_TAPES");
     pool.nbEmptyTapes = rset.columnUint64("NB_EMPTY_TAPES");
@@ -426,6 +434,7 @@ std::optional<TapePool> RdbmsTapePoolCatalogue::getTapePool(const std::string &t
       VIRTUAL_ORGANIZATION.VIRTUAL_ORGANIZATION_NAME AS VO,
       TAPE_POOL.NB_PARTIAL_TAPES AS NB_PARTIAL_TAPES,
       TAPE_POOL.IS_ENCRYPTED AS IS_ENCRYPTED,
+      TAPE_POOL.ENCRYPTION_KEY_NAME AS ENCRYPTION_KEY_NAME,
       TAPE_POOL.SUPPLY AS SUPPLY,
 
       COALESCE(COUNT(TAPE.VID), 0) AS NB_TAPES,
@@ -459,6 +468,7 @@ std::optional<TapePool> RdbmsTapePoolCatalogue::getTapePool(const std::string &t
       VIRTUAL_ORGANIZATION.VIRTUAL_ORGANIZATION_NAME,
       TAPE_POOL.NB_PARTIAL_TAPES,
       TAPE_POOL.IS_ENCRYPTED,
+      TAPE_POOL.ENCRYPTION_KEY_NAME,
       TAPE_POOL.SUPPLY,
       TAPE_POOL.USER_COMMENT,
       TAPE_POOL.CREATION_LOG_USER_NAME,
@@ -490,6 +500,7 @@ std::optional<TapePool> RdbmsTapePoolCatalogue::getTapePool(const std::string &t
     pool.vo.name = rset.columnString("VO");
     pool.nbPartialTapes = rset.columnUint64("NB_PARTIAL_TAPES");
     pool.encryption = rset.columnBool("IS_ENCRYPTED");
+    pool.encryptionKeyName = rset.columnOptionalString("ENCRYPTION_KEY_NAME");
     pool.supply = rset.columnOptionalString("SUPPLY");
     pool.nbTapes = rset.columnUint64("NB_TAPES");
     pool.nbEmptyTapes = rset.columnUint64("NB_EMPTY_TAPES");
@@ -626,37 +637,12 @@ void RdbmsTapePoolCatalogue::modifyTapePoolComment(const common::dataStructures:
   }
 }
 
-void RdbmsTapePoolCatalogue::modifyTapeEncryptionKeyName(const common::dataStructures::SecurityIdentity &admin,
-  const std::string &name, const std::string &encryptionKeyName) {
-    const time_t now = time(nullptr);
-    const char* const sql = R"SQL(
-    UPDATE TAPE_POOL SET
-      ENCRYPTION_KEY_NAME = :ENCRYPTION_KEY_NAME,
-      LAST_UPDATE_USER_NAME = :LAST_UPDATE_USER_NAME,
-      LAST_UPDATE_HOST_NAME = :LAST_UPDATE_HOST_NAME,
-      LAST_UPDATE_TIME = :LAST_UPDATE_TIME
-    WHERE
-      TAPE_POOL_NAME = :TAPE_POOL_NAME
-  )SQL";
-  auto conn = m_connPool->getConn();
-  auto stmt = conn.createStmt(sql);
-  stmt.bindString(":ENCRYPTION_KEY_NAME", encryptionKeyName);
-  stmt.bindString(":LAST_UPDATE_USER_NAME", admin.username);
-  stmt.bindString(":LAST_UPDATE_HOST_NAME", admin.host);
-  stmt.bindUint64(":LAST_UPDATE_TIME", now);
-  stmt.bindString(":TAPE_POOL_NAME", name);
-  stmt.executeNonQuery();
-
-  if(0 == stmt.getNbAffectedRows()) {
-    throw exception::UserError(std::string("Cannot modify tape pool '") + name + "' because it does not exist");
-  }
-}
-
 void RdbmsTapePoolCatalogue::setTapePoolEncryption(const common::dataStructures::SecurityIdentity &admin,
-  const std::string &name, const bool encryptionValue) {
+  const std::string &name, const std::optional<std::string>& encryptionKeyNameOpt) {
   const time_t now = time(nullptr);
   const char* const sql = R"SQL(
-    UPDATE TAPE_POOL SET 
+    UPDATE TAPE_POOL SET
+      ENCRYPTION_KEY_NAME = :ENCRYPTION_KEY_NAME,
       IS_ENCRYPTED = :IS_ENCRYPTED,
       LAST_UPDATE_USER_NAME = :LAST_UPDATE_USER_NAME,
       LAST_UPDATE_HOST_NAME = :LAST_UPDATE_HOST_NAME,
@@ -664,9 +650,13 @@ void RdbmsTapePoolCatalogue::setTapePoolEncryption(const common::dataStructures:
     WHERE 
       TAPE_POOL_NAME = :TAPE_POOL_NAME
   )SQL";
+
+  bool isEncrypted = encryptionKeyNameOpt.has_value();
+
   auto conn = m_connPool->getConn();
   auto stmt = conn.createStmt(sql);
-  stmt.bindBool(":IS_ENCRYPTED", encryptionValue);
+  stmt.bindString(":ENCRYPTION_KEY_NAME", encryptionKeyNameOpt);
+  stmt.bindBool(":IS_ENCRYPTED", isEncrypted);
   stmt.bindString(":LAST_UPDATE_USER_NAME", admin.username);
   stmt.bindString(":LAST_UPDATE_HOST_NAME", admin.host);
   stmt.bindUint64(":LAST_UPDATE_TIME", now);

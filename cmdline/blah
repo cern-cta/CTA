@@ -1,0 +1,16 @@
+            type         tapepool        vo library vid files queued data queued oldest youngest priority min age read max drives write max drives cur. mounts cur. files cur. data tapes capacity files on tapes data on tapes full tapes writable tapes
+ArchiveForRepack systest2_default vo_repack       -   -         1153       17.7M    278      278        2       1               1                1           0          0         0          12.0T           1000         15.4M          0              1
+ArchiveForRepack       ctasystest vo_repack       -   -         1153       17.7M    279      279        2       1               1                1           0          0         0          24.0T           3153         48.4M          1              1
+ArchiveForRepack  systest3_repack vo_repack       -   -            0           0      0        0        0       0               1                1           1       2153     33.1M          12.0T           1000         15.4M          0              1
+Result of dr ls
+library   drive          host desired          request   status since    vid        tapepool        vo files  data MB/s session priority activity scheduler age reason
+VDSTK01 VDSTK01 cta-tpsrv01-0      Up                -     Free   286      -               -         -     -     -    -       -        0        -      ceph   2 -
+VDSTK02 VDSTK02 cta-tpsrv02-0      Up ArchiveForRepack Transfer   275 V00108 systest3_repack vo_repack  2153 33.1M  0.1      30        0        -      ceph   5 -
+Result of Repack ls
+          c.time repackTime    c.user    vid   tapepool providedFiles totalFiles totalBytes selectedFiles filesToRetrieve filesToArchive failed  status
+2025-03-04 11:37      5m12s ctaadmin2 V00101 ctasystest             0       2153      33.1M          6459               0           3679      0 Running
+DestinationVID  NbFiles  totalSize
+V00102          990      15206400
+V00106          990      15206400
+V00108          800      12288000
+command terminated with exit code 1
