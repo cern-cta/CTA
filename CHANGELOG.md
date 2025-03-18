@@ -1,3 +1,34 @@
+## v5.11.5.0-1
+
+### Features
+
+- cta/#1017 - Add unstable release workflow to the CTA CI
+- cta/#1041 - Add option in cta-admin to identify dual tape files that only have one copy
+
+### Bug Fixes
+
+- cta/#990 - Fix repack test bug where EOS directories were incorrectly reused in between tests
+- cta/#1025 - Fix send failed due to message too long
+- cta/#1060 - Fix inconsistency in --fxid field usage
+- cta/#1083 - Fix underflow of unsigned int
+- cta/#1086 - Resolve "Throw exception when verification of crc32c fails"
+- cta/#1087 - Improve cta-admin consistency with empty strings
+- cta/#1096 - Fix broken development setup due to "Unit attention" error on sg_modes command
+- cta/#1109 - Versionlock Oracle instant client to v23
+- cta/#1110 - Fix gRPC Frontend crash when multiple Retrieve requests are submitted simultaneously
+
+### Maintenance
+
+- cta/#1036 - Improve post system-test checks to check for uncaught exceptions in CTA logs
+- cta/#1063 - Update gitignore to have a more thorough ignore list
+- cta/#1077 - Update example config file and systemd service file for grpc frontend
+- cta/#1092 - Parse drive serial number to detect MHVTL drive
+- cta/#1095 - Reduce number of processors used by build cmake
+- cta/#1100 - Replace tape-specific EOS Chart version with latest official version
+- cta/#1110 - Merge release v5.11.2.1-1 into main
+- cta/#1113 - Ignore xrdcp core dumps in client pod
+
+
 ## v5.11.4.0-1
 
 ### Bug Fixes
