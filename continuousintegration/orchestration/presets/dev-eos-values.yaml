@@ -75,6 +75,7 @@ mgm:
       mgmofs.tapeenabled true
       mgmofs.protowfendpoint cta-frontend:10955
       mgmofs.protowfresource /ctafrontend
+      mgmofs.cta_use_grpc false
       tpc.trace  all
       tpc.header2cgi  ArchiveMetadata archivemetadata
       taperestapi.sitename  cern-tape-archive-{{ include "mgm.instancename" . }}
@@ -132,6 +133,7 @@ fst:
       fstofs.protowfresource /ctafrontend
       fstofs.filemd_handler  attr
       tpc.trace  all
+      fstofs.cta_use_grpc false
 
   probes:
     liveness: false
