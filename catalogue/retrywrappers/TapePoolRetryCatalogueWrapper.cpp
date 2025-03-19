@@ -85,9 +85,9 @@ void TapePoolCatalogueRetryWrapper::modifyTapePoolComment(const common::dataStru
 }
 
 void TapePoolCatalogueRetryWrapper::setTapePoolEncryption(const common::dataStructures::SecurityIdentity &admin,
-  const std::string &name, const std::optional<std::string>& encryptionKeyNameOpt) {
-  return retryOnLostConnection(m_log, [this,&admin,&name,&encryptionKeyNameOpt] {
-    return m_catalogue->TapePool()->setTapePoolEncryption(admin, name, encryptionKeyNameOpt);
+                                                          const std::string &name, const std::string &encryptionKeyName) {
+  return retryOnLostConnection(m_log, [this,&admin,&name,&encryptionKeyName] {
+    return m_catalogue->TapePool()->setTapePoolEncryption(admin, name, encryptionKeyName);
   }, m_maxTriesToConnect);
 }
 

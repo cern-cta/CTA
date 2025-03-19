@@ -1013,8 +1013,7 @@ TEST_P(cta_catalogue_TapePoolTest, setTapePoolEncryption) {
     ASSERT_EQ(creationLog, lastModificationLog);
   }
 
-  const std::optional<std::string> encryptionKeyNull = std::nullopt;
-  m_catalogue->TapePool()->setTapePoolEncryption(m_admin, tapePoolName, encryptionKeyNull);
+  m_catalogue->TapePool()->setTapePoolEncryption(m_admin, tapePoolName, "");
 
   {
     const auto pools = m_catalogue->TapePool()->getTapePools();
@@ -1026,7 +1025,7 @@ TEST_P(cta_catalogue_TapePoolTest, setTapePoolEncryption) {
     ASSERT_EQ(m_vo.name, pool.vo.name);
     ASSERT_EQ(nbPartialTapes, pool.nbPartialTapes);
     ASSERT_EQ(false, pool.encryption);
-    ASSERT_EQ(encryptionKeyNull, pool.encryptionKeyName);
+    ASSERT_EQ(std::nullopt, pool.encryptionKeyName);
     ASSERT_EQ(0, pool.nbTapes);
     ASSERT_EQ(0, pool.capacityBytes);
     ASSERT_EQ(0, pool.dataBytes);
@@ -1041,8 +1040,7 @@ TEST_P(cta_catalogue_TapePoolTest, setTapePoolEncryption) {
 
 TEST_P(cta_catalogue_TapePoolTest, setTapePoolEncryption_nonExistentTapePool) {
   const std::string tapePoolName = "tape_pool";
-  const std::optional<std::string> encryptionKeyNull = std::nullopt;
-  ASSERT_THROW(m_catalogue->TapePool()->setTapePoolEncryption(m_admin, tapePoolName, encryptionKeyNull),
+  ASSERT_THROW(m_catalogue->TapePool()->setTapePoolEncryption(m_admin, tapePoolName, ""),
     cta::exception::UserError);
 }
 

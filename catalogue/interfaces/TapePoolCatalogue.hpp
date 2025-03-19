@@ -68,7 +68,7 @@ public:
     const std::string &comment) = 0;
 
   virtual void setTapePoolEncryption(const common::dataStructures::SecurityIdentity &admin, const std::string &name,
-    const std::optional<std::string>& encryptionKeyNameOpt) = 0;
+                                     const std::string &encryptionKeyName) = 0;
 
   virtual void modifyTapePoolSupply(const common::dataStructures::SecurityIdentity& admin,
                                     const std::string& name,
