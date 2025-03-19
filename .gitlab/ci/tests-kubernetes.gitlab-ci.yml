@@ -245,6 +245,8 @@ stress-test:
     - cd tests
     - ./stress_test.sh -n ${NAMESPACE}
   after_script:
+    # Repeat the namespace declaration here as the after_script does not have access to previously exported variables
+    - NAMESPACE="${CI_JOB_NAME_SLUG:0:18}-${CI_PIPELINE_ID}"
     # This also gets called if the job is cancelled to ensure we properly clean up after ourselves
     - cd continuousintegration/orchestration/
     - ./delete_instance.sh --namespace ${NAMESPACE} --discard-logs
