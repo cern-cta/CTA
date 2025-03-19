@@ -313,7 +313,7 @@ std::list<TapePool> RdbmsTapePoolCatalogue::getTapePools(rdbms::Conn &conn,
       TAPE.MEDIA_TYPE_ID = MEDIA_TYPE.MEDIA_TYPE_ID
   )SQL";
 
-  if (searchCriteria.name || searchCriteria.vo || searchCriteria.encrypted) {
+  if (searchCriteria.name || searchCriteria.vo || searchCriteria.encryptionKeyName) {
     sql += R"SQL(
       WHERE
     )SQL";
@@ -336,13 +336,20 @@ std::list<TapePool> RdbmsTapePoolCatalogue::getTapePools(rdbms::Conn &conn,
     addedAWhereConstraint = true;
   }
 
-  if (searchCriteria.encrypted) {
+  if (searchCriteria.encryptionKeyName) {
     if (addedAWhereConstraint) {
       sql += R"SQL( AND )SQL";
     }
     sql += R"SQL(
       TAPE_POOL.IS_ENCRYPTED = :ENCRYPTED
     )SQL";
+
+    if (!searchCriteria.encryptionKeyName.value().empty()) {
+      sql += R"SQL( AND )SQL";
+      sql += R"SQL(
+      TAPE_POOL.ENCRYPTION_KEY_NAME = :ENCRYPTION_KEY_NAME
+    )SQL";
+    }
   }
 
   sql += R"SQL(
@@ -376,8 +383,11 @@ std::list<TapePool> RdbmsTapePoolCatalogue::getTapePools(rdbms::Conn &conn,
     stmt.bindString(":VO", searchCriteria.vo.value());
   }
 
-  if(searchCriteria.encrypted) {
-    stmt.bindBool(":ENCRYPTED", searchCriteria.encrypted.value());
+  if(searchCriteria.encryptionKeyName) {
+    stmt.bindBool(":ENCRYPTED", !searchCriteria.encryptionKeyName.value().empty());
+    if(!searchCriteria.encryptionKeyName.value().empty()) {
+      stmt.bindString(":ENCRYPTION_KEY_NAME", searchCriteria.encryptionKeyName.value());
+    }
   }
 
   auto rset = stmt.executeQuery();

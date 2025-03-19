@@ -47,7 +47,7 @@ struct TapePoolSearchCriteria {
     /**
     * Set to true if searching for encrypted tape pools.
     */
-    std::optional<bool> encrypted;
+    std::optional<std::string> encryptionKeyName;
 
 }; // struct TapePoolSearchCriteria
 

@@ -66,9 +66,13 @@ TapePoolLsStream::TapePoolLsStream(const frontend::AdminCmdStream& requestMsg, c
   XrdSsiPb::Log::Msg(XrdSsiPb::Log::DEBUG, LOG_SUFFIX, "TapePoolLsStream() constructor");
   cta::catalogue::TapePoolSearchCriteria searchCriteria;
 
+  if(requestMsg.getOptional(OptionBoolean::ENCRYPTED)) {
+    throw exception::UserError("The parameter '--encrypted' has been deprecated. Use '--encryptionkeyname'.");
+  }
+
   searchCriteria.name = requestMsg.getOptional(OptionString::TAPE_POOL);
   searchCriteria.vo = requestMsg.getOptional(OptionString::VO);
-  searchCriteria.encrypted = requestMsg.getOptional(OptionBoolean::ENCRYPTED);
+  searchCriteria.encryptionKeyName = requestMsg.getOptional(OptionString::ENCRYPTION_KEY_NAME);
 
   m_tapePoolList = m_catalogue.TapePool()->getTapePools(searchCriteria);
 }

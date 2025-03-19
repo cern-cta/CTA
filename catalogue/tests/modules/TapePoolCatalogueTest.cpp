@@ -1384,7 +1384,7 @@ TEST_P(cta_catalogue_TapePoolTest, getTapePools_filterEncrypted) {
 
   {
     cta::catalogue::TapePoolSearchCriteria criteria;
-    criteria.encrypted = true;
+    criteria.encryptionKeyName = firstPoolEncryptionKeyName;
     const auto pools = m_catalogue->TapePool()->getTapePools(criteria);
     ASSERT_EQ(1, pools.size());
 
@@ -1408,7 +1408,7 @@ TEST_P(cta_catalogue_TapePoolTest, getTapePools_filterEncrypted) {
 
   {
     cta::catalogue::TapePoolSearchCriteria criteria;
-    criteria.encrypted = false;
+    criteria.encryptionKeyName = "";
     const auto pools = m_catalogue->TapePool()->getTapePools(criteria);
     ASSERT_EQ(1, pools.size());
 
@@ -1418,7 +1418,7 @@ TEST_P(cta_catalogue_TapePoolTest, getTapePools_filterEncrypted) {
     ASSERT_EQ(nbSecondPoolPartialTapes, pool.nbPartialTapes);
     ASSERT_EQ(secondPoolEncryptionKeyNull.has_value(), pool.encryption);
     ASSERT_EQ(secondPoolEncryptionKeyNull, pool.encryptionKeyName);
-    ASSERT_FALSE((bool) pool.supply);
+    ASSERT_FALSE(pool.supply);
     ASSERT_EQ(0, pool.nbTapes);
     ASSERT_EQ(0, pool.capacityBytes);
     ASSERT_EQ(0, pool.dataBytes);
