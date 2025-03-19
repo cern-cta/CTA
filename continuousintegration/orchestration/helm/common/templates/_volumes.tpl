@@ -2,32 +2,32 @@
    _volumes.tpl
    This file contains helper functions to handle `volumes` and `volumeMounts`.
    It consolidates volume definitions from both global (.Values.global) and chart-specific (.Values) settings.
-   - `common.volumes`: Generates YAML for volume definitions.
-   - `common.volumeMounts`: Generates YAML for volume mount definitions.
+   - `common.extraVolumes`: Generates YAML for volume definitions.
+   - `common.extraVolumeMounts`: Generates YAML for volume mount definitions.
 */}}
 
 {{/*
-   common.volumes:
-   Outputs the volume definitions from `.Values.global.volumes` and `.Values.volumes`.
+   common.extraVolumes:
+   Outputs the volume definitions from `.Values.global.extraVolumes` and `.Values.extraVolumes`.
 */}}
-{{- define "common.volumes" -}}
-  {{- if .Values.global.volumes -}}
-{{ .Values.global.volumes | toYaml }}
+{{- define "common.extraVolumes" -}}
+  {{- if .Values.global.extraVolumes.volumes -}}
+{{ .Values.global.extraVolumes.volumes | toYaml }}
   {{- end }}
-  {{- if .Values.volumes }}
-{{ .Values.volumes | toYaml }}
+  {{- if .Values.extraVolumes.volumes }}
+{{ .Values.extraVolumes.volumes | toYaml }}
   {{- end }}
 {{- end }}
 
 {{/*
-   common.volumeMounts:
-   Outputs the volume mount definitions from `.Values.global.volumeMounts` and `.Values.volumeMounts`.
+   common.extraVolumeMounts:
+   Outputs the volume mount definitions from `.Values.global.extraVolumeMounts` and `.Values.extraVolumeMounts`.
 */}}
-{{- define "common.volumeMounts" -}}
-  {{- if .Values.global.volumeMounts -}}
-{{ .Values.global.volumeMounts | toYaml }}
+{{- define "common.extraVolumeMounts" -}}
+  {{- if .Values.global.extraVolumes.volumeMounts -}}
+{{ .Values.global.extraVolumes.volumeMounts | toYaml }}
   {{- end }}
-  {{- if .Values.volumeMounts }}
-{{ .Values.volumeMounts | toYaml }}
+  {{- if .Values.extraVolumes.volumeMounts }}
+{{ .Values.extraVolumes.volumeMounts | toYaml }}
   {{- end }}
 {{- end }}

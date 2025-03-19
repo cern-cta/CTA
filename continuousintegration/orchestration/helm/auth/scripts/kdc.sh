@@ -16,9 +16,8 @@
 #               submit itself to any jurisdiction.
 
 set -e
-set -x
 
-# This can be improved by:
+# This could be improved by:
 # - Use a custom image to prevent doing installs here
 # - Do the db initialization in an init container
 # - Run the krb5kdc and kadmind in separate containers

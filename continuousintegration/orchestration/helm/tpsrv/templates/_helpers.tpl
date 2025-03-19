@@ -1,5 +1,5 @@
-{{- define "tpsrv.name" -}}
-  {{ include "common.names.name" . }}
+{{- define "tpsrv.fullname" -}}
+  {{ include "common.names.fullname" . }}
 {{- end }}
 
 {{- define "tpsrv.image" -}}

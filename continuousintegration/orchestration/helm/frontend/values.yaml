@@ -1,15 +1,7 @@
-# If required, the user can specify a custom image here
-image:
-component: frontend
-partOf: cta
-nameOverride: cta-frontend
-isPriviliged: true
-
 frontendPort: 10955
-terminationGracePeriodSeconds: 1 # This is low on purpose as the current process has no gracefull shutdown process
 # Take care with increasing this number, as CTA has not been tested with multiple frontend replicas
 # Increasing this will most likely not work as expected
-replicase: 1
+replicaCount: 1
 
 conf:
   catalogue:
@@ -42,13 +34,11 @@ conf:
     config: "/etc/cta/eos.grpc.keytab"
 
 
-# Additional environment variables
-env: []
+pod:
+  extraSpec:
 
-resources:
-  requests:
-    memory: "512Mi"
-    ephemeral-storage: "1Gi"
-  limits:
-    memory: "6Gi"
-    ephemeral-storage: "8Gi"
+extraEnv:
+
+extraVolumes:
+  volumes:
+  volumeMounts:

@@ -1,5 +1,5 @@
-{{- define "ctacli.name" -}}
-  {{ include "common.names.name" . }}
+{{- define "ctacli.fullname" -}}
+  {{ include "common.names.fullname" . }}
 {{- end }}
 
 {{- define "ctacli.image" -}}
@@ -13,11 +13,3 @@
 {{- define "ctacli.imagePullSecrets" -}}
   {{ include "common.images.pullSecrets" (dict "imageRoot" .Values.image "global" .Values.global.image) }}
 {{- end }}
-
-{{- define "ctacli.volumes" -}}
-  {{ include "common.volumes" . }}
-{{- end -}}
-
-{{- define "ctacli.volumeMounts" -}}
-  {{ include "common.volumeMounts" . }}
-{{- end -}}

@@ -1,9 +1,5 @@
-nameOverride: auth-kdc
-isPriviliged: true
 component: kdc
-partOf: kdc
-
-terminationGracePeriodSeconds: 1 # This is low on purpose as the current process has no gracefull shutdown process
+partOf: auth
 
 image:
   repository: gitlab-registry.cern.ch/cta/ctageneric
@@ -12,9 +8,6 @@ image:
   pullSecrets:
   - ctaregsecret
   - reg-ctageneric
-
-# Additional environment variables
-env: []
 
 # Keytabs that should be generated as secrets
 keytabs:
@@ -34,10 +27,9 @@ kerberos:
     name: root
     password: "defaultcipassword"
 
-resources:
-  requests:
-    memory: "256Mi"
-    ephemeral-storage: "1Gi"
-  limits:
-    memory: "2Gi"
-    ephemeral-storage: "5Gi"
+pod:
+  extraSpec:
+    terminationGracePeriodSeconds: 1 # This is low on purpose as the current process has no gracefull shutdown process
+
+# Additional Extra environment variables
+extraEnv:

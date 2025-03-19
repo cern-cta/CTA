@@ -1,23 +1,16 @@
-# If required, the user can specify a custom image here
-image:
-component: client
-partOf: cta
-nameOverride: client
-isPriviliged: true
-
-replicas: 1
+replicaCount: 1
 
 conf:
   cta:
     endpoint: cta-frontend:10955
 
-# Additional environment variables
-env: []
+pod:
+  extraSpec:
 
-resources:
-  requests:
-    memory: "256Mi"
-    ephemeral-storage: "1Gi"
-  limits:
-    memory: "4Gi"
-    ephemeral-storage: "5Gi"
+# Additional Extra environment variables
+extraEnv:
+
+extraVolumes:
+  volumes:
+  volumeMounts:
+

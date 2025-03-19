@@ -1,13 +1,6 @@
-{{/*
-Get the namespace
-*/}}
-{{- define "kdc.namespace" -}}
-{{ $namespace := .Release.Namespace | quote }}
-{{- end -}}
 
-
-{{- define "kdc.name" -}}
-  {{ include "common.names.name" . }}
+{{- define "kdc.fullname" -}}
+  {{ include "common.names.fullname" . }}
 {{- end -}}
 
 {{- define "kdc.image" -}}

@@ -10,7 +10,7 @@ image:
 
 terminationGracePeriodSeconds: 1
 
-repoName: cta-artefacts
+repoName: cta-artifacts
 
 # Details of the service running inside the container
 server:

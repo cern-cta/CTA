@@ -1,11 +1,10 @@
-{{- $namespace := .Release.Namespace }}
-{{- $name := include "ctafrontend.name" . }}
+{{- $name := include "ctafrontend.fullname" . }}
 {{- $schedulerConfig := include "scheduler.config" . | fromYaml -}}
 apiVersion: apps/v1
 kind: StatefulSet
 metadata:
   name: {{ $name }}
-  namespace: {{ $namespace | quote }}
+  namespace: {{ .Release.Namespace | quote }}
   labels:
     {{- include "common.labels.standard" . | nindent 4 }}
 spec:
@@ -19,13 +18,12 @@ spec:
       labels:
         app.kubernetes.io/name: {{ $name }}
         {{- include "common.labels.withoutname" $ | nindent 8 }}
-      annotations:
-        catalogue-schema-version: {{ .Values.global.catalogueSchemaVersion | quote }}
     spec:
-      restartPolicy: Always
-      terminationGracePeriodSeconds: {{ .Values.terminationGracePeriodSeconds }}
       imagePullSecrets:
       {{ include "ctafrontend.imagePullSecrets" . | nindent 6 }}
+      {{- if .Values.pod.extraSpec }}
+      {{ .Values.pod.extraSpec | toYaml | nindent 6 }}
+      {{- end }}
       initContainers:
       - name: init1-get-krb5-keytab
         image: {{ include "ctafrontend.image" . }}
@@ -34,8 +32,8 @@ spec:
         args:
         - |
           sukadmin() { echo {{ .Values.global.kerberos.adminPrinc.password }} | kadmin -r {{ .Values.global.kerberos.defaultRealm | upper }} -p {{ .Values.global.kerberos.adminPrinc.name }}/admin $@; };
-          sukadmin addprinc -randkey cta/cta-frontend;
-          sukadmin ktadd -k /root/ctafrontend_keytab/output/cta-frontend.krb5.keytab cta/cta-frontend;
+          sukadmin addprinc -randkey cta/{{ $name }};
+          sukadmin ktadd -k /root/ctafrontend_keytab/output/cta-frontend.krb5.keytab cta/{{ $name }};
           chmod 400 /root/ctafrontend_keytab/output/cta-frontend.krb5.keytab
           # Make CTA user owner (group 33 is tape)
           chown -R 1000:33 /root/ctafrontend_keytab/output/cta-frontend.krb5.keytab
@@ -63,7 +61,7 @@ spec:
         - name: eos-sss-keytab-fixedownership
           mountPath: /root/sss_keytab/output
       containers:
-      - name: {{ $name }}
+      - name: cta-frontend
         image: {{ include "ctafrontend.image" . }}
         imagePullPolicy: {{ include "ctafrontend.imagePullPolicy" . }}
         stdin: true
@@ -77,21 +75,15 @@ spec:
           successThreshold: 1
           failureThreshold: 60
         securityContext:
-          privileged: {{ .Values.isPriviliged }}
-        resources:
-          requests:
-            memory: {{ .Values.resources.requests.memory | quote }}
-            ephemeral-storage: {{ index .Values.resources.requests "ephemeral-storage" | quote }}
-          limits:
-            memory: {{ .Values.resources.limits.memory | quote }}
-            ephemeral-storage: {{ index .Values.resources.limits "ephemeral-storage" | quote }}
+          allowPrivilegeEscalation: {{ include "common.securityContext.allowPrivilegeEscalation" . }}
+          privileged: {{ include "common.securityContext.privileged" . }}
         env:
         - name: MY_NAME
           value: {{ $name }}
         - name: MY_NAMESPACE
-          value: {{ $namespace | quote }}
+          value: {{ .Release.Namespace | quote }}
         - name: INSTANCE_NAME
-          value: {{ $namespace | quote }}
+          value: {{ .Release.Namespace | quote }}
         - name: SCHEDULER_BACKEND
           value: {{ $schedulerConfig.backend | quote }}
         {{- if eq $schedulerConfig.backend "ceph" }}
@@ -104,8 +96,8 @@ spec:
         {{- end }}
         - name: TERM
           value: "xterm"
-        {{- if (.Values.env) }}
-            {{- .Values.env | toYaml | nindent 8 }}
+        {{- with .Values.extraEnv }}
+        {{- include "common.extraEnv" . | nindent 8 }}
         {{- end }}
         volumeMounts:
         - name: scripts-volume
@@ -145,7 +137,7 @@ spec:
         - name: krb5-conf
           mountPath: /etc/krb5.conf
           subPath: krb5.conf
-        {{ include "ctafrontend.volumeMounts" . | nindent 8 }}
+        {{ include "common.extraVolumeMounts" . | nindent 8 }}
       volumes:
       - name: scripts-volume
         configMap:
@@ -184,4 +176,4 @@ spec:
       - name: krb5-conf
         configMap:
           name: {{ .Values.global.kerberos.clientConfig.configMap }}
-      {{ include "ctafrontend.volumes" . | nindent 6 }}
+      {{ include "common.extraVolumes" . | nindent 6 }}
