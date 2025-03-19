@@ -92,6 +92,7 @@ int TapePoolLsStream::fillBuffer(XrdSsiPb::OStreamBuffer<Data> *streambuf) {
     tp_item->set_capacity_bytes(tp.capacityBytes);
     tp_item->set_data_bytes(tp.dataBytes);
     tp_item->set_encrypt(tp.encryption);
+    tp_item->set_encryption_key_name(tp.encryptionKeyName.value_or(""));
     tp_item->set_supply(tp.supply ? tp.supply.value() : "");
     tp_item->mutable_created()->set_username(tp.creationLog.username);
     tp_item->mutable_created()->set_host(tp.creationLog.host);

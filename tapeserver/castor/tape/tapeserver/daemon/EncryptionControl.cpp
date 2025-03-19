@@ -68,15 +68,16 @@ auto EncryptionControl::enable(castor::tape::tapeserver::drive::DriveInterface &
 
   // Write session with no encryption key name and encryption is disabled for the tape pool
   // Tape is guaranteed to be unencrypted, no need to run external script
-  if (isWriteSession && !pool->encryption && !volInfo.encryptionKeyName.has_value()) {
+  if (isWriteSession && !pool->encryptionKeyName && !pool->encryption && !volInfo.encryptionKeyName.has_value()) {
     encStatus = {false, "", "", ""};
     disable(m_drive);
     return encStatus;
   }
 
   // In other cases we call external script to get the key value from the JSON data store
+  std::string encryptionKeyName = volInfo.encryptionKeyName ? volInfo.encryptionKeyName.value() : pool->encryptionKeyName.value_or("");
   std::list<std::string> args(
-    {m_path, "--encryption-key-name", volInfo.encryptionKeyName.value_or(""), "--pool-name", volInfo.tapePool});
+    {m_path, "--encryption-key-name", encryptionKeyName, "--pool-name", volInfo.tapePool});
 
   cta::threading::SubProcess sp(m_path, args);
   sp.wait();
@@ -98,7 +99,7 @@ auto EncryptionControl::enable(castor::tape::tapeserver::drive::DriveInterface &
 
   // In write session check if we need to set the key name for the new tape
   // If tape pool encryption is enabled and key name is empty, it means we are writing to the new tape
-  if (isWriteSession && pool->encryption && !volInfo.encryptionKeyName.has_value()) {
+  if (isWriteSession && (pool->encryptionKeyName || pool->encryption) && !volInfo.encryptionKeyName.has_value()) {
     catalogue.Tape()->modifyTapeEncryptionKeyName({"ctaops", cta::utils::getShortHostname()}, volInfo.vid,
                                                   encStatus.keyName);
     encStatus.on = true;
