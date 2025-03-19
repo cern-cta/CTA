@@ -125,6 +125,10 @@ bool EncryptionControl::disable(castor::tape::tapeserver::drive::DriveInterface&
   return m_drive.clearEncryptionKey();
 }
 
+std::string EncryptionControl::getScriptPath() const {
+  return m_path;
+};
+
 namespace {
 struct JsonObjectDeleter {
   void operator()(json_object *jo) { json_object_put(jo); }

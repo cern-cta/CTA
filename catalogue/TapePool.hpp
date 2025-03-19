@@ -75,8 +75,8 @@ struct TapePool {
   bool encryption = false;
 
   /**
- * Tape pool encryption key name.
- */
+   * Tape pool encryption key name.
+   */
   std::optional<std::string> encryptionKeyName;
 
   /**
