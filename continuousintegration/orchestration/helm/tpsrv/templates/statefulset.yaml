@@ -1,15 +1,14 @@
-{{- $namespace := .Release.Namespace -}}
 {{- $schedulerConfig := include "scheduler.config" . | fromYaml -}}
 {{- $tapeServers := include "tpsrv.tapeServers" . | fromYaml -}}
 {{ include "validate.tapeServers" . }}
 {{ range $name,$tapeServerConfig := $tapeServers }}
-{{- $tpsrvName := printf "cta-%s" $name -}}
+{{- $tpsrvName := printf "%s-%s" $.Release.Name $name | trunc 63 | trimSuffix "-" }}
 {{- $libraryDevice := .libraryDevice -}}
 apiVersion: apps/v1
 kind: StatefulSet # StatefulSets enforce at most x pods semantics (in our case x=1)
 metadata:
   name: {{ $tpsrvName }}
-  namespace: {{ $namespace | quote }}
+  namespace: {{ $.Release.Namespace | quote }}
   labels:
     {{- include "common.labels.standard" $ | nindent 4 }}
 spec:
@@ -24,13 +23,12 @@ spec:
         app.kubernetes.io/name: {{ $tpsrvName }}
         {{- include "common.labels.withoutname" $ | nindent 8 }}
         cta/library-device: {{ .libraryDevice }}
-      annotations:
-        catalogue-schema-version: {{ $.Values.global.catalogueSchemaVersion | quote }}
     spec:
-      restartPolicy: Always
-      terminationGracePeriodSeconds: {{ $.Values.terminationGracePeriodSeconds }}
       imagePullSecrets:
       {{- include "tpsrv.imagePullSecrets" $ | nindent 6 }}
+      {{- if $.Values.pod.extraSpec }}
+      {{ $.Values.pod.extraSpec | toYaml | nindent 6 }}
+      {{- end }}
       initContainers:
       # Required until https://github.com/kubernetes/kubernetes/issues/81089 is merged
       - name: init1-fix-sss-keytab-ownership
@@ -51,11 +49,12 @@ spec:
             mountPath: /root/sss_keytab/output
       containers:
       # RMCD container
-      - name: rmcd
+      - name: cta-rmcd
         image: {{ include "tpsrv.image" $ }}
         imagePullPolicy: {{ include "tpsrv.imagePullPolicy" $ }}
         securityContext:
-          privileged: true
+          allowPrivilegeEscalation: {{ include "common.securityContext.allowPrivilegeEscalation" $ }}
+          privileged: {{ include "common.securityContext.privileged" $ }}
         stdin: true
         command: ["bash", "/scripts/rmcd.sh"]
         args: []
@@ -65,40 +64,35 @@ spec:
           initialDelaySeconds: 5
           periodSeconds: 2
           failureThreshold: 60
-        resources:
-          requests:
-            memory: {{ $.Values.rmcd.resources.requests.memory | quote }}
-            ephemeral-storage: {{ index $.Values.rmcd.resources.requests "ephemeral-storage" | quote }}
-          limits:
-            memory: {{ $.Values.taped.resources.limits.memory | quote }}
-            ephemeral-storage: {{ index $.Values.taped.resources.limits "ephemeral-storage" | quote }}
         env:
         - name: MY_NAME
           value: {{ $tpsrvName }}
         - name: MY_NAMESPACE
-          value: {{ $namespace | quote }}
+          value: {{ $.Release.Namespace | quote }}
         - name: INSTANCE_NAME
-          value: {{ $namespace | quote }}
+          value: {{ $.Release.Namespace | quote }}
         - name: LIBRARY_DEVICE
           value: {{ $libraryDevice | quote }}
         - name: MY_CONTAINER
           value: "rmcd"
         - name: TERM
           value: "xterm"
+        {{- with $.Values.extraEnv }}
+        {{- include "common.extraEnv" $ | nindent 8 }}
+        {{- end }}
         volumeMounts:
         - name: scripts-volume
           mountPath: /scripts/rmcd.sh
           subPath: rmcd.sh
-        {{- if $.Values.global.volumeMounts }}
-        {{ $.Values.global.volumeMounts | toYaml | nindent 8 }}
-        {{- end }}
+        {{ include "common.extraVolumeMounts" $ | nindent 8 }}
       # For each drive, spawn a separate taped container
       {{- range $index, $drive := .drives }}
-      - name: "taped-{{ $index }}"
+      - name: "cta-taped-{{ $index }}"
         image: {{ include "tpsrv.image" $ }}
         imagePullPolicy: {{ include "tpsrv.imagePullPolicy" $ }}
         securityContext:
-          privileged: true
+          allowPrivilegeEscalation: {{ include "common.securityContext.allowPrivilegeEscalation" $ }}
+          privileged: {{ include "common.securityContext.privileged" $ }}
         command: ["bash", "/scripts/taped.sh"]
         readinessProbe:
           exec:
@@ -111,9 +105,9 @@ spec:
         - name: MY_NAME
           value: {{ $tpsrvName }}
         - name: MY_NAMESPACE
-          value: {{ $namespace | quote }}
+          value: {{ $.Release.Namespace | quote }}
         - name: INSTANCE_NAME
-          value: {{ $namespace | quote }}
+          value: {{ $.Release.Namespace | quote }}
         - name: MY_CONTAINER
           value: "taped-{{ $index }}"
         - name: TERM
@@ -130,6 +124,9 @@ spec:
           value: {{ $.Values.conf.taped.secProtocol }}
         - name: XrdSecSSSKT
           value: {{ $.Values.conf.taped.secSssktPath }}/{{ $.Values.conf.taped.ctaTapedSss }}
+        {{- with $.Values.extraEnv }}
+        {{- include "common.extraEnv" $ | nindent 8 }}
+        {{- end }}
         volumeMounts:
         - name: scripts-volume
           mountPath: /scripts/taped.sh
@@ -160,9 +157,7 @@ spec:
           mountPath: /etc/ceph/ceph.client.{{ $schedulerConfig.cephConfig.id }}.keyring
           subPath: ceph.client.{{ $schedulerConfig.cephConfig.id }}.keyring
         {{- end }}
-        {{- if $.Values.global.volumeMounts }}
-        {{ $.Values.global.volumeMounts | toYaml | nindent 8 }}
-        {{- end }}
+        {{ include "common.extraVolumeMounts" $ | nindent 8 }}
       {{- end }} # End of containers loop
       volumes:
       - name: scripts-volume
@@ -196,8 +191,6 @@ spec:
           secretName: eos-sss-keytab
       - name: eos-sss-keytab-fixedownership
         emptyDir: {}
-      {{- if $.Values.global.volumes }}
-      {{ $.Values.global.volumes | toYaml | nindent 6 }}
-      {{- end }}
+      {{ include "common.extraVolumes" $ | nindent 6 }}
 ---
 {{- end }}

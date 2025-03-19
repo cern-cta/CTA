@@ -1,6 +1,4 @@
 {{ $name := "liquibase-update" }}
-{{ $namespace := .Release.Namespace }}
-
 apiVersion: v1
 kind: Pod
 metadata:
@@ -19,22 +17,12 @@ spec:
     image: "{{ .Values.image.repository }}:{{ .Values.image.tag }}"
     imagePullPolicy: {{ .Values.image.pullPolicy }}
     stdin: true
+    securityContext:
+      allowPrivilegeEscalation: False
+    {{- if $.Values.resources }}
     resources:
-      requests:
-        memory: {{ .Values.resources.requests.memory | quote }}
-        ephemeral-storage: {{ index .Values.resources.requests "ephemeral-storage" | quote }}
-      limits:
-        memory: {{ .Values.resources.limits.memory | quote }}
-        ephemeral-storage: {{ index .Values.resources.limits "ephemeral-storage" | quote }}
-    env:
-    - name: MY_NAME
-      value: {{ $name | quote }}
-    - name: MY_NAMESPACE
-      value: {{ $namespace | quote }}
-    - name: INSTANCE_NAME
-      value: {{ $namespace | quote }}
-    - name: TERM
-      value: "xterm"
+      {{-  toYaml $.Values.resources | nindent 10 }}
+    {{- end }}
     # This sets up the script used in the liquibase update test
     command: ["/bin/bash", "-c"]
     args:
@@ -44,14 +32,6 @@ spec:
       echo "/entrypoint.sh --disable-schema-verify -f '{{ .Values.catalogueSourceVersion }}' -t '{{ .Values.catalogueDestinationVersion }}' -c \"\$COMMAND\"" >> /launch_liquibase.sh
       chmod +x /launch_liquibase.sh
       sleep infinity
-    volumeMounts:
-    - name: yum-repos
-      mountPath: /shared/etc_yum.repos.d
-    - name: catalogue-config
-      mountPath: /shared/etc_cta/cta-catalogue.conf
-      subPath: cta-catalogue.conf
-    securityContext:
-      privileged: true
     readinessProbe:
       exec:
         command:
@@ -63,6 +43,24 @@ spec:
       timeoutSeconds: 2
       failureThreshold: 3
       successThreshold: 1
+    env:
+    - name: MY_NAME
+      value: {{ $name | quote }}
+    - name: MY_NAMESPACE
+      value: {{ .Release.Namespace | quote }}
+    - name: INSTANCE_NAME
+      value: {{ .Release.Namespace | quote }}
+    - name: TERM
+      value: "xterm"
+    {{- with .Values.extraEnv }}
+    {{- include "common.extraEnv" . | nindent 4 }}
+    {{- end }}
+    volumeMounts:
+    - name: yum-repos
+      mountPath: /shared/etc_yum.repos.d
+    - name: catalogue-config
+      mountPath: /shared/etc_cta/cta-catalogue.conf
+      subPath: cta-catalogue.conf
   volumes:
   - name: yum-repos
     configMap:

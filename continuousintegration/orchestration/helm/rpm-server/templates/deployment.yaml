@@ -20,6 +20,7 @@ spec:
       {{ include "rpmserver.imagePullSecrets" . | nindent 6 }}
       containers:
         - name: rpm-server
+          automountServiceAccountToken: false
           image: {{ include "rpmserver.image" . }}
           imagePullPolicy: {{ include "rpmserver.imagePullPolicy" . }}
           command: ["sh", "-c"]

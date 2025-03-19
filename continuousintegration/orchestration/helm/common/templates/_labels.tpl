@@ -11,7 +11,7 @@
    Uses the naming helpers from _naming.tpl to generate consistent names and handle truncation.
 */}}
 {{- define "common.labels.standard" -}}
-app.kubernetes.io/name: {{ include "common.names.name" . }}
+app.kubernetes.io/name: {{ include "common.names.fullname" . }}
 app.kubernetes.io/instance: {{ .Release.Name | quote }}
 app.kubernetes.io/version: {{ .Chart.AppVersion | quote }}
 app.kubernetes.io/component: {{ .Values.component | default (.Chart.Name) | quote }}

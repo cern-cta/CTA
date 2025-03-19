@@ -252,7 +252,7 @@ create_instance() {
   # Set up local RPM server so that EOS can download cta-fst-gcd
   # This is how we get RPMs from our CTA image into the EOS image
   # Note that we do not wait for it to be fully complete, as the startup is quick enough
-  log_run helm ${helm_command} cta-artefacts helm/rpm-server \
+  log_run helm ${helm_command} cta-artifacts helm/rpm-server \
                                 --set image.repository="${cta_image_repository}" \
                                 --set image.tag="${cta_image_tag}" \
                                 --namespace "${namespace}" \
@@ -268,7 +268,7 @@ create_instance() {
   auth_pid=$!
 
   echo "Deploying with catalogue schema version: ${catalogue_schema_version}"
-  log_run helm ${helm_command} catalogue helm/catalogue \
+  log_run helm ${helm_command} cta-catalogue helm/catalogue \
                                 --namespace "${namespace}" \
                                 --set resetImage.repository="${cta_image_repository}" \
                                 --set resetImage.tag="${cta_image_tag}" \
@@ -278,7 +278,7 @@ create_instance() {
                                 --wait --wait-for-jobs --timeout 4m &
   catalogue_pid=$!
 
-  log_run helm ${helm_command} scheduler helm/scheduler \
+  log_run helm ${helm_command} cta-scheduler helm/scheduler \
                                 --namespace "${namespace}" \
                                 --set resetImage.repository="${cta_image_repository}" \
                                 --set resetImage.tag="${cta_image_tag}" \
@@ -308,7 +308,6 @@ create_instance() {
                                 --namespace "${namespace}" \
                                 --set global.image.repository="${cta_image_repository}" \
                                 --set global.image.tag="${cta_image_tag}" \
-                                --set global.catalogueSchemaVersion="${catalogue_schema_version}" \
                                 --set-file global.configuration.scheduler="${scheduler_config}" \
                                 --set-file tpsrv.tapeServers="${tapeservers_config}" \
                                 --wait --timeout 5m

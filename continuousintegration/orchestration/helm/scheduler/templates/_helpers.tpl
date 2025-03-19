@@ -16,6 +16,14 @@ postgresql:postgresql://{{ $schedulerConfig.postgresConfig.username }}:{{ $sched
 {{- end }}
 {{- end }}
 
+{{- define "schedulerPostgres.fullname" -}}
+  {{- printf "%s-%s" "cta-scheduler" "postgres-db" | trunc 63 | trimSuffix "-" -}}
+{{- end }}
+
+{{- define "schedulerReset.fullname" -}}
+  {{- printf "%s-%s" "cta-scheduler" "reset" | trunc 63 | trimSuffix "-" -}}
+{{- end }}
+
 {{- define "schedulerReset.image" -}}
   {{ include "common.images.image" (dict "imageRoot" .Values.resetImage ) }}
 {{- end }}

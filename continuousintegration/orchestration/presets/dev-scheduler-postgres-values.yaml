@@ -5,4 +5,4 @@ postgresConfig:
   password: cta
   database: cta-scheduler-postgres
   path: /var/lib/postgresql/data/scheddata
-  server: cta-scheduler-postgres
+  server: cta-scheduler-postgres-db
