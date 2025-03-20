@@ -33,9 +33,9 @@ using cta::exception::Exception;
 namespace cta::utils {
 
 //------------------------------------------------------------------------------
-// toPGUint8
+// toUint8
 //------------------------------------------------------------------------------
-uint8_t toPGUint8(std::string_view str) {
+uint8_t toUint8(std::string_view str) {
   if (str.empty()) {
     throw exception::Exception(
       "Failed to convert empty string to uint8_t: An empty string is not a valid unsigned integer");
@@ -63,7 +63,7 @@ uint8_t toPGUint8(std::string_view str) {
 //------------------------------------------------------------------------------
 // toUint16
 //------------------------------------------------------------------------------
-uint16_t toPGUint16(std::string_view str) {
+uint16_t toUint16(std::string_view str) {
   if (str.empty()) {
     throw exception::Exception(
       "Failed to convert empty string to uint16_t: An empty string is not a valid unsigned integer");
@@ -91,7 +91,7 @@ uint16_t toPGUint16(std::string_view str) {
   return value;
 }
 
-uint32_t toPGUint32(std::string_view str) {
+uint32_t toUint32(std::string_view str) {
   if (str.empty()) {
     throw exception::Exception(
       "Failed to convert empty string to uint32_t: An empty string is not a valid unsigned integer");
@@ -117,7 +117,7 @@ uint32_t toPGUint32(std::string_view str) {
   return value;
 }
 
-uint64_t toPGUint64(std::string_view str) {
+uint64_t toUint64(std::string_view str) {
   if (str.empty()) {
     throw exception::Exception(
       "Failed to convert empty string to uint64_t: An empty string is not a valid unsigned integer");
@@ -141,7 +141,7 @@ uint64_t toPGUint64(std::string_view str) {
   return value;
 }
 
-double toPGDouble(std::string_view str) {
+double toDouble(std::string_view str) {
   if (str.empty()) {
     throw exception::Exception("Failed to convert empty string to double: An empty string is not a valid number");
   }
@@ -167,9 +167,9 @@ double toPGDouble(std::string_view str) {
 }
 
 //------------------------------------------------------------------------------
-// toUint8
+// toOLDUint8
 //------------------------------------------------------------------------------
-uint8_t toUint8(const std::string& str) {
+uint8_t toOLDUint8(const std::string& str) {
   if (str.empty()) {
     std::ostringstream msg;
     msg << "Failed to convert empty string to uint8_t: An empty string is not"
@@ -202,9 +202,9 @@ uint8_t toUint8(const std::string& str) {
 }
 
 //------------------------------------------------------------------------------
-// toUint16
+// toOLDUint16
 //------------------------------------------------------------------------------
-uint16_t toUint16(const std::string& str) {
+uint16_t toOLDUint16(const std::string& str) {
   if (str.empty()) {
     std::ostringstream msg;
     msg << "Failed to convert empty string to uint16_t: An empty string is not"
@@ -237,9 +237,9 @@ uint16_t toUint16(const std::string& str) {
 }
 
 //------------------------------------------------------------------------------
-// toUint32
+// toOLDUint32
 //------------------------------------------------------------------------------
-uint32_t toUint32(const std::string& str) {
+uint32_t toOLDUint32(const std::string& str) {
   if (str.empty()) {
     std::ostringstream msg;
     msg << "Failed to convert empty string to uint32_t: An empty string is not"
@@ -272,9 +272,9 @@ uint32_t toUint32(const std::string& str) {
 }
 
 //------------------------------------------------------------------------------
-// toUint64
+// toOLDUint64
 //------------------------------------------------------------------------------
-uint64_t toUint64(const std::string& str) {
+uint64_t toOLDUint64(const std::string& str) {
   try {
     try {
       return std::stoul(str);
@@ -292,9 +292,9 @@ uint64_t toUint64(const std::string& str) {
 }
 
 //------------------------------------------------------------------------------
-// toDouble
+// toOLDDouble
 //------------------------------------------------------------------------------
-double toDouble(const std::string& str) {
+double toOLDDouble(const std::string& str) {
   try {
     try {
       return std::stod(str);

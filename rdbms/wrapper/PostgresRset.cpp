@@ -156,9 +156,8 @@ uint8_t PostgresRset::columnUint8NoOpt(const std::string& colName) const {
       throw NullDbValue(std::string("Database column ") + colName + " contains a null value");
     }
 
-    //const char* cstrValue = PQgetvalue(m_resItr->get(), 0, ifield);
-    //return utils::toPGUint8(std::string_view(cstrValue, PQgetlength(m_resItr->get(), 0, ifield)));
-    return utils::toUint8(PQgetvalue(m_resItr->get(), 0, ifield));
+    const char* cstrValue = PQgetvalue(m_resItr->get(), 0, ifield);
+    return utils::toUint8(std::string_view(cstrValue, PQgetlength(m_resItr->get(), 0, ifield)));
   } catch (exception::Exception& ex) {
     ex.getMessage().str(std::string(__FUNCTION__) + " failed: " + ex.getMessage().str());
     throw;
@@ -176,17 +175,8 @@ uint16_t PostgresRset::columnUint16NoOpt(const std::string& colName) const {
       throw NullDbValue(std::string("Database column ") + colName + " contains a null value");
     }
 
-    //const char* cstrValue = PQgetvalue(m_resItr->get(), 0, ifield);
-
-    //return utils::toPGUint16(std::string_view(cstrValue, PQgetlength(m_resItr->get(), 0, ifield)));
-    const std::string stringValue(PQgetvalue(m_resItr->get(), 0, ifield));
-
-    if (!utils::isValidUInt(stringValue)) {
-      throw exception::Exception(std::string("Column ") + colName + " contains the value " + stringValue +
-                                 " which is not a valid unsigned integer");
-    }
-
-    return utils::toUint16(stringValue);
+    const char* cstrValue = PQgetvalue(m_resItr->get(), 0, ifield);
+    return utils::toUint16(std::string_view(cstrValue, PQgetlength(m_resItr->get(), 0, ifield)));
   } catch (exception::Exception& ex) {
     ex.getMessage().str(std::string(__FUNCTION__) + " failed: " + ex.getMessage().str());
     throw;
@@ -204,17 +194,10 @@ uint32_t PostgresRset::columnUint32NoOpt(const std::string& colName) const {
       throw NullDbValue(std::string("Database column ") + colName + " contains a null value");
     }
 
-    //const char* cstrValue = PQgetvalue(m_resItr->get(), 0, ifield);
+    const char* cstrValue = PQgetvalue(m_resItr->get(), 0, ifield);
 
-    //return utils::toPGUint32(std::string_view(cstrValue, PQgetlength(m_resItr->get(), 0, ifield)));
-    const std::string stringValue(PQgetvalue(m_resItr->get(), 0, ifield));
+    return utils::toUint32(std::string_view(cstrValue, PQgetlength(m_resItr->get(), 0, ifield)));
 
-    if (!utils::isValidUInt(stringValue)) {
-      throw exception::Exception(std::string("Column ") + colName + " contains the value " + stringValue +
-                                 " which is not a valid unsigned integer");
-    }
-
-    return utils::toUint32(stringValue);
   } catch (exception::Exception& ex) {
     ex.getMessage().str(std::string(__FUNCTION__) + " failed: " + ex.getMessage().str());
     throw;
@@ -232,17 +215,10 @@ uint64_t PostgresRset::columnUint64NoOpt(const std::string& colName) const {
       throw NullDbValue(std::string("Database column ") + colName + " contains a null value");
     }
 
-    //const char* cstrValue = PQgetvalue(m_resItr->get(), 0, ifield);
+    const char* cstrValue = PQgetvalue(m_resItr->get(), 0, ifield);
 
-    //return utils::toPGUint64(std::string_view(cstrValue, PQgetlength(m_resItr->get(), 0, ifield)));
-    const std::string stringValue(PQgetvalue(m_resItr->get(), 0, ifield));
+    return utils::toUint64(std::string_view(cstrValue, PQgetlength(m_resItr->get(), 0, ifield)));
 
-    if (!utils::isValidUInt(stringValue)) {
-      throw exception::Exception(std::string("Column ") + colName + " contains the value " + stringValue +
-                                 " which is not a valid unsigned integer");
-    }
-
-    return utils::toUint64(stringValue);
   } catch (exception::Exception& ex) {
     ex.getMessage().str(std::string(__FUNCTION__) + " failed: " + ex.getMessage().str());
     throw;
@@ -260,17 +236,9 @@ double PostgresRset::columnDoubleNoOpt(const std::string& colName) const {
       throw NullDbValue(std::string("Database column ") + colName + " contains a null value");
     }
 
-    //const char* cstrValue = PQgetvalue(m_resItr->get(), 0, ifield);
+    const char* cstrValue = PQgetvalue(m_resItr->get(), 0, ifield);
 
-    //return utils::toPGDouble(std::string_view(cstrValue, PQgetlength(m_resItr->get(), 0, ifield)));
-    const std::string stringValue(PQgetvalue(m_resItr->get(), 0, ifield));
-
-    if (!utils::isValidDecimal(stringValue)) {
-      throw exception::Exception(std::string("Column ") + colName + " contains the value " + stringValue +
-                                 " which is not a valid decimal");
-    }
-
-    return utils::toDouble(stringValue);
+    return utils::toDouble(std::string_view(cstrValue, PQgetlength(m_resItr->get(), 0, ifield)));
   } catch (exception::Exception& ex) {
     ex.getMessage().str(std::string(__FUNCTION__) + " failed: " + ex.getMessage().str());
     throw;
