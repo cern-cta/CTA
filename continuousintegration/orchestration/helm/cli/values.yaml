@@ -11,6 +11,7 @@ conf:
 
 pod:
   extraSpec:
+    terminationGracePeriodSeconds: 1
 
 # Additional Extra environment variables
 extraEnv:
