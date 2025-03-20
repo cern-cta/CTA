@@ -26,6 +26,7 @@
 #include <string.h>
 #include <strings.h>
 #include <sys/types.h>
+#include <charconv>
 
 using cta::exception::Exception;
 
@@ -36,30 +37,27 @@ namespace cta::utils {
 //------------------------------------------------------------------------------
 uint8_t toPGUint8(std::string_view str) {
   if (str.empty()) {
-    std::ostringstream msg;
-    msg << "Failed to convert empty string to uint8_t: An empty string is not a valid unsigned integer";
-    throw exception::Exception(msg.str());
+    throw exception::Exception(
+      "Failed to convert empty string to uint8_t: An empty string is not a valid unsigned integer");
   }
 
-  try {
-    unsigned long value = std::stoul(std::string(str));
+  uint8_t value;
+  auto [ptr, ec] = std::from_chars(str.data(), str.data() + str.size(), value);
 
-    if (value > std::numeric_limits<uint8_t>::max()) {
-      std::ostringstream msg;
-      msg << "Failed to convert '" << str << "' to uint8_t: Number too big";
-      throw exception::Exception(msg.str());
-    }
-
-    return static_cast<uint8_t>(value);
-  } catch (const std::invalid_argument&) {
+  if (ec == std::errc::invalid_argument) {
     std::ostringstream msg;
     msg << "Failed to convert '" << str << "' to uint8_t: Invalid number format";
     throw exception::Exception(msg.str());
-  } catch (const std::out_of_range&) {
+  } else if (ec == std::errc::result_out_of_range || value > std::numeric_limits<uint8_t>::max()) {
     std::ostringstream msg;
     msg << "Failed to convert '" << str << "' to uint8_t: Value out of range";
     throw exception::Exception(msg.str());
+  } else if (ptr != str.data() + str.size()) {
+    std::ostringstream msg;
+    msg << "Failed to convert '" << str << "' to uint8_t: Extra characters found";
+    throw exception::Exception(msg.str());
   }
+  return value;
 }
 
 //------------------------------------------------------------------------------
@@ -67,105 +65,105 @@ uint8_t toPGUint8(std::string_view str) {
 //------------------------------------------------------------------------------
 uint16_t toPGUint16(std::string_view str) {
   if (str.empty()) {
-    std::ostringstream msg;
-    msg << "Failed to convert empty string to uint16_t: An empty string is not a valid unsigned integer";
-    throw exception::Exception(msg.str());
+    throw exception::Exception(
+      "Failed to convert empty string to uint16_t: An empty string is not a valid unsigned integer");
   }
 
-  try {
-    unsigned long value = std::stoul(std::string(str));
+  uint16_t value;
+  auto [ptr, ec] = std::from_chars(str.data(), str.data() + str.size(), value);
 
-    if (value > std::numeric_limits<uint16_t>::max()) {
-      std::ostringstream msg;
-      msg << "Failed to convert '" << str << "' to uint16_t: Number too big";
-      throw exception::Exception(msg.str());
-    }
-
-    return static_cast<uint16_t>(value);
-  } catch (const std::invalid_argument&) {
+  if (ec == std::errc::invalid_argument) {
     std::ostringstream msg;
     msg << "Failed to convert '" << str << "' to uint16_t: Invalid number format";
     throw exception::Exception(msg.str());
-  } catch (const std::out_of_range&) {
+  }
+  if (ec == std::errc::result_out_of_range || value > std::numeric_limits<uint16_t>::max()) {
     std::ostringstream msg;
-    msg << "Failed to convert '" << str << "' to uint16_t: Value out of range";
+    msg << "Failed to convert '" << str << "' to uint16_t: Number too big";
     throw exception::Exception(msg.str());
   }
+  if (ptr != str.data() + str.size()) {
+    std::ostringstream msg;
+    msg << "Failed to convert '" << str << "' to uint16_t: Extra characters found";
+    throw exception::Exception(msg.str());
+  }
+
+  return value;
 }
 
 uint32_t toPGUint32(std::string_view str) {
   if (str.empty()) {
-    std::ostringstream msg;
-    msg << "Failed to convert empty string to uint32_t: An empty string is not a valid unsigned integer";
-    throw exception::Exception(msg.str());
+    throw exception::Exception(
+      "Failed to convert empty string to uint32_t: An empty string is not a valid unsigned integer");
   }
 
-  try {
-    unsigned long value = std::stoul(std::string(str));
+  uint32_t value;
+  auto [ptr, ec] = std::from_chars(str.data(), str.data() + str.size(), value);
 
-    if (value > std::numeric_limits<uint32_t>::max()) {
-      std::ostringstream msg;
-      msg << "Failed to convert '" << str << "' to uint32_t: Number too big";
-      throw exception::Exception(msg.str());
-    }
-
-    return static_cast<uint32_t>(value);
-  } catch (const std::invalid_argument&) {
+  if (ec == std::errc::invalid_argument) {
     std::ostringstream msg;
     msg << "Failed to convert '" << str << "' to uint32_t: Invalid number format";
     throw exception::Exception(msg.str());
-  } catch (const std::out_of_range&) {
+  } else if (ec == std::errc::result_out_of_range || value > std::numeric_limits<uint32_t>::max()) {
     std::ostringstream msg;
     msg << "Failed to convert '" << str << "' to uint32_t: Value out of range";
     throw exception::Exception(msg.str());
+  } else if (ptr != str.data() + str.size()) {
+    std::ostringstream msg;
+    msg << "Failed to convert '" << str << "' to uint32_t: Extra characters found";
+    throw exception::Exception(msg.str());
   }
+
+  return value;
 }
 
 uint64_t toPGUint64(std::string_view str) {
   if (str.empty()) {
-    std::ostringstream msg;
-    msg << "Failed to convert empty string to uint64_t: An empty string is not a valid unsigned integer";
-    throw exception::Exception(msg.str());
+    throw exception::Exception(
+      "Failed to convert empty string to uint64_t: An empty string is not a valid unsigned integer");
   }
+  uint64_t value;
+  auto [ptr, ec] = std::from_chars(str.data(), str.data() + str.size(), value);
 
-  try {
-    unsigned long long value = std::stoull(std::string(str));
-
-    if (value > std::numeric_limits<uint64_t>::max()) {
-      std::ostringstream msg;
-      msg << "Failed to convert '" << str << "' to uint64_t: Number too big";
-      throw exception::Exception(msg.str());
-    }
-
-    return static_cast<uint64_t>(value);
-  } catch (const std::invalid_argument&) {
+  if (ec == std::errc::invalid_argument) {
     std::ostringstream msg;
     msg << "Failed to convert '" << str << "' to uint64_t: Invalid number format";
     throw exception::Exception(msg.str());
-  } catch (const std::out_of_range&) {
+  } else if (ec == std::errc::result_out_of_range || value > std::numeric_limits<uint64_t>::max()) {
     std::ostringstream msg;
     msg << "Failed to convert '" << str << "' to uint64_t: Value out of range";
     throw exception::Exception(msg.str());
+  } else if (ptr != str.data() + str.size()) {
+    std::ostringstream msg;
+    msg << "Failed to convert '" << str << "' to uint64_t: Extra characters found";
+    throw exception::Exception(msg.str());
   }
+  return value;
 }
 
 double toPGDouble(std::string_view str) {
   if (str.empty()) {
-    std::ostringstream msg;
-    msg << "Failed to convert empty string to double: An empty string is not a valid number";
-    throw exception::Exception(msg.str());
+    throw exception::Exception("Failed to convert empty string to double: An empty string is not a valid number");
   }
-  try {
-    return std::stod(std::string(str));
-  } catch (const std::invalid_argument&) {
+
+  double value;
+  auto [ptr, ec] = std::from_chars(str.data(), str.data() + str.size(), value);
+
+  if (ec == std::errc::invalid_argument) {
     std::ostringstream msg;
     msg << "Failed to convert '" << str << "' to double: Invalid number format";
     throw exception::Exception(msg.str());
-  } catch (const std::out_of_range&) {
+  } else if (ec == std::errc::result_out_of_range) {
     std::ostringstream msg;
     msg << "Failed to convert '" << str << "' to double: Value out of range";
     throw exception::Exception(msg.str());
+  } else if (ptr != str.data() + str.size()) {
+    std::ostringstream msg;
+    msg << "Failed to convert '" << str << "' to double: Extra characters found";
+    throw exception::Exception(msg.str());
   }
+
+  return value;
 }
 
 //------------------------------------------------------------------------------
