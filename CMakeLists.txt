@@ -188,7 +188,6 @@ ELSE(DEFINED PackageOnly)
 
   add_subdirectory(objectstore)
 
-  add_subdirectory(python)
   add_subdirectory(rdbms)
   add_subdirectory(scheduler)
   add_subdirectory(tapeserver)
