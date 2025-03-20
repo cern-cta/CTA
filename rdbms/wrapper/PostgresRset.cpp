@@ -255,7 +255,7 @@ std::optional<std::string> PostgresRset::columnOptionalString(const std::string&
     return std::nullopt;
   }
 
-  return std::optional<std::string>(std::move(PQgetvalue(m_resItr->get(), 0, ifield)));
+  return std::move(std::optional<std::string>(std::move(PQgetvalue(m_resItr->get(), 0, ifield))));
 }
 
 //------------------------------------------------------------------------------
@@ -269,7 +269,7 @@ std::optional<uint8_t> PostgresRset::columnOptionalUint8(const std::string& colN
     return std::nullopt;
   }
   const char* cstrValue = PQgetvalue(m_resItr->get(), 0, ifield);
-  return utils::toPGUint8(std::string_view(cstrValue, PQgetlength(m_resItr->get(), 0, ifield)));
+  return std::move(utils::toPGUint8(std::string_view(cstrValue, PQgetlength(m_resItr->get(), 0, ifield))));
 
   //return utils::toUint8(PQgetvalue(m_resItr->get(), 0, ifield));
 }
@@ -286,7 +286,7 @@ std::optional<uint16_t> PostgresRset::columnOptionalUint16(const std::string& co
   }
 
   const char* cstrValue = PQgetvalue(m_resItr->get(), 0, ifield);
-  return utils::toPGUint16(std::string_view(cstrValue, PQgetlength(m_resItr->get(), 0, ifield)));
+  return std::move(utils::toPGUint16(std::string_view(cstrValue, PQgetlength(m_resItr->get(), 0, ifield))));
 
   //return utils::toUint16(stringValue);
 }
@@ -302,7 +302,7 @@ std::optional<uint32_t> PostgresRset::columnOptionalUint32(const std::string& co
     return std::nullopt;
   }
   const char* cstrValue = PQgetvalue(m_resItr->get(), 0, ifield);
-  return utils::toPGUint32(std::string_view(cstrValue, PQgetlength(m_resItr->get(), 0, ifield)));
+  return std::move(utils::toPGUint32(std::string_view(cstrValue, PQgetlength(m_resItr->get(), 0, ifield))));
 
   //return utils::toUint32(stringValue);
 }
@@ -319,7 +319,7 @@ std::optional<uint64_t> PostgresRset::columnOptionalUint64(const std::string& co
   }
 
   const char* cstrValue = PQgetvalue(m_resItr->get(), 0, ifield);
-  return utils::toPGUint64(std::string_view(cstrValue, PQgetlength(m_resItr->get(), 0, ifield)));
+  return std::move(utils::toPGUint64(std::string_view(cstrValue, PQgetlength(m_resItr->get(), 0, ifield))));
 
 
   //return utils::toUint64(stringValue);
@@ -337,7 +337,7 @@ std::optional<double> PostgresRset::columnOptionalDouble(const std::string& colN
   }
 
   const char* cstrValue = PQgetvalue(m_resItr->get(), 0, ifield);
-  return utils::toPGDouble(std::string_view(cstrValue, PQgetlength(m_resItr->get(), 0, ifield)));
+  return std::move(utils::toPGDouble(std::string_view(cstrValue, PQgetlength(m_resItr->get(), 0, ifield))));
 
   //return utils::toDouble(stringValue);
 }
