@@ -70,7 +70,7 @@ class EncryptionControl {
    * Get script path
    * @return The script path.
    */
-  std::string getScriptPath() const;
+  const std::string & getScriptPath() const;
 
  private:
   bool m_useEncryption; // Wether encryption must be enabled for the tape

@@ -125,7 +125,7 @@ bool EncryptionControl::disable(castor::tape::tapeserver::drive::DriveInterface&
   return m_drive.clearEncryptionKey();
 }
 
-std::string EncryptionControl::getScriptPath() const {
+const std::string & EncryptionControl::getScriptPath() const {
   return m_path;
 };
 
