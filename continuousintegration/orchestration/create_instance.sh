@@ -71,7 +71,6 @@ update_local_cta_chart_dependencies() {
   echo "Updating chart dependencies"
   charts=(
     "common"
-    "rpm-server"
     "auth"
     "catalogue"
     "scheduler"
@@ -248,14 +247,6 @@ create_instance() {
   fi
 
   update_local_cta_chart_dependencies
-
-  # Set up local RPM server so that EOS can download cta-fst-gcd
-  # This is how we get RPMs from our CTA image into the EOS image
-  # Note that we do not wait for it to be fully complete, as the startup is quick enough
-  log_run helm ${helm_command} cta-artifacts helm/rpm-server \
-                                --set image.repository="${cta_image_repository}" \
-                                --set image.tag="${cta_image_tag}" \
-                                --namespace "${namespace}" \
 
   # Note that some of these charts are installed in parallel
   # See README.md for details on the order

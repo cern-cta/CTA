@@ -24,26 +24,6 @@ global:
       spec:
         type: ExternalName
         externalName: {{ include "utils.mgm_fqdn" . }}
-    # Create configmap for the cta-fst-gcd
-    - |
-      apiVersion: v1
-      kind: ConfigMap
-      metadata:
-        name: cfgmap-cta-fst-gcd
-        labels:
-          {{- include "fst.labels" . | nindent 4 }}
-      data:
-        cta-fst-gcd.conf: |
-          [main]
-          log_file = /var/log/eos/fst/cta-fst-gcd.log
-          mgm_host = {{ include "utils.mgm_fqdn" . }}
-          eos_spaces = default
-          eos_space_to_min_free_bytes = default:0
-          gc_age_secs = 1
-          absolute_max_age_secs = 604800
-          query_period_secs = 20
-          main_loop_period_secs = 10
-          xrdsecssskt = /etc/eos.keytab
 
 
 mgm:
@@ -140,40 +120,15 @@ fst:
   - name: TZ
     value: "CET"
 
-  # As we only get to specify 1 custom init container, this container sets up both
-  # the certificates and runs the cta-fst-gcd
-  # Note that init containers with "restartpolicy: Always" are sidecar containers
-  # As a result of this being a sidecar container, the main FST container does not wait for it anymore
-  # This causes it to restart 1 or 2 times at startup since the certificates might not be ready
-  # This is nothing to worry about
   initContainer:
     enabled: true
     script: |
       #!/usr/bin/bash
       /mkcert-ssl.sh
       chown -R daemon:daemon /etc/grid-security/certificates
-      dnf install -y cta-fst-gcd
-      runuser -u daemon -- /usr/bin/cta-fst-gcd --stdout
     volumeMounts:
     - name: grid-security
       mountPath: /etc/grid-security
-    - name: cta-fst-gcd
-      mountPath: /etc/cta/cta-fst-gcd.conf
-      subPath: cta-fst-gcd.conf
-    - name: cta-artifacts-repo
-      mountPath: /etc/yum.repos.d/cta-artifacts.repo
-      subPath: cta-artifacts.repo
-    - name: fst-cfgmap-xrd-cf-fst
-      mountPath: /etc/xrd.cf.fst
-      subPath: xrd.cf.fst
-    - name: eos-sss-keytab-fixedownership
-      mountPath: /etc/eos.keytab
-      subPath: eos.keytab
-    - name: fst-storage
-      # Note that if the storageMountPath in the configuration is updated, this value should change accordingly
-      mountPath: /fst_storage
-    spec:
-      restartPolicy: Always
 
   extraVolumes:
     volumeMounts:
@@ -182,20 +137,11 @@ fst:
     - name: grid-security
       mountPath: /etc/grid-security
       readOnly: true
-
     volumes:
     - name: varlog-tmp
       emptyDir: {}
     - name: grid-security
       emptyDir: {}
-    - name: cta-fst-gcd
-      configMap:
-        name: cfgmap-cta-fst-gcd
-        defaultMode: 0755
-    - name: cta-artifacts-repo
-      configMap:
-        name: cta-artifacts-repo
-        defaultMode: 0755
 
 qdb:
   replicaCount: 1
