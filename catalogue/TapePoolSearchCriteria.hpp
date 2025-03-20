@@ -45,6 +45,11 @@ struct TapePoolSearchCriteria {
     std::optional<std::string> vo;
 
     /**
+    * Set to true if searching for encrypted tape pools.
+    */
+    std::optional<bool> encrypted;
+
+    /**
     * The encryption key name.
     */
     std::optional<std::string> encryptionKeyName;
