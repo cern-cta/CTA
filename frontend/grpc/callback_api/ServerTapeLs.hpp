@@ -28,6 +28,7 @@ class TapeLsWriteReactor : public ::grpc::ServerWriteReactor<cta::xrd::StreamRes
     private:
         std::list<common::dataStructures::Tape> m_tapeList;
         bool m_isHeaderSent; // or could be a static variable in the function NextWrite()
+        cta::xrd::StreamResponse m_response;
 };
 
 void TapeLsWriteReactor::OnDone() {
@@ -88,18 +89,18 @@ TapeLsWriteReactor::TapeLsWriteReactor(cta::catalogue::Catalogue &catalogue, cta
 
 void TapeLsWriteReactor::NextWrite() {
     std::cout << "In TapeLsWriteReactor::NextWrite(), just entered!" << std::endl;
-    cta::xrd::StreamResponse response;
+    m_response.Clear();
     // is this the first item? Then write the header
     if (!m_isHeaderSent) {
         cta::xrd::Response *header = new cta::xrd::Response(); // https://stackoverflow.com/questions/75693340/how-to-set-oneof-field-in-c-grpc-server-and-read-from-client
         std::cout << "header is not sent, sending the header" << std::endl;
         header->set_type(cta::xrd::Response::RSP_SUCCESS);
         header->set_show_header(cta::admin::HeaderType::TAPE_LS);
-        response.set_allocated_header(header); // now the message takes ownership of the allocated object, we don't need to free header
+        m_response.set_allocated_header(header); // now the message takes ownership of the allocated object, we don't need to free header
 
         m_isHeaderSent = true;
         std::cout << "about to call StartWrite on the server side" << std::endl;
-        StartWrite(&response); // this will trigger the OnWriteDone method
+        StartWrite(&m_response); // this will trigger the OnWriteDone method
         std::cout << "called StartWrite on the server" << std::endl;
         return; // because we'll be called in a loop by OnWriteDone
     } else {
@@ -107,7 +108,7 @@ void TapeLsWriteReactor::NextWrite() {
         for(; !m_tapeList.empty(); m_tapeList.pop_front()) {
             // cta::xrd::Data record;
             auto &tape = m_tapeList.front();
-            auto tape_item = response.mutable_data()->mutable_tals_item();
+            auto tape_item = m_response.mutable_data()->mutable_tals_item();
 
             tape_item->set_vid(tape.vid);
             tape_item->set_media_type(tape.mediaType);
@@ -162,7 +163,7 @@ void TapeLsWriteReactor::NextWrite() {
             if (tape.verificationStatus) {
                 tape_item->set_verification_status(tape.verificationStatus.value());
             }
-            StartWrite(&response);
+            StartWrite(&m_response);
             return; // because we will be called in a loop by OnWriteDone()
         } // end for
         // did not write anything
