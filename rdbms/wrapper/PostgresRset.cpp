@@ -255,7 +255,7 @@ std::optional<std::string> PostgresRset::columnOptionalString(const std::string&
     return std::nullopt;
   }
 
-  return std::optional<std::string>(PQgetvalue(m_resItr->get(), 0, ifield));
+  return std::make_optional<std::string>(PQgetvalue(m_resItr->get(), 0, ifield), PQgetlength(m_resItr->get(), 0, ifield));
 }
 
 //------------------------------------------------------------------------------
@@ -269,7 +269,7 @@ std::optional<uint8_t> PostgresRset::columnOptionalUint8(const std::string& colN
     return std::nullopt;
   }
 
-  return utils::toUint8(PQgetvalue(m_resItr->get(), 0, ifield));
+  return utils::toPGUint8(std::string_view(PQgetvalue(m_resItr->get(), 0, ifield), PQgetlength(m_resItr->get(), 0, ifield)));
 }
 
 //------------------------------------------------------------------------------
@@ -283,14 +283,7 @@ std::optional<uint16_t> PostgresRset::columnOptionalUint16(const std::string& co
     return std::nullopt;
   }
 
-  const std::string stringValue(PQgetvalue(m_resItr->get(), 0, ifield));
-
-  if (!utils::isValidUInt(stringValue)) {
-    throw exception::Exception(std::string("Column ") + colName + " contains the value " + stringValue +
-                               " which is not a valid unsigned integer");
-  }
-
-  return utils::toUint16(stringValue);
+  return utils::toPGUint16(std::string_view(PQgetvalue(m_resItr->get(), 0, ifield), PQgetlength(m_resItr->get(), 0, ifield)));
 }
 
 //------------------------------------------------------------------------------
@@ -304,14 +297,7 @@ std::optional<uint32_t> PostgresRset::columnOptionalUint32(const std::string& co
     return std::nullopt;
   }
 
-  const std::string stringValue(PQgetvalue(m_resItr->get(), 0, ifield));
-
-  if (!utils::isValidUInt(stringValue)) {
-    throw exception::Exception(std::string("Column ") + colName + " contains the value " + stringValue +
-                               " which is not a valid unsigned integer");
-  }
-
-  return utils::toUint32(stringValue);
+  return utils::toPGUint32(std::string_view(PQgetvalue(m_resItr->get(), 0, ifield), PQgetlength(m_resItr->get(), 0, ifield)));
 }
 
 //------------------------------------------------------------------------------
@@ -325,14 +311,7 @@ std::optional<uint64_t> PostgresRset::columnOptionalUint64(const std::string& co
     return std::nullopt;
   }
 
-  const std::string stringValue(PQgetvalue(m_resItr->get(), 0, ifield));
-
-  if (!utils::isValidUInt(stringValue)) {
-    throw exception::Exception(std::string("Column ") + colName + " contains the value " + stringValue +
-                               " which is not a valid unsigned integer");
-  }
-
-  return utils::toUint64(stringValue);
+  return utils::toPGUint64(std::string_view(PQgetvalue(m_resItr->get(), 0, ifield), PQgetlength(m_resItr->get(), 0, ifield)));
 }
 
 //------------------------------------------------------------------------------
@@ -346,14 +325,7 @@ std::optional<double> PostgresRset::columnOptionalDouble(const std::string& colN
     return std::nullopt;
   }
 
-  const std::string stringValue(PQgetvalue(m_resItr->get(), 0, ifield));
-
-  if (!utils::isValidDecimal(stringValue)) {
-    throw exception::Exception(std::string("Column ") + colName + " contains the value " + stringValue +
-                               " which is not a valid decimal");
-  }
-
-  return utils::toDouble(stringValue);
+  return utils::toPGDouble(std::string_view(PQgetvalue(m_resItr->get(), 0, ifield), PQgetlength(m_resItr->get(), 0, ifield)));
 }
 
 //------------------------------------------------------------------------------
