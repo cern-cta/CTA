@@ -336,11 +336,11 @@ test_assert || exit 1
 
 # Tape Pool (tp)
 test_start "tape pool" "tp"
-test_and_check_cmd "Adding tape pool 'cta_admin_test'" "${command}" "add" "-n 'cta_admin_test' --vo vo -p 0 -e false -m 'Test tp cmd'"\
-  'select(.name=="cta_admin_test" and .vo=="vo" and .numPartialTapes=="0" and .encrypt==false and .comment=="Test tp cmd") | .vo'\
+test_and_check_cmd "Adding tape pool 'cta_admin_test'" "${command}" "add" "-n 'cta_admin_test' --vo vo -p 0 -m 'Test tp cmd'"\
+  'select(.name=="cta_admin_test" and .vo=="vo" and .numPartialTapes=="0" and .encrypt==false and .encryptionKeyName="" and .comment=="Test tp cmd") | .vo'\
   "1" "adding tape pool 'cta_admin_test'" || exit 1
-test_and_check_cmd "Changing tape pool 'cta_admin_test'" "${command}" "ch" "-n 'cta_admin_test' -e true"\
-  'select(.name=="cta_admin_test" and .encrypt==true) | .vo'\
+test_and_check_cmd "Changing tape pool 'cta_admin_test'" "${command}" "ch" "-n 'cta_admin_test' -k encrypt_key_name"\
+  'select(.name=="cta_admin_test" and .encrypt==true and .encryptionKeyName="encrypt_key_name") | .vo'\
   "1" "changing tape pool 'cta_admin_test'" || exit 1
 test_command "Removing tape pool 'cta_admin_test'" "${command}" "rm" "-n 'cta_admin_test'" || exit 1
 test_assert|| exit 1
