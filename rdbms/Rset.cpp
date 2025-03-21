@@ -113,7 +113,7 @@ std::string Rset::columnString(const std::string& colName) const {
       throw InvalidResultSet("This result set is invalid");
     }
 
-    if (const auto && col = columnOptionalString(colName); col) {
+    if (const auto col = columnOptionalString(colName); col) {
       return *col;
     }
 
@@ -133,7 +133,7 @@ uint8_t Rset::columnUint8(const std::string& colName) const {
       throw InvalidResultSet("This result set is invalid");
     }
 
-    if (const auto && col = columnOptionalUint8(colName); col) {
+    if (const auto col = columnOptionalUint8(colName); col) {
       return *col;
     }
 
@@ -153,7 +153,7 @@ uint16_t Rset::columnUint16(const std::string& colName) const {
       throw InvalidResultSet("This result set is invalid");
     }
 
-    if (const auto && col = columnOptionalUint16(colName); col) {
+    if (const auto col = columnOptionalUint16(colName); col) {
       return *col;
     }
 
@@ -173,7 +173,7 @@ uint32_t Rset::columnUint32(const std::string& colName) const {
       throw InvalidResultSet("This result set is invalid");
     }
 
-    if (const auto && col = columnOptionalUint32(colName); col) {
+    if (const auto col = columnOptionalUint32(colName); col) {
       return *col;
     }
 
@@ -193,7 +193,7 @@ uint64_t Rset::columnUint64(const std::string& colName) const {
       throw InvalidResultSet("This result set is invalid");
     }
 
-    if (const auto && col = columnOptionalUint64(colName); col) {
+    if (const auto col = columnOptionalUint64(colName); col) {
       return *col;
     }
 
@@ -213,7 +213,7 @@ bool Rset::columnBool(const std::string& colName) const {
       throw InvalidResultSet("This result set is invalid");
     }
 
-    if (const auto && col = columnOptionalBool(colName); col) {
+    if (const auto col = columnOptionalBool(colName); col) {
       return *col;
     }
 
