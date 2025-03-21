@@ -115,7 +115,7 @@ std::string Rset::columnString(const std::string& colName) const {
 
     const std::optional<std::string> col = columnOptionalString(colName);
     if (col) {
-      return col.value();
+      return std::move(*col);
     } else {
       throw NullDbValue(std::string("Database column ") + colName + " contains a null value");
     }
@@ -136,7 +136,7 @@ uint8_t Rset::columnUint8(const std::string& colName) const {
 
     const std::optional<uint8_t> col = columnOptionalUint8(colName);
     if (col) {
-      return col.value();
+      return std::move(*col);
     } else {
       throw NullDbValue(std::string("Database column ") + colName + " contains a null value");
     }
@@ -157,7 +157,7 @@ uint16_t Rset::columnUint16(const std::string& colName) const {
 
     const std::optional<uint16_t> col = columnOptionalUint16(colName);
     if (col) {
-      return col.value();
+      return std::move(*col);
     } else {
       throw NullDbValue(std::string("Database column ") + colName + " contains a null value");
     }
@@ -178,7 +178,7 @@ uint32_t Rset::columnUint32(const std::string& colName) const {
 
     const std::optional<uint32_t> col = columnOptionalUint32(colName);
     if (col) {
-      return col.value();
+      return std::move(*col);
     } else {
       throw NullDbValue(std::string("Database column ") + colName + " contains a null value");
     }
@@ -199,7 +199,7 @@ uint64_t Rset::columnUint64(const std::string& colName) const {
 
     const std::optional<uint64_t> col = columnOptionalUint64(colName);
     if (col) {
-      return col.value();
+      return std::move(*col);
     } else {
       throw NullDbValue(std::string("Database column ") + colName + " contains a null value");
     }
@@ -220,7 +220,7 @@ bool Rset::columnBool(const std::string& colName) const {
 
     const std::optional<bool> col = columnOptionalBool(colName);
     if (col) {
-      return col.value();
+      return std::move(*col);
     } else {
       throw NullDbValue(std::string("Database column ") + colName + " contains a null value");
     }
@@ -367,7 +367,7 @@ double Rset::columnDouble(const std::string& colName) const {
 
     const std::optional<double> col = columnOptionalDouble(colName);
     if (col) {
-      return col.value();
+      return std::move(*col);
     } else {
       throw NullDbValue(std::string("Database column ") + colName + " contains a null value");
     }
