@@ -49,11 +49,17 @@ public:
     // with a Completion Queue, we would have a state machine transitioning header -> data
     // do I need to check for header/data here?
     virtual void OnReadDone(bool ok) override {
-        if (ok) {
+        std::cout << "In CtaAdminCmdStream, inside OnReadDone() " << std::endl;
+        if (!ok) {
+            std::cout << "Something went wrong with reading the response in the client" << std::endl;
+            // StartRead(&m_response); // no, don't do this, we are just getting in an endless loop
+        } else {
             // if this is the header, print the formatted header I guess?
             if (m_response.has_header()) {
+                std::cout << "We received the header on the client side " << std::endl;
                 switch (m_response.header().type()) {
                     case cta::xrd::Response::RSP_SUCCESS:
+                        std::cout << "The header type was set to SUCCESS" << std::endl;
                         switch (m_response.header().show_header()) {
                             case cta::admin::HeaderType::TAPE_LS:
                                 m_textFormatter.printTapeLsHeader();
@@ -66,15 +72,21 @@ public:
                                 break;
 
                         }
+                        break;
                     case cta::xrd::Response::RSP_ERR_PROTOBUF:
+                        [[fallthrough]];
                     case cta::xrd::Response::RSP_ERR_USER:
+                        [[fallthrough]];
                     case cta::xrd::Response::RSP_ERR_CTA:
+                        [[fallthrough]];
                     default:
+                        std::cout << "The header type was NOT set to SUCCESS" << std::endl;
                         break;
                         // strErrorMsg = m_response.header().message_txt();
                         // need to log an ERROR here, but figure out later how to do this
                 }
             } else if (m_response.has_data()) {
+                std::cout << "We received data on the client side" << std::endl;
                 switch (m_response.data().data_case()) {
                     case cta::xrd::Data::kTalsItem:
                     {
@@ -98,10 +110,14 @@ public:
         } // if (ok)
     }
 
-    CtaAdminClientReadReactor(std::unique_ptr<cta::xrd::CtaRpcStream::Stub> client_stub, const cta::xrd::Request* request) {
+    CtaAdminClientReadReactor(cta::xrd::CtaRpcStream::Stub* client_stub, const cta::xrd::Request* request) {
         // or Otherwise, I can have a generic method
+        setenv("GRPC_VERBOSITY", "debug", 1);
+        setenv("GRPC_TRACE", "all", 1);
+
         std::cout << "In CtaAdminClientReadReactor, about to call the async GenericAdminStream" << std::endl;
         client_stub->async()->GenericAdminStream(&m_context, request, this);
+        std::cout << "Started the request to the server by calling GenericAdminStream" << std::endl;
         // switch (cmd_pair(request.admincmd().cmd(), request.admincmd().subcmd())) {
         //     case cmd_pair(cta::admin::AdminCmd::CMD_TAPE, cta::admin::AdminCmd::SUBCMD_LS):
         //         stub->async()->TapeLs(context, request, this); 
@@ -111,7 +127,9 @@ public:
         //         break;
         // }
         StartRead(&m_response); // where to store the received response?
+        std::cout << "In CtaAdminClientReadReactor, called startRead" << std::endl;
         StartCall(); // activate the RPC!
+        std::cout << "In CtaAdminClientReadReactor, called StartCall()" << std::endl;
     }
     // This method I will put in a separate class, that will inherit from CtaAdminClientReactor
     // void ProcessTapeLs() {

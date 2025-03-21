@@ -163,8 +163,13 @@ void CtaAdminCmdStreaming::send() {
 
   // we could also have the switch-case logic inside the ClientReadReactor?
   try {
-    auto client_reactor = CtaAdminClientReadReactor(std::move(client_stub), &m_request);
+    auto client_reactor = CtaAdminClientReadReactor(client_stub.get(), &m_request);
     status = client_reactor.Await();
+    if (status.ok()) {
+      std::cout << "rpc call succeeded!" << std::endl;
+    } else {
+      std::cout << "gRPC call failed. Error code: " + std::to_string(status.error_code()) + " Error message: " + status.error_message() << std::endl;
+    }
   } catch (std::exception &ex) {
     // what to do in catch? Maybe print an error?
     std::cout << "An exception was thrown in CtaAdminClientReactor" << std::endl;

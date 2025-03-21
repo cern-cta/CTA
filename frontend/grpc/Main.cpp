@@ -36,6 +36,7 @@
 #include <getopt.h>
 #include <fstream>
 #include <grpcpp/ext/proto_server_reflection_plugin.h>
+// #include <glog/logging.h>
 
 using namespace cta;
 using namespace cta::common;

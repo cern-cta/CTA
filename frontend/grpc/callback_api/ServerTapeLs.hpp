@@ -15,9 +15,12 @@ class TapeLsWriteReactor : public ::grpc::ServerWriteReactor<cta::xrd::StreamRes
     public:
         TapeLsWriteReactor(cta::catalogue::Catalogue &catalogue, cta::Scheduler &scheduler, const cta::xrd::Request* request);
         void OnWriteDone(bool ok) override {
+            std::cout << "In TapeLsWriteReactor, we are inside OnWriteDone" << std::endl;
             if (!ok) {
+                std::cout << "Unexpected failure in OnWriteDone" << std::endl;
                 Finish(Status(::grpc::StatusCode::UNKNOWN, "Unexpected Failure in OnWriteDone"));
             }
+            std::cout << "Calling NextWrite inside server's OnWriteDone" << std::endl;
             NextWrite();
         }
         void OnDone() override;
@@ -28,6 +31,7 @@ class TapeLsWriteReactor : public ::grpc::ServerWriteReactor<cta::xrd::StreamRes
 };
 
 void TapeLsWriteReactor::OnDone() {
+    std::cout << "In TapeLsWriteReactor::OnDone(), about to delete this object" << std::endl;
     // add a log line here
     delete this;
 }
@@ -40,6 +44,9 @@ TapeLsWriteReactor::TapeLsWriteReactor(cta::catalogue::Catalogue &catalogue, cta
     // all this will go into a common method in a base class called
     // getTapesList or something
     using namespace cta::admin;
+
+    setenv("GRPC_VERBOSITY", "debug", 1);
+    setenv("GRPC_TRACE", "all", 1); 
 
     std::cout << "In TapeLsWriteReactor constructor, just entered!" << std::endl;
 
@@ -64,14 +71,17 @@ TapeLsWriteReactor::TapeLsWriteReactor(cta::catalogue::Catalogue &catalogue, cta
     searchCriteria.diskFileIds         = requestMsg.getOptional(OptionStrList::FILE_ID,                    &has_any);
     auto stateOpt                      = requestMsg.getOptional(OptionString::STATE,                       &has_any);
     if(stateOpt){
-    searchCriteria.state = common::dataStructures::Tape::stringToState(stateOpt.value(), true);
+        searchCriteria.state = common::dataStructures::Tape::stringToState(stateOpt.value(), true);
     }
     if(!(requestMsg.hasFlag(OptionBoolean::ALL) || has_any)) {
-    throw cta::exception::UserError("Must specify at least one search option, or --all");
+        std::cout << "The --all flag was not specified, will throw" << std::endl;
+        throw cta::exception::UserError("Must specify at least one search option, or --all");
     } else if(requestMsg.hasFlag(OptionBoolean::ALL) && has_any) {
-    throw cta::exception::UserError("Cannot specify --all together with other search options");
+        std::cout << "The --all flag was specified together with other search options, will throw" << std::endl;
+        throw cta::exception::UserError("Cannot specify --all together with other search options");
     }
 
+    std::cout << "Calling getTapes to populate the m_tapeList" << std::endl;
     m_tapeList = catalogue.Tape()->getTapes(searchCriteria);
     NextWrite();
 }
@@ -81,12 +91,19 @@ void TapeLsWriteReactor::NextWrite() {
     cta::xrd::StreamResponse response;
     // is this the first item? Then write the header
     if (!m_isHeaderSent) {
-        response.mutable_header()->set_type(cta::xrd::Response::RSP_SUCCESS);
-        response.mutable_header()->set_show_header(cta::admin::HeaderType::TAPE_LS);
+        cta::xrd::Response *header = new cta::xrd::Response(); // https://stackoverflow.com/questions/75693340/how-to-set-oneof-field-in-c-grpc-server-and-read-from-client
+        std::cout << "header is not sent, sending the header" << std::endl;
+        header->set_type(cta::xrd::Response::RSP_SUCCESS);
+        header->set_show_header(cta::admin::HeaderType::TAPE_LS);
+        response.set_allocated_header(header); // now the message takes ownership of the allocated object, we don't need to free header
+
         m_isHeaderSent = true;
+        std::cout << "about to call StartWrite on the server side" << std::endl;
         StartWrite(&response); // this will trigger the OnWriteDone method
+        std::cout << "called StartWrite on the server" << std::endl;
         return; // because we'll be called in a loop by OnWriteDone
     } else {
+        std::cout << "header was sent, now entering the loop to send the data" << std::endl;
         for(; !m_tapeList.empty(); m_tapeList.pop_front()) {
             // cta::xrd::Data record;
             auto &tape = m_tapeList.front();
@@ -150,6 +167,7 @@ void TapeLsWriteReactor::NextWrite() {
         } // end for
         // did not write anything
         if (m_tapeList.empty()) {
+            std::cout << "Finishing the call on the server side" << std::endl;
             // Finish the call
             Finish(::grpc::Status::OK);
         }
