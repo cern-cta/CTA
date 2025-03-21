@@ -154,6 +154,7 @@ const uint32_t TEST_GROUP_2 = 9754;
     const bool logicalLibraryIsDisabled = false;
     std::optional<std::string> physicalLibraryName;
     const std::string tapePoolName = "tape_pool_name";
+    const std::string encryptionKeyName = "encryption_key_name";
     const std::list<std::string> supply_list;
     const bool fullValue = false;
     const std::string createTapeComment = "Create tape";
@@ -164,7 +165,7 @@ const uint32_t TEST_GROUP_2 = 9754;
     m_catalogue->VO()->createVirtualOrganization(admin,vo);
 
     m_catalogue->LogicalLibrary()->createLogicalLibrary(admin, logicalLibraryName, logicalLibraryIsDisabled, physicalLibraryName, "Create logical library");
-    m_catalogue->TapePool()->createTapePool(admin, tapePoolName, vo.name, 2, true, supply_list, "Create tape pool");
+    m_catalogue->TapePool()->createTapePool(admin, tapePoolName, vo.name, 2, encryptionKeyName, supply_list, "Create tape pool");
     createMediaType(mediaType);
 
     {
@@ -315,7 +316,7 @@ const uint32_t TEST_GROUP_2 = 9754;
     std::optional<std::string> physicalLibraryName;
     const std::string tapePoolName = "tape_pool_name";
     const uint64_t nbPartialTapes = 2;
-    const bool isEncrypted = true;
+    const std::string encryptionKeyName = "encryption_key_name";
     const std::list<std::string> supply_list;
     const bool fullValue = false;
     const std::string createTapeComment = "Create tape";
@@ -327,7 +328,7 @@ const uint32_t TEST_GROUP_2 = 9754;
     m_catalogue->VO()->createVirtualOrganization(admin,vo);
 
     m_catalogue->LogicalLibrary()->createLogicalLibrary(admin, logicalLibraryName, logicalLibraryIsDisabled, physicalLibraryName, "Create logical library");
-    m_catalogue->TapePool()->createTapePool(admin, tapePoolName, vo.name, nbPartialTapes, isEncrypted, supply_list,
+    m_catalogue->TapePool()->createTapePool(admin, tapePoolName, vo.name, nbPartialTapes, encryptionKeyName, supply_list,
                                             "Create tape pool");
     createMediaType(mediaType);
 

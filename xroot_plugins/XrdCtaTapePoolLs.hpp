@@ -69,6 +69,11 @@ TapePoolLsStream::TapePoolLsStream(const frontend::AdminCmdStream& requestMsg, c
   searchCriteria.name = requestMsg.getOptional(OptionString::TAPE_POOL);
   searchCriteria.vo = requestMsg.getOptional(OptionString::VO);
   searchCriteria.encrypted = requestMsg.getOptional(OptionBoolean::ENCRYPTED);
+  searchCriteria.encryptionKeyName = requestMsg.getOptional(OptionString::ENCRYPTION_KEY_NAME);
+
+  if(searchCriteria.encrypted && searchCriteria.encryptionKeyName) {
+    throw exception::UserError("Do not request both '--encrypted' and '--encryptionkeyname' at same time.");
+  }
 
   m_tapePoolList = m_catalogue.TapePool()->getTapePools(searchCriteria);
 }
@@ -88,6 +93,7 @@ int TapePoolLsStream::fillBuffer(XrdSsiPb::OStreamBuffer<Data> *streambuf) {
     tp_item->set_capacity_bytes(tp.capacityBytes);
     tp_item->set_data_bytes(tp.dataBytes);
     tp_item->set_encrypt(tp.encryption);
+    tp_item->set_encryption_key_name(tp.encryptionKeyName.value_or(""));
     tp_item->set_supply(tp.supply ? tp.supply.value() : "");
     tp_item->mutable_created()->set_username(tp.creationLog.username);
     tp_item->mutable_created()->set_host(tp.creationLog.host);

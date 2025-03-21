@@ -66,6 +66,12 @@ class EncryptionControl {
    */
   bool disable(castor::tape::tapeserver::drive::DriveInterface &m_drive);
 
+  /**
+   * Get script path
+   * @return The script path.
+   */
+  const std::string & getScriptPath() const;
+
  private:
   bool m_useEncryption; // Wether encryption must be enabled for the tape
   

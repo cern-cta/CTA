@@ -166,7 +166,7 @@ TEST_P(cta_catalogue_MediaTypeTest, deleteMediaType_usedByTapes) {
   cta::log::LogContext dummyLc(m_dummyLog);
   const bool logicalLibraryIsDisabled = false;
   const uint64_t nbPartialTapes = 2;
-  const bool isEncrypted = true;
+  const std::string encryptionKeyName = "encryption_key_name";
   const std::list<std::string> supply;
   std::optional<std::string> physicalLibraryName;
 
@@ -175,7 +175,7 @@ TEST_P(cta_catalogue_MediaTypeTest, deleteMediaType_usedByTapes) {
     "Create logical library");
   m_catalogue->DiskInstance()->createDiskInstance(m_admin, m_diskInstance.name, m_diskInstance.comment);
   m_catalogue->VO()->createVirtualOrganization(m_admin, m_vo);
-  m_catalogue->TapePool()->createTapePool(m_admin, m_tape1.tapePoolName, m_vo.name, nbPartialTapes, isEncrypted, supply,
+  m_catalogue->TapePool()->createTapePool(m_admin, m_tape1.tapePoolName, m_vo.name, nbPartialTapes, encryptionKeyName, supply,
     "Create tape pool");
   m_catalogue->Tape()->createTape(m_admin, m_tape1);
 
@@ -760,7 +760,7 @@ TEST_P(cta_catalogue_MediaTypeTest, getMediaTypeByVid_nonExistentTape) {
 TEST_P(cta_catalogue_MediaTypeTest, getMediaTypeByVid) {
   const bool logicalLibraryIsDisabled= false;
   const uint64_t nbPartialTapes = 2;
-  const bool isEncrypted = true;
+  const std::string encryptionKeyName = "encryption_key_name";
   const std::list<std::string> supply;
   std::optional<std::string> physicalLibraryName;
 
@@ -770,7 +770,7 @@ TEST_P(cta_catalogue_MediaTypeTest, getMediaTypeByVid) {
     "Create logical library");
   m_catalogue->DiskInstance()->createDiskInstance(m_admin, m_diskInstance.name, m_diskInstance.comment);
   m_catalogue->VO()->createVirtualOrganization(m_admin, m_vo);
-  m_catalogue->TapePool()->createTapePool(m_admin, m_tape1.tapePoolName, m_vo.name, nbPartialTapes, isEncrypted, supply,
+  m_catalogue->TapePool()->createTapePool(m_admin, m_tape1.tapePoolName, m_vo.name, nbPartialTapes, encryptionKeyName, supply,
     "Create tape pool");
 
   m_catalogue->Tape()->createTape(m_admin, m_tape1);

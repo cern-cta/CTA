@@ -176,7 +176,6 @@ kubectl --namespace ${NAMESPACE} exec ${CTA_CLI_POD} -c cta-cli -- cta-admin tap
   --name ctasystest                                                    \
   --vo vo                                                              \
   --partialtapesnumber 5                                               \
-  --encrypted false                                                    \
   --comment "ctasystest"
 
 kubectl --namespace ${NAMESPACE} exec ${CTA_CLI_POD} -c cta-cli -- cta-admin storageclass add \
@@ -195,19 +194,16 @@ kubectl --namespace ${NAMESPACE} exec ${CTA_CLI_POD} -c cta-cli -- cta-admin tap
   --name ctasystest_A                                                  \
   --vo vo                                                              \
   --partialtapesnumber 5                                               \
-  --encrypted false                                                    \
   --comment "ctasystest_A"
 kubectl --namespace ${NAMESPACE} exec ${CTA_CLI_POD} -c cta-cli -- cta-admin tapepool add \
   --name ctasystest_B                                                  \
   --vo vo                                                              \
   --partialtapesnumber 5                                               \
-  --encrypted false                                                    \
   --comment "ctasystest_B"
 kubectl --namespace ${NAMESPACE} exec ${CTA_CLI_POD} -c cta-cli -- cta-admin tapepool add \
   --name ctasystest_C                                                  \
   --vo vo                                                              \
   --partialtapesnumber 5                                               \
-  --encrypted false                                                    \
   --comment "ctasystest_C"
 
 kubectl --namespace ${NAMESPACE} exec ${CTA_CLI_POD} -c cta-cli -- cta-admin storageclass add \
