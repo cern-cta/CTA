@@ -38,7 +38,7 @@ public:
                       const std::string& name,
                       const std::string& vo,
                       const uint64_t nbPartialTapes,
-                      const bool encryptionValue,
+                      const std::optional<std::string>& encryptionKeyNameOpt,
                       const std::list<std::string>& supply_list,
                       const std::string& comment) override;
 
@@ -58,7 +58,7 @@ public:
     const std::string &comment) override;
 
   void setTapePoolEncryption(const common::dataStructures::SecurityIdentity &admin, const std::string &name,
-    const bool encryptionValue) override;
+                             const std::string &encryptionKeyName) override;
 
   void modifyTapePoolSupply(const common::dataStructures::SecurityIdentity& admin,
                             const std::string& name,

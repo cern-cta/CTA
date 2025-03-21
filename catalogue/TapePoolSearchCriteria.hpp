@@ -49,6 +49,11 @@ struct TapePoolSearchCriteria {
     */
     std::optional<bool> encrypted;
 
+    /**
+    * The encryption key name.
+    */
+    std::optional<std::string> encryptionKeyName;
+
 }; // struct TapePoolSearchCriteria
 
 } // namespace cta::catalogue

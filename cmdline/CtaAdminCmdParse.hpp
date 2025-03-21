@@ -1092,17 +1092,27 @@ tapepool (tp)
     **ls** shows statistics such as the total number of tapes in the pool and number of free tapes.
   */
   {{AdminCmd::CMD_TAPEPOOL, AdminCmd::SUBCMD_ADD},
-   {opt_tapepool_alias, opt_vo, opt_partialtapes, opt_encrypted, opt_supply.optional(), opt_comment}                         },
+   {opt_tapepool_alias,
+    opt_vo,
+    opt_partialtapes,
+    opt_encrypted.optional(),
+    opt_encryptionkeyname.optional(),
+    opt_supply.optional(),
+    opt_comment}                                                                                                             },
   {{AdminCmd::CMD_TAPEPOOL, AdminCmd::SUBCMD_CH},
    {opt_tapepool_alias,
     opt_vo.optional(),
     opt_partialtapes.optional(),
     opt_encrypted.optional(),
+    opt_encryptionkeyname.optional(),
     opt_supply.optional(),
     opt_comment.optional()}                                                                                                  },
   {{AdminCmd::CMD_TAPEPOOL, AdminCmd::SUBCMD_RM},             {opt_tapepool_alias}                                           },
   {{AdminCmd::CMD_TAPEPOOL, AdminCmd::SUBCMD_LS},
-   {opt_tapepool_alias.optional(), opt_vo.optional(), opt_encrypted.optional()}                                              },
+   {opt_tapepool_alias.optional(),
+    opt_vo.optional(),
+    opt_encrypted.optional(),
+    opt_encryptionkeyname.optional()}                                                                                        },
 
   /**md
 version (v)

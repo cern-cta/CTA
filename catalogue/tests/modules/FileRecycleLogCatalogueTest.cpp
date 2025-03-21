@@ -71,7 +71,7 @@ TEST_P(cta_catalogue_FileRecycleLogTest, reclaimTapeRemovesFilesFromRecycleLog) 
   const std::string tapePoolName1 = "tape_pool_name_1";
   const std::string tapePoolName2 = "tape_pool_name_2";
   const uint64_t nbPartialTapes = 1;
-  const bool isEncrypted = true;
+  const std::string encryptionKeyName = "encryption_key_name";
   const std::list<std::string> supply;
   const std::string diskInstance = m_diskInstance.name;
   std::optional<std::string> physicalLibraryName;
@@ -81,12 +81,12 @@ TEST_P(cta_catalogue_FileRecycleLogTest, reclaimTapeRemovesFilesFromRecycleLog) 
     "Create logical library");
   m_catalogue->DiskInstance()->createDiskInstance(m_admin, m_diskInstance.name, m_diskInstance.comment);
   m_catalogue->VO()->createVirtualOrganization(m_admin, m_vo);
-  m_catalogue->TapePool()->createTapePool(m_admin, tapePoolName1, m_vo.name, nbPartialTapes, isEncrypted, supply,
+  m_catalogue->TapePool()->createTapePool(m_admin, tapePoolName1, m_vo.name, nbPartialTapes, encryptionKeyName, supply,
     "Create tape pool");
   m_catalogue->StorageClass()->createStorageClass(m_admin, m_storageClassSingleCopy);
 
   const std::string tapeDrive = "tape_drive";
-  m_catalogue->TapePool()->createTapePool(m_admin, tapePoolName2, m_vo.name, nbPartialTapes, isEncrypted, supply,
+  m_catalogue->TapePool()->createTapePool(m_admin, tapePoolName2, m_vo.name, nbPartialTapes, encryptionKeyName, supply,
     "Create tape pool");
 
   auto tape1 = m_tape1;
@@ -190,7 +190,7 @@ TEST_P(cta_catalogue_FileRecycleLogTest, filesArePutInTheFileRecycleLogInsteadOf
   const std::string tapePoolName1 = "tape_pool_name_1";
   const std::string tapePoolName2 = "tape_pool_name_2";
   const uint64_t nbPartialTapes = 1;
-  const bool isEncrypted = true;
+  const std::string encryptionKeyName = "encryption_key_name";
   const std::list<std::string> supply;
   const std::string diskInstance = m_diskInstance.name;
   const std::string tapeDrive = "tape_drive";
@@ -201,9 +201,9 @@ TEST_P(cta_catalogue_FileRecycleLogTest, filesArePutInTheFileRecycleLogInsteadOf
     "Create logical library");
   m_catalogue->DiskInstance()->createDiskInstance(m_admin, m_diskInstance.name, m_diskInstance.comment);
   m_catalogue->VO()->createVirtualOrganization(m_admin, m_vo);
-  m_catalogue->TapePool()->createTapePool(m_admin, tapePoolName1, m_vo.name, nbPartialTapes, isEncrypted, supply,
+  m_catalogue->TapePool()->createTapePool(m_admin, tapePoolName1, m_vo.name, nbPartialTapes, encryptionKeyName, supply,
     "Create tape pool");
-  m_catalogue->TapePool()->createTapePool(m_admin, tapePoolName2, m_vo.name, nbPartialTapes, isEncrypted, supply,
+  m_catalogue->TapePool()->createTapePool(m_admin, tapePoolName2, m_vo.name, nbPartialTapes, encryptionKeyName, supply,
     "Create tape pool");
   m_catalogue->StorageClass()->createStorageClass(m_admin, m_storageClassSingleCopy);
 
@@ -423,7 +423,7 @@ TEST_P(cta_catalogue_FileRecycleLogTest, sameFileWrittenToSameTapePutThePrevious
   const std::string tapePoolName1 = "tape_pool_name_1";
   const std::string tapePoolName2 = "tape_pool_name_2";
   const uint64_t nbPartialTapes = 1;
-  const bool isEncrypted = true;
+  const std::string encryptionKeyName = "encryption_key_name";
   const std::list<std::string> supply;
   const std::string diskInstance = m_diskInstance.name;
   const std::string tapeDrive = "tape_drive";
@@ -434,9 +434,9 @@ TEST_P(cta_catalogue_FileRecycleLogTest, sameFileWrittenToSameTapePutThePrevious
     "Create logical library");
   m_catalogue->DiskInstance()->createDiskInstance(m_admin, m_diskInstance.name, m_diskInstance.comment);
   m_catalogue->VO()->createVirtualOrganization(m_admin, m_vo);
-  m_catalogue->TapePool()->createTapePool(m_admin, tapePoolName1, m_vo.name, nbPartialTapes, isEncrypted, supply,
+  m_catalogue->TapePool()->createTapePool(m_admin, tapePoolName1, m_vo.name, nbPartialTapes, encryptionKeyName, supply,
     "Create tape pool");
-  m_catalogue->TapePool()->createTapePool(m_admin, tapePoolName2, m_vo.name, nbPartialTapes, isEncrypted, supply,
+  m_catalogue->TapePool()->createTapePool(m_admin, tapePoolName2, m_vo.name, nbPartialTapes, encryptionKeyName, supply,
     "Create tape pool");
   m_catalogue->StorageClass()->createStorageClass(m_admin, m_storageClassSingleCopy);
 
@@ -502,7 +502,7 @@ TEST_P(cta_catalogue_FileRecycleLogTest, RestoreTapeFileCopy) {
   const std::string tapePoolName1 = "tape_pool_name_1";
   const std::string tapePoolName2 = "tape_pool_name_2";
   const uint64_t nbPartialTapes = 1;
-  const bool isEncrypted = true;
+  const std::string encryptionKeyName = "encryption_key_name";
   const std::list<std::string> supply;
   const std::string diskInstance = m_diskInstance.name;
   const std::string tapeDrive = "tape_drive";
@@ -514,9 +514,9 @@ TEST_P(cta_catalogue_FileRecycleLogTest, RestoreTapeFileCopy) {
     "Create logical library");
   m_catalogue->DiskInstance()->createDiskInstance(m_admin, m_diskInstance.name, m_diskInstance.comment);
   m_catalogue->VO()->createVirtualOrganization(m_admin, m_vo);
-  m_catalogue->TapePool()->createTapePool(m_admin, tapePoolName1, m_vo.name, nbPartialTapes, isEncrypted, supply,
+  m_catalogue->TapePool()->createTapePool(m_admin, tapePoolName1, m_vo.name, nbPartialTapes, encryptionKeyName, supply,
     "Create tape pool");
-  m_catalogue->TapePool()->createTapePool(m_admin, tapePoolName2, m_vo.name, nbPartialTapes, isEncrypted, supply,
+  m_catalogue->TapePool()->createTapePool(m_admin, tapePoolName2, m_vo.name, nbPartialTapes, encryptionKeyName, supply,
     "Create tape pool");
   m_catalogue->StorageClass()->createStorageClass(m_admin, m_storageClassDualCopy);
 
@@ -656,7 +656,7 @@ TEST_P(cta_catalogue_FileRecycleLogTest, RestoreRewrittenTapeFileCopyFails) {
   const std::string tapePoolName1 = "tape_pool_name_1";
   const std::string tapePoolName2 = "tape_pool_name_2";
   const uint64_t nbPartialTapes = 1;
-  const bool isEncrypted = true;
+  const std::string encryptionKeyName = "encryption_key_name";
   const std::list<std::string> supply;
   const std::string diskInstance = m_diskInstance.name;
   const std::string tapeDrive = "tape_drive";
@@ -668,9 +668,9 @@ TEST_P(cta_catalogue_FileRecycleLogTest, RestoreRewrittenTapeFileCopyFails) {
     "Create logical library");
   m_catalogue->DiskInstance()->createDiskInstance(m_admin, m_diskInstance.name, m_diskInstance.comment);
   m_catalogue->VO()->createVirtualOrganization(m_admin, m_vo);
-  m_catalogue->TapePool()->createTapePool(m_admin, tapePoolName1, m_vo.name, nbPartialTapes, isEncrypted, supply,
+  m_catalogue->TapePool()->createTapePool(m_admin, tapePoolName1, m_vo.name, nbPartialTapes, encryptionKeyName, supply,
     "Create tape pool");
-  m_catalogue->TapePool()->createTapePool(m_admin, tapePoolName2, m_vo.name, nbPartialTapes, isEncrypted, supply,
+  m_catalogue->TapePool()->createTapePool(m_admin, tapePoolName2, m_vo.name, nbPartialTapes, encryptionKeyName, supply,
     "Create tape pool");
   m_catalogue->StorageClass()->createStorageClass(m_admin, m_storageClassDualCopy);
 
@@ -833,7 +833,7 @@ TEST_P(cta_catalogue_FileRecycleLogTest, RestoreTapeFileCopyDeletedTwice) {
   const std::string tapePoolNameA = "tape_pool_name_A";
   const std::string tapePoolNameB = "tape_pool_name_B";
   const uint64_t nbPartialTapes = 1;
-  const bool isEncrypted = true;
+  const std::string encryptionKeyName = "encryption_key_name";
   const std::list<std::string> supply;
   const std::string diskInstance = m_diskInstance.name;
   const std::string tapeDrive = "tape_drive";
@@ -846,9 +846,9 @@ TEST_P(cta_catalogue_FileRecycleLogTest, RestoreTapeFileCopyDeletedTwice) {
                                                       "Create logical library");
   m_catalogue->DiskInstance()->createDiskInstance(m_admin, m_diskInstance.name, m_diskInstance.comment);
   m_catalogue->VO()->createVirtualOrganization(m_admin, m_vo);
-  m_catalogue->TapePool()->createTapePool(m_admin, tapePoolNameA, m_vo.name, nbPartialTapes, isEncrypted, supply,
+  m_catalogue->TapePool()->createTapePool(m_admin, tapePoolNameA, m_vo.name, nbPartialTapes, encryptionKeyName, supply,
                                           "Create tape pool");
-  m_catalogue->TapePool()->createTapePool(m_admin, tapePoolNameB, m_vo.name, nbPartialTapes, isEncrypted, supply,
+  m_catalogue->TapePool()->createTapePool(m_admin, tapePoolNameB, m_vo.name, nbPartialTapes, encryptionKeyName, supply,
                                           "Create tape pool");
   m_catalogue->StorageClass()->createStorageClass(m_admin, m_storageClassDualCopy);
 
@@ -1055,7 +1055,7 @@ TEST_P(cta_catalogue_FileRecycleLogTest, RestoreVariousDeletedTapeFileCopies) {
   const std::string tapePoolName2 = "tape_pool_name_2";
   const std::string tapePoolName3 = "tape_pool_name_3";
   const uint64_t nbPartialTapes = 1;
-  const bool isEncrypted = true;
+  const std::string encryptionKeyName = "encryption_key_name";
   const std::list<std::string> supply;
   const std::string diskInstance = m_diskInstance.name;
   const std::string tapeDrive = "tape_drive";
@@ -1067,11 +1067,11 @@ TEST_P(cta_catalogue_FileRecycleLogTest, RestoreVariousDeletedTapeFileCopies) {
     "Create logical library");
   m_catalogue->DiskInstance()->createDiskInstance(m_admin, m_diskInstance.name, m_diskInstance.comment);
   m_catalogue->VO()->createVirtualOrganization(m_admin, m_vo);
-  m_catalogue->TapePool()->createTapePool(m_admin, tapePoolName1, m_vo.name, nbPartialTapes, isEncrypted, supply,
+  m_catalogue->TapePool()->createTapePool(m_admin, tapePoolName1, m_vo.name, nbPartialTapes, encryptionKeyName, supply,
     "Create tape pool");
-  m_catalogue->TapePool()->createTapePool(m_admin, tapePoolName2, m_vo.name, nbPartialTapes, isEncrypted, supply,
+  m_catalogue->TapePool()->createTapePool(m_admin, tapePoolName2, m_vo.name, nbPartialTapes, encryptionKeyName, supply,
     "Create tape pool");
-  m_catalogue->TapePool()->createTapePool(m_admin, tapePoolName3, m_vo.name, nbPartialTapes, isEncrypted, supply,
+  m_catalogue->TapePool()->createTapePool(m_admin, tapePoolName3, m_vo.name, nbPartialTapes, encryptionKeyName, supply,
     "Create tape pool");
   m_catalogue->StorageClass()->createStorageClass(m_admin, m_storageClassTripleCopy);
 
@@ -1246,7 +1246,7 @@ TEST_P(cta_catalogue_FileRecycleLogTest, RestoreArchiveFileAndCopy) {
   const std::string tapePoolName1 = "tape_pool_name_1";
   const std::string tapePoolName2 = "tape_pool_name_2";
   const uint64_t nbPartialTapes = 1;
-  const bool isEncrypted = true;
+  const std::string encryptionKeyName = "encryption_key_name";
   const std::list<std::string> supply;
   const std::string diskInstance = m_diskInstance.name;
   const std::string tapeDrive = "tape_drive";
@@ -1257,8 +1257,8 @@ TEST_P(cta_catalogue_FileRecycleLogTest, RestoreArchiveFileAndCopy) {
   m_catalogue->LogicalLibrary()->createLogicalLibrary(m_admin, m_tape1.logicalLibraryName, logicalLibraryIsDisabled, physicalLibraryName, "Create logical library");
   m_catalogue->DiskInstance()->createDiskInstance(m_admin, m_diskInstance.name, m_diskInstance.comment);
   m_catalogue->VO()->createVirtualOrganization(m_admin, m_vo);
-  m_catalogue->TapePool()->createTapePool(m_admin, tapePoolName1, m_vo.name, nbPartialTapes, isEncrypted, supply, "Create tape pool");
-  m_catalogue->TapePool()->createTapePool(m_admin, tapePoolName2, m_vo.name, nbPartialTapes, isEncrypted, supply, "Create tape pool");
+  m_catalogue->TapePool()->createTapePool(m_admin, tapePoolName1, m_vo.name, nbPartialTapes, encryptionKeyName, supply, "Create tape pool");
+  m_catalogue->TapePool()->createTapePool(m_admin, tapePoolName2, m_vo.name, nbPartialTapes, encryptionKeyName, supply, "Create tape pool");
   m_catalogue->StorageClass()->createStorageClass(m_admin, m_storageClassDualCopy);
 
   auto tape1 = m_tape1;

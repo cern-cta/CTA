@@ -116,13 +116,13 @@ TEST_P(cta_catalogue_VirtualOrganizationTest, deleteVirtualOrganization) {
 TEST_P(cta_catalogue_VirtualOrganizationTest, deleteVirtualOrganizationUsedByTapePool) {
   const std::string tapePoolName = "tape_pool";
   const uint64_t nbPartialTapes = 2;
-  const bool isEncrypted = true;
+  const std::string encryptionKeyName = "encryption_key_name";
   const std::list<std::string> supply;
   const std::string comment = "Create tape pool";
 
   m_catalogue->DiskInstance()->createDiskInstance(m_admin, m_diskInstance.name, m_diskInstance.comment);
   m_catalogue->VO()->createVirtualOrganization(m_admin, m_vo);
-  m_catalogue->TapePool()->createTapePool(m_admin, m_tape1.tapePoolName, m_vo.name, nbPartialTapes, isEncrypted, supply, comment);
+  m_catalogue->TapePool()->createTapePool(m_admin, m_tape1.tapePoolName, m_vo.name, nbPartialTapes, encryptionKeyName, supply, comment);
 
   ASSERT_THROW(m_catalogue->VO()->deleteVirtualOrganization(m_vo.name), cta::exception::UserError);
 }
@@ -316,14 +316,14 @@ TEST_P(cta_catalogue_VirtualOrganizationTest, modifyVirtualOrganizationDiskInsta
 
 TEST_P(cta_catalogue_VirtualOrganizationTest, getVirtualOrganizationOfTapepool) {
   const uint64_t nbPartialTapes = 2;
-  const bool isEncrypted = true;
+  const std::string encryptionKeyName = "encryption_key_name";
   const std::list<std::string> supply;
 
   cta::common::dataStructures::VirtualOrganization vo = CatalogueTestUtils::getVo();
 
   m_catalogue->DiskInstance()->createDiskInstance(m_admin, m_diskInstance.name, m_diskInstance.comment);
   m_catalogue->VO()->createVirtualOrganization(m_admin,vo);
-  m_catalogue->TapePool()->createTapePool(m_admin, m_tape1.tapePoolName, vo.name, nbPartialTapes, isEncrypted, supply,
+  m_catalogue->TapePool()->createTapePool(m_admin, m_tape1.tapePoolName, vo.name, nbPartialTapes, encryptionKeyName, supply,
     "Create tape pool");
 
   cta::common::dataStructures::VirtualOrganization voFromTapepool =
@@ -335,7 +335,7 @@ TEST_P(cta_catalogue_VirtualOrganizationTest, getVirtualOrganizationOfTapepool) 
 
 TEST_P(cta_catalogue_VirtualOrganizationTest, getDefaultVirtualOrganizationForRepacking) {
   const uint64_t nbPartialTapes = 2;
-  const bool isEncrypted = true;
+  const std::string encryptionKeyName = "encryption_key_name";
   const std::list<std::string> supply;
 
   cta::common::dataStructures::VirtualOrganization repackVo = CatalogueTestUtils::getDefaultRepackVo();
@@ -347,8 +347,8 @@ TEST_P(cta_catalogue_VirtualOrganizationTest, getDefaultVirtualOrganizationForRe
   m_catalogue->VO()->createVirtualOrganization(m_admin,userVo1);
   m_catalogue->VO()->createVirtualOrganization(m_admin,repackVo);
   m_catalogue->VO()->createVirtualOrganization(m_admin,userVo2);
-  m_catalogue->TapePool()->createTapePool(m_admin, m_tape1.tapePoolName, userVo1.name, nbPartialTapes, isEncrypted, supply, "Create tape pool");
-  m_catalogue->TapePool()->createTapePool(m_admin, anotherTapePool, userVo2.name, nbPartialTapes, isEncrypted, supply, "Create tape pool");
+  m_catalogue->TapePool()->createTapePool(m_admin, m_tape1.tapePoolName, userVo1.name, nbPartialTapes, encryptionKeyName, supply, "Create tape pool");
+  m_catalogue->TapePool()->createTapePool(m_admin, anotherTapePool, userVo2.name, nbPartialTapes, encryptionKeyName, supply, "Create tape pool");
 
   std::optional<cta::common::dataStructures::VirtualOrganization> defaultVoForRepacking =
           m_catalogue->VO()->getDefaultVirtualOrganizationForRepack();
@@ -362,7 +362,7 @@ TEST_P(cta_catalogue_VirtualOrganizationTest, getDefaultVirtualOrganizationForRe
 
 TEST_P(cta_catalogue_VirtualOrganizationTest, getDefaultVirtualOrganizationForRepackingNoValue) {
   const uint64_t nbPartialTapes = 2;
-  const bool isEncrypted = true;
+  const std::string encryptionKeyName = "encryption_key_name";
   const std::list<std::string> supply;
 
   cta::common::dataStructures::VirtualOrganization userVo1 = CatalogueTestUtils::getVo();
@@ -372,8 +372,8 @@ TEST_P(cta_catalogue_VirtualOrganizationTest, getDefaultVirtualOrganizationForRe
   m_catalogue->DiskInstance()->createDiskInstance(m_admin, m_diskInstance.name, m_diskInstance.comment);
   m_catalogue->VO()->createVirtualOrganization(m_admin,userVo1);
   m_catalogue->VO()->createVirtualOrganization(m_admin,userVo2);
-  m_catalogue->TapePool()->createTapePool(m_admin, m_tape1.tapePoolName, userVo1.name, nbPartialTapes, isEncrypted, supply, "Create tape pool");
-  m_catalogue->TapePool()->createTapePool(m_admin, anotherTapePool, userVo2.name, nbPartialTapes, isEncrypted, supply, "Create tape pool");
+  m_catalogue->TapePool()->createTapePool(m_admin, m_tape1.tapePoolName, userVo1.name, nbPartialTapes, encryptionKeyName, supply, "Create tape pool");
+  m_catalogue->TapePool()->createTapePool(m_admin, anotherTapePool, userVo2.name, nbPartialTapes, encryptionKeyName, supply, "Create tape pool");
 
   auto defaultVoForRepacking = m_catalogue->VO()->getDefaultVirtualOrganizationForRepack();
   ASSERT_FALSE(defaultVoForRepacking.has_value());

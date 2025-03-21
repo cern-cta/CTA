@@ -42,6 +42,7 @@ std::ostream &operator<<(std::ostream &os, const TapePool &obj) {
      << " vo=" << obj.vo.name
      << " nbPartialTapes=" << obj.nbPartialTapes
      << " encryption=" << obj.encryption
+     << " encryptionKeyName=" << obj.encryptionKeyName.value_or("")
      << " nbTapes=" << obj.nbTapes
      << " nbEmptyTapes=" << obj.nbEmptyTapes
      << " nbDisabledTapes=" << obj.nbDisabledTapes

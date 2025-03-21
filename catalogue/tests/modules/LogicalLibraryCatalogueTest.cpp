@@ -289,7 +289,7 @@ TEST_P(cta_catalogue_LogicalLibraryTest, setLogicalLibraryDisabled_false) {
 TEST_P(cta_catalogue_LogicalLibraryTest, deleteLogicalLibrary) {
   const bool libNotToDeleteIsDisabled= false;
   const uint64_t nbPartialTapes = 2;
-  const bool isEncrypted = true;
+  const std::string encryptionKeyName = "encryption_key_name";
   const std::list<std::string> supply;
   const std::string libNotToDeleteComment = "Create logical library to NOT be deleted";
   std::optional<std::string> physicalLibraryName;
@@ -313,7 +313,7 @@ TEST_P(cta_catalogue_LogicalLibraryTest, deleteLogicalLibrary) {
   m_catalogue->MediaType()->createMediaType(m_admin, m_mediaType);
   m_catalogue->DiskInstance()->createDiskInstance(m_admin, m_diskInstance.name, m_diskInstance.comment);
   m_catalogue->VO()->createVirtualOrganization(m_admin, m_vo);
-  m_catalogue->TapePool()->createTapePool(m_admin, m_tape1.tapePoolName, m_vo.name, nbPartialTapes, isEncrypted, supply,
+  m_catalogue->TapePool()->createTapePool(m_admin, m_tape1.tapePoolName, m_vo.name, nbPartialTapes, encryptionKeyName, supply,
     "Create tape pool");
   {
     const auto pools = m_catalogue->TapePool()->getTapePools();
@@ -425,7 +425,7 @@ TEST_P(cta_catalogue_LogicalLibraryTest, deleteLogicalLibrary_non_empty) {
   const bool logicalLibraryIsDisabled= false;
   std::optional<std::string> physicalLibraryName;
   const uint64_t nbPartialTapes = 2;
-  const bool isEncrypted = true;
+  const std::string encryptionKeyName = "encryption_key_name";
   const std::list<std::string> supply;
 
   m_catalogue->MediaType()->createMediaType(m_admin, m_mediaType);
@@ -434,7 +434,7 @@ TEST_P(cta_catalogue_LogicalLibraryTest, deleteLogicalLibrary_non_empty) {
     "Create logical library");
   m_catalogue->DiskInstance()->createDiskInstance(m_admin, m_diskInstance.name, m_diskInstance.comment);
   m_catalogue->VO()->createVirtualOrganization(m_admin, m_vo);
-  m_catalogue->TapePool()->createTapePool(m_admin, m_tape1.tapePoolName, m_vo.name, nbPartialTapes, isEncrypted, supply,
+  m_catalogue->TapePool()->createTapePool(m_admin, m_tape1.tapePoolName, m_vo.name, nbPartialTapes, encryptionKeyName, supply,
     "Create tape pool");
 
   m_catalogue->Tape()->createTape(m_admin, m_tape1);
@@ -816,7 +816,7 @@ TEST_P(cta_catalogue_LogicalLibraryTest, createTape) {
   const bool logicalLibraryIsDisabled= false;
   std::optional<std::string> physicalLibraryName;
   const uint64_t nbPartialTapes = 2;
-  const bool isEncrypted = true;
+  const std::string encryptionKeyName = "encryption_key_name";
   const std::list<std::string> supply;
 
   m_catalogue->MediaType()->createMediaType(m_admin, m_mediaType);
@@ -825,7 +825,7 @@ TEST_P(cta_catalogue_LogicalLibraryTest, createTape) {
     "Create logical library");
   m_catalogue->DiskInstance()->createDiskInstance(m_admin, m_diskInstance.name, m_diskInstance.comment);
   m_catalogue->VO()->createVirtualOrganization(m_admin, m_vo);
-  m_catalogue->TapePool()->createTapePool(m_admin, m_tape1.tapePoolName, m_vo.name, nbPartialTapes, isEncrypted, supply,
+  m_catalogue->TapePool()->createTapePool(m_admin, m_tape1.tapePoolName, m_vo.name, nbPartialTapes, encryptionKeyName, supply,
     "Create tape pool");
   {
     const auto pools = m_catalogue->TapePool()->getTapePools();

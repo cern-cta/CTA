@@ -47,7 +47,7 @@ public:
                               const std::string& name,
                               const std::string& vo,
                               const uint64_t nbPartialTapes,
-                              const bool encryptionValue,
+                              const std::optional<std::string>& encryptionKeyNameOpt,
                               const std::list<std::string>& supply_list,
                               const std::string& comment) = 0;
 
@@ -68,7 +68,7 @@ public:
     const std::string &comment) = 0;
 
   virtual void setTapePoolEncryption(const common::dataStructures::SecurityIdentity &admin, const std::string &name,
-    const bool encryptionValue) = 0;
+                                     const std::string &encryptionKeyName) = 0;
 
   virtual void modifyTapePoolSupply(const common::dataStructures::SecurityIdentity& admin,
                                     const std::string& name,
