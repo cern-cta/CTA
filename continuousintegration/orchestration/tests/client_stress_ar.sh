@@ -77,7 +77,7 @@ exit 1
 }
 
 
-q# Send annotations to Influxdb
+# Send annotations to Influxdb
 annotate() {
   TITLE=$1
   TEXT=$2
