@@ -213,6 +213,17 @@ public:
    */
   void setAutocommitMode(const AutocommitMode autocommitMode) override;
 
+  /**
+   * Skips any DB round-trips when returning connection to the pool
+   * useful for inserts in PostgreSQL in multi-threaded environment
+   */
+  void voidDBCommit() { m_noDBChecks = true; }
+
+  /**
+   * m_noDBChecks allows to skip any DB rount trips when returning connection to the pool.
+   */
+  bool m_noDBChecks = false;
+
 private:
   /**
    * Closes the conneciton, freeing the underlying libpq conneciton.

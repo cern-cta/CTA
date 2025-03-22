@@ -48,6 +48,7 @@ RelationalDB::RelationalDB(const std::string& ownerId,
                            const uint64_t nbConns)
     : m_ownerId(ownerId),
       m_connPool(login, nbConns),
+      m_connPoolInsertOnly(login, nbConns),
       m_catalogue(catalogue),
       m_logger(logger) {
   m_tapeDrivesState = std::make_unique<TapeDrivesCatalogueState>(m_catalogue);
@@ -89,7 +90,8 @@ std::string RelationalDB::queueArchive(const std::string& instanceName,
   // Construct the archive request object
   utils::Timer timeTotal;
   utils::Timer timeGetConn;
-  auto sqlconn = m_connPool.getConn();
+  auto sqlconn = m_connPoolInsertOnly.getConn();
+  sqlconn.voidDBCommit();
   log::ScopedParamContainer params(logContext);
   params.add("timeGetConn", timeGetConn.secs());
   schedulerdb::ArchiveRequest aReq(sqlconn, logContext);
@@ -373,7 +375,8 @@ RelationalDB::queueRetrieve(cta::common::dataStructures::RetrieveRequest& rqst,
     }
     logContext.log(cta::log::INFO, "In schedulerdb::RelationalDB::queueRetrieve(): before sqlconn selection. ");
 
-    auto sqlconn = m_connPool.getConn();
+    auto sqlconn = m_connPoolInsertOnly.getConn();
+    sqlconn.voidDBCommit();
     /// it make a query for every single file to the scheduler db summary stats for existing queues ? no way ... very inefficient
     // to-do option: query in batches and insert VIDs available in the info about the archive file from the catalogue and decide on the best during the getNextJobBatch phase !
     ret.selectedVid = cta::schedulerdb::Helpers::selectBestVid4Retrieve(candidateVids, m_catalogue, sqlconn, false);
