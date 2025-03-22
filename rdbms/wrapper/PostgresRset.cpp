@@ -197,7 +197,7 @@ uint32_t PostgresRset::columnUint32NoOpt(const std::string& colName) const {
 
     const char* cstrValue = PQgetvalue(m_resItr->get(), 0, ifield);
 
-    return utils::toPGUint32(std::string_view(cstrValue, PQgetlength(m_resItr->get(), 0, ifield)));
+    return utils::toUint32(std::string_view(cstrValue, PQgetlength(m_resItr->get(), 0, ifield)));
   } catch (exception::Exception& ex) {
     ex.getMessage().str(std::string(__FUNCTION__) + " failed: " + ex.getMessage().str());
     throw;
