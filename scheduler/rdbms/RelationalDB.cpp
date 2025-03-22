@@ -89,7 +89,7 @@ void RelationalDB::ensureSchedulerConnected(log::LogContext& logContext) {
     while (true) {  // Retry connection loop
       try {
         m_activeQueueConn = std::make_shared<cta::rdbms::Conn>(m_connPool.getConn());
-        if (m_activeConn && m_activeConn->isOpen()) {
+        if (m_activeQueueConn && m_activeQueueConn->isOpen()) {
           logContext.log(log::WARNING, "In RelationalDB::ensureSchedulerConnected(): Database connection re-established.");
           return;
         }
