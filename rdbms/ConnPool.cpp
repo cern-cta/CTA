@@ -59,10 +59,10 @@ Conn ConnPool::getConn() {
     }
     m_nbConnsOnLoan++;
   }
-  if (!connAndStmts->conn->isOpen()) {
-    connAndStmts->conn = m_connFactory->create();
-    connAndStmts->stmtPool = std::make_unique<StmtPool>();
-  }
+  //if (!connAndStmts->conn->isOpen()) {
+  //  connAndStmts->conn = m_connFactory->create();
+  //  connAndStmts->stmtPool = std::make_unique<StmtPool>();
+  //}
   return Conn(std::move(connAndStmts), this);
 }
 
