@@ -102,14 +102,6 @@ gid_t toGid(const std::string& str);
  */
 bool isValidUInt(const std::string& str);
 
-/**
- * Parses the specified string representation of an unsigned 64-bit integer.
- *
- * Please note that "-1" is a valid string and will parse successfully.
- *
- * @return The parsed unsigned 64-bit integer.
- */
-uint64_t toUint64(const std::string& str);
 
 /**
  * Checks if the specified string is a valid decimal.
