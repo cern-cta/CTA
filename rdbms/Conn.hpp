@@ -275,14 +275,6 @@ public:
     return m_connAndStmts->conn.get();
   }
 
-  /**
-   * Skips calling COMMIT when conn.commit() is called
-   * useful for autocommited inserts in PostgreSQL
-   */
-  void banExplicitSqlCommit() {
-    m_connAndStmts->conn->banExplicitSqlCommit();
-  }
-
 private:
 
   /**
