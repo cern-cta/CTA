@@ -265,6 +265,7 @@ private:
   rdbms::ConnPool m_connPool;
   std::shared_ptr<rdbms::Conn> m_activeQueueConn;  // Persistent DB connection for queueing jobs to the DB
   void ensureSchedulerConnected(log::LogContext& lc);  // Helper to check and re-establish the connection
+  cta::threading::Mutex m_activeQueueConnMutex;
   catalogue::Catalogue& m_catalogue;
   log::Logger& m_logger;
   std::unique_ptr<TapeDrivesCatalogueState> m_tapeDrivesState;
