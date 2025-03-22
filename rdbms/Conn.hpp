@@ -138,7 +138,7 @@ public:
    * Rolls back the current transaction.
    */
   void rollback();
-  
+
   /**
    * Returns the names of all the column and their type as a map for the given 
    * table in the database schema.
@@ -273,6 +273,14 @@ public:
    */
   wrapper::ConnWrapper *getConnWrapperPtr() {
     return m_connAndStmts->conn.get();
+  }
+
+  /**
+   * Skips calling COMMIT when conn.commit() is called
+   * useful for autocommited inserts in PostgreSQL
+   */
+  void banExplicitSqlCommit() {
+    m_connAndStmts->conn->banExplicitSqlCommit();
   }
 
 private:

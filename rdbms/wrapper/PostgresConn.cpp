@@ -109,9 +109,13 @@ void PostgresConn::commit()
     // if we're not in a transaction return, otherwise attempt the commit.
     return;
   }
-
-  Postgres::Result res(PQexec(m_pgsqlConn, "COMMIT"));
-  throwDBIfNotStatus(res.get(), PGRES_COMMAND_OK, std::string(__FUNCTION__) + " problem committing the DB transaction");
+  if(m_noSqlCommit == true){
+    // do not commit this time, but revert back
+    m_noSqlCommit = false;
+  } else {
+    Postgres::Result res(PQexec(m_pgsqlConn, "COMMIT"));
+    throwDBIfNotStatus(res.get(), PGRES_COMMAND_OK, std::string(__FUNCTION__) + " problem committing the DB transaction");
+  }
 }
 
 //------------------------------------------------------------------------------
