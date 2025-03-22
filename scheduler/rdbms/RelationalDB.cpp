@@ -90,7 +90,8 @@ std::string RelationalDB::queueArchive(const std::string& instanceName,
   utils::Timer timeTotal;
   utils::Timer timeGetConn;
   auto sqlconn = m_connPool.getConn();
-  log::ScopedParamContainer(logContext).add("timeGetConn", timeGetConn.secs());
+  log::ScopedParamContainer params(logContext);
+  params.add("timeGetConn", timeGetConn.secs());
   schedulerdb::ArchiveRequest aReq(sqlconn, logContext);
 
 
@@ -107,7 +108,7 @@ std::string RelationalDB::queueArchive(const std::string& instanceName,
   aFile.fileSize = request.fileSize;
   aFile.storageClass = request.storageClass;
   aReq.setArchiveFile(std::move(aFile));
-  log::ScopedParamContainer(logContext).add("timeAfileCreation", timeAfileCreation.secs());
+  params.add("timeAfileCreation", timeAfileCreation.secs());
 
   utils::Timer timeSetters;
   aReq.setMountPolicy(criteria.mountPolicy);
@@ -116,7 +117,7 @@ std::string RelationalDB::queueArchive(const std::string& instanceName,
   aReq.setRequester(request.requester);
   aReq.setSrcURL(request.srcURL);
   aReq.setEntryLog(request.creationLog);
-  log::ScopedParamContainer(logContext).add("timeSetters", timeSetters.secs());
+  params.add("timeSetters", timeSetters.secs());
 
   //std::vector<schedulerdb::ArchiveRequest::JobDump> jl;
   //jl.reserve(criteria.copyToPoolMap.size());
@@ -143,14 +144,13 @@ std::string RelationalDB::queueArchive(const std::string& instanceName,
   aReq.insert();
   //sqlconn.reset();
 
-  log::ScopedParamContainer(logContext)
-    .add("fileId", aFile.archiveFileID)
+  params.add("fileId", aFile.archiveFileID)
     .add("diskInstance", aFile.diskInstance)
     .add("diskFilePath", aFile.diskFileInfo.path)
     .add("diskFileId", aFile.diskFileId)
     .add("insertTime", timeInsert.secs())
-    .add("totalTime", timeTotal.secs())
-    .log(log::INFO, "In RelationalDB::queueArchive(): Finished enqueueing request.");
+    .add("totalTime", timeTotal.secs());
+  logContext.log(log::INFO, "In RelationalDB::queueArchive(): Finished enqueueing request.");
   return aReq.getIdStr();
 }
 
