@@ -81,14 +81,14 @@ void RelationalDB::ping() {
   }
 }
 
-void RelationalDB::ensureSchedulerConnected() {
+void RelationalDB::ensureSchedulerConnected(log::LogContext& logContext) {
   // lock not necessary since already required in isOpen
   // std::lock_guard<std::mutex> lock(m_connMutex);
   if (!m_activeQueueConn || !m_activeQueueConn->isOpen()) {
     logContext.log(log::WARNING, "In RelationalDB::ensureSchedulerConnected(): Database connection lost. Attempting to reconnect...");
-    while (true) {  // Retry loop
+    while (true) {  // Retry connection loop
       try {
-        m_activeQueueConn = m_connPool.getConn();  // Reconnect
+        m_activeQueueConn = std::make_shared<cta::rdbms::Conn>(m_connPool.getConn());
         if (m_activeConn && m_activeConn->isOpen()) {
           logContext.log(log::WARNING, "In RelationalDB::ensureSchedulerConnected(): Database connection re-established.");
           return;
@@ -107,7 +107,7 @@ std::string RelationalDB::queueArchive(const std::string& instanceName,
                                        log::LogContext& logContext) {
   // Construct the archive request object
   utils::Timer timeTotal;
-  ensureSchedulerConnected();
+  ensureSchedulerConnected(logContext);
   //auto sqlconn = m_connPool.getConn();
   auto aReq = std::make_unique<schedulerdb::ArchiveRequest>(*m_activeQueueConn, logContext);
 
