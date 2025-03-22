@@ -132,15 +132,22 @@ public:
   bool columnIsNull(const std::string& colName) const;
 
   /**
-   * Testing new PG methods without passing through optionals
-   * and handling the null case within the implementation
-   * These methods do not use columnOptional methods to check
-   * if value is Null and Throw
-   * They are expected to throw directly if the value is null
-   * from within their implementatinos ithout the need
-   * to construct additional optionals in between !
+   * Methods to get values without passing through optionals.
+   * The only downside is that these methods throw exception for NULL
+   * value inside the speciic implementation rather than on the top RSet level
+   * and shall be used mostly only for values where NULL is not expected.
+   * These methods return the converted strings directly from the Postgres memory buffer
+   * and do not have implementations for other DB backends for the moment.
+   * They were introduced in order to increase performance since the same ran with the corresponding
+   * optional methods made the performance 20 times slower. Many tests were run and code adjustments
+   * made in order to minimise string copy in the implementation with optionals,
+   * but none has shown performance increase so far.
+   *
    * @param colName
-   * @return
+   * @return The specified output type based on the converted column string value.
+   * @throw InvalidResultSet if the result is invalid. NullDbValue in case null value is present
+   *        or any other exception
+   *
    */
   uint8_t columnUint8NoOpt(const std::string& colName) const;
   uint16_t columnUint16NoOpt(const std::string& colName) const;

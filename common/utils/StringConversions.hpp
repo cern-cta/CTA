@@ -60,7 +60,7 @@ uint16_t toUint16(std::string_view str);
    * @param str The string.
    * @return The unsigned integer.
    */
-uint32_t toPGUint32(std::string_view str);
+uint32_t toUint32(std::string_view str);
 
 /**
    * Parses the specified string representation of an unsigned 64-bit integer.
