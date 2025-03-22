@@ -36,6 +36,7 @@
 
 #include <vector>
 #include <chrono>
+#include <thread>
 #include <mutex>
 
 namespace cta {
