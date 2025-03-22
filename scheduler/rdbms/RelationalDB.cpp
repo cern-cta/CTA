@@ -379,10 +379,13 @@ RelationalDB::queueRetrieve(cta::common::dataStructures::RetrieveRequest& rqst,
       candidateVids.insert(tf.vid);
     }
     logContext.log(cta::log::INFO, "In schedulerdb::RelationalDB::queueRetrieve(): before sqlconn selection. ");
-    auto sqlconn = m_connPool.getConn();
+    cta::threading::MutexLocker queueConnMutexLock(m_activeQueueConnMutex);
+    ensureSchedulerConnected(logContext);
+
+    //auto sqlconn = m_connPool.getConn();
     /// it make a query for every single file to the scheduler db summary stats for existing queues ? no way ... very inefficient
     // to-do option: query in batches and insert VIDs available in the info about the archive file from the catalogue and decide on the best during the getNextJobBatch phase !
-    ret.selectedVid = cta::schedulerdb::Helpers::selectBestVid4Retrieve(candidateVids, m_catalogue, sqlconn, false);
+    ret.selectedVid = cta::schedulerdb::Helpers::selectBestVid4Retrieve(candidateVids, m_catalogue, *m_activeQueueConn, false);
     logContext.log(cta::log::INFO, "In schedulerdb::RelationalDB::queueRetrieve(): after selectBestVid4Retrieve. ");
 
     uint8_t bestCopyNb = 0;
@@ -399,7 +402,7 @@ RelationalDB::queueRetrieve(cta::common::dataStructures::RetrieveRequest& rqst,
     logContext.log(cta::log::INFO, "In schedulerdb::RelationalDB::queueRetrieve(): after bestCopyNb selection. ");
 
     // In order to queue the job, construct it first in memory.
-    auto rReq = std::make_unique<schedulerdb::RetrieveRequest>(sqlconn, logContext);
+    auto rReq = std::make_unique<schedulerdb::RetrieveRequest>(*m_activeQueueConn, logContext);
     // the order of the following calls in important - we should rewise
     // the whole logic here and metadata object separation
     rReq->setActivityIfNeeded(rqst, criteria);
@@ -438,7 +441,7 @@ RelationalDB::queueRetrieve(cta::common::dataStructures::RetrieveRequest& rqst,
     //}
     rreqMutex.release();
     rReq->insert();
-    sqlconn.reset();
+    //sqlconn.reset();
     log::ScopedParamContainer(logContext)
       .add("totalTime", timeTotal.secs())
       .log(cta::log::INFO, "In RelationalDB::queueRetrieve(): Finished enqueueing request.");
