@@ -89,7 +89,7 @@ void ArchiveRequest::insert() {
   }
   try {
     //m_lc.log(log::DEBUG, "In ArchiveRequest::insert(): before commiting.");
-    m_conn.reset();
+    //m_conn.reset();
     m_lc.log(log::INFO, "In ArchiveRequest::insert(): added jobs to queue.");
   } catch (exception::Exception& ex) {
     log::ScopedParamContainer params(m_lc);
