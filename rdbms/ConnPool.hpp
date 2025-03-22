@@ -37,7 +37,6 @@ class Login;
  */
 class ConnPool {
 public:
-
   /**
    * Constructor.
    *
@@ -46,7 +45,7 @@ public:
    * @param maxNbConns The maximum number of database connections within the
    * pool.
    */
-  ConnPool(const Login &login, const uint64_t maxNbConns);
+  ConnPool(const Login& login, const uint64_t maxNbConns);
 
   CTA_GENERATE_EXCEPTION_CLASS(ConnPoolConfiguredWithZeroConns);
 
@@ -65,8 +64,9 @@ public:
    */
   Conn getConn();
 
-private:
+  uint64_t getNbConnsOnLoan() { return m_nbConnsOnLoan; }
 
+private:
   friend Conn;
 
   /**
@@ -115,7 +115,7 @@ private:
   /**
    * The database connections within the pool.
    */
-  std::list<std::unique_ptr<ConnAndStmts> > m_connsAndStmts;
-}; // class ConnPool
+  std::list<std::unique_ptr<ConnAndStmts>> m_connsAndStmts;
+};  // class ConnPool
 
-} // namespace cta::rdbms
+}  // namespace cta::rdbms

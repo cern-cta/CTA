@@ -111,7 +111,7 @@ public:
   }
 
   std::unique_ptr<RelationalDB> getSchedDB(catalogue::Catalogue& catalogue, log::Logger& log) {
-    const uint64_t nbConns = 10;
+    const uint64_t nbConns = 20;
     return std::make_unique<RelationalDB>(clientProc, log, catalogue, login, nbConns);
   }
 
