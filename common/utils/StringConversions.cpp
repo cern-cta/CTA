@@ -33,9 +33,9 @@ using cta::exception::Exception;
 namespace cta::utils {
 
 //------------------------------------------------------------------------------
-// toPGUint8
+// toUint8
 //------------------------------------------------------------------------------
-uint8_t toPGUint8(std::string_view str) {
+uint8_t toUint8(std::string_view str) {
   if (str.empty()) {
     throw exception::Exception(
       "Failed to convert empty string to uint8_t: An empty string is not a valid unsigned integer");
@@ -63,7 +63,7 @@ uint8_t toPGUint8(std::string_view str) {
 //------------------------------------------------------------------------------
 // toUint16
 //------------------------------------------------------------------------------
-uint16_t toPGUint16(std::string_view str) {
+uint16_t toUint16(std::string_view str) {
   if (str.empty()) {
     throw exception::Exception(
       "Failed to convert empty string to uint16_t: An empty string is not a valid unsigned integer");
@@ -117,7 +117,7 @@ uint32_t toPGUint32(std::string_view str) {
   return value;
 }
 
-uint64_t toPGUint64(std::string_view str) {
+uint64_t toUint64(std::string_view str) {
   if (str.empty()) {
     throw exception::Exception(
       "Failed to convert empty string to uint64_t: An empty string is not a valid unsigned integer");
@@ -141,7 +141,7 @@ uint64_t toPGUint64(std::string_view str) {
   return value;
 }
 
-double toPGDouble(std::string_view str) {
+double toDouble(std::string_view str) {
   if (str.empty()) {
     throw exception::Exception("Failed to convert empty string to double: An empty string is not a valid number");
   }
@@ -164,150 +164,6 @@ double toPGDouble(std::string_view str) {
   }
 
   return value;
-}
-
-//------------------------------------------------------------------------------
-// toUint8
-//------------------------------------------------------------------------------
-uint8_t toUint8(const std::string& str) {
-  if (str.empty()) {
-    std::ostringstream msg;
-    msg << "Failed to convert empty string to uint8_t: An empty string is not"
-           " a valid unsigned integer";
-    throw exception::Exception(msg.str());
-  }
-
-  errno = 0;
-  const long int value = strtol(str.c_str(), (char**) nullptr, 10);
-  const int savedErrno = errno;
-  if (savedErrno) {
-    std::ostringstream msg;
-    msg << "Failed to convert \'" << str << "' to uint8_t: " << errnoToString(savedErrno);
-    throw exception::Exception(msg.str());
-  }
-
-  if (0 > value) {
-    std::ostringstream msg;
-    msg << "Failed to convert \'" << str << "' to uint8_t: Negative number";
-    throw exception::Exception(msg.str());
-  }
-
-  if (255 < value) {
-    std::ostringstream msg;
-    msg << "Failed to convert \'" << str << "' to uint8_t: Number too big";
-    throw exception::Exception(msg.str());
-  }
-
-  return value;
-}
-
-//------------------------------------------------------------------------------
-// toUint16
-//------------------------------------------------------------------------------
-uint16_t toUint16(const std::string& str) {
-  if (str.empty()) {
-    std::ostringstream msg;
-    msg << "Failed to convert empty string to uint16_t: An empty string is not"
-           " a valid unsigned integer";
-    throw exception::Exception(msg.str());
-  }
-
-  errno = 0;
-  const long int value = strtol(str.c_str(), (char**) nullptr, 10);
-  const int savedErrno = errno;
-  if (savedErrno) {
-    std::ostringstream msg;
-    msg << "Failed to convert \'" << str << "' to uint16_t: " << errnoToString(savedErrno);
-    throw exception::Exception(msg.str());
-  }
-
-  if (0 > value) {
-    std::ostringstream msg;
-    msg << "Failed to convert \'" << str << "' to uint16_t: Negative number";
-    throw exception::Exception(msg.str());
-  }
-
-  if (65535 < value) {
-    std::ostringstream msg;
-    msg << "Failed to convert \'" << str << "' to uint16_t: Number too big";
-    throw exception::Exception(msg.str());
-  }
-
-  return value;
-}
-
-//------------------------------------------------------------------------------
-// toUint32
-//------------------------------------------------------------------------------
-uint32_t toUint32(const std::string& str) {
-  if (str.empty()) {
-    std::ostringstream msg;
-    msg << "Failed to convert empty string to uint32_t: An empty string is not"
-           " a valid unsigned integer";
-    throw exception::Exception(msg.str());
-  }
-
-  errno = 0;
-  const long int value = strtol(str.c_str(), (char**) nullptr, 10);
-  const int savedErrno = errno;
-  if (savedErrno) {
-    std::ostringstream msg;
-    msg << "Failed to convert \'" << str << "' to uint32_t: " << errnoToString(savedErrno);
-    throw exception::Exception(msg.str());
-  }
-
-  if (0 > value) {
-    std::ostringstream msg;
-    msg << "Failed to convert \'" << str << "' to uint32_t: Negative number";
-    throw exception::Exception(msg.str());
-  }
-
-  if (4294967295 < value) {
-    std::ostringstream msg;
-    msg << "Failed to convert \'" << str << "' to uint32_t: Number too big";
-    throw exception::Exception(msg.str());
-  }
-
-  return value;
-}
-
-//------------------------------------------------------------------------------
-// toUint64
-//------------------------------------------------------------------------------
-uint64_t toUint64(const std::string& str) {
-  try {
-    try {
-      return std::stoul(str);
-    } catch (std::invalid_argument&) {
-      throw exception::Exception("Invalid uint64");
-    } catch (std::out_of_range&) {
-      throw exception::Exception("Out of range");
-    } catch (std::exception& se) {
-      throw exception::Exception(se.what());
-    }
-  } catch (exception::Exception& ex) {
-    throw exception::Exception(std::string("Failed to parse ") + str +
-                               " as an unsigned 64-bit integer: " + ex.getMessage().str());
-  }
-}
-
-//------------------------------------------------------------------------------
-// toDouble
-//------------------------------------------------------------------------------
-double toDouble(const std::string& str) {
-  try {
-    try {
-      return std::stod(str);
-    } catch (std::invalid_argument&) {
-      throw exception::Exception("Invalid double");
-    } catch (std::out_of_range&) {
-      throw exception::Exception("Out of range");
-    } catch (std::exception& se) {
-      throw exception::Exception(se.what());
-    }
-  } catch (exception::Exception& ex) {
-    throw exception::Exception(std::string("Failed to parse ") + str + " as a double: " + ex.getMessage().str());
-  }
 }
 
 //------------------------------------------------------------------------------

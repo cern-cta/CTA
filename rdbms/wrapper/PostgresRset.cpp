@@ -157,7 +157,7 @@ uint8_t PostgresRset::columnUint8NoOpt(const std::string& colName) const {
     }
 
     const char* cstrValue = PQgetvalue(m_resItr->get(), 0, ifield);
-    return utils::toPGUint8(std::string_view(cstrValue, PQgetlength(m_resItr->get(), 0, ifield)));
+    return utils::toUint8(std::string_view(cstrValue, PQgetlength(m_resItr->get(), 0, ifield)));
   } catch (exception::Exception& ex) {
     ex.getMessage().str(std::string(__FUNCTION__) + " failed: " + ex.getMessage().str());
     throw;
@@ -177,7 +177,7 @@ uint16_t PostgresRset::columnUint16NoOpt(const std::string& colName) const {
 
     const char* cstrValue = PQgetvalue(m_resItr->get(), 0, ifield);
 
-    return utils::toPGUint16(std::string_view(cstrValue, PQgetlength(m_resItr->get(), 0, ifield)));
+    return utils::toUint16(std::string_view(cstrValue, PQgetlength(m_resItr->get(), 0, ifield)));
   } catch (exception::Exception& ex) {
     ex.getMessage().str(std::string(__FUNCTION__) + " failed: " + ex.getMessage().str());
     throw;
@@ -217,7 +217,7 @@ uint64_t PostgresRset::columnUint64NoOpt(const std::string& colName) const {
 
     const char* cstrValue = PQgetvalue(m_resItr->get(), 0, ifield);
 
-    return utils::toPGUint64(std::string_view(cstrValue, PQgetlength(m_resItr->get(), 0, ifield)));
+    return utils::toUint64(std::string_view(cstrValue, PQgetlength(m_resItr->get(), 0, ifield)));
   } catch (exception::Exception& ex) {
     ex.getMessage().str(std::string(__FUNCTION__) + " failed: " + ex.getMessage().str());
     throw;
@@ -237,7 +237,7 @@ double PostgresRset::columnDoubleNoOpt(const std::string& colName) const {
 
     const char* cstrValue = PQgetvalue(m_resItr->get(), 0, ifield);
 
-    return utils::toPGDouble(std::string_view(cstrValue, PQgetlength(m_resItr->get(), 0, ifield)));
+    return utils::toDouble(std::string_view(cstrValue, PQgetlength(m_resItr->get(), 0, ifield)));
   } catch (exception::Exception& ex) {
     ex.getMessage().str(std::string(__FUNCTION__) + " failed: " + ex.getMessage().str());
     throw;
