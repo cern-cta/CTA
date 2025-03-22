@@ -36,12 +36,12 @@ ConnPool::ConnPool(const Login& login, const uint64_t maxNbConns)
 // getConn
 //------------------------------------------------------------------------------
 Conn ConnPool::getConn() {
-  std::unique_ptr<ConnAndStmts> connAndStmts;
 
   if (0 == m_maxNbConns) {
     throw ConnPoolConfiguredWithZeroConns(std::string(__FUNCTION__) +
                                           " failed: ConnPool is configured with zero connections");
   }
+  std::unique_ptr<ConnAndStmts> connAndStmts;
 
   { // artificial scope to limit the lock taken here
     threading::MutexLocker locker(m_connsAndStmtsMutex);
@@ -49,7 +49,6 @@ Conn ConnPool::getConn() {
     while (m_connsAndStmts.empty() && m_nbConnsOnLoan == m_maxNbConns) {
       m_connsAndStmtsCv.wait(locker);
     }
-
     if (m_connsAndStmts.empty()) {
       connAndStmts = std::make_unique<ConnAndStmts>();
       connAndStmts->conn = m_connFactory->create();
@@ -60,14 +59,11 @@ Conn ConnPool::getConn() {
     }
     m_nbConnsOnLoan++;
   }
-  if (connAndStmts->conn->isOpen()) {
-    return Conn(std::move(connAndStmts), this);
-  } else {
-    auto newConnAndStmts = std::make_unique<ConnAndStmts>();
-    newConnAndStmts->conn = m_connFactory->create();
-    newConnAndStmts->stmtPool = std::make_unique<StmtPool>();
-    return Conn(std::move(newConnAndStmts), this);
+  if (!connAndStmts->conn->isOpen()) {
+    connAndStmts->conn = m_connFactory->create();
+    connAndStmts->stmtPool = std::make_unique<StmtPool>();
   }
+  return Conn(std::move(connAndStmts), this);
 }
 
 //------------------------------------------------------------------------------
