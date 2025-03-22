@@ -385,7 +385,7 @@ RelationalDB::queueRetrieve(cta::common::dataStructures::RetrieveRequest& rqst,
     logContext.log(cta::log::INFO, "In schedulerdb::RelationalDB::queueRetrieve(): after bestCopyNb selection. ");
 
     // In order to queue the job, construct it first in memory.
-    auto schedulerdb::RetrieveRequest rReq(sqlconn, logContext);
+    schedulerdb::RetrieveRequest rReq(sqlconn, logContext);
     // the order of the following calls in important - we should rewise
     // the whole logic here and metadata object separation
     rReq.setActivityIfNeeded(rqst, criteria);
