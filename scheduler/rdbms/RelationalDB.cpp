@@ -89,7 +89,6 @@ std::string RelationalDB::queueArchive(const std::string& instanceName,
   // Construct the archive request object
   utils::Timer timeTotal;
   auto sqlconn = m_connPool.getConn();
-  sqlconn.banExplicitSqlCommit();
   schedulerdb::ArchiveRequest aReq(sqlconn, logContext);
 
   // Summarize all as an archiveFile
@@ -367,7 +366,6 @@ RelationalDB::queueRetrieve(cta::common::dataStructures::RetrieveRequest& rqst,
     logContext.log(cta::log::INFO, "In schedulerdb::RelationalDB::queueRetrieve(): before sqlconn selection. ");
 
     auto sqlconn = m_connPool.getConn();
-    sqlconn.banExplicitSqlCommit();
     /// it make a query for every single file to the scheduler db summary stats for existing queues ? no way ... very inefficient
     // to-do option: query in batches and insert VIDs available in the info about the archive file from the catalogue and decide on the best during the getNextJobBatch phase !
     ret.selectedVid = cta::schedulerdb::Helpers::selectBestVid4Retrieve(candidateVids, m_catalogue, sqlconn, false);

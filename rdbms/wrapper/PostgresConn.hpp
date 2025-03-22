@@ -213,18 +213,6 @@ public:
    */
   void setAutocommitMode(const AutocommitMode autocommitMode) override;
 
-  /**
-   * Skips calling COMMIT when conn.commit() is called
-   * useful for autocommited inserts in PostgreSQL
-   */
-  void banExplicitSqlCommit() { m_noSqlCommit = true; }
-
-  /**
-   * m_noSqlCommit allows to skip COMMIT when commit is called
-   * helpful for auto committed inserts during queueing (used only in PostgresConn).
-   */
-  bool m_noSqlCommit = false;
-
 private:
   /**
    * Closes the conneciton, freeing the underlying libpq conneciton.

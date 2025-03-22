@@ -205,11 +205,6 @@ public:
    */
   virtual std::list<std::string> getViewNames() = 0;
 
-  /**
-   * Skips calling COMMIT when conn.commit() is called
-   * useful for autocommited inserts in PostgreSQL
-   */
-  virtual void banExplicitSqlCommit() = 0;
 }; // class ConnWrapper
 
 } // namespace cta::rdbms::wrapper

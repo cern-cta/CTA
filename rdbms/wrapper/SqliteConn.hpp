@@ -226,12 +226,6 @@ public:
    */
   void printSchema(std::ostream& os);
 
-  /**
-   * Skips calling COMMIT when conn.commit() is called
-   * useful for autocommited inserts in PostgreSQL
-   */
-  void banExplicitSqlCommit() { throw exception::Exception("Not Implemented"); }
-
 private:
   /**
    * Mutex used to serialize access to the database connection.
