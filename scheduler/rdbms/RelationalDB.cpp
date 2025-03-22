@@ -132,7 +132,7 @@ std::string RelationalDB::queueArchive(const std::string& instanceName,
 
   utils::Timer timeInsert;
 
-  aReq->insert();
+  aReq.insert();
   //sqlconn.reset();
 
   log::ScopedParamContainer(logContext)
@@ -143,7 +143,7 @@ std::string RelationalDB::queueArchive(const std::string& instanceName,
     .add("insertTime", timeInsert.secs())
     .add("totalTime", timeTotal.secs())
     .log(log::INFO, "In RelationalDB::queueArchive(): Finished enqueueing request.");
-  return aReq->getIdStr();
+  return aReq.getIdStr();
 }
 
 std::map<std::string, std::list<common::dataStructures::ArchiveJob>, std::less<>> RelationalDB::getArchiveJobs() const {
@@ -368,8 +368,7 @@ RelationalDB::queueRetrieve(cta::common::dataStructures::RetrieveRequest& rqst,
     auto sqlconn = m_connPool.getConn();
     /// it make a query for every single file to the scheduler db summary stats for existing queues ? no way ... very inefficient
     // to-do option: query in batches and insert VIDs available in the info about the archive file from the catalogue and decide on the best during the getNextJobBatch phase !
-    ret.selectedVid =
-      cta::schedulerdb::Helpers::selectBestVid4Retrieve(candidateVids, m_catalogue, sqlconn, false);
+    ret.selectedVid = cta::schedulerdb::Helpers::selectBestVid4Retrieve(candidateVids, m_catalogue, sqlconn, false);
     logContext.log(cta::log::INFO, "In schedulerdb::RelationalDB::queueRetrieve(): after selectBestVid4Retrieve. ");
 
     uint8_t bestCopyNb = 0;
@@ -386,19 +385,19 @@ RelationalDB::queueRetrieve(cta::common::dataStructures::RetrieveRequest& rqst,
     logContext.log(cta::log::INFO, "In schedulerdb::RelationalDB::queueRetrieve(): after bestCopyNb selection. ");
 
     // In order to queue the job, construct it first in memory.
-    auto rReq = std::make_unique<schedulerdb::RetrieveRequest>(sqlconn, logContext);
+    auto schedulerdb::RetrieveRequest rReq(sqlconn, logContext);
     // the order of the following calls in important - we should rewise
     // the whole logic here and metadata object separation
-    rReq->setActivityIfNeeded(rqst, criteria);
-    ret.requestId = rReq->getIdStr();
-    rReq->setSchedulerRequest(rqst);
-    rReq->fillJobsSetRetrieveFileQueueCriteria(criteria);  // fills also m_jobs
-    rReq->setActiveCopyNumber(bestCopyNb);
-    rReq->setIsVerifyOnly(rqst.isVerifyOnly);
+    rReq.setActivityIfNeeded(rqst, criteria);
+    ret.requestId = rReq.getIdStr();
+    rReq.setSchedulerRequest(rqst);
+    rReq.fillJobsSetRetrieveFileQueueCriteria(criteria);  // fills also m_jobs
+    rReq.setActiveCopyNumber(bestCopyNb);
+    rReq.setIsVerifyOnly(rqst.isVerifyOnly);
     if (diskSystemName) {
-      rReq->setDiskSystemName(diskSystemName.value());
+      rReq.setDiskSystemName(diskSystemName.value());
     }
-    // rReq->setCreationTime(rqst.creationLog.time); // ? no reason for this method to exist ?
+    //  rReq.setCreationTime(rqst.creationLog.time); // ? no reason for this method to exist ?
 
     /* FROM OLD getNextJobBatch RETRIEVE method
         schedulerdb::RetrieveRequest rr(logContext, j);
@@ -424,7 +423,7 @@ RelationalDB::queueRetrieve(cta::common::dataStructures::RetrieveRequest& rqst,
     //  throw RetrieveRequestHasNoCopies(err.str());
     //}
     rreqMutex.release();
-    rReq->insert();
+    rReq.insert();
     //sqlconn.reset();
     log::ScopedParamContainer(logContext)
       .add("totalTime", timeTotal.secs())
