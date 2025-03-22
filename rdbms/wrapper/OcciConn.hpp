@@ -215,12 +215,6 @@ public:
    */
   std::list<std::string> getViewNames() override;
 
-  /**
-   * Skips calling COMMIT when conn.commit() is called
-   * useful for autocommited inserts in PostgreSQL
-   */
-  void banExplicitSqlCommit() { throw exception::Exception("Not Implemented"); }
-
 private:
 
   friend OcciStmt;
