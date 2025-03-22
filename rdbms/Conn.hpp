@@ -275,6 +275,14 @@ public:
     return m_connAndStmts->conn.get();
   }
 
+  /**
+   * Skips any DB round-trips when returning connection to the pool
+   * useful for inserts in PostgreSQL in multi-threaded environment
+   */
+  void voidDBCommit() {
+    m_connAndStmts->conn->voidDBCommit();
+  }
+
 private:
 
   /**

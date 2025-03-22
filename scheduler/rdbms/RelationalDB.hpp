@@ -263,6 +263,7 @@ private:
 
   std::string m_ownerId;
   rdbms::ConnPool m_connPool;
+  rdbms::ConnPool m_connPoolInsertOnly;
   catalogue::Catalogue& m_catalogue;
   log::Logger& m_logger;
   std::unique_ptr<TapeDrivesCatalogueState> m_tapeDrivesState;
