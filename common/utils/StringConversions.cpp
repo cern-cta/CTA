@@ -91,7 +91,7 @@ uint16_t toUint16(std::string_view str) {
   return value;
 }
 
-uint32_t toPGUint32(std::string_view str) {
+uint32_t toUint32(std::string_view str) {
   if (str.empty()) {
     throw exception::Exception(
       "Failed to convert empty string to uint32_t: An empty string is not a valid unsigned integer");

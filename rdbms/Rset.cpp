@@ -65,8 +65,9 @@ Rset& Rset::operator=(Rset&& rhs) {
 }
 
 //------------------------------------------------------------------------------
-// Testing new PG implementation of the methods without passing through optionals
-// and handling null case within the implementation
+// Implementation of methods getting column values from string memory buffer of postgres
+// without passing through optionals, then throw Null case exception within the implementation (downside)
+// but significantly improve the performance (20x)
 //------------------------------------------------------------------------------
 
 uint8_t Rset::columnUint8NoOpt(const std::string& colName) const {
