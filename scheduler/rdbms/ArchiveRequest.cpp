@@ -78,7 +78,7 @@ void ArchiveRequest::insert() {
       //}
       //m_lc.log(log::DEBUG, "In ArchiveRequest::insert(): before insert row.");
       ajr.insert(m_conn);
-      m_conn.commit();
+      // m_conn.commit(); unnecessary for insert ! 
     } catch (exception::Exception& ex) {
       log::ScopedParamContainer params(m_lc);
       params.add("exceptionMessage", ex.getMessageValue());
