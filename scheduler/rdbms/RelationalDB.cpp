@@ -82,34 +82,14 @@ void RelationalDB::ping() {
   }
 }
 
-void RelationalDB::ensureSchedulerConnected(log::LogContext& logContext) {
-  if (!m_activeQueueConn || !m_activeQueueConn->isOpen()) {
-    logContext.log(log::WARNING, "In RelationalDB::ensureSchedulerConnected(): Database connection lost. Attempting to reconnect...");
-    while (true) {  // Retry connection loop
-      try {
-        m_activeQueueConn = std::make_shared<cta::rdbms::Conn>(m_connPool.getConn());
-        if (m_activeQueueConn && m_activeQueueConn->isOpen()) {
-          logContext.log(log::WARNING, "In RelationalDB::ensureSchedulerConnected(): Database connection re-established.");
-          return;
-        }
-      } catch (const std::exception& ex) {
-        logContext.log(log::WARNING, std::string("Reconnection attempt failed: ") +  std::string(ex.what()));
-      }
-      std::this_thread::sleep_for(std::chrono::seconds(5));  // Avoid tight loop
-    }
-  }
-}
-
 std::string RelationalDB::queueArchive(const std::string& instanceName,
                                        const cta::common::dataStructures::ArchiveRequest& request,
                                        const cta::common::dataStructures::ArchiveFileQueueCriteriaAndFileId& criteria,
                                        log::LogContext& logContext) {
   // Construct the archive request object
   utils::Timer timeTotal;
-  cta::threading::MutexLocker queueConnMutexLock(m_activeQueueConnMutex);
-  ensureSchedulerConnected(logContext);
-  //auto sqlconn = m_connPool.getConn();
-  auto aReq = std::make_unique<schedulerdb::ArchiveRequest>(*m_activeQueueConn, logContext);
+  auto sqlconn = m_connPool.getConn();
+  schedulerdb::ArchiveRequest aReq(sqlconn, logContext);
 
   // Summarize all as an archiveFile
   common::dataStructures::ArchiveFile aFile;
@@ -122,26 +102,31 @@ std::string RelationalDB::queueArchive(const std::string& instanceName,
   aFile.diskInstance = instanceName;
   aFile.fileSize = request.fileSize;
   aFile.storageClass = request.storageClass;
-  aReq->setArchiveFile(aFile);
-  aReq->setMountPolicy(criteria.mountPolicy);
-  aReq->setArchiveReportURL(request.archiveReportURL);
-  aReq->setArchiveErrorReportURL(request.archiveErrorReportURL);
-  aReq->setRequester(request.requester);
-  aReq->setSrcURL(request.srcURL);
-  aReq->setEntryLog(request.creationLog);
+  aReq.setArchiveFile(std::move(aFile));
+  aReq.setMountPolicy(criteria.mountPolicy);
+  aReq.setArchiveReportURL(request.archiveReportURL);
+  aReq.setArchiveErrorReportURL(request.archiveErrorReportURL);
+  aReq.setRequester(request.requester);
+  aReq.setSrcURL(request.srcURL);
+  aReq.setEntryLog(request.creationLog);
 
-  std::list<schedulerdb::ArchiveRequest::JobDump> jl;
+  //std::vector<schedulerdb::ArchiveRequest::JobDump> jl;
+  //jl.reserve(criteria.copyToPoolMap.size());
+  const uint32_t hardcodedRetriesWithinMount = 2;
+  const uint32_t hardcodedTotalRetries = 2;
+  const uint32_t hardcodedReportRetries = 2;
+  int count_jobs = 0;
   for (auto& [key, value] : criteria.copyToPoolMap) {
-    const uint32_t hardcodedRetriesWithinMount = 2;
-    const uint32_t hardcodedTotalRetries = 2;
-    const uint32_t hardcodedReportRetries = 2;
-    aReq->addJob(key, value, hardcodedRetriesWithinMount, hardcodedTotalRetries, hardcodedReportRetries);
-    jl.emplace_back();
-    jl.back().copyNb = key;
-    jl.back().tapePool = value;
+    count_jobs++;
+    //schedulerdb::ArchiveRequest::JobDump job;
+    aReq.addJob(key, value, hardcodedRetriesWithinMount, hardcodedTotalRetries, hardcodedReportRetries);
+    //jl.emplace_back();
+    //jl.back().copyNb = key;
+    //jl.back().tapePool = value;
   }
 
-  if (jl.empty()) {
+  //if (jl.empty()) {
+  if (count_jobs == 0) {
     throw schedulerdb::ArchiveRequestHasNoCopies("In RelationalDB::queueArchive: the archive request has no copies");
   }
 
@@ -379,13 +364,12 @@ RelationalDB::queueRetrieve(cta::common::dataStructures::RetrieveRequest& rqst,
       candidateVids.insert(tf.vid);
     }
     logContext.log(cta::log::INFO, "In schedulerdb::RelationalDB::queueRetrieve(): before sqlconn selection. ");
-    cta::threading::MutexLocker queueConnMutexLock(m_activeQueueConnMutex);
-    ensureSchedulerConnected(logContext);
 
-    //auto sqlconn = m_connPool.getConn();
+    auto sqlconn = m_connPool.getConn();
     /// it make a query for every single file to the scheduler db summary stats for existing queues ? no way ... very inefficient
     // to-do option: query in batches and insert VIDs available in the info about the archive file from the catalogue and decide on the best during the getNextJobBatch phase !
-    ret.selectedVid = cta::schedulerdb::Helpers::selectBestVid4Retrieve(candidateVids, m_catalogue, *m_activeQueueConn, false);
+    ret.selectedVid =
+      cta::schedulerdb::Helpers::selectBestVid4Retrieve(candidateVids, m_catalogue, sqlconn, false);
     logContext.log(cta::log::INFO, "In schedulerdb::RelationalDB::queueRetrieve(): after selectBestVid4Retrieve. ");
 
     uint8_t bestCopyNb = 0;
@@ -402,7 +386,7 @@ RelationalDB::queueRetrieve(cta::common::dataStructures::RetrieveRequest& rqst,
     logContext.log(cta::log::INFO, "In schedulerdb::RelationalDB::queueRetrieve(): after bestCopyNb selection. ");
 
     // In order to queue the job, construct it first in memory.
-    auto rReq = std::make_unique<schedulerdb::RetrieveRequest>(*m_activeQueueConn, logContext);
+    auto rReq = std::make_unique<schedulerdb::RetrieveRequest>(sqlconn, logContext);
     // the order of the following calls in important - we should rewise
     // the whole logic here and metadata object separation
     rReq->setActivityIfNeeded(rqst, criteria);
