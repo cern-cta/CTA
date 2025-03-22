@@ -215,6 +215,12 @@ public:
    */
   std::list<std::string> getViewNames() override;
 
+  /**
+   * Skips any DB round-trips when returning connection to the pool
+   * useful for inserts in PostgreSQL in multi-threaded environment
+   */
+  void voidDBCommit() { throw exception::Exception("Not Implemented"); }
+
 private:
 
   friend OcciStmt;
