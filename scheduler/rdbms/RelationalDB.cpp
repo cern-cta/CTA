@@ -88,9 +88,13 @@ std::string RelationalDB::queueArchive(const std::string& instanceName,
                                        log::LogContext& logContext) {
   // Construct the archive request object
   utils::Timer timeTotal;
+  utils::Timer timeGetConn;
   auto sqlconn = m_connPool.getConn();
+  log::ScopedParamContainer(logContext).add("timeGetConn", timeGetConn.secs());
   schedulerdb::ArchiveRequest aReq(sqlconn, logContext);
 
+
+  utils::Timer timeAfileCreation;
   // Summarize all as an archiveFile
   common::dataStructures::ArchiveFile aFile;
   aFile.archiveFileID = criteria.fileId;
@@ -103,12 +107,16 @@ std::string RelationalDB::queueArchive(const std::string& instanceName,
   aFile.fileSize = request.fileSize;
   aFile.storageClass = request.storageClass;
   aReq.setArchiveFile(std::move(aFile));
+  log::ScopedParamContainer(logContext).add("timeAfileCreation", timeAfileCreation.secs());
+
+  utils::Timer timeSetters;
   aReq.setMountPolicy(criteria.mountPolicy);
   aReq.setArchiveReportURL(request.archiveReportURL);
   aReq.setArchiveErrorReportURL(request.archiveErrorReportURL);
   aReq.setRequester(request.requester);
   aReq.setSrcURL(request.srcURL);
   aReq.setEntryLog(request.creationLog);
+  log::ScopedParamContainer(logContext).add("timeSetters", timeSetters.secs());
 
   //std::vector<schedulerdb::ArchiveRequest::JobDump> jl;
   //jl.reserve(criteria.copyToPoolMap.size());
