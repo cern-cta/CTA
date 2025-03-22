@@ -81,15 +81,35 @@ void RelationalDB::ping() {
   }
 }
 
+void RelationalDB::ensureConnected() {
+  // lock not necessary since already required in isOpen
+  // std::lock_guard<std::mutex> lock(m_connMutex);
+  if (!m_activeQueueConn || !m_activeQueueConn->isOpen()) {
+    logContext.log(log::WARNING, "In RelationalDB::ensureConnected(): Database connection lost. Attempting to reconnect...");
+    while (true) {  // Retry loop
+      try {
+        m_activeQueueConn = m_connPool.getConn();  // Reconnect
+        if (m_activeConn && m_activeConn->isOpen()) {
+          logContext.log(log::WARNING, "In RelationalDB::ensureConnected(): Database connection re-established.");
+          return;
+        }
+      } catch (const std::exception& ex) {
+        logContext.log(log::WARNING, std::string("Reconnection attempt failed: ") +  std::string(ex.what()));
+      }
+      std::this_thread::sleep_for(std::chrono::seconds(5));  // Avoid tight loop
+    }
+  }
+}
+
 std::string RelationalDB::queueArchive(const std::string& instanceName,
                                        const cta::common::dataStructures::ArchiveRequest& request,
                                        const cta::common::dataStructures::ArchiveFileQueueCriteriaAndFileId& criteria,
                                        log::LogContext& logContext) {
   // Construct the archive request object
   utils::Timer timeTotal;
-
-  auto sqlconn = m_connPool.getConn();
-  auto aReq = std::make_unique<schedulerdb::ArchiveRequest>(sqlconn, logContext);
+  ensureConnected();
+  //auto sqlconn = m_connPool.getConn();
+  auto aReq = std::make_unique<schedulerdb::ArchiveRequest>(*m_activeQueueConn, logContext);
 
   // Summarize all as an archiveFile
   common::dataStructures::ArchiveFile aFile;
@@ -128,7 +148,7 @@ std::string RelationalDB::queueArchive(const std::string& instanceName,
   utils::Timer timeInsert;
 
   aReq->insert();
-  sqlconn.reset();
+  //sqlconn.reset();
 
   log::ScopedParamContainer(logContext)
     .add("fileId", aFile.archiveFileID)
