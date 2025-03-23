@@ -52,7 +52,6 @@ public:
         std::cout << "In CtaAdminCmdStream, inside OnReadDone() " << std::endl;
         if (!ok) {
             std::cout << "Something went wrong with reading the response in the client" << std::endl;
-            // StartRead(&m_response); // no, don't do this, we are just getting in an endless loop
         } else {
             // if this is the header, print the formatted header I guess?
             if (m_response.has_header()) {

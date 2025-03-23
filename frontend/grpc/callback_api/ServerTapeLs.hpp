@@ -29,6 +29,7 @@ class TapeLsWriteReactor : public ::grpc::ServerWriteReactor<cta::xrd::StreamRes
         std::list<common::dataStructures::Tape> m_tapeList;
         bool m_isHeaderSent; // or could be a static variable in the function NextWrite()
         cta::xrd::StreamResponse m_response;
+        std::list<common::dataStructures::Tape>::const_iterator next_tape;// &tape = m_tapeList.front();
 };
 
 void TapeLsWriteReactor::OnDone() {
@@ -45,9 +46,6 @@ TapeLsWriteReactor::TapeLsWriteReactor(cta::catalogue::Catalogue &catalogue, cta
     // all this will go into a common method in a base class called
     // getTapesList or something
     using namespace cta::admin;
-
-    setenv("GRPC_VERBOSITY", "debug", 1);
-    setenv("GRPC_TRACE", "all", 1); 
 
     std::cout << "In TapeLsWriteReactor constructor, just entered!" << std::endl;
 
@@ -84,12 +82,14 @@ TapeLsWriteReactor::TapeLsWriteReactor(cta::catalogue::Catalogue &catalogue, cta
 
     std::cout << "Calling getTapes to populate the m_tapeList" << std::endl;
     m_tapeList = catalogue.Tape()->getTapes(searchCriteria);
+    next_tape = m_tapeList.cbegin();
     NextWrite();
 }
 
 void TapeLsWriteReactor::NextWrite() {
     std::cout << "In TapeLsWriteReactor::NextWrite(), just entered!" << std::endl;
     m_response.Clear();
+    static int iteration = 0;
     // is this the first item? Then write the header
     if (!m_isHeaderSent) {
         cta::xrd::Response *header = new cta::xrd::Response(); // https://stackoverflow.com/questions/75693340/how-to-set-oneof-field-in-c-grpc-server-and-read-from-client
@@ -104,11 +104,20 @@ void TapeLsWriteReactor::NextWrite() {
         std::cout << "called StartWrite on the server" << std::endl;
         return; // because we'll be called in a loop by OnWriteDone
     } else {
-        std::cout << "header was sent, now entering the loop to send the data" << std::endl;
-        for(; !m_tapeList.empty(); m_tapeList.pop_front()) {
+        std::cout << "header was sent, now entering the loop to send the data, should send " << m_tapeList.size() << " records!" << std::endl;
+        // for(; !m_tapeList.empty(); m_tapeList.pop_front()) {
+        while(next_tape != m_tapeList.cend()) {
+            iteration++;
             // cta::xrd::Data record;
-            auto &tape = m_tapeList.front();
-            auto tape_item = m_response.mutable_data()->mutable_tals_item();
+            std::cout << "Inside the for loop for the tapes, this is iteration number " << iteration << " and records left are " << m_tapeList.size() << std::endl;
+            // auto &tape = m_tapeList.front();
+            const auto& tape = *next_tape;
+            next_tape++;
+            cta::xrd::Data* data = new cta::xrd::Data();
+            cta::admin::TapeLsItem *tape_item = data->mutable_tals_item();
+            // cta::admin::TapeLsItem* tape_item = m_response.mutable_data()->mutable_tals_item();
+            // cta::xrd::Data* data = new cta::xrd::Data()
+            // data.set_allocated_tals_item
 
             tape_item->set_vid(tape.vid);
             tape_item->set_media_type(tape.mediaType);
@@ -163,15 +172,23 @@ void TapeLsWriteReactor::NextWrite() {
             if (tape.verificationStatus) {
                 tape_item->set_verification_status(tape.verificationStatus.value());
             }
+            std::cout << "Calling StartWrite on the server, with some data this time" << std::endl;
+            // data->set_allocated_tals_item(tape_item);
+            m_response.set_allocated_data(data);
             StartWrite(&m_response);
             return; // because we will be called in a loop by OnWriteDone()
         } // end for
         // did not write anything
-        if (m_tapeList.empty()) {
-            std::cout << "Finishing the call on the server side" << std::endl;
-            // Finish the call
-            Finish(::grpc::Status::OK);
-        }
+        // apparently we never get here, m_tapeList does not change. WTF
+        // end while, now finish the call
+        std::cout << "Finishing the call on the server side" << std::endl;
+        // Finish the call
+        Finish(::grpc::Status::OK);
+        // if (m_tapeList.empty()) {
+        //     std::cout << "Finishing the call on the server side" << std::endl;
+        //     // Finish the call
+        //     Finish(::grpc::Status::OK);
+        // }
     }
 }
 } // namespace cta::frontend::grpc
