@@ -24,8 +24,6 @@ build-ctageneric-from-artifacts:
     - .build-ctageneric
   needs: # Needs RPM artifacts to build the image
     - job: build-cta-rpm
-    - job: modify-versionlock
-      optional: true
   rules:
     - if: $PIPELINE_TYPE == "EOS_REGR_AGAINST_CTA_TAG" || $PIPELINE_TYPE == "CTAGENERIC_IMAGE"
       when: never
@@ -48,8 +46,6 @@ build-ctageneric-from-repos:
     - .build-ctageneric
   needs:
     - job: pipeline-variable-check
-      optional: true
-    - job: modify-versionlock
       optional: true
   rules:
     - if: $PIPELINE_TYPE == "EOS_REGR_AGAINST_CTA_TAG"

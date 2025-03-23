@@ -30,8 +30,6 @@ SUPPORTED = {
                       "EOS_REGR_AGAINST_CTA_MAIN",
                       "EOS_REGR_AGAINST_CTA_TAG",
                       "CTAGENERIC_IMAGE"],
-    "CUSTOM_XRD_TAG_REGEX": [ re.compile("^\d+:\d+\.\d+\.\d+(-\d+)*$") ],
-    "CUSTOM_EOS_TAG_REGEX": [ re.compile("^\d+\.\d+\.\d+$") ],
     "CUSTOM_CTA_TAG_REGEX": [ re.compile("^v\d+\.\d+\.\d+\.\d+-\d+$"),
                        re.compile("^v\d+\.\d+\.\d+\.\d+-\d+\.el9$") # EL9 Transition format
                      ]

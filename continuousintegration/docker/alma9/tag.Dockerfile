@@ -28,7 +28,6 @@ COPY ${BASEDIR}/etc/yum.repos.d/ /etc/yum.repos.d/
 # Variable to specify the tag to be used for CTA RPMs from the cta-ci-repo
 # Format: X.YY.ZZ.A-B
 ARG PUBLIC_REPO_VER
-ARG YUM_VERSIONLOCK_FILE=continuousintegration/docker/alma9/etc/yum/pluginconf.d/versionlock.list
 
 # Install necessary packages
 RUN dnf install -y \
@@ -48,8 +47,7 @@ RUN useradd -m -u 1000 -g tape cta
 # Install cta-release and clean up
 RUN dnf config-manager --enable epel --setopt="epel.priority=4" && \
     dnf config-manager --enable cta-public-testing && \
-    dnf install -y "cta-release-${PUBLIC_REPO_VER}.el9" && \
-    rm -f /etc/yum/pluginconf.d/versionlock.cta && \
+    dnf install -y cta-release && \
     dnf clean all --enablerepo=\* && \
     rm -rf /etc/rc.d/rc.local
 
