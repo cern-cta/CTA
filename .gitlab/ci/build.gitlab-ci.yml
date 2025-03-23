@@ -21,9 +21,6 @@ build-cta-srpm:
   stage: build
   extends:
     - .build-cta
-  needs:
-    - job: modify-versionlock
-      optional: true
   rules:
     - !reference [.build-cta, rules]
     - when: on_success
@@ -46,9 +43,6 @@ build-cta-rpm:
     - .build-cta
   needs:
     - job: build-cta-srpm
-    - job: modify-versionlock
-      optional: true
-      artifacts: true
   rules:
     - !reference [.build-cta, rules]
     - when: on_success

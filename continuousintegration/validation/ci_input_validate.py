@@ -126,65 +126,15 @@ def validate_default(ci_input_vars):
     pass
 
 
-def validate_eos_regr_against_cta_main(ci_input_vars):
-    """
-    Validation for the pipeline type `EOS_REGR_AGAINST_CTA_MAIN`. Checks the XRootD and EOS
-    RPM packages.
-      - XRootD is fetched from the stable repo.
-      - EOS version should be available in the testing repo as it comes from
-        their latest tag.
-
-    :param ci_input_vars: CI input variables dictionary received by the program.
-    """
-    print("Validating XRootD...")
-    _check_remote_rpm(ci_input_vars,
-                      "CUSTOM_XRD_TAG",
-                      "CUSTOM_XRD_TAG_REGEX",
-                      ["xrd", "https://xrootd.web.cern.ch/repo/stable/el9/x86_64"],
-                      "xrootd-server",
-                      ci_input_vars["CUSTOM_XRD_TAG"])
-    print("XRootD validation passed")
-
-    print("Validating EOS...")
-    _check_remote_rpm(ci_input_vars,
-                      "CUSTOM_EOS_TAG",
-                      "CUSTOM_EOS_TAG_REGEX",
-                      ["eos", "https://storage-ci.web.cern.ch/storage-ci/eos/diopside/tag/testing/el-9/x86_64/"],
-                      "eos-server",
-                      ci_input_vars["CUSTOM_EOS_TAG"])
-    print("EOS validation passed")
-
-
 def validate_eos_regr_against_cta_tag(ci_input_vars):
     """
-    Validation for the pipeline type `EOS_REGR_AGAINST_CTA_TAG`. Checks the XRootD, EOS
-    and CTA RPM packages.
-      - XRootD is fetched from the stable repo.
-      - EOS version should be available in the testing repo as it comes from
-        their latest tag.
+    Validation for the pipeline type `EOS_REGR_AGAINST_CTA_TAG`. Checks that the desired
+    CTA RPM packages (associated with the given tag) are available.
       - CTA should be available in the testing public repository as the latest
         available version in there should match the latest version in production.
 
     :param ci_input_vars: CI input variables dictionary received by the program.
     """
-    print("Validating XRootD...")
-    _check_remote_rpm(ci_input_vars,
-                      "CUSTOM_XRD_TAG",
-                      "CUSTOM_XRD_TAG_REGEX",
-                      ["xrd", "https://xrootd.web.cern.ch/repo/stable/el9/x86_64"],
-                      "xrootd-server",
-                      ci_input_vars["CUSTOM_XRD_TAG"])
-    print("XRootD validation passed")
-
-    print("Validating EOS...")
-    _check_remote_rpm(ci_input_vars,
-                      "CUSTOM_EOS_TAG",
-                      "CUSTOM_EOS_TAG_REGEX",
-                      ["eos", "https://storage-ci.web.cern.ch/storage-ci/eos/diopside/tag/testing/el-9/x86_64/"],
-                      "eos-server",
-                      ci_input_vars["CUSTOM_EOS_TAG"])
-    print("EOS validation passed")
-
     print("Validating CTA...")
     _check_remote_rpm(ci_input_vars,
                       "CUSTOM_CTA_TAG",
@@ -197,26 +147,8 @@ def validate_eos_regr_against_cta_tag(ci_input_vars):
 def validate_ctageneric_image(ci_input_vars):
     """
     Validation for the pipeline type `CTAGENERIC_IMAGE`. Checks that the desired
-    XRootD, EOS and CTA RPM packages are available.
+    CTA RPM packages are available.
     """
-    print("Validating XRootD...")
-    _check_remote_rpm(ci_input_vars,
-                      "CUSTOM_XRD_TAG",
-                      "CUSTOM_XRD_TAG_REGEX",
-                      ["xrd", "https://xrootd.web.cern.ch/repo/stable/el9/x86_64"],
-                      "xrootd-server",
-                      ci_input_vars["CUSTOM_XRD_TAG"])
-    print("XRootD validation passed")
-
-    print("Validating EOS...")
-    _check_remote_rpm(ci_input_vars,
-                      "CUSTOM_EOS_TAG",
-                      "CUSTOM_EOS_TAG_REGEX",
-                      ["eos", "https://storage-ci.web.cern.ch/storage-ci/eos/diopside/tag/testing/el-9/x86_64/"],
-                      "eos-server",
-                      ci_input_vars["CUSTOM_EOS_TAG"])
-    print("EOS validation passed")
-
     print("Validating CTA...")
     _check_remote_rpm(ci_input_vars,
                       "CUSTOM_CTA_TAG",

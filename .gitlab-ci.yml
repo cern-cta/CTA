@@ -35,11 +35,10 @@ variables:
   #   - COMMIT: default pipeline type, Runs static analysis, compiles the software and tests it.
   #   - EOS_REGR_AGAINST_CTA_MAIN: test a new tagged EOS version against CTA main.
   #   - EOS_REGR_AGAINST_CTA_TAG: test a new tagged EOS version against the latest tagged CTA version.
-  #   - CTAGENERIC_IMAGE: generate a ctageneric image from a set of CTA,EOS,XRD RPMS avaiable in repos.
+  #   - CTAGENERIC_IMAGE: generate a ctageneric image from a set of CTA RPMS avaiable in repos.
   PIPELINE_TYPE: "COMMIT"
 
   # Image building. Used by EOS Regression and Image build pipeline types
-  CUSTOM_XRD_TAG: ""
   CUSTOM_EOS_TAG: ""
   CUSTOM_CTA_TAG: ""
 
