@@ -56,15 +56,19 @@ spec:
     {{- include "common.extraEnv" . | nindent 4 }}
     {{- end }}
     volumeMounts:
+    {{- if .Values.customRepoFiles }}
     - name: yum-repos
       mountPath: /shared/etc_yum.repos.d
+    {{- end }}
     - name: catalogue-config
       mountPath: /shared/etc_cta/cta-catalogue.conf
       subPath: cta-catalogue.conf
   volumes:
+  {{- if .Values.customRepoFiles }}
   - name: yum-repos
     configMap:
       name: yum.repos.d-config
+  {{- end }}
   - name: catalogue-config
     configMap:
       name: cta-catalogue-conf

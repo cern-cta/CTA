@@ -82,6 +82,7 @@ kubectl -n ${NAMESPACE} create configmap yum.repos.d-config --from-file=${yum_re
 helm install catalogue-updater ../helm/catalogue-updater --namespace ${NAMESPACE} \
                                                          --set catalogueSourceVersion=$prev_catalogue_schema_version \
                                                          --set catalogueDestinationVersion=$catalogue_schema_version \
+                                                         --set customRepoFiles=true \
                                                          --wait --timeout 2m
 
 kubectl -n ${NAMESPACE} exec -it liquibase-update -- /bin/bash -c "/launch_liquibase.sh \"tag --tag=test_update\""

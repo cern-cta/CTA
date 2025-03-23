@@ -1,6 +1,6 @@
 image:
-  repository: gitlab-registry.cern.ch/cta/eoscta-operations/registry/container_registry/cta-catalogue-updater
-  tag: "alma9-base.1"
+  repository: gitlab-registry.cern.ch/cta/public_registry/container_registry/cta-catalogue-updater
+  tag: "stable"
   pullPolicy: IfNotPresent
   pullSecrets:
   - ctaregsecret
@@ -12,3 +12,6 @@ catalogueDestinationVersion: ""
 
 # Additional Extra environment variables
 extraEnv:
+
+# Set to true if you want to mount the configmap "yum.repos.d-config"
+customRepoFiles: false
