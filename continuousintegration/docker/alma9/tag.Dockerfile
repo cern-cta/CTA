@@ -23,7 +23,6 @@ ENV BASEDIR="continuousintegration/docker/alma9" \
 
 # Add orchestration run scripts locally
 COPY ${BASEDIR}/../opt /opt
-COPY ${BASEDIR}/etc/yum.repos.d/ /etc/yum.repos.d/
 
 # Variable to specify the tag to be used for CTA RPMs from the cta-ci-repo
 # Format: X.YY.ZZ.A-B
@@ -51,4 +50,3 @@ RUN dnf config-manager --enable epel --setopt="epel.priority=4" && \
     dnf clean all --enablerepo=\* && \
     rm -rf /etc/rc.d/rc.local
 
-COPY ${YUM_VERSIONLOCK_FILE} /etc/dnf/plugins/versionlock.list
