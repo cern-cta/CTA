@@ -38,6 +38,7 @@ conf:
 
 pod:
   extraSpec:
+    terminationGracePeriodSeconds: 1
 
 extraEnv:
 
