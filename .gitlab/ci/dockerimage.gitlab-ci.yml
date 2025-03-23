@@ -9,7 +9,7 @@ ctageneric_docker:
     - when: always
   stage: build:dockerimage
   image:
-    name: gitlab-registry.cern.ch/ci-tools/docker-image-builder
+    name: gitlab-registry.cern.ch/cta/public_registry/container_registry/cta-ci-build:2025-03-18-11047290
     entrypoint: [""]
   retry: 1
   before_script:
