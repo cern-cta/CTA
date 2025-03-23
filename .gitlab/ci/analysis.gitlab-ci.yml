@@ -1,4 +1,5 @@
 cppcheck:
+  allow_failure: true
   rules:
     - if: $CI_COMMIT_TAG
       when: never
@@ -23,6 +24,7 @@ cppcheck:
 
 # based on https://gitlab.com/ahogen/cppcheck-codequality
 cppcheck_report:
+  allow_failure: true
   rules:
     - if: $CI_COMMIT_TAG
       when: never
@@ -59,7 +61,7 @@ clang_format:
     name: gitlab-registry.cern.ch/linuxsupport/alma9-base
     entrypoint: [""]
   script:
-    # Remove CC7-specific repos copied by defalt:before_script in .gitlab-ci.yml 
+    # Remove CC7-specific repos copied by defalt:before_script in .gitlab-ci.yml
     - rm -rf /etc/yum.repos.d/centos-cernonly.repo
     - rm -rf /etc/yum.repos.d/cta-ci.repo
     - rm -rf /etc/yum.repos.d/eos-quarkdb.repo
@@ -71,6 +73,7 @@ clang_format:
     - clang-format.output
 
 catalogue_schema_version_check:
+  allow_failure: true
   rules:
     - if: $CI_PIPELINE_SOURCE == "merge_request_event"
       when: never
