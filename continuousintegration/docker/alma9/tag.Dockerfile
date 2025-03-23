@@ -23,6 +23,7 @@ ENV BASEDIR="continuousintegration/docker/alma9" \
 
 # Add orchestration run scripts locally
 COPY ${BASEDIR}/../opt /opt
+COPY ${BASEDIR}/etc/yum.repos.d/cta-public-testing.repo /etc/yum.repos.d/cta-public-testing.repo
 
 # Variable to specify the tag to be used for CTA RPMs from the cta-ci-repo
 # Format: X.YY.ZZ.A-B
@@ -49,4 +50,3 @@ RUN dnf config-manager --enable epel --setopt="epel.priority=4" && \
     dnf install -y cta-release && \
     dnf clean all --enablerepo=\* && \
     rm -rf /etc/rc.d/rc.local
-
