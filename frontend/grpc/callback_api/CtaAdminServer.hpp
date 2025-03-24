@@ -26,6 +26,7 @@
 #include "ServerTapePoolLs.hpp"
 #include "ServerVirtualOrganizationLs.hpp"
 #include "ServerDiskInstanceLs.hpp"
+#include "ServerDriveLs.hpp"
 
 #include <grpcpp/grpcpp.h>
 
@@ -107,6 +108,8 @@ CtaRpcStreamImpl::GenericAdminStream(::grpc::CallbackServerContext* context, con
       return new VirtualOrganizationLsWriteReactor(m_catalogue, m_scheduler, request);
     case cmd_pair(cta::admin::AdminCmd::CMD_DISKINSTANCE, cta::admin::AdminCmd::SUBCMD_LS):
       return new DiskInstanceLsWriteReactor(m_catalogue, m_scheduler, request);
+    case cmd_pair(cta::admin::AdminCmd::CMD_DRIVE, cta::admin::AdminCmd::SUBCMD_LS):
+      return new DriveLsWriteReactor(m_catalogue, m_scheduler, m_lc, request);
     default:
       // make the compiler happy maybe and return
       return new TapeLsWriteReactor(m_catalogue, m_scheduler, request);

@@ -75,6 +75,9 @@ public:
                             case cta::admin::HeaderType::DISKINSTANCE_LS:
                                 m_textFormatter.printDiskInstanceLsHeader();
                                 break;
+                            case cta::admin::HeaderType::DRIVE_LS:
+                                m_textFormatter.printDriveLsHeader();
+                                break;
                             default:
                                 // keep compiler happy
                                 break;
@@ -124,6 +127,12 @@ public:
                     {
                         const cta::admin::DiskInstanceLsItem& diskInstanceLsItem = m_response.data().dils_item();
                         m_textFormatter.print(diskInstanceLsItem);
+                        break;
+                    }
+                    case cta::xrd::Data::kDrlsItem:
+                    {
+                        const cta::admin::DriveLsItem& driveLsItem = m_response.data().drls_item();
+                        m_textFormatter.print(driveLsItem);
                         break;
                     }
                     default:
