@@ -71,6 +71,10 @@ public:
                                 break;
                             case cta::admin::HeaderType::VIRTUALORGANIZATION_LS:
                                 m_textFormatter.printVirtualOrganizationLsHeader();
+                                break;
+                            case cta::admin::HeaderType::DISKINSTANCE_LS:
+                                m_textFormatter.printDiskInstanceLsHeader();
+                                break;
                             default:
                                 // keep compiler happy
                                 break;
@@ -114,6 +118,12 @@ public:
                     {
                         const cta::admin::VirtualOrganizationLsItem& virtualOrganizationLsItem = m_response.data().vols_item();
                         m_textFormatter.print(virtualOrganizationLsItem);
+                        break;
+                    }
+                    case cta::xrd::Data::kDilsItem:
+                    {
+                        const cta::admin::DiskInstanceLsItem& diskInstanceLsItem = m_response.data().dils_item();
+                        m_textFormatter.print(diskInstanceLsItem);
                         break;
                     }
                     default:
