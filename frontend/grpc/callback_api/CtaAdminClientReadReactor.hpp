@@ -69,6 +69,8 @@ public:
                             case cta::admin::HeaderType::TAPEPOOL_LS:
                                 m_textFormatter.printTapePoolLsHeader();
                                 break;
+                            case cta::admin::HeaderType::VIRTUALORGANIZATION_LS:
+                                m_textFormatter.printVirtualOrganizationLsHeader();
                             default:
                                 // keep compiler happy
                                 break;
@@ -106,6 +108,12 @@ public:
                     {
                         const cta::admin::TapePoolLsItem& tapePoolLsItem = m_response.data().tpls_item();
                         m_textFormatter.print(tapePoolLsItem);
+                        break;
+                    }
+                    case cta::xrd::Data::kVolsItem:
+                    {
+                        const cta::admin::VirtualOrganizationLsItem& virtualOrganizationLsItem = m_response.data().vols_item();
+                        m_textFormatter.print(virtualOrganizationLsItem);
                         break;
                     }
                     default:

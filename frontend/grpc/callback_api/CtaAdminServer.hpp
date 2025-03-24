@@ -24,6 +24,7 @@
 #include "common/exception/Exception.hpp"
 #include "ServerTapeLs.hpp" // and all the rest of them
 #include "ServerTapePoolLs.hpp"
+#include "ServerVirtualOrganizationLs.hpp"
 
 #include <grpcpp/grpcpp.h>
 
@@ -101,6 +102,8 @@ CtaRpcStreamImpl::GenericAdminStream(::grpc::CallbackServerContext* context, con
     //   return new StorageClassLsWriteReactor(catalogue, scheduler);
     case cmd_pair(cta::admin::AdminCmd::CMD_TAPEPOOL, cta::admin::AdminCmd::SUBCMD_LS):
       return new TapePoolLsWriteReactor(m_catalogue, m_scheduler, request);
+    case cmd_pair(cta::admin::AdminCmd::CMD_VIRTUALORGANIZATION, cta::admin::AdminCmd::SUBCMD_LS):
+      return new VirtualOrganizationLsWriteReactor(m_catalogue, m_scheduler, request);
     default:
       // make the compiler happy maybe and return
       return new TapeLsWriteReactor(m_catalogue, m_scheduler, request);
