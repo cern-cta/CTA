@@ -78,6 +78,9 @@ public:
                             case cta::admin::HeaderType::DRIVE_LS:
                                 m_textFormatter.printDriveLsHeader();
                                 break;
+                            case cta::admin::HeaderType::ADMIN_LS:
+                                m_textFormatter.printAdminLsHeader();
+                                break;
                             default:
                                 // keep compiler happy
                                 break;
@@ -133,6 +136,12 @@ public:
                     {
                         const cta::admin::DriveLsItem& driveLsItem = m_response.data().drls_item();
                         m_textFormatter.print(driveLsItem);
+                        break;
+                    }
+                    case cta::xrd::Data::kAdlsItem:
+                    {
+                        const cta::admin::AdminLsItem& adminLsItem = m_response.data().adls_item();
+                        m_textFormatter.print(adminLsItem);
                         break;
                     }
                     default:
