@@ -66,6 +66,9 @@ public:
                             case cta::admin::HeaderType::STORAGECLASS_LS:
                                 m_textFormatter.printStorageClassLsHeader();
                                 break;
+                            case cta::admin::HeaderType::TAPEPOOL_LS:
+                                m_textFormatter.printTapePoolLsHeader();
+                                break;
                             default:
                                 // keep compiler happy
                                 break;
@@ -97,6 +100,12 @@ public:
                     {
                         const cta::admin::StorageClassLsItem& storageClassLsItem = m_response.data().scls_item();
                         m_textFormatter.print(storageClassLsItem);
+                        break;
+                    }
+                    case cta::xrd::Data::kTplsItem:
+                    {
+                        const cta::admin::TapePoolLsItem& tapePoolLsItem = m_response.data().tpls_item();
+                        m_textFormatter.print(tapePoolLsItem);
                         break;
                     }
                     default:
