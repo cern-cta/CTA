@@ -25,7 +25,7 @@ ENV BASEDIR="continuousintegration/docker/alma9" \
 COPY ${BASEDIR}/../opt /opt
 COPY ${BASEDIR}/etc/yum.repos.d/cta-public-testing.repo /etc/yum.repos.d/cta-public-testing.repo
 
-ENV PUBLIC_REPO_VER=5.11.0.1-1
+ENV PUBLIC_REPO_VER=5.11.2.0-1
 
 # Install necessary packages
 RUN dnf install -y \

@@ -25,6 +25,9 @@ data:
     # CTA Scheduler DB options - Cache timeout options (decreased for tests)
     cta.schedulerdb.tape_cache_max_age_secs {{ .Values.conf.schedulerdb.tapeCacheMaxAgeSecs }}
     cta.schedulerdb.retrieve_queue_cache_max_age_secs {{ .Values.conf.schedulerdb.retrieveQueueCacheMaxAgeSecs }}
+    # This is for backward compatibility sake
+    cta.schedulerdb.enable_repack_requests on
+    cta.schedulerdb.enable_user_requests on
 
     # CTA Catalogue options
     cta.catalogue.numberofconnections {{ .Values.conf.catalogue.numberOfConnections }}
