@@ -48,6 +48,10 @@ CtaRpcImpl::ProcessGrpcRequest(::grpc::ServerContext* context, const cta::xrd::R
     lc.log(cta::log::ERR, ex.getMessageValue());
     response->set_type(cta::xrd::Response::RSP_ERR_USER);
     response->set_message_txt(ex.getMessageValue());
+    /* Logic-wise, this should also be INVALID_ARGUMENT, but we need a way to
+     * differentiate between different kinds of errors on the client side,
+     * which is why we return ABORTED
+     */
     return ::grpc::Status(::grpc::StatusCode::ABORTED, ex.getMessageValue());
   } catch (cta::exception::Exception &ex) {
     lc.log(cta::log::ERR, ex.getMessageValue());
