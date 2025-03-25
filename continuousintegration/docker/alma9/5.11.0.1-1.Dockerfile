@@ -40,6 +40,13 @@ RUN dnf install -y \
     # logrotate files must be 0644 or 0444
     chmod 0644 /etc/logrotate.d/*
 
+RUN wget https://download.oracle.com/otn_software/linux/instantclient/2112000/el9/oracle-instantclient-basic-21.12.0.0.0-1.el9.x86_64.rpm; \
+    wget https://download.oracle.com/otn_software/linux/instantclient/2112000/el9/oracle-instantclient-devel-21.12.0.0.0-1.el9.x86_64.rpm; \
+    yum install -y oracle-instantclient-basic-21.12.0.0.0-1.el9.x86_64.rpm; \
+    yum install -y oracle-instantclient-devel-21.12.0.0.0-1.el9.x86_64.rpm; \
+    rm oracle-instantclient-basic-21.12.0.0.0-1.el9.x86_64.rpm oracle-instantclient-devel-21.12.0.0.0-1.el9.x86_64.rpm;
+
+
 # We add the cta user so that we can consistently reference it in the Helm chart when changing keytab ownership
 RUN useradd -m -u 1000 -g tape cta
 
@@ -50,9 +57,3 @@ RUN dnf config-manager --enable epel --setopt="epel.priority=4" && \
     cta-versionlock apply && \
     dnf clean all --enablerepo=\* && \
     rm -rf /etc/rc.d/rc.local
-
-RUN wget https://download.oracle.com/otn_software/linux/instantclient/2112000/el9/oracle-instantclient-basic-21.12.0.0.0-1.el9.x86_64.rpm; \
-    wget https://download.oracle.com/otn_software/linux/instantclient/2112000/el9/oracle-instantclient-devel-21.12.0.0.0-1.el9.x86_64.rpm; \
-    yum install -y oracle-instantclient-basic-21.12.0.0.0-1.el9.x86_64.rpm; \
-    yum install -y oracle-instantclient-devel-21.12.0.0.0-1.el9.x86_64.rpm; \
-    rm oracle-instantclient-basic-21.12.0.0.0-1.el9.x86_64.rpm oracle-instantclient-devel-21.12.0.0.0-1.el9.x86_64.rpm;

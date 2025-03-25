@@ -61,6 +61,27 @@ build-ctageneric-from-repos:
                        --build-arg "PUBLIC_REPO_VER=${CUSTOM_CTA_TAG:1}"
     - echo "Image pushed successfully to ${CI_REGISTRY}/cta/ctageneric:${CTA_BUILD_ID}"
 
+build-ctageneric-5-11-2:
+  extends:
+    - .build-ctageneric
+  needs:
+    - job: pipeline-variable-check
+      optional: true
+  rules:
+    - if: $PIPELINE_TYPE == "CTAGENERIC_IMAGE"
+    - when: never
+    - !reference [.build-ctageneric, rules]
+  variables:
+    IMAGE_TAG: 5.11.2.0-1-${CI_JOB_ID}
+  script:
+    - echo "Building image with CTA ${CUSTOM_CTA_TAG} RPMs"
+    - echo "Image tag ${CI_REGISTRY}/cta/ctageneric:${IMAGE_TAG}"
+    - /kaniko/executor --context $CI_PROJECT_DIR
+                       --dockerfile continuousintegration/docker/alma9/tag.Dockerfile
+                       --destination ${CI_REGISTRY}/cta/ctageneric:${IMAGE_TAG}
+                       --build-arg "PUBLIC_REPO_VER=5.11.2.0-1"
+    - echo "Image pushed successfully to ${CI_REGISTRY}/cta/ctageneric:${IMAGE_TAG}"
+
 build-ctageneric-5-10-10:
   extends:
     - .build-ctageneric
@@ -97,6 +118,6 @@ build-ctageneric-5-11-0:
     - echo "Building image with CTA ${CUSTOM_CTA_TAG} RPMs"
     - echo "Image tag ${CI_REGISTRY}/cta/ctageneric:${IMAGE_TAG}"
     - /kaniko/executor --context $CI_PROJECT_DIR
-                       --dockerfile continuousintegration/docker/alma9/5.10.10.1-1.Dockerfile
+                       --dockerfile continuousintegration/docker/alma9/5.11.0.1-1.Dockerfile
                        --destination ${CI_REGISTRY}/cta/ctageneric:${IMAGE_TAG}
     - echo "Image pushed successfully to ${CI_REGISTRY}/cta/ctageneric:${IMAGE_TAG}"
