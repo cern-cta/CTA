@@ -48,5 +48,6 @@ RUN useradd -m -u 1000 -g tape cta
 RUN dnf config-manager --enable epel --setopt="epel.priority=4" && \
     dnf config-manager --enable cta-public-testing && \
     dnf install -y cta-release && \
+    cta-versionlock apply && \
     dnf clean all --enablerepo=\* && \
     rm -rf /etc/rc.d/rc.local
