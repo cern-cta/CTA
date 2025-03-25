@@ -43,25 +43,29 @@ CtaRpcImpl::ProcessGrpcRequest(::grpc::ServerContext* context, const cta::xrd::R
     lc.log(cta::log::ERR, ex.getMessageValue());
     response->set_type(cta::xrd::Response::RSP_ERR_PROTOBUF);
     response->set_message_txt(ex.getMessageValue());
-    return ::grpc::Status(::grpc::StatusCode::INTERNAL, ex.getMessageValue());
+    return ::grpc::Status(::grpc::StatusCode::INVALID_ARGUMENT, ex.getMessageValue());
   } catch (cta::exception::UserError &ex) {
     lc.log(cta::log::ERR, ex.getMessageValue());
     response->set_type(cta::xrd::Response::RSP_ERR_USER);
     response->set_message_txt(ex.getMessageValue());
-    return ::grpc::Status(::grpc::StatusCode::INVALID_ARGUMENT, ex.getMessageValue());
+    /* Logic-wise, this should also be INVALID_ARGUMENT, but we need a way to
+     * differentiate between different kinds of errors on the client side,
+     * which is why we return ABORTED
+     */
+    return ::grpc::Status(::grpc::StatusCode::ABORTED, ex.getMessageValue());
   } catch (cta::exception::Exception &ex) {
     lc.log(cta::log::ERR, ex.getMessageValue());
     response->set_type(cta::xrd::Response::RSP_ERR_CTA);
     response->set_message_txt(ex.getMessageValue());
-    return ::grpc::Status(::grpc::StatusCode::UNKNOWN, ex.getMessageValue());
+    return ::grpc::Status(::grpc::StatusCode::FAILED_PRECONDITION, ex.getMessageValue());
   } catch (std::runtime_error &ex) {
     lc.log(cta::log::ERR, ex.what());
     response->set_type(cta::xrd::Response::RSP_ERR_CTA);
     response->set_message_txt(ex.what());
-    return ::grpc::Status(::grpc::StatusCode::UNKNOWN, ex.what());
+    return ::grpc::Status(::grpc::StatusCode::FAILED_PRECONDITION, ex.what());
   } catch (...) {
     response->set_type(cta::xrd::Response::RSP_ERR_CTA);
-    return ::grpc::Status(::grpc::StatusCode::UNKNOWN, "Error processing gRPC request");
+    return ::grpc::Status(::grpc::StatusCode::FAILED_PRECONDITION, "Error processing gRPC request");
   }
   return Status::OK;
 }
@@ -75,8 +79,11 @@ CtaRpcImpl::Create(::grpc::ServerContext* context, const cta::xrd::Request* requ
   sp.add("request", "create");
   // check that the workflow is set appropriately for the create event
   auto event = request->notification().wf().event();
-  if (event != cta::eos::Workflow::CREATE)
+  if (event != cta::eos::Workflow::CREATE) {
+    response->set_type(cta::xrd::Response::RSP_ERR_USER);
+    response->set_message_txt("Unexpected workflow event type. Expected CREATE, found " + cta::eos::Workflow_EventType_Name(event));
     return ::grpc::Status(::grpc::StatusCode::INVALID_ARGUMENT, "Unexpected workflow event type. Expected CREATE, found " + cta::eos::Workflow_EventType_Name(event));
+  }
   return ProcessGrpcRequest(context, request, response, lc);
 }
 
@@ -90,12 +97,17 @@ CtaRpcImpl::Archive(::grpc::ServerContext* context, const cta::xrd::Request* req
   // check validate request args
   const std::string storageClass = request->notification().file().storage_class();
   if (storageClass.empty()) {
+    response->set_type(cta::xrd::Response::RSP_ERR_USER);
+    response->set_message_txt("Storage class is not set.");
     return ::grpc::Status(::grpc::StatusCode::INVALID_ARGUMENT, "Storage class is not set.");
   }
 
   auto event = request->notification().wf().event();
-  if (event != cta::eos::Workflow::CLOSEW)
+  if (event != cta::eos::Workflow::CLOSEW) {
+    response->set_type(cta::xrd::Response::RSP_ERR_USER);
+    response->set_message_txt("Unexpected workflow event type. Expected CLOSEW, found " + cta::eos::Workflow_EventType_Name(event));
     return ::grpc::Status(::grpc::StatusCode::INVALID_ARGUMENT, "Unexpected workflow event type. Expected CLOSEW, found " + cta::eos::Workflow_EventType_Name(event));
+  }
 
   return ProcessGrpcRequest(context, request, response, lc);
 }
@@ -110,11 +122,16 @@ CtaRpcImpl::Delete(::grpc::ServerContext* context, const cta::xrd::Request* requ
 
   // check validate request args
   auto event = request->notification().wf().event();
-  if (event != cta::eos::Workflow::DELETE)
+  if (event != cta::eos::Workflow::DELETE) {
+    response->set_type(cta::xrd::Response::RSP_ERR_USER);
+    response->set_message_txt("Unexpected workflow event type. Expected DELETE, found " + cta::eos::Workflow_EventType_Name(event));
     return ::grpc::Status(::grpc::StatusCode::INVALID_ARGUMENT, "Unexpected workflow event type. Expected DELETE, found " + cta::eos::Workflow_EventType_Name(event));
+  }
 
   if (request->notification().file().archive_file_id() == 0) {
     lc.log(cta::log::WARNING, "Invalid archive file id");
+    response->set_type(cta::xrd::Response::RSP_ERR_USER);
+    response->set_message_txt("Invalid archive file id");
     return ::grpc::Status(::grpc::StatusCode::INVALID_ARGUMENT, "Invalid archive file id.");
   }
 
@@ -131,17 +148,24 @@ CtaRpcImpl::Retrieve(::grpc::ServerContext* context, const cta::xrd::Request* re
   sp.add("request", "retrieve");
 
   auto event = request->notification().wf().event();
-  if (event != cta::eos::Workflow::PREPARE)
+  if (event != cta::eos::Workflow::PREPARE) {
+    response->set_type(cta::xrd::Response::RSP_ERR_USER);
+    response->set_message_txt("Unexpected workflow event type. Expected PREPARE, found " + cta::eos::Workflow_EventType_Name(event));
     return ::grpc::Status(::grpc::StatusCode::INVALID_ARGUMENT, "Unexpected workflow event type. Expected PREPARE, found " + cta::eos::Workflow_EventType_Name(event));
+  }
 
   const std::string storageClass = request->notification().file().storage_class();
   if (storageClass.empty()) {
+    response->set_type(cta::xrd::Response::RSP_ERR_USER);
+    response->set_message_txt("Storage class is not set");
     return ::grpc::Status(::grpc::StatusCode::INVALID_ARGUMENT, "Storage class is not set.");
   }
 
   // check validate request args
   if (request->notification().file().archive_file_id() == 0) {
     lc.log(cta::log::WARNING, "Invalid archive file id");
+    response->set_type(cta::xrd::Response::RSP_ERR_USER);
+    response->set_message_txt("Invalid archive file id");
     return ::grpc::Status(::grpc::StatusCode::INVALID_ARGUMENT, "Invalid archive file id.");
   }
 
@@ -170,11 +194,16 @@ Status CtaRpcImpl::CancelRetrieve(::grpc::ServerContext* context,
 
   // check validate request args
   auto event = request->notification().wf().event();
-  if (event != cta::eos::Workflow::ABORT_PREPARE)
+  if (event != cta::eos::Workflow::ABORT_PREPARE) {
+    response->set_type(cta::xrd::Response::RSP_ERR_USER);
+    response->set_message_txt("Unexpected workflow event type. Expected ABORT_PREPARE, found " + cta::eos::Workflow_EventType_Name(event));
     return ::grpc::Status(::grpc::StatusCode::INVALID_ARGUMENT, "Unexpected workflow event type. Expected ABORT_PREPARE, found " + cta::eos::Workflow_EventType_Name(event));
+  }
 
   if (!request->notification().file().archive_file_id()) {
     lc.log(cta::log::WARNING, "Invalid archive file id");
+    response->set_type(cta::xrd::Response::RSP_ERR_USER);
+    response->set_message_txt("Invalid archive file id");
     return ::grpc::Status(::grpc::StatusCode::INVALID_ARGUMENT, "Invalid archive file id.");
   }
 
