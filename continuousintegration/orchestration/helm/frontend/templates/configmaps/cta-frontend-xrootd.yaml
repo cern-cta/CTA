@@ -21,8 +21,6 @@ data:
     cta.schedulerdb.scheduler_backend_name {{ $schedulerConfig.backend }}
     cta.schedulerdb.numberofthreads {{ .Values.conf.schedulerdb.numberOfThreads }}
     cta.schedulerdb.threadstacksize_mb {{ .Values.conf.schedulerdb.threadStackSizeMb }}
-    cta.schedulerdb.disable_repack_requests {{ .Values.conf.schedulerdb.disableRepackRequests }}
-    cta.schedulerdb.disable_user_requests {{ .Values.conf.schedulerdb.disableUserRequests }}
 
     # CTA Scheduler DB options - Cache timeout options (decreased for tests)
     cta.schedulerdb.tape_cache_max_age_secs {{ .Values.conf.schedulerdb.tapeCacheMaxAgeSecs }}

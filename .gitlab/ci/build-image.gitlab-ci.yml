@@ -77,7 +77,7 @@ build-ctageneric-5-11-2:
     - echo "Building image with CTA ${CUSTOM_CTA_TAG} RPMs"
     - echo "Image tag ${CI_REGISTRY}/cta/ctageneric:${IMAGE_TAG}"
     - /kaniko/executor --context $CI_PROJECT_DIR
-                       --dockerfile continuousintegration/docker/alma9/tag.Dockerfile
+                       --dockerfile continuousintegration/docker/alma9/5.11.2.0-1.Dockerfile
                        --destination ${CI_REGISTRY}/cta/ctageneric:${IMAGE_TAG}
                        --build-arg "PUBLIC_REPO_VER=5.11.2.0-1"
     - echo "Image pushed successfully to ${CI_REGISTRY}/cta/ctageneric:${IMAGE_TAG}"

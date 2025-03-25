@@ -23,9 +23,9 @@ ENV BASEDIR="continuousintegration/docker/alma9" \
 
 # Add orchestration run scripts locally
 COPY ${BASEDIR}/../opt /opt
-COPY ${BASEDIR}/etc/yum.repos.d/ /etc/yum.repos.d/
+COPY ${BASEDIR}/etc/yum.repos.d/cta-public-testing.repo /etc/yum.repos.d/cta-public-testing.repo
 
-ENV PUBLIC_REPO_VER=5.10.10.1-1.el9
+ENV PUBLIC_REPO_VER=5.11.0.1-1
 
 # Install necessary packages
 RUN dnf install -y \
@@ -46,17 +46,14 @@ RUN wget https://download.oracle.com/otn_software/linux/instantclient/2112000/el
     yum install -y oracle-instantclient-devel-21.12.0.0.0-1.el9.x86_64.rpm; \
     rm oracle-instantclient-basic-21.12.0.0.0-1.el9.x86_64.rpm oracle-instantclient-devel-21.12.0.0.0-1.el9.x86_64.rpm;
 
+
 # We add the cta user so that we can consistently reference it in the Helm chart when changing keytab ownership
 RUN useradd -m -u 1000 -g tape cta
 
 # Install cta-release and clean up
 RUN dnf config-manager --enable epel --setopt="epel.priority=4" && \
     dnf config-manager --enable cta-public-testing && \
+    dnf install -y "cta-release-${PUBLIC_REPO_VER}.el9" && \
+    cta-versionlock apply && \
     dnf clean all --enablerepo=\* && \
     rm -rf /etc/rc.d/rc.local
-
-
-
-
-ENV YUM_VERSIONLOCK_FILE=continuousintegration/docker/alma9/5.10.10.1-1.versionlock.list
-COPY ${YUM_VERSIONLOCK_FILE} /etc/dnf/plugins/versionlock.list
