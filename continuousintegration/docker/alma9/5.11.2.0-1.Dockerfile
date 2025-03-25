@@ -21,8 +21,6 @@ FROM gitlab-registry.cern.ch/linuxsupport/alma9-base:latest
 ENV BASEDIR="continuousintegration/docker/alma9" \
     CTAREPODIR="/opt/repo"
 
-# Add orchestration run scripts locally
-COPY ${BASEDIR}/../opt /opt
 COPY ${BASEDIR}/etc/yum.repos.d/cta-public-testing.repo /etc/yum.repos.d/cta-public-testing.repo
 
 ENV PUBLIC_REPO_VER=5.11.2.0-1
