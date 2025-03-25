@@ -54,10 +54,10 @@ variables:
   GIT_SUBMODULE_DEPTH: 0 # Full clone of the submodules
 
   # Images
-  IMAGE_ANALYSIS: gitlab-registry.cern.ch/cta/public_registry/container_registry/cta-ci-analysis:2025-03-18-11047290
-  IMAGE_BUILD: gitlab-registry.cern.ch/cta/public_registry/container_registry/cta-ci-build:2025-03-18-11047290
-  IMAGE_TEST: gitlab-registry.cern.ch/cta/public_registry/container_registry/cta-ci-test:2025-03-18-11047290
-  IMAGE_RELEASE: gitlab-registry.cern.ch/cta/public_registry/container_registry/cta-ci-release:2025-03-18-11047290
+  IMAGE_ANALYSIS: gitlab-registry.cern.ch/cta/public_registry/container_registry/cta-ci-analysis:2025-03-25-11120052
+  IMAGE_BUILD: gitlab-registry.cern.ch/cta/public_registry/container_registry/cta-ci-build:2025-03-25-11120052
+  IMAGE_TEST: gitlab-registry.cern.ch/cta/public_registry/container_registry/cta-ci-test:2025-03-25-11120052
+  IMAGE_RELEASE: gitlab-registry.cern.ch/cta/public_registry/container_registry/cta-ci-release:2025-03-25-11120052
   IMAGE_GITLAB_RELEASE_CLI: registry.gitlab.com/gitlab-org/release-cli:latest
   IMAGE_DOCKER_IMAGE_BUILDER: gcr.io/kaniko-project/executor:debug
 
