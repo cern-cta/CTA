@@ -81,6 +81,9 @@ public:
                             case cta::admin::HeaderType::ADMIN_LS:
                                 m_textFormatter.printAdminLsHeader();
                                 break;
+                            case cta::admin::HeaderType::VERSION_CMD:
+                                m_textFormatter.printVersionHeader();
+                                break;
                             default:
                                 // keep compiler happy
                                 break;
@@ -142,6 +145,12 @@ public:
                     {
                         const cta::admin::AdminLsItem& adminLsItem = m_response.data().adls_item();
                         m_textFormatter.print(adminLsItem);
+                        break;
+                    }
+                    case cta::xrd::Data::kVersionItem:
+                    {
+                        const cta::admin::VersionItem& versionItem = m_response.data().version_item();
+                        m_textFormatter.print(versionItem);
                         break;
                     }
                     default:

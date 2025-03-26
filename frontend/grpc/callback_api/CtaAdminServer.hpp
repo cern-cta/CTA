@@ -28,6 +28,7 @@
 #include "ServerDiskInstanceLs.hpp"
 #include "ServerDriveLs.hpp"
 #include "ServerAdminLs.hpp"
+#include "ServerVersion.hpp"
 
 #include <grpcpp/grpcpp.h>
 
@@ -51,10 +52,11 @@ class CtaRpcStreamImpl : public cta::xrd::CtaRpcStream::CallbackService {
   public:
     cta::log::LogContext getLogContext() const { return m_lc; }
     // CtaRpcStreamImpl() = delete;
-    CtaRpcStreamImpl(cta::catalogue::Catalogue &catalogue, cta::Scheduler &scheduler, cta::log::LogContext logContext) :
+    CtaRpcStreamImpl(cta::catalogue::Catalogue &catalogue, cta::Scheduler &scheduler, std::string connstr, cta::log::LogContext logContext) :
       m_lc(logContext),
       m_catalogue(catalogue),
-      m_scheduler(scheduler) {}
+      m_scheduler(scheduler),
+      m_catalogueConnString(connstr) {}
     /* CtaAdminServerWriteReactor is what the type of GenericAdminStream could be */
     ::grpc::ServerWriteReactor<cta::xrd::StreamResponse>* GenericAdminStream(::grpc::CallbackServerContext* context, const cta::xrd::Request* request);
     // ::grpc::ServerWriteReactor<cta::xrd::StreamResponse>* TapeLs(::grpc::CallbackServerContext* context, const cta::xrd::Request* request);
@@ -64,6 +66,7 @@ class CtaRpcStreamImpl : public cta::xrd::CtaRpcStream::CallbackService {
     cta::log::LogContext m_lc; // <! Provided by the frontendService
     cta::catalogue::Catalogue &m_catalogue;    //!< Reference to CTA Catalogue
     cta::Scheduler            &m_scheduler;    //!< Reference to CTA Scheduler
+    std::string m_catalogueConnString; //!< Provided by frontendService
     // I do not think a reactor could be a member of this class because it must be reinitialized upon each call
     // CtaAdminServerWriteReactor *m_reactor;      // this will have to be initialized to TapeLs or StorageClassLs or whatever...
 };
@@ -113,6 +116,8 @@ CtaRpcStreamImpl::GenericAdminStream(::grpc::CallbackServerContext* context, con
       return new DriveLsWriteReactor(m_catalogue, m_scheduler, m_lc, request);
     case cmd_pair(cta::admin::AdminCmd::CMD_ADMIN, cta::admin::AdminCmd::SUBCMD_LS):
       return new AdminLsWriteReactor(m_catalogue, m_scheduler, request);
+    case cmd_pair(cta::admin::AdminCmd::CMD_VERSION, cta::admin::AdminCmd::SUBCMD_NONE):
+      return new VersionWriteReactor(m_catalogue, m_scheduler, m_catalogueConnString, request);
     default:
       // make the compiler happy maybe and return
       return new TapeLsWriteReactor(m_catalogue, m_scheduler, request);

@@ -195,7 +195,10 @@ int main(const int argc, char *const *const argv) {
     builder.RegisterService(&svc);
     // I need to also register the CtaRpcStream service
     // but need to make it so it has its own catalogue? logger etc?
-    frontend::grpc::CtaRpcStreamImpl streamSvc(svc.getFrontendService().getCatalogue(), svc.getFrontendService().getScheduler(), svc.getFrontendService().getLogContext());
+    frontend::grpc::CtaRpcStreamImpl streamSvc(svc.getFrontendService().getCatalogue(),
+                                               svc.getFrontendService().getScheduler(),
+                                               svc.getFrontendService().getCatalogueConnString(),
+                                               svc.getFrontendService().getLogContext());
     builder.RegisterService(&streamSvc);
     std::unique_ptr <Server> server(builder.BuildAndStart());
 
