@@ -517,7 +517,7 @@ const Option opt_archive_route_type {Option::OPT_STR,
                                      std::string(R"( <")") +
                                        cta::common::dataStructures::toString(ArchiveRouteType::DEFAULT) + R"(" or ")" +
                                        cta::common::dataStructures::toString(ArchiveRouteType::REPACK) + R"(">)"};
-const Option opt_missingfilecopes {Option::OPT_FLAG, "--missingfilecopies", "--ifc", ""};
+const Option opt_missingfilecopes {Option::OPT_FLAG, "--missingfilecopies", "--mfc", ""};
 
 /*!
  * Subset of commands that return streaming output
