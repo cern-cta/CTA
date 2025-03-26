@@ -5,7 +5,7 @@ pipeline-variable-check:
   rules: # To be removed when cta#962 is merged into main
     - if: $PIPELINE_TYPE != "COMMIT"
   script:
-    - python3 ./continuousintegration/validation/ci_input_validate.py
+    - python3 ./continuousintegration/checks/check_ci_input_variables.py
 
 # If the CTA tagged branch contains a locked EOS version that is different from
 # the one in the main branch, then, it is possible that some of the system tests
