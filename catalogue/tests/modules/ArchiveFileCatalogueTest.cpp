@@ -5069,6 +5069,7 @@ TEST_P(cta_catalogue_ArchiveFileTest, getTapesWithMissingTapeFileCopies) {
   {
     cta::catalogue::TapeSearchCriteria searchCriteria;
     searchCriteria.checkMissingFileCopies = true;
+    searchCriteria.missingFileCopiesMinAgeSecs = 0;
     const std::list<cta::common::dataStructures::Tape> tapes = m_catalogue->Tape()->getTapes(searchCriteria);
 
     ASSERT_EQ(2, tapes.size());
@@ -5110,6 +5111,7 @@ TEST_P(cta_catalogue_ArchiveFileTest, getTapesWithMissingTapeFileCopies) {
   {
     cta::catalogue::TapeSearchCriteria searchCriteria;
     searchCriteria.checkMissingFileCopies = true;
+    searchCriteria.missingFileCopiesMinAgeSecs = 0;
     const std::list<cta::common::dataStructures::Tape> tapes = m_catalogue->Tape()->getTapes(searchCriteria);
 
     ASSERT_EQ(1, tapes.size());
@@ -5149,6 +5151,7 @@ TEST_P(cta_catalogue_ArchiveFileTest, getTapesWithMissingTapeFileCopies) {
   {
     cta::catalogue::TapeSearchCriteria searchCriteria;
     searchCriteria.checkMissingFileCopies = true;
+    searchCriteria.missingFileCopiesMinAgeSecs = 0;
     const std::list<cta::common::dataStructures::Tape> tapes = m_catalogue->Tape()->getTapes(searchCriteria);
 
     ASSERT_TRUE(tapes.empty());

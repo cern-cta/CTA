@@ -70,6 +70,11 @@ public:
   }
 
   /*!
+   * Get missing tape file copies minimum age
+   */
+  uint64_t getMissingFileCopiesMinAgeSecs() const { return m_missingFileCopiesMinAgeSecs; }
+
+  /*!
    * Get a reference to the Scheduler
    */
   bool getUserRequestsAllowed() const { return m_acceptUserRequests; }
@@ -186,6 +191,7 @@ private:
   std::optional<std::string>                    m_tlsKey;                       //!< The TLS service key file
   std::optional<std::string>                    m_tlsCert;                      //!< The TLS service certificate file
   std::optional<std::string>                    m_tlsChain;                     //!< The TLS CA chain file
+  uint64_t                                      m_missingFileCopiesMinAgeSecs;  //!< Missing tape file copies minimum age.
   // clang-format on
 };
 

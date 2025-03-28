@@ -81,6 +81,9 @@ TapeLsStream::TapeLsStream(const frontend::AdminCmdStream& requestMsg, cta::cata
   searchCriteria.physicalLibraryName    = requestMsg.getOptional(OptionString::PHYSICAL_LIBRARY,            &has_any);
   searchCriteria.diskFileIds            = requestMsg.getOptional(OptionStrList::FILE_ID,                    &has_any);
   searchCriteria.checkMissingFileCopies = requestMsg.getOptional(OptionBoolean::MISSING_FILE_COPIES,        &has_any);
+  if (searchCriteria.checkMissingFileCopies.value_or(false)) {
+    searchCriteria.missingFileCopiesMinAgeSecs = requestMsg.getMissingFileCopiesMinAgeSecs();
+  }
   auto stateOpt                      = requestMsg.getOptional(OptionString::STATE,                       &has_any);
 
   if(stateOpt){

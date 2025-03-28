@@ -31,6 +31,11 @@ data:
     # CTA Catalogue options
     cta.catalogue.numberofconnections {{ .Values.conf.catalogue.numberOfConnections }}
 
+    # Missing tape file copies minimum age.
+    # Set it to prevent false flagging of multi-copy files in the process of being archived tapes.
+    # Default 24 hours
+    cta.catalogue.missing_file_copies_min_age_secs {{ .Values.conf.catalogue.missingFileCopiesMinAgeSecs }}
+
     # Maximum file size (in GB) that the CTA Frontend will accept for archiving
     cta.archivefile.max_size_gb {{ .Values.conf.frontend.archiveFileMaxSizeGb }}
 

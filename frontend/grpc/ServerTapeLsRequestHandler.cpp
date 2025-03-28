@@ -100,13 +100,13 @@ bool cta::frontend::grpc::server::TapeLsRequestHandler::next(const bool bOk) {
               m_searchCriteria.state = common::dataStructures::Tape::stringToState(stateOpt.value());
             }
 
-            if(!(requestMsg.hasFlag(cta::admin::OptionBoolean::ALL) || bHasAny)) {
+            if(!(requestMsg.has_flag(cta::admin::OptionBoolean::ALL) || bHasAny)) {
               lc.log(cta::log::ERR, "In grpc::server::TapeLsRequestHandler::next(): Must specify at least one search option, or --all.");
               m_response.mutable_header()->set_type(cta::xrd::Response::RSP_ERR_USER);
               m_response.mutable_header()->set_show_header(cta::admin::HeaderType::NONE);
               m_response.mutable_header()->set_message_txt("Must specify at least one search option, or --all.");
               m_streamState = StreamState::ERROR;
-            } else if(requestMsg.hasFlag(cta::admin::OptionBoolean::ALL) && bHasAny) {
+            } else if(requestMsg.has_flag(cta::admin::OptionBoolean::ALL) && bHasAny) {
               lc.log(cta::log::ERR, "In grpc::server::TapeLsRequestHandler::next(): Cannot specify --all together with other search options.");
               m_response.mutable_header()->set_type(cta::xrd::Response::RSP_ERR_USER);
               m_response.mutable_header()->set_show_header(cta::admin::HeaderType::NONE);

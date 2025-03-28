@@ -1441,7 +1441,7 @@ std::list<common::dataStructures::Tape> RdbmsTapeCatalogue::getTapes(rdbms::Conn
             INNER JOIN STORAGE_CLASS SC ON AF.STORAGE_CLASS_ID = SC.STORAGE_CLASS_ID
             INNER JOIN TAPE_FILE TF ON AF.ARCHIVE_FILE_ID = TF.ARCHIVE_FILE_ID
           WHERE
-            SC.NB_COPIES > 1
+            SC.NB_COPIES > 1 AND AF.CREATION_TIME <= :MAX_CREATION_TIME
           GROUP BY
             AF.ARCHIVE_FILE_ID, SC.NB_COPIES
           HAVING
@@ -1473,6 +1473,11 @@ std::list<common::dataStructures::Tape> RdbmsTapeCatalogue::getTapes(rdbms::Conn
   } catch(cta::exception::Exception&){
     throw cta::exception::UserError(std::string("The state provided does not exist. Possible values are: ")
       + cta::common::dataStructures::Tape::getAllPossibleStates());
+  }
+  if (searchCriteria.checkMissingFileCopies.value_or(false)) {
+    uint64_t max_creation_time = time(nullptr);
+    max_creation_time -= searchCriteria.missingFileCopiesMinAgeSecs;
+    stmt.bindUint64(":MAX_CREATION_TIME", max_creation_time);
   }
 
   // Disk file ID lookup requires multiple queries
