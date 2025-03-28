@@ -1443,7 +1443,7 @@ std::list<common::dataStructures::Tape> RdbmsTapeCatalogue::getTapes(rdbms::Conn
           WHERE
             SC.NB_COPIES > 1
           GROUP BY
-            AF.ARCHIVE_FILE_ID, SC.NB_COPIES AND AF.CREATION_TIME < :MAX_CREATION_TIME
+            AF.ARCHIVE_FILE_ID, SC.NB_COPIES AND AF.CREATION_TIME <= :MAX_CREATION_TIME
           HAVING
             SC.NB_COPIES <> COUNT(TF.ARCHIVE_FILE_ID)
         ) MISSING_COPIES
