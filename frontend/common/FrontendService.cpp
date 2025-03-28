@@ -120,7 +120,7 @@ FrontendService::FrontendService(const std::string& configFilename) : m_archiveF
   m_missingFileCopiesMinAgeSecs = missingFileCopiesMinAgeSecs.value_or(0);
 
   {
-    // Log cta.archivefile.max_size_gb
+    // Log cta.catalogue.missing_file_copies_min_age_secs
     std::list<log::Param> params;
     params.push_back(log::Param("source", missingFileCopiesMinAgeSecs.has_value() ? configFilename : "Compile time default"));
     params.push_back(log::Param("category", "cta.catalogue"));
