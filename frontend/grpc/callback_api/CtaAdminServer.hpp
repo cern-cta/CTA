@@ -29,6 +29,7 @@
 #include "ServerDriveLs.hpp"
 #include "ServerAdminLs.hpp"
 #include "ServerVersion.hpp"
+#include "ServerArchiveRouteLs.hpp"
 
 #include <grpcpp/grpcpp.h>
 
@@ -71,36 +72,12 @@ class CtaRpcStreamImpl : public cta::xrd::CtaRpcStream::CallbackService {
     // CtaAdminServerWriteReactor *m_reactor;      // this will have to be initialized to TapeLs or StorageClassLs or whatever...
 };
 
-// serverWriteReactor<Feature> is the RETURN TYPE of the function which is server-side streaming!!!
-// Is serverWriteReactor a class? yes it is
-// but clientReadReactor is a class
-// ServerWriteReactor class defined in server_callback.h
-// methods: StartWrite(), StartWriteAndFinish(), StartSendInitialMetadata(), StartWriteLast,
-// Finish(), OnSendInitialMetadata(), OnWriteDone(), OnDone(), OnCancel()
-// class CtaAdminServerWriteReactor : public grpc::ServerWriteReactor<cta::xrd::StreamResponse> {
-//   public:
-//     void OnWriteDone(bool ok) override {
-//       if (!ok) {
-//         Finish(Status(grpc::StatusCode::UNKNOWN, "Unexpected Failure in OnWriteDone")); // Finish is a method of the parent class
-//       }
-//       NextWrite();
-//     }
-//   private:
-//     // bool isHeaderSent = false;
-//     xrd::cta::Response stream_item_;
-//     std::vector<> // will hold the database query, each protobuf sent as the response is of the type cta::xrd::Response (which is either Header or Data)
-//     // for tapeLS for example, we hold the results in std::list<common::dataStructures::Tape> m_tapeList; - XrdCtaTapeLs.hpp implementation
-// }
-
 // request object will be filled in by the Parser of the command on the client-side.
 // Currently I am calling this class CtaAdminCmdStreamingClient
 ::grpc::ServerWriteReactor<cta::xrd::StreamResponse>*
 CtaRpcStreamImpl::GenericAdminStream(::grpc::CallbackServerContext* context, const cta::xrd::Request* request) {
   std::cout << "In GenericAdminStream, just entered" << std::endl;
-  // lister class implements all the overriden methods
-  // its constructor calls the NextWrite() function to begin writing
-  // return new Lister(rectangle, &feature_list_);
-  // so I could here, based on the request, have a switch statement calling the constructor of the appropriate child class
+
   switch(cmd_pair(request->admincmd().cmd(), request->admincmd().subcmd())) {
     case cmd_pair(cta::admin::AdminCmd::CMD_TAPE, cta::admin::AdminCmd::SUBCMD_LS):
       return new TapeLsWriteReactor(m_catalogue, m_scheduler, request);
@@ -118,7 +95,9 @@ CtaRpcStreamImpl::GenericAdminStream(::grpc::CallbackServerContext* context, con
       return new AdminLsWriteReactor(m_catalogue, m_scheduler, request);
     case cmd_pair(cta::admin::AdminCmd::CMD_VERSION, cta::admin::AdminCmd::SUBCMD_NONE):
       return new VersionWriteReactor(m_catalogue, m_scheduler, m_catalogueConnString, request);
-    default:
+    case cmd_pair(cta::admin::AdminCmd::CMD_ARCHIVEROUTE, cta::admin::AdminCmd::SUBCMD_LS):
+      return new ArchiveRouteLsWriteReactor(m_catalogue, m_scheduler, request);
+      default:
       // make the compiler happy maybe and return
       return new TapeLsWriteReactor(m_catalogue, m_scheduler, request);
     // dCache impl. prints unrecognized Request message
