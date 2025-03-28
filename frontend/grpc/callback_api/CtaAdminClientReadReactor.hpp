@@ -60,34 +60,37 @@ public:
                     case cta::xrd::Response::RSP_SUCCESS:
                         std::cout << "The header type was set to SUCCESS" << std::endl;
                         switch (m_response.header().show_header()) {
-                            case cta::admin::HeaderType::TAPE_LS:
-                                m_textFormatter.printTapeLsHeader();
-                                break;
-                            case cta::admin::HeaderType::STORAGECLASS_LS:
-                                m_textFormatter.printStorageClassLsHeader();
-                                break;
-                            case cta::admin::HeaderType::TAPEPOOL_LS:
-                                m_textFormatter.printTapePoolLsHeader();
-                                break;
-                            case cta::admin::HeaderType::VIRTUALORGANIZATION_LS:
-                                m_textFormatter.printVirtualOrganizationLsHeader();
-                                break;
-                            case cta::admin::HeaderType::DISKINSTANCE_LS:
-                                m_textFormatter.printDiskInstanceLsHeader();
-                                break;
-                            case cta::admin::HeaderType::DRIVE_LS:
-                                m_textFormatter.printDriveLsHeader();
-                                break;
-                            case cta::admin::HeaderType::ADMIN_LS:
-                                m_textFormatter.printAdminLsHeader();
-                                break;
-                            case cta::admin::HeaderType::VERSION_CMD:
-                                m_textFormatter.printVersionHeader();
-                                break;
+                            case cta::admin::HeaderType::ADMIN_LS:                     m_textFormatter.printAdminLsHeader(); break;
+                            case cta::admin::HeaderType::ARCHIVEROUTE_LS:              m_textFormatter.printArchiveRouteLsHeader(); break;
+                            case cta::admin::HeaderType::DRIVE_LS:                     m_textFormatter.printDriveLsHeader(); break;
+                            case cta::admin::HeaderType::FAILEDREQUEST_LS:             m_textFormatter.printFailedRequestLsHeader(); break;
+                            case cta::admin::HeaderType::FAILEDREQUEST_LS_SUMMARY:     m_textFormatter.printFailedRequestLsSummaryHeader(); break;
+                            case cta::admin::HeaderType::GROUPMOUNTRULE_LS:            m_textFormatter.printGroupMountRuleLsHeader(); break;
+                            case cta::admin::HeaderType::LISTPENDINGARCHIVES:          m_textFormatter.printListPendingArchivesHeader(); break;
+                            case cta::admin::HeaderType::LISTPENDINGARCHIVES_SUMMARY:  m_textFormatter.printListPendingArchivesSummaryHeader(); break;
+                            case cta::admin::HeaderType::LISTPENDINGRETRIEVES:         m_textFormatter.printListPendingRetrievesHeader(); break;
+                            case cta::admin::HeaderType::LISTPENDINGRETRIEVES_SUMMARY: m_textFormatter.printListPendingRetrievesSummaryHeader(); break;
+                            case cta::admin::HeaderType::LOGICALLIBRARY_LS:            m_textFormatter.printLogicalLibraryLsHeader(); break;
+                            case cta::admin::HeaderType::MOUNTPOLICY_LS:               m_textFormatter.printMountPolicyLsHeader(); break;
+                            case cta::admin::HeaderType::REPACK_LS:                    m_textFormatter.printRepackLsHeader(); break;
+                            case cta::admin::HeaderType::REQUESTERMOUNTRULE_LS:        m_textFormatter.printRequesterMountRuleLsHeader(); break;
+                            case cta::admin::HeaderType::ACTIVITYMOUNTRULE_LS:         m_textFormatter.printActivityMountRuleLsHeader(); break;
+                            case cta::admin::HeaderType::SHOWQUEUES:                   m_textFormatter.printShowQueuesHeader(); break;
+                            case cta::admin::HeaderType::STORAGECLASS_LS:              m_textFormatter.printStorageClassLsHeader(); break;
+                            case cta::admin::HeaderType::TAPE_LS:                      m_textFormatter.printTapeLsHeader(); break;
+                            case cta::admin::HeaderType::TAPEFILE_LS:                  m_textFormatter.printTapeFileLsHeader(); break;
+                            case cta::admin::HeaderType::TAPEPOOL_LS:                  m_textFormatter.printTapePoolLsHeader(); break;
+                            case cta::admin::HeaderType::DISKSYSTEM_LS:                m_textFormatter.printDiskSystemLsHeader(); break;
+                            case cta::admin::HeaderType::DISKINSTANCE_LS:              m_textFormatter.printDiskInstanceLsHeader(); break;
+                            case cta::admin::HeaderType::DISKINSTANCESPACE_LS:         m_textFormatter.printDiskInstanceSpaceLsHeader(); break;
+                            case cta::admin::HeaderType::VIRTUALORGANIZATION_LS:       m_textFormatter.printVirtualOrganizationLsHeader(); break;
+                            case cta::admin::HeaderType::VERSION_CMD:                  m_textFormatter.printVersionHeader(); break;
+                            case cta::admin::HeaderType::MEDIATYPE_LS:                 m_textFormatter.printMediaTypeLsHeader(); break;
+                            case cta::admin::HeaderType::RECYLETAPEFILE_LS:            m_textFormatter.printRecycleTapeFileLsHeader(); break;
+                            case cta::admin::HeaderType::PHYSICALLIBRARY_LS:           m_textFormatter.printPhysicalLibraryLsHeader(); break;
+                            case cta::admin::HeaderType::NONE:
                             default:
-                                // keep compiler happy
                                 break;
-
                         }
                         break;
                     case cta::xrd::Response::RSP_ERR_PROTOBUF:
@@ -151,6 +154,96 @@ public:
                     {
                         const cta::admin::VersionItem& versionItem = m_response.data().version_item();
                         m_textFormatter.print(versionItem);
+                        break;
+                    }
+                    case cta::xrd::Data::kArlsItem:
+                    {
+                        const cta::admin::ArchiveRouteLsItem& archiveRouteLsItem = m_response.data().arls_item();
+                        m_textFormatter.print(archiveRouteLsItem);
+                        break;
+                    }
+                    case cta::xrd::Data::kFrlsItem:
+                    {
+                        const cta::admin::FailedRequestLsItem& failedRequestLsItem = m_response.data().frls_item();
+                        m_textFormatter.print(failedRequestLsItem);
+                        break;
+                    }
+                    case cta::xrd::Data::kGmrlsItem:
+                    {
+                        const cta::admin::GroupMountRuleLsItem& groupMountRuleLsItem = m_response.data().gmrls_item();
+                        m_textFormatter.print(groupMountRuleLsItem);
+                        break;
+                    }
+                    case cta::xrd::Data::kLllsItem:
+                    {
+                        const cta::admin::LogicalLibraryLsItem& logicalLibraryLsItem = m_response.data().llls_item();
+                        m_textFormatter.print(logicalLibraryLsItem);
+                        break;
+                    }
+                    case cta::xrd::Data::kPllsItem:
+                    {
+                        const cta::admin::PhysicalLibraryLsItem& physicalLibraryLsItem = m_response.data().plls_item();
+                        m_textFormatter.print(physicalLibraryLsItem);
+                        break;
+                    }
+                    case cta::xrd::Data::kMtlsItem:
+                    {
+                        const cta::admin::MediaTypeLsItem& mediaTypeLsItem = m_response.data().mtls_item();
+                        m_textFormatter.print(mediaTypeLsItem);
+                        break;
+                    }
+                    case cta::xrd::Data::kMplsItem:
+                    {
+                        const cta::admin::MountPolicyLsItem& mountPolicyLsItem = m_response.data().mpls_item();
+                        m_textFormatter.print(mountPolicyLsItem);
+                        break;
+                    }
+                    case cta::xrd::Data::kRelsItem:
+                    {
+                        const cta::admin::RepackLsItem& RepackLsItem = m_response.data().rels_item();
+                        m_textFormatter.print(RepackLsItem);
+                        break;
+                    }
+                    case cta::xrd::Data::kRmrlsItem:
+                    {
+                        const cta::admin::RequesterMountRuleLsItem& requesterMountRuleLsItem = m_response.data().rmrls_item();
+                        m_textFormatter.print(requesterMountRuleLsItem);
+                        break;
+                    }
+                    case cta::xrd::Data::kAmrlsItem:
+                    {
+                        const cta::admin::ActivityMountRuleLsItem& activityMountRuleLsItem = m_response.data().amrls_item();
+                        m_textFormatter.print(activityMountRuleLsItem);
+                        break;
+                    }
+                    case cta::xrd::Data::kSqItem:
+                    {
+                        const cta::admin::ShowQueuesItem& showQueuesItem = m_response.data().sq_item();
+                        m_textFormatter.print(showQueuesItem);
+                        break;
+                    }
+                    case cta::xrd::Data::kTflsItem:
+                    {
+                        const cta::admin::TapeFileLsItem& tapeFileLsItem = m_response.data().tfls_item();
+                        m_textFormatter.print(tapeFileLsItem);
+                        break;
+                    }
+                    case cta::xrd::Data::kDslsItem:
+                    {
+                        const cta::admin::DiskSystemLsItem& diskSystemLsItem = m_response.data().dsls_item();
+                        m_textFormatter.print(diskSystemLsItem);
+                        break;
+                    }
+                    case cta::xrd::Data::kDislsItem:
+                    {
+                        const cta::admin::DiskInstanceSpaceLsItem& diskInstanceSpaceLsItem = m_response.data().disls_item();
+                        m_textFormatter.print(diskInstanceSpaceLsItem);
+                        break;
+                    }
+                    case cta::xrd::Data::kRtflsItem:
+                    {
+                        const cta::admin::RecycleTapeFileLsItem& recycleTapeFileLsItem = m_response.data().rtfls_item();
+                        m_textFormatter.print(recycleTapeFileLsItem);
                         break;
                     }
                     default:
