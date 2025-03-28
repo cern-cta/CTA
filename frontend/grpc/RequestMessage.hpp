@@ -103,14 +103,19 @@ public:
    * or not. In the case of flags, they should always have the value true if the flag is
    * present, but we do a redundant check anyway.
    *
-   * @param[in] option    Optional command line option
+   * @param[in]  option        Optional command line option
+   * @param[out] has_option    Set to true if the option exists, unmodified if it does not
    *
    * @retval    true      The flag is present in the options map, and its value is true
    * @retval    false     The flag is either not present or is present and set to false
    */
-  bool hasFlag(cta::admin::OptionBoolean::Key option) const {
+  bool has_flag(cta::admin::OptionBoolean::Key option, bool *has_option = nullptr) const {
     auto opt_it = m_option_bool.find(option);
-    return opt_it != m_option_bool.end() && opt_it->second;
+    if (opt_it != m_option_bool.end()) {
+      if(has_option != nullptr) *has_option = true;
+      return opt_it->second;
+    }
+    return false;
   }
   
 private:

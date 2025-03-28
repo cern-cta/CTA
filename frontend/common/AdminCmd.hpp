@@ -102,14 +102,19 @@ public:
    * or not. In the case of flags, they should always have the value true if the flag is
    * present, but we do a redundant check anyway.
    *
-   * @param[in] option    Optional command line option
+   * @param[in]  option        Optional command line option
+   * @param[out] has_option    Set to true if the option exists, unmodified if it does not
    *
    * @retval    true      The flag is present in the options map, and its value is true
    * @retval    false     The flag is either not present or is present and set to false
    */
-  bool has_flag(admin::OptionBoolean::Key option) const {
+  bool has_flag(admin::OptionBoolean::Key option, bool *has_option = nullptr) const {
     auto opt_it = m_option_bool.find(option);
-    return opt_it != m_option_bool.end() && opt_it->second;
+    if (opt_it != m_option_bool.end()) {
+      if(has_option != nullptr) *has_option = true;
+      return opt_it->second;
+    }
+    return false;
   }
 
   /*!
@@ -124,6 +129,11 @@ public:
    * @return       The disk file ID as a string (integer or UUID), or nullopt if none defined.
    */
   std::optional<std::string> getAndValidateDiskFileIdOptional(bool* has_any = nullptr) const;
+
+  /*!
+   * @return       The missing tape file copies minimum age.
+   */
+  uint64_t getMissingFileCopiesMinAgeSecs() const { return m_missingFileCopiesMinAgeSecs; }
 
 protected:
   /*!
@@ -237,10 +247,11 @@ private:
   void processRecycleTapeFile_Restore (xrd::Response& response);
   void processModifyArchiveFile       (xrd::Response& response);
 
-  common::dataStructures::SecurityIdentity    m_cliIdentity;           //!< Client identity: username, host, authentication
-  const uint64_t                              m_archiveFileMaxSize;    //!< Maximum allowed file size for archive requests
-  const std::optional<std::string>            m_repackBufferURL;       //!< Repack buffer URL
-  const std::optional<std::uint64_t>          m_repackMaxFilesToSelect;//!< Repack max files to expand
+  common::dataStructures::SecurityIdentity    m_cliIdentity;                 //!< Client identity: username, host, authentication
+  const uint64_t                              m_archiveFileMaxSize;          //!< Maximum allowed file size for archive requests
+  const std::optional<std::string>            m_repackBufferURL;             //!< Repack buffer URL
+  const std::optional<std::uint64_t>          m_repackMaxFilesToSelect;      //!< Repack max files to expand
+  const uint64_t                              m_missingFileCopiesMinAgeSecs; //!< Missing tape file copies minimum age
 
   // Command options extracted from protobuf
   std::map<admin::OptionBoolean::Key, bool>                        m_option_bool;        //!< Boolean options

@@ -517,7 +517,7 @@ const Option opt_archive_route_type {Option::OPT_STR,
                                      std::string(R"( <")") +
                                        cta::common::dataStructures::toString(ArchiveRouteType::DEFAULT) + R"(" or ")" +
                                        cta::common::dataStructures::toString(ArchiveRouteType::REPACK) + R"(">)"};
-const Option opt_missingfilecopes {Option::OPT_FLAG, "--missingfilecopies", "--mfc", ""};
+const Option opt_missingfilecopies {Option::OPT_FLAG, "--missingfilecopies", "--mfc", ""};
 
 /*!
  * Subset of commands that return streaming output
@@ -1037,7 +1037,7 @@ tape (ta)
     opt_fromcastor.optional(),
     opt_purchase_order.optional(),
     opt_physical_library.optional(),
-    opt_missingfilecopes.optional()}                                                                                         },
+    opt_missingfilecopies.optional()}                                                                                         },
 
   /**md
 tapefile (tf)
