@@ -30,6 +30,7 @@
 #include "ServerAdminLs.hpp"
 #include "ServerVersion.hpp"
 #include "ServerArchiveRouteLs.hpp"
+#include "ServerGroupMountRuleLs.hpp"
 
 #include <grpcpp/grpcpp.h>
 
@@ -97,6 +98,8 @@ CtaRpcStreamImpl::GenericAdminStream(::grpc::CallbackServerContext* context, con
       return new VersionWriteReactor(m_catalogue, m_scheduler, m_catalogueConnString, request);
     case cmd_pair(cta::admin::AdminCmd::CMD_ARCHIVEROUTE, cta::admin::AdminCmd::SUBCMD_LS):
       return new ArchiveRouteLsWriteReactor(m_catalogue, m_scheduler, request);
+    case cmd_pair(cta::admin::AdminCmd::CMD_GROUPMOUNTRULE, cta::admin::AdminCmd::SUBCMD_LS):
+      return new GroupMountRuleLsWriteReactor(m_catalogue, m_scheduler, request);
       default:
       // make the compiler happy maybe and return
       return new TapeLsWriteReactor(m_catalogue, m_scheduler, request);
