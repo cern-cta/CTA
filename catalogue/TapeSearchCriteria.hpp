@@ -101,6 +101,11 @@ struct TapeSearchCriteria {
   std::optional<bool> checkMissingFileCopies;
 
   /**
+   * Missing tape file copies minimum age in secs
+   */
+  uint64_t missingFileCopiesMinAgeSecs;
+
+  /**
    * The state of the tapes to look for
    */
   std::optional<common::dataStructures::Tape::State> state;

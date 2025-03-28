@@ -116,6 +116,20 @@ FrontendService::FrontendService(const std::string& configFilename) : m_archiveF
     log(log::INFO, std::string("Starting cta-frontend"), params);
   }
 
+  auto missingFileCopiesMinAgeSecs = config.getOptionValueUInt("cta.catalogue.missing_file_copies_min_age_secs");
+  m_missingFileCopiesMinAgeSecs = missingFileCopiesMinAgeSecs.value_or(0);
+
+  {
+    // Log cta.catalogue.missing_file_copies_min_age_secs
+    std::list<log::Param> params;
+    params.push_back(log::Param("source", missingFileCopiesMinAgeSecs.has_value() ? configFilename : "Compile time default"));
+    params.push_back(log::Param("category", "cta.catalogue"));
+    params.push_back(log::Param("key", "missingFileCopiesMinAgeSecs"));
+    params.push_back(
+      log::Param("value", std::to_string(missingFileCopiesMinAgeSecs.value_or(0))));
+    log(log::INFO, "Configuration entry", params);
+  }
+
   // Initialise the Catalogue
   std::string catalogueConfigFile = "/etc/cta/cta-catalogue.conf";
   const rdbms::Login catalogueLogin = rdbms::Login::parseFile(catalogueConfigFile);

@@ -100,6 +100,10 @@ cta.log.url file:/var/log/cta/cta-frontend.log
 # CTA Catalogue options
 cta.catalogue.numberofconnections 10
 
+# Missing tape file copies minimum age.
+# Set it to prevent false flagging of multi-copy files in the process of being archived tapes.
+# Default 24 hours
+cta.catalogue.missing_file_copies_min_age_secs 86400
 
 ####################################
 # Variables used by cta-frontend-async-grpc

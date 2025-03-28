@@ -37,7 +37,8 @@ AdminCmd::AdminCmd(const frontend::FrontendService& frontendService,
   m_cliIdentity(clientIdentity),
   m_archiveFileMaxSize(frontendService.getArchiveFileMaxSize()),
   m_repackBufferURL(frontendService.getRepackBufferURL()),
-  m_repackMaxFilesToSelect(frontendService.getRepackMaxFilesToSelect())
+  m_repackMaxFilesToSelect(frontendService.getRepackMaxFilesToSelect()),
+  m_missingFileCopiesMinAgeSecs(frontendService.getMissingFileCopiesMinAgeSecs())
 {
   m_lc.pushOrReplace({"user", m_cliIdentity.username + "@" + m_cliIdentity.host});
 
