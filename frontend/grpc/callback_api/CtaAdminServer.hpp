@@ -37,6 +37,7 @@
 #include "ServerMountPolicyLs.hpp"
 #include "ServerDiskSystemLs.hpp"
 #include "ServerDiskInstanceSpaceLs.hpp"
+#include "ServerTapeFileLs.hpp"
 
 #include <grpcpp/grpcpp.h>
 
@@ -118,6 +119,8 @@ CtaRpcStreamImpl::GenericAdminStream(::grpc::CallbackServerContext* context, con
       return new DiskSystemLsWriteReactor(m_catalogue, m_scheduler, request);
     case cmd_pair(cta::admin::AdminCmd::CMD_DISKINSTANCESPACE, cta::admin::AdminCmd::SUBCMD_LS):
       return new DiskInstanceSpaceLsWriteReactor(m_catalogue, m_scheduler, request);
+    case cmd_pair(cta::admin::AdminCmd::CMD_TAPEFILE, cta::admin::AdminCmd::SUBCMD_LS):
+      return new TapeFileLsWriteReactor(m_catalogue, m_scheduler, request);
       default:
       // make the compiler happy maybe and return
       return new TapeLsWriteReactor(m_catalogue, m_scheduler, request);
