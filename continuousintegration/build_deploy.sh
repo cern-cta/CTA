@@ -380,11 +380,12 @@ build_deploy() {
     local rpm_src=build_rpm/RPM/RPMS/x86_64
     echo "Building image from ${rpm_src}"
     ./continuousintegration/build/build_ctageneric_image.sh --tag ${image_tag} \
-                                                 --rpm-src "${rpm_src}" \
-                                                 --operating-system "${operating_system}" \
-                                                 --load-into-minikube \
-                                                 ${extra_build_options}
-    ./continuousintegration/build/build_rest_api_image.sh --tag ${image_tag}
+                                                            --rpm-src "${rpm_src}" \
+                                                            --operating-system "${operating_system}" \
+                                                            --load-into-minikube \
+                                                            ${extra_build_options}
+    ./continuousintegration/build/build_rest_api_image.sh --tag ${image_tag} \
+                                                          --load-into-minikube
 
     if [ ${image_cleanup} = true ]; then
       # Pruning of unused images is done after image building to ensure we maintain caching

@@ -1,4 +1,4 @@
-{{- $name := include "ctafrontend.fullname" . }}
+{{- $name := "cta-rest-api" }}
 apiVersion: v1
 kind: Service
 metadata:
