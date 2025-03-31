@@ -1,0 +1,16 @@
+{{- $name := include "ctafrontend.fullname" . }}
+apiVersion: v1
+kind: Service
+metadata:
+  name: {{ $name }}
+  labels:
+    {{- include "common.labels.standard" . | nindent 4 }}
+spec:
+  selector:
+    app.kubernetes.io/name: {{ $name }}
+  clusterIP: None
+  ports:
+  - name: cta-rest-api
+    port: 8080
+    targetPort: 8081
+    protocol: TCP

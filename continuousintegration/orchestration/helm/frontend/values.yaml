@@ -3,6 +3,12 @@ frontendPort: 10955
 # Increasing this will most likely not work as expected
 replicaCount: 1
 
+restAPI:
+  enabled: true
+  image:
+    repository:
+    tag:
+
 conf:
   catalogue:
     numberOfConnections: 10

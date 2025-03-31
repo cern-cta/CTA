@@ -48,7 +48,7 @@ usage() {
   echo "      --skip-image-cleanup:             Skip the cleanup of the ctageneric images in both podman and minikube before deploying a new instance."
   echo "      --scheduler-type <type>:          The scheduler type. Must be one of [objectstore, pgsched]."
   echo "      --spawn-options <options>:        Additional options to pass for the deployment. These are passed verbatim to the create/upgrade instance scripts."
-  echo "      --build-options <options>:        Additional options to pass for the image building. These are passed verbatim to the build_image.sh script."
+  echo "      --build-options <options>:        Additional options to pass for the image building. These are passed verbatim to the build_ctageneric_image.sh script."
   echo "      --scheduler-config <path>:        Path to the yaml file containing the type and credentials to configure the Scheduler. Defaults to: presets/dev-scheduler-vfs-values.yaml"
   echo "      --catalogue-config <path>:        Path to the yaml file containing the type and credentials to configure the Catalogue. Defaults to: presets/dev-catalogue-postgres-values.yaml"
   echo "      --tapeservers-config <path>:      Path to the yaml file containing the tapeservers config. If not provided, this will be auto-generated."
@@ -379,11 +379,13 @@ build_deploy() {
     ## Create and load the new image
     local rpm_src=build_rpm/RPM/RPMS/x86_64
     echo "Building image from ${rpm_src}"
-    ./continuousintegration/build/build_image.sh --tag ${image_tag} \
+    ./continuousintegration/build/build_ctageneric_image.sh --tag ${image_tag} \
                                                  --rpm-src "${rpm_src}" \
                                                  --operating-system "${operating_system}" \
                                                  --load-into-minikube \
                                                  ${extra_build_options}
+    ./continuousintegration/build/build_rest_api_image.sh --tag ${image_tag}
+
     if [ ${image_cleanup} = true ]; then
       # Pruning of unused images is done after image building to ensure we maintain caching
       podman image ls | grep ctageneric | grep -v "${image_tag}" | awk '{ print "localhost/ctageneric:" $2 }' | xargs -r podman rmi || true
