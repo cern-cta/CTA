@@ -412,6 +412,8 @@ build_deploy() {
       --container-runtime "${container_runtime}" \
       --load-into-minikube \
       ${extra_image_build_options}
+    ./continuousintegration/build/build_rest_api_image.sh --tag ${image_tag}
+
     if [ ${image_cleanup} = true ]; then
       # Pruning of unused images is done after image building to ensure we maintain caching
       podman image ls | grep ctageneric | grep -v "${image_tag}" | awk '{ print "localhost/ctageneric:" $2 }' | xargs -r podman rmi || true

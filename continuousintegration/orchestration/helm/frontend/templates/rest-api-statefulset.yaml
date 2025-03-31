@@ -1,0 +1,66 @@
+{{- if .Values.restAPI.enabled -}}
+{{- $name := "cta-rest-api" }}
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: {{ $name }}
+  namespace: {{ .Release.Namespace | quote }}
+  labels:
+    {{- include "common.labels.standard" . | nindent 4 }}
+spec:
+  serviceName: {{ $name }}
+  replicas: {{ .Values.replicas }}
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: {{ $name }}
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/name: {{ $name }}
+        {{- include "common.labels.withoutname" $ | nindent 8 }}
+    spec:
+      imagePullSecrets:
+      {{ include "ctafrontend.imagePullSecrets" . | nindent 6 }}
+      {{- if .Values.pod.extraSpec }}
+      {{ .Values.pod.extraSpec | toYaml | nindent 6 }}
+      {{- end }}
+      containers:
+      - name: cta-rest-api
+        image: {{ printf "%s:%s" .Values.restAPI.image.repository ( .Values.restAPI.image.tag | toString) | quote }}
+        imagePullPolicy: {{ include "ctafrontend.imagePullPolicy" . }}
+        stdin: true
+        readinessProbe:
+          httpGet:
+            path: /health/ready
+            port: 8081
+          initialDelaySeconds: 5
+          periodSeconds: 5
+          timeoutSeconds: 3
+          successThreshold: 1
+          failureThreshold: 60
+        securityContext:
+          allowPrivilegeEscalation: false
+          privileged: false
+        env:
+        - name: TERM
+          value: "xterm"
+        {{- with .Values.extraEnv }}
+        {{- include "common.extraEnv" . | nindent 8 }}
+        {{- end }}
+        volumeMounts:
+        - name: catalogue-config
+          mountPath: /etc/cta/cta-catalogue.conf
+          subPath: cta-catalogue.conf
+        - name: scheduler-config
+          mountPath: /etc/cta/cta-scheduler.conf
+          subPath: cta-scheduler.conf
+        {{ include "common.extraVolumeMounts" . | nindent 8 }}
+      volumes:
+      - name: catalogue-config
+        configMap:
+          name: cta-catalogue-conf
+      - name: scheduler-config
+        configMap:
+          name: cta-scheduler-conf
+      {{ include "common.extraVolumes" . | nindent 6 }}
+{{- end }}
