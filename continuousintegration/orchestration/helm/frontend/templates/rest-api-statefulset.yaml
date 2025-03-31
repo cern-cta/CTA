@@ -51,16 +51,10 @@ spec:
         - name: catalogue-config
           mountPath: /etc/cta/cta-catalogue.conf
           subPath: cta-catalogue.conf
-        - name: scheduler-config
-          mountPath: /etc/cta/cta-scheduler.conf
-          subPath: cta-scheduler.conf
         {{ include "common.extraVolumeMounts" . | nindent 8 }}
       volumes:
       - name: catalogue-config
         configMap:
           name: cta-catalogue-conf
-      - name: scheduler-config
-        configMap:
-          name: cta-scheduler-conf
       {{ include "common.extraVolumes" . | nindent 6 }}
 {{- end }}

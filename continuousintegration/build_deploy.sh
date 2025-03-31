@@ -412,7 +412,8 @@ build_deploy() {
       --container-runtime "${container_runtime}" \
       --load-into-minikube \
       ${extra_image_build_options}
-    ./continuousintegration/build/build_rest_api_image.sh --tag ${image_tag}
+    ./continuousintegration/build/build_rest_api_image.sh --tag ${image_tag} \
+                                                          --load-into-minikube
 
     if [ ${image_cleanup} = true ]; then
       # Pruning of unused images is done after image building to ensure we maintain caching
