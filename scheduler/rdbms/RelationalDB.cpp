@@ -145,7 +145,6 @@ std::string RelationalDB::queueArchive(const std::string& instanceName,
   utils::Timer timeInsert;
 
   aReq.insert();
-  //sqlconn.reset();
 
   params.add("fileId", aFile.archiveFileID)
     .add("diskInstance", aFile.diskInstance)

@@ -46,6 +46,7 @@ void DiskReportRunner::runOnePass(log::LogContext& lc) {
       m_scheduler.reportArchiveJobsBatch(archiveJobsToReport, m_reporterFactory, timings, t2, lc);
       timings.insertAndReset("reportArchiveJobsTime", t3);
       params.add("roundTime", roundTime.secs());
+      timings.addToLog(params);
       lc.log(cta::log::INFO, "In DiskReportRunner::runOnePass(): did one round of archive reports.");
     } else {
       lc.log(cta::log::DEBUG, "In DiskReportRunner::runOnePass(): archiveJobsToReport is empty.");
@@ -61,6 +62,7 @@ void DiskReportRunner::runOnePass(log::LogContext& lc) {
       m_scheduler.reportRetrieveJobsBatch(retrieveJobsToReport, m_reporterFactory, timings, t2, lc);
       timings.insertAndReset("reportRetrieveJobsTime", t5);
       params.add("roundTime", roundTime.secs());
+      timings.addToLog(params);
       lc.log(cta::log::INFO, "In DiskReportRunner::runOnePass(): did one round of retrieve reports.");
     } else {
       lc.log(cta::log::DEBUG, "In DiskReportRunner::runOnePass(): retrieveJobsToReport is empty.");
