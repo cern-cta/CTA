@@ -28,7 +28,7 @@ usage() {
   echo "  -h, --help:                         Shows help output."
   echo "  -n, --name:                         The Docker image name. Defaults to cta-rest-api"
   echo "  -l, --load-into-minikube:           Takes the image from the podman registry and ensures that it is present in the image registry used by minikube."
-  echo "      --dockerfile <path>:            Path to the Dockerfile (default: 'alma9/Dockerfile'). Should be relative to the repository root."
+  echo "      --dockerfile <path>:            Path to the Dockerfile (default: 'Dockerfile'). Should be relative to the api/ directory."
   exit 1
 }
 
@@ -37,7 +37,7 @@ buildImage() {
   # Default values
   local image_tag=""
   local image_name="cta-rest-api"
-  local dockerfile="continuousintegration/docker/alma9/Dockerfile"
+  local dockerfile="Dockerfile"
   local load_into_minikube=false
 
   while [[ "$#" -gt 0 ]]; do
