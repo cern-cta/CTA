@@ -34,6 +34,7 @@
 #include "ServerMediaTypeLs.hpp"
 #include "ServerRequesterMountRuleLs.hpp"
 #include "ServerPhysicalLibraryLs.hpp"
+#include "ServerMountPolicyLs.hpp"
 
 #include <grpcpp/grpcpp.h>
 
@@ -109,6 +110,8 @@ CtaRpcStreamImpl::GenericAdminStream(::grpc::CallbackServerContext* context, con
       return new RequesterMountRuleLsWriteReactor(m_catalogue, m_scheduler, request);
     case cmd_pair(cta::admin::AdminCmd::CMD_PHYSICALLIBRARY, cta::admin::AdminCmd::SUBCMD_LS):
       return new PhysicalLibraryLsWriteReactor(m_catalogue, m_scheduler, request);
+    case cmd_pair(cta::admin::AdminCmd::CMD_MOUNTPOLICY, cta::admin::AdminCmd::SUBCMD_LS):
+      return new MountPolicyLsWriteReactor(m_catalogue, m_scheduler, request);
       default:
       // make the compiler happy maybe and return
       return new TapeLsWriteReactor(m_catalogue, m_scheduler, request);
