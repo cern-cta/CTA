@@ -359,8 +359,8 @@ create_instance() {
                                 --set global.image.repository="${cta_image_repository}" \
                                 --set global.image.tag="${cta_image_tag}" \
                                 --set frontend.restAPI.enabled="true" \
-                                --set frontend.restAPI.image.repository="localhost/rest-api" \
-                                --set global.image.tag="${cta_image_tag}" \
+                                --set frontend.restAPI.image.repository="localhost/cta-rest-api" \
+                                --set frontend.restAPI.image.tag="dev" \
                                 --set-file global.configuration.scheduler="${scheduler_config}" \
                                 --set-file tpsrv.tapeServers="${tapeservers_config}" \
                                 --wait --timeout 5m
