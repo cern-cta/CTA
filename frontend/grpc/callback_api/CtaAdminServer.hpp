@@ -42,6 +42,7 @@
 #include "ServerShowQueues.hpp"
 #include "ServerStorageClassLs.hpp"
 #include "ServerRepackLs.hpp"
+#include "ServerRecycleTapeFileLs.hpp"
 
 #include <grpcpp/grpcpp.h>
 
@@ -131,6 +132,8 @@ CtaRpcStreamImpl::GenericAdminStream(::grpc::CallbackServerContext* context, con
       return new ShowQueuesWriteReactor(m_catalogue, m_scheduler, m_lc, request);
     case cmd_pair(cta::admin::AdminCmd::CMD_REPACK, cta::admin::AdminCmd::SUBCMD_LS):
       return new RepackLsWriteReactor(m_catalogue, m_scheduler, request);
+    case cmd_pair(cta::admin::AdminCmd::CMD_RECYCLETAPEFILE, cta::admin::AdminCmd::SUBCMD_LS):
+      return new RecycleTapeFileLsWriteReactor(m_catalogue, m_scheduler, request);
       default:
       // make the compiler happy maybe and return
       return new TapeLsWriteReactor(m_catalogue, m_scheduler, request);
