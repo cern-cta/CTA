@@ -8,7 +8,8 @@ router = APIRouter(
     prefix="/drives",
     tags=["drives"],
     dependencies=[],
-    responses={404: {"description": "Not found"}},
+    responses={404: {"description": "Not found"},
+               500: {"description": "Internal server error"}},
 )
 
 

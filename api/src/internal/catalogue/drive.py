@@ -121,6 +121,7 @@ class DriveQueries():
             """)
             result = conn.execute(query, {"limit": limit, "offset": offset})
             rows = result.mappings().all()
+            print(rows[0].keys())
             return [
                 Drive(
                     bytesTransferredInSession=row["BYTES_TRANSFERED_IN_SESSION"] or 0,
@@ -232,7 +233,7 @@ class DriveQueries():
                 ORDER BY
                     DRIVE_NAME
             """)
-            result = conn.execute(query, {"drive_name", drive_name.strip()})
+            result = conn.execute(query, {"drive_name": drive_name.strip()})
             row = result.mappings().first()
             if row is None:
                 return None
