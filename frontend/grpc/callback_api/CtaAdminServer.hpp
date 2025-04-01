@@ -40,6 +40,7 @@
 #include "ServerTapeFileLs.hpp"
 #include "ServerActivityMountRuleLs.hpp"
 #include "ServerShowQueues.hpp"
+#include "ServerStorageClassLs.hpp"
 
 #include <grpcpp/grpcpp.h>
 
@@ -91,8 +92,8 @@ CtaRpcStreamImpl::GenericAdminStream(::grpc::CallbackServerContext* context, con
   switch(cmd_pair(request->admincmd().cmd(), request->admincmd().subcmd())) {
     case cmd_pair(cta::admin::AdminCmd::CMD_TAPE, cta::admin::AdminCmd::SUBCMD_LS):
       return new TapeLsWriteReactor(m_catalogue, m_scheduler, request);
-    // case cmd_pair(cta::admin::AdminCmd::CMD_TAPE, cta::admin::AdminCmd::SUBCMD_LS):
-    //   return new StorageClassLsWriteReactor(catalogue, scheduler);
+    case cmd_pair(cta::admin::AdminCmd::CMD_STORAGECLASS, cta::admin::AdminCmd::SUBCMD_LS):
+      return new StorageClassLsWriteReactor(m_catalogue, m_scheduler, request);
     case cmd_pair(cta::admin::AdminCmd::CMD_TAPEPOOL, cta::admin::AdminCmd::SUBCMD_LS):
       return new TapePoolLsWriteReactor(m_catalogue, m_scheduler, request);
     case cmd_pair(cta::admin::AdminCmd::CMD_VIRTUALORGANIZATION, cta::admin::AdminCmd::SUBCMD_LS):
