@@ -124,34 +124,34 @@ class DriveQueries():
             print(rows[0].keys())
             return [
                 Drive(
-                    bytesTransferredInSession=row["BYTES_TRANSFERED_IN_SESSION"] or 0,
-                    comment=row["USER_COMMENT"] or None,
-                    ctaVersion=row["CTA_VERSION"] or None,
-                    currentActivity=row["CURRENT_ACTIVITY"] or None,
-                    currentPriority=row["CURRENT_PRIORITY"] or 0,
-                    desiredDriveState="UP" if row["DESIRED_UP"] else "DOWN",
-                    devFileName=row["DEV_FILE_NAME"] or None,
-                    diskSystemName=row["DISK_SYSTEM_NAME"] or None,
-                    driveName=row["DRIVE_NAME"],
-                    driveStatus=row["DRIVE_STATUS"],
+                    bytesTransferredInSession=row["bytes_transfered_in_session"] or 0,
+                    comment=row["user_comment"] or None,
+                    ctaVersion=row["cta_version"] or None,
+                    currentActivity=row["current_activity"] or None,
+                    currentPriority=row["current_priority"] or 0,
+                    desiredDriveState="UP" if row["desired_up"] else "DOWN",
+                    devFileName=row["dev_file_name"] or None,
+                    diskSystemName=row["disk_system_name"] or None,
+                    driveName=row["drive_name"],
+                    driveStatus=row["drive_status"],
                     driveStatusSince=0,  # compute later
-                    filesTransferredInSession=row["FILES_TRANSFERED_IN_SESSION"] or 0,
-                    host=row["HOST"],
-                    logicalLibrary=row["LOGICAL_LIBRARY"],
-                    logicalLibraryDisabled=row["LOGICAL_IS_DISABLED"] or False,
-                    mountType=row["MOUNT_TYPE"],
-                    physicalLibrary=row["PHYSICAL_LIBRARY_NAME"] or None,
-                    physicalLibraryDisabled=row["PHYSICAL_IS_DISABLED"] or False,
-                    rawLibrarySlot=row["RAW_LIBRARY_SLOT"] or None,
-                    reason=row["REASON_UP_DOWN"] or None,
-                    reservedBytes=row["RESERVED_BYTES"] or 0,
+                    filesTransferredInSession=row["files_transfered_in_session"] or 0,
+                    host=row["host"],
+                    logicalLibrary=row["logical_library"],
+                    logicalLibraryDisabled=row["logical_is_disabled"] or False,
+                    mountType=row["mount_type"],
+                    physicalLibrary=row["physical_library_name"] or None,
+                    physicalLibraryDisabled=row["physical_is_disabled"] or False,
+                    rawLibrarySlot=row["raw_library_slot"] or None,
+                    reason=row["reason_up_down"] or None,
+                    reservedBytes=row["reserved_bytes"] or 0,
                     schedulerBackendName=None,  # inject separately if needed
-                    sessionElapsedTime=row["SESSION_ELAPSED_TIME"] or 0,
-                    sessionId=row["SESSION_ID"] or 0,
-                    tapepool=row["CURRENT_TAPE_POOL"] or None,
+                    sessionElapsedTime=row["session_elapsed_time"] or 0,
+                    sessionId=row["session_id"] or 0,
+                    tapepool=row["current_tape_pool"] or None,
                     timeSinceLastUpdate=0,  # compute later
-                    vid=row["CURRENT_VID"] or None,
-                    vo=row["CURRENT_VO"] or None,
+                    vid=row["current_vid"] or None,
+                    vo=row["current_vo"] or None,
                 )
                 for row in rows
             ]
@@ -220,8 +220,6 @@ class DriveQueries():
                     PHYSICAL_LIBRARY.IS_DISABLED AS PHYSICAL_IS_DISABLED
                 FROM
                     DRIVE_STATE
-                WHERE
-                    DRIVE_NAME = :drive_name
                 LEFT JOIN
                     LOGICAL_LIBRARY
                 ON
@@ -230,6 +228,8 @@ class DriveQueries():
                     PHYSICAL_LIBRARY
                 ON
                     PHYSICAL_LIBRARY.PHYSICAL_LIBRARY_ID = LOGICAL_LIBRARY.PHYSICAL_LIBRARY_ID
+                WHERE
+                    DRIVE_NAME = :drive_name
                 ORDER BY
                     DRIVE_NAME
             """)
@@ -238,34 +238,34 @@ class DriveQueries():
             if row is None:
                 return None
             return Drive(
-                bytesTransferredInSession=row["BYTES_TRANSFERED_IN_SESSION"] or 0,
-                comment=row["USER_COMMENT"] or None,
-                ctaVersion=row["CTA_VERSION"] or None,
-                currentActivity=row["CURRENT_ACTIVITY"] or None,
-                currentPriority=row["CURRENT_PRIORITY"] or 0,
-                desiredDriveState="UP" if row["DESIRED_UP"] else "DOWN",
-                devFileName=row["DEV_FILE_NAME"] or None,
-                diskSystemName=row["DISK_SYSTEM_NAME"] or None,
-                driveName=row["DRIVE_NAME"],
-                driveStatus=row["DRIVE_STATUS"],
+                bytesTransferredInSession=row["bytes_transfered_in_session"] or 0,
+                comment=row["user_comment"] or None,
+                ctaVersion=row["cta_version"] or None,
+                currentActivity=row["current_activity"] or None,
+                currentPriority=row["current_priority"] or 0,
+                desiredDriveState="UP" if row["desired_up"] else "DOWN",
+                devFileName=row["dev_file_name"] or None,
+                diskSystemName=row["disk_system_name"] or None,
+                driveName=row["drive_name"],
+                driveStatus=row["drive_status"],
                 driveStatusSince=0,  # compute later
-                filesTransferredInSession=row["FILES_TRANSFERED_IN_SESSION"] or 0,
-                host=row["HOST"],
-                logicalLibrary=row["LOGICAL_LIBRARY"],
-                logicalLibraryDisabled=row["LOGICAL_IS_DISABLED"] or False,
-                mountType=row["MOUNT_TYPE"],
-                physicalLibrary=row["PHYSICAL_LIBRARY_NAME"] or None,
-                physicalLibraryDisabled=row["PHYSICAL_IS_DISABLED"] or False,
-                rawLibrarySlot=row["RAW_LIBRARY_SLOT"] or None,
-                reason=row["REASON_UP_DOWN"] or None,
-                reservedBytes=row["RESERVED_BYTES"] or 0,
+                filesTransferredInSession=row["files_transfered_in_session"] or 0,
+                host=row["host"],
+                logicalLibrary=row["logical_library"],
+                logicalLibraryDisabled=row["logical_is_disabled"] or False,
+                mountType=row["mount_type"],
+                physicalLibrary=row["physical_library_name"] or None,
+                physicalLibraryDisabled=row["physical_is_disabled"] or False,
+                rawLibrarySlot=row["raw_library_slot"] or None,
+                reason=row["reason_up_down"] or None,
+                reservedBytes=row["reserved_bytes"] or 0,
                 schedulerBackendName=None,  # inject separately if needed
-                sessionElapsedTime=row["SESSION_ELAPSED_TIME"] or 0,
-                sessionId=row["SESSION_ID"] or 0,
-                tapepool=row["CURRENT_TAPE_POOL"] or None,
+                sessionElapsedTime=row["session_elapsed_time"] or 0,
+                sessionId=row["session_id"] or 0,
+                tapepool=row["current_tape_pool"] or None,
                 timeSinceLastUpdate=0,  # compute later
-                vid=row["CURRENT_VID"] or None,
-                vo=row["CURRENT_VO"] or None,
+                vid=row["current_vid"] or None,
+                vo=row["current_vo"] or None,
             )
 
     def set_drive_up(self, drive_name: str, reason: str) -> bool:
