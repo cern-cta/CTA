@@ -11,6 +11,6 @@ spec:
   clusterIP: None
   ports:
   - name: cta-rest-api
-    port: 8080
-    targetPort: 8081
+    port: 80
+    targetPort: 80
     protocol: TCP
