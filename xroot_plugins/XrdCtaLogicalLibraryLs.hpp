@@ -55,6 +55,7 @@ private:
   // List of logical libraries from the catalogue
   std::list<cta::common::dataStructures::LogicalLibrary> m_logicalLibraryList;
   const std::optional<bool> m_disabled;
+  const std::string m_instanceName;
 
   static constexpr const char* const LOG_SUFFIX  = "LogicalLibraryLsStream";      //!< Identifier for log messages
 };
@@ -64,7 +65,8 @@ LogicalLibraryLsStream::LogicalLibraryLsStream(const frontend::AdminCmdStream& r
   cta::Scheduler &scheduler, const std::optional<bool>& disabled) :
   XrdCtaStream(catalogue, scheduler),
   m_logicalLibraryList(catalogue.LogicalLibrary()->getLogicalLibraries()),
-  m_disabled(disabled) {
+  m_disabled(disabled),
+  m_instanceName(requestMsg.getInstanceName()) {
   using namespace cta::admin;
 
   XrdSsiPb::Log::Msg(XrdSsiPb::Log::DEBUG, LOG_SUFFIX, "LogicalLibraryLsStream() constructor");
@@ -97,6 +99,7 @@ int LogicalLibraryLsStream::fillBuffer(XrdSsiPb::OStreamBuffer<Data> *streambuf)
     ll_item->mutable_last_modification_log()->set_host(ll.lastModificationLog.host);
     ll_item->mutable_last_modification_log()->set_time(ll.lastModificationLog.time);
     ll_item->set_comment(ll.comment);
+    ll_item->set_instance_name(m_instanceName);
 
     is_buffer_full = streambuf->Push(record);
   }

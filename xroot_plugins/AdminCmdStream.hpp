@@ -53,6 +53,11 @@ public:
    */
   static bool isStreamCmd(const admin::AdminCmd& adminCmd);
 
+  /*!
+   * Get CTA instance Name (set in the CTA Frontend config file)
+   */
+  const std::string getInstanceName() const { return m_instanceName; }
+
 private:
   /*!
    * Process admin commands which return a stream response
@@ -86,6 +91,7 @@ private:
   XrdSsiStream*&         m_stream;                 //!< XRootD SSI stream for responses
   cta::SchedulerDB_t&    m_schedDb;                //!< Reference to CTA SchedulerDB
   const std::string      m_catalogueConnString;    //!< CTA Catalogue DB connection string
+  const std::string      m_instanceName;    //!< name of the CTA instance as specified in the server configuration file
   // clang-format on
 };
 

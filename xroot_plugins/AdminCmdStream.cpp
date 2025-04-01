@@ -57,7 +57,8 @@ AdminCmdStream::AdminCmdStream(const frontend::FrontendService& frontendService,
     : AdminCmd(frontendService, clientIdentity, adminCmd),
       m_stream(stream),
       m_schedDb(frontendService.getSchedDb()),
-      m_catalogueConnString(frontendService.getCatalogueConnString()) {}
+      m_catalogueConnString(frontendService.getCatalogueConnString()),
+      m_instanceName(frontendService.getInstanceName()) {}
 
 xrd::Response AdminCmdStream::process() {
   xrd::Response response;
@@ -244,7 +245,7 @@ void AdminCmdStream::processMountPolicy_Ls(xrd::Response& response) {
 void AdminCmdStream::processRepack_Ls(xrd::Response& response) {
   auto vid = getOptional(admin::OptionString::VID);
 
-  m_stream = new xrd::RepackLsStream(m_scheduler, m_catalogue, vid);
+  m_stream = new xrd::RepackLsStream(*this, m_scheduler, m_catalogue, vid);
 
   response.set_show_header(admin::HeaderType::REPACK_LS);
   response.set_type(xrd::Response::RSP_SUCCESS);

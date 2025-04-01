@@ -50,6 +50,7 @@ private:
   virtual int fillBuffer(XrdSsiPb::OStreamBuffer<Data> *streambuf);
 
   cta::disk::DiskSystemList m_diskSystemList;             //!< List of disk systems from the catalogue
+  const std::string m_instanceName;
 
   static constexpr const char* const LOG_SUFFIX  = "DiskSystemLsStream";    //!< Identifier for log messages
 };
@@ -57,7 +58,8 @@ private:
 
 DiskSystemLsStream::DiskSystemLsStream(const frontend::AdminCmdStream& requestMsg, cta::catalogue::Catalogue &catalogue, cta::Scheduler &scheduler) :
   XrdCtaStream(catalogue, scheduler),
-  m_diskSystemList(catalogue.DiskSystem()->getAllDiskSystems())
+  m_diskSystemList(catalogue.DiskSystem()->getAllDiskSystems()),
+  m_instanceName(requestMsg.getInstanceName())
 {
   using namespace cta::admin;
 
@@ -82,6 +84,7 @@ int DiskSystemLsStream::fillBuffer(XrdSsiPb::OStreamBuffer<Data> *streambuf) {
     auto  ds_item = record.mutable_dsls_item();
 
     ds_item->set_name(ds.name);
+    ds_item->set_instance_name(m_instanceName);
     ds_item->set_file_regexp(ds.fileRegexp);
     ds_item->set_disk_instance(ds.diskInstanceSpace.diskInstance);
     ds_item->set_disk_instance_space(ds.diskInstanceSpace.name);

@@ -49,6 +49,7 @@ private:
   virtual int fillBuffer(XrdSsiPb::OStreamBuffer<Data> *streambuf);
 
   std::list<cta::common::dataStructures::MountPolicy> m_mountPolicyList;     //!< List of mount policies from the catalogue
+  const std::string m_instanceName;
 
   static constexpr const char* const LOG_SUFFIX  = "MountPolicyLsStream";    //!< Identifier for log messages
 };
@@ -56,7 +57,8 @@ private:
 
 MountPolicyLsStream::MountPolicyLsStream(const frontend::AdminCmdStream& requestMsg, cta::catalogue::Catalogue &catalogue, cta::Scheduler &scheduler) :
   XrdCtaStream(catalogue, scheduler),
-  m_mountPolicyList(catalogue.MountPolicy()->getMountPolicies())
+  m_mountPolicyList(catalogue.MountPolicy()->getMountPolicies()),
+  m_instanceName(requestMsg.getInstanceName())
 {
   using namespace cta::admin;
 
@@ -71,6 +73,7 @@ int MountPolicyLsStream::fillBuffer(XrdSsiPb::OStreamBuffer<Data> *streambuf) {
     auto  mp_item = record.mutable_mpls_item();
 
     mp_item->set_name(mp.name);
+    mp_item->set_instance_name(m_instanceName);
     mp_item->set_archive_priority(mp.archivePriority);
     mp_item->set_archive_min_request_age(mp.archiveMinRequestAge);
     mp_item->set_retrieve_priority(mp.retrievePriority);

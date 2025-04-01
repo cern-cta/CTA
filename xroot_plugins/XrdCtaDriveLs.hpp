@@ -72,6 +72,8 @@ private:
   int fillBuffer(XrdSsiPb::OStreamBuffer<Data>* streambuf) override;
   bool listAllDrives = false;
   std::optional<std::string> m_schedulerBackendName;
+  const std::string m_instanceName;
+
   cta::log::LogContext m_lc;
 
   static constexpr const char* const LOG_SUFFIX = "DriveLsStream";  //!< Identifier for log messages
@@ -86,6 +88,7 @@ DriveLsStream::DriveLsStream(const frontend::AdminCmdStream& requestMsg,
                              cta::Scheduler& scheduler,
                              log::LogContext& lc)
     : XrdCtaStream(catalogue, scheduler),
+      m_instanceName(requestMsg.getInstanceName()),
       m_lc(lc),
       m_tapeDrives(m_catalogue.DriveState()->getTapeDrives()),
       m_tapeDriveNameConfigMap(convertToMap(m_catalogue.DriveConfig()->getTapeDriveConfigs())) {
@@ -156,7 +159,7 @@ int DriveLsStream::fillBuffer(XrdSsiPb::OStreamBuffer<Data>* streambuf) {
       continue;
     }
     auto dr_item = record.mutable_drls_item();
-
+    dr_item->set_instance_name(m_instanceName);
     dr_item->set_cta_version(dr.ctaVersion ? dr.ctaVersion.value() : "");
     dr_item->set_logical_library(dr.logicalLibrary);
     dr_item->set_drive_name(dr.driveName);

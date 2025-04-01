@@ -50,6 +50,7 @@ private:
   virtual int fillBuffer(XrdSsiPb::OStreamBuffer<Data> *streambuf);
 
   std::list<common::dataStructures::DiskInstanceSpace> m_diskInstanceSpaceList;             //!< List of disk instance spaces from the catalogue
+  const std::string m_instanceName;
 
   static constexpr const char* const LOG_SUFFIX  = "DiskInstanceSpaceLsStream";    //!< Identifier for log messages
 };
@@ -57,7 +58,8 @@ private:
 
 DiskInstanceSpaceLsStream::DiskInstanceSpaceLsStream(const frontend::AdminCmdStream& requestMsg, cta::catalogue::Catalogue &catalogue, cta::Scheduler &scheduler) :
   XrdCtaStream(catalogue, scheduler),
-  m_diskInstanceSpaceList(catalogue.DiskInstanceSpace()->getAllDiskInstanceSpaces())
+  m_diskInstanceSpaceList(catalogue.DiskInstanceSpace()->getAllDiskInstanceSpaces()),
+  m_instanceName(requestMsg.getInstanceName())
 {
   using namespace cta::admin;
 
@@ -72,6 +74,7 @@ int DiskInstanceSpaceLsStream::fillBuffer(XrdSsiPb::OStreamBuffer<Data> *streamb
     auto  dis_item = record.mutable_disls_item();
 
     dis_item->set_name(dis.name);
+    dis_item->set_instance_name(dis.name);
     dis_item->set_disk_instance(dis.diskInstance);
     dis_item->set_refresh_interval(dis.refreshInterval);
     dis_item->set_free_space_query_url(dis.freeSpaceQueryURL);

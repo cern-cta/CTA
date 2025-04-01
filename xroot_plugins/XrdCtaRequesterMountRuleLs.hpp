@@ -50,6 +50,7 @@ private:
   virtual int fillBuffer(XrdSsiPb::OStreamBuffer<Data> *streambuf);
 
   std::list<cta::common::dataStructures::RequesterMountRule> m_requesterMountRuleList;    //!< List of requester mount rules from the catalogue
+  const std::string m_instanceName;
 
   static constexpr const char* const LOG_SUFFIX  = "RequesterMountRuleLsStream";          //!< Identifier for log messages
 };
@@ -57,7 +58,8 @@ private:
 
 RequesterMountRuleLsStream::RequesterMountRuleLsStream(const frontend::AdminCmdStream& requestMsg, cta::catalogue::Catalogue &catalogue, cta::Scheduler &scheduler) :
   XrdCtaStream(catalogue, scheduler),
-  m_requesterMountRuleList(catalogue.RequesterMountRule()->getRequesterMountRules())
+  m_requesterMountRuleList(catalogue.RequesterMountRule()->getRequesterMountRules()),
+  m_instanceName(requestMsg.getInstanceName())
 {
   using namespace cta::admin;
 
@@ -71,6 +73,7 @@ int RequesterMountRuleLsStream::fillBuffer(XrdSsiPb::OStreamBuffer<Data> *stream
     auto &rmr      = m_requesterMountRuleList.front();
     auto  rmr_item = record.mutable_rmrls_item();
 
+    rmr_item->set_instance_name(m_instanceName);
     rmr_item->set_disk_instance(rmr.diskInstance);
     rmr_item->set_requester_mount_rule(rmr.name);
     rmr_item->set_mount_policy(rmr.mountPolicy);

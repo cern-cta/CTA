@@ -52,6 +52,7 @@ private:
   virtual int fillBuffer(XrdSsiPb::OStreamBuffer<Data> *streambuf);
 
   std::list<cta::common::dataStructures::AdminUser> m_adminList;       //!< List of admin users from the catalogue
+  const std::string m_instanceName;
 
   static constexpr const char* const LOG_SUFFIX  = "AdminLsStream";    //!< Identifier for log messages
 };
@@ -59,7 +60,8 @@ private:
 
 AdminLsStream::AdminLsStream(const frontend::AdminCmdStream& requestMsg, cta::catalogue::Catalogue &catalogue, cta::Scheduler &scheduler) :
   XrdCtaStream(catalogue, scheduler),
-  m_adminList(catalogue.AdminUser()->getAdminUsers())
+  m_adminList(catalogue.AdminUser()->getAdminUsers()),
+  m_instanceName(requestMsg.getInstanceName())
 {
   using namespace cta::admin;
 
@@ -81,7 +83,7 @@ int AdminLsStream::fillBuffer(XrdSsiPb::OStreamBuffer<Data> *streambuf) {
     ad_item->mutable_last_modification_log()->set_host(ad.lastModificationLog.host);
     ad_item->mutable_last_modification_log()->set_time(ad.lastModificationLog.time);
     ad_item->set_comment(ad.comment);
-
+    ad_item->set_instance_name(m_instanceName);
     is_buffer_full = streambuf->Push(record);
   }
   return streambuf->Size();

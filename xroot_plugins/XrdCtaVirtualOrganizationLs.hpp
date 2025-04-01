@@ -51,6 +51,7 @@ private:
   virtual int fillBuffer(XrdSsiPb::OStreamBuffer<Data> *streambuf);
 
   std::list<cta::common::dataStructures::VirtualOrganization> m_virtualOrganizationList;             //!< List of virtual organizations from the catalogue
+  const std::string m_instanceName;
 
   static constexpr const char* const LOG_SUFFIX  = "VirtualOrganizationLsStream";    //!< Identifier for log messages
 };
@@ -58,7 +59,8 @@ private:
 
 VirtualOrganizationLsStream::VirtualOrganizationLsStream(const frontend::AdminCmdStream& requestMsg, cta::catalogue::Catalogue &catalogue, cta::Scheduler &scheduler) :
   XrdCtaStream(catalogue, scheduler),
-  m_virtualOrganizationList(catalogue.VO()->getVirtualOrganizations())
+  m_virtualOrganizationList(catalogue.VO()->getVirtualOrganizations()),
+  m_instanceName(requestMsg.getInstanceName())
 {
   using namespace cta::admin;
 
@@ -73,6 +75,7 @@ int VirtualOrganizationLsStream::fillBuffer(XrdSsiPb::OStreamBuffer<Data> *strea
     auto  vo_item = record.mutable_vols_item();
 
     vo_item->set_name(vo.name);
+    vo_item->set_instance_name(m_instanceName);
     vo_item->set_read_max_drives(vo.readMaxDrives);
     vo_item->set_write_max_drives(vo.writeMaxDrives);
     vo_item->set_max_file_size(vo.maxFileSize);

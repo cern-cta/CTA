@@ -50,6 +50,7 @@ private:
   virtual int fillBuffer(XrdSsiPb::OStreamBuffer<Data> *streambuf);
 
   std::list<cta::common::dataStructures::RequesterActivityMountRule> m_activityMountRuleList;    //!< List of group mount rules from the catalogue
+  const std::string m_instanceName;
 
   static constexpr const char* const LOG_SUFFIX  = "ActivityMountRuleLsStream";               //!< Identifier for log messages
 };
@@ -57,7 +58,8 @@ private:
 
 ActivityMountRuleLsStream::ActivityMountRuleLsStream(const frontend::AdminCmdStream& requestMsg, cta::catalogue::Catalogue &catalogue, cta::Scheduler &scheduler) :
   XrdCtaStream(catalogue, scheduler),
-  m_activityMountRuleList(catalogue.RequesterActivityMountRule()->getRequesterActivityMountRules())
+  m_activityMountRuleList(catalogue.RequesterActivityMountRule()->getRequesterActivityMountRules()),
+  m_instanceName(requestMsg.getInstanceName())
 {
   using namespace cta::admin;
 
@@ -81,7 +83,8 @@ int ActivityMountRuleLsStream::fillBuffer(XrdSsiPb::OStreamBuffer<Data> *streamb
     amr_item->mutable_last_modification_log()->set_username(amr.lastModificationLog.username);
     amr_item->mutable_last_modification_log()->set_host(amr.lastModificationLog.host);
     amr_item->mutable_last_modification_log()->set_time(amr.lastModificationLog.time);
-    amr_item->set_comment(amr.comment);
+    amr_item->set_comment(amr.comment),
+    amr_item->set_instance_name(m_instanceName);
 
     is_buffer_full = streambuf->Push(record);
   }

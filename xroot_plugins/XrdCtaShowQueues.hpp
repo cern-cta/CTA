@@ -50,6 +50,8 @@ private:
   virtual int fillBuffer(XrdSsiPb::OStreamBuffer<Data> *streambuf);
 
   std::list<cta::common::dataStructures::QueueAndMountSummary> m_queuesAndMountsList;    //!< List of queues and mounts from the scheduler
+  std::optional<std::string> m_schedulerBackendName;
+  const std::string m_instanceName;
 
   static constexpr const char* const LOG_SUFFIX  = "ShowQueuesStream";                   //!< Identifier for log messages
 };
@@ -57,10 +59,17 @@ private:
 ShowQueuesStream::ShowQueuesStream(const frontend::AdminCmdStream& requestMsg, cta::catalogue::Catalogue& catalogue,
   cta::Scheduler& scheduler, log::LogContext& lc) :
   XrdCtaStream(catalogue, scheduler),
-  m_queuesAndMountsList(scheduler.getQueuesAndMountSummaries(lc))
+  m_queuesAndMountsList(scheduler.getQueuesAndMountSummaries(lc)),
+  m_instanceName(requestMsg.getInstanceName())
 {
   using namespace cta::admin;
-
+  m_schedulerBackendName = scheduler.getSchedulerBackendName();
+  if (!m_schedulerBackendName) {
+    XrdSsiPb::Log::Msg(
+      XrdSsiPb::Log::ERROR,
+      LOG_SUFFIX,
+      "ShowQueuesStream constructor, the cta.scheduler_backend_name is not set in the frontend configuration.");
+  }
   XrdSsiPb::Log::Msg(XrdSsiPb::Log::DEBUG, LOG_SUFFIX, "ShowQueuesStream() constructor");
 }
 
@@ -88,6 +97,8 @@ int ShowQueuesStream::fillBuffer(XrdSsiPb::OStreamBuffer<Data> *streambuf) {
     }
 
     sq_item->set_mount_type(MountTypeToProtobuf(sq.mountType));
+    sq_item->set_instance_name(m_instanceName);
+    sq_item->set_scheduler_backend_name(m_schedulerBackendName.value_or(""));
     sq_item->set_tapepool(sq.tapePool);
     sq_item->set_logical_library(sq.logicalLibrary);
     sq_item->set_vid(sq.vid);

@@ -52,13 +52,14 @@ private:
   virtual int fillBuffer(XrdSsiPb::OStreamBuffer<Data> *streambuf);
 
   cta::catalogue::FileRecycleLogItor m_fileRecycleLogItor;     //!< List of recycle tape files from the catalogue
+  const std::string m_instanceName;
 
   static constexpr const char* const LOG_SUFFIX  = "RecycleTapeFileLsStream";    //!< Identifier for log messages
 };
 
 
 RecycleTapeFileLsStream::RecycleTapeFileLsStream(const frontend::AdminCmdStream& requestMsg, cta::catalogue::Catalogue &catalogue, cta::Scheduler &scheduler) :
-  XrdCtaStream(catalogue, scheduler)
+  XrdCtaStream(catalogue, scheduler), m_instanceName(requestMsg.getInstanceName())
 {
   using namespace cta::admin;
 
@@ -101,6 +102,7 @@ int RecycleTapeFileLsStream::fillBuffer(XrdSsiPb::OStreamBuffer<Data> *streambuf
     Data record;
     
     auto recycleLogToReturn = record.mutable_rtfls_item();
+    recycleLogToReturn->set_instance_name(m_instanceName);
     recycleLogToReturn->set_vid(fileRecycleLog.vid);
     recycleLogToReturn->set_fseq(fileRecycleLog.fSeq);
     recycleLogToReturn->set_block_id(fileRecycleLog.blockId);

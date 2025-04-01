@@ -52,6 +52,7 @@ private:
   std::list<cta::common::dataStructures::StorageClass> m_storageClassList;    //!< List of storage classes from the catalogue
 
   std::optional<std::string> m_storageClassName;
+  const std::string m_instanceName;
 
   static constexpr const char* const LOG_SUFFIX  = "StorageClassLsStream";    //!< Identifier for log messages
 };
@@ -59,7 +60,8 @@ private:
 
 StorageClassLsStream::StorageClassLsStream(const frontend::AdminCmdStream& requestMsg, cta::catalogue::Catalogue &catalogue, cta::Scheduler &scheduler, const std::optional<std::string> storageClassName) :
   XrdCtaStream(catalogue, scheduler),
-  m_storageClassName(storageClassName)
+  m_storageClassName(storageClassName),
+  m_instanceName(requestMsg.getInstanceName())
 {
   using namespace cta::admin;
 
@@ -91,6 +93,7 @@ int StorageClassLsStream::fillBuffer(XrdSsiPb::OStreamBuffer<Data> *streambuf) {
     sc_item->mutable_last_modification_log()->set_host(sc.lastModificationLog.host);
     sc_item->mutable_last_modification_log()->set_time(sc.lastModificationLog.time);
     sc_item->set_comment(sc.comment);
+    sc_item->set_instance_name(m_instanceName);
 
     is_buffer_full = streambuf->Push(record);
   }

@@ -176,6 +176,7 @@ void TextFormatter::flush() {
 void TextFormatter::printActivityMountRuleLsHeader() {
   push_back("HEADER");
   push_back("instance",
+            "disk buffer",
             "username",
             "policy",
             "activity",
@@ -189,7 +190,8 @@ void TextFormatter::printActivityMountRuleLsHeader() {
 }
 
 void TextFormatter::print(const ActivityMountRuleLsItem& amrls_item) {
-  push_back(amrls_item.disk_instance(),
+  push_back(amrls_item.instance_name(),
+            amrls_item.disk_instance(),
             amrls_item.activity_mount_rule(),
             amrls_item.mount_policy(),
             amrls_item.activity_regex(),
@@ -204,7 +206,7 @@ void TextFormatter::print(const ActivityMountRuleLsItem& amrls_item) {
 
 void TextFormatter::printAdminLsHeader() {
   push_back("HEADER");
-  push_back("user", "c.user", "c.host", "c.time", "m.user", "m.host", "m.time", "comment");
+  push_back("user", "c.user", "c.host", "c.time", "m.user", "m.host", "m.time", "comment", "instance");
 }
 
 void TextFormatter::print(const AdminLsItem& adls_item) {
@@ -215,12 +217,14 @@ void TextFormatter::print(const AdminLsItem& adls_item) {
             adls_item.last_modification_log().username(),
             adls_item.last_modification_log().host(),
             timeToStr(adls_item.last_modification_log().time()),
-            adls_item.comment());
+            adls_item.comment(),
+            adls_item.instance_name());
 }
 
 void TextFormatter::printArchiveRouteLsHeader() {
   push_back("HEADER");
-  push_back("storage class",
+  push_back("instance",
+            "storage class",
             "copy number",
             "type",
             "tapepool",
@@ -234,7 +238,8 @@ void TextFormatter::printArchiveRouteLsHeader() {
 }
 
 void TextFormatter::print(const ArchiveRouteLsItem& arls_item) {
-  push_back(arls_item.storage_class(),
+  push_back(arls_item.instance_name(),
+            arls_item.storage_class(),
             arls_item.copy_number(),
             cta::common::dataStructures::toString(ProtobufToArchiveRouteTypeFormat(arls_item.archive_route_type())),
             arls_item.tapepool(),
@@ -266,6 +271,7 @@ void TextFormatter::printDriveLsHeader() {
             "priority",
             "activity",
             "scheduler",
+            "instance",
             "age",
             "reason");
 }
@@ -275,6 +281,7 @@ void TextFormatter::print(const DriveLsItem& drls_item) {
 
   std::string driveStatusSince;
   std::string driveSchedulerBackendName = drls_item.scheduler_backend_name();
+  std::string instanceName = drls_item.instance_name();
   std::string filesTransferredInSession;
   std::string bytesTransferredInSession;
   std::string averageBandwidth;
@@ -327,13 +334,14 @@ void TextFormatter::print(const DriveLsItem& drls_item) {
             drls_item.current_priority(),
             drls_item.current_activity(),
             driveSchedulerBackendName,
+            instanceName,
             timeSinceLastUpdate,
             reason);
 }
 
 void TextFormatter::printFailedRequestLsHeader() {
   push_back("HEADER");
-  push_back("object id", "request type", "copy no", "tapepool/vid", "requester", "group", "path");
+  push_back("object id", "request type", "copy no", "tapepool/vid", "requester", "group", "path", "scheduler", "instance");
 }
 
 void TextFormatter::print(const FailedRequestLsItem& frls_item) {
@@ -359,7 +367,9 @@ void TextFormatter::print(const FailedRequestLsItem& frls_item) {
             tapepool_vid,
             frls_item.requester().username(),
             frls_item.requester().groupname(),
-            frls_item.af().df().path());
+            frls_item.af().df().path(),
+            frls_item.scheduler_backend_name(),
+            frls_item.instance_name());
 
   // Note: failure log messages are available in frls_item.failurelogs(). These are not currently
   //       displayed in the text output, only in JSON.
@@ -367,7 +377,7 @@ void TextFormatter::print(const FailedRequestLsItem& frls_item) {
 
 void TextFormatter::printFailedRequestLsSummaryHeader() {
   push_back("HEADER");
-  push_back("request type", "total files", "total size");
+  push_back("request type", "total files", "total size", "scheduler", "instance");
 }
 
 void TextFormatter::print(const FailedRequestLsSummary& frls_summary) {
@@ -375,16 +385,17 @@ void TextFormatter::print(const FailedRequestLsSummary& frls_summary) {
                              frls_summary.request_type() == RequestType::RETRIEVE_REQUEST ? "retrieve" :
                                                                                             "total";
 
-  push_back(request_type, frls_summary.total_files(), dataSizeToStr(frls_summary.total_size()));
+  push_back(request_type, frls_summary.total_files(), dataSizeToStr(frls_summary.total_size()), frls_summary.scheduler_backend_name(), frls_summary.instance_name());
 }
 
 void TextFormatter::printGroupMountRuleLsHeader() {
   push_back("HEADER");
-  push_back("instance", "group", "policy", "c.user", "c.host", "c.time", "m.user", "m.host", "m.time", "comment");
+  push_back("instance", "disk buffer", "group", "policy", "c.user", "c.host", "c.time", "m.user", "m.host", "m.time", "comment");
 }
 
 void TextFormatter::print(const GroupMountRuleLsItem& gmrls_item) {
-  push_back(gmrls_item.disk_instance(),
+  push_back(gmrls_item.instance_name(),
+            gmrls_item.disk_instance(),
             gmrls_item.group_mount_rule(),
             gmrls_item.mount_policy(),
             gmrls_item.creation_log().username(),
@@ -490,7 +501,8 @@ void TextFormatter::printLogicalLibraryLsHeader() {
             "m.user",
             "m.host",
             "m.time",
-            "comment");
+            "comment",
+            "instance");
 }
 
 void TextFormatter::print(const LogicalLibraryLsItem& llls_item) {
@@ -504,7 +516,8 @@ void TextFormatter::print(const LogicalLibraryLsItem& llls_item) {
             llls_item.last_modification_log().username(),
             llls_item.last_modification_log().host(),
             timeToStr(llls_item.last_modification_log().time()),
-            llls_item.comment());
+            llls_item.comment(),
+            llls_item.instance_name());
 }
 
 void TextFormatter::printMediaTypeLsHeader() {
@@ -523,7 +536,8 @@ void TextFormatter::printMediaTypeLsHeader() {
             "m.user",
             "m.host",
             "m.time",
-            "comment");
+            "comment",
+            "instance");
 }
 
 void TextFormatter::print(const MediaTypeLsItem& mtls_item) {
@@ -541,7 +555,8 @@ void TextFormatter::print(const MediaTypeLsItem& mtls_item) {
             mtls_item.last_modification_log().username(),
             mtls_item.last_modification_log().host(),
             timeToStr(mtls_item.last_modification_log().time()),
-            mtls_item.comment());
+            mtls_item.comment(),
+            mtls_item.instance_name());
 }
 
 void TextFormatter::printMountPolicyLsHeader() {
@@ -557,7 +572,8 @@ void TextFormatter::printMountPolicyLsHeader() {
             "m.user",
             "m.host",
             "m.time",
-            "comment");
+            "comment",
+            "instance");
 }
 
 void TextFormatter::print(const MountPolicyLsItem& mpls_item) {
@@ -572,7 +588,8 @@ void TextFormatter::print(const MountPolicyLsItem& mpls_item) {
             mpls_item.last_modification_log().username(),
             mpls_item.last_modification_log().host(),
             timeToStr(mpls_item.last_modification_log().time()),
-            mpls_item.comment());
+            mpls_item.comment(),
+            mpls_item.instance_name());
 }
 
 void TextFormatter::printRepackLsHeader() {
@@ -589,7 +606,8 @@ void TextFormatter::printRepackLsHeader() {
             "filesToRetrieve",
             "filesToArchive",
             "failed",
-            "status");
+            "status",
+            "instance");
 }
 
 void TextFormatter::print(const RepackLsItem& rels_item) {
@@ -610,16 +628,18 @@ void TextFormatter::print(const RepackLsItem& rels_item) {
     rels_item.files_left_to_retrieve(),                       //https://gitlab.cern.ch/cta/CTA/-/issues/680#note_3845829
     rels_item.files_left_to_archive(),                        //https://gitlab.cern.ch/cta/CTA/-/issues/680#note_3845829
     rels_item.total_failed_files(),                           //https://gitlab.cern.ch/cta/CTA/-/issues/680#note_3849927
-    rels_item.status());
+    rels_item.status(),
+    rels_item.instance_name());
 }
 
 void TextFormatter::printRequesterMountRuleLsHeader() {
   push_back("HEADER");
-  push_back("instance", "username", "policy", "c.user", "c.host", "c.time", "m.user", "m.host", "m.time", "comment");
+  push_back("instance", "disk buffer", "username", "policy", "c.user", "c.host", "c.time", "m.user", "m.host", "m.time", "comment");
 }
 
 void TextFormatter::print(const RequesterMountRuleLsItem& rmrls_item) {
-  push_back(rmrls_item.disk_instance(),
+  push_back(rmrls_item.instance_name(),
+            rmrls_item.disk_instance(),
             rmrls_item.requester_mount_rule(),
             rmrls_item.mount_policy(),
             rmrls_item.creation_log().username(),
@@ -634,6 +654,8 @@ void TextFormatter::print(const RequesterMountRuleLsItem& rmrls_item) {
 void TextFormatter::printShowQueuesHeader() {
   push_back("HEADER");
   push_back("type",
+            "instance",
+            "scheduler",
             "tapepool",
             "vo",
             "library",
@@ -671,6 +693,8 @@ void TextFormatter::print(const ShowQueuesItem& sq_item) {
   }
 
   push_back(toCamelCaseString(ProtobufToMountType(sq_item.mount_type())),
+            sq_item.instance_name(),
+            sq_item.scheduler_backend_name(),
             sq_item.tapepool(),
             sq_item.vo(),
             sq_item.logical_library(),
@@ -704,7 +728,8 @@ void TextFormatter::printStorageClassLsHeader() {
             "m.user",
             "m.host",
             "m.time",
-            "comment");
+            "comment",
+            "instance");
 }
 
 void TextFormatter::print(const StorageClassLsItem& scls_item) {
@@ -717,7 +742,8 @@ void TextFormatter::print(const StorageClassLsItem& scls_item) {
             scls_item.last_modification_log().username(),
             scls_item.last_modification_log().host(),
             timeToStr(scls_item.last_modification_log().time()),
-            scls_item.comment());
+            scls_item.comment(),
+            scls_item.instance_name());
 }
 
 void TextFormatter::printTapeLsHeader() {
@@ -751,7 +777,8 @@ void TextFormatter::printTapeLsHeader() {
             "m.user",
             "m.host",
             "m.time",
-            "comment");
+            "comment",
+            "instance");
 }
 
 void TextFormatter::print(const TapeLsItem& tals_item) {
@@ -785,7 +812,8 @@ void TextFormatter::print(const TapeLsItem& tals_item) {
             tals_item.last_modification_log().username(),
             tals_item.last_modification_log().host(),
             timeToStr(tals_item.last_modification_log().time()),
-            tals_item.comment());
+            tals_item.comment(),
+            tals_item.instance_name());
 }
 
 void TextFormatter::printTapeFileLsHeader() {
@@ -803,7 +831,8 @@ void TextFormatter::printTapeFileLsHeader() {
             "storage class",
             "owner",
             "group",
-            "creation time");
+            "creation time",
+            "instance");
 }
 
 void TextFormatter::print(const TapeFileLsItem& tfls_item) {
@@ -831,7 +860,8 @@ void TextFormatter::print(const TapeFileLsItem& tfls_item) {
             tfls_item.af().storage_class(),
             tfls_item.df().owner_id().uid(),
             tfls_item.df().owner_id().gid(),
-            timeToStr(tfls_item.af().creation_time()));
+            timeToStr(tfls_item.af().creation_time()),
+            tfls_item.instance_name());
 }
 
 void TextFormatter::printTapePoolLsHeader() {
@@ -853,7 +883,8 @@ void TextFormatter::printTapePoolLsHeader() {
             "m.user",
             "m.host",
             "m.time",
-            "comment");
+            "comment",
+            "instance");
 }
 
 void TextFormatter::print(const TapePoolLsItem& tpls_item) {
@@ -893,7 +924,59 @@ void TextFormatter::print(const TapePoolLsItem& tpls_item) {
             tpls_item.modified().username(),
             tpls_item.modified().host(),
             timeToStr(tpls_item.modified().time()),
-            tpls_item.comment());
+            tpls_item.comment(),
+            tpls_item.instance_name());
+}
+
+void TextFormatter::printDiskInstanceSpaceLsHeader() {
+  push_back("HEADER");
+  push_back("name",
+            "disk buffer",
+            "url",
+            "interval",
+            "last refresh",
+            "space",
+            "c.user",
+            "c.host",
+            "c.time",
+            "m.user",
+            "m.host",
+            "m.time",
+            "comment",
+            "instance");
+}
+
+void TextFormatter::print(const DiskInstanceSpaceLsItem& disls_item) {
+  push_back(disls_item.name(),
+            disls_item.disk_instance(),
+            disls_item.refresh_interval(),
+            disls_item.last_refresh_time(),
+            disls_item.free_space(),
+            disls_item.creation_log().username(),
+            disls_item.creation_log().host(),
+            timeToStr(disls_item.creation_log().time()),
+            disls_item.last_modification_log().username(),
+            disls_item.last_modification_log().host(),
+            timeToStr(disls_item.last_modification_log().time()),
+            disls_item.comment(),
+            disls_item.instance_name());
+}
+
+void TextFormatter::printDiskInstanceLsHeader() {
+  push_back("HEADER");
+  push_back("name", "c.user", "c.host", "c.time", "m.user", "m.host", "m.time", "comment", "instance");
+}
+
+void TextFormatter::print(const DiskInstanceLsItem& dils_item) {
+  push_back(dils_item.name(),
+            dils_item.creation_log().username(),
+            dils_item.creation_log().host(),
+            timeToStr(dils_item.creation_log().time()),
+            dils_item.last_modification_log().username(),
+            dils_item.last_modification_log().host(),
+            timeToStr(dils_item.last_modification_log().time()),
+            dils_item.comment(),
+            dils_item.instance_name());
 }
 
 void TextFormatter::printDiskSystemLsHeader() {
@@ -910,56 +993,8 @@ void TextFormatter::printDiskSystemLsHeader() {
             "m.user",
             "m.host",
             "m.time",
-            "comment");
-}
-
-void TextFormatter::printDiskInstanceLsHeader() {
-  push_back("HEADER");
-  push_back("name", "c.user", "c.host", "c.time", "m.user", "m.host", "m.time", "comment");
-}
-
-void TextFormatter::printDiskInstanceSpaceLsHeader() {
-  push_back("HEADER");
-  push_back("name",
-            "instance",
-            "url",
-            "interval",
-            "last refresh",
-            "space",
-            "c.user",
-            "c.host",
-            "c.time",
-            "m.user",
-            "m.host",
-            "m.time",
-            "comment");
-}
-
-void TextFormatter::print(const DiskInstanceSpaceLsItem& disls_item) {
-  push_back(disls_item.name(),
-            disls_item.disk_instance(),
-            disls_item.free_space_query_url(),
-            disls_item.refresh_interval(),
-            disls_item.last_refresh_time(),
-            disls_item.free_space(),
-            disls_item.creation_log().username(),
-            disls_item.creation_log().host(),
-            timeToStr(disls_item.creation_log().time()),
-            disls_item.last_modification_log().username(),
-            disls_item.last_modification_log().host(),
-            timeToStr(disls_item.last_modification_log().time()),
-            disls_item.comment());
-}
-
-void TextFormatter::print(const DiskInstanceLsItem& dils_item) {
-  push_back(dils_item.name(),
-            dils_item.creation_log().username(),
-            dils_item.creation_log().host(),
-            timeToStr(dils_item.creation_log().time()),
-            dils_item.last_modification_log().username(),
-            dils_item.last_modification_log().host(),
-            timeToStr(dils_item.last_modification_log().time()),
-            dils_item.comment());
+            "comment",
+            "instance");
 }
 
 void TextFormatter::print(const DiskSystemLsItem& dsls_item) {
@@ -975,7 +1010,8 @@ void TextFormatter::print(const DiskSystemLsItem& dsls_item) {
             dsls_item.last_modification_log().username(),
             dsls_item.last_modification_log().host(),
             timeToStr(dsls_item.last_modification_log().time()),
-            dsls_item.comment());
+            dsls_item.comment(),
+            dsls_item.instance_name());
 }
 
 void TextFormatter::printVirtualOrganizationLsHeader() {
@@ -992,7 +1028,8 @@ void TextFormatter::printVirtualOrganizationLsHeader() {
             "m.user",
             "m.host",
             "m.time",
-            "comment");
+            "comment",
+            "instance");
 }
 
 void TextFormatter::print(const VirtualOrganizationLsItem& vols_item) {
@@ -1008,7 +1045,8 @@ void TextFormatter::print(const VirtualOrganizationLsItem& vols_item) {
             vols_item.last_modification_log().username(),
             vols_item.last_modification_log().host(),
             timeToStr(vols_item.last_modification_log().time()),
-            vols_item.comment());
+            vols_item.comment(),
+            vols_item.instance_name());
 }
 
 void TextFormatter::printVersionHeader() {
@@ -1017,8 +1055,9 @@ void TextFormatter::printVersionHeader() {
             "Client xrd-ssi-protobuf",
             "CTA Frontend",
             "Server xrd-ssi-protobuf",
-            "Catalogue schema",
-            "DB connection string",
+            "Catalogue Schema",
+            "DB Connection String",
+            "Instance Name",
             "Status",
             "Scheduler Backend Name");
 }
@@ -1030,6 +1069,7 @@ void TextFormatter::print(const VersionItem& version_item) {
             version_item.server_version().xrootd_ssi_protobuf_interface_version(),
             version_item.catalogue_version(),
             version_item.catalogue_connection_string(),
+            version_item.instance_name(),
             version_item.is_upgrading() ? "UPGRADING" : "PRODUCTION",
             version_item.scheduler_backend_name());
 }
@@ -1051,7 +1091,8 @@ void TextFormatter::printRecycleTapeFileLsHeader() {
             "group",
             "deletion time",
             "path when deleted",
-            "reason");
+            "reason",
+            "instance");
 }
 
 void TextFormatter::print(const RecycleTapeFileLsItem& rtfls_item) {
@@ -1081,7 +1122,8 @@ void TextFormatter::print(const RecycleTapeFileLsItem& rtfls_item) {
             rtfls_item.disk_file_gid(),
             timeToStr(rtfls_item.recycle_log_time()),
             rtfls_item.disk_file_path(),
-            rtfls_item.reason_log());
+            rtfls_item.reason_log(),
+            rtfls_item.instance_name());
 }
 
 void TextFormatter::printPhysicalLibraryLsHeader() {
@@ -1103,7 +1145,8 @@ void TextFormatter::printPhysicalLibraryLsHeader() {
             "m.user",
             "m.host",
             "m.time",
-            "comment");
+            "comment",
+            "instance");
 }
 
 void TextFormatter::print(const PhysicalLibraryLsItem& plls_item) {
@@ -1124,7 +1167,8 @@ void TextFormatter::print(const PhysicalLibraryLsItem& plls_item) {
             plls_item.last_modification_log().username(),
             plls_item.last_modification_log().host(),
             timeToStr(plls_item.last_modification_log().time()),
-            plls_item.comment());
+            plls_item.comment(),
+            plls_item.instance_name());
 }
 
 }  // namespace cta::admin

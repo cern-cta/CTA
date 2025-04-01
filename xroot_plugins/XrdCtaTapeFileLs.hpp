@@ -45,6 +45,7 @@ private:
   virtual int fillBuffer(XrdSsiPb::OStreamBuffer<Data> *streambuf);
 
   catalogue::ArchiveFileItor m_tapeFileItor;       //!< Iterator across files which have been archived
+  const std::string m_instanceName;
 
   static constexpr const char* const LOG_SUFFIX  = "TapeFileLsStream";    //!< Identifier for log messages
 };
@@ -52,7 +53,8 @@ private:
 
 TapeFileLsStream::TapeFileLsStream(const frontend::AdminCmdStream& requestMsg,
   cta::catalogue::Catalogue &catalogue, cta::Scheduler &scheduler) :
-    XrdCtaStream(catalogue, scheduler)
+    XrdCtaStream(catalogue, scheduler),
+    m_instanceName(requestMsg.getInstanceName())
 {
   using namespace cta::admin;
 
@@ -91,7 +93,8 @@ int TapeFileLsStream::fillBuffer(XrdSsiPb::OStreamBuffer<Data> *streambuf) {
 
     for(auto jt = archiveFile.tapeFiles.cbegin(); jt != archiveFile.tapeFiles.cend(); jt++) {
       Data record;
-
+      // Set the instance_name field
+      record.mutable_tfls_item()->set_instance_name(m_instanceName);
       // Archive file
       auto af = record.mutable_tfls_item()->mutable_af();
       af->set_archive_id(archiveFile.archiveFileID);
