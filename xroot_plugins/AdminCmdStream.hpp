@@ -56,7 +56,7 @@ public:
   /*!
    * Get CTA instance Name (set in the CTA Frontend config file)
    */
-  const std::string getInstanceName() const { return m_instanceName; }
+  const std::string& getInstanceName() const { return m_instanceName; }
 
 private:
   /*!

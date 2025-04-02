@@ -60,11 +60,10 @@ ShowQueuesStream::ShowQueuesStream(const frontend::AdminCmdStream& requestMsg, c
   cta::Scheduler& scheduler, log::LogContext& lc) :
   XrdCtaStream(catalogue, scheduler),
   m_queuesAndMountsList(scheduler.getQueuesAndMountSummaries(lc)),
-  m_schedulerBackendName(std::nullopt),
+  m_schedulerBackendName(scheduler.getSchedulerBackendName()),
   m_instanceName(requestMsg.getInstanceName())
 {
   using namespace cta::admin;
-  m_schedulerBackendName = scheduler.getSchedulerBackendName();
   if (!m_schedulerBackendName) {
     XrdSsiPb::Log::Msg(
       XrdSsiPb::Log::ERROR,
