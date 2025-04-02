@@ -43,6 +43,7 @@
 #include "ServerStorageClassLs.hpp"
 #include "ServerRepackLs.hpp"
 #include "ServerRecycleTapeFileLs.hpp"
+#include "ServerLogicalLibraryLs.hpp"
 
 #include <grpcpp/grpcpp.h>
 
@@ -134,7 +135,9 @@ CtaRpcStreamImpl::GenericAdminStream(::grpc::CallbackServerContext* context, con
       return new RepackLsWriteReactor(m_catalogue, m_scheduler, request);
     case cmd_pair(cta::admin::AdminCmd::CMD_RECYCLETAPEFILE, cta::admin::AdminCmd::SUBCMD_LS):
       return new RecycleTapeFileLsWriteReactor(m_catalogue, m_scheduler, request);
-      default:
+    case cmd_pair(cta::admin::AdminCmd::CMD_LOGICALLIBRARY, cta::admin::AdminCmd::SUBCMD_LS):
+      return new LogicalLibraryLsWriteReactor(m_catalogue, m_scheduler, request);  
+    default:
       // make the compiler happy maybe and return
       return new TapeLsWriteReactor(m_catalogue, m_scheduler, request);
     // dCache impl. prints unrecognized Request message
