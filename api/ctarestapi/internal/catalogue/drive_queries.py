@@ -1,6 +1,6 @@
 from pydantic import BaseModel
 from sqlalchemy import text, Engine
-from typing import Optional, List
+from typing import Optional
 
 
 class DriveConfigEntry(BaseModel):

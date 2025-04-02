@@ -1,5 +1,5 @@
 from functools import lru_cache
-from .internal.catalogue.catalogue import Catalogue
+from ctarestapi.internal.catalogue.catalogue import Catalogue
 import os
 
 

@@ -1,9 +1,9 @@
 import os
+import sys
 from fastapi import FastAPI
-from fastapi.middleware import Middleware
-from .routers import drives
-from .routers import home
-from .middleware import JWTMiddleware
+from ctarestapi.routers import drives
+from ctarestapi.routers import home
+from ctarestapi.middleware.authentication import JWTMiddleware
 
 
 def create_app() -> FastAPI:
@@ -22,8 +22,8 @@ def create_app() -> FastAPI:
             "url": "https://gitlab.cern.ch/cta/CTA/-/blob/main/COPYING",
         }
     )
-    app.add_middleware(JWTMiddleware, jwks_endpoint=jwks_endpoint, jwks_cache_expiry=jwks_cache_expiry)
 
+    app.add_middleware(JWTMiddleware, jwks_endpoint=jwks_endpoint, jwks_cache_expiry=jwks_cache_expiry)
     app.include_router(home.router)
     app.include_router(drives.router)
     return app
@@ -31,4 +31,8 @@ def create_app() -> FastAPI:
 
 if __name__ == "__main__":
     import uvicorn
-    uvicorn.run(create_app(), host="0.0.0.0", port=80)
+    try:
+      uvicorn.run(create_app(), host="0.0.0.0", port=80)
+    except Exception as error:
+        print("FATAL:", error, file=sys.stderr)
+        sys.exit(1)
