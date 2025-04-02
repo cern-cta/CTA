@@ -9,3 +9,5 @@ data:
     {{ .Files.Get "scripts/generate_secret_files.sh" | nindent 4 }}
   generate_secrets.sh: |
     {{ .Files.Get "scripts/generate_secrets.sh" | nindent 4 }}
+  gen_jwks_jwt.py: |
+    {{ .Files.Get "scripts/gen_jwks_jwt.py" | nindent 4 }}

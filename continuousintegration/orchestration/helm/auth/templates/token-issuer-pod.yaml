@@ -17,22 +17,26 @@ spec:
           openssl rsa -in /data/private.key -pubout -out /data/public.pem && \
           python3 scripts/gen_jwks_jwt.py
       volumeMounts:
-        - name: jwt-data
-          mountPath: /data
+      - name: jwt-data
+        mountPath: /data
+      - name: scripts-volume
+        mountPath: /scripts
   containers:
     - name: jwks-endpoint
       image: python:3.12-alpine
       workingDir: /data
       command: ["python3", "-m", "http.server", "8000"]
-      volumeMounts:
-        - name: jwt-data
-          mountPath: /data
       ports:
         - containerPort: 8000
+      volumeMounts:
+      - name: scripts-volume
+        mountPath: /scripts
+      - name: jwt-data
+        mountPath: /data
   volumes:
   - name: jwt-data
     emptyDir: {}
   - name: scripts-volume
     configMap:
-      name: scripts-kdc
+      name: scripts-auth
       defaultMode: 0777
