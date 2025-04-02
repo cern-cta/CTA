@@ -61,7 +61,7 @@ spec:
   volumes:
   - name: scripts-volume
     configMap:
-      name: scripts-kdc
+      name: scripts-auth
       defaultMode: 0777
   - name: krb5-conf
     configMap:
