@@ -51,6 +51,7 @@ usage() {
   echo "      --eos-image-tag <tag>:          Docker image tag for the EOS chart."
   echo "      --eos-image-repository <repo>:  Docker image for EOS chart. Should be the full image name, e.g. \"gitlab-registry.cern.ch/dss/eos/eos-ci\"."
   echo "      --eos-config <file>:            Values file to use for the EOS chart. Defaults to presets/dev-eos-values.yaml."
+  echo "      --enable-rest-api:              Spawn the CTA REST API as part of the frontend."
   exit 1
 }
 
@@ -106,6 +107,8 @@ create_instance() {
   eos_image_tag=105fc481.el9 # This tag is EOS 5.3.9
   eos_image_repository=gitlab-registry.cern.ch/dss/eos/eos-ci
   eos_config=presets/dev-eos-values.yaml
+  # Other
+  enable_rest_api=false
 
   # Parse command line arguments
   while [[ "$#" -gt 0 ]]; do
@@ -145,6 +148,7 @@ create_instance() {
         shift ;;
       -O|--reset-scheduler) reset_scheduler=true ;;
       -D|--reset-catalogue) reset_catalogue=true ;;
+      --enable-rest-api) enable_rest_api=true ;;
       --dry-run) dry_run=1 ;;
       --eos-config)
         eos_config="$2"
@@ -299,7 +303,7 @@ create_instance() {
                                 --namespace "${namespace}" \
                                 --set global.image.repository="${cta_image_repository}" \
                                 --set global.image.tag="${cta_image_tag}" \
-                                --set frontend.restAPI.enabled="true" \
+                                --set frontend.restAPI.enabled="${enable_rest_api}" \
                                 --set frontend.restAPI.image.repository="localhost/cta-rest-api" \
                                 --set frontend.restAPI.image.tag="dev-0" \
                                 --set-file global.configuration.scheduler="${scheduler_config}" \

@@ -55,6 +55,7 @@ usage() {
   echo "      --upgrade-cta:                    Upgrades the existing CTA instance with a new image instead of spawning an instance from scratch."
   echo "      --upgrade-eos:                    Upgrades the existing EOS instance with a new image instead of spawning an instance from scratch."
   echo "      --eos-version:                    Version of EOS to spawn. If not provided, will default to the version specified in the create_instance script."
+  echo "      --enable-rest-api:                Build image and spawn a pod for the CTA REST API."
   exit 1
 }
 
@@ -100,6 +101,7 @@ build_deploy() {
   local extra_build_options=""
   local catalogue_config="presets/dev-catalogue-postgres-values.yaml"
   local eos_version=""
+  local enable_rest_api=false
 
   # Defaults
   local num_jobs=$(nproc --ignore=2)
@@ -132,6 +134,7 @@ build_deploy() {
       --force-install) force_install=true ;;
       --upgrade-cta) upgrade_cta=true ;;
       --upgrade-eos) upgrade_eos=true ;;
+      --enable-rest-api) enable_rest_api=true ;;
       --eos-version)
         if [[ $# -gt 1 ]]; then
           eos_version="$2"
@@ -384,8 +387,10 @@ build_deploy() {
                                                             --operating-system "${operating_system}" \
                                                             --load-into-minikube \
                                                             ${extra_build_options}
-    ./continuousintegration/build/build_rest_api_image.sh --tag ${image_tag} \
-                                                          --load-into-minikube
+    if [[ ${enable_rest_api} = true ]]; then
+      ./continuousintegration/build/build_rest_api_image.sh --tag ${image_tag} \
+                                                            --load-into-minikube
+    fi
 
     if [ ${image_cleanup} = true ]; then
       # Pruning of unused images is done after image building to ensure we maintain caching
@@ -439,6 +444,9 @@ build_deploy() {
         else
           scheduler_config="presets/dev-scheduler-vfs-values.yaml"
         fi
+      fi
+      if [[ ${enable_rest_api} = true ]]; then
+        extra_spawn_options+=" --enable-rest-api"
       fi
 
       echo "Deploying CTA instance"
