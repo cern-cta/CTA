@@ -1,5 +1,5 @@
 from sqlalchemy import create_engine
-from .drive_queries import DriveQueries
+from ctarestapi.internal.catalogue.drive_queries import DriveQueries
 
 
 class Catalogue:

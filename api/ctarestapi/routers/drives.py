@@ -1,5 +1,5 @@
 from fastapi import APIRouter, Depends, Query, HTTPException
-from ..dependencies import Catalogue, get_catalogue
+from ctarestapi.dependencies import Catalogue, get_catalogue
 from pydantic import BaseModel, StringConstraints, model_validator
 from typing import Annotated, Optional
 from enum import Enum
