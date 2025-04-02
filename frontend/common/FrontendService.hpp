@@ -154,7 +154,7 @@ public:
   /*
    * Get the instanceName from config file
    */
-  const std::string getInstanceName() const { return m_instanceName; }
+  const std::string& getInstanceName() const { return m_instanceName; }
 
 private:
   /*!
