@@ -1,0 +1,38 @@
+apiVersion: v1
+kind: Pod
+metadata:
+  name: auth-token-issuer
+spec:
+  restartPolicy: Never
+  initContainers:
+    - name: generate-keys
+      image: python:3.9-alpine
+      command: ["/bin/sh", "-c"]
+      args:
+        - |
+          apk add --no-cache openssl py3-pip && \
+          pip install cryptography pyjwt && \
+          mkdir -p /data && \
+          openssl genrsa -out /data/private.key 2048 && \
+          openssl rsa -in /data/private.key -pubout -out /data/public.pem && \
+          python3 scripts/gen_jwks_jwt.py
+      volumeMounts:
+        - name: jwt-data
+          mountPath: /data
+  containers:
+    - name: jwks-endpoint
+      image: python:3.12-alpine
+      workingDir: /data
+      command: ["python3", "-m", "http.server", "8000"]
+      volumeMounts:
+        - name: jwt-data
+          mountPath: /data
+      ports:
+        - containerPort: 8000
+  volumes:
+  - name: jwt-data
+    emptyDir: {}
+  - name: scripts-volume
+    configMap:
+      name: scripts-kdc
+      defaultMode: 0777
