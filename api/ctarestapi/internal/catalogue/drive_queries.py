@@ -2,11 +2,13 @@ from pydantic import BaseModel
 from sqlalchemy import text, Engine
 from typing import Optional, List
 
+
 class DriveConfigEntry(BaseModel):
     category: str
     key: str
     source: str
     value: str
+
 
 class Drive(BaseModel):
     bytesTransferredInSession: int
@@ -38,14 +40,16 @@ class Drive(BaseModel):
     vid: Optional[str]
     vo: Optional[str]
 
-class DriveQueries():
+
+class DriveQueries:
 
     def __init__(self, engine: Engine):
         self.engine = engine
 
     def get_all_drives(self, limit: int = 100, offset: int = 0) -> list[Drive]:
         with self.engine.connect() as conn:
-            query = text("""
+            query = text(
+                """
                 SELECT
                     DRIVE_STATE.DRIVE_NAME AS DRIVE_NAME,
                     DRIVE_STATE.HOST AS HOST,
@@ -118,7 +122,8 @@ class DriveQueries():
                 ORDER BY
                     DRIVE_NAME
                 LIMIT :limit OFFSET :offset
-            """)
+            """
+            )
             result = conn.execute(query, {"limit": limit, "offset": offset})
             rows = result.mappings().all()
             print(rows[0].keys())
@@ -158,7 +163,8 @@ class DriveQueries():
 
     def get_drive(self, drive_name: str) -> Optional[Drive]:
         with self.engine.connect() as conn:
-            query = text("""
+            query = text(
+                """
                 SELECT
                     DRIVE_STATE.DRIVE_NAME AS DRIVE_NAME,
                     DRIVE_STATE.HOST AS HOST,
@@ -232,7 +238,8 @@ class DriveQueries():
                     DRIVE_NAME = :drive_name
                 ORDER BY
                     DRIVE_NAME
-            """)
+            """
+            )
             result = conn.execute(query, {"drive_name": drive_name.strip()})
             row = result.mappings().first()
             if row is None:
@@ -270,46 +277,54 @@ class DriveQueries():
 
     def set_drive_up(self, drive_name: str, reason: str) -> bool:
         with self.engine.begin() as conn:
-            query = text(""""
+            query = text(
+                """"
                 UPDATE DRIVE_STATE SET
                     DESIRED_UP = true,
                     DESIRED_FORCE_DOWN = false,
                     REASON_UP_DOWN = :reason_up_down
                 WHERE DRIVE_NAME = :drive_name
-            """)
-            result = conn.execute(query, {"drive_name": drive_name.strip(),
-                                        "reason_up_down": reason.strip(),})
+            """
+            )
+            result = conn.execute(
+                query,
+                {
+                    "drive_name": drive_name.strip(),
+                    "reason_up_down": reason.strip(),
+                },
+            )
             if result.rowcount == 0:
                 return False
             return True
 
-
     def set_drive_down(self, drive_name: str, reason: str, force: bool = False) -> bool:
         with self.engine.begin() as conn:
-            query = text(""""
+            query = text(
+                """"
                 UPDATE DRIVE_STATE SET
                     DESIRED_UP = false,
                     DESIRED_FORCE_DOWN = :desired_force_down,
                     REASON_UP_DOWN = :reason_up_down
                 WHERE DRIVE_NAME = :drive_name
-            """)
-            result = conn.execute(query, {"drive_name": drive_name.strip(),
-                                        "reason_up_down": reason.strip(),
-                                        "desired_force_down": force})
+            """
+            )
+            result = conn.execute(
+                query, {"drive_name": drive_name.strip(), "reason_up_down": reason.strip(), "desired_force_down": force}
+            )
             if result.rowcount == 0:
                 return False
             return True
 
     def update_drive_comment(self, drive_name: str, comment: str) -> bool:
         with self.engine.begin() as conn:
-            query = text(""""
+            query = text(
+                """"
                 UPDATE DRIVE_STATE SET
                     USER_COMMENT = user_comment,
                 WHERE DRIVE_NAME = :drive_name
-            """)
-            result = conn.execute(query, {"drive_name": drive_name.strip(),
-                                        "user_comment": comment.strip()})
+            """
+            )
+            result = conn.execute(query, {"drive_name": drive_name.strip(), "user_comment": comment.strip()})
             if result.rowcount == 0:
                 return False
             return True
-

@@ -63,6 +63,7 @@ usage() {
   echo "      --platform <platform>:            Which platform to build for. Defaults to the default platform in the project.json."
   echo "      --eos-enabled <true|false>:       Whether to spawn an EOS or not. Defaults to true."
   echo "      --dcache-enabled <true|false>:    Whether to spawn a dCache or not. Defaults to false."
+  echo "      --enable-rest-api:                Build image and spawn a pod for the CTA REST API."
   echo
   exit 1
 }
@@ -108,6 +109,7 @@ build_deploy() {
   local use_internal_repos=true
   local eos_enabled=true
   local dcache_enabled=false
+  local enable_rest_api=false
 
 
   # Parse command line arguments
@@ -135,6 +137,7 @@ build_deploy() {
     --upgrade-cta) upgrade_cta=true ;;
     --upgrade-eos) upgrade_eos=true ;;
     --use-public-repos) use_internal_repos=false ;;
+    --enable-rest-api) enable_rest_api=true ;;
     --eos-image-tag)
       if [[ $# -gt 1 ]]; then
         eos_image_tag="$2"
@@ -412,8 +415,10 @@ build_deploy() {
       --container-runtime "${container_runtime}" \
       --load-into-minikube \
       ${extra_image_build_options}
-    ./continuousintegration/build/build_rest_api_image.sh --tag ${image_tag} \
-                                                          --load-into-minikube
+    if [[ ${enable_rest_api} = true ]]; then
+      ./continuousintegration/build/build_rest_api_image.sh --tag ${image_tag} \
+                                                            --load-into-minikube
+    fi
 
     if [ ${image_cleanup} = true ]; then
       # Pruning of unused images is done after image building to ensure we maintain caching
@@ -473,6 +478,9 @@ build_deploy() {
         else
           scheduler_config="presets/dev-scheduler-vfs-values.yaml"
         fi
+      fi
+      if [[ ${enable_rest_api} = true ]]; then
+        extra_spawn_options+=" --enable-rest-api"
       fi
 
       echo "Deploying CTA instance"

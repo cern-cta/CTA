@@ -7,6 +7,9 @@ restAPI:
   image:
     repository:
     tag:
+  jwks:
+    endpoint: http://auth-token-issuer/.well-known/jwks.json
+    expiration: 300
 
 grpc:
   enabled: false

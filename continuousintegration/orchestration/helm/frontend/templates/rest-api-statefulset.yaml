@@ -44,6 +44,8 @@ spec:
         env:
         - name: TERM
           value: "xterm"
+        - name: JWKS_ENDPOINT
+          value: {{ .values.restAPI.jwks.endpoint }}
         {{- with .Values.extraEnv }}
         {{- include "common.extraEnv" . | nindent 8 }}
         {{- end }}

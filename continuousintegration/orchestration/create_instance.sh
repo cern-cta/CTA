@@ -54,6 +54,7 @@ usage() {
   echo "      --eos-enabled <true|false>:     Whether to spawn an EOS instance or not. Defaults to true."
   echo "      --dcache-enabled <true|false>: Whether to spawn a dCache instance or not. Defaults to false."
   echo "      --cta-config <file>:            Values file to use for the CTA chart. Defaults to presets/dev-cta-xrd-values.yaml."
+  echo "      --enable-rest-api:              Spawn the CTA REST API as part of the frontend."
   echo
   exit 1
 }
@@ -117,6 +118,8 @@ create_instance() {
   dcache_image_tag=$(jq -r .dev.dCacheImageTag ${project_json_path})
   dcache_config=presets/dev-dcache-values.yaml
   dcache_enabled=false
+  # Other
+  enable_rest_api=false
 
   # Parse command line arguments
   while [[ "$#" -gt 0 ]]; do
@@ -156,6 +159,7 @@ create_instance() {
         shift ;;
       -O|--reset-scheduler) reset_scheduler=true ;;
       -D|--reset-catalogue) reset_catalogue=true ;;
+      --enable-rest-api) enable_rest_api=true ;;
       --dry-run) dry_run=1 ;;
       --eos-config)
         eos_config="$2"
@@ -358,7 +362,7 @@ create_instance() {
                                 -f "${cta_config}" \
                                 --set global.image.repository="${cta_image_repository}" \
                                 --set global.image.tag="${cta_image_tag}" \
-                                --set frontend.restAPI.enabled="true" \
+                                --set frontend.restAPI.enabled="${enable_rest_api}" \
                                 --set frontend.restAPI.image.repository="localhost/cta-rest-api" \
                                 --set frontend.restAPI.image.tag="dev-0" \
                                 --set-file global.configuration.scheduler="${scheduler_config}" \
