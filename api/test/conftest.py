@@ -1,20 +1,15 @@
-import pytest
-from fastapi import FastAPI
-from fastapi.testclient import TestClient
-from unittest.mock import patch, Mock
-from ctarestapi.server import create_app
-from ctarestapi.dependencies import get_catalogue
 import jwt
 import json
 import pytest
-import datetime
+from fastapi import FastAPI
+from fastapi.testclient import TestClient
+from unittest.mock import patch, MagicMock, Mock
+from ctarestapi.server import create_app
+from ctarestapi.dependencies import get_catalogue
 from fastapi.testclient import TestClient
 from jwt.utils import base64url_encode
 from cryptography.hazmat.primitives import serialization
 from cryptography.hazmat.primitives.asymmetric import rsa
-from unittest.mock import patch, MagicMock, Mock
-from ctarestapi.server import create_app
-from ctarestapi.dependencies import get_catalogue
 
 
 @pytest.fixture
@@ -33,6 +28,7 @@ def client(monkeypatch):
         yield client
 
         app.dependency_overrides.clear()
+
 
 # For testing purposes
 class KeyPair:

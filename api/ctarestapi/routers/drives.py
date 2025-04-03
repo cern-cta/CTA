@@ -51,9 +51,7 @@ async def update_drive_state(
     if state_update.desired_state == DesiredDriveState.up:
         success = catalogue.drives.set_drive_up(drive_name, state_update.reason)
     else:
-        success = catalogue.drives.set_drive_down(
-            drive_name, state_update.reason, force
-        )
+        success = catalogue.drives.set_drive_down(drive_name, state_update.reason, force)
 
     if not success:
         raise HTTPException(status_code=404, detail="Drive not found")
