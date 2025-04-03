@@ -11,14 +11,27 @@ class JWTMiddleware():
     _app: ASGIApp
     _jwks_client: PyJWKClient
     _allowed_algorithms: set[str]
+    _unauthenticated_routes: set[str]
 
-    def __init__(self, app, allowed_algorithms: set[str], jwks_endpoint: str, jwks_cache_expiry: int):
+    def __init__(self, app,
+                 allowed_algorithms: set[str],
+                 jwks_endpoint: str,
+                 jwks_cache_expiry: int,
+                 unauthenticated_routes: set[str] = None):
         self._app = app
         self._allowed_algorithms = allowed_algorithms
         self._jwks_client = PyJWKClient(jwks_endpoint, cache_keys=True, cache_jwk_set=True, lifespan=jwks_cache_expiry)
+        self._unauthenticated_routes = unauthenticated_routes or set()
 
     async def __call__(self, scope: Scope, receive: Receive, send: Send):
         if scope["type"] != "http":
+            await self._app(scope, receive, send)
+            return
+
+        # This is not the cleanest way of handling public routes, but all routes should be protected by default
+        # If we need more public routes, we should look into enabling the middleware on a router level
+        path = scope["path"]
+        if path in self._unauthenticated_routes:
             await self._app(scope, receive, send)
             return
 
