@@ -97,6 +97,9 @@ pod:
     terminationGracePeriodSeconds: 1
 
 extraEnv:
+  - name: LOG_LEVEL
+    value: "DEBUG"
+
 
 extraVolumes:
   volumes:

@@ -1,4 +1,5 @@
 import jwt
+import logging
 from starlette.requests import Request
 from starlette.responses import JSONResponse
 from starlette.types import ASGIApp, Receive, Scope, Send
@@ -56,7 +57,8 @@ class JWTMiddleware():
 
             jwt.decode(token, signing_jwk.key, algorithms=[alg], options={"require": ["exp"]})
 
-        except (PyJWKClientError, InvalidTokenError, ExpiredSignatureError, MissingRequiredClaimError, Exception):
+        except (PyJWKClientError, InvalidTokenError, ExpiredSignatureError, MissingRequiredClaimError, Exception) as error:
+            logging.info("Invalid token: ", error)
             response = JSONResponse(
                 status_code=401,
                 content={"detail": "Invalid or expired token"},
