@@ -3,22 +3,33 @@ import logging
 from starlette.requests import Request
 from starlette.responses import JSONResponse
 from starlette.types import ASGIApp, Receive, Scope, Send
-from jwt import PyJWKClient, InvalidTokenError, ExpiredSignatureError, MissingRequiredClaimError, PyJWKClientError
+from jwt import (
+    PyJWKClient,
+    InvalidTokenError,
+    ExpiredSignatureError,
+    MissingRequiredClaimError,
+    PyJWKClientError,
+    PyJWKClientConnectionError,
+)
 
 # See https://www.rfc-editor.org/rfc/rfc6750 for the JWT location in the request
 
-class JWTMiddleware():
+
+class JWTMiddleware:
 
     _app: ASGIApp
     _jwks_client: PyJWKClient
     _allowed_algorithms: set[str]
     _unauthenticated_routes: set[str]
 
-    def __init__(self, app,
-                 allowed_algorithms: set[str],
-                 jwks_endpoint: str,
-                 jwks_cache_expiry: int,
-                 unauthenticated_routes: set[str] = None):
+    def __init__(
+        self,
+        app,
+        allowed_algorithms: set[str],
+        jwks_endpoint: str,
+        jwks_cache_expiry: int,
+        unauthenticated_routes: set[str] = None,
+    ):
         self._app = app
         self._allowed_algorithms = allowed_algorithms
         self._jwks_client = PyJWKClient(jwks_endpoint, cache_keys=True, cache_jwk_set=True, lifespan=jwks_cache_expiry)
@@ -57,7 +68,21 @@ class JWTMiddleware():
 
             jwt.decode(token, signing_jwk.key, algorithms=[alg], options={"require": ["exp"]})
 
-        except (PyJWKClientError, InvalidTokenError, ExpiredSignatureError, MissingRequiredClaimError, Exception) as error:
+        except PyJWKClientConnectionError as error:
+            logging.error("JWKS endpoint unavailable: ", error)
+            response = JSONResponse(
+                status_code=503,
+                content={"detail": "Unable to verify token"},
+            )
+            await response(scope, receive, send)
+            return
+        except (
+            PyJWKClientError,
+            InvalidTokenError,
+            ExpiredSignatureError,
+            MissingRequiredClaimError,
+            Exception,
+        ) as error:
             logging.info("Invalid token: ", error)
             response = JSONResponse(
                 status_code=401,
