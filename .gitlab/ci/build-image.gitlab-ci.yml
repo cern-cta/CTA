@@ -1,4 +1,4 @@
-.build-ctageneric:
+.build-docker-image:
   stage: build:image
   retry: 1
   rules:
@@ -19,8 +19,8 @@
 
 build-ctageneric-from-local-rpms:
   extends:
-    - .build-ctageneric
-  needs:
+    - .build-docker-image
+  needs: # Needs RPM artifacts to build the image
     - job: build-cta-rpm
     - job: modify-project-json
       optional: true
@@ -48,7 +48,7 @@ build-ctageneric-from-local-rpms:
 
 build-ctageneric-from-remote-rpms:
   extends:
-    - .build-ctageneric
+    - .build-docker-image
   needs:
     - job: validate-pipeline-variables
     - job: modify-project-json
@@ -74,3 +74,20 @@ build-ctageneric-from-remote-rpms:
                        --build-arg "PUBLIC_REPO_VER=${CUSTOM_CTA_VERSION}"
                        --build-arg USE_INTERNAL_REPOS=${USE_INTERNAL_REPOS}
     - echo "Image pushed successfully to ${CI_REGISTRY}/cta/ctageneric:${CTA_BUILD_ID}"
+
+build-cta-rest-api:
+  extends:
+    - .build-docker-image
+  needs:
+    - job: pipeline-variable-check
+      optional: true
+    - job: modify-versionlock
+      optional: true
+  rules:
+    - when: manual
+  script:
+    - echo "Image tag ${CI_REGISTRY}/cta/cta-rest-api:${CTA_BUILD_ID}"
+    - /kaniko/executor --context $CI_PROJECT_DIR/api
+                       --dockerfile Dockerfile
+                       --destination ${CI_REGISTRY}/cta/cta-rest-api:${CTA_BUILD_ID}
+    - echo "Image pushed successfully to ${CI_REGISTRY}/cta/cta-rest-api:${CTA_BUILD_ID}"

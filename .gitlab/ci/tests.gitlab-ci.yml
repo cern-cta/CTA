@@ -128,6 +128,25 @@ unit-test-oracle:
   # This is necessary as the job uses a single account on a centralized database.
   resource_group: oracle-centralized-db-cta-dev04
 
+unit-test-rest-api:
+  stage: test
+  needs: []
+  rules:
+    - if: $CI_PIPELINE_SOURCE == "merge_request_event"
+      when: never
+    - if: $CI_COMMIT_TAG
+      when: never
+    - if: $SYSTEMTESTS_ONLY == "TRUE"
+      when: never
+    - if: $PIPELINE_TYPE != "COMMIT"
+      when: never
+    - when: on_success
+  image: $IMAGE_TEST
+  script:
+    - cd api
+    - pip install -r requirements/dev.txt
+    - pytest test/
+
 test-cta-release:
   stage: test
   needs:
