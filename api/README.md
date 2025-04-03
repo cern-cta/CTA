@@ -15,6 +15,8 @@ There is only minimal configuration to the API, as it is meant to be a stupid st
 - `JWKS_ENDPOINT`: should contain the endpoint that hosts the `jwks.json` used to verify the JWTs. Without providing this, the service will not start.
 - `JWKS_CACHE_EXPIRY` (optional): how often (in seconds) should the `jwks.json` file be refreshed from the JWKS endpoint. Defaults to 300 seconds if not provided.
 
+These values are consumed at startup. Changing them while the application is running has no effect.
+
 ## Authentication
 
 Every route in the API requires a JWT. The CTA REST API expects a JWT to be present in the "authorization" request header field. The client uses the "Bearer" authentication scheme to transmit the token as per section 2.1 of [RFC 6750](https://www.rfc-editor.org/rfc/rfc6750). For example:
@@ -47,6 +49,8 @@ For security reasons, the only supported signing algorithms are:
 
 - `RS256`
 - `ES256`
+
+Any provided JWT will be verified against the JWKS retrieved from the endpoint defined in the `JWKS_ENDPOINT` env variable.
 
 ## Running the unit tests
 
