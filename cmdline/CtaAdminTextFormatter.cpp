@@ -414,6 +414,7 @@ void TextFormatter::printListPendingArchivesHeader() {
             "storage class",
             "copy no",
             "disk id",
+            "disk buffer",
             "checksum type",
             "checksum value",
             "size",
