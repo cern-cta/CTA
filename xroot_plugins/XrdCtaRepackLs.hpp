@@ -31,8 +31,8 @@ namespace cta::xrd {
   class RepackLsStream: public XrdCtaStream {
   public:
     
-    RepackLsStream(cta::Scheduler& scheduler, cta::catalogue::Catalogue& catalogue, const std::optional<std::string> vid):
-    XrdCtaStream(catalogue, scheduler), m_vid(vid) {
+    RepackLsStream(const frontend::AdminCmdStream& requestMsg, cta::Scheduler& scheduler, cta::catalogue::Catalogue& catalogue, const std::optional<std::string> vid):
+    XrdCtaStream(catalogue, scheduler), m_vid(vid), m_instanceName(requestMsg.getInstanceName()) {
       XrdSsiPb::Log::Msg(XrdSsiPb::Log::DEBUG, LOG_SUFFIX, "RepackLsStream() constructor");
       if(!vid){
         m_repackList = m_scheduler.getRepacks();
@@ -73,6 +73,7 @@ namespace cta::xrd {
         uint64_t totalFilesToArchive = repackRequest.totalFilesToArchive;
         
         auto repackRequestItem = record.mutable_rels_item();
+        repackRequestItem->set_instance_name(m_instanceName);
         repackRequestItem->set_vid(repackRequest.vid);
         repackRequestItem->set_tapepool(tapeVidMap[repackRequest.vid].tapePoolName);
         repackRequestItem->set_repack_buffer_url(repackRequest.repackBufferBaseURL);
@@ -122,6 +123,7 @@ namespace cta::xrd {
   
   private:
     const std::optional<std::string> m_vid;
+    const std::string m_instanceName;
     std::list<common::dataStructures::RepackInfo> m_repackList;
     static constexpr const char * const LOG_SUFFIX = "RepackLsStream";
   };

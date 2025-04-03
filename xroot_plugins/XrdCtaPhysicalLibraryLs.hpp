@@ -55,6 +55,7 @@ private:
   // List of physical libraries from the catalogue
   std::list<cta::common::dataStructures::PhysicalLibrary> m_physicalLibraryList;
   const std::optional<bool> m_disabled;
+  const std::string m_instanceName;
 
   static constexpr const char* const LOG_SUFFIX  = "PhysicalLibraryLsStream";      //!< Identifier for log messages
 };
@@ -62,7 +63,8 @@ private:
 
 PhysicalLibraryLsStream::PhysicalLibraryLsStream(const frontend::AdminCmdStream& requestMsg, cta::catalogue::Catalogue &catalogue, cta::Scheduler &scheduler) :
   XrdCtaStream(catalogue, scheduler),
-  m_physicalLibraryList(catalogue.PhysicalLibrary()->getPhysicalLibraries()) {
+  m_physicalLibraryList(catalogue.PhysicalLibrary()->getPhysicalLibraries()),
+  m_instanceName(requestMsg.getInstanceName()) {
   using namespace cta::admin;
 
   XrdSsiPb::Log::Msg(XrdSsiPb::Log::DEBUG, LOG_SUFFIX, "PhysicalLibraryLsStream() constructor");
@@ -77,6 +79,7 @@ int PhysicalLibraryLsStream::fillBuffer(XrdSsiPb::OStreamBuffer<Data> *streambuf
     auto pl_item = record.mutable_plls_item();
 
     pl_item->set_name(pl.name);
+    pl_item->set_instance_name(m_instanceName);
     pl_item->set_manufacturer(pl.manufacturer);
     pl_item->set_model(pl.model);
 

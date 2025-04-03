@@ -151,6 +151,11 @@ public:
    */
   const std::optional<int> getThreads() const { return m_threads; }
 
+  /*
+   * Get the instanceName from config file
+   */
+  const std::string& getInstanceName() const { return m_instanceName; }
+
 private:
   /*!
    * Set the verification mount policy
@@ -192,6 +197,7 @@ private:
   std::optional<std::string>                    m_tlsCert;                      //!< The TLS service certificate file
   std::optional<std::string>                    m_tlsChain;                     //!< The TLS CA chain file
   uint64_t                                      m_missingFileCopiesMinAgeSecs;  //!< Missing tape file copies minimum age.
+  std::string                                   m_instanceName;               //!< value of cta.instance_name in the CTA frontend configuration file
   // clang-format on
 };
 

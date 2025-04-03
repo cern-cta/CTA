@@ -52,6 +52,7 @@ private:
   virtual int fillBuffer(XrdSsiPb::OStreamBuffer<Data> *streambuf);
 
   std::list<cta::catalogue::TapePool> m_tapePoolList;                     //!< List of tape pools from the catalogue
+  const std::string m_instanceName;
 
   static constexpr const char* const LOG_SUFFIX  = "TapePoolLsStream";    //!< Identifier for log messages
 };
@@ -59,7 +60,8 @@ private:
 
 TapePoolLsStream::TapePoolLsStream(const frontend::AdminCmdStream& requestMsg, cta::catalogue::Catalogue &catalogue, cta::Scheduler &scheduler) :
   XrdCtaStream(catalogue, scheduler),
-  m_tapePoolList(catalogue.TapePool()->getTapePools())
+  m_tapePoolList(catalogue.TapePool()->getTapePools()),
+  m_instanceName(requestMsg.getInstanceName())
 {
   using namespace cta::admin;
 
@@ -86,6 +88,7 @@ int TapePoolLsStream::fillBuffer(XrdSsiPb::OStreamBuffer<Data> *streambuf) {
     auto  tp_item = record.mutable_tpls_item();
 
     tp_item->set_name(tp.name);
+    tp_item->set_instance_name(m_instanceName);
     tp_item->set_vo(tp.vo.name);
     tp_item->set_num_tapes(tp.nbTapes);
     tp_item->set_num_partial_tapes(tp.nbPartialTapes);

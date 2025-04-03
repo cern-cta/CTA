@@ -50,13 +50,15 @@ private:
   virtual int fillBuffer(XrdSsiPb::OStreamBuffer<Data> *streambuf);
   
   std::list<common::dataStructures::Tape> m_tapeList;
+  const std::string m_instanceName;
 
   static constexpr const char * const LOG_SUFFIX = "TapeLsStream";
 };
 
 
 TapeLsStream::TapeLsStream(const frontend::AdminCmdStream& requestMsg, cta::catalogue::Catalogue &catalogue, cta::Scheduler &scheduler) :
-  XrdCtaStream(catalogue, scheduler)
+  XrdCtaStream(catalogue, scheduler),
+  m_instanceName(requestMsg.getInstanceName())
 {
   using namespace cta::admin;
 
@@ -105,6 +107,7 @@ int TapeLsStream::fillBuffer(XrdSsiPb::OStreamBuffer<Data> *streambuf) {
     auto &tape = m_tapeList.front();
     auto tape_item = record.mutable_tals_item();
     
+    tape_item->set_instance_name(m_instanceName);
     tape_item->set_vid(tape.vid);
     tape_item->set_media_type(tape.mediaType);
     tape_item->set_vendor(tape.vendor);

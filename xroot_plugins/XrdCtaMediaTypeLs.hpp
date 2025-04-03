@@ -50,6 +50,7 @@ private:
   virtual int fillBuffer(XrdSsiPb::OStreamBuffer<Data> *streambuf);
 
   std::list<cta::catalogue::MediaTypeWithLogs> m_mediaTypeList;    //!< List of tape media types from the catalogue
+  const std::string m_instanceName;
 
   static constexpr const char* const LOG_SUFFIX  = "MediaTypeLsStream";    //!< Identifier for log messages
 };
@@ -57,7 +58,8 @@ private:
 
 MediaTypeLsStream::MediaTypeLsStream(const frontend::AdminCmdStream& requestMsg, cta::catalogue::Catalogue &catalogue, cta::Scheduler &scheduler) :
   XrdCtaStream(catalogue, scheduler),
-  m_mediaTypeList(catalogue.MediaType()->getMediaTypes())
+  m_mediaTypeList(catalogue.MediaType()->getMediaTypes()),
+  m_instanceName(requestMsg.getInstanceName())
 {
   using namespace cta::admin;
 
@@ -72,6 +74,7 @@ int MediaTypeLsStream::fillBuffer(XrdSsiPb::OStreamBuffer<Data> *streambuf) {
     auto  mt_item = record.mutable_mtls_item();
 
     mt_item->set_name(mt.name);
+    mt_item->set_instance_name(m_instanceName);
     mt_item->set_cartridge(mt.cartridge);
     mt_item->set_capacity(mt.capacityInBytes);
     if (mt.primaryDensityCode) mt_item->set_primary_density_code(mt.primaryDensityCode.value());

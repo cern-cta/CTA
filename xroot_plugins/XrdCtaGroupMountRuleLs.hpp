@@ -50,6 +50,7 @@ private:
   virtual int fillBuffer(XrdSsiPb::OStreamBuffer<Data> *streambuf);
 
   std::list<cta::common::dataStructures::RequesterGroupMountRule> m_groupMountRuleList;    //!< List of group mount rules from the catalogue
+  const std::string m_instanceName;
 
   static constexpr const char* const LOG_SUFFIX  = "GroupMountRuleLsStream";               //!< Identifier for log messages
 };
@@ -57,7 +58,8 @@ private:
 
 GroupMountRuleLsStream::GroupMountRuleLsStream(const frontend::AdminCmdStream& requestMsg, cta::catalogue::Catalogue &catalogue, cta::Scheduler &scheduler) :
   XrdCtaStream(catalogue, scheduler),
-  m_groupMountRuleList(catalogue.RequesterGroupMountRule()->getRequesterGroupMountRules())
+  m_groupMountRuleList(catalogue.RequesterGroupMountRule()->getRequesterGroupMountRules()),
+  m_instanceName(requestMsg.getInstanceName())
 {
   using namespace cta::admin;
 
@@ -71,6 +73,7 @@ int GroupMountRuleLsStream::fillBuffer(XrdSsiPb::OStreamBuffer<Data> *streambuf)
     auto &gmr      = m_groupMountRuleList.front();
     auto  gmr_item = record.mutable_gmrls_item();
 
+    gmr_item->set_instance_name(m_instanceName);
     gmr_item->set_disk_instance(gmr.diskInstance);
     gmr_item->set_group_mount_rule(gmr.name);
     gmr_item->set_mount_policy(gmr.mountPolicy);

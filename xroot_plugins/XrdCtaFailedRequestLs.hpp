@@ -89,6 +89,8 @@ class FailedRequestLsStream : public XrdCtaStream {
   bool m_isSummaryDone;                                                     //!< Summary has been sent
   bool m_isLogEntries;                                                      //!< Show failure log messages (verbose)
   log::LogContext &m_lc;                                                    //!< Reference to CTA Log Context
+  std::optional<std::string> m_schedulerBackendName;
+  const std::string m_instanceName;
 
   static constexpr const char* const LOG_SUFFIX  = "FailedRequestLsStream";  //!< Identifier for SSI log messages
 };
@@ -101,13 +103,20 @@ FailedRequestLsStream::FailedRequestLsStream(const frontend::AdminCmdStream& req
     m_isSummary(requestMsg.has_flag(admin::OptionBoolean::SUMMARY)),
     m_isSummaryDone(false),
     m_isLogEntries(requestMsg.has_flag(admin::OptionBoolean::SHOW_LOG_ENTRIES)),
-    m_lc(lc) {
+    m_lc(lc),
+    m_instanceName(requestMsg.getInstanceName()) {
   XrdSsiPb::Log::Msg(XrdSsiPb::Log::DEBUG, LOG_SUFFIX, "FailedRequestLsStream() constructor");
 
   if (m_isLogEntries && m_isSummary) {
     throw cta::exception::UserError("--log and --summary are mutually exclusive");
   }
-
+  m_schedulerBackendName = scheduler.getSchedulerBackendName();
+  if (!m_schedulerBackendName) {
+    XrdSsiPb::Log::Msg(
+      XrdSsiPb::Log::ERROR,
+      LOG_SUFFIX,
+      "FailedRequestLsStream constructor, the cta.scheduler_backend_name is not set in the frontend configuration.");
+  }
   auto tapepool     = requestMsg.getOptional(cta::admin::OptionString::TAPE_POOL);
   auto vid          = requestMsg.getOptional(cta::admin::OptionString::VID);
   bool justarchive  = requestMsg.has_flag(cta::admin::OptionBoolean::JUSTARCHIVE)  || tapepool;
@@ -152,6 +161,8 @@ pushRecord(XrdSsiPb::OStreamBuffer<Data> *streambuf, const common::dataStructure
     *record.mutable_frls_item()->mutable_failurelogs() = { item.failurelogs.begin(), item.failurelogs.end() };
     *record.mutable_frls_item()->mutable_reportfailurelogs() = { item.reportfailurelogs.begin(), item.reportfailurelogs.end() };
   }
+  record.mutable_frls_item()->set_scheduler_backend_name(m_schedulerBackendName.value_or(""));
+  record.mutable_frls_item()->set_instance_name(m_instanceName);
   return streambuf->Push(record);
 }
 
@@ -193,6 +204,8 @@ pushRecord(XrdSsiPb::OStreamBuffer<Data> *streambuf, const common::dataStructure
     *record.mutable_frls_item()->mutable_failurelogs() = { item.failurelogs.begin(), item.failurelogs.end() };
     *record.mutable_frls_item()->mutable_reportfailurelogs() = {item.reportfailurelogs.begin(), item.reportfailurelogs.end()};
   }
+  record.mutable_frls_item()->set_scheduler_backend_name(m_schedulerBackendName.value_or(""));
+  record.mutable_frls_item()->set_instance_name(m_instanceName);
   return streambuf->Push(record);
 }
 
@@ -230,6 +243,8 @@ void FailedRequestLsStream::GetBuffSummary(XrdSsiPb::OStreamBuffer<Data> *stream
     record.mutable_frls_summary()->set_request_type(admin::RequestType::ARCHIVE_REQUEST);
     record.mutable_frls_summary()->set_total_files(archive_summary.totalFiles);
     record.mutable_frls_summary()->set_total_size(archive_summary.totalBytes);
+    record.mutable_frls_summary()->set_scheduler_backend_name(m_schedulerBackendName.value_or(""));
+    record.mutable_frls_summary()->set_instance_name(m_instanceName);
     streambuf->Push(record);
   }
   if (isRetrieveJobs()) {
@@ -238,6 +253,8 @@ void FailedRequestLsStream::GetBuffSummary(XrdSsiPb::OStreamBuffer<Data> *stream
     record.mutable_frls_summary()->set_request_type(admin::RequestType::RETRIEVE_REQUEST);
     record.mutable_frls_summary()->set_total_files(retrieve_summary.totalFiles);
     record.mutable_frls_summary()->set_total_size(retrieve_summary.totalBytes);
+    record.mutable_frls_summary()->set_scheduler_backend_name(m_schedulerBackendName.value_or(""));
+    record.mutable_frls_summary()->set_instance_name(m_instanceName);
     streambuf->Push(record);
   }
   if (isArchiveJobs() && isRetrieveJobs()) {
@@ -245,6 +262,8 @@ void FailedRequestLsStream::GetBuffSummary(XrdSsiPb::OStreamBuffer<Data> *stream
     record.mutable_frls_summary()->set_request_type(admin::RequestType::TOTAL);
     record.mutable_frls_summary()->set_total_files(archive_summary.totalFiles + retrieve_summary.totalFiles);
     record.mutable_frls_summary()->set_total_size(archive_summary.totalBytes + retrieve_summary.totalBytes);
+    record.mutable_frls_summary()->set_scheduler_backend_name(m_schedulerBackendName.value_or(""));
+    record.mutable_frls_summary()->set_instance_name(m_instanceName);
     streambuf->Push(record);
   }
 

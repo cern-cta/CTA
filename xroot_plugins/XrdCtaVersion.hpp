@@ -49,6 +49,7 @@ private:
   std::string m_catalogue_conn_string;
   std::string m_catalogue_version;
   std::optional<std::string> m_schedulerBackendName;
+  const std::string m_instanceName;
   bool m_is_upgrading;
 
   bool m_is_done = false;
@@ -73,6 +74,7 @@ VersionStream::VersionStream(const frontend::AdminCmdStream& requestMsg,
       m_catalogue_conn_string(catalogueConnString),
       m_catalogue_version(m_catalogue.Schema()->getSchemaVersion().getSchemaVersion<std::string>()),
       m_schedulerBackendName(scheduler.getSchedulerBackendName()),
+      m_instanceName(requestMsg.getInstanceName()),
       m_is_upgrading(m_catalogue.Schema()->getSchemaVersion().getStatus<catalogue::SchemaVersion::Status>() ==
                      catalogue::SchemaVersion::Status::UPGRADING) {
   XrdSsiPb::Log::Msg(XrdSsiPb::Log::DEBUG, LOG_SUFFIX, "VersionStream() constructor");
@@ -100,6 +102,7 @@ int VersionStream::fillBuffer(XrdSsiPb::OStreamBuffer<Data>* streambuf) {
   version->set_catalogue_version(m_catalogue_version);
   version->set_is_upgrading(m_is_upgrading);
   version->set_scheduler_backend_name(m_schedulerBackendName.value());
+  version->set_instance_name(m_instanceName);
   streambuf->Push(record);
 
   return streambuf->Size();

@@ -50,6 +50,7 @@ private:
   virtual int fillBuffer(XrdSsiPb::OStreamBuffer<Data> *streambuf);
 
   std::list<common::dataStructures::DiskInstance> m_diskInstanceList;             //!< List of disk instances from the catalogue
+  const std::string m_instanceName;
 
   static constexpr const char* const LOG_SUFFIX  = "DiskInstanceLsStream";    //!< Identifier for log messages
 };
@@ -57,7 +58,8 @@ private:
 
 DiskInstanceLsStream::DiskInstanceLsStream(const frontend::AdminCmdStream& requestMsg, cta::catalogue::Catalogue &catalogue, cta::Scheduler &scheduler) :
   XrdCtaStream(catalogue, scheduler),
-  m_diskInstanceList(catalogue.DiskInstance()->getAllDiskInstances())
+  m_diskInstanceList(catalogue.DiskInstance()->getAllDiskInstances()),
+  m_instanceName(requestMsg.getInstanceName())
 {
   using namespace cta::admin;
 
@@ -72,6 +74,7 @@ int DiskInstanceLsStream::fillBuffer(XrdSsiPb::OStreamBuffer<Data> *streambuf) {
     auto  di_item = record.mutable_dils_item();
 
     di_item->set_name(di.name);
+    di_item->set_instance_name(m_instanceName);
     di_item->mutable_creation_log()->set_username(di.creationLog.username);
     di_item->mutable_creation_log()->set_host(di.creationLog.host);
     di_item->mutable_creation_log()->set_time(di.creationLog.time);

@@ -50,6 +50,7 @@ private:
   virtual int fillBuffer(XrdSsiPb::OStreamBuffer<Data> *streambuf);
 
   std::list<cta::common::dataStructures::ArchiveRoute> m_archiveRouteList;    //!< List of archive routes from the catalogue
+  const std::string m_instanceName;
 
   static constexpr const char* const LOG_SUFFIX  = "ArchiveRouteLsStream";    //!< Identifier for log messages
 };
@@ -57,7 +58,8 @@ private:
 
 ArchiveRouteLsStream::ArchiveRouteLsStream(const frontend::AdminCmdStream& requestMsg, cta::catalogue::Catalogue &catalogue, cta::Scheduler &scheduler) :
   XrdCtaStream(catalogue, scheduler),
-  m_archiveRouteList(catalogue.ArchiveRoute()->getArchiveRoutes())
+  m_archiveRouteList(catalogue.ArchiveRoute()->getArchiveRoutes()),
+  m_instanceName(requestMsg.getInstanceName())
 {
   using namespace cta::admin;
 
@@ -82,6 +84,7 @@ int ArchiveRouteLsStream::fillBuffer(XrdSsiPb::OStreamBuffer<Data> *streambuf) {
     ar_item->mutable_last_modification_log()->set_host(ar.lastModificationLog.host);
     ar_item->mutable_last_modification_log()->set_time(ar.lastModificationLog.time);
     ar_item->set_comment(ar.comment);
+    ar_item->set_instance_name(m_instanceName);
 
     is_buffer_full = streambuf->Push(record);
   }
