@@ -8,6 +8,14 @@ def test_get_drives(client):
     assert response.status_code == 200
     client.mock_catalogue.drives.get_all_drives.assert_called_once_with(limit=100, offset=0)
 
+def test_get_drives_with_pagination(client):
+    client.mock_catalogue.drives.get_all_drives.return_value = []
+
+    limit=3
+    offset=2
+    response = client.get(f"/drives/?limit={limit}&offset={offset}")
+    assert response.status_code == 200
+    client.mock_catalogue.drives.get_all_drives.assert_called_once_with(limit=limit, offset=offset)
 
 def test_get_drive_found(client):
     client.mock_catalogue.drives.get_drive.return_value = {"drive_name": "test"}
