@@ -24,7 +24,11 @@ def create_app() -> FastAPI:
     )
 
     allowed_algorithms = {"RS256", "ES256"}
-    app.add_middleware(JWTMiddleware, allowed_algorithms=allowed_algorithms, jwks_endpoint=jwks_endpoint, jwks_cache_expiry=jwks_cache_expiry)
+    app.add_middleware(JWTMiddleware,
+                       allowed_algorithms=allowed_algorithms,
+                       jwks_endpoint=jwks_endpoint,
+                       jwks_cache_expiry=jwks_cache_expiry,
+                       unauthenticated_routes={"/status"})
 
     app.include_router(home.router)
     app.include_router(drives.router)
