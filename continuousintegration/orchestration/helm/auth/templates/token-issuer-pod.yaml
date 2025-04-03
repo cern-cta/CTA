@@ -21,18 +21,6 @@ spec:
         mountPath: /data
       - name: scripts-volume
         mountPath: /scripts
-    - name: create-jwt-secret
-      image: bitnami/kubectl:1.32.0
-      command: ["/bin/sh", "-c"]
-      args:
-        - |
-          TOKEN=$(cat /data/token.jwt)
-          kubectl create secret generic jwt-token-secret \
-            --from-literal=token="$TOKEN" \
-            --dry-run=client -o yaml | kubectl apply -f -
-      volumeMounts:
-      - name: jwt-data
-        mountPath: /data
   containers:
     - name: jwks-endpoint
       image: python:3.12-alpine
