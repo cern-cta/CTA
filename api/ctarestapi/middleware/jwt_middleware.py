@@ -32,7 +32,12 @@ class JWTMiddleware:
     ):
         self._app = app
         self._allowed_algorithms = allowed_algorithms
-        self._jwks_client = PyJWKClient(jwks_endpoint, cache_keys=True, cache_jwk_set=True, lifespan=jwks_cache_expiry)
+        self._jwks_client = PyJWKClient(
+            jwks_endpoint,
+            cache_keys=True,
+            cache_jwk_set=True,
+            lifespan=jwks_cache_expiry,
+        )
         self._unauthenticated_routes = unauthenticated_routes or set()
 
     async def __call__(self, scope: Scope, receive: Receive, send: Send):
@@ -66,7 +71,9 @@ class JWTMiddleware:
             if alg not in self._allowed_algorithms:
                 raise InvalidTokenError(f"Unsupported algorithm: {alg}")
 
-            jwt.decode(token, signing_jwk.key, algorithms=[alg], options={"require": ["exp"]})
+            jwt.decode(
+                token, signing_jwk.key, algorithms=[alg], options={"require": ["exp"]}
+            )
 
         except PyJWKClientConnectionError as error:
             logging.error("JWKS endpoint unavailable: ", error)

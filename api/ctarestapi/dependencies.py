@@ -6,7 +6,9 @@ import os
 def get_connection_string() -> str:
     conn_str = os.environ.get("CTA_CATALOGUE_CONF")
     if not conn_str:
-        print("Environment variable CTA_CATALOGUE_CONF missing. Looking for file alternative...")
+        print(
+            "Environment variable CTA_CATALOGUE_CONF missing. Looking for file alternative..."
+        )
         with open("/etc/cta/cta-catalogue.conf") as f:
             conn_str = f.read().strip()
 

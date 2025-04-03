@@ -82,8 +82,7 @@ build-ctageneric-from-remote-rpms:
 build-cta-rest-api:
   extends:
     - .build-docker-image
-  needs:
-    - job: unit-test-rest-api
+  needs: []
   rules:
     - when: manual
   script:

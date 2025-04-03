@@ -8,7 +8,11 @@ router = APIRouter(prefix="/drives", tags=["drives"], dependencies=[])
 
 
 @router.get("/")
-async def get_drives(limit: int = Query(100), offset: int = Query(0), catalogue: Catalogue = Depends(get_catalogue)):
+async def get_drives(
+    limit: int = Query(100),
+    offset: int = Query(0),
+    catalogue: Catalogue = Depends(get_catalogue),
+):
     drives = catalogue.drives.get_all_drives(limit=limit, offset=offset)
     return drives
 
@@ -47,7 +51,9 @@ async def update_drive_state(
     if state_update.desired_state == DesiredDriveState.up:
         success = catalogue.drives.set_drive_up(drive_name, state_update.reason)
     else:
-        success = catalogue.drives.set_drive_down(drive_name, state_update.reason, force)
+        success = catalogue.drives.set_drive_down(
+            drive_name, state_update.reason, force
+        )
 
     if not success:
         raise HTTPException(status_code=404, detail="Drive not found")
@@ -60,7 +66,9 @@ class DriveCommentUpdate(BaseModel):
 
 @router.put("/{drive_name}/comment")
 async def update_drive_comment(
-    drive_name: str, update: DriveCommentUpdate, catalogue: Catalogue = Depends(get_catalogue)
+    drive_name: str,
+    update: DriveCommentUpdate,
+    catalogue: Catalogue = Depends(get_catalogue),
 ):
     success = catalogue.drives.update_drive_comment(drive_name, update.comment)
     if not success:
@@ -69,5 +77,9 @@ async def update_drive_comment(
 
 
 @router.delete("/{drive_name}")
-async def delete_drive(drive_name: str, force: bool = Query(False), catalogue: Catalogue = Depends(get_catalogue)):
+async def delete_drive(
+    drive_name: str,
+    force: bool = Query(False),
+    catalogue: Catalogue = Depends(get_catalogue),
+):
     raise HTTPException(status_code=501, detail="Not implemented yet.")
