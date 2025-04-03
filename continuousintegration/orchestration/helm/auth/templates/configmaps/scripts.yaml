@@ -5,5 +5,3 @@ metadata:
 data:
   kdc.sh: |
     {{ .Files.Get "scripts/kdc.sh" | nindent 4 }}
-  gen_jwks_jwt.py: |
-    {{ .Files.Get "scripts/gen_jwks_jwt.py" | nindent 4 }}
