@@ -144,7 +144,7 @@ unit-test-rest-api:
   image: $IMAGE_TEST
   script:
     - cd api
-    - pip install -r requirements/dev.txt
+    - python3 -m pip install --no-cache-dir -r requirements/dev.txt
     - pytest test/
 
 test-cta-release:

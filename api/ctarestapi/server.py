@@ -50,5 +50,5 @@ if __name__ == "__main__":
     try:
         uvicorn.run(create_app(), host="0.0.0.0", port=80)
     except Exception as error:
-        logging.error("FATAL:", error)
+        logging.error(f"FATAL: {error}")
         sys.exit(1)
