@@ -12,7 +12,6 @@
     # For non-pivot CTA releases
     - if: $CI_COMMIT_TAG && $CI_COMMIT_TAG !~ /^.*\.0\.[0-9]+-[^-]*$/
       when: manual
-    - when: on_success
   image:
     name: $IMAGE_DOCKER_IMAGE_BUILDER
     entrypoint: [""]
@@ -30,6 +29,7 @@ build-ctageneric-from-artifacts:
     - if: $PIPELINE_TYPE == "EOS_REGR_AGAINST_CTA_TAG" || $PIPELINE_TYPE == "CTAGENERIC_IMAGE"
       when: never
     - !reference [.build-docker-image, rules]
+    - when: on_success
   script:
     - echo "Building image for tag $CTA_BUILD_ID"
     - echo "Image tag ${CI_REGISTRY}/cta/ctageneric:${CTA_BUILD_ID}"
@@ -55,7 +55,6 @@ build-ctageneric-from-repos:
     - if: $PIPELINE_TYPE == "EOS_REGR_AGAINST_CTA_TAG"
     - if: $PIPELINE_TYPE == "CTAGENERIC_IMAGE"
     - when: never
-    - !reference [.build-docker-image, rules]
   script:
     - echo "Building image with CTA ${CUSTOM_CTA_TAG} RPMs and EOS ${CUSTOM_EOS_TAG} RPMs"
     - echo "Image tag ${CI_REGISTRY}/cta/ctageneric:${CTA_BUILD_ID}"
@@ -70,6 +69,7 @@ build-cta-rest-api:
     - .build-docker-image
   needs: []
   rules:
+    - !reference [.build-docker-image, rules]
     - when: manual
       allow_failure: true
   script:
