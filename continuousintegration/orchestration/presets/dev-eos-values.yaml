@@ -48,6 +48,7 @@ mgm:
 
   xrd:
     # Additional tape-specific config
+    # The option mgmofs.protowfusegrpc should be configurable
     extraConfig: |
       xrootd.chksum  adler32
       mgmofs.archivedir /var/eos/archive
@@ -55,6 +56,7 @@ mgm:
       mgmofs.tapeenabled true
       mgmofs.protowfendpoint cta-frontend:10955
       mgmofs.protowfresource /ctafrontend
+      mgmofs.protowfusegrpc false
       tpc.trace  all
       tpc.header2cgi  ArchiveMetadata archivemetadata
       taperestapi.sitename  cern-tape-archive-{{ include "mgm.instancename" . }}
@@ -111,6 +113,7 @@ fst:
       fstofs.protowfendpoint cta-frontend:10955
       fstofs.protowfresource /ctafrontend
       fstofs.filemd_handler  attr
+      fstofs.protowfusegrpc false
       tpc.trace  all
 
   probes:
