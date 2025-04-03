@@ -311,7 +311,12 @@ class DriveQueries:
             """
             )
             result = conn.execute(
-                query, {"drive_name": drive_name.strip(), "reason_up_down": reason.strip(), "desired_force_down": force}
+                query,
+                {
+                    "drive_name": drive_name.strip(),
+                    "reason_up_down": reason.strip(),
+                    "desired_force_down": force,
+                },
             )
             if result.rowcount == 0:
                 return False
@@ -326,7 +331,10 @@ class DriveQueries:
                 WHERE DRIVE_NAME = :drive_name
             """
             )
-            result = conn.execute(query, {"drive_name": drive_name.strip(), "user_comment": comment.strip()})
+            result = conn.execute(
+                query,
+                {"drive_name": drive_name.strip(), "user_comment": comment.strip()},
+            )
             if result.rowcount == 0:
                 return False
             return True
