@@ -7,7 +7,7 @@ from jwt.utils import base64url_encode
 from cryptography.hazmat.primitives import serialization
 from cryptography.hazmat.primitives.asymmetric import rsa
 from unittest.mock import patch, MagicMock, Mock
-from ctarestapi.main import create_app
+from ctarestapi.server import create_app
 from ctarestapi.dependencies import get_catalogue
 
 KID = "test-key"

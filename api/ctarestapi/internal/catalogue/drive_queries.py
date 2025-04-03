@@ -43,6 +43,8 @@ class Drive(BaseModel):
 
 class DriveQueries:
 
+    engine: Engine
+
     def __init__(self, engine: Engine):
         self.engine = engine
 
