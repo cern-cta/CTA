@@ -72,7 +72,7 @@ data:
     cta.ns.config {{ .Values.conf.ns.config }}
 
     # gRPC options
-    port {{ .Values.conf.grpc.port }}
+    grpc.port {{ .Values.conf.grpc.port }}
 
     # TLS related variables
-    TLS false
+    grpc.tls false
