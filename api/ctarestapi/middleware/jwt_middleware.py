@@ -76,7 +76,7 @@ class JWTMiddleware:
             )
 
         except PyJWKClientConnectionError as error:
-            logging.error("JWKS endpoint unavailable: ", error)
+            logging.error(f"JWKS endpoint unavailable: {error}")
             response = JSONResponse(
                 status_code=503,
                 content={"detail": "Unable to verify token"},
@@ -90,7 +90,7 @@ class JWTMiddleware:
             MissingRequiredClaimError,
             Exception,
         ) as error:
-            logging.info("Invalid token: ", error)
+            logging.debug(f"Invalid token: {error}")
             response = JSONResponse(
                 status_code=401,
                 content={"detail": "Invalid or expired token"},
