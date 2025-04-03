@@ -4,6 +4,8 @@ from ctarestapi.internal.catalogue.drive_queries import DriveQueries
 
 class Catalogue:
 
+    drives: DriveQueries
+
     def __init__(self, connection_string: str):
         engine = create_engine(connection_string)
         self.drives = DriveQueries(engine)

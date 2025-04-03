@@ -2,7 +2,7 @@ import pytest
 from fastapi import FastAPI
 from fastapi.testclient import TestClient
 from unittest.mock import patch, Mock
-from ctarestapi.main import create_app
+from ctarestapi.server import create_app
 from ctarestapi.dependencies import get_catalogue
 
 

@@ -3,7 +3,7 @@ import sys
 from fastapi import FastAPI
 from ctarestapi.routers import drives
 from ctarestapi.routers import home
-from ctarestapi.middleware.authentication import JWTMiddleware
+from ctarestapi.middleware.jwt_middleware import JWTMiddleware
 
 
 def create_app() -> FastAPI:
@@ -23,7 +23,9 @@ def create_app() -> FastAPI:
         }
     )
 
-    app.add_middleware(JWTMiddleware, jwks_endpoint=jwks_endpoint, jwks_cache_expiry=jwks_cache_expiry)
+    allowed_algorithms = {"RS256", "ES256"}
+    app.add_middleware(JWTMiddleware, allowed_algorithms=allowed_algorithms, jwks_endpoint=jwks_endpoint, jwks_cache_expiry=jwks_cache_expiry)
+
     app.include_router(home.router)
     app.include_router(drives.router)
     return app
