@@ -85,6 +85,7 @@ build-cta-rest-api:
   needs: []
   rules:
     - when: manual
+      allow_failure: true
   script:
     - echo "Image tag ${CI_REGISTRY}/cta/cta-rest-api:${CTA_BUILD_ID}"
     - /kaniko/executor --context $CI_PROJECT_DIR/api
