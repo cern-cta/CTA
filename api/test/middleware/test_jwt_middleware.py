@@ -23,7 +23,10 @@ def test_expired_token_returns_401(client_with_auth):
 def test_no_expiration_present_returns_401(client_with_auth):
     kp = client_with_auth.keyPair
     invalid_token = kp.generate_jwt(
-        headers={"kid": kp.get_kid()}, body={}, pem=kp.get_pem(), algorithm=kp.get_algorithm()
+        headers={"kid": kp.get_kid()},
+        body={},
+        pem=kp.get_pem(),
+        algorithm=kp.get_algorithm(),
     )
 
     response = client_with_auth.get("/protected", headers={"Authorization": f"Bearer {invalid_token}"})
@@ -45,7 +48,10 @@ def test_incorrect_signature_returns_401(client_with_auth):
     exp = datetime.datetime.now() + datetime.timedelta(minutes=5)
     kp = client_with_auth.keyPair
     token = kp.generate_jwt(
-        headers={"kid": kp.get_kid()}, body={"exp": exp}, pem=kp.get_pem(), algorithm=kp.get_algorithm()
+        headers={"kid": kp.get_kid()},
+        body={"exp": exp},
+        pem=kp.get_pem(),
+        algorithm=kp.get_algorithm(),
     )
     parts = token.split(".")
     assert len(parts) == 3
@@ -66,7 +72,10 @@ def test_nonexisting_kid_returns_401(client_with_auth):
     exp = datetime.datetime.now() + datetime.timedelta(minutes=5)
     kp = client_with_auth.keyPair
     invalid_token = kp.generate_jwt(
-        headers={"kid": "idontexist"}, body={"exp": exp}, pem=kp.get_pem(), algorithm=kp.get_algorithm()
+        headers={"kid": "idontexist"},
+        body={"exp": exp},
+        pem=kp.get_pem(),
+        algorithm=kp.get_algorithm(),
     )
 
     response = client_with_auth.get("/protected", headers={"Authorization": f"Bearer {invalid_token}"})

@@ -71,9 +71,7 @@ class JWTMiddleware:
             if alg not in self._allowed_algorithms:
                 raise InvalidTokenError(f"Unsupported algorithm: {alg}")
 
-            jwt.decode(
-                token, signing_jwk.key, algorithms=[alg], options={"require": ["exp"]}
-            )
+            jwt.decode(token, signing_jwk.key, algorithms=[alg], options={"require": ["exp"]})
 
         except PyJWKClientConnectionError as error:
             logging.error(f"JWKS endpoint unavailable: {error}")

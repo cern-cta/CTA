@@ -1,5 +1,6 @@
 import pytest
 
+
 def test_get_drives(client):
     client.mock_catalogue.drives.get_all_drives.return_value = []
 
@@ -35,7 +36,10 @@ def test_update_drive_state_up(client):
 def test_update_drive_state_down_with_reason(client):
     client.mock_catalogue.drives.set_drive_down.return_value = True
 
-    response = client.put("/drives/test/state?force=true", json={"desired_state": "down", "reason": "maintenance"})
+    response = client.put(
+        "/drives/test/state?force=true",
+        json={"desired_state": "down", "reason": "maintenance"},
+    )
     assert response.status_code == 200
     client.mock_catalogue.drives.set_drive_down.assert_called_once_with("test", "maintenance", True)
 

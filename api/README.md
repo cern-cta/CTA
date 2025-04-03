@@ -63,3 +63,11 @@ Once this is done, simply execute the following. This commands adds the `-v` fla
 ```sh
 pytest tests/ -v
 ```
+
+## Formatting
+
+Stop discussing and worrying about formatting. Just run the following before every commit and be done with it. Don't add exceptions to this.
+
+```sh
+black . --line-length 120
+```
