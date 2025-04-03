@@ -29,9 +29,13 @@ build-ctageneric-from-local-rpms:
       when: never
     - if: $PIPELINE_TYPE == "IMAGE_FROM_CTA_VERSION"
       when: never
+<<<<<<< HEAD
     - !reference [.build-ctageneric, rules]
   variables:
     DOCKERFILE: continuousintegration/docker/${PLATFORM}/local-rpms.Dockerfile
+=======
+    - !reference [.build-docker-image, rules]
+>>>>>>> b8f1392adb (Fix ci syntax error)
   script:
     - echo "Building image for tag $CTA_BUILD_ID"
     - echo "Image tag ${CI_REGISTRY}/cta/ctageneric:${CTA_BUILD_ID}"
