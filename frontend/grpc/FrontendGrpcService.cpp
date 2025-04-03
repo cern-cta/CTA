@@ -31,7 +31,7 @@
 namespace cta::frontend::grpc {
 
 Status
-CtaRpcImpl::ProcessGrpcRequest(const cta::xrd::Request* request, cta::xrd::Response* response, cta::log::LogContext &lc) {
+CtaRpcImpl::ProcessGrpcRequest(const cta::xrd::Request* request, cta::xrd::Response* response, cta::log::LogContext &lc) const {
 
   try {
     cta::eos::Client client = request->notification().cli();
