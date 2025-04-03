@@ -29,7 +29,7 @@ build-ctageneric-from-artifacts:
   rules:
     - if: $PIPELINE_TYPE == "EOS_REGR_AGAINST_CTA_TAG" || $PIPELINE_TYPE == "CTAGENERIC_IMAGE"
       when: never
-    - !reference [.build-ctageneric, rules]
+    - !reference [.build-docker-image, rules]
   script:
     - echo "Building image for tag $CTA_BUILD_ID"
     - echo "Image tag ${CI_REGISTRY}/cta/ctageneric:${CTA_BUILD_ID}"
@@ -55,7 +55,7 @@ build-ctageneric-from-repos:
     - if: $PIPELINE_TYPE == "EOS_REGR_AGAINST_CTA_TAG"
     - if: $PIPELINE_TYPE == "CTAGENERIC_IMAGE"
     - when: never
-    - !reference [.build-ctageneric, rules]
+    - !reference [.build-docker-image, rules]
   script:
     - echo "Building image with CTA ${CUSTOM_CTA_TAG} RPMs and EOS ${CUSTOM_EOS_TAG} RPMs"
     - echo "Image tag ${CI_REGISTRY}/cta/ctageneric:${CTA_BUILD_ID}"
