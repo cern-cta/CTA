@@ -1,3 +1,6 @@
+{{- define "keycloak.fullname" -}}
+  {{- printf "%s-%s" .Release.Name "keycloak" | trunc 63 | trimSuffix "-" -}}
+{{- end -}}
 
 {{- define "kdc.fullname" -}}
   {{ include "common.names.fullname" . }}

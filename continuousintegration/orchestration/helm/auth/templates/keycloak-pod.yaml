@@ -1,7 +1,12 @@
+{{- $name := include "keycloak.fullname" . }}
 apiVersion: v1
 kind: Pod
 metadata:
-  name: auth-keycloak
+  name: {{ $name }}
+  namespace: {{ .Release.Namespace | quote }}
+  labels:
+    app.kubernetes.io/name: {{ $name }}
+    {{- include "common.labels.withoutname" $ | nindent 4 }}
 spec:
   restartPolicy: Never
   containers:

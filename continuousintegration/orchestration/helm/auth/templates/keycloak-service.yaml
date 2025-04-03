@@ -1,11 +1,12 @@
+{{- $name := include "keycloak.fullname" . }}
 apiVersion: v1
 kind: Service
 metadata:
-  name: auth-keycloak
+  name: {{ $name }}
   namespace: {{ .Release.Namespace }}
 spec:
   selector:
-    app.kubernetes.io/name: auth-keycloak
+    app.kubernetes.io/name: {{ $name }}
   clusterIP: None
   ports:
     - port: 80
