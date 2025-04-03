@@ -147,7 +147,7 @@ unit-test-rest-api:
     # Eventually this should be part of the base image
     - dnf install -y python3-pip
     - python3 -m pip install --no-cache-dir -r requirements/dev.txt
-    - pytest test/
+    - pytest test/ --color=yes
 
 test-cta-release:
   stage: test
