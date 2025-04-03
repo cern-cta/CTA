@@ -87,5 +87,5 @@ build-cta-rest-api:
     - echo "Image tag ${CI_REGISTRY}/cta/cta-rest-api:${CTA_BUILD_ID}"
     - /kaniko/executor --context $CI_PROJECT_DIR/api
                        --dockerfile Dockerfile
-                       --destination ${CI_REGISTRY}/cta/cta-rest-api:${CTA_BUILD_ID}
-    - echo "Image pushed successfully to ${CI_REGISTRY}/cta/cta-rest-api:${CTA_BUILD_ID}"
+                       --destination ${CI_REGISTRY}/cta/ctageneric/cta-rest-api:${CTA_BUILD_ID}
+    - echo "Image pushed successfully to ${CI_REGISTRY}/cta/ctageneric/cta-rest-api:${CTA_BUILD_ID}"
