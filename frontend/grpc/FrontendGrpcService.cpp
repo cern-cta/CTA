@@ -31,7 +31,7 @@
 namespace cta::frontend::grpc {
 
 Status
-CtaRpcImpl::ProcessGrpcRequest(::grpc::ServerContext* context, const cta::xrd::Request* request, cta::xrd::Response* response, cta::log::LogContext &lc) {
+CtaRpcImpl::ProcessGrpcRequest(const cta::xrd::Request* request, cta::xrd::Response* response, cta::log::LogContext &lc) const {
 
   try {
     cta::eos::Client client = request->notification().cli();
@@ -78,13 +78,12 @@ CtaRpcImpl::Create(::grpc::ServerContext* context, const cta::xrd::Request* requ
   sp.add("remoteHost", context->peer());
   sp.add("request", "create");
   // check that the workflow is set appropriately for the create event
-  auto event = request->notification().wf().event();
-  if (event != cta::eos::Workflow::CREATE) {
+  if (auto event = request->notification().wf().event(); event != cta::eos::Workflow::CREATE) {
     response->set_type(cta::xrd::Response::RSP_ERR_USER);
     response->set_message_txt("Unexpected workflow event type. Expected CREATE, found " + cta::eos::Workflow_EventType_Name(event));
     return ::grpc::Status(::grpc::StatusCode::INVALID_ARGUMENT, "Unexpected workflow event type. Expected CREATE, found " + cta::eos::Workflow_EventType_Name(event));
   }
-  return ProcessGrpcRequest(context, request, response, lc);
+  return ProcessGrpcRequest(request, response, lc);
 }
 
 Status
@@ -102,14 +101,13 @@ CtaRpcImpl::Archive(::grpc::ServerContext* context, const cta::xrd::Request* req
     return ::grpc::Status(::grpc::StatusCode::INVALID_ARGUMENT, "Storage class is not set.");
   }
 
-  auto event = request->notification().wf().event();
-  if (event != cta::eos::Workflow::CLOSEW) {
+  if (auto event = request->notification().wf().event(); event != cta::eos::Workflow::CLOSEW) {
     response->set_type(cta::xrd::Response::RSP_ERR_USER);
     response->set_message_txt("Unexpected workflow event type. Expected CLOSEW, found " + cta::eos::Workflow_EventType_Name(event));
     return ::grpc::Status(::grpc::StatusCode::INVALID_ARGUMENT, "Unexpected workflow event type. Expected CLOSEW, found " + cta::eos::Workflow_EventType_Name(event));
   }
 
-  return ProcessGrpcRequest(context, request, response, lc);
+  return ProcessGrpcRequest(request, response, lc);
 }
 
 Status
@@ -121,8 +119,7 @@ CtaRpcImpl::Delete(::grpc::ServerContext* context, const cta::xrd::Request* requ
   sp.add("request", "delete");
 
   // check validate request args
-  auto event = request->notification().wf().event();
-  if (event != cta::eos::Workflow::DELETE) {
+  if (auto event = request->notification().wf().event(); event != cta::eos::Workflow::DELETE) {
     response->set_type(cta::xrd::Response::RSP_ERR_USER);
     response->set_message_txt("Unexpected workflow event type. Expected DELETE, found " + cta::eos::Workflow_EventType_Name(event));
     return ::grpc::Status(::grpc::StatusCode::INVALID_ARGUMENT, "Unexpected workflow event type. Expected DELETE, found " + cta::eos::Workflow_EventType_Name(event));
@@ -136,7 +133,7 @@ CtaRpcImpl::Delete(::grpc::ServerContext* context, const cta::xrd::Request* requ
   }
 
   // done with validation, now do the workflow processing
-  return ProcessGrpcRequest(context, request, response, lc);
+  return ProcessGrpcRequest(request, response, lc);
 }
 
 Status
@@ -147,8 +144,7 @@ CtaRpcImpl::Retrieve(::grpc::ServerContext* context, const cta::xrd::Request* re
   sp.add("remoteHost", context->peer());
   sp.add("request", "retrieve");
 
-  auto event = request->notification().wf().event();
-  if (event != cta::eos::Workflow::PREPARE) {
+  if (auto event = request->notification().wf().event(); event != cta::eos::Workflow::PREPARE) {
     response->set_type(cta::xrd::Response::RSP_ERR_USER);
     response->set_message_txt("Unexpected workflow event type. Expected PREPARE, found " + cta::eos::Workflow_EventType_Name(event));
     return ::grpc::Status(::grpc::StatusCode::INVALID_ARGUMENT, "Unexpected workflow event type. Expected PREPARE, found " + cta::eos::Workflow_EventType_Name(event));
@@ -178,7 +174,7 @@ CtaRpcImpl::Retrieve(::grpc::ServerContext* context, const cta::xrd::Request* re
   sp.add("archiveID", request->notification().file().archive_file_id());
   sp.add("fileID", request->notification().file().disk_file_id());
 
-  return ProcessGrpcRequest(context, request, response, lc);
+  return ProcessGrpcRequest(request, response, lc);
 }
 
 Status CtaRpcImpl::CancelRetrieve(::grpc::ServerContext* context,
@@ -193,8 +189,7 @@ Status CtaRpcImpl::CancelRetrieve(::grpc::ServerContext* context,
   sp.add("request", "cancel");
 
   // check validate request args
-  auto event = request->notification().wf().event();
-  if (event != cta::eos::Workflow::ABORT_PREPARE) {
+  if (auto event = request->notification().wf().event(); event != cta::eos::Workflow::ABORT_PREPARE) {
     response->set_type(cta::xrd::Response::RSP_ERR_USER);
     response->set_message_txt("Unexpected workflow event type. Expected ABORT_PREPARE, found " + cta::eos::Workflow_EventType_Name(event));
     return ::grpc::Status(::grpc::StatusCode::INVALID_ARGUMENT, "Unexpected workflow event type. Expected ABORT_PREPARE, found " + cta::eos::Workflow_EventType_Name(event));
@@ -216,7 +211,7 @@ Status CtaRpcImpl::CancelRetrieve(::grpc::ServerContext* context,
   sp.add("schedulerJobID", request->notification().file().archive_file_id());
 
   // field verification done, now try to call the process method
-  return ProcessGrpcRequest(context, request, response, lc);
+  return ProcessGrpcRequest(request, response, lc);
 }
 
 /* initialize the frontend service

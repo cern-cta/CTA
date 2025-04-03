@@ -394,7 +394,7 @@ FrontendService::FrontendService(const std::string& configFilename) : m_archiveF
 
   // Get the gRPC-specific values, if they are set (getOptionValue returns an std::optional)
   std::optional<bool> tls = config.getOptionValueBool("grpc.tls");
-  m_tls = tls.has_value() ? tls.value() : false;  // default value is false
+  m_tls = tls.value_or(false);  // default value is false
   auto TlsKey = config.getOptionValueStr("grpc.tls.key");
   if (TlsKey.has_value()) {
     m_tlsKey = TlsKey.value();
