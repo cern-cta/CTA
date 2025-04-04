@@ -8,12 +8,7 @@ conf:
     useEncryption: "no"
     tapeCacheMaxAgeSecs: 1
     retrieveQueueCacheMaxAgeSecs: 1
-    secProtocol: "sss"
-    secSssktPath: "/etc/cta"
-    ctaTapedSss: "cta-taped.sss.keytab"
     externalFreeDiskSpaceScript: "/usr/bin/cta-eosdf.sh"
-  general:
-    instanceName: "CI"
 
 
 # tapeServers: {}

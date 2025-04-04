@@ -1,3 +1,4 @@
+{{- if ne .Values.useGrpc -}}
 {{- $schedulerConfig := include "scheduler.config" . | fromYaml -}}
 {{- $name := include "ctafrontend.fullname" . }}
 apiVersion: v1
@@ -12,7 +13,7 @@ data:
     # CTA options
     #
 
-    cta.instance_name {{ .Values.conf.frontend.instanceName }}
+    cta.instance_name {{ .Release.namespace }}
 
     # CTA ObjectStore options
     cta.objectstore.backendpath {{ include "global.schedulerUrl" . }}
@@ -46,7 +47,7 @@ data:
     cta.archivefile.zero_length_files_forbidden_vo_exception_list {{ .Values.conf.frontend.zeroLengthFilesForbiddenVoExceptionList }}
 
     # CTA Frontend log URL
-    cta.log.url {{ .Values.conf.frontend.logUrl }}
+    cta.log.url file:/var/log/cta/cta-frontend.log
 
     # CTA Logger log level
     # Valid log levels are EMERG, ALERT, CRIT, ERR, WARNING, NOTICE (==USERERR), INFO, DEBUG
@@ -54,7 +55,7 @@ data:
 
     # CTA Logger log format
     # Valid formats are default, json
-    cta.log.format {{ .Values.conf.logger.logFormat }}
+    cta.log.format json
 
     # CTA XRootD SSI Protobuf log level
     # cta.log.ssi debug protobuf # TODO: which of these options do we want to make configurable?
@@ -64,7 +65,7 @@ data:
     # cta.repack.repack_buffer_url {{ .Values.conf.frontend.repackBufferUrl }}
 
     # CTA Verification Mount Policy
-    cta.verification.mount_policy {{ .Values.conf.verification.mountPolicy }}
+    cta.verification.mount_policy verification
 
     # Keytab containing gRPC endpoints and tokens for each disk instance
     cta.ns.config {{ .Values.conf.ns.config }}
@@ -102,3 +103,4 @@ data:
 
     # This does not always need to be added
     cta.ns.config {{ .Values.conf.ns.config }}
+{{- end }}
