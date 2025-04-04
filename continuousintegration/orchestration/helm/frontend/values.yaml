@@ -12,7 +12,7 @@ conf:
   frontend:
     instanceName: "CI"
     archiveFileMaxSizeGb: 1000
-    zeroLengthFilesForbidden: "on"
+    zeroLengthFilesForbidden: true
     zeroLengthFilesForbiddenVoExceptionList: ""
     logUrl: "file:/var/log/cta/cta-frontend.log"
 

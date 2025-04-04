@@ -250,19 +250,16 @@ FrontendService::FrontendService(const std::string& configFilename) : m_archiveF
     log(log::INFO, "Configuration entry", params);
   }
 
-  m_zeroLengthFilesForbidden =
-    config.getOptionValueStr("cta.archivefile.zero_length_files_forbidden").value_or("off") == "on" ? true : false;
+  std::optional<bool> zeroLengthFilesForbidden = config.getOptionValueBool("cta.archivefile.zero_length_files_forbidden");
+  m_zeroLengthFilesForbidden = zeroLengthFilesForbidden.value_or(true); // disallow 0-length files by default
   {
     // Log cta.archivefile.zero_length_files_forbidden
     std::list<log::Param> params;
-    params.push_back(log::Param("source",
-                                config.getOptionValueStr("cta.archivefile.zero_length_files_forbidden").has_value() ?
-                                  configFilename :
-                                  "Compile time default"));
+    params.push_back(log::Param("source", zeroLengthFilesForbidden.has_value() ? configFilename : "Compile time default"));
     params.push_back(log::Param("category", "cta.archivefile"));
     params.push_back(log::Param("key", "zero_length_files_forbidden"));
     params.push_back(
-      log::Param("value", config.getOptionValueStr("cta.archivefile.zero_length_files_forbidden").value_or("off")));
+      log::Param("value", config.getOptionValueStr("cta.archivefile.zero_length_files_forbidden").value_or("true")));
     log(log::INFO, "Configuration entry", params);
   }
 
