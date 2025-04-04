@@ -100,7 +100,7 @@ unit-test-postgresql:
     - echo 'postgresql:postgresql://cta@localhost/cta' > ${CTA_CATALOGUE_CONF}
     - /usr/bin/cta-catalogue-schema-create ${CTA_CATALOGUE_CONF}
     - |
-      if [ "$VALGRIND_DB_UNIT_TESTS" = "true" ]; then
+      if [ "$VALGRIND_DB_UNIT_TESTS" = "TRUE" ]; then
         valgrind /usr/bin/cta-rdbmsUnitTests ${CTA_CATALOGUE_CONF}
       else
         /usr/bin/cta-rdbmsUnitTests ${CTA_CATALOGUE_CONF}

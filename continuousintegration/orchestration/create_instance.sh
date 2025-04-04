@@ -51,6 +51,7 @@ usage() {
   echo "      --eos-image-tag <tag>:          Docker image tag for the EOS chart."
   echo "      --eos-image-repository <repo>:  Docker image for EOS chart. Should be the full image name, e.g. \"gitlab-registry.cern.ch/dss/eos/eos-ci\"."
   echo "      --eos-config <file>:            Values file to use for the EOS chart. Defaults to presets/dev-eos-values.yaml."
+  echo "      --cta-config <file>:            Values file to use for the CTA chart. Defaults to presets/dev-cta-xrd-values.yaml."
   exit 1
 }
 
@@ -93,6 +94,7 @@ create_instance() {
   registry_secrets="ctaregsecret reg-eoscta-operations reg-ctageneric" # Secrets to be copied to the namespace (space separated)
   catalogue_config=presets/dev-catalogue-postgres-values.yaml
   scheduler_config=presets/dev-scheduler-vfs-values.yaml
+  cta_config=""
   # By default keep Database and keep Scheduler datastore data
   # default should not make user loose data if he forgot the option
   reset_catalogue=false
@@ -155,6 +157,10 @@ create_instance() {
         shift ;;
       --eos-image-tag)
         eos_image_tag="$2"
+        shift ;;
+      --cta-config)
+        cta_config="$2"
+        test -f "${cta_config}" || die "CTA config file ${cta_config} does not exist"
         shift ;;
       *)
         echo "Unsupported argument: $1"
@@ -297,6 +303,7 @@ create_instance() {
   echo "Installing CTA chart..."
   log_run helm ${helm_command} cta helm/cta \
                                 --namespace "${namespace}" \
+                                -f "${cta_config}" \
                                 --set global.image.repository="${cta_image_repository}" \
                                 --set global.image.tag="${cta_image_tag}" \
                                 --set-file global.configuration.scheduler="${scheduler_config}" \
