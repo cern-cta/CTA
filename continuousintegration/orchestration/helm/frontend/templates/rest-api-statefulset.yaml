@@ -31,7 +31,7 @@ spec:
         stdin: true
         readinessProbe:
           httpGet:
-            path: /status
+            path: /v0/health
             port: 80
           initialDelaySeconds: 5
           periodSeconds: 15

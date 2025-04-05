@@ -4,7 +4,7 @@ import pytest
 from fastapi import FastAPI
 from fastapi.testclient import TestClient
 from unittest.mock import patch, MagicMock, Mock
-from ctarestapi.server import create_app
+from ctarestapi.server_fastapi import create_app
 from ctarestapi.dependencies import get_catalogue
 from fastapi.testclient import TestClient
 from jwt.utils import base64url_encode
