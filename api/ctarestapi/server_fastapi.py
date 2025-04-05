@@ -2,9 +2,9 @@ import os
 import sys
 import logging
 from fastapi import FastAPI
-from ctarestapi.routers import drives
-from ctarestapi.routers import home
-from ctarestapi.middleware.jwt_middleware import JWTMiddleware
+from ctarestapi.routers.v0 import drives as drives_v0
+from ctarestapi.routers.v0 import root as root_v0
+from ctarestapi.middleware import JWTMiddleware
 
 # Set the logging level from the env variable LOGLEVEL
 logging.basicConfig(level=os.environ.get("LOG_LEVEL", "INFO").upper())
@@ -36,11 +36,14 @@ def create_app() -> FastAPI:
         allowed_algorithms=allowed_algorithms,
         jwks_endpoint=jwks_endpoint,
         jwks_cache_expiry=jwks_cache_expiry,
-        unauthenticated_routes={"/status"},
+        unauthenticated_routes={"/v0/health"},
     )
 
-    app.include_router(home.router)
-    app.include_router(drives.router)
+    app.include_router(
+        root_v0.router,
+        prefix="/v0",
+    )
+    app.include_router(drives_v0.router, prefix="/v0")
     return app
 
 

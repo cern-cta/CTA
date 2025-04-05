@@ -3,5 +3,7 @@ PyJWT>=2.10.1
 SQLAlchemy>=2.0.40
 uvicorn>=0.34.0
 cryptography>=44.0.2
+psycopg2-binary>=2.9.10
 httpx>=0.28.1
 pytest>=8.3.5
+black>=25.1.0

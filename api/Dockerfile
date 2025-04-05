@@ -8,4 +8,4 @@ RUN pip install --no-cache-dir --upgrade -r /app/requirements.txt
 
 COPY ./ctarestapi/ /app/ctarestapi
 
-CMD ["python3", "-m", "ctarestapi.server"]
+CMD ["python3", "-m", "ctarestapi.server_fastapi"]
