@@ -9,7 +9,7 @@ conf:
 
     frontend:
       archiveFileMaxSizeGb: 1000
-      zeroLengthFilesForbidden: "on"
+      zeroLengthFilesForbidden: true
       zeroLengthFilesForbiddenVoExceptionList: ""
 
     schedulerdb:
