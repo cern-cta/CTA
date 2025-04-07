@@ -162,7 +162,7 @@ build_rpm() {
       --skip-unit-tests) skip_unit_tests=true ;;
       --oracle-support)
         if [[ $# -gt 1 ]]; then
-          if [ "$2" = "OFF" ]; then
+          if [ "$2" = "FALSE" ]; then
             oracle_support=false
           fi
           shift
@@ -343,7 +343,7 @@ build_rpm() {
 
     # Scheduler type
     if [[ ${scheduler_type} == "pgsched" ]]; then
-      echo "Using specified scheduler database type $SCHED_TYPE";
+      echo "Using specified scheduler database type $scheduler_type";
       cmake_options+=" -D CTA_USE_PGSCHED:BOOL=TRUE";
     else
       # unset it

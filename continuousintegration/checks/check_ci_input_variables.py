@@ -35,14 +35,14 @@ SUPPORTED = {
     "CUSTOM_CTA_TAG_REGEX": [ re.compile("^v\d+\.\d+\.\d+\.\d+-\d+$"),
                        re.compile("^v\d+\.\d+\.\d+\.\d+-\d+\.el9$") # EL9 Transition format
                      ]
-    # "SCHED_TYPE": ["objecstore",
+    # "SCHEDULER_TYPE": ["objecstore",
     #                "pgsched"]
     #  ...
 }
 
 DEFINED_INPUT_VARS = [
     "BUILD_GENERATOR", "CMAKE_BUILD_TYPE", "CTA_VERSION",
-    "SCHED_TYPE", "ORACLE_SUPPORT", "VALGRIND_DB_UNIT_TESTS",
+    "SCHEDULER_TYPE", "ORACLE_SUPPORT", "VALGRIND_DB_UNIT_TESTS",
     "SYSTEMTESTS_ONLY", "SYSTEMTESTS_IMAGETAG",
     "BASH_LOGGING_ENABLED", "PIPELINE_TYPE", "CUSTOM_XRD_TAG",
     "CUSTOM_EOS_TAG", "CUSTOM_CTA_TAG", "CTA_BUILD_ID",
