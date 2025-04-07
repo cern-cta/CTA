@@ -268,6 +268,45 @@
 - cta/CTA#824 - Update gfal2-util rpm install name and remove DMC repo
 
 
+## 5.11.6.0-1 (2025-04-07)
+
+### Features
+
+-  #1041 - Added min-age to "Add option in cta-admin to identify dual tape files that only have one copy"
+
+-  #1104 - Add setter/getter for encryption key name in cta-admin tapepool
+
+-  #1101 - Add extra generic configuration options to Helm charts
+
+
+### Bug Fixes
+
+-  #1041 - Minor fix in "Add option in cta-admin to identify dual tape files that only have one copy"
+
+
+### Maintenance
+
+-  #1127 - Add script to run health checks on the runner
+
+-  #1126 - Update EOS Image and versionlock to 5.3.9
+
+-  #1053 - Add stress-test as job in CI and update stress-test scripts to the latest versions
+
+-  #1118 - Remove `cta-fst-gcd` from the cta repository
+
+
+### feature/bug/maintenance
+
+-  <id> - Resolve "Check frontend/common boolean configuration options handling"
+
+-  <id> - Sonarcloud fixes for grpc frontend
+
+-  <id> - Resolve "Extend cta-admin command output by schedulerBackendName and instanceName"
+
+-  <id> - Fill in the xrd::cta::response in case of grpc error
+
+-  <id> - CI image tag update: 2025-03-25-11120052
+
 ## 4.10.11.0-1 / 5.10.11.0-1
 
 ### Features
