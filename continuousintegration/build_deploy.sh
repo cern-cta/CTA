@@ -30,7 +30,7 @@ usage() {
   echo ""
   echo "options:"
   echo "  -h, --help:                           Shows help output."
-  echo "  -r, --reset:                          Shut down the build container and start a new one to ensure a fresh build."
+  echo "  -r, --reset:                          Shut down the build container and start a new one to ensure a fresh build. Also cleans the build directories."
   echo "  -o, --operating-system <os>:          Specifies for which operating system to build the rpms. Supported operating systems: [alma9]. Defaults to alma9 if not provided."
   echo "      --build-generator <generator>:    Specifies the build generator for cmake. Supported: [\"Unix Makefiles\", \"Ninja\"]."
   echo "      --clean-build-dir:                Empties the RPM build directory (build_rpm/ by default), ensuring a fresh build from scratch."
@@ -54,7 +54,7 @@ usage() {
   echo "      --tapeservers-config <path>:      Path to the yaml file containing the tapeservers config. If not provided, this will be auto-generated."
   echo "      --upgrade-cta:                    Upgrades the existing CTA instance with a new image instead of spawning an instance from scratch."
   echo "      --upgrade-eos:                    Upgrades the existing EOS instance with a new image instead of spawning an instance from scratch."
-  echo "      --eos-version:                    Version of EOS to spawn. If not provided, will default to the version specified in the create_instance script."
+  echo "      --eos-image-tag:                  Image to use for spawning EOS. If not provided, will default to the image specified in the create_instance script."
   exit 1
 }
 
@@ -99,7 +99,8 @@ build_deploy() {
   local extra_spawn_options=""
   local extra_build_options=""
   local catalogue_config="presets/dev-catalogue-postgres-values.yaml"
-  local eos_version=""
+  local eos_image_tag=""
+
 
   # Defaults
   local num_jobs=$(nproc --ignore=2)
@@ -117,7 +118,7 @@ build_deploy() {
   while [[ "$#" -gt 0 ]]; do
     case "$1" in
       -h | --help) usage ;;
-      -r | --reset) reset=true ;;
+      -r | --reset) reset=true; clean_build_dirs=true ;;
       --clean-build-dir) clean_build_dir=true ;;
       --clean-build-dirs) clean_build_dirs=true ;;
       --disable-oracle-support) oracle_support="OFF" ;;
@@ -132,12 +133,12 @@ build_deploy() {
       --force-install) force_install=true ;;
       --upgrade-cta) upgrade_cta=true ;;
       --upgrade-eos) upgrade_eos=true ;;
-      --eos-version)
+      --eos-image-tag)
         if [[ $# -gt 1 ]]; then
-          eos_version="$2"
+          eos_image_tag="$2"
           shift
         else
-          echo "Error: --eos-version requires an argument"
+          echo "Error: --eos-image-tag requires an argument"
           usage
         fi
         ;;
@@ -210,6 +211,24 @@ build_deploy() {
         else
           echo "Error: --tapeservers-config requires an argument"
           exit 1
+        fi
+        ;;
+      --cta-config)
+        if [[ $# -gt 1 ]]; then
+          cta_config="$2"
+          shift
+        else
+          echo "Error: --cta-config requires an argument"
+          usage
+        fi
+        ;;
+      --eos-config)
+        if [[ $# -gt 1 ]]; then
+          eos_config="$2"
+          shift
+        else
+          echo "Error: --eos-config requires an argument"
+          usage
         fi
         ;;
       --spawn-options)
@@ -415,7 +434,7 @@ build_deploy() {
       print_header "UPGRADING EOS INSTANCE"
       cd continuousintegration/orchestration
       ./upgrade_eos_instance.sh --namespace ${deploy_namespace} \
-                                --eos-image-tag ${eos_version}
+                                --eos-image-tag ${eos_image_tag}
     else
       print_header "DELETING OLD CTA INSTANCES"
       # By default we discard the logs from deletion as this is not very useful during development
@@ -426,8 +445,16 @@ build_deploy() {
         extra_spawn_options+=" --tapeservers-config ${tapeservers_config}"
       fi
 
-      if [ -n "${eos_version}" ]; then
-        extra_spawn_options+=" --eos-image-tag ${eos_version}"
+      if [ -n "${eos_image_tag}" ]; then
+        extra_spawn_options+=" --eos-image-tag ${eos_image_tag}"
+      fi
+
+      if [ -n "${eos_config}" ]; then
+        extra_spawn_options+=" --eos-config ${eos_config}"
+      fi
+
+      if [ -n "${cta_config}" ]; then
+        extra_spawn_options+=" --cta-config ${cta_config}"
       fi
 
       if [ -z "${scheduler_config}" ]; then
