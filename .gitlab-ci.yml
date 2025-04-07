@@ -44,28 +44,26 @@ variables:
       - "OFF"
 
   # Tests
-  BASH_LOGGING_ENABLED:
-    description: "Adds additional information to the output of the k8s test scripts"
-    value: 1
-  SYSTEMTESTS_IMAGETAG:
-    description: "Custom image tag to run the systemtests against. Only used if SYSTEMTESTS_ONLY is TRUE"
-    value: ""
-  SYSTEMTESTS_ONLY:
-    description: "Run only the system-test stage. Must be used in combination with SYSTEMTESTS_IMAGETAG"
-    value: "FALSE"
-    options:
-      - "TRUE"
-      - "FALSE"
-  # Pass a file here (must be absolute or relative to the orchestration directory, e.g. presets/dev...)
-  CUSTOM_CTA_VALUES_FILE:
-    description: "Path to a values.yaml file to be passed to the CTA Helm chart. Must be absolute or relative to the orchestration/ directory, e.g. presets/dev-..."
-    value: ""
+  BASH_LOGGING_ENABLED: 1
   VALGRIND_DB_UNIT_TESTS:
     description: "Whether to run the DataBase unit tests with valgrind."
     value: "FALSE"
     options:
       - "TRUE"
       - "FALSE"
+  SYSTEMTESTS_ONLY:
+    description: "Run only the system-test stage. Must be used in combination with SYSTEMTESTS_IMAGETAG"
+    value: "FALSE"
+    options:
+      - "TRUE"
+      - "FALSE"
+  SYSTEMTESTS_IMAGETAG:
+    description: "Custom image tag to run the systemtests against. Only used if SYSTEMTESTS_ONLY is TRUE"
+    value: ""
+  # Pass a file here (must be absolute or relative to the orchestration directory, e.g. presets/dev...)
+  CUSTOM_CTA_VALUES_FILE:
+    description: "Path to a values.yaml file to be passed to the CTA Helm chart. Must be absolute or relative to the orchestration/ directory, e.g. presets/dev-..."
+    value: ""
 
   # Pipeline Type. Supported types:
   #   - COMMIT: default pipeline type, Runs static analysis, compiles the software and tests it.
