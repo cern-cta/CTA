@@ -53,7 +53,7 @@ build_local() {
   local build_generator="Ninja"
   local cmake_build_type=""
   local scheduler_type="objectstore"
-  local oracle_support="ON"
+  local oracle_support="TRUE"
   local enable_ccache=true
   local install=false
 
@@ -70,7 +70,7 @@ build_local() {
       -h | --help) usage ;;
       --clean-build-dir) clean_build_dir=true ;;
       --clean-build-dirs) clean_build_dirs=true ;;
-      --disable-oracle-support) oracle_support="OFF" ;;
+      --disable-oracle-support) oracle_support="FALSE" ;;
       --disable-ccache) enable_ccache=false ;;
       --skip-cmake) skip_cmake=true ;;
       --skip-unit-tests) skip_unit_tests=true ;;

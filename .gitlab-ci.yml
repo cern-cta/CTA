@@ -30,7 +30,7 @@ variables:
 
   # CTA Configuration
   CTA_VERSION: 5
-  SCHED_TYPE:
+  SCHEDULER_TYPE:
     description: "Specifies what scheduler should be used to build CTA and run the tests"
     value: "objectstore"
     options:
@@ -38,10 +38,10 @@ variables:
       - "objectstore"
   ORACLE_SUPPORT:
     description: "Whether to build the CTA RPMs with Oracle support or not"
-    value: "ON"
+    value: "TRUE"
     options:
-      - "ON"
-      - "OFF"
+      - "TRUE"
+      - "FALSE"
 
   # Tests
   BASH_LOGGING_ENABLED: 1

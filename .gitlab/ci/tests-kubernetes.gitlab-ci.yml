@@ -62,6 +62,8 @@
       when: never
     - if: $PIPELINE_TYPE == "CTAGENERIC_IMAGE"
       when: never
+    - if: $SCHEDULER_TYPE == "pgsched"
+      when: manual
     - when: on_success
   variables:
     TEST_SCRIPT:
@@ -241,6 +243,7 @@ stress-test:
     - cd continuousintegration/orchestration/
     # We don't clean up old namespace so this will fail (deliberately) when another test is running there
     # This is because we check for the libraries in use before we start
+    - SCHEDULER_CONFIG=/opt/kubernetes/CTA/scheduler/stresstest-scheduler-postgres-values.yaml
     - ./run_systemtest.sh --namespace ${NAMESPACE}
                           --keep-namespace
                           --cta-image-tag ${IMAGE_TAG}
