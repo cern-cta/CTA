@@ -177,6 +177,8 @@ spec:
       {{- end }}
       {{- if .Values.useGrpc -}}
         # TODO: add grpc configmap here
+      -name: grpc-config
+        configMap: cta-frontend-grpc-conf
       {{- else }}
       - name: xrootd-config
         configMap:
