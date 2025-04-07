@@ -11,65 +11,60 @@ data:
     # CTA options
     #
 
-    cta.instance_name {{ .Values.conf.frontend.instanceName }}
+    cta.instance_name {{ .Release.Namespace | quote }}
     cta.schedulerdb.scheduler_backend_name {{ $schedulerConfig.backend }}
 
     # CTA ObjectStore options
     cta.objectstore.backendpath {{ include "global.schedulerUrl" . }}
 
     # CTA Scheduler DB options
-    cta.schedulerdb.numberofthreads {{ .Values.conf.schedulerdb.numberOfThreads }}
-    cta.schedulerdb.threadstacksize_mb {{ .Values.conf.schedulerdb.threadStackSizeMb }}
-    cta.schedulerdb.disable_repack_requests {{ .Values.conf.schedulerdb.disableRepackRequests }}
-    cta.schedulerdb.disable_user_requests {{ .Values.conf.schedulerdb.disableUserRequests }}
+    cta.schedulerdb.numberofthreads {{ .Values.conf.grpc.schedulerdb.numberOfThreads }}
+    cta.schedulerdb.threadstacksize_mb {{ .Values.conf.grpc.schedulerdb.threadStackSizeMb }}
+    cta.schedulerdb.disable_repack_requests {{ .Values.conf.grpc.schedulerdb.disableRepackRequests }}
+    cta.schedulerdb.disable_user_requests {{ .Values.conf.grpc.schedulerdb.disableUserRequests }}
 
     # CTA Scheduler DB options - Cache timeout options (decreased for tests)
-    cta.schedulerdb.tape_cache_max_age_secs {{ .Values.conf.schedulerdb.tapeCacheMaxAgeSecs }}
-    cta.schedulerdb.retrieve_queue_cache_max_age_secs {{ .Values.conf.schedulerdb.retrieveQueueCacheMaxAgeSecs }}
+    cta.schedulerdb.tape_cache_max_age_secs {{ .Values.conf.grpc.schedulerdb.tapeCacheMaxAgeSecs }}
+    cta.schedulerdb.retrieve_queue_cache_max_age_secs {{ .Values.conf.grpc.schedulerdb.retrieveQueueCacheMaxAgeSecs }}
 
     # CTA Catalogue options
-    cta.catalogue.numberofconnections {{ .Values.conf.catalogue.numberOfConnections }}
+    cta.catalogue.numberofconnections {{ .Values.conf.grpc.catalogue.numberOfConnections }}
 
     # Missing tape file copies minimum age.
     # Set it to prevent false flagging of multi-copy files in the process of being archived tapes.
     # Default 24 hours
-    cta.catalogue.missing_file_copies_min_age_secs {{ .Values.conf.catalogue.missingFileCopiesMinAgeSecs }}
+    cta.catalogue.missing_file_copies_min_age_secs {{ .Values.conf.grpc.catalogue.missingFileCopiesMinAgeSecs }}
 
     # Maximum file size (in GB) that the CTA Frontend will accept for archiving
-    cta.archivefile.max_size_gb {{ .Values.conf.frontend.archiveFileMaxSizeGb }}
+    cta.archivefile.max_size_gb {{ .Values.conf.grpc.frontend.archiveFileMaxSizeGb }}
 
     # Disallow 0-length files
-    cta.archivefile.zero_length_files_forbidden {{ .Values.conf.frontend.zeroLengthFilesForbidden }}
+    cta.archivefile.zero_length_files_forbidden {{ .Values.conf.grpc.frontend.zeroLengthFilesForbidden }}
 
     # Tapepools exempted from this check (if enabled)
-    cta.archivefile.zero_length_files_forbidden_vo_exception_list {{ .Values.conf.frontend.zeroLengthFilesForbiddenVoExceptionList }}
+    cta.archivefile.zero_length_files_forbidden_vo_exception_list {{ .Values.conf.grpc.frontend.zeroLengthFilesForbiddenVoExceptionList }}
 
     # CTA Frontend log URL
-    cta.log.url {{ .Values.conf.frontend.logUrl }}
+    cta.log.url file:/var/log/cta/cta-frontend-grpc.log
 
     # CTA Logger log level
     # Valid log levels are EMERG, ALERT, CRIT, ERR, WARNING, NOTICE (==USERERR), INFO, DEBUG
-    cta.log.level {{ .Values.conf.logger.logLevel }}
+    cta.log.level {{ .Values.conf.grpc.logger.logLevel }}
 
     # CTA Logger log format
     # Valid formats are default, json
-    cta.log.format {{ .Values.conf.logger.logFormat }}
+    cta.log.format {{ .Values.conf.grpc.logger.logFormat }}
 
     cta.log.log_header true
 
     # CTA Repack buffer URL
-    # cta.repack.repack_buffer_url {{ .Values.conf.frontend.repackBufferUrl }}
+    # cta.repack.repack_buffer_url {{ .Values.conf.grpc.frontend.repackBufferUrl }}
 
     # CTA Verification Mount Policy
-    cta.verification.mount_policy {{ .Values.conf.verification.mountPolicy }}
+    cta.verification.mount_policy verification
 
     # Keytab containing gRPC endpoints and tokens for each disk instance
-    cta.ns.config {{ .Values.conf.ns.config }}
-
-    ### This is something leftover from the xrootd/ssi config, maybe unnecessary
-
-    # This does not always need to be added
-    cta.ns.config {{ .Values.conf.ns.config }}
+    cta.ns.config /etc/cta/eos.grpc.keytab
 
     # gRPC options
     grpc.port {{ .Values.conf.grpc.port }}
