@@ -29,7 +29,7 @@ data:
     # Objectstore
     ObjectStore BackendPath {{ include "global.schedulerUrl" $ }}
     # General
-    general InstanceName {{ .Release.Namespace }}
+    general InstanceName {{ $.Release.Namespace }}
     general SchedulerBackendName {{ $schedulerConfig.backend }}
     taped externalFreeDiskSpaceScript {{ $.Values.conf.taped.externalFreeDiskSpaceScript }}
 ---
