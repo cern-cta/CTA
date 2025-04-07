@@ -1,35 +1,50 @@
-## v5.11.5.0-1
+## 5.11.6.0-1
 
 ### Features
 
-- cta/#1017 - Add unstable release workflow to the CTA CI
-- cta/#1041 - Add option in cta-admin to identify dual tape files that only have one copy
-
-### Bug Fixes
-
-- cta/#990 - Fix repack test bug where EOS directories were incorrectly reused in between tests
-- cta/#1025 - Fix send failed due to message too long
-- cta/#1060 - Fix inconsistency in --fxid field usage
-- cta/#1083 - Fix underflow of unsigned int
-- cta/#1086 - Resolve "Throw exception when verification of crc32c fails"
-- cta/#1087 - Improve cta-admin consistency with empty strings
-- cta/#1096 - Fix broken development setup due to "Unit attention" error on sg_modes command
-- cta/#1109 - Versionlock Oracle instant client to v23
-- cta/#1110 - Fix gRPC Frontend crash when multiple Retrieve requests are submitted simultaneously
+- cta/CTA#1041 - Added minimum-age to "Add option in cta-admin to identify dual tape files that only have one copy"
+- cta/CTA#1104 - Add getter/setter for encryption key name in cta-admin tapepool commands
+- cta/CTA#1016 - Add instanceName and schedulerBackendName to relevant cta-admin commands
 
 ### Maintenance
 
-- cta/#1036 - Improve post system-test checks to check for uncaught exceptions in CTA logs
-- cta/#1063 - Update gitignore to have a more thorough ignore list
-- cta/#1077 - Update example config file and systemd service file for grpc frontend
-- cta/#1092 - Parse drive serial number to detect MHVTL drive
-- cta/#1095 - Reduce number of processors used by build cmake
-- cta/#1100 - Replace tape-specific EOS Chart version with latest official version
-- cta/#1110 - Merge release v5.11.2.1-1 into main
-- cta/#1113 - Ignore xrdcp core dumps in client pod
+- cta/CTA#1126 - Bump EOS version to 5.3.9
+- cta/CTA#1118 - Remove `cta-fst-gcd` from the cta repository
+- cta/CTA#1098 - Make option `zero_length_files_forbidden` bool instead of string
+- cta/CTA#1080 - Ensure gRPC updates response protobuf with relevant message in case of errors
+
+## 5.11.5.0-1
+
+### Features
+
+- cta/CTA#1017 - Add unstable release workflow to the CTA CI
+- cta/CTA#1041 - Add option in cta-admin to identify dual tape files that only have one copy
+
+### Bug Fixes
+
+- cta/CTA#990 - Fix repack test bug where EOS directories were incorrectly reused in between tests
+- cta/CTA#1025 - Fix send failed due to message too long
+- cta/CTA#1060 - Fix inconsistency in --fxid field usage
+- cta/CTA#1083 - Fix underflow of unsigned int
+- cta/CTA#1086 - Resolve "Throw exception when verification of crc32c fails"
+- cta/CTA#1087 - Improve cta-admin consistency with empty strings
+- cta/CTA#1096 - Fix broken development setup due to "Unit attention" error on sg_modes command
+- cta/CTA#1109 - Versionlock Oracle instant client to v23
+- cta/CTA#1110 - Fix gRPC Frontend crash when multiple Retrieve requests are submitted simultaneously
+
+### Maintenance
+
+- cta/CTA#1036 - Improve post system-test checks to check for uncaught exceptions in CTA logs
+- cta/CTA#1063 - Update gitignore to have a more thorough ignore list
+- cta/CTA#1077 - Update example config file and systemd service file for grpc frontend
+- cta/CTA#1092 - Parse drive serial number to detect MHVTL drive
+- cta/CTA#1095 - Reduce number of processors used by build cmake
+- cta/CTA#1100 - Replace tape-specific EOS Chart version with latest official version
+- cta/CTA#1110 - Merge release v5.11.2.1-1 into main
+- cta/CTA#1113 - Ignore xrdcp core dumps in client pod
 
 
-## v5.11.4.0-1
+## 5.11.4.0-1
 
 ### Bug Fixes
 
@@ -42,14 +57,14 @@
 - cta/CTA#1069 - Prevent cta-tape-label logging from exposing database credentials
 - cta/CTA#1073 - Remove extra hyphen in `--eos--image-tag` in `create_instance .sh`
 - cta/CTA#1074 - Fix for EOS image tag being different from EOS docker tag on triggered pipeline
-- cta/CTA#1076 - Fix preview_changelog CI procedure 
+- cta/CTA#1076 - Fix preview_changelog CI procedure
 
 ### Maintenance
 
 - cta/CTA#896 - Resolve "Consolidate config file parsing"
 - cta/CTA#1059 - Deprecated usage of fid protobuf field in CTA
 
-## v5.11.3.0-1
+## 5.11.3.0-1
 
 ### Features
 
@@ -89,14 +104,14 @@
 - cta/CTA#1040 - Fix SonarCloud issues in CI
 
 
-## v5.11.2.1-1
+## 5.11.2.1-1
 
 ### Bug Fixes
 
 - cta/#1110 - Fix gRPC Frontend crash when multiple Retrieve requests are submitted simultaneously
 
 
-## v5.11.2.0-1
+## 5.11.2.0-1
 
 ### Features
 
@@ -146,7 +161,7 @@
 - cta/CTA#994 - Fix initialization of hp in rmc to ensure SonarCloud quality gate passes
 
 
-## v5.11.1.0-1
+## 5.11.1.0-1
 
 ### Features
 
@@ -242,13 +257,13 @@
 - cta/CTA#541 - Fixed a number of SonarCloud issues in the catalogue code
 - cta/CTA#742 - Removed the `recreate_ci_running_environment.sh` script and related unused files
 
-## v5.11.0.1-1
+## 5.11.0.1-1
 
 ### Bug Fixes
 
 - cta/CTA#766 - Fix broken cta-release RPM
 
-## v5.11.0.0-1
+## 5.11.0.0-1
 
 ### Summary
 
@@ -266,46 +281,6 @@
 ### Continuous Integration
 
 - cta/CTA#824 - Update gfal2-util rpm install name and remove DMC repo
-
-
-## 5.11.6.0-1 (2025-04-07)
-
-### Features
-
--  #1041 - Added min-age to "Add option in cta-admin to identify dual tape files that only have one copy"
-
--  #1104 - Add setter/getter for encryption key name in cta-admin tapepool
-
--  #1101 - Add extra generic configuration options to Helm charts
-
-
-### Bug Fixes
-
--  #1041 - Minor fix in "Add option in cta-admin to identify dual tape files that only have one copy"
-
-
-### Maintenance
-
--  #1127 - Add script to run health checks on the runner
-
--  #1126 - Update EOS Image and versionlock to 5.3.9
-
--  #1053 - Add stress-test as job in CI and update stress-test scripts to the latest versions
-
--  #1118 - Remove `cta-fst-gcd` from the cta repository
-
-
-### feature/bug/maintenance
-
--  <id> - Resolve "Check frontend/common boolean configuration options handling"
-
--  <id> - Sonarcloud fixes for grpc frontend
-
--  <id> - Resolve "Extend cta-admin command output by schedulerBackendName and instanceName"
-
--  <id> - Fill in the xrd::cta::response in case of grpc error
-
--  <id> - CI image tag update: 2025-03-25-11120052
 
 ## 4.10.11.0-1 / 5.10.11.0-1
 
