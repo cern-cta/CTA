@@ -135,14 +135,14 @@ spec:
         {{- end }}
         {{- if .Values.useGrpc -}}
         # TODO: add grpc config file here
-        - name: eosctaconfig
-          mountPath: /etc/cta/eos.grpc.keytab
-          subPath: eos.grpc.keytab
         {{- else }}
         - name: xrootd-config
           mountPath: /etc/cta/cta-frontend-xrootd.conf
           subPath: cta-frontend-xrootd.conf
         {{- end }}
+        - name: eosctaconfig
+          mountPath: /etc/cta/eos.grpc.keytab
+          subPath: eos.grpc.keytab
         - name: cta-frontend-krb5-keytab
           mountPath: /etc/cta/cta-frontend.krb5.keytab
           subPath: cta-frontend.krb5.keytab
@@ -177,14 +177,14 @@ spec:
       {{- end }}
       {{- if .Values.useGrpc -}}
         # TODO: add grpc configmap here
-      - name: eosctaconfig
-        configMap:
-          name: eos-grpc-keytab
       {{- else }}
       - name: xrootd-config
         configMap:
           name: cta-frontend-xrootd-conf
       {{- end}}
+      - name: eosctaconfig
+        configMap:
+          name: eos-grpc-keytab
       - name: cta-frontend-krb5-keytab
         emptyDir: {}
       - name: eos-sss-keytab
