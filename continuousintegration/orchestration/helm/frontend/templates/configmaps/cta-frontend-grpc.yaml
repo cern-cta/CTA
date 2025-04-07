@@ -67,7 +67,7 @@ data:
     cta.ns.config /etc/cta/eos.grpc.keytab
 
     # gRPC options
-    grpc.port {{ .Values.conf.grpc.port }}
+    grpc.port {{ .Values.frontendPort }}
 
     # TLS related variables
     grpc.tls false
