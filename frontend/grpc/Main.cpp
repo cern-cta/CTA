@@ -172,6 +172,8 @@ int main(const int argc, char *const *const argv) {
         creds = grpc::InsecureServerCredentials();
     }
 
+    // enable health checking, needed by CI
+    grpc::EnableDefaultHealthCheckService(true);
     // Listen on the given address without any authentication mechanism.
     builder.AddListeningPort(server_address, creds);
 
@@ -186,6 +188,7 @@ int main(const int argc, char *const *const argv) {
     builder.RegisterService(&svc);
 
     std::unique_ptr <Server> server(builder.BuildAndStart());
+    svc.setHealthCheckService(server->GetHealthCheckService());
 
     lc.log(cta::log::INFO, "Listening on socket address: " + server_address);
     server->Wait();
