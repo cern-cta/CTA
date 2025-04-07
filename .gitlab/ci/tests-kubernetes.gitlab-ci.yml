@@ -9,7 +9,7 @@
         SCHEDULER_CONFIG=presets/dev-scheduler-postgres-values.yaml
       fi
     - | # Which catalogue to use
-      if [ $ORACLE_SUPPORT == "ON" ]; then
+      if [ $ORACLE_SUPPORT == "TRUE" ]; then
         CATALOGUE_CONFIG=/opt/kubernetes/CTA/catalogue/ci-oracle-values.yaml
       else
         CATALOGUE_CONFIG=presets/dev-catalogue-postgres-values.yaml

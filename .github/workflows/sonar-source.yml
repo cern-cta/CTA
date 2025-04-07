@@ -19,7 +19,7 @@ jobs:
 
     env:
       SCHED_TYPE: objectstore
-      ORACLE_SUPPORT: ON
+      ORACLE_SUPPORT: "TRUE"
       BUILD_WRAPPER_OUT_DIR: build_wrapper_output_directory # Directory where build-wrapper output will be placed
 
     steps:
@@ -57,7 +57,7 @@ jobs:
             CTA_VERSION="${CTA_VERSION}${sched_version}"
             CMAKE_OPTIONS+="-DSKIP_UNIT_TESTS:STRING=1 ${sched_opt} "
           fi
-          if [[ ${ORACLE_SUPPORT} != "ON" ]]; then
+          if [[ ${ORACLE_SUPPORT} == "FALSE" ]]; then
             echo "Disabling Oracle Support"
             CMAKE_OPTIONS+="-DDISABLE_ORACLE_SUPPORT:BOOL=ON"
           fi
