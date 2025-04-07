@@ -3,7 +3,7 @@
 
 .setup-k8s-test-variables: &setup-k8s-test-variables
     - | # Which scheduler to use
-      if [ $SCHED_TYPE == "objectstore" ]; then
+      if [ $SCHEDULER_TYPE == "objectstore" ]; then
         SCHEDULER_CONFIG=/opt/kubernetes/CTA/scheduler/ci-ceph-values.yaml
       else
         SCHEDULER_CONFIG=presets/dev-scheduler-postgres-values.yaml
