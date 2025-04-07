@@ -74,7 +74,7 @@ spec:
         - name: LIBRARY_DEVICE
           value: {{ $libraryDevice | quote }}
         - name: MY_CONTAINER
-          value: "rmcd"
+          value: "cta-rmcd"
         - name: TERM
           value: "xterm"
         {{- with $.Values.extraEnv }}
@@ -109,7 +109,7 @@ spec:
         - name: INSTANCE_NAME
           value: {{ $.Release.Namespace | quote }}
         - name: MY_CONTAINER
-          value: "taped-{{ $index }}"
+          value: "cta-taped-{{ $index }}"
         - name: TERM
           value: "xterm"
         - name: DRIVE_NAME
@@ -121,9 +121,9 @@ spec:
         - name: SCHEDULER_BACKEND
           value: {{ $schedulerConfig.backend | quote }}
         - name: XrdSecPROTOCOL
-          value: {{ $.Values.conf.taped.secProtocol }}
+          value: sss
         - name: XrdSecSSSKT
-          value: {{ $.Values.conf.taped.secSssktPath }}/{{ $.Values.conf.taped.ctaTapedSss }}
+          value: /etc/cta/cta-taped.sss.keytab
         {{- with $.Values.extraEnv }}
         {{- include "common.extraEnv" $ | nindent 8 }}
         {{- end }}
@@ -147,7 +147,7 @@ spec:
           subPath: cta-objectstore-tools.conf
         {{- end }}
         - name: eos-sss-keytab-fixedownership
-          mountPath: {{ $.Values.conf.taped.secSssktPath }}/{{ $.Values.conf.taped.ctaTapedSss }}
+          mountPath: /etc/cta/cta-taped.sss.keytab
           subPath: cta-taped.sss.keytab
         {{- if eq $schedulerConfig.backend "ceph" }}
         - name: cta-ceph-volume

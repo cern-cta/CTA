@@ -200,7 +200,7 @@ EOS_BATCHFILE=$(mktemp --suffix=.eosh)
 echo "$(date +%s): EOS_BATCHFILE=${EOS_BATCHFILE}"
 
 if [[ $VERBOSE == 1 ]]; then
-  tail -v -f /mnt/logs/cta-tpsrv0*/rmcd/cta/cta-rmcd.log &
+  tail -v -f /mnt/logs/cta-tpsrv0*/cta-rmcd/cta/cta-rmcd.log &
   TAILPID=$!
 fi
 
@@ -349,7 +349,7 @@ for ((subdir=0; subdir < ${NB_DIRS}; subdir++)); do
   mv ${ERROR_LOG} ${LOGDIR}/xrd_errors/
   echo "Done."
 done
-# aternative while loop for parallele processing 
+# aternative while loop for parallele processing
 #i=0
 #running_jobs=0
 #

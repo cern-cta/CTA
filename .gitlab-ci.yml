@@ -11,37 +11,81 @@ stages:
   - release:external
 
 variables:
-  # GitLab configuration
-  FF_TIMESTAMPS: true
 
   # Building Configuration
-  BUILD_GENERATOR: "Unix Makefiles"
-  CMAKE_BUILD_TYPE: "Debug"
+  BUILD_GENERATOR:
+    description: "Specifies the build generated for building the CTA RPMs"
+    value: "Unix Makefiles"
+    options:
+      - "Unix Makefiles"
+      - "Ninja"
+  CMAKE_BUILD_TYPE:
+    description: "Specifies the build type used to compile the CTA RPMs"
+    value: "Debug"
+    options:
+      - "Release"
+      - "Debug"
+      - "RelWithDebInfo"
+      - "MinSizeRel"
 
   # CTA Configuration
   CTA_VERSION: 5
-  SCHED_TYPE: "objectstore"
-  ORACLE_SUPPORT: "ON"
+  SCHED_TYPE:
+    description: "Specifies what scheduler should be used to build CTA and run the tests"
+    value: "objectstore"
+    options:
+      - "pgsched"
+      - "objectstore"
+  ORACLE_SUPPORT:
+    description: "Whether to build the CTA RPMs with Oracle support or not"
+    value: "ON"
+    options:
+      - "ON"
+      - "OFF"
 
   # Tests
-  VALGRIND_DB_UNIT_TESTS: false
-
-  # System Tests
-  SYSTEMTESTS_ONLY: "FALSE"
-  SYSTEMTESTS_IMAGETAG: "" # Custom image tag to run the systemtests against. Only used if SYSTEMTESTS_ONLY is true
-  BASH_LOGGING_ENABLED: 1 # For the k8s test scripts
+  BASH_LOGGING_ENABLED: 1
+  VALGRIND_DB_UNIT_TESTS:
+    description: "Whether to run the DataBase unit tests with valgrind."
+    value: "FALSE"
+    options:
+      - "TRUE"
+      - "FALSE"
+  SYSTEMTESTS_ONLY:
+    description: "Run only the system-test stage. Must be used in combination with SYSTEMTESTS_IMAGETAG"
+    value: "FALSE"
+    options:
+      - "TRUE"
+      - "FALSE"
+  SYSTEMTESTS_IMAGETAG:
+    description: "Custom image tag to run the systemtests against. Only used if SYSTEMTESTS_ONLY is TRUE"
+    value: ""
+  # Pass a file here (must be absolute or relative to the orchestration directory, e.g. presets/dev...)
+  CUSTOM_CTA_VALUES_FILE:
+    description: "Path to a values.yaml file to be passed to the CTA Helm chart. Must be absolute or relative to the orchestration/ directory, e.g. presets/dev-..."
+    value: ""
 
   # Pipeline Type. Supported types:
   #   - COMMIT: default pipeline type, Runs static analysis, compiles the software and tests it.
   #   - EOS_REGR_AGAINST_CTA_MAIN: test a new tagged EOS version against CTA main.
   #   - EOS_REGR_AGAINST_CTA_TAG: test a new tagged EOS version against the latest tagged CTA version.
   #   - CTAGENERIC_IMAGE: generate a ctageneric image from a set of CTA,EOS,XRD RPMS avaiable in repos.
-  PIPELINE_TYPE: "COMMIT"
+  PIPELINE_TYPE:
+    description: "What kind of pipeline to run. COMMIT is the default pipeline. Use CTAGENERIC_IMAGE if you want to build a new Docker image based of existing CTA RPMs"
+    value: "COMMIT"
+    options:
+      - "COMMIT"
+      - "EOS_REGR_AGAINST_CTA_MAIN"
+      - "EOS_REGR_AGAINST_CTA_TAG"
+      - "CTAGENERIC_IMAGE"
 
   # Image building. Used by EOS Regression and Image build pipeline types
-  CUSTOM_XRD_TAG: ""
-  CUSTOM_EOS_TAG: ""
-  CUSTOM_CTA_TAG: ""
+  CUSTOM_XRD_TAG:
+    value: ""
+  CUSTOM_EOS_TAG:
+    value: ""
+  CUSTOM_CTA_TAG:
+    value: ""
 
   # Meta CI
   CTA_BUILD_ID: ${CI_PIPELINE_ID}git${CI_COMMIT_SHORT_SHA}
@@ -52,6 +96,9 @@ variables:
   GIT_SUBMODULE_STRATEGY: recursive
   GIT_DEPTH: 1 # Enforce a shallow clone of the main repo
   GIT_SUBMODULE_DEPTH: 0 # Full clone of the submodules
+
+  # Job output configuration
+  FF_TIMESTAMPS: true
 
   # Images
   IMAGE_ANALYSIS: gitlab-registry.cern.ch/cta/public_registry/container_registry/cta-ci-analysis:2025-03-25-11120052

@@ -1,8 +1,3 @@
-# Take care with increasing this number, as CTA has not been tested with multiple frontend replicas
-# Increasing this will most likely not work as expected
-replicaCount: 1
-
-frontendPort: 10955
 useGrpc: false
 
 conf:
@@ -28,16 +23,3 @@ conf:
     logger:
       logLevel: "INFO"
       ssiLogLevel: "warning"
-
-  grpc:
-
-
-pod:
-  extraSpec:
-    terminationGracePeriodSeconds: 1
-
-extraEnv:
-
-extraVolumes:
-  volumes:
-  volumeMounts:

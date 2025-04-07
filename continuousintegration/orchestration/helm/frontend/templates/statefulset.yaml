@@ -65,10 +65,21 @@ spec:
         image: {{ include "ctafrontend.image" . }}
         imagePullPolicy: {{ include "ctafrontend.imagePullPolicy" . }}
         stdin: true
+        {{- if .Values.useGrpc -}}
+        command: ["bash", "/scripts/ctafrontend-grpc.sh"]
+        {{- else }}
         command: ["bash", "/scripts/ctafrontend.sh"]
+        {{- end}}
         readinessProbe:
+
+          {{- if .Values.useGrpc -}}
+          # TODO: this should be fixed
+          grpc:
+            port: {{ .Values.frontendPort }}
+          {{- else }}
           tcpSocket:
             port: {{ .Values.frontendPort }}
+          {{- end }}
           initialDelaySeconds: 5
           periodSeconds: 5
           timeoutSeconds: 3
@@ -114,9 +125,6 @@ spec:
           mountPath: /etc/cta/cta-objectstore-tools.conf
           subPath: cta-objectstore-tools.conf
         {{- end }}
-        - name: xrootd-config
-          mountPath: /etc/cta/cta-frontend-xrootd.conf
-          subPath: cta-frontend-xrootd.conf
         {{- if eq $schedulerConfig.backend "ceph" }}
         - name: cta-ceph-volume
           mountPath: /etc/ceph/ceph.conf
@@ -124,6 +132,13 @@ spec:
         - name: cta-ceph-volume
           mountPath: /etc/ceph/ceph.client.{{ $schedulerConfig.cephConfig.id }}.keyring
           subPath: ceph.client.{{ $schedulerConfig.cephConfig.id }}.keyring
+        {{- end }}
+        {{- if .Values.useGrpc -}}
+        # TODO: add grpc config file here
+        {{- else }}
+        - name: xrootd-config
+          mountPath: /etc/cta/cta-frontend-xrootd.conf
+          subPath: cta-frontend-xrootd.conf
         {{- end }}
         - name: eosctaconfig
           mountPath: /etc/cta/eos.grpc.keytab
@@ -143,9 +158,6 @@ spec:
         configMap:
           name: scripts-ctafrontend
           defaultMode: 0777
-      - name: xrootd-config
-        configMap:
-          name: cta-frontend-xrootd-conf
       - name: catalogue-config
         configMap:
           name: cta-catalogue-conf
@@ -163,6 +175,13 @@ spec:
         configMap:
           name: ceph-conf
       {{- end }}
+      {{- if .Values.useGrpc -}}
+        # TODO: add grpc configmap here
+      {{- else }}
+      - name: xrootd-config
+        configMap:
+          name: cta-frontend-xrootd-conf
+      {{- end}}
       - name: eosctaconfig
         configMap:
           name: eos-grpc-keytab
