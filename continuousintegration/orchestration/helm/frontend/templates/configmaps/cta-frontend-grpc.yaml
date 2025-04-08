@@ -1,4 +1,6 @@
+{{- if .Values.useGrpc }}
 {{- $schedulerConfig := include "scheduler.config" . | fromYaml -}}
+{{- $name := include "ctafrontend.fullname" . }}
 apiVersion: v1
 kind: ConfigMap
 metadata:
@@ -71,3 +73,5 @@ data:
 
     # TLS related variables
     grpc.tls false
+
+{{- end }}
