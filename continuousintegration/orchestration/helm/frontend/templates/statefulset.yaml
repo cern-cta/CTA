@@ -73,7 +73,6 @@ spec:
         readinessProbe:
 
           {{- if .Values.useGrpc }}
-          # TODO: this should be fixed
           grpc:
             port: {{ .Values.frontendPort }}
           {{- else }}
