@@ -339,24 +339,30 @@ FrontendService::FrontendService(const std::string& configFilename) : m_archiveF
     // default value for both repack and user requests is "on"
     std::optional<bool> disableRepackRequests = config.getOptionValueBool("cta.schedulerdb.disable_repack_requests");
     m_acceptRepackRequests = disableRepackRequests.has_value() ? (!disableRepackRequests.value()) : true;
+    if (!disableRepackRequests.has_value()) {
+      log(log::WARNING, "cta.schedulerdb.disable_repack_requests is not set in configuration file, using default value false");
+    }
 
     std::list<log::Param> params;
     params.push_back(log::Param("source", disableRepackRequests.has_value() ? configFilename : "Compile time default"));
     params.push_back(log::Param("category", "cta.schedulerdb"));
     params.push_back(log::Param("key", "disable_repack_requests"));
-    params.push_back(log::Param("value", config.getOptionValueStr("cta.schedulerdb.disable_repack_requests").value()));
+    params.push_back(log::Param("value", disableRepackRequests.has_value() ? config.getOptionValueStr("cta.schedulerdb.disable_repack_requests").value() : "false"));
     log(log::INFO, "Configuration entry", params);
   }
 
   {
     auto disableUserRequests = config.getOptionValueBool("cta.schedulerdb.disable_user_requests");
     m_acceptUserRequests = disableUserRequests.has_value() ? (!disableUserRequests.value()) : true;
+    if (!disableUserRequests.has_value()) {
+      log(log::WARNING, "cta.schedulerdb.disable_user_requests is not set in configuration file, using default value false");
+    }
 
     std::list<log::Param> params;
     params.push_back(log::Param("source", disableUserRequests.has_value() ? configFilename : "Compile time default"));
     params.push_back(log::Param("category", "cta.schedulerdb"));
     params.push_back(log::Param("key", "disable_user_requests"));
-    params.push_back(log::Param("value", config.getOptionValueStr("cta.schedulerdb.disable_user_requests").value()));
+    params.push_back(log::Param("value", disableUserRequests.has_value() ? config.getOptionValueStr("cta.schedulerdb.disable_user_requests").value() : "false"));
     log(log::INFO, "Configuration entry", params);
   }
 
