@@ -31,7 +31,8 @@ variables:
   EL9_IMAGE: gitlab-registry.cern.ch/linuxsupport/alma9-base
   PYTHON3_IMAGE: python:3-alpine
   DOCKER_IMAGE_BUILDER_IMAGE: gcr.io/kaniko-project/executor:debug
-  CPPCHECK_IMAGE: gitlab-registry.cern.ch/cta/eoscta-operations/registry/container_registry/cta-cppcheck:2.16.0
+  #CPPCHECK_IMAGE: gitlab-registry.cern.ch/cta/eoscta-operations/registry/container_registry/cta-cppcheck:2.16.0
+  CPPCHECK_IMAGE: gitlab-registry.cern.ch/cta/public_registry/container_registry/cta-ci-analysis:2025-03-25-11120052
   GITLAB_RELEASE_CLI_IMAGE: registry.gitlab.com/gitlab-org/release-cli:latest
 
 default:
