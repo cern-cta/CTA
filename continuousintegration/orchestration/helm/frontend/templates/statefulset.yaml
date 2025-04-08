@@ -65,15 +65,14 @@ spec:
         image: {{ include "ctafrontend.image" . }}
         imagePullPolicy: {{ include "ctafrontend.imagePullPolicy" . }}
         stdin: true
-        {{- if .Values.useGrpc -}}
+        {{- if .Values.useGrpc }}
         command: ["bash", "/scripts/ctafrontend-grpc.sh"]
         {{- else }}
         command: ["bash", "/scripts/ctafrontend.sh"]
         {{- end}}
         readinessProbe:
 
-          {{- if .Values.useGrpc -}}
-          # TODO: this should be fixed
+          {{- if .Values.useGrpc }}
           grpc:
             port: {{ .Values.frontendPort }}
           {{- else }}
@@ -133,8 +132,10 @@ spec:
           mountPath: /etc/ceph/ceph.client.{{ $schedulerConfig.cephConfig.id }}.keyring
           subPath: ceph.client.{{ $schedulerConfig.cephConfig.id }}.keyring
         {{- end }}
-        {{- if .Values.useGrpc -}}
-        # TODO: add grpc config file here
+        {{- if .Values.useGrpc }}
+        - name: grpc-config
+          mountPath: /etc/cta/cta-frontend-grpc.conf
+          subPath: cta-frontend-grpc.conf
         {{- else }}
         - name: xrootd-config
           mountPath: /etc/cta/cta-frontend-xrootd.conf
@@ -175,8 +176,10 @@ spec:
         configMap:
           name: ceph-conf
       {{- end }}
-      {{- if .Values.useGrpc -}}
-        # TODO: add grpc configmap here
+      {{- if .Values.useGrpc }}
+      - name: grpc-config
+        configMap:
+          name: cta-frontend-grpc-conf
       {{- else }}
       - name: xrootd-config
         configMap:

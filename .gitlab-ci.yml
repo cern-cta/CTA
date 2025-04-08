@@ -64,6 +64,9 @@ variables:
   CUSTOM_CTA_VALUES_FILE:
     description: "Path to a values.yaml file to be passed to the CTA Helm chart. Must be absolute or relative to the orchestration/ directory, e.g. presets/dev-..."
     value: ""
+  CUSTOM_EOS_VALUES_FILE:
+    description: "Path to a values.yaml file to be passed to the EOS Helm chart. Must be absolute or relative to the orchestration/ directory, e.g. presets/dev-..."
+    value: ""
 
   # Pipeline Type. Supported types:
   #   - COMMIT: default pipeline type, Runs static analysis, compiles the software and tests it.

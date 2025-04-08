@@ -37,6 +37,10 @@
       if [ -n "${CUSTOM_CTA_VALUES_FILE}" ]; then
         EXTRA_SPAWN_ARGS="${EXTRA_SPAWN_ARGS} --cta-config ${CUSTOM_CTA_VALUES_FILE}"
       fi
+    - |
+      if [ -n "${CUSTOM_EOS_VALUES_FILE}" ]; then
+        EXTRA_SPAWN_ARGS="${EXTRA_SPAWN_ARGS} --eos-config ${CUSTOM_EOS_VALUES_FILE}"
+      fi
     # Export all variables here so that it is clear which ones are available
     - export SCHEDULER_CONFIG CATALOGUE_CONFIG IMAGE_TAG EXTRA_SPAWN_ARGS
 
