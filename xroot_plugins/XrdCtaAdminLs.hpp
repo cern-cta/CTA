@@ -21,6 +21,7 @@
 
 #include "common/dataStructures/AdminUser.hpp"
 #include "xroot_plugins/XrdCtaStream.hpp"
+#include "cmdline/admin_common/DataItemMessageFill.hpp"
 
 namespace cta::xrd {
 
@@ -75,15 +76,7 @@ int AdminLsStream::fillBuffer(XrdSsiPb::OStreamBuffer<Data> *streambuf) {
     auto &ad      = m_adminList.front();
     auto  ad_item = record.mutable_adls_item();
 
-    ad_item->set_user(ad.name);
-    ad_item->mutable_creation_log()->set_username(ad.creationLog.username);
-    ad_item->mutable_creation_log()->set_host(ad.creationLog.host);
-    ad_item->mutable_creation_log()->set_time(ad.creationLog.time);
-    ad_item->mutable_last_modification_log()->set_username(ad.lastModificationLog.username);
-    ad_item->mutable_last_modification_log()->set_host(ad.lastModificationLog.host);
-    ad_item->mutable_last_modification_log()->set_time(ad.lastModificationLog.time);
-    ad_item->set_comment(ad.comment);
-    ad_item->set_instance_name(m_instanceName);
+    fillAdminItem(ad, ad_item, m_instanceName);
     is_buffer_full = streambuf->Push(record);
   }
   return streambuf->Size();

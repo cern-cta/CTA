@@ -19,6 +19,7 @@
 
 #include <optional>
 #include "xroot_plugins/XrdCtaStream.hpp"
+#include "cmdline/admin_common/DataItemMessageFill.hpp"
 
 namespace cta::xrd {
 
@@ -83,17 +84,7 @@ int StorageClassLsStream::fillBuffer(XrdSsiPb::OStreamBuffer<Data> *streambuf) {
     auto &sc      = m_storageClassList.front();
     auto  sc_item = record.mutable_scls_item();
 
-    sc_item->set_name(sc.name);
-    sc_item->set_nb_copies(sc.nbCopies);
-    sc_item->set_vo(sc.vo.name);
-    sc_item->mutable_creation_log()->set_username(sc.creationLog.username);
-    sc_item->mutable_creation_log()->set_host(sc.creationLog.host);
-    sc_item->mutable_creation_log()->set_time(sc.creationLog.time);
-    sc_item->mutable_last_modification_log()->set_username(sc.lastModificationLog.username);
-    sc_item->mutable_last_modification_log()->set_host(sc.lastModificationLog.host);
-    sc_item->mutable_last_modification_log()->set_time(sc.lastModificationLog.time);
-    sc_item->set_comment(sc.comment);
-    sc_item->set_instance_name(m_instanceName);
+    fillStorageClassItem(sc, sc_item, m_instanceName);
 
     is_buffer_full = streambuf->Push(record);
   }

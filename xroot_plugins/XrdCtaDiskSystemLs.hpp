@@ -19,6 +19,7 @@
 
 #include "xroot_plugins/XrdCtaStream.hpp"
 #include "disk/DiskSystem.hpp"
+#include "cmdline/admin_common/DataItemMessageFill.hpp"
 
 namespace cta::xrd {
 
@@ -83,20 +84,7 @@ int DiskSystemLsStream::fillBuffer(XrdSsiPb::OStreamBuffer<Data> *streambuf) {
     auto &ds      = m_diskSystemList.front();
     auto  ds_item = record.mutable_dsls_item();
 
-    ds_item->set_name(ds.name);
-    ds_item->set_instance_name(m_instanceName);
-    ds_item->set_file_regexp(ds.fileRegexp);
-    ds_item->set_disk_instance(ds.diskInstanceSpace.diskInstance);
-    ds_item->set_disk_instance_space(ds.diskInstanceSpace.name);
-    ds_item->set_targeted_free_space(ds.targetedFreeSpace);
-    ds_item->set_sleep_time(ds.sleepTime);
-    ds_item->mutable_creation_log()->set_username(ds.creationLog.username);
-    ds_item->mutable_creation_log()->set_host(ds.creationLog.host);
-    ds_item->mutable_creation_log()->set_time(ds.creationLog.time);
-    ds_item->mutable_last_modification_log()->set_username(ds.lastModificationLog.username);
-    ds_item->mutable_last_modification_log()->set_host(ds.lastModificationLog.host);
-    ds_item->mutable_last_modification_log()->set_time(ds.lastModificationLog.time);
-    ds_item->set_comment(ds.comment);
+    fillDiskSystemItem(ds, ds_item, m_instanceName);
     is_buffer_full = streambuf->Push(record);
   }
   return streambuf->Size();

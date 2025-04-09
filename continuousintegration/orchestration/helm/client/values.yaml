@@ -2,7 +2,7 @@ replicaCount: 1
 
 conf:
   cta:
-    endpoint: cta-frontend:10955
+    endpoint: cta-frontend-grpc:10956
 
 users:
   - user1
