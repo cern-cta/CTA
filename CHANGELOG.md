@@ -1,24 +1,14 @@
-## 5.11.7.0-1 (2025-04-09)
+## 5.11.7.0-1
 
 ### Bug Fixes
 
--  #1106 - Fix Regex copy constructor not initialising properly and reduce valgrind errors
-
+- cta/CTA#1106 - Fix Regex copy constructor not initialising properly
+- cta/CTA#1132 - Ensure backward compatibility of CTA frontend config
+- cta/CTA#1131 - Update SecurityIdentity in gRPC workflowEvent construction to use correct name
 
 ### Maintenance
 
 - Bump EOS version to 5.3.10
-
-
-### feature/bug/maintenance
-
--  <id> - CI support for gRPC CTA Frontend
-
--  <id> - Resolve "Update workflowEvent construction in gRPC Frontend"
-
--  <id> - Resolve "Add reasonable defaults to cta.schedulerdb.disable_(user|repack)_requests"
-
--  <id> - CI image tag update: 2025-04-08-11679908
 
 ## 5.11.6.0-1
 

@@ -171,50 +171,6 @@ def add_mr_review_comment(
 
 # ------------------------------------------------------------------------------
 
-
-def find_line_number(content: str, section: str):
-    # Find the position of the section
-    section_index = content.find(section)
-    if section_index == -1:
-        raise ValueError(f"The section '{section}' was not found in the file.")
-
-    # Count the number of newlines up to the section index to find the line number
-    line_number = content.count("\n", 0, section_index) + 1
-    return line_number
-
-
-def insert_rpm_changelog_entry(
-    api: GitLabAPI, branch: str, release_version: str, spec_path: str, changelog_entry: str
-) -> int:
-    file_info: Optional[dict[str, Any]] = get_file(api, spec_path, branch)
-    if file_info is None:
-        sys.exit(1)
-    content = base64.b64decode(file_info["content"]).decode("utf-8")
-
-    # Find the position of the %changelog section
-    changelog_section = r"%changelog"
-    changelog_index = content.find(changelog_section)
-
-    if changelog_index == -1:
-        raise ValueError(f"The section '{changelog_section}' was not found in the file.")
-
-    # Insert the changelog entry after the %changelog section
-    insertion_index = changelog_index + len(changelog_section) + 1
-    updated_content = content[:insertion_index] + "\n" + changelog_entry + content[insertion_index:]
-
-    print(f"Pushing {spec_path} changelog updates to branch: {branch_name}...")
-    # Limitation of the current Python version; backslash not allowed in f-string
-    indented_changelog_entry = textwrap.indent(changelog_entry, "\t")
-    print(f"{indented_changelog_entry}")
-
-    commit_msg: str = f"Added changelog entry for release: {release_version}"
-    update_rpm_spec(api, spec_path, branch, updated_content, commit_msg)
-
-    return find_line_number(updated_content, changelog_entry)
-
-
-# ------------------------------------------------------------------------------
-
 if __name__ == "__main__":
 
     parser = argparse.ArgumentParser(description="Tool that checks which commits will end up in the changelog")
@@ -316,14 +272,6 @@ if __name__ == "__main__":
     )
     if not success:
         sys.exit(1)
-
-    # Update spec.in
-    spec_path: str = "cta.spec.in"
-    changelog_entry = (
-        f"* {datetime.now().strftime(r'%a %b %d %Y')} {args.user_name} <{args.user_email}> - {release_version}\n"
-    )
-    changelog_entry += f"- See CHANGELOG.md for details\n"
-    line_number: int = insert_rpm_changelog_entry(api, branch_name, release_version, spec_path, changelog_entry)
 
     # Create Merge Request
     mr_title: str = f"Changelog update for release {release_version}"
