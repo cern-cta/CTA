@@ -97,6 +97,13 @@ size_t EnstoreLargeFileReader::readNextDataBlock(void* data, const size_t size) 
     // the following is a normal day exception: end of files exceptions are thrown at the end of each file being read
     throw EndOfFile();
   }
+  // Make sure we don't read any extra data (EnstoreLarge files are 0 padded)
+  if (bytes_read > bytes_to_read) {
+    bytes_read = bytes_to_read;
+  } else {
+    bytes_to_read -= bytes_read;
+  }
+
   return bytes_read;
 }
 
