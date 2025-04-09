@@ -250,6 +250,7 @@ std::optional<bool> Rset::columnOptionalBool(const std::string& colName) const {
     } catch (exception::Exception& ex) {
       ex.getMessage().str(std::string(__FUNCTION__) + " failed: " + ex.getMessage().str());
       // ignoring this exception and continue looking for string 'f' or 't'
+      // the following covers cases when we would use BOOLEAN in the schema
       const auto column = columnOptionalString(colName);
       if (column) {
         const std::string& strValue = column.value();
