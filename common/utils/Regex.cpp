@@ -36,9 +36,7 @@ Regex::Regex(const std::string & re_str) : m_reStr(re_str), m_set(false) {
   m_set = true;
 }
 
-Regex::Regex(const Regex& o) {
-  Regex(o.m_reStr);
-}
+Regex::Regex(const Regex& o) : Regex(o.m_reStr) {}
 
 Regex::~Regex() {
   if (m_set)
