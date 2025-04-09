@@ -17,6 +17,7 @@
 
 #pragma once
 
+#include "common/exception/Exception.hpp"
 #include "rdbms/wrapper/ColumnNameToIdxAndType.hpp"
 #include "rdbms/wrapper/RsetWrapper.hpp"
 
@@ -70,23 +71,25 @@ public:
    * if value is Null and Throw
    * They are expected to throw directly if the value is null
    * from within their implementatinos ithout the need
-   * to construct additional optionals in between !
+   * to construct additional optionals with possible string copies in between.
+   * We currently need these implementations for PG as we did not find a direct
+   * culprit why the performance with Optionals is so much slower yet.
    * @param colName
    * @return
    */
-  uint8_t columnUint8NoOpt(const std::string& colName) const { return 0; };
+  uint8_t columnUint8NoOpt(const std::string& colName) const { throw cta::exception::Exception("Not implemented"); };
 
-  uint16_t columnUint16NoOpt(const std::string& colName) const { return 0; };
+  uint16_t columnUint16NoOpt(const std::string& colName) const { throw cta::exception::Exception("Not implemented"); };
 
-  uint32_t columnUint32NoOpt(const std::string& colName) const { return 0; };
+  uint32_t columnUint32NoOpt(const std::string& colName) const { throw cta::exception::Exception("Not implemented"); };
 
-  uint64_t columnUint64NoOpt(const std::string& colName) const { return 0; };
+  uint64_t columnUint64NoOpt(const std::string& colName) const { throw cta::exception::Exception("Not implemented"); };
 
-  std::string columnStringNoOpt(const std::string& colName) const { return std::string(); };
+  std::string columnStringNoOpt(const std::string& colName) const { throw cta::exception::Exception("Not implemented"); };
 
-  double columnDoubleNoOpt(const std::string& colName) const { return 0; };
+  double columnDoubleNoOpt(const std::string& colName) const { throw cta::exception::Exception("Not implemented"); };
 
-  bool columnBoolNoOpt(const std::string& colName) const { return false; };
+  bool columnBoolNoOpt(const std::string& colName) const { throw cta::exception::Exception("Not implemented"); };
 
   /**
    * Returns true if the specified column contains a null value.

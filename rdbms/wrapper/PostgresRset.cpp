@@ -82,7 +82,7 @@ int PostgresRset::getColumnIndex(const std::string& colName) const {
 //------------------------------------------------------------------------------
 bool PostgresRset::columnIsNull(const std::string& colName) const {
   const int ifield = getColumnIndex(colName);
-  return PQgetisnull(m_resItr->get(), 0, ifield);
+  return isPGColumnNull(ifield);
 }
 
 //------------------------------------------------------------------------------
@@ -102,14 +102,14 @@ std::string PostgresRset::columnBlob(const std::string& colName) const {
     if (blob_ptr != nullptr) {
       // using unique_ptr with custom deleter to automatically free memory
       std::unique_ptr<unsigned char, decltype(&PQfreemem)> blob_ptr_guard(blob_ptr, &PQfreemem);
-      // using move semantics to avoid unnecessary copies
+      // using compiler RVO (move semantics) to avoid unnecessary copies
       return std::string(reinterpret_cast<const char*>(blob_ptr_guard.get()), blob_len);
     } else {
-      throw NullDbValue(std::string("Database column ") + colName + " contains a null value");
+      // having a non-nullopt while a valid value should never happen
+      throw NullDbValue(std::string("Failed to fetch a value for database column: ") + colName);
     }
-  } else {
-    throw NullDbValue(std::string("Database column ") + colName + " contains a null value");
   }
+  return std::string();
 }
 
 bool PostgresRset::columnBoolNoOpt(const std::string& colName) const {

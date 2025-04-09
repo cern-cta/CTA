@@ -291,8 +291,8 @@ public:
 
   public:
     uint64_t requeueJobBatch(const std::list<std::string>& jobIDsList, log::LogContext& logContext) const override {
-      // Do nothing in this implementation, serves only PGSCHED implementation
-      return 0;
+      // This implementation, serves only PGSCHED implementation
+      throw cta::exception::Exception("Not implemented");
     }
 
     void setJobBatchTransferred(std::list<std::unique_ptr<SchedulerDatabase::ArchiveJob>>& jobsBatch,
