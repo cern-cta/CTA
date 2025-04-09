@@ -19,6 +19,7 @@
 
 #include "xroot_plugins/XrdCtaStream.hpp"
 #include "common/dataStructures/RequesterActivityMountRule.hpp"
+#include "cmdline/admin_common/DataItemMessageFill.hpp"
 
 namespace cta::xrd {
 
@@ -73,18 +74,7 @@ int ActivityMountRuleLsStream::fillBuffer(XrdSsiPb::OStreamBuffer<Data> *streamb
     auto &amr      = m_activityMountRuleList.front();
     auto amr_item  = record.mutable_amrls_item();
 
-    amr_item->set_disk_instance(amr.diskInstance);
-    amr_item->set_activity_mount_rule(amr.name);
-    amr_item->set_mount_policy(amr.mountPolicy);
-    amr_item->set_activity_regex(amr.activityRegex);
-    amr_item->mutable_creation_log()->set_username(amr.creationLog.username);
-    amr_item->mutable_creation_log()->set_host(amr.creationLog.host);
-    amr_item->mutable_creation_log()->set_time(amr.creationLog.time);
-    amr_item->mutable_last_modification_log()->set_username(amr.lastModificationLog.username);
-    amr_item->mutable_last_modification_log()->set_host(amr.lastModificationLog.host);
-    amr_item->mutable_last_modification_log()->set_time(amr.lastModificationLog.time);
-    amr_item->set_comment(amr.comment),
-    amr_item->set_instance_name(m_instanceName);
+    fillActivityMountRuleItem(amr, amr_item, m_instanceName);
 
     is_buffer_full = streambuf->Push(record);
   }

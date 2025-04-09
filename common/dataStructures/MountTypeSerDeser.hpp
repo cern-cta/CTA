@@ -22,7 +22,7 @@
 
 namespace cta::admin {
 
-common::dataStructures::MountType ProtobufToMountType(MountType mountType) {
+inline common::dataStructures::MountType ProtobufToMountType(MountType mountType) {
   using namespace common::dataStructures;
 
   switch(mountType) {
@@ -38,7 +38,7 @@ common::dataStructures::MountType ProtobufToMountType(MountType mountType) {
   }
 }
 
-MountType MountTypeToProtobuf(common::dataStructures::MountType mountType) {
+inline MountType MountTypeToProtobuf(common::dataStructures::MountType mountType) {
   using namespace common::dataStructures;
 
   switch(mountType) {

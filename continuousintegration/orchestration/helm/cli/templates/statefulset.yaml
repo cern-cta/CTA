@@ -41,9 +41,19 @@ spec:
           mountPath: /root/{{ .Values.krb5PrincName }}_keytab/output
       containers:
       - name: cta-cli
+        # need to update this with an if-else for grpc frontend
         image: {{ include "ctacli.image" . }}
         imagePullPolicy: {{ include "ctacli.imagePullPolicy" . }}
         stdin: true
+        {{- if .Values.useGrpc }}
+        command: ["/bin/bash", "/scripts/ctacli-grpc.sh"]
+        readinessProbe:
+          exec:
+            command: ["sh", "-c", "rpm -q cta-admin-grpc"]
+          initialDelaySeconds: 5
+          periodSeconds: 2
+          failureThreshold: 60
+        {{- else }}
         command: ["/bin/bash", "/scripts/ctacli.sh"]
         readinessProbe:
           exec:
@@ -51,6 +61,7 @@ spec:
           initialDelaySeconds: 5
           periodSeconds: 2
           failureThreshold: 60
+        {{- end}}
         securityContext:
           allowPrivilegeEscalation: {{ include "common.securityContext.allowPrivilegeEscalation" . }}
           privileged: {{ include "common.securityContext.privileged" . }}
@@ -86,9 +97,15 @@ spec:
         {{ include "common.extraVolumeMounts" . | nindent 8 }}
       volumes:
       - name: scripts-volume
+        {{- if .Values.useGrpc }}
         configMap:
-          name: scripts-ctacli
+          name: scripts-ctacli-grpc
           defaultMode: 0777
+        {{- else }}
+        configMap:
+          name: scripts-ctacli-xrootd
+          defaultMode: 0777
+        {{- end }}
       - name: cta-conf-volume
         configMap:
           name: etc-cta-ctacli

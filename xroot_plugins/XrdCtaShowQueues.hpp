@@ -18,6 +18,7 @@
 #pragma once
 
 #include "xroot_plugins/XrdCtaStream.hpp"
+#include "cmdline/admin_common/DataItemMessageFill.hpp"
 
 namespace cta::xrd {
 
@@ -79,56 +80,10 @@ int ShowQueuesStream::fillBuffer(XrdSsiPb::OStreamBuffer<Data> *streambuf) {
   for(bool is_buffer_full = false; !m_queuesAndMountsList.empty() && !is_buffer_full; m_queuesAndMountsList.pop_front()) {
     Data record;
 
-    auto &sq      = m_queuesAndMountsList.front();
+    const auto &sq      = m_queuesAndMountsList.front();
     auto  sq_item = record.mutable_sq_item();
 
-    switch(sq.mountType) {
-      case common::dataStructures::MountType::ArchiveForRepack:
-      case common::dataStructures::MountType::ArchiveForUser:
-        sq_item->set_priority(sq.mountPolicy.archivePriority);
-        sq_item->set_min_age(sq.mountPolicy.archiveMinRequestAge);
-        break;
-      case common::dataStructures::MountType::Retrieve:
-        sq_item->set_priority(sq.mountPolicy.retrievePriority);
-        sq_item->set_min_age(sq.mountPolicy.retrieveMinRequestAge);
-        break;
-      default:
-        break;
-    }
-
-    sq_item->set_mount_type(MountTypeToProtobuf(sq.mountType));
-    sq_item->set_instance_name(m_instanceName);
-    sq_item->set_scheduler_backend_name(m_schedulerBackendName.value_or(""));
-    sq_item->set_tapepool(sq.tapePool);
-    sq_item->set_logical_library(sq.logicalLibrary);
-    sq_item->set_vid(sq.vid);
-    sq_item->set_queued_files(sq.filesQueued);
-    sq_item->set_queued_bytes(sq.bytesQueued);
-    sq_item->set_oldest_age(sq.oldestJobAge);
-    sq_item->set_youngest_age(sq.youngestJobAge);
-    sq_item->set_cur_mounts(sq.currentMounts);
-    sq_item->set_cur_files(sq.currentFiles);
-    sq_item->set_cur_bytes(sq.currentBytes);
-    sq_item->set_tapes_capacity(sq.tapesCapacity);
-    sq_item->set_tapes_files(sq.filesOnTapes);
-    sq_item->set_tapes_bytes(sq.dataOnTapes);
-    sq_item->set_full_tapes(sq.fullTapes);
-    sq_item->set_writable_tapes(sq.writableTapes);
-    sq_item->set_vo(sq.vo);
-    sq_item->set_read_max_drives(sq.readMaxDrives);
-    sq_item->set_write_max_drives(sq.writeMaxDrives);
-    if (sq.sleepForSpaceInfo) {
-      sq_item->set_sleeping_for_space(true);
-      sq_item->set_sleep_start_time(sq.sleepForSpaceInfo.value().startTime);
-      sq_item->set_disk_system_slept_for(sq.sleepForSpaceInfo.value().diskSystemName);
-    } else {
-      sq_item->set_sleeping_for_space(false);
-    }
-    for (auto &policyName: sq.mountPolicies) {
-      sq_item->add_mount_policies(policyName);
-    }
-    sq_item->set_highest_priority_mount_policy(sq.highestPriorityMountPolicy);
-    sq_item->set_lowest_request_age_mount_policy(sq.lowestRequestAgeMountPolicy);
+    fillSqItem(sq, sq_item, m_schedulerBackendName, m_instanceName);
 
     is_buffer_full = streambuf->Push(record);
   }
