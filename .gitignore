@@ -13,6 +13,7 @@ build_rpm/
 image_rpms/
 pod_logs/
 tmp/
+*.core
 
 # Helm files
 Chart.lock

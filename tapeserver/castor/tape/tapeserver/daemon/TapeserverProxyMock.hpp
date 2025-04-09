@@ -25,7 +25,7 @@ namespace cta::tape::daemon {
 /**
  * A mock taped-proxy.
  */
-class TapeserverProxyMock final : public TapedProxy {
+class TapeserverProxyMock : public TapedProxy {
 public:
   MOCK_METHOD(void, reportState, (const cta::tape::session::SessionState state, const cta::tape::session::SessionType type, const std::string& vid), (override));
   MOCK_METHOD(void, reportHeartbeat, (uint64_t totalTapeBytesMoved, uint64_t totalDiskBytesMoved), (override));

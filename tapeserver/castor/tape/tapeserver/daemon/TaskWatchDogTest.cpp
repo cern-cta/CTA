@@ -29,7 +29,7 @@
 namespace unitTests {
   using namespace castor::tape;
   using ::testing::_;
-  
+
 TEST(castor_tape_tapeserver_daemon, WatchdogTestStuckWithNothing) {
   const double reportPeriodSecs = 10; // We wont report in practice
   const double stuckPeriod = 0.01;
@@ -38,16 +38,16 @@ TEST(castor_tape_tapeserver_daemon, WatchdogTestStuckWithNothing) {
   cta::log::StringLogger log("dummy","castor_tape_tapeserver_daemon_WatchdogTestStuck",cta::log::DEBUG);
   cta::log::LogContext lc(log);
 
-  cta::tape::daemon::TapeserverProxyMock dummyInitialProcess;
+  ::testing::NiceMock<cta::tape::daemon::TapeserverProxyMock> dummyInitialProcess;
   cta::TapeMountDummy dummyTapeMount;
 
   tapeserver::daemon::RecallWatchDog watchdog(reportPeriodSecs,
     stuckPeriod,dummyInitialProcess,dummyTapeMount,"testTapeDrive",lc,pollPeriod);
-  
+
   watchdog.startThread();
   usleep(100000);
   watchdog.stopAndWaitThread();
-  //we dont tell the watchdog we are working on file, 
+  //we dont tell the watchdog we are working on file,
   //it should not report as being stuck
   ASSERT_EQ(std::string::npos, log.getLog().find("No tape block movement for too long"));
 }
@@ -60,13 +60,13 @@ TEST(castor_tape_tapeserver_daemon, MigrationWatchdogTestStuck) {
   cta::log::StringLogger log("dummy","castor_tape_tapeserver_daemon_WatchdogTestStuck",cta::log::DEBUG);
   cta::log::LogContext lc(log);
 
-  cta::tape::daemon::TapeserverProxyMock dummyInitialProcess;
+  ::testing::NiceMock<cta::tape::daemon::TapeserverProxyMock> dummyInitialProcess;
   cta::TapeMountDummy dummyTapeMount;
 
   // We will poll for a
   tapeserver::daemon::MigrationWatchDog watchdog(reportPeriodSecs,stuckPeriod,
     dummyInitialProcess, dummyTapeMount, "testTapeDrive",  lc, pollPeriod);
-  
+
   watchdog.startThread();
   watchdog.notifyBeginNewJob(64, 64);
   usleep(100000);
@@ -83,7 +83,7 @@ TEST(castor_tape_tapeserver_daemon, MigrationWatchdog_DoNotReportParamsAddedAndD
   cta::log::StringLogger log("dummy","castor_tape_tapeserver_daemon_DoNotReportParamsAddedAndDeleted",cta::log::DEBUG);
   cta::log::LogContext lc(log);
 
-  cta::tape::daemon::TapeserverProxyMock dummyInitialProcess;
+  ::testing::NiceMock<cta::tape::daemon::TapeserverProxyMock> dummyInitialProcess;
   cta::TapeMountDummy dummyTapeMount;
 
   tapeserver::daemon::RecallWatchDog watchdog(reportPeriodSecs,
