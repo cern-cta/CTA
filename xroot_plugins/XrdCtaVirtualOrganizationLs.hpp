@@ -19,6 +19,7 @@
 
 #include "xroot_plugins/XrdCtaStream.hpp"
 #include "disk/DiskSystem.hpp"
+#include "cmdline/admin_common/DataItemMessageFill.hpp"
 
 
 namespace cta::xrd {
@@ -74,20 +75,7 @@ int VirtualOrganizationLsStream::fillBuffer(XrdSsiPb::OStreamBuffer<Data> *strea
     auto &vo      = m_virtualOrganizationList.front();
     auto  vo_item = record.mutable_vols_item();
 
-    vo_item->set_name(vo.name);
-    vo_item->set_instance_name(m_instanceName);
-    vo_item->set_read_max_drives(vo.readMaxDrives);
-    vo_item->set_write_max_drives(vo.writeMaxDrives);
-    vo_item->set_max_file_size(vo.maxFileSize);
-    vo_item->mutable_creation_log()->set_username(vo.creationLog.username);
-    vo_item->mutable_creation_log()->set_host(vo.creationLog.host);
-    vo_item->mutable_creation_log()->set_time(vo.creationLog.time);
-    vo_item->mutable_last_modification_log()->set_username(vo.lastModificationLog.username);
-    vo_item->mutable_last_modification_log()->set_host(vo.lastModificationLog.host);
-    vo_item->mutable_last_modification_log()->set_time(vo.lastModificationLog.time);
-    vo_item->set_comment(vo.comment);
-    vo_item->set_diskinstance(vo.diskInstanceName);
-    vo_item->set_is_repack_vo(vo.isRepackVo);
+    fillVirtualOrganizationItem(vo, vo_item, m_instanceName);
     
     is_buffer_full = streambuf->Push(record);
   }

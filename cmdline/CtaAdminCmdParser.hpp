@@ -464,9 +464,12 @@ const Option opt_state {
   Option::OPT_STR,
   "--state",
   "-s",
-  std::string(" <\"") + Tape::stateToString(Tape::ACTIVE) + "\"" + " or \"" + Tape::stateToString(Tape::DISABLED) +
-    "\" or \"" + Tape::stateToString(Tape::BROKEN) + "\" or \"" + Tape::stateToString(Tape::EXPORTED) + "\" or \"" +
-    Tape::stateToString(Tape::REPACKING) + "\" or \"" + Tape::stateToString(Tape::REPACKING_DISABLED) + "\">"};
+  std::string(" <\"") + cta::common::dataStructures::Tape::stateToString(cta::common::dataStructures::Tape::ACTIVE)
+   + "\"" + " or \"" + cta::common::dataStructures::Tape::stateToString(cta::common::dataStructures::Tape::DISABLED) +
+    "\" or \"" + cta::common::dataStructures::Tape::stateToString(cta::common::dataStructures::Tape::BROKEN)
+    + "\" or \"" + cta::common::dataStructures::Tape::stateToString(cta::common::dataStructures::Tape::EXPORTED) + "\" or \"" +
+    cta::common::dataStructures::Tape::stateToString(cta::common::dataStructures::Tape::REPACKING) + "\" or \""
+    + cta::common::dataStructures::Tape::stateToString(cta::common::dataStructures::Tape::REPACKING_DISABLED) + "\">"};
 const Option opt_activityregex {Option::OPT_STR, "--activityregex", "--ar", " <activity_regex>"};
 const Option opt_diskinstance {Option::OPT_STR, "--diskinstance", "--di", " <disk_instance_name>"};
 const Option opt_diskinstance_alias {Option::OPT_STR, "--name", "-n", " <disk_instance_name>", "--diskinstance"};
@@ -1185,4 +1188,9 @@ virtualorganization (vo)
  * This function is used on the server side
  */
 void validateCmd(const cta::admin::AdminCmd& admincmd);
+
+/*!
+ * Checks if an admin command is a stream command
+ */
+bool isStreamCmd(const cta::admin::AdminCmd& adminCmd);
 }  // namespace cta::admin

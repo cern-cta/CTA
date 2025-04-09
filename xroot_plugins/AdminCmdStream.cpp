@@ -172,10 +172,6 @@ frontend::Version AdminCmdStream::getClientVersion() const {
   return clientVersion;
 }
 
-bool AdminCmdStream::isStreamCmd(const admin::AdminCmd& adminCmd) {
-  return admin::streamCmds.count(std::make_pair(adminCmd.cmd(), adminCmd.subcmd())) > 0;
-}
-
 void AdminCmdStream::processAdmin_Ls(xrd::Response& response) {
   m_stream = new xrd::AdminLsStream(*this, m_catalogue, m_scheduler);
 
