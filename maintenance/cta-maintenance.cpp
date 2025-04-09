@@ -82,10 +82,10 @@ namespace cta::maintenance {
 // @param log The logging system.
 //------------------------------------------------------------------------------
 static int exceptionThrowingMain(const common::Config config, cta::log::Logger &log);
-void maintenanceLoop(DiskReportRunner& drr, RepackRequestManager& rrm, QueueCleanupRunner& qcr, objectstore::GarbageCollector& gc, log::LogContext& lc);
+void maintenanceLoop(DiskReportRunner& drr, RepackRequestManager& rrm, QueueCleanupRunner& qcr, GarbageCollector& gc, log::LogContext& lc);
 
 
-void maintenanceLoop(DiskReportRunner& drr, RepackRequestManager& rrm, QueueCleanupRunner& qcr, objectstore::GarbageCollector& gc, log::LogContext& lc){
+void maintenanceLoop(DiskReportRunner& drr, RepackRequestManager& rrm, QueueCleanupRunner& qcr, GarbageCollector& gc, log::LogContext& lc){
   // Run the maintenance in a loop: queue cleanup, garbage collector and disk reporter
   try {
     do {

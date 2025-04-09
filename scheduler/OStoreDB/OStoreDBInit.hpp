@@ -21,8 +21,8 @@
 #include <objectstore/BackendFactory.hpp>
 #include <objectstore/AgentHeartbeatThread.hpp>
 #include <objectstore/BackendVFS.hpp>
-#include <maintenance/GarbageCollector.hpp>
-#include <maintenance/QueueCleanup/QueueCleanupRunner.hpp>
+#include <maintenance/osrunners/GarbageCollector.hpp>
+#include <maintenance/osrunners/QueueCleanupRunner.hpp>
 #include <scheduler/OStoreDB/OStoreDBWithAgent.hpp>
 
 namespace cta {
