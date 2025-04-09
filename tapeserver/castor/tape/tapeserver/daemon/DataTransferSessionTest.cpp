@@ -350,7 +350,7 @@ public:
     ASSERT_EQ(mountPolicyComment, group.comment);
 
     const auto di = getDefaultDiskInstance();
-    catalogue.DiskInstance()->createDiskInstance(s_adminOnAdminHost, di.name, di.comment); 
+    catalogue.DiskInstance()->createDiskInstance(s_adminOnAdminHost, di.name, di.comment);
 
     const std::string ruleComment = "create requester mount-rule";
     catalogue.RequesterMountRule()->createRequesterMountRule(s_adminOnAdminHost, mountPolicyName, di.name, s_userName, ruleComment);
@@ -613,7 +613,7 @@ TEST_P(DataTransferSessionTest, DataTransferSessionGooddayRecall) {
   cta::log::DummyLogger dummyLog("dummy", "dummy");
   cta::mediachanger::RmcProxy rmcProxy;
   cta::mediachanger::MediaChangerFacade mc(rmcProxy, dummyLog);
-  cta::tape::daemon::TapeserverProxyMock initialProcess;
+  ::testing::NiceMock<cta::tape::daemon::TapeserverProxyMock> initialProcess;
   castor::tape::tapeserver::daemon::DataTransferSession sess("tapeHost", logger, mockSys,
                                                              driveConfig, mc, initialProcess, castorConf, scheduler);
   // 8) Run the data transfer session
@@ -741,7 +741,7 @@ TEST_P(DataTransferSessionTest, DataTransferSessionWrongChecksumRecall) {
       tapeFileWritten.archiveFileId=fseq;
       if (fseq == 4) {
         // Fourth file will have wrong checksum and will not be recalled
-        tapeFileWritten.checksumBlob.insert(cta::checksum::ADLER32, cta::utils::getAdler32(data, archiveFileSize) + 1);  
+        tapeFileWritten.checksumBlob.insert(cta::checksum::ADLER32, cta::utils::getAdler32(data, archiveFileSize) + 1);
       }
       else {
         tapeFileWritten.checksumBlob.insert(cta::checksum::ADLER32, cta::utils::getAdler32(data, archiveFileSize));
@@ -800,7 +800,7 @@ TEST_P(DataTransferSessionTest, DataTransferSessionWrongChecksumRecall) {
   cta::log::DummyLogger dummyLog("dummy", "dummy");
   cta::mediachanger::RmcProxy rmcProxy;
   cta::mediachanger::MediaChangerFacade mc(rmcProxy, dummyLog);
-  cta::tape::daemon::TapeserverProxyMock initialProcess;
+  ::testing::NiceMock<cta::tape::daemon::TapeserverProxyMock> initialProcess;
   castor::tape::tapeserver::daemon::DataTransferSession sess("tapeHost", logger, mockSys,
     driveConfig, mc, initialProcess, castorConf, scheduler);
 
@@ -816,11 +816,11 @@ TEST_P(DataTransferSessionTest, DataTransferSessionWrongChecksumRecall) {
     struct stat statBuf;
     bzero(&statBuf, sizeof(statBuf));
     int statRc = stat(path.substr(7).c_str(), &statBuf); //remove the "file://" for stat-ing
-    // File with wrong checksum are not recalled 
+    // File with wrong checksum are not recalled
     // Rest of the files were read (correct behaviour, unlike archive)
     if (fseq == 4) {
-      ASSERT_EQ(-1, statRc); 
-      ASSERT_EQ(errno, ENOENT);  
+      ASSERT_EQ(-1, statRc);
+      ASSERT_EQ(errno, ENOENT);
     } else {
       ASSERT_EQ(0, statRc);
       ASSERT_EQ(1000, statBuf.st_size); //files should be empty
@@ -1017,7 +1017,7 @@ TEST_P(DataTransferSessionTest, DataTransferSessionWrongRecall) {
   cta::log::DummyLogger dummyLog("dummy", "dummy");
   cta::mediachanger::RmcProxy rmcProxy;
   cta::mediachanger::MediaChangerFacade mc(rmcProxy, dummyLog);
-  cta::tape::daemon::TapeserverProxyMock initialProcess;
+  ::testing::NiceMock<cta::tape::daemon::TapeserverProxyMock> initialProcess;
   DataTransferSession sess("tapeHost", logger, mockSys,
                            driveConfig, mc, initialProcess, castorConf, scheduler);
 
@@ -1201,7 +1201,7 @@ TEST_P(DataTransferSessionTest, DataTransferSessionRAORecall) {
   cta::log::DummyLogger dummyLog("dummy", "dummy");
   cta::mediachanger::RmcProxy rmcProxy;
   cta::mediachanger::MediaChangerFacade mc(rmcProxy, dummyLog);
-  cta::tape::daemon::TapeserverProxyMock initialProcess;
+  ::testing::NiceMock<cta::tape::daemon::TapeserverProxyMock> initialProcess;
   castor::tape::tapeserver::daemon::DataTransferSession sess("tapeHost", logger, mockSys,
                                                              driveConfig, mc, initialProcess, castorConf, scheduler);
 
@@ -1389,7 +1389,7 @@ TEST_P(DataTransferSessionTest, DataTransferSessionRAORecallLinearAlgorithm) {
   cta::log::DummyLogger dummyLog("dummy", "dummy");
   cta::mediachanger::RmcProxy rmcProxy;
   cta::mediachanger::MediaChangerFacade mc(rmcProxy, dummyLog);
-  cta::tape::daemon::TapeserverProxyMock initialProcess;
+  ::testing::NiceMock<cta::tape::daemon::TapeserverProxyMock> initialProcess;
   castor::tape::tapeserver::daemon::DataTransferSession sess("tapeHost", logger, mockSys,
                                                              driveConfig, mc, initialProcess, castorConf, scheduler);
 
@@ -1578,7 +1578,7 @@ TEST_P(DataTransferSessionTest, DataTransferSessionRAORecallRAOAlgoDoesNotExistS
   cta::log::DummyLogger dummyLog("dummy", "dummy");
   cta::mediachanger::RmcProxy rmcProxy;
   cta::mediachanger::MediaChangerFacade mc(rmcProxy, dummyLog);
-  cta::tape::daemon::TapeserverProxyMock initialProcess;
+  ::testing::NiceMock<cta::tape::daemon::TapeserverProxyMock> initialProcess;
   castor::tape::tapeserver::daemon::DataTransferSession sess("tapeHost", logger, mockSys,
                                                              driveConfig, mc, initialProcess, castorConf, scheduler);
 
@@ -1770,7 +1770,7 @@ TEST_P(DataTransferSessionTest, DataTransferSessionRAORecallSLTFRAOAlgorithm) {
   cta::log::DummyLogger dummyLog("dummy", "dummy");
   cta::mediachanger::RmcProxy rmcProxy;
   cta::mediachanger::MediaChangerFacade mc(rmcProxy, dummyLog);
-  cta::tape::daemon::TapeserverProxyMock initialProcess;
+  ::testing::NiceMock<cta::tape::daemon::TapeserverProxyMock> initialProcess;
   castor::tape::tapeserver::daemon::DataTransferSession sess("tapeHost", logger, mockSys,
                                                              driveConfig, mc, initialProcess, castorConf, scheduler);
 
@@ -1949,7 +1949,7 @@ TEST_P(DataTransferSessionTest, DataTransferSessionNoSuchDrive) {
   cta::log::DummyLogger dummyLog("dummy", "dummy");
   cta::mediachanger::RmcProxy rmcProxy;
   cta::mediachanger::MediaChangerFacade mc(rmcProxy, dummyLog);
-  cta::tape::daemon::TapeserverProxyMock initialProcess;
+  ::testing::NiceMock<cta::tape::daemon::TapeserverProxyMock> initialProcess;
   DataTransferSession sess("tapeHost", logger, mockSys,
                            driveConfig, mc, initialProcess, castorConf, scheduler);
   ASSERT_NO_THROW(sess.execute());
@@ -2103,7 +2103,7 @@ TEST_P(DataTransferSessionTest, DataTransferSessionFailtoMount) {
   cta::log::DummyLogger dummyLog("dummy", "dummy");
   cta::mediachanger::RmcProxy rmcProxy;
   cta::mediachanger::MediaChangerFacade mc(rmcProxy, dummyLog);
-  cta::tape::daemon::TapeserverProxyMock initialProcess;
+  ::testing::NiceMock<cta::tape::daemon::TapeserverProxyMock> initialProcess;
   DataTransferSession sess("tapeHost", logger, mockSys,
                            driveConfig, mc, initialProcess, castorConf, scheduler);
   ASSERT_NO_THROW(sess.execute());
@@ -2243,7 +2243,7 @@ TEST_P(DataTransferSessionTest, DataTransferSessionGooddayMigration) {
   cta::log::DummyLogger dummyLog("dummy", "dummy");
   cta::mediachanger::RmcProxy rmcProxy;
   cta::mediachanger::MediaChangerFacade mc(rmcProxy, dummyLog);
-  cta::tape::daemon::TapeserverProxyMock initialProcess;
+  ::testing::NiceMock<cta::tape::daemon::TapeserverProxyMock> initialProcess;
   DataTransferSession sess("tapeHost", logger, mockSys, driveConfig, mc, initialProcess, castorConf, scheduler);
   sess.execute();
   std::string logToCheck = logger.getLog();
@@ -2325,7 +2325,7 @@ TEST_P(DataTransferSessionTest, DataTransferSessionWrongFileSizeMigration) {
   auto mountPolicy = getImmediateMountMountPolicy();
   catalogue.MountPolicy()->createMountPolicy(requester, mountPolicy);
   std::string mountPolicyName = mountPolicy.name;
-  
+
   catalogue.RequesterMountRule()->createRequesterMountRule(requester, mountPolicyName, s_diskInstance, requester.username, "Rule comment");
 
   //delete is unnecessary
@@ -2396,13 +2396,13 @@ TEST_P(DataTransferSessionTest, DataTransferSessionWrongFileSizeMigration) {
   cta::log::DummyLogger dummyLog("dummy", "dummy");
   cta::mediachanger::RmcProxy rmcProxy;
   cta::mediachanger::MediaChangerFacade mc(rmcProxy, dummyLog);
-  cta::tape::daemon::TapeserverProxyMock initialProcess;
+  ::testing::NiceMock<cta::tape::daemon::TapeserverProxyMock> initialProcess;
   DataTransferSession sess("tapeHost", logger, mockSys, driveConfig, mc, initialProcess,  castorConf, scheduler);
   sess.execute();
   std::string logToCheck = logger.getLog();
   logToCheck += "";
   ASSERT_EQ(s_vid, sess.getVid());
-  
+
   auto afiiter = archiveFileIds.begin();
   // First file failed migration, rest made it to the catalogue (fixe for cta/CTA#1096)
   for(auto & sf: sourceFiles) {
@@ -2415,7 +2415,7 @@ TEST_P(DataTransferSessionTest, DataTransferSessionWrongFileSizeMigration) {
       cta::checksum::ChecksumBlob checksumBlob;
       checksumBlob.insert(cta::checksum::ADLER32, sf->adler32());
       ASSERT_EQ(afs.checksumBlob, checksumBlob);
-      ASSERT_EQ(1000, afs.fileSize); 
+      ASSERT_EQ(1000, afs.fileSize);
     }
   }
 
@@ -2560,7 +2560,7 @@ TEST_P(DataTransferSessionTest, DataTransferSessionWrongChecksumMigration) {
   cta::log::DummyLogger dummyLog("dummy", "dummy");
   cta::mediachanger::RmcProxy rmcProxy;
   cta::mediachanger::MediaChangerFacade mc(rmcProxy, dummyLog);
-  cta::tape::daemon::TapeserverProxyMock initialProcess;
+  ::testing::NiceMock<cta::tape::daemon::TapeserverProxyMock> initialProcess;
   DataTransferSession sess("tapeHost", logger, mockSys, driveConfig, mc, initialProcess, castorConf, scheduler);
   sess.execute();
   std::string logToCheck = logger.getLog();
@@ -2715,7 +2715,7 @@ TEST_P(DataTransferSessionTest, DataTransferSessionWrongFilesizeInMiddleOfBatchM
   cta::log::DummyLogger dummyLog("dummy", "dummy");
   cta::mediachanger::RmcProxy rmcProxy;
   cta::mediachanger::MediaChangerFacade mc(rmcProxy, dummyLog);
-  cta::tape::daemon::TapeserverProxyMock initialProcess;
+  ::testing::NiceMock<cta::tape::daemon::TapeserverProxyMock> initialProcess;
   DataTransferSession sess("tapeHost", logger, mockSys, driveConfig, mc, initialProcess, castorConf, scheduler);
   sess.execute();
   std::string logToCheck = logger.getLog();
@@ -2880,7 +2880,7 @@ TEST_P(DataTransferSessionTest, DataTransferSessionMissingFilesMigration) {
   cta::log::DummyLogger dummyLog("dummy", "dummy");
   cta::mediachanger::RmcProxy rmcProxy;
   cta::mediachanger::MediaChangerFacade mc(rmcProxy, dummyLog);
-  cta::tape::daemon::TapeserverProxyMock initialProcess;
+  ::testing::NiceMock<cta::tape::daemon::TapeserverProxyMock> initialProcess;
   DataTransferSession sess("tapeHost", logger, mockSys, driveConfig, mc, initialProcess, castorConf, scheduler);
   sess.execute();
   std::string temp = logger.getLog();
@@ -3043,7 +3043,7 @@ TEST_P(DataTransferSessionTest, DataTransferSessionTapeFullMigration) {
   cta::log::DummyLogger dummyLog("dummy", "dummy");
   cta::mediachanger::RmcProxy rmcProxy;
   cta::mediachanger::MediaChangerFacade mc(rmcProxy, dummyLog);
-  cta::tape::daemon::TapeserverProxyMock initialProcess;
+  ::testing::NiceMock<cta::tape::daemon::TapeserverProxyMock> initialProcess;
   DataTransferSession sess("tapeHost", logger, mockSys, driveConfig, mc, initialProcess,  castorConf, scheduler);
   sess.execute();
   std::string temp = logger.getLog();
@@ -3215,7 +3215,7 @@ TEST_P(DataTransferSessionTest, DataTransferSessionTapeFullOnFlushMigration) {
   cta::log::DummyLogger dummyLog("dummy", "dummy");
   cta::mediachanger::RmcProxy rmcProxy;
   cta::mediachanger::MediaChangerFacade mc(rmcProxy, dummyLog);
-  cta::tape::daemon::TapeserverProxyMock initialProcess;
+  ::testing::NiceMock<cta::tape::daemon::TapeserverProxyMock> initialProcess;
   DataTransferSession sess("tapeHost", logger, mockSys, driveConfig, mc, initialProcess, castorConf, scheduler);
   sess.execute();
   std::string temp = logger.getLog();
@@ -3348,7 +3348,7 @@ TEST_P(DataTransferSessionTest, CleanerSessionFailsShouldPutTheDriveDown) {
   cta::log::DummyLogger dummyLog("dummy", "dummy");
   cta::mediachanger::RmcProxy rmcProxy;
   cta::mediachanger::MediaChangerFacade mc(rmcProxy, dummyLog);
-  cta::tape::daemon::TapeserverProxyMock initialProcess;
+  ::testing::NiceMock<cta::tape::daemon::TapeserverProxyMock> initialProcess;
   CleanerSession cleanerSession(
     mc,
     logger,

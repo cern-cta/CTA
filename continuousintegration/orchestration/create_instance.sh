@@ -105,7 +105,7 @@ create_instance() {
   max_drives_per_tpsrv=1
   max_tapeservers=2
   # EOS related
-  eos_image_tag=105fc481.el9 # This tag is EOS 5.3.9
+  eos_image_tag=5.3.10.el9 # This tag is EOS 5.3.10
   eos_image_repository=gitlab-registry.cern.ch/dss/eos/eos-ci
   eos_config=presets/dev-eos-values.yaml
 

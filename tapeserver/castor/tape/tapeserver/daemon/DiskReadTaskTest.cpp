@@ -32,23 +32,23 @@
 #include <ext/stdio_filebuf.h>
 
 namespace unitTests{
-  
+
   class TestingArchiveJob: public cta::ArchiveJob {
   public:
-    TestingArchiveJob(): cta::ArchiveJob(nullptr, 
+    TestingArchiveJob(): cta::ArchiveJob(nullptr,
         *((cta::catalogue::Catalogue *)nullptr), cta::common::dataStructures::ArchiveFile(),
         "", cta::common::dataStructures::TapeFile()) {
     }
   };
-  
+
   using namespace castor::tape::tapeserver::daemon;
   using namespace cta::disk;
-  
+
   struct MockMigrationReportPacker : public MigrationReportPacker {
     void reportCompletedJob(std::unique_ptr<cta::ArchiveJob> successfulArchiveJob, cta::log::LogContext & lc) override {}
     void reportSkippedJob(std::unique_ptr<cta::ArchiveJob> skippedArchiveJob, const std::string& failure,
         cta::log::LogContext& lc) override {}
-    void reportFailedJob(std::unique_ptr<cta::ArchiveJob> failedArchiveJob, 
+    void reportFailedJob(std::unique_ptr<cta::ArchiveJob> failedArchiveJob,
         const cta::exception::Exception& ex, cta::log::LogContext & lc) override {}
     void reportEndOfSession(cta::log::LogContext & lc) override {}
     void reportEndOfSessionWithErrors(const std::string& msg, bool isTapeFull, cta::log::LogContext & lc) override {}
@@ -56,18 +56,18 @@ namespace unitTests{
     MockMigrationReportPacker(cta::ArchiveMount *rm,cta::log::LogContext lc):
       MigrationReportPacker(rm,lc) {}
   };
-  
+
   class FakeTapeWriteTask : public  DataConsumer{
     cta::threading::BlockingQueue<MemBlock*> fifo;
     unsigned long m_checksum;
   public:
     FakeTapeWriteTask():m_checksum(Payload::zeroAdler32()){
-      
+
     }
     virtual MemBlock * getFreeBlock() {
       return fifo.pop();
     }
-  
+
     virtual void pushDataBlock(MemBlock *mb) {
       m_checksum = mb->m_payload.adler32(m_checksum);
       fifo.push(mb);
@@ -76,7 +76,7 @@ namespace unitTests{
       return m_checksum;
     }
   };
- 
+
   template <class T> unsigned long mycopy(T& out,int size){
     std::vector<char> v(size);
     unsigned long checksum = Payload::zeroAdler32();
@@ -86,13 +86,13 @@ namespace unitTests{
     out.write(&v[0],size);
     return checksum;
   }
-  
+
   class MockMigrationWatchDog: public MigrationWatchDog {
   public:
     MockMigrationWatchDog(double periodToReport,double stuckPeriod,
     cta::tape::daemon::TapedProxy& initialProcess, cta::TapeMount & tapeMount,
     const std::string & driveUnitName,
-    cta::log::LogContext lc, double pollPeriod = 0.1): 
+    cta::log::LogContext lc, double pollPeriod = 0.1):
       MigrationWatchDog(periodToReport, stuckPeriod, initialProcess, tapeMount,
           driveUnitName, lc, pollPeriod) {}
   private:
@@ -102,7 +102,7 @@ namespace unitTests{
     virtual void run() {}
 
   };
-  
+
   TEST(castor_tape_tapeserver_daemon, DiskReadTaskTest){
     char path[]="/tmp/testDRT-XXXXXX";
     ::close(::mkstemp(path));
@@ -113,7 +113,7 @@ namespace unitTests{
     cta::log::StringLogger log("dummy","castor_tape_tapeserver_daemon_DiskReadTaskTest",cta::log::DEBUG);
     cta::log::LogContext lc(log);
 
-    const int blockSize=1500;    
+    const int blockSize=1500;
     const int fileSize(1024*2000);
 
     const unsigned long original_checksum = mycopy(out,fileSize);
@@ -134,7 +134,7 @@ namespace unitTests{
     cta::disk::RadosStriperPool striperPool;
     DiskFileFactory fileFactory(0, striperPool);
 
-    cta::tape::daemon::TapeserverProxyMock tspd;
+    ::testing::NiceMock<cta::tape::daemon::TapeserverProxyMock> tspd;
     cta::TapeMountDummy tmd;
     MockMigrationWatchDog mmwd(1.0, 1.0, tspd, tmd, "", lc);
     drt.execute(lc,fileFactory,mmwd, 0);

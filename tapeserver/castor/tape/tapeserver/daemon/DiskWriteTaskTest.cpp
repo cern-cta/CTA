@@ -53,21 +53,21 @@ namespace unitTests{
     bool reserveDiskSpace(const cta::DiskSpaceReservationRequest &request, const std::string &externalFreeDiskSpaceScript, cta::log::LogContext& logContext) override{ throw std::runtime_error("Not implemented"); }
     bool testReserveDiskSpace(const cta::DiskSpaceReservationRequest &request, const std::string &externalFreeDiskSpaceScript, cta::log::LogContext& logContext) override{ throw std::runtime_error("Not implemented"); }
   };
-  
+
   class TestingRetrieveMount: public cta::RetrieveMount {
   public:
     TestingRetrieveMount(cta::catalogue::Catalogue &catalogue, std::unique_ptr<cta::SchedulerDatabase::RetrieveMount> dbrm): RetrieveMount(catalogue, std::move(dbrm)) {
     }
   };
-  
+
   class TestingRetrieveJob: public cta::RetrieveJob {
   public:
     TestingRetrieveJob(cta::RetrieveMount & rm): cta::RetrieveJob(&rm,
-    cta::common::dataStructures::RetrieveRequest(), 
+    cta::common::dataStructures::RetrieveRequest(),
     cta::common::dataStructures::ArchiveFile(), 1,
     cta::PositioningMethod::ByBlock) {}
   };
-  
+
   using namespace castor::tape::tapeserver::daemon;
   using namespace castor::tape::tapeserver::client;
   using namespace cta::disk;
@@ -103,7 +103,7 @@ namespace unitTests{
       cta::threading::MutexLocker mutexLocker(m_mutex);
       return m_tapeThreadComplete && m_diskThreadComplete;
     }
-    
+
     MockRecallReportPacker(cta::RetrieveMount *rm,cta::log::LogContext lc):
      RecallReportPacker(rm,lc), completeJobs(0), failedJobs(0),
       endSessions(0), endSessionsWithError(0) {}
@@ -118,10 +118,10 @@ namespace unitTests{
 
   TEST(castor_tape_tapeserver_daemon, DiskWriteTaskFailedBlock){
     using ::testing::_;
-    
+
     cta::log::StringLogger log("dummy","castor_tape_tapeserver_daemon_DiskWriteTaskFailedBlock",cta::log::DEBUG);
     cta::log::LogContext lc(log);
-    
+
     std::unique_ptr<cta::SchedulerDatabase::RetrieveMount> dbrm(new TestingDatabaseRetrieveMount());
     std::unique_ptr<cta::catalogue::Catalogue> catalogue(new cta::catalogue::DummyCatalogue);
     TestingRetrieveMount trm(*catalogue, std::move(dbrm));
@@ -129,7 +129,7 @@ namespace unitTests{
     RecallMemoryManager mm(10,100,lc);
     cta::disk::RadosStriperPool striperPool;
     DiskFileFactory fileFactory(0, striperPool);
-    
+
     cta::MockRetrieveMount mrm(*catalogue);
     std::unique_ptr<TestingRetrieveJob> fileToRecall(new TestingRetrieveJob(mrm));
     fileToRecall->retrieveRequest.archiveFileID = 1;
@@ -151,7 +151,7 @@ namespace unitTests{
 
     t.pushDataBlock(mb);
     t.pushDataBlock(nullptr);
-    cta::tape::daemon::TapeserverProxyMock tspd;
+    ::testing::NiceMock<cta::tape::daemon::TapeserverProxyMock> tspd;
     cta::TapeMountDummy tmd;
     RecallWatchDog rwd(1,1,tspd,tmd,"", lc);
     t.execute(report,lc,fileFactory,rwd, 0);

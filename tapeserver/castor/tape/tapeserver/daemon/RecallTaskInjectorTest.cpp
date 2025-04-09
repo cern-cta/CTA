@@ -137,8 +137,8 @@ namespace unitTests
     void addDiskSystemToSkip(const cta::SchedulerDatabase::RetrieveMount::DiskSystemToSkip &diskSystemToSkip) override { throw std::runtime_error("Not implemented"); }
     void requeueJobBatch(std::list<std::unique_ptr<cta::SchedulerDatabase::RetrieveJob>>& jobBatch, cta::log::LogContext& logContext) override { throw std::runtime_error("Not implemented"); }
     void putQueueToSleep(const std::string &diskSystemName, const uint64_t sleepTime, cta::log::LogContext &logContext) override { throw std::runtime_error("Not implemented"); }
-    bool reserveDiskSpace(const cta::DiskSpaceReservationRequest &request, const std::string &externalFreeDiskSpaceScript, cta::log::LogContext& logContext) override { throw std::runtime_error("Not implemented"); } 
-    bool testReserveDiskSpace(const cta::DiskSpaceReservationRequest &request, const std::string &externalFreeDiskSpaceScript, cta::log::LogContext& logContext) override { throw std::runtime_error("Not implemented"); } 
+    bool reserveDiskSpace(const cta::DiskSpaceReservationRequest &request, const std::string &externalFreeDiskSpaceScript, cta::log::LogContext& logContext) override { throw std::runtime_error("Not implemented"); }
+    bool testReserveDiskSpace(const cta::DiskSpaceReservationRequest &request, const std::string &externalFreeDiskSpaceScript, cta::log::LogContext& logContext) override { throw std::runtime_error("Not implemented"); }
   };
 
   TEST_F(castor_tape_tapeserver_daemonTest, RecallTaskInjectorNominal) {
@@ -154,7 +154,7 @@ namespace unitTests
     trm.createRetrieveJobs(nbJobs);
     //EXPECT_CALL(trm, internalGetNextJob()).Times(nbJobs+1);
 
-    cta::tape::daemon::TapeserverProxyMock tspd;
+    ::testing::NiceMock<cta::tape::daemon::TapeserverProxyMock> tspd;
     cta::TapeMountDummy tmd;
     RecallWatchDog rwd(1,1,tspd,tmd,"",lc);
     std::unique_ptr<cta::SchedulerDatabase::RetrieveMount> dbrm(new TestingDatabaseRetrieveMount());
@@ -163,7 +163,7 @@ namespace unitTests
     cta::log::DummyLogger dummyLog("dummy","dummy");
     cta::mediachanger::RmcProxy rmcProxy;
     cta::mediachanger::MediaChangerFacade mc(rmcProxy, dummyLog);
-    cta::tape::daemon::TapeserverProxyMock initialProcess;
+    ::testing::NiceMock<cta::tape::daemon::TapeserverProxyMock> initialProcess;
     castor::tape::tapeserver::daemon::VolumeInfo volume;
     volume.vid="V12345";
     volume.mountType=cta::common::dataStructures::MountType::Retrieve;
@@ -220,7 +220,7 @@ namespace unitTests
     trm.createRetrieveJobs(0);
     //EXPECT_CALL(trm, internalGetNextJob()).Times(1); //no work: single call to getnextjob
 
-    cta::tape::daemon::TapeserverProxyMock tspd;
+    ::testing::NiceMock<cta::tape::daemon::TapeserverProxyMock> tspd;
     cta::TapeMountDummy tmd;
     RecallWatchDog rwd(1,1,tspd,tmd,"",lc);
     std::unique_ptr<cta::SchedulerDatabase::RetrieveMount> dbrm(new TestingDatabaseRetrieveMount());
@@ -229,7 +229,7 @@ namespace unitTests
     cta::log::DummyLogger dummyLog("dummy","dummy");
     cta::mediachanger::RmcProxy rmcProxy;
     cta::mediachanger::MediaChangerFacade mc(rmcProxy, dummyLog);
-    cta::tape::daemon::TapeserverProxyMock initialProcess;
+    ::testing::NiceMock<cta::tape::daemon::TapeserverProxyMock> initialProcess;
     castor::tape::tapeserver::daemon::VolumeInfo volume;
     volume.vid="V12345";
     volume.mountType=cta::common::dataStructures::MountType::Retrieve;
