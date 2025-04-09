@@ -19,18 +19,29 @@ include_directories(${CMAKE_BINARY_DIR}/eos_cta ${PROTOBUF3_INCLUDE_DIRS})
 
 include_directories(${CMAKE_SOURCE_DIR}/common/jwt-cpp/include/)
 
-add_executable(cta-frontend-grpc
-  Main.cpp
-  FrontendGrpcService.cpp
+include_directories(${CMAKE_SOURCE_DIR}/common/jwt-cpp/include/)
+
+# include stuff from the callback api here because we need to serve the streaming commands by registering their service class impl
+add_executable(cta-frontend-grpc Main.cpp FrontendGrpcService.cpp
   ../common/WorkflowEvent.cpp
   ../common/FrontendService.cpp
-  ../common/ValidateToken.cpp)
+  ../common/ValidateToken.cpp
+  ../common/AdminCmd.cpp
+  ../common/AdminCmdOptions.cpp
+  ${PROJECT_SOURCE_DIR}/cmdline/CtaAdminTextFormatter.cpp
+  ${PROJECT_SOURCE_DIR}/cmdline/CtaAdminCmdParser.cpp
+  ${PROJECT_SOURCE_DIR}/common/config/Config.cpp
+  RequestMessage.cpp
+  callback_api/CtaAdminServerWriteReactor.cpp) # This is needed for the Impl Class that serves the streaming commands
+# target_link_libraries(cta-frontend-grpc ProtoCtaFrontend)
 
 if(CTA_USE_PGSCHED)
   target_link_libraries(cta-frontend-grpc
+    ${GRPC_GRPC++_REFLECTION_LIBRARY}
     ctascheduler ctacommon ctacatalogue ctagrpc JwkCache)
 else()
   target_link_libraries(cta-frontend-grpc
+    ${GRPC_GRPC++_REFLECTION_LIBRARY}
     ctascheduler ctacommon ctaobjectstore ctacatalogue ctagrpc JwkCache)
 endif()
 
@@ -41,6 +52,33 @@ install (FILES cta-frontend-grpc.service DESTINATION etc/systemd/system)
 install (FILES cta-frontend-grpc.sysconfig DESTINATION /etc/sysconfig RENAME cta-frontend-grpc)
 install (FILES ${CMAKE_CURRENT_BINARY_DIR}/cta-frontend-grpc.1cta DESTINATION /usr/share/man/man1)
 install (FILES cta-frontend-grpc.conf.example DESTINATION ${CMAKE_INSTALL_SYSCONFDIR}/cta)
+
+##
+## cta-admin-grpc
+## Eventually this will be unified with the streaming commands implementation and renamed to cta-admin-grpc
+##
+include_directories(${XRD_SSI_PB_DIR}/eos_cta/include)
+
+# Compiled protocol buffers
+include_directories(${CMAKE_BINARY_DIR}/eos_cta ${PROTOBUF3_INCLUDE_DIRS})
+
+add_executable(cta-admin-grpc
+  CtaAdminGrpcCmd.cpp
+  ${PROJECT_SOURCE_DIR}/frontend/common/AdminCmd.cpp
+  ${PROJECT_SOURCE_DIR}/frontend/common/AdminCmdOptions.cpp
+  ${PROJECT_SOURCE_DIR}/cmdline/CtaAdminParsedCmd.cpp
+  ${PROJECT_SOURCE_DIR}/cmdline/CtaAdminTextFormatter.cpp
+  ${PROJECT_SOURCE_DIR}/cmdline/CtaAdminCmdParser.cpp
+)
+
+target_link_libraries(cta-admin-grpc
+  ctacommon stdc++fs ctatapedaemoncommon ctascheduler ctaobjectstore ctacatalogue ctagrpc
+)
+# if(CTA_USE_PGSCHED)
+#   target_link_libraries(cta-admin-grpc ctaobjectstore)
+# endif()
+set_property (TARGET cta-admin-grpc APPEND PROPERTY INSTALL_RPATH ${PROTOBUF3_RPATH})
+install(TARGETS cta-admin-grpc DESTINATION usr/bin)
 
 ##
 ## cta-frontend-grpc-stream-server
@@ -54,6 +92,7 @@ add_executable(cta-frontend-async-grpc
   ServerTapeLsRequestHandler.cpp
   ServerNegotiationRequestHandler.cpp
   RequestMessage.cpp
+  ${PROJECT_SOURCE_DIR}/frontend/common/AdminCmdOptions.cpp
   utils.cpp
   ${PROJECT_SOURCE_DIR}/cmdline/CtaAdminCmdParser.cpp
 )
@@ -70,8 +109,8 @@ endif()
 ## cta-frontend-grpc-stream-client
 ##
 
-add_executable(cta-admin-grpc
-  CtaAdminGrpcCmd.cpp
+add_executable(cta-admin-grpc-stream-client
+  CtaAdminGrpcCmdDeprecated.cpp
   ClientTapeLsRequestHandler.cpp
   ClientNegotiationRequestHandler.cpp
   utils.cpp
@@ -80,9 +119,11 @@ add_executable(cta-admin-grpc
 )
 
 if(CTA_USE_PGSCHED)
-  target_link_libraries(cta-admin-grpc
+  target_link_libraries(cta-admin-grpc-stream-client
           ctascheduler ctacommon ctatapedaemoncommon ctacatalogue gssapi_krb5 ctagrpc)
 else()
-  target_link_libraries(cta-admin-grpc
+  target_link_libraries(cta-admin-grpc-stream-client
           ctascheduler ctacommon ctatapedaemoncommon ctaobjectstore ctacatalogue gssapi_krb5 ctagrpc)
 endif()
+
+# add_subdirectory(callback_api)

@@ -172,10 +172,6 @@ frontend::Version AdminCmdStream::getClientVersion() const {
   return clientVersion;
 }
 
-bool AdminCmdStream::isStreamCmd(const admin::AdminCmd& adminCmd) {
-  return admin::streamCmds.count(std::make_pair(adminCmd.cmd(), adminCmd.subcmd())) > 0;
-}
-
 void AdminCmdStream::processAdmin_Ls(xrd::Response& response) {
   m_stream = new xrd::AdminLsStream(*this, m_catalogue, m_scheduler);
 
@@ -214,9 +210,7 @@ void AdminCmdStream::processGroupMountRule_Ls(xrd::Response& response) {
 }
 
 void AdminCmdStream::processLogicalLibrary_Ls(xrd::Response& response) {
-  const auto disabled = getOptional(admin::OptionBoolean::DISABLED);
-
-  m_stream = new xrd::LogicalLibraryLsStream(*this, m_catalogue, m_scheduler, disabled);
+  m_stream = new xrd::LogicalLibraryLsStream(*this, m_catalogue, m_scheduler);
 
   response.set_show_header(admin::HeaderType::LOGICALLIBRARY_LS);
   response.set_type(xrd::Response::RSP_SUCCESS);
@@ -244,9 +238,7 @@ void AdminCmdStream::processMountPolicy_Ls(xrd::Response& response) {
 }
 
 void AdminCmdStream::processRepack_Ls(xrd::Response& response) {
-  auto vid = getOptional(admin::OptionString::VID);
-
-  m_stream = new xrd::RepackLsStream(*this, m_scheduler, m_catalogue, vid);
+  m_stream = new xrd::RepackLsStream(*this, m_catalogue, m_scheduler);
 
   response.set_show_header(admin::HeaderType::REPACK_LS);
   response.set_type(xrd::Response::RSP_SUCCESS);
@@ -274,9 +266,7 @@ void AdminCmdStream::processShowQueues(xrd::Response& response) {
 }
 
 void AdminCmdStream::processStorageClass_Ls(xrd::Response& response) {
-  std::optional<std::string> scn = getOptional(admin::OptionString::STORAGE_CLASS);
-
-  m_stream = new xrd::StorageClassLsStream(*this, m_catalogue, m_scheduler, scn);
+  m_stream = new xrd::StorageClassLsStream(*this, m_catalogue, m_scheduler);
 
   response.set_show_header(admin::HeaderType::STORAGECLASS_LS);
   response.set_type(xrd::Response::RSP_SUCCESS);
