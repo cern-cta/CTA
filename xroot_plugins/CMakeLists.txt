@@ -40,7 +40,8 @@ add_library(XrdSsiCta MODULE XrdSsiCtaServiceProvider.cpp XrdSsiCtaRequestProc.c
                              ../common/config/Config.cpp
                              ../frontend/common/FrontendService.cpp
                              ../frontend/common/WorkflowEvent.cpp
-                             ../frontend/common/AdminCmd.cpp)
+                             ../frontend/common/AdminCmd.cpp
+                             ../frontend/common/AdminCmdOptions.cpp)
 if(CTA_USE_PGSCHED)
   target_link_libraries(XrdSsiCta ${XROOTD_XRDSSI_LIB} XrdSsiLib ctascheduler ctacommon ctacatalogue)
 else()

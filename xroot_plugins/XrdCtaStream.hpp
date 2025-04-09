@@ -20,6 +20,8 @@
 #include <XrdSsiPbOStreamBuffer.hpp>
 #include <catalogue/Catalogue.hpp>
 #include <scheduler/Scheduler.hpp>
+#include "cmdline/CtaAdminResponseStream.hpp"
+#include "AdminCmdStream.hpp"
 
 
 
@@ -102,16 +104,47 @@ private:
   /*!
    * Returns true if there is nothing more to send (i.e. we can close the stream)
    */
-  virtual bool isDone() const = 0;
+  virtual bool isDone() const { return m_stream ? m_stream->isDone() : true; }
 
   /*!
    * Fills the stream buffer
    */
-  virtual int fillBuffer(XrdSsiPb::OStreamBuffer<Data> *streambuf) = 0;
+  virtual int fillBuffer(XrdSsiPb::OStreamBuffer<Data> *streambuf) {
+    if (!m_stream) return 0;
+    
+    for (bool is_buffer_full = false; !m_stream->isDone() && !is_buffer_full;) {
+      Data record = m_stream->next();
+      // is_buffer_full is set to true when we have one full block of data in the buffer, i.e.
+      // enough data to send to the client. The actual buffer size is double the block size,
+      // so we can keep writing a few additional records after is_buffer_full is true. These
+      // will be sent on the next iteration. If we exceed the hard limit of double the block
+      // size, Push() will throw an exception.
+      is_buffer_full = streambuf->Push(record);
+    }
+    return streambuf->Size();
+  }
 
 protected:
   cta::catalogue::Catalogue &m_catalogue;    //!< Reference to CTA Catalogue
   cta::Scheduler            &m_scheduler;    //!< Reference to CTA Scheduler
+  std::unique_ptr<cta::cmdline::CtaAdminResponseStream> m_stream;  //!< Response stream
+
+  // Template factory method to initialize any ResponseStream type
+  template<typename ResponseStreamType, typename... Args>
+  void initializeStream(const frontend::AdminCmdStream& requestMsg, 
+                       const char* logSuffix,
+                       Args&&... args) {
+    XrdSsiPb::Log::Msg(XrdSsiPb::Log::DEBUG, logSuffix, " constructor");
+    
+    try {
+        m_stream = std::make_unique<ResponseStreamType>(
+            m_catalogue, m_scheduler, requestMsg.getInstanceName(), 
+            std::forward<Args>(args)...);
+        m_stream->init(requestMsg.getAdminCmd());
+    } catch (const std::exception& ex) {
+        throw exception::UserError(ex.what());
+    }
+  }
 
 private:
   static constexpr const char* const LOG_SUFFIX  = "XrdCtaStream";    //!< Identifier for log messages

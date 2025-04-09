@@ -17,77 +17,30 @@
 
 #pragma once
 
-#include "common/dataStructures/RequesterMountRule.hpp"
-#include "xroot_plugins/XrdCtaStream.hpp"
+#include "XrdCtaStream.hpp"
+#include "cmdline/RequesterMountRuleLsResponseStream.hpp"
 
 namespace cta::xrd {
 
-/*!
- * Stream object which implements "tapepool ls" command
- */
-class RequesterMountRuleLsStream: public XrdCtaStream{
+class RequesterMountRuleLsStream : public XrdCtaStream {
 public:
-  /*!
-   * Constructor
-   *
-   * @param[in]    requestMsg    RequestMessage containing command-line arguments
-   * @param[in]    catalogue     CTA Catalogue
-   * @param[in]    scheduler     CTA Scheduler
-   */
-  RequesterMountRuleLsStream(const frontend::AdminCmdStream& requestMsg, cta::catalogue::Catalogue &catalogue, cta::Scheduler &scheduler);
+    RequesterMountRuleLsStream(const frontend::AdminCmdStream& requestMsg, 
+                               cta::catalogue::Catalogue& catalogue, 
+                               cta::Scheduler& scheduler);
 
 private:
-  /*!
-   * Can we close the stream?
-   */
-  virtual bool isDone() const {
-    return m_requesterMountRuleList.empty();
-  }
-
-  /*!
-   * Fill the buffer
-   */
-  virtual int fillBuffer(XrdSsiPb::OStreamBuffer<Data> *streambuf);
-
-  std::list<cta::common::dataStructures::RequesterMountRule> m_requesterMountRuleList;    //!< List of requester mount rules from the catalogue
-  const std::string m_instanceName;
-
-  static constexpr const char* const LOG_SUFFIX  = "RequesterMountRuleLsStream";          //!< Identifier for log messages
+    
+    static constexpr const char* const LOG_SUFFIX = "RequesterMountRuleLsStream";
 };
 
 
-RequesterMountRuleLsStream::RequesterMountRuleLsStream(const frontend::AdminCmdStream& requestMsg, cta::catalogue::Catalogue &catalogue, cta::Scheduler &scheduler) :
-  XrdCtaStream(catalogue, scheduler),
-  m_requesterMountRuleList(catalogue.RequesterMountRule()->getRequesterMountRules()),
-  m_instanceName(requestMsg.getInstanceName())
+RequesterMountRuleLsStream::RequesterMountRuleLsStream(const frontend::AdminCmdStream& requestMsg, 
+                                                       cta::catalogue::Catalogue& catalogue, 
+                                                       cta::Scheduler& scheduler) :
+  XrdCtaStream(catalogue, scheduler)
 {
-  using namespace cta::admin;
-
-  XrdSsiPb::Log::Msg(XrdSsiPb::Log::DEBUG, LOG_SUFFIX, "RequesterMountRuleLsStream() constructor");
+    initializeStream<cta::cmdline::RequesterMountRuleLsResponseStream>(requestMsg, LOG_SUFFIX);
 }
 
-int RequesterMountRuleLsStream::fillBuffer(XrdSsiPb::OStreamBuffer<Data> *streambuf) {
-  for(bool is_buffer_full = false; !m_requesterMountRuleList.empty() && !is_buffer_full; m_requesterMountRuleList.pop_front()) {
-    Data record;
-
-    auto &rmr      = m_requesterMountRuleList.front();
-    auto  rmr_item = record.mutable_rmrls_item();
-
-    rmr_item->set_instance_name(m_instanceName);
-    rmr_item->set_disk_instance(rmr.diskInstance);
-    rmr_item->set_requester_mount_rule(rmr.name);
-    rmr_item->set_mount_policy(rmr.mountPolicy);
-    rmr_item->mutable_creation_log()->set_username(rmr.creationLog.username);
-    rmr_item->mutable_creation_log()->set_host(rmr.creationLog.host);
-    rmr_item->mutable_creation_log()->set_time(rmr.creationLog.time);
-    rmr_item->mutable_last_modification_log()->set_username(rmr.lastModificationLog.username);
-    rmr_item->mutable_last_modification_log()->set_host(rmr.lastModificationLog.host);
-    rmr_item->mutable_last_modification_log()->set_time(rmr.lastModificationLog.time);
-    rmr_item->set_comment(rmr.comment);
-
-    is_buffer_full = streambuf->Push(record);
-  }
-  return streambuf->Size();
-}
 
 } // namespace cta::xrd

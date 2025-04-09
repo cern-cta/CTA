@@ -35,6 +35,10 @@
 
 #include <getopt.h>
 #include <fstream>
+#include "callback_api/CtaAdminServer.hpp" // for the impl of the streaming service
+#include <grpcpp/ext/proto_server_reflection_plugin.h>
+
+// #include <grpc++/reflection.h>
 #include <thread>
 #include <future>
 
@@ -211,6 +215,8 @@ int main(const int argc, char *const *const argv) {
 
     // enable health checking, needed by CI
     grpc::EnableDefaultHealthCheckService(true);
+    // add reflection
+    grpc::reflection::InitProtoReflectionServerBuilderPlugin();
     // Listen on the given address without any authentication mechanism.
     builder.AddListeningPort(server_address, creds);
 
@@ -223,7 +229,16 @@ int main(const int argc, char *const *const argv) {
     // Register "service" as the instance through which we'll communicate with
     // clients. In this case it corresponds to an *synchronous* service.
     builder.RegisterService(&svc);
-
+    frontend::grpc::CtaRpcStreamImpl streamSvc(svc.getFrontendService().getCatalogue(),
+                                               svc.getFrontendService().getScheduler(),
+                                               svc.getFrontendService().getSchedDb(),
+                                               svc.getFrontendService().getCatalogueConnString(),
+                                               svc.getFrontendService().getInstanceName(),
+                                               svc.getFrontendService().getMissingFileCopiesMinAgeSecs(),
+                                               svc.getFrontendService().getLogContext());
+    builder.RegisterService(&streamSvc);
+    // add reflection
+    // grpc::reflection::InitProtoReflectionServerBuilderPlugin();
     std::unique_ptr <Server> server(builder.BuildAndStart());
 
     lc.log(cta::log::INFO, "Listening on socket address: " + server_address);
