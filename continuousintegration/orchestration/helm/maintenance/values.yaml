@@ -1,11 +1,5 @@
 # If required, the user can specify a custom image here
-image:
-component: maintenance
-partOf: cta
-nameOverride: cta-maintenance
 isPrivileged: true
-
-terminationGracePeriodSeconds: 1 # This is low on purpose as the current process has no gracefull shutdown process
 
 conf:
   maintenance:
@@ -19,11 +13,12 @@ conf:
   general:
     instanceName: "CI"
 
-maintenance:
-  resources:
-    requests:
-      memory: "256Mi"
-      ephemeral-storage: "1Gi"
-    limits:
-      memory: "4Gi"
-      ephemeral-storage: "8Gi"
+pod:
+  extraSpec:
+    terminationGracePeriodSeconds: 1
+
+extraEnv:
+
+extraVolumes:
+  volumes:
+  volumeMounts:
