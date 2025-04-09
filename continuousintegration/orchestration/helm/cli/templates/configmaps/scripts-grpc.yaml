@@ -1,0 +1,7 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: scripts-ctacli-grpc
+data:
+  ctacli-grpc.sh: |
+    {{ .Files.Get "scripts/ctacli-grpc.sh" | nindent 4 }}

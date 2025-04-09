@@ -28,6 +28,18 @@
  * Validate the storage class and issue the archive ID which should be used for the Archive request
  */
 
+//------------------------------------------------------------------------------
+// getUsername
+//------------------------------------------------------------------------------
+static std::string getUsername() {
+  char buf[256];
+
+  if (getlogin_r(buf, sizeof(buf)) != 0) {
+    return "UNKNOWN";
+  }
+  return std::string(buf);
+}
+
 namespace cta::frontend::grpc {
 
 Status
@@ -210,6 +222,52 @@ Status CtaRpcImpl::CancelRetrieve(::grpc::ServerContext* context,
 
   // field verification done, now try to call the process method
   return ProcessGrpcRequest(request, response, lc);
+}
+
+// Admin command should be implemented here
+// this function can throw, maybe it shouldn't??
+Status CtaRpcImpl::Admin(::grpc::ServerContext* context, const cta::xrd::Request* request, cta::xrd::Response* response) {
+  cta::log::LogContext lc(m_frontendService->getLogContext());
+  cta::log::ScopedParamContainer sp(lc);
+
+  sp.add("remoteHost", context->peer());
+
+  lc.log(cta::log::DEBUG, "CTA-Admin non-streaming command");
+  // sp.add("request", "admin");
+  // process the admin command
+  // create a securityIdentity cli_Identity
+  try {
+    // for this one here we need to fill in the admin username, otherwise we'll get an SQL error
+    // cta::common::dataStructures::SecurityIdentity clientIdentity(getUsername(), getHostname()); /* username, hostname */
+    cta::common::dataStructures::SecurityIdentity clientIdentity(getUsername(), cta::utils::getShortHostname()); /* username, hostname */
+    cta::frontend::AdminCmd adminCmd(*m_frontendService, clientIdentity, request->admincmd(), false);
+    *response = adminCmd.process(); // success response code will be set in here if processing goes well
+  } catch (cta::exception::PbException &ex) {
+    lc.log(cta::log::ERR, ex.getMessageValue());
+    response->set_type(cta::xrd::Response::RSP_ERR_PROTOBUF);
+    response->set_message_txt(ex.getMessageValue());
+    return ::grpc::Status(::grpc::StatusCode::INVALID_ARGUMENT, ex.getMessageValue());
+  } catch (cta::exception::UserError &ex) {
+    lc.log(cta::log::ERR, ex.getMessageValue());
+    response->set_type(cta::xrd::Response::RSP_ERR_USER);
+    response->set_message_txt(ex.getMessageValue());
+    return ::grpc::Status(::grpc::StatusCode::ABORTED, ex.getMessageValue());
+  } catch (cta::exception::Exception &ex) {
+    lc.log(cta::log::ERR, ex.getMessageValue());
+    response->set_type(cta::xrd::Response::RSP_ERR_CTA);
+    response->set_message_txt(ex.getMessageValue());
+    return ::grpc::Status(::grpc::StatusCode::FAILED_PRECONDITION, ex.getMessageValue());
+  } catch (std::runtime_error &ex) {
+    lc.log(cta::log::ERR, ex.what());
+    response->set_type(cta::xrd::Response::RSP_ERR_CTA);
+    response->set_message_txt(ex.what());
+    return ::grpc::Status(::grpc::StatusCode::FAILED_PRECONDITION, ex.what());
+  } catch (...) {
+    response->set_type(cta::xrd::Response::RSP_ERR_CTA);
+    return ::grpc::Status(::grpc::StatusCode::FAILED_PRECONDITION, "Error processing gRPC Admin request");
+  }
+
+  return Status::OK;
 }
 
 /* initialize the frontend service

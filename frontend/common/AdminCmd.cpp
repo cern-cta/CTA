@@ -28,7 +28,7 @@ namespace cta::frontend {
 
 AdminCmd::AdminCmd(const frontend::FrontendService& frontendService,
   const common::dataStructures::SecurityIdentity& clientIdentity,
-  const admin::AdminCmd& adminCmd) :
+  const admin::AdminCmd& adminCmd, const bool check_authorized) :
   m_adminCmd(adminCmd),
   m_catalogue(frontendService.getCatalogue()),
   m_scheduler(frontendService.getScheduler()),
@@ -43,7 +43,8 @@ AdminCmd::AdminCmd(const frontend::FrontendService& frontendService,
   m_lc.pushOrReplace({"user", m_cliIdentity.username + "@" + m_cliIdentity.host});
 
   // Check that the user is authorized
-  m_scheduler.authorizeAdmin(m_cliIdentity, m_lc);
+  if (check_authorized)
+    m_scheduler.authorizeAdmin(m_cliIdentity, m_lc);
 
   // Validate the Protocol Buffer and import options into maps
   importOptions();
