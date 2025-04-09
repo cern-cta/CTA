@@ -68,7 +68,6 @@ public:
   void garbageCollect(const std::string &presumedOwner, AgentReference & agentReference, log::LogContext & lc,
     cta::catalogue::Catalogue & catalogue) override;
 
-private:
   void addToOwnership(const std::string& name);
 
   void removeFromOwnership(const std::string &name);
