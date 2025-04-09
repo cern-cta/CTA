@@ -1,11 +1,10 @@
-{{- $namespace := .Release.Namespace }}
-{{- $name := include "maintenance.name" . }}
+{{- $name := include "ctamaintenance.fullname" . }}
 {{- $schedulerConfig := include "scheduler.config" . | fromYaml -}}
 apiVersion: apps/v1
 kind: StatefulSet
 metadata:
   name: {{ $name }}
-  namespace: {{ $namespace | quote }}
+  namespace: {{ .Release.Namespace | quote }}
   labels:
     {{- include "common.labels.standard" $ | nindent 4 }}
 spec:
@@ -19,13 +18,14 @@ spec:
       labels:
         app.kubernetes.io/name: {{ $name }}
         {{- include "common.labels.withoutname" $ | nindent 8 }}
-      annotations:
-        catalogue-schema-version: {{ $.Values.global.catalogueSchemaVersion | quote }}
     spec:
       restartPolicy: Always
       terminationGracePeriodSeconds: {{ $.Values.terminationGracePeriodSeconds }}
       imagePullSecrets:
       {{- include "maintenance.imagePullSecrets" $ | nindent 6 }}
+      {{- if .Values.pod.extraSpec }}
+      {{ .Values.pod.extraSpec | toYaml | nindent 6 }}
+      {{- end }}
       initContainers:
       - name: init1-fix-sss-keytab-ownership
         image: {{ include "common.images.busybox" . }}
@@ -58,16 +58,17 @@ spec:
           successThreshold: 1
           failureThreshold: 60
         securityContext:
-          privileged: {{ .Values.isPrivileged }}
+          allowPrivilegeEscalation: {{ include "common.securityContext.allowPrivilegeEscalation" . }}
+          privileged: {{ include "common.securityContext.privileged" . }}
           capabilities:
             add: ["CAP_SYS_PTRACE"]
         env:
         - name: MY_NAME
           value: {{ $name }}
         - name: MY_NAMESPACE
-          value: {{ $namespace | quote }}
+          value: {{ .Release.Namespace | quote }}
         - name: INSTANCE_NAME
-          value: {{ $namespace | quote }}
+          value: {{ .Release.Namespace | quote }}
         - name: TERM
           value: "xterm"
         - name: SCHEDULER_BACKEND
@@ -104,6 +105,7 @@ spec:
         {{- if $.Values.global.volumeMounts }}
         {{ $.Values.global.volumeMounts | toYaml | nindent 8 }}
         {{- end }}
+        {{ include "common.extraVolumeMounts" . | nindent 8 }}
       volumes:
       - name: scripts-volume
         configMap:
@@ -137,3 +139,4 @@ spec:
       {{- if $.Values.global.volumes }}
       {{ $.Values.global.volumes | toYaml | nindent 6 }}
       {{- end }}
+      {{ include "common.extraVolumes" . | nindent 6 }}

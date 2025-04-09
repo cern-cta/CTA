@@ -1,5 +1,5 @@
-{{- define "maintenance.name" -}}
-  {{ include "common.names.name" . }}
+{{- define "ctamaintenance.fullname" -}}
+  {{ include "common.names.fullname" . }}
 {{- end }}
 
 {{- define "maintenance.image" -}}
