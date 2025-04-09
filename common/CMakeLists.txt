@@ -127,7 +127,9 @@ set (COMMON_LIB_SRC_FILES
   remoteFS/RemotePathAndStatus.cpp
   SourcedParameter.cpp
   threading/CondVar.cpp
-  threading/Daemon.cpp
+  threading/OldDaemon.cpp
+#  threading/daemon/Daemon.cpp
+#  threading/daemon/SystemdDaemon.cpp
   threading/Mutex.cpp
   threading/RWLock.cpp
   threading/RWLockRdLocker.cpp

@@ -47,6 +47,11 @@ public:
    */
   virtual ~Daemon() = default;
 
+  /**
+   * Returns true if the daemon is configured to run in the foreground.
+   */
+  bool getForeground() const;
+
 protected:
 
   /**
@@ -60,11 +65,35 @@ protected:
   void setCommandLineHasBeenParsed(const bool foreground) noexcept;
 
   /**
+   * Daemonizes the daemon if it has not been configured to run in the
+   * foreground.
+   *
+   * Please make sure that the setForeground() method has been called as
+   * appropriate before this method is called.
+   *
+   * This method takes into account whether or not the daemon should run in
+   * foregreound or background mode (m_foreground).
+   */
+  void daemonizeIfNotRunInForeground();
+
+  /**
    * Object representing the API of the CTA logging system.
    */
   cta::log::Logger &m_log;
 
 private:
+
+
+  /**
+   * Flag indicating whether the server should run in foreground or background
+   * mode.
+   */
+  bool m_foreground;
+
+  /**
+   * True if the command-line has been parsed.
+   */
+  bool m_commandLineHasBeenParsed;
 
 
 }; // class Daemon

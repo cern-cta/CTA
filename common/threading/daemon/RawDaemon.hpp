@@ -15,23 +15,12 @@
  *               submit itself to any jurisdiction.
  */
 
-#include <systemd/sd-daemon.h>
+#pragma once
 
-#include "common/exception/Errnum.hpp"
-#include "common/threading/Daemon.hpp"
-#include <getopt.h>
+namespace cta::server::daemon {
+class RawDaemon : Daemon {
 
-#include <signal.h>
-#include <stdio.h>
-#include <unistd.h>
-#include <sys/stat.h>
 
-//------------------------------------------------------------------------------
-// constructor
-//------------------------------------------------------------------------------
-cta::server::Daemon::Daemon(cta::log::Logger &log) noexcept :
-  m_log(log),
-  m_foreground(false),
-  m_commandLineHasBeenParsed(false) {
-}
 
+} // class RawDaemon
+} // namespace cta::server:daemon
