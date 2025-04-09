@@ -1,3 +1,15 @@
+## 5.11.7.0-1
+
+### Bug Fixes
+
+- cta/CTA#1106 - Fix Regex copy constructor not initialising properly
+- cta/CTA#1132 - Ensure backward compatibility of CTA frontend config
+- cta/CTA#1131 - Update SecurityIdentity in gRPC workflowEvent construction to use correct name
+
+### Maintenance
+
+- Bump EOS version to 5.3.10
+
 ## 5.11.6.0-1
 
 ### Features
