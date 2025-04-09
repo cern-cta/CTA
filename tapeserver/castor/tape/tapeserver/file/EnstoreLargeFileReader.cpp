@@ -75,6 +75,17 @@ void EnstoreLargeFileReader::setBlockSize(const UHL1& uhl1) {  // Could inherit
   }
 }
 
+
+void EnstoreLargeFileReader::setTargetFileSize(const UHL2& uhl2) {  // Could inherit
+  bytes_to_read = static_cast<size_t>(atol(uhl2.getTargetFileSize().c_str()));
+  if (bytes_to_read < 1) {
+    std::ostringstream ex_str;
+    ex_str << std::string(__FUNCTION__) << ": "
+           << "Invalid file size in uhl2 detected";
+    throw TapeFormatError(ex_str.str());
+  }
+}
+
 size_t EnstoreLargeFileReader::readNextDataBlock(void* data, const size_t size) {
   if (size != m_currentBlockSize) {
     throw WrongBlockSize();
@@ -160,6 +171,7 @@ void EnstoreLargeFileReader::checkHeaders(const cta::RetrieveJob& fileToRecall) 
   HDR1 hdr1;
   HDR2 hdr2;
   UHL1 uhl1;
+  UHL2 uhl2;
 
   if (bytes_read < sizeof(hdr1) + sizeof(hdr2) + sizeof(uhl1)) {
     throw cta::exception::Exception(std::string(__FUNCTION__) +
@@ -168,6 +180,7 @@ void EnstoreLargeFileReader::checkHeaders(const cta::RetrieveJob& fileToRecall) 
   memcpy(&hdr1, data, sizeof(hdr1));
   memcpy(&hdr2, data + sizeof(hdr1), sizeof(hdr1));
   memcpy(&uhl1, data + sizeof(hdr1) + sizeof(hdr2), sizeof(uhl1));
+  memcpy(&uhl2, data + sizeof(hdr1) + sizeof(hdr2) + sizeof(uhl1), sizeof(uhl2));
   delete[] data;
 
   m_session.m_drive.readFileMark(std::string(__FUNCTION__) + ": " + "Reading file mark at the end of file header");
@@ -180,6 +193,7 @@ void EnstoreLargeFileReader::checkHeaders(const cta::RetrieveJob& fileToRecall) 
     hdr1.verify(true);  // Skip certain field where enstore and CTA don't match
     hdr2.verify("D");  
     uhl1.verify();
+    uhl2.verify();
   }
   catch (std::exception& e) {
     throw TapeFormatError(e.what());
@@ -188,6 +202,7 @@ void EnstoreLargeFileReader::checkHeaders(const cta::RetrieveJob& fileToRecall) 
   // This differs from CTA checkHeaders in that none of the checks in checkHDR1 or checkUHL1
   // works for these Enstore tapes. We skip this entirely but get the block size out of UHL1
   setBlockSize(uhl1);
+  setTargetFileSize(uhl2);
 }
 
 }  // namespace castor::tape::tapeFile
