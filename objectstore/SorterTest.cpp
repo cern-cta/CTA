@@ -25,7 +25,6 @@
 #include "common/log/DummyLogger.hpp"
 #include "tests/TestsCompileTimeSwitches.hpp"
 #include "common/log/StdoutLogger.hpp"
-#include "GarbageCollector.hpp"
 #include "RootEntry.hpp"
 #include "Agent.hpp"
 #include "AgentReference.hpp"

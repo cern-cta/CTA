@@ -25,6 +25,8 @@
 #include "objectstore/GenericObject.hpp"
 #include "objectstore/Sorter.hpp"
 
+
+
 /**
  * Plan => Garbage collector keeps track of the agents.
  * If an agent is declared dead => take ownership of owned objects
@@ -35,8 +37,8 @@
 
 namespace cta::maintenance {
 
-class objectstore::ArchiveRequest;
-class objectstore::RetrieveRequest;
+//class objectstore::ArchiveRequest;
+//class objectstore::RetrieveRequest;
 
 class GarbageCollector {
 public:
@@ -75,7 +77,7 @@ public:
         cta::catalogue::Catalogue & catalogue, log::LogContext & lc);
 
   private:
-    std::string dispatchArchiveAlgorithms(std::list<std::shared_ptr<ArchiveRequest>> &jobs,const common::dataStructures::JobQueueType& jobQueueType, const std::string& containerIdentifier,
+    std::string dispatchArchiveAlgorithms(std::list<std::shared_ptr<objectstore::ArchiveRequest>> &jobs,const common::dataStructures::JobQueueType& jobQueueType, const std::string& containerIdentifier,
         const std::string& tapepool,std::set<std::string> & jobsIndividuallyGCed,
         objectstore::Agent& agent, objectstore::AgentReference& agentReference, objectstore::Backend & objectstore, log::LogContext &lc);
 

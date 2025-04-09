@@ -95,6 +95,7 @@ if(NOT CTA_USE_PGSCHED)
     SchedulerDatabaseFactory.cpp
     SchedulerDatabaseTest.cpp
     SchedulerTest.cpp
+    ../maintenance/osrunners/GarbageCollector.cpp
     OStoreDB/OStoreDBTest.cpp)
 else()
   add_library (ctaschedulerunittests SHARED
