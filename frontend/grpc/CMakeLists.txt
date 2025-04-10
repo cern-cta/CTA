@@ -58,6 +58,7 @@ install (FILES cta-frontend-grpc.conf.example DESTINATION ${CMAKE_INSTALL_SYSCON
 add_executable(cta-admin-grpc-nonstream
   CtaAdminCmdNonStreaming.cpp
   ${PROJECT_SOURCE_DIR}/frontend/common/AdminCmd.cpp
+  ${PROJECT_SOURCE_DIR}/cmdline/CtaAdminCmd.cpp
   ${PROJECT_SOURCE_DIR}/cmdline/CtaAdminTextFormatter.cpp
   ${PROJECT_SOURCE_DIR}/cmdline/CtaAdminCmdParse.cpp
 )

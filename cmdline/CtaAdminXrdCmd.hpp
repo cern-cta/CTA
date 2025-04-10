@@ -17,30 +17,27 @@
 
 #pragma once
 
-#include "cmdline/CtaAdminCmd.hpp"
 #include "version.h"
-#include <grpcpp/grpcpp.h>
-// #include <grpcpp/resource_quota.h>
-// #include <grpcpp/security/server_credentials.h>
-
-// #include <scheduler/Scheduler.hpp> // what happens if I skip this?
-// #include "common/log/Logger.hpp"
-#include "cta_frontend.pb.h"
-#include "cta_frontend.grpc.pb.h"
+#include "CtaAdminCmd.hpp"
 
 namespace cta::admin {
 
-class CtaAdminCmdNonStreaming : public CtaAdminCmd
+class CtaAdminXrdCmd : public CtaAdminCmd
 {
 public:
-   CtaAdminCmdNonStreaming(int argc, const char *const *const argv);
+   CtaAdminXrdCmd(int argc, const char *const *const argv);
 
    //! Send the protocol buffer across the XRootD SSI transport
-   virtual void send() const override;
+   void send() const override;
 
 private:
+   // Member variables
 
-   static constexpr const char* const LOG_SUFFIX  = "CtaAdminCmdNonStreaming";    //!< Identifier for log messages
+   const std::string StreamBufferSize      = "1024";                  //!< Buffer size for Data/Stream Responses
+   const std::string DefaultRequestTimeout = "10";                    //!< Default Request Timeout. Can be overridden by
+                                                                      //!< XRD_REQUESTTIMEOUT environment variable.
+
+   static constexpr const char* const LOG_SUFFIX  = "CtaAdminXrdCmd";    //!< Identifier for log messages
 };
 
 } // namespace cta::admin
