@@ -1,3 +1,9 @@
+## v5.11.2.2-1
+
+### Bug Fixes
+
+- cta/#1138 - Fix Enstore file reader not correctly dealing with padded files
+
 ## v5.11.2.1-1
 
 ### Bug Fixes
@@ -39,7 +45,7 @@
 - cta/#937 - Increase default resource limits on Helm setup
 - cta/#945 - Adding template for CTA log parameter issues
 - cta/#948 - Update delete_instance.sh so that it does not rely on a central log mount
-- cta/#954 - Further clean-up and performance improvements to the Helm setup 
+- cta/#954 - Further clean-up and performance improvements to the Helm setup
 - cta/#956 - Resolve "Add missing documentation on `archiveroutetype`"
 - cta/#961 - Replace usage of strlen in CmdLineTool.cpp
 - cta/#963 - Replace leftover yum-plugin-versionlock with python3-dnf-plugin-versionlock
