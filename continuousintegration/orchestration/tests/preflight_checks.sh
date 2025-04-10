@@ -50,7 +50,7 @@ FLIGHTTEST_RC=0 # flighttest return code
 EOS_MGM_POD="eos-mgm-0"
 
 echo "Running preflight checks on the following eos version:"
-kubectl -n ${NAMESPACE} exec ${EOS_MGM_POD} -- eos version
+kubectl -n ${NAMESPACE} exec ${EOS_MGM_POD} -c eos-mgm -- eos version
 echo
 
 
