@@ -493,6 +493,31 @@ namespace castor::tape::tapeFile {
            << std::setfill('0') << std::setw(3) << (localTime.tm_yday + 1);
       const std::string str = buff.str();
       std::copy(str.begin(), str.end(), t);
-    }
+    };
+
+    class UHL2 {
+    public:
+
+      UHL2() {
+        spaceStruct(this);
+      }
+    protected:
+      char m_label[4];              // The characters UHL2
+      char m_unknown[60];           // Unused fields
+      char m_actualFileSize[14];    // The actual size of the file to be read
+      char m_reserved[2];           // Spaces
+      /**
+       * We don't write UHL2; no need for other functions
+       */
+
+    public:
+      void verify() const ;
+      /**
+       * @return    The size of the file we want to read
+       */
+      inline std::string getTargetFileSize() const {
+        return toString(m_actualFileSize);
+      }
+    };
 
 } // namespace castor::tape::tapeFile

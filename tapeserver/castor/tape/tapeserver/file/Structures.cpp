@@ -353,3 +353,9 @@ void tapeFile::UTL1::verify() const  {
   verifyCommon();
 }
 
+void tapeFile::UHL2::verify() const  {
+  if (cmpString(m_label, "UHL2"))
+    throw cta::exception::Exception(std::string("Failed verify for the UHL2: ") +
+          tapeFile::toString(m_label));
+}
+

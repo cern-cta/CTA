@@ -26,6 +26,7 @@
 namespace castor::tape::tapeFile {
 
 class UHL1;
+class UHL2;
 
 class EnstoreLargeFileReader : public FileReader {
 public:
@@ -48,11 +49,15 @@ public:
 
   size_t readNextDataBlock(void* data, const size_t size) override;
 
+protected:
+  uint64_t bytes_to_read;
+
 private:
   void setPositioningMethod(const cta::PositioningMethod& newMethod);
   void positionByFseq(const cta::RetrieveJob& fileToRecall) override;
   void positionByBlockID(const cta::RetrieveJob& fileToRecall) override;
   void setBlockSize(const UHL1& uhl1);
+  void setTargetFileSize(const UHL2& uhl2);
   void moveToFirstHeaderBlock();  // Not implemented
   void moveReaderByFSeqDelta(const int64_t fSeq_delta);
   void checkHeaders(const cta::RetrieveJob& fileToRecall);
