@@ -23,7 +23,6 @@ include_directories(${PROTOBUF3_INCLUDE_DIRS})
 # depends on CTA_EOS definitions
 include_directories(${CMAKE_BINARY_DIR}/eos_cta ${PROTOBUF3_INCLUDE_DIRS})
 
-## need AdminCmd here because 
 add_executable(cta-frontend-grpc Main.cpp FrontendGrpcService.cpp
   ../common/WorkflowEvent.cpp
   ../common/FrontendService.cpp
@@ -31,7 +30,6 @@ add_executable(cta-frontend-grpc Main.cpp FrontendGrpcService.cpp
   ../common/AdminCmd.cpp
   ${PROJECT_SOURCE_DIR}/cmdline/CtaAdminTextFormatter.cpp
   ${PROJECT_SOURCE_DIR}/cmdline/CtaAdminCmdParse.cpp
-  # ${PROJECT_SOURCE_DIR}/common/CmdLineTool.cpp
 )
 target_link_libraries(cta-frontend-grpc ProtoCtaFrontend)
 
@@ -54,6 +52,8 @@ install (FILES cta-frontend-grpc.conf.example DESTINATION ${CMAKE_INSTALL_SYSCON
 
 ##
 ## cta-admin-grpc-nonstream
+## Eventually this will be unified with the streaming commands implementation and renamed to cta-admin-grpc
+## (What is currently called cta-admin-grpc is not used by us or dCache)
 ##
 add_executable(cta-admin-grpc-nonstream
   CtaAdminCmdNonStreaming.cpp
@@ -63,7 +63,6 @@ add_executable(cta-admin-grpc-nonstream
   ${PROJECT_SOURCE_DIR}/cmdline/CtaAdminCmdParse.cpp
 )
 
-# add_executable(cta-admin CtaAdminCmd.cpp CtaAdminCmdParse.cpp CtaAdminTextFormatter.cpp)
 target_link_libraries(cta-admin-grpc-nonstream
   ${PROTOBUF3_LIBRARIES}
   ${GRPC_GRPC++_LIBRARY}
