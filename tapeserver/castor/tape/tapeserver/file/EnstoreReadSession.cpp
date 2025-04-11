@@ -33,7 +33,19 @@ EnstoreReadSession::EnstoreReadSession(tapeserver::drive::DriveInterface &drive,
   m_detectedLbp = false;
 
   VOL1 vol1;
-  m_drive.readExactBlock(reinterpret_cast<void *>(&vol1), sizeof(vol1), "[ReadSession::ReadSession()] - Reading VOL1");
+
+  // If this is an EnstoreLarge tape recycled as Enstore, VOL1 is 240 bytes instead of 80
+  // Throw away the end and validate the beggining as a normal VOL1
+  size_t blockSize = 256 * 1024;
+  char* data = new char[blockSize + 1];
+  size_t bytes_read = m_drive.readBlock(data, blockSize);
+  if (bytes_read < sizeof(vol1)) {
+    delete[] data;
+    throw cta::exception::Exception(std::string(__FUNCTION__) + " failed: Too few bytes read from label");
+  }
+  memcpy(&vol1, data, sizeof(vol1));
+  delete[] data;
+
   // Tapes should have label character 0, but if they were recycled from EnstoreLarge tapes, it could be 3
   try {
     vol1.verify("0");

@@ -1,3 +1,9 @@
+## v5.11.2.3-1
+
+### Bug Fixes
+
+- cta/#1145 - Fix insufficient buffer space for reading 240 byte Enstore labels
+
 ## v5.11.2.2-1
 
 ### Bug Fixes
