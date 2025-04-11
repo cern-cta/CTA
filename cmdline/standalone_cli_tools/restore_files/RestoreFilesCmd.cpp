@@ -15,7 +15,7 @@
  *               submit itself to any jurisdiction.
  */
 
-#include "cmdline/CtaAdminCmdParse.hpp"
+#include "cmdline/CtaAdminCmdParser.hpp"
 #include "cmdline/standalone_cli_tools/common/CatalogueFetch.hpp"
 #include "cmdline/standalone_cli_tools/common/ConnectionConfiguration.hpp"
 #include "cmdline/standalone_cli_tools/restore_files/RestoreFilesCmd.hpp"

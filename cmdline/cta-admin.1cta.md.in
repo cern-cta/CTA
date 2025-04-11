@@ -44,7 +44,7 @@ subcommands and options for a specific command, type:
 
 Commands have a long version and an abbreviated version (shown in brackets).
 
-@include_md CtaAdminCmdParse.hpp
+@include_md CtaAdminCmdParser.hpp
 # OPTIONS
 
 **\-\-json**

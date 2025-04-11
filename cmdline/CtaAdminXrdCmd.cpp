@@ -26,6 +26,7 @@
 #include <cmdline/CtaAdminTextFormatter.hpp>
 #include "tapeserver/daemon/common/TapedConfiguration.hpp"
 
+
 // GLOBAL VARIABLES : used to pass information between main thread and stream handler thread
 
 // global synchronisation flag
@@ -33,8 +34,6 @@ std::atomic<bool> isHeaderSent(false);
 
 // initialise an output buffer of 1000 lines
 cta::admin::TextFormatter formattedText(1000);
-
-const std::filesystem::path DEFAULT_CLI_CONFIG = "/etc/cta/cta-cli.conf";
 
 namespace XrdSsiPb {
 
@@ -72,8 +71,8 @@ void IStreamBuffer<cta::xrd::Data>::DataCallback(cta::xrd::Data record) const {
   }
 
   // Output results in JSON format for parsing by a script
-  if (CtaAdminCmd::isJson()) {
-    std::cout << CtaAdminCmd::jsonDelim();
+  if (CtaAdminParsedCmd::isJson()) {
+    std::cout << CtaAdminParsedCmd::jsonDelim();
     // clang-format off
     switch(record.data_case()) {
       case Data::kAdlsItem:      std::cout << Log::DumpProtobuf(&record.adls_item());    break;
@@ -153,17 +152,16 @@ void IStreamBuffer<cta::xrd::Data>::DataCallback(cta::xrd::Data record) const {
 namespace cta::admin {
 
 
-CtaAdminXrdCmd::CtaAdminXrdCmd(int argc, const char* const* const argv) : CtaAdminCmd(argc, argv) {}
-
-void CtaAdminXrdCmd::send() const {
+void CtaAdminXrdCmd::send(const CtaAdminParsedCmd &parsedCmd) const {
   // Validate the Protocol Buffer
+  const auto &request = parsedCmd.getRequest();
   try {
-    validateCmd(m_request.admincmd());
+    validateCmd(request.admincmd());
   } catch (std::runtime_error& ex) {
-    throwUsage(ex.what());
+    parsedCmd.throwUsage(ex.what());
   }
 
-  const std::filesystem::path config_file = getConfigFilePath();
+  const std::filesystem::path config_file = parsedCmd.getConfigFilePath();
 
   // Set configuration options
   XrdSsiPb::Config config(config_file, "cta");
@@ -205,7 +203,7 @@ void CtaAdminXrdCmd::send() const {
 
   // Send the Request to the Service and get a Response
   cta::xrd::Response response;
-  auto stream_future = cta_service.SendAsync(m_request, response, false);
+  auto stream_future = cta_service.SendAsync(request, response, false);
 
   // Handle responses
   switch (response.type()) {
@@ -216,7 +214,7 @@ void CtaAdminXrdCmd::send() const {
       // Print message text
       std::cout << response.message_txt();
       // Print streaming response header
-      if (!isJson()) {
+      if (!parsedCmd.isJson()) {
         switch (response.show_header()) {
             // clang-format off
        case HeaderType::ADMIN_LS:                     formattedText.printAdminLsHeader(); break;
@@ -271,8 +269,8 @@ void CtaAdminXrdCmd::send() const {
   stream_future.wait();
 
   // JSON output is an array of structs, close bracket
-  if (isJson()) {
-    std::cout << jsonCloseDelim();
+  if (parsedCmd.isJson()) {
+    std::cout << CtaAdminParsedCmd::jsonCloseDelim();
   }
 }  // namespace cta::admin
 
@@ -290,32 +288,33 @@ void CtaAdminXrdCmd::send() const {
 int main(int argc, const char** argv) {
   using namespace cta::admin;
 
- try {
-   // Parse the command line arguments
-   CtaAdminXrdCmd cmd(argc, argv);
+  try {
+    // Parse the command line arguments
+    CtaAdminParsedCmd parsedCmd(argc, argv);
+    CtaAdminXrdCmd cmd;
 
-   // Send the protocol buffer
-   cmd.send();
+    // Send the protocol buffer
+    cmd.send(parsedCmd);
 
-   // Delete all global objects allocated by libprotobuf
-   google::protobuf::ShutdownProtobufLibrary();
+    // Delete all global objects allocated by libprotobuf
+    google::protobuf::ShutdownProtobufLibrary();
 
-   return 0;
- } catch (XrdSsiPb::PbException &ex) {
-   std::cerr << "Error in Google Protocol Buffers: " << ex.what() << std::endl;
- } catch (XrdSsiPb::XrdSsiException &ex) {
-   std::cerr << "Error from XRootD SSI Framework: " << ex.what() << std::endl;
- } catch (XrdSsiPb::UserException &ex) {
-   if(CtaAdminCmd::isJson()) std::cout << CtaAdminCmd::jsonCloseDelim();
-     std::cerr << ex.what() << std::endl;
-   return 2;
- } catch (std::runtime_error &ex) {
-   std::cerr << ex.what() << std::endl;
- } catch (std::exception &ex) {
-   std::cerr << "Caught exception: " << ex.what() << std::endl;
- } catch (...) {
-   std::cerr << "Caught an unknown exception" << std::endl;
- }
+    return 0;
+  } catch (XrdSsiPb::PbException &ex) {
+    std::cerr << "Error in Google Protocol Buffers: " << ex.what() << std::endl;
+  } catch (XrdSsiPb::XrdSsiException &ex) {
+    std::cerr << "Error from XRootD SSI Framework: " << ex.what() << std::endl;
+  } catch (XrdSsiPb::UserException &ex) {
+    if(CtaAdminParsedCmd::isJson()) std::cout << CtaAdminParsedCmd::jsonCloseDelim();
+      std::cerr << ex.what() << std::endl;
+    return 2;
+  } catch (std::runtime_error &ex) {
+    std::cerr << ex.what() << std::endl;
+  } catch (std::exception &ex) {
+    std::cerr << "Caught exception: " << ex.what() << std::endl;
+  } catch (...) {
+    std::cerr << "Caught an unknown exception" << std::endl;
+  }
 
- return 1;
+  return 1;
 }

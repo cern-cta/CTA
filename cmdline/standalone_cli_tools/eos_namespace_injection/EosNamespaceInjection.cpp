@@ -20,7 +20,7 @@
 #include <string>
 #include <memory>
 
-#include "cmdline/CtaAdminCmd.hpp"
+#include "cmdline/CtaAdminParsedCmd.hpp"
 #include "cmdline/standalone_cli_tools/common/CmdLineArgs.hpp"
 #include "cmdline/standalone_cli_tools/common/ConnectionConfiguration.hpp"
 #include "cmdline/standalone_cli_tools/eos_namespace_injection/EosNamespaceInjection.hpp"
