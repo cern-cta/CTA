@@ -65,7 +65,7 @@ add_executable(cta-frontend-async-grpc
   ServerNegotiationRequestHandler.cpp
   RequestMessage.cpp
   utils.cpp
-  ${PROJECT_SOURCE_DIR}/cmdline/CtaAdminCmdParse.cpp
+  ${PROJECT_SOURCE_DIR}/cmdline/CtaAdminCmdParser.cpp
 )
 
 if(CTA_USE_PGSCHED)
@@ -89,7 +89,7 @@ add_executable(cta-admin-grpc
   ClientNegotiationRequestHandler.cpp
   utils.cpp
   ${PROJECT_SOURCE_DIR}/cmdline/CtaAdminTextFormatter.cpp
-  ${PROJECT_SOURCE_DIR}/cmdline/CtaAdminCmdParse.cpp
+  ${PROJECT_SOURCE_DIR}/cmdline/CtaAdminCmdParser.cpp
 )
 target_link_libraries(cta-admin-grpc ProtoCtaFrontend)
 

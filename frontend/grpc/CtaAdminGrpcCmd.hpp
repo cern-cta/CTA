@@ -17,7 +17,7 @@
  
 #pragma once
 
-#include "cmdline/CtaAdminCmdParse.hpp"
+#include "cmdline/CtaAdminCmdParser.hpp"
 #include "cta_frontend.pb.h"
 #include "cta_frontend.grpc.pb.h"
 #include "common/log/Logger.hpp"

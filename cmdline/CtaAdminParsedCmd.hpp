@@ -17,18 +17,15 @@
 
 #pragma once
 
-#include "CtaAdminCmdParse.hpp"
+#include "CtaAdminCmdParser.hpp"
 #include "version.h"
 
 namespace cta::admin {
 
-class CtaAdminCmd
+class CtaAdminParsedCmd
 {
 public:
-   CtaAdminCmd(int argc, const char *const *const argv);
-
-   //! Send the protocol buffer across the XRootD SSI transport
-   void send() const;
+   CtaAdminParsedCmd(int argc, const char *const *const argv);
 
    // Static methods to format streaming responses
    static bool isJson() { return is_json; }
@@ -41,6 +38,14 @@ public:
       return is_first_record ? "[]" : "]";
    }
 
+   //! Throw an exception with usage help
+   void throwUsage(const std::string &error_txt = "") const;
+
+   //! Returns user config path if specified, if not looks in $HOME/.cta, then in /etc/cta
+   const std::string getConfigFilePath() const;
+
+   const cta::xrd::Request& getRequest() const { return m_request; }
+
 private:
    //! Parse the options for a specific command/subcommand
    void parseOptions(int start, int argc, const char *const *const argv, const cmd_val_t &options);
@@ -51,20 +56,7 @@ private:
    //! Read a list of string options from a file
    void readListFromFile(cta::admin::OptionStrList &str_list, const std::string &filename);
 
-   //! Throw an exception with usage help
-   void throwUsage(const std::string &error_txt = "") const;
-
-   //! Return the request timeout value (to pass to the ServiceClientSide constructor)
-   int GetRequestTimeout() const;
-
-   //! Returns user config path if specified, if not looks in $HOME/.cta, then in /etc/cta
-   const std::string getConfigFilePath() const;
-
    // Member variables
-
-   const std::string StreamBufferSize      = "1024";                  //!< Buffer size for Data/Stream Responses
-   const std::string DefaultRequestTimeout = "10";                    //!< Default Request Timeout. Can be overridden by
-                                                                      //!< XRD_REQUESTTIMEOUT environment variable.
 
    std::string       m_execname;                                      //!< Executable name of this program
    cta::xrd::Request m_request;                                       //!< Protocol Buffer for the command and parameters
@@ -78,7 +70,7 @@ private:
 
    std::optional<std::string> m_config;                               //!< User defined config file
 
-   static constexpr const char* const LOG_SUFFIX  = "CtaAdminCmd";    //!< Identifier for log messages
+   static constexpr const char* const LOG_SUFFIX  = "CtaAdminParsedCmd";    //!< Identifier for log messages
 };
 
 } // namespace cta::admin
