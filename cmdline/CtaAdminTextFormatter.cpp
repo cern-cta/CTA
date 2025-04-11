@@ -156,7 +156,8 @@ void TextFormatter::flush() {
 
       auto flush = (c == l.size() - 1 && m_lastColumnFlushLeft) ? std::left : std::right;
 
-      std::cout << std::setfill(' ') << std::setw(m_colSize.at(c)) << flush << (l.at(c).empty() ? "-" : l.at(c)) << ' ';
+      std::cout << std::setfill(' ') << std::setw(m_colSize.at(c)) << flush
+                << (l.at(c).empty() || l.at(c) == "NoMount" ? "-" : l.at(c)) << ' ';
     }
     if (is_header) {
       std::cout << TEXT_NORMAL;
@@ -341,7 +342,15 @@ void TextFormatter::print(const DriveLsItem& drls_item) {
 
 void TextFormatter::printFailedRequestLsHeader() {
   push_back("HEADER");
-  push_back("object id", "request type", "copy no", "tapepool/vid", "requester", "group", "path", "scheduler", "instance");
+  push_back("object id",
+            "request type",
+            "copy no",
+            "tapepool/vid",
+            "requester",
+            "group",
+            "path",
+            "scheduler",
+            "instance");
 }
 
 void TextFormatter::print(const FailedRequestLsItem& frls_item) {
@@ -385,12 +394,26 @@ void TextFormatter::print(const FailedRequestLsSummary& frls_summary) {
                              frls_summary.request_type() == RequestType::RETRIEVE_REQUEST ? "retrieve" :
                                                                                             "total";
 
-  push_back(request_type, frls_summary.total_files(), dataSizeToStr(frls_summary.total_size()), frls_summary.scheduler_backend_name(), frls_summary.instance_name());
+  push_back(request_type,
+            frls_summary.total_files(),
+            dataSizeToStr(frls_summary.total_size()),
+            frls_summary.scheduler_backend_name(),
+            frls_summary.instance_name());
 }
 
 void TextFormatter::printGroupMountRuleLsHeader() {
   push_back("HEADER");
-  push_back("disk buffer", "group", "policy", "c.user", "c.host", "c.time", "m.user", "m.host", "m.time", "instance",  "comment");
+  push_back("disk buffer",
+            "group",
+            "policy",
+            "c.user",
+            "c.host",
+            "c.time",
+            "m.user",
+            "m.host",
+            "m.time",
+            "instance",
+            "comment");
 }
 
 void TextFormatter::print(const GroupMountRuleLsItem& gmrls_item) {
@@ -634,7 +657,17 @@ void TextFormatter::print(const RepackLsItem& rels_item) {
 
 void TextFormatter::printRequesterMountRuleLsHeader() {
   push_back("HEADER");
-  push_back("disk buffer", "username", "policy", "c.user", "c.host", "c.time", "m.user", "m.host", "m.time", "instance", "comment");
+  push_back("disk buffer",
+            "username",
+            "policy",
+            "c.user",
+            "c.host",
+            "c.time",
+            "m.user",
+            "m.host",
+            "m.time",
+            "instance",
+            "comment");
 }
 
 void TextFormatter::print(const RequesterMountRuleLsItem& rmrls_item) {
