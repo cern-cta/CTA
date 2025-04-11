@@ -152,9 +152,7 @@ void IStreamBuffer<cta::xrd::Data>::DataCallback(cta::xrd::Data record) const {
 namespace cta::admin {
 
 
-CtaAdminXrdCmd::CtaAdminXrdCmd(CtaAdminParsedCmd &parsed) : parsedCmd(parsed) {}
-
-void CtaAdminXrdCmd::send() const {
+void CtaAdminXrdCmd::send(const CtaAdminParsedCmd &parsedCmd) const {
   // Validate the Protocol Buffer
   const auto &request = parsedCmd.getRequest();
   try {
@@ -272,7 +270,7 @@ void CtaAdminXrdCmd::send() const {
 
   // JSON output is an array of structs, close bracket
   if (parsedCmd.isJson()) {
-    std::cout << parsedCmd.jsonCloseDelim();
+    std::cout << CtaAdminParsedCmd::jsonCloseDelim();
   }
 }  // namespace cta::admin
 
@@ -293,10 +291,10 @@ int main(int argc, const char** argv) {
   try {
     // Parse the command line arguments
     CtaAdminParsedCmd parsedCmd(argc, argv);
-    CtaAdminXrdCmd cmd(parsedCmd);
+    CtaAdminXrdCmd cmd;
 
     // Send the protocol buffer
-    cmd.send();
+    cmd.send(parsedCmd);
 
     // Delete all global objects allocated by libprotobuf
     google::protobuf::ShutdownProtobufLibrary();
