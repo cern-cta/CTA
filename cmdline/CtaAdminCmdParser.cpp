@@ -15,7 +15,7 @@
  *               submit itself to any jurisdiction.
  */
 
-#include "CtaAdminCmdParser.hpp"
+#include "CtaAdminCmdParse.hpp"
 
 namespace cta::admin {
 

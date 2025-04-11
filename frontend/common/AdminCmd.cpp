@@ -19,7 +19,7 @@
 #include "catalogue/CreateMountPolicyAttributes.hpp"
 #include "catalogue/CreateTapeAttributes.hpp"
 #include "catalogue/MediaType.hpp"
-#include "cmdline/CtaAdminCmdParse.hpp"
+#include "cmdline/CtaAdminCmdParser.hpp"
 #include "common/dataStructures/PhysicalLibrary.hpp"
 #include "AdminCmd.hpp"
 #include "PbException.hpp"

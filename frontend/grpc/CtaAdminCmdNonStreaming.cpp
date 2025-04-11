@@ -27,17 +27,17 @@
 
 namespace cta::admin {
 
-CtaAdminCmdNonStreaming::CtaAdminCmdNonStreaming(int argc, const char* const* const argv) : CtaAdminCmd(argc, argv) {}
 
 // Implement the send() method here, by wrapping the Admin rpc call
-void CtaAdminCmdNonStreaming::send() const {
+void CtaAdminCmdNonStreaming::send(const CtaAdminParsedCmd& parsedCmd) const {
+  const auto &request = parsedCmd.getRequest();
   // Validate the Protocol Buffer
   try {
-    cta::admin::validateCmd(m_request.admincmd());
+    validateCmd(request.admincmd());
   }
   catch (std::runtime_error& ex) {
     std::cout << "In the catch block of the send() command, caught a runtime error, about to throw usage" << std::endl;
-    throwUsage(ex.what());
+    parsedCmd.throwUsage(ex.what());
   }
 
   // now construct the Admin call
@@ -46,7 +46,7 @@ void CtaAdminCmdNonStreaming::send() const {
   grpc::Status status;
   cta::xrd::Response response;
   // get the grpc endpoint from the config? but for now, use
-  std::string config_file = getConfigFilePath();
+  std::string config_file = parsedCmd.getConfigFilePath();
   cta::common::Config config(config_file);
   auto endpoint = config.getOptionValueStr("cta.endpoint");
   if (!endpoint.has_value()) {
@@ -56,7 +56,7 @@ void CtaAdminCmdNonStreaming::send() const {
   std::unique_ptr<cta::xrd::CtaRpc::Stub> client_stub = cta::xrd::CtaRpc::NewStub(grpc::CreateChannel(endpoint.value(), grpc::InsecureChannelCredentials()));
 
   // do all the filling in of the command to send
-  status = client_stub->Admin(&context, m_request, &response);
+  status = client_stub->Admin(&context, request, &response);
   // then check the response result, if it's not an error response we are good to continue
   if (!status.ok()) {
     std::cout << "gRPC call failed. Error code: " + std::to_string(status.error_code()) + " Error message: " + status.error_message() << std::endl;
@@ -89,10 +89,11 @@ int main(int argc, const char** argv) {
 
   try {
     // Parse the command line arguments
-    CtaAdminCmdNonStreaming cmd(argc, argv); // this will throw the usage, which is runtime_error
+    CtaAdminParsedCmd parsedCmd(argc, argv);
+    CtaAdminCmdNonStreaming cmd;
 
     // Send the protocol buffer
-    cmd.send();
+    cmd.send(parsedCmd);
 
     // Delete all global objects allocated by libprotobuf
     google::protobuf::ShutdownProtobufLibrary();

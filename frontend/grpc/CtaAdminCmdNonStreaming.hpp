@@ -17,7 +17,7 @@
 
 #pragma once
 
-#include "cmdline/CtaAdminCmd.hpp"
+#include "cmdline/CtaAdminParsedCmd.hpp"
 #include "version.h"
 #include <grpcpp/grpcpp.h>
 
@@ -26,15 +26,11 @@
 
 namespace cta::admin {
 
-class CtaAdminCmdNonStreaming : public CtaAdminCmd
+class CtaAdminCmdNonStreaming
 {
 public:
-   CtaAdminCmdNonStreaming(int argc, const char *const *const argv);
-
    //! Send the protocol buffer across the gRPC transport
-   virtual void send() const override;
-
-private:
+   void send(const CtaAdminParsedCmd& parsedCmd) const;
 };
 
 } // namespace cta::admin

@@ -16,7 +16,7 @@
  */
  
 #include "RequestMessage.hpp"
-#include "cmdline/CtaAdminCmdParse.hpp"
+#include "cmdline/CtaAdminCmdParser.hpp"
 
 cta::frontend::grpc::request::RequestMessage::RequestMessage(const cta::xrd::Request& request) {
   importOptions(request.admincmd());
