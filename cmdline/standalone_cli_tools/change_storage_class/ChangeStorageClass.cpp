@@ -28,7 +28,7 @@
 #include <XrdSsiPbLog.hpp>
 #include <XrdSsiPbIStreamBuffer.hpp>
 
-#include "cmdline/CtaAdminCmdParse.hpp"
+#include "cmdline/CtaAdminCmdParser.hpp"
 #include "cmdline/standalone_cli_tools/change_storage_class/ChangeStorageClass.hpp"
 #include "cmdline/standalone_cli_tools/change_storage_class/JsonFileData.hpp"
 #include "cmdline/standalone_cli_tools/common/CatalogueFetch.hpp"

@@ -17,7 +17,7 @@
 
 #pragma once
 
-#include "CtaAdminCmdParse.hpp"
+#include "CtaAdminCmdParser.hpp"
 #include "version.h"
 
 namespace cta::admin {
