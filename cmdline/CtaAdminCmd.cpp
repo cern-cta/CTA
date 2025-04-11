@@ -312,6 +312,3 @@ void CtaAdminCmd::throwUsage(const std::string& error_txt) const {
 }
 
 } // namespace cta::admin
-
-
-// I will remove the main function. Each executable (cta-admin, cta-admin-grpc-nonstream) will have their own main function
