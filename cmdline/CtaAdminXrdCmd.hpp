@@ -18,14 +18,14 @@
 #pragma once
 
 #include "version.h"
-#include "CtaAdminCmd.hpp"
+#include "CtaAdminParsedCmd.hpp"
 
 namespace cta::admin {
 
 class CtaAdminXrdCmd
 {
 public:
-   CtaAdminXrdCmd(CtaAdminCmd& parsed);
+   CtaAdminXrdCmd(CtaAdminParsedCmd& parsed);
 
    //! Send the protocol buffer across the XRootD SSI transport
    void send() const;
@@ -36,7 +36,7 @@ private:
    const std::string StreamBufferSize      = "1024";                  //!< Buffer size for Data/Stream Responses
    const std::string DefaultRequestTimeout = "10";                    //!< Default Request Timeout. Can be overridden by
                                                                       //!< XRD_REQUESTTIMEOUT environment variable.
-   CtaAdminCmd parsedCmd;
+   CtaAdminParsedCmd parsedCmd;
 
    static constexpr const char* const LOG_SUFFIX  = "CtaAdminXrdCmd";    //!< Identifier for log messages
 };

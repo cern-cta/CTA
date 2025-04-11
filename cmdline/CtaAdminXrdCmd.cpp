@@ -71,8 +71,8 @@ void IStreamBuffer<cta::xrd::Data>::DataCallback(cta::xrd::Data record) const {
   }
 
   // Output results in JSON format for parsing by a script
-  if (CtaAdminCmd::isJson()) {
-    std::cout << CtaAdminCmd::jsonDelim();
+  if (CtaAdminParsedCmd::isJson()) {
+    std::cout << CtaAdminParsedCmd::jsonDelim();
     // clang-format off
     switch(record.data_case()) {
       case Data::kAdlsItem:      std::cout << Log::DumpProtobuf(&record.adls_item());    break;
@@ -152,7 +152,7 @@ void IStreamBuffer<cta::xrd::Data>::DataCallback(cta::xrd::Data record) const {
 namespace cta::admin {
 
 
-CtaAdminXrdCmd::CtaAdminXrdCmd(CtaAdminCmd &parsed) : parsedCmd(parsed) {}
+CtaAdminXrdCmd::CtaAdminXrdCmd(CtaAdminParsedCmd &parsed) : parsedCmd(parsed) {}
 
 void CtaAdminXrdCmd::send() const {
   // Validate the Protocol Buffer
@@ -292,7 +292,7 @@ int main(int argc, const char** argv) {
 
   try {
     // Parse the command line arguments
-    CtaAdminCmd parsedCmd(argc, argv);
+    CtaAdminParsedCmd parsedCmd(argc, argv);
     CtaAdminXrdCmd cmd(parsedCmd);
 
     // Send the protocol buffer
@@ -307,7 +307,7 @@ int main(int argc, const char** argv) {
   } catch (XrdSsiPb::XrdSsiException &ex) {
     std::cerr << "Error from XRootD SSI Framework: " << ex.what() << std::endl;
   } catch (XrdSsiPb::UserException &ex) {
-    if(CtaAdminCmd::isJson()) std::cout << CtaAdminCmd::jsonCloseDelim();
+    if(CtaAdminParsedCmd::isJson()) std::cout << CtaAdminParsedCmd::jsonCloseDelim();
       std::cerr << ex.what() << std::endl;
     return 2;
   } catch (std::runtime_error &ex) {

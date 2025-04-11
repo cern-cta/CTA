@@ -22,7 +22,7 @@
 #include <XrdSsiPbLog.hpp>
 #include <XrdSsiPbIStreamBuffer.hpp>
 
-#include <cmdline/CtaAdminCmd.hpp>
+#include <cmdline/CtaAdminParsedCmd.hpp>
 #include <cmdline/CtaAdminTextFormatter.hpp>
 #include "tapeserver/daemon/common/TapedConfiguration.hpp"
 
@@ -32,10 +32,10 @@ const std::filesystem::path DEFAULT_CLI_CONFIG = "/etc/cta/cta-cli.conf";
 
 namespace cta::admin {
 
-std::atomic<bool> CtaAdminCmd::is_json(false);
-std::atomic<bool> CtaAdminCmd::is_first_record(true);
+std::atomic<bool> CtaAdminParsedCmd::is_json(false);
+std::atomic<bool> CtaAdminParsedCmd::is_first_record(true);
 
-CtaAdminCmd::CtaAdminCmd(int argc, const char* const* const argv) : m_execname(argv[0]) {
+CtaAdminParsedCmd::CtaAdminParsedCmd(int argc, const char* const* const argv) : m_execname(argv[0]) {
   auto& admincmd = *(m_request.mutable_admincmd());
 
   admincmd.set_client_version(CTA_VERSION);
@@ -111,7 +111,7 @@ CtaAdminCmd::CtaAdminCmd(int argc, const char* const* const argv) : m_execname(a
   parseOptions(has_subcommand ? argno + 1 : argno, argc, argv, option_list_it->second);
 }
 
-const std::string CtaAdminCmd::getConfigFilePath() const {
+const std::string CtaAdminParsedCmd::getConfigFilePath() const {
   std::filesystem::path config_file = DEFAULT_CLI_CONFIG;
 
   if (std::getenv("HOME")) {
@@ -127,7 +127,7 @@ const std::string CtaAdminCmd::getConfigFilePath() const {
   return config_file;
 }
 
-void CtaAdminCmd::parseOptions(int start, int argc, const char* const* const argv, const cmd_val_t& options) {
+void CtaAdminParsedCmd::parseOptions(int start, int argc, const char* const* const argv, const cmd_val_t& options) {
   for (int i = start; i < argc; ++i) {
     int opt_num = i - start;
 
@@ -169,7 +169,7 @@ void CtaAdminCmd::parseOptions(int start, int argc, const char* const* const arg
   }
 }
 
-void CtaAdminCmd::addOption(const Option& option, const std::string& value) {
+void CtaAdminParsedCmd::addOption(const Option& option, const std::string& value) {
   auto admincmd_ptr = m_request.mutable_admincmd();
 
   switch (option.get_type()) {
@@ -230,7 +230,7 @@ void CtaAdminCmd::addOption(const Option& option, const std::string& value) {
   }
 }
 
-void CtaAdminCmd::readListFromFile(cta::admin::OptionStrList& str_list, const std::string& filename) {
+void CtaAdminParsedCmd::readListFromFile(cta::admin::OptionStrList& str_list, const std::string& filename) {
   std::ifstream file(filename);
   if (file.fail()) {
     throw std::runtime_error("Unable to open file " + filename);
@@ -276,7 +276,7 @@ void CtaAdminCmd::readListFromFile(cta::admin::OptionStrList& str_list, const st
   }
 }
 
-void CtaAdminCmd::throwUsage(const std::string& error_txt) const {
+void CtaAdminParsedCmd::throwUsage(const std::string& error_txt) const {
   std::stringstream help;
   const auto& admincmd = m_request.admincmd().cmd();
 

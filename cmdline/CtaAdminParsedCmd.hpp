@@ -22,10 +22,10 @@
 
 namespace cta::admin {
 
-class CtaAdminCmd
+class CtaAdminParsedCmd
 {
 public:
-   CtaAdminCmd(int argc, const char *const *const argv);
+   CtaAdminParsedCmd(int argc, const char *const *const argv);
 
    // Static methods to format streaming responses
    static bool isJson() { return is_json; }
@@ -70,7 +70,7 @@ private:
 
    std::optional<std::string> m_config;                               //!< User defined config file
 
-   static constexpr const char* const LOG_SUFFIX  = "CtaAdminCmd";    //!< Identifier for log messages
+   static constexpr const char* const LOG_SUFFIX  = "CtaAdminParsedCmd";    //!< Identifier for log messages
 };
 
 } // namespace cta::admin
