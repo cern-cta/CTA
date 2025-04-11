@@ -290,32 +290,32 @@ void CtaAdminXrdCmd::send() const {
 int main(int argc, const char** argv) {
   using namespace cta::admin;
 
- try {
-   // Parse the command line arguments
-   CtaAdminXrdCmd cmd(argc, argv);
+  try {
+    // Parse the command line arguments
+    CtaAdminXrdCmd cmd(argc, argv);
 
-   // Send the protocol buffer
-   cmd.send();
+    // Send the protocol buffer
+    cmd.send();
 
-   // Delete all global objects allocated by libprotobuf
-   google::protobuf::ShutdownProtobufLibrary();
+    // Delete all global objects allocated by libprotobuf
+    google::protobuf::ShutdownProtobufLibrary();
 
-   return 0;
- } catch (XrdSsiPb::PbException &ex) {
-   std::cerr << "Error in Google Protocol Buffers: " << ex.what() << std::endl;
- } catch (XrdSsiPb::XrdSsiException &ex) {
-   std::cerr << "Error from XRootD SSI Framework: " << ex.what() << std::endl;
- } catch (XrdSsiPb::UserException &ex) {
-   if(CtaAdminCmd::isJson()) std::cout << CtaAdminCmd::jsonCloseDelim();
-     std::cerr << ex.what() << std::endl;
-   return 2;
- } catch (std::runtime_error &ex) {
-   std::cerr << ex.what() << std::endl;
- } catch (std::exception &ex) {
-   std::cerr << "Caught exception: " << ex.what() << std::endl;
- } catch (...) {
-   std::cerr << "Caught an unknown exception" << std::endl;
- }
+    return 0;
+  } catch (XrdSsiPb::PbException &ex) {
+    std::cerr << "Error in Google Protocol Buffers: " << ex.what() << std::endl;
+  } catch (XrdSsiPb::XrdSsiException &ex) {
+    std::cerr << "Error from XRootD SSI Framework: " << ex.what() << std::endl;
+  } catch (XrdSsiPb::UserException &ex) {
+    if(CtaAdminCmd::isJson()) std::cout << CtaAdminCmd::jsonCloseDelim();
+      std::cerr << ex.what() << std::endl;
+    return 2;
+  } catch (std::runtime_error &ex) {
+    std::cerr << ex.what() << std::endl;
+  } catch (std::exception &ex) {
+    std::cerr << "Caught exception: " << ex.what() << std::endl;
+  } catch (...) {
+    std::cerr << "Caught an unknown exception" << std::endl;
+  }
 
- return 1;
+  return 1;
 }
