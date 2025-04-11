@@ -51,11 +51,10 @@ install (FILES ${CMAKE_CURRENT_BINARY_DIR}/cta-frontend-grpc.1cta DESTINATION /u
 install (FILES cta-frontend-grpc.conf.example DESTINATION ${CMAKE_INSTALL_SYSCONFDIR}/cta)
 
 ##
-## cta-admin-grpc-nonstream
+## cta-admin-grpc
 ## Eventually this will be unified with the streaming commands implementation and renamed to cta-admin-grpc
-## (What is currently called cta-admin-grpc is not used by us or dCache)
 ##
-add_executable(cta-admin-grpc-nonstream
+add_executable(cta-admin-grpc
   CtaAdminCmdNonStreaming.cpp
   ${PROJECT_SOURCE_DIR}/frontend/common/AdminCmd.cpp
   ${PROJECT_SOURCE_DIR}/cmdline/CtaAdminCmd.cpp
@@ -63,14 +62,14 @@ add_executable(cta-admin-grpc-nonstream
   ${PROJECT_SOURCE_DIR}/cmdline/CtaAdminCmdParse.cpp
 )
 
-target_link_libraries(cta-admin-grpc-nonstream
+target_link_libraries(cta-admin-grpc
   ${PROTOBUF3_LIBRARIES}
   ${GRPC_GRPC++_LIBRARY}
   ${GRPC_LIBRARY}
   ProtoCtaFrontend ctacommon stdc++fs ctatapedaemoncommon ctascheduler ctaobjectstore ctacatalogue
 )
-set_property (TARGET cta-admin-grpc-nonstream APPEND PROPERTY INSTALL_RPATH ${PROTOBUF3_RPATH})
-install(TARGETS cta-admin-grpc-nonstream DESTINATION usr/bin)
+set_property (TARGET cta-admin-grpc APPEND PROPERTY INSTALL_RPATH ${PROTOBUF3_RPATH})
+install(TARGETS cta-admin-grpc DESTINATION usr/bin)
 
 ##
 ## cta-frontend-grpc-stream-server
@@ -109,7 +108,7 @@ endif()
 ## cta-frontend-grpc-stream-client
 ##
 
-add_executable(cta-admin-grpc
+add_executable(cta-admin-grpc-stream-client
   CtaAdminGrpcCmd.cpp
   ClientTapeLsRequestHandler.cpp
   ClientNegotiationRequestHandler.cpp
@@ -117,16 +116,16 @@ add_executable(cta-admin-grpc
   ${PROJECT_SOURCE_DIR}/cmdline/CtaAdminTextFormatter.cpp
   ${PROJECT_SOURCE_DIR}/cmdline/CtaAdminCmdParse.cpp
 )
-target_link_libraries(cta-admin-grpc ProtoCtaFrontend)
+target_link_libraries(cta-admin-grpc-stream-client ProtoCtaFrontend)
 
 if(CTA_USE_PGSCHED)
-  target_link_libraries(cta-admin-grpc
+  target_link_libraries(cta-admin-grpc-stream-client
           ${PROTOBUF3_LIBRARIES}
           ${GRPC_GRPC++_LIBRARY}
           ${GRPC_LIBRARY}
           ctascheduler ctacommon ctatapedaemoncommon ctacatalogue cryptopp gssapi_krb5)
 else()
-  target_link_libraries(cta-admin-grpc
+  target_link_libraries(cta-admin-grpc-stream-client
           ${PROTOBUF3_LIBRARIES}
           ${GRPC_GRPC++_LIBRARY}
           ${GRPC_LIBRARY}

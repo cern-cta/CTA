@@ -1,4 +1,5 @@
 replicaCount: 1
+useGrpc: false
 
 conf:
   cta:
