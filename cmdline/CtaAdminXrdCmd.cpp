@@ -26,6 +26,7 @@
 #include <cmdline/CtaAdminTextFormatter.hpp>
 #include "tapeserver/daemon/common/TapedConfiguration.hpp"
 
+
 // GLOBAL VARIABLES : used to pass information between main thread and stream handler thread
 
 // global synchronisation flag
@@ -33,8 +34,6 @@ std::atomic<bool> isHeaderSent(false);
 
 // initialise an output buffer of 1000 lines
 cta::admin::TextFormatter formattedText(1000);
-
-const std::filesystem::path DEFAULT_CLI_CONFIG = "/etc/cta/cta-cli.conf";
 
 namespace XrdSsiPb {
 
@@ -153,17 +152,18 @@ void IStreamBuffer<cta::xrd::Data>::DataCallback(cta::xrd::Data record) const {
 namespace cta::admin {
 
 
-CtaAdminXrdCmd::CtaAdminXrdCmd(int argc, const char* const* const argv) : CtaAdminCmd(argc, argv) {}
+CtaAdminXrdCmd::CtaAdminXrdCmd(int argc, const char* const* const argv) : parsedCmd(argc, argv) {}
 
 void CtaAdminXrdCmd::send() const {
   // Validate the Protocol Buffer
+  const auto &request = parsedCmd.getRequest();
   try {
-    validateCmd(m_request.admincmd());
+    validateCmd(request.admincmd());
   } catch (std::runtime_error& ex) {
-    throwUsage(ex.what());
+    parsedCmd.throwUsage(ex.what());
   }
 
-  const std::filesystem::path config_file = getConfigFilePath();
+  const std::filesystem::path config_file = parsedCmd.getConfigFilePath();
 
   // Set configuration options
   XrdSsiPb::Config config(config_file, "cta");
@@ -205,7 +205,7 @@ void CtaAdminXrdCmd::send() const {
 
   // Send the Request to the Service and get a Response
   cta::xrd::Response response;
-  auto stream_future = cta_service.SendAsync(m_request, response, false);
+  auto stream_future = cta_service.SendAsync(request, response, false);
 
   // Handle responses
   switch (response.type()) {
@@ -216,7 +216,7 @@ void CtaAdminXrdCmd::send() const {
       // Print message text
       std::cout << response.message_txt();
       // Print streaming response header
-      if (!isJson()) {
+      if (!parsedCmd.isJson()) {
         switch (response.show_header()) {
             // clang-format off
        case HeaderType::ADMIN_LS:                     formattedText.printAdminLsHeader(); break;
@@ -271,8 +271,8 @@ void CtaAdminXrdCmd::send() const {
   stream_future.wait();
 
   // JSON output is an array of structs, close bracket
-  if (isJson()) {
-    std::cout << jsonCloseDelim();
+  if (parsedCmd.isJson()) {
+    std::cout << parsedCmd.jsonCloseDelim();
   }
 }  // namespace cta::admin
 

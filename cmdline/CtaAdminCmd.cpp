@@ -35,8 +35,6 @@ namespace cta::admin {
 std::atomic<bool> CtaAdminCmd::is_json(false);
 std::atomic<bool> CtaAdminCmd::is_first_record(true);
 
-CtaAdminCmd::~CtaAdminCmd() {}
-
 CtaAdminCmd::CtaAdminCmd(int argc, const char* const* const argv) : m_execname(argv[0]) {
   auto& admincmd = *(m_request.mutable_admincmd());
 
