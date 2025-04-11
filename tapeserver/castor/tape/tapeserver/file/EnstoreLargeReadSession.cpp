@@ -42,6 +42,7 @@ ReadSession(drive, volInfo, useLbp) {
   char* data = new char[blockSize + 1];
   size_t bytes_read = m_drive.readBlock(data, blockSize);
   if (bytes_read < sizeof(vol1)) {
+    delete[] data;
     throw cta::exception::Exception(std::string(__FUNCTION__) + " failed: Too few bytes read from label");
   }
   memcpy(&vol1, data, sizeof(vol1));
