@@ -25,7 +25,7 @@ namespace cta::admin {
 class CtaAdminXrdCmd
 {
 public:
-   CtaAdminXrdCmd(int argc, const char *const *const argv);
+   CtaAdminXrdCmd(CtaAdminCmd& parsed);
 
    //! Send the protocol buffer across the XRootD SSI transport
    void send() const;

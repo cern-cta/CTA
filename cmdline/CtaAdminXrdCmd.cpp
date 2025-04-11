@@ -152,7 +152,7 @@ void IStreamBuffer<cta::xrd::Data>::DataCallback(cta::xrd::Data record) const {
 namespace cta::admin {
 
 
-CtaAdminXrdCmd::CtaAdminXrdCmd(int argc, const char* const* const argv) : parsedCmd(argc, argv) {}
+CtaAdminXrdCmd::CtaAdminXrdCmd(CtaAdminCmd &parsed) : parsedCmd(parsed) {}
 
 void CtaAdminXrdCmd::send() const {
   // Validate the Protocol Buffer
@@ -292,7 +292,8 @@ int main(int argc, const char** argv) {
 
   try {
     // Parse the command line arguments
-    CtaAdminXrdCmd cmd(argc, argv);
+    CtaAdminCmd parsedCmd(argc, argv);
+    CtaAdminXrdCmd cmd(parsedCmd);
 
     // Send the protocol buffer
     cmd.send();
