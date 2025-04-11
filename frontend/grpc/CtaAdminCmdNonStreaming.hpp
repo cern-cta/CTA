@@ -20,11 +20,7 @@
 #include "cmdline/CtaAdminCmd.hpp"
 #include "version.h"
 #include <grpcpp/grpcpp.h>
-// #include <grpcpp/resource_quota.h>
-// #include <grpcpp/security/server_credentials.h>
 
-// #include <scheduler/Scheduler.hpp> // what happens if I skip this?
-// #include "common/log/Logger.hpp"
 #include "cta_frontend.pb.h"
 #include "cta_frontend.grpc.pb.h"
 
@@ -35,12 +31,10 @@ class CtaAdminCmdNonStreaming : public CtaAdminCmd
 public:
    CtaAdminCmdNonStreaming(int argc, const char *const *const argv);
 
-   //! Send the protocol buffer across the XRootD SSI transport
+   //! Send the protocol buffer across the gRPC transport
    virtual void send() const override;
 
 private:
-
-   static constexpr const char* const LOG_SUFFIX  = "CtaAdminCmdNonStreaming";    //!< Identifier for log messages
 };
 
 } // namespace cta::admin

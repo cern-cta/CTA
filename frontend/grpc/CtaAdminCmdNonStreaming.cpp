@@ -22,23 +22,7 @@
 #include "CtaAdminCmdNonStreaming.hpp"
 #include <cmdline/CtaAdminTextFormatter.hpp>
 #include "tapeserver/daemon/common/TapedConfiguration.hpp"
-
-// GLOBAL VARIABLES : used to pass information between main thread and stream handler thread
-
-// global synchronisation flag
-std::atomic<bool> isHeaderSent(false);
-
-// initialise an output buffer of 1000 lines
-cta::admin::TextFormatter formattedText(1000);
-
-const std::filesystem::path DEFAULT_CLI_CONFIG = "/etc/cta/cta-cli.conf"; // should this be anything different for the grpc frontend?
-
-/*!
-* User error exception
-*/
-class UserException : public std::runtime_error {
-  using std::runtime_error::runtime_error;
-};
+#include "common/config/Config.hpp"
 
 
 namespace cta::admin {
@@ -61,9 +45,15 @@ void CtaAdminCmdNonStreaming::send() const {
   grpc::ClientContext context;
   grpc::Status status;
   cta::xrd::Response response;
-  // get the grpc endpoint from the config? but for now, use 
-  std::string endpoint("cta-frontend:10955");
-  std::unique_ptr<cta::xrd::CtaRpc::Stub> client_stub = cta::xrd::CtaRpc::NewStub(grpc::CreateChannel(endpoint, grpc::InsecureChannelCredentials()));
+  // get the grpc endpoint from the config? but for now, use
+  std::string config_file = getConfigFilePath();
+  cta::common::Config config(config_file);
+  auto endpoint = config.getOptionValueStr("cta.endpoint");
+  if (!endpoint.has_value()) {
+    std::cout << "Configuration error: cta.endpoint missing from " + config_file << std::endl;
+    throw std::runtime_error("Configuration error: cta.endpoint missing from " + config_file);
+  }
+  std::unique_ptr<cta::xrd::CtaRpc::Stub> client_stub = cta::xrd::CtaRpc::NewStub(grpc::CreateChannel(endpoint.value(), grpc::InsecureChannelCredentials()));
 
   // do all the filling in of the command to send
   status = client_stub->Admin(&context, m_request, &response);
