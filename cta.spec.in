@@ -231,6 +231,16 @@ Requires: grpc
 %defattr(-,root,root)
 %attr(0755,root,root) %{_bindir}/cta-admin-grpc
 
+## add the frontend-grpc implementation of the streaming commands
+%package -n cta-admin-grpc-stream
+Summary: CERN Tape Archive: command line interface using grpc instead of Xrootd/ssi
+Requires: grpc
+%description -n cta-admin-grpc-stream
+
+%files -n cta-admin-grpc-stream
+%defattr(-,root,root)
+%attr(0755,root,root) %{_bindir}/cta-admin-grpc-stream
+
 %package -n cta-cli
 Summary: CERN Tape Archive: command line interface
 Group: Application/CTA
