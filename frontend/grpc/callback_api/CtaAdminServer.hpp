@@ -76,8 +76,6 @@ class CtaRpcStreamImpl : public cta::xrd::CtaRpcStream::CallbackService {
       m_catalogueConnString(connstr) {}
     /* CtaAdminServerWriteReactor is what the type of GenericAdminStream could be */
     ::grpc::ServerWriteReactor<cta::xrd::StreamResponse>* GenericAdminStream(::grpc::CallbackServerContext* context, const cta::xrd::Request* request);
-    // ::grpc::ServerWriteReactor<cta::xrd::StreamResponse>* TapeLs(::grpc::CallbackServerContext* context, const cta::xrd::Request* request);
-    // ::grpc::ServerWriteReactor<cta::xrd::Response>* StorageClassLs(::grpc::CallbackServerContext* context, const cta::xrd::Request* request);
 
   private:
     cta::log::LogContext m_lc; // <! Provided by the frontendService
