@@ -23,17 +23,21 @@ include_directories(${PROTOBUF3_INCLUDE_DIRS})
 # depends on CTA_EOS definitions
 include_directories(${CMAKE_BINARY_DIR}/eos_cta ${PROTOBUF3_INCLUDE_DIRS})
 
+# include stuff from the callback api here because we need to serve the streaming commands by registering their service class impl
 add_executable(cta-frontend-grpc Main.cpp FrontendGrpcService.cpp
   ../common/WorkflowEvent.cpp
   ../common/FrontendService.cpp
-  ../../common/config/Config.cpp)
+  ${PROJECT_SOURCE_DIR}/common/config/Config.cpp
+  RequestMessage.cpp # This is needed for the Impl Class that serves the streaming commands
+  ${PROJECT_SOURCE_DIR}/cmdline/CtaAdminCmdParser.cpp # needed by RequestMessage.cpp
+  callback_api/CtaAdminServer.hpp)
 target_link_libraries(cta-frontend-grpc ProtoCtaFrontend)
 
 if(CTA_USE_PGSCHED)
-  target_link_libraries(cta-frontend-grpc ${PROTOBUF3_LIBRARIES} ${GRPC_GRPC++_LIBRARY}
+  target_link_libraries(cta-frontend-grpc ${PROTOBUF3_LIBRARIES} ${GRPC_GRPC++_LIBRARY} ${GRPC_GRPC++_REFLECTION_LIBRARY}
     ctascheduler ctacommon ctacatalogue)
 else()
-  target_link_libraries(cta-frontend-grpc ${PROTOBUF3_LIBRARIES} ${GRPC_GRPC++_LIBRARY}
+  target_link_libraries(cta-frontend-grpc ${PROTOBUF3_LIBRARIES} ${GRPC_GRPC++_LIBRARY} ${GRPC_GRPC++_REFLECTION_LIBRARY}
     ctascheduler ctacommon ctaobjectstore ctacatalogue)
 endif()
 set_property(TARGET cta-frontend-grpc APPEND PROPERTY INSTALL_RPATH ${PROTOBUF3_RPATH})
@@ -106,3 +110,5 @@ else()
           ${GRPC_LIBRARY}
           ctascheduler ctacommon ctatapedaemoncommon ctaobjectstore ctacatalogue cryptopp gssapi_krb5)
 endif()
+
+add_subdirectory(callback_api)
