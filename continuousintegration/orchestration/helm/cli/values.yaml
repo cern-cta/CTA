@@ -1,5 +1,5 @@
 replicaCount: 1
-useGrpc: true
+useGrpc: false
 
 conf:
   cta:
