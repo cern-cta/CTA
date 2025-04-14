@@ -195,5 +195,4 @@ int main(const int argc, char *const *const argv) {
 
     lc.log(cta::log::INFO, "Listening on socket address: " + server_address);
     server->Wait();
-    lc.log(cta::log::INFO, "After calling server->Wait(), istening on socket address: " + server_address);
 }
