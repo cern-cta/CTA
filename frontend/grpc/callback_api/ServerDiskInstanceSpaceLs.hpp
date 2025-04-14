@@ -56,7 +56,7 @@ void DiskInstanceSpaceLsWriteReactor::NextWrite() {
     } else {
         while(next_dis != m_diskInstanceSpaceList.cend()) {
             const auto& dis = *next_dis;
-            next_dis++;
+            ++next_dis;
             cta::xrd::Data* data = new cta::xrd::Data();
             cta::admin::DiskInstanceSpaceLsItem *dis_item = data->mutable_disls_item();
 

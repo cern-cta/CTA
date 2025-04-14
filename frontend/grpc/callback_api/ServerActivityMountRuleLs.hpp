@@ -59,7 +59,7 @@ void ActivityMountRuleLsWriteReactor::NextWrite() {
     } else {
         while(next_amr != m_activityMountRuleList.cend()) {
             const auto& amr = *next_amr;
-            next_amr++;
+            ++next_amr;
             cta::xrd::Data* data = new cta::xrd::Data();
             cta::admin::ActivityMountRuleLsItem *amr_item = data->mutable_amrls_item();
             

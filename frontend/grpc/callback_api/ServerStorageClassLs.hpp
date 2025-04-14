@@ -66,7 +66,7 @@ void StorageClassLsWriteReactor::NextWrite() {
     } else {
         while(next_sc != m_storageClassList.cend()) {
             const auto& sc = *next_sc;
-            next_sc++;
+            ++next_sc;
             cta::xrd::Data* data = new cta::xrd::Data();
             cta::admin::StorageClassLsItem *sc_item = data->mutable_scls_item();
 

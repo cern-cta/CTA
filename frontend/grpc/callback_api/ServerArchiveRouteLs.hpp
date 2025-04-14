@@ -67,7 +67,7 @@ void ArchiveRouteLsWriteReactor::NextWrite() {
     } else {
         while(next_ar != m_archiveRouteList.cend()) {
             const auto& ar = *next_ar;
-            next_ar++;
+            ++next_ar;
             cta::xrd::Data* data = new cta::xrd::Data();
             cta::admin::ArchiveRouteLsItem *ar_item = data->mutable_arls_item();
             

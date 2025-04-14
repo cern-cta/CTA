@@ -67,7 +67,7 @@ void DiskInstanceLsWriteReactor::NextWrite() {
         std::cout << "header was sent, now entering the loop to send the data, should send " << m_diskInstanceList.size() << " records!" << std::endl;
         while(next_di != m_diskInstanceList.cend()) {
             const auto& di = *next_di;
-            next_di++;
+            ++next_di;
             cta::xrd::Data* data = new cta::xrd::Data();
             cta::admin::DiskInstanceLsItem *di_item = data->mutable_dils_item();
             

@@ -60,7 +60,7 @@ void ShowQueuesWriteReactor::NextWrite() {
     } else {
         while(next_sq != m_queuesAndMountsList.cend()) {
             const auto& sq = *next_sq;
-            next_sq++;
+            ++next_sq;
             cta::xrd::Data* data = new cta::xrd::Data();
             cta::admin::ShowQueuesItem *sq_item = data->mutable_sq_item();
             

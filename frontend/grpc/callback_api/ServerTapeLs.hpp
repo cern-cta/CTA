@@ -89,7 +89,6 @@ TapeLsWriteReactor::TapeLsWriteReactor(cta::catalogue::Catalogue &catalogue, cta
 void TapeLsWriteReactor::NextWrite() {
     std::cout << "In TapeLsWriteReactor::NextWrite(), just entered!" << std::endl;
     m_response.Clear();
-    static int iteration = 0;
     // is this the first item? Then write the header
     if (!m_isHeaderSent) {
         cta::xrd::Response *header = new cta::xrd::Response(); // https://stackoverflow.com/questions/75693340/how-to-set-oneof-field-in-c-grpc-server-and-read-from-client
@@ -107,12 +106,10 @@ void TapeLsWriteReactor::NextWrite() {
         std::cout << "header was sent, now entering the loop to send the data, should send " << m_tapeList.size() << " records!" << std::endl;
         // for(; !m_tapeList.empty(); m_tapeList.pop_front()) {
         while(next_tape != m_tapeList.cend()) {
-            iteration++;
             // cta::xrd::Data record;
-            std::cout << "Inside the for loop for the tapes, this is iteration number " << iteration << " and records left are " << m_tapeList.size() << std::endl;
             // auto &tape = m_tapeList.front();
             const auto& tape = *next_tape;
-            next_tape++;
+            ++next_tape;
             cta::xrd::Data* data = new cta::xrd::Data();
             cta::admin::TapeLsItem *tape_item = data->mutable_tals_item();
             // cta::admin::TapeLsItem* tape_item = m_response.mutable_data()->mutable_tals_item();

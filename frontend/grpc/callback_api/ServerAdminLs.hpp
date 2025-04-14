@@ -67,7 +67,7 @@ void AdminLsWriteReactor::NextWrite() {
     } else {
         while(next_admin != m_adminList.cend()) {
             const auto& ad = *next_admin;
-            next_admin++;
+            ++next_admin;
             cta::xrd::Data* data = new cta::xrd::Data();
             cta::admin::AdminLsItem *ad_item = data->mutable_adls_item();
             

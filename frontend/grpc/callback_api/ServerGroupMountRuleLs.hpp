@@ -67,7 +67,7 @@ void GroupMountRuleLsWriteReactor::NextWrite() {
     } else {
         while(next_gmr != m_groupMountRuleList.cend()) {
             const auto& gmr = *next_gmr;
-            next_gmr++;
+            ++next_gmr;
             cta::xrd::Data* data = new cta::xrd::Data();
             cta::admin::GroupMountRuleLsItem *gmr_item = data->mutable_gmrls_item();
             

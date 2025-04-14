@@ -65,7 +65,7 @@ void MountPolicyLsWriteReactor::NextWrite() {
     } else {
         while(next_mp != m_mountPolicyList.cend()) {
             const auto& mp = *next_mp;
-            next_mp++;
+            ++next_mp;
             cta::xrd::Data* data = new cta::xrd::Data();
             cta::admin::MountPolicyLsItem *mp_item = data->mutable_mpls_item();
             

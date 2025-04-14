@@ -68,7 +68,7 @@ class CtaRpcStreamImpl : public cta::xrd::CtaRpcStream::CallbackService {
   public:
     cta::log::LogContext getLogContext() const { return m_lc; }
     // CtaRpcStreamImpl() = delete;
-    CtaRpcStreamImpl(cta::catalogue::Catalogue &catalogue, cta::Scheduler &scheduler, cta::SchedulerDB_t &schedDB, std::string connstr, cta::log::LogContext logContext) :
+    CtaRpcStreamImpl(cta::catalogue::Catalogue &catalogue, cta::Scheduler &scheduler, cta::SchedulerDB_t &schedDB, const std::string& connstr, cta::log::LogContext logContext) :
       m_lc(logContext),
       m_catalogue(catalogue),
       m_scheduler(scheduler),
