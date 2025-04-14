@@ -40,6 +40,7 @@ add_executable(cta-admin-grpc-stream
   # ../RequestMessage.cpp
   ${PROJECT_SOURCE_DIR}/cmdline/CtaAdminTextFormatter.cpp
   ${PROJECT_SOURCE_DIR}/cmdline/CtaAdminCmdParser.cpp
+  ${PROJECT_SOURCE_DIR}/cmdline/CtaAdminParsedCmd.cpp
 )
 target_link_libraries(cta-admin-grpc-stream ProtoCtaFrontend)
 
