@@ -66,7 +66,7 @@ void MediaTypeLsWriteReactor::NextWrite() {
     } else {
         while(next_mediatype != m_mediaTypeList.cend()) {
             const auto& mt = *next_mediatype;
-            next_mediatype++;
+            ++next_mediatype;
             cta::xrd::Data* data = new cta::xrd::Data();
             cta::admin::MediaTypeLsItem *mt_item = data->mutable_mtls_item();
 

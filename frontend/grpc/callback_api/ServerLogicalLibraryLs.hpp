@@ -62,7 +62,7 @@ void LogicalLibraryLsWriteReactor::NextWrite() {
     } else {
         while(next_ll != m_logicalLibraryList.cend()) {
             const auto& ll = *next_ll;
-            next_ll++;
+            ++next_ll;
             cta::xrd::Data* data = new cta::xrd::Data();
             cta::admin::LogicalLibraryLsItem *ll_item = data->mutable_llls_item();
             

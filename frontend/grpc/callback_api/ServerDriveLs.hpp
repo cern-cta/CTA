@@ -120,7 +120,7 @@ void DriveLsWriteReactor::NextWrite() {
         while(next_dr != m_tapeDrives.cend()) {
             const auto& dr = *next_dr;
             const auto& driveConfigs = m_tapeDriveNameConfigMap[dr.driveName];
-            next_dr++;
+            ++next_dr;
 
             // Extract the SchedulerBackendName configuration if it exists
             std::string driveSchedulerBackendName = "unknown";

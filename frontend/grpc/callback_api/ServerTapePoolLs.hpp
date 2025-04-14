@@ -81,7 +81,7 @@ void TapePoolLsWriteReactor::NextWrite() {
             std::cout << "Inside the for loop for the tapes, this is iteration number " << iteration << " and records left are " << m_tapePoolList.size() << std::endl;
             // auto &tape = m_tapePoolList.front();
             const auto& tp = *next_tape_pool;
-            next_tape_pool++;
+            ++next_tape_pool;
             cta::xrd::Data* data = new cta::xrd::Data();
             cta::admin::TapePoolLsItem *tp_item = data->mutable_tpls_item();
             

@@ -67,7 +67,7 @@ void VirtualOrganizationLsWriteReactor::NextWrite() {
     } else {
         while(next_vo != m_virtualOrganizationList.cend()) {
             const auto& vo = *next_vo;
-            next_vo++;
+            ++next_vo;
             cta::xrd::Data* data = new cta::xrd::Data();
             cta::admin::VirtualOrganizationLsItem *vo_item = data->mutable_vols_item();
             

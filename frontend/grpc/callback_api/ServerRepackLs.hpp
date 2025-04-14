@@ -72,7 +72,7 @@ void RepackLsWriteReactor::NextWrite() {
     } else {
         while(next_repack != m_repackList.cend()) {
             const auto& repackRequest = *next_repack;
-            next_repack++;
+            ++next_repack;
             cta::xrd::Data* data = new cta::xrd::Data();
             cta::admin::RepackLsItem *repackRequestItem = data->mutable_rels_item();
 

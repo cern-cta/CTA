@@ -66,7 +66,7 @@ void PhysicalLibraryLsWriteReactor::NextWrite() {
     } else {
         while(next_pl != m_physicalLibraryList.cend()) {
             const auto& pl = *next_pl;
-            next_pl++;
+            ++next_pl;
             cta::xrd::Data* data = new cta::xrd::Data();
             cta::admin::PhysicalLibraryLsItem *pl_item = data->mutable_plls_item();
             

@@ -67,7 +67,7 @@ void RequesterMountRuleLsWriteReactor::NextWrite() {
     } else {
         while(next_rmr != m_requesterMountRuleList.cend()) {
             const auto& rmr = *next_rmr;
-            next_rmr++;
+            ++next_rmr;
             cta::xrd::Data* data = new cta::xrd::Data();
             cta::admin::RequesterMountRuleLsItem *rmr_item = data->mutable_rmrls_item();
             

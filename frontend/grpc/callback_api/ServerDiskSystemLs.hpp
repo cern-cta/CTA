@@ -56,7 +56,7 @@ void DiskSystemLsWriteReactor::NextWrite() {
     } else {
         while(next_ds != m_diskSystemList.cend()) {
             const auto& ds = *next_ds;
-            next_ds++;
+            ++next_ds;
             cta::xrd::Data* data = new cta::xrd::Data();
             cta::admin::DiskSystemLsItem *ds_item = data->mutable_dsls_item();
 
