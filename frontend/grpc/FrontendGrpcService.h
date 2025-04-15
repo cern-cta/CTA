@@ -14,7 +14,6 @@
 #include "cta_frontend.pb.h"
 #include "cta_frontend.grpc.pb.h"
 #include "frontend/common/FrontendService.hpp"
-#include "frontend/common/AdminCmd.hpp"
 
 using cta::Scheduler;
 using cta::catalogue::Catalogue;

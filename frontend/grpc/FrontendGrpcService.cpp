@@ -23,6 +23,7 @@
 #include "common/dataStructures/SecurityIdentity.hpp"
 #include "frontend/common/FrontendService.hpp"
 #include "frontend/common/WorkflowEvent.hpp"
+#include "frontend/common/AdminCmd.hpp"
 
 /*
  * Validate the storage class and issue the archive ID which should be used for the Archive request
