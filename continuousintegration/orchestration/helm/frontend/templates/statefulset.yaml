@@ -69,7 +69,7 @@ spec:
         command: ["bash", "/scripts/ctafrontend-grpc.sh"]
         {{- else }}
         command: ["bash", "/scripts/ctafrontend.sh"]
-        {{- end}}
+        {{- end }}
         readinessProbe:
 
           {{- if .Values.useGrpc }}
@@ -184,7 +184,7 @@ spec:
       - name: xrootd-config
         configMap:
           name: cta-frontend-xrootd-conf
-      {{- end}}
+      {{- end }}
       - name: eosctaconfig
         configMap:
           name: eos-grpc-keytab

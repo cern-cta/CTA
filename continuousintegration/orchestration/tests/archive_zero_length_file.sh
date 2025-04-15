@@ -29,6 +29,8 @@ EOS_MGM_HOST="ctaeos"
 CTA_TEST_DIR=/eos/ctaeos/cta
 TEST_FILE_NAME="empty_file"
 
+# get Krb5 credentials
+. /root/client_helper.sh
 eosadmin_kdestroy
 eosadmin_kinit
 
