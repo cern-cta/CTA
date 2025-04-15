@@ -34,7 +34,6 @@
 
 #include <getopt.h>
 #include <fstream>
-// #include <grpc++/reflection.h>
 
 using namespace cta;
 using namespace cta::common;
