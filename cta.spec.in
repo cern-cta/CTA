@@ -221,9 +221,8 @@ dCache frontend
 %systemd_postun cta-frontend-grpc.service
 %systemdDaemonReload
 
-## add the frontend-grpc implementation of the non-streaming commands
 %package -n cta-admin-grpc
-Summary: CERN Tape Archive: command line interface using grpc instead of Xrootd/ssi
+Summary: CERN Tape Archive: cta-admin command line interface for gRPC frontend
 Requires: grpc
 %description -n cta-admin-grpc
 
