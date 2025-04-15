@@ -225,8 +225,6 @@ Status CtaRpcImpl::CancelRetrieve(::grpc::ServerContext* context,
   return ProcessGrpcRequest(request, response, lc);
 }
 
-// Admin command should be implemented here
-// this function can throw, maybe it shouldn't??
 Status CtaRpcImpl::Admin(::grpc::ServerContext* context, const cta::xrd::Request* request, cta::xrd::Response* response) {
   cta::log::LogContext lc(m_frontendService->getLogContext());
   cta::log::ScopedParamContainer sp(lc);
