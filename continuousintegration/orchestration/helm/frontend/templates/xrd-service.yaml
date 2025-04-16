@@ -1,4 +1,4 @@
-{{- if .Values.grpc.enabled }}
+{{- if .Values.xrd.enabled }}
 {{- $name := include "ctafrontend.fullname" . }}
 apiVersion: v1
 kind: Service
