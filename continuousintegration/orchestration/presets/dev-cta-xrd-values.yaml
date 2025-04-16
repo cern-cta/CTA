@@ -1,8 +1,8 @@
 frontend:
-  useGrpc: false
-
-  conf:
-    xrd:
+  xrd:
+    enabled: true
+    port: 10955
+    conf:
       catalogue:
         numberOfConnections: 10
         # Reduced value for test environment

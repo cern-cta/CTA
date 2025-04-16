@@ -1,3 +1,4 @@
+{{- if .Values.xrd.enabled }}
 {{- $name := include "ctafrontend.fullname" . }}
 {{- $schedulerConfig := include "scheduler.config" . | fromYaml -}}
 apiVersion: apps/v1
@@ -65,20 +66,10 @@ spec:
         image: {{ include "ctafrontend.image" . }}
         imagePullPolicy: {{ include "ctafrontend.imagePullPolicy" . }}
         stdin: true
-        {{- if .Values.useGrpc }}
-        command: ["bash", "/scripts/ctafrontend-grpc.sh"]
-        {{- else }}
-        command: ["bash", "/scripts/ctafrontend.sh"]
-        {{- end }}
+        command: ["bash", "/scripts/ctafrontend-xrd.sh"]
         readinessProbe:
-
-          {{- if .Values.useGrpc }}
-          grpc:
-            port: {{ .Values.frontendPort }}
-          {{- else }}
           tcpSocket:
-            port: {{ .Values.frontendPort }}
-          {{- end }}
+            port: {{ .Values.xrd.port }}
           initialDelaySeconds: 5
           periodSeconds: 5
           timeoutSeconds: 3
@@ -132,15 +123,9 @@ spec:
           mountPath: /etc/ceph/ceph.client.{{ $schedulerConfig.cephConfig.id }}.keyring
           subPath: ceph.client.{{ $schedulerConfig.cephConfig.id }}.keyring
         {{- end }}
-        {{- if .Values.useGrpc }}
-        - name: grpc-config
-          mountPath: /etc/cta/cta-frontend-grpc.conf
-          subPath: cta-frontend-grpc.conf
-        {{- else }}
         - name: xrootd-config
           mountPath: /etc/cta/cta-frontend-xrootd.conf
           subPath: cta-frontend-xrootd.conf
-        {{- end }}
         - name: eosctaconfig
           mountPath: /etc/cta/eos.grpc.keytab
           subPath: eos.grpc.keytab
@@ -176,15 +161,9 @@ spec:
         configMap:
           name: ceph-conf
       {{- end }}
-      {{- if .Values.useGrpc }}
-      - name: grpc-config
-        configMap:
-          name: cta-frontend-grpc-conf
-      {{- else }}
       - name: xrootd-config
         configMap:
           name: cta-frontend-xrootd-conf
-      {{- end }}
       - name: eosctaconfig
         configMap:
           name: eos-grpc-keytab
@@ -199,3 +178,4 @@ spec:
         configMap:
           name: {{ .Values.global.kerberos.clientConfig.configMap }}
       {{ include "common.extraVolumes" . | nindent 6 }}
+{{- end }}

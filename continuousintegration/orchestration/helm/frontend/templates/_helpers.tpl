@@ -2,6 +2,10 @@
   {{ include "common.names.fullname" . }}
 {{- end }}
 
+{{- define "ctafrontendgrpc.fullname" -}}
+  {{ printf "%s-grpc" (include "common.names.fullname" .) }}
+{{- end }}
+
 {{- define "ctafrontend.image" -}}
   {{ include "common.images.image" (dict "imageRoot" .Values.image "global" .Values.global.image) }}
 {{- end }}

@@ -1,4 +1,5 @@
-{{- $name := include "ctafrontend.fullname" . }}
+{{- if .Values.grpc.enabled }}
+{{- $name := include "ctafrontendgrpc.fullname" . }}
 apiVersion: v1
 kind: Service
 metadata:
@@ -11,5 +12,6 @@ spec:
   clusterIP: None
   ports:
   - name: {{ $name }}
-    port: {{ .Values.frontendPort }}
+    port: {{ .Values.grpc.port }}
     protocol: TCP
+{{- end }}
