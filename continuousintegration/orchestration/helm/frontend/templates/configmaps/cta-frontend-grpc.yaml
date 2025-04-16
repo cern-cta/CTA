@@ -13,7 +13,7 @@ data:
     # CTA options
     #
 
-    cta.instance_name {{ .Release.Namespace | quote }}
+    cta.instance_name {{ .Release.Namespace }}
     cta.schedulerdb.scheduler_backend_name {{ $schedulerConfig.backend }}
 
     # CTA ObjectStore options

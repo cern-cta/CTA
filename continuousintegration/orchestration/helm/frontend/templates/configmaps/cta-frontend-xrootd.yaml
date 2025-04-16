@@ -13,7 +13,7 @@ data:
     # CTA options
     #
 
-    cta.instance_name {{ .Release.Namespace | quote }}
+    cta.instance_name {{ .Release.Namespace }}
 
     # CTA ObjectStore options
     cta.objectstore.backendpath {{ include "global.schedulerUrl" . }}
