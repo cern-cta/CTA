@@ -1,8 +1,8 @@
 frontend:
-  useGrpc: true
-
-  conf:
-    grpc:
+  grpc:
+    enabled: true
+    port: 10956
+    conf:
       catalogue:
         numberOfConnections: 10
         # Reduced value for test environment
@@ -12,6 +12,7 @@ frontend:
         archiveFileMaxSizeGb: 1000
         zeroLengthFilesForbidden: true
         zeroLengthFilesForbiddenVoExceptionList: ""
+        # repackBufferUrl
 
       schedulerdb:
         numberOfThreads: 500
@@ -23,3 +24,4 @@ frontend:
 
       logger:
         logLevel: "INFO"
+        logFormat: default

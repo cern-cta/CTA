@@ -1,0 +1,17 @@
+{{- if .Values.grpc.enabled }}
+{{- $name := include "ctafrontend.fullname" . }}
+apiVersion: v1
+kind: Service
+metadata:
+  name: {{ $name }}
+  labels:
+    {{- include "common.labels.standard" . | nindent 4 }}
+spec:
+  selector:
+    app.kubernetes.io/name: {{ $name }}
+  clusterIP: None
+  ports:
+  - name: {{ $name }}
+    port: {{ .Values.xrd.port }}
+    protocol: TCP
+{{- end }}
