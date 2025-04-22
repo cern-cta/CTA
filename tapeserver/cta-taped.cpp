@@ -20,6 +20,7 @@
 #include "common/log/StdoutLogger.hpp"
 #include "common/processCap/ProcessCap.hpp"
 #include "common/threading/System.hpp"
+#include "common/telemetry/metrics/MetricsInit.hpp"
 #include "tapeserver/daemon/CommandLineParams.hpp"
 #include "tapeserver/daemon/common/TapedConfiguration.hpp"
 #include "tapeserver/daemon/TapeDaemon.hpp"
@@ -220,6 +221,20 @@ int main(const int argc, char **const argv) {
     }
   } catch(exception::Exception& ex) {
     std::cerr << "Failed to instantiate object representing CTA logging system: " << ex.getMessage().str() << std::endl;
+    return EXIT_FAILURE;
+  }
+
+  // Instantiate telemetry
+  try {
+    // For now the service name for the metrics is just the drive name. This should eventually be updated
+    cta::telemetry::metrics::MetricsConfig metricsConfig(globalConfig.telemetryBackend.value(),
+                                                        globalConfig.driveName.value(),
+                                                        std::chrono::milliseconds(globalConfig.telemetryExportInterval.value()),
+                                                        std::chrono::milliseconds(globalConfig.telemetryExportTimeout.value()),
+                                                        globalConfig.telemetryOltpEndpoint.value());
+    cta::telemetry::metrics::initMetrics(metricsConfig);
+  } catch(exception::Exception& ex) {
+    std::cerr << "Failed to initialise OpenTelemetry: " << ex.getMessage().str() << std::endl;
     return EXIT_FAILURE;
   }
 

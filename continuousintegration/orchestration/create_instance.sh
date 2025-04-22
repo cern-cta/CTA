@@ -54,6 +54,7 @@ usage() {
   echo "      --eos-enabled <true|false>:     Whether to spawn an EOS instance or not. Defaults to true."
   echo "      --dcache-enabled <true|false>: Whether to spawn a dCache instance or not. Defaults to false."
   echo "      --cta-config <file>:            Values file to use for the CTA chart. Defaults to presets/dev-cta-xrd-values.yaml."
+  echo "      --enable-telemetry:             Spawns an OpenTelemetry and Collector and Prometheus scraper."
   echo
   exit 1
 }
@@ -108,6 +109,7 @@ create_instance() {
   num_library_devices=1 # For the auto-generated tapeservers config
   max_drives_per_tpsrv=1
   max_tapeservers=2
+  enable_telemetry=false
   # EOS related
   eos_image_tag=$(jq -r .dev.eosImageTag ${project_json_path})
   eos_image_repository=$(jq -r .dev.eosImageRepository ${project_json_path})
@@ -156,6 +158,7 @@ create_instance() {
         shift ;;
       -O|--reset-scheduler) reset_scheduler=true ;;
       -D|--reset-catalogue) reset_catalogue=true ;;
+      --enable-telemetry) enable_telemetry=true ;;
       --dry-run) dry_run=1 ;;
       --eos-config)
         eos_config="$2"
@@ -371,6 +374,19 @@ create_instance() {
   if [ $dry_run == 1 ]; then
     exit 0
   fi
+
+
+  if [ "$enable_telemetry" == "true" ] ; then
+    helm repo add open-telemetry https://open-telemetry.github.io/opentelemetry-helm-charts
+    helm install my-opentelemetry-collector open-telemetry/opentelemetry-collector \
+          --namespace "${namespace}" \
+          --values presets/dev-opentelemetry-values.yaml
+    helm repo add prometheus-community https://prometheus-community.github.io/helm-charts
+    helm install my-prometheus prometheus-community/prometheus \
+          --namespace "${namespace}" \
+          --values presets/dev-prometheus-values.yaml
+  fi
+
 }
 
 setup_system() {

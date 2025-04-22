@@ -226,6 +226,12 @@ TapedConfiguration TapedConfiguration::createFromConfigPath(
   ret.tapeCacheMaxAgeSecs.setFromConfigurationFile(cf, driveTapedConfigPath);
   ret.retrieveQueueCacheMaxAgeSecs.setFromConfigurationFile(cf, driveTapedConfigPath);
 
+  // Telemetry options
+  ret.telemetryBackend.setFromConfigurationFile(cf, driveTapedConfigPath);
+  ret.telemetryOltpEndpoint.setFromConfigurationFile(cf, driveTapedConfigPath);
+  ret.telemetryExportInterval.setFromConfigurationFile(cf, driveTapedConfigPath);
+  ret.telemetryExportTimeout.setFromConfigurationFile(cf, driveTapedConfigPath);
+
   // If we get here, the configuration file is good enough to be logged.
   ret.daemonUserName.log(log);
   ret.daemonGroupName.log(log);
