@@ -270,15 +270,16 @@ bool RetrieveMount::testReserveDiskSpace(const cta::DiskSpaceReservationRequest&
 
 uint64_t RetrieveMount::requeueJobBatch(const std::list<std::string>& jobIDsList,
                                         cta::log::LogContext& logContext) const {
-  // here we will do the same as for ArchiveRdbJob::failTransfer but for bunch of jobs
+  // here we will do ALMOST the same as for RetrieveRdbJob::failTransfer for a bunch of jobs,
+  // but it will not update the statistics on the number of retries as `failTransfer` does!
   cta::schedulerdb::Transaction txn(m_connPool);
   uint64_t nrows = 0;
   try {
     nrows = postgres::RetrieveJobQueueRow::requeueJobBatch(txn, RetrieveJobStatus::RJS_ToTransfer, jobIDsList);
     if (nrows != jobIDsList.size()) {
       cta::log::ScopedParamContainer params(logContext);
-      params.add("jobCountToRequeue", jobIDsList.size());
-      params.add("jobCountRequeued", nrows);
+      params.add("jobsToRequeue", jobIDsList.size());
+      params.add("jobsRequeued", nrows);
       logContext.log(cta::log::ERR, "In schedulerdb::RetrieveMount::requeueJobBatch(): failed to requeue all jobs !");
     }
     txn.commit();

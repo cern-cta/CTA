@@ -297,13 +297,7 @@ void castor::tape::tapeserver::daemon::TapeWriteSingleThread::run() {
   // prevent counting where error happened upstream.
   std::string currentErrorToCount = "Error_tapeMountForWrite";
   std::unique_ptr<TapeWriteTask> task;
-#ifdef CTA_PGSCHED
-  // This is used for tapeFlush which is done for OStoreDB only for
-  // these params goign out of limits or in case there are no more tasks
-  // for hitting tape end, this is not done AFAICS - implementing it for PGSCHED
-  uint64_t bytes = 0;
-  uint64_t files = 0;
-#endif
+
   try {
     // Report the parameters of the session to the main thread
     typedef cta::log::Param Param;
@@ -428,10 +422,9 @@ void castor::tape::tapeserver::daemon::TapeWriteSingleThread::run() {
       }
 
       m_stats.waitReportingTime += timer.secs(cta::utils::Timer::resetCounter);
-#ifndef CTA_PGSCHED
+
       uint64_t bytes = 0;
       uint64_t files = 0;
-#endif
       // Tasks handle their error logging themselves.
       currentErrorToCount = "";
       m_reportPacker.reportDriveStatus(cta::common::dataStructures::DriveStatus::Transferring,
@@ -530,17 +523,14 @@ void castor::tape::tapeserver::daemon::TapeWriteSingleThread::run() {
     }
 //first empty all the tasks and circulate mem blocks
 #ifdef CTA_PGSCHED
-    // fail the job of the last task which threw exception unless
-    // If isTapeFull is true, final flushTape() is possible to run ( no space fot eh file marks)
-    // so even in this case, we need to declare this last job as failed and requeue it !
+    // If isTapeFull is true, it is not possible to run flushTape() (no space for the file marks)
+    // in this case, we need to declare this last job as failed and requeue it as well !
     // same for all the previously declared reportCompletedJob() jobs and for all the taks in the queue
     //std::string failureReason = "In TapeWriteSingleThread::run(): cleaning failed task queue after failure or end of tape; failing job";
     std::list<std::string> jobIDsList;  // !!! serves for BUNCH FAILURE IMPLEMENTATION BY ArchiveMount
     if (nullptr != task) {
       jobIDsList.emplace_back(task->getArchiveJob().getJobID());
-      // here is where I remove this task object from memory (not in TaskWriteTask as for OStoreDB)
-      task->circulateMemBlocks();
-      //task->getArchiveJob().reportFailed(failureReason, m_logContext); // !!! will be decomissioned
+      // task->getArchiveJob().reportFailed(failureReason, m_logContext); // !!! will be decomissioned
     }
 #endif
     while (true) {

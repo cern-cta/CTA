@@ -45,6 +45,16 @@ MigrationReportPacker::MigrationReportPacker(cta::ArchiveMount* archiveMount, co
 //------------------------------------------------------------------------------
 MigrationReportPacker::~MigrationReportPacker() {
   cta::threading::MutexLocker ml(m_producterProtection);
+  try {
+    cta::log::ScopedParamContainer params(m_lc);
+    if (m_successfulArchiveJobs.size() > 0) {
+      params.add("successfulJobsLostInQueue", m_successfulArchiveJobs.size());
+    }
+    if (m_skippedFiles.size() > 0) {
+      params.add("skippedFilesLostInQueue", m_successfulArchiveJobs.size());
+    }
+    m_lc.log(cta::log::ERR, "In MigrationReportPacker::~MigrationReportPacker(), still pending jobs report.");
+  } catch (...) {}
 }
 
 //------------------------------------------------------------------------------
@@ -247,28 +257,40 @@ void MigrationReportPacker::ReportLastBatchError::execute(MigrationReportPacker&
     return;
   }
   std::unique_ptr<cta::ArchiveJob> job;
+  std::list<std::string>& jobIDsList;
+  uint64_t njobstorequeue = m_successfulArchiveJobs.size();
   while (!reportPacker.m_successfulArchiveJobs.empty()) {
-    job = std::move(reportPacker.m_successfulArchiveJobs.front());
-    reportPacker.m_successfulArchiveJobs.pop();
-    if (!job) {
-      continue;
-    }
     try {
-      job->transferFailed(m_failureLog, reportPacker.m_lc);
-    } catch (cta::exception::NoSuchObject& ex) {
-      cta::log::ScopedParamContainer params(reportPacker.m_lc);
-      params.add("ExceptionMSG", ex.getMessageValue()).add("fileId", job->archiveFile.archiveFileID);
-      reportPacker.m_lc.log(cta::log::WARNING,
-                            "In MigrationReportPacker::ReportLastBatchError::execute(): call to job->failed(), job "
-                            "does not exist in the objectstore.");
+      job = std::move(reportPacker.m_successfulArchiveJobs.front());
+      reportPacker.m_successfulArchiveJobs.pop();
+      if (!job) {
+        continue;
+      }
+      jobIDsList.emplace_back(std::to_string(job->getJobID()));
     } catch (cta::exception::Exception& ex) {
       cta::log::ScopedParamContainer params(reportPacker.m_lc);
       params.add("ExceptionMSG", ex.getMessageValue()).add("fileId", job->archiveFile.archiveFileID);
       reportPacker.m_lc.log(
         cta::log::ERR,
-        "In MigrationReportPacker::ReportLastBatchError::execute(): call to job->failed() threw an exception.");
+        "In MigrationReportPacker::ReportLastBatchError::execute(): looping through reportPacker jobIDs threw an exception.");
       reportPacker.m_lc.logBacktrace(cta::log::INFO, ex.backtrace());
     }
+  }
+  try {
+    uint64_t nrows = reportPacker.m_archiveMount->requeueJobBatch(jobIDsList, m_lc);
+    if (njobstorequeue != nrows) {
+      params.add("reportPackerJobsToRequeue", njobstorequeue).add("jobsToRequeud", nrows);
+      reportPacker.m_lc.log(
+        cta::log::ERR,
+        "In MigrationReportPacker::ReportLastBatchError::execute(): requeueJobBatch() failed, the reportPacker job count to requeue did not match the final requeued job count.");
+    }
+  } catch (cta::exception::Exception& ex) {
+    cta::log::ScopedParamContainer params(reportPacker.m_lc);
+    params.add("ExceptionMSG", ex.getMessageValue()).add("reportPackerJobsToRequeue", njobstorequeue);
+    reportPacker.m_lc.log(
+      cta::log::ERR,
+      "In MigrationReportPacker::ReportLastBatchError::execute(): call to requeueJobBatch threw an exception.");
+    reportPacker.m_lc.logBacktrace(cta::log::INFO, ex.backtrace());
   }
 }
 
