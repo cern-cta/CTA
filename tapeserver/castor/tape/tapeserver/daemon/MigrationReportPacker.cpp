@@ -268,7 +268,7 @@ void MigrationReportPacker::ReportLastBatchError::execute(MigrationReportPacker&
       if (!job) {
         continue;
       }
-      jobIDsList.emplace_back(std::to_string(job->getJobID()));
+      jobIDsList.emplace_back(job->getJobID());
     } catch (cta::exception::Exception& ex) {
       cta::log::ScopedParamContainer params(reportPacker.m_lc);
       params.add("ExceptionMSG", ex.getMessageValue()).add("fileId", job->archiveFile.archiveFileID);
@@ -279,8 +279,9 @@ void MigrationReportPacker::ReportLastBatchError::execute(MigrationReportPacker&
     }
   }
   try {
-    uint64_t nrows = reportPacker.m_archiveMount->requeueJobBatch(jobIDsList, m_lc);
+    uint64_t nrows = reportPacker.m_archiveMount->requeueJobBatch(jobIDsList, reportPacker.m_lc);
     if (njobstorequeue != nrows) {
+      cta::log::ScopedParamContainer params(reportPacker.m_lc);
       params.add("reportPackerJobsToRequeue", njobstorequeue).add("jobsToRequeud", nrows);
       reportPacker.m_lc.log(
         cta::log::ERR,
