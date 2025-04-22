@@ -32,5 +32,10 @@ data:
     general InstanceName {{ $.Release.Namespace }}
     general SchedulerBackendName {{ $schedulerConfig.backend }}
     taped externalFreeDiskSpaceScript {{ $.Values.conf.taped.externalFreeDiskSpaceScript }}
+
+    telemetry backend {{ $.Values.conf.telemetry.backend }}
+    telemetry otlpEndpoint {{ $.Values.conf.telemetry.otlpEndpoint }}
+    telemetry exportInterval {{ $.Values.conf.telemetry.exportInterval }}
+    telemetry exportTimeout{{ $.Values.conf.telemetry.exportTimeout }}
 ---
 {{- end }}
