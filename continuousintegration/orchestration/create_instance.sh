@@ -378,7 +378,7 @@ create_instance() {
 
   if [ "$enable_telemetry" == "true" ] ; then
     helm repo add open-telemetry https://open-telemetry.github.io/opentelemetry-helm-charts
-    helm install opentelemetry open-telemetry/opentelemetry-collector \
+    helm install cta-metrics open-telemetry/opentelemetry-collector \
           --namespace "${namespace}" \
           --values presets/dev-opentelemetry-values.yaml
     helm repo add prometheus-community https://prometheus-community.github.io/helm-charts
