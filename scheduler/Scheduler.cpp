@@ -138,7 +138,7 @@ uint64_t Scheduler::checkAndGetNextArchiveFileId(const std::string& instanceName
     .add("fileId", archiveFileId)
     .add("catalogueTime", catalogueTime)
     .add("schedulerDbTime", schedulerDbTime);
-  lc.log(log::INFO, "Checked request and got next archive file ID");
+  lc.log(log::INFO, "In Scheduler::checkAndGetNextArchiveFileId(): Checked request and got next archive file ID");
 
   return archiveFileId;
 }
@@ -155,7 +155,7 @@ std::string Scheduler::queueArchiveWithGivenId(const uint64_t archiveFileId,
   using utils::postEllipsis;
 
   if (!request.fileSize) {
-    throw cta::exception::UserError(std::string("Rejecting archive request for zero-length file: ") +
+    throw cta::exception::UserError(std::string("In Scheduler::queueArchiveWithGivenId(): Rejecting archive request for zero-length file: ") +
                                     request.diskFileInfo.path);
   }
 
@@ -198,7 +198,7 @@ std::string Scheduler::queueArchiveWithGivenId(const uint64_t archiveFileId,
     .add("catalogueTime", catalogueTime)
     .add("schedulerDbTime", schedulerDbTime);
   request.checksumBlob.addFirstChecksumToLog(spc);
-  lc.log(log::INFO, "Queued archive request");
+  lc.log(log::INFO, "In Scheduler::queueArchiveWithGivenId(): Queued archive request");
   return archiveReqAddr;
 }
 
@@ -231,7 +231,7 @@ std::string Scheduler::queueRetrieve(const std::string& instanceName,
     queueCriteria.archiveFile.tapeFiles.removeAllVidsExcept(*request.vid);
     if (queueCriteria.archiveFile.tapeFiles.empty()) {
       exception::UserError ex;
-      ex.getMessage() << "VID " << *request.vid << " does not contain a tape copy of file with archive file ID "
+      ex.getMessage() << "In Scheduler::queueRetrieve(): VID " << *request.vid << " does not contain a tape copy of file with archive file ID "
                       << request.archiveFileID;
       throw ex;
     }
@@ -293,7 +293,7 @@ std::string Scheduler::queueRetrieve(const std::string& instanceName,
   if (request.activity) {
     spc.add("activity", request.activity.value());
   }
-  lc.log(log::INFO, "Queued retrieve request");
+  lc.log(log::INFO, "In Scheduler::queueRetrieve(): Queued retrieve request");
   return requestInfo.requestId;
 }
 
@@ -1009,6 +1009,9 @@ void Scheduler::reportDriveStatus(const common::dataStructures::DriveInfo& drive
   }
 }
 
+//------------------------------------------------------------------------------
+// createTapeDriveStatus
+//------------------------------------------------------------------------------
 void Scheduler::createTapeDriveStatus(const common::dataStructures::DriveInfo& driveInfo,
                                       const common::dataStructures::DesiredDriveState& desiredState,
                                       const common::dataStructures::MountType& type,
@@ -1078,7 +1081,7 @@ std::list<common::dataStructures::RetrieveJob> Scheduler::getPendingRetrieveJobs
   auto schedulerDbTime = t.secs();
   log::ScopedParamContainer spc(lc);
   spc.add("schedulerDbTime", schedulerDbTime);
-  lc.log(log::INFO, "In Scheduler::getPendingRetrieveJobs(): success.");
+  lc.log(log::INFO, "In Scheduler::getPendingRetrieveJobs(vid): success.");
   return ret;
 }
 

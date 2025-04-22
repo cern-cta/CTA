@@ -156,7 +156,7 @@ void QueueCleanupRunner::runOnePass(log::LogContext &logContext) {
       paramsLoopMsg.add("numberOfJobsMoved", dbRet.size())
                    .add("jobMovingTime", jobMovingTime)
                    .add("tapeVid", queueVid);
-      logContext.log(cta::log::INFO,"In DiskReportRunner::runOnePass(): Queue jobs moved.");
+      logContext.log(cta::log::INFO,"In QueueCleanupRunner::runOnePass(): Queue jobs moved.");
 
       // Tick heartbeat
       try {

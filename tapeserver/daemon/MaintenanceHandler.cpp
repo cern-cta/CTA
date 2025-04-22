@@ -337,19 +337,36 @@ void MaintenanceHandler::exceptionThrowingRunChild(){
     pollList["0"]=m_socketPair.get();
     bool receivedShutdownMessage=false;
     do {
-      utils::Timer t;
-      m_processManager.logContext().log(log::DEBUG,
+      utils::Timer t, onePass;
+      m_processManager.logContext().log(log::INFO,
           "In MaintenanceHandler::exceptionThrowingRunChild(): About to do a maintenance pass.");
       cleanupRunner.runOnePass(m_processManager.logContext());
+      {
+        log::ScopedParamContainer params(m_processManager.logContext());
+        params.add("passTime", onePass.secs());
+        m_processManager.logContext().log(log::INFO, "Queue cleanup run one pass done");
+      }
+
       gc.runOnePass(m_processManager.logContext());
+      {
+        log::ScopedParamContainer params(m_processManager.logContext());
+        params.add("passTime", onePass.secs());
+        m_processManager.logContext().log(log::INFO, "Garbage collector run one pass done");
+      }
+
       diskReportRunner.runOnePass(m_processManager.logContext());
-      m_processManager.logContext().log(log::DEBUG,
-                                        "In MaintenanceHandler::exceptionThrowingRunChild(): After diskReportRunner.runOnePass().");
+      {
+        log::ScopedParamContainer params(m_processManager.logContext());
+        params.add("passTime", onePass.secs());
+        m_processManager.logContext().log(log::INFO, "Disk report run one pass done");
+      }
+
       if(runRepackRequestManager()){
         repackRequestManager.runOnePass(m_processManager.logContext(), m_tapedConfig.repackMaxRequestsToExpand.value());
+        {
+          m_processManager.logContext().log(log::INFO, "Repack request manager run one pass");
+        }
       }
-      m_processManager.logContext().log(log::DEBUG,
-                                        "In MaintenanceHandler::exceptionThrowingRunChild(): After runRepackRequestManager().");
       try {
         server::SocketPair::poll(pollList, s_pollInterval - static_cast<long>(t.secs()), server::SocketPair::Side::parent);
         std::string message = m_socketPair->receive();
