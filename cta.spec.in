@@ -60,6 +60,7 @@ BuildRequires: cmake3 >= 3.17 redhat-rpm-config
 %define oracleVersionMax 24.0
 %define xrootdVersion 1:5.7.1-1.el9
 %define radosVersion 2:17.2.8
+%define opentelemetryCppVersion 1.20.0
 %define requirementsOS protobuf-compiler >= 3.3.1 protobuf-devel >= 3.3.1 oracle-instantclient-devel >= %{oracleVersionMin} oracle-instantclient-devel < %{oracleVersionMax}
 %define requiredProtobuf protobuf
 BuildRequires: %{requirementsOS}
@@ -82,6 +83,8 @@ BuildRequires: valgrind
 BuildRequires: valgrind-devel
 BuildRequires: krb5-devel
 BuildRequires: libtirpc-devel
+BuildRequires:  openssl-devel
+BuildRequires: opentelemetry-cpp >= %{opentelemetryCppVersion}
 %{?systemd_requires}
 BuildRequires: systemd
 # only build debug info if you're building the whole code
@@ -256,6 +259,7 @@ Group: Application/CTA
 # Explicity require protobuf to avoid clash with eos-protobuf
 Requires: %{requiredProtobuf}
 Requires: xrootd-client-libs >= %{xrootdVersion}
+Requires: opentelemetry-cpp >= %{opentelemetryCppVersion}
 %description -n cta-lib-common
 CERN Tape Archive:
 The shared libraries base
@@ -613,6 +617,7 @@ the free disk space in the defalut namespace
 
 %changelog
 
+* Mon Apr 09 2025 Niels Alexander Buegel <niels.alexander.bugel@cern.ch> - 5.11.7.0-1
 - See CHANGELOG.md for version history >= 5.11.7.0
 
 * Mon Apr 07 2025 Niels Alexander Buegel <niels.alexander.bugel@cern.ch> - 5.11.6.0-1

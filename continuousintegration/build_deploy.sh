@@ -57,6 +57,7 @@ usage() {
   echo "      --eos-image-tag:                  Image to use for spawning EOS. If not provided, will default to the image specified in the create_instance script."
   echo "      --cta-config <path>:              Custom Values file to pass to the CTA Helm chart. Defaults to: presets/dev-cta-xrd-values.yaml"
   echo "      --eos-config <path>:              Custom Values file to pass to the EOS Helm chart. Defaults to: presets/dev-eos-values.yaml"
+  echo "      --enable-telemetry:               Enables telemetry in the CI."
   exit 1
 }
 
@@ -73,6 +74,7 @@ build_deploy() {
   local skip_unit_tests=false
   local skip_debug_packages=false
   local skip_image_reload=false
+  local enable_telemetry=false
   local build_generator="Ninja"
   local cmake_build_type="RelWithDebInfo"
   local operating_system="alma9"
@@ -119,6 +121,7 @@ build_deploy() {
       --force-install) force_install=true ;;
       --upgrade-cta) upgrade_cta=true ;;
       --upgrade-eos) upgrade_eos=true ;;
+      --enable-telemetry) enable_telemetry=true ;;
       --eos-image-tag)
         if [[ $# -gt 1 ]]; then
           eos_image_tag="$2"
@@ -441,6 +444,9 @@ build_deploy() {
 
       if [ -n "${cta_config}" ]; then
         extra_spawn_options+=" --cta-config ${cta_config}"
+      fi
+      if [ "$enable_telemetry" = true ]; then
+        extra_spawn_options+=" --enable-telemetry"
       fi
 
       if [ -z "${scheduler_config}" ]; then
