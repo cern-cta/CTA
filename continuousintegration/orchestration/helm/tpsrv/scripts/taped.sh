@@ -21,7 +21,7 @@ echo "$(date '+%Y-%m-%d %H:%M:%S') [$(basename "${BASH_SOURCE[0]}")] Started"
 # Install missing RPMs
 dnf install -y mt-st lsscsi sg3_utils cta-taped cta-tape-label cta-debuginfo cta-eosdf cta-debugsource valgrind xrootd-debuginfo xrootd-debugsource
 
-dnf debuginfo-install -y cta-* xrootd*5.8.1.post35+git95630676a*
+dnf debuginfo-install -y cta-* xrootd*5.8.1.post48+git845be267c*
 
 if [ "$SCHEDULER_BACKEND" == "ceph" ]; then
   dnf config-manager --enable ceph
