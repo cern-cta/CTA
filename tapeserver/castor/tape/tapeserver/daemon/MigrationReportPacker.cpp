@@ -272,9 +272,9 @@ void MigrationReportPacker::ReportLastBatchError::execute(MigrationReportPacker&
     } catch (cta::exception::Exception& ex) {
       cta::log::ScopedParamContainer params(reportPacker.m_lc);
       params.add("ExceptionMSG", ex.getMessageValue()).add("fileId", job->archiveFile.archiveFileID);
-      reportPacker.m_lc.log(
-        cta::log::ERR,
-        "In MigrationReportPacker::ReportLastBatchError::execute(): looping through reportPacker jobIDs threw an exception.");
+      reportPacker.m_lc.log(cta::log::ERR,
+                            "In MigrationReportPacker::ReportLastBatchError::execute(): looping through reportPacker "
+                            "jobIDs threw an exception.");
       reportPacker.m_lc.logBacktrace(cta::log::INFO, ex.backtrace());
     }
   }
@@ -283,9 +283,9 @@ void MigrationReportPacker::ReportLastBatchError::execute(MigrationReportPacker&
     if (njobstorequeue != nrows) {
       cta::log::ScopedParamContainer params(reportPacker.m_lc);
       params.add("reportPackerJobsToRequeue", njobstorequeue).add("jobsToRequeud", nrows);
-      reportPacker.m_lc.log(
-        cta::log::ERR,
-        "In MigrationReportPacker::ReportLastBatchError::execute(): requeueJobBatch() failed, the reportPacker job count to requeue did not match the final requeued job count.");
+      reportPacker.m_lc.log(cta::log::ERR,
+                            "In MigrationReportPacker::ReportLastBatchError::execute(): requeueJobBatch() failed, the "
+                            "reportPacker job count to requeue did not match the final requeued job count.");
     }
   } catch (cta::exception::Exception& ex) {
     cta::log::ScopedParamContainer params(reportPacker.m_lc);
@@ -550,6 +550,13 @@ void MigrationReportPacker::WorkerThread::run() {
   // Drain the FIFO if necessary. We know that m_continue will be
   // set by ReportEndofSessionWithErrors or ReportEndofSession
   // TODO devise a more generic mechanism
+  uint64_t leftOverReportCount = m_parent.m_fifo.size();
+  if (leftOverReportCount != 0) {
+    cta::log::ScopedParamContainer params(lc);
+    params.add("leftOverReportCount", leftOverReportCount);
+    params.add("MigrationReportPacker.m_continue", m_parent.m_continue);
+    lc.log(cta::log::ERROR, "In MigrationReportPacker::WorkerThread::run(): leftover reports will not get executed !");
+  }
   while (m_parent.m_fifo.size()) {
     std::unique_ptr<Report> rep(m_parent.m_fifo.pop());
     cta::log::ScopedParamContainer params(lc);
