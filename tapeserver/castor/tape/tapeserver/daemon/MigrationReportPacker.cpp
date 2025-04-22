@@ -256,6 +256,8 @@ void MigrationReportPacker::ReportLastBatchError::execute(MigrationReportPacker&
                           "Received a flush report from tape, but had no file to report to client. Doing nothing.");
     return;
   }
+  // We re-queue all the jobs which were left in the m_successfulArchiveJobs
+  // after exception was thrown (no flush() could be called for these)
   std::unique_ptr<cta::ArchiveJob> job;
   std::list<std::string>& jobIDsList;
   uint64_t njobstorequeue = m_successfulArchiveJobs.size();

@@ -60,6 +60,8 @@ public:
   /**
     * Re-queue batch of jobs
     * Serves PGSCHED purpose only
+    * This method purposely does not update retry statistics since used only
+    * in RecallTaskInjector when testing for available disk space !
     *
     * @param jobIDsList
     * @return number of jobs re-queued in the DB
