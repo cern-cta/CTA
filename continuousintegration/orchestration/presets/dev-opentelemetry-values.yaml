@@ -1,0 +1,12 @@
+mode: daemonset
+
+config:
+  exporters:
+    prometheus:
+      endpoint: "0.0.0.0:8889"
+
+  service:
+    pipelines:
+      metrics:
+        receivers: [otlp]
+        exporters: [prometheus]
