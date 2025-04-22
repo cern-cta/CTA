@@ -63,6 +63,7 @@ usage() {
   echo "      --platform <platform>:            Which platform to build for. Defaults to the default platform in the project.json."
   echo "      --eos-enabled <true|false>:       Whether to spawn an EOS or not. Defaults to true."
   echo "      --dcache-enabled <true|false>:    Whether to spawn a dCache or not. Defaults to false."
+  echo "      --enable-telemetry:               Enables telemetry in the CI."
   echo
   exit 1
 }
@@ -91,6 +92,7 @@ build_deploy() {
   local skip_unit_tests=false
   local skip_debug_packages=false
   local skip_image_reload=false
+  local enable_telemetry=false
   local build_generator="Ninja"
   local cmake_build_type=$(jq -r .dev.defaultBuildType "${project_root}/project.json")
   local scheduler_type="objectstore"
@@ -135,6 +137,7 @@ build_deploy() {
     --upgrade-cta) upgrade_cta=true ;;
     --upgrade-eos) upgrade_eos=true ;;
     --use-public-repos) use_internal_repos=false ;;
+    --enable-telemetry) enable_telemetry=true ;;
     --eos-image-tag)
       if [[ $# -gt 1 ]]; then
         eos_image_tag="$2"
@@ -462,6 +465,9 @@ build_deploy() {
 
       if [ -n "${cta_config}" ]; then
         extra_spawn_options+=" --cta-config ${cta_config}"
+      fi
+      if [ "$enable_telemetry" = true ]; then
+        extra_spawn_options+=" --enable-telemetry"
       fi
 
       if [ -z "${scheduler_config}" ]; then
