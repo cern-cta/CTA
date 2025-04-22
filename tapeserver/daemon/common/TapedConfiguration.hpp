@@ -289,7 +289,7 @@ struct TapedConfiguration {
     "telemetry", "backend", "NOOP", "Compile time default"};
 
   cta::SourcedParameter<std::string> telemetryOltpEndpoint{
-    "telemetry", "otlpEndpoint"};
+    "telemetry", "otlpEndpoint", "localhost:4317", "Compile time default"};
 
   cta::SourcedParameter<uint32_t> telemetryExportInterval{
     "telemetry", "exportInterval", 1000, "Compile time default"};
