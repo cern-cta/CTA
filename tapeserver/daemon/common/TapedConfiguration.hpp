@@ -280,6 +280,23 @@ struct TapedConfiguration {
     "general", SCHEDULER_NAME_CONFIG_KEY
   };
 
+
+  //----------------------------------------------------------------------------
+  // Telemetry Options
+  //----------------------------------------------------------------------------
+
+  cta::SourcedParameter<std::string> telemetryBackend{
+    "telemetry", "backend", "NOOP", "Compile time default"};
+
+  cta::SourcedParameter<std::string> telemetryOltpEndpoint{
+    "telemetry", "otlpEndpoint"};
+
+  cta::SourcedParameter<uint32_t> telemetryExportInterval{
+    "telemetry", "exportInterval", 1000, "Compile time default"};
+
+  cta::SourcedParameter<uint32_t> telemetryExportTimeout{
+    "telemetry", "exportInterval", 500, "Compile time default"};
+
 private:
   /** A private dummy logger which will simplify the implementation of the
    * functions (just unconditionally log things). */
