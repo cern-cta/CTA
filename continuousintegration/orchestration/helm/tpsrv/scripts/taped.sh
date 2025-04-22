@@ -33,7 +33,8 @@ fi
 # working correctly
 echo "$(date '+%Y-%m-%d %H:%M:%S') [$(basename "${BASH_SOURCE[0]}")] Ready"
 tail -F "/var/log/cta/cta-taped-${DRIVE_NAME}.log" &
-runuser -c "valgrind --leak-check=full --track-origins=yes /usr/bin/cta-taped -c /etc/cta/cta-taped-${DRIVE_NAME}.conf --foreground --log-format=json --log-to-file=/var/log/cta/cta-taped-${DRIVE_NAME}.log"
+# runuser -c "valgrind --leak-check=full --track-origins=yes /usr/bin/cta-taped -c /etc/cta/cta-taped-${DRIVE_NAME}.conf --foreground --log-format=json --log-to-file=/var/log/cta/cta-taped-${DRIVE_NAME}.log"
+runuser -c "/usr/bin/cta-taped -c /etc/cta/cta-taped-${DRIVE_NAME}.conf --foreground --log-format=json --log-to-file=/var/log/cta/cta-taped-${DRIVE_NAME}.log"
 
 echo "taped died"
 sleep infinity # Keep the container alive for debugging purposes
