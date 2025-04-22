@@ -295,7 +295,7 @@ public:
       ret.summary.addDeltaToLog(previousSummary, params);
       contSummaryAfter.addDeltaToLog(contSummaryBefore, params);
       timingList.addToLog(params);
-      lc.log(log::INFO, "In ContainerTraits<Q,C>::popNextBatchFromContainer(): did one round of elements retrieval.");
+      lc.log(log::INFO, "In ContainerTraits<Q,C>::popNextBatchFromContainerAndSwitchStatus(): did one round of elements retrieval.");
     }
   logAndReturn:
     {

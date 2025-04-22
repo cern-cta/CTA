@@ -43,7 +43,7 @@ void QueueCleanupRunner::runOnePass(log::LogContext &logContext) {
       continue; // Ignore queue
     }
 
-    // Check heartbeat of queues to know if they are being cleaned up
+    // Check heartbeat of queues to know if they are being cleaned up <- why not use a flag?
     if (queue.assignedAgent.has_value()) {
       if ((m_heartbeatCheck.count(queue.vid) == 0) || (m_heartbeatCheck[queue.vid].heartbeat != queue.heartbeat)) {
         // If this queue was never seen before, wait for another turn to check if its heartbeat has timed out.
@@ -74,7 +74,7 @@ void QueueCleanupRunner::runOnePass(log::LogContext &logContext) {
       log::ScopedParamContainer params(logContext);
       params.add("exceptionMessage", ex.getMessageValue());
       logContext.log(log::ERR,
-                     "ERROR: In QueueCleanupRunner::runOnePass(): failed to read set of tapes from the database. Aborting cleanup.");
+                     "In QueueCleanupRunner::runOnePass(): failed to read set of tapes from the database. Aborting cleanup.");
       return; // Unable to proceed from here...
     }
 
@@ -83,12 +83,12 @@ void QueueCleanupRunner::runOnePass(log::LogContext &logContext) {
         log::ScopedParamContainer params(logContext);
         params.add("tapeVid", vid);
         logContext.log(log::ERR,
-                       "ERROR: In QueueCleanupRunner::runOnePass(): failed to find the tape " + vid + " in the database. Skipping it.");
+                       "In QueueCleanupRunner::runOnePass(): failed to find the tape " + vid + " in the database. Skipping it.");
       }
     }
   } else {
     logContext.log(log::DEBUG,
-                   "DEBUG: In QueueCleanupRunner::runOnePass(): no queues requested a cleanup.");
+                   "In QueueCleanupRunner::runOnePass(): no queues requested a cleanup.");
     return;
   }
 
@@ -104,7 +104,7 @@ void QueueCleanupRunner::runOnePass(log::LogContext &logContext) {
             .add("tapeState", common::dataStructures::Tape::stateToString(tapeData.state));
       logContext.log(
               log::INFO,
-              "In QueueCleanupRunner::runOnePass(): Queue is has cleanup flag enabled but is not in the expected PENDING state. Skipping it.");
+              "In QueueCleanupRunner::runOnePass(): Queue has cleanup flag enabled but is not in the expected PENDING state. Skipping it.");
       continue;
     }
 

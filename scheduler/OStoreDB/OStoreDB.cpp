@@ -259,13 +259,16 @@ OStoreDB::getRetrieveQueuesCleanupInfo(log::LogContext& logContext) {
         .add("tapeVid", rqp.vid)
         .add("exceptionMessage", ex.getMessageValue())
         .log(log::DEBUG,
-             "In OStoreDB::getRetrieveQueuesCleanupInfo(): failed to lock/fetch a retrieve queue. "
+             "In OStoreDB::getRetrieveQueuesCleanupInfo(): failed to fetch a retrieve queue. "
              "Skipping it.");
       continue;
     }
 
     ret.push_back(SchedulerDatabase::RetrieveQueueCleanupInfo());
     ret.back().vid = rqueue.getVid();
+    // If this functions is called getRetrieveQueuesCleanupInfo(), why are we not
+    // filtering the queues here? But passing an object with thousands of queues
+    // to QueueCleanupRunner.cpp:36 that will be iterated again??
     ret.back().doCleanup = rqueue.getQueueCleanupDoCleanup();
     ret.back().assignedAgent = rqueue.getQueueCleanupAssignedAgent();
     ret.back().heartbeat = rqueue.getQueueCleanupHeartbeat();

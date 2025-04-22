@@ -364,6 +364,8 @@ void MaintenanceHandler::exceptionThrowingRunChild(){
       if(runRepackRequestManager()){
         repackRequestManager.runOnePass(m_processManager.logContext(), m_tapedConfig.repackMaxRequestsToExpand.value());
         {
+          log::ScopedParamContainer params(m_processManager.logContext());
+          params.add("passTime", onePass.secs());
           m_processManager.logContext().log(log::INFO, "Repack request manager run one pass");
         }
       }

@@ -67,7 +67,7 @@ void RetrieveRequest::initialize() {
 }
 
 //------------------------------------------------------------------------------
-// RetrieveRequest::garbageCollect()
+// RetrieveRequest::garbageCollectRetrieveRequest()
 //------------------------------------------------------------------------------
 void RetrieveRequest::garbageCollect(const std::string& presumedOwner, AgentReference& agentReference, log::LogContext& lc,
                                      cta::catalogue::Catalogue& catalogue) {
@@ -78,7 +78,7 @@ void RetrieveRequest::garbageCollectRetrieveRequest(const std::string& presumedO
     cta::catalogue::Catalogue& catalogue, bool isQueueCleanup) {
   checkPayloadWritable();
   utils::Timer t;
-  std::string logHead = std::string("In RetrieveRequest::garbageCollect()") + (isQueueCleanup ? " [queue cleanup]" : "") + ": ";
+  std::string logHead = std::string("In RetrieveRequest::garbageCollectRetrieveRequest()") + (isQueueCleanup ? " [queue cleanup]" : "") + ": ";
   // Check the request is indeed owned by the right owner.
   if (getOwner() != presumedOwner) {
     log::ScopedParamContainer params(lc);

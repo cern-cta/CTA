@@ -258,8 +258,8 @@ void RecallTaskInjector::injectBulkRecalls() {
     m_diskWriter.push(dwt);
     m_tapeReader.push(trt);
     //m_lc.log(cta::log::INFO, "Created tasks for recalling a file");
-    // the previous log just generates the same messafe for every job in the bath..
-    // Only difference between all the log lines is the timestamp.
+    // The previous log line just generates the same message for every job in the batch
+    // Only difference between all the log lines is the timestamp...
   }
   if(setPromise){
     //At least one task has been created, we tell the TapeReadSingleThread that
