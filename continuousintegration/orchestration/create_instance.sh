@@ -52,6 +52,7 @@ usage() {
   echo "      --eos-image-repository <repo>:  Docker image for EOS chart. Should be the full image name, e.g. \"gitlab-registry.cern.ch/dss/eos/eos-ci\"."
   echo "      --eos-config <file>:            Values file to use for the EOS chart. Defaults to presets/dev-eos-values.yaml."
   echo "      --cta-config <file>:            Values file to use for the CTA chart. Defaults to presets/dev-cta-xrd-values.yaml."
+  echo "      --enable-telemetry:             Spawns an OpenTelemetry and Collector and Prometheus scraper."
   exit 1
 }
 
@@ -104,6 +105,7 @@ create_instance() {
   num_library_devices=1 # For the auto-generated tapeservers config
   max_drives_per_tpsrv=1
   max_tapeservers=2
+  enable_telemetry=false
   # EOS related
   eos_image_tag=5.3.10.el9 # This tag is for EOS 5.3.10
   eos_image_repository=gitlab-registry.cern.ch/dss/eos/eos-ci
@@ -147,6 +149,7 @@ create_instance() {
         shift ;;
       -O|--reset-scheduler) reset_scheduler=true ;;
       -D|--reset-catalogue) reset_catalogue=true ;;
+      --enable-telemetry) enable_telemetry=true ;;
       --dry-run) dry_run=1 ;;
       --eos-config)
         eos_config="$2"
@@ -314,6 +317,19 @@ create_instance() {
   if [ $dry_run == 1 ]; then
     exit 0
   fi
+
+
+  if [ "$enable_telemetry" == "true" ] ; then
+    helm repo add open-telemetry https://open-telemetry.github.io/opentelemetry-helm-charts
+    helm install my-opentelemetry-collector open-telemetry/opentelemetry-collector \
+          --namespace "${namespace}" \
+          --values presets/dev-opentelemetry-values.yaml
+    helm repo add prometheus-community https://prometheus-community.github.io/helm-charts
+    helm install my-prometheus prometheus-community/prometheus \
+          --namespace "${namespace}" \
+          --values presets/dev-prometheus-values.yaml
+  fi
+
 }
 
 setup_system() {
