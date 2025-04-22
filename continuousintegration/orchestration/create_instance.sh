@@ -378,11 +378,11 @@ create_instance() {
 
   if [ "$enable_telemetry" == "true" ] ; then
     helm repo add open-telemetry https://open-telemetry.github.io/opentelemetry-helm-charts
-    helm install my-opentelemetry-collector open-telemetry/opentelemetry-collector \
+    helm install opentelemetry open-telemetry/opentelemetry-collector \
           --namespace "${namespace}" \
           --values presets/dev-opentelemetry-values.yaml
     helm repo add prometheus-community https://prometheus-community.github.io/helm-charts
-    helm install my-prometheus prometheus-community/prometheus \
+    helm install prometheus prometheus-community/prometheus \
           --namespace "${namespace}" \
           --values presets/dev-prometheus-values.yaml
   fi
