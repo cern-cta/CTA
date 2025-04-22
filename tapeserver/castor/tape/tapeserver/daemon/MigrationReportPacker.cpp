@@ -555,7 +555,7 @@ void MigrationReportPacker::WorkerThread::run() {
     cta::log::ScopedParamContainer params(lc);
     params.add("leftOverReportCount", leftOverReportCount);
     params.add("MigrationReportPacker.m_continue", m_parent.m_continue);
-    lc.log(cta::log::ERROR, "In MigrationReportPacker::WorkerThread::run(): leftover reports will not get executed !");
+    lc.log(cta::log::ERR, "In MigrationReportPacker::WorkerThread::run(): leftover reports will not get executed !");
   }
   while (m_parent.m_fifo.size()) {
     std::unique_ptr<Report> rep(m_parent.m_fifo.pop());
