@@ -1,0 +1,5 @@
+server:
+  additionalScrapeConfigs:
+    - job_name: 'otel-collector'
+      static_configs:
+        - targets: ['<collector-service-name>:8889']
