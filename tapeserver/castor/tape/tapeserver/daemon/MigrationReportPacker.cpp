@@ -259,8 +259,8 @@ void MigrationReportPacker::ReportLastBatchError::execute(MigrationReportPacker&
   // We re-queue all the jobs which were left in the m_successfulArchiveJobs
   // after exception was thrown (no flush() could be called for these)
   std::unique_ptr<cta::ArchiveJob> job;
-  std::list<std::string>& jobIDsList;
-  uint64_t njobstorequeue = m_successfulArchiveJobs.size();
+  std::list<std::string> jobIDsList;
+  uint64_t njobstorequeue = reportPacker.m_successfulArchiveJobs.size();
   while (!reportPacker.m_successfulArchiveJobs.empty()) {
     try {
       job = std::move(reportPacker.m_successfulArchiveJobs.front());
