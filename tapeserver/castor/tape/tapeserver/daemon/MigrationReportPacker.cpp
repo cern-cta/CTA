@@ -53,7 +53,9 @@ MigrationReportPacker::~MigrationReportPacker() {
     if (m_skippedFiles.size() > 0) {
       params.add("skippedFilesLostInQueue", m_successfulArchiveJobs.size());
     }
-    m_lc.log(cta::log::ERR, "In MigrationReportPacker::~MigrationReportPacker(), still pending jobs report.");
+    if (m_successfulArchiveJobs.size() > 0 || m_skippedFiles.size() > 0) {
+      m_lc.log(cta::log::WARNING, "In MigrationReportPacker::~MigrationReportPacker(), still pending jobs to report.");
+    }
   } catch (...) {}
 }
 
@@ -133,7 +135,7 @@ void MigrationReportPacker::reportLastBatchError(const cta::exception::Exception
   std::string failureLog =
     cta::utils::getCurrentLocalTime() + " " + cta::utils::getShortHostname() + " " + ex.getMessageValue();
   params.add("type", "ReportLastBatchError");
-  lc.log(cta::log::DEBUG, "In MigrationReportPacker::reportLastBatchError(), pushing a report.");
+  lc.log(cta::log::INFO, "In MigrationReportPacker::reportLastBatchError(), pushing a report.");
   cta::threading::MutexLocker ml(m_producterProtection);
   std::unique_ptr<Report> rep(new ReportLastBatchError(failureLog));
   m_fifo.push(std::move(rep));
@@ -253,7 +255,7 @@ void MigrationReportPacker::ReportLastBatchError::execute(MigrationReportPacker&
   // in case there are no remaining jobs, we refrain from sending an empty report to the client in this case.
   if (reportPacker.m_successfulArchiveJobs.empty() && reportPacker.m_skippedFiles.empty()) {
     reportPacker.m_lc.log(cta::log::INFO,
-                          "Received a flush report from tape, but had no file to report to client. Doing nothing.");
+                          "Received a request to requeue last non-flushed job batch from tape session, but no jobs were found. Doing nothing.");
     return;
   }
   // We re-queue all the jobs which were left in the m_successfulArchiveJobs
@@ -262,16 +264,18 @@ void MigrationReportPacker::ReportLastBatchError::execute(MigrationReportPacker&
   std::list<std::string> jobIDsList;
   uint64_t njobstorequeue = reportPacker.m_successfulArchiveJobs.size();
   while (!reportPacker.m_successfulArchiveJobs.empty()) {
+    job = std::move(reportPacker.m_successfulArchiveJobs.front());
+    reportPacker.m_successfulArchiveJobs.pop();
+    if (!job) {
+      continue;
+    }
     try {
-      job = std::move(reportPacker.m_successfulArchiveJobs.front());
-      reportPacker.m_successfulArchiveJobs.pop();
-      if (!job) {
-        continue;
-      }
       jobIDsList.emplace_back(job->getJobID());
     } catch (cta::exception::Exception& ex) {
       cta::log::ScopedParamContainer params(reportPacker.m_lc);
-      params.add("ExceptionMSG", ex.getMessageValue()).add("fileId", job->archiveFile.archiveFileID);
+      params.add("ExceptionMSG", ex.getMessageValue())
+            .add("archiveFileId", job->archiveFile.archiveFileID)
+            .add("jobIDsListSize", jobIDsList.size());
       reportPacker.m_lc.log(cta::log::ERR,
                             "In MigrationReportPacker::ReportLastBatchError::execute(): looping through reportPacker "
                             "jobIDs threw an exception.");
@@ -279,13 +283,19 @@ void MigrationReportPacker::ReportLastBatchError::execute(MigrationReportPacker&
     }
   }
   try {
+    cta::log::ScopedParamContainer params(reportPacker.m_lc);
+    params.add("reportPackerJobsToRequeue", njobstorequeue);
     uint64_t nrows = reportPacker.m_archiveMount->requeueJobBatch(jobIDsList, reportPacker.m_lc);
+    params.add("jobsToRequeud", nrows);
     if (njobstorequeue != nrows) {
-      cta::log::ScopedParamContainer params(reportPacker.m_lc);
-      params.add("reportPackerJobsToRequeue", njobstorequeue).add("jobsToRequeud", nrows);
-      reportPacker.m_lc.log(cta::log::ERR,
-                            "In MigrationReportPacker::ReportLastBatchError::execute(): requeueJobBatch() failed, the "
-                            "reportPacker job count to requeue did not match the final requeued job count.");
+      reportPacker.m_lc.log(
+        cta::log::ERR,
+        "In MigrationReportPacker::ReportLastBatchError::execute(): requeueJobBatch() call failed, the "
+        "reportPacker job count to requeue did not match the final requeued job count.");
+    } else {
+      reportPacker.m_lc.log(
+        cta::log::INFO,
+        "In MigrationReportPacker::ReportLastBatchError::execute(): requeueJobBatch() call succeeded.");
     }
   } catch (cta::exception::Exception& ex) {
     cta::log::ScopedParamContainer params(reportPacker.m_lc);

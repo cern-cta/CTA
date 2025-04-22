@@ -402,7 +402,17 @@ const TapeSessionStats TapeWriteTask::getTaskStats() const {
 //   getArchiveJob
 //------------------------------------------------------------------------------
 cta::ArchiveJob& TapeWriteTask::getArchiveJob() const {
+  if (!m_archiveJob) {
+    throw cta::exception::Exception("No archive job found in the task object !");
+  }
   return *m_archiveJob;
+}
+
+//------------------------------------------------------------------------------
+//   hasArchiveJob
+//------------------------------------------------------------------------------
+bool TapeWriteTask::hasArchiveJob() const {
+  return static_cast<bool>(m_archiveJob);  // true if non-null
 }
 
 }  // namespace castor::tape::tapeserver::daemon

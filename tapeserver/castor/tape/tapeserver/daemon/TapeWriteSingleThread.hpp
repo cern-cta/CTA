@@ -82,7 +82,7 @@ public:
    * Requeues all jobs in from the list of jobIDs failed tape tasks
    *
    */
-  void requeueFailedTasks(std::list<std::string> jobIDsList, cta::log::LogContext& lc) const;
+  void requeueUnprocessedTasks(std::list<std::string> jobIDsList, cta::log::LogContext& lc) const;
   /**
    * 
    * @param lastFseq

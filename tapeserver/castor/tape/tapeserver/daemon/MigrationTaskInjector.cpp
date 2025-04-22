@@ -170,7 +170,7 @@ void MigrationTaskInjector::WorkerThread::run() {
       }
       Request req = m_parent.m_queue.pop();
       m_parent.m_lc.log(cta::log::DEBUG,
-                        "MigrationTaskInjector::WorkerThread::run(): Trying to get jobs from archive Mount");
+                        "MigrationTaskInjector::WorkerThread::run(): Trying to get jobs from archive mount");
       auto jobs = m_parent.m_archiveMount.getNextJobBatch(req.filesRequested, req.bytesRequested, m_parent.m_lc);
       uint64_t files = jobs.size();
       uint64_t bytes = 0;

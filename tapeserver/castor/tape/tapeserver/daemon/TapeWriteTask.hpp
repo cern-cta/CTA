@@ -128,6 +128,11 @@ public:
     * @return
     */
   cta::ArchiveJob& getArchiveJob() const;
+  /**
+   * hasArchiveJob
+   * @return true if non-null
+   */
+  bool hasArchiveJob() const;
 
 private:
   /**
