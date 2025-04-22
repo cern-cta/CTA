@@ -29,4 +29,4 @@ tpsrv:
   conf:
     telemetry:
       backend: "OTLP"
-      otlpEndpoint: "telemetry-collector"
+      otlpEndpoint: "cta-metrics-opentelemetry-collector:4318"
