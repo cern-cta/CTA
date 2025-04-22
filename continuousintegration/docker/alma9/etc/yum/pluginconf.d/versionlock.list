@@ -31,5 +31,5 @@ xrootd-server-1:5.8.1.post35+git95630676a-1.el9.*
 xrootd-server-devel-1:5.8.1.post35+git95630676a-1.el9.*
 xrootd-server-libs-1:5.8.1.post35+git95630676a-1.el9.*
 xrootd-tests-1:5.8.1.post35+git95630676a-1.el9.*
-oracle-instantclient-basic:23.6.0.24.10-1.*
-oracle-instantclient-devel:23.6.0.24.10-1.*
+oracle-instantclient-basic:23.7.0.25.01-1.*
+oracle-instantclient-devel:23.7.0.25.01-1.*
