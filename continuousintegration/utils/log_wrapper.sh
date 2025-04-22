@@ -85,3 +85,19 @@ if [[ $BASH_LOGGING_ENABLED -eq 1 ]]; then
   fi
   __log_start "$*"
 fi
+
+print_header() {
+  local term_width=${COLUMNS:-$(tput cols)}  # Get terminal width (default to tput)
+  local msg="$1"
+  local border_char="="
+  local separator=$(printf "%-${term_width}s" | tr ' ' "${border_char}")
+  # Calculate padding for centering
+  local msg_length=${#msg}
+  local padding=$(( (term_width - msg_length) / 2 ))
+  [[ $padding -lt 0 ]] && padding=0  # Avoid negative padding for small terminals
+  echo
+  echo "${separator}"
+  printf "%*s%s\n" $padding "" "$msg"  # Print message centered
+  echo "${separator}"
+  echo
+}

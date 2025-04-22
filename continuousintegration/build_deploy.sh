@@ -55,23 +55,9 @@ usage() {
   echo "      --upgrade-cta:                    Upgrades the existing CTA instance with a new image instead of spawning an instance from scratch."
   echo "      --upgrade-eos:                    Upgrades the existing EOS instance with a new image instead of spawning an instance from scratch."
   echo "      --eos-image-tag:                  Image to use for spawning EOS. If not provided, will default to the image specified in the create_instance script."
+  echo "      --cta-config <path>:              Custom Values file to pass to the CTA Helm chart. Defaults to: presets/dev-cta-xrd-values.yaml"
+  echo "      --eos-config <path>:              Custom Values file to pass to the EOS Helm chart. Defaults to: presets/dev-eos-values.yaml"
   exit 1
-}
-
-print_header() {
-  local term_width=${COLUMNS:-$(tput cols)}  # Get terminal width (default to tput)
-  local msg="$1"
-  local border_char="="
-  local separator=$(printf "%-${term_width}s" | tr ' ' "${border_char}")
-  # Calculate padding for centering
-  local msg_length=${#msg}
-  local padding=$(( (term_width - msg_length) / 2 ))
-  [[ $padding -lt 0 ]] && padding=0  # Avoid negative padding for small terminals
-  echo
-  echo "${separator}"
-  printf "%*s%s\n" $padding "" "$msg"  # Print message centered
-  echo "${separator}"
-  echo
 }
 
 build_deploy() {
