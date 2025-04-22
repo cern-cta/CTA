@@ -9,6 +9,8 @@ conf:
     tapeCacheMaxAgeSecs: 1
     retrieveQueueCacheMaxAgeSecs: 1
     externalFreeDiskSpaceScript: "/usr/bin/cta-eosdf.sh"
+  telemetry:
+    backend: "NOOP"
 
 
 # tapeServers: {}
