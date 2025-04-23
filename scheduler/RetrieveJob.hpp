@@ -68,6 +68,16 @@ public:
       positioningMethod(positioningMethod),
       transferredSize(std::numeric_limits<decltype(transferredSize)>::max()) { }
 
+  RetrieveJob(RetrieveMount* mount,
+              std::unique_ptr<SchedulerDatabase::RetrieveJob> dbJob)
+      : m_dbJob(std::move(dbJob)),
+        m_mount(mount),
+        retrieveRequest(m_dbJob->retrieveRequest),
+        archiveFile(m_dbJob->archiveFile),
+        selectedCopyNb(m_dbJob->selectedCopyNb),
+        positioningMethod(PositioningMethod::ByBlock),
+        transferredSize(std::numeric_limits<decltype(transferredSize)>::max()) { }
+
   /**
    * Destructor
    */
@@ -90,7 +100,12 @@ public:
    * Completion will be checked implicitly in RetrieveMount::flushAsyncSuccessReports()
    */
   virtual void asyncSetSuccessful();
-  
+  /**
+   * Returns the SchedulerDatabase::RetrieveJob jobID
+   * Serves PGSCHED implementation
+   * @return jobID as a string for SQL queries
+   */
+  virtual std::string getJobID();
   /**
    * Triggers a scheduler update following the failure of the job. Retry policy will
    * be applied by the scheduler.

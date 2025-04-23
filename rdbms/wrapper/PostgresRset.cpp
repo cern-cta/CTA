@@ -17,10 +17,12 @@
 
 #include "common/utils/utils.hpp"
 #include "common/exception/Exception.hpp"
+#include "rdbms/NullDbValue.hpp"
 #include "rdbms/wrapper/PostgresRset.hpp"
 #include "rdbms/wrapper/PostgresStmt.hpp"
 #include "rdbms/wrapper/PostgresConn.hpp"
 #include "common/threading/RWLockWrLocker.hpp"
+#include <cctype>
 
 #include <utility>
 
@@ -56,96 +58,223 @@ PostgresRset::~PostgresRset() {
 }
 
 //------------------------------------------------------------------------------
-// columnIsNull
+// getting column index using a local cache to avoid looking up index
+// for every column for each row of the Rset whenever we loop over the result
 //------------------------------------------------------------------------------
-bool PostgresRset::columnIsNull(const std::string& colName) const {
+int PostgresRset::getColumnIndex(const std::string& colName) const {
   if (nullptr == m_resItr->get()) {
     throw exception::Exception(std::string(__FUNCTION__) + " no row available");
   }
-
-  const int ifield = PQfnumber(m_resItr->get(), colName.c_str());
-  if (ifield < 0) {
+  auto it = m_columnPQindexCache.find(colName);
+  if (it != m_columnPQindexCache.end()) {
+    return it->second;
+  }
+  int idx = PQfnumber(m_resItr->get(), colName.c_str());
+  if (idx < 0) {
     throw exception::Exception(std::string(__FUNCTION__) + " column does not exist: " + colName);
   }
+  m_columnPQindexCache[colName] = idx;
+  return idx;
+}
 
+//------------------------------------------------------------------------------
+// columnIsNull
+//------------------------------------------------------------------------------
+bool PostgresRset::columnIsNull(const std::string& colName) const {
+  const int ifield = getColumnIndex(colName);
+  return isPGColumnNull(ifield);
+}
+
+//------------------------------------------------------------------------------
+// isPGColumnNull
+//------------------------------------------------------------------------------
+bool PostgresRset::isPGColumnNull(int ifield) const {
   return PQgetisnull(m_resItr->get(), 0, ifield);
 }
 
 std::string PostgresRset::columnBlob(const std::string& colName) const {
-  auto blob = columnOptionalString(colName);
-  if (blob) {
-    size_t blob_len;
-    unsigned char* blob_ptr = PQunescapeBytea(reinterpret_cast<const unsigned char*>(blob->c_str()), &blob_len);
-    if (blob_ptr != nullptr) {
-      std::string blob_str(reinterpret_cast<const char*>(blob_ptr), blob_len);
-      PQfreemem(blob_ptr);
-      return blob_str;
-    }
+  std::optional<std::string> blob = columnOptionalString(colName);
+  if (!blob) return std::string();
+
+  size_t blob_len;
+  unsigned char* blob_ptr = PQunescapeBytea(reinterpret_cast<const unsigned char*>(blob->c_str()), &blob_len);
+
+  if (blob_ptr != nullptr) {
+    // using unique_ptr with custom deleter to automatically free memory
+    std::unique_ptr<unsigned char, decltype(&PQfreemem)> blob_ptr_guard(blob_ptr, &PQfreemem);
+    // using compiler RVO (move semantics) to avoid unnecessary copies
+    return std::string(reinterpret_cast<const char*>(blob_ptr_guard.get()), blob_len);
+  } else {
+    // having a non-nullopt while a valid value should never happen
+    throw NullDbValue(std::string("Failed to fetch a value for existing database column: ") + colName);
   }
-  return std::string();
+}
+
+bool PostgresRset::columnBoolNoOpt(const std::string& colName) const {
+  try {
+    const auto strValue = columnStringNoOpt(colName);
+    if (strValue == "t" || strValue == "true") {
+      return true;
+    } else if (strValue == "f" || strValue == "false") {
+      return false;
+    } else {
+      throw exception::Exception("Invalid boolean string representation: " + strValue);
+    }
+  } catch (exception::Exception& ex) {
+    ex.getMessage().str(std::string(__FUNCTION__) + " failed: " + ex.getMessage().str());
+    throw;
+  }
+}
+
+std::string PostgresRset::columnStringNoOpt(const std::string& colName) const {
+  try {
+    const int ifield = getColumnIndex(colName);
+
+    if (isPGColumnNull(ifield)) {
+      throw NullDbValue(std::string("Database column ") + colName + " contains a null value");
+    }
+
+    const char* cstrValue = PQgetvalue(m_resItr->get(), 0, ifield);
+
+    return std::string(cstrValue, PQgetlength(m_resItr->get(), 0, ifield));
+  } catch (exception::Exception& ex) {
+    ex.getMessage().str(std::string(__FUNCTION__) + " failed: " + ex.getMessage().str());
+    throw;
+  }
+}
+
+//------------------------------------------------------------------------------
+// Get uint8_t value from a column with error handling
+//------------------------------------------------------------------------------
+uint8_t PostgresRset::columnUint8NoOpt(const std::string& colName) const {
+  try {
+    const int ifield = getColumnIndex(colName);
+
+    if (isPGColumnNull(ifield)) {
+      throw NullDbValue(std::string("Database column ") + colName + " contains a null value");
+    }
+
+    const char* cstrValue = PQgetvalue(m_resItr->get(), 0, ifield);
+    return utils::toUint8(std::string_view(cstrValue, PQgetlength(m_resItr->get(), 0, ifield)));
+  } catch (exception::Exception& ex) {
+    ex.getMessage().str(std::string(__FUNCTION__) + " failed: " + ex.getMessage().str());
+    throw;
+  }
+}
+
+//------------------------------------------------------------------------------
+// Get uint16_t value from a column with error handling
+//------------------------------------------------------------------------------
+uint16_t PostgresRset::columnUint16NoOpt(const std::string& colName) const {
+  try {
+    const int ifield = getColumnIndex(colName);
+
+    if (isPGColumnNull(ifield)) {
+      throw NullDbValue(std::string("Database column ") + colName + " contains a null value");
+    }
+
+    const char* cstrValue = PQgetvalue(m_resItr->get(), 0, ifield);
+
+    return utils::toUint16(std::string_view(cstrValue, PQgetlength(m_resItr->get(), 0, ifield)));
+  } catch (exception::Exception& ex) {
+    ex.getMessage().str(std::string(__FUNCTION__) + " failed: " + ex.getMessage().str());
+    throw;
+  }
+}
+
+//------------------------------------------------------------------------------
+// Get uint32_t value from a column with error handling
+//------------------------------------------------------------------------------
+uint32_t PostgresRset::columnUint32NoOpt(const std::string& colName) const {
+  try {
+    const int ifield = getColumnIndex(colName);
+
+    if (isPGColumnNull(ifield)) {
+      throw NullDbValue(std::string("Database column ") + colName + " contains a null value");
+    }
+
+    const char* cstrValue = PQgetvalue(m_resItr->get(), 0, ifield);
+
+    return utils::toUint32(std::string_view(cstrValue, PQgetlength(m_resItr->get(), 0, ifield)));
+  } catch (exception::Exception& ex) {
+    ex.getMessage().str(std::string(__FUNCTION__) + " failed: " + ex.getMessage().str());
+    throw;
+  }
+}
+
+//------------------------------------------------------------------------------
+// Get uint64_t value from a column with error handling
+//------------------------------------------------------------------------------
+uint64_t PostgresRset::columnUint64NoOpt(const std::string& colName) const {
+  try {
+    const int ifield = getColumnIndex(colName);
+
+    if (isPGColumnNull(ifield)) {
+      throw NullDbValue(std::string("Database column ") + colName + " contains a null value");
+    }
+
+    const char* cstrValue = PQgetvalue(m_resItr->get(), 0, ifield);
+
+    return utils::toUint64(std::string_view(cstrValue, PQgetlength(m_resItr->get(), 0, ifield)));
+  } catch (exception::Exception& ex) {
+    ex.getMessage().str(std::string(__FUNCTION__) + " failed: " + ex.getMessage().str());
+    throw;
+  }
+}
+
+//------------------------------------------------------------------------------
+// Get double value from a column with error handling
+//------------------------------------------------------------------------------
+double PostgresRset::columnDoubleNoOpt(const std::string& colName) const {
+  try {
+    const int ifield = getColumnIndex(colName);
+
+    if (isPGColumnNull(ifield)) {
+      throw NullDbValue(std::string("Database column ") + colName + " contains a null value");
+    }
+
+    const char* cstrValue = PQgetvalue(m_resItr->get(), 0, ifield);
+
+    return utils::toDouble(std::string_view(cstrValue, PQgetlength(m_resItr->get(), 0, ifield)));
+  } catch (exception::Exception& ex) {
+    ex.getMessage().str(std::string(__FUNCTION__) + " failed: " + ex.getMessage().str());
+    throw;
+  }
 }
 
 //------------------------------------------------------------------------------
 // columnOptionalString
 //------------------------------------------------------------------------------
 std::optional<std::string> PostgresRset::columnOptionalString(const std::string& colName) const {
-  if (nullptr == m_resItr->get()) {
-    throw exception::Exception(std::string(__FUNCTION__) + " no row available");
-  }
-
-  const int ifield = PQfnumber(m_resItr->get(), colName.c_str());
-  if (ifield < 0) {
-    throw exception::Exception(std::string(__FUNCTION__) + " column does not exist: " + colName);
-  }
+  const int ifield = getColumnIndex(colName);
 
   // the value can be null
   if (PQgetisnull(m_resItr->get(), 0, ifield)) {
     return std::nullopt;
   }
 
-  return std::optional<std::string>(PQgetvalue(m_resItr->get(), 0, ifield));
+  return std::optional<std::string>(std::move(PQgetvalue(m_resItr->get(), 0, ifield)));
 }
 
 //------------------------------------------------------------------------------
 // columnOptionalUint8
 //------------------------------------------------------------------------------
 std::optional<uint8_t> PostgresRset::columnOptionalUint8(const std::string& colName) const {
-  if (nullptr == m_resItr->get()) {
-    throw exception::Exception(std::string(__FUNCTION__) + " no row available");
-  }
-
-  const int ifield = PQfnumber(m_resItr->get(), colName.c_str());
-  if (ifield < 0) {
-    throw exception::Exception(std::string(__FUNCTION__) + " column does not exist: " + colName);
-  }
+  const int ifield = getColumnIndex(colName);
 
   // the value can be null
   if (PQgetisnull(m_resItr->get(), 0, ifield)) {
     return std::nullopt;
   }
 
-  const std::string stringValue(PQgetvalue(m_resItr->get(), 0, ifield));
-
-  if (!utils::isValidUInt(stringValue)) {
-    throw exception::Exception(std::string("Column ") + colName + " contains the value " + stringValue +
-                               " which is not a valid unsigned integer");
-  }
-
-  return utils::toUint8(stringValue);
+  return utils::toUint8(PQgetvalue(m_resItr->get(), 0, ifield));
 }
 
 //------------------------------------------------------------------------------
 // columnOptionalUint16
 //------------------------------------------------------------------------------
 std::optional<uint16_t> PostgresRset::columnOptionalUint16(const std::string& colName) const {
-  if (nullptr == m_resItr->get()) {
-    throw exception::Exception(std::string(__FUNCTION__) + " no row available");
-  }
-
-  const int ifield = PQfnumber(m_resItr->get(), colName.c_str());
-  if (ifield < 0) {
-    throw exception::Exception(std::string(__FUNCTION__) + " column does not exist: " + colName);
-  }
+  const int ifield = getColumnIndex(colName);
 
   // the value can be null
   if (PQgetisnull(m_resItr->get(), 0, ifield)) {
@@ -166,14 +295,7 @@ std::optional<uint16_t> PostgresRset::columnOptionalUint16(const std::string& co
 // columnOptionalUint32
 //------------------------------------------------------------------------------
 std::optional<uint32_t> PostgresRset::columnOptionalUint32(const std::string& colName) const {
-  if (nullptr == m_resItr->get()) {
-    throw exception::Exception(std::string(__FUNCTION__) + " no row available");
-  }
-
-  const int ifield = PQfnumber(m_resItr->get(), colName.c_str());
-  if (ifield < 0) {
-    throw exception::Exception(std::string(__FUNCTION__) + " column does not exist: " + colName);
-  }
+  const int ifield = getColumnIndex(colName);
 
   // the value can be null
   if (PQgetisnull(m_resItr->get(), 0, ifield)) {
@@ -194,14 +316,7 @@ std::optional<uint32_t> PostgresRset::columnOptionalUint32(const std::string& co
 // columnOptionalUint64
 //------------------------------------------------------------------------------
 std::optional<uint64_t> PostgresRset::columnOptionalUint64(const std::string& colName) const {
-  if (nullptr == m_resItr->get()) {
-    throw exception::Exception(std::string(__FUNCTION__) + " no row available");
-  }
-
-  const int ifield = PQfnumber(m_resItr->get(), colName.c_str());
-  if (ifield < 0) {
-    throw exception::Exception(std::string(__FUNCTION__) + " column does not exist: " + colName);
-  }
+  const int ifield = getColumnIndex(colName);
 
   // the value can be null
   if (PQgetisnull(m_resItr->get(), 0, ifield)) {
@@ -222,14 +337,7 @@ std::optional<uint64_t> PostgresRset::columnOptionalUint64(const std::string& co
 // columnOptionalDouble
 //------------------------------------------------------------------------------
 std::optional<double> PostgresRset::columnOptionalDouble(const std::string& colName) const {
-  if (nullptr == m_resItr->get()) {
-    throw exception::Exception(std::string(__FUNCTION__) + " no row available");
-  }
-
-  const int ifield = PQfnumber(m_resItr->get(), colName.c_str());
-  if (ifield < 0) {
-    throw exception::Exception(std::string(__FUNCTION__) + " column does not exist: " + colName);
-  }
+  const int ifield = getColumnIndex(colName);
 
   // the value can be null
   if (PQgetisnull(m_resItr->get(), 0, ifield)) {
@@ -260,6 +368,8 @@ bool PostgresRset::next() {
   // always locks in order statement and then connection
   threading::RWLockWrLocker locker2(m_stmt.m_lock);
   threading::RWLockWrLocker locker(m_conn.m_lock);
+  // trying to reuse the indices per the full result set
+  // m_columnPQindexCache.clear();
 
   if (m_resItr->next()) {
     // For queries expect rcode PGRES_SINGLE_TUPLE with ntuples=1 for each row,

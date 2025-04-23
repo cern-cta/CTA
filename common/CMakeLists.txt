@@ -142,7 +142,9 @@ set (COMMON_LIB_SRC_FILES
   utils/GetOptThreadSafe.cpp
   utils/Regex.cpp
   utils/strerror_r_wrapper.cpp
-  utils/utils.cpp)
+  utils/utils.cpp
+  utils/StringConversions.cpp
+  utils/ErrorUtils.cpp)
 
 add_library (ctacommon SHARED
   ${COMMON_LIB_SRC_FILES})

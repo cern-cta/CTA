@@ -138,7 +138,7 @@ public:
    * Rolls back the current transaction.
    */
   void rollback();
-  
+
   /**
    * Returns the names of all the column and their type as a map for the given 
    * table in the database schema.

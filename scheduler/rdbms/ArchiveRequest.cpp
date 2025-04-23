@@ -26,50 +26,58 @@ namespace cta::schedulerdb {
 }
 
 void ArchiveRequest::insert() {
-  m_txn.reset(new schedulerdb::Transaction(m_connPool));
-
+  // Getting the next ID for the request possibly composed of multiple jobs
+  uint64_t areq_id = cta::schedulerdb::postgres::ArchiveJobQueueRow::getNextArchiveRequestID(m_conn);
+  uint32_t areq_job_count = m_jobs.size();
   for (const auto& aj : m_jobs) {
-    cta::schedulerdb::postgres::ArchiveJobQueueRow ajr;
-
-    ajr.tapePool = aj.tapepool;
-    ajr.mountPolicy = m_mountPolicy.name;
-    ajr.priority = m_mountPolicy.archivePriority;
-    ajr.minArchiveRequestAge = m_mountPolicy.archiveMinRequestAge;
-    ajr.archiveFile = m_archiveFile;
-    ajr.archiveFile.creationTime = m_entryLog.time;  // Time the job was received by the CTA Frontend
-    ajr.copyNb = aj.copyNb;
-    ajr.startTime = time(nullptr);  // Time the job was queued in the DB
-    ajr.archiveReportUrl = m_archiveReportURL;
-    ajr.archiveErrorReportUrl = m_archiveErrorReportURL;
-    ajr.requesterName = m_requesterIdentity.name;
-    ajr.requesterGroup = m_requesterIdentity.group;
-    ajr.srcUrl = m_srcURL;
-    ajr.retriesWithinMount = aj.retriesWithinMount;
-    ajr.maxRetriesWithinMount = aj.maxRetriesWithinMount;
-    ajr.totalRetries = aj.totalRetries;
-    ajr.lastMountWithFailure = aj.lastMountWithFailure;
-    ajr.maxTotalRetries = aj.maxTotalRetries;
-
-    log::ScopedParamContainer params(m_lc);
-    ajr.addParamsToLogContext(params);
-
     try {
-      ajr.insert(*m_txn);
+      cta::schedulerdb::postgres::ArchiveJobQueueRow ajr;
+      ajr.reqId = areq_id;
+      ajr.reqJobCount = areq_job_count;
+      ajr.tapePool = aj.tapepool;
+      ajr.mountPolicy = m_mountPolicy.name;
+      ajr.priority = m_mountPolicy.archivePriority;
+      ajr.minArchiveRequestAge = m_mountPolicy.archiveMinRequestAge;
+      // ajr.archiveFile = m_archiveFile;
+      ajr.archiveFileID = m_archiveFile.archiveFileID;
+      ajr.diskFileId = std::move(m_archiveFile.diskFileId);
+      ajr.diskInstance = std::move(m_archiveFile.diskInstance);
+      ajr.fileSize = m_archiveFile.fileSize;
+      ajr.storageClass = std::move(m_archiveFile.storageClass);
+      ajr.diskFileInfoPath = std::move(m_archiveFile.diskFileInfo.path);
+      ajr.diskFileInfoOwnerUid = m_archiveFile.diskFileInfo.owner_uid;
+      ajr.diskFileInfoGid = m_archiveFile.diskFileInfo.gid;
+      ajr.checksumBlob = std::move(m_archiveFile.checksumBlob);
+
+      ajr.creationTime = m_entryLog.time;  // Time the job was received by the CTA Frontend
+      ajr.copyNb = aj.copyNb;
+      ajr.startTime = time(nullptr);  // Time the job was queued in the DB
+      ajr.archiveReportURL = m_archiveReportURL;
+      ajr.archiveErrorReportURL = m_archiveErrorReportURL;
+      ajr.requesterName = m_requesterIdentity.name;
+      ajr.requesterGroup = m_requesterIdentity.group;
+      ajr.srcUrl = m_srcURL;
+      ajr.retriesWithinMount = aj.retriesWithinMount;
+      ajr.maxRetriesWithinMount = aj.maxRetriesWithinMount;
+      ajr.maxReportRetries = aj.maxReportRetries;
+      ajr.totalRetries = aj.totalRetries;
+      ajr.lastMountWithFailure = aj.lastMountWithFailure;
+      ajr.maxTotalRetries = aj.maxTotalRetries;
+
+      log::ScopedParamContainer params(m_lc);
+      ajr.addParamsToLogContext(params);
+      // Inserting the jobs to the DB
+      ajr.insert(m_conn);
+      // m_conn.commit(); unnecessary for insert !
     } catch (exception::Exception& ex) {
-      params.add("exeptionMessage", ex.getMessageValue());
-      m_lc.log(log::ERR, "In ArchiveRequest::insert(): failed to queue job.");
+      log::ScopedParamContainer params(m_lc);
+      params.add("exceptionMessage", ex.getMessageValue());
+      m_lc.log(log::ERR, "In ArchiveRequest::insert(): failed to queue request.");
+      m_conn.rollback();  // Rollback on error
       throw;
     }
-
-    m_lc.log(log::INFO, "In ArchiveRequest::insert(): added job to queue.");
   }
-}
-
-void ArchiveRequest::commit() {
-  if (m_txn) {
-    m_txn->commit();
-  }
-  m_txn.reset();
+  m_lc.log(log::INFO, "In ArchiveRequest::insert(): added jobs to queue.");
 }
 
 void ArchiveRequest::addJob(uint8_t copyNumber,

@@ -15,35 +15,12 @@
  *               submit itself to any jurisdiction.
  */
 
-#pragma once
-
-#include "scheduler/rdbms/RelationalDB.hpp"
-#include "scheduler/rdbms/RetrieveRequest.hpp"
-#include "common/log/LogContext.hpp"
-
-#include <string>
+#include "JobPool.hpp"
+#include "ArchiveRdbJob.hpp"
+#include "RetrieveRdbJob.hpp"
 
 namespace cta::schedulerdb {
-
-class RetrieveJob : public SchedulerDatabase::RetrieveJob {
- friend class cta::RelationalDB;
-
- public:
-
-   [[noreturn]] RetrieveJob();
-
-   void asyncSetSuccessful() override;
-
-   void failTransfer(const std::string &failureReason, log::LogContext &lc) override;
-
-   void failReport(const std::string &failureReason, log::LogContext &lc) override;
-
-   void abort(const std::string &abortReason, log::LogContext &lc) override;
-
-   void fail() override;
-
-   uint64_t m_mountId = 0;
-   schedulerdb::RetrieveRequest::RetrieveReqRepackInfo  m_repackInfo;
-};
-
-} // namespace cta::schedulerdb
+// Explicit instantiation
+template class JobPool<ArchiveRdbJob>;
+template class JobPool<RetrieveRdbJob>;
+}  // namespace cta::schedulerdb

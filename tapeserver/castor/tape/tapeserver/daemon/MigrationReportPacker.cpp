@@ -25,6 +25,7 @@
 #include "catalogue/TapeFileWritten.hpp"
 #include "common/exception/NoSuchObject.hpp"
 #include "common/utils/utils.hpp"
+#include "common/Timer.hpp"
 
 using cta::log::LogContext;
 using cta::log::Param;
@@ -44,6 +45,18 @@ MigrationReportPacker::MigrationReportPacker(cta::ArchiveMount* archiveMount, co
 //------------------------------------------------------------------------------
 MigrationReportPacker::~MigrationReportPacker() {
   cta::threading::MutexLocker ml(m_producterProtection);
+  try {
+    cta::log::ScopedParamContainer params(m_lc);
+    if (m_successfulArchiveJobs.size() > 0) {
+      params.add("successfulJobsLostInQueue", m_successfulArchiveJobs.size());
+    }
+    if (m_skippedFiles.size() > 0) {
+      params.add("skippedFilesLostInQueue", m_successfulArchiveJobs.size());
+    }
+    if (m_successfulArchiveJobs.size() > 0 || m_skippedFiles.size() > 0) {
+      m_lc.log(cta::log::WARNING, "In MigrationReportPacker::~MigrationReportPacker(), still pending jobs to report.");
+    }
+  } catch (...) {}
 }
 
 //------------------------------------------------------------------------------
@@ -111,6 +124,20 @@ void MigrationReportPacker::reportTapeFull(cta::log::LogContext& lc) {
   lc.log(cta::log::DEBUG, "In MigrationReportPacker::reportTapeFull(), pushing a report.");
   cta::threading::MutexLocker ml(m_producterProtection);
   std::unique_ptr<Report> rep(new ReportTapeFull());
+  m_fifo.push(std::move(rep));
+}
+
+//------------------------------------------------------------------------------
+//reportErrorLastBatch
+//------------------------------------------------------------------------------
+void MigrationReportPacker::reportLastBatchError(const cta::exception::Exception& ex, cta::log::LogContext& lc) {
+  cta::log::ScopedParamContainer params(lc);
+  std::string failureLog =
+    cta::utils::getCurrentLocalTime() + " " + cta::utils::getShortHostname() + " " + ex.getMessageValue();
+  params.add("type", "ReportLastBatchError");
+  lc.log(cta::log::INFO, "In MigrationReportPacker::reportLastBatchError(), pushing a report.");
+  cta::threading::MutexLocker ml(m_producterProtection);
+  std::unique_ptr<Report> rep(new ReportLastBatchError(failureLog));
   m_fifo.push(std::move(rep));
 }
 
@@ -219,6 +246,65 @@ void MigrationReportPacker::ReportDriveStatus::execute(MigrationReportPacker& pa
   params.add("status", cta::common::dataStructures::toString(m_status));
   parent.m_lc.log(cta::log::DEBUG, "In MigrationReportPacker::ReportDriveStatus::execute(): reporting drive status.");
   parent.m_archiveMount->setDriveStatus(m_status, m_reason);
+}
+
+//------------------------------------------------------------------------------
+//ReportLastBatchError::execute
+//------------------------------------------------------------------------------
+void MigrationReportPacker::ReportLastBatchError::execute(MigrationReportPacker& reportPacker) {
+  // in case there are no remaining jobs, we refrain from sending an empty report to the client in this case.
+  if (reportPacker.m_successfulArchiveJobs.empty() && reportPacker.m_skippedFiles.empty()) {
+    reportPacker.m_lc.log(cta::log::INFO,
+                          "Received a request to requeue last non-flushed job batch from tape session, but no jobs were found. Doing nothing.");
+    return;
+  }
+  // We re-queue all the jobs which were left in the m_successfulArchiveJobs
+  // after exception was thrown (no flush() could be called for these)
+  std::unique_ptr<cta::ArchiveJob> job;
+  std::list<std::string> jobIDsList;
+  uint64_t njobstorequeue = reportPacker.m_successfulArchiveJobs.size();
+  while (!reportPacker.m_successfulArchiveJobs.empty()) {
+    job = std::move(reportPacker.m_successfulArchiveJobs.front());
+    reportPacker.m_successfulArchiveJobs.pop();
+    if (!job) {
+      continue;
+    }
+    try {
+      jobIDsList.emplace_back(job->getJobID());
+    } catch (cta::exception::Exception& ex) {
+      cta::log::ScopedParamContainer params(reportPacker.m_lc);
+      params.add("ExceptionMSG", ex.getMessageValue())
+            .add("archiveFileId", job->archiveFile.archiveFileID)
+            .add("jobIDsListSize", jobIDsList.size());
+      reportPacker.m_lc.log(cta::log::ERR,
+                            "In MigrationReportPacker::ReportLastBatchError::execute(): looping through reportPacker "
+                            "jobIDs threw an exception.");
+      reportPacker.m_lc.logBacktrace(cta::log::INFO, ex.backtrace());
+    }
+  }
+  try {
+    cta::log::ScopedParamContainer params(reportPacker.m_lc);
+    params.add("reportPackerJobsToRequeue", njobstorequeue);
+    uint64_t nrows = reportPacker.m_archiveMount->requeueJobBatch(jobIDsList, reportPacker.m_lc);
+    params.add("jobsToRequeud", nrows);
+    if (njobstorequeue != nrows) {
+      reportPacker.m_lc.log(
+        cta::log::ERR,
+        "In MigrationReportPacker::ReportLastBatchError::execute(): requeueJobBatch() call failed, the "
+        "reportPacker job count to requeue did not match the final requeued job count.");
+    } else {
+      reportPacker.m_lc.log(
+        cta::log::INFO,
+        "In MigrationReportPacker::ReportLastBatchError::execute(): requeueJobBatch() call succeeded.");
+    }
+  } catch (cta::exception::Exception& ex) {
+    cta::log::ScopedParamContainer params(reportPacker.m_lc);
+    params.add("ExceptionMSG", ex.getMessageValue()).add("reportPackerJobsToRequeue", njobstorequeue);
+    reportPacker.m_lc.log(
+      cta::log::ERR,
+      "In MigrationReportPacker::ReportLastBatchError::execute(): call to requeueJobBatch threw an exception.");
+    reportPacker.m_lc.logBacktrace(cta::log::INFO, ex.backtrace());
+  }
 }
 
 //------------------------------------------------------------------------------
@@ -474,6 +560,13 @@ void MigrationReportPacker::WorkerThread::run() {
   // Drain the FIFO if necessary. We know that m_continue will be
   // set by ReportEndofSessionWithErrors or ReportEndofSession
   // TODO devise a more generic mechanism
+  uint64_t leftOverReportCount = m_parent.m_fifo.size();
+  if (leftOverReportCount != 0) {
+    cta::log::ScopedParamContainer params(lc);
+    params.add("leftOverReportCount", leftOverReportCount);
+    params.add("MigrationReportPacker.m_continue", m_parent.m_continue);
+    lc.log(cta::log::ERR, "In MigrationReportPacker::WorkerThread::run(): leftover reports will not get executed !");
+  }
   while (m_parent.m_fifo.size()) {
     std::unique_ptr<Report> rep(m_parent.m_fifo.pop());
     cta::log::ScopedParamContainer params(lc);

@@ -85,6 +85,16 @@ public:
   virtual void reportTapeFull(cta::log::LogContext& lc);
 
   /**
+   * Create into the MigrationReportPacker a report of the last batch of jobs
+   * which were previously pushed to m_successfulArchiveJobs by reportCompletedJob()
+   * but the task write execution threw an exception and the last batch of m_successfulArchiveJobs
+   * did not get a tapeFlush call --> we consider them not fully written and report them as failure.
+   * @param ex the reason for the failure
+   * @param lc log context provided by the calling thread.
+   */
+  virtual void reportLastBatchError(const cta::exception::Exception& ex, cta::log::LogContext& lc);
+
+  /**
    * Report the drive state and set it in the central drive register. This
    * function is to be used by the tape thread when running.
    * @param state the new drive state.
@@ -212,6 +222,21 @@ private:
     ReportError(std::unique_ptr<cta::ArchiveJob> failedArchiveJob, std::string& failureLog)
         : m_failureLog(failureLog),
           m_failedArchiveJob(std::move(failedArchiveJob)) {}
+
+    void execute(MigrationReportPacker& reportPacker) override;
+  };
+  /*
+   * This Report is only for jobs which were successfully
+   * written to drive, but never flushed to tape
+   * (the file marks were not written there)
+   * Therefore, we fail the remaining batch.
+   */
+  class ReportLastBatchError : public Report {
+    const std::string m_failureLog;
+
+  public:
+    ReportLastBatchError(std::string& failureLog)
+        : m_failureLog(failureLog) {}
 
     void execute(MigrationReportPacker& reportPacker) override;
   };

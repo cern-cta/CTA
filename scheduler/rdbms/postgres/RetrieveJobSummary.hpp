@@ -26,9 +26,14 @@ namespace cta::schedulerdb::postgres {
 struct RetrieveJobSummaryRow {
   uint64_t jobsCount;
   uint64_t jobsTotalSize;
+  uint64_t oldestJobStartTime;
+  uint64_t youngestJobStartTime;
   std::string vid;
+  std::optional<std::string> activity;
   uint64_t priority;
-  schedulerdb::RetrieveJobStatus status;
+  //schedulerdb::RetrieveJobStatus status;
+  std::string mountPolicy;
+  uint64_t minRetrieveRequestAge;
 
   RetrieveJobSummaryRow() = default;
 
@@ -41,10 +46,15 @@ struct RetrieveJobSummaryRow {
 
   RetrieveJobSummaryRow& operator=(const rdbms::Rset& rset) {
     vid = rset.columnString("VID");
-    status = from_string<schedulerdb::RetrieveJobStatus>(rset.columnString("STATUS"));
+    //status = from_string<schedulerdb::RetrieveJobStatus>(rset.columnString("STATUS"));
+    activity = rset.columnOptionalString("ACTIVITY");
     jobsCount = rset.columnUint64("JOBS_COUNT");
     jobsTotalSize = rset.columnUint64("JOBS_TOTAL_SIZE");
-    priority = rset.columnUint16("PRIORITY");
+    priority = rset.columnUint64("PRIORITY");
+    minRetrieveRequestAge = rset.columnUint64("RETRIEVE_MIN_REQUEST_AGE");
+    mountPolicy = rset.columnString("MOUNT_POLICY");
+    oldestJobStartTime = rset.columnUint64("OLDEST_JOB_START_TIME");
+    youngestJobStartTime = rset.columnUint64("YOUNGEST_JOB_START_TIME");
     return *this;
   }
 
@@ -52,7 +62,12 @@ struct RetrieveJobSummaryRow {
     params.add("vid", vid);
     params.add("jobsCount", jobsCount);
     params.add("jobsTotalSize", jobsTotalSize);
+    params.add("activity", activity.value_or(""));
+    params.add("mountPolicy", mountPolicy);
     params.add("priority", priority);
+    params.add("minRetrieveRequestAge", minRetrieveRequestAge);
+    params.add("oldestJobStartTime", oldestJobStartTime);
+    params.add("youngestJobStartTime", youngestJobStartTime);
   }
 
   /**
@@ -60,18 +75,25 @@ struct RetrieveJobSummaryRow {
    *
    * @return result set containing all rows in the table
    */
-  static rdbms::Rset selectVid(const std::string& vid, common::dataStructures::JobQueueType type, Transaction& txn) {
+  static rdbms::Rset selectVid(const std::string& vid, common::dataStructures::JobQueueType type, rdbms::Conn& conn) {
+    // for the moment ignoring status as we will query only one table
+    // where all the jobs wait to be popped to the drive task queues
     const char* const sql = R"SQL(
       SELECT 
         VID,
-        STATUS,
+        MOUNT_POLICY,
+        ACTIVITY,
+        PRIORITY,
         JOBS_COUNT,
         JOBS_TOTAL_SIZE,
-      FROM RETRIEVE_JOB_SUMMARY WHERE 
-        VID = :VID AND 
-        STATUS = :STATUS
+        OLDEST_JOB_START_TIME,
+        YOUNGEST_JOB_START_TIME,
+        RETRIEVE_MIN_REQUEST_AGE,
+        LAST_JOB_UPDATE_TIME
+      FROM RETRIEVE_QUEUE_SUMMARY WHERE
+        VID = :VID
     )SQL";
-
+    /*
     std::string statusStr;
     switch (type) {
       case common::dataStructures::JobQueueType::JobsToTransferForUser:
@@ -95,12 +117,40 @@ struct RetrieveJobSummaryRow {
         statusStr = to_string(schedulerdb::RetrieveJobStatus::RJS_Failed);
         break;
     }
+     */
 
-    auto stmt = txn.conn().createStmt(sql);
+    auto stmt = conn.createStmt(sql);
     stmt.bindString(":VID", vid);
-    stmt.bindString(":STATUS", statusStr);
+    //stmt.bindString(":STATUS", statusStr);
     return stmt.executeQuery();
   }
+  /**
+   * Select jobs which do not belong to any drive yet.
+   * This is used for deciding if a new mount shall be created
+   * @param txn        Transaction to use for this query
+   * @return result set containing all rows in the table
+   */
+  static rdbms::Rset selectNewJobs(Transaction& txn) {
+    const char* const sql = R"SQL(
+      SELECT
+        VID,
+        MOUNT_POLICY,
+        ACTIVITY,
+        PRIORITY,
+        JOBS_COUNT,
+        JOBS_TOTAL_SIZE,
+        OLDEST_JOB_START_TIME,
+        YOUNGEST_JOB_START_TIME,
+        RETRIEVE_MIN_REQUEST_AGE,
+        LAST_JOB_UPDATE_TIME
+      FROM
+        RETRIEVE_QUEUE_SUMMARY
+    )SQL";
+
+    auto stmt = txn.getConn().createStmt(sql);
+    return stmt.executeQuery();
+  }
+
 };
 
 }  // namespace cta::schedulerdb::postgres

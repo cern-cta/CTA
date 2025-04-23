@@ -167,6 +167,7 @@ std::string Scheduler::queueArchiveWithGivenId(const uint64_t archiveFileId,
                                                                                 queueCriteria.copyToPoolMap,
                                                                                 queueCriteria.mountPolicy);
 
+  cta::utils::Timer t2;
   std::string archiveReqAddr = m_db.queueArchive(instanceName, request, catalogueInfo, lc);
   auto schedulerDbTime = t.secs();
   log::ScopedParamContainer spc(lc);
@@ -219,6 +220,7 @@ std::string Scheduler::queueRetrieve(const std::string& instanceName,
                                                                 request.activity,
                                                                 lc,
                                                                 request.mountPolicy);
+  lc.log(log::DEBUG, "Got retrieve queue criteria");
   queueCriteria.archiveFile.diskFileInfo = request.diskFileInfo;
 
   auto diskSystemList = m_catalogue.DiskSystem()->getAllDiskSystems();
@@ -234,6 +236,7 @@ std::string Scheduler::queueRetrieve(const std::string& instanceName,
       throw ex;
     }
   }
+  lc.log(log::DEBUG, "Checked disk system and tape copy existing in catalogue");
 
   // Determine disk system for this request, if any
   std::optional<std::string> diskSystemName;
@@ -243,11 +246,14 @@ std::string Scheduler::queueRetrieve(const std::string& instanceName,
     // If there is no match the function throws an out of range exception.
     // Not a real out of range exception.
   }
+  lc.log(log::DEBUG, "Queueing retrieve request.");
   auto requestInfo = m_db.queueRetrieve(request, queueCriteria, diskSystemName, lc);
+  lc.log(log::DEBUG, "Finished queueing retrieve request.");
   auto schedulerDbTime = t.secs();
   log::ScopedParamContainer spc(lc);
   spc.add("fileId", request.archiveFileID)
     .add("instanceName", instanceName)
+    .add("diskSystemName", diskSystemName.value_or(""))
     .add("diskFilePath", request.diskFileInfo.path)
     .add("diskFileOwnerUid", request.diskFileInfo.owner_uid)
     .add("diskFileGid", request.diskFileInfo.gid)
@@ -1813,7 +1819,13 @@ std::unique_ptr<TapeMount> Scheduler::getNextMount(const std::string& logicalLib
   }
 
   std::unique_ptr<SchedulerDatabase::TapeMountDecisionInfo> mountInfo;
+#ifdef CTA_PGSCHED
+  lc.log(log::DEBUG,
+         "In Scheduler: calling getMountInfo() with DB lock on logicalLibraryName: " + std::string(logicalLibraryName));
+  mountInfo = m_db.getMountInfo(std::string_view(logicalLibraryName), lc, timeout_us);
+#else
   mountInfo = m_db.getMountInfo(lc, timeout_us);
+#endif
   getMountInfoTime = timer.secs(utils::Timer::resetCounter);
   if (mountInfo->queueTrimRequired) {
     m_db.trimEmptyQueues(lc);
@@ -2486,19 +2498,19 @@ void Scheduler::reportArchiveJobsBatch(std::list<std::unique_ptr<ArchiveJob>>& a
       }
     }
   }
-  timingList.insertAndReset("reportCompletionTime", t);
   std::list<SchedulerDatabase::ArchiveJob*> reportedDbJobs;
   for (auto& j : reportedJobs) {
     reportedDbJobs.push_back(j->m_dbJob.get());
   }
+  timingList.insertAndReset("reportCompletionTime", t);
   m_db.setArchiveJobBatchReported(reportedDbJobs, timingList, t, lc);
+  timingList.insertAndReset("reportRecordInSchedDbTime", t);
   // Log the successful reports.
   for (auto& j : reportedJobs) {
     log::ScopedParamContainer params(lc);
     params.add("fileId", j->archiveFile.archiveFileID).add("reportType", j->reportType());
     lc.log(log::INFO, "In Scheduler::reportArchiveJobsBatch(): report successful.");
   }
-  timingList.insertAndReset("reportRecordingInSchedDbTime", t);
   log::ScopedParamContainer params(lc);
   params.add("totalReports", archiveJobsBatch.size())
     .add("failedReports", archiveJobsBatch.size() - reportedJobs.size())
