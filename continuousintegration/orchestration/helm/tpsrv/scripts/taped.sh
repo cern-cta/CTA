@@ -19,9 +19,7 @@
 echo "$(date '+%Y-%m-%d %H:%M:%S') [$(basename "${BASH_SOURCE[0]}")] Started"
 
 # Install missing RPMs
-dnf install -y mt-st lsscsi sg3_utils cta-taped cta-tape-label cta-debuginfo cta-eosdf cta-debugsource valgrind xrootd-debuginfo xrootd-debugsource
-
-dnf debuginfo-install -y cta-* xrootd*5.8.1.post48+git845be267c*
+dnf install -y mt-st lsscsi sg3_utils cta-taped cta-tape-label cta-debuginfo cta-eosdf cta-debugsource
 
 if [ "$SCHEDULER_BACKEND" == "ceph" ]; then
   dnf config-manager --enable ceph
@@ -33,7 +31,6 @@ fi
 # working correctly
 echo "$(date '+%Y-%m-%d %H:%M:%S') [$(basename "${BASH_SOURCE[0]}")] Ready"
 tail -F "/var/log/cta/cta-taped-${DRIVE_NAME}.log" &
-# runuser -c "valgrind --leak-check=full --track-origins=yes /usr/bin/cta-taped -c /etc/cta/cta-taped-${DRIVE_NAME}.conf --foreground --log-format=json --log-to-file=/var/log/cta/cta-taped-${DRIVE_NAME}.log"
 runuser -c "/usr/bin/cta-taped -c /etc/cta/cta-taped-${DRIVE_NAME}.conf --foreground --log-format=json --log-to-file=/var/log/cta/cta-taped-${DRIVE_NAME}.log"
 
 echo "taped died"

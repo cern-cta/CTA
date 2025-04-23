@@ -36,8 +36,6 @@ pod:
     terminationGracePeriodSeconds: 1
 
 extraEnv:
-  - name: XrdSecDEBUG
-    value: "1"
 
 extraVolumes:
   volumes:
