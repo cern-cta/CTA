@@ -59,6 +59,8 @@ Conn ConnPool::getConn() {
     }
     m_nbConnsOnLoan++;
   }
+  // Checks conn->isOpen() after releasing the lock, and if it's closed:
+  // just replaces the conn and stmtPool inside the existing ConnAndStmts
   if (!connAndStmts->conn->isOpen()) {
     connAndStmts->conn = m_connFactory->create();
     connAndStmts->stmtPool = std::make_unique<StmtPool>();

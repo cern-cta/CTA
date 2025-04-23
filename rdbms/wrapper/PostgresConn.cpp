@@ -86,12 +86,6 @@ void PostgresConn::close() {
 // commit
 //------------------------------------------------------------------------------
 void PostgresConn::commit() {
-  // serves to avoid DB round-trips for insert connection pools
-  // when queueing files one by one
-  if (m_noDBChecks){
-    m_noDBChecks = false;
-    return;
-  }
   threading::RWLockWrLocker locker(m_lock);
 
   if (!isOpenAssumeLocked()) {

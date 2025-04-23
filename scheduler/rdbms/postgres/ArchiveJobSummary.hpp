@@ -73,39 +73,10 @@ struct ArchiveJobSummaryRow {
   /**
    * Select jobs which do not belong to any drive yet.
    * This is used for deciding if a new mount shall be created
-   * uint64_t gc_delay = 43200
    * @param txn        Transaction to use for this query
-   * @param gc_delay   Delay for garbage collection of jobs which were not processed
-   *                   until a final state by the mount where they started processing
-   *                   default is 1 hours
    * @return result set containing all rows in the table
    */
-  static rdbms::Rset selectNewJobs(Transaction& txn, uint64_t gc_delay = 10800) {
-    // locking the view until commit (DB lock released)
-    // this is to prevent tape servers counting the rows all at the same time
-    //const char* const lock_sql = R"SQL(
-    //LOCK TABLE ARCHIVE_QUEUE_SUMMARY IN ACCESS EXCLUSIVE MODE
-    //)SQL";
-    //auto stmt = txn.getConn().createStmt(lock_sql);
-    //stmt.executeNonQuery();
-    //update ARCHIVE_ACTIVE_QUEUE set in_drive_queue='f',mount_id=NULL; for all which
-    // are pending since a defined period of time
-    // gc_delay logic and liberating stuck mounts should be later moved elsewhere !
-    // this is currently responsible for reprocessing of tasks which were sent to task queue
-    // but not picked up yet but the drive - if they were not updated during the gc_delay they will get assigned agan !
-    // we could make a queue cleaner doing something much smarter than this
-    /* uint64_t gc_now_minus_delay = (uint64_t) cta::utils::getCurrentEpochTime() - gc_delay;
-    const char* const update_sql = R"SQL(
-    UPDATE ARCHIVE_ACTIVE_QUEUE SET
-      MOUNT_ID = NULL,
-      IN_DRIVE_QUEUE = FALSE
-    WHERE MOUNT_ID IS NOT NULL AND IN_DRIVE_QUEUE = TRUE AND STATUS = :STATUS AND LAST_UPDATE_TIME < :NOW_MINUS_DELAY
-    )SQL";
-    stmt = txn.getConn().createStmt(update_sql);
-    ArchiveJobStatus status = ArchiveJobStatus::AJS_ToTransferForUser;
-    stmt.bindString(":STATUS", to_string(status));
-    stmt.bindUint64(":NOW_MINUS_DELAY", gc_now_minus_delay);
-    stmt.executeNonQuery(); */
+  static rdbms::Rset selectNewJobs(Transaction& txn) {
 
     const char* const sql = R"SQL(
       SELECT 

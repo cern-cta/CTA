@@ -169,7 +169,6 @@ std::string Scheduler::queueArchiveWithGivenId(const uint64_t archiveFileId,
 
   cta::utils::Timer t2;
   std::string archiveReqAddr = m_db.queueArchive(instanceName, request, catalogueInfo, lc);
-  auto schedulerBackendTime = t2.secs();
   auto schedulerDbTime = t.secs();
   log::ScopedParamContainer spc(lc);
   spc.add("instanceName", instanceName)
@@ -197,8 +196,7 @@ std::string Scheduler::queueArchiveWithGivenId(const uint64_t archiveFileId,
     .add("requesterGroup", request.requester.group)
     .add("srcURL", midEllipsis(request.srcURL, 50, 15))
     .add("catalogueTime", catalogueTime)
-    .add("schedulerDbTime", schedulerDbTime)
-    .add("schedulerBackendTime", schedulerBackendTime);
+    .add("schedulerDbTime", schedulerDbTime);
   request.checksumBlob.addFirstChecksumToLog(spc);
   lc.log(log::INFO, "Queued archive request");
   return archiveReqAddr;
@@ -222,7 +220,7 @@ std::string Scheduler::queueRetrieve(const std::string& instanceName,
                                                                 request.activity,
                                                                 lc,
                                                                 request.mountPolicy);
-  lc.log(log::INFO, "Got retrieve queue criteria");
+  lc.log(log::DEBUG, "Got retrieve queue criteria");
   queueCriteria.archiveFile.diskFileInfo = request.diskFileInfo;
 
   auto diskSystemList = m_catalogue.DiskSystem()->getAllDiskSystems();
@@ -238,7 +236,7 @@ std::string Scheduler::queueRetrieve(const std::string& instanceName,
       throw ex;
     }
   }
-  lc.log(log::INFO, "Checked disk system and tape copy existing in catalogue");
+  lc.log(log::DEBUG, "Checked disk system and tape copy existing in catalogue");
 
   // Determine disk system for this request, if any
   std::optional<std::string> diskSystemName;
@@ -248,9 +246,9 @@ std::string Scheduler::queueRetrieve(const std::string& instanceName,
     // If there is no match the function throws an out of range exception.
     // Not a real out of range exception.
   }
-  lc.log(log::INFO, "Queueing retrieve request.");
+  lc.log(log::DEBUG, "Queueing retrieve request.");
   auto requestInfo = m_db.queueRetrieve(request, queueCriteria, diskSystemName, lc);
-  lc.log(log::INFO, "DONE queueing retrieve request.");
+  lc.log(log::DEBUG, "Finished queueing retrieve request.");
   auto schedulerDbTime = t.secs();
   log::ScopedParamContainer spc(lc);
   spc.add("fileId", request.archiveFileID)
@@ -2506,7 +2504,7 @@ void Scheduler::reportArchiveJobsBatch(std::list<std::unique_ptr<ArchiveJob>>& a
   }
   timingList.insertAndReset("reportCompletionTime", t);
   m_db.setArchiveJobBatchReported(reportedDbJobs, timingList, t, lc);
-  timingList.insertAndReset("reportRecordingInSchedDbTime", t);
+  timingList.insertAndReset("reportRecordInSchedDbTime", t);
   // Log the successful reports.
   for (auto& j : reportedJobs) {
     log::ScopedParamContainer params(lc);

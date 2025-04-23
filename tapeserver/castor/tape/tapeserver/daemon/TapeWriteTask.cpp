@@ -264,16 +264,25 @@ void TapeWriteTask::execute(const std::unique_ptr<castor::tape::tapeFile::WriteS
     LogContext::ScopedParam sp1(lc, Param("exceptionMessage", e.getMessageValue()));
     lc.log(errorLevel, "An error occurred for this file. End of migrations.");
     circulateMemBlocks();
-
+    // this last job will be either reported as failure or success
     if (doReportJobError) {
       // we should report job failure for exception
       reportPacker.reportFailedJob(std::move(m_archiveJob), e, lc);
-    } else {
-      // this is for the last job where ENOSPC was thrown;
-      // shall be requeued from m_successfulArchiveJobs later since
-      // no tapeFlush will be called in TWST
+    }
+#ifdef CTA_PGSCHED
+    if (!doReportJobError) {
+      /* the job where ENOSPC was thrown shall also be reported;
+       * in objectstore this is forgotten and garbage collection
+       * requeues it without updating retry statistics
+       * For Postgres Scheduler DB, we report it as completed in order to avoid
+       * updating retry statistics (happening for reportFailedJob)
+       * and let it be requeued from m_successfulArchiveJobs in TWST
+       * We are guaranteed here that no tapeFlush will be called
+       * in TWST as we throw again below
+       */
       reportPacker.reportCompletedJob(std::move(m_archiveJob), lc);
     }
+#endif
     // We throw again because we want TWST to stop all tasks from execution
     // and go into a degraded mode operation.
     throw;
@@ -403,7 +412,7 @@ const TapeSessionStats TapeWriteTask::getTaskStats() const {
 //------------------------------------------------------------------------------
 cta::ArchiveJob& TapeWriteTask::getArchiveJob() const {
   if (!m_archiveJob) {
-    throw cta::exception::Exception("No archive job found in the task object !");
+    throw cta::exception::Exception("No archive job found for the task.");
   }
   return *m_archiveJob;
 }

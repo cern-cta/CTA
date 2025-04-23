@@ -26,13 +26,9 @@ namespace cta::schedulerdb {
 }
 
 void ArchiveRequest::insert() {
-  //m_txn.reset(new schedulerdb::Transaction(m_conn));
-  //m_txn->start();
   // Getting the next ID for the request possibly composed of multiple jobs
   uint64_t areq_id = cta::schedulerdb::postgres::ArchiveJobQueueRow::getNextArchiveRequestID(m_conn);
   uint32_t areq_job_count = m_jobs.size();
-  // Inserting the jobs to the DB
-  //std::string tapePool = "";
   for (const auto& aj : m_jobs) {
     try {
       cta::schedulerdb::postgres::ArchiveJobQueueRow ajr;
@@ -70,34 +66,18 @@ void ArchiveRequest::insert() {
 
       log::ScopedParamContainer params(m_lc);
       ajr.addParamsToLogContext(params);
-      // locking DB operations on transaction level per tapePool
-      // requiring multiple locks succeeds in PostgreSQL
-      //if (tapePool != aj.tapepool || tapePool == ""){
-      //  tapePool = aj.tapepool;
-      //  m_txn.lockGlobal(aj.tapepool);
-      //}
-      //m_lc.log(log::DEBUG, "In ArchiveRequest::insert(): before insert row.");
+      // Inserting the jobs to the DB
       ajr.insert(m_conn);
-      // m_conn.commit(); unnecessary for insert ! 
+      // m_conn.commit(); unnecessary for insert !
     } catch (exception::Exception& ex) {
       log::ScopedParamContainer params(m_lc);
       params.add("exceptionMessage", ex.getMessageValue());
-      //m_lc.log(log::DEBUG, "In ArchiveRequest::insert(): failed to queue job.");
+      m_lc.log(log::ERR, "In ArchiveRequest::insert(): failed to queue request.");
       m_conn.rollback();  // Rollback on error
       throw;
     }
   }
-  try {
-    //m_lc.log(log::DEBUG, "In ArchiveRequest::insert(): before commiting.");
-    //m_conn.reset();
-    m_lc.log(log::INFO, "In ArchiveRequest::insert(): added jobs to queue.");
-  } catch (exception::Exception& ex) {
-    log::ScopedParamContainer params(m_lc);
-    params.add("exceptionMessage", ex.getMessageValue());
-    m_lc.log(log::ERR, "In ArchiveRequest::insert(): failed to queue job.");
-    m_conn.rollback();  // Rollback on error
-    throw;
-  }
+  m_lc.log(log::INFO, "In ArchiveRequest::insert(): added jobs to queue.");
 }
 
 void ArchiveRequest::addJob(uint8_t copyNumber,

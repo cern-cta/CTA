@@ -203,11 +203,6 @@ public:
    */
   virtual std::list<std::string> getViewNames() = 0;
 
-  /**
-   * Skips any DB round-trips when returning connection to the pool
-   * useful for inserts in PostgreSQL in multi-threaded environment
-   */
-  virtual void voidDBCommit() = 0;
 };  // class ConnWrapper
 
 }  // namespace cta::rdbms::wrapper

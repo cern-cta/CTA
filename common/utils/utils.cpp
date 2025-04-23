@@ -18,7 +18,6 @@
 #include "common/exception/Exception.hpp"
 #include "common/exception/Errnum.hpp"
 #include "common/utils/Regex.hpp"
-//#include "common/utils/strerror_r_wrapper.hpp"
 #include "common/utils/utils.hpp"
 
 #include <regex>

@@ -476,8 +476,6 @@ void castor::tape::tapeserver::daemon::TapeWriteSingleThread::run() {
     //end of session + log
     m_reportPacker.reportEndOfSession(m_logContext);
   } catch (const cta::exception::Exception& e) {
-    // prepare logging params
-    cta::log::ScopedParamContainer params(m_logContext);
     //we end there because write session could not be opened
     //or because a task failed or because flush failed
 
@@ -533,7 +531,9 @@ void castor::tape::tapeserver::daemon::TapeWriteSingleThread::run() {
     } catch (cta::exception::Exception& ex) {
       cta::log::ScopedParamContainer exceptionParams(m_logContext);
       exceptionParams.add("ErrorMessage", ex.getMessage().str());
-      m_logContext.log(cta::log::ERR, "TapeWriteSingleThread::run(): job ID could not be retrieved for the last task of the crashed session.");
+      m_logContext.log(
+        cta::log::ERR,
+        "TapeWriteSingleThread::run(): job ID could not be retrieved for the last task of the crashed session.");
     }
     m_logContext.log(cta::log::DEBUG, "TapeWriteSingleThread::run(): CheckNr3: After jobIDsList assembly.");
 #endif
@@ -545,7 +545,7 @@ void castor::tape::tapeserver::daemon::TapeWriteSingleThread::run() {
       }
 #ifdef CTA_PGSCHED
       // prepare job IDs for re-queueing
-      if (remaining_task->hasArchiveJob()){
+      if (remaining_task->hasArchiveJob()) {
         jobIDsList.emplace_back(remaining_task->getArchiveJob().getJobID());
       }
 #endif
@@ -559,15 +559,12 @@ void castor::tape::tapeserver::daemon::TapeWriteSingleThread::run() {
     std::string errorMessage(e.getMessageValue());
     int logLevel = cta::log::ERR;
     // Override if we got en ENOSPC error (end of tape)
-    try {
-      const auto& errnum = dynamic_cast<const cta::exception::Errnum&>(e);
-      if (ENOSPC == errnum.errorNumber()) {
-        isTapeFull = true;
-        errorMessage = "End of migration due to tape full";
-        logLevel = cta::log::INFO;
-      }
-    } catch (...) {}
-    // then log the end of write thread
+    if (isTapeFull) {
+      errorMessage = "End of migration due to tape full";
+      logLevel = cta::log::INFO;
+    }
+    // prepare logging params
+    cta::log::ScopedParamContainer params(m_logContext);
     params.add("status", "error").add("ErrorMessage", errorMessage);
     m_stats.totalTime = totalTimer.secs();
     logWithStats(logLevel, "Tape thread complete for writing", params);
@@ -611,7 +608,7 @@ void castor::tape::tapeserver::daemon::TapeWriteSingleThread::logWithStats(int l
 //   requeueFailedTask - for PGCHED
 //------------------------------------------------------------------------------
 void castor::tape::tapeserver::daemon::TapeWriteSingleThread::requeueUnprocessedTasks(std::list<std::string> jobIDsList,
-                                                                                 cta::log::LogContext& lc) const {
+                                                                                      cta::log::LogContext& lc) const {
   uint64_t njobs = m_archiveMount.requeueJobBatch(jobIDsList, lc);
   cta::log::ScopedParamContainer requeueparam(lc);
   requeueparam.add("requeuedTaskQueueJobs", njobs);

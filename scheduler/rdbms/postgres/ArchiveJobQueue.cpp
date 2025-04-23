@@ -31,10 +31,9 @@ ArchiveJobQueueRow::moveJobsToDbQueue(Transaction& txn,
                                       uint64_t limit) {
   /* using write row lock FOR UPDATE for the select statement
    * since it is the same lock used for UPDATE
-   */
-  /* for paritioned queue table replace CREATION TIME by: EXTRACT(EPOCH FROM CREATION_TIME)::BIGINT */
-  /* below I first apply the LIMIT on the selection to limit
-   * the number of rows and only after calculate the running cumulative sun of bytes in the consequent step */
+   * we first apply the LIMIT on the selection to limit
+   * the number of rows and only after calculate the
+   * running cumulative sum of bytes in the consequent step */
   const char* const sql = R"SQL(
     WITH SET_SELECTION AS (
       SELECT JOB_ID, PRIORITY, SIZE_IN_BYTES
@@ -226,9 +225,9 @@ uint64_t ArchiveJobQueueRow::updateFailedJobStatus(Transaction& txn, ArchiveJobS
   return stmt.getNbAffectedRows();
 };
 
-// the job can stay in the ARCHIVE_PENDING_QUEUE in case the current Mount for this it was requeued
-// dies in the meantime and the same MOundID will not be picking up jobs anymore
-// this needs to be caught up in some cleaner process.
+// requeueFailedJob is used to requeue jobs which were not processed due to finished mount or failed jobs
+// In case of unexpected crashed the job stays in the ARCHIVE_PENDING_QUEUE and needs to be identified
+// in some garbage collection process - TO-BE-DONE.
 uint64_t ArchiveJobQueueRow::requeueFailedJob(Transaction& txn,
                                               ArchiveJobStatus status,
                                               bool keepMountId,
@@ -338,7 +337,6 @@ uint64_t ArchiveJobQueueRow::requeueFailedJob(Transaction& txn,
             :LAST_MOUNT_WITH_FAILURE AS LAST_MOUNT_WITH_FAILURE,
             FAILURE_LOG || :FAILURE_LOG AS FAILURE_LOG,
   )SQL";
-  // Add MOUNT_ID to the query if mountId is provided
   if (!keepMountId) {
     sql += " NULL AS MOUNT_ID";
   } else {
@@ -472,7 +470,6 @@ ArchiveJobQueueRow::requeueJobBatch(Transaction& txn, ArchiveJobStatus status, c
 }
 
 uint64_t ArchiveJobQueueRow::moveJobToFailedQueueTable(Transaction& txn) {
-  // DISABLE DELETION FOR DEBUGGING
   std::string sql = R"SQL(
     WITH MOVED_ROWS AS (
         DELETE FROM ARCHIVE_ACTIVE_QUEUE

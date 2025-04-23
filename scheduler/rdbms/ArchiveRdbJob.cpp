@@ -264,10 +264,10 @@ void ArchiveRdbJob::failReport(const std::string& failureReason, log::LogContext
     .add("reportFailureReason", m_jobRow.reportFailureLogs.value_or(""))
     .log(log::INFO, "In schedulerdb::ArchiveRdbJob::failReport(): reporting failed.");
 
-  // We could use reportType NoReportRequired for cancelling the request. For the moment it is not used
-  // and we directly delet ethe job.
-  // We could also use it for a case whena a previous attempt to report failed
-  // due to an exception, for example if the file was deleted on close.
+  /* We could use reportType NoReportRequired for cancelling the request.
+   * For the moment it is not used and we directly delete the job.
+   * We could also use it for a case when a previous attempt to report failed
+   * due to an exception, for example if the file was deleted on close. */
   cta::schedulerdb::Transaction txn(m_connPool);
   try {
     cta::utils::Timer t;

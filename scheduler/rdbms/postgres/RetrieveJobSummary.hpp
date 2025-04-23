@@ -127,14 +127,10 @@ struct RetrieveJobSummaryRow {
   /**
    * Select jobs which do not belong to any drive yet.
    * This is used for deciding if a new mount shall be created
-   * uint64_t gc_delay = 43200
    * @param txn        Transaction to use for this query
-   * @param gc_delay   Delay for garbage collection of jobs which were not processed
-   *                   until a final state by the mount where they started processing
-   *                   default is 1 hours
    * @return result set containing all rows in the table
    */
-  static rdbms::Rset selectNewJobs(Transaction& txn, uint64_t gc_delay = 10800) {
+  static rdbms::Rset selectNewJobs(Transaction& txn) {
     const char* const sql = R"SQL(
       SELECT
         VID,

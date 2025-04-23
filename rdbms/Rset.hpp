@@ -134,8 +134,8 @@ public:
   /**
    * Methods to get values without passing through optionals.
    * The only downside is that these methods throw exception for NULL
-   * value inside the speciic implementation rather than on the top RSet level
-   * and shall be used mostly only for values where NULL is not expected.
+   * value inside the specific implementation rather than on the top RSet level
+   * and shall be used for columns where NULL is not expected.
    * These methods return the converted strings directly from the Postgres memory buffer
    * and do not have implementations for other DB backends for the moment.
    * They were introduced in order to increase performance since the same ran with the corresponding

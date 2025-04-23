@@ -48,6 +48,8 @@ ArchiveMount::getNextJobBatch(uint64_t filesRequested, uint64_t bytesRequested, 
   cta::log::TimingList timings;
   cta::utils::Timer t;
   std::list<std::unique_ptr<SchedulerDatabase::ArchiveJob>> ret;
+  // using vector instead of list, since we can preallocate the size,
+  // better cache locality for search/loop, faster insertion (less pointer manipulations)
   std::vector<std::unique_ptr<SchedulerDatabase::ArchiveJob>> retVector;
   cta::log::ScopedParamContainer params(logContext);
   try {
@@ -56,8 +58,6 @@ ArchiveMount::getNextJobBatch(uint64_t filesRequested, uint64_t bytesRequested, 
     timings.insertAndReset("mountUpdateBatchTime", t);
     params.add("updateMountInfoRowCount", nrows);
     params.add("MountID", mountInfo.mountId);
-    //logContext.log(cta::log::INFO,
-    //               "In postgres::ArchiveJobQueueRow::moveJobsToDbQueue: successfully assigned Mount ID to DB jobs.");
     retVector.reserve(nrows);
     // Fetch job info only in case there were jobs found and updated
     if (!queuedJobs.isEmpty()) {

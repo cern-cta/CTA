@@ -161,8 +161,6 @@ cta::ArchiveMount::getNextJobBatch(uint64_t filesRequested, uint64_t bytesReques
   // We prepare the response
   for (auto& sdaj : dbJobBatch) {
     ret.emplace_back(std::make_unique<ArchiveJob>(this, m_catalogue, std::move(sdaj)));
-    //ret.emplace_back(new ArchiveJob(this, m_catalogue, sdaj->archiveFile, sdaj->srcURL, sdaj->tapeFile));
-    //ret.back()->m_dbJob.reset(sdaj.release());
   }
   log::ScopedParamContainer(logContext)
     .add("filesRequested", filesRequested)
@@ -170,7 +168,6 @@ cta::ArchiveMount::getNextJobBatch(uint64_t filesRequested, uint64_t bytesReques
     .add("bytesRequested", bytesRequested)
     .add("getNextJobBatchTime", t.secs())
     .log(log::INFO, "In SchedulerDB::ArchiveMount::getNextJobBatch(): Finished getting next job batch.");
-  // Convert vector to list (which is expected as return type, to be revised in the future)
   return ret;
 }
 

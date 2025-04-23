@@ -28,18 +28,10 @@ RetrieveJobQueueRow::moveJobsToDbQueue(Transaction& txn,
                                        std::vector<std::string>& noSpaceDiskSystemNames,
                                        uint64_t maxBytesRequested,
                                        uint64_t limit) {
-  /* using write row lock FOR UPDATE for the select statement
-   * since it is the same lock used for UPDATE
-   */
-  /* for paritioned queue table replace CREATION TIME by: EXTRACT(EPOCH FROM CREATION_TIME)::BIGINT */
-  /* below I first apply the LIMIT on the selection to limit
-   * the number of rows and only after calculate the running cumulative sun of bytes in the consequent step */
-  //
-
   // we first check if there are any disk systems
   // we should avoid querying jobs for
   std::string sql_dsn_exclusion_part = "";
-  if (!noSpaceDiskSystemNames.empty()){
+  if (!noSpaceDiskSystemNames.empty()) {
     sql_dsn_exclusion_part = R"SQL( AND DISK_SYSTEM_NAME != ALL(ARRAY[)SQL";
     size_t j = 1;
     for (const auto& dsn : noSpaceDiskSystemNames) {
@@ -52,7 +44,11 @@ RetrieveJobQueueRow::moveJobsToDbQueue(Transaction& txn,
     }
     sql_dsn_exclusion_part += R"SQL( ]) )SQL";
   }
-
+  /* using write row lock FOR UPDATE for the select statement
+   * since it is the same lock used for UPDATE
+   * we first apply the LIMIT on the selection to limit
+   * the number of rows and only after calculate the
+   * running cumulative sum of bytes in the consequent step */
   std::string sql = R"SQL(
     WITH SET_SELECTION AS (
       SELECT JOB_ID, PRIORITY, SIZE_IN_BYTES
@@ -211,16 +207,16 @@ RetrieveJobQueueRow::moveJobsToDbQueue(Transaction& txn,
   stmt.bindString(":DRIVE", mountInfo.drive);
   stmt.bindString(":HOST", mountInfo.host);
   stmt.bindString(":LOGICAL_LIBRARY", mountInfo.logicalLibrary);
-  stmt.bindString(":TAPE_POOL",mountInfo.tapePool);
+  stmt.bindString(":TAPE_POOL", mountInfo.tapePool);
   stmt.bindUint64(":BYTES_REQUESTED", maxBytesRequested);
   auto result = stmt.executeQuery();
   auto nrows = stmt.getNbAffectedRows();
   return std::make_pair(std::move(result), nrows);
 }
 
-
-uint64_t
-RetrieveJobQueueRow::updateJobStatus(Transaction& txn, RetrieveJobStatus status, const std::vector<std::string>& jobIDs) {
+uint64_t RetrieveJobQueueRow::updateJobStatus(Transaction& txn,
+                                              RetrieveJobStatus status,
+                                              const std::vector<std::string>& jobIDs) {
   if (jobIDs.empty()) {
     return 0;
   }
@@ -284,13 +280,13 @@ uint64_t RetrieveJobQueueRow::updateFailedJobStatus(Transaction& txn, RetrieveJo
   return stmt.getNbAffectedRows();
 };
 
-// the job can stay in the RETRIEVE_PENDING_QUEUE in case the current Mount for this it was requeued
-// dies in the meantime and the same MOundID will not be picking up jobs anymore
-// this needs to be caught up in some cleaner process.
+// requeueFailedJob is used to requeue jobs which were not processed due to finished mount or failed jobs
+// In case of unexpected crashed the job stays in the RETRIEVE_PENDING_QUEUE and needs to be identified
+// in some garbage collection process - TO-BE-DONE.
 uint64_t RetrieveJobQueueRow::requeueFailedJob(Transaction& txn,
-                                              RetrieveJobStatus status,
-                                              bool keepMountId,
-                                              std::optional<std::list<std::string>> jobIDs) {
+                                               RetrieveJobStatus status,
+                                               bool keepMountId,
+                                               std::optional<std::list<std::string>> jobIDs) {
   std::string sql = R"SQL(
     WITH MOVED_ROWS AS (
         DELETE FROM RETRIEVE_ACTIVE_QUEUE
@@ -635,7 +631,6 @@ uint64_t RetrieveJobQueueRow::updateJobStatusForFailedReport(Transaction& txn, R
   // move the row to failed jobs and delete the entry from the queue
   if (status == RetrieveJobStatus::ReadyForDeletion) {
     return RetrieveJobQueueRow::moveJobToFailedQueueTable(txn);
-    // END OF DISABLING DELETION FOR DEBUGGING
   }
   // otherwise update the statistics and requeue the job
   std::string sql = R"SQL(
@@ -658,9 +653,9 @@ uint64_t RetrieveJobQueueRow::updateJobStatusForFailedReport(Transaction& txn, R
 };
 
 rdbms::Rset RetrieveJobQueueRow::flagReportingJobsByStatus(Transaction& txn,
-                                                          std::list<RetrieveJobStatus> statusList,
-                                                          uint64_t gc_delay,
-                                                          uint64_t limit) {
+                                                           std::list<RetrieveJobStatus> statusList,
+                                                           uint64_t gc_delay,
+                                                           uint64_t limit) {
   uint64_t gc_now_minus_delay = (uint64_t) cta::utils::getCurrentEpochTime() - gc_delay;
   std::string sql = R"SQL(
       WITH SET_SELECTION AS (
@@ -724,41 +719,14 @@ uint64_t RetrieveJobQueueRow::getNextRetrieveRequestID(rdbms::Conn& conn) {
 uint64_t
 RetrieveJobQueueRow::cancelRetrieveJob(Transaction& txn, const std::string& diskInstance, uint64_t archiveFileID) {
   std::string sqlpart;
-  /* there is no mechanism to remove this form the queue in memory !!!
-   * might need to be invented if needed otherwise all the jobs in memory will be
-   * executed and will throw an error later as no DB job corresponding to them will exist !
-   *
-   flagging jobs ReadyForDeletion - alternative strategy
-     * for deletion by dropping partitions
-     std::string sql = R"SQL(
-      UPDATE RETRIEVE_ACTIVE_QUEUE SET
-        STATUS = :NEWSTATUS
-      WHERE
-        DISK_INSTANCE = :DISK_INSTANCE AND
-        ARCHIVE_FILE_ID = :ARCHIVE_FILE_ID AND
-        STATUS NOT IN (:COMPLETE, :FAILED, :FORDELETION)
-    )SQL";
-    std::string sql = R"SQL(
-      UPDATE RETRIEVE_ACTIVE_QUEUE SET
-        STATUS = :NEWSTATUS
-      WHERE
-        DISK_INSTANCE = :DISK_INSTANCE AND
-        ARCHIVE_FILE_ID = :ARCHIVE_FILE_ID AND
-        STATUS NOT IN (:COMPLETE, :FAILED, :FORDELETION)
-    )SQL";
-
-    stmt.bindString(":NEWSTATUS",
-                    to_string(RetrieveJobStatus::ReadyForDeletion));
-    stmt.bindString(":COMPLETE",
-                    to_string(RetrieveJobStatus::RJS_Complete));
-    stmt.bindString(":FORDELETION",
-                    to_string(RetrieveJobStatus::ReadyForDeletion));
-    stmt.bindString(":FAILED",
-                    to_string(RetrieveJobStatus::RJS_Failed));
-     */
-  // directly deleting the archive request irrespectively in which state it is
-  // this can result in attempts to update rows of the DB which will not exist anymore
-  // better strategy might be needed
+  /* As of now, there is no way to remove job from the in-memory
+   * (task) queue of the disk/tape processes !
+   * All jobs picked up by the mount will run and later fail
+   * due to missing DB entries. Deleting the archive request blindly
+   * can cause updates on non-existent DB rows. A better strategy is needed—
+   * either notify disk/tape processes or have them verify job presence
+   * in Scheduler DB before execution.
+   */
   std::string sql = R"SQL(
       DELETE FROM RETRIEVE_ACTIVE_QUEUE
       WHERE

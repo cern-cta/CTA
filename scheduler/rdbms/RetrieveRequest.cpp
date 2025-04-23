@@ -30,7 +30,6 @@ void RetrieveRequest::insert() {
     cta::schedulerdb::postgres::RetrieveJobQueueRow rjr;
     rjr.retrieveRequestId = rreq_id;
     rjr.reqJobCount = rreq_job_count;
-    m_lc.log(log::INFO, "In RetrieveRequest::insert(): creating jobs XC1.");
 
     // rdbms request members
     rjr.diskSystemName = m_diskSystemName;
@@ -40,15 +39,8 @@ void RetrieveRequest::insert() {
     rjr.dstURL = m_schedRetrieveReq.dstURL;
     rjr.retrieveReportURL = m_schedRetrieveReq.retrieveReportURL;
     rjr.retrieveErrorReportURL = m_schedRetrieveReq.errorReportURL;
-    rjr.isVerifyOnly = m_isVerifyOnly;
-    m_lc.log(log::INFO, "In RetrieveRequest::insert(): creating jobs XC2.");
-
-    // m_schedRetrieveReq.isVerifyOnly; // request to retrieve file from tape but do not write a disk copy
-    // from archive file - uint64_t archiveFileID;
-    //  DiskFileInfo diskFileInfo;
-    //  std::string path;
-    //  uint32_t    owner_uid
-    //  uint32_t    gid;
+    rjr.isVerifyOnly =
+      m_isVerifyOnly;  // m_schedRetrieveReq.isVerifyOnly; // true = retrieve file from tape but do not write a disk copy
     rjr.srrUsername = m_schedRetrieveReq.creationLog.username;
     rjr.srrHost = m_schedRetrieveReq.creationLog.host;
     rjr.srrTime = m_schedRetrieveReq.creationLog.time;
@@ -56,23 +48,18 @@ void RetrieveRequest::insert() {
     rjr.lifecycleTimings_first_selected_time = m_schedRetrieveReq.lifecycleTimings.first_selected_time;
     rjr.lifecycleTimings_completed_time = m_schedRetrieveReq.lifecycleTimings.completed_time;
     rjr.activity = m_activity;  // from m_schedRetrieveReq.activity; set if needed only
-    m_lc.log(log::INFO, "In RetrieveRequest::insert(): creating jobs XC3.");
 
-    // think about when to register this and when to put another vid found in queueRetrieve
-    // std::optional<std::string> m_schedRetrieveReq.vid;    // limit retrieve requests to the specified vid (in the case of dual-copy files)
-    // std::optional<std::string> m_schedRetrieveReq.mountPolicy; // limit retrieve requests to a specified mount policy (only used for verification requests)
-    //std::optional<std::string> activity;
-    // setActiveCopyNumber sets also vid and status;
+    /* Think about when to register this and when to put another vid found in queueRetrieve:
+     * std::optional<std::string> m_schedRetrieveReq.vid;    // limit retrieve requests to the specified vid (in the case of dual-copy files)
+     * std::optional<std::string> m_schedRetrieveReq.mountPolicy; // limit retrieve requests to a specified mount policy (only used for verification requests)
+     * std::optional<std::string> activity;
+     * setActiveCopyNumber sets also vid and status;
+     */
     rjr.copyNb = m_actCopyNb;
-    rjr.status = RetrieveJobStatus::RJS_ToTransfer; // m_status;
+    rjr.status = RetrieveJobStatus::RJS_ToTransfer;  // m_status;
     rjr.vid = m_vid;
-//        uint64_t fSeq;
-//        uint64_t blockId;
-//        time_t creationTime;
-//        checksum::ChecksumBlob checksumBlob;
     rjr.fSeq = m_fSeq;
     rjr.blockId = m_blockId;
-    ///
     // info from criteria passed to fillJobsSetRetrieveFileQueueCriteria()
     rjr.mountPolicy = m_mountPolicyName;
     rjr.priority = m_priority;
@@ -87,7 +74,6 @@ void RetrieveRequest::insert() {
     rjr.diskFileInfoOwnerUid = m_archiveFile.diskFileInfo.owner_uid;
     rjr.diskFileInfoGid = m_archiveFile.diskFileInfo.gid;
     rjr.checksumBlob = std::move(m_archiveFile.checksumBlob);
-    //
     // rjr.archiveFile.creationTime = m_entryLog.time;  // Time the job was received by the CTA Frontend
     rjr.startTime = time(nullptr);  // Time the job was queued in the DB
 
@@ -126,7 +112,7 @@ void RetrieveRequest::insert() {
     if (!rjr.alternateBlockId.empty()) {
       rjr.alternateBlockId.pop_back();
     }
-    rjr.srrMountPolicy = "?";                       // ? what was this for ?
+    rjr.srrMountPolicy = "?";                                     // ? what was this for ?
     rjr.srrActivity = m_schedRetrieveReq.activity.value_or("?");  // ? what was this for ?
     log::ScopedParamContainer params(m_lc);
     rjr.addParamsToLogContext(params);
@@ -143,31 +129,22 @@ void RetrieveRequest::insert() {
 }
 
 /* [Protobuf to-be-replaced] keeping this logic in a comment to facilitate
-     * future rewrite using DB columns directly instead of inserting Protobuf objects
-     *
-     * ri.set_fseq(m_repackInfo.fSeq);
-     * ri.set_file_buffer_url(m_repackInfo.fileBufferURL);
-     * ri.set_has_user_provided_file(m_repackInfo.hasUserProvidedFile);
-     * for(const auto &[key, value]: m_repackInfo.archiveRouteMap) {
-     *   schedulerdb::blobser::RetrieveRequestArchiveRoute *ar = ri.add_archive_routes();
-     *   ar->set_copynb(key);
-     *   ar->set_tapepool(value);
-     * }
-     * for(auto &c: m_repackInfo.copyNbsToRearchive) {
-     *   ri.add_copy_nbs_to_rearchive(c);
-     * }
-     * rj.SerializeToString(&row.retrieveJobsProtoBuf);
-     * ri.SerializeToString(&row.repackInfoProtoBuf);
-     */
-//m_txn.reset(new schedulerdb::Transaction(m_conn));
-
-//try {
-//  //row.insert(*m_txn);
-//} catch(exception::Exception &ex) {
-//  params.add("exceptionMessage", ex.getMessageValue());
-//  m_lc.log(log::ERR, "In RetrieveRequest::insert(): failed to queue job.");
-//  throw;
-//}
+ * future rewrite using DB columns directly instead of inserting Protobuf objects
+ *
+ * ri.set_fseq(m_repackInfo.fSeq);
+ * ri.set_file_buffer_url(m_repackInfo.fileBufferURL);
+ * ri.set_has_user_provided_file(m_repackInfo.hasUserProvidedFile);
+ * for(const auto &[key, value]: m_repackInfo.archiveRouteMap) {
+ *   schedulerdb::blobser::RetrieveRequestArchiveRoute *ar = ri.add_archive_routes();
+ *   ar->set_copynb(key);
+ *   ar->set_tapepool(value);
+ * }
+ * for(auto &c: m_repackInfo.copyNbsToRearchive) {
+ *   ri.add_copy_nbs_to_rearchive(c);
+ * }
+ * rj.SerializeToString(&row.retrieveJobsProtoBuf);
+ * ri.SerializeToString(&row.repackInfoProtoBuf);
+ */
 
 void RetrieveRequest::update() const {
   throw RetrieveRequestException("update not implemented.");
@@ -222,7 +199,7 @@ void RetrieveRequest::fillJobsSetRetrieveFileQueueCriteria(
     m_jobs.back().maxTotalRetries = hardcodedTotalRetries;
     m_jobs.back().maxReportRetries = hardcodedReportRetries;
     m_jobs.back().status = schedulerdb::RetrieveJobStatus::RJS_ToTransfer;
-    // in case we need these for retrieval we should save them in DB as well somehow !
+    // in case we need these for retrieval we should save them in DB as well !
     m_jobs.back().fSeq = tf.fSeq;
     m_jobs.back().blockId = tf.blockId;
     //uint64_t fileSize = tf.fileSize;

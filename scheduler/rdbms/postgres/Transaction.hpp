@@ -46,9 +46,9 @@ public:
   Transaction& operator=(const Transaction&) = delete;
 
   /**
-   * Take out an advisory transaction lock per tape pool
-   *
-   * The lock will be automatically released when the transaction ends (or the connection is terminated).
+   * Take an advisory transaction lock per tape pool (e.g.)
+   * The lock will be automatically released when the
+   * transaction ends (or the connection is terminated).
    *
    * @param lockIdString  Unique identifier for this lock
    */

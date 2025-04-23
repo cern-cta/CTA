@@ -226,12 +226,6 @@ public:
    */
   void printSchema(std::ostream& os);
 
-  /**
-   * Skips any DB round-trips when returning connection to the pool
-   * useful for inserts in PostgreSQL in multi-threaded environment
-   */
-  void voidDBCommit() { throw exception::Exception("Not Implemented"); }
-
 private:
   /**
    * Mutex used to serialize access to the database connection.

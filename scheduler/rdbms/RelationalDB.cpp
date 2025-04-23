@@ -91,14 +91,12 @@ std::string RelationalDB::queueArchive(const std::string& instanceName,
   utils::Timer timeTotal;
   utils::Timer timeGetConn;
   auto sqlconn = m_connPoolInsertOnly.getConn();
-  sqlconn.voidDBCommit();
   log::ScopedParamContainer params(logContext);
-  params.add("NbConnsOnLoan",m_connPoolInsertOnly.getNbConnsOnLoan());
-  params.add("timeGetConn", timeGetConn.secs());
+  params.add("connCountOnLoad",m_connPoolInsertOnly.getNbConnsOnLoan());
+  params.add("getConnTime", timeGetConn.secs());
   schedulerdb::ArchiveRequest aReq(sqlconn, logContext);
 
 
-  utils::Timer timeAfileCreation;
   // Summarize all as an archiveFile
   common::dataStructures::ArchiveFile aFile;
   aFile.archiveFileID = criteria.fileId;
@@ -111,7 +109,6 @@ std::string RelationalDB::queueArchive(const std::string& instanceName,
   aFile.fileSize = request.fileSize;
   aFile.storageClass = request.storageClass;
   aReq.setArchiveFile(std::move(aFile));
-  params.add("timeAfileCreation", timeAfileCreation.secs());
 
   utils::Timer timeSetters;
   aReq.setMountPolicy(criteria.mountPolicy);
@@ -376,9 +373,11 @@ RelationalDB::queueRetrieve(cta::common::dataStructures::RetrieveRequest& rqst,
     logContext.log(cta::log::INFO, "In schedulerdb::RelationalDB::queueRetrieve(): before sqlconn selection. ");
 
     auto sqlconn = m_connPoolInsertOnly.getConn();
-    sqlconn.voidDBCommit();
-    /// it make a query for every single file to the scheduler db summary stats for existing queues ? no way ... very inefficient
-    // to-do option: query in batches and insert VIDs available in the info about the archive file from the catalogue and decide on the best during the getNextJobBatch phase !
+    /* The current selectBestVid4Retrieve implementation makes
+     * a query for every single file to the scheduler db summary stats
+     * for existing queues, this is very inefficient !
+     * to-do options: a) cache, b) query in batches and insert VIDs available in the info
+     * about the archive file from the catalogue and decide on the best during the getNextJobBatch phase ! */
     ret.selectedVid = cta::schedulerdb::Helpers::selectBestVid4Retrieve(candidateVids, m_catalogue, sqlconn, false);
     logContext.log(cta::log::INFO, "In schedulerdb::RelationalDB::queueRetrieve(): after selectBestVid4Retrieve. ");
 
@@ -411,28 +410,28 @@ RelationalDB::queueRetrieve(cta::common::dataStructures::RetrieveRequest& rqst,
     //  rReq.setCreationTime(rqst.creationLog.time); // ? no reason for this method to exist ?
 
     /* FROM OLD getNextJobBatch RETRIEVE method
-        schedulerdb::RetrieveRequest rr(logContext, j);
-        auto rj = std::make_unique<schedulerdb::RetrieveJob>( j.jobId );
-        rj->archiveFile = rr.m_archiveFile;
-        rj->diskSystemName = rr.m_diskSystemName;
-        rj->retrieveRequest = rr.m_schedRetrieveReq;
-        rj->selectedCopyNb = rr.m_actCopyNb;
-        rj->isRepack = rr.m_repackInfo.isRepack;
-        rj->m_repackInfo = rr.m_repackInfo;
-        //   rj->m_jobOwned = true;
-        rj->m_mountId = mountInfo.mountId;
-        END OF OLD getNextJobBatch */
-    //
-    //if (jl.empty()) {
-    //  throw schedulerdb::RetrieveRequestHasNoCopies("no tape file for requested vid. archiveId="
-    //                                                << criteria.archiveFile.archiveFileID );
-    //}
-    //{
-    //  std::stringstream err;
-    //  err << "In RelationalDB::queueRetrieve(): no job for requested copyNb. archiveId=" << criteria.archiveFile.archiveFileID
-    //      << " vid=" << ret.selectedVid << " copyNb=" << bestCopyNb;
-    //  throw RetrieveRequestHasNoCopies(err.str());
-    //}
+     *  schedulerdb::RetrieveRequest rr(logContext, j);
+     *  auto rj = std::make_unique<schedulerdb::RetrieveJob>( j.jobId );
+     *  rj->archiveFile = rr.m_archiveFile;
+     *  rj->diskSystemName = rr.m_diskSystemName;
+     *  rj->retrieveRequest = rr.m_schedRetrieveReq;
+     *  rj->selectedCopyNb = rr.m_actCopyNb;
+     *  rj->isRepack = rr.m_repackInfo.isRepack;
+     *  rj->m_repackInfo = rr.m_repackInfo;
+     *  //   rj->m_jobOwned = true;
+     *  rj->m_mountId = mountInfo.mountId;
+     * END OF OLD getNextJobBatch
+     *
+     * We need to add this case below when there are no copies:
+     * if (jl.empty()) {
+     * throw schedulerdb::RetrieveRequestHasNoCopies("no tape file for requested vid. archiveId="
+     *  << criteria.archiveFile.archiveFileID );
+     *  std::stringstream err;
+     *  err << "In RelationalDB::queueRetrieve(): no job for requested copyNb. archiveId=" << criteria.archiveFile.archiveFileID
+     *      << " vid=" << ret.selectedVid << " copyNb=" << bestCopyNb;
+     *   throw RetrieveRequestHasNoCopies(err.str());
+     *   }
+     */
     rreqMutex.release();
     rReq.insert();
     //sqlconn.reset();
@@ -861,19 +860,20 @@ void RelationalDB::fetchMountInfo(SchedulerDatabase::TapeMountDecisionInfo& tmdi
     m.vo = "";                     // The vo is not known here, and will be determined by the caller.
     m.capacityInBytes = 0;         // The capacity is not known here, and will be determined by the caller.
     m.labelFormat = std::nullopt;  // The labelFormat is not known here, and may be determined by the caller.
-    // not sure what mountPolicyNames is for ???
-    // are we mounting with multiple mount policies in the game ?
-    // m.mountPolicyNames = queueMountPolicyNames;
-    // sleepInfo - TO BE REVIEWED BEFORE IMPLEMENTING !
-    // We will display the sleep flag only if it is not expired (15 minutes timeout, hardcoded).
-    // This allows having a single decision point instead of implementing is at the consumer levels.
-    // if (rqSummary.sleepInfo && (::time(nullptr) < (rqSummary.sleepInfo.value().sleepStartTime +
-    //                                                (int64_t) rqSummary.sleepInfo.value().sleepTime))) {
-    //   m.sleepingMount = true;
-    //   m.sleepStartTime = rqSummary.sleepInfo.value().sleepStartTime;
-    //   m.diskSystemSleptFor = rqSummary.sleepInfo.value().diskSystemSleptFor;
-    //   m.sleepTime = rqSummary.sleepInfo.value().sleepTime;
-    // }
+    /* not sure what mountPolicyNames is for ???
+    * are we mounting with multiple mount policies in the game ?
+    * m.mountPolicyNames = queueMountPolicyNames;
+    * sleepInfo - TO BE REVIEWED BEFORE IMPLEMENTING !
+    * We will display the sleep flag only if it is not expired (15 minutes timeout, hardcoded).
+    * This allows having a single decision point instead of implementing is at the consumer levels.
+    * if (rqSummary.sleepInfo && (::time(nullptr) < (rqSummary.sleepInfo.value().sleepStartTime +
+    *                                                (int64_t) rqSummary.sleepInfo.value().sleepTime))) {
+    *   m.sleepingMount = true;
+    *   m.sleepStartTime = rqSummary.sleepInfo.value().sleepStartTime;
+    *   m.diskSystemSleptFor = rqSummary.sleepInfo.value().diskSystemSleptFor;
+    *   m.sleepTime = rqSummary.sleepInfo.value().sleepTime;
+    * }
+    */
   }
 
   timings.insertAndReset("getScheduledRetrieveJobSummariesTime", t);
