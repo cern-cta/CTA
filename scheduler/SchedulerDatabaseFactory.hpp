@@ -126,8 +126,8 @@ public:
     m_SchedDB->requeueRetrieveRequestJobs(jobs, lc);
   }
 
-  void reserveRetrieveQueueForCleanup(const std::string& vid, std::optional<uint64_t> cleanupHeartBeatValue) override {
-    m_SchedDB->reserveRetrieveQueueForCleanup(vid, cleanupHeartBeatValue);
+  std::string reserveRetrieveQueueForCleanup(const std::string& vid, std::optional<uint64_t> cleanupHeartBeatValue) override {
+    return m_SchedDB->reserveRetrieveQueueForCleanup(vid, cleanupHeartBeatValue);
   }
 
   void tickRetrieveQueueCleanupHeartbeat(const std::string& vid) override {

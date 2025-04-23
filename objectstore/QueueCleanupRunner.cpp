@@ -123,7 +123,7 @@ void QueueCleanupRunner::runOnePass(log::LogContext &logContext) {
 
       log::ScopedParamContainer(logContext)
         .add("reservedQueue", queueName)
-        .log(log::INFO, "In QueueleanupRunner::runOnePass(): reserved queue.")
+        .log(log::INFO, "In QueueleanupRunner::runOnePass(): reserved queue.");
 
     } catch (OStoreDB::RetrieveQueueNotFound & ex) {
       log::ScopedParamContainer paramsExcMsg(logContext);

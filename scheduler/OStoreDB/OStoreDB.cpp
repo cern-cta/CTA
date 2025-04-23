@@ -3312,8 +3312,8 @@ uint64_t OStoreDB::RepackRequest::addSubrequestsAndUpdateStats(
                 Helpers::selectBestRetrieveQueue({repackInfo.vid},
                                                  m_oStoreDB.m_catalogue,
                                                  m_oStoreDB.m_objectStore,
-                                                 true,
-                                                 lc);
+                                                 lc,
+                                                 true);
                 bestVid = repackInfo.vid;
                 activeCopyNumber = tc.copyNb;
               } catch (Helpers::NoTapeAvailableForRetrieve&) {}
@@ -5584,7 +5584,7 @@ void OStoreDB::RetrieveJob::failTransfer(const std::string& failureReason, log::
 
       // Check that the requested retrieve job (for the provided VID) exists, and record the copy number
       std::string bestVid =
-        Helpers::selectBestRetrieveQueue(candidateVids, m_oStoreDB.m_catalogue, m_oStoreDB.m_objectStore,lc);
+        Helpers::selectBestRetrieveQueue(candidateVids, m_oStoreDB.m_catalogue, m_oStoreDB.m_objectStore, lc);
 
       auto tf_it = af.tapeFiles.begin();
       for (; tf_it != af.tapeFiles.end() && tf_it->vid != bestVid; ++tf_it)
@@ -5658,7 +5658,7 @@ void OStoreDB::RetrieveJob::failTransfer(const std::string& failureReason, log::
 
       // Check that the requested retrieve job (for the provided VID) exists, and record the copy number
       std::string bestVid =
-        Helpers::selectBestRetrieveQueue(candidateVids, m_oStoreDB.m_catalogue, m_oStoreDB.m_objectStore, isRepack, lc);
+        Helpers::selectBestRetrieveQueue(candidateVids, m_oStoreDB.m_catalogue, m_oStoreDB.m_objectStore, lc, isRepack);
 
       auto tf_it = af.tapeFiles.begin();
       for (; tf_it != af.tapeFiles.end() && tf_it->vid != bestVid; ++tf_it)

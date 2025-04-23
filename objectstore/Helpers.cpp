@@ -369,7 +369,7 @@ void Helpers::getLockedAndFetchedRepackQueue(RepackQueue& queue, ScopedExclusive
 // Helpers::selectBestRetrieveQueue()
 //------------------------------------------------------------------------------
 std::string Helpers::selectBestRetrieveQueue(const std::set<std::string, std::less<>>& candidateVids,
-  cta::catalogue::Catalogue & catalogue, objectstore::Backend & objectstore, bool isRepack, log::LogContext& lc) {
+  cta::catalogue::Catalogue & catalogue, objectstore::Backend & objectstore,  log::LogContext& lc, bool isRepack) {
   // We will build the retrieve stats of the non-disabled, non-broken/exported candidate vids here
   std::list<SchedulerDatabase::RetrieveQueueStatistics> candidateVidsStats;
   // We will build the retrieve stats of the disabled vids here, as a fallback
@@ -485,7 +485,7 @@ std::string Helpers::selectBestRetrieveQueue(const std::set<std::string, std::le
       g_retrieveQueueStatistics[v].stats = queuesStats.front();
       g_retrieveQueueStatistics[v].tapeStatus = tapeStatus;
       g_retrieveQueueStatistics[v].updateTime = time(nullptr);
-      logUpdateCacheIfNeeded(true,g_retrieveQueueStatistics[v]);
+      logUpdateCacheIfNeeded(true,g_retrieveQueueStatistics[v], "", lc);
       // Signal to potential waiters
       updatePromise.set_value();
       // Update our own candidate list if needed.
@@ -527,7 +527,7 @@ std::string Helpers::selectBestRetrieveQueue(const std::set<std::string, std::le
 //------------------------------------------------------------------------------
 // Helpers::updateRetrieveQueueStatisticsCache()
 //------------------------------------------------------------------------------
-void Helpers::updateRetrieveQueueStatisticsCache(const std::string& vid, uint64_t files, uint64_t bytes, uint64_t priority) {
+void Helpers::updateRetrieveQueueStatisticsCache(const std::string& vid, uint64_t files, uint64_t bytes, uint64_t priority, log::LogContext& lc) {
   // We will not update the status of the tape if we already cached it (caller did not check),
   // We will also not update the update time, to force an update after a while.
   // If we update the entry while another thread is updating it, this is harmless (cache users will
@@ -537,7 +537,7 @@ void Helpers::updateRetrieveQueueStatisticsCache(const std::string& vid, uint64_
     g_retrieveQueueStatistics.at(vid).stats.filesQueued=files;
     g_retrieveQueueStatistics.at(vid).stats.bytesQueued=bytes;
     g_retrieveQueueStatistics.at(vid).stats.currentPriority = priority;
-    logUpdateCacheIfNeeded(false,g_retrieveQueueStatistics.at(vid));
+    logUpdateCacheIfNeeded(false,g_retrieveQueueStatistics.at(vid), "", lc);
   } catch (std::out_of_range &) {
     // The entry is missing. We just create it.
     g_retrieveQueueStatistics[vid].stats.filesQueued=files;
@@ -553,7 +553,7 @@ void Helpers::updateRetrieveQueueStatisticsCache(const std::string& vid, uint64_
       g_retrieveQueueStatistics[vid].tapeStatus.state = common::dataStructures::Tape::ACTIVE;
       g_retrieveQueueStatistics[vid].tapeStatus.full = false;
     }
-    logUpdateCacheIfNeeded(true,g_retrieveQueueStatistics[vid]);
+    logUpdateCacheIfNeeded(true,g_retrieveQueueStatistics[vid], "", lc);
   }
 }
 
@@ -687,8 +687,8 @@ void Helpers::removeRepackRequestToIndex(const std::string& vid, Backend& backen
 
 void Helpers::logUpdateCacheIfNeeded(const bool entryCreation, const RetrieveQueueStatisticsWithTime& tapeStatistic,
   const std::string& message, log::LogContext& lc) {
-    log::ScopedParamsContainer cacheParams(lc);
-    cacheParams.add("vid", tapeStatistics.tapeStatus.vid)
+    log::ScopedParamContainer cacheParams(lc);
+    cacheParams.add("vid", tapeStatistic.tapeStatus.vid)
       .add("entryCreation", entryCreation)
       .add("state", common::dataStructures::Tape::stateToString(tapeStatistic.tapeStatus.state))
       .add("filesQueued", tapeStatistic.stats.filesQueued);

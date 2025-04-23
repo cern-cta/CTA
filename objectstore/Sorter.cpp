@@ -257,7 +257,7 @@ void Sorter::insertRetrieveRequest(RetrieveRequestInfosAccessorInterface& access
 
     std::string bestVid;
     try {
-      bestVid = Helpers::selectBestRetrieveQueue(candidateVidsToTransfer, m_catalogue, m_objectstore, isRepack, lc);
+      bestVid = Helpers::selectBestRetrieveQueue(candidateVidsToTransfer, m_catalogue, m_objectstore, lc, isRepack);
     } catch(Helpers::NoTapeAvailableForRetrieve&) {
       std::stringstream err;
       err << "In Sorter::insertRetrieveRequest(): no vid available. archiveId=" << accessor.getArchiveFile().archiveFileID;

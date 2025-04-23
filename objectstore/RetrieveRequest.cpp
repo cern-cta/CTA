@@ -159,7 +159,7 @@ void RetrieveRequest::garbageCollectRetrieveRequest(const std::string& presumedO
   // filter on tape availability.
   try {
     // If we have to fetch the status of the tapes and queued for the non-disabled vids.
-    bestVid=Helpers::selectBestRetrieveQueue(candidateVids, catalogue, m_objectStore, m_payload.repack_info().has_repack_request_address(), lc);
+    bestVid=Helpers::selectBestRetrieveQueue(candidateVids, catalogue, m_objectStore, lc, m_payload.repack_info().has_repack_request_address());
     goto queueForTransfer;
   } catch (Helpers::NoTapeAvailableForRetrieve&) {}
 queueForFailure:;
@@ -285,7 +285,7 @@ queueForTransfer:;
     m_payload.set_activecopynb(bestJob->copynb());
     setOwner(rq.getAddressIfSet());
     commit();
-    Helpers::updateRetrieveQueueStatisticsCache(bestVid, jobsSummary.jobs, jobsSummary.bytes, jobsSummary.priority);
+    Helpers::updateRetrieveQueueStatisticsCache(bestVid, jobsSummary.jobs, jobsSummary.bytes, jobsSummary.priority, lc);
     rql.release();
     auto commitUnlockQueueTime = t.secs(utils::Timer::resetCounter);
     {

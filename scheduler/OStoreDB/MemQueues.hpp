@@ -196,7 +196,7 @@ private:
     objectstore::AgentReference & agentReference, log::LogContext & logContext);
 
   /** Helper function updating the cached retrieve queue stats. Noop for archive queues */
-  static void specializedUpdateCachedQueueStats(Queue &queue);
+  static void specializedUpdateCachedQueueStats(Queue &queue, log::LogContext& logContext);
 };
 
 template <class Request, class Queue>
@@ -324,7 +324,7 @@ std::shared_ptr<SharedQueueLock<Queue, Request>> MemQueue<Request, Queue>::share
     specializedAddJobsToQueueAndCommit(jta, queue, *oStoreDB.m_agentReference, logContext);
     double queueProcessAndCommitTime = timer.secs(utils::Timer::resetCounter);
     // Update the cache stats in memory as we hold the queue.
-    specializedUpdateCachedQueueStats(queue);
+    specializedUpdateCachedQueueStats(queue, logContext);
     double cacheUpdateTime = timer.secs(utils::Timer::resetCounter);
     // Log
     auto summaryAfter=queue.getJobsSummary();
