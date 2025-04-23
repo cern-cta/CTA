@@ -145,6 +145,10 @@ unit-test-oracle:
   resource_group: oracle-centralized-db-cta-dev04
 
 test-cta-release:
+  # We could solve this by putting the XRootD testing repo in the public repos, but I would rather not
+  # It's good to have an indicator that we cannot do a release yet, so for now we will just allow failure
+  # Until we get a stable XRootD version again
+  allow_failure: true
   stage: test
   needs:
     - job: build-cta-rpm
