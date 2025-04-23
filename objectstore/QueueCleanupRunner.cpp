@@ -65,6 +65,7 @@ void QueueCleanupRunner::runOnePass(log::LogContext &logContext) {
     queueVidSet.insert(queue.vid);
   }
 
+
   common::dataStructures::VidToTapeMap vidToTapesMap;
 
   if (!queueVidSet.empty()){
@@ -111,12 +112,19 @@ void QueueCleanupRunner::runOnePass(log::LogContext &logContext) {
     log::ScopedParamContainer loopParams(logContext);
     loopParams.add("tapeVid", queueVid)
               .add("tapeState", common::dataStructures::Tape::stateToString(tapeData.state));
-
+    logContext.log(log::INFO,
+                   "In QueueCleanupRunner::runOnePass(): Will try to reserve retrieve queue.");
     try {
       bool prevHeartbeatExists = (m_heartbeatCheck.find(queueVid) != m_heartbeatCheck.end());
-      m_db.reserveRetrieveQueueForCleanup(
+      // Why don't we just lock the queue?
+      const std::string queueName = m_db.reserveRetrieveQueueForCleanup(
               queueVid,
               prevHeartbeatExists ? std::optional(m_heartbeatCheck[queueVid].heartbeat) : std::nullopt);
+
+      log::ScopedParamContainer(logContext)
+        .add("reservedQueue", queueName)
+        .log(log::INFO, "In QueueleanupRunner::runOnePass(): reserved queue.")
+
     } catch (OStoreDB::RetrieveQueueNotFound & ex) {
       log::ScopedParamContainer paramsExcMsg(logContext);
       paramsExcMsg.add("exceptionMessage", ex.getMessageValue());
@@ -143,6 +151,8 @@ void QueueCleanupRunner::runOnePass(log::LogContext &logContext) {
       utils::Timer tLoop;
       log::ScopedParamContainer paramsLoopMsg(logContext);
 
+      // We can see what queue we are getting the jobs from in the 'Algorithms::popNextBatch()'
+      // message
       auto dbRet = m_db.getNextRetrieveJobsToTransferBatch(queueVid, m_batchSize, logContext);
       if (dbRet.empty()) break;
       std::list<cta::SchedulerDatabase::RetrieveJob *> jobPtList;

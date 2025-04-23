@@ -34,10 +34,6 @@
 #include "scheduler/OStoreDB/OStoreDB.hpp"
 #include "scheduler/SchedulerDatabase.hpp"
 
-// Activate or not helper cache update for debugging
-// #define HELPERS_CACHE_UPDATE_LOGGING
-#define HELPERS_CACHE_UPDATE_LOGGING_FILE "/var/tmp/cta-helpers-update-cache.log"
-
 /**
  * A collection of helper functions for commonly used multi-object operations
  */
@@ -92,7 +88,7 @@ class Helpers {
    * to the algorithm, but will help performance drastically for a very similar result
    */
   static std::string selectBestRetrieveQueue(const std::set<std::string, std::less<>> & candidateVids,
-    cta::catalogue::Catalogue & catalogue, objectstore::Backend & objectstore, bool isRepack = false);
+    cta::catalogue::Catalogue & catalogue, objectstore::Backend & objectstore, bool isRepack = false, log::LogContext &lc);
 
   /**
    * Gets the retrieve queue statistics for a set of Vids (extracted from the OStoreDB

@@ -1541,7 +1541,7 @@ OStoreDB::queueRetrieve(cta::common::dataStructures::RetrieveRequest& rqst,
     candidateVids.insert(tf.vid);
   }
   SchedulerDatabase::RetrieveRequestInfo ret;
-  ret.selectedVid = Helpers::selectBestRetrieveQueue(candidateVids, m_catalogue, m_objectStore);
+  ret.selectedVid = Helpers::selectBestRetrieveQueue(candidateVids, m_catalogue, m_objectStore, logContext);
   // Check that the requested retrieve job (for the provided vid) exists, and record the copynb.
   uint64_t bestCopyNb;
   for (auto& tf : criteria.archiveFile.tapeFiles) {
@@ -2185,7 +2185,7 @@ void OStoreDB::requeueRetrieveRequestJobs(std::list<cta::SchedulerDatabase::Retr
 //------------------------------------------------------------------------------
 // OStoreDB::reserveRetrieveQueueForCleanup()
 //------------------------------------------------------------------------------
-void OStoreDB::reserveRetrieveQueueForCleanup(const std::string& vid, std::optional<uint64_t> cleanupHeartBeatValue) {
+std::string OStoreDB::reserveRetrieveQueueForCleanup(const std::string& vid, std::optional<uint64_t> cleanupHeartBeatValue) {
   RootEntry re(m_objectStore);
   RetrieveQueue rq(m_objectStore);
   ScopedExclusiveLock rql;
@@ -2220,6 +2220,8 @@ void OStoreDB::reserveRetrieveQueueForCleanup(const std::string& vid, std::optio
   rq.setQueueCleanupAssignedAgent(m_agentReference->getAgentAddress());
   rq.tickQueueCleanupHeartbeat();
   rq.commit();
+
+  return rq.getAddressIfSet();
 }
 
 //------------------------------------------------------------------------------
@@ -3310,7 +3312,8 @@ uint64_t OStoreDB::RepackRequest::addSubrequestsAndUpdateStats(
                 Helpers::selectBestRetrieveQueue({repackInfo.vid},
                                                  m_oStoreDB.m_catalogue,
                                                  m_oStoreDB.m_objectStore,
-                                                 true);
+                                                 true,
+                                                 lc);
                 bestVid = repackInfo.vid;
                 activeCopyNumber = tc.copyNb;
               } catch (Helpers::NoTapeAvailableForRetrieve&) {}
@@ -5581,7 +5584,7 @@ void OStoreDB::RetrieveJob::failTransfer(const std::string& failureReason, log::
 
       // Check that the requested retrieve job (for the provided VID) exists, and record the copy number
       std::string bestVid =
-        Helpers::selectBestRetrieveQueue(candidateVids, m_oStoreDB.m_catalogue, m_oStoreDB.m_objectStore);
+        Helpers::selectBestRetrieveQueue(candidateVids, m_oStoreDB.m_catalogue, m_oStoreDB.m_objectStore,lc);
 
       auto tf_it = af.tapeFiles.begin();
       for (; tf_it != af.tapeFiles.end() && tf_it->vid != bestVid; ++tf_it)
@@ -5655,7 +5658,7 @@ void OStoreDB::RetrieveJob::failTransfer(const std::string& failureReason, log::
 
       // Check that the requested retrieve job (for the provided VID) exists, and record the copy number
       std::string bestVid =
-        Helpers::selectBestRetrieveQueue(candidateVids, m_oStoreDB.m_catalogue, m_oStoreDB.m_objectStore, isRepack);
+        Helpers::selectBestRetrieveQueue(candidateVids, m_oStoreDB.m_catalogue, m_oStoreDB.m_objectStore, isRepack, lc);
 
       auto tf_it = af.tapeFiles.begin();
       for (; tf_it != af.tapeFiles.end() && tf_it->vid != bestVid; ++tf_it)

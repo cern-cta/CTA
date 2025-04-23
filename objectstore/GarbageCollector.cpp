@@ -384,8 +384,8 @@ void GarbageCollector::OwnedObjectSorter::sortFetchedObjects(Agent& agent, std::
         // Back to the transfer case.
         std::string vid;
         try {
-          vid=Helpers::selectBestRetrieveQueue(candidateVids, catalogue, objectStore, isRepack);
-        } catch (Helpers::NoTapeAvailableForRetrieve & ex) {
+          vid=objectstore::Helpers::selectBestRetrieveQueue(candidateVids, catalogue, objectStore, isRepack, lc);
+        } catch (objectstore::Helpers::NoTapeAvailableForRetrieve & ex) {
           log::ScopedParamContainer params3(lc);
           params3.add("fileId", rr->getArchiveFile().archiveFileID);
           lc.log(log::INFO, "In GarbageCollector::OwnedObjectSorter::fetchOwnedObjects(): No available tape found. Marking request for normal GC (and probably deletion).");
