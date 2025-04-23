@@ -26,7 +26,6 @@
 #include <xrootd/XrdCl/XrdClFile.hh>
 #include <uuid/uuid.h>
 #include <algorithm>
-#include <iostream>
 
 namespace cta::disk {
 
@@ -39,7 +38,6 @@ DiskFileFactory::DiskFileFactory(uint16_t xrootTimeout, cta::disk::RadosStriperP
   m_striperPool(striperPool) {}
 
 ReadFile * DiskFileFactory::createReadFile(const std::string& path) {
-  std::cerr << "createReadFile: " << path << std::endl;
   std::vector<std::string> regexResult;
   // URL path parsing
   // local file URL?
@@ -70,7 +68,6 @@ ReadFile * DiskFileFactory::createReadFile(const std::string& path) {
 }
 
 WriteFile * DiskFileFactory::createWriteFile(const std::string& path) {
-  std::cerr << "createWriteFile: " << path << std::endl;
   std::vector<std::string> regexResult;
   // URL path parsing
   // local file URL?
@@ -173,7 +170,7 @@ XrootReadFile::XrootReadFile(const std::string &xrootUrl, uint16_t timeout):
   XrootBaseReadFile(timeout) {
   // Setup parent's variables
   m_readPosition = 0;
-
+  
   // and simply open
   using XrdCl::OpenFlags;
   XrootClEx::throwOnError(m_xrootFile.Open(xrootUrl, OpenFlags::Read, XrdCl::Access::None, m_timeout),
