@@ -78,7 +78,7 @@ spec:
         - name: TERM
           value: "xterm"
         {{- with $.Values.extraEnv }}
-        {{- include "common.extraEnv" $ | nindent 8 }}
+        {{- include "common.extraEnv" . | nindent 8 }}
         {{- end }}
         volumeMounts:
         - name: scripts-volume
@@ -125,7 +125,7 @@ spec:
         - name: XrdSecSSSKT
           value: /etc/cta/cta-taped.sss.keytab
         {{- with $.Values.extraEnv }}
-        {{- include "common.extraEnv" $ | nindent 8 }}
+        {{- include "common.extraEnv" . | nindent 8 }}
         {{- end }}
         volumeMounts:
         - name: scripts-volume
