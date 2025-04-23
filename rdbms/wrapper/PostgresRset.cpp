@@ -94,22 +94,20 @@ bool PostgresRset::isPGColumnNull(int ifield) const {
 
 std::string PostgresRset::columnBlob(const std::string& colName) const {
   std::optional<std::string> blob = columnOptionalString(colName);
+  if (!blob) return std::string();
 
-  if (blob) {
-    size_t blob_len;
-    unsigned char* blob_ptr = PQunescapeBytea(reinterpret_cast<const unsigned char*>(blob->c_str()), &blob_len);
+  size_t blob_len;
+  unsigned char* blob_ptr = PQunescapeBytea(reinterpret_cast<const unsigned char*>(blob->c_str()), &blob_len);
 
-    if (blob_ptr != nullptr) {
-      // using unique_ptr with custom deleter to automatically free memory
-      std::unique_ptr<unsigned char, decltype(&PQfreemem)> blob_ptr_guard(blob_ptr, &PQfreemem);
-      // using compiler RVO (move semantics) to avoid unnecessary copies
-      return std::string(reinterpret_cast<const char*>(blob_ptr_guard.get()), blob_len);
-    } else {
-      // having a non-nullopt while a valid value should never happen
-      throw NullDbValue(std::string("Failed to fetch a value for database column: ") + colName);
-    }
+  if (blob_ptr != nullptr) {
+    // using unique_ptr with custom deleter to automatically free memory
+    std::unique_ptr<unsigned char, decltype(&PQfreemem)> blob_ptr_guard(blob_ptr, &PQfreemem);
+    // using compiler RVO (move semantics) to avoid unnecessary copies
+    return std::string(reinterpret_cast<const char*>(blob_ptr_guard.get()), blob_len);
+  } else {
+    // having a non-nullopt while a valid value should never happen
+    throw NullDbValue(std::string("Failed to fetch a value for existing database column: ") + colName);
   }
-  return std::string();
 }
 
 bool PostgresRset::columnBoolNoOpt(const std::string& colName) const {
