@@ -27,7 +27,7 @@ TelemetryConfigBuilder& TelemetryConfigBuilder::resourceAttribute(std::string ke
   return *this;
 }
 
-TelemetryConfigBuilder& TelemetryConfigBuilder::metricsBackend(std::string backendType) {
+TelemetryConfigBuilder& TelemetryConfigBuilder::metricsBackend(const std::string& backendType) {
   m_config.metrics.backend = stringToMetricsBackend(backendType);
   return *this;
 }

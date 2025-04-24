@@ -25,7 +25,7 @@ class TelemetryConfigBuilder {
 public:
   TelemetryConfigBuilder& serviceName(std::string name);
   TelemetryConfigBuilder& resourceAttribute(std::string key, std::string value);
-  TelemetryConfigBuilder& metricsBackend(std::string backendType);
+  TelemetryConfigBuilder& metricsBackend(const std::string& backendType);
   TelemetryConfigBuilder& metricsExportInterval(std::chrono::milliseconds interval);
   TelemetryConfigBuilder& metricsExportTimeout(std::chrono::milliseconds timeout);
   TelemetryConfigBuilder& metricsOtlpEndpoint(std::string endpoint);
