@@ -125,8 +125,9 @@ set (COMMON_LIB_SRC_FILES
   remoteFS/RemoteFileStatus.cpp
   remoteFS/RemotePath.cpp
   remoteFS/RemotePathAndStatus.cpp
-  telemetry/metrics/MetricsConfig.cpp
-  telemetry/metrics/MetricsInit.cpp
+  telemetry/TelemetryInit.cpp
+  telemetry/config/TelemetryConfig.cpp
+  telemetry/metrics/MetricsProvider.cpp
   SourcedParameter.cpp
   threading/ChildProcess.cpp
   threading/CondVar.cpp
