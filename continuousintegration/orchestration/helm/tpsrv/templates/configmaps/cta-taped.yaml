@@ -33,9 +33,11 @@ data:
     general SchedulerBackendName {{ $schedulerConfig.backend }}
     taped externalFreeDiskSpaceScript {{ $.Values.conf.taped.externalFreeDiskSpaceScript }}
 
+    # Telemetry
     telemetry backend {{ $.Values.conf.telemetry.backend }}
     telemetry otlpEndpoint {{ $.Values.conf.telemetry.otlpEndpoint }}
-    telemetry exportInterval {{ $.Values.conf.telemetry.exportInterval }}
-    telemetry exportTimeout{{ $.Values.conf.telemetry.exportTimeout }}
+    # These are disabled for now as they have nice defaults
+    # telemetry exportInterval {{ $.Values.conf.telemetry.exportInterval }}
+    # telemetry exportTimeout{{ $.Values.conf.telemetry.exportTimeout }}
 ---
 {{- end }}

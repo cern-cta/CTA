@@ -29,6 +29,7 @@
 #include "common/exception/Errnum.hpp"
 #include "common/log/LogContext.hpp"
 #include "common/processCap/ProcessCap.hpp"
+#include "common/telemetry/TelemetryInit.hpp"
 #include "rdbms/Login.hpp"
 #include "tapeserver/castor/tape/tapeserver/daemon/CleanerSession.hpp"
 #include "tapeserver/castor/tape/tapeserver/daemon/DataTransferSession.hpp"
@@ -154,6 +155,7 @@ SubprocessHandler::ProcessingStatus DriveHandler::fork() {
     m_sessionState = SessionState::StartingUp;
     m_lastStateChangeTime = std::chrono::steady_clock::now();
     if (!m_pid) {
+      cta::telemetry::reinitTelemetry();
       // We are in the child process
       SubprocessHandler::ProcessingStatus ret;
       ret.forkState = SubprocessHandler::ForkState::child;

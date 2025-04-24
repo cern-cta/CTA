@@ -30,7 +30,7 @@ ProcessManager::ProcessManager(log::LogContext & log): m_logContext(log) {
 }
 
 ProcessManager::~ProcessManager() {
-  // First, make sure we delete all handlers. We cannot rely on the implicit 
+  // First, make sure we delete all handlers. We cannot rely on the implicit
   // destructor of m_subprocessHandlers. The handlers will unregister themselves
   // from epoll at that point.
   m_subprocessHandlers.clear();
@@ -79,7 +79,7 @@ int ProcessManager::run() {
     // Manage refresh logger requests
     auto refreshLoggerStatus = runRefreshLoggerManagement();
     if (refreshLoggerStatus.doExit) return refreshLoggerStatus.exitCode;
-    // All subprocesses requests have been handled. We can now switch to the 
+    // All subprocesses requests have been handled. We can now switch to the
     // event handling per se.
     runEventLoop();
   }
@@ -102,7 +102,7 @@ cta::log::LogContext&  ProcessManager::logContext() {
 ProcessManager::RunPartStatus ProcessManager::runShutdownManagement() {
   // Check the current statuses for shutdown requests
   // If any process requests a shutdown, we will trigger it in all.
-  bool anyAskedShutdown = std::count_if(m_subprocessHandlers.cbegin(), m_subprocessHandlers.cend(), 
+  bool anyAskedShutdown = std::count_if(m_subprocessHandlers.cbegin(), m_subprocessHandlers.cend(),
     [this](const SubprocessAndStatus &i) {
       if(i.status.shutdownRequested) {
           cta::log::ScopedParamContainer params(m_logContext);
@@ -135,7 +135,7 @@ ProcessManager::RunPartStatus ProcessManager::runShutdownManagement() {
 
 ProcessManager::RunPartStatus ProcessManager::runKillManagement() {
   // If any process asks for a kill, we kill all sub processes and exit
-  bool anyAskedKill = std::count_if(m_subprocessHandlers.cbegin(), m_subprocessHandlers.cend(), 
+  bool anyAskedKill = std::count_if(m_subprocessHandlers.cbegin(), m_subprocessHandlers.cend(),
     [this](const SubprocessAndStatus &i) {
       if(i.status.killRequested) {
         cta::log::ScopedParamContainer params(m_logContext);
@@ -145,8 +145,8 @@ ProcessManager::RunPartStatus ProcessManager::runKillManagement() {
       return i.status.killRequested;
     });
   if (anyAskedKill) {
-    for(auto & sp: m_subprocessHandlers) { 
-      sp.handler->kill(); 
+    for(auto & sp: m_subprocessHandlers) {
+      sp.handler->kill();
       cta::log::ScopedParamContainer params(m_logContext);
       params.add("SubprocessName", sp.handler->index);
       m_logContext.log(log::INFO, "Instructed handler to kill subprocess");
@@ -199,9 +199,9 @@ ProcessManager::RunPartStatus ProcessManager::runForkManagement() {
 }
 
 ProcessManager::RunPartStatus ProcessManager::runSigChildManagement() {
-  // If any process handler received sigChild, we signal it to all processes. Typically, this is 
+  // If any process handler received sigChild, we signal it to all processes. Typically, this is
   // done by the signal handler
-  bool sigChild = std::count_if(m_subprocessHandlers.cbegin(), m_subprocessHandlers.cend(), 
+  bool sigChild = std::count_if(m_subprocessHandlers.cbegin(), m_subprocessHandlers.cend(),
     [this](const SubprocessAndStatus &i){
       if(i.status.sigChild) {
         cta::log::ScopedParamContainer params(m_logContext);
@@ -251,11 +251,11 @@ void ProcessManager::runEventLoop() {
   // Compute the next timeout. Epoll expects milliseconds.
   std::chrono::time_point<std::chrono::steady_clock> nextTimeout = decltype(nextTimeout)::max();
   for (auto & sp: m_subprocessHandlers) {
-    // First, if the timeout is in the past, inform the handler (who will 
+    // First, if the timeout is in the past, inform the handler (who will
     // come with a new status)
     if (sp.status.nextTimeout < std::chrono::steady_clock::now()) {
       sp.status = sp.handler->processTimeout();
-      // If the handler requested kill, shutdown or fork, we can go back to handlers, 
+      // If the handler requested kill, shutdown or fork, we can go back to handlers,
       // which means we exit from the loop here.
       if (sp.status.forkRequested || sp.status.killRequested || sp.status.shutdownRequested || sp.status.refreshLoggerRequested || sp.status.sigChild) return;
       // If new timeout is still in the past, we overlook it (but log it)
@@ -272,7 +272,7 @@ void ProcessManager::runEventLoop() {
     nextTimeout = std::min(sp.status.nextTimeout, nextTimeout);
   }
   // We now compute the next timeout. epoll needs milliseconds
-  int64_t nextTimeoutMs = 
+  int64_t nextTimeoutMs =
       std::chrono::duration_cast<std::chrono::milliseconds>(
         nextTimeout - std::chrono::steady_clock::now()
       ).count();
@@ -289,12 +289,12 @@ void ProcessManager::runEventLoop() {
   int receivedEvents = ::epoll_wait(m_epollFd, ee, eventSlotCount, nextTimeoutMs);
   // epoll_wait can get interrupted by signal (like while debugging). This is should not be treated as an error.
   if (-1 == receivedEvents && EINTR == errno) receivedEvents = 0;
-  cta::exception::Errnum::throwOnMinusOne(receivedEvents, 
+  cta::exception::Errnum::throwOnMinusOne(receivedEvents,
       "In ProcessManager::runEventLoop(): failed to ::epoll_wait()");
   for (int i=0; i< receivedEvents; i++) {
-    // The subprocess handers registered themselves to epoll, so we have the 
+    // The subprocess handers registered themselves to epoll, so we have the
     // pointer to it.
-    SubprocessHandler::ProcessingStatus status = 
+    SubprocessHandler::ProcessingStatus status =
         ((SubprocessHandler*)ee[i].data.ptr)->processEvent();
     // Record the status with the right handler
     for(auto & sp: m_subprocessHandlers) {

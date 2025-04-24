@@ -20,7 +20,8 @@
 #include "common/log/StdoutLogger.hpp"
 #include "common/processCap/ProcessCap.hpp"
 #include "common/threading/System.hpp"
-#include "common/telemetry/metrics/MetricsInit.hpp"
+#include "common/telemetry/TelemetryInit.hpp"
+#include "common/telemetry/config/TelemetryConfig.hpp"
 #include "tapeserver/daemon/CommandLineParams.hpp"
 #include "tapeserver/daemon/common/TapedConfiguration.hpp"
 #include "tapeserver/daemon/TapeDaemon.hpp"
@@ -166,7 +167,7 @@ int main(const int argc, char **const argv) {
   // Initial parse of config file
   tape::daemon::common::TapedConfiguration globalConfig;
   try {
-  globalConfig =
+    globalConfig =
       tape::daemon::common::TapedConfiguration::createFromConfigPath(commandLine->configFileLocation, *logPtr);
   } catch (const exception::Exception &ex) {
     std::list<cta::log::Param> params = {
@@ -227,12 +228,14 @@ int main(const int argc, char **const argv) {
   // Instantiate telemetry
   try {
     // For now the service name for the metrics is just the drive name. This should eventually be updated
-    cta::telemetry::metrics::MetricsConfig metricsConfig(globalConfig.telemetryBackend.value(),
-                                                        globalConfig.driveName.value(),
-                                                        std::chrono::milliseconds(globalConfig.telemetryExportInterval.value()),
-                                                        std::chrono::milliseconds(globalConfig.telemetryExportTimeout.value()),
-                                                        globalConfig.telemetryOltpEndpoint.value());
-    cta::telemetry::metrics::initMetrics(metricsConfig);
+    cta::telemetry::TelemetryConfig telemetryConfig = cta::telemetry::TelemetryConfigBuilder()
+      .serviceName(globalConfig.driveName.value())
+      .metricsBackend(globalConfig.telemetryMetricsBackend.value())
+      .metricsExportInterval(std::chrono::milliseconds(globalConfig.telemetryMetricsExportInterval.value()))
+      .metricsExportTimeout(std::chrono::milliseconds(globalConfig.telemetryMetricsExportTimeout.value()))
+      .metricsOtlpEndpoint(globalConfig.telemetryMetricsOltpEndpoint.value())
+      .build();
+    cta::telemetry::initTelemetry(telemetryConfig);
   } catch(exception::Exception& ex) {
     std::cerr << "Failed to initialise OpenTelemetry: " << ex.getMessage().str() << std::endl;
     return EXIT_FAILURE;
