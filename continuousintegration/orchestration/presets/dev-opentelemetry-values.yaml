@@ -1,5 +1,6 @@
 image:
-  repository: otel/opentelemetry-collector-k8s
+  repository: ghcr.io/open-telemetry/opentelemetry-collector-releases/opentelemetry-collector-contrib
+  tag: 0.123.1
 
 mode: deployment
 
@@ -7,8 +8,8 @@ config:
   receivers:
     otlp:
       protocols:
-        grpc:
-        http:
+        grpc: {}
+        http: {}
 
   exporters:
     prometheus:

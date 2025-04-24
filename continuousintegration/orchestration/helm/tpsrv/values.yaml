@@ -11,6 +11,7 @@ conf:
     externalFreeDiskSpaceScript: "/usr/bin/cta-eosdf.sh"
   telemetry:
     backend: "NOOP"
+    otlpEndpoint: ""
 
 keytab:
   secretName: eos-sss-keytab

@@ -28,5 +28,5 @@ frontend:
 tpsrv:
   conf:
     telemetry:
-      backend: "OTLP"
-      otlpEndpoint: "cta-metrics-opentelemetry-collector:4318"
+      exportBackend: "OTLP"
+      exportOtlpEndpoint: "opentelemetry-opentelemetry-collector:4318"

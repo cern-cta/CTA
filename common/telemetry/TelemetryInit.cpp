@@ -1,4 +1,4 @@
-#include "MetricsInit.hpp"
+#include "TelemetryInit.hpp"
 
 #include <opentelemetry/exporters/otlp/otlp_http_metric_exporter_factory.h>
 #include <opentelemetry/exporters/otlp/otlp_http_metric_exporter_options.h>
@@ -14,33 +14,33 @@
 #include <opentelemetry/sdk/resource/semantic_conventions.h>
 #include <opentelemetry/sdk/common/attribute_utils.h>
 
-#include "MetricsConfig.hpp"
+#include "config/TelemetryConfigSingleton.hpp"
 
-namespace cta::telemetry::metrics {
+namespace cta::telemetry {
 
 namespace metric_sdk = opentelemetry::sdk::metrics;
 namespace metrics_api = opentelemetry::metrics;
 namespace otlp = opentelemetry::exporter::otlp;
 
-void initMetrics(const MetricsConfig& config) {
-  if (config.backend == MetricsBackend::NOOP) {
+void initMetrics(const TelemetryConfig& config) {
+  if (config.metrics.backend == MetricsBackend::NOOP) {
     metrics_api::Provider::SetMeterProvider(
-      opentelemetry::nostd::shared_ptr<metrics_api::MeterProvider>(new metrics_api::NoopMeterProvider()));
+      std::shared_ptr<metrics_api::MeterProvider>(new metrics_api::NoopMeterProvider()));
     return;
   }
 
   std::unique_ptr<metric_sdk::PushMetricExporter> exporter;
 
-  switch (config.backend) {
+  switch (config.metrics.backend) {
     case MetricsBackend::STDOUT:
       exporter = opentelemetry::exporter::metrics::OStreamMetricExporterFactory::Create();
       break;
 
     case MetricsBackend::OTLP: {
       otlp::OtlpHttpMetricExporterOptions opts;
-      opts.url = config.otlpEndpoint;
+      opts.url = config.metrics.otlpEndpoint;
 
-      for (const auto& kv : config.headers) {
+      for (const auto& kv : config.metrics.headers) {
         opts.http_headers.insert({kv.first, kv.second});
       }
 
@@ -49,10 +49,15 @@ void initMetrics(const MetricsConfig& config) {
     }
 
     default:
-      throw std::runtime_error("Unsupported metrics backend");
+      throw std::runtime_error("initMetrics: Unsupported metrics backend");
+  }
+  std::cerr << "exporter: " << (exporter == nullptr ? "null" : "ok") << "\n";
+  if (!exporter) {
+    throw std::runtime_error("initMetrics: failed to initialise exporter");
   }
 
-  metric_sdk::PeriodicExportingMetricReaderOptions readerOptions {config.exportInterval, config.exportTimeout};
+  metric_sdk::PeriodicExportingMetricReaderOptions readerOptions {config.metrics.exportInterval,
+                                                                  config.metrics.exportTimeout};
 
   auto reader = metric_sdk::PeriodicExportingMetricReaderFactory::Create(std::move(exporter), readerOptions);
   opentelemetry::sdk::common::AttributeMap attributes = {
@@ -65,9 +70,20 @@ void initMetrics(const MetricsConfig& config) {
   auto context = metric_sdk::MeterContextFactory::Create({}, resource);
   context->AddMetricReader(std::move(reader));
   auto providerFactory = metric_sdk::MeterProviderFactory::Create(std::move(context));
-
   std::shared_ptr<metrics_api::MeterProvider> provider(std::move(providerFactory));
+
   metrics_api::Provider::SetMeterProvider(provider);
 }
 
-}  // namespace cta::telemetry::metrics
+void initTelemetry(const TelemetryConfig& config) {
+  // Eventually we can init e.g. traces here as well
+  initMetrics(config);
+  // Ensure we can reuse the config when re-initialise the metrics after e.g. a fork
+  cta::telemetry::TelemetryConfigSingleton::initialize(config);
+}
+
+void reinitTelemetry() {
+  initTelemetry(cta::telemetry::TelemetryConfigSingleton::get());
+}
+
+}  // namespace cta::telemetry
