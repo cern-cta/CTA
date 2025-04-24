@@ -303,6 +303,18 @@ create_instance() {
 
   update_local_cta_chart_dependencies
 
+  if [ "$enable_telemetry" == "true" ] ; then
+    echo "Installing Telemetry and Prometheus charts..."
+    helm repo add open-telemetry https://open-telemetry.github.io/opentelemetry-helm-charts
+    helm repo add prometheus-community https://prometheus-community.github.io/helm-charts
+    helm install opentelemetry open-telemetry/opentelemetry-collector \
+          --namespace "${namespace}" \
+          --values presets/dev-opentelemetry-values.yaml
+    helm install prometheus prometheus-community/prometheus \
+          --namespace "${namespace}" \
+          --values presets/dev-prometheus-values.yaml
+  fi
+
   # Note that some of these charts are installed in parallel
   # See README.md for details on the order
   echo "Installing Authentication, Catalogue and Scheduler charts..."
@@ -374,19 +386,6 @@ create_instance() {
   if [ $dry_run == 1 ]; then
     exit 0
   fi
-
-
-  if [ "$enable_telemetry" == "true" ] ; then
-    helm repo add open-telemetry https://open-telemetry.github.io/opentelemetry-helm-charts
-    helm install cta-metrics open-telemetry/opentelemetry-collector \
-          --namespace "${namespace}" \
-          --values presets/dev-opentelemetry-values.yaml
-    helm repo add prometheus-community https://prometheus-community.github.io/helm-charts
-    helm install prometheus prometheus-community/prometheus \
-          --namespace "${namespace}" \
-          --values presets/dev-prometheus-values.yaml
-  fi
-
 }
 
 setup_system() {
