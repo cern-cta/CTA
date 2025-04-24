@@ -29,6 +29,7 @@
 #include "common/exception/Errnum.hpp"
 #include "common/log/LogContext.hpp"
 #include "common/processCap/ProcessCap.hpp"
+#include "common/telemetry/TelemetryInit.hpp"
 #include "rdbms/Login.hpp"
 #include "tapeserver/castor/tape/tapeserver/daemon/CleanerSession.hpp"
 #include "tapeserver/castor/tape/tapeserver/daemon/DataTransferSession.hpp"
@@ -154,6 +155,7 @@ SubprocessHandler::ProcessingStatus DriveHandler::fork() {
     m_sessionState = SessionState::StartingUp;
     m_lastStateChangeTime = std::chrono::steady_clock::now();
     if (!m_pid) {
+      cta::telemetry::reinitTelemetry();
       // We are in the child process
       SubprocessHandler::ProcessingStatus ret;
       ret.forkState = SubprocessHandler::ForkState::child;
@@ -423,7 +425,7 @@ SubprocessHandler::ProcessingStatus DriveHandler::processSigChild() {
   m_lc.log(log::DEBUG, "In DriveHandler::processSigChild(): calling waitpid()");
   int rc = ::waitpid(m_pid, &processStatus, WNOHANG);
   m_lc.log(log::DEBUG, "In DriveHandler::processSigChild(): waitpid() returned " + std::to_string(rc));
-  
+
   // Check there was no error.
   try {
     exception::Errnum::throwOnMinusOne(rc);
@@ -628,7 +630,7 @@ int DriveHandler::runChild() {
     sleep(1);
     return castor::tape::tapeserver::daemon::Session::MARK_DRIVE_AS_DOWN;
   }
-  
+
   // Before launching the transfer session, we validate that the scheduler is reachable.
   m_lc.log(log::DEBUG, "In DriveHandler::runChild(): will ping scheduler.");
   if (!schedulerPing(scheduler.get(), driveHandlerProxy.get())) {
@@ -676,7 +678,7 @@ int DriveHandler::runChild() {
     m_lc.log(log::DEBUG, "In DriveHandler::runChild(): will create cleaner session.");
     return executeCleanerSession(scheduler.get());
   }
-  
+
   // The next session will be a normal session (no crash with a mounted tape before).
   m_stateChangeTimeouts[session::SessionState::Checking] = std::chrono::duration_cast<Timeout>(
     std::chrono::minutes(m_tapedConfig.wdCheckMaxSecs.value()));
@@ -840,7 +842,7 @@ SubprocessHandler::ProcessingStatus DriveHandler::shutdown() {
   }
   // Putting the drive down
   setDriveDownForShutdown("Shutdown");
-  
+
   return exitShutdown();
 }
 
