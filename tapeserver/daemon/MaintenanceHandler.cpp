@@ -23,6 +23,7 @@
 #include "catalogue/CatalogueFactory.hpp"
 #include "catalogue/CatalogueFactoryFactory.hpp"
 #include "common/exception/Errnum.hpp"
+#include "common/telemetry/TelemetryInit.hpp"
 #include "rdbms/Login.hpp"
 #include "scheduler/DiskReportRunner.hpp"
 #include "scheduler/RepackRequestManager.hpp"
@@ -83,6 +84,7 @@ SubprocessHandler::ProcessingStatus MaintenanceHandler::fork() {
     m_pid=::fork();
     exception::Errnum::throwOnMinusOne(m_pid, "In MaintenanceHandler::fork(): failed to fork()");
     if (!m_pid) {
+      cta::telemetry::reinitTelemetry();
       // We are in the child process
       SubprocessHandler::ProcessingStatus ret;
       ret.forkState = SubprocessHandler::ForkState::child;
