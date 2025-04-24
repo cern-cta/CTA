@@ -285,17 +285,17 @@ struct TapedConfiguration {
   // Telemetry Options
   //----------------------------------------------------------------------------
 
-  cta::SourcedParameter<std::string> telemetryBackend{
-    "telemetry", "backend", "NOOP", "Compile time default"};
+  cta::SourcedParameter<std::string> telemetryMetricsBackend{
+    "telemetry", "metricsBackend", "NOOP", "Compile time default"};
 
-  cta::SourcedParameter<std::string> telemetryOltpEndpoint{
-    "telemetry", "otlpEndpoint", "localhost:4317", "Compile time default"};
+  cta::SourcedParameter<std::string> telemetryMetricsOltpEndpoint{
+    "telemetry", "metricsOtlpEndpoint", "", "Compile time default"};
 
-  cta::SourcedParameter<uint32_t> telemetryExportInterval{
-    "telemetry", "exportInterval", 1000, "Compile time default"};
+  cta::SourcedParameter<uint32_t> telemetryMetricsExportInterval{
+    "telemetry", "metricsExportInterval", 1000, "Compile time default"};
 
-  cta::SourcedParameter<uint32_t> telemetryExportTimeout{
-    "telemetry", "exportTimeout", 500, "Compile time default"};
+  cta::SourcedParameter<uint32_t> telemetryMetricsExportTimeout{
+    "telemetry", "metricsExportTimeout", 500, "Compile time default"};
 
 private:
   /** A private dummy logger which will simplify the implementation of the

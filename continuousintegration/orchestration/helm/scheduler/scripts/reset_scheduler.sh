@@ -29,7 +29,7 @@ echo "Using scheduler backend: $SCHEDULER_BACKEND"
 # Clean up scheduler
 if [ "$SCHEDULER_BACKEND" == "vfs" ] || [ "$SCHEDULER_BACKEND" == "vfsDeprecated" ]; then
   echo "Installing the cta-objectstore-tools"
-  dnf install -y cta-objectstore-tools
+  dnf install -y cta-objectstore-tools valgrind
   echo "Wiping objectstore"
   if [ "$SCHEDULER_BACKEND" == "vfsDeprecated" ]; then
     rm -fr $SCHEDULER_URL
