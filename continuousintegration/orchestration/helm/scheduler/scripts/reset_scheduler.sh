@@ -27,11 +27,11 @@ echo "Using scheduler backend: $SCHEDULER_BACKEND"
 # Clean up scheduler
 if [ "$SCHEDULER_BACKEND" == "VFS" ]; then
   echo "Installing the cta-objectstore-tools"
-  dnf install -y cta-objectstore-tools
+  dnf install -y cta-objectstore-tools valgrind
   echo "Wiping objectstore"
   rm -fr $SCHEDULER_URL
   mkdir -p $SCHEDULER_URL
-  cta-objectstore-initialize $SCHEDULER_URL || die "ERROR: Could not wipe the objectstore. cta-objectstore-initialize $SCHEDULER_URL FAILED"
+  valgrind cta-objectstore-initialize $SCHEDULER_URL || die "ERROR: Could not wipe the objectstore. cta-objectstore-initialize $SCHEDULER_URL FAILED"
   chmod -R 777 $SCHEDULER_URL
 elif [ "$SCHEDULER_BACKEND" == "postgres" ]; then
   echo "Installing the cta-scheduler-utils"

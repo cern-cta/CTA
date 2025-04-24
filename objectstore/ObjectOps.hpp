@@ -23,6 +23,10 @@
 #include "Backend.hpp"
 #include "objectstore/cta.pb.h"
 #include "common/log/LogContext.hpp"
+#include "common/Timer.hpp"
+#include "common/utils/utils.hpp"
+#include "common/telemetry/metrics/MetricsProvider.hpp"
+#include <opentelemetry/context/runtime_context.h>
 
 namespace cta {
 
@@ -338,8 +342,11 @@ protected:
 
 class ScopedSharedLock: public ScopedLock {
 public:
-  ScopedSharedLock() = default;
-  explicit ScopedSharedLock(ObjectOpsBase& oo) {
+  ScopedSharedLock()
+  : shortHostname(cta::utils::getShortHostname()),
+    lockCounter(cta::telemetry::metrics::getMeter("cta.objectstore")->CreateUInt64Counter("lock.acquire.count")),
+    lockAcquireDurationHistogram(cta::telemetry::metrics::getMeter("cta.objectstore")->CreateDoubleHistogram("lock.acquire.duration")) {}
+  explicit ScopedSharedLock(ObjectOpsBase& oo) : ScopedSharedLock() {
     lock(oo);
   }
 
@@ -352,24 +359,41 @@ public:
   }
 
   void lock(ObjectOpsBase & oo) {
-    checkNotLocked();
-    m_objectOps  = & oo;
-    checkObjectAndAddressSet();
-    m_lock.reset(m_objectOps->m_objectStore.lockShared(m_objectOps->getAddressIfSet()));
-    ScopedSharedLock::setObjectLocked(m_objectOps);
-    m_locked = true;
+    utils::Timer timer;
+    {
+      checkNotLocked();
+      m_objectOps  = & oo;
+      checkObjectAndAddressSet();
+      m_lock.reset(m_objectOps->m_objectStore.lockShared(m_objectOps->getAddressIfSet()));
+      ScopedSharedLock::setObjectLocked(m_objectOps);
+      m_locked = true;
+    }
+    const auto lockAcquireTime = timer.secs();
+    lockAcquireDurationHistogram->Record(lockAcquireTime, {{"hostname", shortHostname}, {"lock.type", "ScopedSharedLock"}},
+      opentelemetry::context::RuntimeContext::GetCurrent());
+    lockCounter->Add(1, {{"hostname", shortHostname}, {"lock.type", "ScopedSharedLock"}});
   }
 
   virtual ~ScopedSharedLock() {
     releaseIfNeeded();
   }
 
+private:
+  const std::string shortHostname;
+  std::unique_ptr<opentelemetry::metrics::Counter<uint64_t>> lockCounter;
+  std::unique_ptr<opentelemetry::metrics::Histogram<double>> lockAcquireDurationHistogram;
+
 };
 
 class ScopedExclusiveLock: public ScopedLock {
 public:
-  ScopedExclusiveLock() = default;
-  ScopedExclusiveLock(ObjectOpsBase & oo, uint64_t timeout_us = 0) {
+  // TODO: we need to figure out a nice way to manage the meter names
+  ScopedExclusiveLock()
+  : shortHostname(cta::utils::getShortHostname()),
+    lockCounter(cta::telemetry::metrics::getMeter("cta.objectstore")->CreateUInt64Counter("lock.acquire.count")),
+    lockAcquireDurationHistogram(cta::telemetry::metrics::getMeter("cta.objectstore")->CreateDoubleHistogram("lock.acquire.duration")) {}
+
+  ScopedExclusiveLock(ObjectOpsBase & oo, uint64_t timeout_us = 0) : ScopedExclusiveLock() {
     lock(oo, timeout_us);
   }
 
@@ -384,13 +408,20 @@ public:
   }
 
   void lock(ObjectOpsBase & oo, uint64_t timeout_us = 0) {
-    checkNotLocked();
-    m_objectOps = &oo;
-    checkObjectAndAddressSet();
-    m_lock.reset(m_objectOps->m_objectStore.lockExclusive(m_objectOps->getAddressIfSet(), timeout_us));
-    ScopedExclusiveLock::setObjectLocked(m_objectOps);
-    m_objectOps->m_exclusiveLock = this;
-    m_locked = true;
+    utils::Timer timer;
+    {
+      checkNotLocked();
+      m_objectOps = &oo;
+      checkObjectAndAddressSet();
+      m_lock.reset(m_objectOps->m_objectStore.lockExclusive(m_objectOps->getAddressIfSet(), timeout_us));
+      ScopedExclusiveLock::setObjectLocked(m_objectOps);
+      m_objectOps->m_exclusiveLock = this;
+      m_locked = true;
+    }
+    const auto lockAcquireTime = timer.secs();
+    lockAcquireDurationHistogram->Record(lockAcquireTime, {{"hostname", shortHostname}, {"lock.type", "ScopedExclusiveLock"}},
+      opentelemetry::context::RuntimeContext::GetCurrent());
+    lockCounter->Add(1, {{"hostname", shortHostname}, {"lock.type", "ScopedExclusiveLock"}});
   }
 
   /** Move the locked object reference to a new one. This is done when the locked
@@ -418,6 +449,10 @@ public:
     releaseIfNeeded();
   }
 
+private:
+    const std::string shortHostname;
+    std::unique_ptr<opentelemetry::metrics::Counter<uint64_t>> lockCounter;
+    std::unique_ptr<opentelemetry::metrics::Histogram<double>> lockAcquireDurationHistogram;
 };
 
 template <class PayloadType, serializers::ObjectType PayloadTypeId>
