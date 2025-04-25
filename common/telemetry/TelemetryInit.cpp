@@ -23,7 +23,6 @@ namespace metrics_api = opentelemetry::metrics;
 namespace otlp = opentelemetry::exporter::otlp;
 
 void initMetrics(const TelemetryConfig& config) {
-  // printTelemetryConfig(config, std::cerr);
   if (config.metrics.backend == MetricsBackend::NOOP) {
     metrics_api::Provider::SetMeterProvider(
       std::shared_ptr<metrics_api::MeterProvider>(new metrics_api::NoopMeterProvider()));
