@@ -63,8 +63,7 @@ usage() {
   echo "      --platform <platform>:            Which platform to build for. Defaults to the default platform in the project.json."
   echo "      --eos-enabled <true|false>:       Whether to spawn an EOS or not. Defaults to true."
   echo "      --dcache-enabled <true|false>:    Whether to spawn a dCache or not. Defaults to false."
-  echo "      --enable-telemetry:               Enables telemetry in the CI."
-  echo
+  echo "      --enable-telemetry:               Enables telemetry for the spawned instance."
   exit 1
 }
 
