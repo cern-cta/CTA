@@ -227,9 +227,10 @@ int main(const int argc, char **const argv) {
 
   // Instantiate telemetry
   try {
-    // For now the service name for the metrics is just the drive name. This should eventually be updated
+    (*logPtr)(log::INFO, "Instantiating telemetry", {{"metricsBackend", globalConfig.telemetryMetricsBackend.value()},
+                                                     {"otlpEndpoint", globalConfig.telemetryMetricsOltpEndpoint.value()}});
     cta::telemetry::TelemetryConfig telemetryConfig = cta::telemetry::TelemetryConfigBuilder()
-      .serviceName(globalConfig.driveName.value())
+      .serviceName("cta.taped")
       .metricsBackend(globalConfig.telemetryMetricsBackend.value())
       .metricsExportInterval(std::chrono::milliseconds(globalConfig.telemetryMetricsExportInterval.value()))
       .metricsExportTimeout(std::chrono::milliseconds(globalConfig.telemetryMetricsExportTimeout.value()))
@@ -237,7 +238,7 @@ int main(const int argc, char **const argv) {
       .build();
     cta::telemetry::initTelemetry(telemetryConfig);
   } catch(exception::Exception& ex) {
-    std::cerr << "Failed to initialise OpenTelemetry: " << ex.getMessage().str() << std::endl;
+    std::cerr << "Failed to instantiate OpenTelemetry: " << ex.getMessage().str() << std::endl;
     return EXIT_FAILURE;
   }
 

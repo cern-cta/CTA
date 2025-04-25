@@ -3,6 +3,7 @@
 #include <string>
 #include <chrono>
 #include <map>
+#include <iostream>
 
 namespace cta::telemetry {
 
@@ -20,6 +21,34 @@ typedef struct TelemetryConfig {
     std::map<std::string, std::string> headers;
   } metrics;
 } TelemetryConfig;
+
+inline void printTelemetryConfig(const TelemetryConfig& config, std::ostream& os = std::cout) {
+  os << "TelemetryConfig:\n";
+  os << "  serviceName: " << config.serviceName << "\n";
+
+  os << "  resourceAttributes:\n";
+  for (const auto& [key, value] : config.resourceAttributes) {
+    os << "    " << key << ": " << value << "\n";
+  }
+
+  os << "  metrics:\n";
+  os << "    backend: ";
+  switch (config.metrics.backend) {
+    case MetricsBackend::NOOP:   os << "NOOP"; break;
+    case MetricsBackend::STDOUT: os << "STDOUT"; break;
+    case MetricsBackend::OTLP:   os << "OTLP"; break;
+  }
+  os << "\n";
+
+  os << "    exportInterval: " << config.metrics.exportInterval.count() << "ms\n";
+  os << "    exportTimeout: " << config.metrics.exportTimeout.count() << "ms\n";
+  os << "    otlpEndpoint: " << config.metrics.otlpEndpoint << "\n";
+
+  os << "    headers:\n";
+  for (const auto& [key, value] : config.metrics.headers) {
+    os << "      " << key << ": " << value << "\n";
+  }
+}
 
 class TelemetryConfigBuilder {
 public:
