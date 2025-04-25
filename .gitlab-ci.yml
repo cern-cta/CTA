@@ -45,6 +45,14 @@ variables:
 
   # Tests
   BASH_LOGGING_ENABLED: 1
+
+  SKIP_UNIT_TESTS:
+    description: "Skips the CTA unit tests. Should only be disabled if there is a very good reason to do so."
+    value: "FALSE"
+    options:
+      - "TRUE"
+      - "FALSE"
+
   VALGRIND_DB_UNIT_TESTS:
     description: "Whether to run the DataBase unit tests with valgrind."
     value: "FALSE"

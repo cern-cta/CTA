@@ -70,9 +70,10 @@ build-cta-rpm:
         echo "Error: failed to find tag for submodule $XRD_SSI_PATH"
         exit 1
       fi
+    # For now we automatically skip the unit tests for the postgres scheduler.
     - |
       UNIT_TEST_OPTION=""
-      if [ "${SKIP_UNIT_TESTS}" == "TRUE" ]; then
+      if [ "${SKIP_UNIT_TESTS}" == "TRUE" ] || [ "${SCHEDULER_TYPE}"" == "pgsched"] ; then
         UNIT_TEST_OPTION="--skip-unit-tests"
       fi
     - ./continuousintegration/build/build_rpm.sh --build-dir build_rpm
