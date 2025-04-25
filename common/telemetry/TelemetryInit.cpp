@@ -15,6 +15,8 @@
 #include <opentelemetry/sdk/common/attribute_utils.h>
 
 #include "config/TelemetryConfigSingleton.hpp"
+#include "common/utils/utils.hpp"
+#include "version.h"
 
 namespace cta::telemetry {
 
@@ -43,7 +45,6 @@ void initMetrics(const TelemetryConfig& config) {
       for (const auto& kv : config.metrics.headers) {
         opts.http_headers.insert({kv.first, kv.second});
       }
-
       exporter = otlp::OtlpHttpMetricExporterFactory::Create(opts);
       break;
     }
@@ -60,14 +61,16 @@ void initMetrics(const TelemetryConfig& config) {
 
   auto reader = metric_sdk::PeriodicExportingMetricReaderFactory::Create(std::move(exporter), readerOptions);
   opentelemetry::sdk::common::AttributeMap attributes = {
-    {opentelemetry::sdk::resource::SemanticConventions::kServiceName, config.serviceName}
+    {opentelemetry::sdk::resource::SemanticConventions::kServiceName, config.serviceName},
+    {opentelemetry::sdk::resource::SemanticConventions::kServiceVersion, CTA_VERSION},
+    {opentelemetry::sdk::resource::SemanticConventions::kHostName, cta::utils::getShortHostname()}
   };
   for (const auto& kv : config.resourceAttributes) {
     attributes.SetAttribute(kv.first, kv.second);
   }
   auto resource = opentelemetry::sdk::resource::Resource::Create(attributes);
-  auto view_registry = std::make_unique<opentelemetry::sdk::metrics::ViewRegistry>();
-  auto context = metric_sdk::MeterContextFactory::Create(std::move(view_registry), resource);
+  auto viewRegistry = std::make_unique<opentelemetry::sdk::metrics::ViewRegistry>();
+  auto context = metric_sdk::MeterContextFactory::Create(std::move(viewRegistry), resource);
   context->AddMetricReader(std::move(reader));
   auto providerFactory = metric_sdk::MeterProviderFactory::Create(std::move(context));
   std::shared_ptr<metrics_api::MeterProvider> provider(std::move(providerFactory));
@@ -88,7 +91,7 @@ void reinitTelemetry() {
 
 void resetTelemetry() {
   metrics_api::Provider::SetMeterProvider(
-      std::shared_ptr<metrics_api::MeterProvider>(new metrics_api::NoopMeterProvider()));
+    std::shared_ptr<metrics_api::MeterProvider>(new metrics_api::NoopMeterProvider()));
 }
 
 }  // namespace cta::telemetry
