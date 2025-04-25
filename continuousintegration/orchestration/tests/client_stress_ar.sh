@@ -107,7 +107,7 @@ tapefile_ls()
 }
 
 
-while getopts "d:e:n:N:s:p:vS:rAPGt:m:" o; do
+while getopts "d:e:n:N:s:p:vS:rAPGt:m:Q" o; do
     case "${o}" in
         e)
             EOS_MGM_HOST=${OPTARG}
