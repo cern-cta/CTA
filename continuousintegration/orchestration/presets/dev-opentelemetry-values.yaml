@@ -8,11 +8,12 @@ config:
   receivers:
     otlp:
       protocols:
-        http: {}
+        http:
+          endpoint: 0.0.0.0:4318
 
-  # exporters:
-  #   prometheus:
-  #     endpoint: "0.0.0.0:8889"
+  exporters:
+    prometheus:
+      endpoint: ${env:MY_POD_IP}:8889
 
   service:
     pipelines:
@@ -22,9 +23,14 @@ config:
         processors:
         - batch
         exporters:
-        - debug
-        # - prometheus
+        - prometheus
 
     telemetry:
       logs:
         level: "debug"
+ports:
+  metrics:
+    enabled: true
+    containerPort: 8889
+    servicePort: 8889
+    protocol: TCP

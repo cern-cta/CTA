@@ -52,7 +52,7 @@ usage() {
   echo "      --eos-image-repository <repo>:  Docker image for EOS chart. Should be the full image name, e.g. \"gitlab-registry.cern.ch/dss/eos/eos-ci\"."
   echo "      --eos-config <file>:            Values file to use for the EOS chart. Defaults to presets/dev-eos-values.yaml."
   echo "      --cta-config <file>:            Values file to use for the CTA chart. Defaults to presets/dev-cta-xrd-values.yaml."
-  echo "      --enable-telemetry:             Spawns an OpenTelemetry and Collector and Prometheus scraper."
+  echo "      --enable-telemetry:             Spawns an OpenTelemetry and Collector and Prometheus scraper. Changes the default cta-config to presets/dev-cta-telemetry-values.yaml"
   exit 1
 }
 
@@ -315,6 +315,11 @@ create_instance() {
   wait $catalogue_pid || exit 1
   wait $scheduler_pid || exit 1
 
+  extra_cta_chart_flags=""
+  if [ "$enable_telemetry" == "true" ]; then
+    extra_cta_chart_flags+="--values presets/dev-cta-telemetry-values.yaml"
+  fi
+
   echo "Installing CTA chart..."
   log_run helm ${helm_command} cta helm/cta \
                                 --namespace "${namespace}" \
@@ -323,7 +328,8 @@ create_instance() {
                                 --set global.image.tag="${cta_image_tag}" \
                                 --set-file global.configuration.scheduler="${scheduler_config}" \
                                 --set-file tpsrv.tapeServers="${tapeservers_config}" \
-                                --wait --timeout 5m
+                                --wait --timeout 5m \
+                                ${extra_cta_chart_flags}
   # At this point EOS should also be ready
   wait $eos_pid || exit 1
   if [ $dry_run == 1 ]; then
