@@ -24,7 +24,7 @@ ARCHIVEONLY=0 # Only archive files or do the full test?
 DONOTARCHIVE=0 # files were already archived in a previous run NEED TARGETDIR
 TARGETDIR=''
 LOGDIR='/var/log'
-PGSCHED_TEST=0
+PREQUEUE=0
 SKIP_WAIT_FOR_ARCHIVE=0
 SKIP_ARCHIVE=0
 SKIP_GET_XATTRS=1
@@ -40,10 +40,6 @@ DRIVE_UP='.*'
 DRIVE_UP_SUBDIR_NUMBER=0 # 20
 SLEEP_BEFORE_SUBDIR_NUMBER=1000 # more then NB_DIRS means never
 SLEEP_TIME_AFTER_SUBDIR_NUMBER=0 #6300 # 1h45m sleep time
-if [[ $PGSCHED_TEST == 1 ]]; then
-  DRIVE_UP_SUBDIR_NUMBER=20
-  DRIVE_UP="VDSTK11"
-fi
 NB_PROCS=1
 NB_FILES=1
 NB_DIRS=1
@@ -111,7 +107,7 @@ tapefile_ls()
 }
 
 
-while getopts "d:e:n:N:s:p:vS:rAPGt:m:" o; do
+while getopts "d:e:n:N:s:p:vS:rAPGt:m:Q" o; do
     case "${o}" in
         e)
             EOS_MGM_HOST=${OPTARG}
@@ -149,6 +145,9 @@ while getopts "d:e:n:N:s:p:vS:rAPGt:m:" o; do
         G)
             TAPEAWAREGC=1
             ;;
+        Q)
+            PREQUEUE=1
+            ;;
         t)
             TARGETDIR=${OPTARG}
             ;;
@@ -164,6 +163,11 @@ shift $((OPTIND-1))
 
 if [ "x${COMMENT}" = "x" ]; then
     echo "No annotation will be pushed to Influxdb"
+fi
+
+if [[ $PREQUEUE == 1 ]]; then
+  DRIVE_UP_SUBDIR_NUMBER=20
+  DRIVE_UP="VDSTK11"
 fi
 
 if [[ $DONOTARCHIVE == 1 ]]; then

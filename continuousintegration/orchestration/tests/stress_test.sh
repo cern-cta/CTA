@@ -19,15 +19,22 @@
 # simple stress test: archive some files and then retrieve these
 
 usage() { cat <<EOF 1>&2
-Usage: $0 -n <namespace>
+Usage: $0 -n <namespace> [-Q]
+
+Use -Q to enable pre-queueing
 EOF
 exit 1
 }
 
-while getopts "n:" o; do
+PREQUEUE=0
+
+while getopts "n:Q" o; do
     case "${o}" in
         n)
             NAMESPACE=${OPTARG}
+            ;;
+        Q)
+            PREQUEUE=1
             ;;
         *)
             usage
@@ -94,7 +101,13 @@ echo " Archiving ${NB_FILES} files of ${FILE_SIZE_KB}kB each"
 echo " Archiving files: xrdcp as user1"
 echo " Retrieving them as poweruser1"
 kubectl -n ${NAMESPACE} cp client_stress_ar.sh ${CLIENT_POD}:/root/client_stress_ar.sh -c client
-kubectl -n ${NAMESPACE} exec ${CLIENT_POD} -c client -- bash /root/client_stress_ar.sh -N ${NB_DIRS} -n ${NB_FILES} -s ${FILE_SIZE_KB} -p ${NB_PROCS} -e ctaeos -d /eos/ctaeos/preprod || exit 1
+
+EXTRA_TEST_OPTIONS=""
+if [[ $PREQUEUE == 1 ]]; then
+  EXTRA_TEST_OPTIONS+=" -Q"
+fi
+
+kubectl -n ${NAMESPACE} exec ${CLIENT_POD} -c client -- bash /root/client_stress_ar.sh -N ${NB_DIRS} -n ${NB_FILES} -s ${FILE_SIZE_KB} -p ${NB_PROCS} -e ctaeos -d /eos/ctaeos/preprod ${EXTRA_TEST_OPTIONS} || exit 1
 ## Do not remove as listing af is not coming back???
 #kubectl -n ${NAMESPACE} exec client -- bash /root/client_stress_ar.sh -A -N ${NB_DIRS} -n ${NB_FILES} -s ${FILE_SIZE_KB} -p ${NB_PROCS} -e ctaeos -d /eos/ctaeos/preprod -v || exit 1
 

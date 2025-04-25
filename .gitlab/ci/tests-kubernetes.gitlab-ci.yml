@@ -3,13 +3,13 @@
 
 .setup-k8s-test-variables: &setup-k8s-test-variables
     - | # Which scheduler to use
-      if [ $SCHED_TYPE == "objectstore" ]; then
+      if [ $SCHEDULER_TYPE == "objectstore" ]; then
         SCHEDULER_CONFIG=/opt/kubernetes/CTA/scheduler/ci-ceph-values.yaml
       else
         SCHEDULER_CONFIG=presets/dev-scheduler-postgres-values.yaml
       fi
     - | # Which catalogue to use
-      if [ $ORACLE_SUPPORT == "ON" ]; then
+      if [ $ORACLE_SUPPORT == "TRUE" ]; then
         CATALOGUE_CONFIG=/opt/kubernetes/CTA/catalogue/ci-oracle-values.yaml
       else
         CATALOGUE_CONFIG=presets/dev-catalogue-postgres-values.yaml
@@ -62,6 +62,8 @@
       when: never
     - if: $PIPELINE_TYPE == "CTAGENERIC_IMAGE"
       when: never
+    - if: $SCHEDULER_TYPE == "pgsched"
+      when: manual
     - when: on_success
   variables:
     TEST_SCRIPT:
@@ -221,6 +223,8 @@ test-regression-dCache:
     - xlarge
 
 stress-test:
+  allow_failure: true
+  interruptible: false
   stage: system-test
   rules:
     - if: $CI_PIPELINE_SOURCE == "merge_request_event"
@@ -241,6 +245,7 @@ stress-test:
     - cd continuousintegration/orchestration/
     # We don't clean up old namespace so this will fail (deliberately) when another test is running there
     # This is because we check for the libraries in use before we start
+    - SCHEDULER_CONFIG=/opt/kubernetes/CTA/scheduler/stresstest-scheduler-postgres-values.yaml
     - ./run_systemtest.sh --namespace ${NAMESPACE}
                           --keep-namespace
                           --cta-image-tag ${IMAGE_TAG}
@@ -250,10 +255,20 @@ stress-test:
     # Set up monitoring
     - git clone https://gitlab+deploy-token-3624:${CI_CTA_DEPLOY_TOKEN_READONLY}@gitlab.cern.ch/cta/sandbox/ci_monitoring.git
     - helm install --namespace ${NAMESPACE} ci-monitoring ci_monitoring/ci-monitoring --wait --timeout 5m
+    - |
+      EXTRA_STRESS_TEST_OPTIONS=""
+      if [ "${SCHEDULER_TYPE}" == "pgsched" ]; then
+        EXTRA_STRESS_TEST_OPTIONS+=" -Q"
+      fi
     # Run the actual stress test
     - cd tests
-    - ./stress_test.sh -n ${NAMESPACE}
+    - ./stress_test.sh -n ${NAMESPACE} ${EXTRA_STRESS_TEST_OPTIONS}
   after_script:
+    - |
+      if [ "${KEEP_STRESS_TEST_NAMESPACE}" == "TRUE" ]; then
+        echo "Skipping deletion of stress test namespace ${NAMESPACE}"
+        exit 0
+      fi
     # This also gets called if the job is cancelled to ensure we properly clean up after ourselves
     - cd continuousintegration/orchestration/
     - ./delete_instance.sh --namespace ${NAMESPACE} --discard-logs

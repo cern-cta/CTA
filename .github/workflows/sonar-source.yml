@@ -18,8 +18,8 @@ jobs:
       image: almalinux:9
 
     env:
-      SCHED_TYPE: objectstore
-      ORACLE_SUPPORT: ON
+      SCHEDULER_TYPE: objectstore
+      ORACLE_SUPPORT: "TRUE"
       BUILD_WRAPPER_OUT_DIR: build_wrapper_output_directory # Directory where build-wrapper output will be placed
 
     steps:
@@ -50,14 +50,14 @@ jobs:
             echo "Exporting TAG_VERSION=${TAG_VERSION} - TAG_RELEASE=${TAG_RELEASE}"
           fi
           CTA_VERSION=$(echo ${TAG_VERSION} | cut -d. -f1)
-          if [[ ${SCHED_TYPE} != "objectstore" ]]; then
-            echo "Using specified scheduler database type $SCHED_TYPE"
-            sched_opt="-DCTA_USE_$(echo ${SCHED_TYPE} | tr '[:lower:]' '[:upper:]'):Bool=true"
-            sched_version=$(echo ${SCHED_TYPE} | cut -c 1-3)
+          if [[ ${SCHEDULER_TYPE} != "objectstore" ]]; then
+            echo "Using specified scheduler database type $SCHEDULER_TYPE"
+            sched_opt="-DCTA_USE_$(echo ${SCHEDULER_TYPE} | tr '[:lower:]' '[:upper:]'):Bool=true"
+            sched_version=$(echo ${SCHEDULER_TYPE} | cut -c 1-3)
             CTA_VERSION="${CTA_VERSION}${sched_version}"
             CMAKE_OPTIONS+="-DSKIP_UNIT_TESTS:STRING=1 ${sched_opt} "
           fi
-          if [[ ${ORACLE_SUPPORT} != "ON" ]]; then
+          if [[ ${ORACLE_SUPPORT} == "FALSE" ]]; then
             echo "Disabling Oracle Support"
             CMAKE_OPTIONS+="-DDISABLE_ORACLE_SUPPORT:BOOL=ON"
           fi

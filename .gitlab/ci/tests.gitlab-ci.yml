@@ -118,7 +118,7 @@ unit-test-oracle:
       when: never
     - if: $SYSTEMTESTS_ONLY == "TRUE"
       when: never
-    - if: $ORACLE_SUPPORT == "OFF"
+    - if: $ORACLE_SUPPORT == "FALSE"
       when: never
     - if: $PIPELINE_TYPE != "COMMIT"
       when: never
