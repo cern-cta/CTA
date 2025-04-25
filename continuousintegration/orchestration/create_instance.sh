@@ -367,6 +367,11 @@ create_instance() {
   wait $catalogue_pid || exit 1
   wait $scheduler_pid || exit 1
 
+  extra_cta_chart_flags=""
+  if [ "$enable_telemetry" == "true" ]; then
+    extra_cta_chart_flags+="--values presets/dev-cta-telemetry-values.yaml"
+  fi
+
   echo "Installing CTA chart..."
   log_run helm ${helm_command} cta helm/cta \
                                 --namespace "${namespace}" \
@@ -375,7 +380,8 @@ create_instance() {
                                 --set global.image.tag="${cta_image_tag}" \
                                 --set-file global.configuration.scheduler="${scheduler_config}" \
                                 --set-file tpsrv.tapeServers="${tapeservers_config}" \
-                                --wait --timeout 5m
+                                --wait --timeout 5m ${extra_cta_chart_flags}
+
   # At this point the disk buffer(s) should also be ready
   if [ $eos_enabled == "true" ] ; then
     wait $eos_pid || exit 1

@@ -87,7 +87,7 @@ SubprocessHandler::ProcessingStatus MaintenanceHandler::fork() {
     exception::Errnum::throwOnMinusOne(m_pid, "In MaintenanceHandler::fork(): failed to fork()");
 
     if (!m_pid) {
-      // cta::telemetry::reinitTelemetry();
+      cta::telemetry::reinitTelemetry();
       // We are in the child process
       SubprocessHandler::ProcessingStatus ret;
       ret.forkState = SubprocessHandler::ForkState::child;
