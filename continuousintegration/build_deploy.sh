@@ -258,6 +258,8 @@ build_deploy() {
   # Build binaries/RPMs
   #####################################################################################################################
   if [ ${skip_build} = false ]; then
+    # Delete the deployed namespace now already as it might starve resources from the build process
+    kubectl delete namespace ${deploy_namespace} > /dev/null &
     print_header "BUILDING RPMS"
     # Check if namespace exists
     if kubectl get namespace "${build_namespace}" &>/dev/null; then

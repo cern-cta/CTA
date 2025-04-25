@@ -28,6 +28,9 @@ conf:
     logger:
       logLevel: "INFO"
       ssiLogLevel: "warning"
+    telemetry:
+      metricsBackend: "NOOP"
+      metricsOtlpEndpoint: ""
 
   grpc:
     catalogue:
@@ -52,6 +55,9 @@ conf:
     logger:
       logLevel: "INFO"
       logFormat: default
+    telemetry:
+      metricsBackend: "NOOP"
+      metricsOtlpEndpoint: ""
 
 
 pod:

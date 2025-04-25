@@ -15,7 +15,7 @@
 #               granted to it by virtue of its status as an Intergovernmental Organization or
 #               submit itself to any jurisdiction.
 
-COREFILE=$(ls /var/log/tmp/ctafrontend-*.core | head -n 1)
+COREFILE=$(ls /var/log/tmp/cta-frontend-*.core | head -n 1)
 
 test -z ${COREFILE} && { echo "No core dumps found, exiting"; exit 1; }
 
