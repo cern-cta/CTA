@@ -10,8 +10,8 @@ conf:
     retrieveQueueCacheMaxAgeSecs: 1
     externalFreeDiskSpaceScript: "/usr/bin/cta-eosdf.sh"
   telemetry:
-    backend: "NOOP"
-    otlpEndpoint: ""
+    metricsBackend: "NOOP"
+    metricsOtlpEndpoint: ""
 
 keytab:
   secretName: eos-sss-keytab
