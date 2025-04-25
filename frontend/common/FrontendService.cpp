@@ -25,6 +25,8 @@
 #include "common/log/StdoutLogger.hpp"
 #include "common/telemetry/TelemetryInit.hpp"
 #include "common/telemetry/config/TelemetryConfig.hpp"
+#include <opentelemetry/sdk/common/global_log_handler.h>
+
 #include "rdbms/Login.hpp"
 
 #include "FrontendService.hpp"

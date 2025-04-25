@@ -57,7 +57,7 @@ usage() {
   echo "      --eos-image-tag:                  Image to use for spawning EOS. If not provided, will default to the image specified in the create_instance script."
   echo "      --cta-config <path>:              Custom Values file to pass to the CTA Helm chart. Defaults to: presets/dev-cta-xrd-values.yaml"
   echo "      --eos-config <path>:              Custom Values file to pass to the EOS Helm chart. Defaults to: presets/dev-eos-values.yaml"
-  echo "      --enable-telemetry:               Enables telemetry in the CI."
+  echo "      --enable-telemetry:               Enables telemetry for the spawned instance."
   exit 1
 }
 
