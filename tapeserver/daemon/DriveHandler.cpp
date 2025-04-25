@@ -157,7 +157,7 @@ SubprocessHandler::ProcessingStatus DriveHandler::fork() {
     m_sessionState = SessionState::StartingUp;
     m_lastStateChangeTime = std::chrono::steady_clock::now();
     if (!m_pid) {
-      // cta::telemetry::reinitTelemetry();
+      cta::telemetry::reinitTelemetry();
       // We are in the child process
       SubprocessHandler::ProcessingStatus ret;
       ret.forkState = SubprocessHandler::ForkState::child;
