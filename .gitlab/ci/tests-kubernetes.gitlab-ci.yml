@@ -224,6 +224,7 @@ test-regression-dCache:
 
 stress-test:
   allow_failure: true
+  interruptible: false
   stage: system-test
   rules:
     - if: $CI_PIPELINE_SOURCE == "merge_request_event"
