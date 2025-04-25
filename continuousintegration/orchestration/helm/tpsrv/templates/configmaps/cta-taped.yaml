@@ -34,10 +34,7 @@ data:
     taped externalFreeDiskSpaceScript {{ $.Values.conf.taped.externalFreeDiskSpaceScript }}
 
     # Telemetry
-    telemetry backend {{ $.Values.conf.telemetry.backend }}
-    telemetry otlpEndpoint {{ $.Values.conf.telemetry.otlpEndpoint }}
-    # These are disabled for now as they have nice defaults
-    # telemetry exportInterval {{ $.Values.conf.telemetry.exportInterval }}
-    # telemetry exportTimeout{{ $.Values.conf.telemetry.exportTimeout }}
+    telemetry metricsBackend {{ $.Values.conf.telemetry.metricsBackend }}
+    telemetry metricsOtlpEndpoint {{ $.Values.conf.telemetry.metricsOtlpEndpoint }}
 ---
 {{- end }}

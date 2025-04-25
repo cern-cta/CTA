@@ -23,6 +23,7 @@ namespace metrics_api = opentelemetry::metrics;
 namespace otlp = opentelemetry::exporter::otlp;
 
 void initMetrics(const TelemetryConfig& config) {
+  // printTelemetryConfig(config, std::cerr);
   if (config.metrics.backend == MetricsBackend::NOOP) {
     metrics_api::Provider::SetMeterProvider(
       std::shared_ptr<metrics_api::MeterProvider>(new metrics_api::NoopMeterProvider()));
@@ -51,7 +52,6 @@ void initMetrics(const TelemetryConfig& config) {
     default:
       throw std::runtime_error("initMetrics: Unsupported metrics backend");
   }
-  std::cerr << "exporter: " << (exporter == nullptr ? "null" : "ok") << "\n";
   if (!exporter) {
     throw std::runtime_error("initMetrics: failed to initialise exporter");
   }
@@ -67,7 +67,8 @@ void initMetrics(const TelemetryConfig& config) {
     attributes.SetAttribute(kv.first, kv.second);
   }
   auto resource = opentelemetry::sdk::resource::Resource::Create(attributes);
-  auto context = metric_sdk::MeterContextFactory::Create({}, resource);
+  auto view_registry = std::make_unique<opentelemetry::sdk::metrics::ViewRegistry>();
+  auto context = metric_sdk::MeterContextFactory::Create(std::move(view_registry), resource);
   context->AddMetricReader(std::move(reader));
   auto providerFactory = metric_sdk::MeterProviderFactory::Create(std::move(context));
   std::shared_ptr<metrics_api::MeterProvider> provider(std::move(providerFactory));
@@ -84,6 +85,11 @@ void initTelemetry(const TelemetryConfig& config) {
 
 void reinitTelemetry() {
   initTelemetry(cta::telemetry::TelemetryConfigSingleton::get());
+}
+
+void resetTelemetry() {
+  metrics_api::Provider::SetMeterProvider(
+      std::shared_ptr<metrics_api::MeterProvider>(new metrics_api::NoopMeterProvider()));
 }
 
 }  // namespace cta::telemetry
