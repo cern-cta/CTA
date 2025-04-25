@@ -1,39 +1,21 @@
+# Note that this values can be used in combination with other values files
 frontend:
-  useGrpc: false
-
   conf:
     xrd:
-      catalogue:
-        numberOfConnections: 10
-        # Reduced value for test environment
-        missingFileCopiesMinAgeSecs: 5
-
-      frontend:
-        archiveFileMaxSizeGb: 1000
-        zeroLengthFilesForbidden: true
-        zeroLengthFilesForbiddenVoExceptionList: ""
-
-      schedulerdb:
-        numberOfThreads: 500
-        threadStackSizeMb: 1
-        disableRepackRequests: false
-        disableUserRequests: false
-        tapeCacheMaxAgeSecs: 1
-        retrieveQueueCacheMaxAgeSecs: 1
-
-      logger:
-        logLevel: "INFO"
-        ssiLogLevel: "warning"
-
       telemetry:
         metricsBackend: "OTLP"
-        metricsOtlpEndpoint: "http://opentelemetry-opentelemetry-collector:4318"
+        metricsOtlpEndpoint: "http://opentelemetry-opentelemetry-collector:4318/v1/metrics"
+
+    grpc:
+      telemetry:
+        metricsBackend: "OTLP"
+        metricsOtlpEndpoint: "http://opentelemetry-opentelemetry-collector:4318/v1/metrics"
 
 tpsrv:
   conf:
     telemetry:
       metricsBackend: "OTLP"
-      metricsOtlpEndpoint: "http://opentelemetry-opentelemetry-collector:4318"
+      metricsOtlpEndpoint: "http://opentelemetry-opentelemetry-collector:4318/v1/metrics"
   extraEnv:
-    name: OPENTELEMETRY_LOG_LEVEL
+  - name: OPENTELEMETRY_LOG_LEVEL
     value: "debug"
