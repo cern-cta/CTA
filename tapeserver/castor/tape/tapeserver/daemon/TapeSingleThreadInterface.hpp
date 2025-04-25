@@ -14,7 +14,7 @@
  *               granted to it by virtue of its status as an Intergovernmental Organization or
  *               submit itself to any jurisdiction.
  */
-/* 
+/*
  * Author: dcome
  *
  * Created on March 18, 2014, 4:28 PM
@@ -32,6 +32,7 @@
 #include "tapeserver/castor/tape/tapeserver/drive/DriveInterface.hpp"
 #include "tapeserver/castor/tape/tapeserver/daemon/EncryptionControl.hpp"
 #include "common/Timer.hpp"
+#include "common/telemetry/metrics/MetricsProvider.hpp"
 
 namespace castor::tape::tapeserver::daemon {
 
@@ -47,12 +48,12 @@ template<class Task>
 class TapeSingleThreadInterface : private cta::threading::Thread {
 private :
 protected:
-  ///the queue of tasks 
+  ///the queue of tasks
   cta::threading::BlockingQueue<Task *> m_tasks;
 
   /**
    * An interface to manipulate the drive to manipulate the tape
-   * with the requested vid 
+   * with the requested vid
    */
   castor::tape::tapeserver::drive::DriveInterface& m_drive;
 
@@ -62,10 +63,10 @@ protected:
   /** Reference to the Global reporting interface */
   TapeSessionReporter& m_reporter;
 
-  ///The volumeID of the tape on which we want to operate  
+  ///The volumeID of the tape on which we want to operate
   const std::string m_vid;
 
-  ///log context, for ... logging purpose, copied du to thread mechanism 
+  ///log context, for ... logging purpose, copied du to thread mechanism
   cta::log::LogContext m_logContext;
 
   VolumeInfo m_volInfo;
@@ -85,7 +86,7 @@ protected:
   uint32_t m_tapeLoadTimeout;
 
   /**
-   * Try to mount the tape for read-only access, get an exception if it fails 
+   * Try to mount the tape for read-only access, get an exception if it fails
    */
   void mountTapeReadOnly() {
     cta::log::ScopedParamContainer scoped(m_logContext);
@@ -96,6 +97,8 @@ protected:
       const std::string modeAsString = "R";
       scoped.add("MCMountTime", timer.secs()).add("mode", modeAsString);
       m_logContext.log(cta::log::INFO, "Tape mounted for read-only access");
+      auto mountCounter = cta::telemetry::metrics::getMeter("cta.taped")->CreateUInt64Counter("mount.count");
+      mountCounter->Add(1, {{"mount.type", "retrieve"}, {"tape.vid", m_vid}, {"mount.id", m_volInfo.mountId}});
     }
     catch (cta::exception::Exception& ex) {
       scoped.add("exceptionMessage", ex.getMessageValue());
@@ -105,7 +108,7 @@ protected:
   }
 
   /**
-   * Try to mount the tape for read/write access, get an exception if it fails 
+   * Try to mount the tape for read/write access, get an exception if it fails
    */
   void mountTapeReadWrite() {
     cta::log::ScopedParamContainer scoped(m_logContext);
@@ -116,6 +119,8 @@ protected:
       const std::string modeAsString = "RW";
       scoped.add("MCMountTime", timer.secs()).add("mode", modeAsString);
       m_logContext.log(cta::log::INFO, "Tape mounted for read/write access");
+      auto mountCounter = cta::telemetry::metrics::getMeter("cta.taped")->CreateUInt64Counter("mount.count");
+      mountCounter->Add(1, {{"mount.type", "archive"}, {"tape.vid", m_vid}, {"mount.id", m_volInfo.mountId}});
     }
     catch (cta::exception::Exception& ex) {
       scoped.add("exceptionMessage", ex.getMessageValue());
@@ -127,9 +132,9 @@ protected:
 
   /**
    * After mounting the tape, the drive will say it has no tape inside,
-   * because there was no tape the first time it was opened... 
-   * That function will wait a certain amount of time for the drive 
-   * to tell us he acknowledge it has indeed a tape (get an ex exception in 
+   * because there was no tape the first time it was opened...
+   * That function will wait a certain amount of time for the drive
+   * to tell us he acknowledge it has indeed a tape (get an ex exception in
    * case of timeout)
    */
   void waitForDrive() {
@@ -149,7 +154,7 @@ protected:
 
   /**
    * After waiting for the drive, we will dump the tape alert log content, if
-   * not empty 
+   * not empty
    * @return true if any alert was detected
    */
   bool logTapeAlerts() {
@@ -246,7 +251,7 @@ public:
 
   /**
    * Allows to pre-set the time spent waiting for instructions, spent before
-   * the tape thread is started. This is for timing the synchronous task 
+   * the tape thread is started. This is for timing the synchronous task
    * injection done before session startup.
    * This function MUST be called before starting the thread.
    * @param secs time in seconds (double)
@@ -265,7 +270,7 @@ public:
    * with the requested vid
    * @param mc The media changer (=robot) that will (un)load/(un)mount the tape
    * @param gsr
-   * @param volInfo All we need to know about the tape we are manipulating 
+   * @param volInfo All we need to know about the tape we are manipulating
    * @param lc lc The log context, later on copied
    * @param tapeLoadTimeout the timeout after which the mount of the tape is considered failed
    */

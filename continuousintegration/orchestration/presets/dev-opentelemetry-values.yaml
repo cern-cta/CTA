@@ -24,10 +24,11 @@ config:
         - batch
         exporters:
         - prometheus
+        - debug
 
     telemetry:
       logs:
-        level: "debug"
+        level: "info"
 ports:
   metrics:
     enabled: true

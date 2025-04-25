@@ -6,7 +6,10 @@
 namespace cta::telemetry {
 
 /**
- * Initialises telemetry according to the provided config
+ * Initialises telemetry according to the provided config.
+ * Note that this method is not "fork-safe". That is, before doing a fork, reset the MeterProvider by calling resetTelemetry
+ * Immediately after the fork, call reinitTelemetry. Provided that there are no meters actively being instantiated at the time of forking,
+ * this will ensure both parent and child process end up with correct state.
  */
 void initTelemetry(const TelemetryConfig& config);
 
