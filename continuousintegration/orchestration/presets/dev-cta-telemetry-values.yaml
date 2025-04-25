@@ -25,8 +25,15 @@ frontend:
         logLevel: "INFO"
         ssiLogLevel: "warning"
 
+      telemetry:
+        metricsBackend: "OTLP"
+        metricsOtlpEndpoint: "http://opentelemetry-opentelemetry-collector:4318"
+
 tpsrv:
   conf:
     telemetry:
-      exportBackend: "OTLP"
-      exportOtlpEndpoint: "opentelemetry-opentelemetry-collector:4318"
+      metricsBackend: "OTLP"
+      metricsOtlpEndpoint: "http://opentelemetry-opentelemetry-collector:4318"
+  extraEnv:
+    name: OPENTELEMETRY_LOG_LEVEL
+    value: "debug"

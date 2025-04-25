@@ -74,4 +74,9 @@ data:
     grpc.tls.server_cert_path {{ .Values.grpc.conf.tls.serverCert }}
     grpc.jwks.uri {{ .Values.grpc.conf.jwtAuth.jwksUri }}
     grpc.jwt.enabled {{ .Values.grpc.conf.jwtAuth.enabled }}
+
+    # Telemetry
+    cta.telemetry.metricsBackend {{ .Values.conf.grpc.telemetry.metricsBackend }}
+    cta.telemetry.metricsOtlpEndpoint {{ .Values.conf.grpc.telemetry.metricsOtlpEndpoint }}
+
 {{- end }}
