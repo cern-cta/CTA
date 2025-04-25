@@ -23,6 +23,8 @@
 #include "common/log/FileLogger.hpp"
 #include "common/log/LogLevel.hpp"
 #include "common/log/StdoutLogger.hpp"
+#include "common/telemetry/TelemetryInit.hpp"
+#include "common/telemetry/config/TelemetryConfig.hpp"
 #include "rdbms/Login.hpp"
 
 #include "FrontendService.hpp"
@@ -102,6 +104,43 @@ FrontendService::FrontendService(const std::string& configFilename) : m_archiveF
     staticParamMap["instance"] = m_instanceName;
     staticParamMap["sched_backend"] = m_schedulerBackendName;
     log.setStaticParams(staticParamMap);
+  }
+
+  // Instantiate telemetry
+  {
+    try {
+      // If we stick with this config parsing, would be nice to have the option to provide a default/fallback value
+      auto telemetryMetricsBackend = config.getOptionValueStr("cta.telemetry.metricsBackend");
+      if (!telemetryMetricsBackend.has_value()) {
+        telemetryMetricsBackend = "NOOP";
+      }
+      auto telemetryMetricsExportInterval = config.getOptionValueUInt("cta.telemetry.metricsExportInterval");
+      if (!telemetryMetricsExportInterval.has_value()) {
+        telemetryMetricsExportInterval = 1000;
+      }
+      auto telemetryMetricsExportTimeout = config.getOptionValueUInt("cta.telemetry.metricsExportTimeout");
+      if (!telemetryMetricsExportTimeout.has_value()) {
+        telemetryMetricsExportTimeout = 500;
+      }
+      auto telemetryMetricsOltpEndpoint = config.getOptionValueStr("cta.telemetry.metricsOtlpEndpoint");
+      if (!telemetryMetricsOltpEndpoint.has_value()) {
+        telemetryMetricsOltpEndpoint = "";
+      }
+
+      log(log::INFO, "Instantiating telemetry", {{"metricsBackend", telemetryMetricsBackend},
+                                                 {"otlpEndpoint", telemetryMetricsOltpEndpoint.value()}});
+      cta::telemetry::TelemetryConfig telemetryConfig = cta::telemetry::TelemetryConfigBuilder()
+        .serviceName("cta.frontendxrd")
+        .metricsBackend(telemetryMetricsBackend.value())
+        .metricsExportInterval(std::chrono::milliseconds(telemetryMetricsExportInterval.value()))
+        .metricsExportTimeout(std::chrono::milliseconds(telemetryMetricsExportTimeout.value()))
+        .metricsOtlpEndpoint(telemetryMetricsOltpEndpoint.value())
+        .build();
+      cta::telemetry::initTelemetry(telemetryConfig);
+    } catch(exception::Exception& ex) {
+      std::string ex_str("Failed to instantiate OpenTelemetry: ");
+      throw exception::Exception(ex_str + ex.getMessage().str());
+    }
   }
 
   {

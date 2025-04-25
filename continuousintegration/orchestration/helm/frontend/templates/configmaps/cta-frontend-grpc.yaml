@@ -69,4 +69,9 @@ data:
 
     # TLS related variables
     grpc.tls false
+
+    # Telemetry
+    cta.telemetry.metricsBackend {{ .Values.conf.grpc.telemetry.metricsBackend }}
+    cta.telemetry.metricsOtlpEndpoint {{ .Values.conf.grpc.telemetry.metricsOtlpEndpoint }}
+
 {{- end }}
