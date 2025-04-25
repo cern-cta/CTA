@@ -68,6 +68,14 @@ variables:
   SYSTEMTESTS_IMAGETAG:
     description: "Custom image tag to run the systemtests against. Only used if SYSTEMTESTS_ONLY is TRUE"
     value: ""
+
+  KEEP_STRESS_TEST_NAMESPACE:
+    description: "Keep the stress-test namespace alive after it has been created to allow for manual debugging. In this case, the namespace must be manually deleted at some point."
+    value: "FALSE"
+    options:
+      - "TRUE"
+      - "FALSE"
+
   # Pass a file here (must be absolute or relative to the orchestration directory, e.g. presets/dev...)
   CUSTOM_CTA_VALUES_FILE:
     description: "Path to a values.yaml file to be passed to the CTA Helm chart. Must be absolute or relative to the orchestration/ directory, e.g. presets/dev-..."

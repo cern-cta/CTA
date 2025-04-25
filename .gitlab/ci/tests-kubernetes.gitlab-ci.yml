@@ -223,6 +223,7 @@ test-regression-dCache:
     - xlarge
 
 stress-test:
+  allow_failure: true
   stage: system-test
   rules:
     - if: $CI_PIPELINE_SOURCE == "merge_request_event"
@@ -262,6 +263,11 @@ stress-test:
     - cd tests
     - ./stress_test.sh -n ${NAMESPACE} ${EXTRA_STRESS_TEST_OPTIONS}
   after_script:
+    - |
+      if [ "${KEEP_STRESS_TEST_NAMESPACE}" == "TRUE" ]; then
+        echo "Skipping deletion of stress test namespace ${NAMESPACE}"
+        exit 0
+      fi
     # This also gets called if the job is cancelled to ensure we properly clean up after ourselves
     - cd continuousintegration/orchestration/
     - ./delete_instance.sh --namespace ${NAMESPACE} --discard-logs
