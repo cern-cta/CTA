@@ -8,15 +8,23 @@ config:
   receivers:
     otlp:
       protocols:
-        grpc: {}
         http: {}
 
-  exporters:
-    prometheus:
-      endpoint: "0.0.0.0:8889"
+  # exporters:
+  #   prometheus:
+  #     endpoint: "0.0.0.0:8889"
 
   service:
     pipelines:
       metrics:
-        receivers: [otlp]
-        exporters: [prometheus]
+        receivers:
+        - otlp
+        processors:
+        - batch
+        exporters:
+        - debug
+        # - prometheus
+
+    telemetry:
+      logs:
+        level: "debug"
