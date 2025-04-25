@@ -156,7 +156,7 @@ public:
 
   std::string & getAddressIfSet() {
     if (!m_nameSet) {
-      throw AddressNotSet("In ObjectOpsBase::getNameIfSet: name not set yet");
+      throw AddressNotSet("In ObjectOpsBase::getAddressIfSet: name not set yet");
     }
     return m_name;
   }
@@ -343,8 +343,7 @@ protected:
 class ScopedSharedLock: public ScopedLock {
 public:
   ScopedSharedLock()
-  : shortHostname(cta::utils::getShortHostname()),
-    lockCounter(cta::telemetry::metrics::getMeter("cta.objectstore")->CreateUInt64Counter("lock.acquire.count")),
+  : lockCounter(cta::telemetry::metrics::getMeter("cta.objectstore")->CreateUInt64Counter("lock.acquire.count")),
     lockAcquireDurationHistogram(cta::telemetry::metrics::getMeter("cta.objectstore")->CreateDoubleHistogram("lock.acquire.duration")) {}
   explicit ScopedSharedLock(ObjectOpsBase& oo) : ScopedSharedLock() {
     lock(oo);
@@ -369,9 +368,11 @@ public:
       m_locked = true;
     }
     const auto lockAcquireTime = timer.secs();
-    lockAcquireDurationHistogram->Record(lockAcquireTime, {{"hostname", shortHostname}, {"lock.type", "ScopedSharedLock"}},
-      opentelemetry::context::RuntimeContext::GetCurrent());
-    lockCounter->Add(1, {{"hostname", shortHostname}, {"lock.type", "ScopedSharedLock"}});
+    lockAcquireDurationHistogram->Record(lockAcquireTime, {{"lock.type", "ScopedExclusiveLock"},
+                                                           {"object.address", oo.getAddressIfSet()}},
+                                         opentelemetry::context::RuntimeContext::GetCurrent());
+    lockCounter->Add(1, {{"lock.type", "ScopedExclusiveLock"},
+                         {"object.address", oo.getAddressIfSet()}});
   }
 
   virtual ~ScopedSharedLock() {
@@ -379,7 +380,6 @@ public:
   }
 
 private:
-  const std::string shortHostname;
   std::unique_ptr<opentelemetry::metrics::Counter<uint64_t>> lockCounter;
   std::unique_ptr<opentelemetry::metrics::Histogram<double>> lockAcquireDurationHistogram;
 
@@ -389,8 +389,7 @@ class ScopedExclusiveLock: public ScopedLock {
 public:
   // TODO: we need to figure out a nice way to manage the meter names
   ScopedExclusiveLock()
-  : shortHostname(cta::utils::getShortHostname()),
-    lockCounter(cta::telemetry::metrics::getMeter("cta.objectstore")->CreateUInt64Counter("lock.acquire.count")),
+  : lockCounter(cta::telemetry::metrics::getMeter("cta.objectstore")->CreateUInt64Counter("lock.acquire.count")),
     lockAcquireDurationHistogram(cta::telemetry::metrics::getMeter("cta.objectstore")->CreateDoubleHistogram("lock.acquire.duration")) {}
 
   ScopedExclusiveLock(ObjectOpsBase & oo, uint64_t timeout_us = 0) : ScopedExclusiveLock() {
@@ -419,9 +418,11 @@ public:
       m_locked = true;
     }
     const auto lockAcquireTime = timer.secs();
-    lockAcquireDurationHistogram->Record(lockAcquireTime, {{"hostname", shortHostname}, {"lock.type", "ScopedExclusiveLock"}},
+    lockAcquireDurationHistogram->Record(lockAcquireTime, {{"lock.type", "ScopedExclusiveLock"},
+                                                           {"object.address", oo.getAddressIfSet()}},
       opentelemetry::context::RuntimeContext::GetCurrent());
-    lockCounter->Add(1, {{"hostname", shortHostname}, {"lock.type", "ScopedExclusiveLock"}});
+    lockCounter->Add(1, {{"lock.type", "ScopedExclusiveLock"},
+                         {"object.address", oo.getAddressIfSet()}});
   }
 
   /** Move the locked object reference to a new one. This is done when the locked
@@ -450,7 +451,6 @@ public:
   }
 
 private:
-    const std::string shortHostname;
     std::unique_ptr<opentelemetry::metrics::Counter<uint64_t>> lockCounter;
     std::unique_ptr<opentelemetry::metrics::Histogram<double>> lockAcquireDurationHistogram;
 };
