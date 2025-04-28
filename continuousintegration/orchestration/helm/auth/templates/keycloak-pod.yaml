@@ -1,0 +1,25 @@
+{{- $name := include "keycloak.fullname" . }}
+apiVersion: v1
+kind: Pod
+metadata:
+  name: {{ $name }}
+  namespace: {{ .Release.Namespace | quote }}
+  labels:
+    app.kubernetes.io/name: {{ $name }}
+    {{- include "common.labels.withoutname" $ | nindent 4 }}
+spec:
+  restartPolicy: Never
+  containers:
+    - name: keycloak
+      image: quay.io/keycloak/keycloak:26.1
+      command: ["sh", "-c"]
+      args:
+        - |
+          /opt/keycloak/bin/kc.sh start-dev --http-port=8080
+      env:
+        - name: KEYCLOAK_ADMIN
+          value: admin
+        - name: KEYCLOAK_ADMIN_PASSWORD
+          value: admin
+      ports:
+        - containerPort: 8080
