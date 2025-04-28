@@ -4,6 +4,30 @@ replicaCount: 1
 
 grpc:
   enabled: false
+  port: 10956
+  conf:
+    catalogue:
+      numberOfConnections: 10
+      # Reduced value for test environment
+      missingFileCopiesMinAgeSecs: 5
+
+    frontend:
+      archiveFileMaxSizeGb: 1000
+      zeroLengthFilesForbidden: true
+      zeroLengthFilesForbiddenVoExceptionList: ""
+      # repackBufferUrl
+
+    schedulerdb:
+      numberOfThreads: 500
+      threadStackSizeMb: 1
+      disableRepackRequests: false
+      disableUserRequests: false
+      tapeCacheMaxAgeSecs: 1
+      retrieveQueueCacheMaxAgeSecs: 1
+
+    logger:
+      logLevel: "INFO"
+      logFormat: default
 
 xrd:
   enabled: true
