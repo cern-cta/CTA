@@ -100,6 +100,9 @@ kubectl -n ${NAMESPACE} cp "${EOS_MGM_POD}:etc/grid-security/certificates/" /tmp
 kubectl -n ${NAMESPACE} cp /tmp/certificates ${CLIENT_POD}:/etc/grid-security/ -c client
 rm -rf /tmp/certificates
 
+echo "Launching brief Keycloak test"
+kubectl -n ${NAMESPACE} exec ${CLIENT_POD} -c client -- bash /root/client_testKeycloak.sh || exit 1
+
 # We don'y care about the tapesrv logs so we don't need the TEST_[PRERUN|POSTRUN].
 # We just test the .well-known/wlcg-tape-rest-api endpoint and REST API compliance
 # with the specification.
