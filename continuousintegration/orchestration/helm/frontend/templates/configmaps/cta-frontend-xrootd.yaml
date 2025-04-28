@@ -1,4 +1,4 @@
-{{- if not .Values.useGrpc -}}
+{{- if .Values.xrd.enabled }}
 {{- $schedulerConfig := include "scheduler.config" . | fromYaml -}}
 {{- $name := include "ctafrontend.fullname" . }}
 apiVersion: v1
@@ -20,38 +20,38 @@ data:
 
     # CTA Scheduler DB options
     cta.schedulerdb.scheduler_backend_name {{ $schedulerConfig.backend }}
-    cta.schedulerdb.numberofthreads {{ .Values.conf.xrd.schedulerdb.numberOfThreads }}
-    cta.schedulerdb.threadstacksize_mb {{ .Values.conf.xrd.schedulerdb.threadStackSizeMb }}
-    cta.schedulerdb.disable_repack_requests {{ .Values.conf.xrd.schedulerdb.disableRepackRequests }}
-    cta.schedulerdb.disable_user_requests {{ .Values.conf.xrd.schedulerdb.disableUserRequests }}
+    cta.schedulerdb.numberofthreads {{ .Values.xrd.conf.schedulerdb.numberOfThreads }}
+    cta.schedulerdb.threadstacksize_mb {{ .Values.xrd.conf.schedulerdb.threadStackSizeMb }}
+    cta.schedulerdb.disable_repack_requests {{ .Values.xrd.conf.schedulerdb.disableRepackRequests }}
+    cta.schedulerdb.disable_user_requests {{ .Values.xrd.conf.schedulerdb.disableUserRequests }}
 
     # CTA Scheduler DB options - Cache timeout options (decreased for tests)
-    cta.schedulerdb.tape_cache_max_age_secs {{ .Values.conf.xrd.schedulerdb.tapeCacheMaxAgeSecs }}
-    cta.schedulerdb.retrieve_queue_cache_max_age_secs {{ .Values.conf.xrd.schedulerdb.retrieveQueueCacheMaxAgeSecs }}
+    cta.schedulerdb.tape_cache_max_age_secs {{ .Values.xrd.conf.schedulerdb.tapeCacheMaxAgeSecs }}
+    cta.schedulerdb.retrieve_queue_cache_max_age_secs {{ .Values.xrd.conf.schedulerdb.retrieveQueueCacheMaxAgeSecs }}
 
     # CTA Catalogue options
-    cta.catalogue.numberofconnections {{ .Values.conf.xrd.catalogue.numberOfConnections }}
+    cta.catalogue.numberofconnections {{ .Values.xrd.conf.catalogue.numberOfConnections }}
 
     # Missing tape file copies minimum age.
     # Set it to prevent false flagging of multi-copy files in the process of being archived tapes.
     # Default 24 hours
-    cta.catalogue.missing_file_copies_min_age_secs {{ .Values.conf.xrd.catalogue.missingFileCopiesMinAgeSecs }}
+    cta.catalogue.missing_file_copies_min_age_secs {{ .Values.xrd.conf.catalogue.missingFileCopiesMinAgeSecs }}
 
     # Maximum file size (in GB) that the CTA Frontend will accept for archiving
-    cta.archivefile.max_size_gb {{ .Values.conf.xrd.frontend.archiveFileMaxSizeGb }}
+    cta.archivefile.max_size_gb {{ .Values.xrd.conf.frontend.archiveFileMaxSizeGb }}
 
     # Disallow 0-length files
-    cta.archivefile.zero_length_files_forbidden {{ .Values.conf.xrd.frontend.zeroLengthFilesForbidden }}
+    cta.archivefile.zero_length_files_forbidden {{ .Values.xrd.conf.frontend.zeroLengthFilesForbidden }}
 
     # Tapepools exempted from this check (if enabled)
-    cta.archivefile.zero_length_files_forbidden_vo_exception_list {{ .Values.conf.xrd.frontend.zeroLengthFilesForbiddenVoExceptionList }}
+    cta.archivefile.zero_length_files_forbidden_vo_exception_list {{ .Values.xrd.conf.frontend.zeroLengthFilesForbiddenVoExceptionList }}
 
     # CTA Frontend log URL
     cta.log.url file:/var/log/cta/cta-frontend.log
 
     # CTA Logger log level
     # Valid log levels are EMERG, ALERT, CRIT, ERR, WARNING, NOTICE (==USERERR), INFO, DEBUG
-    cta.log.level {{ .Values.conf.xrd.logger.logLevel }}
+    cta.log.level {{ .Values.xrd.conf.logger.logLevel }}
 
     # CTA Logger log format
     # Valid formats are default, json
@@ -59,10 +59,10 @@ data:
 
     # CTA XRootD SSI Protobuf log level
     # cta.log.ssi debug protobuf # TODO: which of these options do we want to make configurable?
-    cta.log.ssi {{ .Values.conf.xrd.logger.ssiLogLevel }}
+    cta.log.ssi {{ .Values.xrd.conf.logger.ssiLogLevel }}
 
     # CTA Repack buffer URL
-    # cta.repack.repack_buffer_url {{ .Values.conf.xrd.frontend.repackBufferUrl }}
+    # cta.repack.repack_buffer_url {{ .Values.xrd.conf.frontend.repackBufferUrl }}
 
     # CTA Verification Mount Policy
     cta.verification.mount_policy verification
@@ -96,7 +96,7 @@ data:
     xrootd.async off
 
     # Use a port other than 1094, already used by EOS xroot server
-    xrd.port {{ .Values.frontendPort }}
+    xrd.port {{ .Values.xrd.port }}
 
     # Export the SSI resource
     all.export /ctafrontend nolock r/w

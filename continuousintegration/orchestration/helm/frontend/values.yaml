@@ -2,34 +2,10 @@
 # Increasing this will most likely not work as expected
 replicaCount: 1
 
-frontendPort: 10955
-useGrpc: false
-
-conf:
-  xrd:
-    catalogue:
-      numberOfConnections: 10
-      # Reduced value for test environment
-      missingFileCopiesMinAgeSecs: 5
-
-    frontend:
-      archiveFileMaxSizeGb: 1000
-      zeroLengthFilesForbidden: true
-      zeroLengthFilesForbiddenVoExceptionList: ""
-
-    schedulerdb:
-      numberOfThreads: 500
-      threadStackSizeMb: 1
-      disableRepackRequests: false
-      disableUserRequests: false
-      tapeCacheMaxAgeSecs: 1
-      retrieveQueueCacheMaxAgeSecs: 1
-
-    logger:
-      logLevel: "INFO"
-      ssiLogLevel: "warning"
-
-  grpc:
+grpc:
+  enabled: false
+  port: 10956
+  conf:
     catalogue:
       numberOfConnections: 10
       # Reduced value for test environment
@@ -52,6 +28,32 @@ conf:
     logger:
       logLevel: "INFO"
       logFormat: default
+
+xrd:
+  enabled: true
+  port: 10955
+  conf:
+    catalogue:
+      numberOfConnections: 10
+      # Reduced value for test environment
+      missingFileCopiesMinAgeSecs: 5
+
+    frontend:
+      archiveFileMaxSizeGb: 1000
+      zeroLengthFilesForbidden: true
+      zeroLengthFilesForbiddenVoExceptionList: ""
+
+    schedulerdb:
+      numberOfThreads: 500
+      threadStackSizeMb: 1
+      disableRepackRequests: false
+      disableUserRequests: false
+      tapeCacheMaxAgeSecs: 1
+      retrieveQueueCacheMaxAgeSecs: 1
+
+    logger:
+      logLevel: "INFO"
+      ssiLogLevel: "warning"
 
 
 pod:
