@@ -15,12 +15,13 @@
 #include <opentelemetry/sdk/common/attribute_utils.h>
 
 #include "config/TelemetryConfigSingleton.hpp"
+#include "metrics/InstrumentProvider.hpp"
 #include "common/utils/utils.hpp"
 #include "version.h"
 
 namespace cta::telemetry {
 
-namespace metric_sdk = opentelemetry::sdk::metrics;
+namespace metrics_sdk = opentelemetry::sdk::metrics;
 namespace metrics_api = opentelemetry::metrics;
 namespace otlp = opentelemetry::exporter::otlp;
 
@@ -31,7 +32,7 @@ void initMetrics(const TelemetryConfig& config) {
     return;
   }
 
-  std::unique_ptr<metric_sdk::PushMetricExporter> exporter;
+  std::unique_ptr<metrics_sdk::PushMetricExporter> exporter;
 
   switch (config.metrics.backend) {
     case MetricsBackend::STDOUT:
@@ -56,26 +57,32 @@ void initMetrics(const TelemetryConfig& config) {
     throw std::runtime_error("initMetrics: failed to initialise exporter");
   }
 
-  metric_sdk::PeriodicExportingMetricReaderOptions readerOptions {config.metrics.exportInterval,
-                                                                  config.metrics.exportTimeout};
+  metrics_sdk::PeriodicExportingMetricReaderOptions readerOptions {config.metrics.exportInterval,
+                                                                   config.metrics.exportTimeout};
 
-  auto reader = metric_sdk::PeriodicExportingMetricReaderFactory::Create(std::move(exporter), readerOptions);
+  auto reader = metrics_sdk::PeriodicExportingMetricReaderFactory::Create(std::move(exporter), readerOptions);
+
+  std::string shortHostname = cta::utils::getShortHostname();
+  // We need to be a bit careful here, due to forking the main process will also get a different instance ID
+  std::string instanceId = shortHostname + "-" + std::to_string(getpid()) + "-" + cta::utils::generateUuid();
+
   opentelemetry::sdk::common::AttributeMap attributes = {
-    {opentelemetry::sdk::resource::SemanticConventions::kServiceName, config.serviceName},
-    {opentelemetry::sdk::resource::SemanticConventions::kServiceVersion, CTA_VERSION},
-    {opentelemetry::sdk::resource::SemanticConventions::kHostName, cta::utils::getShortHostname()}
+    {opentelemetry::sdk::resource::SemanticConventions::kServiceName,       config.serviceName},
+    {opentelemetry::sdk::resource::SemanticConventions::kServiceVersion,    CTA_VERSION       },
+    {opentelemetry::sdk::resource::SemanticConventions::kServiceInstanceId, instanceId        },
+    {opentelemetry::sdk::resource::SemanticConventions::kHostName,          shortHostname     },
   };
   for (const auto& kv : config.resourceAttributes) {
     attributes.SetAttribute(kv.first, kv.second);
   }
   auto resource = opentelemetry::sdk::resource::Resource::Create(attributes);
   auto viewRegistry = std::make_unique<opentelemetry::sdk::metrics::ViewRegistry>();
-  auto context = metric_sdk::MeterContextFactory::Create(std::move(viewRegistry), resource);
+  auto context = metrics_sdk::MeterContextFactory::Create(std::move(viewRegistry), resource);
   context->AddMetricReader(std::move(reader));
-  auto providerFactory = metric_sdk::MeterProviderFactory::Create(std::move(context));
-  std::shared_ptr<metrics_api::MeterProvider> provider(std::move(providerFactory));
+  auto meterProvider = metrics_sdk::MeterProviderFactory::Create(std::move(context));
+  std::shared_ptr<metrics_api::MeterProvider> apiProvider(std::move(meterProvider));
 
-  metrics_api::Provider::SetMeterProvider(provider);
+  metrics_api::Provider::SetMeterProvider(apiProvider);
 }
 
 void initTelemetry(const TelemetryConfig& config) {
@@ -87,11 +94,21 @@ void initTelemetry(const TelemetryConfig& config) {
 
 void reinitTelemetry() {
   initTelemetry(cta::telemetry::TelemetryConfigSingleton::get());
+  cta::telemetry::metrics::InstrumentProvider::instance().reset();
 }
 
 void resetTelemetry() {
-  metrics_api::Provider::SetMeterProvider(
-    std::shared_ptr<metrics_api::MeterProvider>(new metrics_api::NoopMeterProvider()));
+  auto provider = metrics_api::Provider::GetMeterProvider();
+  if (provider) {
+    auto sdkProvider = dynamic_cast<metrics_sdk::MeterProvider*>(provider.get());
+    if (sdkProvider != nullptr) {
+      sdkProvider->ForceFlush();
+    }
+  }
+
+  // This will invoke shutdown and clean up the background threads as needed before a fork
+  std::shared_ptr<metrics_api::MeterProvider> none;
+  metrics_api::Provider::SetMeterProvider(none);
 }
 
 }  // namespace cta::telemetry
