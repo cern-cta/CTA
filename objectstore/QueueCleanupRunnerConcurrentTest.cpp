@@ -215,11 +215,7 @@ public:
 TEST_P(QueueCleanupRunnerConcurrentTest, CleanupRunnerParameterizedTest) {
   using cta::common::dataStructures::JobQueueType;
   // We will need a log object
-#ifdef STDOUT_LOGGING
   cta::log::StdoutLogger dl("dummy", "unitTest");
-#else
-  cta::log::DummyLogger dl("dummy", "unitTest");
-#endif
   cta::log::LogContext lc(dl);
   // We need a dummy catalogue
   cta::catalogue::DummyCatalogue & catalogue = getCatalogue();
@@ -419,13 +415,14 @@ INSTANTIATE_TEST_CASE_P(OStoreTestVFS, QueueCleanupRunnerConcurrentTest,
                                         OStoreDBFactoryVFS,
                                         Test_retrieveRequestSetupList,
                                         Test_tapeQueueTransitionList_Completed,
-                                        0.0),
+                                        0.0)
+				// We no longer rely on hearbeat to update. This test will fail.
                                 // With a timeout of 120.0s the 2nd cleanup runner will NOT immediately complete the task after the 1st has failed
-                                QueueCleanupRunnerConcurrentTestParams(
-                                        OStoreDBFactoryVFS,
-                                        Test_retrieveRequestSetupList,
-                                        Test_tapeQueueTransitionList_Failed,
-                                        120.0)
+                                //QueueCleanupRunnerConcurrentTestParams(
+                                //        OStoreDBFactoryVFS,
+                                //        Test_retrieveRequestSetupList,
+                                //        Test_tapeQueueTransitionList_Failed,
+                                //        120.0)
                         )
 );
 }

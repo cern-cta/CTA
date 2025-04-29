@@ -24,6 +24,14 @@ QueueCleanupRunner::QueueCleanupRunner(Backend &os, AgentReference &agentReferen
         m_agentRegister(os),
         m_catalogue(catalogue), m_db(oStoreDb),
         m_batchSize(batchSize.value_or(DEFAULT_BATCH_SIZE)), m_heartBeatTimeout(heartBeatTimeout.value_or(DEFAULT_HEARTBEAT_TIMEOUT)) {
+
+  RootEntry re(os);
+  ScopedSharedLock reLock(re);
+  re.fetch();
+  m_agentRegister.setAddress(re.getAgentRegisterAddress());
+  reLock.release();
+  ScopedSharedLock arLock(m_agentRegister);
+  m_agentRegister.fetch();
 }
 
 void QueueCleanupRunner::runOnePass(log::LogContext &logContext) {
@@ -37,10 +45,16 @@ void QueueCleanupRunner::runOnePass(log::LogContext &logContext) {
   auto queuesForCleanup = m_db.getRetrieveQueuesCleanupInfo(logContext);
 
   // Get list of alive agents if the cleanup registered agent is still alive do nothing.
+  {
+    ScopedSharedLock arLock(m_agentRegister);
+    m_agentRegister.fetch();
+  }
   std::list<std::string> agentList = m_agentRegister.getAgents();
 
   // Check, one-by-one, queues need to be cleaned up
   for (const auto &queue: queuesForCleanup) {
+    logContext.log(log::DEBUG, "Queue agent " + queue.assignedAgent.value_or( "none"));
+    for (const auto& x: agentList) {  logContext.log(log::DEBUG, "Agent List: " + x); }
     // Do not clean a queue that does not have the cleanup flag set true
     if (!queue.doCleanup) {
       continue; // Ignore queue
