@@ -13,7 +13,7 @@
     "defaultBuildType": "Debug",
     "ctaImageRepository": "gitlab-registry.cern.ch/cta/ctageneric",
     "eosImageRepository": "gitlab-registry.cern.ch/dss/eos/eos-ci",
-    "eosImageTag": "5.3.14.el9",
+    "eosImageTag": "617812fe.el9",
     "eosServerChartVersion": "0.5.1",
     "dCacheChartVersion": "0.1.0",
     "dCacheImageTag": "94471db7"
@@ -184,6 +184,9 @@
         "postgresql-devel": "",
         "krb5-devel": "",
         "libtirpc-devel": "",
+        "openssl-devel": ">= 1.0.1",
+        "libcurl": "",
+        "libcurl-devel": "",
         "redhat-rpm-config": "",
         "pandoc": "",
         "which": ""

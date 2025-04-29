@@ -43,6 +43,7 @@ CTA_FRONTEND_POD="cta-frontend-0"
 # eos instance identified by SSS username
 EOS_MGM_POD="eos-mgm-0"
 EOS_INSTANCE_NAME="ctaeos"
+EOS_FST_POD="eos-fst-0"
 
 MULTICOPY_DIR_1=/eos/ctaeos/preprod/dir_1_copy
 MULTICOPY_DIR_2=/eos/ctaeos/preprod/dir_2_copy

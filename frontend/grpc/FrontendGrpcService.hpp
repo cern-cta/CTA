@@ -14,6 +14,7 @@
 #include "cta_frontend.pb.h"
 #include "cta_frontend.grpc.pb.h"
 #include "frontend/common/FrontendService.hpp"
+#include "common/JwkCache.hpp"
 
 using cta::Scheduler;
 using cta::catalogue::Catalogue;
@@ -33,6 +34,7 @@ private:
   std::unique_ptr<cta::frontend::FrontendService> m_frontendService;
   ::grpc::HealthCheckServiceInterface* m_healthCheckService = nullptr;
   bool m_isServing = true;
+  JwkCache m_pubkeyCache;
 
 public:
   CtaRpcImpl(const std::string& config);
@@ -43,6 +45,8 @@ public:
       m_healthCheckService = healthCheckService;
   }
 
+  void StartJwksRefreshThread() { return m_pubkeyCache.startRefreshThread(); }
+  void StopJwksRefreshThread() { return m_pubkeyCache.stopRefreshThread(); }
   // Archive/Retrieve interface
   Status Create(::grpc::ServerContext* context, const cta::xrd::Request* request, cta::xrd::Response* response);
   Status Archive(::grpc::ServerContext* context, const cta::xrd::Request* request, cta::xrd::Response* response);
@@ -51,5 +55,7 @@ public:
   Status Delete(::grpc::ServerContext* context, const cta::xrd::Request* request, cta::xrd::Response* response);
 private:
   Status ProcessGrpcRequest(const cta::xrd::Request* request, cta::xrd::Response* response, cta::log::LogContext &lc) const;
+  bool ValidateToken(const std::string& encodedJWT);
+  Status ExtractAuthHeaderAndValidate(::grpc::ServerContext* context);
 };
 } // namespace cta::frontend::grpc

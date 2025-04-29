@@ -189,12 +189,19 @@ set (COMMON_UNIT_TESTS_LIB_SRC_FILES
   utils/UtilsTest.cpp
   json/test/JSONCTestObject.cpp
   json/test/JSONCObjectTest.cpp
+  JwkCacheTests.cpp
 )
 
 add_library (ctacommonunittests SHARED
   ${COMMON_UNIT_TESTS_LIB_SRC_FILES})
 set_property(TARGET ctacommonunittests PROPERTY SOVERSION "${CTA_SOVERSION}")
 set_property(TARGET ctacommonunittests PROPERTY   VERSION "${CTA_LIBVERSION}")
+
+find_package(OpenSSL REQUIRED)
+include_directories(${CMAKE_SOURCE_DIR}/common/jwt-cpp/include/)
+add_library(JwkCache STATIC JwkCache.cpp)
+target_link_libraries(JwkCache PRIVATE curl OpenSSL::Crypto)
+target_link_libraries(ctacommonunittests JwkCache)
 
 install(TARGETS ctacommonunittests DESTINATION usr/${CMAKE_INSTALL_LIBDIR})
 add_executable(mutexLtrace threading/MutexLtrace.cpp)
