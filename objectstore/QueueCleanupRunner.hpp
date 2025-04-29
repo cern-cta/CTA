@@ -57,7 +57,7 @@ private:
     double lastUpdateTimestamp;
   };
 
-  AgentRegister &m_objectStore;
+  AgentRegister m_agentRegister;
   catalogue::Catalogue &m_catalogue;
   SchedulerDatabase &m_db;
   std::map<std::string, HeartbeatStatus> m_heartbeatCheck;

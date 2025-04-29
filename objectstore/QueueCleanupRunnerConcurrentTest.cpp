@@ -344,8 +344,8 @@ TEST_P(QueueCleanupRunnerConcurrentTest, CleanupRunnerParameterizedTest) {
 
   // Execute cleanup runner
   {
-    cta::objectstore::QueueCleanupRunner qCleanupRunnerBroken(agentForCleanupRef, brokenOStore, catalogue, GetParam().cleanupTimeout);
-    cta::objectstore::QueueCleanupRunner qCleanupRunnerOk(agentForCleanupRef, oKOStore, catalogue, GetParam().cleanupTimeout);
+    cta::objectstore::QueueCleanupRunner qCleanupRunnerBroken(be, agentForCleanupRef, brokenOStore, catalogue, GetParam().cleanupTimeout);
+    cta::objectstore::QueueCleanupRunner qCleanupRunnerOk(be, agentForCleanupRef, oKOStore, catalogue, GetParam().cleanupTimeout);
 
     ASSERT_THROW(qCleanupRunnerBroken.runOnePass(lc), OStoreDBWithAgentBroken::TriggeredException);
     for (auto & tapeQueueStateTrans : GetParam().tapeQueueTransitionList) {

@@ -315,7 +315,7 @@ TEST_P(QueueCleanupRunnerTest, CleanupRunnerParameterizedTest) {
 
   // Execute cleanup runner
   {
-    cta::objectstore::QueueCleanupRunner qcr(agentForCleanupRef, oStore, catalogue);
+    cta::objectstore::QueueCleanupRunner qcr(be, agentForCleanupRef, oStore, catalogue);
     qcr.runOnePass(lc); // RUNNER
   }
 
