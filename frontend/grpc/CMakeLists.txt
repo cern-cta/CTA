@@ -17,6 +17,8 @@ cmake_minimum_required (VERSION 3.17)
 
 include_directories(${CMAKE_BINARY_DIR}/eos_cta ${PROTOBUF3_INCLUDE_DIRS})
 
+include_directories(${CMAKE_SOURCE_DIR}/common/jwt-cpp/include/)
+
 add_executable(cta-frontend-grpc
   Main.cpp
   FrontendGrpcService.cpp
@@ -25,10 +27,10 @@ add_executable(cta-frontend-grpc
 
 if(CTA_USE_PGSCHED)
   target_link_libraries(cta-frontend-grpc
-    ctascheduler ctacommon ctacatalogue ctagrpc)
+    ctascheduler ctacommon ctacatalogue ctagrpc curl JwkCache)
 else()
   target_link_libraries(cta-frontend-grpc
-    ctascheduler ctacommon ctaobjectstore ctacatalogue ctagrpc)
+    ctascheduler ctacommon ctaobjectstore ctacatalogue ctagrpc curl JwkCache)
 endif()
 
 add_manpage(cta-frontend-grpc)
@@ -47,7 +49,7 @@ add_executable(cta-frontend-async-grpc
   FrontendCmd.cpp
   AsyncServer.cpp
   TokenStorage.cpp
-  ServiceAuthProcessor.cpp
+  ServiceKerberosAuthProcessor.cpp
   ServerTapeLsRequestHandler.cpp
   ServerNegotiationRequestHandler.cpp
   RequestMessage.cpp
