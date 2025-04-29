@@ -10,7 +10,6 @@
 #include <functional>
 
 #include "version.h"
-#include "MetricsProvider.hpp"
 
 namespace cta::telemetry::metrics {
 
