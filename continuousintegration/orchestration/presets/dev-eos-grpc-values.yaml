@@ -57,6 +57,7 @@ mgm:
       mgmofs.protowfendpoint cta-frontend-grpc:10956
       mgmofs.protowfresource /ctafrontend
       mgmofs.protowfusegrpc true
+      mgmofs.jwttokenpath /etc/grid-security/jwt-token-grpc
       tpc.trace  all
       tpc.header2cgi  ArchiveMetadata archivemetadata
       taperestapi.sitename  cern-tape-archive-{{ include "mgm.instancename" . }}
@@ -96,7 +97,7 @@ mgm:
       mountPath: /var/log/tmp
     - name: grid-security
       mountPath: /etc/grid-security
-      readOnly: true
+      readOnly: false
     volumes:
     - name: varlog-tmp
       emptyDir: {}
@@ -120,6 +121,7 @@ fst:
       fstofs.protowfresource /ctafrontend
       fstofs.filemd_handler  attr
       fstofs.protowfusegrpc true
+      fstofs.jwttokenpath /etc/grid-security/jwt-token-grpc
       tpc.trace  all
 
   probes:
@@ -148,7 +150,7 @@ fst:
       mountPath: /var/log/tmp
     - name: grid-security
       mountPath: /etc/grid-security
-      readOnly: true
+      readOnly: false
     volumes:
     - name: varlog-tmp
       emptyDir: {}

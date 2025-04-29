@@ -116,6 +116,9 @@
         "postgresql-devel": "",
         "krb5-devel": "",
         "libtirpc-devel": "",
+        "openssl-devel": ">= 1.0.1",
+        "libcurl": "",
+        "libcurl-devel": "",
         "redhat-rpm-config": "",
         "pandoc": "",
         "which": ""

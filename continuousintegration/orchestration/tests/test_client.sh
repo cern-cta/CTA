@@ -47,6 +47,14 @@ if [ ! -z "${error}" ]; then
     exit 1
 fi
 
+CTA_TPSRV_POD="cta-tpsrv01-0"
+CLIENT_POD="cta-client-0"
+EOS_MGM_POD="eos-mgm-0"
+EOS_MGM_HOST="ctaeos"
+
+echo "Copying python script to setup JWT to ${CLIENT_POD}."
+kubectl -n ${NAMESPACE} cp setup_jwt_token.py ${CLIENT_POD}:/root/ -c client
+
 if [[ ${PREPARE} -eq 1 ]]; then
   echo "Preparing namespace for the tests"
     . prepare_tests.sh -n ${NAMESPACE}
@@ -55,11 +63,6 @@ if [[ ${PREPARE} -eq 1 ]]; then
     exit 1
   fi
 fi
-
-CTA_TPSRV_POD="cta-tpsrv01-0"
-CLIENT_POD="cta-client-0"
-EOS_MGM_POD="eos-mgm-0"
-EOS_MGM_HOST="ctaeos"
 
 echo
 echo "Copying test scripts to ${CLIENT_POD}, ${EOS_MGM_POD} and ${CTA_TPSRV_POD} pods."

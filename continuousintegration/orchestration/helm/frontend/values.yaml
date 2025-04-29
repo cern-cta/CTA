@@ -28,6 +28,17 @@ grpc:
     logger:
       logLevel: "INFO"
       logFormat: default
+    
+    tls:
+      enabled: true
+      serverKey: /etc/grpc-certs/key/server.key
+      serverCert: /etc/grpc-certs/cert/server.crt
+      caCert: ""
+
+    jwtAuth:
+      enabled: true
+      jwksUri: http://auth-keycloak:8080/realms/master/protocol/openid-connect/certs
+
 
 xrd:
   enabled: true

@@ -103,6 +103,8 @@ int main(const int argc, char *const *const argv) {
     frontend::grpc::CtaRpcImpl svc(config_file);
     // get the log context
     log::LogContext lc = svc.getFrontendService().getLogContext();
+    // if token authentication is specified, then also start the refresh thread, otherwise no point in doing this
+    svc.StartJwksRefreshThread();
 
     // use castor config to avoid dependency on xroot-ssi
     // Configuration config(config_file);
@@ -135,7 +137,7 @@ int main(const int argc, char *const *const argv) {
 
     if (useTLS) {
         lc.log(log::INFO, "Using gRPC over TLS");
-        grpc::SslServerCredentialsOptions tls_options;
+        grpc::SslServerCredentialsOptions tls_options(GRPC_SSL_DONT_REQUEST_CLIENT_CERTIFICATE);
         grpc::SslServerCredentialsOptions::PemKeyCertPair cert;
 
         if (!svc.getFrontendService().getTlsKey().has_value()) {

@@ -43,6 +43,7 @@ CTA_FRONTEND_POD="cta-frontend-0"
 # eos instance identified by SSS username
 EOS_MGM_POD="eos-mgm-0"
 EOS_INSTANCE_NAME="ctaeos"
+EOS_FST_POD="eos-fst-0"
 
 MULTICOPY_DIR_1=/eos/ctaeos/preprod/dir_1_copy
 MULTICOPY_DIR_2=/eos/ctaeos/preprod/dir_2_copy
@@ -309,6 +310,38 @@ kubectl --namespace ${NAMESPACE} exec ${CTA_CLI_POD} -c cta-cli -- cta-admin act
     --name powerusers                                                \
     --activityregex ^T0Reprocess$                                    \
     --mountpolicy ctasystest --comment "ctasystest"
+
+
+## here setup the JWT stuff : copy the script to generate the token into the client pod, it will be run there
+## create a function setup_pods_for_grpc_jwt_auth
+setup_pods_for_grpc_jwt_auth() {
+  echo "Setting up pods for grpc JWT Authentication"
+  # requirements to run the script, which should already be in the pod
+  kubectl --namespace ${NAMESPACE} exec ${CLIENT_POD} -c client -- bash -c 'dnf install -y python3-pip'
+  kubectl --namespace ${NAMESPACE} exec ${CLIENT_POD} -c client -- bash -c 'pip install jwcrypto requests pyjwt'
+
+  kubectl --namespace ${NAMESPACE} exec ${CLIENT_POD} -c client -- bash -c 'python3 /root/setup_jwt_token.py'
+  script_pid=$!
+  wait $script_pid
+  echo "done running the setup_jwt_token.py script inside client pod"
+  echo "copying the generated JWT into /tmp/token_1year.jwt"
+  kubectl --namespace ${NAMESPACE} cp ${CLIENT_POD}:/root/token_1year.jwt /tmp/token_1year.jwt
+  wait $!
+  echo "done copying to /tmp/"
+  echo "doing kubectl --namespace ${NAMESPACE} cp /tmp/token_1year.jwt ${EOS_MGM_POD}:/etc/grid-security/jwt-token-grpc"
+  kubectl --namespace ${NAMESPACE} cp /tmp/token_1year.jwt ${EOS_MGM_POD}:/etc/grid-security/jwt-token-grpc
+  if [ $? -ne 0 ]; then
+    exit 1
+  fi
+  echo "doing kubectl --namespace ${NAMESPACE} cp /tmp/token_1year.jwt ${EOS_FST_POD}:/etc/grid-security/jwt-token-grpc"
+  kubectl --namespace ${NAMESPACE} cp /tmp/token_1year.jwt ${EOS_FST_POD}:/etc/grid-security/jwt-token-grpc
+  if [ $? -ne 0 ]; then
+    exit 1
+  fi
+  echo "Set up complete for JWT Authentication"
+}
+
+setup_pods_for_grpc_jwt_auth
 
 echo "Labeling tapes:"
 # add all tapes

@@ -61,6 +61,18 @@ spec:
           subPath: eos.sss.keytab
         - name: eos-sss-keytab-fixedownership
           mountPath: /root/sss_keytab/output
+      - name: init-download-grpc-health-probe
+        image: {{ include "common.images.busybox" . }}
+        command: ["sh", "-c"]
+        args:
+          - |
+            mkdir -p /grpc-health-probe && \
+            wget -qO/grpc-health-probe/grpc-health-probe https://github.com/grpc-ecosystem/grpc-health-probe/releases/download/v0.4.13/grpc_health_probe-linux-amd64 && \
+            chmod +x /grpc-health-probe/grpc-health-probe
+        volumeMounts:
+          - name: grpc-health-probe-bin
+            mountPath: /grpc-health-probe
+            subPath: grpc-health-probe
       containers:
       - name: cta-frontend
         image: {{ include "ctafrontend.image" . }}
@@ -69,9 +81,13 @@ spec:
         command: ["bash", "/scripts/ctafrontend-grpc.sh"]
         readinessProbe:
           exec:
-            command: ["true"]
-          # grpc:
-          #   port: {{ .Values.grpc.port }}
+            command:
+              - /grpc-health-probe/grpc-health-probe
+              - -addr=localhost:{{ .Values.grpc.port }}
+            {{- if .Values.grpc.conf.tls.enabled }}
+              - -tls
+              - -tls-no-verify
+            {{- end }}
           initialDelaySeconds: 5
           periodSeconds: 5
           timeoutSeconds: 3
@@ -141,6 +157,9 @@ spec:
           mountPath: /etc/grpc-certs/cert
         - name: grpc-server-key
           mountPath: /etc/grpc-certs/key
+        - name: grpc-health-probe-bin
+          mountPath: /grpc-health-probe
+          subPath: grpc-health-probe
         {{ include "common.extraVolumeMounts" . | nindent 8 }}
       volumes:
       - name: scripts-volume
@@ -178,6 +197,8 @@ spec:
       - name: grpc-server-key
         secret:
           secretName: server-key
+      - name: grpc-health-probe-bin
+        emptyDir: {}
       - name: eos-sss-keytab-fixedownership
         emptyDir: {}
       - name: krb5-conf

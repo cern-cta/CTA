@@ -81,12 +81,14 @@ add_library(unitTestHelper
   TempFile.cpp TempDirectory.cpp)
 
 add_library(integrationTestHelperTests SHARED
-  SubprocessIntegrationTests.cpp)
+  SubprocessIntegrationTests.cpp
+  JwkCacheUnitTests.cpp)
 set_property(TARGET integrationTestHelperTests PROPERTY SOVERSION "${CTA_SOVERSION}")
 set_property(TARGET integrationTestHelperTests PROPERTY   VERSION "${CTA_LIBVERSION}")
 
 target_link_libraries(integrationTestHelperTests
-  ctacommon)
+  ctacommon
+  JwkCache)
 
 add_executable(cta-integrationTests
   integration_tests.cpp)

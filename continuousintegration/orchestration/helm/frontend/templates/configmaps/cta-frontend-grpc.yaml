@@ -68,5 +68,9 @@ data:
     grpc.port {{ .Values.grpc.port }}
 
     # TLS related variables
-    grpc.tls false
+    grpc.tls {{ .Values.grpc.conf.tls.enabled }}
+    grpc.tls.key {{ .Values.grpc.conf.tls.serverKey }}
+    grpc.tls.cert {{ .Values.grpc.conf.tls.serverCert }}
+    grpc.jwks.uri {{ .Values.grpc.conf.jwtAuth.jwksUri }}
+    grpc.jwt.auth {{ .Values.grpc.conf.jwtAuth.enabled }}
 {{- end }}

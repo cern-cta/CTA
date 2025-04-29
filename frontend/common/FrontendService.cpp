@@ -397,6 +397,50 @@ FrontendService::FrontendService(const std::string& configFilename) : m_archiveF
     m_threads = threads.value();
   }
 
+  auto jwksUri = config.getOptionValueStr("grpc.jwks.uri");
+  if (jwksUri.has_value()) {
+    m_jwksUri = jwksUri.value();
+  }
+
+  std::optional<bool> jwtAuth = config.getOptionValueBool("grpc.jwt.auth");
+  m_jwtAuth = jwtAuth.value_or(false);  // default value is false
+  if (!m_tls && m_jwtAuth) {
+    throw exception::UserError("grpc.jwt.auth is set to true when grpc.tls is set to false in configuration file " \
+      + configFilename + ". Cannot use tokens over unencrypted channel, tls must be enabled.");
+  }
+
+  if (m_jwtAuth && !m_jwksUri.has_value()) {
+    throw exception::UserError("grpc.jwt.auth is set to true but no endpoint is provided in grpc.jwks.uri in configuration file " + configFilename);
+  }
+  
+  auto cacheRefreshInterval = config.getOptionValueInt("grpc.jwks.cache.refresh_interval_secs");
+  if (cacheRefreshInterval.has_value() && cacheRefreshInterval.value() < 0) {
+      throw exception::UserError("grpc.jwks.cache.refresh_interval_secs is set to a negative value in configuration file " + configFilename);
+  }
+  m_cacheRefreshInterval = cacheRefreshInterval;
+
+  auto pubkeyTimeout = config.getOptionValueInt("grpc.jwks.cache.timeout_secs");
+  if (pubkeyTimeout.has_value() && pubkeyTimeout.value() < 0) {
+    throw exception::UserError("grpc.jwks.cache.timeout_secs is set to a negative value in configuration file " + configFilename);
+  }
+  m_pubkeyTimeout = pubkeyTimeout;
+  
+  if (m_jwtAuth) {
+    if (!m_cacheRefreshInterval.has_value()) {
+      log(log::WARNING, "No value set for grpc.jwks.cache.refresh_interval_secs, using default value");
+      m_cacheRefreshInterval = std::optional<int>(600);
+    }
+    if (!m_pubkeyTimeout.has_value()) {
+      log(log::WARNING, "No value set for grpc.jwks.cache.timeout_secs, using default value");
+      m_pubkeyTimeout = std::optional<int>(600);
+    }
+    if (m_pubkeyTimeout.value() < m_cacheRefreshInterval.value()) {
+      log(log::ERR, "Cannot use a value for grpc.jwks.cache.timeout_secs that is less than grpc.jwks.cache.refresh_interval_secs."
+      "Setting timeout_secs equal to cache_refresh_interval_secs.");
+      m_pubkeyTimeout = std::optional<int>(m_cacheRefreshInterval.value());
+    }
+  }
+
   // All done
   log(log::INFO, std::string("cta-frontend started"), {log::Param("version", CTA_VERSION)});
 }
