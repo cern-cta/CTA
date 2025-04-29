@@ -211,7 +211,7 @@ queueForFailure:;
     // the queue gets created with a different name and they don't
     // step into each others. :)
     if (isQueueCleanup){
-      // activeVid = MyQueue;
+      activeVid += "Cleanup";
     }
     Helpers::getLockedAndFetchedJobQueue<RetrieveQueue>(rq, rql, agentReference, activeVid, getQueueType(), lc);
     // Enqueue the job
