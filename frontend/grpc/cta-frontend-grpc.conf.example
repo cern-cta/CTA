@@ -81,6 +81,17 @@ cta.log.url file:/var/log/cta/cta-frontend.log
 #grpc.tls.chain /path/to/CA/chain
 #
 
+# URI of JWKS endpoint
+# grpc.jwks.uri http://auth-keycloak:8080/realms/master/protocol/openid-connect/certs
+#
+
+# Cache parameters for fetching / caching the public keys used to sign JWT tokens
+# refresh interval in seconds
+# grpc.jwks.cache.refresh_interval_secs 600
+#
+# public key caching interval (can be different from the cache refresh interval)
+# grpc.jwks.cache.timeout_secs 600
+
 # gRPC number of threads
 #grpc.numberofthreads nthreads
 
