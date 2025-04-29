@@ -15,7 +15,7 @@
  *                 You should have received a copy of the GNU General Public License
  *                 along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
-#include "FrontendGrpcService.h"
+#include "FrontendGrpcService.hpp"
 
 #include "catalogue/Catalogue.hpp"
 #include "common/log/LogLevel.hpp"
@@ -23,12 +23,54 @@
 #include "common/dataStructures/SecurityIdentity.hpp"
 #include "frontend/common/FrontendService.hpp"
 #include "frontend/common/WorkflowEvent.hpp"
+#include "frontend/common/ValidateToken.hpp"
+
+#include "jwt-cpp/jwt.h"
+#include <optional>
 
 /*
  * Validate the storage class and issue the archive ID which should be used for the Archive request
  */
 
 namespace cta::frontend::grpc {
+
+Status
+CtaRpcImpl::extractAuthHeaderAndValidate(::grpc::ServerContext* context) {
+  cta::log::LogContext lc(m_frontendService->getLogContext());
+  cta::log::ScopedParamContainer sp(lc);
+  // skip any metadata checks in case JWT Auth is disabled
+  auto jwtAuth = m_frontendService->getJwtAuth();
+  if (!jwtAuth) {
+    lc.log(cta::log::INFO, "Skipping token validation step as token authentication is disabled");
+    return ::grpc::Status::OK;
+  }
+  // Retrieve metadata from the incoming request
+  auto metadata = context->client_metadata();
+  std::string token;
+
+  // Search for the authorization token in the metadata
+  auto it = metadata.find("authorization");
+  if (it != metadata.end()) {
+      // convert from grpc structure to string
+      const ::grpc::string_ref& r = it->second;
+      std::string auth_header = std::string(r.data(), r.size());  // "Bearer <token>"
+      token = auth_header.substr(7); // Extract the token part, use substr(7) because that is the length of "Bearer" plus a space character
+      lc.log(cta::log::DEBUG, std::string("Received token: ") + token);
+      if (token.empty()) {
+        lc.log(cta::log::WARNING, "Authorization token missing");
+        return ::grpc::Status(::grpc::StatusCode::UNAUTHENTICATED, "Missing Authorization token");
+      }
+  } else {
+      lc.log(cta::log::WARNING, "Authorization header missing");
+      return ::grpc::Status(::grpc::StatusCode::UNAUTHENTICATED, "Missing Authorization header");
+  }
+  if (validateToken(token, m_pubkeyCache, lc)) {
+    return ::grpc::Status::OK;
+  } else {
+    lc.log(cta::log::WARNING, "JWT authorization process error. Token validation failed.");
+    return ::grpc::Status(::grpc::StatusCode::UNAUTHENTICATED, "JWT authorization process error. Token validation failed.");
+  }
+}
 
 Status
 CtaRpcImpl::ProcessGrpcRequest(const cta::xrd::Request* request, cta::xrd::Response* response, cta::log::LogContext &lc) const {
@@ -73,6 +115,13 @@ CtaRpcImpl::Create(::grpc::ServerContext* context, const cta::xrd::Request* requ
   cta::log::LogContext lc(m_frontendService->getLogContext());
   cta::log::ScopedParamContainer sp(lc);
 
+  Status status = extractAuthHeaderAndValidate(context);
+  if (!status.ok()) {
+    response->set_type(cta::xrd::Response::RSP_ERR_USER);
+    response->set_message_txt(status.error_message());
+    return status;
+  }
+
   sp.add("remoteHost", context->peer());
   sp.add("request", "create");
   // check that the workflow is set appropriately for the create event
@@ -88,6 +137,12 @@ Status
 CtaRpcImpl::Archive(::grpc::ServerContext* context, const cta::xrd::Request* request, cta::xrd::Response* response) {
   cta::log::LogContext lc(m_frontendService->getLogContext());
   cta::log::ScopedParamContainer sp(lc);
+  Status status = extractAuthHeaderAndValidate(context);
+  if (!status.ok()) {
+    response->set_type(cta::xrd::Response::RSP_ERR_USER);
+    response->set_message_txt(status.error_message());
+    return status;
+  }
 
   sp.add("remoteHost", context->peer());
   sp.add("request", "archive");
@@ -110,6 +165,13 @@ CtaRpcImpl::Archive(::grpc::ServerContext* context, const cta::xrd::Request* req
 
 Status
 CtaRpcImpl::Delete(::grpc::ServerContext* context, const cta::xrd::Request* request, cta::xrd::Response* response) {
+  Status status = extractAuthHeaderAndValidate(context);
+  if (!status.ok()) {
+    response->set_type(cta::xrd::Response::RSP_ERR_USER);
+    response->set_message_txt(status.error_message());
+    return status;
+  }
+
   cta::log::LogContext lc(m_frontendService->getLogContext());
   cta::log::ScopedParamContainer sp(lc);
 
@@ -136,6 +198,13 @@ CtaRpcImpl::Delete(::grpc::ServerContext* context, const cta::xrd::Request* requ
 
 Status
 CtaRpcImpl::Retrieve(::grpc::ServerContext* context, const cta::xrd::Request* request, cta::xrd::Response* response) {
+  Status status = extractAuthHeaderAndValidate(context);
+  if (!status.ok()) {
+    response->set_type(cta::xrd::Response::RSP_ERR_USER);
+    response->set_message_txt(status.error_message());
+    return status;
+  }
+
   cta::log::LogContext lc(m_frontendService->getLogContext());
   cta::log::ScopedParamContainer sp(lc);
 
@@ -178,6 +247,13 @@ CtaRpcImpl::Retrieve(::grpc::ServerContext* context, const cta::xrd::Request* re
 Status CtaRpcImpl::CancelRetrieve(::grpc::ServerContext* context,
                                   const cta::xrd::Request* request,
                                   cta::xrd::Response* response) {
+  Status status = extractAuthHeaderAndValidate(context);
+  if (!status.ok()) {
+    response->set_type(cta::xrd::Response::RSP_ERR_USER);
+    response->set_message_txt(status.error_message());
+    return status;
+  }
+
   cta::log::LogContext lc(m_frontendService->getLogContext());
   cta::log::ScopedParamContainer sp(lc);
 
@@ -217,6 +293,12 @@ Status CtaRpcImpl::CancelRetrieve(::grpc::ServerContext* context,
  * and makes the rpc calls available through this class
  */
 CtaRpcImpl::CtaRpcImpl(const std::string& config)
-    : m_frontendService(std::make_unique<cta::frontend::FrontendService>(config)) {}
-
+    : m_frontendService(std::make_unique<cta::frontend::FrontendService>(config)),
+      m_pubkeyCache(m_frontendService->getJwtAuth() ?
+                      std::make_shared<JwkCache>(
+                        m_jwksFetcher,
+                        m_frontendService->getJwksUri().value_or(""),
+                        m_frontendService->getPubkeyTimeout().value(),  // only empty if jwtAuth is not enabled
+                        m_frontendService->getLogContext()) :
+                      nullptr) {}
 } // namespace cta::frontend::grpc

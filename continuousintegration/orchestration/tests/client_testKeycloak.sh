@@ -29,3 +29,9 @@ response=$(curl -X POST http://auth-keycloak:8080/realms/master/protocol/openid-
 access_token=$(echo ${response} | jq -r .access_token)
 
 echo "Access token: $access_token"
+
+## Run the python script here
+dnf install -y python3-pip
+pip install jwcrypto requests pyjwt
+
+python3 /root/test_jwt_validate.py --token $access_token --jwkUri http://auth-keycloak:8080/realms/master/protocol/openid-connect/certs

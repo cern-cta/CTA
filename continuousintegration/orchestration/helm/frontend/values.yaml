@@ -6,6 +6,7 @@ grpc:
   enabled: false
   port: 10956
   conf:
+    numberOfThreads: 512
     catalogue:
       numberOfConnections: 10
       # Reduced value for test environment
@@ -28,6 +29,17 @@ grpc:
     logger:
       logLevel: "INFO"
       logFormat: json
+    
+    tls:
+      enabled: true
+      serverKey: /etc/grpc-certs/key/server.key
+      serverCert: /etc/grpc-certs/cert/server.crt
+      caCert: ""
+
+    jwtAuth:
+      enabled: true
+      jwksUri: http://auth-keycloak:8080/realms/master/protocol/openid-connect/certs
+
 
 xrd:
   enabled: true

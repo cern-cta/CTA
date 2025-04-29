@@ -70,16 +70,33 @@ cta.log.url file:/var/log/cta/cta-frontend.log
 #  TLS related variables. Only used when TLS is true
 ####################################
 # Use TLS (previously the command-line option --tls)
-#grpc.tls true/false
+#grpc.tls.enabled true/false
 #  TLS service key file
-#grpc.tls.key /path/to/key
+#grpc.tls.server_key_path /path/to/key
 #
 #  TLS service certificate file
-#grpc.tls.cert /path/to/cert
+#grpc.tls.server_cert_path /path/to/cert
 #
 #  TLS CA chain file
-#grpc.tls.chain /path/to/CA/chain
+#grpc.tls.chain_cert_path /path/to/CA/chain
 #
+
+####################################
+# JWT Authentication related variables
+####################################
+# Use JWT auth
+# grpc.jwt.enabled true/false (cannot be true if grpc.tls.enabled is false)
+#
+# URI of JWKS endpoint
+# grpc.jwks.uri http://auth-keycloak:8080/realms/master/protocol/openid-connect/certs
+#
+
+# Cache parameters for fetching / caching the public keys used to sign JWT tokens
+# refresh interval in seconds
+# grpc.jwks.cache.refresh_interval_secs 600
+#
+# public key caching interval (can be different from the cache refresh interval, if not set it means no expiration)
+# grpc.jwks.cache.timeout_secs 600
 
 # gRPC number of threads
 #grpc.numberofthreads nthreads

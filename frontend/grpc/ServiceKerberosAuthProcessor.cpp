@@ -16,11 +16,11 @@
  */
  
 
-#include "ServiceAuthProcessor.hpp"
+#include "ServiceKerberosAuthProcessor.hpp"
 
 #include "common/exception/Exception.hpp"
 
-::grpc::Status cta::frontend::grpc::server::ServiceAuthProcessor::Process(
+::grpc::Status cta::frontend::grpc::server::ServiceKerberosAuthProcessor::Process(
   const ::grpc::AuthMetadataProcessor::InputMetadata& authMetadata, ::grpc::AuthContext* pAuthCtx,
   ::grpc::AuthMetadataProcessor::OutputMetadata* pConsumedAuthMetadata,
   ::grpc::AuthMetadataProcessor::OutputMetadata* pResponseMetadata) {
