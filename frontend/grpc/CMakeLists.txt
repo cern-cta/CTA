@@ -60,7 +60,7 @@ add_executable(cta-frontend-async-grpc
   FrontendCmd.cpp
   AsyncServer.cpp
   TokenStorage.cpp
-  ServiceAuthProcessor.cpp
+  ServiceKerberosAuthProcessor.cpp
   ServerTapeLsRequestHandler.cpp
   ServerNegotiationRequestHandler.cpp
   RequestMessage.cpp
