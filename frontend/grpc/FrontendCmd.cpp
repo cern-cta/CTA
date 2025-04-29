@@ -16,7 +16,7 @@
  */
 
 #include "FrontendCmd.hpp"
-#include "ServiceAuthProcessor.hpp"
+#include "ServiceKerberosAuthProcessor.hpp"
 #include "AsyncServer.hpp"
 #include "ServerNegotiationRequestHandler.hpp"
 #include "ServerTapeLsRequestHandler.hpp"
@@ -263,7 +263,7 @@ int cta::frontend::grpc::server::FrontendCmd::main(const int argc, char** argv) 
     // std::shared_ptr<::grpc::ServerCredentials> spServerCredentials = ::grpc::InsecureServerCredentials();
     // std::shared_ptr<::grpc::ServerCredentials> spServerCredentials = ::grpc::experimental::LocalServerCredentials(grpc_local_connect_type::LOCAL_TCP);
     
-    std::shared_ptr<ServiceAuthProcessor> spAuthProcessor = std::make_shared<ServiceAuthProcessor>(tokenStorage);
+    std::shared_ptr<ServiceKerberosAuthProcessor> spAuthProcessor = std::make_shared<ServiceKerberosAuthProcessor>(tokenStorage);
     
     server.run(spServerCredentials, spAuthProcessor);
   } catch(const cta::exception::Exception& e) {

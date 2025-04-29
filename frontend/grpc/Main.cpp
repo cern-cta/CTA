@@ -15,7 +15,7 @@
  *                 You should have received a copy of the GNU General Public License
  *                 along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
-#include "FrontendGrpcService.h"
+#include "FrontendGrpcService.hpp"
 #include "version.h"
 
 #include "catalogue/Catalogue.hpp"
@@ -103,6 +103,8 @@ int main(const int argc, char *const *const argv) {
     frontend::grpc::CtaRpcImpl svc(config_file);
     // get the log context
     log::LogContext lc = svc.getFrontendService().getLogContext();
+    // if token authentication is specified, then also start the refresh thread, otherwise no point in doing this
+    svc.StartJwksRefreshThread();
 
     // use castor config to avoid dependency on xroot-ssi
     // Configuration config(config_file);
@@ -129,13 +131,13 @@ int main(const int argc, char *const *const argv) {
     // read TLS value from config
     useTLS = svc.getFrontendService().getTls();
 
-    // get number of threads, maybe consider setting it too if unset?
+    // get number of threads
     int threads = svc.getFrontendService().getThreads().value_or(8 * std::thread::hardware_concurrency());
     
 
     if (useTLS) {
         lc.log(log::INFO, "Using gRPC over TLS");
-        grpc::SslServerCredentialsOptions tls_options;
+        grpc::SslServerCredentialsOptions tls_options(GRPC_SSL_DONT_REQUEST_CLIENT_CERTIFICATE);
         grpc::SslServerCredentialsOptions::PemKeyCertPair cert;
 
         if (!svc.getFrontendService().getTlsKey().has_value()) {
