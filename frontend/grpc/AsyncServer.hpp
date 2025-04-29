@@ -20,7 +20,7 @@
 #include "cta_frontend.pb.h"
 #include "cta_frontend.grpc.pb.h"
 #include "IHandler.hpp"
-#include "ServiceAuthProcessor.hpp"
+#include "ServiceKerberosAuthProcessor.hpp"
 #include "TokenStorage.hpp"
 #include "catalogue/Catalogue.hpp"
 #include "common/log/Logger.hpp"
