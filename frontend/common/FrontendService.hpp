@@ -150,6 +150,26 @@ public:
    */
   const std::string& getInstanceName() const { return m_instanceName; }
 
+  /*
+   * Get the url to query for the public keys
+   */
+  const std::optional<std::string> getJwksUri() const { return m_jwksUri; }
+
+  /*
+   * Get the interval (in seconds) after which to update the cache of public keys
+   */
+  const std::optional<int> getCacheRefreshInterval() const { return m_cacheRefreshInterval; }
+
+  /*
+   * Get the interval (in seconds) after which to update public key entries in the cache
+   */
+  const std::optional<int> getPubkeyTimeout() const { return m_pubkeyTimeout; }
+
+  /*
+   * Get the jwtAuth value
+   */
+  bool getJwtAuth() const { return m_jwtAuth; }
+
 private:
   /*!
    * Set the verification mount policy
@@ -186,6 +206,10 @@ private:
   std::optional<std::string>                    m_tlsChain;                     //!< The TLS CA chain file
   uint64_t                                      m_missingFileCopiesMinAgeSecs;  //!< Missing tape file copies minimum age.
   std::string                                   m_instanceName;               //!< value of cta.instance_name in the CTA frontend configuration file
+  std::optional<std::string>                    m_jwksUri;                      //!< The endpoint to obtain public keys from, for validating tokens
+  std::optional<int>                            m_cacheRefreshInterval;         //!< The number of seconds after which to update the cache of public keys used to sign JWT tokens
+  std::optional<int>                            m_pubkeyTimeout;        //!< The number of seconds after which to update the cache entry for a cached key
+  bool                                          m_jwtAuth;                      //!< Feature flag to guard JWT auth when TLS is enabled
   // clang-format on
 };
 

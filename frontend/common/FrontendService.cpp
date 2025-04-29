@@ -374,17 +374,17 @@ FrontendService::FrontendService(const std::string& configFilename) : m_archiveF
   // Get the mount policy name for verification requests
 
   // Get the gRPC-specific values, if they are set (getOptionValue returns an std::optional)
-  std::optional<bool> tls = config.getOptionValueBool("grpc.tls");
+  std::optional<bool> tls = config.getOptionValueBool("grpc.tls.enabled");
   m_tls = tls.value_or(false);  // default value is false
-  auto TlsKey = config.getOptionValueStr("grpc.tls.key");
+  auto TlsKey = config.getOptionValueStr("grpc.tls.server_key_path");
   if (TlsKey.has_value()) {
     m_tlsKey = TlsKey.value();
   }
-  auto TlsCert = config.getOptionValueStr("grpc.tls.cert");
+  auto TlsCert = config.getOptionValueStr("grpc.tls.server_cert_path");
   if (TlsCert.has_value()) {
     m_tlsCert = TlsCert.value();
   }
-  auto TlsChain = config.getOptionValueStr("grpc.tls.chain");
+  auto TlsChain = config.getOptionValueStr("grpc.tls.chain_cert_path");
   if (TlsChain.has_value()) {
     m_tlsChain = TlsChain.value();
   }
@@ -398,6 +398,55 @@ FrontendService::FrontendService(const std::string& configFilename) : m_archiveF
       throw exception::UserError("value of grpc.numberofthreads must be at least 1");
     }
     m_threads = threads.value();
+  }
+
+  auto jwksUri = config.getOptionValueStr("grpc.jwks.uri");
+  if (jwksUri.has_value()) {
+    m_jwksUri = jwksUri.value();
+  }
+
+  std::optional<bool> jwtAuth = config.getOptionValueBool("grpc.jwt.enabled");
+  m_jwtAuth = jwtAuth.value_or(false);  // default value is false
+  if (!m_tls && m_jwtAuth) {
+    throw exception::UserError("grpc.jwt.auth is set to true when grpc.tls is set to false in configuration file " +
+                               configFilename + ". Cannot use tokens over unencrypted channel, tls must be enabled.");
+  }
+
+  if (m_jwtAuth && !m_jwksUri.has_value()) {
+    throw exception::UserError(
+      "grpc.jwt.auth is set to true but no endpoint is provided in grpc.jwks.uri in configuration file " +
+      configFilename);
+  }
+
+  auto cacheRefreshInterval = config.getOptionValueInt("grpc.jwks.cache.refresh_interval_secs");
+  if (cacheRefreshInterval.has_value() && cacheRefreshInterval.value() < 0) {
+    throw exception::UserError(
+      "grpc.jwks.cache.refresh_interval_secs is set to a negative value in configuration file " + configFilename);
+  }
+  m_cacheRefreshInterval = cacheRefreshInterval;
+
+  auto pubkeyTimeout = config.getOptionValueInt("grpc.jwks.cache.timeout_secs");
+  if (pubkeyTimeout.has_value() && pubkeyTimeout.value() < 0) {
+    throw exception::UserError("grpc.jwks.cache.timeout_secs is set to a negative value in configuration file " +
+                               configFilename);
+  }
+  m_pubkeyTimeout = pubkeyTimeout;
+
+  if (m_jwtAuth) {
+    if (!m_cacheRefreshInterval.has_value()) {
+      log(log::WARNING, "No value set for grpc.jwks.cache.refresh_interval_secs, using default value");
+      m_cacheRefreshInterval = 600;
+    }
+    if (!m_pubkeyTimeout.has_value()) {
+      log(log::WARNING, "No value set for grpc.jwks.cache.timeout_secs, cached public keys will not expire");
+      m_pubkeyTimeout = 0;
+    }
+    if (m_pubkeyTimeout.value() != 0 && m_pubkeyTimeout.value() < m_cacheRefreshInterval.value()) {
+      log(log::WARNING,
+          "Cannot use a value for grpc.jwks.cache.timeout_secs that is less than grpc.jwks.cache.refresh_interval_secs."
+          "Setting timeout_secs equal to cache_refresh_interval_secs.");
+      m_pubkeyTimeout = std::optional<int>(m_cacheRefreshInterval.value());
+    }
   }
 
   // All done
