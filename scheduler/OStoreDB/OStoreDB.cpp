@@ -265,6 +265,7 @@ OStoreDB::getRetrieveQueuesCleanupInfo(log::LogContext& logContext) {
     }
 
     ret.push_back(SchedulerDatabase::RetrieveQueueCleanupInfo());
+    ret.back().queueAddress = rqueue.getAddressIfSet();
     ret.back().vid = rqueue.getVid();
     // If this functions is called getRetrieveQueuesCleanupInfo(), why are we not
     // filtering the queues here? But passing an object with thousands of queues

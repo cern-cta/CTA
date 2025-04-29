@@ -62,7 +62,7 @@ public:
   }
 
   objectstore::QueueCleanupRunner getQueueCleanupRunner(catalogue::Catalogue& catalogue, SchedulerDatabase& oStoreDb) {
-    return objectstore::QueueCleanupRunner(m_backendPopulator->getAgentReference(), oStoreDb, catalogue);
+    return objectstore::QueueCleanupRunner(*m_backend, m_backendPopulator->getAgentReference(), oStoreDb, catalogue);
   }
 
 private:

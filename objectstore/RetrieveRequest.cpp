@@ -206,6 +206,13 @@ queueForFailure:;
     // We now need to grab the failed queue and queue the request.
     RetrieveQueue rq(m_objectStore);
     ScopedExclusiveLock rql;
+    // If garbage collect retrieve request is only called by the cleanup
+    // process we can add some extra info in the `activeVid` so that
+    // the queue gets created with a different name and they don't
+    // step into each others. :)
+    if (isQueueCleanup){
+      // activeVid = MyQueue;
+    }
     Helpers::getLockedAndFetchedJobQueue<RetrieveQueue>(rq, rql, agentReference, activeVid, getQueueType(), lc);
     // Enqueue the job
     objectstore::MountPolicySerDeser mp;

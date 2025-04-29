@@ -42,7 +42,7 @@ public:
   static constexpr int DEFAULT_BATCH_SIZE = 500;
   static constexpr double DEFAULT_HEARTBEAT_TIMEOUT = 120;
 
-  QueueCleanupRunner(AgentReference &agentReference, SchedulerDatabase & oStoreDb, catalogue::Catalogue &catalogue,
+  QueueCleanupRunner(Backend & os, AgentReference &agentReference, SchedulerDatabase & oStoreDb, catalogue::Catalogue &catalogue,
                      std::optional<double> heartBeatTimeout = std::nullopt, std::optional<int> batchSize = std::nullopt);
 
   ~QueueCleanupRunner() = default;
@@ -57,6 +57,7 @@ private:
     double lastUpdateTimestamp;
   };
 
+  AgentRegister &m_objectStore;
   catalogue::Catalogue &m_catalogue;
   SchedulerDatabase &m_db;
   std::map<std::string, HeartbeatStatus> m_heartbeatCheck;

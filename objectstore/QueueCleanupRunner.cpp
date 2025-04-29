@@ -19,8 +19,9 @@
 
 namespace cta::objectstore {
 
-QueueCleanupRunner::QueueCleanupRunner(AgentReference &agentReference, SchedulerDatabase & oStoreDb, catalogue::Catalogue &catalogue,
+QueueCleanupRunner::QueueCleanupRunner(Backend &os, AgentReference &agentReference, SchedulerDatabase & oStoreDb, catalogue::Catalogue &catalogue,
                                        std::optional<double> heartBeatTimeout, std::optional<int> batchSize) :
+        m_agentRegister(os),
         m_catalogue(catalogue), m_db(oStoreDb),
         m_batchSize(batchSize.value_or(DEFAULT_BATCH_SIZE)), m_heartBeatTimeout(heartBeatTimeout.value_or(DEFAULT_HEARTBEAT_TIMEOUT)) {
 }
@@ -35,36 +36,32 @@ void QueueCleanupRunner::runOnePass(log::LogContext &logContext) {
   auto queueVidSet = std::set<std::string, std::less<>>();
   auto queuesForCleanup = m_db.getRetrieveQueuesCleanupInfo(logContext);
 
+  // Get list of alive agents if the cleanup registered agent is still alive do nothing.
+  std::list<std::string> agentList = m_agentRegister.getAgents();
+
   // Check, one-by-one, queues need to be cleaned up
   for (const auto &queue: queuesForCleanup) {
-
     // Do not clean a queue that does not have the cleanup flag set true
     if (!queue.doCleanup) {
       continue; // Ignore queue
     }
 
-    // Check heartbeat of queues to know if they are being cleaned up <- why not use a flag?
-    if (queue.assignedAgent.has_value()) {
-      if ((m_heartbeatCheck.count(queue.vid) == 0) || (m_heartbeatCheck[queue.vid].heartbeat != queue.heartbeat)) {
-        // If this queue was never seen before, wait for another turn to check if its heartbeat has timed out.
-        // If heartbeat has been updated, then the queue is being actively processed by another agent.
-        // Record new timestamp and move on.
-        m_heartbeatCheck[queue.vid].agent = queue.assignedAgent.value();
-        m_heartbeatCheck[queue.vid].heartbeat = queue.heartbeat;
-        m_heartbeatCheck[queue.vid].lastUpdateTimestamp = m_timer.secs();
-        continue; // Ignore queue
-      } else {
-        // If heartbeat has not been updated, check how long ago the last update happened
-        // If not enough time has passed, do not consider this queue for cleanup
-        auto lastHeartbeatTimestamp = m_heartbeatCheck[queue.vid].lastUpdateTimestamp;
-        if ((m_timer.secs() - lastHeartbeatTimestamp) < m_heartBeatTimeout) {
-          continue; // Ignore queue
-        }
-      }
+    if (queue.assignedAgent.has_value() &&
+        std::find(agentList.begin(), agentList.end(),
+                  queue.assignedAgent.value())
+        != agentList.end()) {
+      // We have found a queue that is being cleaned up by another agent. Locking is downstream so we have to pass the agent address to know if .
+      // If the agent has been cleaned up in the mean time we will be picked up by the
+      // tape server that tries to mount it later on. Garbage collection does not take care of any of this.
+      continue;
+
+      // I guess we could remove the following hearbeat section if the agent does not exist anymore. Can agents get recreated with the same hearbeat in a short period of time? If that is the case then we can have problems with this approach if we are not careful on how we do this.
+      // Current fear is that an agent gets recreated quick enough that it finds that it is still
+      // alive and the hearbeat is set . But maintenance processes live for long and this should
+      // not be the case. But stil...
     }
     queueVidSet.insert(queue.vid);
   }
-
 
   common::dataStructures::VidToTapeMap vidToTapesMap;
 
@@ -153,8 +150,11 @@ void QueueCleanupRunner::runOnePass(log::LogContext &logContext) {
 
       // We can see what queue we are getting the jobs from in the 'Algorithms::popNextBatch()'
       // message
+      // In here we do not know from which queue we actually grabbed the jobs...
       auto dbRet = m_db.getNextRetrieveJobsToTransferBatch(queueVid, m_batchSize, logContext);
+
       if (dbRet.empty()) break;
+
       std::list<cta::SchedulerDatabase::RetrieveJob *> jobPtList;
       for (auto &j: dbRet) {
         jobPtList.push_back(j.get());
@@ -167,25 +167,6 @@ void QueueCleanupRunner::runOnePass(log::LogContext &logContext) {
                    .add("jobMovingTime", jobMovingTime)
                    .add("tapeVid", queueVid);
       logContext.log(cta::log::INFO,"In QueueCleanupRunner::runOnePass(): Queue jobs moved.");
-
-      // Tick heartbeat
-      try {
-        m_db.tickRetrieveQueueCleanupHeartbeat(queueVid);
-      } catch (OStoreDB::RetrieveQueueNotFound & ex) {
-        break; // Queue was already deleted, probably after all the requests have been removed
-      } catch (OStoreDB::RetrieveQueueNotReservedForCleanup & ex) {
-        log::ScopedParamContainer paramsExcMsg(logContext);
-        paramsExcMsg.add("exceptionMessage", ex.getMessageValue());
-        logContext.log(log::WARNING,
-                       "In QueueCleanupRunner::runOnePass(): Unable to update heartbeat of retrieve queue cleanup, due to it not being reserved by agent. Aborting cleanup.");
-        break;
-      } catch (cta::exception::Exception & ex) {
-        log::ScopedParamContainer paramsExcMsg(logContext);
-        paramsExcMsg.add("exceptionMessage", ex.getMessageValue());
-        logContext.log(log::WARNING,
-                       "In QueueCleanupRunner::runOnePass(): Unable to update heartbeat of retrieve queue cleanup for unknown reasons. Aborting cleanup.");
-        break;
-      }
     }
 
     // Finally, update the tape state out of PENDING

@@ -311,6 +311,7 @@ public:
    * A representation of the cleanup request status of a retrieve queue.
    */
   struct RetrieveQueueCleanupInfo {
+    std::string queueAddress;
     std::string vid;
     bool doCleanup;
     std::optional<std::string> assignedAgent;
