@@ -368,11 +368,9 @@ public:
       m_locked = true;
     }
     const auto lockAcquireTime = timer.secs();
-    lockAcquireDurationHistogram->Record(lockAcquireTime, {{"lock.type", "ScopedExclusiveLock"},
-                                                           {"object.address", oo.getAddressIfSet()}},
+    lockAcquireDurationHistogram->Record(lockAcquireTime, {{"lock.type", "ScopedExclusiveLock"}},
                                          opentelemetry::context::RuntimeContext::GetCurrent());
-    lockCounter->Add(1, {{"lock.type", "ScopedExclusiveLock"},
-                         {"object.address", oo.getAddressIfSet()}});
+    lockCounter->Add(1, {{"lock.type", "ScopedExclusiveLock"}});
   }
 
   virtual ~ScopedSharedLock() {
@@ -418,11 +416,9 @@ public:
       m_locked = true;
     }
     const auto lockAcquireTime = timer.secs();
-    lockAcquireDurationHistogram->Record(lockAcquireTime, {{"lock.type", "ScopedExclusiveLock"},
-                                                           {"object.address", oo.getAddressIfSet()}},
+    lockAcquireDurationHistogram->Record(lockAcquireTime, {{"lock.type", "ScopedExclusiveLock"}},
       opentelemetry::context::RuntimeContext::GetCurrent());
-    lockCounter->Add(1, {{"lock.type", "ScopedExclusiveLock"},
-                         {"object.address", oo.getAddressIfSet()}});
+    lockCounter->Add(1, {{"lock.type", "ScopedExclusiveLock"}});
   }
 
   /** Move the locked object reference to a new one. This is done when the locked
