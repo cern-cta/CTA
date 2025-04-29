@@ -29,6 +29,11 @@ config:
     telemetry:
       logs:
         level: "info"
+
+  processors:
+    batch:
+      timeout: 10s
+      send_batch_size: 8192
 ports:
   metrics:
     enabled: true
