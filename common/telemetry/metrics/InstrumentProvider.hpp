@@ -23,6 +23,33 @@ public:
     return instance;
   }
 
+  void reset() {
+    {
+      std::unique_lock lock(m_uint64CounterMutex);
+      m_uint64Counters.clear();
+    }
+    {
+      std::unique_lock lock(m_doubleCounterMutex);
+      m_doubleCounters.clear();
+    }
+    {
+      std::unique_lock lock(m_uint64HistogramMutex);
+      m_uint64Histograms.clear();
+    }
+    {
+      std::unique_lock lock(m_doubleHistogramMutex);
+      m_doubleHistograms.clear();
+    }
+    {
+      std::unique_lock lock(m_int64UpDownCounterMutex);
+      m_int64UpDownCounters.clear();
+    }
+    {
+      std::unique_lock lock(m_doubleUpDownCounterMutex);
+      m_doubleUpDownCounters.clear();
+    }
+  }
+
   std::shared_ptr<metrics_api::Counter<uint64_t>> getUInt64Counter(const std::string& meterName,
                                                                    const std::string& componentName,
                                                                    const std::string& description = "",
