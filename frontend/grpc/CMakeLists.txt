@@ -18,16 +18,30 @@ cmake_minimum_required (VERSION 3.17)
 find_package(Protobuf3 REQUIRED)
 find_package(GRPC REQUIRED)
 
+include(FetchContent)
+fetchcontent_declare(jwt-cpp 
+    GIT_REPOSITORY https://github.com/Thalhammer/jwt-cpp.git
+    GIT_TAG 08bcf77a687fb06e34138e9e9fa12a4ecbe12332 # v0.7.0 release
+)
+set(JWT_BUILD_EXAMPLES OFF CACHE BOOL "disable building examples" FORCE)
+fetchcontent_makeavailable(jwt-cpp)
+
+# target_link_libraries(my_app PRIVATE jwt-cpp::jwt-cpp)
+find_package(jwt-cpp CONFIG REQUIRED)
+
 include_directories(${PROTOBUF3_INCLUDE_DIRS})
 
 # depends on CTA_EOS definitions
 include_directories(${CMAKE_BINARY_DIR}/eos_cta ${PROTOBUF3_INCLUDE_DIRS})
 
+# Need to add the jwt-cpp dependency here probably
 add_executable(cta-frontend-grpc Main.cpp FrontendGrpcService.cpp
   ../common/WorkflowEvent.cpp
   ../common/FrontendService.cpp
-  ../../common/config/Config.cpp)
+  ../../common/config/Config.cpp
+  ServiceJwtAuthProcessor.cpp)
 target_link_libraries(cta-frontend-grpc ProtoCtaFrontend)
+target_link_libraries(cta-frontend-grpc PRIVATE jwt-cpp::jwt-cpp)
 
 if(CTA_USE_PGSCHED)
   target_link_libraries(cta-frontend-grpc ${PROTOBUF3_LIBRARIES} ${GRPC_GRPC++_LIBRARY}
