@@ -2214,7 +2214,7 @@ std::list<common::dataStructures::QueueAndMountSummary> Scheduler::getQueuesAndM
       auto& t = tapes.at(mountOrQueue.vid);
       utils::Timer catalogueGetVoTimer;
       bool isRepacking =
-        (t.state == Tape::REPACKING || t.state == Tape::REPACKING_DISABLED || t.state == Tape::REPACKING_PENDING);
+        (t.state == Tape::REPACKING || t.state == Tape::REPACKING_DISABLED);
       repackingTapesCount += (isRepacking ? 1 : 0);
       const auto vo = isRepacking ? repackVo : m_catalogue.VO()->getCachedVirtualOrganizationOfTapepool(t.tapePoolName);
       catalogueGetVoTotalTime += catalogueGetVoTimer.secs();
