@@ -158,6 +158,7 @@ Requires: cta-lib = %{version}-%{release}
 Requires: cta-lib-catalogue = %{version}-%{release}
 Requires: xrootd-client-libs >= %{xrootdVersion}
 Requires: xrootd-server >= %{xrootdVersion}
+Provides: lib-xrd-ssi
 %description -n cta-frontend
 CERN Tape Archive:
 The xroot plugin
@@ -224,6 +225,7 @@ dCache frontend
 %package -n cta-admin-grpc
 Summary: CERN Tape Archive: cta-admin command line interface for gRPC frontend
 Requires: grpc
+Provides: cta-admin
 %description -n cta-admin-grpc
 
 %files -n cta-admin-grpc
@@ -235,6 +237,8 @@ Summary: CERN Tape Archive: command line interface
 Group: Application/CTA
 Requires: cta-lib-common = %{version}-%{release}
 Requires: xrootd-client-libs >= %{xrootdVersion}
+Requires: lib-xrd-ssi
+Provides: cta-admin
 %description -n cta-cli
 CERN Tape Archive:
 The command line utilities
