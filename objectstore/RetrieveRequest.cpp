@@ -77,7 +77,13 @@ void RetrieveRequest::garbageCollect(const std::string& presumedOwner, AgentRefe
 void RetrieveRequest::garbageCollectRetrieveRequest(const std::string& presumedOwner, AgentReference& agentReference, log::LogContext& lc,
     cta::catalogue::Catalogue& catalogue, bool isQueueCleanup) {
   checkPayloadWritable();
-  utils::Timer t;
+  utils::Timer t, tmpT;
+  double getOwnerTime = -1.0;
+  double jobDecissionTime = -1.0;
+  double jobFailingTime = -1.0;
+  double selectQueueTime = -1.0;
+  double requeueTime = -1.0;
+  double getLockedQueueTime = -1.0;
   std::string logHead = std::string("In RetrieveRequest::garbageCollectRetrieveRequest()") + (isQueueCleanup ? " [queue cleanup]" : "") + ": ";
   // Check the request is indeed owned by the right owner.
   if (getOwner() != presumedOwner) {
@@ -87,6 +93,7 @@ void RetrieveRequest::garbageCollectRetrieveRequest(const std::string& presumedO
           .add("owner", getOwner());
     lc.log(log::INFO, logHead + "no garbage collection needed.");
   }
+  getOwnerTime = tmpT.secs(utils::Timer::resetCounter);
   // The owner is indeed the right one. We should requeue the request either to
   // the to tranfer queue for one vid, or to the to report (or failed) queue (for one arbitrary VID).
   // Find the vids for active jobs in the request (to transfer ones).
@@ -152,6 +159,7 @@ void RetrieveRequest::garbageCollectRetrieveRequest(const std::string& presumedO
     }
     found:;
   }
+  jobDecissionTime = tmpT.secs(utils::Timer::resetCounter);
   std::string bestVid;
   // If no tape file is a candidate, we just need to skip to queueing to the failed queue
   if (candidateVids.empty()) goto queueForFailure;
@@ -163,7 +171,8 @@ void RetrieveRequest::garbageCollectRetrieveRequest(const std::string& presumedO
     goto queueForTransfer;
   } catch (Helpers::NoTapeAvailableForRetrieve&) {}
 queueForFailure:;
-  {
+  { 
+    selectQueueTime = tmpT.secs(utils::Timer::resetCounter);
     // If there is no candidate, we fail the jobs that are not yet, and queue the request as failed (on any VID).
     for (auto& j: *m_payload.mutable_jobs()) {
       if (j.status() == RetrieveJobStatus::RJS_ToTransfer) {
@@ -185,6 +194,8 @@ queueForFailure:;
         lc.log(log::ERR, logHead + "No VID available to requeue the request. Failing all jobs.");
       }
     }
+    jobFailingTime = tmpT.secs(utils::Timer::resetCounter);
+
     // Ok, the request is ready to be queued. We will queue it to the VID corresponding
     // to the latest queued copy.
     auto activeCopyNb = m_payload.activecopynb();
@@ -210,10 +221,8 @@ queueForFailure:;
     // process we can add some extra info in the `activeVid` so that
     // the queue gets created with a different name and they don't
     // step into each others. :)
-    if (isQueueCleanup){
-      activeVid += "Cleanup";
-    }
     Helpers::getLockedAndFetchedJobQueue<RetrieveQueue>(rq, rql, agentReference, activeVid, getQueueType(), lc);
+    getLockedQueueTime = tmpT.secs(utils::Timer::resetCounter);
     // Enqueue the job
     objectstore::MountPolicySerDeser mp;
     std::list<RetrieveQueue::JobToAdd> jta;
@@ -229,6 +238,7 @@ queueForFailure:;
     commit();
     rql.release();
     auto commitUnlockQueueTime = t.secs(utils::Timer::resetCounter);
+    requeueTime = tmpT.secs(utils::Timer::resetCounter);
     {
       log::ScopedParamContainer params(lc);
       params.add("jobObject", getAddressIfSet())
@@ -237,6 +247,12 @@ queueForFailure:;
             .add("copynb", activeCopyNb)
             .add("tapeVid", activeVid)
             .add("queueUpdateTime", queueUpdateTime)
+	    .add("getOwnerTime", getOwnerTime)
+	    .add("jobDecissionTime", jobDecissionTime)
+	    .add("selectQueueTime", selectQueueTime)
+	    .add("jobFailingTime", jobFailingTime)
+	    .add("getLockedQueueTime", getLockedQueueTime)
+	    .add("requeueTime", requeueTime)
             .add("commitUnlockQueueTime", commitUnlockQueueTime);
       lc.log(log::INFO, logHead + "queued the request to the failed queue.");
     }

@@ -173,11 +173,14 @@ void QueueCleanupRunner::runOnePass(log::LogContext &logContext) {
       for (auto &j: dbRet) {
         jobPtList.push_back(j.get());
       }
+
+      double getQueueTime = tLoop.secs(utils::Timer::resetCounter);
       m_db.requeueRetrieveRequestJobs(jobPtList, logContext);
 
       double jobMovingTime = tLoop.secs(utils::Timer::resetCounter);
 
       paramsLoopMsg.add("numberOfJobsMoved", dbRet.size())
+	           .add("getQueueTime", getQueueTime)
                    .add("jobMovingTime", jobMovingTime)
                    .add("tapeVid", queueVid);
       logContext.log(cta::log::INFO,"In QueueCleanupRunner::runOnePass(): Queue jobs moved.");

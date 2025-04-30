@@ -2159,6 +2159,7 @@ void OStoreDB::requeueRetrieveRequestJobs(std::list<cta::SchedulerDatabase::Retr
                                           log::LogContext& logContext) {
   std::list<std::shared_ptr<objectstore::RetrieveRequest>> rrlist;
   std::list<objectstore::ScopedExclusiveLock> locks;
+  utils::Timer gcrrTimer;
   for (auto& job : jobs) {
     auto oStoreJob = dynamic_cast<OStoreDB::RetrieveJob*>(job);
     auto rr =
@@ -2173,11 +2174,15 @@ void OStoreDB::requeueRetrieveRequestJobs(std::list<cta::SchedulerDatabase::Retr
         .log(log::INFO, "In OStoreDB::requeueRetrieveRequestJobs(): no such retrieve request. Ignoring.");
       continue;
     }
+    gcrrTimer.reset();
     rr->garbageCollectRetrieveRequest(m_agentReference->getAgentAddress(),
                                       *m_agentReference,
                                       logContext,
                                       m_catalogue,
                                       true);
+    log::ScopedParamContainer(logContext)
+	    .add("gcrrt", gcrrTimer.secs(utils::Timer::resetCounter))
+	    .log(log::INFO, "In OStoreDB::requeueRetrieveRequestJobs(): garbage collected 1 job");
   }
   locks.clear();
   rrlist.clear();
