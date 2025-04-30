@@ -31,8 +31,8 @@ add_executable(cta-frontend-grpc Main.cpp FrontendGrpcService.cpp
   ${PROJECT_SOURCE_DIR}/cmdline/CtaAdminTextFormatter.cpp
   ${PROJECT_SOURCE_DIR}/cmdline/CtaAdminCmdParser.cpp
   ${PROJECT_SOURCE_DIR}/common/config/Config.cpp
-  RequestMessage.cpp # This is needed for the Impl Class that serves the streaming commands
-  callback_api/CtaAdminServer.hpp)
+  RequestMessage.cpp) # This is needed for the Impl Class that serves the streaming commands
+  # callback_api/CtaAdminServer.hpp)
 target_link_libraries(cta-frontend-grpc ProtoCtaFrontend)
 
 if(CTA_USE_PGSCHED)
@@ -62,6 +62,7 @@ add_executable(cta-admin-grpc
   ${PROJECT_SOURCE_DIR}/cmdline/CtaAdminParsedCmd.cpp
   ${PROJECT_SOURCE_DIR}/cmdline/CtaAdminTextFormatter.cpp
   ${PROJECT_SOURCE_DIR}/cmdline/CtaAdminCmdParser.cpp
+  callback_api/CtaAdminCmdStreaming.cpp
 )
 
 target_link_libraries(cta-admin-grpc
@@ -70,6 +71,9 @@ target_link_libraries(cta-admin-grpc
   ${GRPC_LIBRARY}
   ProtoCtaFrontend ctacommon stdc++fs ctatapedaemoncommon ctascheduler ctaobjectstore ctacatalogue
 )
+# if(CTA_USE_PGSCHED)
+#   target_link_libraries(cta-admin-grpc ctaobjectstore)
+# endif()
 set_property (TARGET cta-admin-grpc APPEND PROPERTY INSTALL_RPATH ${PROTOBUF3_RPATH})
 install(TARGETS cta-admin-grpc DESTINATION usr/bin)
 
@@ -134,4 +138,4 @@ else()
           ctascheduler ctacommon ctatapedaemoncommon ctaobjectstore ctacatalogue cryptopp gssapi_krb5)
 endif()
 
-add_subdirectory(callback_api)
+# add_subdirectory(callback_api)

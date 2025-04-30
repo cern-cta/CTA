@@ -91,28 +91,28 @@ void CtaAdminCmdStreaming::send(const CtaAdminParsedCmd& parsedCmd) {
 * @param    argv[in]    The command-line arguments
 */
 
-int main(int argc, const char** argv) {
-  using namespace cta::admin;
+// int main(int argc, const char** argv) {
+//   using namespace cta::admin;
 
-  try {
-    // Parse the command line arguments
-    CtaAdminParsedCmd parsedCmd(argc, argv); // this will throw the usage, which is runtime_error
-    CtaAdminCmdStreaming cmd;
-    // Send the protocol buffer
-    cmd.send(parsedCmd);
+//   try {
+//     // Parse the command line arguments
+//     CtaAdminParsedCmd parsedCmd(argc, argv); // this will throw the usage, which is runtime_error
+//     CtaAdminCmdStreaming cmd;
+//     // Send the protocol buffer
+//     cmd.send(parsedCmd);
 
-    // Delete all global objects allocated by libprotobuf
-    google::protobuf::ShutdownProtobufLibrary();
+//     // Delete all global objects allocated by libprotobuf
+//     google::protobuf::ShutdownProtobufLibrary();
 
-    return 0;
-  } catch (std::runtime_error& ex) {
-    std::cerr << ex.what() << std::endl;
-  } catch (...) {
-    std::cerr << "Caught some exception" << std::endl;
-  }
+//     return 0;
+//   } catch (std::runtime_error& ex) {
+//     std::cerr << ex.what() << std::endl;
+//   } catch (...) {
+//     std::cerr << "Caught some exception" << std::endl;
+//   }
 
- return 1;
-}
+//  return 1;
+// }
 
 // I need to keep:
 // exceptionThrowingMain

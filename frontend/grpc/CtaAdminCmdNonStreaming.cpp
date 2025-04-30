@@ -23,7 +23,9 @@
 #include <cmdline/CtaAdminTextFormatter.hpp>
 #include "tapeserver/daemon/common/TapedConfiguration.hpp"
 #include "common/config/Config.hpp"
+#include "callback_api/CtaAdminCmdStreaming.hpp"
 
+// This will be renamed to CtaAdminCmdGrpc
 
 namespace cta::admin {
 
