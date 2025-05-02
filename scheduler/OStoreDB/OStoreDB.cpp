@@ -2195,6 +2195,7 @@ std::string OStoreDB::reserveRetrieveQueueForCleanup(const std::string& vid) {
   RootEntry re(m_objectStore);
   RetrieveQueue rqtt(m_objectStore);
   RetrieveQueue rqtr(m_objectStore);
+  ScopedExclusiveLock rel;
   ScopedExclusiveLock rqttl;
   ScopedExclusiveLock rqtrl;
   re.fetchNoLock();
@@ -2224,6 +2225,11 @@ std::string OStoreDB::reserveRetrieveQueueForCleanup(const std::string& vid) {
       "In OStoreDB::reserveRetrieveQueueForCleanup(): Queue was reserved by another agent. Cancelling reservation.");
   }
 
+// Otherwise, carry on with cleanup of this queue .
+rqtt.setQueueCleanupAssignedAgent(m_agentReference->getAgentAddress());
+  rqtt.tickQueueCleanupHeartbeat();
+  rqtt.commit();
+
   // We are the first one to reserve the queue. Also reserve the ToReport queue.
   // Queue should not exist if we are here.
   //try {
@@ -2233,18 +2239,16 @@ std::string OStoreDB::reserveRetrieveQueueForCleanup(const std::string& vid) {
   //}
 
   // Create the queue.
+  rel.lock(re); // What is faster locking here and fetching again or holdin gthe lock since the previous step? Should be this implementation
+  re.fetch();
   const auto reportQueueName = re.addOrGetRetrieveQueueAndCommit(vid, *m_agentReference,
 common::dataStructures::JobQueueType::JobsToReportToUser);
+  rel.release();
   rqtr.setAddress(reportQueueName);
   rqtrl.lock(rqtr);
   rqtr.fetch();
 
-  // Otherwise, carry on with cleanup of this queue .
-  rqtt.setQueueCleanupAssignedAgent(m_agentReference->getAgentAddress());
-  rqtt.tickQueueCleanupHeartbeat();
-  rqtt.commit();
-
-  // Mark the ToReport queue for clean so that the DiskReporter does not pick it up.
+    // Mark the ToReport queue for clean so that the DiskReporter does not pick it up.
   rqtr.setQueueCleanupDoCleanup();
   rqtr.setQueueCleanupAssignedAgent(m_agentReference->getAgentAddress());
   rqtr.tickQueueCleanupHeartbeat();
@@ -2494,6 +2498,7 @@ void OStoreDB::setRetrieveQueueCleanupFlag(const std::string& vid, bool val, log
       rootRelockExclusiveTime = t.secs(utils::Timer::resetCounter);
       re.fetch();
       rootRefetchTime = t.secs(utils::Timer::resetCounter);
+      // This is wrong
       qAddress = re.addOrGetRetrieveQueueAndCommit(vid,
                                                    *m_agentReference,
                                                    common::dataStructures::JobQueueType::JobsToTransferForUser);
@@ -3666,8 +3671,10 @@ OStoreDB::getNextRetrieveJobsToReportBatch(uint64_t filesRequested, log::LogCont
     // too big.
     // Another point, can we prevent other tasks from queueing requests into this queue ??
     RetrieveQueue rqtr(m_objectStore);
+    ScopedExclusiveLock ex;
+    ex.lock(rqtr);
     rqtr.setAddress(queueList.front().address); // Can the object be gone before this?
-    rqtr.fetchNoLock(); // get the contents of the queue
+    rqtr.fetch(); // get the contents of the queue
     if(rqtr.getQueueCleanupDoCleanup()){
       continue;
     }
