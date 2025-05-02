@@ -130,6 +130,10 @@ public:
     return m_SchedDB->reserveRetrieveQueueForCleanup(vid);
   }
 
+  void freeRetrieveQueueForCleanup(const std::string& vid) override {
+    return m_SchedDB->freeRetrieveQueueForCleanup(vid);
+  }
+
   void tickRetrieveQueueCleanupHeartbeat(const std::string& vid) override {
     m_SchedDB->tickRetrieveQueueCleanupHeartbeat(vid);
   }

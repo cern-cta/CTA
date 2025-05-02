@@ -78,6 +78,7 @@ void QueueCleanupRunner::runOnePass(log::LogContext &logContext) {
   }
 
   common::dataStructures::VidToTapeMap vidToTapesMap;
+  std::string toReportQueueName;
 
   if (!queueVidSet.empty()){
     try {
@@ -126,9 +127,9 @@ void QueueCleanupRunner::runOnePass(log::LogContext &logContext) {
     logContext.log(log::INFO,
                    "In QueueCleanupRunner::runOnePass(): Will try to reserve retrieve queue.");
     try {
-      const std::string queueName = m_db.reserveRetrieveQueueForCleanup(queueVid);
+      toReportQueueName = m_db.reserveRetrieveQueueForCleanup(queueVid);
       log::ScopedParamContainer(logContext)
-        .add("reservedQueue", queueName)
+        .add("reservedQueue", toReportQueueName)
         .log(log::INFO, "In QueueleanupRunner::runOnePass(): reserved queue.");
 
     } catch (OStoreDB::RetrieveQueueNotFound & ex) {
@@ -180,6 +181,9 @@ void QueueCleanupRunner::runOnePass(log::LogContext &logContext) {
                    .add("tapeVid", queueVid);
       logContext.log(cta::log::INFO,"In QueueCleanupRunner::runOnePass(): Queue jobs moved.");
     }
+
+    // Reset the queue cleanup info so that dsik reporting can pick up the queue.
+    m_db.freeRetrieveQueueForCleanup(toReportQueueName);
 
     // Finally, update the tape state out of PENDING
     {

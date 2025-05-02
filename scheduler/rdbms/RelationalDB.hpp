@@ -130,6 +130,8 @@ public:
 
   std::string reserveRetrieveQueueForCleanup(const std::string& vid) override;
 
+  void freeRetrieveQueueForCleanup(const std::string& vid) override;
+
   void tickRetrieveQueueCleanupHeartbeat(const std::string& vid) override;
 
   void setArchiveJobBatchReported(std::list<SchedulerDatabase::ArchiveJob*>& jobsBatch,

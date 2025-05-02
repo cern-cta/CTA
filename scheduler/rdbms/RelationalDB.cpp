@@ -241,6 +241,10 @@ std::string RelationalDB::reserveRetrieveQueueForCleanup(const std::string& vid)
   throw cta::exception::Exception("Not implemented");
 }
 
+void freeRetrieveQueueForCleanup(const std::string& vid) {
+  throw cta::exception::Exception("Not implemented");
+}
+
 void RelationalDB::tickRetrieveQueueCleanupHeartbeat(const std::string& vid) {
   throw cta::exception::Exception("Not implemented");
 }

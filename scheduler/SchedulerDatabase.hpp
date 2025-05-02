@@ -689,6 +689,7 @@ public:
   virtual void requeueRetrieveRequestJobs(std::list<cta::SchedulerDatabase::RetrieveJob*>& jobs,
                                           log::LogContext& logContext) = 0;
   virtual std::string reserveRetrieveQueueForCleanup(const std::string& vid) = 0;
+  virtual void freeRetrieveQueueForCleanup(const std::string& vid) = 0;
   virtual void tickRetrieveQueueCleanupHeartbeat(const std::string& vid) = 0;
 
   /*============ Repack management: maintenance process side =========================*/
