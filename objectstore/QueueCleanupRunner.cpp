@@ -126,12 +126,7 @@ void QueueCleanupRunner::runOnePass(log::LogContext &logContext) {
     logContext.log(log::INFO,
                    "In QueueCleanupRunner::runOnePass(): Will try to reserve retrieve queue.");
     try {
-      bool prevHeartbeatExists = (m_heartbeatCheck.find(queueVid) != m_heartbeatCheck.end());
-      // Why don't we just lock the queue?
-      const std::string queueName = m_db.reserveRetrieveQueueForCleanup(
-              queueVid,
-              prevHeartbeatExists ? std::optional(m_heartbeatCheck[queueVid].heartbeat) : std::nullopt);
-
+      const std::string queueName = m_db.reserveRetrieveQueueForCleanup(queueVid);
       log::ScopedParamContainer(logContext)
         .add("reservedQueue", queueName)
         .log(log::INFO, "In QueueleanupRunner::runOnePass(): reserved queue.");

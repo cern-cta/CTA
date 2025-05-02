@@ -128,7 +128,7 @@ public:
 
   void requeueRetrieveRequestJobs(std::list<cta::SchedulerDatabase::RetrieveJob*>& jobs, log::LogContext& lc) override;
 
-  std::string reserveRetrieveQueueForCleanup(const std::string& vid, std::optional<uint64_t> cleanupHeartBeatValue) override;
+  std::string reserveRetrieveQueueForCleanup(const std::string& vid) override;
 
   void tickRetrieveQueueCleanupHeartbeat(const std::string& vid) override;
 

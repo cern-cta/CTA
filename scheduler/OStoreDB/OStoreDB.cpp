@@ -2191,7 +2191,7 @@ void OStoreDB::requeueRetrieveRequestJobs(std::list<cta::SchedulerDatabase::Retr
 //------------------------------------------------------------------------------
 // OStoreDB::reserveRetrieveQueueForCleanup()
 //------------------------------------------------------------------------------
-std::string OStoreDB::reserveRetrieveQueueForCleanup(const std::string& vid, std::optional<uint64_t> cleanupHeartBeatValue) {
+std::string OStoreDB::reserveRetrieveQueueForCleanup(const std::string& vid) {
   RootEntry re(m_objectStore);
   RetrieveQueue rq(m_objectStore);
   ScopedExclusiveLock rql;
@@ -2209,10 +2209,17 @@ std::string OStoreDB::reserveRetrieveQueueForCleanup(const std::string& vid, std
     throw;
   }
 
-  // After locking a queue, check again if the cleanup flag is still true
+  // After locking a queue, check again if the cleanup flag is still true <- Can we actually
+  // reach this condition ?????
   if (!rq.getQueueCleanupDoCleanup()) {
     throw RetrieveQueueNotReservedForCleanup(
       "In OStoreDB::reserveRetrieveQueueForCleanup(): Queue no longer has the cleanup flag enabled after fetching. Skipping it.");
+  }
+
+  // Check if someone else registered before us.
+  if(rq.getQueueCleanupAssignedAgent()) {
+    throw RetrieveQueueNotReservedForCleanup(
+      "In OStoreDB::reserveRetrieveQueueForCleanup(): Queue was reserved by another agent. Cancelling reservation.");
   }
 
   // Otherwise, carry on with cleanup of this queue

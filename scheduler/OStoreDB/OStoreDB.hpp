@@ -573,7 +573,7 @@ public:
                                      log::LogContext& logContext) override;
   void requeueRetrieveRequestJobs(std::list<cta::SchedulerDatabase::RetrieveJob*>& jobs,
                                   log::LogContext& logContext) override;
-  std::string reserveRetrieveQueueForCleanup(const std::string& vid, std::optional<uint64_t> cleanupHeartBeatValue) override;
+  std::string reserveRetrieveQueueForCleanup(const std::string& vid) override;
   void tickRetrieveQueueCleanupHeartbeat(const std::string& vid) override;
   CTA_GENERATE_EXCEPTION_CLASS(RetrieveQueueNotReservedForCleanup);
   CTA_GENERATE_EXCEPTION_CLASS(RetrieveQueueNotFound);

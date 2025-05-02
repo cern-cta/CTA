@@ -688,8 +688,7 @@ public:
   getNextRetrieveJobsToTransferBatch(const std::string& vid, uint64_t filesRequested, log::LogContext& logContext) = 0;
   virtual void requeueRetrieveRequestJobs(std::list<cta::SchedulerDatabase::RetrieveJob*>& jobs,
                                           log::LogContext& logContext) = 0;
-  virtual std::string reserveRetrieveQueueForCleanup(const std::string& vid,
-                                              std::optional<uint64_t> cleanupHeartBeatValue) = 0;
+  virtual std::string reserveRetrieveQueueForCleanup(const std::string& vid) = 0;
   virtual void tickRetrieveQueueCleanupHeartbeat(const std::string& vid) = 0;
 
   /*============ Repack management: maintenance process side =========================*/
