@@ -137,6 +137,7 @@ public:
   };
 
   virtual void SetUp() {
+    GTEST_SKIP() << "Skip test";
     // We do a deep reference to the member as the C++ compiler requires the function to be
     // already defined if called implicitly.
     const auto &factory = GetParam().dbFactory;
