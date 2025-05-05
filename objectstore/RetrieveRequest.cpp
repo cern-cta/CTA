@@ -231,7 +231,11 @@ queueForFailure:;
     if (m_payload.has_activity()) {
       jta.back().activity = m_payload.activity();
     }
-    rq.addJobsIfNecessaryAndCommit(jta, agentReference, lc);
+    if (isQueueCleanup) {
+      rq.addJobsAndCommit(jta, agentReference, lc);
+    } else {
+      rq.addJobsIfNecessaryAndCommit(jta, agentReference, lc);
+    }
     auto queueUpdateTime = t.secs(utils::Timer::resetCounter);
     // We can now make the transition official.
     setOwner(rq.getAddressIfSet());
