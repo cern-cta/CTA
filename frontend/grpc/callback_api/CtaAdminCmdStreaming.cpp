@@ -31,8 +31,6 @@ namespace cta::admin {
 
 // Implement the send() method here, by wrapping the Admin rpc call
 void CtaAdminCmdStreaming::send(const CtaAdminParsedCmd& parsedCmd, std::string endpoint) {
-
-  std::cout << "In the send() method of cta-admin-grpc-stream" << std::endl;
   const auto &request = parsedCmd.getRequest();
   // Validate the Protocol Buffer
   try {
@@ -56,9 +54,7 @@ void CtaAdminCmdStreaming::send(const CtaAdminParsedCmd& parsedCmd, std::string 
   try {
     auto client_reactor = CtaAdminClientReadReactor(client_stub.get(), parsedCmd);
     status = client_reactor.Await();
-    if (status.ok()) {
-      std::cout << "rpc call succeeded!" << std::endl;
-    } else {
+    if (!status.ok()) {
       std::cout << "gRPC call failed. Error code: " + std::to_string(status.error_code()) + " Error message: " + status.error_message() << std::endl;
     }
     // close the json delimiter
