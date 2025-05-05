@@ -2260,13 +2260,13 @@ common::dataStructures::JobQueueType::JobsToReportToUser);
 //------------------------------------------------------------------------------
 // OStoreDB::freeRetrieveQueueForCleanup()
 //------------------------------------------------------------------------------
-void OStoreDB::freeRetrieveQueueForCleanup(const std::string& vid) {
+void OStoreDB::freeRetrieveQueueForCleanup(const std::string& toReportQueueName) {
   RootEntry re(m_objectStore);
   RetrieveQueue rqtr(m_objectStore);
   ScopedExclusiveLock rqltr;
   re.fetchNoLock();
 
-  rqtr.setAddress(re.getRetrieveQueueAddress(vid, common::dataStructures::JobQueueType::JobsToReportToUser));
+  rqtr.setAddress(toReportQueueName);
   rqltr.lock(rqtr);
   rqtr.fetch();
   rqtr.setQueueCleanupDoCleanup(false);
@@ -3672,8 +3672,8 @@ OStoreDB::getNextRetrieveJobsToReportBatch(uint64_t filesRequested, log::LogCont
     // Another point, can we prevent other tasks from queueing requests into this queue ??
     RetrieveQueue rqtr(m_objectStore);
     ScopedExclusiveLock ex;
-    ex.lock(rqtr);
     rqtr.setAddress(queueList.front().address); // Can the object be gone before this?
+    ex.lock(rqtr);
     rqtr.fetch(); // get the contents of the queue
     if(rqtr.getQueueCleanupDoCleanup()){
       continue;
