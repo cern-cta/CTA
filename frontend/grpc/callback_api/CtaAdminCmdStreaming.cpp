@@ -54,12 +54,16 @@ void CtaAdminCmdStreaming::send(const CtaAdminParsedCmd& parsedCmd, std::string 
 
   // we could also have the switch-case logic inside the ClientReadReactor?
   try {
-    auto client_reactor = CtaAdminClientReadReactor(client_stub.get(), &request);
+    auto client_reactor = CtaAdminClientReadReactor(client_stub.get(), parsedCmd);
     status = client_reactor.Await();
     if (status.ok()) {
       std::cout << "rpc call succeeded!" << std::endl;
     } else {
       std::cout << "gRPC call failed. Error code: " + std::to_string(status.error_code()) + " Error message: " + status.error_message() << std::endl;
+    }
+    // close the json delimiter
+    if (parsedCmd.isJson()) {
+      std::cout << CtaAdminParsedCmd::jsonCloseDelim();
     }
   } catch (std::exception &ex) {
     // what to do in catch? Maybe print an error?

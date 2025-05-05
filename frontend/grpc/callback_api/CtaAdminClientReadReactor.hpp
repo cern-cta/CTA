@@ -15,21 +15,40 @@
  *               submit itself to any jurisdiction.
  */
 
- #pragma once
+#pragma once
 
- #include "cmdline/CtaAdminCmdParser.hpp"
- #include "version.h"
- #include <grpcpp/grpcpp.h>
- // #include <grpcpp/resource_quota.h>
- // #include <grpcpp/security/server_credentials.h>
- 
- // #include <scheduler/Scheduler.hpp> // what happens if I skip this?
- // #include "common/log/Logger.hpp"
- #include "cta_frontend.pb.h"
- #include "cta_frontend.grpc.pb.h"
+#include "cmdline/CtaAdminCmdParser.hpp"
+#include "cmdline/CtaAdminParsedCmd.hpp"
+#include "version.h"
+#include <grpcpp/grpcpp.h>
+#include <google/protobuf/util/json_util.h>
+// #include <grpcpp/resource_quota.h>
+// #include <grpcpp/security/server_credentials.h>
+
+// #include <scheduler/Scheduler.hpp> // what happens if I skip this?
+// #include "common/log/Logger.hpp"
+#include "cta_frontend.pb.h"
+#include "cta_frontend.grpc.pb.h"
 
 constexpr unsigned int cmd_pair(cta::admin::AdminCmd::Cmd cmd, cta::admin::AdminCmd::SubCmd subcmd) {
     return (cmd << 16) + subcmd;
+}
+
+static std::string DumpProtobuf(const google::protobuf::Message *message)
+{
+    using namespace google::protobuf::util;
+
+    std::string logstring;
+    JsonPrintOptions options;
+
+#if GOOGLE_PROTOBUF_VERSION >= 5027000
+    options.always_print_fields_with_no_presence = true;
+#else
+    options.always_print_primitive_fields = true;
+#endif
+    MessageToJsonString(*message, &logstring, options);
+
+    return logstring;
 }
 
 // This is a virtual (maybe not all of its methods) class, each command implementation will inherit from this
@@ -54,7 +73,10 @@ public:
             std::cout << "Something went wrong with reading the response in the client" << std::endl;
         } else {
             // if this is the header, print the formatted header I guess?
-            if (m_response.has_header()) {
+            if (m_response.has_header() && m_isJson) {
+                std::cout << cta::admin::CtaAdminParsedCmd::jsonDelim();
+            }
+            if (m_response.has_header() && !m_isJson) {
                 std::cout << "We received the header on the client side " << std::endl;
                 switch (m_response.header().type()) {
                     case cta::xrd::Response::RSP_SUCCESS:
@@ -111,139 +133,139 @@ public:
                     case cta::xrd::Data::kTalsItem:
                     {
                         const cta::admin::TapeLsItem& tapeLsItem = m_response.data().tals_item();
-                        m_textFormatter.print(tapeLsItem);
+                        if (m_isJson) std::cout << DumpProtobuf(&tapeLsItem); else m_textFormatter.print(tapeLsItem);
                         break;
                     }
                     case cta::xrd::Data::kSclsItem:
                     {
                         const cta::admin::StorageClassLsItem& storageClassLsItem = m_response.data().scls_item();
-                        m_textFormatter.print(storageClassLsItem);
+                        if (m_isJson) std::cout << DumpProtobuf(&storageClassLsItem); else m_textFormatter.print(storageClassLsItem);
                         break;
                     }
                     case cta::xrd::Data::kTplsItem:
                     {
                         const cta::admin::TapePoolLsItem& tapePoolLsItem = m_response.data().tpls_item();
-                        m_textFormatter.print(tapePoolLsItem);
+                        if (m_isJson) std::cout << DumpProtobuf(&tapePoolLsItem); else m_textFormatter.print(tapePoolLsItem);
                         break;
                     }
                     case cta::xrd::Data::kVolsItem:
                     {
                         const cta::admin::VirtualOrganizationLsItem& virtualOrganizationLsItem = m_response.data().vols_item();
-                        m_textFormatter.print(virtualOrganizationLsItem);
+                        if (m_isJson) std::cout << DumpProtobuf(&virtualOrganizationLsItem); else m_textFormatter.print(virtualOrganizationLsItem);
                         break;
                     }
                     case cta::xrd::Data::kDilsItem:
                     {
                         const cta::admin::DiskInstanceLsItem& diskInstanceLsItem = m_response.data().dils_item();
-                        m_textFormatter.print(diskInstanceLsItem);
+                        if (m_isJson) std::cout << DumpProtobuf(&diskInstanceLsItem); else m_textFormatter.print(diskInstanceLsItem);
                         break;
                     }
                     case cta::xrd::Data::kDrlsItem:
                     {
                         const cta::admin::DriveLsItem& driveLsItem = m_response.data().drls_item();
-                        m_textFormatter.print(driveLsItem);
+                        if (m_isJson) std::cout << DumpProtobuf(&driveLsItem); else m_textFormatter.print(driveLsItem);
                         break;
                     }
                     case cta::xrd::Data::kAdlsItem:
                     {
                         const cta::admin::AdminLsItem& adminLsItem = m_response.data().adls_item();
-                        m_textFormatter.print(adminLsItem);
+                        if (m_isJson) std::cout << DumpProtobuf(&adminLsItem); else m_textFormatter.print(adminLsItem);
                         break;
                     }
                     case cta::xrd::Data::kVersionItem:
                     {
                         const cta::admin::VersionItem& versionItem = m_response.data().version_item();
-                        m_textFormatter.print(versionItem);
+                        if (m_isJson) std::cout << DumpProtobuf(&versionItem); else m_textFormatter.print(versionItem);
                         break;
                     }
                     case cta::xrd::Data::kArlsItem:
                     {
                         const cta::admin::ArchiveRouteLsItem& archiveRouteLsItem = m_response.data().arls_item();
-                        m_textFormatter.print(archiveRouteLsItem);
+                        if (m_isJson) std::cout << DumpProtobuf(&archiveRouteLsItem); else m_textFormatter.print(archiveRouteLsItem);
                         break;
                     }
                     case cta::xrd::Data::kFrlsItem:
                     {
                         const cta::admin::FailedRequestLsItem& failedRequestLsItem = m_response.data().frls_item();
-                        m_textFormatter.print(failedRequestLsItem);
+                        if (m_isJson) std::cout << DumpProtobuf(&failedRequestLsItem); else m_textFormatter.print(failedRequestLsItem);
                         break;
                     }
                     case cta::xrd::Data::kGmrlsItem:
                     {
                         const cta::admin::GroupMountRuleLsItem& groupMountRuleLsItem = m_response.data().gmrls_item();
-                        m_textFormatter.print(groupMountRuleLsItem);
+                        if (m_isJson) std::cout << DumpProtobuf(&groupMountRuleLsItem); else m_textFormatter.print(groupMountRuleLsItem);
                         break;
                     }
                     case cta::xrd::Data::kLllsItem:
                     {
                         const cta::admin::LogicalLibraryLsItem& logicalLibraryLsItem = m_response.data().llls_item();
-                        m_textFormatter.print(logicalLibraryLsItem);
+                        if (m_isJson) std::cout << DumpProtobuf(&logicalLibraryLsItem); else m_textFormatter.print(logicalLibraryLsItem);
                         break;
                     }
                     case cta::xrd::Data::kPllsItem:
                     {
                         const cta::admin::PhysicalLibraryLsItem& physicalLibraryLsItem = m_response.data().plls_item();
-                        m_textFormatter.print(physicalLibraryLsItem);
+                        if (m_isJson) std::cout << DumpProtobuf(&physicalLibraryLsItem); else m_textFormatter.print(physicalLibraryLsItem);
                         break;
                     }
                     case cta::xrd::Data::kMtlsItem:
                     {
                         const cta::admin::MediaTypeLsItem& mediaTypeLsItem = m_response.data().mtls_item();
-                        m_textFormatter.print(mediaTypeLsItem);
+                        if (m_isJson) std::cout << DumpProtobuf(&mediaTypeLsItem); else m_textFormatter.print(mediaTypeLsItem);
                         break;
                     }
                     case cta::xrd::Data::kMplsItem:
                     {
                         const cta::admin::MountPolicyLsItem& mountPolicyLsItem = m_response.data().mpls_item();
-                        m_textFormatter.print(mountPolicyLsItem);
+                        if (m_isJson) std::cout << DumpProtobuf(&mountPolicyLsItem); else m_textFormatter.print(mountPolicyLsItem);
                         break;
                     }
                     case cta::xrd::Data::kRelsItem:
                     {
-                        const cta::admin::RepackLsItem& RepackLsItem = m_response.data().rels_item();
-                        m_textFormatter.print(RepackLsItem);
+                        const cta::admin::RepackLsItem& repackLsItem = m_response.data().rels_item();
+                        if (m_isJson) std::cout << DumpProtobuf(&repackLsItem); else m_textFormatter.print(repackLsItem);
                         break;
                     }
                     case cta::xrd::Data::kRmrlsItem:
                     {
                         const cta::admin::RequesterMountRuleLsItem& requesterMountRuleLsItem = m_response.data().rmrls_item();
-                        m_textFormatter.print(requesterMountRuleLsItem);
+                        if (m_isJson) std::cout << DumpProtobuf(&requesterMountRuleLsItem); else m_textFormatter.print(requesterMountRuleLsItem);
                         break;
                     }
                     case cta::xrd::Data::kAmrlsItem:
                     {
                         const cta::admin::ActivityMountRuleLsItem& activityMountRuleLsItem = m_response.data().amrls_item();
-                        m_textFormatter.print(activityMountRuleLsItem);
+                        if (m_isJson) std::cout << DumpProtobuf(&activityMountRuleLsItem); else m_textFormatter.print(activityMountRuleLsItem);
                         break;
                     }
                     case cta::xrd::Data::kSqItem:
                     {
                         const cta::admin::ShowQueuesItem& showQueuesItem = m_response.data().sq_item();
-                        m_textFormatter.print(showQueuesItem);
+                        if (m_isJson) std::cout << DumpProtobuf(&showQueuesItem); else m_textFormatter.print(showQueuesItem);
                         break;
                     }
                     case cta::xrd::Data::kTflsItem:
                     {
                         const cta::admin::TapeFileLsItem& tapeFileLsItem = m_response.data().tfls_item();
-                        m_textFormatter.print(tapeFileLsItem);
+                        if (m_isJson) std::cout << DumpProtobuf(&tapeFileLsItem); else m_textFormatter.print(tapeFileLsItem);
                         break;
                     }
                     case cta::xrd::Data::kDslsItem:
                     {
                         const cta::admin::DiskSystemLsItem& diskSystemLsItem = m_response.data().dsls_item();
-                        m_textFormatter.print(diskSystemLsItem);
+                        if (m_isJson) std::cout << DumpProtobuf(&diskSystemLsItem); else m_textFormatter.print(diskSystemLsItem);
                         break;
                     }
                     case cta::xrd::Data::kDislsItem:
                     {
                         const cta::admin::DiskInstanceSpaceLsItem& diskInstanceSpaceLsItem = m_response.data().disls_item();
-                        m_textFormatter.print(diskInstanceSpaceLsItem);
+                        if (m_isJson) std::cout << DumpProtobuf(&diskInstanceSpaceLsItem); else m_textFormatter.print(diskInstanceSpaceLsItem);
                         break;
                     }
                     case cta::xrd::Data::kRtflsItem:
                     {
                         const cta::admin::RecycleTapeFileLsItem& recycleTapeFileLsItem = m_response.data().rtfls_item();
-                        m_textFormatter.print(recycleTapeFileLsItem);
+                        if (m_isJson) std::cout << DumpProtobuf(&recycleTapeFileLsItem); else m_textFormatter.print(recycleTapeFileLsItem);
                         break;
                     }
                     default:
@@ -256,14 +278,16 @@ public:
         } // if (ok)
     }
 
-    CtaAdminClientReadReactor(cta::xrd::CtaRpcStream::Stub* client_stub, const cta::xrd::Request* request) {
+    CtaAdminClientReadReactor(cta::xrd::CtaRpcStream::Stub* client_stub, const cta::admin::CtaAdminParsedCmd &parsedCmd) {
         // or Otherwise, I can have a generic method
         setenv("GRPC_VERBOSITY", "debug", 1);
         setenv("GRPC_TRACE", "all", 1);
 
+        const auto request = parsedCmd.getRequest();
         std::cout << "In CtaAdminClientReadReactor, about to call the async GenericAdminStream" << std::endl;
-        client_stub->async()->GenericAdminStream(&m_context, request, this);
+        client_stub->async()->GenericAdminStream(&m_context, &request, this);
         std::cout << "Started the request to the server by calling GenericAdminStream" << std::endl;
+        m_isJson = parsedCmd.isJson();
         // switch (cmd_pair(request.admincmd().cmd(), request.admincmd().subcmd())) {
         //     case cmd_pair(cta::admin::AdminCmd::CMD_TAPE, cta::admin::AdminCmd::SUBCMD_LS):
         //         stub->async()->TapeLs(context, request, this); 
@@ -293,4 +317,5 @@ private:
     ::grpc::Status status_;
     bool done_ = false;
     cta::admin::TextFormatter m_textFormatter;
+    bool m_isJson;
 };
