@@ -30,7 +30,7 @@ class CtaAdminCmdNonStreaming
 {
 public:
    //! Send the protocol buffer across the gRPC transport
-   void send(const CtaAdminParsedCmd& parsedCmd) const;
+   void send(const CtaAdminParsedCmd& parsedCmd, std::string endpoint) const;
 };
 
 } // namespace cta::admin

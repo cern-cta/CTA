@@ -30,7 +30,7 @@
 namespace cta::admin {
 
 // Implement the send() method here, by wrapping the Admin rpc call
-void CtaAdminCmdStreaming::send(const CtaAdminParsedCmd& parsedCmd) {
+void CtaAdminCmdStreaming::send(const CtaAdminParsedCmd& parsedCmd, std::string endpoint) {
 
   std::cout << "In the send() method of cta-admin-grpc-stream" << std::endl;
   const auto &request = parsedCmd.getRequest();
@@ -48,7 +48,6 @@ void CtaAdminCmdStreaming::send(const CtaAdminParsedCmd& parsedCmd) {
   grpc::Status status;
   cta::xrd::Response response;
   // get the grpc endpoint from the config? but for now, use 
-  std::string endpoint("cta-frontend:10955");
   // I guess here we do not need the CtaRpc class, we need the CtaRpcStream class, or a new one, or whatever
   std::unique_ptr<cta::xrd::CtaRpcStream::Stub> client_stub = cta::xrd::CtaRpcStream::NewStub(grpc::CreateChannel(endpoint, grpc::InsecureChannelCredentials()));
   // Also create a ClientReadReactor instance to handle the command

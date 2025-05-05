@@ -31,7 +31,7 @@ namespace cta::admin {
 
 
 // Implement the send() method here, by wrapping the Admin rpc call
-void CtaAdminCmdNonStreaming::send(const CtaAdminParsedCmd& parsedCmd) const {
+void CtaAdminCmdNonStreaming::send(const CtaAdminParsedCmd& parsedCmd, std::string endpoint) const {
   const auto &request = parsedCmd.getRequest();
   // Validate the Protocol Buffer
   try {
@@ -47,15 +47,7 @@ void CtaAdminCmdNonStreaming::send(const CtaAdminParsedCmd& parsedCmd) const {
   grpc::ClientContext context;
   grpc::Status status;
   cta::xrd::Response response;
-  // get the grpc endpoint from the config? but for now, use
-  std::string config_file = parsedCmd.getConfigFilePath();
-  cta::common::Config config(config_file);
-  auto endpoint = config.getOptionValueStr("cta.endpoint");
-  if (!endpoint.has_value()) {
-    std::cout << "Configuration error: cta.endpoint missing from " + config_file << std::endl;
-    throw std::runtime_error("Configuration error: cta.endpoint missing from " + config_file);
-  }
-  std::unique_ptr<cta::xrd::CtaRpc::Stub> client_stub = cta::xrd::CtaRpc::NewStub(grpc::CreateChannel(endpoint.value(), grpc::InsecureChannelCredentials()));
+  std::unique_ptr<cta::xrd::CtaRpc::Stub> client_stub = cta::xrd::CtaRpc::NewStub(grpc::CreateChannel(endpoint, grpc::InsecureChannelCredentials()));
 
   // do all the filling in of the command to send
   status = client_stub->Admin(&context, request, &response);
@@ -92,10 +84,23 @@ int main(int argc, const char** argv) {
   try {
     // Parse the command line arguments
     CtaAdminParsedCmd parsedCmd(argc, argv);
-    CtaAdminCmdNonStreaming cmd;
-
-    // Send the protocol buffer
-    cmd.send(parsedCmd);
+    // get the grpc endpoint from the config? but for now, use
+    std::string config_file = parsedCmd.getConfigFilePath();
+    cta::common::Config config(config_file);
+    auto endpoint = config.getOptionValueStr("cta.endpoint");
+    if (!endpoint.has_value()) {
+      std::cout << "Configuration error: cta.endpoint missing from " + config_file << std::endl;
+      throw std::runtime_error("Configuration error: cta.endpoint missing from " + config_file);
+    }
+    const auto &request = parsedCmd.getRequest();
+    if (isStreamCmd(request.admincmd())) {
+      CtaAdminCmdStreaming cmd;
+      // Send the protocol buffer
+      cmd.send(parsedCmd, endpoint.value());
+    } else {
+      CtaAdminCmdNonStreaming cmd;
+      cmd.send(parsedCmd, endpoint.value());
+    }
 
     // Delete all global objects allocated by libprotobuf
     google::protobuf::ShutdownProtobufLibrary();

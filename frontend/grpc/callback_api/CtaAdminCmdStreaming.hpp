@@ -35,7 +35,7 @@ class CtaAdminCmdStreaming
 {
 public:
    //! Send the protocol buffer across the gRPC transport
-   void send(const CtaAdminParsedCmd& parsedCmd);
+   void send(const CtaAdminParsedCmd& parsedCmd, std::string endpoint);
 };
 
 } // namespace cta::admin
