@@ -3670,13 +3670,15 @@ OStoreDB::getNextRetrieveJobsToReportBatch(uint64_t filesRequested, log::LogCont
     // extra cost on the objectstore side of thinsg?? TBD. The queue object itself is not
     // too big.
     // Another point, can we prevent other tasks from queueing requests into this queue ??
-    RetrieveQueue rqtr(m_objectStore);
-    ScopedExclusiveLock ex;
-    rqtr.setAddress(queueList.front().address); // Can the object be gone before this?
-    ex.lock(rqtr);
-    rqtr.fetch(); // get the contents of the queue
-    if(rqtr.getQueueCleanupDoCleanup()){
-      continue;
+    {
+      RetrieveQueue rqtr(m_objectStore);
+      ScopedExclusiveLock ex;
+      rqtr.setAddress(queueList.front().address); // Can the object be gone before this?
+      ex.lock(rqtr);
+      rqtr.fetch(); // get the contents of the queue
+      if(rqtr.getQueueCleanupDoCleanup()){
+        return ret;
+      }
     }
 
     RQTRAlgo::PopCriteria criteria;
