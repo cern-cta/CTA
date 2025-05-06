@@ -93,7 +93,6 @@ build_deploy() {
   local num_jobs=$(nproc --ignore=2)
   local restarted=false
   local deploy_namespace="dev"
-  local build_container_name="cta-build"
   # These versions don't affect anything functionality wise
   local cta_version="5"
   local vcs_version="dev"
@@ -254,7 +253,8 @@ build_deploy() {
     shift
   done
 
-  project_root=$(git rev-parse --show-toplevel)
+  local project_root=$(git rev-parse --show-toplevel)
+  local build_container_name="cta-build${project_root//\//-}"
 
   #####################################################################################################################
   # Build binaries/RPMs
