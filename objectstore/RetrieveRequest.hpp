@@ -217,6 +217,13 @@ public:
   };
 
 //public:
+  //! Request retries
+  static constexpr uint32_t RETRIES_WITHIN_MOUNT_FOR_REPACK = 1;
+  static constexpr uint32_t RETRIES_WITHIN_MOUNT_FOR_USER = 3;
+  static constexpr uint32_t TOTAL_RETRIES_FOR_REPACK = 1;
+  static constexpr uint32_t TOTAL_RETRIES_FOR_USER = 6;
+  static constexpr uint32_t REPORT_RETRIES = 2;
+
   //! Returns next step to take with the job
   EnqueueingNextStep addTransferFailure(uint32_t copyNumber, uint64_t sessionId, const std::string& failureReason, log::LogContext& lc);
   //! Returns next step to take with the job

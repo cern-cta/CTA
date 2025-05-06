@@ -542,10 +542,10 @@ void RetrieveRequest::setRetrieveFileQueueCriteria(const cta::common::dataStruct
      *   (1 mounts * 1 retrieswithinmount = 1 totalretries)
      */
     bool isRepack = getRepackInfo().isRepack;
-    const uint32_t hardcodedRetriesWithinMount = isRepack ? 1 : 3;
-    const uint32_t hardcodedTotalRetries       = isRepack ? 1 : 6;
-    const uint32_t hardcodedReportRetries      = 2;
-    addJob(tf.copyNb, hardcodedRetriesWithinMount, hardcodedTotalRetries, hardcodedReportRetries);
+    addJob(tf.copyNb,
+           isRepack ? RETRIES_WITHIN_MOUNT_FOR_REPACK : RETRIES_WITHIN_MOUNT_FOR_USER,
+           isRepack ? TOTAL_RETRIES_FOR_REPACK : TOTAL_RETRIES_FOR_USER,
+           REPORT_RETRIES);
   }
 }
 
@@ -1373,9 +1373,6 @@ std::string RetrieveRequest::asyncTransformToArchiveRequestCallback(const std::s
   RetrieveRequest::RepackInfoSerDeser repackInfoSerDeser;
   repackInfoSerDeser.deserialize(retrieveRequestPayload.repack_info());
   // TODO: for the moment we just clone the retrieve request's policy.
-  auto maxRetriesWithinMount = retrieveRequestPayload.jobs(0).maxretrieswithinmount();
-  auto maxTotalRetries = retrieveRequestPayload.jobs(0).maxtotalretries();
-  auto maxReportRetries = retrieveRequestPayload.jobs(0).maxreportretries();
   for (auto cntr : repackInfoSerDeser.copyNbsToRearchive) {
     auto* archiveJob = archiveRequestPayload.add_jobs();
     archiveJob->set_status(cta::objectstore::serializers::ArchiveJobStatus::AJS_ToTransferForRepack);
@@ -1385,10 +1382,10 @@ std::string RetrieveRequest::asyncTransformToArchiveRequestCallback(const std::s
     archiveJob->set_lastmountwithfailure(0);
     archiveJob->set_totalretries(0);
     archiveJob->set_retrieswithinmount(0);
-    archiveJob->set_maxretrieswithinmount(maxRetriesWithinMount);
+    archiveJob->set_maxretrieswithinmount(ArchiveRequest::RETRIES_WITHIN_MOUNT);
     archiveJob->set_totalreportretries(0);
-    archiveJob->set_maxtotalretries(maxTotalRetries);
-    archiveJob->set_maxreportretries(maxReportRetries);
+    archiveJob->set_maxtotalretries(ArchiveRequest::TOTAL_RETRIES);
+    archiveJob->set_maxreportretries(ArchiveRequest::REPORT_RETRIES);
     archiveJob->set_tapepool(repackInfoSerDeser.archiveRouteMap[cntr]);
     archiveJob->set_owner(strProcessAgentAddress);
   }

@@ -186,6 +186,11 @@ public:
 
   [[noreturn]] std::list<JobDump> dumpJobs() const;
 
+  //! Request retries
+  static constexpr uint32_t RETRIES_WITHIN_MOUNT = 2;
+  static constexpr uint32_t TOTAL_RETRIES = 2;
+  static constexpr uint32_t REPORT_RETRIES = 2;
+
 private:
   /**
    * Archive Job metadata

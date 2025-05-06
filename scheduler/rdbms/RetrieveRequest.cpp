@@ -184,10 +184,6 @@ void RetrieveRequest::fillJobsSetRetrieveFileQueueCriteria(
   m_priority = criteria.mountPolicy.retrievePriority;
   m_retrieveMinReqAge = criteria.mountPolicy.retrieveMinRequestAge;
 
-  const uint32_t hardcodedRetriesWithinMount = m_repackInfo.isRepack ? 1 : 3;
-  const uint32_t hardcodedTotalRetries = m_repackInfo.isRepack ? 1 : 6;
-  const uint32_t hardcodedReportRetries = 2;
-
   m_jobs.clear();
 
   // create jobs for each tapefile in the archiveFile;
@@ -195,9 +191,9 @@ void RetrieveRequest::fillJobsSetRetrieveFileQueueCriteria(
     m_jobs.emplace_back();
     m_jobs.back().copyNb = tf.copyNb;
     m_jobs.back().vid = tf.vid;
-    m_jobs.back().maxRetriesWithinMount = hardcodedRetriesWithinMount;
-    m_jobs.back().maxTotalRetries = hardcodedTotalRetries;
-    m_jobs.back().maxReportRetries = hardcodedReportRetries;
+    m_jobs.back().maxRetriesWithinMount = m_repackInfo.isRepack ? RETRIES_WITHIN_MOUNT_FOR_REPACK : RETRIES_WITHIN_MOUNT_FOR_USER;
+    m_jobs.back().maxTotalRetries = m_repackInfo.isRepack ? TOTAL_RETRIES_FOR_REPACK : TOTAL_RETRIES_FOR_USER;
+    m_jobs.back().maxReportRetries = REPORT_RETRIES;
     m_jobs.back().status = schedulerdb::RetrieveJobStatus::RJS_ToTransfer;
     // in case we need these for retrieval we should save them in DB as well !
     m_jobs.back().fSeq = tf.fSeq;
