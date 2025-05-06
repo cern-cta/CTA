@@ -28,6 +28,7 @@ class VersionWriteReactor : public ::grpc::ServerWriteReactor<cta::xrd::StreamRe
         void NextWrite();
     private:
         bool m_isHeaderSent;
+        bool m_isVersionSent;
         frontend::Version m_client_versions;
         frontend::Version m_server_versions;
         std::string m_catalogue_conn_string;
@@ -44,6 +45,7 @@ void VersionWriteReactor::OnDone() {
 
 VersionWriteReactor::VersionWriteReactor(cta::catalogue::Catalogue &catalogue, cta::Scheduler &scheduler, const std::string& catalogueConnString, const cta::xrd::Request* request)
     : m_isHeaderSent(false),
+      m_isVersionSent(false),
       m_catalogue_conn_string(catalogueConnString),
       m_catalogue_version(catalogue.Schema()->getSchemaVersion().getSchemaVersion<std::string>()),
       m_schedulerBackendName(scheduler.getSchedulerBackendName()),
@@ -77,7 +79,7 @@ void VersionWriteReactor::NextWrite() {
         StartWrite(&m_response); // this will trigger the OnWriteDone method
         std::cout << "called StartWrite on the server" << std::endl;
         return; // because we'll be called in a loop by OnWriteDone
-    } else {
+    } else if (!m_isVersionSent){
         cta::xrd::Data* data = new cta::xrd::Data();
         cta::admin::VersionItem *version = data->mutable_version_item();
         
@@ -92,12 +94,15 @@ void VersionWriteReactor::NextWrite() {
         version->set_is_upgrading(m_is_upgrading);
         version->set_scheduler_backend_name(m_schedulerBackendName.value());
 
+        m_isVersionSent = true;
+
         std::cout << "Calling StartWrite on the server, with some data this time" << std::endl;
         m_response.set_allocated_data(data);
         StartWrite(&m_response);
-        std::cout << "Finishing the call on the server side" << std::endl;
+    } else {
         // Finish the call
-        Finish(::grpc::Status::OK);
+        std::cout << "Finishing the call on the server side" << std::endl;
+        Finish(::grpc::Status::OK); // do we ever get to this Finish call?
     }
 }
 } // namespace cta::frontend::grpc
