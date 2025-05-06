@@ -57,12 +57,11 @@ install (FILES cta-frontend-grpc.conf.example DESTINATION ${CMAKE_INSTALL_SYSCON
 ## Eventually this will be unified with the streaming commands implementation and renamed to cta-admin-grpc
 ##
 add_executable(cta-admin-grpc
-  CtaAdminCmdNonStreaming.cpp
+  CtaAdminGrpcCmd.cpp
   ${PROJECT_SOURCE_DIR}/frontend/common/AdminCmd.cpp
   ${PROJECT_SOURCE_DIR}/cmdline/CtaAdminParsedCmd.cpp
   ${PROJECT_SOURCE_DIR}/cmdline/CtaAdminTextFormatter.cpp
   ${PROJECT_SOURCE_DIR}/cmdline/CtaAdminCmdParser.cpp
-  callback_api/CtaAdminCmdStreaming.cpp
 )
 
 target_link_libraries(cta-admin-grpc
@@ -115,7 +114,7 @@ endif()
 ##
 
 add_executable(cta-admin-grpc-stream-client
-  CtaAdminGrpcCmd.cpp
+  CtaAdminGrpcCmdDeprecated.cpp
   ClientTapeLsRequestHandler.cpp
   ClientNegotiationRequestHandler.cpp
   utils.cpp
