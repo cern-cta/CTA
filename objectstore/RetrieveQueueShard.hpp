@@ -83,11 +83,7 @@ public:
   typedef std::multiset<serializers::RetrieveJobPointer, 
     RetrieveQueueSerializedJobsToAddLess> SerializedJobsToAddSet;
 private:
-  /**
-   * adds job
-   */
-  void addJob(const RetrieveQueue::JobToAdd & jobToAdd);
-  
+ 
   /**
    * adds batch of jobs.
    */
@@ -96,6 +92,11 @@ private:
   void addJobsThroughCopy(JobsToAddSet & jobsToAdd);
   
 public:
+  /**
+   * adds job
+   */
+  void addJob(const RetrieveQueue::JobToAdd & jobToAdd);
+
   void addJobsBatch(JobsToAddSet & jobToAdd);
   
   

@@ -69,6 +69,8 @@ public:
     std::optional<std::string> activity;
     std::optional<std::string> diskSystemName;
   };
+
+  void appendJobsAndCommit(std::list<JobToAdd> & jobsToAdd, AgentReference & agentReference, log::LogContext & lc);
   void addJobsAndCommit(std::list<JobToAdd> & jobsToAdd, AgentReference & agentReference, log::LogContext & lc);
   // This version will check for existence of the job in the queue before
   // returns the count and sizes of actually added jobs (if any).

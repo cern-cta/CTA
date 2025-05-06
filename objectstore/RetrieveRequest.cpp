@@ -232,7 +232,7 @@ queueForFailure:;
       jta.back().activity = m_payload.activity();
     }
     if (isQueueCleanup) {
-      rq.addJobsAndCommit(jta, agentReference, lc);
+      rq.appendJobsAndCommit(jta, agentReference, lc);
     } else {
       rq.addJobsIfNecessaryAndCommit(jta, agentReference, lc);
     }

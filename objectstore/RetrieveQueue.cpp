@@ -307,6 +307,56 @@ void RetrieveQueue::addJobToShardAndMaybeSplit(RetrieveQueue::JobToAdd & jobToAd
   }
 }
 
+// Sequentially append jobs without caring about anything else PURE FIFO
+void RetrieveQueue::appendJobsAndCommit(std::list<JobToAdd> &jobsToAdd, AgentReference &agentReference, log::LogContext &lc) {
+  auto nextJob = jobsToAdd.begin();
+  while (nextJob != jobsToAdd.end()) {
+    RetrieveQueueShard rqs(m_objectStore);
+    serializers::RetrieveQueueShardPointer *rqsp = nullptr;
+    bool newShard = false;
+    uint64_t shardCount = m_payload.retrievequeueshards_size();
+    if (shardCount &&
+        m_payload.retrievequeueshards(shardCount - 1).shardjobscount() < m_maxShardSize) {
+      auto & shardPointer = m_payload.retrievequeueshards(shardCount - 1);
+      rqs.setAddress(shardPointer.address());
+      m_exclusiveLock->includeSubObject(rqs);
+      rqs.fetch(); // Extra checks happen in the archive queue.
+      rqsp = m_payload.mutable_retrievequeueshards(shardCount - 1);
+    } else {
+        // We need a new shard. Just add it (in memory).
+      newShard = true;
+      rqsp = m_payload.add_retrievequeueshards();
+      // Create the shard in memory.
+      std::stringstream shardName;
+      shardName << "RetrieveQueueShard-" << m_payload.vid();
+      rqs.setAddress(agentReference.nextId(shardName.str()));
+      rqs.initialize(getAddressIfSet());
+      // Reference the shard in the pointer, and initialized counters.
+      rqsp->set_address(rqs.getAddressIfSet());
+      rqsp->set_shardbytescount(0);
+      rqsp->set_shardjobscount(0);
+    }
+
+    // Job insertion
+   while (nextJob != jobsToAdd.end() && rqsp->shardjobscount() < m_maxShardSize) {
+      // Update the job count, we really don't care about other stuff...
+      m_payload.set_retrievejobscount(m_payload.retrievejobscount()+1);
+      // Add the job
+      rqs.addJob(*nextJob);
+
+      nextJob++;
+    }
+
+    if(newShard){
+      rqs.insert();
+    } else {
+      rqs.commit();
+    }
+
+    commit();
+  }
+}
+
 void RetrieveQueue::addJobsAndCommit(std::list<JobToAdd> & jobsToAdd, AgentReference & agentReference, log::LogContext & lc) {
   checkPayloadWritable();
   if (jobsToAdd.empty()) return;
