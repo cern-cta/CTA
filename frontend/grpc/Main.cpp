@@ -196,6 +196,7 @@ int main(const int argc, char *const *const argv) {
                                                svc.getFrontendService().getScheduler(),
                                                svc.getFrontendService().getSchedDb(),
                                                svc.getFrontendService().getCatalogueConnString(),
+                                               svc.getFrontendService().getInstanceName(),
                                                svc.getFrontendService().getLogContext());
     builder.RegisterService(&streamSvc);
     // add reflection

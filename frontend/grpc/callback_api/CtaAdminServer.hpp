@@ -69,10 +69,12 @@ class CtaRpcStreamImpl : public cta::xrd::CtaRpcStream::CallbackService {
   public:
     cta::log::LogContext getLogContext() const { return m_lc; }
     // CtaRpcStreamImpl() = delete;
-    CtaRpcStreamImpl(cta::catalogue::Catalogue &catalogue, cta::Scheduler &scheduler, cta::SchedulerDB_t &schedDB, const std::string& connstr, cta::log::LogContext logContext) :
+    CtaRpcStreamImpl(cta::catalogue::Catalogue &catalogue, cta::Scheduler &scheduler, cta::SchedulerDB_t &schedDB,
+      const std::string instanceName, const std::string& connstr, cta::log::LogContext logContext) :
       m_lc(logContext),
       m_catalogue(catalogue),
       m_scheduler(scheduler),
+      m_instanceName(instanceName),
       m_schedDb(schedDB),
       m_catalogueConnString(connstr) {}
     /* CtaAdminServerWriteReactor is what the type of GenericAdminStream could be */
@@ -82,6 +84,7 @@ class CtaRpcStreamImpl : public cta::xrd::CtaRpcStream::CallbackService {
     cta::log::LogContext m_lc; // <! Provided by the frontendService
     cta::catalogue::Catalogue &m_catalogue;    //!< Reference to CTA Catalogue
     cta::Scheduler            &m_scheduler;    //!< Reference to CTA Scheduler
+    std::string               m_instanceName;  //!< Instance name
     cta::SchedulerDB_t        &m_schedDb;      //!< Reference to CTA SchedulerDB
     std::string m_catalogueConnString; //!< Provided by frontendService
     // I do not think a reactor could be a member of this class because it must be reinitialized upon each call
@@ -132,7 +135,7 @@ CtaRpcStreamImpl::GenericAdminStream(::grpc::CallbackServerContext* context, con
     case cmd_pair(cta::admin::AdminCmd::CMD_ACTIVITYMOUNTRULE, cta::admin::AdminCmd::SUBCMD_LS):
       return new ActivityMountRuleLsWriteReactor(m_catalogue, m_scheduler, request);
     case cmd_pair(cta::admin::AdminCmd::CMD_SHOWQUEUES, cta::admin::AdminCmd::SUBCMD_NONE):
-      return new ShowQueuesWriteReactor(m_catalogue, m_scheduler, m_lc, request);
+      return new ShowQueuesWriteReactor(m_catalogue, m_scheduler,m_instanceName, m_lc, request);
     case cmd_pair(cta::admin::AdminCmd::CMD_REPACK, cta::admin::AdminCmd::SUBCMD_LS):
       return new RepackLsWriteReactor(m_catalogue, m_scheduler, request);
     case cmd_pair(cta::admin::AdminCmd::CMD_RECYCLETAPEFILE, cta::admin::AdminCmd::SUBCMD_LS):
