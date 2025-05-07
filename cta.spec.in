@@ -60,7 +60,7 @@ BuildRequires: cmake3 >= 3.17 redhat-rpm-config
 %define oracleVersionMax 24.0
 %define xrootdVersion 1:5.7.1-1.el9
 %define radosVersion 2:17.2.8
-%define requirementsOS protobuf-compiler >= 3.3.1 protobuf-devel >= 3.3.1 oracle-instantclient-devel >= %{oracleVersionMin} oracle-instantclient-devel < %{oracleVersionMax}
+%define requirementsOS protobuf-compiler >= 3.3.1 protobuf-devel >= 3.3.1 oracle-instantclient-devel >= %{oracleVersionMin}
 %define requiredProtobuf protobuf
 BuildRequires: %{requirementsOS}
 BuildRequires: grpc, grpc-devel, grpc-plugins
