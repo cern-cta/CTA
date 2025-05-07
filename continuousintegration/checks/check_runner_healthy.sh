@@ -40,14 +40,6 @@ else
   errors=$((errors + 1))
 fi
 
-echo "Checking if mhvtl.target is enabled"
-if systemctl is-enabled --quiet mhvtl.target; then
-  echo "SUCCESS: mhvtl.target is enabled"
-else
-  echo "ERROR: mhvtl.target is not enabled. Make sure mhvtl is installed and running"
-  errors=$((errors + 1))
-fi
-
 ctageneric_secret_name="reg-ctageneric"
 echo "Checking if Kubernetes $ctageneric_secret_name is present for pulling of the private CTA images"
 if kubectl get secret $ctageneric_secret_name >/dev/null 2>&1; then
@@ -74,3 +66,11 @@ if [ "${errors}" -gt 0 ]; then
   exit 1
 fi
 echo "SUCCESS: Runner configured correctly"
+
+echo "Checking if mhvtl.target is enabled"
+if systemctl is-enabled --quiet mhvtl.target; then
+  echo "SUCCESS: mhvtl.target is enabled"
+else
+  echo "ERROR: mhvtl.target is not enabled. Make sure mhvtl is installed and running"
+  errors=$((errors + 1))
+fi

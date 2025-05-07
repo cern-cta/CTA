@@ -24,14 +24,15 @@ usage() {
   echo "The container persists between runs of this script (unless the --reset flag is specified), which ensures that the build does not need to happen from scratch."
   echo "It is also able to deploy the built rpms via minikube for a basic testing setup."
   echo ""
-  echo "Important prerequisite: this script expects a CTA/ directory in /home/cirunner/shared/ on a VM setup throught the CTA CI Minikube repo"
+  echo "Important prerequisite: to run the tests, your machine will need to have access to a kubernetes cluster setup using the CTA CI Minikube repo."
   echo ""
   echo "Usage: $0 [options]"
   echo ""
   echo "options:"
   echo "  -h, --help:                           Shows help output."
   echo "  -r, --reset:                          Shut down the build container and start a new one to ensure a fresh build. Also cleans the build directories."
-  echo "  -o, --operating-system <os>:          Specifies for which operating system to build the rpms. Supported operating systems: [alma9]. Defaults to alma9 if not provided."
+  echo "  -c, --container-runtime <runtime>     The container runtime to use for the build container. Defaults to podman."
+  echo "  -b, --build-image <image>             Base image to use for the build container. Defaults to the latest alma9-base image."
   echo "      --build-generator <generator>:    Specifies the build generator for cmake. Supported: [\"Unix Makefiles\", \"Ninja\"]."
   echo "      --clean-build-dir:                Empties the RPM build directory (build_rpm/ by default), ensuring a fresh build from scratch."
   echo "      --clean-build-dirs:               Empties both the SRPM and RPM build directories (build_srpm/ and build_rpm/ by default), ensuring a fresh build from scratch."
@@ -75,7 +76,6 @@ build_deploy() {
   local skip_image_reload=false
   local build_generator="Ninja"
   local cmake_build_type="RelWithDebInfo"
-  local operating_system="alma9"
   local scheduler_type="objectstore"
   local oracle_support="TRUE"
   local enable_ccache=true
@@ -86,15 +86,13 @@ build_deploy() {
   local extra_build_options=""
   local catalogue_config="presets/dev-catalogue-postgres-values.yaml"
   local eos_image_tag=""
-
+  local container_runtime="podman"
+  local build_image="gitlab-registry.cern.ch/linuxsupport/alma9-base:latest"
 
   # Defaults
   local num_jobs=$(nproc --ignore=2)
   local restarted=false
-  local build_namespace="build"
   local deploy_namespace="dev"
-  local src_dir="/home/cirunner/shared"
-  local build_pod_name="cta-build"
   # These versions don't affect anything functionality wise
   local cta_version="5"
   local vcs_version="dev"
@@ -103,205 +101,200 @@ build_deploy() {
   # Parse command line arguments
   while [[ "$#" -gt 0 ]]; do
     case "$1" in
-      -h | --help) usage ;;
-      -r | --reset) reset=true; clean_build_dirs=true ;;
-      --clean-build-dir) clean_build_dir=true ;;
-      --clean-build-dirs) clean_build_dirs=true ;;
-      --disable-oracle-support) oracle_support="FALSE" ;;
-      --disable-ccache) enable_ccache=false ;;
-      --skip-build) skip_build=true ;;
-      --skip-deploy) skip_deploy=true ;;
-      --skip-cmake) skip_cmake=true ;;
-      --skip-unit-tests) skip_unit_tests=true ;;
-      --skip-debug-packages) skip_debug_packages=true ;;
-      --skip-image-reload) skip_image_reload=true ;;
-      --skip-image-cleanup) image_cleanup=false ;;
-      --force-install) force_install=true ;;
-      --upgrade-cta) upgrade_cta=true ;;
-      --upgrade-eos) upgrade_eos=true ;;
-      --eos-image-tag)
-        if [[ $# -gt 1 ]]; then
-          eos_image_tag="$2"
-          shift
-        else
-          echo "Error: --eos-image-tag requires an argument"
-          usage
-        fi
-        ;;
-      --build-generator)
-        if [[ $# -gt 1 ]]; then
-          build_generator="$2"
-          shift
-        else
-          echo "Error: --build-generator requires an argument"
-          usage
-        fi
-        ;;
-      --cmake-build-type)
-        if [[ $# -gt 1 ]]; then
-          if [ "$2" != "Release" ] && [ "$2" != "Debug" ] && [ "$2" != "RelWithDebInfo" ] && [ "$2" != "MinSizeRel" ]; then
-            echo "--cmake-build-type must be one of [Release, Debug, RelWithDebInfo, or MinSizeRel]."
-            exit 1
-          fi
-          cmake_build_type="$2"
-          shift
-        else
-          echo "Error: --cmake-build-type requires an argument"
-          usage
-        fi
-        ;;
-      -o | --operating-system)
-        if [[ $# -gt 1 ]]; then
-          if [ "$2" != "alma9" ]; then
-            echo "-o | --operating-system must be one of [alma9]."
-            exit 1
-          fi
-          operating_system="$2"
-          shift
-        else
-          echo "Error: -o | --operating-system requires an argument"
-          usage
-        fi
-        ;;
-      --scheduler-type)
-        if [[ $# -gt 1 ]]; then
-          scheduler_type="$2"
-          shift
-        else
-          echo "Error: --scheduler-type requires an argument"
-          usage
-        fi
-        ;;
-      --catalogue-config)
-        if [[ $# -gt 1 ]]; then
-          catalogue_config="$2"
-          shift
-        else
-          echo "Error: --catalogue-config requires an argument"
-          exit 1
-        fi
-        ;;
-      --scheduler-config)
-        if [[ $# -gt 1 ]]; then
-          scheduler_config="$2"
-          shift
-        else
-          echo "Error: --scheduler-config requires an argument"
-          exit 1
-        fi
-        ;;
-      --tapeservers-config)
-        if [[ $# -gt 1 ]]; then
-          tapeservers_config="$2"
-          shift
-        else
-          echo "Error: --tapeservers-config requires an argument"
-          exit 1
-        fi
-        ;;
-      --cta-config)
-        if [[ $# -gt 1 ]]; then
-          cta_config="$2"
-          shift
-        else
-          echo "Error: --cta-config requires an argument"
-          usage
-        fi
-        ;;
-      --eos-config)
-        if [[ $# -gt 1 ]]; then
-          eos_config="$2"
-          shift
-        else
-          echo "Error: --eos-config requires an argument"
-          usage
-        fi
-        ;;
-      --spawn-options)
-        if [[ $# -gt 1 ]]; then
-          extra_spawn_options+=" $2"
-          shift
-        else
-          echo "Error: --spawn-options requires an argument"
-          exit 1
-        fi
-        ;;
-      --build-options)
-        if [[ $# -gt 1 ]]; then
-          extra_build_options+=" $2"
-          shift
-        else
-          echo "Error: --build-options requires an argument"
-          exit 1
-        fi
-        ;;
-      *)
-        echo "Unsupported argument: $1"
+    -h | --help) usage ;;
+    -r | --reset)
+      reset=true
+      clean_build_dirs=true
+      ;;
+    --clean-build-dir) clean_build_dir=true ;;
+    --clean-build-dirs) clean_build_dirs=true ;;
+    --disable-oracle-support) oracle_support="FALSE" ;;
+    --disable-ccache) enable_ccache=false ;;
+    --skip-build) skip_build=true ;;
+    --skip-deploy) skip_deploy=true ;;
+    --skip-cmake) skip_cmake=true ;;
+    --skip-unit-tests) skip_unit_tests=true ;;
+    --skip-debug-packages) skip_debug_packages=true ;;
+    --skip-image-reload) skip_image_reload=true ;;
+    --skip-image-cleanup) image_cleanup=false ;;
+    --force-install) force_install=true ;;
+    --upgrade-cta) upgrade_cta=true ;;
+    --upgrade-eos) upgrade_eos=true ;;
+    --eos-image-tag)
+      if [[ $# -gt 1 ]]; then
+        eos_image_tag="$2"
+        shift
+      else
+        echo "Error: --eos-image-tag requires an argument"
         usage
-        ;;
+      fi
+      ;;
+    --build-generator)
+      if [[ $# -gt 1 ]]; then
+        build_generator="$2"
+        shift
+      else
+        echo "Error: --build-generator requires an argument"
+        usage
+      fi
+      ;;
+    --cmake-build-type)
+      if [[ $# -gt 1 ]]; then
+        if [ "$2" != "Release" ] && [ "$2" != "Debug" ] && [ "$2" != "RelWithDebInfo" ] && [ "$2" != "MinSizeRel" ]; then
+          echo "--cmake-build-type must be one of [Release, Debug, RelWithDebInfo, or MinSizeRel]."
+          exit 1
+        fi
+        cmake_build_type="$2"
+        shift
+      else
+        echo "Error: --cmake-build-type requires an argument"
+        usage
+      fi
+      ;;
+    -c | --container-runtime)
+      if [[ $# -gt 1 ]]; then
+        if [ "$2" != "docker" ] && [ "$2" != "podman" ]; then
+          echo "-c | --container-runtime must be one of [docker, podman]."
+          exit 1
+        fi
+        container_runtime="$2"
+        shift
+      else
+        echo "Error: -c | --container-runtime requires an argument"
+        usage
+      fi
+      ;;
+    -b | --build-image)
+      if [[ $# -gt 1 ]]; then
+        build_image="$2"
+        shift
+      else
+        echo "Error: -b | --build-image requires an argument"
+        usage
+      fi
+      ;;
+    --scheduler-type)
+      if [[ $# -gt 1 ]]; then
+        scheduler_type="$2"
+        shift
+      else
+        echo "Error: --scheduler-type requires an argument"
+        usage
+      fi
+      ;;
+    --catalogue-config)
+      if [[ $# -gt 1 ]]; then
+        catalogue_config="$2"
+        shift
+      else
+        echo "Error: --catalogue-config requires an argument"
+        exit 1
+      fi
+      ;;
+    --scheduler-config)
+      if [[ $# -gt 1 ]]; then
+        scheduler_config="$2"
+        shift
+      else
+        echo "Error: --scheduler-config requires an argument"
+        exit 1
+      fi
+      ;;
+    --tapeservers-config)
+      if [[ $# -gt 1 ]]; then
+        tapeservers_config="$2"
+        shift
+      else
+        echo "Error: --tapeservers-config requires an argument"
+        exit 1
+      fi
+      ;;
+    --cta-config)
+      if [[ $# -gt 1 ]]; then
+        cta_config="$2"
+        shift
+      else
+        echo "Error: --cta-config requires an argument"
+        usage
+      fi
+      ;;
+    --eos-config)
+      if [[ $# -gt 1 ]]; then
+        eos_config="$2"
+        shift
+      else
+        echo "Error: --eos-config requires an argument"
+        usage
+      fi
+      ;;
+    --spawn-options)
+      if [[ $# -gt 1 ]]; then
+        extra_spawn_options+=" $2"
+        shift
+      else
+        echo "Error: --spawn-options requires an argument"
+        exit 1
+      fi
+      ;;
+    --build-options)
+      if [[ $# -gt 1 ]]; then
+        extra_build_options+=" $2"
+        shift
+      else
+        echo "Error: --build-options requires an argument"
+        exit 1
+      fi
+      ;;
+    *)
+      echo "Unsupported argument: $1"
+      usage
+      ;;
     esac
     shift
   done
 
-  # Check if src_dir specified
-  echo "Checking whether CTA directory exists in \"${src_dir}\"..."
-  if [ ! -d "${src_dir}/CTA" ]; then
-    echo "Error: CTA directory not present in \"${src_dir}\"."
-    exit 1
-  fi
-  echo "CTA directory found"
+  local project_root=$(git rev-parse --show-toplevel)
+  local build_container_name="cta-build${project_root//\//-}"
 
   #####################################################################################################################
   # Build binaries/RPMs
   #####################################################################################################################
-  if [ ${skip_build} = false ]; then
+  if [ "${skip_build}" = false ]; then
     print_header "BUILDING RPMS"
-    # Check if namespace exists
-    if kubectl get namespace "${build_namespace}" &>/dev/null; then
-      echo "Found existing build namespace ${build_namespace}"
-    else
-      echo "Creating build namespace: ${build_namespace}"
-      kubectl create namespace "${build_namespace}"
-    fi
-    # Delete old pod
-    if [ ${reset} = true ]; then
-      echo "Attempting shutdown of existing build pod..."
-      kubectl delete pod ${build_pod_name} -n ${build_namespace} --ignore-not-found
+    # Stop and remove existing container if reset is requested
+    if [ "${reset}" = true ]; then
+      echo "Shutting down existing build container..."
+      ${container_runtime} rm -f "${build_container_name}" >/dev/null 2>&1 || true
     fi
 
-    # Create the pod if it does not exist
-    if kubectl get pod ${build_pod_name} -n ${build_namespace} >/dev/null 2>&1; then
-      echo "Pod ${build_pod_name} already exists"
+    # Start container if not already running
+    if ${container_runtime} ps -a --format '{{.Names}}' | grep -wq "${build_container_name}"; then
+      echo "Container ${build_container_name} already exists"
     else
       restarted=true
-      echo "Starting a new build pod: ${build_pod_name}..."
-      case "${operating_system}" in
-        alma9)
-          kubectl create -f ${src_dir}/CTA/continuousintegration/build/alma9-build-pod.yml -n ${build_namespace}
-          ;;
-        *)
-          echo "Invalid operating system provided: ${operating_system}"
-          exit 1
-          ;;
-      esac
-      kubectl wait --for=condition=ready pod/${build_pod_name} -n ${build_namespace}
+      echo "Starting new build container: ${build_container_name}"
+      ${container_runtime} run -dit --name "${build_container_name}" \
+        -v "${project_root}:/shared/CTA:z" \
+        "${build_image}" \
+        /bin/bash
       echo "Building SRPMs..."
-      local build_srpm_flags=""
-      if [[ ${clean_build_dirs} = true ]]; then
+      build_srpm_flags=""
+      if [[ "${clean_build_dirs}" = true ]]; then
         build_srpm_flags+=" --clean-build-dir"
       fi
 
-      kubectl exec -it ${build_pod_name} -n ${build_namespace} -- ./shared/CTA/continuousintegration/build/build_srpm.sh \
+      ${container_runtime} exec -it "${build_container_name}" \
+        ./shared/CTA/continuousintegration/build/build_srpm.sh \
         --build-dir /shared/CTA/build_srpm \
         --build-generator "${build_generator}" \
         --create-build-dir \
-        --cta-version ${cta_version} \
-        --vcs-version ${vcs_version} \
-        --scheduler-type ${scheduler_type} \
-        --oracle-support ${oracle_support} \
+        --cta-version "${cta_version}" \
+        --vcs-version "${vcs_version}" \
+        --scheduler-type "${scheduler_type}" \
+        --oracle-support "${oracle_support}" \
         --cmake-build-type "${cmake_build_type}" \
         --install \
-        --jobs ${num_jobs} \
+        --jobs "${num_jobs}" \
         ${build_srpm_flags}
     fi
 
@@ -332,7 +325,8 @@ build_deploy() {
     fi
 
     echo "Building RPMs..."
-    kubectl exec -it ${build_pod_name} -n ${build_namespace} -- ./shared/CTA/continuousintegration/build/build_rpm.sh \
+    ${container_runtime} exec -it "${build_container_name}" \
+      ./shared/CTA/continuousintegration/build/build_rpm.sh \
       --build-dir /shared/CTA/build_rpm \
       --build-generator "${build_generator}" \
       --create-build-dir \
@@ -350,7 +344,7 @@ build_deploy() {
   fi
 
   # navigate to root project directory
-  cd "${src_dir}/CTA"
+  cd "${project_root}"
 
   #####################################################################################################################
   # Build image
@@ -363,12 +357,12 @@ build_deploy() {
       local current_build_id=0
       image_tag="dev-$current_build_id"
       touch $build_iteration_file
-      echo $current_build_id > $build_iteration_file
+      echo $current_build_id >$build_iteration_file
 
       if [ ${image_cleanup} = true ]; then
         # When deploying an entirely new instance, this is a nice time to clean up old images
         echo "Cleaning up unused ctageneric images..."
-        minikube image ls | grep "localhost/ctageneric:dev" | xargs -r minikube image rm > /dev/null 2>&1
+        minikube image ls | grep "localhost/ctageneric:dev" | xargs -r minikube image rm >/dev/null 2>&1
       fi
     else
       # This continuoully increments the image tag from previous upgrades
@@ -379,20 +373,20 @@ build_deploy() {
       local current_build_id=$(cat "$build_iteration_file")
       new_build_id=$((current_build_id + 1))
       image_tag="dev-$new_build_id"
-      echo $new_build_id > $build_iteration_file
+      echo $new_build_id >$build_iteration_file
     fi
     ## Create and load the new image
     local rpm_src=build_rpm/RPM/RPMS/x86_64
     echo "Building image from ${rpm_src}"
     ./continuousintegration/build/build_image.sh --tag ${image_tag} \
-                                                 --rpm-src "${rpm_src}" \
-                                                 --operating-system "${operating_system}" \
-                                                 --load-into-minikube \
-                                                 ${extra_build_options}
+      --rpm-src "${rpm_src}" \
+      --container-runtime "${container_runtime}" \
+      --load-into-minikube \
+      ${extra_build_options}
     if [ ${image_cleanup} = true ]; then
       # Pruning of unused images is done after image building to ensure we maintain caching
       podman image ls | grep ctageneric | grep -v "${image_tag}" | awk '{ print "localhost/ctageneric:" $2 }' | xargs -r podman rmi || true
-      podman image prune -f > /dev/null
+      podman image prune -f >/dev/null
     fi
   else
     if [ ! -f "$build_iteration_file" ]; then
@@ -415,12 +409,12 @@ build_deploy() {
         upgrade_options+=" --cta-image-repository localhost/ctageneric --cta-image-tag ${image_tag}"
       fi
       ./upgrade_cta_instance.sh --namespace ${deploy_namespace} \
-                                ${upgrade_options} ${extra_spawn_options}
+        ${upgrade_options} ${extra_spawn_options}
     elif [ "$upgrade_eos" = true ]; then
       print_header "UPGRADING EOS INSTANCE"
       cd continuousintegration/orchestration
       ./upgrade_eos_instance.sh --namespace ${deploy_namespace} \
-                                --eos-image-tag ${eos_image_tag}
+        --eos-image-tag ${eos_image_tag}
     else
       print_header "DELETING OLD CTA INSTANCES"
       # By default we discard the logs from deletion as this is not very useful during development
@@ -454,13 +448,13 @@ build_deploy() {
       echo "Deploying CTA instance"
       cd continuousintegration/orchestration
       ./create_instance.sh --namespace ${deploy_namespace} \
-                          --cta-image-repository localhost/ctageneric \
-                          --cta-image-tag ${image_tag} \
-                          --catalogue-config ${catalogue_config} \
-                          --scheduler-config ${scheduler_config} \
-                          --reset-catalogue \
-                          --reset-scheduler \
-                          ${extra_spawn_options}
+        --cta-image-repository localhost/ctageneric \
+        --cta-image-tag ${image_tag} \
+        --catalogue-config ${catalogue_config} \
+        --scheduler-config ${scheduler_config} \
+        --reset-catalogue \
+        --reset-scheduler \
+        ${extra_spawn_options}
     fi
   fi
   print_header "DONE"
