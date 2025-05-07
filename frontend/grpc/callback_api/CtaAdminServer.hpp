@@ -130,7 +130,7 @@ CtaRpcStreamImpl::GenericAdminStream(::grpc::CallbackServerContext* context, con
       return new TapeFileLsWriteReactor(m_catalogue, m_scheduler, request);
     case cmd_pair(cta::admin::AdminCmd::CMD_ACTIVITYMOUNTRULE, cta::admin::AdminCmd::SUBCMD_LS):
       return new ActivityMountRuleLsWriteReactor(m_catalogue, m_scheduler, request);
-    case cmd_pair(cta::admin::AdminCmd::CMD_SHOWQUEUES, cta::admin::AdminCmd::SUBCMD_LS):
+    case cmd_pair(cta::admin::AdminCmd::CMD_SHOWQUEUES, cta::admin::AdminCmd::SUBCMD_NONE):
       return new ShowQueuesWriteReactor(m_catalogue, m_scheduler, m_lc, request);
     case cmd_pair(cta::admin::AdminCmd::CMD_REPACK, cta::admin::AdminCmd::SUBCMD_LS):
       return new RepackLsWriteReactor(m_catalogue, m_scheduler, request);

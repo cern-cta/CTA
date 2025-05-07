@@ -79,7 +79,7 @@ void CtaAdminGrpcCmd::send(const CtaAdminParsedCmd& parsedCmd, std::string endpo
       if (!status.ok()) {
         std::cout << "gRPC call failed. Error code: " + std::to_string(status.error_code()) + " Error message: " + status.error_message() << std::endl;
       }
-      // close the json delimiter
+      // close the json delimiter, open is done inside command execution
       if (parsedCmd.isJson()) {
         std::cout << CtaAdminParsedCmd::jsonCloseDelim();
       }
