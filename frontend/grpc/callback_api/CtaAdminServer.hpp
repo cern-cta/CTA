@@ -142,6 +142,7 @@ CtaRpcStreamImpl::GenericAdminStream(::grpc::CallbackServerContext* context, con
       return new FailedRequestLsWriteReactor(m_catalogue, m_scheduler, m_schedDb, m_lc, request);
     default:
       // make the compiler happy maybe and return
+      std::cout << "In GenericAdminStream, we are in the default case, creating a TapeLsWriteReactor, this is problematic" << std::endl;
       return new TapeLsWriteReactor(m_catalogue, m_scheduler, request);
     // dCache impl. prints unrecognized Request message
       // Finish(::grpc::Status(::grpc::StatusCode::UNIMPLEMENTED	, "Method to handle this command is not implemented")); // we will not get into the unimplemented path,

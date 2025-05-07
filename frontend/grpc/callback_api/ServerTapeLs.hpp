@@ -73,11 +73,13 @@ TapeLsWriteReactor::TapeLsWriteReactor(cta::catalogue::Catalogue &catalogue, cta
         searchCriteria.state = common::dataStructures::Tape::stringToState(stateOpt.value(), true);
     }
     if(!(requestMsg.has_flag(OptionBoolean::ALL) || has_any)) {
-        std::cout << "The --all flag was not specified, will throw" << std::endl;
-        throw cta::exception::UserError("Must specify at least one search option, or --all");
+        std::cout << "The --all flag was not specified, will finish the call" << std::endl;
+        Finish(Status(::grpc::StatusCode::INVALID_ARGUMENT, "Must specify at least one search option, or --all"));
+        return;
     } else if(requestMsg.has_flag(OptionBoolean::ALL) && has_any) {
-        std::cout << "The --all flag was specified together with other search options, will throw" << std::endl;
-        throw cta::exception::UserError("Cannot specify --all together with other search options");
+        std::cout << "The --all flag was specified together with other search options, will finish the call" << std::endl;
+        Finish(Status(::grpc::StatusCode::INVALID_ARGUMENT, "Cannot specify --all together with other search options"));
+        return;
     }
 
     std::cout << "Calling getTapes to populate the m_tapeList" << std::endl;
