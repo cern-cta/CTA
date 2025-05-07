@@ -121,14 +121,15 @@ std::string RelationalDB::queueArchive(const std::string& instanceName,
 
   //std::vector<schedulerdb::ArchiveRequest::JobDump> jl;
   //jl.reserve(criteria.copyToPoolMap.size());
-  const uint32_t hardcodedRetriesWithinMount = 2;
-  const uint32_t hardcodedTotalRetries = 2;
-  const uint32_t hardcodedReportRetries = 2;
   int count_jobs = 0;
   for (auto& [key, value] : criteria.copyToPoolMap) {
     count_jobs++;
     //schedulerdb::ArchiveRequest::JobDump job;
-    aReq.addJob(key, value, hardcodedRetriesWithinMount, hardcodedTotalRetries, hardcodedReportRetries);
+    aReq.addJob(key,
+                value,
+                schedulerdb::ArchiveRequest::RETRIES_WITHIN_MOUNT,
+                schedulerdb::ArchiveRequest::TOTAL_RETRIES,
+                schedulerdb::ArchiveRequest::REPORT_RETRIES);
     //jl.emplace_back();
     //jl.back().copyNb = key;
     //jl.back().tapePool = value;

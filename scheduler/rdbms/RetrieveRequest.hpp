@@ -193,6 +193,13 @@ public:
   */
   [[noreturn]] std::list<JobDump> dumpJobs() const;
 
+  //! Request retries
+  static constexpr uint32_t RETRIES_WITHIN_MOUNT_FOR_REPACK = 1;
+  static constexpr uint32_t RETRIES_WITHIN_MOUNT_FOR_USER = 3;
+  static constexpr uint32_t TOTAL_RETRIES_FOR_REPACK = 1;
+  static constexpr uint32_t TOTAL_RETRIES_FOR_USER = 6;
+  static constexpr uint32_t REPORT_RETRIES = 2;
+
 private:
   /**
   * Retrieve Job metadata

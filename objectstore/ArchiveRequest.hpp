@@ -92,6 +92,12 @@ public:
   };
   const std::set<serializers::ArchiveJobStatus> c_statusesImplyingQueueingByRepackRequestAddress {serializers::ArchiveJobStatus::AJS_ToReportToRepackForFailure,
       serializers::ArchiveJobStatus::AJS_ToReportToRepackForSuccess};
+
+  //! Request retries
+  static constexpr uint32_t RETRIES_WITHIN_MOUNT = 2;
+  static constexpr uint32_t TOTAL_RETRIES = 2;
+  static constexpr uint32_t REPORT_RETRIES = 2;
+
 private:
   /**
    * Determine and set the new status of the job and determine whether and where the request should be queued
