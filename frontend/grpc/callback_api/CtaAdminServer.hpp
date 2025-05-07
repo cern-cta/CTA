@@ -45,6 +45,7 @@
 #include "ServerRecycleTapeFileLs.hpp"
 #include "ServerLogicalLibraryLs.hpp"
 #include "ServerFailedRequestLs.hpp"
+#include "ServerDefaultReactor.hpp"
 
 #include <grpcpp/grpcpp.h>
 
@@ -141,9 +142,11 @@ CtaRpcStreamImpl::GenericAdminStream(::grpc::CallbackServerContext* context, con
     case cmd_pair(cta::admin::AdminCmd::CMD_FAILEDREQUEST, cta::admin::AdminCmd::SUBCMD_LS):
       return new FailedRequestLsWriteReactor(m_catalogue, m_scheduler, m_schedDb, m_lc, request);
     default:
-      // make the compiler happy maybe and return
-      std::cout << "In GenericAdminStream, we are in the default case, creating a TapeLsWriteReactor, this is problematic" << std::endl;
-      return new TapeLsWriteReactor(m_catalogue, m_scheduler, request);
+      // Just to return an error status code when the specified command is not implemented
+      const std::string errMsg("Admin command pair <" +
+        AdminCmd_Cmd_Name(request->admincmd().cmd()) + ", " +
+        AdminCmd_SubCmd_Name(request->admincmd().subcmd()) + "> is not implemented.");
+      return new DefaultWriteReactor(errMsg);
     // dCache impl. prints unrecognized Request message
       // Finish(::grpc::Status(::grpc::StatusCode::UNIMPLEMENTED	, "Method to handle this command is not implemented")); // we will not get into the unimplemented path,
       // as it will be detected earlier on by the client at the time of making the rpc call. But, still need a way to return an error here
