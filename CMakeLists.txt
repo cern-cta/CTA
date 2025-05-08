@@ -12,7 +12,8 @@
 #               In applying this licence, CERN does not waive the privileges and immunities
 #               granted to it by virtue of its status as an Intergovernmental Organization or
 #               submit itself to any jurisdiction.
-cmake_minimum_required (VERSION 3.17)
+# We need 3.19 to use the JSON functionality for parsing the project.json
+cmake_minimum_required (VERSION 3.19)
 
 project(cta)
 

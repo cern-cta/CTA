@@ -70,7 +70,7 @@
         "xrootd": "1:5.8.1.post48+git845be267c-1",
         "oracle-instantclient-devel": "23.6.0.24.10-1"
       },
-      "buildDependencies": {
+      "buildVersions": {
         "xrootd": ">= 1:5.7.1-1",
         "protobuf": ">= 3.3.1",
         "librados": "= 2:17.2.7",

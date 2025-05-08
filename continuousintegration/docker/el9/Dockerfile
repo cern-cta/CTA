@@ -19,8 +19,14 @@ FROM gitlab-registry.cern.ch/linuxsupport/alma9-base:latest
 # Add orchestration run scripts locally
 COPY continuousintegration/docker/opt /opt
 
+ARG USE_INTERNAL_REPOS=0
+
 # Ensure we have access to our own internal repos and the local artifact CTA RPMs
-COPY continuousintegration/docker/el9/etc/yum.repos.d/ /etc/yum.repos.d/
+COPY continuousintegration/docker/el9/etc/yum.repos.d-public/ /etc/yum.repos.d/
+COPY continuousintegration/docker/el9/etc/yum.repos.d/ /tmp/
+RUN if [ "$USE_INTERNAL_REPOS" = "1" ]; then \
+      mv -f /tmp/*.repo /etc/yum.repos.d/; \
+    fi
 # Copy pre-built RPMs into the local repository directory
 COPY image_rpms /opt/repo/RPMS/x86_64
 

@@ -82,7 +82,7 @@ execute_process(
 
 # Repos files
 file (GLOB REPO_FILES
-  "${CMAKE_SOURCE_DIR}/cta-release/${RPMTools_RPMBUILD_DIST}/yum.repos.d-public/*.repo"
+  "${CMAKE_SOURCE_DIR}/continuousintegration/docker/${RPMTools_RPMBUILD_DIST}/etc/yum.repos.d-public/*.repo"
 )
 
 string(APPEND CTAVERSIONLOCK "${VERSIONLOCK}")

@@ -49,7 +49,7 @@ usage() {
   echo "      --skip-image-cleanup:             Skip the cleanup of the ctageneric images in both podman and minikube before deploying a new instance."
   echo "      --scheduler-type <type>:          The scheduler type. Must be one of [objectstore, pgsched]."
   echo "      --spawn-options <options>:        Additional options to pass for the deployment. These are passed verbatim to the create/upgrade instance scripts."
-  echo "      --build-options <options>:        Additional options to pass for the image building. These are passed verbatim to the build_image.sh script."
+  echo "      --image-build-options <options>:        Additional options to pass for the image building. These are passed verbatim to the build_image.sh script."
   echo "      --scheduler-config <path>:        Path to the yaml file containing the type and credentials to configure the Scheduler. Defaults to: presets/dev-scheduler-vfs-values.yaml"
   echo "      --catalogue-config <path>:        Path to the yaml file containing the type and credentials to configure the Catalogue. Defaults to: presets/dev-catalogue-postgres-values.yaml"
   echo "      --tapeservers-config <path>:      Path to the yaml file containing the tapeservers config. If not provided, this will be auto-generated."
@@ -58,6 +58,7 @@ usage() {
   echo "      --eos-image-tag:                  Image to use for spawning EOS. If not provided, will default to the image specified in the create_instance script."
   echo "      --cta-config <path>:              Custom Values file to pass to the CTA Helm chart. Defaults to: presets/dev-cta-xrd-values.yaml"
   echo "      --eos-config <path>:              Custom Values file to pass to the EOS Helm chart. Defaults to: presets/dev-eos-values.yaml"
+  echo "      --disable-internal-repos:         If provided, will use the public repos for download packages instead of the internal CERN repos."
   exit 1
 }
 
@@ -83,11 +84,12 @@ build_deploy() {
   local upgrade_eos=false
   local image_cleanup=true
   local extra_spawn_options=""
-  local extra_build_options=""
+  local extra_image_build_options=""
   local catalogue_config="presets/dev-catalogue-postgres-values.yaml"
   local eos_image_tag=""
   local container_runtime="podman"
   local build_image="gitlab-registry.cern.ch/linuxsupport/alma9-base:latest"
+  local use_internal_repos=true
 
   # Defaults
   local num_jobs=$(nproc --ignore=2)
@@ -120,6 +122,7 @@ build_deploy() {
     --force-install) force_install=true ;;
     --upgrade-cta) upgrade_cta=true ;;
     --upgrade-eos) upgrade_eos=true ;;
+    --disable-internal-repos) use_internal_repos=false ;;
     --eos-image-tag)
       if [[ $# -gt 1 ]]; then
         eos_image_tag="$2"
@@ -236,12 +239,12 @@ build_deploy() {
         exit 1
       fi
       ;;
-    --build-options)
+    --image-build-options)
       if [[ $# -gt 1 ]]; then
-        extra_build_options+=" $2"
+        extra_image_build_options+=" $2"
         shift
       else
-        echo "Error: --build-options requires an argument"
+        echo "Error: ---imagebuild-options requires an argument"
         exit 1
       fi
       ;;
@@ -324,6 +327,10 @@ build_deploy() {
       build_rpm_flags+=" --enable-ccache"
     fi
 
+    if [[ ${use_internal_repos} = true ]]; then
+      build_rpm_flags+=" --use-internal-repos"
+    fi
+
     echo "Building RPMs..."
     ${container_runtime} exec -it "${build_container_name}" \
       ./shared/CTA/continuousintegration/build/build_rpm.sh \
@@ -375,6 +382,9 @@ build_deploy() {
       image_tag="dev-$new_build_id"
       echo $new_build_id >$build_iteration_file
     fi
+    if [[ ${use_internal_repos} = true ]]; then
+      extra_image_build_options+=" --use-internal-repos"
+    fi
     ## Create and load the new image
     local rpm_src=build_rpm/RPM/RPMS/x86_64
     echo "Building image from ${rpm_src}"
@@ -382,7 +392,7 @@ build_deploy() {
       --rpm-src "${rpm_src}" \
       --container-runtime "${container_runtime}" \
       --load-into-minikube \
-      ${extra_build_options}
+      ${extra_image_build_options}
     if [ ${image_cleanup} = true ]; then
       # Pruning of unused images is done after image building to ensure we maintain caching
       podman image ls | grep ctageneric | grep -v "${image_tag}" | awk '{ print "localhost/ctageneric:" $2 }' | xargs -r podman rmi || true
