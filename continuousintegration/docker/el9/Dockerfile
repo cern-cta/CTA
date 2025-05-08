@@ -1,5 +1,5 @@
 # @project      The CERN Tape Archive (CTA)
-# @copyright    Copyright © 2023 CERN
+# @copyright    Copyright © 2023-2025 CERN
 # @license      This program is free software, distributed under the terms of the GNU General Public
 #               Licence version 3 (GPL Version 3), copied verbatim in the file "COPYING". You can
 #               redistribute it and/or modify it under the terms of the GPL Version 3, or (at your
@@ -16,10 +16,13 @@
 # CTA generic image containing all CTA RPMs
 FROM gitlab-registry.cern.ch/linuxsupport/alma9-base:latest
 
-ENV CTAREPODIR="/opt/repo"
-
 # Add orchestration run scripts locally
 COPY continuousintegration/docker/opt /opt
+
+# Ensure we have access to our own internal repos and the local artifact CTA RPMs
+COPY continuousintegration/docker/el9/etc/yum.repos.d/ /etc/yum.repos.d/
+# Copy pre-built RPMs into the local repository directory
+COPY image_rpms /opt/repo/RPMS/x86_64
 
 # Install necessary packages
 RUN dnf install -y \
@@ -37,23 +40,10 @@ RUN dnf install -y \
 # We add the cta user so that we can consistently reference it in the Helm chart when changing keytab ownership
 RUN useradd -m -u 1000 -g tape cta
 
-# Copy pre-built RPMs into the local repository directory
-COPY image_rpms ${CTAREPODIR}/RPMS/x86_64
-
 # Populate local repository and enable it
 RUN dnf config-manager --enable epel --setopt="epel.priority=4" && \
-    createrepo "${CTAREPODIR}" && \
-    echo -e "[cta-artifacts]\n\
-name=CTA artifacts\n\
-baseurl=file://${CTAREPODIR}\n\
-gpgcheck=0\n\
-enabled=1\n\
-priority=2" > /etc/yum.repos.d/cta-artifacts.repo && \
     dnf config-manager --enable cta-artifacts && \
     dnf install -y "cta-release" && \
     cta-versionlock apply && \
     dnf clean all --enablerepo=\* && \
     rm -rf /etc/rc.d/rc.local
-
-# Overwrite the repos from cta-release with our own internal repos
-COPY continuousintegration/docker/el9/etc/yum.repos.d/ /etc/yum.repos.d/
