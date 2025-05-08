@@ -31,6 +31,7 @@
 #include "castor/tape/tapeserver/daemon/VolumeInfo.hpp"
 #include "castor/tape/tapeserver/drive/DriveInterface.hpp"
 #include "castor/tape/tapeserver/SCSI/Device.hpp"
+#include "common/dataStructures/LabelFormat.hpp"
 #include "common/exception/Exception.hpp"
 #include "common/exception/TimeoutException.hpp"
 #include "scheduler/RetrieveMount.hpp"
@@ -303,10 +304,15 @@ castor::tape::tapeserver::daemon::DataTransferSession::executeRead(cta::log::Log
 
     // The RecallTaskInjector and the TapeReadSingleThread share the promise
     if (m_dataTransferConfig.useRAO) {
-      castor::tape::tapeserver::rao::RAOParams raoDataConfig(m_dataTransferConfig.useRAO, m_dataTransferConfig.raoLtoAlgorithm,
-                                                             m_dataTransferConfig.raoLtoAlgorithmOptions,
-                                                             m_volInfo.vid);
-      taskInjector.initRAO(raoDataConfig, &m_scheduler.getCatalogue());
+      using LabelFormat = cta::common::dataStructures::Label::Format;
+      if (m_volInfo.labelFormat == LabelFormat::Enstore || m_volInfo.labelFormat == LabelFormat::EnstoreLarge) {
+          logContext.log(cta::log::INFO, "DataTransferSession::executeRead Tape LabelFormat incompatible with RAO. Setting RAO false.");
+      } else {
+        castor::tape::tapeserver::rao::RAOParams raoDataConfig(m_dataTransferConfig.useRAO, m_dataTransferConfig.raoLtoAlgorithm,
+                                                               m_dataTransferConfig.raoLtoAlgorithmOptions,
+                                                               m_volInfo.vid);
+        taskInjector.initRAO(raoDataConfig, &m_scheduler.getCatalogue());
+      }
     }
     bool noFilesToRecall = false;
     bool fetchResult = false;
