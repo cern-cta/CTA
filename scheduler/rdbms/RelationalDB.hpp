@@ -160,6 +160,8 @@ public:
                       const cta::common::dataStructures::CancelRetrieveRequest& rqst,
                       log::LogContext& lc) override;
 
+  void cancelRetrieveForTapeVID(const std::string& vid, log::LogContext& lc);
+
   std::map<std::string, std::list<RetrieveRequestDump>> getRetrieveRequests() const override;
 
   std::list<RetrieveRequestDump> getRetrieveRequestsByVid(const std::string& vid) const override;
