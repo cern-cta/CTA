@@ -22,7 +22,7 @@ build-cta-srpm:
   extends:
     - .build-cta
   needs:
-    - job: modify-versionlock
+    - job: modify-project-json
       optional: true
   rules:
     - !reference [.build-cta, rules]
@@ -46,7 +46,7 @@ build-cta-rpm:
     - .build-cta
   needs:
     - job: build-cta-srpm
-    - job: modify-versionlock
+    - job: modify-project-json
       optional: true
       artifacts: true
   rules:

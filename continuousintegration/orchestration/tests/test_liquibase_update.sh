@@ -64,18 +64,16 @@ fi
 # Note that this assumes the setup was spawned with the previous catalogue version
 
 # Get Catalogue Schema version
-catalogue_major_ver=$(grep CTA_CATALOGUE_SCHEMA_VERSION_MAJOR ../../../catalogue/cta-catalogue-schema/CTACatalogueSchemaVersion.cmake | sed 's/[^0-9]*//g')
-catalogue_minor_ver=$(grep CTA_CATALOGUE_SCHEMA_VERSION_MINOR ../../../catalogue/cta-catalogue-schema/CTACatalogueSchemaVersion.cmake | sed 's/[^0-9]*//g')
-catalogue_schema_version="$catalogue_major_ver.$catalogue_minor_ver"
-migration_files=$(find ../../../catalogue/cta-catalogue-schema -name "*to${catalogue_schema_version}.sql")
-prev_catalogue_schema_version=$(echo "$migration_files" | grep -o -E '[0-9]+\.[0-9]' | head -1)
+project_json=$(cat ../../../project.json)
+catalogue_schema_version=$(echo "$project_json" | jq .catalogueVersion)
+prev_catalogue_schema_version=$(echo "$project_json" | jq .supportedCatalogueVersions[] | grep -v $catalogue_schema_version | head -1)
 
 echo "Checking if the current schema version is the same as the previous one"
 check_schema_version ${prev_catalogue_schema_version}
 
 # This is pretty disgusting but for now this will do
 # If the configmap generation would be done through Helm the file in question needs to be within the chart
-yum_repos_file="$(realpath "$(dirname "$0")/../../docker/alma9/etc/yum.repos.d")"
+yum_repos_file="$(realpath "$(dirname "$0")/../../docker/el9/etc/yum.repos.d")"
 kubectl -n ${NAMESPACE} create configmap yum.repos.d-config --from-file=${yum_repos_file}
 
 # Set up the catalogue updater pod
