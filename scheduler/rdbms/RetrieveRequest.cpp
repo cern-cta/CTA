@@ -112,7 +112,7 @@ void RetrieveRequest::insert() {
     rjr.srrActivity = m_schedRetrieveReq.activity.value_or("?");  // ? what was this for ?
     log::ScopedParamContainer params(m_lc);
     rjr.addParamsToLogContext(params);
-    m_lc.log(log::INFO, "In RetrieveRequest::insert(): before insert row.");
+    //m_lc.log(log::INFO, "In RetrieveRequest::insert(): before insert row.");
     rjr.insert(m_conn);
     m_lc.log(log::INFO, "In RetrieveRequest::insert(): added jobs to queue.");
   } catch (exception::Exception& ex) {

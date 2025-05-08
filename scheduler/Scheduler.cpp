@@ -2386,7 +2386,7 @@ void Scheduler::triggerTapeStateChange(const common::dataStructures::SecurityIde
 
   // Validation of tape state change request is complete
   // Proceed with tape state change...
-
+#ifndef CTA_PGSCHED
   switch (new_state) {
     case Tape::ACTIVE:
     case Tape::DISABLED:
@@ -2435,6 +2435,61 @@ void Scheduler::triggerTapeStateChange(const common::dataStructures::SecurityIde
     default:
       throw cta::exception::UserError("Unknown procedure to change tape state to " + Tape::stateToString(new_state));
   }
+#else
+  switch (new_state) {
+    case Tape::ACTIVE:
+    case Tape::DISABLED:
+    case Tape::REPACKING_DISABLED:
+      // Simply set the new tape state
+      m_catalogue.Tape()->modifyTapeState(admin, vid, new_state, prev_state, stateReason);
+      break;
+    case Tape::BROKEN:
+      // For Postgres Scheduler DB we do not have a queue cleanup runner as the requests are deleted
+      // by one request to the DB per VID with the setRetrieveQueueCleanupFlag() call
+      m_db.setRetrieveQueueCleanupFlag(vid, true, logContext);
+      try {
+        // no need for intermediate state, we set the tape directly to status BROKEN
+        m_catalogue.Tape()->modifyTapeState(admin, vid, Tape::BROKEN, prev_state, stateReason);
+      } catch (catalogue::UserSpecifiedAnEmptyStringReasonWhenTapeStateNotActive& ex) {
+        throw catalogue::UserSpecifiedAnEmptyStringReasonWhenTapeStateNotActive(
+          std::regex_replace(ex.getMessageValue(),
+                             std::regex(Tape::stateToString(Tape::BROKEN)),
+                             Tape::stateToString(Tape::BROKEN)));
+      }
+      break;
+    case Tape::REPACKING:
+      if (prev_state == Tape::REPACKING_DISABLED) {
+        // If tape is on REPACKING_DISABLED state, move it directly to REPACKING
+        m_catalogue.Tape()->modifyTapeState(admin, vid, new_state, prev_state, stateReason);
+      } else {
+        m_db.setRetrieveQueueCleanupFlag(vid, true, logContext);
+        try {
+          m_catalogue.Tape()->modifyTapeState(admin, vid, Tape::REPACKING, prev_state, stateReason);
+        } catch (catalogue::UserSpecifiedAnEmptyStringReasonWhenTapeStateNotActive& ex) {
+          throw catalogue::UserSpecifiedAnEmptyStringReasonWhenTapeStateNotActive(
+            std::regex_replace(ex.getMessageValue(),
+                               std::regex(Tape::stateToString(Tape::REPACKING)),
+                               Tape::stateToString(Tape::REPACKING)));
+        }
+      }
+      break;
+    case Tape::EXPORTED:
+      // For Postgres Scheduler DB we do not have a queue cleanup runner as the requests are deleted
+      // by one request to the DB per VID with the setRetrieveQueueCleanupFlag() call
+      m_db.setRetrieveQueueCleanupFlag(vid, true, logContext);
+      try {
+        m_catalogue.Tape()->modifyTapeState(admin, vid, Tape::EXPORTED, prev_state, stateReason);
+      } catch (catalogue::UserSpecifiedAnEmptyStringReasonWhenTapeStateNotActive& ex) {
+        throw catalogue::UserSpecifiedAnEmptyStringReasonWhenTapeStateNotActive(
+          std::regex_replace(ex.getMessageValue(),
+                             std::regex(Tape::stateToString(Tape::EXPORTED)),
+                             Tape::stateToString(Tape::EXPORTED)));
+      }
+      break;
+    default:
+      throw cta::exception::UserError("Unknown procedure to change tape state to " + Tape::stateToString(new_state));
+  }
+#endif
 
   m_db.clearStatisticsCache(vid);
 }
