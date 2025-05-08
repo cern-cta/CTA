@@ -21,6 +21,7 @@
 #include "castor/tape/tapeserver/drive/DriveInterface.hpp"
 #include "castor/tape/tapeserver/file/ReadSession.hpp"
 #include "castor/tape/tapeserver/file/ReadSessionFactory.hpp"
+#include "common/dataStructures/LabelFormat.hpp"
 
 //------------------------------------------------------------------------------
 // Constructor for TapeReadSingleThread
@@ -280,6 +281,7 @@ void castor::tape::tapeserver::daemon::TapeReadSingleThread::run() {
 
     // Pair of brackets to create an artificial scope for the tapeCleaner
     {
+      using LabelFormat = cta::common::dataStructures::Label::Format;
       // Log and notify
       m_logContext.log(cta::log::INFO, "Starting tape read thread");
 
@@ -291,6 +293,11 @@ void castor::tape::tapeserver::daemon::TapeReadSingleThread::run() {
       // Before anything, the tape should be mounted
       m_reportPacker.reportDriveStatus(cta::common::dataStructures::DriveStatus::Mounting, std::nullopt, m_logContext);
       m_reporter.reportState(cta::tape::session::SessionState::Mounting, cta::tape::session::SessionType::Retrieve);
+
+      if (m_volInfo.labelFormat == LabelFormat::Enstore || m_volInfo.labelFormat == LabelFormat::EnstoreLarge) {
+          m_logContext.log(cta::log::INFO, "Tape LabelFormat incompatible with RAO. Setting RAO false.");
+          m_useRAO = false;
+      }
 
       std::ostringstream ossLabelFormat;
       ossLabelFormat << std::showbase << std::internal << std::setfill('0') << std::hex << std::setw(4) << static_cast<unsigned int>(m_volInfo.labelFormat);
