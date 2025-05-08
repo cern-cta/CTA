@@ -15,14 +15,12 @@
 #               granted to it by virtue of its status as an Intergovernmental Organization or
 #               submit itself to any jurisdiction.
 
-import subprocess
+from pathlib import Path
 import json
 import argparse
 import sys
 
-project_root = subprocess.check_output(
-    ["git", "rev-parse", "--show-toplevel"], text=True
-).strip()
+project_root = str(Path(__file__).resolve().parents[2])
 
 with open(f"{project_root}/project.json") as f:
     project_json = json.load(f)
