@@ -88,6 +88,7 @@ build-cta-rpm:
                                                  --cmake-build-type "${CMAKE_BUILD_TYPE}"
                                                  --jobs $(nproc --ignore=1)
                                                  --install-srpms
+                                                 --use-internal-repos
                                                  ${UNIT_TEST_OPTION}
 
 # Documentation export
