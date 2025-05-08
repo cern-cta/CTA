@@ -56,96 +56,96 @@ build_srpm() {
   # Parse command line arguments
   while [[ "$#" -gt 0 ]]; do
     case "$1" in
-      --build-dir)
-        if [[ $# -gt 1 ]]; then
-          # Convert build_dir to an absolute path to prevent possible future bugs with navigating away from the root directory
-          build_dir=$(realpath "$2")
-          shift
-        else
-          echo "Error: --build-dir requires an argument"
-          usage
-        fi
-        ;;
-      --build-generator)
-        if [[ $# -gt 1 ]]; then
-          if [ "$2" != "Ninja" ] && [ "$2" != "Unix Makefiles" ]; then
-              echo "Warning: build generator $2 is not officially supported. Compilation might not be successful."
-          fi
-          build_generator="$2"
-          shift
-        else
-          echo "Error: --build-generator requires an argument"
-          usage
-        fi
-        ;;
-      --clean-build-dir) clean_build_dir=true ;;
-      --create-build-dir) create_build_dir=true ;;
-      --cta-version)
-        if [[ $# -gt 1 ]]; then
-          cta_version="$2"
-          shift
-        else
-          echo "Error: --cta-version requires an argument"
-          usage
-        fi
-        ;;
-      --scheduler-type)
-        if [[ $# -gt 1 ]]; then
-          if [ "$2" != "objectstore" ] && [ "$2" != "pgsched" ]; then
-              echo "Error: scheduler type $2 is not one of [objectstore, pgsched]."
-              exit 1
-          fi
-          scheduler_type="$2"
-          shift
-        else
-          echo "Error: --scheduler-type requires an argument"
-          usage
-        fi
-        ;;
-      --vcs-version)
-        if [[ $# -gt 1 ]]; then
-          vcs_version="$2"
-          shift
-        else
-          echo "Error: --vcs-version requires an argument"
-          usage
-        fi
-        ;;
-      -i | --install) install=true ;;
-      -j | --jobs)
-        if [[ $# -gt 1 ]]; then
-          num_jobs="$2"
-          shift
-        else
-          echo "Error: --jobs requires an argument"
-          usage
-        fi
-        ;;
-      --oracle-support)
-        if [[ $# -gt 1 ]]; then
-          if [ "$2" = "FALSE" ]; then
-            oracle_support=false
-          fi
-          shift
-        fi
-        ;;
-      --cmake-build-type)
-        if [[ $# -gt 1 ]]; then
-          if [ "$2" != "Release" ] && [ "$2" != "Debug" ] && [ "$2" != "RelWithDebInfo" ] && [ "$2" != "MinSizeRel" ]; then
-            echo "--cmake-build-type must be one of [Release, Debug, RelWithDebInfo, or MinSizeRel]."
-            exit 1
-          fi
-          cmake_build_type="$2"
-          shift
-        else
-          echo "Error: -j|--jobs requires an argument"
-          usage
-        fi
-        ;;
-      *)
-        echo "Invalid argument: $1"
+    --build-dir)
+      if [[ $# -gt 1 ]]; then
+        # Convert build_dir to an absolute path to prevent possible future bugs with navigating away from the root directory
+        build_dir=$(realpath "$2")
+        shift
+      else
+        echo "Error: --build-dir requires an argument"
         usage
-        ;;
+      fi
+      ;;
+    --build-generator)
+      if [[ $# -gt 1 ]]; then
+        if [ "$2" != "Ninja" ] && [ "$2" != "Unix Makefiles" ]; then
+          echo "Warning: build generator $2 is not officially supported. Compilation might not be successful."
+        fi
+        build_generator="$2"
+        shift
+      else
+        echo "Error: --build-generator requires an argument"
+        usage
+      fi
+      ;;
+    --clean-build-dir) clean_build_dir=true ;;
+    --create-build-dir) create_build_dir=true ;;
+    --cta-version)
+      if [[ $# -gt 1 ]]; then
+        cta_version="$2"
+        shift
+      else
+        echo "Error: --cta-version requires an argument"
+        usage
+      fi
+      ;;
+    --scheduler-type)
+      if [[ $# -gt 1 ]]; then
+        if [ "$2" != "objectstore" ] && [ "$2" != "pgsched" ]; then
+          echo "Error: scheduler type $2 is not one of [objectstore, pgsched]."
+          exit 1
+        fi
+        scheduler_type="$2"
+        shift
+      else
+        echo "Error: --scheduler-type requires an argument"
+        usage
+      fi
+      ;;
+    --vcs-version)
+      if [[ $# -gt 1 ]]; then
+        vcs_version="$2"
+        shift
+      else
+        echo "Error: --vcs-version requires an argument"
+        usage
+      fi
+      ;;
+    -i | --install) install=true ;;
+    -j | --jobs)
+      if [[ $# -gt 1 ]]; then
+        num_jobs="$2"
+        shift
+      else
+        echo "Error: --jobs requires an argument"
+        usage
+      fi
+      ;;
+    --oracle-support)
+      if [[ $# -gt 1 ]]; then
+        if [ "$2" = "FALSE" ]; then
+          oracle_support=false
+        fi
+        shift
+      fi
+      ;;
+    --cmake-build-type)
+      if [[ $# -gt 1 ]]; then
+        if [ "$2" != "Release" ] && [ "$2" != "Debug" ] && [ "$2" != "RelWithDebInfo" ] && [ "$2" != "MinSizeRel" ]; then
+          echo "--cmake-build-type must be one of [Release, Debug, RelWithDebInfo, or MinSizeRel]."
+          exit 1
+        fi
+        cmake_build_type="$2"
+        shift
+      else
+        echo "Error: -j|--jobs requires an argument"
+        usage
+      fi
+      ;;
+    *)
+      echo "Invalid argument: $1"
+      usage
+      ;;
     esac
     shift
   done
@@ -166,19 +166,18 @@ build_srpm() {
   fi
 
   if [ -z "${build_generator}" ]; then
-    echo "Failure: Missing mandatory argument --build-generator";
+    echo "Failure: Missing mandatory argument --build-generator"
     usage
   fi
 
   if [ -z "${cmake_build_type}" ]; then
-    echo "Failure: Missing mandatory argument --cmake-build-type";
+    echo "Failure: Missing mandatory argument --cmake-build-type"
     usage
   fi
 
-  # navigate to root directory
   cd "$(dirname "$0")"
   cd ../../
-  local repo_root=$(pwd)
+  local project_root=$(pwd)
   local cmake_options=""
 
   if [[ ${clean_build_dir} = true ]]; then
@@ -193,20 +192,20 @@ build_srpm() {
     exit 1
   fi
 
-  if [ -n "${build_dir}" ]; then
+  if [ -d "${build_dir}" ] && [ "$(ls -A "${build_dir}")" ]; then
     echo "WARNING: build directory ${build_dir} is not empty"
   fi
 
   # Setup
-  if [ "${install}" = true ]; then
-    echo "Installing prerequisites..."
 
-    # Go through supported Operating Systems
-    if [ "$(grep -c 'AlmaLinux release 9' /etc/redhat-release)" -eq 1 ]; then
-      # Alma9
+  # Go through supported Operating Systems
+  if [ "$(grep -c 'AlmaLinux release 9' /etc/redhat-release)" -eq 1 ]; then
+    # Alma9
+    if [ "${install}" = true ]; then
+      echo "Installing prerequisites..."
       echo "Found Alma 9 install..."
       yum install -y epel-release almalinux-release-devel
-      yum install -y gcc gcc-c++ cmake3 rpm-build yum-utils pandoc which
+      yum install -y gcc gcc-c++ cmake3 rpm-build yum-utils pandoc which git
       case "${build_generator}" in
         "Unix Makefiles")
           yum install -y make
@@ -219,10 +218,10 @@ build_srpm() {
           exit 1
           ;;
       esac
-    else
-      echo "Failure: Unsupported distribution. Must be one of: [alma9]"
-      exit 1
     fi
+  else
+    echo "Failure: Unsupported distribution. Must be one of: [alma9]"
+    exit 1
   fi
 
   # Cmake
@@ -243,18 +242,21 @@ build_srpm() {
     cmake_options+=" -D DISABLE_ORACLE_SUPPORT:BOOL=OFF"
   fi
 
-   # Scheduler type
+  # Scheduler type
   if [[ ${scheduler_type} == "pgsched" ]]; then
-    echo "Using specified scheduler database type $scheduler_type";
-    cmake_options+=" -D CTA_USE_PGSCHED:BOOL=TRUE";
+    echo "Using specified scheduler database type $scheduler_type"
+    cmake_options+=" -D CTA_USE_PGSCHED:BOOL=TRUE"
   else
     # unset it
-    cmake_options+=" -D CTA_USE_PGSCHED:BOOL=FALSE";
+    cmake_options+=" -D CTA_USE_PGSCHED:BOOL=FALSE"
   fi
 
   cd "${build_dir}"
   echo "Executing cmake..."
-  (set -x; cmake3 ${cmake_options} -D JOBS_COUNT:INT=${num_jobs} -G "${build_generator}" "${repo_root}")
+  (
+    set -x
+    cmake3 ${cmake_options} -D JOBS_COUNT:INT=${num_jobs} -G "${build_generator}" "${project_root}"
+  )
 
   # Build step
   echo "Executing build step using: ${build_generator}"

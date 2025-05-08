@@ -32,8 +32,8 @@ function(safedl SOURCEURL DESTFILE)
   endif()
 endfunction()
 
-set(OSV "9")
-set(OS "alma9")
+# We need the el version to set the proper cta versionlock version
+include(${CMAKE_SOURCE_DIR}/cmake/UseRPMToolsEnvironment.cmake)
 
 # Download package signing keys
 safedl("https://storage-ci.web.cern.ch/storage-ci/storageci.key"
@@ -69,18 +69,20 @@ endif()
 
 string(REPLACE "\n" ";" RESULTS ${RESULT})
 
-# We need the el version to set the proper cta versionlock version
-include(../cmake/UseRPMToolsEnvironment.cmake)
-
 foreach(PNAME ${RESULTS})
     string(APPEND CTAVERSIONLOCK "${PNAME}-${CTA_VERSION}-${CTA_RELEASE}.${RPMTools_RPMBUILD_DIST}.*\n")
 endforeach()
 
-file(READ ../continuousintegration/docker/${OS}/etc/yum/pluginconf.d/versionlock.list VERSIONLOCK)
+execute_process(
+  COMMAND ${CMAKE_COMMAND} -E env PYTHONUNBUFFERED=1 python3 ${CMAKE_SOURCE_DIR}/continuousintegration/utils/generate_versionlock.py --platform ${RPMTools_RPMBUILD_DIST}
+  WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
+  OUTPUT_VARIABLE VERSIONLOCK
+  OUTPUT_STRIP_TRAILING_WHITESPACE
+)
 
 # Repos files
 file (GLOB REPO_FILES
-  "${CMAKE_SOURCE_DIR}/continuousintegration/docker/${OS}/etc/yum.repos.d-public/*.repo"
+  "${CMAKE_SOURCE_DIR}/cta-release/${RPMTools_RPMBUILD_DIST}/yum.repos.d-public/*.repo"
 )
 
 string(APPEND CTAVERSIONLOCK "${VERSIONLOCK}")

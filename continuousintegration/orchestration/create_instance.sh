@@ -180,10 +180,8 @@ create_instance() {
     usage
   fi
   if [ -z "${catalogue_schema_version}" ]; then
-    echo "No catalogue schema version provided: using latest tag"
-    catalogue_major_ver=$(grep CTA_CATALOGUE_SCHEMA_VERSION_MAJOR ../../catalogue/cta-catalogue-schema/CTACatalogueSchemaVersion.cmake | sed 's/[^0-9]*//g')
-    catalogue_minor_ver=$(grep CTA_CATALOGUE_SCHEMA_VERSION_MINOR ../../catalogue/cta-catalogue-schema/CTACatalogueSchemaVersion.cmake | sed 's/[^0-9]*//g')
-    catalogue_schema_version="$catalogue_major_ver.$catalogue_minor_ver"
+    echo "No catalogue schema version provided: using project.json value"
+    catalogue_schema_version=$(jq .catalogueVersion ../../project.json)
   fi
 
   if [ $dry_run == 1 ]; then

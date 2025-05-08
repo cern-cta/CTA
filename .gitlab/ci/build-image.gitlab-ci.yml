@@ -22,14 +22,12 @@
 build-ctageneric-from-artifacts:
   extends:
     - .build-ctageneric
-  needs: # Needs RPM artifacts to build the image
-    - job: build-cta-rpm
-    - job: modify-versionlock
-      optional: true
   rules:
     - if: $PIPELINE_TYPE == "EOS_REGR_AGAINST_CTA_TAG" || $PIPELINE_TYPE == "CTAGENERIC_IMAGE"
       when: never
     - !reference [.build-ctageneric, rules]
+  variables:
+    DOCKERFILE: continuousintegration/docker/${PLATFORM}/Dockerfile
   script:
     - echo "Building image for tag $CTA_BUILD_ID"
     - echo "Image tag ${CI_REGISTRY}/cta/ctageneric:${CTA_BUILD_ID}"
@@ -39,7 +37,7 @@ build-ctageneric-from-artifacts:
     - mkdir -p image_rpms
     - cp -r build_rpm/RPM/RPMS/x86_64 image_rpms
     - /kaniko/executor --context $CI_PROJECT_DIR
-                       --dockerfile continuousintegration/docker/alma9/Dockerfile
+                       --dockerfile $DOCKERFILE
                        --destination ${CI_REGISTRY}/cta/ctageneric:${CTA_BUILD_ID}
     - echo "Image pushed successfully to ${CI_REGISTRY}/cta/ctageneric:${CTA_BUILD_ID}"
 
@@ -49,18 +47,18 @@ build-ctageneric-from-repos:
   needs:
     - job: pipeline-variable-check
       optional: true
-    - job: modify-versionlock
-      optional: true
   rules:
     - if: $PIPELINE_TYPE == "EOS_REGR_AGAINST_CTA_TAG"
     - if: $PIPELINE_TYPE == "CTAGENERIC_IMAGE"
     - when: never
     - !reference [.build-ctageneric, rules]
+  variables:
+    DOCKERFILE: continuousintegration/docker/${PLATFORM}/tag.Dockerfile
   script:
-    - echo "Building image with CTA ${CUSTOM_CTA_TAG} RPMs and EOS ${CUSTOM_EOS_TAG} RPMs"
+    - echo "Building image with CTA ${CUSTOM_CTA_TAG} RPMs"
     - echo "Image tag ${CI_REGISTRY}/cta/ctageneric:${CTA_BUILD_ID}"
     - /kaniko/executor --context $CI_PROJECT_DIR
-                       --dockerfile continuousintegration/docker/alma9/tag.Dockerfile
+                       --dockerfile $DOCKERFILE
                        --destination ${CI_REGISTRY}/cta/ctageneric:${CTA_BUILD_ID}
                        --build-arg "PUBLIC_REPO_VER=${CUSTOM_CTA_TAG:1}"
     - echo "Image pushed successfully to ${CI_REGISTRY}/cta/ctageneric:${CTA_BUILD_ID}"
