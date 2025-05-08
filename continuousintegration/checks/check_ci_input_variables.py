@@ -35,9 +35,6 @@ SUPPORTED = {
     "CUSTOM_CTA_TAG_REGEX": [ re.compile("^v\d+\.\d+\.\d+\.\d+-\d+$"),
                        re.compile("^v\d+\.\d+\.\d+\.\d+-\d+\.el9$") # EL9 Transition format
                      ]
-    # "SCHEDULER_TYPE": ["objecstore",
-    #                "pgsched"]
-    #  ...
 }
 
 DEFINED_INPUT_VARS = [
@@ -50,7 +47,7 @@ DEFINED_INPUT_VARS = [
     "GIT_DEPTH", "GIT_SUBMODULE_DEPTH",
     "IMAGE_DOCKER_IMAGE_BUILDER", "IMAGE_CPPCHECK",
     "IMAGE_GITLAB_RELEASE_CLI", "IMAGE_BUILD", "IMAGE_TEST",
-    "IMAGE_RELEASE", "IMAGE_ANALYSIS"
+    "IMAGE_RELEASE", "IMAGE_ANALYSIS", "PLATFORM"
 ]
 
 def run_cmd(cmd):
@@ -88,9 +85,10 @@ def _check_remote_rpm(ci_input_vars, ci_var_tag_name, version_regex, remote_rpm_
     :param rpm_name: RPM name to look for
     :param rpm_ver: RPM version to look for
     """
-    # Check tag is supported
+    # Check tag is set
     if ci_var_tag_name not in ci_input_vars.keys():
-        sys.exit(f"ERROR: tag version variable ${ci_var_tag_name} is not set")
+        print(f"WARNING: tag version variable ${ci_var_tag_name} is not set")
+        return
 
     # Check specified RPM version matches any of the possible regexes.
     regex_matched = False

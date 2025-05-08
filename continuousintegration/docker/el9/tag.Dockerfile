@@ -18,17 +18,16 @@
 # As a result, any installs on this image will also pull from public yum repos instead of private ones
 FROM gitlab-registry.cern.ch/linuxsupport/alma9-base:latest
 
-ENV BASEDIR="continuousintegration/docker/alma9" \
-    CTAREPODIR="/opt/repo"
+ENV BASEDIR="continuousintegration/docker/el9"
 
 # Add orchestration run scripts locally
 COPY ${BASEDIR}/../opt /opt
-COPY ${BASEDIR}/etc/yum.repos.d/ /etc/yum.repos.d/
+COPY ${BASEDIR}/etc/yum.repos.d/cta-public-testing.repo /etc/yum.repos.d/cta-public-testing.repo
 
 # Variable to specify the tag to be used for CTA RPMs from the cta-ci-repo
 # Format: X.YY.ZZ.A-B
 ARG PUBLIC_REPO_VER
-ARG YUM_VERSIONLOCK_FILE=continuousintegration/docker/alma9/etc/yum/pluginconf.d/versionlock.list
+ARG YUM_VERSIONLOCK_FILE=continuousintegration/docker/el9/etc/yum/pluginconf.d/versionlock.list
 
 # Install necessary packages
 RUN dnf install -y \
@@ -49,8 +48,6 @@ RUN useradd -m -u 1000 -g tape cta
 RUN dnf config-manager --enable epel --setopt="epel.priority=4" && \
     dnf config-manager --enable cta-public-testing && \
     dnf install -y "cta-release-${PUBLIC_REPO_VER}.el9" && \
-    rm -f /etc/yum/pluginconf.d/versionlock.cta && \
+    cta-versionlock apply && \
     dnf clean all --enablerepo=\* && \
     rm -rf /etc/rc.d/rc.local
-
-COPY ${YUM_VERSIONLOCK_FILE} /etc/dnf/plugins/versionlock.list

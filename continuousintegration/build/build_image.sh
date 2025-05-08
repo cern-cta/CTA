@@ -30,9 +30,7 @@ usage() {
   echo "  -n, --name:                         The Docker image name. Defaults to ctageneric"
   echo "  -l, --load-into-minikube:           Takes the image from the podman registry and ensures that it is present in the image registry used by minikube."
   echo "  -c, --container-runtime <runtime>:  The container runtime to use for the build container. Defaults to podman."
-  echo "      --dockerfile <path>:            Path to the Dockerfile (default: 'alma9/Dockerfile'). Should be relative to the repository root."
-  echo "      --yum-repos-dir <path>:         Directory containing yum.repos.d/ on the host. Should be relative to the repository root."
-  echo "      --yum-versionlock-file <path>:  Path to versionlock.list on the host. Should be relative to the repository root."
+  echo "      --dockerfile <path>:            Path to the Dockerfile (default: 'continuousintegration/docker/el9/Dockerfile'). Should be relative to the repository root."
   exit 1
 }
 
@@ -44,9 +42,7 @@ buildImage() {
   local image_name="ctageneric"
   local container_runtime="podman"
   local rpm_default_src="image_rpms"
-  local yum_repos_dir="continuousintegration/docker/alma9/etc/yum.repos.d/"
-  local yum_versionlock_file="continuousintegration/docker/alma9/etc/yum/pluginconf.d/versionlock.list"
-  local dockerfile="continuousintegration/docker/alma9/Dockerfile"
+  local dockerfile="continuousintegration/docker/el9/Dockerfile"
   local load_into_minikube=false
 
   while [[ "$#" -gt 0 ]]; do
@@ -104,24 +100,6 @@ buildImage() {
         exit 1
       fi
       ;;
-    --yum-repos-dir)
-      if [[ $# -gt 1 ]]; then
-        yum_repos_dir="$2"
-        shift
-      else
-        echo "Error: --yum-repos-dir requires an argument"
-        exit 1
-      fi
-      ;;
-    --yum-versionlock-file)
-      if [[ $# -gt 1 ]]; then
-        yum_versionlock_file="$2"
-        shift
-      else
-        echo "Error: --yum-versionlock-file requires an argument"
-        exit 1
-      fi
-      ;;
     *)
       echo "Unsupported argument: $1"
       usage
@@ -156,9 +134,7 @@ buildImage() {
     set -x
     ${container_runtime} build . -f ${dockerfile} \
       -t ${image_name}:${image_tag} \
-      --network host \
-      --build-arg YUM_REPOS_DIR=${yum_repos_dir} \
-      --build-arg YUM_VERSIONLOCK_FILE=${yum_versionlock_file}
+      --network host
   )
 
   if [ "$load_into_minikube" == "true" ]; then
