@@ -426,7 +426,7 @@ public:
 
   /**
    * When CTA received the deleteArchive request from the disk buffer,
-   * this ensures removal from the queue
+   * the following method ensures removal from the pending queue
    *
    * @param txn           Transaction handling the connection to the backend database
    * @param diskInstance  Name of the disk instance where the archive request was issued from
@@ -435,6 +435,7 @@ public:
    * @return  The number of affected jobs
    */
   static uint64_t cancelArchiveJob(Transaction& txn, const std::string& diskInstance, uint64_t archiveFileID);
+
   /**
      * Select any jobs with specified status(es) from the report,
      * flag them as being reported and return the job IDs

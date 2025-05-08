@@ -738,41 +738,27 @@ uint64_t RetrieveJobQueueRow::getNextRetrieveRequestID(rdbms::Conn& conn) {
   }
 }
 
-uint64_t
-RetrieveJobQueueRow::cancelRetrieveJob(Transaction& txn, const std::string& diskInstance, uint64_t archiveFileID) {
-  std::string sqlpart;
+uint64_t RetrieveJobQueueRow::cancelRetrieveJob(Transaction& txn, uint64_t archiveFileID) {
   /* As of now, there is no way to remove job from the in-memory
-   * (task) queue of the disk/tape processes !
-   * All jobs picked up by the mount will run and later fail
+   * (task) queue of the Mount session (disk/tape) processes
+   * All jobs picked up by the mount to the task queue will run and later fail
    * due to missing DB entries. Deleting the archive request blindly
-   * can cause updates on non-existent DB rows. A better strategy is needed—
-   * either notify disk/tape processes or have them verify job presence
-   * in Scheduler DB before execution.
+   * can cause updates on non-existent DB rows. Strategy improvement
+   * would be good in the future (+ batching) — either notify disk/tape processes
+   * or have them verify job presence in Scheduler DB before execution.
+   * We could also delete from both tables in one go using
+   * WITH ... RETURNING 1; SELECT ... statement style
    */
-  std::string sql = R"SQL(
-      DELETE FROM RETRIEVE_ACTIVE_QUEUE
-      WHERE
-        DISK_INSTANCE = :DISK_INSTANCE AND
-        ARCHIVE_FILE_ID = :ARCHIVE_FILE_ID
-    )SQL";
-  auto stmt = txn.getConn().createStmt(sql);
-  stmt.bindString(":DISK_INSTANCE", diskInstance);
-  stmt.bindUint64(":ARCHIVE_FILE_ID", archiveFileID);
-
-  stmt.executeNonQuery();
-  uint64_t nrows = stmt.getNbAffectedRows();
-  sql = R"SQL(
+  // Delete from RETRIEVE_PENDING_QUEUE
+  std::string sqlActive = R"SQL(
     DELETE FROM RETRIEVE_PENDING_QUEUE
     WHERE
-      DISK_INSTANCE = :DISK_INSTANCE AND
       ARCHIVE_FILE_ID = :ARCHIVE_FILE_ID
   )SQL";
-  stmt = txn.getConn().createStmt(sql);
-  stmt.bindString(":DISK_INSTANCE", diskInstance);
+  auto stmt = txn.getConn().createStmt(sqlActive);
   stmt.bindUint64(":ARCHIVE_FILE_ID", archiveFileID);
   stmt.executeNonQuery();
-  nrows += stmt.getNbAffectedRows();
-  return nrows;
+  
+  return stmt.getNbAffectedRows();
 }
-
 }  // namespace cta::schedulerdb::postgres
