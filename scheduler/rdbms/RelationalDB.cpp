@@ -92,10 +92,9 @@ std::string RelationalDB::queueArchive(const std::string& instanceName,
   utils::Timer timeGetConn;
   auto sqlconn = m_connPoolInsertOnly.getConn();
   log::ScopedParamContainer params(logContext);
-  params.add("connCountOnLoad",m_connPoolInsertOnly.getNbConnsOnLoan());
+  params.add("connCountOnLoad", m_connPoolInsertOnly.getNbConnsOnLoan());
   params.add("getConnTime", timeGetConn.secs());
   schedulerdb::ArchiveRequest aReq(sqlconn, logContext);
-
 
   // Summarize all as an archiveFile
   common::dataStructures::ArchiveFile aFile;
@@ -419,9 +418,29 @@ RelationalDB::queueRetrieve(cta::common::dataStructures::RetrieveRequest& rqst,
 }
 
 void RelationalDB::cancelRetrieve(const std::string& instanceName,
-                                  const cta::common::dataStructures::CancelRetrieveRequest& rqst,
+                                  const cta::common::dataStructures::CancelRetrieveRequest& request,
                                   log::LogContext& lc) {
-  throw cta::exception::Exception("Not implemented");
+  schedulerdb::Transaction txn(m_connPool);
+  try {
+    uint64_t cancelledJobs =
+      schedulerdb::postgres::RetrieveJobQueueRow::cancelRetrieveJob(txn, request.archiveFileID);
+    log::ScopedParamContainer(lc)
+      .add("archiveFileID", request.archiveFileID)
+      .add("cancelledJobs",cancelledJobs)
+      .log(log::INFO, "In RelationalDB::cancelRetrieve(): removing retrieve request from the queue");
+    if (cancelledJobs != 1) {
+      lc.log(cta::log::WARNING,
+             "In RelationalDB::cancelRetrieve(): cancellation affected more than 1 job, check if that is expected !");
+    }
+    txn.commit();
+  } catch (exception::Exception& ex) {
+    lc.log(cta::log::ERR,
+           "In RelationalDB::cancelRetrieve(): failed to cancel retrieve job. Aborting the transaction." +
+             ex.getMessageValue());
+    txn.abort();
+    throw;
+  }
+  return;
 }
 
 std::map<std::string, std::list<RetrieveRequestDump>> RelationalDB::getRetrieveRequests() const {
@@ -444,14 +463,14 @@ void RelationalDB::deleteRetrieveRequest(const common::dataStructures::SecurityI
 void RelationalDB::cancelArchive(const common::dataStructures::DeleteArchiveRequest& request, log::LogContext& lc) {
   schedulerdb::Transaction txn(m_connPool);
   try {
-    uint64_t nrows =
+    uint64_t cancelledJobs =
       schedulerdb::postgres::ArchiveJobQueueRow::cancelArchiveJob(txn, request.diskInstance, request.archiveFileID);
     log::ScopedParamContainer(lc)
       .add("archiveFileID", request.archiveFileID)
       .add("diskInstance", request.diskInstance)
-      .add("n_affectedJobs", nrows)
-      .log(log::INFO, "In RelationalDB::cancelArchive(): removed archive request from the queue");
-    if (nrows != 1) {
+      .add("cancelledJobs", cancelledJobs)
+      .log(log::INFO, "In RelationalDB::cancelArchive(): removing archive request from the queue");
+    if (cancelledJobs != 1) {
       lc.log(cta::log::WARNING,
              "In RelationalDB::cancelArchive(): cancellation affected more than 1 job, check if that is expected !");
     }

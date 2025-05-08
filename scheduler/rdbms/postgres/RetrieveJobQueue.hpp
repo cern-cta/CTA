@@ -511,16 +511,16 @@ public:
   }
 
   /**
-  * When CTA received the deleteRetrieve request from the disk buffer,
-  * this ensures removal from the queue
+  * When CTA received the PREPARE_ABORT request from the disk buffer,
+  * the following method ensures removal from the pending queue
   *
   * @param txn           Transaction handling the connection to the backend database
-  * @param diskInstance  Name of the disk instance where the retrieve request was issued from
   * @param archiveFileID The retrieve file ID assigned originally
   *
   * @return  The number of affected jobs
   */
-  static uint64_t cancelRetrieveJob(Transaction& txn, const std::string& diskInstance, uint64_t archiveFileID);
+  static uint64_t cancelRetrieveJob(Transaction& txn, uint64_t archiveFileID) ;
+
   /**
     * Select any jobs with specified status(es) from the report,
     * flag them as being reported and return the job IDs

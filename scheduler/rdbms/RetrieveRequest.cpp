@@ -77,7 +77,6 @@ void RetrieveRequest::insert() {
     rjr.startTime = time(nullptr);  // Time the job was queued in the DB
 
     // For each tape file concatenate the copyNb and vids into alternate strings to save for retrial/requeueing
-    m_lc.log(log::INFO, "In RetrieveRequest::insert(): creating jobs XC4.");
 
     int i = 0;
     for (const auto& rj : m_jobs) {
@@ -86,7 +85,6 @@ void RetrieveRequest::insert() {
       rjr.alternateCopyNbs += std::to_string(rj.copyNb) + std::string(",");
       rjr.alternateFSeq += std::to_string(rj.fSeq) + std::string(",");
       rjr.alternateBlockId += std::to_string(rj.blockId) + std::string(",");
-      m_lc.log(log::INFO, "In RetrieveRequest::insert(): creating jobs XC5.");
 
       if (i == 1) {
         rjr.retriesWithinMount = rj.retriesWithinMount;
