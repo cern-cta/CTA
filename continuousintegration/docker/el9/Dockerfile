@@ -16,18 +16,10 @@
 # CTA generic image containing all CTA RPMs
 FROM gitlab-registry.cern.ch/linuxsupport/alma9-base:latest
 
-ENV BASEDIR="continuousintegration/docker/alma9" \
-    CTAREPODIR="/opt/repo"
+ENV CTAREPODIR="/opt/repo"
 
 # Add orchestration run scripts locally
-COPY ${BASEDIR}/../opt /opt
-
-# Custom Yum repo setup
-ARG YUM_REPOS_DIR=continuousintegration/docker/alma9/etc/yum.repos.d/
-ARG YUM_VERSIONLOCK_FILE=continuousintegration/docker/alma9/etc/yum/pluginconf.d/versionlock.list
-
-COPY ${YUM_REPOS_DIR} /etc/yum.repos.d/
-COPY ${YUM_VERSIONLOCK_FILE} /etc/dnf/plugins/versionlock.list
+COPY continuousintegration/docker/opt /opt
 
 # Install necessary packages
 RUN dnf install -y \
@@ -58,5 +50,10 @@ gpgcheck=0\n\
 enabled=1\n\
 priority=2" > /etc/yum.repos.d/cta-artifacts.repo && \
     dnf config-manager --enable cta-artifacts && \
+    dnf install -y "cta-release" && \
+    cta-versionlock apply && \
     dnf clean all --enablerepo=\* && \
     rm -rf /etc/rc.d/rc.local
+
+# Overwrite the repos from cta-release with our own internal repos
+COPY continuousintegration/docker/el9/etc/yum.repos.d/ /etc/yum.repos.d/
