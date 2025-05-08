@@ -7,7 +7,7 @@
 
 #include <grpcpp/grpcpp.h>
 #include "common/dataStructures/MountTypeSerDeser.hpp"
-#include "cmdline/admin_common/FillSqItemMessage.hpp"
+#include "cmdline/admin_common/SqItemMessageFill.hpp"
 
 namespace cta::frontend::grpc {
 
