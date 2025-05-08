@@ -417,16 +417,35 @@ RelationalDB::queueRetrieve(cta::common::dataStructures::RetrieveRequest& rqst,
   }
 }
 
+void RelationalDB::cancelRetrieveForTapeVID(const std::string& vid, log::LogContext& lc) {
+  schedulerdb::Transaction txn(m_connPool);
+  try {
+    uint64_t cancelledJobs = schedulerdb::postgres::RetrieveJobQueueRow::cancelRetrieveJobsForTapeVID(txn, vid);
+    log::ScopedParamContainer(lc)
+      .add("VID", vid)
+      .add("cancelledJobs", cancelledJobs)
+      .log(log::INFO, "In RelationalDB::cancelRetrieveForTapeVID(): removing all retrieve jobs from the tape queue");
+    txn.commit();
+  } catch (exception::Exception& ex) {
+    lc.log(cta::log::ERR,
+           "In RelationalDB::cancelRetrieveForTapeVID(): failed to remove retrieve jobs from the tape queue. Aborting "
+           "the transaction." +
+             ex.getMessageValue());
+    txn.abort();
+    throw;
+  }
+  return;
+}
+
 void RelationalDB::cancelRetrieve(const std::string& instanceName,
                                   const cta::common::dataStructures::CancelRetrieveRequest& request,
                                   log::LogContext& lc) {
   schedulerdb::Transaction txn(m_connPool);
   try {
-    uint64_t cancelledJobs =
-      schedulerdb::postgres::RetrieveJobQueueRow::cancelRetrieveJob(txn, request.archiveFileID);
+    uint64_t cancelledJobs = schedulerdb::postgres::RetrieveJobQueueRow::cancelRetrieveJob(txn, request.archiveFileID);
     log::ScopedParamContainer(lc)
       .add("archiveFileID", request.archiveFileID)
-      .add("cancelledJobs",cancelledJobs)
+      .add("cancelledJobs", cancelledJobs)
       .log(log::INFO, "In RelationalDB::cancelRetrieve(): removing retrieve request from the queue");
     if (cancelledJobs != 1) {
       lc.log(cta::log::WARNING,
@@ -976,7 +995,17 @@ std::vector<std::string> RelationalDB::getActiveSleepDiskSystemNamesToFilter() {
 }
 
 void RelationalDB::setRetrieveQueueCleanupFlag(const std::string& vid, bool val, log::LogContext& logContext) {
-  throw cta::exception::Exception("Not implemented");
+  if (val) {
+    try {
+      RelationalDB::cancelRetrieveForTapeVID(vid, logContext);
+    } catch (exception::Exception& ex) {
+      logContext.log(
+        cta::log::ERR,
+        "In RelationalDB::setRetrieveQueueCleanupFlag(): failed to remove retrieve jobs from the tape queue." +
+          ex.getMessageValue());
+      throw;
+    }
+  }
 }
 
 }  // namespace cta
