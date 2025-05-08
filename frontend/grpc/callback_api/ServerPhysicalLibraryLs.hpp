@@ -7,38 +7,22 @@
 
 #include <grpcpp/grpcpp.h>
 #include "common/dataStructures/PhysicalLibrary.hpp"
+#include "CtaAdminServerWriteReactor.hpp"
 
 namespace cta::frontend::grpc {
 
-class PhysicalLibraryLsWriteReactor : public ::grpc::ServerWriteReactor<cta::xrd::StreamResponse> {
+class PhysicalLibraryLsWriteReactor : public CtaAdminServerWriteReactor {
     public:
-        PhysicalLibraryLsWriteReactor(cta::catalogue::Catalogue &catalogue, cta::Scheduler &scheduler, const cta::xrd::Request* request);
-        void OnWriteDone(bool ok) override {
-            std::cout << "In PhysicalLibraryLsWriteReactor, we are inside OnWriteDone" << std::endl;
-            if (!ok) {
-                std::cout << "Unexpected failure in OnWriteDone" << std::endl;
-                Finish(Status(::grpc::StatusCode::UNKNOWN, "Unexpected Failure in OnWriteDone"));
-            }
-            std::cout << "Calling NextWrite inside server's OnWriteDone" << std::endl;
-            NextWrite();
-        }
-        void OnDone() override;
-        void NextWrite();
+        PhysicalLibraryLsWriteReactor(cta::catalogue::Catalogue &catalogue, cta::Scheduler &scheduler, const std::string& instanceName, const cta::xrd::Request* request);
+        void NextWrite() override;
     private:
         std::list<cta::common::dataStructures::PhysicalLibrary> m_physicalLibraryList;
-        bool m_isHeaderSent; // or could be a static variable in the function NextWrite()
-        cta::xrd::StreamResponse m_response;
         std::list<cta::common::dataStructures::PhysicalLibrary>::const_iterator next_pl;
 };
 
-void PhysicalLibraryLsWriteReactor::OnDone() {
-    std::cout << "In PhysicalLibraryLsWriteReactor::OnDone(), about to delete this object" << std::endl;
-    delete this;
-}
-
-PhysicalLibraryLsWriteReactor::PhysicalLibraryLsWriteReactor(cta::catalogue::Catalogue &catalogue, cta::Scheduler &scheduler, const cta::xrd::Request* request)
-    : m_physicalLibraryList(catalogue.PhysicalLibrary()->getPhysicalLibraries()),
-      m_isHeaderSent(false) {
+PhysicalLibraryLsWriteReactor::PhysicalLibraryLsWriteReactor(cta::catalogue::Catalogue &catalogue, cta::Scheduler &scheduler, const std::string& instanceName, const cta::xrd::Request* request)
+    : CtaAdminServerWriteReactor(catalogue, scheduler, instanceName),
+      m_physicalLibraryList(catalogue.PhysicalLibrary()->getPhysicalLibraries()) {
     using namespace cta::admin;
 
     std::cout << "In PhysicalLibraryLsWriteReactor constructor, just entered!" << std::endl;

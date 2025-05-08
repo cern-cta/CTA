@@ -9,46 +9,28 @@
 #include "frontend/common/Version.hpp"
 #include "catalogue/SchemaVersion.hpp"
 #include "version.h"
+#include "CtaAdminServerWriteReactor.hpp"
 
 namespace cta::frontend::grpc {
 
-class VersionWriteReactor : public ::grpc::ServerWriteReactor<cta::xrd::StreamResponse> /* CtaAdminServerWriteReactor */ {
+class VersionWriteReactor : public CtaAdminServerWriteReactor {
     public:
-        VersionWriteReactor(cta::catalogue::Catalogue &catalogue, cta::Scheduler &scheduler, const std::string &catalogueConnString, const cta::xrd::Request* request);
-        void OnWriteDone(bool ok) override {
-            std::cout << "In VersionWriteReactor, we are inside OnWriteDone" << std::endl;
-            if (!ok) {
-                std::cout << "Unexpected failure in OnWriteDone" << std::endl;
-                Finish(Status(::grpc::StatusCode::UNKNOWN, "Unexpected Failure in OnWriteDone"));
-            }
-            std::cout << "Calling NextWrite inside server's OnWriteDone" << std::endl;
-            NextWrite();
-        }
-        void OnDone() override;
-        void NextWrite();
+        VersionWriteReactor(cta::catalogue::Catalogue &catalogue, cta::Scheduler &scheduler, const std::string& instanceName, const std::string &catalogueConnString, const cta::xrd::Request* request);
+        void NextWrite() override;
     private:
-        bool m_isHeaderSent;
         bool m_isVersionSent;
         frontend::Version m_client_versions;
         frontend::Version m_server_versions;
         std::string m_catalogue_conn_string;
         std::string m_catalogue_version;
-        std::optional<std::string> m_schedulerBackendName;
         bool m_is_upgrading;
-        cta::xrd::StreamResponse m_response;
 };
 
-void VersionWriteReactor::OnDone() {
-    std::cout << "In VersionWriteReactor::OnDone(), about to delete this object" << std::endl;
-    delete this;
-}
-
-VersionWriteReactor::VersionWriteReactor(cta::catalogue::Catalogue &catalogue, cta::Scheduler &scheduler, const std::string& catalogueConnString, const cta::xrd::Request* request)
-    : m_isHeaderSent(false),
+VersionWriteReactor::VersionWriteReactor(cta::catalogue::Catalogue &catalogue, cta::Scheduler &scheduler, const std::string& instanceName, const std::string& catalogueConnString, const cta::xrd::Request* request)
+    : CtaAdminServerWriteReactor(catalogue, scheduler, instanceName),
       m_isVersionSent(false),
       m_catalogue_conn_string(catalogueConnString),
       m_catalogue_version(catalogue.Schema()->getSchemaVersion().getSchemaVersion<std::string>()),
-      m_schedulerBackendName(scheduler.getSchedulerBackendName()),
       m_is_upgrading(catalogue.Schema()->getSchemaVersion().getStatus<catalogue::SchemaVersion::Status>() ==
                      catalogue::SchemaVersion::Status::UPGRADING) {
 

@@ -1,4 +1,3 @@
-// #include "CtaAdminServer.hpp" // need this for the class CtaAdminServerWriteReactor, nothing else
 #include <catalogue/Catalogue.hpp>
 #include <scheduler/Scheduler.hpp>
 
@@ -7,36 +6,23 @@
 #include <grpcpp/grpcpp.h>
 #include "../RequestMessage.hpp"
 #include "common/dataStructures/LogicalLibrary.hpp"
+#include "CtaAdminServerWriteReactor.hpp"
 
 namespace cta::frontend::grpc {
 
-class LogicalLibraryLsWriteReactor : public ::grpc::ServerWriteReactor<cta::xrd::StreamResponse> {
+class LogicalLibraryLsWriteReactor : public CtaAdminServerWriteReactor {
     public:
-        LogicalLibraryLsWriteReactor(cta::catalogue::Catalogue &catalogue, cta::Scheduler &scheduler, const cta::xrd::Request* request);
-        void OnWriteDone(bool ok) override {
-            if (!ok) {
-                std::cout << "Unexpected failure in OnWriteDone" << std::endl;
-                Finish(Status(::grpc::StatusCode::UNKNOWN, "Unexpected Failure in OnWriteDone"));
-            }
-            NextWrite();
-        }
-        void OnDone() override;
-        void NextWrite();
+        LogicalLibraryLsWriteReactor(cta::catalogue::Catalogue &catalogue, cta::Scheduler &scheduler, const std::string& instanceName, const cta::xrd::Request* request);
+        void NextWrite() override;
     private:
         std::list<cta::common::dataStructures::LogicalLibrary> m_logicalLibraryList;
-        bool m_isHeaderSent;
         std::optional<bool> m_disabled;
-        cta::xrd::StreamResponse m_response;
         std::list<cta::common::dataStructures::LogicalLibrary>::const_iterator next_ll;
 };
 
-void LogicalLibraryLsWriteReactor::OnDone() {
-    delete this;
-}
-
-LogicalLibraryLsWriteReactor::LogicalLibraryLsWriteReactor(cta::catalogue::Catalogue &catalogue, cta::Scheduler &scheduler, const cta::xrd::Request* request)
-    : m_logicalLibraryList(catalogue.LogicalLibrary()->getLogicalLibraries()),
-      m_isHeaderSent(false) {
+LogicalLibraryLsWriteReactor::LogicalLibraryLsWriteReactor(cta::catalogue::Catalogue &catalogue, cta::Scheduler &scheduler, const std::string& instanceName, const cta::xrd::Request* request)
+    : CtaAdminServerWriteReactor(catalogue, scheduler, instanceName),
+      m_logicalLibraryList(catalogue.LogicalLibrary()->getLogicalLibraries()) {
     using namespace cta::admin;
 
     request::RequestMessage requestMsg(*request);

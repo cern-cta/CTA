@@ -1,4 +1,3 @@
-// #include "CtaAdminServer.hpp" // need this for the class CtaAdminServerWriteReactor, nothing else
 #include <catalogue/Catalogue.hpp>
 #include <scheduler/Scheduler.hpp>
 
@@ -6,38 +5,25 @@
 #include "cta_frontend.grpc.pb.h"
 #include <grpcpp/grpcpp.h>
 #include "../RequestMessage.hpp"
+#include "CtaAdminServerWriteReactor.hpp"
 
 namespace cta::frontend::grpc {
 
-class StorageClassLsWriteReactor : public ::grpc::ServerWriteReactor<cta::xrd::StreamResponse> /* CtaAdminServerWriteReactor */ {
+class StorageClassLsWriteReactor : public CtaAdminServerWriteReactor {
     public:
-    StorageClassLsWriteReactor(cta::catalogue::Catalogue &catalogue, cta::Scheduler &scheduler, const cta::xrd::Request* request);
-        void OnWriteDone(bool ok) override {
-            if (!ok) {
-                std::cout << "Unexpected failure in OnWriteDone" << std::endl;
-                Finish(Status(::grpc::StatusCode::UNKNOWN, "Unexpected Failure in OnWriteDone"));
-            }
-            NextWrite();
-        }
-        void OnDone() override;
-        void NextWrite();
+    StorageClassLsWriteReactor(cta::catalogue::Catalogue &catalogue, cta::Scheduler &scheduler, const std::string& instanceName, const cta::xrd::Request* request);
+        void NextWrite() override;
     private:
         std::list<common::dataStructures::StorageClass> m_storageClassList;
-        bool m_isHeaderSent;
         std::optional<std::string> m_storageClassName;
-        cta::xrd::StreamResponse m_response;
         std::list<common::dataStructures::StorageClass>::const_iterator next_sc;
 };
 
-void StorageClassLsWriteReactor::OnDone() {
-    // add a log line here
-    delete this;
-}
 
 // maybe also override the OnCancel method - Jacek implemented this
 
-StorageClassLsWriteReactor::StorageClassLsWriteReactor(cta::catalogue::Catalogue &catalogue, cta::Scheduler &scheduler, const cta::xrd::Request* request)
-: m_isHeaderSent(false) {
+StorageClassLsWriteReactor::StorageClassLsWriteReactor(cta::catalogue::Catalogue &catalogue, cta::Scheduler &scheduler, const std::string& instanceName, const cta::xrd::Request* request)
+: CtaAdminServerWriteReactor(catalogue, scheduler, instanceName) {
     request::RequestMessage requestMsg(*request);
     m_storageClassName = requestMsg.getOptional(cta::admin::OptionString::STORAGE_CLASS);
     if(m_storageClassName.has_value()) {

@@ -1,4 +1,3 @@
-// #include "CtaAdminServer.hpp" // need this for the class CtaAdminServerWriteReactor, nothing else
 #include <catalogue/Catalogue.hpp>
 #include <scheduler/Scheduler.hpp>
 
@@ -7,35 +6,22 @@
 
 #include <grpcpp/grpcpp.h>
 #include "common/dataStructures/RequesterActivityMountRule.hpp"
+#include "CtaAdminServerWriteReactor.hpp"
 
 namespace cta::frontend::grpc {
 
-class ActivityMountRuleLsWriteReactor : public ::grpc::ServerWriteReactor<cta::xrd::StreamResponse> {
+class ActivityMountRuleLsWriteReactor : public CtaAdminServerWriteReactor {
     public:
-        ActivityMountRuleLsWriteReactor(cta::catalogue::Catalogue &catalogue, cta::Scheduler &scheduler, const cta::xrd::Request* request);
-        void OnWriteDone(bool ok) override {
-            if (!ok) {
-                std::cout << "Unexpected failure in OnWriteDone" << std::endl;
-                Finish(Status(::grpc::StatusCode::UNKNOWN, "Unexpected Failure in OnWriteDone"));
-            }
-            NextWrite();
-        }
-        void OnDone() override;
-        void NextWrite();
+        ActivityMountRuleLsWriteReactor(cta::catalogue::Catalogue &catalogue, cta::Scheduler &scheduler, const std::string& instanceName, const cta::xrd::Request* request);
+        void NextWrite() override;
     private:
-        std::list<cta::common::dataStructures::RequesterActivityMountRule> m_activityMountRuleList; 
-        bool m_isHeaderSent;
-        cta::xrd::StreamResponse m_response;
+        std::list<cta::common::dataStructures::RequesterActivityMountRule> m_activityMountRuleList;
         std::list<cta::common::dataStructures::RequesterActivityMountRule>::const_iterator next_amr;
 };
 
-void ActivityMountRuleLsWriteReactor::OnDone() {
-    delete this;
-}
-
-ActivityMountRuleLsWriteReactor::ActivityMountRuleLsWriteReactor(cta::catalogue::Catalogue &catalogue, cta::Scheduler &scheduler, const cta::xrd::Request* request)
-    : m_activityMountRuleList(catalogue.RequesterActivityMountRule()->getRequesterActivityMountRules()),
-      m_isHeaderSent(false) {
+ActivityMountRuleLsWriteReactor::ActivityMountRuleLsWriteReactor(cta::catalogue::Catalogue &catalogue, cta::Scheduler &scheduler, const std::string& instanceName, const cta::xrd::Request* request)
+    : CtaAdminServerWriteReactor(catalogue, scheduler, instanceName),
+      m_activityMountRuleList(catalogue.RequesterActivityMountRule()->getRequesterActivityMountRules()) {
     using namespace cta::admin;
 
     std::cout << "In ActivityMountRuleLsWriteReactor constructor, just entered!" << std::endl;

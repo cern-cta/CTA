@@ -7,35 +7,22 @@
 
 #include <grpcpp/grpcpp.h>
 #include "disk/DiskSystem.hpp"
+#include "CtaAdminServerWriteReactor.hpp"
 
 namespace cta::frontend::grpc {
 
-class DiskSystemLsWriteReactor : public ::grpc::ServerWriteReactor<cta::xrd::StreamResponse> {
+class DiskSystemLsWriteReactor : public CtaAdminServerWriteReactor {
     public:
-        DiskSystemLsWriteReactor(cta::catalogue::Catalogue &catalogue, cta::Scheduler &scheduler, const cta::xrd::Request* request);
-        void OnWriteDone(bool ok) override {
-            if (!ok) {
-                std::cout << "Unexpected failure in OnWriteDone" << std::endl;
-                Finish(Status(::grpc::StatusCode::UNKNOWN, "Unexpected Failure in OnWriteDone"));
-            }
-            NextWrite();
-        }
-        void OnDone() override;
-        void NextWrite();
+        DiskSystemLsWriteReactor(cta::catalogue::Catalogue &catalogue, cta::Scheduler &scheduler, const std::string& instanceName, const cta::xrd::Request* request);
+        void NextWrite() override;
     private:
-        cta::disk::DiskSystemList m_diskSystemList; 
-        bool m_isHeaderSent; // or could be a static variable in the function NextWrite()
-        cta::xrd::StreamResponse m_response;
+        cta::disk::DiskSystemList m_diskSystemList;
         std::list<disk::DiskSystem>::const_iterator next_ds;
 };
 
-void DiskSystemLsWriteReactor::OnDone() {
-    delete this;
-}
-
-DiskSystemLsWriteReactor::DiskSystemLsWriteReactor(cta::catalogue::Catalogue &catalogue, cta::Scheduler &scheduler, const cta::xrd::Request* request)
-    : m_diskSystemList(catalogue.DiskSystem()->getAllDiskSystems()),
-      m_isHeaderSent(false) {
+DiskSystemLsWriteReactor::DiskSystemLsWriteReactor(cta::catalogue::Catalogue &catalogue, cta::Scheduler &scheduler, const std::string& instanceName, const cta::xrd::Request* request)
+    : CtaAdminServerWriteReactor(catalogue, scheduler, instanceName),
+      m_diskSystemList(catalogue.DiskSystem()->getAllDiskSystems()) {
 
     next_ds = m_diskSystemList.cbegin();
     NextWrite();

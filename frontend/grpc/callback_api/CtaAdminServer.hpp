@@ -22,7 +22,7 @@
 #include "common/log/Logger.hpp"
 #include "common/log/LogContext.hpp"
 #include "common/exception/Exception.hpp"
-#include "ServerTapeLs.hpp" // and all the rest of them
+#include "ServerTapeLs.hpp"
 #include "ServerTapePoolLs.hpp"
 #include "ServerVirtualOrganizationLs.hpp"
 #include "ServerDiskInstanceLs.hpp"
@@ -70,7 +70,7 @@ class CtaRpcStreamImpl : public cta::xrd::CtaRpcStream::CallbackService {
     cta::log::LogContext getLogContext() const { return m_lc; }
     // CtaRpcStreamImpl() = delete;
     CtaRpcStreamImpl(cta::catalogue::Catalogue &catalogue, cta::Scheduler &scheduler, cta::SchedulerDB_t &schedDB,
-      const std::string instanceName, const std::string& connstr, cta::log::LogContext logContext) :
+      const std::string& instanceName, const std::string& connstr, cta::log::LogContext logContext) :
       m_lc(logContext),
       m_catalogue(catalogue),
       m_scheduler(scheduler),
@@ -101,49 +101,49 @@ CtaRpcStreamImpl::GenericAdminStream(::grpc::CallbackServerContext* context, con
     case cmd_pair(cta::admin::AdminCmd::CMD_TAPE, cta::admin::AdminCmd::SUBCMD_LS):
       return new TapeLsWriteReactor(m_catalogue, m_scheduler, m_instanceName, request);
     case cmd_pair(cta::admin::AdminCmd::CMD_STORAGECLASS, cta::admin::AdminCmd::SUBCMD_LS):
-      return new StorageClassLsWriteReactor(m_catalogue, m_scheduler, request);
+      return new StorageClassLsWriteReactor(m_catalogue, m_scheduler, m_instanceName, request);
     case cmd_pair(cta::admin::AdminCmd::CMD_TAPEPOOL, cta::admin::AdminCmd::SUBCMD_LS):
-      return new TapePoolLsWriteReactor(m_catalogue, m_scheduler, request);
+      return new TapePoolLsWriteReactor(m_catalogue, m_scheduler, m_instanceName, request);
     case cmd_pair(cta::admin::AdminCmd::CMD_VIRTUALORGANIZATION, cta::admin::AdminCmd::SUBCMD_LS):
-      return new VirtualOrganizationLsWriteReactor(m_catalogue, m_scheduler, request);
+      return new VirtualOrganizationLsWriteReactor(m_catalogue, m_scheduler, m_instanceName, request);
     case cmd_pair(cta::admin::AdminCmd::CMD_DISKINSTANCE, cta::admin::AdminCmd::SUBCMD_LS):
-      return new DiskInstanceLsWriteReactor(m_catalogue, m_scheduler, request);
+      return new DiskInstanceLsWriteReactor(m_catalogue, m_scheduler, m_instanceName, request);
     case cmd_pair(cta::admin::AdminCmd::CMD_DRIVE, cta::admin::AdminCmd::SUBCMD_LS):
-      return new DriveLsWriteReactor(m_catalogue, m_scheduler, m_lc, request);
+      return new DriveLsWriteReactor(m_catalogue, m_scheduler, m_instanceName, m_lc, request);
     case cmd_pair(cta::admin::AdminCmd::CMD_ADMIN, cta::admin::AdminCmd::SUBCMD_LS):
-      return new AdminLsWriteReactor(m_catalogue, m_scheduler, request);
+      return new AdminLsWriteReactor(m_catalogue, m_scheduler, m_instanceName, request);
     case cmd_pair(cta::admin::AdminCmd::CMD_VERSION, cta::admin::AdminCmd::SUBCMD_NONE):
-      return new VersionWriteReactor(m_catalogue, m_scheduler, m_catalogueConnString, request);
+      return new VersionWriteReactor(m_catalogue, m_scheduler, m_instanceName, m_catalogueConnString, request);
     case cmd_pair(cta::admin::AdminCmd::CMD_ARCHIVEROUTE, cta::admin::AdminCmd::SUBCMD_LS):
-      return new ArchiveRouteLsWriteReactor(m_catalogue, m_scheduler, request);
+      return new ArchiveRouteLsWriteReactor(m_catalogue, m_scheduler, m_instanceName, request);
     case cmd_pair(cta::admin::AdminCmd::CMD_GROUPMOUNTRULE, cta::admin::AdminCmd::SUBCMD_LS):
-      return new GroupMountRuleLsWriteReactor(m_catalogue, m_scheduler, request);
+      return new GroupMountRuleLsWriteReactor(m_catalogue, m_scheduler, m_instanceName, request);
     case cmd_pair(cta::admin::AdminCmd::CMD_MEDIATYPE, cta::admin::AdminCmd::SUBCMD_LS):
-      return new MediaTypeLsWriteReactor(m_catalogue, m_scheduler, request);
+      return new MediaTypeLsWriteReactor(m_catalogue, m_scheduler, m_instanceName, request);
     case cmd_pair(cta::admin::AdminCmd::CMD_REQUESTERMOUNTRULE, cta::admin::AdminCmd::SUBCMD_LS):
-      return new RequesterMountRuleLsWriteReactor(m_catalogue, m_scheduler, request);
+      return new RequesterMountRuleLsWriteReactor(m_catalogue, m_scheduler, m_instanceName, request);
     case cmd_pair(cta::admin::AdminCmd::CMD_PHYSICALLIBRARY, cta::admin::AdminCmd::SUBCMD_LS):
-      return new PhysicalLibraryLsWriteReactor(m_catalogue, m_scheduler, request);
+      return new PhysicalLibraryLsWriteReactor(m_catalogue, m_scheduler, m_instanceName, request);
     case cmd_pair(cta::admin::AdminCmd::CMD_MOUNTPOLICY, cta::admin::AdminCmd::SUBCMD_LS):
-      return new MountPolicyLsWriteReactor(m_catalogue, m_scheduler, request);
+      return new MountPolicyLsWriteReactor(m_catalogue, m_scheduler, m_instanceName, request);
     case cmd_pair(cta::admin::AdminCmd::CMD_DISKSYSTEM, cta::admin::AdminCmd::SUBCMD_LS):
-      return new DiskSystemLsWriteReactor(m_catalogue, m_scheduler, request);
+      return new DiskSystemLsWriteReactor(m_catalogue, m_scheduler, m_instanceName, request);
     case cmd_pair(cta::admin::AdminCmd::CMD_DISKINSTANCESPACE, cta::admin::AdminCmd::SUBCMD_LS):
-      return new DiskInstanceSpaceLsWriteReactor(m_catalogue, m_scheduler, request);
+      return new DiskInstanceSpaceLsWriteReactor(m_catalogue, m_scheduler, m_instanceName, request);
     case cmd_pair(cta::admin::AdminCmd::CMD_TAPEFILE, cta::admin::AdminCmd::SUBCMD_LS):
-      return new TapeFileLsWriteReactor(m_catalogue, m_scheduler, request);
+      return new TapeFileLsWriteReactor(m_catalogue, m_scheduler, m_instanceName, request);
     case cmd_pair(cta::admin::AdminCmd::CMD_ACTIVITYMOUNTRULE, cta::admin::AdminCmd::SUBCMD_LS):
-      return new ActivityMountRuleLsWriteReactor(m_catalogue, m_scheduler, request);
+      return new ActivityMountRuleLsWriteReactor(m_catalogue, m_scheduler, m_instanceName, request);
     case cmd_pair(cta::admin::AdminCmd::CMD_SHOWQUEUES, cta::admin::AdminCmd::SUBCMD_NONE):
       return new ShowQueuesWriteReactor(m_catalogue, m_scheduler,m_instanceName, m_lc, request);
     case cmd_pair(cta::admin::AdminCmd::CMD_REPACK, cta::admin::AdminCmd::SUBCMD_LS):
-      return new RepackLsWriteReactor(m_catalogue, m_scheduler, request);
+      return new RepackLsWriteReactor(m_catalogue, m_scheduler, m_instanceName, request);
     case cmd_pair(cta::admin::AdminCmd::CMD_RECYCLETAPEFILE, cta::admin::AdminCmd::SUBCMD_LS):
-      return new RecycleTapeFileLsWriteReactor(m_catalogue, m_scheduler, request);
+      return new RecycleTapeFileLsWriteReactor(m_catalogue, m_scheduler, m_instanceName, request);
     case cmd_pair(cta::admin::AdminCmd::CMD_LOGICALLIBRARY, cta::admin::AdminCmd::SUBCMD_LS):
-      return new LogicalLibraryLsWriteReactor(m_catalogue, m_scheduler, request);
+      return new LogicalLibraryLsWriteReactor(m_catalogue, m_scheduler, m_instanceName, request);
     case cmd_pair(cta::admin::AdminCmd::CMD_FAILEDREQUEST, cta::admin::AdminCmd::SUBCMD_LS):
-      return new FailedRequestLsWriteReactor(m_catalogue, m_scheduler, m_schedDb, m_lc, request);
+      return new FailedRequestLsWriteReactor(m_catalogue, m_scheduler, m_instanceName, m_schedDb, m_lc, request);
     default:
       // Just to return an error status code when the specified command is not implemented
       const std::string errMsg("Admin command pair <" +

@@ -8,38 +8,22 @@
 #include <grpcpp/grpcpp.h>
 #include "common/dataStructures/LabelFormatSerDeser.hpp"
 #include "common/dataStructures/RequesterGroupMountRule.hpp"
+#include "CtaAdminServerWriteReactor.hpp"
 
 namespace cta::frontend::grpc {
 
-class GroupMountRuleLsWriteReactor : public ::grpc::ServerWriteReactor<cta::xrd::StreamResponse> {
+class GroupMountRuleLsWriteReactor : public CtaAdminServerWriteReactor {
     public:
-        GroupMountRuleLsWriteReactor(cta::catalogue::Catalogue &catalogue, cta::Scheduler &scheduler, const cta::xrd::Request* request);
-        void OnWriteDone(bool ok) override {
-            std::cout << "In GroupMountRuleLsWriteReactor, we are inside OnWriteDone" << std::endl;
-            if (!ok) {
-                std::cout << "Unexpected failure in OnWriteDone" << std::endl;
-                Finish(Status(::grpc::StatusCode::UNKNOWN, "Unexpected Failure in OnWriteDone"));
-            }
-            std::cout << "Calling NextWrite inside server's OnWriteDone" << std::endl;
-            NextWrite();
-        }
-        void OnDone() override;
-        void NextWrite();
+        GroupMountRuleLsWriteReactor(cta::catalogue::Catalogue &catalogue, cta::Scheduler &scheduler, const std::string& instanceName, const cta::xrd::Request* request);
+        void NextWrite() override;
     private:
         std::list<cta::common::dataStructures::RequesterGroupMountRule> m_groupMountRuleList; 
-        bool m_isHeaderSent; // or could be a static variable in the function NextWrite()
-        cta::xrd::StreamResponse m_response;
         std::list<cta::common::dataStructures::RequesterGroupMountRule>::const_iterator next_gmr;
 };
 
-void GroupMountRuleLsWriteReactor::OnDone() {
-    std::cout << "In GroupMountRuleLsWriteReactor::OnDone(), about to delete this object" << std::endl;
-    delete this;
-}
-
-GroupMountRuleLsWriteReactor::GroupMountRuleLsWriteReactor(cta::catalogue::Catalogue &catalogue, cta::Scheduler &scheduler, const cta::xrd::Request* request)
-    : m_groupMountRuleList(catalogue.RequesterGroupMountRule()->getRequesterGroupMountRules()),
-      m_isHeaderSent(false) {
+GroupMountRuleLsWriteReactor::GroupMountRuleLsWriteReactor(cta::catalogue::Catalogue &catalogue, cta::Scheduler &scheduler, const std::string& instanceName, const cta::xrd::Request* request)
+    : CtaAdminServerWriteReactor(catalogue, scheduler, instanceName),
+      m_groupMountRuleList(catalogue.RequesterGroupMountRule()->getRequesterGroupMountRules()) {
     using namespace cta::admin;
 
     std::cout << "In GroupMountRuleLsWriteReactor constructor, just entered!" << std::endl;

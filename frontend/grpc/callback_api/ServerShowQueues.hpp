@@ -13,7 +13,7 @@ namespace cta::frontend::grpc {
 
 class ShowQueuesWriteReactor : public ::grpc::ServerWriteReactor<cta::xrd::StreamResponse> {
     public:
-        ShowQueuesWriteReactor(cta::catalogue::Catalogue &catalogue, cta::Scheduler &scheduler, std::string instanceName, cta::log::LogContext lc, const cta::xrd::Request* request);
+        ShowQueuesWriteReactor(cta::catalogue::Catalogue &catalogue, cta::Scheduler &scheduler, const std::string& instanceName, cta::log::LogContext lc, const cta::xrd::Request* request);
         void OnWriteDone(bool ok) override {
             if (!ok) {
                 std::cout << "Unexpected failure in OnWriteDone" << std::endl;
@@ -36,7 +36,7 @@ void ShowQueuesWriteReactor::OnDone() {
     delete this;
 }
 
-ShowQueuesWriteReactor::ShowQueuesWriteReactor(cta::catalogue::Catalogue &catalogue, cta::Scheduler &scheduler, std::string instanceName, cta::log::LogContext lc, const cta::xrd::Request* request)
+ShowQueuesWriteReactor::ShowQueuesWriteReactor(cta::catalogue::Catalogue &catalogue, cta::Scheduler &scheduler, const std::string& instanceName, cta::log::LogContext lc, const cta::xrd::Request* request)
     : m_queuesAndMountsList(scheduler.getQueuesAndMountSummaries(lc)),
       m_schedulerBackendName(scheduler.getSchedulerBackendName()),
       m_instanceName(instanceName),

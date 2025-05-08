@@ -6,36 +6,23 @@
 #include "cta_frontend.grpc.pb.h"
 #include "../RequestMessage.hpp"
 #include <grpcpp/grpcpp.h>
+#include "CtaAdminServerWriteReactor.hpp"
 
 namespace cta::frontend::grpc {
 
-class RepackLsWriteReactor : public ::grpc::ServerWriteReactor<cta::xrd::StreamResponse> {
+class RepackLsWriteReactor : public CtaAdminServerWriteReactor {
     public:
-        RepackLsWriteReactor(cta::catalogue::Catalogue &catalogue, cta::Scheduler &scheduler, const cta::xrd::Request* request);
-        void OnWriteDone(bool ok) override {
-            if (!ok) {
-                std::cout << "Unexpected failure in OnWriteDone" << std::endl;
-                Finish(Status(::grpc::StatusCode::UNKNOWN, "Unexpected Failure in OnWriteDone"));
-            }
-            NextWrite();
-        }
-        void OnDone() override;
-        void NextWrite();
+        RepackLsWriteReactor(cta::catalogue::Catalogue &catalogue, cta::Scheduler &scheduler, const std::string& instanceName, const cta::xrd::Request* request);
+        void NextWrite() override;
     private:
         std::optional<std::string> m_vid;
         std::list<common::dataStructures::RepackInfo> m_repackList;
         cta::common::dataStructures::VidToTapeMap m_tapeVidMap;
-        bool m_isHeaderSent; // or could be a static variable in the function NextWrite()
-        cta::xrd::StreamResponse m_response;
         std::list<cta::common::dataStructures::RepackInfo>::const_iterator next_repack;
 };
 
-void RepackLsWriteReactor::OnDone() {
-    delete this;
-}
-
-RepackLsWriteReactor::RepackLsWriteReactor(cta::catalogue::Catalogue &catalogue, cta::Scheduler &scheduler, const cta::xrd::Request* request)
-    : m_isHeaderSent(false) {
+RepackLsWriteReactor::RepackLsWriteReactor(cta::catalogue::Catalogue &catalogue, cta::Scheduler &scheduler, const std::string& instanceName, const cta::xrd::Request* request)
+    : CtaAdminServerWriteReactor(catalogue, scheduler, instanceName) {
     request::RequestMessage requestMsg(*request);
 
     m_vid = requestMsg.getOptional(cta::admin::OptionString::VID);

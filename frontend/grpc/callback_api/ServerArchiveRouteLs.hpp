@@ -8,38 +8,22 @@
 #include <grpcpp/grpcpp.h>
 #include "common/dataStructures/LabelFormatSerDeser.hpp"
 #include <common/dataStructures/ArchiveRouteTypeSerDeser.hpp>
+#include "CtaAdminServerWriteReactor.hpp"
 
 namespace cta::frontend::grpc {
 
-class ArchiveRouteLsWriteReactor : public ::grpc::ServerWriteReactor<cta::xrd::StreamResponse> {
+class ArchiveRouteLsWriteReactor : public CtaAdminServerWriteReactor {
     public:
-        ArchiveRouteLsWriteReactor(cta::catalogue::Catalogue &catalogue, cta::Scheduler &scheduler, const cta::xrd::Request* request);
-        void OnWriteDone(bool ok) override {
-            std::cout << "In ArchiveRouteLsWriteReactor, we are inside OnWriteDone" << std::endl;
-            if (!ok) {
-                std::cout << "Unexpected failure in OnWriteDone" << std::endl;
-                Finish(Status(::grpc::StatusCode::UNKNOWN, "Unexpected Failure in OnWriteDone"));
-            }
-            std::cout << "Calling NextWrite inside server's OnWriteDone" << std::endl;
-            NextWrite();
-        }
-        void OnDone() override;
-        void NextWrite();
+        ArchiveRouteLsWriteReactor(cta::catalogue::Catalogue &catalogue, cta::Scheduler &scheduler, const std::string& instanceName, const cta::xrd::Request* request);
+        void NextWrite() override;
     private:
-        std::list<cta::common::dataStructures::ArchiveRoute> m_archiveRouteList; 
-        bool m_isHeaderSent; // or could be a static variable in the function NextWrite()
-        cta::xrd::StreamResponse m_response;
+        std::list<cta::common::dataStructures::ArchiveRoute> m_archiveRouteList;
         std::list<cta::common::dataStructures::ArchiveRoute>::const_iterator next_ar;
 };
 
-void ArchiveRouteLsWriteReactor::OnDone() {
-    std::cout << "In ArchiveRouteLsWriteReactor::OnDone(), about to delete this object" << std::endl;
-    delete this;
-}
-
-ArchiveRouteLsWriteReactor::ArchiveRouteLsWriteReactor(cta::catalogue::Catalogue &catalogue, cta::Scheduler &scheduler, const cta::xrd::Request* request)
-    : m_archiveRouteList(catalogue.ArchiveRoute()->getArchiveRoutes()),
-      m_isHeaderSent(false) {
+ArchiveRouteLsWriteReactor::ArchiveRouteLsWriteReactor(cta::catalogue::Catalogue &catalogue, cta::Scheduler &scheduler, const std::string& instanceName, const cta::xrd::Request* request)
+    : CtaAdminServerWriteReactor(catalogue, scheduler, instanceName),
+      m_archiveRouteList(catalogue.ArchiveRoute()->getArchiveRoutes()) {
     using namespace cta::admin;
 
     std::cout << "In ArchiveRouteLsWriteReactor constructor, just entered!" << std::endl;

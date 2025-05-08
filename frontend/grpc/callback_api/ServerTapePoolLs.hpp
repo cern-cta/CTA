@@ -9,39 +9,22 @@
 #include <grpcpp/grpcpp.h>
 #include "../RequestMessage.hpp"
 #include "common/dataStructures/LabelFormatSerDeser.hpp"
+#include "CtaAdminServerWriteReactor.hpp"
 
 namespace cta::frontend::grpc {
 
-class TapePoolLsWriteReactor : public ::grpc::ServerWriteReactor<cta::xrd::StreamResponse> /* CtaAdminServerWriteReactor */ {
+class TapePoolLsWriteReactor : public CtaAdminServerWriteReactor {
     public:
-        TapePoolLsWriteReactor(cta::catalogue::Catalogue &catalogue, cta::Scheduler &scheduler, const cta::xrd::Request* request);
-        void OnWriteDone(bool ok) override {
-            std::cout << "In TapePoolLsWriteReactor, we are inside OnWriteDone" << std::endl;
-            if (!ok) {
-                std::cout << "Unexpected failure in OnWriteDone" << std::endl;
-                Finish(Status(::grpc::StatusCode::UNKNOWN, "Unexpected Failure in OnWriteDone"));
-            }
-            std::cout << "Calling NextWrite inside server's OnWriteDone" << std::endl;
-            NextWrite();
-        }
-        void OnDone() override;
-        void NextWrite();
+        TapePoolLsWriteReactor(cta::catalogue::Catalogue &catalogue, cta::Scheduler &scheduler, const std::string& instanceName, const cta::xrd::Request* request);
+        void NextWrite() override;
     private:
         std::list<cta::catalogue::TapePool> m_tapePoolList;
-        bool m_isHeaderSent; // or could be a static variable in the function NextWrite()
-        cta::xrd::StreamResponse m_response;
         std::list<cta::catalogue::TapePool>::const_iterator next_tape_pool;
 };
 
-void TapePoolLsWriteReactor::OnDone() {
-    std::cout << "In TapePoolLsWriteReactor::OnDone(), about to delete this object" << std::endl;
-    delete this;
-}
-
-TapePoolLsWriteReactor::TapePoolLsWriteReactor(cta::catalogue::Catalogue &catalogue, cta::Scheduler &scheduler, const cta::xrd::Request* request) : m_isHeaderSent(false) {
+TapePoolLsWriteReactor::TapePoolLsWriteReactor(cta::catalogue::Catalogue &catalogue, cta::Scheduler &scheduler, const std::string& instanceName, const cta::xrd::Request* request)
+: CtaAdminServerWriteReactor(catalogue, scheduler, instanceName) {
     using namespace cta::admin;
-
-    std::cout << "In TapePoolLsWriteReactor constructor, just entered!" << std::endl;
 
     request::RequestMessage requestMsg(*request);
     cta::catalogue::TapePoolSearchCriteria searchCriteria;

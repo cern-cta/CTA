@@ -7,35 +7,23 @@
 
 #include <grpcpp/grpcpp.h>
 #include "common/dataStructures/DiskInstanceSpace.hpp"
+#include "CtaAdminServerWriteReactor.hpp"
 
 namespace cta::frontend::grpc {
 
-class DiskInstanceSpaceLsWriteReactor : public ::grpc::ServerWriteReactor<cta::xrd::StreamResponse> {
+class DiskInstanceSpaceLsWriteReactor : public CtaAdminServerWriteReactor {
     public:
-        DiskInstanceSpaceLsWriteReactor(cta::catalogue::Catalogue &catalogue, cta::Scheduler &scheduler, const cta::xrd::Request* request);
-        void OnWriteDone(bool ok) override {
-            if (!ok) {
-                std::cout << "Unexpected failure in OnWriteDone" << std::endl;
-                Finish(Status(::grpc::StatusCode::UNKNOWN, "Unexpected Failure in OnWriteDone"));
-            }
-            NextWrite();
-        }
-        void OnDone() override;
-        void NextWrite();
+        DiskInstanceSpaceLsWriteReactor(cta::catalogue::Catalogue &catalogue, cta::Scheduler &scheduler, const std::string& instanceName, const cta::xrd::Request* request);
+        void NextWrite() override;
     private:
-        std::list<common::dataStructures::DiskInstanceSpace> m_diskInstanceSpaceList; 
-        bool m_isHeaderSent; // or could be a static variable in the function NextWrite()
-        cta::xrd::StreamResponse m_response;
+        std::list<common::dataStructures::DiskInstanceSpace> m_diskInstanceSpaceList;
         std::list<common::dataStructures::DiskInstanceSpace>::const_iterator next_dis;
 };
 
-void DiskInstanceSpaceLsWriteReactor::OnDone() {
-    delete this;
-}
 
-DiskInstanceSpaceLsWriteReactor::DiskInstanceSpaceLsWriteReactor(cta::catalogue::Catalogue &catalogue, cta::Scheduler &scheduler, const cta::xrd::Request* request)
-    : m_diskInstanceSpaceList(catalogue.DiskInstanceSpace()->getAllDiskInstanceSpaces()),
-      m_isHeaderSent(false) {
+DiskInstanceSpaceLsWriteReactor::DiskInstanceSpaceLsWriteReactor(cta::catalogue::Catalogue &catalogue, cta::Scheduler &scheduler, const std::string& instanceName, const cta::xrd::Request* request)
+    : CtaAdminServerWriteReactor(catalogue, scheduler, instanceName),
+      m_diskInstanceSpaceList(catalogue.DiskInstanceSpace()->getAllDiskInstanceSpaces()) {
 
     next_dis = m_diskInstanceSpaceList.cbegin();
     NextWrite();

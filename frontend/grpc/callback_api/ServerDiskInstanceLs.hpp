@@ -7,38 +7,22 @@
 #include <grpcpp/grpcpp.h>
 #include "common/dataStructures/LabelFormatSerDeser.hpp"
 #include "common/dataStructures/DiskInstance.hpp"
+#include "CtaAdminServerWriteReactor.hpp"
 
 namespace cta::frontend::grpc {
 
-class DiskInstanceLsWriteReactor : public ::grpc::ServerWriteReactor<cta::xrd::StreamResponse> /* CtaAdminServerWriteReactor */ {
+class DiskInstanceLsWriteReactor : public CtaAdminServerWriteReactor {
     public:
-        DiskInstanceLsWriteReactor(cta::catalogue::Catalogue &catalogue, cta::Scheduler &scheduler, const cta::xrd::Request* request);
-        void OnWriteDone(bool ok) override {
-            std::cout << "In DiskInstanceLsWriteReactor, we are inside OnWriteDone" << std::endl;
-            if (!ok) {
-                std::cout << "Unexpected failure in OnWriteDone" << std::endl;
-                Finish(Status(::grpc::StatusCode::UNKNOWN, "Unexpected Failure in OnWriteDone"));
-            }
-            std::cout << "Calling NextWrite inside server's OnWriteDone" << std::endl;
-            NextWrite();
-        }
-        void OnDone() override;
-        void NextWrite();
+        DiskInstanceLsWriteReactor(cta::catalogue::Catalogue &catalogue, cta::Scheduler &scheduler, const std::string& instanceName, const cta::xrd::Request* request);
+        void NextWrite() override;
     private:
         std::list<common::dataStructures::DiskInstance> m_diskInstanceList;  
-        bool m_isHeaderSent;
-        cta::xrd::StreamResponse m_response;
         std::list<common::dataStructures::DiskInstance>::const_iterator next_di;
 };
 
-void DiskInstanceLsWriteReactor::OnDone() {
-    std::cout << "In DiskInstanceLsWriteReactor::OnDone(), about to delete this object" << std::endl;
-    delete this;
-}
-
-DiskInstanceLsWriteReactor::DiskInstanceLsWriteReactor(cta::catalogue::Catalogue &catalogue, cta::Scheduler &scheduler, const cta::xrd::Request* request)
-: m_diskInstanceList(catalogue.DiskInstance()->getAllDiskInstances()),
-  m_isHeaderSent(false) {
+DiskInstanceLsWriteReactor::DiskInstanceLsWriteReactor(cta::catalogue::Catalogue &catalogue, cta::Scheduler &scheduler, const std::string& instanceName, const cta::xrd::Request* request)
+: CtaAdminServerWriteReactor(catalogue, scheduler, instanceName),
+  m_diskInstanceList(catalogue.DiskInstance()->getAllDiskInstances()) {
     using namespace cta::admin;
 
     std::cout << "In DiskInstanceLsWriteReactor constructor, just entered!" << std::endl;

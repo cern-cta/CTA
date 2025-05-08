@@ -8,38 +8,22 @@
 #include <grpcpp/grpcpp.h>
 #include "common/dataStructures/LabelFormatSerDeser.hpp"
 #include "common/dataStructures/AdminUser.hpp"
+#include "CtaAdminServerWriteReactor.hpp"
 
 namespace cta::frontend::grpc {
 
-class AdminLsWriteReactor : public ::grpc::ServerWriteReactor<cta::xrd::StreamResponse> /* CtaAdminServerWriteReactor */ {
+class AdminLsWriteReactor : public CtaAdminServerWriteReactor {
     public:
-        AdminLsWriteReactor(cta::catalogue::Catalogue &catalogue, cta::Scheduler &scheduler, const cta::xrd::Request* request);
-        void OnWriteDone(bool ok) override {
-            std::cout << "In AdminLsWriteReactor, we are inside OnWriteDone" << std::endl;
-            if (!ok) {
-                std::cout << "Unexpected failure in OnWriteDone" << std::endl;
-                Finish(Status(::grpc::StatusCode::UNKNOWN, "Unexpected Failure in OnWriteDone"));
-            }
-            std::cout << "Calling NextWrite inside server's OnWriteDone" << std::endl;
-            NextWrite();
-        }
-        void OnDone() override;
-        void NextWrite();
+        AdminLsWriteReactor(cta::catalogue::Catalogue &catalogue, cta::Scheduler &scheduler, const std::string& instanceName, const cta::xrd::Request* request);
+        void NextWrite() override;
     private:
-        std::list<cta::common::dataStructures::AdminUser> m_adminList; 
-        bool m_isHeaderSent; // or could be a static variable in the function NextWrite()
-        cta::xrd::StreamResponse m_response;
+        std::list<cta::common::dataStructures::AdminUser> m_adminList;
         std::list<cta::common::dataStructures::AdminUser>::const_iterator next_admin;
 };
 
-void AdminLsWriteReactor::OnDone() {
-    std::cout << "In AdminLsWriteReactor::OnDone(), about to delete this object" << std::endl;
-    delete this;
-}
-
-AdminLsWriteReactor::AdminLsWriteReactor(cta::catalogue::Catalogue &catalogue, cta::Scheduler &scheduler, const cta::xrd::Request* request)
-    : m_adminList(catalogue.AdminUser()->getAdminUsers()),
-      m_isHeaderSent(false) {
+AdminLsWriteReactor::AdminLsWriteReactor(cta::catalogue::Catalogue &catalogue, cta::Scheduler &scheduler, const std::string& instanceName, const cta::xrd::Request* request)
+    : CtaAdminServerWriteReactor(catalogue, scheduler, instanceName),
+      m_adminList(catalogue.AdminUser()->getAdminUsers()) {
     using namespace cta::admin;
 
     std::cout << "In AdminLsWriteReactor constructor, just entered!" << std::endl;

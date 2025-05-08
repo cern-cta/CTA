@@ -9,6 +9,7 @@
 #include "common/dataStructures/DriveStatusSerDeser.hpp"
 #include "common/dataStructures/MountTypeSerDeser.hpp"
 #include "../RequestMessage.hpp"
+#include "CtaAdminServerWriteReactor.hpp"
 
 #pragma once
 
@@ -28,41 +29,23 @@ convertToMap(const std::list<cta::catalogue::DriveConfigCatalogue::DriveConfig>&
   return driveConfigMap;
 }
 
-class DriveLsWriteReactor : public ::grpc::ServerWriteReactor<cta::xrd::StreamResponse> /* CtaAdminServerWriteReactor */ {
+class DriveLsWriteReactor : public CtaAdminServerWriteReactor {
     public:
-        DriveLsWriteReactor(cta::catalogue::Catalogue &catalogue, cta::Scheduler &scheduler, cta::log::LogContext lc, const cta::xrd::Request* request);
-        void OnWriteDone(bool ok) override {
-            std::cout << "In DriveLsWriteReactor, we are inside OnWriteDone" << std::endl;
-            if (!ok) {
-                std::cout << "Unexpected failure in OnWriteDone" << std::endl;
-                Finish(Status(::grpc::StatusCode::UNKNOWN, "Unexpected Failure in OnWriteDone"));
-            }
-            std::cout << "Calling NextWrite inside server's OnWriteDone" << std::endl;
-            NextWrite();
-        }
-        void OnDone() override;
-        void NextWrite();
+        DriveLsWriteReactor(cta::catalogue::Catalogue &catalogue, cta::Scheduler &scheduler, const std::string& instanceName, cta::log::LogContext lc, const cta::xrd::Request* request);
+        void NextWrite() override;
     private:
         std::list<common::dataStructures::TapeDrive> m_tapeDrives;
         std::unordered_map<std::string, std::list<cta::catalogue::DriveConfigCatalogue::DriveConfig>> m_tapeDriveNameConfigMap;
         bool m_listAllDrives;
-        std::optional<std::string> m_schedulerBackendName;
-        bool m_isHeaderSent;
-        cta::xrd::StreamResponse m_response;
         std::list<common::dataStructures::TapeDrive>::const_iterator next_dr;
         cta::log::LogContext m_lc;
 };
 
-void DriveLsWriteReactor::OnDone() {
-    std::cout << "In DriveLsWriteReactor::OnDone(), about to delete this object" << std::endl;
-    delete this;
-}
-
-DriveLsWriteReactor::DriveLsWriteReactor(cta::catalogue::Catalogue &catalogue, cta::Scheduler &scheduler, cta::log::LogContext lc, const cta::xrd::Request* request)
-: m_tapeDrives(catalogue.DriveState()->getTapeDrives()),
+DriveLsWriteReactor::DriveLsWriteReactor(cta::catalogue::Catalogue &catalogue, cta::Scheduler &scheduler, const std::string& instanceName, cta::log::LogContext lc, const cta::xrd::Request* request)
+: CtaAdminServerWriteReactor(catalogue, scheduler, instanceName),
+  m_tapeDrives(catalogue.DriveState()->getTapeDrives()),
   m_tapeDriveNameConfigMap(convertToMap(catalogue.DriveConfig()->getTapeDriveConfigs())),
   m_listAllDrives(false),
-  m_isHeaderSent(false),
   m_lc(lc) {
 
     using namespace cta::admin;

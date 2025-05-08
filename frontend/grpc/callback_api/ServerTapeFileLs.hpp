@@ -8,33 +8,20 @@
 #include "catalogue/CatalogueItor.hpp"
 #include "common/checksum/ChecksumBlobSerDeser.hpp"
 #include "../RequestMessage.hpp"
+#include "CtaAdminServerWriteReactor.hpp"
 
 namespace cta::frontend::grpc {
 
-class TapeFileLsWriteReactor : public ::grpc::ServerWriteReactor<cta::xrd::StreamResponse> /* CtaAdminServerWriteReactor */ {
+class TapeFileLsWriteReactor : public CtaAdminServerWriteReactor {
     public:
-        TapeFileLsWriteReactor(cta::catalogue::Catalogue &catalogue, cta::Scheduler &scheduler, const cta::xrd::Request* request);
-        void OnWriteDone(bool ok) override {
-            if (!ok) {
-                std::cout << "Unexpected failure in OnWriteDone" << std::endl;
-                Finish(Status(::grpc::StatusCode::UNKNOWN, "Unexpected Failure in OnWriteDone"));
-            }
-            NextWrite();
-        }
-        void OnDone() override;
-        void NextWrite();
+        TapeFileLsWriteReactor(cta::catalogue::Catalogue &catalogue, cta::Scheduler &scheduler, const std::string& instanceName, const cta::xrd::Request* request);
+        void NextWrite() override;
     private:
         catalogue::ArchiveFileItor m_tapeFileItor;
-        bool m_isHeaderSent; // or could be a static variable in the function NextWrite()
-        cta::xrd::StreamResponse m_response;
-        // cta::common::dataStructures::ArchiveFile archiveFile;
 };
 
-void TapeFileLsWriteReactor::OnDone() {
-    delete this;
-}
-
-TapeFileLsWriteReactor::TapeFileLsWriteReactor(cta::catalogue::Catalogue &catalogue, cta::Scheduler &scheduler, const cta::xrd::Request* request) : m_isHeaderSent(false) {
+TapeFileLsWriteReactor::TapeFileLsWriteReactor(cta::catalogue::Catalogue &catalogue, cta::Scheduler &scheduler, const std::string& instanceName, const cta::xrd::Request* request)
+  : CtaAdminServerWriteReactor(catalogue, scheduler, instanceName) {
     using namespace cta::admin;
 
     request::RequestMessage requestMsg(*request);

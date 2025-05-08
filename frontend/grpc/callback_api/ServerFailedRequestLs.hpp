@@ -1,4 +1,3 @@
-// #include "CtaAdminServer.hpp" // need this for the class CtaAdminServerWriteReactor, nothing else
 #include <catalogue/Catalogue.hpp>
 #include <scheduler/Scheduler.hpp>
 
@@ -8,23 +7,15 @@
 
 #include "common/dataStructures/JobQueueType.hpp"
 #include "../RequestMessage.hpp"
+#include "CtaAdminServerWriteReactor.hpp"
 
 namespace cta::frontend::grpc {
 
-class FailedRequestLsWriteReactor : public ::grpc::ServerWriteReactor<cta::xrd::StreamResponse> {
+class FailedRequestLsWriteReactor : public CtaAdminServerWriteReactor {
     public:
-        FailedRequestLsWriteReactor(cta::catalogue::Catalogue &catalogue, cta::Scheduler &scheduler, SchedulerDatabase &schedDB, cta::log::LogContext lc, const cta::xrd::Request* request);
-        void OnWriteDone(bool ok) override {
-            if (!ok) {
-                std::cout << "Unexpected failure in OnWriteDone" << std::endl;
-                Finish(Status(::grpc::StatusCode::UNKNOWN, "Unexpected Failure in OnWriteDone"));
-            }
-            SendData();
-        }
-        void OnDone() override;
+        FailedRequestLsWriteReactor(cta::catalogue::Catalogue &catalogue, cta::Scheduler &scheduler, const std::string& instanceName, SchedulerDatabase &schedDB, cta::log::LogContext lc, const cta::xrd::Request* request);
+        void NextWrite() override;
     private:
-        bool m_isHeaderSent;
-        cta::xrd::StreamResponse m_response;
         std::unique_ptr<SchedulerDatabase::IArchiveJobQueueItor>  m_archiveQueueItorPtr;     //!< Archive Queue Iterator
         std::unique_ptr<SchedulerDatabase::IRetrieveJobQueueItor> m_retrieveQueueItorPtr;    //!< Retrieve Queue Iterator
         bool m_isSummary; //!< Show only summary of items in the failed queues
@@ -34,7 +25,6 @@ class FailedRequestLsWriteReactor : public ::grpc::ServerWriteReactor<cta::xrd::
         cta::log::LogContext m_lc;
 
         void SendHeader();
-        void SendData();
 
         bool isArchiveJobs() const {
             return m_archiveQueueItorPtr && !m_archiveQueueItorPtr->end();
@@ -46,13 +36,9 @@ class FailedRequestLsWriteReactor : public ::grpc::ServerWriteReactor<cta::xrd::
         void GetBuffSummary();
 };
 
-void FailedRequestLsWriteReactor::OnDone() {
-    delete this;
-}
-
 FailedRequestLsWriteReactor::FailedRequestLsWriteReactor(cta::catalogue::Catalogue &catalogue,
-    cta::Scheduler &scheduler, SchedulerDatabase &schedDB, cta::log::LogContext lc, const cta::xrd::Request* request)
-    : m_isHeaderSent(false),
+    cta::Scheduler &scheduler, const std::string& instanceName, SchedulerDatabase &schedDB, cta::log::LogContext lc, const cta::xrd::Request* request)
+    : CtaAdminServerWriteReactor(catalogue, scheduler, instanceName),
       m_isSummaryDone(false),
       m_scheduler(scheduler),
       m_lc(lc) {
@@ -105,9 +91,8 @@ void FailedRequestLsWriteReactor::SendHeader() {
     StartWrite(&m_response); // this will trigger the OnWriteDone method
 }
 
-void FailedRequestLsWriteReactor::SendData() {
+void FailedRequestLsWriteReactor::NextWrite() {
     m_response.Clear();
-    std::cout << "In SendData(), just entered" << std::endl;
     if (m_isSummary && !m_isSummaryDone) {
         GetBuffSummary();
         Finish(::grpc::Status::OK);

@@ -7,38 +7,22 @@
 
 #include <grpcpp/grpcpp.h>
 #include "catalogue/MediaTypeWithLogs.hpp"
+#include "CtaAdminServerWriteReactor.hpp"
 
 namespace cta::frontend::grpc {
 
-class MediaTypeLsWriteReactor : public ::grpc::ServerWriteReactor<cta::xrd::StreamResponse> {
+class MediaTypeLsWriteReactor : public CtaAdminServerWriteReactor {
     public:
-        MediaTypeLsWriteReactor(cta::catalogue::Catalogue &catalogue, cta::Scheduler &scheduler, const cta::xrd::Request* request);
-        void OnWriteDone(bool ok) override {
-            std::cout << "In MediaTypeLsWriteReactor, we are inside OnWriteDone" << std::endl;
-            if (!ok) {
-                std::cout << "Unexpected failure in OnWriteDone" << std::endl;
-                Finish(Status(::grpc::StatusCode::UNKNOWN, "Unexpected Failure in OnWriteDone"));
-            }
-            std::cout << "Calling NextWrite inside server's OnWriteDone" << std::endl;
-            NextWrite();
-        }
-        void OnDone() override;
-        void NextWrite();
+        MediaTypeLsWriteReactor(cta::catalogue::Catalogue &catalogue, cta::Scheduler &scheduler, const std::string& instanceName, const cta::xrd::Request* request);
+        void NextWrite() override;
     private:
         std::list<cta::catalogue::MediaTypeWithLogs> m_mediaTypeList; 
-        bool m_isHeaderSent; // or could be a static variable in the function NextWrite()
-        cta::xrd::StreamResponse m_response;
         std::list<cta::catalogue::MediaTypeWithLogs>::const_iterator next_mediatype;
 };
 
-void MediaTypeLsWriteReactor::OnDone() {
-    std::cout << "In MediaTypeLsWriteReactor::OnDone(), about to delete this object" << std::endl;
-    delete this;
-}
-
-MediaTypeLsWriteReactor::MediaTypeLsWriteReactor(cta::catalogue::Catalogue &catalogue, cta::Scheduler &scheduler, const cta::xrd::Request* request)
-    : m_mediaTypeList(catalogue.MediaType()->getMediaTypes()),
-      m_isHeaderSent(false) {
+MediaTypeLsWriteReactor::MediaTypeLsWriteReactor(cta::catalogue::Catalogue &catalogue, cta::Scheduler &scheduler, const std::string& instanceName, const cta::xrd::Request* request)
+    : CtaAdminServerWriteReactor(catalogue, scheduler, instanceName),
+      m_mediaTypeList(catalogue.MediaType()->getMediaTypes()) {
     using namespace cta::admin;
 
     std::cout << "In MediaTypeLsWriteReactor constructor, just entered!" << std::endl;

@@ -14,7 +14,7 @@ namespace cta::frontend::grpc {
 
 class TapeLsWriteReactor : public CtaAdminServerWriteReactor {
     public:
-        TapeLsWriteReactor(cta::catalogue::Catalogue &catalogue, cta::Scheduler &scheduler, std::string instanceName, const cta::xrd::Request* request);
+        TapeLsWriteReactor(cta::catalogue::Catalogue &catalogue, cta::Scheduler &scheduler, const std::string& instanceName, const cta::xrd::Request* request);
         void NextWrite() override;
     private:
         std::list<common::dataStructures::Tape> m_tapeList;
@@ -25,8 +25,8 @@ class TapeLsWriteReactor : public CtaAdminServerWriteReactor {
 
 // constructor does not make the first call to write, currently.
 // In the example's Lister case, the first call to write is made in the constructor
-TapeLsWriteReactor::TapeLsWriteReactor(cta::catalogue::Catalogue &catalogue, cta::Scheduler &scheduler, std::string instanceName, const cta::xrd::Request* request)
-  : CtaAdminServerWriteReactor(catalogue, scheduler, instanceName, request) {
+TapeLsWriteReactor::TapeLsWriteReactor(cta::catalogue::Catalogue &catalogue, cta::Scheduler &scheduler, const std::string& instanceName, const cta::xrd::Request* request)
+  : CtaAdminServerWriteReactor(catalogue, scheduler, instanceName) {
     // all this will go into a common method in a base class called
     // getTapesList or something
     using namespace cta::admin;

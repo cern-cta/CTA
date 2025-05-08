@@ -11,32 +11,20 @@
 #include "common/checksum/ChecksumBlobSerDeser.hpp"
 #include "common/dataStructures/FileRecycleLog.hpp"
 #include "../RequestMessage.hpp"
+#include "CtaAdminServerWriteReactor.hpp"
 
 namespace cta::frontend::grpc {
 
-class RecycleTapeFileLsWriteReactor : public ::grpc::ServerWriteReactor<cta::xrd::StreamResponse> {
+class RecycleTapeFileLsWriteReactor : public CtaAdminServerWriteReactor {
     public:
-        RecycleTapeFileLsWriteReactor(cta::catalogue::Catalogue &catalogue, cta::Scheduler &scheduler, const cta::xrd::Request* request);
-        void OnWriteDone(bool ok) override {
-            if (!ok) {
-                Finish(Status(::grpc::StatusCode::UNKNOWN, "Unexpected Failure in OnWriteDone"));
-            }
-            NextWrite();
-        }
-        void OnDone() override;
-        void NextWrite();
+        RecycleTapeFileLsWriteReactor(cta::catalogue::Catalogue &catalogue, cta::Scheduler &scheduler, const std::string& instanceName, const cta::xrd::Request* request);
+        void NextWrite() override;
     private:
         cta::catalogue::FileRecycleLogItor m_fileRecycleLogItor;
-        bool m_isHeaderSent; // or could be a static variable in the function NextWrite()
-        cta::xrd::StreamResponse m_response;
 };
 
-void RecycleTapeFileLsWriteReactor::OnDone() {
-    delete this;
-}
-
-RecycleTapeFileLsWriteReactor::RecycleTapeFileLsWriteReactor(cta::catalogue::Catalogue &catalogue, cta::Scheduler &scheduler, const cta::xrd::Request* request)
-    : m_isHeaderSent(false) {
+RecycleTapeFileLsWriteReactor::RecycleTapeFileLsWriteReactor(cta::catalogue::Catalogue &catalogue, cta::Scheduler &scheduler, const std::string& instanceName, const cta::xrd::Request* request)
+    : CtaAdminServerWriteReactor(catalogue, scheduler, instanceName) {
     using namespace cta::admin;
 
     bool has_any = false;

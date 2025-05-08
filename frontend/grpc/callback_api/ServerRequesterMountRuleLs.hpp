@@ -8,38 +8,22 @@
 #include <grpcpp/grpcpp.h>
 #include "common/dataStructures/LabelFormatSerDeser.hpp"
 #include "common/dataStructures/RequesterMountRule.hpp"
+#include "CtaAdminServerWriteReactor.hpp"
 
 namespace cta::frontend::grpc {
 
-class RequesterMountRuleLsWriteReactor : public ::grpc::ServerWriteReactor<cta::xrd::StreamResponse> {
+class RequesterMountRuleLsWriteReactor : public CtaAdminServerWriteReactor {
     public:
-        RequesterMountRuleLsWriteReactor(cta::catalogue::Catalogue &catalogue, cta::Scheduler &scheduler, const cta::xrd::Request* request);
-        void OnWriteDone(bool ok) override {
-            std::cout << "In RequesterMountRuleLsWriteReactor, we are inside OnWriteDone" << std::endl;
-            if (!ok) {
-                std::cout << "Unexpected failure in OnWriteDone" << std::endl;
-                Finish(Status(::grpc::StatusCode::UNKNOWN, "Unexpected Failure in OnWriteDone"));
-            }
-            std::cout << "Calling NextWrite inside server's OnWriteDone" << std::endl;
-            NextWrite();
-        }
-        void OnDone() override;
-        void NextWrite();
+        RequesterMountRuleLsWriteReactor(cta::catalogue::Catalogue &catalogue, cta::Scheduler &scheduler, const std::string& instanceName, const cta::xrd::Request* request);
+        void NextWrite() override;
     private:
-        std::list<cta::common::dataStructures::RequesterMountRule> m_requesterMountRuleList; 
-        bool m_isHeaderSent; // or could be a static variable in the function NextWrite()
-        cta::xrd::StreamResponse m_response;
+        std::list<cta::common::dataStructures::RequesterMountRule> m_requesterMountRuleList;
         std::list<cta::common::dataStructures::RequesterMountRule>::const_iterator next_rmr;
 };
 
-void RequesterMountRuleLsWriteReactor::OnDone() {
-    std::cout << "In RequesterMountRuleLsWriteReactor::OnDone(), about to delete this object" << std::endl;
-    delete this;
-}
-
-RequesterMountRuleLsWriteReactor::RequesterMountRuleLsWriteReactor(cta::catalogue::Catalogue &catalogue, cta::Scheduler &scheduler, const cta::xrd::Request* request)
-    : m_requesterMountRuleList(catalogue.RequesterMountRule()->getRequesterMountRules()),
-      m_isHeaderSent(false) {
+RequesterMountRuleLsWriteReactor::RequesterMountRuleLsWriteReactor(cta::catalogue::Catalogue &catalogue, cta::Scheduler &scheduler, const std::string& instanceName, const cta::xrd::Request* request)
+    : CtaAdminServerWriteReactor(catalogue, scheduler, instanceName),
+      m_requesterMountRuleList(catalogue.RequesterMountRule()->getRequesterMountRules()) {
     using namespace cta::admin;
 
     std::cout << "In RequesterMountRuleLsWriteReactor constructor, just entered!" << std::endl;

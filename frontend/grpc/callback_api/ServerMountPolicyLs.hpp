@@ -6,38 +6,22 @@
 #include "cta_frontend.grpc.pb.h"
 
 #include <grpcpp/grpcpp.h>
+#include "CtaAdminServerWriteReactor.hpp"
 
 namespace cta::frontend::grpc {
 
-class MountPolicyLsWriteReactor : public ::grpc::ServerWriteReactor<cta::xrd::StreamResponse> {
+class MountPolicyLsWriteReactor : public CtaAdminServerWriteReactor {
     public:
-        MountPolicyLsWriteReactor(cta::catalogue::Catalogue &catalogue, cta::Scheduler &scheduler, const cta::xrd::Request* request);
-        void OnWriteDone(bool ok) override {
-            std::cout << "In MountPolicyLsWriteReactor, we are inside OnWriteDone" << std::endl;
-            if (!ok) {
-                std::cout << "Unexpected failure in OnWriteDone" << std::endl;
-                Finish(Status(::grpc::StatusCode::UNKNOWN, "Unexpected Failure in OnWriteDone"));
-            }
-            std::cout << "Calling NextWrite inside server's OnWriteDone" << std::endl;
-            NextWrite();
-        }
-        void OnDone() override;
-        void NextWrite();
+        MountPolicyLsWriteReactor(cta::catalogue::Catalogue &catalogue, cta::Scheduler &scheduler, const std::string& instanceName, const cta::xrd::Request* request);
+        void NextWrite() override;
     private:
         std::list<cta::common::dataStructures::MountPolicy> m_mountPolicyList;
-        bool m_isHeaderSent; // or could be a static variable in the function NextWrite()
-        cta::xrd::StreamResponse m_response;
         std::list<cta::common::dataStructures::MountPolicy>::const_iterator next_mp;
 };
 
-void MountPolicyLsWriteReactor::OnDone() {
-    std::cout << "In MountPolicyLsWriteReactor::OnDone(), about to delete this object" << std::endl;
-    delete this;
-}
-
-MountPolicyLsWriteReactor::MountPolicyLsWriteReactor(cta::catalogue::Catalogue &catalogue, cta::Scheduler &scheduler, const cta::xrd::Request* request)
-    : m_mountPolicyList(catalogue.MountPolicy()->getMountPolicies()),
-      m_isHeaderSent(false) {
+MountPolicyLsWriteReactor::MountPolicyLsWriteReactor(cta::catalogue::Catalogue &catalogue, cta::Scheduler &scheduler, const std::string& instanceName, const cta::xrd::Request* request)
+    : CtaAdminServerWriteReactor(catalogue, scheduler, instanceName),
+      m_mountPolicyList(catalogue.MountPolicy()->getMountPolicies()) {
     using namespace cta::admin;
 
     std::cout << "In MountPolicyLsWriteReactor constructor, just entered!" << std::endl;

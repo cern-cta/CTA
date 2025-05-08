@@ -8,38 +8,22 @@
 #include <grpcpp/grpcpp.h>
 #include "../RequestMessage.hpp"
 #include "common/dataStructures/LabelFormatSerDeser.hpp"
+#include "CtaAdminServerWriteReactor.hpp"
 
 namespace cta::frontend::grpc {
 
-class VirtualOrganizationLsWriteReactor : public ::grpc::ServerWriteReactor<cta::xrd::StreamResponse> /* CtaAdminServerWriteReactor */ {
+class VirtualOrganizationLsWriteReactor : public CtaAdminServerWriteReactor {
     public:
-        VirtualOrganizationLsWriteReactor(cta::catalogue::Catalogue &catalogue, cta::Scheduler &scheduler, const cta::xrd::Request* request);
-        void OnWriteDone(bool ok) override {
-            std::cout << "In VirtualOrganizationLsWriteReactor, we are inside OnWriteDone" << std::endl;
-            if (!ok) {
-                std::cout << "Unexpected failure in OnWriteDone" << std::endl;
-                Finish(Status(::grpc::StatusCode::UNKNOWN, "Unexpected Failure in OnWriteDone"));
-            }
-            std::cout << "Calling NextWrite inside server's OnWriteDone" << std::endl;
-            NextWrite();
-        }
-        void OnDone() override;
-        void NextWrite();
+        VirtualOrganizationLsWriteReactor(cta::catalogue::Catalogue &catalogue, cta::Scheduler &scheduler, const std::string& instanceName, const cta::xrd::Request* request);
+        void NextWrite() override;
     private:
         std::list<cta::common::dataStructures::VirtualOrganization> m_virtualOrganizationList; 
-        bool m_isHeaderSent; // or could be a static variable in the function NextWrite()
-        cta::xrd::StreamResponse m_response;
         std::list<cta::common::dataStructures::VirtualOrganization>::const_iterator next_vo;
 };
 
-void VirtualOrganizationLsWriteReactor::OnDone() {
-    std::cout << "In VirtualOrganizationLsWriteReactor::OnDone(), about to delete this object" << std::endl;
-    delete this;
-}
-
-VirtualOrganizationLsWriteReactor::VirtualOrganizationLsWriteReactor(cta::catalogue::Catalogue &catalogue, cta::Scheduler &scheduler, const cta::xrd::Request* request)
-    : m_virtualOrganizationList(catalogue.VO()->getVirtualOrganizations()),
-      m_isHeaderSent(false) {
+VirtualOrganizationLsWriteReactor::VirtualOrganizationLsWriteReactor(cta::catalogue::Catalogue &catalogue, cta::Scheduler &scheduler, const std::string& instanceName, const cta::xrd::Request* request)
+    : CtaAdminServerWriteReactor(catalogue, scheduler, instanceName),
+      m_virtualOrganizationList(catalogue.VO()->getVirtualOrganizations()) {
     using namespace cta::admin;
 
     std::cout << "In VirtualOrganizationLsWriteReactor constructor, just entered!" << std::endl;
