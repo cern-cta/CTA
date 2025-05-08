@@ -31,6 +31,7 @@ usage() {
   echo "  -l, --load-into-minikube:           Takes the image from the podman registry and ensures that it is present in the image registry used by minikube."
   echo "  -c, --container-runtime <runtime>:  The container runtime to use for the build container. Defaults to podman."
   echo "      --dockerfile <path>:            Path to the Dockerfile (default: 'continuousintegration/docker/el9/Dockerfile'). Should be relative to the repository root."
+  echo "      --use-internal-repos:           If enabled, will use the internal CERN repos to download packages. Note that this only works if you have access to there repos."
   exit 1
 }
 
@@ -44,10 +45,12 @@ buildImage() {
   local rpm_default_src="image_rpms"
   local dockerfile="continuousintegration/docker/el9/Dockerfile"
   local load_into_minikube=false
+  local use_internal_repos=false
 
   while [[ "$#" -gt 0 ]]; do
     case "$1" in
     -h | --help) usage ;;
+    --use-internal-repos) use_internal_repos=true ;;
     -c | --container-runtime)
       if [[ $# -gt 1 ]]; then
         if [ "$2" != "docker" ] && [ "$2" != "podman" ]; then
@@ -129,12 +132,17 @@ buildImage() {
   mkdir -p ${rpm_default_src}
   cp -r ${rpm_src} ${rpm_default_src}
 
+  build_args=""
+  if [[ ${use_internal_repos} = true ]]; then
+    build_args+=" --build-arg USE_INTERNAL_REPOS=1"
+  fi
+
   echo "Building image ${image_name}:${image_tag}"
   (
     set -x
     ${container_runtime} build . -f ${dockerfile} \
       -t ${image_name}:${image_tag} \
-      --network host
+      --network host ${build_args}
   )
 
   if [ "$load_into_minikube" == "true" ]; then
