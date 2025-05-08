@@ -100,10 +100,12 @@ done
 rm -f reqid_*
 
 
-REMAINING_REQUESTS=$(admin_cta --json sq | jq -r 'map(select (.mountType == "RETRIEVE") | .queuedFiles | tonumber) | add')
+REMAINING_REQUESTS=$(admin_cta --json sq | jq -r 'map(select (.mountType == "RETRIEVE") | .queuedFiles | tonumber) | add // 0')
 echo "${REMAINING_REQUESTS} requests remaining."
 
-if [[ ${REMAINING_REQUESTS} -ne $((NB_FILES * NB_DIRS)) ]]; then
+if [[ ${REMAINING_REQUESTS} -eq 0 ]]; then
+  echo "INFO: Cancelled all pending requests."
+elif [[ ${REMAINING_REQUESTS} -ne $((NB_FILES * NB_DIRS)) ]]; then
   echo "ERROR: Not all files were queued for abort prepare test."
   exit 1
 fi
@@ -131,7 +133,7 @@ while [[ ${REMAINING_REQUESTS} -gt 0 ]]; do
     break
   fi
 
-  REMAINING_REQUESTS=$(admin_cta --json sq | jq -r 'map(select (.mountType == "RETRIEVE") | .queuedFiles | tonumber) | add');
+  REMAINING_REQUESTS=$(admin_cta --json sq | jq -r 'map(select (.mountType == "RETRIEVE") | .queuedFiles | tonumber) | add // 0');
   # Prevent the result from being empty
   if [ -z "$REMAINING_REQUEST" ]; then REMAINING_REQUESTS='0'; fi
   echo "${REMAINING_REQUESTS} requests remaining."
