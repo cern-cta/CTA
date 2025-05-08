@@ -1,5 +1,5 @@
 # @project      The CERN Tape Archive (CTA)
-# @copyright    Copyright © 2024 CERN
+# @copyright    Copyright © 2024-2025 CERN
 # @license      This program is free software, distributed under the terms of the GNU General Public
 #               Licence version 3 (GPL Version 3), copied verbatim in the file "COPYING". You can
 #               redistribute it and/or modify it under the terms of the GPL Version 3, or (at your
@@ -18,16 +18,11 @@
 # As a result, any installs on this image will also pull from public yum repos instead of private ones
 FROM gitlab-registry.cern.ch/linuxsupport/alma9-base:latest
 
-ENV BASEDIR="continuousintegration/docker/el9"
-
 # Add orchestration run scripts locally
-COPY ${BASEDIR}/../opt /opt
-COPY ${BASEDIR}/etc/yum.repos.d/cta-public-testing.repo /etc/yum.repos.d/cta-public-testing.repo
+COPY continuousintegration/docker/opt /opt
 
-# Variable to specify the tag to be used for CTA RPMs from the cta-ci-repo
-# Format: X.YY.ZZ.A-B
-ARG PUBLIC_REPO_VER
-ARG YUM_VERSIONLOCK_FILE=continuousintegration/docker/el9/etc/yum/pluginconf.d/versionlock.list
+# Ensure we have access to our own internal repos and the public CTA RPMs
+COPY continuousintegration/docker/el9/etc/yum.repos.d/ /etc/yum.repos.d/
 
 # Install necessary packages
 RUN dnf install -y \
@@ -43,6 +38,10 @@ RUN dnf install -y \
 
 # We add the cta user so that we can consistently reference it in the Helm chart when changing keytab ownership
 RUN useradd -m -u 1000 -g tape cta
+
+# Variable to specify the tag to be used for CTA RPMs from the cta-ci-repo
+# Format: X.YY.ZZ.A-B
+ARG PUBLIC_REPO_VER
 
 # Install cta-release and clean up
 RUN dnf config-manager --enable epel --setopt="epel.priority=4" && \

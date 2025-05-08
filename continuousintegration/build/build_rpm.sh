@@ -256,10 +256,7 @@ build_rpm() {
       echo "Installing prerequisites..."
       # Alma9
       echo "Found Alma 9 install..."
-      yum install git
-      cp -f continuousintegration/docker/el9/etc/yum.repos.d/*.repo /etc/yum.repos.d/
-      ./continuousintegration/utils/generate_versionlock.py --platform el9 >/etc/yum/pluginconf.d/versionlock.list
-      yum -y install epel-release almalinux-release-devel python3-dnf-plugin-versionlock
+      yum -y install epel-release almalinux-release-devel python3-dnf-plugin-versionlock git
       yum -y install gcc gcc-c++ cmake3 rpm-build yum-utils pandoc which
       case "${build_generator}" in
         "Unix Makefiles")
@@ -276,10 +273,12 @@ build_rpm() {
       if [[ ${enable_ccache} = true ]]; then
         yum -y install ccache
       fi
+      cp -f continuousintegration/docker/el9/etc/yum.repos.d/*.repo /etc/yum.repos.d/
+      ./continuousintegration/utils/generate_versionlock.py --platform el9 >/etc/yum/pluginconf.d/versionlock.list
       yum-builddep --nogpgcheck -y "${srpm_dir}"/*
     elif [ "${install_srpms}" = true ]; then
       cp -f continuousintegration/docker/el9/etc/yum.repos.d/*.repo /etc/yum.repos.d/
-      .continuousintegration/utils/generate_versionlock.py --platform el9 >/etc/yum/pluginconf.d/versionlock.list
+      ./continuousintegration/utils/generate_versionlock.py --platform el9 >/etc/yum/pluginconf.d/versionlock.list
       yum clean all
       yum-builddep --nogpgcheck -y "${srpm_dir}"/*
     fi

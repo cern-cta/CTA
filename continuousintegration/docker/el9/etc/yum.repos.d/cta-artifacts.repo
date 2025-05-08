@@ -1,0 +1,7 @@
+# Repo for local CTA RPMs. Must be explicitly enabled
+[cta-artifacts]
+name=CTA Local Artifact RPMs
+baseurl=file:///opt/repo
+priority=2
+gpgcheck=0
+enabled=0

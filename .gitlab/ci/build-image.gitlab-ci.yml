@@ -22,6 +22,8 @@
 build-ctageneric-from-artifacts:
   extends:
     - .build-ctageneric
+  needs:
+    - job: build-cta-rpm
   rules:
     - if: $PIPELINE_TYPE == "EOS_REGR_AGAINST_CTA_TAG" || $PIPELINE_TYPE == "CTAGENERIC_IMAGE"
       when: never
