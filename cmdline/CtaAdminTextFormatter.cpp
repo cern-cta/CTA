@@ -982,6 +982,7 @@ void TextFormatter::printDiskInstanceSpaceLsHeader() {
 void TextFormatter::print(const DiskInstanceSpaceLsItem& disls_item) {
   push_back(disls_item.name(),
             disls_item.disk_instance(),
+            disls_item.free_space_query_url(),
             disls_item.refresh_interval(),
             disls_item.last_refresh_time(),
             disls_item.free_space(),
