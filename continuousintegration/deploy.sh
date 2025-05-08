@@ -135,8 +135,8 @@ deploy() {
   done
 
   # Navigate to root directory
-  cd "$(dirname "$0")"
-  cd ../
+  local project_root=$(git rev-parse --show-toplevel)
+  cd "$project_root"
 
   print_header "DELETING OLD CTA INSTANCES"
   # By default we discard the logs from deletion as this is not very useful during development

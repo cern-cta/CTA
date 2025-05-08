@@ -12,6 +12,13 @@ stages:
 
 variables:
 
+
+  PLATFORM:
+    description: "Specifies the platform to build, test and (possibly) release on"
+    value: "el9"
+    options:
+      - "el9"
+
   # Building Configuration
   BUILD_GENERATOR:
     description: "Specifies the build generated for building the CTA RPMs"
