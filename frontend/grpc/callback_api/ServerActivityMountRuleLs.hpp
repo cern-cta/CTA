@@ -7,6 +7,7 @@
 #include <grpcpp/grpcpp.h>
 #include "common/dataStructures/RequesterActivityMountRule.hpp"
 #include "CtaAdminServerWriteReactor.hpp"
+#include "cmdline/admin_common/DataItemMessageFill.hpp"
 
 namespace cta::frontend::grpc {
 
@@ -49,17 +50,7 @@ void ActivityMountRuleLsWriteReactor::NextWrite() {
             cta::xrd::Data* data = new cta::xrd::Data();
             cta::admin::ActivityMountRuleLsItem *amr_item = data->mutable_amrls_item();
             
-            amr_item->set_disk_instance(amr.diskInstance);
-            amr_item->set_activity_mount_rule(amr.name);
-            amr_item->set_mount_policy(amr.mountPolicy);
-            amr_item->set_activity_regex(amr.activityRegex);
-            amr_item->mutable_creation_log()->set_username(amr.creationLog.username);
-            amr_item->mutable_creation_log()->set_host(amr.creationLog.host);
-            amr_item->mutable_creation_log()->set_time(amr.creationLog.time);
-            amr_item->mutable_last_modification_log()->set_username(amr.lastModificationLog.username);
-            amr_item->mutable_last_modification_log()->set_host(amr.lastModificationLog.host);
-            amr_item->mutable_last_modification_log()->set_time(amr.lastModificationLog.time);
-            amr_item->set_comment(amr.comment);
+            fillActivityMountRuleItem(amr, amr_item, m_instanceName);
 
             m_response.set_allocated_data(data);
             StartWrite(&m_response);

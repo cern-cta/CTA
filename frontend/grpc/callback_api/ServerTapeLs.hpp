@@ -9,7 +9,7 @@
 #include "../RequestMessage.hpp"
 #include "common/dataStructures/LabelFormatSerDeser.hpp"
 #include "CtaAdminServerWriteReactor.hpp"
-#include "cmdline/admin_common/TapeItemMessageFill.hpp"
+#include "cmdline/admin_common/DataItemMessageFill.hpp"
 
 namespace cta::frontend::grpc {
 

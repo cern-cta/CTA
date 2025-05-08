@@ -9,6 +9,7 @@
 #include "common/dataStructures/LabelFormatSerDeser.hpp"
 #include "common/dataStructures/RequesterGroupMountRule.hpp"
 #include "CtaAdminServerWriteReactor.hpp"
+#include "cmdline/admin_common/DataItemMessageFill.hpp"
 
 namespace cta::frontend::grpc {
 
@@ -55,16 +56,7 @@ void GroupMountRuleLsWriteReactor::NextWrite() {
             cta::xrd::Data* data = new cta::xrd::Data();
             cta::admin::GroupMountRuleLsItem *gmr_item = data->mutable_gmrls_item();
             
-            gmr_item->set_disk_instance(gmr.diskInstance);
-            gmr_item->set_group_mount_rule(gmr.name);
-            gmr_item->set_mount_policy(gmr.mountPolicy);
-            gmr_item->mutable_creation_log()->set_username(gmr.creationLog.username);
-            gmr_item->mutable_creation_log()->set_host(gmr.creationLog.host);
-            gmr_item->mutable_creation_log()->set_time(gmr.creationLog.time);
-            gmr_item->mutable_last_modification_log()->set_username(gmr.lastModificationLog.username);
-            gmr_item->mutable_last_modification_log()->set_host(gmr.lastModificationLog.host);
-            gmr_item->mutable_last_modification_log()->set_time(gmr.lastModificationLog.time);
-            gmr_item->set_comment(gmr.comment);
+            fillGroupMountRuleItem(gmr, gmr_item, m_instanceName);
 
             std::cout << "Calling StartWrite on the server, with some data this time" << std::endl;
             m_response.set_allocated_data(data);

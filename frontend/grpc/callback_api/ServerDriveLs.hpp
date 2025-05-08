@@ -10,6 +10,7 @@
 #include "common/dataStructures/MountTypeSerDeser.hpp"
 #include "../RequestMessage.hpp"
 #include "CtaAdminServerWriteReactor.hpp"
+#include "cmdline/admin_common/DataItemMessageFill.hpp"
 
 #pragma once
 
@@ -132,68 +133,7 @@ void DriveLsWriteReactor::NextWrite() {
             cta::xrd::Data* data = new cta::xrd::Data();
             cta::admin::DriveLsItem *dr_item = data->mutable_drls_item();
             
-            dr_item->set_cta_version(dr.ctaVersion ? dr.ctaVersion.value() : "");
-            dr_item->set_logical_library(dr.logicalLibrary);
-            dr_item->set_drive_name(dr.driveName);
-            dr_item->set_scheduler_backend_name(driveSchedulerBackendName);
-            dr_item->set_host(dr.host);
-            dr_item->set_logical_library_disabled(dr.logicalLibraryDisabled ? dr.logicalLibraryDisabled.value() : false);
-            dr_item->set_desired_drive_state(dr.desiredUp ? cta::admin::DriveLsItem::UP : cta::admin::DriveLsItem::DOWN);
-            dr_item->set_mount_type(cta::admin::MountTypeToProtobuf(dr.mountType));
-            dr_item->set_drive_status(cta::admin::DriveStatusToProtobuf(dr.driveStatus));
-            dr_item->set_vid(dr.currentVid ? dr.currentVid.value() : "");
-            dr_item->set_tapepool(dr.currentTapePool ? dr.currentTapePool.value() : "");
-            dr_item->set_vo(dr.currentVo ? dr.currentVo.value() : "");
-            dr_item->set_files_transferred_in_session(dr.filesTransferedInSession ? dr.filesTransferedInSession.value() : 0);
-            dr_item->set_bytes_transferred_in_session(dr.bytesTransferedInSession ? dr.bytesTransferedInSession.value() : 0);
-            dr_item->set_session_id(dr.sessionId ? dr.sessionId.value() : 0);
-            const auto lastUpdateTime = dr.lastModificationLog ? dr.lastModificationLog.value().time : time(nullptr);
-            dr_item->set_time_since_last_update(time(nullptr) - lastUpdateTime);
-            dr_item->set_current_priority(dr.currentPriority ? dr.currentPriority.value() : 0);
-            dr_item->set_current_activity(dr.currentActivity ? dr.currentActivity.value() : "");
-            dr_item->set_dev_file_name(dr.devFileName ? dr.devFileName.value() : "");
-            dr_item->set_raw_library_slot(dr.rawLibrarySlot ? dr.rawLibrarySlot.value() : "");
-            dr_item->set_comment(dr.userComment ? dr.userComment.value() : "");
-            dr_item->set_reason(dr.reasonUpDown ? dr.reasonUpDown.value() : "");
-            dr_item->set_physical_library(dr.physicalLibraryName ? dr.physicalLibraryName.value() : "");
-            dr_item->set_physical_library_disabled(dr.physicalLibraryDisabled ? dr.physicalLibraryDisabled.value() : false);
-            if (dr.mountType == cta::common::dataStructures::MountType::Retrieve) {
-            dr_item->set_disk_system_name(dr.diskSystemName ? dr.diskSystemName.value() : "");
-            dr_item->set_reserved_bytes(dr.reservedBytes ? dr.reservedBytes.value() : 0);
-            }
-            dr_item->set_session_elapsed_time(dr.sessionElapsedTime ? dr.sessionElapsedTime.value() : 0);
-
-            auto driveConfig = dr_item->mutable_drive_config();
-
-            for (const auto& config : driveConfigs) {
-            auto driveConfigItemProto = driveConfig->Add();
-            driveConfigItemProto->set_key(config.keyName);
-            driveConfigItemProto->set_category(config.category);
-            driveConfigItemProto->set_value(config.value);
-            driveConfigItemProto->set_source(config.source);
-            }
-
-            // set the time spent in the current state
-            uint64_t drive_time = time(nullptr);
-
-            switch (dr.driveStatus) {
-            using cta::common::dataStructures::DriveStatus;
-                // clang-format off
-            case DriveStatus::Probing:           drive_time -= dr.probeStartTime.value();    break;
-            case DriveStatus::Up:                drive_time -= dr.downOrUpStartTime.value(); break;
-            case DriveStatus::Down:              drive_time -= dr.downOrUpStartTime.value(); break;
-            case DriveStatus::Starting:          drive_time -= dr.startStartTime.value();    break;
-            case DriveStatus::Mounting:          drive_time -= dr.mountStartTime.value();    break;
-            case DriveStatus::Transferring:      drive_time -= dr.transferStartTime.value(); break;
-            case DriveStatus::CleaningUp:        drive_time -= dr.cleanupStartTime.value();  break;
-            case DriveStatus::Unloading:         drive_time -= dr.unloadStartTime.value();   break;
-            case DriveStatus::Unmounting:        drive_time -= dr.unmountStartTime.value();  break;
-            case DriveStatus::DrainingToDisk:    drive_time -= dr.drainingStartTime.value(); break;
-            case DriveStatus::Shutdown:          drive_time -= dr.shutdownTime.value();      break;
-            case DriveStatus::Unknown:                                                       break;
-                // clang-format on
-            }
-            dr_item->set_drive_status_since(drive_time);
+            fillDriveItem(dr, dr_item, m_instanceName, driveSchedulerBackendName, driveConfigs);
 
             std::cout << "Calling StartWrite on the server, with some data this time" << std::endl;
             m_response.set_allocated_data(data);

@@ -20,6 +20,7 @@
 #include <list>
 
 #include "xroot_plugins/XrdCtaStream.hpp"
+#include "cmdline/admin_common/DataItemMessageFill.hpp"
 
 namespace cta::xrd {
 
@@ -84,22 +85,7 @@ int LogicalLibraryLsStream::fillBuffer(XrdSsiPb::OStreamBuffer<Data> *streambuf)
       continue;
     }
 
-    ll_item->set_name(ll.name);
-    ll_item->set_is_disabled(ll.isDisabled);
-    if(ll.physicalLibraryName) {
-      ll_item->set_physical_library(ll.physicalLibraryName.value());
-    }
-    if (ll.disabledReason) {
-      ll_item->set_disabled_reason(ll.disabledReason.value());
-    }
-    ll_item->mutable_creation_log()->set_username(ll.creationLog.username);
-    ll_item->mutable_creation_log()->set_host(ll.creationLog.host);
-    ll_item->mutable_creation_log()->set_time(ll.creationLog.time);
-    ll_item->mutable_last_modification_log()->set_username(ll.lastModificationLog.username);
-    ll_item->mutable_last_modification_log()->set_host(ll.lastModificationLog.host);
-    ll_item->mutable_last_modification_log()->set_time(ll.lastModificationLog.time);
-    ll_item->set_comment(ll.comment);
-    ll_item->set_instance_name(m_instanceName);
+    fillLogicalLibraryItem(ll, ll_item, m_instanceName);
 
     is_buffer_full = streambuf->Push(record);
   }

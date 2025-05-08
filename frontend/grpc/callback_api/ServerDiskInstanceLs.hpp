@@ -8,6 +8,7 @@
 #include "common/dataStructures/LabelFormatSerDeser.hpp"
 #include "common/dataStructures/DiskInstance.hpp"
 #include "CtaAdminServerWriteReactor.hpp"
+#include "cmdline/admin_common/DataItemMessageFill.hpp"
 
 namespace cta::frontend::grpc {
 
@@ -55,14 +56,7 @@ void DiskInstanceLsWriteReactor::NextWrite() {
             cta::xrd::Data* data = new cta::xrd::Data();
             cta::admin::DiskInstanceLsItem *di_item = data->mutable_dils_item();
             
-            di_item->set_name(di.name);
-            di_item->mutable_creation_log()->set_username(di.creationLog.username);
-            di_item->mutable_creation_log()->set_host(di.creationLog.host);
-            di_item->mutable_creation_log()->set_time(di.creationLog.time);
-            di_item->mutable_last_modification_log()->set_username(di.lastModificationLog.username);
-            di_item->mutable_last_modification_log()->set_host(di.lastModificationLog.host);
-            di_item->mutable_last_modification_log()->set_time(di.lastModificationLog.time);
-            di_item->set_comment(di.comment);
+            fillDiskInstanceItem(di, di_item, m_instanceName);
 
             std::cout << "Calling StartWrite on the server, with some data this time" << std::endl;
             m_response.set_allocated_data(data);

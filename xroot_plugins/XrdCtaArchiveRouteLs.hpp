@@ -19,6 +19,7 @@
 
 #include <xroot_plugins/XrdCtaStream.hpp>
 #include <common/dataStructures/ArchiveRouteTypeSerDeser.hpp>
+#include "cmdline/admin_common/DataItemMessageFill.hpp"
 
 namespace cta::xrd {
 
@@ -73,18 +74,7 @@ int ArchiveRouteLsStream::fillBuffer(XrdSsiPb::OStreamBuffer<Data> *streambuf) {
     auto &ar      = m_archiveRouteList.front();
     auto  ar_item = record.mutable_arls_item();
 
-    ar_item->set_storage_class(ar.storageClassName);
-    ar_item->set_copy_number(ar.copyNb);
-    ar_item->set_archive_route_type(cta::admin::ArchiveRouteTypeFormatToProtobuf(ar.type));
-    ar_item->set_tapepool(ar.tapePoolName);
-    ar_item->mutable_creation_log()->set_username(ar.creationLog.username);
-    ar_item->mutable_creation_log()->set_host(ar.creationLog.host);
-    ar_item->mutable_creation_log()->set_time(ar.creationLog.time);
-    ar_item->mutable_last_modification_log()->set_username(ar.lastModificationLog.username);
-    ar_item->mutable_last_modification_log()->set_host(ar.lastModificationLog.host);
-    ar_item->mutable_last_modification_log()->set_time(ar.lastModificationLog.time);
-    ar_item->set_comment(ar.comment);
-    ar_item->set_instance_name(m_instanceName);
+    fillArchiveRouteItem(ar, ar_item, m_instanceName);
 
     is_buffer_full = streambuf->Push(record);
   }

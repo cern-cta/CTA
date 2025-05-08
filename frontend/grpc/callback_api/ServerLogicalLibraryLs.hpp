@@ -7,6 +7,7 @@
 #include "../RequestMessage.hpp"
 #include "common/dataStructures/LogicalLibrary.hpp"
 #include "CtaAdminServerWriteReactor.hpp"
+#include "cmdline/admin_common/DataItemMessageFill.hpp"
 
 namespace cta::frontend::grpc {
 
@@ -55,22 +56,8 @@ void LogicalLibraryLsWriteReactor::NextWrite() {
             if (m_disabled && m_disabled.value() != ll.isDisabled) {
                 continue;
             }
-        
-            ll_item->set_name(ll.name);
-            ll_item->set_is_disabled(ll.isDisabled);
-            if(ll.physicalLibraryName) {
-                ll_item->set_physical_library(ll.physicalLibraryName.value());
-            }
-            if (ll.disabledReason) {
-                ll_item->set_disabled_reason(ll.disabledReason.value());
-            }
-            ll_item->mutable_creation_log()->set_username(ll.creationLog.username);
-            ll_item->mutable_creation_log()->set_host(ll.creationLog.host);
-            ll_item->mutable_creation_log()->set_time(ll.creationLog.time);
-            ll_item->mutable_last_modification_log()->set_username(ll.lastModificationLog.username);
-            ll_item->mutable_last_modification_log()->set_host(ll.lastModificationLog.host);
-            ll_item->mutable_last_modification_log()->set_time(ll.lastModificationLog.time);
-            ll_item->set_comment(ll.comment);
+
+            fillLogicalLibraryItem(ll, ll_item, m_instanceName);
 
             m_response.set_allocated_data(data);
             StartWrite(&m_response);

@@ -18,7 +18,7 @@
 #pragma once
 
 #include "xroot_plugins/XrdCtaStream.hpp"
-#include "cmdline/admin_common/SqItemMessageFill.hpp"
+#include "cmdline/admin_common/DataItemMessageFill.hpp"
 
 namespace cta::xrd {
 
