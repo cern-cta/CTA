@@ -738,6 +738,20 @@ uint64_t RetrieveJobQueueRow::getNextRetrieveRequestID(rdbms::Conn& conn) {
   }
 }
 
+uint64_t RetrieveJobQueueRow::cancelRetrieveJobsForTapeVID(Transaction&  txn, std::string vid) {
+  // Delete from RETRIEVE_PENDING_QUEUE
+  std::string sqlActive = R"SQL(
+    DELETE FROM RETRIEVE_PENDING_QUEUE
+    WHERE
+      VID = :VID
+  )SQL";
+  auto stmt = txn.getConn().createStmt(sqlActive);
+  stmt.bindString(":VID", vid);
+  stmt.executeNonQuery();
+
+  return stmt.getNbAffectedRows();
+}
+
 uint64_t RetrieveJobQueueRow::cancelRetrieveJob(Transaction& txn, uint64_t archiveFileID) {
   /* As of now, there is no way to remove job from the in-memory
    * (task) queue of the Mount session (disk/tape) processes

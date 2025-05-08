@@ -519,7 +519,18 @@ public:
   *
   * @return  The number of affected jobs
   */
-  static uint64_t cancelRetrieveJob(Transaction& txn, uint64_t archiveFileID) ;
+  static uint64_t cancelRetrieveJob(Transaction& txn, uint64_t archiveFileID);
+
+  /**
+  * When Tape is BROKEN and queue shall be cleaned up,
+  * the following method ensures removal from the pending queue
+  *
+  * @param txn           Transaction handling the connection to the backend database
+  * @param vid           The Tape VID for which all jobs shall be cancelled
+  *
+  * @return  The number of affected jobs
+  */
+  static uint64_t cancelRetrieveJobsForTapeVID(Transaction&  txn, std::string vid);
 
   /**
     * Select any jobs with specified status(es) from the report,
