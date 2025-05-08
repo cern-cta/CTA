@@ -260,10 +260,10 @@ build_rpm() {
       yum -y install gcc gcc-c++ cmake3 rpm-build yum-utils pandoc which
       case "${build_generator}" in
         "Unix Makefiles")
-          yum install -y make
+          yum -y install make
           ;;
         "Ninja")
-          yum install -y ninja-build
+          yum -y install ninja-build
           ;;
         *)
           echo "Failure: Unsupported build generator for alma9: ${build_generator}"
