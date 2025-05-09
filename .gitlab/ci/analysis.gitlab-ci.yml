@@ -144,3 +144,20 @@ catalogue-schema-version-check:
   image: $IMAGE_ANALYSIS
   script:
     - ./continuousintegration/checks/check_catalogue_schema_version.sh ${CATALOGUE_SCHEMA_CHECK_PARAMS} .
+
+pipeline-variable-check:
+  stage: validation
+  variables:
+    GIT_DEPTH: 0
+  rules: # To be removed when cta#962 is merged into main
+    - if: $PIPELINE_TYPE != "COMMIT"
+  image: $IMAGE_ANALYSIS
+  script:
+    - python3 ./continuousintegration/checks/check_ci_input_variables.py
+
+validate-project-json:
+  stage: validation
+  image: $IMAGE_ANALYSIS
+  script:
+    - python3 -m pip install -y jsonschema
+    - python3 ./continuousintegration/utils/project-json/validate_project_json.py
