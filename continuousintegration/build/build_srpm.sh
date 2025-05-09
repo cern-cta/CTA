@@ -132,7 +132,7 @@ build_srpm() {
     --cmake-build-type)
       if [[ $# -gt 1 ]]; then
         if [ "$2" != "Release" ] && [ "$2" != "Debug" ] && [ "$2" != "RelWithDebInfo" ] && [ "$2" != "MinSizeRel" ]; then
-          echo "--cmake-build-type must be one of [Release, Debug, RelWithDebInfo, or MinSizeRel]."
+          echo "--cmake-build-type is \"$2\" but must be one of [Release, Debug, RelWithDebInfo, or MinSizeRel]."
           exit 1
         fi
         cmake_build_type="$2"
@@ -202,22 +202,9 @@ build_srpm() {
   if [ "$(grep -c 'AlmaLinux release 9' /etc/redhat-release)" -eq 1 ]; then
     # Alma9
     if [ "${install}" = true ]; then
-      echo "Installing prerequisites..."
-      echo "Found Alma 9 install..."
+      echo "Installing prerequisites for Alma 9..."
       yum install -y epel-release almalinux-release-devel
-      yum install -y gcc gcc-c++ cmake3 rpm-build yum-utils
-      case "${build_generator}" in
-        "Unix Makefiles")
-          yum install -y make
-          ;;
-        "Ninja")
-          yum install -y ninja-build
-          ;;
-        *)
-          echo "Failure: Unsupported build generator for alma9: ${build_generator}"
-          exit 1
-          ;;
-      esac
+      yum install -y gcc gcc-c++ cmake3 rpm-build yum-utils make ninja-build
     fi
   else
     echo "Failure: Unsupported distribution. Must be one of: [alma9]"

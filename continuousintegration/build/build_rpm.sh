@@ -174,7 +174,7 @@ build_rpm() {
     --cmake-build-type)
       if [[ $# -gt 1 ]]; then
         if [ "$2" != "Release" ] && [ "$2" != "Debug" ] && [ "$2" != "RelWithDebInfo" ] && [ "$2" != "MinSizeRel" ]; then
-          echo "--cmake-build-type must be one of [Release, Debug, RelWithDebInfo, or MinSizeRel]."
+          echo "--cmake-build-type is \"$2\" but must be one of [Release, Debug, RelWithDebInfo, or MinSizeRel]."
           exit 1
         fi
         cmake_build_type="$2"
@@ -253,26 +253,9 @@ build_rpm() {
   if [ "$(grep -c 'AlmaLinux release 9' /etc/redhat-release)" -eq 1 ]; then
     # Setup
     if [ "${install}" = true ]; then
-      echo "Installing prerequisites..."
-      # Alma9
-      echo "Found Alma 9 install..."
+      echo "Installing prerequisites for Alma 9..."
       yum -y install epel-release almalinux-release-devel python3-dnf-plugin-versionlock git
-      yum -y install gcc gcc-c++ rpm-build yum-utils
-      case "${build_generator}" in
-        "Unix Makefiles")
-          yum -y install make
-          ;;
-        "Ninja")
-          yum -y install ninja-build
-          ;;
-        *)
-          echo "Failure: Unsupported build generator for alma9: ${build_generator}"
-          exit 1
-          ;;
-      esac
-      if [[ ${enable_ccache} = true ]]; then
-        yum -y install ccache
-      fi
+      yum -y install gcc gcc-c++ rpm-build yum-utils make ninja-build ccache
       ./continuousintegration/utils/project-json/generate_versionlock.py --platform el9 >/etc/yum/pluginconf.d/versionlock.list
       cp -f continuousintegration/docker/el9/etc/yum.repos.d/*.repo /etc/yum.repos.d/
       yum-builddep --nogpgcheck -y "${srpm_dir}"/*

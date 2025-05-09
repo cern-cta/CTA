@@ -32,7 +32,7 @@ usage() {
   echo "  -h, --help:                           Shows help output."
   echo "  -r, --reset:                          Shut down the build container and start a new one to ensure a fresh build. Also cleans the build directories."
   echo "  -c, --container-runtime <runtime>     The container runtime to use for the build container. Defaults to podman."
-  echo "  -b, --build-image <image>             Base image to use for the build container. Defaults to the latest alma9-base image."
+  echo "  -b, --build-image <image>             Base image to use for the build container. Defaults to the image specified in project.json."
   echo "      --build-generator <generator>:    Specifies the build generator for cmake. Supported: [\"Unix Makefiles\", \"Ninja\"]."
   echo "      --clean-build-dir:                Empties the RPM build directory (build_rpm/ by default), ensuring a fresh build from scratch."
   echo "      --clean-build-dirs:               Empties both the SRPM and RPM build directories (build_srpm/ and build_rpm/ by default), ensuring a fresh build from scratch."
@@ -63,6 +63,17 @@ usage() {
 
 build_deploy() {
 
+  local project_root=$(git rev-parse --show-toplevel)
+  local build_container_name="cta-build${project_root//\//-}"
+  # Defaults
+  local num_jobs=$(nproc --ignore=2)
+  local restarted=false
+  local deploy_namespace="dev"
+  # These versions don't affect anything functionality wise
+  local cta_version="5"
+  local vcs_version=$(git rev-parse --short HEAD)
+  local xrootd_ssi_version=$(cd "$project_root/xrootd-ssi-protobuf-interface" && git describe --tags --exact-match)
+
   # Input args
   local clean_build_dir=false
   local clean_build_dirs=false
@@ -75,7 +86,7 @@ build_deploy() {
   local skip_debug_packages=false
   local skip_image_reload=false
   local build_generator="Ninja"
-  local cmake_build_type="RelWithDebInfo"
+  local cmake_build_type=$(jq -r .dev.defaultBuildType "${project_root}/project.json")
   local scheduler_type="objectstore"
   local oracle_support="TRUE"
   local enable_ccache=true
@@ -87,16 +98,9 @@ build_deploy() {
   local catalogue_config="presets/dev-catalogue-postgres-values.yaml"
   local eos_image_tag=""
   local container_runtime="podman"
-  local build_image="gitlab-registry.cern.ch/linuxsupport/alma9-base:latest"
+  local platform=$(jq -r .dev.defaultPlatform "${project_root}/project.json")
+  local build_image=$(jq -r .platforms.${platform}.buildImage "${project_root}/project.json")
 
-  # Defaults
-  local num_jobs=$(nproc --ignore=2)
-  local restarted=false
-  local deploy_namespace="dev"
-  # These versions don't affect anything functionality wise
-  local cta_version="5"
-  local vcs_version="dev"
-  local xrootd_ssi_version="dev"
 
   # Parse command line arguments
   while [[ "$#" -gt 0 ]]; do
@@ -141,7 +145,7 @@ build_deploy() {
     --cmake-build-type)
       if [[ $# -gt 1 ]]; then
         if [ "$2" != "Release" ] && [ "$2" != "Debug" ] && [ "$2" != "RelWithDebInfo" ] && [ "$2" != "MinSizeRel" ]; then
-          echo "--cmake-build-type must be one of [Release, Debug, RelWithDebInfo, or MinSizeRel]."
+          echo "--cmake-build-type is \"$2\" but must be one of [Release, Debug, RelWithDebInfo, or MinSizeRel]."
           exit 1
         fi
         cmake_build_type="$2"
@@ -154,7 +158,7 @@ build_deploy() {
     -c | --container-runtime)
       if [[ $# -gt 1 ]]; then
         if [ "$2" != "docker" ] && [ "$2" != "podman" ]; then
-          echo "-c | --container-runtime must be one of [docker, podman]."
+          echo "-c | --container-runtime is \"$2\" but must be one of [docker, podman]."
           exit 1
         fi
         container_runtime="$2"
@@ -252,9 +256,6 @@ build_deploy() {
     esac
     shift
   done
-
-  local project_root=$(git rev-parse --show-toplevel)
-  local build_container_name="cta-build${project_root//\//-}"
 
   #####################################################################################################################
   # Build binaries/RPMs
