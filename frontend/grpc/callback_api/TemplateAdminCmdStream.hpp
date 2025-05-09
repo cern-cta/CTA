@@ -1,3 +1,5 @@
+#pragma once
+
 #include <catalogue/Catalogue.hpp>
 #include <scheduler/Scheduler.hpp>
 
