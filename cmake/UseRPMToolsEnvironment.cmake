@@ -24,11 +24,11 @@ IF (UNIX)
     MESSAGE(STATUS "Looking for RPMTools... - rpmbuild NOT FOUND")
   ENDIF()
 
-  # Default in case detection fails
-  set(RPMTools_RPMBUILD_DIST "el9")
-  set(OSV "test")
+  set(RPMTools_RPMBUILD_DIST "")
+  set(OSV "")
 
   # Detect OS and version from /etc/os-release
+  # For now we only support detecting el9
   if(EXISTS "/etc/os-release")
     file(READ "/etc/os-release" OS_RELEASE_CONTENTS)
 
@@ -41,6 +41,10 @@ IF (UNIX)
     if(OS_ID STREQUAL "centos" OR OS_ID STREQUAL "rhel" OR OS_ID STREQUAL "almalinux" OR OS_ID STREQUAL "rocky")
       set(RPMTools_RPMBUILD_DIST "el${OSV}")
     endif()
+  endif()
+
+  if(RPMTools_RPMBUILD_DIST STREQUAL "" OR OSV STREQUAL "")
+    message(FATAL_ERROR "Could not determine RPM platform or OS version. RPMTools_RPMBUILD_DIST='${RPMTools_RPMBUILD_DIST}', OSV='${OSV}'")
   endif()
 
   message(STATUS "Detected OS ID: ${OS_ID}")
