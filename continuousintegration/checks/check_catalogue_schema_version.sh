@@ -82,30 +82,31 @@ extract_cmake_set_val() {
 CTA_SUB_REPO__CATALOGUE_MAJOR_VERSION=$(extract_cmake_set_val ${cta_repo_dir}/catalogue/cta-catalogue-schema/CTACatalogueSchemaVersion.cmake CTA_CATALOGUE_SCHEMA_VERSION_MAJOR)
 CTA_SUB_REPO__CATALOGUE_MINOR_VERSION=$(extract_cmake_set_val ${cta_repo_dir}/catalogue/cta-catalogue-schema/CTACatalogueSchemaVersion.cmake CTA_CATALOGUE_SCHEMA_VERSION_MINOR)
 # Get all tags from current commit of submodule 'cta-catalogue-schema', separated by whitespaces, and extract MAJOR version
-CTA_SUB_REPO__TAGS_L=$(
+CTA_SUB_REPO__TAGS=$(
   cd ${cta_repo_dir}/catalogue/cta-catalogue-schema
-  git tag | sed 's/v//g;s/\(\.[0-9]*\)//g' | xargs
+  git tag
 )
 
 # Get the CTA catalogue version info from the project.json
 CTA_PROJECT_CATALOGUE_VERSION=$(jq .catalogueVersion ${cta_repo_dir}/project.json)
 CTA_PROJECT_CATALOGUE_MAJOR_VERSION=${CTA_PROJECT_CATALOGUE_VERSION%%.*}
 CTA_PROJECT_SUPPORTED_CATALOGUE_VERSIONS=$(jq -r .supportedCatalogueVersions[] ${cta_repo_dir}/project.json)
-CTA_PROJECT_PREV_CATALOGUE_VERSIONS=$(echo $CTA_PROJECT_SUPPORTED_CATALOGUE_VERSIONS | grep -v $CTA_PROJECT_CATALOGUE_MAJOR_VERSION)
+CTA_PROJECT_PREV_CATALOGUE_VERSIONS=$(echo $CTA_PROJECT_SUPPORTED_CATALOGUE_VERSIONS | grep -v -x $CTA_PROJECT_CATALOGUE_VERSION || true)
+CTA_PROJECT_NUM_SUPPORTED_VERSIONS=$(jq '.supportedCatalogueVersions | length' ${cta_repo_dir}/project.json)
 
 #### Start checks ####
 
 echo "Checking..."
 # Always check that the CTA catalogue schema version is the same in both the main CTA project and the 'cta-catalogue-schema' submodule
 echo -n "- CTA catalogue schema version is the same in the project.json and 'cta-catalogue-schema' submodule: "
-if [ "$CTA_PROJECT_CATALOGUE_VERSION" -ne "$CTA_SUB_REPO__CATALOGUE_MAJOR_VERSION.$CTA_SUB_REPO__CATALOGUE_MINOR_VERSION" ]; then
+if [ "$CTA_PROJECT_CATALOGUE_VERSION" != "${CTA_SUB_REPO__CATALOGUE_MAJOR_VERSION}.${CTA_SUB_REPO__CATALOGUE_MINOR_VERSION}" ]; then
   error="${error}CTA catalogue schema version is not the same in the project.json and the 'cta-catalogue-schema' submodule ${CTA_SUB_REPO__CATALOGUE_MAJOR_VERSION}.\n"
   echo "FAIL"
 else
   echo "OK"
 fi
-echo -n "- project.json catalogue version is part of supportedCatalogueVersions: "
-if [ "$(echo ${CTA_PROJECT_SUPPORTED_CATALOGUE_VERSIONS} | grep $CTA_PROJECT_CATALOGUE_MAJOR_VERSION)" -ne "1" ]; then
+echo -n "- CTA catalogue schema version is part of supported catalogue versions: "
+if ! echo "${CTA_PROJECT_SUPPORTED_CATALOGUE_VERSIONS}" | grep -q -w "$CTA_PROJECT_CATALOGUE_MAJOR_VERSION"; then
   error="${error}The CTA catalogue schema version must be part of the supportedCatalogueVersions.\n"
   echo "FAIL"
 else
@@ -115,7 +116,7 @@ fi
 # [Optional] Check that the 'cta-catalogue-schema' submodule version is tagged
 if [ "$check_catalogue_submodule_tags" -eq "1" ]; then
   echo -n "- CTA catalogue schema version is tagged in the 'cta-catalogue-schema' submodule commit: "
-  if test 0 == $(echo $CTA_SUB_REPO__TAGS_L | xargs -n1 | grep -w $CTA_PROJECT_CATALOGUE_VERSION | wc -l); then
+  if test 0 == $(echo $CTA_SUB_REPO__TAGS | grep $CTA_PROJECT_CATALOGUE_VERSION | wc -l); then
     error="${error}The 'cta-catalogue-schema' submodule commit does not contain a tag for CTA catalogue schema version ${CTA_PROJECT_CATALOGUE_VERSION}.\n"
     echo "FAIL"
   else
@@ -127,7 +128,7 @@ fi
 # - Can only support 1 catalogue schema version
 if [ "$check_non_pivot_release" -eq "1" ]; then
   echo -n "- CTA release is not pivot (single catalogue version supported): "
-  if [ "$(jq '.supportedCatalogueVersions | length' project.json)" -ne "1" ]; then
+  if [ "$CTA_PROJECT_NUM_SUPPORTED_VERSIONS" -ne "1" ]; then
     error="${error}Non-pivot CTA release should only support 1 catalogue schema version. It currently supports multiple versions {${CTA_PROJECT_SUPPORTED_CATALOGUE_VERSIONS}}.\n"
     echo "FAIL"
   else
@@ -141,22 +142,21 @@ fi
 # - 'CTA_PROJECT_PREV_CATALOGUE_VERSIONS' values must be smaller than 'CTA_PROJECT_CATALOGUE_MAJOR_VERSION'
 if [ "$check_pivot_release" -eq "1" ]; then
   echo -n "- CTA release is pivot (multiple catalogue versions supported): "
-  if [ "$(jq '.supportedCatalogueVersions | length' project.json)" -gt "1" ]; then
+  if [ "$CTA_PROJECT_NUM_SUPPORTED_VERSIONS" -le "1" ]; then
     error="${error}Pivot CTA release should support more than 1 catalogue schema versions in the project.json.\n"
     echo "FAIL"
   else
     echo "OK"
   fi
-  echo -n "- All supported releases are less than or equal to the current version: "
+  echo "- All supported releases are less than or equal to the current version: "
   for PREV_VERSION in $(echo $CTA_PROJECT_PREV_CATALOGUE_VERSIONS); do
-    if [ "${PREV_VERSION}" -ge "$CTA_PROJECT_CATALOGUE_VERSION" ]; then
+    if [ "$(printf '%s\n' "$PREV_VERSION" "$CTA_PROJECT_CATALOGUE_VERSION" | sort -V | head -n1)" != "$PREV_VERSION" ]; then
       error="${error}Previous CTA catalogue schema version ${PREV_VERSION} is equal or greater than current version ${CTA_PROJECT_CATALOGUE_VERSION}.\n"
-      echo -n "FAIL(${PREV_VERSION}->${CTA_PROJECT_CATALOGUE_VERSION}) "
+      echo "  - FAIL(${PREV_VERSION}->${CTA_PROJECT_CATALOGUE_VERSION}) "
     else
-      echo -n "OK(${PREV_VERSION}->${CTA_PROJECT_CATALOGUE_VERSION}) "
+      echo "  - OK(${PREV_VERSION}->${CTA_PROJECT_CATALOGUE_VERSION}) "
     fi
   done
-  echo ""
 fi
 
 # Validate that there are migration scripts between all versions
@@ -187,7 +187,7 @@ done
 
 # Fail if there were error...
 if [ -n "${error}" ]; then
-  echo -e "Error:\n${error}"
+  echo -e "Errors:\n${error}"
   exit 1
 fi
 
