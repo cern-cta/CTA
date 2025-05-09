@@ -30,16 +30,24 @@
         git fetch --tags --force
         git checkout tags/$CUSTOM_CTA_TAG -- catalogue/CTARefCatalogueSchemaVersion.cmake
         CATALOGUE_VERSION=$(cat catalogue/CTARefCatalogueSchemaVersion.cmake | grep -v '#' | grep 'CTA_CATALOGUE_REF_SCHEMA_VERSION_CURR' | awk '{print $2}' | awk -F ')' '{ print $1}')
-        EXTRA_SPAWN_ARGS="${EXTRA_SPAWN_ARGS} --catalogue-version ${CATALOGUE_VERSION}.0"
+        EXTRA_SPAWN_ARGS+=" --catalogue-version ${CATALOGUE_VERSION}.0"
+      fi
+    # The inner .el9 appending is a temporary fix for choosing which docker image to grab
+    - |
+      if [[ -n "${CUSTOM_EOS_TAG}" ]]; then
+        if [[ $PIPELINE_TYPE == "EOS_REGR_AGAINST_CTA_MAIN" ]] || [[ $PIPELINE_TYPE == "EOS_REGR_AGAINST_CTA_TAG" ]]; then
+          CUSTOM_EOS_TAG="${CUSTOM_EOS_TAG}.el9"
+        fi
+        EXTRA_SPAWN_ARGS+=" ${CUSTOM_EOS_TAG}";
       fi
     # Additional config
     - |
       if [ -n "${CUSTOM_CTA_VALUES_FILE}" ]; then
-        EXTRA_SPAWN_ARGS="${EXTRA_SPAWN_ARGS} --cta-config ${CUSTOM_CTA_VALUES_FILE}"
+        EXTRA_SPAWN_ARGS+=" --cta-config ${CUSTOM_CTA_VALUES_FILE}"
       fi
     - |
       if [ -n "${CUSTOM_EOS_VALUES_FILE}" ]; then
-        EXTRA_SPAWN_ARGS="${EXTRA_SPAWN_ARGS} --eos-config ${CUSTOM_EOS_VALUES_FILE}"
+        EXTRA_SPAWN_ARGS+=" --eos-config ${CUSTOM_EOS_VALUES_FILE}"
       fi
     # Export all variables here so that it is clear which ones are available
     - export SCHEDULER_CONFIG CATALOGUE_CONFIG IMAGE_TAG EXTRA_SPAWN_ARGS
@@ -84,14 +92,6 @@
     - extra_args=($EXTRA_ARGS)
     - if [[ -n "${EXTRA_SPAWN_ARGS}" ]]; then extra_args+=(--spawn-options "${EXTRA_SPAWN_ARGS}"); fi
     - if [[ -n "${EXTRA_TEST_ARGS}" ]];  then extra_args+=(--test-options "${EXTRA_TEST_ARGS}"); fi
-    # The inner .el9 appending is a temporary fix for choosing which docker image to grab
-    - |
-      if [[ -n "${CUSTOM_EOS_TAG}" ]]; then
-        if [[ $PIPELINE_TYPE == "EOS_REGR_AGAINST_CTA_MAIN" ]] || [[ $PIPELINE_TYPE == "EOS_REGR_AGAINST_CTA_TAG" ]]; then
-          CUSTOM_EOS_TAG="${CUSTOM_EOS_TAG}.el9"
-        fi
-        extra_args+=(--eos-image-tag "${CUSTOM_EOS_TAG}");
-      fi
     # Run test
     - cd continuousintegration/orchestration/
     - ./run_systemtest.sh --namespace ${NAMESPACE}
@@ -189,7 +189,7 @@ test-liquibase-update:
   before_script:
     - !reference [.kubernetes-test, before_script]
     - |
-      if [ "$(jq '.supportedCatalogueVersions | length' project.json)" -lt 2 ]; then
+      if [ "$(jq '.supportedCatalogueVersions | length' project.json)" -eq 1 ]; then
         echo "We are currently in a non-catalogue release. No update to test."
         exit 0
       fi

@@ -1,0 +1,117 @@
+{
+    "$schema": "https://json-schema.org/draft/2020-12/schema",
+    "title": "CTA Project Metadata Schema",
+    "type": "object",
+    "required": [
+      "name",
+      "description",
+      "summary",
+      "license",
+      "defaultPlatform",
+      "catalogueVersion",
+      "supportedCatalogueVersions",
+      "packageGroups",
+      "platforms",
+      "dev"
+    ],
+    "properties": {
+      "name": {
+        "type": "string",
+        "minLength": 1
+      },
+      "summary": {
+        "type": "string",
+        "minLength": 1
+      },
+      "description": {
+        "type": "string",
+        "minLength": 1
+      },
+      "license": {
+        "type": "string",
+        "minLength": 1
+      },
+      "defaultPlatform": {
+        "type": "string",
+        "minLength": 1
+      },
+      "catalogueVersion": {
+        "type": "number"
+      },
+      "supportedCatalogueVersions": {
+        "type": "array",
+        "items": { "type": "number" },
+        "minItems": 1
+      },
+      "dev": {
+        "type": "object",
+        "required": [
+          "cppVersion",
+          "defaultBuildType",
+          "eosServerChartVersion",
+          "defaultEosImageTag"
+        ],
+        "properties": {
+          "cppVersion": {
+            "type": "string",
+            "minLength": 1
+          },
+          "defaultBuildType": {
+            "type": "string",
+            "minLength": 1
+          },
+          "eosServerChartVersion": {
+            "type": "string",
+            "minLength": 1
+          },
+          "defaultEosImageTag": {
+            "type": "string",
+            "minLength": 1
+          }
+        },
+        "additionalProperties": false
+      },
+      "packageGroups": {
+        "type": "object",
+        "additionalProperties": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "minLength": 1
+          }
+        }
+      },
+      "platforms": {
+        "type": "object",
+        "additionalProperties": {
+          "type": "object",
+          "required": [
+            "arch",
+            "versionlock",
+            "buildRequires"
+          ],
+          "properties": {
+            "arch": {
+              "type": "string",
+              "minLength": 1
+            },
+            "versionlock": {
+              "type": "object",
+              "additionalProperties": {
+                "type": "string",
+                "minLength": 1
+              }
+            },
+            "buildRequires": {
+              "type": "object",
+              "additionalProperties": {
+                "type": "string"
+              }
+            }
+          },
+          "additionalProperties": false
+        }
+      }
+    },
+    "additionalProperties": false
+  }
