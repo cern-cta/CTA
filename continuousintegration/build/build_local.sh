@@ -89,7 +89,7 @@ build_local() {
       --cmake-build-type)
         if [[ $# -gt 1 ]]; then
           if [ "$2" != "Release" ] && [ "$2" != "Debug" ] && [ "$2" != "RelWithDebInfo" ] && [ "$2" != "MinSizeRel" ]; then
-            echo "--cmake-build-type must be one of [Release, Debug, RelWithDebInfo, or MinSizeRel]."
+            echo "--cmake-build-type is \"$2\" but must be one of [Release, Debug, RelWithDebInfo, or MinSizeRel]."
             exit 1
           fi
           cmake_build_type="$2"
