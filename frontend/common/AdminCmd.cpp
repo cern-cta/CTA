@@ -380,10 +380,6 @@ AdminCmd::getTapeDriveNamesGivenSchedulerBackendName(const std::list<cta::catalo
       validTapeDrives.emplace_back(config.tapeDriveName);
     }
   }
-  if (validTapeDrives.empty()) {
-    throw exception::UserError("Did not find any drives corresponding to the Frontend Scheduler DB backend name: " +
-                               m_schedulerBackendName.value_or(""));
-  }
   return validTapeDrives;
 }
 
