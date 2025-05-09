@@ -29,6 +29,8 @@ project_json_path = Path(__file__).resolve().parents[3] / "project.json"
 with open(project_json_path, "r") as f:
     project_json = json.load(f)
 
+print(f"Validating project.json using schema.json schema...")
+
 try:
     jsonschema.validate(instance=project_json, schema=schema_json)
     print("Schema validation of project.json completed successfully.")
