@@ -19,6 +19,7 @@
 
 #include "cta_frontend.pb.h"
 #include "frontend/common/FrontendService.hpp"
+#include "catalogue/Catalogue.hpp"
 
 namespace cta::frontend {
 
@@ -165,7 +166,7 @@ protected:
    *
    *  @param[in]   driveConfigList   List of drive configurations (from the catalogue)
    */
-  std::list<std::string> getTapeDriveNamesGivenSchedulerBackendName(const std::list<DriveConfig>& driveConfigList);
+  std::list<std::string> getTapeDriveNamesGivenSchedulerBackendName(const std::list<cta::catalogue::DriveConfigCatalogue::DriveConfig>& driveConfigList);
     /*!
    * Drive state enum
    */

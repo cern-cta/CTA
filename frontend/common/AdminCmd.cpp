@@ -15,7 +15,6 @@
  *               submit itself to any jurisdiction.
  */
 
-#include "catalogue/Catalogue.hpp"
 #include "catalogue/CreateMountPolicyAttributes.hpp"
 #include "catalogue/CreateTapeAttributes.hpp"
 #include "catalogue/MediaType.hpp"
@@ -373,7 +372,7 @@ void AdminCmd::logAdminCmd(const std::string& function,
 }
 
 std::list<std::string>
-AdminCmd::getTapeDriveNamesGivenSchedulerBackendName(const std::list<DriveConfig>& driveConfigList) {
+AdminCmd::getTapeDriveNamesGivenSchedulerBackendName(const std::list<cta::catalogue::DriveConfigCatalogue::DriveConfig>& driveConfigList) {
   // set of valid tapeDriveNames matching the m_schedulerBackendName
   std::list<std::string> validTapeDrives;
   for (const auto& config : driveConfigList) {
@@ -383,7 +382,7 @@ AdminCmd::getTapeDriveNamesGivenSchedulerBackendName(const std::list<DriveConfig
   }
   if (validTapeDrives.empty()) {
     throw exception::UserError("Did not find any drives corresponding to the Frontend Scheduler DB backend name: " +
-                               m_schedulerBackendName);
+                               m_schedulerBackendName.value_or(""));
   }
   return validTapeDrives;
 }
