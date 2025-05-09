@@ -260,7 +260,7 @@ build_rpm() {
       # Alma9
       echo "Found Alma 9 install..."
       yum -y install epel-release almalinux-release-devel python3-dnf-plugin-versionlock git
-      yum -y install gcc gcc-c++ cmake3 rpm-build yum-utils pandoc which
+      yum -y install gcc gcc-c++ rpm-build yum-utils
       case "${build_generator}" in
         "Unix Makefiles")
           yum -y install make
@@ -276,14 +276,14 @@ build_rpm() {
       if [[ ${enable_ccache} = true ]]; then
         yum -y install ccache
       fi
-      ./continuousintegration/utils/generate_versionlock.py --platform el9 >/etc/yum/pluginconf.d/versionlock.list
+      ./continuousintegration/utils/project-json/generate_versionlock.py --platform el9 >/etc/yum/pluginconf.d/versionlock.list
       cp -f continuousintegration/docker/el9/etc/yum.repos.d-public/*.repo /etc/yum.repos.d/
       if [[ ${use_internal_repos} = true ]]; then
         cp -f continuousintegration/docker/el9/etc/yum.repos.d/*.repo /etc/yum.repos.d/
       fi
       yum-builddep --nogpgcheck -y "${srpm_dir}"/*
     elif [ "${install_srpms}" = true ]; then
-      ./continuousintegration/utils/generate_versionlock.py --platform el9 >/etc/yum/pluginconf.d/versionlock.list
+      ./continuousintegration/utils/project-json/generate_versionlock.py --platform el9 >/etc/yum/pluginconf.d/versionlock.list
       cp -f continuousintegration/docker/el9/etc/yum.repos.d-public/*.repo /etc/yum.repos.d/
       if [[ ${use_internal_repos} = true ]]; then
         cp -f continuousintegration/docker/el9/etc/yum.repos.d/*.repo /etc/yum.repos.d/
