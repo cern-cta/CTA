@@ -58,7 +58,6 @@ usage() {
   echo "      --eos-image-tag:                  Image to use for spawning EOS. If not provided, will default to the image specified in the create_instance script."
   echo "      --cta-config <path>:              Custom Values file to pass to the CTA Helm chart. Defaults to: presets/dev-cta-xrd-values.yaml"
   echo "      --eos-config <path>:              Custom Values file to pass to the EOS Helm chart. Defaults to: presets/dev-eos-values.yaml"
-  echo "      --disable-internal-repos:         If provided, will use the public repos for download packages instead of the internal CERN repos."
   exit 1
 }
 
@@ -89,7 +88,6 @@ build_deploy() {
   local eos_image_tag=""
   local container_runtime="podman"
   local build_image="gitlab-registry.cern.ch/linuxsupport/alma9-base:latest"
-  local use_internal_repos=true
 
   # Defaults
   local num_jobs=$(nproc --ignore=2)
@@ -122,7 +120,6 @@ build_deploy() {
     --force-install) force_install=true ;;
     --upgrade-cta) upgrade_cta=true ;;
     --upgrade-eos) upgrade_eos=true ;;
-    --disable-internal-repos) use_internal_repos=false ;;
     --eos-image-tag)
       if [[ $# -gt 1 ]]; then
         eos_image_tag="$2"
@@ -327,10 +324,6 @@ build_deploy() {
       build_rpm_flags+=" --enable-ccache"
     fi
 
-    if [[ ${use_internal_repos} = true ]]; then
-      build_rpm_flags+=" --use-internal-repos"
-    fi
-
     echo "Building RPMs..."
     ${container_runtime} exec -it "${build_container_name}" \
       ./shared/CTA/continuousintegration/build/build_rpm.sh \
@@ -381,9 +374,6 @@ build_deploy() {
       new_build_id=$((current_build_id + 1))
       image_tag="dev-$new_build_id"
       echo $new_build_id >$build_iteration_file
-    fi
-    if [[ ${use_internal_repos} = true ]]; then
-      extra_image_build_options+=" --use-internal-repos"
     fi
     ## Create and load the new image
     local rpm_src=build_rpm/RPM/RPMS/x86_64

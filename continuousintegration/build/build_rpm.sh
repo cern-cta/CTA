@@ -41,7 +41,6 @@ usage() {
   echo "      --skip-debug-packages                     Skips the building of the debug RPM packages."
   echo "      --skip-unit-tests                         Skips the unit tests. Speeds up the build time by not running the unit tests."
   echo "      --oracle-support <ON/OFF>:                When set to OFF, will disable Oracle support. Oracle support is enabled by default."
-  echo "      --use-internal-repos:                     If enabled, will use the internal CERN repos to download packages. Note that this only works if you have access to there repos."
 
   exit 1
 }
@@ -68,7 +67,6 @@ build_rpm() {
   local skip_unit_tests=false
   local skip_debug_packages=false
   local oracle_support=true
-  local use_internal_repos=false
 
   # Parse command line arguments
   while [[ "$#" -gt 0 ]]; do
@@ -97,7 +95,6 @@ build_rpm() {
       ;;
     --clean-build-dir) clean_build_dir=true ;;
     --create-build-dir) create_build_dir=true ;;
-    --use-internal-repos) use_internal_repos=true ;;
     --enable-ccache) enable_ccache=true ;;
     --cta-version)
       if [[ $# -gt 1 ]]; then
@@ -277,17 +274,11 @@ build_rpm() {
         yum -y install ccache
       fi
       ./continuousintegration/utils/project-json/generate_versionlock.py --platform el9 >/etc/yum/pluginconf.d/versionlock.list
-      cp -f continuousintegration/docker/el9/etc/yum.repos.d-public/*.repo /etc/yum.repos.d/
-      if [[ ${use_internal_repos} = true ]]; then
-        cp -f continuousintegration/docker/el9/etc/yum.repos.d/*.repo /etc/yum.repos.d/
-      fi
+      cp -f continuousintegration/docker/el9/etc/yum.repos.d/*.repo /etc/yum.repos.d/
       yum-builddep --nogpgcheck -y "${srpm_dir}"/*
     elif [ "${install_srpms}" = true ]; then
       ./continuousintegration/utils/project-json/generate_versionlock.py --platform el9 >/etc/yum/pluginconf.d/versionlock.list
-      cp -f continuousintegration/docker/el9/etc/yum.repos.d-public/*.repo /etc/yum.repos.d/
-      if [[ ${use_internal_repos} = true ]]; then
-        cp -f continuousintegration/docker/el9/etc/yum.repos.d/*.repo /etc/yum.repos.d/
-      fi
+      cp -f continuousintegration/docker/el9/etc/yum.repos.d/*.repo /etc/yum.repos.d/
       yum clean all
       yum-builddep --nogpgcheck -y "${srpm_dir}"/*
     fi
