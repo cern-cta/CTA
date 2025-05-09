@@ -83,7 +83,7 @@ public:
     //m_catalogue = std::make_unique<cta::catalogue::InMemoryCatalogue>(logger, 1, 1);
     m_catalogue = std::make_unique<cta::catalogue::DummyCatalogue>();
 
-    m_db.reset(factory.create(m_catalogue).release());
+    m_db.reset(factory.create(m_catalogue, s_schedulerDbName).release());
   }
 
   virtual void TearDown() {
@@ -121,6 +121,8 @@ public:
   static const cta::common::dataStructures::SecurityIdentity s_userOnAdminHost;
   static const cta::common::dataStructures::SecurityIdentity s_userOnUserHost;
 
+  static const std::string s_schedulerDbName;
+
 private:
 
   // Prevent copying
@@ -150,6 +152,8 @@ const cta::common::dataStructures::SecurityIdentity SchedulerDatabaseTest::s_adm
 
 const cta::common::dataStructures::SecurityIdentity SchedulerDatabaseTest::s_userOnAdminHost(SchedulerDatabaseTest::s_user, SchedulerDatabaseTest::s_adminHost);
 const cta::common::dataStructures::SecurityIdentity SchedulerDatabaseTest::s_userOnUserHost(SchedulerDatabaseTest::s_user, SchedulerDatabaseTest::s_userHost);
+
+const std::string SchedulerDatabaseTest::s_schedulerDbName = "scheduler_name";
 
 TEST_P(SchedulerDatabaseTest, createManyArchiveJobs) {
   using namespace cta;

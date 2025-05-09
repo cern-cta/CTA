@@ -70,7 +70,7 @@ class OStoreDBTest: public
     const auto &factory = GetParam().dbFactory;
     m_catalogue = std::make_unique<cta::catalogue::DummyCatalogue>();
     // Get the OStore DB from the factory.
-    auto osdb = std::move(factory.create(m_catalogue));
+    auto osdb = std::move(factory.create(m_catalogue, s_schedulerDbName));
     // Make sure the type of the SchedulerDatabase is correct (it should be an OStoreDBWrapperInterface).
     dynamic_cast<cta::objectstore::OStoreDBWrapperInterface *> (osdb.get());
     // We know the cast will not fail, so we can safely do it (otherwise we could leak memory).
@@ -106,6 +106,8 @@ class OStoreDBTest: public
   static const cta::common::dataStructures::SecurityIdentity s_userOnAdminHost;
   static const cta::common::dataStructures::SecurityIdentity s_userOnUserHost;
 
+  static const std::string s_schedulerDbName;
+
  private:
   // Prevent copying
   OStoreDBTest(const OStoreDBTest &) = delete;
@@ -117,6 +119,8 @@ class OStoreDBTest: public
 
   std::unique_ptr<cta::catalogue::Catalogue> m_catalogue;
 };  // class SchedulerDatabaseTest
+
+const std::string OStoreDBTest::s_schedulerDbName = "scheduler_name";
 
 TEST_P(OStoreDBTest, getBatchArchiveJob) {
   cta::log::StringLogger logger("dummy", "OStoreAbstractTest", cta::log::DEBUG);

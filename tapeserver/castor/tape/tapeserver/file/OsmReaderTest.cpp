@@ -125,6 +125,8 @@ protected:
   std::string m_vid;
   std::string m_nstDev;
   std::string m_devName;
+
+  const std::string s_schedulerDbName = "scheduler_name";
 };
 
 TEST_F(OsmReaderTest, ReadOsmTape) {
@@ -169,7 +171,7 @@ TEST_F(OsmReaderTest, CleanDrive) {
   cta::mediachanger::MediaChangerFacade mc(rmcProxy, dummylogger);
   cta::tape::daemon::DriveConfigEntry driveConfig(m_devName, "TestLogicalLibrary", m_nstDev, "dummy");
 
-  auto scheduler = std::make_unique<cta::Scheduler>(*m_catalogue, *m_db, 5, 2 * 1000 * 1000);
+  auto scheduler = std::make_unique<cta::Scheduler>(*m_catalogue, *m_db, s_schedulerDbName, 5, 2 * 1000 * 1000);
 
   castor::tape::tapeserver::daemon::CleanerSession cleanerSession(
     mc,

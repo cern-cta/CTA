@@ -73,7 +73,7 @@ namespace {
 template <class BackendType>
 class OStoreDBWrapper: public cta::objectstore::OStoreDBWrapperInterface {
 public:
-  OStoreDBWrapper(const std::string &context, std::unique_ptr<cta::catalogue::Catalogue>& catalogue, const std::string &URL = "");
+  OStoreDBWrapper(const std::string &context, std::unique_ptr<cta::catalogue::Catalogue>& catalogue, const std::string & schedulerDBName, const std::string &URL = "");
 
   ~OStoreDBWrapper() noexcept {}
 
@@ -113,11 +113,11 @@ private:
 
 template <>
 OStoreDBWrapper<cta::objectstore::BackendVFS>::OStoreDBWrapper(
-        const std::string &context, std::unique_ptr<cta::catalogue::Catalogue> & catalogue, const std::string &URL) :
+        const std::string &context, std::unique_ptr<cta::catalogue::Catalogue> & catalogue, const std::string & schedulerDBName, const std::string &URL) :
 OStoreDBWrapperInterface(m_OStoreDB),
 m_logger(new cta::log::DummyLogger("", "")), m_backend(URL.empty() ? new cta::objectstore::BackendVFS() : new cta::objectstore::BackendVFS(URL)),
 m_catalogue(catalogue),
-m_OStoreDB(*m_backend, *m_catalogue, *m_logger),
+m_OStoreDB(*m_backend, *m_catalogue, schedulerDBName, *m_logger),
   m_agentReferencePtr(new objectstore::AgentReference("OStoreDBFactory", *m_logger))
 {
   // We need to populate the root entry before using.
@@ -165,8 +165,8 @@ public:
    *
    * @return A newly created scheduler database object.
    */
-  std::unique_ptr<SchedulerDatabase> create(std::unique_ptr<cta::catalogue::Catalogue>& catalogue) const {
-    return std::unique_ptr<SchedulerDatabase>(new OStoreDBWrapper<BackendType>("UnitTest", catalogue, m_URL));
+  std::unique_ptr<SchedulerDatabase> create(std::unique_ptr<cta::catalogue::Catalogue>& catalogue, const std::string & schedulerDBName) const {
+    return std::unique_ptr<SchedulerDatabase>(new OStoreDBWrapper<BackendType>("UnitTest", catalogue, schedulerDBName, m_URL));
   }
 
   private:

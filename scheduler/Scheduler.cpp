@@ -58,12 +58,6 @@ namespace cta {
 //------------------------------------------------------------------------------
 Scheduler::Scheduler(catalogue::Catalogue& catalogue,
                      SchedulerDatabase& db,
-                     const uint64_t minFilesToWarrantAMount,
-                     const uint64_t minBytesToWarrantAMount)
-    : Scheduler(catalogue, db, "unknown", minFilesToWarrantAMount, minBytesToWarrantAMount) {}
-
-Scheduler::Scheduler(catalogue::Catalogue& catalogue,
-                     SchedulerDatabase& db,
                      const std::string& schedulerBackendname,
                      const uint64_t minFilesToWarrantAMount,
                      const uint64_t minBytesToWarrantAMount)

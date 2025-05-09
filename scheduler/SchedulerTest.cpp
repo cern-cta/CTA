@@ -157,12 +157,12 @@ public:
     //m_catalogue = std::make_unique<catalogue::SchemaCreatingSqliteCatalogue>(m_tempSqliteFile.path(), nbConns);
     m_catalogue = std::make_unique<catalogue::InMemoryCatalogue>(m_dummyLog, nbConns, nbArchiveFileListingConns);
     // Get the OStore DB from the factory
-    auto osdb = std::move(factory.create(m_catalogue));
+    auto osdb = std::move(factory.create(m_catalogue, s_schedulerDbName));
     // Make sure the type of the SchedulerDatabase is correct (it should be an OStoreDBWrapperInterface)
     dynamic_cast<cta::objectstore::OStoreDBWrapperInterface*>(osdb.get());
     // We know the cast will not fail, so we can safely do it (otherwise we could leak memory)
     m_db.reset(dynamic_cast<cta::objectstore::OStoreDBWrapperInterface*>(osdb.release()));
-    m_scheduler = std::make_unique<Scheduler>(*m_catalogue, *m_db, s_minFilesToWarrantAMount, s_minBytesToWarrantAMount);
+    m_scheduler = std::make_unique<Scheduler>(*m_catalogue, *m_db, s_schedulerDbName, s_minFilesToWarrantAMount, s_minBytesToWarrantAMount);
     objectstore::Helpers::flushStatisticsCache();
   }
 
@@ -384,6 +384,7 @@ protected:
   const uint64_t s_mediaTypeCapacityInBytes = 10;
   const std::string s_vo = "vo";
   const std::string s_repack_vo = "repack_vo";
+  const std::string s_schedulerDbName = "scheduler_name";
   //TempFile m_tempSqliteFile;
 
 }; // class SchedulerTest

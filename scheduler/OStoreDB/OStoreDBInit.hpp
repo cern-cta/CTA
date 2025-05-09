@@ -30,8 +30,8 @@ namespace cta {
 class OStoreDBInit
 {
 public:
-  OStoreDBInit(const std::string& client_process, const std::string& db_conn_str, log::Logger& log,
-    bool leaveNonEmptyAgentsBehind = false)
+  OStoreDBInit(const std::string& client_process, const std::string& db_conn_str, const std::string & schedulerDBName, log::Logger& log,
+    bool leaveNonEmptyAgentsBehind = false): m_schedulerDBName(schedulerDBName)
   {
     // Initialise the ObjectStore Backend
     m_backend = std::move(objectstore::BackendFactory::createBackend(db_conn_str, log));
@@ -53,8 +53,8 @@ public:
     m_agentHeartbeat = std::move(UniquePtrAgentHeartbeatThread(aht));
   }
 
-  std::unique_ptr<OStoreDBWithAgent> getSchedDB(catalogue::Catalogue& catalogue, log::Logger& log) {
-    return std::make_unique<OStoreDBWithAgent>(*m_backend, m_backendPopulator->getAgentReference(), catalogue, log);
+  std::unique_ptr<OStoreDBWithAgent> getSchedDB(catalogue::Catalogue& catalogue, const std::string & schedulerDBName, log::Logger& log) {
+    return std::make_unique<OStoreDBWithAgent>(*m_backend, m_backendPopulator->getAgentReference(), catalogue, schedulerDBName, log);
   }
 
   objectstore::GarbageCollector getGarbageCollector(catalogue::Catalogue& catalogue) {
@@ -81,6 +81,7 @@ private:
 
   // Member variables
 
+  const std::optional<std::string>               m_schedulerDBName;     //!< Scheduler DB name
   std::unique_ptr<objectstore::Backend>          m_backend;             //!< VFS backend for the objectstore DB
   std::unique_ptr<objectstore::BackendPopulator> m_backendPopulator;    //!< Object used to populate the backend
   UniquePtrAgentHeartbeatThread                  m_agentHeartbeat;      //!< Agent heartbeat thread

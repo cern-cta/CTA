@@ -21,7 +21,7 @@
 // Constructor
 //------------------------------------------------------------------------------
 cta::OStoreDBWithAgent::OStoreDBWithAgent(cta::objectstore::Backend & be, cta::objectstore::AgentReference & ar, 
-  catalogue::Catalogue & catalogue, log::Logger & logger): cta::OStoreDB(be, catalogue, logger) {
+  catalogue::Catalogue & catalogue, const std::string & schedulerDBName, log::Logger & logger): cta::OStoreDB(be, catalogue, schedulerDBName, logger) {
   cta::OStoreDB::setAgentReference(&ar);
 }
 

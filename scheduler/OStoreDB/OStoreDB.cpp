@@ -59,11 +59,12 @@ using namespace objectstore;
 //------------------------------------------------------------------------------
 // OStoreDB::OStoreDB()
 //------------------------------------------------------------------------------
-OStoreDB::OStoreDB(objectstore::Backend& be, catalogue::Catalogue& catalogue, log::Logger& logger)
+OStoreDB::OStoreDB(objectstore::Backend& be, catalogue::Catalogue& catalogue, const std::string & schedulerDBName, log::Logger& logger)
     : m_taskQueueSize(0),
       m_taskPostingSemaphore(5),
       m_objectStore(be),
       m_catalogue(catalogue),
+      m_schedulerDBName(schedulerDBName),
       m_logger(logger) {
   m_tapeDrivesState = std::make_unique<TapeDrivesCatalogueState>(m_catalogue);
   for (size_t i = 0; i < 5; i++) {

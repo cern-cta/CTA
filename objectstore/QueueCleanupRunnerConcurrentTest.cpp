@@ -142,13 +142,13 @@ public:
     const auto &factory = GetParam().dbFactory;
     m_catalogue = std::make_unique<cta::catalogue::DummyCatalogue>();
     // Get the OStore DB from the factory.
-    auto osDb = factory.create(m_catalogue);
+    auto osDb = factory.create(m_catalogue, s_schedulerDbName);
     // Make sure the type of the SchedulerDatabase is correct (it should be an OStoreDBWrapperInterface).
     dynamic_cast<cta::objectstore::OStoreDBWrapperInterface *> (osDb.get());
     // We know the cast will not fail, so we can safely do it (otherwise we could leak memory).
     m_db.reset(dynamic_cast<cta::objectstore::OStoreDBWrapperInterface *> (osDb.release()));
     // Setup scheduler
-    m_scheduler = std::make_unique<cta::Scheduler>(*m_catalogue, *m_db, 5, 2 * 1000 * 1000);
+    m_scheduler = std::make_unique<cta::Scheduler>(*m_catalogue, *m_db, s_schedulerDbName, 5, 2 * 1000 * 1000);
   }
 
   virtual void TearDown() {
@@ -192,6 +192,8 @@ private:
   std::unique_ptr<cta::objectstore::OStoreDBWrapperInterface> m_db;
   std::unique_ptr<cta::catalogue::Catalogue> m_catalogue;
   std::unique_ptr<cta::Scheduler> m_scheduler;
+protected:
+  const std::string s_schedulerDbName = "scheduler_name";
 };
 
 class OStoreDBWithAgentBroken : public cta::OStoreDBWithAgent {
@@ -247,7 +249,7 @@ TEST_P(QueueCleanupRunnerConcurrentTest, CleanupRunnerParameterizedTest) {
   cta::objectstore::Agent agentForCleanupFail(agentForCleanupFailRef.getAgentAddress(), be);
 
   // Broken object store, pointing to same as `oKOStore`
-  auto brokenOStore = OStoreDBWithAgentBroken(oKOStore.getBackend(), agentForCleanupFailRef, catalogue, dl);
+  auto brokenOStore = OStoreDBWithAgentBroken(oKOStore.getBackend(), agentForCleanupFailRef, catalogue, s_schedulerDbName, dl);
 
   // Create the root entry
   cta::objectstore::EntryLogSerDeser el("user0", "unittesthost", time(nullptr));

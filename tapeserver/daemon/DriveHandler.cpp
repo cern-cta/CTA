@@ -969,7 +969,7 @@ std::shared_ptr<cta::IScheduler> DriveHandler::createScheduler(const std::string
     params.add("processName", processName);
     m_lc.log(log::DEBUG, "In DriveHandler::createScheduler(): will create agent entry. "
       "Enabling leaving non-empty agent behind.");
-    m_sched_db_init = std::make_unique<SchedulerDBInit_t>(processName, m_tapedConfig.backendPath.value(), m_lc.logger(),
+    m_sched_db_init = std::make_unique<SchedulerDBInit_t>(processName, m_tapedConfig.backendPath.value(), m_tapedConfig.schedulerBackendName.value(), m_lc.logger(),
       true);
   } catch (cta::exception::Exception& ex) {
     log::ScopedParamContainer param(m_lc);
@@ -982,7 +982,7 @@ std::shared_ptr<cta::IScheduler> DriveHandler::createScheduler(const std::string
     if (!m_catalogue) {
       m_catalogue = createCatalogue(processName);
     }
-    m_sched_db = m_sched_db_init->getSchedDB(*m_catalogue, m_lc.logger());
+    m_sched_db = m_sched_db_init->getSchedDB(*m_catalogue, m_tapedConfig.schedulerBackendName.value(), m_lc.logger());
   } catch (cta::exception::Exception& ex) {
     log::ScopedParamContainer param(m_lc);
     param.add("errorMessage", ex.getMessageValue());
@@ -998,7 +998,7 @@ std::shared_ptr<cta::IScheduler> DriveHandler::createScheduler(const std::string
   m_sched_db->setStatisticsCacheConfig(statisticsCacheConfig);
 
   m_lc.log(log::DEBUG, "In DriveHandler::createScheduler(): will create scheduler.");
-  return std::make_shared<Scheduler>(*m_catalogue, *m_sched_db, minFilesToWarrantAMount, minBytesToWarrantAMount);
+  return std::make_shared<Scheduler>(*m_catalogue, *m_sched_db, m_tapedConfig.schedulerBackendName.value(), minFilesToWarrantAMount, minBytesToWarrantAMount);
 }
 
 castor::tape::tapeserver::daemon::Session::EndOfSessionAction DriveHandler::executeDataTransferSession(

@@ -165,8 +165,8 @@ public:
     //m_catalogue = std::make_unique<catalogue::SchemaCreatingSqliteCatalogue>(m_tempSqliteFile.path(), nbConns);
     m_catalogue = std::make_unique<catalogue::InMemoryCatalogue>(m_dummyLog, nbConns, nbArchiveFileListingConns);
 #endif
-    m_db = param.dbFactory.create(m_catalogue);
-    m_scheduler = std::make_unique<Scheduler>(*m_catalogue, *m_db, 5, 2 * 1000 * 1000);
+    m_db = param.dbFactory.create(m_catalogue, s_schedulerDbName);
+    m_scheduler = std::make_unique<Scheduler>(*m_catalogue, *m_db, s_schedulerDbName, 5, 2 * 1000 * 1000);
 
     strncpy(m_tmpDir, "/tmp/DataTransferSessionTestXXXXXX", sizeof(m_tmpDir));
     if (!mkdtemp(m_tmpDir)) {
@@ -455,6 +455,7 @@ protected:
   const std::string s_vid = "TSTVID"; // We really need size <= 6 characters due to tape label format.
   const std::string s_mediaType = "LTO7M";
   const std::string s_vendor = "TestVendor";
+  const std::string s_schedulerDbName = "scheduler_name";
   //TempFile m_tempSqliteFile;
   /**
    * Temporary directory created with mkdtemp that will be used to contain the

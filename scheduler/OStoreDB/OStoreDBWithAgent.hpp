@@ -32,7 +32,7 @@ public:
    * @param ag The agent
    */
   OStoreDBWithAgent(cta::objectstore::Backend & be, cta::objectstore::AgentReference & ar,
-  catalogue::Catalogue & catalogue, log::Logger & logger);
+  catalogue::Catalogue & catalogue, const std::string & schedulerDBName, log::Logger & logger);
   
   /**
    * Destructor

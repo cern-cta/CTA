@@ -62,7 +62,7 @@ class OStoreDB : public SchedulerDatabase {
   friend class cta::ostoredb::MemQueue;
 
 public:
-  OStoreDB(objectstore::Backend& be, catalogue::Catalogue& catalogue, log::Logger& logger);
+  OStoreDB(objectstore::Backend& be, catalogue::Catalogue& catalogue, const std::string & schedulerDBName, log::Logger& logger);
   virtual ~OStoreDB() noexcept;
 
   /* === Object store and agent handling ==================================== */
@@ -822,6 +822,7 @@ private:
 private:
   objectstore::Backend& m_objectStore;
   catalogue::Catalogue& m_catalogue;
+  const std::optional<std::string> m_schedulerDBName;
   log::Logger& m_logger;
   std::unique_ptr<TapeDrivesCatalogueState> m_tapeDrivesState;
   objectstore::AgentReference* m_agentReference = nullptr;

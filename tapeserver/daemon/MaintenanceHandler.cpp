@@ -283,7 +283,7 @@ void MaintenanceHandler::exceptionThrowingRunChild(){
   // Before anything, we will check for access to the scheduler's central storage.
   // If we fail to access it, we cannot work. We expect the drive processes to
   // fail likewise, so we just wait for shutdown signal (no feedback to main process).
-  SchedulerDBInit_t sched_db_init("Maintenance", m_tapedConfig.backendPath.value(), m_processManager.logContext().logger());
+  SchedulerDBInit_t sched_db_init("Maintenance", m_tapedConfig.backendPath.value(), m_tapedConfig.schedulerBackendName.value(), m_processManager.logContext().logger());
 
   std::unique_ptr<cta::SchedulerDB_t> sched_db;
   std::unique_ptr<cta::catalogue::Catalogue> catalogue;
@@ -295,14 +295,14 @@ void MaintenanceHandler::exceptionThrowingRunChild(){
     auto catalogueFactory = cta::catalogue::CatalogueFactoryFactory::create(m_processManager.logContext().logger(),
       catalogueLogin, nbConns, nbArchiveFileListingConns);
     catalogue = catalogueFactory->create();
-    sched_db = sched_db_init.getSchedDB(*catalogue, m_processManager.logContext().logger());
+    sched_db = sched_db_init.getSchedDB(*catalogue, m_tapedConfig.schedulerBackendName.value(), m_processManager.logContext().logger());
     // Set Scheduler DB cache timeouts
     SchedulerDatabase::StatisticsCacheConfig statisticsCacheConfig;
     statisticsCacheConfig.tapeCacheMaxAgeSecs = m_tapedConfig.tapeCacheMaxAgeSecs.value();
     statisticsCacheConfig.retrieveQueueCacheMaxAgeSecs = m_tapedConfig.retrieveQueueCacheMaxAgeSecs.value();
     sched_db->setStatisticsCacheConfig(statisticsCacheConfig);
     // TODO: we have hardcoded the mount policy parameters here temporarily we will remove them once we know where to put them
-    scheduler = std::make_unique<cta::Scheduler>(*catalogue, *sched_db, 5, 2*1000*1000);
+    scheduler = std::make_unique<cta::Scheduler>(*catalogue, *sched_db, m_tapedConfig.schedulerBackendName.value(), 5, 2*1000*1000);
     // Before launching the transfer session, we validate that the scheduler is reachable.
     scheduler->ping(m_processManager.logContext());
   } catch(cta::exception::Exception &ex) {
