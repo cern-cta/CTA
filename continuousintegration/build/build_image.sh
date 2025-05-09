@@ -51,7 +51,7 @@ buildImage() {
     -c | --container-runtime)
       if [[ $# -gt 1 ]]; then
         if [ "$2" != "docker" ] && [ "$2" != "podman" ]; then
-          echo "-c | --container-runtime must be one of [docker, podman]."
+          echo "-c | --container-runtime is \"$2\" but must be one of [docker, podman]."
           exit 1
         fi
         container_runtime="$2"
