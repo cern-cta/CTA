@@ -18,17 +18,7 @@ FROM gitlab-registry.cern.ch/linuxsupport/alma9-base:latest
 
 # Add orchestration run scripts locally
 COPY continuousintegration/docker/opt /opt
-
-ARG USE_INTERNAL_REPOS=0
-
-# Ensure we have access to our own internal repos and the local artifact CTA RPMs
-COPY continuousintegration/docker/el9/etc/yum.repos.d-public/ /etc/yum.repos.d/
-COPY continuousintegration/docker/el9/etc/yum.repos.d/ /tmp/
-RUN if [ "$USE_INTERNAL_REPOS" = "1" ]; then \
-      mv -f /tmp/*.repo /etc/yum.repos.d/; \
-    fi
-# Copy pre-built RPMs into the local repository directory
-COPY image_rpms /opt/repo/RPMS/x86_64
+COPY continuousintegration/docker/el9/etc/yum.repos.d/* /etc/yum.repos.d/
 
 # Install necessary packages
 RUN dnf install -y \
@@ -46,10 +36,18 @@ RUN dnf install -y \
 # We add the cta user so that we can consistently reference it in the Helm chart when changing keytab ownership
 RUN useradd -m -u 1000 -g tape cta
 
+# Copy pre-built RPMs into the local repository directory
+COPY image_rpms /opt/repo/RPMS/x86_64
+
 # Populate local repository and enable it
 RUN dnf config-manager --enable epel --setopt="epel.priority=4" && \
     createrepo "/opt/repo" && \
-    dnf config-manager --enable cta-artifacts && \
+    echo -e "[cta-artifacts]\n\
+name=CTA artifacts\n\
+baseurl=file:///opt/repo\n\
+gpgcheck=0\n\
+enabled=1\n\
+priority=2" > /etc/yum.repos.d/cta-artifacts.repo && \
     dnf install -y "cta-release" && \
     cta-versionlock apply && \
     dnf clean all --enablerepo=\* && \
