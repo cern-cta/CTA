@@ -11,7 +11,6 @@ stages:
 
 variables:
 
-
   PLATFORM:
     description: "Specifies the platform to build, test and (possibly) release on"
     value: "el9"
