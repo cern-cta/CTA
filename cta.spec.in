@@ -14,11 +14,11 @@
 
 # Versioning
 # Every package defined in project.json BuildRequires has a corresponding variable available containing its version constraint
-%define oracleVersionConstraint @ORACLE_INSTANTCLIENT_DEVEL_VERSION_CONSTRAINT@
+%define oracleVersionConstraint @ORACLE_INSTANTCLIENT_VERSION_CONSTRAINT@
 %define valgrindVersionConstraint @VALGRIND_VERSION_CONSTRAINT@
-%define xrootdVersionConstraint @XROOTD_DEVEL_VERSION_CONSTRAINT@
-%define radosVersionConstraint @LIBRADOS_VERSION_CONSTRAINT@
-%define gtestDevelVersionConstraint @GTEST_DEVEL_VERSION_CONSTRAINT@
+%define xrootdVersionConstraint @XROOTD_VERSION_CONSTRAINT@
+%define radosVersionConstraint @RADOS_VERSION_CONSTRAINT@
+%define gtestDevelVersionConstraint @GTEST_VERSION_CONSTRAINT@
 
 # Neutral packaging (for srpm)
 #-----------------------------

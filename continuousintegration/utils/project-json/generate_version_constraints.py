@@ -38,8 +38,8 @@ if args.platform not in project_json["platforms"]:
     print(f"Error: invalid platform '{args.platform}'. Supported options are: {valid_platforms}", file=sys.stderr)
     sys.exit(1)
 
-build_versions = project_json["platforms"][args.platform].get("buildRequires", {})
+require_versions = project_json["platforms"][args.platform].get("requires", {})
 
-for package, version in build_versions.items():
+for package, version in require_versions.items():
     var_name = cmake_var_name(package)
     print(f"{var_name}_VERSION_CONSTRAINT=\"{version}\"")
