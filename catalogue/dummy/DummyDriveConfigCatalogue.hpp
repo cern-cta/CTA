@@ -47,6 +47,8 @@ public:
     const std::string &keyName) const override;
 
   void deleteTapeDriveConfig(const std::string &tapeDriveName, const std::string &keyName) override;
+
+  std::list<DriveConfig> m_driveConfigs;
 };
 
 } // namespace cta::catalogue

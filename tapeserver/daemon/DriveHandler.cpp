@@ -998,7 +998,7 @@ std::shared_ptr<cta::IScheduler> DriveHandler::createScheduler(const std::string
   m_sched_db->setStatisticsCacheConfig(statisticsCacheConfig);
 
   m_lc.log(log::DEBUG, "In DriveHandler::createScheduler(): will create scheduler.");
-  return std::make_shared<Scheduler>(*m_catalogue, *m_sched_db, minFilesToWarrantAMount, minBytesToWarrantAMount);
+  return std::make_shared<Scheduler>(*m_catalogue, *m_sched_db, m_tapedConfig.schedulerBackendName.value(), minFilesToWarrantAMount, minBytesToWarrantAMount);
 }
 
 castor::tape::tapeserver::daemon::Session::EndOfSessionAction DriveHandler::executeDataTransferSession(

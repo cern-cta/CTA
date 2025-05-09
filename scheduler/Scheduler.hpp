@@ -91,11 +91,6 @@ public:
    */
   Scheduler(cta::catalogue::Catalogue& catalogue,
             SchedulerDatabase& db,
-            const uint64_t minFilesToWarrantAMount,
-            const uint64_t minBytesToWarrantAMount);
-
-  Scheduler(cta::catalogue::Catalogue& catalogue,
-            SchedulerDatabase& db,
             const std::string& schedulerBackendName,
             const uint64_t minFilesToWarrantAMount,
             const uint64_t minBytesToWarrantAMount);
