@@ -159,5 +159,5 @@ validate-project-json:
   stage: analysis
   image: $IMAGE_ANALYSIS
   script:
-    - python3 -m pip install -y jsonschema
+    - python3 -m pip install jsonschema
     - python3 ./continuousintegration/utils/project-json/validate_project_json.py
