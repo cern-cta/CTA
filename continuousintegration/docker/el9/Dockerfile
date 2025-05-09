@@ -16,6 +16,8 @@
 # CTA generic image containing all CTA RPMs
 FROM gitlab-registry.cern.ch/linuxsupport/alma9-base:latest
 
+ENV CTAREPODIR="/opt/repo"
+
 # Add orchestration run scripts locally
 COPY continuousintegration/docker/opt /opt
 COPY continuousintegration/docker/el9/etc/yum.repos.d/* /etc/yum.repos.d/
@@ -37,14 +39,14 @@ RUN dnf install -y \
 RUN useradd -m -u 1000 -g tape cta
 
 # Copy pre-built RPMs into the local repository directory
-COPY image_rpms /opt/repo/RPMS/x86_64
+COPY image_rpms ${CTAREPODIR}/RPMS/x86_64
 
 # Populate local repository and enable it
 RUN dnf config-manager --enable epel --setopt="epel.priority=4" && \
-    createrepo "/opt/repo" && \
+    createrepo "${CTAREPODIR}" && \
     echo -e "[cta-artifacts]\n\
 name=CTA artifacts\n\
-baseurl=file:///opt/repo\n\
+baseurl=file://${CTAREPODIR}\n\
 gpgcheck=0\n\
 enabled=1\n\
 priority=2" > /etc/yum.repos.d/cta-artifacts.repo && \
