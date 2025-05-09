@@ -48,6 +48,7 @@ RUN useradd -m -u 1000 -g tape cta
 
 # Populate local repository and enable it
 RUN dnf config-manager --enable epel --setopt="epel.priority=4" && \
+    createrepo "/opt/repo" && \
     dnf config-manager --enable cta-artifacts && \
     dnf install -y "cta-release" && \
     cta-versionlock apply && \

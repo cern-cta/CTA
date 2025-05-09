@@ -105,7 +105,8 @@ create_instance() {
   max_drives_per_tpsrv=1
   max_tapeservers=2
   # EOS related
-  eos_image_tag=5.3.10.el9 # This tag is for EOS 5.3.10
+  eos_server_chart_version=$(jq -r .dev.eosServerChartVersion ../../project.json)
+  eos_image_tag=$(jq -r .dev.defaultEosImageTag ../../project.json)
   eos_image_repository=gitlab-registry.cern.ch/dss/eos/eos-ci
   eos_config=presets/dev-eos-values.yaml
 
@@ -284,7 +285,7 @@ create_instance() {
 
   wait $auth_pid || exit 1
 
-  log_run helm ${helm_command} eos oci://registry.cern.ch/eos/charts/server --version 0.5.1 \
+  log_run helm ${helm_command} eos oci://registry.cern.ch/eos/charts/server --version "${eos_server_chart_version}" \
                                 --namespace "${namespace}" \
                                 -f "${eos_config}" \
                                 --set global.repository="${eos_image_repository}" \
