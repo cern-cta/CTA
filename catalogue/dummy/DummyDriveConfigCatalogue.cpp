@@ -22,15 +22,19 @@ namespace cta::catalogue {
 
 void DummyDriveConfigCatalogue::createTapeDriveConfig(const std::string &tapeDriveName, const std::string &category,
   const std::string &keyName, const std::string &value, const std::string &source) {
-  throw exception::Exception(std::string("In ") + __PRETTY_FUNCTION__ + ": not implemented");
+  m_driveConfigs.emplace_back(DriveConfig{tapeDriveName, category, keyName, value, source});
 }
 
 std::list<cta::catalogue::DriveConfigCatalogue::DriveConfig> DummyDriveConfigCatalogue::getTapeDriveConfigs() const {
-  throw exception::Exception(std::string("In ") + __PRETTY_FUNCTION__ + ": not implemented");
+  return m_driveConfigs;
 }
 
 std::list<std::pair<std::string, std::string>> DummyDriveConfigCatalogue::getTapeDriveConfigNamesAndKeys() const {
-  throw exception::Exception(std::string("In ") + __PRETTY_FUNCTION__ + ": not implemented");
+  std::list<std::pair<std::string, std::string>> result;
+  for (auto& config: m_driveConfigs) {
+    result.emplace_back(config.tapeDriveName, config.keyName);
+  }
+  return result;
 }
 
 void DummyDriveConfigCatalogue::modifyTapeDriveConfig(const std::string &tapeDriveName, const std::string &category,

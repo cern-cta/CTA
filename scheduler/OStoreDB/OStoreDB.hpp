@@ -822,7 +822,7 @@ private:
 private:
   objectstore::Backend& m_objectStore;
   catalogue::Catalogue& m_catalogue;
-  const std::optional<std::string> m_schedulerDBName;
+  const std::string m_schedulerDBName;
   log::Logger& m_logger;
   std::unique_ptr<TapeDrivesCatalogueState> m_tapeDrivesState;
   objectstore::AgentReference* m_agentReference = nullptr;

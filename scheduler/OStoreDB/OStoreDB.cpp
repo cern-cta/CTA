@@ -589,7 +589,32 @@ void OStoreDB::fetchMountInfo(SchedulerDatabase::TapeMountDecisionInfo& tmdi,
                                     (int) cta::common::dataStructures::MountType::ArchiveForRepack,
                                     (int) cta::common::dataStructures::MountType::Retrieve,
                                     (int) cta::common::dataStructures::MountType::Label};
+
+  std::unordered_map<std::string, std::optional<std::string>> driveSchedulerBackendNameMap;
+  for (const auto& config : m_catalogue.DriveConfig()->getTapeDriveConfigs()) {
+    if (config.keyName == "SchedulerBackendName") {
+      if (bool ok = driveSchedulerBackendNameMap.insert({config.tapeDriveName, config.value}).second; !ok) {
+        log::ScopedParamContainer(logContext)
+          .add("driveName", config.tapeDriveName)
+          .log(log::ERR, "In OStoreDB::fetchMountInfo(): found duplicate configuration for SchedulerBackendName.");
+      }
+    }
+  }
+
   for (const auto& driveState : driveStates) {
+    // Ignore drives not connected to the same scheduler backend
+    try {
+      const auto& driveSchedulerBackendName = driveSchedulerBackendNameMap.at(driveState.driveName);
+      if (driveSchedulerBackendName != m_schedulerDBName) {
+        continue;
+      }
+    } catch (std::out_of_range &) {
+      log::ScopedParamContainer(logContext)
+        .add("driveName", driveState.driveName)
+        .log(log::ERR, "In OStoreDB::fetchMountInfo(): could not find SchedulerBackendName configuration for drive.");
+      continue;
+    }
+
     if (activeDriveStatuses.count(static_cast<int>(driveState.driveStatus))) {
       if (driveState.mountType == common::dataStructures::MountType::NoMount) {
         log::ScopedParamContainer(logContext)
