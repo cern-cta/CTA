@@ -30,11 +30,12 @@ usage() {
   echo "  -n, --name:                         The Docker image name. Defaults to ctageneric"
   echo "  -l, --load-into-minikube:           Takes the image from the podman registry and ensures that it is present in the image registry used by minikube."
   echo "  -c, --container-runtime <runtime>:  The container runtime to use for the build container. Defaults to podman."
-  echo "      --dockerfile <path>:            Path to the Dockerfile (default: 'continuousintegration/docker/el9/Dockerfile'). Should be relative to the repository root."
+  echo "      --dockerfile <path>:            Path to the Dockerfile (default: 'continuousintegration/docker/{defaultplatform}/Dockerfile'). Should be relative to the repository root."
   exit 1
 }
 
 buildImage() {
+  project_root=$(git rev-parse --show-toplevel)
 
   # Default values
   local rpm_src=""
@@ -42,7 +43,8 @@ buildImage() {
   local image_name="ctageneric"
   local container_runtime="podman"
   local rpm_default_src="image_rpms"
-  local dockerfile="continuousintegration/docker/el9/Dockerfile"
+  local defaultPlatform=$(jq -r .dev.defaultPlatform "${project_root}/project.json")
+  local dockerfile="continuousintegration/docker/${defaultPlatform}/Dockerfile"
   local load_into_minikube=false
 
   while [[ "$#" -gt 0 ]]; do
@@ -119,7 +121,6 @@ buildImage() {
   fi
 
   # navigate to root directory
-  project_root=$(git rev-parse --show-toplevel)
   cd "${project_root}"
 
   # Copy the rpms into a predefined rpm directory

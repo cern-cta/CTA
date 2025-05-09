@@ -83,11 +83,19 @@ variables:
 
   # Pass a file here (must be absolute or relative to the orchestration directory, e.g. presets/dev...)
   CUSTOM_CTA_VALUES_FILE:
-    description: "Path to a values.yaml file to be passed to the CTA Helm chart. Must be absolute or relative to the orchestration/ directory, e.g. presets/dev-..."
+    description: "Path to a values.yaml file to be passed to the CTA Helm chart."
     value: ""
+    options:
+      - ""
+      - "presets/dev-cta-xrd-values.yaml"
+      - "presets/dev-cta-grpc-values.yaml"
   CUSTOM_EOS_VALUES_FILE:
-    description: "Path to a values.yaml file to be passed to the EOS Helm chart. Must be absolute or relative to the orchestration/ directory, e.g. presets/dev-..."
+    description: "Path to a values.yaml file to be passed to the EOS Helm chart."
     value: ""
+    options:
+      - ""
+      - "presets/dev-eos-values.yaml"
+      - "presets/dev-eos-grpc-values.yaml"
 
   # Pipeline Type. Supported types:
   #   - COMMIT: default pipeline type, Runs static analysis, compiles the software and tests it.
@@ -105,10 +113,13 @@ variables:
 
   # Image building. Used by EOS Regression and Image build pipeline types
   CUSTOM_XRD_TAG:
+    description: "Custom XRootD version to use for building and running."
     value: ""
   CUSTOM_EOS_TAG:
+    description: "Custom EOS version to use running."
     value: ""
   CUSTOM_CTA_TAG:
+    description: "Custom CTA version to build a docker image from and test with. Should only be used when the PIPELINE_TYPE != COMMIT."
     value: ""
 
   # Meta CI

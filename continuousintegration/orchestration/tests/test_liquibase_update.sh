@@ -64,16 +64,17 @@ fi
 # Note that this assumes the setup was spawned with the previous catalogue version
 
 # Get Catalogue Schema version
-project_json=$(cat ../../../project.json)
-catalogue_schema_version=$(echo "$project_json" | jq .catalogueVersion)
-prev_catalogue_schema_version=$(echo "$project_json" | jq .supportedCatalogueVersions[] | grep -v $catalogue_schema_version | head -1)
+project_json_file="../../../project.json"
+catalogue_schema_version=$(jq .catalogueVersion ${project_json_file})
+prev_catalogue_schema_version=$(jq .supportedCatalogueVersions[] ${project_json_file} | grep -v $catalogue_schema_version | head -1)
+defaultPlatform=$(jq -r .dev.defaultPlatform ${project_json_file})
 
 echo "Checking if the current schema version is the same as the previous one"
 check_schema_version ${prev_catalogue_schema_version}
 
 # This is pretty disgusting but for now this will do
 # If the configmap generation would be done through Helm the file in question needs to be within the chart
-yum_repos_file="$(realpath "$(dirname "$0")/../../docker/el9/etc/yum.repos.d")"
+yum_repos_file="$(realpath "$(dirname "$0")/../../docker/${defaultPlatform}/etc/yum.repos.d")"
 kubectl -n ${NAMESPACE} create configmap yum.repos.d-config --from-file=${yum_repos_file}
 
 # Set up the catalogue updater pod
