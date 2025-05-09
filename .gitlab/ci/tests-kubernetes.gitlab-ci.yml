@@ -25,13 +25,12 @@
         IMAGE_TAG=$CTA_BUILD_ID
       fi
     # If we are testing from a CTA tag, get the Catalogue version for that tag
-    # TODO: replace with project.json
     - |
       if [ -n "${CUSTOM_CTA_TAG}" ]; then
         git fetch --tags --force
-        git checkout tags/$CUSTOM_CTA_TAG -- catalogue/CTARefCatalogueSchemaVersion.cmake
-        CATALOGUE_VERSION=$(cat catalogue/CTARefCatalogueSchemaVersion.cmake | grep -v '#' | grep 'CTA_CATALOGUE_REF_SCHEMA_VERSION_CURR' | awk '{print $2}' | awk -F ')' '{ print $1}')
-        EXTRA_SPAWN_ARGS+=" --catalogue-version ${CATALOGUE_VERSION}.0"
+        git checkout "tags/$CUSTOM_CTA_TAG" -- project.json
+        EXTRA_SPAWN_ARGS+=" --catalogue-version $(jq -r '.catalogueVersion' project.json)"
+        git restore project.json
       fi
     # The inner .el9 appending is a temporary fix for choosing which docker image to grab
     - |
