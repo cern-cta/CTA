@@ -4,9 +4,7 @@
   "description": "The CERN Tape Archive (CTA) is the open-source archival storage system for the custodial copy of all physics data at CERN.",
   "license": "GPLv3+",
   "catalogueVersion": 15.0,
-  "supportedCatalogueVersions": [
-    15.0
-  ],
+  "supportedCatalogueVersions": [ 15 ],
   "dev": {
     "cppVersion": "c++17",
     "defaultPlatform": "el9",
@@ -97,7 +95,7 @@
         "libuuid-devel": ">= 2.17",
         "json-c-devel": ">= 0.11",
         "libattr-devel": ">= 2.4.44",
-        "cmake3": ">= 3.17",
+        "cmake3": ">= 3.19",
         "valgrind": ">= 3.8.1",
         "valgrind-devel": "",
         "grpc": "",
