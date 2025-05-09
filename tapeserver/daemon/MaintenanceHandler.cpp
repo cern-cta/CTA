@@ -302,7 +302,7 @@ void MaintenanceHandler::exceptionThrowingRunChild(){
     statisticsCacheConfig.retrieveQueueCacheMaxAgeSecs = m_tapedConfig.retrieveQueueCacheMaxAgeSecs.value();
     sched_db->setStatisticsCacheConfig(statisticsCacheConfig);
     // TODO: we have hardcoded the mount policy parameters here temporarily we will remove them once we know where to put them
-    scheduler = std::make_unique<cta::Scheduler>(*catalogue, *sched_db, 5, 2*1000*1000);
+    scheduler = std::make_unique<cta::Scheduler>(*catalogue, *sched_db, m_tapedConfig.schedulerBackendName.value(), 5, 2*1000*1000);
     // Before launching the transfer session, we validate that the scheduler is reachable.
     scheduler->ping(m_processManager.logContext());
   } catch(cta::exception::Exception &ex) {

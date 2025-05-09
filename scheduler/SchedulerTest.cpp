@@ -162,7 +162,7 @@ public:
     dynamic_cast<cta::objectstore::OStoreDBWrapperInterface*>(osdb.get());
     // We know the cast will not fail, so we can safely do it (otherwise we could leak memory)
     m_db.reset(dynamic_cast<cta::objectstore::OStoreDBWrapperInterface*>(osdb.release()));
-    m_scheduler = std::make_unique<Scheduler>(*m_catalogue, *m_db, s_minFilesToWarrantAMount, s_minBytesToWarrantAMount);
+    m_scheduler = std::make_unique<Scheduler>(*m_catalogue, *m_db, s_schedulerBackendName, s_minFilesToWarrantAMount, s_minBytesToWarrantAMount);
     objectstore::Helpers::flushStatisticsCache();
   }
 
@@ -306,10 +306,10 @@ public:
 
     const std::string driveName = "tape_drive";
     const auto tapeDrive = getDefaultTapeDrive(driveName);
-    catalogue.DriveState()->createTapeDrive(tapeDrive);
+    createTapeDriveWithSchedulerBackendConfig(getCatalogue(), tapeDrive);
     const std::string driveName2 = "drive0";
     const auto tapeDrive2 = getDefaultTapeDrive(driveName2);
-    catalogue.DriveState()->createTapeDrive(tapeDrive2);
+    createTapeDriveWithSchedulerBackendConfig(getCatalogue(), tapeDrive2);
   }
 
   cta::catalogue::CreateTapeAttributes getDefaultTape() {
@@ -344,6 +344,17 @@ public:
     tapeDrive.creationLog = log;
     tapeDrive.lastModificationLog = log;
     return tapeDrive;
+  }
+
+  void createTapeDriveWithSchedulerBackendConfig(cta::catalogue::Catalogue & catalogue, const cta::common::dataStructures::TapeDrive & tapeDrive) {
+    catalogue.DriveState()->createTapeDrive(tapeDrive);
+    catalogue.DriveConfig()->createTapeDriveConfig(
+      tapeDrive.driveName,
+      "category",
+      "SchedulerBackendName",
+      s_schedulerBackendName,
+      "source"
+      );
   }
 
 private:
@@ -384,6 +395,7 @@ protected:
   const uint64_t s_mediaTypeCapacityInBytes = 10;
   const std::string s_vo = "vo";
   const std::string s_repack_vo = "repack_vo";
+  const std::string s_schedulerBackendName = "schedulerBackendName";
   //TempFile m_tempSqliteFile;
 
 }; // class SchedulerTest
@@ -1287,10 +1299,10 @@ TEST_P(SchedulerTest, archive_report_and_retrieve_new_dual_copy_file) {
 
     const std::string driveName = "tape_drive";
     const auto tapeDrive = getDefaultTapeDrive(driveName);
-    catalogue.DriveState()->createTapeDrive(tapeDrive);
+    createTapeDriveWithSchedulerBackendConfig(getCatalogue(), tapeDrive);
     const std::string driveName2 = "drive0";
     const auto tapeDrive2 = getDefaultTapeDrive(driveName2);
-    catalogue.DriveState()->createTapeDrive(tapeDrive2);
+    createTapeDriveWithSchedulerBackendConfig(getCatalogue(), tapeDrive2);
   }
 
 #ifdef STDOUT_LOGGING
@@ -6488,7 +6500,7 @@ TEST_P(SchedulerTest, retrieveArchiveRepackQueueMaxDrivesVoInFlightChangeSchedul
   std::string drive = "drive";
   {
     const auto tapeDrive = getDefaultTapeDrive(drive);
-    catalogue.DriveState()->createTapeDrive(tapeDrive);
+    createTapeDriveWithSchedulerBackendConfig(getCatalogue(), tapeDrive);
   }
 
   //Create a logical library in the catalogue
@@ -6675,17 +6687,17 @@ TEST_P(SchedulerTest, retrieveArchiveAllTypesMaxDrivesVoInFlightChangeScheduleMo
   std::string drive1 = "drive1";
   {
     const auto tapeDrive = getDefaultTapeDrive(drive1);
-    catalogue.DriveState()->createTapeDrive(tapeDrive);
+    createTapeDriveWithSchedulerBackendConfig(getCatalogue(), tapeDrive);
   }
   std::string drive2 = "drive2";
   {
     const auto tapeDrive = getDefaultTapeDrive(drive2);
-    catalogue.DriveState()->createTapeDrive(tapeDrive);
+    createTapeDriveWithSchedulerBackendConfig(getCatalogue(), tapeDrive);
   }
   std::string drive3 = "drive3";
   {
     const auto tapeDrive = getDefaultTapeDrive(drive3);
-    catalogue.DriveState()->createTapeDrive(tapeDrive);
+    createTapeDriveWithSchedulerBackendConfig(getCatalogue(), tapeDrive);
   }
 
   //Create a logical library in the catalogue
@@ -7100,12 +7112,12 @@ TEST_P(SchedulerTest, getNextMountWithArchiveForUserAndArchiveForRepackShouldRet
   std::string drive1 = "drive1";
   {
     const auto tapeDrive = getDefaultTapeDrive(drive1);
-    catalogue.DriveState()->createTapeDrive(tapeDrive);
+    createTapeDriveWithSchedulerBackendConfig(getCatalogue(), tapeDrive);
   }
   std::string drive2 = "drive2";
   {
     const auto tapeDrive = getDefaultTapeDrive(drive2);
-    catalogue.DriveState()->createTapeDrive(tapeDrive);
+    createTapeDriveWithSchedulerBackendConfig(getCatalogue(), tapeDrive);
   }
 
   //Create two tapes (ArchiveForRepack and ArchiveForUser)
