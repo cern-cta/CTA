@@ -79,23 +79,3 @@ message(STATUS "CTA version is ${CTA_VERSION}-${CTA_RELEASE}")
 # Shared library versioning
 set(CTA_LIBVERSION ${CTA_SOMAJOR}.${CTA_SOMINOR}.${CTA_SOPATCH})
 message(STATUS "CTA shared object version is ${CTA_LIBVERSION} (${CTA_SOVERSION})")
-
-# Versioning for packages based on project.json
-include(${CMAKE_SOURCE_DIR}/cmake/UseRPMToolsEnvironment.cmake)
-
-file(READ "${CMAKE_SOURCE_DIR}/project.json" project_json_raw)
-file(JSON project_json PARSE "${project_json_raw}")
-
-file(JSON dep_keys PARSE "${json_raw}" GET platforms "${RPMTools_RPMBUILD_DIST}" buildVersions OBJECT_KEYS)
-
-# For each dependency, generate a value that we can use in cta.spec.in
-foreach(dep IN LISTS dep_keys)
-  file(JSON version_spec PARSE "${json_raw}" GET platforms "${RPMTools_RPMBUILD_DIST}" buildVersions "${dep}")
-  string(TOUPPER "${dep}" var_name)
-  string(REGEX REPLACE "[^A-Z0-9]" "_" var_name "${var_name}")
-  set("${var_name}_VERSION" "${version_spec}")
-endforeach()
-
-# Optional: Debug print
-message(STATUS "PROTOBUF_VERSION = ${PROTOBUF_VERSION}")
-message(STATUS "GRPC_VERSION = ${GRPC_VERSION}")

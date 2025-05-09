@@ -12,11 +12,12 @@
 #               In applying this licence, CERN does not waive the privileges and immunities
 #               granted to it by virtue of its status as an Intergovernmental Organization or
 #               submit itself to any jurisdiction.
-# We need 3.19 to use the JSON functionality for parsing the project.json
-cmake_minimum_required (VERSION 3.19)
+cmake_minimum_required (VERSION 3.17)
 
 project(cta)
 
+# Populate various cmake variables from the project.json
+include(cmake/LoadProjectJson.cmake)
 
 set(CMAKE_C_FLAGS "-fPIC -Wall -Wextra -Werror -Wno-unused-parameter")
 
@@ -47,11 +48,11 @@ execute_process(COMMAND cat /etc/os-release
   RESULT_VARIABLE result
   OUTPUT_VARIABLE output)
 
-message(STATUS "Setting support for c++17")
-set (CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++17")
+message(STATUS "Setting support for ${PROJECT_CPP_VERSION}")
+set (CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=${PROJECT_CPP_VERSION}")
 
 if (NOT CMAKE_BUILD_TYPE)
-  set(CMAKE_BUILD_TYPE "Debug" CACHE STRING "" FORCE)
+  set(CMAKE_BUILD_TYPE "${PROJECT_DEFAULT_BUILD_TYPE}" CACHE STRING "" FORCE)
 endif()
 
 # To enable logging for testing purposes set -DENABLE_STDOUT_LOGGING=1
@@ -119,8 +120,6 @@ endif()
 # Load additional CMake modules:
 # Version information
 include(cmake/CTAVersions.cmake)
-# Pandocology (to create man pages from Markdown)
-include(cmake/Pandocology.cmake)
 
 IF(DEFINED PackageOnly)
   message (STATUS "Running CMake in package-only mode")
@@ -173,6 +172,8 @@ ELSE(DEFINED PackageOnly)
   #
   set(XRD_SSI_PB_DIR ${PROJECT_SOURCE_DIR}/xrootd-ssi-protobuf-interface)
 
+  # Pandocology (to create man pages from Markdown)
+  include(cmake/Pandocology.cmake)
   add_subdirectory(eos_cta)
 
   add_subdirectory(eos_grpc_client)

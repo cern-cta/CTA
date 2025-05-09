@@ -6,3 +6,11 @@ pipeline-variable-check:
     - if: $PIPELINE_TYPE != "COMMIT"
   script:
     - python3 ./continuousintegration/checks/check_ci_input_variables.py
+
+validate-project-json:
+  stage: validation
+  variables:
+    GIT_DEPTH: 0
+  script:
+    - pip install -y jsonschema
+    - python3 ./continuousintegration/utils/project-json/validate_project_json.py

@@ -1,12 +1,19 @@
 {
   "name": "CTA",
+  "summary": "CERN Tape Archive",
   "description": "The CERN Tape Archive (CTA) is the open-source archival storage system for the custodial copy of all physics data at CERN.",
-  "license": "GNU GPLv3",
+  "license": "GPLv3+",
+  "defaultPlatform": "el9",
   "catalogueVersion": 15.0,
   "supportedCatalogueVersions": [
-    14.0, 15.0
+    15.0
   ],
-  "defaultPlatform": "el9",
+  "dev": {
+    "cppVersion": "c++17",
+    "defaultBuildType": "Debug",
+    "eosServerChartVersion": "0.5.1",
+    "defaultEosImageTag": "5.3.10.el9"
+  },
   "packageGroups": {
     "eos": [
       "eos-archive",
@@ -47,6 +54,12 @@
       "xrootd-server-libs",
       "xrootd-tests"
     ],
+    "xrootd-devel": [
+      "xrootd-devel",
+      "xrootd-client-devel",
+      "xrootd-private-devel",
+      "xrootd-server-devel"
+    ],
     "protobuf": [
       "protobuf-compiler",
       "protobuf-devel"
@@ -67,13 +80,14 @@
       "versionlock": {
         "eos": "5.3.10-1",
         "eos-folly": "2019.11.11.00-1",
-        "xrootd": "1:5.8.1.post48+git845be267c-1",
+        "xrootd": "1:5.8.2-1",
         "oracle-instantclient-devel": "23.6.0.24.10-1"
       },
-      "buildVersions": {
-        "xrootd": ">= 1:5.7.1-1",
+      "buildRequires": {
+        "cmake3": ">= 3.17",
+        "xrootd-devel": ">= 1:5.7.1-1",
         "protobuf": ">= 3.3.1",
-        "librados": "= 2:17.2.7",
+        "librados": "= 2:17.2.8",
         "oracle-instantclient-devel": ">= 23.0",
         "gtest-devel": ">= 1.11.0",
         "sqlite-devel": ">= 3.6",
@@ -83,12 +97,15 @@
         "libuuid-devel": ">= 2.17",
         "json-c-devel": ">= 0.11",
         "libattr-devel": ">= 2.4.44",
+        "valgrind": ">= 3.8.1",
+        "valgrind-devel": "",
         "grpc": "",
         "postgresql-devel": "",
-        "valgrind": "",
-        "valgrind-devel": "",
         "krb5-devel": "",
-        "libtirpc-devel": ""
+        "libtirpc-devel": "",
+        "redhat-rpm-config": "",
+        "pandoc": "",
+        "which": ""
       }
     }
   }

@@ -22,6 +22,7 @@ build-cta-srpm:
   extends:
     - .build-cta
   needs:
+    - job: validate-project-json
     - job: modify-project-json
       optional: true
   rules:

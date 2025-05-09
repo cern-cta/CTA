@@ -74,7 +74,7 @@ foreach(PNAME ${RESULTS})
 endforeach()
 
 execute_process(
-  COMMAND ${CMAKE_COMMAND} -E env PYTHONUNBUFFERED=1 python3 ${CMAKE_SOURCE_DIR}/continuousintegration/utils/generate_versionlock.py --platform ${RPMTools_RPMBUILD_DIST}
+  COMMAND ${CMAKE_COMMAND} -E env PYTHONUNBUFFERED=1 python3 ${CMAKE_SOURCE_DIR}/continuousintegration/utils/project-json/generate_versionlock.py --platform ${RPMTools_RPMBUILD_DIST}
   WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
   OUTPUT_VARIABLE VERSIONLOCK
   OUTPUT_STRIP_TRAILING_WHITESPACE

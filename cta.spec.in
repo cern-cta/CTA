@@ -3,12 +3,22 @@
 %define name cta
 %define ctaVersion @CTA_VERSION@
 %define ctaRelease @CTA_RELEASE@
+%define ctaSummary @PROJECT_SUMMARY@
+%define ctaLicense @PROJECT_LICENSE@
 
 %define usingObjectstore @RPM_USINGOBJECTSTORE@
 %define occiSupport @RPM_USING_ORACLE@
 %define schedOpt @RPM_SCHEDOPT@
 %define oracleOpt @RPM_ORACLE@
 %define buildGenerator @CMAKE_GENERATOR@
+
+# Versioning
+# Every package defined in project.json BuildRequires has a corresponding variable available containing its version constraint
+%define oracleVersionConstraint @ORACLE_INSTANTCLIENT_DEVEL_VERSION_CONSTRAINT@
+%define valgrindVersionConstraint @VALGRIND_VERSION_CONSTRAINT@
+%define xrootdVersionConstraint @XROOTD_DEVEL_VERSION_CONSTRAINT@
+%define radosVersionConstraint @LIBRADOS_VERSION_CONSTRAINT@
+%define gtestDevelVersionConstraint @GTEST_DEVEL_VERSION_CONSTRAINT@
 
 # Neutral packaging (for srpm)
 #-----------------------------
@@ -45,43 +55,21 @@
 
 # General settings
 #-----------------
-Summary: CERN Tape Archive
 Name: %{name}
+Summary: %{ctaSummary}
 Version: %{ctaVersion}
 Release: %{ctaRelease}%{mydist}
 Source: %{name}-%{ctaVersion}-%{ctaRelease}.tar.gz
-License: GPLv3+
+License: %{ctaLicense}
 Group: Application/cta
 
 BuildRoot: %{_builddir}/%{name}-%{version}-root
-BuildRequires: cmake3 >= 3.17 redhat-rpm-config
 
-%define oracleVersionMin 23.0
-%define oracleVersionMax 24.0
-%define xrootdVersion 1:5.7.1-1.el9
-%define radosVersion 2:17.2.8
-%define requirementsOS protobuf-compiler >= 3.3.1 protobuf-devel >= 3.3.1 oracle-instantclient-devel >= %{oracleVersionMin}
 %define requiredProtobuf protobuf
-BuildRequires: %{requirementsOS}
-BuildRequires: grpc, grpc-devel, grpc-plugins
-BuildRequires: xrootd-client-devel  >= %{xrootdVersion}
-BuildRequires: xrootd-devel         >= %{xrootdVersion}
-BuildRequires: xrootd-server-devel  >= %{xrootdVersion}
-BuildRequires: xrootd-private-devel >= %{xrootdVersion}
-BuildRequires: librados-devel = %{radosVersion}, libradosstriper-devel = %{radosVersion},
-BuildRequires: gtest-devel >= 1.11.0
-BuildRequires: sqlite-devel >= 3.6
-BuildRequires: libcap-devel >= 2.16
-BuildRequires: binutils-devel >= 2.20
-BuildRequires: cryptopp-devel >= 5.6.2
-BuildRequires: libuuid-devel >= 2.17
-BuildRequires: json-c-devel >= 0.11
-BuildRequires: libattr-devel >= 2.4.44
-BuildRequires: postgresql-devel
-BuildRequires: valgrind
-BuildRequires: valgrind-devel
-BuildRequires: krb5-devel
-BuildRequires: libtirpc-devel
+
+# This is populated by the project.json from the buildRequires items
+@BUILD_REQUIREMENTS@
+
 %{?systemd_requires}
 BuildRequires: systemd
 # only build debug info if you're building the whole code
@@ -124,7 +112,7 @@ Requires: logrotate
 Requires: cta-common = %{version}-%{release}
 Requires: cta-lib = %{version}-%{release}
 Requires: cta-lib-catalogue = %{version}-%{release}
-Requires: xrootd-client-libs >= %{xrootdVersion}
+Requires: xrootd-client-libs %{xrootdVersionConstraint}
 %description -n cta-taped
 CERN Tape Archive:
 The tape server daemon
@@ -156,8 +144,8 @@ Requires: logrotate
 Requires: cta-common = %{version}-%{release}
 Requires: cta-lib = %{version}-%{release}
 Requires: cta-lib-catalogue = %{version}-%{release}
-Requires: xrootd-client-libs >= %{xrootdVersion}
-Requires: xrootd-server >= %{xrootdVersion}
+Requires: xrootd-client-libs %{xrootdVersionConstraint}
+Requires: xrootd-server %{xrootdVersionConstraint}
 %description -n cta-frontend
 CERN Tape Archive:
 The xroot plugin
@@ -225,7 +213,7 @@ dCache frontend
 Summary: CERN Tape Archive: command line interface
 Group: Application/CTA
 Requires: cta-lib-common = %{version}-%{release}
-Requires: xrootd-client-libs >= %{xrootdVersion}
+Requires: xrootd-client-libs %{xrootdVersionConstraint}
 %description -n cta-cli
 CERN Tape Archive:
 The command line utilities
@@ -255,7 +243,7 @@ Summary: CERN Tape Archive libraries
 Group: Application/CTA
 # Explicity require protobuf to avoid clash with eos-protobuf
 Requires: %{requiredProtobuf}
-Requires: xrootd-client-libs >= %{xrootdVersion}
+Requires: xrootd-client-libs %{xrootdVersionConstraint}
 %description -n cta-lib-common
 CERN Tape Archive:
 The shared libraries base
@@ -268,8 +256,7 @@ The shared libraries base
 %package -n cta-lib-catalogue-occi
 Summary: CERN Tape Archive libraries
 Group: Application/CTA
-Requires: oracle-instantclient-basic >= %{oracleVersionMin}
-Requires: oracle-instantclient-basic < %{oracleVersionMax}
+Requires: oracle-instantclient-basic %{oracleVersionConstraint}
 %description -n cta-lib-catalogue-occi
 CERN Tape Archive:
 Shared libraries required to access the Oracle-based CTA catalogue
@@ -307,7 +294,7 @@ Group: Application/CTA
 Requires: cta-lib-common
 Requires: (cta-lib-catalogue-postgres = %{version}-%{release} or cta-lib-catalogue-occi = %{version}-%{release})
 Requires: cta-lib-catalogue-inmemory = %{version}-%{release}
-Requires: xrootd-client-libs >= %{xrootdVersion}
+Requires: xrootd-client-libs %{xrootdVersionConstraint}
 %description -n cta-lib-catalogue
 CERN Tape Archive:
 Shared libraries required to access the CTA catalogue
@@ -326,11 +313,11 @@ Shared libraries required to access the CTA catalogue
 %package -n cta-lib
 Summary: CERN Tape Archive libraries
 Group: Application/CTA
-Requires: librados2 = %{radosVersion}
+Requires: librados2 %{radosVersionConstraint}
 %if "%{usingObjectstore}" == "0"
 Requires: postgresql-libs
 %endif
-Requires: xrootd-client-libs >= %{xrootdVersion}
+Requires: xrootd-client-libs %{xrootdVersionConstraint}
 # Explicity require protobuf to avoid clash with eos-protobuf
 Requires: %{requiredProtobuf}
 Requires: cta-lib-common = %{version}-%{release}
@@ -356,15 +343,15 @@ The shared libraries
 %package -n cta-integrationtests
 Summary: CERN Tape Archive: unit and integration tests with virtual tape drives
 Group: Application/CTA
-Requires: valgrind >= 3.8.1
+Requires: valgrind %{valgrindVersionConstraint}
 Requires: (cta-lib-catalogue-postgres = %{version}-%{release} or cta-lib-catalogue-occi = %{version}-%{release})
 Requires: cta-lib = %{version}-%{release}
 Requires: cta-taped = %{ctaVersion}-%{ctaRelease}%{mydist}
 Requires: make
 Requires: moreutils
 Requires: libtirpc-devel
-Requires: xrootd-client-libs >= %{xrootdVersion}
-Requires: gtest-devel >= 1.11.0
+Requires: xrootd-client-libs %{xrootdVersionConstraint}
+Requires: gtest-devel %{gtestDevelVersionConstraint}
 %description -n cta-integrationtests
 CERN Tape Archive:
 Unit tests and integration tests with virtual tape drives
@@ -414,7 +401,7 @@ Unit tests and integration tests with virtual tape drives
 Summary: CERN Tape Archive: command-line tool for testing immutable files
 Group: Application/CTA
 Requires: cta-lib-common = %{version}-%{release}
-Requires: xrootd-client-libs >= %{xrootdVersion}
+Requires: xrootd-client-libs %{xrootdVersionConstraint}
 %description -n cta-immutable-file-test
 CERN Tape Archive:
 Command-line tool for testing immutable files
@@ -428,7 +415,7 @@ Summary: CERN Tape Archive: object store tools
 Group: Application/CTA
 Requires: cta-lib = %{version}-%{release}
 Requires: cta-lib-catalogue = %{version}-%{release}
-Requires: xrootd-client-libs >= %{xrootdVersion}
+Requires: xrootd-client-libs %{xrootdVersionConstraint}
 %description -n cta-objectstore-tools
 CERN Tape Archive:
 Tools allowing initialization and inspection of the object store.
@@ -449,7 +436,7 @@ Tools allowing initialization and inspection of the object store.
 Summary: Utilities to faciliate working with the CTA catalogue
 Group: Application/CTA
 Requires: cta-lib-catalogue = %{version}-%{release}
-Requires: xrootd-client-libs >= %{xrootdVersion}
+Requires: xrootd-client-libs %{xrootdVersionConstraint}
 %description -n cta-catalogueutils
 CERN Tape Archive:
 Scripts and utilities to faciliate working with the CTA catalogue
@@ -540,7 +527,7 @@ fi
 Summary: The command-line tool for pre-labelling a CTA tape.
 Group: Application/CTA
 Requires: cta-lib = %{version}-%{release}
-Requires: xrootd-client-libs >= %{xrootdVersion}
+Requires: xrootd-client-libs %{xrootdVersionConstraint}
 Requires(post): /usr/sbin/setcap
 %description -n cta-tape-label
 CERN Tape Archive:
@@ -556,7 +543,7 @@ The command-line tool for pre-labelling a CTA tape.
 Summary: The command-line tool for reading files from a CTA tape.
 Group: Application/CTA
 Requires: cta-lib = %{version}-%{release}
-Requires: xrootd-client-libs >= %{xrootdVersion}
+Requires: xrootd-client-libs %{xrootdVersionConstraint}
 Requires(post): /usr/sbin/setcap
 %description -n cta-readtp
 CERN Tape Archive:

@@ -205,7 +205,7 @@ build_srpm() {
       echo "Installing prerequisites..."
       echo "Found Alma 9 install..."
       yum install -y epel-release almalinux-release-devel
-      yum install -y gcc gcc-c++ cmake3 rpm-build yum-utils pandoc which
+      yum install -y gcc gcc-c++ cmake3 rpm-build yum-utils
       case "${build_generator}" in
         "Unix Makefiles")
           yum install -y make

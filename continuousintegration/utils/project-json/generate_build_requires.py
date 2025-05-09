@@ -20,9 +20,8 @@ import json
 import argparse
 import sys
 
-project_root = str(Path(__file__).resolve().parents[2])
-
-with open(f"{project_root}/project.json") as f:
+project_json_path = Path(__file__).resolve().parents[3] / "project.json"
+with open(project_json_path, "r") as f:
     project_json = json.load(f)
 
 parser = argparse.ArgumentParser()
@@ -36,12 +35,11 @@ if platform not in project_json["platforms"]:
     print(f"Error: invalid platform '{platform}'. Supported options are: {valid_platforms}", file=sys.stderr)
     sys.exit(1)
 
-packages = project_json["platforms"][platform]["versionlock"]
-arch = project_json["platforms"][platform]["arch"]
+packages = project_json["platforms"][platform]["buildRequires"]
 
 for package, version in packages.items():
     if package in project_json["packageGroups"]:
         for package_name in project_json["packageGroups"][package]:
-            print(f"{package_name}-{version}.{platform}.{arch}")
+            print(f"BuildRequires: {package_name} {version}")
     else:
-        print(f"{package}-{version}.{platform}.{arch}")
+        print(f"BuildRequires: {package} {version}")
