@@ -88,6 +88,7 @@ update_local_cta_chart_dependencies() {
 }
 
 create_instance() {
+  project_json_path="../../project.json"
   # Argument defaults
   # Not that some arguments below intentionally use false and not 0/1 as they are directly passed as a helm option
   # Note that it is fine for not all of these secrets to exist; eventually the reg-* format will be how the minikube_cta_ci setup inits things
@@ -105,8 +106,8 @@ create_instance() {
   max_drives_per_tpsrv=1
   max_tapeservers=2
   # EOS related
-  eos_server_chart_version=$(jq -r .dev.eosServerChartVersion ../../project.json)
-  eos_image_tag=$(jq -r .dev.defaultEosImageTag ../../project.json)
+  eos_server_chart_version=$(jq -r .dev.eosServerChartVersion ${project_json_path})
+  eos_image_tag=$(jq -r .dev.defaultEosImageTag ${project_json_path})
   eos_image_repository=gitlab-registry.cern.ch/dss/eos/eos-ci
   eos_config=presets/dev-eos-values.yaml
 
@@ -182,7 +183,7 @@ create_instance() {
   fi
   if [ -z "${catalogue_schema_version}" ]; then
     echo "No catalogue schema version provided: using project.json value"
-    catalogue_schema_version=$(jq .catalogueVersion ../../project.json)
+    catalogue_schema_version=$(jq .catalogueVersion ${project_json_path})
   fi
 
   if [ $dry_run == 1 ]; then
