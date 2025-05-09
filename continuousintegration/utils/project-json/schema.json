@@ -103,13 +103,22 @@
                         "minLength": 1
                     },
                     "versionlock": {
+                        "description": "These values are used to generate a versionlock.list file.",
                         "type": "object",
                         "additionalProperties": {
                             "type": "string",
                             "minLength": 1
                         }
                     },
+                    "requires": {
+                        "description": "These values are used to generate KEY_VERSION_CONSTRAINT cmake variables. Every key will be converted to uppercase, special characters converted to underscores and _VERSION_CONSTRAINT appended.",
+                        "type": "object",
+                        "additionalProperties": {
+                            "type": "string"
+                        }
+                    },
                     "buildRequires": {
+                        "description": "These values are used to generate a list of BuildRequires items that are put in the cta.spec.in file.",
                         "type": "object",
                         "additionalProperties": {
                             "type": "string"
