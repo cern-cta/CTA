@@ -25,6 +25,7 @@
         IMAGE_TAG=$CTA_BUILD_ID
       fi
     # If we are testing from a CTA tag, get the Catalogue version for that tag
+    # TODO: replace with project.json
     - |
       if [ -n "${CUSTOM_CTA_TAG}" ]; then
         git fetch --tags --force
