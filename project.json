@@ -72,6 +72,10 @@
       "grpc",
       "grpc-devel",
       "grpc-plugins"
+    ],
+    "oracle-instantclient": [
+      "oracle-instantclient-devel",
+      "oracle-instantclient-basic"
     ]
   },
   "platforms": {
@@ -82,7 +86,7 @@
         "eos": "5.3.10-1",
         "eos-folly": "2019.11.11.00-1",
         "xrootd": "1:5.8.2-1",
-        "oracle-instantclient-devel": "23.6.0.24.10-1"
+        "oracle-instantclient": "23.6.0.24.10-1"
       },
       "requires": {
         "xrootd": ">= 1:5.7.1-1",
