@@ -537,9 +537,9 @@ void AdminCmd::processDrive_Rm(xrd::Response& response) {
   regex = '^' + regex + '$';
   utils::Regex driveNameRegex(regex.c_str());
 
- auto driveConfigList = m_catalogue.DriveConfig()->getTapeDriveConfigs();
- const auto tapeDriveNames = getTapeDriveNamesGivenSchedulerBackendName(driveConfigList);
- bool drivesFound = false;
+  auto driveConfigList = m_catalogue.DriveConfig()->getTapeDriveConfigs();
+  const auto tapeDriveNames = getTapeDriveNamesGivenSchedulerBackendName(driveConfigList);
+  bool drivesFound = false;
 
   for (const auto& tapeDriveName : tapeDriveNames)
   {
@@ -1588,9 +1588,9 @@ std::string AdminCmd::setDriveState(const std::string& regex, const common::data
   std::stringstream cmdlineOutput;
   utils::Regex driveNameRegex(regex.c_str());
 
- auto driveConfigList = m_catalogue.DriveConfig()->getTapeDriveConfigs();
- const auto tapeDriveNames = getTapeDriveNamesGivenSchedulerBackendName(driveConfigList);
- bool is_found = false;
+  auto driveConfigList = m_catalogue.DriveConfig()->getTapeDriveConfigs();
+  const auto tapeDriveNames = getTapeDriveNamesGivenSchedulerBackendName(driveConfigList);
+  bool is_found = false;
 
   for(const auto& tapeDriveName: tapeDriveNames) {
     const auto regexResult = driveNameRegex.exec(tapeDriveName);
