@@ -1229,24 +1229,17 @@ void Scheduler::sortAndGetTapesForMountInfo(
 
     // Remove existing mounts not on the current scheduler DB
     auto schedulerBackendName = getSchedulerBackendName();
-    std::unordered_map<std::string, std::string> tapeDriveSchedulerBackendNameMap;
-    for (const auto & config : m_catalogue.DriveConfig()->getTapeDriveConfigs()) {
-      if (config.keyName == "SchedulerBackendName") {
-        tapeDriveSchedulerBackendNameMap.emplace(config.tapeDriveName, config.value);
-      }
-    }
     std::list<std::string> ignoredDrives;
     mountInfo->existingOrNextMounts.erase(
         std::remove_if(
             mountInfo->existingOrNextMounts.begin(),
             mountInfo->existingOrNextMounts.end(),
-            [&ignoredDrives, &tapeDriveSchedulerBackendNameMap, &schedulerBackendName](const SchedulerDatabase::ExistingMount& mount) {
-              try {
-                return tapeDriveSchedulerBackendNameMap.at(mount.driveName) != schedulerBackendName;
-              } catch (std::out_of_range &) {
+            [&ignoredDrives, &schedulerBackendName](const SchedulerDatabase::ExistingMount& mount) {
+              if (!mount.schedulerBackendName.has_value()) {
                 ignoredDrives.emplace_back(mount.driveName);
                 return true;
               }
+              return mount.schedulerBackendName != schedulerBackendName;
         }),
         mountInfo->existingOrNextMounts.end());
     for (const auto & ignoredDriveName: ignoredDrives) {

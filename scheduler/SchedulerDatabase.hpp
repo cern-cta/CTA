@@ -867,6 +867,7 @@ public:
     double averageBandwidth;
     uint64_t priority;
     std::optional<std::string> activity;
+    std::optional<std::string> schedulerBackendName;
   };
 
   /**
