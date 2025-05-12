@@ -39,10 +39,6 @@ void EnstoreFileReader::setPositioningMethod(const cta::PositioningMethod &newMe
 }
 
 void EnstoreFileReader::positionByFseq(const cta::RetrieveJob &fileToRecall) {
-  /* This is a bit tricky since CTA is starts with fSeq=1 before reading the label
-     and Enstore store fSeq=1 as the first file AFTER the label
-  */
-
   const auto fSeq = fileToRecall.selectedTapeFile().fSeq;
   if (fSeq < 1) {
     std::stringstream err;
@@ -51,20 +47,21 @@ void EnstoreFileReader::positionByFseq(const cta::RetrieveJob &fileToRecall) {
     throw cta::exception::InvalidArgument(err.str());
   }
 
-  const int64_t fSeq_delta = static_cast<int64_t>(fSeq) - static_cast<int64_t>(m_session.getCurrentFseq());
+  // CTA starts with fSeq=1 before reading the labe and Enstore uses fSeq=1 as the first file AFTER the label
+  const int64_t fSeq_delta = static_cast<int64_t>(fSeq) - static_cast<int64_t>(m_session.getCurrentFseq()) + 1;
 
-  if (fSeq == 1) {
+  if (fSeq == 1) {  // Enstore file number. Just rewind and put us in the right place. Perhaps faster than positioning
     m_session.m_drive.rewind();
     m_session.m_drive.spaceFileMarksForward(1);
-  } else if (fSeq_delta == -1) {
+  } else if (fSeq_delta == 0) {
       // do nothing we are in the correct place
-  } else if (fSeq_delta >= 0) {
-    m_session.m_drive.spaceFileMarksForward(static_cast<uint32_t>(fSeq_delta+1));
+  } else if (fSeq_delta > 0) {
+    m_session.m_drive.spaceFileMarksForward(static_cast<uint32_t>(fSeq_delta));
   } else { //fSeq_delta < 0
-    m_session.m_drive.spaceFileMarksBackwards(static_cast<uint32_t>(abs(fSeq_delta)));
+    m_session.m_drive.spaceFileMarksBackwards(static_cast<uint32_t>(abs(fSeq_delta) + 1));
     m_session.m_drive.readFileMark("[EnstoreFileReader::position] Reading file mark right before the header of the file we want to read");
   }
-  m_session.setCurrentFseq(fSeq);
+  m_session.setCurrentFseq(fSeq +1);  // Set CTA fileseq to Enstore + 1
   setBlockSize(1024*1024);  // Enstore used 1M size blocks for T10K, M8, and LTO-8 tapes
 }
 
@@ -119,6 +116,7 @@ size_t EnstoreFileReader::readNextDataBlock(void *data, const size_t size) {
 
   } else {
     bytes_read = m_session.m_drive.readBlock(data, size);
+    auto true_bytes_read = bytes_read;
     m_ui64CPIODataSize += bytes_read;
 
     if (m_ui64CPIODataSize > m_cpioHeader.m_ui64FileSize && bytes_read > 0) {
@@ -128,12 +126,19 @@ size_t EnstoreFileReader::readNextDataBlock(void *data, const size_t size) {
       } else {
     	bytes_read = bytes_read - (m_ui64CPIODataSize - m_cpioHeader.m_ui64FileSize);
       }
+
+      if (true_bytes_read > 0 && bytes_read == 0) { // We need to finish reading the trailer to get the position correct
+        uint8_t* dummyData = new uint8_t[size];
+        size_t dummy_bytes_read = 0;
+        dummy_bytes_read = m_session.m_drive.readBlock(dummyData, size);
+        delete[] dummyData;
+      }
     }
   }
 
   // end of file reached!
   if (!bytes_read) {
-    m_session.setCurrentFseq(m_session.getCurrentFseq() + 2); // +1 for after the current file, +1 for label being file #1
+    m_session.setCurrentFseq(m_session.getCurrentFseq() + 1);
     m_session.setCurrentFilePart(PartOfFile::Header);
     // the following is a normal day exception: end of files exceptions are thrown at the end of each file being read
     throw EndOfFile();
