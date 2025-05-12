@@ -15,7 +15,6 @@
  *               submit itself to any jurisdiction.
  */
 
-#include "catalogue/Catalogue.hpp"
 #include "catalogue/CreateMountPolicyAttributes.hpp"
 #include "catalogue/CreateTapeAttributes.hpp"
 #include "catalogue/MediaType.hpp"
@@ -38,7 +37,8 @@ AdminCmd::AdminCmd(const frontend::FrontendService& frontendService,
   m_archiveFileMaxSize(frontendService.getArchiveFileMaxSize()),
   m_repackBufferURL(frontendService.getRepackBufferURL()),
   m_repackMaxFilesToSelect(frontendService.getRepackMaxFilesToSelect()),
-  m_missingFileCopiesMinAgeSecs(frontendService.getMissingFileCopiesMinAgeSecs())
+  m_missingFileCopiesMinAgeSecs(frontendService.getMissingFileCopiesMinAgeSecs()),
+  m_schedulerBackendName(m_scheduler.getSchedulerBackendName())
 {
   m_lc.pushOrReplace({"user", m_cliIdentity.username + "@" + m_cliIdentity.host});
 
@@ -380,6 +380,18 @@ void AdminCmd::logAdminCmd(const std::string& function, const std::string& statu
   m_lc.log(cta::log::INFO, log_msg);
 }
 
+std::list<std::string> AdminCmd::getTapeDriveNamesGivenSchedulerBackendName(
+  const std::list<cta::catalogue::DriveConfigCatalogue::DriveConfig>& driveConfigList) {
+  // set of valid tapeDriveNames matching the m_schedulerBackendName
+  std::list<std::string> validTapeDrives;
+  for (const auto& config : driveConfigList) {
+    if (config.keyName == "SchedulerBackendName" && config.value == m_schedulerBackendName) {
+      validTapeDrives.emplace_back(config.tapeDriveName);
+    }
+  }
+  return validTapeDrives;
+}
+
 void AdminCmd::processAdmin_Add(xrd::Response& response) {
   using namespace cta::admin;
 
@@ -525,7 +537,8 @@ void AdminCmd::processDrive_Rm(xrd::Response& response) {
   regex = '^' + regex + '$';
   utils::Regex driveNameRegex(regex.c_str());
 
-  const auto tapeDriveNames = m_catalogue.DriveState()->getTapeDriveNames();
+  auto driveConfigList = m_catalogue.DriveConfig()->getTapeDriveConfigs();
+  const auto tapeDriveNames = getTapeDriveNamesGivenSchedulerBackendName(driveConfigList);
   bool drivesFound = false;
 
   for (const auto& tapeDriveName : tapeDriveNames)
@@ -1006,7 +1019,7 @@ void AdminCmd::processActivityMountRule_Ch(xrd::Response& response) {
     m_catalogue.RequesterActivityMountRule()->modifyRequesterActivityMountRulePolicy(m_cliIdentity, in, name,
       activityRegex, mountpolicy.value());
   }
-   
+
   response.set_type(xrd::Response::RSP_SUCCESS);
 }
 
@@ -1174,7 +1187,7 @@ void AdminCmd::processTape_Rm(xrd::Response& response) {
 
   if(m_scheduler.isBeingRepacked(vid)) {
     throw exception::UserError("Cannot delete tape " + vid + " because there is a repack for that tape");
-  }  
+  }
   m_catalogue.Tape()->deleteTape(vid);
 
   response.set_type(xrd::Response::RSP_SUCCESS);
@@ -1200,7 +1213,7 @@ void AdminCmd::processTapeFile_Rm(xrd::Response& response) {
 
   catalogue::TapeFileSearchCriteria searchCriteria;
   searchCriteria.vid = vid;
-  
+
   if(archiveFileId) {
     searchCriteria.archiveFileId = archiveFileId.value();
   }
@@ -1393,7 +1406,7 @@ void AdminCmd::processDiskInstanceSpace_Add(xrd::Response& response) {
   const auto& comment           = getRequired(OptionString::COMMENT);
   const auto& freeSpaceQueryURL = getRequired(OptionString::FREE_SPACE_QUERY_URL);
   const auto refreshInterval    = getRequired(OptionUInt64::REFRESH_INTERVAL);
-   
+
   m_catalogue.DiskInstanceSpace()->createDiskInstanceSpace(m_cliIdentity, name, diskInstance, freeSpaceQueryURL,
     refreshInterval, comment);
 
@@ -1408,7 +1421,7 @@ void AdminCmd::processDiskInstanceSpace_Ch(xrd::Response& response) {
   const auto comment            = getOptional(OptionString::COMMENT);
   const auto& freeSpaceQueryURL = getOptional(OptionString::FREE_SPACE_QUERY_URL);
   const auto refreshInterval    = getOptional(OptionUInt64::REFRESH_INTERVAL);
-   
+
   if(comment) {
     m_catalogue.DiskInstanceSpace()->modifyDiskInstanceSpaceComment(m_cliIdentity, name, diskInstance,
       comment.value());
@@ -1421,7 +1434,7 @@ void AdminCmd::processDiskInstanceSpace_Ch(xrd::Response& response) {
     m_catalogue.DiskInstanceSpace()->modifyDiskInstanceSpaceRefreshInterval(m_cliIdentity, name, diskInstance,
       refreshInterval.value());
   }
-   
+
   response.set_type(xrd::Response::RSP_SUCCESS);
 }
 
@@ -1575,7 +1588,8 @@ std::string AdminCmd::setDriveState(const std::string& regex, const common::data
   std::stringstream cmdlineOutput;
   utils::Regex driveNameRegex(regex.c_str());
 
-  const auto tapeDriveNames = m_catalogue.DriveState()->getTapeDriveNames();
+  auto driveConfigList = m_catalogue.DriveConfig()->getTapeDriveConfigs();
+  const auto tapeDriveNames = getTapeDriveNamesGivenSchedulerBackendName(driveConfigList);
   bool is_found = false;
 
   for(const auto& tapeDriveName: tapeDriveNames) {

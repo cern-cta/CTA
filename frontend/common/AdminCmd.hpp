@@ -17,6 +17,7 @@
 
 #pragma once
 
+#include "catalogue/Catalogue.hpp"
 #include "cta_frontend.pb.h"
 #include "frontend/common/FrontendService.hpp"
 
@@ -159,6 +160,14 @@ protected:
   void logAdminCmd(const std::string& function, const std::string& status, const std::string& reason, utils::Timer& t);
 
   /*!
+   * Returns a list of Tape Drive Names which have the same
+   * Scheduler DB Name configured as the CTA Frontend being queried
+   *
+   *  @param[in]   driveConfigList   List of drive configurations (from the catalogue)
+   */
+  std::list<std::string> getTapeDriveNamesGivenSchedulerBackendName(const std::list<cta::catalogue::DriveConfigCatalogue::DriveConfig>& driveConfigList);
+
+  /*!
    * Drive state enum
    */
   enum DriveState { Up, Down };
@@ -168,7 +177,7 @@ protected:
    *
    * @param[in]    regex                The regex to match drive name(s) to change
    * @param[in]    desiredDriveState    Desired drive state (up, forceDown, reason, comment)
-   * 
+   *
    * @return       The result of the operation, to return to the client
    */
   std::string setDriveState(const std::string& regex, const common::dataStructures::DesiredDriveState& desiredDriveState);
@@ -252,6 +261,7 @@ private:
   const std::optional<std::string>            m_repackBufferURL;             //!< Repack buffer URL
   const std::optional<std::uint64_t>          m_repackMaxFilesToSelect;      //!< Repack max files to expand
   const uint64_t                              m_missingFileCopiesMinAgeSecs; //!< Missing tape file copies minimum age
+  std::optional<std::string> m_schedulerBackendName;            //!< Name of the Scheduler DB to which Frontend connects
 
   // Command options extracted from protobuf
   std::map<admin::OptionBoolean::Key, bool>                        m_option_bool;        //!< Boolean options
