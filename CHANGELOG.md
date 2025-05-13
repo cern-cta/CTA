@@ -1,3 +1,52 @@
+## 5.11.8.0-1 (2025-05-13)
+
+### Features
+
+-  #1093 - Allow repack archive requests to be retried 2 times
+
+
+### Bug Fixes
+
+-  #1164 - Prevent `cta-admin sq` from listing queues that are not part of the current scheduler
+
+-  #1163 - Fix cta-admin dis ls failing to print due to incorrect number of header columns
+
+-  #1145 - Fix insufficient buffer space for reading 240 byte Enstore labels
+
+-  #1099 - Use temporary XRootD patch to fix segfault in tape server
+
+
+### Maintenance
+
+-  #1152 - Bump XRootD version to stable 5.8.2 release
+
+-  #1157 - Add Keycloak to CI for frontend token authentication
+
+-  #1148 - Allow CI to spawn both gRPC and XRootD frontends simultaneously
+
+-  #1123 - Improve CI pipeline options for Postgres Scheduler
+
+-  #1143 - Update Ceph client libraries to 17.2.8
+
+-  #1144 - Extract admin command parsing into common code to be used by both XRootD/SSI and gRPC frontends
+
+
+### feature/bug/maintenance
+
+-  <id> - CI image tag update: 2025-05-13-11978891
+
+-  <id> - Further isolating 'cta-admin dr' operations between scheduler backends
+
+-  <id> - CI image tag update: 2025-05-06-11933631
+
+-  <id> - CI image tag update: 2025-04-29-11892916
+
+-  <id> - Implementation of Postgres Scheduler DB basic Archival and Retrieval functionality
+
+-  <id> - Resolve "CLI output of cta-admin prints "NoMount" instead of "-""
+
+-  <id> - Fix Enstore file reader not correctly dealing with padded files
+
 ## 5.11.7.0-1
 
 ### Bug Fixes
