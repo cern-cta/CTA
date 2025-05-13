@@ -241,11 +241,16 @@ stress-test:
     - bash ./continuousintegration/checks/check_runner_healthy.sh
     - *setup-k8s-test-variables
   script:
+    - |
+      EXTRA_STRESS_TEST_OPTIONS=""
+      if [ "${SCHEDULER_TYPE}" == "pgsched" ]; then
+        SCHEDULER_CONFIG=/opt/kubernetes/CTA/scheduler/stresstest-scheduler-postgres-values.yaml
+        EXTRA_STRESS_TEST_OPTIONS+=" -Q"
+      fi
     # Set up stress test
     - cd continuousintegration/orchestration/
     # We don't clean up old namespace so this will fail (deliberately) when another test is running there
     # This is because we check for the libraries in use before we start
-    - SCHEDULER_CONFIG=/opt/kubernetes/CTA/scheduler/stresstest-scheduler-postgres-values.yaml
     - ./run_systemtest.sh --namespace ${NAMESPACE}
                           --keep-namespace
                           --cta-image-tag ${IMAGE_TAG}
@@ -255,11 +260,6 @@ stress-test:
     # Set up monitoring
     - git clone https://gitlab+deploy-token-3624:${CI_CTA_DEPLOY_TOKEN_READONLY}@gitlab.cern.ch/cta/sandbox/ci_monitoring.git
     - helm install --namespace ${NAMESPACE} ci-monitoring ci_monitoring/ci-monitoring --wait --timeout 5m
-    - |
-      EXTRA_STRESS_TEST_OPTIONS=""
-      if [ "${SCHEDULER_TYPE}" == "pgsched" ]; then
-        EXTRA_STRESS_TEST_OPTIONS+=" -Q"
-      fi
     # Run the actual stress test
     - cd tests
     - ./stress_test.sh -n ${NAMESPACE} ${EXTRA_STRESS_TEST_OPTIONS}
