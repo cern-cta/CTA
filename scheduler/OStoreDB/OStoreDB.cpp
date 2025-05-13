@@ -2153,13 +2153,17 @@ common::dataStructures::RepackInfo OStoreDB::getRepackInfo(const std::string& vi
 }
 
 //------------------------------------------------------------------------------
-// OStoreDB::resheduleRetrieveRequest()
+// OStoreDB::requeueRetrieveRequest()
 //------------------------------------------------------------------------------
 void OStoreDB::requeueRetrieveRequestJobs(std::list<cta::SchedulerDatabase::RetrieveJob*>& jobs,
                                           log::LogContext& logContext) {
   std::list<std::shared_ptr<objectstore::RetrieveRequest>> rrlist;
   std::list<objectstore::ScopedExclusiveLock> locks;
-  utils::Timer gcrrTimer;
+  std::list<RetrieveQueue::JobToAdd> jobsToRequeue;
+  std::list<RetrieveQueue::JobToAdd> jobsToFail;
+ utils::Timer gcrrTimer;
+
+  // First classify the jobs
   for (auto& job : jobs) {
     auto oStoreJob = dynamic_cast<OStoreDB::RetrieveJob*>(job);
     auto rr =
@@ -2174,16 +2178,47 @@ void OStoreDB::requeueRetrieveRequestJobs(std::list<cta::SchedulerDatabase::Retr
         .log(log::INFO, "In OStoreDB::requeueRetrieveRequestJobs(): no such retrieve request. Ignoring.");
       continue;
     }
-    gcrrTimer.reset();
-    rr->garbageCollectRetrieveRequest(m_agentReference->getAgentAddress(),
-                                      *m_agentReference,
-                                      logContext,
-                                      m_catalogue,
-                                      true);
-    log::ScopedParamContainer(logContext)
-	    .add("gcrrt", gcrrTimer.secs(utils::Timer::resetCounter))
-	    .log(log::INFO, "In OStoreDB::requeueRetrieveRequestJobs(): garbage collected 1 job");
+
+    // Move the Job Pointers from the global list to the independent ones
+    switch(rr->reclassifyRetrieveRequest()) {
+      case 0:
+        //TODO
+        //jobsToRequeue.emplace_back(rr);
+        break;
+      case 1:
+        rr->failJobs();
+        jobsToFail.emplace_back(rr->getJobToAdd());
+        break;
+      default:
+        break;
+    }
+  } // End of job classfication.
+
+  // Now requeue the batches. We know that the initial batch holds the max batch size so
+  // inherently in here we are working int <= MAX in each list.
+  // We now need to grab the failed queue and queue the request.
+  if (jobsToFail.size()) {
+    RetrieveQueue rq(m_objectStore);
+    ScopedExclusiveLock rql;
+    // If garbage collect retrieve request is only called by the cleanup
+    // process we can add some extra info in the `activeVid` so that
+    // the queue gets created with a different name and they don't
+    // step into each others. :)
+    Helpers::getLockedAndFetchedJobQueue<RetrieveQueue>(rq, rql, agentReference, activeVid, common::dataStructures::JobQueueType::JobsToReportToUser, lc);
+
+    // Append the jobs and commit.
+    rq.appendJobsAndCommit(jobsToFail, agentReference, lc);
   }
+
+
+  if (jobsToTransfer.size()) {
+    RetrieveQueue rq(m_objectStore);
+    ScopedExclusiveLock rql;
+
+    Helpers::getLockedAndFetchedJobQueue<RetrieveQueue>(rq, rql, agentReference, activeVid, common::dataStructures::JobQueueType::JobsToTransferForUser, lc);
+    rq.addJobsAndCommit(jobsToRequeue, agentReference, lc);
+  }
+
   locks.clear();
   rrlist.clear();
 }

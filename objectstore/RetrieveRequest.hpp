@@ -31,6 +31,7 @@
 #include "ObjectOps.hpp"
 #include "objectstore/cta.pb.h"
 #include "objectstore/RetrieveActivityCountMap.hpp"
+#inlcude "objectstoreRetrieveQueue.hpp"
 
 namespace cta {
   namespace objectstore {
@@ -49,6 +50,9 @@ public:
     cta::catalogue::Catalogue& catalogue) override;
   void garbageCollectRetrieveRequest(const std::string& presumedOwner, AgentReference& agentReference, log::LogContext& lc,
     cta::catalogue::Catalogue& catalogue, bool isQueueCleanup);
+  void failJobs();
+  int reclassifyRetrieveRequest();
+  RetrieveQueue::jobToAdd getJobToAdd();
   // Job management ============================================================
   void addJob(uint32_t copyNumber, uint16_t maxRetriesWithinMount, uint16_t maxTotalRetries, uint16_t maxReportRetries);
   std::string getLastActiveVid();

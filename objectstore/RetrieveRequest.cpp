@@ -74,6 +74,50 @@ void RetrieveRequest::garbageCollect(const std::string& presumedOwner, AgentRefe
   garbageCollectRetrieveRequest(presumedOwner, agentReference, lc, catalogue, false);
 }
 
+
+// Setting a bool for now on what we should do with these types.
+int RetrieveRequest::reclassifyRetrieveRequest(){
+  // The owner is indeed the right one. We should requeue the request either to
+  // the to tranfer queue for one vid, or to the to report (or failed) queue (for one arbitrary VID).
+  // Find the vids for active jobs in the request (to transfer ones).
+  using serializers::RetrieveJobStatus;
+  std::set<std::string, std::less<>> candidateVids;
+  for (auto& j: m_payload.jobs()) {
+    switch(j.status()){
+      case RetrieveJobStatus::RJS_ToTransfer:
+        // Find the job details in tape file
+        for (auto& tf: m_payload.archivefile().tapefiles()) {
+          if (tf.copynb() == j.copynb()) {
+            candidateVids.insert(tf.vid());
+            goto found;
+          }
+        }
+        {
+          std::stringstream err;
+          err << ("In RetrieveRequest::reclassifyRetrieveRequest(): could not find tapefile for copynb ") << j.copynb();
+          throw exception::Exception(err.str());
+        }
+     default:
+        break;
+    }
+    found:;
+  }
+  std::string bestVid;
+  // If no tape file is a candidate, we just need to skip to queueing to the failed queue
+  if (candidateVids.empty()) {
+    return 1;
+  }
+  // We have a chance to find an available tape. Let's compute best VID (this will
+  // filter on tape availability.
+  try {
+    // If we have to fetch the status of the tapes and queued for the non-disabled vids.
+    bestVid=Helpers::selectBestRetrieveQueue(candidateVids, catalogue, m_objectStore, lc, m_payload.repack_info().has_repack_request_address());
+    return 0;
+  } catch (Helpers::NoTapeAvailableForRetrieve&) {}
+  return 1;
+}
+
+
 void RetrieveRequest::garbageCollectRetrieveRequest(const std::string& presumedOwner, AgentReference& agentReference, log::LogContext& lc,
     cta::catalogue::Catalogue& catalogue, bool isQueueCleanup) {
   checkPayloadWritable();
@@ -171,7 +215,7 @@ void RetrieveRequest::garbageCollectRetrieveRequest(const std::string& presumedO
     goto queueForTransfer;
   } catch (Helpers::NoTapeAvailableForRetrieve&) {}
 queueForFailure:;
-  { 
+  {
     selectQueueTime = tmpT.secs(utils::Timer::resetCounter);
     // If there is no candidate, we fail the jobs that are not yet, and queue the request as failed (on any VID).
     for (auto& j: *m_payload.mutable_jobs()) {
@@ -1136,6 +1180,46 @@ uint32_t RetrieveRequest::getActiveCopyNumber() {
 void RetrieveRequest::setFailed() {
   checkPayloadWritable();
   m_payload.set_isfailed(true);
+}
+
+// Fail the job given by the copy number.
+void RetrieveRequest::failJobs() {
+  for (auto& j: *m_payload.mutable_jobs()) {
+    if (j.status() == RetrieveJobStatus::RJS_ToTransfer) {
+      j.set_status(m_payload.isrepack() ?
+                   RetrieveJobStatus::RJS_ToReportToRepackForFailure :
+                   RetrieveJobStatus::RJS_ToReportToUserForFailure);
+    }
+
+    // Generate the last failure for this job (tape unavailable).
+    *j.mutable_failurelogs()->Add() = utils::getCurrentLocalTime() + " " +
+            utils::getShortHostname() + logHead + "No VID available to requeue the request. Failing it.";
+    }
+}
+
+RetrieveQueue::jobToAdd RertieveRequet::getJobToAdd() {
+  auto activeCopyNb = m_payload.activecopynb();
+  std::string activeVid;
+  uint64_t activeFseq;
+  objectstore::MountPolicySerDeser mp;
+  for (auto& tf: m_payload.archivefile().tapefiles()) {
+    if (tf.copynb() == activeCopyNb) {
+      activeVid = tf.vid();
+      activeFseq = tf.fseq();
+      break;
+    }
+  }
+
+  return RetrieveQueue::JobToAdd(
+    activeCopyNb,
+    activeFseq,
+    getAddressIfSet(),
+    m_payload.archivefile().filesize(),
+    mp,
+    (signed) m_payload.schedulerrequest().entrylog().time(),
+    m_payload.has_activity ? m_payload.activity() : std::nullopt,
+    std::nullopt
+  );
 }
 
 //------------------------------------------------------------------------------
