@@ -82,6 +82,7 @@ BuildRequires: valgrind
 BuildRequires: valgrind-devel
 BuildRequires: krb5-devel
 BuildRequires: libtirpc-devel
+BuildRequires: openssl-devel >= 1.0.1
 %{?systemd_requires}
 BuildRequires: systemd
 # only build debug info if you're building the whole code

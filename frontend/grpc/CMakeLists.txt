@@ -23,11 +23,14 @@ include_directories(${PROTOBUF3_INCLUDE_DIRS})
 # depends on CTA_EOS definitions
 include_directories(${CMAKE_BINARY_DIR}/eos_cta ${PROTOBUF3_INCLUDE_DIRS})
 
+include_directories(${CMAKE_SOURCE_DIR}/external/jwt-cpp/include/)
+
 add_executable(cta-frontend-grpc Main.cpp FrontendGrpcService.cpp
   ../common/WorkflowEvent.cpp
   ../common/FrontendService.cpp
-  ../../common/config/Config.cpp)
-target_link_libraries(cta-frontend-grpc ProtoCtaFrontend)
+  ../../common/config/Config.cpp
+  auth/ServiceJWTAuthProcessor.cpp)
+target_link_libraries(cta-frontend-grpc ProtoCtaFrontend jwt-cpp::jwt-cpp)
 
 if(CTA_USE_PGSCHED)
   target_link_libraries(cta-frontend-grpc ${PROTOBUF3_LIBRARIES} ${GRPC_GRPC++_LIBRARY}
