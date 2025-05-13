@@ -120,10 +120,10 @@ variables:
   FF_TIMESTAMPS: true
 
   # Images
-  IMAGE_ANALYSIS: gitlab-registry.cern.ch/cta/public_registry/container_registry/cta-ci-analysis:2025-05-06-11933631
-  IMAGE_BUILD: gitlab-registry.cern.ch/cta/public_registry/container_registry/cta-ci-build:2025-05-06-11933631
-  IMAGE_TEST: gitlab-registry.cern.ch/cta/public_registry/container_registry/cta-ci-test:2025-05-06-11933631
-  IMAGE_RELEASE: gitlab-registry.cern.ch/cta/public_registry/container_registry/cta-ci-release:2025-05-06-11933631
+  IMAGE_ANALYSIS: gitlab-registry.cern.ch/cta/public_registry/container_registry/cta-ci-analysis:2025-05-13-11978891
+  IMAGE_BUILD: gitlab-registry.cern.ch/cta/public_registry/container_registry/cta-ci-build:2025-05-13-11978891
+  IMAGE_TEST: gitlab-registry.cern.ch/cta/public_registry/container_registry/cta-ci-test:2025-05-13-11978891
+  IMAGE_RELEASE: gitlab-registry.cern.ch/cta/public_registry/container_registry/cta-ci-release:2025-05-13-11978891
   IMAGE_GITLAB_RELEASE_CLI: registry.gitlab.com/gitlab-org/release-cli:latest
   IMAGE_DOCKER_IMAGE_BUILDER: gcr.io/kaniko-project/executor:debug
 
