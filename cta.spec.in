@@ -613,6 +613,7 @@ the free disk space in the defalut namespace
 
 %changelog
 
+* Wed Apr 09 2025 Niels Alexander Buegel <niels.alexander.bugel@cern.ch> - 5.11.7.0-1
 - See CHANGELOG.md for version history >= 5.11.7.0
 
 * Mon Apr 07 2025 Niels Alexander Buegel <niels.alexander.bugel@cern.ch> - 5.11.6.0-1

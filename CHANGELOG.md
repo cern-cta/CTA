@@ -1,51 +1,25 @@
-## 5.11.8.0-1 (2025-05-13)
+## 5.11.8.0-1
 
 ### Features
 
--  #1093 - Allow repack archive requests to be retried 2 times
-
+- cta/CTA#1093 - Allow repack archive requests to be retried 2 times
+- cta/CTA#768 - Add basic Archival and Retrieval functionality to Postgres Scheduler DB
 
 ### Bug Fixes
 
--  #1164 - Prevent `cta-admin sq` from listing queues that are not part of the current scheduler
-
--  #1163 - Fix cta-admin dis ls failing to print due to incorrect number of header columns
-
--  #1145 - Fix insufficient buffer space for reading 240 byte Enstore labels
-
--  #1099 - Use temporary XRootD patch to fix segfault in tape server
+- cta/CTA#1164 - Prevent `cta-admin sq` from listing queues that are not part of the current scheduler
+- cta/CTA#1163 - Fix cta-admin dis ls failing to print due to incorrect number of header columns
+- cta/CTA#1145 - Fix insufficient buffer space for reading 240 byte Enstore labels
+- cta/CTA#1165 - Fix certain 'cta-admin dr' operations not respecting scheduler separation
+- cta/CTA#1139 - Fix incorrect printing of "NoMoun" in `cta-admin` cli output
+-  cta/CTA#1138 - Fix Enstore file reader not correctly dealing with padded files
 
 
 ### Maintenance
 
--  #1152 - Bump XRootD version to stable 5.8.2 release
-
--  #1157 - Add Keycloak to CI for frontend token authentication
-
--  #1148 - Allow CI to spawn both gRPC and XRootD frontends simultaneously
-
--  #1123 - Improve CI pipeline options for Postgres Scheduler
-
--  #1143 - Update Ceph client libraries to 17.2.8
-
--  #1144 - Extract admin command parsing into common code to be used by both XRootD/SSI and gRPC frontends
-
-
-### feature/bug/maintenance
-
--  <id> - CI image tag update: 2025-05-13-11978891
-
--  <id> - Further isolating 'cta-admin dr' operations between scheduler backends
-
--  <id> - CI image tag update: 2025-05-06-11933631
-
--  <id> - CI image tag update: 2025-04-29-11892916
-
--  <id> - Implementation of Postgres Scheduler DB basic Archival and Retrieval functionality
-
--  <id> - Resolve "CLI output of cta-admin prints "NoMount" instead of "-""
-
--  <id> - Fix Enstore file reader not correctly dealing with padded files
+- cta/CTA#1152 - Bump XRootD version to stable 5.8.2 release
+- cta/CTA#1123 - Improve CI pipeline options for Postgres Scheduler
+- cta/CTA#1143 - Update Ceph client libraries to 17.2.8
 
 ## 5.11.7.0-1
 
