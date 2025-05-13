@@ -18,6 +18,27 @@
 #include "ServiceJWTAuthProcessor.hpp"
 #include <jwt-cpp/jwt.h>
 
+bool ServiceJWTAuthProcessor::Validate(std::string encodedJWT) {
+    std::cout << "Passed in token is " << encodedJWT << std::endl;
+    return true; // unimplemented, this is what will validate the passed in token
+}
+
+// alternative
+// bool validateToken(const std::string& token) {
+//         try {
+//             auto decoded = jwt::decode(token);
+//             // Example validation: check if the token is expired
+//             auto exp = decoded.get_payload_claim("exp").as_datetime();
+//             if (exp < std::chrono::system_clock::now()) {
+//                 return false;  // Token has expired
+//             }
+//             // Further validations (like signature, audience, etc.) can be added here
+//             return true;
+//         } catch (const jwt::token_verification_exception& e) {
+//             return false;
+//         }
+//     }
+
 ::grpc::Status ServiceJWTAuthProcessor::Process(const ::grpc::AuthMetadataProcessor::InputMetadata& authMetadata,
     ::grpc::AuthContext* authContext,
     ::grpc::AuthMetadataProcessor::OutputMetadata* consumedAuthMetadata,
@@ -36,5 +57,19 @@
     if (iterAuthMetadata == authMetadata.end()) {
         return ::grpc::Status(::grpc::StatusCode::INTERNAL, "JWT authorization process metadata error. Authorization token not found.");
     }
+    /*
+     * Validation 
+     */
+    const auto strAuthMetadataValue = std::string(iterAuthMetadata->second.data(), iterAuthMetadata->second.length());
+    /*
+     * Token decoding
+     */
+    if(Validate(strAuthMetadataValue)) {
+        // If ok consume
+        consumedAuthMetadata->insert(std::make_pair(JWT_TOKEN_AUTH_METADATA_KEY, strAuthMetadataValue));
+        return ::grpc::Status::OK;
+    }
+    // else UNAUTHENTICATED
+    return ::grpc::Status(::grpc::StatusCode::UNAUTHENTICATED, "JWT authorization process error. Invalid principal.");
 
 }
