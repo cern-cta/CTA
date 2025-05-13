@@ -28,6 +28,7 @@
 #include "catalogue/dummy/DummyTapeCatalogue.hpp"
 #include "common/dataStructures/ArchiveFile.hpp"
 #include "common/dataStructures/JobQueueType.hpp"
+#include "common/dataStructures/RetrieveJobToAdd.hpp"
 #include "common/exception/Exception.hpp"
 #include "common/log/DummyLogger.hpp"
 #ifdef STDOUT_LOGGING
@@ -604,7 +605,7 @@ TEST_F(ObjectStore, GarbageCollectorRetrieveRequest) {
       cta::objectstore::RetrieveQueue rq(tAddr[0], be);
       cta::objectstore::ScopedExclusiveLock rql(rq);
       rq.fetch();
-      std::list <cta::objectstore::RetrieveQueue::JobToAdd> jta;
+      std::list <cta::common::dataStructures::RetrieveJobToAdd> jta;
       jta.push_back({1,rqc.archiveFile.tapeFiles.front().fSeq, rr.getAddressIfSet(), rqc.archiveFile.fileSize, rqc.mountPolicy,
           sReq.creationLog.time, std::nullopt, std::nullopt});
       rq.addJobsAndCommit(jta, agentRef, lc);

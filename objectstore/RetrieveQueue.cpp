@@ -18,6 +18,7 @@
 #include <google/protobuf/util/json_util.h>
 
 #include "AgentReference.hpp"
+#include "common/dataStructures/RetrieveJobToAdd.hpp"
 #include "common/exception/NoSuchObject.hpp"
 #include "EntryLogSerDeser.hpp"
 #include "GenericObject.hpp"
@@ -256,7 +257,7 @@ void RetrieveQueue::updateShardLimits(uint64_t fSeq, ShardForAddition & sfa) {
 }
 
 /** Add a jobs to a shard, spliting it if necessary*/
-void RetrieveQueue::addJobToShardAndMaybeSplit(RetrieveQueue::JobToAdd & jobToAdd,
+void RetrieveQueue::addJobToShardAndMaybeSplit(common::dataStructures::RetrieveJobToAdd & jobToAdd,
     std::list<ShardForAddition>::iterator & shardForAddition, std::list<ShardForAddition> & shardList) {
   // Is the shard still small enough? We will not double split shards (we suppose insertion size << shard size cap).
   // We will also no split a new shard.
@@ -308,7 +309,7 @@ void RetrieveQueue::addJobToShardAndMaybeSplit(RetrieveQueue::JobToAdd & jobToAd
 }
 
 // Sequentially append jobs without caring about anything else PURE FIFO
-void RetrieveQueue::appendJobsAndCommit(std::list<JobToAdd> &jobsToAdd, AgentReference &agentReference, log::LogContext &lc) {
+void RetrieveQueue::appendJobsAndCommit(std::list<common::dataStructures::RetrieveJobToAdd> &jobsToAdd, AgentReference &agentReference, log::LogContext &lc) {
   auto nextJob = jobsToAdd.begin();
   while (nextJob != jobsToAdd.end()) {
     RetrieveQueueShard rqs(m_objectStore);
@@ -357,7 +358,7 @@ void RetrieveQueue::appendJobsAndCommit(std::list<JobToAdd> &jobsToAdd, AgentRef
   }
 }
 
-void RetrieveQueue::addJobsAndCommit(std::list<JobToAdd> & jobsToAdd, AgentReference & agentReference, log::LogContext & lc) {
+void RetrieveQueue::addJobsAndCommit(std::list<common::dataStructures::RetrieveJobToAdd> & jobsToAdd, AgentReference & agentReference, log::LogContext & lc) {
   checkPayloadWritable();
   if (jobsToAdd.empty()) return;
   // Keep track of the mounting criteria
@@ -586,7 +587,7 @@ void RetrieveQueue::addJobsAndCommit(std::list<JobToAdd> & jobsToAdd, AgentRefer
   }
 }
 
-auto RetrieveQueue::addJobsIfNecessaryAndCommit(std::list<JobToAdd> & jobsToAdd,
+auto RetrieveQueue::addJobsIfNecessaryAndCommit(std::list<common::dataStructures::RetrieveJobToAdd> & jobsToAdd,
     AgentReference & agentReference, log::LogContext & lc)
 -> AdditionSummary {
   checkPayloadWritable();
@@ -619,7 +620,7 @@ auto RetrieveQueue::addJobsIfNecessaryAndCommit(std::list<JobToAdd> & jobsToAdd,
 
   // Now filter the jobs to add
   AdditionSummary ret;
-  std::list<JobToAdd> jobsToReallyAdd;
+  std::list<common::dataStructures::RetrieveJobToAdd> jobsToReallyAdd;
   for (auto & jta: jobsToAdd) {
     for (auto & sd: shardsDumps) {
       for (auto & sjd: sd) {

@@ -33,6 +33,7 @@
 #include "common/dataStructures/DiskInstance.hpp"
 #include "common/dataStructures/JobQueueType.hpp"
 #include "common/dataStructures/LogicalLibrary.hpp"
+#include "common/dataStructures/RetrieveJobToAdd.hpp"
 #include "common/dataStructures/RequesterMountRule.hpp"
 #include "common/exception/NoSuchObject.hpp"
 #include "common/log/DummyLogger.hpp"
@@ -6912,7 +6913,7 @@ TEST_P(SchedulerTest, getQueuesAndMountSummariesTest)
   }
 
   //Create a RetrieveJob and put it in the queue s_vid
-  cta::objectstore::RetrieveQueue::JobToAdd retrieveJobToAdd;
+  cta::common::dataStructures::RetrieveJobToAdd retrieveJobToAdd;
   retrieveJobToAdd.copyNb = 1;
   retrieveJobToAdd.fSeq = 1;
   retrieveJobToAdd.fileSize = 1;
@@ -6923,7 +6924,7 @@ TEST_P(SchedulerTest, getQueuesAndMountSummariesTest)
   {
     cta::objectstore::ScopedExclusiveLock sel(retrieveQueue1);
     retrieveQueue1.fetch();
-    std::list<cta::objectstore::RetrieveQueue::JobToAdd> jobsToAdd({retrieveJobToAdd});
+    std::list<cta::common::dataStructures::RetrieveJobToAdd> jobsToAdd({retrieveJobToAdd});
     retrieveQueue1.addJobsAndCommit(jobsToAdd,agentReference,lc);
   }
 
@@ -6938,7 +6939,7 @@ TEST_P(SchedulerTest, getQueuesAndMountSummariesTest)
   {
     cta::objectstore::ScopedExclusiveLock sel(retrieveQueue2);
     retrieveQueue2.fetch();
-    std::list<cta::objectstore::RetrieveQueue::JobToAdd> jobsToAdd({retrieveJobToAdd});
+    std::list<cta::common::dataStructures::RetrieveJobToAdd> jobsToAdd({retrieveJobToAdd});
     retrieveQueue2.addJobsAndCommit(jobsToAdd,agentReference,lc);
   }
 

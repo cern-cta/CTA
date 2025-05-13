@@ -21,6 +21,7 @@
 #include "AgentReference.hpp"
 #include "ArchiveQueueAlgorithms.hpp"
 #include "ArchiveRequest.hpp"
+#include "common/dataStructures/RetrieveJobToAdd.cpp"
 #include "common/exception/NoSuchObject.hpp"
 #include "GarbageCollector.hpp"
 #include "Helpers.hpp"
@@ -622,7 +623,7 @@ void GarbageCollector::OwnedObjectSorter::lockFetchAndUpdateRetrieveJobs(Agent& 
       filesBefore=jobsSummary.jobs;
       bytesBefore=jobsSummary.bytes;
       // Prepare the list of requests to add to the queue (if needed).
-      std::list<RetrieveQueue::JobToAdd> jta;
+      std::list<common::dataStructures::RetrieveJobToAdd> jta;
       // We have the queue. We will loop on the requests, add them to the list. We will launch their updates
       // after committing the queue.
       for (auto & rr: currentJobBatch) {

@@ -233,7 +233,8 @@ RelationalDB::getNextRetrieveJobsToTransferBatch(const std::string& vid, uint64_
 }
 
 void RelationalDB::requeueRetrieveRequestJobs(std::list<cta::SchedulerDatabase::RetrieveJob*>& jobs,
-                                              log::LogContext& lc) {
+                                              std::string toRequeueName,
+		                              log::LogContext& lc) {
   throw cta::exception::Exception("Not implemented");
 }
 

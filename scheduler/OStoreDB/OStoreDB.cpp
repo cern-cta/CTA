@@ -30,6 +30,7 @@
 #include "catalogue/Catalogue.hpp"
 #include "catalogue/TapeDrivesCatalogueState.hpp"
 #include "common/dataStructures/MountPolicy.hpp"
+#include "common/dataStructures/RetrieveJobToAdd.hpp"
 #include "common/exception/Exception.hpp"
 #include "common/exception/TimeoutException.hpp"
 #include "common/exception/NoSuchObject.hpp"
@@ -2156,12 +2157,16 @@ common::dataStructures::RepackInfo OStoreDB::getRepackInfo(const std::string& vi
 // OStoreDB::requeueRetrieveRequest()
 //------------------------------------------------------------------------------
 void OStoreDB::requeueRetrieveRequestJobs(std::list<cta::SchedulerDatabase::RetrieveJob*>& jobs,
+		                          std::string toReportQueueName,
                                           log::LogContext& logContext) {
   std::list<std::shared_ptr<objectstore::RetrieveRequest>> rrlist;
   std::list<objectstore::ScopedExclusiveLock> locks;
-  std::list<RetrieveQueue::JobToAdd> jobsToRequeue;
-  std::list<RetrieveQueue::JobToAdd> jobsToFail;
+  std::list<common::dataStructures::RetrieveJobToAdd> jobsToRequeue;
+  std::list<common::dataStructures::RetrieveJobToAdd> jobsToFail;
  utils::Timer gcrrTimer;
+
+  std::string activeVidFail;
+  std::string activeVidRequeue;
 
   // First classify the jobs
   for (auto& job : jobs) {
@@ -2178,15 +2183,18 @@ void OStoreDB::requeueRetrieveRequestJobs(std::list<cta::SchedulerDatabase::Retr
         .log(log::INFO, "In OStoreDB::requeueRetrieveRequestJobs(): no such retrieve request. Ignoring.");
       continue;
     }
+logContext.log(log::INFO, "In OStoreDB::requeueRetrieveRequestJobs(): Classifying retrieve request");
 
     // Move the Job Pointers from the global list to the independent ones
-    switch(rr->reclassifyRetrieveRequest()) {
+    switch(rr->reclassifyRetrieveRequest(m_catalogue, logContext)) {
       case 0:
         //TODO
-        //jobsToRequeue.emplace_back(rr);
+	activeVidRequeue = rr->getLastActiveVid();
+        jobsToRequeue.emplace_back(rr->getJobToAdd());
         break;
       case 1:
-        rr->failJobs();
+        rr->failJobs(toReportQueueName);
+	activeVidFail = rr->getLastActiveVid();
         jobsToFail.emplace_back(rr->getJobToAdd());
         break;
       default:
@@ -2198,25 +2206,27 @@ void OStoreDB::requeueRetrieveRequestJobs(std::list<cta::SchedulerDatabase::Retr
   // inherently in here we are working int <= MAX in each list.
   // We now need to grab the failed queue and queue the request.
   if (jobsToFail.size()) {
+    logContext.log(log::INFO, "In OStoreDB::requeueRetrieveRequestJobs(): Requeueing failed jobs");
     RetrieveQueue rq(m_objectStore);
     ScopedExclusiveLock rql;
     // If garbage collect retrieve request is only called by the cleanup
     // process we can add some extra info in the `activeVid` so that
     // the queue gets created with a different name and they don't
     // step into each others. :)
-    Helpers::getLockedAndFetchedJobQueue<RetrieveQueue>(rq, rql, agentReference, activeVid, common::dataStructures::JobQueueType::JobsToReportToUser, lc);
+    Helpers::getLockedAndFetchedJobQueue<RetrieveQueue>(rq, rql, *m_agentReference, activeVidFail, common::dataStructures::JobQueueType::JobsToReportToUser, logContext);
 
     // Append the jobs and commit.
-    rq.appendJobsAndCommit(jobsToFail, agentReference, lc);
+    rq.appendJobsAndCommit(jobsToFail, *m_agentReference, logContext);
   }
 
 
-  if (jobsToTransfer.size()) {
+  if (jobsToRequeue.size()) {
+    logContext.log(log::INFO, "In OStoreDB::requeueRetrieveRequestJobs(): Requeueing to another VID");
     RetrieveQueue rq(m_objectStore);
     ScopedExclusiveLock rql;
 
-    Helpers::getLockedAndFetchedJobQueue<RetrieveQueue>(rq, rql, agentReference, activeVid, common::dataStructures::JobQueueType::JobsToTransferForUser, lc);
-    rq.addJobsAndCommit(jobsToRequeue, agentReference, lc);
+    Helpers::getLockedAndFetchedJobQueue<RetrieveQueue>(rq, rql, *m_agentReference, activeVidRequeue, common::dataStructures::JobQueueType::JobsToTransferForUser, logContext);
+    rq.addJobsAndCommit(jobsToRequeue, *m_agentReference, logContext);
   }
 
   locks.clear();

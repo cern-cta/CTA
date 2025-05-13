@@ -25,6 +25,7 @@
 #include "objectstore/cta.pb.h"
 #include "Helpers.hpp"
 #include "common/utils/utils.hpp"
+#include "common/dataStructures/RetrieveJobToAdd.hpp"
 #include "LifecycleTimingsSerDeser.hpp"
 #include "Sorter.hpp"
 #include "AgentWrapper.hpp"
@@ -76,7 +77,7 @@ void RetrieveRequest::garbageCollect(const std::string& presumedOwner, AgentRefe
 
 
 // Setting a bool for now on what we should do with these types.
-int RetrieveRequest::reclassifyRetrieveRequest(){
+int RetrieveRequest::reclassifyRetrieveRequest(cta::catalogue::Catalogue& catalogue, log::LogContext& lc){
   // The owner is indeed the right one. We should requeue the request either to
   // the to tranfer queue for one vid, or to the to report (or failed) queue (for one arbitrary VID).
   // Find the vids for active jobs in the request (to transfer ones).
@@ -105,6 +106,7 @@ int RetrieveRequest::reclassifyRetrieveRequest(){
   std::string bestVid;
   // If no tape file is a candidate, we just need to skip to queueing to the failed queue
   if (candidateVids.empty()) {
+    lc.log(log::INFO, "NO VID FOUND");
     return 1;
   }
   // We have a chance to find an available tape. Let's compute best VID (this will
@@ -112,8 +114,11 @@ int RetrieveRequest::reclassifyRetrieveRequest(){
   try {
     // If we have to fetch the status of the tapes and queued for the non-disabled vids.
     bestVid=Helpers::selectBestRetrieveQueue(candidateVids, catalogue, m_objectStore, lc, m_payload.repack_info().has_repack_request_address());
+    lc.log(log::INFO, "VID AVAILABLE TO REQUEUE");
     return 0;
   } catch (Helpers::NoTapeAvailableForRetrieve&) {}
+
+  lc.log(log::INFO, "NO VID AVAILABLE");
   return 1;
 }
 
@@ -269,7 +274,7 @@ queueForFailure:;
     getLockedQueueTime = tmpT.secs(utils::Timer::resetCounter);
     // Enqueue the job
     objectstore::MountPolicySerDeser mp;
-    std::list<RetrieveQueue::JobToAdd> jta;
+    std::list<common::dataStructures::RetrieveJobToAdd> jta;
     jta.push_back({activeCopyNb, activeFseq, getAddressIfSet(), m_payload.archivefile().filesize(),
       mp, (signed)m_payload.schedulerrequest().entrylog().time(), std::nullopt, std::nullopt});
     if (m_payload.has_activity()) {
@@ -343,7 +348,7 @@ queueForTransfer:;
       // Enqueue the job
     objectstore::MountPolicySerDeser mp;
     mp.deserialize(m_payload.mountpolicy());
-    std::list<RetrieveQueue::JobToAdd> jta;
+    std::list<common::dataStructures::RetrieveJobToAdd> jta;
     jta.push_back({bestTapeFile->copynb(), bestTapeFile->fseq(), getAddressIfSet(), m_payload.archivefile().filesize(),
       mp, (signed)m_payload.schedulerrequest().entrylog().time(), getActivity(), getDiskSystemName()});
     if (m_payload.has_activity()) {
@@ -1183,21 +1188,24 @@ void RetrieveRequest::setFailed() {
 }
 
 // Fail the job given by the copy number.
-void RetrieveRequest::failJobs() {
+void RetrieveRequest::failJobs(std::string& newOwner) {
   for (auto& j: *m_payload.mutable_jobs()) {
-    if (j.status() == RetrieveJobStatus::RJS_ToTransfer) {
+    if (j.status() == serializers::RetrieveJobStatus::RJS_ToTransfer) {
       j.set_status(m_payload.isrepack() ?
-                   RetrieveJobStatus::RJS_ToReportToRepackForFailure :
-                   RetrieveJobStatus::RJS_ToReportToUserForFailure);
+                   serializers::RetrieveJobStatus::RJS_ToReportToRepackForFailure :
+                   serializers::RetrieveJobStatus::RJS_ToReportToUserForFailure);
     }
 
     // Generate the last failure for this job (tape unavailable).
     *j.mutable_failurelogs()->Add() = utils::getCurrentLocalTime() + " " +
-            utils::getShortHostname() + logHead + "No VID available to requeue the request. Failing it.";
-    }
+            utils::getShortHostname() + "No VID available to requeue the request. Failing it.";
+  }
+
+  setOwner(newOwner);
+  commit();
 }
 
-RetrieveQueue::jobToAdd RertieveRequet::getJobToAdd() {
+common::dataStructures::RetrieveJobToAdd RetrieveRequest::getJobToAdd() {
   auto activeCopyNb = m_payload.activecopynb();
   std::string activeVid;
   uint64_t activeFseq;
@@ -1210,14 +1218,14 @@ RetrieveQueue::jobToAdd RertieveRequet::getJobToAdd() {
     }
   }
 
-  return RetrieveQueue::JobToAdd(
+  return common::dataStructures::RetrieveJobToAdd(
     activeCopyNb,
     activeFseq,
     getAddressIfSet(),
     m_payload.archivefile().filesize(),
     mp,
     (signed) m_payload.schedulerrequest().entrylog().time(),
-    m_payload.has_activity ? m_payload.activity() : std::nullopt,
+    m_payload.has_activity() ? std::nullopt : std::nullopt,
     std::nullopt
   );
 }

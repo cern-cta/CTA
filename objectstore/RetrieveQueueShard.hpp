@@ -18,6 +18,7 @@
 #pragma once
 
 #include "RetrieveQueue.hpp"
+#include "common/dataStructures/RetrieveJobToAdd.hpp"
 
 namespace cta::objectstore {
 
@@ -59,7 +60,7 @@ public:
   
   /** Variant function allowing shard to shard job transfer (not needed) archives, 
    * which do not split. */
-  std::list<RetrieveQueue::JobToAdd> dumpJobsToAdd();
+  std::list<common::dataStructures::RetrieveJobToAdd> dumpJobsToAdd();
   
   struct JobsSummary {
     uint64_t jobs = 0;
@@ -70,11 +71,11 @@ public:
   JobsSummary getJobsSummary();
   
   struct RetrieveQueueJobsToAddLess {
-    constexpr bool operator() (const RetrieveQueue::JobToAdd& lhs, 
-      const RetrieveQueue::JobToAdd& rhs) const { return lhs.fSeq < rhs.fSeq; }
+    constexpr bool operator() (const common::dataStructures::RetrieveJobToAdd& lhs, 
+      const common::dataStructures::RetrieveJobToAdd& rhs) const { return lhs.fSeq < rhs.fSeq; }
   };
   
-  typedef std::multiset<RetrieveQueue::JobToAdd, RetrieveQueueJobsToAddLess> JobsToAddSet;
+  typedef std::multiset<common::dataStructures::RetrieveJobToAdd, RetrieveQueueJobsToAddLess> JobsToAddSet;
   
   struct RetrieveQueueSerializedJobsToAddLess {
     bool operator() (const serializers::RetrieveJobPointer& lhs, 
@@ -95,7 +96,7 @@ public:
   /**
    * adds job
    */
-  void addJob(const RetrieveQueue::JobToAdd & jobToAdd);
+  void addJob(const common::dataStructures::RetrieveJobToAdd & jobToAdd);
 
   void addJobsBatch(JobsToAddSet & jobToAdd);
   
