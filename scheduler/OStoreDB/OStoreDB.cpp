@@ -578,6 +578,7 @@ void OStoreDB::fetchMountInfo(SchedulerDatabase::TapeMountDecisionInfo& tmdi,
   const auto driveStates = m_catalogue.DriveState()->getTapeDrives();
   registerFetchTime = t.secs(utils::Timer::resetCounter);
   using common::dataStructures::DriveStatus;
+
   std::set<int> activeDriveStatuses = {(int) cta::common::dataStructures::DriveStatus::Starting,
                                        (int) cta::common::dataStructures::DriveStatus::Mounting,
                                        (int) cta::common::dataStructures::DriveStatus::Transferring,
@@ -588,7 +589,23 @@ void OStoreDB::fetchMountInfo(SchedulerDatabase::TapeMountDecisionInfo& tmdi,
                                     (int) cta::common::dataStructures::MountType::ArchiveForRepack,
                                     (int) cta::common::dataStructures::MountType::Retrieve,
                                     (int) cta::common::dataStructures::MountType::Label};
+  std::unordered_map<std::string, std::string> tapeDrivetoSchedulerBackendNameMap;
+
+  for (const auto & config : m_catalogue.DriveConfig()->getTapeDriveConfigs()) {
+    if (config.keyName == "SchedulerBackendName") {
+      tapeDrivetoSchedulerBackendNameMap.emplace(config.tapeDriveName, config.value);
+    }
+  }
+
   for (const auto& driveState : driveStates) {
+    std::optional<std::string> driveSchedulerBackendName;
+    try {
+      driveSchedulerBackendName = tapeDrivetoSchedulerBackendNameMap.at(driveState.driveName);
+    } catch (std::out_of_range &) {
+      log::ScopedParamContainer(logContext)
+        .add("driveName", driveState.driveName)
+        .log(log::ERR, "In OStoreDB::fetchMountInfo(): drive is missing SchedulerBackendName configuration.");
+    }
     if (activeDriveStatuses.count(static_cast<int>(driveState.driveStatus))) {
       if (driveState.mountType == common::dataStructures::MountType::NoMount) {
         log::ScopedParamContainer(logContext)
@@ -615,6 +632,7 @@ void OStoreDB::fetchMountInfo(SchedulerDatabase::TapeMountDecisionInfo& tmdi,
         tmdi.existingOrNextMounts.back().averageBandwidth = 0.0;
       }
       tmdi.existingOrNextMounts.back().activity = driveState.currentActivity.value_or("");
+      tmdi.existingOrNextMounts.back().schedulerBackendName = driveSchedulerBackendName;
     }
     if (driveState.nextMountType == common::dataStructures::MountType::NoMount) {
       continue;
@@ -631,6 +649,7 @@ void OStoreDB::fetchMountInfo(SchedulerDatabase::TapeMountDecisionInfo& tmdi,
       tmdi.existingOrNextMounts.back().filesTransferred = 0;
       tmdi.existingOrNextMounts.back().averageBandwidth = 0;
       tmdi.existingOrNextMounts.back().activity = driveState.nextActivity.value_or("");
+      tmdi.existingOrNextMounts.back().schedulerBackendName = driveSchedulerBackendName;
     }
   }
 

@@ -148,7 +148,7 @@ public:
     // We know the cast will not fail, so we can safely do it (otherwise we could leak memory).
     m_db.reset(dynamic_cast<cta::objectstore::OStoreDBWrapperInterface *> (osDb.release()));
     // Setup scheduler
-    m_scheduler = std::make_unique<cta::Scheduler>(*m_catalogue, *m_db, 5, 2 * 1000 * 1000);
+    m_scheduler = std::make_unique<cta::Scheduler>(*m_catalogue, *m_db, "schedulerBackendName", 5, 2 * 1000 * 1000);
   }
 
   virtual void TearDown() {

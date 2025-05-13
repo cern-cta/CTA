@@ -162,7 +162,7 @@ public:
     dynamic_cast<cta::objectstore::OStoreDBWrapperInterface*>(osdb.get());
     // We know the cast will not fail, so we can safely do it (otherwise we could leak memory)
     m_db.reset(dynamic_cast<cta::objectstore::OStoreDBWrapperInterface*>(osdb.release()));
-    m_scheduler = std::make_unique<Scheduler>(*m_catalogue, *m_db, s_minFilesToWarrantAMount, s_minBytesToWarrantAMount);
+    m_scheduler = std::make_unique<Scheduler>(*m_catalogue, *m_db, s_schedulerBackendName, s_minFilesToWarrantAMount, s_minBytesToWarrantAMount);
     objectstore::Helpers::flushStatisticsCache();
   }
 
@@ -306,10 +306,10 @@ public:
 
     const std::string driveName = "tape_drive";
     const auto tapeDrive = getDefaultTapeDrive(driveName);
-    catalogue.DriveState()->createTapeDrive(tapeDrive);
+    createTapeDriveWithSchedulerBackendConfig(getCatalogue(), tapeDrive);
     const std::string driveName2 = "drive0";
     const auto tapeDrive2 = getDefaultTapeDrive(driveName2);
-    catalogue.DriveState()->createTapeDrive(tapeDrive2);
+    createTapeDriveWithSchedulerBackendConfig(getCatalogue(), tapeDrive2);
   }
 
   cta::catalogue::CreateTapeAttributes getDefaultTape() {
@@ -344,6 +344,21 @@ public:
     tapeDrive.creationLog = log;
     tapeDrive.lastModificationLog = log;
     return tapeDrive;
+  }
+
+  void createTapeDriveWithSchedulerBackendConfig(cta::catalogue::Catalogue & catalogue, const cta::common::dataStructures::TapeDrive & tapeDrive) {
+    createTapeDriveWithSchedulerBackendConfig(catalogue, tapeDrive, s_schedulerBackendName);
+  }
+
+  void createTapeDriveWithSchedulerBackendConfig(cta::catalogue::Catalogue & catalogue, const cta::common::dataStructures::TapeDrive & tapeDrive, const std::string & schedulerBackendName) {
+    catalogue.DriveState()->createTapeDrive(tapeDrive);
+    catalogue.DriveConfig()->createTapeDriveConfig(
+      tapeDrive.driveName,
+      "category",
+      "SchedulerBackendName",
+      schedulerBackendName,
+      "source"
+      );
   }
 
 private:
@@ -384,6 +399,7 @@ protected:
   const uint64_t s_mediaTypeCapacityInBytes = 10;
   const std::string s_vo = "vo";
   const std::string s_repack_vo = "repack_vo";
+  const std::string s_schedulerBackendName = "schedulerBackendName";
   //TempFile m_tempSqliteFile;
 
 }; // class SchedulerTest
@@ -1287,10 +1303,10 @@ TEST_P(SchedulerTest, archive_report_and_retrieve_new_dual_copy_file) {
 
     const std::string driveName = "tape_drive";
     const auto tapeDrive = getDefaultTapeDrive(driveName);
-    catalogue.DriveState()->createTapeDrive(tapeDrive);
+    createTapeDriveWithSchedulerBackendConfig(getCatalogue(), tapeDrive);
     const std::string driveName2 = "drive0";
     const auto tapeDrive2 = getDefaultTapeDrive(driveName2);
-    catalogue.DriveState()->createTapeDrive(tapeDrive2);
+    createTapeDriveWithSchedulerBackendConfig(getCatalogue(), tapeDrive2);
   }
 
 #ifdef STDOUT_LOGGING
@@ -6488,7 +6504,7 @@ TEST_P(SchedulerTest, retrieveArchiveRepackQueueMaxDrivesVoInFlightChangeSchedul
   std::string drive = "drive";
   {
     const auto tapeDrive = getDefaultTapeDrive(drive);
-    catalogue.DriveState()->createTapeDrive(tapeDrive);
+    createTapeDriveWithSchedulerBackendConfig(getCatalogue(), tapeDrive);
   }
 
   //Create a logical library in the catalogue
@@ -6675,17 +6691,17 @@ TEST_P(SchedulerTest, retrieveArchiveAllTypesMaxDrivesVoInFlightChangeScheduleMo
   std::string drive1 = "drive1";
   {
     const auto tapeDrive = getDefaultTapeDrive(drive1);
-    catalogue.DriveState()->createTapeDrive(tapeDrive);
+    createTapeDriveWithSchedulerBackendConfig(getCatalogue(), tapeDrive);
   }
   std::string drive2 = "drive2";
   {
     const auto tapeDrive = getDefaultTapeDrive(drive2);
-    catalogue.DriveState()->createTapeDrive(tapeDrive);
+    createTapeDriveWithSchedulerBackendConfig(getCatalogue(), tapeDrive);
   }
   std::string drive3 = "drive3";
   {
     const auto tapeDrive = getDefaultTapeDrive(drive3);
-    catalogue.DriveState()->createTapeDrive(tapeDrive);
+    createTapeDriveWithSchedulerBackendConfig(getCatalogue(), tapeDrive);
   }
 
   //Create a logical library in the catalogue
@@ -7026,9 +7042,38 @@ TEST_P(SchedulerTest, getQueuesAndMountSummariesTest)
     repackArchiveQueue.addJobsAndCommit(jobsToAdd,agentReference,lc);
   }
 
+  // Create a drive, with same scheduler backend
+  const std::string driveName_1 = "tape_drive_1";
+  const std::string vid_3 = s_vid + "3";
+  {
+    auto tapeDrive = getDefaultTapeDrive(driveName_1);
+    auto newTape = getDefaultTape();
+    newTape.vid = vid_3;
+    catalogue.Tape()->createTape(s_adminOnAdminHost, newTape);
+    tapeDrive.driveStatus = common::dataStructures::DriveStatus::Starting;
+    tapeDrive.mountType = common::dataStructures::MountType::Retrieve;
+    tapeDrive.currentVid = newTape.vid;
+    createTapeDriveWithSchedulerBackendConfig(catalogue, tapeDrive, s_schedulerBackendName);
+  }
+
+  // Create a drive, with a different scheduler backend
+  // Should not be listed by getQueuesAndMountSummaries
+  const std::string driveName_2 = "tape_drive_2";
+  const std::string vid_4 = s_vid + "4";
+  {
+    auto tapeDrive = getDefaultTapeDrive(driveName_2);
+    auto newTape = getDefaultTape();
+    newTape.vid = vid_4;
+    catalogue.Tape()->createTape(s_adminOnAdminHost, newTape);
+    tapeDrive.driveStatus = common::dataStructures::DriveStatus::Starting;
+    tapeDrive.mountType = common::dataStructures::MountType::Retrieve;
+    tapeDrive.currentVid = newTape.vid;
+    createTapeDriveWithSchedulerBackendConfig(catalogue, tapeDrive, "otherSchedulerBackendName");
+  }
+
   auto queuesAndMountSummaries = scheduler.getQueuesAndMountSummaries(lc);
 
-  ASSERT_EQ(4,queuesAndMountSummaries.size());
+  ASSERT_EQ(5,queuesAndMountSummaries.size());
   std::string vid = tape.vid;
 
   //Test the QueueAndMountSummary of the first Retrieve Queue s_vid
@@ -7060,6 +7105,19 @@ TEST_P(SchedulerTest, getQueuesAndMountSummariesTest)
   });
   ASSERT_EQ(tapePool, res->tapePool);
   ASSERT_EQ(cta::common::dataStructures::MountType::ArchiveForRepack,res->mountType);
+
+  //Test the existingOrNextMounts for mount on drive with same scheduler backend
+  res = std::find_if(queuesAndMountSummaries.begin(), queuesAndMountSummaries.end(), [vid_3](const cta::common::dataStructures::QueueAndMountSummary & qams){
+    return qams.mountType == cta::common::dataStructures::MountType::Retrieve && qams.vid == vid_3;
+  });
+  ASSERT_EQ(vid_3,res->vid);
+  ASSERT_EQ(cta::common::dataStructures::MountType::Retrieve,res->mountType);
+
+  //Test the existingOrNextMounts for mount on drive with different scheduler backend (should not be listed)
+  res = std::find_if(queuesAndMountSummaries.begin(), queuesAndMountSummaries.end(), [vid_4](const cta::common::dataStructures::QueueAndMountSummary & qams){
+    return qams.mountType == cta::common::dataStructures::MountType::Retrieve && qams.vid == vid_4;
+  });
+  ASSERT_EQ(res,queuesAndMountSummaries.end());
 }
 
 //This test tests what is described in the use case ticket
@@ -7100,12 +7158,12 @@ TEST_P(SchedulerTest, getNextMountWithArchiveForUserAndArchiveForRepackShouldRet
   std::string drive1 = "drive1";
   {
     const auto tapeDrive = getDefaultTapeDrive(drive1);
-    catalogue.DriveState()->createTapeDrive(tapeDrive);
+    createTapeDriveWithSchedulerBackendConfig(getCatalogue(), tapeDrive);
   }
   std::string drive2 = "drive2";
   {
     const auto tapeDrive = getDefaultTapeDrive(drive2);
-    catalogue.DriveState()->createTapeDrive(tapeDrive);
+    createTapeDriveWithSchedulerBackendConfig(getCatalogue(), tapeDrive);
   }
 
   //Create two tapes (ArchiveForRepack and ArchiveForUser)
