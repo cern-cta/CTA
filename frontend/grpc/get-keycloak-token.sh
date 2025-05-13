@@ -105,12 +105,12 @@ response=$(curl -X POST http://auth-keycloak:8080/realms/master/protocol/openid-
   -d "password=admin" \
   -s)
 
-access_token=$(echo ${response} | jq -r .access_token)
+admin_access_token=$(echo ${response} | jq -r .access_token)
 
 admin_cli_id="b2bc9e53-323e-4354-8ec1-297e7898f535"
 
 curl -X POST "http://auth-keycloak:8080/admin/realms/master/clients" \
-  -H "Authorization: Bearer $access_token" \
+  -H "Authorization: Bearer $admin_access_token" \
   -H "Content-Type: application/json" \
   -d '{
     "clientId": "konstantina-client",
@@ -120,22 +120,30 @@ curl -X POST "http://auth-keycloak:8080/admin/realms/master/clients" \
     "serviceAccountsEnabled": true,
     "redirectUris": ["http://example.com/callback"],
     "attributes": {
-      "access.token.lifespan": "4800"
+      "access.token.lifespan": "43200"
     }
-}'
+}' # this will give us a one-month-lifetime token
 # konstantina-client id is ba906211-c359-4a55-b017-3ed4c9f9c6d9 and indeed its token lifespan is 4800
 # the client secret for this client is HNfLq3KaMBVSzKfUsXCy7gT99R30rkei
 # now how can this new-client request an access token?
+
+# extract the client_id and client_secret for konstantina-client
+clients=$(curl -X GET http://auth-keycloak:8080/admin/realms/master/clients \
+  -H "Authorization: Bearer $admin_access_token"
+)
+konstantina_client_id=$(echo $clients | jq -r '.[] | select(.clientId == "konstantina-client") .id')
+konstantina_client_secret=$(echo $clients | jq -r '.[] | select(.clientId == "konstantina-client") .secret')
+
+# request an access token now for konstantina-client
 response=$(curl -X POST http://auth-keycloak:8080/realms/master/protocol/openid-connect/token \
   -H "Content-Type: application/x-www-form-urlencoded" \
   -d "grant_type=client_credentials" \
   -d "client_id=konstantina-client" \
-  -d "client_secret=HNfLq3KaMBVSzKfUsXCy7gT99R30rkei" \
+  -d "client_secret=$konstantina_client_secret" \
   -s)
-access_token=$(echo ${response} | jq -r .access_token) ## okay great, konstantina-client has an access token
-## find my new client's ID and see if they can request their own access token
-konstantina_client_id="ba906211-c359-4a55-b017-3ed4c9f9c6d9"
+konstantina_access_token=$(echo ${response} | jq -r .access_token) ## okay great, konstantina-client has an access token
 
 curl -X GET "http://auth-keycloak:8080/admin/realms/master/clients/$konstantina_client_id" \
-  -H "Authorization: Bearer $access_token" \
+  -H "Authorization: Bearer $konstantina_access_token" \
   -s | jq .attributes
+
