@@ -1,3 +1,25 @@
+## 5.11.8.0-1
+
+### Features
+
+- cta/CTA#1093 - Allow repack archive requests to be retried 2 times
+- cta/CTA#768 - Add basic Archival and Retrieval functionality to Postgres Scheduler DB
+
+### Bug Fixes
+
+- cta/CTA#1164 - Prevent `cta-admin sq` from listing queues that are not part of the current scheduler
+- cta/CTA#1163 - Fix cta-admin dis ls failing to print due to incorrect number of header columns
+- cta/CTA#1145 - Fix insufficient buffer space for reading 240 byte Enstore labels
+- cta/CTA#1165 - Fix certain 'cta-admin dr' operations not respecting scheduler separation
+- cta/CTA#1139 - Fix incorrect printing of "NoMoun" in `cta-admin` cli output
+- cta/CTA#1138 - Fix Enstore file reader not correctly dealing with padded files
+
+### Maintenance
+
+- cta/CTA#1152 - Bump XRootD version to stable 5.8.2 release
+- cta/CTA#1123 - Improve CI pipeline options for Postgres Scheduler
+- cta/CTA#1143 - Update Ceph client libraries to 17.2.8
+
 ## 5.11.7.0-1
 
 ### Bug Fixes
