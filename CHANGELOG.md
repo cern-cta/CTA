@@ -12,8 +12,7 @@
 - cta/CTA#1145 - Fix insufficient buffer space for reading 240 byte Enstore labels
 - cta/CTA#1165 - Fix certain 'cta-admin dr' operations not respecting scheduler separation
 - cta/CTA#1139 - Fix incorrect printing of "NoMoun" in `cta-admin` cli output
--  cta/CTA#1138 - Fix Enstore file reader not correctly dealing with padded files
-
+- cta/CTA#1138 - Fix Enstore file reader not correctly dealing with padded files
 
 ### Maintenance
 
