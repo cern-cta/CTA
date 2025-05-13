@@ -18,8 +18,6 @@
 #pragma once
 
 
-#include "TokenStorage.hpp"
-
 #include <grpcpp/grpcpp.h>
 
 #include <unordered_map>
@@ -29,14 +27,15 @@
 class ServiceJWTAuthProcessor : public ::grpc::AuthMetadataProcessor {
 
 public:
-    explicit ServiceJWTAuthProcessor(const TokenStorage& tokenStorage) : m_tokenStorage(tokenStorage) {}
+    explicit ServiceJWTAuthProcessor(const std::string& token) : m_token(token) {}
 
     ::grpc::Status Process(const ::grpc::AuthMetadataProcessor::InputMetadata& authMetadata, ::grpc::AuthContext* context,
                     ::grpc::AuthMetadataProcessor::OutputMetadata* consumedAuthMetadata,
                     ::grpc::AuthMetadataProcessor::OutputMetadata* processedResponseMetadata) override;
+    bool Validate(std::string encodedJWT);
 
 private:
     const std::string JWT_TOKEN_AUTH_METADATA_KEY = {"cta-grpc-jwt-auth-token"};
-    const TokenStorage& m_tokenStorage;
+    const std::string& m_token;
 
 };
