@@ -83,7 +83,7 @@ unit-test-postgresql:
   before_script:
     - *setup-cta-install
   script:
-    - yum -y install cta-catalogueutils
+    - dnf -y install cta-catalogueutils
     - POSTGRESQL_DATA_DIR=/usr/local/cta_test_pgsql_data
     - POSTGRESQL_LOG_DIR=/var/log/postgres
     - echo POSTGRESQL_DATA_DIR=${POSTGRESQL_DATA_DIR}
@@ -136,7 +136,7 @@ unit-test-oracle:
   before_script:
     - *setup-cta-install
   script:
-    - yum -y install cta-catalogueutils
+    - dnf -y install cta-catalogueutils
     - CTA_CATALOGUE_CONF=/etc/cta/cta-catalogue.conf
     - echo CTA_CATALOGUE_CONF=${CTA_CATALOGUE_CONF}
     - echo oracle:${ORACLE_USERNAME}/${ORACLE_PASSWORD}@${ORACLE_DATABASE} > ${CTA_CATALOGUE_CONF}
@@ -170,14 +170,14 @@ test-cta-release:
     - cp -r build_rpm/RPM ${CTAREPODIR}
     - createrepo ${CTAREPODIR}
     - echo -e "[cta-artifacts]\nname=CTA artifacts\nbaseurl=file://${CTAREPODIR}\ngpgcheck=0\nenabled=1\npriority=2" > /etc/yum.repos.d/cta-artifacts.repo
-    - yum install --nogpgcheck -y cta-release
+    - dnf install --nogpgcheck -y cta-release
     - cta-versionlock apply
-    - yum install --nogpgcheck -y cta-frontend
-    - yum install --nogpgcheck -y cta-taped
-    - yum install --nogpgcheck -y cta-rmcd
-    - yum install --nogpgcheck -y cta-smc
-    - yum install --nogpgcheck -y eos-server
-    - yum install --nogpgcheck -y eos-client
+    - dnf install --nogpgcheck -y cta-frontend
+    - dnf install --nogpgcheck -y cta-taped
+    - dnf install --nogpgcheck -y cta-rmcd
+    - dnf install --nogpgcheck -y cta-smc
+    - dnf install --nogpgcheck -y eos-server
+    - dnf install --nogpgcheck -y eos-client
     # Check that everything was installed properly
     - cta-versionlock --json check-installed > checkpkg-output.json
   artifacts:

@@ -272,8 +272,8 @@ build_rpm() {
     else
       cp -f continuousintegration/docker/${platform}/etc/yum.repos.d-public/*.repo /etc/yum.repos.d/
     fi
-    yum clean all
-    yum-builddep --nogpgcheck -y "${srpm_dir}"/*
+    dnf clean all
+    dnf builddep --nogpgcheck -y "${srpm_dir}"/*
   fi
 
   # Cmake
