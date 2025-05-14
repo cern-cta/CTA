@@ -42,7 +42,7 @@ RUN set -ex; \
     make srpm;
 
 RUN set -ex; \
-    yum-builddep -y --nogpgcheck build_srpm/SRPMS/*;
+    dnf builddep -y --nogpgcheck build_srpm/SRPMS/*;
 
 RUN set -ex; \
     rm -rf build_srpm;

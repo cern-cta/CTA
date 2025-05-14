@@ -25,7 +25,7 @@ COPY continuousintegration/docker/el9/etc/yum.repos.d-internal/* /etc/yum.repos.
 # Install necessary packages
 RUN dnf install -y \
       python3-dnf-plugin-versionlock \
-      yum-utils \
+      dnf-utils \
       createrepo \
       epel-release \
       jq \

@@ -576,7 +576,7 @@ Requires: python
 Requires: jq
 %description -n cta-release
 Repository configuration for CTA and its dependencies
-This package contains .repo files, gpg keys and yum-versionlock configuration for CTA
+This package contains .repo files, gpg keys and versionlock configuration for CTA
 %files -n cta-release
 %defattr(-,root,root)
 %attr(0644,root,root) %config(noreplace) %{_sysconfdir}/yum.repos.d/*

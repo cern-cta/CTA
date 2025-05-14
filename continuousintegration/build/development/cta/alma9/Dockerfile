@@ -42,7 +42,7 @@ RUN set -ex; \
     make cta_srpm;
 
 RUN set -ex; \
-    yum-builddep -y --nogpgcheck build_srpm/RPM/SRPMS/*;
+    dnf builddep -y --nogpgcheck build_srpm/RPM/SRPMS/*;
 
 RUN set -ex; \
     rm -rf build_srpm;
