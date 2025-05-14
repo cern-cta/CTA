@@ -127,11 +127,8 @@ size_t EnstoreFileReader::readNextDataBlock(void *data, const size_t size) {
     	bytes_read = bytes_read - (m_ui64CPIODataSize - m_cpioHeader.m_ui64FileSize);
       }
 
-      if (true_bytes_read > 0 && bytes_read == 0) { // We need to finish reading the trailer to get the position correct
-        uint8_t* dummyData = new uint8_t[size];
-        size_t dummy_bytes_read = 0;
-        dummy_bytes_read = m_session.m_drive.readBlock(dummyData, size);
-        delete[] dummyData;
+      if (true_bytes_read > 0 && bytes_read == 0) { // We need to finish reading the file mark to get the position correct
+        m_session.m_drive.readFileMark("[EnstoreFileReader::readNextDataBlock] Forcing read of file mark after trailer-only block");
       }
     }
   }
