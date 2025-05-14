@@ -29,7 +29,6 @@ usage() {
   echo "  --cmake-build-type <type>:            Specifies the build type for cmake. Must be one of [Release, Debug, RelWithDebInfo, or MinSizeRel]."
   echo ""
   echo "options:"
-  echo "  -i, --install:                        Installs the required packages. Supported operating systems: [alma9]."
   echo "  -j, --jobs <num-jobs>:                How many jobs to use for make."
   echo "      --clean-build-dir:                Empties the build directory, ensuring a fresh build from scratch."
   echo "      --create-build-dir                Creates the build directory if it does not exist."
@@ -38,7 +37,7 @@ usage() {
 }
 
 build_srpm() {
-
+  project_root="$(realpath "$(dirname "$0")/../..")"
   # Default values for arguments
   local build_dir=""
   local build_generator=""
@@ -48,7 +47,6 @@ build_srpm() {
 
   local create_build_dir=false
   local clean_build_dir=false
-  local install=false
   local num_jobs=$(nproc --ignore=2)
   local oracle_support=true
   local cmake_build_type=""
@@ -111,7 +109,6 @@ build_srpm() {
         usage
       fi
       ;;
-    -i | --install) install=true ;;
     -j | --jobs)
       if [[ $# -gt 1 ]]; then
         num_jobs="$2"
@@ -175,9 +172,7 @@ build_srpm() {
     usage
   fi
 
-  cd "$(dirname "$0")"
-  cd ../../
-  local project_root=$(pwd)
+  cd "${project_root}"
   local cmake_options=""
 
   if [[ ${clean_build_dir} = true ]]; then
@@ -194,21 +189,6 @@ build_srpm() {
 
   if [ -d "${build_dir}" ] && [ "$(ls -A "${build_dir}")" ]; then
     echo "WARNING: build directory ${build_dir} is not empty"
-  fi
-
-  # Setup
-
-  # Go through supported Operating Systems
-  if [ "$(grep -c 'AlmaLinux release 9' /etc/redhat-release)" -eq 1 ]; then
-    # Alma9
-    if [ "${install}" = true ]; then
-      echo "Installing prerequisites for Alma 9..."
-      yum install -y epel-release almalinux-release-devel
-      yum install -y gcc gcc-c++ cmake3 rpm-build yum-utils make ninja-build
-    fi
-  else
-    echo "Failure: Unsupported distribution. Must be one of: [alma9]"
-    exit 1
   fi
 
   # Cmake

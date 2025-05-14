@@ -5,8 +5,10 @@
   - echo -e "[cta-artifacts]\nname=CTA artifacts\nbaseurl=file://${CTAREPODIR}\ngpgcheck=0\nenabled=1\npriority=2" > /etc/yum.repos.d/cta-artifacts.repo
   - dnf -y --nogpgcheck install cta-release
   - cta-versionlock apply
-  # Overwrite public repos with our own internal repos
-  - cp -f continuousintegration/docker/${PLATFORM}/etc/yum.repos.d/*.repo /etc/yum.repos.d/
+  - |
+    if [ "$USE_INTERNAL_REPOS" == "TRUE" ]; then
+      cp -f continuousintegration/docker/${PLATFORM}/etc/yum.repos.d-internal/*.repo /etc/yum.repos.d/
+    fi
   - dnf -y --nogpgcheck install cta-integrationtests cta-debuginfo cta-debugsource
 
 test-cta-valgrind:

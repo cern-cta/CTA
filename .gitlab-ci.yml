@@ -33,6 +33,13 @@ variables:
       - "RelWithDebInfo"
       - "MinSizeRel"
 
+  USE_INTERNAL_REPOS:
+    description: "Whether to use the internal yum repos instead of the public yum repos."
+    value: "TRUE"
+    options:
+      - "TRUE"
+      - "FALSE"
+
   # CTA Configuration
   CTA_VERSION: 5
   SCHEDULER_TYPE:

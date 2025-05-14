@@ -20,7 +20,7 @@ FROM gitlab-registry.cern.ch/linuxsupport/alma9-base:latest
 
 # Add orchestration run scripts locally
 COPY continuousintegration/docker/opt /opt
-COPY continuousintegration/docker/el9/etc/yum.repos.d/* /etc/yum.repos.d/
+COPY continuousintegration/docker/el9/etc/yum.repos.d-internal/* /etc/yum.repos.d-internal/
 
 # Install necessary packages
 RUN dnf install -y \
@@ -48,3 +48,9 @@ RUN dnf config-manager --enable epel --setopt="epel.priority=4" && \
     cta-versionlock apply && \
     dnf clean all --enablerepo=\* && \
     rm -rf /etc/rc.d/rc.local
+
+# Overwrite with internal repos if configured
+ARG USE_INTERNAL_REPOS=FALSE
+RUN if [ "$USE_INTERNAL_REPOS" = "TRUE" ]; then \
+      cp -f /etc/yum.repos.d-internal/* /etc/yum.repos.d/; \
+    fi

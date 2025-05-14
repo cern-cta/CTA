@@ -1,5 +1,5 @@
 # @project      The CERN Tape Archive (CTA)
-# @copyright    Copyright © 2023 CERN
+# @copyright    Copyright © 2025 CERN
 # @license      This program is free software, distributed under the terms of the GNU General Public
 #               Licence version 3 (GPL Version 3), copied verbatim in the file "COPYING". You can
 #               redistribute it and/or modify it under the terms of the GPL Version 3, or (at your
@@ -15,41 +15,7 @@
 
 FROM gitlab-registry.cern.ch/linuxsupport/alma9-base:latest
 
-ARG EOS_VERSION=master
-RUN set -ex; \
-    echo "EOS version is ${EOS_VERSION}";
+RUN dnf install -y epel-release almalinux-release-devel git python3-dnf-plugin-versionlock
 
-COPY ./etc/yum.repos.d-internal/ /etc/yum.repos.d/
-
-RUN mkdir -p shared;
-
-RUN set -ex; \
-    dnf -y update; \
-    dnf -y install epel-release almalinux-release-devel; \
-    dnf -y install git vim rsync cmake3 dnf-utils ccache openssh-server; \
-    dnf -y group install "Development Tools";
-
-RUN set -ex; \
-    git clone https://gitlab.cern.ch/dss/eos.git eos; \
-    cd eos; \
-    git checkout ${EOS_VERSION}; \
-    git submodule sync --recursive && git submodule update --init --recursive;
-
-RUN set -ex; \
-    mkdir build_srpm; \
-    cd build_srpm; \
-    cmake3 -DPACKAGEONLY:Bool=true ../eos; \
-    make srpm;
-
-RUN set -ex; \
-    yum-builddep -y --nogpgcheck build_srpm/SRPMS/*;
-
-RUN set -ex; \
-    rm -rf build_srpm;
-
-# Setup SSH server for remote access
-RUN /usr/bin/ssh-keygen -A; \
-    rm /run/nologin;
-
-EXPOSE 22
-CMD ["/usr/sbin/sshd", "-D"]
+RUN dnf install -y gcc gcc-c++ cmake3 rpm-build yum-utils make ninja-build ccache systemd-devel && \
+    dnf clean all --enablerepo=\*

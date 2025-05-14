@@ -20,7 +20,6 @@ ENV CTAREPODIR="/opt/repo"
 
 # Add orchestration run scripts locally
 COPY continuousintegration/docker/opt /opt
-COPY continuousintegration/docker/el9/etc/yum.repos.d/* /etc/yum.repos.d/
 
 # Install necessary packages
 RUN dnf install -y \
@@ -54,3 +53,9 @@ priority=2" > /etc/yum.repos.d/cta-artifacts.repo && \
     cta-versionlock apply && \
     dnf clean all --enablerepo=\* && \
     rm -rf /etc/rc.d/rc.local
+
+# Overwrite with internal repos if configured
+ARG USE_INTERNAL_REPOS=FALSE
+RUN if [ "${USE_INTERNAL_REPOS}" = "TRUE" ]; then \
+      cp -f /etc/yum.repos.d-internal/* /etc/yum.repos.d/; \
+    fi
