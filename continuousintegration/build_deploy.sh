@@ -392,6 +392,9 @@ build_deploy() {
       image_tag="dev-$new_build_id"
       echo $new_build_id >$build_iteration_file
     fi
+    if [[ ${use_internal_repos} = true ]]; then
+      extra_image_build_options+=" --use-internal-repos"
+    fi
     ## Create and load the new image
     local rpm_src=build_rpm/RPM/RPMS/x86_64
     echo "Building image from ${rpm_src}"

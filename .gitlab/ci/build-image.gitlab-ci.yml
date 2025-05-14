@@ -68,4 +68,5 @@ build-ctageneric-from-repos:
                        --dockerfile $DOCKERFILE
                        --destination ${CI_REGISTRY}/cta/ctageneric:${CTA_BUILD_ID}
                        --build-arg "PUBLIC_REPO_VER=${CUSTOM_CTA_TAG:1}"
+                       --build-arg USE_INTERNAL_REPOS=${USE_INTERNAL_REPOS}
     - echo "Image pushed successfully to ${CI_REGISTRY}/cta/ctageneric:${CTA_BUILD_ID}"
