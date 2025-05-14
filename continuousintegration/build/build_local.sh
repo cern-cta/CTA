@@ -137,7 +137,7 @@ build_local() {
     if [[ ${install} = true ]]; then
       if [ ${install_platform} == "el9" ]; then
         dnf install -y epel-release almalinux-release-devel git python3-dnf-plugin-versionlock
-        dnf install -y gcc gcc-c++ cmake3 rpm-build yum-utils pandoc which make ninja-build ccache systemd-devel
+        dnf install -y gcc gcc-c++ cmake3 rpm-build dnf-utils pandoc which make ninja-build ccache systemd-devel
       else
         echo "Platform not supported: ${install_platform}. Must be one of [el9]"
       fi

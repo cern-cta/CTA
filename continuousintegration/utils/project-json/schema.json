@@ -97,7 +97,6 @@
         "type": "object",
         "required": [
           "arch",
-          "buildImage",
           "versionlock",
           "buildRequires"
         ],
@@ -106,11 +105,6 @@
             "description": "Architecture",
             "type": "string",
             "enum": ["x86_64"],
-            "minLength": 1
-          },
-          "buildImage": {
-            "description": "Default image to be used for building the project for the given platform.",
-            "type": "string",
             "minLength": 1
           },
           "versionlock": {
