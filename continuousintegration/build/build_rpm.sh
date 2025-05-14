@@ -29,9 +29,9 @@ usage() {
   echo "  --vcs-version <vcs-version>:                  Sets the VCS_VERSION variable in cmake."
   echo "  --xrootd-ssi-version <xrootd-ssi-version>:    Sets the XROOTD_SSI_PROTOBUF_INTERFACE_VERSION variable in cmake."
   echo "  --cmake-build-type <type>:                    Specifies the build type for cmake. Must be one of [Release, Debug, RelWithDebInfo, or MinSizeRel]."
+  echo "  --platform <platform>:                        Which platform the build is running for."
   echo ""
   echo "options:"
-  echo "  -i, --install:                                Installs the required packages. Also installs the SRPMs. Supported operating systems: [alma9]."
   echo "      --install-srpms:                          Installs only the SRPMS."
   echo "  -j, --jobs <num_jobs>:                        How many jobs to use for make."
   echo "      --clean-build-dir:                        Empties the build directory, ensuring a fresh build from scratch."
@@ -41,12 +41,12 @@ usage() {
   echo "      --skip-debug-packages                     Skips the building of the debug RPM packages."
   echo "      --skip-unit-tests                         Skips the unit tests. Speeds up the build time by not running the unit tests."
   echo "      --oracle-support <ON/OFF>:                When set to OFF, will disable Oracle support. Oracle support is enabled by default."
-
+  echo "      --use-internal-repos                      Use the internal yum repos instead of the public yum repos."
   exit 1
 }
 
 build_rpm() {
-
+  project_root="$(realpath "$(dirname "$0")/../..")"
   # Default values for arguments
   local build_dir=""
   local build_generator=""
@@ -55,9 +55,9 @@ build_rpm() {
   local srpm_dir=""
   local vcs_version=""
   local xrootd_ssi_version=""
+  local platform=""
 
   local enable_ccache=false
-  local install=false
   local install_srpms=false
   local num_jobs=$(nproc --ignore=2)
   local cmake_build_type=""
@@ -67,6 +67,7 @@ build_rpm() {
   local skip_unit_tests=false
   local skip_debug_packages=false
   local oracle_support=true
+  local use_internal_repos=false
 
   # Parse command line arguments
   while [[ "$#" -gt 0 ]]; do
@@ -78,6 +79,18 @@ build_rpm() {
         shift
       else
         echo "Error: --build-dir requires an argument"
+        usage
+      fi
+      ;;
+    --platform)
+      if [[ $# -gt 1 ]]; then
+        if [ $(jq '.platforms | has("el9")' ${project_root}/project.json) != "true" ]; then
+          echo "Error: platform $2 not supported. Please check the project.json for supported platforms."
+        fi
+        platform="$2"
+        shift
+      else
+        echo "Error: --platform requires an argument"
         usage
       fi
       ;;
@@ -146,8 +159,8 @@ build_rpm() {
         usage
       fi
       ;;
-    -i | --install) install=true ;;
     --install-srpms) install_srpms=true ;;
+    --use-internal-repos) use_internal_repos=true ;;
     -j | --jobs)
       if [[ $# -gt 1 ]]; then
         num_jobs="$2"
@@ -227,10 +240,12 @@ build_rpm() {
     usage
   fi
 
-  # navigate to root directory
-  cd "$(dirname "$0")"
-  cd ../../
-  local project_root=$(pwd)
+  if [ -z "${platform}" ]; then
+    echo "Failure: Missing mandatory argument --platform"
+    usage
+  fi
+
+  cd "${project_root}"
   local cmake_options=""
 
   if [[ ${clean_build_dir} = true ]]; then
@@ -249,25 +264,16 @@ build_rpm() {
     echo "WARNING: build directory ${build_dir} is not empty"
   fi
 
-  # Go through supported Operating Systems
-  if [ "$(grep -c 'AlmaLinux release 9' /etc/redhat-release)" -eq 1 ]; then
-    # Setup
-    if [ "${install}" = true ]; then
-      echo "Installing prerequisites for Alma 9..."
-      yum -y install epel-release almalinux-release-devel python3-dnf-plugin-versionlock git
-      yum -y install gcc gcc-c++ rpm-build yum-utils make ninja-build ccache
-      ./continuousintegration/utils/project-json/generate_versionlock.py --platform el9 >/etc/yum/pluginconf.d/versionlock.list
-      cp -f continuousintegration/docker/el9/etc/yum.repos.d/*.repo /etc/yum.repos.d/
-      yum-builddep --nogpgcheck -y "${srpm_dir}"/*
-    elif [ "${install_srpms}" = true ]; then
-      ./continuousintegration/utils/project-json/generate_versionlock.py --platform el9 >/etc/yum/pluginconf.d/versionlock.list
-      cp -f continuousintegration/docker/el9/etc/yum.repos.d/*.repo /etc/yum.repos.d/
-      yum clean all
-      yum-builddep --nogpgcheck -y "${srpm_dir}"/*
+  # Setup
+  if [ "${install_srpms}" = true ]; then
+    ./continuousintegration/utils/project-json/generate_versionlock.py --platform ${platform} >/etc/yum/pluginconf.d/versionlock.list
+    if [[ ${use_internal_repos} = true ]]; then
+      cp -f continuousintegration/docker/${platform}/etc/yum.repos.d-internal/*.repo /etc/yum.repos.d/
+    else
+      cp -f continuousintegration/docker/${platform}/etc/yum.repos.d-public/*.repo /etc/yum.repos.d/
     fi
-  else
-    echo "Failure: Unsupported distribution. Must be one of: [alma9]"
-    exit 1
+    yum clean all
+    yum-builddep --nogpgcheck -y "${srpm_dir}"/*
   fi
 
   # Cmake
