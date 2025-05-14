@@ -25,7 +25,7 @@ COPY continuousintegration/docker/el9/etc/yum.repos.d-internal/* /etc/yum.repos.
 # Install necessary packages
 RUN dnf install -y \
       python3-dnf-plugin-versionlock \
-      yum-utils \
+      dnf-utils \
       epel-release \
       jq \
       bc \
@@ -51,6 +51,6 @@ RUN dnf config-manager --enable epel --setopt="epel.priority=4" && \
 
 # Overwrite with internal repos if configured
 ARG USE_INTERNAL_REPOS=FALSE
-RUN if [ "$USE_INTERNAL_REPOS" = "TRUE" ]; then \
+RUN if [ "${USE_INTERNAL_REPOS}" = "TRUE" ]; then \
       cp -f /etc/yum.repos.d-internal/* /etc/yum.repos.d/; \
     fi
