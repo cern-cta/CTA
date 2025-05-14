@@ -31,7 +31,7 @@ build-ctageneric-from-artifacts:
       when: never
     - !reference [.build-ctageneric, rules]
   variables:
-    DOCKERFILE: continuousintegration/docker/${PLATFORM}/Dockerfile
+    DOCKERFILE: continuousintegration/docker/${PLATFORM}/artifacts.Dockerfile
   script:
     - echo "Building image for tag $CTA_BUILD_ID"
     - echo "Image tag ${CI_REGISTRY}/cta/ctageneric:${CTA_BUILD_ID}"
@@ -43,6 +43,7 @@ build-ctageneric-from-artifacts:
     - /kaniko/executor --context $CI_PROJECT_DIR
                        --dockerfile $DOCKERFILE
                        --destination ${CI_REGISTRY}/cta/ctageneric:${CTA_BUILD_ID}
+                       --build-arg USE_INTERNAL_REPOS=${USE_INTERNAL_REPOS}
     - echo "Image pushed successfully to ${CI_REGISTRY}/cta/ctageneric:${CTA_BUILD_ID}"
 
 build-ctageneric-from-repos:

@@ -81,7 +81,6 @@
   "platforms": {
     "el9": {
       "arch": "x86_64",
-      "buildImage": "gitlab-registry.cern.ch/linuxsupport/alma9-base:latest",
       "versionlock": {
         "eos": "5.3.10-1",
         "eos-folly": "2019.11.11.00-1",
