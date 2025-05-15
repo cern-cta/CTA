@@ -29,7 +29,7 @@ SUPPORTED = {
     "PIPELINE_TYPE": ["DEFAULT",
                       "REGR_AGAINST_CTA_MAIN",
                       "REGR_AGAINST_CTA_TAG",
-                      "CTAGENERIC_IMAGE,"
+                      "CTAGENERIC_IMAGE",
                       "SYSTEM_TEST"]
 }
 
@@ -122,8 +122,10 @@ def validate_system_test(ci_input_vars):
     """
     Validation for the pipeline type `SYSTEM_TEST`.
     """
-    if not env_var_defined("CUSTOM_CTA_VERSION", ci_input_vars):
-        sys.exit(f"ERROR: CUSTOM_CTA_VERSION must be provided when running a CTAGENERIC_IMAGE pipeline.")
+    if env_var_defined("CUSTOM_CTA_VERSION", ci_input_vars):
+        sys.exit(f"ERROR: CUSTOM_CTA_VERSION must not be provided when running a SYSTEM_TEST pipeline.")
+    if env_var_defined("CUSTOM_XROOTD_VERSION", ci_input_vars):
+        sys.exit(f"ERROR: CUSTOM_XROOTD_VERSION must not be provided when running a SYSTEM_TEST pipeline.")
 
 
 def main():
