@@ -49,7 +49,7 @@ usage() {
   echo "      --skip-image-cleanup:             Skip the cleanup of the ctageneric images in both the container runtime and minikube before deploying a new instance."
   echo "      --scheduler-type <type>:          The scheduler type. Must be one of [objectstore, pgsched]."
   echo "      --spawn-options <options>:        Additional options to pass for the deployment. These are passed verbatim to the create/upgrade instance scripts."
-  echo "      --image-build-options <options>:        Additional options to pass for the image building. These are passed verbatim to the build_image.sh script."
+  echo "      --image-build-options <options>:  Additional options to pass for the image building. These are passed verbatim to the build_image.sh script."
   echo "      --scheduler-config <path>:        Path to the yaml file containing the type and credentials to configure the Scheduler. Defaults to: presets/dev-scheduler-vfs-values.yaml"
   echo "      --catalogue-config <path>:        Path to the yaml file containing the type and credentials to configure the Catalogue. Defaults to: presets/dev-catalogue-postgres-values.yaml"
   echo "      --tapeservers-config <path>:      Path to the yaml file containing the tapeservers config. If not provided, this will be auto-generated."
