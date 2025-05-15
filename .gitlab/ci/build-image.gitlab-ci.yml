@@ -2,7 +2,7 @@
   stage: build:image
   retry: 1
   rules:
-    - if: $PIPELINE_TYPE == "SYSTEM_TEST"
+    - if: $PIPELINE_TYPE == "SYSTEM_TEST_ONLY"
       when: never
     # For pivot CTA releases: vX.Y.0
     - if: $CI_COMMIT_TAG && $CI_COMMIT_TAG =~ /^.*\.0\.[0-9]+-[^-]*$/
@@ -17,7 +17,7 @@
   before_script:
     - echo "{\"auths\":{\"$CI_REGISTRY\":{\"username\":\"${DOCKER_LOGIN_USERNAME}\",\"password\":\"${DOCKER_LOGIN_PASSWORD}\"}}}" > /kaniko/.docker/config.json
 
-build-ctageneric-from-artifacts:
+build-ctageneric-from-local-rpms:
   extends:
     - .build-ctageneric
   needs:
@@ -25,11 +25,11 @@ build-ctageneric-from-artifacts:
     - job: modify-project-json
       optional: true
   rules:
-    - if: $PIPELINE_TYPE == "REGR_AGAINST_CTA_TAG" || $PIPELINE_TYPE == "CTAGENERIC_IMAGE"
+    - if: $PIPELINE_TYPE == "REGR_AGAINST_CTA_VERSION" || $PIPELINE_TYPE == "IMAGE_FROM_CTA_VERSION"
       when: never
     - !reference [.build-ctageneric, rules]
   variables:
-    DOCKERFILE: continuousintegration/docker/${PLATFORM}/artifacts.Dockerfile
+    DOCKERFILE: continuousintegration/docker/${PLATFORM}/local-rpms.Dockerfile
   script:
     - echo "Building image for tag $CTA_BUILD_ID"
     - echo "Image tag ${CI_REGISTRY}/cta/ctageneric:${CTA_BUILD_ID}"
@@ -44,7 +44,7 @@ build-ctageneric-from-artifacts:
                        --build-arg USE_INTERNAL_REPOS=${USE_INTERNAL_REPOS}
     - echo "Image pushed successfully to ${CI_REGISTRY}/cta/ctageneric:${CTA_BUILD_ID}"
 
-build-ctageneric-from-repos:
+build-ctageneric-from-remote-rpms:
   extends:
     - .build-ctageneric
   needs:
@@ -52,12 +52,12 @@ build-ctageneric-from-repos:
     - job: modify-project-json
       optional: true
   rules:
-    - if: $PIPELINE_TYPE == "REGR_AGAINST_CTA_TAG"
-    - if: $PIPELINE_TYPE == "CTAGENERIC_IMAGE"
+    - if: $PIPELINE_TYPE == "REGR_AGAINST_CTA_VERSION"
+    - if: $PIPELINE_TYPE == "IMAGE_FROM_CTA_VERSION"
     - when: never
     - !reference [.build-ctageneric, rules]
   variables:
-    DOCKERFILE: continuousintegration/docker/${PLATFORM}/tag.Dockerfile
+    DOCKERFILE: continuousintegration/docker/${PLATFORM}/remote-rpms.Dockerfile
   script:
     - echo "Building image with CTA ${CUSTOM_CTA_VERSION} RPMs"
     - echo "Image tag ${CI_REGISTRY}/cta/ctageneric:${CTA_BUILD_ID}"

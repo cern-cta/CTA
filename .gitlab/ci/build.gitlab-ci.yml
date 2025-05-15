@@ -1,11 +1,11 @@
 .build-cta:
   retry: 1
   rules:
-    - if: $PIPELINE_TYPE == "SYSTEM_TEST"
+    - if: $PIPELINE_TYPE == "SYSTEM_TEST_ONLY"
       when: never
-    - if: $PIPELINE_TYPE == "REGR_AGAINST_CTA_TAG"
+    - if: $PIPELINE_TYPE == "REGR_AGAINST_CTA_VERSION"
       when: never
-    - if: $PIPELINE_TYPE == "CTAGENERIC_IMAGE"
+    - if: $PIPELINE_TYPE == "IMAGE_FROM_CTA_VERSION"
       when: never
   image: $IMAGE_BUILD
   artifacts:
