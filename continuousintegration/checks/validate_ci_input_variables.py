@@ -90,7 +90,7 @@ def validate_default(ci_input_vars):
     Validation for the DEFAULT pipeline type.
     """
     if env_var_defined("CUSTOM_CTA_VERSION", ci_input_vars):
-        sys.exit(f"ERROR: using CUSTOM_CTA_VERSION is not allowed in the {ci_input_vars["PIPELINE_TYPE"]} pipeline type.")
+        sys.exit(f"ERROR: using CUSTOM_CTA_VERSION is not allowed in the {ci_input_vars['PIPELINE_TYPE']} pipeline type.")
 
 
 def validate_regr_against_cta_main(ci_input_vars):
@@ -98,7 +98,7 @@ def validate_regr_against_cta_main(ci_input_vars):
     Validation for the pipeline type `REGR_AGAINST_CTA_MAIN`.
     """
     if env_var_defined("CUSTOM_CTA_VERSION", ci_input_vars):
-        sys.exit(f"ERROR: using CUSTOM_CTA_VERSION is not allowed in the {ci_input_vars["PIPELINE_TYPE"]} pipeline type.")
+        sys.exit(f"ERROR: using CUSTOM_CTA_VERSION is not allowed in the {ci_input_vars['PIPELINE_TYPE']} pipeline type.")
     if not env_var_defined("CUSTOM_EOS_VERSION", ci_input_vars) and not env_var_defined("CUSTOM_XROOTD_VERSION", ci_input_vars):
         sys.exit(f"ERROR: at least one of [CUSTOM_EOS_VERSION, CUSTOM_XROOTD_VERSION] must be provided when running a regression test.")
 
@@ -118,18 +118,18 @@ def validate_image_from_cta_version(ci_input_vars):
     Validation for the pipeline type `IMAGE_FROM_CTA_VERSION`.
     """
     if not env_var_defined("CUSTOM_CTA_VERSION", ci_input_vars):
-        sys.exit(f"ERROR: CUSTOM_CTA_VERSION must be provided when running a {ci_input_vars["PIPELINE_TYPE"]} pipeline.")
+        sys.exit(f"ERROR: CUSTOM_CTA_VERSION must be provided when running a {ci_input_vars['PIPELINE_TYPE']} pipeline.")
     if env_var_defined("CUSTOM_XROOTD_VERSION", ci_input_vars):
-        sys.exit(f"ERROR: using CUSTOM_XROOTD_VERSION has no effect in the {ci_input_vars["PIPELINE_TYPE"]} pipeline type.")
+        sys.exit(f"ERROR: using CUSTOM_XROOTD_VERSION has no effect in the {ci_input_vars['PIPELINE_TYPE']} pipeline type.")
 
 def validate_system_test_only(ci_input_vars):
     """
     Validation for the pipeline type `SYSTEM_TEST_ONLY`.
     """
     if env_var_defined("CUSTOM_CTA_VERSION", ci_input_vars):
-        sys.exit(f"ERROR: CUSTOM_CTA_VERSION must not be provided when running a {ci_input_vars["PIPELINE_TYPE"]} pipeline.")
+        sys.exit(f"ERROR: CUSTOM_CTA_VERSION must not be provided when running a {ci_input_vars['PIPELINE_TYPE']} pipeline.")
     if env_var_defined("CUSTOM_XROOTD_VERSION", ci_input_vars):
-        sys.exit(f"ERROR: CUSTOM_XROOTD_VERSION must not be provided when running a {ci_input_vars["PIPELINE_TYPE"]} pipeline.")
+        sys.exit(f"ERROR: CUSTOM_XROOTD_VERSION must not be provided when running a {ci_input_vars['PIPELINE_TYPE']} pipeline.")
 
 
 def main():
