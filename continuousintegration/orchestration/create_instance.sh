@@ -108,7 +108,7 @@ create_instance() {
   # EOS related
   eos_server_chart_version=$(jq -r .dev.eosServerChartVersion ${project_json_path})
   eos_image_tag=$(jq -r .dev.defaultEosImageTag ${project_json_path})
-  eos_image_repository=gitlab-registry.cern.ch/dss/eos/eos-ci
+  eos_image_repository=$(jq -r .dev.defaultEosImageRepository ${project_json_path})
   eos_config=presets/dev-eos-values.yaml
 
   # Parse command line arguments

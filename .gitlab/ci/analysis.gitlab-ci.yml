@@ -10,7 +10,7 @@ cppcheck:
       when: never
     - if: $SYSTEMTESTS_ONLY == "TRUE"
       when: never
-    - if: $PIPELINE_TYPE != "COMMIT"
+    - if: $PIPELINE_TYPE != "DEFAULT"
       when: never
     - when: always
   dependencies: [] # Ensure no artifacts are downloaded
@@ -47,7 +47,7 @@ clang-format-report:
       when: never
     - if: $CI_PIPELINE_SOURCE == "merge_request_event"
       when: never
-    - if: $PIPELINE_TYPE != "COMMIT"
+    - if: $PIPELINE_TYPE != "DEFAULT"
       when: never
     - when: always
   image: $IMAGE_ANALYSIS
@@ -86,7 +86,7 @@ clang-format-apply:
       when: never
     - if: $CI_PIPELINE_SOURCE == "merge_request_event"
       when: never
-    - if: $PIPELINE_TYPE != "COMMIT"
+    - if: $PIPELINE_TYPE != "DEFAULT"
       when: never
     - if: $CI_COMMIT_REF_NAME == $CI_DEFAULT_BRANCH
       when: never
@@ -114,7 +114,7 @@ catalogue-schema-version-check:
   rules:
     - if: $CI_PIPELINE_SOURCE == "merge_request_event"
       when: never
-    - if: $PIPELINE_TYPE != "COMMIT"
+    - if: $PIPELINE_TYPE != "DEFAULT"
       when: never
     - if: $SYSTEMTESTS_ONLY == "TRUE"
       when: never
@@ -145,15 +145,15 @@ catalogue-schema-version-check:
   script:
     - ./continuousintegration/checks/check_catalogue_schema_version.sh ${CATALOGUE_SCHEMA_CHECK_PARAMS} .
 
-pipeline-variable-check:
+validate-pipeline-variables:
   stage: analysis
   variables:
     GIT_DEPTH: 0
   rules: # To be removed when cta#962 is merged into main
-    - if: $PIPELINE_TYPE != "COMMIT"
+    - if: $PIPELINE_TYPE != "DEFAULT"
   image: $IMAGE_ANALYSIS
   script:
-    - python3 ./continuousintegration/checks/check_ci_input_variables.py
+    - python3 ./continuousintegration/checks/validate_ci_input_variables.py
 
 validate-project-json:
   stage: analysis

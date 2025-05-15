@@ -27,7 +27,7 @@ build-ctageneric-from-artifacts:
     - job: modify-project-json
       optional: true
   rules:
-    - if: $PIPELINE_TYPE == "EOS_REGR_AGAINST_CTA_TAG" || $PIPELINE_TYPE == "CTAGENERIC_IMAGE"
+    - if: $PIPELINE_TYPE == "REGR_AGAINST_CTA_TAG" || $PIPELINE_TYPE == "CTAGENERIC_IMAGE"
       when: never
     - !reference [.build-ctageneric, rules]
   variables:
@@ -50,23 +50,22 @@ build-ctageneric-from-repos:
   extends:
     - .build-ctageneric
   needs:
-    - job: pipeline-variable-check
-      optional: true
+    - job: validate-pipeline-variables
     - job: modify-project-json
       optional: true
   rules:
-    - if: $PIPELINE_TYPE == "EOS_REGR_AGAINST_CTA_TAG"
+    - if: $PIPELINE_TYPE == "REGR_AGAINST_CTA_TAG"
     - if: $PIPELINE_TYPE == "CTAGENERIC_IMAGE"
     - when: never
     - !reference [.build-ctageneric, rules]
   variables:
     DOCKERFILE: continuousintegration/docker/${PLATFORM}/tag.Dockerfile
   script:
-    - echo "Building image with CTA ${CUSTOM_CTA_TAG} RPMs"
+    - echo "Building image with CTA ${CUSTOM_CTA_VERSION} RPMs"
     - echo "Image tag ${CI_REGISTRY}/cta/ctageneric:${CTA_BUILD_ID}"
     - /kaniko/executor --context $CI_PROJECT_DIR
                        --dockerfile $DOCKERFILE
                        --destination ${CI_REGISTRY}/cta/ctageneric:${CTA_BUILD_ID}
-                       --build-arg "PUBLIC_REPO_VER=${CUSTOM_CTA_TAG:1}"
+                       --build-arg "PUBLIC_REPO_VER=${CUSTOM_CTA_VERSION:1}"
                        --build-arg USE_INTERNAL_REPOS=${USE_INTERNAL_REPOS}
     - echo "Image pushed successfully to ${CI_REGISTRY}/cta/ctageneric:${CTA_BUILD_ID}"

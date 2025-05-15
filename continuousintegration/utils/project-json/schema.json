@@ -47,6 +47,7 @@
         "defaultBuildType",
         "eosServerChartVersion",
         "defaultEosImageTag",
+        "defaultEosImageRepository",
         "defaultPlatform"
       ],
       "properties": {
@@ -62,6 +63,11 @@
         },
         "eosServerChartVersion": {
           "description": "Version of the EOS server Helm chart to use in CI.",
+          "type": "string",
+          "minLength": 1
+        },
+        "defaultEosImageRepository": {
+          "description": "Default EOS image repository to use in CI.",
           "type": "string",
           "minLength": 1
         },
