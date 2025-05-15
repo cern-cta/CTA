@@ -1,8 +1,6 @@
 .build-cta:
   retry: 1
   rules:
-    - if: $CI_PIPELINE_SOURCE == "merge_request_event"
-      when: never
     - if: $PIPELINE_TYPE == "SYSTEM_TEST"
       when: never
     - if: $PIPELINE_TYPE == "REGR_AGAINST_CTA_TAG"
