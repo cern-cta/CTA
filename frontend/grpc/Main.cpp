@@ -174,6 +174,9 @@ int main(const int argc, char *const *const argv) {
 
     // enable health checking, needed by CI
     grpc::EnableDefaultHealthCheckService(true);
+    // // add the JWT Authenticator to the server creds
+    // std::shared_ptr<ServiceJWTAuthProcessor> spAuthProcessor = std::make_shared<ServiceJWTAuthProcessor>();
+    // creds->SetAuthMetadataProcessor(spAuthProcessor);
     // Listen on the given address without any authentication mechanism.
     builder.AddListeningPort(server_address, creds);
 
