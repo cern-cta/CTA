@@ -105,28 +105,28 @@ variables:
       - "presets/dev-eos-grpc-values.yaml"
 
   # Pipeline Type. Supported types:
-  #   - COMMIT: default pipeline type, Runs static analysis, compiles the software and tests it.
-  #   - EOS_REGR_AGAINST_CTA_MAIN: test a new tagged EOS version against CTA main.
-  #   - EOS_REGR_AGAINST_CTA_TAG: test a new tagged EOS version against the latest tagged CTA version.
+  #   - DEFAULT: default pipeline type, Runs static analysis, compiles the software and tests it.
+  #   - REGR_AGAINST_CTA_MAIN: test custom dependency versions (EOS/XRootD) against CTA main.
+  #   - REGR_AGAINST_CTA_TAG: test custom dependency versions (EOS/XRootD) against the latest tagged CTA version.
   #   - CTAGENERIC_IMAGE: generate a ctageneric image from a set of CTA,EOS,XRD RPMS avaiable in repos.
   PIPELINE_TYPE:
-    description: "What kind of pipeline to run. COMMIT is the default pipeline. Use CTAGENERIC_IMAGE if you want to build a new Docker image based of existing CTA RPMs"
-    value: "COMMIT"
+    description: "What kind of pipeline to run. Use CTAGENERIC_IMAGE if you want to build a new Docker image based of existing CTA RPMs"
+    value: "DEFAULT"
     options:
-      - "COMMIT"
-      - "EOS_REGR_AGAINST_CTA_MAIN"
-      - "EOS_REGR_AGAINST_CTA_TAG"
+      - "DEFAULT"
+      - "REGR_AGAINST_CTA_MAIN"
+      - "REGR_AGAINST_CTA_TAG"
       - "CTAGENERIC_IMAGE"
 
-  # Image building. Used by EOS Regression and Image build pipeline types
-  CUSTOM_XRD_TAG:
+  # Custom variables for image building and run environment packages
+  CUSTOM_XROOTD_VERSION:
     description: "Custom XRootD version to use for building and running."
     value: ""
-  CUSTOM_EOS_TAG:
+  CUSTOM_EOS_VERSION:
     description: "Custom EOS version to use running."
     value: ""
-  CUSTOM_CTA_TAG:
-    description: "Custom CTA version to build a docker image from and test with. Should only be used when the PIPELINE_TYPE != COMMIT."
+  CUSTOM_CTA_VERSION:
+    description: "Custom CTA version to build a docker image from and test with. Should only be used when the PIPELINE_TYPE != DEFAULT."
     value: ""
 
   # Meta CI
