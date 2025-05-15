@@ -32,7 +32,7 @@ SUPPORTED = {
                       "CTAGENERIC_IMAGE"]
 }
 
-DEFINED_INPUT_VARS = [
+SUPPORTED_ENV_VARS = [
     "BUILD_GENERATOR", "CMAKE_BUILD_TYPE", "CTA_VERSION",
     "SCHEDULER_TYPE", "ORACLE_SUPPORT", "VALGRIND_DB_UNIT_TESTS",
     "SYSTEMTESTS_ONLY", "SYSTEMTESTS_IMAGETAG",
@@ -44,6 +44,9 @@ DEFINED_INPUT_VARS = [
     "IMAGE_GITLAB_RELEASE_CLI", "IMAGE_BUILD", "IMAGE_TEST",
     "IMAGE_RELEASE", "IMAGE_ANALYSIS", "PLATFORM"
 ]
+
+def env_var_defined(name: str, ci_input_vars):
+    return name in ci_input_vars and len(ci_input_vars[name]) > 0
 
 def run_cmd(cmd: str):
     """
@@ -89,42 +92,36 @@ def check_image_tag_available(image_tag: str, registry: str):
 
 def validate_default(ci_input_vars):
     """
-    Validation for the default pipeline type.
-    :param ci_input_vars: CI input variables dictionary received by the program.
+    Validation for the DEFAULT pipeline type.
     """
-    if "CUSTOM_CTA_VERSION" in ci_input_vars:
+    if env_var_defined("CUSTOM_CTA_VERSION", ci_input_vars):
         sys.exit(f"ERROR: using CUSTOM_CTA_VERSION is not allowed in the DEFAULT pipeline type.")
 
 
 def validate_eos_regr_against_cta_main(ci_input_vars):
     """
     Validation for the pipeline type `REGR_AGAINST_CTA_MAIN`.
-    :param ci_input_vars: CI input variables dictionary received by the program.
     """
-    if not "CUSTOM_EOS_VERSION" in ci_input_vars and not "CUSTOM_XROOTD_VERSION" in ci_input_vars:
+    if not env_var_defined("CUSTOM_EOS_VERSION", ci_input_vars) and not env_var_defined("CUSTOM_XROOTD_VERSION", ci_input_vars):
         sys.exit(f"ERROR: at least one of [CUSTOM_EOS_VERSION, CUSTOM_XROOTD_VERSION] must be provided when running a regression test.")
 
 
 def validate_eos_regr_against_cta_tag(ci_input_vars):
     """
     Validation for the pipeline type `EOS_REGR_AGAINST_CTA_TAG`.
-    :param ci_input_vars: CI input variables dictionary received by the program.
     """
-    if not "CUSTOM_CTA_VERSION" in ci_input_vars:
+    if not env_var_defined("CUSTOM_CTA_VERSION", ci_input_vars):
         sys.exit(f"ERROR: CUSTOM_CTA_VERSION must be provided when running a regression test.")
-    if not "CUSTOM_EOS_VERSION" in ci_input_vars and not "CUSTOM_XROOTD_VERSION" in ci_input_vars:
+    if not env_var_defined("CUSTOM_EOS_VERSION", ci_input_vars) and not env_var_defined("CUSTOM_XROOTD_VERSION", ci_input_vars):
         sys.exit(f"ERROR: at least one of [CUSTOM_EOS_VERSION, CUSTOM_XROOTD_VERSION] must be provided when running a regression test.")
 
 
 def validate_ctageneric_image(ci_input_vars):
     """
     Validation for the pipeline type `CTAGENERIC_IMAGE`.
-    :param ci_input_vars: CI input variables dictionary received by the program.
     """
-    if not "CUSTOM_CTA_VERSION" in ci_input_vars:
+    if not env_var_defined("CUSTOM_CTA_VERSION", ci_input_vars):
         sys.exit(f"ERROR: CUSTOM_CTA_VERSION must be provided when running a CTAGENERIC_IMAGE pipeline.")
-
-
 
 
 def main():
@@ -137,10 +134,9 @@ def main():
 
     # Get project defined CI variables from environment
     ci_input_vars = {}
-    for var in DEFINED_INPUT_VARS:
+    for var in SUPPORTED_ENV_VARS:
         if var not in os.environ:
-            print(f"Warning: input variable {var} was not found in the environment variables")
-            continue
+            sys.exit(f"ERROR: input variable {var} was not found as an environment variable.")
         ci_input_vars[var] = os.environ[var]
 
     print(ci_input_vars)
@@ -154,11 +150,11 @@ def main():
     globals()[validate_func_name](ci_input_vars)
 
     # Ensure availability of any custom provided versions
-    if "CUSTOM_CTA_VERSION" in ci_input_vars:
+    if env_var_defined("CUSTOM_CTA_VERSION", ci_input_vars):
         check_rpm_available("cta-frontend", ci_input_vars["CUSTOM_CTA_VERSION"])
-    if "CUSTOM_XROOTD_VERSION" in ci_input_vars:
+    if env_var_defined("CUSTOM_XROOTD_VERSION", ci_input_vars):
         check_rpm_available("xrootd-server", ci_input_vars["CUSTOM_XROOTD_VERSION"])
-    if "CUSTOM_EOS_VERSION" in ci_input_vars:
+    if env_var_defined("CUSTOM_EOS_VERSION", ci_input_vars):
         check_rpm_available("eos-server", ci_input_vars["CUSTOM_EOS_VERSION"])
         eos_image_tag=f"{ci_input_vars['CUSTOM_EOS_VERSION']}.{ci_input_vars['PLATFORM']}"
         check_image_tag_available(eos_image_tag, project_json["dev"]["defaultEosImageRepository"])
