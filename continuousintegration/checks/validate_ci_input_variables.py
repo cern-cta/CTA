@@ -78,6 +78,7 @@ def check_image_tag_available(image_tag: str, repository: str):
     Checks that the image tag is available in the given repository.
     """
     full_image = f"{repository}:{image_tag}"
+    print(run_cmd(f"podman manifest inspect {full_image}"))
     try:
         run_cmd(f"podman manifest inspect {full_image}")
     except SystemExit:
