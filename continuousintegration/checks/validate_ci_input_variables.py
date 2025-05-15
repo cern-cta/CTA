@@ -30,7 +30,8 @@ SUPPORTED = {
                       "REGR_AGAINST_CTA_MAIN",
                       "REGR_AGAINST_CTA_VERSION",
                       "IMAGE_FROM_CTA_VERSION",
-                      "SYSTEM_TEST_ONLY"]
+                      "SYSTEM_TEST_ONLY",
+                      "CUSTOM_SYSTEM_TEST_IMAGE_TAG"]
 }
 
 SUPPORTED_ENV_VARS = [
@@ -40,6 +41,14 @@ SUPPORTED_ENV_VARS = [
 
 def env_var_defined(name: str, ci_input_vars):
     return name in ci_input_vars and len(ci_input_vars[name]) > 0
+
+def exit_if_defined(env_var_name, ci_input_vars):
+    if env_var_defined(env_var_name, ci_input_vars):
+        sys.exit(f"ERROR: using {env_var_name} is not allowed when running a {ci_input_vars['PIPELINE_TYPE']} pipeline.")
+
+def exit_if_not_defined(env_var_name, ci_input_vars):
+    if not env_var_defined(env_var_name, ci_input_vars):
+        sys.exit(f"ERROR: {env_var_name} must be provided when running a {ci_input_vars['PIPELINE_TYPE']} pipeline.")
 
 def run_cmd(cmd: str):
     """
@@ -62,6 +71,7 @@ def run_cmd(cmd: str):
         sys.exit(f"ERROR: Command failed: {e.stderr}")
 
     return cmd_call.stdout.strip()
+
 
 def check_rpm_available(package_name: str, package_version: str):
     """
@@ -89,20 +99,18 @@ def validate_default(ci_input_vars):
     """
     Validation for the DEFAULT pipeline type.
     """
-    if env_var_defined("CUSTOM_CTA_VERSION", ci_input_vars):
-        sys.exit(f"ERROR: using CUSTOM_CTA_VERSION is not allowed when running a {ci_input_vars['PIPELINE_TYPE']} pipeline.")
-    if env_var_defined("CUSTOM_EOS_VERSION", ci_input_vars):
-        sys.exit(f"ERROR: using CUSTOM_EOS_VERSION is not allowed when running a {ci_input_vars['PIPELINE_TYPE']} pipeline.")
-    if env_var_defined("CUSTOM_XROOTD_VERSION", ci_input_vars):
-        sys.exit(f"ERROR: using CUSTOM_XROOTD_VERSION is not allowed when running a when running a {ci_input_vars['PIPELINE_TYPE']} pipeline.")
+    exit_if_defined("CUSTOM_CTA_VERSION", ci_input_vars)
+    exit_if_defined("CUSTOM_EOS_VERSION", ci_input_vars)
+    exit_if_defined("CUSTOM_XROOTD_VERSION", ci_input_vars)
+    exit_if_defined("CUSTOM_SYSTEM_TEST_IMAGE_TAG", ci_input_vars)
 
 
 def validate_regr_against_cta_main(ci_input_vars):
     """
     Validation for the pipeline type `REGR_AGAINST_CTA_MAIN`.
     """
-    if env_var_defined("CUSTOM_CTA_VERSION", ci_input_vars):
-        sys.exit(f"ERROR: using CUSTOM_CTA_VERSION is not allowed when running a {ci_input_vars['PIPELINE_TYPE']} pipeline.")
+    exit_if_defined("CUSTOM_CTA_VERSION", ci_input_vars)
+    exit_if_defined("CUSTOM_SYSTEM_TEST_IMAGE_TAG", ci_input_vars)
     if not env_var_defined("CUSTOM_EOS_VERSION", ci_input_vars) and not env_var_defined("CUSTOM_XROOTD_VERSION", ci_input_vars):
         sys.exit(f"ERROR: at least one of [CUSTOM_EOS_VERSION, CUSTOM_XROOTD_VERSION] must be provided when running a regression test.")
 
@@ -111,8 +119,8 @@ def validate_regr_against_cta_version(ci_input_vars):
     """
     Validation for the pipeline type `EOS_REGR_AGAINST_CTA_VERSION`.
     """
-    if not env_var_defined("CUSTOM_CTA_VERSION", ci_input_vars):
-        sys.exit(f"ERROR: CUSTOM_CTA_VERSION must be provided when running a regression test.")
+    exit_if_not_defined("CUSTOM_CTA_VERSION", ci_input_vars)
+    exit_if_defined("CUSTOM_SYSTEM_TEST_IMAGE_TAG", ci_input_vars)
     if not env_var_defined("CUSTOM_EOS_VERSION", ci_input_vars) and not env_var_defined("CUSTOM_XROOTD_VERSION", ci_input_vars):
         sys.exit(f"ERROR: at least one of [CUSTOM_EOS_VERSION, CUSTOM_XROOTD_VERSION] must be provided when running a regression test.")
 
@@ -121,23 +129,18 @@ def validate_image_from_cta_version(ci_input_vars):
     """
     Validation for the pipeline type `IMAGE_FROM_CTA_VERSION`.
     """
-    if not env_var_defined("CUSTOM_CTA_VERSION", ci_input_vars):
-        sys.exit(f"ERROR: CUSTOM_CTA_VERSION must be provided when running a {ci_input_vars['PIPELINE_TYPE']} pipeline.")
-    if env_var_defined("CUSTOM_EOS_VERSION", ci_input_vars):
-        sys.exit(f"ERROR: using CUSTOM_EOS_VERSION is not allowed when running a {ci_input_vars['PIPELINE_TYPE']} pipeline.")
-    if env_var_defined("CUSTOM_XROOTD_VERSION", ci_input_vars):
-        sys.exit(f"ERROR: using CUSTOM_XROOTD_VERSION is not allowed when running a when running a {ci_input_vars['PIPELINE_TYPE']} pipeline.")
+    exit_if_not_defined("CUSTOM_CTA_VERSION", ci_input_vars)
+    exit_if_defined("CUSTOM_EOS_VERSION", ci_input_vars)
+    exit_if_defined("CUSTOM_XROOTD_VERSION", ci_input_vars)
+    exit_if_defined("CUSTOM_SYSTEM_TEST_IMAGE_TAG", ci_input_vars)
 
 def validate_system_test_only(ci_input_vars):
     """
     Validation for the pipeline type `SYSTEM_TEST_ONLY`.
     """
-    if env_var_defined("CUSTOM_CTA_VERSION", ci_input_vars):
-        sys.exit(f"ERROR: using CUSTOM_CTA_VERSION is not allowed when running a {ci_input_vars['PIPELINE_TYPE']} pipeline.")
-    if env_var_defined("CUSTOM_EOS_VERSION", ci_input_vars):
-        sys.exit(f"ERROR: using CUSTOM_EOS_VERSION is not allowed when running a {ci_input_vars['PIPELINE_TYPE']} pipeline.")
-    if env_var_defined("CUSTOM_XROOTD_VERSION", ci_input_vars):
-        sys.exit(f"ERROR: using CUSTOM_XROOTD_VERSION is not allowed when running a when running a {ci_input_vars['PIPELINE_TYPE']} pipeline.")
+    exit_if_defined("CUSTOM_CTA_VERSION", ci_input_vars)
+    exit_if_defined("CUSTOM_EOS_VERSION", ci_input_vars)
+    exit_if_defined("CUSTOM_XROOTD_VERSION", ci_input_vars)
 
 
 def main():
@@ -173,6 +176,8 @@ def main():
     if env_var_defined("CUSTOM_EOS_VERSION", ci_input_vars):
         check_rpm_available("eos-server", ci_input_vars["CUSTOM_EOS_VERSION"])
         eos_image_tag=f"{ci_input_vars['CUSTOM_EOS_VERSION']}.{ci_input_vars['PLATFORM']}"
+        check_image_tag_available(eos_image_tag, project_json["dev"]["defaultEosImageRepository"])
+    if env_var_defined("CUSTOM_SYSTEM_TEST_IMAGE_TAG", ci_input_vars):
         check_image_tag_available(eos_image_tag, project_json["dev"]["defaultEosImageRepository"])
 
     print("Validation was successful")

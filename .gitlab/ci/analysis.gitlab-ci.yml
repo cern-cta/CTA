@@ -129,12 +129,10 @@ catalogue-schema-version-check:
   script:
     - ./continuousintegration/checks/check_catalogue_schema_version.sh ${CATALOGUE_SCHEMA_CHECK_PARAMS} .
 
-# TODO: move these installs to the base image
 validate-pipeline-variables:
   stage: analysis
   image: $IMAGE_ANALYSIS
   script:
-    - dnf install -y podman
     - |
       if [ "$USE_INTERNAL_REPOS" == "TRUE" ]; then
         cp -f continuousintegration/docker/${PLATFORM}/etc/yum.repos.d-internal/*.repo /etc/yum.repos.d/
@@ -147,5 +145,4 @@ validate-project-json:
   stage: analysis
   image: $IMAGE_ANALYSIS
   script:
-    - python3 -m pip install jsonschema
     - python3 ./continuousintegration/utils/project-json/validate_project_json.py
