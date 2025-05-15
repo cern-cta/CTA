@@ -11,6 +11,7 @@
     "cppVersion": "c++17",
     "defaultPlatform": "el9",
     "defaultBuildType": "Debug",
+    "defaultEosImageRepository": "gitlab-registry.cern.ch/dss/eos/eos-ci",
     "defaultEosImageTag": "5.3.10.el9",
     "eosServerChartVersion": "0.5.1"
   },

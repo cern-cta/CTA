@@ -2,13 +2,13 @@
 # These are also the only tests executed on our personal runners instead of the GitLab runners
 
 .setup-k8s-test-variables: &setup-k8s-test-variables
-    - | # Which scheduler to use
+    - | # Which scheduler config to use
       if [ $SCHEDULER_TYPE == "objectstore" ]; then
         SCHEDULER_CONFIG=/opt/kubernetes/CTA/scheduler/ci-ceph-values.yaml
       else
         SCHEDULER_CONFIG=presets/dev-scheduler-postgres-values.yaml
       fi
-    - | # Which catalogue to use
+    - | # Which catalogue config to use
       if [ $ORACLE_SUPPORT == "TRUE" ]; then
         CATALOGUE_CONFIG=/opt/kubernetes/CTA/catalogue/ci-oracle-values.yaml
       else
@@ -26,19 +26,11 @@
       fi
     # If we are testing from a CTA tag, get the Catalogue version for that tag
     - |
-      if [ -n "${CUSTOM_CTA_TAG}" ]; then
+      if [ -n "${CUSTOM_CTA_VERSION}" ]; then
         git fetch --tags --force
-        git checkout "tags/$CUSTOM_CTA_TAG" -- project.json
+        git checkout "tags/$CUSTOM_CTA_VERSION" -- project.json
         EXTRA_SPAWN_ARGS+=" --catalogue-version $(jq -r '.catalogueVersion' project.json)"
         git restore project.json
-      fi
-    # The inner .el9 appending is a temporary fix for choosing which docker image to grab
-    - |
-      if [[ -n "${CUSTOM_EOS_TAG}" ]]; then
-        if [[ $PIPELINE_TYPE == "EOS_REGR_AGAINST_CTA_MAIN" ]] || [[ $PIPELINE_TYPE == "EOS_REGR_AGAINST_CTA_TAG" ]]; then
-          CUSTOM_EOS_TAG="${CUSTOM_EOS_TAG}.el9"
-        fi
-        EXTRA_SPAWN_ARGS+=" ${CUSTOM_EOS_TAG}";
       fi
     # Additional config
     - |
@@ -149,9 +141,9 @@ test-cta-admin:
   extends:
     - .kubernetes-test
   rules:
-    # Skip this test for EOS regressions as it does not test anything new
+    # Skip this test for regressions as it does not test anything new
     # with respect to the other tests we run.
-    - if:  $PIPELINE_TYPE == "EOS_REGR_AGAINST_CTA_TAG"
+    - if:  $PIPELINE_TYPE == "REGR_AGAINST_CTA_TAG"
       when: never
     - !reference [.kubernetes-test, rules]
   variables:

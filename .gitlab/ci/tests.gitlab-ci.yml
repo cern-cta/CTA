@@ -18,7 +18,7 @@ test-cta-valgrind:
   rules:
     - if: $SYSTEMTESTS_ONLY == "TRUE"
       when: never
-    - if: $PIPELINE_TYPE != "COMMIT"
+    - if: $PIPELINE_TYPE != "DEFAULT"
       when: never
     - if: $CI_PIPELINE_SOURCE == "merge_request_event"
       when: never
@@ -52,7 +52,7 @@ integration-test-cta:
       when: never
     - if: $SYSTEMTESTS_ONLY == "TRUE"
       when: never
-    - if: $PIPELINE_TYPE != "COMMIT"
+    - if: $PIPELINE_TYPE != "DEFAULT"
       when: never
     - when: on_success
   image: $IMAGE_TEST
@@ -74,7 +74,7 @@ unit-test-postgresql:
       when: never
     - if: $SYSTEMTESTS_ONLY == "TRUE"
       when: never
-    - if: $PIPELINE_TYPE != "COMMIT"
+    - if: $PIPELINE_TYPE != "DEFAULT"
       when: never
     - when: on_success
   image: $IMAGE_TEST
@@ -123,7 +123,7 @@ unit-test-oracle:
       when: never
     - if: $ORACLE_SUPPORT == "FALSE"
       when: never
-    - if: $PIPELINE_TYPE != "COMMIT"
+    - if: $PIPELINE_TYPE != "DEFAULT"
       when: never
     - when: on_success
   image: $IMAGE_TEST
@@ -158,7 +158,7 @@ test-cta-release:
       when: never
     - if: $SYSTEMTESTS_ONLY == "TRUE"
       when: never
-    - if: $PIPELINE_TYPE != "COMMIT"
+    - if: $PIPELINE_TYPE != "DEFAULT"
       when: never
     - when: on_success
   image: $IMAGE_TEST
