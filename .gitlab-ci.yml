@@ -37,6 +37,9 @@ variables:
   CUSTOM_CTA_VERSION:
     description: "Custom CTA version to build a docker image from and test with. Should only be used when the PIPELINE_TYPE != DEFAULT."
     value: ""
+  CUSTOM_SYSTEM_TEST_IMAGE_TAG:
+    description: "Custom image tag to run the systemtests against. If left empty, the latest image tag from main will be used. Should only be used when the PIPELINE_TYPE = SYSTEM_TEST."
+    value: ""
 
   PLATFORM:
     description: "Specifies the platform to build, test and (possibly) release on"
@@ -98,9 +101,6 @@ variables:
     options:
       - "TRUE"
       - "FALSE"
-  SYSTEM_TEST_IMAGETAG:
-    description: "Custom image tag to run the systemtests against. Only used if PIPELINE_TYPE is SYSTEM_TEST"
-    value: ""
 
   KEEP_STRESS_TEST_NAMESPACE:
     description: "Keep the stress-test namespace alive after it has been created to allow for manual debugging. In this case, the namespace must be manually deleted at some point."

@@ -16,10 +16,10 @@
       fi
     - | # Which image tag to use
       if [ $PIPELINE_TYPE == "SYSTEM_TEST" ]; then
-        if [ -z "$SYSTEM_TEST_IMAGETAG" ]; then
+        if [ -z "$CUSTOM_SYSTEM_TEST_IMAGE_TAG" ]; then
           IMAGE_TAG=$(./continuousintegration/utils/get_latest_image_tag_on_branch.sh --branch $CI_DEFAULT_BRANCH)
         else
-          IMAGE_TAG=$SYSTEM_TEST_IMAGETAG
+          IMAGE_TAG=$CUSTOM_SYSTEM_TEST_IMAGE_TAG
         fi
       else
         IMAGE_TAG=$CTA_BUILD_ID
