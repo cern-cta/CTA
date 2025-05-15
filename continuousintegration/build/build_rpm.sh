@@ -84,7 +84,7 @@ build_rpm() {
       ;;
     --platform)
       if [[ $# -gt 1 ]]; then
-        if [ $(jq '.platforms | has("el9")' ${project_root}/project.json) != "true" ]; then
+        if [ $(jq ".platforms | has($2)" ${project_root}/project.json) != "true" ]; then
           echo "Error: platform $2 not supported. Please check the project.json for supported platforms."
         fi
         platform="$2"
