@@ -90,15 +90,17 @@ def validate_default(ci_input_vars):
         sys.exit(f"ERROR: using CUSTOM_CTA_VERSION is not allowed in the DEFAULT pipeline type.")
 
 
-def validate_eos_regr_against_cta_main(ci_input_vars):
+def validate_regr_against_cta_main(ci_input_vars):
     """
     Validation for the pipeline type `REGR_AGAINST_CTA_MAIN`.
     """
+    if env_var_defined("CUSTOM_CTA_VERSION", ci_input_vars):
+        sys.exit(f"ERROR: using CUSTOM_CTA_VERSION is not allowed in the EOS_REGR_AGAINST_MAIN pipeline type.")
     if not env_var_defined("CUSTOM_EOS_VERSION", ci_input_vars) and not env_var_defined("CUSTOM_XROOTD_VERSION", ci_input_vars):
         sys.exit(f"ERROR: at least one of [CUSTOM_EOS_VERSION, CUSTOM_XROOTD_VERSION] must be provided when running a regression test.")
 
 
-def validate_eos_regr_against_cta_tag(ci_input_vars):
+def validate_regr_against_cta_tag(ci_input_vars):
     """
     Validation for the pipeline type `EOS_REGR_AGAINST_CTA_TAG`.
     """
