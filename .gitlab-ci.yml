@@ -28,11 +28,11 @@ variables:
       - "CTAGENERIC_IMAGE"
 
   # Custom variables for image building and run environment packages
-  CUSTOM_XROOTD_VERSION:
-    description: "Custom XRootD version to use for building and running."
-    value: ""
   CUSTOM_EOS_VERSION:
     description: "Custom EOS version to use running."
+    value: ""
+  CUSTOM_XROOTD_VERSION:
+    description: "Custom XRootD version to use for building and running."
     value: ""
   CUSTOM_CTA_VERSION:
     description: "Custom CTA version to build a docker image from and test with. Should only be used when the PIPELINE_TYPE != DEFAULT."
