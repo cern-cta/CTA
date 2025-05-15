@@ -72,13 +72,14 @@ def check_rpm_available(package_name: str, package_version: str):
 
     if int(tag_available) < 1:
         sys.exit(f"ERROR: Could not find {package_name} version {package_version}")
+    if int(tag_available) > 1:
+        sys.exit(f"ERROR: Multiple packages found for {package_name} version {package_version}")
 
 def check_image_tag_available(image_tag: str, repository: str):
     """
     Checks that the image tag is available in the given repository.
     """
     full_image = f"{repository}:{image_tag}"
-    print(run_cmd(f"podman manifest inspect {full_image}"))
     try:
         run_cmd(f"podman manifest inspect {full_image}")
     except SystemExit:
