@@ -37,7 +37,7 @@ RUN dnf install -y \
 # We add the cta user so that we can consistently reference it in the Helm chart when changing keytab ownership
 RUN useradd -m -u 1000 -g tape cta
 
-# Variable to specify the tag to be used for CTA RPMs from the cta-ci-repo
+# Variable to specify the version to be used for CTA RPMs from the cta-ci-repo
 # Format: X.YY.ZZ.A-B
 ARG PUBLIC_REPO_VER
 
