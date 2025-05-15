@@ -73,15 +73,15 @@ def check_rpm_available(package_name: str, package_version: str):
     if int(tag_available) < 1:
         sys.exit(f"ERROR: Could not find {package_name} version {package_version}")
 
-def check_image_tag_available(image_tag: str, registry: str):
+def check_image_tag_available(image_tag: str, repository: str):
     """
-    Checks that the image tag is available in the given registry.
+    Checks that the image tag is available in the given repository.
     """
-    full_image = f"{registry}/{image_tag}"
+    full_image = f"{repository}:{image_tag}"
     try:
         run_cmd(f"podman manifest inspect {full_image}")
     except SystemExit:
-        sys.exit(f"ERROR: Image tag '{image_tag}' not found in registry '{registry}'")
+        sys.exit(f"ERROR: Image tag '{image_tag}' not found in repository '{repository}'")
 
 def validate_default(ci_input_vars):
     """
