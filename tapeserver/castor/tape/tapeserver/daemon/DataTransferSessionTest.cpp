@@ -2437,7 +2437,11 @@ TEST_P(DataTransferSessionTest, DataTransferSessionWrongChecksumMigration) {
   // Behaviour is different from production due to  cta/CTA#1100
 
   // 0) Prepare the logger for everyone
+#ifdef STDOUT_LOGGING
   cta::log::StringLogger logger("dummy","tapeServerUnitTest",cta::log::DEBUG);
+#else
+  cta::log::DummyLogger logger("dummy","tapeServerUnitTest",cta::log::DEBUG);
+#endif
   cta::log::LogContext logContext(logger);
 
   setupDefaultCatalogue();

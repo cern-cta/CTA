@@ -137,7 +137,6 @@ public:
   };
 
   virtual void SetUp() {
-    GTEST_SKIP() << "Skip test";
     // We do a deep reference to the member as the C++ compiler requires the function to be
     // already defined if called implicitly.
     const auto &factory = GetParam().dbFactory;
@@ -216,7 +215,12 @@ public:
 TEST_P(QueueCleanupRunnerConcurrentTest, CleanupRunnerParameterizedTest) {
   using cta::common::dataStructures::JobQueueType;
   // We will need a log object
+#ifdef STDOUT_LOGGING
   cta::log::StdoutLogger dl("dummy", "unitTest");
+#else
+  cta::log::DummyLogger dl("dummy", "unitTest");
+#endif
+
   cta::log::LogContext lc(dl);
   // We need a dummy catalogue
   cta::catalogue::DummyCatalogue & catalogue = getCatalogue();
