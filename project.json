@@ -38,7 +38,6 @@
       "eos-folly-deps"
     ],
     "xrootd": [
-      "python3-xrootd",
       "xrootd",
       "xrootd-client",
       "xrootd-client-devel",
@@ -53,7 +52,8 @@
       "xrootd-server",
       "xrootd-server-devel",
       "xrootd-server-libs",
-      "xrootd-tests"
+      "xrootd-tests",
+      "python3-xrootd"
     ],
     "xrootd-devel": [
       "xrootd-devel",
@@ -75,8 +75,8 @@
       "grpc-plugins"
     ],
     "oracle-instantclient": [
-      "oracle-instantclient-devel",
-      "oracle-instantclient-basic"
+      "oracle-instantclient-basic",
+      "oracle-instantclient-devel"
     ]
   },
   "platforms": {

@@ -133,6 +133,12 @@ validate-pipeline-variables:
   stage: analysis
   image: $IMAGE_ANALYSIS
   script:
+    - |
+      if [ "$USE_INTERNAL_REPOS" == "TRUE" ]; then
+        cp -f continuousintegration/docker/${PLATFORM}/etc/yum.repos.d-internal/*.repo /etc/yum.repos.d/
+      else
+        cp -f continuousintegration/docker/${PLATFORM}/etc/yum.repos.d-public/*.repo /etc/yum.repos.d/
+      fi
     - python3 ./continuousintegration/checks/validate_ci_input_variables.py
 
 validate-project-json:
