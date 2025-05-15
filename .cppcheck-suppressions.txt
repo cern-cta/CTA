@@ -5,3 +5,5 @@ unknownMacro:tapeserver/castor/tape/tapeserver/file/FileTest.cpp
 unknownMacro:tapeserver/castor/tape/tapeserver/file/OSMFileTest.cpp
 nullPointer:common/utils/utils.cpp
 uninitStructMember:objectstore/RetrieveRequest.cpp
+preprocessorErrorDirective:frontend/grpc/auth/third-party/jwt-cpp/tests/cmake/wolfssl-is-used.cpp
+preprocessorErrorDirective:frontend/grpc/auth/third-party/jwt-cpp/tests/cmake/libressl-is-used.cpp
