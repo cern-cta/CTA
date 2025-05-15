@@ -7,3 +7,6 @@
 [submodule "catalogue/cta-catalogue-schema"]
 	path = catalogue/cta-catalogue-schema
 	url = https://:@gitlab.cern.ch:8443/cta/cta-catalogue-schema.git
+[submodule "frontend/grpc/auth/third-party/jwt-cpp"]
+	path = frontend/grpc/auth/third-party/jwt-cpp
+	url = https://github.com/Thalhammer/jwt-cpp.git

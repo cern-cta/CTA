@@ -196,7 +196,7 @@ ELSE(DEFINED PackageOnly)
 
   add_subdirectory(cta-release)
 
-  add_subdirectory(${PROJECT_SOURCE_DIR}/external/jwt-cpp)
+  # add_subdirectory(${PROJECT_SOURCE_DIR}/external/jwt-cpp)
 
   #Generate version information
   configure_file(${PROJECT_SOURCE_DIR}/version.hpp.in

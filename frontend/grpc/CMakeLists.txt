@@ -18,12 +18,14 @@ cmake_minimum_required (VERSION 3.17)
 find_package(Protobuf3 REQUIRED)
 find_package(GRPC REQUIRED)
 
+add_subdirectory(auth/third-party/jwt-cpp)
+
 include_directories(${PROTOBUF3_INCLUDE_DIRS})
 
 # depends on CTA_EOS definitions
 include_directories(${CMAKE_BINARY_DIR}/eos_cta ${PROTOBUF3_INCLUDE_DIRS})
 
-include_directories(${CMAKE_SOURCE_DIR}/external/jwt-cpp/include/)
+include_directories(auth/third_party/jwt-cpp/include/)
 
 add_executable(cta-frontend-grpc Main.cpp FrontendGrpcService.cpp
   ../common/WorkflowEvent.cpp

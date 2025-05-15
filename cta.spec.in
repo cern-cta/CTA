@@ -209,6 +209,11 @@ dCache frontend
 %attr(0644,root,root) /etc/sysconfig/cta-frontend-grpc
 %attr(0644,root,root) %config(noreplace) %{_sysconfdir}/cta/cta-frontend-grpc.conf.example
 %attr(0644,root,root) %doc /usr/share/man/man1/cta-frontend-grpc.1cta.gz
+%attr(0644, root, root) /usr/include/jwt-cpp/*
+%attr(0644, root, root) /usr/include/picojson/picojson.h
+%attr(0644, root, root) /cmake/jwt-cpp-config-version.cmake
+%attr(0644, root, root) /cmake/jwt-cpp-config.cmake
+%attr(0644, root, root) /cmake/jwt-cpp-targets.cmake
 
 %post -n cta-frontend-grpc
 %systemd_post cta-frontend-grpc.service
