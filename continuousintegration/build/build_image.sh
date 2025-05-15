@@ -30,7 +30,7 @@ usage() {
   echo "  -n, --name:                         The Docker image name. Defaults to ctageneric"
   echo "  -l, --load-into-minikube:           Takes the image from the podman registry and ensures that it is present in the image registry used by minikube."
   echo "  -c, --container-runtime <runtime>:  The container runtime to use for the build container. Defaults to podman."
-  echo "      --dockerfile <path>:            Path to the Dockerfile (default: 'continuousintegration/docker/{defaultplatform}/artifacts.Dockerfile'). Should be relative to the repository root."
+  echo "      --dockerfile <path>:            Path to the Dockerfile (default: 'continuousintegration/docker/{defaultplatform}/local-rpms.Dockerfile'). Should be relative to the repository root."
   echo "      --use-internal-repos:           Use the internal yum repos instead of the public repos."
   exit 1
 }
@@ -45,7 +45,7 @@ buildImage() {
   local container_runtime="podman"
   local rpm_default_src="image_rpms"
   local defaultPlatform=$(jq -r .dev.defaultPlatform "${project_root}/project.json")
-  local dockerfile="continuousintegration/docker/${defaultPlatform}/artifacts.Dockerfile"
+  local dockerfile="continuousintegration/docker/${defaultPlatform}/local-rpms.Dockerfile"
   local load_into_minikube=false
   # Note that the capitalization here is intentional as this is passed directly as a build arg
   local use_internal_repos="FALSE"

@@ -15,7 +15,7 @@
         CATALOGUE_CONFIG=presets/dev-catalogue-postgres-values.yaml
       fi
     - | # Which image tag to use
-      if [ $PIPELINE_TYPE == "SYSTEM_TEST" ]; then
+      if [ $PIPELINE_TYPE == "SYSTEM_TEST_ONLY" ]; then
         if [ -z "$CUSTOM_SYSTEM_TEST_IMAGE_TAG" ]; then
           IMAGE_TAG=$(./continuousintegration/utils/get_latest_image_tag_on_branch.sh --branch $CI_DEFAULT_BRANCH)
         else
@@ -47,9 +47,9 @@
 
 .kubernetes-test:
   needs:
-    - job: build-ctageneric-from-artifacts
-      optional: true # Otherwise the SYSTEM_TEST PIPELINE_TYPE won't work
-    - job: build-ctageneric-from-repos
+    - job: build-ctageneric-from-local-rpms
+      optional: true # Otherwise the SYSTEM_TEST_ONLY PIPELINE_TYPE won't work
+    - job: build-ctageneric-from-remote-rpms
       optional: true
     - job: prepare
       optional: true
@@ -58,7 +58,7 @@
   rules:
     - if: $CI_COMMIT_TAG
       when: never
-    - if: $PIPELINE_TYPE == "CTAGENERIC_IMAGE"
+    - if: $PIPELINE_TYPE == "IMAGE_FROM_CTA_VERSION"
       when: never
     - if: $SCHEDULER_TYPE == "pgsched"
       when: manual
@@ -141,7 +141,7 @@ test-cta-admin:
   rules:
     # Skip this test for regressions as it does not test anything new
     # with respect to the other tests we run.
-    - if:  $PIPELINE_TYPE == "REGR_AGAINST_CTA_TAG"
+    - if:  $PIPELINE_TYPE == "REGR_AGAINST_CTA_VERSION"
       when: never
     - !reference [.kubernetes-test, rules]
   variables:

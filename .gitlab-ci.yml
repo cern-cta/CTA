@@ -13,19 +13,19 @@ variables:
 
   # Pipeline Type. Supported types:
   #   - DEFAULT: runs static analysis, compiles the software and tests it.
-  #   - SYSTEM_TEST: runs the system tests against the latest (or a provided) ctageneric image.
+  #   - SYSTEM_TEST_ONLY: runs the system tests against the latest (or a provided) ctageneric image.
   #   - REGR_AGAINST_CTA_MAIN: test custom dependency versions (EOS/XRootD) against CTA main.
-  #   - REGR_AGAINST_CTA_TAG: test custom dependency versions (EOS/XRootD) against the latest tagged CTA version.
-  #   - CTAGENERIC_IMAGE: generate a ctageneric image from a set of CTA,EOS,XRD RPMS avaiable in repos.
+  #   - REGR_AGAINST_CTA_VERSION: test custom dependency versions (EOS/XRootD) against the latest tagged CTA version.
+  #   - IMAGE_FROM_CTA_VERSION: generate a docker image from a set of CTA RPMS avaiable in repos and run the tests.
   PIPELINE_TYPE:
-    description: "What kind of pipeline to run. Use CTAGENERIC_IMAGE if you want to build a new Docker image based of existing CTA RPMs"
+    description: "What kind of pipeline to run. Use IMAGE_FROM_CTA_VERSION if you want to build a new Docker image based of existing CTA RPMs"
     value: "DEFAULT"
     options:
       - "DEFAULT"
-      - "SYSTEM_TEST"
+      - "SYSTEM_TEST_ONLY"
       - "REGR_AGAINST_CTA_MAIN"
-      - "REGR_AGAINST_CTA_TAG"
-      - "CTAGENERIC_IMAGE"
+      - "REGR_AGAINST_CTA_VERSION"
+      - "IMAGE_FROM_CTA_VERSION"
 
   # Custom variables for image building and run environment packages
   CUSTOM_EOS_VERSION:
@@ -35,10 +35,10 @@ variables:
     description: "Custom XRootD version to use for building and running."
     value: ""
   CUSTOM_CTA_VERSION:
-    description: "Custom CTA version to build a docker image from and test with. Should only be used when the PIPELINE_TYPE != DEFAULT."
+    description: "Custom CTA version to build a docker image from and test with. Must exist in the CTA testing repo. Should only be used when the PIPELINE_TYPE != DEFAULT."
     value: ""
   CUSTOM_SYSTEM_TEST_IMAGE_TAG:
-    description: "Custom image tag to run the systemtests against. If left empty, the latest image tag from main will be used. Should only be used when the PIPELINE_TYPE = SYSTEM_TEST."
+    description: "Custom image tag to run the systemtests against. If left empty, the latest image tag from main will be used. Should only be used when the PIPELINE_TYPE = SYSTEM_TEST_ONLY."
     value: ""
 
   PLATFORM:
@@ -55,6 +55,7 @@ variables:
       - "FALSE"
 
   # Building Configuration
+  BUILD_CTA_VERSION: 5
   BUILD_GENERATOR:
     description: "Specifies the build generated for building the CTA RPMs"
     value: "Unix Makefiles"
@@ -71,7 +72,6 @@ variables:
       - "MinSizeRel"
 
   # CTA Configuration
-  BUILD_CTA_VERSION: 5
   SCHEDULER_TYPE:
     description: "Specifies what scheduler should be used to build CTA and run the tests"
     value: "objectstore"
