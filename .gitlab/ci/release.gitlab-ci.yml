@@ -2,7 +2,7 @@ changelog-preview:
   stage: release:changelog
   needs: [] # Ensure this job can be triggered at the beginning if necessary
   rules:
-    - if: $SYSTEMTESTS_ONLY == "TRUE"
+    - if: $PIPELINE_TYPE != "DEFAULT"
       when: never
     - if: $CI_PIPELINE_SOURCE == "push"
       when: manual
@@ -49,7 +49,7 @@ changelog-update:
   needs:
     - changelog-preview
   rules:
-    - if: $SYSTEMTESTS_ONLY == "TRUE"
+    - if: $PIPELINE_TYPE != "DEFAULT"
       when: never
     - if: $CI_PIPELINE_SOURCE == "push"
       when: manual

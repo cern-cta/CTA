@@ -11,11 +11,45 @@ stages:
 
 variables:
 
+  # Pipeline Type. Supported types:
+  #   - DEFAULT: runs static analysis, compiles the software and tests it.
+  #   - SYSTEM_TEST: runs the system tests against the latest (or a provided) ctageneric image.
+  #   - REGR_AGAINST_CTA_MAIN: test custom dependency versions (EOS/XRootD) against CTA main.
+  #   - REGR_AGAINST_CTA_TAG: test custom dependency versions (EOS/XRootD) against the latest tagged CTA version.
+  #   - CTAGENERIC_IMAGE: generate a ctageneric image from a set of CTA,EOS,XRD RPMS avaiable in repos.
+  PIPELINE_TYPE:
+    description: "What kind of pipeline to run. Use CTAGENERIC_IMAGE if you want to build a new Docker image based of existing CTA RPMs"
+    value: "DEFAULT"
+    options:
+      - "DEFAULT"
+      - "SYSTEM_TEST"
+      - "REGR_AGAINST_CTA_MAIN"
+      - "REGR_AGAINST_CTA_TAG"
+      - "CTAGENERIC_IMAGE"
+
+  # Custom variables for image building and run environment packages
+  CUSTOM_XROOTD_VERSION:
+    description: "Custom XRootD version to use for building and running."
+    value: ""
+  CUSTOM_EOS_VERSION:
+    description: "Custom EOS version to use running."
+    value: ""
+  CUSTOM_CTA_VERSION:
+    description: "Custom CTA version to build a docker image from and test with. Should only be used when the PIPELINE_TYPE != DEFAULT."
+    value: ""
+
   PLATFORM:
     description: "Specifies the platform to build, test and (possibly) release on"
     value: "el9"
     options:
       - "el9"
+
+  USE_INTERNAL_REPOS:
+    description: "Whether to use the internal yum repos instead of the public yum repos."
+    value: "TRUE"
+    options:
+      - "TRUE"
+      - "FALSE"
 
   # Building Configuration
   BUILD_GENERATOR:
@@ -33,15 +67,8 @@ variables:
       - "RelWithDebInfo"
       - "MinSizeRel"
 
-  USE_INTERNAL_REPOS:
-    description: "Whether to use the internal yum repos instead of the public yum repos."
-    value: "TRUE"
-    options:
-      - "TRUE"
-      - "FALSE"
-
   # CTA Configuration
-  CTA_VERSION: 5
+  BUILD_CTA_VERSION: 5
   SCHEDULER_TYPE:
     description: "Specifies what scheduler should be used to build CTA and run the tests"
     value: "objectstore"
@@ -71,14 +98,8 @@ variables:
     options:
       - "TRUE"
       - "FALSE"
-  SYSTEMTESTS_ONLY:
-    description: "Run only the system-test stage. Must be used in combination with SYSTEMTESTS_IMAGETAG"
-    value: "FALSE"
-    options:
-      - "TRUE"
-      - "FALSE"
-  SYSTEMTESTS_IMAGETAG:
-    description: "Custom image tag to run the systemtests against. Only used if SYSTEMTESTS_ONLY is TRUE"
+  SYSTEM_TEST_IMAGETAG:
+    description: "Custom image tag to run the systemtests against. Only used if PIPELINE_TYPE is SYSTEM_TEST"
     value: ""
 
   KEEP_STRESS_TEST_NAMESPACE:
@@ -103,31 +124,6 @@ variables:
       - ""
       - "presets/dev-eos-values.yaml"
       - "presets/dev-eos-grpc-values.yaml"
-
-  # Pipeline Type. Supported types:
-  #   - DEFAULT: default pipeline type, Runs static analysis, compiles the software and tests it.
-  #   - REGR_AGAINST_CTA_MAIN: test custom dependency versions (EOS/XRootD) against CTA main.
-  #   - REGR_AGAINST_CTA_TAG: test custom dependency versions (EOS/XRootD) against the latest tagged CTA version.
-  #   - CTAGENERIC_IMAGE: generate a ctageneric image from a set of CTA,EOS,XRD RPMS avaiable in repos.
-  PIPELINE_TYPE:
-    description: "What kind of pipeline to run. Use CTAGENERIC_IMAGE if you want to build a new Docker image based of existing CTA RPMs"
-    value: "DEFAULT"
-    options:
-      - "DEFAULT"
-      - "REGR_AGAINST_CTA_MAIN"
-      - "REGR_AGAINST_CTA_TAG"
-      - "CTAGENERIC_IMAGE"
-
-  # Custom variables for image building and run environment packages
-  CUSTOM_XROOTD_VERSION:
-    description: "Custom XRootD version to use for building and running."
-    value: ""
-  CUSTOM_EOS_VERSION:
-    description: "Custom EOS version to use running."
-    value: ""
-  CUSTOM_CTA_VERSION:
-    description: "Custom CTA version to build a docker image from and test with. Should only be used when the PIPELINE_TYPE != DEFAULT."
-    value: ""
 
   # Meta CI
   CTA_BUILD_ID: ${CI_PIPELINE_ID}git${CI_COMMIT_SHORT_SHA}

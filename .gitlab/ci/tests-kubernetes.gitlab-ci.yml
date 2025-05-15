@@ -15,11 +15,11 @@
         CATALOGUE_CONFIG=presets/dev-catalogue-postgres-values.yaml
       fi
     - | # Which image tag to use
-      if [ $SYSTEMTESTS_ONLY == "TRUE" ]; then
-        if [ -z "$SYSTEMTESTS_IMAGETAG" ]; then
+      if [ $PIPELINE_TYPE == "SYSTEM_TEST" ]; then
+        if [ -z "$SYSTEM_TEST_IMAGETAG" ]; then
           IMAGE_TAG=$(./continuousintegration/utils/get_latest_image_tag_on_branch.sh --branch $CI_DEFAULT_BRANCH)
         else
-          IMAGE_TAG=$SYSTEMTESTS_IMAGETAG
+          IMAGE_TAG=$SYSTEM_TEST_IMAGETAG
         fi
       else
         IMAGE_TAG=$CTA_BUILD_ID
@@ -48,7 +48,7 @@
 .kubernetes-test:
   needs:
     - job: build-ctageneric-from-artifacts
-      optional: true # Otherwise the SYSTEMTESTS_ONLY flag won't work
+      optional: true # Otherwise the SYSTEM_TEST PIPELINE_TYPE won't work
     - job: build-ctageneric-from-repos
       optional: true
     - job: prepare
