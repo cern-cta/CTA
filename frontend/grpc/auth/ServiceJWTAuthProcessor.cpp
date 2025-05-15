@@ -18,7 +18,7 @@
 #include "ServiceJWTAuthProcessor.hpp"
 #include <jwt-cpp/jwt.h>
 
-bool ServiceJWTAuthProcessor::Validate(std::string encodedJWT) {
+bool ServiceJWTAuthProcessor::Validate(const std::string& encodedJWT) {
     std::cout << "Passed in token is " << encodedJWT << std::endl;
     return true; // unimplemented, this is what will validate the passed in token
 }
