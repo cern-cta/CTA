@@ -15,6 +15,7 @@
  *               submit itself to any jurisdiction.
  */
 
+#include <memory>
 #include <sstream>
 #include <string>
 
@@ -134,6 +135,32 @@ std::string HeaderChecker::checkVolumeLabel(tapeserver::drive::DriveInterface &d
     return osmLabel.name();
   };
 
+  auto enstoreLabel = [](tapeserver::drive::DriveInterface &drive) {
+    tapeFile::VOL1 vol1;
+
+    size_t blockSize = 256 * 1024;
+    auto data = std::make_unique<char[]>(blockSize + 1);
+    size_t bytes_read = drive.readBlock(data.get(), blockSize);
+    if (bytes_read < sizeof(vol1)) {
+      throw cta::exception::Exception(std::string(__FUNCTION__) + " failed: Too few bytes read from label");
+    }
+    memcpy(&vol1, data.get(), sizeof(vol1));
+
+    // Enstore tapes are normally "0" and EnstoreLarge tapes are normally "3"
+    // But if tapes are recycled from one format to the other, it could be flipped
+    try {
+      vol1.verify("0");
+    } catch (std::exception& e) {
+      try {
+        vol1.verify("3");
+      } catch (std::exception& e) {
+        throw TapeFormatError(e.what());
+      };
+    };
+
+    return vol1.getVSN();
+  };
+
   try {
     switch (labelFormat) {
       case LabelFormat::CTA:
@@ -142,8 +169,9 @@ std::string HeaderChecker::checkVolumeLabel(tapeserver::drive::DriveInterface &d
       case LabelFormat::OSM:
         volumeLabelVSN = osmLabel(drive);
         break;
-      case LabelFormat::Enstore:
-        volumeLabelVSN = vol1Label(drive, "0");
+      case LabelFormat::Enstore:       // Same conditions for Enstore and EnstoreLarge
+      case LabelFormat::EnstoreLarge:
+        volumeLabelVSN = enstoreLabel(drive);
         break;
       default: {
         cta::exception::Exception ex;
