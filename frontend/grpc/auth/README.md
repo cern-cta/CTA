@@ -14,5 +14,7 @@ So even though it was written here, it should be moved to the EOS repository.
 
 - `ServiceJWTAuthProcessor.hpp`: This class is the server-side interceptor that allows the server-side to verify the token by performing token validation.
 The way it is expected to be used is the following:
-First I need to create a shared pointer to grpc::ServerCredentials spServerCredentials.
-Then call `spServerCredentials->SetAuthMetadataProcessor(spAuthProcessor);`
+1. Create a shared pointer to grpc::ServerCredentials spServerCredentials.
+2. Create authProcessor pointer
+3. Then call `spServerCredentials->SetAuthMetadataProcessor(spAuthProcessor);`
+4. builder.AddListeningPort(server_address_.str(), spServerCredentials);
