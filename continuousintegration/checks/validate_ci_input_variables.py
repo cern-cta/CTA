@@ -29,7 +29,8 @@ SUPPORTED = {
     "PIPELINE_TYPE": ["DEFAULT",
                       "REGR_AGAINST_CTA_MAIN",
                       "REGR_AGAINST_CTA_TAG",
-                      "CTAGENERIC_IMAGE"]
+                      "CTAGENERIC_IMAGE,"
+                      "SYSTEM_TEST"]
 }
 
 SUPPORTED_ENV_VARS = [
@@ -113,6 +114,13 @@ def validate_regr_against_cta_tag(ci_input_vars):
 def validate_ctageneric_image(ci_input_vars):
     """
     Validation for the pipeline type `CTAGENERIC_IMAGE`.
+    """
+    if not env_var_defined("CUSTOM_CTA_VERSION", ci_input_vars):
+        sys.exit(f"ERROR: CUSTOM_CTA_VERSION must be provided when running a CTAGENERIC_IMAGE pipeline.")
+
+def validate_system_test(ci_input_vars):
+    """
+    Validation for the pipeline type `SYSTEM_TEST`.
     """
     if not env_var_defined("CUSTOM_CTA_VERSION", ci_input_vars):
         sys.exit(f"ERROR: CUSTOM_CTA_VERSION must be provided when running a CTAGENERIC_IMAGE pipeline.")

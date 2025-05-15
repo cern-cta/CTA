@@ -3,7 +3,7 @@
   rules:
     - if: $CI_PIPELINE_SOURCE == "merge_request_event"
       when: never
-    - if: $SYSTEMTESTS_ONLY == "TRUE"
+    - if: $PIPELINE_TYPE == "SYSTEM_TEST"
       when: never
     - if: $PIPELINE_TYPE == "REGR_AGAINST_CTA_TAG"
       when: never
@@ -34,7 +34,7 @@ build-cta-srpm:
     - ./continuousintegration/build/build_srpm.sh --build-dir build_srpm
                                                   --build-generator "${BUILD_GENERATOR}"
                                                   --create-build-dir
-                                                  --cta-version ${CTA_VERSION}
+                                                  --cta-version ${BUILD_CTA_VERSION}
                                                   --vcs-version ${CTA_BUILD_ID}
                                                   --scheduler-type ${SCHEDULER_TYPE}
                                                   --oracle-support ${ORACLE_SUPPORT}
