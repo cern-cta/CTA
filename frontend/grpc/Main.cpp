@@ -34,6 +34,7 @@
 
 #include <getopt.h>
 #include <fstream>
+#include "auth/ServiceJWTAuthProcessor.hpp"
 
 using namespace cta;
 using namespace cta::common;
@@ -175,8 +176,8 @@ int main(const int argc, char *const *const argv) {
     // enable health checking, needed by CI
     grpc::EnableDefaultHealthCheckService(true);
     // // add the JWT Authenticator to the server creds
-    // std::shared_ptr<ServiceJWTAuthProcessor> spAuthProcessor = std::make_shared<ServiceJWTAuthProcessor>();
-    // creds->SetAuthMetadataProcessor(spAuthProcessor);
+    std::shared_ptr<ServiceJWTAuthProcessor> spAuthProcessor = std::make_shared<ServiceJWTAuthProcessor>();
+    creds->SetAuthMetadataProcessor(spAuthProcessor);
     // Listen on the given address without any authentication mechanism.
     builder.AddListeningPort(server_address, creds);
 
@@ -189,9 +190,12 @@ int main(const int argc, char *const *const argv) {
     // Register "service" as the instance through which we'll communicate with
     // clients. In this case it corresponds to an *synchronous* service.
     builder.RegisterService(&svc);
+    lc.log(log::INFO, "Registered the service with builder");
 
     std::unique_ptr <Server> server(builder.BuildAndStart());
+    lc.log(log::INFO, "Called buildAndStart successfully");
     svc.setHealthCheckService(server->GetHealthCheckService());
+    lc.log(log::INFO, "Called setHealthCheckService successfully");
 
     lc.log(cta::log::INFO, "Listening on socket address: " + server_address);
     server->Wait();

@@ -71,5 +71,8 @@ data:
     grpc.port {{ .Values.grpc.port }}
 
     # TLS related variables
-    grpc.tls false
+    grpc.tls true
+    grpc.tls.key /shared/sslCerts/privkey.pem
+    grpc.tls.cert /shared/sslCerts/host.cert
+    grpc.tls.chain /shared/sslCerts/host-chain.p7b
 {{- end }}
