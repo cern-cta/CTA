@@ -75,6 +75,9 @@ std::string file2string(std::string filename){
 
 int main(const int argc, char *const *const argv) {
 
+    setenv("GRPC_VERBOSITY", "debug", 1);
+    setenv("GRPC_TRACE", "all", 1);
+
     std::string config_file("/etc/cta/cta-frontend-grpc.conf");
 
     char c;
