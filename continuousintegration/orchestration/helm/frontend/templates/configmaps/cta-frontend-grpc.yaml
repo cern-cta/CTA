@@ -72,7 +72,7 @@ data:
 
     # TLS related variables
     grpc.tls true
-    grpc.tls.key /shared/sslCerts/privkey.pem
-    grpc.tls.cert /shared/sslCerts/host.cert
-    grpc.tls.chain /shared/sslCerts/host-chain.p7b
+    grpc.tls.key /shared/sslCerts/server.key
+    grpc.tls.cert /shared/sslCerts/server.crt
+    grpc.tls.chain /shared/sslCerts/ca.crt
 {{- end }}
