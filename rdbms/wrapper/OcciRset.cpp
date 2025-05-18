@@ -124,13 +124,13 @@ void OcciRset::close() {
   }
 }
 
+//------------------------------------------------------------------------------
+// columnBlob
+//------------------------------------------------------------------------------
 std::string OcciRset::columnBlob(const std::string &colName) const {
   try {
-    const int colIdx = m_colNameToIdx.getIdx(colName);
-    auto raw = m_rset->getBytes(colIdx);
-    std::unique_ptr<unsigned char[]> bytearray(new unsigned char[raw.length()]());
-    raw.getBytes(bytearray.get(), raw.length());
-    return std::string(reinterpret_cast<char*>(bytearray.get()), raw.length());
+    auto blob_view = columnBlobView(colName);
+    return std::string(reinterpret_cast<const char*>(blob_view->data()), blob_view->size());
   } catch(exception::Exception &ne) {
     throw exception::Exception(std::string(__FUNCTION__) + " failed for SQL statement " + m_stmt.getSql() + ": " +
       ne.getMessage().str());
@@ -138,6 +138,20 @@ std::string OcciRset::columnBlob(const std::string &colName) const {
     throw exception::Exception(std::string(__FUNCTION__) + " failed for SQL statement " + m_stmt.getSql() + ": " +
       se.what());
   }
+}
+
+//------------------------------------------------------------------------------
+// columnBlobView
+//------------------------------------------------------------------------------
+std::unique_ptr<rdbms::wrapper::IBlobView> OcciRset::columnBlobView(const std::string& colName) const {
+  const int colIdx = m_colNameToIdx.getIdx(colName);
+  auto raw = m_rset->getBytes(colIdx);
+  std::size_t len = raw.length();
+
+  std::unique_ptr<unsigned char[]> buffer(new unsigned char[len]());
+  raw.getBytes(buffer.get(), len);
+
+  return std::make_unique<BlobView>(std::move(buffer), len);
 }
 
 //------------------------------------------------------------------------------

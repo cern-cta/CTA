@@ -61,7 +61,7 @@ public:
    *
    * @param other The other object.
    */
-  Conn(Conn &&other);
+  Conn(Conn &&other) noexcept;
 
   /**
    * Destructor.

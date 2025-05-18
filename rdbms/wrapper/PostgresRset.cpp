@@ -93,21 +93,27 @@ bool PostgresRset::isPGColumnNull(int ifield) const {
 }
 
 std::string PostgresRset::columnBlob(const std::string& colName) const {
-  std::optional<std::string> blob = columnOptionalString(colName);
-  if (!blob) return std::string();
+  auto blob_view = columnBlobView(colName);
+  // Make a copy (only one) before blob_ptr_guard goes out of scope and releases memory
+  return std::string(reinterpret_cast<const char*>(blob_view->data()), blob_view->size());
+}
 
-  size_t blob_len;
-  unsigned char* blob_ptr = PQunescapeBytea(reinterpret_cast<const unsigned char*>(blob->c_str()), &blob_len);
+std::unique_ptr<rdbms::wrapper::IBlobView> PostgresRset::columnBlobView(const std::string& colName) const {
+  const int ifield = getColumnIndex(colName);
 
-  if (blob_ptr != nullptr) {
-    // using unique_ptr with custom deleter to automatically free memory
-    std::unique_ptr<unsigned char, decltype(&PQfreemem)> blob_ptr_guard(blob_ptr, &PQfreemem);
-    // using compiler RVO (move semantics) to avoid unnecessary copies
-    return std::string(reinterpret_cast<const char*>(blob_ptr_guard.get()), blob_len);
-  } else {
-    // having a non-nullopt while a valid value should never happen
-    throw NullDbValue(std::string("Failed to fetch a value for existing database column: ") + colName);
+  if (PQgetisnull(m_resItr->get(), 0, ifield)) {
+    return std::make_unique<BlobView>(nullptr, 0);
   }
+
+  const char* raw_blob_ptr = PQgetvalue(m_resItr->get(), 0, ifield);
+  size_t blob_len = 0;
+  unsigned char* blob_ptr = PQunescapeBytea(reinterpret_cast<const unsigned char*>(raw_blob_ptr), &blob_len);
+
+  if (!blob_ptr) {
+    throw NullDbValue("Failed to fetch a value for existing database column: " + colName);
+  }
+
+  return std::make_unique<BlobView>(blob_ptr, blob_len);
 }
 
 bool PostgresRset::columnBoolNoOpt(const std::string& colName) const {
@@ -252,8 +258,12 @@ std::optional<std::string> PostgresRset::columnOptionalString(const std::string&
   if (PQgetisnull(m_resItr->get(), 0, ifield)) {
     return std::nullopt;
   }
+  const char* value = PQgetvalue(m_resItr->get(), 0, ifield);
+  int length = PQgetlength(m_resItr->get(), 0, ifield);
 
-  return std::optional<std::string>(std::move(PQgetvalue(m_resItr->get(), 0, ifield)));
+  // Construct std::string directly from PG buffer without intermediate copy
+  return std::make_optional<std::string>(value, length);
+
 }
 
 //------------------------------------------------------------------------------
