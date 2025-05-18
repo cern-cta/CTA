@@ -64,7 +64,7 @@ public:
    *
    * @param other The other object.
    */
-  Stmt(Stmt &&other);
+  Stmt(Stmt &&other) noexcept;
 
   /**
    * Destructor.

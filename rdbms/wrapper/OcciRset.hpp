@@ -55,6 +55,75 @@ public:
   ~OcciRset() override;
 
   /**
+   * @class BlobView
+   * @brief RAII wrapper for binary blob data extracted from Oracle OCCI result set.
+   *
+   * This class provides a safe, read-only view of binary data returned by Oracle's
+   * OCCI `getBytes()` method. It owns the memory buffer where blob contents are
+   * copied and ensures proper cleanup using a `std::unique_ptr` with the default
+   * deleter.
+   *
+   * The blob contents can be accessed using `data()` and `size()` methods, which
+   * return a raw pointer to the buffer and the number of bytes it contains,
+   * respectively.
+   *
+   * The main use case for this class is efficient blob deserialization without
+   * intermediate string copies, especially when integrating with Protobuf or other
+   * binary deserialization tools.
+   *
+   * Example usage:
+   * @code
+   *   BlobView blob = rset.columnBlobView("CHECKSUMBLOB");
+   *   const unsigned char* ptr = blob.data();
+   *   std::size_t len = blob.size();
+   *   // Deserialize, checksum, or process as needed
+   * @endcode
+   *
+   * Note: This class is non-copyable but movable.
+   */
+  class BlobView : public rdbms::wrapper::IBlobView {
+  public:
+    BlobView(std::unique_ptr<unsigned char[]> buffer, std::size_t size)
+        : m_data(buffer.get()),
+          m_size(size),
+          m_buffer(std::move(buffer)) {}
+
+    // Delete copy constructor and copy assignment
+    BlobView(const BlobView&) = delete;
+    BlobView& operator=(const BlobView&) = delete;
+
+    // Move constructor
+    BlobView(BlobView&& other) noexcept
+        : m_data(other.m_data),
+          m_size(other.m_size),
+          m_buffer(std::move(other.m_buffer)) {
+      other.m_data = nullptr;
+      other.m_size = 0;
+    }
+
+    // Move assignment
+    BlobView& operator=(BlobView&& other) noexcept {
+      if (this != &other) {
+        m_data = other.m_data;
+        m_size = other.m_size;
+        m_buffer = std::move(other.m_buffer);
+        other.m_data = nullptr;
+        other.m_size = 0;
+      }
+      return *this;
+    }
+
+    const unsigned char* data() const { return m_data; }
+
+    std::size_t size() const { return m_size; }
+
+  private:
+    const unsigned char* m_data;
+    std::size_t m_size;
+    std::unique_ptr<unsigned char[]> m_buffer;
+  };
+
+  /**
    * Returns the SQL statement.
    *
    * @return The SQL statement.
@@ -111,6 +180,25 @@ public:
    * @return The string value of the specified column.
    */
   std::string columnBlob(const std::string& colName) const override;
+
+  /**
+  * Returns the value of the specified column as a view over a binary large object (BLOB).
+  *
+  * This method extracts and unescapes binary data from the specified column and wraps it
+  * in a `BlobView`, which manages the memory using a unique pointer with a custom deleter.
+  * The view provides access to the data via a pointer and size, and the underlying memory
+  * remains valid as long as the `BlobView` instance is alive.
+  *
+  * Note: This method allocates memory using `PQunescapeBytea`, which is automatically
+  * freed when the returned `BlobView` is destroyed. This is not a non-owning view;
+  * ownership of the decoded buffer is transferred to the `BlobView`.
+  *
+  * @param colName The name of the column containing the BLOB data.
+  * @return A `BlobView` object managing the decoded binary data and its size.
+  * @throws NullDbValue If the column value is not null but decoding fails.
+  */
+  std::unique_ptr<rdbms::wrapper::IBlobView> columnBlobView(const std::string& colName) const override;
+
 
   /**
    * Returns the value of the specified column as a string.

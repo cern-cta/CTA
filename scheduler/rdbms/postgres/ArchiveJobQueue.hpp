@@ -176,7 +176,8 @@ struct ArchiveJobQueueRow {
     fileSize = rset.columnUint64NoOpt("SIZE_IN_BYTES");
     copyNb = rset.columnUint16NoOpt("COPY_NB");
     startTime = rset.columnUint64NoOpt("START_TIME");
-    checksumBlob.deserialize(std::move(rset.columnBlob("CHECKSUMBLOB")));
+    auto blob_view = rset.columnBlobView("CHECKSUMBLOB");
+    checksumBlob.deserialize(blob_view->data(), blob_view->size());
     creationTime = rset.columnUint64NoOpt("CREATION_TIME");
     diskInstance = rset.columnStringNoOpt("DISK_INSTANCE");
     diskFileId = rset.columnStringNoOpt("DISK_FILE_ID");
