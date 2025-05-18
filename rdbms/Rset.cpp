@@ -38,7 +38,7 @@ Rset::Rset(std::unique_ptr<wrapper::RsetWrapper> impl) : m_impl(std::move(impl))
 //------------------------------------------------------------------------------
 // constructor
 //------------------------------------------------------------------------------
-Rset::Rset(Rset&& other) : m_impl(std::move(other.m_impl)) {}
+Rset::Rset(Rset&& other) noexcept : m_impl(std::move(other.m_impl)) {}
 
 //------------------------------------------------------------------------------
 // destructor
@@ -99,7 +99,7 @@ bool Rset::columnBoolNoOpt(const std::string& colName) const {
 }
 
 //------------------------------------------------------------------------------
-// columnString
+// columnBlob
 //------------------------------------------------------------------------------
 std::string Rset::columnBlob(const std::string& colName) const {
   return delegateToImpl(&wrapper::RsetWrapper::columnBlob, colName);
