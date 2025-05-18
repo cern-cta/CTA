@@ -50,6 +50,27 @@ public:
   ~SqliteRset() override = default;
 
   /**
+   * @class BlobView
+   * @brief Non-owning read-only view of a SQLite BLOB.
+   *
+   * This class provides a lightweight view of the BLOB data fetched from a SQLite result set,
+   * without copying or owning the memory. The view is only valid until the next call to
+   * sqlite3_step() or when the statement is finalized.
+   */
+  class BlobView : public rdbms::wrapper::IBlobView {
+  public:
+    BlobView(const unsigned char* data, std::size_t size) : m_data(data), m_size(size) {}
+
+    const unsigned char* data() const { return m_data; }
+
+    std::size_t size() const { return m_size; }
+
+  private:
+    const unsigned char* m_data;
+    std::size_t m_size;
+  };
+
+  /**
    * Returns the SQL statement.
    *
    * @return The SQL statement.
@@ -106,6 +127,26 @@ public:
    * @return The string value of the specified column.
    */
   std::string columnBlob(const std::string& colName) const override;
+
+ /**
+  * Returns the value of the specified column as a non-owning view over a binary large object (BLOB).
+  *
+  * This method provides direct access to the binary data stored in the specified column using
+  * SQLite's `sqlite3_column_blob()` function. The returned view is a lightweight, non-owning
+  * wrapper that exposes a pointer to the raw data and its size.
+  *
+  * Unlike other implementations (e.g., PostgreSQL), this method does not allocate or manage memory.
+  * Instead, the underlying memory is owned and managed by SQLite and remains valid only until the
+  * next call to `sqlite3_step()` or until the statement is finalized.
+  *
+  * The returned view must be used immediately and should not be stored beyond the lifetime
+  * of the SQLite statement or result set row.
+  *
+  * @param colName The name of the column containing the BLOB data.
+  * @return A `BlobView`-like object providing access to the raw binary data and its size.
+  * @throws Exception If the column name is invalid or data extraction fails.
+  */
+  std::unique_ptr<rdbms::wrapper::IBlobView> columnBlobView(const std::string& colName) const override;
 
   /**
    * Returns the value of the specified column as a string.

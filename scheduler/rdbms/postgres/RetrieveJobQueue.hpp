@@ -269,7 +269,8 @@ struct RetrieveJobQueueRow {
 
     archiveFileID = rset.columnUint64NoOpt("ARCHIVE_FILE_ID");
     fileSize = rset.columnUint64NoOpt("SIZE_IN_BYTES");
-    checksumBlob.deserialize(std::move(rset.columnBlob("CHECKSUMBLOB")));
+    auto blob_view = rset.columnBlobView("CHECKSUMBLOB");
+    checksumBlob.deserialize(blob_view->data(), blob_view->size());
     creationTime = rset.columnUint64NoOpt("CREATION_TIME");
     diskInstance = rset.columnStringNoOpt("DISK_INSTANCE");
     diskFileId = rset.columnStringNoOpt("DISK_FILE_ID");

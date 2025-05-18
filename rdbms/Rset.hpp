@@ -28,6 +28,7 @@ namespace cta::rdbms {
 
 namespace wrapper {
 class RsetWrapper;
+class IBlobView;
 }
 
 /**
@@ -73,7 +74,7 @@ public:
    *
    * @param other The other object to be moved.
    */
-  Rset(Rset&& other);
+  Rset(Rset&& other) noexcept;
 
   /**
    * Deletion of copy assignment.
@@ -168,6 +169,9 @@ public:
    * @throw InvalidResultSet if the result is invalid.
    */
   std::string columnBlob(const std::string& colName) const;
+
+  std::unique_ptr<wrapper::IBlobView> columnBlobView(const std::string& colName) const;
+
 
   /**
    * Returns the value of the specified column as a string.
