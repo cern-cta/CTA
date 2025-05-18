@@ -610,6 +610,137 @@ RetrieveJobQueueRow::requeueJobBatch(Transaction& txn, RetrieveJobStatus newStat
   return stmt.getNbAffectedRows();
 }
 
+// before using the following method we need to - check if alternative copy nb exists to be used and use it,
+// otherwise change the state to failure and leave the reporting to take care of it
+uint64_t
+RetrieveJobQueueRow::requeueAllTapeJobs(Transaction& txn, RetrieveJobStatus status, std::string_view vid) {
+  std::string sql = R"SQL(
+    WITH MOVED_ROWS AS (
+        DELETE FROM RETRIEVE_ACTIVE_QUEUE
+        WHERE VID = :VID
+        RETURNING *
+    )
+    INSERT INTO RETRIEVE_PENDING_QUEUE (
+      JOB_ID,
+      RETRIEVE_REQUEST_ID,
+      REQUEST_JOB_COUNT,
+      TAPE_POOL,
+      MOUNT_POLICY,
+      PRIORITY,
+      MIN_RETRIEVE_REQUEST_AGE,
+      ARCHIVE_FILE_ID,
+      SIZE_IN_BYTES,
+      COPY_NB,
+      START_TIME,
+      CHECKSUMBLOB,
+      FSEQ,
+      BLOCK_ID,
+      CREATION_TIME,
+      DISK_INSTANCE,
+      DISK_FILE_ID,
+      DISK_FILE_OWNER_UID,
+      DISK_FILE_GID,
+      DISK_FILE_PATH,
+      RETRIEVE_REPORT_URL,
+      RETRIEVE_ERROR_REPORT_URL,
+      REQUESTER_NAME,
+      REQUESTER_GROUP,
+      DST_URL,
+      STORAGE_CLASS,
+      MAX_TOTAL_RETRIES,
+      MAX_RETRIES_WITHIN_MOUNT,
+      TOTAL_REPORT_RETRIES,
+      MAX_REPORT_RETRIES,
+      VID,
+      ALTERNATE_FSEQS,
+      ALTERNATE_BLOCK_IDS,
+      ALTERNATE_VIDS,
+      ALTERNATE_COPY_NBS,
+      DRIVE,
+      HOST,
+      LOGICAL_LIBRARY,
+      ACTIVITY,
+      SRR_USERNAME,
+      SRR_HOST,
+      SRR_TIME,
+      SRR_MOUNT_POLICY,
+      SRR_ACTIVITY,
+      LIFECYCLE_CREATION_TIME,
+      LIFECYCLE_FIRST_SELECTED_TIME,
+      LIFECYCLE_COMPLETED_TIME,
+      DISK_SYSTEM_NAME,
+      FAILURE_LOG,
+      RETRIES_WITHIN_MOUNT,
+      TOTAL_RETRIES,
+      LAST_MOUNT_WITH_FAILURE,
+      STATUS,
+      MOUNT_ID
+    )
+    SELECT
+      M.JOB_ID,
+      M.RETRIEVE_REQUEST_ID,
+      M.REQUEST_JOB_COUNT,
+      M.TAPE_POOL,
+      M.MOUNT_POLICY,
+      M.PRIORITY,
+      M.MIN_RETRIEVE_REQUEST_AGE,
+      M.ARCHIVE_FILE_ID,
+      M.SIZE_IN_BYTES,
+      M.COPY_NB,
+      M.START_TIME,
+      M.CHECKSUMBLOB,
+      M.FSEQ,
+      M.BLOCK_ID,
+      M.CREATION_TIME,
+      M.DISK_INSTANCE,
+      M.DISK_FILE_ID,
+      M.DISK_FILE_OWNER_UID,
+      M.DISK_FILE_GID,
+      M.DISK_FILE_PATH,
+      M.RETRIEVE_REPORT_URL,
+      M.RETRIEVE_ERROR_REPORT_URL,
+      M.REQUESTER_NAME,
+      M.REQUESTER_GROUP,
+      M.DST_URL,
+      M.STORAGE_CLASS,
+      M.MAX_TOTAL_RETRIES,
+      M.MAX_RETRIES_WITHIN_MOUNT,
+      M.TOTAL_REPORT_RETRIES,
+      M.MAX_REPORT_RETRIES,
+      M.VID,
+      M.ALTERNATE_FSEQS,
+      M.ALTERNATE_BLOCK_IDS,
+      M.ALTERNATE_VIDS,
+      M.ALTERNATE_COPY_NBS,
+      M.DRIVE,
+      M.HOST,
+      M.LOGICAL_LIBRARY,
+      M.ACTIVITY,
+      M.SRR_USERNAME,
+      M.SRR_HOST,
+      M.SRR_TIME,
+      M.SRR_MOUNT_POLICY,
+      M.SRR_ACTIVITY,
+      M.LIFECYCLE_CREATION_TIME,
+      M.LIFECYCLE_FIRST_SELECTED_TIME,
+      M.LIFECYCLE_COMPLETED_TIME,
+      M.DISK_SYSTEM_NAME,
+      M.FAILURE_LOG || :FAILURE_LOG AS FAILURE_LOG,
+      M.RETRIES_WITHIN_MOUNT + 1 AS RETRIES_WITHIN_MOUNT,
+      M.TOTAL_RETRIES + 1 AS TOTAL_RETRIES,
+      M.LAST_MOUNT_WITH_FAILURE,
+      :STATUS AS STATUS,
+      NULL AS MOUNT_ID
+        FROM MOVED_ROWS M;
+  )SQL";
+
+  auto stmt = txn.getConn().createStmt(sql);
+  stmt.bindString(":STATUS", to_string(status));
+  stmt.bindString(":FAILURE_LOG", "VID_STATE_CHANGE_JOBS_REQUEUED");
+  stmt.executeNonQuery();
+  return stmt.getNbAffectedRows();
+}
+
 uint64_t RetrieveJobQueueRow::moveJobToFailedQueueTable(Transaction& txn) {
   // DISABLE DELETION FOR DEBUGGING
   std::string sql = R"SQL(
