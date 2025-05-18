@@ -48,7 +48,6 @@ castor::tape::tapeserver::daemon::TapeWriteSingleThread::TapeWriteSingleThread(
                                                tapeLoadTimeout),
       m_filesBeforeFlush(filesBeforeFlush),
       m_bytesBeforeFlush(bytesBeforeFlush),
-      m_drive(drive),
       m_reportPacker(reportPacker),
       m_lastFseq(0),
       m_compress(true),

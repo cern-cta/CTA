@@ -20,8 +20,26 @@
 #include <optional>
 #include <stdint.h>
 #include <string>
+#include <memory>
 
 namespace cta::rdbms::wrapper {
+
+/**
+ * Abstract class specifying the interface for a read-only binary blob view.
+ *
+ * Used for exposing database blob data in a backend-agnostic way.
+ * Useful to avoid temporary creation of a string
+ */
+class IBlobView {
+public:
+  virtual ~IBlobView() = default;
+
+  /** Returns pointer to the raw binary data. */
+  virtual const unsigned char* data() const = 0;
+
+  /** Returns size of the blob in bytes. */
+  virtual std::size_t size() const = 0;
+};
 
 /**
  * Abstract class specifying the interface to an implementation of the result
@@ -67,6 +85,8 @@ public:
   virtual std::string columnStringNoOpt(const std::string& colName) const = 0;
   virtual double columnDoubleNoOpt(const std::string& colName) const = 0;
   virtual bool columnBoolNoOpt(const std::string& colName) const = 0;
+  // Returns a backend-specific BlobView as a generic IBlobView pointer
+  virtual std::unique_ptr<rdbms::wrapper::IBlobView> columnBlobView(const std::string& colName) const = 0;
 
   /**
    * Returns true if the specified column contains a null value.
