@@ -17,9 +17,9 @@
 
 #include "common/exception/Exception.hpp"
 #include "common/utils/StringConversions.hpp"
-//#include "common/utils/strerror_r_wrapper.hpp"
 #include "common/utils/ErrorUtils.hpp"
 
+#include <algorithm>
 #include <limits>
 #include <iostream>
 #include <stdlib.h>
@@ -179,8 +179,7 @@ uid_t toUid(const std::string& str) {
 
   errno = 0;
   const long int value = strtol(str.c_str(), (char**) nullptr, 10);
-  const int savedErrno = errno;
-  if (savedErrno) {
+  if (const int savedErrno = errno; savedErrno) {
     std::ostringstream msg;
     msg << "Failed to convert \'" << str << "' to uid_t: " << errnoToString(savedErrno);
     throw exception::Exception(msg.str());
@@ -214,8 +213,7 @@ gid_t toGid(const std::string& str) {
 
   errno = 0;
   const long int value = strtol(str.c_str(), (char**) nullptr, 10);
-  const int savedErrno = errno;
-  if (savedErrno) {
+  if (const int savedErrno = errno; savedErrno) {
     std::ostringstream msg;
     msg << "Failed to convert \'" << str << "' to gid_t: " << errnoToString(savedErrno);
     throw exception::Exception(msg.str());
@@ -233,33 +231,24 @@ gid_t toGid(const std::string& str) {
     throw exception::Exception(msg.str());
   }
 
-  return value;
+  return static_cast<gid_t>(value);
 }
 
 //------------------------------------------------------------------------------
 // isValidUInt
 //------------------------------------------------------------------------------
-bool isValidUInt(const std::string& str) {
+bool isValidUInt(std::string_view str) {
   // An empty string is not a valid unsigned integer
   if (str.empty()) {
     return false;
   }
-
-  // For each character in the string
-  for (std::string::const_iterator itor = str.begin(); itor != str.end(); ++itor) {
-    // If the current character is not a valid numerical digit
-    if (*itor < '0' || *itor > '9') {
-      return false;
-    }
-  }
-
-  return true;
+  return std::all_of(str.begin(), str.end(), ::isdigit);
 }
 
 //------------------------------------------------------------------------------
 // isValidDecimal
 //------------------------------------------------------------------------------
-bool isValidDecimal(const std::string& str) {
+bool isValidDecimal(std::string_view str) {
   // An empty string is not a valid decimal
   if (str.empty()) {
     return false;
@@ -268,7 +257,7 @@ bool isValidDecimal(const std::string& str) {
   uint64_t nbDecimalPoints = 0;
 
   // For each character in the string
-  for (std::string::const_iterator itor = str.begin(); itor != str.end(); ++itor) {
+  for (auto itor = str.begin(); itor != str.end(); ++itor) {
     const bool isFirstChar = itor == str.begin();
     const bool isMinusChar = '-' == *itor;
     const bool isANumericalDigit = '0' <= *itor && *itor <= '9';
@@ -294,8 +283,8 @@ bool isValidDecimal(const std::string& str) {
 // toUpper
 //------------------------------------------------------------------------------
 void toUpper(std::string& str) {
-  for (std::string::iterator itor = str.begin(); itor != str.end(); ++itor) {
-    *itor = toupper(*itor);
+  for (char& c : str) {
+    c = std::toupper(static_cast<unsigned char>(c));
   }
 }
 
@@ -312,8 +301,8 @@ bool isUpper(const std::string& str) {
 // toLower
 //------------------------------------------------------------------------------
 void toLower(std::string& str) {
-  for (std::string::iterator itor = str.begin(); itor != str.end(); ++itor) {
-    *itor = tolower(*itor);
+  for (char& c : str) {
+    c = std::tolower(static_cast<unsigned char>(c));
   }
 }
 }  // namespace cta::utils
