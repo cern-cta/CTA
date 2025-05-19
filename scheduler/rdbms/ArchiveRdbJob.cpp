@@ -101,30 +101,6 @@ void ArchiveRdbJob::reset() {
   // No need to reset the connection pool (m_connPool) as it's shared and passed by reference
 }
 
-void ArchiveRdbJob::updateJobRowFailureLog(const std::string& reason, bool is_report_log) {
-  std::string failureLog = cta::utils::getCurrentLocalTime() + " " + cta::utils::getShortHostname() + " " + reason;
-  auto& logField = is_report_log ? m_jobRow.reportFailureLogs : m_jobRow.failureLogs;
-
-  if (logField.has_value()) {
-    logField.value() += failureLog;
-  } else {
-    logField.emplace(failureLog);
-  }
-  if (is_report_log) {
-    ++m_jobRow.totalReportRetries;
-  }
-}
-
-void ArchiveRdbJob::updateRetryCounts() {
-  if (m_jobRow.lastMountWithFailure == m_mountId) {
-    m_jobRow.retriesWithinMount += 1;
-  } else {
-    m_jobRow.retriesWithinMount = 1;
-    m_jobRow.lastMountWithFailure = m_mountId;
-  }
-  m_jobRow.totalRetries += 1;
-}
-
 void ArchiveRdbJob::handleExceedTotalRetries(cta::schedulerdb::Transaction& txn,
                                              log::LogContext& lc,
                                              const std::string& reason) {
@@ -193,7 +169,7 @@ void ArchiveRdbJob::failTransfer(const std::string& failureReason, log::LogConte
     .add("tapePool", m_tapePool)
     .add("failureReason", m_jobRow.failureLogs.value_or(""));
   lc.log(log::WARNING, "In schedulerdb::ArchiveRdbJob::failTransfer(): received failed job to be reported.");
-  updateJobRowFailureLog(failureReason);
+  m_jobRow.updateJobRowFailureLog(failureReason);
 
   // For multiple jobs existing more might need to be done to ensure the file on EOS
   // is deleted only when both requests succeed !
@@ -205,7 +181,7 @@ void ArchiveRdbJob::failTransfer(const std::string& failureReason, log::LogConte
   // not all jobs succeeded - do we report failure for all ? - I guess so,
   // check how this case is handled in the objectstore
 
-  updateRetryCounts();
+  m_jobRow.updateRetryCounts(m_mountId);
   // for now we do not pur failure log into the DB just log it
   // not sure if this is necessary
   //m_jobRow.failureLogs.emplace_back(failureReason);
@@ -236,7 +212,7 @@ void ArchiveRdbJob::failReport(const std::string& failureReason, log::LogContext
     .add("tapePool", m_tapePool)
     .add("reportFailureReason", m_jobRow.reportFailureLogs.value_or(""));
   lc.log(log::INFO, "In schedulerdb::ArchiveRdbJob::failReport(): reporting failed.");
-  updateJobRowFailureLog(failureReason, true);
+  m_jobRow.updateJobRowFailureLog(failureReason, true);
   /* We could use reportType NoReportRequired for cancelling the request.
    * For the moment it is not used and we directly delete the job.
    * We could also use it for a case when a previous attempt to report failed
