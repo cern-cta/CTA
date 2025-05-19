@@ -76,7 +76,7 @@ std::string file2string(std::string filename){
 int main(const int argc, char *const *const argv) {
 
     setenv("GRPC_VERBOSITY", "debug", 1);
-    setenv("GRPC_TRACE", "tcp,http,secure_endpoint,transport_security", 1); // do not set to all, this is to debug the transport protocol
+    setenv("GRPC_TRACE", "all", 1); // "tcp,http,secure_endpoint,transport_security", 1); // do not set to all, this is to debug the transport protocol
     // per https://chromium.googlesource.com/external/github.com/grpc/grpc/+/HEAD/examples/cpp/debugging/#debug-transport-protocol
 
     std::string config_file("/etc/cta/cta-frontend-grpc.conf");
@@ -182,6 +182,7 @@ int main(const int argc, char *const *const argv) {
     // // add the JWT Authenticator to the server creds
     std::shared_ptr<ServiceJWTAuthProcessor> spAuthProcessor = std::make_shared<ServiceJWTAuthProcessor>();
     creds->SetAuthMetadataProcessor(spAuthProcessor);
+    lc.log(log::INFO, "Set the authMetadataProcessor to JWTAuthProcessor");
     // Listen on the given address without any authentication mechanism.
     builder.AddListeningPort(server_address, creds);
 
