@@ -35,3 +35,13 @@ openssl x509 -passin pass:1234 -req -days 365 -in client.csr -CA ca.crt -CAkey c
 
 # Remove passphrase from Client Key
 openssl rsa -passin pass:1234 -in client.key -out client.key
+
+# for testing the certs
+openssl s_client -connect user-service-ip-uc.a.run.app:443 ...
+openssl s_client -connect cta-frontend-grpc:10956 -CAfile /shared/sslCerts/ca.crt
+
+## use grpcurl :
+grpcurl -cacert /shared/sslCerts/ca.crt \
+  -authority cta-frontend-grpc-0 \
+  cta-frontend-grpc:10956 list
+
