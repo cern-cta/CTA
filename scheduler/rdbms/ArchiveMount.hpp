@@ -114,6 +114,8 @@ private:
   const std::string& m_ownerId;
   common::dataStructures::JobQueueType m_queueType;
   schedulerdb::JobPool<schedulerdb::ArchiveRdbJob> m_jobPool;
+
+  void recycleTransferredJobs(std::list<std::unique_ptr<SchedulerDatabase::ArchiveJob>>& jobsBatch, log::LogContext& lc);
 };
 
 }  // namespace cta::schedulerdb
