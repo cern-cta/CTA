@@ -15,7 +15,7 @@ modify-project-json:
         tmp_file=$(mktemp)
         jq --arg new_xrd_version "$trimmed_xrootd_version" \
           --arg platform "$PLATFORM" \
-          '.platforms[$platform].versionlock.group-xrootd = $new_xrd_version' \
+          '.platforms[$platform].versionlock["group-xrootd"] = $new_xrd_version' \
           "$project_json_file" > "$tmp_file" && mv "$tmp_file" "$project_json_file"
       else
         echo "CUSTOM_XROOTD_VERSION is not provided. Skipping XRootD version replacement."
@@ -29,7 +29,7 @@ modify-project-json:
         tmp_file=$(mktemp)
         jq --arg new_eos_version "$trimmed_eos_version" \
           --arg platform "$PLATFORM" \
-          '.platforms[$platform].versionlock.group-eos = $new_eos_version' \
+          '.platforms[$platform].versionlock["group-eos"] = $new_eos_version' \
           "$project_json_file" > "$tmp_file" && mv "$tmp_file" "$project_json_file"
       else
         echo "CUSTOM_EOS_VERSION is not provided. Skipping EOS version replacement."
