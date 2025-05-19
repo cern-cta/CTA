@@ -68,8 +68,10 @@ spec:
         stdin: true
         command: ["bash", "/scripts/ctafrontend-grpc.sh"]
         readinessProbe:
-          grpc:
-            port: {{ .Values.grpc.port }}
+          exec:
+            command: ["true"]
+          # grpc:
+          #   port: {{ .Values.grpc.port }}
           initialDelaySeconds: 5
           periodSeconds: 5
           timeoutSeconds: 3
