@@ -75,6 +75,41 @@ public:
    */
   void reset();
 
+  /**
+   * Updates the retry counters for the current mount and globally.
+   * Increments the number of retries and updates the last failed mount accordingly.
+   */
+  void updateRetryCounts();
+
+  /**
+   * Handles the case when the job has exceeded its total retry limit.
+   * Marks the job for failure reporting and updates its status in the database.
+   *
+   * @param txn The transaction context for database operations.
+   * @param lc The logging context for structured logging.
+   * @param reason The textual explanation for the failure.
+   */
+  void handleExceedTotalRetries(cta::schedulerdb::Transaction& txn, log::LogContext& lc, const std::string& reason);
+
+  /**
+   * Requeues the job to a new mount after a failure. Resets mount-related retry counters and updates the job in the DB.
+   *
+   * @param txn The transaction context for database operations.
+   * @param lc The logging context for structured logging.
+   * @param reason The textual explanation for the failure.
+   */
+  void requeueToNewMount(cta::schedulerdb::Transaction& txn, log::LogContext& lc, const std::string& reason);
+
+  /**
+   * Requeues the job to the same mount after a recoverable failure.
+   * Keeps the mount context but marks it for retry, updating the job in the DB.
+   *
+   * @param txn The transaction context for database operations.
+   * @param lc The logging context for structured logging.
+   * @param reason The textual explanation for the failure.
+   */
+  void requeueToSameMount(cta::schedulerdb::Transaction& txn, log::LogContext& lc, const std::string& reason);
+
   postgres::RetrieveJobQueueRow m_jobRow;  // Job data is encapsulated in this member
   bool m_jobOwned = false;
   uint64_t m_mountId = 0;
