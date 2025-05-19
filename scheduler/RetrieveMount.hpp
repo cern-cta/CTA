@@ -280,7 +280,7 @@ private:
   /**
     * Internal tracking of the session completion
     */
-  bool m_sessionRunning;
+  bool m_sessionRunning = false;
 
   /**
     * Internal tracking of the tape thread

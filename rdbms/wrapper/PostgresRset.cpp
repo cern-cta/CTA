@@ -61,19 +61,18 @@ PostgresRset::~PostgresRset() {
 // getting column index using a local cache to avoid looking up index
 // for every column for each row of the Rset whenever we loop over the result
 //------------------------------------------------------------------------------
-int PostgresRset::getColumnIndex(const std::string& colName) const {
+size_t PostgresRset::getColumnIndex(const std::string& colName) const {
   if (nullptr == m_resItr->get()) {
     throw exception::Exception(std::string(__FUNCTION__) + " no row available");
   }
-  auto it = m_columnPQindexCache.find(colName);
-  if (it != m_columnPQindexCache.end()) {
+  if (auto it = m_columnPQindexCache.find(colName); it != m_columnPQindexCache.end()) {
     return it->second;
   }
   int idx = PQfnumber(m_resItr->get(), colName.c_str());
   if (idx < 0) {
     throw exception::Exception(std::string(__FUNCTION__) + " column does not exist: " + colName);
   }
-  m_columnPQindexCache[colName] = idx;
+  m_columnPQindexCache[colName] = static_cast<size_t>(idx);
   return idx;
 }
 
@@ -378,8 +377,6 @@ bool PostgresRset::next() {
   // always locks in order statement and then connection
   threading::RWLockWrLocker locker2(m_stmt.m_lock);
   threading::RWLockWrLocker locker(m_conn.m_lock);
-  // trying to reuse the indices per the full result set
-  // m_columnPQindexCache.clear();
 
   if (m_resItr->next()) {
     // For queries expect rcode PGRES_SINGLE_TUPLE with ntuples=1 for each row,
