@@ -107,6 +107,7 @@ def validate_default(ci_input_vars):
     """
     exit_if_defined("CUSTOM_CTA_VERSION", ci_input_vars)
     exit_if_defined("CUSTOM_EOS_VERSION", ci_input_vars)
+    exit_if_defined("CUSTOM_EOS_IMAGE_TAG", ci_input_vars)
     exit_if_defined("CUSTOM_XROOTD_VERSION", ci_input_vars)
     exit_if_defined("CUSTOM_SYSTEM_TEST_IMAGE_TAG", ci_input_vars)
 
@@ -117,8 +118,8 @@ def validate_regr_against_cta_main(ci_input_vars):
     """
     exit_if_defined("CUSTOM_CTA_VERSION", ci_input_vars)
     exit_if_defined("CUSTOM_SYSTEM_TEST_IMAGE_TAG", ci_input_vars)
-    if not env_var_defined("CUSTOM_EOS_VERSION", ci_input_vars) and not env_var_defined("CUSTOM_XROOTD_VERSION", ci_input_vars):
-        sys.exit(f"ERROR: at least one of [CUSTOM_EOS_VERSION, CUSTOM_XROOTD_VERSION] must be provided when running a regression test.")
+    if not env_var_defined("CUSTOM_EOS_VERSION", ci_input_vars) and not env_var_defined("CUSTOM_XROOTD_VERSION", ci_input_vars) and not env_var_defined("CUSTOM_EOS_IMAGE_TAG", ci_input_vars):
+        sys.exit(f"ERROR: at least one of [CUSTOM_EOS_VERSION, CUSTOM_XROOTD_VERSION, CUSTOM_EOS_IMAGE_TAG] must be provided when running a regression test.")
 
 
 def validate_regr_against_cta_version(ci_input_vars):
@@ -127,8 +128,8 @@ def validate_regr_against_cta_version(ci_input_vars):
     """
     exit_if_not_defined("CUSTOM_CTA_VERSION", ci_input_vars)
     exit_if_defined("CUSTOM_SYSTEM_TEST_IMAGE_TAG", ci_input_vars)
-    if not env_var_defined("CUSTOM_EOS_VERSION", ci_input_vars) and not env_var_defined("CUSTOM_XROOTD_VERSION", ci_input_vars):
-        sys.exit(f"ERROR: at least one of [CUSTOM_EOS_VERSION, CUSTOM_XROOTD_VERSION] must be provided when running a regression test.")
+    if not env_var_defined("CUSTOM_EOS_VERSION", ci_input_vars) and not env_var_defined("CUSTOM_XROOTD_VERSION", ci_input_vars) and not env_var_defined("CUSTOM_EOS_IMAGE_TAG", ci_input_vars):
+        sys.exit(f"ERROR: at least one of [CUSTOM_EOS_VERSION, CUSTOM_XROOTD_VERSION, CUSTOM_EOS_IMAGE_TAG] must be provided when running a regression test.")
 
 
 def validate_image_from_cta_version(ci_input_vars):
@@ -137,6 +138,7 @@ def validate_image_from_cta_version(ci_input_vars):
     """
     exit_if_not_defined("CUSTOM_CTA_VERSION", ci_input_vars)
     exit_if_defined("CUSTOM_EOS_VERSION", ci_input_vars)
+    exit_if_defined("CUSTOM_EOS_IMAGE_TAG", ci_input_vars)
     exit_if_defined("CUSTOM_XROOTD_VERSION", ci_input_vars)
     exit_if_defined("CUSTOM_SYSTEM_TEST_IMAGE_TAG", ci_input_vars)
 
@@ -146,6 +148,7 @@ def validate_system_test_only(ci_input_vars):
     """
     exit_if_defined("CUSTOM_CTA_VERSION", ci_input_vars)
     exit_if_defined("CUSTOM_EOS_VERSION", ci_input_vars)
+    exit_if_defined("CUSTOM_EOS_IMAGE_TAG", ci_input_vars)
     exit_if_defined("CUSTOM_XROOTD_VERSION", ci_input_vars)
 
 
