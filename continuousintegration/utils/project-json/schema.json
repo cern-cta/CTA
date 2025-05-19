@@ -46,8 +46,9 @@
         "cppVersion",
         "defaultBuildType",
         "eosServerChartVersion",
-        "defaultEosImageTag",
-        "defaultEosImageRepository",
+        "eosImageTag",
+        "eosImageRepository",
+        "ctaImageRepository",
         "defaultPlatform"
       ],
       "properties": {
@@ -66,13 +67,18 @@
           "type": "string",
           "minLength": 1
         },
-        "defaultEosImageRepository": {
-          "description": "Default EOS image repository to use in CI.",
+        "eosImageRepository": {
+          "description": "EOS image repository to use in CI.",
           "type": "string",
           "minLength": 1
         },
-        "defaultEosImageTag": {
-          "description": "Default EOS image tag to use in CI.",
+        "eosImageTag": {
+          "description": "EOS image tag to use in CI.",
+          "type": "string",
+          "minLength": 1
+        },
+        "ctaImageRepository": {
+          "description": "CTA image repository to use in CI.",
           "type": "string",
           "minLength": 1
         },
