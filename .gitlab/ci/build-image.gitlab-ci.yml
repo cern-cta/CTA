@@ -64,6 +64,6 @@ build-ctageneric-from-remote-rpms:
     - /kaniko/executor --context $CI_PROJECT_DIR
                        --dockerfile $DOCKERFILE
                        --destination ${CI_REGISTRY}/cta/ctageneric:${CTA_BUILD_ID}
-                       --build-arg "PUBLIC_REPO_VER=${CUSTOM_CTA_VERSION:1}"
+                       --build-arg "PUBLIC_REPO_VER=${CUSTOM_CTA_VERSION}"
                        --build-arg USE_INTERNAL_REPOS=${USE_INTERNAL_REPOS}
     - echo "Image pushed successfully to ${CI_REGISTRY}/cta/ctageneric:${CTA_BUILD_ID}"
