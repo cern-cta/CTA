@@ -50,7 +50,7 @@ modify-project-json:
         tmp_file=$(mktemp)
         jq --arg new_eos_image_tag "$trimmed_eos_image_tag" \
           '
-          .dev.eosImageTag = $trimmed_eos_image_tag
+          .dev.eosImageTag = $new_eos_image_tag
           ' \
           "$project_json_file" > "$tmp_file" && mv "$tmp_file" "$project_json_file"
       else
