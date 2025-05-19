@@ -2088,7 +2088,7 @@ std::list<common::dataStructures::QueueAndMountSummary> Scheduler::getQueuesAndM
     std::unordered_map<std::string, std::string> tapeDriveSchedulerBackendNameMap;
     for (const auto & config : m_catalogue.DriveConfig()->getTapeDriveConfigs()) {
       if (config.keyName == "SchedulerBackendName") {
-        tapeDriveSchedulerBackendNameMap.emplace(config.tapeDriveName, config.value);
+        tapeDriveSchedulerBackendNameMap.try_emplace(config.tapeDriveName, config.value);
       }
     }
     std::list<std::string> ignoredDrives;
