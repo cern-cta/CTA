@@ -28,9 +28,8 @@
 namespace cta::schedulerdb {
 
 RetrieveRdbJob::RetrieveRdbJob(rdbms::ConnPool& connPool)
-    : m_jobRow(),
-      m_jobOwned((m_jobRow.mountId.value_or(0) != 0)),
-      m_mountId(m_jobRow.mountId.value_or(0)),  // use mountId or 0 if not set
+    : m_jobOwned((m_jobRow.mountId.value_or(0) != 0)),
+      m_mountId(m_jobRow.mountId.value_or(0)),
       m_tapePool(m_jobRow.tapePool),
       m_connPool(connPool) {
   // Copying relevant data from RetrieveJobQueueRow to RetrieveRdbJob

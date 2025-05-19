@@ -88,6 +88,8 @@ private:
   cta::RelationalDB& m_RelationalDB;
   cta::rdbms::ConnPool& m_connPool;
   schedulerdb::JobPool<schedulerdb::RetrieveRdbJob> m_jobPool;
+  void recycleTransferredJobs(std::list<std::unique_ptr<SchedulerDatabase::RetrieveJob>>& jobsBatch,
+                              log::LogContext& lc);
 };
 
 }  // namespace cta::schedulerdb
