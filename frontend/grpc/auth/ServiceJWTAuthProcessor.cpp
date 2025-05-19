@@ -43,6 +43,8 @@ bool ServiceJWTAuthProcessor::Validate(const std::string& encodedJWT) {
     ::grpc::AuthContext* authContext,
     ::grpc::AuthMetadataProcessor::OutputMetadata* consumedAuthMetadata,
     ::grpc::AuthMetadataProcessor::OutputMetadata* responseMetadata) {
+
+    std::cout << "In ServiceJWTAuthProcessor, method Process, just got in here" << std::endl;
     
     if (!authContext) {
         return ::grpc::Status(::grpc::StatusCode::INTERNAL, std::string("JWT authorization process internal error. AuthContext is set to NULL"));
