@@ -27,7 +27,7 @@ class ArchiveRdbJob;
 class RetrieveRdbJob;
 
 template<typename T>
-class JobPool {
+class JobPool : public std::enable_shared_from_this<JobPool<T>> {
 public:
   // Constructor initializes the pool with a connection pool reference or other parameters
   explicit JobPool(rdbms::ConnPool& connPool, size_t poolSize = 100000);
@@ -52,7 +52,9 @@ JobPool<T>::JobPool(rdbms::ConnPool& connPool, size_t poolSize)
       m_connPool(connPool) {
   // Optionally, pre-fill the pool with some job objects
   for (size_t i = 0; i < m_poolSize; ++i) {
-    m_pool.push(std::make_unique<T>(m_connPool));
+    auto job = std::make_unique<T>(m_connPool);
+    job->setPool(this->shared_from_this());  // Set pool in job
+    m_pool.push(std::move(job));
   }
 }
 
@@ -64,6 +66,7 @@ std::unique_ptr<T> JobPool<T>::acquireJob() {
     // Get a job from the pool if available
     auto job = std::move(m_pool.top());
     m_pool.pop();
+    job->setPool(this->shared_from_this());
     return job;
   }
 
@@ -78,6 +81,7 @@ void JobPool<T>::releaseJob(std::unique_ptr<T> job) {
   if (m_pool.size() < m_poolSize) {
     // Reset the job's state as needed before reusing
     job->reset();
+    job->setPool(this->shared_from_this());
     m_pool.push(std::move(job));
   }
 }
