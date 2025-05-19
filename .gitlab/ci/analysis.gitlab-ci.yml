@@ -138,7 +138,9 @@ validate-pipeline-variables:
         cp -f continuousintegration/docker/${PLATFORM}/etc/yum.repos.d-internal/*.repo /etc/yum.repos.d/
       else
         cp -f continuousintegration/docker/${PLATFORM}/etc/yum.repos.d-public/*.repo /etc/yum.repos.d/
+        cp -f continuousintegration/docker/${PLATFORM}/etc/yum.repos.d-internal/cta-public-testing.repo /etc/yum.repos.d/
       fi
+    - dnf config-manager --enable cta-public-testing
     - python3 ./continuousintegration/checks/validate_ci_input_variables.py
 
 validate-project-json:
