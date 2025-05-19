@@ -7,25 +7,6 @@ modify-project-json:
     - if: $PIPELINE_TYPE == "REGR_AGAINST_CTA_VERSION"
   script:
     - project_json_file="project.json"
-    # Replace EOS versionlock and EOS image tag
-    - trimmed_eos_version=$(echo "$CUSTOM_EOS_VERSION" | xargs)
-    # Note that we assume the EOS image tag has the form <eos_image_version>.<platform>
-    - |
-      if [ -n "$trimmed_eos_version" ]; then
-        eos_image_tag="${trimmed_eos_version}.${PLATFORM}"
-        echo "Updating EOS version to: $trimmed_eos_version. Update EOS image tag to $eos_image_tag"
-        tmp_file=$(mktemp)
-        jq --arg new_eos_version "$trimmed_eos_version" \
-          --arg new_eos_image_tag "$eos_image_tag" \
-          --arg platform "$PLATFORM" \
-          '
-          .platforms[$platform].versionlock.eos = $new_eos_version
-          | .dev.defaultEosImageTag = $new_eos_image_tag
-          ' \
-          "$project_json_file" > "$tmp_file" && mv "$tmp_file" "$project_json_file"
-      else
-        echo "CUSTOM_EOS_VERSION is not provided. Skipping EOS version replacement."
-      fi
     # Replace XRootD
     - trimmed_xrootd_version=$(echo "$CUSTOM_XROOTD_VERSION" | xargs)
     - |
@@ -38,6 +19,42 @@ modify-project-json:
           "$project_json_file" > "$tmp_file" && mv "$tmp_file" "$project_json_file"
       else
         echo "CUSTOM_XROOTD_VERSION is not provided. Skipping XRootD version replacement."
+      fi
+    # Replace EOS versionlock
+    - trimmed_eos_version=$(echo "$CUSTOM_EOS_VERSION" | xargs)
+    - |
+      if [ -n "$trimmed_eos_version" ]; then
+        eos_image_tag="${trimmed_eos_version}.${PLATFORM}"
+        echo "Updating EOS version to: $trimmed_eos_version."
+        tmp_file=$(mktemp)
+        jq --arg new_eos_version "$trimmed_eos_version" \
+          --arg platform "$PLATFORM" \
+          '
+          .platforms[$platform].versionlock.eos = $new_eos_version
+          ' \
+          "$project_json_file" > "$tmp_file" && mv "$tmp_file" "$project_json_file"
+      else
+        echo "CUSTOM_EOS_VERSION is not provided. Skipping EOS version replacement."
+      fi
+    # Replace EOS image tag
+    - trimmed_eos_image_tag=$(echo "$CUSTOM_EOS_IMAGE_TAG" | xargs)
+    # If not explicitly provided, extract it from the EOS version by removing the packaging number and appending the platform
+    - |
+      if [ -z "$trimmed_eos_image_tag" ] && [ -n "$trimmed_eos_version" ]; then
+        base_eos_version="${trimmed_eos_version%-*}"
+        trimmed_eos_image_tag="${base_eos_version}.${PLATFORM}"
+      fi
+    - |
+      if [ -n "$trimmed_eos_image_tag" ]; then
+        echo "Updating EOS image tag to: $trimmed_eos_image_tag."
+        tmp_file=$(mktemp)
+        jq --arg new_eos_image_tag "$trimmed_eos_image_tag" \
+          '
+          .dev.defaultEosImageTag = $trimmed_eos_image_tag
+          ' \
+          "$project_json_file" > "$tmp_file" && mv "$tmp_file" "$project_json_file"
+      else
+        echo "Neither CUSTOM_EOS_VERSION nor CUSTOM_EOS_IMAGE_TAG was provided. Skipping EOS image tag replacement."
       fi
     # Done
     - echo "File content after replacement"

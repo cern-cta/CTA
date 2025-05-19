@@ -21,6 +21,11 @@ FROM gitlab-registry.cern.ch/linuxsupport/alma9-base:latest
 # Add orchestration run scripts locally
 COPY continuousintegration/docker/opt /opt
 COPY continuousintegration/docker/el9/etc/yum.repos.d-internal/* /etc/yum.repos.d-internal/
+# The CTA repo is a special case as it provides CTA itself. As such, we cannot put it in
+# yum.repos.d-public, as this might overwrite an existing CTA repo when installing cta-release
+# If we were to put it in yum.repos.d-internal, we would have to manually copy it from internal
+# even if we want the public repos, which is not nice.
+COPY continuousintegration/docker/el9/cta-public-testing.repo /etc/yum.repos.d/
 
 # Install necessary packages
 RUN dnf install -y \
@@ -43,7 +48,6 @@ ARG PUBLIC_REPO_VER
 
 # Install cta-release and clean up
 RUN dnf config-manager --enable epel --setopt="epel.priority=4" && \
-    dnf config-manager --enable cta-public-testing && \
     dnf install -y "cta-release-${PUBLIC_REPO_VER}.el9" && \
     cta-versionlock apply && \
     dnf clean all --enablerepo=\* && \

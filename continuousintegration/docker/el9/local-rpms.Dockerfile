@@ -44,12 +44,12 @@ COPY image_rpms ${CTAREPODIR}/RPMS/x86_64
 # Populate local repository and enable it
 RUN dnf config-manager --enable epel --setopt="epel.priority=4" && \
     createrepo "${CTAREPODIR}" && \
-    echo -e "[cta-artifacts]\n\
-name=CTA artifacts\n\
+    echo -e "[cta-local-testing]\n\
+name=CTA repo with testing RPMs pointing to local artifacts\n\
 baseurl=file://${CTAREPODIR}\n\
 gpgcheck=0\n\
 enabled=1\n\
-priority=2" > /etc/yum.repos.d/cta-artifacts.repo && \
+priority=2" > /etc/yum.repos.d/cta-local-testing.repo && \
     dnf install -y "cta-release" && \
     cta-versionlock apply && \
     dnf clean all --enablerepo=\* && \
