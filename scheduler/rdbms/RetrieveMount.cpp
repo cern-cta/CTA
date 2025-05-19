@@ -271,8 +271,7 @@ void RetrieveMount::recycleTransferredJobs(std::list<std::unique_ptr<SchedulerDa
                                           log::LogContext& lc) {
   try {
     for (auto& job : jobsBatch) {
-      auto castedJob = std::unique_ptr<RetrieveRdbJob>(static_cast<RetrieveRdbJob*>(job.release()));
-      m_jobPool.releaseJob(std::move(castedJob));
+      job->releaseToPool();  // virtual dispatch
     }
     jobsBatch.clear();
   } catch (const exception::Exception& ex) {

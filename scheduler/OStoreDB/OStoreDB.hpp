@@ -256,8 +256,9 @@ public:
     CTA_GENERATE_EXCEPTION_CLASS(NoSuchJob);
     void failTransfer(const std::string& failureReason, log::LogContext& lc) override;
     void failReport(const std::string& failureReason, log::LogContext& lc) override;
-    // initialize method is here with empty implementation only since it is needed by PGSCHED in the baseclass
+    // initialize and releaseToPool methods are here with empty implementation only since it is needed by PGSCHED in the baseclass
     void initialize(const rdbms::Rset& resultSet) override {};
+    void releaseToPool() override {};
 
   private:
     void asyncSucceedTransfer();
@@ -357,8 +358,9 @@ public:
     void asyncSetSuccessful() override;
     void failTransfer(const std::string& failureReason, log::LogContext& lc) override;
     void failReport(const std::string& failureReason, log::LogContext& lc) override;
-    // initialize method is here with empty implementation only since it is needed by PGSCHED in the baseclass
+    // initialize and releaseToPool methods are here with empty implementation only since it is needed by PGSCHED in the baseclass
     void initialize(const rdbms::Rset& resultSet) override {};
+    void releaseToPool() override {};
     void abort(const std::string& abortReason, log::LogContext& lc) override;
     void fail() override;
     ~RetrieveJob() override;

@@ -219,8 +219,7 @@ void ArchiveMount::recycleTransferredJobs(std::list<std::unique_ptr<SchedulerDat
                                           log::LogContext& lc) {
   try {
     for (auto& job : jobsBatch) {
-      auto castedJob = std::unique_ptr<ArchiveRdbJob>(static_cast<ArchiveRdbJob*>(job.release()));
-      m_jobPool.releaseJob(std::move(castedJob));
+      job->releaseToPool();
     }
     jobsBatch.clear();
   } catch (const exception::Exception& ex) {
