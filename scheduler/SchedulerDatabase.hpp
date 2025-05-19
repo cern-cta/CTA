@@ -253,7 +253,8 @@ public:
       CompletionReport,
       FailureReport,
       Report  ///< A generic grouped type
-    } reportType;
+    };
+    ReportType reportType;
     cta::common::dataStructures::ArchiveFile archiveFile;
     cta::common::dataStructures::TapeFile tapeFile;
     virtual void failTransfer(const std::string& failureReason, log::LogContext& lc) = 0;
