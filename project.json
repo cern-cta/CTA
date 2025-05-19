@@ -89,11 +89,11 @@
         "group-xrootd": "1:5.8.2-1",
         "group-oracle-instantclient": "23.6.0.24.10-1"
       },
-      "requires": {
+      "runRequires": {
         "xrootd": ">= 1:5.7.1-1",
         "oracle-instantclient": ">= 23.0",
-        "valgrind": ">= 3.8.1",
         "rados": "= 2:17.2.8",
+        "valgrind": ">= 3.8.1",
         "gtest": ">= 1.11.0"
       },
       "buildRequires": {
