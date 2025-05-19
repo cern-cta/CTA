@@ -280,6 +280,30 @@ uint64_t RetrieveJobQueueRow::updateFailedJobStatus(Transaction& txn, RetrieveJo
   return stmt.getNbAffectedRows();
 };
 
+void RetrieveJobQueueRow::updateJobRowFailureLog(const std::string& reason, bool is_report_log) {
+  std::string failureLog = cta::utils::getCurrentLocalTime() + " " + cta::utils::getShortHostname() + " " + reason;
+  auto& logField = is_report_log ? reportFailureLogs : failureLogs;
+
+  if (logField.has_value()) {
+    logField.value() += failureLog;
+  } else {
+    logField.emplace(failureLog);
+  }
+  if (is_report_log) {
+    ++totalReportRetries;
+  }
+};
+
+void RetrieveJobQueueRow::updateRetryCounts(uint64_t mountId) {
+  if (lastMountWithFailure == mountId) {
+    retriesWithinMount += 1;
+  } else {
+    retriesWithinMount = 1;
+    lastMountWithFailure = mountId;
+  }
+  totalRetries += 1;
+};
+
 // requeueFailedJob is used to requeue jobs which were not processed due to finished mount or failed jobs
 // In case of unexpected crashed the job stays in the RETRIEVE_PENDING_QUEUE and needs to be identified
 // in some garbage collection process - TO-BE-DONE.

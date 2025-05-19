@@ -660,5 +660,19 @@ struct RetrieveJobQueueRow {
   * @return     Retrieve Request ID
   */
   static uint64_t getNextRetrieveRequestID(rdbms::Conn& conn);
+
+  /**
+   * Appends the provided failure reason, along with timestamp and hostname, to the job's failure log.
+   *
+   * @param reason        The textual explanation for the failure.
+   * @param is_report_log If true report failure log will be appended instead of job failure log.
+   */
+  void updateJobRowFailureLog(const std::string& reason, bool is_report_log = false);
+
+  /**
+   * Updates the retry counters for the current mount and globally.
+   * Increments the number of retries and updates the last failed mount accordingly.
+   */
+  void updateRetryCounts(uint64_t mountId);
 };
 };  // namespace cta::schedulerdb::postgres

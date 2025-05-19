@@ -84,13 +84,6 @@ public:
   void reset();
 
  /**
-  * Appends the provided failure reason, along with timestamp and hostname, to the job's failure log.
-  *
-  * @param reason The textual explanation for the failure.
-  */
-  void updateJobRowFailureLog(const std::string& reason, bool is_report_log = false);
-
- /**
   * Updates the retry counters for the current mount and globally.
   * Increments the number of retries and updates the last failed mount accordingly.
   */
