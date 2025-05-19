@@ -567,7 +567,7 @@ void Scheduler::expandRepackRequest(const std::unique_ptr<RepackRequest>& repack
         }
         dir->mkdir();
       }
-    } catch (const exception::XrdClException& ex) {
+    } catch (const cta::exception::XrootCl& ex) {
       throw ExpandRepackRequestException(
         "In Scheduler::expandRepackRequest(): errors while doing some checks on the repack buffer. ExceptionMsg = " +
         ex.getMessageValue());
@@ -1628,7 +1628,7 @@ void Scheduler::deleteRepackBuffer(std::unique_ptr<cta::disk::Directory> repackB
     if (repackBuffer != nullptr && repackBuffer->exist()) {
       repackBuffer->rmdir();
     }
-  } catch (const exception::XrdClException& ex) {
+  } catch (const cta::exception::XrootCl& ex) {
     log::ScopedParamContainer spc(lc);
     spc.add("exceptionMsg", ex.getMessageValue());
     lc.log(log::ERR,
@@ -2089,7 +2089,7 @@ std::list<common::dataStructures::QueueAndMountSummary> Scheduler::getQueuesAndM
     std::unordered_map<std::string, std::string> tapeDriveSchedulerBackendNameMap;
     for (const auto & config : m_catalogue.DriveConfig()->getTapeDriveConfigs()) {
       if (config.keyName == SCHEDULER_NAME_CONFIG_KEY) {
-        tapeDriveSchedulerBackendNameMap.emplace(config.tapeDriveName, config.value);
+        tapeDriveSchedulerBackendNameMap.try_emplace(config.tapeDriveName, config.value);
       }
     }
     std::list<std::string> ignoredDrives;

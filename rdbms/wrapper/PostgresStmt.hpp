@@ -78,14 +78,6 @@ public:
    * @param paramName The name of the parameter.
    * @param paramValue The value to be bound.
    */
-  void bindBool(const std::string& paramName, const std::optional<bool>& paramValue);
-
-  /**
-   * Binds an SQL parameter.
-   *
-   * @param paramName The name of the parameter.
-   * @param paramValue The value to be bound.
-   */
   void bindUint8(const std::string& paramName, const std::optional<uint8_t>& paramValue) override;
 
   /**

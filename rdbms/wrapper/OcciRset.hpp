@@ -151,19 +151,19 @@ public:
    * @param colName
    * @return
    */
-  uint8_t columnUint8NoOpt(const std::string& colName) const { throw cta::exception::Exception("Not implemented"); };
+  uint8_t columnUint8NoOpt(const std::string& colName) const override { throw cta::exception::Exception("Not implemented"); };
 
-  uint16_t columnUint16NoOpt(const std::string& colName) const { throw cta::exception::Exception("Not implemented"); };
+  uint16_t columnUint16NoOpt(const std::string& colName) const override { throw cta::exception::Exception("Not implemented"); };
 
-  uint32_t columnUint32NoOpt(const std::string& colName) const { throw cta::exception::Exception("Not implemented"); };
+  uint32_t columnUint32NoOpt(const std::string& colName) const override { throw cta::exception::Exception("Not implemented"); };
 
-  uint64_t columnUint64NoOpt(const std::string& colName) const { throw cta::exception::Exception("Not implemented"); };
+  uint64_t columnUint64NoOpt(const std::string& colName) const override { throw cta::exception::Exception("Not implemented"); };
 
-  std::string columnStringNoOpt(const std::string& colName) const { throw cta::exception::Exception("Not implemented"); };
+  std::string columnStringNoOpt(const std::string& colName) const override { throw cta::exception::Exception("Not implemented"); };
 
-  double columnDoubleNoOpt(const std::string& colName) const { throw cta::exception::Exception("Not implemented"); };
+  double columnDoubleNoOpt(const std::string& colName) const override { throw cta::exception::Exception("Not implemented"); };
 
-  bool columnBoolNoOpt(const std::string& colName) const { throw cta::exception::Exception("Not implemented"); };
+  bool columnBoolNoOpt(const std::string& colName) const override { throw cta::exception::Exception("Not implemented"); };
 
   /**
    * Returns true if the specified column contains a null value.

@@ -162,7 +162,7 @@ public:
     * @param colName The name of the column.
     * @return The string value of the specified column.
     */
-  bool columnBoolNoOpt(const std::string& colName) const;
+  bool columnBoolNoOpt(const std::string& colName) const override;
 
   /**
    * Returns the value of the specified column as a string.
@@ -170,7 +170,7 @@ public:
    * @param colName
    * @return
    */
-  std::string columnStringNoOpt(const std::string& colName) const;
+  std::string columnStringNoOpt(const std::string& colName) const override;
 
   /**
    * Returns the value of the specified column as an integer.
@@ -178,7 +178,7 @@ public:
    * @param colName
    * @return
    */
-  uint8_t columnUint8NoOpt(const std::string& colName) const;
+  uint8_t columnUint8NoOpt(const std::string& colName) const override;
 
   /**
    * Returns the value of the specified column as an integer.
@@ -186,7 +186,7 @@ public:
    * @param colName
    * @return
    */
-  uint16_t columnUint16NoOpt(const std::string& colName) const;
+  uint16_t columnUint16NoOpt(const std::string& colName) const override;
 
   /**
    * Returns the value of the specified column as an integer.
@@ -194,7 +194,7 @@ public:
    * @param colName
    * @return
    */
-  uint32_t columnUint32NoOpt(const std::string& colName) const;
+  uint32_t columnUint32NoOpt(const std::string& colName) const override;
 
   /**
    * Returns the value of the specified column as an integer.
@@ -202,7 +202,7 @@ public:
    * @param colName
    * @return
    */
-  uint64_t columnUint64NoOpt(const std::string& colName) const;
+  uint64_t columnUint64NoOpt(const std::string& colName) const override;
 
   /**
    * Returns the value of the specified column as an double.
@@ -210,7 +210,7 @@ public:
    * @param colName
    * @return
    */
-  double columnDoubleNoOpt(const std::string& colName) const;
+  double columnDoubleNoOpt(const std::string& colName) const override;
   /**
    * Returns the value of the specified column as a string.
    *
@@ -295,7 +295,7 @@ private:
    * @param colName
    * @return index of the column
    */
-  int getColumnIndex(const std::string& colName) const;
+  size_t getColumnIndex(const std::string& colName) const;
 
   /**
    * Template method that converts a string to a required numeric type
@@ -308,7 +308,7 @@ private:
   template<typename NumericType>
   NumericType getNumberFromString(const std::string& colName, const std::string& stringValue) const {
     // At compile time ensure the type is numeric (e.g., int, double, uint64_t, etc.)
-    static_assert(std::is_arithmetic<NumericType>::value, "NumericType must be a numeric type.");
+    static_assert(std::is_arithmetic_v<NumericType>, "NumericType must be a numeric type.");
 
     // Create a stringstream for converting the string to the target type
     std::istringstream iss(stringValue);
@@ -331,7 +331,7 @@ private:
   /**
    * column index cache
    */
-  mutable std::unordered_map<std::string, uint64_t> m_columnPQindexCache;
+  mutable std::unordered_map<std::string, size_t> m_columnPQindexCache;
   /**
    * The SQL connection.
    */

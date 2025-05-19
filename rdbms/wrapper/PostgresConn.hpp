@@ -284,7 +284,7 @@ private:
   /**
    * represent postgres connection, used by libpq
    */
-  PGconn* m_pgsqlConn;
+  PGconn* m_pgsqlConn = nullptr;
 
   /**
    * indicate if we have sent a command that will send results or take data while
@@ -293,13 +293,13 @@ private:
    * if new sync commands are sent they will interrupt communiction with the
    * ongoing async command.
    */
-  bool m_asyncInProgress;
+  bool m_asyncInProgress = false;
 
   /**
    * Counter for number of statements ever created.
    * Used to ensure unique statement naming on the conneciton.
    */
-  uint64_t m_nStmts;
+  uint64_t m_nStmts = 0;
 
 };  // class PostgresConn
 
