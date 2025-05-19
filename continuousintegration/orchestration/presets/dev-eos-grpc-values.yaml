@@ -3,6 +3,9 @@ global:
   repository:
   tag:
   pullPolicy: IfNotPresent
+  security:
+    privileged: true
+    allowPrivilegeEscalation: true
 
   eos:
     instancename: ctaeos
@@ -161,3 +164,7 @@ qdb:
 
   probes:
     liveness: false
+
+# security:
+#   privileged: true
+#   allowPrivilegeEscalation: true
