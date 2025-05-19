@@ -30,16 +30,14 @@
 // constructor
 //------------------------------------------------------------------------------
 cta::RetrieveMount::RetrieveMount(cta::catalogue::Catalogue& catalogue)
-    : m_sessionRunning(false),
-      m_catalogue(catalogue) {}
+    : m_catalogue(catalogue) {}
 
 //------------------------------------------------------------------------------
 // constructor
 //------------------------------------------------------------------------------
 cta::RetrieveMount::RetrieveMount(cta::catalogue::Catalogue& catalogue,
                                   std::unique_ptr<SchedulerDatabase::RetrieveMount> dbMount)
-    : m_sessionRunning(false),
-      m_catalogue(catalogue) {
+    : m_catalogue(catalogue) {
   m_dbMount.reset(dbMount.release());
 }
 
