@@ -100,15 +100,15 @@ create_instance() {
   # default should not make user loose data if he forgot the option
   reset_catalogue=false
   reset_scheduler=false
-  cta_image_repository="gitlab-registry.cern.ch/cta/ctageneric" # Used for the ctageneric pod image(s)
+  cta_image_repository=$(jq -r .dev.ctaImageRepository ${project_json_path}) # Used for the ctageneric pod image(s)
   dry_run=0 # Will not do anything with the namespace and just render the generated yaml files
   num_library_devices=1 # For the auto-generated tapeservers config
   max_drives_per_tpsrv=1
   max_tapeservers=2
   # EOS related
   eos_server_chart_version=$(jq -r .dev.eosServerChartVersion ${project_json_path})
-  eos_image_tag=$(jq -r .dev.defaultEosImageTag ${project_json_path})
-  eos_image_repository=$(jq -r .dev.defaultEosImageRepository ${project_json_path})
+  eos_image_tag=$(jq -r .dev.eosImageTag ${project_json_path})
+  eos_image_repository=$(jq -r .dev.eosImageRepository ${project_json_path})
   eos_config=presets/dev-eos-values.yaml
 
   # Parse command line arguments
