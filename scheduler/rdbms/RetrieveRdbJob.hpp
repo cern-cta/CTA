@@ -34,7 +34,7 @@ class RelationalDB;
 
 namespace cta::schedulerdb {
 
-class RetrieveRdbJob : public SchedulerDatabase::RetrieveJob {
+class RetrieveRdbJob final : public SchedulerDatabase::RetrieveJob {
   friend class cta::RelationalDB;
 
 public:

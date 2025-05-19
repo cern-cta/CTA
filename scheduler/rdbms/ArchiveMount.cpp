@@ -205,31 +205,29 @@ void ArchiveMount::setJobBatchTransferred(std::list<std::unique_ptr<SchedulerDat
              "entire job list provided.");
     }
     // After processing, return the job object to the job pool for re-use
-    try {
-      for (auto& job : jobsBatch) {
-        // Attempt to release the job back to the pool
-        auto castedJob = std::unique_ptr<ArchiveRdbJob>(static_cast<ArchiveRdbJob*>(job.release()));
-        m_jobPool.releaseJob(std::move(castedJob));
-      }
-      jobsBatch.clear();  // Clear the container after all jobs are successfully processed
-    } catch (const exception::Exception& ex) {
-      lc.log(cta::log::ERR,
-             "In ArchiveMount::setJobBatchTransferred(): Failed to recycle all job objects for the job pool: " +
-               ex.getMessageValue());
-
-      // Destroy all remaining jobs in case of failure
-      for (auto& job : jobsBatch) {
-        // Release the unique_ptr ownership and delete the underlying object
-        delete job.release();
-      }
-      jobsBatch.clear();  // Ensure the container is emptied
-    }
+    recycleTransferredJobs(jobsBatch, lc);
   } catch (exception::Exception& ex) {
     lc.log(cta::log::ERR,
            "In schedulerdb::ArchiveMount::setJobBatchTransferred(): Failed to update job status for "
            "reporting. Aborting the transaction." +
              ex.getMessageValue());
     txn.abort();
+  }
+}
+
+void ArchiveMount::recycleTransferredJobs(std::list<std::unique_ptr<SchedulerDatabase::ArchiveJob>>& jobsBatch,
+                                          log::LogContext& lc) {
+  try {
+    for (auto& job : jobsBatch) {
+      auto castedJob = std::unique_ptr<ArchiveRdbJob>(static_cast<ArchiveRdbJob*>(job.release()));
+      m_jobPool.releaseJob(std::move(castedJob));
+    }
+    jobsBatch.clear();
+  } catch (const exception::Exception& ex) {
+    lc.log(cta::log::ERR,
+           "In ArchiveMount::recycleTransferredJobs(): Failed to recycle all job objects for the job pool: " +
+             ex.getMessageValue());
+    jobsBatch.clear();
   }
 }
 }  // namespace cta::schedulerdb
