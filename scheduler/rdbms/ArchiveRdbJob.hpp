@@ -20,6 +20,7 @@
 #include "common/log/LogContext.hpp"
 #include "rdbms/ConnPool.hpp"
 #include "scheduler/rdbms/postgres/ArchiveJobQueue.hpp"
+#include "scheduler/rdbms/JobPool.hpp"
 
 #include <list>
 #include <memory>
@@ -78,16 +79,30 @@ public:
   */
   void initialize(const rdbms::Rset& rset) override;
 
+  /**
+   * @brief Returns this job instance back to its originating pool.
+   *
+   *        Used when the job has completed and can be recycled.
+   *        Assumes the job is exclusively owned and managed by the pool.
+   */
+  void releaseToPool() override {
+    m_pool->releaseJob(std::unique_ptr<ArchiveRdbJob>(this));
+  }
+
+  /**
+   * @brief Injects the pointer to the pool this job belongs to.
+   *
+   *        This allows the job to release itself properly once processing
+   *        is complete.
+   *
+   * @param pool  Pointer to the corresponding job pool.
+   */
+  void setPool(std::shared_ptr<JobPool<ArchiveRdbJob>> pool) { m_pool = pool; }
+
  /**
   * Reset all data members to return the job object to the pool
   */
   void reset();
-
- /**
-  * Updates the retry counters for the current mount and globally.
-  * Increments the number of retries and updates the last failed mount accordingly.
-  */
-  void updateRetryCounts();
 
  /**
   * Handles the case when the job has exceeded its total retry limit.
@@ -123,6 +138,9 @@ public:
   uint64_t m_mountId = 0;
   std::string m_tapePool;
   rdbms::ConnPool& m_connPool;
+
+private:
+  std::shared_ptr<JobPool<ArchiveRdbJob>> m_pool = nullptr;
 };
 
 }  // namespace cta::schedulerdb
