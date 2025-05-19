@@ -2,7 +2,7 @@
   - mkdir -p ${CTAREPODIR}
   - cp -r build_rpm/RPM ${CTAREPODIR}
   - createrepo ${CTAREPODIR}
-  - echo -e "[cta-artifacts]\nname=CTA artifacts\nbaseurl=file://${CTAREPODIR}\ngpgcheck=0\nenabled=1\npriority=2" > /etc/yum.repos.d/cta-artifacts.repo
+  - echo -e "[cta-local-testing]\nname=CTA artifacts\nbaseurl=file://${CTAREPODIR}\ngpgcheck=0\nenabled=1\npriority=2" > /etc/yum.repos.d/cta-local-testing.repo
   - dnf -y --nogpgcheck install cta-release
   - cta-versionlock apply
   - |
@@ -149,7 +149,7 @@ test-cta-release:
     - mkdir -p ${CTAREPODIR}
     - cp -r build_rpm/RPM ${CTAREPODIR}
     - createrepo ${CTAREPODIR}
-    - echo -e "[cta-artifacts]\nname=CTA artifacts\nbaseurl=file://${CTAREPODIR}\ngpgcheck=0\nenabled=1\npriority=2" > /etc/yum.repos.d/cta-artifacts.repo
+    - echo -e "[cta-local-testing]\nname=CTA artifacts\nbaseurl=file://${CTAREPODIR}\ngpgcheck=0\nenabled=1\npriority=2" > /etc/yum.repos.d/cta-local-testing.repo
     - dnf install --nogpgcheck -y cta-release
     - cta-versionlock apply
     - dnf install --nogpgcheck -y cta-frontend
