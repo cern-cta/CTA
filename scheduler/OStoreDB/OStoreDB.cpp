@@ -694,11 +694,11 @@ OStoreDB::createBestArchiveMountPolicy(const std::list<common::dataStructures::M
     mountPolicies.front(),
     [](const common::dataStructures::MountPolicy& mp1, const common::dataStructures::MountPolicy& mp2) {
       common::dataStructures::MountPolicy mp = mp1;
-      if (mp1.archivePriority > mp2.archivePriority) {
-        mp.archivePriority = mp1.archivePriority;
+      if (mp2.archivePriority > mp.archivePriority) {
+        mp.archivePriority = mp2.archivePriority;
       }
-      if (mp1.archiveMinRequestAge < mp2.archiveMinRequestAge) {
-        mp.archiveMinRequestAge = mp1.archiveMinRequestAge;
+      if (mp2.archiveMinRequestAge < mp.archiveMinRequestAge) {
+        mp.archiveMinRequestAge = mp2.archiveMinRequestAge;
       }
       return mp;
     });
@@ -769,11 +769,11 @@ OStoreDB::createBestRetrieveMountPolicy(const std::list<common::dataStructures::
     mountPolicies.front(),
     [](const common::dataStructures::MountPolicy& mp1, const common::dataStructures::MountPolicy& mp2) {
       common::dataStructures::MountPolicy mp = mp1;
-      if (mp1.retrievePriority > mp2.retrievePriority) {
-        mp.retrievePriority = mp1.retrievePriority;
+      if (mp2.retrievePriority > mp.retrievePriority) {
+        mp.retrievePriority = mp2.retrievePriority;
       }
-      if (mp1.retrieveMinRequestAge < mp2.retrieveMinRequestAge) {
-        mp.retrieveMinRequestAge = mp1.retrieveMinRequestAge;
+      if (mp2.retrieveMinRequestAge < mp.retrieveMinRequestAge) {
+        mp.retrieveMinRequestAge = mp2.retrieveMinRequestAge;
       }
       return mp;
     });
