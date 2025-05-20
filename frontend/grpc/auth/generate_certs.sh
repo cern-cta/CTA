@@ -41,7 +41,19 @@ openssl s_client -connect user-service-ip-uc.a.run.app:443 ...
 openssl s_client -connect cta-frontend-grpc:10956 -CAfile /shared/sslCerts/ca.crt
 
 ## use grpcurl :
-grpcurl -cacert /shared/sslCerts/ca.crt \
+## install it
+# first install go
+dnf install golang
+go install github.com/fullstorydev/grpcurl/cmd/grpcurl@latest
+root/go/bin/grpcurl -cacert /shared/sslCerts/ca.crt \
   -authority cta-frontend-grpc-0 \
   cta-frontend-grpc:10956 list
 
+## this gives me an error about the certificate name..
+# Failed to dial target host "cta-frontend-grpc:10956": tls: failed to verify certificate: x509: certificate relies on legacy Common Name field, use SANs instead
+# to view SANs in cert
+openssl x509 -in /home/cirunner/shared/sslCerts/ca.crt -noout -text | grep -A1 "Subject Alternative Name"
+
+# run openssl verify on my certs
+openssl verify -CAfile ca.crt server.crt
+# server.crt: OK
