@@ -23,7 +23,7 @@ set -e
 # - Run the krb5kdc and kadmind in separate containers
 
 # See: https://docs.redhat.com/en/documentation/red_hat_enterprise_linux/6/html/managing_smart_cards/configuring_a_kerberos_5_server
-# We only look in a single repo, as the CTA, XRootD and EOS repos are slowing things down significantly
+# We only look in a single repo, as we want this script to run as fast as possible since the rest of the chart installations depend on this chart
 dnf install -y --disablerepo=* --enablerepo=baseos krb5-server
 
 echo "Initialising key distribution center... "
