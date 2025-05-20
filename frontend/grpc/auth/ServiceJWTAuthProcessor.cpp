@@ -45,19 +45,28 @@ bool ServiceJWTAuthProcessor::Validate(const std::string& encodedJWT) {
     ::grpc::AuthMetadataProcessor::OutputMetadata* responseMetadata) {
 
     std::cout << "In ServiceJWTAuthProcessor, method Process, just got in here" << std::endl;
-    
+    std::string msg;
+
     if (!authContext) {
-        return ::grpc::Status(::grpc::StatusCode::INTERNAL, std::string("JWT authorization process internal error. AuthContext is set to NULL"));
+        msg = std::string("JWT authorization process internal error. AuthContext is set to NULL");
+        std::cout << msg << std::endl;
+        return ::grpc::Status(::grpc::StatusCode::INTERNAL, msg);
     }
     if (!consumedAuthMetadata) {
-        return ::grpc::Status(::grpc::StatusCode::INTERNAL, std::string("JWT authorization process internal error. ConsumedAuthMetadata is set to NULL"));
+        msg = std::string("JWT authorization process internal error. ConsumedAuthMetadata is set to NULL");
+        std::cout << msg << std::endl;
+        return ::grpc::Status(::grpc::StatusCode::INTERNAL, msg);
     }
     if (!responseMetadata) {
-        return ::grpc::Status(::grpc::StatusCode::INTERNAL, std::string("JWT authorization process internal error. ResponseMetadata is set to NULL"));
+        msg = std::string("JWT authorization process internal error. ResponseMetadata is set to NULL");
+        std::cout << msg << std::endl;
+        return ::grpc::Status(::grpc::StatusCode::INTERNAL, msg);
     }
     auto iterAuthMetadata = authMetadata.find(JWT_TOKEN_AUTH_METADATA_KEY);
     if (iterAuthMetadata == authMetadata.end()) {
-        return ::grpc::Status(::grpc::StatusCode::INTERNAL, "JWT authorization process metadata error. Authorization token not found.");
+        msg = "JWT authorization process metadata error. Authorization token not found.";
+        std::cout << msg << std::endl;
+        return ::grpc::Status(::grpc::StatusCode::INTERNAL, msg);
     }
     /*
      * Validation 
@@ -69,9 +78,11 @@ bool ServiceJWTAuthProcessor::Validate(const std::string& encodedJWT) {
     if(Validate(strAuthMetadataValue)) {
         // If ok consume
         consumedAuthMetadata->insert(std::make_pair(JWT_TOKEN_AUTH_METADATA_KEY, strAuthMetadataValue));
+        std::cout << "Validate went ok, returning status OK" << std::endl;
         return ::grpc::Status::OK;
     }
     // else UNAUTHENTICATED
+    std::cout << "JWT authorization process error. Invalid principal." << std::endl;
     return ::grpc::Status(::grpc::StatusCode::UNAUTHENTICATED, "JWT authorization process error. Invalid principal.");
 
 }
