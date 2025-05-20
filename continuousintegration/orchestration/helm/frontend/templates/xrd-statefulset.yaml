@@ -51,15 +51,15 @@ spec:
         command: ["sh", "-c"]
         args:
         - |
-          cp /root/sss_keytab/input/eos.sss.keytab /root/sss_keytab/output/eos.sss.keytab;
-          chmod 400 /root/sss_keytab/output/eos.sss.keytab;
+          cp /root/sss_keytab/input/diskbuffer.sss.keytab /root/sss_keytab/output/diskbuffer.sss.keytab;
+          chmod 400 /root/sss_keytab/output/diskbuffer.sss.keytab;
           # Make CTA user owner (group 33 is tape)
-          chown -R 1000:33 /root/sss_keytab/output/eos.sss.keytab
+          chown -R 1000:33 /root/sss_keytab/output/diskbuffer.sss.keytab
         volumeMounts:
-        - name: eos-sss-keytab
-          mountPath: /root/sss_keytab/input/eos.sss.keytab
-          subPath: eos.sss.keytab
-        - name: eos-sss-keytab-fixedownership
+        - name: diskbuffer-sss-keytab
+          mountPath: /root/sss_keytab/input/diskbuffer.sss.keytab
+          subPath: {{ .Values.xrd.keytab.subPath }}
+        - name: diskbuffer-sss-keytab-fixedownership
           mountPath: /root/sss_keytab/output
       containers:
       - name: cta-frontend
@@ -129,9 +129,9 @@ spec:
         - name: cta-frontend-krb5-keytab
           mountPath: /etc/cta/cta-frontend.krb5.keytab
           subPath: cta-frontend.krb5.keytab
-        - name: eos-sss-keytab-fixedownership
-          mountPath: /etc/cta/eos.sss.keytab
-          subPath: eos.sss.keytab
+        - name: diskbuffer-sss-keytab-fixedownership
+          mountPath: /etc/cta/diskbuffer.sss.keytab
+          subPath: diskbuffer.sss.keytab
         - name: krb5-conf
           mountPath: /etc/krb5.conf
           subPath: krb5.conf
@@ -163,10 +163,10 @@ spec:
           name: cta-frontend-xrootd-conf
       - name: cta-frontend-krb5-keytab
         emptyDir: {}
-      - name: eos-sss-keytab
+      - name: diskbuffer-sss-keytab
         secret:
-          secretName: cta-frontend-sss-keytab # Note that this is a different keytab from eos-sss-keytab
-      - name: eos-sss-keytab-fixedownership
+          secretName: {{ .Values.xrd.keytab.secretName }}
+      - name: diskbuffer-sss-keytab-fixedownership
         emptyDir: {}
       - name: krb5-conf
         configMap:

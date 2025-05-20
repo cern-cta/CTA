@@ -8,6 +8,3 @@ data:
   cta-cli.conf: |-
     # solved by kubernetes DNS server so KIS...
     cta.endpoint {{ .Values.conf.cta.endpoint }}
-    eos.instance {{ .Values.conf.eos.instance }}
-    eos.requester.user {{ .Values.conf.eos.requester.user }}
-    eos.requester.group {{ .Values.conf.eos.requester.group }}
