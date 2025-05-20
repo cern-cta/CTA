@@ -77,7 +77,7 @@ void RetrieveRequest::garbageCollect(const std::string& presumedOwner, AgentRefe
 
 
 // Setting a bool for now on what we should do with these types.
-int RetrieveRequest::reclassifyRetrieveRequest(cta::catalogue::Catalogue& catalogue, log::LogContext& lc){
+std::optional<std::string> RetrieveRequest::reclassifyRetrieveRequest(cta::catalogue::Catalogue& catalogue, log::LogContext& lc){
   // The owner is indeed the right one. We should requeue the request either to
   // the to tranfer queue for one vid, or to the to report (or failed) queue (for one arbitrary VID).
   // Find the vids for active jobs in the request (to transfer ones).
@@ -107,7 +107,7 @@ int RetrieveRequest::reclassifyRetrieveRequest(cta::catalogue::Catalogue& catalo
   // If no tape file is a candidate, we just need to skip to queueing to the failed queue
   if (candidateVids.empty()) {
     lc.log(log::INFO, "NO VID FOUND");
-    return 1;
+    return std::nullopt;
   }
   // We have a chance to find an available tape. Let's compute best VID (this will
   // filter on tape availability.
@@ -115,11 +115,11 @@ int RetrieveRequest::reclassifyRetrieveRequest(cta::catalogue::Catalogue& catalo
     // If we have to fetch the status of the tapes and queued for the non-disabled vids.
     bestVid=Helpers::selectBestRetrieveQueue(candidateVids, catalogue, m_objectStore, lc, m_payload.repack_info().has_repack_request_address());
     lc.log(log::INFO, "VID AVAILABLE TO REQUEUE");
-    return 0;
+    return std::optional<std::string>(bestVid);
   } catch (Helpers::NoTapeAvailableForRetrieve&) {}
 
   lc.log(log::INFO, "NO VID AVAILABLE");
-  return 1;
+  return std::nullopt;
 }
 
 

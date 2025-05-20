@@ -15,6 +15,9 @@
  *               submit itself to any jurisdiction.
  */
 
+
+#define STDOUT_LOGGING
+
 #include "objectstore/BackendRadosTestSwitch.hpp"
 #include "tests/TestsCompileTimeSwitches.hpp"
 #include "scheduler/SchedulerDatabase.hpp"
@@ -44,8 +47,6 @@
 #include "scheduler/Scheduler.hpp"
 
 #include "objectstore/QueueCleanupRunnerTestUtils.hpp"
-
-//#define STDOUT_LOGGING
 
 namespace unitTests {
 
@@ -243,7 +244,8 @@ TEST_P(QueueCleanupRunnerConcurrentTest, CleanupRunnerParameterizedTest) {
   cta::objectstore::AgentReference agentForCleanupRef("AgentForCleanup", dl);
   cta::objectstore::Agent agentForCleanup(agentForCleanupRef.getAgentAddress(), be);
 
-  //AgentC for popping (for broken OStoreDB)
+  //AgentC for popping (for broken OStoreDB). The goal of this agent is to get registered
+  //as the cleanup agent but not perform any work.
   cta::objectstore::AgentReference agentForCleanupFailRef("AgentForCleanupFail", dl);
   cta::objectstore::Agent agentForCleanupFail(agentForCleanupFailRef.getAgentAddress(), be);
 
@@ -265,6 +267,9 @@ TEST_P(QueueCleanupRunnerConcurrentTest, CleanupRunnerParameterizedTest) {
   agentForSetup.insertAndRegisterSelf(lc);
   agentForCleanup.initialize();
   agentForCleanup.insertAndRegisterSelf(lc);
+  agentForCleanupFail.initialize();
+  agentForCleanupFail.setTimeout_us(0);
+  agentForCleanupFail.insertAndRegisterSelf(lc);
 
   // Create retrieve requests and add them to the queues
   // Create queues when they do not exist
@@ -296,7 +301,6 @@ TEST_P(QueueCleanupRunnerConcurrentTest, CleanupRunnerParameterizedTest) {
   }
 
   // Setup initial tape states and validate number of requests
-  //for (TapeQueueTransition tapeQueueStateTrans : GetParam().tapeQueueTransitionList) {
   for (auto & tapeQueueStateTrans : GetParam().tapeQueueTransitionList) {
 
     std::string vid = tapeQueueStateTrans.vid;
@@ -349,12 +353,12 @@ TEST_P(QueueCleanupRunnerConcurrentTest, CleanupRunnerParameterizedTest) {
     cta::objectstore::QueueCleanupRunner qCleanupRunnerOk(be, agentForCleanupRef, oKOStore, catalogue, GetParam().cleanupTimeout);
 
     ASSERT_THROW(qCleanupRunnerBroken.runOnePass(lc), OStoreDBWithAgentBroken::TriggeredException);
-    for (auto & tapeQueueStateTrans : GetParam().tapeQueueTransitionList) {
-      // Tick the queue cleanup heartbeat a few times
-      brokenOStore.tickRetrieveQueueCleanupHeartbeat(tapeQueueStateTrans.vid);
-      brokenOStore.tickRetrieveQueueCleanupHeartbeat(tapeQueueStateTrans.vid);
-    }
-    ASSERT_NO_THROW(qCleanupRunnerOk.runOnePass(lc)); // Two passes are needed for the other cleanup runner to be able to track the heartbeats
+
+    // We now run the GarbageCollector to clear the CleanupInfo 
+    cta::objectstore::GarbageCollector gc(be, agentForCleanupRef, catalogue);
+    gc.runOnePass(lc);
+
+    // Run another cleanup runner
     ASSERT_NO_THROW(qCleanupRunnerOk.runOnePass(lc));
   }
 
@@ -365,6 +369,9 @@ TEST_P(QueueCleanupRunnerConcurrentTest, CleanupRunnerParameterizedTest) {
     auto expectedState = tapeQueueStateTrans.expectedState;
     auto expectedRetrieveQueueToTransferJobs = tapeQueueStateTrans.finalSetup.retrieveQueueToTransferJobs;
     auto expectedRetrieveQueueToReportJobs = tapeQueueStateTrans.finalSetup.retrieveQueueToReportJobs;
+
+    // Missing  check of requests in RetrieveQueueFailed queue.
+   
 
     // Check final tape state
     const auto tapeState = static_cast<cta::catalogue::DummyTapeCatalogue*>(catalogue.Tape().get())->getTapeState(vid);
@@ -421,13 +428,6 @@ INSTANTIATE_TEST_CASE_P(OStoreTestVFS, QueueCleanupRunnerConcurrentTest,
                                         Test_retrieveRequestSetupList,
                                         Test_tapeQueueTransitionList_Completed,
                                         0.0)
-				// We no longer rely on hearbeat to update. This test will fail.
-                                // With a timeout of 120.0s the 2nd cleanup runner will NOT immediately complete the task after the 1st has failed
-                                //QueueCleanupRunnerConcurrentTestParams(
-                                //        OStoreDBFactoryVFS,
-                                //        Test_retrieveRequestSetupList,
-                                //        Test_tapeQueueTransitionList_Failed,
-                                //        120.0)
                         )
 );
 }

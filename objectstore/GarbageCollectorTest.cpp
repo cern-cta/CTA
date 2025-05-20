@@ -17,6 +17,7 @@
  */
 
 #include <gtest/gtest.h>
+#include <memory>
 
 #include "Agent.hpp"
 #include "AgentReference.hpp"
@@ -31,9 +32,9 @@
 #include "common/dataStructures/RetrieveJobToAdd.hpp"
 #include "common/exception/Exception.hpp"
 #include "common/log/DummyLogger.hpp"
-#ifdef STDOUT_LOGGING
+//#ifdef STDOUT_LOGGING
 #include "common/log/StdoutLogger.hpp"
-#endif
+//#endif
 #include "common/log/StringLogger.hpp"
 #include "DriveRegister.hpp"
 #include "EntryLogSerDeser.hpp"
@@ -47,92 +48,167 @@
 
 namespace unitTests {
 
-TEST_F(ObjectStore, GarbageCollectorBasicFuctionnality) {
+using cta::common::dataStructures::JobQueueType;
+
+class GarbageCollectorTest: public ::testing::Test {
+public:
+
+  //GarbageCollectorTest() : m_catalogue(), m_dl({"dummy", "unitTest"}), m_lc(m_dl), be(), re(be), m_agentRef("unitTestCreateEnv", m_dl) {};
+  GarbageCollectorTest() : m_dl("dummy", "unitTest"), m_lc(m_dl) {};
+
+  class FailedToGetBackend : public std::exception {
+  public:
+      const char *what() const noexcept override {
+        return "failedto get VFS backend";
+      }
+  };
+
+  class FailedToGetCatalogue : public std::exception {
+  public:
+      const char *what() const noexcept override {
+        return "failedto get catalogue";
+      }
+  };
+
+  class FailedToGetRootEntry : public std::exception {
+  public:
+      const char *what() const noexcept override {
+        return "failedto get root entry";
+      }
+  };
+
+  class FailedToGetAgentRef : public std::exception {
+  public:
+      const char *what() const noexcept override {
+        return "failedto get agentref";
+      }
+  };
+
+  virtual void SetUp() {
+    m_catalogue = std::make_unique<cta::catalogue::DummyCatalogue>();
+    m_be = std::make_unique<cta::objectstore::BackendVFS>();
+    m_re = std::make_unique<cta::objectstore::RootEntry>(getBackend());
+    m_re->initialize();
+    m_re->insert();
+    // Create the agent register
+    m_agentRef = std::make_unique<cta::objectstore::AgentReference>("unitTestCreateEnv", m_dl);
+
+    cta::objectstore::EntryLogSerDeser el("user0", "unittesthost", time(nullptr));
+    cta::objectstore::ScopedExclusiveLock rel(getRootEntry());
+    // Finish root creation.
+    m_re->addOrGetAgentRegisterPointerAndCommit(getAgentRef(), el, m_lc);
+  }
+
+  virtual void TearDown() {
+    cta::objectstore::Helpers::flushStatisticsCache();
+    m_catalogue.reset();
+    m_be.reset();
+    m_re.reset();
+    m_agentRef.reset();
+  }
+
+  cta::catalogue::DummyCatalogue& getCatalogue() {
+    cta::catalogue::DummyCatalogue *const ptr = m_catalogue.get();
+    if(nullptr == ptr) {
+      throw FailedToGetCatalogue();
+    }
+    return *ptr;
+  }
+
+  cta::objectstore::BackendVFS& getBackend() {
+    cta::objectstore::BackendVFS *const ptr = m_be.get();
+    if(nullptr == ptr) {
+      throw FailedToGetBackend();
+    }
+    return *ptr;
+  }
+
+  cta::objectstore::RootEntry& getRootEntry() {
+    cta::objectstore::RootEntry *const ptr = m_re.get();
+    if(nullptr == ptr) {
+      throw FailedToGetRootEntry();
+    }
+    return *ptr;
+  }
+
+  cta::objectstore::AgentReference& getAgentRef() {
+    cta::objectstore::AgentReference *const ptr = m_agentRef.get();
+    if(nullptr == ptr) {
+      throw FailedToGetAgentRef();
+    }
+    return *ptr;
+  }
+
   // We will need a log object
-#ifdef STDOUT_LOGGING
-  cta::log::StdoutLogger dl("dummy", "unitTest");
-#else
-  cta::log::DummyLogger dl("dummy", "unitTest");
-#endif
-  cta::catalogue::DummyCatalogue catalogue;
-  cta::log::LogContext lc(dl);
-  // Here we check for the ability to detect dead (but empty agents)
-  // and clean them up.
-  cta::objectstore::BackendVFS be;
-  cta::objectstore::AgentReference agentRef("unitTestGarbageCollector", dl);
-  cta::objectstore::Agent agent(agentRef.getAgentAddress(), be);
-  // Create the root entry
-  cta::objectstore::RootEntry re(be);
-  re.initialize();
-  re.insert();
-  // Create the agent register
-    cta::objectstore::EntryLogSerDeser el("user0",
-      "unittesthost", time(nullptr));
-  cta::objectstore::ScopedExclusiveLock rel(re);
-  re.addOrGetAgentRegisterPointerAndCommit(agentRef, el, lc);
-  rel.release();
+//#ifdef STDOUT_LOGGING
+  cta::log::StdoutLogger m_dl;
+//#else
+//  cta::log::DummyLogger m_dl;
+//#endif
+  
+  cta::log::LogContext m_lc;
+
+
+private:
+  // Prevent copying
+  GarbageCollectorTest(const GarbageCollectorTest &) = delete;
+
+  // Prevent assignment
+  GarbageCollectorTest & operator= (const GarbageCollectorTest &) = delete;
+
+  std::unique_ptr<cta::catalogue::DummyCatalogue> m_catalogue;
+  std::unique_ptr<cta::objectstore::BackendVFS> m_be;
+  std::unique_ptr<cta::objectstore::RootEntry> m_re;
+  std::unique_ptr<cta::objectstore::AgentReference> m_agentRef;
+
+};
+
+TEST_F(GarbageCollectorTest, GarbageCollectorBasicFuctionnality) {
+  auto re = getRootEntry();
+  auto be = getBackend();
   // Create 2 agents, A and B and register them
-  // The agents are set with a timeout of 0, so they will be delclared
+  // The agents are set with a timeout of 0, so they will be declared
   // dead immediately.
-  cta::objectstore::AgentReference agrA("unitTestAgentA", dl), agrB("unitTestAgentB", dl);
+  cta::objectstore::AgentReference agrA("unitTestAgentA", m_dl), agrB("unitTestAgentB", m_dl);
   cta::objectstore::Agent agA(agrA.getAgentAddress(), be), agB(agrB.getAgentAddress(), be);
   agA.initialize();
   agA.setTimeout_us(0);
-  agA.insertAndRegisterSelf(lc);
+  agA.insertAndRegisterSelf(m_lc);
   agB.initialize();
   agB.setTimeout_us(0);
-  agB.insertAndRegisterSelf(lc);
+  agB.insertAndRegisterSelf(m_lc);
   // Create the garbage colletor and run it twice.
-  cta::objectstore::AgentReference gcAgentRef("unitTestGarbageCollector", dl);
+  cta::objectstore::AgentReference gcAgentRef("unitTestGarbageCollector", m_dl);
   cta::objectstore::Agent gcAgent(gcAgentRef.getAgentAddress(), be);
   gcAgent.initialize();
   gcAgent.setTimeout_us(0);
-  gcAgent.insertAndRegisterSelf(lc);
+  gcAgent.insertAndRegisterSelf(m_lc);
   {
-    cta::objectstore::GarbageCollector gc(be, gcAgentRef, catalogue);
-    gc.runOnePass(lc);
-    gc.runOnePass(lc);
+    cta::objectstore::GarbageCollector gc(be, gcAgentRef, getCatalogue());
+    gc.runOnePass(m_lc);
+    gc.runOnePass(m_lc);
   }
   // Unregister gc's agent
   cta::objectstore::ScopedExclusiveLock gcal(gcAgent);
   gcAgent.fetch();
-  gcAgent.removeAndUnregisterSelf(lc);
+  gcAgent.removeAndUnregisterSelf(m_lc);
   // We should not be able to remove the agent register (as it should be empty)
+  cta::objectstore::ScopedExclusiveLock rel;
   rel.lock(re);
   re.fetch();
-  ASSERT_NO_THROW(re.removeAgentRegisterAndCommit(lc));
-  ASSERT_NO_THROW(re.removeIfEmpty(lc));
+  ASSERT_NO_THROW(re.removeAgentRegisterAndCommit(m_lc));
+  ASSERT_NO_THROW(re.removeIfEmpty(m_lc));
 }
 
-TEST_F(ObjectStore, GarbageCollectorRegister) {
-  // We will need a log object
-#ifdef STDOUT_LOGGING
-  cta::log::StdoutLogger dl("dummy", "unitTest");
-#else
-  cta::log::DummyLogger dl("dummy", "unitTest");
-#endif
-  cta::log::LogContext lc(dl);
-  cta::catalogue::DummyCatalogue catalogue;
-  // Here we check that can successfully call agentRegister's garbage collector
-  cta::objectstore::BackendVFS be;
-  cta::objectstore::AgentReference agentRef("unitTestGarbageCollector", dl);
-  cta::objectstore::Agent agent(agentRef.getAgentAddress(), be);
-  // Create the root entry
-  cta::objectstore::RootEntry re(be);
-  re.initialize();
-  re.insert();
-  // Create the agent register
-    cta::objectstore::EntryLogSerDeser el("user0",
-      "unittesthost", time(nullptr));
-  cta::objectstore::ScopedExclusiveLock rel(re);
-  re.addOrGetAgentRegisterPointerAndCommit(agentRef, el, lc);
-  rel.release();
+TEST_F(GarbageCollectorTest, GarbageCollectorRegister) {
+  auto re = getRootEntry();
+  auto be = getBackend();
   // Create an agent and add and agent register to it as an owned object
-  cta::objectstore::AgentReference agrA("unitTestAgentA", dl);
+  cta::objectstore::AgentReference agrA("unitTestAgentA", m_dl);
   cta::objectstore::Agent agA(agrA.getAgentAddress(), be);
   agA.initialize();
   agA.setTimeout_us(0);
-  agA.insertAndRegisterSelf(lc);
+  agA.insertAndRegisterSelf(m_lc);
   // Create a new agent register, owned by agA (by hand as it is not an usual
   // situation)
   std::string arName;
@@ -145,58 +221,38 @@ TEST_F(ObjectStore, GarbageCollectorRegister) {
     ar.insert();
   }
   // Create the garbage colletor and run it twice.
-  cta::objectstore::AgentReference gcAgentRef("unitTestGarbageCollector", dl);
+  cta::objectstore::AgentReference gcAgentRef("unitTestGarbageCollector", m_dl);
   cta::objectstore::Agent gcAgent(gcAgentRef.getAgentAddress(), be);
   gcAgent.initialize();
   gcAgent.setTimeout_us(0);
-  gcAgent.insertAndRegisterSelf(lc);
+  gcAgent.insertAndRegisterSelf(m_lc);
   {
-    cta::objectstore::GarbageCollector gc(be, gcAgentRef, catalogue);
-    gc.runOnePass(lc);
-    gc.runOnePass(lc);
+    cta::objectstore::GarbageCollector gc(be, gcAgentRef, getCatalogue());
+    gc.runOnePass(m_lc);
+    gc.runOnePass(m_lc);
   }
   ASSERT_FALSE(be.exists(arName));
   // Unregister gc's agent
   cta::objectstore::ScopedExclusiveLock gcal(gcAgent);
   gcAgent.fetch();
-  gcAgent.removeAndUnregisterSelf(lc);
+  gcAgent.removeAndUnregisterSelf(m_lc);
   // We should not be able to remove the agent register (as it should be empty)
+  cta::objectstore::ScopedExclusiveLock rel;
   rel.lock(re);
   re.fetch();
-  ASSERT_NO_THROW(re.removeAgentRegisterAndCommit(lc));
-  ASSERT_NO_THROW(re.removeIfEmpty(lc));
+  ASSERT_NO_THROW(re.removeAgentRegisterAndCommit(m_lc));
+  ASSERT_NO_THROW(re.removeIfEmpty(m_lc));
 }
 
-TEST_F(ObjectStore, GarbageCollectorArchiveQueue) {
-  // We will need a log object
-#ifdef STDOUT_LOGGING
-  cta::log::StdoutLogger dl("dummy", "unitTest");
-#else
-  cta::log::DummyLogger dl("dummy", "unitTest");
-#endif
-  cta::log::LogContext lc(dl);
-  // We need a dummy catalogue
-  cta::catalogue::DummyCatalogue catalogue;
-  // Here we check that can successfully call agentRegister's garbage collector
-  cta::objectstore::BackendVFS be;
-  cta::objectstore::AgentReference agentRef("unitTestGarbageCollector", dl);
-  cta::objectstore::Agent agent(agentRef.getAgentAddress(), be);
-  // Create the root entry
-  cta::objectstore::RootEntry re(be);
-  re.initialize();
-  re.insert();
-  // Create the agent register
-    cta::objectstore::EntryLogSerDeser el("user0",
-      "unittesthost", time(nullptr));
-  cta::objectstore::ScopedExclusiveLock rel(re);
-  re.addOrGetAgentRegisterPointerAndCommit(agentRef, el, lc);
-  rel.release();
+TEST_F(GarbageCollectorTest, GarbageCollectorArchiveQueue) {
+  auto re = getRootEntry();
+  auto be = getBackend();
   // Create an agent and add and agent register to it as an owned object
-  cta::objectstore::AgentReference agrA("unitTestAgentA", dl);
+  cta::objectstore::AgentReference agrA("unitTestAgentA", m_dl);
   cta::objectstore::Agent agA(agrA.getAgentAddress(), be);
   agA.initialize();
   agA.setTimeout_us(0);
-  agA.insertAndRegisterSelf(lc);
+  agA.insertAndRegisterSelf(m_lc);
   // Create a new agent register, owned by agA (by hand as it is not an usual
   // situation)
   std::string tpName;
@@ -209,58 +265,38 @@ TEST_F(ObjectStore, GarbageCollectorArchiveQueue) {
     aq.insert();
   }
   // Create the garbage colletor and run it twice.
-  cta::objectstore::AgentReference gcAgentRef("unitTestGarbageCollector", dl);
+  cta::objectstore::AgentReference gcAgentRef("unitTestGarbageCollector", m_dl);
   cta::objectstore::Agent gcAgent(gcAgentRef.getAgentAddress(), be);
   gcAgent.initialize();
   gcAgent.setTimeout_us(0);
-  gcAgent.insertAndRegisterSelf(lc);
+  gcAgent.insertAndRegisterSelf(m_lc);
   {
-    cta::objectstore::GarbageCollector gc(be, gcAgentRef, catalogue);
-    gc.runOnePass(lc);
-    gc.runOnePass(lc);
+    cta::objectstore::GarbageCollector gc(be, gcAgentRef, getCatalogue());
+    gc.runOnePass(m_lc);
+    gc.runOnePass(m_lc);
   }
   ASSERT_FALSE(be.exists(tpName));
   // Unregister gc's agent
   cta::objectstore::ScopedExclusiveLock gcal(gcAgent);
   gcAgent.fetch();
-  gcAgent.removeAndUnregisterSelf(lc);
+  gcAgent.removeAndUnregisterSelf(m_lc);
   // We should not be able to remove the agent register (as it should be empty)
+  cta::objectstore::ScopedExclusiveLock rel;
   rel.lock(re);
   re.fetch();
-  ASSERT_NO_THROW(re.removeAgentRegisterAndCommit(lc));
-  ASSERT_NO_THROW(re.removeIfEmpty(lc));
+  ASSERT_NO_THROW(re.removeAgentRegisterAndCommit(m_lc));
+  ASSERT_NO_THROW(re.removeIfEmpty(m_lc));
 }
 
-TEST_F(ObjectStore, GarbageCollectorDriveRegister) {
-  // We will need a log object
-#ifdef STDOUT_LOGGING
-  cta::log::StdoutLogger dl("dummy", "unitTest");
-#else
-  cta::log::DummyLogger dl("dummy", "unitTest");
-#endif
-  cta::log::LogContext lc(dl);
-  // We need a dummy catalogue
-  cta::catalogue::DummyCatalogue catalogue;
-  // Here we check that can successfully call agentRegister's garbage collector
-  cta::objectstore::BackendVFS be;
-  cta::objectstore::AgentReference agentRef("unitTestGarbageCollector", dl);
-  cta::objectstore::Agent agent(agentRef.getAgentAddress(), be);
-  // Create the root entry
-  cta::objectstore::RootEntry re(be);
-  re.initialize();
-  re.insert();
-  // Create the agent register
-    cta::objectstore::EntryLogSerDeser el("user0",
-      "unittesthost", time(nullptr));
-  cta::objectstore::ScopedExclusiveLock rel(re);
-  re.addOrGetAgentRegisterPointerAndCommit(agentRef, el, lc);
-  rel.release();
-  // Create an agent and add the drive register to it as an owned object
-  cta::objectstore::AgentReference agrA("unitTestAgentA", dl);
+TEST_F(GarbageCollectorTest, GarbageCollectorDriveRegister) {
+ auto re = getRootEntry();
+  auto be = getBackend();
+ // Create an agent and add the drive register to it as an owned object
+  cta::objectstore::AgentReference agrA("unitTestAgentA", m_dl);
   cta::objectstore::Agent agA(agrA.getAgentAddress(), be);
   agA.initialize();
   agA.setTimeout_us(0);
-  agA.insertAndRegisterSelf(lc);
+  agA.insertAndRegisterSelf(m_lc);
   // Create a new drive register, owned by agA (by hand as it is not an usual
   // situation)
   std::string tpName;
@@ -273,64 +309,43 @@ TEST_F(ObjectStore, GarbageCollectorDriveRegister) {
     dr.insert();
   }
   // Create the garbage colletor and run it twice.
-  cta::objectstore::AgentReference gcAgentRef("unitTestGarbageCollector", dl);
+  cta::objectstore::AgentReference gcAgentRef("unitTestGarbageCollector", m_dl);
   cta::objectstore::Agent gcAgent(gcAgentRef.getAgentAddress(), be);
   gcAgent.initialize();
   gcAgent.setTimeout_us(0);
-  gcAgent.insertAndRegisterSelf(lc);
+  gcAgent.insertAndRegisterSelf(m_lc);
   {
-    cta::objectstore::GarbageCollector gc(be, gcAgentRef, catalogue);
-    gc.runOnePass(lc);
-    gc.runOnePass(lc);
+    cta::objectstore::GarbageCollector gc(be, gcAgentRef, getCatalogue());
+    gc.runOnePass(m_lc);
+    gc.runOnePass(m_lc);
   }
   ASSERT_FALSE(be.exists(tpName));
   // Unregister gc's agent
   cta::objectstore::ScopedExclusiveLock gcal(gcAgent);
   gcAgent.fetch();
-  gcAgent.removeAndUnregisterSelf(lc);
+  gcAgent.removeAndUnregisterSelf(m_lc);
   // We should not be able to remove the agent register (as it should be empty)
+  cta::objectstore::ScopedExclusiveLock rel;
   rel.lock(re);
   re.fetch();
-  ASSERT_NO_THROW(re.removeAgentRegisterAndCommit(lc));
-  ASSERT_NO_THROW(re.removeIfEmpty(lc));
+  ASSERT_NO_THROW(re.removeAgentRegisterAndCommit(m_lc));
+  ASSERT_NO_THROW(re.removeIfEmpty(m_lc));
 }
 
-TEST_F(ObjectStore, GarbageCollectorArchiveRequest) {
-  using cta::common::dataStructures::JobQueueType;
-  // We will need a log object
-#ifdef STDOUT_LOGGING
-  cta::log::StdoutLogger dl("dummy", "unitTest");
-#else
-  cta::log::DummyLogger dl("dummy", "unitTest");
-#endif
-  cta::log::LogContext lc(dl);
-  // We need a dummy catalogue
-  cta::catalogue::DummyCatalogue catalogue;
-  // Here we check that can successfully call ArchiveRequests's garbage collector
-  cta::objectstore::BackendVFS be;
-  // Create the root entry
-  cta::objectstore::RootEntry re(be);
-  re.initialize();
-  re.insert();
-  // Create the agent register
-  cta::objectstore::EntryLogSerDeser el("user0", "unittesthost", time(nullptr));
-  cta::objectstore::ScopedExclusiveLock rel(re);
-  // Create the agent for objects creation
-  cta::objectstore::AgentReference agentRef("unitTestCreateEnv", dl);
-  // Finish root creation.
-  re.addOrGetAgentRegisterPointerAndCommit(agentRef, el, lc);
-  rel.release();
+TEST_F(GarbageCollectorTest, GarbageCollectorArchiveRequest) {
+  auto re = getRootEntry();
+  auto be = getBackend();
   // continue agent creation.
-  cta::objectstore::Agent agent(agentRef.getAgentAddress(), be);
+  cta::objectstore::Agent agent(getAgentRef().getAgentAddress(), be);
   agent.initialize();
   agent.setTimeout_us(0);
-  agent.insertAndRegisterSelf(lc);
+  agent.insertAndRegisterSelf(m_lc);
   // Create an agent to garbage collected
-  cta::objectstore::AgentReference agrA("unitTestAgentA", dl);
+  cta::objectstore::AgentReference agrA("unitTestAgentA", m_dl);
   cta::objectstore::Agent agA(agrA.getAgentAddress(), be);
   agA.initialize();
   agA.setTimeout_us(0);
-  agA.insertAndRegisterSelf(lc);
+  agA.insertAndRegisterSelf(m_lc);
   // Several use cases are present for the ArchiveRequests:
   // - just referenced in agent ownership list, but not yet created.
   // - just created but not linked to any tape pool
@@ -347,7 +362,7 @@ TEST_F(ObjectStore, GarbageCollectorArchiveRequest) {
     re.fetch();
     std::stringstream tapePoolName;
     tapePoolName << "TapePool" << i;
-    tpAddr[i] = re.addOrGetArchiveQueueAndCommit(tapePoolName.str(), agentRef, JobQueueType::JobsToTransferForUser);
+    tpAddr[i] = re.addOrGetArchiveQueueAndCommit(tapePoolName.str(), getAgentRef(), JobQueueType::JobsToTransferForUser);
     cta::objectstore::ArchiveQueue aq(tpAddr[i], be);
   }
   // Create the various ATFR's, stopping one step further each time.
@@ -401,7 +416,7 @@ TEST_F(ObjectStore, GarbageCollectorArchiveRequest) {
       policy.archivePriority = 1;
       std::list <cta::objectstore::ArchiveQueue::JobToAdd> jta;
       jta.push_back({jd, ar.getAddressIfSet(), ar.getArchiveFile().archiveFileID, 1000U+pass, policy, time(nullptr)});
-      aq.addJobsAndCommit(jta, agentRef, lc);
+      aq.addJobsAndCommit(jta, getAgentRef(), m_lc);
       ar.setJobOwner(1, aq.getAddressIfSet());
       ar.commit();
     }
@@ -421,7 +436,7 @@ TEST_F(ObjectStore, GarbageCollectorArchiveRequest) {
       policy.archivePriority = 1;
       std::list <cta::objectstore::ArchiveQueue::JobToAdd> jta;
       jta.push_back({jd, ar.getAddressIfSet(), ar.getArchiveFile().archiveFileID, 1000+pass, policy, time(nullptr)});
-      aq.addJobsAndCommit(jta, agentRef, lc);
+      aq.addJobsAndCommit(jta, getAgentRef(), m_lc);
       ar.setJobOwner(2, aq.getAddressIfSet());
       ar.commit();
     }
@@ -430,15 +445,15 @@ TEST_F(ObjectStore, GarbageCollectorArchiveRequest) {
     break;
   }
   // Create the garbage collector and run it twice.
-  cta::objectstore::AgentReference gcAgentRef("unitTestGarbageCollector", dl);
+  cta::objectstore::AgentReference gcAgentRef("unitTestGarbageCollector", m_dl);
   cta::objectstore::Agent gcAgent(gcAgentRef.getAgentAddress(), be);
   gcAgent.initialize();
   gcAgent.setTimeout_us(0);
-  gcAgent.insertAndRegisterSelf(lc);
+  gcAgent.insertAndRegisterSelf(m_lc);
   {
-    cta::objectstore::GarbageCollector gc(be, gcAgentRef, catalogue);
-    gc.runOnePass(lc);
-    gc.runOnePass(lc);
+    cta::objectstore::GarbageCollector gc(be, gcAgentRef, getCatalogue());
+    gc.runOnePass(m_lc);
+    gc.runOnePass(m_lc);
   }
   // All 4 requests should be linked in both tape pools
   {
@@ -458,8 +473,9 @@ TEST_F(ObjectStore, GarbageCollectorArchiveRequest) {
   // Unregister gc's agent
   cta::objectstore::ScopedExclusiveLock gcal(gcAgent);
   gcAgent.fetch();
-  gcAgent.removeAndUnregisterSelf(lc);
+  gcAgent.removeAndUnregisterSelf(m_lc);
   // We should not be able to remove the agent register (as it should be empty)
+  cta::objectstore::ScopedExclusiveLock rel;
   rel.lock(re);
   re.fetch();
   // Remove jobs from archive queues
@@ -473,54 +489,31 @@ TEST_F(ObjectStore, GarbageCollectorArchiveRequest) {
     for (auto &j: aq.dumpJobs()) {
       ajtr.push_back(j.address);
     }
-    aq.removeJobsAndCommit(ajtr, lc);
+    aq.removeJobsAndCommit(ajtr, m_lc);
     aql.release();
     // Remove queues from root
-    re.removeArchiveQueueAndCommit(tp, JobQueueType::JobsToTransferForUser, lc);
+    re.removeArchiveQueueAndCommit(tp, JobQueueType::JobsToTransferForUser, m_lc);
   }
 
-  ASSERT_NO_THROW(re.removeAgentRegisterAndCommit(lc));
-  ASSERT_NO_THROW(re.removeIfEmpty(lc));
+  ASSERT_NO_THROW(re.removeAgentRegisterAndCommit(m_lc));
+  ASSERT_NO_THROW(re.removeIfEmpty(m_lc));
   // TODO: this unit test still leaks tape pools and requests
 }
 
-TEST_F(ObjectStore, GarbageCollectorRetrieveRequest) {
-  using cta::common::dataStructures::JobQueueType;
-  // We will need a log object
-#ifdef STDOUT_LOGGING
-  cta::log::StdoutLogger dl("dummy", "unitTest");
-#else
-  cta::log::DummyLogger dl("dummy", "unitTest");
-#endif
-  cta::log::LogContext lc(dl);
-  // We need a dummy catalogue
-  cta::catalogue::DummyCatalogue catalogue;
-  // Here we check that can successfully call RetrieveRequests's garbage collector
-  cta::objectstore::BackendVFS be;
-  // Create the root entry
-  cta::objectstore::RootEntry re(be);
-  re.initialize();
-  re.insert();
-  // Create the agent register
-  cta::objectstore::EntryLogSerDeser el("user0",
-      "unittesthost", time(nullptr));
-  cta::objectstore::ScopedExclusiveLock rel(re);
-  // Create the agent for objects creation
-  cta::objectstore::AgentReference agentRef("unitTestCreateEnv", dl);
-  // Finish root creation.
-  re.addOrGetAgentRegisterPointerAndCommit(agentRef, el, lc);
-  rel.release();
+TEST_F(GarbageCollectorTest, GarbageCollectorRetrieveRequest) {
+  auto re = getRootEntry();
+  auto be = getBackend();
   // continue agent creation.
-  cta::objectstore::Agent agent(agentRef.getAgentAddress(), be);
+  cta::objectstore::Agent agent(getAgentRef().getAgentAddress(), be);
   agent.initialize();
   agent.setTimeout_us(0);
-  agent.insertAndRegisterSelf(lc);
+  agent.insertAndRegisterSelf(m_lc);
   // Create an agent to garbage be collected
-  cta::objectstore::AgentReference agrA("unitTestAgentA", dl);
+  cta::objectstore::AgentReference agrA("unitTestAgentA", m_dl);
   cta::objectstore::Agent agA(agrA.getAgentAddress(), be);
   agA.initialize();
   agA.setTimeout_us(0);
-  agA.insertAndRegisterSelf(lc);
+  agA.insertAndRegisterSelf(m_lc);
   // Several use cases are present for the RetrieveRequests:
   // - just referenced in agent ownership list, but not yet created.
   // - just created but not linked to any tape
@@ -537,7 +530,7 @@ TEST_F(ObjectStore, GarbageCollectorRetrieveRequest) {
     re.fetch();
     std::stringstream vid;
     vid << "Tape" << i;
-    tAddr[i] = re.addOrGetRetrieveQueueAndCommit(vid.str(), agentRef, JobQueueType::JobsToTransferForUser);
+    tAddr[i] = re.addOrGetRetrieveQueueAndCommit(vid.str(), getAgentRef(), JobQueueType::JobsToTransferForUser);
     cta::objectstore::RetrieveQueue rq(tAddr[i], be);
   }
   // Create the various ATFR's, stopping one step further each time.
@@ -608,7 +601,7 @@ TEST_F(ObjectStore, GarbageCollectorRetrieveRequest) {
       std::list <cta::common::dataStructures::RetrieveJobToAdd> jta;
       jta.push_back({1,rqc.archiveFile.tapeFiles.front().fSeq, rr.getAddressIfSet(), rqc.archiveFile.fileSize, rqc.mountPolicy,
           sReq.creationLog.time, std::nullopt, std::nullopt});
-      rq.addJobsAndCommit(jta, agentRef, lc);
+      rq.addJobsAndCommit(jta, getAgentRef(), m_lc);
     }
     if (pass < 5) { pass++; continue; }
     // - Still marked as not owned but referenced in the agent
@@ -619,20 +612,21 @@ TEST_F(ObjectStore, GarbageCollectorRetrieveRequest) {
     }
     break;
   }
+
   // Mark the tape as enabled
-  static_cast<cta::catalogue::DummyTapeCatalogue*>(catalogue.Tape().get())->addEnabledTape("Tape0");
+  static_cast<cta::catalogue::DummyTapeCatalogue*>(getCatalogue().Tape().get())->addEnabledTape("Tape0");
   // Mark the other tape as disabled
-  static_cast<cta::catalogue::DummyTapeCatalogue*>(catalogue.Tape().get())->addDisabledTape("Tape1");
+  static_cast<cta::catalogue::DummyTapeCatalogue*>(getCatalogue().Tape().get())->addDisabledTape("Tape1");
   // Create the garbage collector and run it twice.
-  cta::objectstore::AgentReference gcAgentRef("unitTestGarbageCollector", dl);
+  cta::objectstore::AgentReference gcAgentRef("unitTestGarbageCollector", m_dl);
   cta::objectstore::Agent gcAgent(gcAgentRef.getAgentAddress(), be);
   gcAgent.initialize();
   gcAgent.setTimeout_us(0);
-  gcAgent.insertAndRegisterSelf(lc);
+  gcAgent.insertAndRegisterSelf(m_lc);
   {
-    cta::objectstore::GarbageCollector gc(be, gcAgentRef, catalogue);
-    gc.runOnePass(lc);
-    gc.runOnePass(lc);
+    cta::objectstore::GarbageCollector gc(be, gcAgentRef, getCatalogue());
+    gc.runOnePass(m_lc);
+    gc.runOnePass(m_lc);
   }
   // All 4 requests should be linked in the first tape queue
   {
@@ -647,8 +641,9 @@ TEST_F(ObjectStore, GarbageCollectorRetrieveRequest) {
   // Unregister gc's agent
   cta::objectstore::ScopedExclusiveLock gcal(gcAgent);
   gcAgent.fetch();
-  gcAgent.removeAndUnregisterSelf(lc);
+  gcAgent.removeAndUnregisterSelf(m_lc);
   // We should not be able to remove the agent register (as it should be empty)
+  cta::objectstore::ScopedExclusiveLock rel;
   rel.lock(re);
   re.fetch();
   // Remove jobs from retrieve queue
@@ -662,54 +657,32 @@ TEST_F(ObjectStore, GarbageCollectorRetrieveRequest) {
     for (auto &j: rq.dumpJobs()) {
       jtrl.push_back(j.address);
     }
-    rq.removeJobsAndCommit(jtrl, lc);
+    rq.removeJobsAndCommit(jtrl, m_lc);
     rql.release();
     // Remove queues from root
-    re.removeRetrieveQueueAndCommit(vid, JobQueueType::JobsToTransferForUser, lc);
+    re.removeRetrieveQueueAndCommit(vid, JobQueueType::JobsToTransferForUser, m_lc);
   }
 
-  ASSERT_NO_THROW(re.removeAgentRegisterAndCommit(lc));
-  ASSERT_NO_THROW(re.removeIfEmpty(lc));
+  ASSERT_NO_THROW(re.removeAgentRegisterAndCommit(m_lc));
+  ASSERT_NO_THROW(re.removeIfEmpty(m_lc));
   // TODO: this unit test still leaks tape pools and requests
 }
 
-TEST_F(ObjectStore, GarbageCollectorRepackRequestPending) {
-// We will need a log object
-#ifdef STDOUT_LOGGING
-  cta::log::StdoutLogger dl("dummy", "unitTest");
-#else
-  cta::log::DummyLogger dl("dummy", "unitTest");
-#endif
-  cta::log::LogContext lc(dl);
-  // We need a dummy catalogue
-  cta::catalogue::DummyCatalogue catalogue;
-  // Here we check that can successfully call RetrieveRequests's garbage collector
-  cta::objectstore::BackendVFS be;
-  // Create the root entry
-  cta::objectstore::RootEntry re(be);
-  re.initialize();
-  re.insert();
-  // Create the agent register
-  cta::objectstore::EntryLogSerDeser el("user0",
-      "unittesthost", time(nullptr));
-  cta::objectstore::ScopedExclusiveLock rel(re);
-  // Create the agent for objects creation
-  cta::objectstore::AgentReference agentRef("unitTestCreateEnv", dl);
-  // Finish root creation.
-  re.addOrGetAgentRegisterPointerAndCommit(agentRef, el, lc);
-  rel.release();
+TEST_F(GarbageCollectorTest, GarbageCollectorRepackRequestPending) {
+  auto re = getRootEntry();
+  auto be = getBackend();
   // continue agent creation.
-  cta::objectstore::Agent agent(agentRef.getAgentAddress(), be);
+  cta::objectstore::Agent agent(getAgentRef().getAgentAddress(), be);
   agent.initialize();
   agent.setTimeout_us(0);
-  agent.insertAndRegisterSelf(lc);
+  agent.insertAndRegisterSelf(m_lc);
   {
     // Create an agent to be garbage collected
-    cta::objectstore::AgentReference agentReferenceRepackRequest("AgentReferenceRepackRequest", dl);
+    cta::objectstore::AgentReference agentReferenceRepackRequest("AgentReferenceRepackRequest", m_dl);
     cta::objectstore::Agent agentRepackRequest(agentReferenceRepackRequest.getAgentAddress(), be);
     agentRepackRequest.initialize();
     agentRepackRequest.setTimeout_us(0);
-    agentRepackRequest.insertAndRegisterSelf(lc);
+    agentRepackRequest.insertAndRegisterSelf(m_lc);
     //Create a RepackQueue and insert a RepackRequest with status "Pending" in it
     cta::objectstore::RootEntry re(be);
     cta::objectstore::ScopedExclusiveLock rel(re);
@@ -732,14 +705,14 @@ TEST_F(ObjectStore, GarbageCollectorRepackRequestPending) {
     //Now we garbage collect the RepackRequest
 
     // Create the garbage collector and run it once.
-    cta::objectstore::AgentReference gcAgentRef("unitTestGarbageCollector", dl);
+    cta::objectstore::AgentReference gcAgentRef("unitTestGarbageCollector", m_dl);
     cta::objectstore::Agent gcAgent(gcAgentRef.getAgentAddress(), be);
     gcAgent.initialize();
     gcAgent.setTimeout_us(0);
-    gcAgent.insertAndRegisterSelf(lc);
+    gcAgent.insertAndRegisterSelf(m_lc);
     {
-      cta::objectstore::GarbageCollector gc(be, gcAgentRef, catalogue);
-      gc.runOnePass(lc);
+      cta::objectstore::GarbageCollector gc(be, gcAgentRef, getCatalogue());
+      gc.runOnePass(m_lc);
     }
   }
   //The repack request should have been requeued in the RepackQueuePending
@@ -747,7 +720,7 @@ TEST_F(ObjectStore, GarbageCollectorRepackRequestPending) {
     cta::objectstore::RootEntry re(be);
     cta::objectstore::ScopedExclusiveLock rel(re);
     re.fetch();
-    std::string repackQueueAddr = re.addOrGetRepackQueueAndCommit(agentRef,cta::common::dataStructures::RepackQueueType::Pending);
+    std::string repackQueueAddr = re.addOrGetRepackQueueAndCommit(getAgentRef(),cta::common::dataStructures::RepackQueueType::Pending);
     cta::objectstore::RepackQueue rq(repackQueueAddr,be);
     cta::objectstore::ScopedExclusiveLock rql(rq);
     rq.fetch();
@@ -755,43 +728,21 @@ TEST_F(ObjectStore, GarbageCollectorRepackRequestPending) {
   }
 }
 
-TEST_F(ObjectStore, GarbageCollectorRepackRequestToExpand) {
-// We will need a log object
-#ifdef STDOUT_LOGGING
-  cta::log::StdoutLogger dl("dummy", "unitTest");
-#else
-  cta::log::DummyLogger dl("dummy", "unitTest");
-#endif
-  cta::log::LogContext lc(dl);
-  // We need a dummy catalogue
-  cta::catalogue::DummyCatalogue catalogue;
-  // Here we check that can successfully call RetrieveRequests's garbage collector
-  cta::objectstore::BackendVFS be;
-  // Create the root entry
-  cta::objectstore::RootEntry re(be);
-  re.initialize();
-  re.insert();
-  // Create the agent register
-  cta::objectstore::EntryLogSerDeser el("user0",
-      "unittesthost", time(nullptr));
-  cta::objectstore::ScopedExclusiveLock rel(re);
-  // Create the agent for objects creation
-  cta::objectstore::AgentReference agentRef("unitTestCreateEnv", dl);
-  // Finish root creation.
-  re.addOrGetAgentRegisterPointerAndCommit(agentRef, el, lc);
-  rel.release();
+TEST_F(GarbageCollectorTest, GarbageCollectorRepackRequestToExpand) {
+  auto re = getRootEntry();
+  auto be = getBackend();
   // continue agent creation.
-  cta::objectstore::Agent agent(agentRef.getAgentAddress(), be);
+  cta::objectstore::Agent agent(getAgentRef().getAgentAddress(), be);
   agent.initialize();
   agent.setTimeout_us(0);
-  agent.insertAndRegisterSelf(lc);
+  agent.insertAndRegisterSelf(m_lc);
   {
     // Create an agent to be garbage collected
-    cta::objectstore::AgentReference agentReferenceRepackRequest("AgentReferenceRepackRequest", dl);
+    cta::objectstore::AgentReference agentReferenceRepackRequest("AgentReferenceRepackRequest", m_dl);
     cta::objectstore::Agent agentRepackRequest(agentReferenceRepackRequest.getAgentAddress(), be);
     agentRepackRequest.initialize();
     agentRepackRequest.setTimeout_us(0);
-    agentRepackRequest.insertAndRegisterSelf(lc);
+    agentRepackRequest.insertAndRegisterSelf(m_lc);
     //Create a RepackQueue and insert a RepackRequest with status "ToExpand" in it
     cta::objectstore::RootEntry re(be);
     cta::objectstore::ScopedExclusiveLock rel(re);
@@ -814,21 +765,21 @@ TEST_F(ObjectStore, GarbageCollectorRepackRequestToExpand) {
     // Now we garbage collect the RepackRequest
 
     // Create the garbage collector and run it once.
-    cta::objectstore::AgentReference gcAgentRef("unitTestGarbageCollector", dl);
+    cta::objectstore::AgentReference gcAgentRef("unitTestGarbageCollector", m_dl);
     cta::objectstore::Agent gcAgent(gcAgentRef.getAgentAddress(), be);
     gcAgent.initialize();
     gcAgent.setTimeout_us(0);
-    gcAgent.insertAndRegisterSelf(lc);
+    gcAgent.insertAndRegisterSelf(m_lc);
     {
-      cta::objectstore::GarbageCollector gc(be, gcAgentRef, catalogue);
-      gc.runOnePass(lc);
+      cta::objectstore::GarbageCollector gc(be, gcAgentRef, getCatalogue());
+      gc.runOnePass(m_lc);
     }
   }
   {
     cta::objectstore::RootEntry re(be);
     cta::objectstore::ScopedExclusiveLock rel(re);
     re.fetch();
-    std::string repackQueueAddr = re.addOrGetRepackQueueAndCommit(agentRef,cta::common::dataStructures::RepackQueueType::ToExpand);
+    std::string repackQueueAddr = re.addOrGetRepackQueueAndCommit(getAgentRef(),cta::common::dataStructures::RepackQueueType::ToExpand);
     cta::objectstore::RepackQueue rq(repackQueueAddr,be);
     cta::objectstore::ScopedExclusiveLock rql(rq);
     rq.fetch();
@@ -836,43 +787,21 @@ TEST_F(ObjectStore, GarbageCollectorRepackRequestToExpand) {
   }
 }
 
-TEST_F(ObjectStore, GarbageCollectorRepackRequestRunningExpandNotFinished) {
-  // We will need a log object
-#ifdef STDOUT_LOGGING
-  cta::log::StdoutLogger dl("dummy", "unitTest");
-#else
-  cta::log::DummyLogger dl("dummy", "unitTest");
-#endif
-  cta::log::LogContext lc(dl);
-  // We need a dummy catalogue
-  cta::catalogue::DummyCatalogue catalogue;
-  // Here we check that can successfully call RetrieveRequests's garbage collector
-  cta::objectstore::BackendVFS be;
-  // Create the root entry
-  cta::objectstore::RootEntry re(be);
-  re.initialize();
-  re.insert();
-  // Create the agent register
-  cta::objectstore::EntryLogSerDeser el("user0",
-      "unittesthost", time(nullptr));
-  cta::objectstore::ScopedExclusiveLock rel(re);
-  // Create the agent for objects creation
-  cta::objectstore::AgentReference agentRef("unitTestCreateEnv", dl);
-  // Finish root creation.
-  re.addOrGetAgentRegisterPointerAndCommit(agentRef, el, lc);
-  rel.release();
+TEST_F(GarbageCollectorTest, GarbageCollectorRepackRequestRunningExpandNotFinished) {
+  auto re = getRootEntry();
+  auto be = getBackend();
   // continue agent creation.
-  cta::objectstore::Agent agent(agentRef.getAgentAddress(), be);
+  cta::objectstore::Agent agent(getAgentRef().getAgentAddress(), be);
   agent.initialize();
   agent.setTimeout_us(0);
-  agent.insertAndRegisterSelf(lc);
+  agent.insertAndRegisterSelf(m_lc);
   {
     // Create an agent to be garbage collected
-    cta::objectstore::AgentReference agentReferenceRepackRequest("AgentReferenceRepackRequest", dl);
+    cta::objectstore::AgentReference agentReferenceRepackRequest("AgentReferenceRepackRequest", m_dl);
     cta::objectstore::Agent agentRepackRequest(agentReferenceRepackRequest.getAgentAddress(), be);
     agentRepackRequest.initialize();
     agentRepackRequest.setTimeout_us(0);
-    agentRepackRequest.insertAndRegisterSelf(lc);
+    agentRepackRequest.insertAndRegisterSelf(m_lc);
     //Create a RepackQueue and insert a RepackRequest with status "ToExpand" in it
     cta::objectstore::RootEntry re(be);
     cta::objectstore::ScopedExclusiveLock rel(re);
@@ -896,14 +825,14 @@ TEST_F(ObjectStore, GarbageCollectorRepackRequestRunningExpandNotFinished) {
     // Now we garbage collect the RepackRequest
 
     // Create the garbage collector and run it once.
-    cta::objectstore::AgentReference gcAgentRef("unitTestGarbageCollector", dl);
+    cta::objectstore::AgentReference gcAgentRef("unitTestGarbageCollector", m_dl);
     cta::objectstore::Agent gcAgent(gcAgentRef.getAgentAddress(), be);
     gcAgent.initialize();
     gcAgent.setTimeout_us(0);
-    gcAgent.insertAndRegisterSelf(lc);
+    gcAgent.insertAndRegisterSelf(m_lc);
     {
-      cta::objectstore::GarbageCollector gc(be, gcAgentRef, catalogue);
-      gc.runOnePass(lc);
+      cta::objectstore::GarbageCollector gc(be, gcAgentRef, getCatalogue());
+      gc.runOnePass(m_lc);
     }
   }
   {
@@ -911,7 +840,7 @@ TEST_F(ObjectStore, GarbageCollectorRepackRequestRunningExpandNotFinished) {
     cta::objectstore::RootEntry re(be);
     cta::objectstore::ScopedExclusiveLock rel(re);
     re.fetch();
-    std::string repackQueueAddr = re.addOrGetRepackQueueAndCommit(agentRef,cta::common::dataStructures::RepackQueueType::ToExpand);
+    std::string repackQueueAddr = re.addOrGetRepackQueueAndCommit(getAgentRef(),cta::common::dataStructures::RepackQueueType::ToExpand);
     cta::objectstore::RepackQueue rq(repackQueueAddr,be);
     cta::objectstore::ScopedExclusiveLock rql(rq);
     rq.fetch();
@@ -919,44 +848,22 @@ TEST_F(ObjectStore, GarbageCollectorRepackRequestRunningExpandNotFinished) {
   }
 }
 
-TEST_F(ObjectStore, GarbageCollectorRepackRequestRunningExpandFinished) {
-  // We will need a log object
-#ifdef STDOUT_LOGGING
-  cta::log::StdoutLogger dl("dummy", "unitTest");
-#else
-  cta::log::DummyLogger dl("dummy", "unitTest");
-#endif
-  cta::log::LogContext lc(dl);
-  // We need a dummy catalogue
-  cta::catalogue::DummyCatalogue catalogue;
-  // Here we check that can successfully call RetrieveRequests's garbage collector
-  cta::objectstore::BackendVFS be;
-  // Create the root entry
-  cta::objectstore::RootEntry re(be);
-  re.initialize();
-  re.insert();
-  // Create the agent register
-  cta::objectstore::EntryLogSerDeser el("user0",
-      "unittesthost", time(nullptr));
-  cta::objectstore::ScopedExclusiveLock rel(re);
-  // Create the agent for objects creation
-  cta::objectstore::AgentReference agentRef("unitTestCreateEnv", dl);
-  // Finish root creation.
-  re.addOrGetAgentRegisterPointerAndCommit(agentRef, el, lc);
-  rel.release();
+TEST_F(GarbageCollectorTest, GarbageCollectorRepackRequestRunningExpandFinished) {
+  auto re = getRootEntry();
+  auto be = getBackend();
   // continue agent creation.
-  cta::objectstore::Agent agent(agentRef.getAgentAddress(), be);
+  cta::objectstore::Agent agent(getAgentRef().getAgentAddress(), be);
   agent.initialize();
   agent.setTimeout_us(0);
-  agent.insertAndRegisterSelf(lc);
+  agent.insertAndRegisterSelf(m_lc);
   std::string repackRequestAddress;
   {
     // Create an agent to be garbage collected
-    cta::objectstore::AgentReference agentReferenceRepackRequest("AgentReferenceRepackRequest", dl);
+    cta::objectstore::AgentReference agentReferenceRepackRequest("AgentReferenceRepackRequest", m_dl);
     cta::objectstore::Agent agentRepackRequest(agentReferenceRepackRequest.getAgentAddress(), be);
     agentRepackRequest.initialize();
     agentRepackRequest.setTimeout_us(0);
-    agentRepackRequest.insertAndRegisterSelf(lc);
+    agentRepackRequest.insertAndRegisterSelf(m_lc);
     //Create a RepackQueue and insert a RepackRequest with status "ToExpand" in it
     cta::objectstore::RootEntry re(be);
     cta::objectstore::ScopedExclusiveLock rel(re);
@@ -990,7 +897,7 @@ TEST_F(ObjectStore, GarbageCollectorRepackRequestRunningExpandFinished) {
     gcAgent.setTimeout_us(0);
     gcAgent.insertAndRegisterSelf(lc2);
     {
-      cta::objectstore::GarbageCollector gc(be, gcAgentRef, catalogue);
+      cta::objectstore::GarbageCollector gc(be, gcAgentRef, getCatalogue());
       gc.runOnePass(lc2);
     }
   }
@@ -999,7 +906,7 @@ TEST_F(ObjectStore, GarbageCollectorRepackRequestRunningExpandFinished) {
     cta::objectstore::RootEntry re(be);
     cta::objectstore::ScopedExclusiveLock rel(re);
     re.fetch();
-    std::string repackQueueAddr = re.addOrGetRepackQueueAndCommit(agentRef,cta::common::dataStructures::RepackQueueType::ToExpand);
+    std::string repackQueueAddr = re.addOrGetRepackQueueAndCommit(getAgentRef(),cta::common::dataStructures::RepackQueueType::ToExpand);
     cta::objectstore::RepackQueue rq(repackQueueAddr,be);
     cta::objectstore::ScopedExclusiveLock rql(rq);
     rq.fetch();
@@ -1010,7 +917,7 @@ TEST_F(ObjectStore, GarbageCollectorRepackRequestRunningExpandFinished) {
     cta::objectstore::RootEntry re(be);
     cta::objectstore::ScopedExclusiveLock rel(re);
     re.fetch();
-    std::string repackQueueAddr = re.addOrGetRepackQueueAndCommit(agentRef,cta::common::dataStructures::RepackQueueType::Pending);
+    std::string repackQueueAddr = re.addOrGetRepackQueueAndCommit(getAgentRef(),cta::common::dataStructures::RepackQueueType::Pending);
     cta::objectstore::RepackQueue rq(repackQueueAddr,be);
     cta::objectstore::ScopedExclusiveLock rql(rq);
     rq.fetch();
@@ -1028,43 +935,21 @@ TEST_F(ObjectStore, GarbageCollectorRepackRequestRunningExpandFinished) {
   ASSERT_NE(std::string::npos,logToCheck.find("MSG=\"In RepackRequest::garbageCollect(): failed to requeue the RepackRequest (leaving it as it is) : The status Running has no corresponding queue type.\""));
 }
 
-TEST_F(ObjectStore, GarbageCollectorRepackRequestStarting) {
-// We will need a log object
-#ifdef STDOUT_LOGGING
-  cta::log::StdoutLogger dl("dummy", "unitTest");
-#else
-  cta::log::DummyLogger dl("dummy", "unitTest");
-#endif
-  cta::log::LogContext lc(dl);
-  // We need a dummy catalogue
-  cta::catalogue::DummyCatalogue catalogue;
-  // Here we check that can successfully call RetrieveRequests's garbage collector
-  cta::objectstore::BackendVFS be;
-  // Create the root entry
-  cta::objectstore::RootEntry re(be);
-  re.initialize();
-  re.insert();
-  // Create the agent register
-  cta::objectstore::EntryLogSerDeser el("user0",
-      "unittesthost", time(nullptr));
-  cta::objectstore::ScopedExclusiveLock rel(re);
-  // Create the agent for objects creation
-  cta::objectstore::AgentReference agentRef("unitTestCreateEnv", dl);
-  // Finish root creation.
-  re.addOrGetAgentRegisterPointerAndCommit(agentRef, el, lc);
-  rel.release();
+TEST_F(GarbageCollectorTest, GarbageCollectorRepackRequestStarting) {
+  auto re = getRootEntry();
+  auto be = getBackend();
   // continue agent creation.
-  cta::objectstore::Agent agent(agentRef.getAgentAddress(), be);
+  cta::objectstore::Agent agent(getAgentRef().getAgentAddress(), be);
   agent.initialize();
   agent.setTimeout_us(0);
-  agent.insertAndRegisterSelf(lc);
+  agent.insertAndRegisterSelf(m_lc);
   {
     // Create an agent to be garbage collected
-    cta::objectstore::AgentReference agentReferenceRepackRequest("AgentReferenceRepackRequest", dl);
+    cta::objectstore::AgentReference agentReferenceRepackRequest("AgentReferenceRepackRequest", m_dl);
     cta::objectstore::Agent agentRepackRequest(agentReferenceRepackRequest.getAgentAddress(), be);
     agentRepackRequest.initialize();
     agentRepackRequest.setTimeout_us(0);
-    agentRepackRequest.insertAndRegisterSelf(lc);
+    agentRepackRequest.insertAndRegisterSelf(m_lc);
     //Create a RepackQueue and insert a RepackRequest with status "ToExpand" in it
     cta::objectstore::RootEntry re(be);
     cta::objectstore::ScopedExclusiveLock rel(re);
@@ -1096,7 +981,7 @@ TEST_F(ObjectStore, GarbageCollectorRepackRequestStarting) {
     gcAgent.setTimeout_us(0);
     gcAgent.insertAndRegisterSelf(lc2);
     {
-      cta::objectstore::GarbageCollector gc(be, gcAgentRef, catalogue);
+      cta::objectstore::GarbageCollector gc(be, gcAgentRef, getCatalogue());
       gc.runOnePass(lc2);
     }
   }
@@ -1106,43 +991,20 @@ TEST_F(ObjectStore, GarbageCollectorRepackRequestStarting) {
   ASSERT_NE(std::string::npos,logToCheck.find("MSG=\"In RepackRequest::garbageCollect(): failed to requeue the RepackRequest (leaving it as it is) : The status Starting has no corresponding queue type.\""));
 }
 
-TEST_F(ObjectStore, GarbageCollectorRetrieveAllStatusesAndQueues) {
-  using cta::common::dataStructures::JobQueueType;
-// We will need a log object
-#ifdef STDOUT_LOGGING
-  cta::log::StdoutLogger dl("dummy", "unitTest");
-#else
-  cta::log::DummyLogger dl("dummy", "unitTest");
-#endif
-  cta::log::LogContext lc(dl);
-  // We need a dummy catalogue
-  cta::catalogue::DummyCatalogue catalogue;
-  // Here we check that can successfully call RetrieveRequests's garbage collector
-  cta::objectstore::BackendVFS be;
-  // Create the root entry
-  cta::objectstore::RootEntry re(be);
-  re.initialize();
-  re.insert();
-  // Create the agent register
-  cta::objectstore::EntryLogSerDeser el("user0",
-      "unittesthost", time(nullptr));
-  cta::objectstore::ScopedExclusiveLock rel(re);
-  // Create the agent for objects creation
-  cta::objectstore::AgentReference agentRef("unitTestCreateEnv", dl);
-  // Finish root creation.
-  re.addOrGetAgentRegisterPointerAndCommit(agentRef, el, lc);
-  rel.release();
+TEST_F(GarbageCollectorTest, GarbageCollectorRetrieveAllStatusesAndQueues) {
+  auto re = getRootEntry();
+  auto be = getBackend();
   // continue agent creation.
-  cta::objectstore::Agent agent(agentRef.getAgentAddress(), be);
+  cta::objectstore::Agent agent(getAgentRef().getAgentAddress(), be);
   agent.initialize();
   agent.setTimeout_us(100000000);
-  agent.insertAndRegisterSelf(lc);
+  agent.insertAndRegisterSelf(m_lc);
   // Create all agents to be garbage collected
-  cta::objectstore::AgentReference agentRefToTransferForUser("ToTransferForUser", dl);
+  cta::objectstore::AgentReference agentRefToTransferForUser("ToTransferForUser", m_dl);
   cta::objectstore::Agent agentToTransferForUser(agentRefToTransferForUser.getAgentAddress(), be);
   agentToTransferForUser.initialize();
   agentToTransferForUser.setTimeout_us(0);
-  agentToTransferForUser.insertAndRegisterSelf(lc);
+  agentToTransferForUser.insertAndRegisterSelf(m_lc);
 
   std::string retrieveRequestAddress = agentRefToTransferForUser.nextId("RetrieveRequest");
   agentRefToTransferForUser.addToOwnership(retrieveRequestAddress, be);
@@ -1187,14 +1049,14 @@ TEST_F(ObjectStore, GarbageCollectorRetrieveAllStatusesAndQueues) {
   rr.insert();
 
   // Create the garbage collector and run it once.
-  cta::objectstore::AgentReference gcAgentRef("unitTestGarbageCollector", dl);
+  cta::objectstore::AgentReference gcAgentRef("unitTestGarbageCollector", m_dl);
   cta::objectstore::Agent gcAgent(gcAgentRef.getAgentAddress(), be);
   gcAgent.initialize();
   gcAgent.setTimeout_us(0);
-  gcAgent.insertAndRegisterSelf(lc);
+  gcAgent.insertAndRegisterSelf(m_lc);
 
-  cta::objectstore::GarbageCollector gc(be, gcAgentRef, catalogue);
-  gc.runOnePass(lc);
+  cta::objectstore::GarbageCollector gc(be, gcAgentRef, getCatalogue());
+  gc.runOnePass(m_lc);
 
   {
     //The Retrieve Request should now be queued in the RetrieveQueueToTransferForUser
@@ -1214,18 +1076,18 @@ TEST_F(ObjectStore, GarbageCollectorRetrieveAllStatusesAndQueues) {
 
   {
     //Test the RetrieveRequest::garbageCollect method for RetrieveQueueToTransferForUser
-    cta::objectstore::AgentReference agentRefToTransferForUserAutoGc("ToTransferForUser", dl);
+    cta::objectstore::AgentReference agentRefToTransferForUserAutoGc("ToTransferForUser", m_dl);
     cta::objectstore::Agent agentToTransferForUserAutoGc(agentRefToTransferForUserAutoGc.getAgentAddress(), be);
     agentToTransferForUserAutoGc.initialize();
     agentToTransferForUserAutoGc.setTimeout_us(0);
-    agentToTransferForUserAutoGc.insertAndRegisterSelf(lc);
+    agentToTransferForUserAutoGc.insertAndRegisterSelf(m_lc);
 
     cta::objectstore::ScopedExclusiveLock sel(rr);
     rr.fetch();
     rr.setOwner(agentRefToTransferForUserAutoGc.getAgentAddress());
     agentRefToTransferForUserAutoGc.addToOwnership(rr.getAddressIfSet(),be);
 
-    ASSERT_NO_THROW(rr.garbageCollect(agentRefToTransferForUserAutoGc.getAgentAddress(),agentRef,lc,catalogue));
+    ASSERT_NO_THROW(rr.garbageCollect(agentRefToTransferForUserAutoGc.getAgentAddress(),getAgentRef(),m_lc,getCatalogue()));
     sel.release();
     //The Retrieve Request should now be queued in the RetrieveQueueToTransferForUser
     re.fetchNoLock();
@@ -1244,16 +1106,16 @@ TEST_F(ObjectStore, GarbageCollectorRetrieveAllStatusesAndQueues) {
 
   {
     //Test the Garbage collection of the RetrieveRequest with a reportToUserForFailure job
-    cta::objectstore::AgentReference agentRefToReportToUser("ToReportToUser", dl);
+    cta::objectstore::AgentReference agentRefToReportToUser("ToReportToUser", m_dl);
     cta::objectstore::Agent agentToReportToUser(agentRefToReportToUser.getAgentAddress(), be);
     agentToReportToUser.initialize();
     agentToReportToUser.setTimeout_us(0);
-    agentToReportToUser.insertAndRegisterSelf(lc);
+    agentToReportToUser.insertAndRegisterSelf(m_lc);
 
     cta::objectstore::RetrieveQueue rq(re.getRetrieveQueueAddress("Tape0", JobQueueType::JobsToTransferForUser), be);
     cta::objectstore::ScopedExclusiveLock rql(rq);
     rq.fetch();
-    rq.removeJobsAndCommit({rr.getAddressIfSet()}, lc);
+    rq.removeJobsAndCommit({rr.getAddressIfSet()}, m_lc);
     rql.release();
 
     {
@@ -1266,7 +1128,7 @@ TEST_F(ObjectStore, GarbageCollectorRetrieveAllStatusesAndQueues) {
 
     agentRefToReportToUser.addToOwnership(rr.getAddressIfSet(),be);
 
-    gc.runOnePass(lc);
+    gc.runOnePass(m_lc);
 
     //The Retrieve Request should be queued in the RetrieveQueueToReportToUser
     re.fetchNoLock();
@@ -1282,17 +1144,17 @@ TEST_F(ObjectStore, GarbageCollectorRetrieveAllStatusesAndQueues) {
 
   {
     //Test the RetrieveRequest::garbageCollect method for ToReportToUserForFailure job
-    cta::objectstore::AgentReference agentRefToReportToUserAutoGc("ToReportForUser", dl);
+    cta::objectstore::AgentReference agentRefToReportToUserAutoGc("ToReportForUser", m_dl);
     cta::objectstore::Agent agentToReportToUserAutoGc(agentRefToReportToUserAutoGc.getAgentAddress(), be);
     agentToReportToUserAutoGc.initialize();
     agentToReportToUserAutoGc.setTimeout_us(0);
-    agentToReportToUserAutoGc.insertAndRegisterSelf(lc);
+    agentToReportToUserAutoGc.insertAndRegisterSelf(m_lc);
 
 
     cta::objectstore::RetrieveQueue rq(re.getRetrieveQueueAddress("Tape0", JobQueueType::JobsToReportToUser), be);
     cta::objectstore::ScopedExclusiveLock rql(rq);
     rq.fetch();
-    rq.removeJobsAndCommit({rr.getAddressIfSet()}, lc);
+    rq.removeJobsAndCommit({rr.getAddressIfSet()}, m_lc);
     rql.release();
 
     {
@@ -1304,7 +1166,7 @@ TEST_F(ObjectStore, GarbageCollectorRetrieveAllStatusesAndQueues) {
 
       agentRefToReportToUserAutoGc.addToOwnership(rr.getAddressIfSet(),be);
 
-      ASSERT_NO_THROW(rr.garbageCollect(agentRefToReportToUserAutoGc.getAgentAddress(),agentRef,lc,catalogue));
+      ASSERT_NO_THROW(rr.garbageCollect(agentRefToReportToUserAutoGc.getAgentAddress(),getAgentRef(),m_lc,getCatalogue()));
     }
 
     //The Retrieve Request should now be queued in the RetrieveQueueToTransferForUser
@@ -1325,16 +1187,16 @@ TEST_F(ObjectStore, GarbageCollectorRetrieveAllStatusesAndQueues) {
 
   {
     //Test the Garbage collection of the RetrieveRequest with a RJS_Failed job
-    cta::objectstore::AgentReference agentRefFailedJob("FailedJob", dl);
+    cta::objectstore::AgentReference agentRefFailedJob("FailedJob", m_dl);
     cta::objectstore::Agent agentFailedJob(agentRefFailedJob.getAgentAddress(), be);
     agentFailedJob.initialize();
     agentFailedJob.setTimeout_us(0);
-    agentFailedJob.insertAndRegisterSelf(lc);
+    agentFailedJob.insertAndRegisterSelf(m_lc);
 
     cta::objectstore::RetrieveQueue rq(re.getRetrieveQueueAddress("Tape0", JobQueueType::JobsToReportToUser), be);
     cta::objectstore::ScopedExclusiveLock rql(rq);
     rq.fetch();
-    rq.removeJobsAndCommit({rr.getAddressIfSet()}, lc);
+    rq.removeJobsAndCommit({rr.getAddressIfSet()}, m_lc);
     rql.release();
 
     {
@@ -1346,7 +1208,7 @@ TEST_F(ObjectStore, GarbageCollectorRetrieveAllStatusesAndQueues) {
     }
     agentRefFailedJob.addToOwnership(rr.getAddressIfSet(),be);
 
-    gc.runOnePass(lc);
+    gc.runOnePass(m_lc);
 
     //The Retrieve Request should be queued in the RetrieveQueueFailed
     re.fetchNoLock();
@@ -1362,17 +1224,17 @@ TEST_F(ObjectStore, GarbageCollectorRetrieveAllStatusesAndQueues) {
 
   {
     //Test the RetrieveRequest::garbageCollect method for RJS_Failed job
-    cta::objectstore::AgentReference agentRefFailedJobAutoGc("FailedJob", dl);
+    cta::objectstore::AgentReference agentRefFailedJobAutoGc("FailedJob", m_dl);
     cta::objectstore::Agent agentFailedJobAutoGc(agentRefFailedJobAutoGc.getAgentAddress(), be);
     agentFailedJobAutoGc.initialize();
     agentFailedJobAutoGc.setTimeout_us(0);
-    agentFailedJobAutoGc.insertAndRegisterSelf(lc);
+    agentFailedJobAutoGc.insertAndRegisterSelf(m_lc);
 
 
     cta::objectstore::RetrieveQueue rq(re.getRetrieveQueueAddress("Tape0", JobQueueType::FailedJobs), be);
     cta::objectstore::ScopedExclusiveLock rql(rq);
     rq.fetch();
-    rq.removeJobsAndCommit({rr.getAddressIfSet()}, lc);
+    rq.removeJobsAndCommit({rr.getAddressIfSet()}, m_lc);
     rql.release();
 
     {
@@ -1385,7 +1247,7 @@ TEST_F(ObjectStore, GarbageCollectorRetrieveAllStatusesAndQueues) {
 
       agentRefFailedJobAutoGc.addToOwnership(rr.getAddressIfSet(),be);
 
-      ASSERT_NO_THROW(rr.garbageCollect(agentRefFailedJobAutoGc.getAgentAddress(),agentRef,lc,catalogue));
+      ASSERT_NO_THROW(rr.garbageCollect(agentRefFailedJobAutoGc.getAgentAddress(),getAgentRef(),m_lc,getCatalogue()));
     }
 
     //The Retrieve Request should now be queued in the RetrieveQueueToTransferForUser
@@ -1413,16 +1275,16 @@ TEST_F(ObjectStore, GarbageCollectorRetrieveAllStatusesAndQueues) {
 
   {
     //Test the Garbage collection of the RetrieveRequest with a Retrieve job ToReportToRepackForSuccess
-    cta::objectstore::AgentReference agentRefToReportToRepackForSuccess("ToReportToRepackForSuccess", dl);
+    cta::objectstore::AgentReference agentRefToReportToRepackForSuccess("ToReportToRepackForSuccess", m_dl);
     cta::objectstore::Agent agentToReportToRepackForSuccess(agentRefToReportToRepackForSuccess.getAgentAddress(), be);
     agentToReportToRepackForSuccess.initialize();
     agentToReportToRepackForSuccess.setTimeout_us(0);
-    agentToReportToRepackForSuccess.insertAndRegisterSelf(lc);
+    agentToReportToRepackForSuccess.insertAndRegisterSelf(m_lc);
 
     cta::objectstore::RetrieveQueue rq(re.getRetrieveQueueAddress("Tape0", JobQueueType::FailedJobs), be);
     cta::objectstore::ScopedExclusiveLock rql(rq);
     rq.fetch();
-    rq.removeJobsAndCommit({rr.getAddressIfSet()}, lc);
+    rq.removeJobsAndCommit({rr.getAddressIfSet()}, m_lc);
     rql.release();
 
     {
@@ -1436,7 +1298,7 @@ TEST_F(ObjectStore, GarbageCollectorRetrieveAllStatusesAndQueues) {
     }
     agentRefToReportToRepackForSuccess.addToOwnership(rr.getAddressIfSet(),be);
 
-    gc.runOnePass(lc);
+    gc.runOnePass(m_lc);
 
     //The Retrieve Request should be queued in the RetrieveQueueToReportToRepackForSuccess
     re.fetchNoLock();
@@ -1452,17 +1314,17 @@ TEST_F(ObjectStore, GarbageCollectorRetrieveAllStatusesAndQueues) {
 
   {
     //Test the RetrieveRequest::garbageCollect method for RJS_ToReportToRepackForSuccess job
-    cta::objectstore::AgentReference agentRefToReportToRepackForSuccessJobAutoGc("ToReportToRepackForSuccessAutoGC", dl);
+    cta::objectstore::AgentReference agentRefToReportToRepackForSuccessJobAutoGc("ToReportToRepackForSuccessAutoGC", m_dl);
     cta::objectstore::Agent agentToReportToRepackForSuccessJobAutoGc(agentRefToReportToRepackForSuccessJobAutoGc.getAgentAddress(), be);
     agentToReportToRepackForSuccessJobAutoGc.initialize();
     agentToReportToRepackForSuccessJobAutoGc.setTimeout_us(0);
-    agentToReportToRepackForSuccessJobAutoGc.insertAndRegisterSelf(lc);
+    agentToReportToRepackForSuccessJobAutoGc.insertAndRegisterSelf(m_lc);
 
 
     cta::objectstore::RetrieveQueue rq(re.getRetrieveQueueAddress(ri.repackRequestAddress, JobQueueType::JobsToReportToRepackForSuccess), be);
     cta::objectstore::ScopedExclusiveLock rql(rq);
     rq.fetch();
-    rq.removeJobsAndCommit({rr.getAddressIfSet()}, lc);
+    rq.removeJobsAndCommit({rr.getAddressIfSet()}, m_lc);
     rql.release();
 
     {
@@ -1474,7 +1336,7 @@ TEST_F(ObjectStore, GarbageCollectorRetrieveAllStatusesAndQueues) {
 
       agentRefToReportToRepackForSuccessJobAutoGc.addToOwnership(rr.getAddressIfSet(),be);
 
-      ASSERT_NO_THROW(rr.garbageCollect(agentRefToReportToRepackForSuccessJobAutoGc.getAgentAddress(),agentRef,lc,catalogue));
+      ASSERT_NO_THROW(rr.garbageCollect(agentRefToReportToRepackForSuccessJobAutoGc.getAgentAddress(),getAgentRef(),m_lc,getCatalogue()));
     }
 
     //The Retrieve Request should now be queued in the RetrieveQueueToReportToRepackForSuccess
@@ -1495,16 +1357,16 @@ TEST_F(ObjectStore, GarbageCollectorRetrieveAllStatusesAndQueues) {
 
   {
     //Test the Garbage collection of the RetrieveRequest with a Retrieve job ToReportToRepackForFailure
-    cta::objectstore::AgentReference agentRefToReportToRepackForFailure("ToReportToRepackForFailure", dl);
+    cta::objectstore::AgentReference agentRefToReportToRepackForFailure("ToReportToRepackForFailure", m_dl);
     cta::objectstore::Agent agentToReportToRepackForFailure(agentRefToReportToRepackForFailure.getAgentAddress(), be);
     agentToReportToRepackForFailure.initialize();
     agentToReportToRepackForFailure.setTimeout_us(0);
-    agentToReportToRepackForFailure.insertAndRegisterSelf(lc);
+    agentToReportToRepackForFailure.insertAndRegisterSelf(m_lc);
 
     cta::objectstore::RetrieveQueue rq(re.getRetrieveQueueAddress(ri.repackRequestAddress, JobQueueType::JobsToReportToRepackForSuccess), be);
     cta::objectstore::ScopedExclusiveLock rql(rq);
     rq.fetch();
-    rq.removeJobsAndCommit({rr.getAddressIfSet()}, lc);
+    rq.removeJobsAndCommit({rr.getAddressIfSet()}, m_lc);
     rql.release();
 
     cta::objectstore::ScopedExclusiveLock sel(rr);
@@ -1517,7 +1379,7 @@ TEST_F(ObjectStore, GarbageCollectorRetrieveAllStatusesAndQueues) {
 
     agentRefToReportToRepackForFailure.addToOwnership(rr.getAddressIfSet(),be);
 
-    gc.runOnePass(lc);
+    gc.runOnePass(m_lc);
 
     //The Retrieve Request should be queued in the RetrieveQueueToReportToRepackForFailure
     re.fetchNoLock();
@@ -1533,17 +1395,17 @@ TEST_F(ObjectStore, GarbageCollectorRetrieveAllStatusesAndQueues) {
 
   {
     //Test the RetrieveRequest::garbageCollect method for RJS_ToReportToRepackForSuccess job
-    cta::objectstore::AgentReference agentRefToReportToRepackForFailureJobAutoGc("ToReportToRepackForFailureAutoGC", dl);
+    cta::objectstore::AgentReference agentRefToReportToRepackForFailureJobAutoGc("ToReportToRepackForFailureAutoGC", m_dl);
     cta::objectstore::Agent agentToReportToRepackForFailureJobAutoGc(agentRefToReportToRepackForFailureJobAutoGc.getAgentAddress(), be);
     agentToReportToRepackForFailureJobAutoGc.initialize();
     agentToReportToRepackForFailureJobAutoGc.setTimeout_us(0);
-    agentToReportToRepackForFailureJobAutoGc.insertAndRegisterSelf(lc);
+    agentToReportToRepackForFailureJobAutoGc.insertAndRegisterSelf(m_lc);
 
 
     cta::objectstore::RetrieveQueue rq(re.getRetrieveQueueAddress(ri.repackRequestAddress, JobQueueType::JobsToReportToRepackForFailure), be);
     cta::objectstore::ScopedExclusiveLock rql(rq);
     rq.fetch();
-    rq.removeJobsAndCommit({rr.getAddressIfSet()}, lc);
+    rq.removeJobsAndCommit({rr.getAddressIfSet()}, m_lc);
     rql.release();
 
     {
@@ -1555,7 +1417,7 @@ TEST_F(ObjectStore, GarbageCollectorRetrieveAllStatusesAndQueues) {
 
       agentRefToReportToRepackForFailureJobAutoGc.addToOwnership(rr.getAddressIfSet(),be);
 
-      ASSERT_NO_THROW(rr.garbageCollect(agentRefToReportToRepackForFailureJobAutoGc.getAgentAddress(),agentRef,lc,catalogue));
+      ASSERT_NO_THROW(rr.garbageCollect(agentRefToReportToRepackForFailureJobAutoGc.getAgentAddress(),getAgentRef(),m_lc,getCatalogue()));
     }
 
     //The Retrieve Request should now be queued in the RetrieveQueueToReportToRepackForFailure
@@ -1575,43 +1437,20 @@ TEST_F(ObjectStore, GarbageCollectorRetrieveAllStatusesAndQueues) {
   }
 }
 
-TEST_F(ObjectStore, GarbageCollectorRetrieveRequestRepackRepackingTape) {
-  using cta::common::dataStructures::JobQueueType;
-// We will need a log object
-#ifdef STDOUT_LOGGING
-  cta::log::StdoutLogger dl("dummy", "unitTest");
-#else
-  cta::log::DummyLogger dl("dummy", "unitTest");
-#endif
-  cta::log::LogContext lc(dl);
-  // We need a dummy catalogue
-  cta::catalogue::DummyCatalogue catalogue;
-  // Here we check that can successfully call RetrieveRequests's garbage collector
-  cta::objectstore::BackendVFS be;
-  // Create the root entry
-  cta::objectstore::RootEntry re(be);
-  re.initialize();
-  re.insert();
-  // Create the agent register
-  cta::objectstore::EntryLogSerDeser el("user0",
-      "unittesthost", time(nullptr));
-  cta::objectstore::ScopedExclusiveLock rel(re);
-  // Create the agent for objects creation
-  cta::objectstore::AgentReference agentRef("unitTestCreateEnv", dl);
-  // Finish root creation.
-  re.addOrGetAgentRegisterPointerAndCommit(agentRef, el, lc);
-  rel.release();
+TEST_F(GarbageCollectorTest, GarbageCollectorRetrieveRequestRepackRepackingTape) {
+  auto re = getRootEntry();
+  auto be = getBackend();
   // continue agent creation.
-  cta::objectstore::Agent agent(agentRef.getAgentAddress(), be);
+  cta::objectstore::Agent agent(getAgentRef().getAgentAddress(), be);
   agent.initialize();
   agent.setTimeout_us(10000);
-  agent.insertAndRegisterSelf(lc);
+  agent.insertAndRegisterSelf(m_lc);
   // Create all agents to be garbage collected
-  cta::objectstore::AgentReference agentRefToTransferForUser("ToTransferForUser", dl);
+  cta::objectstore::AgentReference agentRefToTransferForUser("ToTransferForUser", m_dl);
   cta::objectstore::Agent agentToTransferForUser(agentRefToTransferForUser.getAgentAddress(), be);
   agentToTransferForUser.initialize();
   agentToTransferForUser.setTimeout_us(0);
-  agentToTransferForUser.insertAndRegisterSelf(lc);
+  agentToTransferForUser.insertAndRegisterSelf(m_lc);
 
   std::string retrieveRequestAddress = agentRefToTransferForUser.nextId("RetrieveRequest");
   agentRefToTransferForUser.addToOwnership(retrieveRequestAddress, be);
@@ -1664,16 +1503,16 @@ TEST_F(ObjectStore, GarbageCollectorRetrieveRequestRepackRepackingTape) {
   rr.insert();
 
   // Create the garbage collector and run it once.
-  cta::objectstore::AgentReference gcAgentRef("unitTestGarbageCollector", dl);
+  cta::objectstore::AgentReference gcAgentRef("unitTestGarbageCollector", m_dl);
   cta::objectstore::Agent gcAgent(gcAgentRef.getAgentAddress(), be);
   gcAgent.initialize();
   gcAgent.setTimeout_us(0);
-  gcAgent.insertAndRegisterSelf(lc);
+  gcAgent.insertAndRegisterSelf(m_lc);
 
-  static_cast<cta::catalogue::DummyTapeCatalogue*>(catalogue.Tape().get())->addRepackingTape("Tape0");
+  static_cast<cta::catalogue::DummyTapeCatalogue*>(getCatalogue().Tape().get())->addRepackingTape("Tape0");
 
-  cta::objectstore::GarbageCollector gc(be, gcAgentRef, catalogue);
-  gc.runOnePass(lc);
+  cta::objectstore::GarbageCollector gc(be, gcAgentRef, getCatalogue());
+  gc.runOnePass(m_lc);
 
   {
     //The Retrieve Request should now be queued in the RetrieveQueueToTransferForUser
@@ -1693,17 +1532,17 @@ TEST_F(ObjectStore, GarbageCollectorRetrieveRequestRepackRepackingTape) {
 
   {
     //Test the RetrieveRequest::garbageCollect method for RJS_ToTransferForUser job and a repacking tape
-    cta::objectstore::AgentReference agentRefToTransferRepackingTapeAutoGc("ToReportToRepackForFailureAutoGC", dl);
+    cta::objectstore::AgentReference agentRefToTransferRepackingTapeAutoGc("ToReportToRepackForFailureAutoGC", m_dl);
     cta::objectstore::Agent agentToReportToRepackForFailureJobAutoGc(agentRefToTransferRepackingTapeAutoGc.getAgentAddress(), be);
     agentToReportToRepackForFailureJobAutoGc.initialize();
     agentToReportToRepackForFailureJobAutoGc.setTimeout_us(0);
-    agentToReportToRepackForFailureJobAutoGc.insertAndRegisterSelf(lc);
+    agentToReportToRepackForFailureJobAutoGc.insertAndRegisterSelf(m_lc);
 
 
     cta::objectstore::RetrieveQueue rq(re.getRetrieveQueueAddress("Tape0", JobQueueType::JobsToTransferForUser), be);
     cta::objectstore::ScopedExclusiveLock rql(rq);
     rq.fetch();
-    rq.removeJobsAndCommit({rr.getAddressIfSet()}, lc);
+    rq.removeJobsAndCommit({rr.getAddressIfSet()}, m_lc);
     rql.release();
 
     {
@@ -1715,7 +1554,7 @@ TEST_F(ObjectStore, GarbageCollectorRetrieveRequestRepackRepackingTape) {
 
       agentRefToTransferRepackingTapeAutoGc.addToOwnership(rr.getAddressIfSet(),be);
 
-      ASSERT_NO_THROW(rr.garbageCollect(agentRefToTransferRepackingTapeAutoGc.getAgentAddress(),agentRef,lc,catalogue));
+      ASSERT_NO_THROW(rr.garbageCollect(agentRefToTransferRepackingTapeAutoGc.getAgentAddress(),getAgentRef(),m_lc,getCatalogue()));
     }
 
     //The Retrieve Request should now be queued in the RetrieveQueueToTransferForUser
@@ -1735,44 +1574,94 @@ TEST_F(ObjectStore, GarbageCollectorRetrieveRequestRepackRepackingTape) {
   }
 }
 
-TEST_F(ObjectStore, GarbageCollectorArchiveAllStatusesAndQueues) {
-  using cta::common::dataStructures::JobQueueType;
-  // We will need a log object
-#ifdef STDOUT_LOGGING
-  cta::log::StdoutLogger dl("dummy", "unitTest");
-#else
-  cta::log::DummyLogger dl("dummy", "unitTest");
-#endif
-  cta::log::LogContext lc(dl);
-  // We need a dummy catalogue
-  cta::catalogue::DummyCatalogue catalogue;
-  // Here we check that can successfully call RetrieveRequests's garbage collector
-  cta::objectstore::BackendVFS be;
-  // Create the root entry
-  cta::objectstore::RootEntry re(be);
-  re.initialize();
-  re.insert();
-  // Create the agent register
-  cta::objectstore::EntryLogSerDeser el("user0",
-      "unittesthost", time(nullptr));
-  cta::objectstore::ScopedExclusiveLock rel(re);
-  // Create the agent for objects creation
-  cta::objectstore::AgentReference agentRef("unitTestCreateEnv", dl);
-  // Finish root creation.
-  re.addOrGetAgentRegisterPointerAndCommit(agentRef, el, lc);
-  rel.release();
-  // continue agent creation.
-  cta::objectstore::Agent agent(agentRef.getAgentAddress(), be);
+
+TEST_F(GarbageCollectorTest, GarbageCollectToReportRetrieveQueue) {
+  auto re = getRootEntry();
+  auto be = getBackend();
+  // We only need to create the agent for the cleanup.
+  // There is no need to create the ones that register for the cleanup info struct
+  // we will populate that information manually.
+  cta::objectstore::Agent agent(getAgentRef().getAgentAddress(), be);
   agent.initialize();
   agent.setTimeout_us(0);
-  agent.insertAndRegisterSelf(lc);
+  agent.insertAndRegisterSelf(m_lc);
+
+  cta::objectstore::AgentReference agentRef2("custom", m_dl);
+  cta::objectstore::Agent deadAgent(agentRef2.getAgentAddress(), be);
+  deadAgent.initialize();
+  deadAgent.setTimeout_us(0);
+  deadAgent.insertAndRegisterSelf(m_lc);
+
+  // Create a retrieve queue and populate the cleanup info.
+  // This is basically a rperoduction of OStoreDB::reserveREtrieveQueueForCleanup
+  const std::string tapeAddr = "Tape0";
+  {
+    cta::objectstore::ScopedExclusiveLock rel(re);
+    re.fetch();
+    const auto queueAddr = re.addOrGetRetrieveQueueAndCommit(tapeAddr, getAgentRef(), JobQueueType::JobsToTransferForUser);
+    cta::objectstore::RetrieveQueue rq(queueAddr, be);
+    cta::objectstore::ScopedExclusiveLock rql(rq);
+    rq.fetch();
+    rq.setOwner(agentRef2.getAgentAddress());
+    rq.setQueueCleanupDoCleanup();
+    rq.setQueueCleanupAssignedAgent(deadAgent.getAddressIfSet());
+    rq.commit();
+    // Create the ToReport queue and populate the cleanup info.
+    const auto reportQueueName = re.addOrGetRetrieveQueueAndCommit(tapeAddr, getAgentRef(), JobQueueType::JobsToReportToUser);
+    cta::objectstore::RetrieveQueue rqtr(reportQueueName, be);
+    cta::objectstore::ScopedExclusiveLock rqtrl(rqtr);
+    rqtr.fetch();
+    rqtr.setOwner(agentRef2.getAgentAddress());
+    rqtr.setQueueCleanupDoCleanup();
+    rqtr.setQueueCleanupAssignedAgent(deadAgent.getAddressIfSet());
+    rqtr.commit();
+    
+    // Check the Agent has been set. 
+    ASSERT_EQ(rq.getQueueCleanupAssignedAgent().value(), agentRef2.getAgentAddress());
+    ASSERT_EQ(rqtr.getQueueCleanupAssignedAgent().value(), agentRef2.getAgentAddress());
+
+    // Add the queues to the object ownership.
+    agentRef2.addToOwnership(rq.getAddressIfSet() ,be);
+    agentRef2.addToOwnership(rqtr.getAddressIfSet(), be);
+  }
+
+  // We don't need to populate the queue with requests as the job of the
+  // garbage collector is just to clear the CleanUp info
+  // Run the garbage collector.
+  cta::objectstore::GarbageCollector gc(be, getAgentRef(), getCatalogue());
+  gc.runOnePass(m_lc);
+
+  // The cleanup info should no be gone.
+  {
+    cta::objectstore::ScopedExclusiveLock rel(re);
+    re.fetch();
+    cta::objectstore::RetrieveQueue rq(re.addOrGetRetrieveQueueAndCommit(tapeAddr, getAgentRef(), JobQueueType::JobsToTransferForUser), be);
+    cta::objectstore::RetrieveQueue rqtr(re.addOrGetRetrieveQueueAndCommit(tapeAddr, getAgentRef(), JobQueueType::JobsToReportToUser), be);
+    cta::objectstore::ScopedExclusiveLock rql(rq);
+    cta::objectstore::ScopedExclusiveLock rqtrl(rqtr);
+    rq.fetch();
+    rqtr.fetch();
+    ASSERT_EQ(rq.getQueueCleanupAssignedAgent().has_value(), false);
+    ASSERT_EQ(rqtr.getQueueCleanupAssignedAgent().has_value(), false);
+  }
+}
+
+
+TEST_F(GarbageCollectorTest, GarbageCollectorArchiveAllStatusesAndQueues) {
+  auto re = getRootEntry();
+  auto be = getBackend();
+  // continue agent creation.
+  cta::objectstore::Agent agent(getAgentRef().getAgentAddress(), be);
+  agent.initialize();
+  agent.setTimeout_us(0);
+  agent.insertAndRegisterSelf(m_lc);
 
   // Create all agents to be garbage collected
-  cta::objectstore::AgentReference agentRefToTransferForUser("ToTransferForUser", dl);
+  cta::objectstore::AgentReference agentRefToTransferForUser("ToTransferForUser", m_dl);
   cta::objectstore::Agent agentToTransferForUser(agentRefToTransferForUser.getAgentAddress(), be);
   agentToTransferForUser.initialize();
   agentToTransferForUser.setTimeout_us(0);
-  agentToTransferForUser.insertAndRegisterSelf(lc);
+  agentToTransferForUser.insertAndRegisterSelf(m_lc);
 
   std::string archiveRequestAddress = agentRefToTransferForUser.nextId("ArchiveRequest");
   agentRefToTransferForUser.addToOwnership(archiveRequestAddress, be);
@@ -1803,14 +1692,14 @@ TEST_F(ObjectStore, GarbageCollectorArchiveAllStatusesAndQueues) {
   ar.insert();
 
   // Create the garbage collector and run it once.
-  cta::objectstore::AgentReference gcAgentRef("unitTestGarbageCollector", dl);
+  cta::objectstore::AgentReference gcAgentRef("unitTestGarbageCollector", m_dl);
   cta::objectstore::Agent gcAgent(gcAgentRef.getAgentAddress(), be);
   gcAgent.initialize();
   gcAgent.setTimeout_us(0);
-  gcAgent.insertAndRegisterSelf(lc);
+  gcAgent.insertAndRegisterSelf(m_lc);
 
-  cta::objectstore::GarbageCollector gc(be, gcAgentRef, catalogue);
-  gc.runOnePass(lc);
+  cta::objectstore::GarbageCollector gc(be, gcAgentRef, getCatalogue());
+  gc.runOnePass(m_lc);
 
   {
     //The Archive Request should now be queued in the ArchiveQueueToTransferForUser
@@ -1829,16 +1718,16 @@ TEST_F(ObjectStore, GarbageCollectorArchiveAllStatusesAndQueues) {
   }
   {
     //Test the AJS_ToTransferForUser auto garbage collection
-    cta::objectstore::AgentReference agentRefToTransferForUserAutoGC("ToTransferForUserAutoGC", dl);
+    cta::objectstore::AgentReference agentRefToTransferForUserAutoGC("ToTransferForUserAutoGC", m_dl);
     cta::objectstore::Agent agentToTransferForUserAutoGC(agentRefToTransferForUserAutoGC.getAgentAddress(), be);
     agentToTransferForUserAutoGC.initialize();
     agentToTransferForUserAutoGC.setTimeout_us(0);
-    agentToTransferForUserAutoGC.insertAndRegisterSelf(lc);
+    agentToTransferForUserAutoGC.insertAndRegisterSelf(m_lc);
 
     cta::objectstore::ArchiveQueue aq(re.getArchiveQueueAddress(tapePool, JobQueueType::JobsToTransferForUser), be);
     cta::objectstore::ScopedExclusiveLock aql(aq);
     aq.fetch();
-    aq.removeJobsAndCommit({ar.getAddressIfSet()}, lc);
+    aq.removeJobsAndCommit({ar.getAddressIfSet()}, m_lc);
     aql.release();
 
 
@@ -1849,7 +1738,7 @@ TEST_F(ObjectStore, GarbageCollectorArchiveAllStatusesAndQueues) {
     ar.commit();
     agentRefToTransferForUserAutoGC.addToOwnership(ar.getAddressIfSet(),be);
 
-    ar.garbageCollect(agentRefToTransferForUserAutoGC.getAgentAddress(),agentRef,lc,catalogue);
+    ar.garbageCollect(agentRefToTransferForUserAutoGC.getAgentAddress(),getAgentRef(),m_lc,getCatalogue());
     sel.release();
 
     {
@@ -1871,16 +1760,16 @@ TEST_F(ObjectStore, GarbageCollectorArchiveAllStatusesAndQueues) {
   }
   {
     //Test the AJS_ToReportToUserForFailure Garbage collection
-    cta::objectstore::AgentReference agentRefToReportToUserForFailure("ToReportToUserForFailure", dl);
+    cta::objectstore::AgentReference agentRefToReportToUserForFailure("ToReportToUserForFailure", m_dl);
     cta::objectstore::Agent agentToReportToUserForFailure(agentRefToReportToUserForFailure.getAgentAddress(), be);
     agentToReportToUserForFailure.initialize();
     agentToReportToUserForFailure.setTimeout_us(0);
-    agentToReportToUserForFailure.insertAndRegisterSelf(lc);
+    agentToReportToUserForFailure.insertAndRegisterSelf(m_lc);
 
     cta::objectstore::ArchiveQueue aq(re.getArchiveQueueAddress(tapePool, JobQueueType::JobsToTransferForUser), be);
     cta::objectstore::ScopedExclusiveLock aql(aq);
     aq.fetch();
-    aq.removeJobsAndCommit({ar.getAddressIfSet()}, lc);
+    aq.removeJobsAndCommit({ar.getAddressIfSet()}, m_lc);
     aql.release();
 
 
@@ -1893,7 +1782,7 @@ TEST_F(ObjectStore, GarbageCollectorArchiveAllStatusesAndQueues) {
 
     agentRefToReportToUserForFailure.addToOwnership(ar.getAddressIfSet(),be);
 
-    gc.runOnePass(lc);
+    gc.runOnePass(m_lc);
 
     //The Archive Request should be queued in the ArchiveQueueToReportForUser
     {
@@ -1914,16 +1803,16 @@ TEST_F(ObjectStore, GarbageCollectorArchiveAllStatusesAndQueues) {
   }
   {
     //Test the AJS_ToReportToUserForFailure Auto Garbage collection
-    cta::objectstore::AgentReference agentRefToReportToUserForFailureAutoGC("ToReportToUserForFailureAutoGC", dl);
+    cta::objectstore::AgentReference agentRefToReportToUserForFailureAutoGC("ToReportToUserForFailureAutoGC", m_dl);
     cta::objectstore::Agent agentToReportToUserForFailureAutoGC(agentRefToReportToUserForFailureAutoGC.getAgentAddress(), be);
     agentToReportToUserForFailureAutoGC.initialize();
     agentToReportToUserForFailureAutoGC.setTimeout_us(0);
-    agentToReportToUserForFailureAutoGC.insertAndRegisterSelf(lc);
+    agentToReportToUserForFailureAutoGC.insertAndRegisterSelf(m_lc);
 
     cta::objectstore::ArchiveQueue aq(re.getArchiveQueueAddress(tapePool, JobQueueType::JobsToReportToUser), be);
     cta::objectstore::ScopedExclusiveLock aql(aq);
     aq.fetch();
-    aq.removeJobsAndCommit({ar.getAddressIfSet()}, lc);
+    aq.removeJobsAndCommit({ar.getAddressIfSet()}, m_lc);
     aql.release();
 
 
@@ -1933,7 +1822,7 @@ TEST_F(ObjectStore, GarbageCollectorArchiveAllStatusesAndQueues) {
     ar.setJobStatus(2,cta::objectstore::serializers::ArchiveJobStatus::AJS_ToReportToUserForFailure);
     ar.commit();
     agentRefToReportToUserForFailureAutoGC.addToOwnership(ar.getAddressIfSet(),be);
-    ar.garbageCollect(agentRefToReportToUserForFailureAutoGC.getAgentAddress(),agentRef,lc,catalogue);
+    ar.garbageCollect(agentRefToReportToUserForFailureAutoGC.getAgentAddress(),getAgentRef(),m_lc,getCatalogue());
 
     //The Archive Request should be queued in the ArchiveQueueToReportForUser
     {
@@ -1955,16 +1844,16 @@ TEST_F(ObjectStore, GarbageCollectorArchiveAllStatusesAndQueues) {
 
   {
     //Test the AJS_ToReportToUserForTransfer Garbage collection
-    cta::objectstore::AgentReference agentRefToReportToUserForTransfer("ToReportToUserForTransfer", dl);
+    cta::objectstore::AgentReference agentRefToReportToUserForTransfer("ToReportToUserForTransfer", m_dl);
     cta::objectstore::Agent agentToReportToUserForTransfer(agentRefToReportToUserForTransfer.getAgentAddress(), be);
     agentToReportToUserForTransfer.initialize();
     agentToReportToUserForTransfer.setTimeout_us(0);
-    agentToReportToUserForTransfer.insertAndRegisterSelf(lc);
+    agentToReportToUserForTransfer.insertAndRegisterSelf(m_lc);
 
     cta::objectstore::ArchiveQueue aq(re.getArchiveQueueAddress(tapePool, JobQueueType::JobsToReportToUser), be);
     cta::objectstore::ScopedExclusiveLock aql(aq);
     aq.fetch();
-    aq.removeJobsAndCommit({ar.getAddressIfSet()}, lc);
+    aq.removeJobsAndCommit({ar.getAddressIfSet()}, m_lc);
     aql.release();
 
 
@@ -1977,7 +1866,7 @@ TEST_F(ObjectStore, GarbageCollectorArchiveAllStatusesAndQueues) {
 
     agentRefToReportToUserForTransfer.addToOwnership(ar.getAddressIfSet(),be);
 
-    gc.runOnePass(lc);
+    gc.runOnePass(m_lc);
 
     //The Archive Request should be queued in the ArchiveQueueToReportForUser
     {
@@ -1998,16 +1887,16 @@ TEST_F(ObjectStore, GarbageCollectorArchiveAllStatusesAndQueues) {
   }
   {
     //Test the AJS_ToReportToUserForTransfer Auto Garbage collection
-    cta::objectstore::AgentReference agentRefToReportToUserForTransferAutoGC("ToReportToUserForTransferAutoGC", dl);
+    cta::objectstore::AgentReference agentRefToReportToUserForTransferAutoGC("ToReportToUserForTransferAutoGC", m_dl);
     cta::objectstore::Agent agentToReportToUserForTransferAutoGC(agentRefToReportToUserForTransferAutoGC.getAgentAddress(), be);
     agentToReportToUserForTransferAutoGC.initialize();
     agentToReportToUserForTransferAutoGC.setTimeout_us(0);
-    agentToReportToUserForTransferAutoGC.insertAndRegisterSelf(lc);
+    agentToReportToUserForTransferAutoGC.insertAndRegisterSelf(m_lc);
 
     cta::objectstore::ArchiveQueue aq(re.getArchiveQueueAddress(tapePool, JobQueueType::JobsToReportToUser), be);
     cta::objectstore::ScopedExclusiveLock aql(aq);
     aq.fetch();
-    aq.removeJobsAndCommit({ar.getAddressIfSet()}, lc);
+    aq.removeJobsAndCommit({ar.getAddressIfSet()}, m_lc);
     aql.release();
 
     cta::objectstore::ScopedExclusiveLock sel(ar);
@@ -2016,7 +1905,7 @@ TEST_F(ObjectStore, GarbageCollectorArchiveAllStatusesAndQueues) {
     ar.setJobStatus(2,cta::objectstore::serializers::ArchiveJobStatus::AJS_ToReportToUserForTransfer);
     ar.commit();
     agentRefToReportToUserForTransferAutoGC.addToOwnership(ar.getAddressIfSet(),be);
-    ar.garbageCollect(agentRefToReportToUserForTransferAutoGC.getAgentAddress(),agentRef,lc,catalogue);
+    ar.garbageCollect(agentRefToReportToUserForTransferAutoGC.getAgentAddress(),getAgentRef(),m_lc,getCatalogue());
 
     //The Archive Request should be queued in the ArchiveQueueToReportForUser
     {
@@ -2037,16 +1926,16 @@ TEST_F(ObjectStore, GarbageCollectorArchiveAllStatusesAndQueues) {
   }
   {
     //Test the garbage collection of an AJS_Failed job
-    cta::objectstore::AgentReference agentRefFailed("Failed", dl);
+    cta::objectstore::AgentReference agentRefFailed("Failed", m_dl);
     cta::objectstore::Agent agentFailed(agentRefFailed.getAgentAddress(), be);
     agentFailed.initialize();
     agentFailed.setTimeout_us(0);
-    agentFailed.insertAndRegisterSelf(lc);
+    agentFailed.insertAndRegisterSelf(m_lc);
 
     cta::objectstore::ArchiveQueue aq(re.getArchiveQueueAddress(tapePool, JobQueueType::JobsToReportToUser), be);
     cta::objectstore::ScopedExclusiveLock aql(aq);
     aq.fetch();
-    aq.removeJobsAndCommit({ar.getAddressIfSet()}, lc);
+    aq.removeJobsAndCommit({ar.getAddressIfSet()}, m_lc);
     aql.release();
 
 
@@ -2059,7 +1948,7 @@ TEST_F(ObjectStore, GarbageCollectorArchiveAllStatusesAndQueues) {
 
     agentRefFailed.addToOwnership(ar.getAddressIfSet(),be);
 
-    gc.runOnePass(lc);
+    gc.runOnePass(m_lc);
 
     //The Archive Request should be queued in the ArchiveQueueFailed
     {
@@ -2081,16 +1970,16 @@ TEST_F(ObjectStore, GarbageCollectorArchiveAllStatusesAndQueues) {
 
   {
     //Test the AJS_Failed job Auto Garbage collection
-    cta::objectstore::AgentReference agentRefFailedAutoGC("FailedAutoGC", dl);
+    cta::objectstore::AgentReference agentRefFailedAutoGC("FailedAutoGC", m_dl);
     cta::objectstore::Agent agentFailedAutoGC(agentRefFailedAutoGC.getAgentAddress(), be);
     agentFailedAutoGC.initialize();
     agentFailedAutoGC.setTimeout_us(0);
-    agentFailedAutoGC.insertAndRegisterSelf(lc);
+    agentFailedAutoGC.insertAndRegisterSelf(m_lc);
 
     cta::objectstore::ArchiveQueue aq(re.getArchiveQueueAddress(tapePool, JobQueueType::FailedJobs), be);
     cta::objectstore::ScopedExclusiveLock aql(aq);
     aq.fetch();
-    aq.removeJobsAndCommit({ar.getAddressIfSet()}, lc);
+    aq.removeJobsAndCommit({ar.getAddressIfSet()}, m_lc);
     aql.release();
 
     cta::objectstore::ScopedExclusiveLock sel(ar);
@@ -2099,7 +1988,7 @@ TEST_F(ObjectStore, GarbageCollectorArchiveAllStatusesAndQueues) {
     ar.setJobStatus(2,cta::objectstore::serializers::ArchiveJobStatus::AJS_Failed);
     ar.commit();
     agentRefFailedAutoGC.addToOwnership(ar.getAddressIfSet(),be);
-    ar.garbageCollect(agentRefFailedAutoGC.getAgentAddress(),agentRef,lc,catalogue);
+    ar.garbageCollect(agentRefFailedAutoGC.getAgentAddress(),getAgentRef(),m_lc,getCatalogue());
 
     //The Archive Request should be queued in the ArchiveQueueFailed
     {
@@ -2136,16 +2025,16 @@ TEST_F(ObjectStore, GarbageCollectorArchiveAllStatusesAndQueues) {
 
   {
     //Test the Garbage collection of an AJS_ToReportToRepackForSuccess job
-    cta::objectstore::AgentReference agentRefToReportToRepackForSuccess("ToReportToUserForTransfer", dl);
+    cta::objectstore::AgentReference agentRefToReportToRepackForSuccess("ToReportToUserForTransfer", m_dl);
     cta::objectstore::Agent agentToReportToRepackForSuccess(agentRefToReportToRepackForSuccess.getAgentAddress(), be);
     agentToReportToRepackForSuccess.initialize();
     agentToReportToRepackForSuccess.setTimeout_us(0);
-    agentToReportToRepackForSuccess.insertAndRegisterSelf(lc);
+    agentToReportToRepackForSuccess.insertAndRegisterSelf(m_lc);
 
     cta::objectstore::ArchiveQueue aq(re.getArchiveQueueAddress(tapePool, JobQueueType::FailedJobs), be);
     cta::objectstore::ScopedExclusiveLock aql(aq);
     aq.fetch();
-    aq.removeJobsAndCommit({ar.getAddressIfSet()}, lc);
+    aq.removeJobsAndCommit({ar.getAddressIfSet()}, m_lc);
     aql.release();
 
 
@@ -2158,7 +2047,7 @@ TEST_F(ObjectStore, GarbageCollectorArchiveAllStatusesAndQueues) {
 
     agentRefToReportToRepackForSuccess.addToOwnership(ar.getAddressIfSet(),be);
 
-    gc.runOnePass(lc);
+    gc.runOnePass(m_lc);
 
     //The Archive Request should be queued in the ArchiveQueueToReportToRepackForSuccess
     {
@@ -2180,16 +2069,16 @@ TEST_F(ObjectStore, GarbageCollectorArchiveAllStatusesAndQueues) {
 
   {
     //Test the AJS_ToReportToRepackForSuccess job Auto Garbage collection
-    cta::objectstore::AgentReference agentRefToReportToRepackForSuccessAutoGC("ToReportToRepackForSuccessAutoGC", dl);
+    cta::objectstore::AgentReference agentRefToReportToRepackForSuccessAutoGC("ToReportToRepackForSuccessAutoGC", m_dl);
     cta::objectstore::Agent agentToReportToRepackForSuccessAutoGC(agentRefToReportToRepackForSuccessAutoGC.getAgentAddress(), be);
     agentToReportToRepackForSuccessAutoGC.initialize();
     agentToReportToRepackForSuccessAutoGC.setTimeout_us(0);
-    agentToReportToRepackForSuccessAutoGC.insertAndRegisterSelf(lc);
+    agentToReportToRepackForSuccessAutoGC.insertAndRegisterSelf(m_lc);
 
     cta::objectstore::ArchiveQueue aq(re.getArchiveQueueAddress(ri.repackRequestAddress, JobQueueType::JobsToReportToRepackForSuccess), be);
     cta::objectstore::ScopedExclusiveLock aql(aq);
     aq.fetch();
-    aq.removeJobsAndCommit({ar.getAddressIfSet()}, lc);
+    aq.removeJobsAndCommit({ar.getAddressIfSet()}, m_lc);
     aql.release();
 
     cta::objectstore::ScopedExclusiveLock sel(ar);
@@ -2198,7 +2087,7 @@ TEST_F(ObjectStore, GarbageCollectorArchiveAllStatusesAndQueues) {
     ar.setJobStatus(2,cta::objectstore::serializers::ArchiveJobStatus::AJS_ToReportToRepackForSuccess);
     ar.commit();
     agentRefToReportToRepackForSuccessAutoGC.addToOwnership(ar.getAddressIfSet(),be);
-    ar.garbageCollect(agentRefToReportToRepackForSuccessAutoGC.getAgentAddress(),agentRef,lc,catalogue);
+    ar.garbageCollect(agentRefToReportToRepackForSuccessAutoGC.getAgentAddress(),getAgentRef(),m_lc,getCatalogue());
 
     //The Archive Request should be queued in the ArchiveQueueToReportToRepackForSuccess
     {
@@ -2220,16 +2109,16 @@ TEST_F(ObjectStore, GarbageCollectorArchiveAllStatusesAndQueues) {
 
   {
     //Test the garbage collection of an AJS_ToReportToRepackForFailure job
-    cta::objectstore::AgentReference agentRefToReportToRepackForFailure("ToReportToRepackForFailure", dl);
+    cta::objectstore::AgentReference agentRefToReportToRepackForFailure("ToReportToRepackForFailure", m_dl);
     cta::objectstore::Agent agentToReportToRepackForFailure(agentRefToReportToRepackForFailure.getAgentAddress(), be);
     agentToReportToRepackForFailure.initialize();
     agentToReportToRepackForFailure.setTimeout_us(0);
-    agentToReportToRepackForFailure.insertAndRegisterSelf(lc);
+    agentToReportToRepackForFailure.insertAndRegisterSelf(m_lc);
 
     cta::objectstore::ArchiveQueue aq(re.getArchiveQueueAddress(ri.repackRequestAddress, JobQueueType::JobsToReportToRepackForSuccess), be);
     cta::objectstore::ScopedExclusiveLock aql(aq);
     aq.fetch();
-    aq.removeJobsAndCommit({ar.getAddressIfSet()}, lc);
+    aq.removeJobsAndCommit({ar.getAddressIfSet()}, m_lc);
     aql.release();
 
 
@@ -2242,7 +2131,7 @@ TEST_F(ObjectStore, GarbageCollectorArchiveAllStatusesAndQueues) {
 
     agentRefToReportToRepackForFailure.addToOwnership(ar.getAddressIfSet(),be);
 
-    gc.runOnePass(lc);
+    gc.runOnePass(m_lc);
 
     //The Archive Request should be queued in the ArchiveQueueToReportToRepackForFailure
     {
@@ -2263,16 +2152,16 @@ TEST_F(ObjectStore, GarbageCollectorArchiveAllStatusesAndQueues) {
   }
   {
     //Test the AJS_ToReportToRepackForFailure job Auto Garbage collection
-    cta::objectstore::AgentReference agentRefToReportToRepackForFailureAutoGC("ToReportToRepackForFailureAutoGC", dl);
+    cta::objectstore::AgentReference agentRefToReportToRepackForFailureAutoGC("ToReportToRepackForFailureAutoGC", m_dl);
     cta::objectstore::Agent agentToReportToRepackForFailureAutoGC(agentRefToReportToRepackForFailureAutoGC.getAgentAddress(), be);
     agentToReportToRepackForFailureAutoGC.initialize();
     agentToReportToRepackForFailureAutoGC.setTimeout_us(0);
-    agentToReportToRepackForFailureAutoGC.insertAndRegisterSelf(lc);
+    agentToReportToRepackForFailureAutoGC.insertAndRegisterSelf(m_lc);
 
     cta::objectstore::ArchiveQueue aq(re.getArchiveQueueAddress(ri.repackRequestAddress, JobQueueType::JobsToReportToRepackForFailure), be);
     cta::objectstore::ScopedExclusiveLock aql(aq);
     aq.fetch();
-    aq.removeJobsAndCommit({ar.getAddressIfSet()}, lc);
+    aq.removeJobsAndCommit({ar.getAddressIfSet()}, m_lc);
     aql.release();
 
     cta::objectstore::ScopedExclusiveLock sel(ar);
@@ -2281,7 +2170,7 @@ TEST_F(ObjectStore, GarbageCollectorArchiveAllStatusesAndQueues) {
     ar.setJobStatus(2,cta::objectstore::serializers::ArchiveJobStatus::AJS_ToReportToRepackForFailure);
     ar.commit();
     agentRefToReportToRepackForFailureAutoGC.addToOwnership(ar.getAddressIfSet(),be);
-    ar.garbageCollect(agentRefToReportToRepackForFailureAutoGC.getAgentAddress(),agentRef,lc,catalogue);
+    ar.garbageCollect(agentRefToReportToRepackForFailureAutoGC.getAgentAddress(),getAgentRef(),m_lc,getCatalogue());
 
     //The Archive Request should be queued in the ArchiveQueueToReportToRepackForFailure
     {

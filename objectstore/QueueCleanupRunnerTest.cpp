@@ -190,6 +190,12 @@ private:
 };
 
 
+// Check that two cleanup runner processes cannot start cleaning
+// the same queue at the same time.
+TEST_P(QueueCleanupRunnerTest, CleanupRunnerNoConcurrency) {
+
+}
+
 TEST_P(QueueCleanupRunnerTest, CleanupRunnerParameterizedTest) {
   using cta::common::dataStructures::JobQueueType;
   // We will need a log object

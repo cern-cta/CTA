@@ -264,13 +264,17 @@ OStoreDB::getRetrieveQueuesCleanupInfo(log::LogContext& logContext) {
              "Skipping it.");
       continue;
     }
+   
+    // The queue does not require cleanup or is being cleaned up by another
+    // agent. Skip it. If that agent dies the GarbageCollector will take care of
+    // clearing the CleanupInfo data.
+    if(!rqueue.getQueueCleanupDoCleanup() || rqueue.getQueueCleanupAssignedAgent().has_value()){
+      continue;
+    }
 
     ret.push_back(SchedulerDatabase::RetrieveQueueCleanupInfo());
     ret.back().queueAddress = rqueue.getAddressIfSet();
     ret.back().vid = rqueue.getVid();
-    // If this functions is called getRetrieveQueuesCleanupInfo(), why are we not
-    // filtering the queues here? But passing an object with thousands of queues
-    // to QueueCleanupRunner.cpp:36 that will be iterated again??
     ret.back().doCleanup = rqueue.getQueueCleanupDoCleanup();
     ret.back().assignedAgent = rqueue.getQueueCleanupAssignedAgent();
     ret.back().heartbeat = rqueue.getQueueCleanupHeartbeat();
@@ -2161,9 +2165,9 @@ void OStoreDB::requeueRetrieveRequestJobs(std::list<cta::SchedulerDatabase::Retr
                                           log::LogContext& logContext) {
   std::list<std::shared_ptr<objectstore::RetrieveRequest>> rrlist;
   std::list<objectstore::ScopedExclusiveLock> locks;
-  std::list<common::dataStructures::RetrieveJobToAdd> jobsToRequeue;
+  std::map<std::string, std::list<common::dataStructures::RetrieveJobToAdd>> jobsToRequeue;
   std::list<common::dataStructures::RetrieveJobToAdd> jobsToFail;
- utils::Timer gcrrTimer;
+  utils::Timer gcrrTimer;
 
   std::string activeVidFail;
   std::string activeVidRequeue;
@@ -2186,19 +2190,14 @@ void OStoreDB::requeueRetrieveRequestJobs(std::list<cta::SchedulerDatabase::Retr
 logContext.log(log::INFO, "In OStoreDB::requeueRetrieveRequestJobs(): Classifying retrieve request");
 
     // Move the Job Pointers from the global list to the independent ones
-    switch(rr->reclassifyRetrieveRequest(m_catalogue, logContext)) {
-      case 0:
-        //TODO
-	activeVidRequeue = rr->getLastActiveVid();
-        jobsToRequeue.emplace_back(rr->getJobToAdd());
-        break;
-      case 1:
+    //
+    std::optional<std::string> vidToRequeue = rr->reclassifyRetrieveRequest(m_catalogue, logContext);
+    if (vidToRequeue.has_value()){
+        jobsToRequeue[vidToRequeue.value()].emplace_back(rr->getJobToAdd());
+    } else {
         rr->failJobs(toReportQueueName);
 	activeVidFail = rr->getLastActiveVid();
         jobsToFail.emplace_back(rr->getJobToAdd());
-        break;
-      default:
-        break;
     }
   } // End of job classfication.
 
@@ -2220,13 +2219,15 @@ logContext.log(log::INFO, "In OStoreDB::requeueRetrieveRequestJobs(): Classifyin
   }
 
 
-  if (jobsToRequeue.size()) {
+  for(auto &[activeVid, requestList] : jobsToRequeue){
+    log::ScopedParamContainer params(logContext);
+    params.add("vidToRequeue", activeVid);
+    params.add("requeuedJobCount", requestList.size()); 
     logContext.log(log::INFO, "In OStoreDB::requeueRetrieveRequestJobs(): Requeueing to another VID");
     RetrieveQueue rq(m_objectStore);
     ScopedExclusiveLock rql;
-
-    Helpers::getLockedAndFetchedJobQueue<RetrieveQueue>(rq, rql, *m_agentReference, activeVidRequeue, common::dataStructures::JobQueueType::JobsToTransferForUser, logContext);
-    rq.addJobsAndCommit(jobsToRequeue, *m_agentReference, logContext);
+    Helpers::getLockedAndFetchedJobQueue<RetrieveQueue>(rq, rql, *m_agentReference, activeVid, common::dataStructures::JobQueueType::JobsToTransferForUser, logContext);
+    rq.addJobsAndCommit(requestList, *m_agentReference, logContext);
   }
 
   locks.clear();
@@ -2257,8 +2258,7 @@ std::string OStoreDB::reserveRetrieveQueueForCleanup(const std::string& vid) {
     throw;
   }
 
-  // After locking a queue, check again if the cleanup flag is still true <- Can we actually
-  // reach this condition ?????
+  // After locking a queue, check again if the cleanup flag is still true
   if (!rqtt.getQueueCleanupDoCleanup()) {
     throw RetrieveQueueNotReservedForCleanup(
       "In OStoreDB::reserveRetrieveQueueForCleanup(): Queue no longer has the cleanup flag enabled after fetching. Skipping it.");
@@ -2270,21 +2270,14 @@ std::string OStoreDB::reserveRetrieveQueueForCleanup(const std::string& vid) {
       "In OStoreDB::reserveRetrieveQueueForCleanup(): Queue was reserved by another agent. Cancelling reservation.");
   }
 
-// Otherwise, carry on with cleanup of this queue .
-rqtt.setQueueCleanupAssignedAgent(m_agentReference->getAgentAddress());
-  rqtt.tickQueueCleanupHeartbeat();
+  // Otherwise, carry on with cleanup of this queue .
+  m_agentReference->addToOwnership(rqtt.getAddressIfSet(), m_objectStore);
+  rqtt.setOwner(m_agentReference->getAgentAddress());
+  rqtt.setQueueCleanupAssignedAgent(m_agentReference->getAgentAddress());
   rqtt.commit();
 
-  // We are the first one to reserve the queue. Also reserve the ToReport queue.
-  // Queue should not exist if we are here.
-  //try {
-
-  //} catch() {
-
-  //}
-
-  // Create the queue.
-  rel.lock(re); // What is faster locking here and fetching again or holdin gthe lock since the previous step? Should be this implementation
+  // Create the queue or get it in case a previous agent died and we are taking over.
+  rel.lock(re); // What is faster locking here and fetching again or holding the lock since the previous step? Should be this implementation
   re.fetch();
   const auto reportQueueName = re.addOrGetRetrieveQueueAndCommit(vid, *m_agentReference,
 common::dataStructures::JobQueueType::JobsToReportToUser);
@@ -2293,10 +2286,11 @@ common::dataStructures::JobQueueType::JobsToReportToUser);
   rqtrl.lock(rqtr);
   rqtr.fetch();
 
-    // Mark the ToReport queue for clean so that the DiskReporter does not pick it up.
+  // Mark the ToReport queue for clean so that the DiskReporter does not pick it up.
+  m_agentReference->addToOwnership(rqtr.getAddressIfSet(), m_objectStore);
+  rqtr.setOwner(m_agentReference->getAgentAddress());
   rqtr.setQueueCleanupDoCleanup();
   rqtr.setQueueCleanupAssignedAgent(m_agentReference->getAgentAddress());
-  rqtr.tickQueueCleanupHeartbeat();
   rqtr.commit();
 
   return reportQueueName;

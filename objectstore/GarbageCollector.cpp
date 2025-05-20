@@ -588,13 +588,17 @@ void GarbageCollector::OwnedObjectSorter::lockFetchAndUpdateArchiveJobs(Agent& a
 
 void GarbageCollector::OwnedObjectSorter::lockFetchAndUpdateRetrieveJobs(Agent& agent, AgentReference& agentReference,
     Backend & objectStore, log::LogContext & lc) {
+
   // 2) Get the retrieve requests done. They are simpler as retrieve requests are fully owned.
   // Then should hence not have changes since we pre-fetched them.
   for (auto & retriveQueueIdAndReqs: retrieveQueuesAndRequests) {
     std::string containerIdentifier;
     common::dataStructures::JobQueueType queueType;
     std::string vid;
+
     std::tie(containerIdentifier, queueType, vid) = retriveQueueIdAndReqs.first;
+
+    // Check if the type is transfer and was being cleaned up.
     auto & requestsList = retriveQueueIdAndReqs.second;
     while (requestsList.size()) {
       decltype (retriveQueueIdAndReqs.second) currentJobBatch;

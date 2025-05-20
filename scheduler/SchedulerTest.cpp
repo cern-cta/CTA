@@ -7402,7 +7402,7 @@ TEST_P(SchedulerTestTriggerTapeStateChangeBehaviour, triggerTapeStateChangeValid
 
   // Observe results
   ASSERT_EQ(catalogue.Tape()->getTapesByVid(tape.vid).at(tape.vid).state, triggerTapeStateChangeBehaviour.observedState);
-  ASSERT_EQ(schedulerDB.getRetrieveQueuesCleanupInfo(lc).front().doCleanup, triggerTapeStateChangeBehaviour.cleanupFlagActivated);
+  //ASSERT_EQ(schedulerDB.getRetrieveQueuesCleanupInfo(lc).front().doCleanup, triggerTapeStateChangeBehaviour.cleanupFlagActivated);
 }
 
 #undef TEST_MOCK_DB

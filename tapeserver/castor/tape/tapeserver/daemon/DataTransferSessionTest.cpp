@@ -2437,11 +2437,7 @@ TEST_P(DataTransferSessionTest, DataTransferSessionWrongChecksumMigration) {
   // Behaviour is different from production due to  cta/CTA#1100
 
   // 0) Prepare the logger for everyone
-#ifdef STDOUT_LOGGING
   cta::log::StringLogger logger("dummy","tapeServerUnitTest",cta::log::DEBUG);
-#else
-  cta::log::DummyLogger logger("dummy","tapeServerUnitTest",cta::log::DEBUG);
-#endif
   cta::log::LogContext logContext(logger);
 
   setupDefaultCatalogue();
@@ -2571,7 +2567,7 @@ TEST_P(DataTransferSessionTest, DataTransferSessionWrongChecksumMigration) {
   logToCheck += "";
   ASSERT_EQ(s_vid, sess.getVid());
 
-  std::cout << logToCheck << std::endl;
+  //std::cout << logToCheck << std::endl;
 
   for (const auto & fileNumber : archiveFileIds) {
     if (fileNumber < problematicFseq) {

@@ -41,39 +41,12 @@ void QueueCleanupRunner::runOnePass(log::LogContext &logContext) {
   admin.username = "Queue cleanup runner";
   admin.host = cta::utils::getShortHostname();
 
-  auto queueVidSet = std::set<std::string, std::less<>>();
+  // Get the list os retrieve queues to transfer for user that require
+  // cleaning up and do not have an assigned agent.
   auto queuesForCleanup = m_db.getRetrieveQueuesCleanupInfo(logContext);
 
-  // Get list of alive agents if the cleanup registered agent is still alive do nothing.
-  {
-    ScopedSharedLock arLock(m_agentRegister);
-    m_agentRegister.fetch();
-  }
-  std::list<std::string> agentList = m_agentRegister.getAgents();
-
-  // Check, one-by-one, queues need to be cleaned up
+  auto queueVidSet = std::set<std::string, std::less<>>();
   for (const auto &queue: queuesForCleanup) {
-    logContext.log(log::DEBUG, "Queue agent " + queue.assignedAgent.value_or( "none"));
-    for (const auto& x: agentList) {  logContext.log(log::DEBUG, "Agent List: " + x); }
-    // Do not clean a queue that does not have the cleanup flag set true
-    if (!queue.doCleanup) {
-      continue; // Ignore queue
-    }
-
-    if (queue.assignedAgent.has_value() &&
-        std::find(agentList.begin(), agentList.end(),
-                  queue.assignedAgent.value())
-        != agentList.end()) {
-      // We have found a queue that is being cleaned up by another agent. Locking is downstream so we have to pass the agent address to know if .
-      // If the agent has been cleaned up in the mean time we will be picked up by the
-      // tape server that tries to mount it later on. Garbage collection does not take care of any of this.
-      continue;
-
-      // I guess we could remove the following hearbeat section if the agent does not exist anymore. Can agents get recreated with the same hearbeat in a short period of time? If that is the case then we can have problems with this approach if we are not careful on how we do this.
-      // Current fear is that an agent gets recreated quick enough that it finds that it is still
-      // alive and the hearbeat is set . But maintenance processes live for long and this should
-      // not be the case. But stil...
-    }
     queueVidSet.insert(queue.vid);
   }
 
@@ -125,7 +98,7 @@ void QueueCleanupRunner::runOnePass(log::LogContext &logContext) {
     loopParams.add("tapeVid", queueVid)
               .add("tapeState", common::dataStructures::Tape::stateToString(tapeData.state));
     logContext.log(log::INFO,
-                   "In QueueCleanupRunner::runOnePass(): Will try to reserve retrieve queue.");
+                   "In QueueCleanupRunner::runOnePass(): Will try to reserve the retrieve queue.");
     try {
       toReportQueueName = m_db.reserveRetrieveQueueForCleanup(queueVid);
       log::ScopedParamContainer(logContext)
@@ -182,8 +155,12 @@ void QueueCleanupRunner::runOnePass(log::LogContext &logContext) {
       logContext.log(cta::log::INFO,"In QueueCleanupRunner::runOnePass(): Queue jobs moved.");
     }
 
-    // Reset the queue cleanup info so that dsik reporting can pick up the queue.
-    m_db.freeRetrieveQueueForCleanup(toReportQueueName);
+    // Check if we were able to requeue all jobs. In that case, remove the queue we created.
+    // If not, mark the cleanup flag as finished in the
+    {// Reset the queue cleanup info so that dsik reporting can pick up the queue.
+        m_db.freeRetrieveQueueForCleanup(toReportQueueName);
+	      m_db.trimEmptyQueues(logContext);
+    }
 
     // Finally, update the tape state out of PENDING
     {
