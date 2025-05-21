@@ -23,7 +23,6 @@
 #else
 #include "scheduler/OStoreDB/OStoreDBInit.hpp"
 #endif
-#include "Namespace.hpp"
 
 namespace cta::frontend {
 
@@ -116,11 +115,6 @@ public:
    */
   const std::string& getVerificationMountPolicy() const { return m_verificationMountPolicy; }
 
-  /*!
-   * Get the endpoints for namespace queries
-   */
-  const cta::NamespaceMap_t& getNamespaceMap() const { return m_namespaceMap; }
-
   /*
    * Get the TLS value
    */
@@ -164,11 +158,6 @@ private:
     m_verificationMountPolicy = verificationMountPolicy;
   }
 
-  /*!
-   * Populate the namespace endpoint configuration from a keytab file
-   */
-  void setNamespaceMap(const std::string& keytab_file);
-
   // Member variables
   // clang-format off
   std::unique_ptr<cta::log::Logger>             m_log;                          //!< The logger
@@ -189,7 +178,6 @@ private:
   std::optional<std::string>                    m_repackBufferURL;              //!< The repack buffer URL
   std::optional<uint64_t>                       m_repackMaxFilesToSelect;       //!< The max number of files to expand during a repack
   std::string                                   m_verificationMountPolicy;      //!< The mount policy for verification requests
-  cta::NamespaceMap_t                           m_namespaceMap;                 //!< Endpoints for namespace queries  // gRPC-frontend specific variables
   std::optional<std::string>                    m_port;                         //!< The port for the gRPC server
   std::optional<int>                            m_threads;                      //!< The number of threads used by the gRPC server
   bool                                          m_tls;                          //!< Use TLS encryption for gRPC

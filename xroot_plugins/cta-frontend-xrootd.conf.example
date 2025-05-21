@@ -63,9 +63,6 @@ cta.log.ssi warning
 # CTA Verification Mount Policy
 cta.verification.mount_policy verification
 
-# Keytab containing gRPC endpoints and tokens for each disk instance
-#cta.ns.config /etc/cta/eos.grpc.keytab
-
 #
 # XRootD/SSI options
 #

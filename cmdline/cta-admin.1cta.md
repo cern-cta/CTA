@@ -1,5 +1,5 @@
 ---
-date: 2024-08-15
+date: 2025-05-21
 section: 1cta
 title: CTA-ADMIN
 header: The CERN Tape Archive (CTA)
@@ -141,7 +141,10 @@ drive (dr)
     *drive_name* option accepts a regular expression. If the *drive_name* option is set to **first**,
     the **up**, **down**, **ls** and **ch** commands will scan the local configuration directory
     *\/etc\/cta* and use the drive from the first tape server configuration file found. This does not
-    guarantee that the same drive will be used every time.
+    guarantee that the same drive will be used every time. This command will act only on drives that
+    have the same SchedulerBackendName configured as the frontend the cta-admin client is querying.
+    The only exception to this rule is the *dr ls --all* command, which shows all the drives registered
+    in the catalogue.
 
     **up** puts a drive into active state, able to perform an archive or retrieve mount.
 
@@ -434,14 +437,6 @@ XRD\_CONNECTIONRETRY *1*
 */etc/cta/cta-cli.conf*
 
 :   See **CONFIGURATION** above, and */etc/cta/cta-cli.conf.example*.
-
-*/etc/cta/eos.grpc.keytab*
-
-:   gRPC keys for each instance, used by **cta-admin tapefile ls** to display disk metadata associated with
-    files on tape. The format is one line per disk instance, as follows:
-
-        # disk instance  endpoint (host:port)         gRPC token
-        eosctaphysics    eosctaphysics.cern.ch:50051  bf8d9c49-2eda-40bd-82aa-630a556caf31
 
 # BUGS
 

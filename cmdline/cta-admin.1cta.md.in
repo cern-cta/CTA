@@ -152,14 +152,6 @@ XRD\_CONNECTIONRETRY *1*
 
 :   See **CONFIGURATION** above, and */etc/cta/cta-cli.conf.example*.
 
-*/etc/cta/eos.grpc.keytab*
-
-:   gRPC keys for each instance, used by **cta-admin tapefile ls** to display disk metadata associated with
-    files on tape. The format is one line per disk instance, as follows:
-
-        # disk instance  endpoint (host:port)         gRPC token
-        eosctaphysics    eosctaphysics.cern.ch:50051  bf8d9c49-2eda-40bd-82aa-630a556caf31
-
 # BUGS
 
 When using the **\--json** option, 64-bit integer fields are returned as strings. This is a feature of the

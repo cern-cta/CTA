@@ -30,7 +30,6 @@
 #else
 #include "scheduler/OStoreDB/OStoreDBInit.hpp"
 #endif
-#include "frontend/common/Namespace.hpp"
 #include "frontend/common/FrontendService.hpp"
 
 /*!

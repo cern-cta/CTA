@@ -314,26 +314,6 @@ FrontendService::FrontendService(const std::string& configFilename) : m_archiveF
     }
   }
 
-  // Get the endpoint for namespace queries
-  auto nsConf = config.getOptionValueStr("cta.ns.config");
-  if (nsConf.has_value()) {
-    setNamespaceMap(nsConf.value());
-  } else {
-    log(log::WARNING, "'cta.ns.config' not specified; namespace queries are disabled");
-  }
-
-  {
-    // Log cta.ns.config
-    if (nsConf.has_value()) {
-      std::list<log::Param> params;
-      params.push_back(log::Param("source", configFilename));
-      params.push_back(log::Param("category", "cta.ns"));
-      params.push_back(log::Param("key", "config"));
-      params.push_back(log::Param("value", nsConf.value()));
-      log(log::INFO, "Configuration entry", params);
-    }
-  }
-
   // Configure allowed requests
   {
     // default value for both repack and user requests is "on"
@@ -421,42 +401,6 @@ FrontendService::FrontendService(const std::string& configFilename) : m_archiveF
 
   // All done
   log(log::INFO, std::string("cta-frontend started"), {log::Param("version", CTA_VERSION)});
-}
-
-void FrontendService::setNamespaceMap(const std::string& keytab_file) {
-  // Open the keytab file for reading
-  std::ifstream file(keytab_file);
-  if (!file) {
-    throw cta::exception::UserError("Failed to open namespace keytab configuration file " + keytab_file);
-  }
-
-  // Parse the keytab line by line
-  std::string line;
-  for (int lineno = 0; std::getline(file, line); ++lineno) {
-    // Strip out comments
-    auto pos = line.find('#');
-    if (pos != std::string::npos) {
-      line.resize(pos);
-    }
-
-    // Parse one line
-    std::istringstream ss(line);
-    std::string diskInstance;
-    std::string endpoint;
-    std::string token;
-    std::string eol;
-    ss >> diskInstance >> endpoint >> token >> eol;
-
-    // Ignore blank lines, all other lines must have exactly 3 elements
-    if (token.empty() || !eol.empty()) {
-      if (diskInstance.empty() && endpoint.empty() && token.empty()) {
-        continue;
-      }
-      throw cta::exception::UserError("Could not parse namespace keytab configuration file line " +
-                                      std::to_string(lineno) + ": " + line);
-    }
-    m_namespaceMap.insert(std::make_pair(diskInstance, cta::Namespace(endpoint, token)));
-  }
 }
 
 }  // namespace cta::frontend

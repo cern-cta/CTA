@@ -15,13 +15,10 @@ In addition, the tool must be run from the folder:
 
 `~/CTA/continuousintegration/orchestration/tests`
 
-There must also be a keytab file provided in `/etc/cta/eos.grpc.keytab`. Use the same token as on the eos side. The file should be on the form:
+Finally, as this tool currently reads from `/etc/cta/cta-frontend-xrootd.conf` to get the namespace config, manually add the following to this file:
 
 ```
-# disk instance  endpoint (host:port)           gRPC token
-eosdev           <eoshostname>.cern.ch:50051    <token>
+cta.ns.config /etc/cta/eos.grpc.keytab
 ```
 
-In `continuousintegration/docker/alma9/etc/cta/cta-frontend-xrootd.conf` an option should specify the path to the file:
-
-`cta.ns.config /etc/cta/eos.grpc.keytab`
+Once the tool has been updated to read from a more sensible location, this can be done automatically in the test itself.
