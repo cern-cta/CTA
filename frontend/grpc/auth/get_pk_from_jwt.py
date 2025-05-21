@@ -78,7 +78,10 @@ print("ALG:", alg)
 jwks_url = "http://auth-keycloak:8080/realms/master/protocol/openid-connect/certs"
 response = requests.get(jwks_url)
 jwks = response.json()
-key_data = (jwks['keys']['kid' == kid])
+key_data = next((key for key in jwks["keys"] if key["kid"] == kid), None)
+
+if key_data is None:
+    raise ValueError(f"No key found with kid: {kid}")
 
 print(key_data)
 
