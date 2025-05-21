@@ -147,7 +147,6 @@ buildImage() {
   # Copy the rpms into a predefined rpm directory
   # This is important to ensure that the RPMs are accessible from the Docker build context
   # (as the provided location might be outside of the project root)
-  trap 'rm -rf ${rpm_default_src}' EXIT
   mkdir -p ${rpm_default_src}
   cp -r ${rpm_src} ${rpm_default_src}
 
