@@ -147,6 +147,7 @@ buildImage() {
   # Copy the rpms into a predefined rpm directory
   # This is important to ensure that the RPMs are accessible from the Docker build context
   # (as the provided location might be outside of the project root)
+  trap 'rm -rf ${rpm_default_src}' EXIT
   mkdir -p ${rpm_default_src}
   cp -r ${rpm_src} ${rpm_default_src}
 
@@ -159,7 +160,6 @@ buildImage() {
       --build-arg YUM_REPOS_DIR=${yum_repos_dir} \
       --build-arg YUM_VERSIONLOCK_FILE=${yum_versionlock_file}
   )
-  rm -rf ${rpm_default_src}
 
   if [ "$load_into_minikube" == "true" ]; then
     # This step is necessary because atm the container runtime and minikube don't share the same docker runtime and local registry
