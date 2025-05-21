@@ -58,6 +58,8 @@ usage() {
   echo "      --eos-image-tag:                  Image to use for spawning EOS. If not provided, will default to the image specified in the create_instance script."
   echo "      --cta-config <path>:              Custom Values file to pass to the CTA Helm chart. Defaults to: presets/dev-cta-xrd-values.yaml"
   echo "      --eos-config <path>:              Custom Values file to pass to the EOS Helm chart. Defaults to: presets/dev-eos-values.yaml"
+  echo "      --eos-enabled <true|false>:       Whether to spawn an EOS or not. Defaults to true."
+  echo "      --dcache-enabled <true|false>:    Whether to spawn a dCache or not. Defaults to false."
   exit 1
 }
 
@@ -88,6 +90,8 @@ build_deploy() {
   local eos_image_tag=""
   local container_runtime="podman"
   local build_image="gitlab-registry.cern.ch/linuxsupport/alma9-base:latest"
+  local eos_enabled=true
+  local dcache_enabled=false
 
   # Defaults
   local num_jobs=$(nproc --ignore=2)
@@ -118,6 +122,8 @@ build_deploy() {
     --skip-image-reload) skip_image_reload=true ;;
     --skip-image-cleanup) image_cleanup=false ;;
     --force-install) force_install=true ;;
+    --enable-dcache) dcache_enabled=true ;;
+    --disable-eos) eos_enabled=false ;;
     --upgrade-cta) upgrade_cta=true ;;
     --upgrade-eos) upgrade_eos=true ;;
     --eos-image-tag)
@@ -408,13 +414,11 @@ build_deploy() {
       if [ "$skip_image_reload" == "false" ]; then
         upgrade_options+=" --cta-image-repository localhost/ctageneric --cta-image-tag ${image_tag}"
       fi
-      ./upgrade_cta_instance.sh --namespace ${deploy_namespace} \
-        ${upgrade_options} ${extra_spawn_options}
+      ./upgrade_cta_instance.sh --namespace ${deploy_namespace} ${upgrade_options} ${extra_spawn_options}
     elif [ "$upgrade_eos" = true ]; then
       print_header "UPGRADING EOS INSTANCE"
       cd continuousintegration/orchestration
-      ./upgrade_eos_instance.sh --namespace ${deploy_namespace} \
-        --eos-image-tag ${eos_image_tag}
+      ./deploy_eos_instance.sh --namespace ${deploy_namespace} --eos-image-tag ${eos_image_tag}
     else
       print_header "DELETING OLD CTA INSTANCES"
       # By default we discard the logs from deletion as this is not very useful during development
@@ -454,6 +458,8 @@ build_deploy() {
         --scheduler-config ${scheduler_config} \
         --reset-catalogue \
         --reset-scheduler \
+        --eos-enabled ${eos_enabled} \
+        --dcache-enabled ${dcache_enabled} \
         ${extra_spawn_options}
     fi
   fi
