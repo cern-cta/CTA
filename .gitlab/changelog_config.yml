@@ -1,13 +1,13 @@
 ---
 categories:
   addition: New Features
+  change: Changes
   fix: Bug Fixes
-  change: Changed Behavior
-  deprecation: Deprecated Functionality
-  removal: Removed Functionality
-  security: Security
-  performance: Performance
-  other: Miscellaneous
+  deprecation: Deprecations
+  removal: Removals
+  security: Security Fixes
+  performance: Performance Improvements
+  other: Other
 template: |
   {% if categories %}
   {% each categories %}
