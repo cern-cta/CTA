@@ -159,18 +159,18 @@ fi
 
 # 11. Setting up dummy spaces and file systems for testing
 echo "Setting up dummy spaces and file systems (${FSID_DUMMY_1_NAME}=${FSID_DUMMY_1_VALUE}, ${FSID_DUMMY_2_NAME} =${FSID_DUMMY_2_VALUE}, ${FSID_DUMMY_3_NAME}=${FSID_DUMMY_3_VALUE}) for testing..."
-XrdSecPROTOCOL=sss eos -r 0 0 root://${EOS_MGM_HOST} space define ${FSID_DUMMY_1_NAME}
-XrdSecPROTOCOL=sss eos -r 0 0 root://${EOS_MGM_HOST} space define ${FSID_DUMMY_2_NAME}
-XrdSecPROTOCOL=sss eos -r 0 0 root://${EOS_MGM_HOST} space define ${FSID_DUMMY_3_NAME}
-XrdSecPROTOCOL=sss eos -r 0 0 root://${EOS_MGM_HOST} fs add -m ${FSID_DUMMY_1_VALUE} ${FSID_DUMMY_1_NAME} localhost:1234 /does_not_exist_1 ${FSID_DUMMY_1_NAME}
-XrdSecPROTOCOL=sss eos -r 0 0 root://${EOS_MGM_HOST} fs add -m ${FSID_DUMMY_2_VALUE} ${FSID_DUMMY_2_NAME} localhost:1234 /does_not_exist_2 ${FSID_DUMMY_2_NAME}
-XrdSecPROTOCOL=sss eos -r 0 0 root://${EOS_MGM_HOST} fs add -m ${FSID_DUMMY_3_VALUE} ${FSID_DUMMY_3_NAME} localhost:1234 /does_not_exist_3 ${FSID_DUMMY_3_NAME}
+KRB5CCNAME=/tmp/${EOSADMIN_USER}/krb5cc_0 XrdSecPROTOCOL=krb5 eos -r 0 0 root://${EOS_MGM_HOST} space define ${FSID_DUMMY_1_NAME}
+KRB5CCNAME=/tmp/${EOSADMIN_USER}/krb5cc_0 XrdSecPROTOCOL=krb5 eos -r 0 0 root://${EOS_MGM_HOST} space define ${FSID_DUMMY_2_NAME}
+KRB5CCNAME=/tmp/${EOSADMIN_USER}/krb5cc_0 XrdSecPROTOCOL=krb5 eos -r 0 0 root://${EOS_MGM_HOST} space define ${FSID_DUMMY_3_NAME}
+KRB5CCNAME=/tmp/${EOSADMIN_USER}/krb5cc_0 XrdSecPROTOCOL=krb5 eos -r 0 0 root://${EOS_MGM_HOST} fs add -m ${FSID_DUMMY_1_VALUE} ${FSID_DUMMY_1_NAME} localhost:1234 /does_not_exist_1 ${FSID_DUMMY_1_NAME}
+KRB5CCNAME=/tmp/${EOSADMIN_USER}/krb5cc_0 XrdSecPROTOCOL=krb5 eos -r 0 0 root://${EOS_MGM_HOST} fs add -m ${FSID_DUMMY_2_VALUE} ${FSID_DUMMY_2_NAME} localhost:1234 /does_not_exist_2 ${FSID_DUMMY_2_NAME}
+KRB5CCNAME=/tmp/${EOSADMIN_USER}/krb5cc_0 XrdSecPROTOCOL=krb5 eos -r 0 0 root://${EOS_MGM_HOST} fs add -m ${FSID_DUMMY_3_VALUE} ${FSID_DUMMY_3_NAME} localhost:1234 /does_not_exist_3 ${FSID_DUMMY_3_NAME}
 
 # 12. Adding dummy file systems to namespace
 echo "Adding dummy filesystems ${FSID_DUMMY_1_NAME}, ${FSID_DUMMY_2_NAME} and ${FSID_DUMMY_3_NAME} to ${TEMP_FILE} ..."
-XrdSecPROTOCOL=sss eos -r 0 0 root://${EOS_MGM_HOST} file tag "${TEMP_FILE}" +${FSID_DUMMY_1_VALUE}
-XrdSecPROTOCOL=sss eos -r 0 0 root://${EOS_MGM_HOST} file tag "${TEMP_FILE}" +${FSID_DUMMY_2_VALUE}
-XrdSecPROTOCOL=sss eos -r 0 0 root://${EOS_MGM_HOST} file tag "${TEMP_FILE}" +${FSID_DUMMY_3_VALUE}
+KRB5CCNAME=/tmp/${EOSADMIN_USER}/krb5cc_0 XrdSecPROTOCOL=krb5 eos -r 0 0 root://${EOS_MGM_HOST} file tag "${TEMP_FILE}" +${FSID_DUMMY_1_VALUE}
+KRB5CCNAME=/tmp/${EOSADMIN_USER}/krb5cc_0 XrdSecPROTOCOL=krb5 eos -r 0 0 root://${EOS_MGM_HOST} file tag "${TEMP_FILE}" +${FSID_DUMMY_2_VALUE}
+KRB5CCNAME=/tmp/${EOSADMIN_USER}/krb5cc_0 XrdSecPROTOCOL=krb5 eos -r 0 0 root://${EOS_MGM_HOST} file tag "${TEMP_FILE}" +${FSID_DUMMY_3_VALUE}
 
 # 13. Check that there are 4 replicas advertised on the namespace now
 echo "Checking that ${TEMP_FILE} has 4 replicas advertised on the namespace..."
@@ -284,12 +284,12 @@ fi
 
 # 21. Cleanup dummy spaces and file systems
 echo "Cleaning up dummy spaces and filesystems ${FSID_DUMMY_1_NAME}, ${FSID_DUMMY_2_NAME} and ${FSID_DUMMY_3_NAME}..."
-XrdSecPROTOCOL=sss eos -r 0 0 root://${EOS_MGM_HOST} fs config ${FSID_DUMMY_1_VALUE} configstatus=empty
-XrdSecPROTOCOL=sss eos -r 0 0 root://${EOS_MGM_HOST} fs config ${FSID_DUMMY_2_VALUE} configstatus=empty
-XrdSecPROTOCOL=sss eos -r 0 0 root://${EOS_MGM_HOST} fs config ${FSID_DUMMY_3_VALUE} configstatus=empty
-XrdSecPROTOCOL=sss eos -r 0 0 root://${EOS_MGM_HOST} fs rm ${FSID_DUMMY_1_VALUE}
-XrdSecPROTOCOL=sss eos -r 0 0 root://${EOS_MGM_HOST} fs rm ${FSID_DUMMY_2_VALUE}
-XrdSecPROTOCOL=sss eos -r 0 0 root://${EOS_MGM_HOST} fs rm ${FSID_DUMMY_3_VALUE}
+KRB5CCNAME=/tmp/${EOSADMIN_USER}/krb5cc_0 XrdSecPROTOCOL=krb5 eos -r 0 0 root://${EOS_MGM_HOST} fs config ${FSID_DUMMY_1_VALUE} configstatus=empty
+KRB5CCNAME=/tmp/${EOSADMIN_USER}/krb5cc_0 XrdSecPROTOCOL=krb5 eos -r 0 0 root://${EOS_MGM_HOST} fs config ${FSID_DUMMY_2_VALUE} configstatus=empty
+KRB5CCNAME=/tmp/${EOSADMIN_USER}/krb5cc_0 XrdSecPROTOCOL=krb5 eos -r 0 0 root://${EOS_MGM_HOST} fs config ${FSID_DUMMY_3_VALUE} configstatus=empty
+KRB5CCNAME=/tmp/${EOSADMIN_USER}/krb5cc_0 XrdSecPROTOCOL=krb5 eos -r 0 0 root://${EOS_MGM_HOST} fs rm ${FSID_DUMMY_1_VALUE}
+KRB5CCNAME=/tmp/${EOSADMIN_USER}/krb5cc_0 XrdSecPROTOCOL=krb5 eos -r 0 0 root://${EOS_MGM_HOST} fs rm ${FSID_DUMMY_2_VALUE}
+KRB5CCNAME=/tmp/${EOSADMIN_USER}/krb5cc_0 XrdSecPROTOCOL=krb5 eos -r 0 0 root://${EOS_MGM_HOST} fs rm ${FSID_DUMMY_3_VALUE}
 
 ################################################################
 # Finalize
