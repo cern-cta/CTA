@@ -29,16 +29,16 @@ log_run() {
 }
 
 usage() {
-  echo "Performs a helm upgrade of a running EOS system. For any values not provided, this will reuse the existing values of the deployment."
+  echo "Deploys EOS to a given namespace. If a deployment already exists, it will try and perform an upgrade."
   echo ""
   echo "Usage: $0 -n <namespace> [options]"
   echo ""
   echo "options:"
   echo "  -h, --help:                         Shows help output."
   echo "  -n, --namespace <namespace>:        Specify the Kubernetes namespace."
-  echo "  -r, --eos-image-repository <repo>:  The EOS Docker image name. Defaults to \"gitlab-registry.cern.ch/dss/eos/eos-ci\"."
+  echo "  -r, --eos-image-repository <repo>:  The EOS Docker image name."
   echo "  -i, --eos-image-tag <tag>:          The EOS Docker image tag."
-  echo "      --force:                        Force redeploy all pods in the EOS chart."
+  echo "      --eos-config <file>:            Values file to use for the EOS chart. Defaults to presets/dev-eos-values.yaml."
   exit 1
 }
 
@@ -49,8 +49,7 @@ check_helm_installed() {
   fi
 }
 
-upgrade_instance() {
-  force=0
+deploy() {
   # Parse command line arguments
   while [[ "$#" -gt 0 ]]; do
     case "$1" in
@@ -64,9 +63,9 @@ upgrade_instance() {
       -i|--eos-image-tag)
         eos_image_tag="$2"
         shift ;;
-      --force)
-        force=1
-        ;;
+      --eos-config)
+        eos_config="$2"
+        shift ;;
       *)
         echo "Unsupported argument: $1"
         usage
@@ -86,31 +85,25 @@ upgrade_instance() {
 
 
   helm_flags=""
-  if [ $force == 1 ]; then
-    helm_flags+=" --force"
-  fi
   if [ -n "$eos_image_repository" ]; then
     helm_flags+=" --set global.repository=${eos_image_repository}"
   fi
   if [ -n "$eos_image_tag" ]; then
     helm_flags+=" --set global.tag=${eos_image_tag}"
   fi
+  if [ -n "$eos_image_tag" ]; then
+    helm_flags+=" --values ${eos_config}"
+  fi
 
-  echo "Upgrading EOS chart..."
-  log_run helm upgrade eos oci://registry.cern.ch/eos/charts/server --version 0.2.2-tape \
+  log_run helm upgrade --install eos oci://registry.cern.ch/eos/charts/server --version 0.5.1 \
                       --namespace ${namespace} \
                       --wait --timeout 5m \
                       --reuse-values \
                       ${helm_flags}
-
-}
-
-setup_system() {
   ./setup/configure_eos.sh -n "${namespace}" --mgm-name eos-mgm-0
+
 }
 
 check_helm_installed
-upgrade_instance "$@"
-setup_system
-echo "EOS instance in ${namespace} successfully upgraded:"
-kubectl --namespace ${namespace} get pods
+deploy "$@"
+echo "EOS deployment in namespace ${namespace} successful"

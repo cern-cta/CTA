@@ -51,6 +51,8 @@ usage() {
   echo "      --eos-image-tag <tag>:          Docker image tag for the EOS chart."
   echo "      --eos-image-repository <repo>:  Docker image for EOS chart. Should be the full image name, e.g. \"gitlab-registry.cern.ch/dss/eos/eos-ci\"."
   echo "      --eos-config <file>:            Values file to use for the EOS chart. Defaults to presets/dev-eos-values.yaml."
+  echo "      --eos-enabled <true|false>:     Whether to spawn an EOS instance or not. Defaults to true."
+  echo "      --dcache-enabled <true|false>: Whether to spawn a dCache instance or not. Defaults to false."
   echo "      --cta-config <file>:            Values file to use for the CTA chart. Defaults to presets/dev-cta-xrd-values.yaml."
   exit 1
 }
@@ -110,6 +112,9 @@ create_instance() {
   eos_image_tag=$(jq -r .dev.eosImageTag ${project_json_path})
   eos_image_repository=$(jq -r .dev.eosImageRepository ${project_json_path})
   eos_config=presets/dev-eos-values.yaml
+  eos_enabled=true
+  # dCache
+  dcache_enabled=false
 
   # Parse command line arguments
   while [[ "$#" -gt 0 ]]; do
@@ -159,6 +164,12 @@ create_instance() {
         shift ;;
       --eos-image-tag)
         eos_image_tag="$2"
+        shift ;;
+      --eos-enabled)
+        eos_enabled="$2"
+        shift ;;
+      --dcache-enabled)
+        dcache_enabled="$2"
         shift ;;
       --cta-config)
         cta_config="$2"
@@ -286,15 +297,19 @@ create_instance() {
 
   wait $auth_pid || exit 1
 
-  log_run helm ${helm_command} eos oci://registry.cern.ch/eos/charts/server --version "${eos_server_chart_version}" \
-                                --namespace "${namespace}" \
-                                -f "${eos_config}" \
-                                --set global.repository="${eos_image_repository}" \
-                                --set global.tag="${eos_image_tag}" \
-                                --set fst.tape.gcd.image.repository="${cta_image_repository}" \
-                                --set fst.tape.gcd.image.tag="${cta_image_tag}" \
-                                --wait --timeout 5m &
-  eos_pid=$!
+  if [ $eos_enabled == "true" ] ; then
+    ./deploy_eos_instance.sh --namespace "${namespace}" \
+                            --eos-config "${eos_config}" \
+                            --eos-image-repository "${eos_image_repository}" \
+                            --eos-image-tag "${eos_image_tag}" &
+    eos_pid=$!
+  fi
+
+  if [ $dcache_enabled == "true" ] ; then
+    ./deploy_dcache_instance.sh --namespace "${namespace}" &
+    dcache_pid=$!
+  fi
+
 
   # Wait for the scheduler and catalogue charts to be installed (and exit if 1 failed)
   wait $catalogue_pid || exit 1
@@ -309,8 +324,13 @@ create_instance() {
                                 --set-file global.configuration.scheduler="${scheduler_config}" \
                                 --set-file tpsrv.tapeServers="${tapeservers_config}" \
                                 --wait --timeout 5m
-  # At this point EOS should also be ready
-  wait $eos_pid || exit 1
+  # At this point the disk buffer(s) should also be ready
+  if [ $eos_enabled == "true" ] ; then
+    wait $eos_pid || exit 1
+  fi
+  if [ $dcache_enabled == "true" ] ; then
+    wait $dcache_pid || exit 1
+  fi
   if [ $dry_run == 1 ]; then
     exit 0
   fi
@@ -319,7 +339,6 @@ create_instance() {
 setup_system() {
   ./setup/reset_tapes.sh -n "${namespace}"
   ./setup/kinit_clients.sh -n "${namespace}"
-  ./setup/configure_eos.sh -n "${namespace}" --mgm-name eos-mgm-0
 }
 
 check_helm_installed
