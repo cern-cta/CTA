@@ -108,7 +108,7 @@ std::string Rset::columnBlob(const std::string& colName) const {
 //------------------------------------------------------------------------------
 // columnBlobView
 //------------------------------------------------------------------------------
-std::unique_ptr<wrapper::IBlobView> columnBlobView(const std::string& colName) const {
+std::unique_ptr<wrapper::IBlobView> Rset::columnBlobView(const std::string& colName) const {
   return delegateToImpl<&wrapper::RsetWrapper::columnBlobView>(m_impl, colName);
 };
 
