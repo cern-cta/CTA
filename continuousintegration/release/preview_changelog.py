@@ -80,11 +80,6 @@ def get_commit(api: GitLabAPI, commit_sha: str) -> Optional[Commit]:
 # ------------------------------------------------------------------------------
 
 
-def is_valid_issue_ref(issue: str) -> bool:
-    # Accepts e.g. #123, CTA#123, cta/CTA#123
-    return re.match(r"^((?:\w+/)?\w+)?#\d+", issue) is not None
-
-
 def generate_report(commits: list[Commit], verbose: bool) -> dict[str, list[str]]:
     report: dict[str, list[str]] = {
         "errors": [],
@@ -109,19 +104,6 @@ def generate_report(commits: list[Commit], verbose: bool) -> dict[str, list[str]
         changelog_type = trailers["Changelog"]
         if changelog_type not in changelog_cats:
             warn_string: str = f"({commit_id}) Commit has an unsupported Changelog trailer type"
-            if verbose:
-                warn_string += f"\n{commit_summary(commit)}"
-            report["warnings"].append(warn_string)
-            continue
-        if "Issue" not in trailers:
-            warn_string: str = f"({commit_id}) Commit does not have the Issue trailer"
-            if verbose:
-                warn_string += f"\n{commit_summary(commit)}"
-            report["warnings"].append(warn_string)
-            continue
-        issue = trailers["Issue"]
-        if not is_valid_issue_ref(issue):
-            warn_string: str = f"({commit_id}) Commit does not have a correct issue reference"
             if verbose:
                 warn_string += f"\n{commit_summary(commit)}"
             report["warnings"].append(warn_string)
