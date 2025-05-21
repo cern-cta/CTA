@@ -14,7 +14,7 @@ template: |
   ### {{ title }}
 
   {% each entries %}
-  {{ merge_request.reference }} - {{ title }}
+  - {{ title }}
 
   {% end %}
 
