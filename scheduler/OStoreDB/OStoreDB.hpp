@@ -265,6 +265,7 @@ public:
   std::unique_ptr<SchedulerDatabase::TapeMountDecisionInfo> getMountInfoNoLock(PurposeGetMountInfo purpose,
                                                                                log::LogContext& logContext) override;
   void trimEmptyQueues(log::LogContext& lc) override;
+  void trimEmptyToReportQueueWithVid(const std::string& queueVid, log::LogContext&lc) override;
 
   /* === Archive Mount handling ============================================= */
   class ArchiveJob;

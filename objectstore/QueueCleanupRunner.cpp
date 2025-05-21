@@ -159,7 +159,7 @@ void QueueCleanupRunner::runOnePass(log::LogContext &logContext) {
     // If not, mark the cleanup flag as finished in the
     {// Reset the queue cleanup info so that dsik reporting can pick up the queue.
         m_db.freeRetrieveQueueForCleanup(toReportQueueName);
-	      m_db.trimEmptyQueues(logContext);
+	      m_db.trimEmptyToReportQueueWithVid(toReportQueueName, logContext);
     }
 
     // Finally, update the tape state out of PENDING

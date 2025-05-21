@@ -719,6 +719,10 @@ void RelationalDB::trimEmptyQueues(log::LogContext& lc) {
   throw cta::exception::Exception("Not implemented");
 }
 
+void RelationalDB::trimEmptyToReportQueueWithVid(const std::string& queueVid, log::LogContext& lc) {
+  throw cta::exception::Exception("Not implemented");
+}
+
 std::unique_ptr<SchedulerDatabase::TapeMountDecisionInfo>
 RelationalDB::getMountInfoNoLock(PurposeGetMountInfo purpose, log::LogContext& logContext) {
   utils::Timer t;

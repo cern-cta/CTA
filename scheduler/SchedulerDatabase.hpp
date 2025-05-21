@@ -933,6 +933,8 @@ public:
    */
   virtual void trimEmptyQueues(log::LogContext& lc) = 0;
 
+  virtual void trimEmptyToReportQueueWithVid(const std::string& queueVid, log::LogContext& lc) = 0;
+
   /**
    * A function dumping the relevant mount information for reporting the system
    * status. It is identical to getMountInfo, yet does not take the global lock.

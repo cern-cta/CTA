@@ -957,6 +957,27 @@ void OStoreDB::trimEmptyQueues(log::LogContext& lc) {
 }
 
 //------------------------------------------------------------------------------
+// OStoreDB::trimEmptyToReportQueueWithVid()
+//------------------------------------------------------------------------------
+void OStoreDB::trimEmptyToReportQueueWithVid(const std::string& queueVid, log::LogContext& lc){
+  // Check if the RetrieveQueue is actually empty.
+  RetrieveQueue rq(queueVid, m_objectStore);
+  ScopedExclusiveLock rql(rq);
+  rq.fetch();
+  if(!rq.isEmpty()) {
+    return;
+  }
+  const auto vid = rq.getVid();
+  rql.release();
+  RootEntry re(m_objectStore);
+  ScopedExclusiveLock rel(re);
+  re.fetch();
+  re.removeRetrieveQueueAndCommit(vid,
+    common::dataStructures::JobQueueType::JobsToReportToUser,
+    lc);
+}
+
+//------------------------------------------------------------------------------
 // OStoreDB::TapeMountDecisionInfoNoLock::createArchiveMount()
 //------------------------------------------------------------------------------
 std::unique_ptr<SchedulerDatabase::ArchiveMount>
