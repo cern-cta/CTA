@@ -14,14 +14,3 @@ The test can be run with the following command:
 In addition, the tool must be run from the folder:
 
 `~/CTA/continuousintegration/orchestration/tests`
-
-There must also be a keytab file provided in `/etc/cta/eos.grpc.keytab`. Use the same token as on the eos side. The file should be on the form:
-
-```
-# disk instance  endpoint (host:port)           gRPC token
-eosdev           <eoshostname>.cern.ch:50051    <token>
-```
-
-In `continuousintegration/docker/alma9/etc/cta/cta-frontend-xrootd.conf` an option should specify the path to the file:
-
-`cta.ns.config /etc/cta/eos.grpc.keytab`

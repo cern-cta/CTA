@@ -58,6 +58,12 @@ FRONTEND_IP=$(kubectl -n ${NAMESPACE} get pods cta-frontend -o json | jq .status
 echo
 echo "ADD FRONTEND GATEWAY TO EOS"
 echo "kubectl -n ${NAMESPACE} exec ${EOS_MGM_POD} -c eos-mgm -- bash eos root://${EOS_MGM_HOST} -r 0 0 vid add gateway ${FRONTEND_IP} grpc"
+# Generate random key
+grpc_key=$(openssl rand -hex 12)
+
+kubectl -n ${NAMESPACE} exec ${CTA_FRONTEND_POD} -c cta-frontend -- echo "ctaeos ctaeos:50051 ${grpc_key}" > /etc/cta/eos.grpc.keytab
+kubectl -n ${NAMESPACE} exec ${CTA_FRONTEND_POD} -c cta-frontend -- echo "cta.ns.config /etc/cta/eos.grpc.keytab" >> /etc/cta/cta-frontend-xrootd.conf
+kubectl -n ${NAMESPACE} exec ${EOS_MGM_POD} -c eos-mgm -- eos vid set map -grpc key:${grpc_key} vuid:2 vgid:2
 kubectl -n ${NAMESPACE} exec ${EOS_MGM_POD} -c eos-mgm -- eos -r 0 0 vid add gateway ${FRONTEND_IP} grpc
 
 echo
