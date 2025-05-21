@@ -160,6 +160,7 @@ buildImage() {
       --build-arg YUM_REPOS_DIR=${yum_repos_dir} \
       --build-arg YUM_VERSIONLOCK_FILE=${yum_versionlock_file}
   )
+  rm -rf ${rpm_default_src}
 
   if [ "$load_into_minikube" == "true" ]; then
     # This step is necessary because atm the container runtime and minikube don't share the same docker runtime and local registry

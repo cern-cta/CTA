@@ -53,7 +53,7 @@ CTA_CLI_POD="cta-cli-0"
 CTA_FRONTEND_POD="cta-frontend-0"
 EOS_MGM_POD="eos-mgm-0"
 
-FRONTEND_IP=$(kubectl -n ${NAMESPACE} get pods cta-frontend -o json | jq .status.podIP | tr -d '"')
+FRONTEND_IP=$(kubectl -n ${NAMESPACE} get pods ${CTA_FRONTEND_POD} -o json | jq .status.podIP | tr -d '"')
 
 echo
 echo "ADD FRONTEND GATEWAY TO EOS"
@@ -61,14 +61,16 @@ echo "kubectl -n ${NAMESPACE} exec ${EOS_MGM_POD} -c eos-mgm -- bash eos root://
 # Generate random key
 grpc_key=$(openssl rand -hex 12)
 
-kubectl -n ${NAMESPACE} exec ${CTA_FRONTEND_POD} -c cta-frontend -- echo "ctaeos ctaeos:50051 ${grpc_key}" > /etc/cta/eos.grpc.keytab
-kubectl -n ${NAMESPACE} exec ${CTA_FRONTEND_POD} -c cta-frontend -- echo "cta.ns.config /etc/cta/eos.grpc.keytab" >> /etc/cta/cta-frontend-xrootd.conf
+kubectl -n ${NAMESPACE} exec ${CTA_FRONTEND_POD} -c cta-frontend -- sh -c "echo 'ctaeos ctaeos:50051 ${grpc_key}' > /etc/cta/eos.grpc.keytab"
+# This will fail currently as /etc/cta/cta-frontend-xrootd.conf is a configmap and therefore readonly
+# If this needs to be tested, the dev should manually update the configmap to include this
+# kubectl -n ${NAMESPACE} exec ${CTA_FRONTEND_POD} -c cta-frontend -- sh -c "echo 'cta.ns.config /etc/cta/eos.grpc.keytab' >> /etc/cta/cta-frontend-xrootd.conf"
 kubectl -n ${NAMESPACE} exec ${EOS_MGM_POD} -c eos-mgm -- eos vid set map -grpc key:${grpc_key} vuid:2 vgid:2
 kubectl -n ${NAMESPACE} exec ${EOS_MGM_POD} -c eos-mgm -- eos -r 0 0 vid add gateway ${FRONTEND_IP} grpc
 
 echo
 echo "eos vid ls"
-kubectl -n ${NAMESPACE} exec ${EOS_MGM_POD} -- eos root://${EOS_MGM_HOST} vid ls
+kubectl -n ${NAMESPACE} exec ${EOS_MGM_POD} -c eos-mgm -- eos vid ls
 
 echo
 echo "Launching restore_files_client.sh on client pod"
@@ -107,18 +109,18 @@ echo "kubectl cp ${NAMESPACE}/${CTA_CLI_POD}:/etc/cta/cta-cli.conf ${TMP_DIR}/ct
 echo "kubectl cp ${TMP_DIR}/cta/cta-cli.conf ${NAMESPACE}/cta-frontend:/etc/cta-cli.conf"
 
 kubectl cp ${NAMESPACE}/${CTA_CLI_POD}:/etc/cta/cta-cli.conf ${TMP_DIR}/cta-cli.conf
-kubectl cp ${TMP_DIR}/cta-cli.conf ${NAMESPACE}/cta-frontend:/etc/cta/cta-cli.conf
+kubectl cp ${TMP_DIR}/cta-cli.conf ${NAMESPACE}/${CTA_FRONTEND_POD}:/etc/cta/cta-cli.conf
 
 ##
 # Maybe that this part should entirely be moved to cta-cli pod:
 # there is no reason to install cta-cli rpm on the frontend pod as it is just meant to run the cta-frontend with minimal requirements
 echo
-echo "ENABLE cta-frontend TO EXECUTE CTA ADMIN COMMANDS"
-kubectl --namespace ${NAMESPACE} exec kdc -- cat /root/ctaadmin2.keytab | kubectl --namespace ${NAMESPACE} exec -i cta-frontend --  bash -c "cat > /root/ctaadmin2.keytab; mkdir -p /tmp/ctaadmin2"
-kubectl -n ${NAMESPACE} cp client_helper.sh cta-frontend:/root/client_helper.sh
+echo "ENABLE ${CTA_FRONTEND_POD} TO EXECUTE CTA ADMIN COMMANDS"
+kubectl --namespace ${NAMESPACE} exec ${CLIENT_POD} -- cat /root/ctaadmin2.keytab | kubectl --namespace ${NAMESPACE} exec -i ${CTA_FRONTEND_POD} --  bash -c "cat > /root/ctaadmin2.keytab; mkdir -p /tmp/ctaadmin2"
+kubectl -n ${NAMESPACE} cp client_helper.sh ${CTA_FRONTEND_POD}:/root/client_helper.sh
 touch ${TMP_DIR}/init_kerb.sh
 echo '. /root/client_helper.sh; admin_kinit' >> ${TMP_DIR}/init_kerb.sh
-kubectl -n ${NAMESPACE} cp ${TMP_DIR}/init_kerb.sh cta-frontend:${TMP_DIR}/init_kerb.sh
+kubectl -n ${NAMESPACE} cp ${TMP_DIR}/init_kerb.sh ${CTA_FRONTEND_POD}:${TMP_DIR}/init_kerb.sh
 kubectl -n ${NAMESPACE} exec ${CTA_FRONTEND_POD} -c cta-frontend -- bash ${TMP_DIR}/init_kerb.sh
 # install cta-cli that provides `cta-restore-deleted-files`
 kubectl -n ${NAMESPACE} exec ${CTA_FRONTEND_POD} -c cta-frontend -- bash -c 'rpm -q cta-cli || dnf install -y cta-cli'

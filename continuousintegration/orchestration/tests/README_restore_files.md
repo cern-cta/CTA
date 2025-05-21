@@ -14,3 +14,11 @@ The test can be run with the following command:
 In addition, the tool must be run from the folder:
 
 `~/CTA/continuousintegration/orchestration/tests`
+
+Finally, as this tool currently reads from `/etc/cta/cta-frontend-xrootd.conf` to get the namespace config, manually add the following to this file:
+
+```
+cta.ns.config /etc/cta/eos.grpc.keytab
+```
+
+Once the tool has been updated to read from a more sensible location, this can be done automatically in the test itself.
