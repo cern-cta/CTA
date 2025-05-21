@@ -79,7 +79,7 @@ eos root://${EOS_MGM_HOST} info /eos/ctaeos/cta/${TEST_FILE_NAME}
 echo
 echo "Removing disk replica as poweruser1:powerusers (12001:1200)"
 
-XrdSecPROTOCOL=sss eos -r 0 0 root://${EOS_MGM_HOST} file drop /eos/ctaeos/cta/${TEST_FILE_NAME} 1
+KRB5CCNAME=/tmp/${EOSADMIN_USER}/krb5cc_0 XrdSecPROTOCOL=krb5 eos -r 0 0 root://${EOS_MGM_HOST} file drop /eos/ctaeos/cta/${TEST_FILE_NAME} 1
 echo
 echo "Information about the testing file without disk replica"
 eos root://${EOS_MGM_HOST} ls -l /eos/ctaeos/cta/${TEST_FILE_NAME}

@@ -20,7 +20,6 @@
 INITIALFILESONTAPE=$((${NB_FILES}*${NB_DIRS}))
 
 echo "$(date +%s): Before starting deletion there are ${INITIALFILESONTAPE} files on tape."
-#XrdSecPROTOCOL=sss eos -r 0 0 root://${EOS_MGM_HOST} rm -Fr ${EOS_DIR} &
 eval $delete
 EOSRMPID=$!
 # wait a bit in case eos prematurely fails...

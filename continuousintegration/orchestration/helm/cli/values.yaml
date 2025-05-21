@@ -4,6 +4,8 @@ conf:
   cta:
     endpoint: cta-frontend:10955
 
+krb5PrincName: ctaadmin1
+
 pod:
   extraSpec:
     terminationGracePeriodSeconds: 1

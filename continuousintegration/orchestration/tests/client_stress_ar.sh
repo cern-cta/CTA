@@ -803,7 +803,6 @@ if [[ $REMOVE == 1 ]]; then
   VIDLIST=$(nsls_tapes ${EOS_DIR})
   INITIALFILESONTAPE=$(tapefile_ls ${VIDLIST} | wc -l)
   echo "Before starting deletion there are ${INITIALFILESONTAPE} files on tape."
-  #XrdSecPROTOCOL=sss eos -r 0 0 root://${EOS_MGM_HOST} rm -Fr ${EOS_DIR} &
   KRB5CCNAME=/tmp/${EOSPOWER_USER}/krb5cc_0 XrdSecPROTOCOL=krb5 eos root://${EOS_MGM_HOST} rm -Fr ${EOS_DIR} &
   EOSRMPID=$!
   # wait a bit in case eos prematurely fails...

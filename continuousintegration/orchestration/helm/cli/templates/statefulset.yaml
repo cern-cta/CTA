@@ -31,14 +31,14 @@ spec:
         args:
         - |
           sukadmin() { echo {{ .Values.global.kerberos.adminPrinc.password }} | kadmin -r {{ .Values.global.kerberos.defaultRealm | upper }} -p {{ .Values.global.kerberos.adminPrinc.name }}/admin $@; };
-          sukadmin addprinc -randkey ctaadmin1;
-          sukadmin ktadd -k /root/ctaadmin1_keytab/output/ctaadmin1.keytab ctaadmin1;
+          sukadmin addprinc -randkey {{ .Values.krb5PrincName }};
+          sukadmin ktadd -k /root/{{ .Values.krb5PrincName }}_keytab/output/{{ .Values.krb5PrincName }}.keytab {{ .Values.krb5PrincName }};
         volumeMounts:
         - name: krb5-conf
           mountPath: /etc/krb5.conf
           subPath: krb5.conf
-        - name: ctaadmin1-keytab
-          mountPath: /root/ctaadmin1_keytab/output
+        - name: "{{ .Values.krb5PrincName }}-keytab"
+          mountPath: /root/{{ .Values.krb5PrincName }}_keytab/output
       containers:
       - name: cta-cli
         image: {{ include "ctacli.image" . }}
@@ -77,9 +77,9 @@ spec:
         - name: cta-conf-volume
           mountPath: /etc/cta/cta-cli.conf
           subPath: cta-cli.conf
-        - name: ctaadmin1-keytab
-          mountPath: /root/ctaadmin1.keytab
-          subPath: ctaadmin1.keytab
+        - name: "{{ .Values.krb5PrincName }}-keytab"
+          mountPath: /root/{{ .Values.krb5PrincName }}.keytab
+          subPath: "{{ .Values.krb5PrincName }}.keytab"
         - name: krb5-conf
           mountPath: /etc/krb5.conf
           subPath: krb5.conf
@@ -92,7 +92,7 @@ spec:
       - name: cta-conf-volume
         configMap:
           name: etc-cta-ctacli
-      - name: ctaadmin1-keytab
+      - name: "{{ .Values.krb5PrincName }}-keytab"
         emptyDir: {}
       - name: krb5-conf
         configMap:

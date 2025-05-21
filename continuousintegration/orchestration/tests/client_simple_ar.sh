@@ -42,7 +42,7 @@ echo "********"
 
 echo
 echo "Removing disk replica as poweruser1:powerusers (12001:1200)"
-XrdSecPROTOCOL=sss eos -r 0 0 root://${EOS_MGM_HOST} file drop "${TEST_DIR}/${TEST_FILE_NAME}" 1
+KRB5CCNAME=/tmp/${EOS_POWER_USER}/krb5cc_0 XrdSecPROTOCOL=krb5 eos -r 0 0 root://${EOS_MGM_HOST} file drop "${TEST_DIR}/${TEST_FILE_NAME}" 1
 
 
 echo
