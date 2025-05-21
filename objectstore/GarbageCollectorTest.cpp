@@ -32,9 +32,9 @@
 #include "common/dataStructures/RetrieveJobToAdd.hpp"
 #include "common/exception/Exception.hpp"
 #include "common/log/DummyLogger.hpp"
-//#ifdef STDOUT_LOGGING
+#ifdef STDOUT_LOGGING
 #include "common/log/StdoutLogger.hpp"
-//#endif
+#endif
 #include "common/log/StringLogger.hpp"
 #include "DriveRegister.hpp"
 #include "EntryLogSerDeser.hpp"
@@ -140,14 +140,13 @@ public:
   }
 
   // We will need a log object
-//#ifdef STDOUT_LOGGING
+#ifdef STDOUT_LOGGING
   cta::log::StdoutLogger m_dl;
-//#else
-//  cta::log::DummyLogger m_dl;
-//#endif
+#else
+  cta::log::DummyLogger m_dl;
+#endif
   
   cta::log::LogContext m_lc;
-
 
 private:
   // Prevent copying
