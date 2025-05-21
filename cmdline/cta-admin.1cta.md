@@ -119,7 +119,7 @@ disksystem (ds)
     The two options below are provided to configure backpressure for retrieve operations. Backpressure
     is a mechanism to postpone retrieval of files from tape to the disk buffer when there is insufficient
     disk space. It can be configured separately for each disk system.
-    
+
     Before a retrieve mount, the destination URL of each file is pattern-matched to identify the disk
     system. The corresponding disk instance space is queried to determine if there is sufficient free
     space to perform the mount. If there is insufficient space, the tape server sleeps for the specified
@@ -434,14 +434,6 @@ XRD\_CONNECTIONRETRY *1*
 */etc/cta/cta-cli.conf*
 
 :   See **CONFIGURATION** above, and */etc/cta/cta-cli.conf.example*.
-
-*/etc/cta/eos.grpc.keytab*
-
-:   gRPC keys for each instance, used by **cta-admin tapefile ls** to display disk metadata associated with
-    files on tape. The format is one line per disk instance, as follows:
-
-        # disk instance  endpoint (host:port)         gRPC token
-        eosctaphysics    eosctaphysics.cern.ch:50051  bf8d9c49-2eda-40bd-82aa-630a556caf31
 
 # BUGS
 
