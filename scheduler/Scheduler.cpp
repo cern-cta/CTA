@@ -59,12 +59,12 @@ namespace cta {
 //------------------------------------------------------------------------------
 Scheduler::Scheduler(catalogue::Catalogue& catalogue,
                      SchedulerDatabase& db,
-                     const std::string& schedulerBackendname,
+                     const std::string& schedulerBackendName,
                      const uint64_t minFilesToWarrantAMount,
                      const uint64_t minBytesToWarrantAMount)
     : m_catalogue(catalogue),
       m_db(db),
-      m_schedulerBackendName(schedulerBackendname),
+      m_schedulerBackendName(schedulerBackendName),
       m_minFilesToWarrantAMount(minFilesToWarrantAMount),
       m_minBytesToWarrantAMount(minBytesToWarrantAMount) {
   m_tapeDrivesState = std::make_unique<TapeDrivesCatalogueState>(m_catalogue);
