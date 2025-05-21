@@ -50,9 +50,6 @@ cta.schedulerdb.threadstacksize_mb 1
 # CTA Verification Mount Policy
 # cta.verification.mount_policy verification
 
-# Keytab containing gRPC endpoints and tokens for each disk instance
-#cta.ns.config /etc/cta/eos.grpc.keytab
-
 
 # CTA Frontend log URL
 cta.log.url file:/var/log/cta/cta-frontend.log

@@ -185,7 +185,6 @@ protected:
   const admin::AdminCmd    m_adminCmd;        //!< Administrator Command protocol buffer
   catalogue::Catalogue    &m_catalogue;       //!< Reference to CTA Catalogue
   cta::Scheduler          &m_scheduler;       //!< Reference to CTA Scheduler
-  const NamespaceMap_t     m_namespaceMap;    //!< Identifiers for namespace queries
   log::LogContext          m_lc;              //!< CTA Log Context
 
 private:
