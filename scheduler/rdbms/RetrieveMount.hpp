@@ -42,7 +42,9 @@ class RetrieveMount : public SchedulerDatabase::RetrieveMount {
 public:
   //RetrieveMount(const std::string& ownerId, Transaction& txn, const std::string &vid) :
   //   , m_txn(txn), m_vid(vid) { }
-  RetrieveMount(RelationalDB& pdb) : m_RelationalDB(pdb), m_connPool(pdb.m_connPool), m_jobPool(pdb.m_connPool) {}
+  RetrieveMount(RelationalDB& pdb) : m_RelationalDB(pdb), m_connPool(pdb.m_connPool) {
+    m_jobPool = std::make_shared<schedulerdb::JobPool<schedulerdb::RetrieveRdbJob>>(m_connPool);
+  }
 
   const MountInfo& getMountInfo() override;
 
@@ -95,7 +97,7 @@ public:
 private:
   cta::RelationalDB& m_RelationalDB;
   cta::rdbms::ConnPool& m_connPool;
-  schedulerdb::JobPool<schedulerdb::RetrieveRdbJob> m_jobPool;
+  std::shared_ptr<schedulerdb::JobPool<schedulerdb::RetrieveRdbJob>> m_jobPool;
   void recycleTransferredJobs(std::list<std::unique_ptr<SchedulerDatabase::RetrieveJob>>& jobsBatch,
                               log::LogContext& lc);
 };
