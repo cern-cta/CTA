@@ -53,7 +53,6 @@ JobPool<T>::JobPool(rdbms::ConnPool& connPool, size_t poolSize)
   // Optionally, pre-fill the pool with some job objects
   for (size_t i = 0; i < m_poolSize; ++i) {
     auto job = std::make_unique<T>(m_connPool);
-    job->setPool(this->shared_from_this());  // Set pool in job
     m_pool.push(std::move(job));
   }
 }

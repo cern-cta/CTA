@@ -66,7 +66,7 @@ ArchiveMount::getNextJobBatch(uint64_t filesRequested, uint64_t bytesRequested, 
       common::dataStructures::TapeFile tpfile;
       auto maxBlockId = std::numeric_limits<decltype(tpfile.blockId)>::max();
       while (queuedJobs.next()) {
-        auto job = m_jobPool.acquireJob();
+        auto job = m_jobPool->acquireJob();
         if (!job) {
           throw exception::Exception("In ArchiveMount::getNextJobBatch(): Failed to acquire job from pool.");
         }
