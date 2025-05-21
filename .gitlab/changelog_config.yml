@@ -1,18 +1,20 @@
 ---
 categories:
-  feature: Features
-  bug: Bug Fixes
-  maintenance: Maintenance
-  documentation: Documentation
-  other: Other # While technically supported here, we don't advertise it
+  addition: New Features
+  fix: Bug Fixes
+  change: Changed Behavior
+  deprecation: Deprecated Functionality
+  removal: Removed Functionality
+  security: Security
+  performance: Performance
+  other: Miscellaneous
 template: |
   {% if categories %}
   {% each categories %}
   ### {{ title }}
 
   {% each entries %}
-  - {% if commit.trailers.Issue %} {{ commit.trailers.Issue }} - {% end %}\
-  {{ title }}
+  {{ merge_request.reference }} - {{ title }}
 
   {% end %}
 

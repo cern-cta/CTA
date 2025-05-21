@@ -34,7 +34,7 @@ class ColorCodes:
     UNDERLINE = "\033[4m"
 
 
-changelog_cats: list[str] = ["feature", "bug", "maintenance", "documentation", "other"]
+changelog_cats: list[str] = ["addition", "fix", "change", "deprecation", "removal", "security", "performance", "other"]
 
 # ------------------------------------------------------------------------------
 
