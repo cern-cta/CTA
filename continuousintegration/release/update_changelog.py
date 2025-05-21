@@ -73,22 +73,6 @@ def get_file(api: GitLabAPI, path: str, ref: str) -> bool:
     return api.get(f"repository/files/{path}", params)
 
 
-# https://docs.gitlab.com/ee/api/repository_files.html#update-existing-file-in-repository
-def update_rpm_spec(api: GitLabAPI, spec_path: str, branch: str, content: str, commit_msg: str) -> bool:
-    data: dict = {
-        "branch": branch,
-        "content": content,
-        "commit_message": commit_msg,
-    }
-    result: Optional[str] = api.put(f"repository/files/{spec_path}", json=data)
-    if result is not None:
-        print(f"Update of {spec_path} pushed successfully")
-        return True
-    else:
-        print(f"Failed to update {spec_path}")
-        return False
-
-
 # https://docs.gitlab.com/ee/api/merge_requests.html#create-mr
 # returns the id of the MR
 def create_merge_request(
@@ -274,7 +258,7 @@ if __name__ == "__main__":
         sys.exit(1)
 
     # Create Merge Request
-    mr_title: str = f"Changelog update for release {release_version}"
+    mr_title: str = f"[Misc] Update changelog for release {release_version}"
     reviewers: list[str] = [args.reviewer]
     labels: list[str] = ["workflow::in review"]
     mr_id: Optional[int] = create_merge_request(
@@ -289,10 +273,4 @@ if __name__ == "__main__":
     if mr_id is None:
         sys.exit(1)
 
-    # Add a review comment to the Merge Request
-    success = add_mr_review_comment(
-        api, mr_id, spec_path, line_number + 1, "Please add any specific notes for this release here."
-    )
-    if not success:
-        sys.exit(1)
     print(f"Script completed successfully.")
