@@ -22,7 +22,8 @@ secrets:
     content: "0 u:ctaeos g:ctaeos n:ctaeos+ N:7449334094434926593 c:1734433252 e:0 f:0 k:32869bcee6fb7ccfb835e28b2622286260d93ea5b5ad5aa3d854ba59c8754e6"
   - secretName: server-key
     fileName: server.key
-    content: "-----BEGIN PRIVATE KEY-----
+    content: |
+      -----BEGIN PRIVATE KEY-----
       MIIJQQIBADANBgkqhkiG9w0BAQEFAASCCSswggknAgEAAoICAQDZHSh43hbag13w
       2kFdrLzbVYmQtPy25JimsNIvt3j80mbIuaRFOS8Idt+Ej2E1XSsxmsXddG8CHk/o
       oVpSlG5ZeGyj/pjPJ2eWMaA7jGUsCMthMP8QfSJLNwYhdJTCUGrSbA1dlnLz/sut
@@ -73,10 +74,11 @@ secrets:
       d797ryolrgC/P3Rt6VR0sP+Hoi1I++dXeF+wQNCIVMhLG0V2OG3D+er6m3V+VZMV
       PDCqlJvvCJTxiYdKdjRDOEyFSmJNQ3Euuk4r4zlPzOjXBkykUUEOFb05Nr8XcASV
       XwQfSOd0zB0aE73rdIqiMsP3jQO3
-      -----END PRIVATE KEY-----"
+      -----END PRIVATE KEY-----
   - secretName: server-cert
     fileName: server.crt
-    content: "-----BEGIN CERTIFICATE-----
+    content: |
+      -----BEGIN CERTIFICATE-----
       MIIFPjCCAyYCAQEwDQYJKoZIhvcNAQELBQAwXzELMAkGA1UEBhMCQ0gxDzANBgNV
       BAgMBkdlbmV2YTEPMA0GA1UEBwwGR2VuZXZhMQ0wCwYDVQQKDARUZXN0MQ0wCwYD
       VQQLDARUZXN0MRAwDgYDVQQDDAdSb290IENBMB4XDTI1MDUyMDEyMDM0NloXDTI2
@@ -106,10 +108,11 @@ secrets:
       ZhzBrz+MbMh0+EXDIaD/T75FTS+pr6YqO24mkJm1dMp8G0JWcWMd5Wxcavz58dmd
       rMuGeoQJOY1t3QBkgXHWizwtg85zOnsA5gT0YXikjrx7GExsKhrTpJwOxIdQHp4L
       Y6M=
-      -----END CERTIFICATE-----"
+      -----END CERTIFICATE-----
   - secretName: ca-cert
     fileName: ca.crt
-    content: "-----BEGIN CERTIFICATE-----
+    content: |
+      -----BEGIN CERTIFICATE-----
       MIIFnzCCA4egAwIBAgIUIBcV0mBiA+XnCXG9Q3T3yFPE0dEwDQYJKoZIhvcNAQEL
       BQAwXzELMAkGA1UEBhMCQ0gxDzANBgNVBAgMBkdlbmV2YTEPMA0GA1UEBwwGR2Vu
       ZXZhMQ0wCwYDVQQKDARUZXN0MQ0wCwYDVQQLDARUZXN0MRAwDgYDVQQDDAdSb290
@@ -141,7 +144,8 @@ secrets:
       4A1W5Bv5mjr1ZVunBwaP6zR+tYziW2FyM+/IWxCly4C2dlI8XyMvFHzEDUgZi3I6
       D11oJk7hmjRcoJ5eM93NPCsn1VYET+NB8olJkmuEeInOwpWvZGVY0SVSXrhyNqA8
       xB2r
-      -----END CERTIFICATE-----"
+      -----END CERTIFICATE-----
+
 
 kerberos:
   defaultRealm: TEST.CTA
