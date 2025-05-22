@@ -363,7 +363,7 @@ void MaintenanceHandler::exceptionThrowingRunChild(){
         {
           log::ScopedParamContainer params(m_processManager.logContext());
           params.add("passTime", onePass.secs());
-          m_processManager.logContext().log(log::INFO, "In MaintenanceHandler::exceptionThrowingRunChild(): Repack Request manager run one pass." done);
+          m_processManager.logContext().log(log::INFO, "In MaintenanceHandler::exceptionThrowingRunChild(): Repack Request manager run one pass done.");
         }
       }
       try {
