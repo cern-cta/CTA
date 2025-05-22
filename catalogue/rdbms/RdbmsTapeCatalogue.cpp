@@ -866,6 +866,20 @@ void RdbmsTapeCatalogue::modifyTapeState(const common::dataStructures::SecurityI
     throw UserSpecifiedANonExistentTape(std::string("Cannot modify the state of the tape ") + vid +
                                         " because it does not exist");
   }
+
+  log::LogContext lc(m_log);
+  log::ScopedParamContainer spc(lc);
+  spc.add("vid", vid);
+
+  if (prev_state.has_value()) {
+    spc.add("prevTapeState", prevStateStr);
+  }
+
+  spc.add("tapeState", stateStr)
+      .add("lastUpdateUserName", admin.username)
+      .add("lastUpdateHostName", admin.host)
+      .add("lastUpdateTime", now);
+  lc.log(log::INFO, "Catalogue - user modified tape - state");
 }
 
 bool RdbmsTapeCatalogue::tapeExists(const std::string &vid) const {

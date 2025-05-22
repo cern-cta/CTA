@@ -234,12 +234,16 @@ RelationalDB::getNextRetrieveJobsToTransferBatch(const std::string& vid, uint64_
 }
 
 void RelationalDB::requeueRetrieveRequestJobs(std::list<cta::SchedulerDatabase::RetrieveJob*>& jobs,
-                                              log::LogContext& lc) {
+                                              std::string toRequeueName,
+		                              log::LogContext& lc) {
   throw cta::exception::Exception("Not implemented");
 }
 
-void RelationalDB::reserveRetrieveQueueForCleanup(const std::string& vid,
-                                                  std::optional<uint64_t> cleanupHeartBeatValue) {
+std::string RelationalDB::reserveRetrieveQueueForCleanup(const std::string& vid) {
+  throw cta::exception::Exception("Not implemented");
+}
+
+void freeRetrieveQueueForCleanup(const std::string& vid) {
   throw cta::exception::Exception("Not implemented");
 }
 
@@ -713,6 +717,10 @@ RelationalDB::getMountInfo(std::string_view logicalLibraryName, log::LogContext&
 }
 
 void RelationalDB::trimEmptyQueues(log::LogContext& lc) {
+  throw cta::exception::Exception("Not implemented");
+}
+
+bool RelationalDB::trimEmptyToReportQueueWithVid(const std::string& queueVid, log::LogContext& lc) {
   throw cta::exception::Exception("Not implemented");
 }
 

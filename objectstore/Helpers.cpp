@@ -369,7 +369,7 @@ void Helpers::getLockedAndFetchedRepackQueue(RepackQueue& queue, ScopedExclusive
 // Helpers::selectBestRetrieveQueue()
 //------------------------------------------------------------------------------
 std::string Helpers::selectBestRetrieveQueue(const std::set<std::string, std::less<>>& candidateVids,
-  cta::catalogue::Catalogue & catalogue, objectstore::Backend & objectstore, bool isRepack) {
+  cta::catalogue::Catalogue & catalogue, objectstore::Backend & objectstore,  log::LogContext& lc, bool isRepack) {
   // We will build the retrieve stats of the non-disabled, non-broken/exported candidate vids here
   std::list<SchedulerDatabase::RetrieveQueueStatistics> candidateVidsStats;
   // We will build the retrieve stats of the disabled vids here, as a fallback
@@ -409,7 +409,7 @@ std::string Helpers::selectBestRetrieveQueue(const std::set<std::string, std::le
       // If an update is in progress, we wait on it, and get the result after.
       // We have to release the global lock while doing so.
       if (g_retrieveQueueStatistics.at(v).updating) {
-        logUpdateCacheIfNeeded(false,g_retrieveQueueStatistics.at(v),"g_retrieveQueueStatistics.at(v).updating");
+        logUpdateCacheIfNeeded(false,g_retrieveQueueStatistics.at(v),"g_retrieveQueueStatistics.at(v).updating", lc);
         // Cache is updating, we wait on update.
         auto updateFuture = g_retrieveQueueStatistics.at(v).updateFuture;
         grqsmLock.unlock();
@@ -417,11 +417,11 @@ std::string Helpers::selectBestRetrieveQueue(const std::set<std::string, std::le
         grqsmLock.lock();
         if ((g_retrieveQueueStatistics.at(v).tapeStatus.state == common::dataStructures::Tape::ACTIVE && !isRepack) ||
             (g_retrieveQueueStatistics.at(v).tapeStatus.state == common::dataStructures::Tape::REPACKING && isRepack)) {
-          logUpdateCacheIfNeeded(false,g_retrieveQueueStatistics.at(v),"(g_retrieveQueueStatistics.at(v).tapeStatus.state == common::dataStructures::Tape::ACTIVE && !isRepack) || (g_retrieveQueueStatistics.at(v).tapeStatus.state == common::dataStructures::Tape::REPACKING && isRepack)");
+          logUpdateCacheIfNeeded(false,g_retrieveQueueStatistics.at(v),"(g_retrieveQueueStatistics.at(v).tapeStatus.state == common::dataStructures::Tape::ACTIVE && !isRepack) || (g_retrieveQueueStatistics.at(v).tapeStatus.state == common::dataStructures::Tape::REPACKING && isRepack)", lc);
           candidateVidsStats.emplace_back(g_retrieveQueueStatistics.at(v).stats);
         } else if ((g_retrieveQueueStatistics.at(v).tapeStatus.state == common::dataStructures::Tape::DISABLED && !isRepack) ||
                   (g_retrieveQueueStatistics.at(v).tapeStatus.state == common::dataStructures::Tape::REPACKING_DISABLED && isRepack)) {
-          logUpdateCacheIfNeeded(false,g_retrieveQueueStatistics.at(v),"(g_retrieveQueueStatistics.at(v).tapeStatus.state == common::dataStructures::Tape::DISABLED && !isRepack) || (g_retrieveQueueStatistics.at(v).tapeStatus.state == common::dataStructures::Tape::REPACKING_DISABLED && isRepack)");
+          logUpdateCacheIfNeeded(false,g_retrieveQueueStatistics.at(v),"(g_retrieveQueueStatistics.at(v).tapeStatus.state == common::dataStructures::Tape::DISABLED && !isRepack) || (g_retrieveQueueStatistics.at(v).tapeStatus.state == common::dataStructures::Tape::REPACKING_DISABLED && isRepack)", lc);
           candidateVidsStatsFallback.emplace_back(g_retrieveQueueStatistics.at(v).stats);
         }
       } else {
@@ -430,13 +430,13 @@ std::string Helpers::selectBestRetrieveQueue(const std::set<std::string, std::le
         if (timeSinceLastUpdate >= g_retrieveQueueCacheMaxAge) {
           if (g_retrieveQueueCacheMaxAge) {
             logUpdateCacheIfNeeded(false,g_retrieveQueueStatistics.at(v), "timeSinceLastUpdate (" + std::to_string(timeSinceLastUpdate) + ")> g_retrieveQueueCacheMaxAge ("
-                                                                          + std::to_string(g_retrieveQueueCacheMaxAge) + "), cache needs to be updated");
+                                                                          + std::to_string(g_retrieveQueueCacheMaxAge) + "), cache needs to be updated", lc);
           }
           throw std::out_of_range("");
         }
 
         logUpdateCacheIfNeeded(false,g_retrieveQueueStatistics.at(v), "Cache is not updated, timeSinceLastUpdate (" + std::to_string(timeSinceLastUpdate) +
-                                                                      ") <= g_retrieveQueueCacheMaxAge (" + std::to_string(g_retrieveQueueCacheMaxAge) + ")");
+                                                                      ") <= g_retrieveQueueCacheMaxAge (" + std::to_string(g_retrieveQueueCacheMaxAge) + ")", lc);
         // We're lucky: cache hit (and not stale)
         if ((g_retrieveQueueStatistics.at(v).tapeStatus.state == common::dataStructures::Tape::ACTIVE && !isRepack) ||
             (g_retrieveQueueStatistics.at(v).tapeStatus.state == common::dataStructures::Tape::REPACKING && isRepack)) {
@@ -485,7 +485,7 @@ std::string Helpers::selectBestRetrieveQueue(const std::set<std::string, std::le
       g_retrieveQueueStatistics[v].stats = queuesStats.front();
       g_retrieveQueueStatistics[v].tapeStatus = tapeStatus;
       g_retrieveQueueStatistics[v].updateTime = time(nullptr);
-      logUpdateCacheIfNeeded(true,g_retrieveQueueStatistics[v]);
+      logUpdateCacheIfNeeded(true,g_retrieveQueueStatistics[v], "", lc);
       // Signal to potential waiters
       updatePromise.set_value();
       // Update our own candidate list if needed.
@@ -527,7 +527,7 @@ std::string Helpers::selectBestRetrieveQueue(const std::set<std::string, std::le
 //------------------------------------------------------------------------------
 // Helpers::updateRetrieveQueueStatisticsCache()
 //------------------------------------------------------------------------------
-void Helpers::updateRetrieveQueueStatisticsCache(const std::string& vid, uint64_t files, uint64_t bytes, uint64_t priority) {
+void Helpers::updateRetrieveQueueStatisticsCache(const std::string& vid, uint64_t files, uint64_t bytes, uint64_t priority, log::LogContext& lc) {
   // We will not update the status of the tape if we already cached it (caller did not check),
   // We will also not update the update time, to force an update after a while.
   // If we update the entry while another thread is updating it, this is harmless (cache users will
@@ -537,7 +537,7 @@ void Helpers::updateRetrieveQueueStatisticsCache(const std::string& vid, uint64_
     g_retrieveQueueStatistics.at(vid).stats.filesQueued=files;
     g_retrieveQueueStatistics.at(vid).stats.bytesQueued=bytes;
     g_retrieveQueueStatistics.at(vid).stats.currentPriority = priority;
-    logUpdateCacheIfNeeded(false,g_retrieveQueueStatistics.at(vid));
+    logUpdateCacheIfNeeded(false,g_retrieveQueueStatistics.at(vid), "", lc);
   } catch (std::out_of_range &) {
     // The entry is missing. We just create it.
     g_retrieveQueueStatistics[vid].stats.filesQueued=files;
@@ -553,7 +553,7 @@ void Helpers::updateRetrieveQueueStatisticsCache(const std::string& vid, uint64_
       g_retrieveQueueStatistics[vid].tapeStatus.state = common::dataStructures::Tape::ACTIVE;
       g_retrieveQueueStatistics[vid].tapeStatus.full = false;
     }
-    logUpdateCacheIfNeeded(true,g_retrieveQueueStatistics[vid]);
+    logUpdateCacheIfNeeded(true,g_retrieveQueueStatistics[vid], "", lc);
   }
 }
 
@@ -686,19 +686,13 @@ void Helpers::removeRepackRequestToIndex(const std::string& vid, Backend& backen
 }
 
 void Helpers::logUpdateCacheIfNeeded(const bool entryCreation, const RetrieveQueueStatisticsWithTime& tapeStatistic,
-  const std::string& message) {
-  #ifdef HELPERS_CACHE_UPDATE_LOGGING
-    std::ofstream logFile(HELPERS_CACHE_UPDATE_LOGGING_FILE, std::ofstream::app);
-    std::time_t end_time = std::chrono::system_clock::to_time_t(std::chrono::system_clock::now());
-    // Chomp newline in the end
-    std::string date = std::ctime(&end_time);
-    date.erase(std::remove(date.begin(), date.end(), '\n'), date.end());
-    logFile << date << " pid=" << ::getpid() << " tid=" << syscall(SYS_gettid)
-            << " message=" << message << " entryCreation="<< entryCreation
-            <<" vid=" << tapeStatistic.tapeStatus.vid
-            << " state=" << common::dataStructures::Tape::stateToString(tapeStatistic.tapeStatus.state)
-            << " filesQueued=" << tapeStatistic.stats.filesQueued <<  std::endl;
-  #endif  // HELPERS_CACHE_UPDATE_LOGGING
+  const std::string& message, log::LogContext& lc) {
+    log::ScopedParamContainer cacheParams(lc);
+    cacheParams.add("vid", tapeStatistic.tapeStatus.vid)
+      .add("entryCreation", entryCreation)
+      .add("state", common::dataStructures::Tape::stateToString(tapeStatistic.tapeStatus.state))
+      .add("filesQueued", tapeStatistic.stats.filesQueued);
+    lc.log(log::INFO, message);
 }
 
 } // namespace cta::objectstore

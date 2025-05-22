@@ -27,6 +27,7 @@
 #include "common/dataStructures/LifecycleTimings.hpp"
 #include "common/dataStructures/RetrieveFileQueueCriteria.hpp"
 #include "common/dataStructures/RetrieveRequest.hpp"
+#include "common/dataStructures/RetrieveJobToAdd.hpp"
 #include "MountPolicySerDeser.hpp"
 #include "ObjectOps.hpp"
 #include "objectstore/cta.pb.h"
@@ -49,6 +50,9 @@ public:
     cta::catalogue::Catalogue& catalogue) override;
   void garbageCollectRetrieveRequest(const std::string& presumedOwner, AgentReference& agentReference, log::LogContext& lc,
     cta::catalogue::Catalogue& catalogue, bool isQueueCleanup);
+  void failJob(std::string& newOwner);
+  std::optional<std::string> reclassifyRetrieveRequest(cta::catalogue::Catalogue& catalogue, log::LogContext& lc);
+  common::dataStructures::RetrieveJobToAdd getJobToAdd();
   // Job management ============================================================
   void addJob(uint32_t copyNumber, uint16_t maxRetriesWithinMount, uint16_t maxTotalRetries, uint16_t maxReportRetries);
   std::string getLastActiveVid();
@@ -317,4 +321,4 @@ private:
 
 };
 
-}}
+}} // namespace cta::objectstore

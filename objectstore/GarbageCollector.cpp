@@ -21,6 +21,7 @@
 #include "AgentReference.hpp"
 #include "ArchiveQueueAlgorithms.hpp"
 #include "ArchiveRequest.hpp"
+#include "common/dataStructures/RetrieveJobToAdd.cpp"
 #include "common/exception/NoSuchObject.hpp"
 #include "GarbageCollector.hpp"
 #include "Helpers.hpp"
@@ -322,7 +323,7 @@ void GarbageCollector::OwnedObjectSorter::sortFetchedObjects(Agent& agent, std::
                      .add("containerIdentifier", containerIdentifier)
                      .add("copynb", j.copyNb)
                      .add("fileId", ar->getArchiveFile().archiveFileID);
-              lc.log(log::INFO, "Selected archive request for requeueing to the corresponding queue");
+              lc.log(log::INFO, "In GarbageCollector::OwnedObjectSorter::fetchOwnedObjects(): Selected archive request for requeueing to the corresponding queue");
               jobRequeued=true;
             } catch (ArchiveRequest::JobNotQueueable &) {
               log::ScopedParamContainer params3(lc);
@@ -331,14 +332,14 @@ void GarbageCollector::OwnedObjectSorter::sortFetchedObjects(Agent& agent, std::
                      .add("copynb", j.copyNb)
                      .add("status",ArchiveRequest::statusToString(j.status))
                      .add("fileId", ar->getArchiveFile().archiveFileID);
-              lc.log(log::WARNING, "Job garbage collected with a status not queueable. Leaving it as is.");
+              lc.log(log::WARNING, "In GarbageCollector::OwnedObjectSorter::fetchOwnedObjects(): Job garbage collected with a status not queueable. Leaving it as is.");
             }
           }
         }
         if (!jobRequeued) {
           log::ScopedParamContainer params3(lc);
           params3.add("fileId", ar->getArchiveFile().archiveFileID);
-          lc.log(log::INFO, "No active archive job to requeue found. Request will remain as-is.");
+          lc.log(log::INFO, "In GarbageCollector::OwnedObjectSorter::fetchOwnedObjects(): No active archive job to requeue found. Request will remain as-is.");
         }
         break;
       }
@@ -376,7 +377,7 @@ void GarbageCollector::OwnedObjectSorter::sortFetchedObjects(Agent& agent, std::
             log::ScopedParamContainer params3(lc);
             params3.add("fileId", rr->getArchiveFile().archiveFileID)
                    .add("exceptionMessage", ex.getMessageValue());
-            lc.log(log::ERR, "Failed to determine destination queue for retrieve request. Marking request for normal GC (and probably deletion).");
+            lc.log(log::ERR, "In GarbageCollector::OwnedObjectSorter::fetchOwnedObjects(): Failed to determine destination queue for retrieve request. Marking request for normal GC (and probably deletion).");
             otherObjects.emplace_back(new GenericObject(rr->getAddressIfSet(), objectStore));
             break;
           }
@@ -384,11 +385,11 @@ void GarbageCollector::OwnedObjectSorter::sortFetchedObjects(Agent& agent, std::
         // Back to the transfer case.
         std::string vid;
         try {
-          vid=Helpers::selectBestRetrieveQueue(candidateVids, catalogue, objectStore, isRepack);
-        } catch (Helpers::NoTapeAvailableForRetrieve & ex) {
+          vid=objectstore::Helpers::selectBestRetrieveQueue(candidateVids, catalogue, objectStore, lc, isRepack);
+        } catch (objectstore::Helpers::NoTapeAvailableForRetrieve & ex) {
           log::ScopedParamContainer params3(lc);
           params3.add("fileId", rr->getArchiveFile().archiveFileID);
-          lc.log(log::INFO, "No available tape found. Marking request for normal GC (and probably deletion).");
+          lc.log(log::INFO, "In GarbageCollector::OwnedObjectSorter::fetchOwnedObjects(): No available tape found. Marking request for normal GC (and probably deletion).");
           otherObjects.emplace_back(new GenericObject(rr->getAddressIfSet(), objectStore));
           break;
         }
@@ -402,7 +403,7 @@ void GarbageCollector::OwnedObjectSorter::sortFetchedObjects(Agent& agent, std::
                .add("copyNb", copyNb)
                .add("tapeVid", vid)
                .add("fSeq", fSeq);
-        lc.log(log::INFO, "Selected vid to be requeued for retrieve request.");
+        lc.log(log::INFO, "In GarbageCollector::OwnedObjectSorter::fetchOwnedObjects(): Selected vid to be requeued for retrieve request.");
       }
       break;
       default:
@@ -565,13 +566,13 @@ void GarbageCollector::OwnedObjectSorter::lockFetchAndUpdateArchiveJobs(Agent& a
           ownershipUpdated=true;
           log::ScopedParamContainer params(lc);
           params.add("archiveRequestObject", ar->getAddressIfSet());
-          lc.log(log::DEBUG, "Removed AR from agent ownership.");
+          lc.log(log::DEBUG, "In GarbageCollector::OwnedObjectSorter::lockFetchAndUpdateArchiveJobs(): Removed AR from agent ownership.");
         } else {
           log::ScopedParamContainer params(lc);
           params.add("archiveRequestObject", ar->getAddressIfSet())
                 .add("use_count", ar.use_count())
                 .add("IndividuallyGCed", jobsIndividuallyGCed.count(ar->getAddressIfSet()));
-          lc.log(log::DEBUG, "Did not remove AR from agent ownership.");
+          lc.log(log::DEBUG, "In GarbageCollector::OwnedObjectSorter::lockFetchAndUpdateArchiveJobs(): Did not remove AR from agent ownership.");
         }
       }
       if (ownershipUpdated) {
@@ -587,13 +588,17 @@ void GarbageCollector::OwnedObjectSorter::lockFetchAndUpdateArchiveJobs(Agent& a
 
 void GarbageCollector::OwnedObjectSorter::lockFetchAndUpdateRetrieveJobs(Agent& agent, AgentReference& agentReference,
     Backend & objectStore, log::LogContext & lc) {
+
   // 2) Get the retrieve requests done. They are simpler as retrieve requests are fully owned.
   // Then should hence not have changes since we pre-fetched them.
   for (auto & retriveQueueIdAndReqs: retrieveQueuesAndRequests) {
     std::string containerIdentifier;
     common::dataStructures::JobQueueType queueType;
     std::string vid;
+
     std::tie(containerIdentifier, queueType, vid) = retriveQueueIdAndReqs.first;
+
+    // Check if the type is transfer and was being cleaned up.
     auto & requestsList = retriveQueueIdAndReqs.second;
     while (requestsList.size()) {
       decltype (retriveQueueIdAndReqs.second) currentJobBatch;
@@ -622,7 +627,7 @@ void GarbageCollector::OwnedObjectSorter::lockFetchAndUpdateRetrieveJobs(Agent& 
       filesBefore=jobsSummary.jobs;
       bytesBefore=jobsSummary.bytes;
       // Prepare the list of requests to add to the queue (if needed).
-      std::list<RetrieveQueue::JobToAdd> jta;
+      std::list<common::dataStructures::RetrieveJobToAdd> jta;
       // We have the queue. We will loop on the requests, add them to the list. We will launch their updates
       // after committing the queue.
       for (auto & rr: currentJobBatch) {

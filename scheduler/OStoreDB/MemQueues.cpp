@@ -18,6 +18,7 @@
 #include "MemQueues.hpp"
 #include "OStoreDB.hpp"
 #include "objectstore/Helpers.hpp"
+#include "common/dataStructures/RetrieveJobToAdd.hpp"
 
 namespace cta::ostoredb {
 
@@ -43,7 +44,7 @@ template<>
 void MemQueue<objectstore::RetrieveRequest, objectstore::RetrieveQueue>::specializedAddJobsToQueueAndCommit(
   std::list<MemQueue<objectstore::RetrieveRequest, objectstore::RetrieveQueue>::JobAndRequest> & jobsToAdd,
   objectstore::RetrieveQueue &queue, objectstore::AgentReference & agentReference, log::LogContext & logContext) {
-  std::list<objectstore::RetrieveQueue::JobToAdd> jtal;
+  std::list<common::dataStructures::RetrieveJobToAdd> jtal;
   auto queueAddress = queue.getAddressIfSet();
   for (auto & jta: jobsToAdd) {
     // We need to find the job corresponding to the copyNb
@@ -65,12 +66,12 @@ void MemQueue<objectstore::RetrieveRequest, objectstore::RetrieveQueue>::special
 }
 
 template<>
-void MemQueue<objectstore::ArchiveRequest,objectstore::ArchiveQueue>::specializedUpdateCachedQueueStats(objectstore::ArchiveQueue &queue) {}
+void MemQueue<objectstore::ArchiveRequest,objectstore::ArchiveQueue>::specializedUpdateCachedQueueStats(objectstore::ArchiveQueue &queue, log::LogContext &lc) {}
 
 template<>
-void MemQueue<objectstore::RetrieveRequest,objectstore::RetrieveQueue>::specializedUpdateCachedQueueStats(objectstore::RetrieveQueue &queue) {
+void MemQueue<objectstore::RetrieveRequest,objectstore::RetrieveQueue>::specializedUpdateCachedQueueStats(objectstore::RetrieveQueue &queue, log::LogContext &lc) {
   auto summary = queue.getJobsSummary();
-  objectstore::Helpers::updateRetrieveQueueStatisticsCache(queue.getVid(), summary.jobs, summary.bytes, summary.priority);
+  objectstore::Helpers::updateRetrieveQueueStatisticsCache(queue.getVid(), summary.jobs, summary.bytes, summary.priority, lc);
 }
 
 } // namespace cta::ostoredb

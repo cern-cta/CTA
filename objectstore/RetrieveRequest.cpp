@@ -25,6 +25,7 @@
 #include "objectstore/cta.pb.h"
 #include "Helpers.hpp"
 #include "common/utils/utils.hpp"
+#include "common/dataStructures/RetrieveJobToAdd.hpp"
 #include "LifecycleTimingsSerDeser.hpp"
 #include "Sorter.hpp"
 #include "AgentWrapper.hpp"
@@ -67,18 +68,72 @@ void RetrieveRequest::initialize() {
 }
 
 //------------------------------------------------------------------------------
-// RetrieveRequest::garbageCollect()
+// RetrieveRequest::garbageCollectRetrieveRequest()
 //------------------------------------------------------------------------------
 void RetrieveRequest::garbageCollect(const std::string& presumedOwner, AgentReference& agentReference, log::LogContext& lc,
                                      cta::catalogue::Catalogue& catalogue) {
   garbageCollectRetrieveRequest(presumedOwner, agentReference, lc, catalogue, false);
 }
 
+
+// Setting a bool for now on what we should do with these types.
+std::optional<std::string> RetrieveRequest::reclassifyRetrieveRequest(cta::catalogue::Catalogue& catalogue, log::LogContext& lc){
+  // The owner is indeed the right one. We should requeue the request either to
+  // the to tranfer queue for one vid, or to the to report (or failed) queue (for one arbitrary VID).
+  // Find the vids for active jobs in the request (to transfer ones).
+  using serializers::RetrieveJobStatus;
+  std::set<std::string, std::less<>> candidateVids;
+  for (auto& j: m_payload.jobs()) {
+    switch(j.status()){
+      case RetrieveJobStatus::RJS_ToTransfer:
+        // Find the job details in tape file
+        for (auto& tf: m_payload.archivefile().tapefiles()) {
+          if (tf.copynb() == j.copynb()) {
+            candidateVids.insert(tf.vid());
+            goto found;
+          }
+        }
+        {
+          std::stringstream err;
+          err << ("In RetrieveRequest::reclassifyRetrieveRequest(): could not find tapefile for copynb ") << j.copynb();
+          throw exception::Exception(err.str());
+        }
+     default:
+        break;
+    }
+    found:;
+  }
+  std::string bestVid;
+  // If no tape file is a candidate, we just need to skip to queueing to the failed queue
+  if (candidateVids.empty()) {
+    lc.log(log::INFO, "NO VID FOUND");
+    return std::nullopt;
+  }
+  // We have a chance to find an available tape. Let's compute best VID (this will
+  // filter on tape availability.
+  try {
+    // If we have to fetch the status of the tapes and queued for the non-disabled vids.
+    bestVid=Helpers::selectBestRetrieveQueue(candidateVids, catalogue, m_objectStore, lc, m_payload.repack_info().has_repack_request_address());
+    lc.log(log::INFO, "VID AVAILABLE TO REQUEUE");
+    return std::optional<std::string>(bestVid);
+  } catch (Helpers::NoTapeAvailableForRetrieve&) {}
+
+  lc.log(log::INFO, "NO VID AVAILABLE");
+  return std::nullopt;
+}
+
+
 void RetrieveRequest::garbageCollectRetrieveRequest(const std::string& presumedOwner, AgentReference& agentReference, log::LogContext& lc,
     cta::catalogue::Catalogue& catalogue, bool isQueueCleanup) {
   checkPayloadWritable();
-  utils::Timer t;
-  std::string logHead = std::string("In RetrieveRequest::garbageCollect()") + (isQueueCleanup ? " [queue cleanup]" : "") + ": ";
+  utils::Timer t, tmpT;
+  double getOwnerTime = -1.0;
+  double jobDecissionTime = -1.0;
+  double jobFailingTime = -1.0;
+  double selectQueueTime = -1.0;
+  double requeueTime = -1.0;
+  double getLockedQueueTime = -1.0;
+  std::string logHead = std::string("In RetrieveRequest::garbageCollectRetrieveRequest()") + (isQueueCleanup ? " [queue cleanup]" : "") + ": ";
   // Check the request is indeed owned by the right owner.
   if (getOwner() != presumedOwner) {
     log::ScopedParamContainer params(lc);
@@ -87,6 +142,7 @@ void RetrieveRequest::garbageCollectRetrieveRequest(const std::string& presumedO
           .add("owner", getOwner());
     lc.log(log::INFO, logHead + "no garbage collection needed.");
   }
+  getOwnerTime = tmpT.secs(utils::Timer::resetCounter);
   // The owner is indeed the right one. We should requeue the request either to
   // the to tranfer queue for one vid, or to the to report (or failed) queue (for one arbitrary VID).
   // Find the vids for active jobs in the request (to transfer ones).
@@ -152,6 +208,7 @@ void RetrieveRequest::garbageCollectRetrieveRequest(const std::string& presumedO
     }
     found:;
   }
+  jobDecissionTime = tmpT.secs(utils::Timer::resetCounter);
   std::string bestVid;
   // If no tape file is a candidate, we just need to skip to queueing to the failed queue
   if (candidateVids.empty()) goto queueForFailure;
@@ -159,11 +216,12 @@ void RetrieveRequest::garbageCollectRetrieveRequest(const std::string& presumedO
   // filter on tape availability.
   try {
     // If we have to fetch the status of the tapes and queued for the non-disabled vids.
-    bestVid=Helpers::selectBestRetrieveQueue(candidateVids, catalogue, m_objectStore, m_payload.repack_info().has_repack_request_address());
+    bestVid=Helpers::selectBestRetrieveQueue(candidateVids, catalogue, m_objectStore, lc, m_payload.repack_info().has_repack_request_address());
     goto queueForTransfer;
   } catch (Helpers::NoTapeAvailableForRetrieve&) {}
 queueForFailure:;
   {
+    selectQueueTime = tmpT.secs(utils::Timer::resetCounter);
     // If there is no candidate, we fail the jobs that are not yet, and queue the request as failed (on any VID).
     for (auto& j: *m_payload.mutable_jobs()) {
       if (j.status() == RetrieveJobStatus::RJS_ToTransfer) {
@@ -185,6 +243,8 @@ queueForFailure:;
         lc.log(log::ERR, logHead + "No VID available to requeue the request. Failing all jobs.");
       }
     }
+    jobFailingTime = tmpT.secs(utils::Timer::resetCounter);
+
     // Ok, the request is ready to be queued. We will queue it to the VID corresponding
     // to the latest queued copy.
     auto activeCopyNb = m_payload.activecopynb();
@@ -206,22 +266,32 @@ queueForFailure:;
     // We now need to grab the failed queue and queue the request.
     RetrieveQueue rq(m_objectStore);
     ScopedExclusiveLock rql;
+    // If garbage collect retrieve request is only called by the cleanup
+    // process we can add some extra info in the `activeVid` so that
+    // the queue gets created with a different name and they don't
+    // step into each others. :)
     Helpers::getLockedAndFetchedJobQueue<RetrieveQueue>(rq, rql, agentReference, activeVid, getQueueType(), lc);
+    getLockedQueueTime = tmpT.secs(utils::Timer::resetCounter);
     // Enqueue the job
     objectstore::MountPolicySerDeser mp;
-    std::list<RetrieveQueue::JobToAdd> jta;
+    std::list<common::dataStructures::RetrieveJobToAdd> jta;
     jta.push_back({activeCopyNb, activeFseq, getAddressIfSet(), m_payload.archivefile().filesize(),
       mp, (signed)m_payload.schedulerrequest().entrylog().time(), std::nullopt, std::nullopt});
     if (m_payload.has_activity()) {
       jta.back().activity = m_payload.activity();
     }
-    rq.addJobsIfNecessaryAndCommit(jta, agentReference, lc);
+    if (isQueueCleanup) {
+      rq.appendJobsAndCommit(jta, agentReference, lc);
+    } else {
+      rq.addJobsIfNecessaryAndCommit(jta, agentReference, lc);
+    }
     auto queueUpdateTime = t.secs(utils::Timer::resetCounter);
     // We can now make the transition official.
     setOwner(rq.getAddressIfSet());
     commit();
     rql.release();
     auto commitUnlockQueueTime = t.secs(utils::Timer::resetCounter);
+    requeueTime = tmpT.secs(utils::Timer::resetCounter);
     {
       log::ScopedParamContainer params(lc);
       params.add("jobObject", getAddressIfSet())
@@ -230,6 +300,12 @@ queueForFailure:;
             .add("copynb", activeCopyNb)
             .add("tapeVid", activeVid)
             .add("queueUpdateTime", queueUpdateTime)
+	    .add("getOwnerTime", getOwnerTime)
+	    .add("jobDecissionTime", jobDecissionTime)
+	    .add("selectQueueTime", selectQueueTime)
+	    .add("jobFailingTime", jobFailingTime)
+	    .add("getLockedQueueTime", getLockedQueueTime)
+	    .add("requeueTime", requeueTime)
             .add("commitUnlockQueueTime", commitUnlockQueueTime);
       lc.log(log::INFO, logHead + "queued the request to the failed queue.");
     }
@@ -272,7 +348,7 @@ queueForTransfer:;
       // Enqueue the job
     objectstore::MountPolicySerDeser mp;
     mp.deserialize(m_payload.mountpolicy());
-    std::list<RetrieveQueue::JobToAdd> jta;
+    std::list<common::dataStructures::RetrieveJobToAdd> jta;
     jta.push_back({bestTapeFile->copynb(), bestTapeFile->fseq(), getAddressIfSet(), m_payload.archivefile().filesize(),
       mp, (signed)m_payload.schedulerrequest().entrylog().time(), getActivity(), getDiskSystemName()});
     if (m_payload.has_activity()) {
@@ -285,7 +361,7 @@ queueForTransfer:;
     m_payload.set_activecopynb(bestJob->copynb());
     setOwner(rq.getAddressIfSet());
     commit();
-    Helpers::updateRetrieveQueueStatisticsCache(bestVid, jobsSummary.jobs, jobsSummary.bytes, jobsSummary.priority);
+    Helpers::updateRetrieveQueueStatisticsCache(bestVid, jobsSummary.jobs, jobsSummary.bytes, jobsSummary.priority, lc);
     rql.release();
     auto commitUnlockQueueTime = t.secs(utils::Timer::resetCounter);
     {
@@ -1109,6 +1185,54 @@ uint32_t RetrieveRequest::getActiveCopyNumber() {
 void RetrieveRequest::setFailed() {
   checkPayloadWritable();
   m_payload.set_isfailed(true);
+}
+
+//------------------------------------------------------------------------------
+// RetrieveRequest::failJob()
+//------------------------------------------------------------------------------
+void RetrieveRequest::failJob(std::string& newOwner) {
+  for (auto& j: *m_payload.mutable_jobs()) {
+    if (j.status() == serializers::RetrieveJobStatus::RJS_ToTransfer) {
+      j.set_status(m_payload.isrepack() ?
+                   serializers::RetrieveJobStatus::RJS_ToReportToRepackForFailure :
+                   serializers::RetrieveJobStatus::RJS_ToReportToUserForFailure);
+    }
+
+    // Generate the last failure for this job (tape unavailable).
+    *j.mutable_failurelogs()->Add() = utils::getCurrentLocalTime() + " " +
+            utils::getShortHostname() + "No VID available to requeue the request. Failing it.";
+  }
+
+  setOwner(newOwner);
+  commit();
+}
+
+//------------------------------------------------------------------------------
+// RetrieveRequest::getJobToAdd()
+//------------------------------------------------------------------------------
+common::dataStructures::RetrieveJobToAdd RetrieveRequest::getJobToAdd() {
+  auto activeCopyNb = m_payload.activecopynb();
+  std::string activeVid;
+  uint64_t activeFseq;
+  objectstore::MountPolicySerDeser mp;
+  for (auto& tf: m_payload.archivefile().tapefiles()) {
+    if (tf.copynb() == activeCopyNb) {
+      activeVid = tf.vid();
+      activeFseq = tf.fseq();
+      break;
+    }
+  }
+
+  return common::dataStructures::RetrieveJobToAdd(
+    activeCopyNb,
+    activeFseq,
+    getAddressIfSet(),
+    m_payload.archivefile().filesize(),
+    mp,
+    (signed) m_payload.schedulerrequest().entrylog().time(),
+    m_payload.has_activity() ? std::nullopt : std::nullopt,
+    std::nullopt
+  );
 }
 
 //------------------------------------------------------------------------------

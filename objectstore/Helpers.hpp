@@ -34,10 +34,6 @@
 #include "scheduler/OStoreDB/OStoreDB.hpp"
 #include "scheduler/SchedulerDatabase.hpp"
 
-// Activate or not helper cache update for debugging
-// #define HELPERS_CACHE_UPDATE_LOGGING
-#define HELPERS_CACHE_UPDATE_LOGGING_FILE "/var/tmp/cta-helpers-update-cache.log"
-
 /**
  * A collection of helper functions for commonly used multi-object operations
  */
@@ -92,7 +88,7 @@ class Helpers {
    * to the algorithm, but will help performance drastically for a very similar result
    */
   static std::string selectBestRetrieveQueue(const std::set<std::string, std::less<>> & candidateVids,
-    cta::catalogue::Catalogue & catalogue, objectstore::Backend & objectstore, bool isRepack = false);
+    cta::catalogue::Catalogue & catalogue, objectstore::Backend & objectstore, log::LogContext &lc, bool isRepack = false);
 
   /**
    * Gets the retrieve queue statistics for a set of Vids (extracted from the OStoreDB
@@ -107,7 +103,7 @@ class Helpers {
    * Opportunistic updating of the queue stats cache as we access it. This implies the
    * tape is not disabled (full status not fetched).
    */
-  static void updateRetrieveQueueStatisticsCache(const std::string & vid, uint64_t files, uint64_t bytes, uint64_t priority);
+  static void updateRetrieveQueueStatisticsCache(const std::string & vid, uint64_t files, uint64_t bytes, uint64_t priority, log::LogContext &lc);
 
   /**
    * Allows to flush the statistics caches
@@ -150,7 +146,7 @@ private:
   static time_t g_tapeCacheMaxAge;
   static time_t g_retrieveQueueCacheMaxAge;
   static void logUpdateCacheIfNeeded(const bool entryCreation, const RetrieveQueueStatisticsWithTime& tapeStatistic,
-    const std::string& message = "");
+    const std::string& message, log::LogContext& lc);
 
  public:
   enum class CreateIfNeeded: bool {

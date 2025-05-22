@@ -434,14 +434,14 @@ void RootEntry::removeRetrieveQueueAndCommit(const std::string& vid, common::dat
     // Verify this is the retrieve queue we're looking for.
     if (rq.getVid() != vid) {
       std::stringstream err;
-      err << "Unexpected vid found in retrieve queue pointed to for vid: "
+      err << "In RootEntry::removeRetrieveQueueAndCommit(): Unexpected vid found in retrieve queue pointed to for vid: "
           << vid << " found: " << rq.getVid();
       throw WrongRetrieveQueue(err.str());
     }
     // Check the retrieve queue is empty
     if (!rq.isEmpty()) {
-      throw RetrieveQueueNotEmpty("In RootEntry::removeTapePoolQueueAndCommit: trying to "
-          "remove a non-empty tape pool");
+      throw RetrieveQueueNotEmpty("In RootEntry::removeRetrieveQueueAndCommit(): trying to "
+          "remove a non-empty retrieve queue");
     }
     // We can now delete the queue
     rq.remove();
@@ -462,7 +462,7 @@ void RootEntry::removeRetrieveQueueAndCommit(const std::string& vid, common::dat
       lc.log(log::INFO, "In RootEntry::removeRetrieveQueueAndCommit(): removed retrieve queue reference.");
     }
   } catch (serializers::NotFound &) {
-    // No such tape pool. Nothing to to.
+    // No such retrieve queue. Nothing to to.
     throw NoSuchRetrieveQueue("In RootEntry::removeRetrieveQueueAndCommit: trying to remove non-existing retrieve queue");
   }
 }
@@ -474,7 +474,7 @@ std::string RootEntry::getRetrieveQueueAddress(const std::string& vid, common::d
     auto & rqp = serializers::findElement(retrieveQueuePointers(queueType), vid);
     return rqp.address();
   } catch (serializers::NotFound &) {
-    throw NoSuchRetrieveQueue(std::string("In RootEntry::getRetreveQueueAddress: retrieve queue not allocated ")+
+    throw NoSuchRetrieveQueue(std::string("In RootEntry::getRetrieveQueueAddress: retrieve queue not allocated ")+
         vid+"/"+toString(queueType));
   }
 }

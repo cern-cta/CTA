@@ -461,6 +461,7 @@ echo "Sleeping 60 seconds to allow MGM-FST communication to settle after disk co
 sleep 60
 echo "###"
 
+DRIVE_UP_SUBDIR_NUMBER =3
 if (( 0 != DRIVE_UP_SUBDIR_NUMBER )); then
   admin_cta drive down ".*" --reason "PUTTING DRIVE DOWN TO PRE-QUEUE REQUESTS"
 fi

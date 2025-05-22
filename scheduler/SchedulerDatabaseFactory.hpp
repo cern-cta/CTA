@@ -122,12 +122,16 @@ public:
     return m_SchedDB->getNextRetrieveJobsToTransferBatch(vid, filesRequested, lc);
   }
 
-  void requeueRetrieveRequestJobs(std::list<cta::SchedulerDatabase::RetrieveJob*>& jobs, log::LogContext& lc) override {
-    m_SchedDB->requeueRetrieveRequestJobs(jobs, lc);
+  void requeueRetrieveRequestJobs(std::list<cta::SchedulerDatabase::RetrieveJob*>& jobs, std::string toRequeueName, log::LogContext& lc) override {
+    m_SchedDB->requeueRetrieveRequestJobs(jobs, toRequeueName, lc);
   }
 
-  void reserveRetrieveQueueForCleanup(const std::string& vid, std::optional<uint64_t> cleanupHeartBeatValue) override {
-    m_SchedDB->reserveRetrieveQueueForCleanup(vid, cleanupHeartBeatValue);
+  std::string reserveRetrieveQueueForCleanup(const std::string& vid) override {
+    return m_SchedDB->reserveRetrieveQueueForCleanup(vid);
+  }
+
+  void freeRetrieveQueueForCleanup(const std::string& vid) override {
+    return m_SchedDB->freeRetrieveQueueForCleanup(vid);
   }
 
   void tickRetrieveQueueCleanupHeartbeat(const std::string& vid) override {
@@ -217,6 +221,9 @@ public:
   }
 
   void trimEmptyQueues(log::LogContext& lc) override { m_SchedDB->trimEmptyQueues(lc); }
+
+  bool trimEmptyToReportQueueWithVid(const std::string& queueVid, log::LogContext& lc) override {
+ return m_SchedDB->trimEmptyToReportQueueWithVid(queueVid, lc); }
 
   std::unique_ptr<TapeMountDecisionInfo> getMountInfoNoLock(PurposeGetMountInfo purpose,
                                                             log::LogContext& logContext) override {

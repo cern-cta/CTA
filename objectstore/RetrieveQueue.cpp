@@ -18,6 +18,7 @@
 #include <google/protobuf/util/json_util.h>
 
 #include "AgentReference.hpp"
+#include "common/dataStructures/RetrieveJobToAdd.hpp"
 #include "common/exception/NoSuchObject.hpp"
 #include "EntryLogSerDeser.hpp"
 #include "GenericObject.hpp"
@@ -256,7 +257,7 @@ void RetrieveQueue::updateShardLimits(uint64_t fSeq, ShardForAddition & sfa) {
 }
 
 /** Add a jobs to a shard, spliting it if necessary*/
-void RetrieveQueue::addJobToShardAndMaybeSplit(RetrieveQueue::JobToAdd & jobToAdd,
+void RetrieveQueue::addJobToShardAndMaybeSplit(common::dataStructures::RetrieveJobToAdd & jobToAdd,
     std::list<ShardForAddition>::iterator & shardForAddition, std::list<ShardForAddition> & shardList) {
   // Is the shard still small enough? We will not double split shards (we suppose insertion size << shard size cap).
   // We will also no split a new shard.
@@ -307,7 +308,57 @@ void RetrieveQueue::addJobToShardAndMaybeSplit(RetrieveQueue::JobToAdd & jobToAd
   }
 }
 
-void RetrieveQueue::addJobsAndCommit(std::list<JobToAdd> & jobsToAdd, AgentReference & agentReference, log::LogContext & lc) {
+// Sequentially append jobs without caring about anything else PURE FIFO
+void RetrieveQueue::appendJobsAndCommit(std::list<common::dataStructures::RetrieveJobToAdd> &jobsToAdd, AgentReference &agentReference, log::LogContext &lc) {
+  auto nextJob = jobsToAdd.begin();
+  while (nextJob != jobsToAdd.end()) {
+    RetrieveQueueShard rqs(m_objectStore);
+    serializers::RetrieveQueueShardPointer *rqsp = nullptr;
+    bool newShard = false;
+    uint64_t shardCount = m_payload.retrievequeueshards_size();
+    if (shardCount &&
+        m_payload.retrievequeueshards(shardCount - 1).shardjobscount() < m_maxShardSize) {
+      auto & shardPointer = m_payload.retrievequeueshards(shardCount - 1);
+      rqs.setAddress(shardPointer.address());
+      m_exclusiveLock->includeSubObject(rqs);
+      rqs.fetch(); // Extra checks happen in the archive queue.
+      rqsp = m_payload.mutable_retrievequeueshards(shardCount - 1);
+    } else {
+        // We need a new shard. Just add it (in memory).
+      newShard = true;
+      rqsp = m_payload.add_retrievequeueshards();
+      // Create the shard in memory.
+      std::stringstream shardName;
+      shardName << "RetrieveQueueShard-" << m_payload.vid();
+      rqs.setAddress(agentReference.nextId(shardName.str()));
+      rqs.initialize(getAddressIfSet());
+      // Reference the shard in the pointer, and initialized counters.
+      rqsp->set_address(rqs.getAddressIfSet());
+      rqsp->set_shardbytescount(0);
+      rqsp->set_shardjobscount(0);
+    }
+
+    // Job insertion
+   while (nextJob != jobsToAdd.end() && rqsp->shardjobscount() < m_maxShardSize) {
+      // Update the job count, we really don't care about other stuff...
+      m_payload.set_retrievejobscount(m_payload.retrievejobscount()+1);
+      // Add the job
+      rqs.addJob(*nextJob);
+
+      nextJob++;
+    }
+
+    if(newShard){
+      rqs.insert();
+    } else {
+      rqs.commit();
+    }
+
+    commit();
+  }
+}
+
+void RetrieveQueue::addJobsAndCommit(std::list<common::dataStructures::RetrieveJobToAdd> & jobsToAdd, AgentReference & agentReference, log::LogContext & lc) {
   checkPayloadWritable();
   if (jobsToAdd.empty()) return;
   // Keep track of the mounting criteria
@@ -536,7 +587,7 @@ void RetrieveQueue::addJobsAndCommit(std::list<JobToAdd> & jobsToAdd, AgentRefer
   }
 }
 
-auto RetrieveQueue::addJobsIfNecessaryAndCommit(std::list<JobToAdd> & jobsToAdd,
+auto RetrieveQueue::addJobsIfNecessaryAndCommit(std::list<common::dataStructures::RetrieveJobToAdd> & jobsToAdd,
     AgentReference & agentReference, log::LogContext & lc)
 -> AdditionSummary {
   checkPayloadWritable();
@@ -569,7 +620,7 @@ auto RetrieveQueue::addJobsIfNecessaryAndCommit(std::list<JobToAdd> & jobsToAdd,
 
   // Now filter the jobs to add
   AdditionSummary ret;
-  std::list<JobToAdd> jobsToReallyAdd;
+  std::list<common::dataStructures::RetrieveJobToAdd> jobsToReallyAdd;
   for (auto & jta: jobsToAdd) {
     for (auto & sd: shardsDumps) {
       for (auto & sjd: sd) {
@@ -853,7 +904,19 @@ void RetrieveQueue::tickQueueCleanupHeartbeat() {
 
 void RetrieveQueue::garbageCollect(const std::string &presumedOwner, AgentReference & agentReference, log::LogContext & lc,
     cta::catalogue::Catalogue & catalogue) {
-  throw cta::exception::Exception("In RetrieveQueue::garbageCollect(): not implemented");
+  // Garbage collection of a retrieve queue should only happen it died in the middle of QueueCleanup.
+  if(!getQueueCleanupDoCleanup()){ 
+    throw cta::exception::Exception("In RetrieveQueue::garbageCollect(): not implemented");
+  }
+
+  if(getQueueCleanupAssignedAgent().has_value()){
+    clearQueueCleanupAssignedAgent();
+    commit();
+    //setOwner(); Do we need to reset the owner here os is it ok to leave the previous one and overwrite on the new reservation...
+    log::ScopedParamContainer(lc)
+      .add("queueAddress", getAddressIfSet())
+      .log(log::INFO, "In RetrieveQueue::garbageCollect(): cleared CleanupInfo assined agent.");
+  }
 }
 
 void RetrieveQueue::setShardSize(uint64_t shardSize) {
