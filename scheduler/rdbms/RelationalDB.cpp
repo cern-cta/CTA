@@ -719,7 +719,7 @@ void RelationalDB::trimEmptyQueues(log::LogContext& lc) {
   throw cta::exception::Exception("Not implemented");
 }
 
-void RelationalDB::trimEmptyToReportQueueWithVid(const std::string& queueVid, log::LogContext& lc) {
+bool RelationalDB::trimEmptyToReportQueueWithVid(const std::string& queueVid, log::LogContext& lc) {
   throw cta::exception::Exception("Not implemented");
 }
 

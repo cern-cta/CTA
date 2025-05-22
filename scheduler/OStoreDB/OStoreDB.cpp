@@ -959,13 +959,13 @@ void OStoreDB::trimEmptyQueues(log::LogContext& lc) {
 //------------------------------------------------------------------------------
 // OStoreDB::trimEmptyToReportQueueWithVid()
 //------------------------------------------------------------------------------
-void OStoreDB::trimEmptyToReportQueueWithVid(const std::string& queueVid, log::LogContext& lc){
+bool OStoreDB::trimEmptyToReportQueueWithVid(const std::string& queueVid, log::LogContext& lc){
   // Check if the RetrieveQueue is actually empty.
   RetrieveQueue rq(queueVid, m_objectStore);
   ScopedExclusiveLock rql(rq);
   rq.fetch();
   if(!rq.isEmpty()) {
-    return;
+    return 0;
   }
   const auto vid = rq.getVid();
   rql.release();
@@ -975,6 +975,8 @@ void OStoreDB::trimEmptyToReportQueueWithVid(const std::string& queueVid, log::L
   re.removeRetrieveQueueAndCommit(vid,
     common::dataStructures::JobQueueType::JobsToReportToUser,
     lc);
+
+  return 1;
 }
 
 //------------------------------------------------------------------------------

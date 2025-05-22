@@ -151,12 +151,13 @@ void QueueCleanupRunner::runOnePass(log::LogContext &logContext) {
       logContext.log(cta::log::INFO,"In QueueCleanupRunner::runOnePass(): Queue jobs moved.");
     }
 
-    // Clear the DoCleanup flag in the ToReport queue so that DiskReporting can
-    // start working on it.
-    // Delete the ToReport queue in case we were able to requeue all jobs and the ToReport queue
-    // holds no requests at all.
-    m_db.freeRetrieveQueueForCleanup(toReportQueueName);
-    m_db.trimEmptyToReportQueueWithVid(toReportQueueName, logContext);
+
+    // Remove the ToReport queue if we managed to requeue the jobs to a different VID.
+    // If we failed some job (moved to the ToReport queue) clear the DoCleanup flag in
+    // the ToReport queue so that DiskReporting can start working on it.
+    if(!m_db.trimEmptyToReportQueueWithVid(toReportQueueName, logContext)){
+      m_db.freeRetrieveQueueForCleanup(toReportQueueName);
+    }
 
     // Finally, update the tape state out of PENDING
     {
