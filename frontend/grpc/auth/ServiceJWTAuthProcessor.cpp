@@ -67,23 +67,57 @@ Json::Value ServiceJWTAuthProcessor::FetchJWKS(const std::string& jwksUrl) {
 }
 
 // alternative
-// bool ServiceJWTAuthProcessor::ValidateToken(const std::string& encodedJWT) {
-//     try {
-//         auto decoded = jwt::decode(encodedJWT);
-//         // Example validation: check if the token is expired
-//         auto exp = decoded.get_payload_claim("exp").as_datetime();
-//         if (exp < std::chrono::system_clock::now()) {
-//             std::cout << "Passed-in token has expired!" << std::endl;
-//             return false;  // Token has expired
-//         }
-//         // Get the JWKS endpoint, find the matching with our token, obtain the public key
-//         // used to sign the token and validate it
-//         // Further validations (like signature, audience, etc.) can be added here
-//         return true;
-//     } catch (const jwt::token_verification_exception& e) {
-//         return false;
-//     }
-// }
+bool ServiceJWTAuthProcessor::ValidateToken(const std::string& encodedJWT) {
+    try {
+        auto decoded = jwt::decode(encodedJWT);
+
+        // Example validation: check if the token is expired
+        auto exp = decoded.get_payload_claim("exp").as_date();
+        if (exp < std::chrono::system_clock::now()) {
+            std::cout << "Passed-in token has expired!" << std::endl;
+            return false;  // Token has expired
+        }
+        auto header = decoded.get_header_json();
+        std::string kid = header["kid"].get<std::string>();
+        std::string alg = header["alg"].get<std::string>();
+
+        std::cout << "KID: " << kid << ",ALG: " << alg << std::endl;
+        // Get the JWKS endpoint, find the matching with our token, obtain the public key
+        // used to sign the token and validate it
+        Json::Value jwks = FetchJWKS(m_jwksUri);
+
+        // Find the key with the matching KID
+        Json::Value key_data;
+        bool key_found = false;
+        for (const auto& key : jwks["keys"])
+            if (key["kid"].asString() == kid) { key_data = key; key_found = true; break; }
+        if (!key_found) {
+            std::cout << "No key found with kid: " << kid << std::endl;
+            return false;
+        }
+        std::cout << "Key data: " << key_data.toStyledString() << std::endl;
+        // std::string begin_pk = "-----BEGIN PUBLIC KEY-----";
+        // std::string end_pk = "-----END PUBLIC KEY-----";
+        std::string x5c = key_data["x5c"][0].asString();
+        // std::string pubkey = begin_pk + x5c + std::string("\n") + end_pk;
+        std::cout << "Public key is " << x5c << std::endl;
+
+        // Validate signature
+        auto verifier = jwt::verify()
+                            .allow_algorithm(jwt::algorithm::rs256(jwt::helper::convert_base64_der_to_pem(x5c), "", "", ""));
+                            // .allow_algorithm(jwt::algorithm::rs256(x5c));
+                            // .with_issuer("http://auth-keycloak:8080/realms/master");  // Replace with your issuer
+        std::cout << "successfully built the verifier" << std::endl;
+        verifier.verify(decoded);
+        return true;
+    } catch (const std::system_error& e) {
+        std::cout << "There was a failure in token verification. Code " << e.code() << "meaning: " << e.what() << std::endl;
+        return false;
+    } catch (const std::runtime_error& e) {
+        std::cout << "Failure in token verification, " << e.what() << std::endl;
+        return false;
+    }
+}
 
 ::grpc::Status ServiceJWTAuthProcessor::Process(const ::grpc::AuthMetadataProcessor::InputMetadata& authMetadata,
     ::grpc::AuthContext* authContext,
@@ -121,7 +155,7 @@ Json::Value ServiceJWTAuthProcessor::FetchJWKS(const std::string& jwksUrl) {
     /*
      * Token decoding
      */
-    if(Validate(strAuthMetadataValue)) {
+    if(ValidateToken(strAuthMetadataValue)) {
         // If ok consume
         consumedAuthMetadata->insert(std::make_pair(JWT_TOKEN_AUTH_METADATA_KEY, strAuthMetadataValue));
         std::cout << "Validate went ok, returning status OK" << std::endl;
