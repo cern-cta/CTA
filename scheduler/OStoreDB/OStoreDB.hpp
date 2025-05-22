@@ -235,19 +235,17 @@ private:
 
 protected:
   /**
-   * Return the best archive mount policy from the mountPolicies passed in parameter
-   * The aim is to do the same as ArchiveQueue::getJobsSummary() regarding the priority, minArchiveRequestAge attributes of the queue
+   * Return the mount policy max retrieve priority and min retrieve minimum age from the mountPolicies passed in parameter
    * @param mountPolicies the list of mount policies in order to create the best one.
-   * @return the best archive mount policy to use
+   * @return a pair with the max retrieve priority and min retrieve minimum age
    */
   static std::pair<uint64_t, uint64_t>
   getArchiveMountPolicyMaxPriorityMinAge(const std::list<common::dataStructures::MountPolicy> &mountPolicies);
 
   /**
-   * Return the best retrieve mount policy from the mountPolicies passed in parameter
-   * The aim is to do the same as RetrieveQueue::getJobsSummary() regarding the priority, minArchiveRequestAge attributes of the queue
+   * Return the mount policy max retrieve priority and min retrieve minimum age from the mountPolicies passed in parameter
    * @param mountPolicies the list of mount policies in order to create the best one.
-   * @return the best retrieve mount policy to use
+   * @return a pair with the max retrieve priority and min retrieve minimum age
    */
   static std::pair<uint64_t, uint64_t>
   getRetrieveMountPolicyMaxPriorityMinAge(const std::list<common::dataStructures::MountPolicy> &mountPolicies);
