@@ -139,9 +139,12 @@ fst:
       #!/usr/bin/bash
       /mkcert-ssl.sh
       chown -R daemon:daemon /etc/grid-security/certificates
+      cp /etc/grpc-certs/ca.crt /etc/grid-security/certificates
     volumeMounts:
     - name: grid-security
       mountPath: /etc/grid-security
+    - name: grpc-certs
+      mountPath: /etc/grpc-certs
 
   extraVolumes:
     volumeMounts:
@@ -149,12 +152,15 @@ fst:
       mountPath: /var/log/tmp
     - name: grid-security
       mountPath: /etc/grid-security
-      readOnly: true
+      readOnly: false
     volumes:
     - name: varlog-tmp
       emptyDir: {}
     - name: grid-security
       emptyDir: {}
+    - name: grpc-certs
+      secret:
+        secretName: ca-cert
 
 qdb:
   replicaCount: 1
