@@ -17,27 +17,73 @@
 
 #include "ServiceJWTAuthProcessor.hpp"
 #include <jwt-cpp/jwt.h>
+#include <json/json.h>
+#include <curl/curl.h>
 
 bool ServiceJWTAuthProcessor::Validate(const std::string& encodedJWT) {
     std::cout << "Passed in token is " << encodedJWT << std::endl;
     return true; // unimplemented, this is what will validate the passed in token
 }
 
+// Function to handle curl responses
+static size_t WriteCallback(void* contents, size_t size, size_t nmemb, std::string* output) {
+    size_t totalSize = size * nmemb;
+    output->append((char*)contents, totalSize);
+    return totalSize;
+}
+
+Json::Value ServiceJWTAuthProcessor::FetchJWKS(const std::string& jwksUrl) {
+    CURL* curl;
+    CURLcode res;
+    std::string readBuffer;
+
+    curl_global_init(CURL_GLOBAL_DEFAULT);
+    curl = curl_easy_init();
+    if(curl) {
+        curl_easy_setopt(curl, CURLOPT_URL, jwksUrl.c_str());
+        curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, WriteCallback);
+        curl_easy_setopt(curl, CURLOPT_WRITEDATA, &readBuffer);
+        res = curl_easy_perform(curl);
+        if(res != CURLE_OK) {
+            std::cout << "Curl failed: " << curl_easy_strerror(res) << std::endl;
+            throw std::runtime_error("CURL failed in FetchJWKS");
+        }
+        curl_easy_cleanup(curl);
+    }
+    curl_global_cleanup();
+
+    // Parse the response JSON
+    Json::CharReaderBuilder readerBuilder;
+    Json::Value jwks;
+    std::istringstream sstream(readBuffer);
+    std::string errs;
+    if (!Json::parseFromStream(readerBuilder, sstream, &jwks, &errs)) {
+        std::cout << "Failed to parse JSON: " << errs << std::endl;
+        // throw some exception here
+        throw std::runtime_error("Failed to parse JSON in FetchJWKS");
+    }
+
+    return jwks;
+}
+
 // alternative
-// bool validateToken(const std::string& token) {
-//         try {
-//             auto decoded = jwt::decode(token);
-//             // Example validation: check if the token is expired
-//             auto exp = decoded.get_payload_claim("exp").as_datetime();
-//             if (exp < std::chrono::system_clock::now()) {
-//                 return false;  // Token has expired
-//             }
-//             // Further validations (like signature, audience, etc.) can be added here
-//             return true;
-//         } catch (const jwt::token_verification_exception& e) {
-//             return false;
+// bool ServiceJWTAuthProcessor::ValidateToken(const std::string& encodedJWT) {
+//     try {
+//         auto decoded = jwt::decode(encodedJWT);
+//         // Example validation: check if the token is expired
+//         auto exp = decoded.get_payload_claim("exp").as_datetime();
+//         if (exp < std::chrono::system_clock::now()) {
+//             std::cout << "Passed-in token has expired!" << std::endl;
+//             return false;  // Token has expired
 //         }
+//         // Get the JWKS endpoint, find the matching with our token, obtain the public key
+//         // used to sign the token and validate it
+//         // Further validations (like signature, audience, etc.) can be added here
+//         return true;
+//     } catch (const jwt::token_verification_exception& e) {
+//         return false;
 //     }
+// }
 
 ::grpc::Status ServiceJWTAuthProcessor::Process(const ::grpc::AuthMetadataProcessor::InputMetadata& authMetadata,
     ::grpc::AuthContext* authContext,

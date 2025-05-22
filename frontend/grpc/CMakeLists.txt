@@ -32,7 +32,9 @@ add_executable(cta-frontend-grpc Main.cpp FrontendGrpcService.cpp
   ../common/FrontendService.cpp
   ../../common/config/Config.cpp
   auth/ServiceJWTAuthProcessor.cpp)
-target_link_libraries(cta-frontend-grpc ProtoCtaFrontend jwt-cpp::jwt-cpp)
+target_link_libraries(cta-frontend-grpc ProtoCtaFrontend jwt-cpp::jwt-cpp jsoncpp curl)
+# link also with curl and json
+
 
 if(CTA_USE_PGSCHED)
   target_link_libraries(cta-frontend-grpc ${PROTOBUF3_LIBRARIES} ${GRPC_GRPC++_LIBRARY}
