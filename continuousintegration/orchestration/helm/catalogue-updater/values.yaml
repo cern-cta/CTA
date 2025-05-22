@@ -12,3 +12,6 @@ catalogueDestinationVersion: ""
 
 # Additional Extra environment variables
 extraEnv:
+
+# Set to true if you want to mount the configmap "yum.repos.d-config"
+customRepoFiles: true
