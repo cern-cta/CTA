@@ -72,6 +72,6 @@ data:
 
     # TLS related variables
     grpc.tls true
-    grpc.tls.key /shared/sslCerts/server.key
-    grpc.tls.cert /shared/sslCerts/server.crt
+    grpc.tls.key /etc/grpc-certs/key/server.key
+    grpc.tls.cert /etc/grpc-certs/cert/server.crt
 {{- end }}

@@ -20,6 +20,15 @@ secrets:
   - secretName: cta-frontend-sss-keytab
     fileName: eos.sss.keytab
     content: "0 u:ctaeos g:ctaeos n:ctaeos+ N:7449334094434926593 c:1734433252 e:0 f:0 k:32869bcee6fb7ccfb835e28b2622286260d93ea5b5ad5aa3d854ba59c8754e6"
+  # Certificates and key generated with the following commands:
+  # openssl genrsa -passout pass:1234 -des3 -out ca.key 4096
+  # openssl req -passin pass:1234 -new -x509 -days 365 -key ca.key -out ca.crt -subj  "/C=CH/ST=Geneva/L=Geneva/O=Test/OU=Test/CN=Root CA"
+  # # Generate valid Server Key/Cert
+  # openssl genrsa -passout pass:1234 -des3 -out server.key 4096
+  # openssl req -passin pass:1234 -new -key server.key -out server.csr -subj  "/C=CH/ST=Geneva/L=Geneva/O=Test/OU=Server/CN=cta-frontend-grpc"
+  # openssl x509 -req -passin pass:1234 -days 365 -in server.csr -CA ca.crt -CAkey ca.key -set_serial 01 -out server.crt
+  # # Remove passphrase from the Server Key
+  # openssl rsa -passin pass:1234 -in server.key -out server.key
   - secretName: server-key
     fileName: server.key
     content: |
@@ -77,6 +86,7 @@ secrets:
       -----END PRIVATE KEY-----
   - secretName: server-cert
     fileName: server.crt
+    # expires: May 20 12:03:46 2026 GMT
     content: |
       -----BEGIN CERTIFICATE-----
       MIIFPjCCAyYCAQEwDQYJKoZIhvcNAQELBQAwXzELMAkGA1UEBhMCQ0gxDzANBgNV
@@ -111,6 +121,7 @@ secrets:
       -----END CERTIFICATE-----
   - secretName: ca-cert
     fileName: ca.crt
+    # expires: May 20 12:03:46 2026 GMT
     content: |
       -----BEGIN CERTIFICATE-----
       MIIFnzCCA4egAwIBAgIUIBcV0mBiA+XnCXG9Q3T3yFPE0dEwDQYJKoZIhvcNAQEL
