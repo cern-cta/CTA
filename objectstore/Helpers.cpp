@@ -537,7 +537,7 @@ void Helpers::updateRetrieveQueueStatisticsCache(const std::string& vid, uint64_
     g_retrieveQueueStatistics.at(vid).stats.filesQueued=files;
     g_retrieveQueueStatistics.at(vid).stats.bytesQueued=bytes;
     g_retrieveQueueStatistics.at(vid).stats.currentPriority = priority;
-    logUpdateCacheIfNeeded(false,g_retrieveQueueStatistics.at(vid));
+    logUpdateCacheIfNeeded(false,g_retrieveQueueStatistics.at(vid), lc);
   } catch (std::out_of_range &) {
     // The entry is missing. We just create it.
     g_retrieveQueueStatistics[vid].stats.filesQueued=files;

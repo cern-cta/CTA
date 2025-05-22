@@ -322,7 +322,7 @@ void GarbageCollector::OwnedObjectSorter::sortFetchedObjects(Agent& agent, std::
                      .add("containerIdentifier", containerIdentifier)
                      .add("copynb", j.copyNb)
                      .add("fileId", ar->getArchiveFile().archiveFileID);
-              lc.log(log::INFO, "Selected archive request for requeueing to the corresponding queue");
+              lc.log(log::INFO, "In GarbageCollector::OwnedObjectSorter::sortFetchedObjects(): Selected archive request for requeueing to the corresponding queue");
               jobRequeued=true;
             } catch (ArchiveRequest::JobNotQueueable &) {
               log::ScopedParamContainer params3(lc);
@@ -331,14 +331,14 @@ void GarbageCollector::OwnedObjectSorter::sortFetchedObjects(Agent& agent, std::
                      .add("copynb", j.copyNb)
                      .add("status",ArchiveRequest::statusToString(j.status))
                      .add("fileId", ar->getArchiveFile().archiveFileID);
-              lc.log(log::WARNING, "Job garbage collected with a status not queueable. Leaving it as is.");
+              lc.log(log::WARNING, "In GarbageCollector::OwnedObjectSorter::sortFetchedObjects(): Job garbage collected with a status not queueable. Leaving it as is.");
             }
           }
         }
         if (!jobRequeued) {
           log::ScopedParamContainer params3(lc);
           params3.add("fileId", ar->getArchiveFile().archiveFileID);
-          lc.log(log::INFO, "No active archive job to requeue found. Request will remain as-is.");
+          lc.log(log::INFO, "In GarbageCollector::OwnedObjectSorter::sortFetchedObjects(): No active archive job to requeue found. Request will remain as-is.");
         }
         break;
       }
@@ -376,7 +376,7 @@ void GarbageCollector::OwnedObjectSorter::sortFetchedObjects(Agent& agent, std::
             log::ScopedParamContainer params3(lc);
             params3.add("fileId", rr->getArchiveFile().archiveFileID)
                    .add("exceptionMessage", ex.getMessageValue());
-            lc.log(log::ERR, "Failed to determine destination queue for retrieve request. Marking request for normal GC (and probably deletion).");
+            lc.log(log::ERR, "In GarbageCollector::OwnedObjectSorter::fetchOwnedObjects(): Failed to determine destination queue for retrieve request. Marking request for normal GC (and probably deletion).");
             otherObjects.emplace_back(new GenericObject(rr->getAddressIfSet(), objectStore));
             break;
           }
@@ -388,7 +388,7 @@ void GarbageCollector::OwnedObjectSorter::sortFetchedObjects(Agent& agent, std::
         } catch (Helpers::NoTapeAvailableForRetrieve & ex) {
           log::ScopedParamContainer params3(lc);
           params3.add("fileId", rr->getArchiveFile().archiveFileID);
-          lc.log(log::INFO, "No available tape found. Marking request for normal GC (and probably deletion).");
+          lc.log(log::INFO, "In GarbageCollector::OwnedObjectSorter::fetchOwnedObjects(): No available tape found. Marking request for normal GC (and probably deletion).");
           otherObjects.emplace_back(new GenericObject(rr->getAddressIfSet(), objectStore));
           break;
         }
@@ -402,7 +402,7 @@ void GarbageCollector::OwnedObjectSorter::sortFetchedObjects(Agent& agent, std::
                .add("copyNb", copyNb)
                .add("tapeVid", vid)
                .add("fSeq", fSeq);
-        lc.log(log::INFO, "Selected vid to be requeued for retrieve request.");
+        lc.log(log::INFO, "In GarbageCollector::OwnedObjectSorter::fetchOwnedObjects(): Selected vid to be requeued for retrieve request.");
       }
       break;
       default:
@@ -456,7 +456,7 @@ void GarbageCollector::OwnedObjectSorter::executeArchiveAlgorithm(std::list<std:
                 .add("fileId", arup.archiveRequest->getArchiveFile().archiveFileID)
                 .add("exceptionType", debugType);
           lc.log(log::INFO, 
-              "In GarbageCollector::OwnedObjectSorter::lockFetchAndUpdateArchiveJobs(): "
+              "In GarbageCollector::OwnedObjectSorter::executeArchiveAlgorithm(): "
               "failed to requeue gone/not owned archive job. Removed from queue.");
         } else {
           // We have an unexpected error. We will handle this with the request-by-request garbage collection.
@@ -466,7 +466,7 @@ void GarbageCollector::OwnedObjectSorter::executeArchiveAlgorithm(std::list<std:
                 .add("fileId", arup.archiveRequest->getArchiveFile().archiveFileID)
                 .add("exceptionType", debugType)
                 .add("exceptionMessage", e.getMessageValue());
-          lc.log(log::ERR, "In GarbageCollector::OwnedObjectSorter::lockFetchAndUpdateArchiveJobs(): "
+          lc.log(log::ERR, "In GarbageCollector::OwnedObjectSorter::executeArchiveAlgorithm(): "
               "failed to requeue archive job with unexpected error. "
               "Removing from queue and will re-run individual garbage collection.");
           // We will re-run the individual GC for this one.
@@ -487,7 +487,7 @@ void GarbageCollector::OwnedObjectSorter::executeArchiveAlgorithm(std::list<std:
               .add("tapePool", tapepool)
               .add("archiveQueueObject", queueAddress)
               .add("garbageCollectedPreviousOwner", agent.getAddressIfSet());
-        lc.log(log::INFO, "In GarbageCollector::OwnedObjectSorter::lockFetchAndUpdateArchiveJobs(): requeued archive job.");
+        lc.log(log::INFO, "In GarbageCollector::OwnedObjectSorter::executeArchiveAlgorithm(): requeued archive job.");
     }
   }
   jobsToAdd.clear();
@@ -565,13 +565,13 @@ void GarbageCollector::OwnedObjectSorter::lockFetchAndUpdateArchiveJobs(Agent& a
           ownershipUpdated=true;
           log::ScopedParamContainer params(lc);
           params.add("archiveRequestObject", ar->getAddressIfSet());
-          lc.log(log::DEBUG, "Removed AR from agent ownership.");
+          lc.log(log::DEBUG, "In GarbageCollector::OwnedObjectSorter::lockFetchAndUpdateArchiveJobs(): Removed AR from agent ownership.");
         } else {
           log::ScopedParamContainer params(lc);
           params.add("archiveRequestObject", ar->getAddressIfSet())
                 .add("use_count", ar.use_count())
                 .add("IndividuallyGCed", jobsIndividuallyGCed.count(ar->getAddressIfSet()));
-          lc.log(log::DEBUG, "Did not remove AR from agent ownership.");
+          lc.log(log::DEBUG, "In GarbageCollector::OwnedObjectSorter::lockFetchAndUpdateArchiveJobs(): Did not remove AR from agent ownership.");
         }
       }
       if (ownershipUpdated) {
@@ -794,7 +794,7 @@ void GarbageCollector::OwnedObjectSorter::lockFetchAndUpdateOtherObjects(Agent& 
   }
   // We now processed all the owned objects. We can delete the agent's entry
   agent.removeAndUnregisterSelf(lc);
-  lc.log(log::INFO, "In GarbageCollector::cleanupDeadAgent(): agent entry removed.");
+  lc.log(log::INFO, "In GarbageCollector::OwnedObjectSorter::lockFetchAndUpdateOtherObjects(): agent entry removed.");
   // We can remove the agent from our own ownership.
   agentReference.removeFromOwnership(agent.getAddressIfSet(), objectStore);
 }

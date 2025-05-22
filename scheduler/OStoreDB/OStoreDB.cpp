@@ -1902,7 +1902,7 @@ void OStoreDB::deleteFailed(const std::string& objectId, log::LogContext& lc) {
     }
   }
   if (queueIds.empty()) {
-    throw exception::Exception("OIn OStoreDB::deleteFailed(): bject " + objectId + " is not owned by any queue.");
+    throw exception::Exception("In OStoreDB::deleteFailed(): Object " + objectId + " is not owned by any queue.");
   }
 
   // Make a set of failed archive or retrieve queues
@@ -2063,7 +2063,7 @@ std::string OStoreDB::queueRepack(const SchedulerDatabase::QueueRepackRequest& r
   try {
     Helpers::registerRepackRequestToIndex(vid, rr->getAddressIfSet(), *m_agentReference, m_objectStore, lc);
   } catch (objectstore::RepackIndex::VidAlreadyRegistered&) {
-    throw exception::UserError("In OStoreDB::queueRepack(): A repack request already exists for this VID.");
+    throw exception::UserError("A repack request already exists for this VID.");
   }
   // We're good to go to create the object. We need to own it.
   m_agentReference->addToOwnership(rr->getAddressIfSet(), m_objectStore);
@@ -2165,7 +2165,7 @@ common::dataStructures::RepackInfo OStoreDB::getRepackInfo(const std::string& vi
 }
 
 //------------------------------------------------------------------------------
-// OStoreDB::resheduleRetrieveRequest()
+// OStoreDB::requeueRetrieveRequestJobs()
 //------------------------------------------------------------------------------
 void OStoreDB::requeueRetrieveRequestJobs(std::list<cta::SchedulerDatabase::RetrieveJob*>& jobs,
                                           log::LogContext& logContext) {
@@ -3326,6 +3326,7 @@ uint64_t OStoreDB::RepackRequest::addSubrequestsAndUpdateStats(
                 Helpers::selectBestRetrieveQueue({repackInfo.vid},
                                                  m_oStoreDB.m_catalogue,
                                                  m_oStoreDB.m_objectStore,
+                                                 lc,
                                                  true);
                 bestVid = repackInfo.vid;
                 activeCopyNumber = tc.copyNb;
@@ -3552,7 +3553,7 @@ void OStoreDB::cancelRepack(const std::string& vid, log::LogContext& lc) {
   try {
     ri.setAddress(re.getRepackIndexAddress());
   } catch (cta::exception::Exception&) {
-    throw exception::UserError("In OStoreDB::cancelRepack(): No repack request for this VID (index not present).");
+    throw exception::UserError("No repack request for this VID (index not present).");
   }
   ri.fetchNoLock();
   auto rrAddresses = ri.getRepackRequestsAddresses();
@@ -3663,7 +3664,7 @@ SchedulerDatabase::JobsFailedSummary OStoreDB::getRetrieveJobsFailedSummary(log:
         .add("queueObject", rj.address)
         .add("exceptionMessage", ex.getMessageValue())
         .log(log::DEBUG,
-             "WARNING: In OStoreDB::getRetrieveJobsFailedSummary(): failed to lock/fetch a retrieve queue.");
+             "In OStoreDB::getRetrieveJobsFailedSummary(): failed to lock/fetch a retrieve queue.");
       continue;
     }
     auto summary = rq.getCandidateSummary();

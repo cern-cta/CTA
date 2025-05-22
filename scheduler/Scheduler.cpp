@@ -132,7 +132,7 @@ uint64_t Scheduler::checkAndGetNextArchiveFileId(const std::string& instanceName
     .add("fileId", archiveFileId)
     .add("catalogueTime", catalogueTime)
     .add("schedulerDbTime", schedulerDbTime);
-  lc.log(log::INFO, "In Shceduler::checkAndGetNextArchiveFileId(): Checked request and got next archive file ID");
+  lc.log(log::INFO, "In Scheduler::checkAndGetNextArchiveFileId(): Checked request and got next archive file ID");
 
   return archiveFileId;
 }

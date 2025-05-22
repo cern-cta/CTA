@@ -344,25 +344,26 @@ void MaintenanceHandler::exceptionThrowingRunChild(){
       {
         log::ScopedParamContainer params(m_processManager.logContext());
         params.add("passTime", onePass.secs());
-        m_processManager.logContext().log(log::INFO, "Queue cleanup run one pass done");
+        m_processManager.logContext().log(log::INFO, "In MaintenanceHandler::exceptionThrowingRunChild(): Queue Cleanup run one pass done.");
       }
       gc.runOnePass(m_processManager.logContext());
       {
         log::ScopedParamContainer params(m_processManager.logContext());
         params.add("passTime", onePass.secs());
+        m_processManager.logContext().log(log::INFO, "In MaintenanceHandler::exceptionThrowingRunChild(): Garbage Colletor run one pass done.");
       }
       diskReportRunner.runOnePass(m_processManager.logContext());
       {
         log::ScopedParamContainer params(m_processManager.logContext());
         params.add("passTime", onePass.secs());
-        m_processManager.logContext().log(log::INFO, "Disk report run one pass done");
+        m_processManager.logContext().log(log::INFO, "In MaintenanceHandler::exceptionThrowingRunChild(): Disk Report run one pass done.");
       }
       if(runRepackRequestManager()){
         repackRequestManager.runOnePass(m_processManager.logContext(), m_tapedConfig.repackMaxRequestsToExpand.value());
         {
           log::ScopedParamContainer params(m_processManager.logContext());
           params.add("passTime", onePass.secs());
-          m_processManager.logContext().log(log::INFO, "Repack request manager run one pass");
+          m_processManager.logContext().log(log::INFO, "In MaintenanceHandler::exceptionThrowingRunChild(): Repack Request manager run one pass." done);
         }
       }
       try {
