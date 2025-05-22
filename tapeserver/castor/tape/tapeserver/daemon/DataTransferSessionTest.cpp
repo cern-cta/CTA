@@ -2567,8 +2567,6 @@ TEST_P(DataTransferSessionTest, DataTransferSessionWrongChecksumMigration) {
   logToCheck += "";
   ASSERT_EQ(s_vid, sess.getVid());
 
-  //std::cout << logToCheck << std::endl;
-
   for (const auto & fileNumber : archiveFileIds) {
     if (fileNumber < problematicFseq) {
       // Files queued without the wrong checksum made it to the catalogue
@@ -2894,7 +2892,7 @@ TEST_P(DataTransferSessionTest, DataTransferSessionMissingFilesMigration) {
     pos += successLog.size();
     count++;
   }
-  //std::cout << logger.getLog() << std::endl;
+
   ASSERT_EQ(5, count);
   cta::catalogue::TapeSearchCriteria tapeCriteria;
   tapeCriteria.vid = s_vid;
