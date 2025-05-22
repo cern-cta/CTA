@@ -80,8 +80,8 @@ Example configuration of */etc/systemd/system/cta-rmcd.service*:
 
     [Unit]
     Description=CERN Tape Archive (CTA) rmcd daemon
-    After=syslog.target network-online.target
-   
+    After=network-online.target
+
     [Service]
     User=cta
     EnvironmentFile=-/etc/sysconfig/cta-rmcd
@@ -89,7 +89,7 @@ Example configuration of */etc/systemd/system/cta-rmcd.service*:
     LimitCORE=infinity
     Type=forking
     Restart=no
-   
+
     [Install]
     WantedBy=default.target
 

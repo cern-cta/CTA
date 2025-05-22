@@ -60,7 +60,7 @@ daemon (**cta-rmcd**) to be installed and running on the same server as itself.
 
 -l, \--log-to-file *log_file*
 
-:   Log to a file instead of using syslog.
+:   Log to a file instead of stdout.
 
 -o, \--log-format *format*
 
@@ -68,7 +68,7 @@ daemon (**cta-rmcd**) to be installed and running on the same server as itself.
 
 -s, \--stdout
 
-:   Log to standard output instead of using syslog. Requires \--foreground.
+:   Log to standard output. Requires \--foreground. Logging to stdout is the default, but this option is kept for compatibility reasons
 
 # CONFIGURATION
 

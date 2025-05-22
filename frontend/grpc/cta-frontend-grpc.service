@@ -1,6 +1,6 @@
 [Unit]
 Description=gRPC frontend for CERN Tape Archive (CTA)
-After=syslog.target network-online.target
+After=network-online.target
 
 [Service]
 EnvironmentFile=/etc/sysconfig/cta-frontend-grpc
