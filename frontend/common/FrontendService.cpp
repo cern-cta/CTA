@@ -419,6 +419,11 @@ FrontendService::FrontendService(const std::string& configFilename) : m_archiveF
     m_threads = threads.value();
   }
 
+  auto jwksUri = config.getOptionValueStr("grpc.jwks.uri");
+  if (jwksUri.has_value()) {
+    m_jwksUri = jwksUri.value();
+  }
+
   // All done
   log(log::INFO, std::string("cta-frontend started"), {log::Param("version", CTA_VERSION)});
 }

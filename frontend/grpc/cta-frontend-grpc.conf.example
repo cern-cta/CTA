@@ -84,6 +84,10 @@ cta.log.url file:/var/log/cta/cta-frontend.log
 #grpc.tls.chain /path/to/CA/chain
 #
 
+# URI of JWKS endpoint
+# grpc.jwks.uri http://auth-keycloak:8080/realms/master/protocol/openid-connect/certs
+#
+
 # gRPC number of threads
 #grpc.numberofthreads nthreads
 

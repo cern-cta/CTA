@@ -74,4 +74,5 @@ data:
     grpc.tls true
     grpc.tls.key /etc/grpc-certs/key/server.key
     grpc.tls.cert /etc/grpc-certs/cert/server.crt
+    grpc.jwks.uri http://auth-keycloak:8080/realms/master/protocol/openid-connect/certs
 {{- end }}
