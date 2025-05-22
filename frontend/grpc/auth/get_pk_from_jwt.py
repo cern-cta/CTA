@@ -92,4 +92,8 @@ print(pubkey)
 ## Validate the token using the public key..?
 jwt.decode(token, pubkey, algorithms=["RS256"])
 
+## also write the JWT valid for a year in a place where we can copy it into the eos pods
+with open("token_1year.jwt", "a") as f:
+    f.write(token)
+
 ## this blogpost should be helpful in token validation: https://blog.ropardo.ro/2025/02/06/keycloak-access-token-verification-a-step-by-step-example/
