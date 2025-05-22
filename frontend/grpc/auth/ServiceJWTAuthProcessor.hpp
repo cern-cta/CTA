@@ -27,7 +27,7 @@
 class ServiceJWTAuthProcessor : public ::grpc::AuthMetadataProcessor {
 
 public:
-    explicit ServiceJWTAuthProcessor() {}
+    explicit ServiceJWTAuthProcessor(const std::string& jwksUri): m_jwksUri(jwksUri) {}
 
     ::grpc::Status Process(const ::grpc::AuthMetadataProcessor::InputMetadata& authMetadata, ::grpc::AuthContext* context,
                     ::grpc::AuthMetadataProcessor::OutputMetadata* consumedAuthMetadata,
@@ -38,5 +38,5 @@ public:
 private:
     const std::string JWT_TOKEN_AUTH_METADATA_KEY = {"cta-grpc-jwt-auth-token"};
     Json::Value FetchJWKS(const std::string& jwksUrl);
-
+    std::string m_jwksUri;
 };
