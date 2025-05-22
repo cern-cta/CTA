@@ -149,6 +149,14 @@ void QueueCleanupRunner::runOnePass(log::LogContext &logContext) {
       m_db.unblockRetrieveQueueForCleanup(toReportQueueAddress);
     }
 
+    // If we managed to requeue all the jobs to a differen VID remove the ToReport queue
+    // If not, remove the CleanUp flag from the ToReport queue so that the Disk reporter
+    // can pick it up.
+    if(!m_db.trimEmptyToReportQueueWithVid(toReportQueueName, logContext)){
+      m_db.freeRetrieveQueueForCleanup(toReportQueueName);
+    }
+
+
     // Finally, update the tape state out of PENDING
     {
       cta::common::dataStructures::Tape tapeDataRefreshed;
