@@ -32,7 +32,6 @@
 namespace cta::frontend {
 
 FrontendService::FrontendService(const std::string& configFilename) : m_archiveFileMaxSize(0) {
-  int logToSyslog = 0;
   int logToStdout = 0;
   int logtoFile = 0;
   std::string logFilePath = "";
@@ -45,7 +44,7 @@ FrontendService::FrontendService(const std::string& configFilename) : m_archiveF
     // Set the logger URL
     auto loggerURL = config.getOptionValueStr("cta.log.url");
     if (!loggerURL.has_value()) {
-      loggerURL = "syslog:";
+      loggerURL = "stdout:";
     }
     const auto shortHostname = utils::getShortHostname();
 
@@ -111,7 +110,6 @@ FrontendService::FrontendService(const std::string& configFilename) : m_archiveF
     params.push_back(log::Param("version", CTA_VERSION));
     params.push_back(log::Param("configFilename", configFilename));
     params.push_back(log::Param("logToStdout", std::to_string(logToStdout)));
-    params.push_back(log::Param("logToSyslog", std::to_string(logToSyslog)));
     params.push_back(log::Param("logtoFile", std::to_string(logtoFile)));
     params.push_back(log::Param("logFilePath", logFilePath));
     log(log::INFO, std::string("Starting cta-frontend"), params);

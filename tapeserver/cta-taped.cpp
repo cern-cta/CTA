@@ -57,8 +57,8 @@ const std::string gHelpString =
     "where options can be:\n"
     "\n"
     "\t--foreground             or -f         \tRemain in the Foreground\n"
-    "\t--stdout                 or -s         \tPrint logs to standard output. Required --foreground\n"
-    "\t--log-to-file <log-file> or -l         \tLogs to a given file (instead of default syslog)\n"
+    "\t--stdout                 or -s         \tPrint logs to standard output. Requires --foreground. Logging to stdout is the default, but this option is kept for compatibility reasons\n"
+    "\t--log-to-file <log-file> or -l         \tLogs to a given file (instead of default stdout)\n"
     "\t--log-format <format>    or -o         \tOutput format for log messages (default or json)\n"
     "\t--config <config-file>   or -c         \tConfiguration file\n"
     "\t--help                   or -h         \tPrint this help and exit\n";
