@@ -75,8 +75,8 @@ std::string file2string(std::string filename){
 
 int main(const int argc, char *const *const argv) {
 
-    setenv("GRPC_VERBOSITY", "debug", 1);
-    setenv("GRPC_TRACE", "all", 1); // "tcp,http,secure_endpoint,transport_security", 1); // do not set to all, this is to debug the transport protocol
+    // setenv("GRPC_VERBOSITY", "debug", 1);
+    // setenv("GRPC_TRACE", "all", 1); // "tcp,http,secure_endpoint,transport_security", 1); // do not set to all, this is to debug the transport protocol
     // per https://chromium.googlesource.com/external/github.com/grpc/grpc/+/HEAD/examples/cpp/debugging/#debug-transport-protocol
 
     std::string config_file("/etc/cta/cta-frontend-grpc.conf");
