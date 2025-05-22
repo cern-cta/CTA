@@ -33,7 +33,7 @@ public:
                     ::grpc::AuthMetadataProcessor::OutputMetadata* consumedAuthMetadata,
                     ::grpc::AuthMetadataProcessor::OutputMetadata* processedResponseMetadata) override;
     bool Validate(const std::string& encodedJWT);
-    // bool ValidateToken(const std::string& encodedJWT);
+    bool ValidateToken(const std::string& encodedJWT);
 
 private:
     const std::string JWT_TOKEN_AUTH_METADATA_KEY = {"cta-grpc-jwt-auth-token"};
