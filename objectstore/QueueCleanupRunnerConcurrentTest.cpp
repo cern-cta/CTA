@@ -422,7 +422,10 @@ static std::list<ConcurrentTapeQueueTransition> Test_tapeQueueTransitionList_Fai
 
 INSTANTIATE_TEST_CASE_P(OStoreTestVFS, QueueCleanupRunnerConcurrentTest,
                         ::testing::Values(
-                                // With a timeout of 0.0s the 2nd cleanup runner will be able to complete the task after the 1st has failed
+                                // Reserve the queue, set the agent timeout to 0 and run the
+                                // garbage collector to remove the agent. This way we simulate
+                                // that the maintenance process died. Use a new QCR to move the
+                                // remaining jobs. The queue should be cleared.
                                 QueueCleanupRunnerConcurrentTestParams(
                                         OStoreDBFactoryVFS,
                                         Test_retrieveRequestSetupList,

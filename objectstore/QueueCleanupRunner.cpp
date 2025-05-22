@@ -125,15 +125,11 @@ void QueueCleanupRunner::runOnePass(log::LogContext &logContext) {
       continue;
     }
 
-    // Transfer all the jobs to a different queue (if there are replicas) or report the error back to the user
+    // Transfer all the jobs to a different queue (if there are replicas) or enqueue the requests into the ToReport queue so that the DiskReporter can report the error back to the user.
     while (true) {
-
       utils::Timer tLoop;
       log::ScopedParamContainer paramsLoopMsg(logContext);
 
-      // We can see what queue we are getting the jobs from in the 'Algorithms::popNextBatch()'
-      // message
-      // In here we do not know from which queue we actually grabbed the jobs...
       auto dbRet = m_db.getNextRetrieveJobsToTransferBatch(queueVid, m_batchSize, logContext);
 
       if (dbRet.empty()) break;
@@ -155,12 +151,12 @@ void QueueCleanupRunner::runOnePass(log::LogContext &logContext) {
       logContext.log(cta::log::INFO,"In QueueCleanupRunner::runOnePass(): Queue jobs moved.");
     }
 
-    // Check if we were able to requeue all jobs. In that case, remove the queue we created.
-    // If not, mark the cleanup flag as finished in the
-    {// Reset the queue cleanup info so that dsik reporting can pick up the queue.
-        m_db.freeRetrieveQueueForCleanup(toReportQueueName);
-	      m_db.trimEmptyToReportQueueWithVid(toReportQueueName, logContext);
-    }
+    // Clear the DoCleanup flag in the ToReport queue so that DiskReporting can
+    // start working on it.
+    // Delete the ToReport queue in case we were able to requeue all jobs and the ToReport queue
+    // holds no requests at all.
+    m_db.freeRetrieveQueueForCleanup(toReportQueueName);
+    m_db.trimEmptyToReportQueueWithVid(toReportQueueName, logContext);
 
     // Finally, update the tape state out of PENDING
     {

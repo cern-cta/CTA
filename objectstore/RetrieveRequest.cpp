@@ -1187,8 +1187,10 @@ void RetrieveRequest::setFailed() {
   m_payload.set_isfailed(true);
 }
 
-// Fail the job given by the copy number.
-void RetrieveRequest::failJobs(std::string& newOwner) {
+//------------------------------------------------------------------------------
+// RetrieveRequest::failJob()
+//------------------------------------------------------------------------------
+void RetrieveRequest::failJob(std::string& newOwner) {
   for (auto& j: *m_payload.mutable_jobs()) {
     if (j.status() == serializers::RetrieveJobStatus::RJS_ToTransfer) {
       j.set_status(m_payload.isrepack() ?
@@ -1205,6 +1207,9 @@ void RetrieveRequest::failJobs(std::string& newOwner) {
   commit();
 }
 
+//------------------------------------------------------------------------------
+// RetrieveRequest::getJobToAdd()
+//------------------------------------------------------------------------------
 common::dataStructures::RetrieveJobToAdd RetrieveRequest::getJobToAdd() {
   auto activeCopyNb = m_payload.activecopynb();
   std::string activeVid;

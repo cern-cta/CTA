@@ -50,7 +50,7 @@ public:
     cta::catalogue::Catalogue& catalogue) override;
   void garbageCollectRetrieveRequest(const std::string& presumedOwner, AgentReference& agentReference, log::LogContext& lc,
     cta::catalogue::Catalogue& catalogue, bool isQueueCleanup);
-  void failJobs(std::string& newOwner);
+  void failJob(std::string& newOwner);
   std::optional<std::string> reclassifyRetrieveRequest(cta::catalogue::Catalogue& catalogue, log::LogContext& lc);
   common::dataStructures::RetrieveJobToAdd getJobToAdd();
   // Job management ============================================================

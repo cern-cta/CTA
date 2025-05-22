@@ -2186,14 +2186,15 @@ void OStoreDB::requeueRetrieveRequestJobs(std::list<cta::SchedulerDatabase::Retr
                                           log::LogContext& logContext) {
   std::list<std::shared_ptr<objectstore::RetrieveRequest>> rrlist;
   std::list<objectstore::ScopedExclusiveLock> locks;
-  std::map<std::string, std::list<common::dataStructures::RetrieveJobToAdd>> jobsToRequeue;
-  std::list<common::dataStructures::RetrieveJobToAdd> jobsToFail;
   utils::Timer gcrrTimer;
 
-  std::string activeVidFail;
-  std::string activeVidRequeue;
+  // We have to objects to classify the batch into.
+  // - jobsToRequeue: map containing the VID as key and a list of requests as value.
+  // - jobToFail: list of jobs containing the jobs we have to fail.
+  std::map<std::string, std::list<common::dataStructures::RetrieveJobToAdd>> jobsToRequeue;
+  std::list<common::dataStructures::RetrieveJobToAdd> jobsToFail;
 
-  // First classify the jobs
+  // First we have to decide what we will do with each job
   for (auto& job : jobs) {
     auto oStoreJob = dynamic_cast<OStoreDB::RetrieveJob*>(job);
     auto rr =
@@ -2210,35 +2211,29 @@ void OStoreDB::requeueRetrieveRequestJobs(std::list<cta::SchedulerDatabase::Retr
     }
 logContext.log(log::INFO, "In OStoreDB::requeueRetrieveRequestJobs(): Classifying retrieve request");
 
-    // Move the Job Pointers from the global list to the independent ones
-    //
+    // Move the Job Pointers from the batch into the dedicated ones.
+    // If we receice a std::nullopt it means that there is no VID to requeue -> fail it.
+    // If we get a value it will containt the VID where we should requeue the request.
     std::optional<std::string> vidToRequeue = rr->reclassifyRetrieveRequest(m_catalogue, logContext);
     if (vidToRequeue.has_value()){
-        jobsToRequeue[vidToRequeue.value()].emplace_back(rr->getJobToAdd());
+      jobsToRequeue[vidToRequeue.value()].emplace_back(rr->getJobToAdd());
     } else {
-        rr->failJobs(toReportQueueName);
-	activeVidFail = rr->getLastActiveVid();
-        jobsToFail.emplace_back(rr->getJobToAdd());
+      rr->failJob(toReportQueueName);
+      jobsToFail.emplace_back(rr->getJobToAdd());
     }
   } // End of job classfication.
 
-  // Now requeue the batches. We know that the initial batch holds the max batch size so
-  // inherently in here we are working int <= MAX in each list.
-  // We now need to grab the failed queue and queue the request.
+  // Now requeue the batches. We know that the initial batch holds the max batch size, so,
+  // any of the job lists to requeue will be <= than the batch size.
   if (jobsToFail.size()) {
     logContext.log(log::INFO, "In OStoreDB::requeueRetrieveRequestJobs(): Requeueing failed jobs");
     RetrieveQueue rq(m_objectStore);
     ScopedExclusiveLock rql;
-    // If garbage collect retrieve request is only called by the cleanup
-    // process we can add some extra info in the `activeVid` so that
-    // the queue gets created with a different name and they don't
-    // step into each others. :)
     Helpers::getLockedAndFetchedJobQueue<RetrieveQueue>(rq, rql, *m_agentReference, activeVidFail, common::dataStructures::JobQueueType::JobsToReportToUser, logContext);
 
-    // Append the jobs and commit.
+    // Append the jobs sequentially, we do not care about the order.
     rq.appendJobsAndCommit(jobsToFail, *m_agentReference, logContext);
   }
-
 
   for(auto &[activeVid, requestList] : jobsToRequeue){
     log::ScopedParamContainer params(logContext);
@@ -2248,6 +2243,7 @@ logContext.log(log::INFO, "In OStoreDB::requeueRetrieveRequestJobs(): Classifyin
     RetrieveQueue rq(m_objectStore);
     ScopedExclusiveLock rql;
     Helpers::getLockedAndFetchedJobQueue<RetrieveQueue>(rq, rql, *m_agentReference, activeVid, common::dataStructures::JobQueueType::JobsToTransferForUser, logContext);
+    // Insert the jobs in the correct order.
     rq.addJobsAndCommit(requestList, *m_agentReference, logContext);
   }
 
@@ -2291,23 +2287,23 @@ std::string OStoreDB::reserveRetrieveQueueForCleanup(const std::string& vid) {
       "In OStoreDB::reserveRetrieveQueueForCleanup(): Queue was reserved by another agent. Cancelling reservation.");
   }
 
-  // Otherwise, carry on with cleanup of this queue .
+  // Otherwise, carry on with cleanup of this queue.
   m_agentReference->addToOwnership(rqtt.getAddressIfSet(), m_objectStore);
   rqtt.setOwner(m_agentReference->getAgentAddress());
   rqtt.setQueueCleanupAssignedAgent(m_agentReference->getAgentAddress());
   rqtt.commit();
 
-  // Create the queue or get it in case a previous agent died and we are taking over.
-  rel.lock(re); // What is faster locking here and fetching again or holding the lock since the previous step? Should be this implementation
-  re.fetch();
+  // Create the ToReport queue or get it in case a previous agent died and we are taking over.
+  rel.lock(re);
+  re.fetch();  // Die here
   const auto reportQueueName = re.addOrGetRetrieveQueueAndCommit(vid, *m_agentReference,
 common::dataStructures::JobQueueType::JobsToReportToUser);
-  rel.release();
+  rel.release();  // Die here
   rqtr.setAddress(reportQueueName);
   rqtrl.lock(rqtr);
-  rqtr.fetch();
+  rqtr.fetch();  // Dee here
 
-  // Mark the ToReport queue for clean so that the DiskReporter does not pick it up.
+  // Mark the ToReport queue for cleanup so that the DiskReporter does not pick it up.
   m_agentReference->addToOwnership(rqtr.getAddressIfSet(), m_objectStore);
   rqtr.setOwner(m_agentReference->getAgentAddress());
   rqtr.setQueueCleanupDoCleanup();
@@ -2321,10 +2317,8 @@ common::dataStructures::JobQueueType::JobsToReportToUser);
 // OStoreDB::freeRetrieveQueueForCleanup()
 //------------------------------------------------------------------------------
 void OStoreDB::freeRetrieveQueueForCleanup(const std::string& toReportQueueName) {
-  RootEntry re(m_objectStore);
   RetrieveQueue rqtr(m_objectStore);
   ScopedExclusiveLock rqltr;
-  re.fetchNoLock();
 
   rqtr.setAddress(toReportQueueName);
   rqltr.lock(rqtr);
