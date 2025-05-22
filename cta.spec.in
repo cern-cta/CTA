@@ -83,6 +83,8 @@ BuildRequires: valgrind-devel
 BuildRequires: krb5-devel
 BuildRequires: libtirpc-devel
 BuildRequires: openssl-devel >= 1.0.1
+BuildRequires: libcurl, libcurl-devel
+BuildRequires: jsoncpp, jsoncpp-devel
 %{?systemd_requires}
 BuildRequires: systemd
 # only build debug info if you're building the whole code
