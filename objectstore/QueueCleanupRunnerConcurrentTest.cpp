@@ -264,6 +264,10 @@ TEST_P(QueueCleanupRunnerConcurrentTest, CleanupRunnerParameterizedTest) {
   agentForSetup.insertAndRegisterSelf(lc);
   agentForCleanup.initialize();
   agentForCleanup.insertAndRegisterSelf(lc);
+  agentForCleanupFail.initialize();
+  agentForCleanupFail.setTimeout_us(0);
+  agentForCleanupFail.insertAndRegisterSelf(lc);
+
 
   // Create retrieve requests and add them to the queues
   // Create queues when they do not exist
@@ -346,13 +350,11 @@ TEST_P(QueueCleanupRunnerConcurrentTest, CleanupRunnerParameterizedTest) {
     cta::objectstore::QueueCleanupRunner qCleanupRunnerBroken(agentForCleanupRef, brokenOStore, catalogue, GetParam().cleanupTimeout);
     cta::objectstore::QueueCleanupRunner qCleanupRunnerOk(agentForCleanupRef, oKOStore, catalogue, GetParam().cleanupTimeout);
 
-    ASSERT_THROW(qCleanupRunnerBroken.runOnePass(lc), OStoreDBWithAgentBroken::TriggeredException);
-    for (auto & tapeQueueStateTrans : GetParam().tapeQueueTransitionList) {
-      // Tick the queue cleanup heartbeat a few times
-      brokenOStore.tickRetrieveQueueCleanupHeartbeat(tapeQueueStateTrans.vid);
-      brokenOStore.tickRetrieveQueueCleanupHeartbeat(tapeQueueStateTrans.vid);
-    }
-    ASSERT_NO_THROW(qCleanupRunnerOk.runOnePass(lc)); // Two passes are needed for the other cleanup runner to be able to track the heartbeats
+    // We now run the GarbageCollector to clear the CleanupInfo 
+    cta::objectstore::GarbageCollector gc(be, agentForCleanupRef, catalogue);
+    ASSERT_NO_THROW(gc.runOnePass(lc));
+
+    // Try to move the requests after agent got garbage collected
     ASSERT_NO_THROW(qCleanupRunnerOk.runOnePass(lc));
   }
 
@@ -418,13 +420,7 @@ INSTANTIATE_TEST_CASE_P(OStoreTestVFS, QueueCleanupRunnerConcurrentTest,
                                         OStoreDBFactoryVFS,
                                         Test_retrieveRequestSetupList,
                                         Test_tapeQueueTransitionList_Completed,
-                                        0.0),
-                                // With a timeout of 120.0s the 2nd cleanup runner will NOT immediately complete the task after the 1st has failed
-                                QueueCleanupRunnerConcurrentTestParams(
-                                        OStoreDBFactoryVFS,
-                                        Test_retrieveRequestSetupList,
-                                        Test_tapeQueueTransitionList_Failed,
-                                        120.0)
-                        )
-);
+                                        0.0)
+				)
+			);
 }

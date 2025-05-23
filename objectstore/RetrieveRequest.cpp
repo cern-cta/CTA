@@ -74,6 +74,9 @@ void RetrieveRequest::garbageCollect(const std::string& presumedOwner, AgentRefe
   garbageCollectRetrieveRequest(presumedOwner, agentReference, lc, catalogue, false);
 }
 
+//------------------------------------------------------------------------------
+// RetrieveRequest::garbageCollectRetrieveRequest()
+//------------------------------------------------------------------------------
 void RetrieveRequest::garbageCollectRetrieveRequest(const std::string& presumedOwner, AgentReference& agentReference, log::LogContext& lc,
     cta::catalogue::Catalogue& catalogue, bool isQueueCleanup) {
   checkPayloadWritable();

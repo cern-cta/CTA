@@ -853,7 +853,20 @@ void RetrieveQueue::tickQueueCleanupHeartbeat() {
 
 void RetrieveQueue::garbageCollect(const std::string &presumedOwner, AgentReference & agentReference, log::LogContext & lc,
     cta::catalogue::Catalogue & catalogue) {
-  throw cta::exception::Exception("In RetrieveQueue::garbageCollect(): not implemented");
+  // Garbage collection of a retrieve queue should only happen it died in the middle of QueueCleanup.
+  if(!getQueueCleanupDoCleanup()){
+    throw cta::exception::Exception("In RetrieveQueue::garbageCollect(): trying to gabarbage collect Retrieve Queue not marked for cleanup");
+  }
+
+  if(getQueueCleanupAssignedAgent().has_value()){
+    clearQueueCleanupAssignedAgent();
+    commit();
+    //setOwner(); Do we need to reset the owner here os is it ok to leave the previous one and overwrite on the new reservation...
+    log::ScopedParamContainer(lc)
+      .add("queueAddress", getAddressIfSet())
+      .log(log::INFO, "In RetrieveQueue::garbageCollect(): cleared CleanupInfo assined agent.");
+
+  }
 }
 
 void RetrieveQueue::setShardSize(uint64_t shardSize) {
