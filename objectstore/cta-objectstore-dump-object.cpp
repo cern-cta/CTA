@@ -114,8 +114,8 @@ int main(int argc, char ** argv) {
         oss << R"({)";
         oss << R"("objectStorePath":")" << objectStorePath << R"(",)";
         oss << R"("objectName":")" << objectName << R"(",)";
-        oss << R"("headerDump":")" << headerDump << R"(",)";
-        oss << R"("bodyDump":")" << bodyDump << R"("})";
+        oss << R"("headerDump":)" << headerDump << R"(,)";
+        oss << R"("bodyDump":)" << bodyDump << R"(})";
         cta::utils::json::object::JSONCObject jObject;
         jObject.buildFromJSON(oss.str());
         std::cout << jObject.getJSONPretty() << std::endl;
