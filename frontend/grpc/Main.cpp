@@ -74,6 +74,10 @@ std::string file2string(std::string filename){
 
 int main(const int argc, char *const *const argv) {
 
+    setenv("GRPC_VERBOSITY", "debug", 1);
+    setenv("GRPC_TRACE", "tls, api", 1); // "tcp,http,secure_endpoint,transport_security", 1); // do not set to all, this is to debug the transport protocol
+    // per https://chromium.googlesource.com/external/github.com/grpc/grpc/+/HEAD/examples/cpp/debugging/#debug-transport-protocol
+
     std::string config_file("/etc/cta/cta-frontend-grpc.conf");
 
     char c;
@@ -161,8 +165,13 @@ int main(const int argc, char *const *const argv) {
                 lc.log(log::INFO, "TLS CA chain file not defined ...");
                 // tls_options.pem_root_certs = "";
             }
-            auto certificate_provider = std::make_shared<grpc::experimental::FileWatcherCertificateProvider>(key_file, cert_file, "", 1);
+            auto certificate_provider = std::make_shared<grpc::experimental::FileWatcherCertificateProvider>(key_file, cert_file, 1);
             grpc::experimental::TlsServerCredentialsOptions tls_options(certificate_provider);
+            // tls_options.watch_root_certs();
+            // tls_options.set_root_cert_name("Root CA"); // cta-frontend-grpc for key identity name
+            tls_options.watch_identity_key_cert_pairs();
+            tls_options.set_identity_cert_name("cta-frontend-grpc");
+            // tls_options.set_verify_server_cert(false);
 
             creds = grpc::experimental::TlsServerCredentials(tls_options);
         }
