@@ -168,6 +168,9 @@ int main(const int argc, char *const *const argv) {
             }
             auto certificate_provider = std::make_shared<grpc::experimental::FileWatcherCertificateProvider>(key_file, cert_file, "", 1);
             grpc::experimental::TlsServerCredentialsOptions tls_options(certificate_provider);
+            tls_options.watch_root_certs();
+            tls_options.set_root_cert_name("Root CA"); // cta-frontend-grpc for key identity name
+            tls_options.set_identity_cert_name("cta-frontend-grpc");
 
             creds = grpc::experimental::TlsServerCredentials(tls_options);
         }
