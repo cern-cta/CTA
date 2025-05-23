@@ -41,6 +41,10 @@ std::string JSONCObject::getJSON() {
   return std::string(json_object_to_json_string_ext(m_jsonObject, JSON_C_TO_STRING_PLAIN));
 }
 
+std::string JSONCObject::getJSONPretty() {
+  return std::string(json_object_to_json_string_ext(m_jsonObject, JSON_C_TO_STRING_PRETTY));
+}
+
 void JSONCObject::initializeJSONCObject() {
   m_jsonObject = json_object_new_object();
 }

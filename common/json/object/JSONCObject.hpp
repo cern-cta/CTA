@@ -52,6 +52,7 @@ public:
    * or null if the json cannot be generated from the inherited object attributes
    */
   virtual std::string getJSON();
+  virtual std::string getJSONPretty();
   virtual ~JSONCObject();
 protected:
   json_object * m_jsonObject = nullptr;
