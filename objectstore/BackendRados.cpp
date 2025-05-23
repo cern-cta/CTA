@@ -530,7 +530,7 @@ void BackendRados::lockBackoff(const std::string& name, uint64_t timeout_us, Loc
     t.reset();
   }
   cta::exception::Errnum::throwOnReturnedErrno(-rc,
-      std::string("In BackendRados::lock(), failed to librados::IoCtx::") +
+      std::string("In BackendRados::lockBackoff(): failed to librados::IoCtx::") +
       (lockType==LockType::Shared?"lock_shared: ":"lock_exclusive: ") +
       name + "/" + "lock" + "/" + clientId + "//");
   // We could have created an empty object by trying to lock it. We can find this out: if the object is
@@ -539,12 +539,12 @@ void BackendRados::lockBackoff(const std::string& name, uint64_t timeout_us, Loc
   uint64_t size;
   time_t date;
   throwOnReturnedErrnoOrThrownStdException ([&radosCtx, &name, &size, &date]() { return -radosCtx.stat(name, &size, &date); },
-      std::string("In BackendRados::lockBackoff, failed to librados::IoCtx::stat: ") +
+      std::string("In BackendRados::lockBackoff(): failed to librados::IoCtx::stat: ") +
       name + "/" + "lock" + "/" + clientId + "//");
   if (!size) {
     // The object has a zero size: we probably created it by attempting the locking.
     throwOnReturnedErrnoOrThrownStdException ([&radosCtx, &name]() { return -radosCtx.remove(name); },
-        std::string("In BackendRados::lockBackoff, failed to librados::IoCtx::remove: ") +
+        std::string("In BackendRados::lockBackoff(): failed to librados::IoCtx::remove: ") +
         name + "//");
     throw cta::exception::NoSuchObject(std::string("In BackendRados::lockBackoff(): "
         "trying to lock a non-existing object: ") + name);

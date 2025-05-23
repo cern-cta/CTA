@@ -74,7 +74,7 @@ void QueueCleanupRunner::runOnePass(log::LogContext &logContext) {
       log::ScopedParamContainer params(logContext);
       params.add("exceptionMessage", ex.getMessageValue());
       logContext.log(log::ERR,
-                     "ERROR: In QueueCleanupRunner::runOnePass(): failed to read set of tapes from the database. Aborting cleanup.");
+                     "In QueueCleanupRunner::runOnePass(): failed to read set of tapes from the database. Aborting cleanup.");
       return; // Unable to proceed from here...
     }
 
@@ -83,12 +83,12 @@ void QueueCleanupRunner::runOnePass(log::LogContext &logContext) {
         log::ScopedParamContainer params(logContext);
         params.add("tapeVid", vid);
         logContext.log(log::ERR,
-                       "ERROR: In QueueCleanupRunner::runOnePass(): failed to find the tape " + vid + " in the database. Skipping it.");
+                       "In QueueCleanupRunner::runOnePass(): failed to find the tape " + vid + " in the database. Skipping it.");
       }
     }
   } else {
     logContext.log(log::DEBUG,
-                   "DEBUG: In QueueCleanupRunner::runOnePass(): no queues requested a cleanup.");
+                   "In QueueCleanupRunner::runOnePass(): no queues requested a cleanup.");
     return;
   }
 
@@ -104,7 +104,7 @@ void QueueCleanupRunner::runOnePass(log::LogContext &logContext) {
             .add("tapeState", common::dataStructures::Tape::stateToString(tapeData.state));
       logContext.log(
               log::INFO,
-              "In QueueCleanupRunner::runOnePass(): Queue is has cleanup flag enabled but is not in the expected PENDING state. Skipping it.");
+              "In QueueCleanupRunner::runOnePass(): Queue has the cleanup flag enabled but is not in the expected PENDING state. Skipping it.");
       continue;
     }
 
@@ -112,11 +112,13 @@ void QueueCleanupRunner::runOnePass(log::LogContext &logContext) {
     loopParams.add("tapeVid", queueVid)
               .add("tapeState", common::dataStructures::Tape::stateToString(tapeData.state));
 
+    logContext.log(log::DEBUG, "In QueueCleanupRunner::runOnePass(): Will try to reserve retrieve queue.");
     try {
       bool prevHeartbeatExists = (m_heartbeatCheck.find(queueVid) != m_heartbeatCheck.end());
       m_db.reserveRetrieveQueueForCleanup(
               queueVid,
               prevHeartbeatExists ? std::optional(m_heartbeatCheck[queueVid].heartbeat) : std::nullopt);
+
     } catch (OStoreDB::RetrieveQueueNotFound & ex) {
       log::ScopedParamContainer paramsExcMsg(logContext);
       paramsExcMsg.add("exceptionMessage", ex.getMessageValue());
@@ -149,14 +151,18 @@ void QueueCleanupRunner::runOnePass(log::LogContext &logContext) {
       for (auto &j: dbRet) {
         jobPtList.push_back(j.get());
       }
+
+      double getQueueTime = tLoop.secs(utils::Timer::resetCounter);
+
       m_db.requeueRetrieveRequestJobs(jobPtList, logContext);
 
       double jobMovingTime = tLoop.secs(utils::Timer::resetCounter);
 
       paramsLoopMsg.add("numberOfJobsMoved", dbRet.size())
+                   .add("getQueueTime", getQueueTime)
                    .add("jobMovingTime", jobMovingTime)
                    .add("tapeVid", queueVid);
-      logContext.log(cta::log::INFO,"In DiskReportRunner::runOnePass(): Queue jobs moved.");
+      logContext.log(cta::log::INFO,"In QueueCleanupRunner::runOnePass(): Queue jobs moved.");
 
       // Tick heartbeat
       try {

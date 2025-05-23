@@ -295,7 +295,6 @@ TEST_P(QueueCleanupRunnerConcurrentTest, CleanupRunnerParameterizedTest) {
   }
 
   // Setup initial tape states and validate number of requests
-  //for (TapeQueueTransition tapeQueueStateTrans : GetParam().tapeQueueTransitionList) {
   for (auto & tapeQueueStateTrans : GetParam().tapeQueueTransitionList) {
 
     std::string vid = tapeQueueStateTrans.vid;

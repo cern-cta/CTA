@@ -257,7 +257,6 @@ void RecallTaskInjector::injectBulkRecalls() {
     recallOrderLog << " " << job->selectedTapeFile().fSeq;
     m_diskWriter.push(dwt);
     m_tapeReader.push(trt);
-    m_lc.log(cta::log::INFO, "Created tasks for recalling a file");
   }
   if(setPromise){
     //At least one task has been created, we tell the TapeReadSingleThread that
@@ -265,10 +264,12 @@ void RecallTaskInjector::injectBulkRecalls() {
     setFirstTasksInjectedPromise();
   }
   // log the recall order
-  cta::log::ScopedParamContainer params(m_lc);
-  params.add("useRAO", useRAO ? "true" : "false");
-  params.add("recallOrder", recallOrderLog.str());
-  m_lc.log(cta::log::INFO, "Recall order of FSEQs");
+  {
+    cta::log::ScopedParamContainer params(m_lc);
+    params.add("useRAO", useRAO ? "true" : "false");
+    params.add("recallOrder", recallOrderLog.str());
+    m_lc.log(cta::log::INFO, "Recall order of FSEQs");
+  }
   // keep the rest for later injection
   m_jobs.erase(std::remove_if(m_jobs.begin(), m_jobs.end(), [](const std::unique_ptr<cta::RetrieveJob> &jobptr) {
     return jobptr.get() == nullptr;
