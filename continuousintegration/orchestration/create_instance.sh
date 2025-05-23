@@ -298,15 +298,15 @@ create_instance() {
   wait $auth_pid || exit 1
 
   if [ $eos_enabled == "true" ] ; then
-    ./deploy_eos_instance.sh --namespace "${namespace}" \
-                            --eos-config "${eos_config}" \
-                            --eos-image-repository "${eos_image_repository}" \
-                            --eos-image-tag "${eos_image_tag}" &
+    ./deploy_eos.sh --namespace "${namespace}" \
+                    --eos-config "${eos_config}" \
+                    --eos-image-repository "${eos_image_repository}" \
+                    --eos-image-tag "${eos_image_tag}" &
     eos_pid=$!
   fi
 
   if [ $dcache_enabled == "true" ] ; then
-    ./deploy_dcache_instance.sh --namespace "${namespace}" &
+    ./deploy_dcache.sh --namespace "${namespace}" &
     dcache_pid=$!
   fi
 

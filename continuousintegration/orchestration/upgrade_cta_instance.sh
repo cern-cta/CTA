@@ -162,7 +162,6 @@ upgrade_instance() {
 }
 
 setup_system() {
-  ./setup/reset_tapes.sh -n ${namespace}
   ./setup/init_kerberos.sh -n ${namespace}
 }
 
