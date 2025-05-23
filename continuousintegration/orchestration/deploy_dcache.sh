@@ -94,7 +94,7 @@ deploy() {
   log_run helm install -n ${namespace} --replace --wait --timeout 10m0s --set auth.username=dcache --set auth.password=let-me-in --set auth.database=chimera chimera bitnami/postgresql --version=12.12.10
   log_run helm install -n ${namespace} --replace --wait --timeout 10m0s cells bitnami/zookeeper
   log_run helm install -n ${namespace} --replace --wait --timeout 10m0s --set externalZookeeper.servers=cells-zookeeper --set kraft.enabled=false billing bitnami/kafka --version 23.0.7
-  log_run helm install -n ${namespace} --debug --replace --wait --timeout 10m0s --set dcache.hsm.enabled=true store dcache/dcache ${helm_flags}
+  log_run helm install -n ${namespace} --replace --wait --timeout 10m0s --set dcache.hsm.enabled=true store dcache/dcache ${helm_flags}
 }
 
 check_helm_installed
