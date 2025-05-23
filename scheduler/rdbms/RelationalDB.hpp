@@ -126,7 +126,7 @@ public:
   std::list<std::unique_ptr<SchedulerDatabase::RetrieveJob>>
   getNextRetrieveJobsToTransferBatch(const std::string& vid, uint64_t filesRequested, log::LogContext& lc) override;
 
-  void requeueRetrieveRequestJobs(std::list<cta::SchedulerDatabase::RetrieveJob*>& jobs, log::LogContext& lc) override;
+  void requeueRetrieveRequestJobs(std::list<cta::SchedulerDatabase::RetrieveJob*>& jobs, const std::string& toReportQueueName, log::LogContext& lc) override;
 
   std::string blockRetrieveQueueForCleanup(const std::string& vid) override;
 
@@ -232,7 +232,11 @@ public:
   getMountInfo(std::string_view logicalLibraryName, log::LogContext& logContext, uint64_t timeout_us) override;
 
   void trimEmptyQueues(log::LogContext& lc) override;
+<<<<<<< HEAD
   bool trimEmptyToReportQueue(const std::string& queueName, log::LogContext& lc) override;
+=======
+  bool trimEmptyToReportQueueWithVid(const std::string& queueVid, log::LogContext& lc) override;
+>>>>>>> 59fc684b42 (Fix RetrieveQueueToReport Reservation)
 
   std::unique_ptr<SchedulerDatabase::TapeMountDecisionInfo> getMountInfoNoLock(PurposeGetMountInfo purpose,
                                                                                log::LogContext& logContext) override;

@@ -869,7 +869,7 @@ void RetrieveQueue::garbageCollect(const std::string &presumedOwner, AgentRefere
     log::ScopedParamContainer(lc)
       .add("queueAddress", getAddressIfSet())
       .log(log::INFO, "In RetrieveQueue::garbageCollect(): cleared CleanupInfo assigned agent.");
-  }
+ }
 }
 
 void RetrieveQueue::setShardSize(uint64_t shardSize) {

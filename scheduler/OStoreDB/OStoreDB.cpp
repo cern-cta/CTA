@@ -2168,6 +2168,7 @@ common::dataStructures::RepackInfo OStoreDB::getRepackInfo(const std::string& vi
 // OStoreDB::requeueRetrieveRequestJobs()
 //------------------------------------------------------------------------------
 void OStoreDB::requeueRetrieveRequestJobs(std::list<cta::SchedulerDatabase::RetrieveJob*>& jobs,
+                                          const std::string& toReportQueueName,
                                           log::LogContext& logContext) {
   std::list<std::shared_ptr<objectstore::RetrieveRequest>> rrlist;
   std::list<objectstore::ScopedExclusiveLock> locks;
@@ -2198,10 +2199,20 @@ void OStoreDB::requeueRetrieveRequestJobs(std::list<cta::SchedulerDatabase::Retr
 //------------------------------------------------------------------------------
 // OStoreDB::blockRetrieveQueueForCleanup()
 //------------------------------------------------------------------------------
+<<<<<<< HEAD
 std::string OStoreDB::blockRetrieveQueueForCleanup(const std::string& vid) {
   RootEntry re(m_objectStore);
   RetrieveQueue rqtt(m_objectStore);
   ScopedExclusiveLock rqttl;
+=======
+std::string OStoreDB::reserveRetrieveQueueForCleanup(const std::string& vid) {
+  RootEntry re(m_objectStore);
+  RetrieveQueue rqtt(m_objectStore);
+  RetrieveQueue rqtr(m_objectStore);
+  ScopedExclusiveLock rel;
+  ScopedExclusiveLock rqttl;
+  ScopedExclusiveLock rqtrl;
+>>>>>>> 59fc684b42 (Fix RetrieveQueueToReport Reservation)
   re.fetchNoLock();
 
   try {
@@ -2225,15 +2236,23 @@ std::string OStoreDB::blockRetrieveQueueForCleanup(const std::string& vid) {
   // Check if someone else registered before us.
   if(rqtt.getQueueCleanupAssignedAgent()) {
     throw RetrieveQueueNotReservedForCleanup(
+<<<<<<< HEAD
       "In OStoreDB::blockRetrieveQueueForCleanup(): Queue was reserved by another agent. Cancelling reservation.");
   }
 
   // Otherwise, carry on with cleanup of this queue.
   // Agent ownership must go first.
+=======
+      "In OStoreDB::reserveRetrieveQueueForCleanup(): Queue was reserved by another agent. Cancelling reservation.");
+  }
+
+  // Otherwise, carry on with cleanup of this queue.
+>>>>>>> 59fc684b42 (Fix RetrieveQueueToReport Reservation)
   m_agentReference->addToOwnership(rqtt.getAddressIfSet(), m_objectStore);
   rqtt.setOwner(m_agentReference->getAgentAddress());
   rqtt.setQueueCleanupAssignedAgent(m_agentReference->getAgentAddress());
   rqtt.commit();
+<<<<<<< HEAD
   rqttl.release();
 
 
@@ -2274,12 +2293,45 @@ void OStoreDB::unblockRetrieveQueueForCleanup(const std::string& toReportQueueAd
   RetrieveQueue rqtr(m_objectStore);
   ScopedExclusiveLock rqltr;
   rqtr.setAddress(toReportQueueAddress);
+=======
+
+  // Create the ToReport queue or get it in case a previous agent died and we are taking over.
+  rel.lock(re);
+  re.fetch();  // Die here
+  const auto reportQueueName = re.addOrGetRetrieveQueueAndCommit(vid, *m_agentReference,
+common::dataStructures::JobQueueType::JobsToReportToUser);
+  rel.release();  // Die here
+  rqtr.setAddress(reportQueueName);
+  rqtrl.lock(rqtr);
+  rqtr.fetch();
+
+  // Mark the ToReport queue for cleanup so that the DiskReporter does not pick it up.
+  m_agentReference->addToOwnership(rqtr.getAddressIfSet(), m_objectStore);
+  rqtr.setOwner(m_agentReference->getAgentAddress());
+  rqtr.setQueueCleanupDoCleanup();
+  rqtr.setQueueCleanupAssignedAgent(m_agentReference->getAgentAddress());
+  rqtr.commit();
+
+  return reportQueueName;
+}
+
+//------------------------------------------------------------------------------
+// OStoreDB::freeRetrieveQueueForCleanup()
+//------------------------------------------------------------------------------
+void OStoreDB::freeRetrieveQueueForCleanup(const std::string& toReportQueueName) {
+  RetrieveQueue rqtr(m_objectStore);
+  ScopedExclusiveLock rqltr;
+  rqtr.setAddress(toReportQueueName);
+>>>>>>> 59fc684b42 (Fix RetrieveQueueToReport Reservation)
   rqltr.lock(rqtr);
   rqtr.fetch();
   rqtr.setQueueCleanupDoCleanup(false);
   rqtr.clearQueueCleanupAssignedAgent();
   rqtr.commit();
+<<<<<<< HEAD
   m_agentReference->removeFromOwnership(toReportQueueAddress, m_objectStore);
+=======
+>>>>>>> 59fc684b42 (Fix RetrieveQueueToReport Reservation)
 }
 
 //------------------------------------------------------------------------------
@@ -3639,6 +3691,7 @@ OStoreDB::getNextRetrieveJobsToReportBatch(uint64_t filesRequested, log::LogCont
       return ret;
     }
 
+<<<<<<< HEAD
     // If the queue is being cleanup up it will be freed at some point. Skip the queue.
     // This queue list is not actually the queues but the contents of the
     // Root Entry's pointer list).
@@ -3661,6 +3714,26 @@ OStoreDB::getNextRetrieveJobsToReportBatch(uint64_t filesRequested, log::LogCont
         return ret;
       }
     }
+=======
+    // If the queue is being cleanup up it will be freed at some point.
+    // This queue list is not actually the queues but a representation that only contains
+    // the VID and the Adress (basically, the contents of the Root Entry's pointer list),
+    // We need to fetch the actual information of the queue to know what
+    // Now, this happens on a queue by queue basis, if we have 4k queus, what is the
+    // extra cost on the objectstore side of thinsg?? TBD. The queue object itself is not
+    // too big.
+    {
+      RetrieveQueue rqtr(m_objectStore);
+      ScopedExclusiveLock ex;
+      rqtr.setAddress(queueList.front().address); // Can the object be gone before this?
+      ex.lock(rqtr);
+      rqtr.fetch(); // get the contents of the queue
+      if(rqtr.getQueueCleanupDoCleanup()){
+        return ret;
+      }
+    }
+
+>>>>>>> 59fc684b42 (Fix RetrieveQueueToReport Reservation)
     // Try to get jobs from the first queue. If it is empty, it will be trimmed, so we can go for another round.
     RQTRAlgo::PopCriteria criteria;
     criteria.files = filesRequested;
