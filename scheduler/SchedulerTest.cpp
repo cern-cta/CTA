@@ -7489,7 +7489,7 @@ TEST_P(SchedulerTestTriggerTapeStateChangeBehaviour, triggerTapeStateChangeValid
   }
 
   // Setup initial conditions
-  schedulerDB.setRetrieveQueueCleanupFlag(tape.vid, false, lc);
+  schedulerDB.setRetrieveQueueCleanupFlag(tape.vid, false, lc); // This has the side effect of creating the queue if it does not exist.
   catalogue.Tape()->modifyTapeState(s_adminOnAdminHost, tape.vid,triggerTapeStateChangeBehaviour.fromState,std::nullopt,"Test");
 
   // Trigger change
@@ -7501,7 +7501,18 @@ TEST_P(SchedulerTestTriggerTapeStateChangeBehaviour, triggerTapeStateChangeValid
 
   // Observe results
   ASSERT_EQ(catalogue.Tape()->getTapesByVid(tape.vid).at(tape.vid).state, triggerTapeStateChangeBehaviour.observedState);
-  ASSERT_EQ(schedulerDB.getRetrieveQueuesCleanupInfo(lc).front().doCleanup, triggerTapeStateChangeBehaviour.cleanupFlagActivated);
+
+  // Search the queue we created and check the Cleanup flag.
+  cta::objectstore::RetrieveQueue rq(schedulerDB.getBackend());
+  cta::objectstore::ScopedExclusiveLock rql;
+
+   cta::objectstore::AgentReference ar("unitTestTapeStateChange", dl);
+   cta::objectstore::Agent auxAgent(ar.getAgentAddress(), getSchedulerDB().getBackend());
+   auxAgent.initialize();
+   auxAgent.insertAndRegisterSelf(lc);
+ 
+  cta::objectstore::Helpers::getLockedAndFetchedJobQueue(rq, rql, ar, tape.vid, common::dataStructures::JobQueueType::JobsToTransferForUser, lc);
+  ASSERT_EQ(rq.getQueueCleanupDoCleanup(), triggerTapeStateChangeBehaviour.cleanupFlagActivated);
 }
 
 #undef TEST_MOCK_DB

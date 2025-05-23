@@ -265,11 +265,18 @@ OStoreDB::getRetrieveQueuesCleanupInfo(log::LogContext& logContext) {
       continue;
     }
 
+    // If the queue does not require cleanup or is being cleaned up by another
+    // agent, skip it. If that agent dies the GarbageCollector will take care
+    // of clearing the CleanupInfo data.
+    if(!rqueue.getQueueCleanupDoCleanup() || rqueue.getQueueCleanupAssignedAgent().has_value()){
+      continue;
+    }
+
     ret.push_back(SchedulerDatabase::RetrieveQueueCleanupInfo());
+    ret.back().queueAddress = rqueue.getAddressIfSet();
     ret.back().vid = rqueue.getVid();
     ret.back().doCleanup = rqueue.getQueueCleanupDoCleanup();
     ret.back().assignedAgent = rqueue.getQueueCleanupAssignedAgent();
-    ret.back().heartbeat = rqueue.getQueueCleanupHeartbeat();
   }
   return ret;
 }
@@ -919,7 +926,7 @@ void OStoreDB::trimEmptyQueues(log::LogContext& lc) {
         RetrieveQueue rq(r.address, m_objectStore);
         ScopedSharedLock rql(rq);
         rq.fetch();
-        if (!rq.getJobsSummary().jobs) {
+        if (!rq.getJobsSummary().jobs && !rq.getQueueCleanupDoCleanup()) {
           rql.release();
           re.removeRetrieveQueueAndCommit(r.vid, queueType, lc);
           log::ScopedParamContainer(lc)
@@ -936,6 +943,29 @@ void OStoreDB::trimEmptyQueues(log::LogContext& lc) {
       lc.logBacktrace(log::INFO, ex.backtrace());
     }
   }
+}
+
+//------------------------------------------------------------------------------
+// OStoreDB::trimEmptyToReportQueueWithVid()
+//------------------------------------------------------------------------------
+bool OStoreDB::trimEmptyToReportQueueWithVid(const std::string& queueVid, log::LogContext& lc){
+  // Check if the RetrieveQueue is actually empty.
+  RetrieveQueue rq(queueVid, m_objectStore);
+  ScopedExclusiveLock rql(rq);
+  rq.fetch();
+  if(!rq.isEmpty()) {
+    return 0;
+  }
+  const auto vid = rq.getVid();
+  rql.release();
+  RootEntry re(m_objectStore);
+  ScopedExclusiveLock rel(re);
+  re.fetch();
+  re.removeRetrieveQueueAndCommit(vid,
+    common::dataStructures::JobQueueType::JobsToReportToUser,
+    lc);
+
+  return 1;
 }
 
 //------------------------------------------------------------------------------
@@ -2140,6 +2170,7 @@ common::dataStructures::RepackInfo OStoreDB::getRepackInfo(const std::string& vi
 // OStoreDB::requeueRetrieveRequestJobs()
 //------------------------------------------------------------------------------
 void OStoreDB::requeueRetrieveRequestJobs(std::list<cta::SchedulerDatabase::RetrieveJob*>& jobs,
+                                          const std::string& toReportQueueName,
                                           log::LogContext& logContext) {
   std::list<std::shared_ptr<objectstore::RetrieveRequest>> rrlist;
   std::list<objectstore::ScopedExclusiveLock> locks;
@@ -2170,16 +2201,19 @@ void OStoreDB::requeueRetrieveRequestJobs(std::list<cta::SchedulerDatabase::Retr
 //------------------------------------------------------------------------------
 // OStoreDB::reserveRetrieveQueueForCleanup()
 //------------------------------------------------------------------------------
-void OStoreDB::reserveRetrieveQueueForCleanup(const std::string& vid, std::optional<uint64_t> cleanupHeartBeatValue) {
+std::string OStoreDB::reserveRetrieveQueueForCleanup(const std::string& vid) {
   RootEntry re(m_objectStore);
-  RetrieveQueue rq(m_objectStore);
-  ScopedExclusiveLock rql;
+  RetrieveQueue rqtt(m_objectStore);
+  RetrieveQueue rqtr(m_objectStore);
+  ScopedExclusiveLock rel;
+  ScopedExclusiveLock rqttl;
+  ScopedExclusiveLock rqtrl;
   re.fetchNoLock();
 
   try {
-    rq.setAddress(re.getRetrieveQueueAddress(vid, common::dataStructures::JobQueueType::JobsToTransferForUser));
-    rql.lock(rq);
-    rq.fetch();
+    rqtt.setAddress(re.getRetrieveQueueAddress(vid, common::dataStructures::JobQueueType::JobsToTransferForUser));
+    rqttl.lock(rqtt);
+    rqtt.fetch();
   } catch (cta::objectstore::RootEntry::NoSuchRetrieveQueue& ex) {
     throw RetrieveQueueNotFound("In OStoreDB::reserveRetrieveQueueForCleanup(): Retrieve queue of vid " + vid + " not found. " + ex.getMessageValue());
   } catch (cta::exception::NoSuchObject& ex) {
@@ -2189,53 +2223,55 @@ void OStoreDB::reserveRetrieveQueueForCleanup(const std::string& vid, std::optio
   }
 
   // After locking a queue, check again if the cleanup flag is still true
-  if (!rq.getQueueCleanupDoCleanup()) {
+  if (!rqtt.getQueueCleanupDoCleanup()) {
     throw RetrieveQueueNotReservedForCleanup(
       "In OStoreDB::reserveRetrieveQueueForCleanup(): Queue no longer has the cleanup flag enabled after fetching. Skipping it.");
   }
 
-  // Check if heartbeat has been updated, which means that another agent is still tracking it
-  if (rq.getQueueCleanupAssignedAgent().has_value()) {
-    if (rq.getQueueCleanupHeartbeat() != (cleanupHeartBeatValue.has_value() ? cleanupHeartBeatValue.value() : 0)) {
-      throw RetrieveQueueNotReservedForCleanup("Another agent is alive and cleaning up the queue. Skipping it.");
-    }
+  // Check if someone else registered before us.
+  if(rqtt.getQueueCleanupAssignedAgent()) {
+    throw RetrieveQueueNotReservedForCleanup(
+      "In OStoreDB::reserveRetrieveQueueForCleanup(): Queue was reserved by another agent. Cancelling reservation.");
   }
 
-  // Otherwise, carry on with cleanup of this queue
-  rq.setQueueCleanupAssignedAgent(m_agentReference->getAgentAddress());
-  rq.tickQueueCleanupHeartbeat();
-  rq.commit();
+  // Otherwise, carry on with cleanup of this queue.
+  m_agentReference->addToOwnership(rqtt.getAddressIfSet(), m_objectStore);
+  rqtt.setOwner(m_agentReference->getAgentAddress());
+  rqtt.setQueueCleanupAssignedAgent(m_agentReference->getAgentAddress());
+  rqtt.commit();
+
+  // Create the ToReport queue or get it in case a previous agent died and we are taking over.
+  rel.lock(re);
+  re.fetch();  // Die here
+  const auto reportQueueName = re.addOrGetRetrieveQueueAndCommit(vid, *m_agentReference,
+common::dataStructures::JobQueueType::JobsToReportToUser);
+  rel.release();  // Die here
+  rqtr.setAddress(reportQueueName);
+  rqtrl.lock(rqtr);
+  rqtr.fetch();
+
+  // Mark the ToReport queue for cleanup so that the DiskReporter does not pick it up.
+  m_agentReference->addToOwnership(rqtr.getAddressIfSet(), m_objectStore);
+  rqtr.setOwner(m_agentReference->getAgentAddress());
+  rqtr.setQueueCleanupDoCleanup();
+  rqtr.setQueueCleanupAssignedAgent(m_agentReference->getAgentAddress());
+  rqtr.commit();
+
+  return reportQueueName;
 }
 
 //------------------------------------------------------------------------------
-// OStoreDB::tickRetrieveQueueCleanupHeartbeat()
+// OStoreDB::freeRetrieveQueueForCleanup()
 //------------------------------------------------------------------------------
-void OStoreDB::tickRetrieveQueueCleanupHeartbeat(const std::string& vid) {
-  RootEntry re(m_objectStore);
-  RetrieveQueue rq(m_objectStore);
-  ScopedExclusiveLock rql;
-  re.fetchNoLock();
-
-  try {
-    rq.setAddress(re.getRetrieveQueueAddress(vid, common::dataStructures::JobQueueType::JobsToTransferForUser));
-    rql.lock(rq);
-    rq.fetch();
-    if (rq.getQueueCleanupAssignedAgent().has_value() &&
-        (rq.getQueueCleanupAssignedAgent() != m_agentReference->getAgentAddress())) {
-      throw RetrieveQueueNotReservedForCleanup("In OStoreDB::tickRetrieveQueueCleanupHeartbeat(): Another agent is alive and cleaning up the retrieve queue of tape " +
-                                               vid + ". Heartbeat not ticked.");
-    }
-    rq.tickQueueCleanupHeartbeat();
-    rq.commit();
-  } catch (RetrieveQueueNotReservedForCleanup& ex) {
-    throw;  // Just pass this exception to the outside
-  } catch (cta::objectstore::RootEntry::NoSuchRetrieveQueue& ex) {
-    throw RetrieveQueueNotFound("In OStoreDB::tickRetrieveQueueCleanupHeartbeat(): Retrieve queue of vid " + vid + " not found. " + ex.getMessageValue());
-  } catch (cta::exception::NoSuchObject& ex) {
-    throw RetrieveQueueNotFound("In OStoreDB::tickRetrieveQueueCleanupHeartbeat(): Retrieve queue of vid " + vid + " not found. " + ex.getMessageValue());
-  } catch (cta::exception::Exception& ex) {
-    throw;
-  }
+void OStoreDB::freeRetrieveQueueForCleanup(const std::string& toReportQueueName) {
+  RetrieveQueue rqtr(m_objectStore);
+  ScopedExclusiveLock rqltr;
+  rqtr.setAddress(toReportQueueName);
+  rqltr.lock(rqtr);
+  rqtr.fetch();
+  rqtr.setQueueCleanupDoCleanup(false);
+  rqtr.clearQueueCleanupAssignedAgent();
+  rqtr.commit();
 }
 
 //------------------------------------------------------------------------------
@@ -3593,6 +3629,24 @@ OStoreDB::getNextRetrieveJobsToReportBatch(uint64_t filesRequested, log::LogCont
     std::list<std::unique_ptr<SchedulerDatabase::RetrieveJob>> ret;
     if (queueList.empty()) {
       return ret;
+    }
+
+    // If the queue is being cleanup up it will be freed at some point.
+    // This queue list is not actually the queues but a representation that only contains
+    // the VID and the Adress (basically, the contents of the Root Entry's pointer list),
+    // We need to fetch the actual information of the queue to know what
+    // Now, this happens on a queue by queue basis, if we have 4k queus, what is the
+    // extra cost on the objectstore side of thinsg?? TBD. The queue object itself is not
+    // too big.
+    {
+      RetrieveQueue rqtr(m_objectStore);
+      ScopedExclusiveLock ex;
+      rqtr.setAddress(queueList.front().address); // Can the object be gone before this?
+      ex.lock(rqtr);
+      rqtr.fetch(); // get the contents of the queue
+      if(rqtr.getQueueCleanupDoCleanup()){
+        return ret;
+      }
     }
 
     // Try to get jobs from the first queue. If it is empty, it will be trimmed, so we can go for another round.
