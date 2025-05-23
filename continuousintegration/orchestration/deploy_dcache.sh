@@ -49,6 +49,7 @@ check_helm_installed() {
 }
 
 deploy() {
+
   # Parse command line arguments
   while [[ "$#" -gt 0 ]]; do
     case "$1" in
@@ -56,7 +57,7 @@ deploy() {
       -n|--namespace)
         namespace="$2"
         shift ;;
-      -i|--eos-image-tag)
+      -i|--dcache-image-tag)
         dcache_image_tag="$2"
         shift ;;
       --dcache-config)
@@ -84,17 +85,31 @@ deploy() {
   if [ -n "$dcache_image_tag" ]; then
     helm_flags+=" --set image.tag=${dcache_image_tag}"
   fi
-  if [ -n "$dcache_image_tag" ]; then
+  if [ -n "$dcache_config" ]; then
     helm_flags+=" --values ${dcache_config}"
   fi
 
   helm repo add bitnami https://charts.bitnami.com/bitnami
   helm repo add dcache https://gitlab.desy.de/api/v4/projects/7648/packages/helm/test
   helm repo update
-  log_run helm install -n ${namespace} --replace --wait --timeout 10m0s --set auth.username=dcache --set auth.password=let-me-in --set auth.database=chimera chimera bitnami/postgresql --version=12.12.10
-  log_run helm install -n ${namespace} --replace --wait --timeout 10m0s cells bitnami/zookeeper
-  log_run helm install -n ${namespace} --replace --wait --timeout 10m0s --set externalZookeeper.servers=cells-zookeeper --set kraft.enabled=false billing bitnami/kafka --version 23.0.7
-  log_run helm install -n ${namespace} --replace --wait --timeout 10m0s --set dcache.hsm.enabled=true store dcache/dcache ${helm_flags}
+  log_run helm install -n ${namespace} chimera bitnami/postgresql \
+                                       --replace --wait --timeout 10m0s \
+                                       --set auth.username=dcache \
+                                       --set auth.password=let-me-in \
+                                       --set auth.database=chimera \
+                                       --version 12.12.10
+  log_run helm install -n ${namespace} cells bitnami/zookeeper \
+                                       --replace --wait --timeout 10m0s
+  log_run helm install -n ${namespace} billing bitnami/kafka \
+                                       --replace --wait --timeout 10m0s \
+                                       --set externalZookeeper.servers=cells-zookeeper \
+                                       --set kraft.enabled=false \
+                                       --version 23.0.7
+  log_run helm install -n ${namespace} store dcache/dcache \
+                                       --replace --wait --timeout 10m0s \
+                                       --set dcache.hsm.enabled=true \
+                                       --values presets/dev-dcache-values.yaml \
+                                       ${helm_flags}
 }
 
 check_helm_installed

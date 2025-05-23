@@ -100,8 +100,10 @@ deploy() {
                       --wait --timeout 5m \
                       --reuse-values \
                       ${helm_flags}
-  ./setup/configure_eos.sh -n "${namespace}" --mgm-name eos-mgm-0
 
+  EOS_MGM_POD=eos-mgm-0
+  kubectl cp --namespace "${namespace}" ./configure_eoscta_tape.sh ${EOS_MGM_POD}:/tmp -c eos-mgm
+  kubectl exec --namespace "${namespace}" ${EOS_MGM_POD} -c eos-mgm -- /bin/bash -c "chmod +x /tmp/configure_eoscta_tape.sh && /tmp/configure_eoscta_tape.sh"
 }
 
 check_helm_installed
