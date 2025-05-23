@@ -89,10 +89,7 @@ void QueueCleanupRunner::runOnePass(log::LogContext &logContext) {
 
     logContext.log(log::DEBUG, "In QueueCleanupRunner::runOnePass(): Will try to reserve retrieve queue.");
     try {
-      toReportQueueName = m_db.reserveRetrieveQueueForCleanup(
-              queueVid,
-              prevHeartbeatExists ? std::optional(m_heartbeatCheck[queueVid].heartbeat) : std::nullopt);
-
+      toReportQueueName = m_db.reserveRetrieveQueueForCleanup(queueVid);
     } catch (OStoreDB::RetrieveQueueNotFound & ex) {
       log::ScopedParamContainer paramsExcMsg(logContext);
       paramsExcMsg.add("exceptionMessage", ex.getMessageValue());
@@ -104,6 +101,12 @@ void QueueCleanupRunner::runOnePass(log::LogContext &logContext) {
       paramsExcMsg.add("exceptionMessage", ex.getMessageValue());
       logContext.log(log::DEBUG,
                      "In QueueCleanupRunner::runOnePass(): Unable to reserve the retrieve queue due to it not being available for cleanup. Skipping it.");
+      continue;
+    } catch (OStoreDB::RetrieveQueueAlreadyReserved &ex) {
+      log::ScopedParamContainer paramsExcMsg(logContext);
+      paramsExcMsg.add("exceptionMessage", ex.getMessageValue());
+      logContext.log(log::DEBUG,
+                     "In QueueCleanupRunner::runOnePass(): Queue already reserved. Skipping it.");
       continue;
     } catch (cta::exception::Exception & ex) {
       log::ScopedParamContainer paramsExcMsg(logContext);
@@ -128,7 +131,7 @@ void QueueCleanupRunner::runOnePass(log::LogContext &logContext) {
 
       double getQueueTime = tLoop.secs(utils::Timer::resetCounter);
 
-      m_db.requeueRetrieveRequestJobs(jobPtList, logContext);
+      m_db.requeueRetrieveRequestJobs(jobPtList, toReportQueueName, logContext);
 
       double jobMovingTime = tLoop.secs(utils::Timer::resetCounter);
 

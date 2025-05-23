@@ -347,11 +347,6 @@ TEST_P(QueueCleanupRunnerConcurrentTest, CleanupRunnerParameterizedTest) {
     cta::objectstore::QueueCleanupRunner qCleanupRunnerOk(agentForCleanupRef, oKOStore, catalogue, GetParam().cleanupTimeout);
 
     ASSERT_THROW(qCleanupRunnerBroken.runOnePass(lc), OStoreDBWithAgentBroken::TriggeredException);
-    for (auto & tapeQueueStateTrans : GetParam().tapeQueueTransitionList) {
-      // Tick the queue cleanup heartbeat a few times
-      brokenOStore.tickRetrieveQueueCleanupHeartbeat(tapeQueueStateTrans.vid);
-      brokenOStore.tickRetrieveQueueCleanupHeartbeat(tapeQueueStateTrans.vid);
-    }
     ASSERT_NO_THROW(qCleanupRunnerOk.runOnePass(lc)); // Two passes are needed for the other cleanup runner to be able to track the heartbeats
     ASSERT_NO_THROW(qCleanupRunnerOk.runOnePass(lc));
   }

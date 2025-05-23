@@ -126,11 +126,11 @@ public:
   std::list<std::unique_ptr<SchedulerDatabase::RetrieveJob>>
   getNextRetrieveJobsToTransferBatch(const std::string& vid, uint64_t filesRequested, log::LogContext& lc) override;
 
-  void requeueRetrieveRequestJobs(std::list<cta::SchedulerDatabase::RetrieveJob*>& jobs, log::LogContext& lc) override;
+  void requeueRetrieveRequestJobs(std::list<cta::SchedulerDatabase::RetrieveJob*>& jobs, const std::string& toReportQueueName, log::LogContext& lc) override;
 
-  void reserveRetrieveQueueForCleanup(const std::string& vid, std::optional<uint64_t> cleanupHeartBeatValue) override;
+  std::string reserveRetrieveQueueForCleanup(const std::string& vid) override;
 
-  void tickRetrieveQueueCleanupHeartbeat(const std::string& vid) override;
+  void freeRetrieveQueueForCleanup(const std::string& vid) override;
 
   void setArchiveJobBatchReported(std::list<SchedulerDatabase::ArchiveJob*>& jobsBatch,
                                   log::TimingList& timingList,
@@ -232,6 +232,7 @@ public:
   getMountInfo(std::string_view logicalLibraryName, log::LogContext& logContext, uint64_t timeout_us) override;
 
   void trimEmptyQueues(log::LogContext& lc) override;
+  bool trimEmptyToReportQueueWithVid(const std::string& queueVid, log::LogContext& lc) override;
 
   std::unique_ptr<SchedulerDatabase::TapeMountDecisionInfo> getMountInfoNoLock(PurposeGetMountInfo purpose,
                                                                                log::LogContext& logContext) override;

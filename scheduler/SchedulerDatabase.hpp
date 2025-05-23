@@ -310,11 +310,11 @@ public:
   /**
    * A representation of the cleanup request status of a retrieve queue.
    */
-  struct RetrieveQueueCleanupInfo {
+  struct RetrieveQueueCleanupInfo { 
+    std::string queueAddress;
     std::string vid;
     bool doCleanup;
     std::optional<std::string> assignedAgent;
-    uint64_t heartbeat;
   };
 
   /**
@@ -686,10 +686,11 @@ public:
   virtual std::list<std::unique_ptr<RetrieveJob>>
   getNextRetrieveJobsToTransferBatch(const std::string& vid, uint64_t filesRequested, log::LogContext& logContext) = 0;
   virtual void requeueRetrieveRequestJobs(std::list<cta::SchedulerDatabase::RetrieveJob*>& jobs,
+                                          const std::string& toRequeueName,
                                           log::LogContext& logContext) = 0;
-  virtual void reserveRetrieveQueueForCleanup(const std::string& vid,
-                                              std::optional<uint64_t> cleanupHeartBeatValue) = 0;
-  virtual void tickRetrieveQueueCleanupHeartbeat(const std::string& vid) = 0;
+  virtual std::string reserveRetrieveQueueForCleanup(const std::string& vid) = 0;
+
+  virtual void freeRetrieveQueueForCleanup(const std::string& vid) = 0;
 
   /*============ Repack management: maintenance process side =========================*/
 
@@ -931,6 +932,11 @@ public:
    * bit was set in the TapeMountDecisionInfo returned by getMountInfo().
    */
   virtual void trimEmptyQueues(log::LogContext& lc) = 0;
+
+  /* Attempt to trim a ToReport queue. This is a dedicated function called by the
+   * QueueCleanupRunner to delete the ToReportQueue in case we did not fail any requests.
+   */
+  virtual bool trimEmptyToReportQueueWithVid(const std::string& queueVid, log::LogContext& lc) = 0;
 
   /**
    * A function dumping the relevant mount information for reporting the system
