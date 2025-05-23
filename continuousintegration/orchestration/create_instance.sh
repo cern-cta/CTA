@@ -114,6 +114,8 @@ create_instance() {
   eos_config=presets/dev-eos-values.yaml
   eos_enabled=true
   # dCache
+  dcache_image_tag=94471db7
+  dcache_config=presets/dev-dcache-values.yaml
   dcache_enabled=false
 
   # Parse command line arguments
@@ -306,7 +308,9 @@ create_instance() {
   fi
 
   if [ $dcache_enabled == "true" ] ; then
-    ./deploy_dcache.sh --namespace "${namespace}" &
+    ./deploy_dcache.sh --namespace "${namespace}" \
+                       --dcache-config "${dcache_config}" \
+                       --dcache-image-tag "${dcache_image_tag}" &
     dcache_pid=$!
   fi
 
