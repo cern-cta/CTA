@@ -156,7 +156,7 @@ namespace {
   }
 }
 
-std::string GenericObject::dump() {
+std::pair<std::string, std::string>  GenericObject::dump() {
   checkHeaderReadable();
   google::protobuf::util::JsonPrintOptions options;
   options.add_whitespace = true;
@@ -212,7 +212,7 @@ std::string GenericObject::dump() {
       err << "Unsupported type: " << m_header.type();
       throw std::runtime_error(err.str());
   }
-  return std::string ("Header dump:\n") + headerDump + "Body dump:\n" + bodyDump;
+  return std::pair{headerDump, bodyDump};
 }
 
 } // namespace cta::objectstore

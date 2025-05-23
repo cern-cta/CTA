@@ -77,7 +77,7 @@ public:
    *
    * @param lock reference to the generic object's lock
    */
-  std::string dump();
+  std::pair<std::string, std::string> dump();
   
   CTA_GENERATE_EXCEPTION_CLASS(UnsupportedType);
   
