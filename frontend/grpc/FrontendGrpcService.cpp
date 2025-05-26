@@ -24,11 +24,144 @@
 #include "frontend/common/FrontendService.hpp"
 #include "frontend/common/WorkflowEvent.hpp"
 
+#include <jwt-cpp/jwt.h>
+#include <json/json.h>
+#include <curl/curl.h>
+
 /*
  * Validate the storage class and issue the archive ID which should be used for the Archive request
  */
 
 namespace cta::frontend::grpc {
+
+// Function to handle curl responses
+static size_t WriteCallback(void* contents, size_t size, size_t nmemb, std::string* output) {
+    size_t totalSize = size * nmemb;
+    output->append((char*)contents, totalSize);
+    return totalSize;
+}
+
+static Json::Value FetchJWKS(const std::string& jwksUrl) {
+    CURL* curl;
+    CURLcode res;
+    std::string readBuffer;
+
+    curl_global_init(CURL_GLOBAL_DEFAULT);
+    curl = curl_easy_init();
+    if(curl) {
+        curl_easy_setopt(curl, CURLOPT_URL, jwksUrl.c_str());
+        curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, WriteCallback);
+        curl_easy_setopt(curl, CURLOPT_WRITEDATA, &readBuffer);
+        res = curl_easy_perform(curl);
+        if(res != CURLE_OK) {
+            std::cout << "Curl failed: " << curl_easy_strerror(res) << std::endl;
+            throw std::runtime_error("CURL failed in FetchJWKS");
+        }
+        curl_easy_cleanup(curl);
+    }
+    curl_global_cleanup();
+
+    // Parse the response JSON
+    Json::CharReaderBuilder readerBuilder;
+    Json::Value jwks;
+    std::istringstream sstream(readBuffer);
+    std::string errs;
+    if (!Json::parseFromStream(readerBuilder, sstream, &jwks, &errs)) {
+        std::cout << "Failed to parse JSON: " << errs << std::endl;
+        // throw some exception here
+        throw std::runtime_error("Failed to parse JSON in FetchJWKS");
+    }
+
+    return jwks;
+}
+
+static std::string ToString(const ::grpc::string_ref& r) {
+  return std::string(r.data(), r.size());
+}
+
+// alternative
+bool CtaRpcImpl::ValidateToken(const std::string& encodedJWT) {
+  try {
+    auto decoded = jwt::decode(encodedJWT);
+
+    // Example validation: check if the token is expired
+    auto exp = decoded.get_payload_claim("exp").as_date();
+    if (exp < std::chrono::system_clock::now()) {
+        std::cout << "Passed-in token has expired!" << std::endl;
+        return false;  // Token has expired
+    }
+    auto header = decoded.get_header_json();
+    std::string kid = header["kid"].get<std::string>();
+    std::string alg = header["alg"].get<std::string>();
+
+    std::cout << "KID: " << kid << ",ALG: " << alg << std::endl;
+    // Get the JWKS endpoint, find the matching with our token, obtain the public key
+    // used to sign the token and validate it
+    auto m_jwksUri = m_frontendService->getJwksUri().value_or("");
+    Json::Value jwks = FetchJWKS(m_jwksUri);
+
+    // Find the key with the matching KID
+    Json::Value key_data;
+    bool key_found = false;
+    for (const auto& key : jwks["keys"])
+        if (key["kid"].asString() == kid) { key_data = key; key_found = true; break; }
+    if (!key_found) {
+        std::cout << "No key found with kid: " << kid << std::endl;
+        return false;
+    }
+    std::cout << "Key data: " << key_data.toStyledString() << std::endl;
+    // std::string begin_pk = "-----BEGIN PUBLIC KEY-----";
+    // std::string end_pk = "-----END PUBLIC KEY-----";
+    std::string x5c = key_data["x5c"][0].asString();
+    // std::string pubkey = begin_pk + x5c + std::string("\n") + end_pk;
+    std::cout << "Public key is " << x5c << std::endl;
+
+    // Validate signature
+    auto verifier = jwt::verify()
+                        .allow_algorithm(jwt::algorithm::rs256(jwt::helper::convert_base64_der_to_pem(x5c), "", "", ""));
+                        // .allow_algorithm(jwt::algorithm::rs256(x5c));
+                        // .with_issuer("http://auth-keycloak:8080/realms/master");  // Replace with your issuer
+    std::cout << "successfully built the verifier" << std::endl;
+    verifier.verify(decoded);
+    return true;
+  } catch (const std::system_error& e) {
+    std::cout << "There was a failure in token verification. Code " << e.code() << "meaning: " << e.what() << std::endl;
+    return false;
+  } catch (const std::runtime_error& e) {
+    std::cout << "Failure in token verification, " << e.what() << std::endl;
+    return false;
+  }
+}
+
+Status
+CtaRpcImpl::ExtractAuthHeaderAndValidate(::grpc::ServerContext* context) {
+  // Retrieve metadata from the incoming request
+  auto metadata = context->client_metadata();
+  std::string token;
+
+  // Search for the authorization token in the metadata
+  auto it = metadata.find("authorization");
+  if (it != metadata.end()) {
+      std::string auth_header = ToString(it->second);  // "Bearer <token>"
+      token = auth_header.substr(7);  // Extract the token part
+
+      std::cout << "Received token: " << token << std::endl;
+
+  } else {
+      std::cout << "Authorization header missing" << std::endl;
+      return ::grpc::Status(::grpc::StatusCode::UNAUTHENTICATED, "Missing Authorization header");
+  }
+  // Optionally, verify the token here...
+  if (ValidateToken(token)) {
+    std::cout << "Validate went ok, returning status OK" << std::endl;
+    return ::grpc::Status::OK;
+  }
+  else
+  {
+    std::cout << "JWT authorization process error. Invalid principal." << std::endl;
+    return ::grpc::Status(::grpc::StatusCode::UNAUTHENTICATED, "JWT authorization process error. Invalid principal.");
+  }
+}
 
 Status
 CtaRpcImpl::ProcessGrpcRequest(const cta::xrd::Request* request, cta::xrd::Response* response, cta::log::LogContext &lc) const {
@@ -73,6 +206,10 @@ CtaRpcImpl::Create(::grpc::ServerContext* context, const cta::xrd::Request* requ
   cta::log::LogContext lc(m_frontendService->getLogContext());
   cta::log::ScopedParamContainer sp(lc);
 
+  Status status = ExtractAuthHeaderAndValidate(context);
+  if (!status.ok())
+    return status;
+
   sp.add("remoteHost", context->peer());
   sp.add("request", "create");
   // check that the workflow is set appropriately for the create event
@@ -86,6 +223,10 @@ CtaRpcImpl::Create(::grpc::ServerContext* context, const cta::xrd::Request* requ
 
 Status
 CtaRpcImpl::Archive(::grpc::ServerContext* context, const cta::xrd::Request* request, cta::xrd::Response* response) {
+  Status status = ExtractAuthHeaderAndValidate(context);
+  if (!status.ok())
+    return status;
+
   cta::log::LogContext lc(m_frontendService->getLogContext());
   cta::log::ScopedParamContainer sp(lc);
 
@@ -110,6 +251,10 @@ CtaRpcImpl::Archive(::grpc::ServerContext* context, const cta::xrd::Request* req
 
 Status
 CtaRpcImpl::Delete(::grpc::ServerContext* context, const cta::xrd::Request* request, cta::xrd::Response* response) {
+  Status status = ExtractAuthHeaderAndValidate(context);
+  if (!status.ok())
+    return status;
+
   cta::log::LogContext lc(m_frontendService->getLogContext());
   cta::log::ScopedParamContainer sp(lc);
 
@@ -136,6 +281,10 @@ CtaRpcImpl::Delete(::grpc::ServerContext* context, const cta::xrd::Request* requ
 
 Status
 CtaRpcImpl::Retrieve(::grpc::ServerContext* context, const cta::xrd::Request* request, cta::xrd::Response* response) {
+  Status status = ExtractAuthHeaderAndValidate(context);
+  if (!status.ok())
+    return status;
+
   cta::log::LogContext lc(m_frontendService->getLogContext());
   cta::log::ScopedParamContainer sp(lc);
 
@@ -178,6 +327,10 @@ CtaRpcImpl::Retrieve(::grpc::ServerContext* context, const cta::xrd::Request* re
 Status CtaRpcImpl::CancelRetrieve(::grpc::ServerContext* context,
                                   const cta::xrd::Request* request,
                                   cta::xrd::Response* response) {
+  Status status = ExtractAuthHeaderAndValidate(context);
+  if (!status.ok())
+    return status;
+
   cta::log::LogContext lc(m_frontendService->getLogContext());
   cta::log::ScopedParamContainer sp(lc);
 
