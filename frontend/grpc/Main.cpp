@@ -34,7 +34,6 @@
 
 #include <getopt.h>
 #include <fstream>
-#include "auth/ServiceJWTAuthProcessor.hpp"
 
 using namespace cta;
 using namespace cta::common;
@@ -179,10 +178,6 @@ int main(const int argc, char *const *const argv) {
 
     // enable health checking, needed by CI
     grpc::EnableDefaultHealthCheckService(true);
-    // // add the JWT Authenticator to the server creds
-    std::shared_ptr<ServiceJWTAuthProcessor> spAuthProcessor = std::make_shared<ServiceJWTAuthProcessor>(svc.getFrontendService().getJwksUri().value_or(""));
-    creds->SetAuthMetadataProcessor(spAuthProcessor);
-    lc.log(log::INFO, "Set the authMetadataProcessor to JWTAuthProcessor");
     // Listen on the given address without any authentication mechanism.
     builder.AddListeningPort(server_address, creds);
 
