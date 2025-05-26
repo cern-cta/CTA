@@ -36,6 +36,11 @@
 #include <fstream>
 #include "auth/ServiceJWTAuthProcessor.hpp"
 
+// for reading openssl cert stuff
+#include <openssl/x509.h>
+#include <openssl/pem.h>
+#include <openssl/err.h>
+
 using namespace cta;
 using namespace cta::common;
 // using namespace cta::frontend::grpc;
@@ -71,6 +76,52 @@ std::string file2string(std::string filename){
     std::ostringstream as_string;
     as_string << as_stream.rdbuf();
     return as_string.str();
+}
+
+std::string getCommonNameFromCert(const char* certPath) {
+    FILE* fp = fopen(certPath, "r");
+    if (!fp) {
+        std::cerr << "Unable to open file\n";
+        return "";
+    }
+
+    X509* cert = PEM_read_X509(fp, nullptr, nullptr, nullptr);
+    fclose(fp);
+
+    if (!cert) {
+        std::cerr << "Error reading certificate\n";
+        return "";
+    }
+
+    X509_NAME* subjectName = X509_get_subject_name(cert);
+    if (!subjectName) {
+        std::cerr << "Error getting subject name\n";
+        X509_free(cert);
+        return "";
+    }
+
+    // Get index of the CN entry
+    int idx = X509_NAME_get_index_by_NID(subjectName, NID_commonName, -1);
+    if (idx == -1) {
+        std::cerr << "Common Name not found in subject\n";
+        X509_free(cert);
+        return "";
+    }
+
+    X509_NAME_ENTRY* cnEntry = X509_NAME_get_entry(subjectName, idx);
+    ASN1_STRING* cnAsn1 = X509_NAME_ENTRY_get_data(cnEntry);
+
+    // Convert ASN1_STRING to UTF-8 string
+    unsigned char* cnUtf8 = nullptr;
+    int length = ASN1_STRING_to_UTF8(&cnUtf8, cnAsn1);
+    std::string commonName;
+    if (length >= 0) {
+        commonName = std::string(reinterpret_cast<char*>(cnUtf8), length);
+        OPENSSL_free(cnUtf8);
+    }
+
+    X509_free(cert);
+    return commonName;
 }
 
 int main(const int argc, char *const *const argv) {
@@ -168,9 +219,12 @@ int main(const int argc, char *const *const argv) {
             }
             auto certificate_provider = std::make_shared<grpc::experimental::FileWatcherCertificateProvider>(key_file, cert_file, "", 1);
             grpc::experimental::TlsServerCredentialsOptions tls_options(certificate_provider);
-            tls_options.watch_root_certs();
-            tls_options.set_root_cert_name("Root CA"); // cta-frontend-grpc for key identity name
-            tls_options.set_identity_cert_name("cta-frontend-grpc");
+            // tls_options.watch_root_certs();
+            // tls_options.set_root_cert_name("Root CA"); // cta-frontend-grpc for key identity name
+            tls_options.watch_identity_key_cert_pairs();
+            lc.log(log::INFO, "output of getCommonNameFromCert is " + getCommonNameFromCert(cert_file.c_str()));
+            tls_options.set_identity_cert_name(getCommonNameFromCert(cert_file.c_str())); // ("cta-frontend-grpc");
+            // tls_options.set_verify_server_cert(false);
 
             creds = grpc::experimental::TlsServerCredentials(tls_options);
         }
