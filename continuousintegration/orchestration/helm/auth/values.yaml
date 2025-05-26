@@ -10,16 +10,153 @@ image:
   - reg-ctageneric
 
 # Keytabs that should be generated as secrets
-keytabs:
+secrets:
   # Generated using echo y | xrdsssadmin -k ctaeos+ -u daemon -g daemon add /tmp/eos.keytab
   # Note that this hardcoded keytab is only for CI/dev purposes
   - secretName: eos-sss-keytab
-    keytabName: eos.keytab
+    fileName: eos.keytab
     content: "0 u:daemon g:daemon n:ctaeos+ N:7449334094434926593 c:1734433252 e:0 f:0 k:32869bcee6fb7ccfb835e28b2622286260d93ea5b5ad5aa3d854ba59c8754e6"
   # Same as above, but changing the user and group to the eos instance name
   - secretName: cta-frontend-sss-keytab
-    keytabName: eos.sss.keytab
+    fileName: eos.sss.keytab
     content: "0 u:ctaeos g:ctaeos n:ctaeos+ N:7449334094434926593 c:1734433252 e:0 f:0 k:32869bcee6fb7ccfb835e28b2622286260d93ea5b5ad5aa3d854ba59c8754e6"
+  # Certificates and key generated with the following commands:
+  # openssl genrsa -passout pass:1234 -des3 -out ca.key 4096
+  # openssl req -passin pass:1234 -new -x509 -days 365 -key ca.key -out ca.crt -subj  "/C=CH/ST=Geneva/L=Geneva/O=Test/OU=Test/CN=Root CA"
+  # # Generate valid Server Key/Cert
+  # openssl genrsa -passout pass:1234 -des3 -out server.key 4096
+  # openssl req -passin pass:1234 -new -key server.key -out server.csr -subj  "/C=CH/ST=Geneva/L=Geneva/O=Test/OU=Server/CN=cta-frontend-grpc"
+  # openssl x509 -req -passin pass:1234 -days 365 -in server.csr -CA ca.crt -CAkey ca.key -set_serial 01 -out server.crt
+  # # Remove passphrase from the Server Key
+  # openssl rsa -passin pass:1234 -in server.key -out server.key
+  - secretName: server-key
+    fileName: server.key
+    content: |
+      -----BEGIN PRIVATE KEY-----
+      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
+      XwQfSOd0zB0aE73rdIqiMsP3jQO3
+      -----END PRIVATE KEY-----
+  - secretName: server-cert
+    fileName: server.crt
+    # expires: May 20 12:03:46 2026 GMT
+    content: |
+      -----BEGIN CERTIFICATE-----
+      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
+      Y6M=
+      -----END CERTIFICATE-----
+  - secretName: ca-cert
+    fileName: ca.crt
+    # expires: May 20 12:03:46 2026 GMT
+    content: |
+      -----BEGIN CERTIFICATE-----
+      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
+      xB2r
+      -----END CERTIFICATE-----
+
 
 kerberos:
   defaultRealm: TEST.CTA
