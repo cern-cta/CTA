@@ -58,6 +58,13 @@ struct SchedulerDatabaseTestParam {
  }
 }; // struct SchedulerDatabaseTestParam
 
+class OStoreFixture : public cta::OStoreDB {
+public:
+  using cta::OStoreDB::OStoreDB;
+  using cta::OStoreDB::getArchiveMountPolicyMaxPriorityMinAge;
+  using cta::OStoreDB::getRetrieveMountPolicyMaxPriorityMinAge;
+};
+
 /**
  * The scheduler database test is a parameterized test.  It takes a
  * scheduler database factory as a parameter.
@@ -901,6 +908,56 @@ TEST_P(SchedulerDatabaseTest, popRetrieveRequestsWithDiskSystemNotFetcheable) {
   ASSERT_FALSE(mi->potentialMounts.begin()->sleepingMount);
   // diskSystemSleptFor is set in putQueuesToSleep, as we do not call this function anymore, value is not set
   ASSERT_EQ("", mi->potentialMounts.begin()->diskSystemSleptFor);
+}
+
+TEST_P(SchedulerDatabaseTest, getArchiveMountPolicyMaxPriorityMinAge) {
+  std::list<cta::common::dataStructures::MountPolicy> mountPolicies;
+
+  mountPolicies.emplace_back();
+  mountPolicies.back().archivePriority = 1;
+  mountPolicies.back().archiveMinRequestAge = 1000;
+
+  mountPolicies.emplace_back();
+  mountPolicies.back().archivePriority = 99;
+  mountPolicies.back().archiveMinRequestAge = 2000;
+
+  mountPolicies.emplace_back();
+  mountPolicies.back().archivePriority = 2;
+  mountPolicies.back().archiveMinRequestAge = 50;
+
+  mountPolicies.emplace_back();
+  mountPolicies.back().archivePriority = 3;
+  mountPolicies.back().archiveMinRequestAge = 3000;
+
+  auto [maxPriority, minMinRequestAge] = OStoreFixture::getArchiveMountPolicyMaxPriorityMinAge(mountPolicies);
+
+  ASSERT_EQ(99, maxPriority);
+  ASSERT_EQ(50, minMinRequestAge);
+}
+
+TEST_P(SchedulerDatabaseTest, getRetrieveMountPolicyMaxPriorityMinAge) {
+  std::list<cta::common::dataStructures::MountPolicy> mountPolicies;
+
+  mountPolicies.emplace_back();
+  mountPolicies.back().retrievePriority = 1;
+  mountPolicies.back().retrieveMinRequestAge = 1000;
+
+  mountPolicies.emplace_back();
+  mountPolicies.back().retrievePriority = 99;
+  mountPolicies.back().retrieveMinRequestAge = 2000;
+
+  mountPolicies.emplace_back();
+  mountPolicies.back().retrievePriority = 2;
+  mountPolicies.back().retrieveMinRequestAge = 50;
+
+  mountPolicies.emplace_back();
+  mountPolicies.back().retrievePriority = 3;
+  mountPolicies.back().retrieveMinRequestAge = 3000;
+
+  auto [maxPriority, minMinRequestAge] = OStoreFixture::getRetrieveMountPolicyMaxPriorityMinAge(mountPolicies);
+
+  ASSERT_EQ(99, maxPriority);
+  ASSERT_EQ(50, minMinRequestAge);
 }
 
 #undef TEST_MOCK_DB

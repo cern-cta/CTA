@@ -330,9 +330,7 @@ void OStoreDB::fetchMountInfo(SchedulerDatabase::TapeMountDecisionInfo& tmdi,
             mountPoliciesInQueueList.end(),
             std::back_inserter(m.mountPolicyNames.value()),
             [](const cta::common::dataStructures::MountPolicy& policy) -> std::string { return policy.name; });
-          auto mountPolicyToUse = createBestArchiveMountPolicy(mountPoliciesInQueueList);
-          m.priority = mountPolicyToUse.archivePriority;
-          m.minRequestAge = mountPolicyToUse.archiveMinRequestAge;
+          std::tie(m.priority, m.minRequestAge) = getArchiveMountPolicyMaxPriorityMinAge(mountPoliciesInQueueList);
           m.highestPriorityMountPolicyName = getHighestPriorityArchiveMountPolicyName(mountPoliciesInQueueList);
           m.lowestRequestAgeMountPolicyName = getLowestRequestAgeArchiveMountPolicyName(mountPoliciesInQueueList);
         }
@@ -404,9 +402,7 @@ void OStoreDB::fetchMountInfo(SchedulerDatabase::TapeMountDecisionInfo& tmdi,
             mountPoliciesInQueueList.end(),
             std::back_inserter(m.mountPolicyNames.value()),
             [](const cta::common::dataStructures::MountPolicy& policy) -> std::string { return policy.name; });
-          auto mountPolicyToUse = createBestArchiveMountPolicy(mountPoliciesInQueueList);
-          m.priority = mountPolicyToUse.archivePriority;
-          m.minRequestAge = mountPolicyToUse.archiveMinRequestAge;
+          std::tie(m.priority, m.minRequestAge) = getArchiveMountPolicyMaxPriorityMinAge(mountPoliciesInQueueList);
           m.highestPriorityMountPolicyName = getHighestPriorityArchiveMountPolicyName(mountPoliciesInQueueList);
           m.lowestRequestAgeMountPolicyName = getLowestRequestAgeArchiveMountPolicyName(mountPoliciesInQueueList);
         }
@@ -471,12 +467,7 @@ void OStoreDB::fetchMountInfo(SchedulerDatabase::TapeMountDecisionInfo& tmdi,
             mountPoliciesInQueueList.end(),
             std::back_inserter(queueMountPolicyNames),
             [](const cta::common::dataStructures::MountPolicy& policy) -> std::string { return policy.name; });
-          //We need to get the most advantageous mountPolicy
-          //As the Init element of the reduce function is the first element of the list, we start the reduce with the second element (++mountPolicyInQueueList.begin())
-          common::dataStructures::MountPolicy mountPolicyToUse =
-            createBestRetrieveMountPolicy(mountPoliciesInQueueList);
-          priority = mountPolicyToUse.retrievePriority;
-          minRetrieveRequestAge = mountPolicyToUse.retrieveMinRequestAge;
+          std::tie(priority, minRetrieveRequestAge) = getRetrieveMountPolicyMaxPriorityMinAge(mountPoliciesInQueueList);
           highestPriorityMountPolicyName = getHighestPriorityRetrieveMountPolicyName(mountPoliciesInQueueList);
           lowestRequestAgeMountPolicyName = getLowestRequestAgeRetrieveMountPolicyName(mountPoliciesInQueueList);
         }
@@ -681,28 +672,18 @@ OStoreDB::getMountPoliciesInQueue(const std::list<common::dataStructures::MountP
 //------------------------------------------------------------------------------
 // OStoreDB::createBestArchiveMountPolicy()
 //------------------------------------------------------------------------------
-common::dataStructures::MountPolicy
-OStoreDB::createBestArchiveMountPolicy(const std::list<common::dataStructures::MountPolicy>& mountPolicies) {
+std::pair<uint64_t, uint64_t>
+OStoreDB::getArchiveMountPolicyMaxPriorityMinAge(const std::list<common::dataStructures::MountPolicy>& mountPolicies) {
   if (mountPolicies.empty()) {
     throw cta::exception::Exception("In OStoreDB::createBestArchiveMountPolicy(), empty mount policy list.");
   }
-  //We need to get the most advantageous mountPolicy
-  //As the Init element of the reduce function is the first element of the list, we start the reduce with the second element (++mountPolicyInQueueList.begin())
-  common::dataStructures::MountPolicy bestMountPolicy = cta::utils::reduce(
-    ++mountPolicies.begin(),
-    mountPolicies.end(),
-    mountPolicies.front(),
-    [](const common::dataStructures::MountPolicy& mp1, const common::dataStructures::MountPolicy& mp2) {
-      common::dataStructures::MountPolicy mp = mp1;
-      if (mp1.archivePriority > mp2.archivePriority) {
-        mp.archivePriority = mp1.archivePriority;
-      }
-      if (mp1.archiveMinRequestAge < mp2.archiveMinRequestAge) {
-        mp.archiveMinRequestAge = mp1.archiveMinRequestAge;
-      }
-      return mp;
-    });
-  return bestMountPolicy;
+  uint64_t maxPriority = std::numeric_limits<uint64_t>::min();
+  uint64_t minMinRequestAge = std::numeric_limits<uint64_t>::max();
+  for (auto & mountPolicy : mountPolicies) {
+    maxPriority = std::max(maxPriority, mountPolicy.archivePriority);
+    minMinRequestAge = std::min(minMinRequestAge, mountPolicy.archiveMinRequestAge);
+  }
+  return std::pair{maxPriority, minMinRequestAge};
 }
 
 //------------------------------------------------------------------------------
@@ -756,28 +737,18 @@ std::string OStoreDB::getLowestRequestAgeArchiveMountPolicyName(
 //------------------------------------------------------------------------------
 // OStoreDB::createBestRetrieveMountPolicy()
 //------------------------------------------------------------------------------
-common::dataStructures::MountPolicy
-OStoreDB::createBestRetrieveMountPolicy(const std::list<common::dataStructures::MountPolicy>& mountPolicies) {
+std::pair<uint64_t, uint64_t>
+OStoreDB::getRetrieveMountPolicyMaxPriorityMinAge(const std::list<common::dataStructures::MountPolicy>& mountPolicies) {
   if (mountPolicies.empty()) {
     throw cta::exception::Exception("In OStoreDB::createBestRetrieveMountPolicy(), empty mount policy list.");
   }
-  //We need to get the most advantageous mountPolicy
-  //As the Init element of the reduce function is the first element of the list, we start the reduce with the second element (++mountPolicyInQueueList.begin())
-  common::dataStructures::MountPolicy bestMountPolicy = cta::utils::reduce(
-    ++mountPolicies.begin(),
-    mountPolicies.end(),
-    mountPolicies.front(),
-    [](const common::dataStructures::MountPolicy& mp1, const common::dataStructures::MountPolicy& mp2) {
-      common::dataStructures::MountPolicy mp = mp1;
-      if (mp1.retrievePriority > mp2.retrievePriority) {
-        mp.retrievePriority = mp1.retrievePriority;
-      }
-      if (mp1.retrieveMinRequestAge < mp2.retrieveMinRequestAge) {
-        mp.retrieveMinRequestAge = mp1.retrieveMinRequestAge;
-      }
-      return mp;
-    });
-  return bestMountPolicy;
+  uint64_t maxPriority = std::numeric_limits<uint64_t>::min();
+  uint64_t minMinRequestAge = std::numeric_limits<uint64_t>::max();
+  for (auto & mountPolicy : mountPolicies) {
+    maxPriority = std::max(maxPriority, mountPolicy.retrievePriority);
+    minMinRequestAge = std::min(minMinRequestAge, mountPolicy.retrieveMinRequestAge);
+  }
+  return std::pair{maxPriority, minMinRequestAge};
 }
 
 //------------------------------------------------------------------------------
