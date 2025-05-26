@@ -18,6 +18,7 @@
 #pragma once
 
 #include "common/dataStructures/RetrieveJob.hpp"
+#include "common/dataStructures/RetrieveJobToAdd.hpp"
 #include "ObjectOps.hpp"
 #include "objectstore/cta.pb.h"
 #include "RetrieveActivityCountMap.hpp"
@@ -59,24 +60,14 @@ public:
   std::string dump();
   
   // Retrieve jobs management ==================================================
-  struct JobToAdd {
-    uint32_t copyNb;
-    uint64_t fSeq;
-    std::string retrieveRequestAddress;
-    uint64_t fileSize;
-    cta::common::dataStructures::MountPolicy policy;
-    time_t startTime;
-    std::optional<std::string> activity;
-    std::optional<std::string> diskSystemName;
-  };
-  void addJobsAndCommit(std::list<JobToAdd> & jobsToAdd, AgentReference & agentReference, log::LogContext & lc);
+  void addJobsAndCommit(std::list<common::dataStructures::RetrieveJobToAdd> & jobsToAdd, AgentReference & agentReference, log::LogContext & lc);
   // This version will check for existence of the job in the queue before
   // returns the count and sizes of actually added jobs (if any).
   struct AdditionSummary {
     uint64_t files = 0;
     uint64_t bytes = 0;
   };
-  AdditionSummary addJobsIfNecessaryAndCommit(std::list<JobToAdd> & jobsToAdd,
+  AdditionSummary addJobsIfNecessaryAndCommit(std::list<common::dataStructures::RetrieveJobToAdd> & jobsToAdd,
     AgentReference & agentReference, log::LogContext & lc);
   struct JobsSummary {
     struct ActivityCount {
@@ -180,13 +171,13 @@ private:
     uint64_t minFseq;
     uint64_t maxFseq;
     uint64_t jobsCount;
-    std::list<RetrieveQueue::JobToAdd> jobsToAdd;
+    std::list<common::dataStructures::RetrieveJobToAdd> jobsToAdd;
     size_t shardIndex = std::numeric_limits<size_t>::max();
   };
   
   void updateShardLimits(uint64_t fSeq, ShardForAddition & sfa);
   
-  void addJobToShardAndMaybeSplit(RetrieveQueue::JobToAdd & jobToAdd, 
+  void addJobToShardAndMaybeSplit(common::dataStructures::RetrieveJobToAdd & jobToAdd, 
     std::list<ShardForAddition>::iterator & shardForAddition, std::list<ShardForAddition> & shardList);
   
 public:
