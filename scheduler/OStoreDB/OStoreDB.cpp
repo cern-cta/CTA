@@ -677,14 +677,12 @@ OStoreDB::getArchiveMountPolicyMaxPriorityMinAge(const std::list<common::dataStr
   if (mountPolicies.empty()) {
     throw cta::exception::Exception("In OStoreDB::createBestArchiveMountPolicy(), empty mount policy list.");
   }
-  std::set<uint64_t> mountPrioritySet;
-  std::set<uint64_t> mountMinRequestAgeSet;
+  uint64_t maxPriority = std::numeric_limits<uint64_t>::min();
+  uint64_t minMinRequestAge = std::numeric_limits<uint64_t>::max();
   for (auto & mountPolicy : mountPolicies) {
-    mountPrioritySet.insert(mountPolicy.archivePriority);
-    mountMinRequestAgeSet.insert(mountPolicy.archiveMinRequestAge);
+    maxPriority = std::max(maxPriority, mountPolicy.archivePriority);
+    minMinRequestAge = std::min(minMinRequestAge, mountPolicy.archiveMinRequestAge);
   }
-  auto maxPriority = *std::max_element(mountPrioritySet.begin(), mountPrioritySet.end());
-  auto minMinRequestAge = *std::min_element(mountMinRequestAgeSet.begin(), mountMinRequestAgeSet.end());
   return std::pair{maxPriority, minMinRequestAge};
 }
 
@@ -744,14 +742,12 @@ OStoreDB::getRetrieveMountPolicyMaxPriorityMinAge(const std::list<common::dataSt
   if (mountPolicies.empty()) {
     throw cta::exception::Exception("In OStoreDB::createBestRetrieveMountPolicy(), empty mount policy list.");
   }
-  std::set<uint64_t> mountPrioritySet;
-  std::set<uint64_t> mountMinRequestAgeSet;
+  uint64_t maxPriority = std::numeric_limits<uint64_t>::min();
+  uint64_t minMinRequestAge = std::numeric_limits<uint64_t>::max();
   for (auto & mountPolicy : mountPolicies) {
-    mountPrioritySet.insert(mountPolicy.retrievePriority);
-    mountMinRequestAgeSet.insert(mountPolicy.retrieveMinRequestAge);
+    maxPriority = std::max(maxPriority, mountPolicy.retrievePriority);
+    minMinRequestAge = std::min(minMinRequestAge, mountPolicy.retrieveMinRequestAge);
   }
-  auto maxPriority = *std::max_element(mountPrioritySet.begin(), mountPrioritySet.end());
-  auto minMinRequestAge = *std::min_element(mountMinRequestAgeSet.begin(), mountMinRequestAgeSet.end());
   return std::pair{maxPriority, minMinRequestAge};
 }
 

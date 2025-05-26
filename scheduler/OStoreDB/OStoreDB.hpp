@@ -235,17 +235,19 @@ private:
 
 protected:
   /**
-   * Return the mount policy max retrieve priority and min retrieve minimum age from the mountPolicies passed in parameter
+   * Given a list of mount policies, it compares all of them to extract both the maximum archive priority and the minimum
+   * archive age between all entries.
    * @param mountPolicies the list of mount policies in order to create the best one.
-   * @return a pair with the max retrieve priority and min retrieve minimum age
+   * @return a pair with the max retrieve priority and minimum archive age
    */
   static std::pair<uint64_t, uint64_t>
   getArchiveMountPolicyMaxPriorityMinAge(const std::list<common::dataStructures::MountPolicy> &mountPolicies);
 
   /**
-   * Return the mount policy max retrieve priority and min retrieve minimum age from the mountPolicies passed in parameter
+   * Given a list of mount policies, it compares all of them to extract both the maximum retrieve priority and the minimum
+   * retrieve age between all entries.
    * @param mountPolicies the list of mount policies in order to create the best one.
-   * @return a pair with the max retrieve priority and min retrieve minimum age
+   * @return a pair with the max retrieve priority and minimum retrieve age
    */
   static std::pair<uint64_t, uint64_t>
   getRetrieveMountPolicyMaxPriorityMinAge(const std::list<common::dataStructures::MountPolicy> &mountPolicies);
