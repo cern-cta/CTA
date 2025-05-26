@@ -68,8 +68,10 @@ spec:
         stdin: true
         command: ["bash", "/scripts/ctafrontend-grpc.sh"]
         readinessProbe:
-          grpc:
-            port: {{ .Values.grpc.port }}
+          exec:
+            command: ["true"]
+          # grpc:
+          #   port: {{ .Values.grpc.port }}
           initialDelaySeconds: 5
           periodSeconds: 5
           timeoutSeconds: 3
@@ -135,6 +137,10 @@ spec:
         - name: krb5-conf
           mountPath: /etc/krb5.conf
           subPath: krb5.conf
+        - name: grpc-server-cert
+          mountPath: /etc/grpc-certs/cert
+        - name: grpc-server-key
+          mountPath: /etc/grpc-certs/key
         {{ include "common.extraVolumeMounts" . | nindent 8 }}
       volumes:
       - name: scripts-volume
@@ -166,6 +172,12 @@ spec:
       - name: eos-sss-keytab
         secret:
           secretName: cta-frontend-sss-keytab # Note that this is a different keytab from eos-sss-keytab
+      - name: grpc-server-cert
+        secret:
+          secretName: server-cert
+      - name: grpc-server-key
+        secret:
+          secretName: server-key
       - name: eos-sss-keytab-fixedownership
         emptyDir: {}
       - name: krb5-conf

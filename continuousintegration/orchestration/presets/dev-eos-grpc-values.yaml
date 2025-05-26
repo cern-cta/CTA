@@ -82,9 +82,12 @@ mgm:
       #!/usr/bin/bash
       /mkcert-ssl.sh
       chown -R daemon:daemon /etc/grid-security/certificates
+      cp /etc/grpc-certs/ca.crt /etc/grid-security/certificates
     volumeMounts:
     - name: grid-security
       mountPath: /etc/grid-security
+    - name: grpc-certs
+      mountPath: /etc/grpc-certs
 
   extraVolumes:
     volumeMounts:
@@ -99,6 +102,9 @@ mgm:
       emptyDir: {}
     - name: grid-security
       emptyDir: {}
+    - name: grpc-certs
+      secret:
+        secretName: ca-cert
 
 fst:
   replicaCount: 1
@@ -129,9 +135,12 @@ fst:
       #!/usr/bin/bash
       /mkcert-ssl.sh
       chown -R daemon:daemon /etc/grid-security/certificates
+      cp /etc/grpc-certs/ca.crt /etc/grid-security/certificates
     volumeMounts:
     - name: grid-security
       mountPath: /etc/grid-security
+    - name: grpc-certs
+      mountPath: /etc/grpc-certs
 
   extraVolumes:
     volumeMounts:
@@ -145,6 +154,9 @@ fst:
       emptyDir: {}
     - name: grid-security
       emptyDir: {}
+    - name: grpc-certs
+      secret:
+        secretName: ca-cert
 
 qdb:
   replicaCount: 1
