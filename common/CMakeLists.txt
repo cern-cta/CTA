@@ -74,6 +74,7 @@ set (COMMON_LIB_SRC_FILES
   dataStructures/RequesterMountRule.cpp
   dataStructures/RequesterActivityMountRule.cpp
   dataStructures/RetrieveJob.cpp
+  dataStructures/RetrieveJobToAdd.cpp
   dataStructures/RetrieveRequest.cpp
   dataStructures/SecurityIdentity.cpp
   dataStructures/StorageClass.cpp
