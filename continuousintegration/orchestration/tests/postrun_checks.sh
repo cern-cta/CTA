@@ -90,16 +90,15 @@ for pod in $(echo "${pods}" | jq -r '.metadata.name'); do
     # We hardcode ignore the error here for cta_admin because it occurs in the exceptionmessage
     # With the test rewrite, this should be done in a better way; or we should revisit whether this should not
     # be a fatal error instead (instead of an uncaught exception)
-    logged_errors=$(kubectl --namespace "${NAMESPACE}" exec "${pod}" -c "${container}" -- \
+    logged_error_messages=$(kubectl --namespace "${NAMESPACE}" exec "${pod}" -c "${container}" -- \
                   bash -c "cat /var/log/cta/* 2> /dev/null \
                            | grep -a -E '\"log_level\":\"(ERROR|CRITICAL)\"' \
                            | grep -v -E 'Cannot update status for drive [A-Za-z0-9_-]+. Drive not found' \
                            || true")
-    if [ -n "${logged_errors}" ]; then
-      num_errors=$(wc -l <<< "${logged_errors}")
-      all_logged_errors+="$logged_errors"$'\n'
+    if [ -n "${logged_error_messages}" ]; then
+      num_errors=$(wc -l <<< "${logged_error_messages}")
+      all_logged_error_messages+="$logged_error_messages"$'\n'
       echo "Found ${num_errors} logged errors in pod ${pod} - container ${container}"
-      logged_error_counter=$((logged_error_counter + num_errors))
     fi
   done
 done
@@ -107,7 +106,7 @@ done
 echo ""
 echo "Summary of logged error messages:"
 non_whitelisted_errors=0
-if [ -n "${all_logged_errors}" ]; then
+if [ -n "${all_logged_error_messages}" ]; then
   while read -r count message; do
     if grep -Fxq "${message}" "${WHITELIST_FILE}"; then
       echo "(whitelisted) Count: ${count}, Message: \"${message}\""
@@ -115,7 +114,7 @@ if [ -n "${all_logged_errors}" ]; then
       echo "              Count: ${count}, Message: \"${message}\""
       non_whitelisted_errors=$(( non_whitelisted_errors + count ))
     fi
-  done < <(echo "${all_logged_errors}" \
+  done < <(echo "${all_logged_error_messages}" \
     | jq -r '.message' \
     | sort \
     | uniq -c \
