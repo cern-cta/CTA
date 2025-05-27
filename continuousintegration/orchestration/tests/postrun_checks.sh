@@ -42,6 +42,7 @@ echo "Performing postrun checks"
 general_errors=0
 core_dump_counter=0
 uncaught_exc_counter=0
+all_logged_errors=""
 # We get all the pod details in one go so that we don't have to do too many kubectl calls
 pods=$(kubectl --namespace "${NAMESPACE}" get pods -o json | jq -r '.items[]')
 
@@ -91,24 +92,25 @@ for pod in $(echo "${pods}" | jq -r '.metadata.name'); do
     for pattern in "${false_positives[@]}"; do
         exclude_patterns+=" | grep -v -E '${pattern}'"
     done
-    uncaught_exc=$(kubectl --namespace "${NAMESPACE}" exec "${pod}" -c "${container}" -- \
+    logged_errors=$(kubectl --namespace "${NAMESPACE}" exec "${pod}" -c "${container}" -- \
                   bash -c "cat /var/log/cta/* 2> /dev/null \
-                           | grep -a '\"log_level\":\"ERROR\"' \
-                           | grep uncaught -i \
+                           | grep -a -E '\"log_level\":\"(ERROR|CRITICAL)\"' \
                            ${exclude_patterns} \
                            || true")
-    if [ -n "${uncaught_exc}" ]; then
-      num_exc=$(wc -l <<< "${uncaught_exc}")
-      echo "Found ${num_exc} uncaught exceptions in pod ${pod} - container ${container}"
-      uncaught_exc_counter=$((uncaught_exc_counter + num_exc))
+    if [ -n "${logged_errors}" ]; then
+      num_errors=$(wc -l <<< "${logged_errors}")
+      all_logged_errors+="\n$logged_errors"
+      echo "Found ${num_errors} logged errors in pod ${pod} - container ${container}"
+      logged_error_counter=$((uncaught_exc_counter + num_exc))
     fi
   done
 done
 
 echo "Summary:"
 echo "Found ${core_dump_counter} core dumps."
-echo "Found ${uncaught_exc_counter} uncaught exceptions."
-if [ "${core_dump_counter}" -gt 0 ] || [ "${uncaught_exc_counter}" -gt 0 ] || [ "${general_errors}" -gt 0 ]; then
+echo "Found ${logged_error_counter} logged errors:"
+echo "$all_logged_errors"
+if [ "${core_dump_counter}" -gt 0 ] || [ "${logged_error_counter}" -gt 0 ] || [ "${general_errors}" -gt 0 ]; then
   echo "Failing..."
   exit 1
 fi
