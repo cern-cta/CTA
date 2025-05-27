@@ -107,6 +107,9 @@ set_property (TARGET cta-immutable-file-test APPEND PROPERTY INCLUDE_DIRECTORIES
 target_link_libraries(cta-immutable-file-test
   ctacommon)
 
+add_executable(jwkCacheTests JwkCacheUnitTests.cpp)
+target_link_libraries(jwkCacheTests jsoncpp gtest JwkCache)
+
 install(
   TARGETS
     cta-rdbmsUnitTests
@@ -114,6 +117,7 @@ install(
     cta-unitTests-multiProcess
     cta-integrationTests
     cta-immutable-file-test
+    jwkCacheTests
   DESTINATION
     usr/bin)
 

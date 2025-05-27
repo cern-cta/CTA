@@ -108,7 +108,8 @@ bool CtaRpcImpl::ValidateToken(const std::string& encodedJWT) {
     if (it == m_pubkeyCache.m_keymap.end()) {
       // add the key to the cache, after fetching
       auto m_jwksUri = m_frontendService->getJwksUri().value_or("");
-      m_pubkeyCache.UpdateCache();
+      time_t now = time(NULL);
+      m_pubkeyCache.UpdateCache(now);
     }
     it = m_pubkeyCache.m_keymap.find(kid);
     if (it == m_pubkeyCache.m_keymap.end()) {
@@ -370,7 +371,8 @@ Status CtaRpcImpl::CancelRetrieve(::grpc::ServerContext* context,
 void CtaRpcImpl::StartJwksRefreshThread(int refreshInterval) {
   std::thread([this, refreshInterval]() {
     while (true) {
-      m_pubkeyCache.UpdateCache();
+      time_t now = time(NULL);
+      m_pubkeyCache.UpdateCache(now);
       std::this_thread::sleep_for(std::chrono::seconds(refreshInterval));
     }
   }).detach();
