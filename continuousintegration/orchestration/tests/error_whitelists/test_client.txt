@@ -1,0 +1,8 @@
+Task failed: counting another error for this session
+In RecallReportPacker::ReportError::execute(): failing retrieve job after exception.
+File writing to disk failed
+Received an exception when trying to get archive file by id. Ignoring request to delete archive file.
+In Scheduler::reportRetrieveJobsBatch(): failed to report.
+In RetrieveRequest::garbageCollect() [queue cleanup]: No VID available to requeue the request. Failing all jobs.
+End of recall session with error(s)
+In RetrieveMount::releaseDiskSpace(): reservation release request failed, driveName, diskSystem and mountId do not match.

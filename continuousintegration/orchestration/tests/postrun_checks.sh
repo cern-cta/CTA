@@ -106,50 +106,33 @@ done
 
 echo ""
 echo "Summary of logged error messages:"
+non_whitelisted_errors=0
 if [ -n "${all_logged_errors}" ]; then
-  # Extract all messages and count their occurrences
-  echo "${all_logged_errors}" \
+  while read -r count message; do
+    if grep -Fxq "${message}" "${WHITELIST_FILE}"; then
+      echo "(whitelisted) Count: ${count}, Message: \"${message}\""
+    else
+      echo "              Count: ${count}, Message: \"${message}\""
+      non_whitelisted_errors=$(( non_whitelisted_errors + count ))
+    fi
+  done < <(echo "${all_logged_errors}" \
     | jq -r '.message' \
     | sort \
     | uniq -c \
-    | sort -nr \
-    | while read -r count message; do
-        # Check if the message is whitelisted
-        if grep -Fxq "${message}" "${WHITELIST_FILE}"; then
-          echo "Count: ${count}, Message: \"${message}\" (whitelisted)"
-        else
-          echo "Count: ${count}, Message: \"${message}\""
-        fi
-      done
+    | sort -nr)
 else
   echo "No logged errors found."
 fi
 
 echo ""
 echo "Summary of other issues:"
-echo "Found ${core_dump_counter} core dumps."
-echo "Found ${logged_error_counter} logged errors."
 echo "Found ${general_errors} general pod errors."
-
-# Determine if any of the logged errors are NOT whitelisted
-non_whitelisted_errors=0
-if [[ -f "${WHITELIST_FILE}" ]] && [[ -s "${WHITELIST_FILE}" ]] && [[ -n "${all_logged_errors}" ]]; then
-  # Build pattern for grep -F
-  whitelist_pattern=$(sed '/^\s*$/d' "${WHITELIST_FILE}")
-  if [ -n "${whitelist_pattern}" ]; then
-    non_whitelisted_errors=$(echo "${all_logged_errors}" \
-      | jq -r '.message' \
-      | grep -v -F -f <(echo "${whitelist_pattern}") \
-      | wc -l)
-  fi
-elif [[ -n "${all_logged_errors}" ]]; then
-  non_whitelisted_errors=$(echo "${all_logged_errors}" \
-    | jq -r '.message' \
-    | wc -l)
-fi
+echo "Found ${core_dump_counter} core dumps."
+echo "Found ${non_whitelisted_errors} logged errors not in the whitelist."
 
 if [ "${core_dump_counter}" -gt 0 ] || [ "${non_whitelisted_errors}" -gt 0 ] || [ "${general_errors}" -gt 0 ]; then
   echo "Failing due to non-whitelisted errors or core dumps or general errors."
   exit 1
 fi
 echo "Success"
+
