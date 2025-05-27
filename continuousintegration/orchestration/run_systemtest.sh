@@ -220,15 +220,17 @@ run_systemtest() {
 
   # launch system test and timeout after ${systemtestscript_timeout} seconds
   cd $(dirname "${systemtest_script}")
-  execute_cmd_with_log "./$(basename ${systemtest_script}) -n ${namespace} ${extra_test_options}" \
-                       "${log_dir}/$(basename ${systemtest_script} | cut -d. -f1).log" \
+  systemtest_script_basename=$(basename -- "$systemtest_script")
+  execute_cmd_with_log "./${systemtest_script_basename} -n ${namespace} ${extra_test_options}" \
+                       "${log_dir}/${systemtest_script_basename} | cut -d. -f1).log" \
                        ${systemtestscript_timeout}
   cd "${orchestration_dir}"
 
   # Launch any final checks
+  white_list_file="error_whitelists/${systemtest_script_basename##*.}.txt"
   cd $(dirname "${postrun_checks_script}")
   echo "Launching postrun checks: ${postrun_checks_script}"
-  execute_cmd_with_log "./$(basename ${postrun_checks_script}) -n ${namespace}" \
+  execute_cmd_with_log "./$(basename ${postrun_checks_script}) -n ${namespace} -w ${white_list_file}" \
                         "${log_dir}/$(basename ${postrun_checks_script} | cut -d. -f1).log" \
                         ${postrun_checks_timeout}
   cd "${orchestration_dir}"
