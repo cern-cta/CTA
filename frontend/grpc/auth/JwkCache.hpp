@@ -5,7 +5,7 @@
 typedef struct JwkCacheEntry {
     time_t last_refresh_time;
     std::string pubkey; // public key in PEM format
-};
+} JwkCacheEntry;
 
 class JwkCache {
 public:
@@ -15,7 +15,8 @@ public:
     int m_pubkeyRefreshInterval;
     void PurgeCache(); // remove all entries
     void UpdateCache(); // 
+    std::map<std::string, JwkCacheEntry>::iterator find(std::string key);
     std::map<std::string, JwkCacheEntry> m_keymap;
-    std::string m_jwkUri;
-    JwkCache(const std::string& jwkUri) : m_jwkUri(jwkUri) {} ;
+    std::string m_jwksUri;
+    JwkCache(const std::string& jwkUri) : m_jwksUri(jwkUri) {} ;
 };

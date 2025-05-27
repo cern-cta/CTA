@@ -27,6 +27,7 @@
 #include <jwt-cpp/jwt.h>
 #include <json/json.h>
 #include <curl/curl.h>
+#include <thread>
 
 /*
  * Validate the storage class and issue the archive ID which should be used for the Archive request
@@ -99,33 +100,26 @@ bool CtaRpcImpl::ValidateToken(const std::string& encodedJWT) {
     // Get the JWKS endpoint, find the matching with our token, obtain the public key
     // used to sign the token and validate it
     // first try to use the cached value
-    auto it = m_cachedKeys.find(kid);
-    if (it == m_cachedKeys.end()) {
+    auto it = m_pubkeyCache.m_keymap.find(kid);
+    if (it == m_pubkeyCache.m_keymap.end()) {
         std::cout << "No cached key found for kid: " << kid << ", will fetch keys from endpoint" << std::endl;
     } else
-      pubkeyPem = it->second;
-    if (it == m_cachedKeys.end()) {
+      pubkeyPem = it->second.pubkey;
+    if (it == m_pubkeyCache.m_keymap.end()) {
       // add the key to the cache, after fetching
       auto m_jwksUri = m_frontendService->getJwksUri().value_or("");
-      Json::Value jwks = FetchJWKS(m_jwksUri);
-      // Find the key with the matching KID
-      Json::Value key_data;
-      bool key_found = false;
-      for (const auto& key : jwks["keys"])
-          if (key["kid"].asString() == kid) { key_data = key; key_found = true; break; }
-      if (!key_found) {
-          std::cout << "No key found with kid: " << kid << std::endl;
-          return false;
-      }
-      std::cout << "Key data: " << key_data.toStyledString() << std::endl;
-      std::string x5c = key_data["x5c"][0].asString();
-      std::cout << "Public key is " << x5c << std::endl;
-      pubkeyPem = jwt::helper::convert_base64_der_to_pem(x5c);
-      m_cachedKeys[kid] = pubkeyPem; // store the certificate in PEM format
+      m_pubkeyCache.UpdateCache();
     }
+    it = m_pubkeyCache.m_keymap.find(kid);
+    if (it == m_pubkeyCache.m_keymap.end()) {
+      // unable to fetch the public key for validation, fail the request
+      std::cout << "Unable to find the public key for the token, authentication failed" << std::endl;
+      return false;
+    }
+    pubkeyPem = it->second.pubkey;
     // Validate signature
     auto verifier = jwt::verify()
-                        .allow_algorithm(jwt::algorithm::rs256(jwt::helper::convert_base64_der_to_pem(x5c), "", "", ""));
+                        .allow_algorithm(jwt::algorithm::rs256(pubkeyPem, "", "", ""));
                         // .allow_algorithm(jwt::algorithm::rs256(x5c));
                         // .with_issuer("http://auth-keycloak:8080/realms/master");  // Replace with your issuer
     std::cout << "successfully built the verifier" << std::endl;
@@ -137,22 +131,6 @@ bool CtaRpcImpl::ValidateToken(const std::string& encodedJWT) {
   } catch (const std::runtime_error& e) {
     std::cout << "Failure in token verification, " << e.what() << std::endl;
     return false;
-  }
-}
-
-void CtaRpcImpl::UpdateJwksCache() {
-  Json::Value jwks = FetchJWKS(m_jwksUri);
-  // std::lock_guard<std::mutex> lock(m_cacheMutex); // 
-
-  m_cachedKeys.clear();
-  for (const auto& key : jwks["keys"]) {
-    std::string kid = key["kid"].asString();
-    std::string x5c = key["x5c"][0].asString();
-
-    // Convert x5c cert to PEM format, e.g.,
-    std::string pemKey = jwt::helper::convert_base64_der_to_pem(x5c);
-
-    m_cachedKeys[kid] = pemKey;
   }
 }
 
@@ -392,7 +370,7 @@ Status CtaRpcImpl::CancelRetrieve(::grpc::ServerContext* context,
 void CtaRpcImpl::StartJwksRefreshThread(int refreshInterval) {
   std::thread([this, refreshInterval]() {
     while (true) {
-      m_cachedKeys.UpdateCache();
+      m_pubkeyCache.UpdateCache();
       std::this_thread::sleep_for(std::chrono::seconds(refreshInterval));
     }
   }).detach();
@@ -403,6 +381,7 @@ void CtaRpcImpl::StartJwksRefreshThread(int refreshInterval) {
  * and makes the rpc calls available through this class
  */
 CtaRpcImpl::CtaRpcImpl(const std::string& config)
-    : m_frontendService(std::make_unique<cta::frontend::FrontendService>(config)) {}
+    : m_frontendService(std::make_unique<cta::frontend::FrontendService>(config)),
+      m_pubkeyCache(m_frontendService->getJwksUri().value_or("")) {}
 
 } // namespace cta::frontend::grpc

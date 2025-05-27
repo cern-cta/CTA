@@ -1,6 +1,7 @@
 #include "JwkCache.hpp"
 #include <json/json.h>
 #include <curl/curl.h>
+#include <jwt-cpp/jwt.h>
 
 
 // Function to handle curl responses
@@ -44,25 +45,34 @@ static Json::Value FetchJWKS(const std::string& jwksUrl) {
     return jwks;
 }
 
+std::map<std::string, JwkCacheEntry>::iterator JwkCache::find(std::string key) {
+    return m_keymap.find(key);
+}
+
 void JwkCache::UpdateCache() {
     Json::Value jwks = FetchJWKS(m_jwksUri);
     // purge any keys that have expired
     time_t now = time(NULL);
     for (const auto& entry: m_keymap) {
         int lastRefresh = entry.second.last_refresh_time;
-        if (lastRefresh + m_pubkeyRefreshInterval >= now) {
+        if (lastRefresh + m_pubkeyRefreshInterval <= now) {
             m_keymap.erase(entry.first);
         }
     }
     // add they new keys
+    // we only care about keys used for signing
     for (const auto& key : jwks["keys"]) {
+        if (key["use"] != "sig")
+            continue;
         std::string kid = key["kid"].asString();
         std::string x5c = key["x5c"][0].asString();
         std::string pubkeyPem = jwt::helper::convert_base64_der_to_pem(x5c);
-        JwkCacheEntry entry = {
-            .last_refresh_time = now,
-            .pubkey = pubkeyPem,
-        }
+        JwkCacheEntry entry = {now, pubkeyPem};
         m_keymap[kid] = entry; // store the certificate in PEM format
     }
+}
+
+// Remove all entries from the cache
+void JwkCache::PurgeCache() {
+    m_keymap.clear();
 }

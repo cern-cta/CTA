@@ -14,7 +14,7 @@
 #include "cta_frontend.pb.h"
 #include "cta_frontend.grpc.pb.h"
 #include "frontend/common/FrontendService.hpp"
-#include "JwkCache.hpp"
+#include "auth/JwkCache.hpp"
 
 using cta::Scheduler;
 using cta::catalogue::Catalogue;
@@ -34,7 +34,7 @@ private:
   std::unique_ptr<cta::frontend::FrontendService> m_frontendService;
   ::grpc::HealthCheckServiceInterface* m_healthCheckService = nullptr;
   bool m_isServing = true;
-  JwkCache m_cachedKeys;
+  JwkCache m_pubkeyCache;
   std::mutex m_cacheMutex;  // to guard cache in multithreaded environment
 
 public:
