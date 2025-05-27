@@ -75,11 +75,11 @@ static Json::Value FetchJWKS(const std::string& jwksUrl) {
     return jwks;
 }
 
+// helper function for converting from grpc structure to std::string
 static std::string ToString(const ::grpc::string_ref& r) {
   return std::string(r.data(), r.size());
 }
 
-// alternative
 bool CtaRpcImpl::ValidateToken(const std::string& encodedJWT) {
   try {
     auto decoded = jwt::decode(encodedJWT);
@@ -93,29 +93,36 @@ bool CtaRpcImpl::ValidateToken(const std::string& encodedJWT) {
     auto header = decoded.get_header_json();
     std::string kid = header["kid"].get<std::string>();
     std::string alg = header["alg"].get<std::string>();
+    std::string pubkeyPem;
 
     std::cout << "KID: " << kid << ",ALG: " << alg << std::endl;
     // Get the JWKS endpoint, find the matching with our token, obtain the public key
     // used to sign the token and validate it
-    auto m_jwksUri = m_frontendService->getJwksUri().value_or("");
-    Json::Value jwks = FetchJWKS(m_jwksUri);
-
-    // Find the key with the matching KID
-    Json::Value key_data;
-    bool key_found = false;
-    for (const auto& key : jwks["keys"])
-        if (key["kid"].asString() == kid) { key_data = key; key_found = true; break; }
-    if (!key_found) {
-        std::cout << "No key found with kid: " << kid << std::endl;
-        return false;
+    // first try to use the cached value
+    auto it = m_cachedKeys.find(kid);
+    if (it == m_cachedKeys.end()) {
+        std::cout << "No cached key found for kid: " << kid << ", will fetch keys from endpoint" << std::endl;
+    } else
+      pubkeyPem = it->second;
+    if (it == m_cachedKeys.end()) {
+      // add the key to the cache, after fetching
+      auto m_jwksUri = m_frontendService->getJwksUri().value_or("");
+      Json::Value jwks = FetchJWKS(m_jwksUri);
+      // Find the key with the matching KID
+      Json::Value key_data;
+      bool key_found = false;
+      for (const auto& key : jwks["keys"])
+          if (key["kid"].asString() == kid) { key_data = key; key_found = true; break; }
+      if (!key_found) {
+          std::cout << "No key found with kid: " << kid << std::endl;
+          return false;
+      }
+      std::cout << "Key data: " << key_data.toStyledString() << std::endl;
+      std::string x5c = key_data["x5c"][0].asString();
+      std::cout << "Public key is " << x5c << std::endl;
+      pubkeyPem = jwt::helper::convert_base64_der_to_pem(x5c);
+      m_cachedKeys[kid] = pubkeyPem; // store the certificate in PEM format
     }
-    std::cout << "Key data: " << key_data.toStyledString() << std::endl;
-    // std::string begin_pk = "-----BEGIN PUBLIC KEY-----";
-    // std::string end_pk = "-----END PUBLIC KEY-----";
-    std::string x5c = key_data["x5c"][0].asString();
-    // std::string pubkey = begin_pk + x5c + std::string("\n") + end_pk;
-    std::cout << "Public key is " << x5c << std::endl;
-
     // Validate signature
     auto verifier = jwt::verify()
                         .allow_algorithm(jwt::algorithm::rs256(jwt::helper::convert_base64_der_to_pem(x5c), "", "", ""));
@@ -130,6 +137,22 @@ bool CtaRpcImpl::ValidateToken(const std::string& encodedJWT) {
   } catch (const std::runtime_error& e) {
     std::cout << "Failure in token verification, " << e.what() << std::endl;
     return false;
+  }
+}
+
+void CtaRpcImpl::UpdateJwksCache() {
+  Json::Value jwks = FetchJWKS(m_jwksUri);
+  // std::lock_guard<std::mutex> lock(m_cacheMutex); // 
+
+  m_cachedKeys.clear();
+  for (const auto& key : jwks["keys"]) {
+    std::string kid = key["kid"].asString();
+    std::string x5c = key["x5c"][0].asString();
+
+    // Convert x5c cert to PEM format, e.g.,
+    std::string pemKey = jwt::helper::convert_base64_der_to_pem(x5c);
+
+    m_cachedKeys[kid] = pemKey;
   }
 }
 
@@ -363,6 +386,16 @@ Status CtaRpcImpl::CancelRetrieve(::grpc::ServerContext* context,
 
   // field verification done, now try to call the process method
   return ProcessGrpcRequest(request, response, lc);
+}
+
+// should be called at server startup
+void CtaRpcImpl::StartJwksRefreshThread(int refreshInterval) {
+  std::thread([this, refreshInterval]() {
+    while (true) {
+      m_cachedKeys.UpdateCache();
+      std::this_thread::sleep_for(std::chrono::seconds(refreshInterval));
+    }
+  }).detach();
 }
 
 /* initialize the frontend service
