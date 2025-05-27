@@ -15,16 +15,22 @@
 #                 You should have received a copy of the GNU General Public License
 #                 along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
+
+set -euo pipefail
+
 usage() { cat <<EOF 1>&2
-Usage: $0 -n <namespace>
+Usage: $0 -n <namespace> [-w <whitelist-file-path>]
 EOF
 exit 1
 }
 
-while getopts "n:q" o; do
+while getopts "n:w:q" o; do
     case "${o}" in
         n)
             NAMESPACE=${OPTARG}
+            ;;
+        w)
+            WHITELIST_FILE=${OPTARG}
             ;;
         *)
             usage
@@ -41,42 +47,34 @@ echo "Performing postrun checks"
 
 general_errors=0
 core_dump_counter=0
-uncaught_exc_counter=0
+logged_error_counter=0
 all_logged_errors=""
-# We get all the pod details in one go so that we don't have to do too many kubectl calls
+
 pods=$(kubectl --namespace "${NAMESPACE}" get pods -o json | jq -r '.items[]')
 
-# Iterate over pods
 for pod in $(echo "${pods}" | jq -r '.metadata.name'); do
-  # Check if logs are accessible
   if ! kubectl --namespace "${NAMESPACE}" logs "${pod}" > /dev/null 2>&1; then
     echo "Pod contents are not accessible: ${pod}"
     exit 1
   fi
 
-  # Check for pod restarts
   restart_count=$(echo "${pods}" | jq -r "select(.metadata.name==\"${pod}\") | .status.containerStatuses[].restartCount" | awk '{s+=$1} END {print s}')
   if [[ "$restart_count" -gt 0 ]]; then
     echo "WARNING: Pod ${pod} has restarted ${restart_count} times."
   fi
 
-  # Check for pod crashes/failures
   pod_status=$(echo "${pods}" | jq -r "select(.metadata.name==\"${pod}\") | .status.phase")
-  if [ "${pod_status}" != "Succeeded" ] && [ "${pod_status}" != "Running" ] ; then
+  if [ "${pod_status}" != "Succeeded" ] && [ "${pod_status}" != "Running" ]; then
     echo "Error: ${pod} is in state ${pod_status}"
     general_errors=$((general_errors + 1))
     continue
   fi
-  # Only pods that are running can be executed into
   if [[ "${pod_status}" != "Running" ]]; then
     continue
   fi
 
-  # Get containers for the pod
   containers=$(echo "${pods}" | jq -r " select(.metadata.name==\"${pod}\") | .spec.containers[].name")
   for container in ${containers}; do
-    # Check for core dumps
-    # We ignore core dumps of xrdcp on the client pod (see #1113)
     coredumpfiles=$(kubectl --namespace "${NAMESPACE}" exec "${pod}" -c "${container}" -- \
                       bash -c "find /var/log/tmp/ -type f -name '*.core' 2>/dev/null \
                                | grep -v -E 'client-0-[0-9]+-xrdcp-.*\.core$' \
@@ -86,32 +84,59 @@ for pod in $(echo "${pods}" | jq -r '.metadata.name'); do
       echo "Found ${num_files} core dump files in pod ${pod} - container ${container}"
       core_dump_counter=$((core_dump_counter + num_files))
     fi
-    # Check for uncaught exceptions if there are logs in the /var/log/cta directory
-    false_positives=("Cannot update status for drive [A-Za-z0-9_-]+. Drive not found")
-    exclude_patterns=""
-    for pattern in "${false_positives[@]}"; do
-        exclude_patterns+=" | grep -v -E '${pattern}'"
-    done
     logged_errors=$(kubectl --namespace "${NAMESPACE}" exec "${pod}" -c "${container}" -- \
                   bash -c "cat /var/log/cta/* 2> /dev/null \
                            | grep -a -E '\"log_level\":\"(ERROR|CRITICAL)\"' \
-                           ${exclude_patterns} \
                            || true")
     if [ -n "${logged_errors}" ]; then
       num_errors=$(wc -l <<< "${logged_errors}")
-      all_logged_errors+="\n$logged_errors"
+      all_logged_errors+="$logged_errors"$'\n'
       echo "Found ${num_errors} logged errors in pod ${pod} - container ${container}"
-      logged_error_counter=$((num_errors + num_exc))
+      logged_error_counter=$((logged_error_counter + num_errors))
     fi
   done
 done
 
-echo "Summary:"
+echo ""
+echo "Summary of logged error messages (including whitelisted):"
+if [ -n "${all_logged_errors}" ]; then
+  echo "${all_logged_errors}" \
+    | jq -r '.message' \
+    | sort \
+    | uniq -c \
+    | sort -nr \
+    | while read -r count message; do
+        echo "Count: ${count}, Message: ${message}"
+      done
+else
+  echo "No logged errors found."
+fi
+
+echo ""
+echo "Summary of other issues:"
 echo "Found ${core_dump_counter} core dumps."
-echo "Found ${logged_error_counter} logged errors:"
-echo "$all_logged_errors"
-if [ "${core_dump_counter}" -gt 0 ] || [ "${logged_error_counter}" -gt 0 ] || [ "${general_errors}" -gt 0 ]; then
-  echo "Failing..."
+echo "Found ${logged_error_counter} logged errors."
+echo "Found ${general_errors} general pod errors."
+
+# Determine if any of the logged errors are NOT whitelisted
+non_whitelisted_errors=0
+if [[ -f "${WHITELIST_FILE}" ]] && [[ -s "${WHITELIST_FILE}" ]] && [[ -n "${all_logged_errors}" ]]; then
+  # Build pattern for grep -F
+  whitelist_pattern=$(sed '/^\s*$/d' "${WHITELIST_FILE}")
+  if [ -n "${whitelist_pattern}" ]; then
+    non_whitelisted_errors=$(echo "${all_logged_errors}" \
+      | jq -r '.message' \
+      | grep -v -F -f <(echo "${whitelist_pattern}") \
+      | wc -l)
+  fi
+elif [[ -n "${all_logged_errors}" ]]; then
+  non_whitelisted_errors=$(echo "${all_logged_errors}" \
+    | jq -r '.message' \
+    | wc -l)
+fi
+
+if [ "${core_dump_counter}" -gt 0 ] || [ "${non_whitelisted_errors}" -gt 0 ] || [ "${general_errors}" -gt 0 ]; then
+  echo "Failing due to non-whitelisted errors or core dumps or general errors."
   exit 1
 fi
 echo "Success"
