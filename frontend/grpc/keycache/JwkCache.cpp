@@ -11,7 +11,8 @@ static size_t WriteCallback(void* contents, size_t size, size_t nmemb, std::stri
     return totalSize;
 }
 
-static Json::Value FetchJWKS(const std::string& jwksUrl) {
+Json::Value FetchJWKS(const std::string& jwksUrl) {
+    std::cout << "In FetchJWKS function" << std::endl;
     CURL* curl;
     CURLcode res;
     std::string readBuffer;
@@ -49,14 +50,15 @@ std::map<std::string, JwkCacheEntry>::iterator JwkCache::find(std::string key) {
     return m_keymap.find(key);
 }
 
-void JwkCache::UpdateCache() {
+void JwkCache::UpdateCache(time_t now) {
+    std::cout << "In updateCache() function" << std::endl;
     Json::Value jwks = FetchJWKS(m_jwksUri);
     // purge any keys that have expired
-    time_t now = time(NULL);
     for (const auto& entry: m_keymap) {
         int lastRefresh = entry.second.last_refresh_time;
         if (lastRefresh + m_pubkeyRefreshInterval <= now) {
             m_keymap.erase(entry.first);
+            std::cout << "Removing entry for key with kid " << entry.first << std::endl;
         }
     }
     // add they new keys
@@ -69,6 +71,7 @@ void JwkCache::UpdateCache() {
         std::string pubkeyPem = jwt::helper::convert_base64_der_to_pem(x5c);
         JwkCacheEntry entry = {now, pubkeyPem};
         m_keymap[kid] = entry; // store the certificate in PEM format
+        std::cout << "Adding entry for key with kid " << kid << " and cachedTime " << now << std::endl;
     }
 }
 
