@@ -1196,38 +1196,51 @@ void Scheduler::sortAndGetTapesForMountInfo(
   // Clean list of potential mounts
   {
     // Remove empty string tape pools
-    bool foundEmptyTapePoolString = false;
+    std::set<std::string> vidsWithEmptyTapePoolString;
     mountInfo->potentialMounts.erase(
     std::remove_if(mountInfo->potentialMounts.begin(),
                    mountInfo->potentialMounts.end(),
-                   [&foundEmptyTapePoolString](const SchedulerDatabase::PotentialMount& mount) {
-                     foundEmptyTapePoolString = true;
-                     return mount.tapePool.empty();
+                   [&vidsWithEmptyTapePoolString](const SchedulerDatabase::PotentialMount& mount) {
+                     if (mount.tapePool.empty()) {
+                       vidsWithEmptyTapePoolString.insert(mount.vid);
+                       return true;
+                     }
+                     return false;
                    }),
     mountInfo->potentialMounts.end());
-    if (foundEmptyTapePoolString) {
-      lc.log(log::ERR,
-        "In Scheduler::sortAndGetTapesForMountInfo(): for Potential Mounts, tapePool is an empty string.");
+    if (!vidsWithEmptyTapePoolString.empty()) {
+      for (auto & vid : vidsWithEmptyTapePoolString) {
+        log::ScopedParamContainer params(lc);
+        params.add("tapeVid", vid);
+        lc.log(log::ERR,
+               "In Scheduler::sortAndGetTapesForMountInfo(): empty tape pool string found on potential mounts.");
+      }
     }
   }
 
   // Clean list of existing mounts
   {
     // Remove empty string tape pools
-    bool foundEmptyTapePoolString = false;
+    std::set<std::string> drivesWithEmptyTapePoolString;
     mountInfo->existingOrNextMounts.erase(
         std::remove_if(
             mountInfo->existingOrNextMounts.begin(),
             mountInfo->existingOrNextMounts.end(),
-            [&foundEmptyTapePoolString](const SchedulerDatabase::ExistingMount& mount) {
-              foundEmptyTapePoolString = true;
-              return mount.tapePool.empty();
+            [&drivesWithEmptyTapePoolString](const SchedulerDatabase::ExistingMount& mount) {
+              if (mount.tapePool.empty()) {
+                drivesWithEmptyTapePoolString.insert(mount.driveName);
+                return true;
+              }
+              return false;
         }),
         mountInfo->existingOrNextMounts.end());
-    if (foundEmptyTapePoolString) {
-      lc.log(log::ERR,
-           "In Scheduler::sortAndGetTapesForMountInfo(): for Existing or Next Mounts, "
-           "tapePool is an empty string.");
+    if (!drivesWithEmptyTapePoolString.empty()) {
+      for (auto & drive : drivesWithEmptyTapePoolString) {
+        log::ScopedParamContainer params(lc);
+        params.add("drive", drive);
+        lc.log(log::ERR,
+             "In Scheduler::sortAndGetTapesForMountInfo(): empty tape pool string found on existing or next mount.");
+      }
     }
 
     // Remove existing mounts not on the current scheduler DB
