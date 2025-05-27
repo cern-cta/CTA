@@ -24,6 +24,8 @@ EOF
 exit 1
 }
 
+WHITELIST_FILE=""
+
 while getopts "n:w:q" o; do
     case "${o}" in
         n)
@@ -85,9 +87,13 @@ for pod in $(echo "${pods}" | jq -r '.metadata.name'); do
       core_dump_counter=$((core_dump_counter + num_files))
     fi
 
+    # We hardcode ignore the error here for cta_admin because it occurs in the exceptionmessage
+    # With the test rewrite, this should be done in a better way; or we should revisit whether this should not
+    # be a fatal error instead (instead of an uncaught exception)
     logged_errors=$(kubectl --namespace "${NAMESPACE}" exec "${pod}" -c "${container}" -- \
                   bash -c "cat /var/log/cta/* 2> /dev/null \
                            | grep -a -E '\"log_level\":\"(ERROR|CRITICAL)\"' \
+                           | grep -v -E 'Cannot update status for drive VDSTK[^\s]*. Drive not found' \
                            || true")
     if [ -n "${logged_errors}" ]; then
       num_errors=$(wc -l <<< "${logged_errors}")
@@ -99,15 +105,21 @@ for pod in $(echo "${pods}" | jq -r '.metadata.name'); do
 done
 
 echo ""
-echo "Summary of logged error messages (including whitelisted):"
+echo "Summary of logged error messages:"
 if [ -n "${all_logged_errors}" ]; then
+  # Extract all messages and count their occurrences
   echo "${all_logged_errors}" \
     | jq -r '.message' \
     | sort \
     | uniq -c \
     | sort -nr \
     | while read -r count message; do
-        echo "Count: ${count}, Message: ${message}"
+        # Check if the message is whitelisted
+        if grep -Fxq "${message}" "${WHITELIST_FILE}"; then
+          echo "Count: ${count}, Message: \"${message}\" (whitelisted)"
+        else
+          echo "Count: ${count}, Message: \"${message}\""
+        fi
       done
 else
   echo "No logged errors found."
