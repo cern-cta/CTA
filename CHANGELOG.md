@@ -1,3 +1,27 @@
+## 5.11.8.1-1 (2025-05-27)
+
+### Bug Fixes
+
+- [Scheduler] Fix tapepool names always being incorrectly marked as empty in...
+
+- [Scheduler] Fix incorrect calculation of archive/retrieve priority when...
+
+- [Enstore] Make sure file mark is read when file length lands on a block boundary (cta/CTA!895)
+
+
+### Removals
+
+- Remove remaining syslog code and configuration from CTA (cta/CTA!913)
+
+- Remove cta.ns.config option from cta-frontend (cta/CTA!910)
+
+
+### addition/fix/change/deprecation/removal/security/performance/other -- remove this line if no changelog entry required
+
+- CI image tag update: 2025-05-20-12043486.el9 (cta/CTA!906)
+
+- CI image tag update: 2025-05-15-11999249.el9 (cta/CTA!902)
+
 ## 5.11.8.0-1
 
 ### Features
