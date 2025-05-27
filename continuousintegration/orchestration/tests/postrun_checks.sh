@@ -50,7 +50,7 @@ echo "Performing postrun checks"
 general_errors=0
 core_dump_counter=0
 logged_error_counter=0
-all_logged_errors=""
+all_logged_error_messages=""
 
 pods=$(kubectl --namespace "${NAMESPACE}" get pods -o json | jq -r '.items[]')
 
