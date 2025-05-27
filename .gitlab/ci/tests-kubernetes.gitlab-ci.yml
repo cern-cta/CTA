@@ -223,6 +223,7 @@ test-regression-dCache:
     - xlarge
 
 stress-test:
+  timeout: 6 hours
   allow_failure: true
   interruptible: false
   stage: system-test
