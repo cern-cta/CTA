@@ -30,7 +30,8 @@ include_directories(auth/third_party/jwt-cpp/include/)
 add_executable(cta-frontend-grpc Main.cpp FrontendGrpcService.cpp
   ../common/WorkflowEvent.cpp
   ../common/FrontendService.cpp
-  ../../common/config/Config.cpp)
+  ../../common/config/Config.cpp
+  auth/JwkCache.cpp)
 target_link_libraries(cta-frontend-grpc ProtoCtaFrontend jwt-cpp::jwt-cpp jsoncpp curl)
 # link also with curl and json
 
