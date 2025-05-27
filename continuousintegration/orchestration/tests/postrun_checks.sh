@@ -101,7 +101,7 @@ for pod in $(echo "${pods}" | jq -r '.metadata.name'); do
       num_errors=$(wc -l <<< "${logged_errors}")
       all_logged_errors+="\n$logged_errors"
       echo "Found ${num_errors} logged errors in pod ${pod} - container ${container}"
-      logged_error_counter=$((uncaught_exc_counter + num_exc))
+      logged_error_counter=$((num_errors + num_exc))
     fi
   done
 done
