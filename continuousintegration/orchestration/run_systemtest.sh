@@ -227,7 +227,7 @@ run_systemtest() {
   cd "${orchestration_dir}"
 
   # Launch any final checks
-  white_list_file="error_whitelists/${systemtest_script_basename##*.}.txt"
+  white_list_file="error_whitelists/${systemtest_script_basename%.*}.txt"
   cd $(dirname "${postrun_checks_script}")
   echo "Launching postrun checks: ${postrun_checks_script}"
   execute_cmd_with_log "./$(basename ${postrun_checks_script}) -n ${namespace} -w ${white_list_file}" \
