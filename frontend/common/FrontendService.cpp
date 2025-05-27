@@ -401,7 +401,16 @@ FrontendService::FrontendService(const std::string& configFilename) : m_archiveF
   if (jwksUri.has_value()) {
     m_jwksUri = jwksUri.value();
   }
+  
+  auto cacheRefreshInterval = config.getOptionValueInt("grpc.cache.cache_refresh_interval_secs");
+  if (cacheRefreshInterval.has_value()) {
+    m_cacheRefreshInterval = cacheRefreshInterval.value();
+  }
 
+  auto pubkeyRefreshInterval = config.getOptionValueInt("grpc.cache.pubkey_refresh_interval_secs");
+  if (pubkeyRefreshInterval.has_value()) {
+    m_pubkeyRefreshInterval = pubkeyRefreshInterval.value();
+  }
   // All done
   log(log::INFO, std::string("cta-frontend started"), {log::Param("version", CTA_VERSION)});
 }

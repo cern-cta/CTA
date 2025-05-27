@@ -171,6 +171,12 @@ int main(const int argc, char *const *const argv) {
 
             creds = grpc::SslServerCredentials(tls_options);
         }
+        if (!svc.getFrontendService().getCacheRefreshInterval().has_value()) {
+            lc.log(log::WARNING, "No value set in config for the JWT cache refresh interval, using default value");
+        }
+        if (!svc.getFrontendService().getPubkeyRefreshInterval().has_value()) {
+            lc.log(log::WARNING, "No value set in config for the JWT public key refresh interval, using default value");
+        }
     } else {
         lc.log(log::INFO, "Using gRPC over plaintext socket");
         creds = grpc::InsecureServerCredentials();

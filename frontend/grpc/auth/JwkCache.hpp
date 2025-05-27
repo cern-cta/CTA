@@ -9,6 +9,7 @@ typedef struct JwkCacheEntry {
 
 class JwkCache {
 public:
+    std::string m_jwksUri;
     int m_cacheRefreshInterval; // value in seconds
     // at some point will need a mutex added to handle parallel requests
     // This gives the option to keep public keys around for longer than the refresh interval.
@@ -17,6 +18,8 @@ public:
     void UpdateCache(); // 
     std::map<std::string, JwkCacheEntry>::iterator find(std::string key);
     std::map<std::string, JwkCacheEntry> m_keymap;
-    std::string m_jwksUri;
-    JwkCache(const std::string& jwkUri) : m_jwksUri(jwkUri) {} ;
+    JwkCache(const std::string& jwkUri, int cacheRefreshInterval = 600, int pubkeyRefreshInterval = 600)
+                : m_jwksUri(jwkUri),
+                  m_cacheRefreshInterval(cacheRefreshInterval),
+                  m_pubkeyRefreshInterval(pubkeyRefreshInterval) {};
 };

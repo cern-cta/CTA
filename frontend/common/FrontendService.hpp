@@ -155,6 +155,16 @@ public:
    */
   const std::optional<std::string> getJwksUri() const { return m_jwksUri; }
 
+  /*
+   * Get the interval (in seconds) after which to update the cache of public keys
+   */
+  const std::optional<int> getCacheRefreshInterval() const { return m_cacheRefreshInterval; }
+
+  /*
+   * Get the interval (in seconds) after which to update public key entries in the cache
+   */
+  const std::optional<int> getPubkeyRefreshInterval() const { return m_pubkeyRefreshInterval; }
+
 private:
   /*!
    * Set the verification mount policy
@@ -192,6 +202,8 @@ private:
   uint64_t                                      m_missingFileCopiesMinAgeSecs;  //!< Missing tape file copies minimum age.
   std::string                                   m_instanceName;               //!< value of cta.instance_name in the CTA frontend configuration file
   std::optional<std::string>                    m_jwksUri;                      //!< The endpoint to obtain public keys from, for validating tokens
+  std::optional<int>                            m_cacheRefreshInterval;         //!< The number of seconds after which to update the cache of public keys used to sign JWT tokens
+  std::optional<int>                            m_pubkeyRefreshInterval;        //!< The number of seconds after which to update the cache entry for a cached key
   // clang-format on
 };
 
