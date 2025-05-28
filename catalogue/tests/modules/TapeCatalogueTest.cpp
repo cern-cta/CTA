@@ -2539,7 +2539,7 @@ TEST_P(cta_catalogue_TapeTest, reclaimTapeBrokenState) {
   m_catalogue->Tape()->createTape(m_admin, tape1);
   m_catalogue->Tape()->setTapeFull(m_admin, tape1.vid, true);
 
-  // DISABLED - Reclaim allowed
+  // BROKEN - Reclaim allowed
   m_catalogue->Tape()->modifyTapeState(m_admin, tape1.vid, cta::common::dataStructures::Tape::BROKEN, std::nullopt,
     "Testing");
   ASSERT_NO_THROW(m_catalogue->Tape()->reclaimTape(m_admin, tape1.vid, dummyLc));
