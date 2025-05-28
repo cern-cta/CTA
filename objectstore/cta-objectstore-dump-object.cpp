@@ -30,6 +30,7 @@
 #include <iostream>
 #include <stdexcept>
 #include <optional>
+#include <common/exception/NoSuchObject.hpp>
 
 int main(int argc, char ** argv) {
   try {
@@ -57,9 +58,10 @@ int main(int argc, char ** argv) {
     cta::objectstore::GenericObject ge(objectName, *be);
     ge.fetchNoLock();
     std::cout << ge.dump() << std::endl;
+  } catch (cta::exception::NoSuchObject &) {
+    std::cerr << "Object not found in the object store" << std::endl;
   } catch (const std::bad_optional_access&) {
-    std::cerr << "Config file '/etc/cta/cta-objectstore-tools.conf' does not contain the BackendPath entry."
-              << std::endl;
+    std::cerr << "Config file '/etc/cta/cta-objectstore-tools.conf' does not contain the BackendPath entry." << std::endl;
   } catch (std::exception& e) {
     std::cerr << "Failed to dump object: "
         << std::endl << e.what() << std::endl;
