@@ -1,3 +1,21 @@
+## 5.11.8.1-1
+
+### Bug Fixes
+
+- [Scheduler] Fix tapepool names always being incorrectly marked as empty in scheduler logs (cta/CTA!924)
+- [Scheduler] Fix incorrect calculation of archive/retrieve priority when comparing multiple mount policies in a queue (cta/CTA!908)
+- [Enstore] Make sure file mark is read when file length lands on a block boundary (cta/CTA!895)
+
+
+### Removals
+
+- Remove remaining syslog code and configuration from CTA (cta/CTA!913)
+- [Frontend] Remove cta.ns.config option from cta-frontend (cta/CTA!910)
+
+### Other
+
+- Various small logging improvements (cta/CTA!915)
+
 ## 5.11.8.0-1
 
 ### Features
