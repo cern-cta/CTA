@@ -54,11 +54,13 @@ void JwkCache::UpdateCache(time_t now) {
     std::cout << "In updateCache() function" << std::endl;
     Json::Value jwks = m_fetchFunc(m_jwksUri);
     // purge any keys that have expired
-    for (const auto& entry: m_keymap) {
-        int lastRefresh = entry.second.last_refresh_time;
+    for (auto it = m_keymap.begin(); it != m_keymap.end() ;) {
+        int lastRefresh = it->second.last_refresh_time;
         if (lastRefresh + m_pubkeyRefreshInterval <= now) {
-            m_keymap.erase(entry.first);
-            std::cout << "Removing entry for key with kid " << entry.first << std::endl;
+            std::cout << "Removing entry for key with kid " << it->first << std::endl;
+            it = m_keymap.erase(it); // erase returns next valid iterator
+        } else {
+            ++it;
         }
     }
     // add they new keys

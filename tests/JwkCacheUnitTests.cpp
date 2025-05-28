@@ -18,7 +18,6 @@
 #include "frontend/grpc/keycache/JwkCache.hpp"
 #include <gtest/gtest.h>
 #include <json/json.h>
-// #include <jwt-cpp/jwt.h>
 
 namespace integrationTests {
 // Fake FetchJWKS for testing
@@ -75,17 +74,26 @@ TEST(JwkCacheTest, PurgeCacheClearsKeys) {
 }
 
 TEST(JwkCacheTest, UpdateCacheRemovesExpiredKeys) {
-    JwkCache cache("http://fake-jwks-uri", 600, 1, FakeFetchJWKS);  // very short pubkeyRefreshInterval
+    JwkCache cache("http://fake-jwks-uri", 100, 200, FakeFetchJWKS);  // very short pubkeyRefreshInterval
 
-    time_t oldTime = 1000;
-    cache.UpdateCache(oldTime);
+    time_t lastRefreshTime = 1000;
+    cache.UpdateCache(lastRefreshTime);
 
     // Manually insert a stale key
-    cache.m_keymap["expired-key"] = {oldTime - 10, "old-pubkey"};
+    JwkCacheEntry expiredEntry = {lastRefreshTime, "old-pubkey"};
+    cache.m_keymap["expired-key"] = expiredEntry;
 
-    time_t now = oldTime + 2;
+    time_t now = lastRefreshTime + 2;
     cache.UpdateCache(now);
-
+    // should not be removed yet, it should be removed after lastRefreshTime + 200 = 1200
+    EXPECT_EQ(cache.m_keymap.count("expired-key"), 1);
+    now = lastRefreshTime + 120;
+    cache.UpdateCache(now);
+    // still here
+    EXPECT_EQ(cache.m_keymap.count("expired-key"), 1);
+    // now the PK has expired, should be removed
+    now = lastRefreshTime + 220;
+    cache.UpdateCache(now);
     EXPECT_EQ(cache.m_keymap.count("expired-key"), 0);
 }
 }
