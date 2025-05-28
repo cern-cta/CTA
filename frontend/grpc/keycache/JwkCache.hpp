@@ -26,7 +26,7 @@ public:
     std::map<std::string, JwkCacheEntry>::iterator find(std::string key);
     std::map<std::string, JwkCacheEntry> m_keymap;
     FetchFunction m_fetchFunc;
-    JwkCache(const std::string& jwkUri, int cacheRefreshInterval = 600, int pubkeyRefreshInterval = 600, FetchFunction fetchFunc = FetchJWKS)
+    JwkCache(const std::string& jwkUri, int cacheRefreshInterval, int pubkeyRefreshInterval, FetchFunction fetchFunc)
                 : m_jwksUri(jwkUri),
                   m_cacheRefreshInterval(cacheRefreshInterval),
                   m_pubkeyRefreshInterval(pubkeyRefreshInterval),
