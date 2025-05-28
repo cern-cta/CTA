@@ -20,6 +20,7 @@
 #include <json/json.h>
 // #include <jwt-cpp/jwt.h>
 
+namespace integrationTests {
 // Fake FetchJWKS for testing
 Json::Value FakeFetchJWKS(const std::string& uri) {
     // Create a fake JWKS JSON structure
@@ -70,9 +71,10 @@ TEST(JwkCacheTest, UpdateCacheRemovesExpiredKeys) {
 
     EXPECT_EQ(cache.m_keymap.count("expired-key"), 0);
 }
-
-int main(int argc, char **argv) {
-  ::testing::InitGoogleTest(&argc, argv);
-  return RUN_ALL_TESTS();
 }
+
+// int main(int argc, char **argv) {
+//   ::testing::InitGoogleTest(&argc, argv);
+//   return RUN_ALL_TESTS();
+// }
 
