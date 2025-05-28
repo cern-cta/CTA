@@ -81,12 +81,15 @@ add_library(unitTestHelper
   TempFile.cpp TempDirectory.cpp)
 
 add_library(integrationTestHelperTests SHARED
-  SubprocessIntegrationTests.cpp)
+  SubprocessIntegrationTests.cpp
+  JwkCacheUnitTests.cpp)
 set_property(TARGET integrationTestHelperTests PROPERTY SOVERSION "${CTA_SOVERSION}")
 set_property(TARGET integrationTestHelperTests PROPERTY   VERSION "${CTA_LIBVERSION}")
 
 target_link_libraries(integrationTestHelperTests
-  ctacommon)
+  ctacommon
+  JwkCache
+  jsoncpp)
 
 add_executable(cta-integrationTests
   integration_tests.cpp)
@@ -107,8 +110,8 @@ set_property (TARGET cta-immutable-file-test APPEND PROPERTY INCLUDE_DIRECTORIES
 target_link_libraries(cta-immutable-file-test
   ctacommon)
 
-add_executable(jwkCacheTests JwkCacheUnitTests.cpp)
-target_link_libraries(jwkCacheTests jsoncpp gtest JwkCache)
+# add_executable(jwkCacheTests JwkCacheUnitTests.cpp)
+# target_link_libraries(jwkCacheTests jsoncpp gtest JwkCache)
 
 install(
   TARGETS
@@ -117,7 +120,7 @@ install(
     cta-unitTests-multiProcess
     cta-integrationTests
     cta-immutable-file-test
-    jwkCacheTests
+    # jwkCacheTests
   DESTINATION
     usr/bin)
 
