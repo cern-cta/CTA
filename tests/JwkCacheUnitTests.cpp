@@ -27,20 +27,37 @@ Json::Value FakeFetchJWKS(const std::string& uri) {
     Json::Value root;
     Json::Value key;
     key["use"] = "sig";
-    key["kid"] = "test-kid-123";
+    key["kid"] = "test-kid";
     key["x5c"] = Json::arrayValue;
-    key["x5c"].append("MIIBIjANBgkqh...");  // fake base64 cert string
+    std::string sample_cert_base64_der = "MIIDHDCCAgSgAwIBAgIIGlbUz5cvweUwDQYJKoZIhvcNAQEFBQAwMTEvMC0GA1UE"
+										 "AxMmc2VjdXJldG9rZW4uc3lzdGVtLmdzZXJ2aWNlYWNjb3VudC5jb20wHhcNMTkw"
+										 "NDEwMjEyMDUxWhcNMTkwNDI3MDkzNTUxWjAxMS8wLQYDVQQDEyZzZWN1cmV0b2tl"
+										 "bi5zeXN0ZW0uZ3NlcnZpY2VhY2NvdW50LmNvbTCCASIwDQYJKoZIhvcNAQEBBQAD"
+										 "ggEPADCCAQoCggEBALRPFSsUi/bGcMVkD+XjJ6z/71u+7Wn1C1bRnM9sU3q7+Ere"
+										 "DV6an+z+YsjblskBX73h1GyYvmtkyuL7Uq0N+y+RTOmd2fwDw48gM5FEq6DNpVVW"
+										 "ZRIzzoMSLZCB+tg1eQZdGKtmctdd5Jjhwihf9Aa759fcj60GDG39G6A/w4Jok+J6"
+										 "7sRabxxontJ4Kpo6zmwUKbWF8naJeCRTO0VAYLkJqEWO4VJTIHJeu2WpxM0qzvY9"
+										 "IY5Yd7Njegu64FoHU55dSfee2KwDa0/bajrknJfxWBN4hk/rqgGjxQmzAYMCB7/p"
+										 "/9Snfg4NmfX5cJJ01SNzY6Q/mJRjB3iX2PBz+GsCAwEAAaM4MDYwDAYDVR0TAQH/"
+										 "BAIwADAOBgNVHQ8BAf8EBAMCB4AwFgYDVR0lAQH/BAwwCgYIKwYBBQUHAwIwDQYJ"
+										 "KoZIhvcNAQEFBQADggEBAKCSq0D+NIAsGULZrhXouurxInxDyq03xLNcxvKDQchc"
+										 "XfGA1r3eltmlyKQb5TmAsuKwS/LAQ5z8SlRTOmDGVEtDwnw3S83C4ufXbP0eMB6H"
+										 "eKf2XCA00T3odUfXmQZme8hG6z7GKVOdn/0oY+vaX38brlCpRXDTm1WldyddUpMz"
+										 "ftcs6dibdnbQtbX6o9E+KuvGHoNW5xcSjX8lwXTpopfvufPOLPcnFXi4UoYZ8NZ2"
+										 "2mRG78LkOA+SkOMutbt6w7TBDvADmFzuzvAULy4gsfcamOYcQ7uiHnnD+PoNiNbw"
+										 "flE/m/0zymX8I/Xu3+KKLhUnUROGC6zO3OnLHXCnEns=";
+    key["x5c"].append(sample_cert_base64_der);  // fake base64 cert string, contents copied from jwt-cpp examples
     root["keys"].append(key);
     return root;
 }
 
 TEST(JwkCacheTest, UpdateCacheAddsKey) {
-    JwkCache cache("http://fake-jwks-uri", 600, 600, FakeFetchJWKS);
+    JwkCache cache("http://fake-jwks-uri", 1200, 1200, FakeFetchJWKS);
 
     time_t fakeNow = 1000;
     cache.UpdateCache(fakeNow);
 
-    auto it = cache.find("test-kid-123");
+    auto it = cache.find("test-kid");
     ASSERT_NE(it, cache.m_keymap.end());
     EXPECT_EQ(it->second.last_refresh_time, fakeNow);
     EXPECT_FALSE(it->second.pubkey.empty());

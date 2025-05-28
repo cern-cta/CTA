@@ -52,7 +52,7 @@ std::map<std::string, JwkCacheEntry>::iterator JwkCache::find(std::string key) {
 
 void JwkCache::UpdateCache(time_t now) {
     std::cout << "In updateCache() function" << std::endl;
-    Json::Value jwks = FetchJWKS(m_jwksUri);
+    Json::Value jwks = m_fetchFunc(m_jwksUri);
     // purge any keys that have expired
     for (const auto& entry: m_keymap) {
         int lastRefresh = entry.second.last_refresh_time;
