@@ -460,6 +460,9 @@ std::map<std::string, std::string, std::less<>> RdbmsTapeCatalogue::getVidToLogi
 
 void RdbmsTapeCatalogue::reclaimTape(const common::dataStructures::SecurityIdentity &admin, const std::string &vid,
   cta::log::LogContext & lc) {
+
+  using namespace common::dataStructures;
+
   log::TimingList tl;
   utils::Timer t;
   auto conn = m_connPool->getConn();
@@ -471,11 +474,14 @@ void RdbmsTapeCatalogue::reclaimTape(const common::dataStructures::SecurityIdent
 
   if (tapes.empty()) {
     throw exception::UserError(std::string("Cannot reclaim tape ") + vid + " because it does not exist");
-  } else if (tapes.front().state != common::dataStructures::Tape::State::ACTIVE
-    && tapes.front().state != common::dataStructures::Tape::State::DISABLED) {
-    throw exception::UserError(std::string("Cannot reclaim tape ") + vid
-      + " because it is not on ACTIVE or DISABLED state");
-  } else if (!tapes.front().full) {
+  }
+
+  if (auto & tape = tapes.front();
+    tape.state != Tape::State::ACTIVE
+    && tape.state != Tape::State::DISABLED
+    && tape.state != Tape::State::BROKEN) {
+    throw exception::UserError(std::string("Cannot reclaim tape ") + vid + " because it is not on ACTIVE, DISABLED or BROKEN state");
+  } else if (!tape.full) {
     throw exception::UserError(std::string("Cannot reclaim tape ") + vid + " because it is not FULL");
   }
 
