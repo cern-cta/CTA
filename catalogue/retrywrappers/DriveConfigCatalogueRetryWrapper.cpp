@@ -41,6 +41,12 @@ std::list<cta::catalogue::DriveConfigCatalogue::DriveConfig> DriveConfigCatalogu
   }, m_maxTriesToConnect);
 }
 
+std::list<std::string>  DriveConfigCatalogueRetryWrapper::getTapeDriveNamesForSchedulerBackend(const std::string &schedulerBackendName) const {
+  return retryOnLostConnection(m_log, [this,&schedulerBackendName] {
+    return m_catalogue->DriveConfig()->getTapeDriveNamesForSchedulerBackend(schedulerBackendName);
+  }, m_maxTriesToConnect);
+}
+
 std::list<std::pair<std::string, std::string>> DriveConfigCatalogueRetryWrapper::getTapeDriveConfigNamesAndKeys() const {
   return retryOnLostConnection(m_log, [this] {
     return m_catalogue->DriveConfig()->getTapeDriveConfigNamesAndKeys();

@@ -379,18 +379,6 @@ void AdminCmd::logAdminCmd(const std::string& function, const std::string& statu
   m_lc.log(cta::log::INFO, log_msg);
 }
 
-std::list<std::string> AdminCmd::getTapeDriveNamesGivenSchedulerBackendName(
-  const std::list<cta::catalogue::DriveConfigCatalogue::DriveConfig>& driveConfigList) {
-  // set of valid tapeDriveNames matching the m_schedulerBackendName
-  std::list<std::string> validTapeDrives;
-  for (const auto& config : driveConfigList) {
-    if (config.keyName == "SchedulerBackendName" && config.value == m_schedulerBackendName) {
-      validTapeDrives.emplace_back(config.tapeDriveName);
-    }
-  }
-  return validTapeDrives;
-}
-
 void AdminCmd::processAdmin_Add(xrd::Response& response) {
   using namespace cta::admin;
 
@@ -536,8 +524,10 @@ void AdminCmd::processDrive_Rm(xrd::Response& response) {
   regex = '^' + regex + '$';
   utils::Regex driveNameRegex(regex.c_str());
 
-  auto driveConfigList = m_catalogue.DriveConfig()->getTapeDriveConfigs();
-  const auto tapeDriveNames = getTapeDriveNamesGivenSchedulerBackendName(driveConfigList);
+  if (!m_schedulerBackendName.has_value()){
+    throw exception::UserError("You must provide a value for cta.schedulerdb.scheduler_backend_name in the frontend configuration !");
+  }
+  const auto tapeDriveNames = m_catalogue.DriveConfig()->getTapeDriveNamesForSchedulerBackend(m_schedulerBackendName.value());
   bool drivesFound = false;
 
   for (const auto& tapeDriveName : tapeDriveNames)
@@ -1587,8 +1577,11 @@ std::string AdminCmd::setDriveState(const std::string& regex, const common::data
   std::stringstream cmdlineOutput;
   utils::Regex driveNameRegex(regex.c_str());
 
-  auto driveConfigList = m_catalogue.DriveConfig()->getTapeDriveConfigs();
-  const auto tapeDriveNames = getTapeDriveNamesGivenSchedulerBackendName(driveConfigList);
+  if (!m_schedulerBackendName.has_value()){
+    throw exception::UserError("You must provide a value for cta.schedulerdb.scheduler_backend_name in the frontend configuration !");
+  }
+
+  const auto tapeDriveNames = m_catalogue.DriveConfig()->getTapeDriveNamesForSchedulerBackend(m_schedulerBackendName.value());
   bool is_found = false;
 
   for(const auto& tapeDriveName: tapeDriveNames) {
