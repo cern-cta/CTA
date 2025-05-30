@@ -135,6 +135,27 @@ std::list<cta::catalogue::DriveConfigCatalogue::DriveConfig> RdbmsDriveConfigCat
   return drivesConfigs;
 }
 
+std::list<std::string>
+RdbmsDriveConfigCatalogue::getTapeDriveNamesForSchedulerBackend(const std::string &schedulerBackendName) const {
+  const char* const sql = R"SQL(
+    SELECT
+      DRIVE_NAME AS DRIVE_NAME
+    FROM
+      DRIVE_CONFIG WHERE KEY_NAME = :KEY_NAME AND VALUE = :VALUE
+  )SQL";
+  auto conn = m_connPool->getConn();
+  auto stmt = conn.createStmt(sql);
+  stmt.bindString(":KEY_NAME", "SchedulerBackendName");
+  stmt.bindString(":VALUE", schedulerBackendName);
+  auto rset = stmt.executeQuery();
+  std::list<std::string> tapeDriveNames;
+  while (rset.next()) {
+    const std::string driveName = rset.columnString("DRIVE_NAME");
+    tapeDriveNames.push_back(driveName);
+  }
+  return tapeDriveNames;
+}
+
 std::optional<std::tuple<std::string, std::string, std::string>> RdbmsDriveConfigCatalogue::getTapeDriveConfig(
   const std::string &tapeDriveName, const std::string &keyName) const {
   const char* const sql = R"SQL(
