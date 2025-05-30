@@ -404,7 +404,7 @@ repackCancellation() {
     sleep 1
     let SECONDS_PASSED=SECONDS_PASSED+1
     if test ${SECONDS_PASSED} == ${WAIT_FOR_EMPTY_QUEUE_TIMEOUT}; then
-      echo "Timed out after ${ WAIT_FOR_EMPTY_QUEUE_TIMEOUT} seconds waiting for retrieve queue ${VID_TO_REPACK} to be emptied. Test failed."
+      echo "Timed out after ${WAIT_FOR_EMPTY_QUEUE_TIMEOUT} seconds waiting for retrieve queue ${VID_TO_REPACK} to be emptied. Test failed."
       exit 1
     fi
   done
@@ -536,11 +536,14 @@ repackMoveAndAddCopies() {
     echo "Found $tapepoolDestination2_repack in repack archive destination pools."
   fi
 
+  kubectl -n ${NAMESPACE} exec ${EOS_MGM_POD} -c eos-mgm -- eos ls -l /eos/ctaeos/repack/${VID_TO_REPACK}
+  echo "----"
   removeRepackRequest ${VID_TO_REPACK}
   echo "Setting the tape ${VID_TO_REPACK} back to ACTIVE"
   modifyTapeState ${VID_TO_REPACK} ACTIVE
   echo "Reclaimimg tape ${VID_TO_REPACK}"
   kubectl -n ${NAMESPACE} exec ${CTA_CLI_POD} -c cta-cli -- cta-admin tape reclaim --vid ${VID_TO_REPACK}
+  kubectl -n ${NAMESPACE} exec ${EOS_MGM_POD} -c eos-mgm -- eos ls -l /eos/ctaeos/repack/${VID_TO_REPACK}
 
   echo
   echo "***************************************************************"
