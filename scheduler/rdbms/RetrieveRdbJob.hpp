@@ -43,6 +43,11 @@ public:
   // Constructor to create empty RetrieveJob object with a reference to the connection pool
   explicit RetrieveRdbJob(rdbms::ConnPool& connPool);
   explicit RetrieveRdbJob(rdbms::ConnPool& connPool, const rdbms::Rset& rset);
+
+  ~RetrieveRdbJob() {
+    assert(false && "RetrieveRdbJob destructor called unexpectedly! Object must be recycled instead.");
+  }
+
   /*
    * Sets the status of the job as failed in the Scheduler DB
    *
@@ -72,14 +77,17 @@ public:
    */
   void initialize(const rdbms::Rset& rset) override;
 
-    /**
+  /**
    * @brief Returns this job instance back to its originating pool.
    *
    *        Used when the job has completed and can be recycled.
    *        Assumes the job is exclusively owned and managed by the pool.
    */
   void releaseToPool() override {
-    m_pool->releaseJob(std::unique_ptr<RetrieveRdbJob>(this));
+    if (!m_pool || !m_pool->releaseJob(this)) {
+      // Pool is full, allow destruction
+      delete this;
+    }
   }
 
   /**

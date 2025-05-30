@@ -45,7 +45,11 @@ public:
   // Constructor to create empty ArchiveJob object with a reference to the connection pool
   explicit ArchiveRdbJob(rdbms::ConnPool& connPool);
 
- /**
+  ~ArchiveRdbJob() {
+    assert(false && "ArchiveRdbJob destructor called unexpectedly! Object must be recycled instead.");
+  }
+
+  /**
   * Sets the status of the job as failed in the Scheduler DB
   *
   * @param failureReason  The reason of the failure as string
@@ -79,14 +83,22 @@ public:
   */
   void initialize(const rdbms::Rset& rset) override;
 
-  /**
-   * @brief Returns this job instance back to its originating pool.
-   *
-   *        Used when the job has completed and can be recycled.
-   *        Assumes the job is exclusively owned and managed by the pool.
-   */
+ /**
+  * @brief Returns the job instance back to its originating JobPool.
+  *
+  * This method should be called instead of deleting the object when the job
+  * is no longer needed. It enables object reuse by placing the job back into
+  * the pool, avoiding unnecessary allocations.
+  *
+  * @note After calling releaseToPool(), the caller must not use or delete the object.
+  *       It is the caller's responsibility to also call .release() on any
+  *       std::unique_ptr managing this object to prevent double-deletion.
+  */
   void releaseToPool() override {
-    m_pool->releaseJob(std::unique_ptr<ArchiveRdbJob>(this));
+    if (!m_pool || !m_pool->releaseJob(this)) {
+      // Pool is full, allow destruction
+      delete this;
+    }
   }
 
   /**
