@@ -36,7 +36,7 @@ public:
   std::unique_ptr<T> acquireJob();
 
   // Return a job to the pool for reuse
-  void releaseJob(std::unique_ptr<T> job);
+  bool releaseJob(T* job);
 
 private:
   std::stack<std::unique_ptr<T>> m_pool;  // Stack to store reusable jobs
@@ -75,13 +75,16 @@ std::unique_ptr<T> JobPool<T>::acquireJob() {
 
 // Release a job back into the pool
 template<typename T>
-void JobPool<T>::releaseJob(std::unique_ptr<T> job) {
+bool JobPool<T>::releaseJob(T* job) {
   std::lock_guard<std::mutex> lock(m_poolMutex);
   if (m_pool.size() < m_poolSize) {
     // Reset the job's state as needed before reusing
     job->reset();
     job->setPool(this->shared_from_this());
-    m_pool.push(std::move(job));
+    m_pool.push(std::unique_ptr<T>(job));
+    return true;
+  } else {
+    return false;
   }
 }
 }  // namespace cta::schedulerdb

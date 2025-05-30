@@ -268,10 +268,10 @@ void RetrieveMount::putQueueToSleep(const std::string& diskSystemName,
 }
 
 void RetrieveMount::recycleTransferredJobs(std::list<std::unique_ptr<SchedulerDatabase::RetrieveJob>>& jobsBatch,
-                                          log::LogContext& lc) {
+                                           log::LogContext& lc) {
   try {
     for (auto& job : jobsBatch) {
-      job->releaseToPool();  // virtual dispatch
+      job->releaseToPool();
     }
     jobsBatch.clear();
   } catch (const exception::Exception& ex) {
