@@ -47,7 +47,7 @@ WorkflowEvent::WorkflowEvent(const frontend::FrontendService& frontendService,
         .add("diskFilePath", diskFilePath)
         .add("diskFileId", diskFileId);
   m_lc.log(log::INFO, "In WorkflowEvent::WorkflowEvent(): received event.");
-  
+
   // Validate that instance name in key used to authenticate == instance name in protocol buffer
   if(m_cliIdentity.username != event.wf().instance().name()) {
     // Special case:
@@ -85,7 +85,10 @@ WorkflowEvent::WorkflowEvent(const frontend::FrontendService& frontendService,
 
 xrd::Response WorkflowEvent::process() {
   xrd::Response response;
-
+  auto requestCounter = cta::telemetry::metrics::InstrumentProvider::instance().getUInt64Counter("cta.frontend", "requests.count");
+  requestCounter->Add(1, {{"request.type", "workflow_event"}, {"event.type", m_event.wf().event()}});
+  auto requestDurationHistogram = cta::telemetry::metrics::InstrumentProvider::instance().getDoubleHistogram("cta.frontend", "request.duration");
+  utils::Timer timer;
   switch(m_event.wf().event()) {
     using namespace cta::eos;
 
@@ -114,6 +117,9 @@ xrd::Response WorkflowEvent::process() {
       throw exception::PbException("Workflow event " + Workflow_EventType_Name(m_event.wf().event()) +
         " is not implemented.");
   }
+  const auto requestProcessingDuration = timer.secs();
+  requestDurationHistogram->Record(requestProcessingDuration, {{"request.type", "workflow_event"}, {"event.type", m_event.wf().event()}},
+                                        opentelemetry::context::RuntimeContext::GetCurrent());
   return response;
 }
 
@@ -472,7 +478,7 @@ void WorkflowEvent::processDELETE(xrd::Response& response) {
     checksum::ProtobufToChecksumBlob(m_event.file().csb(), csb);
     request.checksumBlob = csb;
   }
-  
+
   // Log with file size
   if (m_event.file().size() != 0) {
     request.diskFileSize    = m_event.file().size();
