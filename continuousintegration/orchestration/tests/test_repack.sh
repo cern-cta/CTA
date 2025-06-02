@@ -486,6 +486,7 @@ repackMoveAndAddCopies() {
   echo "OK"
 
   VID_TO_REPACK=$(getFirstVidContainingFiles)
+  kubectl -n ${NAMESPACE} exec ${EOS_MGM_POD} -c eos-mgm -- eos ls -l /eos/ctaeos/repack/${VID_TO_REPACK}
 
   echo "Marking the tape ${VID_TO_REPACK} as REPACKING"
   modifyTapeStateAndWait ${VID_TO_REPACK} REPACKING
@@ -754,6 +755,7 @@ repackTapeRepairNoRecall() {
     removeRepackRequest ${VID_TO_REPACK}
     echo "Setting the tape ${VID_TO_REPACK} back to ACTIVE"
     modifyTapeState ${VID_TO_REPACK} ACTIVE
+    kubectl -n ${NAMESPACE} exec ${EOS_MGM_POD} -c eos-mgm -- eos ls -l /eos/ctaeos/repack/${VID_TO_REPACK}
 
   else
     echo "No file to inject, test not OK"

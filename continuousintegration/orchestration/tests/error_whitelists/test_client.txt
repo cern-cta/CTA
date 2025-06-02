@@ -6,3 +6,4 @@ In Scheduler::reportRetrieveJobsBatch(): failed to report.
 In RetrieveRequest::garbageCollect() [queue cleanup]: No VID available to requeue the request. Failing all jobs.
 End of recall session with error(s)
 In RetrieveMount::releaseDiskSpace(): reservation release request failed, driveName, diskSystem and mountId do not match.
+In OStoreDB::RepackArchiveReportBatch::report(): async job update failed.
