@@ -29,7 +29,7 @@ grpc:
     logger:
       logLevel: "INFO"
       logFormat: json
-    
+
     tls:
       enabled: true
       serverKey: /etc/grpc-certs/key/server.key
@@ -40,7 +40,9 @@ grpc:
       enabled: true
       jwksUri: http://auth-keycloak:8080/realms/master/protocol/openid-connect/certs
 
-
+    telemetry:
+      metricsBackend: "NOOP"
+      metricsOtlpEndpoint: ""
 xrd:
   enabled: true
   port: 10955
@@ -66,6 +68,9 @@ xrd:
     logger:
       logLevel: "INFO"
       ssiLogLevel: "warning"
+    telemetry:
+      metricsBackend: "NOOP"
+      metricsOtlpEndpoint: ""
 
   keytab:
     secretName: cta-frontend-keytab
