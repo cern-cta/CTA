@@ -141,6 +141,18 @@ admin_klist > /dev/null 2>&1 || die "Cannot get kerberos credentials for user ${
 FULL_REPACK_BUFFER_URL=root://${EOS_MGM_HOST}/${REPACK_BUFFER_BASEDIR}
 testRepackBufferURL
 
+echo "---------------------------------------"
+echo "Pre-test debug info:"
+echo "cta-admin tape ls"
+admin_cta --json ta ls --all | jq
+echo "cta-admin tp ls"
+admic_cta --json tp ls | jq
+echo "cta-admin re ls"
+admic_cta --json re ls | jq
+echo "cta-admin sq"
+admic_cta --json sq | jq
+echo "---------------------------------------"
+
 echo "Deleting existing repack request for VID ${VID_TO_REPACK}"
 admin_cta repack rm --vid ${VID_TO_REPACK}
 
@@ -296,5 +308,17 @@ fi
 echo
 echo "Repack request on VID ${VID_TO_REPACK} succeeded."
 echo
+
+echo "---------------------------------------"
+echo "Post-test debug info:"
+echo "cta-admin tape ls"
+admin_cta --json ta ls --all | jq
+echo "cta-admin tp ls"
+admic_cta --json tp ls | jq
+echo "cta-admin re ls"
+admic_cta --json re ls | jq
+echo "cta-admin sq"
+admic_cta --json sq | jq
+echo "---------------------------------------"
 
 exit 0
