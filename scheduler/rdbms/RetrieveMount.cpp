@@ -272,13 +272,20 @@ void RetrieveMount::recycleTransferredJobs(std::list<std::unique_ptr<SchedulerDa
   try {
     for (auto& job : jobsBatch) {
       job->releaseToPool();
+      if (job->shouldBeDeleted()) {
+        // Let unique_ptr delete it
+      } else {
+        // Prevent deletion - better than handling deletion here would be
+        // to introduce custom deleter for the unique_ptr,
+        // but this would mean changing types all across the CTA code
+        job.release();
+      }
     }
-    jobsBatch.clear();
   } catch (const exception::Exception& ex) {
     lc.log(cta::log::ERR,
            "In RetrieveMount::recycleTransferredJobs(): Failed to recycle all job objects for the job pool: " +
              ex.getMessageValue());
-    jobsBatch.clear();
   }
+  jobsBatch.clear();
 }
 }  // namespace cta::schedulerdb
