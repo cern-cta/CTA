@@ -356,7 +356,7 @@ public:
     catalogue.DriveConfig()->createTapeDriveConfig(
       tapeDrive.driveName,
       "category",
-      SCHEDULER_NAME_CONFIG_KEY,
+      cta::SCHEDULER_NAME_CONFIG_KEY,
       schedulerBackendName,
       "source"
       );
