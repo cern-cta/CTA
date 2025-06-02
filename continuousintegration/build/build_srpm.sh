@@ -219,8 +219,6 @@ build_srpm() {
           exit 1
           ;;
       esac
-
-
     else
       echo "Failure: Unsupported distribution. Must be one of: [alma9]"
       exit 1
