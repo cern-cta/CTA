@@ -196,12 +196,9 @@ int main(const int argc, char *const *const argv) {
     // Register "service" as the instance through which we'll communicate with
     // clients. In this case it corresponds to an *synchronous* service.
     builder.RegisterService(&svc);
-    lc.log(log::INFO, "Registered the service with builder");
 
     std::unique_ptr <Server> server(builder.BuildAndStart());
-    lc.log(log::INFO, "Called buildAndStart successfully");
     svc.setHealthCheckService(server->GetHealthCheckService());
-    lc.log(log::INFO, "Called setHealthCheckService successfully");
 
     lc.log(cta::log::INFO, "Listening on socket address: " + server_address);
     server->Wait();

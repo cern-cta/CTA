@@ -35,47 +35,6 @@
 
 namespace cta::frontend::grpc {
 
-// Function to handle curl responses
-static size_t WriteCallback(void* contents, size_t size, size_t nmemb, std::string* output) {
-    size_t totalSize = size * nmemb;
-    output->append((char*)contents, totalSize);
-    return totalSize;
-}
-
-static Json::Value FetchJWKS(const std::string& jwksUrl) {
-    CURL* curl;
-    CURLcode res;
-    std::string readBuffer;
-
-    curl_global_init(CURL_GLOBAL_DEFAULT);
-    curl = curl_easy_init();
-    if(curl) {
-        curl_easy_setopt(curl, CURLOPT_URL, jwksUrl.c_str());
-        curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, WriteCallback);
-        curl_easy_setopt(curl, CURLOPT_WRITEDATA, &readBuffer);
-        res = curl_easy_perform(curl);
-        if(res != CURLE_OK) {
-            std::cout << "Curl failed: " << curl_easy_strerror(res) << std::endl;
-            throw std::runtime_error("CURL failed in FetchJWKS");
-        }
-        curl_easy_cleanup(curl);
-    }
-    curl_global_cleanup();
-
-    // Parse the response JSON
-    Json::CharReaderBuilder readerBuilder;
-    Json::Value jwks;
-    std::istringstream sstream(readBuffer);
-    std::string errs;
-    if (!Json::parseFromStream(readerBuilder, sstream, &jwks, &errs)) {
-        std::cout << "Failed to parse JSON: " << errs << std::endl;
-        // throw some exception here
-        throw std::runtime_error("Failed to parse JSON in FetchJWKS");
-    }
-
-    return jwks;
-}
-
 // helper function for converting from grpc structure to std::string
 static std::string ToString(const ::grpc::string_ref& r) {
   return std::string(r.data(), r.size());
@@ -93,10 +52,9 @@ bool CtaRpcImpl::ValidateToken(const std::string& encodedJWT) {
     }
     auto header = decoded.get_header_json();
     std::string kid = header["kid"].get<std::string>();
-    std::string alg = header["alg"].get<std::string>();
+    std::string alg = header["alg"].get<std::string>(); // alg should be RS256
     std::string pubkeyPem;
 
-    std::cout << "KID: " << kid << ",ALG: " << alg << std::endl;
     // Get the JWKS endpoint, find the matching with our token, obtain the public key
     // used to sign the token and validate it
     // first try to use the cached value
@@ -122,7 +80,7 @@ bool CtaRpcImpl::ValidateToken(const std::string& encodedJWT) {
     auto verifier = jwt::verify()
                         .allow_algorithm(jwt::algorithm::rs256(pubkeyPem, "", "", ""));
                         // .allow_algorithm(jwt::algorithm::rs256(x5c));
-                        // .with_issuer("http://auth-keycloak:8080/realms/master");  // Replace with your issuer
+                        // .with_issuer("http://auth-keycloak:8080/realms/master");
     std::cout << "successfully built the verifier" << std::endl;
     verifier.verify(decoded);
     return true;
