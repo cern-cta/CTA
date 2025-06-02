@@ -45,10 +45,6 @@ public:
   // Constructor to create empty ArchiveJob object with a reference to the connection pool
   explicit ArchiveRdbJob(rdbms::ConnPool& connPool);
 
-  ~ArchiveRdbJob() {
-    assert(false && "ArchiveRdbJob destructor called unexpectedly! Object must be recycled instead.");
-  }
-
   /**
   * Sets the status of the job as failed in the Scheduler DB
   *
@@ -94,11 +90,12 @@ public:
   *       It is the caller's responsibility to also call .release() on any
   *       std::unique_ptr managing this object to prevent double-deletion.
   */
-  void releaseToPool() override {
+  bool releaseToPool() override {
     if (!m_pool || !m_pool->releaseJob(this)) {
       // Pool is full, allow destruction
-     m_shouldBeDeleted = true;
+     return false;
     }
+    return true;
   }
 
   /**
@@ -151,11 +148,8 @@ public:
   std::string m_tapePool;
   rdbms::ConnPool& m_connPool;
 
-  bool shouldBeDeleted() const;
-
 private:
   std::shared_ptr<JobPool<ArchiveRdbJob>> m_pool = nullptr;
-  bool m_shouldBeDeleted = false;
 };
 
 }  // namespace cta::schedulerdb
