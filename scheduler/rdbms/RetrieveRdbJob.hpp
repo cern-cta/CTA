@@ -86,7 +86,7 @@ public:
   void releaseToPool() override {
     if (!m_pool || !m_pool->releaseJob(this)) {
       // Pool is full, allow destruction
-      delete this;
+      m_shouldBeDeleted = true;
     }
   }
 
@@ -145,8 +145,11 @@ public:
   void asyncSetSuccessful() override;
   void fail() override;
 
+  bool shouldBeDeleted() const;
+
 private:
   std::shared_ptr<JobPool<RetrieveRdbJob>> m_pool = nullptr;
+  bool m_shouldBeDeleted = false;
 };
 
 }  // namespace cta::schedulerdb
