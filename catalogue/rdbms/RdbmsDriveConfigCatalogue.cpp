@@ -24,6 +24,7 @@
 
 #include "catalogue/CatalogueExceptions.hpp"
 #include "catalogue/rdbms/RdbmsDriveConfigCatalogue.hpp"
+#include "common/Constants.hpp"
 #include "common/dataStructures/DesiredDriveState.hpp"
 #include "common/dataStructures/TapeDrive.hpp"
 #include "common/dataStructures/TapeDriveStatistics.hpp"
@@ -145,7 +146,7 @@ RdbmsDriveConfigCatalogue::getTapeDriveNamesForSchedulerBackend(const std::strin
   )SQL";
   auto conn = m_connPool->getConn();
   auto stmt = conn.createStmt(sql);
-  stmt.bindString(":KEY_NAME", "SchedulerBackendName");
+  stmt.bindString(":KEY_NAME", SCHEDULER_NAME_CONFIG_KEY);
   stmt.bindString(":VALUE", schedulerBackendName);
   auto rset = stmt.executeQuery();
   std::list<std::string> tapeDriveNames;

@@ -30,6 +30,7 @@
 #include "catalogue/TapeFileWritten.hpp"
 #include "catalogue/TapeItemWrittenPointer.hpp"
 #include "catalogue/TapePool.hpp"
+#include "common/Constants.hpp"
 #include "common/dataStructures/DiskInstance.hpp"
 #include "common/dataStructures/JobQueueType.hpp"
 #include "common/dataStructures/LogicalLibrary.hpp"
@@ -355,7 +356,7 @@ public:
     catalogue.DriveConfig()->createTapeDriveConfig(
       tapeDrive.driveName,
       "category",
-      "SchedulerBackendName",
+      SCHEDULER_NAME_CONFIG_KEY,
       schedulerBackendName,
       "source"
       );

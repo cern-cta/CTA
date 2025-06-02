@@ -17,6 +17,7 @@
 
 #include "catalogue/dummy/DummyDriveConfigCatalogue.hpp"
 #include "common/exception/Exception.hpp"
+#include "common/Constants.hpp"
 
 #include <algorithm>
 
@@ -34,7 +35,7 @@ std::list<cta::catalogue::DriveConfigCatalogue::DriveConfig> DummyDriveConfigCat
 std::list<std::string> DummyDriveConfigCatalogue::getTapeDriveNamesForSchedulerBackend(const std::string &schedulerBackendName) const {
   std::list<std::string> validTapeDrives;
   for (const auto& config : m_driveConfigs) {
-    if (config.keyName == "SchedulerBackendName" && config.value == schedulerBackendName) {
+    if (config.keyName == SCHEDULER_NAME_CONFIG_KEY && config.value == schedulerBackendName) {
       validTapeDrives.emplace_back(config.tapeDriveName);
     }
   }

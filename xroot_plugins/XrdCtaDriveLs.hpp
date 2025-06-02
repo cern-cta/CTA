@@ -23,6 +23,7 @@
 #include <utility>
 
 #include "catalogue/Catalogue.hpp"
+#include "common/Constants.hpp"
 #include "common/dataStructures/DriveStatusSerDeser.hpp"
 #include "common/dataStructures/MountTypeSerDeser.hpp"
 #include "xroot_plugins/XrdCtaStream.hpp"
@@ -141,7 +142,7 @@ int DriveLsStream::fillBuffer(XrdSsiPb::OStreamBuffer<Data>* streambuf) {
       std::find_if(driveConfigs.begin(),
                    driveConfigs.end(),
                    [&driveSchedulerBackendName](const cta::catalogue::DriveConfigCatalogue::DriveConfig& config) {
-                     if (config.keyName == "SchedulerBackendName") {
+                     if (config.keyName == SCHEDULER_NAME_CONFIG_KEY) {
                        driveSchedulerBackendName = config.value;
                        return true;
                      }

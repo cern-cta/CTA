@@ -34,6 +34,7 @@
 #include "catalogue/DriveConfig.hpp"
 #include "catalogue/TapeDrivesCatalogueState.hpp"
 #include "catalogue/TapePool.hpp"
+#include "common/Constants.hpp"
 #include "common/dataStructures/ArchiveFileQueueCriteria.hpp"
 #include "common/dataStructures/ArchiveFileQueueCriteriaAndFileId.hpp"
 #include "common/dataStructures/LogicalLibrary.hpp"
@@ -2087,7 +2088,7 @@ std::list<common::dataStructures::QueueAndMountSummary> Scheduler::getQueuesAndM
     auto schedulerBackendName = getSchedulerBackendName();
     std::unordered_map<std::string, std::string> tapeDriveSchedulerBackendNameMap;
     for (const auto & config : m_catalogue.DriveConfig()->getTapeDriveConfigs()) {
-      if (config.keyName == "SchedulerBackendName") {
+      if (config.keyName == SCHEDULER_NAME_CONFIG_KEY) {
         tapeDriveSchedulerBackendNameMap.emplace(config.tapeDriveName, config.value);
       }
     }
