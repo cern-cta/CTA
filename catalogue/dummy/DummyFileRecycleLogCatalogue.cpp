@@ -22,18 +22,18 @@
 
 namespace cta::catalogue {
 
-FileRecycleLogItor DummyFileRecycleLogCatalogue::getFileRecycleLogItor(
-  const RecycleTapeFileSearchCriteria & searchCriteria) const {
-  throw exception::Exception(std::string("In ")+__PRETTY_FUNCTION__+": not implemented");
+FileRecycleLogItor
+DummyFileRecycleLogCatalogue::getFileRecycleLogItor(const RecycleTapeFileSearchCriteria& searchCriteria) const {
+  throw exception::Exception(std::string("In ") + __PRETTY_FUNCTION__ + ": not implemented");
 }
 
-void DummyFileRecycleLogCatalogue::restoreFileInRecycleLog(const RecycleTapeFileSearchCriteria & searchCriteria,
-  const std::string &newFid) {
-  throw exception::Exception(std::string("In ")+__PRETTY_FUNCTION__+": not implemented");
+void DummyFileRecycleLogCatalogue::restoreFileInRecycleLog(const RecycleTapeFileSearchCriteria& searchCriteria,
+                                                           const std::string& newFid) {
+  throw exception::Exception(std::string("In ") + __PRETTY_FUNCTION__ + ": not implemented");
 }
 
 void DummyFileRecycleLogCatalogue::deleteFilesFromRecycleLog(const std::string& vid, log::LogContext& lc) {
-  throw exception::Exception(std::string("In ")+__PRETTY_FUNCTION__+": not implemented");
+  throw exception::Exception(std::string("In ") + __PRETTY_FUNCTION__ + ": not implemented");
 }
 
-} // namespace cta::catalogue
+}  // namespace cta::catalogue

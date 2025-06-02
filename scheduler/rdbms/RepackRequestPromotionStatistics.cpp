@@ -20,15 +20,13 @@
 
 namespace cta::schedulerdb {
 
-[[noreturn]]RepackRequestPromotionStatistics::RepackRequestPromotionStatistics()
-{
-   throw cta::exception::Exception("Not implemented");
+[[noreturn]] RepackRequestPromotionStatistics::RepackRequestPromotionStatistics() {
+  throw cta::exception::Exception("Not implemented");
 }
 
-SchedulerDatabase::RepackRequestStatistics::PromotionToToExpandResult RepackRequestPromotionStatistics::promotePendingRequestsForExpansion(size_t requestCount,
-      log::LogContext &lc)
-{
-   throw cta::exception::Exception("Not implemented");
+SchedulerDatabase::RepackRequestStatistics::PromotionToToExpandResult
+RepackRequestPromotionStatistics::promotePendingRequestsForExpansion(size_t requestCount, log::LogContext& lc) {
+  throw cta::exception::Exception("Not implemented");
 }
 
-} // namespace cta::schedulerdb
+}  // namespace cta::schedulerdb

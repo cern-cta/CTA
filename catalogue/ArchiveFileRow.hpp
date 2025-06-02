@@ -28,7 +28,6 @@ namespace cta::catalogue {
  * A row in the ArchiveFile table.
  */
 struct ArchiveFileRow {
-
   /**
    * Constructor.
    *
@@ -41,7 +40,7 @@ struct ArchiveFileRow {
    *
    * @param ths The right hand side of the operator.
    */
-  bool operator==(const ArchiveFileRow &rhs) const;
+  bool operator==(const ArchiveFileRow& rhs) const;
 
   /**
    * The unique identifier of the file being archived.
@@ -75,12 +74,12 @@ struct ArchiveFileRow {
    * The uncompressed size of the tape file in bytes.
    */
   uint64_t size = 0;
-  
+
   /**
    * Set of checksum types and values
    */
   checksum::ChecksumBlob checksumBlob;
-  
+
   /**
    * The name of the file's storage class.
    */
@@ -96,7 +95,7 @@ struct ArchiveFileRow {
    */
   time_t reconciliationTime = 0;
 
-}; // struct ArchiveFileRow
+};  // struct ArchiveFileRow
 
 /**
  * Output stream operator for an ArchiveFileRow object.
@@ -107,6 +106,6 @@ struct ArchiveFileRow {
  * @param os The output stream.
  * @param obj The object.
  */
-std::ostream &operator<<(std::ostream &os, const ArchiveFileRow &obj);
+std::ostream& operator<<(std::ostream& os, const ArchiveFileRow& obj);
 
-} // namespace cta::catalogue
+}  // namespace cta::catalogue

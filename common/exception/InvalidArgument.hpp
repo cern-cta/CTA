@@ -28,7 +28,7 @@ struct InvalidArgument : public Exception {
   /**
    * constructor
    */
-  explicit InvalidArgument(const std::string& what = "") noexcept : Exception(what) { }
+  explicit InvalidArgument(const std::string& what = "") noexcept : Exception(what) {}
 };
 
-} // namespace cta::exception
+}  // namespace cta::exception

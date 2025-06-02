@@ -24,27 +24,27 @@
 
 namespace cta::cliTool {
 
-JsonFileData::JsonFileData(const std::filesystem::path &jsonPath) {
+JsonFileData::JsonFileData(const std::filesystem::path& jsonPath) {
   readJson(jsonPath);
 }
 
-void JsonFileData::readJson(const std::filesystem::path &jsonPath) {
+void JsonFileData::readJson(const std::filesystem::path& jsonPath) {
   std::ifstream infile(jsonPath);
-  if(infile.fail()) {
+  if (infile.fail()) {
     throw exception::UserError("Could not open " + jsonPath.generic_string());
   }
 
   std::string line;
   while (std::getline(infile, line)) {
-    if(!line.empty()) {
+    if (!line.empty()) {
       cta::utils::json::object::JSONCObject jsonObject;
       buildFromJSON(line);
 
       JsonFileDataObject JsonFileDataObject;
-      JsonFileDataObject.archiveFileId     = jsonGetValue<std::string>("archiveFileId");
-      JsonFileDataObject.fid           = std::to_string(jsonGetValue<uint64_t>("fid"));
-      JsonFileDataObject.instance      = jsonGetValue<std::string>("instance");
-      JsonFileDataObject.storageClass  = jsonGetValue<std::string>("storageclass");
+      JsonFileDataObject.archiveFileId = jsonGetValue<std::string>("archiveFileId");
+      JsonFileDataObject.fid = std::to_string(jsonGetValue<uint64_t>("fid"));
+      JsonFileDataObject.instance = jsonGetValue<std::string>("instance");
+      JsonFileDataObject.storageClass = jsonGetValue<std::string>("storageclass");
 
       m_jsonArgumentsCollection.push_back(JsonFileDataObject);
     }
@@ -52,4 +52,4 @@ void JsonFileData::readJson(const std::filesystem::path &jsonPath) {
   infile.close();
 }
 
-} // namespace cta::cliTool
+}  // namespace cta::cliTool

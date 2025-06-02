@@ -32,20 +32,19 @@ namespace cta::common::dataStructures {
  * UpdateFileStorageClass command 
  */
 struct UpdateFileStorageClassRequest {
-
   UpdateFileStorageClassRequest();
 
-  bool operator==(const UpdateFileStorageClassRequest &rhs) const;
+  bool operator==(const UpdateFileStorageClassRequest& rhs) const;
 
-  bool operator!=(const UpdateFileStorageClassRequest &rhs) const;
+  bool operator!=(const UpdateFileStorageClassRequest& rhs) const;
 
   RequesterIdentity requester;
   uint64_t archiveFileID;
   std::string storageClass;
   DiskFileInfo diskFileInfo;
 
-}; // struct UpdateFileStorageClassRequest
+};  // struct UpdateFileStorageClassRequest
 
-std::ostream &operator<<(std::ostream &os, const UpdateFileStorageClassRequest &obj);
+std::ostream& operator<<(std::ostream& os, const UpdateFileStorageClassRequest& obj);
 
-} // namespace cta::common::dataStructures
+}  // namespace cta::common::dataStructures

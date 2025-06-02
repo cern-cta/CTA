@@ -21,7 +21,6 @@
 
 #include <string>
 
-
 namespace cta::rdbms {
 
 /**
@@ -37,7 +36,10 @@ public:
    * @param embedBacktrace whether to embed a backtrace of where the
    * exception was throw in the message
    */
-  ConstraintError(const std::string &context, const std::string &dbErrorMessage, const std::string &violatedConstraintName, const bool embedBacktrace = true);
+  ConstraintError(const std::string& context,
+                  const std::string& dbErrorMessage,
+                  const std::string& violatedConstraintName,
+                  const bool embedBacktrace = true);
 
   /**
    * Empty Destructor (needed for std::exception inheritance)
@@ -51,6 +53,6 @@ public:
 
 private:
   std::string m_violatedConstraintName;
-}; // class ConstraintError
+};  // class ConstraintError
 
-} // namespace cta::rdbms
+}  // namespace cta::rdbms

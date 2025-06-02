@@ -251,26 +251,26 @@ const subcmdLookup_t subcmdLookup = {
  */
 const std::map<std::string, OptionBoolean::Key> boolOptions = {
   // Boolean options
-  {"--all",             OptionBoolean::ALL             },
-  {"--disabled",        OptionBoolean::DISABLED        },
-  {"--encrypted",       OptionBoolean::ENCRYPTED       },
-  {"--force",           OptionBoolean::FORCE           },
-  {"--full",            OptionBoolean::FULL            },
-  {"--fromcastor",      OptionBoolean::FROM_CASTOR     },
+  {"--all",               OptionBoolean::ALL                },
+  {"--disabled",          OptionBoolean::DISABLED           },
+  {"--encrypted",         OptionBoolean::ENCRYPTED          },
+  {"--force",             OptionBoolean::FORCE              },
+  {"--full",              OptionBoolean::FULL               },
+  {"--fromcastor",        OptionBoolean::FROM_CASTOR        },
 
   // hasOption options
-  {"--disabledtape",         OptionBoolean::DISABLED            },
-  {"--justarchive",          OptionBoolean::JUSTARCHIVE         },
-  {"--justmove",             OptionBoolean::JUSTMOVE            },
-  {"--justaddcopies",        OptionBoolean::JUSTADDCOPIES       },
-  {"--justretrieve",         OptionBoolean::JUSTRETRIEVE        },
-  {"--log",                  OptionBoolean::SHOW_LOG_ENTRIES    },
-  {"--lookupnamespace",      OptionBoolean::LOOKUP_NAMESPACE    },
-  {"--summary",              OptionBoolean::SUMMARY             },
-  {"--no-recall",            OptionBoolean::NO_RECALL           },
-  {"--dirtybit",             OptionBoolean::DIRTY_BIT           },
-  {"--isrepackvo",           OptionBoolean::IS_REPACK_VO        },
-  {"--missingfilecopies",    OptionBoolean::MISSING_FILE_COPIES },
+  {"--disabledtape",      OptionBoolean::DISABLED           },
+  {"--justarchive",       OptionBoolean::JUSTARCHIVE        },
+  {"--justmove",          OptionBoolean::JUSTMOVE           },
+  {"--justaddcopies",     OptionBoolean::JUSTADDCOPIES      },
+  {"--justretrieve",      OptionBoolean::JUSTRETRIEVE       },
+  {"--log",               OptionBoolean::SHOW_LOG_ENTRIES   },
+  {"--lookupnamespace",   OptionBoolean::LOOKUP_NAMESPACE   },
+  {"--summary",           OptionBoolean::SUMMARY            },
+  {"--no-recall",         OptionBoolean::NO_RECALL          },
+  {"--dirtybit",          OptionBoolean::DIRTY_BIT          },
+  {"--isrepackvo",        OptionBoolean::IS_REPACK_VO       },
+  {"--missingfilecopies", OptionBoolean::MISSING_FILE_COPIES},
 };
 
 /*!
@@ -1040,7 +1040,7 @@ tape (ta)
     opt_fromcastor.optional(),
     opt_purchase_order.optional(),
     opt_physical_library.optional(),
-    opt_missingfilecopies.optional()}                                                                                         },
+    opt_missingfilecopies.optional()}                                                                                        },
 
   /**md
 tapefile (tf)
@@ -1073,7 +1073,12 @@ tapefile (tf)
     opt_fidfile.optional(),
     opt_archivefileid.optional()}                                                                                            },
   {{AdminCmd::CMD_TAPEFILE, AdminCmd::SUBCMD_RM},
-   {opt_vid, opt_instance.optional(), opt_fid.optional(), opt_diskfileid.optional(), opt_archivefileid.optional(), opt_reason}                          },
+   {opt_vid,
+    opt_instance.optional(),
+    opt_fid.optional(),
+    opt_diskfileid.optional(),
+    opt_archivefileid.optional(),
+    opt_reason}                                                                                                              },
 
   /**md
 tapepool (tp)
@@ -1112,10 +1117,7 @@ tapepool (tp)
     opt_comment.optional()}                                                                                                  },
   {{AdminCmd::CMD_TAPEPOOL, AdminCmd::SUBCMD_RM},             {opt_tapepool_alias}                                           },
   {{AdminCmd::CMD_TAPEPOOL, AdminCmd::SUBCMD_LS},
-   {opt_tapepool_alias.optional(),
-    opt_vo.optional(),
-    opt_encrypted.optional(),
-    opt_encryptionkeyname.optional()}                                                                                        },
+   {opt_tapepool_alias.optional(), opt_vo.optional(), opt_encrypted.optional(), opt_encryptionkeyname.optional()}            },
 
   /**md
 version (v)
@@ -1171,10 +1173,19 @@ virtualorganization (vo)
 
   // Used by cta-change-storageclass and cta-eos-namespace-inject
   {{AdminCmd::CMD_ARCHIVEFILE, AdminCmd::SUBCMD_CH},
-   {opt_storageclass.optional(), opt_archive_file_ids, opt_fid.optional(), opt_diskfileid.optional(), opt_diskinstance.optional()}                      },
+   {opt_storageclass.optional(),
+    opt_archive_file_ids,
+    opt_fid.optional(),
+    opt_diskfileid.optional(),
+    opt_diskinstance.optional()}                                                                                             },
   // Used by cta-restore-deleted-files
   {{AdminCmd::CMD_RECYCLETAPEFILE, AdminCmd::SUBCMD_RESTORE},
-   {opt_vid.optional(), opt_fid.optional(), opt_diskfileid.optional(), opt_copynb.optional(), opt_archivefileid.optional(), opt_instance.optional()}               },
+   {opt_vid.optional(),
+    opt_fid.optional(),
+    opt_diskfileid.optional(),
+    opt_copynb.optional(),
+    opt_archivefileid.optional(),
+    opt_instance.optional()}                                                                                                 },
   /*-------------------------------------------------------------------------------------------------------------------------*/
 };
 

@@ -92,10 +92,9 @@ std::string RelationalDB::queueArchive(const std::string& instanceName,
   utils::Timer timeGetConn;
   auto sqlconn = m_connPoolInsertOnly.getConn();
   log::ScopedParamContainer params(logContext);
-  params.add("connCountOnLoad",m_connPoolInsertOnly.getNbConnsOnLoan());
+  params.add("connCountOnLoad", m_connPoolInsertOnly.getNbConnsOnLoan());
   params.add("getConnTime", timeGetConn.secs());
   schedulerdb::ArchiveRequest aReq(sqlconn, logContext);
-
 
   // Summarize all as an archiveFile
   common::dataStructures::ArchiveFile aFile;

@@ -24,64 +24,61 @@
  many memory leaks in the child process. */
 
 namespace threadedUnitTests {
-  class emptyCleanup : public cta::threading::ChildProcess::Cleanup {
-  public:
+class emptyCleanup : public cta::threading::ChildProcess::Cleanup {
+public:
+  virtual void operator()() {};
+};
 
-    virtual void operator ()() { };
-  };
-
-  class myOtherProcess : public cta::threading::ChildProcess {
-  private:
-
-    int run() {
-      /* Just sleep a bit so the parent process gets a chance to see us running */
-      struct timespec ts;
-      ts.tv_sec = 0;
-      ts.tv_nsec = 100*1000*1000;
-      nanosleep(&ts, nullptr);
-      return 123;
-    }
-  };
-
-  TEST(cta_threading, ChildProcess_return_value) {
-    myOtherProcess cp;
-    emptyCleanup cleanup;
-    EXPECT_THROW(cp.exitCode(), cta::threading::ChildProcess::ProcessNeverStarted);
-    EXPECT_NO_THROW(cp.start(cleanup));
-    EXPECT_THROW(cp.exitCode(), cta::threading::ChildProcess::ProcessStillRunning);
-    EXPECT_NO_THROW(cp.wait());
-    ASSERT_EQ(123, cp.exitCode());
-  }
-
-  class myInfiniteSpinner : public cta::threading::ChildProcess {
-  private:
-
-    int run() {
-      /* Loop forever (politely) */
-      while (true) {
-        struct timespec ts;
-        ts.tv_sec = 0;
-        ts.tv_nsec = 10*1000*1000;
-        nanosleep(&ts, nullptr);
-      }
-      return 321;
-    }
-  };
-
-  TEST(cta_threading, ChildProcess_killing) {
-    myInfiniteSpinner cp;
-    emptyCleanup cleanup;
-    EXPECT_THROW(cp.kill(), cta::threading::ChildProcess::ProcessNeverStarted);
-    EXPECT_NO_THROW(cp.start(cleanup));
-    EXPECT_THROW(cp.exitCode(), cta::threading::ChildProcess::ProcessStillRunning);
-    ASSERT_EQ(true, cp.running());
-    EXPECT_NO_THROW(cp.kill());
-    /* The effect is not immediate, wait a bit. */
+class myOtherProcess : public cta::threading::ChildProcess {
+private:
+  int run() {
+    /* Just sleep a bit so the parent process gets a chance to see us running */
     struct timespec ts;
     ts.tv_sec = 0;
-    ts.tv_nsec = 100*1000*1000;
+    ts.tv_nsec = 100 * 1000 * 1000;
     nanosleep(&ts, nullptr);
-    ASSERT_FALSE(cp.running());
-    EXPECT_THROW(cp.exitCode(), cta::threading::ChildProcess::ProcessWasKilled);
+    return 123;
   }
-} // namespace threadedUnitTests
+};
+
+TEST(cta_threading, ChildProcess_return_value) {
+  myOtherProcess cp;
+  emptyCleanup cleanup;
+  EXPECT_THROW(cp.exitCode(), cta::threading::ChildProcess::ProcessNeverStarted);
+  EXPECT_NO_THROW(cp.start(cleanup));
+  EXPECT_THROW(cp.exitCode(), cta::threading::ChildProcess::ProcessStillRunning);
+  EXPECT_NO_THROW(cp.wait());
+  ASSERT_EQ(123, cp.exitCode());
+}
+
+class myInfiniteSpinner : public cta::threading::ChildProcess {
+private:
+  int run() {
+    /* Loop forever (politely) */
+    while (true) {
+      struct timespec ts;
+      ts.tv_sec = 0;
+      ts.tv_nsec = 10 * 1000 * 1000;
+      nanosleep(&ts, nullptr);
+    }
+    return 321;
+  }
+};
+
+TEST(cta_threading, ChildProcess_killing) {
+  myInfiniteSpinner cp;
+  emptyCleanup cleanup;
+  EXPECT_THROW(cp.kill(), cta::threading::ChildProcess::ProcessNeverStarted);
+  EXPECT_NO_THROW(cp.start(cleanup));
+  EXPECT_THROW(cp.exitCode(), cta::threading::ChildProcess::ProcessStillRunning);
+  ASSERT_EQ(true, cp.running());
+  EXPECT_NO_THROW(cp.kill());
+  /* The effect is not immediate, wait a bit. */
+  struct timespec ts;
+  ts.tv_sec = 0;
+  ts.tv_nsec = 100 * 1000 * 1000;
+  nanosleep(&ts, nullptr);
+  ASSERT_FALSE(cp.running());
+  EXPECT_THROW(cp.exitCode(), cta::threading::ChildProcess::ProcessWasKilled);
+}
+}  // namespace threadedUnitTests

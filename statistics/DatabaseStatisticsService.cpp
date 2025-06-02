@@ -20,12 +20,10 @@
 
 #include "DatabaseStatisticsService.hpp"
 
-
 namespace cta::statistics {
 
 DatabaseStatisticsService::DatabaseStatisticsService(cta::rdbms::Conn* databaseConnection)
-  : m_conn(*databaseConnection) {
-}
+    : m_conn(*databaseConnection) {}
 
 void DatabaseStatisticsService::updateStatisticsPerTape() {
   // to update the statistics, we will first select the DIRTY tapes ordered by VID and we will run an update for each row.
@@ -99,14 +97,14 @@ void DatabaseStatisticsService::updateStatisticsPerTape() {
     while (rset.next()) {
       dirtyVids.push_back(rset.columnString("VID"));
     }
-    for (const auto & vid : dirtyVids) {
+    for (const auto& vid : dirtyVids) {
       // For all DIRTY tapes, update its statistics
       auto updateStmt = m_conn.createStmt(updateSql);
       updateStmt.bindString(":VID", vid);
       updateStmt.executeNonQuery();
       m_nbUpdatedTapes += updateStmt.getNbAffectedRows();
     }
-  } catch(cta::exception::Exception &ex) {
+  } catch (cta::exception::Exception& ex) {
     ex.getMessage().str(std::string(__PRETTY_FUNCTION__) + ": " + ex.getMessage().str());
     throw;
   }
@@ -139,10 +137,10 @@ std::unique_ptr<cta::statistics::Statistics> DatabaseStatisticsService::getStati
     auto rset = stmt.executeQuery();
     // Build the Statitistics with the result set and return them
     return Statistics::Builder().build(&rset);
-  } catch(cta::exception::Exception &ex) {
+  } catch (cta::exception::Exception& ex) {
     ex.getMessage().str(std::string(__PRETTY_FUNCTION__) + ": " + ex.getMessage().str());
     throw;
   }
 }
 
-} // namespace cta::statistics
+}  // namespace cta::statistics

@@ -21,7 +21,6 @@
 
 #include <string>
 
-
 namespace cta::rdbms {
 
 /**
@@ -29,7 +28,6 @@ namespace cta::rdbms {
  */
 class UniqueConstraintError : public ConstraintError {
 public:
-
   /**
    * Constructor.
    *
@@ -38,14 +36,17 @@ public:
    * @param embedBacktrace whether to embed a backtrace of where the
    * exception was throw in the message
    */
-  UniqueConstraintError(const std::string &context, const std::string &dbErrorMessage, const std::string &violatedConstraintName, const bool embedBacktrace = true);
+  UniqueConstraintError(const std::string& context,
+                        const std::string& dbErrorMessage,
+                        const std::string& violatedConstraintName,
+                        const bool embedBacktrace = true);
 
   /**
    * Empty Destructor, explicitely non-throwing (needed for std::exception
    * inheritance)
    */
   ~UniqueConstraintError() noexcept override = default;
-  
-}; // class UniqueConstraintError
 
-} // namespace cta::rdbms
+};  // class UniqueConstraintError
+
+}  // namespace cta::rdbms

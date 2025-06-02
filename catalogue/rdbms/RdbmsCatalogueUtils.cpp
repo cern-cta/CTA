@@ -30,7 +30,7 @@
 
 namespace cta::catalogue {
 
-bool RdbmsCatalogueUtils::diskSystemExists(rdbms::Conn &conn, const std::string &name) {
+bool RdbmsCatalogueUtils::diskSystemExists(rdbms::Conn& conn, const std::string& name) {
   const char* const sql = R"SQL(
     SELECT 
       DISK_SYSTEM_NAME AS DISK_SYSTEM_NAME 
@@ -46,22 +46,27 @@ bool RdbmsCatalogueUtils::diskSystemExists(rdbms::Conn &conn, const std::string 
 }
 
 std::optional<std::string> RdbmsCatalogueUtils::checkCommentOrReasonMaxLength(const std::optional<std::string>& str,
-  log::Logger* log) {
+                                                                              log::Logger* log) {
   const size_t MAX_CHAR_COMMENT = 1000;
-  if (!str.has_value()) return std::nullopt;
-  if (str.value().empty()) return std::nullopt;
+  if (!str.has_value()) {
+    return std::nullopt;
+  }
+  if (str.value().empty()) {
+    return std::nullopt;
+  }
   if (str.value().length() > MAX_CHAR_COMMENT) {
     log::LogContext lc(*log);
     log::ScopedParamContainer spc(lc);
     spc.add("Large_Message: ", str.value());
-    lc.log(log::WARNING, "The reason or comment has more characters than the maximum allowed, 1000 characters."
-      " It will be truncated");
+    lc.log(log::WARNING,
+           "The reason or comment has more characters than the maximum allowed, 1000 characters."
+           " It will be truncated");
     return str.value().substr(0, MAX_CHAR_COMMENT);
   }
   return str;
 }
 
-bool RdbmsCatalogueUtils::storageClassExists(rdbms::Conn &conn, const std::string &storageClassName) {
+bool RdbmsCatalogueUtils::storageClassExists(rdbms::Conn& conn, const std::string& storageClassName) {
   const char* const sql = R"SQL(
     SELECT 
       STORAGE_CLASS_NAME AS STORAGE_CLASS_NAME 
@@ -76,7 +81,7 @@ bool RdbmsCatalogueUtils::storageClassExists(rdbms::Conn &conn, const std::strin
   return rset.next();
 }
 
-bool RdbmsCatalogueUtils::virtualOrganizationExists(rdbms::Conn &conn, const std::string &voName) {
+bool RdbmsCatalogueUtils::virtualOrganizationExists(rdbms::Conn& conn, const std::string& voName) {
   const char* const sql = R"SQL(
     SELECT 
       VIRTUAL_ORGANIZATION_NAME AS VIRTUAL_ORGANIZATION_NAME 
@@ -91,7 +96,7 @@ bool RdbmsCatalogueUtils::virtualOrganizationExists(rdbms::Conn &conn, const std
   return rset.next();
 }
 
-std::optional<std::string> RdbmsCatalogueUtils::defaultVirtualOrganizationForRepackExists(rdbms::Conn &conn) {
+std::optional<std::string> RdbmsCatalogueUtils::defaultVirtualOrganizationForRepackExists(rdbms::Conn& conn) {
   const char* const sql = R"SQL(
     SELECT 
       VIRTUAL_ORGANIZATION_NAME AS VIRTUAL_ORGANIZATION_NAME 
@@ -109,7 +114,7 @@ std::optional<std::string> RdbmsCatalogueUtils::defaultVirtualOrganizationForRep
   }
 }
 
-bool RdbmsCatalogueUtils::mediaTypeExists(rdbms::Conn &conn, const std::string &name) {
+bool RdbmsCatalogueUtils::mediaTypeExists(rdbms::Conn& conn, const std::string& name) {
   const char* const sql = R"SQL(
     SELECT 
       MEDIA_TYPE_NAME AS MEDIA_TYPE_NAME 
@@ -124,7 +129,7 @@ bool RdbmsCatalogueUtils::mediaTypeExists(rdbms::Conn &conn, const std::string &
   return rset.next();
 }
 
-bool RdbmsCatalogueUtils::diskInstanceExists(rdbms::Conn &conn, const std::string &name) {
+bool RdbmsCatalogueUtils::diskInstanceExists(rdbms::Conn& conn, const std::string& name) {
   const char* const sql = R"SQL(
     SELECT 
       DISK_INSTANCE_NAME AS DISK_INSTANCE_NAME 
@@ -139,7 +144,7 @@ bool RdbmsCatalogueUtils::diskInstanceExists(rdbms::Conn &conn, const std::strin
   return rset.next();
 }
 
-bool RdbmsCatalogueUtils::tapePoolExists(rdbms::Conn &conn, const std::string &tapePoolName) {
+bool RdbmsCatalogueUtils::tapePoolExists(rdbms::Conn& conn, const std::string& tapePoolName) {
   const char* const sql = R"SQL(
     SELECT 
       TAPE_POOL_NAME AS TAPE_POOL_NAME 
@@ -154,7 +159,7 @@ bool RdbmsCatalogueUtils::tapePoolExists(rdbms::Conn &conn, const std::string &t
   return rset.next();
 }
 
-bool RdbmsCatalogueUtils::logicalLibraryExists(rdbms::Conn &conn, const std::string &logicalLibraryName) {
+bool RdbmsCatalogueUtils::logicalLibraryExists(rdbms::Conn& conn, const std::string& logicalLibraryName) {
   const char* const sql = R"SQL(
     SELECT 
       LOGICAL_LIBRARY_NAME AS LOGICAL_LIBRARY_NAME 
@@ -169,7 +174,7 @@ bool RdbmsCatalogueUtils::logicalLibraryExists(rdbms::Conn &conn, const std::str
   return rset.next();
 }
 
-bool RdbmsCatalogueUtils::tapeExists(rdbms::Conn &conn, const std::string &vid) {
+bool RdbmsCatalogueUtils::tapeExists(rdbms::Conn& conn, const std::string& vid) {
   const char* const sql = R"SQL(
     SELECT 
       VID AS VID 
@@ -184,7 +189,7 @@ bool RdbmsCatalogueUtils::tapeExists(rdbms::Conn &conn, const std::string &vid) 
   return rset.next();
 }
 
-bool RdbmsCatalogueUtils::archiveFileIdExists(rdbms::Conn &conn, const uint64_t archiveFileId) {
+bool RdbmsCatalogueUtils::archiveFileIdExists(rdbms::Conn& conn, const uint64_t archiveFileId) {
   const char* const sql = R"SQL(
     SELECT 
       ARCHIVE_FILE_ID AS ARCHIVE_FILE_ID 
@@ -199,7 +204,7 @@ bool RdbmsCatalogueUtils::archiveFileIdExists(rdbms::Conn &conn, const uint64_t 
   return rset.next();
 }
 
-bool RdbmsCatalogueUtils::mountPolicyExists(rdbms::Conn &conn, const std::string &mountPolicyName) {
+bool RdbmsCatalogueUtils::mountPolicyExists(rdbms::Conn& conn, const std::string& mountPolicyName) {
   const char* const sql = R"SQL(
     SELECT 
       MOUNT_POLICY_NAME AS MOUNT_POLICY_NAME 
@@ -214,8 +219,10 @@ bool RdbmsCatalogueUtils::mountPolicyExists(rdbms::Conn &conn, const std::string
   return rset.next();
 }
 
-bool RdbmsCatalogueUtils::requesterActivityMountRuleExists(rdbms::Conn &conn, const std::string &diskInstanceName,
-  const std::string &requesterName, const std::string &activityRegex) {
+bool RdbmsCatalogueUtils::requesterActivityMountRuleExists(rdbms::Conn& conn,
+                                                           const std::string& diskInstanceName,
+                                                           const std::string& requesterName,
+                                                           const std::string& activityRegex) {
   const char* const sql = R"SQL(
     SELECT 
       DISK_INSTANCE_NAME AS DISK_INSTANCE_NAME, 
@@ -236,8 +243,9 @@ bool RdbmsCatalogueUtils::requesterActivityMountRuleExists(rdbms::Conn &conn, co
   return rset.next();
 }
 
-bool RdbmsCatalogueUtils::diskFileIdExists(rdbms::Conn &conn, const std::string &diskInstanceName,
-  const std::string &diskFileId) {
+bool RdbmsCatalogueUtils::diskFileIdExists(rdbms::Conn& conn,
+                                           const std::string& diskInstanceName,
+                                           const std::string& diskFileId) {
   const char* const sql = R"SQL(
     SELECT 
       DISK_INSTANCE_NAME AS DISK_INSTANCE_NAME, 
@@ -255,8 +263,9 @@ bool RdbmsCatalogueUtils::diskFileIdExists(rdbms::Conn &conn, const std::string 
   return rset.next();
 }
 
-bool RdbmsCatalogueUtils::diskFileUserExists(rdbms::Conn &conn, const std::string &diskInstanceName,
-  uint32_t diskFileOwnerUid) {
+bool RdbmsCatalogueUtils::diskFileUserExists(rdbms::Conn& conn,
+                                             const std::string& diskInstanceName,
+                                             uint32_t diskFileOwnerUid) {
   const char* const sql = R"SQL(
     SELECT 
       DISK_INSTANCE_NAME AS DISK_INSTANCE_NAME, 
@@ -274,8 +283,9 @@ bool RdbmsCatalogueUtils::diskFileUserExists(rdbms::Conn &conn, const std::strin
   return rset.next();
 }
 
-bool RdbmsCatalogueUtils::diskFileGroupExists(rdbms::Conn &conn, const std::string &diskInstanceName,
-  uint32_t diskFileGid) {
+bool RdbmsCatalogueUtils::diskFileGroupExists(rdbms::Conn& conn,
+                                              const std::string& diskInstanceName,
+                                              uint32_t diskFileGid) {
   const char* const sql = R"SQL(
     SELECT 
       DISK_INSTANCE_NAME AS DISK_INSTANCE_NAME, 
@@ -293,8 +303,9 @@ bool RdbmsCatalogueUtils::diskFileGroupExists(rdbms::Conn &conn, const std::stri
   return rset.next();
 }
 
-bool RdbmsCatalogueUtils::requesterMountRuleExists(rdbms::Conn &conn, const std::string &diskInstanceName,
-  const std::string &requesterName) {
+bool RdbmsCatalogueUtils::requesterMountRuleExists(rdbms::Conn& conn,
+                                                   const std::string& diskInstanceName,
+                                                   const std::string& requesterName) {
   const char* const sql = R"SQL(
     SELECT 
       REQUESTER_NAME AS REQUESTER_NAME 
@@ -311,8 +322,9 @@ bool RdbmsCatalogueUtils::requesterMountRuleExists(rdbms::Conn &conn, const std:
   return rset.next();
 }
 
-bool RdbmsCatalogueUtils::requesterGroupMountRuleExists(rdbms::Conn &conn, const std::string &diskInstanceName,
-  const std::string &requesterGroupName) {
+bool RdbmsCatalogueUtils::requesterGroupMountRuleExists(rdbms::Conn& conn,
+                                                        const std::string& diskInstanceName,
+                                                        const std::string& requesterGroupName) {
   const char* const sql = R"SQL(
     SELECT 
       DISK_INSTANCE_NAME AS DISK_INSTANCE_NAME, 
@@ -330,16 +342,15 @@ bool RdbmsCatalogueUtils::requesterGroupMountRuleExists(rdbms::Conn &conn, const
   return rset.next();
 }
 
-
-bool RdbmsCatalogueUtils::isSetAndEmpty(const std::optional<std::string> &optionalStr) {
+bool RdbmsCatalogueUtils::isSetAndEmpty(const std::optional<std::string>& optionalStr) {
   return optionalStr.has_value() && optionalStr->empty();
 }
 
-bool RdbmsCatalogueUtils::isSetAndEmpty(const std::optional<std::vector<std::string>> &optionalStrList) {
+bool RdbmsCatalogueUtils::isSetAndEmpty(const std::optional<std::vector<std::string>>& optionalStrList) {
   return optionalStrList.has_value() && optionalStrList->empty();
 }
 
-std::optional<std::string> RdbmsCatalogueUtils::nulloptIfEmptyStr(const std::optional<std::string> &optionalStr) {
+std::optional<std::string> RdbmsCatalogueUtils::nulloptIfEmptyStr(const std::optional<std::string>& optionalStr) {
   return RdbmsCatalogueUtils::isSetAndEmpty(optionalStr) ? std::nullopt : optionalStr;
 }
 
@@ -352,7 +363,7 @@ void RdbmsCatalogueUtils::setTapeDirty(rdbms::Conn& conn, const std::string& vid
   stmt.executeNonQuery();
 }
 
-void RdbmsCatalogueUtils::setTapeDirty(rdbms::Conn& conn, const uint64_t & archiveFileId) {
+void RdbmsCatalogueUtils::setTapeDirty(rdbms::Conn& conn, const uint64_t& archiveFileId) {
   const char* const sql = R"SQL(
     UPDATE TAPE SET DIRTY='1' 
     WHERE VID IN 
@@ -363,8 +374,12 @@ void RdbmsCatalogueUtils::setTapeDirty(rdbms::Conn& conn, const uint64_t & archi
   stmt.executeNonQuery();
 }
 
-void RdbmsCatalogueUtils::updateTape(rdbms::Conn &conn, const std::string &vid, const uint64_t lastFSeq,
-  const uint64_t compressedBytesWritten, const uint64_t filesWritten, const std::string &tapeDrive) {
+void RdbmsCatalogueUtils::updateTape(rdbms::Conn& conn,
+                                     const std::string& vid,
+                                     const uint64_t lastFSeq,
+                                     const uint64_t compressedBytesWritten,
+                                     const uint64_t filesWritten,
+                                     const std::string& tapeDrive) {
   const time_t now = time(nullptr);
   const char* const sql = R"SQL(
     UPDATE TAPE SET 
@@ -388,8 +403,8 @@ void RdbmsCatalogueUtils::updateTape(rdbms::Conn &conn, const std::string &vid, 
   stmt.executeNonQuery();
 }
 
-std::string RdbmsCatalogueUtils::generateTapeStateModifiedBy( const common::dataStructures::SecurityIdentity & admin) {
+std::string RdbmsCatalogueUtils::generateTapeStateModifiedBy(const common::dataStructures::SecurityIdentity& admin) {
   return admin.username + "@" + admin.host;
 }
 
-} // namespace cta::catalogue
+}  // namespace cta::catalogue

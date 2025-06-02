@@ -248,6 +248,7 @@ public:
    * @return list of diskSystemName strings
    */
   std::vector<std::string> getActiveSleepDiskSystemNamesToFilter();
+
 private:
   /*
    * Get all the tape pools and tapes with queues (potential mounts)
@@ -269,6 +270,7 @@ private:
   std::unique_ptr<TapeDrivesCatalogueState> m_tapeDrivesState;
 
   void populateRepackRequestsStatistics(SchedulerDatabase::RepackRequestStatistics& stats);
+
   /*
    * for retrieve queue sleep mechanism (filter out disk systems which do not have space)
    * we put in place DiskSleepEntry, m_diskSystemSleepCacheMap and diskSystemSleepCacheMutex
@@ -276,11 +278,15 @@ private:
   struct DiskSleepEntry {
     uint64_t sleepTime;
     time_t timestamp;
+
     DiskSleepEntry() : sleepTime(0), timestamp(0) {}
+
     DiskSleepEntry(uint64_t st, time_t ts) : sleepTime(st), timestamp(ts) {}
   };
+
   std::unordered_map<std::string, DiskSleepEntry> m_diskSystemSleepCacheMap;
   cta::threading::Mutex m_diskSystemSleepCacheMutex;
+
   /**
   * Candidate for redesign/removal once we start improving Scheduler algorithm
   * A class holding a lock on the pending repack request queue. This is the first

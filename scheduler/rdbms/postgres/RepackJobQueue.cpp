@@ -19,6 +19,4 @@
 #include "rdbms/wrapper/PostgresColumn.hpp"
 #include "rdbms/wrapper/PostgresStmt.hpp"
 
-namespace cta::schedulerdb::postgres {
-
-} // namespace cta::schedulerdb::postgres
+namespace cta::schedulerdb::postgres {}  // namespace cta::schedulerdb::postgres

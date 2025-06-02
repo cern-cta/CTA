@@ -24,13 +24,10 @@ namespace unitTests {
 
 class cta_log_LogLevelTest : public ::testing::Test {
 protected:
+  virtual void SetUp() {}
 
-  virtual void SetUp() {
-  }
-
-  virtual void TearDown() {
-  }
-}; // class cta_log_LogLevelTest
+  virtual void TearDown() {}
+};  // class cta_log_LogLevelTest
 
 TEST_F(cta_log_LogLevelTest, toLogLevel_EMERG) {
   using namespace cta::log;
@@ -95,4 +92,4 @@ TEST_F(cta_log_LogLevelTest, toLogLevel_INVALID_LOG_LEVEL) {
   ASSERT_THROW(toLogLevel("toLogLevel_INVALID_LOG_LEVEL"), exception::Exception);
 }
 
-} // namespace unitTests
+}  // namespace unitTests

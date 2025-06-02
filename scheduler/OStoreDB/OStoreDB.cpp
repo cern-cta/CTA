@@ -138,12 +138,13 @@ void OStoreDB::initConfig(const std::optional<int>& osThreadPoolSize, const std:
     lc.log(log::INFO, "In OStoreDB::initConfig(): Objectstore thread pool initialised.");
   } else if (osThreadStackSize.has_value()) {
     params.add("osThreadStackSize_MB", osThreadStackSize.value());
-    lc.log(
-      log::WARNING,
-      "In OStoreDB::initConfig(): Missing cta.schedulerdb.numberofthreads in the configuration. Objectstore thread pool will not be initialised.");
+    lc.log(log::WARNING,
+           "In OStoreDB::initConfig(): Missing cta.schedulerdb.numberofthreads in the configuration. Objectstore "
+           "thread pool will not be initialised.");
   } else {
     lc.log(log::WARNING,
-           "In OStoreDB::initConfig(): Missing cta.schedulerdb.numberofthreads and cta.schedulerdb.threadstacksize_mb in the configuration. "
+           "In OStoreDB::initConfig(): Missing cta.schedulerdb.numberofthreads and cta.schedulerdb.threadstacksize_mb "
+           "in the configuration. "
            "Objectstore thread pool will not be initialised.");
   }
   OStoreDB::setBottomHalfQueueSize(25000);
@@ -582,7 +583,7 @@ void OStoreDB::fetchMountInfo(SchedulerDatabase::TapeMountDecisionInfo& tmdi,
                                     (int) cta::common::dataStructures::MountType::Label};
   std::unordered_map<std::string, std::string> tapeDrivetoSchedulerBackendNameMap;
 
-  for (const auto & config : m_catalogue.DriveConfig()->getTapeDriveConfigs()) {
+  for (const auto& config : m_catalogue.DriveConfig()->getTapeDriveConfigs()) {
     if (config.keyName == "SchedulerBackendName") {
       tapeDrivetoSchedulerBackendNameMap.emplace(config.tapeDriveName, config.value);
     }
@@ -592,7 +593,7 @@ void OStoreDB::fetchMountInfo(SchedulerDatabase::TapeMountDecisionInfo& tmdi,
     std::optional<std::string> driveSchedulerBackendName;
     try {
       driveSchedulerBackendName = tapeDrivetoSchedulerBackendNameMap.at(driveState.driveName);
-    } catch (std::out_of_range &) {
+    } catch (std::out_of_range&) {
       log::ScopedParamContainer(logContext)
         .add("driveName", driveState.driveName)
         .log(log::ERR, "In OStoreDB::fetchMountInfo(): drive is missing SchedulerBackendName configuration.");
@@ -679,11 +680,11 @@ OStoreDB::getArchiveMountPolicyMaxPriorityMinAge(const std::list<common::dataStr
   }
   uint64_t maxPriority = std::numeric_limits<uint64_t>::min();
   uint64_t minMinRequestAge = std::numeric_limits<uint64_t>::max();
-  for (auto & mountPolicy : mountPolicies) {
+  for (auto& mountPolicy : mountPolicies) {
     maxPriority = std::max(maxPriority, mountPolicy.archivePriority);
     minMinRequestAge = std::min(minMinRequestAge, mountPolicy.archiveMinRequestAge);
   }
-  return std::pair{maxPriority, minMinRequestAge};
+  return std::pair {maxPriority, minMinRequestAge};
 }
 
 //------------------------------------------------------------------------------
@@ -744,11 +745,11 @@ OStoreDB::getRetrieveMountPolicyMaxPriorityMinAge(const std::list<common::dataSt
   }
   uint64_t maxPriority = std::numeric_limits<uint64_t>::min();
   uint64_t minMinRequestAge = std::numeric_limits<uint64_t>::max();
-  for (auto & mountPolicy : mountPolicies) {
+  for (auto& mountPolicy : mountPolicies) {
     maxPriority = std::max(maxPriority, mountPolicy.retrievePriority);
     minMinRequestAge = std::min(minMinRequestAge, mountPolicy.retrieveMinRequestAge);
   }
-  return std::pair{maxPriority, minMinRequestAge};
+  return std::pair {maxPriority, minMinRequestAge};
 }
 
 //------------------------------------------------------------------------------
@@ -1850,7 +1851,8 @@ void OStoreDB::deleteFailed(const std::string& objectId, log::LogContext& lc) {
   // Validate that the object is an Archive or Retrieve request
   if (fr.type() != objectstore::serializers::ArchiveRequest_t &&
       fr.type() != objectstore::serializers::RetrieveRequest_t) {
-    throw exception::Exception("In OStoreDB::deleteFailed(): Object " + objectId + " is not an archive or retrieve request.");
+    throw exception::Exception("In OStoreDB::deleteFailed(): Object " + objectId +
+                               " is not an archive or retrieve request.");
   }
 
   // Make a list of all owners of the object
@@ -1905,7 +1907,8 @@ void OStoreDB::deleteFailed(const std::string& objectId, log::LogContext& lc) {
   // Validate that all owners of the object are failed queues and therefore it is safe to delete the job
   for (auto& qid : queueIds) {
     if (failedQueueIds.find(qid) == failedQueueIds.end()) {
-      throw exception::Exception("In OStoreDB::deleteFailed(): Will not delete object " + objectId + "\nwhich is owned by " + qid);
+      throw exception::Exception("In OStoreDB::deleteFailed(): Will not delete object " + objectId +
+                                 "\nwhich is owned by " + qid);
     }
   }
 
@@ -2180,17 +2183,19 @@ void OStoreDB::reserveRetrieveQueueForCleanup(const std::string& vid, std::optio
     rql.lock(rq);
     rq.fetch();
   } catch (cta::objectstore::RootEntry::NoSuchRetrieveQueue& ex) {
-    throw RetrieveQueueNotFound("In OStoreDB::reserveRetrieveQueueForCleanup(): Retrieve queue of vid " + vid + " not found. " + ex.getMessageValue());
+    throw RetrieveQueueNotFound("In OStoreDB::reserveRetrieveQueueForCleanup(): Retrieve queue of vid " + vid +
+                                " not found. " + ex.getMessageValue());
   } catch (cta::exception::NoSuchObject& ex) {
-    throw RetrieveQueueNotFound("In OStoreDB::reserveRetrieveQueueForCleanup(): Retrieve queue of vid " + vid + " not found. " + ex.getMessageValue());
+    throw RetrieveQueueNotFound("In OStoreDB::reserveRetrieveQueueForCleanup(): Retrieve queue of vid " + vid +
+                                " not found. " + ex.getMessageValue());
   } catch (cta::exception::Exception& ex) {
     throw;
   }
 
   // After locking a queue, check again if the cleanup flag is still true
   if (!rq.getQueueCleanupDoCleanup()) {
-    throw RetrieveQueueNotReservedForCleanup(
-      "In OStoreDB::reserveRetrieveQueueForCleanup(): Queue no longer has the cleanup flag enabled after fetching. Skipping it.");
+    throw RetrieveQueueNotReservedForCleanup("In OStoreDB::reserveRetrieveQueueForCleanup(): Queue no longer has the "
+                                             "cleanup flag enabled after fetching. Skipping it.");
   }
 
   // Check if heartbeat has been updated, which means that another agent is still tracking it
@@ -2221,7 +2226,8 @@ void OStoreDB::tickRetrieveQueueCleanupHeartbeat(const std::string& vid) {
     rq.fetch();
     if (rq.getQueueCleanupAssignedAgent().has_value() &&
         (rq.getQueueCleanupAssignedAgent() != m_agentReference->getAgentAddress())) {
-      throw RetrieveQueueNotReservedForCleanup("In OStoreDB::tickRetrieveQueueCleanupHeartbeat(): Another agent is alive and cleaning up the retrieve queue of tape " +
+      throw RetrieveQueueNotReservedForCleanup("In OStoreDB::tickRetrieveQueueCleanupHeartbeat(): Another agent is "
+                                               "alive and cleaning up the retrieve queue of tape " +
                                                vid + ". Heartbeat not ticked.");
     }
     rq.tickQueueCleanupHeartbeat();
@@ -2229,9 +2235,11 @@ void OStoreDB::tickRetrieveQueueCleanupHeartbeat(const std::string& vid) {
   } catch (RetrieveQueueNotReservedForCleanup& ex) {
     throw;  // Just pass this exception to the outside
   } catch (cta::objectstore::RootEntry::NoSuchRetrieveQueue& ex) {
-    throw RetrieveQueueNotFound("In OStoreDB::tickRetrieveQueueCleanupHeartbeat(): Retrieve queue of vid " + vid + " not found. " + ex.getMessageValue());
+    throw RetrieveQueueNotFound("In OStoreDB::tickRetrieveQueueCleanupHeartbeat(): Retrieve queue of vid " + vid +
+                                " not found. " + ex.getMessageValue());
   } catch (cta::exception::NoSuchObject& ex) {
-    throw RetrieveQueueNotFound("In OStoreDB::tickRetrieveQueueCleanupHeartbeat(): Retrieve queue of vid " + vid + " not found. " + ex.getMessageValue());
+    throw RetrieveQueueNotFound("In OStoreDB::tickRetrieveQueueCleanupHeartbeat(): Retrieve queue of vid " + vid +
+                                " not found. " + ex.getMessageValue());
   } catch (cta::exception::Exception& ex) {
     throw;
   }
@@ -3367,7 +3375,8 @@ copyNbFound:;
             .add("repackVid", repackInfo.vid)
             .add("bestVid", bestVid)
             .add("ExceptionMessage", ex.getMessageValue())
-            .log(log::ERR, "In OStoreDB::RepackRequest::addSubrequestsAndUpdateStats(): could not asyncInsert the subrequest.");
+            .log(log::ERR,
+                 "In OStoreDB::RepackRequest::addSubrequestsAndUpdateStats(): could not asyncInsert the subrequest.");
         }
       }
 nextSubrequest:
@@ -3413,7 +3422,8 @@ nextSubrequest:
           .add("bestVid", aii.bestVid)
           .add("bestCopyNb", aii.activeCopyNb)
           .add("ExceptionMessage", ex.getMessageValue())
-          .log(log::ERR, "In OStoreDB::RepackRequest::addSubrequestsAndUpdateStats(): could not asyncInsert the subrequest.");
+          .log(log::ERR,
+               "In OStoreDB::RepackRequest::addSubrequestsAndUpdateStats(): could not asyncInsert the subrequest.");
       }
     }
     if (notCreatedSubrequests.size()) {
@@ -3423,7 +3433,8 @@ nextSubrequest:
         .add("files", failedCreationStats.files)
         .add("bytes", failedCreationStats.bytes)
         .log(log::ERR,
-             "In OStoreDB::RepackRequest::addSubRequestsAndUpdateStats(), reported the failed creation of retrieve requests "
+             "In OStoreDB::RepackRequest::addSubRequestsAndUpdateStats(), reported the failed creation of retrieve "
+             "requests "
              "to the repack request");
     }
     // We now have created the subrequests. Time to enqueue.
@@ -3634,8 +3645,7 @@ SchedulerDatabase::JobsFailedSummary OStoreDB::getRetrieveJobsFailedSummary(log:
       log::ScopedParamContainer(logContext)
         .add("queueObject", rj.address)
         .add("exceptionMessage", ex.getMessageValue())
-        .log(log::DEBUG,
-             "In OStoreDB::getRetrieveJobsFailedSummary(): failed to lock/fetch a retrieve queue.");
+        .log(log::DEBUG, "In OStoreDB::getRetrieveJobsFailedSummary(): failed to lock/fetch a retrieve queue.");
       continue;
     }
     auto summary = rq.getCandidateSummary();
@@ -4015,10 +4025,11 @@ void OStoreDB::RetrieveMount::requeueJobBatch(std::list<std::unique_ptr<Schedule
 // OStoreDB::RetrieveMount::testReserveDiskSpace()
 //------------------------------------------------------------------------------
 bool OStoreDB::RetrieveMount::testReserveDiskSpace(const cta::DiskSpaceReservationRequest& diskSpaceReservationRequest,
-  const std::string& externalFreeDiskSpaceScript, log::LogContext& logContext) {
+                                                   const std::string& externalFreeDiskSpaceScript,
+                                                   log::LogContext& logContext) {
   // if the problem is that the script is throwing errors (and not that the disk space is insufficient),
   // we will issue a warning, but otherwise we will not sleep the queues and we will act like no disk
-  // system was present 
+  // system was present
   // Get the current file systems list from the catalogue
   cta::disk::DiskSystemList diskSystemList;
   diskSystemList = m_oStoreDB.m_catalogue.DiskSystem()->getAllDiskSystems();
@@ -4044,8 +4055,8 @@ bool OStoreDB::RetrieveMount::testReserveDiskSpace(const cta::DiskSpaceReservati
         .add("diskSystemName", failedDiskSystem.first)
         .add("failureReason", failedDiskSystem.second.getMessageValue())
         .log(cta::log::WARNING,
-            "In OStoreDB::RetrieveMount::testReserveDiskSpace(): unable to request EOS free space "
-            "for disk system using external script, backpressure will not be applied");
+             "In OStoreDB::RetrieveMount::testReserveDiskSpace(): unable to request EOS free space "
+             "for disk system using external script, backpressure will not be applied");
     }
     return true;
   } catch (std::exception& ex) {
@@ -4125,8 +4136,8 @@ bool OStoreDB::RetrieveMount::reserveDiskSpace(const cta::DiskSpaceReservationRe
         .add("diskSystemName", failedDiskSystem.first)
         .add("failureReason", failedDiskSystem.second.getMessageValue())
         .log(cta::log::WARNING,
-            "In OStoreDB::RetrieveMount::reserveDiskSpace(): unable to request EOS free space for "
-            "disk system using external script, backpressure will not be applied");
+             "In OStoreDB::RetrieveMount::reserveDiskSpace(): unable to request EOS free space for "
+             "disk system using external script, backpressure will not be applied");
     }
     return true;
   } catch (std::exception& ex) {
@@ -5061,7 +5072,9 @@ void OStoreDB::ArchiveJob::asyncSucceedTransfer() {
     .add("requestObject", m_archiveRequest.getAddressIfSet())
     .add("destinationVid", tapeFile.vid)
     .add("copyNb", tapeFile.copyNb)
-    .log(log::DEBUG, "In OStoreDB::ArchiveJob::asyncSucceedTransfer(): Will start async update archiveRequest for transfer success");
+    .log(
+      log::DEBUG,
+      "In OStoreDB::ArchiveJob::asyncSucceedTransfer(): Will start async update archiveRequest for transfer success");
   m_succesfulTransferUpdater.reset(m_archiveRequest.asyncUpdateTransferSuccessful(tapeFile.vid, tapeFile.copyNb));
 }
 
@@ -5073,7 +5086,8 @@ void OStoreDB::ArchiveJob::waitAsyncSucceed() {
   log::LogContext lc(m_oStoreDB.m_logger);
   log::ScopedParamContainer(lc)
     .add("requestObject", m_archiveRequest.getAddressIfSet())
-    .log(log::DEBUG, "In OStoreDB::ArchiveJob::waitAsyncSucceed(): Async update of archiveRequest for transfer success complete");
+    .log(log::DEBUG,
+         "In OStoreDB::ArchiveJob::waitAsyncSucceed(): Async update of archiveRequest for transfer success complete");
   // We no more own the job (which could be gone)
   m_jobOwned = false;
   // Ownership removal will be done globally by the caller.
@@ -5572,8 +5586,7 @@ void OStoreDB::RetrieveJob::failTransfer(const std::string& failureReason, log::
         Helpers::selectBestRetrieveQueue(candidateVids, m_oStoreDB.m_catalogue, m_oStoreDB.m_objectStore, lc);
 
       auto tf_it = af.tapeFiles.begin();
-      for (; tf_it != af.tapeFiles.end() && tf_it->vid != bestVid; ++tf_it)
-        ;
+      for (; tf_it != af.tapeFiles.end() && tf_it->vid != bestVid; ++tf_it);
       if (tf_it == af.tapeFiles.end()) {
         std::stringstream err;
         err << "In OStoreDB::RetrieveJob::failTransfer(): no tape file for requested vid."
@@ -5646,8 +5659,7 @@ void OStoreDB::RetrieveJob::failTransfer(const std::string& failureReason, log::
         Helpers::selectBestRetrieveQueue(candidateVids, m_oStoreDB.m_catalogue, m_oStoreDB.m_objectStore, lc, isRepack);
 
       auto tf_it = af.tapeFiles.begin();
-      for (; tf_it != af.tapeFiles.end() && tf_it->vid != bestVid; ++tf_it)
-        ;
+      for (; tf_it != af.tapeFiles.end() && tf_it->vid != bestVid; ++tf_it);
       if (tf_it == af.tapeFiles.end()) {
         std::stringstream err;
         err << "In OStoreDB::RetrieveJob::failTransfer(): no tape file for requested vid."
@@ -5768,9 +5780,11 @@ void OStoreDB::RetrieveJob::failReport(const std::string& failureReason, log::Lo
           .add("totalReportRetries", retryStatus.totalReportRetries)
           .add("maxReportRetries", retryStatus.maxReportRetries);
         if (enQueueingNextStep.nextStep == NextStep::StoreInFailedJobsContainer) {
-          lc.log(log::INFO, "In OStoreDB::RetrieveJob::failReport(): stored job in failed container for operator handling.");
+          lc.log(log::INFO,
+                 "In OStoreDB::RetrieveJob::failReport(): stored job in failed container for operator handling.");
         } else {
-          lc.log(log::ERR, "In OStoreDB::RetrieveJob::failReport(): stored job in failed container after unexpected next step.");
+          lc.log(log::ERR,
+                 "In OStoreDB::RetrieveJob::failReport(): stored job in failed container after unexpected next step.");
         }
         break;
       }

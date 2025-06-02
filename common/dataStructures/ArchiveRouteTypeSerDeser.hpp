@@ -22,26 +22,33 @@
 
 namespace cta::admin {
 
-common::dataStructures::ArchiveRouteType ProtobufToArchiveRouteTypeFormat(ArchiveRouteLsItem::ArchiveRouteType archiveRouteType) {
-
+common::dataStructures::ArchiveRouteType
+ProtobufToArchiveRouteTypeFormat(ArchiveRouteLsItem::ArchiveRouteType archiveRouteType) {
   using namespace common::dataStructures;
 
   switch (archiveRouteType) {
-    case ArchiveRouteLsItem::DEFAULT: return ArchiveRouteType::DEFAULT;
-    case ArchiveRouteLsItem::REPACK:  return ArchiveRouteType::REPACK;
+    case ArchiveRouteLsItem::DEFAULT:
+      return ArchiveRouteType::DEFAULT;
+    case ArchiveRouteLsItem::REPACK:
+      return ArchiveRouteType::REPACK;
     default:
-      throw std::runtime_error("In ProtobufToArchiveRouteTypeFormat(): unknown archive route type " + std::to_string(archiveRouteType));
+      throw std::runtime_error("In ProtobufToArchiveRouteTypeFormat(): unknown archive route type " +
+                               std::to_string(archiveRouteType));
   }
 }
 
-ArchiveRouteLsItem::ArchiveRouteType ArchiveRouteTypeFormatToProtobuf(common::dataStructures::ArchiveRouteType archiveRouteType) {
+ArchiveRouteLsItem::ArchiveRouteType
+ArchiveRouteTypeFormatToProtobuf(common::dataStructures::ArchiveRouteType archiveRouteType) {
   using namespace common::dataStructures;
 
   switch (archiveRouteType) {
-    case ArchiveRouteType::DEFAULT: return ArchiveRouteLsItem::DEFAULT;
-    case ArchiveRouteType::REPACK:  return ArchiveRouteLsItem::REPACK;
+    case ArchiveRouteType::DEFAULT:
+      return ArchiveRouteLsItem::DEFAULT;
+    case ArchiveRouteType::REPACK:
+      return ArchiveRouteLsItem::REPACK;
     default:
-      throw std::runtime_error("In ArchiveRouteTypeFormatToProtobuf(): unknown archive route type " + std::to_string(archiveRouteType));
+      throw std::runtime_error("In ArchiveRouteTypeFormatToProtobuf(): unknown archive route type " +
+                               std::to_string(archiveRouteType));
   }
 }
 

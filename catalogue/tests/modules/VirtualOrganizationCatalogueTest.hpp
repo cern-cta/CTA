@@ -31,7 +31,7 @@
 
 namespace unitTests {
 
-class cta_catalogue_VirtualOrganizationTest : public ::testing::TestWithParam<cta::catalogue::CatalogueFactory **> {
+class cta_catalogue_VirtualOrganizationTest : public ::testing::TestWithParam<cta::catalogue::CatalogueFactory**> {
 public:
   cta_catalogue_VirtualOrganizationTest();
 

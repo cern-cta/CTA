@@ -25,14 +25,12 @@ namespace cta::objectstore {
  * It will also cleanup 
  */
 class ProtobufCleaner {
-  ProtobufCleaner() {
-    GOOGLE_PROTOBUF_VERIFY_VERSION;
-  }
-  
+  ProtobufCleaner() { GOOGLE_PROTOBUF_VERIFY_VERSION; }
+
   virtual ~ProtobufCleaner() {
     // Make protobuf cleanup not trigger memory leak detectors
     google::protobuf::ShutdownProtobufLibrary();
   }
 } g_protobufCleaner;
 
-} // namespace cta::objectstore
+}  // namespace cta::objectstore

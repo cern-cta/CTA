@@ -29,7 +29,6 @@ namespace cta::rdbms::wrapper {
  */
 class OcciEnv {
 public:
-
   /**
    * Constructor.
    *
@@ -55,18 +54,15 @@ public:
    * @param database The name of the database.
    * @return The newly created OCCI connection.
    */
-  std::unique_ptr<ConnWrapper> createConn(
-    const std::string &username,
-    const std::string &password,
-    const std::string &database);
+  std::unique_ptr<ConnWrapper>
+  createConn(const std::string& username, const std::string& password, const std::string& database);
 
 private:
-
   /**
    * The OCCI environment.
    */
-  oracle::occi::Environment *m_env;
+  oracle::occi::Environment* m_env;
 
-}; // class OcciEnv
+};  // class OcciEnv
 
-} // namespace cta::rdbms::wrapper
+}  // namespace cta::rdbms::wrapper

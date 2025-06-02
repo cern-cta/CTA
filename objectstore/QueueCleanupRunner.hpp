@@ -36,29 +36,30 @@ namespace cta::objectstore {
 class RetrieveRequest;
 
 class QueueCleanupRunner {
-
 public:
   // We currently got for a hardcoded number of jobs batch to requeue every turn
   static constexpr int DEFAULT_BATCH_SIZE = 500;
   static constexpr double DEFAULT_HEARTBEAT_TIMEOUT = 120;
 
-  QueueCleanupRunner(AgentReference &agentReference, SchedulerDatabase & oStoreDb, catalogue::Catalogue &catalogue,
-                     std::optional<double> heartBeatTimeout = std::nullopt, std::optional<int> batchSize = std::nullopt);
+  QueueCleanupRunner(AgentReference& agentReference,
+                     SchedulerDatabase& oStoreDb,
+                     catalogue::Catalogue& catalogue,
+                     std::optional<double> heartBeatTimeout = std::nullopt,
+                     std::optional<int> batchSize = std::nullopt);
 
   ~QueueCleanupRunner() = default;
 
-  void runOnePass(log::LogContext &lc);
+  void runOnePass(log::LogContext& lc);
 
 private:
-
   struct HeartbeatStatus {
     std::string agent;
     uint64_t heartbeat;
     double lastUpdateTimestamp;
   };
 
-  catalogue::Catalogue &m_catalogue;
-  SchedulerDatabase &m_db;
+  catalogue::Catalogue& m_catalogue;
+  SchedulerDatabase& m_db;
   std::map<std::string, HeartbeatStatus> m_heartbeatCheck;
   cta::utils::Timer m_timer;
 
@@ -66,4 +67,4 @@ private:
   double m_heartBeatTimeout;
 };
 
-} // namespace cta::objectstore
+}  // namespace cta::objectstore

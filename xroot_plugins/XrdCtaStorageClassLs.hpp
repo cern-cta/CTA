@@ -25,7 +25,7 @@ namespace cta::xrd {
 /*!
  * Stream object which implements "tapepool ls" command
  */
-class StorageClassLsStream: public XrdCtaStream{
+class StorageClassLsStream : public XrdCtaStream {
 public:
   /*!
    * Constructor
@@ -34,54 +34,57 @@ public:
    * @param[in]    catalogue     CTA Catalogue
    * @param[in]    scheduler     CTA Scheduler
    */
-  StorageClassLsStream(const frontend::AdminCmdStream& requestMsg, cta::catalogue::Catalogue &catalogue, cta::Scheduler &scheduler, const std::optional<std::string> storageClassName);
+  StorageClassLsStream(const frontend::AdminCmdStream& requestMsg,
+                       cta::catalogue::Catalogue& catalogue,
+                       cta::Scheduler& scheduler,
+                       const std::optional<std::string> storageClassName);
 
 private:
   /*!
    * Can we close the stream?
    */
-  virtual bool isDone() const {
-    return m_storageClassList.empty();
-  }
+  virtual bool isDone() const { return m_storageClassList.empty(); }
 
   /*!
    * Fill the buffer
    */
-  virtual int fillBuffer(XrdSsiPb::OStreamBuffer<Data> *streambuf);
+  virtual int fillBuffer(XrdSsiPb::OStreamBuffer<Data>* streambuf);
 
-  std::list<cta::common::dataStructures::StorageClass> m_storageClassList;    //!< List of storage classes from the catalogue
+  std::list<cta::common::dataStructures::StorageClass>
+    m_storageClassList;  //!< List of storage classes from the catalogue
 
   std::optional<std::string> m_storageClassName;
   const std::string m_instanceName;
 
-  static constexpr const char* const LOG_SUFFIX  = "StorageClassLsStream";    //!< Identifier for log messages
+  static constexpr const char* const LOG_SUFFIX = "StorageClassLsStream";  //!< Identifier for log messages
 };
 
-
-StorageClassLsStream::StorageClassLsStream(const frontend::AdminCmdStream& requestMsg, cta::catalogue::Catalogue &catalogue, cta::Scheduler &scheduler, const std::optional<std::string> storageClassName) :
-  XrdCtaStream(catalogue, scheduler),
-  m_storageClassName(storageClassName),
-  m_instanceName(requestMsg.getInstanceName())
-{
+StorageClassLsStream::StorageClassLsStream(const frontend::AdminCmdStream& requestMsg,
+                                           cta::catalogue::Catalogue& catalogue,
+                                           cta::Scheduler& scheduler,
+                                           const std::optional<std::string> storageClassName)
+    : XrdCtaStream(catalogue, scheduler),
+      m_storageClassName(storageClassName),
+      m_instanceName(requestMsg.getInstanceName()) {
   using namespace cta::admin;
 
   XrdSsiPb::Log::Msg(XrdSsiPb::Log::DEBUG, LOG_SUFFIX, "StorageClassLsStream() constructor");
 
-  if(m_storageClassName) {
+  if (m_storageClassName) {
     m_storageClassList.push_back(m_catalogue.StorageClass()->getStorageClass(m_storageClassName.value()));
   } else {
-    for(const auto &storageClass : m_catalogue.StorageClass()->getStorageClasses()) {
+    for (const auto& storageClass : m_catalogue.StorageClass()->getStorageClasses()) {
       m_storageClassList.push_back(storageClass);
     }
   }
 }
 
-int StorageClassLsStream::fillBuffer(XrdSsiPb::OStreamBuffer<Data> *streambuf) {
-  for(bool is_buffer_full = false; !m_storageClassList.empty() && !is_buffer_full; m_storageClassList.pop_front()) {
+int StorageClassLsStream::fillBuffer(XrdSsiPb::OStreamBuffer<Data>* streambuf) {
+  for (bool is_buffer_full = false; !m_storageClassList.empty() && !is_buffer_full; m_storageClassList.pop_front()) {
     Data record;
 
-    auto &sc      = m_storageClassList.front();
-    auto  sc_item = record.mutable_scls_item();
+    auto& sc = m_storageClassList.front();
+    auto sc_item = record.mutable_scls_item();
 
     sc_item->set_name(sc.name);
     sc_item->set_nb_copies(sc.nbCopies);
@@ -100,4 +103,4 @@ int StorageClassLsStream::fillBuffer(XrdSsiPb::OStreamBuffer<Data> *streambuf) {
   return streambuf->Size();
 }
 
-} // namespace cta::xrd
+}  // namespace cta::xrd

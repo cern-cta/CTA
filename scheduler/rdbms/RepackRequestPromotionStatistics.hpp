@@ -25,14 +25,12 @@
 namespace cta::schedulerdb {
 
 class RepackRequestPromotionStatistics : public SchedulerDatabase::RepackRequestStatistics {
- friend class cta::RelationalDB;
+  friend class cta::RelationalDB;
 
- public:
+public:
+  [[noreturn]] RepackRequestPromotionStatistics();
 
-   [[noreturn]] RepackRequestPromotionStatistics();
-
-   PromotionToToExpandResult promotePendingRequestsForExpansion(size_t requestCount,
-      log::LogContext &lc) override;
+  PromotionToToExpandResult promotePendingRequestsForExpansion(size_t requestCount, log::LogContext& lc) override;
 };
 
-} // namespace cta::schedulerdb
+}  // namespace cta::schedulerdb

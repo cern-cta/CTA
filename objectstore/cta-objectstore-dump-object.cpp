@@ -32,7 +32,7 @@
 #include <optional>
 #include <common/exception/NoSuchObject.hpp>
 
-int main(int argc, char ** argv) {
+int main(int argc, char** argv) {
   try {
     cta::log::DummyLogger dl("", "");
     std::unique_ptr<cta::objectstore::Backend> be;
@@ -40,7 +40,7 @@ int main(int argc, char ** argv) {
     if (3 == argc) {
       be.reset(cta::objectstore::BackendFactory::createBackend(argv[1], dl).release());
       objectName = argv[2];
-    } else if (2 == argc ){
+    } else if (2 == argc) {
       cta::common::Config m_ctaConf("/etc/cta/cta-objectstore-tools.conf");
       be = std::move(
         cta::objectstore::BackendFactory::createBackend(m_ctaConf.getOptionValueStr("BackendPath").value(), dl));
@@ -51,19 +51,19 @@ int main(int argc, char ** argv) {
     // If the backend is a VFS, make sure we don't delete it on exit.
     // If not, nevermind.
     try {
-      dynamic_cast<cta::objectstore::BackendVFS &>(*be).noDeleteOnExit();
-    } catch (std::bad_cast &){}
-    std::cout << "Object store path: " << be->getParams()->toURL() << std::endl 
-        << "Object name: " << objectName << std::endl;
+      dynamic_cast<cta::objectstore::BackendVFS&>(*be).noDeleteOnExit();
+    } catch (std::bad_cast&) {}
+    std::cout << "Object store path: " << be->getParams()->toURL() << std::endl
+              << "Object name: " << objectName << std::endl;
     cta::objectstore::GenericObject ge(objectName, *be);
     ge.fetchNoLock();
     std::cout << ge.dump() << std::endl;
-  } catch (cta::exception::NoSuchObject &) {
+  } catch (cta::exception::NoSuchObject&) {
     std::cerr << "Object not found in the object store" << std::endl;
   } catch (const std::bad_optional_access&) {
-    std::cerr << "Config file '/etc/cta/cta-objectstore-tools.conf' does not contain the BackendPath entry." << std::endl;
+    std::cerr << "Config file '/etc/cta/cta-objectstore-tools.conf' does not contain the BackendPath entry."
+              << std::endl;
   } catch (std::exception& e) {
-    std::cerr << "Failed to dump object: "
-        << std::endl << e.what() << std::endl;
+    std::cerr << "Failed to dump object: " << std::endl << e.what() << std::endl;
   }
 }

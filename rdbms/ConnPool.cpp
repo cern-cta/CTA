@@ -36,14 +36,13 @@ ConnPool::ConnPool(const Login& login, const uint64_t maxNbConns)
 // getConn
 //------------------------------------------------------------------------------
 Conn ConnPool::getConn() {
-
   if (0 == m_maxNbConns) {
     throw ConnPoolConfiguredWithZeroConns(std::string(__FUNCTION__) +
                                           " failed: ConnPool is configured with zero connections");
   }
   std::unique_ptr<ConnAndStmts> connAndStmts;
 
-  { // artificial scope to limit the lock taken here
+  {  // artificial scope to limit the lock taken here
     threading::MutexLocker locker(m_connsAndStmtsMutex);
 
     while (m_connsAndStmts.empty() && m_nbConnsOnLoan == m_maxNbConns) {

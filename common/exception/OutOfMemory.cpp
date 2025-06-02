@@ -21,5 +21,4 @@
 // -----------------------------------------------------------------------
 // Constructor
 // -----------------------------------------------------------------------
-cta::exception::OutOfMemory::OutOfMemory() :
-  cta::exception::Exception() {}
+cta::exception::OutOfMemory::OutOfMemory() : cta::exception::Exception() {}

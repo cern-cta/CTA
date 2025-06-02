@@ -22,8 +22,7 @@ namespace cta::exception {
 //------------------------------------------------------------------------------
 // constructor
 //------------------------------------------------------------------------------
-Exception::Exception(std::string_view context, const bool embedBacktrace) : 
-  m_backtrace(!embedBacktrace) {
+Exception::Exception(std::string_view context, const bool embedBacktrace) : m_backtrace(!embedBacktrace) {
   m_message << context;
 }
 
@@ -61,4 +60,4 @@ void Exception::setWhat(std::string_view what) {
   getMessage() << what;
 }
 
-} // namespace cta::exception::Exception
+}  // namespace cta::exception

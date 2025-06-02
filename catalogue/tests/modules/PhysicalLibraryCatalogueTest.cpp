@@ -33,12 +33,11 @@
 namespace unitTests {
 
 cta_catalogue_PhysicalLibraryTest::cta_catalogue_PhysicalLibraryTest()
-  : m_dummyLog("dummy", "dummy"),
-    m_admin("admin", "admin", "admin", ""),
-    m_physicalLibrary1(CatalogueTestUtils::getPhysicalLibrary1()),
-    m_physicalLibrary2(CatalogueTestUtils::getPhysicalLibrary2()),
-    m_physicalLibrary3(CatalogueTestUtils::getPhysicalLibrary3()) {
-}
+    : m_dummyLog("dummy", "dummy"),
+      m_admin("admin", "admin", "admin", ""),
+      m_physicalLibrary1(CatalogueTestUtils::getPhysicalLibrary1()),
+      m_physicalLibrary2(CatalogueTestUtils::getPhysicalLibrary2()),
+      m_physicalLibrary3(CatalogueTestUtils::getPhysicalLibrary3()) {}
 
 void cta_catalogue_PhysicalLibraryTest::SetUp() {
   cta::log::LogContext dummyLc(m_dummyLog);
@@ -110,14 +109,14 @@ TEST_P(cta_catalogue_PhysicalLibraryTest, modifyPhysicalLibrary) {
     ASSERT_EQ(1, libs.size());
     const cta::common::dataStructures::PhysicalLibrary lib = libs.front();
     cta::common::dataStructures::UpdatePhysicalLibrary pl;
-    pl.name                      = m_physicalLibrary2.name;
-    pl.guiUrl                    = m_physicalLibrary3.guiUrl.value();
-    pl.webcamUrl                 = m_physicalLibrary3.webcamUrl.value();
-    pl.location                  = m_physicalLibrary3.location.value();
-    pl.nbPhysicalCartridgeSlots  = m_physicalLibrary3.nbPhysicalCartridgeSlots;
+    pl.name = m_physicalLibrary2.name;
+    pl.guiUrl = m_physicalLibrary3.guiUrl.value();
+    pl.webcamUrl = m_physicalLibrary3.webcamUrl.value();
+    pl.location = m_physicalLibrary3.location.value();
+    pl.nbPhysicalCartridgeSlots = m_physicalLibrary3.nbPhysicalCartridgeSlots;
     pl.nbAvailableCartridgeSlots = m_physicalLibrary3.nbAvailableCartridgeSlots.value();
-    pl.nbPhysicalDriveSlots      = m_physicalLibrary3.nbPhysicalDriveSlots;
-    pl.comment                   = m_physicalLibrary3.comment.value();
+    pl.nbPhysicalDriveSlots = m_physicalLibrary3.nbPhysicalDriveSlots;
+    pl.comment = m_physicalLibrary3.comment.value();
 
     m_catalogue->PhysicalLibrary()->modifyPhysicalLibrary(m_admin, pl);
   }
@@ -214,14 +213,14 @@ TEST_P(cta_catalogue_PhysicalLibraryTest, addingSameNamePhysicalLibrary) {
 TEST_P(cta_catalogue_PhysicalLibraryTest, modifyNonExistentPhysicalLibrary) {
   auto shouldThrow = [this]() -> void {
     cta::common::dataStructures::UpdatePhysicalLibrary pl;
-    pl.name                      = "doesNotExist";
-    pl.guiUrl                    = m_physicalLibrary3.guiUrl.value();
-    pl.webcamUrl                 = m_physicalLibrary3.webcamUrl.value();
-    pl.location                  = m_physicalLibrary3.location.value();
-    pl.nbPhysicalCartridgeSlots  = m_physicalLibrary3.nbPhysicalCartridgeSlots;
+    pl.name = "doesNotExist";
+    pl.guiUrl = m_physicalLibrary3.guiUrl.value();
+    pl.webcamUrl = m_physicalLibrary3.webcamUrl.value();
+    pl.location = m_physicalLibrary3.location.value();
+    pl.nbPhysicalCartridgeSlots = m_physicalLibrary3.nbPhysicalCartridgeSlots;
     pl.nbAvailableCartridgeSlots = m_physicalLibrary3.nbAvailableCartridgeSlots.value();
-    pl.nbPhysicalDriveSlots      = m_physicalLibrary3.nbPhysicalDriveSlots;
-    pl.comment                   = m_physicalLibrary3.comment.value();
+    pl.nbPhysicalDriveSlots = m_physicalLibrary3.nbPhysicalDriveSlots;
+    pl.comment = m_physicalLibrary3.comment.value();
 
     m_catalogue->PhysicalLibrary()->modifyPhysicalLibrary(m_admin, pl);
   };

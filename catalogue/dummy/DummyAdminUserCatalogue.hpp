@@ -26,16 +26,18 @@ public:
   DummyAdminUserCatalogue() = default;
   ~DummyAdminUserCatalogue() override = default;
 
-  void createAdminUser(const common::dataStructures::SecurityIdentity &admin, const std::string &username,
-    const std::string &comment) override;
-  void deleteAdminUser(const std::string &username) override;
+  void createAdminUser(const common::dataStructures::SecurityIdentity& admin,
+                       const std::string& username,
+                       const std::string& comment) override;
+  void deleteAdminUser(const std::string& username) override;
 
   std::list<common::dataStructures::AdminUser> getAdminUsers() const override;
 
-  void modifyAdminUserComment(const common::dataStructures::SecurityIdentity &admin,
-    const std::string &username, const std::string &comment) override;
+  void modifyAdminUserComment(const common::dataStructures::SecurityIdentity& admin,
+                              const std::string& username,
+                              const std::string& comment) override;
 
-  bool isAdmin(const common::dataStructures::SecurityIdentity &admin) const override;
+  bool isAdmin(const common::dataStructures::SecurityIdentity& admin) const override;
 };
 
-} // namespace cta::catalogue
+}  // namespace cta::catalogue

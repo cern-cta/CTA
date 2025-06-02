@@ -21,9 +21,9 @@
 
 namespace unitTests {
 
-  void ObjectStore::SetUp() {
-    // We need to cleanup the queue statistics cache before every test
-    cta::objectstore::Helpers::flushStatisticsCache();
-  }
-
+void ObjectStore::SetUp() {
+  // We need to cleanup the queue statistics cache before every test
+  cta::objectstore::Helpers::flushStatisticsCache();
 }
+
+}  // namespace unitTests

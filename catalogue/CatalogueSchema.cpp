@@ -25,35 +25,32 @@ namespace cta::catalogue {
 //------------------------------------------------------------------------------
 // constructor
 //------------------------------------------------------------------------------
-CatalogueSchema::CatalogueSchema(): sql("") {
-}
+CatalogueSchema::CatalogueSchema() : sql("") {}
 
 //------------------------------------------------------------------------------
 // constructor
 //------------------------------------------------------------------------------
-CatalogueSchema::CatalogueSchema(const std::string &sqlSchema): sql(sqlSchema) {
-}
+CatalogueSchema::CatalogueSchema(const std::string& sqlSchema) : sql(sqlSchema) {}
 
 //------------------------------------------------------------------------------
 // getSchemaColumns
 //------------------------------------------------------------------------------
-std::map<std::string, std::string, std::less<>> CatalogueSchema::getSchemaColumns(const std::string &tableName) const {
+std::map<std::string, std::string, std::less<>> CatalogueSchema::getSchemaColumns(const std::string& tableName) const {
   std::map<std::string, std::string, std::less<>> schemaColumnNames;
   std::string::size_type searchPos = 0;
   std::string::size_type findResult = std::string::npos;
-  const std::string columnTypes = 
-    "NUMERIC|"
-    "INTEGER|"
-    "CHAR|"
-    "VARCHAR|"
-    "VARCHAR2|"
-    "BLOB|"
-    "BYTEA|"
-    "VARBINARY|"
-    "RAW";
-  
+  const std::string columnTypes = "NUMERIC|"
+                                  "INTEGER|"
+                                  "CHAR|"
+                                  "VARCHAR|"
+                                  "VARCHAR2|"
+                                  "BLOB|"
+                                  "BYTEA|"
+                                  "VARBINARY|"
+                                  "RAW";
+
   try {
-    while(std::string::npos != (findResult = sql.find(';', searchPos))) {
+    while (std::string::npos != (findResult = sql.find(';', searchPos))) {
       // Calculate the length of the current statement without the trailing ';'
       const std::string::size_type stmtLen = findResult - searchPos;
       const std::string sqlStmt = utils::trimString(std::string_view(sql).substr(searchPos, stmtLen));
@@ -92,7 +89,7 @@ std::map<std::string, std::string, std::less<>> CatalogueSchema::getSchemaColumn
         }
       }
     }
-  } catch(exception::Exception &ex) {
+  } catch (exception::Exception& ex) {
     throw exception::Exception(std::string(__FUNCTION__) + " failed: " + ex.getMessage().str());
   }
   return schemaColumnNames;
@@ -101,18 +98,18 @@ std::map<std::string, std::string, std::less<>> CatalogueSchema::getSchemaColumn
 //------------------------------------------------------------------------------
 // getSchemaTableNames
 //------------------------------------------------------------------------------
-std::list<std::string> CatalogueSchema::getSchemaTableNames() const {  
+std::list<std::string> CatalogueSchema::getSchemaTableNames() const {
   std::list<std::string> schemaTables;
   std::string::size_type searchPos = 0;
   std::string::size_type findResult = std::string::npos;
   try {
-    while(std::string::npos != (findResult = sql.find(';', searchPos))) {
+    while (std::string::npos != (findResult = sql.find(';', searchPos))) {
       // Calculate the length of the current statement without the trailing ';'
       const std::string::size_type stmtLen = findResult - searchPos;
       const std::string sqlStmt = utils::trimString(std::string_view(sql).substr(searchPos, stmtLen));
       searchPos = findResult + 1;
 
-      if(0 < sqlStmt.size()) { // Ignore empty statements
+      if (0 < sqlStmt.size()) {  // Ignore empty statements
         cta::utils::Regex tableNamesRegex("CREATE[a-zA-Z ]+TABLE ([a-zA-Z_0-9]+)");
         auto tableName = tableNamesRegex.exec(sqlStmt);
         if (2 == tableName.size()) {
@@ -120,7 +117,7 @@ std::list<std::string> CatalogueSchema::getSchemaTableNames() const {
         }
       }
     }
-  } catch(exception::Exception &ex) {
+  } catch (exception::Exception& ex) {
     throw exception::Exception(std::string(__FUNCTION__) + " failed: " + ex.getMessage().str());
   }
   return schemaTables;
@@ -129,18 +126,18 @@ std::list<std::string> CatalogueSchema::getSchemaTableNames() const {
 //------------------------------------------------------------------------------
 // getSchemaIndexNames
 //------------------------------------------------------------------------------
-std::list<std::string> CatalogueSchema::getSchemaIndexNames() const {  
+std::list<std::string> CatalogueSchema::getSchemaIndexNames() const {
   std::list<std::string> schemaIndices;
   std::string::size_type searchPos = 0;
   std::string::size_type findResult = std::string::npos;
   try {
-    while(std::string::npos != (findResult = sql.find(';', searchPos))) {
+    while (std::string::npos != (findResult = sql.find(';', searchPos))) {
       // Calculate the length of the current statement without the trailing ';'
       const std::string::size_type stmtLen = findResult - searchPos;
       const std::string sqlStmt = utils::trimString(std::string_view(sql).substr(searchPos, stmtLen));
       searchPos = findResult + 1;
 
-      if(0 < sqlStmt.size()) { // Ignore empty statements
+      if (0 < sqlStmt.size()) {  // Ignore empty statements
         cta::utils::Regex tableIndicesRegex("CREATE INDEX ([a-zA-Z_]+)");
         auto indexName = tableIndicesRegex.exec(sqlStmt);
         if (2 == indexName.size()) {
@@ -148,7 +145,7 @@ std::list<std::string> CatalogueSchema::getSchemaIndexNames() const {
         }
       }
     }
-  } catch(exception::Exception &ex) {
+  } catch (exception::Exception& ex) {
     throw exception::Exception(std::string(__FUNCTION__) + " failed: " + ex.getMessage().str());
   }
   return schemaIndices;
@@ -157,18 +154,18 @@ std::list<std::string> CatalogueSchema::getSchemaIndexNames() const {
 //------------------------------------------------------------------------------
 // getSchemaSequenceNames
 //------------------------------------------------------------------------------
-std::list<std::string> CatalogueSchema::getSchemaSequenceNames() const {  
+std::list<std::string> CatalogueSchema::getSchemaSequenceNames() const {
   std::list<std::string> schemaSequences;
   std::string::size_type searchPos = 0;
   std::string::size_type findResult = std::string::npos;
   try {
-    while(std::string::npos != (findResult = sql.find(';', searchPos))) {
+    while (std::string::npos != (findResult = sql.find(';', searchPos))) {
       // Calculate the length of the current statement without the trailing ';'
       const std::string::size_type stmtLen = findResult - searchPos;
       const std::string sqlStmt = utils::trimString(std::string_view(sql).substr(searchPos, stmtLen));
       searchPos = findResult + 1;
 
-      if(0 < sqlStmt.size()) { // Ignore empty statements
+      if (0 < sqlStmt.size()) {  // Ignore empty statements
         cta::utils::Regex tableSequencesRegex("CREATE SEQUENCE ([a-zA-Z_]+)");
         auto sequenceName = tableSequencesRegex.exec(sqlStmt);
         if (2 == sequenceName.size()) {
@@ -176,7 +173,7 @@ std::list<std::string> CatalogueSchema::getSchemaSequenceNames() const {
         }
       }
     }
-  } catch(exception::Exception &ex) {
+  } catch (exception::Exception& ex) {
     throw exception::Exception(std::string(__FUNCTION__) + " failed: " + ex.getMessage().str());
   }
   return schemaSequences;
@@ -188,26 +185,24 @@ std::list<std::string> CatalogueSchema::getSchemaSequenceNames() const {
 std::map<std::string, uint64_t, std::less<>> CatalogueSchema::getSchemaVersion() const {
   try {
     std::map<std::string, uint64_t, std::less<>> schemaVersion;
-    cta::utils::Regex schemaVersionRegex(
-      "INSERT INTO CTA_CATALOGUE\\("
-      "  SCHEMA_VERSION_MAJOR,"
-      "  SCHEMA_VERSION_MINOR\\)"
-      "VALUES\\("
-      "  ([[:digit:]]+),"
-      "  ([[:digit:]]+)\\);"
-    );
+    cta::utils::Regex schemaVersionRegex("INSERT INTO CTA_CATALOGUE\\("
+                                         "  SCHEMA_VERSION_MAJOR,"
+                                         "  SCHEMA_VERSION_MINOR\\)"
+                                         "VALUES\\("
+                                         "  ([[:digit:]]+),"
+                                         "  ([[:digit:]]+)\\);");
     if (auto version = schemaVersionRegex.exec(sql); version.size() == 3) {
       schemaVersion.try_emplace("SCHEMA_VERSION_MAJOR", cta::utils::toUint64(version[1].c_str()));
       schemaVersion.try_emplace("SCHEMA_VERSION_MINOR", cta::utils::toUint64(version[2].c_str()));
     } else {
       exception::Exception ex;
       ex.getMessage() << "Could not find SCHEMA_VERSION";
-      throw ex; 
+      throw ex;
     }
     return schemaVersion;
-  } catch(exception::Exception &ex) {
+  } catch (exception::Exception& ex) {
     throw exception::Exception(std::string(__FUNCTION__) + " failed: " + ex.getMessage().str());
   }
 }
 
-} // namespace cta::catalogue
+}  // namespace cta::catalogue

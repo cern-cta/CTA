@@ -24,7 +24,7 @@ namespace cta::exception {
  * to inform about a problem linked to the creation or json serialization of an object
  */
 class JSONObjectException : public Exception {
-  using Exception::Exception; 
+  using Exception::Exception;
 };
 
-} // namespace cta::exception
+}  // namespace cta::exception

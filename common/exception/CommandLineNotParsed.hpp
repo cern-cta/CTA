@@ -25,9 +25,7 @@ namespace cta::exception {
  * CommandLineNotParsed.
  */
 class CommandLineNotParsed : public cta::exception::Exception {
-  
 public:
-  
   /**
    * Constructor.
    *
@@ -36,8 +34,8 @@ public:
    * @param embedBacktrace whether to embed a backtrace of where the
    * exception was throw in the message
    */
-  CommandLineNotParsed(const std::string &context = "", const bool embedBacktrace = true);
+  CommandLineNotParsed(const std::string& context = "", const bool embedBacktrace = true);
 
-}; // class CommandLineNotParsed
+};  // class CommandLineNotParsed
 
-} // namespace cta::exception
+}  // namespace cta::exception

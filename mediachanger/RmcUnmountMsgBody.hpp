@@ -29,8 +29,8 @@ namespace cta::mediachanger {
 struct RmcUnmountMsgBody {
   uint32_t uid;
   uint32_t gid;
-  char unusedLoader[1]; // Should always be set to the emtpy string
-  char vid[CA_MAXVIDLEN+1];
+  char unusedLoader[1];  // Should always be set to the emtpy string
+  char vid[CA_MAXVIDLEN + 1];
   uint16_t drvOrd;
   uint16_t force;
 
@@ -47,7 +47,6 @@ struct RmcUnmountMsgBody {
   uint32_t bodyLen() const;
 
   static const RequestType requestType = RMC_UNMOUNT;
-}; // struct RmcUnmountMsgBody
+};  // struct RmcUnmountMsgBody
 
-} // namespace cta::mediachanger
-
+}  // namespace cta::mediachanger

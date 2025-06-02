@@ -21,6 +21,6 @@
 // -----------------------------------------------------------------------
 // Constructor
 // -----------------------------------------------------------------------
-cta::exception::NoEntry::NoEntry() :
-  // No backtrace for this exception
-  cta::exception::Exception("", false) {}
+cta::exception::NoEntry::NoEntry()
+    :  // No backtrace for this exception
+      cta::exception::Exception("", false) {}

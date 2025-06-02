@@ -24,4 +24,4 @@ namespace cta::rdbms {
 //------------------------------------------------------------------------------
 LoginFactory::~LoginFactory() = default;
 
-} // namespace cta::rdbms
+}  // namespace cta::rdbms

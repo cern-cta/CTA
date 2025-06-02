@@ -25,7 +25,6 @@ namespace unitTests {
 
 class cta_rdbms_ConnTest : public ::testing::TestWithParam<cta::rdbms::LoginFactory*> {
 protected:
-
   /**
    * The login object used to create database connections.
    */
@@ -35,6 +34,6 @@ protected:
 
   virtual void TearDown();
 
-}; // cta_rdbms_ConnTest
+};  // cta_rdbms_ConnTest
 
-} // namespace unitTests
+}  // namespace unitTests

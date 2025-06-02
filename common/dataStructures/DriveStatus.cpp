@@ -20,7 +20,7 @@
 #include <sstream>
 
 std::string cta::common::dataStructures::toString(cta::common::dataStructures::DriveStatus type) {
-  switch(type) {
+  switch (type) {
     case cta::common::dataStructures::DriveStatus::Down:
       return "Down";
     case cta::common::dataStructures::DriveStatus::Up:
@@ -45,13 +45,10 @@ std::string cta::common::dataStructures::toString(cta::common::dataStructures::D
       return "Shutdown";
     case cta::common::dataStructures::DriveStatus::Unknown:
       return "Unknown";
-    default:
-    {
+    default: {
       std::stringstream ret;
       ret << "WRONG STATE CODE (" << (uint32_t) type << ")";
       return ret.str();
     }
   }
 }
-
-

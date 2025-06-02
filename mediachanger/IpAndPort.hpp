@@ -44,6 +44,6 @@ struct IpAndPort {
    */
   unsigned short port;
 
-}; // struct IpAndPort
-  	
-} // namespace cta::mediachanger
+};  // struct IpAndPort
+
+}  // namespace cta::mediachanger

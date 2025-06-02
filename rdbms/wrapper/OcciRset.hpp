@@ -90,7 +90,9 @@ public:
 
   uint64_t columnUint64NoOpt(const std::string& colName) const { throw cta::exception::Exception("Not implemented"); };
 
-  std::string columnStringNoOpt(const std::string& colName) const { throw cta::exception::Exception("Not implemented"); };
+  std::string columnStringNoOpt(const std::string& colName) const {
+    throw cta::exception::Exception("Not implemented");
+  };
 
   double columnDoubleNoOpt(const std::string& colName) const { throw cta::exception::Exception("Not implemented"); };
 

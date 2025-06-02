@@ -47,13 +47,14 @@ void GenericObject::getHeaderFromObjectData(const std::string& objData) {
     // Base64 encode the header for diagnostics.
     const bool noNewLineInBase64Output = false;
     std::string objDataBase64;
-    CryptoPP::StringSource ss1(objData, true,
-      new CryptoPP::Base64Encoder(
-         new CryptoPP::StringSink(objDataBase64), noNewLineInBase64Output));
-    throw cta::exception::Exception(std::string("In <GenericObject::getHeaderFromObjectData(): could not parse header: ") +
-            m_header.InitializationErrorString() +
-            " size=" + std::to_string(objData.size()) + " data(b64)=\"" +
-            objDataBase64 + "\" name=" + m_name + "\"");
+    CryptoPP::StringSource ss1(
+      objData,
+      true,
+      new CryptoPP::Base64Encoder(new CryptoPP::StringSink(objDataBase64), noNewLineInBase64Output));
+    throw cta::exception::Exception(
+      std::string("In <GenericObject::getHeaderFromObjectData(): could not parse header: ") +
+      m_header.InitializationErrorString() + " size=" + std::to_string(objData.size()) + " data(b64)=\"" +
+      objDataBase64 + "\" name=" + m_name + "\"");
   }
   m_headerInterpreted = true;
 }
@@ -86,28 +87,36 @@ Backend& GenericObject::objectStore() {
 }
 
 namespace {
-  using cta::objectstore::GenericObject;
-  using cta::objectstore::ScopedExclusiveLock;
-  template <class C>
-  void garbageCollectWithType(GenericObject * gop, ScopedExclusiveLock& lock,
-      const std::string &presumedOwner, AgentReference & agentReference, log::LogContext & lc,
-    cta::catalogue::Catalogue & catalogue) {
-    C typedObject(*gop);
-    lock.transfer(typedObject);
-    typedObject.garbageCollect(presumedOwner, agentReference, lc, catalogue);
-  }
-}
+using cta::objectstore::GenericObject;
+using cta::objectstore::ScopedExclusiveLock;
 
-void GenericObject::garbageCollect(const std::string& presumedOwner, AgentReference & agentReference, log::LogContext & lc,
-    cta::catalogue::Catalogue & catalogue) {
+template<class C>
+void garbageCollectWithType(GenericObject* gop,
+                            ScopedExclusiveLock& lock,
+                            const std::string& presumedOwner,
+                            AgentReference& agentReference,
+                            log::LogContext& lc,
+                            cta::catalogue::Catalogue& catalogue) {
+  C typedObject(*gop);
+  lock.transfer(typedObject);
+  typedObject.garbageCollect(presumedOwner, agentReference, lc, catalogue);
+}
+}  // namespace
+
+void GenericObject::garbageCollect(const std::string& presumedOwner,
+                                   AgentReference& agentReference,
+                                   log::LogContext& lc,
+                                   cta::catalogue::Catalogue& catalogue) {
   throw ForbiddenOperation("In GenericObject::garbageCollect(): GenericObject cannot be garbage collected");
 }
 
 void GenericObject::garbageCollectDispatcher(ScopedExclusiveLock& lock,
-    const std::string &presumedOwner, AgentReference & agentReference, log::LogContext & lc,
-    cta::catalogue::Catalogue & catalogue) {
+                                             const std::string& presumedOwner,
+                                             AgentReference& agentReference,
+                                             log::LogContext& lc,
+                                             cta::catalogue::Catalogue& catalogue) {
   checkHeaderWritable();
-  switch(m_header.type()) {
+  switch (m_header.type()) {
     case serializers::AgentRegister_t:
       garbageCollectWithType<AgentRegister>(this, lock, presumedOwner, agentReference, lc, catalogue);
       break;
@@ -137,24 +146,24 @@ void GenericObject::garbageCollectDispatcher(ScopedExclusiveLock& lock,
       break;
     default: {
       std::stringstream err;
-      err << "In GenericObject::garbageCollect, unsupported type: "
-          << m_header.type();
+      err << "In GenericObject::garbageCollect, unsupported type: " << m_header.type();
       throw UnsupportedType(err.str());
     }
   }
 }
 
 namespace {
-  using cta::objectstore::GenericObject;
-  using cta::objectstore::ScopedExclusiveLock;
-  template <class C>
-  std::string dumpWithType(GenericObject * gop) {
-    C typedObject(*gop);
-    ScopedLock::transfer(*gop, typedObject);
-    std::string ret = typedObject.dump();
-    return ret;
-  }
+using cta::objectstore::GenericObject;
+using cta::objectstore::ScopedExclusiveLock;
+
+template<class C>
+std::string dumpWithType(GenericObject* gop) {
+  C typedObject(*gop);
+  ScopedLock::transfer(*gop, typedObject);
+  std::string ret = typedObject.dump();
+  return ret;
 }
+}  // namespace
 
 std::string GenericObject::dump() {
   checkHeaderReadable();
@@ -164,7 +173,7 @@ std::string GenericObject::dump() {
   std::string headerDump;
   std::string bodyDump;
   google::protobuf::util::MessageToJsonString(m_header, &headerDump, options);
-  switch(m_header.type()) {
+  switch (m_header.type()) {
     case serializers::RootEntry_t:
       bodyDump = dumpWithType<RootEntry>(this);
       break;
@@ -212,7 +221,7 @@ std::string GenericObject::dump() {
       err << "Unsupported type: " << m_header.type();
       throw std::runtime_error(err.str());
   }
-  return std::string ("Header dump:\n") + headerDump + "Body dump:\n" + bodyDump;
+  return std::string("Header dump:\n") + headerDump + "Body dump:\n" + bodyDump;
 }
 
-} // namespace cta::objectstore
+}  // namespace cta::objectstore

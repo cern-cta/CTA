@@ -21,18 +21,16 @@
 
 namespace cta::exception {
 
-    /**
+/**
      * Failed to dismount volume.
      */
-    class EncryptionException : public cta::exception::Exception {
-
-    public:
-
-      /**
+class EncryptionException : public cta::exception::Exception {
+public:
+  /**
        * Constructor
        */
-      EncryptionException(const std::string &context, const bool embedBacktrace = false);
+  EncryptionException(const std::string& context, const bool embedBacktrace = false);
 
-    }; // class DismountFailed
+};  // class DismountFailed
 
-} // namespace cta::exception
+}  // namespace cta::exception

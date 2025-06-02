@@ -26,41 +26,46 @@
  * 0 if it is a size with no unit,
  * 1 if it is a size with a unit
  */
-int check_for_strutou64(char *str) {
+int check_for_strutou64(char* str) {
   /* We accept only the following format */
   /* [blanks]<digits>[b|k|M|G|T|P]i? */
-  char *p = (char *) str;
-  while (isspace (*p)) p++; /* skip leading spaces */
+  char* p = (char*) str;
+  while (isspace(*p)) {
+    p++; /* skip leading spaces */
+  }
   while (*p) {
-    if (! isdigit (*p)) break;
+    if (!isdigit(*p)) {
+      break;
+    }
     p++;
   }
 
   /* End of the digits section:  */
   /* Either there is a supported unit, either there is none */
   switch (*p) {
-  case '\0':
-    return(0); /* Ok and no unit */
-  case 'b':  /* Not supported by u64
+    case '\0':
+      return (0); /* Ok and no unit */
+    case 'b':     /* Not supported by u64
                 we say it is bytes
                 u64 will ignore it, simply */
-  case 'k':
-  case 'M':
-  case 'G':
-  case 'T':
-  case 'P':
-    switch (*++p) {
-    case '\0':
-      return(1); /* Ok with unit */
-    case 'i':
-      if (*(p+2) == '\0')
-        return(1); /* Ok with power of 2 unit */
-      else
-        return(-1); /* Unit followed by anything, not valid */
+    case 'k':
+    case 'M':
+    case 'G':
+    case 'T':
+    case 'P':
+      switch (*++p) {
+        case '\0':
+          return (1); /* Ok with unit */
+        case 'i':
+          if (*(p + 2) == '\0') {
+            return (1); /* Ok with power of 2 unit */
+          } else {
+            return (-1); /* Unit followed by anything, not valid */
+          }
+        default:
+          return (-1); /* Unit followed by anything, not valid */
+      }
     default:
-      return(-1); /* Unit followed by anything, not valid */
-    }
-  default:
-    return(-1); /* Unknown unit */
+      return (-1); /* Unknown unit */
   }
 }

@@ -36,11 +36,11 @@ namespace cta::catalogue {
  * The purpose of this class is to help IDEs by isolating the "non-compilable"
  * issues into a small cpp file.
  */
-struct SqliteCatalogueSchema: public CatalogueSchema {
+struct SqliteCatalogueSchema : public CatalogueSchema {
   /**
    * Constructor.
    */
   SqliteCatalogueSchema();
 };
 
-} // namespace cta::catalogue
+}  // namespace cta::catalogue

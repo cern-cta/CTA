@@ -21,18 +21,16 @@
 
 namespace cta::exception {
 
-    /**
+/**
      * Mismatch.
      */
-    class Mismatch : public cta::exception::Exception {
-      
-    public:
-      
-      /**
+class Mismatch : public cta::exception::Exception {
+public:
+  /**
        * Constructor
        */
-      Mismatch();
+  Mismatch();
 
-    }; // class Mismatch
+};  // class Mismatch
 
-} // namespace cta::exception
+}  // namespace cta::exception

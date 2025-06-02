@@ -255,7 +255,8 @@ void MigrationReportPacker::ReportLastBatchError::execute(MigrationReportPacker&
   // in case there are no remaining jobs, we refrain from sending an empty report to the client in this case.
   if (reportPacker.m_successfulArchiveJobs.empty() && reportPacker.m_skippedFiles.empty()) {
     reportPacker.m_lc.log(cta::log::INFO,
-                          "Received a request to requeue last non-flushed job batch from tape session, but no jobs were found. Doing nothing.");
+                          "Received a request to requeue last non-flushed job batch from tape session, but no jobs "
+                          "were found. Doing nothing.");
     return;
   }
   // We re-queue all the jobs which were left in the m_successfulArchiveJobs
@@ -274,8 +275,8 @@ void MigrationReportPacker::ReportLastBatchError::execute(MigrationReportPacker&
     } catch (cta::exception::Exception& ex) {
       cta::log::ScopedParamContainer params(reportPacker.m_lc);
       params.add("ExceptionMSG", ex.getMessageValue())
-            .add("archiveFileId", job->archiveFile.archiveFileID)
-            .add("jobIDsListSize", jobIDsList.size());
+        .add("archiveFileId", job->archiveFile.archiveFileID)
+        .add("jobIDsListSize", jobIDsList.size());
       reportPacker.m_lc.log(cta::log::ERR,
                             "In MigrationReportPacker::ReportLastBatchError::execute(): looping through reportPacker "
                             "jobIDs threw an exception.");

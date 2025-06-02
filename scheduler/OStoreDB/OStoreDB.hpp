@@ -241,7 +241,7 @@ protected:
    * @return a pair with the max retrieve priority and minimum archive age
    */
   static std::pair<uint64_t, uint64_t>
-  getArchiveMountPolicyMaxPriorityMinAge(const std::list<common::dataStructures::MountPolicy> &mountPolicies);
+  getArchiveMountPolicyMaxPriorityMinAge(const std::list<common::dataStructures::MountPolicy>& mountPolicies);
 
   /**
    * Given a list of mount policies, it compares all of them to extract both the maximum retrieve priority and the minimum
@@ -250,7 +250,7 @@ protected:
    * @return a pair with the max retrieve priority and minimum retrieve age
    */
   static std::pair<uint64_t, uint64_t>
-  getRetrieveMountPolicyMaxPriorityMinAge(const std::list<common::dataStructures::MountPolicy> &mountPolicies);
+  getRetrieveMountPolicyMaxPriorityMinAge(const std::list<common::dataStructures::MountPolicy>& mountPolicies);
 
 public:
   std::unique_ptr<SchedulerDatabase::TapeMountDecisionInfo> getMountInfo(log::LogContext& logContext) override;
@@ -402,8 +402,9 @@ public:
     void addDiskSystemToSkip(const SchedulerDatabase::RetrieveMount::DiskSystemToSkip& diskSystemToSkip) override;
     void flushAsyncSuccessReports(std::list<cta::SchedulerDatabase::RetrieveJob*>& jobsBatch,
                                   log::LogContext& lc) override;
+
     void flushAsyncSuccessReports(std::list<std::unique_ptr<cta::SchedulerDatabase::RetrieveJob>>& jobsBatch,
-                                  log::LogContext& lc) override { /* empty implementaion, for CTA_PGSCHED only */  }
+                                  log::LogContext& lc) override { /* empty implementaion, for CTA_PGSCHED only */ }
   };
   friend class RetrieveMount;
 

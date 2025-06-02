@@ -20,8 +20,11 @@
 //------------------------------------------------------------------------------
 // Constructor
 //------------------------------------------------------------------------------
-cta::OStoreDBWithAgent::OStoreDBWithAgent(cta::objectstore::Backend & be, cta::objectstore::AgentReference & ar, 
-  catalogue::Catalogue & catalogue, log::Logger & logger): cta::OStoreDB(be, catalogue, logger) {
+cta::OStoreDBWithAgent::OStoreDBWithAgent(cta::objectstore::Backend& be,
+                                          cta::objectstore::AgentReference& ar,
+                                          catalogue::Catalogue& catalogue,
+                                          log::Logger& logger)
+    : cta::OStoreDB(be, catalogue, logger) {
   cta::OStoreDB::setAgentReference(&ar);
 }
 

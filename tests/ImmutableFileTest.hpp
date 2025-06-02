@@ -27,7 +27,6 @@ namespace cta {
  */
 class ImmutableFileTest {
 public:
-
   /**
    * Constructor.
    *
@@ -35,7 +34,7 @@ public:
    * @param outStream Standard output stream.
    * @param errStream Standard error stream.
    */
-  ImmutableFileTest(std::istream &inStream, std::ostream &outStream, std::ostream &errStream);
+  ImmutableFileTest(std::istream& inStream, std::ostream& outStream, std::ostream& errStream);
 
   /**
    * The object's implementation of main() that should be called from the main()
@@ -45,24 +44,23 @@ public:
    * @param argv The command-line arguments.
    * @return The exit value of the program.
    */
-  int main(const int argc, char *const *const argv);
+  int main(const int argc, char* const* const argv);
 
 private:
-
   /**
    * Standard input stream.
    */
-  std::istream &m_in;
+  std::istream& m_in;
 
   /**
    * Standard output stream.
    */
-  std::ostream &m_out;
+  std::ostream& m_out;
 
   /**
    * Standard error stream.
    */
-  std::ostream &m_err;
+  std::ostream& m_err;
 
   /**
    * An exception throwing version of main().
@@ -71,7 +69,7 @@ private:
    * @param argv The command-line arguments.
    * @return The exit value of the program.
    */
-  int exceptionThrowingMain(const int argc, char *const *const argv);
+  int exceptionThrowingMain(const int argc, char* const* const argv);
 
   /**
    * Asks the user to confirm that they want to destroy the specified file.
@@ -79,20 +77,20 @@ private:
    * @param fileUrl The URL of the file.
    * @return True if the user confirmed.
    */
-  bool userConfirmsDestroyFile(const std::string &fileUrl) const;
+  bool userConfirmsDestroyFile(const std::string& fileUrl) const;
 
   /**
    * @return True if the specified file exists
    * @param url The XRootD URL of the file to be tested.
    */
-  bool fileExists(const XrdCl::URL &url);
+  bool fileExists(const XrdCl::URL& url);
 
   /**
    * Deletes the specified file.
    *
    * @param url The XRootD URL of the file to be deleted.
    */
-  void deleteFile(const XrdCl::URL &url);
+  void deleteFile(const XrdCl::URL& url);
 
   /**
    * Tests the opening and closing of the specified file.
@@ -108,8 +106,11 @@ private:
    * string means don't write anything.
    * @param expectecErrNo The expected errNo result of opening the file.
    */
-  void testFile(const XrdCl::URL &url, const XrdCl::OpenFlags::Flags openFlags, const XrdCl::Access::Mode openMode,
-    const std::string &contents, const uint32_t expectedOpenErrNo);
+  void testFile(const XrdCl::URL& url,
+                const XrdCl::OpenFlags::Flags openFlags,
+                const XrdCl::Access::Mode openMode,
+                const std::string& contents,
+                const uint32_t expectedOpenErrNo);
 
   /**
    * @return The string representation of the specified XRootD "open file"
@@ -131,6 +132,6 @@ private:
    */
   std::string xErrorCodeToString(uint32_t code);
 
-}; // class ImmutableFileTest
+};  // class ImmutableFileTest
 
-} // namespace cta
+}  // namespace cta

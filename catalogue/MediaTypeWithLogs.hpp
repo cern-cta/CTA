@@ -29,8 +29,7 @@ namespace cta::catalogue {
  * Structure describing a tape media type together with cfeation and last
  * modification logs.
  */
-struct MediaTypeWithLogs: public MediaType {
-
+struct MediaTypeWithLogs : public MediaType {
   /**
    * The creation log.
    */
@@ -41,6 +40,6 @@ struct MediaTypeWithLogs: public MediaType {
    */
   common::dataStructures::EntryLog lastModificationLog;
 
-}; // struct MediaType
+};  // struct MediaType
 
-} // namespace cta::catalogue
+}  // namespace cta::catalogue

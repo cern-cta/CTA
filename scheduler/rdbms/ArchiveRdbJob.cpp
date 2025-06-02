@@ -271,7 +271,7 @@ void ArchiveRdbJob::failReport(const std::string& failureReason, log::LogContext
   cta::schedulerdb::Transaction txn(m_connPool);
   try {
     cta::utils::Timer t;
-    uint64_t deletionCount = 0 ;
+    uint64_t deletionCount = 0;
     if (reportType == ReportType::NoReportRequired || m_jobRow.totalReportRetries >= m_jobRow.maxReportRetries) {
       //m_jobRow.updateJobStatusForFailedReport(txn, ArchiveJobStatus::AJS_Failed);
       uint64_t nrows = m_jobRow.updateJobStatusForFailedReport(txn, ArchiveJobStatus::ReadyForDeletion);
@@ -306,8 +306,11 @@ void ArchiveRdbJob::failReport(const std::string& failureReason, log::LogContext
       }
     }
     txn.commit();
-    if(reportType == ReportType::NoReportRequired || m_jobRow.totalReportRetries >= m_jobRow.maxReportRetries){
-      log::ScopedParamContainer(lc).add("rowDeletionTime", t.secs()).add("rowDeletionCount", deletionCount).log(log::INFO, "ArchiveRdbJob::failReport(): deleted job.");
+    if (reportType == ReportType::NoReportRequired || m_jobRow.totalReportRetries >= m_jobRow.maxReportRetries) {
+      log::ScopedParamContainer(lc)
+        .add("rowDeletionTime", t.secs())
+        .add("rowDeletionCount", deletionCount)
+        .log(log::INFO, "ArchiveRdbJob::failReport(): deleted job.");
     }
   } catch (exception::Exception& ex) {
     lc.log(cta::log::WARNING,

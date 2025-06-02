@@ -31,9 +31,8 @@ namespace cta::catalogue {
  * RdbmsCatalogue::getArchiveFilesForRepack() implementation of
  * ArchiveFileItorImpl.
  */
-class RdbmsCatalogueGetArchiveFilesForRepackItor: public catalogue::ArchiveFileItor::Impl {
+class RdbmsCatalogueGetArchiveFilesForRepackItor : public catalogue::ArchiveFileItor::Impl {
 public:
-
   /**
    * Constructor.
    *
@@ -44,11 +43,10 @@ public:
    * that there might not be a file with this exact file sequence number.
    * @return The specified files in tape file sequence order.
    */
-  RdbmsCatalogueGetArchiveFilesForRepackItor(
-    log::Logger &log,
-    rdbms::ConnPool &connPool,
-    const std::string &vid,
-    const uint64_t startFSeq);
+  RdbmsCatalogueGetArchiveFilesForRepackItor(log::Logger& log,
+                                             rdbms::ConnPool& connPool,
+                                             const std::string& vid,
+                                             const uint64_t startFSeq);
 
   /**
    * Destructor.
@@ -66,11 +64,10 @@ public:
   common::dataStructures::ArchiveFile next() override;
 
 private:
-
   /**
    * Object representing the API to the CTA logging system.
    */
-  log::Logger &m_log;
+  log::Logger& m_log;
 
   /**
    * True if the result set is empty.
@@ -113,6 +110,6 @@ private:
    * ID and then copy number.
    */
   ArchiveFileBuilder<cta::common::dataStructures::ArchiveFile> m_archiveFileBuilder;
-}; // class RdbmsCatalogueGetArchiveFilesForRepackItor
+};  // class RdbmsCatalogueGetArchiveFilesForRepackItor
 
-} // namespace cta::catalogue
+}  // namespace cta::catalogue

@@ -27,9 +27,10 @@ namespace cta::rdbms::wrapper {
 OcciEnv::OcciEnv() {
   using namespace oracle::occi;
   m_env = Environment::createEnvironment(Environment::THREADED_MUTEXED);
-  if(nullptr == m_env) {
-    throw exception::Exception(std::string(__FUNCTION__) + "failed"
-      ": oracle::occi::createEnvironment() returned a nullptr pointer");
+  if (nullptr == m_env) {
+    throw exception::Exception(std::string(__FUNCTION__) +
+                               "failed"
+                               ": oracle::occi::createEnvironment() returned a nullptr pointer");
   }
 }
 
@@ -45,22 +46,20 @@ OcciEnv::~OcciEnv() {
 //------------------------------------------------------------------------------
 // createConn
 //------------------------------------------------------------------------------
-std::unique_ptr<ConnWrapper> OcciEnv::createConn(
-  const std::string &username,
-  const std::string &password,
-  const std::string &database) {
+std::unique_ptr<ConnWrapper>
+OcciEnv::createConn(const std::string& username, const std::string& password, const std::string& database) {
   try {
-    oracle::occi::Connection *const conn = m_env->createConnection(username, password, database);
+    oracle::occi::Connection* const conn = m_env->createConnection(username, password, database);
     if (nullptr == conn) {
       throw exception::Exception("oracle::occi::createConnection() returned a nullptr pointer");
     }
 
     return std::make_unique<OcciConn>(m_env, conn);
-  } catch(exception::Exception &ex) {
+  } catch (exception::Exception& ex) {
     throw exception::Exception(std::string(__FUNCTION__) + " failed: " + ex.getMessage().str());
-  } catch(std::exception &se) {
+  } catch (std::exception& se) {
     throw exception::Exception(std::string(__FUNCTION__) + " failed: " + se.what());
   }
 }
 
-} // namespace cta::rdbms::wrapper
+}  // namespace cta::rdbms::wrapper

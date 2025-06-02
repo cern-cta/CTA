@@ -17,4 +17,4 @@
 
 #pragma once
 
-EXTERN_C int Cdomainname (char*, int);
+EXTERN_C int Cdomainname(char*, int);

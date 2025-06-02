@@ -102,7 +102,6 @@ gid_t toGid(const std::string& str);
  */
 bool isValidUInt(const std::string& str);
 
-
 /**
  * Checks if the specified string is a valid decimal.
  *

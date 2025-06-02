@@ -39,4 +39,4 @@ public:
   virtual FilePositionInfos getFilePosition(const cta::RetrieveJob& job) const = 0;
 };
 
-} // namespace castor::tape::tapeserver::rao
+}  // namespace castor::tape::tapeserver::rao

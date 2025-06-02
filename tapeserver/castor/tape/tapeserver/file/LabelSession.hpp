@@ -44,7 +44,8 @@ public:
     *            without otherwise.
     *
     */
-  static void label(tapeserver::drive::DriveInterface *drive, const std::string &vid, const bool lbp);
+  static void label(tapeserver::drive::DriveInterface* drive, const std::string& vid, const bool lbp);
 };
 
-}}  // namespace castor::tape::tapeFile
+}  // namespace tapeFile
+}  // namespace castor::tape

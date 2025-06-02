@@ -61,20 +61,19 @@ public:
    * configuration item was created.  If no value is given then the current
    * time is used.
    */
-  UserGroup(
-    const std::string &name,
-    const DriveQuota &archiveDriveQuota,
-    const DriveQuota &retrieveDriveQuota,
-    const MountCriteria &archiveMountCriteria,
-    const MountCriteria &retrieveMountCriteria,
-    const CreationLog & creationLog);
+  UserGroup(const std::string& name,
+            const DriveQuota& archiveDriveQuota,
+            const DriveQuota& retrieveDriveQuota,
+            const MountCriteria& archiveMountCriteria,
+            const MountCriteria& retrieveMountCriteria,
+            const CreationLog& creationLog);
 
   /**
    * Returns the name of the user group.
    *
    * @return The name of the user group.
    */
-  const std::string &getName() const noexcept;
+  const std::string& getName() const noexcept;
 
   /**
    * Returns the tape drive quota for the user group when mounting tapes for
@@ -83,7 +82,7 @@ public:
    * @return The tape drive quota for the user group when mounting tapes for
    * file archive.
    */
-  const DriveQuota &getArchiveDriveQuota() const noexcept;
+  const DriveQuota& getArchiveDriveQuota() const noexcept;
 
   /**
    * Returns the tape drive quota for the user group when mounting tapes for
@@ -92,19 +91,19 @@ public:
    * @return The tape drive quota for the user group when mounting tapes for
    * file retrieve.
    */
-  const DriveQuota &getRetrieveDriveQuota() const noexcept;
+  const DriveQuota& getRetrieveDriveQuota() const noexcept;
 
   /**
    * Returns the criteria of the user group to be met in order to justify
    * mounting a tape for file archive.
    */
-  const MountCriteria &getArchiveMountCriteria() const noexcept;
+  const MountCriteria& getArchiveMountCriteria() const noexcept;
 
   /**
    * Returns the criteria of the user group to be met in order to justify
    * mounting a tape for file retrieve.
    */
-  const MountCriteria &getRetrieveMountCriteria() const noexcept;
+  const MountCriteria& getRetrieveMountCriteria() const noexcept;
 
 private:
   /**
@@ -135,11 +134,11 @@ private:
    * tape for file retrieve.
    */
   MountCriteria m_retrieveMountCriteria;
-  
+
   /**
    * The when, who, why of the group's creation
    */
   CreationLog m_creationLog;
 };
 
-} // namespace cta
+}  // namespace cta

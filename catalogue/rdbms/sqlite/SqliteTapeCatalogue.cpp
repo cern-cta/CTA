@@ -24,11 +24,12 @@
 
 namespace cta::catalogue {
 
-SqliteTapeCatalogue::SqliteTapeCatalogue(log::Logger &log,
-  std::shared_ptr<rdbms::ConnPool> connPool, RdbmsCatalogue* rdbmsCatalogue)
-  : RdbmsTapeCatalogue(log, connPool, rdbmsCatalogue) {}
+SqliteTapeCatalogue::SqliteTapeCatalogue(log::Logger& log,
+                                         std::shared_ptr<rdbms::ConnPool> connPool,
+                                         RdbmsCatalogue* rdbmsCatalogue)
+    : RdbmsTapeCatalogue(log, connPool, rdbmsCatalogue) {}
 
-uint64_t SqliteTapeCatalogue::getTapeLastFSeq(rdbms::Conn &conn, const std::string &vid) const {
+uint64_t SqliteTapeCatalogue::getTapeLastFSeq(rdbms::Conn& conn, const std::string& vid) const {
   const char* const sql = R"SQL(
     SELECT 
       LAST_FSEQ AS LAST_FSEQ 
@@ -47,4 +48,4 @@ uint64_t SqliteTapeCatalogue::getTapeLastFSeq(rdbms::Conn &conn, const std::stri
 
   return rset.columnUint64("LAST_FSEQ");
 }
-} // namespace cta::catalogue
+}  // namespace cta::catalogue

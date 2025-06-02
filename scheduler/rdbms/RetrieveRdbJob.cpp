@@ -349,7 +349,7 @@ void RetrieveRdbJob::failReport(const std::string& failureReason, log::LogContex
     }
     txn.commit();
     if (reportType == ReportType::NoReportRequired || m_jobRow.totalReportRetries >= m_jobRow.maxReportRetries) {
-       log::ScopedParamContainer(lc)
+      log::ScopedParamContainer(lc)
         .add("rowDeletionCount", nrowsdeleted)
         .add("rowDeletionTime", t.secs())
         .log(log::INFO, "In schedulerdb::RetrieveJobQueueRow::updateJobStatusForFailedReport(): deleted jobs");

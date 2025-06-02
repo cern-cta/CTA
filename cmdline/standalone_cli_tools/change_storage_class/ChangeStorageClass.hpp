@@ -26,13 +26,18 @@
 
 #include "CtaFrontendApi.hpp"
 
-namespace eos::client { class EndpointMap;  }
-namespace cta::log    { class StdoutLogger; }
+namespace eos::client {
+class EndpointMap;
+}
+
+namespace cta::log {
+class StdoutLogger;
+}
 
 namespace cta::cliTool {
 class CmdLineArgs;
 
-class ChangeStorageClass final: public CmdLineTool {
+class ChangeStorageClass final : public CmdLineTool {
 public:
   /**
    * Constructor.
@@ -44,23 +49,21 @@ public:
    * @param argc
    * @param argv
    */
-  ChangeStorageClass(
-    std::istream &inStream,
-    std::ostream &outStream,
-    std::ostream &errStream,
-    cta::log::StdoutLogger &log);
+  ChangeStorageClass(std::istream& inStream,
+                     std::ostream& outStream,
+                     std::ostream& errStream,
+                     cta::log::StdoutLogger& log);
 
   /*
    * Destructor
    */
-   ~ChangeStorageClass() override;
+  ~ChangeStorageClass() override;
 
 private:
-
   /**
    * The object representing the API of the CTA logging system.
    */
-  cta::log::StdoutLogger &m_log;
+  cta::log::StdoutLogger& m_log;
 
   /**
    * Archive file ids of the files to change
@@ -105,7 +108,7 @@ private:
   /**
   * Fills the member variables with data, based on the arguments that were provided
   */
-  void handleArguments(const CmdLineArgs &cmdLineArgs);
+  void handleArguments(const CmdLineArgs& cmdLineArgs);
 
   /**
   * Checks that the provided archive id is related to the correct disk file id and disk instance
@@ -113,7 +116,9 @@ private:
   * @param operatorProvidedFid The disk file id provided by the operator, either from a json file or an command line argument
   * @param operatorProvidedInstance The disk instance provided by the operator, either from a json file or an command line argument
   */
-  bool validateUserInputFileMetadata(const std::string& archiveFileId, const std::string& operatorProvidedFid, const std::string& operatorProvidedInstance);
+  bool validateUserInputFileMetadata(const std::string& archiveFileId,
+                                     const std::string& operatorProvidedFid,
+                                     const std::string& operatorProvidedInstance);
 
   /**
    * An exception throwing version of main().
@@ -122,10 +127,8 @@ private:
    * @param argv The command-line arguments.
    * @return The exit value of the program.
    */
-  int exceptionThrowingMain(const int argc, char *const *const argv) override;
+  int exceptionThrowingMain(const int argc, char* const* const argv) override;
 
+};  // class CtaChangeStorageClass
 
-
-} ; // class CtaChangeStorageClass
-
-} // namespace cta::admin
+}  // namespace cta::cliTool

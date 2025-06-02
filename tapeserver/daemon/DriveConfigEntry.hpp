@@ -54,13 +54,13 @@ public:
    * Accessor method to the library slot strcuture.
    * @return reference to the library slot.
    */
-  const cta::mediachanger::LibrarySlot & librarySlot() const;
+  const cta::mediachanger::LibrarySlot& librarySlot() const;
 
 private:
   /**
    * The library slot structure.
    */
-  std::unique_ptr <cta::mediachanger::LibrarySlot> m_librarySlot;
+  std::unique_ptr<cta::mediachanger::LibrarySlot> m_librarySlot;
 
 public:
   /**
@@ -77,11 +77,10 @@ public:
    * @param librarySlot The slot in the tape library that contains the tape
    * drive.
    */
-  DriveConfigEntry(
-    const std::string &unitName,
-    const std::string &logicalLibrary,
-    const std::string &devFilename,
-    const std::string &librarySlot);
+  DriveConfigEntry(const std::string& unitName,
+                   const std::string& logicalLibrary,
+                   const std::string& devFilename,
+                   const std::string& librarySlot);
 
   /**
    * Copy constructor
@@ -96,6 +95,6 @@ public:
    */
   DriveConfigEntry& operator=(const DriveConfigEntry& o);
   static const size_t maxNameLen = 100;
-}; // struct DriveConfigEntry
+};  // struct DriveConfigEntry
 
-} // namespace cta::tape::daemon
+}  // namespace cta::tape::daemon

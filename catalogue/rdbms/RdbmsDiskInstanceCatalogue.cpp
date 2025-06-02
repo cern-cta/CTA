@@ -29,23 +29,25 @@
 
 namespace cta::catalogue {
 
-RdbmsDiskInstanceCatalogue::RdbmsDiskInstanceCatalogue(log::Logger &log, std::shared_ptr<rdbms::ConnPool> connPool)
-  : m_log(log), m_connPool(connPool) {}
+RdbmsDiskInstanceCatalogue::RdbmsDiskInstanceCatalogue(log::Logger& log, std::shared_ptr<rdbms::ConnPool> connPool)
+    : m_log(log),
+      m_connPool(connPool) {}
 
-void RdbmsDiskInstanceCatalogue::createDiskInstance(const common::dataStructures::SecurityIdentity &admin,
-  const std::string &name, const std::string &comment) {
-  if(name.empty()) {
+void RdbmsDiskInstanceCatalogue::createDiskInstance(const common::dataStructures::SecurityIdentity& admin,
+                                                    const std::string& name,
+                                                    const std::string& comment) {
+  if (name.empty()) {
     throw UserSpecifiedAnEmptyStringDiskInstanceName("Cannot create disk system because the name is an empty string");
   }
-  if(comment.empty()) {
+  if (comment.empty()) {
     throw UserSpecifiedAnEmptyStringComment("Cannot create disk system because the comment is an empty string");
   }
   const auto trimmedComment = RdbmsCatalogueUtils::checkCommentOrReasonMaxLength(comment, &m_log);
 
   auto conn = m_connPool->getConn();
-  if(RdbmsCatalogueUtils::diskInstanceExists(conn, name)) {
+  if (RdbmsCatalogueUtils::diskInstanceExists(conn, name)) {
     throw exception::UserError(std::string("Cannot create disk instance ") + name +
-      " because a disk instance with the same name identifier already exists");
+                               " because a disk instance with the same name identifier already exists");
   }
 
   const time_t now = time(nullptr);
@@ -92,7 +94,7 @@ void RdbmsDiskInstanceCatalogue::createDiskInstance(const common::dataStructures
   stmt.executeNonQuery();
 }
 
-void RdbmsDiskInstanceCatalogue::deleteDiskInstance(const std::string &name) {
+void RdbmsDiskInstanceCatalogue::deleteDiskInstance(const std::string& name) {
   const char* const delete_sql = R"SQL(
     DELETE 
     FROM 
@@ -102,29 +104,32 @@ void RdbmsDiskInstanceCatalogue::deleteDiskInstance(const std::string &name) {
   )SQL";
   auto conn = m_connPool->getConn();
   auto stmt = conn.createStmt(delete_sql);
-    stmt.bindString(":DISK_INSTANCE_NAME", name);
+  stmt.bindString(":DISK_INSTANCE_NAME", name);
   stmt.executeNonQuery();
 
   // The delete statement will effect no rows and will not raise an error if
   // either the tape does not exist or if it still has tape files
-  if(0 == stmt.getNbAffectedRows()) {
-    if(RdbmsCatalogueUtils::diskInstanceExists(conn, name)) {
-      throw UserSpecifiedANonEmptyDiskInstanceAfterDelete(std::string("Cannot delete disk instance ") + name + " for unknown reason");
+  if (0 == stmt.getNbAffectedRows()) {
+    if (RdbmsCatalogueUtils::diskInstanceExists(conn, name)) {
+      throw UserSpecifiedANonEmptyDiskInstanceAfterDelete(std::string("Cannot delete disk instance ") + name +
+                                                          " for unknown reason");
     } else {
-      throw UserSpecifiedANonExistentDiskInstance(std::string("Cannot delete disk instance ") + name + " because it does not exist");
+      throw UserSpecifiedANonExistentDiskInstance(std::string("Cannot delete disk instance ") + name +
+                                                  " because it does not exist");
     }
   }
 }
 
-void RdbmsDiskInstanceCatalogue::modifyDiskInstanceComment(const common::dataStructures::SecurityIdentity &admin,
-  const std::string &name, const std::string &comment) {
-  if(name.empty()) {
+void RdbmsDiskInstanceCatalogue::modifyDiskInstanceComment(const common::dataStructures::SecurityIdentity& admin,
+                                                           const std::string& name,
+                                                           const std::string& comment) {
+  if (name.empty()) {
     throw UserSpecifiedAnEmptyStringDiskInstanceName("Cannot modify disk instance"
-      " because the disk instance name is an empty string");
+                                                     " because the disk instance name is an empty string");
   }
-  if(comment.empty()) {
+  if (comment.empty()) {
     throw UserSpecifiedAnEmptyStringComment("Cannot modify disk instance "
-      "because the new comment is an empty string");
+                                            "because the new comment is an empty string");
   }
   const auto trimmedComment = RdbmsCatalogueUtils::checkCommentOrReasonMaxLength(comment, &m_log);
 
@@ -147,8 +152,9 @@ void RdbmsDiskInstanceCatalogue::modifyDiskInstanceComment(const common::dataStr
   stmt.bindString(":DISK_INSTANCE_NAME", name);
   stmt.executeNonQuery();
 
-  if(0 == stmt.getNbAffectedRows()) {
-    throw UserSpecifiedANonExistentDiskInstance(std::string("Cannot modify disk instance ") + name + " because it does not exist");
+  if (0 == stmt.getNbAffectedRows()) {
+    throw UserSpecifiedANonExistentDiskInstance(std::string("Cannot modify disk instance ") + name +
+                                                " because it does not exist");
   }
 }
 
@@ -190,4 +196,4 @@ std::list<common::dataStructures::DiskInstance> RdbmsDiskInstanceCatalogue::getA
   return diskInstanceList;
 }
 
-} // namespace cta::catalogue
+}  // namespace cta::catalogue

@@ -32,5 +32,5 @@ struct DriveNextState {
   std::string vid;
   std::string tapepool;
 };
-  
-} // namespace cta::common::dataStructures
+
+}  // namespace cta::common::dataStructures

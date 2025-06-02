@@ -41,4 +41,4 @@ struct LifecycleTimings {
   time_t completed_time = 0;
 };
 
-} // namespace cta::common::dataStructures
+}  // namespace cta::common::dataStructures

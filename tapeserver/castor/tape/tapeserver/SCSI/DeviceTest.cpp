@@ -21,9 +21,9 @@
 #include "../system/Wrapper.hpp"
 #include "common/exception/Errnum.hpp"
 
+using ::testing::_;
 using ::testing::AtLeast;
 using ::testing::Return;
-using ::testing::_;
 
 namespace unitTests {
 
@@ -57,8 +57,7 @@ TEST(castor_tape_SCSI_DeviceList, ScansCorrectly) {
   EXPECT_CALL(sysWrapper, write(_, _, _)).Times(0);
   EXPECT_CALL(sysWrapper, close(_)).Times(38);
   EXPECT_CALL(sysWrapper, readlink(_, _, _)).Times(6);
-  EXPECT_CALL(sysWrapper, stat(_,_)).Times(14);
-
+  EXPECT_CALL(sysWrapper, stat(_, _)).Times(14);
 
   /* Everything should have been found correctly */
 
@@ -66,30 +65,30 @@ TEST(castor_tape_SCSI_DeviceList, ScansCorrectly) {
 
   ASSERT_EQ(6U, dl.size());
   ASSERT_EQ(castor::tape::SCSI::Types::mediumChanger, dl[0].type);
-  ASSERT_EQ(castor::tape::SCSI::Types::tape,          dl[1].type);
-  ASSERT_EQ(castor::tape::SCSI::Types::tape,          dl[2].type);
+  ASSERT_EQ(castor::tape::SCSI::Types::tape, dl[1].type);
+  ASSERT_EQ(castor::tape::SCSI::Types::tape, dl[2].type);
   ASSERT_EQ(castor::tape::SCSI::Types::mediumChanger, dl[3].type);
-  ASSERT_EQ(castor::tape::SCSI::Types::tape,          dl[4].type);
-  ASSERT_EQ(castor::tape::SCSI::Types::tape,          dl[5].type);
+  ASSERT_EQ(castor::tape::SCSI::Types::tape, dl[4].type);
+  ASSERT_EQ(castor::tape::SCSI::Types::tape, dl[5].type);
 
-  ASSERT_EQ( "/dev/sg2", dl[0].sg_dev);
-  ASSERT_EQ( "/dev/sg0", dl[1].sg_dev);
-  ASSERT_EQ( "/dev/sg1", dl[2].sg_dev);
-  ASSERT_EQ( "/dev/sg5", dl[3].sg_dev);
-  ASSERT_EQ( "/dev/sg3", dl[4].sg_dev);
-  ASSERT_EQ( "/dev/sg4", dl[5].sg_dev);
+  ASSERT_EQ("/dev/sg2", dl[0].sg_dev);
+  ASSERT_EQ("/dev/sg0", dl[1].sg_dev);
+  ASSERT_EQ("/dev/sg1", dl[2].sg_dev);
+  ASSERT_EQ("/dev/sg5", dl[3].sg_dev);
+  ASSERT_EQ("/dev/sg3", dl[4].sg_dev);
+  ASSERT_EQ("/dev/sg4", dl[5].sg_dev);
 
-  ASSERT_EQ(         "", dl[0].st_dev);
-  ASSERT_EQ( "/dev/st0", dl[1].st_dev);
-  ASSERT_EQ( "/dev/st1", dl[2].st_dev);
-  ASSERT_EQ(         "", dl[3].st_dev);
-  ASSERT_EQ( "/dev/st2", dl[4].st_dev);
-  ASSERT_EQ( "/dev/st3", dl[5].st_dev);
+  ASSERT_EQ("", dl[0].st_dev);
+  ASSERT_EQ("/dev/st0", dl[1].st_dev);
+  ASSERT_EQ("/dev/st1", dl[2].st_dev);
+  ASSERT_EQ("", dl[3].st_dev);
+  ASSERT_EQ("/dev/st2", dl[4].st_dev);
+  ASSERT_EQ("/dev/st3", dl[5].st_dev);
 
-  ASSERT_EQ(         "", dl[0].nst_dev);
+  ASSERT_EQ("", dl[0].nst_dev);
   ASSERT_EQ("/dev/nst0", dl[1].nst_dev);
   ASSERT_EQ("/dev/nst1", dl[2].nst_dev);
-  ASSERT_EQ(         "", dl[3].nst_dev);
+  ASSERT_EQ("", dl[3].nst_dev);
   ASSERT_EQ("/dev/nst2", dl[4].nst_dev);
   ASSERT_EQ("/dev/nst3", dl[5].nst_dev);
 
@@ -100,41 +99,41 @@ TEST(castor_tape_SCSI_DeviceList, ScansCorrectly) {
   ASSERT_EQ("/sys/devices/pseudo_0/adapter0/host2/target2:0:1/2:0:1:0", dl[4].sysfs_entry);
   ASSERT_EQ("/sys/devices/pseudo_0/adapter0/host2/target2:0:2/2:0:2:0", dl[5].sysfs_entry);
 
-  ASSERT_EQ( 21U, dl[0].sg.major);
-  ASSERT_EQ(  2U, dl[0].sg.minor);
-  ASSERT_EQ( 21U, dl[1].sg.major);
-  ASSERT_EQ(  0U, dl[1].sg.minor);
-  ASSERT_EQ( 21U, dl[2].sg.major);
-  ASSERT_EQ(  1U, dl[2].sg.minor);
-  ASSERT_EQ( 21U, dl[3].sg.major);
-  ASSERT_EQ(  5U, dl[3].sg.minor);
-  ASSERT_EQ( 21U, dl[4].sg.major);
-  ASSERT_EQ(  3U, dl[4].sg.minor);
-  ASSERT_EQ( 21U, dl[5].sg.major);
-  ASSERT_EQ(  4U, dl[5].sg.minor);
-  ASSERT_EQ(  0U, dl[0].st.major);
-  ASSERT_EQ(  0U, dl[0].st.minor);
-  ASSERT_EQ(  9U, dl[1].st.major);
-  ASSERT_EQ(  0U, dl[1].st.minor);
-  ASSERT_EQ(  9U, dl[2].st.major);
-  ASSERT_EQ(  1U, dl[2].st.minor);
-  ASSERT_EQ(  0U, dl[3].st.major);
-  ASSERT_EQ(  0U, dl[3].st.minor);
-  ASSERT_EQ(  9U, dl[4].st.major);
-  ASSERT_EQ(  2U, dl[4].st.minor);
-  ASSERT_EQ(  9U, dl[5].st.major);
-  ASSERT_EQ(  3U, dl[5].st.minor);
-  ASSERT_EQ(  0U, dl[0].nst.major);
-  ASSERT_EQ(  0U, dl[0].nst.minor);
-  ASSERT_EQ(  9U, dl[1].nst.major);
+  ASSERT_EQ(21U, dl[0].sg.major);
+  ASSERT_EQ(2U, dl[0].sg.minor);
+  ASSERT_EQ(21U, dl[1].sg.major);
+  ASSERT_EQ(0U, dl[1].sg.minor);
+  ASSERT_EQ(21U, dl[2].sg.major);
+  ASSERT_EQ(1U, dl[2].sg.minor);
+  ASSERT_EQ(21U, dl[3].sg.major);
+  ASSERT_EQ(5U, dl[3].sg.minor);
+  ASSERT_EQ(21U, dl[4].sg.major);
+  ASSERT_EQ(3U, dl[4].sg.minor);
+  ASSERT_EQ(21U, dl[5].sg.major);
+  ASSERT_EQ(4U, dl[5].sg.minor);
+  ASSERT_EQ(0U, dl[0].st.major);
+  ASSERT_EQ(0U, dl[0].st.minor);
+  ASSERT_EQ(9U, dl[1].st.major);
+  ASSERT_EQ(0U, dl[1].st.minor);
+  ASSERT_EQ(9U, dl[2].st.major);
+  ASSERT_EQ(1U, dl[2].st.minor);
+  ASSERT_EQ(0U, dl[3].st.major);
+  ASSERT_EQ(0U, dl[3].st.minor);
+  ASSERT_EQ(9U, dl[4].st.major);
+  ASSERT_EQ(2U, dl[4].st.minor);
+  ASSERT_EQ(9U, dl[5].st.major);
+  ASSERT_EQ(3U, dl[5].st.minor);
+  ASSERT_EQ(0U, dl[0].nst.major);
+  ASSERT_EQ(0U, dl[0].nst.minor);
+  ASSERT_EQ(9U, dl[1].nst.major);
   ASSERT_EQ(128U, dl[1].nst.minor);
-  ASSERT_EQ(  9U, dl[2].nst.major);
+  ASSERT_EQ(9U, dl[2].nst.major);
   ASSERT_EQ(129U, dl[2].nst.minor);
-  ASSERT_EQ(  0U, dl[3].nst.major);
-  ASSERT_EQ(  0U, dl[3].nst.minor);
-  ASSERT_EQ(  9U, dl[4].nst.major);
+  ASSERT_EQ(0U, dl[3].nst.major);
+  ASSERT_EQ(0U, dl[3].nst.minor);
+  ASSERT_EQ(9U, dl[4].nst.major);
   ASSERT_EQ(130U, dl[4].nst.minor);
-  ASSERT_EQ(  9U, dl[5].nst.major);
+  ASSERT_EQ(9U, dl[5].nst.major);
   ASSERT_EQ(131U, dl[5].nst.minor);
   ASSERT_EQ("STK", dl[0].vendor);
   ASSERT_EQ("STK", dl[1].vendor);
@@ -160,7 +159,7 @@ TEST(castor_tape_SCSI_DeviceList, FindBySymlink) {
   castor::tape::System::mockWrapper sysWrapper;
   sysWrapper.delegateToFake();
   sysWrapper.fake.setupForVirtualDriveSLC6();
-  
+
   /* We expect the following calls: */
   EXPECT_CALL(sysWrapper, opendir(_)).Times(AtLeast(3));
   EXPECT_CALL(sysWrapper, readdir(_)).Times(AtLeast(30));
@@ -171,15 +170,13 @@ TEST(castor_tape_SCSI_DeviceList, FindBySymlink) {
   EXPECT_CALL(sysWrapper, write(_, _, _)).Times(0);
   EXPECT_CALL(sysWrapper, close(_)).Times(AtLeast(19));
   EXPECT_CALL(sysWrapper, readlink(_, _, _)).Times(AtLeast(3));
-  EXPECT_CALL(sysWrapper, stat(_,_)).Times(AtLeast(7));
-  
+  EXPECT_CALL(sysWrapper, stat(_, _)).Times(AtLeast(7));
+
   castor::tape::SCSI::DeviceVector dl(sysWrapper);
   ASSERT_NO_THROW(dl.findBySymlink("/dev/tape_T10D6116"));
-  ASSERT_THROW(dl.findBySymlink("NoSuchPath"), 
-      cta::exception::Errnum);
-  ASSERT_THROW(dl.findBySymlink("/dev/noSuchTape"), 
-      castor::tape::SCSI::DeviceVector::NotFound);
-  castor::tape::SCSI::DeviceInfo & di = dl.findBySymlink("/dev/tape_T10D6116");
+  ASSERT_THROW(dl.findBySymlink("NoSuchPath"), cta::exception::Errnum);
+  ASSERT_THROW(dl.findBySymlink("/dev/noSuchTape"), castor::tape::SCSI::DeviceVector::NotFound);
+  castor::tape::SCSI::DeviceInfo& di = dl.findBySymlink("/dev/tape_T10D6116");
   // The symlink is supposed to point to nst0 which is 9,128 (maj,min)
   ASSERT_EQ(9U, di.nst.major);
   ASSERT_EQ(128U, di.nst.minor);
@@ -188,4 +185,4 @@ TEST(castor_tape_SCSI_DeviceList, FindBySymlink) {
   ASSERT_EQ("VIRTUAL", di.product);
 }
 
-}
+}  // namespace unitTests

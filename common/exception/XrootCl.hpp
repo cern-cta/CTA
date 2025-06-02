@@ -29,11 +29,13 @@ class XrootCl : public Exception {
 public:
   XrootCl(const XrdCl::XRootDStatus& status, std::string_view context);
   virtual ~XrootCl() = default;
-  const XrdCl::XRootDStatus & xRootDStatus() const { return m_status; }
+
+  const XrdCl::XRootDStatus& xRootDStatus() const { return m_status; }
+
   static void throwOnError(const XrdCl::XRootDStatus& status, std::string_view context = "");
 
 private:
   XrdCl::XRootDStatus m_status;
 };
 
-} // namespace cta::exception
+}  // namespace cta::exception

@@ -29,7 +29,7 @@ namespace cta::catalogue {
  * requests).
  */
 
-class DummyCatalogue: public Catalogue {
+class DummyCatalogue : public Catalogue {
 public:
   DummyCatalogue();
   ~DummyCatalogue() override = default;

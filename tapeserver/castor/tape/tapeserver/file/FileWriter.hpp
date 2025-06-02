@@ -37,7 +37,7 @@ public:
     * @param fileInfo: information about the file we want to read
     * @param blockSize: size of blocks we want to use in writing
     */
-  FileWriter(const std::unique_ptr<WriteSession> &ws, const cta::ArchiveJob &fileToMigrate, const size_t blockSize);
+  FileWriter(const std::unique_ptr<WriteSession>& ws, const cta::ArchiveJob& fileToMigrate, const size_t blockSize);
 
   /**
     * Returns the block id of the current position
@@ -63,7 +63,7 @@ public:
     * @param data: buffer to copy the data from
     * @param size: size of the buffer
     */
-  void write(const void *data, const size_t size);
+  void write(const void* data, const size_t size);
 
   /**
     * Closes the file by writing the corresponding trailer on tape
@@ -91,13 +91,13 @@ private:
   /**
     * Session to which we are attached to
     */
-  const std::unique_ptr<WriteSession> &m_session;
+  const std::unique_ptr<WriteSession>& m_session;
 
   /**
     * Information that we have about the current file to be written and that
     * will be used to write appropriate headers and trailers
     */
-  const cta::ArchiveJob &m_fileToMigrate;
+  const cta::ArchiveJob& m_fileToMigrate;
 
   /**
     * set to true whenever the constructor is called and to false when close() is called
@@ -126,4 +126,4 @@ private:
   std::string m_LBPMode;
 };
 
-} // namespace castor::tape::tapeFile
+}  // namespace castor::tape::tapeFile

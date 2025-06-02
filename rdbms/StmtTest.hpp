@@ -55,6 +55,6 @@ protected:
 
   virtual void TearDown();
 
-}; // cta_rdbms_StmtTest
+};  // cta_rdbms_StmtTest
 
-} // namespace unitTests
+}  // namespace unitTests

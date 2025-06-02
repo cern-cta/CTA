@@ -27,11 +27,11 @@ namespace cta::exception {
  * No Such Object exception
  */
 class NoSuchObject : public cta::exception::Exception {
- public:
+public:
   /**
    * default constructor
    */
   explicit NoSuchObject(const std::string& what = "") : cta::exception::Exception(what) {}
 };
 
-} // namespace cta::exception
+}  // namespace cta::exception

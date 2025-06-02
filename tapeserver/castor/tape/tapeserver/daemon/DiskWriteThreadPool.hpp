@@ -79,7 +79,7 @@ public:
    * de-allocate it.
    * @param t pointer to the task
    */
-  void push(DiskWriteTask *t);
+  void push(DiskWriteTask* t);
 
   /**
    * Signals to the thread pool that there will be no more tasks pushed to it,
@@ -98,17 +98,19 @@ private:
    */
   class DiskWriteWorkerThread : private cta::threading::Thread {
   public:
-    explicit DiskWriteWorkerThread(DiskWriteThreadPool& manager) :
-      m_threadID(manager.m_nbActiveThread++),
-      m_parentThreadPool(manager),
-      m_lc(m_parentThreadPool.m_lc),
-      m_diskFileFactory(manager.m_xrootTimeout, manager.m_striperPool) {
+    explicit DiskWriteWorkerThread(DiskWriteThreadPool& manager)
+        : m_threadID(manager.m_nbActiveThread++),
+          m_parentThreadPool(manager),
+          m_lc(m_parentThreadPool.m_lc),
+          m_diskFileFactory(manager.m_xrootTimeout, manager.m_striperPool) {
       // This thread id will remain for the rest of the thread's lifetime
       // (and also context's lifetime), so no need for a scope
       m_lc.pushOrReplace(cta::log::Param("threadID", m_threadID));
       m_lc.log(cta::log::INFO, "DiskWrite Thread created");
     }
+
     void start() { cta::threading::Thread::start(); }
+
     void wait() { cta::threading::Thread::wait(); }
 
   private:
@@ -150,7 +152,6 @@ private:
    */
   void addThreadStats(const DiskStats& threadStats);
 
-
   /**
    * When the last thread finish, we log all m_pooldStat members + message
    * at the given level
@@ -160,7 +161,7 @@ private:
   void logWithStat(int level, const std::string& message);
 
   /** The actual container for the thread objects */
-  std::vector<DiskWriteWorkerThread *> m_threads;
+  std::vector<DiskWriteWorkerThread*> m_threads;
   /** Mutex protecting the pushers of new tasks from having the object deleted
    * under their feet. */
   cta::threading::Mutex m_pusherProtection;
@@ -169,9 +170,10 @@ private:
    To protect addThreadStats from concurrent calls
    */
   cta::threading::Mutex m_statAddingProtection;
+
 protected:
   /** The (thread safe) queue of tasks */
-  cta::threading::BlockingQueue<DiskWriteTask *> m_tasks;
+  cta::threading::BlockingQueue<DiskWriteTask*> m_tasks;
 
   /**
    * Parameter: xroot timeout
@@ -206,4 +208,4 @@ private:
   cta::log::LogContext m_lc;
 };
 
-} // namespace castor::tape::tapeserver::daemon
+}  // namespace castor::tape::tapeserver::daemon

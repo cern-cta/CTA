@@ -24,7 +24,7 @@
 
 namespace cta::common::dataStructures {
 
-struct  FileRecycleLog {
+struct FileRecycleLog {
   std::string vid;
   uint64_t fSeq;
   uint64_t blockId;
@@ -54,4 +54,4 @@ struct  FileRecycleLog {
   time_t recycleLogTime;
 };
 
-} // namespace cta::common::dataStructures
+}  // namespace cta::common::dataStructures

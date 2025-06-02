@@ -39,7 +39,7 @@
 // global synchronisation flag
 std::atomic<bool> isHeaderSent;
 std::list<cta::admin::RecycleTapeFileLsItem> deletedTapeFiles;
-std::list<std::pair<std::string,std::string>> listedTapeFiles;
+std::list<std::pair<std::string, std::string>> listedTapeFiles;
 
 namespace XrdSsiPb {
 
@@ -56,10 +56,9 @@ class UserException : public std::runtime_error {
  * Defines how Alert messages should be logged
  */
 template<>
-void RequestCallback<cta::xrd::Alert>::operator()(const cta::xrd::Alert &alert)
-{
-   Log::DumpProtobuf(Log::PROTOBUF, &alert);
-} // namespace XrdSsiPb
+void RequestCallback<cta::xrd::Alert>::operator()(const cta::xrd::Alert& alert) {
+  Log::DumpProtobuf(Log::PROTOBUF, &alert);
+}  // namespace XrdSsiPb
 
 /*!
  * Data/Stream callback.
@@ -67,34 +66,32 @@ void RequestCallback<cta::xrd::Alert>::operator()(const cta::xrd::Alert &alert)
  * Defines how incoming records from the stream should be handled
  */
 template<>
-void IStreamBuffer<cta::xrd::Data>::DataCallback(cta::xrd::Data record) const
-{
+void IStreamBuffer<cta::xrd::Data>::DataCallback(cta::xrd::Data record) const {
   using namespace cta::xrd;
   using namespace cta::admin;
 
   // Wait for primary response to be handled before allowing stream response
-  while(!isHeaderSent) { std::this_thread::yield(); }
+  while (!isHeaderSent) {
+    std::this_thread::yield();
+  }
 
-  switch(record.data_case()) {
-    case Data::kRtflsItem:
-      {
-        auto item = record.rtfls_item();
-        deletedTapeFiles.push_back(item);
-      }
-      break;
-    case Data::kTflsItem:
-      {
-        const auto item = record.tfls_item();
-        const auto instanceAndFid = std::make_pair(item.df().disk_instance(), item.df().disk_id());
-        listedTapeFiles.push_back(instanceAndFid);
-      }
-      break;
+  switch (record.data_case()) {
+    case Data::kRtflsItem: {
+      auto item = record.rtfls_item();
+      deletedTapeFiles.push_back(item);
+    } break;
+    case Data::kTflsItem: {
+      const auto item = record.tfls_item();
+      const auto instanceAndFid = std::make_pair(item.df().disk_instance(), item.df().disk_id());
+      listedTapeFiles.push_back(instanceAndFid);
+    } break;
     default:
-      throw std::runtime_error("Received invalid stream data from CTA Frontend for the cta-restore-deleted-files command.");
-   }
-} // namespace XrdSsiPb
+      throw std::runtime_error(
+        "Received invalid stream data from CTA Frontend for the cta-restore-deleted-files command.");
+  }
+}  // namespace XrdSsiPb
 
-} // namespace XrdSsiPb
+}  // namespace XrdSsiPb
 
 namespace cta::cliTool {
 
@@ -108,16 +105,17 @@ class RestoreFilesCmdException : public std::runtime_error {
 //------------------------------------------------------------------------------
 // constructor
 //------------------------------------------------------------------------------
-RestoreFilesCmd::RestoreFilesCmd(std::istream &inStream, std::ostream &outStream,
-  std::ostream &errStream, cta::log::StdoutLogger &log):
-  CmdLineTool(inStream, outStream, errStream),
-  m_log(log) {
-
+RestoreFilesCmd::RestoreFilesCmd(std::istream& inStream,
+                                 std::ostream& outStream,
+                                 std::ostream& errStream,
+                                 cta::log::StdoutLogger& log)
+    : CmdLineTool(inStream, outStream, errStream),
+      m_log(log) {
   // Default layout: see EOS common/LayoutId.hh for definitions of constants
-  const int kAdler         =  0x2;
-  const int kReplica       = (0x1 <<  4);
-  const int kStripeSize    = (0x0 <<  8); // 1 stripe
-  const int kStripeWidth   = (0x0 << 16); // 4K blocks
+  const int kAdler = 0x2;
+  const int kReplica = (0x1 << 4);
+  const int kStripeSize = (0x0 << 8);    // 1 stripe
+  const int kStripeWidth = (0x0 << 16);  // 4K blocks
   const int kBlockChecksum = (0x1 << 20);
 
   // Default single replica layout id should be 00100012
@@ -132,7 +130,7 @@ RestoreFilesCmd::~RestoreFilesCmd() = default;
 //------------------------------------------------------------------------------
 // exceptionThrowingMain
 //------------------------------------------------------------------------------
-int RestoreFilesCmd::exceptionThrowingMain(const int argc, char *const *const argv) {
+int RestoreFilesCmd::exceptionThrowingMain(const int argc, char* const* const argv) {
   CmdLineArgs cmdLineArgs(argc, argv, StandaloneCliTool::RESTORE_FILES);
   if (cmdLineArgs.m_help) {
     cmdLineArgs.printUsage(m_out);
@@ -145,11 +143,11 @@ int RestoreFilesCmd::exceptionThrowingMain(const int argc, char *const *const ar
   m_copyNumber = cmdLineArgs.m_copyNumber;
   m_archiveFileId = cmdLineArgs.m_archiveFileId;
 
-  if(argc == 1) {
+  if (argc == 1) {
     cmdLineArgs.printUsage(m_out);
     throw RestoreFilesCmdException("No arguments were provided");
   }
-  if(m_fids && !m_diskInstance) {
+  if (m_fids && !m_diskInstance) {
     cmdLineArgs.printUsage(m_out);
     throw RestoreFilesCmdException("Disk instance must be provided when fids are used as input.");
   }
@@ -182,16 +180,17 @@ int RestoreFilesCmd::exceptionThrowingMain(const int argc, char *const *const ar
       restoreDeletedFileCopyCta(file);
       // sanity check
       auto diskInstanceAndFxid = getInstanceAndFidFromCTA(file);
-      auto eosArchiveFileIdAndChecksum = getArchiveFileIdAndChecksumFromEOS(diskInstanceAndFxid.first, diskInstanceAndFxid.second);
-      auto &eosArchiveFileId = eosArchiveFileIdAndChecksum.first;
-      auto &eosChecksum = eosArchiveFileIdAndChecksum.second;
-      auto &ctaChecksum = file.checksum().begin()->value();
+      auto eosArchiveFileIdAndChecksum =
+        getArchiveFileIdAndChecksumFromEOS(diskInstanceAndFxid.first, diskInstanceAndFxid.second);
+      auto& eosArchiveFileId = eosArchiveFileIdAndChecksum.first;
+      auto& eosChecksum = eosArchiveFileIdAndChecksum.second;
+      auto& ctaChecksum = file.checksum().begin()->value();
       std::list<cta::log::Param> params;
       params.push_back(cta::log::Param("archiveFileId", file.archive_file_id()));
       params.push_back(cta::log::Param("diskInstance", diskInstanceAndFxid.first));
       params.push_back(cta::log::Param("diskFileId", diskInstanceAndFxid.second));
       params.push_back(cta::log::Param("checksum", ctaChecksum));
-      if(eosArchiveFileId == file.archive_file_id() && eosChecksum == ctaChecksum) {
+      if (eosArchiveFileId == file.archive_file_id() && eosChecksum == ctaChecksum) {
         m_log(cta::log::INFO, "File metadata in EOS and CTA matches", params);
       } else {
         params.push_back(cta::log::Param("eosArchiveFileId", eosArchiveFileId));
@@ -199,8 +198,8 @@ int RestoreFilesCmd::exceptionThrowingMain(const int argc, char *const *const ar
         m_log(cta::log::INFO, "File metadata in EOS and CTA does not match", params);
         throw std::runtime_error("Sanity check failed.");
       }
-    } catch (RestoreFilesCmdException &e) {
-      m_log(cta::log::ERR,e.what());
+    } catch (RestoreFilesCmdException& e) {
+      m_log(cta::log::ERR, e.what());
     }
   }
   return 0;
@@ -215,7 +214,7 @@ void RestoreFilesCmd::listDeletedFilesCta() const {
 
   cta::xrd::Request request;
 
-  auto &admincmd = *(request.mutable_admincmd());
+  auto& admincmd = *(request.mutable_admincmd());
 
   admincmd.set_client_version(CTA_VERSION);
   admincmd.set_protobuf_tag(XROOTD_SSI_PROTOBUF_INTERFACE_VERSION);
@@ -255,12 +254,12 @@ void RestoreFilesCmd::listDeletedFilesCta() const {
     auto key = cta::admin::OptionStrList::FILE_ID;
     auto new_opt = admincmd.add_option_str_list();
     new_opt->set_key(key);
-    for (const auto &fid : m_fids.value()) {
+    for (const auto& fid : m_fids.value()) {
       new_opt->add_item(fid);
       ss << fid << ",";
     }
     auto fids = ss.str();
-    fids.pop_back(); // remove last ","
+    fids.pop_back();  // remove last ","
     params.push_back(cta::log::Param("diskFileId", fids));
   }
 
@@ -271,8 +270,7 @@ void RestoreFilesCmd::listDeletedFilesCta() const {
   auto stream_future = m_serviceProviderPtr->SendAsync(request, response, false);
 
   // Handle responses
-  switch(response.type())
-  {
+  switch (response.type()) {
     using namespace cta::xrd;
     using namespace cta::admin;
     case Response::RSP_SUCCESS:
@@ -281,10 +279,14 @@ void RestoreFilesCmd::listDeletedFilesCta() const {
       // Allow stream processing to commence
       isHeaderSent = true;
       break;
-    case Response::RSP_ERR_PROTOBUF:                     throw XrdSsiPb::PbException(response.message_txt());
-    case Response::RSP_ERR_USER:                         throw XrdSsiPb::UserException(response.message_txt());
-    case Response::RSP_ERR_CTA:                          throw std::runtime_error(response.message_txt());
-    default:                                             throw XrdSsiPb::PbException("Invalid response type.");
+    case Response::RSP_ERR_PROTOBUF:
+      throw XrdSsiPb::PbException(response.message_txt());
+    case Response::RSP_ERR_USER:
+      throw XrdSsiPb::UserException(response.message_txt());
+    case Response::RSP_ERR_CTA:
+      throw std::runtime_error(response.message_txt());
+    default:
+      throw XrdSsiPb::PbException("Invalid response type.");
   }
 
   // wait until the data stream has been processed before exiting
@@ -297,8 +299,7 @@ void RestoreFilesCmd::listDeletedFilesCta() const {
 //------------------------------------------------------------------------------
 // restoreDeletedFileCopyCta
 //------------------------------------------------------------------------------
-void RestoreFilesCmd::restoreDeletedFileCopyCta(const cta::admin::RecycleTapeFileLsItem &file) const {
-
+void RestoreFilesCmd::restoreDeletedFileCopyCta(const cta::admin::RecycleTapeFileLsItem& file) const {
   std::list<cta::log::Param> params;
   params.push_back(cta::log::Param("userName", getUsername()));
   params.push_back(cta::log::Param("tapeVid", file.vid()));
@@ -309,7 +310,7 @@ void RestoreFilesCmd::restoreDeletedFileCopyCta(const cta::admin::RecycleTapeFil
 
   cta::xrd::Request request;
 
-  auto &admincmd = *(request.mutable_admincmd());
+  auto& admincmd = *(request.mutable_admincmd());
 
   admincmd.set_client_version(CTA_VERSION);
   admincmd.set_protobuf_tag(XROOTD_SSI_PROTOBUF_INTERFACE_VERSION);
@@ -360,8 +361,7 @@ void RestoreFilesCmd::restoreDeletedFileCopyCta(const cta::admin::RecycleTapeFil
   m_serviceProviderPtr->Send(request, response, false);
 
   // Handle responses
-  switch(response.type())
-  {
+  switch (response.type()) {
     using namespace cta::xrd;
     using namespace cta::admin;
     case Response::RSP_SUCCESS:
@@ -369,17 +369,23 @@ void RestoreFilesCmd::restoreDeletedFileCopyCta(const cta::admin::RecycleTapeFil
       std::cout << response.message_txt();
       m_log(cta::log::INFO, "Restored file copy in CTA catalogue", params);
       break;
-    case Response::RSP_ERR_PROTOBUF:                     throw XrdSsiPb::PbException(response.message_txt());
-    case Response::RSP_ERR_USER:                         throw XrdSsiPb::UserException(response.message_txt());
-    case Response::RSP_ERR_CTA:                          throw std::runtime_error(response.message_txt());
-    default:                                             throw XrdSsiPb::PbException("Invalid response type.");
+    case Response::RSP_ERR_PROTOBUF:
+      throw XrdSsiPb::PbException(response.message_txt());
+    case Response::RSP_ERR_USER:
+      throw XrdSsiPb::UserException(response.message_txt());
+    case Response::RSP_ERR_CTA:
+      throw std::runtime_error(response.message_txt());
+    default:
+      throw XrdSsiPb::PbException("Invalid response type.");
   }
 }
 
 //------------------------------------------------------------------------------
 // addContainerEos
 //------------------------------------------------------------------------------
-uint64_t RestoreFilesCmd::addContainerEos(const std::string &diskInstance, const std::string &path, const std::string &sc) const {
+uint64_t RestoreFilesCmd::addContainerEos(const std::string& diskInstance,
+                                          const std::string& path,
+                                          const std::string& sc) const {
   auto c_id = containerExistsEos(diskInstance, path);
   if (c_id) {
     return c_id;
@@ -402,7 +408,7 @@ uint64_t RestoreFilesCmd::addContainerEos(const std::string &diskInstance, const
   dir.set_name(cta::utils::getEnclosedName(path));
 
   // Filemode: filter out S_ISUID, S_ISGID and S_ISVTX because EOS does not follow POSIX semantics for these bits
-  uint64_t filemode = (S_IRWXU | S_IRGRP | S_IWGRP | S_IROTH | S_IWOTH); // 0755 permissions by default
+  uint64_t filemode = (S_IRWXU | S_IRGRP | S_IWGRP | S_IROTH | S_IWOTH);  // 0755 permissions by default
   filemode &= ~(S_ISUID | S_ISGID | S_ISVTX);
   dir.set_mode(filemode);
 
@@ -412,8 +418,7 @@ uint64_t RestoreFilesCmd::addContainerEos(const std::string &diskInstance, const
   dir.mutable_mtime()->set_sec(time);
   // we don't care about dir.stime (sync time, used for CERNBox)
 
-  dir.mutable_xattrs()->insert(google::protobuf::MapPair<std::string,std::string>("sys.archive.storage_class", sc));
-
+  dir.mutable_xattrs()->insert(google::protobuf::MapPair<std::string, std::string>("sys.archive.storage_class", sc));
 
   auto reply = m_endpointMapPtr->containerInsert(diskInstance, dir);
 
@@ -429,7 +434,7 @@ uint64_t RestoreFilesCmd::addContainerEos(const std::string &diskInstance, const
 //------------------------------------------------------------------------------
 // containerExistsEos
 //------------------------------------------------------------------------------
-uint64_t RestoreFilesCmd::containerExistsEos(const std::string &diskInstance, const std::string &path) const {
+uint64_t RestoreFilesCmd::containerExistsEos(const std::string& diskInstance, const std::string& path) const {
   std::list<cta::log::Param> params;
   params.push_back(cta::log::Param("userName", getUsername()));
   params.push_back(cta::log::Param("diskInstance", diskInstance));
@@ -448,15 +453,14 @@ uint64_t RestoreFilesCmd::containerExistsEos(const std::string &diskInstance, co
   return cid;
 }
 
-bool RestoreFilesCmd::fileWasDeletedByRM(const cta::admin::RecycleTapeFileLsItem &file) const {
+bool RestoreFilesCmd::fileWasDeletedByRM(const cta::admin::RecycleTapeFileLsItem& file) const {
   return file.reason_log().rfind("(Deleted using cta-admin tapefile rm)", 0) == 0;
 }
 
 //------------------------------------------------------------------------------
 // archiveFileExistsCTA
 //------------------------------------------------------------------------------
-bool RestoreFilesCmd::archiveFileExistsCTA(const uint64_t &archiveFileId) const {
-
+bool RestoreFilesCmd::archiveFileExistsCTA(const uint64_t& archiveFileId) const {
   std::list<cta::log::Param> params;
   params.push_back(cta::log::Param("userName", getUsername()));
   params.push_back(cta::log::Param("archiveFileId", archiveFileId));
@@ -465,7 +469,7 @@ bool RestoreFilesCmd::archiveFileExistsCTA(const uint64_t &archiveFileId) const 
 
   cta::xrd::Request request;
 
-  auto &admincmd = *(request.mutable_admincmd());
+  auto& admincmd = *(request.mutable_admincmd());
 
   admincmd.set_client_version(CTA_VERSION);
   admincmd.set_protobuf_tag(XROOTD_SSI_PROTOBUF_INTERFACE_VERSION);
@@ -483,15 +487,21 @@ bool RestoreFilesCmd::archiveFileExistsCTA(const uint64_t &archiveFileId) const 
 
   bool ret;
   // Handle responses
-  switch(response.type())
-  {
+  switch (response.type()) {
     using namespace cta::xrd;
     using namespace cta::admin;
-    case Response::RSP_SUCCESS:                          ret = true; break; //success sent if archive file does not exist
-    case Response::RSP_ERR_PROTOBUF:                     throw XrdSsiPb::PbException(response.message_txt());
-    case Response::RSP_ERR_USER:                         ret = false; break; //user error sent if archive file does not exist
-    case Response::RSP_ERR_CTA:                          throw std::runtime_error(response.message_txt());
-    default:                                             throw XrdSsiPb::PbException("Invalid response type.");
+    case Response::RSP_SUCCESS:
+      ret = true;
+      break;  //success sent if archive file does not exist
+    case Response::RSP_ERR_PROTOBUF:
+      throw XrdSsiPb::PbException(response.message_txt());
+    case Response::RSP_ERR_USER:
+      ret = false;
+      break;  //user error sent if archive file does not exist
+    case Response::RSP_ERR_CTA:
+      throw std::runtime_error(response.message_txt());
+    default:
+      throw XrdSsiPb::PbException("Invalid response type.");
   }
 
   // wait until the data stream has been processed before exiting
@@ -499,7 +509,7 @@ bool RestoreFilesCmd::archiveFileExistsCTA(const uint64_t &archiveFileId) const 
     stream_future.wait();
   }
   if (ret) {
-    m_log(cta::log::DEBUG, "Archive file is present in the CTA catalogue", params);  
+    m_log(cta::log::DEBUG, "Archive file is present in the CTA catalogue", params);
   } else {
     m_log(cta::log::DEBUG, "Archive file is missing in the CTA catalogue", params);
   }
@@ -509,7 +519,7 @@ bool RestoreFilesCmd::archiveFileExistsCTA(const uint64_t &archiveFileId) const 
 //------------------------------------------------------------------------------
 // fileExistsEos
 //------------------------------------------------------------------------------
-bool RestoreFilesCmd::fileExistsEos(const std::string &diskInstance, const std::string &diskFileId) const {
+bool RestoreFilesCmd::fileExistsEos(const std::string& diskInstance, const std::string& diskFileId) const {
   std::list<cta::log::Param> params;
   params.push_back(cta::log::Param("userName", getUsername()));
   params.push_back(cta::log::Param("diskInstance", diskInstance));
@@ -521,7 +531,7 @@ bool RestoreFilesCmd::fileExistsEos(const std::string &diskInstance, const std::
     params.push_back(cta::log::Param("diskFilePath", path));
     m_log(cta::log::DEBUG, "EOS fid exists in the EOS namespace");
     return true;
-  } catch(cta::exception::Exception&) {
+  } catch (cta::exception::Exception&) {
     m_log(cta::log::DEBUG, "EOS fid does not exist in the EOS namespace");
     return false;
   }
@@ -530,7 +540,7 @@ bool RestoreFilesCmd::fileExistsEos(const std::string &diskInstance, const std::
 //------------------------------------------------------------------------------
 // getFileIdEos
 //------------------------------------------------------------------------------
-uint64_t RestoreFilesCmd::getFileIdEos(const std::string &diskInstance, const std::string &path) const {
+uint64_t RestoreFilesCmd::getFileIdEos(const std::string& diskInstance, const std::string& path) const {
   std::list<cta::log::Param> params;
   params.push_back(cta::log::Param("userName", getUsername()));
   params.push_back(cta::log::Param("diskInstance", diskInstance));
@@ -551,7 +561,7 @@ uint64_t RestoreFilesCmd::getFileIdEos(const std::string &diskInstance, const st
 //------------------------------------------------------------------------------
 // getCurrentEosIds
 //------------------------------------------------------------------------------
-void RestoreFilesCmd::getCurrentEosIds(const std::string &diskInstance) const {
+void RestoreFilesCmd::getCurrentEosIds(const std::string& diskInstance) const {
   uint64_t cid;
   uint64_t fid;
   m_endpointMapPtr->getCurrentIds(diskInstance, cid, fid);
@@ -563,12 +573,10 @@ void RestoreFilesCmd::getCurrentEosIds(const std::string &diskInstance) const {
   m_log(cta::log::DEBUG, "Obtained current EOS container and file id", params);
 }
 
-
 //------------------------------------------------------------------------------
 // restoreDeletedFileEos
 //------------------------------------------------------------------------------
-uint64_t RestoreFilesCmd::restoreDeletedFileEos(const cta::admin::RecycleTapeFileLsItem &rtfls_item) const {
-
+uint64_t RestoreFilesCmd::restoreDeletedFileEos(const cta::admin::RecycleTapeFileLsItem& rtfls_item) const {
   std::list<cta::log::Param> params;
   params.push_back(cta::log::Param("userName", getUsername()));
   params.push_back(cta::log::Param("diskInstance", rtfls_item.disk_instance()));
@@ -581,13 +589,14 @@ uint64_t RestoreFilesCmd::restoreDeletedFileEos(const cta::admin::RecycleTapeFil
   getCurrentEosIds(rtfls_item.disk_instance());
   uint64_t file_id = getFileIdEos(rtfls_item.disk_instance(), rtfls_item.disk_file_path());
   if (file_id) {
-    return file_id; // EOS disk file id was changed since the file was deleted, just return the new file id
+    return file_id;  // EOS disk file id was changed since the file was deleted, just return the new file id
   }
 
   ::eos::rpc::FileMdProto file;
 
   auto fullPath = rtfls_item.disk_file_path();
-  auto cont_id = addContainerEos(rtfls_item.disk_instance(), cta::utils::getEnclosingPath(fullPath), rtfls_item.storage_class());
+  auto cont_id =
+    addContainerEos(rtfls_item.disk_instance(), cta::utils::getEnclosingPath(fullPath), rtfls_item.storage_class());
 
   // We do not set the file id. Since the file was deleted the fid cannot be reused, so EOS will generate a new file id
   file.set_cont_id(cont_id);
@@ -596,8 +605,8 @@ uint64_t RestoreFilesCmd::restoreDeletedFileEos(const cta::admin::RecycleTapeFil
   file.set_size(rtfls_item.size_in_bytes());
   file.set_layout_id(m_defaultFileLayout);
 
-  // Filemode: filter out S_ISUID, S_ISGID and S_ISVTX because EOS does not follow POSIX semantics for these bits  
-  uint64_t filemode = (S_IRWXU | S_IRGRP | S_IWGRP | S_IROTH | S_IWOTH); // 0755
+  // Filemode: filter out S_ISUID, S_ISGID and S_ISVTX because EOS does not follow POSIX semantics for these bits
+  uint64_t filemode = (S_IRWXU | S_IRGRP | S_IWGRP | S_IROTH | S_IWOTH);  // 0755
   filemode &= ~(S_ISUID | S_ISGID | S_ISVTX);
   file.set_flags(filemode);
 
@@ -613,13 +622,13 @@ uint64_t RestoreFilesCmd::restoreDeletedFileEos(const cta::admin::RecycleTapeFil
   file.set_name(cta::utils::getEnclosedName(fullPath));
 
   // Checksums
-  if(rtfls_item.checksum().empty()) {
+  if (rtfls_item.checksum().empty()) {
     throw RestoreFilesCmdException("File " + rtfls_item.disk_file_id() + " does not have a checksum");
   }
   std::string checksumType("NONE");
   std::string checksumValue;
-  const google::protobuf::EnumDescriptor *descriptor = cta::common::ChecksumBlob::Checksum::Type_descriptor();
-  checksumType  = descriptor->FindValueByNumber(rtfls_item.checksum().begin()->type())->name();
+  const google::protobuf::EnumDescriptor* descriptor = cta::common::ChecksumBlob::Checksum::Type_descriptor();
+  checksumType = descriptor->FindValueByNumber(rtfls_item.checksum().begin()->type())->name();
   checksumValue = rtfls_item.checksum().begin()->value();
 
   // TODO: The protobuf and supporting code here and in EOS should be refactored to take a ChecksumBlob
@@ -627,22 +636,23 @@ uint64_t RestoreFilesCmd::restoreDeletedFileEos(const cta::admin::RecycleTapeFil
   // For now, only Adler32 is supported.
   file.mutable_checksum()->set_type(checksumType);
   auto byteArray = checksum::ChecksumBlob::HexToByteArray(checksumValue);
-  file.mutable_checksum()->set_value(std::string(byteArray.rbegin(),byteArray.rend()));
+  file.mutable_checksum()->set_value(std::string(byteArray.rbegin(), byteArray.rend()));
 
   // Extended attributes:
   //
   // 1. Archive File ID
   std::string archiveId(std::to_string(rtfls_item.archive_file_id()));
-  file.mutable_xattrs()->insert(google::protobuf::MapPair<std::string,std::string>("sys.archive.file_id", archiveId));
+  file.mutable_xattrs()->insert(google::protobuf::MapPair<std::string, std::string>("sys.archive.file_id", archiveId));
   // 2. Storage Class
-  file.mutable_xattrs()->insert(google::protobuf::MapPair<std::string,std::string>("sys.archive.storage_class", rtfls_item.storage_class()));
+  file.mutable_xattrs()->insert(
+    google::protobuf::MapPair<std::string, std::string>("sys.archive.storage_class", rtfls_item.storage_class()));
   // 3. Birth Time
   // POSIX ATIME (Access Time) is used by CASTOR to store the file creation time. EOS calls this "birth time",
   // but there is no place in the namespace to store it, so it is stored as an extended attribute.
-  file.mutable_xattrs()->insert(google::protobuf::MapPair<std::string,std::string>("eos.btime", std::to_string(time)));
+  file.mutable_xattrs()->insert(google::protobuf::MapPair<std::string, std::string>("eos.btime", std::to_string(time)));
 
   // Indicate that there is a tape-resident replica of this file (except for zero-length files)
-  if(file.size() > 0) {
+  if (file.size() > 0) {
     file.mutable_locations()->Add(65535);
   }
 
@@ -655,13 +665,13 @@ uint64_t RestoreFilesCmd::restoreDeletedFileEos(const cta::admin::RecycleTapeFil
 
   auto new_fid = getFileIdEos(rtfls_item.disk_instance(), rtfls_item.disk_file_path());
   return new_fid;
-
 }
 
 //------------------------------------------------------------------------------
 // getFxidFromCTA
 //------------------------------------------------------------------------------
-std::pair<std::string,std::string> RestoreFilesCmd::getInstanceAndFidFromCTA(const cta::admin::RecycleTapeFileLsItem& file) {
+std::pair<std::string, std::string>
+RestoreFilesCmd::getInstanceAndFidFromCTA(const cta::admin::RecycleTapeFileLsItem& file) {
   {
     std::list<cta::log::Param> params;
     params.push_back(cta::log::Param("archiveFileId", file.archive_file_id()));
@@ -669,7 +679,7 @@ std::pair<std::string,std::string> RestoreFilesCmd::getInstanceAndFidFromCTA(con
   }
 
   cta::xrd::Request request;
-  auto &admincmd = *(request.mutable_admincmd());
+  auto& admincmd = *(request.mutable_admincmd());
 
   admincmd.set_client_version(CTA_VERSION);
   admincmd.set_protobuf_tag(XROOTD_SSI_PROTOBUF_INTERFACE_VERSION);
@@ -684,8 +694,7 @@ std::pair<std::string,std::string> RestoreFilesCmd::getInstanceAndFidFromCTA(con
   auto stream_future = m_serviceProviderPtr->SendAsync(request, response, false);
 
   // Handle responses
-  switch(response.type())
-  {
+  switch (response.type()) {
     using namespace cta::xrd;
     using namespace cta::admin;
     case Response::RSP_SUCCESS:
@@ -694,16 +703,21 @@ std::pair<std::string,std::string> RestoreFilesCmd::getInstanceAndFidFromCTA(con
       // Allow stream processing to commence
       isHeaderSent = true;
       break;
-    case Response::RSP_ERR_PROTOBUF:                     throw XrdSsiPb::PbException(response.message_txt());
-    case Response::RSP_ERR_USER:                         throw XrdSsiPb::UserException(response.message_txt());
-    case Response::RSP_ERR_CTA:                          throw std::runtime_error(response.message_txt());
-    default:                                             throw XrdSsiPb::PbException("Invalid response type.");
+    case Response::RSP_ERR_PROTOBUF:
+      throw XrdSsiPb::PbException(response.message_txt());
+    case Response::RSP_ERR_USER:
+      throw XrdSsiPb::UserException(response.message_txt());
+    case Response::RSP_ERR_CTA:
+      throw std::runtime_error(response.message_txt());
+    default:
+      throw XrdSsiPb::PbException("Invalid response type.");
   }
 
   // wait until the data stream has been processed before exiting
   stream_future.wait();
-  if(listedTapeFiles.size() == 0) {
-    throw std::runtime_error("Unexpected result set: listedTapeFiles size expected to be larger than 0, received=" + std::to_string(listedTapeFiles.size()));
+  if (listedTapeFiles.size() == 0) {
+    throw std::runtime_error("Unexpected result set: listedTapeFiles size expected to be larger than 0, received=" +
+                             std::to_string(listedTapeFiles.size()));
   }
   auto listedTapeFile = listedTapeFiles.back();
   listedTapeFiles.clear();
@@ -719,10 +733,10 @@ std::pair<std::string,std::string> RestoreFilesCmd::getInstanceAndFidFromCTA(con
 //------------------------------------------------------------------------------
 // getArchiveFileIdFromEOS
 //------------------------------------------------------------------------------
-std::pair<uint64_t, std::string> RestoreFilesCmd::getArchiveFileIdAndChecksumFromEOS(
-  const std::string& diskInstance, const std::string& fidStr) {
+std::pair<uint64_t, std::string> RestoreFilesCmd::getArchiveFileIdAndChecksumFromEOS(const std::string& diskInstance,
+                                                                                     const std::string& fidStr) {
   auto fid = strtoul(fidStr.c_str(), nullptr, 10);
-  if(fid < 1) {
+  if (fid < 1) {
     throw std::runtime_error(fid + " (base 10) is not a valid disk file ID");
   }
   {
@@ -736,7 +750,7 @@ std::pair<uint64_t, std::string> RestoreFilesCmd::getArchiveFileIdAndChecksumFro
   }
   auto md_response = m_endpointMapPtr->getMD(diskInstance, ::eos::rpc::FILE, fid, "", false);
   auto archiveFileIdItor = md_response.fmd().xattrs().find("sys.archive.file_id");
-  if(md_response.fmd().xattrs().end() == archiveFileIdItor) {
+  if (md_response.fmd().xattrs().end() == archiveFileIdItor) {
     throw std::runtime_error("archiveFileId extended attribute not found.");
   }
   auto archiveFileId = strtoul(archiveFileIdItor->second.c_str(), nullptr, 10);
@@ -749,7 +763,7 @@ std::pair<uint64_t, std::string> RestoreFilesCmd::getArchiveFileIdAndChecksumFro
     m_log(cta::log::DEBUG, "Response from EOS nameserver", params);
   }
 
-  return std::make_pair(archiveFileId,checksumValue);
+  return std::make_pair(archiveFileId, checksumValue);
 }
 
-} // namespace admin
+}  // namespace cta::cliTool

@@ -37,4 +37,4 @@ enum DriveStatus {
 };
 
 std::string toString(DriveStatus type);
-} // namespace cta::common::dataStructures
+}  // namespace cta::common::dataStructures

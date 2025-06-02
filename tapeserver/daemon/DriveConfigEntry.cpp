@@ -24,31 +24,34 @@ namespace cta::tape::daemon {
 //------------------------------------------------------------------------------
 // Constructor.
 //------------------------------------------------------------------------------
-cta::tape::daemon::DriveConfigEntry::DriveConfigEntry(
-  const std::string &unitName,
-  const std::string &logicalLibrary,
-  const std::string &devFilename,
-  const std::string &librarySlot):
-  unitName(unitName),
-  logicalLibrary(logicalLibrary),
-  devFilename(devFilename),
-  rawLibrarySlot(librarySlot),
-  m_librarySlot(mediachanger::LibrarySlotParser::parse(rawLibrarySlot)){
-  if (unitName.size() > maxNameLen)
+cta::tape::daemon::DriveConfigEntry::DriveConfigEntry(const std::string& unitName,
+                                                      const std::string& logicalLibrary,
+                                                      const std::string& devFilename,
+                                                      const std::string& librarySlot)
+    : unitName(unitName),
+      logicalLibrary(logicalLibrary),
+      devFilename(devFilename),
+      rawLibrarySlot(librarySlot),
+      m_librarySlot(mediachanger::LibrarySlotParser::parse(rawLibrarySlot)) {
+  if (unitName.size() > maxNameLen) {
     throw cta::exception::Exception("In DriveConfigEntry::DriveConfigEntry: unitName too long");
-  if (logicalLibrary.size() > maxNameLen)
+  }
+  if (logicalLibrary.size() > maxNameLen) {
     throw cta::exception::Exception("In DriveConfigEntry::DriveConfigEntry: logicalLibrary too long");
-  if (devFilename.size() > maxNameLen)
+  }
+  if (devFilename.size() > maxNameLen) {
     throw cta::exception::Exception("In DriveConfigEntry::DriveConfigEntry: devFilename too long");
-  if (librarySlot.size() > maxNameLen)
+  }
+  if (librarySlot.size() > maxNameLen) {
     throw cta::exception::Exception("In DriveConfigEntry::DriveConfigEntry: librarySlot too long");
+  }
 }
 
 //------------------------------------------------------------------------------
 // Copy constructor.
 //------------------------------------------------------------------------------
-DriveConfigEntry::DriveConfigEntry(const DriveConfigEntry& o): DriveConfigEntry(o.unitName, o.logicalLibrary,
-    o.devFilename, o.rawLibrarySlot) {}
+DriveConfigEntry::DriveConfigEntry(const DriveConfigEntry& o)
+    : DriveConfigEntry(o.unitName, o.logicalLibrary, o.devFilename, o.rawLibrarySlot) {}
 
 //------------------------------------------------------------------------------
 // DriveConfigEntry::librarySlot
@@ -69,4 +72,4 @@ DriveConfigEntry& DriveConfigEntry::operator=(const DriveConfigEntry& o) {
   return *this;
 }
 
-} // namespace cta::tape::daemon
+}  // namespace cta::tape::daemon

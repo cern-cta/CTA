@@ -22,10 +22,9 @@
 #include <stdint.h>
 #include <stdlib.h>
 
-
 namespace castor::tape::tapeserver {
 
-  /**
+/**
    * The compile-time default value of the tapebridged configuration parameter
    * named TAPEBRIDGE/MAXBYTESBEFOREFLUSH.
    *
@@ -38,9 +37,9 @@ namespace castor::tape::tapeserver {
    * used over multiple files as defined by the parameter named
    * TAPEBRIDGE/USEBUFFEREDTAPEMARKSOVERMULTIPLEFILES.
    */
-  const uint64_t TAPEBRIDGE_MAXBYTESBEFOREFLUSH = 32000000000ULL; // 32 GB
+const uint64_t TAPEBRIDGE_MAXBYTESBEFOREFLUSH = 32000000000ULL;  // 32 GB
 
-  /**
+/**
    * The compile-time default value of the tapebridged configuration parameter
    * named TAPEBRIDGE/MAXFILESBEFOREFLUSH.
    *
@@ -51,36 +50,36 @@ namespace castor::tape::tapeserver {
    * used over multiple files as defined by the parameter named
    * TAPEBRIDGE/USEBUFFEREDTAPEMARKSOVERMULTIPLEFILES.
    */
-  const uint64_t TAPEBRIDGE_MAXFILESBEFOREFLUSH = 200;
+const uint64_t TAPEBRIDGE_MAXFILESBEFOREFLUSH = 200;
 
-  /**
+/**
    * When the tapegatewayd daemon is asked for a set of files to migrate to
    * tape, this is the compile-time default for the maximum number of bytes
    * the resulting set can represent.  This number may be exceeded when the set
    * contains a single file.
    */
-  const uint64_t TAPEBRIDGE_BULKREQUESTMIGRATIONMAXBYTES = 80000000000ULL;
+const uint64_t TAPEBRIDGE_BULKREQUESTMIGRATIONMAXBYTES = 80000000000ULL;
 
-  /**
+/**
    * When the tapegatewayd daemon is asked for a set of files to migrate to
    * tape, this is the compile-time default for the maximum number of files
    * that can be in that set.
    */
-  const uint64_t TAPEBRIDGE_BULKREQUESTMIGRATIONMAXFILES = 500;
+const uint64_t TAPEBRIDGE_BULKREQUESTMIGRATIONMAXFILES = 500;
 
-  /**
+/**
    * When the tapegatewayd daemon is asked for a set of files to recall from
    * tape, this is the compile-time default for the maximum number of bytes
    * the resulting set can represent.  This number may be exceeded when the set
    * contains a single file.
    */
-  const uint64_t TAPEBRIDGE_BULKREQUESTRECALLMAXBYTES = 80000000000ULL;
+const uint64_t TAPEBRIDGE_BULKREQUESTRECALLMAXBYTES = 80000000000ULL;
 
-  /**
+/**
    * When the tapegatewayd daemon is asked for a set of files to recall from
    * tape, this is the compile-time default for the maximum number of files
    * that can be in that set.
    */
-  const uint64_t TAPEBRIDGE_BULKREQUESTRECALLMAXFILES = 500;
+const uint64_t TAPEBRIDGE_BULKREQUESTRECALLMAXFILES = 500;
 
-} // namespace castor::tape::tapeserver
+}  // namespace castor::tape::tapeserver

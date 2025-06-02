@@ -23,12 +23,9 @@ namespace unitTests {
 
 class cta_rdbms_rdbmsTest : public ::testing::Test {
 protected:
+  virtual void SetUp() {}
 
-  virtual void SetUp() {
-  }
-
-  virtual void TearDown() {
-  }
+  virtual void TearDown() {}
 };
 
 TEST_F(cta_rdbms_rdbmsTest, getSqlForException) {
@@ -42,4 +39,4 @@ TEST_F(cta_rdbms_rdbmsTest, getSqlForException) {
   ASSERT_EQ(expectedSql, resultingSql);
 }
 
-} // namespace unitTests
+}  // namespace unitTests

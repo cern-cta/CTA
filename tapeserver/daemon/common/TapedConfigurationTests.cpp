@@ -25,57 +25,52 @@ namespace unitTests {
 
 TEST(cta_Daemon, TapedConfiguration) {
   TempFile incompleteConfFile, completeConfFile;
-  incompleteConfFile.stringFill(
-  "# My incomplete taped configuration file\n"
-  );
-  completeConfFile.stringFill(
-  "# A good enough configuration file for taped\n"
-  "ObjectStore BackendPath vfsObjectStore:///tmp/dir\n"
+  incompleteConfFile.stringFill("# My incomplete taped configuration file\n");
+  completeConfFile.stringFill("# A good enough configuration file for taped\n"
+                              "ObjectStore BackendPath vfsObjectStore:///tmp/dir\n"
 
-  "taped DriveName dummy-Drive\n"
-  "taped DriveLogicalLibrary dummyLL\n"
-  "taped DriveDevice /dummy/Device\n"
-  "taped DriveControlPath dummyControlPath\n"
+                              "taped DriveName dummy-Drive\n"
+                              "taped DriveLogicalLibrary dummyLL\n"
+                              "taped DriveDevice /dummy/Device\n"
+                              "taped DriveControlPath dummyControlPath\n"
 
-  "general InstanceName production\n"
-  "general SchedulerBackendName dummyProdUser\n"
-  "general ServiceName dummy-service-name\n");
+                              "general InstanceName production\n"
+                              "general SchedulerBackendName dummyProdUser\n"
+                              "general ServiceName dummy-service-name\n");
 
   ASSERT_THROW(cta::tape::daemon::common::TapedConfiguration::createFromConfigPath(incompleteConfFile.path()),
-    cta::SourcedParameter<std::string>::MandatoryParameterNotDefined);
-  auto completeConfig = 
-    cta::tape::daemon::common::TapedConfiguration::createFromConfigPath(completeConfFile.path());
-  ASSERT_EQ(completeConfFile.path()+":2", completeConfig.backendPath.source());
+               cta::SourcedParameter<std::string>::MandatoryParameterNotDefined);
+  auto completeConfig = cta::tape::daemon::common::TapedConfiguration::createFromConfigPath(completeConfFile.path());
+  ASSERT_EQ(completeConfFile.path() + ":2", completeConfig.backendPath.source());
   ASSERT_EQ("vfsObjectStore:///tmp/dir", completeConfig.backendPath.value());
 }
 
 TEST(cta_Daemon, TapedConfigurationFull) {
-  cta::log::StdoutLogger log("dummy","unitTests");
+  cta::log::StdoutLogger log("dummy", "unitTests");
   TempFile completeConfFile;
-  completeConfFile.stringFill(
-  "#A good enough configuration file for taped\n"
-  "ObjectStore BackendPath vfsObjectStore:///tmp/dir\n"
-  "taped CatalogueConfigFile /etc/cta/catalog.conf\n"
-  "taped ArchiveFetchBytesFiles 1,2\n"
-  "taped ArchiveFlushBytesFiles              3 , 4 \n"
-  "taped RetrieveFetchBytesFiles  5,   6\n"
-  "taped BufferCount 1  \n"
+  completeConfFile.stringFill("#A good enough configuration file for taped\n"
+                              "ObjectStore BackendPath vfsObjectStore:///tmp/dir\n"
+                              "taped CatalogueConfigFile /etc/cta/catalog.conf\n"
+                              "taped ArchiveFetchBytesFiles 1,2\n"
+                              "taped ArchiveFlushBytesFiles              3 , 4 \n"
+                              "taped RetrieveFetchBytesFiles  5,   6\n"
+                              "taped BufferCount 1  \n"
 
-  "taped DriveName dummy-Drive\n"
-  "taped DriveLogicalLibrary dummyLL\n"
-  "taped DriveDevice /dummy/Device\n"
-  "taped DriveControlPath dummyControlPath\n"
+                              "taped DriveName dummy-Drive\n"
+                              "taped DriveLogicalLibrary dummyLL\n"
+                              "taped DriveDevice /dummy/Device\n"
+                              "taped DriveControlPath dummyControlPath\n"
 
-  "general InstanceName production\n"
-  "general SchedulerBackendName dummyProdUser\n"
-  "general ServiceName dummy-service-name\n");
+                              "general InstanceName production\n"
+                              "general SchedulerBackendName dummyProdUser\n"
+                              "general ServiceName dummy-service-name\n");
 
   // The log parameter can be uncommented to inspect the result on the output.
-  auto completeConfig = 
-    cta::tape::daemon::common::TapedConfiguration::createFromConfigPath(completeConfFile.path()/*, log*/);
-  ASSERT_EQ(completeConfFile.path()+":2", completeConfig.backendPath.source());
+  auto completeConfig =
+    cta::tape::daemon::common::TapedConfiguration::createFromConfigPath(completeConfFile.path() /*, log*/);
+  ASSERT_EQ(completeConfFile.path() + ":2", completeConfig.backendPath.source());
   ASSERT_EQ("vfsObjectStore:///tmp/dir", completeConfig.backendPath.value());
-  ASSERT_EQ(completeConfFile.path()+":3", completeConfig.fileCatalogConfigFile.source());
+  ASSERT_EQ(completeConfFile.path() + ":3", completeConfig.fileCatalogConfigFile.source());
   ASSERT_EQ("/etc/cta/catalog.conf", completeConfig.fileCatalogConfigFile.value());
   ASSERT_EQ(1, completeConfig.archiveFetchBytesFiles.value().maxBytes);
   ASSERT_EQ(2, completeConfig.archiveFetchBytesFiles.value().maxFiles);
@@ -85,4 +80,4 @@ TEST(cta_Daemon, TapedConfigurationFull) {
   ASSERT_EQ(6, completeConfig.retrieveFetchBytesFiles.value().maxFiles);
 }
 
-} // namespace unitTests
+}  // namespace unitTests

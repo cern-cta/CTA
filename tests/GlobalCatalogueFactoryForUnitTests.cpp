@@ -20,4 +20,4 @@
 //------------------------------------------------------------------------------
 // g_catalogueFactoryForUnitTests
 //------------------------------------------------------------------------------
-cta::catalogue::CatalogueFactory *g_catalogueFactoryForUnitTests = nullptr;
+cta::catalogue::CatalogueFactory* g_catalogueFactoryForUnitTests = nullptr;

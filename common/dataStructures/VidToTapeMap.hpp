@@ -29,4 +29,4 @@ namespace cta::common::dataStructures {
  */
 typedef std::map<std::string, Tape> VidToTapeMap;
 
-} // namespace cta::common::dataStructures
+}  // namespace cta::common::dataStructures

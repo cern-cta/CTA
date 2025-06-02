@@ -37,6 +37,7 @@ public:
   int exitValue();
   bool wasKilled();
   int killSignal();
+
 private:
   int m_stdoutFd;
   int m_stderrFd;
@@ -47,4 +48,4 @@ private:
   std::string m_stderr;
 };
 
-} // namespace cta::threading
+}  // namespace cta::threading

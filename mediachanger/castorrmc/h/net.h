@@ -22,10 +22,10 @@
 #include <sys/types.h>
 #include <sys/socket.h>
 
-EXTERN_C int   netread (int, char *, int); /* Network receive function */
-EXTERN_C int   netwrite(const int, const char *, const int); /* Network send function */
-EXTERN_C char* neterror(void); /* Network error function */
+EXTERN_C int netread(int, char*, int);                    /* Network receive function */
+EXTERN_C int netwrite(const int, const char*, const int); /* Network send function */
+EXTERN_C char* neterror(void);                            /* Network error function */
 
-EXTERN_C ssize_t  netread_timeout (int, void *, ssize_t, int);
-EXTERN_C ssize_t  netwrite_timeout (int, void *, ssize_t, int);
-EXTERN_C int netconnect_timeout (int, struct sockaddr *, size_t, int);
+EXTERN_C ssize_t netread_timeout(int, void*, ssize_t, int);
+EXTERN_C ssize_t netwrite_timeout(int, void*, ssize_t, int);
+EXTERN_C int netconnect_timeout(int, struct sockaddr*, size_t, int);

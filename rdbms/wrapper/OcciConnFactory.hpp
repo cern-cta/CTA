@@ -24,9 +24,8 @@ namespace cta::rdbms::wrapper {
 /**
  * A concrete factory of Conn objects.
  */
-class OcciConnFactory: public ConnFactory {
+class OcciConnFactory : public ConnFactory {
 public:
-
   /**
    * Constructor.
    *
@@ -34,10 +33,7 @@ public:
    * @param password The database password.
    * @param database The database name.
    */
-  OcciConnFactory(
-    const std::string &username,
-    const std::string &password,
-    const std::string &database);
+  OcciConnFactory(const std::string& username, const std::string& password, const std::string& database);
 
   /**
    * Destructor
@@ -52,7 +48,6 @@ public:
   std::unique_ptr<ConnWrapper> create() override;
 
 private:
-
   /**
    * The database username.
    */
@@ -68,6 +63,6 @@ private:
    */
   std::string m_database;
 
-}; // class OcciConnFactory
+};  // class OcciConnFactory
 
-} // namespace cta::rdbms::wrapper
+}  // namespace cta::rdbms::wrapper

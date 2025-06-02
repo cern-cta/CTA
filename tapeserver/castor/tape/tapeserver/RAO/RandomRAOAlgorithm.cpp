@@ -24,10 +24,9 @@
 #include "tapeserver/castor/tape/tapeserver/RAO/RandomRAOAlgorithm.hpp"
 #include "tapeserver/castor/tape/tapeserver/SCSI/Structures.hpp"
 
-
 namespace castor::tape::tapeserver::rao {
 
-std::vector<uint64_t> RandomRAOAlgorithm::performRAO(const std::vector<std::unique_ptr<cta::RetrieveJob> >& jobs) {
+std::vector<uint64_t> RandomRAOAlgorithm::performRAO(const std::vector<std::unique_ptr<cta::RetrieveJob>>& jobs) {
   std::vector<uint64_t> raoIndices(jobs.size());
   cta::utils::Timer totalTimer;
   std::iota(raoIndices.begin(), raoIndices.end(), 0);
@@ -36,4 +35,4 @@ std::vector<uint64_t> RandomRAOAlgorithm::performRAO(const std::vector<std::uniq
   return raoIndices;
 }
 
-} // namespace castor::tape::tapeserver::rao
+}  // namespace castor::tape::tapeserver::rao

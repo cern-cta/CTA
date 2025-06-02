@@ -93,7 +93,7 @@ public:
     return 0;
   };
 
-  void requeueJobBatch(std::vector<std::unique_ptr<cta::RetrieveJob>> &jobs, log::LogContext &logContext) override{};
+  void requeueJobBatch(std::vector<std::unique_ptr<cta::RetrieveJob>>& jobs, log::LogContext& logContext) override {};
 
   bool reserveDiskSpace(const cta::DiskSpaceReservationRequest& request, log::LogContext& logContext) override {
     return true;

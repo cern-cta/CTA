@@ -39,4 +39,4 @@ public:
   virtual std::unique_ptr<Catalogue> create() = 0;
 };
 
-} // namespace cta::catalogue
+}  // namespace cta::catalogue

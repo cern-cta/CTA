@@ -25,12 +25,9 @@ namespace unitTests {
 
 class cta_rdbms_wrapper_ParamNameToIdxTest : public ::testing::Test {
 protected:
+  virtual void SetUp() {}
 
-  virtual void SetUp() {
-  }
-
-  virtual void TearDown() {
-  }
+  virtual void TearDown() {}
 };
 
 TEST_F(cta_rdbms_wrapper_ParamNameToIdxTest, getIdx_existing_params) {
@@ -92,4 +89,4 @@ TEST_F(cta_rdbms_wrapper_ParamNameToIdxTest, getIdx_non_existing_param) {
   ASSERT_THROW(paramNameToIdx.getIdx(":NON_EXISTING_PARAM"), exception::Exception);
 }
 
-} // namespace unitTests
+}  // namespace unitTests

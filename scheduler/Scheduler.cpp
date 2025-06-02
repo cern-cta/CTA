@@ -149,8 +149,9 @@ std::string Scheduler::queueArchiveWithGivenId(const uint64_t archiveFileId,
   using utils::postEllipsis;
 
   if (!request.fileSize) {
-    throw cta::exception::UserError(std::string("In Scheduler::queueArchiveWithGivenId(): Rejecting archive request for zero-length file: ") +
-                                    request.diskFileInfo.path);
+    throw cta::exception::UserError(
+      std::string("In Scheduler::queueArchiveWithGivenId(): Rejecting archive request for zero-length file: ") +
+      request.diskFileInfo.path);
   }
 
   const auto queueCriteria =
@@ -225,8 +226,8 @@ std::string Scheduler::queueRetrieve(const std::string& instanceName,
     queueCriteria.archiveFile.tapeFiles.removeAllVidsExcept(*request.vid);
     if (queueCriteria.archiveFile.tapeFiles.empty()) {
       exception::UserError ex;
-      ex.getMessage() << "In Scheduler::queueRetrieve(): VID " << *request.vid << " does not contain a tape copy of file with archive file ID "
-                      << request.archiveFileID;
+      ex.getMessage() << "In Scheduler::queueRetrieve(): VID " << *request.vid
+                      << " does not contain a tape copy of file with archive file ID " << request.archiveFileID;
       throw ex;
     }
   }
@@ -1198,18 +1199,18 @@ void Scheduler::sortAndGetTapesForMountInfo(
     // Remove empty string tape pools
     std::set<std::string> vidsWithEmptyTapePoolString;
     mountInfo->potentialMounts.erase(
-    std::remove_if(mountInfo->potentialMounts.begin(),
-                   mountInfo->potentialMounts.end(),
-                   [&vidsWithEmptyTapePoolString](const SchedulerDatabase::PotentialMount& mount) {
-                     if (mount.tapePool.empty()) {
-                       vidsWithEmptyTapePoolString.insert(mount.vid);
-                       return true;
-                     }
-                     return false;
-                   }),
-    mountInfo->potentialMounts.end());
+      std::remove_if(mountInfo->potentialMounts.begin(),
+                     mountInfo->potentialMounts.end(),
+                     [&vidsWithEmptyTapePoolString](const SchedulerDatabase::PotentialMount& mount) {
+                       if (mount.tapePool.empty()) {
+                         vidsWithEmptyTapePoolString.insert(mount.vid);
+                         return true;
+                       }
+                       return false;
+                     }),
+      mountInfo->potentialMounts.end());
     if (!vidsWithEmptyTapePoolString.empty()) {
-      for (auto & vid : vidsWithEmptyTapePoolString) {
+      for (auto& vid : vidsWithEmptyTapePoolString) {
         log::ScopedParamContainer params(lc);
         params.add("tapeVid", vid);
         lc.log(log::ERR,
@@ -1223,23 +1224,22 @@ void Scheduler::sortAndGetTapesForMountInfo(
     // Remove empty string tape pools
     std::set<std::string> drivesWithEmptyTapePoolString;
     mountInfo->existingOrNextMounts.erase(
-        std::remove_if(
-            mountInfo->existingOrNextMounts.begin(),
-            mountInfo->existingOrNextMounts.end(),
-            [&drivesWithEmptyTapePoolString](const SchedulerDatabase::ExistingMount& mount) {
-              if (mount.tapePool.empty()) {
-                drivesWithEmptyTapePoolString.insert(mount.driveName);
-                return true;
-              }
-              return false;
-        }),
-        mountInfo->existingOrNextMounts.end());
+      std::remove_if(mountInfo->existingOrNextMounts.begin(),
+                     mountInfo->existingOrNextMounts.end(),
+                     [&drivesWithEmptyTapePoolString](const SchedulerDatabase::ExistingMount& mount) {
+                       if (mount.tapePool.empty()) {
+                         drivesWithEmptyTapePoolString.insert(mount.driveName);
+                         return true;
+                       }
+                       return false;
+                     }),
+      mountInfo->existingOrNextMounts.end());
     if (!drivesWithEmptyTapePoolString.empty()) {
-      for (auto & drive : drivesWithEmptyTapePoolString) {
+      for (auto& drive : drivesWithEmptyTapePoolString) {
         log::ScopedParamContainer params(lc);
         params.add("drive", drive);
         lc.log(log::ERR,
-             "In Scheduler::sortAndGetTapesForMountInfo(): empty tape pool string found on existing or next mount.");
+               "In Scheduler::sortAndGetTapesForMountInfo(): empty tape pool string found on existing or next mount.");
       }
     }
 
@@ -1247,21 +1247,22 @@ void Scheduler::sortAndGetTapesForMountInfo(
     auto schedulerBackendName = getSchedulerBackendName();
     std::list<std::string> ignoredDrives;
     mountInfo->existingOrNextMounts.erase(
-        std::remove_if(
-            mountInfo->existingOrNextMounts.begin(),
-            mountInfo->existingOrNextMounts.end(),
-            [&ignoredDrives, &schedulerBackendName](const SchedulerDatabase::ExistingMount& mount) {
-              if (!mount.schedulerBackendName.has_value()) {
-                ignoredDrives.emplace_back(mount.driveName);
-                return true;
-              }
-              return mount.schedulerBackendName != schedulerBackendName;
-        }),
-        mountInfo->existingOrNextMounts.end());
-    for (const auto & ignoredDriveName: ignoredDrives) {
+      std::remove_if(mountInfo->existingOrNextMounts.begin(),
+                     mountInfo->existingOrNextMounts.end(),
+                     [&ignoredDrives, &schedulerBackendName](const SchedulerDatabase::ExistingMount& mount) {
+                       if (!mount.schedulerBackendName.has_value()) {
+                         ignoredDrives.emplace_back(mount.driveName);
+                         return true;
+                       }
+                       return mount.schedulerBackendName != schedulerBackendName;
+                     }),
+      mountInfo->existingOrNextMounts.end());
+    for (const auto& ignoredDriveName : ignoredDrives) {
       log::ScopedParamContainer params(lc);
       params.add("ignoredDrive", ignoredDriveName);
-      lc.log(log::ERR, "In Scheduler::sortAndGetTapesForMountInfo(): found a drive without SchedulerBackendName configuration. Ignoring drive.");
+      lc.log(log::ERR,
+             "In Scheduler::sortAndGetTapesForMountInfo(): found a drive without SchedulerBackendName configuration. "
+             "Ignoring drive.");
     }
   }
 
@@ -2086,29 +2087,31 @@ std::list<common::dataStructures::QueueAndMountSummary> Scheduler::getQueuesAndM
   {
     auto schedulerBackendName = getSchedulerBackendName();
     std::unordered_map<std::string, std::string> tapeDriveSchedulerBackendNameMap;
-    for (const auto & config : m_catalogue.DriveConfig()->getTapeDriveConfigs()) {
+    for (const auto& config : m_catalogue.DriveConfig()->getTapeDriveConfigs()) {
       if (config.keyName == "SchedulerBackendName") {
         tapeDriveSchedulerBackendNameMap.emplace(config.tapeDriveName, config.value);
       }
     }
     std::list<std::string> ignoredDrives;
     mountDecisionInfo->existingOrNextMounts.erase(
-        std::remove_if(
-            mountDecisionInfo->existingOrNextMounts.begin(),
-            mountDecisionInfo->existingOrNextMounts.end(),
-            [&ignoredDrives, &tapeDriveSchedulerBackendNameMap, &schedulerBackendName](const SchedulerDatabase::ExistingMount& mount) {
-              try {
-                return tapeDriveSchedulerBackendNameMap.at(mount.driveName) != schedulerBackendName;
-              } catch (std::out_of_range &) {
-                ignoredDrives.emplace_back(mount.driveName);
-                return true;
-              }
-        }),
-        mountDecisionInfo->existingOrNextMounts.end());
-    for (const auto & ignoredDriveName: ignoredDrives) {
+      std::remove_if(mountDecisionInfo->existingOrNextMounts.begin(),
+                     mountDecisionInfo->existingOrNextMounts.end(),
+                     [&ignoredDrives, &tapeDriveSchedulerBackendNameMap, &schedulerBackendName](
+                       const SchedulerDatabase::ExistingMount& mount) {
+                       try {
+                         return tapeDriveSchedulerBackendNameMap.at(mount.driveName) != schedulerBackendName;
+                       } catch (std::out_of_range&) {
+                         ignoredDrives.emplace_back(mount.driveName);
+                         return true;
+                       }
+                     }),
+      mountDecisionInfo->existingOrNextMounts.end());
+    for (const auto& ignoredDriveName : ignoredDrives) {
       log::ScopedParamContainer params(lc);
       params.add("ignoredDrive", ignoredDriveName);
-      lc.log(log::ERR, "In Scheduler::getQueuesAndMountSummaries(): found a drive without SchedulerBackendName configuration. Ignoring drive.");
+      lc.log(log::ERR,
+             "In Scheduler::getQueuesAndMountSummaries(): found a drive without SchedulerBackendName configuration. "
+             "Ignoring drive.");
     }
   }
 
@@ -2286,8 +2289,7 @@ std::list<common::dataStructures::QueueAndMountSummary> Scheduler::getQueuesAndM
       // Get info for this tape.
       auto& t = tapes.at(mountOrQueue.vid);
       utils::Timer catalogueGetVoTimer;
-      bool isRepacking =
-        (t.state == Tape::REPACKING || t.state == Tape::REPACKING_DISABLED);
+      bool isRepacking = (t.state == Tape::REPACKING || t.state == Tape::REPACKING_DISABLED);
       repackingTapesCount += (isRepacking ? 1 : 0);
       const auto vo = isRepacking ? repackVo : m_catalogue.VO()->getCachedVirtualOrganizationOfTapepool(t.tapePoolName);
       catalogueGetVoTotalTime += catalogueGetVoTimer.secs();

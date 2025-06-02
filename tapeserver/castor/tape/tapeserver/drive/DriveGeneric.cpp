@@ -1011,7 +1011,7 @@ bool drive::DriveGeneric::isTapeBlank() {
  * layer, unless the parameter turns out to be disused.
  * @param bufWrite: value of the buffer write switch
  */
-void drive::DriveGeneric::setSTBufferWrite(bool bufWrite)  {
+void drive::DriveGeneric::setSTBufferWrite(bool bufWrite) {
   struct mtop m_mtCmd = {};
   m_mtCmd.mt_op = MTSETDRVBUFFER;
   m_mtCmd.mt_count = bufWrite ? (MT_ST_SETBOOLEANS | MT_ST_BUFFER_WRITES) : (MT_ST_CLEARBOOLEANS | MT_ST_BUFFER_WRITES);
@@ -1042,7 +1042,7 @@ void drive::DriveGeneric::spaceToEOM(void) {
  * the higher levels of the software (TODO: protected?).
  * @param fastMTEOM the option switch.
  */
-void drive::DriveGeneric::setSTFastMTEOM(bool fastMTEOM)  {
+void drive::DriveGeneric::setSTFastMTEOM(bool fastMTEOM) {
   struct mtop m_mtCmd = {};
   m_mtCmd.mt_op = MTSETDRVBUFFER;
   m_mtCmd.mt_count = fastMTEOM ? (MT_ST_SETBOOLEANS | MT_ST_FAST_MTEOM) : (MT_ST_CLEARBOOLEANS | MT_ST_FAST_MTEOM);
@@ -1066,7 +1066,7 @@ void drive::DriveGeneric::fastSpaceToEOM(void) {
 /**
  * Rewind tape.
  */
-void drive::DriveGeneric::rewind(void)  {
+void drive::DriveGeneric::rewind(void) {
   struct mtop m_mtCmd = {};
   m_mtCmd.mt_op = MTREW;
   m_mtCmd.mt_count = 1;
@@ -1111,7 +1111,7 @@ void drive::DriveGeneric::spaceFileMarksForward(size_t count) {
 /**
  * Unload the tape.
  */
-void drive::DriveGeneric::unloadTape(void)  {
+void drive::DriveGeneric::unloadTape(void) {
   struct mtop m_mtCmd = {};
   m_mtCmd.mt_op = MTUNLOAD;
   m_mtCmd.mt_count = 1;
@@ -1123,9 +1123,10 @@ void drive::DriveGeneric::unloadTape(void)  {
  * Synch call to the tape drive. This function will not return before the
  * data in the drive's buffer is actually committed to the medium.
  */
-void drive::DriveGeneric::flush(void)  {
+void drive::DriveGeneric::flush(void) {
   struct mtop m_mtCmd = {};
-  m_mtCmd.mt_op = MTWEOF; //Not using MTNOP because it doesn't do what it claims (see st source code) so here we put "write sync file marks" with count set to 0.
+  m_mtCmd.mt_op =
+    MTWEOF;  //Not using MTNOP because it doesn't do what it claims (see st source code) so here we put "write sync file marks" with count set to 0.
   // The following text is a quote from the SCSI Stream commands manual (SSC-3):
   // NOTE 25 Upon completion of any buffered write operation, the application client may issue a WRITE FILEMARKS(16) command with the IMMED bit set to zero and the FILEMARK COUNT field set to zero to perform a synchronize operation (see 4.2.10).
   m_mtCmd.mt_count = 0;
@@ -1138,7 +1139,7 @@ void drive::DriveGeneric::flush(void)  {
  * are committed to medium.
  * @param count
  */
-void drive::DriveGeneric::writeSyncFileMarks(size_t count)  {
+void drive::DriveGeneric::writeSyncFileMarks(size_t count) {
   struct mtop m_mtCmd = {};
   m_mtCmd.mt_op = MTWEOF;
   m_mtCmd.mt_count = (int) count;
@@ -1151,13 +1152,12 @@ void drive::DriveGeneric::writeSyncFileMarks(size_t count)  {
  * buffer and the function return immediately.
  * @param count
  */
-void drive::DriveGeneric::writeImmediateFileMarks(size_t count)  {
+void drive::DriveGeneric::writeImmediateFileMarks(size_t count) {
   struct mtop m_mtCmd = {};
-  m_mtCmd.mt_op = MTWEOFI; //Undocumented in "man st" needs the mtio_add.hh header file (see above)
-  m_mtCmd.mt_count = (int)count;
-  cta::exception::Errnum::throwOnMinusOne(
-      m_sysWrapper.ioctl(m_tapeFD, MTIOCTOP, &m_mtCmd),
-      "Failed ST ioctl (MTWEOFI) in DriveGeneric::writeImmediateFileMarks");
+  m_mtCmd.mt_op = MTWEOFI;  //Undocumented in "man st" needs the mtio_add.hh header file (see above)
+  m_mtCmd.mt_count = (int) count;
+  cta::exception::Errnum::throwOnMinusOne(m_sysWrapper.ioctl(m_tapeFD, MTIOCTOP, &m_mtCmd),
+                                          "Failed ST ioctl (MTWEOFI) in DriveGeneric::writeImmediateFileMarks");
 }
 
 /**

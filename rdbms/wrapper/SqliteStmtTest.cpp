@@ -28,12 +28,9 @@ namespace unitTests {
 
 class cta_rdbms_wrapper_SqliteStmtTest : public ::testing::Test {
 protected:
+  virtual void SetUp() {}
 
-  virtual void SetUp() {
-  }
-
-  virtual void TearDown() {
-  }
+  virtual void TearDown() {}
 };
 
 TEST_F(cta_rdbms_wrapper_SqliteStmtTest, create_table) {
@@ -56,7 +53,7 @@ TEST_F(cta_rdbms_wrapper_SqliteStmtTest, create_table) {
     auto rset = stmt->executeQuery();
     ASSERT_TRUE(rset->next());
     const auto nbTables = rset->columnOptionalUint64("NB_TABLES");
-    ASSERT_TRUE((bool)nbTables);
+    ASSERT_TRUE((bool) nbTables);
     ASSERT_EQ(0, nbTables.value());
     ASSERT_FALSE(rset->next());
     ASSERT_TRUE(conn.getTableNames().empty());
@@ -88,7 +85,7 @@ TEST_F(cta_rdbms_wrapper_SqliteStmtTest, create_table) {
     auto rset = stmt->executeQuery();
     ASSERT_TRUE(rset->next());
     const auto nbTables = rset->columnOptionalUint64("NB_TABLES");
-    ASSERT_TRUE((bool)nbTables);
+    ASSERT_TRUE((bool) nbTables);
     ASSERT_EQ(1, nbTables.value());
     ASSERT_FALSE(rset->next());
     ASSERT_EQ(1, conn.getTableNames().size());
@@ -121,7 +118,7 @@ TEST_F(cta_rdbms_wrapper_SqliteStmtTest, create_table) {
     auto rset = stmt->executeQuery();
     ASSERT_TRUE(rset->next());
     const auto nbTables = rset->columnOptionalUint64("NB_TABLES");
-    ASSERT_TRUE((bool)nbTables);
+    ASSERT_TRUE((bool) nbTables);
     ASSERT_EQ(1, nbTables.value());
     ASSERT_FALSE(rset->next());
     const auto tableNames = conn.getTableNames();
@@ -229,9 +226,9 @@ TEST_F(cta_rdbms_wrapper_SqliteStmtTest, insert_without_bind) {
     const auto col2 = rset->columnOptionalString("COL2");
     const auto col3 = rset->columnOptionalUint64("COL3");
 
-    ASSERT_TRUE((bool)col1);
-    ASSERT_TRUE((bool)col2);
-    ASSERT_TRUE((bool)col3);
+    ASSERT_TRUE((bool) col1);
+    ASSERT_TRUE((bool) col2);
+    ASSERT_TRUE((bool) col3);
 
     ASSERT_EQ("one", col1.value());
     ASSERT_EQ("two", col2.value());
@@ -301,9 +298,9 @@ TEST_F(cta_rdbms_wrapper_SqliteStmtTest, insert_with_bind) {
     const auto col2 = rset->columnOptionalString("COL2");
     const auto col3 = rset->columnOptionalUint64("COL3");
 
-    ASSERT_TRUE((bool)col1);
-    ASSERT_TRUE((bool)col2);
-    ASSERT_TRUE((bool)col3);
+    ASSERT_TRUE((bool) col1);
+    ASSERT_TRUE((bool) col2);
+    ASSERT_TRUE((bool) col3);
 
     ASSERT_EQ("one", col1.value());
     ASSERT_EQ("two", col2.value());
@@ -368,8 +365,8 @@ TEST_F(cta_rdbms_wrapper_SqliteStmtTest, isolated_transaction) {
     ASSERT_TRUE(rset->next());
 
     const auto nbRows = rset->columnOptionalUint64("NB_ROWS");
-    ASSERT_TRUE((bool)nbRows);
-    ASSERT_EQ((uint64_t)1, nbRows.value());
+    ASSERT_TRUE((bool) nbRows);
+    ASSERT_EQ((uint64_t) 1, nbRows.value());
 
     ASSERT_FALSE(rset->next());
   }
@@ -476,4 +473,4 @@ TEST_F(cta_rdbms_wrapper_SqliteStmtTest, executeQuery_insert_violating_primary_k
   }
 }
 
-} // namespace unitTests
+}  // namespace unitTests

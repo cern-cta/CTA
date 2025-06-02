@@ -82,4 +82,4 @@ protected:
   void writeMsgToUnderlyingLoggingSystem(std::string_view header, std::string_view body) final;
 };
 
-} // namespace cta::log
+}  // namespace cta::log

@@ -36,14 +36,13 @@ class CondVar;
  */
 class MutexLocker {
 public:
-
   /**
    * Constructor
    *
    * @param m pointer to Mutex to be owned
    */
   explicit MutexLocker(Mutex& m) : m_mutex(m) { m.lock(); }
-  
+
   /**
    * Unlocker
    */
@@ -52,7 +51,7 @@ public:
       throw exception::Exception("In MutexLocker::unlock(): trying to unlock an already unlocked mutex");
     }
     m_mutex.unlock();
-    m_locked=false;
+    m_locked = false;
   }
 
   /**
@@ -63,9 +62,9 @@ public:
       throw exception::Exception("In MutexLocker::lock(): trying to relock an locked mutex");
     }
     m_mutex.lock();
-    m_locked=true;
+    m_locked = true;
   }
-  
+
   /**
    * Destructor.
    */
@@ -85,13 +84,13 @@ private:
   /**
    * The mutex owened by this MutexLocker.
    */
-  Mutex & m_mutex;
-  
+  Mutex& m_mutex;
+
   /**
    * Tracking of the state of the mutex
    */
-  bool m_locked=true;
+  bool m_locked = true;
 
-}; // class MutexLocker
-  
-} // namespace cta::threading
+};  // class MutexLocker
+
+}  // namespace cta::threading

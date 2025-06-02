@@ -36,14 +36,14 @@ namespace rdbms {
 class Login;
 class Conn;
 class ConnPool;
-}
+}  // namespace rdbms
 
 namespace catalogue {
 
 /**
  * CTA catalogue implemented using a relational database backend.
  */
-class RdbmsCatalogue: public Catalogue {
+class RdbmsCatalogue : public Catalogue {
 protected:
   /**
    * Protected constructor only to be called by sub-classes.
@@ -58,11 +58,10 @@ protected:
    * connections to the underlying relational database for the sole purpose of
    * listing archive files.
    */
-  RdbmsCatalogue(
-    log::Logger &log,
-    const rdbms::Login &login,
-    const uint64_t nbConns,
-    const uint64_t nbArchiveFileListingConns);
+  RdbmsCatalogue(log::Logger& log,
+                 const rdbms::Login& login,
+                 const uint64_t nbConns,
+                 const uint64_t nbArchiveFileListingConns);
 
 public:
   ~RdbmsCatalogue() override = default;
@@ -99,7 +98,7 @@ protected:
   /**
    * Object representing the API to the CTA logging system.
    */
-  log::Logger &m_log;
+  log::Logger& m_log;
 
   /**
    * Mutex to be used to a take a global lock on the database.
@@ -126,8 +125,9 @@ protected:
    * @param diskFileIds List of disk file IDs (fxid).
    * @return Name of the temporary table
    */
-  virtual std::string createAndPopulateTempTableFxid(rdbms::Conn &conn,
-    const std::optional<std::vector<std::string>> &diskFileIds) const = 0;
+  virtual std::string
+  createAndPopulateTempTableFxid(rdbms::Conn& conn,
+                                 const std::optional<std::vector<std::string>>& diskFileIds) const = 0;
 
   friend class RdbmsMountPolicyCatalogue;
   friend class RdbmsRequesterActivityMountRuleCatalogue;
@@ -137,12 +137,12 @@ protected:
   /**
    * Cached versions of mount policies for specific user groups.
    */
-  mutable TimeBasedCache<Group, std::optional<common::dataStructures::MountPolicy> > m_groupMountPolicyCache;
+  mutable TimeBasedCache<Group, std::optional<common::dataStructures::MountPolicy>> m_groupMountPolicyCache;
 
   /**
    * Cached versions of mount policies for specific users.
    */
-  mutable TimeBasedCache<User, std::optional<common::dataStructures::MountPolicy> > m_userMountPolicyCache;
+  mutable TimeBasedCache<User, std::optional<common::dataStructures::MountPolicy>> m_userMountPolicyCache;
 
   /**
    * Cached versions of all mount policies
@@ -181,4 +181,5 @@ protected:
   std::unique_ptr<ArchiveFileCatalogue> m_archiveFile;
 };  // class RdbmsCatalogue
 
-}} // namespace cta::catalogue
+}  // namespace catalogue
+}  // namespace cta

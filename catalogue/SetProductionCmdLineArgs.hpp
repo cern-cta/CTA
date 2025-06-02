@@ -21,7 +21,7 @@
 
 namespace cta::catalogue {
 
-  /**
+/**
  * Structure to store the command-line arguments of the command-line tool
  * named cta-catalogue-set-production
  */
@@ -36,7 +36,7 @@ struct SetProductionCmdLineArgs {
    * database.
    */
   std::string dbConfigPath;
-  
+
   /**
    * Constructor that parses the specified command-line arguments.
    *
@@ -44,15 +44,14 @@ struct SetProductionCmdLineArgs {
    * executable.
    * @param argv The vector of command-line arguments.
    */
-  SetProductionCmdLineArgs(const int argc, char *const *const argv);
-  
+  SetProductionCmdLineArgs(const int argc, char* const* const argv);
+
   /**
    * Prints the usage message of the command-line tool.
    *
    * @param os The output stream to which the usage message is to be printed.
    */
-  static void printUsage(std::ostream &os);
+  static void printUsage(std::ostream& os);
 };
 
-} // namespace cta::catalogue
-
+}  // namespace cta::catalogue

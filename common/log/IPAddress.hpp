@@ -22,35 +22,31 @@
 
 namespace cta {
 
-  namespace log {
+namespace log {
 
-    /**
+/**
      * A simple object around an IP address
      */
-    class IPAddress {
-
-    public:
-
-      /**
+class IPAddress {
+public:
+  /**
        * Constructor
        */
-      IPAddress(int ip) : m_ip(ip) {};
+  IPAddress(int ip) : m_ip(ip) {};
 
-      /**
+  /**
        * Accessor
        */
-      int ip() const { return m_ip; }
+  int ip() const { return m_ip; }
 
-    private:
+private:
+  /// the IP address, as an int
+  int m_ip;
+};
 
-      /// the IP address, as an int
-      int m_ip;
+}  // end of namespace log
 
-    };
-
-  } // end of namespace log
-
-} // end of namespace cta
+}  // end of namespace cta
 
 /**
  * non-member operator to stream an IpAdress

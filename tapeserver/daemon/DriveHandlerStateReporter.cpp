@@ -20,26 +20,30 @@
 namespace cta::tape::daemon {
 
 DriveHandlerStateReporter::DriveHandlerStateReporter(const std::string& driveName,
-  SubprocessHandler::ProcessingStatus *processingStatus, SessionVid *sessionVid, TimePoint * lastDataMovementTime,
-  cta::log::LogContext* lc)
-  : m_driveName(driveName),
-    m_processingStatus(processingStatus),
-    m_sessionVid(sessionVid),
-    m_lastDataMovementTime(lastDataMovementTime),
-    m_lc(lc) {}
+                                                     SubprocessHandler::ProcessingStatus* processingStatus,
+                                                     SessionVid* sessionVid,
+                                                     TimePoint* lastDataMovementTime,
+                                                     cta::log::LogContext* lc)
+    : m_driveName(driveName),
+      m_processingStatus(processingStatus),
+      m_sessionVid(sessionVid),
+      m_lastDataMovementTime(lastDataMovementTime),
+      m_lc(lc) {}
 
 TimePoint DriveHandlerStateReporter::processState(const serializers::WatchdogMessage& message,
-  SessionState *sessionState, SessionState *previousState,
-  SessionType *sessionType, SessionType *previousType) {
+                                                  SessionState* sessionState,
+                                                  SessionState* previousState,
+                                                  SessionType* sessionType,
+                                                  SessionType* previousType) {
   // Log a session state change
   if (*sessionState != static_cast<SessionState>(message.sessionstate())) {
     *previousState = *sessionState;
     *previousType = *sessionType;
     log::ScopedParamContainer scoped(*m_lc);
     scoped.add("PreviousState", session::toString(*previousState))
-          .add("PreviousType", session::toString(*previousType))
-          .add("NewState", session::toString(static_cast<SessionState>(message.sessionstate())))
-          .add("NewType", session::toString(static_cast<SessionType>(message.sessiontype())));
+      .add("PreviousType", session::toString(*previousType))
+      .add("NewState", session::toString(static_cast<SessionState>(message.sessionstate())))
+      .add("NewType", session::toString(static_cast<SessionType>(message.sessiontype())));
     m_lc->log(log::INFO, "In processEvent(): changing session state");
   }
 
@@ -84,21 +88,19 @@ TimePoint DriveHandlerStateReporter::processState(const serializers::WatchdogMes
 }
 
 SessionVid DriveHandlerStateReporter::processScheduling(const serializers::WatchdogMessage& message,
-  const SessionState& sessionState, const SessionType& sessionType) {
+                                                        const SessionState& sessionState,
+                                                        const SessionType& sessionType) {
   // We are either going to schedule
   // Check the transition is expected. This is non-fatal as the drive session has the last word anyway.
   log::ScopedParamContainer params(*m_lc);
   params.add("tapeDrive", m_driveName);
-  const std::set<SessionState> expectedStates = {
-    SessionState::StartingUp, SessionState::Scheduling
-  };
-  if (!expectedStates.count(sessionState) ||
-      sessionType != SessionType::Undetermined ||
+  const std::set<SessionState> expectedStates = {SessionState::StartingUp, SessionState::Scheduling};
+  if (!expectedStates.count(sessionState) || sessionType != SessionType::Undetermined ||
       static_cast<SessionType>(message.sessiontype()) != SessionType::Undetermined) {
     params.add("PreviousState", session::toString(sessionState))
-          .add("PreviousType", session::toString(sessionType))
-          .add("NewState", session::toString(static_cast<SessionState>(message.sessionstate())))
-          .add("NewType", session::toString(static_cast<SessionType>(message.sessiontype())));
+      .add("PreviousType", session::toString(sessionType))
+      .add("NewState", session::toString(static_cast<SessionState>(message.sessionstate())))
+      .add("NewType", session::toString(static_cast<SessionType>(message.sessiontype())));
     m_lc->log(log::WARNING, "In processScheduling(): unexpected previous state/type.");
   }
 
@@ -106,7 +108,8 @@ SessionVid DriveHandlerStateReporter::processScheduling(const serializers::Watch
 }
 
 SessionVid DriveHandlerStateReporter::processChecking(const serializers::WatchdogMessage& message,
-  const SessionState& sessionState, const SessionType& sessionType) {
+                                                      const SessionState& sessionState,
+                                                      const SessionType& sessionType) {
   // We expect to come from startup/undefined and to get into checking/cleanup
   // As usual, subprocess has the last word.
   log::ScopedParamContainer params(*m_lc);
@@ -114,9 +117,9 @@ SessionVid DriveHandlerStateReporter::processChecking(const serializers::Watchdo
   if (sessionState != SessionState::StartingUp || sessionType != SessionType::Undetermined ||
       static_cast<SessionType>(message.sessiontype()) != SessionType::Cleanup) {
     params.add("PreviousState", session::toString(sessionState))
-          .add("PreviousType", session::toString(sessionType))
-          .add("NewState", session::toString(static_cast<SessionState>(message.sessionstate())))
-          .add("NewType", session::toString(static_cast<SessionType>(message.sessiontype())));
+      .add("PreviousType", session::toString(sessionType))
+      .add("NewState", session::toString(static_cast<SessionState>(message.sessionstate())))
+      .add("NewType", session::toString(static_cast<SessionType>(message.sessiontype())));
     m_lc->log(log::WARNING, "In processChecking(): unexpected previous state/type.");
   }
 
@@ -124,21 +127,19 @@ SessionVid DriveHandlerStateReporter::processChecking(const serializers::Watchdo
 }
 
 SessionVid DriveHandlerStateReporter::processMounting(const serializers::WatchdogMessage& message,
-  const SessionState& sessionState, const SessionType& sessionType) {
+                                                      const SessionState& sessionState,
+                                                      const SessionType& sessionType) {
   // The only transition expected is from scheduling. Several sessions types are possible
   // As usual, subprocess has the last word.
   log::ScopedParamContainer params(*m_lc);
   params.add("tapeDrive", m_driveName);
-  const std::set<SessionType> expectedNewTypes = {
-    SessionType::Archive, SessionType::Retrieve, SessionType::Label
-  };
-  if (sessionState != SessionState::Scheduling ||
-      sessionType != SessionType::Undetermined ||
+  const std::set<SessionType> expectedNewTypes = {SessionType::Archive, SessionType::Retrieve, SessionType::Label};
+  if (sessionState != SessionState::Scheduling || sessionType != SessionType::Undetermined ||
       !expectedNewTypes.count(static_cast<SessionType>(message.sessiontype()))) {
     params.add("PreviousState", session::toString(sessionState))
-          .add("PreviousType", session::toString(sessionType))
-          .add("NewState", session::toString(static_cast<SessionState>(message.sessionstate())))
-          .add("NewType", session::toString(static_cast<SessionType>(message.sessiontype())));
+      .add("PreviousType", session::toString(sessionType))
+      .add("NewState", session::toString(static_cast<SessionState>(message.sessionstate())))
+      .add("NewType", session::toString(static_cast<SessionType>(message.sessiontype())));
     m_lc->log(log::WARNING, "In processMounting(): unexpected previous state/type.");
   }
 
@@ -146,23 +147,21 @@ SessionVid DriveHandlerStateReporter::processMounting(const serializers::Watchdo
 }
 
 SessionVid DriveHandlerStateReporter::processRunning(const serializers::WatchdogMessage& message,
-  const SessionState& sessionState, const SessionType& sessionType) {
+                                                     const SessionState& sessionState,
+                                                     const SessionType& sessionType) {
   // This status can be reported repeatedly (or we can transition from the previous one: Mounting).
   // We expect the type not to change (and to be in the right range)
   // As usual, subprocess has the last word.
   log::ScopedParamContainer params(*m_lc);
   params.add("tapeDrive", m_driveName);
-  const std::set<SessionState> expectedStates = {
-    SessionState::Mounting, SessionState::Running
-  };
+  const std::set<SessionState> expectedStates = {SessionState::Mounting, SessionState::Running};
   std::set<SessionType> expectedTypes = {SessionType::Archive, SessionType::Retrieve, SessionType::Label};
-  if (!expectedStates.count(sessionState) ||
-      !expectedTypes.count(sessionType) ||
+  if (!expectedStates.count(sessionState) || !expectedTypes.count(sessionType) ||
       (sessionType != static_cast<SessionType>(message.sessiontype()))) {
     params.add("PreviousState", session::toString(sessionState))
-          .add("PreviousType", session::toString(sessionType))
-          .add("NewState", session::toString(static_cast<SessionState>(message.sessionstate())))
-          .add("NewType", session::toString(static_cast<SessionType>(message.sessiontype())));
+      .add("PreviousType", session::toString(sessionType))
+      .add("NewState", session::toString(static_cast<SessionState>(message.sessionstate())))
+      .add("NewType", session::toString(static_cast<SessionType>(message.sessiontype())));
     m_lc->log(log::WARNING, "In processMounting(): unexpected previous state/type.");
   }
 
@@ -175,7 +174,8 @@ SessionVid DriveHandlerStateReporter::processRunning(const serializers::Watchdog
 }
 
 SessionVid DriveHandlerStateReporter::processUnmounting(const serializers::WatchdogMessage& message,
-  const SessionState& sessionState, const SessionType& sessionType) {
+                                                        const SessionState& sessionState,
+                                                        const SessionType& sessionType) {
   // This status can come from either running (any running compatible session type)
   // of checking in the case of the cleanup session.
   // As usual, subprocess has the last word.
@@ -185,14 +185,13 @@ SessionVid DriveHandlerStateReporter::processUnmounting(const serializers::Watch
     std::make_tuple(SessionState::Running, SessionType::Archive),
     std::make_tuple(SessionState::Running, SessionType::Retrieve),
     std::make_tuple(SessionState::Running, SessionType::Label),
-    std::make_tuple(SessionState::Checking, SessionType::Cleanup)
-  };
+    std::make_tuple(SessionState::Checking, SessionType::Cleanup)};
   // (all types of sessions can unmount).
   if (!expectedStateTypes.count(std::make_tuple(sessionState, sessionType))) {
     params.add("PreviousState", session::toString(sessionState))
-          .add("PreviousType", session::toString(sessionType))
-          .add("NewState", session::toString(static_cast<SessionState>(message.sessionstate())))
-          .add("NewType", session::toString(static_cast<SessionType>(message.sessiontype())));
+      .add("PreviousType", session::toString(sessionType))
+      .add("NewState", session::toString(static_cast<SessionState>(message.sessionstate())))
+      .add("NewType", session::toString(static_cast<SessionType>(message.sessiontype())));
     m_lc->log(log::WARNING, "In processUnmounting(): unexpected previous state/type.");
   }
 
@@ -200,17 +199,17 @@ SessionVid DriveHandlerStateReporter::processUnmounting(const serializers::Watch
 }
 
 SessionVid DriveHandlerStateReporter::processDrainingToDisk(const serializers::WatchdogMessage& message,
-  const SessionState& sessionState, const SessionType& sessionType) {
+                                                            const SessionState& sessionState,
+                                                            const SessionType& sessionType) {
   // This status transition is expected from unmounting, and only for retrieve sessions.
   // As usual, subprocess has the last word.
   log::ScopedParamContainer params(*m_lc);
   params.add("tapeDrive", m_driveName);
-  if (SessionState::Unmounting != sessionState ||
-      SessionType::Retrieve != sessionType) {
+  if (SessionState::Unmounting != sessionState || SessionType::Retrieve != sessionType) {
     params.add("PreviousState", session::toString(sessionState))
-          .add("PreviousType", session::toString(sessionType))
-          .add("NewState", session::toString(static_cast<SessionState>(message.sessionstate())))
-          .add("NewType", session::toString(static_cast<SessionType>(message.sessiontype())));
+      .add("PreviousType", session::toString(sessionType))
+      .add("NewState", session::toString(static_cast<SessionState>(message.sessionstate())))
+      .add("NewType", session::toString(static_cast<SessionType>(message.sessiontype())));
     m_lc->log(log::WARNING, "In processDrainingToDisk(): unexpected previous state/type.");
   }
 
@@ -218,19 +217,18 @@ SessionVid DriveHandlerStateReporter::processDrainingToDisk(const serializers::W
 }
 
 SessionVid DriveHandlerStateReporter::processShuttingDown(const serializers::WatchdogMessage& message,
-  const SessionState& sessionState, const SessionType& sessionType) {
+                                                          const SessionState& sessionState,
+                                                          const SessionType& sessionType) {
   // This status transition is expected from unmounting, and only for retrieve sessions.
   // As usual, subprocess has the last word.
   log::ScopedParamContainer params(*m_lc);
   params.add("tapeDrive", m_driveName);
-  const std::set<SessionState> expectedStates = {
-    SessionState::Unmounting, SessionState::DrainingToDisk
-  };
+  const std::set<SessionState> expectedStates = {SessionState::Unmounting, SessionState::DrainingToDisk};
   if (!expectedStates.count(sessionState)) {
     params.add("PreviousState", session::toString(sessionState))
-          .add("PreviousType", session::toString(sessionType))
-          .add("NewState", session::toString(static_cast<SessionState>(message.sessionstate())))
-          .add("NewType", session::toString(static_cast<SessionType>(message.sessiontype())));
+      .add("PreviousType", session::toString(sessionType))
+      .add("NewState", session::toString(static_cast<SessionState>(message.sessionstate())))
+      .add("NewType", session::toString(static_cast<SessionType>(message.sessiontype())));
     m_lc->log(log::WARNING, "In processShuttingDown(): unexpected previous state/type.");
   }
 
@@ -246,4 +244,4 @@ void DriveHandlerStateReporter::processFatal(const serializers::WatchdogMessage&
   m_lc->log(log::CRIT, "In processFatal(): shutting down after fatal failure.");
 }
 
-} // namespace cta::tape::daemon
+}  // namespace cta::tape::daemon

@@ -22,9 +22,7 @@ namespace cta::exception {
 //------------------------------------------------------------------------------
 // constructor
 //------------------------------------------------------------------------------
-RetryableError::RetryableError(const std::string &context, const bool embedBacktrace):
-  Exception(context, embedBacktrace) {
-}
+RetryableError::RetryableError(const std::string& context, const bool embedBacktrace)
+    : Exception(context, embedBacktrace) {}
 
-} // namespace cta::exception
-
+}  // namespace cta::exception

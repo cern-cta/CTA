@@ -23,11 +23,12 @@
 
 namespace cta::catalogue {
 
-OracleStorageClassCatalogue::OracleStorageClassCatalogue(log::Logger &log,
-  std::shared_ptr<rdbms::ConnPool> connPool, RdbmsCatalogue* rdbmsCatalogue)
-  : RdbmsStorageClassCatalogue(log, connPool, rdbmsCatalogue) {}
+OracleStorageClassCatalogue::OracleStorageClassCatalogue(log::Logger& log,
+                                                         std::shared_ptr<rdbms::ConnPool> connPool,
+                                                         RdbmsCatalogue* rdbmsCatalogue)
+    : RdbmsStorageClassCatalogue(log, connPool, rdbmsCatalogue) {}
 
-uint64_t OracleStorageClassCatalogue::getNextStorageClassId(rdbms::Conn &conn) {
+uint64_t OracleStorageClassCatalogue::getNextStorageClassId(rdbms::Conn& conn) {
   const char* const sql = R"SQL(
     SELECT 
       STORAGE_CLASS_ID_SEQ.NEXTVAL AS STORAGE_CLASS_ID 
@@ -43,4 +44,4 @@ uint64_t OracleStorageClassCatalogue::getNextStorageClassId(rdbms::Conn &conn) {
   return rset.columnUint64("STORAGE_CLASS_ID");
 }
 
-} // namespace cta::catalogue
+}  // namespace cta::catalogue

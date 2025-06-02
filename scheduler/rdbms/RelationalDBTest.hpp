@@ -19,6 +19,4 @@
 
 #include <gtest/gtest.h>
 
-namespace unitTests {
-
-}
+namespace unitTests {}

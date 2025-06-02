@@ -24,12 +24,12 @@ namespace cta::threading {
 //------------------------------------------------------------------------------
 //constructor
 //------------------------------------------------------------------------------
-RWLock::RWLock()  {
+RWLock::RWLock() {
   const int rc = pthread_rwlock_init(&m_lock, nullptr);
-  if(0 != rc) {
+  if (0 != rc) {
     exception::Exception ex;
-    ex.getMessage() << __FUNCTION__ << " failed: Failed to initialise underlying pthread read-write lock: " <<
-      utils::errnoToString(rc);
+    ex.getMessage() << __FUNCTION__
+                    << " failed: Failed to initialise underlying pthread read-write lock: " << utils::errnoToString(rc);
     throw ex;
   }
 }
@@ -44,12 +44,12 @@ RWLock::~RWLock() {
 //------------------------------------------------------------------------------
 // rdlock
 //------------------------------------------------------------------------------
-void RWLock::rdlock()  {
+void RWLock::rdlock() {
   const int rc = pthread_rwlock_rdlock(&m_lock);
-  if(0 != rc) {
+  if (0 != rc) {
     exception::Exception ex;
     ex.getMessage() << __FUNCTION__ << " failed: Failed to take read lock on underlying pthread read-write lock: "
-      << utils::errnoToString(rc);
+                    << utils::errnoToString(rc);
     throw ex;
   }
 }
@@ -57,12 +57,12 @@ void RWLock::rdlock()  {
 //------------------------------------------------------------------------------
 // wrlock
 //------------------------------------------------------------------------------
-void RWLock::wrlock()  {
+void RWLock::wrlock() {
   const int rc = pthread_rwlock_wrlock(&m_lock);
-  if(0 != rc) {
+  if (0 != rc) {
     exception::Exception ex;
     ex.getMessage() << __FUNCTION__ << " failed: Failed to take write lock on underlying pthread read-write lock: "
-      << utils::errnoToString(rc);
+                    << utils::errnoToString(rc);
     throw ex;
   }
 }
@@ -70,14 +70,14 @@ void RWLock::wrlock()  {
 //------------------------------------------------------------------------------
 //unlock
 //------------------------------------------------------------------------------
-void RWLock::unlock()  {
+void RWLock::unlock() {
   const int rc = pthread_rwlock_unlock(&m_lock);
-  if(0 != rc) {
+  if (0 != rc) {
     exception::Exception ex;
-    ex.getMessage() << __FUNCTION__ << " failed: Failed to unlock underlying pthread read-write lock: " <<
-      utils::errnoToString(rc);
+    ex.getMessage() << __FUNCTION__
+                    << " failed: Failed to unlock underlying pthread read-write lock: " << utils::errnoToString(rc);
     throw ex;
   }
 }
 
-} // namespace cta::threading
+}  // namespace cta::threading

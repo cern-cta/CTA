@@ -22,11 +22,11 @@ namespace cta::rdbms {
 //------------------------------------------------------------------------------
 // getSqlForException
 //------------------------------------------------------------------------------
-std::string getSqlForException(const std::string &sql, const std::string::size_type maxSqlLenInExceptions) {
-  if(sql.length() <= maxSqlLenInExceptions) {
+std::string getSqlForException(const std::string& sql, const std::string::size_type maxSqlLenInExceptions) {
+  if (sql.length() <= maxSqlLenInExceptions) {
     return sql;
   } else {
-    if(maxSqlLenInExceptions >= 3) {
+    if (maxSqlLenInExceptions >= 3) {
       return sql.substr(0, maxSqlLenInExceptions - 3) + "...";
     } else {
       return std::string("...").substr(0, maxSqlLenInExceptions);
@@ -34,4 +34,4 @@ std::string getSqlForException(const std::string &sql, const std::string::size_t
   }
 }
 
-} // namespace cta::rdbms
+}  // namespace cta::rdbms

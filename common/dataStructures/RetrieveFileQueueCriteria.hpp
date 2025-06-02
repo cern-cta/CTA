@@ -40,4 +40,4 @@ struct RetrieveFileQueueCriteria {
   MountPolicy mountPolicy;
 };
 
-} // namespace cta::common::dataStructures
+}  // namespace cta::common::dataStructures

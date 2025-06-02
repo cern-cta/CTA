@@ -25,7 +25,7 @@ namespace cta::xrd {
 /*!
  * Stream object which implements "tape ls" command
  */
-class TapeLsStream: public XrdCtaStream{
+class TapeLsStream : public XrdCtaStream {
 public:
   /*!
    * Constructor
@@ -34,79 +34,78 @@ public:
    * @param[in]    catalogue     CTA Catalogue
    * @param[in]    scheduler     CTA Scheduler
    */
-  TapeLsStream(const frontend::AdminCmdStream& requestMsg, cta::catalogue::Catalogue &catalogue, cta::Scheduler &scheduler);
+  TapeLsStream(const frontend::AdminCmdStream& requestMsg,
+               cta::catalogue::Catalogue& catalogue,
+               cta::Scheduler& scheduler);
 
 private:
   /*!
    * Can we close the stream?
    */
-  virtual bool isDone() const {
-    return m_tapeList.empty();
-  }
+  virtual bool isDone() const { return m_tapeList.empty(); }
 
   /*!
    * Fill the buffer
    */
-  virtual int fillBuffer(XrdSsiPb::OStreamBuffer<Data> *streambuf);
-  
+  virtual int fillBuffer(XrdSsiPb::OStreamBuffer<Data>* streambuf);
+
   std::list<common::dataStructures::Tape> m_tapeList;
   const std::string m_instanceName;
 
-  static constexpr const char * const LOG_SUFFIX = "TapeLsStream";
+  static constexpr const char* const LOG_SUFFIX = "TapeLsStream";
 };
 
-
-TapeLsStream::TapeLsStream(const frontend::AdminCmdStream& requestMsg, cta::catalogue::Catalogue &catalogue, cta::Scheduler &scheduler) :
-  XrdCtaStream(catalogue, scheduler),
-  m_instanceName(requestMsg.getInstanceName())
-{
+TapeLsStream::TapeLsStream(const frontend::AdminCmdStream& requestMsg,
+                           cta::catalogue::Catalogue& catalogue,
+                           cta::Scheduler& scheduler)
+    : XrdCtaStream(catalogue, scheduler),
+      m_instanceName(requestMsg.getInstanceName()) {
   using namespace cta::admin;
 
   XrdSsiPb::Log::Msg(XrdSsiPb::Log::DEBUG, LOG_SUFFIX, "TapeLsStream() constructor");
 
   cta::catalogue::TapeSearchCriteria searchCriteria;
-   
-  bool has_any = false; // set to true if at least one optional option is set
+
+  bool has_any = false;  // set to true if at least one optional option is set
 
   // Get the search criteria from the optional options
 
-  searchCriteria.full                   = requestMsg.getOptional(OptionBoolean::FULL,                       &has_any);
-  searchCriteria.fromCastor             = requestMsg.getOptional(OptionBoolean::FROM_CASTOR,                &has_any);
-  searchCriteria.capacityInBytes        = requestMsg.getOptional(OptionUInt64::CAPACITY,                    &has_any);
-  searchCriteria.logicalLibrary         = requestMsg.getOptional(OptionString::LOGICAL_LIBRARY,             &has_any);
-  searchCriteria.tapePool               = requestMsg.getOptional(OptionString::TAPE_POOL,                   &has_any);
-  searchCriteria.vo                     = requestMsg.getOptional(OptionString::VO,                          &has_any);
-  searchCriteria.vid                    = requestMsg.getOptional(OptionString::VID,                         &has_any);
-  searchCriteria.mediaType              = requestMsg.getOptional(OptionString::MEDIA_TYPE,                  &has_any);
-  searchCriteria.vendor                 = requestMsg.getOptional(OptionString::VENDOR,                      &has_any);
-  searchCriteria.purchaseOrder          = requestMsg.getOptional(OptionString::MEDIA_PURCHASE_ORDER_NUMBER, &has_any);
-  searchCriteria.physicalLibraryName    = requestMsg.getOptional(OptionString::PHYSICAL_LIBRARY,            &has_any);
-  searchCriteria.diskFileIds            = requestMsg.getOptional(OptionStrList::FILE_ID,                    &has_any);
-  searchCriteria.checkMissingFileCopies = requestMsg.getOptional(OptionBoolean::MISSING_FILE_COPIES,        &has_any);
+  searchCriteria.full = requestMsg.getOptional(OptionBoolean::FULL, &has_any);
+  searchCriteria.fromCastor = requestMsg.getOptional(OptionBoolean::FROM_CASTOR, &has_any);
+  searchCriteria.capacityInBytes = requestMsg.getOptional(OptionUInt64::CAPACITY, &has_any);
+  searchCriteria.logicalLibrary = requestMsg.getOptional(OptionString::LOGICAL_LIBRARY, &has_any);
+  searchCriteria.tapePool = requestMsg.getOptional(OptionString::TAPE_POOL, &has_any);
+  searchCriteria.vo = requestMsg.getOptional(OptionString::VO, &has_any);
+  searchCriteria.vid = requestMsg.getOptional(OptionString::VID, &has_any);
+  searchCriteria.mediaType = requestMsg.getOptional(OptionString::MEDIA_TYPE, &has_any);
+  searchCriteria.vendor = requestMsg.getOptional(OptionString::VENDOR, &has_any);
+  searchCriteria.purchaseOrder = requestMsg.getOptional(OptionString::MEDIA_PURCHASE_ORDER_NUMBER, &has_any);
+  searchCriteria.physicalLibraryName = requestMsg.getOptional(OptionString::PHYSICAL_LIBRARY, &has_any);
+  searchCriteria.diskFileIds = requestMsg.getOptional(OptionStrList::FILE_ID, &has_any);
+  searchCriteria.checkMissingFileCopies = requestMsg.getOptional(OptionBoolean::MISSING_FILE_COPIES, &has_any);
   if (searchCriteria.checkMissingFileCopies.value_or(false)) {
     searchCriteria.missingFileCopiesMinAgeSecs = requestMsg.getMissingFileCopiesMinAgeSecs();
   }
-  auto stateOpt                      = requestMsg.getOptional(OptionString::STATE,                       &has_any);
+  auto stateOpt = requestMsg.getOptional(OptionString::STATE, &has_any);
 
-  if(stateOpt){
+  if (stateOpt) {
     searchCriteria.state = common::dataStructures::Tape::stringToState(stateOpt.value(), true);
   }
-  if(!(requestMsg.has_flag(OptionBoolean::ALL) || has_any)) {
+  if (!(requestMsg.has_flag(OptionBoolean::ALL) || has_any)) {
     throw cta::exception::UserError("Must specify at least one search option, or --all");
-  } else if(requestMsg.has_flag(OptionBoolean::ALL) && has_any) {
+  } else if (requestMsg.has_flag(OptionBoolean::ALL) && has_any) {
     throw cta::exception::UserError("Cannot specify --all together with other search options");
   }
 
   m_tapeList = m_catalogue.Tape()->getTapes(searchCriteria);
 }
 
-
-int TapeLsStream::fillBuffer(XrdSsiPb::OStreamBuffer<Data> *streambuf) {
-  for(bool is_buffer_full = false; !m_tapeList.empty() && !is_buffer_full; m_tapeList.pop_front()) {
+int TapeLsStream::fillBuffer(XrdSsiPb::OStreamBuffer<Data>* streambuf) {
+  for (bool is_buffer_full = false; !m_tapeList.empty() && !is_buffer_full; m_tapeList.pop_front()) {
     Data record;
-    auto &tape = m_tapeList.front();
+    auto& tape = m_tapeList.front();
     auto tape_item = record.mutable_tals_item();
-    
+
     tape_item->set_instance_name(m_instanceName);
     tape_item->set_vid(tape.vid);
     tape_item->set_media_type(tape.mediaType);
@@ -126,27 +125,27 @@ int TapeLsStream::fillBuffer(XrdSsiPb::OStreamBuffer<Data> *streambuf) {
     tape_item->set_write_mount_count(tape.writeMountCount);
     tape_item->set_nb_master_files(tape.nbMasterFiles);
     tape_item->set_master_data_in_bytes(tape.masterDataInBytes);
-    
-    if(tape.labelLog) {
-      ::cta::common::TapeLog * labelLog = tape_item->mutable_label_log();
+
+    if (tape.labelLog) {
+      ::cta::common::TapeLog* labelLog = tape_item->mutable_label_log();
       labelLog->set_drive(tape.labelLog.value().drive);
       labelLog->set_time(tape.labelLog.value().time);
     }
-    if(tape.lastWriteLog){
-      ::cta::common::TapeLog * lastWriteLog = tape_item->mutable_last_written_log();
+    if (tape.lastWriteLog) {
+      ::cta::common::TapeLog* lastWriteLog = tape_item->mutable_last_written_log();
       lastWriteLog->set_drive(tape.lastWriteLog.value().drive);
       lastWriteLog->set_time(tape.lastWriteLog.value().time);
     }
-    if(tape.lastReadLog){
-      ::cta::common::TapeLog * lastReadLog = tape_item->mutable_last_read_log();
+    if (tape.lastReadLog) {
+      ::cta::common::TapeLog* lastReadLog = tape_item->mutable_last_read_log();
       lastReadLog->set_drive(tape.lastReadLog.value().drive);
       lastReadLog->set_time(tape.lastReadLog.value().time);
     }
-    ::cta::common::EntryLog * creationLog = tape_item->mutable_creation_log();
+    ::cta::common::EntryLog* creationLog = tape_item->mutable_creation_log();
     creationLog->set_username(tape.creationLog.username);
     creationLog->set_host(tape.creationLog.host);
     creationLog->set_time(tape.creationLog.time);
-    ::cta::common::EntryLog * lastModificationLog = tape_item->mutable_last_modification_log();
+    ::cta::common::EntryLog* lastModificationLog = tape_item->mutable_last_modification_log();
     lastModificationLog->set_username(tape.lastModificationLog.username);
     lastModificationLog->set_host(tape.lastModificationLog.host);
     lastModificationLog->set_time(tape.lastModificationLog.time);
@@ -167,4 +166,4 @@ int TapeLsStream::fillBuffer(XrdSsiPb::OStreamBuffer<Data> *streambuf) {
   return streambuf->Size();
 }
 
-} // namespace cta::xrd
+}  // namespace cta::xrd

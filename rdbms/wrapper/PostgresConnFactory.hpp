@@ -26,9 +26,8 @@ namespace cta::rdbms::wrapper {
 /**
  * A concrete factory of Conn objects.
  */
-class PostgresConnFactory: public ConnFactory {
+class PostgresConnFactory : public ConnFactory {
 public:
-
   /**
    * Constructor
    *
@@ -49,12 +48,11 @@ public:
   std::unique_ptr<ConnWrapper> create() override;
 
 private:
-
   /**
    * The conninfo string
    */
   std::string m_conninfo;
 
-}; // class PostgresConnFactory
+};  // class PostgresConnFactory
 
-} // namespace cta::rdbms::wrapper
+}  // namespace cta::rdbms::wrapper

@@ -24,4 +24,4 @@ namespace cta::rdbms::wrapper {
 //------------------------------------------------------------------------------
 RsetWrapper::~RsetWrapper() = default;
 
-} // namespace cta::rdbms::wrapper
+}  // namespace cta::rdbms::wrapper

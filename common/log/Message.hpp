@@ -22,19 +22,18 @@
 
 namespace cta {
 
-  namespace log {
+namespace log {
 
-    /**
+/**
      * Container for a CASTOR log message
      */
-    struct Message {
-      /// Message number
-      int number;
-      /// Message text
-      std::string text;
-    }; 
-    
-  } // end of namespace log
+struct Message {
+  /// Message number
+  int number;
+  /// Message text
+  std::string text;
+};
 
-} // end of namespace cta
+}  // end of namespace log
 
+}  // end of namespace cta

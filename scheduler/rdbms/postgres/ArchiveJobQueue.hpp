@@ -107,9 +107,7 @@ struct ArchiveJobQueueRow {
      *
      * @param row  A single row from the current row of the rset
      */
-  explicit ArchiveJobQueueRow(const rdbms::Rset& rset) {
-    *this = rset;
-  }
+  explicit ArchiveJobQueueRow(const rdbms::Rset& rset) { *this = rset; }
 
   // Reset function
   void reset() {
@@ -159,7 +157,6 @@ struct ArchiveJobQueueRow {
     diskFileInfoOwnerUid = 0;
     diskFileInfoGid = 0;
     checksumBlob.clear();
-
   }
 
   ArchiveJobQueueRow& operator=(const rdbms::Rset& rset) {
@@ -206,6 +203,7 @@ struct ArchiveJobQueueRow {
     totalReportRetries = rset.columnUint16NoOpt("TOTAL_REPORT_RETRIES");
     return *this;
   }
+
   void insert(rdbms::Conn& conn) const {
     // does not set mountId or jobId
     const char* const sql = R"SQL(
@@ -508,9 +506,7 @@ struct ArchiveJobQueueRow {
    * @param keepMountId          true or false
    * @return                     Number of updated rows
    */
-  static uint64_t requeueJobBatch(Transaction& txn,
-                                  ArchiveJobStatus status,
-                                  const std::list<std::string>& jobIDs);
+  static uint64_t requeueJobBatch(Transaction& txn, ArchiveJobStatus status, const std::list<std::string>& jobIDs);
 
   /**
    * Update job status when job report failed

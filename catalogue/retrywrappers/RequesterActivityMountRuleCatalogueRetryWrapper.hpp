@@ -33,30 +33,39 @@ class Catalogue;
 
 class RequesterActivityMountRuleCatalogueRetryWrapper : public RequesterActivityMountRuleCatalogue {
 public:
-  RequesterActivityMountRuleCatalogueRetryWrapper(const std::unique_ptr<Catalogue>& catalogue, log::Logger &m_log,
-    const uint32_t maxTriesToConnect);
+  RequesterActivityMountRuleCatalogueRetryWrapper(const std::unique_ptr<Catalogue>& catalogue,
+                                                  log::Logger& m_log,
+                                                  const uint32_t maxTriesToConnect);
   ~RequesterActivityMountRuleCatalogueRetryWrapper() override = default;
 
-  void modifyRequesterActivityMountRulePolicy(const common::dataStructures::SecurityIdentity &admin,
-    const std::string &instanceName, const std::string &requesterName, const std::string &activityRegex,
-    const std::string &mountPolicy) override;
+  void modifyRequesterActivityMountRulePolicy(const common::dataStructures::SecurityIdentity& admin,
+                                              const std::string& instanceName,
+                                              const std::string& requesterName,
+                                              const std::string& activityRegex,
+                                              const std::string& mountPolicy) override;
 
-  void modifyRequesterActivityMountRuleComment(const common::dataStructures::SecurityIdentity &admin,
-    const std::string &instanceName, const std::string &requesterName, const std::string &activityRegex,
-    const std::string &comment) override;
+  void modifyRequesterActivityMountRuleComment(const common::dataStructures::SecurityIdentity& admin,
+                                               const std::string& instanceName,
+                                               const std::string& requesterName,
+                                               const std::string& activityRegex,
+                                               const std::string& comment) override;
 
-  void createRequesterActivityMountRule(const common::dataStructures::SecurityIdentity &admin,
-    const std::string &mountPolicyName, const std::string &diskInstance, const std::string &requesterName,
-    const std::string &activityRegex, const std::string &comment) override;
+  void createRequesterActivityMountRule(const common::dataStructures::SecurityIdentity& admin,
+                                        const std::string& mountPolicyName,
+                                        const std::string& diskInstance,
+                                        const std::string& requesterName,
+                                        const std::string& activityRegex,
+                                        const std::string& comment) override;
 
   std::list<common::dataStructures::RequesterActivityMountRule> getRequesterActivityMountRules() const override;
 
-  void deleteRequesterActivityMountRule(const std::string &diskInstanceName, const std::string &requesterName,
-    const std::string &activityRegex) override;
+  void deleteRequesterActivityMountRule(const std::string& diskInstanceName,
+                                        const std::string& requesterName,
+                                        const std::string& activityRegex) override;
 
 private:
   const std::unique_ptr<Catalogue>& m_catalogue;
-  log::Logger &m_log;
+  log::Logger& m_log;
   uint32_t m_maxTriesToConnect;
 };  // class SchemaCatalogueRetryWrapper
 

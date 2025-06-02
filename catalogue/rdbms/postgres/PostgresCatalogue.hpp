@@ -25,9 +25,8 @@ namespace cta::catalogue {
 /**
  * An Postgres based implementation of the CTA catalogue.
  */
-class PostgresCatalogue: public RdbmsCatalogue {
+class PostgresCatalogue : public RdbmsCatalogue {
 public:
-
   /**
    * Constructor.
    *
@@ -42,11 +41,10 @@ public:
    * connections to the underlying relational database for the sole purpose of
    * listing archive files.
    */
-  PostgresCatalogue(
-    log::Logger &log,
-    const rdbms::Login &login,
-    const uint64_t nbConns,
-    const uint64_t nbArchiveFileListingConns);
+  PostgresCatalogue(log::Logger& log,
+                    const rdbms::Login& login,
+                    const uint64_t nbConns,
+                    const uint64_t nbArchiveFileListingConns);
 
   /**
    * Destructor.
@@ -60,8 +58,8 @@ public:
    * @param diskFileIds List of disk file IDs (fxid).
    * @return Name of the temporary table
    */
-  std::string createAndPopulateTempTableFxid(rdbms::Conn &conn,
-    const std::optional<std::vector<std::string>> &diskFileIds) const override;
-}; // class PostgresCatalogue
+  std::string createAndPopulateTempTableFxid(rdbms::Conn& conn,
+                                             const std::optional<std::vector<std::string>>& diskFileIds) const override;
+};  // class PostgresCatalogue
 
-} // namespace cta::catalogue
+}  // namespace cta::catalogue

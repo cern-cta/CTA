@@ -15,7 +15,6 @@
  *               submit itself to any jurisdiction.
  */
 
-
 #include "common/utils/strerror_r_wrapper.hpp"
 #include "common/utils/ErrorUtils.hpp"
 #include <sstream>

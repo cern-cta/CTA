@@ -29,7 +29,7 @@
 
 namespace unitTests {
 
-class cta_catalogue_PhysicalLibraryTest : public ::testing::TestWithParam<cta::catalogue::CatalogueFactory **> {
+class cta_catalogue_PhysicalLibraryTest : public ::testing::TestWithParam<cta::catalogue::CatalogueFactory**> {
 public:
   cta_catalogue_PhysicalLibraryTest();
 
@@ -45,8 +45,8 @@ protected:
   const cta::common::dataStructures::PhysicalLibrary m_physicalLibrary2;
   const cta::common::dataStructures::PhysicalLibrary m_physicalLibrary3;
 
-  std::map<std::string, cta::common::dataStructures::PhysicalLibrary> physicalLibraryListToMap(
-    const std::list<cta::common::dataStructures::PhysicalLibrary> &listOfLibs) const;
+  std::map<std::string, cta::common::dataStructures::PhysicalLibrary>
+  physicalLibraryListToMap(const std::list<cta::common::dataStructures::PhysicalLibrary>& listOfLibs) const;
 };
 
 }  // namespace unitTests

@@ -24,9 +24,8 @@ namespace cta::rdbms::wrapper {
 /**
  * A concrete factory of Conn objects.
  */
-class SqliteConnFactory: public ConnFactory {
+class SqliteConnFactory : public ConnFactory {
 public:
-
   /**
    * Constructor
    *
@@ -47,12 +46,11 @@ public:
   std::unique_ptr<ConnWrapper> create() override;
 
 private:
-
   /**
    * The filename to be passed to the sqlite3_open() function.
    */
   std::string m_filename;
 
-}; // class SqliteConnFactory
+};  // class SqliteConnFactory
 
-} // namespace cta::rdbms::wrapper
+}  // namespace cta::rdbms::wrapper

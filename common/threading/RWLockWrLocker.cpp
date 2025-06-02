@@ -24,16 +24,16 @@ namespace cta::threading {
 //------------------------------------------------------------------------------
 // constructor
 //------------------------------------------------------------------------------
-RWLockWrLocker::RWLockWrLocker(RWLock &lock): m_lock(lock) {
+RWLockWrLocker::RWLockWrLocker(RWLock& lock) : m_lock(lock) {
   try {
     m_lock.wrlock();
-  } catch(exception::Exception &ne) {
+  } catch (exception::Exception& ne) {
     exception::Exception ex;
     ex.getMessage() << __FUNCTION__ << " failed to take write lock: " << ne.getMessage().str();
     throw ex;
   }
 }
-  
+
 //------------------------------------------------------------------------------
 // destructor
 //------------------------------------------------------------------------------
@@ -41,4 +41,4 @@ RWLockWrLocker::~RWLockWrLocker() {
   m_lock.unlock();
 }
 
-} // namespace cta::threading
+}  // namespace cta::threading

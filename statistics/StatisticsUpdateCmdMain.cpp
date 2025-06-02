@@ -20,7 +20,7 @@
 //------------------------------------------------------------------------------
 // main
 //------------------------------------------------------------------------------
-int main(const int argc, char *const *const argv) {
+int main(const int argc, char* const* const argv) {
   cta::statistics::StatisticsUpdateCmd cmd(std::cin, std::cout, std::cerr);
   return cmd.main(argc, argv);
 }

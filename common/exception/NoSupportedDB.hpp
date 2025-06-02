@@ -34,5 +34,4 @@ public:
   explicit NoSupportedDB(const std::string& what = "");
 };  // class NoSupportedDB
 
-} // namespace cta::exception
-
+}  // namespace cta::exception

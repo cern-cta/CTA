@@ -26,4 +26,4 @@ namespace cta::rdbms::wrapper {
 //------------------------------------------------------------------------------
 ConnWrapper::~ConnWrapper() = default;
 
-} // namespace cta::rdbms::wrapper
+}  // namespace cta::rdbms::wrapper

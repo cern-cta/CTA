@@ -1,4 +1,4 @@
-  /*
+/*
  * @project      The CERN Tape Archive (CTA)
  * @copyright    Copyright © 2021-2022 CERN
  * @license      This program is free software, distributed under the terms of the GNU General Public
@@ -27,7 +27,7 @@
 #include <memory>
 
 namespace castor::tape::tapeserver::daemon {
-  class TapeReadTask;
+class TapeReadTask;
 }
 
 namespace cta {
@@ -57,26 +57,25 @@ public:
    * @param positioningMethod the positioning method
    */
   RetrieveJob(RetrieveMount* mount,
-    const common::dataStructures::RetrieveRequest& retrieveRequest,
-    const common::dataStructures::ArchiveFile& archiveFile,
-    const uint64_t selectedCopyNb,
-    const PositioningMethod positioningMethod) :
-      m_mount(mount),
-      retrieveRequest(retrieveRequest),
-      archiveFile(archiveFile),
-      selectedCopyNb(selectedCopyNb),
-      positioningMethod(positioningMethod),
-      transferredSize(std::numeric_limits<decltype(transferredSize)>::max()) { }
+              const common::dataStructures::RetrieveRequest& retrieveRequest,
+              const common::dataStructures::ArchiveFile& archiveFile,
+              const uint64_t selectedCopyNb,
+              const PositioningMethod positioningMethod)
+      : m_mount(mount),
+        retrieveRequest(retrieveRequest),
+        archiveFile(archiveFile),
+        selectedCopyNb(selectedCopyNb),
+        positioningMethod(positioningMethod),
+        transferredSize(std::numeric_limits<decltype(transferredSize)>::max()) {}
 
-  RetrieveJob(RetrieveMount* mount,
-              std::unique_ptr<SchedulerDatabase::RetrieveJob> dbJob)
+  RetrieveJob(RetrieveMount* mount, std::unique_ptr<SchedulerDatabase::RetrieveJob> dbJob)
       : m_dbJob(std::move(dbJob)),
         m_mount(mount),
         retrieveRequest(m_dbJob->retrieveRequest),
         archiveFile(m_dbJob->archiveFile),
         selectedCopyNb(m_dbJob->selectedCopyNb),
         positioningMethod(PositioningMethod::ByBlock),
-        transferredSize(std::numeric_limits<decltype(transferredSize)>::max()) { }
+        transferredSize(std::numeric_limits<decltype(transferredSize)>::max()) {}
 
   /**
    * Destructor
@@ -85,11 +84,11 @@ public:
 
 private:
   std::unique_ptr<cta::SchedulerDatabase::RetrieveJob> m_dbJob;
-  
+
   /**
    * The mount that generated this job
    */
-  RetrieveMount *m_mount;
+  RetrieveMount* m_mount;
 
 public:
   /**
@@ -110,7 +109,7 @@ public:
    * Triggers a scheduler update following the failure of the job. Retry policy will
    * be applied by the scheduler.
    */
-  virtual void transferFailed(const std::string &failureReason, log::LogContext &lc);
+  virtual void transferFailed(const std::string& failureReason, log::LogContext& lc);
 
   /**
    * Get the URL used for reporting
@@ -123,12 +122,12 @@ public:
    * @return the type of report (success or failure), as a string
    */
   virtual std::string reportType();
-  
+
   /**
    * Triggers a scheduler update following the failure of the report. Retry policy will
    * be applied by the scheduler.
    */
-  virtual void reportFailed(const std::string &failureReason, log::LogContext &lc);
+  virtual void reportFailed(const std::string& failureReason, log::LogContext& lc);
 
   /**
    * Returning the name of the disk system associated with the scheduler database RetrieveJob
@@ -138,50 +137,50 @@ public:
   /**
    * Helper function returning a reference to the currently selected tape file.
    */
-  common::dataStructures::TapeFile & selectedTapeFile();
+  common::dataStructures::TapeFile& selectedTapeFile();
 
   /**
    * Helper function returning a reference to the currently selected tape file (const variant).
    */
-  const common::dataStructures::TapeFile & selectedTapeFile() const;
-  
+  const common::dataStructures::TapeFile& selectedTapeFile() const;
+
   /**
    * The mount to which the job belongs.
    */
-  //RetrieveMount &mount;  
-  
+  //RetrieveMount &mount;
+
   /**
    * The NS archive file information
    */
   common::dataStructures::RetrieveRequest retrieveRequest;
-  
+
   /**
    * The full information about the file
    */
   common::dataStructures::ArchiveFile archiveFile;
-                
+
   /**
    * CopyNb of the selected tape file
    */
   uint64_t selectedCopyNb;
-  
+
   /**
    * The positioning method
    */
   PositioningMethod positioningMethod;
-  
+
   /**
    * The checksum type of the transferred data. This should be set before calling 
    * complete()
    */
   std::string transferredChecksumType;
-  
+
   /**
    * The checksum value of the transferred data. This should be set before calling 
    * complete()
    */
   std::string transferredChecksumValue;
-  
+
   /**
    * The size of the transferred data. This should be set before calling 
    * complete().
@@ -189,4 +188,4 @@ public:
   uint64_t transferredSize;
 };
 
-} // namespace cta
+}  // namespace cta

@@ -34,18 +34,19 @@
 
 namespace cta::catalogue {
 
-PostgresCatalogue::PostgresCatalogue(
-  log::Logger &log,
-  const rdbms::Login &login,
-  const uint64_t nbConns,
-  const uint64_t nbArchiveFileListingConns)
-  : RdbmsCatalogue(
-      log,
-      rdbms::Login(rdbms::Login::DBTYPE_POSTGRESQL,
-                  login.username, login.password, login.database,
-                  login.hostname, login.port),
-      nbConns,
-      nbArchiveFileListingConns) {
+PostgresCatalogue::PostgresCatalogue(log::Logger& log,
+                                     const rdbms::Login& login,
+                                     const uint64_t nbConns,
+                                     const uint64_t nbArchiveFileListingConns)
+    : RdbmsCatalogue(log,
+                     rdbms::Login(rdbms::Login::DBTYPE_POSTGRESQL,
+                                  login.username,
+                                  login.password,
+                                  login.database,
+                                  login.hostname,
+                                  login.port),
+                     nbConns,
+                     nbArchiveFileListingConns) {
   RdbmsCatalogue::m_vo = std::make_unique<PostgresVirtualOrganizationCatalogue>(m_log, m_connPool, this);
   RdbmsCatalogue::m_mediaType = std::make_unique<PostgresMediaTypeCatalogue>(m_log, m_connPool, this);
   RdbmsCatalogue::m_storageClass = std::make_unique<PostgresStorageClassCatalogue>(m_log, m_connPool, this);
@@ -58,16 +59,17 @@ PostgresCatalogue::PostgresCatalogue(
   RdbmsCatalogue::m_tape = std::make_unique<PostgresTapeCatalogue>(m_log, m_connPool, this);
 }
 
-std::string PostgresCatalogue::createAndPopulateTempTableFxid(rdbms::Conn &conn,
-  const std::optional<std::vector<std::string>> &diskFileIds) const {
+std::string
+PostgresCatalogue::createAndPopulateTempTableFxid(rdbms::Conn& conn,
+                                                  const std::optional<std::vector<std::string>>& diskFileIds) const {
   const std::string tempTableName = "TEMP_DISK_FXIDS";
 
-  if(diskFileIds) {
+  if (diskFileIds) {
     try {
       std::string sql = "CREATE TEMPORARY TABLE " + tempTableName + "(DISK_FILE_ID VARCHAR(100))";
       try {
         conn.executeNonQuery(sql);
-      } catch(exception::Exception &ex) {
+      } catch (exception::Exception& ex) {
         // Postgres does not drop temporary tables until the end of the session; trying to create another
         // temporary table in the same unit test will fail. If this happens, truncate the table and carry on.
         std::string sql2 = "TRUNCATE TABLE " + tempTableName;
@@ -76,11 +78,11 @@ std::string PostgresCatalogue::createAndPopulateTempTableFxid(rdbms::Conn &conn,
 
       std::string sql3 = "INSERT INTO " + tempTableName + " VALUES(:DISK_FILE_ID)";
       auto stmt = conn.createStmt(sql3);
-      for(auto &diskFileId : diskFileIds.value()) {
+      for (auto& diskFileId : diskFileIds.value()) {
         stmt.bindString(":DISK_FILE_ID", diskFileId);
         stmt.executeNonQuery();
       }
-    } catch(exception::Exception &ex) {
+    } catch (exception::Exception& ex) {
       ex.getMessage().str(std::string(__FUNCTION__) + ": " + ex.getMessage().str());
       throw;
     }
@@ -88,4 +90,4 @@ std::string PostgresCatalogue::createAndPopulateTempTableFxid(rdbms::Conn &conn,
   return tempTableName;
 }
 
-} // namespace cta::catalogue
+}  // namespace cta::catalogue

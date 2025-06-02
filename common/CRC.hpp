@@ -23,8 +23,8 @@ namespace cta {
 
 /**
  * Set of CRC functions.
- */ 
-  
+ */
+
 /**
  * Compute by software Reed Solomon CRC for the given block.
  *
@@ -34,9 +34,8 @@ namespace cta {
  * @return The computed CRC in big endian (MSB is first byte).
  */
 
-uint32_t crcRS_sw (const uint32_t crcInit, const uint32_t cnt, 
-  const void *const start);
-  
+uint32_t crcRS_sw(const uint32_t crcInit, const uint32_t cnt, const void* const start);
+
 /**
  * Compute by software CRC32C (iSCSI) for the given block.
  *
@@ -45,8 +44,7 @@ uint32_t crcRS_sw (const uint32_t crcInit, const uint32_t cnt,
  * @param start    The starting address of the data bytes (e.g., data buffer).
  * @return The computed CRC in big endian (MSB is first byte). 
  */
-uint32_t crc32c_sw (const uint32_t crcInit, const uint32_t cnt, 
-  const void *const start);
+uint32_t crc32c_sw(const uint32_t crcInit, const uint32_t cnt, const void* const start);
 
 /**
  * Compute by hardware CRC32C (iSCSI) for the given block.
@@ -61,8 +59,7 @@ uint32_t crc32c_sw (const uint32_t crcInit, const uint32_t cnt,
  * @param start    The starting address of the data bytes (e.g., data buffer).
  * @return The computed CRC in big endian (MSB is first byte). 
  */
-uint32_t crc32c_hw (const uint32_t crcInit, const uint32_t cnt, 
-  const void *const start);
+uint32_t crc32c_hw(const uint32_t crcInit, const uint32_t cnt, const void* const start);
 
 /**
  * Check for SSE 4.2.  SSE 4.2 was first supported in Nehalem processors
@@ -71,15 +68,12 @@ uint32_t crc32c_hw (const uint32_t crcInit, const uint32_t cnt,
  * will fail on earlier x86 processors.  cpuid works on all Pentium and later
  * processors. 
  */
-#define SSE42(have) \
-  do { \
-      uint32_t eax, ecx; \
-      eax = 1; \
-      __asm__("cpuid" \
-              : "=c"(ecx) \
-              : "a"(eax) \
-              : "%ebx", "%edx"); \
-      (have) = (ecx >> 20) & 1; \
+#define SSE42(have)                                           \
+  do {                                                        \
+    uint32_t eax, ecx;                                        \
+    eax = 1;                                                  \
+    __asm__("cpuid" : "=c"(ecx) : "a"(eax) : "%ebx", "%edx"); \
+    (have) = (ecx >> 20) & 1;                                 \
   } while (0)
 
 /**
@@ -91,8 +85,7 @@ uint32_t crc32c_hw (const uint32_t crcInit, const uint32_t cnt,
  * @param start    The starting address of the data bytes (e.g., data buffer).
  * @return The computed CRC in big endian (MSB is first byte). 
  */
-uint32_t crc32c(const uint32_t crcInit, const uint32_t cnt, 
-  const void *const start);
+uint32_t crc32c(const uint32_t crcInit, const uint32_t cnt, const void* const start);
 
 /**
  * Compute the CRC32C (iSCSI) and append it to the memory block.
@@ -106,8 +99,7 @@ uint32_t crc32c(const uint32_t crcInit, const uint32_t cnt,
  *                 4 bytes at the end.
  * @return The length of the memory block with crc32c added.
  */
-uint32_t addCrc32cToMemoryBlock(const uint32_t crcInit,
-  const uint32_t cnt, uint8_t *start);
+uint32_t addCrc32cToMemoryBlock(const uint32_t crcInit, const uint32_t cnt, uint8_t* start);
 
 /**
  * Compute the CRC32C (iSCSI) and check it for the memory block with CRC32C
@@ -119,8 +111,6 @@ uint32_t addCrc32cToMemoryBlock(const uint32_t crcInit,
  * @param start    The starting address of the data bytes (e.g., data buffer).
  * @return True if CRC32C is correct and False otherwise.
  */
-bool verifyCrc32cForMemoryBlockWithCrc32c(
-  const uint32_t crcInit, const uint32_t cnt, const uint8_t *start);
+bool verifyCrc32cForMemoryBlockWithCrc32c(const uint32_t crcInit, const uint32_t cnt, const uint8_t* start);
 
-
-} // namespace cta
+}  // namespace cta

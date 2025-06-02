@@ -32,18 +32,21 @@
 
 namespace cta::catalogue {
 
-RdbmsMountPolicyCatalogue::RdbmsMountPolicyCatalogue(log::Logger &log, std::shared_ptr<rdbms::ConnPool> connPool,
-  RdbmsCatalogue *rdbmsCatalogue):
-  m_log(log), m_connPool(connPool), m_rdbmsCatalogue(rdbmsCatalogue) {}
+RdbmsMountPolicyCatalogue::RdbmsMountPolicyCatalogue(log::Logger& log,
+                                                     std::shared_ptr<rdbms::ConnPool> connPool,
+                                                     RdbmsCatalogue* rdbmsCatalogue)
+    : m_log(log),
+      m_connPool(connPool),
+      m_rdbmsCatalogue(rdbmsCatalogue) {}
 
-void RdbmsMountPolicyCatalogue::createMountPolicy(const common::dataStructures::SecurityIdentity &admin,
-  const CreateMountPolicyAttributes & mountPolicy) {
+void RdbmsMountPolicyCatalogue::createMountPolicy(const common::dataStructures::SecurityIdentity& admin,
+                                                  const CreateMountPolicyAttributes& mountPolicy) {
   std::string name = mountPolicy.name;
   const auto trimmedComment = RdbmsCatalogueUtils::checkCommentOrReasonMaxLength(mountPolicy.comment, &m_log);
   auto conn = m_connPool->getConn();
   if (RdbmsCatalogueUtils::mountPolicyExists(conn, name)) {
     throw exception::UserError(std::string("Cannot create mount policy ") + name +
-      " because a mount policy with the same name already exists");
+                               " because a mount policy with the same name already exists");
   }
   const time_t now = time(nullptr);
   const char* const sql = R"SQL(
@@ -111,7 +114,7 @@ void RdbmsMountPolicyCatalogue::createMountPolicy(const common::dataStructures::
   m_rdbmsCatalogue->m_allMountPoliciesCache.invalidate();
 }
 
-void RdbmsMountPolicyCatalogue::deleteMountPolicy(const std::string &name) {
+void RdbmsMountPolicyCatalogue::deleteMountPolicy(const std::string& name) {
   const char* const sql = R"SQL(
     DELETE FROM MOUNT_POLICY WHERE MOUNT_POLICY_NAME = :MOUNT_POLICY_NAME
   )SQL";
@@ -120,7 +123,7 @@ void RdbmsMountPolicyCatalogue::deleteMountPolicy(const std::string &name) {
   stmt.bindString(":MOUNT_POLICY_NAME", name);
   stmt.executeNonQuery();
 
-  if(0 == stmt.getNbAffectedRows()) {
+  if (0 == stmt.getNbAffectedRows()) {
     throw exception::UserError(std::string("Cannot delete mount policy ") + name + " because it does not exist");
   }
 
@@ -134,7 +137,7 @@ std::list<common::dataStructures::MountPolicy> RdbmsMountPolicyCatalogue::getMou
   return getMountPolicies(conn);
 }
 
-std::list<common::dataStructures::MountPolicy> RdbmsMountPolicyCatalogue::getMountPolicies(rdbms::Conn & conn) const {
+std::list<common::dataStructures::MountPolicy> RdbmsMountPolicyCatalogue::getMountPolicies(rdbms::Conn& conn) const {
   std::list<common::dataStructures::MountPolicy> policies;
   const char* const sql = R"SQL(
     SELECT 
@@ -188,12 +191,14 @@ std::list<common::dataStructures::MountPolicy> RdbmsMountPolicyCatalogue::getMou
   return policies;
 }
 
-std::optional<common::dataStructures::MountPolicy> RdbmsMountPolicyCatalogue::getMountPolicy(const std::string &mountPolicyName) const {
+std::optional<common::dataStructures::MountPolicy>
+RdbmsMountPolicyCatalogue::getMountPolicy(const std::string& mountPolicyName) const {
   auto conn = m_connPool->getConn();
   return getMountPolicy(conn, mountPolicyName);
 }
 
-std::optional<common::dataStructures::MountPolicy> RdbmsMountPolicyCatalogue::getMountPolicy(rdbms::Conn &conn, const std::string &mountPolicyName) const {
+std::optional<common::dataStructures::MountPolicy>
+RdbmsMountPolicyCatalogue::getMountPolicy(rdbms::Conn& conn, const std::string& mountPolicyName) const {
   const char* const sql = R"SQL(
     SELECT 
       MOUNT_POLICY_NAME AS MOUNT_POLICY_NAME,
@@ -220,7 +225,7 @@ std::optional<common::dataStructures::MountPolicy> RdbmsMountPolicyCatalogue::ge
   )SQL";
   auto stmt = conn.createStmt(sql);
   stmt.bindString(":MOUNT_POLICY_NAME", mountPolicyName);
-  
+
   if (auto rset = stmt.executeQuery(); rset.next()) {
     common::dataStructures::MountPolicy policy;
 
@@ -252,11 +257,12 @@ std::list<common::dataStructures::MountPolicy> RdbmsMountPolicyCatalogue::getCac
     auto conn = m_connPool->getConn();
     return getMountPolicies(conn);
   };
-  return m_rdbmsCatalogue->m_allMountPoliciesCache.getCachedValue("all",l_getNonCachedValue).value;
+  return m_rdbmsCatalogue->m_allMountPoliciesCache.getCachedValue("all", l_getNonCachedValue).value;
 }
 
-void RdbmsMountPolicyCatalogue::modifyMountPolicyArchivePriority(const common::dataStructures::SecurityIdentity &admin,
-  const std::string &name, const uint64_t archivePriority) {
+void RdbmsMountPolicyCatalogue::modifyMountPolicyArchivePriority(const common::dataStructures::SecurityIdentity& admin,
+                                                                 const std::string& name,
+                                                                 const uint64_t archivePriority) {
   const time_t now = time(nullptr);
   const char* const sql = R"SQL(
     UPDATE MOUNT_POLICY SET 
@@ -276,7 +282,7 @@ void RdbmsMountPolicyCatalogue::modifyMountPolicyArchivePriority(const common::d
   stmt.bindString(":MOUNT_POLICY_NAME", name);
   stmt.executeNonQuery();
 
-  if(0 == stmt.getNbAffectedRows()) {
+  if (0 == stmt.getNbAffectedRows()) {
     throw exception::UserError(std::string("Cannot modify mount policy ") + name + " because they do not exist");
   }
 
@@ -285,8 +291,10 @@ void RdbmsMountPolicyCatalogue::modifyMountPolicyArchivePriority(const common::d
   m_rdbmsCatalogue->m_allMountPoliciesCache.invalidate();
 }
 
-void RdbmsMountPolicyCatalogue::modifyMountPolicyArchiveMinRequestAge(const common::dataStructures::SecurityIdentity &admin,
-  const std::string &name, const uint64_t minArchiveRequestAge) {
+void RdbmsMountPolicyCatalogue::modifyMountPolicyArchiveMinRequestAge(
+  const common::dataStructures::SecurityIdentity& admin,
+  const std::string& name,
+  const uint64_t minArchiveRequestAge) {
   const time_t now = time(nullptr);
   const char* const sql = R"SQL(
     UPDATE MOUNT_POLICY SET 
@@ -306,7 +314,7 @@ void RdbmsMountPolicyCatalogue::modifyMountPolicyArchiveMinRequestAge(const comm
   stmt.bindString(":MOUNT_POLICY_NAME", name);
   stmt.executeNonQuery();
 
-  if(0 == stmt.getNbAffectedRows()) {
+  if (0 == stmt.getNbAffectedRows()) {
     throw exception::UserError(std::string("Cannot modify mount policy ") + name + " because they do not exist");
   }
 
@@ -315,8 +323,9 @@ void RdbmsMountPolicyCatalogue::modifyMountPolicyArchiveMinRequestAge(const comm
   m_rdbmsCatalogue->m_allMountPoliciesCache.invalidate();
 }
 
-void RdbmsMountPolicyCatalogue::modifyMountPolicyRetrievePriority(const common::dataStructures::SecurityIdentity &admin,
-  const std::string &name, const uint64_t retrievePriority) {
+void RdbmsMountPolicyCatalogue::modifyMountPolicyRetrievePriority(const common::dataStructures::SecurityIdentity& admin,
+                                                                  const std::string& name,
+                                                                  const uint64_t retrievePriority) {
   const time_t now = time(nullptr);
   const char* const sql = R"SQL(
     UPDATE MOUNT_POLICY SET 
@@ -336,7 +345,7 @@ void RdbmsMountPolicyCatalogue::modifyMountPolicyRetrievePriority(const common::
   stmt.bindString(":MOUNT_POLICY_NAME", name);
   stmt.executeNonQuery();
 
-  if(0 == stmt.getNbAffectedRows()) {
+  if (0 == stmt.getNbAffectedRows()) {
     throw exception::UserError(std::string("Cannot modify mount policy ") + name + " because they do not exist");
   }
 
@@ -345,8 +354,10 @@ void RdbmsMountPolicyCatalogue::modifyMountPolicyRetrievePriority(const common::
   m_rdbmsCatalogue->m_allMountPoliciesCache.invalidate();
 }
 
-void RdbmsMountPolicyCatalogue::modifyMountPolicyRetrieveMinRequestAge(const common::dataStructures::SecurityIdentity &admin,
-  const std::string &name, const uint64_t minRetrieveRequestAge) {
+void RdbmsMountPolicyCatalogue::modifyMountPolicyRetrieveMinRequestAge(
+  const common::dataStructures::SecurityIdentity& admin,
+  const std::string& name,
+  const uint64_t minRetrieveRequestAge) {
   const time_t now = time(nullptr);
   const char* const sql = R"SQL(
     UPDATE MOUNT_POLICY SET 
@@ -366,7 +377,7 @@ void RdbmsMountPolicyCatalogue::modifyMountPolicyRetrieveMinRequestAge(const com
   stmt.bindString(":MOUNT_POLICY_NAME", name);
   stmt.executeNonQuery();
 
-  if(0 == stmt.getNbAffectedRows()) {
+  if (0 == stmt.getNbAffectedRows()) {
     throw exception::UserError(std::string("Cannot modify mount policy ") + name + " because they do not exist");
   }
 
@@ -375,8 +386,9 @@ void RdbmsMountPolicyCatalogue::modifyMountPolicyRetrieveMinRequestAge(const com
   m_rdbmsCatalogue->m_allMountPoliciesCache.invalidate();
 }
 
-void RdbmsMountPolicyCatalogue::modifyMountPolicyComment(const common::dataStructures::SecurityIdentity &admin,
-  const std::string &name, const std::string &comment) {
+void RdbmsMountPolicyCatalogue::modifyMountPolicyComment(const common::dataStructures::SecurityIdentity& admin,
+                                                         const std::string& name,
+                                                         const std::string& comment) {
   const auto trimmedComment = RdbmsCatalogueUtils::checkCommentOrReasonMaxLength(comment, &m_log);
   const time_t now = time(nullptr);
   const char* const sql = R"SQL(
@@ -397,7 +409,7 @@ void RdbmsMountPolicyCatalogue::modifyMountPolicyComment(const common::dataStruc
   stmt.bindString(":MOUNT_POLICY_NAME", name);
   stmt.executeNonQuery();
 
-  if(0 == stmt.getNbAffectedRows()) {
+  if (0 == stmt.getNbAffectedRows()) {
     throw exception::UserError(std::string("Cannot modify mount policy ") + name + " because they do not exist");
   }
 
@@ -409,8 +421,8 @@ void RdbmsMountPolicyCatalogue::modifyMountPolicyComment(const common::dataStruc
 //------------------------------------------------------------------------------
 // getRequesterGroupMountPolicy
 //------------------------------------------------------------------------------
-std::optional<common::dataStructures::MountPolicy> RdbmsMountPolicyCatalogue::getRequesterGroupMountPolicy(
-  rdbms::Conn &conn, const Group &group) const {
+std::optional<common::dataStructures::MountPolicy>
+RdbmsMountPolicyCatalogue::getRequesterGroupMountPolicy(rdbms::Conn& conn, const Group& group) const {
   const char* const sql = R"SQL(
     SELECT 
       MOUNT_POLICY.MOUNT_POLICY_NAME AS MOUNT_POLICY_NAME,
@@ -444,7 +456,7 @@ std::optional<common::dataStructures::MountPolicy> RdbmsMountPolicyCatalogue::ge
   stmt.bindString(":DISK_INSTANCE_NAME", group.diskInstanceName);
   stmt.bindString(":REQUESTER_GROUP_NAME", group.groupName);
   auto rset = stmt.executeQuery();
-  if(rset.next()) {
+  if (rset.next()) {
     common::dataStructures::MountPolicy policy;
 
     policy.name = rset.columnString("MOUNT_POLICY_NAME");
@@ -469,8 +481,8 @@ std::optional<common::dataStructures::MountPolicy> RdbmsMountPolicyCatalogue::ge
   }
 }
 
-std::optional<common::dataStructures::MountPolicy> RdbmsMountPolicyCatalogue::getRequesterMountPolicy(rdbms::Conn &conn,
-  const User &user) const {
+std::optional<common::dataStructures::MountPolicy>
+RdbmsMountPolicyCatalogue::getRequesterMountPolicy(rdbms::Conn& conn, const User& user) const {
   const char* const sql = R"SQL(
     SELECT 
       MOUNT_POLICY.MOUNT_POLICY_NAME AS MOUNT_POLICY_NAME,
@@ -504,7 +516,7 @@ std::optional<common::dataStructures::MountPolicy> RdbmsMountPolicyCatalogue::ge
   stmt.bindString(":DISK_INSTANCE_NAME", user.diskInstanceName);
   stmt.bindString(":REQUESTER_NAME", user.username);
   auto rset = stmt.executeQuery();
-  if(rset.next()) {
+  if (rset.next()) {
     common::dataStructures::MountPolicy policy;
 
     policy.name = rset.columnString("MOUNT_POLICY_NAME");
@@ -532,12 +544,11 @@ std::optional<common::dataStructures::MountPolicy> RdbmsMountPolicyCatalogue::ge
   }
 }
 
-RequesterAndGroupMountPolicies RdbmsMountPolicyCatalogue::getMountPolicies(
-  rdbms::Conn &conn,
-  const std::string &diskInstanceName,
-  const std::string &requesterName,
-  const std::string &requesterGroupName,
-  const std::string &activity) const {
+RequesterAndGroupMountPolicies RdbmsMountPolicyCatalogue::getMountPolicies(rdbms::Conn& conn,
+                                                                           const std::string& diskInstanceName,
+                                                                           const std::string& requesterName,
+                                                                           const std::string& requesterGroupName,
+                                                                           const std::string& activity) const {
   const char* const sql = R"SQL(
     SELECT 
       'ACTIVITY' AS RULE_TYPE,
@@ -631,7 +642,7 @@ RequesterAndGroupMountPolicies RdbmsMountPolicyCatalogue::getMountPolicies(
   auto rset = stmt.executeQuery();
 
   RequesterAndGroupMountPolicies policies;
-  while(rset.next()) {
+  while (rset.next()) {
     common::dataStructures::MountPolicy policy;
 
     policy.name = rset.columnString("MOUNT_POLICY_NAME");
@@ -647,13 +658,13 @@ RequesterAndGroupMountPolicies RdbmsMountPolicyCatalogue::getMountPolicies(
     policy.lastModificationLog.host = rset.columnString("LAST_UPDATE_HOST_NAME");
     policy.lastModificationLog.time = rset.columnUint64("LAST_UPDATE_TIME");
 
-    if(rset.columnString("RULE_TYPE") == "ACTIVITY") {
+    if (rset.columnString("RULE_TYPE") == "ACTIVITY") {
       auto activityRegexString = rset.columnString("ACTIVITY_REGEX");
       cta::utils::Regex activityRegex(activityRegexString);
       if (activityRegex.has_match(activity)) {
         policies.requesterActivityMountPolicies.push_back(policy);
       }
-    } else if(rset.columnString("RULE_TYPE") == "REQUESTER") {
+    } else if (rset.columnString("RULE_TYPE") == "REQUESTER") {
       policies.requesterMountPolicies.push_back(policy);
     } else {
       policies.requesterGroupMountPolicies.push_back(policy);
@@ -663,11 +674,11 @@ RequesterAndGroupMountPolicies RdbmsMountPolicyCatalogue::getMountPolicies(
   return policies;
 }
 
-RequesterAndGroupMountPolicies RdbmsMountPolicyCatalogue::getMountPolicies(
-  rdbms::Conn &conn,
-  const std::string &diskInstanceName,
-  const std::string &requesterName,
-  const std::string &requesterGroupName) const {
+RequesterAndGroupMountPolicies
+RdbmsMountPolicyCatalogue::getMountPolicies(rdbms::Conn& conn,
+                                            const std::string& diskInstanceName,
+                                            const std::string& requesterName,
+                                            const std::string& requesterGroupName) const {
   const char* const sql = R"SQL(
     SELECT 
       'REQUESTER' AS RULE_TYPE,
@@ -730,7 +741,7 @@ RequesterAndGroupMountPolicies RdbmsMountPolicyCatalogue::getMountPolicies(
   auto rset = stmt.executeQuery();
 
   RequesterAndGroupMountPolicies policies;
-  while(rset.next()) {
+  while (rset.next()) {
     common::dataStructures::MountPolicy policy;
 
     policy.name = rset.columnString("MOUNT_POLICY_NAME");
@@ -746,7 +757,7 @@ RequesterAndGroupMountPolicies RdbmsMountPolicyCatalogue::getMountPolicies(
     policy.lastModificationLog.host = rset.columnString("LAST_UPDATE_HOST_NAME");
     policy.lastModificationLog.time = rset.columnUint64("LAST_UPDATE_TIME");
 
-    if(rset.columnString("RULE_TYPE") == "REQUESTER") {
+    if (rset.columnString("RULE_TYPE") == "REQUESTER") {
       policies.requesterMountPolicies.push_back(policy);
     } else {
       policies.requesterGroupMountPolicies.push_back(policy);
@@ -756,4 +767,4 @@ RequesterAndGroupMountPolicies RdbmsMountPolicyCatalogue::getMountPolicies(
   return policies;
 }
 
-} // namespace cta::catalogue
+}  // namespace cta::catalogue

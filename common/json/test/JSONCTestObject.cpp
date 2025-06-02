@@ -15,14 +15,13 @@
  *               submit itself to any jurisdiction.
  */
 
-
 #include "JSONCTestObject.hpp"
 
 namespace unitTests {
 
-JSONCTestObject::JSONCTestObject():JSONCObject(), TestObject()  { }
+JSONCTestObject::JSONCTestObject() : JSONCObject(), TestObject() {}
 
-void JSONCTestObject::buildFromJSON(const std::string & json){
+void JSONCTestObject::buildFromJSON(const std::string& json) {
   JSONCObject::buildFromJSON(json);
   double_number = jsonGetValue<double>("double_number");
   integer_number = jsonGetValue<uint64_t>("integer_number");
@@ -31,9 +30,9 @@ void JSONCTestObject::buildFromJSON(const std::string & json){
 
 std::string JSONCTestObject::getJSON() {
   reinitializeJSONCObject();
-  jsonSetValue("integer_number",integer_number);
-  jsonSetValue("str",str);
-  jsonSetValue("double_number",double_number);
+  jsonSetValue("integer_number", integer_number);
+  jsonSetValue("str", str);
+  jsonSetValue("double_number", double_number);
   return JSONCObject::getJSON();
 }
 
@@ -41,4 +40,4 @@ std::string JSONCTestObject::getExpectedJSONToBuildObject() const {
   return "{\"integer_number\":42,\"str\":\"forty two\",\"double_number\":42.000000}";
 }
 
-}
+}  // namespace unitTests

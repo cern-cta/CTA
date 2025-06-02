@@ -24,8 +24,10 @@ namespace cta::tape::daemon::common {
 struct FetchReportOrFlushLimits {
   uint64_t maxBytes;
   uint64_t maxFiles;
-  FetchReportOrFlushLimits(): maxBytes(0), maxFiles(0) {}
-  FetchReportOrFlushLimits(uint64_t bytes, uint64_t files): maxBytes(bytes), maxFiles(files) {}
+
+  FetchReportOrFlushLimits() : maxBytes(0), maxFiles(0) {}
+
+  FetchReportOrFlushLimits(uint64_t bytes, uint64_t files) : maxBytes(bytes), maxFiles(files) {}
 };
 
-} // namespace cta::tape::daemon
+}  // namespace cta::tape::daemon::common

@@ -20,13 +20,12 @@
 #include "xroot_plugins/XrdCtaStream.hpp"
 #include "disk/DiskSystem.hpp"
 
-
 namespace cta::xrd {
 
 /*!
  * Stream object which implements "virtualorganization ls" command
  */
-class VirtualOrganizationLsStream: public XrdCtaStream{
+class VirtualOrganizationLsStream : public XrdCtaStream {
 public:
   /*!
    * Constructor
@@ -35,44 +34,46 @@ public:
    * @param[in]    catalogue     CTA Catalogue
    * @param[in]    scheduler     CTA Scheduler
    */
-  VirtualOrganizationLsStream(const frontend::AdminCmdStream& requestMsg, cta::catalogue::Catalogue &catalogue, cta::Scheduler &scheduler);
+  VirtualOrganizationLsStream(const frontend::AdminCmdStream& requestMsg,
+                              cta::catalogue::Catalogue& catalogue,
+                              cta::Scheduler& scheduler);
 
 private:
   /*!
    * Can we close the stream?
    */
-  virtual bool isDone() const {
-    return m_virtualOrganizationList.empty();
-  }
+  virtual bool isDone() const { return m_virtualOrganizationList.empty(); }
 
   /*!
    * Fill the buffer
    */
-  virtual int fillBuffer(XrdSsiPb::OStreamBuffer<Data> *streambuf);
+  virtual int fillBuffer(XrdSsiPb::OStreamBuffer<Data>* streambuf);
 
-  std::list<cta::common::dataStructures::VirtualOrganization> m_virtualOrganizationList;             //!< List of virtual organizations from the catalogue
+  std::list<cta::common::dataStructures::VirtualOrganization>
+    m_virtualOrganizationList;  //!< List of virtual organizations from the catalogue
   const std::string m_instanceName;
 
-  static constexpr const char* const LOG_SUFFIX  = "VirtualOrganizationLsStream";    //!< Identifier for log messages
+  static constexpr const char* const LOG_SUFFIX = "VirtualOrganizationLsStream";  //!< Identifier for log messages
 };
 
-
-VirtualOrganizationLsStream::VirtualOrganizationLsStream(const frontend::AdminCmdStream& requestMsg, cta::catalogue::Catalogue &catalogue, cta::Scheduler &scheduler) :
-  XrdCtaStream(catalogue, scheduler),
-  m_virtualOrganizationList(catalogue.VO()->getVirtualOrganizations()),
-  m_instanceName(requestMsg.getInstanceName())
-{
+VirtualOrganizationLsStream::VirtualOrganizationLsStream(const frontend::AdminCmdStream& requestMsg,
+                                                         cta::catalogue::Catalogue& catalogue,
+                                                         cta::Scheduler& scheduler)
+    : XrdCtaStream(catalogue, scheduler),
+      m_virtualOrganizationList(catalogue.VO()->getVirtualOrganizations()),
+      m_instanceName(requestMsg.getInstanceName()) {
   using namespace cta::admin;
 
   XrdSsiPb::Log::Msg(XrdSsiPb::Log::DEBUG, LOG_SUFFIX, "VirtualOrganizationLsStream() constructor");
 }
 
-int VirtualOrganizationLsStream::fillBuffer(XrdSsiPb::OStreamBuffer<Data> *streambuf) {
-  for(bool is_buffer_full = false; !m_virtualOrganizationList.empty() && !is_buffer_full; m_virtualOrganizationList.pop_front()) {
+int VirtualOrganizationLsStream::fillBuffer(XrdSsiPb::OStreamBuffer<Data>* streambuf) {
+  for (bool is_buffer_full = false; !m_virtualOrganizationList.empty() && !is_buffer_full;
+       m_virtualOrganizationList.pop_front()) {
     Data record;
 
-    auto &vo      = m_virtualOrganizationList.front();
-    auto  vo_item = record.mutable_vols_item();
+    auto& vo = m_virtualOrganizationList.front();
+    auto vo_item = record.mutable_vols_item();
 
     vo_item->set_name(vo.name);
     vo_item->set_instance_name(m_instanceName);
@@ -88,10 +89,10 @@ int VirtualOrganizationLsStream::fillBuffer(XrdSsiPb::OStreamBuffer<Data> *strea
     vo_item->set_comment(vo.comment);
     vo_item->set_diskinstance(vo.diskInstanceName);
     vo_item->set_is_repack_vo(vo.isRepackVo);
-    
+
     is_buffer_full = streambuf->Push(record);
   }
   return streambuf->Size();
 }
 
-} // namespace cta::xrd
+}  // namespace cta::xrd

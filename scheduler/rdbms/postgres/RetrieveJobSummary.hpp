@@ -124,6 +124,7 @@ struct RetrieveJobSummaryRow {
     //stmt.bindString(":STATUS", statusStr);
     return stmt.executeQuery();
   }
+
   /**
    * Select jobs which do not belong to any drive yet.
    * This is used for deciding if a new mount shall be created
@@ -150,7 +151,6 @@ struct RetrieveJobSummaryRow {
     auto stmt = txn.getConn().createStmt(sql);
     return stmt.executeQuery();
   }
-
 };
 
 }  // namespace cta::schedulerdb::postgres

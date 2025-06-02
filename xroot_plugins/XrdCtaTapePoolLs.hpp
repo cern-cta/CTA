@@ -27,7 +27,7 @@ namespace cta::xrd {
 /*!
  * Stream object which implements "tapepool ls" command
  */
-class TapePoolLsStream: public XrdCtaStream{
+class TapePoolLsStream : public XrdCtaStream {
 public:
   /*!
    * Constructor
@@ -36,33 +36,33 @@ public:
    * @param[in]    catalogue     CTA Catalogue
    * @param[in]    scheduler     CTA Scheduler
    */
-  TapePoolLsStream(const frontend::AdminCmdStream& requestMsg, cta::catalogue::Catalogue &catalogue, cta::Scheduler &scheduler);
+  TapePoolLsStream(const frontend::AdminCmdStream& requestMsg,
+                   cta::catalogue::Catalogue& catalogue,
+                   cta::Scheduler& scheduler);
 
 private:
   /*!
    * Can we close the stream?
    */
-  virtual bool isDone() const {
-    return m_tapePoolList.empty();
-  }
+  virtual bool isDone() const { return m_tapePoolList.empty(); }
 
   /*!
    * Fill the buffer
    */
-  virtual int fillBuffer(XrdSsiPb::OStreamBuffer<Data> *streambuf);
+  virtual int fillBuffer(XrdSsiPb::OStreamBuffer<Data>* streambuf);
 
-  std::list<cta::catalogue::TapePool> m_tapePoolList;                     //!< List of tape pools from the catalogue
+  std::list<cta::catalogue::TapePool> m_tapePoolList;  //!< List of tape pools from the catalogue
   const std::string m_instanceName;
 
-  static constexpr const char* const LOG_SUFFIX  = "TapePoolLsStream";    //!< Identifier for log messages
+  static constexpr const char* const LOG_SUFFIX = "TapePoolLsStream";  //!< Identifier for log messages
 };
 
-
-TapePoolLsStream::TapePoolLsStream(const frontend::AdminCmdStream& requestMsg, cta::catalogue::Catalogue &catalogue, cta::Scheduler &scheduler) :
-  XrdCtaStream(catalogue, scheduler),
-  m_tapePoolList(catalogue.TapePool()->getTapePools()),
-  m_instanceName(requestMsg.getInstanceName())
-{
+TapePoolLsStream::TapePoolLsStream(const frontend::AdminCmdStream& requestMsg,
+                                   cta::catalogue::Catalogue& catalogue,
+                                   cta::Scheduler& scheduler)
+    : XrdCtaStream(catalogue, scheduler),
+      m_tapePoolList(catalogue.TapePool()->getTapePools()),
+      m_instanceName(requestMsg.getInstanceName()) {
   using namespace cta::admin;
 
   XrdSsiPb::Log::Msg(XrdSsiPb::Log::DEBUG, LOG_SUFFIX, "TapePoolLsStream() constructor");
@@ -73,19 +73,19 @@ TapePoolLsStream::TapePoolLsStream(const frontend::AdminCmdStream& requestMsg, c
   searchCriteria.encrypted = requestMsg.getOptional(OptionBoolean::ENCRYPTED);
   searchCriteria.encryptionKeyName = requestMsg.getOptional(OptionString::ENCRYPTION_KEY_NAME);
 
-  if(searchCriteria.encrypted && searchCriteria.encryptionKeyName) {
+  if (searchCriteria.encrypted && searchCriteria.encryptionKeyName) {
     throw exception::UserError("Do not request both '--encrypted' and '--encryptionkeyname' at same time.");
   }
 
   m_tapePoolList = m_catalogue.TapePool()->getTapePools(searchCriteria);
 }
 
-int TapePoolLsStream::fillBuffer(XrdSsiPb::OStreamBuffer<Data> *streambuf) {
-  for(bool is_buffer_full = false; !m_tapePoolList.empty() && !is_buffer_full; m_tapePoolList.pop_front()) {
+int TapePoolLsStream::fillBuffer(XrdSsiPb::OStreamBuffer<Data>* streambuf) {
+  for (bool is_buffer_full = false; !m_tapePoolList.empty() && !is_buffer_full; m_tapePoolList.pop_front()) {
     Data record;
 
-    auto &tp      = m_tapePoolList.front();
-    auto  tp_item = record.mutable_tpls_item();
+    auto& tp = m_tapePoolList.front();
+    auto tp_item = record.mutable_tpls_item();
 
     tp_item->set_name(tp.name);
     tp_item->set_instance_name(m_instanceName);
@@ -117,4 +117,4 @@ int TapePoolLsStream::fillBuffer(XrdSsiPb::OStreamBuffer<Data> *streambuf) {
   return streambuf->Size();
 }
 
-} // namespace cta::xrd
+}  // namespace cta::xrd

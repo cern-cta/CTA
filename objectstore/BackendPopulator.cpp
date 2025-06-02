@@ -25,9 +25,12 @@ namespace cta::objectstore {
 //------------------------------------------------------------------------------
 // Constructor
 //------------------------------------------------------------------------------
-BackendPopulator::BackendPopulator(cta::objectstore::Backend & be,
-    const std::string &agentType, const cta::log::LogContext & lc): m_backend(be), m_agentReference(agentType, lc.logger()),
-    m_lc(lc) {
+BackendPopulator::BackendPopulator(cta::objectstore::Backend& be,
+                                   const std::string& agentType,
+                                   const cta::log::LogContext& lc)
+    : m_backend(be),
+      m_agentReference(agentType, lc.logger()),
+      m_lc(lc) {
   cta::objectstore::RootEntry re(m_backend);
   re.fetchNoLock();
   cta::objectstore::EntryLogSerDeser cl("user0", "systemhost", time(nullptr));
@@ -67,20 +70,23 @@ BackendPopulator::~BackendPopulator() noexcept {
       cta::log::ScopedParamContainer params(m_lc);
       agent.setNeedsGarbageCollection();
       agent.commit();
-      params.add("agentObject", agent.getAddressIfSet())
-            .add("ownedObjectCount", agent.getOwnershipList().size());
-      m_lc.log(log::INFO, "In BackendPopulator::~BackendPopulator(): not deleting non-empty agent object, left for garbage collection.");
+      params.add("agentObject", agent.getAddressIfSet()).add("ownedObjectCount", agent.getOwnershipList().size());
+      m_lc.log(
+        log::INFO,
+        "In BackendPopulator::~BackendPopulator(): not deleting non-empty agent object, left for garbage collection.");
       return;
     }
     agent.removeAndUnregisterSelf(m_lc);
-  } catch (cta::exception::Exception & ex) {
+  } catch (cta::exception::Exception& ex) {
     cta::log::ScopedParamContainer params(m_lc);
     params.add("errorMessage", ex.getMessageValue());
-    m_lc.log(log::CRIT, "In BackendPopulator::~BackendPopulator(): error deleting agent (cta::exception::Exception). Backtrace follows.");
+    m_lc.log(
+      log::CRIT,
+      "In BackendPopulator::~BackendPopulator(): error deleting agent (cta::exception::Exception). Backtrace follows.");
     m_lc.logBacktrace(log::INFO, ex.backtrace());
     // We have an exception (we should not), let's core dump.
     cta::utils::segfault();
-  } catch (std::exception & ex) {
+  } catch (std::exception& ex) {
     cta::log::ScopedParamContainer params(m_lc);
     params.add("exceptionWhat", ex.what());
     m_lc.log(log::CRIT, "In BackendPopulator::~BackendPopulator(): error deleting agent (std::exception).");
@@ -92,7 +98,7 @@ BackendPopulator::~BackendPopulator() noexcept {
 //------------------------------------------------------------------------------
 // getAgent
 //------------------------------------------------------------------------------
-cta::objectstore::AgentReference & BackendPopulator::getAgentReference() {
+cta::objectstore::AgentReference& BackendPopulator::getAgentReference() {
   return m_agentReference;
 }
 
@@ -100,8 +106,7 @@ cta::objectstore::AgentReference & BackendPopulator::getAgentReference() {
 // leaveNonEmptyAgentsBehind
 //------------------------------------------------------------------------------
 void BackendPopulator::leaveNonEmptyAgentsBehind() {
-  m_leaveNonEmptyAgentBehind=true;
+  m_leaveNonEmptyAgentBehind = true;
 }
 
-
-} // namespace cta::objectstore
+}  // namespace cta::objectstore

@@ -22,23 +22,19 @@
 
 namespace cta {
 
-  namespace exception {
+namespace exception {
 
-    /**
+/**
      * Invalid argument exception
      */
-    class OutOfMemory : public cta::exception::Exception {
-      
-    public:
-      
-      /**
+class OutOfMemory : public cta::exception::Exception {
+public:
+  /**
        * default constructor
        */
-      OutOfMemory();
+  OutOfMemory();
+};
 
-    };
-      
-  } // end of namespace exception
+}  // end of namespace exception
 
-} // end of namespace cta
-
+}  // end of namespace cta

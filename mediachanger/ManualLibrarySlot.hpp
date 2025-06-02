@@ -24,9 +24,8 @@ namespace cta::mediachanger {
 /**
  * Class representing a slot in a manually operated tape library.
  */
-class ManualLibrarySlot: public LibrarySlot {
+class ManualLibrarySlot : public LibrarySlot {
 public:
-
   /**
    * Constructor.
    *
@@ -42,7 +41,7 @@ public:
    *
    * @param str The string representation of the library slot.
    */
-  ManualLibrarySlot(const std::string &str);
+  ManualLibrarySlot(const std::string& str);
 
   /**
    * Destructor.
@@ -54,8 +53,8 @@ public:
    *
    * @return The clone.
    */
-  LibrarySlot *clone();
+  LibrarySlot* clone();
 
-}; // class ManualLibrarySlot
+};  // class ManualLibrarySlot
 
-} // namespace cta::mediachanger
+}  // namespace cta::mediachanger

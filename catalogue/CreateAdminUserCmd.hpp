@@ -43,7 +43,7 @@ private:
    * @param argv The command-line arguments
    * @return The exit value of the program
    */
-  int exceptionThrowingMain(const int argc, char *const *const argv) override;
+  int exceptionThrowingMain(const int argc, char* const* const argv) override;
 
   /**
    * Prints the usage message of the command-line tool
@@ -53,4 +53,4 @@ private:
   void printUsage(std::ostream& os) override;
 };
 
-} // namespace cta::catalogue
+}  // namespace cta::catalogue

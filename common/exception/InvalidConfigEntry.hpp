@@ -40,7 +40,7 @@ public:
    * Trivial destructor (required through inheritence from std::exception) 
    */
   ~InvalidConfigEntry() final = default;
-      
+
   /**
    * Returns the category of the configuration entry.
    */
@@ -73,4 +73,4 @@ private:
   const std::string m_entryValue;
 };
 
-} // namespace cta::exception
+}  // namespace cta::exception

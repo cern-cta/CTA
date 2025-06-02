@@ -34,13 +34,14 @@ class Catalogue;
  * Static class to set TapedConfiguration in Database
  */
 class DriveConfig {
- public:
-  static void setTapedConfiguration(const cta::tape::daemon::common::TapedConfiguration &tapedConfiguration,
-    catalogue::Catalogue* catalogue, const std::string& tapeDriveName);
+public:
+  static void setTapedConfiguration(const cta::tape::daemon::common::TapedConfiguration& tapedConfiguration,
+                                    catalogue::Catalogue* catalogue,
+                                    const std::string& tapeDriveName);
 
- private:
-  static void checkConfigInDB(catalogue::Catalogue* catalogue, const std::string& tapeDriveName,
-    const std::string& key);
+private:
+  static void
+  checkConfigInDB(catalogue::Catalogue* catalogue, const std::string& tapeDriveName, const std::string& key);
   static void setConfigToDB(const cta::SourcedParameter<std::string>& sourcedParameter,
                             catalogue::Catalogue* catalogue,
                             const std::string& tapeDriveName);
@@ -59,4 +60,4 @@ class DriveConfig {
                             const std::string& tapeDriveName);
 };  // class DriveConfig
 
-} // namespace cta
+}  // namespace cta

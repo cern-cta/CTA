@@ -17,8 +17,8 @@
 
 using cta::Scheduler;
 using cta::catalogue::Catalogue;
-using cta::xrd::CtaRpc;
 using cta::log::LogContext;
+using cta::xrd::CtaRpc;
 
 using grpc::ResourceQuota;
 using grpc::Server;
@@ -28,7 +28,6 @@ using grpc::Status;
 
 namespace cta::frontend::grpc {
 class CtaRpcImpl : public CtaRpc::Service {
-
 private:
   std::unique_ptr<cta::frontend::FrontendService> m_frontendService;
   ::grpc::HealthCheckServiceInterface* m_healthCheckService = nullptr;
@@ -38,9 +37,9 @@ public:
   CtaRpcImpl(const std::string& config);
 
   FrontendService& getFrontendService() const { return *m_frontendService; }
-  void setHealthCheckService(
-    ::grpc::HealthCheckServiceInterface* healthCheckService) {
-      m_healthCheckService = healthCheckService;
+
+  void setHealthCheckService(::grpc::HealthCheckServiceInterface* healthCheckService) {
+    m_healthCheckService = healthCheckService;
   }
 
   // Archive/Retrieve interface
@@ -49,7 +48,9 @@ public:
   Status Retrieve(::grpc::ServerContext* context, const cta::xrd::Request* request, cta::xrd::Response* response);
   Status CancelRetrieve(::grpc::ServerContext* context, const cta::xrd::Request* request, cta::xrd::Response* response);
   Status Delete(::grpc::ServerContext* context, const cta::xrd::Request* request, cta::xrd::Response* response);
+
 private:
-  Status ProcessGrpcRequest(const cta::xrd::Request* request, cta::xrd::Response* response, cta::log::LogContext &lc) const;
+  Status
+  ProcessGrpcRequest(const cta::xrd::Request* request, cta::xrd::Response* response, cta::log::LogContext& lc) const;
 };
-} // namespace cta::frontend::grpc
+}  // namespace cta::frontend::grpc

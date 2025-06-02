@@ -32,7 +32,6 @@
 namespace castor::tape::tapeserver::daemon {
 
 class TapeSessionReporter : private cta::threading::Thread {
-
 public:
   /**
    * Constructor
@@ -41,8 +40,10 @@ public:
    * @param hostname The host name of the computer
    * @param lc 
    */
-  TapeSessionReporter(cta::tape::daemon::TapedProxy& tapeserverProxy, const cta::tape::daemon::DriveConfigEntry& driveConfig,
-    std::string_view hostname, const cta::log::LogContext& lc);
+  TapeSessionReporter(cta::tape::daemon::TapedProxy& tapeserverProxy,
+                      const cta::tape::daemon::DriveConfigEntry& driveConfig,
+                      std::string_view hostname,
+                      const cta::log::LogContext& lc);
 
   /**
    * Put into the waiting list a guard value to signal the thread we want
@@ -58,8 +59,7 @@ public:
   /**
    * Will call TapedProxy::reportState();
    */
-  void reportState(cta::tape::session::SessionState state,
-                   cta::tape::session::SessionType type);
+  void reportState(cta::tape::session::SessionState state, cta::tape::session::SessionType type);
 
   void setVolInfo(const castor::tape::tapeserver::daemon::VolumeInfo& volumeInfo) { m_volume = volumeInfo; };
 
@@ -88,15 +88,14 @@ private:
   public:
     virtual ~Report() = default;
 
-    virtual void execute(TapeSessionReporter &) = 0;
+    virtual void execute(TapeSessionReporter&) = 0;
   };
 
   class ReportStateChange : public Report {
   public:
-    ReportStateChange(cta::tape::session::SessionState state,
-                      cta::tape::session::SessionType type);
+    ReportStateChange(cta::tape::session::SessionState state, cta::tape::session::SessionType type);
 
-    void execute(TapeSessionReporter &) override;
+    void execute(TapeSessionReporter&) override;
 
   private:
     cta::tape::session::SessionState m_state;
@@ -112,7 +111,7 @@ private:
   /** 
    * m_fifo is holding all the report waiting to be processed
    */
-  cta::threading::BlockingQueue<Report *> m_fifo;
+  cta::threading::BlockingQueue<Report*> m_fifo;
 
   /**
    A bunch of references to proxies to send messages to the 
@@ -132,4 +131,4 @@ private:
   const pid_t m_sessionPid;
 };
 
-} // namespace castor::tape::tapeserver::daemon
+}  // namespace castor::tape::tapeserver::daemon

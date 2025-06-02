@@ -106,8 +106,7 @@ std::string TextFormatter::dataSizeToStr(uint64_t value) {
   // or yottabytes of data in a tapepool anytime soon.
   int unit;
   uint64_t divisor;
-  for (unit = 0, divisor = 1000; unit < 6 && value >= divisor * 1000; divisor *= 1000, ++unit)
-    ;
+  for (unit = 0, divisor = 1000; unit < 6 && value >= divisor * 1000; divisor *= 1000, ++unit);
 
   // Convert to format like "3.1G"
   double val_d = static_cast<double>(value) / static_cast<double>(divisor);

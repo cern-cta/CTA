@@ -20,7 +20,7 @@
 namespace cta::common::dataStructures {
 
 std::string toString(FrontendReturnCode rc) {
-  switch(rc) {
+  switch (rc) {
     case FrontendReturnCode::ok:
       return "ok";
     case FrontendReturnCode::userErrorNoRetry:
@@ -36,4 +36,4 @@ std::string toString(FrontendReturnCode rc) {
   }
 }
 
-} // namespace cta::common::dataStructures
+}  // namespace cta::common::dataStructures

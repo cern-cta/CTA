@@ -32,7 +32,7 @@
 #include <stdexcept>
 #include <optional>
 
-int main(int argc, char ** argv) {
+int main(int argc, char** argv) {
   try {
     cta::log::DummyLogger dl("", "");
     std::unique_ptr<cta::objectstore::Backend> be;
@@ -47,18 +47,17 @@ int main(int argc, char ** argv) {
     }
     // If the backend is a VFS, make sure we don't delete it on exit.
     try {
-      dynamic_cast<cta::objectstore::BackendVFS &>(*be).noDeleteOnExit();
-    } catch (std::bad_cast &){}
+      dynamic_cast<cta::objectstore::BackendVFS&>(*be).noDeleteOnExit();
+    } catch (std::bad_cast&) {}
     // If not, nevermind.
     std::cout << "Object store path: " << be->getParams()->toURL() << std::endl;
     auto l = be->list();
-    for (auto o=l.begin(); o!=l.end(); o++) {
+    for (auto o = l.begin(); o != l.end(); o++) {
       std::cout << *o << std::endl;
     }
   } catch (const std::bad_optional_access&) {
     std::cerr << "Config file '/etc/cta/cta-objectstore-tools.conf' does not contain the BackendPath entry.";
   } catch (std::exception& e) {
-    std::cerr << "Failed to list backend store: "
-        << std::endl << e.what() << std::endl;
+    std::cerr << "Failed to list backend store: " << std::endl << e.what() << std::endl;
   }
 }

@@ -35,8 +35,8 @@ public:
    * @return the RAO algorithm instance
    */
   virtual std::unique_ptr<RAOAlgorithm> createRAOAlgorithm() = 0;
-  
+
   std::unique_ptr<RAOAlgorithm> createDefaultLinearAlgorithm();
 };
 
-} // namespace castor::tape::tapeserver::rao
+}  // namespace castor::tape::tapeserver::rao

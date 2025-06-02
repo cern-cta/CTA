@@ -33,8 +33,7 @@ std::string DesiredDriveState::generateReasonFromLogMsg(int logLevel, std::strin
 }
 
 std::ostream& operator<<(std::ostream& os, const DesiredDriveState& obj) {
-  return os << "(up="        << (obj.up        ? "true" : "false")
-            << " forceDown=" << (obj.forceDown ? "true" : "false") << ")";
+  return os << "(up=" << (obj.up ? "true" : "false") << " forceDown=" << (obj.forceDown ? "true" : "false") << ")";
 }
 
-} // namespace cta::common::dataStructures
+}  // namespace cta::common::dataStructures

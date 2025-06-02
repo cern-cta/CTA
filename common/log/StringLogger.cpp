@@ -28,10 +28,8 @@ void StringLogger::writeMsgToUnderlyingLoggingSystem(std::string_view header, st
   threading::MutexLocker lock(m_mutex);
 
   // Append the message to the log
-  m_log << (m_logFormat == LogFormat::JSON ? "{" : "")
-        << header << body
-        << (m_logFormat == LogFormat::JSON ? "}" : "")
+  m_log << (m_logFormat == LogFormat::JSON ? "{" : "") << header << body << (m_logFormat == LogFormat::JSON ? "}" : "")
         << std::endl;
 }
 
-} // namespace cta::log
+}  // namespace cta::log

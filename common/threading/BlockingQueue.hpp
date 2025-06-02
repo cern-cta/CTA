@@ -36,7 +36,11 @@ public:
   typedef typename std::queue<C>::value_type value_type;
   typedef typename std::queue<C>::reference reference;
   typedef typename std::queue<C>::const_reference const_reference;
-  typedef struct valueRemainingPair {C value; size_t remaining;} valueRemainingPair;
+
+  typedef struct valueRemainingPair {
+    C value;
+    size_t remaining;
+  } valueRemainingPair;
 
   BlockingQueue() = default;
   ~BlockingQueue() = default;
@@ -72,6 +76,7 @@ public:
     m_sem.acquire();
     return popCriticalSection();
   }
+
   /**
    * Atomically pop the element of the top of the pile AND return it with the
    * number of remaining elements in the queue
@@ -79,7 +84,7 @@ public:
    * remaining (into ret.remaining)
    *
    */
-  valueRemainingPair popGetSize () {
+  valueRemainingPair popGetSize() {
     m_sem.acquire();
     valueRemainingPair ret;
     ret.value = popCriticalSection(&ret.remaining);
@@ -114,15 +119,15 @@ private:
    * Thread and exception safe pop. Optionally atomically extracts the size
    * of the queue after pop
    */
-  C popCriticalSection(size_t * sz = nullptr) {
+  C popCriticalSection(size_t* sz = nullptr) {
     MutexLocker ml(m_mutex);
     C ret = std::move(m_queue.front());
     m_queue.pop();
-    if (sz)
+    if (sz) {
       *sz = m_queue.size();
+    }
     return ret;
   }
-
 };
 
-} // namespace cta::threading
+}  // namespace cta::threading

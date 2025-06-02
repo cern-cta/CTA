@@ -38,7 +38,6 @@ class RetrieveRdbJob : public SchedulerDatabase::RetrieveJob {
   friend class cta::RelationalDB;
 
 public:
-
   // Constructor to create empty RetrieveJob object with a reference to the connection pool
   explicit RetrieveRdbJob(rdbms::ConnPool& connPool);
   explicit RetrieveRdbJob(rdbms::ConnPool& connPool, const rdbms::Rset& rset);
@@ -78,7 +77,7 @@ public:
   postgres::RetrieveJobQueueRow m_jobRow;  // Job data is encapsulated in this member
   bool m_jobOwned = false;
   uint64_t m_mountId = 0;
-  std::string m_tapePool="";
+  std::string m_tapePool = "";
   rdbms::ConnPool& m_connPool;
   //std::shared_ptr<rdbms::Conn> m_conn;
 
@@ -86,6 +85,5 @@ public:
   void asyncSetSuccessful() override;
   void fail() override;
 };
-
 
 }  // namespace cta::schedulerdb

@@ -30,11 +30,11 @@ std::vector<uint64_t> EnterpriseRAOAlgorithm::performRAO(const std::vector<std::
   uint32_t block_size = c_blockSize;
   std::list<castor::tape::SCSI::Structures::RAO::blockLims> files;
   for (uint32_t i = 0; i < njobs; i++) {
-    cta::RetrieveJob *job = jobs.at(i).get();
+    cta::RetrieveJob* job = jobs.at(i).get();
     castor::tape::SCSI::Structures::RAO::blockLims lims;
-    lims.fseq[sizeof(lims.fseq)-1] = '\0';
+    lims.fseq[sizeof(lims.fseq) - 1] = '\0';
     strncpy(reinterpret_cast<char*>(lims.fseq), std::to_string(i).c_str(), sizeof(lims.fseq));
-    if(lims.fseq[sizeof(lims.fseq)-1] != '\0') {
+    if (lims.fseq[sizeof(lims.fseq) - 1] != '\0') {
       throw cta::exception::Exception("In EnterpriseRAOAlgorithm::performRAO: fSeq " + std::to_string(i) +
                                       " too long for buffer length " + std::to_string(sizeof(lims.fseq)));
     }
@@ -44,8 +44,7 @@ std::vector<uint64_t> EnterpriseRAOAlgorithm::performRAO(const std::vector<std::
                ((job->archiveFile.fileSize + block_size - 1) / block_size);
 
     files.push_back(lims);
-    if ((files.size() == m_maxFilesSupported) ||
-            ((i == njobs - 1) && (files.size() > 1))) {
+    if ((files.size() == m_maxFilesSupported) || ((i == njobs - 1) && (files.size() > 1))) {
       /* We do a RAO query if:
        *  1. the maximum number of files supported by the drive
        *     for RAO query has been reached
@@ -56,18 +55,18 @@ std::vector<uint64_t> EnterpriseRAOAlgorithm::performRAO(const std::vector<std::
 
       /* Add the RAO sorted files to the new list*/
       for (auto fit = files.begin(); fit != files.end(); fit++) {
-        uint64_t id = atoi((char*)fit->fseq);
+        uint64_t id = atoi((char*) fit->fseq);
         raoOrder.push_back(id);
       }
       files.clear();
     }
   }
   for (auto fit = files.begin(); fit != files.end(); fit++) {
-    uint64_t id = atoi((char*)fit->fseq);
+    uint64_t id = atoi((char*) fit->fseq);
     raoOrder.push_back(id);
   }
   files.clear();
-  m_raoTimings.insertAndReset("RAOAlgorithmTime",totalTimer);
+  m_raoTimings.insertAndReset("RAOAlgorithmTime", totalTimer);
   return raoOrder;
 }
 
@@ -75,4 +74,4 @@ std::string EnterpriseRAOAlgorithm::getName() const {
   return "enterprise";
 }
 
-} // namespace castor::tape::tapeserver::rao
+}  // namespace castor::tape::tapeserver::rao

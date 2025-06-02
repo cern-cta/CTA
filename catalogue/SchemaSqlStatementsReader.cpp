@@ -57,8 +57,8 @@ std::list<std::string> SchemaSqlStatementsReader::getStatements() {
       break;
     case rdbms::Login::DBTYPE_NONE:
       throw exception::Exception("Cannot get statements without a database type");
-    }
-    return getAllStatementsFromSchema(schema->sql);
+  }
+  return getAllStatementsFromSchema(schema->sql);
 }
 
 std::list<std::string> SchemaSqlStatementsReader::getAllStatementsFromSchema(const std::string& schema) const {
@@ -73,10 +73,10 @@ std::list<std::string> SchemaSqlStatementsReader::getAllStatementsFromSchema(con
       searchPos = findResult + 1;
 
       if (0 < sqlStmt.size()) {  // Ignore empty statements
-        statements.push_back(sqlStmt+";");
+        statements.push_back(sqlStmt + ";");
       }
     }
-  } catch(exception::Exception &ex) {
+  } catch (exception::Exception& ex) {
     throw exception::Exception(std::string(__FUNCTION__) + " failed: " + ex.getMessage().str());
   }
   return statements;
@@ -95,8 +95,7 @@ std::string SchemaSqlStatementsReader::getDatabaseType() const {
 #endif
     case rdbms::Login::DBTYPE_NONE:
       throw exception::Exception("The database type should not be DBTYPE_NONE");
-    default:
-    {
+    default: {
       exception::Exception ex;
       ex.getMessage() << "Unknown database type: value=" << m_dbType;
       throw ex;
@@ -111,8 +110,9 @@ std::string DirectoryVersionsSqlStatementsReader::readSchemaFromFile() const {
   std::string schemaFilePath = getSchemaFilePath();
   std::ifstream schemaFile(schemaFilePath);
   if (schemaFile.fail()) {
-    throw cta::exception::Exception("In DirectoryVersionsSqlStatementsReader::readSchemaFromFile(), unable to open the file located in "
-      + schemaFilePath);
+    throw cta::exception::Exception(
+      "In DirectoryVersionsSqlStatementsReader::readSchemaFromFile(), unable to open the file located in " +
+      schemaFilePath);
   }
   std::string content((std::istreambuf_iterator<char>(schemaFile)), (std::istreambuf_iterator<char>()));
   return content;
@@ -126,13 +126,13 @@ std::list<std::string> MapSqlStatementsReader::getStatements() {
   try {
     mapVersionSchemas = AllCatalogueSchema::mapSchema.at(m_catalogueVersion);
   } catch (const std::out_of_range&) {
-    throw cta::exception::Exception("No schema has been found for version number "+m_catalogueVersion);
+    throw cta::exception::Exception("No schema has been found for version number " + m_catalogueVersion);
   }
   try {
     std::string schema = mapVersionSchemas.at(getDatabaseType());
     return getAllStatementsFromSchema(schema);
   } catch (const std::out_of_range&) {
-    throw cta::exception::Exception("No schema has been found for database type "+getDatabaseType());
+    throw cta::exception::Exception("No schema has been found for database type " + getDatabaseType());
   }
 }
 
@@ -140,10 +140,11 @@ std::list<std::string> MapSqlStatementsReader::getStatements() {
 // CppSchemaStatementsReader
 //////////////////////////////////////////////////////////////////
 
-CppSchemaStatementsReader::CppSchemaStatementsReader(const cta::catalogue::CatalogueSchema& schema):m_schema(schema) {}
+CppSchemaStatementsReader::CppSchemaStatementsReader(const cta::catalogue::CatalogueSchema& schema)
+    : m_schema(schema) {}
 
 std::list<std::string> CppSchemaStatementsReader::getStatements() {
   return getAllStatementsFromSchema(m_schema.sql);
 }
 
-} // namespace cta::catalogue
+}  // namespace cta::catalogue

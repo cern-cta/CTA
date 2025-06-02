@@ -22,7 +22,6 @@
 #include <stdint.h>
 #include <string>
 
-
 namespace cta::common::dataStructures {
 
 /**
@@ -30,21 +29,20 @@ namespace cta::common::dataStructures {
  * file in case of disaster 
  */
 struct DiskFileInfo {
-
   DiskFileInfo();
 
-  DiskFileInfo(const std::string &path, uint32_t owner_uid, uint32_t gid);
+  DiskFileInfo(const std::string& path, uint32_t owner_uid, uint32_t gid);
 
-  bool operator==(const DiskFileInfo &rhs) const;
+  bool operator==(const DiskFileInfo& rhs) const;
 
-  bool operator!=(const DiskFileInfo &rhs) const;
+  bool operator!=(const DiskFileInfo& rhs) const;
 
   std::string path;
-  uint32_t    owner_uid;
-  uint32_t    gid;
+  uint32_t owner_uid;
+  uint32_t gid;
 
-}; // struct DiskFileInfo
+};  // struct DiskFileInfo
 
-std::ostream &operator<<(std::ostream &os, const DiskFileInfo &obj);
+std::ostream& operator<<(std::ostream& os, const DiskFileInfo& obj);
 
-} // namespace cta::common::dataStructures
+}  // namespace cta::common::dataStructures

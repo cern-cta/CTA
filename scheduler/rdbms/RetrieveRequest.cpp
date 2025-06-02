@@ -191,7 +191,8 @@ void RetrieveRequest::fillJobsSetRetrieveFileQueueCriteria(
     m_jobs.emplace_back();
     m_jobs.back().copyNb = tf.copyNb;
     m_jobs.back().vid = tf.vid;
-    m_jobs.back().maxRetriesWithinMount = m_repackInfo.isRepack ? RETRIES_WITHIN_MOUNT_FOR_REPACK : RETRIES_WITHIN_MOUNT_FOR_USER;
+    m_jobs.back().maxRetriesWithinMount =
+      m_repackInfo.isRepack ? RETRIES_WITHIN_MOUNT_FOR_REPACK : RETRIES_WITHIN_MOUNT_FOR_USER;
     m_jobs.back().maxTotalRetries = m_repackInfo.isRepack ? TOTAL_RETRIES_FOR_REPACK : TOTAL_RETRIES_FOR_USER;
     m_jobs.back().maxReportRetries = REPORT_RETRIES;
     m_jobs.back().status = schedulerdb::RetrieveJobStatus::RJS_ToTransfer;

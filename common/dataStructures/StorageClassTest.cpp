@@ -23,7 +23,6 @@ namespace unitTests {
 
 class cta_common_dataStructures_StorageClassTest : public ::testing::Test {
 protected:
-
   cta_common_dataStructures_StorageClassTest() {
     m_storageClass1DiskInstance1.name = "storage_class_1";
     m_storageClass1DiskInstance1.nbCopies = 2;
@@ -55,11 +54,9 @@ protected:
     m_storageClass1DiskInstance1EffectiveCopy.comment = "Different comment";
   }
 
-  virtual void SetUp() {
-  }
+  virtual void SetUp() {}
 
-  virtual void TearDown() {
-  }
+  virtual void TearDown() {}
 
   cta::common::dataStructures::StorageClass m_storageClass1DiskInstance1;
   cta::common::dataStructures::StorageClass m_storageClass1DiskInstance2;
@@ -100,4 +97,4 @@ TEST_F(cta_common_dataStructures_StorageClassTest, inequality_different_name) {
   ASSERT_NE(m_storageClass1DiskInstance1, m_storageClass2DiskInstance1);
 }
 
-} // namespace unitTests
+}  // namespace unitTests

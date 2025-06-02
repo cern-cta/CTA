@@ -14,7 +14,7 @@
  *               granted to it by virtue of its status as an Intergovernmental Organization or
  *               submit itself to any jurisdiction.
  */
- 
+
 #pragma once
 
 #include "cmdline/CtaAdminCmdParser.hpp"
@@ -28,35 +28,35 @@
 namespace cta::frontend::grpc::client {
 
 class CtaAdminGrpcCmd {
-  
 public:
   CtaAdminGrpcCmd(int argc, char** argv);
   ~CtaAdminGrpcCmd() = default;
-  void exe(cta::log::Logger& log, const std::string& strSslRoot,
-           const std::string& strSslKey, const std::string& strSslCert,
-           const std::string& strGrpcHost, const unsigned int& uiGrpcPort);
-  
+  void exe(cta::log::Logger& log,
+           const std::string& strSslRoot,
+           const std::string& strSslKey,
+           const std::string& strSslCert,
+           const std::string& strGrpcHost,
+           const unsigned int& uiGrpcPort);
+
   // Static methods to format streaming responses
   static bool isJson() { return m_abIsJson; }
 
 private:
   std::string m_strExecname;
-  cta::xrd::Request m_request;                 //!< Protocol Buffer for the command and parameters
-  static std::atomic<bool> m_abIsJson;         //!< Display results in JSON format
+  cta::xrd::Request m_request;          //!< Protocol Buffer for the command and parameters
+  static std::atomic<bool> m_abIsJson;  //!< Display results in JSON format
 
-  
   //! Parse the options for a specific command/subcommand
   void parseOptions(int start, int argc, char** argv, const cta::admin::cmd_val_t& options);
 
   //! Add a valid option to the protocol buffer
   void addOption(const cta::admin::Option& option, const std::string& strValue);
-  
+
   //! Read a list of string options from a file
-  void readListFromFile(cta::admin::OptionStrList &str_list, const std::string &filename);
-  
+  void readListFromFile(cta::admin::OptionStrList& str_list, const std::string& filename);
+
   //! Throw an exception with usage help
-  void throwUsage(const std::string &strError = "") const;
-  
+  void throwUsage(const std::string& strError = "") const;
 };
 
-} // namespace cta::frontend::grpc::client
+}  // namespace cta::frontend::grpc::client

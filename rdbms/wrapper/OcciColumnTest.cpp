@@ -24,12 +24,9 @@ namespace unitTests {
 
 class cta_rdbms_wrapper_OcciColumnTest : public ::testing::Test {
 protected:
+  virtual void SetUp() {}
 
-  virtual void SetUp() {
-  }
-
-  virtual void TearDown() {
-  }
+  virtual void TearDown() {}
 };
 
 TEST_F(cta_rdbms_wrapper_OcciColumnTest, getColName) {
@@ -139,11 +136,11 @@ TEST_F(cta_rdbms_wrapper_OcciColumnTest, getFieldLengths) {
   const ub2 field0Value = 1;
   const ub2 field1Value = 22;
   const ub2 field2Value = 333;
-  col.setFieldLenToValueLen(0, field0Value); // Field Length is 1 + 1
-  col.setFieldLenToValueLen(1, field1Value); // Field length is 2 + 1
-  col.setFieldLenToValueLen(2, field2Value); // Field length is 3 + 1
+  col.setFieldLenToValueLen(0, field0Value);  // Field Length is 1 + 1
+  col.setFieldLenToValueLen(1, field1Value);  // Field length is 2 + 1
+  col.setFieldLenToValueLen(2, field2Value);  // Field length is 3 + 1
 
-  ub2 *const fieldLens = col.getFieldLengths();
+  ub2* const fieldLens = col.getFieldLengths();
 
   ASSERT_EQ(2, fieldLens[0]);
   ASSERT_EQ(3, fieldLens[1]);
@@ -161,7 +158,7 @@ TEST_F(cta_rdbms_wrapper_OcciColumnTest, getBuffer) {
   const ub2 field0Value = 1234;
   col.setFieldLenToValueLen(0, field0Value);
 
-  char *const buf = col.getBuffer();
+  char* const buf = col.getBuffer();
   ASSERT_NE(nullptr, buf);
 }
 
@@ -186,7 +183,7 @@ TEST_F(cta_rdbms_wrapper_OcciColumnTest, getMaxFieldLength) {
 
   const ub2 field0Value = 1;
   const ub2 field1Value = 22;
-  const ub2 field2Value = 333; // Max field length is 3 + 1
+  const ub2 field2Value = 333;  // Max field length is 3 + 1
   const ub2 field3Value = 1;
   col.setFieldLenToValueLen(0, field0Value);
   col.setFieldLenToValueLen(1, field1Value);
@@ -208,7 +205,7 @@ TEST_F(cta_rdbms_wrapper_OcciColumnTest, copyStrIntoField_1_oneField) {
   col.setFieldLenToValueLen(0, field0Value);
   col.setFieldValue(0, field0Value);
 
-  char *const buf = col.getBuffer();
+  char* const buf = col.getBuffer();
   ASSERT_EQ(field0Value, std::string(buf));
 }
 
@@ -227,9 +224,9 @@ TEST_F(cta_rdbms_wrapper_OcciColumnTest, setFieldValue_twoFields) {
   col.setFieldValue(0, field0Value);
   col.setFieldValue(1, field1Value);
 
-  char *const buf = col.getBuffer();
-  const char *const bufField0 = buf;
-  const char *const bufField1 = buf + col.getMaxFieldLength();
+  char* const buf = col.getBuffer();
+  const char* const bufField0 = buf;
+  const char* const bufField1 = buf + col.getMaxFieldLength();
   ASSERT_EQ(field0Value, std::string(bufField0));
   ASSERT_EQ(field1Value, std::string(bufField1));
 }
@@ -248,4 +245,4 @@ TEST_F(cta_rdbms_wrapper_OcciColumnTest, setFieldValue_tooLong) {
   ASSERT_THROW(col.setFieldValue(0, field0Value), exception::Exception);
 }
 
-} // namespace unitTests
+}  // namespace unitTests

@@ -43,7 +43,7 @@
  * https://www.spinics.net/lists/ceph-devel/msg32724.html
  */
 
-int main (void) {
+int main(void) {
   {
     cta::threading::Mutex m;
     cta::threading::MutexLocker ml(m);

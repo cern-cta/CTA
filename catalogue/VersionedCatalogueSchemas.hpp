@@ -37,4 +37,4 @@ struct PostgresVersionedCatalogueSchema : public CatalogueSchema {
   explicit PostgresVersionedCatalogueSchema(const std::string& catalogueVersion);
 };
 
-} // namespace cta::catalogue
+}  // namespace cta::catalogue

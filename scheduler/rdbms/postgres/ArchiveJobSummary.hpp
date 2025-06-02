@@ -77,7 +77,6 @@ struct ArchiveJobSummaryRow {
    * @return result set containing all rows in the table
    */
   static rdbms::Rset selectNewJobs(Transaction& txn) {
-
     const char* const sql = R"SQL(
       SELECT 
         STATUS,

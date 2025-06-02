@@ -23,11 +23,12 @@
 
 namespace cta::catalogue {
 
-OracleMediaTypeCatalogue::OracleMediaTypeCatalogue(log::Logger &log,
-  std::shared_ptr<rdbms::ConnPool> connPool, RdbmsCatalogue* rdbmsCatalogue)
-  : RdbmsMediaTypeCatalogue(log, connPool, rdbmsCatalogue) {}
+OracleMediaTypeCatalogue::OracleMediaTypeCatalogue(log::Logger& log,
+                                                   std::shared_ptr<rdbms::ConnPool> connPool,
+                                                   RdbmsCatalogue* rdbmsCatalogue)
+    : RdbmsMediaTypeCatalogue(log, connPool, rdbmsCatalogue) {}
 
-uint64_t OracleMediaTypeCatalogue::getNextMediaTypeId(rdbms::Conn &conn) const {
+uint64_t OracleMediaTypeCatalogue::getNextMediaTypeId(rdbms::Conn& conn) const {
   const char* const sql = R"SQL(
     SELECT 
       MEDIA_TYPE_ID_SEQ.NEXTVAL AS MEDIA_TYPE_ID 
@@ -43,4 +44,4 @@ uint64_t OracleMediaTypeCatalogue::getNextMediaTypeId(rdbms::Conn &conn) const {
   return rset.columnUint64("MEDIA_TYPE_ID");
 }
 
-} // namespace cta::catalogue
+}  // namespace cta::catalogue

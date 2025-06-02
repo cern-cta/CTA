@@ -34,12 +34,12 @@
 
 namespace cta::tape::daemon {
 
-TapeDaemon::TapeDaemon(const cta::daemon::CommandLineParams & commandLine,
-    log::Logger& log,
-    const common::TapedConfiguration& globalConfig):
-    cta::server::Daemon(log),
-    m_globalConfiguration(globalConfig),
-    m_hostName(getHostName()) {
+TapeDaemon::TapeDaemon(const cta::daemon::CommandLineParams& commandLine,
+                       log::Logger& log,
+                       const common::TapedConfiguration& globalConfig)
+    : cta::server::Daemon(log),
+      m_globalConfiguration(globalConfig),
+      m_hostName(getHostName()) {
   setCommandLineHasBeenParsed(commandLine.foreground);
 }
 
@@ -53,12 +53,16 @@ TapeDaemon::~TapeDaemon() {
 int TapeDaemon::main() {
   try {
     exceptionThrowingMain();
-  } catch (cta::exception::NoSuchObject &ex) {
+  } catch (cta::exception::NoSuchObject& ex) {
     m_log(log::ERR, "Aborting cta-taped. Not starting because: " + ex.getMessage().str());
     return EXIT_FAILURE;
-  } catch (cta::exception::Exception &ex) {
+  } catch (cta::exception::Exception& ex) {
     // Log the error
-    m_log(log::ERR, "Aborting cta-taped on uncaught exception. Stack trace follows.", {{"exceptionMessage", ex.getMessage().str()}});
+    m_log(log::ERR,
+          "Aborting cta-taped on uncaught exception. Stack trace follows.",
+          {
+            {"exceptionMessage", ex.getMessage().str()}
+    });
     log::LogContext lc(m_log);
     lc.logBacktrace(log::INFO, ex.backtrace());
     return EXIT_FAILURE;
@@ -71,15 +75,16 @@ int TapeDaemon::main() {
 //------------------------------------------------------------------------------
 std::string cta::tape::daemon::TapeDaemon::getHostName() const {
   char nameBuf[HOST_NAME_MAX + 1];
-  if(gethostname(nameBuf, sizeof(nameBuf)))
+  if (gethostname(nameBuf, sizeof(nameBuf))) {
     throw cta::exception::Errnum("Failed to get host name");
+  }
   return nameBuf;
 }
 
 //------------------------------------------------------------------------------
 // exceptionThrowingMain
 //------------------------------------------------------------------------------
-void  cta::tape::daemon::TapeDaemon::exceptionThrowingMain()  {
+void cta::tape::daemon::TapeDaemon::exceptionThrowingMain() {
   daemonizeIfNotRunInForeground();
   setDumpable();
 
@@ -99,24 +104,24 @@ void cta::tape::daemon::TapeDaemon::mainEventLoop() {
   auto sh = std::make_unique<SignalHandler>(pm);
   pm.addHandler(std::move(sh));
   // Create the drive handler
-  const DriveConfigEntry dce{m_globalConfiguration.driveName.value(),
-                             m_globalConfiguration.driveLogicalLibrary.value(),
-                             m_globalConfiguration.driveDevice.value(),
-                             m_globalConfiguration.driveControlPath.value()};
-  auto dh = std::make_unique<DriveHandler>(m_globalConfiguration,
-                                           dce,
-                                           pm);
+  const DriveConfigEntry dce {m_globalConfiguration.driveName.value(),
+                              m_globalConfiguration.driveLogicalLibrary.value(),
+                              m_globalConfiguration.driveDevice.value(),
+                              m_globalConfiguration.driveControlPath.value()};
+  auto dh = std::make_unique<DriveHandler>(m_globalConfiguration, dce, pm);
   pm.addHandler(std::move(dh));
 
   // Create the garbage collector
-  if(!isMaintenanceProcessDisabled()){
+  if (!isMaintenanceProcessDisabled()) {
     auto gc = std::make_unique<MaintenanceHandler>(m_globalConfiguration, pm);
     pm.addHandler(std::move(gc));
   } else {
-    lc.log(log::INFO,"In TapeDaemon::mainEventLoop, the Maintenance process is disabled from the configuration. Will not run it.");
+    lc.log(
+      log::INFO,
+      "In TapeDaemon::mainEventLoop, the Maintenance process is disabled from the configuration. Will not run it.");
   }
   // And run the process manager
-  int ret=pm.run();
+  int ret = pm.run();
   {
     log::ScopedParamContainer param(lc);
     param.add("returnValue", ret);
@@ -131,18 +136,17 @@ void cta::tape::daemon::TapeDaemon::mainEventLoop() {
 void cta::tape::daemon::TapeDaemon::setDumpable() {
   cta::utils::setDumpableProcessAttribute(true);
   const bool dumpable = cta::utils::getDumpableProcessAttribute();
-  std::list<cta::log::Param> params = {
-    cta::log::Param("dumpable", dumpable ? "true" : "false")};
+  std::list<cta::log::Param> params = {cta::log::Param("dumpable", dumpable ? "true" : "false")};
   m_log(log::INFO, "Got dumpable attribute of process", params);
-  if(!dumpable) {
+  if (!dumpable) {
     cta::exception::Exception ex;
     ex.getMessage() << "Failed to set dumpable attribute of process to true";
     throw ex;
   }
 }
 
-bool cta::tape::daemon::TapeDaemon::isMaintenanceProcessDisabled() const{
+bool cta::tape::daemon::TapeDaemon::isMaintenanceProcessDisabled() const {
   return m_globalConfiguration.useMaintenanceProcess.value() == "no";
 }
 
-} // namespace cta::tape::daemon
+}  // namespace cta::tape::daemon

@@ -20,7 +20,6 @@
 #include "RAOAlgorithm.hpp"
 #include "NonConfigurableRAOAlgorithmFactory.hpp"
 
-
 namespace castor::tape::tapeserver::rao {
 
 /**
@@ -38,9 +37,9 @@ public:
    * @param jobs the jobs to perform the linear RAO query
    * @return the indexes of the jobs ordered by fseq ascendant
    */
-  std::vector<uint64_t> performRAO(const std::vector<std::unique_ptr<cta::RetrieveJob> >& jobs) override;
-  
+  std::vector<uint64_t> performRAO(const std::vector<std::unique_ptr<cta::RetrieveJob>>& jobs) override;
+
   std::string getName() const override;
 };
 
-} // namespace castor::tape::tapeserver::rao
+}  // namespace castor::tape::tapeserver::rao

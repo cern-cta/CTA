@@ -30,19 +30,20 @@
 
 namespace cta::frontend::grpc {
 
-Status
-CtaRpcImpl::ProcessGrpcRequest(const cta::xrd::Request* request, cta::xrd::Response* response, cta::log::LogContext &lc) const {
-
+Status CtaRpcImpl::ProcessGrpcRequest(const cta::xrd::Request* request,
+                                      cta::xrd::Response* response,
+                                      cta::log::LogContext& lc) const {
   try {
-    cta::common::dataStructures::SecurityIdentity clientIdentity(request->notification().wf().instance().name(), cta::utils::getShortHostname());
+    cta::common::dataStructures::SecurityIdentity clientIdentity(request->notification().wf().instance().name(),
+                                                                 cta::utils::getShortHostname());
     cta::frontend::WorkflowEvent wfe(*m_frontendService, clientIdentity, request->notification());
     *response = wfe.process();
-  } catch (cta::exception::PbException &ex) {
+  } catch (cta::exception::PbException& ex) {
     lc.log(cta::log::ERR, ex.getMessageValue());
     response->set_type(cta::xrd::Response::RSP_ERR_PROTOBUF);
     response->set_message_txt(ex.getMessageValue());
     return ::grpc::Status(::grpc::StatusCode::INVALID_ARGUMENT, ex.getMessageValue());
-  } catch (cta::exception::UserError &ex) {
+  } catch (cta::exception::UserError& ex) {
     lc.log(cta::log::ERR, ex.getMessageValue());
     response->set_type(cta::xrd::Response::RSP_ERR_USER);
     response->set_message_txt(ex.getMessageValue());
@@ -51,12 +52,12 @@ CtaRpcImpl::ProcessGrpcRequest(const cta::xrd::Request* request, cta::xrd::Respo
      * which is why we return ABORTED
      */
     return ::grpc::Status(::grpc::StatusCode::ABORTED, ex.getMessageValue());
-  } catch (cta::exception::Exception &ex) {
+  } catch (cta::exception::Exception& ex) {
     lc.log(cta::log::ERR, ex.getMessageValue());
     response->set_type(cta::xrd::Response::RSP_ERR_CTA);
     response->set_message_txt(ex.getMessageValue());
     return ::grpc::Status(::grpc::StatusCode::FAILED_PRECONDITION, ex.getMessageValue());
-  } catch (std::runtime_error &ex) {
+  } catch (std::runtime_error& ex) {
     lc.log(cta::log::ERR, ex.what());
     response->set_type(cta::xrd::Response::RSP_ERR_CTA);
     response->set_message_txt(ex.what());
@@ -78,8 +79,11 @@ CtaRpcImpl::Create(::grpc::ServerContext* context, const cta::xrd::Request* requ
   // check that the workflow is set appropriately for the create event
   if (auto event = request->notification().wf().event(); event != cta::eos::Workflow::CREATE) {
     response->set_type(cta::xrd::Response::RSP_ERR_USER);
-    response->set_message_txt("Unexpected workflow event type. Expected CREATE, found " + cta::eos::Workflow_EventType_Name(event));
-    return ::grpc::Status(::grpc::StatusCode::INVALID_ARGUMENT, "Unexpected workflow event type. Expected CREATE, found " + cta::eos::Workflow_EventType_Name(event));
+    response->set_message_txt("Unexpected workflow event type. Expected CREATE, found " +
+                              cta::eos::Workflow_EventType_Name(event));
+    return ::grpc::Status(::grpc::StatusCode::INVALID_ARGUMENT,
+                          "Unexpected workflow event type. Expected CREATE, found " +
+                            cta::eos::Workflow_EventType_Name(event));
   }
   return ProcessGrpcRequest(request, response, lc);
 }
@@ -101,8 +105,11 @@ CtaRpcImpl::Archive(::grpc::ServerContext* context, const cta::xrd::Request* req
 
   if (auto event = request->notification().wf().event(); event != cta::eos::Workflow::CLOSEW) {
     response->set_type(cta::xrd::Response::RSP_ERR_USER);
-    response->set_message_txt("Unexpected workflow event type. Expected CLOSEW, found " + cta::eos::Workflow_EventType_Name(event));
-    return ::grpc::Status(::grpc::StatusCode::INVALID_ARGUMENT, "Unexpected workflow event type. Expected CLOSEW, found " + cta::eos::Workflow_EventType_Name(event));
+    response->set_message_txt("Unexpected workflow event type. Expected CLOSEW, found " +
+                              cta::eos::Workflow_EventType_Name(event));
+    return ::grpc::Status(::grpc::StatusCode::INVALID_ARGUMENT,
+                          "Unexpected workflow event type. Expected CLOSEW, found " +
+                            cta::eos::Workflow_EventType_Name(event));
   }
 
   return ProcessGrpcRequest(request, response, lc);
@@ -119,8 +126,11 @@ CtaRpcImpl::Delete(::grpc::ServerContext* context, const cta::xrd::Request* requ
   // check validate request args
   if (auto event = request->notification().wf().event(); event != cta::eos::Workflow::DELETE) {
     response->set_type(cta::xrd::Response::RSP_ERR_USER);
-    response->set_message_txt("Unexpected workflow event type. Expected DELETE, found " + cta::eos::Workflow_EventType_Name(event));
-    return ::grpc::Status(::grpc::StatusCode::INVALID_ARGUMENT, "Unexpected workflow event type. Expected DELETE, found " + cta::eos::Workflow_EventType_Name(event));
+    response->set_message_txt("Unexpected workflow event type. Expected DELETE, found " +
+                              cta::eos::Workflow_EventType_Name(event));
+    return ::grpc::Status(::grpc::StatusCode::INVALID_ARGUMENT,
+                          "Unexpected workflow event type. Expected DELETE, found " +
+                            cta::eos::Workflow_EventType_Name(event));
   }
 
   if (request->notification().file().archive_file_id() == 0) {
@@ -144,8 +154,11 @@ CtaRpcImpl::Retrieve(::grpc::ServerContext* context, const cta::xrd::Request* re
 
   if (auto event = request->notification().wf().event(); event != cta::eos::Workflow::PREPARE) {
     response->set_type(cta::xrd::Response::RSP_ERR_USER);
-    response->set_message_txt("Unexpected workflow event type. Expected PREPARE, found " + cta::eos::Workflow_EventType_Name(event));
-    return ::grpc::Status(::grpc::StatusCode::INVALID_ARGUMENT, "Unexpected workflow event type. Expected PREPARE, found " + cta::eos::Workflow_EventType_Name(event));
+    response->set_message_txt("Unexpected workflow event type. Expected PREPARE, found " +
+                              cta::eos::Workflow_EventType_Name(event));
+    return ::grpc::Status(::grpc::StatusCode::INVALID_ARGUMENT,
+                          "Unexpected workflow event type. Expected PREPARE, found " +
+                            cta::eos::Workflow_EventType_Name(event));
   }
 
   const std::string storageClass = request->notification().file().storage_class();
@@ -189,8 +202,11 @@ Status CtaRpcImpl::CancelRetrieve(::grpc::ServerContext* context,
   // check validate request args
   if (auto event = request->notification().wf().event(); event != cta::eos::Workflow::ABORT_PREPARE) {
     response->set_type(cta::xrd::Response::RSP_ERR_USER);
-    response->set_message_txt("Unexpected workflow event type. Expected ABORT_PREPARE, found " + cta::eos::Workflow_EventType_Name(event));
-    return ::grpc::Status(::grpc::StatusCode::INVALID_ARGUMENT, "Unexpected workflow event type. Expected ABORT_PREPARE, found " + cta::eos::Workflow_EventType_Name(event));
+    response->set_message_txt("Unexpected workflow event type. Expected ABORT_PREPARE, found " +
+                              cta::eos::Workflow_EventType_Name(event));
+    return ::grpc::Status(::grpc::StatusCode::INVALID_ARGUMENT,
+                          "Unexpected workflow event type. Expected ABORT_PREPARE, found " +
+                            cta::eos::Workflow_EventType_Name(event));
   }
 
   if (!request->notification().file().archive_file_id()) {
@@ -219,4 +235,4 @@ Status CtaRpcImpl::CancelRetrieve(::grpc::ServerContext* context,
 CtaRpcImpl::CtaRpcImpl(const std::string& config)
     : m_frontendService(std::make_unique<cta::frontend::FrontendService>(config)) {}
 
-} // namespace cta::frontend::grpc
+}  // namespace cta::frontend::grpc

@@ -23,8 +23,9 @@ namespace castor::tape::tapeserver::daemon {
 //------------------------------------------------------------------------------
 // Constructor
 //------------------------------------------------------------------------------
-RecallMemoryManager::RecallMemoryManager(size_t numberOfBlocks, size_t blockSize, cta::log::LogContext& lc) :
-  m_totalNumberOfBlocks(numberOfBlocks), m_lc(lc) {
+RecallMemoryManager::RecallMemoryManager(size_t numberOfBlocks, size_t blockSize, cta::log::LogContext& lc)
+    : m_totalNumberOfBlocks(numberOfBlocks),
+      m_lc(lc) {
   for (size_t i = 0; i < numberOfBlocks; i++) {
     m_freeBlocks.push(new MemBlock(i, blockSize));
 
@@ -32,9 +33,7 @@ RecallMemoryManager::RecallMemoryManager(size_t numberOfBlocks, size_t blockSize
     //m_lc.log(cta::log::DEBUG, "RecallMemoryManager created a block");
   }
   cta::log::ScopedParamContainer params(m_lc);
-  params.add("blockCount", numberOfBlocks)
-        .add("blockSize", blockSize)
-        .add("totalSize", numberOfBlocks*blockSize);
+  params.add("blockCount", numberOfBlocks).add("blockSize", blockSize).add("totalSize", numberOfBlocks * blockSize);
   m_lc.log(cta::log::INFO, "RecallMemoryManager: all blocks have been created");
 }
 
@@ -72,9 +71,8 @@ MemBlock* RecallMemoryManager::getFreeBlock() {
   // When delivering a fresh block to the user, it should be empty.
   if (ret->m_payload.size()) {
     m_freeBlocks.push(ret);
-    throw cta::exception::Exception(
-      "Internal error: RecallMemoryManager::getFreeBlock "
-      "popped a non-empty memory block");
+    throw cta::exception::Exception("Internal error: RecallMemoryManager::getFreeBlock "
+                                    "popped a non-empty memory block");
   }
   return ret;
 }
@@ -89,4 +87,4 @@ void RecallMemoryManager::releaseBlock(MemBlock* mb) {
   m_freeBlocks.push(mb);
 }
 
-} // namespace castor::tape::tapeserver::daemon
+}  // namespace castor::tape::tapeserver::daemon

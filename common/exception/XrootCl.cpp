@@ -23,19 +23,17 @@
 namespace cta::exception {
 
 XrootCl::XrootCl(const XrdCl::XRootDStatus& status, std::string_view what) {
-  if(!what.empty()) {
+  if (!what.empty()) {
     getMessage() << what << " ";
   }
   getMessage() << status.ToStr().c_str();
-  getMessage() << " code:"   << status.code
-               << " errNo:"  << status.errNo
-               << " status:" << status.status;
+  getMessage() << " code:" << status.code << " errNo:" << status.errNo << " status:" << status.status;
 }
 
 void XrootCl::throwOnError(const XrdCl::XRootDStatus& status, std::string_view context) {
-  if(!status.IsOK()) {
+  if (!status.IsOK()) {
     throw XrootCl(status, context);
   }
 }
 
-} // namespace cta::exception
+}  // namespace cta::exception

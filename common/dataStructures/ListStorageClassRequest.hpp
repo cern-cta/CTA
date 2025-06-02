@@ -31,12 +31,12 @@ namespace cta::common::dataStructures {
  */
 struct ListStorageClassRequest {
   ListStorageClassRequest() = default;
-  bool operator==(const ListStorageClassRequest &rhs) const;
-  bool operator!=(const ListStorageClassRequest &rhs) const;
+  bool operator==(const ListStorageClassRequest& rhs) const;
+  bool operator!=(const ListStorageClassRequest& rhs) const;
 
   RequesterIdentity requester;
 };
 
-std::ostream &operator<<(std::ostream &os, const ListStorageClassRequest &obj);
+std::ostream& operator<<(std::ostream& os, const ListStorageClassRequest& obj);
 
-} // namespace cta::common::dataStructures
+}  // namespace cta::common::dataStructures

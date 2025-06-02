@@ -24,28 +24,19 @@ namespace cta::mediachanger {
 //------------------------------------------------------------------------------
 // constructor
 //------------------------------------------------------------------------------
-RmcMountMsgBody::RmcMountMsgBody():
-  uid(0),
-  gid(0),
-  side(0),
-  drvOrd(0) {
+RmcMountMsgBody::RmcMountMsgBody() : uid(0), gid(0), side(0), drvOrd(0) {
   memset(unusedLoader, '\0', sizeof(unusedLoader));
   memset(vid, '\0', sizeof(vid));
 }
 
 uint32_t RmcMountMsgBody::bodyLen() const {
-  const auto vidLen = strnlen(vid, CA_MAXVIDLEN+1);
-  if(*unusedLoader != '\0' || vidLen > CA_MAXVIDLEN) {
+  const auto vidLen = strnlen(vid, CA_MAXVIDLEN + 1);
+  if (*unusedLoader != '\0' || vidLen > CA_MAXVIDLEN) {
     throw exception::Exception("Message body contains improperly-terminated strings");
   }
 
-  auto retval = sizeof(uid) +
-                sizeof(gid) +
-                sizeof(unusedLoader) +
-                vidLen + 1 +
-                sizeof(side) +
-                sizeof(drvOrd);
+  auto retval = sizeof(uid) + sizeof(gid) + sizeof(unusedLoader) + vidLen + 1 + sizeof(side) + sizeof(drvOrd);
   return static_cast<uint32_t>(retval);
 }
 
-} // namespace cta::mediachanger
+}  // namespace cta::mediachanger

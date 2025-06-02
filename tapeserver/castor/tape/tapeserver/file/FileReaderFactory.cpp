@@ -60,4 +60,4 @@ std::unique_ptr<FileReader> FileReaderFactory::create(ReadSession& readSession, 
   return reader;
 }
 
-} // namespace castor::tape::tapeFile
+}  // namespace castor::tape::tapeFile

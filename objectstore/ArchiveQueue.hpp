@@ -33,42 +33,43 @@ namespace cta::objectstore {
 
 class GenericObject;
 
-class ArchiveQueue: public ObjectOps<serializers::ArchiveQueue, serializers::ArchiveQueue_t> {
+class ArchiveQueue : public ObjectOps<serializers::ArchiveQueue, serializers::ArchiveQueue_t> {
   // TODO: rename tapepoolname field to tapepool (including in probuf)
-  
+
 public:
   // Trait to specify the type of jobs associated with this type of queue
   typedef cta::common::dataStructures::ArchiveJob job_t;
 
   // Constructor
   ArchiveQueue(const std::string& address, Backend& os);
-  
+
   // Undefined object constructor
   explicit ArchiveQueue(Backend& os);
-  
+
   // Upgrader form generic object
   explicit ArchiveQueue(GenericObject& go);
 
   // In memory initialiser
   void initialize(const std::string& name);
-  
+
   // Commit with sanity checks (overload from ObjectOps)
   void commit() override;
+
 private:
   // Validates all summaries are in accordance with each other.
   bool checkMapsAndShardsCoherency();
-  
+
   // Rebuild from shards if something goes wrong.
   void rebuild();
-  
+
   // Recompute oldest job creation time
   void recomputeOldestAndYoungestJobCreationTime();
-  
+
 public:
   // Set/get tape pool
-  void setTapePool(const std::string & name);
+  void setTapePool(const std::string& name);
   std::string getTapePool();
-  
+
   // Archive jobs management ===================================================
   struct JobToAdd {
     ArchiveRequest::JobDump job;
@@ -78,41 +79,48 @@ public:
     const cta::common::dataStructures::MountPolicy policy;
     time_t startTime;
   };
+
   /** Add the jobs to the queue. 
    * The lock will be used to mark the shards as locked (the lock is the same for 
    * the main object and the shard, the is no shared access.
    * As we potentially have to create new shard(s), we need access to the agent 
    * reference (to generate a non-colliding object name).
    * We will also log the shard creation (hence the context)
-   */ 
-  void addJobsAndCommit(std::list<JobToAdd> & jobsToAdd, AgentReference & agentReference, log::LogContext & lc);
+   */
+  void addJobsAndCommit(std::list<JobToAdd>& jobsToAdd, AgentReference& agentReference, log::LogContext& lc);
+
   /// This version will check for existence of the job in the queue before
   // returns the count and sizes of actually added jobs (if any).
   struct AdditionSummary {
     uint64_t files = 0;
     uint64_t bytes = 0;
   };
-  AdditionSummary addJobsIfNecessaryAndCommit(std::list<JobToAdd> & jobsToAdd,
-    AgentReference & agentReference, log::LogContext & lc);
-  
+
+  AdditionSummary
+  addJobsIfNecessaryAndCommit(std::list<JobToAdd>& jobsToAdd, AgentReference& agentReference, log::LogContext& lc);
+
   struct JobsSummary {
-    uint64_t jobs{0};
-    uint64_t bytes{0};
-    time_t oldestJobStartTime{0};
-    time_t youngestJobStartTime{0};
-    uint64_t priority{0};
-    uint64_t minArchiveRequestAge{0};
+    uint64_t jobs {0};
+    uint64_t bytes {0};
+    time_t oldestJobStartTime {0};
+    time_t youngestJobStartTime {0};
+    uint64_t priority {0};
+    uint64_t minArchiveRequestAge {0};
     std::map<std::string, uint64_t> mountPolicyCountMap;
   };
+
   JobsSummary getJobsSummary();
-  
-  void removeJobsAndCommit(const std::list<std::string> & jobsToRemove, log::LogContext & lc);
+
+  void removeJobsAndCommit(const std::list<std::string>& jobsToRemove, log::LogContext& lc);
+
   struct JobDump {
     uint64_t size;
     std::string address;
     uint32_t copyNb;
   };
+
   std::list<JobDump> dumpJobs();
+
   struct CandidateJobList {
     uint64_t remainingFilesAfterCandidates = 0;
     uint64_t remainingBytesAfterCandidates = 0;
@@ -120,23 +128,29 @@ public:
     uint64_t candidateBytes = 0;
     std::list<JobDump> candidates;
   };
+
   // The set of archive requests to skip are requests previously identified by the caller as bad,
   // which still should be removed from the queue. They will be disregarded from  listing.
-  CandidateJobList getCandidateList(uint64_t maxBytes, uint64_t maxFiles, std::set<std::string> archiveRequestsToSkip, log::LogContext & lc);
+  CandidateJobList getCandidateList(uint64_t maxBytes,
+                                    uint64_t maxFiles,
+                                    std::set<std::string> archiveRequestsToSkip,
+                                    log::LogContext& lc);
 
   //! Return a summary of the number of jobs and number of bytes in the queue
   CandidateJobList getCandidateSummary();
 
   // Check that the tape pool is empty (of both tapes and jobs)
   bool isEmpty();
- 
+
   CTA_GENERATE_EXCEPTION_CLASS(NotEmpty);
   // Garbage collection
-  void garbageCollect(const std::string &presumedOwner, AgentReference & agentReference, log::LogContext & lc,
-    cta::catalogue::Catalogue & catalogue) override;
-  
+  void garbageCollect(const std::string& presumedOwner,
+                      AgentReference& agentReference,
+                      log::LogContext& lc,
+                      cta::catalogue::Catalogue& catalogue) override;
+
   std::string dump();
-  
+
   // The shard size. From experience, 100k is where we start to see performance difference,
   // but nothing prevents us from using a smaller size.
   // The performance will be roughly flat until the queue size reaches the square of this limit
@@ -145,11 +159,28 @@ public:
   static const uint64_t c_maxShardSize = 25000;
 };
 
-class ArchiveQueueToTransferForUser: public ArchiveQueue { using ArchiveQueue::ArchiveQueue; };
-class ArchiveQueueToReportForUser: public ArchiveQueue { using ArchiveQueue::ArchiveQueue; };
-class ArchiveQueueFailed: public ArchiveQueue { using ArchiveQueue::ArchiveQueue; };
-class ArchiveQueueToTransferForRepack: public ArchiveQueue{ using ArchiveQueue::ArchiveQueue; };
-class ArchiveQueueToReportToRepackForSuccess : public ArchiveQueue{ using ArchiveQueue::ArchiveQueue; };
-class ArchiveQueueToReportToRepackForFailure: public ArchiveQueue{ using ArchiveQueue::ArchiveQueue; };
-  
-} // namespace cta::objectstore
+class ArchiveQueueToTransferForUser : public ArchiveQueue {
+  using ArchiveQueue::ArchiveQueue;
+};
+
+class ArchiveQueueToReportForUser : public ArchiveQueue {
+  using ArchiveQueue::ArchiveQueue;
+};
+
+class ArchiveQueueFailed : public ArchiveQueue {
+  using ArchiveQueue::ArchiveQueue;
+};
+
+class ArchiveQueueToTransferForRepack : public ArchiveQueue {
+  using ArchiveQueue::ArchiveQueue;
+};
+
+class ArchiveQueueToReportToRepackForSuccess : public ArchiveQueue {
+  using ArchiveQueue::ArchiveQueue;
+};
+
+class ArchiveQueueToReportToRepackForFailure : public ArchiveQueue {
+  using ArchiveQueue::ArchiveQueue;
+};
+
+}  // namespace cta::objectstore

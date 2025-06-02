@@ -24,27 +24,23 @@ namespace cta::common::dataStructures {
 //------------------------------------------------------------------------------
 // operator==
 //------------------------------------------------------------------------------
-bool RetrieveJob::operator==(const RetrieveJob &rhs) const {
-  return request==rhs.request
-      && fileSize==rhs.fileSize
-      && tapeCopies==rhs.tapeCopies;
+bool RetrieveJob::operator==(const RetrieveJob& rhs) const {
+  return request == rhs.request && fileSize == rhs.fileSize && tapeCopies == rhs.tapeCopies;
 }
 
 //------------------------------------------------------------------------------
 // operator!=
 //------------------------------------------------------------------------------
-bool RetrieveJob::operator!=(const RetrieveJob &rhs) const {
+bool RetrieveJob::operator!=(const RetrieveJob& rhs) const {
   return !operator==(rhs);
 }
 
 //------------------------------------------------------------------------------
 // operator<<
 //------------------------------------------------------------------------------
-std::ostream &operator<<(std::ostream &os, const RetrieveJob &obj) {
-  os << "(request=" << obj.request
-     << " fileSize=" << obj.fileSize
-     << " tapeFiles=" << obj.tapeCopies << ")";
+std::ostream& operator<<(std::ostream& os, const RetrieveJob& obj) {
+  os << "(request=" << obj.request << " fileSize=" << obj.fileSize << " tapeFiles=" << obj.tapeCopies << ")";
   return os;
 }
 
-} // namespace cta::common::dataStructures
+}  // namespace cta::common::dataStructures

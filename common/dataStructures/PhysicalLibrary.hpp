@@ -48,7 +48,7 @@ struct PhysicalLibrary {
   std::optional<std::string> disabledReason;
 
   PhysicalLibrary() = default;
-}; // struct PhysicalLibrary
+};  // struct PhysicalLibrary
 
 struct UpdatePhysicalLibrary {
   std::string name;
@@ -61,6 +61,6 @@ struct UpdatePhysicalLibrary {
   std::optional<std::string> comment;
   std::optional<bool> isDisabled;
   std::optional<std::string> disabledReason;
-}; // struct PhysicalLibrary
+};  // struct PhysicalLibrary
 
-} // namespace cta::common::dataStructures
+}  // namespace cta::common::dataStructures

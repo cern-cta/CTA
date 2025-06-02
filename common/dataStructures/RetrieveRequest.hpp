@@ -35,12 +35,11 @@ namespace cta::common::dataStructures {
  * This struct holds all the command line parameters of a CTA retrieve command
  */
 struct RetrieveRequest {
-
   RetrieveRequest();
 
-  bool operator==(const RetrieveRequest &rhs) const;
+  bool operator==(const RetrieveRequest& rhs) const;
 
-  bool operator!=(const RetrieveRequest &rhs) const;
+  bool operator!=(const RetrieveRequest& rhs) const;
 
   /**
   * Idempotently append the fileSize to the dstURL
@@ -56,14 +55,15 @@ struct RetrieveRequest {
   std::string errorReportURL;
   DiskFileInfo diskFileInfo;
   EntryLog creationLog;
-  bool isVerifyOnly;    // request to retrieve file from tape but do not write a disk copy
-  std::optional<std::string> vid;    // limit retrieve requests to the specified vid (in the case of dual-copy files)
-  std::optional<std::string> mountPolicy; // limit retrieve requests to a specified mount policy (only used for verification requests)
+  bool isVerifyOnly;               // request to retrieve file from tape but do not write a disk copy
+  std::optional<std::string> vid;  // limit retrieve requests to the specified vid (in the case of dual-copy files)
+  std::optional<std::string>
+    mountPolicy;  // limit retrieve requests to a specified mount policy (only used for verification requests)
   LifecycleTimings lifecycleTimings;
   std::optional<std::string> activity;
 
-}; // struct RetrieveRequest
+};  // struct RetrieveRequest
 
-std::ostream &operator<<(std::ostream &os, const RetrieveRequest &obj);
+std::ostream& operator<<(std::ostream& os, const RetrieveRequest& obj);
 
-} // namespace cta::common::dataStructures
+}  // namespace cta::common::dataStructures

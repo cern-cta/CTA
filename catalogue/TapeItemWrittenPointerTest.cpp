@@ -25,7 +25,6 @@ namespace unitTests {
 
 class cta_catalogue_TapeItemWrittenPointerTest : public ::testing::Test {
 protected:
-
   void SetUp() final {
     // nothing to do
   }
@@ -52,7 +51,7 @@ TEST_F(cta_catalogue_TapeItemWrittenPointerTest, check_set_order_after_set_fseq_
   ASSERT_EQ(2, filesWrittenSet.size());
 
   uint64_t expectedFSeq = 1;
-  for(const auto &event: filesWrittenSet) {
+  for (const auto& event : filesWrittenSet) {
     ASSERT_EQ(expectedFSeq, event->fSeq);
     expectedFSeq++;
   }
@@ -69,11 +68,11 @@ TEST_F(cta_catalogue_TapeItemWrittenPointerTest, DISABLED_check_set_order_after_
   auto file1WrittenPtr = file1WrittenUP.get();
   auto file2WrittenPtr = file2WrittenUP.get();
 
-  auto & file1Written = *file1WrittenUP;
+  auto& file1Written = *file1WrittenUP;
   filesWrittenSet.insert(file1WrittenUP.release());
   file1Written.fSeq = 1;
 
-  auto & file2Written = *file2WrittenUP;
+  auto& file2Written = *file2WrittenUP;
   filesWrittenSet.insert(file2WrittenUP.release());
   file2Written.fSeq = 2;
 
@@ -82,10 +81,10 @@ TEST_F(cta_catalogue_TapeItemWrittenPointerTest, DISABLED_check_set_order_after_
   ASSERT_EQ(2, filesWrittenSet.size());
 
   // Check the set contains the original objects
-  for(const auto &event: filesWrittenSet) {
+  for (const auto& event : filesWrittenSet) {
     ASSERT_TRUE(event.get() == file1WrittenPtr || event.get() == file2WrittenPtr);
 
-    if(event.get() == file1WrittenPtr) {
+    if (event.get() == file1WrittenPtr) {
       ASSERT_EQ(1, event->fSeq);
     } else {
       ASSERT_EQ(2, event->fSeq);
@@ -94,7 +93,7 @@ TEST_F(cta_catalogue_TapeItemWrittenPointerTest, DISABLED_check_set_order_after_
 
   // Check the order of the set
   uint64_t expectedFSeq = 1;
-  for(const auto &event: filesWrittenSet) {
+  for (const auto& event : filesWrittenSet) {
     ASSERT_EQ(expectedFSeq, event->fSeq);
     expectedFSeq++;
   }
@@ -111,10 +110,10 @@ TEST_F(cta_catalogue_TapeItemWrittenPointerTest, check_set_order_after_set_fseq_
   auto file1WrittenPtr = file1WrittenUP.get();
   auto file2WrittenPtr = file2WrittenUP.get();
 
-  auto & file1Written = *file1WrittenUP;
+  auto& file1Written = *file1WrittenUP;
   file1Written.fSeq = 1;
 
-  auto & file2Written = *file2WrittenUP;
+  auto& file2Written = *file2WrittenUP;
   file2Written.fSeq = 2;
 
   filesWrittenSet.insert(file1WrittenUP.release());
@@ -125,10 +124,10 @@ TEST_F(cta_catalogue_TapeItemWrittenPointerTest, check_set_order_after_set_fseq_
   ASSERT_EQ(2, filesWrittenSet.size());
 
   // Check the set contains the original objects
-  for(const auto &event: filesWrittenSet) {
+  for (const auto& event : filesWrittenSet) {
     ASSERT_TRUE(event.get() == file1WrittenPtr || event.get() == file2WrittenPtr);
 
-    if(event.get() == file1WrittenPtr) {
+    if (event.get() == file1WrittenPtr) {
       ASSERT_EQ(1, event->fSeq);
     } else {
       ASSERT_EQ(2, event->fSeq);
@@ -137,10 +136,10 @@ TEST_F(cta_catalogue_TapeItemWrittenPointerTest, check_set_order_after_set_fseq_
 
   // Check the order of the set
   uint64_t expectedFSeq = 1;
-  for(const auto &event: filesWrittenSet) {
+  for (const auto& event : filesWrittenSet) {
     ASSERT_EQ(expectedFSeq, event->fSeq);
     expectedFSeq++;
   }
 }
 
-} // namespace unitTests
+}  // namespace unitTests

@@ -36,7 +36,7 @@
 #include <stdexcept>
 #include <optional>
 
-int main(int argc, char ** argv) {
+int main(int argc, char** argv) {
   try {
     cta::log::StdoutLogger logger(cta::utils::getShortHostname(), "cta-objectstore-create-missing-repack-index");
     cta::log::LogContext lc(logger);
@@ -53,8 +53,8 @@ int main(int argc, char ** argv) {
     // If the backend is a VFS, make sure we don't delete it on exit.
     // If not, nevermind.
     try {
-      dynamic_cast<cta::objectstore::BackendVFS &>(*be).noDeleteOnExit();
-    } catch (std::bad_cast &){}
+      dynamic_cast<cta::objectstore::BackendVFS&>(*be).noDeleteOnExit();
+    } catch (std::bad_cast&) {}
     std::cout << "Object store path: " << be->getParams()->toURL() << std::endl;
     // Open the root entry RW
     std::cout << "Creating AgentReference for the creation of the repack index" << std::endl;
@@ -75,11 +75,11 @@ int main(int argc, char ** argv) {
         std::cout << "Trying to insert repack index" << std::endl;
         std::string repackIndexAddress = re.addOrGetRepackIndexAndCommit(agr);
         std::cout << "Repack index created. Address = " << repackIndexAddress << std::endl;
-        
-      } catch (const cta::objectstore::RootEntry::DriveRegisterNotEmpty &ex ) {
+
+      } catch (const cta::objectstore::RootEntry::DriveRegisterNotEmpty& ex) {
         std::cout << "Could not remove the already existing repack index, errorMsg = " << ex.getMessageValue();
         return 1;
-      } catch(const cta::exception::Exception &e){
+      } catch (const cta::exception::Exception& e) {
         std::cout << "Unable to create repack index: " << e.getMessageValue() << std::endl;
         return 1;
       }
@@ -88,8 +88,7 @@ int main(int argc, char ** argv) {
     std::cerr << "Config file '/etc/cta/cta-objectstore-tools.conf' does not contain the BackendPath entry."
               << std::endl;
   } catch (std::exception& e) {
-    std::cerr << "Failed to create repack index: "
-        << std::endl << e.what() << std::endl;
+    std::cerr << "Failed to create repack index: " << std::endl << e.what() << std::endl;
     return 1;
   }
 }

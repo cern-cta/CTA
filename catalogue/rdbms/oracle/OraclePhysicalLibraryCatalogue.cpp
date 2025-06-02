@@ -23,11 +23,12 @@
 
 namespace cta::catalogue {
 
-OraclePhysicalLibraryCatalogue::OraclePhysicalLibraryCatalogue(log::Logger &log,
-  std::shared_ptr<rdbms::ConnPool> connPool, RdbmsCatalogue* rdbmsCatalogue)
-  : RdbmsPhysicalLibraryCatalogue(log, connPool, rdbmsCatalogue) {}
+OraclePhysicalLibraryCatalogue::OraclePhysicalLibraryCatalogue(log::Logger& log,
+                                                               std::shared_ptr<rdbms::ConnPool> connPool,
+                                                               RdbmsCatalogue* rdbmsCatalogue)
+    : RdbmsPhysicalLibraryCatalogue(log, connPool, rdbmsCatalogue) {}
 
-uint64_t OraclePhysicalLibraryCatalogue::getNextPhysicalLibraryId(rdbms::Conn &conn) const {
+uint64_t OraclePhysicalLibraryCatalogue::getNextPhysicalLibraryId(rdbms::Conn& conn) const {
   const char* const sql = R"SQL(
     SELECT 
       PHYSICAL_LIBRARY_ID_SEQ.NEXTVAL AS PHYSICAL_LIBRARY_ID 
@@ -43,4 +44,4 @@ uint64_t OraclePhysicalLibraryCatalogue::getNextPhysicalLibraryId(rdbms::Conn &c
   return rset.columnUint64("PHYSICAL_LIBRARY_ID");
 }
 
-} // namespace cta::catalogue
+}  // namespace cta::catalogue

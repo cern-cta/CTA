@@ -14,7 +14,7 @@
  *               granted to it by virtue of its status as an Intergovernmental Organization or
  *               submit itself to any jurisdiction.
  */
- 
+
 #pragma once
 
 #include "IHandler.hpp"
@@ -31,7 +31,6 @@ namespace cta::frontend::grpc::server {
 class AsyncServer;
 
 class NegotiationRequestHandler : public request::IHandler {
-
 public:
   NegotiationRequestHandler() = delete;
   NegotiationRequestHandler(cta::log::Logger& log,
@@ -40,22 +39,15 @@ public:
                             const std::string& strKeytab,
                             const std::string& strService);
   ~NegotiationRequestHandler() override;
-  
-  void init() override; // can thorw
-  bool next(const bool bOk) override; // can thorw
+
+  void init() override;                // can thorw
+  bool next(const bool bOk) override;  // can thorw
 
 private:
   const unsigned int CHUNK_SIZE = 4 * 1024;
-  
-  enum class StreamState : unsigned int {
-    NEW = 1,
-    PROCESSING,
-    READ,
-    WRITE,
-    ERROR,
-    FINISH
-  };
-  
+
+  enum class StreamState : unsigned int { NEW = 1, PROCESSING, READ, WRITE, ERROR, FINISH };
+
   cta::log::Logger& m_log;
   cta::frontend::grpc::request::Tag m_tag;
   AsyncServer& m_asyncServer;
@@ -71,8 +63,7 @@ private:
    * client.
    */
   ::grpc::ServerContext m_ctx;
-  
-  
+
   // Request from the client
   cta::xrd::KerberosAuthenticationRequest m_request;
   // Response send back to the client
@@ -82,9 +73,9 @@ private:
     m_rwNegotiation;
   // KRB5 credentials
   void logGSSErrors(const std::string& strContext, OM_uint32 gssCode, int iType);
-  void registerKeytab(const std::string& strKeytab); // can throw
+  void registerKeytab(const std::string& strKeytab);  // can throw
   void releaseName(const std::string& strContext, gss_name_t* pGssName);
-  void acquireCreds(const std::string& strService, gss_OID mech, gss_cred_id_t *pGssServerCreds); // can throw
+  void acquireCreds(const std::string& strService, gss_OID mech, gss_cred_id_t* pGssServerCreds);  // can throw
 };
 
-} // namespace cta::frontend::grpc::server
+}  // namespace cta::frontend::grpc::server

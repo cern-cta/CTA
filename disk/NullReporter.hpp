@@ -21,10 +21,11 @@
 
 namespace cta::disk {
 
-class NullReporter: public DiskReporter {
+class NullReporter : public DiskReporter {
 public:
   NullReporter() { m_promise.set_value(); };
+
   void asyncReport() override {};
 };
 
-} // namespace cta::disk
+}  // namespace cta::disk

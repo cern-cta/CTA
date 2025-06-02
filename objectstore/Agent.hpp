@@ -39,11 +39,12 @@ class Sorter;
  * It handles (in the base class):
  */
 
-class Agent: public ObjectOps<serializers::Agent, serializers::Agent_t> {
+class Agent : public ObjectOps<serializers::Agent, serializers::Agent_t> {
   friend class AgentReference;
   friend class GarbageCollector;
   friend class AgentWrapper;
   friend class Sorter;
+
 public:
   CTA_GENERATE_EXCEPTION_CLASS(AgentStillOwnsObjects);
   explicit Agent(GenericObject& go);
@@ -51,9 +52,9 @@ public:
 
   void initialize() override;
 
-  void insertAndRegisterSelf(log::LogContext & lc);
+  void insertAndRegisterSelf(log::LogContext& lc);
 
-  void removeAndUnregisterSelf(log::LogContext & lc);
+  void removeAndUnregisterSelf(log::LogContext& lc);
 
   bool isEmpty();
 
@@ -65,13 +66,15 @@ public:
 
   bool needsGarbageCollection();
 
-  void garbageCollect(const std::string &presumedOwner, AgentReference & agentReference, log::LogContext & lc,
-    cta::catalogue::Catalogue & catalogue) override;
+  void garbageCollect(const std::string& presumedOwner,
+                      AgentReference& agentReference,
+                      log::LogContext& lc,
+                      cta::catalogue::Catalogue& catalogue) override;
 
 private:
   void addToOwnership(const std::string& name);
 
-  void removeFromOwnership(const std::string &name);
+  void removeFromOwnership(const std::string& name);
 
 public:
   std::list<std::string> getOwnershipList();
@@ -93,6 +96,7 @@ public:
 
   // We set the timeout as an integer number of us.
   void setTimeout_us(uint64_t timeout);
+
   /**
    * Helper function to transfer ownership of the next valid head object of a
    * container to the agent.
@@ -100,11 +104,11 @@ public:
    * @param container
    * @param object
    */
-  template <class Cont, class Obj>
-  void popFromContainer (Cont & container, Obj & object, ScopedExclusiveLock & objLock) {
+  template<class Cont, class Obj>
+  void popFromContainer(Cont& container, Obj& object, ScopedExclusiveLock& objLock) {
     // Lock the container for write first.
     ScopedExclusiveLock contLock(container);
-    while(true) {
+    while (true) {
       // Check there is an object to pop.
       // This throws an exception if nothing's available, we just let it through
       std::string nextObjName = container.peek();
@@ -153,4 +157,4 @@ private:
   uint64_t m_nextId;
 };
 
-} // namespace cta::objectstore
+}  // namespace cta::objectstore

@@ -27,7 +27,6 @@ namespace cta::rdbms::wrapper {
  */
 class Sqlite {
 public:
-
   /**
    * Returns the string representation of the specified SQLite return code.
    *
@@ -36,6 +35,6 @@ public:
    */
   static std::string rcToStr(const int rc);
 
-}; // class SqlLiteStmt
+};  // class SqlLiteStmt
 
-} // namespace cta::rdbms::wrapper
+}  // namespace cta::rdbms::wrapper

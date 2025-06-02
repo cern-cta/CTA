@@ -25,12 +25,9 @@ namespace unitTests {
 
 class cta_log_LoggerTest : public ::testing::Test {
 protected:
+  void SetUp() {}
 
-  void SetUp() {
-  }
-
-  void TearDown() {
-  }
+  void TearDown() {}
 };  // cta_log_ParamTest
 
 // Tests for floating point formatting.

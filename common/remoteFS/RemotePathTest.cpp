@@ -27,11 +27,9 @@ namespace unitTests {
 
 class cta_RemotePathTest : public ::testing::Test {
 protected:
-  virtual void SetUp() {
-  }
+  virtual void SetUp() {}
 
-  virtual void TearDown() {
-  }
+  virtual void TearDown() {}
 };
 
 TEST_F(cta_RemotePathTest, default_constructor) {
@@ -87,4 +85,4 @@ TEST_F(cta_RemotePathTest, raw_path_constructor_nothing_after_scheme) {
   ASSERT_THROW(remotePath = RemotePath("xroot:"), std::exception);
 }
 
-} // namespace unitTests
+}  // namespace unitTests

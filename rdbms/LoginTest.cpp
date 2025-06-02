@@ -25,12 +25,9 @@ namespace unitTests {
 
 class cta_rdbms_LoginTest : public ::testing::Test {
 protected:
+  virtual void SetUp() {}
 
-  virtual void SetUp() {
-  }
-
-  virtual void TearDown() {
-  }
+  virtual void TearDown() {}
 };
 
 TEST_F(cta_rdbms_LoginTest, default_constructor) {
@@ -297,7 +294,7 @@ TEST_F(cta_rdbms_LoginTest, parseStringConnectionString_InMemory) {
 
   Login login = Login::parseInMemory(connectionDetails);
 
-  ASSERT_EQ(expectedConnectionString,login.connectionString);
+  ASSERT_EQ(expectedConnectionString, login.connectionString);
 }
 
 TEST_F(cta_rdbms_LoginTest, parseStringConnectionString_Sqlite) {
@@ -305,11 +302,11 @@ TEST_F(cta_rdbms_LoginTest, parseStringConnectionString_Sqlite) {
   using namespace cta::rdbms;
 
   std::string connectionDetails = "filename";
-  std::string expectedConnectionString = Login::DbTypeAndConnectionDetails::sqlite+":"+connectionDetails;
+  std::string expectedConnectionString = Login::DbTypeAndConnectionDetails::sqlite + ":" + connectionDetails;
 
   Login login = Login::parseSqlite(connectionDetails);
 
-  ASSERT_EQ(expectedConnectionString,login.connectionString);
+  ASSERT_EQ(expectedConnectionString, login.connectionString);
 }
 
 TEST_F(cta_rdbms_LoginTest, parseStringConnectionString_Oracle) {
@@ -318,10 +315,11 @@ TEST_F(cta_rdbms_LoginTest, parseStringConnectionString_Oracle) {
   std::string username = "username";
   std::string database = "database";
   std::string connectionDetails = "username/password@database";
-  std::string expectedConnectionString = Login::DbTypeAndConnectionDetails::oracle+":"+username+"/"+Login::s_hiddenPassword+"@" + database;
+  std::string expectedConnectionString =
+    Login::DbTypeAndConnectionDetails::oracle + ":" + username + "/" + Login::s_hiddenPassword + "@" + database;
 
   Login login = Login::parseOracle(connectionDetails);
-  ASSERT_EQ(expectedConnectionString,login.connectionString);
+  ASSERT_EQ(expectedConnectionString, login.connectionString);
 }
 
 TEST_F(cta_rdbms_LoginTest, parseStringConnectionString_Postgresql) {
@@ -334,33 +332,35 @@ TEST_F(cta_rdbms_LoginTest, parseStringConnectionString_Postgresql) {
   std::string database = "cta";
   std::string port = "666";
 
-  std::string connectionString = Login::DbTypeAndConnectionDetails::postgresql+"://"+username+":"+password+"@"+host+"/"+database;
-  std::string expectedConnectionString = Login::DbTypeAndConnectionDetails::postgresql + ":postgresql://" + username + ":" + Login::s_hiddenPassword + "@" + host+ "/" + database;
+  std::string connectionString =
+    Login::DbTypeAndConnectionDetails::postgresql + "://" + username + ":" + password + "@" + host + "/" + database;
+  std::string expectedConnectionString = Login::DbTypeAndConnectionDetails::postgresql + ":postgresql://" + username +
+                                         ":" + Login::s_hiddenPassword + "@" + host + "/" + database;
   {
     Login login = Login::parsePostgresql(connectionString);
 
-    ASSERT_EQ(expectedConnectionString,login.connectionString);
+    ASSERT_EQ(expectedConnectionString, login.connectionString);
   }
 
-  connectionString = Login::DbTypeAndConnectionDetails::postgresql+"://"+username+"@"+host+"/"+database;
-  expectedConnectionString = Login::DbTypeAndConnectionDetails::postgresql+":"+connectionString;
+  connectionString = Login::DbTypeAndConnectionDetails::postgresql + "://" + username + "@" + host + "/" + database;
+  expectedConnectionString = Login::DbTypeAndConnectionDetails::postgresql + ":" + connectionString;
   {
     Login login = Login::parsePostgresql(connectionString);
-    ASSERT_EQ(expectedConnectionString,login.connectionString);
+    ASSERT_EQ(expectedConnectionString, login.connectionString);
   }
 
-  connectionString = Login::DbTypeAndConnectionDetails::postgresql+"://"+host;
-  expectedConnectionString = Login::DbTypeAndConnectionDetails::postgresql+":"+connectionString;
+  connectionString = Login::DbTypeAndConnectionDetails::postgresql + "://" + host;
+  expectedConnectionString = Login::DbTypeAndConnectionDetails::postgresql + ":" + connectionString;
   {
     Login login = Login::parsePostgresql(connectionString);
-    ASSERT_EQ(expectedConnectionString,login.connectionString);
+    ASSERT_EQ(expectedConnectionString, login.connectionString);
   }
 
   connectionString = Login::DbTypeAndConnectionDetails::postgresql + "://" + host + ":" + port;
-  expectedConnectionString = Login::DbTypeAndConnectionDetails::postgresql+":"+connectionString;
+  expectedConnectionString = Login::DbTypeAndConnectionDetails::postgresql + ":" + connectionString;
   {
     Login login = Login::parsePostgresql(connectionString);
-    ASSERT_EQ(expectedConnectionString,login.connectionString);
+    ASSERT_EQ(expectedConnectionString, login.connectionString);
   }
 }
 

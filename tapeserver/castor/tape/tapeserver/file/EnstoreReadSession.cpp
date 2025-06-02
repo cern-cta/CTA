@@ -25,9 +25,10 @@
 
 namespace castor::tape::tapeFile {
 
-EnstoreReadSession::EnstoreReadSession(tapeserver::drive::DriveInterface &drive,
-  const tapeserver::daemon::VolumeInfo &volInfo, const bool useLbp)
-  : ReadSession(drive, volInfo, useLbp) {
+EnstoreReadSession::EnstoreReadSession(tapeserver::drive::DriveInterface& drive,
+                                       const tapeserver::daemon::VolumeInfo& volInfo,
+                                       const bool useLbp)
+    : ReadSession(drive, volInfo, useLbp) {
   m_drive.rewind();
   m_drive.disableLogicalBlockProtection();
   m_detectedLbp = false;
@@ -58,7 +59,6 @@ EnstoreReadSession::EnstoreReadSession(tapeserver::drive::DriveInterface &drive,
   };
   HeaderChecker::checkVOL1(vol1, volInfo.vid);
   // after which we are at the end of VOL1 header (e.g. beginning of first file)
-
 }
 
-} // namespace castor::tape::tapeFile
+}  // namespace castor::tape::tapeFile

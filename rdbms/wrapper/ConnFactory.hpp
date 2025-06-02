@@ -28,7 +28,6 @@ namespace cta::rdbms::wrapper {
  */
 class ConnFactory {
 public:
-
   /**
    * Destructor.
    */
@@ -41,6 +40,6 @@ public:
    */
   virtual std::unique_ptr<ConnWrapper> create() = 0;
 
-}; // class ConnFactory
+};  // class ConnFactory
 
-} // namespace cta::rdbms::wrapper
+}  // namespace cta::rdbms::wrapper

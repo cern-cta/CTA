@@ -40,8 +40,10 @@ namespace cta::tape::daemon {
 //------------------------------------------------------------------------------
 // constructor
 //------------------------------------------------------------------------------
-MaintenanceHandler::MaintenanceHandler(const common::TapedConfiguration& tapedConfig, ProcessManager& pm):
-SubprocessHandler("maintenanceHandler"), m_processManager(pm), m_tapedConfig(tapedConfig) {
+MaintenanceHandler::MaintenanceHandler(const common::TapedConfiguration& tapedConfig, ProcessManager& pm)
+    : SubprocessHandler("maintenanceHandler"),
+      m_processManager(pm),
+      m_tapedConfig(tapedConfig) {
   // As the handler is started, its first duty is to create a new subprocess. This
   // will be managed by the process manager (initial request in getInitialStatus)
 }
@@ -50,7 +52,7 @@ SubprocessHandler("maintenanceHandler"), m_processManager(pm), m_tapedConfig(tap
 // MaintenanceHandler::getInitialStatus
 //------------------------------------------------------------------------------
 SubprocessHandler::ProcessingStatus MaintenanceHandler::getInitialStatus() {
-  m_processingStatus.forkRequested=true;
+  m_processingStatus.forkRequested = true;
   return m_processingStatus;
 }
 
@@ -65,7 +67,6 @@ void MaintenanceHandler::postForkCleanup() {
   m_pid = -1;
 }
 
-
 //------------------------------------------------------------------------------
 // MaintenanceHandler::fork
 //------------------------------------------------------------------------------
@@ -79,7 +80,7 @@ SubprocessHandler::ProcessingStatus MaintenanceHandler::fork() {
     // First prepare a socket pair for this new subprocess
     m_socketPair.reset(new cta::server::SocketPair());
     // and fork
-    m_pid=::fork();
+    m_pid = ::fork();
     exception::Errnum::throwOnMinusOne(m_pid, "In MaintenanceHandler::fork(): failed to fork()");
     if (!m_pid) {
       // We are in the child process
@@ -96,13 +97,14 @@ SubprocessHandler::ProcessingStatus MaintenanceHandler::fork() {
       // We are now ready to react to timeouts and messages from the child process.
       return m_processingStatus;
     }
-  } catch (cta::exception::Exception &) {
+  } catch (cta::exception::Exception&) {
     cta::log::ScopedParamContainer params(m_processManager.logContext());
-    m_processManager.logContext().log(log::ERR, "Failed to fork maintenance process. Initiating shutdown with SIGTERM.");
+    m_processManager.logContext().log(log::ERR,
+                                      "Failed to fork maintenance process. Initiating shutdown with SIGTERM.");
     // Wipe all previous states as we are shutting down
     m_processingStatus = SubprocessHandler::ProcessingStatus();
-    m_processingStatus.shutdownComplete=true;
-    m_processingStatus.forkState=SubprocessHandler::ForkState::parent;
+    m_processingStatus.shutdownComplete = true;
+    m_processingStatus.forkState = SubprocessHandler::ForkState::parent;
     // Initiate shutdown
     ::kill(::getpid(), SIGTERM);
     return m_processingStatus;
@@ -121,7 +123,7 @@ void MaintenanceHandler::kill() {
     // The socket pair will be reopened on the next fork. Clean it up.
     m_socketPair.reset(nullptr);
     try {
-      exception::Errnum::throwOnMinusOne(::kill(m_pid, SIGKILL),"Failed to kill() subprocess");
+      exception::Errnum::throwOnMinusOne(::kill(m_pid, SIGKILL), "Failed to kill() subprocess");
       int status;
       // wait for child process exit
       exception::Errnum::throwOnMinusOne(::waitpid(m_pid, &status, 0), "Failed to waitpid() subprocess");
@@ -133,7 +135,7 @@ void MaintenanceHandler::kill() {
         params.add("WIFSIGNALED", WIFSIGNALED(status));
       }
       m_processManager.logContext().log(log::INFO, "In MaintenanceHandler::kill(): sub process completed");
-    } catch (exception::Exception & ex) {
+    } catch (exception::Exception& ex) {
       params.add("Exception", ex.getMessageValue());
       m_processManager.logContext().log(log::ERR, "In MaintenanceHandler::kill(): failed to kill existing subprocess");
     }
@@ -160,18 +162,21 @@ SubprocessHandler::ProcessingStatus MaintenanceHandler::processSigChild() {
   // be picked up) and -1 if the process is entirely gone.
   // Of course we might not have a child process to begin with.
   log::ScopedParamContainer params(m_processManager.logContext());
-  if (-1 == m_pid) return m_processingStatus;
+  if (-1 == m_pid) {
+    return m_processingStatus;
+  }
   int processStatus;
-  int rc=::waitpid(m_pid, &processStatus, WNOHANG);
+  int rc = ::waitpid(m_pid, &processStatus, WNOHANG);
   // Check there was no error.
   try {
     exception::Errnum::throwOnMinusOne(rc);
-  } catch (exception::Exception &ex) {
+  } catch (exception::Exception& ex) {
     cta::log::ScopedParamContainer exParams(m_processManager.logContext());
-    exParams.add("subprocessPid", m_pid)
-          .add("exceptionMessage", ex.getMessageValue());
-    m_processManager.logContext().log(log::WARNING,
-        "In MaintenanceHandler::processSigChild(): failed to get child process exit code. Doing nothing as we are unable to determine if it is still running or not.");
+    exParams.add("subprocessPid", m_pid).add("exceptionMessage", ex.getMessageValue());
+    m_processManager.logContext().log(
+      log::WARNING,
+      "In MaintenanceHandler::processSigChild(): failed to get child process exit code. Doing nothing as we are unable "
+      "to determine if it is still running or not.");
     return m_processingStatus;
   }
   if (rc) {
@@ -188,32 +193,36 @@ SubprocessHandler::ProcessingStatus MaintenanceHandler::processSigChild() {
       // If we are shutting down, we should not request a new session.
       if (!m_shutdownInProgress) {
         m_processManager.logContext().log(log::INFO, "Maintenance subprocess exited. Will spawn a new one.");
-        m_processingStatus.forkRequested=true;
-        m_processingStatus.nextTimeout=m_processingStatus.nextTimeout.max();
+        m_processingStatus.forkRequested = true;
+        m_processingStatus.nextTimeout = m_processingStatus.nextTimeout.max();
       } else {
-        m_processManager.logContext().log(log::INFO, "Maintenance subprocess exited. Will not spawn new one as we are shutting down.");
-        m_processingStatus.forkRequested=false;
-        m_processingStatus.shutdownComplete=true;
-        m_processingStatus.nextTimeout=m_processingStatus.nextTimeout.max();
+        m_processManager.logContext().log(
+          log::INFO,
+          "Maintenance subprocess exited. Will not spawn new one as we are shutting down.");
+        m_processingStatus.forkRequested = false;
+        m_processingStatus.shutdownComplete = true;
+        m_processingStatus.nextTimeout = m_processingStatus.nextTimeout.max();
       }
     } else {
       params.add("IfSignaled", WIFSIGNALED(processStatus))
-            .add("TermSignal", WTERMSIG(processStatus))
-            .add("CoreDump", WCOREDUMP(processStatus));
+        .add("TermSignal", WTERMSIG(processStatus))
+        .add("CoreDump", WCOREDUMP(processStatus));
       // If we are shutting down, we should not request a new session.
       if (!m_shutdownInProgress) {
         m_processManager.logContext().log(log::INFO, "Maintenance subprocess crashed. Will spawn a new one.");
-        m_processingStatus.forkRequested=true;
-        m_processingStatus.nextTimeout=m_processingStatus.nextTimeout.max();
+        m_processingStatus.forkRequested = true;
+        m_processingStatus.nextTimeout = m_processingStatus.nextTimeout.max();
       } else {
-        m_processManager.logContext().log(log::INFO, "Maintenance subprocess crashed. Will not spawn new one as we are shutting down.");
-        m_processingStatus.forkRequested=false;
-        m_processingStatus.shutdownComplete=true;
-        m_processingStatus.nextTimeout=m_processingStatus.nextTimeout.max();
+        m_processManager.logContext().log(
+          log::INFO,
+          "Maintenance subprocess crashed. Will not spawn new one as we are shutting down.");
+        m_processingStatus.forkRequested = false;
+        m_processingStatus.shutdownComplete = true;
+        m_processingStatus.nextTimeout = m_processingStatus.nextTimeout.max();
       }
     }
     // In all cases, we do not have a PID anymore
-    m_pid=-1;
+    m_pid = -1;
   }
   return m_processingStatus;
 }
@@ -241,21 +250,22 @@ SubprocessHandler::ProcessingStatus MaintenanceHandler::refreshLogger() {
 SubprocessHandler::ProcessingStatus MaintenanceHandler::processTimeout() {
   // The only time we expect a timeout is when shutting down
   if (!m_shutdownInProgress) {
-    m_processManager.logContext().log(log::WARNING, "In MaintenanceHandler::processTimeout(): spurious timeout: no shutdown");
+    m_processManager.logContext().log(log::WARNING,
+                                      "In MaintenanceHandler::processTimeout(): spurious timeout: no shutdown");
     return m_processingStatus;
   }
   // We were shutting down and the child process did not exit in time. Killing it.
-  if (-1!=m_pid) {
+  if (-1 != m_pid) {
     m_processManager.logContext().log(log::WARNING,
-        "In MaintenanceHandler::processTimeout(): spurious timeout: no more process");
+                                      "In MaintenanceHandler::processTimeout(): spurious timeout: no more process");
   } else {
     // We will help the exit of the child process by killing it.
     m_processManager.logContext().log(log::WARNING, "In MaintenanceHandler::processTimeout(): will kill subprocess");
     kill();
   }
   // In all cases, the shutdown is complete.
-  m_processingStatus.nextTimeout=m_processingStatus.nextTimeout.max();
-  m_processingStatus.shutdownComplete=true;
+  m_processingStatus.nextTimeout = m_processingStatus.nextTimeout.max();
+  m_processingStatus.shutdownComplete = true;
   return m_processingStatus;
 }
 
@@ -263,15 +273,15 @@ SubprocessHandler::ProcessingStatus MaintenanceHandler::processTimeout() {
 // MaintenanceHandler::runChild
 //------------------------------------------------------------------------------
 int MaintenanceHandler::runChild() noexcept {
-  try{
+  try {
     exceptionThrowingRunChild();
     return EXIT_SUCCESS;
-  } catch (...){
+  } catch (...) {
     return EXIT_FAILURE;
   }
 }
 
-void MaintenanceHandler::exceptionThrowingRunChild(){
+void MaintenanceHandler::exceptionThrowingRunChild() {
   // We are in the child process. It is time to open connections to the catalogue
   // and object store, and run the garbage collector.
   // We do not have to care for previous crashed sessions as we will garbage
@@ -283,7 +293,9 @@ void MaintenanceHandler::exceptionThrowingRunChild(){
   // Before anything, we will check for access to the scheduler's central storage.
   // If we fail to access it, we cannot work. We expect the drive processes to
   // fail likewise, so we just wait for shutdown signal (no feedback to main process).
-  SchedulerDBInit_t sched_db_init("Maintenance", m_tapedConfig.backendPath.value(), m_processManager.logContext().logger());
+  SchedulerDBInit_t sched_db_init("Maintenance",
+                                  m_tapedConfig.backendPath.value(),
+                                  m_processManager.logContext().logger());
 
   std::unique_ptr<cta::SchedulerDB_t> sched_db;
   std::unique_ptr<cta::catalogue::Catalogue> catalogue;
@@ -293,7 +305,9 @@ void MaintenanceHandler::exceptionThrowingRunChild(){
     const uint64_t nbConns = 1;
     const uint64_t nbArchiveFileListingConns = 1;
     auto catalogueFactory = cta::catalogue::CatalogueFactoryFactory::create(m_processManager.logContext().logger(),
-      catalogueLogin, nbConns, nbArchiveFileListingConns);
+                                                                            catalogueLogin,
+                                                                            nbConns,
+                                                                            nbArchiveFileListingConns);
     catalogue = catalogueFactory->create();
     sched_db = sched_db_init.getSchedDB(*catalogue, m_processManager.logContext().logger());
     // Set Scheduler DB cache timeouts
@@ -302,21 +316,27 @@ void MaintenanceHandler::exceptionThrowingRunChild(){
     statisticsCacheConfig.retrieveQueueCacheMaxAgeSecs = m_tapedConfig.retrieveQueueCacheMaxAgeSecs.value();
     sched_db->setStatisticsCacheConfig(statisticsCacheConfig);
     // TODO: we have hardcoded the mount policy parameters here temporarily we will remove them once we know where to put them
-    scheduler = std::make_unique<cta::Scheduler>(*catalogue, *sched_db, m_tapedConfig.schedulerBackendName.value(), 5, 2*1000*1000);
+    scheduler = std::make_unique<cta::Scheduler>(*catalogue,
+                                                 *sched_db,
+                                                 m_tapedConfig.schedulerBackendName.value(),
+                                                 5,
+                                                 2 * 1000 * 1000);
     // Before launching the transfer session, we validate that the scheduler is reachable.
     scheduler->ping(m_processManager.logContext());
-  } catch(cta::exception::Exception &ex) {
+  } catch (cta::exception::Exception& ex) {
     log::ScopedParamContainer exParams(m_processManager.logContext());
     exParams.add("errorMessage", ex.getMessageValue());
-    m_processManager.logContext().log(log::CRIT,
-          "In MaintenanceHandler::exceptionThrowingRunChild(): contact central storage. Waiting for shutdown.");
+    m_processManager.logContext().log(
+      log::CRIT,
+      "In MaintenanceHandler::exceptionThrowingRunChild(): contact central storage. Waiting for shutdown.");
 
     server::SocketPair::pollMap pollList;
-    pollList["0"]=m_socketPair.get();
+    pollList["0"] = m_socketPair.get();
     // Wait forever (negative timeout) for something to come from parent process.
     server::SocketPair::poll(pollList, -1, server::SocketPair::Side::parent);
     m_processManager.logContext().log(log::INFO,
-        "In MaintenanceHandler::exceptionThrowingRunChild(): Received shutdown message after failure to contact storage. Exiting.");
+                                      "In MaintenanceHandler::exceptionThrowingRunChild(): Received shutdown message "
+                                      "after failure to contact storage. Exiting.");
     throw ex;
   }
 
@@ -326,81 +346,97 @@ void MaintenanceHandler::exceptionThrowingRunChild(){
   DiskReportRunner diskReportRunner(*scheduler);
   RepackRequestManager repackRequestManager(*scheduler);
 
-  if(!runRepackRequestManager()){
+  if (!runRepackRequestManager()) {
     m_processManager.logContext().log(log::INFO,
-    "In MaintenanceHandler::exceptionThrowingRunChild(): Repack management is disabled. No repack-related operations will run on this tapeserver.");
+                                      "In MaintenanceHandler::exceptionThrowingRunChild(): Repack management is "
+                                      "disabled. No repack-related operations will run on this tapeserver.");
   }
 
   // Run the maintenance in a loop: queue cleanup, garbage collector and disk reporter
   try {
     server::SocketPair::pollMap pollList;
-    pollList["0"]=m_socketPair.get();
-    bool receivedShutdownMessage=false;
+    pollList["0"] = m_socketPair.get();
+    bool receivedShutdownMessage = false;
     do {
       utils::Timer t, onePass;
-      m_processManager.logContext().log(log::INFO,
-          "In MaintenanceHandler::exceptionThrowingRunChild(): About to do a maintenance pass.");
+      m_processManager.logContext().log(
+        log::INFO,
+        "In MaintenanceHandler::exceptionThrowingRunChild(): About to do a maintenance pass.");
       cleanupRunner.runOnePass(m_processManager.logContext());
       {
         log::ScopedParamContainer params(m_processManager.logContext());
         params.add("passTime", onePass.secs());
-        m_processManager.logContext().log(log::INFO, "In MaintenanceHandler::exceptionThrowingRunChild(): Queue Cleanup run one pass done.");
+        m_processManager.logContext().log(
+          log::INFO,
+          "In MaintenanceHandler::exceptionThrowingRunChild(): Queue Cleanup run one pass done.");
       }
       gc.runOnePass(m_processManager.logContext());
       {
         log::ScopedParamContainer params(m_processManager.logContext());
         params.add("passTime", onePass.secs());
-        m_processManager.logContext().log(log::INFO, "In MaintenanceHandler::exceptionThrowingRunChild(): Garbage Colletor run one pass done.");
+        m_processManager.logContext().log(
+          log::INFO,
+          "In MaintenanceHandler::exceptionThrowingRunChild(): Garbage Colletor run one pass done.");
       }
       diskReportRunner.runOnePass(m_processManager.logContext());
       {
         log::ScopedParamContainer params(m_processManager.logContext());
         params.add("passTime", onePass.secs());
-        m_processManager.logContext().log(log::INFO, "In MaintenanceHandler::exceptionThrowingRunChild(): Disk Report run one pass done.");
+        m_processManager.logContext().log(
+          log::INFO,
+          "In MaintenanceHandler::exceptionThrowingRunChild(): Disk Report run one pass done.");
       }
-      if(runRepackRequestManager()){
+      if (runRepackRequestManager()) {
         repackRequestManager.runOnePass(m_processManager.logContext(), m_tapedConfig.repackMaxRequestsToExpand.value());
         {
           log::ScopedParamContainer params(m_processManager.logContext());
           params.add("passTime", onePass.secs());
-          m_processManager.logContext().log(log::INFO, "In MaintenanceHandler::exceptionThrowingRunChild(): Repack Request manager run one pass done.");
+          m_processManager.logContext().log(
+            log::INFO,
+            "In MaintenanceHandler::exceptionThrowingRunChild(): Repack Request manager run one pass done.");
         }
       }
       try {
-        server::SocketPair::poll(pollList, s_pollInterval - static_cast<long>(t.secs()), server::SocketPair::Side::parent);
+        server::SocketPair::poll(pollList,
+                                 s_pollInterval - static_cast<long>(t.secs()),
+                                 server::SocketPair::Side::parent);
         std::string message = m_socketPair->receive();
         if (message == SHUTDOWN_MSG) {
-          receivedShutdownMessage=true;
+          receivedShutdownMessage = true;
         } else if (message == REFRESH_LOGGER_MSG) {
           m_processManager.logContext().logger().refresh();
         }
-      } catch (server::SocketPair::Timeout &) {
+      } catch (server::SocketPair::Timeout&) {
         // Timing out while waiting for message is not a problem for us
         // as we retry in the next loop iteration.
       }
-      m_processManager.logContext().log(log::DEBUG,
-                                        "In MaintenanceHandler::exceptionThrowingRunChild(): Waiting for a message ended.");
+      m_processManager.logContext().log(
+        log::DEBUG,
+        "In MaintenanceHandler::exceptionThrowingRunChild(): Waiting for a message ended.");
 
     } while (!receivedShutdownMessage);
-    m_processManager.logContext().log(log::INFO,
-        "In MaintenanceHandler::exceptionThrowingRunChild(): Received shutdown message. Exiting.");
-  } catch(cta::exception::Exception & ex) {
+    m_processManager.logContext().log(
+      log::INFO,
+      "In MaintenanceHandler::exceptionThrowingRunChild(): Received shutdown message. Exiting.");
+  } catch (cta::exception::Exception& ex) {
     log::ScopedParamContainer exParams(m_processManager.logContext());
     exParams.add("exceptionMessage", ex.getMessageValue());
-    m_processManager.logContext().log(log::ERR,
-        "In MaintenanceHandler::exceptionThrowingRunChild(): received an exception. Backtrace follows.");
+    m_processManager.logContext().log(
+      log::ERR,
+      "In MaintenanceHandler::exceptionThrowingRunChild(): received an exception. Backtrace follows.");
 
     m_processManager.logContext().logBacktrace(log::INFO, ex.backtrace());
     throw ex;
-  } catch(std::exception &ex) {
+  } catch (std::exception& ex) {
     log::ScopedParamContainer exParams(m_processManager.logContext());
     exParams.add("exceptionMessage", ex.what());
     m_processManager.logContext().log(log::ERR,
-        "In MaintenanceHandler::exceptionThrowingRunChild(): received a std::exception.");
+                                      "In MaintenanceHandler::exceptionThrowingRunChild(): received a std::exception.");
     throw ex;
-  } catch(...) {
-    m_processManager.logContext().log(log::ERR,
-        "In MaintenanceHandler::exceptionThrowingRunChild(): received an unknown exception.");
+  } catch (...) {
+    m_processManager.logContext().log(
+      log::ERR,
+      "In MaintenanceHandler::exceptionThrowingRunChild(): received an unknown exception.");
     throw;
   }
 }
@@ -411,11 +447,12 @@ void MaintenanceHandler::exceptionThrowingRunChild(){
 SubprocessHandler::ProcessingStatus MaintenanceHandler::shutdown() {
   // We will signal the shutdown to the child process by sending a byte over the
   // socket pair (if we have one)
-  m_shutdownInProgress=true;
+  m_shutdownInProgress = true;
   if (!m_socketPair.get()) {
     m_processManager.logContext().log(log::WARNING, "In MaintenanceHandler::shutdown(): no socket pair");
   } else {
-    m_processManager.logContext().log(log::INFO, "In MaintenanceHandler::shutdown(): sent shutdown message to child process");
+    m_processManager.logContext().log(log::INFO,
+                                      "In MaintenanceHandler::shutdown(): sent shutdown message to child process");
     m_socketPair->send(SHUTDOWN_MSG, server::SocketPair::Side::child);
   }
   return m_processingStatus;
@@ -430,7 +467,8 @@ MaintenanceHandler::~MaintenanceHandler() {
     cta::log::ScopedParamContainer params(m_processManager.logContext());
     params.add("subprocessPid", m_pid);
     ::kill(m_pid, SIGKILL);
-    m_processManager.logContext().log(log::WARNING, "In MaintenanceHandler::~MaintenanceHandler(): killed leftover subprocess");
+    m_processManager.logContext().log(log::WARNING,
+                                      "In MaintenanceHandler::~MaintenanceHandler(): killed leftover subprocess");
   }
 }
 
@@ -441,4 +479,4 @@ bool MaintenanceHandler::runRepackRequestManager() const {
   return m_tapedConfig.useRepackManagement.value() == "yes";
 }
 
-} // namespace cta::tape::daemon
+}  // namespace cta::tape::daemon

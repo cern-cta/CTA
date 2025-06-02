@@ -34,7 +34,7 @@
 /* ============== */
 /* System headers */
 /* ============== */
-#include <stdlib.h>         /* For getenv, etc... */
+#include <stdlib.h> /* For getenv, etc... */
 #include <stdio.h>
 #include <string.h>
 
@@ -42,44 +42,43 @@
 /* Local headers */
 /* ============= */
 #include <Cglobals.h>
-#include <Cgetopt.h>        /* Our decls, especially TSD's */
-#include <Castor_limits.h>  /* For CA_MAXLINELEN */
+#include <Cgetopt.h>       /* Our decls, especially TSD's */
+#include <Castor_limits.h> /* For CA_MAXLINELEN */
 
 /* =================== */
 /* Internal prototypes */
 /* =================== */
-static char * _Cgetopt_progname (char *);
-int _Cgetopt_internal (int, char * const *, const char *);
-static char **C__place ();
+static char* _Cgetopt_progname(char*);
+int _Cgetopt_internal(int, char* const*, const char*);
+static char** C__place();
 static int my_place = -1; /* If Cglobals_get error in order not to crash */
 #define place (*C__place())
-static char *my_place_static = "";
+static char* my_place_static = "";
 
-static char * _Cgetopt_progname(char * nargv0)
-{
-  char * tmp = strrchr(nargv0, '/');
-  if (tmp) tmp++; else tmp = nargv0;
-  return(tmp);
+static char* _Cgetopt_progname(char* nargv0) {
+  char* tmp = strrchr(nargv0, '/');
+  if (tmp) {
+    tmp++;
+  } else {
+    tmp = nargv0;
+  }
+  return (tmp);
 }
 
-#define	BADCH	(int)'?'
-#define	BADARG	(int)':'
-#define	EMSG	""
+#define BADCH  (int) '?'
+#define BADARG (int) ':'
+#define EMSG   ""
 
 /*
  * Cgetopt --
  *	Parse argc/argv argument vector.
  */
-int
-_Cgetopt_internal(int nargc,
-                      char * const *nargv,
-                      const char *ostr)
-{
-  char *oli;				/* option letter list index */
-  
+int _Cgetopt_internal(int nargc, char* const* nargv, const char* ostr) {
+  char* oli; /* option letter list index */
+
   if (nargv == NULL) {
     /* Cannot be */
-    return(-1);
+    return (-1);
   }
 
   if (ostr == NULL) {
@@ -87,98 +86,89 @@ _Cgetopt_internal(int nargc,
 
     /* Check if there might be long options */
     for (i = 0; i < nargc; i++) {
-      if (strstr(nargv[i],"--") != NULL) {
-        return(-2);
+      if (strstr(nargv[i], "--") != NULL) {
+        return (-2);
       }
     }
     /* Nope */
-    return(-1);
-
+    return (-1);
   }
 
-  if (Coptreset || !*place) {		/* update scanning pointer */
+  if (Coptreset || !*place) { /* update scanning pointer */
     Coptreset = 0;
     if (Coptind >= nargc || *(place = nargv[Coptind]) != '-') {
       place = EMSG;
       return (-1);
     }
-    if (place[1] && *++place == '-') {	/* found "--" */
+    if (place[1] && *++place == '-') { /* found "--" */
       /* ++Coptind; */
       place = EMSG;
       return (-2);
     }
-  }					/* option letter okay? */
-  if ((Coptopt = (int)*place++) == (int)':' ||
-      !(oli = strchr(ostr, Coptopt))) {
+  } /* option letter okay? */
+  if ((Coptopt = (int) *place++) == (int) ':' || !(oli = strchr(ostr, Coptopt))) {
     /*
      * if the user didn't specify '-' as an option,
      * assume it means -1.
      */
-    if (Coptopt == (int)'-')
+    if (Coptopt == (int) '-') {
       return (-1);
-    if (!*place)
+    }
+    if (!*place) {
       ++Coptind;
-    if (Copterr && *ostr != ':')
-      (void)fprintf(stderr,
-                    "%s: illegal option -- %c\n", _Cgetopt_progname(nargv[0]), Coptopt);
+    }
+    if (Copterr && *ostr != ':') {
+      (void) fprintf(stderr, "%s: illegal option -- %c\n", _Cgetopt_progname(nargv[0]), Coptopt);
+    }
     return (BADCH);
   }
-  if (*++oli != ':') {			/* don't need argument */
+  if (*++oli != ':') { /* don't need argument */
     Coptarg = NULL;
-    if (!*place)
+    if (!*place) {
       ++Coptind;
-  } else {				/* need an argument */
-    if (*place)			/* no white space */
+    }
+  } else {        /* need an argument */
+    if (*place) { /* no white space */
       Coptarg = place;
-    else if (nargc <= ++Coptind) {	/* no arg */
+    } else if (nargc <= ++Coptind) { /* no arg */
       place = EMSG;
-      if ((Copterr) && (*ostr != ':'))
-        (void)fprintf(stderr,
-                      "%s: option requires an argument -- %c\n",
-                      _Cgetopt_progname(nargv[0]), Coptopt);
+      if ((Copterr) && (*ostr != ':')) {
+        (void) fprintf(stderr, "%s: option requires an argument -- %c\n", _Cgetopt_progname(nargv[0]), Coptopt);
+      }
       return (BADARG);
-    } else				/* white space */
+    } else { /* white space */
       Coptarg = nargv[Coptind];
+    }
     place = EMSG;
     ++Coptind;
   }
-  return (Coptopt);			/* dump back option letter */
+  return (Coptopt); /* dump back option letter */
 }
 
 /*
  * Cgetopt --
  *	Parse argc/argv argument vector.
  */
-int 
-Cgetopt(int nargc,
-             char * const *nargv,
-             const char *ostr)
-{
+int Cgetopt(int nargc, char* const* nargv, const char* ostr) {
   int retval;
 
   if ((retval = _Cgetopt_internal(nargc, nargv, ostr)) == -2) {
     retval = -1;
-    ++Coptind; 
+    ++Coptind;
   }
-  return(retval);
+  return (retval);
 }
 
 /*
  * Cgetopt_long --
  *	Parse argc/argv argument vector.
  */
-int
-Cgetopt_long(int nargc,
-                 char **nargv,
-                 const char *options,
-                 Coptions_t *long_options,
-                 int *index)
-{
+int Cgetopt_long(int nargc, char** nargv, const char* options, Coptions_t* long_options, int* index) {
   int retval;
 
   if (options == NULL && long_options == NULL) {
     /* No option at all ? */
-    return(-1);
+    return (-1);
   }
 
   if ((retval = _Cgetopt_internal(nargc, nargv, options)) == -2) {
@@ -188,19 +178,20 @@ Cgetopt_long(int nargc,
     int ambig = 0;
 
     if (*current_argv == '\0') {
-      return(-1);
+      return (-1);
     }
     if ((has_equal = strchr(current_argv, '=')) != NULL) {
       current_argv_len = has_equal - current_argv;
       has_equal++;
-    } else
+    } else {
       current_argv_len = strlen(current_argv);
+    }
 
-    for (i = 0; long_options[i].name; i++) { 
+    for (i = 0; long_options[i].name; i++) {
       if (strncmp(current_argv, long_options[i].name, current_argv_len)) {
         continue;
       }
-      if (strlen(long_options[i].name) == (unsigned)current_argv_len) { 
+      if (strlen(long_options[i].name) == (unsigned) current_argv_len) {
         /* Exact match found */
         match = i;
         exact = 1;
@@ -214,19 +205,18 @@ Cgetopt_long(int nargc,
         ambig = 1;
       }
     }
-    if (ambig && ! exact) {
+    if (ambig && !exact) {
       if (options != NULL) {
-        if ((Copterr) && (*options != ':'))
-          (void)fprintf(stderr,
-                        "%s: option is ambiguous -- %s\n", _Cgetopt_progname(nargv[0]), current_argv);
+        if ((Copterr) && (*options != ':')) {
+          (void) fprintf(stderr, "%s: option is ambiguous -- %s\n", _Cgetopt_progname(nargv[0]), current_argv);
+        }
         return (BADCH);
       } else {
         return (-1);
       }
     }
     if (match != -1) {
-      if (long_options[match].has_arg == REQUIRED_ARGUMENT ||
-          long_options[match].has_arg == OPTIONAL_ARGUMENT) {
+      if (long_options[match].has_arg == REQUIRED_ARGUMENT || long_options[match].has_arg == OPTIONAL_ARGUMENT) {
         if (has_equal) {
           Coptarg = has_equal;
         } else {
@@ -239,17 +229,15 @@ Cgetopt_long(int nargc,
          * indicates no error should be generated
          */
         if ((Copterr) && (*options != ':')) {
-          (void)fprintf(stderr,
-                        "%s: option requires an argument -- %s\n",
-                        _Cgetopt_progname(nargv[0]), current_argv);
+          (void) fprintf(stderr, "%s: option requires an argument -- %s\n", _Cgetopt_progname(nargv[0]), current_argv);
         }
         return (BADARG);
       }
     } else { /* No matching argument */
       if (options != NULL) {
-        if ((Copterr) && (*options != ':'))
-          (void)fprintf(stderr,
-                        "%s: illegal option -- %s\n", _Cgetopt_progname(nargv[0]), current_argv);
+        if ((Copterr) && (*options != ':')) {
+          (void) fprintf(stderr, "%s: illegal option -- %s\n", _Cgetopt_progname(nargv[0]), current_argv);
+        }
         return (BADCH);
       } else {
         return (-1);
@@ -261,38 +249,36 @@ Cgetopt_long(int nargc,
     } else {
       retval = long_options[match].val;
     }
-    if (index != NULL)
+    if (index != NULL) {
       *index = match;
+    }
   }
-  return(retval);
+  return (retval);
 }
 
-static char **C__place() {
-	char **var;
-	/* Call Cglobals_get */
-	if (Cglobals_get(&my_place,
-					 (void **) &var,
-					 sizeof(char *)) > 0) {
-		/* First time : init value is EMSG */
-		/* Reminder: **C_place is used like that: */
-		/* place is (*C__place()), e.g. place is a */
-		/* (char *), but place is always used as */
-		/* pointer to a char, not a real string. */
-		/* In the un-thread-safe version of Cgetopt */
-		/* e;g. prior to revision 1.6, place was */
-		/* declared like that: static char *place = EMSG */
-		/* Since now we are a true variable, we must point */
-		/* to something instead of having that static */
-		/* declaration. It is harmless to use my_place_static */
-		/* as an initializer. The only important thing is that */
-		/* var itself is not the same between threads */
-		*var = my_place_static;
-	}
+static char** C__place() {
+  char** var;
+  /* Call Cglobals_get */
+  if (Cglobals_get(&my_place, (void**) &var, sizeof(char*)) > 0) {
+    /* First time : init value is EMSG */
+    /* Reminder: **C_place is used like that: */
+    /* place is (*C__place()), e.g. place is a */
+    /* (char *), but place is always used as */
+    /* pointer to a char, not a real string. */
+    /* In the un-thread-safe version of Cgetopt */
+    /* e;g. prior to revision 1.6, place was */
+    /* declared like that: static char *place = EMSG */
+    /* Since now we are a true variable, we must point */
+    /* to something instead of having that static */
+    /* declaration. It is harmless to use my_place_static */
+    /* as an initializer. The only important thing is that */
+    /* var itself is not the same between threads */
+    *var = my_place_static;
+  }
 
-	/* If error, var will be NULL */
-	if (var == NULL)
-	{
-		return(&my_place_static);
-	}
-	return(var);
+  /* If error, var will be NULL */
+  if (var == NULL) {
+    return (&my_place_static);
+  }
+  return (var);
 }

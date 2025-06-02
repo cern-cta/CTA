@@ -20,14 +20,12 @@
 
 namespace cta::schedulerdb {
 
-[[noreturn]] RepackReportBatch::RepackReportBatch()
-{
-   throw cta::exception::Exception("Not implemented");
+[[noreturn]] RepackReportBatch::RepackReportBatch() {
+  throw cta::exception::Exception("Not implemented");
 }
 
-void RepackReportBatch::report(log::LogContext & lc)
-{
-   throw cta::exception::Exception("Not implemented");
+void RepackReportBatch::report(log::LogContext& lc) {
+  throw cta::exception::Exception("Not implemented");
 }
 
-} // namespace cta::schedulerdb
+}  // namespace cta::schedulerdb

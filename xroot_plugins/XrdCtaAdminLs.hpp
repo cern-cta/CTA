@@ -27,7 +27,7 @@ namespace cta::xrd {
 /*!
  * Stream object which implements "tapepool ls" command
  */
-class AdminLsStream: public XrdCtaStream{
+class AdminLsStream : public XrdCtaStream {
 public:
   /*!
    * Constructor
@@ -36,44 +36,44 @@ public:
    * @param[in]    catalogue     CTA Catalogue
    * @param[in]    scheduler     CTA Scheduler
    */
-  AdminLsStream(const frontend::AdminCmdStream& requestMsg, cta::catalogue::Catalogue &catalogue, cta::Scheduler &scheduler);
+  AdminLsStream(const frontend::AdminCmdStream& requestMsg,
+                cta::catalogue::Catalogue& catalogue,
+                cta::Scheduler& scheduler);
 
 private:
   /*!
    * Can we close the stream?
    */
-  virtual bool isDone() const {
-    return m_adminList.empty();
-  }
+  virtual bool isDone() const { return m_adminList.empty(); }
 
   /*!
    * Fill the buffer
    */
-  virtual int fillBuffer(XrdSsiPb::OStreamBuffer<Data> *streambuf);
+  virtual int fillBuffer(XrdSsiPb::OStreamBuffer<Data>* streambuf);
 
-  std::list<cta::common::dataStructures::AdminUser> m_adminList;       //!< List of admin users from the catalogue
+  std::list<cta::common::dataStructures::AdminUser> m_adminList;  //!< List of admin users from the catalogue
   const std::string m_instanceName;
 
-  static constexpr const char* const LOG_SUFFIX  = "AdminLsStream";    //!< Identifier for log messages
+  static constexpr const char* const LOG_SUFFIX = "AdminLsStream";  //!< Identifier for log messages
 };
 
-
-AdminLsStream::AdminLsStream(const frontend::AdminCmdStream& requestMsg, cta::catalogue::Catalogue &catalogue, cta::Scheduler &scheduler) :
-  XrdCtaStream(catalogue, scheduler),
-  m_adminList(catalogue.AdminUser()->getAdminUsers()),
-  m_instanceName(requestMsg.getInstanceName())
-{
+AdminLsStream::AdminLsStream(const frontend::AdminCmdStream& requestMsg,
+                             cta::catalogue::Catalogue& catalogue,
+                             cta::Scheduler& scheduler)
+    : XrdCtaStream(catalogue, scheduler),
+      m_adminList(catalogue.AdminUser()->getAdminUsers()),
+      m_instanceName(requestMsg.getInstanceName()) {
   using namespace cta::admin;
 
   XrdSsiPb::Log::Msg(XrdSsiPb::Log::DEBUG, LOG_SUFFIX, "AdminLsStream() constructor");
 }
 
-int AdminLsStream::fillBuffer(XrdSsiPb::OStreamBuffer<Data> *streambuf) {
-  for(bool is_buffer_full = false; !m_adminList.empty() && !is_buffer_full; m_adminList.pop_front()) {
+int AdminLsStream::fillBuffer(XrdSsiPb::OStreamBuffer<Data>* streambuf) {
+  for (bool is_buffer_full = false; !m_adminList.empty() && !is_buffer_full; m_adminList.pop_front()) {
     Data record;
 
-    auto &ad      = m_adminList.front();
-    auto  ad_item = record.mutable_adls_item();
+    auto& ad = m_adminList.front();
+    auto ad_item = record.mutable_adls_item();
 
     ad_item->set_user(ad.name);
     ad_item->mutable_creation_log()->set_username(ad.creationLog.username);
@@ -89,4 +89,4 @@ int AdminLsStream::fillBuffer(XrdSsiPb::OStreamBuffer<Data> *streambuf) {
   return streambuf->Size();
 }
 
-} // namespace cta::xrd
+}  // namespace cta::xrd

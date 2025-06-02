@@ -121,11 +121,11 @@ FrontendService::FrontendService(const std::string& configFilename) : m_archiveF
   {
     // Log cta.catalogue.missing_file_copies_min_age_secs
     std::list<log::Param> params;
-    params.push_back(log::Param("source", missingFileCopiesMinAgeSecs.has_value() ? configFilename : "Compile time default"));
+    params.push_back(
+      log::Param("source", missingFileCopiesMinAgeSecs.has_value() ? configFilename : "Compile time default"));
     params.push_back(log::Param("category", "cta.catalogue"));
     params.push_back(log::Param("key", "missingFileCopiesMinAgeSecs"));
-    params.push_back(
-      log::Param("value", std::to_string(missingFileCopiesMinAgeSecs.value_or(0))));
+    params.push_back(log::Param("value", std::to_string(missingFileCopiesMinAgeSecs.value_or(0))));
     log(log::INFO, "Configuration entry", params);
   }
 
@@ -248,12 +248,14 @@ FrontendService::FrontendService(const std::string& configFilename) : m_archiveF
     log(log::INFO, "Configuration entry", params);
   }
 
-  std::optional<bool> zeroLengthFilesForbidden = config.getOptionValueBool("cta.archivefile.zero_length_files_forbidden");
-  m_zeroLengthFilesForbidden = zeroLengthFilesForbidden.value_or(true); // disallow 0-length files by default
+  std::optional<bool> zeroLengthFilesForbidden =
+    config.getOptionValueBool("cta.archivefile.zero_length_files_forbidden");
+  m_zeroLengthFilesForbidden = zeroLengthFilesForbidden.value_or(true);  // disallow 0-length files by default
   {
     // Log cta.archivefile.zero_length_files_forbidden
     std::list<log::Param> params;
-    params.push_back(log::Param("source", zeroLengthFilesForbidden.has_value() ? configFilename : "Compile time default"));
+    params.push_back(
+      log::Param("source", zeroLengthFilesForbidden.has_value() ? configFilename : "Compile time default"));
     params.push_back(log::Param("category", "cta.archivefile"));
     params.push_back(log::Param("key", "zero_length_files_forbidden"));
     params.push_back(
@@ -318,14 +320,18 @@ FrontendService::FrontendService(const std::string& configFilename) : m_archiveF
     std::optional<bool> disableRepackRequests = config.getOptionValueBool("cta.schedulerdb.disable_repack_requests");
     m_acceptRepackRequests = disableRepackRequests.has_value() ? (!disableRepackRequests.value()) : true;
     if (!disableRepackRequests.has_value()) {
-      log(log::WARNING, "cta.schedulerdb.disable_repack_requests is not set in configuration file, using default value false");
+      log(log::WARNING,
+          "cta.schedulerdb.disable_repack_requests is not set in configuration file, using default value false");
     }
 
     std::list<log::Param> params;
     params.push_back(log::Param("source", disableRepackRequests.has_value() ? configFilename : "Compile time default"));
     params.push_back(log::Param("category", "cta.schedulerdb"));
     params.push_back(log::Param("key", "disable_repack_requests"));
-    params.push_back(log::Param("value", disableRepackRequests.has_value() ? config.getOptionValueStr("cta.schedulerdb.disable_repack_requests").value() : "false"));
+    params.push_back(log::Param("value",
+                                disableRepackRequests.has_value() ?
+                                  config.getOptionValueStr("cta.schedulerdb.disable_repack_requests").value() :
+                                  "false"));
     log(log::INFO, "Configuration entry", params);
   }
 
@@ -333,14 +339,18 @@ FrontendService::FrontendService(const std::string& configFilename) : m_archiveF
     auto disableUserRequests = config.getOptionValueBool("cta.schedulerdb.disable_user_requests");
     m_acceptUserRequests = disableUserRequests.has_value() ? (!disableUserRequests.value()) : true;
     if (!disableUserRequests.has_value()) {
-      log(log::WARNING, "cta.schedulerdb.disable_user_requests is not set in configuration file, using default value false");
+      log(log::WARNING,
+          "cta.schedulerdb.disable_user_requests is not set in configuration file, using default value false");
     }
 
     std::list<log::Param> params;
     params.push_back(log::Param("source", disableUserRequests.has_value() ? configFilename : "Compile time default"));
     params.push_back(log::Param("category", "cta.schedulerdb"));
     params.push_back(log::Param("key", "disable_user_requests"));
-    params.push_back(log::Param("value", disableUserRequests.has_value() ? config.getOptionValueStr("cta.schedulerdb.disable_user_requests").value() : "false"));
+    params.push_back(log::Param("value",
+                                disableUserRequests.has_value() ?
+                                  config.getOptionValueStr("cta.schedulerdb.disable_user_requests").value() :
+                                  "false"));
     log(log::INFO, "Configuration entry", params);
   }
 

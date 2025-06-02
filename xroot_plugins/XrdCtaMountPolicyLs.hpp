@@ -24,7 +24,7 @@ namespace cta::xrd {
 /*!
  * Stream object which implements "tapepool ls" command
  */
-class MountPolicyLsStream: public XrdCtaStream{
+class MountPolicyLsStream : public XrdCtaStream {
 public:
   /*!
    * Constructor
@@ -33,44 +33,44 @@ public:
    * @param[in]    catalogue     CTA Catalogue
    * @param[in]    scheduler     CTA Scheduler
    */
-  MountPolicyLsStream(const frontend::AdminCmdStream& requestMsg, cta::catalogue::Catalogue &catalogue, cta::Scheduler &scheduler);
+  MountPolicyLsStream(const frontend::AdminCmdStream& requestMsg,
+                      cta::catalogue::Catalogue& catalogue,
+                      cta::Scheduler& scheduler);
 
 private:
   /*!
    * Can we close the stream?
    */
-  virtual bool isDone() const {
-    return m_mountPolicyList.empty();
-  }
+  virtual bool isDone() const { return m_mountPolicyList.empty(); }
 
   /*!
    * Fill the buffer
    */
-  virtual int fillBuffer(XrdSsiPb::OStreamBuffer<Data> *streambuf);
+  virtual int fillBuffer(XrdSsiPb::OStreamBuffer<Data>* streambuf);
 
-  std::list<cta::common::dataStructures::MountPolicy> m_mountPolicyList;     //!< List of mount policies from the catalogue
+  std::list<cta::common::dataStructures::MountPolicy> m_mountPolicyList;  //!< List of mount policies from the catalogue
   const std::string m_instanceName;
 
-  static constexpr const char* const LOG_SUFFIX  = "MountPolicyLsStream";    //!< Identifier for log messages
+  static constexpr const char* const LOG_SUFFIX = "MountPolicyLsStream";  //!< Identifier for log messages
 };
 
-
-MountPolicyLsStream::MountPolicyLsStream(const frontend::AdminCmdStream& requestMsg, cta::catalogue::Catalogue &catalogue, cta::Scheduler &scheduler) :
-  XrdCtaStream(catalogue, scheduler),
-  m_mountPolicyList(catalogue.MountPolicy()->getMountPolicies()),
-  m_instanceName(requestMsg.getInstanceName())
-{
+MountPolicyLsStream::MountPolicyLsStream(const frontend::AdminCmdStream& requestMsg,
+                                         cta::catalogue::Catalogue& catalogue,
+                                         cta::Scheduler& scheduler)
+    : XrdCtaStream(catalogue, scheduler),
+      m_mountPolicyList(catalogue.MountPolicy()->getMountPolicies()),
+      m_instanceName(requestMsg.getInstanceName()) {
   using namespace cta::admin;
 
   XrdSsiPb::Log::Msg(XrdSsiPb::Log::DEBUG, LOG_SUFFIX, "MountPolicyLsStream() constructor");
 }
 
-int MountPolicyLsStream::fillBuffer(XrdSsiPb::OStreamBuffer<Data> *streambuf) {
-  for(bool is_buffer_full = false; !m_mountPolicyList.empty() && !is_buffer_full; m_mountPolicyList.pop_front()) {
+int MountPolicyLsStream::fillBuffer(XrdSsiPb::OStreamBuffer<Data>* streambuf) {
+  for (bool is_buffer_full = false; !m_mountPolicyList.empty() && !is_buffer_full; m_mountPolicyList.pop_front()) {
     Data record;
 
-    auto &mp      = m_mountPolicyList.front();
-    auto  mp_item = record.mutable_mpls_item();
+    auto& mp = m_mountPolicyList.front();
+    auto mp_item = record.mutable_mpls_item();
 
     mp_item->set_name(mp.name);
     mp_item->set_instance_name(m_instanceName);
@@ -91,4 +91,4 @@ int MountPolicyLsStream::fillBuffer(XrdSsiPb::OStreamBuffer<Data> *streambuf) {
   return streambuf->Size();
 }
 
-} // namespace cta::xrd
+}  // namespace cta::xrd

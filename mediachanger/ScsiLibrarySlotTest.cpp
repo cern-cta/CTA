@@ -25,12 +25,9 @@ namespace unitTests {
 
 class cta_mediachanger_ScsiLibrarySlotTest : public ::testing::Test {
 protected:
+  virtual void SetUp() {}
 
-  virtual void SetUp() {
-  }
-
-  virtual void TearDown() {
-  }
+  virtual void TearDown() {}
 };
 
 TEST_F(cta_mediachanger_ScsiLibrarySlotTest, goodDay) {
@@ -39,7 +36,7 @@ TEST_F(cta_mediachanger_ScsiLibrarySlotTest, goodDay) {
   ScsiLibrarySlot slot(2);
   ASSERT_EQ(TAPE_LIBRARY_TYPE_SCSI, slot.getLibraryType());
   ASSERT_EQ(std::string("smc2"), slot.str());
-  ASSERT_EQ((uint16_t)2, slot.getDrvOrd());
+  ASSERT_EQ((uint16_t) 2, slot.getDrvOrd());
 }
 
 TEST_F(cta_mediachanger_ScsiLibrarySlotTest, clone) {
@@ -51,9 +48,9 @@ TEST_F(cta_mediachanger_ScsiLibrarySlotTest, clone) {
   ASSERT_EQ(std::string("smc2"), slot1->str());
 
   std::unique_ptr<ScsiLibrarySlot> slot2;
-  ASSERT_NO_THROW(slot2.reset((ScsiLibrarySlot*)slot1->clone()));
+  ASSERT_NO_THROW(slot2.reset((ScsiLibrarySlot*) slot1->clone()));
   ASSERT_EQ(TAPE_LIBRARY_TYPE_SCSI, slot2->getLibraryType());
   ASSERT_EQ(std::string("smc2"), slot2->str());
 }
 
-} // namespace unitTests
+}  // namespace unitTests

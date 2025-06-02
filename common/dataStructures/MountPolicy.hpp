@@ -35,8 +35,8 @@ struct MountPolicy {
   MountPolicy(const MountPolicy& other) = default;
   MountPolicy& operator=(const MountPolicy& other) = default;
 
-  bool operator==(const MountPolicy &rhs) const;
-  bool operator!=(const MountPolicy &rhs) const;
+  bool operator==(const MountPolicy& rhs) const;
+  bool operator!=(const MountPolicy& rhs) const;
 
   std::string name;
   uint64_t archivePriority = 0;
@@ -52,10 +52,13 @@ struct MountPolicy {
   static const MountPolicy s_defaultMountPolicyForRepack;
 
 private:
-  MountPolicy(std::string_view mpName, uint64_t archivePriority, uint64_t archiveMinRequestAge,
-    uint64_t retrievePriority, uint64_t retrieveMinRequestAge);
+  MountPolicy(std::string_view mpName,
+              uint64_t archivePriority,
+              uint64_t archiveMinRequestAge,
+              uint64_t retrievePriority,
+              uint64_t retrieveMinRequestAge);
 };
 
 std::ostream& operator<<(std::ostream& os, const MountPolicy& obj);
 
-} // namespace cta::common::dataStructures
+}  // namespace cta::common::dataStructures

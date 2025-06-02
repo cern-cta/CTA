@@ -28,64 +28,63 @@
 #include <Cgrp.h>
 #include <osdep.h>
 
-struct group *Cgetgrnam(name)
-const char *name;
+struct group* Cgetgrnam(name) const char* name;
 {
-    /*
+  /*
      * linux or APPLE
      * The final POSIX.1c standard: the return value is int and
      * buffer pointer is returned as last argument
      */
-    static int grp_key = -1;
-    static int grpbuf_key = -1;
-    void *grp = NULL;
-    struct group *result = NULL;
-    void *grpbuf = NULL;
-    size_t grpbuflen = BUFSIZ;
-    int rc;
+  static int grp_key = -1;
+  static int grpbuf_key = -1;
+  void* grp = NULL;
+  struct group* result = NULL;
+  void* grpbuf = NULL;
+  size_t grpbuflen = BUFSIZ;
+  int rc;
 
-    Cglobals_get(&grp_key,&grp,sizeof(struct group));
-    Cglobals_get(&grpbuf_key,&grpbuf,grpbuflen);
+  Cglobals_get(&grp_key, &grp, sizeof(struct group));
+  Cglobals_get(&grpbuf_key, &grpbuf, grpbuflen);
 
-    if ( grp == NULL || grpbuf == NULL ) {
-        serrno = SEINTERNAL;
-        return(NULL);
-    }
-    errno = 0;
-    rc = getgrnam_r(name,grp,grpbuf,grpbuflen,&result);
-    if (rc != 0) {
-      serrno = ENOENT==errno?SEGROUPUNKN:SEINTERNAL;
-    }
-    return(result);
+  if (grp == NULL || grpbuf == NULL) {
+    serrno = SEINTERNAL;
+    return (NULL);
+  }
+  errno = 0;
+  rc = getgrnam_r(name, grp, grpbuf, grpbuflen, &result);
+  if (rc != 0) {
+    serrno = ENOENT == errno ? SEGROUPUNKN : SEINTERNAL;
+  }
+  return (result);
 }
 
-struct group *Cgetgrgid(gid)
+struct group* Cgetgrgid(gid)
 gid_t gid;
 {
-    /*
+  /*
      * linux or APPLE
      * The final POSIX.1c standard: the return value is int and
      * buffer pointer is returned as last argument
      */
-    static int grp_key = -1;
-    static int grpbuf_key = -1;
-    void *grp = NULL;
-    struct group *result = NULL;
-    void *grpbuf = NULL;
-    size_t grpbuflen = BUFSIZ;
-    int rc;
+  static int grp_key = -1;
+  static int grpbuf_key = -1;
+  void* grp = NULL;
+  struct group* result = NULL;
+  void* grpbuf = NULL;
+  size_t grpbuflen = BUFSIZ;
+  int rc;
 
-    Cglobals_get(&grp_key,&grp,sizeof(struct group));
-    Cglobals_get(&grpbuf_key,&grpbuf,grpbuflen);
+  Cglobals_get(&grp_key, &grp, sizeof(struct group));
+  Cglobals_get(&grpbuf_key, &grpbuf, grpbuflen);
 
-    if ( grp == NULL || grpbuf == NULL ) {
-        serrno = SEINTERNAL;
-        return(NULL);
-    }
-    errno = 0;
-    rc = getgrgid_r(gid,grp,grpbuf,grpbuflen,&result);
-    if (rc != 0) {
-      serrno = ENOENT==errno?SEGROUPUNKN:SEINTERNAL;
-    }
-    return(result);
+  if (grp == NULL || grpbuf == NULL) {
+    serrno = SEINTERNAL;
+    return (NULL);
+  }
+  errno = 0;
+  rc = getgrgid_r(gid, grp, grpbuf, grpbuflen, &result);
+  if (rc != 0) {
+    serrno = ENOENT == errno ? SEGROUPUNKN : SEINTERNAL;
+  }
+  return (result);
 }

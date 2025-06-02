@@ -27,9 +27,7 @@ namespace cta::rdbms::wrapper {
 //------------------------------------------------------------------------------
 // constructor
 //------------------------------------------------------------------------------
-PostgresConnFactory::PostgresConnFactory(const std::string& conninfo)
-    : m_conninfo(conninfo) {
-}
+PostgresConnFactory::PostgresConnFactory(const std::string& conninfo) : m_conninfo(conninfo) {}
 
 //------------------------------------------------------------------------------
 // create
@@ -37,22 +35,22 @@ PostgresConnFactory::PostgresConnFactory(const std::string& conninfo)
 std::unique_ptr<ConnWrapper> PostgresConnFactory::create() {
   try {
     return std::make_unique<PostgresConn>(m_conninfo);
-  } catch(exception::Exception &ex) {
+  } catch (exception::Exception& ex) {
     throw exception::Exception(std::string(__FUNCTION__) + " failed: " + ex.getMessage().str());
   }
 }
 
-} // namespace cta::rdbms::wrapper
+}  // namespace cta::rdbms::wrapper
 
 extern "C" {
 
-void factory(cta::plugin::Interface<cta::rdbms::wrapper::ConnFactory,
-    cta::plugin::Args<const std::string&>,
-    cta::plugin::Args<const std::string&, const std::string&, const std::string&>>& interface) {
-
+void factory(
+  cta::plugin::Interface<cta::rdbms::wrapper::ConnFactory,
+                         cta::plugin::Args<const std::string&>,
+                         cta::plugin::Args<const std::string&, const std::string&, const std::string&>>& interface) {
   interface.SET<cta::plugin::DATA::PLUGIN_NAME>("ctardbmspostgres")
     .SET<cta::plugin::DATA::API_VERSION>(VERSION_API)
     .CLASS<cta::rdbms::wrapper::PostgresConnFactory>("PostgresConnFactory");
 }
 
-}// extern "C"
+}  // extern "C"

@@ -25,14 +25,10 @@ namespace cta::rdbms::wrapper {
 //------------------------------------------------------------------------------
 // constructor
 //------------------------------------------------------------------------------
-OcciConnFactory::OcciConnFactory(
-  const std::string &username,
-  const std::string &password,
-  const std::string &database):
-  m_username(username),
-  m_password(password),
-  m_database(database) {
-}
+OcciConnFactory::OcciConnFactory(const std::string& username, const std::string& password, const std::string& database)
+    : m_username(username),
+      m_password(password),
+      m_database(database) {}
 
 //------------------------------------------------------------------------------
 // create
@@ -40,22 +36,22 @@ OcciConnFactory::OcciConnFactory(
 std::unique_ptr<ConnWrapper> OcciConnFactory::create() {
   try {
     return OcciEnvSingleton::instance().createConn(m_username, m_password, m_database);
-  } catch(exception::Exception &ex) {
+  } catch (exception::Exception& ex) {
     throw exception::Exception(std::string(__FUNCTION__) + " failed: " + ex.getMessage().str());
   }
 }
 
-} // namespace cta::rdbms::wrapper
+}  // namespace cta::rdbms::wrapper
 
 extern "C" {
 
-void factory(cta::plugin::Interface<cta::rdbms::wrapper::ConnFactory,
-    cta::plugin::Args<const std::string&>,
-    cta::plugin::Args<const std::string&, const std::string&, const std::string&>>& interface) {
-
+void factory(
+  cta::plugin::Interface<cta::rdbms::wrapper::ConnFactory,
+                         cta::plugin::Args<const std::string&>,
+                         cta::plugin::Args<const std::string&, const std::string&, const std::string&>>& interface) {
   interface.SET<cta::plugin::DATA::PLUGIN_NAME>("ctardbmsocci")
     .SET<cta::plugin::DATA::API_VERSION>(VERSION_API)
     .CLASS<cta::rdbms::wrapper::OcciConnFactory>("OcciConnFactory");
 }
 
-}// extern "C"
+}  // extern "C"

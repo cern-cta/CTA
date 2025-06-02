@@ -25,12 +25,9 @@ namespace unitTests {
 
 class cta_mediachanger_LibrarySlotParserTest : public ::testing::Test {
 protected:
+  virtual void SetUp() {}
 
-  virtual void SetUp() {
-  }
-
-  virtual void TearDown() {
-  }
+  virtual void TearDown() {}
 };
 
 TEST_F(cta_mediachanger_LibrarySlotParserTest, dummy) {
@@ -38,7 +35,7 @@ TEST_F(cta_mediachanger_LibrarySlotParserTest, dummy) {
 
   std::unique_ptr<LibrarySlot> slot;
   ASSERT_NO_THROW(slot.reset(LibrarySlotParser::parse("dummy")));
-  ASSERT_NE((LibrarySlot*)0, slot.get());
+  ASSERT_NE((LibrarySlot*) 0, slot.get());
   ASSERT_EQ(TAPE_LIBRARY_TYPE_DUMMY, slot->getLibraryType());
 }
 
@@ -47,7 +44,7 @@ TEST_F(cta_mediachanger_LibrarySlotParserTest, scsi) {
 
   std::unique_ptr<LibrarySlot> slot;
   ASSERT_NO_THROW(slot.reset(LibrarySlotParser::parse("smc1")));
-  ASSERT_NE((LibrarySlot*)0, slot.get());
+  ASSERT_NE((LibrarySlot*) 0, slot.get());
   ASSERT_EQ(TAPE_LIBRARY_TYPE_SCSI, slot->getLibraryType());
 }
 
@@ -55,8 +52,7 @@ TEST_F(cta_mediachanger_LibrarySlotParserTest, nonsense) {
   using namespace cta::mediachanger;
 
   std::unique_ptr<LibrarySlot> slot;
-  ASSERT_THROW(slot.reset(LibrarySlotParser::parse("nonsense")),
-    cta::exception::Exception);
+  ASSERT_THROW(slot.reset(LibrarySlotParser::parse("nonsense")), cta::exception::Exception);
 }
 
-} // namespace unitTests
+}  // namespace unitTests

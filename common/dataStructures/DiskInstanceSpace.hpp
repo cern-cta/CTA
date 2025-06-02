@@ -16,20 +16,19 @@
  */
 
 #pragma once
- 
+
 #include <string>
 #include "EntryLog.hpp"
 
 namespace cta::common::dataStructures {
 
 struct DiskInstanceSpace {
-  
-   /**
+  /**
    * The name
    */
   std::string name;
 
-   /**
+  /**
    * The disk instance
    */
   std::string diskInstance;
@@ -58,7 +57,7 @@ struct DiskInstanceSpace {
    * The comment.
    */
   std::string comment;
-    
+
   /**
    * The creation log.
    */
@@ -69,9 +68,9 @@ struct DiskInstanceSpace {
    */
   EntryLog lastModificationLog;
 
-  bool operator==(const DiskInstanceSpace & other) const{
+  bool operator==(const DiskInstanceSpace& other) const {
     return (name == other.name && diskInstance == other.diskInstance && comment == other.comment);
   }
 };
 
-} // namespace cta::common::dataStructures
+}  // namespace cta::common::dataStructures

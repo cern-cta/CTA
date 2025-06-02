@@ -27,7 +27,6 @@ namespace cta::catalogue {
  * Structure describing a tape media type.
  */
 struct MediaType {
-
   /**
    * Constructor.
    *
@@ -81,6 +80,6 @@ struct MediaType {
    */
   std::string comment;
 
-}; // struct MediaType
+};  // struct MediaType
 
-} // namespace cta::catalogue
+}  // namespace cta::catalogue

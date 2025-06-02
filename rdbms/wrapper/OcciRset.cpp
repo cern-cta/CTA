@@ -30,17 +30,15 @@ namespace cta::rdbms::wrapper {
 //------------------------------------------------------------------------------
 // constructor
 //------------------------------------------------------------------------------
-OcciRset::OcciRset(OcciStmt &stmt, oracle::occi::ResultSet *const rset):
-  m_stmt(stmt),
-  m_rset(rset) {
+OcciRset::OcciRset(OcciStmt& stmt, oracle::occi::ResultSet* const rset) : m_stmt(stmt), m_rset(rset) {
   try {
     if (nullptr == rset) {
       throw exception::Exception("rset is nullptr");
     }
     populateColNameToIdxMap();
-  } catch(exception::Exception &ne) {
+  } catch (exception::Exception& ne) {
     throw exception::Exception(std::string(__FUNCTION__) + " failed for SQL statement " + m_stmt.getSql() + ": " +
-      ne.getMessage().str());
+                               ne.getMessage().str());
   }
 }
 
@@ -58,9 +56,9 @@ void OcciRset::populateColNameToIdxMap() {
       const std::string name = columns[i].getString(occi::MetaData::ATTR_NAME);
       m_colNameToIdx.add(name, colIdx);
     }
-  } catch(exception::Exception &ne) {
+  } catch (exception::Exception& ne) {
     throw exception::Exception(std::string(__FUNCTION__) + " failed: " + ne.getMessage().str());
-  } catch(std::exception &se) {
+  } catch (std::exception& se) {
     throw exception::Exception(std::string(__FUNCTION__) + " failed: " + se.what());
   }
 }
@@ -70,8 +68,8 @@ void OcciRset::populateColNameToIdxMap() {
 //------------------------------------------------------------------------------
 OcciRset::~OcciRset() {
   try {
-    close(); // Idempotent close()
-  } catch(...) {
+    close();  // Idempotent close()
+  } catch (...) {
     // Destructor does not throw
   }
 }
@@ -79,7 +77,7 @@ OcciRset::~OcciRset() {
 //------------------------------------------------------------------------------
 // getSql
 //------------------------------------------------------------------------------
-const std::string &OcciRset::getSql() const {
+const std::string& OcciRset::getSql() const {
   return m_stmt.getSql();
 }
 
@@ -92,22 +90,22 @@ bool OcciRset::next() {
   try {
     const occi::ResultSet::Status status = m_rset->next();
     return occi::ResultSet::DATA_AVAILABLE == status;
-  } catch(std::exception &se) {
+  } catch (std::exception& se) {
     throw exception::Exception(std::string(__FUNCTION__) + " failed for SQL statement " + m_stmt.getSql() + ": " +
-      se.what());
+                               se.what());
   }
 }
 
 //------------------------------------------------------------------------------
 // columnIsNull
 //------------------------------------------------------------------------------
-bool OcciRset::columnIsNull(const std::string &colName) const {
+bool OcciRset::columnIsNull(const std::string& colName) const {
   try {
     const int colIdx = m_colNameToIdx.getIdx(colName);
     return m_rset->isNull(colIdx);
-  } catch(exception::Exception &ne) {
+  } catch (exception::Exception& ne) {
     throw exception::Exception(std::string(__FUNCTION__) + " failed: " + ne.getMessage().str());
-  } catch(std::exception &se) {
+  } catch (std::exception& se) {
     throw exception::Exception(std::string(__FUNCTION__) + " failed: " + se.what());
   }
 }
@@ -118,69 +116,69 @@ bool OcciRset::columnIsNull(const std::string &colName) const {
 void OcciRset::close() {
   threading::Mutex locker(m_mutex);
 
-  if(nullptr != m_rset) {
+  if (nullptr != m_rset) {
     m_stmt->closeResultSet(m_rset);
     m_rset = nullptr;
   }
 }
 
-std::string OcciRset::columnBlob(const std::string &colName) const {
+std::string OcciRset::columnBlob(const std::string& colName) const {
   try {
     const int colIdx = m_colNameToIdx.getIdx(colName);
     auto raw = m_rset->getBytes(colIdx);
     std::unique_ptr<unsigned char[]> bytearray(new unsigned char[raw.length()]());
     raw.getBytes(bytearray.get(), raw.length());
     return std::string(reinterpret_cast<char*>(bytearray.get()), raw.length());
-  } catch(exception::Exception &ne) {
+  } catch (exception::Exception& ne) {
     throw exception::Exception(std::string(__FUNCTION__) + " failed for SQL statement " + m_stmt.getSql() + ": " +
-      ne.getMessage().str());
-  } catch(std::exception &se) {
+                               ne.getMessage().str());
+  } catch (std::exception& se) {
     throw exception::Exception(std::string(__FUNCTION__) + " failed for SQL statement " + m_stmt.getSql() + ": " +
-      se.what());
+                               se.what());
   }
 }
 
 //------------------------------------------------------------------------------
 // columnOptionalString
 //------------------------------------------------------------------------------
-std::optional<std::string> OcciRset::columnOptionalString(const std::string &colName) const {
+std::optional<std::string> OcciRset::columnOptionalString(const std::string& colName) const {
   try {
     const int colIdx = m_colNameToIdx.getIdx(colName);
     const std::string stringValue = m_rset->getString(colIdx);
-    if(stringValue.empty()) {
+    if (stringValue.empty()) {
       return std::nullopt;
     }
     return stringValue;
-  } catch(exception::Exception &ne) {
+  } catch (exception::Exception& ne) {
     throw exception::Exception(std::string(__FUNCTION__) + " failed for SQL statement " + m_stmt.getSql() + ": " +
-      ne.getMessage().str());
-  } catch(std::exception &se) {
+                               ne.getMessage().str());
+  } catch (std::exception& se) {
     throw exception::Exception(std::string(__FUNCTION__) + " failed for SQL statement " + m_stmt.getSql() + ": " +
-      se.what());
+                               se.what());
   }
 }
 
 //------------------------------------------------------------------------------
 // columnOptionalUint8
 //------------------------------------------------------------------------------
-std::optional<uint8_t> OcciRset::columnOptionalUint8(const std::string &colName) const {
+std::optional<uint8_t> OcciRset::columnOptionalUint8(const std::string& colName) const {
   try {
     threading::Mutex locker(m_mutex);
 
     const int colIdx = m_colNameToIdx.getIdx(colName);
     const std::string stringValue = m_rset->getString(colIdx);
-    if(stringValue.empty()) {
+    if (stringValue.empty()) {
       return std::nullopt;
     }
-    if(!utils::isValidUInt(stringValue)) {
+    if (!utils::isValidUInt(stringValue)) {
       throw exception::Exception(std::string("Column ") + colName + " contains the value " + stringValue +
                                  " which is not a valid unsigned integer");
     }
     return utils::toUint8(stringValue);
-  } catch(exception::Exception &ne) {
+  } catch (exception::Exception& ne) {
     throw exception::Exception(std::string(__FUNCTION__) + " failed for SQL statement " + m_stmt.getSql() + ": " +
                                ne.getMessage().str());
-  } catch(std::exception &se) {
+  } catch (std::exception& se) {
     throw exception::Exception(std::string(__FUNCTION__) + " failed for SQL statement " + m_stmt.getSql() + ": " +
                                se.what());
   }
@@ -189,24 +187,24 @@ std::optional<uint8_t> OcciRset::columnOptionalUint8(const std::string &colName)
 //------------------------------------------------------------------------------
 // columnOptionalUint16
 //------------------------------------------------------------------------------
-std::optional<uint16_t> OcciRset::columnOptionalUint16(const std::string &colName) const {
+std::optional<uint16_t> OcciRset::columnOptionalUint16(const std::string& colName) const {
   try {
     threading::Mutex locker(m_mutex);
 
     const int colIdx = m_colNameToIdx.getIdx(colName);
     const std::string stringValue = m_rset->getString(colIdx);
-    if(stringValue.empty()) {
+    if (stringValue.empty()) {
       return std::nullopt;
     }
-    if(!utils::isValidUInt(stringValue)) {
+    if (!utils::isValidUInt(stringValue)) {
       throw exception::Exception(std::string("Column ") + colName + " contains the value " + stringValue +
                                  " which is not a valid unsigned integer");
     }
     return utils::toUint16(stringValue);
-  } catch(exception::Exception &ne) {
+  } catch (exception::Exception& ne) {
     throw exception::Exception(std::string(__FUNCTION__) + " failed for SQL statement " + m_stmt.getSql() + ": " +
                                ne.getMessage().str());
-  } catch(std::exception &se) {
+  } catch (std::exception& se) {
     throw exception::Exception(std::string(__FUNCTION__) + " failed for SQL statement " + m_stmt.getSql() + ": " +
                                se.what());
   }
@@ -215,24 +213,24 @@ std::optional<uint16_t> OcciRset::columnOptionalUint16(const std::string &colNam
 //------------------------------------------------------------------------------
 // columnOptionalUint32
 //------------------------------------------------------------------------------
-std::optional<uint32_t> OcciRset::columnOptionalUint32(const std::string &colName) const {
+std::optional<uint32_t> OcciRset::columnOptionalUint32(const std::string& colName) const {
   try {
     threading::Mutex locker(m_mutex);
 
     const int colIdx = m_colNameToIdx.getIdx(colName);
     const std::string stringValue = m_rset->getString(colIdx);
-    if(stringValue.empty()) {
+    if (stringValue.empty()) {
       return std::nullopt;
     }
-    if(!utils::isValidUInt(stringValue)) {
+    if (!utils::isValidUInt(stringValue)) {
       throw exception::Exception(std::string("Column ") + colName + " contains the value " + stringValue +
                                  " which is not a valid unsigned integer");
     }
     return utils::toUint32(stringValue);
-  } catch(exception::Exception &ne) {
+  } catch (exception::Exception& ne) {
     throw exception::Exception(std::string(__FUNCTION__) + " failed for SQL statement " + m_stmt.getSql() + ": " +
                                ne.getMessage().str());
-  } catch(std::exception &se) {
+  } catch (std::exception& se) {
     throw exception::Exception(std::string(__FUNCTION__) + " failed for SQL statement " + m_stmt.getSql() + ": " +
                                se.what());
   }
@@ -241,49 +239,49 @@ std::optional<uint32_t> OcciRset::columnOptionalUint32(const std::string &colNam
 //------------------------------------------------------------------------------
 // columnOptionalUint64
 //------------------------------------------------------------------------------
-std::optional<uint64_t> OcciRset::columnOptionalUint64(const std::string &colName) const {
+std::optional<uint64_t> OcciRset::columnOptionalUint64(const std::string& colName) const {
   try {
     threading::Mutex locker(m_mutex);
 
     const int colIdx = m_colNameToIdx.getIdx(colName);
     const std::string stringValue = m_rset->getString(colIdx);
-    if(stringValue.empty()) {
+    if (stringValue.empty()) {
       return std::nullopt;
     }
-    if(!utils::isValidUInt(stringValue)) {
+    if (!utils::isValidUInt(stringValue)) {
       throw exception::Exception(std::string("Column ") + colName + " contains the value " + stringValue +
-        " which is not a valid unsigned integer");
+                                 " which is not a valid unsigned integer");
     }
     return utils::toUint64(stringValue);
-  } catch(exception::Exception &ne) {
+  } catch (exception::Exception& ne) {
     throw exception::Exception(std::string(__FUNCTION__) + " failed for SQL statement " + m_stmt.getSql() + ": " +
-      ne.getMessage().str());
-  } catch(std::exception &se) {
+                               ne.getMessage().str());
+  } catch (std::exception& se) {
     throw exception::Exception(std::string(__FUNCTION__) + " failed for SQL statement " + m_stmt.getSql() + ": " +
-      se.what());
+                               se.what());
   }
 }
 
 //------------------------------------------------------------------------------
 // columnOptionalDouble
 //------------------------------------------------------------------------------
-std::optional<double> OcciRset::columnOptionalDouble(const std::string &colName) const {
+std::optional<double> OcciRset::columnOptionalDouble(const std::string& colName) const {
   try {
     threading::Mutex locker(m_mutex);
 
     const int colIdx = m_colNameToIdx.getIdx(colName);
-    if(m_rset->isNull(colIdx)) {
+    if (m_rset->isNull(colIdx)) {
       return std::nullopt;
     } else {
       return m_rset->getDouble(colIdx);
     }
-  } catch(exception::Exception &ne) {
+  } catch (exception::Exception& ne) {
     throw exception::Exception(std::string(__FUNCTION__) + " failed for SQL statement " + m_stmt.getSql() + ": " +
-      ne.getMessage().str());
-  } catch(std::exception &se) {
+                               ne.getMessage().str());
+  } catch (std::exception& se) {
     throw exception::Exception(std::string(__FUNCTION__) + " failed for SQL statement " + m_stmt.getSql() + ": " +
-      se.what());
+                               se.what());
   }
 }
 
-} // namespace cta::rdbms::wrapper
+}  // namespace cta::rdbms::wrapper

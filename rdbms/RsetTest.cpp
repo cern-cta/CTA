@@ -27,12 +27,9 @@ namespace unitTests {
 
 class cta_rdbms_RsetTest : public ::testing::Test {
 protected:
+  virtual void SetUp() {}
 
-  virtual void SetUp() {
-  }
-
-  virtual void TearDown() {
-  }
+  virtual void TearDown() {}
 };
 
 TEST_F(cta_rdbms_RsetTest, constructor) {
@@ -57,7 +54,7 @@ TEST_F(cta_rdbms_RsetTest, next) {
     Stmt stmt = pool.getStmt(*conn, sql);
     stmt.executeNonQuery();
   }
-  
+
   {
     const char* const sql = R"SQL(
       INSERT INTO RSET_TEST(ID) VALUES(1)
@@ -85,4 +82,4 @@ TEST_F(cta_rdbms_RsetTest, next) {
   }
 }
 
-} // namespace unitTests
+}  // namespace unitTests

@@ -22,8 +22,7 @@ namespace cta::exception {
 //------------------------------------------------------------------------------
 // constructor
 //------------------------------------------------------------------------------
-CommandLineNotParsed::CommandLineNotParsed(const std::string &context, const bool embedBacktrace):
-  Exception(context, embedBacktrace) {
-}
+CommandLineNotParsed::CommandLineNotParsed(const std::string& context, const bool embedBacktrace)
+    : Exception(context, embedBacktrace) {}
 
-} // namespace cta::exception
+}  // namespace cta::exception

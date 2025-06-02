@@ -33,8 +33,8 @@ DiskReporter* DiskReporterFactory::createDiskReporter(const std::string& URL) {
   if (regexResult.size()) {
     return new NullReporter();
   }
-  throw cta::exception::Exception(
-      std::string("In DiskReporterFactory::createDiskReporter failed to parse URL: ")+URL);
+  throw cta::exception::Exception(std::string("In DiskReporterFactory::createDiskReporter failed to parse URL: ") +
+                                  URL);
 }
 
-} // namespace cta::disk
+}  // namespace cta::disk

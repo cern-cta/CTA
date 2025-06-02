@@ -31,12 +31,11 @@ namespace cta::common::dataStructures {
  * data-transfer requesters.
  */
 struct RequesterGroupMountRule {
-
   RequesterGroupMountRule() = default;
 
-  bool operator==(const RequesterGroupMountRule &rhs) const;
+  bool operator==(const RequesterGroupMountRule& rhs) const;
 
-  bool operator!=(const RequesterGroupMountRule &rhs) const;
+  bool operator!=(const RequesterGroupMountRule& rhs) const;
 
   /**
    * The name of the disk instance to which the requester group belongs.
@@ -54,8 +53,8 @@ struct RequesterGroupMountRule {
   EntryLog lastModificationLog;
   std::string comment;
 
-}; // struct RequesterGroupMountRule
+};  // struct RequesterGroupMountRule
 
-std::ostream &operator<<(std::ostream &os, const RequesterGroupMountRule &obj);
+std::ostream& operator<<(std::ostream& os, const RequesterGroupMountRule& obj);
 
-} // namespace cta::common::dataStructures
+}  // namespace cta::common::dataStructures

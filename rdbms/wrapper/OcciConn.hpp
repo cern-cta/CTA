@@ -34,9 +34,8 @@ class OcciStmt;
 /**
  * A convenience wrapper around a connection to an OCCI database.
  */
-class OcciConn: public ConnWrapper {
+class OcciConn : public ConnWrapper {
 public:
-
   /**
    * Constructor.
    *
@@ -46,7 +45,7 @@ public:
    * @param env The OCCI environment.
    * @param conn The OCCI connection.
    */
-  OcciConn(oracle::occi::Environment *env, oracle::occi::Connection *const conn);
+  OcciConn(oracle::occi::Environment* env, oracle::occi::Connection* const conn);
 
   /**
    * Destructor.
@@ -79,7 +78,7 @@ public:
    *
    * @param sql The SQL statement.
    */
-  void executeNonQuery(const std::string &sql) override;
+  void executeNonQuery(const std::string& sql) override;
 
   /**
    * Creates a prepared statement.
@@ -87,7 +86,7 @@ public:
    * @param sql The SQL statement.
    * @return The prepared statement.
    */
-  std::unique_ptr<StmtWrapper> createStmt(const std::string &sql) override;
+  std::unique_ptr<StmtWrapper> createStmt(const std::string& sql) override;
 
   /**
    * Commits the current transaction.
@@ -98,7 +97,7 @@ public:
    * Rolls back the current transaction.
    */
   void rollback() override;
-  
+
   /**
    * Returns the names of all the column and their type as a map for the given 
    * table in the database schema.
@@ -106,7 +105,7 @@ public:
    * @param tableName The table name to get the columns.
    * @return The map of types by name of all the columns for the given table in the database schema.
    */
-  std::map<std::string, std::string, std::less<>> getColumns(const std::string &tableName) override;
+  std::map<std::string, std::string, std::less<>> getColumns(const std::string& tableName) override;
 
   /**
    * Returns the names of all the tables in the database schema in alphabetical
@@ -116,7 +115,7 @@ public:
    * order.
    */
   std::list<std::string> getTableNames() override;
-  
+
   /**
    * Returns the names of all the indices the database schema in alphabetical
    * order.
@@ -142,7 +141,7 @@ public:
    * alphabetical order.
    */
   std::list<std::string> getSequenceNames() override;
-  
+
   /**
    * Returns the names of all the triggers in the database schema in
    * alphabetical order.
@@ -154,7 +153,7 @@ public:
    * alphabetical order.
    */
   std::list<std::string> getTriggerNames() override;
-  
+
   /**
    * Returns the names of all the tables that have been set as PARALLEL
    * in alphabetical order.
@@ -172,8 +171,8 @@ public:
    * @param tableName the table name to get the constraint names from
    * @return the list of the names of the constraints that the given table has.
    */
-  std::list<std::string> getConstraintNames(const std::string &tableName) override;
-  
+  std::list<std::string> getConstraintNames(const std::string& tableName) override;
+
   /**
    * 
    * Returns the stored procedure names of the database
@@ -184,7 +183,7 @@ public:
    * @return the list of the names of the stored procedures in the database
    */
   std::list<std::string> getStoredProcedureNames() override;
-  
+
   /**
    * Returns the synonym names of the database
    * 
@@ -194,7 +193,7 @@ public:
    * @return the list of the names of the synonyms in the database
    */
   std::list<std::string> getSynonymNames() override;
-  
+
   /**
    * Returns the type names of the database
    * 
@@ -216,7 +215,6 @@ public:
   std::list<std::string> getViewNames() override;
 
 private:
-
   friend OcciStmt;
 
   /**
@@ -227,12 +225,12 @@ private:
   /**
    * The OCCI environment.
    */
-  oracle::occi::Environment *m_env;
+  oracle::occi::Environment* m_env;
 
   /**
    * The OCCI connection.
    */
-  oracle::occi::Connection *m_occiConn;
+  oracle::occi::Connection* m_occiConn;
 
   /**
    * Read-write lock to protect m_autocommitMode.
@@ -249,8 +247,8 @@ private:
    *
    * @param stmt The OCCI statement to be closed.
    */
-  void closeStmt(oracle::occi::Statement *const stmt);
+  void closeStmt(oracle::occi::Statement* const stmt);
 
-}; // class OcciConn
+};  // class OcciConn
 
-} // namespace cta::rdbms::wrapper
+}  // namespace cta::rdbms::wrapper

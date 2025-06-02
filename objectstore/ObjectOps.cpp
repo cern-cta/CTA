@@ -19,8 +19,10 @@
 
 namespace cta::objectstore {
 
-ObjectOpsBase::~ObjectOpsBase()  {
-  if (m_lockForSubObject) m_lockForSubObject->dereferenceSubObject(*this);
+ObjectOpsBase::~ObjectOpsBase() {
+  if (m_lockForSubObject) {
+    m_lockForSubObject->dereferenceSubObject(*this);
+  }
 }
 
-} // namespace cta::objectstore
+}  // namespace cta::objectstore

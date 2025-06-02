@@ -22,12 +22,10 @@ namespace cta::rdbms {
 //------------------------------------------------------------------------------
 // constructor
 //------------------------------------------------------------------------------
-CheckConstraintError::CheckConstraintError(
-  const std::string &context,
-  const std::string &dbErrorMessage,
-  const std::string &violatedConstraintName,
-  const bool embedBacktrace):
-  ConstraintError(context, dbErrorMessage, violatedConstraintName, embedBacktrace) {
-}
+CheckConstraintError::CheckConstraintError(const std::string& context,
+                                           const std::string& dbErrorMessage,
+                                           const std::string& violatedConstraintName,
+                                           const bool embedBacktrace)
+    : ConstraintError(context, dbErrorMessage, violatedConstraintName, embedBacktrace) {}
 
-} // namespace cta::rdbms
+}  // namespace cta::rdbms

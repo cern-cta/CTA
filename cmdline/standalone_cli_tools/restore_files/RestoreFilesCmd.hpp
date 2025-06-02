@@ -25,13 +25,21 @@
 
 #include "CtaFrontendApi.hpp"
 
-namespace eos::client { class EndpointMap;  }
-namespace cta::log    { class StdoutLogger; }
-namespace cta::admin  { class RecycleTapeFileLsItem; }
+namespace eos::client {
+class EndpointMap;
+}
+
+namespace cta::log {
+class StdoutLogger;
+}
+
+namespace cta::admin {
+class RecycleTapeFileLsItem;
+}
 
 namespace cta::cliTool {
 
-class RestoreFilesCmd final: public CmdLineTool {
+class RestoreFilesCmd final : public CmdLineTool {
 public:
   /**
    * Constructor.
@@ -41,8 +49,10 @@ public:
    * @param errStream Standard error stream.
    * @param log The object representing the API of the CTA logging system.
    */
-  RestoreFilesCmd(std::istream &inStream, std::ostream &outStream,
-    std::ostream &errStream, cta::log::StdoutLogger &log);
+  RestoreFilesCmd(std::istream& inStream,
+                  std::ostream& outStream,
+                  std::ostream& errStream,
+                  cta::log::StdoutLogger& log);
 
   /**
   * Destructor
@@ -56,7 +66,7 @@ public:
    * @param argv The command-line arguments.
    * @return The exit value of the program.
    */
-  int exceptionThrowingMain(const int argc, char *const *const argv) override;
+  int exceptionThrowingMain(const int argc, char* const* const argv) override;
 
   /**
    * Sets internal configuration parameters to be used for reading.
@@ -65,12 +75,12 @@ public:
    * @param username The name of the user running the command-line tool.
    * @param cmdLineArgs The arguments parsed from the command line.
    */
-  void readAndSetConfiguration(const std::string &userName, const CmdLineArgs &cmdLineArgs);
+  void readAndSetConfiguration(const std::string& userName, const CmdLineArgs& cmdLineArgs);
 
   /**
    * Populate the namespace endpoint configuration from a keytab file
    */
-  void setNamespaceMap(const std::string &keytab_file);
+  void setNamespaceMap(const std::string& keytab_file);
 
   /**
    * Restores the specified deleted files in the cta catalogue
@@ -83,13 +93,13 @@ public:
    * client cid and fid
    * @param diskInstance the disk instance of the eos instance
    */
-  void getCurrentEosIds(const std::string &diskInstance) const;
+  void getCurrentEosIds(const std::string& diskInstance) const;
 
   /**
    * Restores the deleted file present in the cta catalogue recycle bin
    * @param file the deleted tape file
    */
-  void restoreDeletedFileCopyCta(const cta::admin::RecycleTapeFileLsItem &file) const;
+  void restoreDeletedFileCopyCta(const cta::admin::RecycleTapeFileLsItem& file) const;
 
   /**
    * Adds a container in the eos namespace, if it does not exist
@@ -98,7 +108,7 @@ public:
    * @param sc the storage class of the container
    * @returns the container id of the container identified by path
    */
-  uint64_t addContainerEos(const std::string &diskInstance, const std::string &path, const std::string &sc) const;
+  uint64_t addContainerEos(const std::string& diskInstance, const std::string& path, const std::string& sc) const;
 
   /**
    * Returns the container id of the container in the EOS namespace
@@ -108,40 +118,40 @@ public:
    *
    * @returns the container id of the container in the EOS namespace, or zero if it does not exist
    */
-  uint64_t containerExistsEos(const std::string &diskInstance, const std::string &path) const;
+  uint64_t containerExistsEos(const std::string& diskInstance, const std::string& path) const;
 
   /**
    * Returns true (i.e. not zero) if a file with given id exists in the eos namespace
    * @param diskInstance eos disk instance
    * @param diskFileId the eos file id to check
    */
-  bool fileExistsEos(const std::string &diskInstance, const std::string &diskFileId) const;
+  bool fileExistsEos(const std::string& diskInstance, const std::string& diskFileId) const;
 
   /**
    * Returns true (i.e. not zero) if a file was deleted using cta-admin tf rm
    * @param diskInstance eos disk instance
    * @param diskFileId the eos file id to check
    */
-  bool fileWasDeletedByRM(const cta::admin::RecycleTapeFileLsItem &file) const;
+  bool fileWasDeletedByRM(const cta::admin::RecycleTapeFileLsItem& file) const;
 
   /**
    * Returns true (i.e. not zero) if an archive file with given id exists in the cta catalogue
    * @param archiveFileId the archive file id to check
    */
-  bool archiveFileExistsCTA(const uint64_t &archiveFileId) const;
+  bool archiveFileExistsCTA(const uint64_t& archiveFileId) const;
 
   /**
    * Returns the id of a given file in eos or zero if the files does not exist
    * @param diskInstance eos disk instance
    * @param path the path to check
    */
-  uint64_t getFileIdEos(const std::string &diskInstance, const std::string &path) const;
+  uint64_t getFileIdEos(const std::string& diskInstance, const std::string& path) const;
 
   /**
    * Restores the deleted file present in the eos namespace
    * @param file the deleted tape file
    */
-  uint64_t restoreDeletedFileEos(const cta::admin::RecycleTapeFileLsItem &file) const;
+  uint64_t restoreDeletedFileEos(const cta::admin::RecycleTapeFileLsItem& file) const;
 
 private:
   /**
@@ -150,7 +160,7 @@ private:
    * @param file  The restored tape file in CTA
    * @return      Tuple of EOS disk instance and file ID (fid) as a decimal string
    */
-  std::pair<std::string,std::string> getInstanceAndFidFromCTA(const cta::admin::RecycleTapeFileLsItem& file);
+  std::pair<std::string, std::string> getInstanceAndFidFromCTA(const cta::admin::RecycleTapeFileLsItem& file);
 
   /**
    * Query EOS for the archiveFileId and checksum of the restored file
@@ -160,12 +170,12 @@ private:
    * @return              tuple containing archiveFileId and checksum of the file
    */
   std::pair<uint64_t, std::string> getArchiveFileIdAndChecksumFromEOS(const std::string& diskInstance,
-    const std::string& fidStr);
+                                                                      const std::string& fidStr);
 
   /**
    * The object representing the API of the CTA logging system.
    */
-  cta::log::StdoutLogger &m_log;
+  cta::log::StdoutLogger& m_log;
 
   /**
    * True if the command should just restore deleted tape file copies
@@ -214,16 +224,15 @@ private:
 
   std::unique_ptr<::eos::client::EndpointMap> m_endpointMapPtr;
 
-   const std::string StreamBufferSize      = "1024";                  //!< Buffer size for Data/Stream Responses
-   const std::string DefaultRequestTimeout = "10";                    //!< Default Request Timeout. Can be overridden by
-                                                                      //!< XRD_REQUESTTIMEOUT environment variable.
+  const std::string StreamBufferSize = "1024";     //!< Buffer size for Data/Stream Responses
+  const std::string DefaultRequestTimeout = "10";  //!< Default Request Timeout. Can be overridden by
+                                                   //!< XRD_REQUESTTIMEOUT environment variable.
 
-   const std::string m_ctaVersion = CTA_VERSION;                      //!< The version of CTA
-   const std::string m_xrootdSsiProtobufInterfaceVersion =            //!< The xrootd-ssi-protobuf-interface version (=tag)
-      XROOTD_SSI_PROTOBUF_INTERFACE_VERSION;
+  const std::string m_ctaVersion = CTA_VERSION;            //!< The version of CTA
+  const std::string m_xrootdSsiProtobufInterfaceVersion =  //!< The xrootd-ssi-protobuf-interface version (=tag)
+    XROOTD_SSI_PROTOBUF_INTERFACE_VERSION;
 
-
-} ; // class RestoreFilesCmd
+};  // class RestoreFilesCmd
 
 // namespace admin
-} // namespace cta::cliTool
+}  // namespace cta::cliTool

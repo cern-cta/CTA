@@ -111,4 +111,4 @@ struct TapeSearchCriteria {
   std::optional<common::dataStructures::Tape::State> state;
 };  // struct TapeSearchCriteria
 
-} // namespace cta::catalogue
+}  // namespace cta::catalogue

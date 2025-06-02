@@ -18,7 +18,7 @@
 #include "common/dataStructures/TestSourceType.hpp"
 
 std::string cta::common::dataStructures::toString(cta::common::dataStructures::TestSourceType type) {
-  switch(type) {
+  switch (type) {
     case cta::common::dataStructures::TestSourceType::devzero:
       return "devzero";
     case cta::common::dataStructures::TestSourceType::devurandom:

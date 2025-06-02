@@ -43,4 +43,4 @@ public:
   virtual ~JSONDiskSystem() = default;
 };
 
-} // namespace cta::disk
+}  // namespace cta::disk

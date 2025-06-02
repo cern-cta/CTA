@@ -85,9 +85,7 @@ public:
    *
    * @return backtrace in a standard string.
    */
-  std::string const backtrace() const {
-    return m_backtrace.str();
-  }
+  const std::string backtrace() const { return m_backtrace.str(); }
 
   /**
    * Updates the m_what member with a concatenation of the message and the stack trace
@@ -116,6 +114,9 @@ protected:
   Backtrace m_backtrace;
 };
 
-} // namespace cta::exception
+}  // namespace cta::exception
 
-#define CTA_GENERATE_EXCEPTION_CLASS(A) class A: public cta::exception::Exception { using Exception::Exception; }
+#define CTA_GENERATE_EXCEPTION_CLASS(A)        \
+  class A : public cta::exception::Exception { \
+    using Exception::Exception;                \
+  }

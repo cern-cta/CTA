@@ -48,7 +48,7 @@ ReadFile* DiskFileFactory::createReadFile(const std::string& path) {
   // Xroot URL?
   regexResult = m_URLXrootFile.exec(path);
   if (regexResult.size()) {
-     return new XrootReadFile(regexResult[1], m_xrootTimeout);
+    return new XrootReadFile(regexResult[1], m_xrootTimeout);
   }
   // radosStriper URL?
   regexResult = m_URLCephFile.exec(path);

@@ -20,9 +20,9 @@
 #include <gmock/gmock-cardinalities.h>
 #include "Regex.hpp"
 
+using ::testing::_;
 using ::testing::AtLeast;
 using ::testing::Return;
-using ::testing::_;
 
 namespace unitTests {
 
@@ -53,7 +53,6 @@ TEST(Regex, OperationalTest) {
   ASSERT_EQ(ret2[1], "st124");
   ASSERT_EQ(ret3.size(), 0U);
 }
-
 
 TEST(Regex, SubstringMatch) {
   cta::utils::Regex re("^radosstriper:///([^:]+@[^:]+):(.*)$");
@@ -93,5 +92,4 @@ TEST(Regex, CopyConstructor) {
   ASSERT_EQ("pool", ret[2]);
   ASSERT_EQ("namespace", ret[4]);
 }
-}
-
+}  // namespace unitTests

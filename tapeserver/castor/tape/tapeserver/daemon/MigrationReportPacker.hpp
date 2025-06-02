@@ -225,6 +225,7 @@ private:
 
     void execute(MigrationReportPacker& reportPacker) override;
   };
+
   /*
    * This Report is only for jobs which were successfully
    * written to drive, but never flushed to tape
@@ -235,8 +236,7 @@ private:
     const std::string m_failureLog;
 
   public:
-    ReportLastBatchError(std::string& failureLog)
-        : m_failureLog(failureLog) {}
+    ReportLastBatchError(std::string& failureLog) : m_failureLog(failureLog) {}
 
     void execute(MigrationReportPacker& reportPacker) override;
   };

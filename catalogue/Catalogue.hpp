@@ -80,7 +80,6 @@ public:
   virtual const std::unique_ptr<DriveConfigCatalogue>& DriveConfig() = 0;
   virtual const std::unique_ptr<DriveStateCatalogue>& DriveState() = 0;
   virtual const std::unique_ptr<ArchiveFileCatalogue>& ArchiveFile() = 0;
-}; // class Catalogue
+};  // class Catalogue
 
-} // namespace cta::catalogue
-
+}  // namespace cta::catalogue

@@ -29,12 +29,13 @@
 
 namespace cta::catalogue {
 
-RdbmsDiskInstanceSpaceCatalogue::RdbmsDiskInstanceSpaceCatalogue(log::Logger &log,
-  std::shared_ptr<rdbms::ConnPool> connPool)
-  : m_log(log), m_connPool(connPool) {}
+RdbmsDiskInstanceSpaceCatalogue::RdbmsDiskInstanceSpaceCatalogue(log::Logger& log,
+                                                                 std::shared_ptr<rdbms::ConnPool> connPool)
+    : m_log(log),
+      m_connPool(connPool) {}
 
-void RdbmsDiskInstanceSpaceCatalogue::deleteDiskInstanceSpace(const std::string &name,
-  const std::string &diskInstance) {
+void RdbmsDiskInstanceSpaceCatalogue::deleteDiskInstanceSpace(const std::string& name,
+                                                              const std::string& diskInstance) {
   const char* const delete_sql = R"SQL(
     DELETE 
     FROM 
@@ -52,45 +53,49 @@ void RdbmsDiskInstanceSpaceCatalogue::deleteDiskInstanceSpace(const std::string 
 
   // The delete statement will effect no rows and will not raise an error if
   // either the tape does not exist or if it still has tape files
-  if(0 == stmt.getNbAffectedRows()) {
-    if(diskInstanceSpaceExists(conn, name, diskInstance)) {
-      throw UserSpecifiedANonEmptyDiskInstanceSpaceAfterDelete(std::string("Cannot delete disk instance space")
-        + name + " for unknown reason");
+  if (0 == stmt.getNbAffectedRows()) {
+    if (diskInstanceSpaceExists(conn, name, diskInstance)) {
+      throw UserSpecifiedANonEmptyDiskInstanceSpaceAfterDelete(std::string("Cannot delete disk instance space") + name +
+                                                               " for unknown reason");
     } else {
-      throw UserSpecifiedANonExistentDiskInstanceSpace(std::string("Cannot delete disk instance space ") 
-        + name + " because it does not exist");
+      throw UserSpecifiedANonExistentDiskInstanceSpace(std::string("Cannot delete disk instance space ") + name +
+                                                       " because it does not exist");
     }
   }
 }
 
-void RdbmsDiskInstanceSpaceCatalogue::createDiskInstanceSpace(const common::dataStructures::SecurityIdentity &admin,
-  const std::string &name, const std::string &diskInstance, const std::string &freeSpaceQueryURL,
-  const uint64_t refreshInterval, const std::string &comment) {
-  if(name.empty()) {
-    throw UserSpecifiedAnEmptyStringDiskInstanceSpaceName("Cannot create disk instance space because the name is an empty string");
+void RdbmsDiskInstanceSpaceCatalogue::createDiskInstanceSpace(const common::dataStructures::SecurityIdentity& admin,
+                                                              const std::string& name,
+                                                              const std::string& diskInstance,
+                                                              const std::string& freeSpaceQueryURL,
+                                                              const uint64_t refreshInterval,
+                                                              const std::string& comment) {
+  if (name.empty()) {
+    throw UserSpecifiedAnEmptyStringDiskInstanceSpaceName(
+      "Cannot create disk instance space because the name is an empty string");
   }
-  if(freeSpaceQueryURL.empty()) {
-    throw UserSpecifiedAnEmptyStringFreeSpaceQueryURL("Cannot create disk instance space because the free space query URL is an empty string");
+  if (freeSpaceQueryURL.empty()) {
+    throw UserSpecifiedAnEmptyStringFreeSpaceQueryURL(
+      "Cannot create disk instance space because the free space query URL is an empty string");
   }
-  if(0 == refreshInterval) {
+  if (0 == refreshInterval) {
     throw UserSpecifiedAZeroRefreshInterval("Cannot create disk instance space because the refresh interval is zero");
   }
-  if(comment.empty()) {
+  if (comment.empty()) {
     throw UserSpecifiedAnEmptyStringComment("Cannot create disk instance space because the comment is an empty string");
   }
   const auto trimmedComment = RdbmsCatalogueUtils::checkCommentOrReasonMaxLength(comment, &m_log);
 
   auto conn = m_connPool->getConn();
-  if(!RdbmsCatalogueUtils::diskInstanceExists(conn, diskInstance)) {
-    throw exception::UserError(std::string("Cannot create disk instance space ") + name +
-      " for disk instance " + diskInstance +
-      " because the disk instance does not exist");
+  if (!RdbmsCatalogueUtils::diskInstanceExists(conn, diskInstance)) {
+    throw exception::UserError(std::string("Cannot create disk instance space ") + name + " for disk instance " +
+                               diskInstance + " because the disk instance does not exist");
   }
 
   if (diskInstanceSpaceExists(conn, name, diskInstance)) {
-    throw exception::UserError(std::string("Cannot create disk instance space ") + name +
-      " for disk instance " + diskInstance +
-      " because a disk instance space with the same name and disk instance already exists");
+    throw exception::UserError(std::string("Cannot create disk instance space ") + name + " for disk instance " +
+                               diskInstance +
+                               " because a disk instance space with the same name and disk instance already exists");
   }
 
   const time_t now = time(nullptr);
@@ -185,9 +190,9 @@ std::list<common::dataStructures::DiskInstanceSpace> RdbmsDiskInstanceSpaceCatal
     diskInstanceSpace.name = rset.columnString("DISK_INSTANCE_SPACE_NAME");
     diskInstanceSpace.diskInstance = rset.columnString("DISK_INSTANCE_NAME");
     diskInstanceSpace.freeSpaceQueryURL = rset.columnString("FREE_SPACE_QUERY_URL");
-    diskInstanceSpace.refreshInterval =  rset.columnUint64("REFRESH_INTERVAL");
-    diskInstanceSpace.freeSpace =  rset.columnUint64("FREE_SPACE");
-    diskInstanceSpace.lastRefreshTime =  rset.columnUint64("LAST_REFRESH_TIME");
+    diskInstanceSpace.refreshInterval = rset.columnUint64("REFRESH_INTERVAL");
+    diskInstanceSpace.freeSpace = rset.columnUint64("FREE_SPACE");
+    diskInstanceSpace.lastRefreshTime = rset.columnUint64("LAST_REFRESH_TIME");
     diskInstanceSpace.comment = rset.columnString("USER_COMMENT");
     diskInstanceSpace.creationLog.username = rset.columnString("CREATION_LOG_USER_NAME");
     diskInstanceSpace.creationLog.host = rset.columnString("CREATION_LOG_HOST_NAME");
@@ -201,12 +206,13 @@ std::list<common::dataStructures::DiskInstanceSpace> RdbmsDiskInstanceSpaceCatal
 }
 
 void RdbmsDiskInstanceSpaceCatalogue::modifyDiskInstanceSpaceComment(
-  const common::dataStructures::SecurityIdentity &admin, const std::string &name, const std::string &diskInstance,
-  const std::string &comment) {
-
-  if(comment.empty()) {
+  const common::dataStructures::SecurityIdentity& admin,
+  const std::string& name,
+  const std::string& diskInstance,
+  const std::string& comment) {
+  if (comment.empty()) {
     throw UserSpecifiedAnEmptyStringComment("Cannot modify disk instance space "
-      "because the new comment is an empty string");
+                                            "because the new comment is an empty string");
   }
   const auto trimmedComment = RdbmsCatalogueUtils::checkCommentOrReasonMaxLength(comment, &m_log);
   const time_t now = time(nullptr);
@@ -231,18 +237,20 @@ void RdbmsDiskInstanceSpaceCatalogue::modifyDiskInstanceSpaceComment(
   stmt.bindString(":DISK_INSTANCE_SPACE_NAME", name);
   stmt.executeNonQuery();
 
-  if(0 == stmt.getNbAffectedRows()) {
-    throw UserSpecifiedANonExistentDiskInstanceSpace(std::string("Cannot modify disk system ") + name
-      + " because it does not exist");
+  if (0 == stmt.getNbAffectedRows()) {
+    throw UserSpecifiedANonExistentDiskInstanceSpace(std::string("Cannot modify disk system ") + name +
+                                                     " because it does not exist");
   }
 }
 
 void RdbmsDiskInstanceSpaceCatalogue::modifyDiskInstanceSpaceRefreshInterval(
-  const common::dataStructures::SecurityIdentity &admin, const std::string &name, const std::string &diskInstance,
+  const common::dataStructures::SecurityIdentity& admin,
+  const std::string& name,
+  const std::string& diskInstance,
   const uint64_t refreshInterval) {
-  if(0 == refreshInterval) {
+  if (0 == refreshInterval) {
     throw UserSpecifiedAZeroRefreshInterval("Cannot modify disk instance space "
-      "because the new refreshInterval is zero");
+                                            "because the new refreshInterval is zero");
   }
   const time_t now = time(nullptr);
   const char* const sql = R"SQL(
@@ -266,14 +274,15 @@ void RdbmsDiskInstanceSpaceCatalogue::modifyDiskInstanceSpaceRefreshInterval(
   stmt.bindString(":DISK_INSTANCE_SPACE_NAME", name);
   stmt.executeNonQuery();
 
-  if(0 == stmt.getNbAffectedRows()) {
-    throw UserSpecifiedANonExistentDiskInstanceSpace(std::string("Cannot modify disk system ") + name
-      + " because it does not exist");
+  if (0 == stmt.getNbAffectedRows()) {
+    throw UserSpecifiedANonExistentDiskInstanceSpace(std::string("Cannot modify disk system ") + name +
+                                                     " because it does not exist");
   }
 }
 
-void RdbmsDiskInstanceSpaceCatalogue::modifyDiskInstanceSpaceFreeSpace(const std::string &name,
-  const std::string &diskInstance, const uint64_t freeSpace) {
+void RdbmsDiskInstanceSpaceCatalogue::modifyDiskInstanceSpaceFreeSpace(const std::string& name,
+                                                                       const std::string& diskInstance,
+                                                                       const uint64_t freeSpace) {
   const time_t now = time(nullptr);
   const char* const sql = R"SQL(
     UPDATE DISK_INSTANCE_SPACE SET 
@@ -292,18 +301,20 @@ void RdbmsDiskInstanceSpaceCatalogue::modifyDiskInstanceSpaceFreeSpace(const std
   stmt.bindString(":DISK_INSTANCE_SPACE_NAME", name);
   stmt.executeNonQuery();
 
-  if(0 == stmt.getNbAffectedRows()) {
-    throw UserSpecifiedANonExistentDiskInstanceSpace(std::string("Cannot modify disk system ") + name
-      + " because it does not exist");
+  if (0 == stmt.getNbAffectedRows()) {
+    throw UserSpecifiedANonExistentDiskInstanceSpace(std::string("Cannot modify disk system ") + name +
+                                                     " because it does not exist");
   }
 }
 
 void RdbmsDiskInstanceSpaceCatalogue::modifyDiskInstanceSpaceQueryURL(
-  const common::dataStructures::SecurityIdentity &admin, const std::string &name, const std::string &diskInstance,
-  const std::string &freeSpaceQueryURL) {
-  if(freeSpaceQueryURL.empty()) {
+  const common::dataStructures::SecurityIdentity& admin,
+  const std::string& name,
+  const std::string& diskInstance,
+  const std::string& freeSpaceQueryURL) {
+  if (freeSpaceQueryURL.empty()) {
     throw UserSpecifiedAnEmptyStringFreeSpaceQueryURL("Cannot modify disk instance space "
-      "because the new freeSpaceQueryURL is an empty string");
+                                                      "because the new freeSpaceQueryURL is an empty string");
   }
 
   const time_t now = time(nullptr);
@@ -328,14 +339,15 @@ void RdbmsDiskInstanceSpaceCatalogue::modifyDiskInstanceSpaceQueryURL(
   stmt.bindString(":DISK_INSTANCE_SPACE_NAME", name);
   stmt.executeNonQuery();
 
-  if(0 == stmt.getNbAffectedRows()) {
-    throw UserSpecifiedANonExistentDiskInstanceSpace(std::string("Cannot modify disk system ") + name
-      + " because it does not exist");
+  if (0 == stmt.getNbAffectedRows()) {
+    throw UserSpecifiedANonExistentDiskInstanceSpace(std::string("Cannot modify disk system ") + name +
+                                                     " because it does not exist");
   }
 }
 
-bool RdbmsDiskInstanceSpaceCatalogue::diskInstanceSpaceExists(rdbms::Conn &conn, const std::string &name,
-  const std::string &diskInstance) const {
+bool RdbmsDiskInstanceSpaceCatalogue::diskInstanceSpaceExists(rdbms::Conn& conn,
+                                                              const std::string& name,
+                                                              const std::string& diskInstance) const {
   const char* const sql = R"SQL(
     SELECT 
       DISK_INSTANCE_SPACE_NAME AS DISK_INSTANCE_SPACE_NAME 
@@ -353,4 +365,4 @@ bool RdbmsDiskInstanceSpaceCatalogue::diskInstanceSpaceExists(rdbms::Conn &conn,
   return rset.next();
 }
 
-} // namespace cta::catalogue
+}  // namespace cta::catalogue

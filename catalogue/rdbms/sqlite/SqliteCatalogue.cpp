@@ -35,16 +35,14 @@ namespace cta::catalogue {
 //------------------------------------------------------------------------------
 // constructor
 //------------------------------------------------------------------------------
-SqliteCatalogue::SqliteCatalogue(
-  log::Logger &log,
-  const std::string &filename,
-  const uint64_t nbConns,
-  const uint64_t nbArchiveFileListingConns):
-  RdbmsCatalogue(
-    log,
-    rdbms::Login(rdbms::Login::DBTYPE_SQLITE, "", "", filename, "", 0),
-    nbConns,
-    nbArchiveFileListingConns) {
+SqliteCatalogue::SqliteCatalogue(log::Logger& log,
+                                 const std::string& filename,
+                                 const uint64_t nbConns,
+                                 const uint64_t nbArchiveFileListingConns)
+    : RdbmsCatalogue(log,
+                     rdbms::Login(rdbms::Login::DBTYPE_SQLITE, "", "", filename, "", 0),
+                     nbConns,
+                     nbArchiveFileListingConns) {
   RdbmsCatalogue::m_fileRecycleLog = std::make_unique<SqliteFileRecycleLogCatalogue>(m_log, m_connPool, this);
   RdbmsCatalogue::m_storageClass = std::make_unique<SqliteStorageClassCatalogue>(m_log, m_connPool, this);
   RdbmsCatalogue::m_tapePool = std::make_unique<SqliteTapePoolCatalogue>(m_log, m_connPool, this);
@@ -60,16 +58,18 @@ SqliteCatalogue::SqliteCatalogue(
 //------------------------------------------------------------------------------
 // createAndPopulateTempTableFxid
 //------------------------------------------------------------------------------
-std::string SqliteCatalogue::createAndPopulateTempTableFxid(rdbms::Conn &conn, const std::optional<std::vector<std::string>> &diskFileIds) const {
+std::string
+SqliteCatalogue::createAndPopulateTempTableFxid(rdbms::Conn& conn,
+                                                const std::optional<std::vector<std::string>>& diskFileIds) const {
   const std::string tempTableName = "TEMP.DISK_FXIDS";
 
   // Drop any prexisting temporary table and create a new one
   conn.executeNonQuery("DROP TABLE IF EXISTS " + tempTableName);
   conn.executeNonQuery("CREATE TEMPORARY TABLE " + tempTableName + "(DISK_FILE_ID TEXT)");
 
-  if(diskFileIds) {
+  if (diskFileIds) {
     auto stmt = conn.createStmt("INSERT INTO " + tempTableName + " VALUES(:DISK_FILE_ID)");
-    for(auto &diskFileId : diskFileIds.value()) {
+    for (auto& diskFileId : diskFileIds.value()) {
       stmt.bindString(":DISK_FILE_ID", diskFileId);
       stmt.executeNonQuery();
     }
@@ -78,4 +78,4 @@ std::string SqliteCatalogue::createAndPopulateTempTableFxid(rdbms::Conn &conn, c
   return tempTableName;
 }
 
-} // namespace cta::catalogue
+}  // namespace cta::catalogue

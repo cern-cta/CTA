@@ -54,4 +54,4 @@
  * to either EINVAL to indicate the error number is invalid, or to ERANGE to
  * indicate the supplied error buffer is not large enough.
  */
-EXTERN_C int strerror_r_wrapper(int errnum, char *buf, size_t buflen);
+EXTERN_C int strerror_r_wrapper(int errnum, char* buf, size_t buflen);

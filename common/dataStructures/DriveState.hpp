@@ -33,12 +33,11 @@ namespace cta::common::dataStructures {
  * of the old "showqueues -x -D" CASTOR command
  */
 struct DriveState {
+  bool operator==(const DriveState& rhs) const;
 
-  bool operator==(const DriveState &rhs) const;
+  bool operator!=(const DriveState& rhs) const;
 
-  bool operator!=(const DriveState &rhs) const;
-
-  struct DriveConfigItem{
+  struct DriveConfigItem {
     std::string category;
     std::string key;
     std::string value;
@@ -81,8 +80,8 @@ struct DriveState {
   std::vector<DriveConfigItem> driveConfigItems;
   std::string devFileName;
   std::string rawLibrarySlot;
-}; // struct DriveState
+};  // struct DriveState
 
-std::ostream &operator<<(std::ostream &os, const DriveState &obj);
+std::ostream& operator<<(std::ostream& os, const DriveState& obj);
 
-} // namespace cta::common::dataStructures
+}  // namespace cta::common::dataStructures

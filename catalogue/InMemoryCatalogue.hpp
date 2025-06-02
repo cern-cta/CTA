@@ -26,7 +26,7 @@ class CatalogueFactory;
 /**
  * CTA catalogue class to be used for unit testing.
  */
-class InMemoryCatalogue: public SchemaCreatingSqliteCatalogue {
+class InMemoryCatalogue : public SchemaCreatingSqliteCatalogue {
 public:
   /**
    * Constructor.
@@ -39,10 +39,7 @@ public:
    * connections to the underlying relational database for the sole purpose of
    * listing archive files.
    */
-  InMemoryCatalogue(
-    log::Logger &log,
-    const uint64_t nbConns,
-    const uint64_t nbArchiveFileListingConns);
+  InMemoryCatalogue(log::Logger& log, const uint64_t nbConns, const uint64_t nbArchiveFileListingConns);
 };
 
-} // namespace cta::catalogue
+}  // namespace cta::catalogue

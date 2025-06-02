@@ -24,29 +24,25 @@ namespace cta::common::dataStructures {
 //------------------------------------------------------------------------------
 // operator==
 //------------------------------------------------------------------------------
-bool AdminUser::operator==(const AdminUser &rhs) const {
-  return name==rhs.name
-      && creationLog==rhs.creationLog
-      && lastModificationLog==rhs.lastModificationLog
-      && comment==rhs.comment;
+bool AdminUser::operator==(const AdminUser& rhs) const {
+  return name == rhs.name && creationLog == rhs.creationLog && lastModificationLog == rhs.lastModificationLog &&
+         comment == rhs.comment;
 }
 
 //------------------------------------------------------------------------------
 // operator!=
 //------------------------------------------------------------------------------
-bool AdminUser::operator!=(const AdminUser &rhs) const {
+bool AdminUser::operator!=(const AdminUser& rhs) const {
   return !operator==(rhs);
 }
 
 //------------------------------------------------------------------------------
 // operator<<
 //------------------------------------------------------------------------------
-std::ostream &operator<<(std::ostream &os, const AdminUser &obj) {
-  os << "(name=" << obj.name
-     << " creationLog=" << obj.creationLog
-     << " lastModificationLog=" << obj.lastModificationLog
+std::ostream& operator<<(std::ostream& os, const AdminUser& obj) {
+  os << "(name=" << obj.name << " creationLog=" << obj.creationLog << " lastModificationLog=" << obj.lastModificationLog
      << " comment=" << obj.comment << ")";
   return os;
 }
 
-} // namespace cta::common::dataStructures
+}  // namespace cta::common::dataStructures

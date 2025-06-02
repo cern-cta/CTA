@@ -30,10 +30,10 @@ namespace unitTests {
 class JSONCTestObject : public object::JSONCObject, public TestObject {
 public:
   JSONCTestObject();
-  void buildFromJSON(const std::string & json) override;
+  void buildFromJSON(const std::string& json) override;
   std::string getExpectedJSONToBuildObject() const override;
   std::string getJSON() override;
   virtual ~JSONCTestObject() = default;
 };
 
-}
+}  // namespace unitTests

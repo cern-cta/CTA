@@ -29,4 +29,4 @@ class TimeoutException : public Exception {
   using Exception::Exception;
 };
 
-} // namespace cta::exception
+}  // namespace cta::exception

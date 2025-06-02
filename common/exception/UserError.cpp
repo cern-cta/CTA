@@ -22,8 +22,6 @@ namespace cta::exception {
 //------------------------------------------------------------------------------
 // constructor
 //------------------------------------------------------------------------------
-UserError::UserError(const std::string &context, const bool embedBacktrace):
-  Exception(context, embedBacktrace) {
-}
+UserError::UserError(const std::string& context, const bool embedBacktrace) : Exception(context, embedBacktrace) {}
 
-} // namespace cta::exception
+}  // namespace cta::exception

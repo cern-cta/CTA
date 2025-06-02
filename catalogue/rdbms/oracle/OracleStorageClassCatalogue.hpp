@@ -28,12 +28,13 @@ class RdbmsCatalogue;
 
 class OracleStorageClassCatalogue : public RdbmsStorageClassCatalogue {
 public:
-  OracleStorageClassCatalogue(log::Logger &log, std::shared_ptr<rdbms::ConnPool> connPool,
-    RdbmsCatalogue* rdbmsCatalogue);
+  OracleStorageClassCatalogue(log::Logger& log,
+                              std::shared_ptr<rdbms::ConnPool> connPool,
+                              RdbmsCatalogue* rdbmsCatalogue);
   ~OracleStorageClassCatalogue() override = default;
 
 private:
-  uint64_t getNextStorageClassId(rdbms::Conn &conn) override;
+  uint64_t getNextStorageClassId(rdbms::Conn& conn) override;
 };  // class PostgresStorageClassCatalogue
 
-} // namespace cta::catalogue
+}  // namespace cta::catalogue

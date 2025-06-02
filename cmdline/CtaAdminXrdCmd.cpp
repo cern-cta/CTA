@@ -26,7 +26,6 @@
 #include <cmdline/CtaAdminTextFormatter.hpp>
 #include "tapeserver/daemon/common/TapedConfiguration.hpp"
 
-
 // GLOBAL VARIABLES : used to pass information between main thread and stream handler thread
 
 // global synchronisation flag
@@ -151,10 +150,9 @@ void IStreamBuffer<cta::xrd::Data>::DataCallback(cta::xrd::Data record) const {
 
 namespace cta::admin {
 
-
-void CtaAdminXrdCmd::send(const CtaAdminParsedCmd &parsedCmd) const {
+void CtaAdminXrdCmd::send(const CtaAdminParsedCmd& parsedCmd) const {
   // Validate the Protocol Buffer
-  const auto &request = parsedCmd.getRequest();
+  const auto& request = parsedCmd.getRequest();
   try {
     validateCmd(request.admincmd());
   } catch (std::runtime_error& ex) {
@@ -274,9 +272,7 @@ void CtaAdminXrdCmd::send(const CtaAdminParsedCmd &parsedCmd) const {
   }
 }  // namespace cta::admin
 
-} // namespace cta::admin
-
-
+}  // namespace cta::admin
 
 /*!
 * Start here
@@ -300,17 +296,19 @@ int main(int argc, const char** argv) {
     google::protobuf::ShutdownProtobufLibrary();
 
     return 0;
-  } catch (XrdSsiPb::PbException &ex) {
+  } catch (XrdSsiPb::PbException& ex) {
     std::cerr << "Error in Google Protocol Buffers: " << ex.what() << std::endl;
-  } catch (XrdSsiPb::XrdSsiException &ex) {
+  } catch (XrdSsiPb::XrdSsiException& ex) {
     std::cerr << "Error from XRootD SSI Framework: " << ex.what() << std::endl;
-  } catch (XrdSsiPb::UserException &ex) {
-    if(CtaAdminParsedCmd::isJson()) std::cout << CtaAdminParsedCmd::jsonCloseDelim();
-      std::cerr << ex.what() << std::endl;
-    return 2;
-  } catch (std::runtime_error &ex) {
+  } catch (XrdSsiPb::UserException& ex) {
+    if (CtaAdminParsedCmd::isJson()) {
+      std::cout << CtaAdminParsedCmd::jsonCloseDelim();
+    }
     std::cerr << ex.what() << std::endl;
-  } catch (std::exception &ex) {
+    return 2;
+  } catch (std::runtime_error& ex) {
+    std::cerr << ex.what() << std::endl;
+  } catch (std::exception& ex) {
     std::cerr << "Caught exception: " << ex.what() << std::endl;
   } catch (...) {
     std::cerr << "Caught an unknown exception" << std::endl;

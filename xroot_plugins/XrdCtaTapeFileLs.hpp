@@ -29,38 +29,37 @@ namespace cta::xrd {
  */
 class TapeFileLsStream : public XrdCtaStream {
 public:
-  TapeFileLsStream(const frontend::AdminCmdStream& requestMsg, cta::catalogue::Catalogue &catalogue, cta::Scheduler &scheduler);
+  TapeFileLsStream(const frontend::AdminCmdStream& requestMsg,
+                   cta::catalogue::Catalogue& catalogue,
+                   cta::Scheduler& scheduler);
 
 private:
   /*!
    * Can we close the stream?
    */
-  bool isDone() const override {
-    return !m_tapeFileItor.hasMore();
-  }
+  bool isDone() const override { return !m_tapeFileItor.hasMore(); }
 
   /*!
    * Fill the buffer
    */
-  virtual int fillBuffer(XrdSsiPb::OStreamBuffer<Data> *streambuf);
+  virtual int fillBuffer(XrdSsiPb::OStreamBuffer<Data>* streambuf);
 
-  catalogue::ArchiveFileItor m_tapeFileItor;       //!< Iterator across files which have been archived
+  catalogue::ArchiveFileItor m_tapeFileItor;  //!< Iterator across files which have been archived
   const std::string m_instanceName;
 
-  static constexpr const char* const LOG_SUFFIX  = "TapeFileLsStream";    //!< Identifier for log messages
+  static constexpr const char* const LOG_SUFFIX = "TapeFileLsStream";  //!< Identifier for log messages
 };
 
-
 TapeFileLsStream::TapeFileLsStream(const frontend::AdminCmdStream& requestMsg,
-  cta::catalogue::Catalogue &catalogue, cta::Scheduler &scheduler) :
-    XrdCtaStream(catalogue, scheduler),
-    m_instanceName(requestMsg.getInstanceName())
-{
+                                   cta::catalogue::Catalogue& catalogue,
+                                   cta::Scheduler& scheduler)
+    : XrdCtaStream(catalogue, scheduler),
+      m_instanceName(requestMsg.getInstanceName()) {
   using namespace cta::admin;
 
   XrdSsiPb::Log::Msg(XrdSsiPb::Log::DEBUG, LOG_SUFFIX, "TapeFileLsStream() constructor");
 
-  bool has_any = false; // set to true if at least one optional option is set
+  bool has_any = false;  // set to true if at least one optional option is set
 
   // Get the search criteria from the optional options
   cta::catalogue::TapeFileSearchCriteria searchCriteria;
@@ -70,28 +69,29 @@ TapeFileLsStream::TapeFileLsStream(const frontend::AdminCmdStream& requestMsg,
 
   // Disk file IDs can be a list or a single ID
   searchCriteria.diskFileIds = requestMsg.getOptional(OptionStrList::FILE_ID, &has_any);
-  if(diskFileIdStr) {
-    if(!searchCriteria.diskFileIds) searchCriteria.diskFileIds = std::vector<std::string>();
+  if (diskFileIdStr) {
+    if (!searchCriteria.diskFileIds) {
+      searchCriteria.diskFileIds = std::vector<std::string>();
+    }
     searchCriteria.diskFileIds->push_back(diskFileIdStr.value());
   }
   searchCriteria.diskInstance = requestMsg.getOptional(OptionString::INSTANCE, &has_any);
 
   searchCriteria.archiveFileId = requestMsg.getOptional(OptionUInt64::ARCHIVE_FILE_ID, &has_any);
 
-  if(!has_any) {
-    throw cta::exception::UserError("Must specify at least one of the following search options: vid, fxid, diskfileid, fxidfile or archiveFileId");
+  if (!has_any) {
+    throw cta::exception::UserError(
+      "Must specify at least one of the following search options: vid, fxid, diskfileid, fxidfile or archiveFileId");
   }
 
   m_tapeFileItor = m_catalogue.ArchiveFile()->getArchiveFilesItor(searchCriteria);
 }
 
-
-int TapeFileLsStream::fillBuffer(XrdSsiPb::OStreamBuffer<Data> *streambuf) {
-  for(bool is_buffer_full = false; m_tapeFileItor.hasMore() && !is_buffer_full; )
-  {
+int TapeFileLsStream::fillBuffer(XrdSsiPb::OStreamBuffer<Data>* streambuf) {
+  for (bool is_buffer_full = false; m_tapeFileItor.hasMore() && !is_buffer_full;) {
     const cta::common::dataStructures::ArchiveFile archiveFile = m_tapeFileItor.next();
 
-    for(auto jt = archiveFile.tapeFiles.cbegin(); jt != archiveFile.tapeFiles.cend(); jt++) {
+    for (auto jt = archiveFile.tapeFiles.cbegin(); jt != archiveFile.tapeFiles.cend(); jt++) {
       Data record;
       // Set the instance_name field
       record.mutable_tfls_item()->set_instance_name(m_instanceName);
@@ -105,7 +105,7 @@ int TapeFileLsStream::fillBuffer(XrdSsiPb::OStreamBuffer<Data> *streambuf) {
       // Checksum
       common::ChecksumBlob csb;
       checksum::ChecksumBlobToProtobuf(archiveFile.checksumBlob, csb);
-      for(auto csb_it = csb.cs().begin(); csb_it != csb.cs().end(); ++csb_it) {
+      for (auto csb_it = csb.cs().begin(); csb_it != csb.cs().end(); ++csb_it) {
         auto cs_ptr = af->add_checksum();
         cs_ptr->set_type(csb_it->type());
         cs_ptr->set_value(checksum::ChecksumBlob::ByteArrayToHex(csb_it->value()));
@@ -137,4 +137,4 @@ int TapeFileLsStream::fillBuffer(XrdSsiPb::OStreamBuffer<Data> *streambuf) {
   return streambuf->Size();
 }
 
-} // namespace cta::xrd
+}  // namespace cta::xrd

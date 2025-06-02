@@ -19,11 +19,11 @@
 
 #include "osdep.h"
 
-	/* structure to be used with Cinitdaemon()/Cinitservice() */
+/* structure to be used with Cinitdaemon()/Cinitservice() */
 
 struct main_args {
-	int	argc;
-	char	**argv;
+  int argc;
+  char** argv;
 };
 
-EXTERN_C int Cinitdaemon (const char *const name, void (*const wait4child) (int));
+EXTERN_C int Cinitdaemon(const char* const name, void (*const wait4child)(int));

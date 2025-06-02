@@ -25,9 +25,8 @@ namespace cta::catalogue {
 /**
  * Factory of Catalogue objects.
  */
-class InMemoryCatalogueFactory: public CatalogueFactory {
+class InMemoryCatalogueFactory : public CatalogueFactory {
 public:
-
   /**
    * Constructor
    *
@@ -42,11 +41,10 @@ public:
    * try to connect to the database in the event of LostDatabaseConnection
    * exceptions being thrown.
    */
-  InMemoryCatalogueFactory(
-    log::Logger &log,
-    const uint64_t nbConns,
-    const uint64_t nbArchiveFileListingConns,
-    const uint32_t maxTriesToConnect);
+  InMemoryCatalogueFactory(log::Logger& log,
+                           const uint64_t nbConns,
+                           const uint64_t nbArchiveFileListingConns,
+                           const uint32_t maxTriesToConnect);
 
   /**
    * Returns a newly created CTA catalogue object.
@@ -54,11 +52,10 @@ public:
   std::unique_ptr<Catalogue> create() override;
 
 private:
-
   /**
    * Object representing the API to the CTA logging system.
    */
-  log::Logger &m_log;
+  log::Logger& m_log;
 
   /**
    * The maximum number of concurrent connections to the underlying relational
@@ -80,6 +77,6 @@ private:
    */
   uint32_t m_maxTriesToConnect;
 
-}; // class InMemoryCatalogueFactory
+};  // class InMemoryCatalogueFactory
 
-} // namespace cta::catalogue
+}  // namespace cta::catalogue

@@ -29,7 +29,6 @@ namespace cta::catalogue {
  * A tape that can be written to.
  */
 struct TapeForWriting {
-
   /**
    * Constructor.
    *
@@ -47,7 +46,7 @@ struct TapeForWriting {
    *
    * @param ths The right hand side of the operator.
    */
-  bool operator==(const TapeForWriting &rhs) const;
+  bool operator==(const TapeForWriting& rhs) const;
 
   /**
    * The volume identifier of the tape.
@@ -99,7 +98,7 @@ struct TapeForWriting {
    */
   std::optional<std::string> encryptionKeyName;
 
-}; // struct TapeForWriting
+};  // struct TapeForWriting
 
 /**
  * Output stream operator for an TapeForWriting object.
@@ -110,6 +109,6 @@ struct TapeForWriting {
  * @param os The output stream.
  * @param obj The object.
  */
-std::ostream &operator<<(std::ostream &os, const TapeForWriting &obj);
+std::ostream& operator<<(std::ostream& os, const TapeForWriting& obj);
 
-} // namespace cta::catalogue
+}  // namespace cta::catalogue

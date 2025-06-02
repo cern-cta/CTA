@@ -27,27 +27,35 @@
 namespace cta::catalogue {
 
 FileRecycleLogCatalogueRetryWrapper::FileRecycleLogCatalogueRetryWrapper(const std::unique_ptr<Catalogue>& catalogue,
-  log::Logger &log, const uint32_t maxTriesToConnect):
-  m_catalogue(catalogue), m_log(log), m_maxTriesToConnect(maxTriesToConnect) {}
+                                                                         log::Logger& log,
+                                                                         const uint32_t maxTriesToConnect)
+    : m_catalogue(catalogue),
+      m_log(log),
+      m_maxTriesToConnect(maxTriesToConnect) {}
 
-FileRecycleLogItor FileRecycleLogCatalogueRetryWrapper::getFileRecycleLogItor(
-  const RecycleTapeFileSearchCriteria & searchCriteria) const {
-  return retryOnLostConnection(m_log, [this,&searchCriteria] {
-    return m_catalogue->FileRecycleLog()->getFileRecycleLogItor(searchCriteria);
-  }, m_maxTriesToConnect);
+FileRecycleLogItor
+FileRecycleLogCatalogueRetryWrapper::getFileRecycleLogItor(const RecycleTapeFileSearchCriteria& searchCriteria) const {
+  return retryOnLostConnection(
+    m_log,
+    [this, &searchCriteria] { return m_catalogue->FileRecycleLog()->getFileRecycleLogItor(searchCriteria); },
+    m_maxTriesToConnect);
 }
 
-void FileRecycleLogCatalogueRetryWrapper::restoreFileInRecycleLog(const RecycleTapeFileSearchCriteria & searchCriteria,
-  const std::string &newFid) {
-  return retryOnLostConnection(m_log, [this,&searchCriteria,&newFid] {
-    return m_catalogue->FileRecycleLog()->restoreFileInRecycleLog(searchCriteria, newFid);
-  }, m_maxTriesToConnect);
+void FileRecycleLogCatalogueRetryWrapper::restoreFileInRecycleLog(const RecycleTapeFileSearchCriteria& searchCriteria,
+                                                                  const std::string& newFid) {
+  return retryOnLostConnection(
+    m_log,
+    [this, &searchCriteria, &newFid] {
+      return m_catalogue->FileRecycleLog()->restoreFileInRecycleLog(searchCriteria, newFid);
+    },
+    m_maxTriesToConnect);
 }
 
 void FileRecycleLogCatalogueRetryWrapper::deleteFilesFromRecycleLog(const std::string& vid, log::LogContext& lc) {
-  return retryOnLostConnection(m_log, [this,&vid,&lc] {
-    return m_catalogue->FileRecycleLog()->deleteFilesFromRecycleLog(vid, lc);
-  }, m_maxTriesToConnect);
+  return retryOnLostConnection(
+    m_log,
+    [this, &vid, &lc] { return m_catalogue->FileRecycleLog()->deleteFilesFromRecycleLog(vid, lc); },
+    m_maxTriesToConnect);
 }
 
-} // namespace cta::catalogue
+}  // namespace cta::catalogue

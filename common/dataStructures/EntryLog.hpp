@@ -44,4 +44,4 @@ struct EntryLog {
 
 std::ostream& operator<<(std::ostream& os, const EntryLog& obj);
 
-} // namespace cta::common::dataStructures
+}  // namespace cta::common::dataStructures

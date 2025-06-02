@@ -33,23 +33,26 @@ class Catalogue;
 
 class DiskInstanceCatalogueRetryWrapper : public DiskInstanceCatalogue {
 public:
-  DiskInstanceCatalogueRetryWrapper(const std::unique_ptr<Catalogue>& catalogue, log::Logger &m_log,
-    const uint32_t maxTriesToConnect);
+  DiskInstanceCatalogueRetryWrapper(const std::unique_ptr<Catalogue>& catalogue,
+                                    log::Logger& m_log,
+                                    const uint32_t maxTriesToConnect);
   ~DiskInstanceCatalogueRetryWrapper() override = default;
 
-  void createDiskInstance(const common::dataStructures::SecurityIdentity &admin, const std::string &name,
-    const std::string &comment) override;
+  void createDiskInstance(const common::dataStructures::SecurityIdentity& admin,
+                          const std::string& name,
+                          const std::string& comment) override;
 
-  void deleteDiskInstance(const std::string &name) override;
+  void deleteDiskInstance(const std::string& name) override;
 
-  void modifyDiskInstanceComment(const common::dataStructures::SecurityIdentity &admin,
-    const std::string &name, const std::string &comment) override;
+  void modifyDiskInstanceComment(const common::dataStructures::SecurityIdentity& admin,
+                                 const std::string& name,
+                                 const std::string& comment) override;
 
   std::list<common::dataStructures::DiskInstance> getAllDiskInstances() const override;
 
 private:
   const std::unique_ptr<Catalogue>& m_catalogue;
-  log::Logger &m_log;
+  log::Logger& m_log;
   uint32_t m_maxTriesToConnect;
 };  // class DiskInstanceCatalogueRetryWrapper
 

@@ -28,8 +28,8 @@ namespace castor::tape::tapeFile {
 
 EnstoreLargeReadSession::EnstoreLargeReadSession(tapeserver::drive::DriveInterface& drive,
                                                  const tapeserver::daemon::VolumeInfo& volInfo,
-                                                 const bool useLbp) :
-ReadSession(drive, volInfo, useLbp) {
+                                                 const bool useLbp)
+    : ReadSession(drive, volInfo, useLbp) {
   m_drive.rewind();
   m_drive.disableLogicalBlockProtection();
   m_detectedLbp = false;

@@ -43,9 +43,8 @@ class OcciColumn;
 /**
  * A convenience wrapper around an OCCI prepared statement.
  */
-class OcciStmt: public StmtWrapper {
+class OcciStmt : public StmtWrapper {
 public:
-
   /**
    * Constructor.
    *
@@ -53,10 +52,7 @@ public:
    * @param conn The database connection.
    * @param stmt The OCCI statement.
    */
-  OcciStmt(
-    const std::string &sql,
-    OcciConn &conn,
-    oracle::occi::Statement *const stmt);
+  OcciStmt(const std::string& sql, OcciConn& conn, oracle::occi::Statement* const stmt);
 
   /**
    * Destructor.
@@ -66,7 +62,7 @@ public:
   /**
    * Prevent copying the object.
    */
-  OcciStmt(const OcciStmt &) = delete;
+  OcciStmt(const OcciStmt&) = delete;
 
   /**
    * Clears the prepared statement so that it is ready to be reused.
@@ -84,7 +80,7 @@ public:
    * @param paramName The name of the parameter.
    * @param paramValue The value to be bound.
    */
-  void bindUint8(const std::string &paramName, const std::optional<uint8_t> &paramValue) override;
+  void bindUint8(const std::string& paramName, const std::optional<uint8_t>& paramValue) override;
 
   /**
    * Binds an SQL parameter.
@@ -92,7 +88,7 @@ public:
    * @param paramName The name of the parameter.
    * @param paramValue The value to be bound.
    */
-  void bindUint16(const std::string &paramName, const std::optional<uint16_t> &paramValue) override;
+  void bindUint16(const std::string& paramName, const std::optional<uint16_t>& paramValue) override;
 
   /**
    * Binds an SQL parameter.
@@ -100,7 +96,7 @@ public:
    * @param paramName The name of the parameter.
    * @param paramValue The value to be bound.
    */
-  void bindUint32(const std::string &paramName, const std::optional<uint32_t> &paramValue) override;
+  void bindUint32(const std::string& paramName, const std::optional<uint32_t>& paramValue) override;
 
   /**
    * Binds an SQL parameter.
@@ -108,7 +104,7 @@ public:
    * @param paramName The name of the parameter.
    * @param paramValue The value to be bound.
    */
-  void bindUint64(const std::string &paramName, const std::optional<uint64_t> &paramValue) override;
+  void bindUint64(const std::string& paramName, const std::optional<uint64_t>& paramValue) override;
 
   /**
    * Binds an SQL parameter.
@@ -116,15 +112,15 @@ public:
    * @param paramName The name of the parameter.
    * @param paramValue The value to be bound.
    */
-  void bindDouble(const std::string &paramName, const std::optional<double> &paramValue) override;
+  void bindDouble(const std::string& paramName, const std::optional<double>& paramValue) override;
 
   /** 
    * Binds an SQL parameter of type binary string (byte array).
    *
    * @param paramName The name of the parameter.
    * @param paramValue The value to be bound.
-   */ 
-  void bindBlob(const std::string &paramName, const std::string &paramValue) override;
+   */
+  void bindBlob(const std::string& paramName, const std::string& paramValue) override;
 
   /** 
    * Binds an SQL parameter of type optional-string.
@@ -135,8 +131,8 @@ public:
    *
    * @param paramName The name of the parameter.
    * @param paramValue The value to be bound.
-   */ 
-  void bindString(const std::string &paramName, const std::optional<std::string> &paramValue) override;
+   */
+  void bindString(const std::string& paramName, const std::optional<std::string>& paramValue) override;
 
   /**
    * Executes the statement and returns the result set.
@@ -163,14 +159,14 @@ public:
    *
    * @return The underlying OCCI result set.
    */
-  oracle::occi::Statement *get() const;
+  oracle::occi::Statement* get() const;
 
   /**
    * Alias for the get() method.
    *
    * @return The underlying OCCI result set.
    */
-  oracle::occi::Statement *operator->() const;
+  oracle::occi::Statement* operator->() const;
 
   /**
    * Sets the specified column data for a batch-based database access.
@@ -178,7 +174,7 @@ public:
    * @param  col   The column data
    * @param  type  The type of the data
    */
-  void setColumn(OcciColumn &col, oracle::occi::Type type = oracle::occi::OCCI_SQLT_STR);
+  void setColumn(OcciColumn& col, oracle::occi::Type type = oracle::occi::OCCI_SQLT_STR);
 
   /**
    * Determines whether or not the connection should be closed based on the
@@ -187,10 +183,9 @@ public:
    * @param ex The Oracle exception.
    * @return True if the connection should be closed.
    */
-  static bool connShouldBeClosed(const oracle::occi::SQLException &ex);
+  static bool connShouldBeClosed(const oracle::occi::SQLException& ex);
 
 private:
-
   /**
    * Mutex used to serialize access to this object.
    */
@@ -199,12 +194,12 @@ private:
   /**
    * The database connection.
    */
-  OcciConn &m_conn;
+  OcciConn& m_conn;
 
   /**
    * The prepared statement.
    */
-  oracle::occi::Statement *m_stmt;
+  oracle::occi::Statement* m_stmt;
 
   /**
    * Templated bind of an optional number.
@@ -212,8 +207,8 @@ private:
    * @param paramName The name of the parameter.
    * @param paramValue The value to be bound.
    */
-  template <typename IntegerType> void bindInteger(const std::string &paramName,
-    const std::optional<IntegerType> &paramValue) {
+  template<typename IntegerType>
+  void bindInteger(const std::string& paramName, const std::optional<IntegerType>& paramValue) {
     try {
       const unsigned paramIdx = getParamIdx(paramName);
       if (paramValue) {
@@ -222,14 +217,14 @@ private:
       } else {
         m_stmt->setNull(paramIdx, oracle::occi::OCCINUMBER);
       }
-    } catch (exception::Exception &ex) {
-      throw exception::Exception(std::string(__FUNCTION__) + " failed for SQL statement " +
-                                 getSqlForException() + ": " + ex.getMessage().str());
-    } catch (std::exception &se) {
-      throw exception::Exception(std::string(__FUNCTION__) + " failed for SQL statement " +
-                                 getSqlForException() + ": " + se.what());
+    } catch (exception::Exception& ex) {
+      throw exception::Exception(std::string(__FUNCTION__) + " failed for SQL statement " + getSqlForException() +
+                                 ": " + ex.getMessage().str());
+    } catch (std::exception& se) {
+      throw exception::Exception(std::string(__FUNCTION__) + " failed for SQL statement " + getSqlForException() +
+                                 ": " + se.what());
     }
   }
-}; // class OcciStmt
+};  // class OcciStmt
 
-} // namespace cta::rdbms::wrapper
+}  // namespace cta::rdbms::wrapper

@@ -21,7 +21,6 @@
 
 #include <string>
 
-
 namespace cta::rdbms {
 
 /**
@@ -29,7 +28,6 @@ namespace cta::rdbms {
  */
 class DBException : public cta::exception::Exception {
 public:
-
   /**
    * Constructor.
    *
@@ -38,7 +36,9 @@ public:
    * @param embedBacktrace whether to embed a backtrace of where the
    * exception was throw in the message
    */
-  DBException(const std::string &context = "", const std::string &dbErrorMessage="", const bool embedBacktrace = true);
+  DBException(const std::string& context = "",
+              const std::string& dbErrorMessage = "",
+              const bool embedBacktrace = true);
 
   /**
    * Empty Destructor, explicitely non-throwing (needed for std::exception
@@ -53,6 +53,6 @@ public:
 
 private:
   std::string rawDbErrorMessage;
-}; // class DBException
+};  // class DBException
 
-} // namespace cta::rdbms
+}  // namespace cta::rdbms

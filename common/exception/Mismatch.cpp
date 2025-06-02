@@ -18,10 +18,7 @@
 
 #include "Mismatch.hpp"
 
-
 // -----------------------------------------------------------------------------
 // Constructor
 // -----------------------------------------------------------------------------
-cta::exception::Mismatch::Mismatch():
-  cta::exception::Exception() {
-}
+cta::exception::Mismatch::Mismatch() : cta::exception::Exception() {}

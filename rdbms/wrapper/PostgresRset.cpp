@@ -94,7 +94,9 @@ bool PostgresRset::isPGColumnNull(int ifield) const {
 
 std::string PostgresRset::columnBlob(const std::string& colName) const {
   std::optional<std::string> blob = columnOptionalString(colName);
-  if (!blob) return std::string();
+  if (!blob) {
+    return std::string();
+  }
 
   size_t blob_len;
   unsigned char* blob_ptr = PQunescapeBytea(reinterpret_cast<const unsigned char*>(blob->c_str()), &blob_len);

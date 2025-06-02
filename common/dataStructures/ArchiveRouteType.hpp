@@ -36,4 +36,4 @@ std::string toString(ArchiveRouteType type);
  */
 ArchiveRouteType strToArchiveRouteType(const std::string& archiveRouteTypeStr);
 
-} // namespace cta::common::dataStructures
+}  // namespace cta::common::dataStructures

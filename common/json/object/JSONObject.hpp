@@ -46,4 +46,4 @@ public:
   virtual ~JSONObject() = default;
 };
 
-} // namespace cta::utils::json::object
+}  // namespace cta::utils::json::object

@@ -28,7 +28,6 @@
 #include "common/utils/StringConversions.hpp"
 #include "Regex.hpp"
 
-
 namespace cta::utils {
 
 /**

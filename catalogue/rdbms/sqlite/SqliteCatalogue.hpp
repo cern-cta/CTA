@@ -24,9 +24,8 @@ namespace cta::catalogue {
 /**
  * An SQLite implementation of the CTA catalogue.
  */
-class SqliteCatalogue: public RdbmsCatalogue {
+class SqliteCatalogue : public RdbmsCatalogue {
 public:
-
   /**
    * Constructor.
    *
@@ -39,11 +38,10 @@ public:
    * connections to the underlying relational database for the sole purpose of
    * listing archive files.
    */
-  SqliteCatalogue(
-    log::Logger &log,
-    const std::string &filename,
-    const uint64_t nbConns,
-    const uint64_t nbArchiveFileListingConns);
+  SqliteCatalogue(log::Logger& log,
+                  const std::string& filename,
+                  const uint64_t nbConns,
+                  const uint64_t nbArchiveFileListingConns);
 
 public:
   /**
@@ -59,8 +57,8 @@ protected:
    * @param diskFileIds List of disk file IDs (fxid).
    * @return Name of the temporary table
    */
-  std::string createAndPopulateTempTableFxid(rdbms::Conn &conn,
-    const std::optional<std::vector<std::string>> &diskFileIds) const override;
-}; // class SqliteCatalogue
+  std::string createAndPopulateTempTableFxid(rdbms::Conn& conn,
+                                             const std::optional<std::vector<std::string>>& diskFileIds) const override;
+};  // class SqliteCatalogue
 
-} // namespace cta::catalogue
+}  // namespace cta::catalogue
