@@ -146,11 +146,11 @@ echo "Pre-test debug info:"
 echo "cta-admin tape ls"
 admin_cta --json ta ls --all | jq
 echo "cta-admin tp ls"
-admic_cta --json tp ls | jq
+admin_cta --json tp ls | jq
 echo "cta-admin re ls"
-admic_cta --json re ls | jq
+admin_cta --json re ls | jq
 echo "cta-admin sq"
-admic_cta --json sq | jq
+admin_cta --json sq | jq
 echo "---------------------------------------"
 
 echo "Deleting existing repack request for VID ${VID_TO_REPACK}"
@@ -314,11 +314,11 @@ echo "Post-test debug info:"
 echo "cta-admin tape ls"
 admin_cta --json ta ls --all | jq
 echo "cta-admin tp ls"
-admic_cta --json tp ls | jq
+admin_cta --json tp ls | jq
 echo "cta-admin re ls"
-admic_cta --json re ls | jq
+admin_cta --json re ls | jq
 echo "cta-admin sq"
-admic_cta --json sq | jq
+admin_cta --json sq | jq
 echo "---------------------------------------"
 
 exit 0
