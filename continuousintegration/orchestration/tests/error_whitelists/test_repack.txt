@@ -1,2 +1,3 @@
 Aborting recall mount startup: empty mount
 Notified client of end session with error
+In OStoreDB::RepackArchiveReportBatch::report(): async job update failed.
