@@ -262,4 +262,8 @@ void ArchiveRdbJob::bumpUpTapeFileCount(uint64_t newFileCount) {
   throw cta::exception::Exception("Not implemented");
 }
 
+bool ArchiveRdbJob::shouldBeDeleted() const {
+    return m_shouldBeDeleted;
+}
+
 }  // namespace cta::schedulerdb
