@@ -219,14 +219,13 @@ void ArchiveMount::recycleTransferredJobs(std::list<std::unique_ptr<SchedulerDat
                                           log::LogContext& lc) {
   try {
     for (auto& job : jobsBatch) {
-      job->releaseToPool();
-      if (job->shouldBeDeleted()) {
-        // Let unique_ptr delete it
-      } else {
-        // Prevent deletion - better than handling deletion here would be
-        // to introduce custom deleter for the unique_ptr,
+      if (job->releaseToPool()) {
+        // Prevent deletion via unique_ptr - correct handling here would be
+        // to introduce custom deleter for the unique_ptr (would make recycleTransferredJobs obsolete),
         // but this would mean changing types all across the CTA code
         job.release();
+      } else {
+        // Let unique_ptr delete it
       }
     }
   } catch (const exception::Exception& ex) {

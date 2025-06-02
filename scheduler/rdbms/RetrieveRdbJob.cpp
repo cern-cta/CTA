@@ -350,8 +350,4 @@ void RetrieveRdbJob::fail() {
   throw cta::exception::Exception("Not implemented");
 }
 
-bool RetrieveRdbJob::shouldBeDeleted() const {
-    return m_shouldBeDeleted;
-}
-
 }  // namespace cta::schedulerdb

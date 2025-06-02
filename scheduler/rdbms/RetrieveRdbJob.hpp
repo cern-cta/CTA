@@ -44,10 +44,6 @@ public:
   explicit RetrieveRdbJob(rdbms::ConnPool& connPool);
   explicit RetrieveRdbJob(rdbms::ConnPool& connPool, const rdbms::Rset& rset);
 
-  ~RetrieveRdbJob() {
-    assert(false && "RetrieveRdbJob destructor called unexpectedly! Object must be recycled instead.");
-  }
-
   /*
    * Sets the status of the job as failed in the Scheduler DB
    *
@@ -83,11 +79,12 @@ public:
    *        Used when the job has completed and can be recycled.
    *        Assumes the job is exclusively owned and managed by the pool.
    */
-  void releaseToPool() override {
+  bool releaseToPool() override {
     if (!m_pool || !m_pool->releaseJob(this)) {
       // Pool is full, allow destruction
-      m_shouldBeDeleted = true;
+     return false;
     }
+    return true;
   }
 
   /**
@@ -145,11 +142,8 @@ public:
   void asyncSetSuccessful() override;
   void fail() override;
 
-  bool shouldBeDeleted() const;
-
 private:
   std::shared_ptr<JobPool<RetrieveRdbJob>> m_pool = nullptr;
-  bool m_shouldBeDeleted = false;
 };
 
 }  // namespace cta::schedulerdb
