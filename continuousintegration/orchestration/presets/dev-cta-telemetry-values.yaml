@@ -1,12 +1,13 @@
 # Note that this values can be used in combination with other values files
 frontend:
-  conf:
-    xrd:
+  xrd:
+    conf:
       telemetry:
         metricsBackend: "OTLP"
         metricsOtlpEndpoint: "http://opentelemetry-opentelemetry-collector:4318/v1/metrics"
 
-    grpc:
+  grpc:
+    conf:
       telemetry:
         metricsBackend: "OTLP"
         metricsOtlpEndpoint: "http://opentelemetry-opentelemetry-collector:4318/v1/metrics"
