@@ -1,5 +1,5 @@
 #include "JwkCache.hpp"
-#include <json/json.h>
+#include <json-c/json.h>
 #include <curl/curl.h>
 #include <jwt-cpp/jwt.h>
 
@@ -11,7 +11,7 @@ static size_t WriteCallback(void* contents, size_t size, size_t nmemb, std::stri
     return totalSize;
 }
 
-Json::Value FetchJWKS(const std::string& jwksUrl) {
+json_object* FetchJWKS(const std::string& jwksUrl) {
     std::cout << "In FetchJWKS function" << std::endl;
     CURL* curl;
     CURLcode res;
@@ -32,14 +32,10 @@ Json::Value FetchJWKS(const std::string& jwksUrl) {
     }
     curl_global_cleanup();
 
-    // Parse the response JSON
-    Json::CharReaderBuilder readerBuilder;
-    Json::Value jwks;
-    std::istringstream sstream(readBuffer);
-    std::string errs;
-    if (!Json::parseFromStream(readerBuilder, sstream, &jwks, &errs)) {
-        std::cout << "Failed to parse JSON: " << errs << std::endl;
-        // throw some exception here
+    // Parse JSON using json-c
+    json_object* jwks = json_tokener_parse(readBuffer.c_str());
+    if (!jwks) {
+        std::cerr << "Failed to parse JSON response from JWKS" << std::endl;
         throw std::runtime_error("Failed to parse JSON in FetchJWKS");
     }
 
@@ -52,7 +48,7 @@ std::map<std::string, JwkCacheEntry>::iterator JwkCache::find(std::string key) {
 
 void JwkCache::UpdateCache(time_t now) {
     std::cout << "In updateCache() function" << std::endl;
-    Json::Value jwks = m_fetchFunc(m_jwksUri);
+    json_object* jwks = m_fetchFunc(m_jwksUri);
     // purge any keys that have expired
     for (auto it = m_keymap.begin(); it != m_keymap.end() ;) {
         int lastRefresh = it->second.last_refresh_time;
@@ -64,17 +60,46 @@ void JwkCache::UpdateCache(time_t now) {
         }
     }
     // add they new keys
-    // we only care about keys used for signing
-    for (const auto& key : jwks["keys"]) {
-        if (key["use"] != "sig")
+    // Parse the "keys" array from JWKS
+    json_object* keys = nullptr;
+    if (!json_object_object_get_ex(jwks, "keys", &keys) || !json_object_is_type(keys, json_type_array)) {
+        std::cerr << "\"keys\" field missing or not an array in JWKS" << std::endl;
+        json_object_put(jwks);  // Cleanup
+        return;
+    }
+    // Iterate over the keys array
+    int len = json_object_array_length(keys);
+    for (int i = 0; i < len; ++i) {
+        json_object* key = json_object_array_get_idx(keys, i);
+        if (!key || !json_object_is_type(key, json_type_object))
             continue;
-        std::string kid = key["kid"].asString();
-        std::string x5c = key["x5c"][0].asString();
+
+        json_object *use_obj = nullptr;
+        if (!json_object_object_get_ex(key, "use", &use_obj))
+            continue;
+        // we only care about keys used for signing
+        const char* use_str = json_object_get_string(use_obj);
+        if (!use_str || std::string(use_str) != "sig")
+            continue;
+
+        json_object *kid_obj = nullptr, *x5c_arr = nullptr;
+        if (!json_object_object_get_ex(key, "kid", &kid_obj) ||
+            !json_object_object_get_ex(key, "x5c", &x5c_arr) ||
+            !json_object_is_type(x5c_arr, json_type_array) ||
+            json_object_array_length(x5c_arr) == 0)
+            continue;
+
+        const char* kid = json_object_get_string(kid_obj);
+        const char* x5c = json_object_get_string(json_object_array_get_idx(x5c_arr, 0));
+
         std::string pubkeyPem = jwt::helper::convert_base64_der_to_pem(x5c);
         JwkCacheEntry entry = {now, pubkeyPem};
-        m_keymap[kid] = entry; // store the certificate in PEM format
+        m_keymap[kid] = entry;
+
         std::cout << "Adding entry for key with kid " << kid << " and cachedTime " << now << std::endl;
     }
+
+    json_object_put(jwks);  // Clean up ref count
 }
 
 // Remove all entries from the cache

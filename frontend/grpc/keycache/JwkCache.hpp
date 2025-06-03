@@ -2,7 +2,7 @@
 #include <map>
 #include <time.h>
 #include <iostream>
-#include <json/json.h>
+#include <json-c/json.h>
 #include <functional>
 
 typedef struct JwkCacheEntry {
@@ -11,11 +11,11 @@ typedef struct JwkCacheEntry {
 } JwkCacheEntry;
 
 // forward declaration;
-Json::Value FetchJWKS(const std::string& jwksUrl);
+json_object* FetchJWKS(const std::string& jwksUrl);
 class JwkCache {
 public:
     // Constructor with optional fetch function for testing
-    using FetchFunction = std::function<Json::Value(const std::string& jwkUri)>;
+    using FetchFunction = std::function<json_object* (const std::string& jwkUri)>;
     std::string m_jwksUri;
     int m_cacheRefreshInterval; // value in seconds
     // at some point will need a mutex added to handle parallel requests

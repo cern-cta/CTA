@@ -28,13 +28,13 @@ include_directories(${CMAKE_BINARY_DIR}/eos_cta ${PROTOBUF3_INCLUDE_DIRS})
 include_directories(auth/third_party/jwt-cpp/include/)
 
 add_library(JwkCache STATIC keycache/JwkCache.cpp)
-target_link_libraries(JwkCache PRIVATE curl jsoncpp jwt-cpp)
+target_link_libraries(JwkCache PRIVATE curl json-c jwt-cpp)
 
 add_executable(cta-frontend-grpc Main.cpp FrontendGrpcService.cpp
   ../common/WorkflowEvent.cpp
   ../common/FrontendService.cpp
   ../../common/config/Config.cpp)
-target_link_libraries(cta-frontend-grpc ProtoCtaFrontend jwt-cpp::jwt-cpp jsoncpp curl JwkCache)
+target_link_libraries(cta-frontend-grpc ProtoCtaFrontend jwt-cpp::jwt-cpp json-c curl JwkCache)
 
 
 if(CTA_USE_PGSCHED)

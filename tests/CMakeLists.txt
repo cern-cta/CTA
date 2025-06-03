@@ -89,7 +89,7 @@ set_property(TARGET integrationTestHelperTests PROPERTY   VERSION "${CTA_LIBVERS
 target_link_libraries(integrationTestHelperTests
   ctacommon
   JwkCache
-  jsoncpp)
+  json-c)
 
 add_executable(cta-integrationTests
   integration_tests.cpp)
