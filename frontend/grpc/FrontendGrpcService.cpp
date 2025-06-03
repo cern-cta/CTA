@@ -61,11 +61,11 @@ bool CtaRpcImpl::ValidateToken(const std::string& encodedJWT) {
     auto it = m_pubkeyCache.m_keymap.find(kid);
     if (it == m_pubkeyCache.m_keymap.end()) {
         std::cout << "No cached key found for kid: " << kid << ", will fetch keys from endpoint" << std::endl;
-    } else
+    } else {
       pubkeyPem = it->second.pubkey;
+    }
     if (it == m_pubkeyCache.m_keymap.end()) {
       // add the key to the cache, after fetching
-      auto m_jwksUri = m_frontendService->getJwksUri().value_or("");
       time_t now = time(NULL);
       m_pubkeyCache.UpdateCache(now);
     }
@@ -103,7 +103,7 @@ CtaRpcImpl::ExtractAuthHeaderAndValidate(::grpc::ServerContext* context) {
   auto it = metadata.find("authorization");
   if (it != metadata.end()) {
       std::string auth_header = ToString(it->second);  // "Bearer <token>"
-      token = auth_header.substr(7);  // Extract the token part
+      token = auth_header.substr(7); // Extract the token part, use substr(7) because that is the length of "Bearer" plus a space character
 
       std::cout << "Received token: " << token << std::endl;
 
