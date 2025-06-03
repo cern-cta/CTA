@@ -84,8 +84,10 @@ spec:
             command:
               - /grpc-health-probe/grpc-health-probe
               - -addr=localhost:{{ .Values.grpc.port }}
+            {{- if .Values.grpc.conf.tls.enabled }}
               - -tls
               - -tls-no-verify
+            {{- end }}
           initialDelaySeconds: 5
           periodSeconds: 5
           timeoutSeconds: 3

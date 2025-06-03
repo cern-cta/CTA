@@ -68,8 +68,8 @@ data:
     grpc.port {{ .Values.grpc.port }}
 
     # TLS related variables
-    grpc.tls true
-    grpc.tls.key /etc/grpc-certs/key/server.key
-    grpc.tls.cert /etc/grpc-certs/cert/server.crt
-    grpc.jwks.uri http://auth-keycloak:8080/realms/master/protocol/openid-connect/certs
+    grpc.tls {{ .Values.grpc.conf.tls.enabled }}
+    grpc.tls.key {{ .Values.grpc.conf.tls.serverKey }}
+    grpc.tls.cert {{ .Values.grpc.conf.tls.serverCert }}
+    grpc.jwks.uri {{ .Values.grpc.conf.jwtAuth.jwksUri }}
 {{- end }}
