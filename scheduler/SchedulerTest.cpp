@@ -6921,6 +6921,91 @@ TEST_P(SchedulerTest, retrieveArchiveAllTypesMaxDrivesVoInFlightChangeScheduleMo
   }
 }
 
+
+// Test case.
+//   - We added to ownership the toTransferQueue but we did not
+//   reserve modify the assigned aget to the queue.
+//   - In this scenario the next QCR execution will do the job. The
+//   garbage collection of the queue of the dead agent should ...
+TEST_P(SchedulerTest, toTransfereRetrieveQueueMissingReservationInfo)
+{
+  // Create a retrieve queue
+  using namespace cta;
+  using namespace cta::objectstore;
+  using cta::common::dataStructures::JobQueueType;
+
+#ifdef STDOUT_LOGGING
+  log::StdoutLogger dl("dummy", "unitTest");
+#else
+  log::DummyLogger dl("", "");
+#endif
+  log::LogContext lc(dl);
+
+  auto &schedulerDB = getSchedulerDB();
+  auto &catalogue = getCatalogue();
+  
+  Backend &backend = schedulerDB.getBackend();
+  //Create a RetrieveQueue with the vid s_vid
+  cta::objectstore::AgentReference agentReference("ttrqMissingReservationInfo", dl);
+  std::string retrieveQueueAddress;
+  cta::objectstore::RootEntry re(backend);
+  {
+    cta::objectstore::ScopedExclusiveLock sel(re);
+    re.fetch();
+    retrieveQueueAddress = re.addOrGetRetrieveQueueAndCommit(s_vid,agentReference,JobQueueType::JobsToTransferForUser);
+  }
+
+  //Create a RetrieveJob and put it in the queue s_vid
+  RetrieveQueue::JobToAdd retrieveJobToAdd;
+  retrieveJobToAdd.copyNb = 1;
+  retrieveJobToAdd.fSeq = 1;
+  retrieveJobToAdd.fileSize = 1;
+  retrieveJobToAdd.startTime = time(nullptr);
+  retrieveJobToAdd.retrieveRequestAddress = "";
+
+  cta::objectstore::RetrieveQueue retrieveQueue1(retrieveQueueAddress,backend);
+  {
+    cta::objectstore::ScopedExclusiveLock sel(retrieveQueue1);
+    retrieveQueue1.fetch();
+    std::list<cta::objectstore::RetrieveQueue::JobToAdd> jobsToAdd({retrieveJobToAdd});
+    retrieveQueue1.addJobsAndCommit(jobsToAdd,agentReference,lc);
+  }
+
+  // Create an agent and add the queue to the
+  // agent's ownership list.
+  cta::objectstore::AgentReference deadAgentReference("deadAgent", dl);
+  cta::objectstore::Agent deadAgent(deadAgentReference.getAgentAddress(), backend);
+  deadAgent.initialize();
+  deadAgent.setTimeout_us(0);
+  deadAgent.insertAndRegisterSelf(lc);
+
+  deadAgentReference.addToOwnership(retrieveQueueAddress, backend);
+
+  // Properly register the queue to a second agent.
+  cta::objectstore::Agent agent(agentReference.getAgentAddress(), backend);
+  agent.initialize();
+  agent.setTimeout_us(0);
+  agent.insertAndRegisterSelf(lc);
+
+  // Add the queue cleanupinfo.
+  {
+    cta::objectstore::ScopedExclusiveLock sel(retrieveQueue1);
+    retrieveQueue1.fetch();
+    retrieveQueue1.setQueueCleanupAssignedAgent(agentReference.getAgentAddress());
+    retrieveQueue1.commit();
+  }
+  // Garbage collect the first agent
+  GarbageCollector gc(backend, agentReference, catalogue);
+  gc.runOnePass(lc);
+
+  // Check that the queue cleanup information has not been cleared.
+  cta::objectstore::ScopedExclusiveLock sel(retrieveQueue1);
+  retrieveQueue1.fetch();
+  ASSERT_NE(retrieveQueue1.getQueueCleanupAssignedAgent().value().find("ttrqMissingReservationInfo"), std::string::npos);
+}
+
+
+
 TEST_P(SchedulerTest, getQueuesAndMountSummariesTest)
 {
   using namespace cta;

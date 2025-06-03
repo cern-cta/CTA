@@ -616,6 +616,7 @@ void GarbageCollector::OwnedObjectSorter::lockFetchAndUpdateRetrieveJobs(Agent& 
       // Get the retrieve queue and add references to the jobs to it.
       RetrieveQueue rq(objectStore);
       ScopedExclusiveLock rql;
+
       Helpers::getLockedAndFetchedJobQueue<RetrieveQueue>(rq,rql, agentReference, containerIdentifier, queueType, lc);
       queueLockFetchTime = t.secs(utils::Timer::resetCounter);
       auto jobsSummary=rq.getJobsSummary();

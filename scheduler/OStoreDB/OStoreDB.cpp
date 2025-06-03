@@ -2235,27 +2235,33 @@ std::string OStoreDB::reserveRetrieveQueueForCleanup(const std::string& vid) {
   }
 
   // Otherwise, carry on with cleanup of this queue.
+  // Agent ownership must go first.
   m_agentReference->addToOwnership(rqtt.getAddressIfSet(), m_objectStore);
   rqtt.setOwner(m_agentReference->getAgentAddress());
   rqtt.setQueueCleanupAssignedAgent(m_agentReference->getAgentAddress());
   rqtt.commit();
+  rqttl.release();
 
-  // Create the ToReport queue or get it in case a previous agent died and we are taking over.
+  // Create the ToReport queue or get it in case a previous agent died and we are taking over. The second case is only possible if the agent
+  // that died has already been garbage collected.
+  // We hold the root entry lock until we get set the cleanupflag. This prevents trimEmptyQueues() to interfere with us.
   rel.lock(re);
-  re.fetch();  // Die here
+  re.fetch();
   const auto reportQueueName = re.addOrGetRetrieveQueueAndCommit(vid, *m_agentReference,
 common::dataStructures::JobQueueType::JobsToReportToUser);
-  rel.release();  // Die here
+
+  m_agentReference->addToOwnership(reportQueueName, m_objectStore);
+
   rqtr.setAddress(reportQueueName);
   rqtrl.lock(rqtr);
   rqtr.fetch();
 
-  // Mark the ToReport queue for cleanup so that the DiskReporter does not pick it up.
-  m_agentReference->addToOwnership(rqtr.getAddressIfSet(), m_objectStore);
   rqtr.setOwner(m_agentReference->getAgentAddress());
   rqtr.setQueueCleanupDoCleanup();
   rqtr.setQueueCleanupAssignedAgent(m_agentReference->getAgentAddress());
   rqtr.commit();
+
+  rel.release();
 
   return reportQueueName;
 }
