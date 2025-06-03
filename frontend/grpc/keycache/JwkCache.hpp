@@ -5,10 +5,10 @@
 #include <json-c/json.h>
 #include <functional>
 
-typedef struct JwkCacheEntry {
+struct JwkCacheEntry {
     time_t last_refresh_time;
     std::string pubkey; // public key in PEM format
-} JwkCacheEntry;
+};
 
 // forward declaration;
 json_object* FetchJWKS(const std::string& jwksUrl);
@@ -16,22 +16,24 @@ class JwkCache {
 public:
     // Constructor with optional fetch function for testing
     using FetchFunction = std::function<json_object* (const std::string& jwkUri)>;
-    std::string m_jwksUri;
-    int m_cacheRefreshInterval; // value in seconds
-    // at some point will need a mutex added to handle parallel requests
-    // This gives the option to keep public keys around for longer than the refresh interval.
-    int m_pubkeyTimeout;
-    void PurgeCache(); // remove all entries
-    void UpdateCache(time_t now); // 
-    std::map<std::string, JwkCacheEntry>::iterator find(std::string key);
-    std::map<std::string, JwkCacheEntry> m_keymap;
-    FetchFunction m_fetchFunc;
     JwkCache(const std::string& jwkUri, int cacheRefreshInterval, int pubkeyTimeout, FetchFunction fetchFunc)
                 : m_jwksUri(jwkUri),
-                  m_cacheRefreshInterval(cacheRefreshInterval),
-                  m_pubkeyTimeout(pubkeyTimeout),
-                  m_fetchFunc(fetchFunc)
+                    m_cacheRefreshInterval(cacheRefreshInterval),
+                    m_pubkeyTimeout(pubkeyTimeout),
+                    m_fetchFunc(fetchFunc)
         {
             std::cout << "In JwkCache constructor, cacheRefreshInterval value is " << m_cacheRefreshInterval << std::endl;
         };
+
+    void PurgeCache(); // remove all entries
+    void UpdateCache(time_t now);
+
+    std::string m_jwksUri;
+    int m_cacheRefreshInterval; // value in seconds
+    // This gives the option to keep public keys around for longer than the refresh interval.
+    int m_pubkeyTimeout;
+    FetchFunction m_fetchFunc;
+    // TODO: add mutex to handle parallel requests
+    std::map<std::string, JwkCacheEntry>::iterator find(std::string key);
+    std::map<std::string, JwkCacheEntry> m_keymap;
 };
