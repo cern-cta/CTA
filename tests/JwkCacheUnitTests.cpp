@@ -98,7 +98,7 @@ TEST(JwkCacheTest, PurgeCacheClearsKeys) {
 }
 
 TEST(JwkCacheTest, UpdateCacheRemovesExpiredKeys) {
-    JwkCache cache("http://fake-jwks-uri", 100, 200, FakeFetchJWKS);  // very short pubkeyRefreshInterval
+    JwkCache cache("http://fake-jwks-uri", 100, 200, FakeFetchJWKS);  // very short pubkeyTimeout
 
     time_t lastRefreshTime = 1000;
     cache.UpdateCache(lastRefreshTime);

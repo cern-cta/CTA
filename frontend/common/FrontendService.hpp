@@ -163,7 +163,7 @@ public:
   /*
    * Get the interval (in seconds) after which to update public key entries in the cache
    */
-  const std::optional<int> getPubkeyRefreshInterval() const { return m_pubkeyRefreshInterval; }
+  const std::optional<int> getPubkeyTimeout() const { return m_pubkeyTimeout; }
 
 private:
   /*!
@@ -203,7 +203,7 @@ private:
   std::string                                   m_instanceName;               //!< value of cta.instance_name in the CTA frontend configuration file
   std::optional<std::string>                    m_jwksUri;                      //!< The endpoint to obtain public keys from, for validating tokens
   std::optional<int>                            m_cacheRefreshInterval;         //!< The number of seconds after which to update the cache of public keys used to sign JWT tokens
-  std::optional<int>                            m_pubkeyRefreshInterval;        //!< The number of seconds after which to update the cache entry for a cached key
+  std::optional<int>                            m_pubkeyTimeout;        //!< The number of seconds after which to update the cache entry for a cached key
   // clang-format on
 };
 

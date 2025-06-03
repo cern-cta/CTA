@@ -52,7 +52,7 @@ void JwkCache::UpdateCache(time_t now) {
     // purge any keys that have expired
     for (auto it = m_keymap.begin(); it != m_keymap.end() ;) {
         int lastRefresh = it->second.last_refresh_time;
-        if (lastRefresh + m_pubkeyRefreshInterval <= now) {
+        if (lastRefresh + m_pubkeyTimeout <= now) {
             std::cout << "Removing entry for key with kid " << it->first << std::endl;
             it = m_keymap.erase(it); // erase returns next valid iterator
         } else {

@@ -344,7 +344,7 @@ CtaRpcImpl::CtaRpcImpl(const std::string& config)
     : m_frontendService(std::make_unique<cta::frontend::FrontendService>(config)),
       m_pubkeyCache(m_frontendService->getJwksUri().value_or(""),
                     m_frontendService->getCacheRefreshInterval().value_or(600),
-                    m_frontendService->getPubkeyRefreshInterval().value_or(600),
+                    m_frontendService->getPubkeyTimeout().value_or(600),
                     FetchJWKS) {}
 
 } // namespace cta::frontend::grpc

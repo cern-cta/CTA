@@ -20,16 +20,16 @@ public:
     int m_cacheRefreshInterval; // value in seconds
     // at some point will need a mutex added to handle parallel requests
     // This gives the option to keep public keys around for longer than the refresh interval.
-    int m_pubkeyRefreshInterval;
+    int m_pubkeyTimeout;
     void PurgeCache(); // remove all entries
     void UpdateCache(time_t now); // 
     std::map<std::string, JwkCacheEntry>::iterator find(std::string key);
     std::map<std::string, JwkCacheEntry> m_keymap;
     FetchFunction m_fetchFunc;
-    JwkCache(const std::string& jwkUri, int cacheRefreshInterval, int pubkeyRefreshInterval, FetchFunction fetchFunc)
+    JwkCache(const std::string& jwkUri, int cacheRefreshInterval, int pubkeyTimeout, FetchFunction fetchFunc)
                 : m_jwksUri(jwkUri),
                   m_cacheRefreshInterval(cacheRefreshInterval),
-                  m_pubkeyRefreshInterval(pubkeyRefreshInterval),
+                  m_pubkeyTimeout(pubkeyTimeout),
                   m_fetchFunc(fetchFunc)
         {
             std::cout << "In JwkCache constructor, cacheRefreshInterval value is " << m_cacheRefreshInterval << std::endl;

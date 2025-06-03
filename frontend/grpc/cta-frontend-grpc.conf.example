@@ -87,10 +87,10 @@ cta.log.url file:/var/log/cta/cta-frontend.log
 
 # Cache parameters for fetching / caching the public keys used to sign JWT tokens
 # refresh interval in seconds
-# grpc.cache.cache_refresh_interval_secs 600
+# grpc.jwks.cache.refresh_interval_secs 600
 #
 # public key caching interval (can be different from the cache refresh interval)
-# grpc.cache.pubkey_refresh_interval_secs 600
+# grpc.jwks.cache.timeout_secs 600
 
 # gRPC number of threads
 #grpc.numberofthreads nthreads

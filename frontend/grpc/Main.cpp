@@ -174,7 +174,7 @@ int main(const int argc, char *const *const argv) {
         if (!svc.getFrontendService().getCacheRefreshInterval().has_value()) {
             lc.log(log::WARNING, "No value set in config for the JWT cache refresh interval, using default value");
         }
-        if (!svc.getFrontendService().getPubkeyRefreshInterval().has_value()) {
+        if (!svc.getFrontendService().getPubkeyTimeout().has_value()) {
             lc.log(log::WARNING, "No value set in config for the JWT public key refresh interval, using default value");
         }
     } else {
