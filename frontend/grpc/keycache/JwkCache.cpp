@@ -2,6 +2,7 @@
 #include <json-c/json.h>
 #include <curl/curl.h>
 #include <jwt-cpp/jwt.h>
+#include <mutex>
 
 
 // Function to handle curl responses
@@ -43,6 +44,7 @@ json_object* FetchJWKS(const std::string& jwksUrl) {
 }
 
 std::map<std::string, JwkCacheEntry>::iterator JwkCache::find(std::string key) {
+    std::shared_lock<std::shared_mutex> lock(m_mutex);
     return m_keymap.find(key);
 }
 
@@ -50,6 +52,7 @@ void JwkCache::UpdateCache(time_t now) {
     std::cout << "In updateCache() function" << std::endl;
     json_object* jwks = m_fetchFunc(m_jwksUri);
     // purge any keys that have expired
+    std::unique_lock<std::shared_mutex> lock(m_mutex);
     for (auto it = m_keymap.begin(); it != m_keymap.end() ;) {
         int lastRefresh = it->second.last_refresh_time;
         if (lastRefresh + m_pubkeyTimeout <= now) {
@@ -104,5 +107,6 @@ void JwkCache::UpdateCache(time_t now) {
 
 // Remove all entries from the cache
 void JwkCache::PurgeCache() {
+    std::unique_lock<std::shared_mutex> lock(m_mutex);
     m_keymap.clear();
 }

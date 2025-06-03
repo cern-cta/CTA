@@ -4,6 +4,7 @@
 #include <iostream>
 #include <json-c/json.h>
 #include <functional>
+#include <shared_mutex>
 
 struct JwkCacheEntry {
     time_t last_refresh_time;
@@ -34,6 +35,7 @@ public:
     int m_pubkeyTimeout;
     FetchFunction m_fetchFunc;
     // TODO: add mutex to handle parallel requests
+    std::shared_mutex m_mutex;
     std::map<std::string, JwkCacheEntry>::iterator find(std::string key);
     std::map<std::string, JwkCacheEntry> m_keymap;
 };
