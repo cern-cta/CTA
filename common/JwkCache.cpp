@@ -13,7 +13,6 @@ static size_t WriteCallback(void* contents, size_t size, size_t nmemb, std::stri
 }
 
 json_object* FetchJWKS(const std::string& jwksUrl) {
-    std::cout << "In FetchJWKS function" << std::endl;
     CURL* curl;
     CURLcode res;
     std::string readBuffer;
@@ -26,8 +25,7 @@ json_object* FetchJWKS(const std::string& jwksUrl) {
         curl_easy_setopt(curl, CURLOPT_WRITEDATA, &readBuffer);
         res = curl_easy_perform(curl);
         if(res != CURLE_OK) {
-            std::cout << "Curl failed: " << curl_easy_strerror(res) << std::endl;
-            throw std::runtime_error("CURL failed in FetchJWKS");
+            throw CurlException(std::string("CURL failed in FetchJWKS: ") + curl_easy_strerror(res));
         }
         curl_easy_cleanup(curl);
     }
@@ -36,7 +34,6 @@ json_object* FetchJWKS(const std::string& jwksUrl) {
     // Parse JSON using json-c
     json_object* jwks = json_tokener_parse(readBuffer.c_str());
     if (!jwks) {
-        std::cerr << "Failed to parse JSON response from JWKS" << std::endl;
         throw JSONParseException("Failed to parse JSON response from FetchJWKS");
     }
 
@@ -49,11 +46,15 @@ JwkCache::~JwkCache() {
 
 std::optional<JwkCacheEntry> JwkCache::find(const std::string& key) {
     std::shared_lock<std::shared_mutex> lock(m_mutex);
+    cta::log::LogContext lc(m_lc);
     auto it = m_keymap.find(key);
-    if (it == m_keymap.end())
+    if (it == m_keymap.end()) {
+        lc.log(cta::log::INFO, std::string("Entry not found for kid ") + key);
         return std::nullopt;
-    else
+    } else {
+        lc.log(cta::log::INFO, std::string("Entry found in cache for kid ") + key);
         return std::optional<JwkCacheEntry>(it->second);
+    }
 }
 
 void JwkCache::Insert(const std::string &key, const JwkCacheEntry& e) {
@@ -66,7 +67,8 @@ void JwkCache::StartRefreshThread() {
         // Already running
         return;
     }
-    std::cout << "Starting cache refresh thread" << std::endl;
+    cta::log::LogContext lc(m_lc);
+    lc.log(cta::log::INFO, "Starting cache refresh thread");
     m_stopThread = false;
     m_refreshThread = std::thread(&JwkCache::RefreshLoop, this);
 }
@@ -86,7 +88,8 @@ void JwkCache::RefreshLoop() {
             UpdateCache(now);
         }
         catch (const std::exception& ex) {
-            std::cout << "Some exception thrown in the RefreshLoop " << ex.what() << std::endl;
+            cta::log::LogContext lc(m_lc);
+            lc.log(cta::log::ERR, std::string("Some exception thrown in the RefreshLoop ") + ex.what());
         }
         std::unique_lock<std::mutex> lk(m_cv_mutex);
         m_cv.wait_for(lk, std::chrono::seconds(m_cacheRefreshInterval), [this]() {
@@ -96,15 +99,23 @@ void JwkCache::RefreshLoop() {
 }
 
 void JwkCache::UpdateCache(time_t now) {
-    std::cout << "In updateCache() function" << std::endl;
-    // TODO: catch exception here, this might throw
-    json_object* jwks = m_fetchFunc(m_jwksUri);
+    cta::log::LogContext lc(m_lc);
+    json_object* jwks = nullptr;
+    try {
+        jwks = m_fetchFunc(m_jwksUri);
+    } catch (CurlException& ex) {
+        lc.log(cta::log::ERR, ex.getMessageValue());
+        return;
+    } catch (JSONParseException& ex) {
+        lc.log(cta::log::ERR, ex.getMessageValue());
+        return;
+    }
     // purge any keys that have expired
     std::unique_lock<std::shared_mutex> lock(m_mutex);
     for (auto it = m_keymap.begin(); it != m_keymap.end() ;) {
         int lastRefresh = it->second.last_refresh_time;
         if (lastRefresh + m_pubkeyTimeout <= now) {
-            std::cout << "Removing entry for key with kid " << it->first << std::endl;
+            lc.log(cta::log::DEBUG, std::string("Removing entry for key with kid ") + it->first);
             it = m_keymap.erase(it); // erase returns next valid iterator
         } else {
             ++it;
@@ -113,7 +124,7 @@ void JwkCache::UpdateCache(time_t now) {
     // add they new keys
     json_object* keys = nullptr;
     if (!json_object_object_get_ex(jwks, "keys", &keys) || !json_object_is_type(keys, json_type_array)) {
-        std::cerr << "\"keys\" field missing or not an array in JWKS" << std::endl;
+        lc.log(cta::log::ERR, "\"keys\" field missing or not an array in JWKS");
         json_object_put(jwks);  // Cleanup
         return;
     }
@@ -146,7 +157,7 @@ void JwkCache::UpdateCache(time_t now) {
         JwkCacheEntry entry = {now, pubkeyPem};
         m_keymap[kid] = entry;
 
-        std::cout << "Adding entry for key with kid " << kid << " and cachedTime " << now << std::endl;
+        lc.log(cta::log::INFO, std::string("Adding entry for key with kid ") + kid + " and cachedTime " + std::to_string(now));
     }
 
     json_object_put(jwks); // Clean up ref count

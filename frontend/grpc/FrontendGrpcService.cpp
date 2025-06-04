@@ -42,13 +42,15 @@ static std::string ToString(const ::grpc::string_ref& r) {
 }
 
 bool CtaRpcImpl::ValidateToken(const std::string& encodedJWT) {
+  // this is thread-safe because it makes a copy of logContext for each thread
+  cta::log::LogContext lc(m_frontendService->getLogContext());
+  cta::log::ScopedParamContainer sp(lc);
   try {
     auto decoded = jwt::decode(encodedJWT);
-
     // Example validation: check if the token is expired
     auto exp = decoded.get_payload_claim("exp").as_date();
     if (exp < std::chrono::system_clock::now()) {
-        std::cout << "Passed-in token has expired!" << std::endl;
+        lc.log(cta::log::ERR, "In ValidateToken, Passed-in token has expired!");
         return false;  // Token has expired
     }
     auto header = decoded.get_header_json();
@@ -61,7 +63,7 @@ bool CtaRpcImpl::ValidateToken(const std::string& encodedJWT) {
     // first try to use the cached value
     auto entry = m_pubkeyCache.find(kid);
     if (!entry.has_value()) {
-        std::cout << "No cached key found for kid: " << kid << ", will fetch keys from endpoint" << std::endl;
+        lc.log(cta::log::INFO, std::string("No cached key found for kid: ") + kid + ", will fetch keys from endpoint");
     } else {
       pubkeyPem = entry.value().pubkey;
     }
@@ -73,7 +75,7 @@ bool CtaRpcImpl::ValidateToken(const std::string& encodedJWT) {
       entry = m_pubkeyCache.find(kid);
       if (!entry.has_value()) {
         // unable to fetch the public key for validation, fail the request
-        std::cout << "Unable to find the public key for the token, authentication failed" << std::endl;
+        lc.log(cta::log::ERR, "Unable to find the public key for the token, authentication failed");
         return false;
       }
     }
@@ -84,14 +86,13 @@ bool CtaRpcImpl::ValidateToken(const std::string& encodedJWT) {
                         .allow_algorithm(jwt::algorithm::rs256(pubkeyPem, "", "", ""));
                         // .allow_algorithm(jwt::algorithm::rs256(x5c));
                         // .with_issuer("http://auth-keycloak:8080/realms/master");
-    std::cout << "successfully built the verifier" << std::endl;
     verifier.verify(decoded);
     return true;
   } catch (const std::system_error& e) {
-    std::cout << "There was a failure in token verification. Code " << e.code() << "meaning: " << e.what() << std::endl;
+    lc.log(cta::log::ERR, std::string("There was a failure in token verification. ") + e.what());
     return false;
   } catch (const std::runtime_error& e) {
-    std::cout << "Failure in token verification, " << e.what() << std::endl;
+    lc.log(cta::log::ERR, std::string("Failure in token verification, ") + e.what());
     return false;
   }
 }
@@ -102,27 +103,23 @@ CtaRpcImpl::ExtractAuthHeaderAndValidate(::grpc::ServerContext* context) {
   auto metadata = context->client_metadata();
   std::string token;
 
+  cta::log::LogContext lc(m_frontendService->getLogContext());
+  cta::log::ScopedParamContainer sp(lc);
   // Search for the authorization token in the metadata
   auto it = metadata.find("authorization");
   if (it != metadata.end()) {
       std::string auth_header = ToString(it->second);  // "Bearer <token>"
       token = auth_header.substr(7); // Extract the token part, use substr(7) because that is the length of "Bearer" plus a space character
-
-      std::cout << "Received token: " << token << std::endl;
-
+      lc.log(cta::log::DEBUG, std::string("Received token: ") + token);
   } else {
-      std::cout << "Authorization header missing" << std::endl;
+      lc.log(cta::log::ERR, "Authorization header missing");
       return ::grpc::Status(::grpc::StatusCode::UNAUTHENTICATED, "Missing Authorization header");
   }
-  // Optionally, verify the token here...
   if (ValidateToken(token)) {
-    std::cout << "Validate went ok, returning status OK" << std::endl;
     return ::grpc::Status::OK;
-  }
-  else
-  {
-    std::cout << "JWT authorization process error. Invalid principal." << std::endl;
-    return ::grpc::Status(::grpc::StatusCode::UNAUTHENTICATED, "JWT authorization process error. Invalid principal.");
+  } else {
+    lc.log(cta::log::ERR, "JWT authorization process error. Token validation failed.");
+    return ::grpc::Status(::grpc::StatusCode::UNAUTHENTICATED, "JWT authorization process error. Token validation failed.");
   }
 }
 
@@ -337,6 +334,7 @@ CtaRpcImpl::CtaRpcImpl(const std::string& config)
       m_pubkeyCache(m_frontendService->getJwksUri().value_or(""),
                     m_frontendService->getCacheRefreshInterval().value_or(600),
                     m_frontendService->getPubkeyTimeout().value_or(600),
-                    FetchJWKS) {}
+                    FetchJWKS,
+                    m_frontendService->getLogContext()) {}
 
 } // namespace cta::frontend::grpc

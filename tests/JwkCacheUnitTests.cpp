@@ -18,6 +18,8 @@
 #include "common/JwkCache.hpp"
 #include <gtest/gtest.h>
 #include <json-c/json.h>
+#include "common/log/StringLogger.hpp"
+#include "common/log/LogContext.hpp"
 
 namespace integrationTests {
 // Fake FetchJWKS for testing
@@ -75,7 +77,9 @@ json_object* FakeFetchJWKS(const std::string& uri) {
 }
 
 TEST(JwkCacheTest, UpdateCacheAddsKey) {
-    JwkCache cache("http://fake-jwks-uri", 1200, 1200, FakeFetchJWKS);
+    cta::log::StringLogger log("dummy","JwkCacheTest_UpdateCacheAddsKey",cta::log::DEBUG);
+    cta::log::LogContext lc(log);
+    JwkCache cache("http://fake-jwks-uri", 1200, 1200, FakeFetchJWKS, lc);
 
     time_t fakeNow = 1000;
     cache.UpdateCache(fakeNow);
@@ -87,7 +91,9 @@ TEST(JwkCacheTest, UpdateCacheAddsKey) {
 }
 
 TEST(JwkCacheTest, PurgeCacheClearsKeys) {
-    JwkCache cache("http://fake-jwks-uri", 600, 600, FakeFetchJWKS);
+    cta::log::StringLogger log("dummy","JwkCacheTest_PurgeCacheClearsKeys",cta::log::DEBUG);
+    cta::log::LogContext lc(log);
+    JwkCache cache("http://fake-jwks-uri", 600, 600, FakeFetchJWKS, lc);
 
     time_t fakeNow = 1000;
     cache.UpdateCache(fakeNow);
@@ -98,7 +104,9 @@ TEST(JwkCacheTest, PurgeCacheClearsKeys) {
 }
 
 TEST(JwkCacheTest, UpdateCacheRemovesExpiredKeys) {
-    JwkCache cache("http://fake-jwks-uri", 100, 200, FakeFetchJWKS);  // very short pubkeyTimeout
+    cta::log::StringLogger log("dummy","JwkCacheTest_UpdateCacheRemovesExpiredKeys",cta::log::DEBUG);
+    cta::log::LogContext lc(log);
+    JwkCache cache("http://fake-jwks-uri", 100, 200, FakeFetchJWKS, lc);  // very short pubkeyTimeout
 
     time_t lastRefreshTime = 1000;
     cache.UpdateCache(lastRefreshTime);

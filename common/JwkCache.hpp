@@ -12,8 +12,10 @@
 #include <atomic>
 
 #include "exception/Exception.hpp"
+#include "log/LogContext.hpp"
 
 CTA_GENERATE_EXCEPTION_CLASS(JSONParseException);
+CTA_GENERATE_EXCEPTION_CLASS(CurlException);
 
 struct JwkCacheEntry {
     time_t last_refresh_time;
@@ -26,14 +28,12 @@ class JwkCache {
 public:
     // Constructor with optional fetch function for testing
     using FetchFunction = std::function<json_object* (const std::string& jwkUri)>;
-    JwkCache(const std::string& jwkUri, int cacheRefreshInterval, int pubkeyTimeout, FetchFunction fetchFunc)
+    JwkCache(const std::string& jwkUri, int cacheRefreshInterval, int pubkeyTimeout, FetchFunction fetchFunc, const cta::log::LogContext& lc)
                 : m_jwksUri(jwkUri),
                     m_cacheRefreshInterval(cacheRefreshInterval),
                     m_pubkeyTimeout(pubkeyTimeout),
-                    m_fetchFunc(fetchFunc)
-        {
-            std::cout << "In JwkCache constructor, cacheRefreshInterval value is " << m_cacheRefreshInterval << std::endl;
-        };
+                    m_fetchFunc(fetchFunc),
+                    m_lc(lc) {};
     ~JwkCache();
 
     void PurgeCache(); // remove all entries
@@ -58,4 +58,6 @@ private:
     std::condition_variable m_cv; // condition: stop the refresh thread, will be performed in destructor
                                   // this is needed because the refresh thread might be sleeping, if not actively performing cache update
     std::atomic<bool> m_stopThread;
+    // The logging context
+    cta::log::LogContext m_lc; // always make a copy for thread safety
 };
