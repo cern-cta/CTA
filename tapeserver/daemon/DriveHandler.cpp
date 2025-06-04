@@ -166,6 +166,12 @@ SubprocessHandler::ProcessingStatus DriveHandler::fork() {
       m_processingStatus.nextTimeout = nextTimeout();
       // Register our socket pair side for epoll
       m_processManager.addFile(m_socketPair->getFdForAccess(server::SocketPair::Side::child), this);
+      // Create a catalogue handler in the parent process,
+      // to be able to properly handle a drive shutdown without having to reload the plugin catalogue libraries
+      if (!m_catalogue) {
+        const std::string catalogueHandlerName =  "DriveHandlerParent-" + m_driveConfig.unitName;
+        m_catalogue = createCatalogue(catalogueHandlerName);
+      }
       // We are now ready to react to timeouts and messages from the child process.
       return m_processingStatus;
     }
