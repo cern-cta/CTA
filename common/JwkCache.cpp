@@ -1,7 +1,7 @@
 #include "JwkCache.hpp"
 #include <json-c/json.h>
 #include <curl/curl.h>
-#include <jwt-cpp/jwt.h>
+#include "jwt-cpp/jwt.h"
 #include <mutex>
 
 

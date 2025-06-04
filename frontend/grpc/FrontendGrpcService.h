@@ -14,7 +14,7 @@
 #include "cta_frontend.pb.h"
 #include "cta_frontend.grpc.pb.h"
 #include "frontend/common/FrontendService.hpp"
-#include "keycache/JwkCache.hpp"
+#include "common/JwkCache.hpp"
 
 using cta::Scheduler;
 using cta::catalogue::Catalogue;

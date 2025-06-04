@@ -15,7 +15,7 @@
  *               submit itself to any jurisdiction.
  */
 
-#include "frontend/grpc/keycache/JwkCache.hpp"
+#include "common/JwkCache.hpp"
 #include <gtest/gtest.h>
 #include <json-c/json.h>
 

@@ -203,3 +203,8 @@ set_property(TARGET ctacommonunittests PROPERTY   VERSION "${CTA_LIBVERSION}")
 install(TARGETS ctacommonunittests DESTINATION usr/${CMAKE_INSTALL_LIBDIR})
 add_executable(mutexLtrace threading/MutexLtrace.cpp)
 target_link_libraries(mutexLtrace ctacommon)
+
+find_package(OpenSSL REQUIRED)
+include_directories(${CMAKE_SOURCE_DIR}/common/jwt-cpp/include/)
+add_library(JwkCache STATIC JwkCache.cpp)
+target_link_libraries(JwkCache PRIVATE curl json-c OpenSSL::Crypto)
