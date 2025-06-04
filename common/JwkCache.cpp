@@ -37,7 +37,7 @@ json_object* FetchJWKS(const std::string& jwksUrl) {
     json_object* jwks = json_tokener_parse(readBuffer.c_str());
     if (!jwks) {
         std::cerr << "Failed to parse JSON response from JWKS" << std::endl;
-        throw std::runtime_error("Failed to parse JSON in FetchJWKS");
+        throw JSONParseException("Failed to parse JSON response from FetchJWKS");
     }
 
     return jwks;
@@ -97,6 +97,7 @@ void JwkCache::RefreshLoop() {
 
 void JwkCache::UpdateCache(time_t now) {
     std::cout << "In updateCache() function" << std::endl;
+    // TODO: catch exception here, this might throw
     json_object* jwks = m_fetchFunc(m_jwksUri);
     // purge any keys that have expired
     std::unique_lock<std::shared_mutex> lock(m_mutex);

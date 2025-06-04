@@ -11,6 +11,10 @@
 #include <thread>
 #include <atomic>
 
+#include "exception/Exception.hpp"
+
+CTA_GENERATE_EXCEPTION_CLASS(JSONParseException);
+
 struct JwkCacheEntry {
     time_t last_refresh_time;
     std::string pubkey; // public key in PEM format
