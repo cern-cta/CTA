@@ -72,7 +72,6 @@ void JwkCache::StartRefreshThread() {
 }
 
 void JwkCache::StopRefreshThread() {
-    // no need for locking because it's atomic
     m_stopThread = true;
     m_cv.notify_all();  // Wake the thread if sleeping
     if (m_refreshThread.joinable()) {
@@ -81,7 +80,6 @@ void JwkCache::StopRefreshThread() {
 }
 
 void JwkCache::RefreshLoop() {
-    // do your update and wait for the next one
     while (!m_stopThread.load()) {
         try {
             time_t now = time(NULL);
@@ -93,7 +91,7 @@ void JwkCache::RefreshLoop() {
         std::unique_lock<std::mutex> lk(m_cv_mutex);
         m_cv.wait_for(lk, std::chrono::seconds(m_cacheRefreshInterval), [this]() {
             return m_stopThread.load();
-        }); // wait to be woken up
+        });
     }
 }
 
@@ -112,7 +110,6 @@ void JwkCache::UpdateCache(time_t now) {
         }
     }
     // add they new keys
-    // Parse the "keys" array from JWKS
     json_object* keys = nullptr;
     if (!json_object_object_get_ex(jwks, "keys", &keys) || !json_object_is_type(keys, json_type_array)) {
         std::cerr << "\"keys\" field missing or not an array in JWKS" << std::endl;
@@ -151,7 +148,7 @@ void JwkCache::UpdateCache(time_t now) {
         std::cout << "Adding entry for key with kid " << kid << " and cachedTime " << now << std::endl;
     }
 
-    json_object_put(jwks);  // Clean up ref count
+    json_object_put(jwks); // Clean up ref count
 }
 
 // Remove all entries from the cache
