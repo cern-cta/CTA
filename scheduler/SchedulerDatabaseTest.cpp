@@ -58,11 +58,11 @@ struct SchedulerDatabaseTestParam {
  }
 }; // struct SchedulerDatabaseTestParam
 
-class OStoreFixture : public cta::OStoreDB {
+class SchedulerDatabaseFixture : public cta::SchedulerDatabase {
 public:
-  using cta::OStoreDB::OStoreDB;
-  using cta::OStoreDB::getArchiveMountPolicyMaxPriorityMinAge;
-  using cta::OStoreDB::getRetrieveMountPolicyMaxPriorityMinAge;
+  using cta::SchedulerDatabase::SchedulerDatabase;
+  using cta::SchedulerDatabase::getArchiveMountPolicyMaxPriorityMinAge;
+  using cta::SchedulerDatabase::getRetrieveMountPolicyMaxPriorityMinAge;
 };
 
 /**
@@ -929,7 +929,7 @@ TEST_P(SchedulerDatabaseTest, getArchiveMountPolicyMaxPriorityMinAge) {
   mountPolicies.back().archivePriority = 3;
   mountPolicies.back().archiveMinRequestAge = 3000;
 
-  auto [maxPriority, minMinRequestAge] = OStoreFixture::getArchiveMountPolicyMaxPriorityMinAge(mountPolicies);
+  auto [maxPriority, minMinRequestAge] = SchedulerDatabaseFixture::getArchiveMountPolicyMaxPriorityMinAge(mountPolicies);
 
   ASSERT_EQ(99, maxPriority);
   ASSERT_EQ(50, minMinRequestAge);
@@ -954,7 +954,7 @@ TEST_P(SchedulerDatabaseTest, getRetrieveMountPolicyMaxPriorityMinAge) {
   mountPolicies.back().retrievePriority = 3;
   mountPolicies.back().retrieveMinRequestAge = 3000;
 
-  auto [maxPriority, minMinRequestAge] = OStoreFixture::getRetrieveMountPolicyMaxPriorityMinAge(mountPolicies);
+  auto [maxPriority, minMinRequestAge] = SchedulerDatabaseFixture::getRetrieveMountPolicyMaxPriorityMinAge(mountPolicies);
 
   ASSERT_EQ(99, maxPriority);
   ASSERT_EQ(50, minMinRequestAge);
