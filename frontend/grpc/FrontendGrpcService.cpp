@@ -28,6 +28,7 @@
 #include <json-c/json.h>
 #include <curl/curl.h>
 #include <thread>
+#include <optional>
 
 /*
  * Validate the storage class and issue the archive ID which should be used for the Archive request
@@ -58,25 +59,26 @@ bool CtaRpcImpl::ValidateToken(const std::string& encodedJWT) {
     // Get the JWKS endpoint, find the matching with our token, obtain the public key
     // used to sign the token and validate it
     // first try to use the cached value
-    auto it = m_pubkeyCache.m_keymap.find(kid);
-    if (it == m_pubkeyCache.m_keymap.end()) {
+    auto entry = m_pubkeyCache.find(kid);
+    if (!entry.has_value()) {
         std::cout << "No cached key found for kid: " << kid << ", will fetch keys from endpoint" << std::endl;
     } else {
-      pubkeyPem = it->second.pubkey;
+      pubkeyPem = entry.value().pubkey;
     }
-    if (it == m_pubkeyCache.m_keymap.end()) {
+    if (!entry.has_value()) {
       // add the key to the cache, after fetching
       auto const now = std::chrono::system_clock::now();
       time_t nowt = std::chrono::system_clock::to_time_t(now);
       m_pubkeyCache.UpdateCache(nowt);
+      entry = m_pubkeyCache.find(kid);
+      if (!entry.has_value()) {
+        // unable to fetch the public key for validation, fail the request
+        std::cout << "Unable to find the public key for the token, authentication failed" << std::endl;
+        return false;
+      }
     }
-    it = m_pubkeyCache.m_keymap.find(kid);
-    if (it == m_pubkeyCache.m_keymap.end()) {
-      // unable to fetch the public key for validation, fail the request
-      std::cout << "Unable to find the public key for the token, authentication failed" << std::endl;
-      return false;
-    }
-    pubkeyPem = it->second.pubkey;
+
+    pubkeyPem = entry.value().pubkey;
     // Validate signature
     auto verifier = jwt::verify()
                         .allow_algorithm(jwt::algorithm::rs256(pubkeyPem, "", "", ""));

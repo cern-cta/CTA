@@ -5,6 +5,7 @@
 #include <json-c/json.h>
 #include <functional>
 #include <shared_mutex>
+#include <optional>
 
 struct JwkCacheEntry {
     time_t last_refresh_time;
@@ -28,7 +29,9 @@ public:
 
     void PurgeCache(); // remove all entries
     void UpdateCache(time_t now);
-
+    void Insert(const std::string& key, const JwkCacheEntry& e); // only used for tests
+    std::optional<JwkCacheEntry> find(std::string key);
+private:
     std::string m_jwksUri;
     int m_cacheRefreshInterval; // value in seconds
     // This gives the option to keep public keys around for longer than the refresh interval.
@@ -36,6 +39,5 @@ public:
     FetchFunction m_fetchFunc;
     // TODO: add mutex to handle parallel requests
     std::shared_mutex m_mutex;
-    std::map<std::string, JwkCacheEntry>::iterator find(std::string key);
     std::map<std::string, JwkCacheEntry> m_keymap;
 };

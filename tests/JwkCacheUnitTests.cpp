@@ -80,10 +80,10 @@ TEST(JwkCacheTest, UpdateCacheAddsKey) {
     time_t fakeNow = 1000;
     cache.UpdateCache(fakeNow);
 
-    auto it = cache.find("test-kid");
-    ASSERT_NE(it, cache.m_keymap.end());
-    EXPECT_EQ(it->second.last_refresh_time, fakeNow);
-    EXPECT_FALSE(it->second.pubkey.empty());
+    auto entry = cache.find("test-kid");
+    ASSERT_TRUE(entry.has_value());
+    EXPECT_EQ(entry.value().last_refresh_time, fakeNow);
+    EXPECT_FALSE(entry.value().pubkey.empty());
 }
 
 TEST(JwkCacheTest, PurgeCacheClearsKeys) {
@@ -93,8 +93,8 @@ TEST(JwkCacheTest, PurgeCacheClearsKeys) {
     cache.UpdateCache(fakeNow);
 
     cache.PurgeCache();
-
-    EXPECT_TRUE(cache.m_keymap.empty());
+    auto entry = cache.find("test-kid");
+    EXPECT_FALSE(entry.has_value());
 }
 
 TEST(JwkCacheTest, UpdateCacheRemovesExpiredKeys) {
@@ -105,20 +105,20 @@ TEST(JwkCacheTest, UpdateCacheRemovesExpiredKeys) {
 
     // Manually insert a stale key
     JwkCacheEntry expiredEntry = {lastRefreshTime, "old-pubkey"};
-    cache.m_keymap["expired-key"] = expiredEntry;
+    cache.Insert("expired-key", expiredEntry);
 
     time_t now = lastRefreshTime + 2;
     cache.UpdateCache(now);
     // should not be removed yet, it should be removed after lastRefreshTime + 200 = 1200
-    EXPECT_EQ(cache.m_keymap.count("expired-key"), 1);
+    EXPECT_TRUE(cache.find("expired-key").has_value());
     now = lastRefreshTime + 120;
     cache.UpdateCache(now);
     // still here
-    EXPECT_EQ(cache.m_keymap.count("expired-key"), 1);
+    EXPECT_TRUE(cache.find("expired-key").has_value());
     // now the PK has expired, should be removed
     now = lastRefreshTime + 220;
     cache.UpdateCache(now);
-    EXPECT_EQ(cache.m_keymap.count("expired-key"), 0);
+    EXPECT_FALSE(cache.find("expired-key").has_value());
 }
 }
 

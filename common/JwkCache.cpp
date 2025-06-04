@@ -43,9 +43,18 @@ json_object* FetchJWKS(const std::string& jwksUrl) {
     return jwks;
 }
 
-std::map<std::string, JwkCacheEntry>::iterator JwkCache::find(std::string key) {
+std::optional<JwkCacheEntry> JwkCache::find(std::string key) {
     std::shared_lock<std::shared_mutex> lock(m_mutex);
-    return m_keymap.find(key);
+    auto it = m_keymap.find(key);
+    if (it == m_keymap.end())
+        return std::nullopt;
+    else
+        return std::optional<JwkCacheEntry>(it->second);
+}
+
+void JwkCache::Insert(const std::string &key, const JwkCacheEntry& e) {
+    std::unique_lock<std::shared_mutex> lock(m_mutex);
+    m_keymap[key] = e;
 }
 
 void JwkCache::UpdateCache(time_t now) {
