@@ -855,21 +855,20 @@ void RetrieveQueue::garbageCollect(const std::string &presumedOwner, AgentRefere
     cta::catalogue::Catalogue & catalogue) {
   // Garbage collection of a retrieve queue should only happen it died in the middle of QueueCleanup.
   if(!getQueueCleanupDoCleanup()){
-    throw cta::exception::Exception("In RetrieveQueue::garbageCollect(): trying to gabarbage collect Retrieve Queue not marked for cleanup");
+    throw cta::exception::Exception("In RetrieveQueue::garbageCollect(): trying to gabarbage collect Retrieve Queue not marked for cleanup.");
   }
 
   // It might happen that the queue was added to ownership but the
-  // serve crashed before chaing the reservation value of the queue.
+  // server crashed before changing the reservation value of the queue.
   // Check assigned agent is the same as the one we are cleaning up.
-  if(getQueueCleanupAssignedAgent().has_value() &&
-     getQueueCleanupAssignedAgent().value() == presumedOwner){
-
+  if (getQueueCleanupAssignedAgent().has_value() &&
+      getQueueCleanupAssignedAgent().value() == presumedOwner) {
     clearQueueCleanupAssignedAgent();
+    setOwner("root");
     commit();
-    //setOwner(); Do we need to reset the owner here os is it ok to leave the previous one and overwrite on the new reservation...
     log::ScopedParamContainer(lc)
       .add("queueAddress", getAddressIfSet())
-      .log(log::INFO, "In RetrieveQueue::garbageCollect(): cleared CleanupInfo assined agent.");
+      .log(log::INFO, "In RetrieveQueue::garbageCollect(): cleared CleanupInfo assigned agent.");
   }
 }
 

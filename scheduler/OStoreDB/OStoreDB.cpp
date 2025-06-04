@@ -2278,6 +2278,7 @@ void OStoreDB::freeRetrieveQueueForCleanup(const std::string& toReportQueueName)
   rqtr.setQueueCleanupDoCleanup(false);
   rqtr.clearQueueCleanupAssignedAgent();
   rqtr.commit();
+  m_agentReference->removeFromOwnership(toReportQueueName, m_objectStore);
 }
 
 //------------------------------------------------------------------------------
@@ -3637,24 +3638,28 @@ OStoreDB::getNextRetrieveJobsToReportBatch(uint64_t filesRequested, log::LogCont
       return ret;
     }
 
-    // If the queue is being cleanup up it will be freed at some point.
-    // This queue list is not actually the queues but a representation that only contains
-    // the VID and the Adress (basically, the contents of the Root Entry's pointer list),
-    // We need to fetch the actual information of the queue to know what
-    // Now, this happens on a queue by queue basis, if we have 4k queus, what is the
-    // extra cost on the objectstore side of thinsg?? TBD. The queue object itself is not
-    // too big.
+    // If the queue is being cleanup up it will be freed at some point. Skip the queue.
+    // This queue list is not actually the queues but the contents of the
+    // Root Entry's pointer list).
+    // We need to fetch the actual information of the queue to know the content of the cleanup info.
     {
+      // We need this lock here to cover the case in which
+      ScopedExclusiveLock rel(re);
       RetrieveQueue rqtr(m_objectStore);
       ScopedExclusiveLock ex;
       rqtr.setAddress(queueList.front().address); // Can the object be gone before this?
-      ex.lock(rqtr);
-      rqtr.fetch(); // get the contents of the queue
-      if(rqtr.getQueueCleanupDoCleanup()){
+      try {
+        ex.lock(rqtr);
+        rqtr.fetch();
+        // The queue is not reserved for cleaned up. Proceed with job popping.
+        if (rqtr.getQueueCleanupDoCleanup()) {
+          return ret;
+        }
+      } catch (cta::exception::Exception&) {
+        logContext.log(log::DEBUG, "In OStoreDB::getNextRetrieveJobsToReportBatch(): Retrieve queue gone. Skipping it.");
         return ret;
       }
     }
-
     // Try to get jobs from the first queue. If it is empty, it will be trimmed, so we can go for another round.
     RQTRAlgo::PopCriteria criteria;
     criteria.files = filesRequested;

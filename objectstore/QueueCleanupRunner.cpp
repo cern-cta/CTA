@@ -149,7 +149,6 @@ void QueueCleanupRunner::runOnePass(log::LogContext &logContext) {
       m_db.freeRetrieveQueueForCleanup(toReportQueueName);
     }
 
-
     // Finally, update the tape state out of PENDING
     {
       cta::common::dataStructures::Tape tapeDataRefreshed;
