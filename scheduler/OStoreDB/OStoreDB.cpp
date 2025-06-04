@@ -2199,20 +2199,10 @@ void OStoreDB::requeueRetrieveRequestJobs(std::list<cta::SchedulerDatabase::Retr
 //------------------------------------------------------------------------------
 // OStoreDB::blockRetrieveQueueForCleanup()
 //------------------------------------------------------------------------------
-<<<<<<< HEAD
 std::string OStoreDB::blockRetrieveQueueForCleanup(const std::string& vid) {
   RootEntry re(m_objectStore);
   RetrieveQueue rqtt(m_objectStore);
   ScopedExclusiveLock rqttl;
-=======
-std::string OStoreDB::reserveRetrieveQueueForCleanup(const std::string& vid) {
-  RootEntry re(m_objectStore);
-  RetrieveQueue rqtt(m_objectStore);
-  RetrieveQueue rqtr(m_objectStore);
-  ScopedExclusiveLock rel;
-  ScopedExclusiveLock rqttl;
-  ScopedExclusiveLock rqtrl;
->>>>>>> 59fc684b42 (Fix RetrieveQueueToReport Reservation)
   re.fetchNoLock();
 
   try {
@@ -2236,28 +2226,15 @@ std::string OStoreDB::reserveRetrieveQueueForCleanup(const std::string& vid) {
   // Check if someone else registered before us.
   if(rqtt.getQueueCleanupAssignedAgent()) {
     throw RetrieveQueueNotReservedForCleanup(
-<<<<<<< HEAD
       "In OStoreDB::blockRetrieveQueueForCleanup(): Queue was reserved by another agent. Cancelling reservation.");
   }
 
   // Otherwise, carry on with cleanup of this queue.
   // Agent ownership must go first.
-=======
-      "In OStoreDB::reserveRetrieveQueueForCleanup(): Queue was reserved by another agent. Cancelling reservation.");
-  }
-
-  // Otherwise, carry on with cleanup of this queue.
-<<<<<<< HEAD
->>>>>>> 59fc684b42 (Fix RetrieveQueueToReport Reservation)
-=======
-  // Agent ownership must go first.
->>>>>>> 6aac5e2fed (Fix concurrenct problems)
   m_agentReference->addToOwnership(rqtt.getAddressIfSet(), m_objectStore);
   rqtt.setOwner(m_agentReference->getAgentAddress());
   rqtt.setQueueCleanupAssignedAgent(m_agentReference->getAgentAddress());
   rqtt.commit();
-<<<<<<< HEAD
-<<<<<<< HEAD
   rqttl.release();
 
 
@@ -2285,7 +2262,6 @@ std::string OStoreDB::reserveRetrieveQueueForCleanup(const std::string& vid) {
     rqtr.setQueueCleanupDoCleanup();
     rqtr.setQueueCleanupAssignedAgent(m_agentReference->getAgentAddress());
     rqtr.commit();
-
   }
 
   return reportQueueAddress;
@@ -2298,52 +2274,12 @@ void OStoreDB::unblockRetrieveQueueForCleanup(const std::string& toReportQueueAd
   RetrieveQueue rqtr(m_objectStore);
   ScopedExclusiveLock rqltr;
   rqtr.setAddress(toReportQueueAddress);
-=======
-=======
-  rqttl.release();
->>>>>>> 6aac5e2fed (Fix concurrenct problems)
-
-  // Create the ToReport queue or get it in case a previous agent died and we are taking over. The second case is only possible if the agent
-  // that died has already been garbage collected.
-  // We hold the root entry lock until we get set the cleanupflag. This prevents trimEmptyQueues() to interfere with us.
-  rel.lock(re);
-  re.fetch();
-  const auto reportQueueName = re.addOrGetRetrieveQueueAndCommit(vid, *m_agentReference,
-common::dataStructures::JobQueueType::JobsToReportToUser);
-
-  m_agentReference->addToOwnership(reportQueueName, m_objectStore);
-
-  rqtr.setAddress(reportQueueName);
   rqtrl.lock(rqtr);
-  rqtr.fetch();
-
-  rqtr.setOwner(m_agentReference->getAgentAddress());
-  rqtr.setQueueCleanupDoCleanup();
-  rqtr.setQueueCleanupAssignedAgent(m_agentReference->getAgentAddress());
-  rqtr.commit();
-
-  rel.release();
-
-  return reportQueueName;
-}
-
-//------------------------------------------------------------------------------
-// OStoreDB::freeRetrieveQueueForCleanup()
-//------------------------------------------------------------------------------
-void OStoreDB::freeRetrieveQueueForCleanup(const std::string& toReportQueueName) {
-  RetrieveQueue rqtr(m_objectStore);
-  ScopedExclusiveLock rqltr;
-  rqtr.setAddress(toReportQueueName);
->>>>>>> 59fc684b42 (Fix RetrieveQueueToReport Reservation)
-  rqltr.lock(rqtr);
   rqtr.fetch();
   rqtr.setQueueCleanupDoCleanup(false);
   rqtr.clearQueueCleanupAssignedAgent();
   rqtr.commit();
-<<<<<<< HEAD
   m_agentReference->removeFromOwnership(toReportQueueAddress, m_objectStore);
-=======
->>>>>>> 59fc684b42 (Fix RetrieveQueueToReport Reservation)
 }
 
 //------------------------------------------------------------------------------
@@ -3725,7 +3661,6 @@ OStoreDB::getNextRetrieveJobsToReportBatch(uint64_t filesRequested, log::LogCont
         return ret;
       }
     }
-
     // Try to get jobs from the first queue. If it is empty, it will be trimmed, so we can go for another round.
     RQTRAlgo::PopCriteria criteria;
     criteria.files = filesRequested;
