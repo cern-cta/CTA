@@ -160,14 +160,6 @@ protected:
   void logAdminCmd(const std::string& function, const std::string& status, const std::string& reason, utils::Timer& t);
 
   /*!
-   * Returns a list of Tape Drive Names which have the same
-   * Scheduler DB Name configured as the CTA Frontend being queried
-   *
-   *  @param[in]   driveConfigList   List of drive configurations (from the catalogue)
-   */
-  std::list<std::string> getTapeDriveNamesGivenSchedulerBackendName(const std::list<cta::catalogue::DriveConfigCatalogue::DriveConfig>& driveConfigList);
-
-  /*!
    * Drive state enum
    */
   enum DriveState { Up, Down };

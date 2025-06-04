@@ -61,6 +61,15 @@ public:
   virtual std::list<DriveConfig> getTapeDriveConfigs() const = 0;
 
   /**
+   * Gets all Drive Names of Drive Configurations with given
+   * combination of key_name = SchedulerBackendName
+   * and value = <schedulerBackendName>
+   * @param schedulerBackendName name of the scheduler backend
+   * @return list of drive names
+   */
+  virtual std::list<std::string> getTapeDriveNamesForSchedulerBackend(const std::string &schedulerBackendName) const = 0;
+
+  /**
    * Gets the Key and Names of configurations of all TapeDrives
    * @return Keys and Names of configurations.
    */

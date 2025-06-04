@@ -29,6 +29,7 @@
 
 #include "catalogue/Catalogue.hpp"
 #include "catalogue/TapeDrivesCatalogueState.hpp"
+#include "common/Constants.hpp"
 #include "common/dataStructures/MountPolicy.hpp"
 #include "common/exception/Exception.hpp"
 #include "common/exception/TimeoutException.hpp"
@@ -583,7 +584,7 @@ void OStoreDB::fetchMountInfo(SchedulerDatabase::TapeMountDecisionInfo& tmdi,
   std::unordered_map<std::string, std::string> tapeDrivetoSchedulerBackendNameMap;
 
   for (const auto & config : m_catalogue.DriveConfig()->getTapeDriveConfigs()) {
-    if (config.keyName == "SchedulerBackendName") {
+    if (config.keyName == SCHEDULER_NAME_CONFIG_KEY) {
       tapeDrivetoSchedulerBackendNameMap.emplace(config.tapeDriveName, config.value);
     }
   }

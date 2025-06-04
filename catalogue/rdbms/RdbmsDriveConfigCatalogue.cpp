@@ -24,6 +24,7 @@
 
 #include "catalogue/CatalogueExceptions.hpp"
 #include "catalogue/rdbms/RdbmsDriveConfigCatalogue.hpp"
+#include "common/Constants.hpp"
 #include "common/dataStructures/DesiredDriveState.hpp"
 #include "common/dataStructures/TapeDrive.hpp"
 #include "common/dataStructures/TapeDriveStatistics.hpp"
@@ -133,6 +134,27 @@ std::list<cta::catalogue::DriveConfigCatalogue::DriveConfig> RdbmsDriveConfigCat
     drivesConfigs.push_back(driveConfig);
   }
   return drivesConfigs;
+}
+
+std::list<std::string>
+RdbmsDriveConfigCatalogue::getTapeDriveNamesForSchedulerBackend(const std::string &schedulerBackendName) const {
+  const char* const sql = R"SQL(
+    SELECT
+      DRIVE_NAME AS DRIVE_NAME
+    FROM
+      DRIVE_CONFIG WHERE KEY_NAME = :KEY_NAME AND VALUE = :VALUE
+  )SQL";
+  auto conn = m_connPool->getConn();
+  auto stmt = conn.createStmt(sql);
+  stmt.bindString(":KEY_NAME", SCHEDULER_NAME_CONFIG_KEY);
+  stmt.bindString(":VALUE", schedulerBackendName);
+  auto rset = stmt.executeQuery();
+  std::list<std::string> tapeDriveNames;
+  while (rset.next()) {
+    const std::string driveName = rset.columnString("DRIVE_NAME");
+    tapeDriveNames.push_back(driveName);
+  }
+  return tapeDriveNames;
 }
 
 std::optional<std::tuple<std::string, std::string, std::string>> RdbmsDriveConfigCatalogue::getTapeDriveConfig(

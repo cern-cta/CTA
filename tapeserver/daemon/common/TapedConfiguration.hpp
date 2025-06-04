@@ -21,6 +21,7 @@
 #include <type_traits>
 #include <limits>
 #include <optional>
+#include "common/Constants.hpp"
 #include "common/log/DummyLogger.hpp"
 #include "common/exception/Exception.hpp"
 #include "common/SourcedParameter.hpp"
@@ -264,7 +265,7 @@ struct TapedConfiguration {
   };
 
   cta::SourcedParameter<std::string> schedulerBackendName {
-    "general", "SchedulerBackendName"
+    "general", SCHEDULER_NAME_CONFIG_KEY
   };
 
 private:

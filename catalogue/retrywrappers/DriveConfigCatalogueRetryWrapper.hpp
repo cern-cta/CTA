@@ -49,6 +49,8 @@ public:
   std::optional<std::tuple<std::string, std::string, std::string>> getTapeDriveConfig(const std::string &tapeDriveName,
     const std::string &keyName) const override;
 
+  std::list<std::string> getTapeDriveNamesForSchedulerBackend(const std::string &schedulerBackendName) const override;
+
   void deleteTapeDriveConfig(const std::string &tapeDriveName, const std::string &keyName) override;
 
 private:
