@@ -66,8 +66,9 @@ bool CtaRpcImpl::ValidateToken(const std::string& encodedJWT) {
     }
     if (it == m_pubkeyCache.m_keymap.end()) {
       // add the key to the cache, after fetching
-      time_t now = time(NULL);
-      m_pubkeyCache.UpdateCache(now);
+      auto const now = std::chrono::system_clock::now();
+      time_t nowt = std::chrono::system_clock::to_time_t(now);
+      m_pubkeyCache.UpdateCache(nowt);
     }
     it = m_pubkeyCache.m_keymap.find(kid);
     if (it == m_pubkeyCache.m_keymap.end()) {
