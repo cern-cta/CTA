@@ -328,17 +328,6 @@ Status CtaRpcImpl::CancelRetrieve(::grpc::ServerContext* context,
   return ProcessGrpcRequest(request, response, lc);
 }
 
-// should be called at server startup
-void CtaRpcImpl::StartJwksRefreshThread(int refreshInterval) {
-  std::thread([this, refreshInterval]() {
-    while (true) {
-      time_t now = time(NULL);
-      m_pubkeyCache.UpdateCache(now);
-      std::this_thread::sleep_for(std::chrono::seconds(refreshInterval));
-    }
-  }).detach();
-}
-
 /* initialize the frontend service
  * this iniitalizes the catalogue, scheduler, logger
  * and makes the rpc calls available through this class

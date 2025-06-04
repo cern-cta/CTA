@@ -43,7 +43,11 @@ json_object* FetchJWKS(const std::string& jwksUrl) {
     return jwks;
 }
 
-std::optional<JwkCacheEntry> JwkCache::find(std::string key) {
+JwkCache::~JwkCache() {
+    StopRefreshThread();
+}
+
+std::optional<JwkCacheEntry> JwkCache::find(const std::string& key) {
     std::shared_lock<std::shared_mutex> lock(m_mutex);
     auto it = m_keymap.find(key);
     if (it == m_keymap.end())
@@ -55,6 +59,42 @@ std::optional<JwkCacheEntry> JwkCache::find(std::string key) {
 void JwkCache::Insert(const std::string &key, const JwkCacheEntry& e) {
     std::unique_lock<std::shared_mutex> lock(m_mutex);
     m_keymap[key] = e;
+}
+
+void JwkCache::StartRefreshThread() {
+    if (m_refreshThread.joinable()) {
+        // Already running
+        return;
+    }
+    std::cout << "Starting cache refresh thread" << std::endl;
+    m_stopThread = false;
+    m_refreshThread = std::thread(&JwkCache::RefreshLoop, this);
+}
+
+void JwkCache::StopRefreshThread() {
+    // no need for locking because it's atomic
+    m_stopThread = true;
+    m_cv.notify_all();  // Wake the thread if sleeping
+    if (m_refreshThread.joinable()) {
+        m_refreshThread.join();
+    }
+}
+
+void JwkCache::RefreshLoop() {
+    // do your update and wait for the next one
+    while (!m_stopThread.load()) {
+        try {
+            time_t now = time(NULL);
+            UpdateCache(now);
+        }
+        catch (const std::exception& ex) {
+            std::cout << "Some exception thrown in the RefreshLoop " << ex.what() << std::endl;
+        }
+        std::unique_lock<std::mutex> lk(m_cv_mutex);
+        m_cv.wait_for(lk, std::chrono::seconds(m_cacheRefreshInterval), [this]() {
+            return m_stopThread.load();
+        }); // wait to be woken up
+    }
 }
 
 void JwkCache::UpdateCache(time_t now) {
