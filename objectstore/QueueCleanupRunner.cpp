@@ -40,7 +40,7 @@ void QueueCleanupRunner::runOnePass(log::LogContext &logContext) {
   }
 
   common::dataStructures::VidToTapeMap vidToTapesMap;
-  std::string toReportQueueName;
+  std::string toReportQueueAddress;
 
   if (!queueVidSet.empty()){
     try {
@@ -89,7 +89,7 @@ void QueueCleanupRunner::runOnePass(log::LogContext &logContext) {
 
     logContext.log(log::DEBUG, "In QueueCleanupRunner::runOnePass(): Will try to reserve retrieve queue.");
     try {
-      toReportQueueName = m_db.blockRetrieveQueueForCleanup(queueVid);
+      toReportQueueAddress = m_db.blockRetrieveQueueForCleanup(queueVid);
     } catch (OStoreDB::RetrieveQueueNotFound & ex) {
       log::ScopedParamContainer paramsExcMsg(logContext);
       paramsExcMsg.add("exceptionMessage", ex.getMessageValue());
@@ -145,8 +145,8 @@ void QueueCleanupRunner::runOnePass(log::LogContext &logContext) {
     // If we managed to requeue all the jobs to a differen VID remove the ToReport queue
     // If not, remove the CleanUp flag from the ToReport queue so that the Disk reporter
     // can pick it up.
-    if(!m_db.trimEmptyToReportQueue(toReportQueueName, logContext)){
-      m_db.unblockRetrieveQueueForCleanup(toReportQueueName);
+    if(!m_db.trimEmptyToReportQueue(toReportQueueAddress, logContext)){
+      m_db.unblockRetrieveQueueForCleanup(toReportQueueAddress);
     }
 
     // Finally, update the tape state out of PENDING

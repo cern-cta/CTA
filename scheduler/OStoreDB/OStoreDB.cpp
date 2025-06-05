@@ -2241,19 +2241,19 @@ std::string OStoreDB::blockRetrieveQueueForCleanup(const std::string& vid) {
   // taking over. The second case is only possible if the agent that died has 
   // already been garbage collected. We hold the root entry lock until we get 
   // set the cleanupflag. This prevents trimEmptyQueues() to interfere with us.
-  std::string reportQueueName;
+  std::string reportQueueAddress;
   {
     RetrieveQueue rqtr(m_objectStore);
     ScopedExclusiveLock rel;
     ScopedExclusiveLock rqtrl;
     rel.lock(re);
     re.fetch();
-    reportQueueName = re.addOrGetRetrieveQueueAndCommit(vid, *m_agentReference, 
+    reportQueueAddress = re.addOrGetRetrieveQueueAndCommit(vid, *m_agentReference, 
 		                                        common::dataStructures::JobQueueType::JobsToReportToUser);
 
-    m_agentReference->addToOwnership(reportQueueName, m_objectStore);
+    m_agentReference->addToOwnership(reportQueueAddress, m_objectStore);
 
-    rqtr.setAddress(reportQueueName);
+    rqtr.setAddress(reportQueueAddress);
     rqtrl.lock(rqtr);
     rqtr.fetch();
 
@@ -2264,22 +2264,22 @@ std::string OStoreDB::blockRetrieveQueueForCleanup(const std::string& vid) {
 
   }
 
-  return reportQueueName;
+  return reportQueueAddress;
 }
 
 //------------------------------------------------------------------------------
 // OStoreDB::unblockRetrieveQueueForCleanup()
 //------------------------------------------------------------------------------
-void OStoreDB::unblockRetrieveQueueForCleanup(const std::string& toReportQueueName) {
+void OStoreDB::unblockRetrieveQueueForCleanup(const std::string& toReportQueueAddress) {
   RetrieveQueue rqtr(m_objectStore);
   ScopedExclusiveLock rqltr;
-  rqtr.setAddress(toReportQueueName);
+  rqtr.setAddress(toReportQueueAddress);
   rqltr.lock(rqtr);
   rqtr.fetch();
   rqtr.setQueueCleanupDoCleanup(false);
   rqtr.clearQueueCleanupAssignedAgent();
   rqtr.commit();
-  m_agentReference->removeFromOwnership(toReportQueueName, m_objectStore);
+  m_agentReference->removeFromOwnership(toReportQueueAddress, m_objectStore);
 }
 
 //------------------------------------------------------------------------------
