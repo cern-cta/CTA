@@ -163,6 +163,9 @@ qdb:
   persistence:
     enabled: true
     storageClass: "fast-ssd"
+    # This is a temporary work-around until the bug is fixed in the EOS charts
+    pvc:
+      storageClass: "fast-ssd"
     annotations: {}
     accessModes:
       - ReadWriteOnce
