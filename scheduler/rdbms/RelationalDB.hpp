@@ -128,9 +128,9 @@ public:
 
   void requeueRetrieveRequestJobs(std::list<cta::SchedulerDatabase::RetrieveJob*>& jobs, log::LogContext& lc) override;
 
-  std::string reserveRetrieveQueueForCleanup(const std::string& vid) override;
+  std::string blockRetrieveQueueForCleanup(const std::string& vid) override;
 
-  void freeRetrieveQueueForCleanup(const std::string& vid) override;
+  void unblockRetrieveQueueForCleanup(const std::string& vid) override;
 
   void setArchiveJobBatchReported(std::list<SchedulerDatabase::ArchiveJob*>& jobsBatch,
                                   log::TimingList& timingList,

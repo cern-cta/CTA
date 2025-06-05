@@ -126,12 +126,12 @@ public:
     m_SchedDB->requeueRetrieveRequestJobs(jobs, lc);
   }
 
-  std::string reserveRetrieveQueueForCleanup(const std::string& vid) override {
-    return m_SchedDB->reserveRetrieveQueueForCleanup(vid);
+  std::string blockRetrieveQueueForCleanup(const std::string& vid) override {
+    return m_SchedDB->blockRetrieveQueueForCleanup(vid);
   }
 
-  void freeRetrieveQueueForCleanup(const std::string& vid) override {
-    return m_SchedDB->freeRetrieveQueueForCleanup(vid);
+  void unblockRetrieveQueueForCleanup(const std::string& vid) override {
+    return m_SchedDB->unblockRetrieveQueueForCleanup(vid);
   }
 
   std::list<RetrieveQueueCleanupInfo> getRetrieveQueuesCleanupInfo(log::LogContext& logContext) override {

@@ -2196,15 +2196,12 @@ void OStoreDB::requeueRetrieveRequestJobs(std::list<cta::SchedulerDatabase::Retr
 }
 
 //------------------------------------------------------------------------------
-// OStoreDB::reserveRetrieveQueueForCleanup()
+// OStoreDB::blockRetrieveQueueForCleanup()
 //------------------------------------------------------------------------------
-std::string OStoreDB::reserveRetrieveQueueForCleanup(const std::string& vid) {
+std::string OStoreDB::blockRetrieveQueueForCleanup(const std::string& vid) {
   RootEntry re(m_objectStore);
   RetrieveQueue rqtt(m_objectStore);
-  RetrieveQueue rqtr(m_objectStore);
-  ScopedExclusiveLock rel;
   ScopedExclusiveLock rqttl;
-  ScopedExclusiveLock rqtrl;
   re.fetchNoLock();
 
   try {
@@ -2212,9 +2209,9 @@ std::string OStoreDB::reserveRetrieveQueueForCleanup(const std::string& vid) {
     rqttl.lock(rqtt);
     rqtt.fetch();
   } catch (cta::objectstore::RootEntry::NoSuchRetrieveQueue& ex) {
-    throw RetrieveQueueNotFound("In OStoreDB::reserveRetrieveQueueForCleanup(): Retrieve queue of vid " + vid + " not found. " + ex.getMessageValue());
+    throw RetrieveQueueNotFound("In OStoreDB::blockRetrieveQueueForCleanup(): Retrieve queue of vid " + vid + " not found. " + ex.getMessageValue());
   } catch (cta::exception::NoSuchObject& ex) {
-    throw RetrieveQueueNotFound("In OStoreDB::reserveRetrieveQueueForCleanup(): Retrieve queue of vid " + vid + " not found. " + ex.getMessageValue());
+    throw RetrieveQueueNotFound("In OStoreDB::blockRetrieveQueueForCleanup(): Retrieve queue of vid " + vid + " not found. " + ex.getMessageValue());
   } catch (cta::exception::Exception& ex) {
     throw;
   }
@@ -2222,13 +2219,13 @@ std::string OStoreDB::reserveRetrieveQueueForCleanup(const std::string& vid) {
   // After locking a queue, check again if the cleanup flag is still true
   if (!rqtt.getQueueCleanupDoCleanup()) {
     throw RetrieveQueueNotReservedForCleanup(
-      "In OStoreDB::reserveRetrieveQueueForCleanup(): Queue no longer has the cleanup flag enabled after fetching. Skipping it.");
+      "In OStoreDB::blockRetrieveQueueForCleanup(): Queue no longer has the cleanup flag enabled after fetching. Skipping it.");
   }
 
   // Check if someone else registered before us.
   if(rqtt.getQueueCleanupAssignedAgent()) {
     throw RetrieveQueueNotReservedForCleanup(
-      "In OStoreDB::reserveRetrieveQueueForCleanup(): Queue was reserved by another agent. Cancelling reservation.");
+      "In OStoreDB::blockRetrieveQueueForCleanup(): Queue was reserved by another agent. Cancelling reservation.");
   }
 
   // Otherwise, carry on with cleanup of this queue.
@@ -2239,34 +2236,41 @@ std::string OStoreDB::reserveRetrieveQueueForCleanup(const std::string& vid) {
   rqtt.commit();
   rqttl.release();
 
-  // Create the ToReport queue or get it in case a previous agent died and we are taking over. The second case is only possible if the agent
-  // that died has already been garbage collected.
-  // We hold the root entry lock until we get set the cleanupflag. This prevents trimEmptyQueues() to interfere with us.
-  rel.lock(re);
-  re.fetch();
-  const auto reportQueueName = re.addOrGetRetrieveQueueAndCommit(vid, *m_agentReference,
-common::dataStructures::JobQueueType::JobsToReportToUser);
 
-  m_agentReference->addToOwnership(reportQueueName, m_objectStore);
+  // Create the ToReport queue or get it in case a previous agent died and we are
+  // taking over. The second case is only possible if the agent that died has 
+  // already been garbage collected. We hold the root entry lock until we get 
+  // set the cleanupflag. This prevents trimEmptyQueues() to interfere with us.
+  std::string reportQueueName;
+  {
+    RetrieveQueue rqtr(m_objectStore);
+    ScopedExclusiveLock rel;
+    ScopedExclusiveLock rqtrl;
+    rel.lock(re);
+    re.fetch();
+    reportQueueName = re.addOrGetRetrieveQueueAndCommit(vid, *m_agentReference, 
+		                                        common::dataStructures::JobQueueType::JobsToReportToUser);
 
-  rqtr.setAddress(reportQueueName);
-  rqtrl.lock(rqtr);
-  rqtr.fetch();
+    m_agentReference->addToOwnership(reportQueueName, m_objectStore);
 
-  rqtr.setOwner(m_agentReference->getAgentAddress());
-  rqtr.setQueueCleanupDoCleanup();
-  rqtr.setQueueCleanupAssignedAgent(m_agentReference->getAgentAddress());
-  rqtr.commit();
+    rqtr.setAddress(reportQueueName);
+    rqtrl.lock(rqtr);
+    rqtr.fetch();
 
-  rel.release();
+    rqtr.setOwner(m_agentReference->getAgentAddress());
+    rqtr.setQueueCleanupDoCleanup();
+    rqtr.setQueueCleanupAssignedAgent(m_agentReference->getAgentAddress());
+    rqtr.commit();
+
+  }
 
   return reportQueueName;
 }
 
 //------------------------------------------------------------------------------
-// OStoreDB::freeRetrieveQueueForCleanup()
+// OStoreDB::unblockRetrieveQueueForCleanup()
 //------------------------------------------------------------------------------
-void OStoreDB::freeRetrieveQueueForCleanup(const std::string& toReportQueueName) {
+void OStoreDB::unblockRetrieveQueueForCleanup(const std::string& toReportQueueName) {
   RetrieveQueue rqtr(m_objectStore);
   ScopedExclusiveLock rqltr;
   rqtr.setAddress(toReportQueueName);

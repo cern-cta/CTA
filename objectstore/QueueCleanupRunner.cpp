@@ -89,7 +89,7 @@ void QueueCleanupRunner::runOnePass(log::LogContext &logContext) {
 
     logContext.log(log::DEBUG, "In QueueCleanupRunner::runOnePass(): Will try to reserve retrieve queue.");
     try {
-      toReportQueueName = m_db.reserveRetrieveQueueForCleanup(queueVid);
+      toReportQueueName = m_db.blockRetrieveQueueForCleanup(queueVid);
     } catch (OStoreDB::RetrieveQueueNotFound & ex) {
       log::ScopedParamContainer paramsExcMsg(logContext);
       paramsExcMsg.add("exceptionMessage", ex.getMessageValue());
@@ -146,7 +146,7 @@ void QueueCleanupRunner::runOnePass(log::LogContext &logContext) {
     // If not, remove the CleanUp flag from the ToReport queue so that the Disk reporter
     // can pick it up.
     if(!m_db.trimEmptyToReportQueue(toReportQueueName, logContext)){
-      m_db.freeRetrieveQueueForCleanup(toReportQueueName);
+      m_db.unblockRetrieveQueueForCleanup(toReportQueueName);
     }
 
     // Finally, update the tape state out of PENDING

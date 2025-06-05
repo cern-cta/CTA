@@ -238,11 +238,11 @@ void RelationalDB::requeueRetrieveRequestJobs(std::list<cta::SchedulerDatabase::
   throw cta::exception::Exception("Not implemented");
 }
 
-std::string RelationalDB::reserveRetrieveQueueForCleanup(const std::string& vid) {
+std::string RelationalDB::blockRetrieveQueueForCleanup(const std::string& vid) {
   throw cta::exception::Exception("Not implemented");
 }
 
-void freeRetrieveQueueForCleanup(const std::string& vid){
+void unblockRetrieveQueueForCleanup(const std::string& vid){
   throw cta::exception::Exception("Not implemented");
 };
 
