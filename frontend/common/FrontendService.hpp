@@ -165,6 +165,9 @@ public:
    */
   const std::optional<int> getPubkeyTimeout() const { return m_pubkeyTimeout; }
 
+  void setCacheRefreshInterval(int cacheRefreshInterval) { m_cacheRefreshInterval = cacheRefreshInterval; }
+  void setPubkeyTimeout(int pubkeyTimeout) { m_pubkeyTimeout = pubkeyTimeout; }
+
 private:
   /*!
    * Set the verification mount policy

@@ -33,7 +33,14 @@ public:
                     m_cacheRefreshInterval(cacheRefreshInterval),
                     m_pubkeyTimeout(pubkeyTimeout),
                     m_fetchFunc(fetchFunc),
-                    m_lc(lc) {};
+                    m_lc(lc) {
+                        if (pubkeyTimeout < cacheRefreshInterval) {
+                            cta::log::LogContext lc(m_lc);
+                            lc.log(cta::log::ERR, "Cannot use a value for grpc.jwks.cache.timeout_secs that is less than grpc.jwks.cache.refresh_interval_secs."
+                            "Setting timeout_secs equal to cache_refresh_interval_secs.");
+                            m_pubkeyTimeout = m_cacheRefreshInterval;
+                        }
+                    };
     ~JwkCache();
 
     void PurgeCache(); // remove all entries
