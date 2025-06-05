@@ -855,7 +855,7 @@ void RetrieveQueue::garbageCollect(const std::string &presumedOwner, AgentRefere
     cta::catalogue::Catalogue & catalogue) {
   // Garbage collection of a retrieve queue should only happen it died in the middle of QueueCleanup.
   if(!getQueueCleanupDoCleanup()){
-    lc.log(log::WARN, "In RetrieveQueue::garbageCollect(): trying to gabarbage collect Retrieve Queue not marked for cleanup. Ignoring it.")
+    lc.log(log::WARNING, "In RetrieveQueue::garbageCollect(): trying to gabarbage collect Retrieve Queue not marked for cleanup. Ignoring it.");
   }
 
   // It might happen that the queue was added to ownership but the
