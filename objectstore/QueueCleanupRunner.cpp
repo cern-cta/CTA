@@ -131,7 +131,7 @@ void QueueCleanupRunner::runOnePass(log::LogContext &logContext) {
 
       double getQueueTime = tLoop.secs(utils::Timer::resetCounter);
 
-      m_db.requeueRetrieveRequestJobs(jobPtList, toReportQueueName, logContext);
+      m_db.requeueRetrieveRequestJobs(jobPtList, logContext);
 
       double jobMovingTime = tLoop.secs(utils::Timer::resetCounter);
 

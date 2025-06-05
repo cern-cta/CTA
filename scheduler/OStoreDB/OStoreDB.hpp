@@ -574,7 +574,6 @@ public:
                                      uint64_t filesRequested,
                                      log::LogContext& logContext) override;
   void requeueRetrieveRequestJobs(std::list<cta::SchedulerDatabase::RetrieveJob*>& jobs,
-		                  const std::string& toReportQueueName, 
                                   log::LogContext& logContext) override;
   std::string reserveRetrieveQueueForCleanup(const std::string& vid) override;
   void freeRetrieveQueueForCleanup(const std::string& vid) override;
