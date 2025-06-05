@@ -954,7 +954,7 @@ bool OStoreDB::trimEmptyToReportQueueWithVid(const std::string& queueVid, log::L
   ScopedExclusiveLock rql(rq);
   rq.fetch();
   if(!rq.isEmpty()) {
-    return 0;
+    return false;
   }
   const auto vid = rq.getVid();
   rql.release();
@@ -965,7 +965,7 @@ bool OStoreDB::trimEmptyToReportQueueWithVid(const std::string& queueVid, log::L
     common::dataStructures::JobQueueType::JobsToReportToUser,
     lc);
 
-  return 1;
+  return true;
 }
 
 //------------------------------------------------------------------------------
