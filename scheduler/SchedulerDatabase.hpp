@@ -935,11 +935,7 @@ public:
   /* Attempt to trim a ToReport queue. This is a dedicated function called by the
    * QueueCleanupRunner to delete the ToReportQueue in case we did not fail any requests.
    */
-<<<<<<< HEAD
   virtual bool trimEmptyToReportQueue(const std::string& queueName, log::LogContext& lc) = 0;
-=======
-  virtual bool trimEmptyToReportQueueWithVid(const std::string& queueVid, log::LogContext& lc) = 0;
->>>>>>> 59fc684b42 (Fix RetrieveQueueToReport Reservation)
 
   /**
    * A function dumping the relevant mount information for reporting the system

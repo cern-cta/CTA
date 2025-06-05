@@ -232,11 +232,7 @@ public:
   getMountInfo(std::string_view logicalLibraryName, log::LogContext& logContext, uint64_t timeout_us) override;
 
   void trimEmptyQueues(log::LogContext& lc) override;
-<<<<<<< HEAD
   bool trimEmptyToReportQueue(const std::string& queueName, log::LogContext& lc) override;
-=======
-  bool trimEmptyToReportQueueWithVid(const std::string& queueVid, log::LogContext& lc) override;
->>>>>>> 59fc684b42 (Fix RetrieveQueueToReport Reservation)
 
   std::unique_ptr<SchedulerDatabase::TapeMountDecisionInfo> getMountInfoNoLock(PurposeGetMountInfo purpose,
                                                                                log::LogContext& logContext) override;
