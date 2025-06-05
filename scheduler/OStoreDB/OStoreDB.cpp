@@ -951,13 +951,11 @@ void OStoreDB::trimEmptyQueues(log::LogContext& lc) {
 bool OStoreDB::trimEmptyToReportQueue(const std::string& queueName, log::LogContext& lc){
   // Check if the RetrieveQueue is actually empty.
   RetrieveQueue rq(queueName, m_objectStore);
-  ScopedExclusiveLock rql(rq);
-  rq.fetch();
+  rq.fetchNoLock();
   if(!rq.isEmpty()) {
     return false;
   }
   const auto vid = rq.getVid();
-  rql.release();
   RootEntry re(m_objectStore);
   ScopedExclusiveLock rel(re);
   re.fetch();
