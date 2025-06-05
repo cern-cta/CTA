@@ -5,14 +5,14 @@
 #include <mutex>
 
 
-// Function to handle curl responses
-static size_t WriteCallback(void* contents, size_t size, size_t nmemb, std::string* output) {
-    size_t totalSize = size * nmemb;
-    output->append((char*)contents, totalSize);
-    return totalSize;
-}
-
 json_object* FetchJWKS(const std::string& jwksUrl) {
+    // Function to handle curl responses
+    auto WriteCallback = [] (void* contents, size_t size, size_t nmemb, std::string* output) {
+        size_t totalSize = size * nmemb;
+        output->append((char*)contents, totalSize);
+        return totalSize;
+    };
+
     CURL* curl;
     CURLcode res;
     std::string readBuffer;
