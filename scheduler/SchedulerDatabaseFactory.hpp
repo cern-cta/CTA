@@ -218,8 +218,8 @@ public:
 
   void trimEmptyQueues(log::LogContext& lc) override { m_SchedDB->trimEmptyQueues(lc); }
 
-  bool trimEmptyToReportQueueWithVid(const std::string& queueVid, log::LogContext& lc) override {
-    return m_SchedDB->trimEmptyToReportQueueWithVid(queueVid, lc);
+  bool trimEmptyToReportQueue(const std::string& queueName, log::LogContext& lc) override {
+    return m_SchedDB->trimEmptyToReportQueue(queueName, lc);
   }
 
   std::unique_ptr<TapeMountDecisionInfo> getMountInfoNoLock(PurposeGetMountInfo purpose,

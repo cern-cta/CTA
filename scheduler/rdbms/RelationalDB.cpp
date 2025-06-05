@@ -246,7 +246,7 @@ void freeRetrieveQueueForCleanup(const std::string& vid){
   throw cta::exception::Exception("Not implemented");
 };
 
-bool RelationalDB::trimEmptyToReportQueueWithVid(const std::string& queueVid, log::LogContext& lc) {
+bool RelationalDB::trimEmptyToReportQueue(const std::string& queueName, log::LogContext& lc) {
   throw cta::exception::Exception("Not implemented");
 }
 

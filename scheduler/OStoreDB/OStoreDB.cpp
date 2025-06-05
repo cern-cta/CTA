@@ -946,11 +946,11 @@ void OStoreDB::trimEmptyQueues(log::LogContext& lc) {
 }
 
 //------------------------------------------------------------------------------
-// OStoreDB::trimEmptyToReportQueueWithVid()
+// OStoreDB::trimEmptyToReportQueue()
 //------------------------------------------------------------------------------
-bool OStoreDB::trimEmptyToReportQueueWithVid(const std::string& queueVid, log::LogContext& lc){
+bool OStoreDB::trimEmptyToReportQueue(const std::string& queueName, log::LogContext& lc){
   // Check if the RetrieveQueue is actually empty.
-  RetrieveQueue rq(queueVid, m_objectStore);
+  RetrieveQueue rq(queueName, m_objectStore);
   ScopedExclusiveLock rql(rq);
   rq.fetch();
   if(!rq.isEmpty()) {
