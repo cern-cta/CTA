@@ -2271,7 +2271,7 @@ std::string OStoreDB::blockRetrieveQueueForCleanup(const std::string& vid) {
 //------------------------------------------------------------------------------
 void OStoreDB::unblockRetrieveQueueForCleanup(const std::string& toReportQueueAddress) {
   RetrieveQueue rqtr(m_objectStore);
-  ScopedExclusiveLock rqltr;
+  ScopedExclusiveLock rqtrl;
   rqtr.setAddress(toReportQueueAddress);
   rqtrl.lock(rqtr);
   rqtr.fetch();
