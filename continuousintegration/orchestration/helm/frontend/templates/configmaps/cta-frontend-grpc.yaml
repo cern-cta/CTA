@@ -76,7 +76,7 @@ data:
     grpc.jwt.enabled {{ .Values.grpc.conf.jwtAuth.enabled }}
 
     # Telemetry
-    cta.telemetry.metricsBackend {{ .Values.conf.grpc.telemetry.metricsBackend }}
-    cta.telemetry.metricsOtlpEndpoint {{ .Values.conf.grpc.telemetry.metricsOtlpEndpoint }}
+    cta.telemetry.metricsBackend {{ .Values.grpc.conf.telemetry.metricsBackend }}
+    cta.telemetry.metricsOtlpEndpoint {{ .Values.grpc.conf.telemetry.metricsOtlpEndpoint }}
 
 {{- end }}
