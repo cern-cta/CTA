@@ -340,8 +340,8 @@ repackCancellation() {
   echo "***********************************"
 
   echo "Putting all drives down"
-  echo 'kubectl -n ${NAMESPACE} exec ${CTA_CLI_POD} -c cta-cli -- cta-admin drive down VD.* --reason "Putting drive down for repack test"'
-  kubectl -n ${NAMESPACE} exec ${CTA_CLI_POD} -c cta-cli -- cta-admin drive down VD.* --reason "Putting drive down for repack test"
+  echo 'kubectl -n ${NAMESPACE} exec ${CTA_CLI_POD} -c cta-cli -- cta-admin drive down .* --reason "Putting drive down for repack test"'
+  kubectl -n ${NAMESPACE} exec ${CTA_CLI_POD} -c cta-cli -- cta-admin drive down '.*' --reason "Putting drive down for repack test"
 
   VID_TO_REPACK=$(getFirstVidContainingFiles)
   if [ "$VID_TO_REPACK" != "null" ]
@@ -393,8 +393,8 @@ repackCancellation() {
   fi
 
   echo "Putting all drives up"
-  echo 'kubectl -n ${NAMESPACE} exec ${CTA_CLI_POD} -c cta-cli -- cta-admin drive up VD.*'
-  kubectl -n ${NAMESPACE} exec ${CTA_CLI_POD} -c cta-cli -- cta-admin drive up VD.*
+  echo 'kubectl -n ${NAMESPACE} exec ${CTA_CLI_POD} -c cta-cli -- cta-admin drive up .*'
+  kubectl -n ${NAMESPACE} exec ${CTA_CLI_POD} -c cta-cli -- cta-admin drive up '.*'
 
   WAIT_FOR_EMPTY_QUEUE_TIMEOUT=100
 
@@ -482,7 +482,7 @@ repackMoveAndAddCopies() {
   echo "OK"
 
   echo "Putting all drives up"
-  kubectl -n ${NAMESPACE} exec ${CTA_CLI_POD} -c cta-cli -- cta-admin dr up VD.*
+  kubectl -n ${NAMESPACE} exec ${CTA_CLI_POD} -c cta-cli -- cta-admin dr up '.*'
   echo "OK"
 
   VID_TO_REPACK=$(getFirstVidContainingFiles)
