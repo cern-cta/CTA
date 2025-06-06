@@ -99,7 +99,7 @@ data:
     all.export /ctafrontend nolock r/w
 
     # Telemetrysssss
-    cta.telemetry.metricsBackend {{ .Values.conf.xrd.telemetry.metricsBackend }}
-    cta.telemetry.metricsOtlpEndpoint {{ .Values.conf.xrd.telemetry.metricsOtlpEndpoint }}
+    cta.telemetry.metricsBackend {{ .Values.xrd.conf.telemetry.metricsBackend }}
+    cta.telemetry.metricsOtlpEndpoint {{ .Values.xrd.conf.telemetry.metricsOtlpEndpoint }}
 
 {{- end }}
