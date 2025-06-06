@@ -35,6 +35,7 @@
 
 namespace unitTests{
   class TestingDatabaseRetrieveMount: public cta::SchedulerDatabase::RetrieveMount {
+    TestingDatabaseRetrieveMount(cta::SchedulerDatabase &db) : RetrieveMount(db) {}
     const MountInfo & getMountInfo() override { throw std::runtime_error("Not implemented"); }
     std::list<std::unique_ptr<cta::SchedulerDatabase::RetrieveJob> > getNextJobBatch(uint64_t filesRequested, uint64_t bytesRequested,
       cta::log::LogContext& logContext) override { throw std::runtime_error("Not implemented");}
@@ -52,8 +53,6 @@ namespace unitTests{
     void requeueJobBatch(std::list<std::unique_ptr<cta::SchedulerDatabase::RetrieveJob>>& jobBatch, cta::log::LogContext& logContext) override { throw std::runtime_error("Not implemented"); }
     uint64_t requeueJobBatch(const std::list<std::string>& jobIDsList, cta::log::LogContext& logContext) const override { throw std::runtime_error("Not implemented"); }
     void putQueueToSleep(const std::string &diskSystemName, const uint64_t sleepTime, cta::log::LogContext &logContext) override { throw std::runtime_error("Not implemented"); }
-    bool reserveDiskSpace(const cta::DiskSpaceReservationRequest &request, const std::string &externalFreeDiskSpaceScript, cta::log::LogContext& logContext) override{ throw std::runtime_error("Not implemented"); }
-    bool testReserveDiskSpace(const cta::DiskSpaceReservationRequest &request, const std::string &externalFreeDiskSpaceScript, cta::log::LogContext& logContext) override{ throw std::runtime_error("Not implemented"); }
   };
 
   class TestingRetrieveMount: public cta::RetrieveMount {
@@ -123,8 +122,8 @@ namespace unitTests{
 
     cta::log::StringLogger log("dummy","castor_tape_tapeserver_daemon_DiskWriteTaskFailedBlock",cta::log::DEBUG);
     cta::log::LogContext lc(log);
-
-    std::unique_ptr<cta::SchedulerDatabase::RetrieveMount> dbrm(new TestingDatabaseRetrieveMount());
+    cta::SchedulerDatabase dummyDB;
+    std::unique_ptr<cta::SchedulerDatabase::RetrieveMount> dbrm(new TestingDatabaseRetrieveMount(dummyDB));
     std::unique_ptr<cta::catalogue::Catalogue> catalogue(new cta::catalogue::DummyCatalogue);
     TestingRetrieveMount trm(*catalogue, std::move(dbrm));
     MockRecallReportPacker report(&trm,lc);

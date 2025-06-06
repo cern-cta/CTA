@@ -28,6 +28,7 @@
 #include <string>
 #include <vector>
 
+#include "catalogue/Catalogue.hpp"
 #include "catalogue/TapeForWriting.hpp"
 #include "common/dataStructures/ArchiveFile.hpp"
 #include "common/dataStructures/ArchiveFileQueueCriteriaAndFileId.hpp"
@@ -122,6 +123,7 @@ public:
    * will be executed to check. The exception is let through in case of problem.
    */
   virtual void ping() = 0;
+  virtual catalogue::Catalogue& getCatalogue() = 0;
 
   /*============ Archive management: user side ==============================*/
   /**
@@ -224,7 +226,6 @@ public:
   std::string
   getLowestRequestAgeRetrieveMountPolicyName(const std::list<common::dataStructures::MountPolicy>& mountPolicies);
 
-  protected:
   /**
    * Given a list of mount policies, it compares all of them to extract both the maximum archive priority and the minimum
    * archive age between all entries.
@@ -541,6 +542,7 @@ public:
 public:
   class RetrieveMount {
   public:
+    RetrieveMount(SchedulerDatabase& parent) : m_parent(parent) {}
     struct MountInfo {
       std::string vid;
       std::string logicalLibrary;
@@ -560,12 +562,6 @@ public:
     virtual const MountInfo& getMountInfo() = 0;
     virtual std::list<std::unique_ptr<cta::SchedulerDatabase::RetrieveJob>>
     getNextJobBatch(uint64_t filesRequested, uint64_t bytesRequested, log::LogContext& logContext) = 0;
-    virtual bool reserveDiskSpace(const cta::DiskSpaceReservationRequest& request,
-                                  const std::string& externalFreeDiskSpaceScript,
-                                  log::LogContext& logContext) = 0;
-    virtual bool testReserveDiskSpace(const cta::DiskSpaceReservationRequest& request,
-                                      const std::string& externalFreeDiskSpaceScript,
-                                      log::LogContext& logContext) = 0;
 
     virtual void requeueJobBatch(std::list<std::unique_ptr<SchedulerDatabase::RetrieveJob>>& jobBatch,
                                  log::LogContext& logContext) = 0;
@@ -602,6 +598,18 @@ public:
     putQueueToSleep(const std::string& diskSystemName, const uint64_t sleepTime, log::LogContext& logContext) = 0;
     virtual ~RetrieveMount() = default;
     uint64_t nbFilesCurrentlyOnTape;
+
+    bool reserveDiskSpace(const cta::DiskSpaceReservationRequest& request,
+                                  const std::string& externalFreeDiskSpaceScript,
+                                  log::LogContext& logContext);
+    bool testReserveDiskSpace(const cta::DiskSpaceReservationRequest& request,
+                                      const std::string& externalFreeDiskSpaceScript,
+                                      log::LogContext& logContext);
+    protected:
+    catalogue::Catalogue& getCatalogue() {
+      return m_parent.getCatalogue();
+    }
+    SchedulerDatabase& m_parent;
   };
 
   class RetrieveJob {
