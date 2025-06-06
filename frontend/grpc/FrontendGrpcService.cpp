@@ -94,6 +94,9 @@ bool CtaRpcImpl::ValidateToken(const std::string& encodedJWT) {
   } catch (const std::runtime_error& e) {
     lc.log(cta::log::ERR, std::string("Failure in token verification, ") + e.what());
     return false;
+  } catch (...) {
+    lc.log(cta::log::ERR, "Unknown exception thrown in ValidateToken");
+    return false;
   }
 }
 
@@ -111,6 +114,9 @@ CtaRpcImpl::ExtractAuthHeaderAndValidate(::grpc::ServerContext* context) {
       std::string auth_header = ToString(it->second);  // "Bearer <token>"
       token = auth_header.substr(7); // Extract the token part, use substr(7) because that is the length of "Bearer" plus a space character
       lc.log(cta::log::DEBUG, std::string("Received token: ") + token);
+      if (token.empty()) {
+        return ::grpc::Status(::grpc::StatusCode::UNAUTHENTICATED, "Missing Authorization token");
+      }
   } else {
       lc.log(cta::log::ERR, "Authorization header missing");
       return ::grpc::Status(::grpc::StatusCode::UNAUTHENTICATED, "Missing Authorization header");
@@ -167,8 +173,11 @@ CtaRpcImpl::Create(::grpc::ServerContext* context, const cta::xrd::Request* requ
   cta::log::ScopedParamContainer sp(lc);
 
   Status status = ExtractAuthHeaderAndValidate(context);
-  if (!status.ok())
+  if (!status.ok()) {
+    response->set_type(cta::xrd::Response::RSP_ERR_USER);
+    response->set_message_txt(status.error_message());
     return status;
+  }
 
   sp.add("remoteHost", context->peer());
   sp.add("request", "create");
@@ -183,12 +192,14 @@ CtaRpcImpl::Create(::grpc::ServerContext* context, const cta::xrd::Request* requ
 
 Status
 CtaRpcImpl::Archive(::grpc::ServerContext* context, const cta::xrd::Request* request, cta::xrd::Response* response) {
-  Status status = ExtractAuthHeaderAndValidate(context);
-  if (!status.ok())
-    return status;
-
   cta::log::LogContext lc(m_frontendService->getLogContext());
   cta::log::ScopedParamContainer sp(lc);
+  Status status = ExtractAuthHeaderAndValidate(context);
+  if (!status.ok()) {
+    response->set_type(cta::xrd::Response::RSP_ERR_USER);
+    response->set_message_txt(status.error_message());
+    return status;
+  }
 
   sp.add("remoteHost", context->peer());
   sp.add("request", "archive");
@@ -212,8 +223,11 @@ CtaRpcImpl::Archive(::grpc::ServerContext* context, const cta::xrd::Request* req
 Status
 CtaRpcImpl::Delete(::grpc::ServerContext* context, const cta::xrd::Request* request, cta::xrd::Response* response) {
   Status status = ExtractAuthHeaderAndValidate(context);
-  if (!status.ok())
+  if (!status.ok()) {
+    response->set_type(cta::xrd::Response::RSP_ERR_USER);
+    response->set_message_txt(status.error_message());
     return status;
+  }
 
   cta::log::LogContext lc(m_frontendService->getLogContext());
   cta::log::ScopedParamContainer sp(lc);
@@ -242,8 +256,11 @@ CtaRpcImpl::Delete(::grpc::ServerContext* context, const cta::xrd::Request* requ
 Status
 CtaRpcImpl::Retrieve(::grpc::ServerContext* context, const cta::xrd::Request* request, cta::xrd::Response* response) {
   Status status = ExtractAuthHeaderAndValidate(context);
-  if (!status.ok())
+  if (!status.ok()) {
+    response->set_type(cta::xrd::Response::RSP_ERR_USER);
+    response->set_message_txt(status.error_message());
     return status;
+  }
 
   cta::log::LogContext lc(m_frontendService->getLogContext());
   cta::log::ScopedParamContainer sp(lc);
@@ -288,8 +305,11 @@ Status CtaRpcImpl::CancelRetrieve(::grpc::ServerContext* context,
                                   const cta::xrd::Request* request,
                                   cta::xrd::Response* response) {
   Status status = ExtractAuthHeaderAndValidate(context);
-  if (!status.ok())
+  if (!status.ok()) {
+    response->set_type(cta::xrd::Response::RSP_ERR_USER);
+    response->set_message_txt(status.error_message());
     return status;
+  }
 
   cta::log::LogContext lc(m_frontendService->getLogContext());
   cta::log::ScopedParamContainer sp(lc);
