@@ -525,7 +525,7 @@ for drive in "${dr_names[@]}"; do
   admin_cta dr down "$drive" -r "cta-admin sq test"
   sleep 3
 done
-#admin_cta dr down VDSTK11 -r "cta-admin sq test"
+
 xrdcp /root/testfile root://${EOS_MGM_HOST}//eos/ctaeos/cta/testfile
 
 sleep 10
@@ -540,7 +540,6 @@ for drive in "${dr_names[@]}"; do
   log_message "Putting drive $drive up."
   admin_cta dr up "$drive"
 done
-#admin_cta dr up VDSTK11
 
 log_message "Waiting for drive to be up."
 sleep 5

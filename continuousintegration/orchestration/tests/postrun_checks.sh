@@ -86,7 +86,7 @@ for pod in $(echo "${pods}" | jq -r '.metadata.name'); do
       core_dump_counter=$((core_dump_counter + num_files))
     fi
     # Check for uncaught exceptions if there are logs in the /var/log/cta directory
-    false_positives=("Cannot update status for drive VDSTK[^\s]*. Drive not found")
+    false_positives=("Cannot update status for drive [A-Za-z0-9_-]+. Drive not found")
     exclude_patterns=""
     for pattern in "${false_positives[@]}"; do
         exclude_patterns+=" | grep -v -E '${pattern}'"

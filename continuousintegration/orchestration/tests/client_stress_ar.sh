@@ -167,7 +167,7 @@ fi
 
 if [[ $PREQUEUE == 1 ]]; then
   DRIVE_UP_SUBDIR_NUMBER=20
-  DRIVE_UP="VDSTK11"
+  DRIVE_UP="ULT3580-TD811"
 fi
 
 if [[ $DONOTARCHIVE == 1 ]]; then
