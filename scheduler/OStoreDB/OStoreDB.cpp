@@ -2197,9 +2197,9 @@ void OStoreDB::requeueRetrieveRequestJobs(std::list<cta::SchedulerDatabase::Retr
     }
 
     // Move the Job Pointers from the batch into the dedicated ones.
-    // If we receice a std::nullopt it means that there is no VID to requeue -> fail it.
-    // If we get a value it will containt the VID where we should requeue the request.
-    std::optional<std::string> vidToRequeue = rr->reclassifyRetrieveRequest(m_catalogue, logContext);
+    // If we receive a std::nullopt it means that there is no VID to requeue -> fail it.
+    // If we get a value it will contain the VID where we should requeue the request.
+    std::optional<std::string> vidToRequeue = rr->decideRetrieveRequestDestination(m_catalogue, logContext);
     if (vidToRequeue.has_value()){
       jobsToRequeue[vidToRequeue.value()].emplace_back(rr->getJobToAdd());
     } else {

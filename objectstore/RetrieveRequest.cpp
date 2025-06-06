@@ -76,9 +76,9 @@ void RetrieveRequest::garbageCollect(const std::string& presumedOwner, AgentRefe
 }
 
 //------------------------------------------------------------------------------
-// RetrieveRequest::reclassifyRetrieveRequest()
+// RetrieveRequest::deideRetrieveRequestDestination()
 //------------------------------------------------------------------------------
-std::optional<std::string> RetrieveRequest::reclassifyRetrieveRequest(cta::catalogue::Catalogue& catalogue, log::LogContext& lc){
+std::optional<std::string> RetrieveRequest::decideRetrieveRequestDestination(cta::catalogue::Catalogue& catalogue, log::LogContext& lc){
   using serializers::RetrieveJobStatus;
   std::set<std::string, std::less<>> candidateVids;
   for (auto& j: m_payload.jobs()) {
@@ -93,7 +93,7 @@ std::optional<std::string> RetrieveRequest::reclassifyRetrieveRequest(cta::catal
         }
         {
           std::stringstream err;
-          err << ("In RetrieveRequest::reclassifyRetrieveRequest(): could not find tapefile for copynb ") << j.copynb();
+          err << ("In RetrieveRequest::decideRetrieveRequestDestination(): could not find tapefile for copynb ") << j.copynb();
           throw exception::Exception(err.str());
         }
      default:

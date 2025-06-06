@@ -51,8 +51,24 @@ public:
   void garbageCollectRetrieveRequest(const std::string& presumedOwner, AgentReference& agentReference, log::LogContext& lc,
     cta::catalogue::Catalogue& catalogue);
 
+  /**
+   * Commit to the OS the failure reason (unable to requeue the request) of the RetrieveRequest.
+   *
+   * @param newOwner Reference to new queue addres where the job will be moved to.
+   */
   void failJob(const std::string& newOwner);
-  std::optional<std::string> reclassifyRetrieveRequest(cta::catalogue::Catalogue& catalogue, log::LogContext& lc);
+
+  /**
+   * Decide wether we can requeue the request to a different queue because we
+   * have a second copy of the file available or fail the request.
+   *
+   * @param   catalogue reference to the catalogue
+   * @param   lc        reference to the log context
+   *
+   * @returns std::nullopt if we have to fail the request or
+   *          std::option<std::string> containing the VID to requeue the request
+   */
+  std::optional<std::string> decideRetrieveRequestDestination(cta::catalogue::Catalogue& catalogue, log::LogContext& lc);
   common::dataStructures::RetrieveJobToAdd getJobToAdd();
   // Job management ============================================================
   void addJob(uint32_t copyNumber, uint16_t maxRetriesWithinMount, uint16_t maxTotalRetries, uint16_t maxReportRetries);
