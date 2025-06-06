@@ -62,15 +62,12 @@ void initMetrics(const TelemetryConfig& config) {
 
   auto reader = metrics_sdk::PeriodicExportingMetricReaderFactory::Create(std::move(exporter), readerOptions);
 
-  std::string shortHostname = cta::utils::getShortHostname();
-  // We need to be a bit careful here, due to forking the main process will also get a different instance ID
-  std::string instanceId = shortHostname + "-" + std::to_string(getpid()) + "-" + cta::utils::generateUuid();
-
+  // These metrics should make sure that each and every process is uniquely identifiable
+  // Otherwise, metrics will not be aggregated correctly.
   opentelemetry::sdk::common::AttributeMap attributes = {
-    {opentelemetry::sdk::resource::SemanticConventions::kServiceName,       config.serviceName},
-    {opentelemetry::sdk::resource::SemanticConventions::kServiceVersion,    CTA_VERSION       },
-    {opentelemetry::sdk::resource::SemanticConventions::kServiceInstanceId, instanceId        },
-    {opentelemetry::sdk::resource::SemanticConventions::kHostName,          shortHostname     },
+    {opentelemetry::sdk::resource::SemanticConventions::kServiceName,    config.serviceName      },
+    {opentelemetry::sdk::resource::SemanticConventions::kServiceVersion, CTA_VERSION             },
+    {opentelemetry::sdk::resource::SemanticConventions::kProcessPid,     std::to_string(getpid())}
   };
   for (const auto& kv : config.resourceAttributes) {
     attributes.SetAttribute(kv.first, kv.second);
