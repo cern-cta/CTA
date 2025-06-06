@@ -331,10 +331,22 @@ Status CtaRpcImpl::CancelRetrieve(::grpc::ServerContext* context,
  */
 CtaRpcImpl::CtaRpcImpl(const std::string& config)
     : m_frontendService(std::make_unique<cta::frontend::FrontendService>(config)),
-      m_pubkeyCache(m_frontendService->getJwksUri().value_or(""),
-                    m_frontendService->getCacheRefreshInterval().value(),
-                    m_frontendService->getPubkeyTimeout().value(),
-                    FetchJWKS,
-                    m_frontendService->getLogContext()) {}
+      m_pubkeyCache([this]() {
 
+          if (!m_frontendService->getCacheRefreshInterval().has_value()) {
+              m_frontendService->getLogContext().log(log::WARNING, "No value set in config for the JWT cache refresh interval, using default value");
+              m_frontendService->setCacheRefreshInterval(600);
+          }
+          if (!m_frontendService->getPubkeyTimeout().has_value()) {
+              m_frontendService->getLogContext().log(log::WARNING, "No value set in config for the JWT public key refresh interval, will set value equal to JWT cache refresh interval");
+              m_frontendService->setPubkeyTimeout(m_frontendService->getCacheRefreshInterval().value());
+          }
+          return JwkCache(
+              m_frontendService->getJwksUri().value_or(""),
+              m_frontendService->getCacheRefreshInterval().value(),
+              m_frontendService->getPubkeyTimeout().value(),
+              FetchJWKS,
+              m_frontendService->getLogContext()
+          );
+      }()) {}
 } // namespace cta::frontend::grpc

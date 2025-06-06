@@ -403,20 +403,17 @@ FrontendService::FrontendService(const std::string& configFilename) : m_archiveF
   }
   
   auto cacheRefreshInterval = config.getOptionValueInt("grpc.jwks.cache.refresh_interval_secs");
-  if (cacheRefreshInterval.has_value()) {
-    if (cacheRefreshInterval.value() < 0) {
+  if (cacheRefreshInterval.has_value() && cacheRefreshInterval.value() < 0) {
       throw exception::UserError("grpc.jwks.cache.refresh_interval_secs is set to a negative value in configuration file " + configFilename);
-    }
-    m_cacheRefreshInterval = cacheRefreshInterval.value();
   }
+  m_cacheRefreshInterval = cacheRefreshInterval;
 
   auto pubkeyTimeout = config.getOptionValueInt("grpc.jwks.cache.timeout_secs");
-  if (pubkeyTimeout.has_value()) {
-    if (pubkeyTimeout.value() < 0) {
-      throw exception::UserError("grpc.jwks.cache.timeout_secs is set to a negative value in configuration file " + configFilename);
-    }
-    m_pubkeyTimeout = pubkeyTimeout.value();
+  if (pubkeyTimeout.has_value() && pubkeyTimeout.value() < 0) {
+    throw exception::UserError("grpc.jwks.cache.timeout_secs is set to a negative value in configuration file " + configFilename);
   }
+  m_pubkeyTimeout = pubkeyTimeout;
+
   // All done
   log(log::INFO, std::string("cta-frontend started"), {log::Param("version", CTA_VERSION)});
 }
