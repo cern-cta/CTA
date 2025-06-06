@@ -127,6 +127,7 @@ private:
 public:
   /*============ Basic IO check: validate object store access ===============*/
   void ping() override;
+  catalogue::Catalogue& getCatalogue() override { return m_catalogue; }
 
   /* === Session handling =================================================== */
   class TapeMountDecisionInfo : public SchedulerDatabase::TapeMountDecisionInfo {
@@ -241,7 +242,6 @@ public:
       // This implementation, serves only PGSCHED implementation
       throw cta::exception::Exception("Not implemented");
     }
-
     void setJobBatchTransferred(std::list<std::unique_ptr<SchedulerDatabase::ArchiveJob>>& jobsBatch,
                                 log::LogContext& lc) override;
   };
@@ -302,7 +302,6 @@ public:
     const MountInfo& getMountInfo() override;
     std::list<std::unique_ptr<cta::SchedulerDatabase::RetrieveJob>>
     getNextJobBatch(uint64_t filesRequested, uint64_t bytesRequested, log::LogContext& logContext) override;
-
     void requeueJobBatch(std::list<std::unique_ptr<SchedulerDatabase::RetrieveJob>>& jobBatch,
                          log::LogContext& logContext) override;
 
@@ -310,14 +309,6 @@ public:
       // Do nothing in this implementation, serves only PGSCHED implementation
       return 0;
     }
-
-    bool reserveDiskSpace(const cta::DiskSpaceReservationRequest& request,
-                          const std::string& externalFreeDiskSpaceScript,
-                          log::LogContext& logContext) override;
-
-    bool testReserveDiskSpace(const cta::DiskSpaceReservationRequest& request,
-                              const std::string& externalFreeDiskSpaceScript,
-                              log::LogContext& logContext) override;
 
     void
     putQueueToSleep(const std::string& diskSystemName, const uint64_t sleepTime, log::LogContext& logContext) override;

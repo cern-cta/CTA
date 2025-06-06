@@ -77,6 +77,7 @@ public:
   friend class cta::schedulerdb::RetrieveRdbJob;
   friend class cta::schedulerdb::TapeMountDecisionInfo;
   void waitSubthreadsComplete() override;
+  catalogue::Catalogue& getCatalogue() override { return m_catalogue; }
 
   /*============ Basic IO check: validate Postgres DB store access ===============*/
   void ping() override;

@@ -42,20 +42,12 @@ class RetrieveMount : public SchedulerDatabase::RetrieveMount {
 public:
   //RetrieveMount(const std::string& ownerId, Transaction& txn, const std::string &vid) :
   //   , m_txn(txn), m_vid(vid) { }
-  RetrieveMount(RelationalDB& pdb) : m_RelationalDB(pdb), m_connPool(pdb.m_connPool), m_jobPool(pdb.m_connPool) {}
+  RetrieveMount(RelationalDB& reldb) : SchedulerDatabase::RetrieveMount(reldb), m_RelationalDB(reldb), m_connPool(reldb.m_connPool), m_jobPool(reldb.m_connPool) {}
 
   const MountInfo& getMountInfo() override;
 
   std::list<std::unique_ptr<SchedulerDatabase::RetrieveJob>>
   getNextJobBatch(uint64_t filesRequested, uint64_t bytesRequested, log::LogContext& logContext) override;
-
-  bool reserveDiskSpace(const cta::DiskSpaceReservationRequest& diskSpaceReservationRequest,
-                        const std::string& externalFreeDiskSpaceScript,
-                        log::LogContext& logContext) override;
-
-  bool testReserveDiskSpace(const cta::DiskSpaceReservationRequest& request,
-                            const std::string& externalFreeDiskSpaceScript,
-                            log::LogContext& logContext) override;
 
   /**
     * Re-queue batch of jobs
