@@ -266,6 +266,7 @@ public:
   std::unique_ptr<SchedulerDatabase::TapeMountDecisionInfo> getMountInfoNoLock(PurposeGetMountInfo purpose,
                                                                                log::LogContext& logContext) override;
   void trimEmptyQueues(log::LogContext& lc) override;
+  bool trimEmptyToReportQueue(const std::string& queueName, log::LogContext& lc) override;
 
   /* === Archive Mount handling ============================================= */
   class ArchiveJob;
@@ -574,9 +575,11 @@ public:
                                      log::LogContext& logContext) override;
   void requeueRetrieveRequestJobs(std::list<cta::SchedulerDatabase::RetrieveJob*>& jobs,
                                   log::LogContext& logContext) override;
-  void reserveRetrieveQueueForCleanup(const std::string& vid, std::optional<uint64_t> cleanupHeartBeatValue) override;
-  void tickRetrieveQueueCleanupHeartbeat(const std::string& vid) override;
+  std::string blockRetrieveQueueForCleanup(const std::string& vid) override;
+  void unblockRetrieveQueueForCleanup(const std::string& vid) override;
+
   CTA_GENERATE_EXCEPTION_CLASS(RetrieveQueueNotReservedForCleanup);
+  CTA_GENERATE_EXCEPTION_CLASS(RetrieveQueueAlreadyReserved);
   CTA_GENERATE_EXCEPTION_CLASS(RetrieveQueueNotFound);
 
   std::list<std::unique_ptr<SchedulerDatabase::RetrieveJob>>

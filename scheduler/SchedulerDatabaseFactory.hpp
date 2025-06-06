@@ -126,12 +126,12 @@ public:
     m_SchedDB->requeueRetrieveRequestJobs(jobs, lc);
   }
 
-  void reserveRetrieveQueueForCleanup(const std::string& vid, std::optional<uint64_t> cleanupHeartBeatValue) override {
-    m_SchedDB->reserveRetrieveQueueForCleanup(vid, cleanupHeartBeatValue);
+  std::string blockRetrieveQueueForCleanup(const std::string& vid) override {
+    return m_SchedDB->blockRetrieveQueueForCleanup(vid);
   }
 
-  void tickRetrieveQueueCleanupHeartbeat(const std::string& vid) override {
-    m_SchedDB->tickRetrieveQueueCleanupHeartbeat(vid);
+  void unblockRetrieveQueueForCleanup(const std::string& vid) override {
+    return m_SchedDB->unblockRetrieveQueueForCleanup(vid);
   }
 
   std::list<RetrieveQueueCleanupInfo> getRetrieveQueuesCleanupInfo(log::LogContext& logContext) override {
@@ -217,6 +217,10 @@ public:
   }
 
   void trimEmptyQueues(log::LogContext& lc) override { m_SchedDB->trimEmptyQueues(lc); }
+
+  bool trimEmptyToReportQueue(const std::string& queueName, log::LogContext& lc) override {
+    return m_SchedDB->trimEmptyToReportQueue(queueName, lc);
+  }
 
   std::unique_ptr<TapeMountDecisionInfo> getMountInfoNoLock(PurposeGetMountInfo purpose,
                                                             log::LogContext& logContext) override {

@@ -128,9 +128,9 @@ public:
 
   void requeueRetrieveRequestJobs(std::list<cta::SchedulerDatabase::RetrieveJob*>& jobs, log::LogContext& lc) override;
 
-  void reserveRetrieveQueueForCleanup(const std::string& vid, std::optional<uint64_t> cleanupHeartBeatValue) override;
+  std::string blockRetrieveQueueForCleanup(const std::string& vid) override;
 
-  void tickRetrieveQueueCleanupHeartbeat(const std::string& vid) override;
+  void unblockRetrieveQueueForCleanup(const std::string& vid) override;
 
   void setArchiveJobBatchReported(std::list<SchedulerDatabase::ArchiveJob*>& jobsBatch,
                                   log::TimingList& timingList,
@@ -232,6 +232,7 @@ public:
   getMountInfo(std::string_view logicalLibraryName, log::LogContext& logContext, uint64_t timeout_us) override;
 
   void trimEmptyQueues(log::LogContext& lc) override;
+  bool trimEmptyToReportQueue(const std::string& queueName, log::LogContext& lc) override;
 
   std::unique_ptr<SchedulerDatabase::TapeMountDecisionInfo> getMountInfoNoLock(PurposeGetMountInfo purpose,
                                                                                log::LogContext& logContext) override;

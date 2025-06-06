@@ -32,40 +32,15 @@ void QueueCleanupRunner::runOnePass(log::LogContext &logContext) {
   admin.username = "Queue cleanup runner";
   admin.host = cta::utils::getShortHostname();
 
-  auto queueVidSet = std::set<std::string, std::less<>>();
   auto queuesForCleanup = m_db.getRetrieveQueuesCleanupInfo(logContext);
 
-  // Check, one-by-one, queues need to be cleaned up
+  auto queueVidSet = std::set<std::string, std::less<>>();
   for (const auto &queue: queuesForCleanup) {
-
-    // Do not clean a queue that does not have the cleanup flag set true
-    if (!queue.doCleanup) {
-      continue; // Ignore queue
-    }
-
-    // Check heartbeat of queues to know if they are being cleaned up
-    if (queue.assignedAgent.has_value()) {
-      if ((m_heartbeatCheck.count(queue.vid) == 0) || (m_heartbeatCheck[queue.vid].heartbeat != queue.heartbeat)) {
-        // If this queue was never seen before, wait for another turn to check if its heartbeat has timed out.
-        // If heartbeat has been updated, then the queue is being actively processed by another agent.
-        // Record new timestamp and move on.
-        m_heartbeatCheck[queue.vid].agent = queue.assignedAgent.value();
-        m_heartbeatCheck[queue.vid].heartbeat = queue.heartbeat;
-        m_heartbeatCheck[queue.vid].lastUpdateTimestamp = m_timer.secs();
-        continue; // Ignore queue
-      } else {
-        // If heartbeat has not been updated, check how long ago the last update happened
-        // If not enough time has passed, do not consider this queue for cleanup
-        auto lastHeartbeatTimestamp = m_heartbeatCheck[queue.vid].lastUpdateTimestamp;
-        if ((m_timer.secs() - lastHeartbeatTimestamp) < m_heartBeatTimeout) {
-          continue; // Ignore queue
-        }
-      }
-    }
     queueVidSet.insert(queue.vid);
   }
 
   common::dataStructures::VidToTapeMap vidToTapesMap;
+  std::string toReportQueueAddress;
 
   if (!queueVidSet.empty()){
     try {
@@ -114,11 +89,7 @@ void QueueCleanupRunner::runOnePass(log::LogContext &logContext) {
 
     logContext.log(log::DEBUG, "In QueueCleanupRunner::runOnePass(): Will try to reserve retrieve queue.");
     try {
-      bool prevHeartbeatExists = (m_heartbeatCheck.find(queueVid) != m_heartbeatCheck.end());
-      m_db.reserveRetrieveQueueForCleanup(
-              queueVid,
-              prevHeartbeatExists ? std::optional(m_heartbeatCheck[queueVid].heartbeat) : std::nullopt);
-
+      toReportQueueAddress = m_db.blockRetrieveQueueForCleanup(queueVid);
     } catch (OStoreDB::RetrieveQueueNotFound & ex) {
       log::ScopedParamContainer paramsExcMsg(logContext);
       paramsExcMsg.add("exceptionMessage", ex.getMessageValue());
@@ -131,6 +102,12 @@ void QueueCleanupRunner::runOnePass(log::LogContext &logContext) {
       logContext.log(log::DEBUG,
                      "In QueueCleanupRunner::runOnePass(): Unable to reserve the retrieve queue due to it not being available for cleanup. Skipping it.");
       continue;
+    } catch (OStoreDB::RetrieveQueueAlreadyReserved &ex) {
+      log::ScopedParamContainer paramsExcMsg(logContext);
+      paramsExcMsg.add("exceptionMessage", ex.getMessageValue());
+      logContext.log(log::DEBUG,
+                     "In QueueCleanupRunner::runOnePass(): Queue already reserved. Skipping it.");
+      continue;
     } catch (cta::exception::Exception & ex) {
       log::ScopedParamContainer paramsExcMsg(logContext);
       paramsExcMsg.add("exceptionMessage", ex.getMessageValue());
@@ -139,7 +116,7 @@ void QueueCleanupRunner::runOnePass(log::LogContext &logContext) {
       continue;
     }
 
-    // Transfer all the jobs to a different queue (if there are replicas) or report the error back to the user
+    // Transfer all the jobs to a different queue (if there are replicas) or enqueue the requests into the ToReport queue so that the DiskReporter can report the error back to the user.
     while (true) {
 
       utils::Timer tLoop;
@@ -163,25 +140,13 @@ void QueueCleanupRunner::runOnePass(log::LogContext &logContext) {
                    .add("jobMovingTime", jobMovingTime)
                    .add("tapeVid", queueVid);
       logContext.log(cta::log::INFO,"In QueueCleanupRunner::runOnePass(): Queue jobs moved.");
+    }
 
-      // Tick heartbeat
-      try {
-        m_db.tickRetrieveQueueCleanupHeartbeat(queueVid);
-      } catch (OStoreDB::RetrieveQueueNotFound & ex) {
-        break; // Queue was already deleted, probably after all the requests have been removed
-      } catch (OStoreDB::RetrieveQueueNotReservedForCleanup & ex) {
-        log::ScopedParamContainer paramsExcMsg(logContext);
-        paramsExcMsg.add("exceptionMessage", ex.getMessageValue());
-        logContext.log(log::WARNING,
-                       "In QueueCleanupRunner::runOnePass(): Unable to update heartbeat of retrieve queue cleanup, due to it not being reserved by agent. Aborting cleanup.");
-        break;
-      } catch (cta::exception::Exception & ex) {
-        log::ScopedParamContainer paramsExcMsg(logContext);
-        paramsExcMsg.add("exceptionMessage", ex.getMessageValue());
-        logContext.log(log::WARNING,
-                       "In QueueCleanupRunner::runOnePass(): Unable to update heartbeat of retrieve queue cleanup for unknown reasons. Aborting cleanup.");
-        break;
-      }
+    // If we managed to requeue all the jobs to a differen VID remove the ToReport queue
+    // If not, remove the CleanUp flag from the ToReport queue so that the Disk reporter
+    // can pick it up.
+    if(!m_db.trimEmptyToReportQueue(toReportQueueAddress, logContext)){
+      m_db.unblockRetrieveQueueForCleanup(toReportQueueAddress);
     }
 
     // Finally, update the tape state out of PENDING

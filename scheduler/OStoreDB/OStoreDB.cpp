@@ -265,11 +265,18 @@ OStoreDB::getRetrieveQueuesCleanupInfo(log::LogContext& logContext) {
       continue;
     }
 
+    // If the queue does not require cleanup or is being cleaned up by another
+    // agent, skip it. If that agent dies the GarbageCollector will take care
+    // of clearing the CleanupInfo data.
+    if(!rqueue.getQueueCleanupDoCleanup() || rqueue.getQueueCleanupAssignedAgent().has_value()){
+      continue;
+    }
+
     ret.push_back(SchedulerDatabase::RetrieveQueueCleanupInfo());
+    ret.back().queueAddress = rqueue.getAddressIfSet();
     ret.back().vid = rqueue.getVid();
     ret.back().doCleanup = rqueue.getQueueCleanupDoCleanup();
     ret.back().assignedAgent = rqueue.getQueueCleanupAssignedAgent();
-    ret.back().heartbeat = rqueue.getQueueCleanupHeartbeat();
   }
   return ret;
 }
@@ -919,7 +926,7 @@ void OStoreDB::trimEmptyQueues(log::LogContext& lc) {
         RetrieveQueue rq(r.address, m_objectStore);
         ScopedSharedLock rql(rq);
         rq.fetch();
-        if (!rq.getJobsSummary().jobs) {
+        if (!rq.getJobsSummary().jobs && !rq.getQueueCleanupDoCleanup()) {
           rql.release();
           re.removeRetrieveQueueAndCommit(r.vid, queueType, lc);
           log::ScopedParamContainer(lc)
@@ -936,6 +943,27 @@ void OStoreDB::trimEmptyQueues(log::LogContext& lc) {
       lc.logBacktrace(log::INFO, ex.backtrace());
     }
   }
+}
+
+//------------------------------------------------------------------------------
+// OStoreDB::trimEmptyToReportQueue()
+//------------------------------------------------------------------------------
+bool OStoreDB::trimEmptyToReportQueue(const std::string& queueName, log::LogContext& lc){
+  // Check if the RetrieveQueue is actually empty.
+  RetrieveQueue rq(queueName, m_objectStore);
+  rq.fetchNoLock();
+  if(!rq.isEmpty()) {
+    return false;
+  }
+  const auto vid = rq.getVid();
+  RootEntry re(m_objectStore);
+  ScopedExclusiveLock rel(re);
+  re.fetch();
+  re.removeRetrieveQueueAndCommit(vid,
+    common::dataStructures::JobQueueType::JobsToReportToUser,
+    lc);
+
+  return true;
 }
 
 //------------------------------------------------------------------------------
@@ -2168,74 +2196,90 @@ void OStoreDB::requeueRetrieveRequestJobs(std::list<cta::SchedulerDatabase::Retr
 }
 
 //------------------------------------------------------------------------------
-// OStoreDB::reserveRetrieveQueueForCleanup()
+// OStoreDB::blockRetrieveQueueForCleanup()
 //------------------------------------------------------------------------------
-void OStoreDB::reserveRetrieveQueueForCleanup(const std::string& vid, std::optional<uint64_t> cleanupHeartBeatValue) {
+std::string OStoreDB::blockRetrieveQueueForCleanup(const std::string& vid) {
   RootEntry re(m_objectStore);
-  RetrieveQueue rq(m_objectStore);
-  ScopedExclusiveLock rql;
+  RetrieveQueue rqtt(m_objectStore);
+  ScopedExclusiveLock rqttl;
   re.fetchNoLock();
 
   try {
-    rq.setAddress(re.getRetrieveQueueAddress(vid, common::dataStructures::JobQueueType::JobsToTransferForUser));
-    rql.lock(rq);
-    rq.fetch();
+    rqtt.setAddress(re.getRetrieveQueueAddress(vid, common::dataStructures::JobQueueType::JobsToTransferForUser));
+    rqttl.lock(rqtt);
+    rqtt.fetch();
   } catch (cta::objectstore::RootEntry::NoSuchRetrieveQueue& ex) {
-    throw RetrieveQueueNotFound("In OStoreDB::reserveRetrieveQueueForCleanup(): Retrieve queue of vid " + vid + " not found. " + ex.getMessageValue());
+    throw RetrieveQueueNotFound("In OStoreDB::blockRetrieveQueueForCleanup(): Retrieve queue of vid " + vid + " not found. " + ex.getMessageValue());
   } catch (cta::exception::NoSuchObject& ex) {
-    throw RetrieveQueueNotFound("In OStoreDB::reserveRetrieveQueueForCleanup(): Retrieve queue of vid " + vid + " not found. " + ex.getMessageValue());
+    throw RetrieveQueueNotFound("In OStoreDB::blockRetrieveQueueForCleanup(): Retrieve queue of vid " + vid + " not found. " + ex.getMessageValue());
   } catch (cta::exception::Exception& ex) {
     throw;
   }
 
   // After locking a queue, check again if the cleanup flag is still true
-  if (!rq.getQueueCleanupDoCleanup()) {
+  if (!rqtt.getQueueCleanupDoCleanup()) {
     throw RetrieveQueueNotReservedForCleanup(
-      "In OStoreDB::reserveRetrieveQueueForCleanup(): Queue no longer has the cleanup flag enabled after fetching. Skipping it.");
+      "In OStoreDB::blockRetrieveQueueForCleanup(): Queue no longer has the cleanup flag enabled after fetching. Skipping it.");
   }
 
-  // Check if heartbeat has been updated, which means that another agent is still tracking it
-  if (rq.getQueueCleanupAssignedAgent().has_value()) {
-    if (rq.getQueueCleanupHeartbeat() != (cleanupHeartBeatValue.has_value() ? cleanupHeartBeatValue.value() : 0)) {
-      throw RetrieveQueueNotReservedForCleanup("Another agent is alive and cleaning up the queue. Skipping it.");
-    }
+  // Check if someone else registered before us.
+  if(rqtt.getQueueCleanupAssignedAgent()) {
+    throw RetrieveQueueNotReservedForCleanup(
+      "In OStoreDB::blockRetrieveQueueForCleanup(): Queue was reserved by another agent. Cancelling reservation.");
   }
 
-  // Otherwise, carry on with cleanup of this queue
-  rq.setQueueCleanupAssignedAgent(m_agentReference->getAgentAddress());
-  rq.tickQueueCleanupHeartbeat();
-  rq.commit();
+  // Otherwise, carry on with cleanup of this queue.
+  // Agent ownership must go first.
+  m_agentReference->addToOwnership(rqtt.getAddressIfSet(), m_objectStore);
+  rqtt.setOwner(m_agentReference->getAgentAddress());
+  rqtt.setQueueCleanupAssignedAgent(m_agentReference->getAgentAddress());
+  rqtt.commit();
+  rqttl.release();
+
+
+  // Create the ToReport queue or get it in case a previous agent died and we are
+  // taking over. The second case is only possible if the agent that died has 
+  // already been garbage collected. We hold the root entry lock until we get 
+  // set the cleanupflag. This prevents trimEmptyQueues() to interfere with us.
+  std::string reportQueueAddress;
+  {
+    RetrieveQueue rqtr(m_objectStore);
+    ScopedExclusiveLock rel;
+    ScopedExclusiveLock rqtrl;
+    rel.lock(re);
+    re.fetch();
+    reportQueueAddress = re.addOrGetRetrieveQueueAndCommit(vid, *m_agentReference, 
+		                                        common::dataStructures::JobQueueType::JobsToReportToUser);
+
+    m_agentReference->addToOwnership(reportQueueAddress, m_objectStore);
+
+    rqtr.setAddress(reportQueueAddress);
+    rqtrl.lock(rqtr);
+    rqtr.fetch();
+
+    rqtr.setOwner(m_agentReference->getAgentAddress());
+    rqtr.setQueueCleanupDoCleanup();
+    rqtr.setQueueCleanupAssignedAgent(m_agentReference->getAgentAddress());
+    rqtr.commit();
+
+  }
+
+  return reportQueueAddress;
 }
 
 //------------------------------------------------------------------------------
-// OStoreDB::tickRetrieveQueueCleanupHeartbeat()
+// OStoreDB::unblockRetrieveQueueForCleanup()
 //------------------------------------------------------------------------------
-void OStoreDB::tickRetrieveQueueCleanupHeartbeat(const std::string& vid) {
-  RootEntry re(m_objectStore);
-  RetrieveQueue rq(m_objectStore);
-  ScopedExclusiveLock rql;
-  re.fetchNoLock();
-
-  try {
-    rq.setAddress(re.getRetrieveQueueAddress(vid, common::dataStructures::JobQueueType::JobsToTransferForUser));
-    rql.lock(rq);
-    rq.fetch();
-    if (rq.getQueueCleanupAssignedAgent().has_value() &&
-        (rq.getQueueCleanupAssignedAgent() != m_agentReference->getAgentAddress())) {
-      throw RetrieveQueueNotReservedForCleanup("In OStoreDB::tickRetrieveQueueCleanupHeartbeat(): Another agent is alive and cleaning up the retrieve queue of tape " +
-                                               vid + ". Heartbeat not ticked.");
-    }
-    rq.tickQueueCleanupHeartbeat();
-    rq.commit();
-  } catch (RetrieveQueueNotReservedForCleanup& ex) {
-    throw;  // Just pass this exception to the outside
-  } catch (cta::objectstore::RootEntry::NoSuchRetrieveQueue& ex) {
-    throw RetrieveQueueNotFound("In OStoreDB::tickRetrieveQueueCleanupHeartbeat(): Retrieve queue of vid " + vid + " not found. " + ex.getMessageValue());
-  } catch (cta::exception::NoSuchObject& ex) {
-    throw RetrieveQueueNotFound("In OStoreDB::tickRetrieveQueueCleanupHeartbeat(): Retrieve queue of vid " + vid + " not found. " + ex.getMessageValue());
-  } catch (cta::exception::Exception& ex) {
-    throw;
-  }
+void OStoreDB::unblockRetrieveQueueForCleanup(const std::string& toReportQueueAddress) {
+  RetrieveQueue rqtr(m_objectStore);
+  ScopedExclusiveLock rqltr;
+  rqtr.setAddress(toReportQueueAddress);
+  rqltr.lock(rqtr);
+  rqtr.fetch();
+  rqtr.setQueueCleanupDoCleanup(false);
+  rqtr.clearQueueCleanupAssignedAgent();
+  rqtr.commit();
+  m_agentReference->removeFromOwnership(toReportQueueAddress, m_objectStore);
 }
 
 //------------------------------------------------------------------------------
@@ -3595,6 +3639,28 @@ OStoreDB::getNextRetrieveJobsToReportBatch(uint64_t filesRequested, log::LogCont
       return ret;
     }
 
+    // If the queue is being cleanup up it will be freed at some point. Skip the queue.
+    // This queue list is not actually the queues but the contents of the
+    // Root Entry's pointer list).
+    // We need to fetch the actual information of the queue to know the content of the cleanup info.
+    {
+      // We need this lock here to cover the case in which
+      ScopedExclusiveLock rel(re);
+      RetrieveQueue rqtr(m_objectStore);
+      ScopedExclusiveLock ex;
+      rqtr.setAddress(queueList.front().address); // Can the object be gone before this?
+      try {
+        ex.lock(rqtr);
+        rqtr.fetch();
+        // The queue is not reserved for cleaned up. Proceed with job popping.
+        if (rqtr.getQueueCleanupDoCleanup()) {
+          return ret;
+        }
+      } catch (cta::exception::Exception&) {
+        logContext.log(log::DEBUG, "In OStoreDB::getNextRetrieveJobsToReportBatch(): Retrieve queue gone. Skipping it.");
+        return ret;
+      }
+    }
     // Try to get jobs from the first queue. If it is empty, it will be trimmed, so we can go for another round.
     RQTRAlgo::PopCriteria criteria;
     criteria.files = filesRequested;

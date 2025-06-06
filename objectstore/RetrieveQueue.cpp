@@ -853,7 +853,23 @@ void RetrieveQueue::tickQueueCleanupHeartbeat() {
 
 void RetrieveQueue::garbageCollect(const std::string &presumedOwner, AgentReference & agentReference, log::LogContext & lc,
     cta::catalogue::Catalogue & catalogue) {
-  throw cta::exception::Exception("In RetrieveQueue::garbageCollect(): not implemented");
+  // Garbage collection of a retrieve queue should only happen it died in the middle of QueueCleanup.
+  if(!getQueueCleanupDoCleanup()){
+    lc.log(log::WARNING, "In RetrieveQueue::garbageCollect(): trying to gabarbage collect Retrieve Queue not marked for cleanup. Ignoring it.");
+  }
+
+  // It might happen that the queue was added to ownership but the
+  // server crashed before changing the reservation value of the queue.
+  // Check assigned agent is the same as the one we are cleaning up.
+  if (getQueueCleanupAssignedAgent().has_value() &&
+      getQueueCleanupAssignedAgent().value() == presumedOwner) {
+    clearQueueCleanupAssignedAgent();
+    setOwner("root");
+    commit();
+    log::ScopedParamContainer(lc)
+      .add("queueAddress", getAddressIfSet())
+      .log(log::INFO, "In RetrieveQueue::garbageCollect(): cleared CleanupInfo assigned agent.");
+  }
 }
 
 void RetrieveQueue::setShardSize(uint64_t shardSize) {
