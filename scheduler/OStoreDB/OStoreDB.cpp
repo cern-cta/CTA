@@ -3888,7 +3888,7 @@ OStoreDB::ArchiveJob* OStoreDB::castFromSchedDBJob(SchedulerDatabase::ArchiveJob
 //------------------------------------------------------------------------------
 // OStoreDB::RetrieveMount::RetrieveMount()
 //------------------------------------------------------------------------------
-OStoreDB::RetrieveMount::RetrieveMount(OStoreDB& oStoreDB) : SchedulerDatabase::RetrieveMount(oStoreDB), m_oStoreDB(oStoreDB) {}
+OStoreDB::RetrieveMount::RetrieveMount(OStoreDB& oStoreDB) : m_oStoreDB(oStoreDB) {}
 
 //------------------------------------------------------------------------------
 // OStoreDB::RetrieveMount::getMountInfo()

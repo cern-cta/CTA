@@ -26,6 +26,7 @@
 #include "catalogue/InMemoryCatalogue.hpp"
 #include "common/dataStructures/SecurityIdentity.hpp"
 #include "common/log/DummyLogger.hpp"
+#include "scheduler/RetrieveMount.hpp"
 #include "scheduler/SchedulerDatabase.hpp"
 #include "scheduler/SchedulerDatabaseFactory.hpp"
 #include "tests/TestsCompileTimeSwitches.hpp"
@@ -699,9 +700,11 @@ TEST_P(SchedulerDatabaseTest, popRetrieveRequestsWithDisksytem) {
 
   // Then load all archive jobs into memory
   // Create mount.
+  std::unique_ptr<cta::RetrieveMount> retMount(new cta::RetrieveMount(catalogue));
   auto mountInfo = db.getMountInfo(lc);
   ASSERT_EQ(1, mountInfo->potentialMounts.size());
-  auto rm = mountInfo->createRetrieveMount(mountInfo->potentialMounts.front(), "drive", "library", "host");
+  retMount->m_dbMount = mountInfo->createRetrieveMount(mountInfo->potentialMounts.front(), "drive", "library", "host");
+  auto rm = retMount->m_dbMount;
   auto rjb = rm->getNextJobBatch(20,20*1000, lc);
   ASSERT_EQ(filesToDo, rjb.size());
 

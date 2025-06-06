@@ -100,9 +100,7 @@ public:
     rel.release();
     m_OStoreDB.setAgentReference(m_agentReferencePtr.get());
   }
-  catalogue::Catalogue& getCatalogue() override {
-    return *m_catalogue;
-  }
+
   cta::OStoreDB& getOstoreDB() override { return m_OStoreDB; }
 
 private:
