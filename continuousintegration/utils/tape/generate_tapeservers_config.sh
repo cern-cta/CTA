@@ -68,9 +68,9 @@ generate_tpsrvs_config_for_library() {
   # Extract library name and drive names
   local library_name=$(echo "${line}" | awk '{print $4}')
   mapfile -t driveNames < <(echo "$lsscsi_g" | \
-                        grep "^.${scsi_host}:${scsi_channel}:" | \
-                        grep tape | \
-                        sed -e 's/^.[0-9]\+:[0-9]\+:\([0-9]\+\):\([0-9]\+\)\].*/VDSTK\1\2/')
+                            grep "^.${scsi_host}:${scsi_channel}:" | \
+                            grep tape | \
+                            sed -E 's/^\[[0-9]+:[0-9]+:([0-9]+):([0-9]+)\][[:space:]]+tape[[:space:]]+[^\ ]+[[:space:]]+([^\ ]+).*/\3\1\2/')
 
   mapfile -t driveDevices < <(echo "$lsscsi_g" | \
                         grep "^.${scsi_host}:${scsi_channel}:" | \
