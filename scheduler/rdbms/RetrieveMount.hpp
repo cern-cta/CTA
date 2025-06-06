@@ -42,7 +42,7 @@ class RetrieveMount : public SchedulerDatabase::RetrieveMount {
 public:
   //RetrieveMount(const std::string& ownerId, Transaction& txn, const std::string &vid) :
   //   , m_txn(txn), m_vid(vid) { }
-  RetrieveMount(RelationalDB& reldb) : SchedulerDatabase::RetrieveMount(reldb), m_RelationalDB(reldb), m_connPool(reldb.m_connPool), m_jobPool(reldb.m_connPool) {}
+  RetrieveMount(RelationalDB& reldb) : m_RelationalDB(reldb), m_connPool(reldb.m_connPool), m_jobPool(reldb.m_connPool) {}
 
   const MountInfo& getMountInfo() override;
 

@@ -123,7 +123,6 @@ public:
    * will be executed to check. The exception is let through in case of problem.
    */
   virtual void ping() = 0;
-  virtual catalogue::Catalogue& getCatalogue() = 0;
 
   /*============ Archive management: user side ==============================*/
   /**
@@ -542,7 +541,6 @@ public:
 public:
   class RetrieveMount {
   public:
-    RetrieveMount(SchedulerDatabase& parent) : m_parent(parent) {}
     struct MountInfo {
       std::string vid;
       std::string logicalLibrary;
@@ -598,18 +596,6 @@ public:
     putQueueToSleep(const std::string& diskSystemName, const uint64_t sleepTime, log::LogContext& logContext) = 0;
     virtual ~RetrieveMount() = default;
     uint64_t nbFilesCurrentlyOnTape;
-
-    bool reserveDiskSpace(const cta::DiskSpaceReservationRequest& request,
-                                  const std::string& externalFreeDiskSpaceScript,
-                                  log::LogContext& logContext);
-    bool testReserveDiskSpace(const cta::DiskSpaceReservationRequest& request,
-                                      const std::string& externalFreeDiskSpaceScript,
-                                      log::LogContext& logContext);
-    protected:
-    catalogue::Catalogue& getCatalogue() {
-      return m_parent.getCatalogue();
-    }
-    SchedulerDatabase& m_parent;
   };
 
   class RetrieveJob {

@@ -35,7 +35,6 @@
 
 namespace unitTests{
   class TestingDatabaseRetrieveMount: public cta::SchedulerDatabase::RetrieveMount {
-    TestingDatabaseRetrieveMount(cta::SchedulerDatabase &db) : RetrieveMount(db) {}
     const MountInfo & getMountInfo() override { throw std::runtime_error("Not implemented"); }
     std::list<std::unique_ptr<cta::SchedulerDatabase::RetrieveJob> > getNextJobBatch(uint64_t filesRequested, uint64_t bytesRequested,
       cta::log::LogContext& logContext) override { throw std::runtime_error("Not implemented");}
@@ -122,8 +121,8 @@ namespace unitTests{
 
     cta::log::StringLogger log("dummy","castor_tape_tapeserver_daemon_DiskWriteTaskFailedBlock",cta::log::DEBUG);
     cta::log::LogContext lc(log);
-    cta::SchedulerDatabase dummyDB;
-    std::unique_ptr<cta::SchedulerDatabase::RetrieveMount> dbrm(new TestingDatabaseRetrieveMount(dummyDB));
+
+    std::unique_ptr<cta::SchedulerDatabase::RetrieveMount> dbrm(new TestingDatabaseRetrieveMount());
     std::unique_ptr<cta::catalogue::Catalogue> catalogue(new cta::catalogue::DummyCatalogue);
     TestingRetrieveMount trm(*catalogue, std::move(dbrm));
     MockRecallReportPacker report(&trm,lc);

@@ -127,7 +127,6 @@ private:
 public:
   /*============ Basic IO check: validate object store access ===============*/
   void ping() override;
-  catalogue::Catalogue& getCatalogue() override { return m_catalogue; }
 
   /* === Session handling =================================================== */
   class TapeMountDecisionInfo : public SchedulerDatabase::TapeMountDecisionInfo {
