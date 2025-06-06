@@ -86,7 +86,7 @@
       "versionlock": {
         "group-eos": "5.3.10-1",
         "group-eos-folly": "2019.11.11.00-1",
-        "group-xrootd": "1:5.8.2-1",
+        "group-xrootd": "1:5.8.3-1",
         "group-oracle-instantclient": "23.6.0.24.10-1"
       },
       "runRequires": {
