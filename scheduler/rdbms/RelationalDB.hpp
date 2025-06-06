@@ -126,7 +126,7 @@ public:
   std::list<std::unique_ptr<SchedulerDatabase::RetrieveJob>>
   getNextRetrieveJobsToTransferBatch(const std::string& vid, uint64_t filesRequested, log::LogContext& lc) override;
 
-  void requeueRetrieveRequestJobs(std::list<cta::SchedulerDatabase::RetrieveJob*>& jobs, log::LogContext& lc) override;
+  void requeueRetrieveRequestJobs(std::list<cta::SchedulerDatabase::RetrieveJob*>& jobs, const std::string& toReportQueueAddress, log::LogContext& lc) override;
 
   std::string blockRetrieveQueueForCleanup(const std::string& vid) override;
 

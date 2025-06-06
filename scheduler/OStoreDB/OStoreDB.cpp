@@ -2169,6 +2169,7 @@ common::dataStructures::RepackInfo OStoreDB::getRepackInfo(const std::string& vi
 // OStoreDB::requeueRetrieveRequestJobs()
 //------------------------------------------------------------------------------
 void OStoreDB::requeueRetrieveRequestJobs(std::list<cta::SchedulerDatabase::RetrieveJob*>& jobs,
+                                          const std::string& toReportQueueAddress,
                                           log::LogContext& logContext) {
   std::list<std::shared_ptr<objectstore::RetrieveRequest>> rrlist;
   std::list<objectstore::ScopedExclusiveLock> locks;
@@ -2202,7 +2203,7 @@ void OStoreDB::requeueRetrieveRequestJobs(std::list<cta::SchedulerDatabase::Retr
     if (vidToRequeue.has_value()){
       jobsToRequeue[vidToRequeue.value()].emplace_back(rr->getJobToAdd());
     } else {
-      rr->failJob(toReportQueueName);
+      rr->failJob(toReportQueueAddress);
       jobsToFail.emplace_back(rr->getJobToAdd());
     }
   } // End of job classfication.
@@ -2213,7 +2214,7 @@ void OStoreDB::requeueRetrieveRequestJobs(std::list<cta::SchedulerDatabase::Retr
     log::ScopedParamContainer params(logContext);
     params.add("failedJobCount", jobsToFail.size());
     logContext.log(log::INFO, "In OStoreDB::requeueRetrieveRequestJobs(): Requeueing failed jobs");
-    RetrieveQueue rq(toReportQueueName, m_objectStore);
+    RetrieveQueue rq(toReportQueueAddress, m_objectStore);
     ScopedExclusiveLock rql(rq);
     rq.fetch();
 

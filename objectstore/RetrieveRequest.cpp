@@ -79,9 +79,6 @@ void RetrieveRequest::garbageCollect(const std::string& presumedOwner, AgentRefe
 // RetrieveRequest::reclassifyRetrieveRequest()
 //------------------------------------------------------------------------------
 std::optional<std::string> RetrieveRequest::reclassifyRetrieveRequest(cta::catalogue::Catalogue& catalogue, log::LogContext& lc){
-  // The owner is indeed the right one. We should requeue the request either to
-  // the to tranfer queue for one vid, or to the to report (or failed) queue (for one arbitrary VID).
-  // Find the vids for active jobs in the request (to transfer ones).
   using serializers::RetrieveJobStatus;
   std::set<std::string, std::less<>> candidateVids;
   for (auto& j: m_payload.jobs()) {

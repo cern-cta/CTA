@@ -122,8 +122,8 @@ public:
     return m_SchedDB->getNextRetrieveJobsToTransferBatch(vid, filesRequested, lc);
   }
 
-  void requeueRetrieveRequestJobs(std::list<cta::SchedulerDatabase::RetrieveJob*>& jobs, log::LogContext& lc) override {
-    m_SchedDB->requeueRetrieveRequestJobs(jobs, lc);
+  void requeueRetrieveRequestJobs(std::list<cta::SchedulerDatabase::RetrieveJob*>& jobs, const std::string& toReportQueueAddress, log::LogContext& lc) override {
+    m_SchedDB->requeueRetrieveRequestJobs(jobs, toReportQueueAddress, lc);
   }
 
   std::string blockRetrieveQueueForCleanup(const std::string& vid) override {
