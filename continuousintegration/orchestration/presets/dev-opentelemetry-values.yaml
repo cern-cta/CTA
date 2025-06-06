@@ -4,6 +4,11 @@ image:
 
 mode: deployment
 
+presets:
+  # Associates metrics with pods
+  kubernetesAttributes:
+    enabled: true
+
 config:
   receivers:
     otlp:
