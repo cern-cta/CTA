@@ -9,10 +9,8 @@
 oracle:{{ $catalogueConfig.oracleConfig.username }}/{{ $catalogueConfig.oracleConfig.password }}@{{ $catalogueConfig.oracleConfig.database }}
 {{- else if eq $backend "postgres" -}}
 postgresql:postgresql://{{ $catalogueConfig.postgresConfig.username }}:{{ $catalogueConfig.postgresConfig.password }}@{{ $catalogueConfig.postgresConfig.server }}/{{ $catalogueConfig.postgresConfig.database }}
-{{- else if eq $backend "sqlite" -}}
-sqlite:{{ $catalogueConfig.sqliteConfig.filepath | replace "%NAMESPACE" .Release.Namespace }}
 {{- else }}
-{{- fail (printf "Unsupported catalogue backend type: %s. Please use 'oracle', 'postgres', or 'sqlite'." $backend) -}}
+{{- fail (printf "Unsupported catalogue backend type: %s. Please use 'oracle' or 'postgres'." $backend) -}}
 {{- end }}
 {{- end }}
 

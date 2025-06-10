@@ -75,7 +75,7 @@ The `catalogue` chart expects the following required parameters:
 The catalogue configuration is the second of the three "main" configurations. It can be explicitly provided using the `--catalogue-config` flag. If not provided, it will default to `presets/dev-catalogue-postgres-values.yaml`. The configuration looks as follows:
 
 ```yaml
-backend: "" # Can be sqlite, oracle or postgres.
+backend: "" # Can be oracle or postgres.
 oracleConfig:
   username: ""
   database: ""
@@ -86,8 +86,6 @@ postgresConfig:
   password: ""
   server: ""
   database: ""
-sqliteConfig:
-  filepath: ""
 ```
 
 Note that only one of these `*Config` fields needs to be provided (based on the backend).

@@ -10,7 +10,7 @@ rados://{{ $schedulerConfig.cephConfig.id }}@{{ $schedulerConfig.cephConfig.pool
 {{- else if eq $backend "postgres" -}}
 postgresql:postgresql://{{ $schedulerConfig.postgresConfig.username }}:{{ $schedulerConfig.postgresConfig.password }}@{{ $schedulerConfig.postgresConfig.server }}/{{ $schedulerConfig.postgresConfig.database }}
 {{- else if eq $backend "VFS" -}}
-{{ $schedulerConfig.vfsConfig.path | replace "%NAMESPACE" .Release.Namespace }}
+/objectstore
 {{- else }}
 {{- fail (printf "Unsupported scheduler backend type: %s. Please use 'ceph', 'postgres', or 'file'." $schedulerConfig.backend) -}}
 {{- end }}

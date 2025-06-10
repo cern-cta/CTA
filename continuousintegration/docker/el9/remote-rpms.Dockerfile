@@ -18,8 +18,6 @@
 # As a result, any installs on this image will also pull from public yum repos instead of private ones
 FROM gitlab-registry.cern.ch/linuxsupport/alma9-base:latest
 
-# Add orchestration run scripts locally
-COPY continuousintegration/docker/opt /opt
 COPY continuousintegration/docker/el9/etc/yum.repos.d-internal/* /etc/yum.repos.d-internal/
 # The CTA repo is a special case as it provides CTA itself. As such, we cannot put it in
 # yum.repos.d-public, as this might overwrite an existing CTA repo when installing cta-release

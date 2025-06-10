@@ -15,6 +15,8 @@
 #               granted to it by virtue of its status as an Intergovernmental Organization or
 #               submit itself to any jurisdiction.
 
+set -e
+
 echo "$(date '+%Y-%m-%d %H:%M:%S') [$(basename "${BASH_SOURCE[0]}")] Started"
 
 die() {
@@ -29,8 +31,7 @@ if [ "$SCHEDULER_BACKEND" == "VFS" ]; then
   echo "Installing the cta-objectstore-tools"
   dnf install -y cta-objectstore-tools
   echo "Wiping objectstore"
-  rm -fr $SCHEDULER_URL
-  mkdir -p $SCHEDULER_URL
+  rm -fr "${SCHEDULER_URL:?}/*"
   cta-objectstore-initialize $SCHEDULER_URL || die "ERROR: Could not wipe the objectstore. cta-objectstore-initialize $SCHEDULER_URL FAILED"
   chmod -R 777 $SCHEDULER_URL
 elif [ "$SCHEDULER_BACKEND" == "postgres" ]; then

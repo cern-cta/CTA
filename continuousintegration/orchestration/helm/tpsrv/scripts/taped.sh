@@ -15,7 +15,6 @@
 #               granted to it by virtue of its status as an Intergovernmental Organization or
 #               submit itself to any jurisdiction.
 
-. /opt/run/bin/init_pod.sh
 echo "$(date '+%Y-%m-%d %H:%M:%S') [$(basename "${BASH_SOURCE[0]}")] Started"
 
 # Install missing RPMs
@@ -32,6 +31,3 @@ fi
 echo "$(date '+%Y-%m-%d %H:%M:%S') [$(basename "${BASH_SOURCE[0]}")] Ready"
 tail -F "/var/log/cta/cta-taped-${DRIVE_NAME}.log" &
 runuser -c "/usr/bin/cta-taped -c /etc/cta/cta-taped-${DRIVE_NAME}.conf --foreground --log-format=json --log-to-file=/var/log/cta/cta-taped-${DRIVE_NAME}.log"
-
-echo "taped died"
-sleep infinity # Keep the container alive for debugging purposes

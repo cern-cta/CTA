@@ -15,7 +15,6 @@
 #               granted to it by virtue of its status as an Intergovernmental Organization or
 #               submit itself to any jurisdiction.
 
-. /opt/run/bin/init_pod.sh
 echo "$(date '+%Y-%m-%d %H:%M:%S') [$(basename "${BASH_SOURCE[0]}")] Started"
 
 # Install missing RPMs
@@ -29,8 +28,3 @@ echo "$(date '+%Y-%m-%d %H:%M:%S') [$(basename "${BASH_SOURCE[0]}")] Ready"
 
 tail -F /var/log/cta/cta-frontend-grpc.log &
 runuser --shell='/bin/bash' --session-command='/usr/bin/cta-frontend-grpc >> /var/log/cta/cta-frontend-grpc.log' cta
-
-echo "ctafrontend died"
-echo "analysing core file if any"
-/scripts/ctafrontend-backtrace.sh
-sleep infinity # Keep the container alive for debugging purposes
