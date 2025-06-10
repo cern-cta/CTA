@@ -18,6 +18,7 @@
 #include "MemQueues.hpp"
 #include "OStoreDB.hpp"
 #include "objectstore/Helpers.hpp"
+#include "common/dataStructures/RetrieveJobToAdd.hpp"
 
 namespace cta::ostoredb {
 
@@ -43,7 +44,7 @@ template<>
 void MemQueue<objectstore::RetrieveRequest, objectstore::RetrieveQueue>::specializedAddJobsToQueueAndCommit(
   std::list<MemQueue<objectstore::RetrieveRequest, objectstore::RetrieveQueue>::JobAndRequest> & jobsToAdd,
   objectstore::RetrieveQueue &queue, objectstore::AgentReference & agentReference, log::LogContext & logContext) {
-  std::list<objectstore::RetrieveQueue::JobToAdd> jtal;
+  std::list<common::dataStructures::RetrieveJobToAdd> jtal;
   auto queueAddress = queue.getAddressIfSet();
   for (auto & jta: jobsToAdd) {
     // We need to find the job corresponding to the copyNb

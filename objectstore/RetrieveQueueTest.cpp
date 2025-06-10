@@ -22,6 +22,7 @@
 #include "AgentReference.hpp"
 #include "common/log/DummyLogger.hpp"
 #include "common/exception/NoSuchObject.hpp"
+#include "common/dataStructures/RetrieveJobToAdd.hpp"
 
 #include <random>
 
@@ -64,10 +65,10 @@ TEST_F(ObjectStore, RetrieveQueueShardingAndOrderingTest) {
   cta::objectstore::AgentReference agentRef("unitTest", dl);
   std::mt19937 gen((std::random_device())());
   // Create 1000 jobs references.
-  std::list<cta::objectstore::RetrieveQueue::JobToAdd> jobsToAdd;
+  std::list<cta::common::dataStructures::RetrieveJobToAdd> jobsToAdd;
   const size_t totalJobs = 1000, shardSize=25, batchSize=10;
   for (size_t i=0; i<totalJobs; i++) {
-    cta::objectstore::RetrieveQueue::JobToAdd jta;
+    cta::common::dataStructures::RetrieveJobToAdd jta;
     jta.copyNb = 1;
     jta.fSeq = i;
     jta.fileSize = 1000;
@@ -95,7 +96,7 @@ TEST_F(ObjectStore, RetrieveQueueShardingAndOrderingTest) {
     // expected to be << shard size (25 here).
     auto jobsToAddNow = jobsToAdd;
     while (jobsToAddNow.size()) {
-      std::list<cta::objectstore::RetrieveQueue::JobToAdd> jobsBatch;
+      std::list<cta::common::dataStructures::RetrieveJobToAdd> jobsBatch;
       for (size_t i=0; i<batchSize; i++) {
         if (jobsToAddNow.size()) {
           std::uniform_int_distribution<size_t> distrib(0, jobsToAddNow.size() - 1);
@@ -165,11 +166,11 @@ TEST_F(ObjectStore, RetrieveQueueMissingShardingTest) {
   cta::objectstore::AgentReference agentRef("unitTest", dl);
   std::mt19937 gen((std::random_device())());
   // Create 100 jobs references.
-  std::list<cta::objectstore::RetrieveQueue::JobToAdd> jobsToAdd;
+  std::list<cta::common::dataStructures::RetrieveJobToAdd> jobsToAdd;
   const size_t totalJobs = 100, shardSize=25, batchSize=10;
   uint64_t removedShardJobs;
   for (size_t i=0; i<totalJobs; i++) {
-    cta::objectstore::RetrieveQueue::JobToAdd jta;
+    cta::common::dataStructures::RetrieveJobToAdd jta;
     jta.copyNb = 1;
     jta.fSeq = i;
     jta.fileSize = 1000;
@@ -195,7 +196,7 @@ TEST_F(ObjectStore, RetrieveQueueMissingShardingTest) {
     // By inserting in batches, we guarantee that various shards will be created
     auto jobsToAddNow = jobsToAdd;
     while (jobsToAddNow.size()) {
-      std::list<cta::objectstore::RetrieveQueue::JobToAdd> jobsBatch;
+      std::list<cta::common::dataStructures::RetrieveJobToAdd> jobsBatch;
       for (size_t i = 0; i < batchSize; i++) {
         if (jobsToAddNow.size()) {
           jobsBatch.emplace_back(jobsToAddNow.front());
@@ -262,10 +263,10 @@ TEST_F(ObjectStore, RetrieveQueueActivityCounts) {
   cta::objectstore::AgentReference agentRef("unitTest", dl);
   std::mt19937 gen((std::random_device())());
   // Create 1000 jobs references.
-  std::list<cta::objectstore::RetrieveQueue::JobToAdd> jobsToAdd;
+  std::list<cta::common::dataStructures::RetrieveJobToAdd> jobsToAdd;
   const size_t totalJobs = 100, shardSize=25, batchSize=10;
   for (size_t i=0; i<totalJobs; i++) {
-    cta::objectstore::RetrieveQueue::JobToAdd jta;
+    cta::common::dataStructures::RetrieveJobToAdd jta;
     jta.copyNb = 1;
     jta.fSeq = i;
     jta.fileSize = 1000;
@@ -303,7 +304,7 @@ TEST_F(ObjectStore, RetrieveQueueActivityCounts) {
     // expected to be << shard size (25 here).
     auto jobsToAddNow = jobsToAdd;
     while (jobsToAddNow.size()) {
-      std::list<cta::objectstore::RetrieveQueue::JobToAdd> jobsBatch;
+      std::list<cta::common::dataStructures::RetrieveJobToAdd> jobsBatch;
       for (size_t i=0; i<batchSize; i++) {
         if (jobsToAddNow.size()) {
           std::uniform_int_distribution<size_t> distrib(0, jobsToAddNow.size() -1);

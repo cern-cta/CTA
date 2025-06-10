@@ -686,6 +686,7 @@ public:
   virtual std::list<std::unique_ptr<RetrieveJob>>
   getNextRetrieveJobsToTransferBatch(const std::string& vid, uint64_t filesRequested, log::LogContext& logContext) = 0;
   virtual void requeueRetrieveRequestJobs(std::list<cta::SchedulerDatabase::RetrieveJob*>& jobs,
+                                          const std::string& toReportQueueAddress,
                                           log::LogContext& logContext) = 0;
   virtual std::string blockRetrieveQueueForCleanup(const std::string& vid) = 0;
 

@@ -31,6 +31,7 @@
 #include "catalogue/TapeDrivesCatalogueState.hpp"
 #include "common/Constants.hpp"
 #include "common/dataStructures/MountPolicy.hpp"
+#include "common/dataStructures/RetrieveJobToAdd.hpp"
 #include "common/exception/Exception.hpp"
 #include "common/exception/TimeoutException.hpp"
 #include "common/exception/NoSuchObject.hpp"
@@ -2168,9 +2169,18 @@ common::dataStructures::RepackInfo OStoreDB::getRepackInfo(const std::string& vi
 // OStoreDB::requeueRetrieveRequestJobs()
 //------------------------------------------------------------------------------
 void OStoreDB::requeueRetrieveRequestJobs(std::list<cta::SchedulerDatabase::RetrieveJob*>& jobs,
+                                          const std::string& toReportQueueAddress,
                                           log::LogContext& logContext) {
   std::list<std::shared_ptr<objectstore::RetrieveRequest>> rrlist;
   std::list<objectstore::ScopedExclusiveLock> locks;
+
+  // We have to objects to classify the batch into.
+  // - jobsToRequeue: map containing the VID as key and a list of requests as value.
+  // - jobToFail: list of jobs containing the jobs we have to fail.
+  std::map<std::string, std::list<common::dataStructures::RetrieveJobToAdd>> jobsToRequeue;
+  std::list<common::dataStructures::RetrieveJobToAdd> jobsToFail;
+
+  // First we have to decide what we will do with each job.  
   for (auto& job : jobs) {
     auto oStoreJob = dynamic_cast<OStoreDB::RetrieveJob*>(job);
     auto rr =
@@ -2185,12 +2195,45 @@ void OStoreDB::requeueRetrieveRequestJobs(std::list<cta::SchedulerDatabase::Retr
         .log(log::INFO, "In OStoreDB::requeueRetrieveRequestJobs(): no such retrieve request. Ignoring.");
       continue;
     }
-    rr->garbageCollectRetrieveRequest(m_agentReference->getAgentAddress(),
-                                      *m_agentReference,
-                                      logContext,
-                                      m_catalogue,
-                                      true);
+
+    // Move the Job Pointers from the batch into the dedicated ones.
+    // If we receive a std::nullopt it means that there is no VID to requeue -> fail it.
+    // If we get a value it will contain the VID where we should requeue the request.
+    std::optional<std::string> vidToRequeue = rr->decideRetrieveRequestDestination(m_catalogue, logContext);
+    if (vidToRequeue.has_value()){
+      jobsToRequeue[vidToRequeue.value()].emplace_back(rr->getJobToAdd());
+    } else {
+      rr->failJob(toReportQueueAddress);
+      jobsToFail.emplace_back(rr->getJobToAdd());
+    }
+  } // End of job classfication.
+
+  // Now requeue the batches. We know that the initial batch holds the max batch size, so,
+  // any of the job lists to requeue will be <= than the batch size.
+  if (jobsToFail.size()) {
+    log::ScopedParamContainer params(logContext);
+    params.add("failedJobCount", jobsToFail.size());
+    logContext.log(log::INFO, "In OStoreDB::requeueRetrieveRequestJobs(): Requeueing failed jobs");
+    RetrieveQueue rq(toReportQueueAddress, m_objectStore);
+    ScopedExclusiveLock rql(rq);
+    rq.fetch();
+
+    // Append the jobs sequentially, we do not care about the order.
+    rq.addJobsAndCommit(jobsToFail, *m_agentReference, logContext);
   }
+
+  for(auto &[activeVid, requestList] : jobsToRequeue){
+    log::ScopedParamContainer params(logContext);
+    params.add("vidToRequeue", activeVid);
+    params.add("requeuedJobCount", requestList.size()); 
+    logContext.log(log::INFO, "In OStoreDB::requeueRetrieveRequestJobs(): Requeueing to another VID");
+    RetrieveQueue rq(m_objectStore);
+    ScopedExclusiveLock rql;
+    Helpers::getLockedAndFetchedJobQueue<RetrieveQueue>(rq, rql, *m_agentReference, activeVid, common::dataStructures::JobQueueType::JobsToTransferForUser, logContext);
+    // Insert the jobs in the correct order.
+    rq.addJobsAndCommit(requestList, *m_agentReference, logContext);
+  }
+
   locks.clear();
   rrlist.clear();
 }
@@ -2261,7 +2304,6 @@ std::string OStoreDB::blockRetrieveQueueForCleanup(const std::string& vid) {
     rqtr.setQueueCleanupDoCleanup();
     rqtr.setQueueCleanupAssignedAgent(m_agentReference->getAgentAddress());
     rqtr.commit();
-
   }
 
   return reportQueueAddress;
@@ -2272,9 +2314,9 @@ std::string OStoreDB::blockRetrieveQueueForCleanup(const std::string& vid) {
 //------------------------------------------------------------------------------
 void OStoreDB::unblockRetrieveQueueForCleanup(const std::string& toReportQueueAddress) {
   RetrieveQueue rqtr(m_objectStore);
-  ScopedExclusiveLock rqltr;
+  ScopedExclusiveLock rqtrl;
   rqtr.setAddress(toReportQueueAddress);
-  rqltr.lock(rqtr);
+  rqtrl.lock(rqtr);
   rqtr.fetch();
   rqtr.setQueueCleanupDoCleanup(false);
   rqtr.clearQueueCleanupAssignedAgent();
@@ -3661,6 +3703,7 @@ OStoreDB::getNextRetrieveJobsToReportBatch(uint64_t filesRequested, log::LogCont
         return ret;
       }
     }
+
     // Try to get jobs from the first queue. If it is empty, it will be trimmed, so we can go for another round.
     RQTRAlgo::PopCriteria criteria;
     criteria.files = filesRequested;

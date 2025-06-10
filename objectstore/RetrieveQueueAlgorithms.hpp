@@ -18,6 +18,7 @@
 #pragma once
 
 #include "Algorithms.hpp"
+#include "common/dataStructures/RetrieveJobToAdd.hpp"
 #include "common/dataStructures/JobQueueType.hpp"
 #include "RetrieveQueue.hpp"
 
@@ -281,7 +282,7 @@ void ContainerTraits<RetrieveQueue,C>::
 addReferencesAndCommit(Container &cont, typename InsertedElement::list &elemMemCont, AgentReference &agentRef,
   log::LogContext &lc)
 {
-  std::list<RetrieveQueue::JobToAdd> jobsToAdd;
+  std::list<common::dataStructures::RetrieveJobToAdd> jobsToAdd;
   for (auto &e : elemMemCont) {
     RetrieveRequest &rr = *e.retrieveRequest;
     jobsToAdd.push_back({e.copyNb, e.fSeq, rr.getAddressIfSet(), e.filesize, e.policy, ::time(nullptr), e.activity, e.diskSystemName});
@@ -294,7 +295,7 @@ void ContainerTraits<RetrieveQueue,C>::
 addReferencesIfNecessaryAndCommit(Container& cont, typename InsertedElement::list& elemMemCont,
   AgentReference& agentRef, log::LogContext& lc)
 {
-  std::list<RetrieveQueue::JobToAdd> jobsToAdd;
+  std::list<common::dataStructures::RetrieveJobToAdd> jobsToAdd;
   for (auto &e : elemMemCont) {
     RetrieveRequest &rr = *e.retrieveRequest;
     jobsToAdd.push_back({e.copyNb, e.fSeq, rr.getAddressIfSet(), e.filesize, e.policy, rr.getCreationTime(), e.activity, e.diskSystemName});

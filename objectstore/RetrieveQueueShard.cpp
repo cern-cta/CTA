@@ -16,6 +16,7 @@
  *               submit itself to any jurisdiction.
  */
 
+#include "common/dataStructures/RetrieveJobToAdd.hpp"
 #include "RetrieveQueueShard.hpp"
 #include "GenericObject.hpp"
 #include <google/protobuf/util/json_util.h>
@@ -157,11 +158,11 @@ auto RetrieveQueueShard::dumpJobs() -> std::list<JobInfo> {
   return ret;
 }
 
-std::list<RetrieveQueue::JobToAdd> RetrieveQueueShard::dumpJobsToAdd() {
+std::list<common::dataStructures::RetrieveJobToAdd> RetrieveQueueShard::dumpJobsToAdd() {
   checkPayloadReadable();
-  std::list<RetrieveQueue::JobToAdd> ret;
+  std::list<common::dataStructures::RetrieveJobToAdd> ret;
   for (auto &j: m_payload.retrievejobs()) {
-    ret.emplace_back(RetrieveQueue::JobToAdd());
+    ret.emplace_back(common::dataStructures::RetrieveJobToAdd());
     ret.back().copyNb = j.copynb();
     ret.back().fSeq = j.fseq();
     ret.back().fileSize = j.size();
@@ -262,7 +263,7 @@ void RetrieveQueueShard::addJobsInPlace(JobsToAddSet& jobsToAdd) {
   for (auto &j: jobsToAdd) addJob(j);
 }
 
-void RetrieveQueueShard::addJob(const RetrieveQueue::JobToAdd& jobToAdd) {
+void RetrieveQueueShard::addJob(const common::dataStructures::RetrieveJobToAdd& jobToAdd) {
   checkPayloadWritable();
   auto * j = m_payload.add_retrievejobs();
   j->set_address(jobToAdd.retrieveRequestAddress);
