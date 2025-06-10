@@ -15,7 +15,7 @@ spec:
       command: ["sh", "-c"]
       args:
         - |
-          /opt/keycloak/bin/kc.sh start-dev --http-port=8080
+          /opt/keycloak/bin/kc.sh start-dev --http-port=8080 --import-realm
       env:
         - name: KEYCLOAK_ADMIN
           value: admin
@@ -23,3 +23,14 @@ spec:
           value: admin
       ports:
         - containerPort: 8080
+      volumeMounts:
+      - name: grpc-realm-volume
+        mountPath: /opt/keycloak/data/import
+  volumes:
+  - name: grpc-realm-volume
+    configMap:
+      name: grpc-realm
+
+
+## useful: https://www.reddit.com/r/KeyCloak/comments/1cmc75l/import_realm/
+## look at https://www.keycloak.org/server/containers
