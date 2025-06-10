@@ -41,7 +41,7 @@ frontend:
     enabled: true
     # Mount /var/log contents in /mnt/logs so that the fluentd can consume it
     script: |
-      #!/usr/bin/bash
+      #!/bin/bash
       LOGMOUNT=/mnt/logs
       PV_PATH=""
       if [ "-${MY_CONTAINER}-" != "--" ]; then
@@ -61,7 +61,7 @@ tpsrv:
     enabled: true
     # Mount /var/log contents in /mnt/logs so that the fluentd can consume it
     script: |
-      #!/usr/bin/bash
+      #!/bin/bash
       LOGMOUNT=/mnt/logs
       PV_PATH=""
       if [ "-${MY_CONTAINER}-" != "--" ]; then
