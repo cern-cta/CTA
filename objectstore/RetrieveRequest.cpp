@@ -76,7 +76,7 @@ void RetrieveRequest::garbageCollect(const std::string& presumedOwner, AgentRefe
 }
 
 //------------------------------------------------------------------------------
-// RetrieveRequest::deideRetrieveRequestDestination()
+// RetrieveRequest::decideRetrieveRequestDestination()
 //------------------------------------------------------------------------------
 std::optional<std::string> RetrieveRequest::decideRetrieveRequestDestination(cta::catalogue::Catalogue& catalogue, log::LogContext& lc){
   using serializers::RetrieveJobStatus;
