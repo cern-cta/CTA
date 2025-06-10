@@ -1,3 +1,28 @@
+## 5.11.10.0-1
+
+### New Features
+
+- [Tools] Allow cta-objectstore-dump-object tool to print JSON-only output (cta/CTA!920)
+- [Catalogue] Allow tapes in broken state to be reclaimed (cta/CTA!927)
+
+### Bug Fixes
+
+- [Scheduler] Fix Queue Cleanup Runner Queue Reservation (cta/CTA!916)
+- [Taped] Fix bug from cleaner session not understanding EnstoreLarge label format (cta/CTA!900)
+- [Taped] Turn off RAO for Enstore label formats (cta/CTA!903)
+- [Taped] Fix 'Plugin API version mismatch error' found during cta-taped upgrade (cta/CTA!934)
+- [Tools] Handle missing objects in cta-objectstore-dump-object tool graciously (cta/CTA!919)
+
+### Performance Improvements
+
+- [Scheduler] Implement job batching for Queue Cleanup Runner (cta/CTA!917)
+- [Frontend] Fix performance issues with 'cta-admin dr down' command (cta/CTA!928)
+
+### Other
+
+- [Misc] Bump XRootD version to 5.8.3 (cta/CTA!935)
+
+
 ## 5.11.9.0-1
 
 ### Bug Fixes
