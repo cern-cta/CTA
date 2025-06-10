@@ -22,7 +22,7 @@ preRun:
   script: |
     #!/usr/bin/bash
 
-# Script to execute in the main container after the tpsrv/rmcd services exited
+# Script to execute in the main container after the taped process exited
 # Enabled by default to allow debugging
 postRun:
   enabled: true
