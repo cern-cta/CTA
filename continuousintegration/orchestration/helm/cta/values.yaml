@@ -32,18 +32,8 @@ global:
 
   extraVolumes:
     volumes:
-    - name: shared
-      hostPath:
-        path: /opt/cta
-    - name: logstorage
-      emptyDir: {}
     volumeMounts:
-    - name: shared
-      mountPath: /shared
-    - name: logstorage
-      mountPath: /mnt/logs
 
-  # While we have init_pod.sh, we need pods to be privileged :(
   securityContext:
-    allowPrivilegeEscalation: True
-    privileged: True
+    allowPrivilegeEscalation: False
+    privileged: False
