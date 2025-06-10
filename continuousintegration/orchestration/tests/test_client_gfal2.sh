@@ -70,12 +70,6 @@ NB_PROCS=20
 TEST_PRERUN=". /root/client_env "
 TEST_POSTRUN=""
 
-VERBOSE=0
-if [[ $VERBOSE == 1 ]]; then
-  TEST_PRERUN="tail -v -f /mnt/logs/cta-tpsrv*/cta-rmcd/cta/cta-rmcd.log & export TAILPID=\$! && ${TEST_PRERUN}"
-  TEST_POSTRUN=" && kill \${TAILPID} &> /dev/null"
-fi
-
 clientgfal2_options="-n ${NB_FILES} -s ${FILE_SIZE_KB} -p ${NB_PROCS} -d /eos/ctaeos/preprod -r -c gfal2"
 
 # Tests

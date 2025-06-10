@@ -88,12 +88,6 @@ kubectl -n ${NAMESPACE} exec ${CLIENT_POD} -c client -- bash -c "/root/client_se
 TEST_PRERUN=". /root/client_env "
 TEST_POSTRUN=""
 
-VERBOSE=0
-if [[ $VERBOSE == 1 ]]; then
-  TEST_PRERUN="tail -v -f /mnt/logs/cta-tpsrv*/cta-rmcd/cta/cta-rmcd.log & export TAILPID=\$! && ${TEST_PRERUN}"
-  TEST_POSTRUN=" && kill \${TAILPID} &> /dev/null"
-fi
-
 
 echo "Setting up client pod for HTTPs REST API test"
 echo " Copying CA certificates to client pod from ${EOS_MGM_POD} pod."

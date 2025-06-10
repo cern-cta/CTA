@@ -66,7 +66,12 @@ spec:
         image: {{ include "ctafrontend.image" . }}
         imagePullPolicy: {{ include "ctafrontend.imagePullPolicy" . }}
         stdin: true
-        command: ["bash", "/scripts/ctafrontend-xrd.sh"]
+        command: ["sh", "-c"]
+        args:
+        - |
+          {{- if .Values.preRun.enabled }}/scripts/pre_run.sh; {{- end }}
+          /scripts/ctafrontend-xrd.sh;
+          {{- if .Values.postRun.enabled }}/scripts/post_run.sh; {{- end }}
         readinessProbe:
           tcpSocket:
             port: {{ .Values.xrd.port }}
@@ -135,6 +140,10 @@ spec:
         - name: krb5-conf
           mountPath: /etc/krb5.conf
           subPath: krb5.conf
+      {{- if eq $schedulerConfig.backend "VFS" }}
+        - name: vfs-storage-volume
+          mountPath: /objectstore
+      {{- end }}
         {{ include "common.extraVolumeMounts" . | nindent 8 }}
       volumes:
       - name: scripts-volume
@@ -157,6 +166,11 @@ spec:
       - name: cta-ceph-volume
         configMap:
           name: ceph-conf
+      {{- end }}
+      {{- if eq $schedulerConfig.backend "VFS" }}
+      - name: vfs-storage-volume
+        persistentVolumeClaim:
+          claimName: scheduler-vfs-pvc
       {{- end }}
       - name: xrootd-config
         configMap:

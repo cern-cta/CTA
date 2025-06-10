@@ -43,7 +43,12 @@ spec:
         image: {{ include "ctafrontend.image" . }}
         imagePullPolicy: {{ include "ctafrontend.imagePullPolicy" . }}
         stdin: true
-        command: ["bash", "/scripts/ctafrontend-grpc.sh"]
+        command: ["sh", "-c"]
+        args:
+        - |
+          {{- if .Values.preRun.enabled }}/scripts/pre_run.sh; {{- end }}
+          /scripts/ctafrontend-grpc.sh;
+          {{- if .Values.postRun.enabled }}/scripts/post_run.sh; {{- end }}
         readinessProbe:
           exec:
             command:
@@ -106,6 +111,10 @@ spec:
           mountPath: /etc/ceph/ceph.client.{{ $schedulerConfig.cephConfig.id }}.keyring
           subPath: ceph.client.{{ $schedulerConfig.cephConfig.id }}.keyring
         {{- end }}
+        {{- if eq $schedulerConfig.backend "VFS" }}
+        - name: vfs-storage-volume
+          mountPath: /objectstore
+        {{- end }}
         - name: grpc-config
           mountPath: /etc/cta/cta-frontend-grpc.conf
           subPath: cta-frontend-grpc.conf
@@ -138,6 +147,11 @@ spec:
       - name: cta-ceph-volume
         configMap:
           name: ceph-conf
+      {{- end }}
+      {{- if eq $schedulerConfig.backend "VFS" }}
+      - name: vfs-storage-volume
+        persistentVolumeClaim:
+          claimName: scheduler-vfs-pvc
       {{- end }}
       - name: grpc-config
         configMap:

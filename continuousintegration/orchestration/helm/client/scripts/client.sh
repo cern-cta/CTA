@@ -14,10 +14,6 @@
 #               In applying this licence, CERN does not waive the privileges and immunities
 #               granted to it by virtue of its status as an Intergovernmental Organization or
 #               submit itself to any jurisdiction.
-
-. /opt/run/bin/init_pod.sh
-echo "$(date '+%Y-%m-%d %H:%M:%S') [$(basename "${BASH_SOURCE[0]}")] Started"
-
 # Install missing RPMs
 dnf install -y cta-cli cta-immutable-file-test xrootd-client eos-client
 
