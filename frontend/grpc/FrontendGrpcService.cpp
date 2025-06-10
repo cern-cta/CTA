@@ -115,6 +115,7 @@ CtaRpcImpl::ExtractAuthHeaderAndValidate(::grpc::ServerContext* context) {
       token = auth_header.substr(7); // Extract the token part, use substr(7) because that is the length of "Bearer" plus a space character
       lc.log(cta::log::DEBUG, std::string("Received token: ") + token);
       if (token.empty()) {
+        lc.log(cta::log::ERR, "Authorization token missing");
         return ::grpc::Status(::grpc::StatusCode::UNAUTHENTICATED, "Missing Authorization token");
       }
   } else {
