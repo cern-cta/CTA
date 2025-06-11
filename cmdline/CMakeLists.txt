@@ -42,9 +42,8 @@ set_property (TARGET cta-admin APPEND PROPERTY INSTALL_RPATH ${PROTOBUF3_RPATH})
 #
 # Previously this was the eoscta_stub which was called by a script invoked by the EOS WFE.
 #
-find_package(cryptopp REQUIRED)
 add_executable(cta-wfe-test EosCtaStub.cpp)
-target_link_libraries(cta-wfe-test cryptopp ctacommon ProtoCtaFrontend XrdSsiLib XrdUtils)
+target_link_libraries(cta-wfe-test ctacommon ProtoCtaFrontend XrdSsiLib XrdUtils)
 set_property (TARGET cta-wfe-test APPEND PROPERTY INSTALL_RPATH ${PROTOBUF3_RPATH})
 
 add_manpage(cta-admin)

@@ -23,7 +23,6 @@
 #include "common/exception/XrootCl.hpp"
 #include "common/exception/Exception.hpp"
 #include <xrootd/XrdCl/XrdClFile.hh>
-#include <cryptopp/rsa.h>
 #include <radosstriper/libradosstriper.hpp>
 
 namespace cta::disk {
