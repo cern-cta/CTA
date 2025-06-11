@@ -16,10 +16,7 @@
 cmake_minimum_required (VERSION 3.17)
 
 find_package (binutils REQUIRED)
-find_package (libattr REQUIRED)
-find_package (libcap REQUIRED)
-find_package (libuuid REQUIRED)
-find_package(json-c REQUIRED)
+find_package (json-c REQUIRED)
 
 add_subdirectory (exception)
 
@@ -156,10 +153,6 @@ install (TARGETS ctacommon DESTINATION usr/${CMAKE_INSTALL_LIBDIR})
 
 target_link_libraries (ctacommon
   ProtoCtaFrontend
-  pthread
-  uuid
-  z
-  cap
   XrdCl
   json-c
 )

@@ -15,6 +15,7 @@
  *               submit itself to any jurisdiction.
  */
 
+#include <algorithm>
 #include "scheduler/Scheduler.hpp"
 #include "scheduler/rdbms/RepackRequest.hpp"
 #include "scheduler/rdbms/RetrieveRequest.hpp"

@@ -32,13 +32,12 @@ add_library(ctadisk SHARED
   JSONFreeSpace.cpp
 )
 
-target_link_libraries (ctadisk XrdCl cryptopp radosstriper)
+target_link_libraries (ctadisk XrdCl radosstriper)
 
 set_property(TARGET ctadisk PROPERTY SOVERSION "${CTA_SOVERSION}")
 set_property(TARGET ctadisk PROPERTY   VERSION "${CTA_LIBVERSION}")
 
 add_library(ctadiskunittests SHARED
-  CryptoPPTest.cpp
   DiskSystemTest.cpp
 )
 
