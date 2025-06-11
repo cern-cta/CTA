@@ -530,7 +530,7 @@ void WorkflowEvent::processDELETE(xrd::Response& response) {
     log::ScopedParamContainer spc(m_lc);
     spc.add("fileId", request.archiveFileID);
     spc.add("catalogueError", ex.getMessage().str());
-    m_lc.log(log::ERR,
+    m_lc.log(log::WARNING,
              "Received an exception when trying to get archive file by id. Ignoring request to delete archive file.");
   }
 
