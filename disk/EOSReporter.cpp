@@ -15,10 +15,8 @@
  *               submit itself to any jurisdiction.
  */
 
-#include <future>
-
 #include "EOSReporter.hpp"
-#include "common/exception/XrootCl.hpp"
+#include "XrdClException.hpp"
 
 namespace cta::disk {
 
@@ -30,7 +28,7 @@ void EOSReporter::asyncReport() {
   XrdCl::Buffer arg (m_query.size());
   arg.FromString(m_query);
   XrdCl::XRootDStatus status=m_fs.Query( qcOpaque, arg, this, CTA_EOS_QUERY_TIMEOUT);
-  cta::exception::XrootCl::throwOnError(status,
+  exception::XrdClException::throwOnError(status,
       "In EOSReporter::asyncReportArchiveFullyComplete(): failed to XrdCl::FileSystem::Query()");
 }
 
@@ -40,7 +38,7 @@ void EOSReporter::asyncReport() {
 void EOSReporter::HandleResponse(XrdCl::XRootDStatus *status,
                                  XrdCl::AnyObject    *response) {
   try {
-    cta::exception::XrootCl::throwOnError(*status,
+    exception::XrdClException::throwOnError(*status,
       "In EOSReporter::AsyncQueryHandler::HandleResponse(): failed to XrdCl::FileSystem::Query()");
     m_promise.set_value();
   } catch (...) {

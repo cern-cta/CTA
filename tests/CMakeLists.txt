@@ -105,7 +105,7 @@ add_executable(cta-immutable-file-test
 set_property (TARGET cta-immutable-file-test APPEND PROPERTY INCLUDE_DIRECTORIES "/usr/include/xrootd")
 
 target_link_libraries(cta-immutable-file-test
-  ctacommon)
+  ctacommon XrdCl)
 
 install(
   TARGETS

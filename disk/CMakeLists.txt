@@ -30,6 +30,7 @@ add_library(ctadisk SHARED
   DiskSystem.cpp
   JSONDiskSystem.cpp
   JSONFreeSpace.cpp
+  XrdClException.cpp
 )
 
 target_link_libraries (ctadisk XrdCl radosstriper)

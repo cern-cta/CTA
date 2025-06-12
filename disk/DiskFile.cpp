@@ -168,14 +168,14 @@ XrootReadFile::XrootReadFile(const std::string& xrootUrl, uint16_t timeout) : Xr
 
   // and simply open
   using XrdCl::OpenFlags;
-  XrootClEx::throwOnError(m_xrootFile.Open(xrootUrl, OpenFlags::Read, XrdCl::Access::None, m_timeout),
+  exception::XrdClException::throwOnError(m_xrootFile.Open(xrootUrl, OpenFlags::Read, XrdCl::Access::None, m_timeout),
                           std::string("In XrootReadFile::XrootReadFile failed XrdCl::File::Open() on ") + xrootUrl);
   m_xrootFile.GetProperty("LastURL", m_URL);
 }
 
 size_t XrootBaseReadFile::read(void* data, const size_t size) const {
   uint32_t ret;
-  XrootClEx::throwOnError(m_xrootFile.Read(m_readPosition, size, data, ret, m_timeout),
+  exception::XrdClException::throwOnError(m_xrootFile.Read(m_readPosition, size, data, ret, m_timeout),
                           std::string("In XrootReadFile::read failed XrdCl::File::Read() on ") + m_URL);
   m_readPosition += ret;
   return ret;
@@ -185,7 +185,7 @@ size_t XrootBaseReadFile::size() const {
   const bool forceStat = false;
   XrdCl::StatInfo* statInfo(nullptr);
   size_t ret;
-  XrootClEx::throwOnError(m_xrootFile.Stat(forceStat, statInfo, m_timeout),
+  exception::XrdClException::throwOnError(m_xrootFile.Stat(forceStat, statInfo, m_timeout),
                           std::string("In XrootReadFile::size failed XrdCl::File::Stat() on ") + m_URL);
   ret = statInfo->GetSize();
   delete statInfo;
@@ -207,14 +207,14 @@ XrootBaseReadFile::~XrootBaseReadFile() noexcept {
 //==============================================================================
 XrootWriteFile::XrootWriteFile(const std::string& xrootUrl, uint16_t timeout) : XrootBaseWriteFile(timeout) {
   using XrdCl::OpenFlags;
-  XrootClEx::throwOnError(
+  exception::XrdClException::throwOnError(
     m_xrootFile.Open(xrootUrl, OpenFlags::Delete | OpenFlags::Write, XrdCl::Access::None, m_timeout),
     std::string("In XrootWriteFile::XrootWriteFile failed XrdCl::File::Open() on ") + xrootUrl);
   m_xrootFile.GetProperty("LastURL", m_URL);
 }
 
 void XrootBaseWriteFile::write(const void* data, const size_t size) {
-  XrootClEx::throwOnError(m_xrootFile.Write(m_writePosition, size, data, m_timeout),
+  exception::XrdClException::throwOnError(m_xrootFile.Write(m_writePosition, size, data, m_timeout),
                           std::string("In XrootWriteFile::write failed XrdCl::File::Write() on ") + m_URL);
   m_writePosition += size;
 }
@@ -229,7 +229,7 @@ void XrootBaseWriteFile::close() {
     return;
   }
   m_closeTried = true;
-  XrootClEx::throwOnError(m_xrootFile.Close(m_timeout),
+  exception::XrdClException::throwOnError(m_xrootFile.Close(m_timeout),
                           std::string("In XrootWriteFile::close failed XrdCl::File::Close() on ") + m_URL);
 }
 
@@ -373,19 +373,19 @@ void LocalDiskFileRemover::remove() {
 //==============================================================================
 XRootdDiskFileRemover::XRootdDiskFileRemover(const std::string& path) : m_xrootFileSystem(path) {
   m_URL = path;
-  m_truncatedFileURL = cta::utils::extractPathFromXrootdPath(path);
+  XrdCl::URL urlInfo(path.c_str());
+  m_truncatedFileURL = urlInfo.GetPath();
 }
 
 void XRootdDiskFileRemover::remove() {
   XrdCl::XRootDStatus statusRm = m_xrootFileSystem.Rm(m_truncatedFileURL, c_xrootTimeout);
-  cta::exception::XrootCl::throwOnError(statusRm, "In XRootdDiskFileRemover::remove(), fail to remove file.");
-  ;
+  exception::XrdClException::throwOnError(statusRm, "In XRootdDiskFileRemover::remove(), fail to remove file.");
 }
 
 void XRootdDiskFileRemover::removeAsync(AsyncXRootdDiskFileRemover::XRootdFileRemoverResponseHandler& responseHandler) {
   XrdCl::XRootDStatus statusRm = m_xrootFileSystem.Rm(m_truncatedFileURL, &responseHandler, c_xrootTimeout);
   try {
-    cta::exception::XrootCl::throwOnError(statusRm, "In XRootdDiskFileRemover::remove(), fail to remove file.");
+    exception::XrdClException::throwOnError(statusRm, "In XRootdDiskFileRemover::remove(), fail to remove file.");
   } catch (const cta::exception::Exception& e) {
     responseHandler.m_deletionPromise.set_exception(std::current_exception());
   }
@@ -409,7 +409,7 @@ void AsyncXRootdDiskFileRemover::wait() {
 void AsyncXRootdDiskFileRemover::XRootdFileRemoverResponseHandler::HandleResponse(XrdCl::XRootDStatus* status,
                                                                                   XrdCl::AnyObject* response) {
   try {
-    cta::exception::XrootCl::throwOnError(*status, "In XRootdDiskFileRemover::remove(), fail to remove file.");
+    exception::XrdClException::throwOnError(*status, "In XRootdDiskFileRemover::remove(), fail to remove file.");
     m_deletionPromise.set_value();
   } catch (const cta::exception::Exception& e) {
     m_deletionPromise.set_exception(std::current_exception());
@@ -498,7 +498,8 @@ std::set<std::string> LocalDirectory::getFilesName() {
 //==============================================================================
 XRootdDirectory::XRootdDirectory(const std::string& path) : m_xrootFileSystem(path) {
   m_URL = path;
-  m_truncatedDirectoryURL = cta::utils::extractPathFromXrootdPath(path);
+  XrdCl::URL urlInfo(path.c_str());
+  m_truncatedDirectoryURL = urlInfo.GetPath();
 }
 
 void XRootdDirectory::mkdir() {
@@ -507,14 +508,12 @@ void XRootdDirectory::mkdir() {
                             XrdCl::MkDirFlags::None,
                             XrdCl::Access::Mode::UR | XrdCl::Access::Mode::UW | XrdCl::Access::Mode::UX,
                             c_xrootTimeout);
-  cta::exception::XrootCl::throwOnError(mkdirStatus,
-                                        "In XRootdDirectory::mkdir() : failed to create directory at " + m_URL);
+  exception::XrdClException::throwOnError(mkdirStatus, "In XRootdDirectory::mkdir() : failed to create directory at " + m_URL);
 }
 
 void XRootdDirectory::rmdir() {
   XrdCl::XRootDStatus rmdirStatus = m_xrootFileSystem.RmDir(m_truncatedDirectoryURL, c_xrootTimeout);
-  cta::exception::XrootCl::throwOnError(rmdirStatus,
-                                        "In XRootdDirectory::rmdir() : failed to remove directory at " + m_URL);
+  exception::XrdClException::throwOnError(rmdirStatus, "In XRootdDirectory::rmdir() : failed to remove directory at " + m_URL);
 }
 
 bool XRootdDirectory::exist() {
@@ -523,10 +522,9 @@ bool XRootdDirectory::exist() {
   if (statStatus.errNo == XErrorCode::kXR_NotFound) {
     return false;
   }
-  //If the EOS instance does not exist, we don't want to return false, we want to throw an exception.
-  cta::exception::XrootCl::throwOnError(statStatus,
-                                        "In XRootdDirectory::exist() : failed to stat the directory at " + m_URL);
-  //No exception, return true
+  // If the EOS instance does not exist, don't return false, just throw an exception
+  exception::XrdClException::throwOnError(statStatus, "In XRootdDirectory::exist() : failed to stat the directory at " + m_URL);
+  // No exception, return true
   return true;
 }
 
@@ -537,9 +535,7 @@ std::set<std::string> XRootdDirectory::getFilesName() {
                                                                 XrdCl::DirListFlags::Flags::Stat,
                                                                 directoryContent,
                                                                 c_xrootTimeout);
-  cta::exception::XrootCl::throwOnError(
-    dirListStatus,
-    "In XrootdDirectory::getFilesName(): unable to list the files contained in the directory.");
+  exception::XrdClException::throwOnError(dirListStatus, "In XrootdDirectory::getFilesName(): unable to list the files contained in the directory.");
   XrdCl::DirectoryList::ConstIterator iter = directoryContent->Begin();
   while (iter != directoryContent->End()) {
     ret.insert((*iter)->GetName());

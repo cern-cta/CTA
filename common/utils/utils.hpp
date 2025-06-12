@@ -311,14 +311,6 @@ std::string getCurrentLocalTime();
 std::string getCurrentLocalTime(const std::string& format);
 
 /**
- * Remove the root:// part of the path passed in parameter
- * and return the corresponding string
- * @param path the xroot path to truncate
- * @return the xroot path truncated
- */
-std::string extractPathFromXrootdPath(const std::string& path);
-
-/**
  * Performs a search and replace operation on the specified string.
  *
  * @param str In/out parameter which is the string to be modified.
