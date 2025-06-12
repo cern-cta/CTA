@@ -53,7 +53,7 @@ EOS_MGM_POD="eos-mgm-0"
 EOS_MGM_HOST="ctaeos"
 
 echo "Copying python script to setup JWT to ${CLIENT_POD}."
-kubectl -n ${NAMESPACE} cp get_pk_from_jwt.py ${CLIENT_POD}:/root/ -c client
+kubectl -n ${NAMESPACE} cp setup_jwt_token.py ${CLIENT_POD}:/root/ -c client
 
 if [[ ${PREPARE} -eq 1 ]]; then
   echo "Preparing namespace for the tests"

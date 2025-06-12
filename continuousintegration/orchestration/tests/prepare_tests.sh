@@ -319,10 +319,10 @@ setup_pods_for_grpc_jwt_auth() {
   kubectl --namespace ${NAMESPACE} exec ${CLIENT_POD} -c client -- bash -c 'dnf install -y python3-pip'
   kubectl --namespace ${NAMESPACE} exec ${CLIENT_POD} -c client -- bash -c 'pip install jwcrypto requests pyjwt'
 
-  kubectl --namespace ${NAMESPACE} exec ${CLIENT_POD} -c client -- bash -c 'python3 /root/get_pk_from_jwt.py'
+  kubectl --namespace ${NAMESPACE} exec ${CLIENT_POD} -c client -- bash -c 'python3 /root/setup_jwt_token.py'
   script_pid=$!
   wait $script_pid
-  echo "done running the get_pk_from_jwt.py script inside client pod"
+  echo "done running the setup_jwt_token.py script inside client pod"
   echo "copying the generated JWT into /tmp/token_1year.jwt"
   kubectl --namespace ${NAMESPACE} cp ${CLIENT_POD}:/root/token_1year.jwt /tmp/token_1year.jwt
   wait $!
