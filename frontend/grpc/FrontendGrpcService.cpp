@@ -102,12 +102,18 @@ bool CtaRpcImpl::ValidateToken(const std::string& encodedJWT) {
 
 Status
 CtaRpcImpl::ExtractAuthHeaderAndValidate(::grpc::ServerContext* context) {
+  cta::log::LogContext lc(m_frontendService->getLogContext());
+  cta::log::ScopedParamContainer sp(lc);
+  // skip any metadata checks in case JWT Auth is disabled
+  auto jwtAuth = m_frontendService->getJwtAuth();
+  if (!jwtAuth) {
+    lc.log(cta::log::INFO, "Skipping token validation step as token authentication is disabled");
+    return ::grpc::Status::OK;
+  }
   // Retrieve metadata from the incoming request
   auto metadata = context->client_metadata();
   std::string token;
 
-  cta::log::LogContext lc(m_frontendService->getLogContext());
-  cta::log::ScopedParamContainer sp(lc);
   // Search for the authorization token in the metadata
   auto it = metadata.find("authorization");
   if (it != metadata.end()) {

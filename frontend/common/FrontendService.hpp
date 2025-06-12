@@ -168,6 +168,11 @@ public:
   void setCacheRefreshInterval(int cacheRefreshInterval) { m_cacheRefreshInterval = std::optional<int>(cacheRefreshInterval); }
   void setPubkeyTimeout(int pubkeyTimeout) { m_pubkeyTimeout = std::optional<int>(pubkeyTimeout); }
 
+  /*
+   * Get the jwtAuth value
+   */
+  bool getJwtAuth() const { return m_jwtAuth; }
+
 private:
   /*!
    * Set the verification mount policy
@@ -207,6 +212,7 @@ private:
   std::optional<std::string>                    m_jwksUri;                      //!< The endpoint to obtain public keys from, for validating tokens
   std::optional<int>                            m_cacheRefreshInterval;         //!< The number of seconds after which to update the cache of public keys used to sign JWT tokens
   std::optional<int>                            m_pubkeyTimeout;        //!< The number of seconds after which to update the cache entry for a cached key
+  bool                                          m_jwtAuth;                      //!< Feature flag to guard JWT auth when TLS is enabled
   // clang-format on
 };
 

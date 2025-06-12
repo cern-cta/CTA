@@ -401,6 +401,13 @@ FrontendService::FrontendService(const std::string& configFilename) : m_archiveF
   if (jwksUri.has_value()) {
     m_jwksUri = jwksUri.value();
   }
+
+  std::optional<bool> jwtAuth = config.getOptionValueBool("grpc.jwt.auth");
+  m_jwtAuth = jwtAuth.value_or(false);  // default value is false
+  if (!m_tls && m_jwtAuth) {
+    throw exception::UserError("gprc.jwt.auth is set to true when grpc.tls is set to false in configuration file " \
+      + configFilename + ". Cannot use tokens over unencrypted channel, tls must be enabled.");
+  }
   
   auto cacheRefreshInterval = config.getOptionValueInt("grpc.jwks.cache.refresh_interval_secs");
   if (cacheRefreshInterval.has_value() && cacheRefreshInterval.value() < 0) {
