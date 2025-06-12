@@ -23,13 +23,13 @@
 namespace cta::exception {
 
 /**
- * A class turning the XrootCl (xroot 4 object client) error codes into CTA exceptions
+ * A class turning the XrdCl (XRootD object client) error codes into CTA exceptions
  */
-class XrootCl : public Exception {
+class XrdClException : public Exception {
 public:
-  XrootCl(const XrdCl::XRootDStatus& status, std::string_view context);
-  virtual ~XrootCl() = default;
-  const XrdCl::XRootDStatus & xRootDStatus() const { return m_status; }
+  XrdClException(const XrdCl::XRootDStatus& status, std::string_view context);
+  virtual ~XrdClException() = default;
+  const XrdCl::XRootDStatus& xRootDStatus() const { return m_status; }
   static void throwOnError(const XrdCl::XRootDStatus& status, std::string_view context = "");
 
 private:
