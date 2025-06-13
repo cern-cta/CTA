@@ -142,7 +142,10 @@ reclaim_released_pvs() {
 
     if [ -d "$path" ]; then
       echo "  Wiping contents of $path"
-      rm -rf "${path:?}/"*
+      (
+        shopt -s dotglob
+        rm -rf "${path:?}/"*
+      )
     else
       echo "  Warning: $path does not exist on this node"
       continue
