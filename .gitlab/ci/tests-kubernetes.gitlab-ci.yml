@@ -258,6 +258,7 @@ stress-test:
                           --catalogue-config ${CATALOGUE_CONFIG}
                           --scheduler-config ${SCHEDULER_CONFIG}
                           --test-script tests/prepare_tests.sh
+                          --spawn-options " --cta-config presets/stress-cta-values.yaml --eos-config presets/stress-eos-values.yaml"
                           "${extra_args[@]}"
     # Set up monitoring
     - git clone https://gitlab+deploy-token-3624:${CI_CTA_DEPLOY_TOKEN_READONLY}@gitlab.cern.ch/cta/sandbox/ci_monitoring.git
