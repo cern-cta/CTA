@@ -18,25 +18,21 @@ cmake_minimum_required (VERSION 3.17)
 find_package(Protobuf3 REQUIRED)
 find_package(GRPC REQUIRED)
 
-include_directories(${PROTOBUF3_INCLUDE_DIRS})
-
 # depends on CTA_EOS definitions
 include_directories(${CMAKE_BINARY_DIR}/eos_cta ${PROTOBUF3_INCLUDE_DIRS})
 
 add_executable(cta-frontend-grpc Main.cpp FrontendGrpcService.cpp
   ../common/WorkflowEvent.cpp
-  ../common/FrontendService.cpp
-  ../../common/config/Config.cpp)
-target_link_libraries(cta-frontend-grpc ProtoCtaFrontend)
+  ../common/FrontendService.cpp)
+target_link_libraries(cta-frontend-grpc ctacommon)
 
 if(CTA_USE_PGSCHED)
-  target_link_libraries(cta-frontend-grpc ${PROTOBUF3_LIBRARIES} ${GRPC_GRPC++_LIBRARY}
+  target_link_libraries(cta-frontend-grpc ${GRPC_GRPC++_LIBRARY}
     ctascheduler ctacommon ctacatalogue)
 else()
-  target_link_libraries(cta-frontend-grpc ${PROTOBUF3_LIBRARIES} ${GRPC_GRPC++_LIBRARY}
+  target_link_libraries(cta-frontend-grpc ${GRPC_GRPC++_LIBRARY}
     ctascheduler ctacommon ctaobjectstore ctacatalogue)
 endif()
-set_property(TARGET cta-frontend-grpc APPEND PROPERTY INSTALL_RPATH ${PROTOBUF3_RPATH})
 
 add_manpage(cta-frontend-grpc)
 
@@ -69,15 +65,14 @@ add_executable(cta-frontend-async-grpc
 )
 
 if(CTA_USE_PGSCHED)
-  target_link_libraries(cta-frontend-async-grpc ${PROTOBUF3_LIBRARIES}
-          ${GRPC_GRPC++_LIBRARY} ${GRPC_LIBRARY}
-          ProtoCtaFrontend ctascheduler ctacommon ctatapedaemoncommon ctacatalogue gssapi_krb5)
+  target_link_libraries(cta-frontend-async-grpc
+          ${GRPC_GRPC++_LIBRARY}
+          ctascheduler ctacommon ctatapedaemoncommon ctacatalogue gssapi_krb5)
 else()
-  target_link_libraries(cta-frontend-async-grpc ${PROTOBUF3_LIBRARIES}
-          ${GRPC_GRPC++_LIBRARY} ${GRPC_LIBRARY}
-          ProtoCtaFrontend ctascheduler ctacommon ctatapedaemoncommon ctaobjectstore ctacatalogue gssapi_krb5)
+  target_link_libraries(cta-frontend-async-grpc
+          ${GRPC_GRPC++_LIBRARY}
+          ctascheduler ctacommon ctatapedaemoncommon ctaobjectstore ctacatalogue gssapi_krb5)
 endif()
-
 
 ##
 ## cta-frontend-grpc-stream-client
@@ -91,18 +86,13 @@ add_executable(cta-admin-grpc
   ${PROJECT_SOURCE_DIR}/cmdline/CtaAdminTextFormatter.cpp
   ${PROJECT_SOURCE_DIR}/cmdline/CtaAdminCmdParser.cpp
 )
-target_link_libraries(cta-admin-grpc ProtoCtaFrontend)
 
 if(CTA_USE_PGSCHED)
   target_link_libraries(cta-admin-grpc
-          ${PROTOBUF3_LIBRARIES}
           ${GRPC_GRPC++_LIBRARY}
-          ${GRPC_LIBRARY}
           ctascheduler ctacommon ctatapedaemoncommon ctacatalogue gssapi_krb5)
 else()
   target_link_libraries(cta-admin-grpc
-          ${PROTOBUF3_LIBRARIES}
           ${GRPC_GRPC++_LIBRARY}
-          ${GRPC_LIBRARY}
           ctascheduler ctacommon ctatapedaemoncommon ctaobjectstore ctacatalogue gssapi_krb5)
 endif()

@@ -18,8 +18,6 @@ cmake_minimum_required (VERSION 3.17)
 include_directories(${CMAKE_CURRENT_SOURCE_DIR}/..)
 include_directories(${CMAKE_CURRENT_SOURCE_DIR}/../middletier)
 
-
-find_package(json-c REQUIRED)
 find_package(librados2 REQUIRED)
 find_package(Protobuf3 REQUIRED)
 
@@ -101,7 +99,7 @@ add_library (ctaobjectstore SHARED
 set_property(TARGET ctaobjectstore PROPERTY SOVERSION "${CTA_SOVERSION}")
 set_property(TARGET ctaobjectstore PROPERTY   VERSION "${CTA_LIBVERSION}")
 
-target_link_libraries(ctaobjectstore rados json-c cryptopp)
+target_link_libraries(ctaobjectstore rados cryptopp)
 set_source_files_properties(BackendRados.cpp PROPERTIES COMPILE_FLAGS -Wno-deprecated-declarations)
 if(NOT CTA_USE_PGSCHED)
   install (TARGETS ctaobjectstore DESTINATION usr/${CMAKE_INSTALL_LIBDIR})
@@ -125,40 +123,34 @@ set_property(TARGET ctaobjectstoreunittests PROPERTY SOVERSION "${CTA_SOVERSION}
 set_property(TARGET ctaobjectstoreunittests PROPERTY   VERSION "${CTA_LIBVERSION}")
 
 target_link_libraries(ctaobjectstoreunittests
-  ${PROTOBUF3_LIBRARIES} rados ctacommon gtest ctaobjectstore)
+  rados ctacommon gtest ctaobjectstore)
 if(NOT CTA_USE_PGSCHED)
   install(TARGETS ctaobjectstoreunittests DESTINATION usr/${CMAKE_INSTALL_LIBDIR})
 endif()
 
 add_executable(cta-objectstore-initialize cta-objectstore-initialize.cpp)
-set_property(TARGET cta-objectstore-initialize APPEND PROPERTY INSTALL_RPATH ${PROTOBUF3_RPATH})
 target_link_libraries(cta-objectstore-initialize
-  ${PROTOBUF3_LIBRARIES} ctaobjectstore ctacommon)
+  ctaobjectstore ctacommon)
 
 add_executable(cta-objectstore-list cta-objectstore-list.cpp)
-set_property(TARGET cta-objectstore-list APPEND PROPERTY INSTALL_RPATH ${PROTOBUF3_RPATH})
 target_link_libraries(cta-objectstore-list
-  ${PROTOBUF3_LIBRARIES} ctaobjectstore ctacommon)
+  ctaobjectstore ctacommon)
 
 add_executable(cta-objectstore-dump-object cta-objectstore-dump-object.cpp)
-set_property(TARGET cta-objectstore-dump-object APPEND PROPERTY INSTALL_RPATH ${PROTOBUF3_RPATH})
 target_link_libraries(cta-objectstore-dump-object
-  ${PROTOBUF3_LIBRARIES} ctaobjectstore ctacommon)
+  ctaobjectstore ctacommon)
 
 add_executable(cta-objectstore-dereference-removed-queues cta-objectstore-dereference-removed-queues.cpp)
-set_property(TARGET cta-objectstore-dereference-removed-queues APPEND PROPERTY INSTALL_RPATH ${PROTOBUF3_RPATH})
 target_link_libraries(cta-objectstore-dereference-removed-queues
-  ${PROTOBUF3_LIBRARIES} ctaobjectstore ctacommon)
+  ctaobjectstore ctacommon)
 
 add_executable(cta-objectstore-collect-orphaned-object cta-objectstore-collect-orphaned-object.cpp)
-set_property(TARGET cta-objectstore-collect-orphaned-object APPEND PROPERTY INSTALL_RPATH ${PROTOBUF3_RPATH})
 target_link_libraries(cta-objectstore-collect-orphaned-object
-  ${PROTOBUF3_LIBRARIES} ctaobjectstore ctacommon ctacatalogue)
+  ctaobjectstore ctacommon ctacatalogue)
 
 add_executable(cta-objectstore-create-missing-repack-index cta-objectstore-create-missing-repack-index.cpp)
-set_property(TARGET cta-objectstore-create-missing-repack-index APPEND PROPERTY INSTALL_RPATH ${PROTOBUF3_RPATH})
 target_link_libraries(cta-objectstore-create-missing-repack-index
-  ${PROTOBUF3_LIBRARIES} ctaobjectstore ctacommon)
+  ctaobjectstore ctacommon)
 
 if(NOT CTA_USE_PGSCHED)
   install(TARGETS cta-objectstore-initialize cta-objectstore-list cta-objectstore-dump-object
