@@ -153,7 +153,7 @@ set_property(TARGET ctacommon PROPERTY   VERSION "${CTA_LIBVERSION}")
 install (TARGETS ctacommon DESTINATION usr/${CMAKE_INSTALL_LIBDIR})
 
 target_link_libraries (ctacommon
-  ProtoCtaFrontend
+  ctaprotobuf
   uuid
   cap
   json-c

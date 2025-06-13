@@ -43,15 +43,21 @@ set_source_files_properties(
   ${GrpcSourcesCtaFrontend} ${GrpcHeadersCtaFrontend}
   PROPERTIES GENERATED TRUE)
 
-add_library(ProtoCtaFrontend ${ProtoSourcesCtaFrontend} ${GrpcSourcesCtaFrontend})
-set_target_properties(ProtoCtaFrontend PROPERTIES
+add_library(ctaprotobuf ${ProtoSourcesCtaFrontend})
+set_target_properties(ctaprotobuf PROPERTIES
   LINKER_LANGUAGE CXX
   POSITION_INDEPENDENT_CODE TRUE)
-target_link_libraries(ProtoCtaFrontend gpr absl_synchronization ${PROTOBUF3_LIBRARIES})
+target_link_libraries(ctaprotobuf ${PROTOBUF3_LIBRARIES})
+
+add_library(ctagrpc ${GrpcSourcesCtaFrontend})
+set_target_properties(ctagrpc PROPERTIES
+  LINKER_LANGUAGE CXX
+  POSITION_INDEPENDENT_CODE TRUE)
+target_link_libraries(ctagrpc gpr absl_synchronization ${PROTOBUF3_GRPC_LIBRARIES} ${GRPC_GRPC++_LIBRARY})
 
 # Library containing EOS protobuf and gRPC definitions
 add_library(ProtoEOSMGM ${ProtoSourcesEOSMGM} ${GrpcSourcesEOSMGM})
 set_target_properties(ProtoEOSMGM PROPERTIES
   LINKER_LANGUAGE CXX
   POSITION_INDEPENDENT_CODE TRUE)
-target_link_libraries(ProtoEOSMGM gpr absl_synchronization ${PROTOBUF3_GRPC_LIBRARIES})
+target_link_libraries(ProtoEOSMGM gpr absl_synchronization ${PROTOBUF3_GRPC_LIBRARIES} ${GRPC_GRPC++_LIBRARY})
