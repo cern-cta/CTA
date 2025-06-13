@@ -92,7 +92,7 @@ mgm:
       mountPath: /var/log/tmp
     - name: grid-security
       mountPath: /etc/grid-security
-      readOnly: true
+      readOnly: false
     volumes:
     - name: varlog-tmp
       emptyDir: {}
@@ -138,7 +138,7 @@ fst:
       mountPath: /var/log/tmp
     - name: grid-security
       mountPath: /etc/grid-security
-      readOnly: true
+      readOnly: false
     volumes:
     - name: varlog-tmp
       emptyDir: {}

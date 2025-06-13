@@ -43,6 +43,7 @@ CTA_FRONTEND_POD="cta-frontend-0"
 # eos instance identified by SSS username
 EOS_MGM_POD="eos-mgm-0"
 EOS_INSTANCE_NAME="ctaeos"
+EOS_FST_POD="eos-fst-0"
 
 MULTICOPY_DIR_1=/eos/ctaeos/preprod/dir_1_copy
 MULTICOPY_DIR_2=/eos/ctaeos/preprod/dir_2_copy
@@ -327,12 +328,14 @@ setup_pods_for_grpc_jwt_auth() {
   kubectl --namespace ${NAMESPACE} cp ${CLIENT_POD}:/root/token_1year.jwt /tmp/token_1year.jwt
   wait $!
   echo "done copying to /tmp/"
+  echo "doing kubectl --namespace ${NAMESPACE} cp /tmp/token_1year.jwt ${EOS_MGM_POD}:/etc/grid-security/jwt-token-grpc"
   kubectl --namespace ${NAMESPACE} cp /tmp/token_1year.jwt ${EOS_MGM_POD}:/etc/grid-security/jwt-token-grpc
-  if [$? -ne 0]; then
+  if [ $? -ne 0 ]; then
     exit 1
   fi
+  echo "doing kubectl --namespace ${NAMESPACE} cp /tmp/token_1year.jwt ${EOS_FST_POD}:/etc/grid-security/jwt-token-grpc"
   kubectl --namespace ${NAMESPACE} cp /tmp/token_1year.jwt ${EOS_FST_POD}:/etc/grid-security/jwt-token-grpc
-  if [$? -ne 0]; then
+  if [ $? -ne 0 ]; then
     exit 1
   fi
   echo "Set up complete for JWT Authentication"
