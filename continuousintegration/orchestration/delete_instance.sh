@@ -34,6 +34,7 @@ usage() {
   echo "  -n, --namespace <namespace>:        Specify the Kubernetes namespace."
   echo "  -l, --log-dir <dir>:                Base directory to output the logs to. Defaults to /tmp."
   echo "  -D, --discard-logs:                 Do not collect the logs when deleting an instance."
+  echo "      --keep-pvs:                     Skip the wiping and reclaiming of released Persistent Volumes after namespace cleanup."
   exit 1
 }
 
@@ -121,9 +122,41 @@ save_logs() {
   fi
 }
 
+reclaim_released_pvs() {
+  wipe_namespace="$1"
+  released_pvs=$(kubectl get pv -o json | jq -r \
+    --arg ns "$wipe_namespace" \
+    '.items[] | select(.status.phase == "Released" and .spec.claimRef.namespace == $ns) | .metadata.name')
+
+  for pv in $released_pvs; do
+    echo "Processing PV: $pv"
+
+    path=$(kubectl get pv "$pv" -o jsonpath='{.spec.local.path}')
+    if [ -z "$path" ]; then
+      echo "  Skipping: no local path found (not a local volume?)"
+      continue
+    fi
+    echo "  Found path: $path"
+
+    if [ -d "$path" ]; then
+      echo "  Wiping contents of $path"
+      rm -rf "${path:?}/"*
+    else
+      echo "  Warning: $path does not exist on this node"
+      continue
+    fi
+
+    # Remove claimRef to mark PV as Available again
+    echo "  Removing claimRef from PV $pv"
+    kubectl patch pv "$pv" --type=json -p='[{"op": "remove", "path": "/spec/claimRef"}]'
+    echo "  PV $pv wiped and reclaimed successfully"
+  done
+}
+
 delete_instance() {
   local log_dir=/tmp
   local collect_logs=true
+  local wipe_pvs=true
   local namespace=""
 
   # Parse command line arguments
@@ -134,6 +167,7 @@ delete_instance() {
         namespace="$2"
         shift ;;
       -D|--discard-logs) collect_logs=false ;;
+      --keep-pvs) wipe_pvs=false ;;
       -l|--log-dir)
         log_dir="$2"
         test -d "${log_dir}" || die "ERROR: Log directory ${log_dir} does not exist"
@@ -171,10 +205,17 @@ delete_instance() {
   echo "Removing auto-generated /tmp/${namespace}-tapeservers-*-values.yaml files"
   rm -f /tmp/${namespace}-tapeservers-*-values.yaml
 
-  # Finally delete the actual namespace
+  # Delete the actual namespace
   echo "Deleting ${namespace} instance"
   kubectl delete namespace ${namespace} --now
   echo "Deletion finished"
+
+  # Reclaim any PVs
+  if [ "$wipe_pvs" = true ]; then
+    reclaim_released_pvs $namespace
+  else
+    echo "Skipping reclaiming of released Persistent Volumes"
+  fi
 }
 
 delete_instance "$@"
