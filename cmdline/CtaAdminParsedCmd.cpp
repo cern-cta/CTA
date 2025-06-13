@@ -18,6 +18,7 @@
 #include <filesystem>
 #include <sstream>
 #include <iostream>
+#include <fstream>
 
 #include <XrdSsiPbLog.hpp>
 #include <XrdSsiPbIStreamBuffer.hpp>

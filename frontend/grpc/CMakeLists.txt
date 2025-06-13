@@ -15,23 +15,20 @@
 
 cmake_minimum_required (VERSION 3.17)
 
-find_package(Protobuf3 REQUIRED)
-find_package(GRPC REQUIRED)
-
-# depends on CTA_EOS definitions
 include_directories(${CMAKE_BINARY_DIR}/eos_cta ${PROTOBUF3_INCLUDE_DIRS})
 
-add_executable(cta-frontend-grpc Main.cpp FrontendGrpcService.cpp
+add_executable(cta-frontend-grpc
+  Main.cpp
+  FrontendGrpcService.cpp
   ../common/WorkflowEvent.cpp
   ../common/FrontendService.cpp)
-target_link_libraries(cta-frontend-grpc ctacommon)
 
 if(CTA_USE_PGSCHED)
-  target_link_libraries(cta-frontend-grpc ${GRPC_GRPC++_LIBRARY}
-    ctascheduler ctacommon ctacatalogue)
+  target_link_libraries(cta-frontend-grpc
+    ctascheduler ctacommon ctacatalogue ctagrpc)
 else()
-  target_link_libraries(cta-frontend-grpc ${GRPC_GRPC++_LIBRARY}
-    ctascheduler ctacommon ctaobjectstore ctacatalogue)
+  target_link_libraries(cta-frontend-grpc
+    ctascheduler ctacommon ctaobjectstore ctacatalogue ctagrpc)
 endif()
 
 add_manpage(cta-frontend-grpc)
@@ -45,12 +42,6 @@ install (FILES cta-frontend-grpc.conf.example DESTINATION ${CMAKE_INSTALL_SYSCON
 ##
 ## cta-frontend-grpc-stream-server
 ##
-
-# XRootD SSI Protocol Buffer bindings
-# CtaFrontendApi.hpp
-include_directories(${XRD_SSI_PB_DIR}/include ${XRD_SSI_PB_DIR}/eos_cta/include)
-# XRootD SSI
-include_directories(${XROOTD_INCLUDE_DIR} ${XROOTD_INCLUDE_DIR}/private)
 
 add_executable(cta-frontend-async-grpc
   FrontendCmd.cpp
@@ -66,12 +57,10 @@ add_executable(cta-frontend-async-grpc
 
 if(CTA_USE_PGSCHED)
   target_link_libraries(cta-frontend-async-grpc
-          ${GRPC_GRPC++_LIBRARY}
-          ctascheduler ctacommon ctatapedaemoncommon ctacatalogue gssapi_krb5)
+          ctascheduler ctacommon ctatapedaemoncommon ctacatalogue gssapi_krb5 ctagrpc)
 else()
   target_link_libraries(cta-frontend-async-grpc
-          ${GRPC_GRPC++_LIBRARY}
-          ctascheduler ctacommon ctatapedaemoncommon ctaobjectstore ctacatalogue gssapi_krb5)
+          ctascheduler ctacommon ctatapedaemoncommon ctaobjectstore ctacatalogue gssapi_krb5 ctagrpc)
 endif()
 
 ##
@@ -89,10 +78,8 @@ add_executable(cta-admin-grpc
 
 if(CTA_USE_PGSCHED)
   target_link_libraries(cta-admin-grpc
-          ${GRPC_GRPC++_LIBRARY}
-          ctascheduler ctacommon ctatapedaemoncommon ctacatalogue gssapi_krb5)
+          ctascheduler ctacommon ctatapedaemoncommon ctacatalogue gssapi_krb5 ctagrpc)
 else()
   target_link_libraries(cta-admin-grpc
-          ${GRPC_GRPC++_LIBRARY}
-          ctascheduler ctacommon ctatapedaemoncommon ctaobjectstore ctacatalogue gssapi_krb5)
+          ctascheduler ctacommon ctatapedaemoncommon ctaobjectstore ctacatalogue gssapi_krb5 ctagrpc)
 endif()

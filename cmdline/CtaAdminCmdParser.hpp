@@ -23,7 +23,7 @@
 #include "common/dataStructures/Tape.hpp"
 #include "common/dataStructures/ArchiveRouteType.hpp"
 
-#include "CtaFrontendApi.hpp"
+#include "cta_frontend.pb.h"
 
 namespace cta::admin {
 

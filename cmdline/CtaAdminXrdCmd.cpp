@@ -25,7 +25,7 @@
 #include <cmdline/CtaAdminXrdCmd.hpp>
 #include <cmdline/CtaAdminTextFormatter.hpp>
 #include "tapeserver/daemon/common/TapedConfiguration.hpp"
-
+#include "CtaFrontendApi.hpp"
 
 // GLOBAL VARIABLES : used to pass information between main thread and stream handler thread
 

@@ -42,13 +42,10 @@ add_library(XrdSsiCta MODULE XrdSsiCtaServiceProvider.cpp XrdSsiCtaRequestProc.c
                              ../frontend/common/WorkflowEvent.cpp
                              ../frontend/common/AdminCmd.cpp)
 if(CTA_USE_PGSCHED)
-  target_link_libraries(XrdSsiCta ${XROOTD_XRDSSI_LIB} XrdSsiLib ctascheduler ctacommon ctacatalogue
-                        ${GRPC_LIBRARY} ${GRPC_GRPC++_LIBRARY})
+  target_link_libraries(XrdSsiCta ${XROOTD_XRDSSI_LIB} XrdSsiLib ctascheduler ctacommon ctacatalogue)
 else()
-  target_link_libraries(XrdSsiCta ${XROOTD_XRDSSI_LIB} XrdSsiLib ctascheduler ctacommon ctaobjectstore ctacatalogue
-                        ${GRPC_LIBRARY} ${GRPC_GRPC++_LIBRARY})
+  target_link_libraries(XrdSsiCta ${XROOTD_XRDSSI_LIB} XrdSsiLib ctascheduler ctacommon ctaobjectstore ctacatalogue)
 endif()
-set_property (TARGET XrdSsiCta APPEND PROPERTY INSTALL_RPATH ${PROTOBUF3_RPATH})
 
 install(TARGETS XrdSsiCta DESTINATION usr/${CMAKE_INSTALL_LIBDIR})
 install(FILES cta-frontend-xrootd.conf.example DESTINATION ${CMAKE_INSTALL_SYSCONFDIR}/cta)

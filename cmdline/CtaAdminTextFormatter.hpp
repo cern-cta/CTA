@@ -17,7 +17,7 @@
 
 #pragma once
 
-#include "CtaFrontendApi.hpp"
+#include "cta_frontend.pb.h"
 
 namespace cta::admin {
 
