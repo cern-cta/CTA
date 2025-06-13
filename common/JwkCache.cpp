@@ -44,8 +44,10 @@ JwkCache::~JwkCache() {
 }
 
 std::optional<JwkCacheEntry> JwkCache::find(const std::string& key) {
-    std::shared_lock<std::shared_mutex> lock(m_mutex);
     cta::log::LogContext lc(m_lc);
+    lc.log(cta::log::INFO, "Waiting to acquire shared_lock in JwkCache::find");
+    std::shared_lock<std::shared_mutex> lock(m_mutex);
+    lc.log(cta::log::INFO, "Just acquired the shared_lock in JwkCache::find");
     auto it = m_keymap.find(key);
     if (it == m_keymap.end()) {
         lc.log(cta::log::INFO, std::string("Entry not found for kid ") + key);
@@ -57,7 +59,10 @@ std::optional<JwkCacheEntry> JwkCache::find(const std::string& key) {
 }
 
 void JwkCache::Insert(const std::string &key, const JwkCacheEntry& e) {
+    cta::log::LogContext lc(m_lc);
+    lc.log(cta::log::INFO, "Waiting to acquire unique_lock in JwkCache::Insert");
     std::unique_lock<std::shared_mutex> lock(m_mutex);
+    lc.log(cta::log::INFO, "Just acquired the unique_lock in JwkCache::Insert");
     m_keymap[key] = e;
 }
 
@@ -70,35 +75,44 @@ void JwkCache::StartRefreshThread() {
     lc.log(cta::log::INFO, "Starting cache refresh thread");
     m_stopThread = false;
     m_refreshThread = std::thread(&JwkCache::RefreshLoop, this);
+    lc.log(cta::log::INFO, "Cache refresh thread started");
 }
 
 void JwkCache::StopRefreshThread() {
+    cta::log::LogContext lc(m_lc);
+    lc.log(cta::log::INFO, "In StopRefershThread, stopping the thread and notifying the cv");
     m_stopThread = true;
     m_cv.notify_all();  // Wake the thread if sleeping
+    lc.log(cta::log::INFO, "Notified condition variable");
     if (m_refreshThread.joinable()) {
         m_refreshThread.join();
     }
 }
 
 void JwkCache::RefreshLoop() {
+    cta::log::LogContext lc(m_lc);
+    lc.log(cta::log::INFO, "Entering function Refresh loop");
     while (!m_stopThread.load()) {
         try {
             time_t now = time(NULL);
             UpdateCache(now);
         }
         catch (const std::exception& ex) {
-            cta::log::LogContext lc(m_lc);
             lc.log(cta::log::ERR, std::string("Some exception thrown in the RefreshLoop ") + ex.what());
         }
         std::unique_lock<std::mutex> lk(m_cv_mutex);
         m_cv.wait_for(lk, std::chrono::seconds(m_cacheRefreshInterval), [this]() {
+            cta::log::LogContext lc(m_lc);
+            lc.log(cta::log::INFO, "Waiting on condition variable or explicit wakeup...");
             return m_stopThread.load();
         });
     }
+    lc.log(cta::log::INFO, "Received notification in RefreshLoop");
 }
 
 void JwkCache::UpdateCache(time_t now) {
     cta::log::LogContext lc(m_lc);
+    lc.log(cta::log::INFO, "In function UpdateCache");
     json_object* jwks = nullptr;
     try {
         jwks = m_fetchFunc(m_jwksUri);
@@ -110,7 +124,9 @@ void JwkCache::UpdateCache(time_t now) {
         return;
     }
     // purge any keys that have expired
+    lc.log(cta::log::INFO, "In function UpdateCache, waiting to acquire unique lock");
     std::unique_lock<std::shared_mutex> lock(m_mutex);
+    lc.log(cta::log::INFO, "In UpdateCache, just acquired the unique lock");
     for (auto it = m_keymap.begin(); it != m_keymap.end() ;) {
         int lastRefresh = it->second.last_refresh_time;
         if (lastRefresh + m_pubkeyTimeout <= now) {
