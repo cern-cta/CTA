@@ -36,9 +36,6 @@ set (CTA_SCHEDULER_SRC_FILES
   SchedulerDatabase.cpp
   SchedulerDatabaseFactory.cpp)
 
-find_package(Protobuf3 REQUIRED)
-include_directories (${PROTOBUF3_INCLUDE_DIRS})
-
 # Definitions specific to only Objectstore module lib compilation:
 
 set (CTA_SCHEDULER_OS_SRC_FILES ${CTA_SCHEDULER_SRC_FILES}
@@ -77,16 +74,16 @@ set (CTA_SCHEDULER_PG_SRC_FILES ${CTA_SCHEDULER_SRC_FILES}
 
 if(NOT CTA_USE_PGSCHED)
     add_library (ctascheduler SHARED ${CTA_SCHEDULER_OS_SRC_FILES})
-    target_link_libraries (ctascheduler ctacommon ctaobjectstore ${PROTOBUF3_LIBRARIES} ctadisk)
+    target_link_libraries (ctascheduler ctacommon ctaobjectstore ctadisk)
     add_library (ctascheduler-postgres SHARED ${CTA_SCHEDULER_PG_SRC_FILES})
-    target_link_libraries (ctascheduler-postgres ctacommon ${PROTOBUF3_LIBRARIES} ctadisk)
+    target_link_libraries (ctascheduler-postgres ctacommon ctadisk)
     set_property(TARGET ctascheduler-postgres PROPERTY SOVERSION "${CTA_SOVERSION}")
     set_property(TARGET ctascheduler-postgres PROPERTY   VERSION "${CTA_LIBVERSION}")
 else()
     add_library (ctascheduler SHARED ${CTA_SCHEDULER_PG_SRC_FILES})
-    target_link_libraries (ctascheduler ctacommon ${PROTOBUF3_LIBRARIES} ctadisk cryptopp)
+    target_link_libraries (ctascheduler ctacommon ctadisk cryptopp)
     add_library (ctascheduler-objectstore SHARED ${CTA_SCHEDULER_OS_SRC_FILES})
-    target_link_libraries (ctascheduler-objectstore ctacommon ${PROTOBUF3_LIBRARIES} ctadisk)
+    target_link_libraries (ctascheduler-objectstore ctacommon ctadisk)
     set_property(TARGET ctascheduler-objectstore PROPERTY SOVERSION "${CTA_SOVERSION}")
     set_property(TARGET ctascheduler-objectstore PROPERTY   VERSION "${CTA_LIBVERSION}")
 endif()

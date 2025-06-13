@@ -42,10 +42,10 @@ add_library(XrdSsiCta MODULE XrdSsiCtaServiceProvider.cpp XrdSsiCtaRequestProc.c
                              ../frontend/common/WorkflowEvent.cpp
                              ../frontend/common/AdminCmd.cpp)
 if(CTA_USE_PGSCHED)
-  target_link_libraries(XrdSsiCta ${XROOTD_XRDSSI_LIB} XrdSsiLib ProtoCtaFrontend ctascheduler ctacommon ctacatalogue
+  target_link_libraries(XrdSsiCta ${XROOTD_XRDSSI_LIB} XrdSsiLib ctascheduler ctacommon ctacatalogue
                         ${GRPC_LIBRARY} ${GRPC_GRPC++_LIBRARY})
 else()
-  target_link_libraries(XrdSsiCta ${XROOTD_XRDSSI_LIB} XrdSsiLib ProtoCtaFrontend ctascheduler ctacommon ctaobjectstore ctacatalogue
+  target_link_libraries(XrdSsiCta ${XROOTD_XRDSSI_LIB} XrdSsiLib ctascheduler ctacommon ctaobjectstore ctacatalogue
                         ${GRPC_LIBRARY} ${GRPC_GRPC++_LIBRARY})
 endif()
 set_property (TARGET XrdSsiCta APPEND PROPERTY INSTALL_RPATH ${PROTOBUF3_RPATH})
