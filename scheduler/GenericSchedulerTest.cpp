@@ -159,7 +159,7 @@ public:
     auto sdb = std::move(factory.create(m_catalogue));
     // We don't check the specific type of the SchedulerDatabase as we intend to ge generic
     m_db = std::move(sdb);
-    m_scheduler = std::make_unique<Scheduler>(*m_catalogue, *m_db, s_minFilesToWarrantAMount, s_minBytesToWarrantAMount);
+    m_scheduler = std::make_unique<Scheduler>(*m_catalogue, *m_db, "schedulerBackendName", s_minFilesToWarrantAMount, s_minBytesToWarrantAMount);
   }
 
   virtual void TearDown() {

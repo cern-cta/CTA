@@ -243,7 +243,7 @@ std::string RelationalDB::blockRetrieveQueueForCleanup(const std::string& vid) {
   throw cta::exception::Exception("Not implemented");
 }
 
-void unblockRetrieveQueueForCleanup(const std::string& vid){
+void RelationalDB::unblockRetrieveQueueForCleanup(const std::string& vid){
   throw cta::exception::Exception("Not implemented");
 };
 
