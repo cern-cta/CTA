@@ -142,9 +142,12 @@ reclaim_released_pvs() {
 
     if [ -d "$path" ]; then
       echo "  Wiping contents of $path"
+      # We need sudo here as files in the mount path can be owned by root
+      # Note that this requires explicit permission in the sudoers file to ensure the user executing this
+      # Can remove the contents of these mount paths
       (
         shopt -s dotglob
-        rm -rf "${path:?}/"*
+        sudo rm -rf "${path:?}/"*
       )
     else
       echo "  Warning: $path does not exist on this node"
