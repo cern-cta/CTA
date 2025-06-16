@@ -230,10 +230,11 @@ uint64_t cta::RetrieveMount::requeueJobBatch(const std::list<std::string>& jobID
 }
 
 //------------------------------------------------------------------------------
-// reserveDiskSpace()
+// checkOrReserveFreeDiskSpaceForRequest() - Helper method to do the common disk space reservation check
 //------------------------------------------------------------------------------
-bool cta::RetrieveMount::reserveDiskSpace(const cta::DiskSpaceReservationRequest& diskSpaceReservationRequest,
-                                          log::LogContext& logContext) {
+bool cta::RetrieveMount::checkOrReserveFreeDiskSpaceForRequest(const cta::DiskSpaceReservationRequest& diskSpaceReservationRequest,
+                                              log::LogContext& logContext,
+                                              bool doReserve) {
   // Get the current file systems list from the catalogue
   cta::disk::DiskSystemList diskSystemList;
   diskSystemList = m_catalogue.DiskSystem()->getAllDiskSystems();
@@ -259,7 +260,7 @@ bool cta::RetrieveMount::reserveDiskSpace(const cta::DiskSpaceReservationRequest
         .add("diskSystemName", failedDiskSystem.first)
         .add("failureReason", failedDiskSystem.second.getMessageValue())
         .log(cta::log::WARNING,
-            "In OStoreDB::RetrieveMount::reserveDiskSpace(): unable to request EOS free space for "
+            "In cta::RetrieveMount::checkOrReserveFreeDiskSpaceForRequest(): unable to request EOS free space for "
             "disk system using external script, backpressure will not be applied");
     }
     return true;
@@ -268,7 +269,7 @@ bool cta::RetrieveMount::reserveDiskSpace(const cta::DiskSpaceReservationRequest
     cta::log::ScopedParamContainer(logContext)
       .add("exceptionWhat", ex.what())
       .log(cta::log::ERR,
-           "In OStoreDB::RetrieveMount::reserveDiskSpace(): got an exception from "
+           "In cta::RetrieveMount::checkOrReserveFreeDiskSpaceForRequest(): got an exception from "
            "diskSystemFreeSpace.fetchDiskSystemFreeSpace().");
     throw;
   }
@@ -298,7 +299,7 @@ bool cta::RetrieveMount::reserveDiskSpace(const cta::DiskSpaceReservationRequest
         .add("spaceToReserve", diskSpaceReservationRequest.at(ds))
         .add("targetedFreeSpace", diskSystemFreeSpace.at(ds).targetedFreeSpace)
         .log(cta::log::WARNING,
-             "In OStoreDB::RetrieveMount::reserveDiskSpace(): could not allocate disk space for job, "
+             "In cta::RetrieveMount::checkOrReserveFreeDiskSpaceForRequest(): could not allocate disk space for job, "
              "applying backpressure");
 
       auto sleepTime = diskSystem.sleepTime;
@@ -307,11 +308,21 @@ bool cta::RetrieveMount::reserveDiskSpace(const cta::DiskSpaceReservationRequest
     }
   }
 
-  m_catalogue.DriveState()->reserveDiskSpace(m_dbMount->mountInfo.drive,
-                                             m_dbMount->mountInfo.mountId,
-                                             diskSpaceReservationRequest,
-                                             logContext);
+  if (doReserve) {
+    m_catalogue.DriveState()->reserveDiskSpace(m_dbMount->mountInfo.drive,
+                                               m_dbMount->mountInfo.mountId,
+                                               diskSpaceReservationRequest,
+                                               logContext);
+  }
   return true;
+}
+
+//------------------------------------------------------------------------------
+// reserveDiskSpace()
+//------------------------------------------------------------------------------
+bool cta::RetrieveMount::reserveDiskSpace(const cta::DiskSpaceReservationRequest& diskSpaceReservationRequest,
+                                          log::LogContext& logContext) {
+  return checkOrReserveFreeDiskSpaceForRequest(diskSpaceReservationRequest, logContext, true);
 }
 
 //------------------------------------------------------------------------------
@@ -319,82 +330,7 @@ bool cta::RetrieveMount::reserveDiskSpace(const cta::DiskSpaceReservationRequest
 //------------------------------------------------------------------------------
 bool cta::RetrieveMount::testReserveDiskSpace(const cta::DiskSpaceReservationRequest& diskSpaceReservationRequest,
                                               log::LogContext& logContext) {
-  // if the problem is that the script is throwing errors (and not that the disk space is insufficient),
-  // we will issue a warning, but otherwise we will not sleep the queues and we will act like no disk
-  // system was present
-  // Get the current file systems list from the catalogue
-  cta::disk::DiskSystemList diskSystemList;
-  diskSystemList = m_catalogue.DiskSystem()->getAllDiskSystems();
-  diskSystemList.setExternalFreeDiskSpaceScript(m_externalFreeDiskSpaceScript);
-  cta::disk::DiskSystemFreeSpaceList diskSystemFreeSpace(diskSystemList);
-
-  // Get the existing reservation map from drives.
-  auto previousDrivesReservations = m_catalogue.DriveState()->getDiskSpaceReservations();
-  // Get the free space from disk systems involved.
-  std::set<std::string> diskSystemNames;
-  for (const auto& dsrr : diskSpaceReservationRequest) {
-    diskSystemNames.insert(dsrr.first);
-  }
-
-  try {
-    diskSystemFreeSpace.fetchDiskSystemFreeSpace(diskSystemNames, m_catalogue, logContext);
-  } catch (const cta::disk::DiskSystemFreeSpaceListException& ex) {
-    // Could not get free space for one of the disk systems due to a script error.
-    // The queue will not be put to sleep (backpressure will not be applied), and we return true
-    // because we want to allow staging files for retrieve in case of script errors.
-    for (const auto& failedDiskSystem : ex.m_failedDiskSystems) {
-      cta::log::ScopedParamContainer(logContext)
-        .add("diskSystemName", failedDiskSystem.first)
-        .add("failureReason", failedDiskSystem.second.getMessageValue())
-        .log(cta::log::WARNING,
-            "In cta::RetrieveMount::testReserveDiskSpace(): unable to request EOS free space "
-            "for disk system using external script, backpressure will not be applied");
-    }
-    return true;
-  } catch (std::exception& ex) {
-    // Leave a log message before letting the possible exception go up the stack.
-    cta::log::ScopedParamContainer(logContext)
-      .add("exceptionWhat", ex.what())
-      .log(cta::log::ERR,
-           "In cta::RetrieveMount::testReserveDiskSpace(): got an exception from "
-           "diskSystemFreeSpace.fetchDiskSystemFreeSpace().");
-    throw;
-  }
-
-  // If a file system does not have enough space fail the disk space reservation,  put the queue to sleep and
-  // the retrieve mount will immediately stop
-  for (const auto& ds : diskSystemNames) {
-    uint64_t previousDrivesReservationTotal = 0;
-    auto diskSystem = diskSystemFreeSpace.getDiskSystemList().at(ds);
-    // Compute previous drives reservation for the physical space of the current disk system.
-    for (auto previousDriveReservation : previousDrivesReservations) {
-      //avoid empty string when no disk space reservation exists for drive
-      if (previousDriveReservation.second != 0) {
-        auto previousDiskSystem = diskSystemFreeSpace.getDiskSystemList().at(previousDriveReservation.first);
-        if (diskSystem.diskInstanceSpace.freeSpaceQueryURL == previousDiskSystem.diskInstanceSpace.freeSpaceQueryURL) {
-          previousDrivesReservationTotal += previousDriveReservation.second;
-        }
-      }
-    }
-    if (diskSystemFreeSpace.at(ds).freeSpace < diskSpaceReservationRequest.at(ds) +
-                                                 diskSystemFreeSpace.at(ds).targetedFreeSpace +
-                                                 previousDrivesReservationTotal) {
-      cta::log::ScopedParamContainer(logContext)
-        .add("diskSystemName", ds)
-        .add("freeSpace", diskSystemFreeSpace.at(ds).freeSpace)
-        .add("existingReservations", previousDrivesReservationTotal)
-        .add("spaceToReserve", diskSpaceReservationRequest.at(ds))
-        .add("targetedFreeSpace", diskSystemFreeSpace.at(ds).targetedFreeSpace)
-        .log(cta::log::WARNING,
-             "In cta::RetrieveMount::testReserveDiskSpace(): could not allocate disk space for job, "
-             "applying backpressure");
-
-      auto sleepTime = diskSystem.sleepTime;
-      putQueueToSleep(ds, sleepTime, logContext);
-      return false;
-    }
-  }
-  return true;
+  return checkOrReserveFreeDiskSpaceForRequest(diskSpaceReservationRequest, logContext, false);
 }
 
 //------------------------------------------------------------------------------

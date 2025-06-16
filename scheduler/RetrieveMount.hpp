@@ -271,6 +271,19 @@ public:
     */
   virtual void addDiskSystemToSkip(const cta::SchedulerDatabase::RetrieveMount::DiskSystemToSkip& diskSystem);
 
+protected:
+  /**
+   * Sets the session running flag, primarily for use in unit tests.
+   *
+   * This method is intended to simulate the internal state change that would normally
+   * be triggered by the Scheduler class during production execution. It allows tests
+   * to explicitly set the m_sessionRunning flag to control RetrieveMount behavior
+   * without requiring the full Scheduler machinery.
+   *
+   * @param isRunning True to simulate an active session; false otherwise.
+   */
+  void _setSessionRunning(bool isRunning) { m_sessionRunning = isRunning; }
+
 private:
   /**
     * The database representation of this mount.
@@ -310,6 +323,17 @@ private:
     * to get the free disk space in the Retrieve space
     */
   std::string m_externalFreeDiskSpaceScript;
+
+  /**
+    * Helper method for public calls reserveDiskSpace and testReserveDiskSpace
+    * @param request the disk space reservation request
+    * @param logContext
+    * @param doReserve if true, the method will attempt to reserve the space in the catalogue
+    */
+  bool checkOrReserveFreeDiskSpaceForRequest(const cta::DiskSpaceReservationRequest& diskSpaceReservationRequest,
+                                              log::LogContext& logContext,
+                                              bool doReserve);
+
 };  // class RetrieveMount
 
 }  // namespace cta
