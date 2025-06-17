@@ -56,8 +56,6 @@
       optional: true # Otherwise the SYSTEM_TEST_ONLY PIPELINE_TYPE won't work
     - job: build-ctageneric-from-remote-rpms
       optional: true
-    - job: prepare
-      optional: true
     - job: modify-catalogue-version
       optional: true
   rules:
@@ -220,6 +218,11 @@ stress-test:
   allow_failure: true
   interruptible: false
   stage: system-test
+  needs:
+    - job: build-ctageneric-from-artifacts
+      optional: true # Otherwise the SYSTEMTESTS_ONLY flag won't work
+    - job: build-ctageneric-from-repos
+      optional: true
   rules:
     - if: $CI_COMMIT_TAG
       when: never
