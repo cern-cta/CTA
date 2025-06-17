@@ -30,10 +30,16 @@ spec:
       volumeMounts:
       - name: grpc-realm-volume
         mountPath: /opt/keycloak/data/import
+      - name: keycloak-conf-volume
+        mountPath: /opt/keycloak/conf/keycloak.conf
+        subPath: keycloak.conf
   volumes:
   - name: grpc-realm-volume
     configMap:
-      name: grpc-realm
+      name: master # grpc-realm
+  - name: keycloak-conf-volume
+    configMap:
+      name: keycloak-conf
 
 
 ## useful: https://www.reddit.com/r/KeyCloak/comments/1cmc75l/import_realm/
