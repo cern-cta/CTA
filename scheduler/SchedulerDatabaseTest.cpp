@@ -809,6 +809,7 @@ TEST_P(SchedulerDatabaseTest, popRetrieveRequestsWithBackpressure) {
     }
     //reserving disk space will fail (not enough disk space, backpressure is triggered)
     auto schedulerRetrieveMount = std::make_unique<TestRetrieveMount>(catalogue, std::move(rm));
+    schedulerRetrieveMount->setExternalFreeDiskSpaceScript("/usr/bin/cta-eosdf.sh");
     ASSERT_FALSE(schedulerRetrieveMount->reserveDiskSpace(reservationRequest, lc));
   }
   auto mi = db.getMountInfoNoLock(cta::SchedulerDatabase::PurposeGetMountInfo::GET_NEXT_MOUNT,lc);

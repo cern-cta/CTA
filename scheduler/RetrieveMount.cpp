@@ -282,6 +282,7 @@ bool cta::RetrieveMount::checkOrReserveFreeDiskSpaceForRequest(const cta::DiskSp
 
   // If a file system does not have enough space fail the disk space reservation,  put the queue to sleep and
   // the retrieve mount will immediately stop
+  size_t dscount = 0;
   for (const auto& ds : diskSystemNames) {
     uint64_t previousDrivesReservationTotal = 0;
     auto diskSystem = diskSystemFreeSpace.getDiskSystemList().at(ds);
@@ -300,6 +301,8 @@ bool cta::RetrieveMount::checkOrReserveFreeDiskSpaceForRequest(const cta::DiskSp
                                                  previousDrivesReservationTotal) {
       cta::log::ScopedParamContainer(logContext)
         .add("diskSystemName", ds)
+        .add("diskSystemCount", diskSystemNames.size())
+        .add("diskSystemsPutToSleep", dscount)
         .add("freeSpace", diskSystemFreeSpace.at(ds).freeSpace)
         .add("existingReservations", previousDrivesReservationTotal)
         .add("spaceToReserve", diskSpaceReservationRequest.at(ds))
@@ -310,8 +313,11 @@ bool cta::RetrieveMount::checkOrReserveFreeDiskSpaceForRequest(const cta::DiskSp
 
       auto sleepTime = diskSystem.sleepTime;
       putQueueToSleep(ds, sleepTime, logContext);
-      return false;
+      dscount++;
     }
+  }
+  if (dscount > 0){
+    return false;
   }
 
   if (doReserve) {
