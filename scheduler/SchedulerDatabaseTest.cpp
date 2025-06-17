@@ -59,19 +59,13 @@ struct SchedulerDatabaseTestParam {
  }
 }; // struct SchedulerDatabaseTestParam
 
-class SchedulerDatabaseFixture : public cta::SchedulerDatabase {
-public:
-  using cta::SchedulerDatabase::SchedulerDatabase;
-  using cta::SchedulerDatabase::getArchiveMountPolicyMaxPriorityMinAge;
-  using cta::SchedulerDatabase::getRetrieveMountPolicyMaxPriorityMinAge;
-};
-
 class TestRetrieveMount : public cta::RetrieveMount {
 public:
   TestRetrieveMount(cta::catalogue::Catalogue& catalogue,
                     std::unique_ptr<cta::SchedulerDatabase::RetrieveMount> dbMount)
-      : RetrieveMount(catalogue, std::move(dbMount)) {}
-  void testSetSessionRunning(bool b) { _setSessionRunning(b); }
+      : RetrieveMount(catalogue, std::move(dbMount)) {
+    m_sessionRunning = true;
+  }
 };
 
 /**
@@ -717,14 +711,11 @@ TEST_P(SchedulerDatabaseTest, popRetrieveRequestsWithDisksytem) {
   cta::DiskSpaceReservationRequest reservationRequest;
   for (auto &rj: rjb) {
     rj->asyncSetSuccessful();
-    ASSERT_TRUE((bool)rj->diskSystemName);
+    ASSERT_TRUE(rj->diskSystemName);
     ASSERT_EQ(rj->archiveFile.tapeFiles.front().fSeq%2?"ds-B":"ds-A", rj->diskSystemName.value());
-    if ((bool)rj->diskSystemName) {
-      reservationRequest.addRequest(rj->diskSystemName.value(), rj->archiveFile.fileSize);
-    }
+    reservationRequest.addRequest(rj->diskSystemName.value(), rj->archiveFile.fileSize);
   }
-  std::unique_ptr<TestRetrieveMount> schedRetMount(new TestRetrieveMount(catalogue, std::move(rm)));
-  schedRetMount->testSetSessionRunning(true);
+  auto schedRetMount = std::make_unique<TestRetrieveMount>(catalogue, std::move(rm));
   std::queue<std::unique_ptr<cta::RetrieveJob>> jobQueue;
   for (auto &rj: rjb) {
     jobQueue.push(std::make_unique<cta::RetrieveJob>(schedRetMount.get(), std::move(rj)));
@@ -814,14 +805,12 @@ TEST_P(SchedulerDatabaseTest, popRetrieveRequestsWithBackpressure) {
     cta::DiskSpaceReservationRequest reservationRequest;
     for (auto &rj: rjb) {
       rj->asyncSetSuccessful();
-      ASSERT_TRUE((bool)rj->diskSystemName);
+      ASSERT_TRUE(rj->diskSystemName);
       ASSERT_EQ("ds-A", rj->diskSystemName.value());
-      if (rj->diskSystemName) {
-        reservationRequest.addRequest(rj->diskSystemName.value(), rj->archiveFile.fileSize);
-      }
+      reservationRequest.addRequest(rj->diskSystemName.value(), rj->archiveFile.fileSize);
     }
     //reserving disk space will fail (not enough disk space, backpressure is triggered)
-    std::unique_ptr<TestRetrieveMount> schedRetMount(new TestRetrieveMount(catalogue, std::move(rm)));
+    auto schedRetMount = std::make_unique<TestRetrieveMount>(catalogue, std::move(rm));
     ASSERT_FALSE(schedRetMount->reserveDiskSpace(reservationRequest, lc));
   }
   auto mi = db.getMountInfoNoLock(cta::SchedulerDatabase::PurposeGetMountInfo::GET_NEXT_MOUNT,lc);
@@ -906,13 +895,13 @@ TEST_P(SchedulerDatabaseTest, popRetrieveRequestsWithDiskSystemNotFetcheable) {
 
     cta::DiskSpaceReservationRequest reservationRequest;
     for (auto &rj: rjb) {
-      ASSERT_TRUE((bool)rj->diskSystemName);
+      ASSERT_TRUE(rj->diskSystemName);
       ASSERT_EQ("ds-Error", rj->diskSystemName.value());
       reservationRequest.addRequest(rj->diskSystemName.value(), rj->archiveFile.fileSize);
     }
     // reserving disk space will fail because the script cannot be executed, no backpressure will be applied in this case
     // but reserveDiskSpace will return true, because this is due to a script error
-    std::unique_ptr<TestRetrieveMount> schedRetMount(new TestRetrieveMount(catalogue, std::move(rm)));
+    auto schedRetMount = std::make_unique<TestRetrieveMount>(catalogue, std::move(rm));
     ASSERT_TRUE(schedRetMount->reserveDiskSpace(reservationRequest, lc));
   }
   auto mi = db.getMountInfoNoLock(cta::SchedulerDatabase::PurposeGetMountInfo::GET_NEXT_MOUNT,lc);
@@ -944,7 +933,7 @@ TEST_P(SchedulerDatabaseTest, getArchiveMountPolicyMaxPriorityMinAge) {
   mountPolicies.back().archivePriority = 3;
   mountPolicies.back().archiveMinRequestAge = 3000;
 
-  auto [maxPriority, minMinRequestAge] = SchedulerDatabaseFixture::getArchiveMountPolicyMaxPriorityMinAge(mountPolicies);
+  auto [maxPriority, minMinRequestAge] = cta::SchedulerDatabase::getArchiveMountPolicyMaxPriorityMinAge(mountPolicies);
 
   ASSERT_EQ(99, maxPriority);
   ASSERT_EQ(50, minMinRequestAge);
@@ -969,7 +958,7 @@ TEST_P(SchedulerDatabaseTest, getRetrieveMountPolicyMaxPriorityMinAge) {
   mountPolicies.back().retrievePriority = 3;
   mountPolicies.back().retrieveMinRequestAge = 3000;
 
-  auto [maxPriority, minMinRequestAge] = SchedulerDatabaseFixture::getRetrieveMountPolicyMaxPriorityMinAge(mountPolicies);
+  auto [maxPriority, minMinRequestAge] = cta::SchedulerDatabase::getRetrieveMountPolicyMaxPriorityMinAge(mountPolicies);
 
   ASSERT_EQ(99, maxPriority);
   ASSERT_EQ(50, minMinRequestAge);

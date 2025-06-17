@@ -272,28 +272,18 @@ public:
   virtual void addDiskSystemToSkip(const cta::SchedulerDatabase::RetrieveMount::DiskSystemToSkip& diskSystem);
 
 protected:
-  /**
-   * Sets the session running flag, primarily for use in unit tests.
-   *
-   * This method is intended to simulate the internal state change that would normally
-   * be triggered by the Scheduler class during production execution. It allows tests
-   * to explicitly set the m_sessionRunning flag to control RetrieveMount behavior
-   * without requiring the full Scheduler machinery.
-   *
-   * @param isRunning True to simulate an active session; false otherwise.
-   */
-  void _setSessionRunning(bool isRunning) { m_sessionRunning = isRunning; }
+   /**
+    * Internal tracking of the session completion
+    * This member variable used to be private,
+    * now protected to have it accessible via TestRetrieveMount
+    */
+  bool m_sessionRunning;
 
 private:
   /**
     * The database representation of this mount.
     */
   std::unique_ptr<cta::SchedulerDatabase::RetrieveMount> m_dbMount;
-
-  /**
-    * Internal tracking of the session completion
-    */
-  bool m_sessionRunning;
 
   /**
     * Internal tracking of the tape thread
