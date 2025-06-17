@@ -713,15 +713,15 @@ TEST_P(SchedulerDatabaseTest, popRetrieveRequestsWithDisksytem) {
     ASSERT_EQ(rj->archiveFile.tapeFiles.front().fSeq%2?"ds-B":"ds-A", rj->diskSystemName.value());
     reservationRequest.addRequest(rj->diskSystemName.value(), rj->archiveFile.fileSize);
   }
-  auto schedRetMount = std::make_unique<TestRetrieveMount>(catalogue, std::move(rm));
+  auto schedulerRetrieveMount = std::make_unique<TestRetrieveMount>(catalogue, std::move(rm));
   std::queue<std::unique_ptr<cta::RetrieveJob>> jobQueue;
   for (auto &rj: rjb) {
-    jobQueue.push(std::make_unique<cta::RetrieveJob>(schedRetMount.get(), std::move(rj)));
+    jobQueue.push(std::make_unique<cta::RetrieveJob>(schedulerRetrieveMount.get(), std::move(rj)));
   }
-  schedRetMount->reserveDiskSpace(reservationRequest, lc);
-  schedRetMount->m_sessionRunning = true;
-  schedRetMount->flushAsyncSuccessReports(jobQueue, lc);
-  ASSERT_EQ(0, schedRetMount->getNextJobBatch(20,20*1000, lc).size());
+  schedulerRetrieveMount->reserveDiskSpace(reservationRequest, lc);
+  schedulerRetrieveMount->m_sessionRunning = true;
+  schedulerRetrieveMount->flushAsyncSuccessReports(jobQueue, lc);
+  ASSERT_EQ(0, schedulerRetrieveMount->getNextJobBatch(20,20*1000, lc).size());
   rjb.clear();
 }
 
@@ -809,8 +809,8 @@ TEST_P(SchedulerDatabaseTest, popRetrieveRequestsWithBackpressure) {
       reservationRequest.addRequest(rj->diskSystemName.value(), rj->archiveFile.fileSize);
     }
     //reserving disk space will fail (not enough disk space, backpressure is triggered)
-    auto schedRetMount = std::make_unique<TestRetrieveMount>(catalogue, std::move(rm));
-    ASSERT_FALSE(schedRetMount->reserveDiskSpace(reservationRequest, lc));
+    auto schedulerRetrieveMount = std::make_unique<TestRetrieveMount>(catalogue, std::move(rm));
+    ASSERT_FALSE(schedulerRetrieveMount->reserveDiskSpace(reservationRequest, lc));
   }
   auto mi = db.getMountInfoNoLock(cta::SchedulerDatabase::PurposeGetMountInfo::GET_NEXT_MOUNT,lc);
   ASSERT_EQ(1, mi->potentialMounts.size()); //all jobs were requeued
@@ -900,8 +900,8 @@ TEST_P(SchedulerDatabaseTest, popRetrieveRequestsWithDiskSystemNotFetcheable) {
     }
     // reserving disk space will fail because the script cannot be executed, no backpressure will be applied in this case
     // but reserveDiskSpace will return true, because this is due to a script error
-    auto schedRetMount = std::make_unique<TestRetrieveMount>(catalogue, std::move(rm));
-    ASSERT_TRUE(schedRetMount->reserveDiskSpace(reservationRequest, lc));
+    auto schedulerRetrieveMount = std::make_unique<TestRetrieveMount>(catalogue, std::move(rm));
+    ASSERT_TRUE(schedulerRetrieveMount->reserveDiskSpace(reservationRequest, lc));
   }
   auto mi = db.getMountInfoNoLock(cta::SchedulerDatabase::PurposeGetMountInfo::GET_NEXT_MOUNT,lc);
   ASSERT_EQ(1, mi->potentialMounts.size());
