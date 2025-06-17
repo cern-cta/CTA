@@ -33,7 +33,7 @@ include_directories(${CMAKE_BINARY_DIR}/eos_cta ${PROTOBUF3_INCLUDE_DIRS})
 # cta-admin <admin_command> is the SSI version of "cta <admin_command>"
 #
 add_executable(cta-admin CtaAdminXrdCmd.cpp CtaAdminParsedCmd.cpp CtaAdminCmdParser.cpp CtaAdminTextFormatter.cpp)
-target_link_libraries(cta-admin ProtoCtaFrontend XrdSsiLib XrdUtils ctacommon stdc++fs ctatapedaemoncommon)
+target_link_libraries(cta-admin XrdSsiLib XrdUtils ctacommon stdc++fs ctatapedaemoncommon)
 set_property (TARGET cta-admin APPEND PROPERTY INSTALL_RPATH ${PROTOBUF3_RPATH})
 
 #
@@ -42,9 +42,8 @@ set_property (TARGET cta-admin APPEND PROPERTY INSTALL_RPATH ${PROTOBUF3_RPATH})
 #
 # Previously this was the eoscta_stub which was called by a script invoked by the EOS WFE.
 #
-find_package(cryptopp REQUIRED)
 add_executable(cta-wfe-test EosCtaStub.cpp)
-target_link_libraries(cta-wfe-test cryptopp ctacommon ProtoCtaFrontend XrdSsiLib XrdUtils)
+target_link_libraries(cta-wfe-test ctacommon XrdSsiLib XrdUtils)
 set_property (TARGET cta-wfe-test APPEND PROPERTY INSTALL_RPATH ${PROTOBUF3_RPATH})
 
 add_manpage(cta-admin)

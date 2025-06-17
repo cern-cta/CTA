@@ -19,8 +19,6 @@
 #include "common/Timer.hpp"
 #include "disk/DiskReporter.hpp"
 #include "RetrieveMount.hpp"
-#include <cryptopp/base64.h>
-#include <future>
 
 //------------------------------------------------------------------------------
 // diskSystemName

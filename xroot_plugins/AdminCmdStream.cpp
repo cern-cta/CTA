@@ -16,6 +16,7 @@
  */
 
 #include "common/dataStructures/LogicalLibrary.hpp"
+#include "CtaFrontendApi.hpp"
 #include "cmdline/CtaAdminCmdParser.hpp"
 #include "frontend/common/AdminCmd.hpp"
 #include "AdminCmdStream.hpp"

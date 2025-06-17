@@ -15,21 +15,8 @@
 
 cmake_minimum_required (VERSION 3.17)
 
-find_package(xrootdclient REQUIRED)
-find_package(Protobuf3 REQUIRED)
-
-# XRootD SSI
-include_directories(${XROOTD_INCLUDE_DIR} ${XROOTD_INCLUDE_DIR}/private )
-
-# XRootD SSI Protocol Buffer bindings
-include_directories(${XRD_SSI_PB_DIR}/include ${XRD_SSI_PB_DIR}/eos_cta/include)
-
-# Compiled protocol buffers
-include_directories(${CMAKE_BINARY_DIR}/eos_cta ${PROTOBUF3_INCLUDE_DIRS})
-
 add_executable(cta-change-storage-class ChangeStorageClass.cpp ChangeStorageClassMain.cpp ../../CtaAdminCmdParser.cpp JsonFileData.cpp)
-target_link_libraries(cta-change-storage-class XrdSsiLib XrdUtils ctacommon stdc++fs ctaCmdlineToolsCommon)
-set_property(TARGET cta-change-storage-class APPEND PROPERTY INSTALL_RPATH ${PROTOBUF3_RPATH})
+target_link_libraries(cta-change-storage-class ctacommon stdc++fs ctaCmdlineToolsCommon)
 
 add_manpage(cta-change-storage-class)
 

@@ -15,13 +15,6 @@
 
 cmake_minimum_required (VERSION 3.17)
 
-#[[
-   TO-DO Remove Protobuf dependency if possible
-   (we could remove the dependency pulled in via
-   catalogue --> cta-lib-common, does common lib
-   need Protobuf3 at all ?)
-]]#
-find_package(Protobuf3 REQUIRED)
 find_package(postgres REQUIRED)
 
 include_directories (${POSTGRES_INCLUDE_DIRS})
@@ -29,7 +22,6 @@ include_directories (${POSTGRES_INCLUDE_DIRS})
 #
 # Compiled protocol buffers (for ChecksumBlob)
 #
-include_directories(${CMAKE_BINARY_DIR}/eos_cta ${PROTOBUF3_INCLUDE_DIRS})
 
 configure_file(${CMAKE_CURRENT_SOURCE_DIR}/insert_cta_scheduler_version.sql.in insert_cta_scheduler_version.sql)
 
@@ -52,8 +44,6 @@ set (SCHEMA_CREATE_SRC_FILES
 
 add_executable(cta-scheduler-schema-create ${SCHEMA_CREATE_SRC_FILES})
 target_link_libraries (cta-scheduler-schema-create ctacatalogue)
-
-set_property(TARGET cta-scheduler-schema-create APPEND PROPERTY INSTALL_RPATH ${PROTOBUF3_RPATH})
 
 if(CTA_USE_PGSCHED)
   install (TARGETS cta-scheduler-schema-create DESTINATION /usr/bin)

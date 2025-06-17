@@ -25,7 +25,6 @@ add_subdirectory (session)
 add_subdirectory (tapelabel)
 add_subdirectory (readtp)
 
-include_directories (${PROTOBUF3_INCLUDE_DIRS})
 add_executable (cta-taped cta-taped.cpp)
 target_link_libraries(cta-taped ctatapedaemon ctacommon)
 

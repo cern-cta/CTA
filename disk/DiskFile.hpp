@@ -19,7 +19,6 @@
 
 #include "common/utils/Regex.hpp"
 #include "common/threading/Mutex.hpp"
-#include <cryptopp/rsa.h>
 #include <memory>
 #include <stdint.h>
 #include <set>

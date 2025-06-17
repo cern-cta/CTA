@@ -20,10 +20,9 @@
 #include "disk/DiskFile.hpp"
 #include "tapeserver/castor/tape/tapeserver/file/Structures.hpp"
 #include "tapeserver/castor/tape/tapeserver/daemon/VolumeInfo.hpp"
-#include "common/exception/XrootCl.hpp"
 #include "common/exception/Exception.hpp"
+#include "XrdClException.hpp"
 #include <xrootd/XrdCl/XrdClFile.hh>
-#include <cryptopp/rsa.h>
 #include <radosstriper/libradosstriper.hpp>
 
 namespace cta::disk {
@@ -75,7 +74,6 @@ namespace cta::disk {
         mutable XrdCl::File m_xrootFile;
         mutable uint64_t m_readPosition;
         const uint16_t m_timeout;
-        typedef cta::exception::XrootCl XrootClEx;
       };
       
       class XrootReadFile: public XrootBaseReadFile {
@@ -96,7 +94,6 @@ namespace cta::disk {
         XrdCl::File m_xrootFile;
         uint64_t m_writePosition;
         const uint16_t m_timeout;
-        typedef cta::exception::XrootCl XrootClEx;
         bool m_closeTried;      
       };
       

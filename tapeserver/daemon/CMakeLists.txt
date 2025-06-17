@@ -26,7 +26,6 @@ PROTOBUF3_GENERATE_CPP(WDMsgSources WDMsgHeaders WatchdogMessage.proto)
 SET_SOURCE_FILES_PROPERTIES(${WDMsgHeaders} PROPERTIES HEADER_FILE_ONLY TRUE)
 SET_SOURCE_FILES_PROPERTIES(DriveHandler.cpp PROPERTIES OBJECT_DEPENDS ${WDMsgHeaders})
 
-include_directories(${PROTOBUF3_INCLUDE_DIRS})
 add_library(ctatapedaemon
   ${WDMsgSources}
   CommandLineParams.cpp
