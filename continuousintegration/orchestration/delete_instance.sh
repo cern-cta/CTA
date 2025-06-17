@@ -66,15 +66,6 @@ save_logs() {
     num_containers=$(echo "${containers}" | wc -w)
 
     for container in ${containers}; do
-      # Check for backtraces
-      backtracefiles=$(kubectl --namespace "${namespace}" exec "${pod}" -c "${container}" -- find /var/log/tmp/ -type f -name '*.bt' 2>/dev/null || true)
-      if [ -n "${backtracefiles}" ]; then
-        echo "Found backtrace in pod ${pod} - container ${container}:"
-        for backtracefile in ${backtracefiles}; do
-          kubectl --namespace "${namespace}" exec "${pod}" -c "${container}" -- cat "${backtracefile}"
-        done
-      fi
-
       # Name of the (sub)directory to output logs to
       output_dir="${pod}"
       [ "${num_containers}" -gt 1 ] && output_dir="${pod}-${container}"
