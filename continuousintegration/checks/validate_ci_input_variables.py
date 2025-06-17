@@ -80,9 +80,9 @@ def check_rpm_available(package_name: str, package_version: str):
     Checks that the package of a given version is available.
     Note that this assumes the current machine has all the required .repo files correctly configured.
     """
-    version_regex = r"\d[\w.+~]*-\d+"
+    version_regex = r"(\d+:)?\d[\w.+~]*-\d+"
     if not re.fullmatch(version_regex, package_version):
-        sys.exit(f"ERROR: package version {package_version} does not satisfy regex {version_regex}. Please double-check that the version (including the epoch) is correct.")
+        sys.exit(f"ERROR: package version {package_version} does not satisfy regex {version_regex}. Please double-check that the version (including the release) is correct.")
 
     tag_available = run_cmd(f"dnf list --showduplicates {package_name} | grep \"{package_version}\" | wc -l")
 
