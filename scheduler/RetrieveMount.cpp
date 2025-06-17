@@ -235,6 +235,12 @@ uint64_t cta::RetrieveMount::requeueJobBatch(const std::list<std::string>& jobID
 bool cta::RetrieveMount::checkOrReserveFreeDiskSpaceForRequest(const cta::DiskSpaceReservationRequest& diskSpaceReservationRequest,
                                               log::LogContext& logContext,
                                               bool doReserve) {
+  if (m_externalFreeDiskSpaceScript.empty()) {
+    logContext.log(cta::log::WARNING,
+                   "In cta::RetrieveMount::checkOrReserveFreeDiskSpaceForRequest(): missing external script path to "
+                   "check EOS free space, backpressure will not be applied");
+    return true;
+  }
   // Get the current file systems list from the catalogue
   cta::disk::DiskSystemList diskSystemList;
   diskSystemList = m_catalogue.DiskSystem()->getAllDiskSystems();
