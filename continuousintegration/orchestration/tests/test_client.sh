@@ -262,21 +262,6 @@ kubectl -n ${NAMESPACE} exec ${CLIENT_POD} -c client -- bash /root/archive_zero_
 kubectl -n ${NAMESPACE} exec ${EOS_MGM_POD} -c eos-mgm -- bash /root/grep_xrdlog_mgm_for_error.sh || exit 1
 
 echo
-echo "Launching try_evict_before_archive_completed.sh on client pod"
-echo " Archiving file: xrdcp as user1"
-echo " Retrieving it as poweruser1"
-kubectl -n ${NAMESPACE} exec ${CLIENT_POD} -c client -- bash /root/try_evict_before_archive_completed.sh || exit 1
-kubectl -n ${NAMESPACE} exec ${EOS_MGM_POD} -c eos-mgm -- bash /root/grep_xrdlog_mgm_for_error.sh || exit 1
-
-# TODO: Remove the stagerrm tests once the command is removed from EOS
-echo
-echo "Launching stagerrm_tests.sh on client pod"
-echo " Archiving file: xrdcp as user1"
-echo " Retrieving it as poweruser1"
-kubectl -n ${NAMESPACE} exec ${CLIENT_POD} -c client -- bash /root/stagerrm_tests.sh || exit 1
-kubectl -n ${NAMESPACE} exec ${EOS_MGM_POD} -c eos-mgm -- bash /root/grep_xrdlog_mgm_for_error.sh || exit 1
-
-echo
 echo "Launching evict_tests.sh on client pod"
 echo " Archiving file: xrdcp as user1"
 echo " Retrieving it as poweruser1"
