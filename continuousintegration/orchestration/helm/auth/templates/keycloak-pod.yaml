@@ -21,6 +21,10 @@ spec:
           value: admin
         - name: KEYCLOAK_ADMIN_PASSWORD
           value: admin
+        - name: KC_SSO_SESSION_MAX_LIFESPAN
+          value: "29030400"
+        - name: KC_ACCESS_TOKEN_LIFESPAN
+          value: "29030400"
       ports:
         - containerPort: 8080
       volumeMounts:
