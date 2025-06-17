@@ -718,6 +718,7 @@ TEST_P(SchedulerDatabaseTest, popRetrieveRequestsWithDisksytem) {
   for (auto &rj: rjb) {
     jobQueue.push(std::make_unique<cta::RetrieveJob>(schedulerRetrieveMount.get(), std::move(rj)));
   }
+  schedulerRetrieveMount->setExternalFreeDiskSpaceScript("/usr/bin/cta-eosdf.sh");
   schedulerRetrieveMount->reserveDiskSpace(reservationRequest, lc);
   schedulerRetrieveMount->flushAsyncSuccessReports(jobQueue, lc);
   ASSERT_EQ(0, schedulerRetrieveMount->getNextJobBatch(20,20*1000, lc).size());
@@ -901,6 +902,7 @@ TEST_P(SchedulerDatabaseTest, popRetrieveRequestsWithDiskSystemNotFetcheable) {
     // reserving disk space will fail because the script cannot be executed, no backpressure will be applied in this case
     // but reserveDiskSpace will return true, because this is due to a script error
     auto schedulerRetrieveMount = std::make_unique<TestRetrieveMount>(catalogue, std::move(rm));
+    schedulerRetrieveMount->setExternalFreeDiskSpaceScript("/usr/bin/cta-eosdf.sh");
     ASSERT_TRUE(schedulerRetrieveMount->reserveDiskSpace(reservationRequest, lc));
   }
   auto mi = db.getMountInfoNoLock(cta::SchedulerDatabase::PurposeGetMountInfo::GET_NEXT_MOUNT,lc);
