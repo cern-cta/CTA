@@ -63,9 +63,7 @@ class TestRetrieveMount : public cta::RetrieveMount {
 public:
   TestRetrieveMount(cta::catalogue::Catalogue& catalogue,
                     std::unique_ptr<cta::SchedulerDatabase::RetrieveMount> dbMount)
-      : RetrieveMount(catalogue, std::move(dbMount)) {
-    m_sessionRunning = true;
-  }
+      : RetrieveMount(catalogue, std::move(dbMount)) {}
 };
 
 /**
@@ -721,6 +719,7 @@ TEST_P(SchedulerDatabaseTest, popRetrieveRequestsWithDisksytem) {
     jobQueue.push(std::make_unique<cta::RetrieveJob>(schedRetMount.get(), std::move(rj)));
   }
   schedRetMount->reserveDiskSpace(reservationRequest, lc);
+  schedRetMount->m_sessionRunning = true;
   schedRetMount->flushAsyncSuccessReports(jobQueue, lc);
   ASSERT_EQ(0, schedRetMount->getNextJobBatch(20,20*1000, lc).size());
   rjb.clear();
