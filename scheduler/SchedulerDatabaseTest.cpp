@@ -26,6 +26,7 @@
 #include "catalogue/InMemoryCatalogue.hpp"
 #include "common/dataStructures/SecurityIdentity.hpp"
 #include "common/log/DummyLogger.hpp"
+#include "scheduler/RetrieveMount.hpp"
 #include "scheduler/SchedulerDatabase.hpp"
 #include "scheduler/SchedulerDatabaseFactory.hpp"
 #include "tests/TestsCompileTimeSwitches.hpp"
@@ -58,11 +59,11 @@ struct SchedulerDatabaseTestParam {
  }
 }; // struct SchedulerDatabaseTestParam
 
-class OStoreFixture : public cta::OStoreDB {
+class TestRetrieveMount : public cta::RetrieveMount {
 public:
-  using cta::OStoreDB::OStoreDB;
-  using cta::OStoreDB::getArchiveMountPolicyMaxPriorityMinAge;
-  using cta::OStoreDB::getRetrieveMountPolicyMaxPriorityMinAge;
+  TestRetrieveMount(cta::catalogue::Catalogue& catalogue,
+                    std::unique_ptr<cta::SchedulerDatabase::RetrieveMount> dbMount)
+      : RetrieveMount(catalogue, std::move(dbMount)) { m_sessionRunning = true; }
 };
 
 /**
@@ -702,24 +703,26 @@ TEST_P(SchedulerDatabaseTest, popRetrieveRequestsWithDisksytem) {
   auto mountInfo = db.getMountInfo(lc);
   ASSERT_EQ(1, mountInfo->potentialMounts.size());
   auto rm = mountInfo->createRetrieveMount(mountInfo->potentialMounts.front(), "drive", "library", "host");
-  auto rjb = rm->getNextJobBatch(20,20*1000, lc);
+  std::list<std::unique_ptr<SchedulerDatabase::RetrieveJob>> rjb = rm->getNextJobBatch(20,20*1000, lc);
   ASSERT_EQ(filesToDo, rjb.size());
 
-  std::list <cta::SchedulerDatabase::RetrieveJob*> jobBatch;
   cta::DiskSpaceReservationRequest reservationRequest;
   for (auto &rj: rjb) {
     rj->asyncSetSuccessful();
-    ASSERT_TRUE((bool)rj->diskSystemName);
+    ASSERT_TRUE(rj->diskSystemName);
     ASSERT_EQ(rj->archiveFile.tapeFiles.front().fSeq%2?"ds-B":"ds-A", rj->diskSystemName.value());
-    jobBatch.emplace_back(rj.get());
-    if (rj->diskSystemName) {
-      reservationRequest.addRequest(rj->diskSystemName.value(), rj->archiveFile.fileSize);
-    }
+    reservationRequest.addRequest(rj->diskSystemName.value(), rj->archiveFile.fileSize);
   }
-  rm->reserveDiskSpace(reservationRequest, "", lc);
-  rm->flushAsyncSuccessReports(jobBatch, lc);
+  auto schedulerRetrieveMount = std::make_unique<TestRetrieveMount>(catalogue, std::move(rm));
+  std::queue<std::unique_ptr<cta::RetrieveJob>> jobQueue;
+  for (auto &rj: rjb) {
+    jobQueue.push(std::make_unique<cta::RetrieveJob>(schedulerRetrieveMount.get(), std::move(rj)));
+  }
+  schedulerRetrieveMount->setExternalFreeDiskSpaceScript("/usr/bin/cta-eosdf.sh");
+  schedulerRetrieveMount->reserveDiskSpace(reservationRequest, lc);
+  schedulerRetrieveMount->flushAsyncSuccessReports(jobQueue, lc);
+  ASSERT_EQ(0, schedulerRetrieveMount->getNextJobBatch(20,20*1000, lc).size());
   rjb.clear();
-  ASSERT_EQ(0, rm->getNextJobBatch(20,20*1000, lc).size());
 }
 
 TEST_P(SchedulerDatabaseTest, popRetrieveRequestsWithBackpressure) {
@@ -801,14 +804,14 @@ TEST_P(SchedulerDatabaseTest, popRetrieveRequestsWithBackpressure) {
     cta::DiskSpaceReservationRequest reservationRequest;
     for (auto &rj: rjb) {
       rj->asyncSetSuccessful();
-      ASSERT_TRUE((bool)rj->diskSystemName);
+      ASSERT_TRUE(rj->diskSystemName);
       ASSERT_EQ("ds-A", rj->diskSystemName.value());
-      if (rj->diskSystemName) {
-        reservationRequest.addRequest(rj->diskSystemName.value(), rj->archiveFile.fileSize);
-      }
+      reservationRequest.addRequest(rj->diskSystemName.value(), rj->archiveFile.fileSize);
     }
     //reserving disk space will fail (not enough disk space, backpressure is triggered)
-    ASSERT_FALSE(rm->reserveDiskSpace(reservationRequest, "", lc));
+    auto schedulerRetrieveMount = std::make_unique<TestRetrieveMount>(catalogue, std::move(rm));
+    schedulerRetrieveMount->setExternalFreeDiskSpaceScript("/usr/bin/cta-eosdf.sh");
+    ASSERT_FALSE(schedulerRetrieveMount->reserveDiskSpace(reservationRequest, lc));
   }
   auto mi = db.getMountInfoNoLock(cta::SchedulerDatabase::PurposeGetMountInfo::GET_NEXT_MOUNT,lc);
   ASSERT_EQ(1, mi->potentialMounts.size()); //all jobs were requeued
@@ -892,13 +895,15 @@ TEST_P(SchedulerDatabaseTest, popRetrieveRequestsWithDiskSystemNotFetcheable) {
 
     cta::DiskSpaceReservationRequest reservationRequest;
     for (auto &rj: rjb) {
-      ASSERT_TRUE((bool)rj->diskSystemName);
+      ASSERT_TRUE(rj->diskSystemName);
       ASSERT_EQ("ds-Error", rj->diskSystemName.value());
       reservationRequest.addRequest(rj->diskSystemName.value(), rj->archiveFile.fileSize);
     }
     // reserving disk space will fail because the script cannot be executed, no backpressure will be applied in this case
     // but reserveDiskSpace will return true, because this is due to a script error
-    ASSERT_TRUE(rm->reserveDiskSpace(reservationRequest, "", lc));
+    auto schedulerRetrieveMount = std::make_unique<TestRetrieveMount>(catalogue, std::move(rm));
+    schedulerRetrieveMount->setExternalFreeDiskSpaceScript("/usr/bin/cta-eosdf.sh");
+    ASSERT_TRUE(schedulerRetrieveMount->reserveDiskSpace(reservationRequest, lc));
   }
   auto mi = db.getMountInfoNoLock(cta::SchedulerDatabase::PurposeGetMountInfo::GET_NEXT_MOUNT,lc);
   ASSERT_EQ(1, mi->potentialMounts.size());
@@ -929,7 +934,7 @@ TEST_P(SchedulerDatabaseTest, getArchiveMountPolicyMaxPriorityMinAge) {
   mountPolicies.back().archivePriority = 3;
   mountPolicies.back().archiveMinRequestAge = 3000;
 
-  auto [maxPriority, minMinRequestAge] = OStoreFixture::getArchiveMountPolicyMaxPriorityMinAge(mountPolicies);
+  auto [maxPriority, minMinRequestAge] = cta::SchedulerDatabase::getArchiveMountPolicyMaxPriorityMinAge(mountPolicies);
 
   ASSERT_EQ(99, maxPriority);
   ASSERT_EQ(50, minMinRequestAge);
@@ -954,7 +959,7 @@ TEST_P(SchedulerDatabaseTest, getRetrieveMountPolicyMaxPriorityMinAge) {
   mountPolicies.back().retrievePriority = 3;
   mountPolicies.back().retrieveMinRequestAge = 3000;
 
-  auto [maxPriority, minMinRequestAge] = OStoreFixture::getRetrieveMountPolicyMaxPriorityMinAge(mountPolicies);
+  auto [maxPriority, minMinRequestAge] = cta::SchedulerDatabase::getRetrieveMountPolicyMaxPriorityMinAge(mountPolicies);
 
   ASSERT_EQ(99, maxPriority);
   ASSERT_EQ(50, minMinRequestAge);

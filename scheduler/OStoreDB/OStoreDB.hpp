@@ -197,61 +197,6 @@ private:
   getMountPoliciesInQueue(const std::list<common::dataStructures::MountPolicy>& mountPoliciesInCatalogue,
                           const std::map<std::string, uint64_t>& queueMountPolicyMap);
 
-  /**
-   * Return the name of the archive mount policy with highest priority from the mountPolicies passed in parameter
-   * The aim is to do the same as ArchiveQueue::getJobsSummary() regarding the priority
-   * @param mountPolicies the list of mount policies in order to create the best one.
-   * @return the archive mount policy with highest priority
-   */
-  std::string
-  getHighestPriorityArchiveMountPolicyName(const std::list<common::dataStructures::MountPolicy>& mountPolicies);
-
-  /**
-   * Return the name of the archive mount policy with lowest request age from the mountPolicies passed in parameter
-   * The aim is to do the same as ArchiveQueue::getJobsSummary() regarding the request age
-   * @param mountPolicies the list of mount policies in order to create the best one.
-   * @return the archive mount policy with lowest request age
-   */
-  std::string
-  getLowestRequestAgeArchiveMountPolicyName(const std::list<common::dataStructures::MountPolicy>& mountPolicies);
-
-  /**
-   * Return the name of the retrieve mount policy with highest priority from the mountPolicies passed in parameter
-   * The aim is to do the same as RetrieveQueue::getJobsSummary() regarding the priority
-   * @param mountPolicies the list of mount policies in order to create the best one.
-   * @return the retrieve mount policy with highest priority
-   */
-  std::string
-  getHighestPriorityRetrieveMountPolicyName(const std::list<common::dataStructures::MountPolicy>& mountPolicies);
-
-  /**
-   * Return the name of the retrieve mount policy with lowest request age from the mountPolicies passed in parameter
-   * The aim is to do the same as RetrieveQueue::getJobsSummary() regarding the request age
-   * @param mountPolicies the list of mount policies in order to create the best one.
-   * @return the retrieve mount policy with lowest request age
-   */
-  std::string
-  getLowestRequestAgeRetrieveMountPolicyName(const std::list<common::dataStructures::MountPolicy>& mountPolicies);
-
-protected:
-  /**
-   * Given a list of mount policies, it compares all of them to extract both the maximum archive priority and the minimum
-   * archive age between all entries.
-   * @param mountPolicies the list of mount policies in order to create the best one.
-   * @return a pair with the max retrieve priority and minimum archive age
-   */
-  static std::pair<uint64_t, uint64_t>
-  getArchiveMountPolicyMaxPriorityMinAge(const std::list<common::dataStructures::MountPolicy> &mountPolicies);
-
-  /**
-   * Given a list of mount policies, it compares all of them to extract both the maximum retrieve priority and the minimum
-   * retrieve age between all entries.
-   * @param mountPolicies the list of mount policies in order to create the best one.
-   * @return a pair with the max retrieve priority and minimum retrieve age
-   */
-  static std::pair<uint64_t, uint64_t>
-  getRetrieveMountPolicyMaxPriorityMinAge(const std::list<common::dataStructures::MountPolicy> &mountPolicies);
-
 public:
   std::unique_ptr<SchedulerDatabase::TapeMountDecisionInfo> getMountInfo(log::LogContext& logContext) override;
   std::unique_ptr<SchedulerDatabase::TapeMountDecisionInfo> getMountInfo(log::LogContext& logContext,
@@ -296,7 +241,6 @@ public:
       // This implementation, serves only PGSCHED implementation
       throw cta::exception::Exception("Not implemented");
     }
-
     void setJobBatchTransferred(std::list<std::unique_ptr<SchedulerDatabase::ArchiveJob>>& jobsBatch,
                                 log::LogContext& lc) override;
   };
@@ -357,7 +301,6 @@ public:
     const MountInfo& getMountInfo() override;
     std::list<std::unique_ptr<cta::SchedulerDatabase::RetrieveJob>>
     getNextJobBatch(uint64_t filesRequested, uint64_t bytesRequested, log::LogContext& logContext) override;
-
     void requeueJobBatch(std::list<std::unique_ptr<SchedulerDatabase::RetrieveJob>>& jobBatch,
                          log::LogContext& logContext) override;
 
@@ -365,14 +308,6 @@ public:
       // Do nothing in this implementation, serves only PGSCHED implementation
       return 0;
     }
-
-    bool reserveDiskSpace(const cta::DiskSpaceReservationRequest& request,
-                          const std::string& externalFreeDiskSpaceScript,
-                          log::LogContext& logContext) override;
-
-    bool testReserveDiskSpace(const cta::DiskSpaceReservationRequest& request,
-                              const std::string& externalFreeDiskSpaceScript,
-                              log::LogContext& logContext) override;
 
     void
     putQueueToSleep(const std::string& diskSystemName, const uint64_t sleepTime, log::LogContext& logContext) override;

@@ -271,16 +271,19 @@ public:
     */
   virtual void addDiskSystemToSkip(const cta::SchedulerDatabase::RetrieveMount::DiskSystemToSkip& diskSystem);
 
+protected:
+   /**
+    * Internal tracking of the session completion
+    * This member variable used to be private,
+    * now protected to have it accessible via TestRetrieveMount
+    */
+  bool m_sessionRunning;
+
 private:
   /**
     * The database representation of this mount.
     */
   std::unique_ptr<cta::SchedulerDatabase::RetrieveMount> m_dbMount;
-
-  /**
-    * Internal tracking of the session completion
-    */
-  bool m_sessionRunning;
 
   /**
     * Internal tracking of the tape thread
@@ -310,6 +313,17 @@ private:
     * to get the free disk space in the Retrieve space
     */
   std::string m_externalFreeDiskSpaceScript;
+
+  /**
+    * Helper method for public calls reserveDiskSpace and testReserveDiskSpace
+    * @param request the disk space reservation request
+    * @param logContext
+    * @param doReserve if true, the method will attempt to reserve the space in the catalogue
+    */
+  bool checkOrReserveFreeDiskSpaceForRequest(const cta::DiskSpaceReservationRequest& diskSpaceReservationRequest,
+                                              log::LogContext& logContext,
+                                              bool doReserve);
+
 };  // class RetrieveMount
 
 }  // namespace cta
