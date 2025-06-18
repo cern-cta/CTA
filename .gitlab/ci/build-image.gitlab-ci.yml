@@ -59,6 +59,11 @@ build-ctageneric-from-remote-rpms:
   variables:
     DOCKERFILE: continuousintegration/docker/${PLATFORM}/remote-rpms.Dockerfile
   script:
+    # If .$PLATFORM (e.g. .el9) was not specified, attach it here
+    - |
+      if [[ "$CUSTOM_CTA_VERSION" != *.${PLATFORM} ]]; then
+        CUSTOM_CTA_VERSION="${CUSTOM_CTA_VERSION}.${PLATFORM}"
+      fi
     - echo "Building image with CTA ${CUSTOM_CTA_VERSION} RPMs"
     - echo "Image tag ${CI_REGISTRY}/cta/ctageneric:${CTA_BUILD_ID}"
     - /kaniko/executor --context $CI_PROJECT_DIR

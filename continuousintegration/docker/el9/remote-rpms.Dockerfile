@@ -48,7 +48,7 @@ ARG PUBLIC_REPO_VER
 
 # Install cta-release and clean up
 RUN dnf config-manager --enable epel --setopt="epel.priority=4" && \
-    dnf install -y "cta-release-${PUBLIC_REPO_VER}.el9" && \
+    dnf install -y "cta-release-${PUBLIC_REPO_VER}" && \
     cta-versionlock apply && \
     dnf clean all --enablerepo=\* && \
     rm -rf /etc/rc.d/rc.local
