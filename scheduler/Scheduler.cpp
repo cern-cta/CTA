@@ -567,7 +567,7 @@ void Scheduler::expandRepackRequest(const std::unique_ptr<RepackRequest>& repack
         }
         dir->mkdir();
       }
-    } catch (const cta::exception::XrootCl& ex) {
+    } catch (const exception::XrdClException& ex) {
       throw ExpandRepackRequestException(
         "In Scheduler::expandRepackRequest(): errors while doing some checks on the repack buffer. ExceptionMsg = " +
         ex.getMessageValue());
@@ -1628,7 +1628,7 @@ void Scheduler::deleteRepackBuffer(std::unique_ptr<cta::disk::Directory> repackB
     if (repackBuffer != nullptr && repackBuffer->exist()) {
       repackBuffer->rmdir();
     }
-  } catch (const cta::exception::XrootCl& ex) {
+  } catch (const exception::XrdClException& ex) {
     log::ScopedParamContainer spc(lc);
     spc.add("exceptionMsg", ex.getMessageValue());
     lc.log(log::ERR,
