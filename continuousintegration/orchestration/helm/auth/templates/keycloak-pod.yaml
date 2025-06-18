@@ -11,36 +11,30 @@ spec:
   restartPolicy: Never
   containers:
     - name: keycloak
-      image: quay.io/keycloak/keycloak:26.1
+      image: {{ .Values.keycloak.image }}
       command: ["sh", "-c"]
       args:
         - |
-          /opt/keycloak/bin/kc.sh start-dev --http-port=8080 --import-realm
-      env:
-        - name: KEYCLOAK_ADMIN
-          value: admin
-        - name: KEYCLOAK_ADMIN_PASSWORD
-          value: admin
-        - name: KC_SSO_SESSION_MAX_LIFESPAN
-          value: "29030400"
-        - name: KC_ACCESS_TOKEN_LIFESPAN
-          value: "29030400"
+          /opt/keycloak/bin/kc.sh start-dev --http-port=8080
       ports:
         - containerPort: 8080
-      volumeMounts:
-      - name: grpc-realm-volume
-        mountPath: /opt/keycloak/data/import
-      - name: keycloak-conf-volume
-        mountPath: /opt/keycloak/conf/keycloak.conf
-        subPath: keycloak.conf
-  volumes:
-  - name: grpc-realm-volume
-    configMap:
-      name: master # grpc-realm
-  - name: keycloak-conf-volume
-    configMap:
-      name: keycloak-conf
+      readinessProbe:
+        httpGet:
+          path: /realms/master
+          port: 8080
+        initialDelaySeconds: 3
+        periodSeconds: 1
+        timeoutSeconds: 2
+        failureThreshold: 6
+      env:
+        - name: KEYCLOAK_ADMIN
+          valueFrom:
+            secretKeyRef:
+              name: keycloak-admin-credentials
+              key: username
+        - name: KEYCLOAK_ADMIN_PASSWORD
+          valueFrom:
+            secretKeyRef:
+              name: keycloak-admin-credentials
+              key: password
 
-
-## useful: https://www.reddit.com/r/KeyCloak/comments/1cmc75l/import_realm/
-## look at https://www.keycloak.org/server/containers

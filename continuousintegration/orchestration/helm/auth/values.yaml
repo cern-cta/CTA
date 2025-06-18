@@ -9,6 +9,15 @@ image:
   - ctaregsecret
   - reg-ctageneric
 
+keycloak:
+  image: quay.io/keycloak/keycloak:26.1
+  adminUsername: admin
+  adminPassword: admin
+  realm: master
+  accessTokenLifespan: 36000
+  ssoSessionMaxLifespan: 36000
+
+
 # Keytabs that should be generated as secrets
 secrets:
   # Generated using echo y | xrdsssadmin -k ctaeos+ -u daemon -g daemon add /tmp/eos.keytab
