@@ -32,6 +32,7 @@ spec:
                 -s "ssoSessionMaxLifespan={{ .Values.keycloak.ssoSessionMaxLifespan }}"
 
               echo "Updated accessTokenLifespan to {{ .Values.keycloak.accessTokenLifespan }} seconds."
+              echo "Updated ssoSessionMaxLifespan to {{ .Values.keycloak.ssoSessionMaxLifespan }} seconds."
           env:
             - name: KEYCLOAK_ADMIN
               valueFrom:
