@@ -80,7 +80,7 @@ def check_rpm_available(package_name: str, package_version: str):
     Checks that the package of a given version is available.
     Note that this assumes the current machine has all the required .repo files correctly configured.
     """
-    version_regex = r"(\d+:)?\d[\w.+~]*-\d+"
+    version_regex = r"(\d+:)?\d[\w.+~]*-\d+[a-zA-Z0-9\._^]*"
     if not re.fullmatch(version_regex, package_version):
         sys.exit(f"ERROR: package version {package_version} does not satisfy regex {version_regex}. Please double-check that the version (including the release) is correct.")
 
@@ -89,7 +89,7 @@ def check_rpm_available(package_name: str, package_version: str):
     if int(tag_available) < 1:
         sys.exit(f"ERROR: Could not find {package_name} version {package_version}")
     if int(tag_available) > 1:
-        sys.exit(f"ERROR: Multiple packages found for {package_name} version {package_version}")
+        print(f"WARNING: Multiple packages found for {package_name} version {package_version}")
 
 def check_image_tag_available(image_tag: str, repository: str):
     """
