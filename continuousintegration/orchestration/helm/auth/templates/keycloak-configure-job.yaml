@@ -1,0 +1,46 @@
+{{- $keycloakName := include "keycloak.fullname" . }}
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: {{ .Release.Name }}-configure-keycloak-job
+  namespace: {{ .Release.Namespace | quote }}
+  annotations:
+    "helm.sh/hook": post-install   # Note that we need to be sure the keycloak pod has been started before we do anything with it
+    "helm.sh/hook-delete-policy": delete
+spec:
+  backoffLimit: 0
+  template:
+    spec:
+      restartPolicy: Never
+      containers:
+        - name: kcadm
+          image: {{ .Values.keycloak.image }}
+          command:
+            - /bin/bash
+            - -c
+            - |
+              set -e
+
+              /opt/keycloak/bin/kcadm.sh config credentials \
+                --server "http://{{ $keycloakName }}:8080" \
+                --realm "master" \
+                --user "${KEYCLOAK_ADMIN}" \
+                --password "${KEYCLOAK_ADMIN_PASSWORD}"
+
+              /opt/keycloak/bin/kcadm.sh update "realms/{{ .Values.keycloak.realm }}" \
+                -s "accessTokenLifespan={{ .Values.keycloak.accessTokenLifespan }}" \
+                -s "ssoSessionMaxLifespan={{ .Values.keycloak.ssoSessionMaxLifespan }}"
+
+              echo "Updated accessTokenLifespan to {{ .Values.keycloak.accessTokenLifespan }} seconds."
+              echo "Updated ssoSessionMaxLifespan to {{ .Values.keycloak.ssoSessionMaxLifespan }} seconds."
+          env:
+            - name: KEYCLOAK_ADMIN
+              valueFrom:
+                secretKeyRef:
+                  name: keycloak-admin-credentials
+                  key: username
+            - name: KEYCLOAK_ADMIN_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: keycloak-admin-credentials
+                  key: password

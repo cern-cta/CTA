@@ -11,15 +11,30 @@ spec:
   restartPolicy: Never
   containers:
     - name: keycloak
-      image: quay.io/keycloak/keycloak:26.1
+      image: {{ .Values.keycloak.image }}
       command: ["sh", "-c"]
       args:
         - |
           /opt/keycloak/bin/kc.sh start-dev --http-port=8080
-      env:
-        - name: KEYCLOAK_ADMIN
-          value: admin
-        - name: KEYCLOAK_ADMIN_PASSWORD
-          value: admin
       ports:
         - containerPort: 8080
+      readinessProbe:
+        httpGet:
+          path: /realms/master
+          port: 8080
+        initialDelaySeconds: 3
+        periodSeconds: 1
+        timeoutSeconds: 2
+        failureThreshold: 6
+      env:
+        - name: KEYCLOAK_ADMIN
+          valueFrom:
+            secretKeyRef:
+              name: keycloak-admin-credentials
+              key: username
+        - name: KEYCLOAK_ADMIN_PASSWORD
+          valueFrom:
+            secretKeyRef:
+              name: keycloak-admin-credentials
+              key: password
+
