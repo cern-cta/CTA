@@ -28,9 +28,14 @@
     - |
       if [ -n "${CUSTOM_CTA_VERSION}" ]; then
         git fetch --tags --force
-        git checkout "tags/$CUSTOM_CTA_VERSION" -- project.json
-        EXTRA_SPAWN_ARGS+=" --catalogue-version $(jq -r '.catalogueVersion' project.json)"
-        git restore project.json
+        if git checkout "tags/$CUSTOM_CTA_VERSION" -- project.json; then
+          catalogue_version=$(jq -r '.catalogueVersion' project.json)
+          git restore project.json
+        else
+          # If the project.json does not exist, just assume catalogue version 15.0
+          catalogue_version=15.0
+        fi
+        EXTRA_SPAWN_ARGS+=" --catalogue-version ${catalogue_version}"
       fi
     # Additional config
     - |
