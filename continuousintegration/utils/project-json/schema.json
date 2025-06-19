@@ -49,6 +49,8 @@
         "eosImageTag",
         "eosImageRepository",
         "ctaImageRepository",
+        "dCacheChartVersion",
+        "dCacheImageTag",
         "defaultPlatform"
       ],
       "properties": {
@@ -79,6 +81,16 @@
         },
         "ctaImageRepository": {
           "description": "CTA image repository to use in CI.",
+          "type": "string",
+          "minLength": 1
+        },
+        "dCacheChartVersion": {
+          "description": "Version of the dCache Helm chart to use in CI.",
+          "type": "string",
+          "minLength": 1
+        },
+        "dCacheImageTag": {
+          "description": "dCache image tag to use in CI.",
           "type": "string",
           "minLength": 1
         },
