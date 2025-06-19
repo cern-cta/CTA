@@ -1,5 +1,5 @@
 # @project      The CERN Tape Archive (CTA)
-# @copyright    Copyright © 2023 CERN
+# @copyright    Copyright © 2024-2025 CERN
 # @license      This program is free software, distributed under the terms of the GNU General Public
 #               Licence version 3 (GPL Version 3), copied verbatim in the file "COPYING". You can
 #               redistribute it and/or modify it under the terms of the GPL Version 3, or (at your
@@ -14,26 +14,23 @@
 #               submit itself to any jurisdiction.
 
 # CTA generic image containing all CTA RPMs
+# This image is similar to the one created by Dockerfile, except that this uses RPMs for a remote repo instead of local ones
+# As a result, any installs on this image will also pull from public yum repos instead of private ones
 FROM gitlab-registry.cern.ch/linuxsupport/alma9-base:latest
 
-ENV BASEDIR="continuousintegration/docker/alma9" \
-    CTAREPODIR="/opt/repo"
-
 # Add orchestration run scripts locally
-COPY ${BASEDIR}/../opt /opt
-
-# Custom Yum repo setup
-ARG YUM_REPOS_DIR=continuousintegration/docker/alma9/etc/yum.repos.d/
-ARG YUM_VERSIONLOCK_FILE=continuousintegration/docker/alma9/etc/yum/pluginconf.d/versionlock.list
-
-COPY ${YUM_REPOS_DIR} /etc/yum.repos.d/
-COPY ${YUM_VERSIONLOCK_FILE} /etc/dnf/plugins/versionlock.list
+COPY continuousintegration/docker/opt /opt
+COPY continuousintegration/docker/el9/etc/yum.repos.d-internal/* /etc/yum.repos.d-internal/
+# The CTA repo is a special case as it provides CTA itself. As such, we cannot put it in
+# yum.repos.d-public, as this might overwrite an existing CTA repo when installing cta-release
+# If we were to put it in yum.repos.d-internal, we would have to manually copy it from internal
+# even if we want the public repos, which is not nice.
+COPY continuousintegration/docker/el9/cta-public-testing.repo /etc/yum.repos.d/
 
 # Install necessary packages
 RUN dnf install -y \
       python3-dnf-plugin-versionlock \
-      yum-utils \
-      createrepo \
+      dnf-utils \
       epel-release \
       jq \
       bc \
@@ -45,18 +42,19 @@ RUN dnf install -y \
 # We add the cta user so that we can consistently reference it in the Helm chart when changing keytab ownership
 RUN useradd -m -u 1000 -g tape cta
 
-# Copy pre-built RPMs into the local repository directory
-COPY image_rpms ${CTAREPODIR}/RPMS/x86_64
+# Variable to specify the version to be used for CTA RPMs from the cta-ci-repo
+# Format: X.YY.ZZ.A-B
+ARG PUBLIC_REPO_VER
 
-# Populate local repository and enable it
+# Install cta-release and clean up
 RUN dnf config-manager --enable epel --setopt="epel.priority=4" && \
-    createrepo "${CTAREPODIR}" && \
-    echo -e "[cta-artifacts]\n\
-name=CTA artifacts\n\
-baseurl=file://${CTAREPODIR}\n\
-gpgcheck=0\n\
-enabled=1\n\
-priority=2" > /etc/yum.repos.d/cta-artifacts.repo && \
-    dnf config-manager --enable cta-artifacts && \
+    dnf install -y "cta-release-${PUBLIC_REPO_VER}" && \
+    cta-versionlock apply && \
     dnf clean all --enablerepo=\* && \
     rm -rf /etc/rc.d/rc.local
+
+# Overwrite with internal repos if configured
+ARG USE_INTERNAL_REPOS=FALSE
+RUN if [ "${USE_INTERNAL_REPOS}" = "TRUE" ]; then \
+      cp -f /etc/yum.repos.d-internal/* /etc/yum.repos.d/; \
+    fi

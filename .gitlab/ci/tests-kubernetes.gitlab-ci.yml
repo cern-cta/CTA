@@ -2,44 +2,49 @@
 # These are also the only tests executed on our personal runners instead of the GitLab runners
 
 .setup-k8s-test-variables: &setup-k8s-test-variables
-    - | # Which scheduler to use
+    - | # Which scheduler config to use
       if [ $SCHEDULER_TYPE == "objectstore" ]; then
         SCHEDULER_CONFIG=/opt/kubernetes/CTA/scheduler/ci-ceph-values.yaml
       else
         SCHEDULER_CONFIG=presets/dev-scheduler-postgres-values.yaml
       fi
-    - | # Which catalogue to use
+    - | # Which catalogue config to use
       if [ $ORACLE_SUPPORT == "TRUE" ]; then
         CATALOGUE_CONFIG=/opt/kubernetes/CTA/catalogue/ci-oracle-values.yaml
       else
         CATALOGUE_CONFIG=presets/dev-catalogue-postgres-values.yaml
       fi
     - | # Which image tag to use
-      if [ $SYSTEMTESTS_ONLY == "TRUE" ]; then
-        if [ -z "$SYSTEMTESTS_IMAGETAG" ]; then
+      if [ $PIPELINE_TYPE == "SYSTEM_TEST_ONLY" ]; then
+        if [ -z "$CUSTOM_SYSTEM_TEST_IMAGE_TAG" ]; then
           IMAGE_TAG=$(./continuousintegration/utils/get_latest_image_tag_on_branch.sh --branch $CI_DEFAULT_BRANCH)
         else
-          IMAGE_TAG=$SYSTEMTESTS_IMAGETAG
+          IMAGE_TAG=$CUSTOM_SYSTEM_TEST_IMAGE_TAG
         fi
       else
         IMAGE_TAG=$CTA_BUILD_ID
       fi
     # If we are testing from a CTA tag, get the Catalogue version for that tag
     - |
-      if [ -n "${CUSTOM_CTA_TAG}" ]; then
+      if [ -n "${CUSTOM_CTA_VERSION}" ]; then
         git fetch --tags --force
-        git checkout tags/$CUSTOM_CTA_TAG -- catalogue/CTARefCatalogueSchemaVersion.cmake
-        CATALOGUE_VERSION=$(cat catalogue/CTARefCatalogueSchemaVersion.cmake | grep -v '#' | grep 'CTA_CATALOGUE_REF_SCHEMA_VERSION_CURR' | awk '{print $2}' | awk -F ')' '{ print $1}')
-        EXTRA_SPAWN_ARGS="${EXTRA_SPAWN_ARGS} --catalogue-version ${CATALOGUE_VERSION}.0"
+        if git checkout "tags/$CUSTOM_CTA_VERSION" -- project.json; then
+          catalogue_version=$(jq -r '.catalogueVersion' project.json)
+          git restore project.json
+        else
+          # If the project.json does not exist, just assume catalogue version 15.0
+          catalogue_version=15.0
+        fi
+        EXTRA_SPAWN_ARGS+=" --catalogue-version ${catalogue_version}"
       fi
     # Additional config
     - |
       if [ -n "${CUSTOM_CTA_VALUES_FILE}" ]; then
-        EXTRA_SPAWN_ARGS="${EXTRA_SPAWN_ARGS} --cta-config ${CUSTOM_CTA_VALUES_FILE}"
+        EXTRA_SPAWN_ARGS+=" --cta-config ${CUSTOM_CTA_VALUES_FILE}"
       fi
     - |
       if [ -n "${CUSTOM_EOS_VALUES_FILE}" ]; then
-        EXTRA_SPAWN_ARGS="${EXTRA_SPAWN_ARGS} --eos-config ${CUSTOM_EOS_VALUES_FILE}"
+        EXTRA_SPAWN_ARGS+=" --eos-config ${CUSTOM_EOS_VALUES_FILE}"
       fi
     # Export all variables here so that it is clear which ones are available
     - export SCHEDULER_CONFIG CATALOGUE_CONFIG IMAGE_TAG EXTRA_SPAWN_ARGS
@@ -47,20 +52,18 @@
 
 .kubernetes-test:
   needs:
-    - job: build-ctageneric-from-artifacts
-      optional: true # Otherwise the SYSTEMTESTS_ONLY flag won't work
-    - job: build-ctageneric-from-repos
+    - job: build-ctageneric-from-local-rpms
+      optional: true # Otherwise the SYSTEM_TEST_ONLY PIPELINE_TYPE won't work
+    - job: build-ctageneric-from-remote-rpms
       optional: true
     - job: prepare
       optional: true
     - job: modify-catalogue-version
       optional: true
   rules:
-    - if: $CI_PIPELINE_SOURCE == "merge_request_event"
-      when: never
     - if: $CI_COMMIT_TAG
       when: never
-    - if: $PIPELINE_TYPE == "CTAGENERIC_IMAGE"
+    - if: $PIPELINE_TYPE == "IMAGE_FROM_CTA_VERSION"
       when: never
     - if: $SCHEDULER_TYPE == "pgsched"
       when: manual
@@ -84,14 +87,6 @@
     - extra_args=($EXTRA_ARGS)
     - if [[ -n "${EXTRA_SPAWN_ARGS}" ]]; then extra_args+=(--spawn-options "${EXTRA_SPAWN_ARGS}"); fi
     - if [[ -n "${EXTRA_TEST_ARGS}" ]];  then extra_args+=(--test-options "${EXTRA_TEST_ARGS}"); fi
-    # The inner .el9 appending is a temporary fix for choosing which docker image to grab
-    - |
-      if [[ -n "${CUSTOM_EOS_TAG}" ]]; then
-        if [[ $PIPELINE_TYPE == "EOS_REGR_AGAINST_CTA_MAIN" ]] || [[ $PIPELINE_TYPE == "EOS_REGR_AGAINST_CTA_TAG" ]]; then
-          CUSTOM_EOS_TAG="${CUSTOM_EOS_TAG}.el9"
-        fi
-        extra_args+=(--eos-image-tag "${CUSTOM_EOS_TAG}");
-      fi
     # Run test
     - cd continuousintegration/orchestration/
     - ./run_systemtest.sh --namespace ${NAMESPACE}
@@ -149,9 +144,9 @@ test-cta-admin:
   extends:
     - .kubernetes-test
   rules:
-    # Skip this test for EOS regressions as it does not test anything new
+    # Skip this test for regressions as it does not test anything new
     # with respect to the other tests we run.
-    - if:  $PIPELINE_TYPE == "EOS_REGR_AGAINST_CTA_TAG"
+    - if:  $PIPELINE_TYPE == "REGR_AGAINST_CTA_VERSION"
       when: never
     - !reference [.kubernetes-test, rules]
   variables:
@@ -188,14 +183,12 @@ test-liquibase-update:
     EXTRA_ARGS: "--test-timeout 2400"
   before_script:
     - !reference [.kubernetes-test, before_script]
-    - | # Yes this is ugly, hopefully we can improve this if we have a project.json where we specify these kinds of values
-      CURRENT_VERSION=$(grep -E '^[^#]*set\(CTA_CATALOGUE_REF_SCHEMA_VERSION_CURR' catalogue/CTARefCatalogueSchemaVersion.cmake | grep -oP 'CTA_CATALOGUE_REF_SCHEMA_VERSION_CURR \K[0-9]+')
-      PREVIOUS_VERSION=$(grep -E '^[^#]*set\(CTA_CATALOGUE_REF_SCHEMA_VERSION_PREV' catalogue/CTARefCatalogueSchemaVersion.cmake | grep -oP 'CTA_CATALOGUE_REF_SCHEMA_VERSION_PREV \K[0-9]+')
-      if [ "$CURRENT_VERSION" = "$PREVIOUS_VERSION" ]; then
+    - |
+      if [ "$(jq '.supportedCatalogueVersions | length' project.json)" -eq 1 ]; then
         echo "We are currently in a non-catalogue release. No update to test."
         exit 0
       fi
-    - PREV_CATALOGUE_VERSION=$(./continuousintegration/utils/get_prev_catalogue_schema_version.sh)
+    - PREV_CATALOGUE_VERSION=$(jq .supportedCatalogueVersions[] project.json | grep -v $(jq .catalogueVersion project.json) | head -1)
     # Note that we need to do this here as the image-tag is not available yet in the variables part
     - export EXTRA_SPAWN_ARGS="--catalogue-version ${PREV_CATALOGUE_VERSION}"
 
@@ -228,11 +221,9 @@ stress-test:
   interruptible: false
   stage: system-test
   rules:
-    - if: $CI_PIPELINE_SOURCE == "merge_request_event"
-      when: never
     - if: $CI_COMMIT_TAG
       when: never
-    - if: $PIPELINE_TYPE == "CTAGENERIC_IMAGE"
+    - if: $PIPELINE_TYPE != "DEFAULT"
       when: never
     - when: manual
       allow_failure: true # Otherwise this blocks the pipeline

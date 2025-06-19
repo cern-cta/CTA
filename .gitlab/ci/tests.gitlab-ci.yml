@@ -1,23 +1,22 @@
-.before-script-alma9: &before-script-alma9
-  - cp -f continuousintegration/docker/alma9/etc/yum.repos.d/*.repo /etc/yum.repos.d/
-  - cp -f continuousintegration/docker/alma9/etc/yum/pluginconf.d/versionlock.list /etc/yum/pluginconf.d/
-  - cp -f continuousintegration/docker/alma9/etc/yum/pluginconf.d/versionlock.list /etc/dnf/plugins/versionlock.list
+.setup-cta-install: &setup-cta-install
   - mkdir -p ${CTAREPODIR}
   - cp -r build_rpm/RPM ${CTAREPODIR}
   - createrepo ${CTAREPODIR}
-  - echo -e "[cta-artifacts]\nname=CTA artifacts\nbaseurl=file://${CTAREPODIR}\ngpgcheck=0\nenabled=1\npriority=2" > /etc/yum.repos.d/cta-artifacts.repo
-  - yum -y --nogpgcheck install cta-integrationtests cta-debuginfo cta-debugsource
+  - echo -e "[cta-local-testing]\nname=CTA artifacts\nbaseurl=file://${CTAREPODIR}\ngpgcheck=0\nenabled=1\npriority=2" > /etc/yum.repos.d/cta-local-testing.repo
+  - dnf -y --nogpgcheck install cta-release
+  - cta-versionlock apply
+  - |
+    if [ "$USE_INTERNAL_REPOS" == "TRUE" ]; then
+      cp -f continuousintegration/docker/${PLATFORM}/etc/yum.repos.d-internal/*.repo /etc/yum.repos.d/
+    fi
+  - dnf -y --nogpgcheck install cta-integrationtests cta-debuginfo cta-debugsource
 
 test-cta-valgrind:
   stage: test
   needs:
     - job: build-cta-rpm
   rules:
-    - if: $SYSTEMTESTS_ONLY == "TRUE"
-      when: never
-    - if: $PIPELINE_TYPE != "COMMIT"
-      when: never
-    - if: $CI_PIPELINE_SOURCE == "merge_request_event"
+    - if: $PIPELINE_TYPE != "DEFAULT"
       when: never
     - if: $CI_COMMIT_TAG
       when: never
@@ -34,7 +33,7 @@ test-cta-valgrind:
   variables:
     CTAREPODIR: /tmp/repo
   before_script:
-    - *before-script-alma9
+    - *setup-cta-install
   script:
     - /usr/bin/cta-unitPlusIntegrationTests.sh
 
@@ -43,20 +42,16 @@ integration-test-cta:
   needs:
     - job: build-cta-rpm
   rules:
-    - if: $CI_PIPELINE_SOURCE == "merge_request_event"
-      when: never
     - if: $CI_COMMIT_TAG
       when: never
-    - if: $SYSTEMTESTS_ONLY == "TRUE"
-      when: never
-    - if: $PIPELINE_TYPE != "COMMIT"
+    - if: $PIPELINE_TYPE != "DEFAULT"
       when: never
     - when: on_success
   image: $IMAGE_TEST
   variables:
     CTAREPODIR: /tmp/repo
   before_script:
-    - *before-script-alma9
+    - *setup-cta-install
   script:
     - /usr/bin/cta-integrationTests
 
@@ -65,22 +60,18 @@ unit-test-postgresql:
   needs:
     - job: build-cta-rpm
   rules:
-    - if: $CI_PIPELINE_SOURCE == "merge_request_event"
-      when: never
     - if: $CI_COMMIT_TAG
       when: never
-    - if: $SYSTEMTESTS_ONLY == "TRUE"
-      when: never
-    - if: $PIPELINE_TYPE != "COMMIT"
+    - if: $PIPELINE_TYPE != "DEFAULT"
       when: never
     - when: on_success
   image: $IMAGE_TEST
   variables:
     CTAREPODIR: /tmp/repo
   before_script:
-    - *before-script-alma9
+    - *setup-cta-install
   script:
-    - yum -y install cta-catalogueutils
+    - dnf -y install cta-catalogueutils
     - POSTGRESQL_DATA_DIR=/usr/local/cta_test_pgsql_data
     - POSTGRESQL_LOG_DIR=/var/log/postgres
     - echo POSTGRESQL_DATA_DIR=${POSTGRESQL_DATA_DIR}
@@ -112,15 +103,11 @@ unit-test-oracle:
   needs:
     - job: build-cta-rpm
   rules:
-    - if: $CI_PIPELINE_SOURCE == "merge_request_event"
-      when: never
     - if: $CI_COMMIT_TAG
-      when: never
-    - if: $SYSTEMTESTS_ONLY == "TRUE"
       when: never
     - if: $ORACLE_SUPPORT == "FALSE"
       when: never
-    - if: $PIPELINE_TYPE != "COMMIT"
+    - if: $PIPELINE_TYPE != "DEFAULT"
       when: never
     - when: on_success
   image: $IMAGE_TEST
@@ -131,9 +118,9 @@ unit-test-oracle:
     # Note that this expects the full url; not a shortname relying on tnsnames
     ORACLE_DATABASE: $CI_ORACLE_UNIT_TEST_DB_DATABASE
   before_script:
-    - *before-script-alma9
+    - *setup-cta-install
   script:
-    - yum -y install cta-catalogueutils
+    - dnf -y install cta-catalogueutils
     - CTA_CATALOGUE_CONF=/etc/cta/cta-catalogue.conf
     - echo CTA_CATALOGUE_CONF=${CTA_CATALOGUE_CONF}
     - echo oracle:${ORACLE_USERNAME}/${ORACLE_PASSWORD}@${ORACLE_DATABASE} > ${CTA_CATALOGUE_CONF}
@@ -149,13 +136,9 @@ test-cta-release:
   needs:
     - job: build-cta-rpm
   rules:
-    - if: $CI_PIPELINE_SOURCE == "merge_request_event"
-      when: never
     - if: $CI_COMMIT_TAG
       when: never
-    - if: $SYSTEMTESTS_ONLY == "TRUE"
-      when: never
-    - if: $PIPELINE_TYPE != "COMMIT"
+    - if: $PIPELINE_TYPE != "DEFAULT"
       when: never
     - when: on_success
   image: $IMAGE_TEST
@@ -166,15 +149,15 @@ test-cta-release:
     - mkdir -p ${CTAREPODIR}
     - cp -r build_rpm/RPM ${CTAREPODIR}
     - createrepo ${CTAREPODIR}
-    - echo -e "[cta-artifacts]\nname=CTA artifacts\nbaseurl=file://${CTAREPODIR}\ngpgcheck=0\nenabled=1\npriority=2" > /etc/yum.repos.d/cta-artifacts.repo
-    - yum install --nogpgcheck -y cta-release
+    - echo -e "[cta-local-testing]\nname=CTA artifacts\nbaseurl=file://${CTAREPODIR}\ngpgcheck=0\nenabled=1\npriority=2" > /etc/yum.repos.d/cta-local-testing.repo
+    - dnf install --nogpgcheck -y cta-release
     - cta-versionlock apply
-    - yum install --nogpgcheck -y cta-frontend
-    - yum install --nogpgcheck -y cta-taped
-    - yum install --nogpgcheck -y cta-rmcd
-    - yum install --nogpgcheck -y cta-smc
-    - yum install --nogpgcheck -y eos-server
-    - yum install --nogpgcheck -y eos-client
+    - dnf install --nogpgcheck -y cta-frontend
+    - dnf install --nogpgcheck -y cta-taped
+    - dnf install --nogpgcheck -y cta-rmcd
+    - dnf install --nogpgcheck -y cta-smc
+    - dnf install --nogpgcheck -y eos-server
+    - dnf install --nogpgcheck -y eos-client
     # Check that everything was installed properly
     - cta-versionlock --json check-installed > checkpkg-output.json
   artifacts:

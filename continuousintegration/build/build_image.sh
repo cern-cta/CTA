@@ -30,13 +30,13 @@ usage() {
   echo "  -n, --name:                         The Docker image name. Defaults to ctageneric"
   echo "  -l, --load-into-minikube:           Takes the image from the podman registry and ensures that it is present in the image registry used by minikube."
   echo "  -c, --container-runtime <runtime>:  The container runtime to use for the build container. Defaults to podman."
-  echo "      --dockerfile <path>:            Path to the Dockerfile (default: 'alma9/Dockerfile'). Should be relative to the repository root."
-  echo "      --yum-repos-dir <path>:         Directory containing yum.repos.d/ on the host. Should be relative to the repository root."
-  echo "      --yum-versionlock-file <path>:  Path to versionlock.list on the host. Should be relative to the repository root."
+  echo "      --dockerfile <path>:            Path to the Dockerfile (default: 'continuousintegration/docker/{defaultplatform}/local-rpms.Dockerfile'). Should be relative to the repository root."
+  echo "      --use-internal-repos:           Use the internal yum repos instead of the public repos."
   exit 1
 }
 
 buildImage() {
+  project_root=$(git rev-parse --show-toplevel)
 
   # Default values
   local rpm_src=""
@@ -44,10 +44,11 @@ buildImage() {
   local image_name="ctageneric"
   local container_runtime="podman"
   local rpm_default_src="image_rpms"
-  local yum_repos_dir="continuousintegration/docker/alma9/etc/yum.repos.d/"
-  local yum_versionlock_file="continuousintegration/docker/alma9/etc/yum/pluginconf.d/versionlock.list"
-  local dockerfile="continuousintegration/docker/alma9/Dockerfile"
+  local defaultPlatform=$(jq -r .dev.defaultPlatform "${project_root}/project.json")
+  local dockerfile="continuousintegration/docker/${defaultPlatform}/local-rpms.Dockerfile"
   local load_into_minikube=false
+  # Note that the capitalization here is intentional as this is passed directly as a build arg
+  local use_internal_repos="FALSE"
 
   while [[ "$#" -gt 0 ]]; do
     case "$1" in
@@ -55,7 +56,7 @@ buildImage() {
     -c | --container-runtime)
       if [[ $# -gt 1 ]]; then
         if [ "$2" != "docker" ] && [ "$2" != "podman" ]; then
-          echo "-c | --container-runtime must be one of [docker, podman]."
+          echo "-c | --container-runtime is \"$2\" but must be one of [docker, podman]."
           exit 1
         fi
         container_runtime="$2"
@@ -95,30 +96,15 @@ buildImage() {
     -l | --load-into-minikube)
       load_into_minikube=true
       ;;
+    --use-internal-repos)
+      use_internal_repos="TRUE"
+      ;;
     --dockerfile)
       if [[ $# -gt 1 ]]; then
         dockerfile="$2"
         shift
       else
         echo "Error: --dockerfile requires an argument"
-        exit 1
-      fi
-      ;;
-    --yum-repos-dir)
-      if [[ $# -gt 1 ]]; then
-        yum_repos_dir="$2"
-        shift
-      else
-        echo "Error: --yum-repos-dir requires an argument"
-        exit 1
-      fi
-      ;;
-    --yum-versionlock-file)
-      if [[ $# -gt 1 ]]; then
-        yum_versionlock_file="$2"
-        shift
-      else
-        echo "Error: --yum-versionlock-file requires an argument"
         exit 1
       fi
       ;;
@@ -141,7 +127,6 @@ buildImage() {
   fi
 
   # navigate to root directory
-  project_root=$(git rev-parse --show-toplevel)
   cd "${project_root}"
 
   # Copy the rpms into a predefined rpm directory
@@ -157,8 +142,7 @@ buildImage() {
     ${container_runtime} build . -f ${dockerfile} \
       -t ${image_name}:${image_tag} \
       --network host \
-      --build-arg YUM_REPOS_DIR=${yum_repos_dir} \
-      --build-arg YUM_VERSIONLOCK_FILE=${yum_versionlock_file}
+      --build-arg USE_INTERNAL_REPOS=${use_internal_repos}
   )
 
   if [ "$load_into_minikube" == "true" ]; then

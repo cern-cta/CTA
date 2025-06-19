@@ -6,11 +6,7 @@ cppcheck:
   rules:
     - if: $CI_COMMIT_TAG
       when: never
-    - if: $CI_PIPELINE_SOURCE == "merge_request_event"
-      when: never
-    - if: $SYSTEMTESTS_ONLY == "TRUE"
-      when: never
-    - if: $PIPELINE_TYPE != "COMMIT"
+    - if: $PIPELINE_TYPE != "DEFAULT"
       when: never
     - when: always
   dependencies: [] # Ensure no artifacts are downloaded
@@ -43,11 +39,7 @@ clang-format-report:
   rules:
     - if: $CI_COMMIT_TAG
       when: never
-    - if: $SYSTEMTESTS_ONLY == "TRUE"
-      when: never
-    - if: $CI_PIPELINE_SOURCE == "merge_request_event"
-      when: never
-    - if: $PIPELINE_TYPE != "COMMIT"
+    - if: $PIPELINE_TYPE != "DEFAULT"
       when: never
     - when: always
   image: $IMAGE_ANALYSIS
@@ -82,11 +74,7 @@ clang-format-apply:
   rules:
     - if: $CI_COMMIT_TAG
       when: never
-    - if: $SYSTEMTESTS_ONLY == "TRUE"
-      when: never
-    - if: $CI_PIPELINE_SOURCE == "merge_request_event"
-      when: never
-    - if: $PIPELINE_TYPE != "COMMIT"
+    - if: $PIPELINE_TYPE != "DEFAULT"
       when: never
     - if: $CI_COMMIT_REF_NAME == $CI_DEFAULT_BRANCH
       when: never
@@ -112,11 +100,7 @@ catalogue-schema-version-check:
   stage: analysis
   dependencies: [] # Ensure no artifacts are downloaded
   rules:
-    - if: $CI_PIPELINE_SOURCE == "merge_request_event"
-      when: never
-    - if: $PIPELINE_TYPE != "COMMIT"
-      when: never
-    - if: $SYSTEMTESTS_ONLY == "TRUE"
+    - if: $PIPELINE_TYPE != "DEFAULT"
       when: never
     # For pivot CTA releases: vX.Y.0
     - if: $CI_COMMIT_TAG && $CI_COMMIT_TAG =~ /^.*\.0\.[0-9]+-[^-]*$/
@@ -144,3 +128,23 @@ catalogue-schema-version-check:
   image: $IMAGE_ANALYSIS
   script:
     - ./continuousintegration/checks/check_catalogue_schema_version.sh ${CATALOGUE_SCHEMA_CHECK_PARAMS} .
+
+validate-pipeline-variables:
+  stage: analysis
+  image: $IMAGE_ANALYSIS
+  script:
+    - |
+      if [ "$USE_INTERNAL_REPOS" == "TRUE" ]; then
+        cp -f continuousintegration/docker/${PLATFORM}/etc/yum.repos.d-internal/*.repo /etc/yum.repos.d/
+      else
+        cp -f continuousintegration/docker/${PLATFORM}/etc/yum.repos.d-public/*.repo /etc/yum.repos.d/
+      fi
+    # This repo is a special case as it provides CTA itself
+    - cp -f continuousintegration/docker/${PLATFORM}/cta-public-testing.repo /etc/yum.repos.d/
+    - python3 ./continuousintegration/checks/validate_ci_input_variables.py
+
+validate-project-json:
+  stage: analysis
+  image: $IMAGE_ANALYSIS
+  script:
+    - python3 ./continuousintegration/utils/project-json/validate_project_json.py

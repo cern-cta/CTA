@@ -88,6 +88,7 @@ update_local_cta_chart_dependencies() {
 }
 
 create_instance() {
+  project_json_path="../../project.json"
   # Argument defaults
   # Not that some arguments below intentionally use false and not 0/1 as they are directly passed as a helm option
   # Note that it is fine for not all of these secrets to exist; eventually the reg-* format will be how the minikube_cta_ci setup inits things
@@ -99,14 +100,15 @@ create_instance() {
   # default should not make user loose data if he forgot the option
   reset_catalogue=false
   reset_scheduler=false
-  cta_image_repository="gitlab-registry.cern.ch/cta/ctageneric" # Used for the ctageneric pod image(s)
+  cta_image_repository=$(jq -r .dev.ctaImageRepository ${project_json_path}) # Used for the ctageneric pod image(s)
   dry_run=0 # Will not do anything with the namespace and just render the generated yaml files
   num_library_devices=1 # For the auto-generated tapeservers config
   max_drives_per_tpsrv=1
   max_tapeservers=2
   # EOS related
-  eos_image_tag=5.3.10.el9 # This tag is for EOS 5.3.10
-  eos_image_repository=gitlab-registry.cern.ch/dss/eos/eos-ci
+  eos_server_chart_version=$(jq -r .dev.eosServerChartVersion ${project_json_path})
+  eos_image_tag=$(jq -r .dev.eosImageTag ${project_json_path})
+  eos_image_repository=$(jq -r .dev.eosImageRepository ${project_json_path})
   eos_config=presets/dev-eos-values.yaml
 
   # Parse command line arguments
@@ -180,10 +182,8 @@ create_instance() {
     usage
   fi
   if [ -z "${catalogue_schema_version}" ]; then
-    echo "No catalogue schema version provided: using latest tag"
-    catalogue_major_ver=$(grep CTA_CATALOGUE_SCHEMA_VERSION_MAJOR ../../catalogue/cta-catalogue-schema/CTACatalogueSchemaVersion.cmake | sed 's/[^0-9]*//g')
-    catalogue_minor_ver=$(grep CTA_CATALOGUE_SCHEMA_VERSION_MINOR ../../catalogue/cta-catalogue-schema/CTACatalogueSchemaVersion.cmake | sed 's/[^0-9]*//g')
-    catalogue_schema_version="$catalogue_major_ver.$catalogue_minor_ver"
+    echo "No catalogue schema version provided: using project.json value"
+    catalogue_schema_version=$(jq .catalogueVersion ${project_json_path})
   fi
 
   if [ $dry_run == 1 ]; then
@@ -286,7 +286,7 @@ create_instance() {
 
   wait $auth_pid || exit 1
 
-  log_run helm ${helm_command} eos oci://registry.cern.ch/eos/charts/server --version 0.5.1 \
+  log_run helm ${helm_command} eos oci://registry.cern.ch/eos/charts/server --version "${eos_server_chart_version}" \
                                 --namespace "${namespace}" \
                                 -f "${eos_config}" \
                                 --set global.repository="${eos_image_repository}" \

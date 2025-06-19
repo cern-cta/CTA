@@ -2,9 +2,7 @@
   stage: build:image
   retry: 1
   rules:
-    - if: $CI_PIPELINE_SOURCE == "merge_request_event"
-      when: never
-    - if: $SYSTEMTESTS_ONLY == "TRUE"
+    - if: $PIPELINE_TYPE == "SYSTEM_TEST_ONLY"
       when: never
     # For pivot CTA releases: vX.Y.0
     - if: $CI_COMMIT_TAG && $CI_COMMIT_TAG =~ /^.*\.0\.[0-9]+-[^-]*$/
@@ -19,17 +17,19 @@
   before_script:
     - echo "{\"auths\":{\"$CI_REGISTRY\":{\"username\":\"${DOCKER_LOGIN_USERNAME}\",\"password\":\"${DOCKER_LOGIN_PASSWORD}\"}}}" > /kaniko/.docker/config.json
 
-build-ctageneric-from-artifacts:
+build-ctageneric-from-local-rpms:
   extends:
     - .build-ctageneric
-  needs: # Needs RPM artifacts to build the image
+  needs:
     - job: build-cta-rpm
-    - job: modify-versionlock
+    - job: modify-project-json
       optional: true
   rules:
-    - if: $PIPELINE_TYPE == "EOS_REGR_AGAINST_CTA_TAG" || $PIPELINE_TYPE == "CTAGENERIC_IMAGE"
+    - if: $PIPELINE_TYPE == "REGR_AGAINST_CTA_VERSION" || $PIPELINE_TYPE == "IMAGE_FROM_CTA_VERSION"
       when: never
     - !reference [.build-ctageneric, rules]
+  variables:
+    DOCKERFILE: continuousintegration/docker/${PLATFORM}/local-rpms.Dockerfile
   script:
     - echo "Building image for tag $CTA_BUILD_ID"
     - echo "Image tag ${CI_REGISTRY}/cta/ctageneric:${CTA_BUILD_ID}"
@@ -39,28 +39,36 @@ build-ctageneric-from-artifacts:
     - mkdir -p image_rpms
     - cp -r build_rpm/RPM/RPMS/x86_64 image_rpms
     - /kaniko/executor --context $CI_PROJECT_DIR
-                       --dockerfile continuousintegration/docker/alma9/Dockerfile
+                       --dockerfile $DOCKERFILE
                        --destination ${CI_REGISTRY}/cta/ctageneric:${CTA_BUILD_ID}
+                       --build-arg USE_INTERNAL_REPOS=${USE_INTERNAL_REPOS}
     - echo "Image pushed successfully to ${CI_REGISTRY}/cta/ctageneric:${CTA_BUILD_ID}"
 
-build-ctageneric-from-repos:
+build-ctageneric-from-remote-rpms:
   extends:
     - .build-ctageneric
   needs:
-    - job: pipeline-variable-check
-      optional: true
-    - job: modify-versionlock
+    - job: validate-pipeline-variables
+    - job: modify-project-json
       optional: true
   rules:
-    - if: $PIPELINE_TYPE == "EOS_REGR_AGAINST_CTA_TAG"
-    - if: $PIPELINE_TYPE == "CTAGENERIC_IMAGE"
+    - if: $PIPELINE_TYPE == "REGR_AGAINST_CTA_VERSION"
+    - if: $PIPELINE_TYPE == "IMAGE_FROM_CTA_VERSION"
     - when: never
     - !reference [.build-ctageneric, rules]
+  variables:
+    DOCKERFILE: continuousintegration/docker/${PLATFORM}/remote-rpms.Dockerfile
   script:
-    - echo "Building image with CTA ${CUSTOM_CTA_TAG} RPMs and EOS ${CUSTOM_EOS_TAG} RPMs"
+    # If .$PLATFORM (e.g. .el9) was not specified, attach it here
+    - |
+      if [[ "$CUSTOM_CTA_VERSION" != *.${PLATFORM} ]]; then
+        CUSTOM_CTA_VERSION="${CUSTOM_CTA_VERSION}.${PLATFORM}"
+      fi
+    - echo "Building image with CTA ${CUSTOM_CTA_VERSION} RPMs"
     - echo "Image tag ${CI_REGISTRY}/cta/ctageneric:${CTA_BUILD_ID}"
     - /kaniko/executor --context $CI_PROJECT_DIR
-                       --dockerfile continuousintegration/docker/alma9/tag.Dockerfile
+                       --dockerfile $DOCKERFILE
                        --destination ${CI_REGISTRY}/cta/ctageneric:${CTA_BUILD_ID}
-                       --build-arg "PUBLIC_REPO_VER=${CUSTOM_CTA_TAG:1}"
+                       --build-arg "PUBLIC_REPO_VER=${CUSTOM_CTA_VERSION}"
+                       --build-arg USE_INTERNAL_REPOS=${USE_INTERNAL_REPOS}
     - echo "Image pushed successfully to ${CI_REGISTRY}/cta/ctageneric:${CTA_BUILD_ID}"

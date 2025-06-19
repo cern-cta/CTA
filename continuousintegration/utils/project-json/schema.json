@@ -1,0 +1,150 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "CTA Project Metadata Schema",
+  "type": "object",
+  "required": [
+    "name",
+    "description",
+    "summary",
+    "license",
+    "catalogueVersion",
+    "supportedCatalogueVersions",
+    "packageGroups",
+    "platforms",
+    "dev"
+  ],
+  "properties": {
+    "name": {
+      "type": "string",
+      "minLength": 1
+    },
+    "summary": {
+      "type": "string",
+      "minLength": 1
+    },
+    "description": {
+      "type": "string",
+      "minLength": 1
+    },
+    "license": {
+      "type": "string",
+      "minLength": 1
+    },
+    "catalogueVersion": {
+      "type": "number"
+    },
+    "supportedCatalogueVersions": {
+      "type": "array",
+      "items": {
+        "type": "number"
+      },
+      "minItems": 1
+    },
+    "dev": {
+      "type": "object",
+      "required": [
+        "cppVersion",
+        "defaultBuildType",
+        "eosServerChartVersion",
+        "eosImageTag",
+        "eosImageRepository",
+        "ctaImageRepository",
+        "defaultPlatform"
+      ],
+      "properties": {
+        "cppVersion": {
+          "description": "C++ version to use for building the project.",
+          "type": "string",
+          "enum": ["c++17", "c++20", "c++23"]
+        },
+        "defaultBuildType": {
+          "description": "Default build type to use use for building the project.",
+          "type": "string",
+          "enum": ["Release", "Debug", "RelWithDebInfo", "MinSizeRel"]
+        },
+        "eosServerChartVersion": {
+          "description": "Version of the EOS server Helm chart to use in CI.",
+          "type": "string",
+          "minLength": 1
+        },
+        "eosImageRepository": {
+          "description": "EOS image repository to use in CI.",
+          "type": "string",
+          "minLength": 1
+        },
+        "eosImageTag": {
+          "description": "EOS image tag to use in CI.",
+          "type": "string",
+          "minLength": 1
+        },
+        "ctaImageRepository": {
+          "description": "CTA image repository to use in CI.",
+          "type": "string",
+          "minLength": 1
+        },
+        "defaultPlatform": {
+          "description": "Default platform to use for the development environment and build.",
+          "type": "string",
+          "minLength": 1,
+          "enum": ["el9"]
+        }
+      },
+      "additionalProperties": false
+    },
+    "packageGroups": {
+      "description": "Defines custom package groups. Each key can be referenced in the versionlock or buildRequires below, causing the corresponding version information to be applied to all packages in the package group.",
+      "type": "object",
+      "additionalProperties": {
+        "type": "array",
+        "items": {
+          "type": "string",
+          "minLength": 1
+        }
+      }
+    },
+    "platforms": {
+      "description": "Defines the information of how to build the project for a given platform.",
+      "type": "object",
+      "additionalProperties": {
+        "type": "object",
+        "required": [
+          "arch",
+          "versionlock",
+          "buildRequires"
+        ],
+        "properties": {
+          "arch": {
+            "description": "Architecture",
+            "type": "string",
+            "enum": ["x86_64"],
+            "minLength": 1
+          },
+          "versionlock": {
+            "description": "These values are used to generate a versionlock.list file.",
+            "type": "object",
+            "additionalProperties": {
+              "type": "string",
+              "minLength": 1
+            }
+          },
+          "runRequires": {
+            "description": "These values are used to generate KEY_VERSION_CONSTRAINT cmake variables. Every key will be converted to uppercase, special characters converted to underscores and _VERSION_CONSTRAINT will be appended.",
+            "type": "object",
+            "additionalProperties": {
+              "type": "string"
+            }
+          },
+          "buildRequires": {
+            "description": "These values are used to generate a list of BuildRequires items that are put in the cta.spec.in file.",
+            "type": "object",
+            "additionalProperties": {
+              "type": "string"
+            }
+          }
+        },
+        "additionalProperties": false
+      }
+    }
+  },
+  "additionalProperties": false
+}

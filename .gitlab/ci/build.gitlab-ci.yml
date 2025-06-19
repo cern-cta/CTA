@@ -1,13 +1,11 @@
 .build-cta:
   retry: 1
   rules:
-    - if: $CI_PIPELINE_SOURCE == "merge_request_event"
+    - if: $PIPELINE_TYPE == "SYSTEM_TEST_ONLY"
       when: never
-    - if: $SYSTEMTESTS_ONLY == "TRUE"
+    - if: $PIPELINE_TYPE == "REGR_AGAINST_CTA_VERSION"
       when: never
-    - if: $PIPELINE_TYPE == "EOS_REGR_AGAINST_CTA_TAG"
-      when: never
-    - if: $PIPELINE_TYPE == "CTAGENERIC_IMAGE"
+    - if: $PIPELINE_TYPE == "IMAGE_FROM_CTA_VERSION"
       when: never
   image: $IMAGE_BUILD
   artifacts:
@@ -22,7 +20,8 @@ build-cta-srpm:
   extends:
     - .build-cta
   needs:
-    - job: modify-versionlock
+    - job: validate-project-json
+    - job: modify-project-json
       optional: true
   rules:
     - !reference [.build-cta, rules]
@@ -33,7 +32,7 @@ build-cta-srpm:
     - ./continuousintegration/build/build_srpm.sh --build-dir build_srpm
                                                   --build-generator "${BUILD_GENERATOR}"
                                                   --create-build-dir
-                                                  --cta-version ${CTA_VERSION}
+                                                  --cta-version ${BUILD_CTA_VERSION}
                                                   --vcs-version ${CTA_BUILD_ID}
                                                   --scheduler-type ${SCHEDULER_TYPE}
                                                   --oracle-support ${ORACLE_SUPPORT}
@@ -45,8 +44,9 @@ build-cta-rpm:
   extends:
     - .build-cta
   needs:
+    - job: validate-pipeline-variables
     - job: build-cta-srpm
-    - job: modify-versionlock
+    - job: modify-project-json
       optional: true
       artifacts: true
   rules:
@@ -59,6 +59,7 @@ build-cta-rpm:
     - |
       if [ -z "${CI_COMMIT_TAG}" ]; then
         export VCS_VERSION=$CTA_BUILD_ID
+        export CTA_VERSION=$BUILD_CTA_VERSION
       else
         export CTA_VERSION=$(echo ${CI_COMMIT_TAG} | awk -F '[v-]' '{print $2}')
         export VCS_VERSION=$(echo ${CI_COMMIT_TAG} | awk -F '-' '{if(NF>1) print $2; else print 0}')
@@ -70,11 +71,15 @@ build-cta-rpm:
         echo "Error: failed to find tag for submodule $XRD_SSI_PATH"
         exit 1
       fi
+    - BUILD_OPTIONS=""
     # For now we automatically skip the unit tests for the postgres scheduler.
     - |
-      UNIT_TEST_OPTION=""
       if [ "${SKIP_UNIT_TESTS}" == "TRUE" ]; then
-        UNIT_TEST_OPTION="--skip-unit-tests"
+        BUILD_OPTIONS+=" --skip-unit-tests"
+      fi
+    - |
+      if [ "$USE_INTERNAL_REPOS" == "TRUE" ]; then
+        BUILD_OPTIONS+=" --use-internal-repos"
       fi
     - ./continuousintegration/build/build_rpm.sh --build-dir build_rpm
                                                  --build-generator "${BUILD_GENERATOR}"
@@ -88,7 +93,8 @@ build-cta-rpm:
                                                  --cmake-build-type "${CMAKE_BUILD_TYPE}"
                                                  --jobs $(nproc --ignore=1)
                                                  --install-srpms
-                                                 ${UNIT_TEST_OPTION}
+                                                 --platform ${PLATFORM}
+                                                 ${BUILD_OPTIONS}
 
 # Documentation export
 

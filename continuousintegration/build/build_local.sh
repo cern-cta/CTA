@@ -36,13 +36,13 @@ usage() {
   echo "      --skip-debug-packages             Skips the building of the debug RPM packages."
   echo "      --skip-unit-tests:                Skips the unit tests. Speeds up the build time by not running the unit tests."
   echo "      --skip-srpms:                     Skips the building of the SRPMs."
-  echo "      --install:                        Installs the required yum packages."
+  echo "      --install <platform>:             Installs the required yum packages for the given platform."
   echo "      --scheduler-type <type>:          The scheduler type. Ex: objectstore."
   exit 1
 }
 
 build_local() {
-
+  project_root="$(realpath "$(dirname "$0")/../..")"
   # Input args
   local clean_build_dir=false
   local clean_build_dirs=false
@@ -56,6 +56,7 @@ build_local() {
   local oracle_support="TRUE"
   local enable_ccache=true
   local install=false
+  local install_platform=""
 
   # Defaults
   local num_jobs=8
@@ -76,7 +77,15 @@ build_local() {
       --skip-unit-tests) skip_unit_tests=true ;;
       --skip-debug-packages) skip_debug_packages=true ;;
       --skip-srpms) skip_srpms=true ;;
-      --install) install=true ;;
+      --install)
+        if [[ $# -gt 1 ]]; then
+          install_platform="$2"
+          shift
+        else
+          echo "Error: --install requires an argument"
+          usage
+        fi
+        ;;
       --build-generator)
         if [[ $# -gt 1 ]]; then
           build_generator="$2"
@@ -89,7 +98,7 @@ build_local() {
       --cmake-build-type)
         if [[ $# -gt 1 ]]; then
           if [ "$2" != "Release" ] && [ "$2" != "Debug" ] && [ "$2" != "RelWithDebInfo" ] && [ "$2" != "MinSizeRel" ]; then
-            echo "--cmake-build-type must be one of [Release, Debug, RelWithDebInfo, or MinSizeRel]."
+            echo "--cmake-build-type is \"$2\" but must be one of [Release, Debug, RelWithDebInfo, or MinSizeRel]."
             exit 1
           fi
           cmake_build_type="$2"
@@ -116,9 +125,8 @@ build_local() {
     shift
   done
 
-  local initial_loc=$(pwd)
   # Navigate to repo root
-  cd "$(dirname "$(realpath "${BASH_SOURCE[0]}")")/../.."
+  cd "${project_root}"
 
   if [ ${skip_srpms} = false ]; then
     echo "Building SRPMs..."
@@ -127,7 +135,12 @@ build_local() {
       build_srpm_flags+=" --clean-build-dir"
     fi
     if [[ ${install} = true ]]; then
-      build_srpm_flags+=" --install"
+      if [ ${install_platform} == "el9" ]; then
+        dnf install -y epel-release almalinux-release-devel git python3-dnf-plugin-versionlock
+        dnf install -y gcc gcc-c++ cmake3 rpm-build dnf-utils pandoc which make ninja-build ccache systemd-devel
+      else
+        echo "Platform not supported: ${install_platform}. Must be one of [el9]"
+      fi
     fi
 
     ./continuousintegration/build/build_srpm.sh \
@@ -138,7 +151,6 @@ build_local() {
       --vcs-version ${vcs_version} \
       --scheduler-type ${scheduler_type} \
       --oracle-support ${oracle_support} \
-      --install \
       --jobs ${num_jobs} \
       ${build_srpm_flags}
   fi
@@ -168,9 +180,6 @@ build_local() {
   if [[ ${enable_ccache} = true ]]; then
     build_rpm_flags+=" --enable-ccache"
   fi
-  if [[ ${install} = true ]]; then
-    build_rpm_flags+=" --install"
-  fi
 
   echo "Building RPMs..."
   ./continuousintegration/build/build_rpm.sh \
@@ -183,6 +192,8 @@ build_local() {
     --xrootd-ssi-version ${xrootd_ssi_version} \
     --scheduler-type ${scheduler_type} \
     --oracle-support ${oracle_support} \
+    --install-srpms \
+    --platform ${install_platform} \
     ${build_rpm_flags}
 
   echo "Build successful"

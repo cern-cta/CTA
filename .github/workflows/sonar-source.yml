@@ -27,7 +27,7 @@ jobs:
         run: |
           dnf -y update
           dnf -y install epel-release almalinux-release-devel python3-dnf-plugin-versionlock
-          dnf -y --enablerepo=crb install git gcc gcc-c++ cmake3 make rpm-build yum-utils unzip which nodejs ninja-build pandoc
+          dnf -y --enablerepo=crb install git gcc gcc-c++ cmake3 make rpm-build dnf-utils unzip nodejs ninja-build
 
       - name: Download CTA
         uses: actions/checkout@v4
@@ -42,8 +42,9 @@ jobs:
           export CMAKE_OPTIONS
           export CTA_VERSION
           export CTA_BUILD_ID=${GITHUB_RUN_ID}git${GITHUB_SHA:0:8}
-          cp -f continuousintegration/docker/alma9/etc/yum.repos.d-public/*.repo /etc/yum.repos.d/
-          cp -f continuousintegration/docker/alma9/etc/yum/pluginconf.d/versionlock.list /etc/yum/pluginconf.d/
+          PLATFORM=$(jq -r .dev.defaultPlatform project.json)
+          cp -f continuousintegration/docker/${PLATFORM}/etc/yum.repos.d-public/*.repo /etc/yum.repos.d/
+          ./continuousintegration/utils/project-json/generate_versionlock.py --platform ${PLATFORM} > /etc/yum/pluginconf.d/versionlock.list
           if [[ "${GITHUB_REF_TYPE}" == "tag" ]]; then
             export TAG_VERSION=$(echo ${GITHUB_REF_NAME} | sed -e 's/^.*v//;s/-.*$//')
             export TAG_RELEASE=$(echo ${GITHUB_REF_NAME} | sed -e 's/^.*v[^-]*-//')
@@ -75,7 +76,7 @@ jobs:
         run: |
           cd xrootd-ssi-protobuf-interface && export XROOTD_SSI_PROTOBUF_INTERFACE_VERSION=$(git describe --tags --abbrev=0) && cd ..
           dnf config-manager --set-enabled crb
-          yum-builddep --nogpgcheck -y build_srpm/RPM/SRPMS/*
+          dnf builddep --nogpgcheck -y build_srpm/RPM/SRPMS/*
           mkdir build_rpm
           cd build_rpm
           cmake -DVCS_VERSION=${CTA_BUILD_ID} ${CMAKE_OPTIONS} ..

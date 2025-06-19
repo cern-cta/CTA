@@ -32,24 +32,24 @@ usage() {
   echo "  -h, --help:                           Shows help output."
   echo "  -r, --reset:                          Shut down the build container and start a new one to ensure a fresh build. Also cleans the build directories."
   echo "  -c, --container-runtime <runtime>     The container runtime to use for the build container. Defaults to podman."
-  echo "  -b, --build-image <image>             Base image to use for the build container. Defaults to the latest alma9-base image."
+  echo "  -b, --build-image <image>             Base image to use for the build container. Defaults to the image specified in project.json."
   echo "      --build-generator <generator>:    Specifies the build generator for cmake. Supported: [\"Unix Makefiles\", \"Ninja\"]."
   echo "      --clean-build-dir:                Empties the RPM build directory (build_rpm/ by default), ensuring a fresh build from scratch."
   echo "      --clean-build-dirs:               Empties both the SRPM and RPM build directories (build_srpm/ and build_rpm/ by default), ensuring a fresh build from scratch."
   echo "      --cmake-build-type <type>:        Specifies the build type for cmake. Must be one of [Release, Debug, RelWithDebInfo, or MinSizeRel]."
   echo "      --disable-oracle-support:         Disables support for oracle."
   echo "      --disable-ccache:                 Disables ccache for the building of the rpms."
-  echo "      --force-install:                  Adds the --install flag to the build_rpm step, regardless of whether the pod was reset or not."
+  echo "      --force-install:                  Adds the --install-srpm flag to the build_rpm step, regardless of whether the container was reset or not."
   echo "      --skip-build:                     Skips the build step."
   echo "      --skip-deploy:                    Skips the deploy step."
   echo "      --skip-cmake:                     Skips the cmake step of the build_rpm stage during the build process."
   echo "      --skip-debug-packages             Skips the building of the debug RPM packages."
   echo "      --skip-unit-tests:                Skips the unit tests. Speeds up the build time by not running the unit tests."
   echo "      --skip-image-reload:              Skips the step where the image is reloaded into Minikube. This allows easy redeployment with the image that is already loaded."
-  echo "      --skip-image-cleanup:             Skip the cleanup of the ctageneric images in both podman and minikube before deploying a new instance."
+  echo "      --skip-image-cleanup:             Skip the cleanup of the ctageneric images in both the container runtime and minikube before deploying a new instance."
   echo "      --scheduler-type <type>:          The scheduler type. Must be one of [objectstore, pgsched]."
   echo "      --spawn-options <options>:        Additional options to pass for the deployment. These are passed verbatim to the create/upgrade instance scripts."
-  echo "      --build-options <options>:        Additional options to pass for the image building. These are passed verbatim to the build_image.sh script."
+  echo "      --image-build-options <options>:  Additional options to pass for the image building. These are passed verbatim to the build_image.sh script."
   echo "      --scheduler-config <path>:        Path to the yaml file containing the type and credentials to configure the Scheduler. Defaults to: presets/dev-scheduler-vfs-values.yaml"
   echo "      --catalogue-config <path>:        Path to the yaml file containing the type and credentials to configure the Catalogue. Defaults to: presets/dev-catalogue-postgres-values.yaml"
   echo "      --tapeservers-config <path>:      Path to the yaml file containing the tapeservers config. If not provided, this will be auto-generated."
@@ -58,10 +58,23 @@ usage() {
   echo "      --eos-image-tag:                  Image to use for spawning EOS. If not provided, will default to the image specified in the create_instance script."
   echo "      --cta-config <path>:              Custom Values file to pass to the CTA Helm chart. Defaults to: presets/dev-cta-xrd-values.yaml"
   echo "      --eos-config <path>:              Custom Values file to pass to the EOS Helm chart. Defaults to: presets/dev-eos-values.yaml"
+  echo "      --use-public-repos:               Use the public yum repos instead of the internal yum repos. Use when you do not have access to the CERN network."
+  echo "      --platform <platform>:            Which platform to build for. Defaults to the default platform in the project.json."
   exit 1
 }
 
 build_deploy() {
+
+  local project_root=$(git rev-parse --show-toplevel)
+  local build_container_name="cta-build${project_root//\//-}"
+  # Defaults
+  local num_jobs=$(nproc --ignore=2)
+  local restarted=false
+  local deploy_namespace="dev"
+  # These versions don't affect anything functionality wise
+  local cta_version="5"
+  local vcs_version=$(git rev-parse --short HEAD)
+  local xrootd_ssi_version=$(cd "$project_root/xrootd-ssi-protobuf-interface" && git describe --tags --exact-match)
 
   # Input args
   local clean_build_dir=false
@@ -75,7 +88,7 @@ build_deploy() {
   local skip_debug_packages=false
   local skip_image_reload=false
   local build_generator="Ninja"
-  local cmake_build_type="RelWithDebInfo"
+  local cmake_build_type=$(jq -r .dev.defaultBuildType "${project_root}/project.json")
   local scheduler_type="objectstore"
   local oracle_support="TRUE"
   local enable_ccache=true
@@ -83,20 +96,13 @@ build_deploy() {
   local upgrade_eos=false
   local image_cleanup=true
   local extra_spawn_options=""
-  local extra_build_options=""
+  local extra_image_build_options=""
   local catalogue_config="presets/dev-catalogue-postgres-values.yaml"
   local eos_image_tag=""
   local container_runtime="podman"
-  local build_image="gitlab-registry.cern.ch/linuxsupport/alma9-base:latest"
+  local platform=$(jq -r .dev.defaultPlatform "${project_root}/project.json")
+  local use_internal_repos=true
 
-  # Defaults
-  local num_jobs=$(nproc --ignore=2)
-  local restarted=false
-  local deploy_namespace="dev"
-  # These versions don't affect anything functionality wise
-  local cta_version="5"
-  local vcs_version="dev"
-  local xrootd_ssi_version="dev"
 
   # Parse command line arguments
   while [[ "$#" -gt 0 ]]; do
@@ -120,12 +126,25 @@ build_deploy() {
     --force-install) force_install=true ;;
     --upgrade-cta) upgrade_cta=true ;;
     --upgrade-eos) upgrade_eos=true ;;
+    --use-public-repos) use_internal_repos=false ;;
     --eos-image-tag)
       if [[ $# -gt 1 ]]; then
         eos_image_tag="$2"
         shift
       else
         echo "Error: --eos-image-tag requires an argument"
+        usage
+      fi
+      ;;
+    --platform)
+      if [[ $# -gt 1 ]]; then
+        if [ $(jq '.platforms | has("el9")' ${project_root}/project.json) != "true" ]; then
+          echo "Error: platform $2 not supported. Please check the project.json for supported platforms."
+        fi
+        platform="$2"
+        shift
+      else
+        echo "Error: --platform requires an argument"
         usage
       fi
       ;;
@@ -141,7 +160,7 @@ build_deploy() {
     --cmake-build-type)
       if [[ $# -gt 1 ]]; then
         if [ "$2" != "Release" ] && [ "$2" != "Debug" ] && [ "$2" != "RelWithDebInfo" ] && [ "$2" != "MinSizeRel" ]; then
-          echo "--cmake-build-type must be one of [Release, Debug, RelWithDebInfo, or MinSizeRel]."
+          echo "--cmake-build-type is \"$2\" but must be one of [Release, Debug, RelWithDebInfo, or MinSizeRel]."
           exit 1
         fi
         cmake_build_type="$2"
@@ -154,22 +173,13 @@ build_deploy() {
     -c | --container-runtime)
       if [[ $# -gt 1 ]]; then
         if [ "$2" != "docker" ] && [ "$2" != "podman" ]; then
-          echo "-c | --container-runtime must be one of [docker, podman]."
+          echo "-c | --container-runtime is \"$2\" but must be one of [docker, podman]."
           exit 1
         fi
         container_runtime="$2"
         shift
       else
         echo "Error: -c | --container-runtime requires an argument"
-        usage
-      fi
-      ;;
-    -b | --build-image)
-      if [[ $# -gt 1 ]]; then
-        build_image="$2"
-        shift
-      else
-        echo "Error: -b | --build-image requires an argument"
         usage
       fi
       ;;
@@ -236,12 +246,12 @@ build_deploy() {
         exit 1
       fi
       ;;
-    --build-options)
+    --image-build-options)
       if [[ $# -gt 1 ]]; then
-        extra_build_options+=" $2"
+        extra_image_build_options+=" $2"
         shift
       else
-        echo "Error: --build-options requires an argument"
+        echo "Error: ---imagebuild-options requires an argument"
         exit 1
       fi
       ;;
@@ -253,31 +263,36 @@ build_deploy() {
     shift
   done
 
-  local project_root=$(git rev-parse --show-toplevel)
-  local build_container_name="cta-build${project_root//\//-}"
+  # navigate to root project directory
+  cd "${project_root}"
 
   #####################################################################################################################
   # Build binaries/RPMs
   #####################################################################################################################
   if [ "${skip_build}" = false ]; then
-    print_header "BUILDING RPMS"
+    build_image_name="cta-build-image-${platform}"
     # Stop and remove existing container if reset is requested
     if [ "${reset}" = true ]; then
       echo "Shutting down existing build container..."
       ${container_runtime} rm -f "${build_container_name}" >/dev/null 2>&1 || true
+      podman rmi ${build_image_name} > /dev/null
     fi
 
     # Start container if not already running
     if ${container_runtime} ps -a --format '{{.Names}}' | grep -wq "${build_container_name}"; then
-      echo "Container ${build_container_name} already exists"
+      echo "Found existing build container: ${build_container_name}"
     else
+      print_header "SETTING UP BUILD CONTAINER"
       restarted=true
+      echo "Rebuilding build container image"
+      ${container_runtime} build --no-cache -t "${build_image_name}" -f continuousintegration/docker/${platform}/build.Dockerfile .
       echo "Starting new build container: ${build_container_name}"
-      ${container_runtime} run -dit --name "${build_container_name}" \
+      ${container_runtime} run -dit --rm --name "${build_container_name}" \
         -v "${project_root}:/shared/CTA:z" \
-        "${build_image}" \
+        "${build_image_name}" \
         /bin/bash
-      echo "Building SRPMs..."
+
+      print_header "BUILDING SRPMS"
       build_srpm_flags=""
       if [[ "${clean_build_dirs}" = true ]]; then
         build_srpm_flags+=" --clean-build-dir"
@@ -293,7 +308,6 @@ build_deploy() {
         --scheduler-type "${scheduler_type}" \
         --oracle-support "${oracle_support}" \
         --cmake-build-type "${cmake_build_type}" \
-        --install \
         --jobs "${num_jobs}" \
         ${build_srpm_flags}
     fi
@@ -303,8 +317,8 @@ build_deploy() {
     local build_rpm_flags=""
 
     if [ ${restarted} = true ] || [ ${force_install} = true ]; then
-      # Only install if it is the first time running this or if the install is forced
-      build_rpm_flags+=" --install"
+      # Only install srpms if it is the first time running this or if the install is forced
+      build_rpm_flags+=" --install-srpms"
     elif [ ${skip_cmake} = true ]; then
       # It should only be possible to skip cmake if the pod was not restarted
       build_rpm_flags+=" --skip-cmake"
@@ -324,7 +338,11 @@ build_deploy() {
       build_rpm_flags+=" --enable-ccache"
     fi
 
-    echo "Building RPMs..."
+    if [[ ${use_internal_repos} = true ]]; then
+      build_rpm_flags+=" --use-internal-repos"
+    fi
+
+    print_header "BUILDING RPMS"
     ${container_runtime} exec -it "${build_container_name}" \
       ./shared/CTA/continuousintegration/build/build_rpm.sh \
       --build-dir /shared/CTA/build_rpm \
@@ -338,13 +356,12 @@ build_deploy() {
       --oracle-support ${oracle_support} \
       --cmake-build-type "${cmake_build_type}" \
       --jobs ${num_jobs} \
+      --platform ${platform} \
       ${build_rpm_flags}
 
     echo "Build successful"
   fi
 
-  # navigate to root project directory
-  cd "${project_root}"
 
   #####################################################################################################################
   # Build image
@@ -375,6 +392,9 @@ build_deploy() {
       image_tag="dev-$new_build_id"
       echo $new_build_id >$build_iteration_file
     fi
+    if [[ ${use_internal_repos} = true ]]; then
+      extra_image_build_options+=" --use-internal-repos"
+    fi
     ## Create and load the new image
     local rpm_src=build_rpm/RPM/RPMS/x86_64
     echo "Building image from ${rpm_src}"
@@ -382,7 +402,7 @@ build_deploy() {
       --rpm-src "${rpm_src}" \
       --container-runtime "${container_runtime}" \
       --load-into-minikube \
-      ${extra_build_options}
+      ${extra_image_build_options}
     if [ ${image_cleanup} = true ]; then
       # Pruning of unused images is done after image building to ensure we maintain caching
       podman image ls | grep ctageneric | grep -v "${image_tag}" | awk '{ print "localhost/ctageneric:" $2 }' | xargs -r podman rmi || true

@@ -1,5 +1,5 @@
 # @project      The CERN Tape Archive (CTA)
-# @copyright    Copyright © 2024 CERN
+# @copyright    Copyright © 2023-2025 CERN
 # @license      This program is free software, distributed under the terms of the GNU General Public
 #               Licence version 3 (GPL Version 3), copied verbatim in the file "COPYING". You can
 #               redistribute it and/or modify it under the terms of the GPL Version 3, or (at your
@@ -14,26 +14,19 @@
 #               submit itself to any jurisdiction.
 
 # CTA generic image containing all CTA RPMs
-# This image is similar to the one created by Dockerfile, except that this uses RPMs for a remote repo instead of local ones
-# As a result, any installs on this image will also pull from public yum repos instead of private ones
 FROM gitlab-registry.cern.ch/linuxsupport/alma9-base:latest
 
-ENV BASEDIR="continuousintegration/docker/alma9" \
-    CTAREPODIR="/opt/repo"
+ENV CTAREPODIR="/opt/repo"
 
 # Add orchestration run scripts locally
-COPY ${BASEDIR}/../opt /opt
-COPY ${BASEDIR}/etc/yum.repos.d/ /etc/yum.repos.d/
-
-# Variable to specify the tag to be used for CTA RPMs from the cta-ci-repo
-# Format: X.YY.ZZ.A-B
-ARG PUBLIC_REPO_VER
-ARG YUM_VERSIONLOCK_FILE=continuousintegration/docker/alma9/etc/yum/pluginconf.d/versionlock.list
+COPY continuousintegration/docker/opt /opt
+COPY continuousintegration/docker/el9/etc/yum.repos.d-internal/* /etc/yum.repos.d-internal/
 
 # Install necessary packages
 RUN dnf install -y \
       python3-dnf-plugin-versionlock \
-      yum-utils \
+      dnf-utils \
+      createrepo \
       epel-release \
       jq \
       bc \
@@ -45,12 +38,25 @@ RUN dnf install -y \
 # We add the cta user so that we can consistently reference it in the Helm chart when changing keytab ownership
 RUN useradd -m -u 1000 -g tape cta
 
-# Install cta-release and clean up
+# Copy pre-built RPMs into the local repository directory
+COPY image_rpms ${CTAREPODIR}/RPMS/x86_64
+
+# Populate local repository and enable it
 RUN dnf config-manager --enable epel --setopt="epel.priority=4" && \
-    dnf config-manager --enable cta-public-testing && \
-    dnf install -y "cta-release-${PUBLIC_REPO_VER}.el9" && \
-    rm -f /etc/yum/pluginconf.d/versionlock.cta && \
+    createrepo "${CTAREPODIR}" && \
+    echo -e "[cta-local-testing]\n\
+name=CTA repo with testing RPMs pointing to local artifacts\n\
+baseurl=file://${CTAREPODIR}\n\
+gpgcheck=0\n\
+enabled=1\n\
+priority=2" > /etc/yum.repos.d/cta-local-testing.repo && \
+    dnf install -y "cta-release" && \
+    cta-versionlock apply && \
     dnf clean all --enablerepo=\* && \
     rm -rf /etc/rc.d/rc.local
 
-COPY ${YUM_VERSIONLOCK_FILE} /etc/dnf/plugins/versionlock.list
+# Overwrite with internal repos if configured
+ARG USE_INTERNAL_REPOS=FALSE
+RUN if [ "${USE_INTERNAL_REPOS}" = "TRUE" ]; then \
+      cp -f /etc/yum.repos.d-internal/* /etc/yum.repos.d/; \
+    fi

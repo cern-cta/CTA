@@ -1,0 +1,125 @@
+{
+  "name": "CTA",
+  "summary": "CERN Tape Archive",
+  "description": "The CERN Tape Archive (CTA) is the open-source archival storage system for the custodial copy of all physics data at CERN.",
+  "license": "GPLv3+",
+  "catalogueVersion": 15.0,
+  "supportedCatalogueVersions": [
+    15
+  ],
+  "dev": {
+    "cppVersion": "c++17",
+    "defaultPlatform": "el9",
+    "defaultBuildType": "Debug",
+    "ctaImageRepository": "gitlab-registry.cern.ch/cta/ctageneric",
+    "eosImageRepository": "gitlab-registry.cern.ch/dss/eos/eos-ci",
+    "eosImageTag": "5.3.10.el9",
+    "eosServerChartVersion": "0.5.1"
+  },
+  "packageGroups": {
+    "group-eos": [
+      "eos-archive",
+      "eos-cleanup",
+      "eos-client",
+      "eos-fuse",
+      "eos-fuse-core",
+      "eos-fuse-sysv",
+      "eos-fusex",
+      "eos-fusex-core",
+      "eos-fusex-selinux",
+      "eos-ns-inspect",
+      "eos-server",
+      "eos-srm",
+      "eos-test",
+      "eos-testkeytab",
+      "eos-quarkdb"
+    ],
+    "group-eos-folly": [
+      "eos-folly",
+      "eos-folly-deps"
+    ],
+    "group-xrootd": [
+      "xrootd",
+      "xrootd-client",
+      "xrootd-client-devel",
+      "xrootd-client-libs",
+      "xrootd-debuginfo",
+      "xrootd-devel",
+      "xrootd-doc",
+      "xrootd-fuse",
+      "xrootd-libs",
+      "xrootd-private-devel",
+      "xrootd-selinux",
+      "xrootd-server",
+      "xrootd-server-devel",
+      "xrootd-server-libs",
+      "xrootd-tests",
+      "python3-xrootd"
+    ],
+    "group-xrootd-devel": [
+      "xrootd-devel",
+      "xrootd-client-devel",
+      "xrootd-private-devel",
+      "xrootd-server-devel"
+    ],
+    "group-protobuf": [
+      "protobuf-compiler",
+      "protobuf-devel"
+    ],
+    "group-librados": [
+      "librados-devel",
+      "libradosstriper-devel"
+    ],
+    "group-grpc": [
+      "grpc",
+      "grpc-devel",
+      "grpc-plugins"
+    ],
+    "group-oracle-instantclient": [
+      "oracle-instantclient-basic",
+      "oracle-instantclient-devel"
+    ]
+  },
+  "platforms": {
+    "el9": {
+      "arch": "x86_64",
+      "versionlock": {
+        "group-eos": "5.3.10-1",
+        "group-eos-folly": "2019.11.11.00-1",
+        "group-xrootd": "1:5.8.3-1",
+        "group-oracle-instantclient": "23.6.0.24.10-1"
+      },
+      "runRequires": {
+        "xrootd": ">= 1:5.7.1-1",
+        "oracle-instantclient": ">= 23.0",
+        "rados": "= 2:17.2.8",
+        "valgrind": ">= 3.8.1",
+        "gtest": ">= 1.11.0"
+      },
+      "buildRequires": {
+        "group-xrootd-devel": ">= 1:5.7.1-1",
+        "group-protobuf": ">= 3.3.1",
+        "group-librados": "= 2:17.2.8",
+        "oracle-instantclient-devel": ">= 23.0",
+        "gtest-devel": ">= 1.11.0",
+        "sqlite-devel": ">= 3.6",
+        "libcap-devel": ">= 2.16",
+        "binutils-devel": ">= 2.20",
+        "cryptopp-devel": ">= 5.6.2",
+        "libuuid-devel": ">= 2.17",
+        "json-c-devel": ">= 0.11",
+        "libattr-devel": ">= 2.4.44",
+        "cmake3": ">= 3.19",
+        "valgrind": ">= 3.8.1",
+        "valgrind-devel": "",
+        "group-grpc": "",
+        "postgresql-devel": "",
+        "krb5-devel": "",
+        "libtirpc-devel": "",
+        "redhat-rpm-config": "",
+        "pandoc": "",
+        "which": ""
+      }
+    }
+  }
+}
