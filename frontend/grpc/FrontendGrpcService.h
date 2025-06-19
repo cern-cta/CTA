@@ -35,7 +35,6 @@ private:
   ::grpc::HealthCheckServiceInterface* m_healthCheckService = nullptr;
   bool m_isServing = true;
   JwkCache m_pubkeyCache;
-  std::mutex m_cacheMutex;  // to guard cache in multithreaded environment
 
 public:
   CtaRpcImpl(const std::string& config);
