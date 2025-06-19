@@ -211,7 +211,7 @@ test-regression-dCache:
   variables:
     TEST_SCRIPT: "tests/test_regression_dCache.sh"
     EXTRA_RUN_ARGS: "--test-timeout 2400"
-    EXTRA_SPAWN_ARGS: "--cta-config presets/dev-grpc-values.yaml --dcache-enabled true --eos-enabled false"
+    EXTRA_SPAWN_ARGS: "--cta-config presets/dev-cta-grpc-values.yaml --dcache-enabled true --eos-enabled false"
   tags:
     - kubernetes
     - xlarge
