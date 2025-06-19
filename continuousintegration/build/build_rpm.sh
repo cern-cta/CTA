@@ -269,10 +269,9 @@ build_rpm() {
   # Setup
   if [ "${install_srpms}" = true ]; then
     ./continuousintegration/project-json/generate_versionlock.py --platform ${platform} >/etc/yum/pluginconf.d/versionlock.list
+    cp -f continuousintegration/docker/${platform}/etc/yum.repos.d-public/*.repo /etc/yum.repos.d/
     if [[ ${use_internal_repos} = true ]]; then
       cp -f continuousintegration/docker/${platform}/etc/yum.repos.d-internal/*.repo /etc/yum.repos.d/
-    else
-      cp -f continuousintegration/docker/${platform}/etc/yum.repos.d-public/*.repo /etc/yum.repos.d/
     fi
     dnf clean all
     dnf builddep --nogpgcheck -y "${srpm_dir}"/*
