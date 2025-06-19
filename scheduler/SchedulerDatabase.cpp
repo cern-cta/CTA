@@ -79,7 +79,7 @@ SchedulerDatabase::getRetrieveMountPolicyMaxPriorityMinAge(const std::list<commo
 // SchedulerDatabase::getHighestPriorityArchiveMountPolicyName()
 //------------------------------------------------------------------------------
 std::string SchedulerDatabase::getHighestPriorityArchiveMountPolicyName(
-  const std::list<common::dataStructures::MountPolicy>& mountPolicies) {
+  const std::list<common::dataStructures::MountPolicy>& mountPolicies) const {
   if (mountPolicies.empty()) {
     throw cta::exception::Exception(
       "In SchedulerDatabase::getHighestPriorityArchiveMountPolicyName(), empty mount policy list.");
@@ -103,7 +103,7 @@ std::string SchedulerDatabase::getHighestPriorityArchiveMountPolicyName(
 // SchedulerDatabase::getLowestRequestAgeArchiveMountPolicyName()
 //------------------------------------------------------------------------------
 std::string SchedulerDatabase::getLowestRequestAgeArchiveMountPolicyName(
-  const std::list<common::dataStructures::MountPolicy>& mountPolicies) {
+  const std::list<common::dataStructures::MountPolicy>& mountPolicies) const {
   if (mountPolicies.empty()) {
     throw cta::exception::Exception(
       "In SchedulerDatabase::getLowestRequestAgeArchiveMountPolicyName(), empty mount policy list.");
@@ -127,7 +127,7 @@ std::string SchedulerDatabase::getLowestRequestAgeArchiveMountPolicyName(
 // SchedulerDatabase::getHighestPriorityRetrieveMountPolicyName()
 //------------------------------------------------------------------------------
 std::string SchedulerDatabase::getHighestPriorityRetrieveMountPolicyName(
-  const std::list<common::dataStructures::MountPolicy>& mountPolicies) {
+  const std::list<common::dataStructures::MountPolicy>& mountPolicies) const {
   if (mountPolicies.empty()) {
     throw cta::exception::Exception(
       "In SchedulerDatabase::getHighestPriorityRetrieveMountPolicyName(), empty mount policy list.");
@@ -151,7 +151,7 @@ std::string SchedulerDatabase::getHighestPriorityRetrieveMountPolicyName(
 // SchedulerDatabase::getLowestRequestAgeRetrieveMountPolicyName()
 //------------------------------------------------------------------------------
 std::string SchedulerDatabase::getLowestRequestAgeRetrieveMountPolicyName(
-  const std::list<common::dataStructures::MountPolicy>& mountPolicies) {
+  const std::list<common::dataStructures::MountPolicy>& mountPolicies) const {
   if (mountPolicies.empty()) {
     throw cta::exception::Exception(
       "In SchedulerDatabase::getLowestRequestAgeRetrieveMountPolicyName(), empty mount policy list.");
