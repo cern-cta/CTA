@@ -84,7 +84,7 @@ data:
     #
     # Note: the XRootD process needs to be able to read the keytab file
     sec.protocol krb5 /etc/cta/cta-frontend.krb5.keytab cta/{{ $name }}@{{ .Values.global.kerberos.defaultRealm }}
-    sec.protocol sss -s /etc/cta/eos.sss.keytab
+    sec.protocol sss -s /etc/cta/diskbuffer.sss.keytab
 
     # Only Kerberos 5 and sss are allowed
     sec.protbind * only sss krb5
@@ -92,7 +92,7 @@ data:
     # Turn off asynchronous I/O
     xrootd.async off
 
-    # Use a port other than 1094, already used by EOS xroot server
+    # Use a port other than 1094, already in use
     xrd.port {{ .Values.xrd.port }}
 
     # Export the SSI resource

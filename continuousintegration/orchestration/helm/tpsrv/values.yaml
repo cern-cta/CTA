@@ -10,6 +10,9 @@ conf:
     retrieveQueueCacheMaxAgeSecs: 1
     externalFreeDiskSpaceScript: "/usr/bin/cta-eosdf.sh"
 
+keytab:
+  secretName: eos-sss-keytab
+  subPath: eos.keytab
 
 # tapeServers: {}
 # The following is an example format of tapeServers

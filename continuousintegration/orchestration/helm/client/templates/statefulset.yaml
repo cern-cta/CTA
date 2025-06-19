@@ -32,43 +32,18 @@ spec:
         args:
         - |
           sukadmin() { echo {{ .Values.global.kerberos.adminPrinc.password }} | kadmin -r {{ .Values.global.kerberos.defaultRealm | upper }} -p {{ .Values.global.kerberos.adminPrinc.name }}/admin $@; };
-          sukadmin addprinc -randkey user1;
-          sukadmin addprinc -randkey eosadmin1;
-          sukadmin addprinc -randkey poweruser1;
-          sukadmin addprinc -randkey ctaadmin2;
-          sukadmin ktadd -k /root/user1_keytab/output/user1.keytab user1;
-          sukadmin ktadd -k /root/eosadmin1_keytab/output/eosadmin1.keytab eosadmin1;
-          sukadmin ktadd -k /root/poweruser1_keytab/output/poweruser1.keytab poweruser1;
-          sukadmin ktadd -k /root/ctaadmin2_keytab/output/ctaadmin2.keytab ctaadmin2;
+          {{ range $user := .Values.users }}
+          sukadmin addprinc -randkey {{ $user }};
+          sukadmin ktadd -k /root/{{ $user }}_keytab/output/{{ $user }}.keytab {{ $user }};
+          {{ end }}
         volumeMounts:
         - name: krb5-conf
           mountPath: /etc/krb5.conf
           subPath: krb5.conf
-        - name: user1-keytab
-          mountPath: /root/user1_keytab/output
-        - name: eosadmin1-keytab
-          mountPath: /root/eosadmin1_keytab/output
-        - name: poweruser1-keytab
-          mountPath: /root/poweruser1_keytab/output
-        - name: ctaadmin2-keytab
-          mountPath: /root/ctaadmin2_keytab/output
-      # Required until https://github.com/kubernetes/kubernetes/issues/81089 is merged
-      - name: init2-fix-sss-keytab-ownership
-        image: {{ include "common.images.busybox" . }}
-        imagePullPolicy: {{ include "common.images.defaultPullPolicy" . }}
-        securityContext:
-          allowPrivilegeEscalation: {{ include "common.securityContext.allowPrivilegeEscalation" . }}
-        command: ["sh", "-c"]
-        args:
-        - |
-          cp /root/sss_keytab/input/eos.keytab /root/sss_keytab/output/eos.keytab;
-          chmod 600 /root/sss_keytab/output/eos.keytab
-        volumeMounts:
-        - name: eos-sss-keytab
-          mountPath: /root/sss_keytab/input/eos.keytab
-          subPath: eos.keytab
-        - name: eos-sss-keytab-fixedownership
-          mountPath: /root/sss_keytab/output
+        {{ range $user := .Values.users }}
+        - name: "{{ $user }}-keytab"
+          mountPath: "/root/{{ $user }}_keytab/output"
+        {{ end }}
       containers:
       - name: client
         image: {{ include "client.image" . }}
@@ -109,24 +84,14 @@ spec:
         - name: etc-cta-client
           mountPath: /etc/cta/cta-cli.conf
           subPath: cta-cli.conf
-        - name: eos-sss-keytab-fixedownership
-          mountPath: /etc/eos.keytab
-          subPath: eos.keytab
         - name: krb5-conf
           mountPath: /etc/krb5.conf
           subPath: krb5.conf
-        - name: user1-keytab
-          mountPath: /root/user1.keytab
-          subPath: user1.keytab
-        - name: eosadmin1-keytab
-          mountPath: /root/eosadmin1.keytab
-          subPath: eosadmin1.keytab
-        - name: poweruser1-keytab
-          mountPath: /root/poweruser1.keytab
-          subPath: poweruser1.keytab
-        - name: ctaadmin2-keytab
-          mountPath: /root/ctaadmin2.keytab
-          subPath: ctaadmin2.keytab
+        {{ range $user := .Values.users }}
+        - name: "{{ $user }}-keytab"
+          mountPath: "/root/{{ $user }}.keytab"
+          subPath: "{{ $user }}.keytab"
+        {{ end }}
         {{ include "common.extraVolumeMounts" . | nindent 8 }}
       volumes:
       - name: scripts-volume
@@ -139,20 +104,11 @@ spec:
       - name: xrootd-client-conf
         configMap:
           name: xrootd-client-conf
-      - name: eos-sss-keytab
-        secret:
-          secretName: eos-sss-keytab
-      - name: eos-sss-keytab-fixedownership
-        emptyDir: {}
       - name: krb5-conf
         configMap:
           name: {{ .Values.global.kerberos.clientConfig.configMap }}
-      - name: user1-keytab
+      {{ range $user := .Values.users }}
+      - name: "{{ $user }}-keytab"
         emptyDir: {}
-      - name: eosadmin1-keytab
-        emptyDir: {}
-      - name: poweruser1-keytab
-        emptyDir: {}
-      - name: ctaadmin2-keytab
-        emptyDir: {}
+      {{ end }}
       {{ include "common.extraVolumes" . | nindent 6 }}

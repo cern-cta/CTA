@@ -4,6 +4,12 @@ conf:
   cta:
     endpoint: cta-frontend:10955
 
+users:
+  - user1
+  - eosadmin1
+  - poweruser1
+  - ctaadmin2
+
 pod:
   extraSpec:
     terminationGracePeriodSeconds: 1

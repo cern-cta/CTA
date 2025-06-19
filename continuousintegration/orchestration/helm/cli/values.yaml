@@ -3,11 +3,8 @@ replicaCount: 1
 conf:
   cta:
     endpoint: cta-frontend:10955
-  eos:
-    instance: eos-dev-mgm
-    requester:
-      user: adm
-      group: powerusers
+
+krb5PrincName: ctaadmin1
 
 pod:
   extraSpec:
