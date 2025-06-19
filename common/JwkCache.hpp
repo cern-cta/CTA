@@ -41,8 +41,7 @@ private:
     int m_cacheRefreshInterval; // value in seconds
     // This gives the option to keep public keys around for longer than the refresh interval.
     int m_pubkeyTimeout;
-    // TODO: add mutex to handle parallel requests
-    std::shared_mutex m_mutex;
+    std::shared_mutex m_mutex; // mutex to handle parallel requests
     std::map<std::string, JwkCacheEntry> m_keymap;
     std::thread m_refreshThread;
     std::mutex m_cv_mutex;
