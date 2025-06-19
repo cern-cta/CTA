@@ -49,7 +49,7 @@ bool CtaRpcImpl::ValidateToken(const std::string& encodedJWT) {
     // Example validation: check if the token is expired
     auto exp = decoded.get_payload_claim("exp").as_date();
     if (exp < std::chrono::system_clock::now()) {
-        lc.log(cta::log::ERR, "In ValidateToken, Passed-in token has expired!");
+        lc.log(cta::log::WARNING, "In ValidateToken, Passed-in token has expired!");
         return false;  // Token has expired
     }
     auto header = decoded.get_header_json();
@@ -75,7 +75,7 @@ bool CtaRpcImpl::ValidateToken(const std::string& encodedJWT) {
       entry = m_pubkeyCache.find(kid);
       if (!entry.has_value()) {
         // unable to fetch the public key for validation, fail the request
-        lc.log(cta::log::ERR, "Unable to find the public key for the token, authentication failed");
+        lc.log(cta::log::WARNING, "Unable to find the public key for the token, authentication failed");
         return false;
       }
     }
@@ -121,17 +121,17 @@ CtaRpcImpl::ExtractAuthHeaderAndValidate(::grpc::ServerContext* context) {
       token = auth_header.substr(7); // Extract the token part, use substr(7) because that is the length of "Bearer" plus a space character
       lc.log(cta::log::DEBUG, std::string("Received token: ") + token);
       if (token.empty()) {
-        lc.log(cta::log::ERR, "Authorization token missing");
+        lc.log(cta::log::WARNING, "Authorization token missing");
         return ::grpc::Status(::grpc::StatusCode::UNAUTHENTICATED, "Missing Authorization token");
       }
   } else {
-      lc.log(cta::log::ERR, "Authorization header missing");
+      lc.log(cta::log::WARNING, "Authorization header missing");
       return ::grpc::Status(::grpc::StatusCode::UNAUTHENTICATED, "Missing Authorization header");
   }
   if (ValidateToken(token)) {
     return ::grpc::Status::OK;
   } else {
-    lc.log(cta::log::ERR, "JWT authorization process error. Token validation failed.");
+    lc.log(cta::log::WARNING, "JWT authorization process error. Token validation failed.");
     return ::grpc::Status(::grpc::StatusCode::UNAUTHENTICATED, "JWT authorization process error. Token validation failed.");
   }
 }
