@@ -92,15 +92,6 @@ spec:
         - name: grpc-config
           mountPath: /etc/cta/cta-frontend-grpc.conf
           subPath: cta-frontend-grpc.conf
-        - name: cta-frontend-krb5-keytab
-          mountPath: /etc/cta/cta-frontend.krb5.keytab
-          subPath: cta-frontend.krb5.keytab
-        - name: eos-sss-keytab-fixedownership
-          mountPath: /etc/cta/eos.sss.keytab
-          subPath: eos.sss.keytab
-        - name: krb5-conf
-          mountPath: /etc/krb5.conf
-          subPath: krb5.conf
         - name: grpc-server-cert
           mountPath: /etc/grpc-certs/cert
         - name: grpc-server-key
@@ -131,11 +122,6 @@ spec:
       - name: grpc-config
         configMap:
           name: cta-frontend-grpc-conf
-      - name: cta-frontend-krb5-keytab
-        emptyDir: {}
-      - name: eos-sss-keytab
-        secret:
-          secretName: cta-frontend-sss-keytab # Note that this is a different keytab from eos-sss-keytab
       - name: grpc-server-cert
         secret:
           secretName: server-cert

@@ -49,6 +49,8 @@ check_helm_installed() {
 }
 
 deploy() {
+  project_json_path="../../project.json"
+  dcache_chart_version=$(jq -r .dev.dCacheChartVersion ${project_json_path})
 
   # Parse command line arguments
   while [[ "$#" -gt 0 ]]; do
@@ -105,7 +107,7 @@ deploy() {
                                        --set externalZookeeper.servers=cells-zookeeper \
                                        --set kraft.enabled=false \
                                        --version 23.0.7
-  log_run helm install -n ${namespace} store dcache/dcache \
+  log_run helm install -n ${namespace} store dcache/dcache --version ${dcache_chart_version} \
                                        --replace --wait --timeout 10m0s \
                                        --set dcache.hsm.enabled=true \
                                        --values presets/dev-dcache-values.yaml \

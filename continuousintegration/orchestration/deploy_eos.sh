@@ -50,6 +50,9 @@ check_helm_installed() {
 }
 
 deploy() {
+  project_json_path="../../project.json"
+  eos_server_chart_version=$(jq -r .dev.eosServerChartVersion ${project_json_path})
+
   # Parse command line arguments
   while [[ "$#" -gt 0 ]]; do
     case "$1" in
@@ -95,7 +98,7 @@ deploy() {
     helm_flags+=" --values ${eos_config}"
   fi
 
-  log_run helm upgrade --install eos oci://registry.cern.ch/eos/charts/server --version 0.5.1 \
+  log_run helm upgrade --install eos oci://registry.cern.ch/eos/charts/server --version ${eos_server_chart_version} \
                       --namespace ${namespace} \
                       --wait --timeout 5m \
                       --reuse-values \

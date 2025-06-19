@@ -108,13 +108,12 @@ create_instance() {
   max_drives_per_tpsrv=1
   max_tapeservers=2
   # EOS related
-  eos_server_chart_version=$(jq -r .dev.eosServerChartVersion ${project_json_path})
   eos_image_tag=$(jq -r .dev.eosImageTag ${project_json_path})
   eos_image_repository=$(jq -r .dev.eosImageRepository ${project_json_path})
   eos_config=presets/dev-eos-values.yaml
   eos_enabled=true
   # dCache
-  dcache_image_tag=94471db7
+  dcache_image_tag=$(jq -r .dev.dCacheImageTag ${project_json_path})
   dcache_config=presets/dev-dcache-values.yaml
   dcache_enabled=false
 
