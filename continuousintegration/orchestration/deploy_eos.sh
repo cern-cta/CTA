@@ -105,7 +105,7 @@ deploy() {
                       ${helm_flags}
 
   EOS_MGM_POD=eos-mgm-0
-  kubectl cp --namespace "${namespace}" ./configure_eoscta_tape.sh ${EOS_MGM_POD}:/tmp -c eos-mgm
+  kubectl cp --namespace "${namespace}" ./setup/configure_eoscta_tape.sh ${EOS_MGM_POD}:/tmp -c eos-mgm
   kubectl exec --namespace "${namespace}" ${EOS_MGM_POD} -c eos-mgm -- /bin/bash -c "chmod +x /tmp/configure_eoscta_tape.sh && /tmp/configure_eoscta_tape.sh"
 }
 

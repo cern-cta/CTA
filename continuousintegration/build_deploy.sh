@@ -104,7 +104,6 @@ build_deploy() {
   local container_runtime="podman"
   local platform=$(jq -r .dev.defaultPlatform "${project_root}/project.json")
   local use_internal_repos=true
-  local build_image="gitlab-registry.cern.ch/linuxsupport/alma9-base:latest"
   local eos_enabled=true
   local dcache_enabled=false
 
@@ -282,7 +281,7 @@ build_deploy() {
     if [ "${reset}" = true ]; then
       echo "Shutting down existing build container..."
       ${container_runtime} rm -f "${build_container_name}" >/dev/null 2>&1 || true
-      podman rmi ${build_image_name} > /dev/null
+      podman rmi ${build_image_name} > /dev/null 2>&1 || true
     fi
 
     # Start container if not already running
