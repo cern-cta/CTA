@@ -82,8 +82,7 @@ std::optional<std::string> RetrieveRequest::decideRetrieveRequestDestination(cta
   using serializers::RetrieveJobStatus;
   std::set<std::string, std::less<>> candidateVids;
   for (auto& j: m_payload.jobs()) {
-    switch(j.status()){
-      case RetrieveJobStatus::RJS_ToTransfer:
+    if (j.status() == RetrieveJobStatus::RJS_ToTransfer){
         // Find the job details in tape file
         for (auto& tf: m_payload.archivefile().tapefiles()) {
           if (tf.copynb() == j.copynb()) {
@@ -93,10 +92,10 @@ std::optional<std::string> RetrieveRequest::decideRetrieveRequestDestination(cta
         }
         {
           std::stringstream err;
-          err << ("In RetrieveRequest::decideRetrieveRequestDestination(): could not find tapefile for copynb ") << j.copynb();
+          err << "In RetrieveRequest::decideRetrieveRequestDestination(): could not find tapefile for copynb " << j.copynb();
           throw exception::Exception(err.str());
         }
-     default:
+    } else {
         break;
     }
     found:;
@@ -112,7 +111,9 @@ std::optional<std::string> RetrieveRequest::decideRetrieveRequestDestination(cta
     // If we have to fetch the status of the tapes and queued for the non-disabled vids.
     bestVid=Helpers::selectBestRetrieveQueue(candidateVids, catalogue, m_objectStore, lc, m_payload.repack_info().has_repack_request_address());
     return std::optional<std::string>(bestVid);
-  } catch (Helpers::NoTapeAvailableForRetrieve&) {}
+  } catch (Helpers::NoTapeAvailableForRetrieve&) {
+    // selectBestRetrieveQueue thows an exception if it cannot find a tape, catch it and return a nullopt.
+  }
 
   return std::nullopt;
 }
@@ -124,7 +125,7 @@ void RetrieveRequest::garbageCollectRetrieveRequest(const std::string& presumedO
     cta::catalogue::Catalogue& catalogue) {
   checkPayloadWritable();
   utils::Timer t;
-  std::string logHead = std::string("In RetrieveRequest::garbageCollect(): ");
+  auto logHead = std::string("In RetrieveRequest::garbageCollect(): ");
   // Check the request is indeed owned by the right owner.
   if (getOwner() != presumedOwner) {
     log::ScopedParamContainer params(lc);
@@ -256,11 +257,9 @@ queueForFailure:;
     // Enqueue the job
     objectstore::MountPolicySerDeser mp;
     std::list<common::dataStructures::RetrieveJobToAdd> jta;
-    jta.push_back({activeCopyNb, activeFseq, getAddressIfSet(), m_payload.archivefile().filesize(),
-      mp, (signed)m_payload.schedulerrequest().entrylog().time(), std::nullopt, std::nullopt});
-    if (m_payload.has_activity()) {
-      jta.back().activity = m_payload.activity();
-    }
+    jta.emplace_back(activeCopyNb, activeFseq, getAddressIfSet(), m_payload.archivefile().filesize(),
+      mp, (signed)m_payload.schedulerrequest().entrylog().time(), m_payload.has_activity() ? std::optional<std::string>{m_payload.activity()} : std::nullopt, std::nullopt);
+    
     rq.addJobsIfNecessaryAndCommit(jta, agentReference, lc);
     auto queueUpdateTime = t.secs(utils::Timer::resetCounter);
     // We can now make the transition official.
@@ -319,8 +318,8 @@ queueForTransfer:;
     objectstore::MountPolicySerDeser mp;
     mp.deserialize(m_payload.mountpolicy());
     std::list<common::dataStructures::RetrieveJobToAdd> jta;
-    jta.push_back({bestTapeFile->copynb(), bestTapeFile->fseq(), getAddressIfSet(), m_payload.archivefile().filesize(),
-      mp, (signed)m_payload.schedulerrequest().entrylog().time(), getActivity(), getDiskSystemName()});
+    jta.emplace_back(bestTapeFile->copynb(), bestTapeFile->fseq(), getAddressIfSet(), m_payload.archivefile().filesize(),
+      mp, (signed)m_payload.schedulerrequest().entrylog().time(), getActivity(), getDiskSystemName());
     if (m_payload.has_activity()) {
       jta.back().activity = m_payload.activity();
     }
@@ -1530,7 +1529,7 @@ void RetrieveRequest::failJob(const std::string& newOwner) {
 
     // Generate the last failure for this job (tape unavailable).
     *j.mutable_failurelogs()->Add() = utils::getCurrentLocalTime() + " " +
-            utils::getShortHostname() + "No VID available to requeue the request. Failing it.";
+            utils::getShortHostname() + " No VID available to requeue the request. Failing it.";
   }
 
   setOwner(newOwner);
@@ -1542,15 +1541,17 @@ void RetrieveRequest::failJob(const std::string& newOwner) {
 //------------------------------------------------------------------------------
 common::dataStructures::RetrieveJobToAdd RetrieveRequest::getJobToAdd() {
   auto activeCopyNb = m_payload.activecopynb();
-  std::string activeVid;
-  uint64_t activeFseq;
+  uint64_t activeFseq = std::numeric_limits<uint64_t>::max();
   objectstore::MountPolicySerDeser mp;
   for (auto& tf: m_payload.archivefile().tapefiles()) {
     if (tf.copynb() == activeCopyNb) {
-      activeVid = tf.vid();
       activeFseq = tf.fseq();
       break;
     }
+  }
+
+  if (activeFseq == std::numeric_limits<uint64_t>::max()) {
+    throw exception::Exception("In RetrieveRequest::getJobToAdd(): Could not find a tapefile for copynb " + activeCopyNb);
   }
 
   return common::dataStructures::RetrieveJobToAdd(
@@ -1560,7 +1561,7 @@ common::dataStructures::RetrieveJobToAdd RetrieveRequest::getJobToAdd() {
     m_payload.archivefile().filesize(),
     mp,
     (signed) m_payload.schedulerrequest().entrylog().time(),
-    m_payload.has_activity() ? std::nullopt : std::nullopt,
+    m_payload.has_activity() ? std::optional<std::string>{m_payload.activity()} : std::nullopt,
     std::nullopt
   );
 }

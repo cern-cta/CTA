@@ -75,7 +75,7 @@ public:
       const common::dataStructures::RetrieveJobToAdd& rhs) const { return lhs.fSeq < rhs.fSeq; }
   };
   
-  typedef std::multiset<common::dataStructures::RetrieveJobToAdd, RetrieveQueueJobsToAddLess> JobsToAddSet;
+  using JobsToAddSet = std::multiset<common::dataStructures::RetrieveJobToAdd, RetrieveQueueJobsToAddLess>;
   
   struct RetrieveQueueSerializedJobsToAddLess {
     bool operator() (const serializers::RetrieveJobPointer& lhs, 

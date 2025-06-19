@@ -51,7 +51,6 @@ struct MountPolicy {
   // to do a Retrieve mount or Archive mount
   static const MountPolicy s_defaultMountPolicyForRepack;
 
-private:
   MountPolicy(std::string_view mpName, uint64_t archivePriority, uint64_t archiveMinRequestAge,
     uint64_t retrievePriority, uint64_t retrieveMinRequestAge);
 };
