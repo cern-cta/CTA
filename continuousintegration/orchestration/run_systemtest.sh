@@ -46,6 +46,7 @@ usage() {
   echo "      --test-options <options>:       Additional options to pass verbatim to the test script."
   echo "  -K, --keep-namespace:               Keep the namespace after the system test script run if successful."
   echo "  -C, --cleanup-namespaces:           Clean up leftover Kubernetes namespaces."
+  echo "      --skip-preflight:               Skips the preflight tests."
   exit 1
 }
 
@@ -112,6 +113,8 @@ run_systemtest() {
         systemtest_script="$2"
         test -f ${systemtest_script} || die "ERROR: systemtest script file ${systemtest_script} does not exist\n"
         shift ;;
+      --skip-preflight)
+        preflight_checks_script="" ;;
       -n|--namespace)
         namespace="$2"
         shift ;;
