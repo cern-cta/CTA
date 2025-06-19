@@ -57,6 +57,6 @@ if [ -z "$NAMESPACE" ]; then
   exit 1
 fi
 
-cd "$(dirname "$0")"
+cd "$(dirname "${BASH_SOURCE[0]}")"
 kubectl cp --namespace "${NAMESPACE}" ./configure_eoscta_tape.sh ${EOS_MGM_POD}:/tmp -c eos-mgm
 kubectl exec --namespace "${NAMESPACE}" ${EOS_MGM_POD} -c eos-mgm -- /bin/bash -c "chmod +x /tmp/configure_eoscta_tape.sh && /tmp/configure_eoscta_tape.sh"

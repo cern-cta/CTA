@@ -46,7 +46,7 @@ usage() {
 }
 
 build_rpm() {
-  project_root="$(realpath "$(dirname "$0")/../..")"
+  project_root="$(realpath "$(dirname "${BASH_SOURCE[0]}")/../..")"
   # Default values for arguments
   local build_dir=""
   local build_generator=""
@@ -267,10 +267,9 @@ build_rpm() {
   # Setup
   if [ "${install_srpms}" = true ]; then
     ./continuousintegration/utils/project-json/generate_versionlock.py --platform ${platform} >/etc/yum/pluginconf.d/versionlock.list
+    cp -f continuousintegration/docker/${platform}/etc/yum.repos.d-public/*.repo /etc/yum.repos.d/
     if [[ ${use_internal_repos} = true ]]; then
       cp -f continuousintegration/docker/${platform}/etc/yum.repos.d-internal/*.repo /etc/yum.repos.d/
-    else
-      cp -f continuousintegration/docker/${platform}/etc/yum.repos.d-public/*.repo /etc/yum.repos.d/
     fi
     dnf clean all
     dnf builddep --nogpgcheck -y "${srpm_dir}"/*
