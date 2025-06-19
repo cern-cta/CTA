@@ -13,7 +13,7 @@
     "defaultBuildType": "Debug",
     "ctaImageRepository": "gitlab-registry.cern.ch/cta/ctageneric",
     "eosImageRepository": "gitlab-registry.cern.ch/dss/eos/eos-ci",
-    "eosImageTag": "5.3.10.el9",
+    "eosImageTag": "617812fe.el9",
     "eosServerChartVersion": "0.5.1"
   },
   "packageGroups": {
