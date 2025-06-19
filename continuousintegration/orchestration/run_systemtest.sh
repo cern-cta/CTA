@@ -207,7 +207,7 @@ run_systemtest() {
   execute_cmd_with_log "./create_instance.sh -n ${namespace} ${spawn_options} ${extra_spawn_options}" "${log_dir}/create_instance.log" ${create_instance_timeout}
 
   # Launch preflight_checks and timeout after ${preflight_checks_timeout} seconds
-  if [ -x ${preflight_checks_script} ]; then
+  if [ -n "$preflight_checks_script" ] && [ -x "$preflight_checks_script" ]; then
     cd $(dirname "${preflight_checks_script}")
     echo "Launching preflight checks: ${preflight_checks_script}"
     execute_cmd_with_log "./$(basename ${preflight_checks_script}) -n ${namespace}" \
