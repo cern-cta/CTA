@@ -84,6 +84,29 @@ mgm:
       /mkcert-ssl.sh
       chown -R daemon:daemon /etc/grid-security/certificates
       cp /etc/grpc-certs/ca.crt /etc/grid-security/certificates
+
+      response=$(curl -X POST http://auth-keycloak:8080/realms/master/protocol/openid-connect/token \
+      -H "Content-Type: application/x-www-form-urlencoded" \
+      -d "grant_type=password" \
+      -d "client_id=admin-cli" \
+      -d "username=${KEYCLOAK_ADMIN}" \
+      -d "password=${KEYCLOAK_ADMIN_PASSWORD}" \
+      -s)
+
+      admin_access_token=$(echo ${response} | jq -r .access_token)
+      printf "$admin_access_token" > /etc/grid-security/jwt-token-grpc
+    spec:
+      env:
+        - name: KEYCLOAK_ADMIN
+          valueFrom:
+            secretKeyRef:
+              name: keycloak-admin-credentials
+              key: username
+        - name: KEYCLOAK_ADMIN_PASSWORD
+          valueFrom:
+            secretKeyRef:
+              name: keycloak-admin-credentials
+              key: password
     volumeMounts:
     - name: grid-security
       mountPath: /etc/grid-security
@@ -138,6 +161,29 @@ fst:
       /mkcert-ssl.sh
       chown -R daemon:daemon /etc/grid-security/certificates
       cp /etc/grpc-certs/ca.crt /etc/grid-security/certificates
+
+      response=$(curl -X POST http://auth-keycloak:8080/realms/master/protocol/openid-connect/token \
+      -H "Content-Type: application/x-www-form-urlencoded" \
+      -d "grant_type=password" \
+      -d "client_id=admin-cli" \
+      -d "username=${KEYCLOAK_ADMIN}" \
+      -d "password=${KEYCLOAK_ADMIN_PASSWORD}" \
+      -s)
+
+      admin_access_token=$(echo ${response} | jq -r .access_token)
+      printf "$admin_access_token" > /etc/grid-security/jwt-token-grpc
+    spec:
+      env:
+        - name: KEYCLOAK_ADMIN
+          valueFrom:
+            secretKeyRef:
+              name: keycloak-admin-credentials
+              key: username
+        - name: KEYCLOAK_ADMIN_PASSWORD
+          valueFrom:
+            secretKeyRef:
+              name: keycloak-admin-credentials
+              key: password
     volumeMounts:
     - name: grid-security
       mountPath: /etc/grid-security
