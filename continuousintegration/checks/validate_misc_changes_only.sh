@@ -51,8 +51,8 @@ fi
 # Read whitelist patterns into an array
 mapfile -t WHITELIST < "$WHITELIST_FILE"
 
+git fetch origin "$COMPARE_BRANCH:$COMPARE_BRANCH"
 # Get the list of changed files
-git fetch "origin/$COMPARE_BRANCH"
 CHANGED_FILES=$(git diff --name-only "origin/$COMPARE_BRANCH")
 
 # Check each changed file against the whitelist
