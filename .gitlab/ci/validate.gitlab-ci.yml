@@ -85,12 +85,12 @@ redirect-if-misc-only-changes:
       if [ "$VALIDATION_EXIT_CODE" -eq 0 ]; then
         echo "Only misc files changed — triggering a new MISC_ONLY pipeline and cancelling this one."
 
-        # Trigger new pipeline
-        curl -X POST "$CI_API_V4_URL/projects/$CI_PROJECT_ID/pipeline" \
+        echo "Triggering MISC_ONLY pipeline"
+        curl -s -X POST "$CI_API_V4_URL/projects/$CI_PROJECT_ID/pipeline" \
           --header "PRIVATE-TOKEN: $CI_API_TOKEN" \
           --header "Content-Type: application/json" \
           --data '{
-            "ref": "$CI_MERGE_REQUEST_SOURCE_BRANCH_NAME",
+            "ref": "$CI_MERGE_REQUEST_REF_PATH",
             "variables": [
               {
                 "key": "PIPELINE_TYPE",
@@ -99,8 +99,8 @@ redirect-if-misc-only-changes:
             ]
           }'
 
-        # Cancel this full pipeline
-        curl -X POST "$CI_API_V4_URL/projects/$CI_PROJECT_ID/pipelines/$CI_PIPELINE_ID/cancel" \
+        echo "Cancelling current pipeline"
+        curl -s -X POST "$CI_API_V4_URL/projects/$CI_PROJECT_ID/pipelines/$CI_PIPELINE_ID/cancel" \
           --header "PRIVATE-TOKEN: $CI_API_TOKEN"
       else
         echo "Non-misc changes found. Continuing normal pipeline."
