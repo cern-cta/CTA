@@ -4,10 +4,10 @@ changelog-preview:
   rules:
     - if: $PIPELINE_TYPE != "DEFAULT"
       when: never
-    - if: $CI_PIPELINE_SOURCE == "push"
-      when: manual
+    - if: $CI_COMMIT_TAG
+      when: never
+    - when: manual
       allow_failure: true
-    - when: never
   image: $IMAGE_RELEASE
   variables:
     GIT_DEPTH: 0 # Ensure we don't do a shallow clone here as we might need to find the latest tag
@@ -51,10 +51,10 @@ changelog-update:
   rules:
     - if: $PIPELINE_TYPE != "DEFAULT"
       when: never
-    - if: $CI_PIPELINE_SOURCE == "push"
-      when: manual
+    - if: $CI_COMMIT_TAG
+      when: never
+    - when: manual
       allow_failure: true
-    - when: never
   image: $IMAGE_RELEASE
   variables:
     SOURCE_BRANCH: ""

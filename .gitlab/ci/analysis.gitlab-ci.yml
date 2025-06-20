@@ -161,9 +161,36 @@ validate-misc-only-changes:
   stage: analysis
   image: $IMAGE_ANALYSIS
   rules:
-    - if: $PIPELINE_TYPE != "MISC_ONLY"
-      when: never
-    - when: on_success
+    - if: $CI_PIPELINE_SOURCE == "merge_request_event" && $PIPELINE_TYPE == "MISC_ONLY"
+      when: on_success
+    - when: never
   script:
     - cd continuousintegration/checks/
     - ./validate_misc_changes_only.sh --branch $CI_DEFAULT_BRANCH --whitelist misc_changes_whitelist.txt
+
+redirect-if-misc-only-changes:
+  stage: analysis
+  image: $IMAGE_ANALYSIS
+  rules:
+    - if: $CI_PIPELINE_SOURCE == "merge_request_event" && $PIPELINE_TYPE != "MISC_ONLY"
+      when: on_success
+    - when: never
+  script:
+    - cd continuousintegration/checks/
+    - ./validate_misc_changes_only.sh --branch "$CI_DEFAULT_BRANCH" --whitelist misc_changes_whitelist.txt
+    - |
+      if [ $? -eq 0 ]; then
+        echo "Only misc files changed — triggering a new MISC_ONLY pipeline and cancelling this one."
+
+        # Trigger new pipeline
+        curl --request POST "$CI_API_V4_URL/projects/$CI_PROJECT_ID/pipeline" \
+          --header "PRIVATE-TOKEN: $CI_JOB_TOKEN" \
+          --form "ref=$CI_COMMIT_REF_NAME" \
+          --form "variables[PIPELINE_TYPE]=MISC_ONLY"
+
+        # Cancel this full pipeline
+        curl --request POST "$CI_API_V4_URL/projects/$CI_PROJECT_ID/pipelines/$CI_PIPELINE_ID/cancel" \
+          --header "PRIVATE-TOKEN: $CI_JOB_TOKEN"
+      else
+        echo "Non-misc changes found. Continuing normal pipeline."
+      fi
