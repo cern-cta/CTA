@@ -17,6 +17,7 @@ variables:
   #   - REGR_AGAINST_CTA_MAIN: test custom dependency versions (EOS/XRootD) against CTA main.
   #   - REGR_AGAINST_CTA_VERSION: test custom dependency versions (EOS/XRootD) against the latest tagged CTA version.
   #   - IMAGE_FROM_CTA_VERSION: generate a docker image from a set of CTA RPMS avaiable in repos and run the tests.
+  #   - MISC_ONLY: use this when only trivial changes such as README updates are made. Skips most of the pipeline.
   PIPELINE_TYPE:
     description: "What kind of pipeline to run. Use IMAGE_FROM_CTA_VERSION if you want to build a new Docker image based of existing CTA RPMs"
     value: "DEFAULT"
@@ -26,6 +27,7 @@ variables:
       - "REGR_AGAINST_CTA_MAIN"
       - "REGR_AGAINST_CTA_VERSION"
       - "IMAGE_FROM_CTA_VERSION"
+      - "MISC_ONLY"
 
   # Custom variables for image building and run environment packages
   CUSTOM_EOS_VERSION:

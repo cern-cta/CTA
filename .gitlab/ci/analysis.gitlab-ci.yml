@@ -132,6 +132,10 @@ catalogue-schema-version-check:
 validate-pipeline-variables:
   stage: analysis
   image: $IMAGE_ANALYSIS
+  rules:
+    - if: $PIPELINE_TYPE == "MISC_ONLY"
+      when: never
+    - when: on_success
   script:
     - |
       if [ "$USE_INTERNAL_REPOS" == "TRUE" ]; then
@@ -146,5 +150,20 @@ validate-pipeline-variables:
 validate-project-json:
   stage: analysis
   image: $IMAGE_ANALYSIS
+  rules:
+    - if: $PIPELINE_TYPE == "MISC_ONLY"
+      when: never
+    - when: on_success
   script:
     - python3 ./continuousintegration/utils/project-json/validate_project_json.py
+
+validate-misc-only-changes:
+  stage: analysis
+  image: $IMAGE_ANALYSIS
+  rules:
+    - if: $PIPELINE_TYPE != "MISC_ONLY"
+      when: never
+    - when: on_success
+  script:
+    - cd continuousintegration/checks/
+    - ./validate_misc_changes_only.sh --branch $CI_DEFAULT_BRANCH --whitelist misc_changes_whitelist.txt

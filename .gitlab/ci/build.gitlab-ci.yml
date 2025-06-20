@@ -1,6 +1,8 @@
 .build-cta:
   retry: 1
   rules:
+    - if: $PIPELINE_TYPE == "MISC_ONLY"
+      when: never
     - if: $PIPELINE_TYPE == "SYSTEM_TEST_ONLY"
       when: never
     - if: $PIPELINE_TYPE == "REGR_AGAINST_CTA_VERSION"
@@ -102,6 +104,8 @@ export-docs:
   needs: []
   stage: build
   rules:
+    - if: $PIPELINE_TYPE == "MISC_ONLY"
+      when: never
     - if: $CI_PIPELINE_SOURCE == "schedule"
   script:
     - echo "Exporting man pages (Markdown)"
