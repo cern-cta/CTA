@@ -13,3 +13,4 @@ continuousintegration/build_deploy.sh
 continuousintegration/deploy.sh
 continuousintegration/release/*
 continuousintegration/build/development/*
+*/*
