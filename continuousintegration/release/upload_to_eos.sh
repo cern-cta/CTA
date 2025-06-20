@@ -140,7 +140,7 @@ upload_to_eos() {
     echo "Failure: Missing mandatory argument --eos-target-dir"
     usage
   fi
-
+test
   if [ -z "${local_source_dir}" ] && [ -z "${eos_source_dir}" ]; then
     echo "Failure: Missing mandatory argument --local-source-dir or --eos-source-dir"
     usage
