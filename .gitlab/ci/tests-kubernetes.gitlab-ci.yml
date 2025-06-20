@@ -159,6 +159,8 @@ test-cta-admin:
 
 .manual-rules:
   rules:
+    - if: $PIPELINE_TYPE == "MISC_ONLY"
+      when: never
     # For pivot CTA releases: vX.Y.0
     - if: $CI_COMMIT_TAG && $CI_COMMIT_TAG =~ /^.*\.0\.[0-9]+-[^-]*$/
       when: on_success
