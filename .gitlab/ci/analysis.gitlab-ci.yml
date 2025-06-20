@@ -185,13 +185,13 @@ redirect-if-misc-only-changes:
 
         # Trigger new pipeline
         curl --request POST "$CI_API_V4_URL/projects/$CI_PROJECT_ID/pipeline" \
-          --header "PRIVATE-TOKEN: $CI_JOB_TOKEN" \
+          --header "PRIVATE-TOKEN: $CI_API_TOKEN" \
           --form "ref=$CI_COMMIT_REF_NAME" \
           --form "variables[PIPELINE_TYPE]=MISC_ONLY"
 
         # Cancel this full pipeline
         curl --request POST "$CI_API_V4_URL/projects/$CI_PROJECT_ID/pipelines/$CI_PIPELINE_ID/cancel" \
-          --header "PRIVATE-TOKEN: $CI_JOB_TOKEN"
+          --header "PRIVATE-TOKEN: $CI_API_TOKEN"
       else
         echo "Non-misc changes found. Continuing normal pipeline."
       fi
