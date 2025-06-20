@@ -66,6 +66,7 @@ data:
 
     # gRPC options
     grpc.port {{ .Values.grpc.port }}
+    grpc.numberofthreads {{ .Values.grpc.conf.numberOfThreads }}
 
     # TLS related variables
     grpc.tls {{ .Values.grpc.conf.tls.enabled }}
