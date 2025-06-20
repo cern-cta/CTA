@@ -148,3 +148,15 @@ validate-project-json:
   image: $IMAGE_ANALYSIS
   script:
     - python3 ./continuousintegration/utils/project-json/validate_project_json.py
+
+danger-review:
+  image: ruby:3.2
+  stage: analysis
+  before_script:
+    - gem install danger
+    # - git config --global user.email "$GITLAB_USER_EMAIL"
+    # - git config --global user.name "Danger Bot"
+  script:
+    - danger --dangerfile continuousintegration/danger/Dangerfile
+  only:
+    - merge_requests
