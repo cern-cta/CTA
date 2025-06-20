@@ -177,6 +177,7 @@ redirect-if-misc-only-changes:
     - when: never
   script:
     - cd continuousintegration/checks/
+    - VALIDATION_EXIT_CODE=0
     - ./validate_misc_changes_only.sh --branch "$CI_DEFAULT_BRANCH" --whitelist misc_changes_whitelist.txt || VALIDATION_EXIT_CODE=$?
     - |
       if [ "$VALIDATION_EXIT_CODE" -eq 0 ]; then
