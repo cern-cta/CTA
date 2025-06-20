@@ -1,6 +1,7 @@
 stages:
-  - setup
-  - analysis
+  - prepare
+  - validate
+  - lint
   - build
   - build:image
   - test
