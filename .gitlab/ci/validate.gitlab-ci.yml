@@ -65,10 +65,13 @@ validate-misc-only-changes:
   rules:
     - if: $CI_PIPELINE_SOURCE == "merge_request_event" && $PIPELINE_TYPE == "MISC_ONLY"
       when: on_success
+    - if: $CI_PIPELINE_SOURCE == "trigger" && $PIPELINE_TYPE == "MISC_ONLY"
+      when: on_success
     - when: never
   script:
     - cd continuousintegration/checks/
-    - ./validate_misc_changes_only.sh --branch $CI_DEFAULT_BRANCH --whitelist misc_changes_whitelist.txt
+    - TARGET_BRANCH=${CI_MERGE_REQUEST_TARGET_BRANCH_NAME:-$CI_DEFAULT_BRANCH}
+    - ./validate_misc_changes_only.sh --branch $TARGET_BRANCH --whitelist misc_changes_whitelist.txt
 
 redirect-if-misc-only-changes:
   stage: validate
