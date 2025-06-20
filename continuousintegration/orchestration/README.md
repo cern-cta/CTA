@@ -126,8 +126,6 @@ vfsConfig:
   path: ""
 ```
 
-test
-
 Note that only one of these `*Config` fields needs to be provided (based on the backend).
 
 ### Disk Buffer - EOS
