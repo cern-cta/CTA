@@ -1,5 +1,5 @@
 modify-project-json:
-  stage: setup
+  stage: prepare
   rules:
     - if: $PIPELINE_TYPE == "REGR_AGAINST_CTA_MAIN"
     # Note that for regressions against an existing CTA version, only the EOS image version used in the Helm chart will be updated

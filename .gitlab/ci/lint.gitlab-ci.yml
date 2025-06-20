@@ -1,0 +1,97 @@
+cppcheck:
+  stage: lint
+  image:
+    name: $IMAGE_ANALYSIS
+    entrypoint: ["/usr/bin/env"]
+  rules:
+    - if: $CI_COMMIT_TAG
+      when: never
+    - if: $PIPELINE_TYPE != "DEFAULT"
+      when: never
+    - when: always
+  dependencies: [] # Ensure no artifacts are downloaded
+  script:
+    - cppcheck --xml
+               --force
+               --enable=warning,performance
+               --inline-suppr
+               --check-level=exhaustive
+               --suppressions-list=.cppcheck-suppressions.txt
+               . 2> cppcheck_out.xml
+    - cppcheck-codequality --input-file=cppcheck_out.xml --output-file=cppcheck.json
+    - |
+      if cat cppcheck_out.xml | grep -q "<error\s"; then
+        echo "cppcheck detected errors. cppcheck-codequality output:"
+        cat cppcheck.json | jq
+        exit 1
+      fi
+    - echo "Done. No errors detected by cppcheck"
+  artifacts:
+    when: on_failure
+    expire_in: 7 days
+    reports:
+      codequality: cppcheck.json
+
+clang-format-report:
+  stage: lint
+  dependencies: [] # Ensure no artifacts are downloaded
+  allow_failure: true
+  rules:
+    - if: $CI_COMMIT_TAG
+      when: never
+    - if: $PIPELINE_TYPE != "DEFAULT"
+      when: never
+    - when: always
+  image: $IMAGE_ANALYSIS
+  script:
+    - TARGET_BRANCH=${CI_MERGE_REQUEST_TARGET_BRANCH_NAME:-$CI_DEFAULT_BRANCH}
+    - git fetch --no-tags origin $TARGET_BRANCH:$TARGET_BRANCH
+    - echo "Running clang-format for changes compared to branch $TARGET_BRANCH"
+    - git-clang-format $TARGET_BRANCH HEAD --diff > clang-format.diff || true
+    - |
+      if [ $(wc -l < clang-format.diff) -le 1 ]; then
+        echo "No clang-format issues found"
+        exit 0
+      fi
+    - |
+      if [ $(wc -l < clang-format.diff) -le 1000 ]; then
+        bat --style=plain --color=always clang-format.diff
+      else
+        echo "Clang-format output too large. Please check job artifacts"
+      fi
+    - exit 1 # clang-format failed, so the job should fail
+  artifacts:
+    when: on_failure
+    expire_in: 7 days
+    paths:
+      - clang-format.diff
+
+clang-format-apply:
+  stage: lint
+  needs:
+    - clang-format-report
+  allow_failure: true
+  rules:
+    - if: $CI_COMMIT_TAG
+      when: never
+    - if: $PIPELINE_TYPE != "DEFAULT"
+      when: never
+    - if: $CI_COMMIT_REF_NAME == $CI_DEFAULT_BRANCH
+      when: never
+    - when: manual
+  image: $IMAGE_ANALYSIS
+  variables:
+    REPO_REMOTE: https://gitlab-ci-token:${CI_PUSH_TOKEN}@${CI_SERVER_HOST}/${CI_PROJECT_PATH}.git
+    CLANG_FORMAT_REPORT: clang-format.diff
+  before_script:
+    - git config user.email $GITLAB_USER_EMAIL
+    - git config user.name $GITLAB_USER_LOGIN
+  script:
+    - |
+      if [ $(wc -l < "$CLANG_FORMAT_REPORT") -le 1 ]; then
+        cat $CLANG_FORMAT_REPORT;
+        exit 0;
+      fi
+    - cat $CLANG_FORMAT_REPORT | patch -p1
+    - git commit -am "Applied clang format to changed lines"
+    - git push $REPO_REMOTE HEAD:$CI_COMMIT_REF_NAME
