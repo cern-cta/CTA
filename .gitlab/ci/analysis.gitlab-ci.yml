@@ -177,8 +177,7 @@ redirect-if-misc-only-changes:
     - when: never
   script:
     - cd continuousintegration/checks/
-    - ./validate_misc_changes_only.sh --branch "$CI_DEFAULT_BRANCH" --whitelist misc_changes_whitelist.txt
-      ; VALIDATION_EXIT_CODE=$?
+    - ./validate_misc_changes_only.sh --branch "$CI_DEFAULT_BRANCH" --whitelist misc_changes_whitelist.txt || VALIDATION_EXIT_CODE=$?
     - |
       if [ "$VALIDATION_EXIT_CODE" -eq 0 ]; then
         echo "Only misc files changed — triggering a new MISC_ONLY pipeline and cancelling this one."
