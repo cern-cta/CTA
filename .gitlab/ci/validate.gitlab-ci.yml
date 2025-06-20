@@ -73,38 +73,39 @@ validate-misc-only-changes:
     - TARGET_BRANCH=${CI_MERGE_REQUEST_TARGET_BRANCH_NAME:-$CI_DEFAULT_BRANCH}
     - ./validate_misc_changes_only.sh --branch $TARGET_BRANCH --whitelist misc_changes_whitelist.txt
 
-redirect-if-misc-only-changes:
+validate-misc-only-changes:
   stage: validate
   image: $IMAGE_ANALYSIS
   rules:
-    - if: $CI_PIPELINE_SOURCE == "merge_request_event" && $PIPELINE_TYPE != "MISC_ONLY"
+    - if: $CI_PIPELINE_SOURCE == "merge_request_event" && $PIPELINE_TYPE == "DEFAULT"
+      when: on_success
+    - if: $CI_PIPELINE_SOURCE == "trigger" && $PIPELINE_TYPE == "MISC_ONLY"
       when: on_success
     - when: never
   script:
     - cd continuousintegration/checks/
-    - VALIDATION_EXIT_CODE=0
-    - ./validate_misc_changes_only.sh --branch "$CI_DEFAULT_BRANCH" --whitelist misc_changes_whitelist.txt || VALIDATION_EXIT_CODE=$?
+    - TARGET_BRANCH="${CI_MERGE_REQUEST_TARGET_BRANCH_NAME:-$CI_DEFAULT_BRANCH}"
+    - MISC_ONLY_EXIT_CODE=0
+    - ./validate_misc_changes_only.sh --branch "$TARGET_BRANCH" --whitelist misc_changes_whitelist.txt || MISC_ONLY_EXIT_CODE=$?
     - |
-      if [ "$VALIDATION_EXIT_CODE" -eq 0 ]; then
-        echo "Only misc files changed — triggering a new MISC_ONLY pipeline and cancelling this one."
-
-        echo "Triggering MISC_ONLY pipeline"
-        curl -s -X POST "$CI_API_V4_URL/projects/$CI_PROJECT_ID/pipeline" \
-          --header "PRIVATE-TOKEN: $CI_API_TOKEN" \
-          --header "Content-Type: application/json" \
-          --data '{
-            "ref": "$CI_MERGE_REQUEST_REF_PATH",
-            "variables": [
-              {
-                "key": "PIPELINE_TYPE",
-                "value": "MISC_ONLY"
-              }
-            ]
-          }'
-
-        echo "Cancelling current pipeline"
-        curl -s -X POST "$CI_API_V4_URL/projects/$CI_PROJECT_ID/pipelines/$CI_PIPELINE_ID/cancel" \
-          --header "PRIVATE-TOKEN: $CI_API_TOKEN"
-      else
-        echo "Non-misc changes found. Continuing normal pipeline."
+      if [ "$PIPELINE_TYPE" = "MISC_ONLY" ]; then
+        exit $MISC_ONLY_EXIT_CODE
       fi
+    - echo "MISC_ONLY_EXIT_CODE=$MISC_ONLY_EXIT_CODE" >> misc_only.env
+  artifacts:
+    reports:
+      dotenv: misc_only.env
+
+trigger-misc-only-pipeline:
+  stage: validate
+  image: $IMAGE_ANALYSIS
+  needs:
+    - job: validate-misc-only-changes
+  rules:
+    - if: $PIPELINE_TYPE == "DEFAULT" && $MISC_ONLY_EXIT_CODE == "0"
+      when: always
+    - when: never
+  trigger:
+    branch: $CI_COMMIT_REF_NAME
+  variables:
+    PIPELINE_TYPE: "MISC_ONLY"
