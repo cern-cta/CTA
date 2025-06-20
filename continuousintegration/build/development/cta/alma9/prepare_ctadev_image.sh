@@ -23,5 +23,3 @@ fi
 
 # Pass to docker the version of CTA to build
 podman build --platform linux/amd64 -f Dockerfile -t ctadev:${image_tag} ${version_arg} .
-
-test

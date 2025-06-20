@@ -71,7 +71,6 @@ jobs:
           echo "CTA_BUILD_ID=${CTA_BUILD_ID}" >> "$GITHUB_ENV"
           cmake -DPackageOnly:Bool=true -DVCS_VERSION=${CTA_BUILD_ID} ${CMAKE_OPTIONS} ..
           make cta_srpm
-          echo test
 
       - name: Run build-wrapper
         run: |
