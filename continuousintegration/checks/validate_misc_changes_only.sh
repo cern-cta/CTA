@@ -77,7 +77,10 @@ if [ ${#NON_WHITELISTED[@]} -ne 0 ]; then
   for f in "${NON_WHITELISTED[@]}"; do
     echo "  $f"
   done
+  echo "It is therefore not possible to run this pipeline with the MISC_ONLY type"
+  echo "Failing..."
   exit 1
 else
   echo "All changed files are whitelisted."
+  echo "Running the pipeline with MISC_ONLY type is allowed."
 fi
