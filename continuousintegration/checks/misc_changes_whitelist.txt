@@ -1,0 +1,14 @@
+**/README.md
+.gitignore
+.git-blame-ignore-revs
+CHANGELOG.md
+COPYING
+sonar-project.properties
+.github/*
+.gitlab/issue_templates/*
+.gitlab/changelog_config.yml
+assets/*
+continuousintegration/build_deploy.sh
+continuousintegration/deploy.sh
+continuousintegration/release/*
+continuousintegration/build/development/*

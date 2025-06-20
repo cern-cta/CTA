@@ -4,6 +4,8 @@
   rules:
     - if: $PIPELINE_TYPE == "SYSTEM_TEST_ONLY"
       when: never
+    - if: $PIPELINE_TYPE == "MISC_ONLY"
+      when: never
     # For pivot CTA releases: vX.Y.0
     - if: $CI_COMMIT_TAG && $CI_COMMIT_TAG =~ /^.*\.0\.[0-9]+-[^-]*$/
       when: on_success
@@ -25,7 +27,11 @@ build-ctageneric-from-local-rpms:
     - job: modify-project-json
       optional: true
   rules:
-    - if: $PIPELINE_TYPE == "REGR_AGAINST_CTA_VERSION" || $PIPELINE_TYPE == "IMAGE_FROM_CTA_VERSION"
+    - if: $PIPELINE_TYPE == "REGR_AGAINST_CTA_VERSION"
+      when: never
+    - if: $PIPELINE_TYPE == "IMAGE_FROM_CTA_VERSION"
+      when: never
+    - if: $PIPELINE_TYPE == "MISC_ONLY"
       when: never
     - !reference [.build-ctageneric, rules]
   variables:
