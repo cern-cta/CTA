@@ -88,6 +88,7 @@ redirect-if-misc-only-changes:
         # Trigger new pipeline
         curl -X POST "$CI_API_V4_URL/projects/$CI_PROJECT_ID/pipeline" \
           --header "PRIVATE-TOKEN: $CI_API_TOKEN" \
+          --header "Content-Type: application/json" \
           --data '{
             "ref": "$CI_COMMIT_REF_NAME",
             "variables": [
