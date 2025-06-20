@@ -59,19 +59,6 @@ validate-project-json:
   script:
     - python3 ./continuousintegration/utils/project-json/validate_project_json.py
 
-validate-misc-only-changes:
-  stage: validate
-  image: $IMAGE_ANALYSIS
-  rules:
-    - if: $CI_PIPELINE_SOURCE == "merge_request_event" && $PIPELINE_TYPE == "MISC_ONLY"
-      when: on_success
-    - if: $CI_PIPELINE_SOURCE == "trigger" && $PIPELINE_TYPE == "MISC_ONLY"
-      when: on_success
-    - when: never
-  script:
-    - cd continuousintegration/checks/
-    - TARGET_BRANCH=${CI_MERGE_REQUEST_TARGET_BRANCH_NAME:-$CI_DEFAULT_BRANCH}
-    - ./validate_misc_changes_only.sh --branch $TARGET_BRANCH --whitelist misc_changes_whitelist.txt
 
 validate-misc-only-changes:
   stage: validate
@@ -98,14 +85,13 @@ validate-misc-only-changes:
 
 trigger-misc-only-pipeline:
   stage: validate
-  image: $IMAGE_ANALYSIS
   needs:
     - job: validate-misc-only-changes
   rules:
-    - if: $PIPELINE_TYPE == "DEFAULT" && $MISC_ONLY_EXIT_CODE == "0"
+    - if: $CI_PIPELINE_SOURCE == "merge_request_event" && $PIPELINE_TYPE == "DEFAULT" && $MISC_ONLY_EXIT_CODE == "0"
       when: always
     - when: never
   trigger:
-    branch: $CI_COMMIT_REF_NAME
+    branch: $CI_MERGE_REQUEST_SOURCE_BRANCH_NAME
   variables:
     PIPELINE_TYPE: "MISC_ONLY"
