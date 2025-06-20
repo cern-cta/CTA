@@ -14,3 +14,4 @@ continuousintegration/deploy.sh
 continuousintegration/release/*
 continuousintegration/build/development/*
 */*
+.gitlab-ci.yml
