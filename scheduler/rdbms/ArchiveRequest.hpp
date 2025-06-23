@@ -62,7 +62,7 @@ public:
    *
    * @return void
    */
-  void setArchiveFile(const common::dataStructures::ArchiveFile& archiveFile);
+  void setArchiveFile(common::dataStructures::ArchiveFile archiveFile);
   common::dataStructures::ArchiveFile getArchiveFile() const;
 
   /*

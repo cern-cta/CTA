@@ -60,7 +60,7 @@ JobPool<T>::JobPool(rdbms::ConnPool& connPool, size_t poolSize)
 // Acquire a job from the pool
 template<typename T>
 std::unique_ptr<T> JobPool<T>::acquireJob() {
-  std::lock_guard<std::mutex> lock(m_poolMutex);
+  std::scoped_lock lock(m_poolMutex);
   if (!m_pool.empty()) {
     // Get a job from the pool if available
     auto job = std::move(m_pool.top());
@@ -76,7 +76,7 @@ std::unique_ptr<T> JobPool<T>::acquireJob() {
 // Release a job back into the pool
 template<typename T>
 bool JobPool<T>::releaseJob(T* job) {
-  std::lock_guard<std::mutex> lock(m_poolMutex);
+  std::scoped_lock lock(m_poolMutex);
   if (m_pool.size() < m_poolSize) {
     // Reset the job's state as needed before reusing
     job->reset();

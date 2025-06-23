@@ -71,7 +71,7 @@ public:
    * @param connPool
    * @param rset
    */
-  void initialize(const rdbms::Rset& rset) override;
+  void initialize(const rdbms::Rset& rset) final;
 
   /**
    * @brief Returns this job instance back to its originating pool.

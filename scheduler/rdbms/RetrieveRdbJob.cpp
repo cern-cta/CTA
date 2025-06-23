@@ -54,12 +54,11 @@ void RetrieveRdbJob::initialize(const rdbms::Rset& rset) {
   retrieveRequest.diskFileInfo = archiveFile.diskFileInfo;
   retrieveRequest.creationLog.username = std::move(m_jobRow.srrUsername);  // EntryLog
   retrieveRequest.creationLog.host = std::move(m_jobRow.srrHost);
-  retrieveRequest.creationLog.time = std::move(m_jobRow.srrTime);
+  retrieveRequest.creationLog.time = m_jobRow.srrTime;
   retrieveRequest.isVerifyOnly =
     m_jobRow.isVerifyOnly;             // request to retrieve file from tape but do not write a disk copy
   retrieveRequest.vid = m_jobRow.vid;  // limit retrieve requests to the specified vid (in the case of dual-copy files)
-  retrieveRequest.mountPolicy =
-    m_jobRow.mountPolicy;  // limit retrieve requests to a specified mount policy (only used for verification requests)
+  retrieveRequest.mountPolicy = m_jobRow.mountPolicy;  // limit retrieve requests to a specified mount policy (only used for verification requests)
   retrieveRequest.lifecycleTimings.creation_time = m_jobRow.lifecycleTimings_creation_time;
   retrieveRequest.lifecycleTimings.first_selected_time = m_jobRow.lifecycleTimings_first_selected_time;
   retrieveRequest.lifecycleTimings.completed_time = m_jobRow.lifecycleTimings_completed_time;
@@ -92,21 +91,7 @@ void RetrieveRdbJob::initialize(const rdbms::Rset& rset) {
   if (m_jobRow.diskSystemName) {
     diskSystemName = m_jobRow.diskSystemName.value();
   }
-  /* rj retrieve job setting:
-     rj->archiveFile = rr.m_archiveFile;
-
-     rj->diskSystemName = rr.m_diskSystemName;
-     rj->retrieveRequest = rr.m_schedRetrieveReq;
-     rj->selectedCopyNb = rr.m_actCopyNb;
-     rj->isRepack = rr.m_repackInfo.isRepack;
-     rj->m_repackInfo = rr.m_repackInfo;
-     //   rj->m_jobOwned = true;
-     rj->m_mountId = mountInfo.mountId;
-     */
-
-  //timings.insOrIncAndReset("RetrieveRdbJob_rset_init", t);
   // Reset or update other member variables as necessary
-  //timings.insOrIncAndReset("RetrieveRdbJob_dbjobmembers_init", t);
   // Re-initialize report type
   if (m_jobRow.status == RetrieveJobStatus::RJS_ToTransfer) {
     reportType = ReportType::CompletionReport;
@@ -115,13 +100,9 @@ void RetrieveRdbJob::initialize(const rdbms::Rset& rset) {
   } else {
     reportType = ReportType::NoReportRequired;
   }
-  //timings.insOrIncAndReset("RetrieveRdbJob_status_init", t);
-  //cta::log::ScopedParamContainer logParams(lc);
-  //timings.addToLog(logParams);
-  //lc.log(cta::log::INFO, "In RetrieveRdbJob::initialize(): Finished initializing job object with new values.");
 }
 
-// contructor for get next job batch to report
+// contructor to get next job batch to report
 RetrieveRdbJob::RetrieveRdbJob(rdbms::ConnPool& connPool, const rdbms::Rset& rset) : RetrieveRdbJob(connPool) {
   initialize(rset);
 };

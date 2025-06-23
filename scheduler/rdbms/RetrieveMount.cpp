@@ -128,7 +128,7 @@ uint64_t RetrieveMount::requeueJobBatch(const std::list<std::string>& jobIDsList
 void RetrieveMount::requeueJobBatch(std::list<std::unique_ptr<SchedulerDatabase::RetrieveJob>>& jobBatch,
                                     cta::log::LogContext& logContext) {
   std::list<std::string> jobIDsList;
-  for (auto& job : jobBatch) {
+  for (const auto& job : jobBatch) {
     jobIDsList.push_back(std::to_string(job->jobID));
   }
   uint64_t njobs = RetrieveMount::requeueJobBatch(jobIDsList, logContext);
@@ -201,7 +201,7 @@ void RetrieveMount::flushAsyncSuccessReports(std::list<std::unique_ptr<Scheduler
   cta::DiskSpaceReservationRequest diskSpaceReservationRequest;
   std::vector<std::string> jobIDsList_success;
   jobIDsList_success.reserve(jobsBatch.size());
-  for (auto& rdbJob : jobsBatch) {
+  for (const auto& rdbJob : jobsBatch) {
     if (rdbJob->diskSystemName) {
       diskSpaceReservationRequest.addRequest(rdbJob->diskSystemName.value(), rdbJob->archiveFile.fileSize);
     }
@@ -216,7 +216,7 @@ void RetrieveMount::flushAsyncSuccessReports(std::list<std::unique_ptr<Scheduler
   try {
     uint64_t deletionCount = 0;
     cta::utils::Timer t;
-    if (jobIDsList_success.size() > 0) {
+    if (!jobIDsList_success.empty()) {
       uint64_t nrows = schedulerdb::postgres::RetrieveJobQueueRow::updateJobStatus(
         txn,
         cta::schedulerdb::RetrieveJobStatus::ReadyForDeletion,
@@ -272,9 +272,10 @@ void RetrieveMount::recycleTransferredJobs(std::list<std::unique_ptr<SchedulerDa
   try {
     for (auto& job : jobsBatch) {
       if (job->releaseToPool()) {
-        // Prevent deletion via unique_ptr - correct handling here would be
-        // to introduce custom deleter for the unique_ptr (would make recycleTransferredJobs obsolete),
-        // but this would mean changing types all across the CTA code
+        /* Prevent deletion via unique_ptr - correct handling here would be
+           to introduce custom deleter for the unique_ptr
+           (would make recycleTransferredJobs obsolete),
+           but this would mean changing types all across the CTA code */
         job.release();
       } else {
         // Let unique_ptr delete it

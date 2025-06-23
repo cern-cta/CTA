@@ -40,9 +40,7 @@ class RetrieveMount : public SchedulerDatabase::RetrieveMount {
   friend class TapeMountDecisionInfo;
 
 public:
-  //RetrieveMount(const std::string& ownerId, Transaction& txn, const std::string &vid) :
-  //   , m_txn(txn), m_vid(vid) { }
-  RetrieveMount(RelationalDB& pdb) : m_RelationalDB(pdb), m_connPool(pdb.m_connPool) {
+  explicit RetrieveMount(RelationalDB& pdb) : m_RelationalDB(pdb), m_connPool(pdb.m_connPool) {
     m_jobPool = std::make_shared<schedulerdb::JobPool<schedulerdb::RetrieveRdbJob>>(m_connPool);
   }
 
@@ -68,7 +66,7 @@ public:
   void setDriveStatus(common::dataStructures::DriveStatus status,
                       common::dataStructures::MountType mountType,
                       time_t completionTime,
-                      const std::optional<std::string>& reason = std::nullopt) override;
+                      const std::optional<std::string>& reason) override;
 
   void setTapeSessionStats(const castor::tape::tapeserver::daemon::TapeSessionStats& stats) override;
 
@@ -79,7 +77,9 @@ public:
   // for compliance with OStoreDB only
   //------------------------------------------------------------------------------
   void flushAsyncSuccessReports(std::list<cta::SchedulerDatabase::RetrieveJob*>& jobsBatch,
-                                cta::log::LogContext& lc) override {};
+                                cta::log::LogContext& lc) override {
+    throw cta::exception::Exception("Not implemented");
+  };
 
   void addDiskSystemToSkip(const DiskSystemToSkip& diskSystemToSkip) override;
 

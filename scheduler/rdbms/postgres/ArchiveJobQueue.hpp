@@ -450,7 +450,7 @@ struct ArchiveJobQueueRow {
    *
    *
    * @param txn        Transaction to use for this query
-   * @param status     Archive Job Status to select on
+   * @param newStatus  Archive Job Status to select on
    * @param mountInfo  mountInfo object
    * @param maxBytesRequested  the maximum cumulative size of the files in the bunch requested
    * @param limit      Maximum number of rows to return
@@ -458,7 +458,7 @@ struct ArchiveJobQueueRow {
    * @return  result set containing job IDs of the rows which were updated
    */
   static std::pair<rdbms::Rset, uint64_t> moveJobsToDbQueue(Transaction& txn,
-                                                            ArchiveJobStatus status,
+                                                            ArchiveJobStatus newStatus,
                                                             const SchedulerDatabase::ArchiveMount::MountInfo& mountInfo,
                                                             uint64_t maxBytesRequested,
                                                             uint64_t limit);
@@ -467,20 +467,20 @@ struct ArchiveJobQueueRow {
    * Update job status
    *
    * @param txn        Transaction to use for this query
-   * @param status     Archive Job Status to select on
+   * @param newStatus  Archive Job Status to select on
    * @param jobIDs     List of jobID strings to select
    * @return           Number of updated rows
    */
-  static uint64_t updateJobStatus(Transaction& txn, ArchiveJobStatus status, const std::vector<std::string>& jobIDs);
+  static uint64_t updateJobStatus(Transaction& txn, ArchiveJobStatus newStatus, const std::vector<std::string>& jobIDs);
 
   /**
    * Update failed job status
    *
    * @param txn                  Transaction to use for this query
-   * @param status               Archive Job Status to select on
+   * @param newStatus            Archive Job Status to select on
    * @return                     Number of updated rows
    */
-  uint64_t updateFailedJobStatus(Transaction& txn, ArchiveJobStatus status);
+  uint64_t updateFailedJobStatus(Transaction& txn, ArchiveJobStatus newStatus);
 
   /**
    * Move from ARCHIVE_ACTIVE_QUEUE to ARCHIVE_PENDING_QUEUE
@@ -488,12 +488,12 @@ struct ArchiveJobQueueRow {
    * This method updates also the retry statistics
    *
    * @param txn                  Transaction to use for this query
-   * @param status               Archive Job Status to select on
+   * @param newStatus            Archive Job Status to select on
    * @param keepMountId          true or false
    * @return                     Number of updated rows
    */
   uint64_t requeueFailedJob(Transaction& txn,
-                            ArchiveJobStatus status,
+                            ArchiveJobStatus newStatus,
                             bool keepMountId,
                             std::optional<std::list<std::string>> jobIDs = std::nullopt);
 
@@ -505,22 +505,22 @@ struct ArchiveJobQueueRow {
    * (e.g. in case of a full tape)
    *
    * @param txn                  Transaction to use for this query
-   * @param status               Archive Job Status to select on
+   * @param newStatus            Archive Job Status to select on
    * @param keepMountId          true or false
    * @return                     Number of updated rows
    */
   static uint64_t requeueJobBatch(Transaction& txn,
-                                  ArchiveJobStatus status,
+                                  ArchiveJobStatus newStatus,
                                   const std::list<std::string>& jobIDs);
 
   /**
    * Update job status when job report failed
    *
    * @param txn                  Transaction to use for this query
-   * @param status               Archive Job Status to select on
+   * @param newStatus            Archive Job Status to select on
    * @return                     Number of updated rows
    */
-  uint64_t updateJobStatusForFailedReport(Transaction& txn, ArchiveJobStatus status);
+  uint64_t updateJobStatusForFailedReport(Transaction& txn, ArchiveJobStatus newStatus);
 
   /**
    * Move the job row to the ARCHIVE FAILED JOB TABLE

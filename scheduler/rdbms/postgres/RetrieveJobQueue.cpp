@@ -23,7 +23,7 @@ namespace cta::schedulerdb::postgres {
 
 std::pair<rdbms::Rset, uint64_t>
 RetrieveJobQueueRow::moveJobsToDbQueue(Transaction& txn,
-                                       RetrieveJobStatus status,
+                                       RetrieveJobStatus newStatus,
                                        const SchedulerDatabase::RetrieveMount::MountInfo& mountInfo,
                                        std::vector<std::string>& noSpaceDiskSystemNames,
                                        uint64_t maxBytesRequested,
@@ -193,7 +193,7 @@ RetrieveJobQueueRow::moveJobsToDbQueue(Transaction& txn,
   )SQL";
   auto stmt = txn.getConn().createStmt(sql);
   stmt.bindString(":VID", mountInfo.vid);
-  stmt.bindString(":STATUS", to_string(status));
+  stmt.bindString(":STATUS", to_string(newStatus));
   stmt.bindUint32(":LIMIT", limit);
   stmt.bindUint64(":MOUNT_ID", mountInfo.mountId);
   stmt.bindUint64(":SAME_MOUNT_ID", mountInfo.mountId);
@@ -215,7 +215,7 @@ RetrieveJobQueueRow::moveJobsToDbQueue(Transaction& txn,
 }
 
 uint64_t RetrieveJobQueueRow::updateJobStatus(Transaction& txn,
-                                              RetrieveJobStatus status,
+                                              RetrieveJobStatus newStatus,
                                               const std::vector<std::string>& jobIDs) {
   if (jobIDs.empty()) {
     return 0;
@@ -228,9 +228,9 @@ uint64_t RetrieveJobQueueRow::updateJobStatus(Transaction& txn,
     sqlpart.pop_back();
   }
   // DISABLE DELETION FOR DEBUGGING
-  if (status == RetrieveJobStatus::RJS_Complete || status == RetrieveJobStatus::RJS_Failed ||
-      status == RetrieveJobStatus::ReadyForDeletion) {
-    if (status == RetrieveJobStatus::RJS_Failed) {
+  if (newStatus == RetrieveJobStatus::RJS_Complete || newStatus == RetrieveJobStatus::RJS_Failed ||
+      newStatus == RetrieveJobStatus::ReadyForDeletion) {
+    if (newStatus == RetrieveJobStatus::RJS_Failed) {
       return RetrieveJobQueueRow::moveJobBatchToFailedQueueTable(txn, jobIDs);
     } else {
       std::string sql = R"SQL(
@@ -254,12 +254,12 @@ uint64_t RetrieveJobQueueRow::updateJobStatus(Transaction& txn,
   // }
   std::string sql = "UPDATE RETRIEVE_ACTIVE_QUEUE SET STATUS = :STATUS WHERE JOB_ID IN (" + sqlpart + ")";
   auto stmt1 = txn.getConn().createStmt(sql);
-  stmt1.bindString(":STATUS", to_string(status));
+  stmt1.bindString(":STATUS", to_string(newStatus));
   stmt1.executeNonQuery();
   return stmt1.getNbAffectedRows();
 };
 
-uint64_t RetrieveJobQueueRow::updateFailedJobStatus(Transaction& txn, RetrieveJobStatus status) {
+uint64_t RetrieveJobQueueRow::updateFailedJobStatus(Transaction& txn, RetrieveJobStatus newStatus) {
   std::string sql = R"SQL(
       UPDATE RETRIEVE_ACTIVE_QUEUE SET
         STATUS = :STATUS,
@@ -270,7 +270,7 @@ uint64_t RetrieveJobQueueRow::updateFailedJobStatus(Transaction& txn, RetrieveJo
         WHERE JOB_ID = :JOB_ID
     )SQL";
   auto stmt = txn.getConn().createStmt(sql);
-  stmt.bindString(":STATUS", to_string(status));
+  stmt.bindString(":STATUS", to_string(newStatus));
   stmt.bindUint32(":TOTAL_RETRIES", totalRetries);
   stmt.bindUint32(":RETRIES_WITHIN_MOUNT", retriesWithinMount);
   stmt.bindUint64(":LAST_MOUNT_WITH_FAILURE", lastMountWithFailure);
@@ -308,7 +308,7 @@ void RetrieveJobQueueRow::updateRetryCounts(uint64_t mountId) {
 // In case of unexpected crashed the job stays in the RETRIEVE_PENDING_QUEUE and needs to be identified
 // in some garbage collection process - TO-BE-DONE.
 uint64_t RetrieveJobQueueRow::requeueFailedJob(Transaction& txn,
-                                               RetrieveJobStatus status,
+                                               RetrieveJobStatus newStatus,
                                                bool keepMountId,
                                                std::optional<std::list<std::string>> jobIDs) {
   std::string sql = R"SQL(
@@ -456,7 +456,7 @@ uint64_t RetrieveJobQueueRow::requeueFailedJob(Transaction& txn,
           FROM MOVED_ROWS M;
   )SQL";
   auto stmt = txn.getConn().createStmt(sql);
-  stmt.bindString(":STATUS", to_string(status));
+  stmt.bindString(":STATUS", to_string(newStatus));
   stmt.bindUint32(":TOTAL_RETRIES", totalRetries);
   stmt.bindUint32(":RETRIES_WITHIN_MOUNT", retriesWithinMount);
   stmt.bindUint64(":LAST_MOUNT_WITH_FAILURE", lastMountWithFailure);
@@ -469,7 +469,7 @@ uint64_t RetrieveJobQueueRow::requeueFailedJob(Transaction& txn,
 };
 
 uint64_t
-RetrieveJobQueueRow::requeueJobBatch(Transaction& txn, RetrieveJobStatus status, const std::list<std::string>& jobIDs) {
+RetrieveJobQueueRow::requeueJobBatch(Transaction& txn, RetrieveJobStatus newStatus, const std::list<std::string>& jobIDs) {
   std::string sql = R"SQL(
     WITH MOVED_ROWS AS (
         DELETE FROM RETRIEVE_ACTIVE_QUEUE
@@ -604,7 +604,7 @@ RetrieveJobQueueRow::requeueJobBatch(Transaction& txn, RetrieveJobStatus status,
   )SQL";
 
   auto stmt = txn.getConn().createStmt(sql);
-  stmt.bindString(":STATUS", to_string(status));
+  stmt.bindString(":STATUS", to_string(newStatus));
   stmt.bindString(":FAILURE_LOG", "UNPROCESSED_TASK_QUEUE_JOB_REQUEUED");
   stmt.executeNonQuery();
   return stmt.getNbAffectedRows();
@@ -644,13 +644,11 @@ uint64_t RetrieveJobQueueRow::moveJobBatchToFailedQueueTable(Transaction& txn, c
     ) INSERT INTO RETRIEVE_FAILED_QUEUE SELECT * FROM MOVED_ROWS;
   )SQL";
   auto stmt = txn.getConn().createStmt(sql);
-  //stmt.bindString(":STATUS", to_string(RetrieveJobStatus::RJS_Failed));
   stmt.executeNonQuery();
   return stmt.getNbAffectedRows();
-  ;
 }
 
-uint64_t RetrieveJobQueueRow::updateJobStatusForFailedReport(Transaction& txn, RetrieveJobStatus status) {
+uint64_t RetrieveJobQueueRow::updateJobStatusForFailedReport(Transaction& txn, RetrieveJobStatus newStatus) {
   // if this was the final reporting failure,
   // move the row to failed jobs and delete the entry from the queue
   if (status == RetrieveJobStatus::ReadyForDeletion) {
@@ -667,7 +665,7 @@ uint64_t RetrieveJobQueueRow::updateJobStatusForFailedReport(Transaction& txn, R
     )SQL";
 
   auto stmt = txn.getConn().createStmt(sql);
-  stmt.bindString(":STATUS", to_string(status));
+  stmt.bindString(":STATUS", to_string(newStatus));
   stmt.bindUint32(":TOTAL_REPORT_RETRIES", totalReportRetries);
   stmt.bindBool(":IS_REPORTING", isReporting);
   stmt.bindString(":REPORT_FAILURE_LOG", reportFailureLogs.value_or(""));
@@ -691,9 +689,9 @@ rdbms::Rset RetrieveJobQueueRow::flagReportingJobsByStatus(Transaction& txn,
   std::vector<std::string> placeholderVec;
   size_t j = 1;
   for (const auto& jstatus : statusList) {
-    statusVec.push_back(to_string(jstatus));
+    statusVec.emplace_back(to_string(jstatus));
     std::string plch = std::string(":STATUS") + std::to_string(j);
-    placeholderVec.push_back(plch);
+    placeholderVec.emplace_back(plch);
     sql += plch;
     if (&jstatus != &statusList.back()) {
       sql += std::string(",");

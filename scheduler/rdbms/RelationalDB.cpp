@@ -58,7 +58,7 @@ RelationalDB::~RelationalDB() = default;
 
 void RelationalDB::waitSubthreadsComplete() {
   // This method is only used by unit tests so calling usleep() is good enough
-  ::usleep(1000000);
+  std::this_thread::sleep_for(std::chrono::seconds(1));
 }
 
 void RelationalDB::ping() {
@@ -108,7 +108,7 @@ std::string RelationalDB::queueArchive(const std::string& instanceName,
   aFile.diskInstance = instanceName;
   aFile.fileSize = request.fileSize;
   aFile.storageClass = request.storageClass;
-  aReq.setArchiveFile(std::move(aFile));
+  aReq.setArchiveFile(aFile);
 
   utils::Timer timeSetters;
   aReq.setMountPolicy(criteria.mountPolicy);
@@ -119,23 +119,16 @@ std::string RelationalDB::queueArchive(const std::string& instanceName,
   aReq.setEntryLog(request.creationLog);
   params.add("timeSetters", timeSetters.secs());
 
-  //std::vector<schedulerdb::ArchiveRequest::JobDump> jl;
-  //jl.reserve(criteria.copyToPoolMap.size());
   int count_jobs = 0;
   for (auto& [key, value] : criteria.copyToPoolMap) {
     count_jobs++;
-    //schedulerdb::ArchiveRequest::JobDump job;
     aReq.addJob(key,
                 value,
                 schedulerdb::ArchiveRequest::RETRIES_WITHIN_MOUNT,
                 schedulerdb::ArchiveRequest::TOTAL_RETRIES,
                 schedulerdb::ArchiveRequest::REPORT_RETRIES);
-    //jl.emplace_back();
-    //jl.back().copyNb = key;
-    //jl.back().tapePool = value;
   }
 
-  //if (jl.empty()) {
   if (count_jobs == 0) {
     throw schedulerdb::ArchiveRequestHasNoCopies("In RelationalDB::queueArchive: the archive request has no copies");
   }
@@ -294,7 +287,7 @@ void RelationalDB::setArchiveJobBatchReported(std::list<SchedulerDatabase::Archi
   try {
     cta::utils::Timer t2;
     uint64_t deletionCount = 0;
-    if (jobIDsList_success.size() > 0) {
+    if (!jobIDsList_success.empty()) {
       uint64_t nrows =
         schedulerdb::postgres::ArchiveJobQueueRow::updateJobStatus(txn,
                                                                    cta::schedulerdb::ArchiveJobStatus::ReadyForDeletion,
@@ -309,7 +302,7 @@ void RelationalDB::setArchiveJobBatchReported(std::list<SchedulerDatabase::Archi
                "for entire job list provided.");
       }
     }
-    if (jobIDsList_failure.size() > 0) {
+    if (!jobIDsList_failure.empty()) {
       uint64_t nrows =
         schedulerdb::postgres::ArchiveJobQueueRow::updateJobStatus(txn,
                                                                    cta::schedulerdb::ArchiveJobStatus::AJS_Failed,
@@ -412,34 +405,8 @@ RelationalDB::queueRetrieve(cta::common::dataStructures::RetrieveRequest& rqst,
     if (diskSystemName) {
       rReq.setDiskSystemName(diskSystemName.value());
     }
-    //  rReq.setCreationTime(rqst.creationLog.time); // ? no reason for this method to exist ?
-
-    /* FROM OLD getNextJobBatch RETRIEVE method
-     *  schedulerdb::RetrieveRequest rr(logContext, j);
-     *  auto rj = std::make_unique<schedulerdb::RetrieveJob>( j.jobId );
-     *  rj->archiveFile = rr.m_archiveFile;
-     *  rj->diskSystemName = rr.m_diskSystemName;
-     *  rj->retrieveRequest = rr.m_schedRetrieveReq;
-     *  rj->selectedCopyNb = rr.m_actCopyNb;
-     *  rj->isRepack = rr.m_repackInfo.isRepack;
-     *  rj->m_repackInfo = rr.m_repackInfo;
-     *  //   rj->m_jobOwned = true;
-     *  rj->m_mountId = mountInfo.mountId;
-     * END OF OLD getNextJobBatch
-     *
-     * We need to add this case below when there are no copies:
-     * if (jl.empty()) {
-     * throw schedulerdb::RetrieveRequestHasNoCopies("no tape file for requested vid. archiveId="
-     *  << criteria.archiveFile.archiveFileID );
-     *  std::stringstream err;
-     *  err << "In RelationalDB::queueRetrieve(): no job for requested copyNb. archiveId=" << criteria.archiveFile.archiveFileID
-     *      << " vid=" << ret.selectedVid << " copyNb=" << bestCopyNb;
-     *   throw RetrieveRequestHasNoCopies(err.str());
-     *   }
-     */
     rreqMutex.release();
     rReq.insert();
-    //sqlconn.reset();
     log::ScopedParamContainer(logContext)
       .add("totalTime", timeTotal.secs())
       .log(cta::log::INFO, "In RelationalDB::queueRetrieve(): Finished enqueueing request.");
@@ -748,7 +715,7 @@ void RelationalDB::fetchMountInfo(SchedulerDatabase::TapeMountDecisionInfo& tmdi
   utils::Timer ttotal;
   log::TimingList timings;
   // Get a reference to the transaction, which may or may not be holding the scheduler global lock
-  auto& txn = static_cast<schedulerdb::TapeMountDecisionInfo*>(&tmdi)->m_txn;
+  const auto& txn = static_cast<const schedulerdb::TapeMountDecisionInfo*>(&tmdi)->m_txn;
 
   // Map of mount policies. getCachedMountPolicies() should be refactored to return a map instead of a list. In the meantime, copy the values into a local map.
   std::map<std::string, common::dataStructures::MountPolicy, std::less<>> cachedMountPoliciesMap;
@@ -807,8 +774,6 @@ void RelationalDB::fetchMountInfo(SchedulerDatabase::TapeMountDecisionInfo& tmdi
   uint64_t lowestRequestAge = 9999999999999;
   std::optional<std::string> highestPriorityMountPolicyName;
   std::optional<std::string> lowestRequestAgeMountPolicyName;
-  //std::list<std::string> queueMountPolicyNames;
-  //std::map<std::string, uint64_t, std::less<>> queueActivityNamesJobCounts;
   std::vector<cta::schedulerdb::postgres::RetrieveJobSummaryRow> rjsr_vector;
   // Set the queue type
   common::dataStructures::MountType mountType = common::dataStructures::MountType::Retrieve;

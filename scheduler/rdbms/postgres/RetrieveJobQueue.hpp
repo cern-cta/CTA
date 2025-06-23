@@ -94,20 +94,10 @@ struct RetrieveJobQueueRow {
   std::optional<std::string> diskSystemName = std::nullopt;
 
   RetrieveJobQueueRow() {
-    archiveFileID = 0;
     diskFileId.reserve(128);
     diskInstance.reserve(128);
-    fileSize = 0;
     storageClass.reserve(128);
     diskFileInfoPath.reserve(2048);
-    diskFileInfoOwnerUid = 0;
-    diskFileInfoGid = 0;
-    creationTime = 0;
-    lifecycleTimings_creation_time = 0;
-    lifecycleTimings_first_selected_time = 0;
-    lifecycleTimings_completed_time = 0;
-    fSeq = 0;
-    blockId = 0;
     tapePool.reserve(64);
     mountPolicy.reserve(64);
     retrieveReportURL.reserve(2048);
@@ -564,7 +554,7 @@ struct RetrieveJobQueueRow {
   *
   *
   * @param txn        Transaction to use for this query
-  * @param status     Retrieve Job Status to select on
+  * @param newStatus  Retrieve Job Status to select on
   * @param mountInfo  mountInfo object
   * @param noSpaceDiskSystemNames list of diskSystemNames where there is no space left for more retrieves
   * @param maxBytesRequested  the maximum cumulative size of the files in the bunch requested
@@ -574,7 +564,7 @@ struct RetrieveJobQueueRow {
   */
   static std::pair<rdbms::Rset, uint64_t>
   moveJobsToDbQueue(Transaction& txn,
-                    RetrieveJobStatus status,
+                    RetrieveJobStatus newStatus,
                     const SchedulerDatabase::RetrieveMount::MountInfo& mountInfo,
                     std::vector<std::string>& noSpaceDiskSystemNames,
                     uint64_t maxBytesRequested,
@@ -583,20 +573,20 @@ struct RetrieveJobQueueRow {
   * Update job status
   *
   * @param txn        Transaction to use for this query
-  * @param status     Retrieve Job Status to select on
+  * @param newStatus  Retrieve Job Status to select on
   * @param jobIDs     List of jobID strings to select
   * @return           Number of updated rows
   */
-  static uint64_t updateJobStatus(Transaction& txn, RetrieveJobStatus status, const std::vector<std::string>& jobIDs);
+  static uint64_t updateJobStatus(Transaction& txn, RetrieveJobStatus newStatus, const std::vector<std::string>& jobIDs);
 
   /**
   * Update failed job status
   *
   * @param txn                  Transaction to use for this query
-  * @param status               Retrieve Job Status to select on
+  * @param newStatus            Retrieve Job Status to select on
   * @return                     Number of updated rows
   */
-  uint64_t updateFailedJobStatus(Transaction& txn, RetrieveJobStatus status);
+  uint64_t updateFailedJobStatus(Transaction& txn, RetrieveJobStatus newStatus);
 
   /**
   * Move from ARCHIVE_ACTIVE_QUEUE to ARCHIVE_PENDING_QUEUE
@@ -604,12 +594,12 @@ struct RetrieveJobQueueRow {
   * This method updates also the retry statistics
   *
   * @param txn                  Transaction to use for this query
-  * @param status               Retrieve Job Status to select on
+  * @param newStatus            Retrieve Job Status to select on
   * @param keepMountId          true or false
   * @return                     Number of updated rows
   */
   uint64_t requeueFailedJob(Transaction& txn,
-                            RetrieveJobStatus status,
+                            RetrieveJobStatus newStatus,
                             bool keepMountId,
                             std::optional<std::list<std::string>> jobIDs = std::nullopt);
 
@@ -621,20 +611,20 @@ struct RetrieveJobQueueRow {
   * (e.g. in case of a full tape)
   *
   * @param txn                  Transaction to use for this query
-  * @param status               Retrieve Job Status to select on
+  * @param newStatus            Retrieve Job Status to select on
   * @param keepMountId          true or false
   * @return                     Number of updated rows
   */
-  static uint64_t requeueJobBatch(Transaction& txn, RetrieveJobStatus status, const std::list<std::string>& jobIDs);
+  static uint64_t requeueJobBatch(Transaction& txn, RetrieveJobStatus newStatus, const std::list<std::string>& jobIDs);
 
   /**
   * Update job status when job report failed
   *
   * @param txn                  Transaction to use for this query
-  * @param status               Retrieve Job Status to select on
+  * @param newStatus            Retrieve Job Status to select on
   * @return                     Number of updated rows
   */
-  uint64_t updateJobStatusForFailedReport(Transaction& txn, RetrieveJobStatus status);
+  uint64_t updateJobStatusForFailedReport(Transaction& txn, RetrieveJobStatus newStatus);
 
   /**
   * Move the job row to the ARCHIVE FAILED JOB TABLE

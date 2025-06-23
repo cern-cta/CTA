@@ -38,7 +38,6 @@ void ArchiveRequest::insert() {
       ajr.mountPolicy = m_mountPolicy.name;
       ajr.priority = m_mountPolicy.archivePriority;
       ajr.minArchiveRequestAge = m_mountPolicy.archiveMinRequestAge;
-      // ajr.archiveFile = m_archiveFile;
       ajr.archiveFileID = m_archiveFile.archiveFileID;
       ajr.diskFileId = std::move(m_archiveFile.diskFileId);
       ajr.diskInstance = std::move(m_archiveFile.diskInstance);
@@ -99,8 +98,8 @@ void ArchiveRequest::addJob(uint8_t copyNumber,
   m_jobs.push_back(newJob);
 }
 
-void ArchiveRequest::setArchiveFile(const common::dataStructures::ArchiveFile& archiveFile) {
-  m_archiveFile = archiveFile;
+void ArchiveRequest::setArchiveFile(common::dataStructures::ArchiveFile archiveFile) {
+  m_archiveFile = std::move(archiveFile);
 }
 
 common::dataStructures::ArchiveFile ArchiveRequest::getArchiveFile() const {
