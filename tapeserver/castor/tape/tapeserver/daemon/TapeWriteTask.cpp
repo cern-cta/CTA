@@ -260,7 +260,7 @@ void TapeWriteTask::execute(const std::unique_ptr<castor::tape::tapeFile::WriteS
     int errorLevel = cta::log::ERR;
     if (!doReportJobError) {
       errorLevel = cta::log::INFO;
-    };
+    }
     LogContext::ScopedParam sp1(lc, Param("exceptionMessage", e.getMessageValue()));
     lc.log(errorLevel, "An error occurred for this file. End of migrations.");
     circulateMemBlocks();

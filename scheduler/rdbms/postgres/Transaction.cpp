@@ -66,10 +66,10 @@ void Transaction::takeNamedLock(std::string_view tapePoolString) {
   std::hash<std::string_view> lock_id_hasher;
   std::size_t lock_id = lock_id_hasher(tapePoolString);
   // Convert to 64-bit integer
-  uint64_t hash64 = static_cast<uint64_t>(lock_id);
-  uint32_t hash32 = static_cast<uint32_t>(hash64 ^ (hash64 >> 32));
+  auto hash64 = static_cast<uint64_t>(lock_id);
+  auto hash32 = static_cast<uint32_t>(hash64 ^ (hash64 >> 32));
 
-  //std::cout << "Hash value (64-bit): " << hash64 << std::endl;
+  // debug: std::cout << "Hash value (64-bit): " << hash64 << std::endl;
   std::string sql = "SELECT PG_ADVISORY_XACT_LOCK(:HASH32::bigint)";
   auto stmt = m_conn->createStmt(sql);
   stmt.bindUint64(":HASH32", hash32);

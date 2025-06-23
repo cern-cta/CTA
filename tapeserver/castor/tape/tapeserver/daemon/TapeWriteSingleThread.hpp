@@ -84,7 +84,7 @@ public:
    * @param jobIDsList list of job IDs as strings
    * @param lc         logging context
    */
-  void requeueUnprocessedTasks(std::list<std::string> jobIDsList, cta::log::LogContext& lc) const;
+  void requeueUnprocessedTasks(const std::list<std::string>& jobIDsList, cta::log::LogContext& lc) const;
   /**
    * 
    * @param lastFseq
