@@ -51,7 +51,7 @@ if [ -z "$branch" ]; then
 fi
 
 # Navigate to script location
-cd "$(dirname "$0")"
+cd "$(dirname "${BASH_SOURCE[0]}")"
 
 # Check if registry credentials are valid
 ./get_registry_credentials.sh --check > /dev/null || die "Error: Credential check failed."

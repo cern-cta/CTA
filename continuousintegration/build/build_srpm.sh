@@ -37,7 +37,7 @@ usage() {
 }
 
 build_srpm() {
-  project_root="$(realpath "$(dirname "$0")/../..")"
+  project_root="$(realpath "$(dirname "${BASH_SOURCE[0]}")/../..")"
   # Default values for arguments
   local build_dir=""
   local build_generator=""

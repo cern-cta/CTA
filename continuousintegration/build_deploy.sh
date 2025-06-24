@@ -144,8 +144,8 @@ build_deploy() {
       ;;
     --platform)
       if [[ $# -gt 1 ]]; then
-        if [ $(jq '.platforms | has("el9")' ${project_root}/project.json) != "true" ]; then
-          echo "Error: platform $2 not supported. Please check the project.json for supported platforms."
+        if [ "$(jq --arg platform "$2" '.platforms | has($platform)' "$project_root/project.json")" != "true" ]; then
+            echo "Error: platform $2 not supported. Please check the project.json for supported platforms."
         fi
         platform="$2"
         shift
