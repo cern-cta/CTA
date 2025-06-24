@@ -42,9 +42,9 @@ add_library(XrdSsiCta MODULE XrdSsiCtaServiceProvider.cpp XrdSsiCtaRequestProc.c
                              ../frontend/common/WorkflowEvent.cpp
                              ../frontend/common/AdminCmd.cpp)
 if(CTA_USE_PGSCHED)
-  target_link_libraries(XrdSsiCta ${XROOTD_XRDSSI_LIB} XrdSsiLib ctascheduler ctacommon ctacatalogue)
+  target_link_libraries(XrdSsiCta ${XROOTD_XRDSSI_LIB} XrdSsiLib ctaprotobuf ctascheduler ctacommon ctacatalogue)
 else()
-  target_link_libraries(XrdSsiCta ${XROOTD_XRDSSI_LIB} XrdSsiLib ctascheduler ctacommon ctaobjectstore ctacatalogue)
+  target_link_libraries(XrdSsiCta ${XROOTD_XRDSSI_LIB} XrdSsiLib ctaprotobuf ctascheduler ctacommon ctaobjectstore ctacatalogue)
 endif()
 
 install(TARGETS XrdSsiCta DESTINATION usr/${CMAKE_INSTALL_LIBDIR})
