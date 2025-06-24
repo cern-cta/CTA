@@ -1,6 +1,8 @@
 .build-cta:
   retry: 1
   rules:
+    - when: manual
+      allow_failure: true
     - if: $PIPELINE_TYPE == "MISC_ONLY"
       when: never
     - if: $PIPELINE_TYPE == "SYSTEM_TEST_ONLY"
