@@ -35,8 +35,6 @@ validate-pipeline-variables:
   stage: validate
   image: $IMAGE_ANALYSIS
   rules:
-    - if: $PIPELINE_TYPE == "MISC_ONLY"
-      when: never
     - when: on_success
   script:
     - |
@@ -53,8 +51,6 @@ validate-project-json:
   stage: validate
   image: $IMAGE_ANALYSIS
   rules:
-    - if: $PIPELINE_TYPE == "MISC_ONLY"
-      when: never
     - when: on_success
   script:
     - python3 ./continuousintegration/utils/project-json/validate_project_json.py
