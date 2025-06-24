@@ -71,38 +71,38 @@ validate-misc-only-changes:
     - TARGET_BRANCH=${CI_MERGE_REQUEST_TARGET_BRANCH_NAME:-$CI_DEFAULT_BRANCH}
     - ./validate_misc_changes_only.sh --branch $TARGET_BRANCH --whitelist misc_changes_whitelist.txt
 
-redirect-if-misc-only-changes:
-  stage: validate
-  image: $IMAGE_ANALYSIS
-  rules:
-    - if: $CI_PIPELINE_SOURCE == "merge_request_event" && $PIPELINE_TYPE != "MISC_ONLY"
-      when: on_success
-    - when: never
-  script:
-    - cd continuousintegration/checks/
-    - VALIDATION_EXIT_CODE=0
-    - ./validate_misc_changes_only.sh --branch "$CI_DEFAULT_BRANCH" --whitelist misc_changes_whitelist.txt || VALIDATION_EXIT_CODE=$?
-    - |
-      if [ "$VALIDATION_EXIT_CODE" -eq 0 ]; then
-        echo "Only misc files changed — triggering a new MISC_ONLY pipeline and cancelling this one."
+# redirect-if-misc-only-changes:
+#   stage: validate
+#   image: $IMAGE_ANALYSIS
+#   rules:
+#     - if: $CI_PIPELINE_SOURCE == "merge_request_event" && $PIPELINE_TYPE != "MISC_ONLY"
+#       when: on_success
+#     - when: never
+#   script:
+#     - cd continuousintegration/checks/
+#     - VALIDATION_EXIT_CODE=0
+#     - ./validate_misc_changes_only.sh --branch "$CI_DEFAULT_BRANCH" --whitelist misc_changes_whitelist.txt || VALIDATION_EXIT_CODE=$?
+#     - |
+#       if [ "$VALIDATION_EXIT_CODE" -eq 0 ]; then
+#         echo "Only misc files changed — triggering a new MISC_ONLY pipeline and cancelling this one."
 
-        echo "Triggering MISC_ONLY pipeline"
-        curl -s -X POST "$CI_API_V4_URL/projects/$CI_PROJECT_ID/pipeline" \
-          --header "PRIVATE-TOKEN: $CI_API_TOKEN" \
-          --header "Content-Type: application/json" \
-          --data '{
-            "ref": "'"$CI_MERGE_REQUEST_REF_PATH"'",
-            "variables": [
-              {
-                "key": "PIPELINE_TYPE",
-                "value": "MISC_ONLY"
-              }
-            ]
-          }'
+#         echo "Triggering MISC_ONLY pipeline"
+#         curl -s -X POST "$CI_API_V4_URL/projects/$CI_PROJECT_ID/pipeline" \
+#           --header "PRIVATE-TOKEN: $CI_API_TOKEN" \
+#           --header "Content-Type: application/json" \
+#           --data '{
+#             "ref": "'"$CI_MERGE_REQUEST_REF_PATH"'",
+#             "variables": [
+#               {
+#                 "key": "PIPELINE_TYPE",
+#                 "value": "MISC_ONLY"
+#               }
+#             ]
+#           }'
 
-        echo "Cancelling current pipeline"
-        curl -s -X POST "$CI_API_V4_URL/projects/$CI_PROJECT_ID/pipelines/$CI_PIPELINE_ID/cancel" \
-          --header "PRIVATE-TOKEN: $CI_API_TOKEN"
-      else
-        echo "Non-misc changes found. Continuing normal pipeline."
-      fi
+#         echo "Cancelling current pipeline"
+#         curl -s -X POST "$CI_API_V4_URL/projects/$CI_PROJECT_ID/pipelines/$CI_PIPELINE_ID/cancel" \
+#           --header "PRIVATE-TOKEN: $CI_API_TOKEN"
+#       else
+#         echo "Non-misc changes found. Continuing normal pipeline."
+#       fi
