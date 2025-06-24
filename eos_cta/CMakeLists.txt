@@ -55,6 +55,8 @@ set_target_properties(ctagrpc PROPERTIES
   POSITION_INDEPENDENT_CODE TRUE)
 target_link_libraries(ctagrpc gpr absl_synchronization ${PROTOBUF3_GRPC_LIBRARIES} ${GRPC_GRPC++_LIBRARY})
 
+add_dependencies(ctagrpc ctaprotobuf)
+
 # Library containing EOS protobuf and gRPC definitions
 add_library(ProtoEOSMGM ${ProtoSourcesEOSMGM} ${GrpcSourcesEOSMGM})
 set_target_properties(ProtoEOSMGM PROPERTIES
