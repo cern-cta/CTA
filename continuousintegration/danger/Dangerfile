@@ -10,11 +10,24 @@ unless ALLOWED_PREFIXES.any? { |prefix| gitlab.mr_title.start_with?(prefix) }
 end
 
 if gitlab.mr_title.length > 72
-  warn("**Merge Request Title Too Long**\n\nThe title is longer than 72 characters. Consider shortening it for readability.")
+  warn("**Merge Request Title Too Long**\n\nThe title is #{gitlab.mr_title.length} characters long. Please try to 1shorten it to 72 or fewer.")
 end
 
 
 # --- Description checks ---
+
+
+
+required_checklist_items = [
+  "- [x] Documentation reflects the changes made.",
+  "- [x] Merge Request title is clear, concise, and suitable as a changelog entry. See [this link](https://cta.docs.cern.ch/latest/dev/contributing/workflow/#changelog)"
+]
+
+missing_items = required_checklist_items.reject { |item| gitlab.mr_body.include?(item) }
+
+unless missing_items.empty?
+  fail("**Checklist Incomplete**\n\nPlease complete all required items in the merge request checklist before proceeding.")
+end
 
 desc = gitlab.mr_body.strip
 
@@ -22,22 +35,18 @@ if desc.empty?
   fail("**Missing Description**\n\nThe merge request description is empty. Please use the provided MR template.")
 end
 
-unless gitlab.mr_body.include?("- [x] Documentation reflects the changes made.")
-  fail("**Documentation Acknowledgment Missing**\n\nPlease confirm whether the documentation is (still) up-to-date by checking the corresponding box in the MR description.")
-end
-
-unless gitlab.mr_body.include?("- [x] Merge Request title is clear, concise, and suitable as a changelog entry. See [this link](https://cta.docs.cern.ch/latest/dev/contributing/workflow/#changelog)")
-  fail("**Title Acknowledgment Missing**\n\nPlease review the merge request title and confirm by checking the corresponding box in the MR description.")
-end
-
 desc_section = desc[/### Description\s+(.+?)### Checklist/m, 1]
 
 if desc_section.nil?
-  fail("**Missing Description Section**\n\nCould not find the Description` section. Please ensure the merge request template is being followed.")
+  fail("**Missing Description Section**\n\nCould not find the `Description` section. Please ensure the merge request template is being followed.")
 elsif desc_section.include?("<!-- Mandatory: provide a description")
   fail("**Unmodified Description Placeholder**\n\nPlease remove the placeholder comment and describe the changes introduced in this merge request.")
 elsif desc_section.strip.length < 40
-  warn("**Short Description**\n\nThe content under `### Description` appears too brief. Please provide a more complete summary of the changes.")
+  warn("**Short Description**\n\nThe content under `Description` appears too brief. Please provide a more complete summary of the changes.")
+end
+
+unless gitlab.mr_body.match?(/(Closes|Fixes|Resolves) #\d+/)
+  warn("**No Issue Reference Found**\n\nConsider linking this MR to a related issue using `Closes #1234` or similar.")
 end
 
 
@@ -54,7 +63,7 @@ if type_labels.size != 1
 end
 
 if workflow_labels.size != 1
-  warn("**Missing `workflow::` Label**\n\nConsider adding a `workflow::` label to reflect the current review status.")
+  fail("**Missing `workflow::` Label**\n\nConsider adding a `workflow::` label to reflect the current review status.")
 end
 
 if other_labels.empty?
@@ -92,7 +101,7 @@ markdown <<~MSG
   Please address all `fail` and `warn` messages below before merging.
   If any warning is intentional, acknowledge it by updating the MR description or replying to this comment.
 
-  🔁 [Retry the `danger-review` job](#{job_url}) if needed to refresh these results.
+  🔁 Retry the [`danger-review` job](#{job_url}) if needed to refresh these results.
 
   ---
 MSG
