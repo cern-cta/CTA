@@ -54,3 +54,19 @@ validate-project-json:
     - when: on_success
   script:
     - python3 ./continuousintegration/utils/project-json/validate_project_json.py
+
+danger-review:
+  allow_failure: true
+  image: ruby:3.4-alpine
+  stage: validate
+  needs: []
+  rules:
+    - if: $CI_PIPELINE_SOURCE == "merge_request_event"
+      when: always
+    - when: never
+  before_script:
+    - gem install danger
+    # - git config --global user.email "$GITLAB_USER_EMAIL"
+    # - git config --global user.name "Danger Bot"
+  script:
+    - danger --dangerfile continuousintegration/danger/Dangerfile
