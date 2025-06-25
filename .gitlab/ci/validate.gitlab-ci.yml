@@ -65,7 +65,7 @@ danger-review:
       when: always
     - when: never
   variables:
-    DANGER_GITLAB_USE_THREADS: true
+    DANGER_GITLAB_USE_THREADS: 1
   before_script:
     - apk add --no-cache git
     - gem install danger danger-gitlab faraday-retry

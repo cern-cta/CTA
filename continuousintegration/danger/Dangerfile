@@ -1,11 +1,21 @@
-# --- Constants ---
+# --- General message ---
+
+markdown <<~MSG
+  🤖 **This merge request has been automatically reviewed by [Danger](https://danger.systems/).**
+
+  Danger helps enforce project standards by checking MR titles, descriptions, labels, reviewers, and size.
+
+  Please address all `fail` and `warn` messages below before merging.
+  If any warning is intentional, acknowledge it by replying to this comment.
+MSG
+
+
+# --- Title checks ---
 
 ALLOWED_PREFIXES = %w[
   [CI] [Misc] [Tools] [catalogue]
   [frontend] [scheduler] [taped] [rmcd]
 ]
-
-# --- Title checks ---
 
 unless ALLOWED_PREFIXES.any? { |prefix| gitlab.mr_title.start_with?(prefix) }
   fail("The merge request title must start with one of: #{ALLOWED_PREFIXES.join(', ')}")
@@ -25,11 +35,11 @@ if desc.empty?
 end
 
 unless gitlab.mr_body.include?("- [x] Documentation reflects the changes made.")
-  fail("Please ensure that the documentation has been updated if relevant and check the acknowledgment box in the MR description: `- [x] Documentation reflects the changes made.`")
+  fail("Please ensure that the documentation has been updated (if required) and check the relevant acknowledgment box in the MR description.")
 end
 
 unless gitlab.mr_body.include?("- [x] Merge Request title is clear, concise, and suitable as a changelog entry. See [this link](https://cta.docs.cern.ch/latest/dev/contributing/workflow/#changelog)")
-  fail("Please ensure that the merge request title has been reviewed and check the acknowledgment box in the MR description: `- [x] Merge Request title is clear, concise, and suitable as a changelog entry.`")
+  fail("Please ensure that the merge request title has been reviewed and check the relevant acknowledgment box in the MR description.")
 end
 
 desc_section = desc[/### Description\s+(.+?)### Checklist/m, 1]
@@ -37,9 +47,9 @@ desc_section = desc[/### Description\s+(.+?)### Checklist/m, 1]
 if desc_section.nil?
   fail("Could not find a properly formatted Description section. Please follow the merge request template.")
 elsif desc_section.include?("<!-- Mandatory: provide a description")
-  fail("Please remove the placeholder comment and describe the changes in the Description section.")
+  fail("Please remove the placeholder description comment and describe the changes in the Description section.")
 elsif desc_section.strip.length < 40
-  fail("The Description section appears too short. Please provide a meaningful summary of your changes.")
+  warn("The Description section appears too short. Please there is a meaningful summary of the changes.")
 end
 
 # --- Label checks ---
@@ -78,14 +88,3 @@ end
 if git.lines_of_code > 500
   warn "This merge request is quite big (#{git.lines_of_code} lines changed), please consider splitting it into multiple merge requests."
 end
-
-# --- General message ---
-
-markdown <<~MSG
-  ⚠️ **This merge request has been automatically reviewed by [Danger](https://danger.systems/).**
-
-  Danger helps enforce project standards by checking MR titles, descriptions, labels, reviewers, and size.
-
-  Please address all `fail` and `warn` messages below before merging.
-  If any warning is intentional, acknowledge it by replying to this comment.
-MSG
