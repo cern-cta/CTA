@@ -63,7 +63,7 @@ if type_labels.size != 1
 end
 
 if workflow_labels.size != 1
-  fail("**Missing `workflow::` Label**\n\nConsider adding a `workflow::` label to reflect the current review status.")
+  fail("**Missing `workflow::` Label**\n\Please add a `workflow::` label to reflect the current work status.")
 end
 
 if other_labels.empty?
@@ -98,8 +98,8 @@ markdown <<~MSG
 
   Danger helps enforce project standards by checking MR titles, descriptions, labels, reviewers, and size.
 
-  Please address all `fail` and `warn` messages below before merging.
-  If any warning is intentional, acknowledge it by updating the MR description or replying to this comment.
+  Please address all `fail` and `warn` messages before merging.
+  If any warning is intentional, acknowledge it by replying to this comment.
 
   🔁 Retry the [`danger-review` job](#{job_url}) if needed to refresh these results.
 
