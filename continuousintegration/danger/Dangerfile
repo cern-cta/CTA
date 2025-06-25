@@ -48,12 +48,11 @@ end
 # --- Assignee check ---
 
 if gitlab.mr_json["assignee"].nil?
-  warn("No assignee set — assigning author")
+  warn("This merge request does not have an assignee, please add one")
+end
 
-  gitlab.api.put(
-    "/projects/#{gitlab.mr_json['project_id']}/merge_requests/#{gitlab.mr_json['iid']}",
-    assignee_id: gitlab.mr_json["author"]["id"]
-  )
+if gitlab.mr_json["reviewers"].nil? || gitlab.mr_json["reviewers"].empty?
+  warn("This merge request has no reviewers assigned")
 end
 
 # --- MR size warnings ---
