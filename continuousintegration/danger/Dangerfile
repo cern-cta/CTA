@@ -12,7 +12,7 @@ unless ALLOWED_PREFIXES.any? { |prefix| gitlab.mr_title.start_with?(prefix) }
 end
 
 if gitlab.mr_title.length > 72
-  warn("The merge request title is long. Consider shortening it to less than 72 characters")
+  warn("The merge request title is long. Consider shortening it to less than 72 characters.")
 end
 
 
@@ -21,7 +21,25 @@ end
 desc = gitlab.mr_body.strip
 
 if desc.empty?
-  fail("The merge request description is missing or incomplete (please follow the template)")
+  fail("The merge request description is missing or incomplete. Please follow the template.")
+end
+
+unless gitlab.mr_body.include?("- [x] Documentation reflects the changes made.")
+  fail("Please ensure that the documentation has been updated if relevant and check the acknowledgment box in the MR description: `- [x] Documentation reflects the changes made.`")
+end
+
+unless gitlab.mr_body.include?("- [x] Merge Request title is clear, concise, and suitable as a changelog entry. See [this link](https://cta.docs.cern.ch/latest/dev/contributing/workflow/#changelog)")
+  fail("Please ensure that the merge request title has been reviewed and check the acknowledgment box in the MR description: `- [x] Merge Request title is clear, concise, and suitable as a changelog entry.`")
+end
+
+desc_section = description[/### Description\s+(.+?)### Checklist/m, 1]
+
+if desc_section.nil?
+  fail("Could not find a properly formatted Description section. Please follow the merge request template.")
+elsif desc_section.include?("<!-- Mandatory: provide a description")
+  fail("Please remove the placeholder comment and describe the changes in the Description section.")
+elsif desc_section.strip.length < 40
+  fail("The Description section appears too short. Please provide a meaningful summary of your changes.")
 end
 
 # --- Label checks ---
@@ -34,11 +52,11 @@ other_labels = labels - (type_labels + workflow_labels)
 
 
 if type_labels.size != 1
-  fail("This merge request is missing a 'type::' label, please assign one")
+  warn("This merge request is missing a 'type::' label, please assign one.")
 end
 
 if workflow_labels.size != 1
-  fail("This merge request is missing a 'workflow::' label, please assign one")
+  warn("This merge request is missing a 'workflow::' label, please assign one.")
 end
 
 if other_labels.empty?
@@ -48,11 +66,11 @@ end
 # --- Assignee check ---
 
 if gitlab.mr_json["assignee"].nil?
-  warn("This merge request does not have an assignee, please add one")
+  warn("This merge request does not have an assignee, please add one.")
 end
 
 if gitlab.mr_json["reviewers"].nil? || gitlab.mr_json["reviewers"].empty?
-  warn("This merge request has no reviewers assigned")
+  warn("This merge request has no reviewers assigned.")
 end
 
 # --- MR size warnings ---
@@ -60,3 +78,14 @@ end
 if git.lines_of_code > 500
   warn "This merge request is quite big (#{git.lines_of_code} lines changed), please consider splitting it into multiple merge requests."
 end
+
+# --- General message ---
+
+markdown <<~MSG
+  ⚠️ **This merge request has been automatically reviewed by [Danger](https://danger.systems/).**
+
+  Danger helps enforce project standards by checking MR titles, descriptions, labels, reviewers, and size.
+
+  Please address all `fail` and `warn` messages below before merging.
+  If any warning is intentional, acknowledge it by replying to this comment.
+MSG
