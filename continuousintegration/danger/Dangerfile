@@ -96,12 +96,11 @@ job_url = "#{ENV['CI_PROJECT_URL']}/-/jobs/#{ENV['CI_JOB_ID']}"
 markdown <<~MSG
   ## 🤖 This merge request was automatically reviewed by [Danger](https://danger.systems/ruby/)
 
-  Danger helps enforce project standards by checking MR titles, descriptions, labels, reviewers, and size.
-
-  Please address all `fail` and `warn` messages before merging.
+  Danger helps enforce project standards by performing various automated checks on the merge request.
+  Please address all messages before merging.
   If any warning is intentional, acknowledge it by replying to this comment.
 
-  🔁 Retry the [`danger-review` job](#{job_url}) if needed to refresh these results.
+  🔁 Retry the [`danger-review`](#{job_url}) job if needed to refresh these results.
 
   ---
 MSG
