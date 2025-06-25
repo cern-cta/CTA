@@ -7,6 +7,25 @@
       when: never
     - if: $PIPELINE_TYPE == "IMAGE_FROM_CTA_VERSION"
       when: never
+    # These rules serve to prevent the rest of the pipeline from triggering when only trivial files such as the CHANGELOG have been modified
+    # GitLab only allows a whitelist and not a blacklist, so we have to list all file changes that should trigger the build job
+    - changes:
+        - .dockerignore
+        - .gitlab-ci.yml
+        - CMakeLists.txt
+        - cta.spec.in
+        - project.json
+        - version.hpp.in
+        # To be safe, all files in all sub-directories
+        # Once we have a src/ directory, we can be a bit more specific without having to specify a long list here
+        - '*/**/*'
+      when: on_success
+    # If only "trivial" changes were done and we are in a MR, set this job to manual
+    - if: $CI_PIPELINE_SOURCE == "merge_request_event"
+      when: manual
+      allow_failure: true # Ensures the pipeline counts as "passed" instead of "blocked"
+    # Ensure we cover any other cases that might trigger this
+    - when: on_success
   image: $IMAGE_BUILD
   artifacts:
     expire_in: 30 days

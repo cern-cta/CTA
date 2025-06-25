@@ -25,7 +25,9 @@ build-ctageneric-from-local-rpms:
     - job: modify-project-json
       optional: true
   rules:
-    - if: $PIPELINE_TYPE == "REGR_AGAINST_CTA_VERSION" || $PIPELINE_TYPE == "IMAGE_FROM_CTA_VERSION"
+    - if: $PIPELINE_TYPE == "REGR_AGAINST_CTA_VERSION"
+      when: never
+    - if: $PIPELINE_TYPE == "IMAGE_FROM_CTA_VERSION"
       when: never
     - !reference [.build-ctageneric, rules]
   variables:

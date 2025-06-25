@@ -1,5 +1,5 @@
 cppcheck:
-  stage: analysis
+  stage: lint
   image:
     name: $IMAGE_ANALYSIS
     entrypoint: ["/usr/bin/env"]
@@ -33,7 +33,7 @@ cppcheck:
       codequality: cppcheck.json
 
 clang-format-report:
-  stage: analysis
+  stage: lint
   dependencies: [] # Ensure no artifacts are downloaded
   allow_failure: true
   rules:
@@ -67,7 +67,7 @@ clang-format-report:
       - clang-format.diff
 
 clang-format-apply:
-  stage: analysis
+  stage: lint
   needs:
     - clang-format-report
   allow_failure: true
@@ -95,56 +95,3 @@ clang-format-apply:
     - cat $CLANG_FORMAT_REPORT | patch -p1
     - git commit -am "Applied clang format to changed lines"
     - git push $REPO_REMOTE HEAD:$CI_COMMIT_REF_NAME
-
-catalogue-schema-version-check:
-  stage: analysis
-  dependencies: [] # Ensure no artifacts are downloaded
-  rules:
-    - if: $PIPELINE_TYPE != "DEFAULT"
-      when: never
-    # For pivot CTA releases: vX.Y.0
-    - if: $CI_COMMIT_TAG && $CI_COMMIT_TAG =~ /^.*\.0\.[0-9]+-[^-]*$/
-      when: on_success
-      allow_failure: false
-      variables:
-        CATALOGUE_SCHEMA_CHECK_PARAMS: "-p -t"
-    # For non-pivot CTA releases
-    - if: $CI_COMMIT_TAG && $CI_COMMIT_TAG !~ /^.*\.0\.[0-9]+-[^-]*$/
-      when: on_success
-      allow_failure: false
-      variables:
-        CATALOGUE_SCHEMA_CHECK_PARAMS: "-n -t"
-    # Any run on main
-    - if: $CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH
-      when: on_success
-      allow_failure: false
-      variables:
-        CATALOGUE_SCHEMA_CHECK_PARAMS: "-t"
-    # For all other scenarios, manual run only
-    - when: on_success
-    - allow_failure: false
-    - variables:
-        CATALOGUE_SCHEMA_CHECK_PARAMS: ""
-  image: $IMAGE_ANALYSIS
-  script:
-    - ./continuousintegration/checks/check_catalogue_schema_version.sh ${CATALOGUE_SCHEMA_CHECK_PARAMS} .
-
-validate-pipeline-variables:
-  stage: analysis
-  image: $IMAGE_ANALYSIS
-  script:
-    - |
-      if [ "$USE_INTERNAL_REPOS" == "TRUE" ]; then
-        cp -f continuousintegration/docker/${PLATFORM}/etc/yum.repos.d-internal/*.repo /etc/yum.repos.d/
-      else
-        cp -f continuousintegration/docker/${PLATFORM}/etc/yum.repos.d-public/*.repo /etc/yum.repos.d/
-      fi
-    # This repo is a special case as it provides CTA itself
-    - cp -f continuousintegration/docker/${PLATFORM}/cta-public-testing.repo /etc/yum.repos.d/
-    - python3 ./continuousintegration/checks/validate_ci_input_variables.py
-
-validate-project-json:
-  stage: analysis
-  image: $IMAGE_ANALYSIS
-  script:
-    - python3 ./continuousintegration/utils/project-json/validate_project_json.py
