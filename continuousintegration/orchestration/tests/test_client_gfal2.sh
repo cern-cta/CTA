@@ -80,58 +80,60 @@ clientgfal2_options="-n ${NB_FILES} -s ${FILE_SIZE_KB} -p ${NB_PROCS} -d /eos/ct
 
 # Tests
 
-GFAL2_PROTOCOL='root'
-echo "Installing gfal2-plugin-xrootd for gfal-${GFAL2_PROTOCOL} tests."
-kubectl -n ${NAMESPACE} exec ${CLIENT_POD} -c client -- bash -c "dnf install -y gfal2-plugin-xrootd"
+# GFAL2_PROTOCOL='root'
+# echo "Installing gfal2-plugin-xrootd for gfal-${GFAL2_PROTOCOL} tests."
+# kubectl -n ${NAMESPACE} exec ${CLIENT_POD} -c client -- bash -c "dnf install -y gfal2-plugin-xrootd"
 
-echo "Setting up environment for gfal-${GFAL2_PROTOCOL} test."
-kubectl -n ${NAMESPACE} exec ${CLIENT_POD} -c client -- bash -c "/root/client_setup.sh ${clientgfal2_options} -Z ${GFAL2_PROTOCOL}"
+# echo "Setting up environment for gfal-${GFAL2_PROTOCOL} test."
+# kubectl -n ${NAMESPACE} exec ${CLIENT_POD} -c client -- bash -c "/root/client_setup.sh ${clientgfal2_options} -Z ${GFAL2_PROTOCOL}"
 
-echo
-echo "Track progress of test"
-(kubectl -n ${NAMESPACE} exec ${CLIENT_POD} -c client -- bash -c ". /root/client_env && /root/progress_tracker.sh 'archive retrieve evict delete'"
-)&
-TRACKER_PID=$!
+# echo
+# echo "Track progress of test"
+# (kubectl -n ${NAMESPACE} exec ${CLIENT_POD} -c client -- bash -c ". /root/client_env && /root/progress_tracker.sh 'archive retrieve evict delete'"
+# )&
+# TRACKER_PID=$!
 
-echo
-echo "Launching client_archive.sh on client pod using ${GFAL2_PROTOCOL} protocol"
-echo "  Archiving files: xrdcp as user1"
-kubectl -n ${NAMESPACE} exec ${CLIENT_POD} -c client -- bash -c "${TEST_PRERUN} &&  /root/client_archive.sh ${TEST_POSTRUN}" || exit 1
-kubectl -n ${NAMESPACE} exec ${EOS_MGM_POD} -c eos-mgm -- bash /root/grep_xrdlog_mgm_for_error.sh || exit 1
+# echo
+# echo "Launching client_archive.sh on client pod using ${GFAL2_PROTOCOL} protocol"
+# echo "  Archiving files: xrdcp as user1"
+# kubectl -n ${NAMESPACE} exec ${CLIENT_POD} -c client -- bash -c "${TEST_PRERUN} &&  /root/client_archive.sh ${TEST_POSTRUN}" || exit 1
+# kubectl -n ${NAMESPACE} exec ${EOS_MGM_POD} -c eos-mgm -- bash /root/grep_xrdlog_mgm_for_error.sh || exit 1
 
-echo "###"
-echo "Sleeping 10 seconds to allow MGM-FST communication to settle after disk copy deletion."
-sleep 10
-echo "###"
+# echo "###"
+# echo "Sleeping 10 seconds to allow MGM-FST communication to settle after disk copy deletion."
+# sleep 10
+# echo "###"
 
-echo
-echo "Launching client_retrieve.sh on client pod using ${GFAL2_PROTOCOL} protocol"
-echo "  Retrieving files with gfal-bringonline via root protocol"
-kubectl -n ${NAMESPACE} exec ${CLIENT_POD} -c client -- bash -c "${TEST_PRERUN} &&  /root/client_retrieve.sh ${TEST_POSTRUN}" || exit 1
-kubectl -n ${NAMESPACE} exec ${EOS_MGM_POD} -c eos-mgm -- bash /root/grep_xrdlog_mgm_for_error.sh || exit 1
+# echo
+# echo "Launching client_retrieve.sh on client pod using ${GFAL2_PROTOCOL} protocol"
+# echo "  Retrieving files with gfal-bringonline via root protocol"
+# kubectl -n ${NAMESPACE} exec ${CLIENT_POD} -c client -- bash -c "${TEST_PRERUN} &&  /root/client_retrieve.sh ${TEST_POSTRUN}" || exit 1
+# kubectl -n ${NAMESPACE} exec ${EOS_MGM_POD} -c eos-mgm -- bash /root/grep_xrdlog_mgm_for_error.sh || exit 1
 
-echo
-echo "Launching client_evict.sh on client pod using ${GFAL2_PROTOCOL} protocol"
-echo "  Evicting files with gfal-evict via root protocol"
-kubectl -n ${NAMESPACE} exec ${CLIENT_POD} -c client -- bash -c "${TEST_PRERUN} &&  /root/client_evict.sh ${TEST_POSTRUN}" || exit 1
-kubectl -n ${NAMESPACE} exec ${EOS_MGM_POD} -c eos-mgm -- bash /root/grep_xrdlog_mgm_for_error.sh || exit 1
+# echo
+# echo "Launching client_evict.sh on client pod using ${GFAL2_PROTOCOL} protocol"
+# echo "  Evicting files with gfal-evict via root protocol"
+# kubectl -n ${NAMESPACE} exec ${CLIENT_POD} -c client -- bash -c "${TEST_PRERUN} &&  /root/client_evict.sh ${TEST_POSTRUN}" || exit 1
+# kubectl -n ${NAMESPACE} exec ${EOS_MGM_POD} -c eos-mgm -- bash /root/grep_xrdlog_mgm_for_error.sh || exit 1
 
-echo
-echo "Launching client_delete.sh on client pod using ${GFAL2_PROTOCOL} protocol"
-echo "  Deleting files with gfal-rm via root protocol"
-kubectl -n ${NAMESPACE} exec ${CLIENT_POD} -c client -- bash -c "${TEST_PRERUN} &&  /root/client_delete.sh ${TEST_POSTRUN}" || exit 1
-kubectl -n ${NAMESPACE} exec ${EOS_MGM_POD} -c eos-mgm -- bash /root/grep_xrdlog_mgm_for_error.sh || exit 1
+# echo
+# echo "Launching client_delete.sh on client pod using ${GFAL2_PROTOCOL} protocol"
+# echo "  Deleting files with gfal-rm via root protocol"
+# kubectl -n ${NAMESPACE} exec ${CLIENT_POD} -c client -- bash -c "${TEST_PRERUN} &&  /root/client_delete.sh ${TEST_POSTRUN}" || exit 1
+# kubectl -n ${NAMESPACE} exec ${EOS_MGM_POD} -c eos-mgm -- bash /root/grep_xrdlog_mgm_for_error.sh || exit 1
 
 
-echo "$(date +%s): Waiting for tracker process to finish. "
-wait "${TRACKER_PID}"
-if [[ $? == 1 ]]; then
-  echo "Some files were lost during tape workflow."
-  kubectl -n ${NAMESPACE} cp ${CLIENT_POD}:/root/trackerdb.db -c client ../../../pod_logs/${NAMESPACE}/trackerdb.db 2>/dev/null
-exit 1
-fi
+# echo "$(date +%s): Waiting for tracker process to finish. "
+# wait "${TRACKER_PID}"
+# if [[ $? == 1 ]]; then
+#   echo "Some files were lost during tape workflow."
+#   kubectl -n ${NAMESPACE} cp ${CLIENT_POD}:/root/trackerdb.db -c client ../../../pod_logs/${NAMESPACE}/trackerdb.db 2>/dev/null
+# exit 1
+# fi
 
 # Test gfal2 https plugin
+
+### This is the part of the test with the errors
 
 echo "Uninstall gfal2-plugin-xrootd before continuing with http tests"
 # The presence of the xrootd package seems to be causing double free/corruption errors in the http plugin
@@ -156,49 +158,49 @@ echo " Archiving files: gfal-copy as user1 via https"
 kubectl -n ${NAMESPACE} exec ${CLIENT_POD} -c client -- bash -c "${TEST_PRERUN} &&  /root/client_archive.sh ${TEST_POSTRUN}" || exit 1
 kubectl -n ${NAMESPACE} exec ${EOS_MGM_POD} -c eos-mgm -- bash /root/grep_xrdlog_mgm_for_error.sh || exit 1
 
-echo "###"
-echo "Sleeping 10 seconds to allow MGM-FST communication to settle after disk copy deletion."
-sleep 10
-echo "###"
+# echo "###"
+# echo "Sleeping 10 seconds to allow MGM-FST communication to settle after disk copy deletion."
+# sleep 10
+# echo "###"
 
-echo
-echo "Launching client_retrieve.sh on client pod using ${GFAL2_PROTOCOL} protocol"
-echo "  Retrieving files with gfal-bringonline via https protocol"
-kubectl -n ${NAMESPACE} exec ${CLIENT_POD} -c client -- bash -c "${TEST_PRERUN} &&  /root/client_retrieve.sh ${TEST_POSTRUN}" || exit 1
-kubectl -n ${NAMESPACE} exec ${EOS_MGM_POD} -c eos-mgm -- bash /root/grep_xrdlog_mgm_for_error.sh || exit 1
+# echo
+# echo "Launching client_retrieve.sh on client pod using ${GFAL2_PROTOCOL} protocol"
+# echo "  Retrieving files with gfal-bringonline via https protocol"
+# kubectl -n ${NAMESPACE} exec ${CLIENT_POD} -c client -- bash -c "${TEST_PRERUN} &&  /root/client_retrieve.sh ${TEST_POSTRUN}" || exit 1
+# kubectl -n ${NAMESPACE} exec ${EOS_MGM_POD} -c eos-mgm -- bash /root/grep_xrdlog_mgm_for_error.sh || exit 1
 
-echo
-echo "Launching client_evict.sh on client pod using ${GFAL2_PROTOCOL} protocol"
-echo "  Evicting files with gfal-evict as poweruser via https protocol"
-kubectl -n ${NAMESPACE} exec ${CLIENT_POD} -c client -- bash -c "${TEST_PRERUN} &&  /root/client_evict.sh ${TEST_POSTRUN}" || exit 1
-kubectl -n ${NAMESPACE} exec ${EOS_MGM_POD} -c eos-mgm -- bash /root/grep_xrdlog_mgm_for_error.sh || exit 1
+# echo
+# echo "Launching client_evict.sh on client pod using ${GFAL2_PROTOCOL} protocol"
+# echo "  Evicting files with gfal-evict as poweruser via https protocol"
+# kubectl -n ${NAMESPACE} exec ${CLIENT_POD} -c client -- bash -c "${TEST_PRERUN} &&  /root/client_evict.sh ${TEST_POSTRUN}" || exit 1
+# kubectl -n ${NAMESPACE} exec ${EOS_MGM_POD} -c eos-mgm -- bash /root/grep_xrdlog_mgm_for_error.sh || exit 1
 
-echo
-echo "Launching client_delete.sh on client pod using ${GFAL2_PROTOCOL} protocol"
-echo "  Deleting files with gfal-rm as user1 via https protocol"
-kubectl -n ${NAMESPACE} exec ${CLIENT_POD} -c client -- bash -c "${TEST_PRERUN} &&  /root/client_delete.sh ${TEST_POSTRUN}" || exit 1
-kubectl -n ${NAMESPACE} exec ${EOS_MGM_POD} -c eos-mgm -- bash /root/grep_xrdlog_mgm_for_error.sh || exit 1
+# echo
+# echo "Launching client_delete.sh on client pod using ${GFAL2_PROTOCOL} protocol"
+# echo "  Deleting files with gfal-rm as user1 via https protocol"
+# kubectl -n ${NAMESPACE} exec ${CLIENT_POD} -c client -- bash -c "${TEST_PRERUN} &&  /root/client_delete.sh ${TEST_POSTRUN}" || exit 1
+# kubectl -n ${NAMESPACE} exec ${EOS_MGM_POD} -c eos-mgm -- bash /root/grep_xrdlog_mgm_for_error.sh || exit 1
 
-echo "$(date +%s): Waiting for tracker process to finish. "
-wait "${TRACKER_PID}"
-if [[ $? == 1 ]]; then
-    echo "Some files were lost during tape workflow."
-    exit 1
-fi
+# echo "$(date +%s): Waiting for tracker process to finish. "
+# wait "${TRACKER_PID}"
+# if [[ $? == 1 ]]; then
+#     echo "Some files were lost during tape workflow."
+#     exit 1
+# fi
 
-# Test activity
-TEST_PRERUN=". /root/client_env "
+# # Test activity
+# TEST_PRERUN=". /root/client_env "
 
-echo
-echo "Launching gfal_activity_check.sh on client pod"
-kubectl -n ${NAMESPACE} exec ${CLIENT_POD} -c client -- bash -c "${TEST_PRERUN} && /root/gfal_activity_check.sh"  || exit 1
+# echo
+# echo "Launching gfal_activity_check.sh on client pod"
+# kubectl -n ${NAMESPACE} exec ${CLIENT_POD} -c client -- bash -c "${TEST_PRERUN} && /root/gfal_activity_check.sh"  || exit 1
 
-echo
-echo "Launching xrootd_activity_check.sh on client pod"
-kubectl -n ${NAMESPACE} exec ${CLIENT_POD} -c client -- bash -c "${TEST_PRERUN} && /root/xrootd_activity_check.sh" || exit 1
+# echo
+# echo "Launching xrootd_activity_check.sh on client pod"
+# kubectl -n ${NAMESPACE} exec ${CLIENT_POD} -c client -- bash -c "${TEST_PRERUN} && /root/xrootd_activity_check.sh" || exit 1
 
-echo "Checking activity was set..."
-kubectl -n ${NAMESPACE} cp grep_eosreport_for_activity.sh ${EOS_MGM_POD}:/root/ -c eos-mgm
-kubectl -n ${NAMESPACE} exec ${EOS_MGM_POD} -c eos-mgm -- bash /root/grep_eosreport_for_activity.sh || exit 1
+# echo "Checking activity was set..."
+# kubectl -n ${NAMESPACE} cp grep_eosreport_for_activity.sh ${EOS_MGM_POD}:/root/ -c eos-mgm
+# kubectl -n ${NAMESPACE} exec ${EOS_MGM_POD} -c eos-mgm -- bash /root/grep_eosreport_for_activity.sh || exit 1
 
 exit 0

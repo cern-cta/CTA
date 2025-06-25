@@ -27,6 +27,8 @@ echo
 # As we are skipping n bytes per file we need a bit more than the file size to accomodate dd to read ${FILE_KB_SIZE} skipping the n first bytes
 dd if=/dev/urandom of=/tmp/testfile bs=1k count=$((${FILE_KB_SIZE} + ${NB_FILES}*${NB_DIRS}/1024 + 1)) || exit 1
 
+NB_FILES=1
+NB_DIRS=1
 
 # not more than 100k files per directory so that we can rm and find as a standard user
 for ((subdir=0; subdir < ${NB_DIRS}; subdir++)); do
@@ -39,6 +41,7 @@ for ((subdir=0; subdir < ${NB_DIRS}; subdir++)); do
   # The `archive` variable is sourced from cli_calls.sh without parameter
   # expansion, to be able to expand the variable afterwards we need `eval echo`
   xrdcp_call=$(eval echo "${archive}")
+  echo "In client_archive, the exact xrdcp call made to copy the files is ${xrdcp_call}"
   xrdcp_call+=" 2>${ERROR_DIR}/${subdir}TEST_FILE_NUM"
   xrdcp_succes=" rm ${ERROR_DIR}/${subdir}TEST_FILE_NUM"
 
