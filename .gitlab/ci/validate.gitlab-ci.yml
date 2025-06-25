@@ -65,6 +65,7 @@ danger-review:
       when: always
     - when: never
   before_script:
+    - apk add --no-cache git
     - gem install danger-gitlab
     # - git config --global user.email "$GITLAB_USER_EMAIL"
     # - git config --global user.name "Danger Bot"
