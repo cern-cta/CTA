@@ -1626,10 +1626,7 @@ std::optional<std::string> AdminCmd::getAndValidateDiskFileIdOptional(bool* has_
   }
 
   if(diskFileIdStr) {
-    if (!utils::isValidDecimal(diskFileIdStr.value()) && !utils::isValidUUID(diskFileIdStr.value())) {
-      throw cta::exception::UserError(diskFileIdStr.value() + " is not a valid decimal or UUID file ID value");
-    }
-    return diskFileIdStr;
+    return diskFileIdStr.value();
   }
 
   return std::nullopt;
