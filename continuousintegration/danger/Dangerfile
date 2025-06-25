@@ -1,0 +1,63 @@
+# --- Constants ---
+
+ALLOWED_PREFIXES = %w[
+  [CI] [Misc] [Tools] [catalogue]
+  [frontend] [scheduler] [taped] [rmcd]
+]
+
+# --- Title checks ---
+
+unless ALLOWED_PREFIXES.any? { |prefix| gitlab.mr_title.start_with?(prefix) }
+  fail("The merge request title must start with one of: #{ALLOWED_PREFIXES.join(', ')}")
+end
+
+if gitlab.mr_title.length > 72
+  warn("The merge request title is long. Consider shortening it to less than 72 characters")
+end
+
+
+# --- Description checks ---
+
+desc = gitlab.mr_body.strip
+
+if desc.empty?
+  fail("The merge request description is missing or incomplete (please follow the template)")
+end
+
+# --- Label checks ---
+
+labels = gitlab.mr_json["labels"] || []
+
+type_labels = labels.select { |l| l.start_with?("type::") }
+workflow_labels = labels.select { |l| l.start_with?("workflow::") }
+other_labels = labels - (type_labels + workflow_labels)
+
+
+if type_labels.size != 1
+  fail("This merge request is missing a 'type::' label, please assign one")
+end
+
+if workflow_labels.size != 1
+  fail("This merge request is missing a 'workflow::' label, please assign one")
+end
+
+if other_labels.empty?
+  warn("This merge request does not contain any scoping labels, please consider adding additional labels")
+end
+
+# --- Assignee check ---
+
+if gitlab.mr_json["assignee"].nil?
+  warn("No assignee set — assigning author")
+
+  gitlab.api.put(
+    "/projects/#{gitlab.mr_json['project_id']}/merge_requests/#{gitlab.mr_json['iid']}",
+    assignee_id: gitlab.mr_json["author"]["id"]
+  )
+end
+
+# --- MR size warnings ---
+
+if git.lines_of_code > 500
+  warn "This merge request is quite big (#{git.lines_of_code} lines changed), please consider splitting it into multiple merge requests."
+end
