@@ -164,7 +164,8 @@
         "oracle-instantclient": ">= 23.0",
         "rados": "= 2:17.2.8",
         "valgrind": ">= 3.8.1",
-        "gtest": ">= 1.11.0"
+        "gtest": ">= 1.11.0",
+        "opentelemetry-cpp": ">= 1.21.0"
       },
       "buildRequires": {
         "opentelemetry-cpp": ">= 1.21.0",
@@ -182,6 +183,7 @@
         "libattr-devel": ">= 2.4.44",
         "cmake3": ">= 3.19",
         "valgrind": ">= 3.8.1",
+        "openssl-devel": "",
         "libcurl-devel": "",
         "valgrind-devel": "",
         "group-grpc": "",
