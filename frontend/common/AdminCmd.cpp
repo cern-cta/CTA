@@ -1625,11 +1625,7 @@ std::optional<std::string> AdminCmd::getAndValidateDiskFileIdOptional(bool* has_
     return utils::hexadecimalToDecimal(diskFileIdHex.value());
   }
 
-  if(diskFileIdStr) {
-    return diskFileIdStr.value();
-  }
-
-  return std::nullopt;
+  return diskFileIdStr;
 }
 
 void AdminCmd::processRecycleTapeFile_Restore(xrd::Response& response) {
