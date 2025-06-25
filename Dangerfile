@@ -1,14 +1,9 @@
-# Load GitLab plugin
-warn("danger-gitlab plugin not loaded") unless defined? danger.gitlab
-
 # --- Constants ---
 
 ALLOWED_PREFIXES = %w[
   [CI] [Misc] [Tools] [catalogue]
   [frontend] [scheduler] [taped] [rmcd]
 ]
-
-REVIEWERS = %w[alice bob carol] # Replace with actual usernames
 
 # --- Title checks ---
 
