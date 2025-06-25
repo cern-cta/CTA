@@ -1,15 +1,3 @@
-# --- General message ---
-
-markdown <<~MSG
-  🤖 **This merge request has been automatically reviewed by [Danger](https://danger.systems/).**
-
-  Danger helps enforce project standards by checking MR titles, descriptions, labels, reviewers, and size.
-
-  Please address all `fail` and `warn` messages below before merging.
-  If any warning is intentional, acknowledge it by replying to this comment.
-MSG
-
-
 # --- Title checks ---
 
 ALLOWED_PREFIXES = %w[
@@ -60,13 +48,12 @@ type_labels = labels.select { |l| l.start_with?("type::") }
 workflow_labels = labels.select { |l| l.start_with?("workflow::") }
 other_labels = labels - (type_labels + workflow_labels)
 
-
 if type_labels.size != 1
-  warn("This merge request is missing a 'type::' label, please assign one.")
+  fail("This merge request is missing a 'type::' label, please assign one.")
 end
 
 if workflow_labels.size != 1
-  warn("This merge request is missing a 'workflow::' label, please assign one.")
+  warn("This merge request is missing a 'workflow::' label, please consider assigning one.")
 end
 
 if other_labels.empty?
@@ -76,7 +63,7 @@ end
 # --- Assignee check ---
 
 if gitlab.mr_json["assignee"].nil?
-  warn("This merge request does not have an assignee, please add one.")
+  fail("This merge request does not have an assignee, please add one.")
 end
 
 if gitlab.mr_json["reviewers"].nil? || gitlab.mr_json["reviewers"].empty?
@@ -88,3 +75,17 @@ end
 if git.lines_of_code > 500
   warn "This merge request is quite big (#{git.lines_of_code} lines changed), please consider splitting it into multiple merge requests."
 end
+
+# --- General message ---
+
+markdown <<~MSG
+  🤖 **This merge request has been automatically reviewed by [Danger](https://danger.systems/).**
+
+  Danger helps enforce project standards by checking MR titles, descriptions, labels, reviewers, and size.
+
+  Please address all `fail` and `warn` messages below before merging.
+  If any warning is intentional, acknowledge it by replying to this comment.
+
+  This comment does not update automatically unless the danger-review job is run.
+  If you addressed any of the above issues, please re-run the `danger-review` manually.
+MSG
