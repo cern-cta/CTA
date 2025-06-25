@@ -57,7 +57,7 @@ validate-project-json:
 
 danger-review:
   allow_failure: true
-  image: ruby:3.4-alpine
+  image:  registry.cern.ch/docker.io/ruby:3.4-alpine
   stage: validate
   needs: []
   rules:
