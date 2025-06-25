@@ -1,0 +1,7 @@
+# Contains opentelemetry among other things
+[cta-dependencies-testing]
+name=CTA repo containing dependencies
+baseurl=https://cta-public-repo.web.cern.ch/testing/cta-5/el9/cta-dependencies/x86_64/
+priority=2
+gpgcheck=0
+enabled=1
