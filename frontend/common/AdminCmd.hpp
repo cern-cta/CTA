@@ -122,12 +122,12 @@ public:
    * Both parameters FXID and DISK_FILE_ID expect the same information but with different formats.
    * They can't both be set simultaneously, to avoid inconsistencies.
    *
-   * This function tries to parse one of these values and return it as a string (integer or UUID).
+   * This function tries to parse one of these values and return it as a string.
    *
    * @throws UserError if both FXID and DISK_FILE_ID are defined
-   * @throws UserError if format of FXID or DISK_FILE_ID is wrong
+   * @throws UserError if format of FXID is wrong (DISK_FILE_ID can be any string)
    *
-   * @return       The disk file ID as a string (integer or UUID), or nullopt if none defined.
+   * @return       The disk file ID as a string, or nullopt if none defined.
    */
   std::optional<std::string> getAndValidateDiskFileIdOptional(bool* has_any = nullptr) const;
 
