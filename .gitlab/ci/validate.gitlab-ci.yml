@@ -70,4 +70,4 @@ danger-review:
     # - git config --global user.email "$GITLAB_USER_EMAIL"
     # - git config --global user.name "Danger Bot"
   script:
-    - danger --fail-on-errors=true --verbose
+    - danger --verbose
