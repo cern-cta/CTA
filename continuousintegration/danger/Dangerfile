@@ -32,7 +32,7 @@ unless gitlab.mr_body.include?("- [x] Merge Request title is clear, concise, and
   fail("Please ensure that the merge request title has been reviewed and check the acknowledgment box in the MR description: `- [x] Merge Request title is clear, concise, and suitable as a changelog entry.`")
 end
 
-desc_section = description[/### Description\s+(.+?)### Checklist/m, 1]
+desc_section = desc[/### Description\s+(.+?)### Checklist/m, 1]
 
 if desc_section.nil?
   fail("Could not find a properly formatted Description section. Please follow the merge request template.")
