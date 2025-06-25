@@ -44,13 +44,6 @@ if gitlab.mr_json["assignee"].nil?
   )
 end
 
-# --- Reviewer assignment (round-robin) ---
-
-if !gitlab.mr_draft && (gitlab.mr_json["reviewers"].nil? || gitlab.mr_json["reviewers"].empty?)
-  warn("No reviewer is assigned to this merge request.")
-end
-
-
 # --- MR size warnings ---
 
 added = git.lines_of_code[:added]
