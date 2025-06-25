@@ -60,6 +60,8 @@ danger-review:
   image:  registry.cern.ch/docker.io/ruby:3.4-alpine
   stage: validate
   needs: []
+  variables:
+    DANGER_GITLAB_HOST: $CI_SERVER_HOST
   rules:
     - if: $CI_PIPELINE_SOURCE == "merge_request_event"
       when: always
