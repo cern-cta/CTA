@@ -60,15 +60,14 @@ danger-review:
   image:  registry.cern.ch/docker.io/ruby:3.4-alpine
   stage: validate
   needs: []
-  variables:
-    DANGER_GITLAB_HOST: $CI_SERVER_HOST
   rules:
     - if: $CI_PIPELINE_SOURCE == "merge_request_event"
       when: always
     - when: never
   before_script:
     - apk add --no-cache git
-    - gem install danger-gitlab
+    - gem install danger danger-gitlab
+    - gem install faraday-retry
     # - git config --global user.email "$GITLAB_USER_EMAIL"
     # - git config --global user.name "Danger Bot"
   script:
