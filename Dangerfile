@@ -46,8 +46,8 @@ end
 
 # --- MR size warnings ---
 
-added = git.lines_of_code[:added]
-deleted = git.lines_of_code[:deleted]
+added = git.added_lines
+deleted = git.deleted_lines
 files_changed = (git.modified_files + git.added_files + git.deleted_files).uniq.size
 
 warn("MR is large: #{added + deleted} lines changed") if (added + deleted) > 500
