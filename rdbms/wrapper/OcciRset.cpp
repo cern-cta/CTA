@@ -129,8 +129,11 @@ void OcciRset::close() {
 //------------------------------------------------------------------------------
 std::string OcciRset::columnBlob(const std::string &colName) const {
   try {
-    auto blob_view = columnBlobView(colName);
-    return std::string(reinterpret_cast<const char*>(blob_view->data()), blob_view->size());
+    const int colIdx = m_colNameToIdx.getIdx(colName);
+    auto raw = m_rset->getBytes(colIdx);
+    std::unique_ptr<unsigned char[]> bytearray(new unsigned char[raw.length()]());
+    raw.getBytes(bytearray.get(), raw.length());
+    return std::string(reinterpret_cast<char*>(bytearray.get()), raw.length());
   } catch(exception::Exception &ne) {
     throw exception::Exception(std::string(__FUNCTION__) + " failed for SQL statement " + m_stmt.getSql() + ": " +
       ne.getMessage().str());
@@ -144,14 +147,9 @@ std::string OcciRset::columnBlob(const std::string &colName) const {
 // columnBlobView
 //------------------------------------------------------------------------------
 std::unique_ptr<rdbms::wrapper::IBlobView> OcciRset::columnBlobView(const std::string& colName) const {
-  const int colIdx = m_colNameToIdx.getIdx(colName);
-  auto raw = m_rset->getBytes(colIdx);
-  std::size_t len = raw.length();
-
-  std::unique_ptr<unsigned char[]> buffer(new unsigned char[len]());
-  raw.getBytes(buffer.get(), len);
-
-  return std::make_unique<BlobView>(std::move(buffer), len);
+  throw exception::Exception(std::string(__FUNCTION__) +
+                             "This method is Not implemented for Oracle DB, since there is no way to gain access to "
+                             "the raw data buffer without making a copy first.");
 }
 
 //------------------------------------------------------------------------------
