@@ -6,11 +6,11 @@ ALLOWED_PREFIXES = %w[
 ]
 
 unless ALLOWED_PREFIXES.any? { |prefix| gitlab.mr_title.start_with?(prefix) }
-  fail("The merge request title must start with one of: #{ALLOWED_PREFIXES.join(', ')}")
+  fail("**Invalid Merge Request Title format**\n\nThe title must start with one of the following prefixes:\n`#{ALLOWED_PREFIXES.join('`, `')}`")
 end
 
 if gitlab.mr_title.length > 72
-  warn("The merge request title is long. Consider shortening it to less than 72 characters.")
+  warn("**Merge Request Title Too Long**\n\nThe title is longer than 72 characters. Consider shortening it for readability.")
 end
 
 
@@ -19,26 +19,27 @@ end
 desc = gitlab.mr_body.strip
 
 if desc.empty?
-  fail("The merge request description is missing or incomplete. Please follow the template.")
+  fail("**Missing Description**\n\nThe merge request description is empty. Please use the provided MR template.")
 end
 
 unless gitlab.mr_body.include?("- [x] Documentation reflects the changes made.")
-  fail("Please ensure that the documentation has been updated (if required) and check the relevant acknowledgment box in the MR description.")
+  fail("**Documentation Acknowledgment Missing**\n\nPlease confirm whether the documentation is (still) up-to-date by checking the corresponding box in the MR description.")
 end
 
 unless gitlab.mr_body.include?("- [x] Merge Request title is clear, concise, and suitable as a changelog entry. See [this link](https://cta.docs.cern.ch/latest/dev/contributing/workflow/#changelog)")
-  fail("Please ensure that the merge request title has been reviewed and check the relevant acknowledgment box in the MR description.")
+  fail("**Title Acknowledgment Missing**\n\nPlease review the merge request title and confirm by checking the corresponding box in the MR description.")
 end
 
 desc_section = desc[/### Description\s+(.+?)### Checklist/m, 1]
 
 if desc_section.nil?
-  fail("Could not find a properly formatted Description section. Please follow the merge request template.")
+  fail("**Missing Description Section**\n\nCould not find the Description` section. Please ensure the merge request template is being followed.")
 elsif desc_section.include?("<!-- Mandatory: provide a description")
-  fail("Please remove the placeholder description comment and describe the changes in the Description section.")
+  fail("**Unmodified Description Placeholder**\n\nPlease remove the placeholder comment and describe the changes introduced in this merge request.")
 elsif desc_section.strip.length < 40
-  warn("The Description section appears too short. Please there is a meaningful summary of the changes.")
+  warn("**Short Description**\n\nThe content under `### Description` appears too brief. Please provide a more complete summary of the changes.")
 end
+
 
 # --- Label checks ---
 
@@ -49,43 +50,49 @@ workflow_labels = labels.select { |l| l.start_with?("workflow::") }
 other_labels = labels - (type_labels + workflow_labels)
 
 if type_labels.size != 1
-  fail("This merge request is missing a 'type::' label, please assign one.")
+  fail("**Missing `type::` Label**\n\nThis merge request must have a `type::` label (e.g. `type::bug`, `type::addition`).")
 end
 
 if workflow_labels.size != 1
-  warn("This merge request is missing a 'workflow::' label, please consider assigning one.")
+  warn("**Missing `workflow::` Label**\n\nConsider adding a `workflow::` label to reflect the current review status.")
 end
 
 if other_labels.empty?
-  warn("This merge request does not contain any scoping labels, please consider adding additional labels")
+  warn("**No Scoping Labels Found**\n\nAdd at least one additional label to indicate the affected component or context.")
 end
+
 
 # --- Assignee check ---
 
 if gitlab.mr_json["assignee"].nil?
-  fail("This merge request does not have an assignee, please add one.")
+  fail("**No Assignee Set**\n\nPlease assign this merge request to a developer.")
 end
 
 if gitlab.mr_json["reviewers"].nil? || gitlab.mr_json["reviewers"].empty?
-  warn("This merge request has no reviewers assigned.")
+  warn("**No Reviewers Assigned**\n\nConsider assigning one or more reviewers to ensure this MR gets timely feedback.")
 end
+
 
 # --- MR size warnings ---
 
 if git.lines_of_code > 500
-  warn "This merge request is quite big (#{git.lines_of_code} lines changed), please consider splitting it into multiple merge requests."
+  warn("**Large Merge Request**\n\nThis merge request includes over 500 changed lines (#{git.lines_of_code}). Consider splitting it into smaller MRs to improve reviewability.")
 end
+
 
 # --- General message ---
 
+job_url = "#{ENV['CI_PROJECT_URL']}/-/jobs/#{ENV['CI_JOB_ID']}"
+
 markdown <<~MSG
-  🤖 **This merge request has been automatically reviewed by [Danger](https://danger.systems/).**
+  ## 🤖 This merge request was automatically reviewed by [Danger](https://danger.systems/ruby/)
 
   Danger helps enforce project standards by checking MR titles, descriptions, labels, reviewers, and size.
 
   Please address all `fail` and `warn` messages below before merging.
-  If any warning is intentional, acknowledge it by replying to this comment.
+  If any warning is intentional, acknowledge it by updating the MR description or replying to this comment.
 
-  This comment does not update automatically unless the danger-review job is run.
-  If you addressed any of the above issues, please re-run the `danger-review` manually.
+  🔁 [Retry the `danger-review` job](#{job_url}) if needed to refresh these results.
+
+  ---
 MSG
