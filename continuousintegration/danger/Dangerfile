@@ -20,7 +20,7 @@ end
 
 required_checklist_items = [
   "- [x] Documentation reflects the changes made.",
-  "- [x] Merge Request title is clear, concise, and suitable as a changelog entry. See [this link](https://cta.docs.cern.ch/latest/dev/contributing/workflow/#changelog)"
+  "- [x] Merge Request title is clear, concise, and suitable as a changelog entry."
 ]
 
 missing_items = required_checklist_items.reject { |item| gitlab.mr_body.include?(item) }
