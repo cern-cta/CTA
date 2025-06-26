@@ -69,5 +69,5 @@ data:
 
     # TLS related variables
     grpc.tls false
-    grpc.numberofthreads 256
+    grpc.numberofthreads 128
 {{- end }}
