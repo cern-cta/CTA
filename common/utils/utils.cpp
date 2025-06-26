@@ -679,16 +679,6 @@ std::string hexadecimalToDecimal(const std::string& hexadecimalNumberStr) {
   return fidStream.str();
 }
 
-// Check if uuid is correct
-bool isValidUUID(const std::string& uuid) {
-  if (uuid.empty()) {
-    return false;
-  }
-  const Regex uuidRegex("^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-"
-                        "[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$");
-  return uuidRegex.has_match(uuid);
-}
-
 // Check if Hexadecimal is correct
 bool isValidHex(const std::string& hex) {
   if (hex.empty()) {
@@ -706,16 +696,6 @@ bool isValidHex(const std::string& hex) {
     }
   }
 
-  return true;
-}
-
-bool isValidID(const std::string& id) {
-  if (id.empty()) {
-    return false;
-  }
-  if (!cta::utils::isValidDecimal(id) && !cta::utils::isValidUUID(id) && !cta::utils::isValidHex(id)) {
-    return false;
-  }
   return true;
 }
 
