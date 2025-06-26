@@ -71,23 +71,31 @@ if other_labels.empty?
 end
 
 
-# --- Assignee check ---
-
-if gitlab.mr_json["assignee"].nil?
-  fail("**No Assignee Set**\n\nPlease assign this merge request to a developer.")
-end
-
-if gitlab.mr_json["reviewers"].nil? || gitlab.mr_json["reviewers"].empty?
-  warn("**No Reviewers Assigned**\n\nConsider assigning one or more reviewers to ensure this MR gets timely feedback.")
-end
-
-
 # --- MR size warnings ---
 
 if git.lines_of_code > 500
   warn("**Large Merge Request**\n\nThis merge request includes over 500 changed lines (#{git.lines_of_code}). Consider splitting it into smaller MRs to improve reviewability.")
 end
 
+# --- Assignee check ---
+
+if gitlab.mr_json["assignee"].nil?
+  fail("**No Assignee Set**\n\nPlease assign this merge request to a developer.")
+end
+
+# --- Reviewers check ---
+
+issues_present = danger.status_report[:fails].any?
+
+reviewers = gitlab.mr_json["reviewers"] || []
+
+if reviewers.empty? && !issues_present
+    warn("**No Reviewers Assigned**\n\nConsider assigning one or more reviewers to ensure this MR gets timely feedback.")
+end
+
+if !reviewers.empty? && issues_present
+    warn("This merge request has reviewers assigned but still contains unresolved Danger checks.\nPlease address these to ensure the reviewer has all the required information.")
+end
 
 # --- General message ---
 
