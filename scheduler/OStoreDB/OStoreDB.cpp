@@ -1339,17 +1339,17 @@ void OStoreDB::setRetrieveJobBatchReportedToUser(std::list<cta::SchedulerDatabas
           log::ScopedParamContainer(lc)
             .add("objectAddress", j->m_retrieveRequest.getAddressIfSet())
             .log(log::WARNING, "In OStoreDB::setRetrieveJobBatchReportedToUser(): failed to asyncDeleteJob because it does not exist in the objectstore.");
-          jobsToDeleteItor = jobsToDelete.erase(jobsToDeleteItor);
           continue;
         }
         log::ScopedParamContainer(lc)
           .log(log::INFO, "In OStoreDB::setRetrieveJobBatchReportedToUser(): delete RetrieveRequest after reporting.");
+        jobsToUnown.push_back(j->m_retrieveRequest.getAddressIfSet());
       } catch (cta::exception::Exception &ex) {
         log::ScopedParamContainer(lc)
-	  .add("objectAddress", j->m_retrieveRequest.getAddressIfSet())
-	  .add("exceptionMSG", ex.getMessageValue())
-	  .log(log::ERR, "In OStoreDB::setRetrieveJobBatchReportedToUser(): failed to delete RetrieveRequest.");
-	jobsToUnown.push_back(j->m_retrieveRequest.getAddressIfSet());
+          .add("objectAddress", j->m_retrieveRequest.getAddressIfSet())
+          .add("exceptionMSG", ex.getMessageValue())
+          .log(log::ERR, "In OStoreDB::setRetrieveJobBatchReportedToUser(): failed to delete RetrieveRequest.");
+        jobsToUnown.push_back(j->m_retrieveRequest.getAddressIfSet());
       }
     }
     m_agentReference->removeBatchFromOwnership(jobsToUnown, m_objectStore);

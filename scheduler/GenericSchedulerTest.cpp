@@ -1506,9 +1506,11 @@ TEST_P(SchedulerTest, archive_and_retrieve_failure) {
   }
 
   {
-    // There should be one failed job
+    // There should be no failed job as the report to the user was successful
+    // We test that failing to report actually ends in a failed job in the
+    // archive_and_retrieve_report_failure test
     auto retrieveJobFailedList = scheduler.getNextRetrieveJobsFailedBatch(10,lc);
-    ASSERT_EQ(1, retrieveJobFailedList.size());
+    ASSERT_EQ(0, retrieveJobFailedList.size());
   }
 }
 
