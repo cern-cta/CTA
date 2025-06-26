@@ -1302,80 +1302,57 @@ void OStoreDB::setRetrieveJobBatchReportedToUser(std::list<cta::SchedulerDatabas
                                                  log::TimingList& timingList,
                                                  utils::Timer& t,
                                                  log::LogContext& lc) {
-  struct FailedJobToQueue {
-    RetrieveJob* job;
-  };
 
-  // Sort jobs to be updated
-  std::map<std::string, std::list<FailedJobToQueue>> failedQueues;
-  auto jobsBatchItor = jobsBatch.begin();
-  while (jobsBatchItor != jobsBatch.end()) {
-    auto& j = *jobsBatchItor;
-    switch (j->reportType) {
-      case SchedulerDatabase::RetrieveJob::ReportType::CompletionReport:
-        // do nothing
-        break;
-      case SchedulerDatabase::RetrieveJob::ReportType::FailureReport: {
-        try {
-          j->fail();
-        } catch (const cta::exception::NoSuchObject& ex) {
-          log::ScopedParamContainer(lc)
-            .add("fileId", j->archiveFile.archiveFileID)
-            .add("exceptionMsg", ex.getMessageValue())
-            .log(log::WARNING,
-                 "In OStoreDB::setRetrieveJobBatchReportedToUser(), fail to fail the job "
-                 "because it does not exists in the objectstore.");
-          jobsBatch.erase(jobsBatchItor);
-          goto next;
-        }
-        auto& vid = j->archiveFile.tapeFiles.at(j->selectedCopyNb).vid;
-        failedQueues[vid].push_back(FailedJobToQueue {castFromSchedDBJob(j)});
-        break;
-      }
-      default: {
-        log::ScopedParamContainer(lc)
-          .add("fileId", j->archiveFile.archiveFileID)
-          .add("objectAddress", castFromSchedDBJob(j)->m_retrieveRequest.getAddressIfSet())
-          .log(log::ERR,
-               "In OStoreDB::setRetrieveJobBatchReportedToUser(): unexpected job status. "
-               "Leaving the job as-is.");
-      }
-    }
-next:
-    jobsBatchItor++;
+  std::list<RetrieveJob*> jobsToDelete;
+  for (auto& j : jobsBatch) {
+    jobsToDelete.push_back(castFromSchedDBJob(j));
   }
 
-  // Put the failed jobs in the failed queue
-  for (auto& queue : failedQueues) {
-    typedef objectstore::ContainerAlgorithms<RetrieveQueue, RetrieveQueueFailed> CaRQF;
-    CaRQF caRQF(m_objectStore, *m_agentReference);
-    CaRQF::InsertedElement::list insertedElements;
-    for (auto& j : queue.second) {
-      auto tf_it = j.job->archiveFile.tapeFiles.begin();
-      while (tf_it != j.job->archiveFile.tapeFiles.end()) {
-        if (queue.first == tf_it->vid) {
-          break;
+  // All jobs in jobs batch has successfully been reported, when we fail to report
+  // we move the job directly to the failed queue. We can proceed directly with the
+  // deletion of the jobs.
+
+  // Launch deletion asynchronously
+  if (jobsToDelete.size()) {
+    // Launch deleteion.
+    auto jobsToDeleteItor = jobsToDelete.begin();
+    while (jobsToDeleteItor != jobsToDelete.end()) {
+      auto &j = *jobsToDeleteItor;
+      try {
+        j->asyncDeleteJob();
+      } catch (const cta::exception::NoSuchObject& ex) {
+        log::ScopedParamContainer(lc)
+          .log(log::WARNING, "In OStoreDB::setRetrieveJobBatchReportedToUser(): failed to asyncDeleteJob because it does not exist in the objectstore.");
+        jobsToDeleteItor = jobsToDelete.erase(jobsToDeleteItor);
+        continue;
+      }
+      jobsToDeleteItor++;
+    }
+
+    // Wait for deletions to finish.
+    std::list<std::string> jobsToUnown;
+    for (auto& j : jobsToDelete) {
+      try {
+        try {
+          j->waitAsyncDelete();
+        } catch (const cta::exception::NoSuchObject& ex) {
+          log::ScopedParamContainer(lc)
+            .add("objectAddress", j->m_retrieveRequest.getAddressIfSet())
+            .log(log::WARNING, "In OStoreDB::setRetrieveJobBatchReportedToUser(): failed to asyncDeleteJob because it does not exist in the objectstore.");
+          jobsToDeleteItor = jobsToDelete.erase(jobsToDeleteItor);
+          continue;
         }
+        log::ScopedParamContainer(lc)
+          .log(log::INFO, "In OStoreDB::setRetrieveJobBatchReportedToUser(): delete RetrieveRequest after reporting.");
+      } catch (cta::exception::Exception &ex) {
+        log::ScopedParamContainer(lc)
+	  .add("objectAddress", j->m_retrieveRequest.getAddressIfSet())
+	  .add("exceptionMSG", ex.getMessageValue())
+	  .log(log::ERR, "In OStoreDB::setRetrieveJobBatchReportedToUser(): failed to delete RetrieveRequest.");
+	jobsToUnown.push_back(j->m_retrieveRequest.getAddressIfSet());
       }
-      if (tf_it == j.job->archiveFile.tapeFiles.end()) {
-        throw cta::exception::Exception("In OStoreDB::setRetrieveJobBatchReportedToUser(): tape copy not found");
-      }
-      insertedElements.emplace_back(CaRQF::InsertedElement {&j.job->m_retrieveRequest,
-                                                            tf_it->copyNb,
-                                                            tf_it->fSeq,
-                                                            j.job->archiveFile.fileSize,
-                                                            common::dataStructures::MountPolicy(),
-                                                            j.job->m_activity,
-                                                            j.job->m_diskSystemName});
     }
-    try {
-      caRQF.referenceAndSwitchOwnership(queue.first, m_agentReference->getAgentAddress(), insertedElements, lc);
-    } catch (exception::Exception& ex) {
-      log::ScopedParamContainer params(lc);
-    }
-    log::TimingList tl;
-    tl.insertAndReset("queueAndSwitchStateTime", t);
-    timingList += tl;
+    m_agentReference->removeBatchFromOwnership(jobsToUnown, m_objectStore);
   }
 }
 
@@ -5632,6 +5609,29 @@ void OStoreDB::RetrieveJob::abort(const std::string& abortReason, log::LogContex
         "In OStoreDB::RetrieveJob::abort(): Wrong EnqueueingNextStep for queueing the RetrieveRequest");
   }
 }
+
+
+//------------------------------------------------------------------------------
+// OStoreDB::RetrieveJob::asyncDeletejOB()
+//------------------------------------------------------------------------------
+void OStoreDB::RetrieveJob::asyncDeleteJob() {
+  m_jobDeleter.reset(m_retrieveRequest.asyncDeleteJob());
+}
+
+
+//------------------------------------------------------------------------------
+// OStoreDB::RetrieveJob::waitAsyncDelete()
+//------------------------------------------------------------------------------
+void OStoreDB::RetrieveJob::waitAsyncDelete() {
+  m_jobDeleter->wait();
+  log::LogContext lc(m_oStoreDB.m_logger);
+  log::ScopedParamContainer(lc)
+    .add("requestObject", m_retrieveRequest.getAddressIfSet())
+    .log(log::DEBUG, "In OStoreDB::RetrieveJob::waitAsyncDelete(): Async delete of archiveRequest complete");
+  // We no more own the job (which could be gone)
+  m_jobOwned = false;
+}
+
 
 //------------------------------------------------------------------------------
 // OStoreDB::RetrieveJob::~RetrieveJob()

@@ -373,6 +373,8 @@ public:
           m_oStoreDB(oStoreDB),
           m_retrieveRequest(jobAddress, m_oStoreDB.m_objectStore),
           m_retrieveMount(rm) {}
+    void asyncDeleteJob();
+    void waitAsyncDelete();
 
   private:
     bool m_jobOwned;
@@ -387,6 +389,7 @@ public:
     objectstore::RetrieveRequest::RepackInfo m_repackInfo;
     std::optional<std::string> m_activity;
     std::optional<std::string> m_diskSystemName;
+    std::unique_ptr<objectstore::RetrieveRequest::AsyncJobDeleter> m_jobDeleter;
   };
 
   static RetrieveJob* castFromSchedDBJob(SchedulerDatabase::RetrieveJob* job);
