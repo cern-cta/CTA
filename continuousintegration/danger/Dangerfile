@@ -85,17 +85,10 @@ end
 
 # --- Reviewers check ---
 
-failures = danger.status_report[:fails]
-issues_present = !failures.nil? && failures.any?
-
 reviewers = gitlab.mr_json["reviewers"] || []
 
-if reviewers.empty? && !issues_present
+if reviewers.empty?
     warn("**No Reviewers Assigned**\n\nConsider assigning one or more reviewers to ensure this MR gets timely feedback.")
-end
-
-if !reviewers.empty? && issues_present
-    warn("This merge request has reviewers assigned but still contains unresolved Danger checks.\nPlease address these to ensure the reviewer has all the required information.")
 end
 
 # --- General message ---
