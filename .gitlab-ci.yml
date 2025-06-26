@@ -6,9 +6,7 @@ stages:
   - build:image
   - test
   - system-test
-  - release:changelog
-  - release:internal
-  - release:external
+  - release
 
 variables:
 
