@@ -2,13 +2,13 @@ danger-review:
   # We allow failure here as we don't want to immediately auto-cancel the entire pipeline
   # Developers should be allowed to test things without
   allow_failure: true
-  image:  registry.cern.ch/docker.io/ruby:3.4-alpine
-  stage: validate
+  stage: review
   needs: []
   rules:
     - if: $CI_PIPELINE_SOURCE == "merge_request_event"
       when: always
     - when: never
+  image:  registry.cern.ch/docker.io/ruby:3.4-alpine
   variables:
     DANGER_GITLAB_USE_THREADS: 1
   before_script:
