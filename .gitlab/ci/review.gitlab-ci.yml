@@ -16,8 +16,8 @@ danger-review:
     - gem install danger danger-gitlab faraday-retry
     - gem install faraday-retry
   script:
-    - danger --verbose --dangerfile=continuousintegration/danger/Dangerfile --fail-on-errors=true
-    - echo $? > danger_status.txt
+    - danger --verbose --dangerfile=continuousintegration/danger/Dangerfile --fail-on-errors=true || exit_code=$?
+    - echo $exit_code > danger_status.txt
   artifacts:
     paths:
       - danger_status.txt
@@ -30,14 +30,14 @@ danger-review-gate:
   needs:
     - job: danger-review
       artifacts: true
-    - job: test-client
-      optional: true
-    - job: test-client-gfal2
-      optional: true
-    - job: test-repack
-      optional: true
-    - job: test-cta-admin
-      optional: true
+    # - job: test-client
+    #   optional: true
+    # - job: test-client-gfal2
+    #   optional: true
+    # - job: test-repack
+    #   optional: true
+    # - job: test-cta-admin
+    #   optional: true
   script:
     - status=$(cat danger_status.txt)
     - if [ "$status" -ne 0 ]; then
