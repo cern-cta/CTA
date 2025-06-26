@@ -1,7 +1,9 @@
 changelog-preview:
-  stage: release:changelog
+  stage: release
   needs: [] # Ensure this job can be triggered at the beginning if necessary
   rules:
+    - if: $CI_PIPELINE_SOURCE == "merge_request_event"
+      when: never
     - if: $PIPELINE_TYPE != "DEFAULT"
       when: never
     - if: $CI_COMMIT_TAG
@@ -45,10 +47,12 @@ changelog-preview:
       dotenv: vars.env
 
 changelog-update:
-  stage: release:changelog
+  stage: release
   needs:
     - changelog-preview
   rules:
+    - if: $CI_PIPELINE_SOURCE == "merge_request_event"
+      when: never
     - if: $PIPELINE_TYPE != "DEFAULT"
       when: never
     - if: $CI_COMMIT_TAG
@@ -80,8 +84,8 @@ changelog-update:
                                                                 --description-file changelog_report.md
                                                                 --verbose
 
-release-cta:
-  stage: release:internal
+internal-release-cta:
+  stage: release
   needs:
     - build-cta-rpm
   image: $IMAGE_RELEASE
@@ -97,59 +101,69 @@ release-cta:
                                                        --eos-target-dir /eos/user/c/ctareg/www/cta-repo
                                                        --hook /eos/user/c/ctareg/www/cta-repo/update_repos.sh
 
-release-cta-unstable:
-  stage: release:external
+public-release-cta-unstable:
+  stage: release
   needs:
-    - release-cta
+    - internal-release-cta
   image: $IMAGE_RELEASE
   rules:
     - if: $CI_COMMIT_TAG
       when: manual
       allow_failure: true
   script:
-    - echo "Publishing to unstable CTA repository"
     - export CTA_VERSION=$(echo ${CI_COMMIT_TAG} | awk -F '[v-]' '{print $2}')
+    - echo "Publishing CTA version ${CTA_VERSION} to unstable CTA repository"
     - ./continuousintegration/release/upload_to_eos.sh --eos-username ${DOCKER_LOGIN_USERNAME}
                                                        --eos-password ${DOCKER_LOGIN_PASSWORD}
                                                        --eos-source-dir /eos/user/c/ctareg/www/cta-repo/RPMS
                                                        --eos-target-dir /eos/user/c/ctareg/www/public/cta-public-repo/unstable/cta-5/${PLATFORM}/cta
                                                        --hook /eos/user/c/ctareg/www/public/update_repos.sh
                                                        --cta-version ${CTA_VERSION}
+    - REPO_URL="https://cta-public-repo.web.cern.ch/unstable/cta-5/el9/cta/x86_64"
+    - ./continuousintegration/release/check_rpm_available.sh --repository-url "$REPO_URL" --package "cta-taped" --version "$CTA_VERSION"
 
-release-cta-testing:
-  stage: release:external
+public-release-cta-testing:
+  stage: release
   needs:
-    - release-cta
+    - internal-release-cta
   image: $IMAGE_RELEASE
   rules:
     - if: $CI_COMMIT_TAG
       when: manual
       allow_failure: true
   script:
-    - echo "Publishing to testing CTA repository"
     - export CTA_VERSION=$(echo ${CI_COMMIT_TAG} | awk -F '[v-]' '{print $2}')
+    - echo "Publishing CTA version ${CTA_VERSION} to testing CTA repository"
     - ./continuousintegration/release/upload_to_eos.sh --eos-username ${DOCKER_LOGIN_USERNAME}
                                                        --eos-password ${DOCKER_LOGIN_PASSWORD}
                                                        --eos-source-dir /eos/user/c/ctareg/www/cta-repo/RPMS
                                                        --eos-target-dir /eos/user/c/ctareg/www/public/cta-public-repo/testing/cta-5/${PLATFORM}/cta
                                                        --hook /eos/user/c/ctareg/www/public/update_repos.sh
                                                        --cta-version ${CTA_VERSION}
+    - REPO_URL="https://cta-public-repo.web.cern.ch/testing/cta-5/el9/cta/x86_64"
+    - ./continuousintegration/release/check_rpm_available.sh --repository-url "$REPO_URL" --package "cta-taped" --version "$CTA_VERSION"
 
-release-cta-stable:
-  stage: release:external
+public-release-cta-stable:
+  stage: release
   needs:
-    - release-cta
+    - internal-release-cta
+    # Anything in stable must also be in unstable and testing
+    - public-release-cta-unstable
+    - public-release-cta-testing
   image: $IMAGE_RELEASE
   rules:
     - if: $CI_COMMIT_TAG
       when: manual
       allow_failure: true
   script:
-    - echo "Publishing to public CTA repository"
     - export CTA_VERSION=$(echo ${CI_COMMIT_TAG} | awk -F '[v-]' '{print $2}')
+    - echo "Publishing CTA version ${CTA_VERSION} to public CTA repository"
     - ./continuousintegration/release/upload_to_eos.sh --eos-username ${DOCKER_LOGIN_USERNAME}
                                                        --eos-password ${DOCKER_LOGIN_PASSWORD}
                                                        --eos-source-dir /eos/user/c/ctareg/www/cta-repo/RPMS
                                                        --eos-target-dir /eos/user/c/ctareg/www/public/cta-public-repo/stable/cta-5/${PLATFORM}/cta
                                                        --hook /eos/user/c/ctareg/www/public/update_repos.sh
                                                        --cta-version ${CTA_VERSION}
+    - REPO_URL="https://cta-public-repo.web.cern.ch/stable/cta-5/el9/cta/x86_64"
+    - ./continuousintegration/release/check_rpm_available.sh --repository-url "$REPO_URL" --package "cta-taped" --version "$CTA_VERSION"
+
