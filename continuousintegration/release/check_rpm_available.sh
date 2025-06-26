@@ -81,6 +81,9 @@ check_package_available() {
     usage
   fi
 
+  echo "Checking whether $package version $version is available in the following repo:"
+  echo "    $repository"
+
   tempdir=$(mktemp -d)
   trap 'rm -rf "$tempdir"' EXIT
   repofile="$tempdir/temp.repo"
@@ -102,7 +105,7 @@ EOF
     echo "Package '$package' with version '$version' is available in the provided repository."
     exit 0
   else
-    echo "Package '$package' with version '$version' is NOT available in the provided repository."
+    echo "Failed: Package '$package' with version '$version' is NOT available in the provided repository."
     exit 1
   fi
 
