@@ -394,6 +394,9 @@ FrontendService::FrontendService(const std::string& configFilename) : m_archiveF
   }
   auto threads = config.getOptionValueInt("grpc.numberofthreads");
   if (threads.has_value()) {
+    if (threads.value() < 1) {
+      throw exception::UserError("value of grpc.numberofthreads must be at least 1");
+    }
     m_threads = threads.value();
   }
 
