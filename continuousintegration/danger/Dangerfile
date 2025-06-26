@@ -107,7 +107,7 @@ markdown <<~MSG
   Please address all messages before merging.
   If any warning is intentional, acknowledge it by replying to this comment.
 
-  🔁 Retry the [`danger-review`](#{job_url}) job if needed to refresh these results. Retry the `danger-review-gate` job afterwards to update the pipeline status accordingly.
+  🔁 Retry the [`danger-review`](#{danger_review_job_url}) job if needed to refresh these results. Retry the `danger-review-gate` job afterwards to update the pipeline status accordingly.
 
   ---
 MSG
