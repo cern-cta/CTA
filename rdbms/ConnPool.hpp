@@ -64,7 +64,7 @@ public:
    */
   Conn getConn();
 
-  uint64_t getNbConnsOnLoan() const { return m_nbConnsOnLoan; }
+  uint64_t getNbConnsOnLoan() { return m_nbConnsOnLoan; }
 
 private:
   friend Conn;

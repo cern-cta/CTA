@@ -52,68 +52,6 @@ public:
   ~PostgresRset() override;
 
   /**
-   * @class BlobView
-   * @brief RAII wrapper for a PostgreSQL unescaped binary blob (bytea).
-   *
-   * This class provides a safe, read-only view of binary data returned by
-   * `PQunescapeBytea`. It manages the lifetime of the allocated memory using
-   * a `std::unique_ptr` with a custom deleter (`PQfreemem`), ensuring that
-   * the buffer is correctly freed when the object goes out of scope.
-   *
-   * The blob contents can be accessed using `data()` and `size()` methods.
-   *
-   * Example usage:
-   * @code
-   *   BlobView blob = rset.columnBlobView("CHECKSUMBLOB");
-   *   const unsigned char* ptr = blob.data();
-   *   std::size_t len = blob.size();
-   *   // Use ptr and len as needed
-   * @endcode
-   *
-   * Note: This class is non-copyable but movable.
-   */
-  class BlobView : public rdbms::wrapper::IBlobView {
-  public:
-    BlobView(unsigned char* ptr, std::size_t size) : m_data(ptr), m_size(size), m_guard(ptr, &PQfreemem) {}
-
-    // Explicitly delete copy constructor and copy assignment
-    // (despite already implicitly done for unique pointer)
-    BlobView(const BlobView&) = delete;
-    BlobView& operator=(const BlobView&) = delete;
-
-    // Move constructor
-    BlobView(BlobView&& other) noexcept
-        : m_data(other.m_data),
-          m_size(other.m_size),
-          m_guard(std::move(other.m_guard)) {
-      other.m_data = nullptr;
-      other.m_size = 0;
-    }
-
-    // Move assignment
-    BlobView& operator=(BlobView&& other) noexcept {
-      if (this != &other) {
-        m_data = other.m_data;
-        m_size = other.m_size;
-        m_guard = std::move(other.m_guard);
-
-        other.m_data = nullptr;
-        other.m_size = 0;
-      }
-      return *this;
-    }
-
-    const unsigned char* data() const { return m_data; }
-
-    std::size_t size() const { return m_size; }
-
-  private:
-    const unsigned char* m_data;
-    std::size_t m_size;
-    std::unique_ptr<unsigned char, decltype(&PQfreemem)> m_guard;
-  };
-
-  /**
    * Returns true if the specified column contains a null value.
    *
    * @param colName The name of the column.
@@ -138,31 +76,12 @@ public:
   std::string columnBlob(const std::string& colName) const override;
 
   /**
-  * Returns the value of the specified column as a view over a binary large object (BLOB).
-  *
-  * This method extracts and uneicitujjecgntnnlthekjndlgfinekvdbcujgcvfivft
-   * escapes binary data from the specified column and wraps it
-  * in a `BlobView`, which manages the memory using a unique pointer with a custom deleter.
-  * The view provides access to the data via a pointer and size, and the underlying memory
-  * remains valid as long as the `BlobView` instance is alive.
-  *
-  * Note: This method allocates memory using `PQunescapeBytea`, which is automatically
-  * freed when the returned `BlobView` is destroyed. This is not a non-owning view;
-  * ownership of the decoded buffer is transferred to the `BlobView`.
-  *
-  * @param colName The name of the column containing the BLOB data.
-  * @return A `BlobView` object managing the decoded binary data and its size.
-  * @throws NullDbValue If the column value is not null but decoding fails.
-  */
-  std::unique_ptr<rdbms::wrapper::IBlobView> columnBlobView(const std::string& colName) const override;
-
-  /**
     * Returns the value of the specified column as a binary string (byte array).
     *
     * @param colName The name of the column.
     * @return The string value of the specified column.
     */
-  bool columnBoolNoOpt(const std::string& colName) const override;
+  bool columnBoolNoOpt(const std::string& colName) const;
 
   /**
    * Returns the value of the specified column as a string.
@@ -170,7 +89,7 @@ public:
    * @param colName
    * @return
    */
-  std::string columnStringNoOpt(const std::string& colName) const override;
+  std::string columnStringNoOpt(const std::string& colName) const;
 
   /**
    * Returns the value of the specified column as an integer.
@@ -178,7 +97,7 @@ public:
    * @param colName
    * @return
    */
-  uint8_t columnUint8NoOpt(const std::string& colName) const override;
+  uint8_t columnUint8NoOpt(const std::string& colName) const;
 
   /**
    * Returns the value of the specified column as an integer.
@@ -186,7 +105,7 @@ public:
    * @param colName
    * @return
    */
-  uint16_t columnUint16NoOpt(const std::string& colName) const override;
+  uint16_t columnUint16NoOpt(const std::string& colName) const;
 
   /**
    * Returns the value of the specified column as an integer.
@@ -194,7 +113,7 @@ public:
    * @param colName
    * @return
    */
-  uint32_t columnUint32NoOpt(const std::string& colName) const override;
+  uint32_t columnUint32NoOpt(const std::string& colName) const;
 
   /**
    * Returns the value of the specified column as an integer.
@@ -202,7 +121,7 @@ public:
    * @param colName
    * @return
    */
-  uint64_t columnUint64NoOpt(const std::string& colName) const override;
+  uint64_t columnUint64NoOpt(const std::string& colName) const;
 
   /**
    * Returns the value of the specified column as an double.
@@ -210,7 +129,7 @@ public:
    * @param colName
    * @return
    */
-  double columnDoubleNoOpt(const std::string& colName) const override;
+  double columnDoubleNoOpt(const std::string& colName) const;
   /**
    * Returns the value of the specified column as a string.
    *
@@ -287,7 +206,6 @@ public:
   bool next() override;
 
 private:
-
   /**
    * Getting index of a column by using the columnIndexCache
    * in order to avoid looking them up every time we fetch columns of
@@ -295,7 +213,7 @@ private:
    * @param colName
    * @return index of the column
    */
-  size_t getColumnIndex(const std::string& colName) const;
+  int getColumnIndex(const std::string& colName) const;
 
   /**
    * Template method that converts a string to a required numeric type
@@ -308,7 +226,7 @@ private:
   template<typename NumericType>
   NumericType getNumberFromString(const std::string& colName, const std::string& stringValue) const {
     // At compile time ensure the type is numeric (e.g., int, double, uint64_t, etc.)
-    static_assert(std::is_arithmetic_v<NumericType>, "NumericType must be a numeric type.");
+    static_assert(std::is_arithmetic<NumericType>::value, "NumericType must be a numeric type.");
 
     // Create a stringstream for converting the string to the target type
     std::istringstream iss(stringValue);
@@ -331,7 +249,7 @@ private:
   /**
    * column index cache
    */
-  mutable std::unordered_map<std::string, int> m_columnPQindexCache;
+  mutable std::unordered_map<std::string, uint64_t> m_columnPQindexCache;
   /**
    * The SQL connection.
    */

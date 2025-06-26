@@ -66,7 +66,7 @@ ArchiveMount::getNextJobBatch(uint64_t filesRequested, uint64_t bytesRequested, 
       common::dataStructures::TapeFile tpfile;
       auto maxBlockId = std::numeric_limits<decltype(tpfile.blockId)>::max();
       while (queuedJobs.next()) {
-        auto job = m_jobPool->acquireJob();
+        auto job = m_jobPool.acquireJob();
         if (!job) {
           throw exception::Exception("In ArchiveMount::getNextJobBatch(): Failed to acquire job from pool.");
         }
@@ -205,7 +205,25 @@ void ArchiveMount::setJobBatchTransferred(std::list<std::unique_ptr<SchedulerDat
              "entire job list provided.");
     }
     // After processing, return the job object to the job pool for re-use
-    recycleTransferredJobs(jobsBatch, lc);
+    try {
+      for (auto& job : jobsBatch) {
+        // Attempt to release the job back to the pool
+        auto castedJob = std::unique_ptr<ArchiveRdbJob>(static_cast<ArchiveRdbJob*>(job.release()));
+        m_jobPool.releaseJob(std::move(castedJob));
+      }
+      jobsBatch.clear();  // Clear the container after all jobs are successfully processed
+    } catch (const exception::Exception& ex) {
+      lc.log(cta::log::ERR,
+             "In ArchiveMount::setJobBatchTransferred(): Failed to recycle all job objects for the job pool: " +
+               ex.getMessageValue());
+
+      // Destroy all remaining jobs in case of failure
+      for (auto& job : jobsBatch) {
+        // Release the unique_ptr ownership and delete the underlying object
+        delete job.release();
+      }
+      jobsBatch.clear();  // Ensure the container is emptied
+    }
   } catch (exception::Exception& ex) {
     lc.log(cta::log::ERR,
            "In schedulerdb::ArchiveMount::setJobBatchTransferred(): Failed to update job status for "
@@ -213,26 +231,5 @@ void ArchiveMount::setJobBatchTransferred(std::list<std::unique_ptr<SchedulerDat
              ex.getMessageValue());
     txn.abort();
   }
-}
-
-void ArchiveMount::recycleTransferredJobs(std::list<std::unique_ptr<SchedulerDatabase::ArchiveJob>>& jobsBatch,
-                                          log::LogContext& lc) {
-  try {
-    for (auto& job : jobsBatch) {
-      if (job->releaseToPool()) {
-        // Prevent deletion via unique_ptr - correct handling here would be
-        // to introduce custom deleter for the unique_ptr (would make recycleTransferredJobs obsolete),
-        // but this would mean changing types all across the CTA code
-        job.release();
-      } else {
-        // Let unique_ptr delete it
-      }
-    }
-  } catch (const exception::Exception& ex) {
-    lc.log(cta::log::ERR,
-           "In ArchiveMount::recycleTransferredJobs(): Failed to recycle all job objects for the job pool: " +
-             ex.getMessageValue());
-  }
-  jobsBatch.clear();
 }
 }  // namespace cta::schedulerdb

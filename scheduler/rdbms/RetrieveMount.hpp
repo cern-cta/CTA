@@ -40,9 +40,9 @@ class RetrieveMount : public SchedulerDatabase::RetrieveMount {
   friend class TapeMountDecisionInfo;
 
 public:
-  explicit RetrieveMount(RelationalDB& rdb_instance) : m_RelationalDB(rdb_instance), m_connPool(rdb_instance.m_connPool) {
-    m_jobPool = std::make_shared<schedulerdb::JobPool<schedulerdb::RetrieveRdbJob>>(m_connPool);
-  }
+  //RetrieveMount(const std::string& ownerId, Transaction& txn, const std::string &vid) :
+  //   , m_txn(txn), m_vid(vid) { }
+  RetrieveMount(RelationalDB& reldb) : m_RelationalDB(reldb), m_connPool(reldb.m_connPool), m_jobPool(reldb.m_connPool) {}
 
   const MountInfo& getMountInfo() override;
 
@@ -66,7 +66,7 @@ public:
   void setDriveStatus(common::dataStructures::DriveStatus status,
                       common::dataStructures::MountType mountType,
                       time_t completionTime,
-                      const std::optional<std::string>& reason) override;
+                      const std::optional<std::string>& reason = std::nullopt) override;
 
   void setTapeSessionStats(const castor::tape::tapeserver::daemon::TapeSessionStats& stats) override;
 
@@ -77,9 +77,7 @@ public:
   // for compliance with OStoreDB only
   //------------------------------------------------------------------------------
   void flushAsyncSuccessReports(std::list<cta::SchedulerDatabase::RetrieveJob*>& jobsBatch,
-                                cta::log::LogContext& lc) override {
-    throw cta::exception::Exception("Not implemented");
-  };
+                                cta::log::LogContext& lc) override {};
 
   void addDiskSystemToSkip(const DiskSystemToSkip& diskSystemToSkip) override;
 
@@ -89,9 +87,7 @@ public:
 private:
   cta::RelationalDB& m_RelationalDB;
   cta::rdbms::ConnPool& m_connPool;
-  std::shared_ptr<schedulerdb::JobPool<schedulerdb::RetrieveRdbJob>> m_jobPool;
-  void recycleTransferredJobs(std::list<std::unique_ptr<SchedulerDatabase::RetrieveJob>>& jobsBatch,
-                              log::LogContext& lc);
+  schedulerdb::JobPool<schedulerdb::RetrieveRdbJob> m_jobPool;
 };
 
 }  // namespace cta::schedulerdb

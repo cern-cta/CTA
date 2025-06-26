@@ -117,15 +117,10 @@ void ChecksumBlob::deserialize(const std::string& bytearray) {
   ProtobufToChecksumBlob(p_csb, *this);
 }
 
-void ChecksumBlob::deserialize(const void* data, std::size_t size) {
+void ChecksumBlob::deserialize(std::string&& bytearray) {
   common::ChecksumBlob p_csb;
-  if (size > std::numeric_limits<int>::max()) {
-    throw std::overflow_error("Blob too large (>2GB) for Protobuf ParseFromArray");
-  }
-  // In case we do not want to construct temporary std::strings beforehand and we just want to parse
-  // raw binary data (e.g., from Postgres BLOB) we can do so directly with
-  // ParseFromArray designed for fast, zero-copy parsing
-  if (!p_csb.ParseFromArray(data, static_cast<int>(size))) {
+  // Move the string to avoid extra copies
+  if (!p_csb.ParseFromString(std::move(bytearray))) {
     throw exception::Exception("ChecksumBlob: deserialization failed");
   }
   ProtobufToChecksumBlob(p_csb, *this);

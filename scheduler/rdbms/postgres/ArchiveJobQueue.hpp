@@ -81,8 +81,7 @@ struct ArchiveJobQueueRow {
   uint32_t diskFileInfoGid = 0;
   checksum::ChecksumBlob checksumBlob;
 
-private:
-  void reserveStringFields() {
+  ArchiveJobQueueRow() {
     tapePool.reserve(64);
     mountPolicy.reserve(64);
     archiveReportURL.reserve(2048);
@@ -103,18 +102,12 @@ private:
     diskFileInfoPath.reserve(2048);
   }
 
-public:
-  ArchiveJobQueueRow() {
-    reserveStringFields();
-  }
-
   /**
      * Constructor from row
      *
      * @param row  A single row from the current row of the rset
      */
   explicit ArchiveJobQueueRow(const rdbms::Rset& rset) {
-    reserveStringFields();
     *this = rset;
   }
 
@@ -183,8 +176,7 @@ public:
     fileSize = rset.columnUint64NoOpt("SIZE_IN_BYTES");
     copyNb = rset.columnUint16NoOpt("COPY_NB");
     startTime = rset.columnUint64NoOpt("START_TIME");
-    auto blob_view = rset.columnBlobView("CHECKSUMBLOB");
-    checksumBlob.deserialize(blob_view->data(), blob_view->size());
+    checksumBlob.deserialize(std::move(rset.columnBlob("CHECKSUMBLOB")));
     creationTime = rset.columnUint64NoOpt("CREATION_TIME");
     diskInstance = rset.columnStringNoOpt("DISK_INSTANCE");
     diskFileId = rset.columnStringNoOpt("DISK_FILE_ID");
@@ -457,7 +449,7 @@ public:
    *
    *
    * @param txn        Transaction to use for this query
-   * @param newStatus  Archive Job Status to select on
+   * @param status     Archive Job Status to select on
    * @param mountInfo  mountInfo object
    * @param maxBytesRequested  the maximum cumulative size of the files in the bunch requested
    * @param limit      Maximum number of rows to return
@@ -465,7 +457,7 @@ public:
    * @return  result set containing job IDs of the rows which were updated
    */
   static std::pair<rdbms::Rset, uint64_t> moveJobsToDbQueue(Transaction& txn,
-                                                            ArchiveJobStatus newStatus,
+                                                            ArchiveJobStatus status,
                                                             const SchedulerDatabase::ArchiveMount::MountInfo& mountInfo,
                                                             uint64_t maxBytesRequested,
                                                             uint64_t limit);
@@ -474,20 +466,20 @@ public:
    * Update job status
    *
    * @param txn        Transaction to use for this query
-   * @param newStatus  Archive Job Status to select on
+   * @param status     Archive Job Status to select on
    * @param jobIDs     List of jobID strings to select
    * @return           Number of updated rows
    */
-  static uint64_t updateJobStatus(Transaction& txn, ArchiveJobStatus newStatus, const std::vector<std::string>& jobIDs);
+  static uint64_t updateJobStatus(Transaction& txn, ArchiveJobStatus status, const std::vector<std::string>& jobIDs);
 
   /**
    * Update failed job status
    *
    * @param txn                  Transaction to use for this query
-   * @param newStatus            Archive Job Status to select on
+   * @param status               Archive Job Status to select on
    * @return                     Number of updated rows
    */
-  uint64_t updateFailedJobStatus(Transaction& txn, ArchiveJobStatus newStatus);
+  uint64_t updateFailedJobStatus(Transaction& txn, ArchiveJobStatus status);
 
   /**
    * Move from ARCHIVE_ACTIVE_QUEUE to ARCHIVE_PENDING_QUEUE
@@ -495,12 +487,12 @@ public:
    * This method updates also the retry statistics
    *
    * @param txn                  Transaction to use for this query
-   * @param newStatus            Archive Job Status to select on
+   * @param status               Archive Job Status to select on
    * @param keepMountId          true or false
    * @return                     Number of updated rows
    */
   uint64_t requeueFailedJob(Transaction& txn,
-                            ArchiveJobStatus newStatus,
+                            ArchiveJobStatus status,
                             bool keepMountId,
                             std::optional<std::list<std::string>> jobIDs = std::nullopt);
 
@@ -512,22 +504,22 @@ public:
    * (e.g. in case of a full tape)
    *
    * @param txn                  Transaction to use for this query
-   * @param newStatus            Archive Job Status to select on
+   * @param status               Archive Job Status to select on
    * @param keepMountId          true or false
    * @return                     Number of updated rows
    */
   static uint64_t requeueJobBatch(Transaction& txn,
-                                  ArchiveJobStatus newStatus,
+                                  ArchiveJobStatus status,
                                   const std::list<std::string>& jobIDs);
 
   /**
    * Update job status when job report failed
    *
    * @param txn                  Transaction to use for this query
-   * @param newStatus            Archive Job Status to select on
+   * @param status               Archive Job Status to select on
    * @return                     Number of updated rows
    */
-  uint64_t updateJobStatusForFailedReport(Transaction& txn, ArchiveJobStatus newStatus);
+  uint64_t updateJobStatusForFailedReport(Transaction& txn, ArchiveJobStatus status);
 
   /**
    * Move the job row to the ARCHIVE FAILED JOB TABLE
@@ -553,19 +545,5 @@ public:
    * @return     Archive Request ID
    */
   static uint64_t getNextArchiveRequestID(rdbms::Conn& conn);
-
-  /**
-   * Appends the provided failure reason, along with timestamp and hostname, to the job's failure log.
-   *
-   * @param reason        The textual explanation for the failure.
-   * @param is_report_log If true report failure log will be appended instead of job failure log.
-   */
-  void updateJobRowFailureLog(const std::string& reason, bool is_report_log = false);
-
-  /**
-   * Updates the retry counters for the current mount and globally.
-   * Increments the number of retries and updates the last failed mount accordingly.
-   */
-  void updateRetryCounts(uint64_t mountId);
 };
 };  // namespace cta::schedulerdb::postgres

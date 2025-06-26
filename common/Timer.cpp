@@ -42,7 +42,7 @@ int64_t Timer::usecs(reset_t reset) {
 // secs
 //------------------------------------------------------------------------------
 double Timer::secs(reset_t reset) {
-  return static_cast<double>(usecs(reset)) * 1.0e-6;  // Convert microseconds to seconds
+  return usecs(reset) * 1.0e-6;  // Convert microseconds to seconds
 }
 
 //------------------------------------------------------------------------------

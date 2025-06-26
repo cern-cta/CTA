@@ -40,7 +40,7 @@ Stmt::Stmt(std::unique_ptr<wrapper::StmtWrapper> stmt, StmtPool &stmtPool):
 //-----------------------------------------------------------------------------
 // constructor
 //-----------------------------------------------------------------------------
-Stmt::Stmt(Stmt &&other) noexcept :
+Stmt::Stmt(Stmt &&other):
   m_stmt(std::move(other.m_stmt)),
   m_stmtPool(other.m_stmtPool){
 }

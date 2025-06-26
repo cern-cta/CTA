@@ -27,7 +27,7 @@ class ArchiveRdbJob;
 class RetrieveRdbJob;
 
 template<typename T>
-class JobPool : public std::enable_shared_from_this<JobPool<T>> {
+class JobPool {
 public:
   // Constructor initializes the pool with a connection pool reference or other parameters
   explicit JobPool(rdbms::ConnPool& connPool, size_t poolSize = 100000);
@@ -36,7 +36,7 @@ public:
   std::unique_ptr<T> acquireJob();
 
   // Return a job to the pool for reuse
-  bool releaseJob(T* job);
+  void releaseJob(std::unique_ptr<T> job);
 
 private:
   std::stack<std::unique_ptr<T>> m_pool;  // Stack to store reusable jobs
@@ -52,20 +52,18 @@ JobPool<T>::JobPool(rdbms::ConnPool& connPool, size_t poolSize)
       m_connPool(connPool) {
   // Optionally, pre-fill the pool with some job objects
   for (size_t i = 0; i < m_poolSize; ++i) {
-    auto job = std::make_unique<T>(m_connPool);
-    m_pool.push(std::move(job));
+    m_pool.push(std::make_unique<T>(m_connPool));
   }
 }
 
 // Acquire a job from the pool
 template<typename T>
 std::unique_ptr<T> JobPool<T>::acquireJob() {
-  std::scoped_lock lock(m_poolMutex);
+  std::lock_guard<std::mutex> lock(m_poolMutex);
   if (!m_pool.empty()) {
     // Get a job from the pool if available
     auto job = std::move(m_pool.top());
     m_pool.pop();
-    job->setPool(this->shared_from_this());
     return job;
   }
 
@@ -75,16 +73,12 @@ std::unique_ptr<T> JobPool<T>::acquireJob() {
 
 // Release a job back into the pool
 template<typename T>
-bool JobPool<T>::releaseJob(T* job) {
-  std::scoped_lock lock(m_poolMutex);
+void JobPool<T>::releaseJob(std::unique_ptr<T> job) {
+  std::lock_guard<std::mutex> lock(m_poolMutex);
   if (m_pool.size() < m_poolSize) {
     // Reset the job's state as needed before reusing
     job->reset();
-    job->setPool(this->shared_from_this());
-    m_pool.push(std::unique_ptr<T>(job));
-    return true;
-  } else {
-    return false;
+    m_pool.push(std::move(job));
   }
 }
 }  // namespace cta::schedulerdb

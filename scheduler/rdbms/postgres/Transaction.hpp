@@ -27,7 +27,7 @@ public:
 
   // Constructors
   Transaction(std::unique_ptr<cta::rdbms::Conn> conn, bool ownConnection = false);
-  explicit Transaction(cta::rdbms::ConnPool& connPool);
+  Transaction(cta::rdbms::ConnPool& connPool);
 
   // Move constructor
   Transaction(Transaction&& other) noexcept;

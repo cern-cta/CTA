@@ -84,7 +84,7 @@ public:
    * @param jobIDsList list of job IDs as strings
    * @param lc         logging context
    */
-  void requeueUnprocessedTasks(const std::list<std::string>& jobIDsList, cta::log::LogContext& lc) const;
+  void requeueUnprocessedTasks(std::list<std::string> jobIDsList, cta::log::LogContext& lc) const;
   /**
    * 
    * @param lastFseq
@@ -153,6 +153,9 @@ private:
 
   ///how many bytes written before flushing on tape
   const uint64_t m_bytesBeforeFlush;
+
+  ///an interface for manipulating all type of drives
+  castor::tape::tapeserver::drive::DriveInterface& m_drive;
 
   ///the object that will send reports to the client
   MigrationReportPacker& m_reportPacker;

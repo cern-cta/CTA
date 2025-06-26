@@ -26,15 +26,19 @@
 namespace cta::schedulerdb {
 
 ArchiveRdbJob::ArchiveRdbJob(rdbms::ConnPool& connPool)
-    : m_jobOwned((m_jobRow.mountId.value_or(0) != 0)),
-      m_mountId(m_jobRow.mountId.value_or(0)),
-      m_tapePool(m_jobRow.tapePool),
+    : m_jobRow(),
+      m_jobOwned(0),
+      m_mountId(0),  // use mountId or 0 if not set
+      m_tapePool(""),
       m_connPool(connPool) {
   reset();
 };
 
 void ArchiveRdbJob::initialize(const rdbms::Rset& rset) {
+  //cta::log::TimingList timings;
+  //cta::utils::Timer t;
   m_jobRow = rset;
+  //timings.insOrIncAndReset("ArchiveRdbJob_rset_init", t);
   // Reset or update other member variables as necessary
   m_jobOwned = (m_jobRow.mountId.value_or(0) != 0);
   m_mountId = m_jobRow.mountId.value_or(0);  // use mountId or 0 if not set
@@ -45,6 +49,7 @@ void ArchiveRdbJob::initialize(const rdbms::Rset& rset) {
   archiveReportURL = std::move(m_jobRow.archiveReportURL);
   errorReportURL = std::move(m_jobRow.archiveErrorReportURL);
 
+  // archiveFile = std::move(m_jobRow.archiveFile);
   archiveFile.archiveFileID = m_jobRow.archiveFileID;
   archiveFile.creationTime = m_jobRow.creationTime;
   archiveFile.diskFileId = std::move(m_jobRow.diskFileId);
@@ -58,6 +63,7 @@ void ArchiveRdbJob::initialize(const rdbms::Rset& rset) {
 
   tapeFile.vid = std::move(m_jobRow.vid);
   tapeFile.copyNb = m_jobRow.copyNb;
+  //timings.insOrIncAndReset("ArchiveRdbJob_dbjobmembers_init", t);
   // Re-initialize report type
   if (m_jobRow.status == ArchiveJobStatus::AJS_ToReportToUserForTransfer) {
     reportType = ReportType::CompletionReport;
@@ -66,6 +72,10 @@ void ArchiveRdbJob::initialize(const rdbms::Rset& rset) {
   } else {
     reportType = ReportType::NoReportRequired;
   }
+  //timings.insOrIncAndReset("ArchiveRdbJob_status_init", t);
+  //cta::log::ScopedParamContainer logParams(lc);
+  //timings.addToLog(logParams);
+  //lc.log(cta::log::INFO, "In ArchiveRdbJob::initialize(): Finished initializing job object with new values.");
 }
 
 ArchiveRdbJob::ArchiveRdbJob(rdbms::ConnPool& connPool, const rdbms::Rset& rset) : ArchiveRdbJob(connPool) {
@@ -101,75 +111,22 @@ void ArchiveRdbJob::reset() {
   // No need to reset the connection pool (m_connPool) as it's shared and passed by reference
 }
 
-void ArchiveRdbJob::handleExceedTotalRetries(cta::schedulerdb::Transaction& txn,
-                                             log::LogContext& lc,
-                                             const std::string& reason) {
-  if (m_jobRow.status != ArchiveJobStatus::AJS_ToTransferForUser) {
-    lc.log(log::WARNING,
-           std::string("ArchiveRdbJob::handleExceedTotalRetries(): Unexpected status: ") + to_string(m_jobRow.status) +
-           std::string(". Assuming ToTransfer anyway and changing status to AJS_ToReportToUserForFailure."));
-  }
-
-  try {
-    uint64_t nrows = m_jobRow.updateFailedJobStatus(txn, ArchiveJobStatus::AJS_ToReportToUserForFailure);
-    txn.commit();
-    if (nrows != 1) {
-      lc.log(log::WARNING,
-             "ArchiveRdbJob::handleExceedTotalRetries(): ArchiveJobQueueRow::updateFailedJobStatus() failed; job not "
-             "found (possibly deleted).");
-    }
-    reportType = ReportType::FailureReport;
-  } catch (const exception::Exception& ex) {
-    lc.log(cta::log::WARNING,
-           "Failed to update job status for reporting failure. Aborting txn: " + ex.getMessageValue());
-    txn.abort();
-  }
-}
-
-void ArchiveRdbJob::requeueToNewMount(cta::schedulerdb::Transaction& txn,
-                                      log::LogContext& lc,
-                                      const std::string& reason) {
-  try {
-    // requeue by changing status, reset the mount_id to NULL and updating all other stat fields
-    m_jobRow.retriesWithinMount = 0;
-    uint64_t nrows = m_jobRow.requeueFailedJob(txn, ArchiveJobStatus::AJS_ToTransferForUser, false);
-    txn.commit();
-    if (nrows != 1) {
-      lc.log(log::WARNING,
-             "ArchiveRdbJob::requeueToNewMount(): requeueFailedJob (new mount) failed; job not found in DB.");
-    }
-    // since requeueing, we do not report and we do not
-    // set reportType to a particular value here
-  } catch (const exception::Exception& ex) {
-    lc.log(log::WARNING,
-           "ArchiveRdbJob::requeueToNewMount(): Failed to requeue to new mount. Aborting txn: " + ex.getMessageValue());
-    txn.abort();
-  }
-}
-
-void ArchiveRdbJob::requeueToSameMount(cta::schedulerdb::Transaction& txn, log::LogContext& lc, const std::string& reason) {
-  try {
-    // requeue to the same mount simply by moving it to PENDING QUEUE and updating all other stat fields
-    uint64_t nrows = m_jobRow.requeueFailedJob(txn, ArchiveJobStatus::AJS_ToTransferForUser, true);
-    txn.commit();
-    if (nrows != 1) {
-      lc.log(log::WARNING, "ArchiveRdbJob::requeueFailedJob(): (same mount) failed; job not found.");
-    }
-  } catch (const exception::Exception& ex) {
-    lc.log(log::WARNING, "ArchiveRdbJob::requeueFailedJob(): Failed to requeue to same mount. Aborting txn: " + ex.getMessageValue());
-    txn.abort();
-  }
-}
-
 void ArchiveRdbJob::failTransfer(const std::string& failureReason, log::LogContext& lc) {
+  std::string failureLog =
+    cta::utils::getCurrentLocalTime() + " " + cta::utils::getShortHostname() + " " + failureReason;
+  if (m_jobRow.failureLogs.has_value()) {
+    m_jobRow.failureLogs.value() += failureLog;
+  } else {
+    m_jobRow.failureLogs = failureLog;
+  }
+  lc.log(log::WARNING, "In schedulerdb::ArchiveRdbJob::failTransfer(): passes as half-dummy implementation !");
   log::ScopedParamContainer(lc)
     .add("jobID", jobID)
     .add("archiveFile.archiveFileID", archiveFile.archiveFileID)
     .add("mountId", m_mountId)
     .add("tapePool", m_tapePool)
-    .add("failureReason", m_jobRow.failureLogs.value_or(""));
-  lc.log(log::WARNING, "In schedulerdb::ArchiveRdbJob::failTransfer(): received failed job to be reported.");
-  m_jobRow.updateJobRowFailureLog(failureReason);
+    .add("failureReason", m_jobRow.failureLogs.value_or(""))
+    .log(log::INFO, "In schedulerdb::ArchiveRdbJob::failTransfer(): received failed job to be reported.");
 
   // For multiple jobs existing more might need to be done to ensure the file on EOS
   // is deleted only when both requests succeed !
@@ -181,7 +138,13 @@ void ArchiveRdbJob::failTransfer(const std::string& failureReason, log::LogConte
   // not all jobs succeeded - do we report failure for all ? - I guess so,
   // check how this case is handled in the objectstore
 
-  m_jobRow.updateRetryCounts(m_mountId);
+  if (m_jobRow.lastMountWithFailure == m_mountId) {
+    m_jobRow.retriesWithinMount += 1;
+  } else {
+    m_jobRow.retriesWithinMount = 1;
+    m_jobRow.lastMountWithFailure = m_mountId;
+  }
+  m_jobRow.totalRetries += 1;
   // for now we do not pur failure log into the DB just log it
   // not sure if this is necessary
   //m_jobRow.failureLogs.emplace_back(failureReason);
@@ -189,30 +152,118 @@ void ArchiveRdbJob::failTransfer(const std::string& failureReason, log::LogConte
   cta::schedulerdb::Transaction txn(m_connPool);
   // here we either decide if we report the failure to user or requeue the job
   if (m_jobRow.totalRetries >= m_jobRow.maxTotalRetries) {
-    handleExceedTotalRetries(txn, lc, failureReason);
-    return;
-  }
-
-  // decide if the failure comes from full tape or failed task queue - then avoid re-queueing to the same mount
-  // for the moment this is driven by failureReason - needs more robust design in the future !
-  const bool failedTaskQueue =
-    failureReason.find("In TapeWriteSingleThread::run(): cleaning failed task queue") != std::string::npos;
-  if (m_jobRow.retriesWithinMount >= m_jobRow.maxRetriesWithinMount || failedTaskQueue) {
-    requeueToNewMount(txn, lc, failureReason);
+    // We have to determine if this was the last copy to fail/succeed.
+    if (m_jobRow.status != ArchiveJobStatus::AJS_ToTransferForUser) {
+      // Wrong status, but the context leaves no ambiguity and we set the job to report failure.
+      lc.log(log::WARNING,
+             std::string("In ArchiveRdbJob::failTransfer(): unexpected status: ") + to_string(m_jobRow.status) +
+               std::string("Assuming ToTransfer."));
+    }
+    try {
+      uint64_t nrows = m_jobRow.updateFailedJobStatus(txn, ArchiveJobStatus::AJS_ToReportToUserForFailure);
+      txn.commit();
+      if (nrows != 1) {
+        log::ScopedParamContainer(lc)
+          .add("jobID", jobID)
+          .add("archiveFile.archiveFileID", archiveFile.archiveFileID)
+          .add("mountId", m_mountId)
+          .add("tapePool", m_tapePool)
+          .add("failureReason", m_jobRow.failureLogs.value_or(""))
+          .log(log::WARNING,
+               "In schedulerdb::ArchiveJobQueueRow::updateFailedJobStatus(): all job retries failed and "
+               "update of the failure failed as well since, no jobs were found in DB (possibly deleted "
+               "by frontend cancelArchiveJob() call in the meantime).");
+      }
+      reportType = ReportType::FailureReport;
+    } catch (exception::Exception& ex) {
+      lc.log(cta::log::WARNING,
+             "In schedulerdb::ArchiveRdbJob::failTransfer(): failed to update job status for "
+             "reporting a failure. Aborting the transaction." +
+               ex.getMessageValue());
+      txn.abort();
+    }
   } else {
-    requeueToSameMount(txn, lc, failureReason);
+    // decide if the failure comes from full tape or failed task queue - then avoid re-queueing to the same mount
+    // for the moment this is driven by failureReason - needs more robust design in the future !
+    std::string substring = "In TapeWriteSingleThread::run(): cleaning failed task queue";
+    bool failedtaskqueuejob = false;
+    if (failureReason.find(substring) != std::string::npos) {
+      failedtaskqueuejob = true;
+    }
+    // Decide if we want the job to have a chance to come back to this mount (requeue) or not.
+    if (m_jobRow.retriesWithinMount >= m_jobRow.maxRetriesWithinMount || failedtaskqueuejob) {
+      try {
+        // requeue by changing status, reset the mount_id to NULL and updating all other stat fields
+        m_jobRow.retriesWithinMount = 0;
+        uint64_t nrows = m_jobRow.requeueFailedJob(txn, ArchiveJobStatus::AJS_ToTransferForUser, false);
+        txn.commit();
+        if (nrows != 1) {
+          log::ScopedParamContainer(lc)
+            .add("jobID", jobID)
+            .add("archiveFile.archiveFileID", archiveFile.archiveFileID)
+            .add("mountId", m_mountId)
+            .add("tapePool", m_tapePool)
+            .add("failureReason", m_jobRow.failureLogs.value_or(""))
+            .log(log::WARNING,
+                 "In schedulerdb::ArchiveJobQueueRow::requeueFailedJob(): requeue job to a new mount failed, no "
+                 "job found in DB (possibly deleted by frontend cancelArchiveJob() call in the meantime).");
+        }
+        // since requeueing, we do not report and we do not
+        // set reportType to a particular value here
+      } catch (exception::Exception& ex) {
+        lc.log(cta::log::WARNING,
+               "In schedulerdb::ArchiveRdbJob::failTransfer(): failed to update job status to "
+               "requeue the failed job on a new mount. Aborting the transaction." +
+                 ex.getMessageValue());
+        txn.abort();
+      }
+    } else {
+      try {
+        // requeue to the same mount simply by changing IN_DRIVE_QUEUE to False and updating all other stat fields
+        uint64_t nrows = m_jobRow.requeueFailedJob(txn, ArchiveJobStatus::AJS_ToTransferForUser, true);
+        txn.commit();
+        if (nrows != 1) {
+          log::ScopedParamContainer(lc)
+            .add("jobID", jobID)
+            .add("archiveFile.archiveFileID", archiveFile.archiveFileID)
+            .add("mountId", m_mountId)
+            .add("tapePool", m_tapePool)
+            .add("failureReason", m_jobRow.failureLogs.value_or(""))
+            .log(log::WARNING,
+                 "In schedulerdb::ArchiveJobQueueRow::requeueFailedJob(): requeue job on the same mount failed, "
+                 "no job found in DB (possibly deleted by frontend cancelArchiveJob() call in the meantime).");
+        }
+        // since requeueing, we do not report and we do not
+        // set reportType to a particular value here
+      } catch (exception::Exception& ex) {
+        lc.log(cta::log::WARNING,
+               "In schedulerdb::ArchiveRdbJob::failTransfer(): failed to update job status to "
+               "requeue the failed job. Aborting the transaction." +
+                 ex.getMessageValue());
+        txn.abort();
+      }
+    }
   }
 }
 
 void ArchiveRdbJob::failReport(const std::string& failureReason, log::LogContext& lc) {
+  lc.log(log::WARNING, "In schedulerdb::ArchiveRdbJob::failReport(): passes as half-dummy implementation !");
+  std::string reportFailureLog =
+    cta::utils::getCurrentLocalTime() + " " + cta::utils::getShortHostname() + " " + failureReason;
+  if (m_jobRow.reportFailureLogs.has_value()) {
+    m_jobRow.reportFailureLogs.value() += reportFailureLog;
+  } else {
+    m_jobRow.reportFailureLogs = reportFailureLog;
+  }
+  m_jobRow.totalReportRetries += 1;
   log::ScopedParamContainer(lc)
     .add("jobID", jobID)
     .add("archiveFile.archiveFileID", archiveFile.archiveFileID)
     .add("mountId", m_mountId)
     .add("tapePool", m_tapePool)
-    .add("reportFailureReason", m_jobRow.reportFailureLogs.value_or(""));
-  lc.log(log::INFO, "In schedulerdb::ArchiveRdbJob::failReport(): reporting failed.");
-  m_jobRow.updateJobRowFailureLog(failureReason, true);
+    .add("reportFailureReason", m_jobRow.reportFailureLogs.value_or(""))
+    .log(log::INFO, "In schedulerdb::ArchiveRdbJob::failReport(): reporting failed.");
+
   /* We could use reportType NoReportRequired for cancelling the request.
    * For the moment it is not used and we directly delete the job.
    * We could also use it for a case when a previous attempt to report failed
@@ -220,12 +271,19 @@ void ArchiveRdbJob::failReport(const std::string& failureReason, log::LogContext
   cta::schedulerdb::Transaction txn(m_connPool);
   try {
     cta::utils::Timer t;
-    uint64_t deletionCount = 0;
+    uint64_t deletionCount = 0 ;
     if (reportType == ReportType::NoReportRequired || m_jobRow.totalReportRetries >= m_jobRow.maxReportRetries) {
+      //m_jobRow.updateJobStatusForFailedReport(txn, ArchiveJobStatus::AJS_Failed);
       uint64_t nrows = m_jobRow.updateJobStatusForFailedReport(txn, ArchiveJobStatus::ReadyForDeletion);
       deletionCount = nrows;
       if (nrows != 1) {
-        lc.log(log::WARNING,
+        log::ScopedParamContainer(lc)
+          .add("jobID", jobID)
+          .add("archiveFile.archiveFileID", archiveFile.archiveFileID)
+          .add("mountId", m_mountId)
+          .add("tapePool", m_tapePool)
+          .add("reportFailureReason", m_jobRow.reportFailureLogs.value_or(""))
+          .log(log::WARNING,
                "In schedulerdb::ArchiveJobQueueRow::updateJobStatusForFailedReport(): reporting failed terminally, but "
                "no job was found in the DB (possibly deleted by frontend cancelArchiveJob() call in the meantime).");
       }
@@ -235,18 +293,21 @@ void ArchiveRdbJob::failReport(const std::string& failureReason, log::LogContext
       m_jobRow.isReporting = false;
       uint64_t nrows = m_jobRow.updateJobStatusForFailedReport(txn, m_jobRow.status);
       if (nrows != 1) {
-        lc.log(
-          log::WARNING,
-          "In schedulerdb::ArchiveJobQueueRow::updateJobStatusForFailedReport(): requeue reporting did not succeed, "
-          "no job was found in the DB (possibly deleted by frontend cancelArchiveJob() call in the meantime).");
+        log::ScopedParamContainer(lc)
+          .add("jobID", jobID)
+          .add("archiveFile.archiveFileID", archiveFile.archiveFileID)
+          .add("mountId", m_mountId)
+          .add("tapePool", m_tapePool)
+          .add("reportFailureReason", m_jobRow.reportFailureLogs.value_or(""))
+          .log(
+            log::WARNING,
+            "In schedulerdb::ArchiveJobQueueRow::updateJobStatusForFailedReport(): requeue reporting did not succeed, "
+            "no job was found in the DB (possibly deleted by frontend cancelArchiveJob() call in the meantime).");
       }
     }
     txn.commit();
-    if (reportType == ReportType::NoReportRequired || m_jobRow.totalReportRetries >= m_jobRow.maxReportRetries) {
-      log::ScopedParamContainer(lc)
-        .add("rowDeletionTime", t.secs())
-        .add("rowDeletionCount", deletionCount)
-        .log(log::INFO, "ArchiveRdbJob::failReport(): deleted job.");
+    if(reportType == ReportType::NoReportRequired || m_jobRow.totalReportRetries >= m_jobRow.maxReportRetries){
+      log::ScopedParamContainer(lc).add("rowDeletionTime", t.secs()).add("rowDeletionCount", deletionCount).log(log::INFO, "ArchiveRdbJob::failReport(): deleted job.");
     }
   } catch (exception::Exception& ex) {
     lc.log(cta::log::WARNING,

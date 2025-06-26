@@ -99,9 +99,10 @@ std::string cta::ArchiveJob::exceptionThrowingReportURL() {
       std::string base64ErrorReport;
       // Construct a pipe: msg -> sign -> Base64 encode -> result goes into ret.
       const bool noNewLineInBase64Output = false;
-      auto sink = std::make_unique<CryptoPP::StringSink>(base64ErrorReport);
-      auto encoder = std::make_unique<CryptoPP::Base64Encoder>(sink.get(), noNewLineInBase64Output);
-      CryptoPP::StringSource ss1(m_dbJob->latestError, true, encoder.get());
+      CryptoPP::StringSource ss1(
+        m_dbJob->latestError,
+        true,
+        new CryptoPP::Base64Encoder(new CryptoPP::StringSink(base64ErrorReport), noNewLineInBase64Output));
       return m_dbJob->errorReportURL + base64ErrorReport;
     }
     case SchedulerDatabase::ArchiveJob::ReportType::NoReportRequired:

@@ -40,7 +40,7 @@ Conn::Conn(std::unique_ptr<ConnAndStmts> connAndStmts, ConnPool *pool):
 //------------------------------------------------------------------------------
 // move constructor
 //------------------------------------------------------------------------------
-Conn::Conn(Conn&& other) noexcept :
+Conn::Conn(Conn &&other):
   m_connAndStmts(std::move(other.m_connAndStmts)),
   m_pool(other.m_pool) {
   other.m_pool = nullptr;

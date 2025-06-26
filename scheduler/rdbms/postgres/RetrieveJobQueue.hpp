@@ -93,13 +93,21 @@ struct RetrieveJobQueueRow {
   time_t lifecycleTimings_completed_time = 0;
   std::optional<std::string> diskSystemName = std::nullopt;
 
-
-private:
-  void reserveStringFields() {
+  RetrieveJobQueueRow() {
+    archiveFileID = 0;
     diskFileId.reserve(128);
     diskInstance.reserve(128);
+    fileSize = 0;
     storageClass.reserve(128);
     diskFileInfoPath.reserve(2048);
+    diskFileInfoOwnerUid = 0;
+    diskFileInfoGid = 0;
+    creationTime = 0;
+    lifecycleTimings_creation_time = 0;
+    lifecycleTimings_first_selected_time = 0;
+    lifecycleTimings_completed_time = 0;
+    fSeq = 0;
+    blockId = 0;
     tapePool.reserve(64);
     mountPolicy.reserve(64);
     retrieveReportURL.reserve(2048);
@@ -121,18 +129,31 @@ private:
     alternateBlockId.reserve(256);
   }
 
-public:
-  RetrieveJobQueueRow() {
-    reserveStringFields();
-  }
-
   /**
   * Constructor from row
   *
   * @param row  A single row from the current row of the rset
   */
   explicit RetrieveJobQueueRow(const rdbms::Rset& rset) {
-    reserveStringFields();
+    tapePool.reserve(64);
+    mountPolicy.reserve(64);
+    retrieveReportURL.reserve(2048);
+    retrieveErrorReportURL.reserve(2048);
+    requesterName.reserve(64);
+    requesterGroup.reserve(64);
+    dstURL.reserve(2048);
+    vid.reserve(64);
+    drive.reserve(128);
+    logical_library.reserve(128);
+    host.reserve(64);
+    srrUsername.reserve(128);
+    srrHost.reserve(64);
+    srrMountPolicy.reserve(64);
+    srrActivity.reserve(64);
+    alternateVids.reserve(128);
+    alternateCopyNbs.reserve(20);
+    alternateFSeq.reserve(256);
+    alternateBlockId.reserve(256);
     *this = rset;
   }
 
@@ -248,8 +269,7 @@ public:
 
     archiveFileID = rset.columnUint64NoOpt("ARCHIVE_FILE_ID");
     fileSize = rset.columnUint64NoOpt("SIZE_IN_BYTES");
-    auto blob_view = rset.columnBlobView("CHECKSUMBLOB");
-    checksumBlob.deserialize(blob_view->data(), blob_view->size());
+    checksumBlob.deserialize(std::move(rset.columnBlob("CHECKSUMBLOB")));
     creationTime = rset.columnUint64NoOpt("CREATION_TIME");
     diskInstance = rset.columnStringNoOpt("DISK_INSTANCE");
     diskFileId = rset.columnStringNoOpt("DISK_FILE_ID");
@@ -543,7 +563,7 @@ public:
   *
   *
   * @param txn        Transaction to use for this query
-  * @param newStatus  Retrieve Job Status to select on
+  * @param status     Retrieve Job Status to select on
   * @param mountInfo  mountInfo object
   * @param noSpaceDiskSystemNames list of diskSystemNames where there is no space left for more retrieves
   * @param maxBytesRequested  the maximum cumulative size of the files in the bunch requested
@@ -553,7 +573,7 @@ public:
   */
   static std::pair<rdbms::Rset, uint64_t>
   moveJobsToDbQueue(Transaction& txn,
-                    RetrieveJobStatus newStatus,
+                    RetrieveJobStatus status,
                     const SchedulerDatabase::RetrieveMount::MountInfo& mountInfo,
                     std::vector<std::string>& noSpaceDiskSystemNames,
                     uint64_t maxBytesRequested,
@@ -562,20 +582,20 @@ public:
   * Update job status
   *
   * @param txn        Transaction to use for this query
-  * @param newStatus  Retrieve Job Status to select on
+  * @param status     Retrieve Job Status to select on
   * @param jobIDs     List of jobID strings to select
   * @return           Number of updated rows
   */
-  static uint64_t updateJobStatus(Transaction& txn, RetrieveJobStatus newStatus, const std::vector<std::string>& jobIDs);
+  static uint64_t updateJobStatus(Transaction& txn, RetrieveJobStatus status, const std::vector<std::string>& jobIDs);
 
   /**
   * Update failed job status
   *
   * @param txn                  Transaction to use for this query
-  * @param newStatus            Retrieve Job Status to select on
+  * @param status               Retrieve Job Status to select on
   * @return                     Number of updated rows
   */
-  uint64_t updateFailedJobStatus(Transaction& txn, RetrieveJobStatus newStatus);
+  uint64_t updateFailedJobStatus(Transaction& txn, RetrieveJobStatus status);
 
   /**
   * Move from ARCHIVE_ACTIVE_QUEUE to ARCHIVE_PENDING_QUEUE
@@ -583,12 +603,12 @@ public:
   * This method updates also the retry statistics
   *
   * @param txn                  Transaction to use for this query
-  * @param newStatus            Retrieve Job Status to select on
+  * @param status               Retrieve Job Status to select on
   * @param keepMountId          true or false
   * @return                     Number of updated rows
   */
   uint64_t requeueFailedJob(Transaction& txn,
-                            RetrieveJobStatus newStatus,
+                            RetrieveJobStatus status,
                             bool keepMountId,
                             std::optional<std::list<std::string>> jobIDs = std::nullopt);
 
@@ -600,20 +620,20 @@ public:
   * (e.g. in case of a full tape)
   *
   * @param txn                  Transaction to use for this query
-  * @param newStatus            Retrieve Job Status to select on
+  * @param status               Retrieve Job Status to select on
   * @param keepMountId          true or false
   * @return                     Number of updated rows
   */
-  static uint64_t requeueJobBatch(Transaction& txn, RetrieveJobStatus newStatus, const std::list<std::string>& jobIDs);
+  static uint64_t requeueJobBatch(Transaction& txn, RetrieveJobStatus status, const std::list<std::string>& jobIDs);
 
   /**
   * Update job status when job report failed
   *
   * @param txn                  Transaction to use for this query
-  * @param newStatus            Retrieve Job Status to select on
+  * @param status               Retrieve Job Status to select on
   * @return                     Number of updated rows
   */
-  uint64_t updateJobStatusForFailedReport(Transaction& txn, RetrieveJobStatus newStatus);
+  uint64_t updateJobStatusForFailedReport(Transaction& txn, RetrieveJobStatus status);
 
   /**
   * Move the job row to the ARCHIVE FAILED JOB TABLE
@@ -639,19 +659,5 @@ public:
   * @return     Retrieve Request ID
   */
   static uint64_t getNextRetrieveRequestID(rdbms::Conn& conn);
-
-  /**
-   * Appends the provided failure reason, along with timestamp and hostname, to the job's failure log.
-   *
-   * @param reason        The textual explanation for the failure.
-   * @param is_report_log If true report failure log will be appended instead of job failure log.
-   */
-  void updateJobRowFailureLog(const std::string& reason, bool is_report_log = false);
-
-  /**
-   * Updates the retry counters for the current mount and globally.
-   * Increments the number of retries and updates the last failed mount accordingly.
-   */
-  void updateRetryCounts(uint64_t mountId);
 };
 };  // namespace cta::schedulerdb::postgres

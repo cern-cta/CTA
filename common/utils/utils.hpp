@@ -32,6 +32,16 @@
 namespace cta::utils {
 
 /**
+ * Determines the string representation of the specified error number.
+ *
+ * Please note this method is thread safe.
+ *
+ * @param errnoValue The errno value.
+ * @return The string representation.
+ */
+//std::string errnoToString(const int errnoValue);
+
+/**
  * Returns true if the hostname is a valid IPv4 or IPv6 address.
  *
  * The address is checked against two regular expressions adapted from:

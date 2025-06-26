@@ -59,12 +59,12 @@ namespace cta {
 //------------------------------------------------------------------------------
 Scheduler::Scheduler(catalogue::Catalogue& catalogue,
                      SchedulerDatabase& db,
-                     const std::string& schedulerBackendName,
+                     const std::string& schedulerBackendname,
                      const uint64_t minFilesToWarrantAMount,
                      const uint64_t minBytesToWarrantAMount)
     : m_catalogue(catalogue),
       m_db(db),
-      m_schedulerBackendName(schedulerBackendName),
+      m_schedulerBackendName(schedulerBackendname),
       m_minFilesToWarrantAMount(minFilesToWarrantAMount),
       m_minBytesToWarrantAMount(minBytesToWarrantAMount) {
   m_tapeDrivesState = std::make_unique<TapeDrivesCatalogueState>(m_catalogue);
@@ -2089,7 +2089,7 @@ std::list<common::dataStructures::QueueAndMountSummary> Scheduler::getQueuesAndM
     std::unordered_map<std::string, std::string> tapeDriveSchedulerBackendNameMap;
     for (const auto & config : m_catalogue.DriveConfig()->getTapeDriveConfigs()) {
       if (config.keyName == SCHEDULER_NAME_CONFIG_KEY) {
-        tapeDriveSchedulerBackendNameMap.try_emplace(config.tapeDriveName, config.value);
+        tapeDriveSchedulerBackendNameMap.emplace(config.tapeDriveName, config.value);
       }
     }
     std::list<std::string> ignoredDrives;

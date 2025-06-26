@@ -34,7 +34,7 @@ namespace cta::rdbms::wrapper {
 //------------------------------------------------------------------------------
 // constructor
 //------------------------------------------------------------------------------
-PostgresConn::PostgresConn(const std::string& conninfo) {
+PostgresConn::PostgresConn(const std::string& conninfo) : m_pgsqlConn(nullptr), m_asyncInProgress(false), m_nStmts(0) {
   // establish the connection and create the PGconn data structure
 
   m_pgsqlConn = PQconnectdb(conninfo.c_str());
@@ -536,13 +536,11 @@ void PostgresConn::throwDBIfNotStatus(const PGresult* res,
   if (PQresultStatus(res) != requiredStatus) {
     try {
       Postgres::ThrowInfo(m_pgsqlConn, res, prefix);
-    } catch (exception::LostDatabaseConnection& ldbex) {
+    } catch (exception::LostDatabaseConnection&) {
       try {
         closeAssumeLocked();
-      } catch (exception::Exception& ex) {
-        throw exception::Exception(std::string(__FUNCTION__) + " failed: " + ex.getMessage().str());
-      }
-      throw exception::Exception(std::string(__FUNCTION__) + " failed: " + ldbex.getMessage().str());
+      } catch (std::exception&) {}
+      throw;
     }
   }
 }

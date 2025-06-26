@@ -124,9 +124,6 @@ void OcciRset::close() {
   }
 }
 
-//------------------------------------------------------------------------------
-// columnBlob
-//------------------------------------------------------------------------------
 std::string OcciRset::columnBlob(const std::string &colName) const {
   try {
     const int colIdx = m_colNameToIdx.getIdx(colName);
@@ -141,15 +138,6 @@ std::string OcciRset::columnBlob(const std::string &colName) const {
     throw exception::Exception(std::string(__FUNCTION__) + " failed for SQL statement " + m_stmt.getSql() + ": " +
       se.what());
   }
-}
-
-//------------------------------------------------------------------------------
-// columnBlobView
-//------------------------------------------------------------------------------
-std::unique_ptr<rdbms::wrapper::IBlobView> OcciRset::columnBlobView(const std::string& colName) const {
-  throw exception::Exception(std::string(__FUNCTION__) +
-                             "This method is Not implemented for Oracle DB, since there is no way to gain access to "
-                             "the raw data buffer without making a copy first.");
 }
 
 //------------------------------------------------------------------------------
