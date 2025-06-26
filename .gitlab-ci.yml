@@ -6,6 +6,7 @@ stages:
   - build:image
   - test
   - system-test
+  - review
   - release
 
 variables:
