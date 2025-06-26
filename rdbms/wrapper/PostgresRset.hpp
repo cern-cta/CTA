@@ -331,7 +331,7 @@ private:
   /**
    * column index cache
    */
-  mutable std::unordered_map<std::string, size_t> m_columnPQindexCache;
+  mutable std::unordered_map<std::string, int> m_columnPQindexCache;
   /**
    * The SQL connection.
    */

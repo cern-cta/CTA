@@ -81,7 +81,8 @@ struct ArchiveJobQueueRow {
   uint32_t diskFileInfoGid = 0;
   checksum::ChecksumBlob checksumBlob;
 
-  ArchiveJobQueueRow() {
+private:
+  void reserveStringFields() {
     tapePool.reserve(64);
     mountPolicy.reserve(64);
     archiveReportURL.reserve(2048);
@@ -102,12 +103,18 @@ struct ArchiveJobQueueRow {
     diskFileInfoPath.reserve(2048);
   }
 
+public:
+  ArchiveJobQueueRow() {
+    reserveStringFields();
+  }
+
   /**
      * Constructor from row
      *
      * @param row  A single row from the current row of the rset
      */
   explicit ArchiveJobQueueRow(const rdbms::Rset& rset) {
+    reserveStringFields();
     *this = rset;
   }
 

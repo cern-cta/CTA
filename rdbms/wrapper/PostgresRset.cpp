@@ -72,7 +72,7 @@ size_t PostgresRset::getColumnIndex(const std::string& colName) const {
   if (idx < 0) {
     throw exception::Exception(std::string(__FUNCTION__) + " column does not exist: " + colName);
   }
-  m_columnPQindexCache[colName] = static_cast<size_t>(idx);
+  m_columnPQindexCache[colName] = idx;
   return idx;
 }
 

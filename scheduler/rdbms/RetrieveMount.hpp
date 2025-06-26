@@ -40,7 +40,7 @@ class RetrieveMount : public SchedulerDatabase::RetrieveMount {
   friend class TapeMountDecisionInfo;
 
 public:
-  explicit RetrieveMount(RelationalDB& pdb) : m_RelationalDB(pdb), m_connPool(pdb.m_connPool) {
+  explicit RetrieveMount(RelationalDB& rdb_instance) : m_RelationalDB(rdb_instance), m_connPool(rdb_instance.m_connPool) {
     m_jobPool = std::make_shared<schedulerdb::JobPool<schedulerdb::RetrieveRdbJob>>(m_connPool);
   }
 

@@ -93,7 +93,9 @@ struct RetrieveJobQueueRow {
   time_t lifecycleTimings_completed_time = 0;
   std::optional<std::string> diskSystemName = std::nullopt;
 
-  RetrieveJobQueueRow() {
+
+private:
+  void reserveStringFields() {
     diskFileId.reserve(128);
     diskInstance.reserve(128);
     storageClass.reserve(128);
@@ -119,31 +121,18 @@ struct RetrieveJobQueueRow {
     alternateBlockId.reserve(256);
   }
 
+public:
+  RetrieveJobQueueRow() {
+    reserveStringFields();
+  }
+
   /**
   * Constructor from row
   *
   * @param row  A single row from the current row of the rset
   */
   explicit RetrieveJobQueueRow(const rdbms::Rset& rset) {
-    tapePool.reserve(64);
-    mountPolicy.reserve(64);
-    retrieveReportURL.reserve(2048);
-    retrieveErrorReportURL.reserve(2048);
-    requesterName.reserve(64);
-    requesterGroup.reserve(64);
-    dstURL.reserve(2048);
-    vid.reserve(64);
-    drive.reserve(128);
-    logical_library.reserve(128);
-    host.reserve(64);
-    srrUsername.reserve(128);
-    srrHost.reserve(64);
-    srrMountPolicy.reserve(64);
-    srrActivity.reserve(64);
-    alternateVids.reserve(128);
-    alternateCopyNbs.reserve(20);
-    alternateFSeq.reserve(256);
-    alternateBlockId.reserve(256);
+    reserveStringFields();
     *this = rset;
   }
 
