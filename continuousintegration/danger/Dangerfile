@@ -96,6 +96,17 @@ if reviewers.empty?
     warn("**No Reviewers Assigned**\n\nConsider assigning one or more reviewers to ensure this MR gets timely feedback.")
 end
 
+# --- Messages to the devs ---
+
+ci_files_changed = git.modified_files.any? do |path|
+  path.start_with?('continuousintegration/', '.gitlab/') || path == '.gitlab-ci.yml'
+end
+
+if ci_files_changed
+  message("CI-related configuration files have been modified. @nbugel, please review these changes if applicable.")
+end
+
+
 # --- General message ---
 
 danger_review_job_url = "#{ENV['CI_PROJECT_URL']}/-/jobs/#{ENV['CI_JOB_ID']}"
