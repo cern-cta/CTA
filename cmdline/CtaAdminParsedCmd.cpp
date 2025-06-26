@@ -265,9 +265,6 @@ void CtaAdminParsedCmd::readListFromFile(cta::admin::OptionStrList& str_list, co
           continue;
         }
         auto fid = item.substr(4);
-        if (!utils::isValidID(fid)) {
-          throw std::runtime_error(fid + " is not a valid file ID");
-        }
         str_list.add_item(fid);
       } else {
         // default case: add all items
