@@ -85,9 +85,8 @@ end
 
 # --- Reviewers check ---
 
-message(danger.status_report)
-
-issues_present = false # danger.status_report[:fails].any?
+failures = danger.status_report[:fails]
+issues_present = !failures.nil? && failures.any?
 
 reviewers = gitlab.mr_json["reviewers"] || []
 
