@@ -1529,7 +1529,7 @@ void RetrieveRequest::failJob(const std::string& newOwner) {
 
     // Generate the last failure for this job (tape unavailable).
     *j.mutable_failurelogs()->Add() = utils::getCurrentLocalTime() + " " +
-            utils::getShortHostname() + " No VID available to requeue the request. Failing it.";
+            utils::getShortHostname() + "REPACKING_PENDING queue cleanup: No VID available to requeue the request. Failing it.";
   }
 
   setOwner(newOwner);
