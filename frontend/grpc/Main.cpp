@@ -130,7 +130,7 @@ int main(const int argc, char *const *const argv) {
     useTLS = svc.getFrontendService().getTls();
 
     // get number of threads, maybe consider setting it too if unset?
-    int threads = 8 * std::thread::hardware_concurrency();
+    int threads = svc.getFrontendService().getThreads().value_or(8 * std::thread::hardware_concurrency());
     
 
     if (useTLS) {
