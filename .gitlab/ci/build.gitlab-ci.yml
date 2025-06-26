@@ -11,14 +11,14 @@
     # GitLab only allows a whitelist and not a blacklist, so we have to list all file changes that should trigger the build job
     - changes:
         - .dockerignore
-        - .gitlab-ci.yml
+        # - .gitlab-ci.yml
         - CMakeLists.txt
         - cta.spec.in
         - project.json
         - version.hpp.in
         # To be safe, all files in all sub-directories
         # Once we have a src/ directory, we can be a bit more specific without having to specify a long list here
-        - '*/**/*'
+        # - '*/**/*'
       when: on_success
     # If only "trivial" changes were done and we are in a MR, set this job to manual
     - if: $CI_PIPELINE_SOURCE == "merge_request_event"
