@@ -10,7 +10,7 @@ unless ALLOWED_PREFIXES.any? { |prefix| gitlab.mr_title.start_with?(prefix) }
 end
 
 if gitlab.mr_title.length > 72
-  warn("**Merge Request Title Too Long**\n\nThe title is #{gitlab.mr_title.length} characters long. Please try to 1shorten it to 72 or fewer.")
+  warn("**Merge Request Title Too Long**\n\nThe title is #{gitlab.mr_title.length} characters long. Please try to shorten it to 72 or fewer.")
 end
 
 
