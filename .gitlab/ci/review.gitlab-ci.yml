@@ -38,6 +38,10 @@ danger-review-gate:
       optional: true
     - job: test-cta-admin
       optional: true
+  rules:
+    - if: $CI_PIPELINE_SOURCE == "merge_request_event"
+      when: always
+    - when: never
   script:
     - status=$(cat danger_status.txt)
     - if [ "$status" -ne 0 ]; then
