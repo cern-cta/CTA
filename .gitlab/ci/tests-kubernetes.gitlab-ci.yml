@@ -132,6 +132,8 @@ test-client-gfal2:
     EXTRA_RUN_ARGS: "--test-timeout 2400"
 
 test-repack:
+  # test is flaky and we want to prevent cancelling everything
+  retry: 1
   stage: system-test
   extends:
     - .kubernetes-test
