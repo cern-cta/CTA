@@ -48,7 +48,6 @@ castor::tape::tapeserver::daemon::TapeWriteSingleThread::TapeWriteSingleThread(
                                                tapeLoadTimeout),
       m_filesBeforeFlush(filesBeforeFlush),
       m_bytesBeforeFlush(bytesBeforeFlush),
-      m_drive(drive),
       m_reportPacker(reportPacker),
       m_lastFseq(0),
       m_compress(true),
@@ -607,7 +606,7 @@ void castor::tape::tapeserver::daemon::TapeWriteSingleThread::logWithStats(int l
 //------------------------------------------------------------------------------
 //   requeueFailedTask - for PGCHED
 //------------------------------------------------------------------------------
-void castor::tape::tapeserver::daemon::TapeWriteSingleThread::requeueUnprocessedTasks(std::list<std::string> jobIDsList,
+void castor::tape::tapeserver::daemon::TapeWriteSingleThread::requeueUnprocessedTasks(const std::list<std::string>& jobIDsList,
                                                                                       cta::log::LogContext& lc) const {
   uint64_t njobs = m_archiveMount.requeueJobBatch(jobIDsList, lc);
   cta::log::ScopedParamContainer requeueparam(lc);

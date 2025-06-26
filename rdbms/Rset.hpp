@@ -28,6 +28,7 @@ namespace cta::rdbms {
 
 namespace wrapper {
 class RsetWrapper;
+class IBlobView;
 }
 
 /**
@@ -73,7 +74,7 @@ public:
    *
    * @param other The other object to be moved.
    */
-  Rset(Rset&& other);
+  Rset(Rset&& other) noexcept;
 
   /**
    * Deletion of copy assignment.
@@ -85,15 +86,15 @@ public:
    */
   Rset& operator=(Rset&& rhs);
 
-  // Generic method to handle calls to m_impl
-  template<typename ReturnType, typename... Args>
-  ReturnType delegateToImpl(ReturnType (wrapper::RsetWrapper::* func)(const std::string&) const,
-                            const std::string& colName) const {
+  // Generic method to handle calls to methods (MethodPtr) of m_impl (ImplPtrT)
+  template<auto MethodPtr, typename ImplPtrT>
+  decltype(auto) delegateToImpl(ImplPtrT& impl, const std::string& colName) const {
+    if (impl == nullptr) {
+      throw InvalidResultSet("This result set is invalid");
+    }
+
     try {
-      if (nullptr == m_impl) {
-        throw InvalidResultSet("This result set is invalid");
-      }
-      return (m_impl.get()->*func)(colName);
+      return ((*impl).*MethodPtr)(colName);
     } catch (exception::Exception& ex) {
       ex.getMessage().str(std::string(__FUNCTION__) + " failed: " + ex.getMessage().str());
       throw;
@@ -168,6 +169,9 @@ public:
    * @throw InvalidResultSet if the result is invalid.
    */
   std::string columnBlob(const std::string& colName) const;
+
+  std::unique_ptr<wrapper::IBlobView> columnBlobView(const std::string& colName) const;
+
 
   /**
    * Returns the value of the specified column as a string.
@@ -304,6 +308,8 @@ public:
    *
    * Please note that the underlying database column type is expected to be a
    * number where a non-zero value means true and a value of zero means false.
+   * In case of failure this method falls back to interpreting string 't' or 'true'
+   * as true and 'f' or 'false' as false.
    *
    * This method will return a null column value as an optional with no value.
    *
@@ -313,6 +319,11 @@ public:
    */
   std::optional<bool> columnOptionalBool(const std::string& colName) const;
 
+  /** Helper function used by columnOptionalBool */
+  std::optional<bool> extractBoolFromOptionalUint64(const std::string& colName) const;
+
+  /** Helper function used by columnOptionalBool */
+  std::optional<bool> extractBoolFromOptionalString(const std::string& colName) const;
   /**
    * Returns the value of the specified column as a double.
    *

@@ -65,7 +65,7 @@ RetrieveMount::getNextJobBatch(uint64_t filesRequested, uint64_t bytesRequested,
       //common::dataStructures::TapeFile tpfile;
       //auto maxBlockId = std::numeric_limits<decltype(tpfile.blockId)>::max();
       while (queuedJobs.next()) {
-        auto job = m_jobPool.acquireJob();
+        auto job = m_jobPool->acquireJob();
         if (!job) {
           throw exception::Exception("In RetrieveMount::getNextJobBatch(): Failed to acquire job from pool.");
         }
@@ -128,7 +128,7 @@ uint64_t RetrieveMount::requeueJobBatch(const std::list<std::string>& jobIDsList
 void RetrieveMount::requeueJobBatch(std::list<std::unique_ptr<SchedulerDatabase::RetrieveJob>>& jobBatch,
                                     cta::log::LogContext& logContext) {
   std::list<std::string> jobIDsList;
-  for (auto& job : jobBatch) {
+  for (const auto& job : jobBatch) {
     jobIDsList.push_back(std::to_string(job->jobID));
   }
   uint64_t njobs = RetrieveMount::requeueJobBatch(jobIDsList, logContext);
@@ -201,7 +201,7 @@ void RetrieveMount::flushAsyncSuccessReports(std::list<std::unique_ptr<Scheduler
   cta::DiskSpaceReservationRequest diskSpaceReservationRequest;
   std::vector<std::string> jobIDsList_success;
   jobIDsList_success.reserve(jobsBatch.size());
-  for (auto& rdbJob : jobsBatch) {
+  for (const auto& rdbJob : jobsBatch) {
     if (rdbJob->diskSystemName) {
       diskSpaceReservationRequest.addRequest(rdbJob->diskSystemName.value(), rdbJob->archiveFile.fileSize);
     }
@@ -216,7 +216,7 @@ void RetrieveMount::flushAsyncSuccessReports(std::list<std::unique_ptr<Scheduler
   try {
     uint64_t deletionCount = 0;
     cta::utils::Timer t;
-    if (jobIDsList_success.size() > 0) {
+    if (!jobIDsList_success.empty()) {
       uint64_t nrows = schedulerdb::postgres::RetrieveJobQueueRow::updateJobStatus(
         txn,
         cta::schedulerdb::RetrieveJobStatus::ReadyForDeletion,
@@ -249,25 +249,7 @@ void RetrieveMount::flushAsyncSuccessReports(std::list<std::unique_ptr<Scheduler
   // After processing - we free the memory object
   // in case the flush and DB update failed, we still want to clean the jobs from memory
   // (they need to be garbage collected in case of a crash)
-  try {
-    for (auto& job : jobsBatch) {
-      // Attempt to release the job back to the pool
-      auto castedJob = std::unique_ptr<RetrieveRdbJob>(static_cast<RetrieveRdbJob*>(job.release()));
-      m_jobPool.releaseJob(std::move(castedJob));
-    }
-    jobsBatch.clear();  // Clear the container after all jobs are successfully processed
-  } catch (const exception::Exception& ex) {
-    lc.log(cta::log::ERR,
-           "In RetrieveMount::flushAsyncSuccessReports(): Failed to recycle all job objects for the job pool: " +
-             ex.getMessageValue());
-
-    // Destroy all remaining jobs in case of failure
-    for (auto& job : jobsBatch) {
-      // Release the unique_ptr ownership and delete the underlying object
-      delete job.release();
-    }
-    jobsBatch.clear();  // Ensure the container is emptied
-  }
+  recycleTransferredJobs(jobsBatch, lc);
 }
 
 void RetrieveMount::addDiskSystemToSkip(const DiskSystemToSkip& diskSystemToSkip) {
@@ -285,4 +267,25 @@ void RetrieveMount::putQueueToSleep(const std::string& diskSystemName,
   }
 }
 
+void RetrieveMount::recycleTransferredJobs(std::list<std::unique_ptr<SchedulerDatabase::RetrieveJob>>& jobsBatch,
+                                           log::LogContext& lc) {
+  try {
+    for (auto& job : jobsBatch) {
+      if (job->releaseToPool()) {
+        /* Prevent deletion via unique_ptr - correct handling here would be
+           to introduce custom deleter for the unique_ptr
+           (would make recycleTransferredJobs obsolete),
+           but this would mean changing types all across the CTA code */
+        job.release();
+      } else {
+        // Let unique_ptr delete it
+      }
+    }
+  } catch (const exception::Exception& ex) {
+    lc.log(cta::log::ERR,
+           "In RetrieveMount::recycleTransferredJobs(): Failed to recycle all job objects for the job pool: " +
+             ex.getMessageValue());
+  }
+  jobsBatch.clear();
+}
 }  // namespace cta::schedulerdb

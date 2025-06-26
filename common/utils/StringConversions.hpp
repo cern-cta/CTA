@@ -100,7 +100,7 @@ gid_t toGid(const std::string& str);
  * @param str The string to be checked.
  * @returns true if the string is a valid unsigned integer, else false.
  */
-bool isValidUInt(const std::string& str);
+bool isValidUInt(std::string_view str);
 
 
 /**
@@ -109,7 +109,7 @@ bool isValidUInt(const std::string& str);
  * @param str The string to be checked.
  * @returns true if the string is a valid decimal, else false.
  */
-bool isValidDecimal(const std::string& str);
+bool isValidDecimal(std::string_view str);
 
 /**
  * Converts the specified string to uppercase.

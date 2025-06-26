@@ -50,8 +50,8 @@ void RetrieveRequest::insert() {
     rjr.activity = m_activity;  // from m_schedRetrieveReq.activity; set if needed only
 
     /* Think about when to register this and when to put another vid found in queueRetrieve:
-     * std::optional<std::string> m_schedRetrieveReq.vid;    // limit retrieve requests to the specified vid (in the case of dual-copy files)
-     * std::optional<std::string> m_schedRetrieveReq.mountPolicy; // limit retrieve requests to a specified mount policy (only used for verification requests)
+     * std::optional<std::string> m_schedRetrieveReq.vid; limit retrieve requests to the specified vid (in the case of dual-copy files)
+     * std::optional<std::string> m_schedRetrieveReq.mountPolicy; limit retrieve requests to a specified mount policy (only used for verification requests)
      * std::optional<std::string> activity;
      * setActiveCopyNumber sets also vid and status;
      */
@@ -74,7 +74,6 @@ void RetrieveRequest::insert() {
     rjr.diskFileInfoOwnerUid = m_archiveFile.diskFileInfo.owner_uid;
     rjr.diskFileInfoGid = m_archiveFile.diskFileInfo.gid;
     rjr.checksumBlob = std::move(m_archiveFile.checksumBlob);
-    // rjr.archiveFile.creationTime = m_entryLog.time;  // Time the job was received by the CTA Frontend
     rjr.startTime = time(nullptr);  // Time the job was queued in the DB
 
     // For each tape file concatenate the copyNb and vids into alternate strings to save for retrial/requeueing
@@ -89,7 +88,6 @@ void RetrieveRequest::insert() {
       rjr.alternateBlockId += std::to_string(rj.blockId) + std::string(",");
       m_lc.log(log::INFO, "In RetrieveRequest::insert(): creating jobs XC5.");
 
-      //rjr.tapePool = rj.tapepool; // currently not sure if we have need for tape pool
       if (i == 1) {
         rjr.retriesWithinMount = rj.retriesWithinMount;
         rjr.maxRetriesWithinMount = rj.maxRetriesWithinMount;
@@ -198,10 +196,6 @@ void RetrieveRequest::fillJobsSetRetrieveFileQueueCriteria(
     // in case we need these for retrieval we should save them in DB as well !
     m_jobs.back().fSeq = tf.fSeq;
     m_jobs.back().blockId = tf.blockId;
-    //uint64_t fileSize = tf.fileSize;
-    //uint8_t copyNb = tf.copyNb;
-    //time_t creationTime = tf.creationTime;
-    //checksum::ChecksumBlob checksumBlob = tf.checksumBlob.serialize();
   }
 }
 

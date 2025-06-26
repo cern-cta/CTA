@@ -55,6 +55,26 @@ public:
   ~OcciRset() override;
 
   /**
+   * @class BlobView
+   * @brief For interface compatibility only.
+   * Not implemented for Oracle DB, since there is no way to gain access to
+   * the raw data buffer without making a copy first.
+   */
+  class BlobView : public IBlobView {
+  public:
+      BlobView() = delete;
+
+      const unsigned char* data() const override {
+          throw std::logic_error("OcciRset::BlobView is not meant to be used");
+      }
+
+      std::size_t size() const override {
+          throw std::logic_error("OcciRset::BlobView is not meant to be used");
+      }
+
+      ~BlobView() override = default;
+  };
+  /**
    * Returns the SQL statement.
    *
    * @return The SQL statement.
@@ -82,19 +102,19 @@ public:
    * @param colName
    * @return
    */
-  uint8_t columnUint8NoOpt(const std::string& colName) const { throw cta::exception::Exception("Not implemented"); };
+  uint8_t columnUint8NoOpt(const std::string& colName) const override { throw cta::exception::Exception("Not implemented"); };
 
-  uint16_t columnUint16NoOpt(const std::string& colName) const { throw cta::exception::Exception("Not implemented"); };
+  uint16_t columnUint16NoOpt(const std::string& colName) const override { throw cta::exception::Exception("Not implemented"); };
 
-  uint32_t columnUint32NoOpt(const std::string& colName) const { throw cta::exception::Exception("Not implemented"); };
+  uint32_t columnUint32NoOpt(const std::string& colName) const override { throw cta::exception::Exception("Not implemented"); };
 
-  uint64_t columnUint64NoOpt(const std::string& colName) const { throw cta::exception::Exception("Not implemented"); };
+  uint64_t columnUint64NoOpt(const std::string& colName) const override { throw cta::exception::Exception("Not implemented"); };
 
-  std::string columnStringNoOpt(const std::string& colName) const { throw cta::exception::Exception("Not implemented"); };
+  std::string columnStringNoOpt(const std::string& colName) const override { throw cta::exception::Exception("Not implemented"); };
 
-  double columnDoubleNoOpt(const std::string& colName) const { throw cta::exception::Exception("Not implemented"); };
+  double columnDoubleNoOpt(const std::string& colName) const override { throw cta::exception::Exception("Not implemented"); };
 
-  bool columnBoolNoOpt(const std::string& colName) const { throw cta::exception::Exception("Not implemented"); };
+  bool columnBoolNoOpt(const std::string& colName) const override { throw cta::exception::Exception("Not implemented"); };
 
   /**
    * Returns true if the specified column contains a null value.
@@ -111,6 +131,25 @@ public:
    * @return The string value of the specified column.
    */
   std::string columnBlob(const std::string& colName) const override;
+
+  /**
+  * Returns the value of the specified column as a view over a binary large object (BLOB).
+  *
+  * This method extracts and unescapes binary data from the specified column and wraps it
+  * in a `BlobView`, which manages the memory using a unique pointer with a custom deleter.
+  * The view provides access to the data via a pointer and size, and the underlying memory
+  * remains valid as long as the `BlobView` instance is alive.
+  *
+  * Note: This method allocates memory using `PQunescapeBytea`, which is automatically
+  * freed when the returned `BlobView` is destroyed. This is not a non-owning view;
+  * ownership of the decoded buffer is transferred to the `BlobView`.
+  *
+  * @param colName The name of the column containing the BLOB data.
+  * @return A `BlobView` object managing the decoded binary data and its size.
+  * @throws NullDbValue If the column value is not null but decoding fails.
+  */
+  std::unique_ptr<rdbms::wrapper::IBlobView> columnBlobView(const std::string& colName) const override;
+
 
   /**
    * Returns the value of the specified column as a string.

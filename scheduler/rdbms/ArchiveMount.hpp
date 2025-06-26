@@ -40,12 +40,13 @@ class ArchiveMount : public SchedulerDatabase::ArchiveMount {
   friend class TapeMountDecisionInfo;
 
 public:
-  ArchiveMount(RelationalDB& pdb, const std::string& ownerId, common::dataStructures::JobQueueType queueType)
-      : m_RelationalDB(pdb),
-        m_connPool(pdb.m_connPool),
+  ArchiveMount(RelationalDB& rdb_instance, const std::string& ownerId, common::dataStructures::JobQueueType queueType)
+      : m_RelationalDB(rdb_instance),
+        m_connPool(rdb_instance.m_connPool),
         m_ownerId(ownerId),
-        m_queueType(queueType),
-        m_jobPool(pdb.m_connPool) {}
+        m_queueType(queueType) {
+    m_jobPool = std::make_shared<schedulerdb::JobPool<schedulerdb::ArchiveRdbJob>>(m_connPool);
+  }
 
   const MountInfo& getMountInfo() override;
 
@@ -113,7 +114,9 @@ private:
   cta::rdbms::ConnPool& m_connPool;
   const std::string& m_ownerId;
   common::dataStructures::JobQueueType m_queueType;
-  schedulerdb::JobPool<schedulerdb::ArchiveRdbJob> m_jobPool;
+  std::shared_ptr<schedulerdb::JobPool<schedulerdb::ArchiveRdbJob>> m_jobPool;
+
+  void recycleTransferredJobs(std::list<std::unique_ptr<SchedulerDatabase::ArchiveJob>>& jobsBatch, log::LogContext& lc);
 };
 
 }  // namespace cta::schedulerdb

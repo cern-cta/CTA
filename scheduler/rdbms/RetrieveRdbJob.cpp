@@ -28,9 +28,8 @@
 namespace cta::schedulerdb {
 
 RetrieveRdbJob::RetrieveRdbJob(rdbms::ConnPool& connPool)
-    : m_jobRow(),
-      m_jobOwned((m_jobRow.mountId.value_or(0) != 0)),
-      m_mountId(m_jobRow.mountId.value_or(0)),  // use mountId or 0 if not set
+    : m_jobOwned((m_jobRow.mountId.value_or(0) != 0)),
+      m_mountId(m_jobRow.mountId.value_or(0)),
       m_tapePool(m_jobRow.tapePool),
       m_connPool(connPool) {
   // Copying relevant data from RetrieveJobQueueRow to RetrieveRdbJob
@@ -55,12 +54,11 @@ void RetrieveRdbJob::initialize(const rdbms::Rset& rset) {
   retrieveRequest.diskFileInfo = archiveFile.diskFileInfo;
   retrieveRequest.creationLog.username = std::move(m_jobRow.srrUsername);  // EntryLog
   retrieveRequest.creationLog.host = std::move(m_jobRow.srrHost);
-  retrieveRequest.creationLog.time = std::move(m_jobRow.srrTime);
+  retrieveRequest.creationLog.time = m_jobRow.srrTime;
   retrieveRequest.isVerifyOnly =
     m_jobRow.isVerifyOnly;             // request to retrieve file from tape but do not write a disk copy
   retrieveRequest.vid = m_jobRow.vid;  // limit retrieve requests to the specified vid (in the case of dual-copy files)
-  retrieveRequest.mountPolicy =
-    m_jobRow.mountPolicy;  // limit retrieve requests to a specified mount policy (only used for verification requests)
+  retrieveRequest.mountPolicy = m_jobRow.mountPolicy;  // limit retrieve requests to a specified mount policy (only used for verification requests)
   retrieveRequest.lifecycleTimings.creation_time = m_jobRow.lifecycleTimings_creation_time;
   retrieveRequest.lifecycleTimings.first_selected_time = m_jobRow.lifecycleTimings_first_selected_time;
   retrieveRequest.lifecycleTimings.completed_time = m_jobRow.lifecycleTimings_completed_time;
@@ -93,21 +91,7 @@ void RetrieveRdbJob::initialize(const rdbms::Rset& rset) {
   if (m_jobRow.diskSystemName) {
     diskSystemName = m_jobRow.diskSystemName.value();
   }
-  /* rj retrieve job setting:
-     rj->archiveFile = rr.m_archiveFile;
-
-     rj->diskSystemName = rr.m_diskSystemName;
-     rj->retrieveRequest = rr.m_schedRetrieveReq;
-     rj->selectedCopyNb = rr.m_actCopyNb;
-     rj->isRepack = rr.m_repackInfo.isRepack;
-     rj->m_repackInfo = rr.m_repackInfo;
-     //   rj->m_jobOwned = true;
-     rj->m_mountId = mountInfo.mountId;
-     */
-
-  //timings.insOrIncAndReset("RetrieveRdbJob_rset_init", t);
   // Reset or update other member variables as necessary
-  //timings.insOrIncAndReset("RetrieveRdbJob_dbjobmembers_init", t);
   // Re-initialize report type
   if (m_jobRow.status == RetrieveJobStatus::RJS_ToTransfer) {
     reportType = ReportType::CompletionReport;
@@ -116,13 +100,9 @@ void RetrieveRdbJob::initialize(const rdbms::Rset& rset) {
   } else {
     reportType = ReportType::NoReportRequired;
   }
-  //timings.insOrIncAndReset("RetrieveRdbJob_status_init", t);
-  //cta::log::ScopedParamContainer logParams(lc);
-  //timings.addToLog(logParams);
-  //lc.log(cta::log::INFO, "In RetrieveRdbJob::initialize(): Finished initializing job object with new values.");
 }
 
-// contructor for get next job batch to report
+// contructor to get next job batch to report
 RetrieveRdbJob::RetrieveRdbJob(rdbms::ConnPool& connPool, const rdbms::Rset& rset) : RetrieveRdbJob(connPool) {
   initialize(rset);
 };
@@ -172,131 +152,95 @@ void RetrieveRdbJob::reset() {
   reportType = ReportType::NoReportRequired;
 }
 
-void RetrieveRdbJob::failTransfer(const std::string& failureReason, log::LogContext& lc) {
-  std::string failureLog =
-    cta::utils::getCurrentLocalTime() + " " + cta::utils::getShortHostname() + " " + failureReason;
-  if (m_jobRow.failureLogs.has_value()) {
-    m_jobRow.failureLogs.value() += failureLog;
-  } else {
-    m_jobRow.failureLogs = failureLog;
+
+void RetrieveRdbJob::handleExceedTotalRetries(cta::schedulerdb::Transaction& txn,
+                                             log::LogContext& lc,
+                                             const std::string& reason) {
+  if (m_jobRow.status != RetrieveJobStatus::RJS_ToTransfer) {
+    lc.log(log::WARNING,
+           std::string("RetrieveRdbJob::handleExceedTotalRetries(): Unexpected status: ") + to_string(m_jobRow.status) +
+           std::string(". Assuming ToTransfer anyway and changing status to RJS_ToReportToUserForFailure."));
   }
-  lc.log(log::WARNING, "In schedulerdb::RetrieveRdbJob::failTransfer(): passes as half-dummy implementation !");
+
+  try {
+    uint64_t nrows = m_jobRow.updateFailedJobStatus(txn, RetrieveJobStatus::RJS_ToReportToUserForFailure);
+    txn.commit();
+    if (nrows != 1) {
+      lc.log(log::WARNING,
+             "RetrieveRdbJob::handleExceedTotalRetries(): ArchiveJobQueueRow::updateFailedJobStatus() failed; job not "
+             "found (possibly deleted).");
+    }
+    reportType = ReportType::FailureReport;
+  } catch (const exception::Exception& ex) {
+    lc.log(cta::log::WARNING,
+           "Failed to update job status for reporting failure. Aborting txn: " + ex.getMessageValue());
+    txn.abort();
+  }
+}
+
+void RetrieveRdbJob::requeueToNewMount(cta::schedulerdb::Transaction& txn,
+                                      log::LogContext& lc,
+                                      const std::string& reason) {
+  try {
+    // requeue by changing status, reset the mount_id to NULL and updating all other stat fields
+    m_jobRow.retriesWithinMount = 0;
+    uint64_t nrows = m_jobRow.requeueFailedJob(txn, RetrieveJobStatus::RJS_ToTransfer, false);
+    txn.commit();
+    if (nrows != 1) {
+      lc.log(log::WARNING,
+             "RetrieveRdbJob::requeueToNewMount(): requeueFailedJob (new mount) failed; job not found in DB.");
+    }
+    // since requeueing, we do not report and we do not
+    // set reportType to a particular value here
+  } catch (const exception::Exception& ex) {
+    lc.log(log::WARNING,
+           "RetrieveRdbJob::requeueToNewMount(): Failed to requeue to new mount. Aborting txn: " + ex.getMessageValue());
+    txn.abort();
+  }
+}
+
+void RetrieveRdbJob::requeueToSameMount(cta::schedulerdb::Transaction& txn, log::LogContext& lc, const std::string& reason) {
+  try {
+    // requeue to the same mount simply by moving it to PENDING QUEUE and updating all other stat fields
+    uint64_t nrows = m_jobRow.requeueFailedJob(txn, RetrieveJobStatus::RJS_ToTransfer, true);
+    txn.commit();
+    if (nrows != 1) {
+      lc.log(log::WARNING, "RetrieveRdbJob::requeueFailedJob(): (same mount) failed; job not found.");
+    }
+  } catch (const exception::Exception& ex) {
+    lc.log(log::WARNING, "RetrieveRdbJob::requeueFailedJob(): Failed to requeue to same mount. Aborting txn: " + ex.getMessageValue());
+    txn.abort();
+  }
+}
+
+void RetrieveRdbJob::failTransfer(const std::string& failureReason, log::LogContext& lc) {
   log::ScopedParamContainer(lc)
     .add("jobID", jobID)
     .add("archiveFile.archiveFileID", archiveFile.archiveFileID)
     .add("mountId", m_mountId)
     .add("tapePool", m_tapePool)
-    .add("failureReason", m_jobRow.failureLogs.value_or(""))
-    .log(log::INFO, "In schedulerdb::RetrieveRdbJob::failTransfer(): received failed job to be reported.");
-
-  if (m_jobRow.lastMountWithFailure == m_mountId) {
-    m_jobRow.retriesWithinMount += 1;
-  } else {
-    m_jobRow.retriesWithinMount = 1;
-    m_jobRow.lastMountWithFailure = m_mountId;
-  }
-  m_jobRow.totalRetries += 1;
+    .add("failureReason", m_jobRow.failureLogs.value_or(""));
+  lc.log(log::INFO, "In schedulerdb::RetrieveRdbJob::failTransfer(): received failed job to be reported.");
+  m_jobRow.updateJobRowFailureLog(failureReason);
+  m_jobRow.updateRetryCounts(m_mountId);
 
   cta::schedulerdb::Transaction txn(m_connPool);
   // here we either decide if we report the failure to user or requeue the job
   if (m_jobRow.totalRetries >= m_jobRow.maxTotalRetries) {
-    // We have to determine if this was the last copy to fail/succeed.
-    if (m_jobRow.status != RetrieveJobStatus::RJS_ToTransfer) {
-      // Wrong status, but the context leaves no ambiguity and we set the job to report failure.
-      lc.log(log::WARNING,
-             std::string("In RetrieveRdbJob::failTransfer(): unexpected status: ") + to_string(m_jobRow.status) +
-               std::string("Assuming ToTransfer."));
-    }
-    try {
-      uint64_t nrows = m_jobRow.updateFailedJobStatus(txn, RetrieveJobStatus::RJS_ToReportToUserForFailure);
-      txn.commit();
-      if (nrows != 1) {
-        log::ScopedParamContainer(lc)
-          .add("jobID", jobID)
-          .add("archiveFile.archiveFileID", archiveFile.archiveFileID)
-          .add("mountId", m_mountId)
-          .add("tapePool", m_tapePool)
-          .add("failureReason", m_jobRow.failureLogs.value_or(""))
-          .log(log::WARNING,
-               "In schedulerdb::RetrieveJobQueueRow::updateFailedJobStatus(): all job retries failed and "
-               "update of the failure failed as well since, no jobs were found in DB (possibly deleted "
-               "by frontend cancelRetrieveJob() call in the meantime).");
-      }
-      reportType = ReportType::FailureReport;
-    } catch (exception::Exception& ex) {
-      lc.log(cta::log::WARNING,
-             "In schedulerdb::RetrieveRdbJob::failTransfer(): failed to update job status for "
-             "reporting a failure. Aborting the transaction." +
-               ex.getMessageValue());
-      txn.abort();
-    }
+    handleExceedTotalRetries(txn, lc, failureReason);
+    return;
+  }
+  // Decide if we want the job to have a chance to come back to this mount (requeue) or not.
+  if (m_jobRow.retriesWithinMount >= m_jobRow.maxRetriesWithinMount) {
+    requeueToNewMount(txn, lc, failureReason);
   } else {
-    // Decide if we want the job to have a chance to come back to this mount (requeue) or not.
-    if (m_jobRow.retriesWithinMount >= m_jobRow.maxRetriesWithinMount) {
-      try {
-        // requeue by changing status, reset the mount_id to NULL and updating all other stat fields
-        m_jobRow.retriesWithinMount = 0;
-        uint64_t nrows = m_jobRow.requeueFailedJob(txn, RetrieveJobStatus::RJS_ToTransfer, false);
-        txn.commit();
-        if (nrows != 1) {
-          log::ScopedParamContainer(lc)
-            .add("jobID", jobID)
-            .add("archiveFile.archiveFileID", archiveFile.archiveFileID)
-            .add("mountId", m_mountId)
-            .add("tapePool", m_tapePool)
-            .add("failureReason", m_jobRow.failureLogs.value_or(""))
-            .log(log::WARNING,
-                 "In schedulerdb::RetrieveJobQueueRow::requeueFailedJob(): requeue job to a new mount failed, no "
-                 "job found in DB (possibly deleted by frontend cancelRetrieveJob() call in the meantime).");
-        }
-        // since requeueing, we do not report and we do not
-        // set reportType to a particular value here
-      } catch (exception::Exception& ex) {
-        lc.log(cta::log::WARNING,
-               "In schedulerdb::RetrieveRdbJob::failTransfer(): failed to update job status to "
-               "requeue the failed job on a new mount. Aborting the transaction." +
-                 ex.getMessageValue());
-        txn.abort();
-      }
-    } else {
-      try {
-        // requeue to the same mount simply by changing IN_DRIVE_QUEUE to False and updating all other stat fields
-        uint64_t nrows = m_jobRow.requeueFailedJob(txn, RetrieveJobStatus::RJS_ToTransfer, true);
-        txn.commit();
-        if (nrows != 1) {
-          log::ScopedParamContainer(lc)
-            .add("jobID", jobID)
-            .add("archiveFile.archiveFileID", archiveFile.archiveFileID)
-            .add("mountId", m_mountId)
-            .add("tapePool", m_tapePool)
-            .add("failureReason", m_jobRow.failureLogs.value_or(""))
-            .log(log::WARNING,
-                 "In schedulerdb::RetrieveJobQueueRow::requeueFailedJob(): requeue job on the same mount failed, "
-                 "no job found in DB (possibly deleted by frontend cancelRetrieveJob() call in the meantime).");
-        }
-        // since requeueing, we do not report and we do not
-        // set reportType to a particular value here
-      } catch (exception::Exception& ex) {
-        lc.log(cta::log::WARNING,
-               "In schedulerdb::RetrieveRdbJob::failTransfer(): failed to update job status to "
-               "requeue the failed job. Aborting the transaction." +
-                 ex.getMessageValue());
-        txn.abort();
-      }
-    }
+    requeueToSameMount(txn, lc, failureReason);
   }
 }
 
 void RetrieveRdbJob::failReport(const std::string& failureReason, log::LogContext& lc) {
   lc.log(log::WARNING, "In schedulerdb::RetrieveRdbJob::failReport(): passes as half-dummy implementation !");
-  std::string reportFailureLog =
-    cta::utils::getCurrentLocalTime() + " " + cta::utils::getShortHostname() + " " + failureReason;
-  if (m_jobRow.reportFailureLogs.has_value()) {
-    m_jobRow.reportFailureLogs.value() += reportFailureLog;
-  } else {
-    m_jobRow.reportFailureLogs = reportFailureLog;
-  }
-  m_jobRow.totalReportRetries += 1;
+  m_jobRow.updateJobRowFailureLog(failureReason, true);
   log::ScopedParamContainer(lc)
     .add("jobID", jobID)
     .add("archiveFile.archiveFileID", archiveFile.archiveFileID)

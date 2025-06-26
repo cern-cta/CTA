@@ -206,20 +206,38 @@ bool SqliteRset::columnIsNull(const std::string &colName) const {
   }
 }
 
+//------------------------------------------------------------------------------
+// columnBlob
+//------------------------------------------------------------------------------
 std::string SqliteRset::columnBlob(const std::string &colName) const {
   try {
-    const ColumnNameToIdxAndType::IdxAndType idxAndType = m_colNameToIdxAndType.getIdxAndType(colName);
-    if(SQLITE_NULL == idxAndType.colType) {
-      return std::string();
-    } else {
-      const char *const colValue = reinterpret_cast<const char*>(sqlite3_column_blob(m_stmt.get(), idxAndType.colIdx));
-      if(nullptr == colValue) {
-        return std::string();
-      }
-      int blobsize = sqlite3_column_bytes(m_stmt.get(), idxAndType.colIdx);
-      return std::string(colValue,blobsize);
-    }
+    auto blob_view = columnBlobView(colName);
+    return std::string(reinterpret_cast<const char*>(blob_view->data()), blob_view->size());
   } catch(exception::Exception &ex) {
+    throw exception::Exception(std::string(__FUNCTION__) + " failed: " + ex.getMessage().str());
+  }
+}
+
+//------------------------------------------------------------------------------
+// columnBlobView
+//------------------------------------------------------------------------------
+std::unique_ptr<rdbms::wrapper::IBlobView> SqliteRset::columnBlobView(const std::string& colName) const {
+  try {
+    const ColumnNameToIdxAndType::IdxAndType idxAndType = m_colNameToIdxAndType.getIdxAndType(colName);
+
+    if (SQLITE_NULL == idxAndType.colType) {
+      return std::make_unique<BlobView>(nullptr, 0);
+    }
+
+    const void* blobData = sqlite3_column_blob(m_stmt.get(), idxAndType.colIdx);
+    if (!blobData) {
+      return std::make_unique<BlobView>(nullptr, 0);
+    }
+
+    int blobSize = sqlite3_column_bytes(m_stmt.get(), idxAndType.colIdx);
+    return std::make_unique<BlobView>(static_cast<const unsigned char*>(blobData), static_cast<std::size_t>(blobSize));
+
+  } catch (const exception::Exception& ex) {
     throw exception::Exception(std::string(__FUNCTION__) + " failed: " + ex.getMessage().str());
   }
 }
