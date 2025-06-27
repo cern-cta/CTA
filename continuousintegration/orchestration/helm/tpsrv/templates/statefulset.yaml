@@ -162,7 +162,7 @@ spec:
           mountPath: /etc/ceph/ceph.client.{{ $schedulerConfig.cephConfig.id }}.keyring
           subPath: ceph.client.{{ $schedulerConfig.cephConfig.id }}.keyring
         {{- end }}
-        {{- if eq $schedulerConfig.backend "VFS" }}
+        {{- if eq $schedulerConfig.backend "vfs" }}
         - name: vfs-storage-volume
           mountPath: /objectstore
         {{- end }}
@@ -190,7 +190,7 @@ spec:
         configMap:
           name: ceph-conf
       {{- end }}
-      {{- if eq $schedulerConfig.backend "VFS" }}
+      {{- if eq $schedulerConfig.backend "vfs" }}
       - name: vfs-storage-volume
         persistentVolumeClaim:
           claimName: scheduler-vfs-pvc

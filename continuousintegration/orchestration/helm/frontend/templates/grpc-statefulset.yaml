@@ -111,6 +111,10 @@ spec:
         - name: vfs-storage-volume
           mountPath: /objectstore
         {{- end }}
+      {{- if eq $schedulerConfig.backend "vfs" }}
+        - name: vfs-storage-volume
+          mountPath: /objectstore
+      {{- end }}
         - name: grpc-config
           mountPath: /etc/cta/cta-frontend-grpc.conf
           subPath: cta-frontend-grpc.conf
@@ -144,7 +148,7 @@ spec:
         configMap:
           name: ceph-conf
       {{- end }}
-      {{- if eq $schedulerConfig.backend "VFS" }}
+      {{- if eq $schedulerConfig.backend "vfs" }}
       - name: vfs-storage-volume
         persistentVolumeClaim:
           claimName: scheduler-vfs-pvc

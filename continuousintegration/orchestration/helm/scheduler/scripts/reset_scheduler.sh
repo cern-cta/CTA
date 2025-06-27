@@ -27,11 +27,16 @@ die() {
 echo "Using scheduler backend: $SCHEDULER_BACKEND"
 
 # Clean up scheduler
-if [ "$SCHEDULER_BACKEND" == "VFS" ]; then
+if [ "$SCHEDULER_BACKEND" == "vfs" ] || [ "$SCHEDULER_BACKEND" == "vfsDeprecated" ]; then
   echo "Installing the cta-objectstore-tools"
   dnf install -y cta-objectstore-tools
   echo "Wiping objectstore"
-  rm -fr "${SCHEDULER_URL:?}/*"
+  if [ "$SCHEDULER_BACKEND" == "vfsDeprecated" ]; then
+    rm -fr $SCHEDULER_URL
+    mkdir -p $SCHEDULER_URL
+  else
+    rm -fr "${SCHEDULER_URL:?}/*"
+  fi
   cta-objectstore-initialize $SCHEDULER_URL || die "ERROR: Could not wipe the objectstore. cta-objectstore-initialize $SCHEDULER_URL FAILED"
   chmod -R 777 $SCHEDULER_URL
 elif [ "$SCHEDULER_BACKEND" == "postgres" ]; then

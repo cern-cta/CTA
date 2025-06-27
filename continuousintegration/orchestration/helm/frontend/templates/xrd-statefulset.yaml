@@ -136,7 +136,7 @@ spec:
         - name: krb5-conf
           mountPath: /etc/krb5.conf
           subPath: krb5.conf
-      {{- if eq $schedulerConfig.backend "VFS" }}
+      {{- if eq $schedulerConfig.backend "vfs" }}
         - name: vfs-storage-volume
           mountPath: /objectstore
       {{- end }}
@@ -163,7 +163,7 @@ spec:
         configMap:
           name: ceph-conf
       {{- end }}
-      {{- if eq $schedulerConfig.backend "VFS" }}
+      {{- if eq $schedulerConfig.backend "vfs" }}
       - name: vfs-storage-volume
         persistentVolumeClaim:
           claimName: scheduler-vfs-pvc

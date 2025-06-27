@@ -1,4 +1,4 @@
-backend: "VFS"
+backend: "vfs"
 vfsConfig:
   storageClass: local-path
   accessModes:

@@ -30,9 +30,16 @@ global:
       name: root
       password: "defaultcipassword"
 
+  # This shared mount is to be removed once vfsDeprecated is removed
   extraVolumes:
     volumes:
+    - name: shared
+      hostPath:
+        path: /opt/cta
     volumeMounts:
+    - name: shared
+      mountPath: /shared
+
 
   securityContext:
     allowPrivilegeEscalation: False

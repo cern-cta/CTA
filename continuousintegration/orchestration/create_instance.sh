@@ -251,6 +251,39 @@ create_instance() {
   cat "$tapeservers_config"
   echo "---"
 
+  if [ "$scheduler_config" == "presets/dev-scheduler-vfs-values.yaml" ]; then
+    if kubectl get pods -n local-path-storage -l app=local-path-provisioner 2>/dev/null | grep -q Running; then
+      echo "Local path provisioning is enabled. Using VFS scheduler is okay."
+    else
+      echo "==============================================================================="
+      echo "!!!!!!!!DEPRECATION WARNING!!!!!!!!"
+      echo "==============================================================================="
+      echo
+      echo "It seems that your machine does not have local path provisioning enabled"
+      echo "Support for running without local path provisioning will be removed soon."
+      echo
+      echo "Please follow these instructions to enable local path provisioning."
+      echo " 1. ssh into your machine as root"
+      echo " 2. navigate to the minikube_cta_ci repo you used to instantiate your dev machine"
+      echo " 3. Run: git pull"
+      echo " 4. Run: ./01_bootstrap_minikube.sh"
+      echo " 5. Reboot the machine"
+      echo "The storage-provisioner-rancher addon should now be enabled."
+      echo "This addon provides dynamic local path provisioning"
+      echo
+      echo "Alternatively if you prefer to do it manually:"
+      echo " 1. Run: minikube addons enable storage-provisioner-rancher"
+      echo " 2. Add this same line to /usr/local/bin/start_minikube.sh to ensure it persists over restarts"
+      echo
+      echo "Changing scheduler config to \"presets/dev-scheduler-vfs-deprecated-values.yaml\"...."
+      echo "==============================================================================="
+      echo
+      echo
+      scheduler_config=presets/dev-scheduler-vfs-deprecated-values.yaml
+    fi
+  fi
+
+
   # Create the namespace if necessary
   if [ $dry_run == 0 ] ; then
     echo "Creating ${namespace} namespace"
