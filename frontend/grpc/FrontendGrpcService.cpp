@@ -25,8 +25,6 @@
 #include "frontend/common/WorkflowEvent.hpp"
 
 #include "jwt-cpp/jwt.h"
-#include <curl/curl.h>
-#include <thread>
 #include <optional>
 
 /*
