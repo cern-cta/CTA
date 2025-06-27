@@ -132,7 +132,7 @@ def compare_versionlock(options: dict) -> dict[str, list[str]]:
         if expected_version == version:
             result["success"].append(f"CTA package {get_package_str(package, version)} found in yum versionlock.list")
         else:
-            result["error"].append(f"CTA package {get_package_str(package, version)} was found, but has an incorrect version. Expected: {get_package_str(package, expected_version)}")           
+            result["error"].append(f"CTA package {get_package_str(package, version)} was found, but has an incorrect version. Expected: {get_package_str(package, expected_version)}")
     return result
 
 def apply_versionlock(options: dict) -> dict[str, Any]:
@@ -154,7 +154,7 @@ def apply_versionlock(options: dict) -> dict[str, Any]:
                 continue
         yum_versions[package] = version
         result["success"].append(f"Added package {get_package_str(package, version)}")
-    
+
     write_versionlock(yum_versions, yum_versionlock_file)
     return result
 
@@ -258,7 +258,7 @@ def main() -> None:
     parser.add_argument("--cta-versionlock", help="Use the provided versionlock file instead of the default versionlock.cta")
     parser.add_argument("--yum-versionlock", help="Use the provided versionlock file instead of the default versionlock.list")
     parser.add_argument("--json", action="store_true", help="Format output in json")
-    parser.add_argument("--force", action="store_true", 
+    parser.add_argument("--force", action="store_true",
                         help="Allows overwriting the versionlock.list even if this potentially results in an inconsistent state")
     subparsers = parser.add_subparsers(dest='command')
     for action in actions.values():

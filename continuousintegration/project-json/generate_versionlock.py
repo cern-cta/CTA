@@ -36,11 +36,10 @@ if platform not in project_json["platforms"]:
     sys.exit(1)
 
 packages = project_json["platforms"][platform]["versionlock"]
-arch = project_json["platforms"][platform]["arch"]
 
 for package, version in packages.items():
     if package in project_json["packageGroups"]:
         for package_name in project_json["packageGroups"][package]:
-            print(f"{package_name}-{version}.{platform}.{arch}")
+            print(f"{package_name}-{version}.{platform}.*")
     else:
-        print(f"{package}-{version}.{platform}.{arch}")
+        print(f"{package}-{version}.{platform}.*")
