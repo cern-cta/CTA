@@ -100,7 +100,8 @@ echo "Checking..."
 # Always check that the CTA catalogue schema version is the same in both the main CTA project and the 'cta-catalogue-schema' submodule
 echo -n "- CTA catalogue schema version is the same in the project.json and 'cta-catalogue-schema' submodule: "
 if [ "$CTA_PROJECT_CATALOGUE_VERSION" != "${CTA_SUB_REPO__CATALOGUE_MAJOR_VERSION}.${CTA_SUB_REPO__CATALOGUE_MINOR_VERSION}" ]; then
-  error="${error}CTA catalogue schema version is not the same in the project.json and the 'cta-catalogue-schema' submodule ${CTA_SUB_REPO__CATALOGUE_MAJOR_VERSION}.\n"
+  error="${error}CTA catalogue schema version is not the same in the project.json and the 'cta-catalogue-schema' submodule.
+         ${CTA_PROJECT_CATALOGUE_VERSION} vs ${CTA_SUB_REPO__CATALOGUE_MAJOR_VERSION}.${CTA_SUB_REPO__CATALOGUE_MINOR_VERSION}\n"
   echo "FAIL"
 else
   echo "OK"
