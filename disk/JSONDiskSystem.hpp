@@ -35,7 +35,7 @@ public:
   /**
    * Builds the DiskSystem object with the json passed in parameter
    */
-  void buildFromJSON(const std::string& json) override;
+  void reset(const std::string& json) override;
   /**
    * Get the json string representation of the inherited DiskSystem object
    */

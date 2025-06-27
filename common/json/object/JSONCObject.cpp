@@ -16,21 +16,30 @@
  */
 
 #include "JSONCObject.hpp"
-
 #include "JSONObjectException.hpp"
+#include <vector>
 
 namespace cta::utils::json::object {
 
-JSONCObject::JSONCObject():JSONObject() {
-  initializeJSONCObject();
+JSONCObject::JSONCObject() : m_jsonObject(json_object_new_object()) {}
+JSONCObject::JSONCObject(const std::string& json) : m_jsonObject(json_tokener_parse(json.c_str())) {
+  if (!m_jsonObject) {
+    std::string errMsg = "In JSONCObject::reset(), the provided string is an invalid JSON.";
+    throw cta::exception::JSONObjectException(errMsg);
+  }
+}
+JSONCObject::JSONCObject(json_object * obj) : m_jsonObject(json_object_get(obj)) {}
+
+void JSONCObject::reset(const std::string& json){
+  m_jsonObject.reset(json_tokener_parse(json.c_str()));
+  if (!m_jsonObject) {
+    std::string errMsg = "In JSONCObject::reset(), the provided string is an invalid JSON.";
+    throw cta::exception::JSONObjectException(errMsg);
+  }
 }
 
-void JSONCObject::buildFromJSON(const std::string& json){
-  //DO JSON_C deinitialization
-  if(m_jsonObject != nullptr){
-    destroyJSONCObject();
-  }
-  m_jsonObject = json_tokener_parse(json.c_str());
+void JSONCObject::reset(json_object * obj) {
+  m_jsonObject.reset(json_object_get(obj));
 }
 
 std::string JSONCObject::getExpectedJSONToBuildObject() const {
@@ -38,103 +47,69 @@ std::string JSONCObject::getExpectedJSONToBuildObject() const {
 }
 
 std::string JSONCObject::getJSON() {
-  return std::string(json_object_to_json_string_ext(m_jsonObject, JSON_C_TO_STRING_PLAIN));
+  return {json_object_to_json_string_ext(m_jsonObject.get(), JSON_C_TO_STRING_PLAIN)};
 }
 
 std::string JSONCObject::getJSONPretty() {
-  return std::string(json_object_to_json_string_ext(m_jsonObject, JSON_C_TO_STRING_PRETTY));
+  return {json_object_to_json_string_ext(m_jsonObject.get(), JSON_C_TO_STRING_PRETTY)};
 }
 
-void JSONCObject::initializeJSONCObject() {
-  m_jsonObject = json_object_new_object();
+void JSONCObject::resetJSONCObject() {
+  m_jsonObject.reset(json_object_new_object());
 }
 
-void JSONCObject::destroyJSONCObject() {
-  json_object_put(m_jsonObject);
-  m_jsonObject = nullptr;
-}
-
-void JSONCObject::reinitializeJSONCObject() {
-  destroyJSONCObject();
-  initializeJSONCObject();
-}
-
-json_type JSONCObject::getJSONObjectType(const std::string& key){
+json_type JSONCObject::getJSONObjectType(const std::string& key) const {
   json_object * objectRet;
-  if(json_object_object_get_ex(m_jsonObject,key.c_str(),&objectRet)){
+  if(json_object_object_get_ex(m_jsonObject.get(),key.c_str(),&objectRet)){
     return json_object_get_type(objectRet);
   }
   std::string errMsg = "In JSONCObject::getJSONObjectType(), the provided json does not contain any key named \""+key+"\".";
   throw cta::exception::JSONObjectException(errMsg);
 }
 
-json_object * JSONCObject::getJSONObject(const std::string& key){
+json_object * JSONCObject::getJSONObject(const std::string& key) const {
   json_object * objectRet;
-  if(json_object_object_get_ex(m_jsonObject,key.c_str(),&objectRet)){
+  if(json_object_object_get_ex(m_jsonObject.get(),key.c_str(),&objectRet)){
     return objectRet;
   }
   std::string errMsg = "In JSONCObject::getJSONObject(), the provided json does not contain any key named \""+key+"\".";
   throw cta::exception::JSONObjectException(errMsg);
 }
-
+/*
 template<>
-std::string JSONCObject::jsonGetValue(const std::string& key){
-  json_object * jsonObj = getJSONObject(key);
-  return std::string(json_object_get_string(jsonObj));
+std::string JSONCObject::jsonConvertValue() {
+  return {json_object_get_string(m_jsonObject.get())};
 }
 
 template<>
-uint64_t JSONCObject::jsonGetValue(const std::string & key){
-  json_object * jsonObj = getJSONObject(key);
-  return json_object_get_int64(jsonObj);
+uint64_t JSONCObject::jsonConvertValue() {
+  return json_object_get_uint64(m_jsonObject.get());
 }
 
 template<>
-int64_t JSONCObject::jsonGetValue(const std::string & key){
-  json_object * jsonObj = getJSONObject(key);
-  return json_object_get_int64(jsonObj);
+int64_t JSONCObject::jsonConvertValue() {
+  return json_object_get_int64(m_jsonObject.get());
 }
 
 template<>
-double JSONCObject::jsonGetValue(const std::string & key){
-  json_object * jsonObj = getJSONObject(key);
-  return json_object_get_double(jsonObj);
+double JSONCObject::jsonConvertValue() {
+  return json_object_get_double(m_jsonObject.get());
 }
 
 template<>
-bool JSONCObject::jsonGetValue(const std::string & key){
-  json_object * jsonObj = getJSONObject(key);
-  return json_object_get_boolean(jsonObj);
+bool JSONCObject::jsonConvertValue() {
+  return json_object_get_boolean(m_jsonObject.get());
 }
 
 template<>
-void JSONCObject::jsonSetValue(const std::string& key, const std::string & value){
-  json_object_object_add(m_jsonObject,key.c_str(),json_object_new_string(value.c_str()));
-}
-
-template<>
-void JSONCObject::jsonSetValue(const std::string& key, const double& value) {
-  char buffer[64];
-  snprintf(buffer, sizeof(buffer), "%.6f", value);
-  json_object_object_add(m_jsonObject, key.c_str(), json_object_new_double_s(value, buffer));
-}
-
-template<>
-void JSONCObject::jsonSetValue(const std::string& key, const uint64_t & value){
-  json_object_object_add(m_jsonObject,key.c_str(),json_object_new_int64(value));
-}
-
-template<>
-void JSONCObject::jsonSetValue(const std::string& key, const time_t & value){
-  json_object_object_add(m_jsonObject,key.c_str(),json_object_new_int64(value));
-}
-
-
-JSONCObject::~JSONCObject() {
-  //Free the JSON object if initialized
-  if(m_jsonObject != nullptr){
-    destroyJSONCObject();
+std::vector<JSONCObject> JSONCObject::jsonConvertValue(){
+  const size_t size = json_object_array_length(m_jsonObject.get());
+  std::vector<JSONCObject> result;
+  result.reserve(size);
+  for (size_t i = 0; i < size; i++) {
+    result.emplace_back(json_object_array_get_idx(m_jsonObject.get(), i));
   }
-}
+  return result;
+}*/
 
 } // namespace cta::utils::json::object

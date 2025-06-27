@@ -18,7 +18,6 @@
 #pragma once
 
 #include "common/json/object/JSONCObject.hpp"
-#include "TestObject.hpp"
 
 using namespace cta::utils::json;
 
@@ -27,13 +26,46 @@ namespace unitTests {
 /**
  * This class is only use to unit test the JSONCObject class
  */
-class JSONCTestObject : public object::JSONCObject, public TestObject {
+class JSONCTestObject : public object::JSONCObject {
 public:
-  JSONCTestObject();
-  void buildFromJSON(const std::string & json) override;
-  std::string getExpectedJSONToBuildObject() const override;
-  std::string getJSON() override;
-  virtual ~JSONCTestObject() = default;
+  using JSONCObject::JSONCObject;
+  explicit JSONCTestObject(JSONCObject && base) : JSONCObject(std::move(base)) {}
+
+  template<typename T>
+  T jsonGetValueProbe(const std::string & key) {
+    return JSONCObject::jsonGetValue<T>(key);
+  }
+
+  template<typename T>
+  void jsonSetValue(const std::string & key, const T & value) {
+    return JSONCObject::jsonSetValue<T>(key,value);
+  }
+
+  template<typename T>
+  T jsonGetValue(const std::string& key) {
+    if constexpr (std::is_same_v<T, JSONCTestObject>) {
+      return JSONCTestObject{ std::move(JSONCObject::jsonGetValue<JSONCObject>(key)) };
+    } else if constexpr (std::is_same_v<T, std::vector<JSONCTestObject>>) {
+      auto jsoncVector = JSONCObject::jsonGetValue<std::vector<JSONCObject>>(key);
+      std::vector<JSONCTestObject> returnVector;
+      returnVector.reserve(jsoncVector.size());
+      for (auto & item : jsoncVector) {
+        returnVector.emplace_back(std::move(item));
+      }
+      return returnVector;
+    } else {
+      return JSONCObject::jsonGetValue<T>(key);
+    }
+  }
+
+  template<typename T>
+  T jsonConvertValue() {
+    return JSONCObject::jsonConvertValue<T>();
+  }
+
+  json_type jsonGetValueType(const std::string & key) {
+    return JSONCObject::getJSONObjectType(key);
+  }
 };
 
 }

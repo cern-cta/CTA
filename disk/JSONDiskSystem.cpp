@@ -36,8 +36,8 @@ JSONDiskSystem::JSONDiskSystem(const DiskSystem& diskSystem):JSONCObject(){
   }
 }
 
-void JSONDiskSystem::buildFromJSON(const std::string& json) {
-  JSONCObject::buildFromJSON(json);
+void JSONDiskSystem::reset(const std::string& json) {
+  JSONCObject::reset(json);
   name = jsonGetValue<std::string>("name");
   fileRegexp = jsonGetValue<std::string>("fileRegexp");
   diskInstanceSpace.freeSpaceQueryURL = jsonGetValue<std::string>("freeSpaceQueryURL");
@@ -47,7 +47,7 @@ void JSONDiskSystem::buildFromJSON(const std::string& json) {
 }
 
 std::string JSONDiskSystem::getJSON() {
-  reinitializeJSONCObject();
+  resetJSONCObject();
   jsonSetValue("name",name);
   jsonSetValue("fileRegexp",fileRegexp);
   jsonSetValue("freeSpaceQueryURL",diskInstanceSpace.freeSpaceQueryURL);

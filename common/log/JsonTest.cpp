@@ -29,6 +29,7 @@ namespace unitTests {
 
 class JSONCObjectProbe: public cta::utils::json::object::JSONCObject {
 public:
+  using JSONCObject::JSONCObject;
   template<typename T>
   T jsonGetValueProbe(const std::string & key) {
     return jsonGetValue<T>(key);
@@ -90,9 +91,7 @@ TEST_F(cta_log_JsonTest, testJsonPrinting) {
 
   ASSERT_EQ(2, logLines.size());
 
-  JSONCObjectProbe jObjA, jObjB;
-  jObjA.buildFromJSON(logLines[0]);
-  jObjB.buildFromJSON(logLines[1]);
+  JSONCObjectProbe jObjA(logLines[0]), jObjB(logLines[1]);
 
   // Check that JSON is parsed correctly
   ASSERT_NO_THROW(jObjA.getJSON());
@@ -176,8 +175,7 @@ TEST_F(cta_log_JsonTest, testJsonStringEscape) {
 
   std::string logLine = logger.getLog();
 
-  JSONCObjectProbe jObj;
-  jObj.buildFromJSON(logLine);
+  JSONCObjectProbe jObj(logLine);
 
   // Check that JSON is parsed correctly
   ASSERT_NO_THROW(jObj.getJSON());

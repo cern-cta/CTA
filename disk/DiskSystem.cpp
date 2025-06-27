@@ -218,7 +218,7 @@ uint64_t DiskSystemFreeSpaceList::fetchFreeDiskSpaceWithScript(const std::string
   std::istringstream spStdoutIss(sp->stdout());
   std::string stdoutScript = spStdoutIss.str();
   try {
-    jsonFreeSpace.buildFromJSON(stdoutScript);
+    jsonFreeSpace.reset(stdoutScript);
     std::string logMessage = "In DiskSystemFreeSpaceList::fetchFreeDiskSpaceWithScript(), freeSpace returned from the script is: " + std::to_string(jsonFreeSpace.m_freeSpace); 
     lc.log(log::DEBUG,logMessage);
     return jsonFreeSpace.m_freeSpace;

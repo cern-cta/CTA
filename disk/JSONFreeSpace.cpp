@@ -22,13 +22,13 @@ namespace cta::disk {
 JSONFreeSpace::JSONFreeSpace(): JSONCObject() {
 }
 
-void JSONFreeSpace::buildFromJSON(const std::string& json) {
-  JSONCObject::buildFromJSON(json);
+void JSONFreeSpace::reset(const std::string& json) {
+  JSONCObject::reset(json);
   m_freeSpace = jsonGetValue<uint64_t>("freeSpace");
 }
 
 std::string JSONFreeSpace::getJSON(){
-  reinitializeJSONCObject();
+  resetJSONCObject();
   jsonSetValue("freeSpace",m_freeSpace);
   return JSONCObject::getJSON();
 }

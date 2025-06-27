@@ -187,7 +187,6 @@ set (COMMON_UNIT_TESTS_LIB_SRC_FILES
   utils/GetOptThreadSafeTest.cpp
   utils/RegexTest.cpp
   utils/UtilsTest.cpp
-  json/test/JSONCTestObject.cpp
   json/test/JSONCObjectTest.cpp
 )
 

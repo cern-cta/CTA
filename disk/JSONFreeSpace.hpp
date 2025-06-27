@@ -29,7 +29,7 @@ class JSONFreeSpace: public cta::utils::json::object::JSONCObject {
 public:
   JSONFreeSpace();
   ~JSONFreeSpace() final = default;
-  void buildFromJSON(const std::string & json) override;
+  void reset(const std::string & json) override;
   std::string getJSON() override;
   std::string getExpectedJSONToBuildObject() const override;
 

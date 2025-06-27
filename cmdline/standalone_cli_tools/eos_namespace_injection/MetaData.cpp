@@ -37,8 +37,7 @@ void MetaData::readJson(const std::filesystem::path &jsonPath) {
   std::string line;
   while (std::getline(infile, line)) {
     if(!line.empty()) {
-      cta::utils::json::object::JSONCObject jsonObject;
-      buildFromJSON(line);
+      JSONCObject jsonObject(line);
 
       MetaDataObject metaDataObject;
       metaDataObject.eosPath = jsonGetValue<std::string>("eosPath");

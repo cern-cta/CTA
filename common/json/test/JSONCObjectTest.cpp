@@ -26,29 +26,44 @@ using namespace cta::utils;
 
 TEST(JSONCObjectTest, testJSONGenerationFromObject) {
   JSONCTestObject to;
-  to.double_number = 42.234567;
-  to.integer_number = 42;
-  to.str = "forty two";
+  to.jsonSetValue("integer_number", 42);
+  to.jsonSetValue("str","forty two");
+  to.jsonSetValue("double_number", 42.234567);
   ASSERT_EQ("{\"integer_number\":42,\"str\":\"forty two\",\"double_number\":42.234567}", to.getJSON());
 }
 
 TEST(JSONCObjectTest, testObjectGenerationFromJSON){
   std::string json = "{\"integer_number\":42,\"str\":\"forty two\",\"double_number\":42.000000}";
-  JSONCTestObject to;
-  to.buildFromJSON(json);
-  ASSERT_EQ(42,to.integer_number);
-  ASSERT_EQ("forty two",to.str);
-  ASSERT_EQ(42.000000,to.double_number);
-}
-
-TEST(JSONCObjectTest, testJSONCParserGetJSONShouldReturnDefaultValues){
-  JSONCTestObject to;
-  ASSERT_EQ("{\"integer_number\":0,\"str\":\"\",\"double_number\":0.000000}",to.getJSON());
+  JSONCTestObject to(json);
+  ASSERT_EQ(42, to.jsonGetValue<int>("integer_number"));
+  ASSERT_EQ("forty two", to.jsonGetValue<std::string>("str"));
+  ASSERT_DOUBLE_EQ(42.000000, to.jsonGetValue<double>("double_number"));
 }
 
 TEST(JSONCObjectTest, testJSONCParserSetJSONToBeParsedWrongJSONFormat){
   JSONCTestObject to;
-  ASSERT_THROW(to.buildFromJSON("WRONG_JSON_STRING"),cta::exception::JSONObjectException);
+  ASSERT_THROW(to.reset("WRONG_JSON_STRING"),cta::exception::JSONObjectException);
+}
+
+TEST(JSONCObjectTest, testJSONCParserRecursiveWithObject){
+  std::string json = R"({"integer_number": 42, "str": "forty two", "double_number": 42.234567 , "inner_object": { "integer_number": 777, "str": "seven seven seven", "double_number": 777.777777} })";
+  JSONCTestObject to_outer(json);
+  auto to_inner = to_outer.jsonGetValue<JSONCTestObject>("inner_object");
+  to_outer.reset("{}"); // Force outer object to be destructed
+  ASSERT_EQ(777, to_inner.jsonGetValue<int>("integer_number"));
+  ASSERT_EQ("seven seven seven", to_inner.jsonGetValue<std::string>("str"));
+  ASSERT_DOUBLE_EQ(777.777777, to_inner.jsonGetValue<double>("double_number"));
+}
+
+TEST(JSONCObjectTest, testJSONCParserRecursiveWithArray){
+  std::string json = R"({"integer_number": 42, "str": "forty two", "double_number": 42.234567 , "inner_array": [ 777, "seven seven seven", 777.777777 ] })";
+  JSONCTestObject to_outer(json);
+  auto to_inner = to_outer.jsonGetValue<std::vector<JSONCTestObject>>("inner_array");
+  to_outer.reset("{}"); // Force outer object to be destructed
+  ASSERT_EQ(3, to_inner.size());
+  ASSERT_EQ(777, to_inner[0].jsonConvertValue<int>());
+  ASSERT_EQ("seven seven seven", to_inner[1].jsonConvertValue<std::string>());
+  ASSERT_DOUBLE_EQ(777.777777, to_inner[2].jsonConvertValue<double>());
 }
 
 } // namespace unitTests
