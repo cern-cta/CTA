@@ -53,4 +53,4 @@ validate-project-json:
   rules:
     - when: on_success
   script:
-    - python3 ./continuousintegration/utils/project-json/validate_project_json.py
+    - python3 ./continuousintegration/project-json/validate_project_json.py
