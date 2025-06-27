@@ -151,7 +151,7 @@
       "versionlock": {
         "group-ceph": "2:17.2.8-0",
         "group-eos": "5.3.14-1",
-        "group-eos-folly": "2019.11.11.0-1",
+        "group-eos-folly": "2019.11.11.00-1",
         "group-eosgrpc": "1.56.1-3",
         "group-eosscitokens": "1.2.0-1",
         "group-eosxrootd": "5.8.3-2",
