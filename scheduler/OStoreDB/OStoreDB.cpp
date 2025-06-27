@@ -1313,8 +1313,8 @@ void OStoreDB::setRetrieveJobBatchReportedToUser(std::list<cta::SchedulerDatabas
   // deletion of the jobs.
 
   // Launch deletion asynchronously
-  if (jobsToDelete.size()) {
-    // Launch deleteion.
+  if (!jobsToDelete.empty()) {
+    // Launch deletion.
     auto jobsToDeleteItor = jobsToDelete.begin();
     while (jobsToDeleteItor != jobsToDelete.end()) {
       auto &j = *jobsToDeleteItor;
@@ -1342,7 +1342,7 @@ void OStoreDB::setRetrieveJobBatchReportedToUser(std::list<cta::SchedulerDatabas
           continue;
         }
         log::ScopedParamContainer(lc)
-          .log(log::INFO, "In OStoreDB::setRetrieveJobBatchReportedToUser(): delete RetrieveRequest after reporting.");
+          .log(log::INFO, "In OStoreDB::setRetrieveJobBatchReportedToUser(): deleted RetrieveRequest after reporting.");
         jobsToUnown.push_back(j->m_retrieveRequest.getAddressIfSet());
       } catch (cta::exception::Exception &ex) {
         log::ScopedParamContainer(lc)
