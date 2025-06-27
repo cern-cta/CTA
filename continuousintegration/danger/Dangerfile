@@ -18,11 +18,11 @@ end
 # --- Description checks ---
 
 required_checklist_items = [
-  "- [x] Documentation reflects the changes made.",
-  "- [x] Merge Request title is clear, concise, and suitable as a changelog entry."
+  /^- \[x\] Documentation reflects the changes made.*/,
+  /^- \[x\] Merge Request title is clear, concise, and suitable as a changelog entry.*/
 ]
 
-missing_items = required_checklist_items.reject { |item| gitlab.mr_body.include?(item) }
+missing_items = required_checklist_items.reject { |item| gitlab.mr_body.match?(item) }
 
 unless missing_items.empty?
   fail("**Checklist Incomplete**\n\nPlease complete all required items in the merge request checklist before proceeding.")
