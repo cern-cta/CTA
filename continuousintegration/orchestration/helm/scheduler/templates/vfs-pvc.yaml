@@ -1,5 +1,5 @@
 {{- $schedulerConfig := include "scheduler.config" . | fromYaml }}
-{{- if eq $schedulerConfig.backend "VFS" }}
+{{- if eq $schedulerConfig.backend "vfs" }}
 apiVersion: v1
 kind: PersistentVolumeClaim
 metadata:
