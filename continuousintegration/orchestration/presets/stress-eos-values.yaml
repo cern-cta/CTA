@@ -24,6 +24,20 @@ global:
       spec:
         type: ExternalName
         externalName: {{ include "utils.mgm_fqdn" . }}
+    # Persistent volume for the mgm logs
+    - |
+      apiVersion: v1
+      kind: PersistentVolumeClaim
+      metadata:
+        name: eos-mgm-logs-pvc
+      spec:
+        accessModes:
+          - ReadWriteOnce
+        resources:
+          requests:
+            storage: 10Gi
+        storageClassName: fast-ssd
+
 
 
 mgm:
@@ -88,14 +102,15 @@ mgm:
   extraVolumes:
     volumeMounts:
     # varlog-tmp is the location where core dumps will end up
-    - name: varlog-tmp
-      mountPath: /var/log/tmp
+    - name: varlog
+      mountPath: /var/log
     - name: grid-security
       mountPath: /etc/grid-security
       readOnly: true
     volumes:
-    - name: varlog-tmp
-      emptyDir: {}
+    - name: varlog
+      persistentVolumeClaim:
+        claimName: eos-mgm-logs-pvc
     - name: grid-security
       emptyDir: {}
 
