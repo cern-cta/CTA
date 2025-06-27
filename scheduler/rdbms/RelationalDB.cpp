@@ -50,7 +50,9 @@ RelationalDB::RelationalDB(const std::string& ownerId,
       m_connPool(login, nbConns),
       m_connPoolInsertOnly(login, nbConns),
       m_catalogue(catalogue),
-      m_logger(logger) {
+      m_logger(logger),
+      m_archiveCounter(cta::telemetry::metrics::InstrumentProvider::instance().getUInt64Counter("cta.scheduler", "scheduler.queueing.archive.count")),
+      m_retrieveCounter(cta::telemetry::metrics::InstrumentProvider::instance().getUInt64Counter("cta.scheduler", "scheduler.queueing.retrieve.count")) {
   m_tapeDrivesState = std::make_unique<TapeDrivesCatalogueState>(m_catalogue);
 }
 
@@ -151,6 +153,7 @@ std::string RelationalDB::queueArchive(const std::string& instanceName,
     .add("insertTime", timeInsert.secs())
     .add("totalTime", timeTotal.secs());
   logContext.log(log::INFO, "In RelationalDB::queueArchive(): Finished enqueueing request.");
+  m_archiveCounter->Add(1, {{"disk.instance", aFile.diskInstance}});
   return aReq.getIdStr();
 }
 
@@ -409,8 +412,10 @@ RelationalDB::queueRetrieve(cta::common::dataStructures::RetrieveRequest& rqst,
     rReq.fillJobsSetRetrieveFileQueueCriteria(criteria);  // fills also m_jobs
     rReq.setActiveCopyNumber(bestCopyNb);
     rReq.setIsVerifyOnly(rqst.isVerifyOnly);
+    std::string diskSystemNameStr = "unknown";
     if (diskSystemName) {
-      rReq.setDiskSystemName(diskSystemName.value());
+      diskSystemNameStr = diskSystemName.value();
+      rReq.setDiskSystemName(diskSystemNameStr);
     }
     //  rReq.setCreationTime(rqst.creationLog.time); // ? no reason for this method to exist ?
 
@@ -443,6 +448,7 @@ RelationalDB::queueRetrieve(cta::common::dataStructures::RetrieveRequest& rqst,
     log::ScopedParamContainer(logContext)
       .add("totalTime", timeTotal.secs())
       .log(cta::log::INFO, "In RelationalDB::queueRetrieve(): Finished enqueueing request.");
+    m_retrieveCounter->Add(1, {{"disk.instance", diskSystemNameStr}});
     return ret;
   } catch (exception::Exception& ex) {
     logContext.log(cta::log::ERR,

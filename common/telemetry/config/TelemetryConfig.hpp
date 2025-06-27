@@ -11,6 +11,8 @@ enum class MetricsBackend { NOOP, STDOUT, OTLP };
 
 typedef struct TelemetryConfig {
   std::string serviceName;
+  std::string serviceNamespace;
+  std::string instanceHint;
   std::map<std::string, std::string> resourceAttributes;
 
   struct Metrics {
@@ -24,7 +26,11 @@ typedef struct TelemetryConfig {
 
 class TelemetryConfigBuilder {
 public:
-  TelemetryConfigBuilder& serviceName(std::string name);
+  TelemetryConfigBuilder& serviceName(std::string serviceName);
+  TelemetryConfigBuilder& serviceNamespace(std::string serviceNamespace);
+  // The instance hint is an optional field that can be used to generate a deterministic service.instance.id that persists across restarts
+  // For this to work, the instanceHint must allow the triplet (hostname, processName, instanceHint) to be globally unique
+  TelemetryConfigBuilder& instanceHint(std::string instanceHint);
   TelemetryConfigBuilder& resourceAttribute(std::string key, std::string value);
   TelemetryConfigBuilder& metricsBackend(const std::string& backendType);
   TelemetryConfigBuilder& metricsExportInterval(std::chrono::milliseconds interval);
