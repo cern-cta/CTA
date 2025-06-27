@@ -21,17 +21,17 @@
 
 namespace cta::utils::json::object {
 
-JSONCObject::JSONCObject() : m_jsonObject(json_object_new_object()) {}
-JSONCObject::JSONCObject(const std::string& json) : m_jsonObject(json_tokener_parse(json.c_str())) {
+JSONCObject::JSONCObject() : m_jsonObject(json_object_new_object(), JSONCDeleter()) {}
+JSONCObject::JSONCObject(const std::string& json) : m_jsonObject(json_tokener_parse(json.c_str()), JSONCDeleter()) {
   if (!m_jsonObject) {
     std::string errMsg = "In JSONCObject::reset(), the provided string is an invalid JSON.";
     throw cta::exception::JSONObjectException(errMsg);
   }
 }
-JSONCObject::JSONCObject(json_object * obj) : m_jsonObject(json_object_get(obj)) {}
+JSONCObject::JSONCObject(json_object * obj) : m_jsonObject(json_object_get(obj), JSONCDeleter()) {}
 
 void JSONCObject::reset(const std::string& json){
-  m_jsonObject.reset(json_tokener_parse(json.c_str()));
+  m_jsonObject.reset(json_tokener_parse(json.c_str()), JSONCDeleter());
   if (!m_jsonObject) {
     std::string errMsg = "In JSONCObject::reset(), the provided string is an invalid JSON.";
     throw cta::exception::JSONObjectException(errMsg);
@@ -39,7 +39,7 @@ void JSONCObject::reset(const std::string& json){
 }
 
 void JSONCObject::reset(json_object * obj) {
-  m_jsonObject.reset(json_object_get(obj));
+  m_jsonObject.reset(json_object_get(obj), JSONCDeleter());
 }
 
 std::string JSONCObject::getExpectedJSONToBuildObject() const {
@@ -55,7 +55,7 @@ std::string JSONCObject::getJSONPretty() {
 }
 
 void JSONCObject::resetJSONCObject() {
-  m_jsonObject.reset(json_object_new_object());
+  m_jsonObject.reset(json_object_new_object(), JSONCDeleter());
 }
 
 json_type JSONCObject::getJSONObjectTypeFromKey(const std::string& key) const {

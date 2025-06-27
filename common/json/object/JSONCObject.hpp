@@ -66,7 +66,7 @@ public:
   virtual std::string getJSONPretty();
 
 protected:
-  std::unique_ptr<json_object, JSONCDeleter> m_jsonObject;
+  std::shared_ptr<json_object> m_jsonObject;
 
   /**
    * Destroy then initialize the JSON-C representation
