@@ -66,7 +66,9 @@ OStoreDB::OStoreDB(objectstore::Backend& be, catalogue::Catalogue& catalogue, lo
       m_taskPostingSemaphore(5),
       m_objectStore(be),
       m_catalogue(catalogue),
-      m_logger(logger) {
+      m_logger(logger),
+      m_archiveCounter(cta::telemetry::metrics::InstrumentProvider::instance().getUInt64Counter("cta.objectstore", "objectstore.queueing.archive.count")),
+      m_retrieveCounter(cta::telemetry::metrics::InstrumentProvider::instance().getUInt64Counter("cta.objectstore", "objectstore.queueing.retrieve.count")) {
   m_tapeDrivesState = std::make_unique<TapeDrivesCatalogueState>(m_catalogue);
   for (size_t i = 0; i < 5; i++) {
     m_enqueueingWorkerThreads.emplace_back(new EnqueueingWorkerThread(m_enqueueingTasksQueue));
@@ -1024,6 +1026,7 @@ std::string OStoreDB::queueArchive(const std::string& instanceName,
            arRelockTime + arTotalQueueingTime + arTotalCommitTime + arTotalQueueUnlockTime + arOwnerResetTime +
              arLockRelease + agOwnershipResetTime)
       .log(log::INFO, "In OStoreDB::queueArchive(): Finished enqueueing request.");
+      m_archiveCounter->Add(1, {{"disk.instance", archiveFile.diskInstance}});
   });
   mlForHelgrind.unlock();
   m_enqueueingTasksQueue.push(et);
@@ -1531,6 +1534,7 @@ jobFound: {
       .add("agentOwnershipResetTime", agOwnershipResetTime)
       .add("totalTime", rLockTime + qTime + cTime + qUnlockTime + rUnlockTime + agOwnershipResetTime)
       .log(log::INFO, "In OStoreDB::queueRetrieve(): added job to queue (enqueueing finished).");
+      m_retrieveCounter->Add(1, {{"disk.instance", rReq->getArchiveFile().diskInstance}});
   });
   mlForHelgrind.unlock();
   m_enqueueingTasksQueue.push(et);
@@ -2030,7 +2034,7 @@ void OStoreDB::requeueRetrieveRequestJobs(std::list<cta::SchedulerDatabase::Retr
   std::map<std::string, std::list<common::dataStructures::RetrieveJobToAdd>> jobsToRequeue;
   std::list<common::dataStructures::RetrieveJobToAdd> jobsToFail;
 
-  // First we have to decide what we will do with each job.  
+  // First we have to decide what we will do with each job.
   for (auto& job : jobs) {
     auto oStoreJob = dynamic_cast<OStoreDB::RetrieveJob*>(job);
     auto rr =
@@ -2075,7 +2079,7 @@ void OStoreDB::requeueRetrieveRequestJobs(std::list<cta::SchedulerDatabase::Retr
   for(auto &[activeVid, requestList] : jobsToRequeue){
     log::ScopedParamContainer params(logContext);
     params.add("vidToRequeue", activeVid);
-    params.add("requeuedJobCount", requestList.size()); 
+    params.add("requeuedJobCount", requestList.size());
     logContext.log(log::INFO, "In OStoreDB::requeueRetrieveRequestJobs(): Requeueing to another VID");
     RetrieveQueue rq(m_objectStore);
     ScopedExclusiveLock rql;
@@ -2131,8 +2135,8 @@ std::string OStoreDB::blockRetrieveQueueForCleanup(const std::string& vid) {
 
 
   // Create the ToReport queue or get it in case a previous agent died and we are
-  // taking over. The second case is only possible if the agent that died has 
-  // already been garbage collected. We hold the root entry lock until we get 
+  // taking over. The second case is only possible if the agent that died has
+  // already been garbage collected. We hold the root entry lock until we get
   // set the cleanupflag. This prevents trimEmptyQueues() to interfere with us.
   std::string reportQueueAddress;
   {
@@ -2141,7 +2145,7 @@ std::string OStoreDB::blockRetrieveQueueForCleanup(const std::string& vid) {
     ScopedExclusiveLock rqtrl;
     rel.lock(re);
     re.fetch();
-    reportQueueAddress = re.addOrGetRetrieveQueueAndCommit(vid, *m_agentReference, 
+    reportQueueAddress = re.addOrGetRetrieveQueueAndCommit(vid, *m_agentReference,
 		                                        common::dataStructures::JobQueueType::JobsToReportToUser);
 
     m_agentReference->addToOwnership(reportQueueAddress, m_objectStore);

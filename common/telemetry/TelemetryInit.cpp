@@ -25,6 +25,20 @@ namespace metrics_sdk = opentelemetry::sdk::metrics;
 namespace metrics_api = opentelemetry::metrics;
 namespace otlp = opentelemetry::exporter::otlp;
 
+std::string getDeterministicInstanceId(const std::string& serviceName,
+                                       const std::string& hostname,
+                                       const std::string& instanceHint) {
+  std::string seed = serviceName + ":" + hostname + ":" + instanceHint;
+
+  // Hash to fixed-length string or UUID format
+  std::hash<std::string> hasher;
+  size_t hash = hasher(seed);
+
+  std::stringstream ss;
+  ss << std::hex << hash;
+  return ss.str();  // Or convert to UUID format if needed
+}
+
 void initMetrics(const TelemetryConfig& config) {
   if (config.metrics.backend == MetricsBackend::NOOP) {
     metrics_api::Provider::SetMeterProvider(
@@ -62,12 +76,23 @@ void initMetrics(const TelemetryConfig& config) {
 
   auto reader = metrics_sdk::PeriodicExportingMetricReaderFactory::Create(std::move(exporter), readerOptions);
 
+  std::string processName = cta::utils::getProcessName();
+  std::string serviceInstanceId;
+  if (config.instanceHint.empty()) {
+    // No instance hint, so we don't care about a deterministic/persistent ServiceInstanceId across restarts
+    serviceInstanceId = cta::utils::generateUuid();
+  } else {
+    serviceInstanceId = cta::utils::getShortHostname() + ":" + processName + ":" + config.instanceHint;
+  }
+
   // These metrics should make sure that each and every process is uniquely identifiable
   // Otherwise, metrics will not be aggregated correctly.
   opentelemetry::sdk::common::AttributeMap attributes = {
-    {opentelemetry::sdk::resource::SemanticConventions::kServiceName,    config.serviceName      },
-    {opentelemetry::sdk::resource::SemanticConventions::kServiceVersion, CTA_VERSION             },
-    {opentelemetry::sdk::resource::SemanticConventions::kProcessPid,     std::to_string(getpid())}
+    {opentelemetry::sdk::resource::SemanticConventions::kServiceName,       config.serviceName     },
+    {opentelemetry::sdk::resource::SemanticConventions::kServiceNamespace,  config.serviceNamespace},
+    {opentelemetry::sdk::resource::SemanticConventions::kServiceVersion,    CTA_VERSION            },
+    {opentelemetry::sdk::resource::SemanticConventions::kServiceInstanceId, serviceInstanceId      },
+    {"process.name",                                                        processName            },
   };
   for (const auto& kv : config.resourceAttributes) {
     attributes.SetAttribute(kv.first, kv.second);
@@ -85,6 +110,11 @@ void initMetrics(const TelemetryConfig& config) {
 void initTelemetry(const TelemetryConfig& config) {
   // Eventually we can init e.g. traces here as well
   initMetrics(config);
+  // Ensure we can reuse the config when re-initialise the metrics after e.g. a fork
+  cta::telemetry::TelemetryConfigSingleton::initialize(config);
+}
+
+void initTelemetryConfig(const TelemetryConfig& config) {
   // Ensure we can reuse the config when re-initialise the metrics after e.g. a fork
   cta::telemetry::TelemetryConfigSingleton::initialize(config);
 }

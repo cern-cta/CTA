@@ -17,6 +17,7 @@
 
 #pragma once
 
+#include "common/telemetry/metrics/InstrumentProvider.hpp"
 #include "rdbms/AutocommitMode.hpp"
 #include "rdbms/Rset.hpp"
 
@@ -214,6 +215,11 @@ private:
    * The database statement pool to which the m_stmt should be returned.
    */
   StmtPool *m_stmtPool;
+
+  /**
+   * Counter for monitoring database queries
+   */
+  std::shared_ptr<opentelemetry::metrics::Counter<uint64_t>> m_queryCounter;
 
 }; // class Stmt
 

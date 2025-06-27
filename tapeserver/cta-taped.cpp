@@ -231,12 +231,15 @@ int main(const int argc, char **const argv) {
                                                      {"otlpEndpoint", globalConfig.telemetryMetricsOltpEndpoint.value()}});
     cta::telemetry::TelemetryConfig telemetryConfig = cta::telemetry::TelemetryConfigBuilder()
       .serviceName("cta.taped")
+      .serviceNamespace(globalConfig.instanceName.value())
+      .instanceHint(globalConfig.driveName.value()) // This allows us to have a service.instance.id that is consistent across restarts/forks
       .metricsBackend(globalConfig.telemetryMetricsBackend.value())
       .metricsExportInterval(std::chrono::milliseconds(globalConfig.telemetryMetricsExportInterval.value()))
       .metricsExportTimeout(std::chrono::milliseconds(globalConfig.telemetryMetricsExportTimeout.value()))
       .metricsOtlpEndpoint(globalConfig.telemetryMetricsOltpEndpoint.value())
       .build();
-    cta::telemetry::initTelemetry(telemetryConfig);
+    // taped is a special case where we only do initTelemetry after the process name has been set
+    cta::telemetry::initTelemetryConfig(telemetryConfig);
   } catch(exception::Exception& ex) {
     std::cerr << "Failed to instantiate OpenTelemetry: " << ex.getMessage().str() << std::endl;
     return EXIT_FAILURE;
