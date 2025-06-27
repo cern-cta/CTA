@@ -1,3 +1,9 @@
+## 5.11.10.1-1
+
+### Bug Fixes
+- [frontend] Change cta-admin command to allow arbitrary Disk File IDs strings (cta/CTA!956)
+
+
 ## 5.11.10.0-1
 
 ### New Features
