@@ -309,10 +309,12 @@ create_instance() {
     helm repo add prometheus-community https://prometheus-community.github.io/helm-charts
     helm install opentelemetry open-telemetry/opentelemetry-collector \
           --namespace "${namespace}" \
-          --values presets/dev-opentelemetry-values.yaml
+          --values presets/dev-opentelemetry-values.yaml \
+          --wait --timeout 2m
     helm install prometheus prometheus-community/prometheus \
           --namespace "${namespace}" \
-          --values presets/dev-prometheus-values.yaml
+          --values presets/dev-prometheus-values.yaml \
+          --wait --timeout 2m
   fi
 
   # Note that some of these charts are installed in parallel

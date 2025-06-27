@@ -23,6 +23,7 @@
 #include "common/exception/Errnum.hpp"
 #include "common/exception/NoSuchObject.hpp"
 #include "common/processCap/ProcessCap.hpp"
+#include "common/telemetry/TelemetryInit.hpp"
 #include "common/utils/utils.hpp"
 #include "tapeserver/daemon/CommandLineParams.hpp"
 #include "tapeserver/daemon/DriveHandler.hpp"
@@ -89,6 +90,15 @@ void  cta::tape::daemon::TapeDaemon::exceptionThrowingMain()  {
 // mainEventLoop
 //------------------------------------------------------------------------------
 void cta::tape::daemon::TapeDaemon::mainEventLoop() {
+  const DriveConfigEntry dce{m_globalConfiguration.driveName.value(),
+                             m_globalConfiguration.driveLogicalLibrary.value(),
+                             m_globalConfiguration.driveDevice.value(),
+                             m_globalConfiguration.driveControlPath.value()};
+  std::string processName = dce.getShortUnitName() + "-parent";
+  prctl(PR_SET_NAME, processName.c_str());
+  // Initialise telemetry only after the process name is available
+  cta::telemetry::reinitTelemetry();
+
   // Create the log context
   log::LogContext lc(m_log);
   // Create the process manager and signal handler
@@ -96,12 +106,6 @@ void cta::tape::daemon::TapeDaemon::mainEventLoop() {
   auto sh = std::make_unique<SignalHandler>(pm);
   pm.addHandler(std::move(sh));
   // Create the drive handler
-  const DriveConfigEntry dce{m_globalConfiguration.driveName.value(),
-                             m_globalConfiguration.driveLogicalLibrary.value(),
-                             m_globalConfiguration.driveDevice.value(),
-                             m_globalConfiguration.driveControlPath.value()};
-  std::string processName = dce.getShortUnitName() + "-parent";
-  prctl(PR_SET_NAME, processName.c_str());
   auto dh = std::make_unique<DriveHandler>(m_globalConfiguration,
                                            dce,
                                            pm);
