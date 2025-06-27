@@ -174,7 +174,7 @@ void TapeWriteTask::execute(const std::unique_ptr<castor::tape::tapeFile::WriteS
     m_taskStats.totalTime = localTime.secs();
     // Log the successful transfer
     logWithStats(cta::log::INFO, "File successfully transmitted to drive", lc);
-    auto archiveCounter = cta::telemetry::metrics::InstrumentProvider::instance().getUInt64Counter("cta.taped", "archive.count");
+    auto archiveCounter = cta::telemetry::metrics::InstrumentProvider::instance().getUInt64Counter("cta.taped", "taped.archive.count");
     archiveCounter->Add(1);
   } catch (const castor::tape::tapeserver::daemon::ErrorFlag&) {
     // We end up there because another task has failed

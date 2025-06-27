@@ -23,6 +23,7 @@
 #include "common/exception/Errnum.hpp"
 #include "common/exception/NoSuchObject.hpp"
 #include "common/processCap/ProcessCap.hpp"
+#include "common/telemetry/TelemetryInit.hpp"
 #include "common/utils/utils.hpp"
 #include "tapeserver/daemon/CommandLineParams.hpp"
 #include "tapeserver/daemon/DriveHandler.hpp"
@@ -89,6 +90,15 @@ void  cta::tape::daemon::TapeDaemon::exceptionThrowingMain()  {
 // mainEventLoop
 //------------------------------------------------------------------------------
 void cta::tape::daemon::TapeDaemon::mainEventLoop() {
+  const DriveConfigEntry dce{m_globalConfiguration.driveName.value(),
+                             m_globalConfiguration.driveLogicalLibrary.value(),
+                             m_globalConfiguration.driveDevice.value(),
+                             m_globalConfiguration.driveControlPath.value()};
+  std::string processName = dce.getShortUnitName() + "-parent";
+  prctl(PR_SET_NAME, processName.c_str());
+  // Initialise telemetry only after the process name is available
+  cta::telemetry::reinitTelemetry();
+
   // Create the log context
   log::LogContext lc(m_log);
   // Set process name

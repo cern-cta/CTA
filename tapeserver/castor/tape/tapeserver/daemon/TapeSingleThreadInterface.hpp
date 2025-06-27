@@ -97,7 +97,7 @@ protected:
       const std::string modeAsString = "R";
       scoped.add("MCMountTime", timer.secs()).add("mode", modeAsString);
       m_logContext.log(cta::log::INFO, "Tape mounted for read-only access");
-      auto mountCounter = cta::telemetry::metrics::InstrumentProvider::instance().getUInt64Counter("cta.taped", "mount.count");
+      auto mountCounter = cta::telemetry::metrics::InstrumentProvider::instance().getUInt64Counter("cta.taped", "taped.mount.count");
       mountCounter->Add(1, {{"mount.type", "retrieve"}, {"tape.vid", m_vid}});
     }
     catch (cta::exception::Exception& ex) {
@@ -119,7 +119,7 @@ protected:
       const std::string modeAsString = "RW";
       scoped.add("MCMountTime", timer.secs()).add("mode", modeAsString);
       m_logContext.log(cta::log::INFO, "Tape mounted for read/write access");
-      auto mountCounter = cta::telemetry::metrics::InstrumentProvider::instance().getUInt64Counter("cta.taped", "mount.count");
+      auto mountCounter = cta::telemetry::metrics::InstrumentProvider::instance().getUInt64Counter("cta.taped", "taped.mount.count");
       mountCounter->Add(1, {{"mount.type", "archive"}, {"tape.vid", m_vid}});
     }
     catch (cta::exception::Exception& ex) {

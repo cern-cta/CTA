@@ -697,4 +697,10 @@ std::time_t getCurrentEpochTime() {
   return std::chrono::system_clock::to_time_t(std::chrono::system_clock::now());
 }
 
+std::string getProcessName() {
+  char name[16] = {0};
+  prctl(PR_GET_NAME, name, 0, 0, 0);
+  return std::string(name);
+}
+
 }  // namespace cta::utils
