@@ -1322,7 +1322,8 @@ void OStoreDB::setRetrieveJobBatchReportedToUser(std::list<cta::SchedulerDatabas
         j->asyncDeleteJob();
       } catch (const cta::exception::NoSuchObject& ex) {
         log::ScopedParamContainer(lc)
-          .log(log::WARNING, "In OStoreDB::setRetrieveJobBatchReportedToUser(): failed to asyncDeleteJob because it does not exist in the objectstore.");
+            .add("fileId", j->archiveFile.archiveFileID)
+            .log(log::WARNING, "In OStoreDB::setRetrieveJobBatchReportedToUser(): failed to asyncDeleteJob because it does not exist in the objectstore.");
         jobsToDeleteItor = jobsToDelete.erase(jobsToDeleteItor);
         continue;
       }
@@ -1337,6 +1338,7 @@ void OStoreDB::setRetrieveJobBatchReportedToUser(std::list<cta::SchedulerDatabas
           j->waitAsyncDelete();
         } catch (const cta::exception::NoSuchObject& ex) {
           log::ScopedParamContainer(lc)
+            .add("fileId", j->archiveFile.archiveFileID)
             .add("objectAddress", j->m_retrieveRequest.getAddressIfSet())
             .log(log::WARNING, "In OStoreDB::setRetrieveJobBatchReportedToUser(): failed to asyncDeleteJob because it does not exist in the objectstore.");
           continue;
@@ -1346,6 +1348,7 @@ void OStoreDB::setRetrieveJobBatchReportedToUser(std::list<cta::SchedulerDatabas
         jobsToUnown.push_back(j->m_retrieveRequest.getAddressIfSet());
       } catch (cta::exception::Exception &ex) {
         log::ScopedParamContainer(lc)
+          .add("fileId", j->archiveFile.archiveFileID)
           .add("objectAddress", j->m_retrieveRequest.getAddressIfSet())
           .add("exceptionMSG", ex.getMessageValue())
           .log(log::ERR, "In OStoreDB::setRetrieveJobBatchReportedToUser(): failed to delete RetrieveRequest.");
