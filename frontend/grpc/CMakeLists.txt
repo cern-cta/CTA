@@ -27,10 +27,10 @@ add_executable(cta-frontend-grpc
 
 if(CTA_USE_PGSCHED)
   target_link_libraries(cta-frontend-grpc
-    ctascheduler ctacommon ctacatalogue ctagrpc curl JwkCache)
+    ctascheduler ctacommon ctacatalogue ctagrpc JwkCache)
 else()
   target_link_libraries(cta-frontend-grpc
-    ctascheduler ctacommon ctaobjectstore ctacatalogue ctagrpc curl JwkCache)
+    ctascheduler ctacommon ctaobjectstore ctacatalogue ctagrpc JwkCache)
 endif()
 
 add_manpage(cta-frontend-grpc)
