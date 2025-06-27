@@ -120,17 +120,10 @@
       "additionalProperties": {
         "type": "object",
         "required": [
-          "arch",
           "versionlock",
           "buildRequires"
         ],
         "properties": {
-          "arch": {
-            "description": "Architecture",
-            "type": "string",
-            "enum": ["x86_64"],
-            "minLength": 1
-          },
           "versionlock": {
             "description": "These values are used to generate a versionlock.list file.",
             "type": "object",
