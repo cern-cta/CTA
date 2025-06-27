@@ -86,12 +86,12 @@ mgm:
       cp /etc/grpc-certs/ca.crt /etc/grid-security/certificates
 
       response=$(curl -X POST http://auth-keycloak:8080/realms/master/protocol/openid-connect/token \
-      -H "Content-Type: application/x-www-form-urlencoded" \
-      -d "grant_type=password" \
-      -d "client_id=admin-cli" \
-      -d "username=${KEYCLOAK_ADMIN}" \
-      -d "password=${KEYCLOAK_ADMIN_PASSWORD}" \
-      -s)
+        -H "Content-Type: application/x-www-form-urlencoded" \
+        -d "grant_type=password" \
+        -d "client_id=admin-cli" \
+        -d "username=${KEYCLOAK_ADMIN}" \
+        -d "password=${KEYCLOAK_ADMIN_PASSWORD}" \
+        -s)
 
       admin_access_token=$(echo ${response} | jq -r .access_token)
       printf "$admin_access_token" > /etc/grid-security/jwt-token-grpc
