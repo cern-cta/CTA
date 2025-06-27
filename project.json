@@ -168,7 +168,7 @@
       "buildRequires": {
         "group-xrootd-devel": ">= 1:5.7.1-1",
         "group-protobuf": ">= 3.3.1",
-        "group-ceph-devel": "= 2:17.2.8-0",
+        "group-ceph-devel": "= 2:17.2.8",
         "oracle-instantclient-devel": ">= 23.0",
         "gtest-devel": ">= 1.11.0",
         "sqlite-devel": ">= 3.6",
