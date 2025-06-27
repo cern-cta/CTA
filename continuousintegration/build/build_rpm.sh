@@ -266,7 +266,7 @@ build_rpm() {
 
   # Setup
   if [ "${install_srpms}" = true ]; then
-    ./continuousintegration/utils/project-json/generate_versionlock.py --platform ${platform} >/etc/yum/pluginconf.d/versionlock.list
+    ./continuousintegration/project-json/generate_versionlock.py --platform ${platform} >/etc/yum/pluginconf.d/versionlock.list
     if [[ ${use_internal_repos} = true ]]; then
       cp -f continuousintegration/docker/${platform}/etc/yum.repos.d-internal/*.repo /etc/yum.repos.d/
     else
