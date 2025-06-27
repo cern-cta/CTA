@@ -21,6 +21,7 @@
 #include <json-c/json.h>
 #include <memory>
 #include <vector>
+#include <set>
 
 namespace cta::utils::json::object {
 
@@ -78,6 +79,12 @@ protected:
    * @return the JSON-C representation of the object associated to the key passed in parameter
    */
   json_type getJSONObjectType(const std::string& key) const;
+
+  /**
+   * This method allows to get all keys in a JSON-C object
+   * @return the set of key names
+   */
+  std::set<std::string> getJSONObjectKeys() const;
 
   /**
    * Helper template

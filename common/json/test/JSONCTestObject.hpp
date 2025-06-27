@@ -66,6 +66,10 @@ public:
   json_type jsonGetValueType(const std::string & key) {
     return JSONCObject::getJSONObjectType(key);
   }
+
+  std::set<std::string> getJSONObjectKeys() {
+    return JSONCObject::getJSONObjectKeys();
+  }
 };
 
 }

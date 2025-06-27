@@ -35,6 +35,13 @@ TEST(JSONCObjectTest, testJSONGenerationFromObject) {
 TEST(JSONCObjectTest, testObjectGenerationFromJSON){
   std::string json = "{\"integer_number\":42,\"str\":\"forty two\",\"double_number\":42.000000}";
   JSONCTestObject to(json);
+
+  auto keys = to.getJSONObjectKeys();
+  ASSERT_EQ(3, keys.size());
+  ASSERT_TRUE(keys.count("integer_number"));
+  ASSERT_TRUE(keys.count("str"));
+  ASSERT_TRUE(keys.count("double_number"));
+
   ASSERT_EQ(42, to.jsonGetValue<int>("integer_number"));
   ASSERT_EQ("forty two", to.jsonGetValue<std::string>("str"));
   ASSERT_DOUBLE_EQ(42.000000, to.jsonGetValue<double>("double_number"));
@@ -50,6 +57,13 @@ TEST(JSONCObjectTest, testJSONCParserRecursiveWithObject){
   JSONCTestObject to_outer(json);
   auto to_inner = to_outer.jsonGetValue<JSONCTestObject>("inner_object");
   to_outer.reset("{}"); // Force outer object to be destructed
+
+  auto keys = to_inner.getJSONObjectKeys();
+  ASSERT_EQ(3, keys.size());
+  ASSERT_TRUE(keys.count("integer_number"));
+  ASSERT_TRUE(keys.count("str"));
+  ASSERT_TRUE(keys.count("double_number"));
+
   ASSERT_EQ(777, to_inner.jsonGetValue<int>("integer_number"));
   ASSERT_EQ("seven seven seven", to_inner.jsonGetValue<std::string>("str"));
   ASSERT_DOUBLE_EQ(777.777777, to_inner.jsonGetValue<double>("double_number"));

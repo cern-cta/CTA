@@ -67,6 +67,14 @@ json_type JSONCObject::getJSONObjectType(const std::string& key) const {
   throw cta::exception::JSONObjectException(errMsg);
 }
 
+std::set<std::string> JSONCObject::getJSONObjectKeys() const {
+  std::set<std::string> keys;
+  json_object_object_foreach(m_jsonObject.get(), key, val) {
+    keys.insert(key);
+  }
+  return keys;
+}
+
 json_object * JSONCObject::getJSONObject(const std::string& key) const {
   json_object * objectRet;
   if(json_object_object_get_ex(m_jsonObject.get(),key.c_str(),&objectRet)){
