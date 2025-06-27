@@ -159,9 +159,9 @@
         "group-oracle-instantclient": "23.6.0.24.10-1"
       },
       "runRequires": {
-        "xrootd": ">= 1:5.7.1-1",
+        "xrootd": ">= 1:5.7.1",
         "oracle-instantclient": ">= 23.0",
-        "rados": "= 2:17.2.8-0",
+        "rados": "= 2:17.2.8",
         "valgrind": ">= 3.8.1",
         "gtest": ">= 1.11.0"
       },
