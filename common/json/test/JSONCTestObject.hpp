@@ -63,8 +63,12 @@ public:
     return JSONCObject::jsonConvertValue<T>();
   }
 
-  json_type jsonGetValueType(const std::string & key) {
-    return JSONCObject::getJSONObjectType(key);
+  json_type jsonGetValueTypeFromKey(const std::string & key) {
+    return JSONCObject::getJSONObjectTypeFromKey(key);
+  }
+
+  json_type getJSONObjectType() {
+    return JSONCObject::getJSONObjectType();
   }
 
   std::set<std::string> getJSONObjectKeys() {

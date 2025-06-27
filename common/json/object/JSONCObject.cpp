@@ -58,13 +58,17 @@ void JSONCObject::resetJSONCObject() {
   m_jsonObject.reset(json_object_new_object());
 }
 
-json_type JSONCObject::getJSONObjectType(const std::string& key) const {
+json_type JSONCObject::getJSONObjectTypeFromKey(const std::string& key) const {
   json_object * objectRet;
   if(json_object_object_get_ex(m_jsonObject.get(),key.c_str(),&objectRet)){
     return json_object_get_type(objectRet);
   }
   std::string errMsg = "In JSONCObject::getJSONObjectType(), the provided json does not contain any key named \""+key+"\".";
   throw cta::exception::JSONObjectException(errMsg);
+}
+
+json_type JSONCObject::getJSONObjectType() const {
+  return json_object_get_type(m_jsonObject.get());
 }
 
 std::set<std::string> JSONCObject::getJSONObjectKeys() const {

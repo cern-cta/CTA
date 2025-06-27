@@ -34,8 +34,8 @@ public:
   T jsonGetValueProbe(const std::string & key) {
     return jsonGetValue<T>(key);
   }
-  json_type jsonGetValueType(const std::string & key) {
-    return getJSONObjectType(key);
+  json_type jsonGetValueTypeFromKey(const std::string & key) {
+    return getJSONObjectTypeFromKey(key);
   }
 };
 
@@ -102,50 +102,50 @@ TEST_F(cta_log_JsonTest, testJsonPrinting) {
   ASSERT_THROW(jObjB.jsonGetValueProbe<int64_t>("missing_key"), cta::exception::JSONObjectException);
 
   // Check epoch time is a floating-point
-  ASSERT_EQ(json_type::json_type_double, jObjA.jsonGetValueType("epoch_time"));
-  ASSERT_EQ(json_type::json_type_double, jObjB.jsonGetValueType("epoch_time"));
+  ASSERT_EQ(json_type::json_type_double, jObjA.jsonGetValueTypeFromKey("epoch_time"));
+  ASSERT_EQ(json_type::json_type_double, jObjB.jsonGetValueTypeFromKey("epoch_time"));
 
   // Check hostname
-  ASSERT_EQ(json_type::json_type_string, jObjA.jsonGetValueType("hostname"));
-  ASSERT_EQ(json_type::json_type_string, jObjB.jsonGetValueType("hostname"));
+  ASSERT_EQ(json_type::json_type_string, jObjA.jsonGetValueTypeFromKey("hostname"));
+  ASSERT_EQ(json_type::json_type_string, jObjB.jsonGetValueTypeFromKey("hostname"));
   ASSERT_EQ("dummy", jObjA.jsonGetValueProbe<std::string>("hostname"));
   ASSERT_EQ("dummy", jObjB.jsonGetValueProbe<std::string>("hostname"));
 
   // Check programme
-  ASSERT_EQ(json_type::json_type_string, jObjA.jsonGetValueType("program"));
-  ASSERT_EQ(json_type::json_type_string, jObjB.jsonGetValueType("program"));
+  ASSERT_EQ(json_type::json_type_string, jObjA.jsonGetValueTypeFromKey("program"));
+  ASSERT_EQ(json_type::json_type_string, jObjB.jsonGetValueTypeFromKey("program"));
   ASSERT_EQ("cta_log_JsonTest", jObjA.jsonGetValueProbe<std::string>("program"));
   ASSERT_EQ("cta_log_JsonTest", jObjB.jsonGetValueProbe<std::string>("program"));
 
   // Check log level
-  ASSERT_EQ(json_type::json_type_string, jObjA.jsonGetValueType("log_level"));
-  ASSERT_EQ(json_type::json_type_string, jObjB.jsonGetValueType("log_level"));
+  ASSERT_EQ(json_type::json_type_string, jObjA.jsonGetValueTypeFromKey("log_level"));
+  ASSERT_EQ(json_type::json_type_string, jObjB.jsonGetValueTypeFromKey("log_level"));
   ASSERT_EQ("INFO", jObjA.jsonGetValueProbe<std::string>("log_level"));
   ASSERT_EQ("INFO", jObjB.jsonGetValueProbe<std::string>("log_level"));
 
   // Check parameters and expected types
-  ASSERT_EQ(json_type::json_type_string, jObjA.jsonGetValueType("ParamsA_string"));
-  ASSERT_EQ(json_type::json_type_string, jObjB.jsonGetValueType("ParamsB_string"));
+  ASSERT_EQ(json_type::json_type_string, jObjA.jsonGetValueTypeFromKey("ParamsA_string"));
+  ASSERT_EQ(json_type::json_type_string, jObjB.jsonGetValueTypeFromKey("ParamsB_string"));
   ASSERT_EQ("test_value_A", jObjA.jsonGetValueProbe<std::string>("ParamsA_string"));
   ASSERT_EQ("test_value_B", jObjB.jsonGetValueProbe<std::string>("ParamsB_string"));
 
-  ASSERT_EQ(json_type::json_type_double, jObjA.jsonGetValueType("ParamsA_double"));
-  ASSERT_EQ(json_type::json_type_double, jObjB.jsonGetValueType("ParamsB_double"));
+  ASSERT_EQ(json_type::json_type_double, jObjA.jsonGetValueTypeFromKey("ParamsA_double"));
+  ASSERT_EQ(json_type::json_type_double, jObjB.jsonGetValueTypeFromKey("ParamsB_double"));
   ASSERT_DOUBLE_EQ(1234.5678, jObjA.jsonGetValueProbe<double>("ParamsA_double"));
   ASSERT_DOUBLE_EQ(0.0, jObjB.jsonGetValueProbe<double>("ParamsB_double"));
 
-  ASSERT_EQ(json_type::json_type_int, jObjA.jsonGetValueType("ParamsA_integer"));
-  ASSERT_EQ(json_type::json_type_int, jObjB.jsonGetValueType("ParamsB_integer"));
+  ASSERT_EQ(json_type::json_type_int, jObjA.jsonGetValueTypeFromKey("ParamsA_integer"));
+  ASSERT_EQ(json_type::json_type_int, jObjB.jsonGetValueTypeFromKey("ParamsB_integer"));
   ASSERT_EQ(-777, jObjA.jsonGetValueProbe<int64_t>("ParamsA_integer"));
   ASSERT_EQ(999, jObjB.jsonGetValueProbe<int64_t>("ParamsB_integer"));
 
-  ASSERT_EQ(json_type::json_type_boolean, jObjA.jsonGetValueType("ParamsA_bool"));
-  ASSERT_EQ(json_type::json_type_boolean, jObjB.jsonGetValueType("ParamsB_bool"));
+  ASSERT_EQ(json_type::json_type_boolean, jObjA.jsonGetValueTypeFromKey("ParamsA_bool"));
+  ASSERT_EQ(json_type::json_type_boolean, jObjB.jsonGetValueTypeFromKey("ParamsB_bool"));
   ASSERT_EQ(true, jObjA.jsonGetValueProbe<int64_t>("ParamsA_bool"));
   ASSERT_EQ(false, jObjB.jsonGetValueProbe<int64_t>("ParamsB_bool"));
 
-  ASSERT_EQ(json_type::json_type_null, jObjA.jsonGetValueType("ParamsA_null"));
-  ASSERT_EQ(json_type::json_type_null, jObjB.jsonGetValueType("ParamsB_null"));
+  ASSERT_EQ(json_type::json_type_null, jObjA.jsonGetValueTypeFromKey("ParamsA_null"));
+  ASSERT_EQ(json_type::json_type_null, jObjB.jsonGetValueTypeFromKey("ParamsB_null"));
   ASSERT_EQ(0, jObjA.jsonGetValueProbe<int64_t>("ParamsA_null"));
   ASSERT_EQ(0, jObjB.jsonGetValueProbe<int64_t>("ParamsB_null"));
 }
