@@ -196,7 +196,7 @@ public:
    * @return the archive mount policy with highest priority
    */
   std::string
-  getHighestPriorityArchiveMountPolicyName(const std::list<common::dataStructures::MountPolicy>& mountPolicies);
+  getHighestPriorityArchiveMountPolicyName(const std::list<common::dataStructures::MountPolicy>& mountPolicies) const;
 
   /**
    * Return the name of the archive mount policy with lowest request age from the mountPolicies passed in parameter
@@ -205,7 +205,7 @@ public:
    * @return the archive mount policy with lowest request age
    */
   std::string
-  getLowestRequestAgeArchiveMountPolicyName(const std::list<common::dataStructures::MountPolicy>& mountPolicies);
+  getLowestRequestAgeArchiveMountPolicyName(const std::list<common::dataStructures::MountPolicy>& mountPolicies) const;
 
   /**
    * Return the name of the retrieve mount policy with highest priority from the mountPolicies passed in parameter
@@ -214,7 +214,7 @@ public:
    * @return the retrieve mount policy with highest priority
    */
   std::string
-  getHighestPriorityRetrieveMountPolicyName(const std::list<common::dataStructures::MountPolicy>& mountPolicies);
+  getHighestPriorityRetrieveMountPolicyName(const std::list<common::dataStructures::MountPolicy>& mountPolicies) const;
 
   /**
    * Return the name of the retrieve mount policy with lowest request age from the mountPolicies passed in parameter
@@ -223,7 +223,7 @@ public:
    * @return the retrieve mount policy with lowest request age
    */
   std::string
-  getLowestRequestAgeRetrieveMountPolicyName(const std::list<common::dataStructures::MountPolicy>& mountPolicies);
+  getLowestRequestAgeRetrieveMountPolicyName(const std::list<common::dataStructures::MountPolicy>& mountPolicies) const;
 
   /**
    * Given a list of mount policies, it compares all of them to extract both the maximum archive priority and the minimum
@@ -243,7 +243,6 @@ public:
   static std::pair<uint64_t, uint64_t>
   getRetrieveMountPolicyMaxPriorityMinAge(const std::list<common::dataStructures::MountPolicy> &mountPolicies);
 
-  public:
   /*============ Archive management: tape server side =======================*/
   /**
    * The class used by the scheduler database to track the archive mounts

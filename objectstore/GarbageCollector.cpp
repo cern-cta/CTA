@@ -630,8 +630,8 @@ void GarbageCollector::OwnedObjectSorter::lockFetchAndUpdateRetrieveJobs(Agent& 
         // Determine the copy number and feed the queue with it.
         for (auto &tf: rr->getArchiveFile().tapeFiles) {
             if (tf.vid == vid) {
-            jta.push_back({tf.copyNb, tf.fSeq, rr->getAddressIfSet(), rr->getArchiveFile().fileSize,
-                rr->getRetrieveFileQueueCriteria().mountPolicy, rr->getEntryLog().time, rr->getActivity(), rr->getDiskSystemName()});
+            jta.emplace_back(tf.copyNb, tf.fSeq, rr->getAddressIfSet(), rr->getArchiveFile().fileSize,
+                rr->getRetrieveFileQueueCriteria().mountPolicy, rr->getEntryLog().time, rr->getActivity(), rr->getDiskSystemName());
           }
         }
       }

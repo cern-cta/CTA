@@ -16,6 +16,7 @@
  *               submit itself to any jurisdiction.
  */
 
+#include "common/dataStructures/MountPolicy.hpp"
 #include "common/dataStructures/RetrieveJobToAdd.hpp"
 #include "RetrieveQueueShard.hpp"
 #include "GenericObject.hpp"
@@ -162,20 +163,17 @@ std::list<common::dataStructures::RetrieveJobToAdd> RetrieveQueueShard::dumpJobs
   checkPayloadReadable();
   std::list<common::dataStructures::RetrieveJobToAdd> ret;
   for (auto &j: m_payload.retrievejobs()) {
-    ret.emplace_back(common::dataStructures::RetrieveJobToAdd());
-    ret.back().copyNb = j.copynb();
-    ret.back().fSeq = j.fseq();
-    ret.back().fileSize = j.size();
-    ret.back().policy.retrieveMinRequestAge = j.minretrieverequestage();
-    ret.back().policy.retrievePriority = j.priority();
-    ret.back().policy.name = j.mountpolicyname();
-    ret.back().startTime = j.starttime();
-    ret.back().retrieveRequestAddress = j.address();
-    if (j.has_activity()) {
-      ret.back().activity = j.activity();
-    }
-    if (j.has_destination_disk_system_name())
-      ret.back().diskSystemName = j.destination_disk_system_name();
+    ret.emplace_back(
+      j.copynb(),
+      j.fseq(),
+      j.address(),
+      j.size(),
+      common::dataStructures::MountPolicy(j.mountpolicyname(), 0, 0,
+                                          j.priority(), j.minretrieverequestage()),
+      j.starttime(),
+      j.has_activity() ? std::optional<std::string>{j.activity()} : std::nullopt,
+      j.has_destination_disk_system_name() ? std::optional<std::string>{j.destination_disk_system_name()} : std::nullopt
+    );
   }
   return ret;
 }

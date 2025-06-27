@@ -308,7 +308,7 @@ void RetrieveQueue::addJobToShardAndMaybeSplit(common::dataStructures::RetrieveJ
   }
 }
 
-void RetrieveQueue::addJobsAndCommit(std::list<common::dataStructures::RetrieveJobToAdd> & jobsToAdd, AgentReference & agentReference, log::LogContext & lc) {
+void RetrieveQueue::addJobsAndCommit(std::list<common::dataStructures::RetrieveJobToAdd> & jobsToAdd, AgentReference & agentReference, [[maybe_unused]] log::LogContext & lc) {
   checkPayloadWritable();
   if (jobsToAdd.empty()) return;
   // Keep track of the mounting criteria
