@@ -84,7 +84,6 @@ SubprocessHandler::ProcessingStatus MaintenanceHandler::fork() {
     // and fork
     m_pid=::fork();
     exception::Errnum::throwOnMinusOne(m_pid, "In MaintenanceHandler::fork(): failed to fork()");
-    cta::telemetry::reinitTelemetry();
     if (!m_pid) {
       // We are in the child process
       SubprocessHandler::ProcessingStatus ret;
@@ -97,6 +96,8 @@ SubprocessHandler::ProcessingStatus MaintenanceHandler::fork() {
       m_processingStatus.forkState = SubprocessHandler::ForkState::parent;
       // Close child side of socket.
       m_socketPair->close(server::SocketPair::Side::child);
+      // Ensure the parent has telemetry available
+      cta::telemetry::reinitTelemetry();
       // We are now ready to react to timeouts and messages from the child process.
       return m_processingStatus;
     }
@@ -283,6 +284,8 @@ void MaintenanceHandler::exceptionThrowingRunChild(){
 
   // Set the thread name for process ID:
   prctl(PR_SET_NAME, "cta-tpd-maint");
+  // Initialise telemetry only after the process name is available
+  cta::telemetry::reinitTelemetry();
 
   // Before anything, we will check for access to the scheduler's central storage.
   // If we fail to access it, we cannot work. We expect the drive processes to

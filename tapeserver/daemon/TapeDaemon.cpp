@@ -23,6 +23,7 @@
 #include "common/exception/Errnum.hpp"
 #include "common/exception/NoSuchObject.hpp"
 #include "common/processCap/ProcessCap.hpp"
+#include "common/telemetry/TelemetryInit.hpp"
 #include "common/utils/utils.hpp"
 #include "tapeserver/daemon/CommandLineParams.hpp"
 #include "tapeserver/daemon/DriveHandler.hpp"
@@ -85,6 +86,8 @@ void  cta::tape::daemon::TapeDaemon::exceptionThrowingMain()  {
 
   // Set the name of the (unique) thread for easy process identification.
   prctl(PR_SET_NAME, "cta-tpd-master");
+  // Initialise telemetry only after the process name is available
+  cta::telemetry::reinitTelemetry();
   mainEventLoop();
 }
 
