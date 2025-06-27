@@ -132,7 +132,8 @@ FrontendService::FrontendService(const std::string& configFilename) : m_archiveF
       log(log::INFO, "Instantiating telemetry", {{"metricsBackend", telemetryMetricsBackend},
                                                  {"otlpEndpoint", telemetryMetricsOltpEndpoint.value()}});
       cta::telemetry::TelemetryConfig telemetryConfig = cta::telemetry::TelemetryConfigBuilder()
-        .serviceName("cta.frontendxrd")
+        .serviceName("cta.frontend")
+        .serviceNamespace(m_instanceName)
         .metricsBackend(telemetryMetricsBackend.value())
         .metricsExportInterval(std::chrono::milliseconds(telemetryMetricsExportInterval.value()))
         .metricsExportTimeout(std::chrono::milliseconds(telemetryMetricsExportTimeout.value()))
