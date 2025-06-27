@@ -85,9 +85,9 @@ WorkflowEvent::WorkflowEvent(const frontend::FrontendService& frontendService,
 
 xrd::Response WorkflowEvent::process() {
   xrd::Response response;
-  auto requestCounter = cta::telemetry::metrics::InstrumentProvider::instance().getUInt64Counter("cta.frontend", "requests.count");
+  auto requestCounter = cta::telemetry::metrics::InstrumentProvider::instance().getUInt64Counter("cta.frontend", "frontend.request.count");
   requestCounter->Add(1, {{"request.type", "workflow_event"}, {"event.type", m_event.wf().event()}});
-  auto requestDurationHistogram = cta::telemetry::metrics::InstrumentProvider::instance().getDoubleHistogram("cta.frontend", "request.duration");
+  auto requestDurationHistogram = cta::telemetry::metrics::InstrumentProvider::instance().getDoubleHistogram("cta.frontend", "frontend.request.duration");
   utils::Timer timer;
   switch(m_event.wf().event()) {
     using namespace cta::eos;

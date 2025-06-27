@@ -28,6 +28,7 @@
 #include "common/dataStructures/JobQueueType.hpp"
 #include "common/dataStructures/LabelFormat.hpp"
 #include "common/log/Logger.hpp"
+#include "common/telemetry/metrics/InstrumentProvider.hpp"
 #include "common/threading/BlockingQueue.hpp"
 #include "common/threading/Thread.hpp"
 #include "objectstore/Agent.hpp"
@@ -783,6 +784,9 @@ private:
   log::Logger& m_logger;
   std::unique_ptr<TapeDrivesCatalogueState> m_tapeDrivesState;
   objectstore::AgentReference* m_agentReference = nullptr;
+
+  std::shared_ptr<opentelemetry::metrics::Counter<uint64_t>> m_archiveCounter;
+  std::shared_ptr<opentelemetry::metrics::Counter<uint64_t>> m_retrieveCounter;
 };
 
 }  // namespace cta

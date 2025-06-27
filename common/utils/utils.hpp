@@ -405,4 +405,11 @@ bool isValidHex(const std::string& hexadecimal);
 // Function to get the current epoch time in seconds
 std::time_t getCurrentEpochTime();
 
+/**
+ * Retrieves the current process (or main thread) name using the Linux prctl system call.
+ *
+ * @return A std::string containing the name of the calling thread (typically the process name).
+ */
+std::string getProcessName();
+
 }  // namespace cta::utils

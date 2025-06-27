@@ -156,7 +156,6 @@ SubprocessHandler::ProcessingStatus DriveHandler::fork() {
     exception::Errnum::throwOnMinusOne(m_pid, "In DriveHandler::fork(): failed to fork()");
     m_sessionState = SessionState::StartingUp;
     m_lastStateChangeTime = std::chrono::steady_clock::now();
-    cta::telemetry::reinitTelemetry();
     if (!m_pid) {
       // We are in the child process
       SubprocessHandler::ProcessingStatus ret;
@@ -170,6 +169,8 @@ SubprocessHandler::ProcessingStatus DriveHandler::fork() {
       m_processingStatus.nextTimeout = nextTimeout();
       // Register our socket pair side for epoll
       m_processManager.addFile(m_socketPair->getFdForAccess(server::SocketPair::Side::child), this);
+      // Ensure the parent has telemetry available
+      cta::telemetry::reinitTelemetry();
       // Create a catalogue handler in the parent process,
       // to be able to properly handle a drive shutdown without having to reload the plugin catalogue libraries
       if (!m_catalogue) {
@@ -608,6 +609,9 @@ int DriveHandler::runChild() {
   // Set the process name for process ID:
   const auto processName = m_tapedConfig.constructProcessName(m_lc, "drive");
   prctl(PR_SET_NAME, processName.c_str());
+
+  // Initialise telemetry only after the process name is available
+  cta::telemetry::reinitTelemetry();
 
   // Create the channel to talk back to the parent process.
   const auto driveHandlerProxy = createDriveHandlerProxy();

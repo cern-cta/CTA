@@ -17,8 +17,18 @@ inline MetricsBackend stringToMetricsBackend(const std::string& name) {
   throw std::invalid_argument("Invalid MetricBackend: " + name);
 }
 
-TelemetryConfigBuilder& TelemetryConfigBuilder::serviceName(std::string name) {
-  m_config.serviceName = std::move(name);
+TelemetryConfigBuilder& TelemetryConfigBuilder::serviceName(std::string serviceName) {
+  m_config.serviceName = std::move(serviceName);
+  return *this;
+}
+
+TelemetryConfigBuilder& TelemetryConfigBuilder::serviceNamespace(std::string serviceNamespace) {
+  m_config.serviceNamespace = std::move(serviceNamespace);
+  return *this;
+}
+
+TelemetryConfigBuilder& TelemetryConfigBuilder::instanceHint(std::string instanceHint) {
+  m_config.instanceHint = std::move(instanceHint);
   return *this;
 }
 
@@ -55,6 +65,10 @@ TelemetryConfigBuilder& TelemetryConfigBuilder::metricsHeader(std::string key, s
 TelemetryConfig TelemetryConfigBuilder::build() const {
   if (m_config.serviceName.empty()) {
     throw std::invalid_argument("TelemetryConfig: serviceName is required.");
+  }
+
+  if (m_config.serviceNamespace.empty()) {
+    throw std::invalid_argument("TelemetryConfig: serviceNamespace is required.");
   }
 
   if (m_config.metrics.backend == MetricsBackend::OTLP && m_config.metrics.otlpEndpoint.empty()) {
