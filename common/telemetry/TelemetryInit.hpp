@@ -14,6 +14,12 @@ namespace cta::telemetry {
 void initTelemetry(const TelemetryConfig& config);
 
 /**
+ * Initialises the telemetry config, but not telemetry itself
+ * After this has been used, reinitTelemetry() can be used
+ */
+void initTelemetryConfig(const TelemetryConfig& config);
+
+/**
  * Provided that initTelemetry has been called at some point in the past,
  * this method will reuse the original telemetry config to reinitialise telemetry
  */
