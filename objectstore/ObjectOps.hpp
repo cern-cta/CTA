@@ -371,9 +371,9 @@ public:
       m_locked = true;
     }
     const auto lockAcquireTime = timer.secs();
-    lockAcquireDurationHistogram->Record(lockAcquireTime, {{cta::telemetry::constants::kLockTypeKey, "ScopedExclusiveLock"}},
+    lockAcquireDurationHistogram->Record(lockAcquireTime, {{cta::telemetry::constants::kLockTypeKey, "ScopedSharedLock"}},
                                          opentelemetry::context::RuntimeContext::GetCurrent());
-    lockCounter->Add(1, {{cta::telemetry::constants::kLockTypeKey, "ScopedExclusiveLock"}});
+    lockCounter->Add(1, {{cta::telemetry::constants::kLockTypeKey, "ScopedSharedLock"}});
   }
 
   virtual ~ScopedSharedLock() {
