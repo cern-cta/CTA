@@ -27,7 +27,7 @@ using grpc::ServerContext;
 using grpc::Status;
 
 namespace cta::frontend::grpc {
-class CtaRpcImpl : public CtaRpc::Service {
+class CtaRpcImpl : public CtaRpc::CallbackService {
 
 private:
   std::unique_ptr<cta::frontend::FrontendService> m_frontendService;
@@ -44,12 +44,12 @@ public:
   }
 
   // Archive/Retrieve interface
-  Status Create(::grpc::ServerContext* context, const cta::xrd::Request* request, cta::xrd::Response* response);
-  Status Archive(::grpc::ServerContext* context, const cta::xrd::Request* request, cta::xrd::Response* response);
-  Status Retrieve(::grpc::ServerContext* context, const cta::xrd::Request* request, cta::xrd::Response* response);
-  Status CancelRetrieve(::grpc::ServerContext* context, const cta::xrd::Request* request, cta::xrd::Response* response);
-  Status Delete(::grpc::ServerContext* context, const cta::xrd::Request* request, cta::xrd::Response* response);
+  ::grpc::ServerUnaryReactor* Create(::grpc::CallbackServerContext* context, const cta::xrd::Request* request, cta::xrd::Response* response);
+  ::grpc::ServerUnaryReactor* Archive(::grpc::CallbackServerContext* context, const cta::xrd::Request* request, cta::xrd::Response* response);
+  ::grpc::ServerUnaryReactor* Retrieve(::grpc::CallbackServerContext* context, const cta::xrd::Request* request, cta::xrd::Response* response);
+  ::grpc::ServerUnaryReactor* CancelRetrieve(::grpc::CallbackServerContext* context, const cta::xrd::Request* request, cta::xrd::Response* response);
+  ::grpc::ServerUnaryReactor* Delete(::grpc::CallbackServerContext* context, const cta::xrd::Request* request, cta::xrd::Response* response);
 private:
-  Status ProcessGrpcRequest(const cta::xrd::Request* request, cta::xrd::Response* response, cta::log::LogContext &lc) const;
+  void ProcessGrpcRequest(::grpc::ServerUnaryReactor* reactor, const cta::xrd::Request* request, cta::xrd::Response* response, cta::log::LogContext &lc) const;
 };
 } // namespace cta::frontend::grpc
