@@ -19,6 +19,7 @@
 #include "rdbms/Stmt.hpp"
 #include "rdbms/StmtPool.hpp"
 #include "rdbms/wrapper/StmtWrapper.hpp"
+#include "common/telemetry/TelemetryConstants.hpp"
 
 namespace cta::rdbms {
 
@@ -27,7 +28,7 @@ namespace cta::rdbms {
 //-----------------------------------------------------------------------------
 Stmt::Stmt():
   m_stmtPool(nullptr),
-  m_queryCounter(cta::telemetry::metrics::InstrumentProvider::instance().getUInt64Counter("cta.catalogue", "catalogue.query.count")) {
+  m_queryCounter(cta::telemetry::metrics::InstrumentProvider::instance().getUInt64Counter(cta::telemetry::constants::kCatalogueMeter, cta::telemetry::constants::kCatalogueQueryCount)) {
 }
 
 //-----------------------------------------------------------------------------
@@ -36,7 +37,7 @@ Stmt::Stmt():
 Stmt::Stmt(std::unique_ptr<wrapper::StmtWrapper> stmt, StmtPool &stmtPool):
   m_stmt(std::move(stmt)),
   m_stmtPool(&stmtPool),
-  m_queryCounter(cta::telemetry::metrics::InstrumentProvider::instance().getUInt64Counter("cta.catalogue", "catalogue.query.count")) {
+  m_queryCounter(cta::telemetry::metrics::InstrumentProvider::instance().getUInt64Counter(cta::telemetry::constants::kCatalogueMeter, cta::telemetry::constants::kCatalogueQueryCount)) {
 }
 
 //-----------------------------------------------------------------------------
@@ -45,7 +46,7 @@ Stmt::Stmt(std::unique_ptr<wrapper::StmtWrapper> stmt, StmtPool &stmtPool):
 Stmt::Stmt(Stmt &&other) noexcept :
   m_stmt(std::move(other.m_stmt)),
   m_stmtPool(other.m_stmtPool),
-  m_queryCounter(cta::telemetry::metrics::InstrumentProvider::instance().getUInt64Counter("cta.catalogue", "catalogue.query.count")) {
+  m_queryCounter(cta::telemetry::metrics::InstrumentProvider::instance().getUInt64Counter(cta::telemetry::constants::kCatalogueMeter, cta::telemetry::constants::kCatalogueQueryCount)) {
 }
 
 //-----------------------------------------------------------------------------
@@ -261,7 +262,7 @@ void Stmt::bindString(const std::string &paramName, const std::optional<std::str
 Rset Stmt::executeQuery() {
   try {
     if(nullptr != m_stmt) {
-      m_queryCounter->Add(1, {});
+      m_queryCounter->Add(1);
       return Rset(m_stmt->executeQuery());
     } else {
       throw exception::Exception("Stmt does not contain a cached statement");
@@ -278,7 +279,7 @@ Rset Stmt::executeQuery() {
 void Stmt::executeNonQuery() {
   try {
     if(nullptr != m_stmt) {
-      m_queryCounter->Add(1, {});
+      m_queryCounter->Add(1);
       return m_stmt->executeNonQuery();
     } else {
       throw exception::Exception("Stmt does not contain a cached statement");
