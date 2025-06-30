@@ -78,11 +78,11 @@ void initMetrics(const TelemetryConfig& config) {
 
   std::string processName = cta::utils::getProcessName();
   std::string serviceInstanceId;
-  if (config.instanceHint.empty()) {
+  if (config.serviceInstanceHint.empty()) {
     // No instance hint, so we don't care about a deterministic/persistent ServiceInstanceId across restarts
     serviceInstanceId = cta::utils::generateUuid();
   } else {
-    serviceInstanceId = cta::utils::getShortHostname() + ":" + processName + ":" + config.instanceHint;
+    serviceInstanceId = cta::utils::getShortHostname() + ":" + processName + ":" + config.serviceInstanceHint;
   }
 
   // These metrics should make sure that each and every process is uniquely identifiable
