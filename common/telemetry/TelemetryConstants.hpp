@@ -27,6 +27,7 @@ inline const std::string kCatalogueQueryCount = "catalogue.query.count";
 inline const std::string kSchedulerQueueingCount = "scheduler.queueing.count";
 
 inline const std::string kTapedTransferCount = "taped.transfer.count";
+inline const std::string kTapedMountCount = "taped.mount.count";
 
 // -------------------- Attribute Keys --------------------
 inline const std::string kTransferTypeKey = "transfer.type";
@@ -35,6 +36,7 @@ inline const std::string kRequestTypeKey = "request.type";
 inline const std::string kEventTypeKey = "event.type";
 inline const std::string kDiskInstanceKey = "disk.instance";
 inline const std::string kBackendKey = "backend";
+inline const std::string kTapeVidKey = "tape.vid";
 
 // -------------------- Attribute Values --------------------
 inline const std::string kTransferTypeArchive = "archive";
