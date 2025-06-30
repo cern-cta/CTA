@@ -1537,7 +1537,7 @@ jobFound: {
       .log(log::INFO, "In OStoreDB::queueRetrieve(): added job to queue (enqueueing finished).");
       m_queueingCounter->Add(1, {{"transfer.type", "retrieve"},
                                  {"disk.instance", rReq->getArchiveFile().diskInstance},
-                                 {"backend", "objectstore"}});});
+                                 {"backend", "objectstore"}});
   });
   mlForHelgrind.unlock();
   m_enqueueingTasksQueue.push(et);

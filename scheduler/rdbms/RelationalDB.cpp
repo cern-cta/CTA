@@ -146,7 +146,7 @@ std::string RelationalDB::queueArchive(const std::string& instanceName,
   logContext.log(log::INFO, "In RelationalDB::queueArchive(): Finished enqueueing request.");
   m_queueingCounter->Add(1, {{"transfer.type", "archive"},
                              {"disk.instance", aFile.diskInstance},
-                             {"backend", "postgres"}});});
+                             {"backend", "postgres"}});
   return aReq.getIdStr();
 }
 
