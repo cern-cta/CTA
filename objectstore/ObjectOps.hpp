@@ -343,8 +343,8 @@ protected:
 class ScopedSharedLock: public ScopedLock {
 public:
   ScopedSharedLock()
-  : lockCounter(cta::telemetry::metrics::InstrumentProvider::instance().getUInt64Counter("cta.objectstore", "objectstore.lock.acquire.count")),
-    lockAcquireDurationHistogram(cta::telemetry::metrics::InstrumentProvider::instance().getDoubleHistogram("cta.objectstore", "objectstore.lock.acquire.duration")) {}
+  : lockCounter(cta::telemetry::metrics::InstrumentProvider::instance().getUInt64Counter("cta.scheduler", "objectstore.lock.acquire.count")),
+    lockAcquireDurationHistogram(cta::telemetry::metrics::InstrumentProvider::instance().getDoubleHistogram("cta.scheduler", "objectstore.lock.acquire.duration")) {}
   explicit ScopedSharedLock(ObjectOpsBase& oo) : ScopedSharedLock() {
     lock(oo);
   }
@@ -385,10 +385,9 @@ private:
 
 class ScopedExclusiveLock: public ScopedLock {
 public:
-  // TODO: we need to figure out a nice way to manage the meter names
   ScopedExclusiveLock()
-  : lockCounter(cta::telemetry::metrics::InstrumentProvider::instance().getUInt64Counter("cta.objectstore", "objectstore.lock.acquire.count")),
-    lockAcquireDurationHistogram(cta::telemetry::metrics::InstrumentProvider::instance().getDoubleHistogram("cta.objectstore", "objectstore.lock.acquire.duration")) {}
+  : lockCounter(cta::telemetry::metrics::InstrumentProvider::instance().getUInt64Counter("cta.scheduler", "objectstore.lock.acquire.count")),
+    lockAcquireDurationHistogram(cta::telemetry::metrics::InstrumentProvider::instance().getDoubleHistogram("cta.scheduler", "objectstore.lock.acquire.duration")) {}
 
   ScopedExclusiveLock(ObjectOpsBase & oo, uint64_t timeout_us = 0) : ScopedExclusiveLock() {
     lock(oo, timeout_us);
