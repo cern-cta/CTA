@@ -785,8 +785,7 @@ private:
   std::unique_ptr<TapeDrivesCatalogueState> m_tapeDrivesState;
   objectstore::AgentReference* m_agentReference = nullptr;
 
-  std::shared_ptr<opentelemetry::metrics::Counter<uint64_t>> m_archiveCounter;
-  std::shared_ptr<opentelemetry::metrics::Counter<uint64_t>> m_retrieveCounter;
+  std::shared_ptr<opentelemetry::metrics::Counter<uint64_t>> m_queueingCounter;
 };
 
 }  // namespace cta

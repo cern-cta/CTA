@@ -67,8 +67,7 @@ OStoreDB::OStoreDB(objectstore::Backend& be, catalogue::Catalogue& catalogue, lo
       m_objectStore(be),
       m_catalogue(catalogue),
       m_logger(logger),
-      m_archiveCounter(cta::telemetry::metrics::InstrumentProvider::instance().getUInt64Counter("cta.objectstore", "objectstore.queueing.archive.count")),
-      m_retrieveCounter(cta::telemetry::metrics::InstrumentProvider::instance().getUInt64Counter("cta.objectstore", "objectstore.queueing.retrieve.count")) {
+      m_queueingCounter(cta::telemetry::metrics::InstrumentProvider::instance().getUInt64Counter("cta.scheduler", "scheduler.queueing.count")) {
   m_tapeDrivesState = std::make_unique<TapeDrivesCatalogueState>(m_catalogue);
   for (size_t i = 0; i < 5; i++) {
     m_enqueueingWorkerThreads.emplace_back(new EnqueueingWorkerThread(m_enqueueingTasksQueue));
@@ -1026,7 +1025,9 @@ std::string OStoreDB::queueArchive(const std::string& instanceName,
            arRelockTime + arTotalQueueingTime + arTotalCommitTime + arTotalQueueUnlockTime + arOwnerResetTime +
              arLockRelease + agOwnershipResetTime)
       .log(log::INFO, "In OStoreDB::queueArchive(): Finished enqueueing request.");
-      m_archiveCounter->Add(1, {{"disk.instance", archiveFile.diskInstance}});
+      m_queueingCounter->Add(1, {{"transfer.type", "archive"},
+                                 {"disk.instance", archiveFile.diskInstance},
+                                 {"backend", "objectstore"}});
   });
   mlForHelgrind.unlock();
   m_enqueueingTasksQueue.push(et);
@@ -1534,7 +1535,9 @@ jobFound: {
       .add("agentOwnershipResetTime", agOwnershipResetTime)
       .add("totalTime", rLockTime + qTime + cTime + qUnlockTime + rUnlockTime + agOwnershipResetTime)
       .log(log::INFO, "In OStoreDB::queueRetrieve(): added job to queue (enqueueing finished).");
-      m_retrieveCounter->Add(1, {{"disk.instance", rReq->getArchiveFile().diskInstance}});
+      m_queueingCounter->Add(1, {{"transfer.type", "retrieve"},
+                                 {"disk.instance", rReq->getArchiveFile().diskInstance},
+                                 {"backend", "objectstore"}});});
   });
   mlForHelgrind.unlock();
   m_enqueueingTasksQueue.push(et);
