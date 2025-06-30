@@ -137,8 +137,9 @@ bool DiskWriteTask::execute(RecallReportPacker& reporter, cta::log::LogContext& 
     m_stats.totalTime = totalTime.secs();
     logWithStat(cta::log::INFO, isVerifyOnly ? "File successfully verified" : "File successfully transfered to disk", lc);
     watchdog.deleteParameter("stillOpenFileForThread" + std::to_string((long long)threadID));
-    auto retrieveCounter = cta::telemetry::metrics::InstrumentProvider::instance().getUInt64Counter(cta::telemetry::constants::kTapedMeter, "taped.retrieve.count");
-    retrieveCounter->Add(1);
+    auto transferCounter = cta::telemetry::metrics::InstrumentProvider::instance().getUInt64Counter(cta::telemetry::constants::kTapedMeter,
+                                                                                                    cta::telemetry::constants::kTapedTransferCount);
+    transferCounter->Add(1, {{cta::telemetry::constants::kTransferTypeKey, cta::telemetry::constants::kTransferTypeRetrieve}});
     //everything went well, return true
     return true;
   } //end of try
