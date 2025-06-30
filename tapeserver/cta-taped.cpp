@@ -232,7 +232,7 @@ int main(const int argc, char **const argv) {
     cta::telemetry::TelemetryConfig telemetryConfig = cta::telemetry::TelemetryConfigBuilder()
       .serviceName("cta.taped")
       .serviceNamespace(globalConfig.instanceName.value())
-      .instanceHint(globalConfig.driveName.value()) // This allows us to have a service.instance.id that is consistent across restarts/forks
+      .serviceInstanceHint(globalConfig.driveName.value()) // This allows us to have a service.instance.id that is consistent across restarts/forks
       .metricsBackend(globalConfig.telemetryMetricsBackend.value())
       .metricsExportInterval(std::chrono::milliseconds(globalConfig.telemetryMetricsExportInterval.value()))
       .metricsExportTimeout(std::chrono::milliseconds(globalConfig.telemetryMetricsExportTimeout.value()))
