@@ -24,6 +24,7 @@
 #include "common/log/LogLevel.hpp"
 #include "common/log/StdoutLogger.hpp"
 #include "common/telemetry/TelemetryInit.hpp"
+#include "common/telemetry/TelemetryConstants.hpp"
 #include "common/telemetry/config/TelemetryConfig.hpp"
 #include <opentelemetry/sdk/common/global_log_handler.h>
 
@@ -481,7 +482,7 @@ FrontendService::FrontendService(const std::string& configFilename) : m_archiveF
       log(log::INFO, "Instantiating telemetry", {{"metricsBackend", telemetryMetricsBackend},
                                                  {"otlpEndpoint", telemetryMetricsOltpEndpoint.value()}});
       cta::telemetry::TelemetryConfig telemetryConfig = cta::telemetry::TelemetryConfigBuilder()
-        .serviceName("cta.frontend")
+        .serviceName(cta::telemetry::constants::kFrontendMeter)
         .serviceNamespace(m_instanceName)
         .serviceInstanceHint(servicePort)
         .metricsBackend(telemetryMetricsBackend.value())
