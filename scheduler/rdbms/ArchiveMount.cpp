@@ -175,7 +175,7 @@ void ArchiveMount::setJobBatchTransferred(std::list<std::unique_ptr<SchedulerDat
                                           log::LogContext& lc) {
   lc.log(log::WARNING,
          "In schedulerdb::ArchiveMount::setJobBatchTransferred(): passes as half-dummy implementation "
-         "valid only for AJS_ToReportToUserForTransfer !");
+         "valid only for AJS_ToReportToUserForSuccess !");
   std::vector<std::string> jobIDsList;
   jobIDsList.reserve(jobsBatch.size());
   auto jobsBatchItor = jobsBatch.begin();
@@ -194,7 +194,7 @@ void ArchiveMount::setJobBatchTransferred(std::list<std::unique_ptr<SchedulerDat
   try {
     // all jobs for which setJobBatchTransferred is called shall be reported as successful
     uint64_t nrows =
-      postgres::ArchiveJobQueueRow::updateJobStatus(txn, ArchiveJobStatus::AJS_ToReportToUserForTransfer, jobIDsList);
+      postgres::ArchiveJobQueueRow::updateJobStatus(txn, ArchiveJobStatus::AJS_ToReportToUserForSuccess, jobIDsList);
     txn.commit();
     if (nrows != jobIDsList.size()) {
       log::ScopedParamContainer(lc)

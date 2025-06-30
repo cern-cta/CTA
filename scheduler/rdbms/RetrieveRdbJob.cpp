@@ -93,7 +93,7 @@ void RetrieveRdbJob::initialize(const rdbms::Rset& rset) {
   }
   // Reset or update other member variables as necessary
   // Re-initialize report type
-  if (m_jobRow.status == RetrieveJobStatus::RJS_ToTransfer) {
+  if (m_jobRow.status == RetrieveJobStatus::RJS_ToReportToUserForSuccess) {
     reportType = ReportType::CompletionReport;
   } else if (m_jobRow.status == RetrieveJobStatus::RJS_ToReportToUserForFailure) {
     reportType = ReportType::FailureReport;

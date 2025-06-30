@@ -1,6 +1,6 @@
 CREATE TYPE ARCHIVE_JOB_STATUS AS ENUM (
   'AJS_ToTransferForUser',
-  'AJS_ToReportToUserForTransfer',
+  'AJS_ToReportToUserForSuccess',
   'AJS_Complete',
   'AJS_ToReportToUserForFailure',
   'AJS_Failed',
@@ -10,6 +10,7 @@ CREATE TYPE ARCHIVE_JOB_STATUS AS ENUM (
   'ReadyForDeletion');
 CREATE TYPE RETRIEVE_JOB_STATUS AS ENUM (
   'RJS_ToTransfer',
+  'RJS_ToReportToUserForSuccess',
   'RJS_ToReportToUserForFailure',
   'RJS_Failed',
   'RJS_Complete',

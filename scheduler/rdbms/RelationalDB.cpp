@@ -169,7 +169,7 @@ RelationalDB::getNextArchiveJobsToReportBatch(uint64_t filesRequested, log::LogC
   schedulerdb::Transaction txn(m_connPool);
   // retrieve batch up to file limit
   std::list<schedulerdb::ArchiveJobStatus> statusList;
-  statusList.emplace_back(schedulerdb::ArchiveJobStatus::AJS_ToReportToUserForTransfer);
+  statusList.emplace_back(schedulerdb::ArchiveJobStatus::AJS_ToReportToUserForSuccess);
   statusList.emplace_back(schedulerdb::ArchiveJobStatus::AJS_ToReportToUserForFailure);
   rdbms::Rset resultSet;
   try {
@@ -631,9 +631,41 @@ std::unique_ptr<SchedulerDatabase::RepackRequest> RelationalDB::getNextRepackJob
 
 std::list<std::unique_ptr<SchedulerDatabase::RetrieveJob>>
 RelationalDB::getNextRetrieveJobsToReportBatch(uint64_t filesRequested, log::LogContext& logContext) {
-  log::LogContext lc(m_logger);
-  lc.log(log::WARNING, "RelationalDB::getNextRetrieveJobsToReportBatch() dummy implementation !");
+  log::TimingList timings;
+  cta::utils::Timer t;
+  cta::log::ScopedParamContainer logParams(logContext);
   std::list<std::unique_ptr<SchedulerDatabase::RetrieveJob>> ret;
+  schedulerdb::Transaction txn(m_connPool);
+  // retrieve batch up to file limit
+  std::list<schedulerdb::RetrieveJobStatus> statusList;
+  statusList.emplace_back(schedulerdb::RetrieveJobStatus::RJS_ToReportToUserForSuccess);
+  statusList.emplace_back(schedulerdb::RetrieveJobStatus::RJS_ToReportToUserForFailure);
+  rdbms::Rset resultSet;
+  try {
+    // gc_delay 3h delay for each report, if not reported, requeue for reporting
+    uint64_t gc_delay = 10800;
+    resultSet =
+      schedulerdb::postgres::RetrieveJobQueueRow::flagReportingJobsByStatus(txn, statusList, gc_delay, filesRequested);
+    if (resultSet.isEmpty()) {
+      logContext.log(cta::log::INFO, "In RelationalDB::getNextRetrieveJobsToReportBatch(): nothing to report.");
+      return ret;
+    }
+    while (resultSet.next()) {
+      ret.emplace_back(std::make_unique<schedulerdb::RetrieveRdbJob>(m_connPool, resultSet));
+    }
+    txn.commit();
+    timings.insertAndReset("fetchedRetrieveJobs", t);
+    timings.addToLog(logParams);
+    logContext.log(cta::log::INFO, "Successfully flagged jobs for reporting.");
+  } catch (exception::Exception& ex) {
+    logContext.log(cta::log::ERR,
+                   "In RelationalDB::getNextRetrieveJobsToReportBatch(): failed to flagReportingJobsByStatus: " +
+                     ex.getMessageValue());
+    txn.abort();
+    return ret;
+  }
+  logContext.log(log::INFO,
+                 "In RelationalDB::getNextRetrieveJobsToReportBatch(): Finished getting retrieve jobs for reporting.");
   return ret;
 }
 
@@ -678,11 +710,95 @@ RelationalDB::getRepackReportBatches(log::LogContext& lc) {
   return ret;
 }
 
+// The name of setRetrieveJobBatchReportedToUser method shall be aligned with
+// the Archive method (OStoreDB refactoring task)
+// and since they are very similar code duplication shall be avoided
 void RelationalDB::setRetrieveJobBatchReportedToUser(std::list<SchedulerDatabase::RetrieveJob*>& jobsBatch,
                                                      log::TimingList& timingList,
                                                      utils::Timer& t,
                                                      log::LogContext& lc) {
-  throw cta::exception::Exception("Not implemented");
+  lc.log(log::WARNING, "RelationalDB::setRetrieveJobBatchReportedToUser() half-dummy implementation for successful jobs !");
+  // If job is done we will delete it (if the full request was served) - to be implemented !
+  std::vector<std::string> jobIDsList_success;
+  std::vector<std::string> jobIDsList_failure;
+  // reserving space to avoid multiple re-allocations during emplace_back
+  jobIDsList_success.reserve(jobsBatch.size());
+  jobIDsList_failure.reserve(jobsBatch.size());
+  auto jobsBatchItor = jobsBatch.begin();
+  while (jobsBatchItor != jobsBatch.end()) {
+    switch ((*jobsBatchItor)->reportType) {
+      case SchedulerDatabase::RetrieveJob::ReportType::CompletionReport:
+        jobIDsList_success.emplace_back(std::to_string((*jobsBatchItor)->jobID));
+        break;
+      case SchedulerDatabase::RetrieveJob::ReportType::FailureReport:
+        jobIDsList_failure.emplace_back(std::to_string((*jobsBatchItor)->jobID));
+        break;
+      default:
+        log::ScopedParamContainer(lc)
+          .add("jobID", (*jobsBatchItor)->jobID)
+          .add("archiveFileID", (*jobsBatchItor)->archiveFile.archiveFileID)
+          .add("diskInstance", (*jobsBatchItor)->archiveFile.diskInstance)
+          .log(cta::log::WARNING,
+               "In schedulerdb::RelationalDB::setRetrieveJobBatchReportedToUser(): Skipping handling of a reported job");
+        jobsBatchItor++;
+        continue;
+    }
+    log::ScopedParamContainer(lc)
+      .add("jobID", (*jobsBatchItor)->jobID)
+      .add("archiveFileID", (*jobsBatchItor)->archiveFile.archiveFileID)
+      .add("diskInstance", (*jobsBatchItor)->archiveFile.diskInstance)
+      .log(log::INFO,
+           "In schedulerdb::RelationalDB::setRetrieveJobBatchReportedToUser(): received a reported job for a "
+           "status change to Failed or Completed.");
+    jobsBatchItor++;
+  }
+  schedulerdb::Transaction txn(m_connPool);
+  try {
+    cta::utils::Timer t2;
+    uint64_t deletionCount = 0;
+    if (!jobIDsList_success.empty()) {
+      uint64_t nrows =
+        schedulerdb::postgres::RetrieveJobQueueRow::updateJobStatus(txn,
+                                                                   cta::schedulerdb::RetrieveJobStatus::ReadyForDeletion,
+                                                                   jobIDsList_success);
+      deletionCount += nrows;
+      if (nrows != jobIDsList_success.size()) {
+        log::ScopedParamContainer(lc)
+          .add("updatedRows", nrows)
+          .add("jobListSize", jobIDsList_success.size())
+          .log(log::ERR,
+               "In RelationalDB::setRetrieveJobBatchReportedToUser(): Failed to RetrieveJobQueueRow::updateJobStatus() "
+               "for entire job list provided.");
+      }
+    }
+    if (!jobIDsList_failure.empty()) {
+      uint64_t nrows =
+        schedulerdb::postgres::RetrieveJobQueueRow::updateJobStatus(txn,
+                                                                   cta::schedulerdb::RetrieveJobStatus::RJS_Failed,
+                                                                   jobIDsList_failure);
+      if (nrows != jobIDsList_failure.size()) {
+        log::ScopedParamContainer(lc)
+          .add("updatedRows", nrows)
+          .add("jobListSize", jobIDsList_failure.size())
+          .log(log::ERR,
+               "In RelationalDB::setRetrieveJobBatchReportedToUser(): Failed to RetrieveJobQueueRow::updateJobStatus() "
+               "for entire job list provided.");
+      }
+    }
+    txn.commit();
+    log::ScopedParamContainer(lc)
+      .add("rowDeletionTime", t2.secs())
+      .add("rowDeletionCount", deletionCount)
+      .log(log::INFO, "RelationalDB::setRetrieveJobBatchReportedToUser(): deleted job.");
+
+  } catch (exception::Exception& ex) {
+    lc.log(cta::log::ERR,
+           "In schedulerdb::RelationalDB::setRetrieveJobBatchReportedToUser(): failed to update job status. "
+           "Aborting the transaction." +
+             ex.getMessageValue());
+    txn.abort();
+  }
+  return;
 }
 
 SchedulerDatabase::JobsFailedSummary RelationalDB::getRetrieveJobsFailedSummary(log::LogContext& logContext) {
