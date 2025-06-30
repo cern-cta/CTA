@@ -189,63 +189,78 @@ void RetrieveMount::setTapeSessionStats(const castor::tape::tapeserver::daemon::
   m_RelationalDB.m_tapeDrivesState->updateDriveStatistics(driveInfo, inputs, lc);
 }
 
+void RetrieveMount::updateRetrieveJobStatus(const std::vector<std::string>& jobIDs,
+                                            cta::schedulerdb::RetrieveJobStatus newStatus,
+                                            log::LogContext& lc) {
+  cta::schedulerdb::Transaction txn(m_connPool);
+  try {
+    cta::utils::Timer t;
+
+    if (!jobIDs.empty()) {
+      uint64_t nrows = schedulerdb::postgres::RetrieveJobQueueRow::updateJobStatus(txn, newStatus, jobIDs);
+
+      if (nrows != jobIDs.size()) {
+        log::ScopedParamContainer(lc)
+          .add("updatedRows", nrows)
+          .add("jobListSize", jobIDs.size())
+          .add("targetStatus", TO_STRING(newStatus))
+          .log(log::ERR,
+               "In RetrieveMount::updateRetrieveJobStatus(): Failed to update all jobs to target status. Aborting transaction.");
+        txn.abort();
+        return;
+      }
+
+      txn.commit();
+      log::ScopedParamContainer(lc)
+        .add("rowUpdateCount", nrows)
+        .add("rowUpdateTime", t.secs())
+        .add("targetStatus", TO_STRING(newStatus))
+        .log(log::INFO, "In RetrieveMount::updateRetrieveJobStatus(): updated job statuses.");
+    }
+  } catch (const exception::Exception& ex) {
+    lc.log(cta::log::ERR,
+           "In RetrieveMount::updateRetrieveJobStatus(): Exception while updating job status. Aborting transaction. " +
+             ex.getMessageValue());
+    txn.abort();
+  }
+}
+
 void RetrieveMount::flushAsyncSuccessReports(std::list<std::unique_ptr<SchedulerDatabase::RetrieveJob>>& jobsBatch,
                                              log::LogContext& lc) {
-  // this method will remove the rows of the jobs from the DB
-  //if (isRepack) {
-  // If the job is from a repack subrequest, we change its status (to report
-  // for repack success). Queueing will be done in batch in
+  std::vector<std::string> jobIDs_success, jobIDs_repackSuccess, jobIDs_reportToUser;
+  // This method will remove the rows of the jobs from the DB or update jobs to get reported to the disk buffer
   // REPACK USE CASE TO-BE-DONE
-  // }
   // we update/release the space reservation of the drive in the catalogue
   cta::DiskSpaceReservationRequest diskSpaceReservationRequest;
-  std::vector<std::string> jobIDsList_success;
-  jobIDsList_success.reserve(jobsBatch.size());
+  jobIDs_success.reserve(jobsBatch.size());
   for (const auto& rdbJob : jobsBatch) {
     if (rdbJob->diskSystemName) {
       diskSpaceReservationRequest.addRequest(rdbJob->diskSystemName.value(), rdbJob->archiveFile.fileSize);
     }
-    jobIDsList_success.emplace_back(std::to_string(rdbJob->jobID));
-    // we collect the jobIDs to delete form the JOB table since they are done successfully
+    // Once we implement Repack we can compare mountInfo.vo with the defaultRepack VO of the scheduler
+    bool isRepackMount = false;
+    if (isRepackMount) {
+      // If the job is from a repack subrequest, we change its status (to report
+      // for repack success). Queueing will be done in batch in
+      jobIDs_repackSuccess.push_back(std::to_string(rdbJob->jobID));
+    } else if (retrieveRequest.retrieveReportURL.empty()) {
+      // Set the user transfer request as successful (delete it).
+      jobIDs_success.push_back(std::to_string(rdbJob->jobID));
+    } else {
+      // else we change its status (to report for transfer success).
+      jobIDs_reportToUser.push_back(std::to_string(rdbJob->jobID));
+    }
   }
   this->m_RelationalDB.m_catalogue.DriveState()->releaseDiskSpace(mountInfo.drive,
                                                                   mountInfo.mountId,
                                                                   diskSpaceReservationRequest,
                                                                   lc);
-  cta::schedulerdb::Transaction txn(m_connPool);
-  try {
-    uint64_t deletionCount = 0;
-    cta::utils::Timer t;
-    if (!jobIDsList_success.empty()) {
-      uint64_t nrows = schedulerdb::postgres::RetrieveJobQueueRow::updateJobStatus(
-        txn,
-        cta::schedulerdb::RetrieveJobStatus::ReadyForDeletion,
-        jobIDsList_success);
-      deletionCount = nrows;
-      if (nrows != jobIDsList_success.size()) {
-        log::ScopedParamContainer(lc)
-          .add("updatedRows", nrows)
-          .add("jobListSize", jobIDsList_success.size())
-          .log(log::ERR,
-               "In RetrieveMount::flushAsyncSuccessReports(): Failed to RetrieveJobQueueRow::updateJobStatus() - job "
-               "deletion - "
-               "for the full entire list of successful retrieve jobs. Aborting the transaction.");
-        txn.abort();
-      } else {
-        txn.commit();
-        log::ScopedParamContainer(lc)
-          .add("rowDeletionCount", deletionCount)
-          .add("rowDeletionTime", t.secs())
-          .log(log::INFO, "In RetrieveMount::flushAsyncSuccessReports(): deleted jobs.");
-      }
-    }
-  } catch (exception::Exception& ex) {
-    lc.log(cta::log::ERR,
-           "In schedulerdb::RetrieveMount::flushAsyncSuccessReports(): Failed to delete jobs. "
-           "Aborting the transaction." +
-             ex.getMessageValue());
-    txn.abort();
-  }
+  if (!jobIDs_success.empty())
+    schedulerdb::postgres::RetrieveJobQueueRow::updateRetrieveJobStatus(jobIDs_success, RetrieveJobStatus::ReadyForDeletion, lc);
+  if (!jobIDs_repackSuccess.empty())
+    schedulerdb::postgres::RetrieveJobQueueRow::updateRetrieveJobStatus(jobIDs_repackSuccess, RetrieveJobStatus::RJS_ToReportToRepackForSuccess, lc);
+  if (!jobIDs_reportToUser.empty())
+    schedulerdb::postgres::RetrieveJobQueueRow::updateRetrieveJobStatus(jobIDs_reportToUser, RetrieveJobStatus::RJS_ToReportToUserForSuccess, lc);
   // After processing - we free the memory object
   // in case the flush and DB update failed, we still want to clean the jobs from memory
   // (they need to be garbage collected in case of a crash)

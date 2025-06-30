@@ -111,7 +111,7 @@ public:
 
   /**
    * Get all archive queues with status:
-   * AJS_ToReportToUserForTransfer or AJS_ToReportToUserForFailure
+   * AJS_ToReportToUserForSuccess or AJS_ToReportToUserForFailure
    *
    * @param filesRequested  number of rows to be reported from the scheduler DB
    * @param logContext      logging context

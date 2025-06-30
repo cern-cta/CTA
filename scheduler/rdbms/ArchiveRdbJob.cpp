@@ -59,7 +59,7 @@ void ArchiveRdbJob::initialize(const rdbms::Rset& rset) {
   tapeFile.vid = std::move(m_jobRow.vid);
   tapeFile.copyNb = m_jobRow.copyNb;
   // Re-initialize report type
-  if (m_jobRow.status == ArchiveJobStatus::AJS_ToReportToUserForTransfer) {
+  if (m_jobRow.status == ArchiveJobStatus::AJS_ToReportToUserForSuccess) {
     reportType = ReportType::CompletionReport;
   } else if (m_jobRow.status == ArchiveJobStatus::AJS_ToReportToUserForFailure) {
     reportType = ReportType::FailureReport;
