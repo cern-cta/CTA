@@ -8,6 +8,7 @@ namespace cta::telemetry::constants {
 // Not ideal, but these are all const std::string instead of const std::string
 // since the template deduction of the opentelemetry API fails otherwise
 
+// These constants follow the conventions as detailed here: https://opentelemetry.io/docs/specs/semconv/general/naming/
 
 // -------------------- Meter Names --------------------
 inline const std::string kSchedulerMeter = "cta.scheduler";
