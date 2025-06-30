@@ -289,8 +289,7 @@ private:
   catalogue::Catalogue& m_catalogue;
   log::Logger& m_logger;
   std::unique_ptr<TapeDrivesCatalogueState> m_tapeDrivesState;
-  std::shared_ptr<opentelemetry::metrics::Counter<uint64_t>> m_archiveCounter;
-  std::shared_ptr<opentelemetry::metrics::Counter<uint64_t>> m_retrieveCounter;
+  std::shared_ptr<opentelemetry::metrics::Counter<uint64_t>> m_queueingCounter;
 
   void populateRepackRequestsStatistics(SchedulerDatabase::RepackRequestStatistics& stats);
   /*
