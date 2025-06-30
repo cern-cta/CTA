@@ -51,8 +51,7 @@ RelationalDB::RelationalDB(const std::string& ownerId,
       m_connPoolInsertOnly(login, nbConns),
       m_catalogue(catalogue),
       m_logger(logger),
-      m_archiveCounter(cta::telemetry::metrics::InstrumentProvider::instance().getUInt64Counter("cta.scheduler", "scheduler.queueing.archive.count")),
-      m_retrieveCounter(cta::telemetry::metrics::InstrumentProvider::instance().getUInt64Counter("cta.scheduler", "scheduler.queueing.retrieve.count")) {
+      m_queueingCounter(cta::telemetry::metrics::InstrumentProvider::instance().getUInt64Counter("cta.scheduler", "scheduler.queueing.count")) {
   m_tapeDrivesState = std::make_unique<TapeDrivesCatalogueState>(m_catalogue);
 }
 
@@ -145,7 +144,9 @@ std::string RelationalDB::queueArchive(const std::string& instanceName,
     .add("insertTime", timeInsert.secs())
     .add("totalTime", timeTotal.secs());
   logContext.log(log::INFO, "In RelationalDB::queueArchive(): Finished enqueueing request.");
-  m_archiveCounter->Add(1, {{"disk.instance", aFile.diskInstance}});
+  m_queueingCounter->Add(1, {{"transfer.type", "archive"},
+                             {"disk.instance", aFile.diskInstance},
+                             {"backend", "postgres"}});});
   return aReq.getIdStr();
 }
 
@@ -414,7 +415,9 @@ RelationalDB::queueRetrieve(cta::common::dataStructures::RetrieveRequest& rqst,
     log::ScopedParamContainer(logContext)
       .add("totalTime", timeTotal.secs())
       .log(cta::log::INFO, "In RelationalDB::queueRetrieve(): Finished enqueueing request.");
-    m_retrieveCounter->Add(1, {{"disk.instance", diskSystemNameStr}});
+    m_queueingCounter->Add(1, {{"transfer.type", "retrieve"},
+                               {"disk.instance", diskSystemNameStr},
+                               {"backend", "postgres"}});});
     return ret;
   } catch (exception::Exception& ex) {
     logContext.log(cta::log::ERR,
