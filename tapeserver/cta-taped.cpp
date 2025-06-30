@@ -20,6 +20,7 @@
 #include "common/log/StdoutLogger.hpp"
 #include "common/processCap/ProcessCap.hpp"
 #include "common/threading/System.hpp"
+#include "common/telemetry/TelemetryConstants.hpp"
 #include "common/telemetry/TelemetryInit.hpp"
 #include "common/telemetry/config/TelemetryConfig.hpp"
 #include "tapeserver/daemon/CommandLineParams.hpp"
@@ -230,7 +231,7 @@ int main(const int argc, char **const argv) {
     (*logPtr)(log::INFO, "Instantiating telemetry", {{"metricsBackend", globalConfig.telemetryMetricsBackend.value()},
                                                      {"otlpEndpoint", globalConfig.telemetryMetricsOltpEndpoint.value()}});
     cta::telemetry::TelemetryConfig telemetryConfig = cta::telemetry::TelemetryConfigBuilder()
-      .serviceName("cta.taped")
+      .serviceName(cta::telemetry::constants::kTapedMeter)
       .serviceNamespace(globalConfig.instanceName.value())
       .serviceInstanceHint(globalConfig.driveName.value()) // This allows us to have a service.instance.id that is consistent across restarts/forks
       .metricsBackend(globalConfig.telemetryMetricsBackend.value())

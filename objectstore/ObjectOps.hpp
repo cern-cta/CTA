@@ -25,6 +25,7 @@
 #include "common/log/LogContext.hpp"
 #include "common/Timer.hpp"
 #include "common/utils/utils.hpp"
+#include "common/telemetry/TelemetryConstants.hpp"
 #include "common/telemetry/metrics/InstrumentProvider.hpp"
 #include <opentelemetry/context/runtime_context.h>
 
@@ -343,8 +344,10 @@ protected:
 class ScopedSharedLock: public ScopedLock {
 public:
   ScopedSharedLock()
-  : lockCounter(cta::telemetry::metrics::InstrumentProvider::instance().getUInt64Counter("cta.scheduler", "objectstore.lock.acquire.count")),
-    lockAcquireDurationHistogram(cta::telemetry::metrics::InstrumentProvider::instance().getDoubleHistogram("cta.scheduler", "objectstore.lock.acquire.duration")) {}
+  : lockCounter(cta::telemetry::metrics::InstrumentProvider::instance().getUInt64Counter(cta::telemetry::constants::kSchedulerMeter,
+                                                                                         cta::telemetry::constants::kObjectstoreLockAcquireCount)),
+    lockAcquireDurationHistogram(cta::telemetry::metrics::InstrumentProvider::instance().getDoubleHistogram(cta::telemetry::constants::kSchedulerMeter,
+                                                                                                            cta::telemetry::constants::kObjectstoreLockAcquireDuration)) {}
   explicit ScopedSharedLock(ObjectOpsBase& oo) : ScopedSharedLock() {
     lock(oo);
   }
@@ -368,9 +371,9 @@ public:
       m_locked = true;
     }
     const auto lockAcquireTime = timer.secs();
-    lockAcquireDurationHistogram->Record(lockAcquireTime, {{"lock.type", "ScopedExclusiveLock"}},
+    lockAcquireDurationHistogram->Record(lockAcquireTime, {{cta::telemetry::constants::kLockTypeKey, "ScopedExclusiveLock"}},
                                          opentelemetry::context::RuntimeContext::GetCurrent());
-    lockCounter->Add(1, {{"lock.type", "ScopedExclusiveLock"}});
+    lockCounter->Add(1, {{cta::telemetry::constants::kLockTypeKey, "ScopedExclusiveLock"}});
   }
 
   virtual ~ScopedSharedLock() {
@@ -386,8 +389,10 @@ private:
 class ScopedExclusiveLock: public ScopedLock {
 public:
   ScopedExclusiveLock()
-  : lockCounter(cta::telemetry::metrics::InstrumentProvider::instance().getUInt64Counter("cta.scheduler", "objectstore.lock.acquire.count")),
-    lockAcquireDurationHistogram(cta::telemetry::metrics::InstrumentProvider::instance().getDoubleHistogram("cta.scheduler", "objectstore.lock.acquire.duration")) {}
+  : lockCounter(cta::telemetry::metrics::InstrumentProvider::instance().getUInt64Counter(cta::telemetry::constants::kSchedulerMeter,
+                                                                                         cta::telemetry::constants::kObjectstoreLockAcquireCount)),
+    lockAcquireDurationHistogram(cta::telemetry::metrics::InstrumentProvider::instance().getDoubleHistogram(cta::telemetry::constants::kSchedulerMeter,
+                                                                                                            cta::telemetry::constants::kObjectstoreLockAcquireDuration)) {}
 
   ScopedExclusiveLock(ObjectOpsBase & oo, uint64_t timeout_us = 0) : ScopedExclusiveLock() {
     lock(oo, timeout_us);
@@ -415,9 +420,9 @@ public:
       m_locked = true;
     }
     const auto lockAcquireTime = timer.secs();
-    lockAcquireDurationHistogram->Record(lockAcquireTime, {{"lock.type", "ScopedExclusiveLock"}},
+    lockAcquireDurationHistogram->Record(lockAcquireTime, {{cta::telemetry::constants::kLockTypeKey, "ScopedExclusiveLock"}},
       opentelemetry::context::RuntimeContext::GetCurrent());
-    lockCounter->Add(1, {{"lock.type", "ScopedExclusiveLock"}});
+    lockCounter->Add(1, {{cta::telemetry::constants::kLockTypeKey, "ScopedExclusiveLock"}});
   }
 
   /** Move the locked object reference to a new one. This is done when the locked
