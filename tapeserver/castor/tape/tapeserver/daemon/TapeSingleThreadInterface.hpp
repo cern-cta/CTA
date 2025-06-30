@@ -32,6 +32,7 @@
 #include "tapeserver/castor/tape/tapeserver/drive/DriveInterface.hpp"
 #include "tapeserver/castor/tape/tapeserver/daemon/EncryptionControl.hpp"
 #include "common/Timer.hpp"
+#include "common/telemetry/TelemetryConstants.hpp"
 #include "common/telemetry/metrics/InstrumentProvider.hpp"
 
 namespace castor::tape::tapeserver::daemon {
@@ -97,7 +98,7 @@ protected:
       const std::string modeAsString = "R";
       scoped.add("MCMountTime", timer.secs()).add("mode", modeAsString);
       m_logContext.log(cta::log::INFO, "Tape mounted for read-only access");
-      auto mountCounter = cta::telemetry::metrics::InstrumentProvider::instance().getUInt64Counter("cta.taped", "taped.mount.count");
+      auto mountCounter = cta::telemetry::metrics::InstrumentProvider::instance().getUInt64Counter(cta::telemetry::constants::kTapedMeter, "taped.mount.count");
       mountCounter->Add(1, {{"mount.type", "retrieve"}, {"tape.vid", m_vid}});
     }
     catch (cta::exception::Exception& ex) {
@@ -119,7 +120,7 @@ protected:
       const std::string modeAsString = "RW";
       scoped.add("MCMountTime", timer.secs()).add("mode", modeAsString);
       m_logContext.log(cta::log::INFO, "Tape mounted for read/write access");
-      auto mountCounter = cta::telemetry::metrics::InstrumentProvider::instance().getUInt64Counter("cta.taped", "taped.mount.count");
+      auto mountCounter = cta::telemetry::metrics::InstrumentProvider::instance().getUInt64Counter(cta::telemetry::constants::kTapedMeter, "taped.mount.count");
       mountCounter->Add(1, {{"mount.type", "archive"}, {"tape.vid", m_vid}});
     }
     catch (cta::exception::Exception& ex) {
