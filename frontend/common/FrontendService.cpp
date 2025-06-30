@@ -108,44 +108,6 @@ FrontendService::FrontendService(const std::string& configFilename) : m_archiveF
     log.setStaticParams(staticParamMap);
   }
 
-  // Instantiate telemetry
-  {
-    try {
-      // If we stick with this config parsing, would be nice to have the option to provide a default/fallback value
-      auto telemetryMetricsBackend = config.getOptionValueStr("cta.telemetry.metricsBackend");
-      if (!telemetryMetricsBackend.has_value()) {
-        telemetryMetricsBackend = "NOOP";
-      }
-      auto telemetryMetricsExportInterval = config.getOptionValueUInt("cta.telemetry.metricsExportInterval");
-      if (!telemetryMetricsExportInterval.has_value()) {
-        telemetryMetricsExportInterval = 1000;
-      }
-      auto telemetryMetricsExportTimeout = config.getOptionValueUInt("cta.telemetry.metricsExportTimeout");
-      if (!telemetryMetricsExportTimeout.has_value()) {
-        telemetryMetricsExportTimeout = 500;
-      }
-      auto telemetryMetricsOltpEndpoint = config.getOptionValueStr("cta.telemetry.metricsOtlpEndpoint");
-      if (!telemetryMetricsOltpEndpoint.has_value()) {
-        telemetryMetricsOltpEndpoint = "";
-      }
-
-      log(log::INFO, "Instantiating telemetry", {{"metricsBackend", telemetryMetricsBackend},
-                                                 {"otlpEndpoint", telemetryMetricsOltpEndpoint.value()}});
-      cta::telemetry::TelemetryConfig telemetryConfig = cta::telemetry::TelemetryConfigBuilder()
-        .serviceName("cta.frontend")
-        .serviceNamespace(m_instanceName)
-        .metricsBackend(telemetryMetricsBackend.value())
-        .metricsExportInterval(std::chrono::milliseconds(telemetryMetricsExportInterval.value()))
-        .metricsExportTimeout(std::chrono::milliseconds(telemetryMetricsExportTimeout.value()))
-        .metricsOtlpEndpoint(telemetryMetricsOltpEndpoint.value())
-        .build();
-      cta::telemetry::initTelemetry(telemetryConfig);
-    } catch(exception::Exception& ex) {
-      std::string ex_str("Failed to instantiate OpenTelemetry: ");
-      throw exception::Exception(ex_str + ex.getMessage().str());
-    }
-  }
-
   {
     // Log starting message
     std::list<log::Param> params;
@@ -487,6 +449,50 @@ FrontendService::FrontendService(const std::string& configFilename) : m_archiveF
           "Cannot use a value for grpc.jwks.cache.timeout_secs that is less than grpc.jwks.cache.refresh_interval_secs."
           "Setting timeout_secs equal to cache_refresh_interval_secs.");
       m_pubkeyTimeout = std::optional<int>(m_cacheRefreshInterval.value());
+      }
+  }
+  // Instantiate telemetry
+  {
+    try {
+      // If we stick with this config parsing, would be nice to have the option to provide a default/fallback value
+      auto telemetryMetricsBackend = config.getOptionValueStr("cta.telemetry.metricsBackend");
+      if (!telemetryMetricsBackend.has_value()) {
+        telemetryMetricsBackend = "NOOP";
+      }
+      auto telemetryMetricsExportInterval = config.getOptionValueUInt("cta.telemetry.metricsExportInterval");
+      if (!telemetryMetricsExportInterval.has_value()) {
+        telemetryMetricsExportInterval = 1000;
+      }
+      auto telemetryMetricsExportTimeout = config.getOptionValueUInt("cta.telemetry.metricsExportTimeout");
+      if (!telemetryMetricsExportTimeout.has_value()) {
+        telemetryMetricsExportTimeout = 500;
+      }
+      auto telemetryMetricsOltpEndpoint = config.getOptionValueStr("cta.telemetry.metricsOtlpEndpoint");
+      if (!telemetryMetricsOltpEndpoint.has_value()) {
+        telemetryMetricsOltpEndpoint = "";
+      }
+
+      // For the time being it seems that only grpc populates m_port as xrootd abstracts all this away
+      // For extra clarity, I will get both of them again.
+      auto xrdPort = config.getOptionValueStr("xrd.port");
+      auto grpcPort = config.getOptionValueStr("grpc.port");
+      std::string servicePort = xrdPort.has_value() ? xrdPort.value() : grpcPort.value();
+
+      log(log::INFO, "Instantiating telemetry", {{"metricsBackend", telemetryMetricsBackend},
+                                                 {"otlpEndpoint", telemetryMetricsOltpEndpoint.value()}});
+      cta::telemetry::TelemetryConfig telemetryConfig = cta::telemetry::TelemetryConfigBuilder()
+        .serviceName("cta.frontend")
+        .serviceNamespace(m_instanceName)
+        .serviceInstanceHint(servicePort)
+        .metricsBackend(telemetryMetricsBackend.value())
+        .metricsExportInterval(std::chrono::milliseconds(telemetryMetricsExportInterval.value()))
+        .metricsExportTimeout(std::chrono::milliseconds(telemetryMetricsExportTimeout.value()))
+        .metricsOtlpEndpoint(telemetryMetricsOltpEndpoint.value())
+        .build();
+      cta::telemetry::initTelemetry(telemetryConfig);
+    } catch(exception::Exception& ex) {
+      std::string ex_str("Failed to instantiate OpenTelemetry: ");
+      throw exception::Exception(ex_str + ex.getMessage().str());
     }
   }
 
