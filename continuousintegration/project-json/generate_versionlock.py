@@ -15,17 +15,12 @@
 #               granted to it by virtue of its status as an Intergovernmental Organization or
 #               submit itself to any jurisdiction.
 
-import argparse
-import json
-import re
-import sys
 from pathlib import Path
+import json
+import argparse
+import sys
 
-def cmake_var_name(package_name: str) -> str:
-    """Convert package name to CMake-style upper-case variable name."""
-    return re.sub(r'[^A-Z0-9]', '_', package_name.upper())
-
-project_json_path = Path(__file__).resolve().parents[3] / "project.json"
+project_json_path = Path(__file__).resolve().parents[2] / "project.json"
 with open(project_json_path, "r") as f:
     project_json = json.load(f)
 
@@ -33,13 +28,18 @@ parser = argparse.ArgumentParser()
 parser.add_argument('--platform', default=project_json["dev"]["defaultPlatform"])
 args = parser.parse_args()
 
-if args.platform not in project_json["platforms"]:
+platform = args.platform
+
+if platform not in project_json["platforms"]:
     valid_platforms = list(project_json["platforms"].keys())
-    print(f"Error: invalid platform '{args.platform}'. Supported options are: {valid_platforms}", file=sys.stderr)
+    print(f"Error: invalid platform '{platform}'. Supported options are: {valid_platforms}", file=sys.stderr)
     sys.exit(1)
 
-require_versions = project_json["platforms"][args.platform].get("runRequires", {})
+packages = project_json["platforms"][platform]["versionlock"]
 
-for package, version in require_versions.items():
-    var_name = cmake_var_name(package)
-    print(f"{var_name}_VERSION_CONSTRAINT=\"{version}\"")
+for package, version in packages.items():
+    if package in project_json["packageGroups"]:
+        for package_name in project_json["packageGroups"][package]:
+            print(f"{package_name}-{version}.{platform}.*")
+    else:
+        print(f"{package}-{version}.{platform}.*")

@@ -37,7 +37,7 @@ def validate_schema(project_json, schema_json):
         sys.exit(1)
 
 if __name__ == '__main__':
-    project_json_path = Path(__file__).resolve().parents[3] / "project.json"
+    project_json_path = Path(__file__).resolve().parents[2] / "project.json"
     with open(project_json_path, "r") as f:
         project_json = json.load(f)
 

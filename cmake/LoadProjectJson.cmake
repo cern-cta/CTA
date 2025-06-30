@@ -39,7 +39,7 @@ message(STATUS "Supported CTA catalogue schema versions: {${SUPPORTED_CTA_CATALO
 # Version constraint variables for packages based on project.json
 execute_process(
   COMMAND ${CMAKE_COMMAND} -E env PYTHONUNBUFFERED=1 python3
-          ${CMAKE_SOURCE_DIR}/continuousintegration/utils/project-json/generate_version_constraints.py
+          ${CMAKE_SOURCE_DIR}/continuousintegration/project-json/generate_version_constraints.py
           --platform ${RPMTools_RPMBUILD_DIST}
   WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
   OUTPUT_VARIABLE BUILD_VERSION_RAW
@@ -56,7 +56,7 @@ endforeach()
 # Build requirements for spec file based on project.json
 execute_process(
   COMMAND ${CMAKE_COMMAND} -E env PYTHONUNBUFFERED=1 python3
-          ${CMAKE_SOURCE_DIR}/continuousintegration/utils/project-json/generate_build_requires.py
+          ${CMAKE_SOURCE_DIR}/continuousintegration/project-json/generate_build_requires.py
           --platform ${RPMTools_RPMBUILD_DIST}
   WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
   OUTPUT_VARIABLE BUILD_REQUIREMENTS
