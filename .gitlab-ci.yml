@@ -142,14 +142,16 @@ variables:
   FF_TIMESTAMPS: true
 
   # Images
-  IMAGE_ANALYSIS: gitlab-registry.cern.ch/cta/public_registry/container_registry/cta-ci-analysis:2025-06-24-12292465.el9
-  IMAGE_BUILD: gitlab-registry.cern.ch/cta/public_registry/container_registry/cta-ci-build:2025-06-24-12292465.el9
-  IMAGE_TEST: gitlab-registry.cern.ch/cta/public_registry/container_registry/cta-ci-test:2025-06-24-12292465.el9
-  IMAGE_RELEASE: gitlab-registry.cern.ch/cta/public_registry/container_registry/cta-ci-release:2025-06-24-12292465.el9
-  IMAGE_GITLAB_RELEASE_CLI: registry.gitlab.com/gitlab-org/release-cli:latest
+  IMAGE_DEFAULT: gitlab-registry.cern.ch/cta/public_registry/container_registry/cta-ci-default:2025-07-01-12342383.el9
+  IMAGE_LINT: gitlab-registry.cern.ch/cta/public_registry/container_registry/cta-ci-lint:2025-07-01-12342383.el9
+  IMAGE_BUILD: gitlab-registry.cern.ch/cta/public_registry/container_registry/cta-ci-build:2025-07-01-12342383.el9
+  IMAGE_TEST: gitlab-registry.cern.ch/cta/public_registry/container_registry/cta-ci-test:2025-07-01-12342383.el9
+  IMAGE_RELEASE: gitlab-registry.cern.ch/cta/public_registry/container_registry/cta-ci-release:2025-07-01-12342383.el9
+  IMAGE_REVIEW: gitlab-registry.cern.ch/cta/public_registry/container_registry/cta-ci-review:2025-07-01-12342383.el9
   IMAGE_DOCKER_IMAGE_BUILDER: gcr.io/kaniko-project/executor:debug
 
 default:
+  image: $IMAGE_DEFAULT
   interruptible: true
 
 workflow:
