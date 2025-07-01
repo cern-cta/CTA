@@ -1,4 +1,5 @@
 danger-review:
+  interruptible: false
   # We allow failure here as we don't want to immediately auto-cancel the entire pipeline
   # Developers should be allowed to test things without
   allow_failure: true
@@ -8,13 +9,9 @@ danger-review:
     - if: $CI_PIPELINE_SOURCE == "merge_request_event"
       when: always
     - when: never
-  image:  registry.cern.ch/docker.io/ruby:3.4-alpine
+  image: $IMAGE_DANGER
   variables:
     DANGER_GITLAB_USE_THREADS: 1
-  before_script:
-    - apk add --no-cache git
-    - gem install danger danger-gitlab faraday-retry
-    - gem install faraday-retry
   script:
     - danger --verbose --dangerfile=continuousintegration/danger/Dangerfile --fail-on-errors=true || exit_code=$?
     - echo $exit_code > danger_status.txt
