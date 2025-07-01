@@ -27,13 +27,11 @@ validate-catalogue-schema-version:
     - allow_failure: false
     - variables:
         CATALOGUE_SCHEMA_CHECK_PARAMS: ""
-  image: $IMAGE_ANALYSIS
   script:
     - ./continuousintegration/checks/check_catalogue_schema_version.sh ${CATALOGUE_SCHEMA_CHECK_PARAMS} .
 
 validate-pipeline-variables:
   stage: validate
-  image: $IMAGE_ANALYSIS
   rules:
     - when: on_success
   script:
@@ -49,7 +47,6 @@ validate-pipeline-variables:
 
 validate-project-json:
   stage: validate
-  image: $IMAGE_ANALYSIS
   rules:
     - when: on_success
   script:
