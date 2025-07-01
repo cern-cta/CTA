@@ -17,7 +17,7 @@
 {{- define "common.images.image" -}}
   {{- $imageRoot := .imageRoot -}}
   {{- $global := .global -}}
-  {{- if and $global.repository $global.tag -}}
+  {{- if and  $global.tag -}}
     {{- printf "%s:%s" $global.repository ( $global.tag | toString ) | quote -}}
   {{- else if and $imageRoot.repository $imageRoot.tag -}}
     {{- printf "%s:%s" $imageRoot.repository ( $imageRoot.tag | toString ) | quote -}}
@@ -25,7 +25,7 @@
     {{- fail "You must provide repository, and tag for the image in either .Values.global.image or .Values.image." -}}
   {{- end }}
 {{- end }}
-
+$global.repository
 {{/*
    common.images.pullPolicy:
    This function picks the image pull policy, prioritizing the global setting (.Values.global.image.pullPolicy).
@@ -72,6 +72,14 @@
 */}}
 {{- define "common.images.busybox" -}}
   "busybox:1.36.1"
+{{- end }}
+
+{{/*
+   common.images.kubectl:
+   Returns the predefined kubectl image in the format <repository>:<tag>.
+*/}}
+{{- define "common.images.kubectl" -}}
+  "registry.cern.ch/docker.io/bitnami/kubectl:1.32.4"
 {{- end }}
 
 {{/*

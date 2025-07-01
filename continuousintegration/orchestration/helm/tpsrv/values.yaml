@@ -11,7 +11,7 @@ conf:
     externalFreeDiskSpaceScript: "/usr/bin/cta-eosdf.sh"
 
 keytab:
-  secretName: eos-sss-keytab
+  secretName: eos-keytab
   subPath: eos.keytab
 
 # tapeServers: {}

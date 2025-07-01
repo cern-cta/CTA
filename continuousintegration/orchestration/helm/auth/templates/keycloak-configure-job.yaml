@@ -9,12 +9,20 @@ metadata:
     "helm.sh/hook-delete-policy": delete
 spec:
   backoffLimit: 0
+  ttlSecondsAfterFinished: 300
   template:
     spec:
+      automountServiceAccountToken: false
       restartPolicy: Never
       containers:
         - name: kcadm
           image: {{ .Values.keycloak.image }}
+          securityContext:
+            allowPrivilegeEscalation: {{ include "common.securityContext.allowPrivilegeEscalation" . }}
+          {{- if $.Values.resources }}
+          resources:
+            {{-  toYaml $.Values.resources | nindent 10 }}
+          {{- end }}
           command:
             - /bin/bash
             - -c
