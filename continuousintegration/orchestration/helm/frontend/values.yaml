@@ -57,7 +57,7 @@ xrd:
 
   keytab:
     secretName: cta-frontend-sss-keytab
-    subPath: eos.sss.keytab
+    subPath: cta-frontend-sss.keytab
 
 pod:
   extraSpec:

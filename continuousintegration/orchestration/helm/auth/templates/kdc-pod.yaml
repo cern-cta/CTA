@@ -7,6 +7,7 @@ metadata:
   labels:
     {{- include "common.labels.standard" . | nindent 4 }}
 spec:
+  automountServiceAccountToken: false
   restartPolicy: Never
   {{- if .Values.pod.extraSpec }}
   {{ .Values.pod.extraSpec | toYaml | nindent 2 }}
@@ -25,9 +26,9 @@ spec:
       periodSeconds: 2
     securityContext:
       allowPrivilegeEscalation: {{ include "common.securityContext.allowPrivilegeEscalation" . }}
-    {{- if $.Values.resources }}
+    {{- if $.Values.kerberos.resources }}
     resources:
-      {{-  toYaml $.Values.resources | nindent 10 }}
+      {{-  toYaml $.Values.kerberos.resources | nindent 10 }}
     {{- end }}
     env:
     - name: MY_NAME
@@ -61,7 +62,7 @@ spec:
   volumes:
   - name: scripts-volume
     configMap:
-      name: scripts-kdc
+      name: scripts-auth
       defaultMode: 0777
   - name: krb5-conf
     configMap:

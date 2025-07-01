@@ -18,6 +18,9 @@ pod:
 
 extraEnv:
 
+job:
+  ttlSecondsAfterFinished:
+
 # This can either be provided via --set-file or specified directly here
 # configuration:
 #   backend: "" # Can be sqlite, oracle or postgres.

@@ -8,10 +8,15 @@ metadata:
     app.kubernetes.io/name: {{ $name }}
     {{- include "common.labels.withoutname" $ | nindent 4 }}
 spec:
+  automountServiceAccountToken: false
   restartPolicy: Never
+  {{- if .Values.pod.extraSpec }}
+  {{ .Values.pod.extraSpec | toYaml | nindent 2 }}
+  {{- end }}
   containers:
     - name: keycloak
       image: {{ .Values.keycloak.image }}
+      imagePullPolicy: IfNotPresent
       command: ["sh", "-c"]
       args:
         - |
@@ -26,6 +31,12 @@ spec:
         periodSeconds: 1
         timeoutSeconds: 2
         failureThreshold: 6
+      securityContext:
+        allowPrivilegeEscalation: {{ include "common.securityContext.allowPrivilegeEscalation" . }}
+      {{- if $.Values.keycloak.resources }}
+      resources:
+        {{-  toYaml $.Values.keycloak.resources | nindent 10 }}
+      {{- end }}
       env:
         - name: KEYCLOAK_ADMIN
           valueFrom:
