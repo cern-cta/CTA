@@ -25,24 +25,10 @@ namespace metrics_sdk = opentelemetry::sdk::metrics;
 namespace metrics_api = opentelemetry::metrics;
 namespace otlp = opentelemetry::exporter::otlp;
 
-std::string getDeterministicInstanceId(const std::string& serviceName,
-                                       const std::string& hostname,
-                                       const std::string& instanceHint) {
-  std::string seed = serviceName + ":" + hostname + ":" + instanceHint;
-
-  // Hash to fixed-length string or UUID format
-  std::hash<std::string> hasher;
-  size_t hash = hasher(seed);
-
-  std::stringstream ss;
-  ss << std::hex << hash;
-  return ss.str();  // Or convert to UUID format if needed
-}
-
 void initMetrics(const TelemetryConfig& config) {
   if (config.metrics.backend == MetricsBackend::NOOP) {
-    metrics_api::Provider::SetMeterProvider(
-      std::shared_ptr<metrics_api::MeterProvider>(new metrics_api::NoopMeterProvider()));
+    std::shared_ptr<metrics_api::MeterProvider> noopProvider = std::make_shared<metrics_api::NoopMeterProvider>();
+    metrics_api::Provider::SetMeterProvider(noopProvider);
     return;
   }
 
@@ -65,7 +51,7 @@ void initMetrics(const TelemetryConfig& config) {
     }
 
     default:
-      throw std::runtime_error("initMetrics: Unsupported metrics backend");
+      throw std::runtime_error("initMetrics: Unsupported metrics backend provided");
   }
   if (!exporter) {
     throw std::runtime_error("initMetrics: failed to initialise exporter");
@@ -80,7 +66,7 @@ void initMetrics(const TelemetryConfig& config) {
   std::string serviceInstanceId;
   if (config.serviceInstanceHint.empty()) {
     // No instance hint, so we don't care about a deterministic/persistent ServiceInstanceId across restarts
-    serviceInstanceId = cta::utils::generateUuid();
+    serviceInstanceId = cta::utils::getShortHostname() + ":" + processName + ":" + cta::utils::generateUuid();
   } else {
     serviceInstanceId = cta::utils::getShortHostname() + ":" + processName + ":" + config.serviceInstanceHint;
   }
