@@ -229,11 +229,15 @@ stress-test:
       allow_failure: true # Otherwise this blocks the pipeline
   variables:
     NAMESPACE: stress-${CI_COMMIT_SHORT_SHA}-${CI_PIPELINE_ID}
+    # Passed to the create_instance.sh script verbatim
+    EXTRA_SPAWN_ARGS: ""
   before_script:
     - bash ./continuousintegration/checks/check_runner_healthy.sh
     - *setup-k8s-test-variables
   script:
     - |
+      extra_args=($EXTRA_ARGS)
+      if [[ -n "${EXTRA_SPAWN_ARGS}" ]]; then extra_args+=(--spawn-options "${EXTRA_SPAWN_ARGS}"); fi
       EXTRA_STRESS_TEST_OPTIONS=""
       if [ "${SCHEDULER_TYPE}" == "pgsched" ]; then
         SCHEDULER_CONFIG=/opt/kubernetes/CTA/scheduler/stresstest-scheduler-postgres-values.yaml
@@ -249,6 +253,7 @@ stress-test:
                           --catalogue-config ${CATALOGUE_CONFIG}
                           --scheduler-config ${SCHEDULER_CONFIG}
                           --test-script tests/prepare_tests.sh
+                          "${extra_args[@]}"
     # Set up monitoring
     - git clone https://gitlab+deploy-token-3624:${CI_CTA_DEPLOY_TOKEN_READONLY}@gitlab.cern.ch/cta/sandbox/ci_monitoring.git
     - helm install --namespace ${NAMESPACE} ci-monitoring ci_monitoring/ci-monitoring --wait --timeout 5m
