@@ -195,4 +195,8 @@ echo "Checking activity was set..."
 kubectl -n ${NAMESPACE} cp grep_eosreport_for_activity.sh ${EOS_MGM_POD}:/root/ -c eos-mgm
 kubectl -n ${NAMESPACE} exec ${EOS_MGM_POD} -c eos-mgm -- bash /root/grep_eosreport_for_activity.sh || exit 1
 
+# Test that telemetry agrees with the amount of files archived and retrieved
+TOTAL_FILES_ARCHIVED_RETRIEVED=$((NB_FILES * 2))
+kubectl -n ${NAMESPACE} exec ${CLIENT_POD} -c client -- bash -c "/root/client_telemetry_summary.sh $TOTAL_FILES_ARCHIVED_RETRIEVED" || exit 1
+
 exit 0
