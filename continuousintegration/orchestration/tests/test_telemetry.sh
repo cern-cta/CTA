@@ -94,4 +94,4 @@ echo "Sleeping 20 seconds to give Prometheus time to scrape the metrics"
 sleep 20
 
 # Provide some telemetry metrics
-kubectl -n ${NAMESPACE} exec ${CLIENT_POD} -c client -- bash -c ". /root/client_env && /root/client_telemetry_summary.sh" || exit 1
+kubectl -n ${NAMESPACE} exec ${CLIENT_POD} -c client -- bash -c "/root/client_telemetry_summary.sh $NB_FILES" || exit 1
