@@ -16,7 +16,7 @@ typedef struct TelemetryConfig {
   std::map<std::string, std::string> resourceAttributes;
 
   struct Metrics {
-    MetricsBackend backend;
+    MetricsBackend backend = MetricsBackend::NOOP;
     std::chrono::milliseconds exportInterval;
     std::chrono::milliseconds exportTimeout;
     std::string otlpEndpoint;
