@@ -128,8 +128,6 @@ spec:
       - name: grpc-server-key
         secret:
           secretName: server-key
-      - name: eos-sss-keytab-fixedownership
-        emptyDir: {}
       - name: krb5-conf
         configMap:
           name: {{ .Values.global.kerberos.clientConfig.configMap }}
