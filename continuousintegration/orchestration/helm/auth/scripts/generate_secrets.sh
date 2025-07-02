@@ -25,6 +25,8 @@ is_valid_name() {
   [[ "$1" =~ ^[a-z0-9]([-a-z0-9]*[a-z0-9])?$ ]] && [[ ${#1} -le 63 ]]
 }
 
+# Create a secret for every file in the input directory
+# The secret name is equivalent to the file name (lowercase and dots replaced by dashes)
 for filepath in "$INPUT_DIR"/*; do
   [[ -f "$filepath" ]] || continue
 
