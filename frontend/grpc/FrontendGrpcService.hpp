@@ -55,7 +55,6 @@ public:
   Status Delete(::grpc::ServerContext* context, const cta::xrd::Request* request, cta::xrd::Response* response);
 private:
   Status ProcessGrpcRequest(const cta::xrd::Request* request, cta::xrd::Response* response, cta::log::LogContext &lc) const;
-  bool ValidateToken(const std::string& encodedJWT);
   Status ExtractAuthHeaderAndValidate(::grpc::ServerContext* context);
 };
 } // namespace cta::frontend::grpc

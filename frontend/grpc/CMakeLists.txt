@@ -23,7 +23,8 @@ add_executable(cta-frontend-grpc
   Main.cpp
   FrontendGrpcService.cpp
   ../common/WorkflowEvent.cpp
-  ../common/FrontendService.cpp)
+  ../common/FrontendService.cpp
+  ../common/ValidateToken.cpp)
 
 if(CTA_USE_PGSCHED)
   target_link_libraries(cta-frontend-grpc
