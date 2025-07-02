@@ -33,6 +33,8 @@ exec_prometheus_query() {
   echo "$response" | jq '.data.result'
 }
 
+TOTAL_FILES_ARCHIVED_RETRIEVED="$1"
+
 echo "====== Metric Summary ======"
 echo
 
@@ -71,10 +73,10 @@ echo
 archive_count=$(echo "$archives" | jq -r '.[].value[1]')
 retrieve_count=$(echo "$retrieves" | jq -r '.[].value[1]')
 
-if [ "$archive_count" -eq "$NB_FILES" ] && [ "$retrieve_count" -eq "$NB_FILES" ]; then
-  echo "Archive/Retrieve counts match $NB_FILES files archived/retrieved."
+if [ "$archive_count" -eq "$TOTAL_FILES_ARCHIVED_RETRIEVED" ] && [ "$retrieve_count" -eq "$TOTAL_FILES_ARCHIVED_RETRIEVED" ]; then
+  echo "Archive/Retrieve counts match $TOTAL_FILES_ARCHIVED_RETRIEVED files archived/retrieved."
 else
-  echo "Archive/Retrieve counts do not match $NB_FILES files archived/retrieved."
+  echo "Archive/Retrieve counts do not match $TOTAL_FILES_ARCHIVED_RETRIEVED files archived/retrieved."
   echo "Archives: $archive_count"
   echo "Retrieves: $retrieve_count"
   exit 1
