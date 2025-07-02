@@ -85,10 +85,21 @@ WorkflowEvent::WorkflowEvent(const frontend::FrontendService& frontendService,
 
 xrd::Response WorkflowEvent::process() {
   xrd::Response response;
-  auto requestCounter = cta::telemetry::metrics::InstrumentProvider::instance().getUInt64Counter(cta::telemetry::constants::kFrontendMeter, cta::telemetry::constants::kFrontendRequestCount);
-  requestCounter->Add(1, {{cta::telemetry::constants::kRequestTypeKey, "workflow_event"}, {cta::telemetry::constants::kEventTypeKey, m_event.wf().event()}});
-  auto requestDurationHistogram = cta::telemetry::metrics::InstrumentProvider::instance().getDoubleHistogram(cta::telemetry::constants::kFrontendMeter, cta::telemetry::constants::kFrontendRequestDuration);
+
+  // Record request count
+  namespace tc = cta::telemetry::constants;
+  auto& instrumentProvider = cta::telemetry::metrics::InstrumentProvider::instance();
+
+  using TelemAttrList = std::vector<std::pair<opentelemetry::nostd::string_view, opentelemetry::common::AttributeValue>>;
+  TelemAttrList telemetryAttributes = {{
+    {tc::kRequestTypeKey, "workflow_event"},
+    {tc::kEventTypeKey,   m_event.wf().event()}
+  }};
+
+  auto requestCounter = instrumentProvider.getUInt64Counter(tc::kFrontendMeter, tc::kFrontendRequestCount);
+  requestCounter->Add(1, telemetryAttributes);
   utils::Timer timer;
+
   switch(m_event.wf().event()) {
     using namespace cta::eos;
 
@@ -117,9 +128,12 @@ xrd::Response WorkflowEvent::process() {
       throw exception::PbException("Workflow event " + Workflow_EventType_Name(m_event.wf().event()) +
         " is not implemented.");
   }
+
+  // Record request duration
   const auto requestProcessingDuration = timer.secs();
-  requestDurationHistogram->Record(requestProcessingDuration, {{cta::telemetry::constants::kRequestTypeKey, "workflow_event"}, {cta::telemetry::constants::kEventTypeKey, m_event.wf().event()}},
-                                        opentelemetry::context::RuntimeContext::GetCurrent());
+  auto requestDurationHistogram = instrumentProvider.getDoubleHistogram(tc::kFrontendMeter, tc::kFrontendRequestDuration);
+  requestDurationHistogram->Record(requestProcessingDuration, telemetryAttributes, opentelemetry::context::RuntimeContext::GetCurrent());
+
   return response;
 }
 
