@@ -17,7 +17,7 @@
 {{- define "common.images.image" -}}
   {{- $imageRoot := .imageRoot -}}
   {{- $global := .global -}}
-  {{- if and  $global.tag -}}
+  {{- if and $global.repository $global.tag -}}
     {{- printf "%s:%s" $global.repository ( $global.tag | toString ) | quote -}}
   {{- else if and $imageRoot.repository $imageRoot.tag -}}
     {{- printf "%s:%s" $imageRoot.repository ( $imageRoot.tag | toString ) | quote -}}
@@ -25,7 +25,7 @@
     {{- fail "You must provide repository, and tag for the image in either .Values.global.image or .Values.image." -}}
   {{- end }}
 {{- end }}
-$global.repository
+
 {{/*
    common.images.pullPolicy:
    This function picks the image pull policy, prioritizing the global setting (.Values.global.image.pullPolicy).

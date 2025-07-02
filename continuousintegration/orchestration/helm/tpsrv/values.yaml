@@ -10,6 +10,7 @@ conf:
     retrieveQueueCacheMaxAgeSecs: 1
     externalFreeDiskSpaceScript: "/usr/bin/cta-eosdf.sh"
 
+# SSS keytab to communicate to the disk buffer
 keytab:
   secretName: eos-keytab
   subPath: eos.keytab
