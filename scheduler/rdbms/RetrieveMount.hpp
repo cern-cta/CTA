@@ -73,6 +73,9 @@ public:
   void flushAsyncSuccessReports(std::list<std::unique_ptr<SchedulerDatabase::RetrieveJob>>& jobsBatch,
                                 log::LogContext& lc) override;
 
+  void updateRetrieveJobStatus(const std::vector<std::string>& jobIDs,
+                                            cta::schedulerdb::RetrieveJobStatus newStatus,
+                                            log::LogContext& lc);
   //------------------------------------------------------------------------------
   // for compliance with OStoreDB only
   //------------------------------------------------------------------------------

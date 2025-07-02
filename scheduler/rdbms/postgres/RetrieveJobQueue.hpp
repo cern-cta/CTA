@@ -589,7 +589,7 @@ public:
   uint64_t updateFailedJobStatus(Transaction& txn, RetrieveJobStatus newStatus);
 
   /**
-  * Move from ARCHIVE_ACTIVE_QUEUE to ARCHIVE_PENDING_QUEUE
+  * Move from RETRIEVE_ACTIVE_QUEUE to RETRIEVE_PENDING_QUEUE
   * a failed job so that it can be to drive queues requeued.
   * This method updates also the retry statistics
   *
@@ -604,7 +604,20 @@ public:
                             std::optional<std::list<std::string>> jobIDs = std::nullopt);
 
   /**
-  * Move from ARCHIVE_ACTIVE_QUEUE to ARCHIVE_PENDING_QUEUE
+  * Move from RETRIEVE_ACTIVE_QUEUE to RETRIEVE_PENDING_QUEUE
+  * a all jobs of the tape VID specified
+  * This method updates also the retry statistics
+  *
+  * @param txn                  Transaction to use for this query
+  * @param newStatus            Retrieve Job Status to set
+  * @param vid                  tape VID to requeue
+  * @return                     Number of updated rows
+  */
+  static uint64_t requeueAllTapeJobs(Transaction& txn, RetrieveJobStatus newStatus, std::string vid);
+
+
+  /**
+  * Move from RETRIEVE_ACTIVE_QUEUE to RETRIEVE_PENDING_QUEUE
   * a batch of jobs so that they can be requeued to drive queues later
   * This methos is static and does not udate any retry statistics
   * It is used for batch of jobs not processed, returning from the task queue

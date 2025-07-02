@@ -306,7 +306,7 @@ void RetrieveJobQueueRow::updateRetryCounts(uint64_t mountId) {
 
 // requeueFailedJob is used to requeue jobs which were not processed due to finished mount or failed jobs
 // In case of unexpected crashed the job stays in the RETRIEVE_PENDING_QUEUE and needs to be identified
-// in some garbage collection process - TO-BE-DONE.
+// in some garbage collection process - TO-BE-DONE. ALTERNATE_VIDS
 uint64_t RetrieveJobQueueRow::requeueFailedJob(Transaction& txn,
                                                RetrieveJobStatus newStatus,
                                                bool keepMountId,
@@ -421,7 +421,7 @@ uint64_t RetrieveJobQueueRow::requeueFailedJob(Transaction& txn,
       M.MAX_RETRIES_WITHIN_MOUNT,
       M.TOTAL_REPORT_RETRIES,
       M.MAX_REPORT_RETRIES,
-      M.VID,
+      :VID AS VID,
       M.ALTERNATE_FSEQS,
       M.ALTERNATE_BLOCK_IDS,
       M.ALTERNATE_VIDS,
@@ -460,6 +460,7 @@ uint64_t RetrieveJobQueueRow::requeueFailedJob(Transaction& txn,
   stmt.bindUint32(":TOTAL_RETRIES", totalRetries);
   stmt.bindUint32(":RETRIES_WITHIN_MOUNT", retriesWithinMount);
   stmt.bindUint64(":LAST_MOUNT_WITH_FAILURE", lastMountWithFailure);
+  stmt.bindString(":VID", vid);
   stmt.bindString(":FAILURE_LOG", failureLogs.value_or(""));
   if (userowjid) {
     stmt.bindUint64(":JOB_ID", jobId);
@@ -613,7 +614,7 @@ RetrieveJobQueueRow::requeueJobBatch(Transaction& txn, RetrieveJobStatus newStat
 // before using the following method we need to - check if alternative copy nb exists to be used and use it,
 // otherwise change the state to failure and leave the reporting to take care of it
 uint64_t
-RetrieveJobQueueRow::requeueAllTapeJobs(Transaction& txn, RetrieveJobStatus status, std::string_view vid) {
+RetrieveJobQueueRow::requeueAllTapeJobs(Transaction& txn, RetrieveJobStatus newStatus, std::string vid) {
   std::string sql = R"SQL(
     WITH MOVED_ROWS AS (
         DELETE FROM RETRIEVE_ACTIVE_QUEUE
@@ -735,7 +736,8 @@ RetrieveJobQueueRow::requeueAllTapeJobs(Transaction& txn, RetrieveJobStatus stat
   )SQL";
 
   auto stmt = txn.getConn().createStmt(sql);
-  stmt.bindString(":STATUS", to_string(status));
+  stmt.bindString(":VID", vid);
+  stmt.bindString(":STATUS", to_string(newStatus));
   stmt.bindString(":FAILURE_LOG", "VID_STATE_CHANGE_JOBS_REQUEUED");
   stmt.executeNonQuery();
   return stmt.getNbAffectedRows();

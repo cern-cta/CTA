@@ -136,11 +136,14 @@ void RetrieveMount::requeueJobBatch(std::list<std::unique_ptr<SchedulerDatabase:
     // handle the case of failed bunch update of the jobs !
     std::string jobIDsString;
     for (const auto& piece : jobIDsList) {
-      jobIDsString += piece;
+      jobIDsString += piece + ",";
+    }
+    if (!jobIDsString.empty()) {
+      jobIDsString.pop_back();
     }
     logContext.log(cta::log::ERR,
                    std::string("In RetrieveMount::requeueJobBatch(): Did not requeue all task jobs of "
-                               "the queue for this there was no space on disk, job IDs attempting to update were: ") +
+                               "the queue, there was no space on disk, job IDs attempting to update were: ") +
                      jobIDsString);
   }
 }
@@ -203,7 +206,7 @@ void RetrieveMount::updateRetrieveJobStatus(const std::vector<std::string>& jobI
         log::ScopedParamContainer(lc)
           .add("updatedRows", nrows)
           .add("jobListSize", jobIDs.size())
-          .add("targetStatus", TO_STRING(newStatus))
+          .add("targetStatus", to_string(newStatus))
           .log(log::ERR,
                "In RetrieveMount::updateRetrieveJobStatus(): Failed to update all jobs to target status. Aborting transaction.");
         txn.abort();
@@ -214,7 +217,7 @@ void RetrieveMount::updateRetrieveJobStatus(const std::vector<std::string>& jobI
       log::ScopedParamContainer(lc)
         .add("rowUpdateCount", nrows)
         .add("rowUpdateTime", t.secs())
-        .add("targetStatus", TO_STRING(newStatus))
+        .add("targetStatus", to_string(newStatus))
         .log(log::INFO, "In RetrieveMount::updateRetrieveJobStatus(): updated job statuses.");
     }
   } catch (const exception::Exception& ex) {
@@ -243,7 +246,7 @@ void RetrieveMount::flushAsyncSuccessReports(std::list<std::unique_ptr<Scheduler
       // If the job is from a repack subrequest, we change its status (to report
       // for repack success). Queueing will be done in batch in
       jobIDs_repackSuccess.push_back(std::to_string(rdbJob->jobID));
-    } else if (retrieveRequest.retrieveReportURL.empty()) {
+    } else if (rdbJob->retrieveRequest.retrieveReportURL.empty()) {
       // Set the user transfer request as successful (delete it).
       jobIDs_success.push_back(std::to_string(rdbJob->jobID));
     } else {
@@ -256,11 +259,11 @@ void RetrieveMount::flushAsyncSuccessReports(std::list<std::unique_ptr<Scheduler
                                                                   diskSpaceReservationRequest,
                                                                   lc);
   if (!jobIDs_success.empty())
-    schedulerdb::postgres::RetrieveJobQueueRow::updateRetrieveJobStatus(jobIDs_success, RetrieveJobStatus::ReadyForDeletion, lc);
+    updateRetrieveJobStatus(jobIDs_success, RetrieveJobStatus::ReadyForDeletion, lc);
   if (!jobIDs_repackSuccess.empty())
-    schedulerdb::postgres::RetrieveJobQueueRow::updateRetrieveJobStatus(jobIDs_repackSuccess, RetrieveJobStatus::RJS_ToReportToRepackForSuccess, lc);
+    updateRetrieveJobStatus(jobIDs_repackSuccess, RetrieveJobStatus::RJS_ToReportToRepackForSuccess, lc);
   if (!jobIDs_reportToUser.empty())
-    schedulerdb::postgres::RetrieveJobQueueRow::updateRetrieveJobStatus(jobIDs_reportToUser, RetrieveJobStatus::RJS_ToReportToUserForSuccess, lc);
+    updateRetrieveJobStatus(jobIDs_reportToUser, RetrieveJobStatus::RJS_ToReportToUserForSuccess, lc);
   // After processing - we free the memory object
   // in case the flush and DB update failed, we still want to clean the jobs from memory
   // (they need to be garbage collected in case of a crash)
