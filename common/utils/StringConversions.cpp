@@ -305,4 +305,48 @@ void toLower(std::string& str) {
     c = std::tolower(static_cast<unsigned char>(c));
   }
 }
+
+//------------------------------------------------------------------------------
+// Splits a comma-separated string into a vector of strings.
+//------------------------------------------------------------------------------
+std::vector<std::string> splitStringToVector(const std::string& input, const char separator) {
+    std::vector<std::string> result;
+    std::stringstream ss(input);
+    std::string item;
+
+    while (std::getline(ss, item, separator)) {
+        if (!item.empty()) {
+            result.push_back(item);
+        }
+    }
+
+    return result;
+}
+
+//------------------------------------------------------------------------------
+// Select a string to the right of the provided current string in the alternateStrings vector
+//------------------------------------------------------------------------------
+std::string selectNextString(const std::string& currentString, const std::string& alternateStrings) {
+    if (alternateStrings.empty()) {
+        return currentString;
+    }
+
+    std::vector<std::string> stringVec = splitStringToVector(alternateStrings);
+    if (stringVec.empty()) {
+        return currentString;
+    }
+
+    for (size_t i = 0; i < stringVec.size(); ++i) {
+        if (stringVec[i] == currentString) {
+            if (i + 1 < stringVec.size()) {
+                // If not the last, return next
+                return stringVec[i + 1];
+            } else {
+                // If current is last, wrap around
+                return stringVec[0];
+            }
+        }
+    }
+    return currentString;
+}
 }  // namespace cta::utils

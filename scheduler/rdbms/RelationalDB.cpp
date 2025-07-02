@@ -417,18 +417,18 @@ RelationalDB::queueRetrieve(cta::common::dataStructures::RetrieveRequest& rqst,
   }
 }
 
-void RelationalDB::cancelRetrieveForTapeVID(const std::string& vid, log::LogContext& lc) {
+void RelationalDB::cancelAndReportRetrieveForTapeVID(const std::string& vid, log::LogContext& lc) {
   schedulerdb::Transaction txn(m_connPool);
   try {
     uint64_t cancelledJobs = schedulerdb::postgres::RetrieveJobQueueRow::cancelRetrieveJobsForTapeVID(txn, vid);
     log::ScopedParamContainer(lc)
       .add("VID", vid)
       .add("cancelledJobs", cancelledJobs)
-      .log(log::INFO, "In RelationalDB::cancelRetrieveForTapeVID(): removing all retrieve jobs from the tape queue");
+      .log(log::INFO, "In RelationalDB::cancelAndReportRetrieveForTapeVID(): removing all retrieve jobs from the tape queue");
     txn.commit();
   } catch (exception::Exception& ex) {
     lc.log(cta::log::ERR,
-           "In RelationalDB::cancelRetrieveForTapeVID(): failed to remove retrieve jobs from the tape queue. Aborting "
+           "In RelationalDB::cancelAndReportRetrieveForTapeVID(): failed to remove retrieve jobs from the tape queue. Aborting "
            "the transaction." +
              ex.getMessageValue());
     txn.abort();
@@ -436,6 +436,34 @@ void RelationalDB::cancelRetrieveForTapeVID(const std::string& vid, log::LogCont
   }
   return;
 }
+
+////////////
+// bool isRepackMount = false;
+//    if (isRepackMount) {
+//      // If the job is from a repack subrequest, we change its status (to report
+//      // for repack success). Queueing will be done in batch in
+//      jobIDs_repackSuccess.push_back(std::to_string(rdbJob->jobID));
+//    } else if (rdbJob->retrieveRequest.retrieveReportURL.empty()) {
+//      // Set the user transfer request as successful (delete it).
+//      jobIDs_success.push_back(std::to_string(rdbJob->jobID));
+//    } else {
+//      // else we change its status (to report for transfer success).
+//      jobIDs_reportToUser.push_back(std::to_string(rdbJob->jobID));
+//    }
+//  }
+//  this->m_RelationalDB.m_catalogue.DriveState()->releaseDiskSpace(mountInfo.drive,
+//                                                                  mountInfo.mountId,
+//                                                                  diskSpaceReservationRequest,
+//                                                                  lc);
+//  if (!jobIDs_success.empty())
+//    updateRetrieveJobStatus(jobIDs_success, RetrieveJobStatus::ReadyForDeletion, lc);
+//  if (!jobIDs_reportToUser.empty())
+//    updateRetrieveJobStatus(jobIDs_reportToUser, RetrieveJobStatus::RJS_ToReportToUserForFailure, lc);
+//  // After processing - we free the memory object
+//  // in case the flush and DB update failed, we still want to clean the jobs from memory
+//  // (they need to be garbage collected in case of a crash)
+//  recycleTransferredJobs(jobsBatch, lc);
+//////////
 
 void RelationalDB::cancelRetrieve(const std::string& instanceName,
                                   const cta::common::dataStructures::CancelRetrieveRequest& request,
@@ -1112,8 +1140,13 @@ std::vector<std::string> RelationalDB::getActiveSleepDiskSystemNamesToFilter() {
 
 void RelationalDB::setRetrieveQueueCleanupFlag(const std::string& vid, bool val, log::LogContext& logContext) {
   if (val) {
+    // here I could also clal requeueAllTapeVID
+    // cancelRetrieveForTapeVID method deletes from the pending queue wjat was not picked up yet
+    // we need to report first ! so basically these should be moved to active and all marked as to be reported ot deleted depending on existance of the URL for reporting ...
+    // this is nto an error, they were cancelled ... but should be reported as failure do due to that ...
+    // when do I want to requeue all TAPE VID ? ...
     try {
-      RelationalDB::cancelRetrieveForTapeVID(vid, logContext);
+      RelationalDB::cancelAndReportRetrieveForTapeVID(vid, logContext);
     } catch (exception::Exception& ex) {
       logContext.log(
         cta::log::ERR,
