@@ -87,7 +87,8 @@ void  cta::tape::daemon::TapeDaemon::exceptionThrowingMain()  {
   // Set the name of the (unique) thread for easy process identification.
   prctl(PR_SET_NAME, "cta-tpd-master");
   // Initialise telemetry only after the process name is available
-  cta::telemetry::reinitTelemetry();
+  cta::log::LogContext lc(m_log); // temporary log context
+  cta::telemetry::reinitTelemetry(lc);
   mainEventLoop();
 }
 
