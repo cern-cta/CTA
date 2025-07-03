@@ -81,7 +81,7 @@ SubprocessHandler::ProcessingStatus MaintenanceHandler::fork() {
     // First prepare a socket pair for this new subprocess
     m_socketPair.reset(new cta::server::SocketPair());
     // We don't want to fork telemetry state
-    cta::telemetry::resetTelemetry();
+    cta::telemetry::resetTelemetry(m_processManager.logContext());
     // and fork
     m_pid=::fork();
     exception::Errnum::throwOnMinusOne(m_pid, "In MaintenanceHandler::fork(): failed to fork()");
@@ -98,7 +98,7 @@ SubprocessHandler::ProcessingStatus MaintenanceHandler::fork() {
       // Close child side of socket.
       m_socketPair->close(server::SocketPair::Side::child);
       // Ensure the parent has telemetry available
-      cta::telemetry::reinitTelemetry();
+      cta::telemetry::reinitTelemetry(m_processManager.logContext());
       // We are now ready to react to timeouts and messages from the child process.
       return m_processingStatus;
     }
@@ -287,7 +287,8 @@ void MaintenanceHandler::exceptionThrowingRunChild(){
   const auto processName = m_tapedConfig.constructProcessName(m_processManager.logContext(), "maint");
   prctl(PR_SET_NAME, processName.c_str());
   // Initialise telemetry only after the process name is available
-  cta::telemetry::reinitTelemetry();
+  cta::telemetry::reinitTelemetry(m_processManager.logContext());
+
   // Before anything, we will check for access to the scheduler's central storage.
   // If we fail to access it, we cannot work. We expect the drive processes to
   // fail likewise, so we just wait for shutdown signal (no feedback to main process).

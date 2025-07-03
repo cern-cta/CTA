@@ -4,7 +4,7 @@
 
 namespace cta::telemetry {
 
-inline MetricsBackend stringToMetricsBackend(const std::string& name) {
+MetricsBackend stringToMetricsBackend(const std::string& name) {
   if (name == "NOOP") {
     return MetricsBackend::NOOP;
   }
@@ -16,6 +16,19 @@ inline MetricsBackend stringToMetricsBackend(const std::string& name) {
   }
   throw std::invalid_argument("Invalid MetricBackend: " + name);
 }
+
+std::string metricsBackendToString(MetricsBackend backend) {
+  switch(backend) {
+    case MetricsBackend::NOOP:
+      return "NOOP";
+    case MetricsBackend::STDOUT:
+      return "STDOUT";
+    case MetricsBackend::OTLP:
+      return "OTLP";
+  }
+  throw std::invalid_argument("Provided MetricsBackend cannot be converted to string");
+}
+
 
 TelemetryConfigBuilder& TelemetryConfigBuilder::serviceName(std::string serviceName) {
   m_config.serviceName = std::move(serviceName);
