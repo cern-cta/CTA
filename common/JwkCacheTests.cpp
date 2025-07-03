@@ -34,23 +34,21 @@ public:
 std::string JwkCacheTest::fetchJWKS(const std::string& uri) {
 
     std::string sample_cert_base64_der = 
-        "MIIDHDCCAgSgAwIBAgIIGlbUz5cvweUwDQYJKoZIhvcNAQEFBQAwMTEvMC0GA1UE"
-        "AxMmc2VjdXJldG9rZW4uc3lzdGVtLmdzZXJ2aWNlYWNjb3VudC5jb20wHhcNMTkw"
-        "NDEwMjEyMDUxWhcNMTkwNDI3MDkzNTUxWjAxMS8wLQYDVQQDEyZzZWN1cmV0b2tl"
-        "bi5zeXN0ZW0uZ3NlcnZpY2VhY2NvdW50LmNvbTCCASIwDQYJKoZIhvcNAQEBBQAD"
-        "ggEPADCCAQoCggEBALRPFSsUi/bGcMVkD+XjJ6z/71u+7Wn1C1bRnM9sU3q7+Ere"
-        "DV6an+z+YsjblskBX73h1GyYvmtkyuL7Uq0N+y+RTOmd2fwDw48gM5FEq6DNpVVW"
-        "ZRIzzoMSLZCB+tg1eQZdGKtmctdd5Jjhwihf9Aa759fcj60GDG39G6A/w4Jok+J6"
-        "7sRabxxontJ4Kpo6zmwUKbWF8naJeCRTO0VAYLkJqEWO4VJTIHJeu2WpxM0qzvY9"
-        "IY5Yd7Njegu64FoHU55dSfee2KwDa0/bajrknJfxWBN4hk/rqgGjxQmzAYMCB7/p"
-        "/9Snfg4NmfX5cJJ01SNzY6Q/mJRjB3iX2PBz+GsCAwEAAaM4MDYwDAYDVR0TAQH/"
-        "BAIwADAOBgNVHQ8BAf8EBAMCB4AwFgYDVR0lAQH/BAwwCgYIKwYBBQUHAwIwDQYJ"
-        "KoZIhvcNAQEFBQADggEBAKCSq0D+NIAsGULZrhXouurxInxDyq03xLNcxvKDQchc"
-        "XfGA1r3eltmlyKQb5TmAsuKwS/LAQ5z8SlRTOmDGVEtDwnw3S83C4ufXbP0eMB6H"
-        "eKf2XCA00T3odUfXmQZme8hG6z7GKVOdn/0oY+vaX38brlCpRXDTm1WldyddUpMz"
-        "ftcs6dibdnbQtbX6o9E+KuvGHoNW5xcSjX8lwXTpopfvufPOLPcnFXi4UoYZ8NZ2"
-        "2mRG78LkOA+SkOMutbt6w7TBDvADmFzuzvAULy4gsfcamOYcQ7uiHnnD+PoNiNbw"
-        "flE/m/0zymX8I/Xu3+KKLhUnUROGC6zO3OnLHXCnEns=";
+       "MIIDSTCCAjGgAwIBAgIUQQp5TK9J3SemQXrCF+ffmED4qy4wDQYJKoZIhvcNAQELBQAwTTELMAkG"
+        "A1UEBhMCQ0gxDzANBgNVBAgMBkdlbmV2YTEPMA0GA1UEBwwGR2VuZXZhMRwwGgYDVQQKDBNEZWZh"
+        "dWx0IENvbXBhbnkgTHRkMB4XDTI1MDcwOTA4NDYyN1oXDTM1MDcwNzA4NDYyN1owTTELMAkGA1UE"
+        "BhMCQ0gxDzANBgNVBAgMBkdlbmV2YTEPMA0GA1UEBwwGR2VuZXZhMRwwGgYDVQQKDBNEZWZhdWx0"
+        "IENvbXBhbnkgTHRkMIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEAh0gY8QsodbL06ls2"
+        "vRuY9ETBefO2llFkpfYpExdT0WVeNq7iV5AXD+pyI1rHt6ua59gnvhSFwpIqcMF1DXW4LuQIFy0h"
+        "TOYPDBpbt6YBDb5imHHosE+pWUu6fU/dBy0m0cp84z0/UHDuHQSYYsDMDLnSTIk/F8k4idPkZfoY"
+        "N2a7gNTiMfxM7MvoJkZ43FSU/LVnm2dymn+5LZJHT5+oZLx70tjNBqCSiroYTmHWnu79agWr0Yiv"
+        "3U9UKCkjmz3hHemcz5mJdoHtaVHe2+FoprnT0pY/nyLFcmlsTsIDYHTZRi9sfE/RnC2ANaWV4T3L"
+        "/DLPOghy56gGICRAXudUqwIDAQABoyEwHzAdBgNVHQ4EFgQUZxkzqXZASKTRanmOKg6r52Wcj1Mw"
+        "DQYJKoZIhvcNAQELBQADggEBACVb/KiCg1PD+DYSHet5eZ0sskx6AtB4CwCsErTzy4z6Noy3zSuH"
+        "3RjYFR/1nsG2M8ZMn6LrB3T6VCnGdZAc6DLHaDZWzt+8g1yNP/9+0p3H9FcemIOVEwdvE/ExwFu9"
+        "W0AKcHVrhUK7OT7RemSfEodzUU+e6Ze/2Joq1vDNW7/ui/pC8XDljqSkwJqPCJeU4KGlTtloXWPw"
+        "GREcpm5DVoJKJ9li9xIj2VHxmXPcdsmeiBL/5BB/1ldcOueirUPTyGiXxR2R1paHrjHZNBXKZ5Du"
+        "2N4HyvOmkj/xht5wkZU3OqA31aScrWF5MjMIu4FBVO3fY7El5s0rCp/cJivDq0Y=";
 
     std::string raw_jwks = R"({
     "keys": [{
