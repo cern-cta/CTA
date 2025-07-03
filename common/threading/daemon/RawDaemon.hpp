@@ -18,9 +18,5 @@
 #pragma once
 
 namespace cta::server::daemon {
-class RawDaemon : Daemon {
-
-
-
-} // class RawDaemon
-} // namespace cta::server:daemon
+class RawDaemon : Daemon {}  // class RawDaemon
+}  // namespace cta::server::daemon

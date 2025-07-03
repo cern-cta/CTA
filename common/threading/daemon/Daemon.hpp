@@ -24,15 +24,13 @@
 #include <memory>
 #include <ostream>
 
-
 // Global signal flag state to know which actions do we have to take.
 // The signal handler thread takes care of setting them to 1 without
 // causnig an interruption of the process. The daemon is responsible
 // of taking action on the different received signals. Write something for the opposite case.
-volatile sig_atomic_t g_sigTERMINT = 0; // Either SIGTERM or SIGINT. Stop the daemon.
-volatile sig_atomic_t g_sigHUP = 0;  // Update configuration file. This requires falling back to init stage.
-volatile sig_atomic_t g_sigUSR1 = 0; // Log rotate.
-
+volatile sig_atomic_t g_sigTERMINT = 0;  // Either SIGTERM or SIGINT. Stop the daemon.
+volatile sig_atomic_t g_sigHUP = 0;      // Update configuration file. This requires falling back to init stage.
+volatile sig_atomic_t g_sigUSR1 = 0;     // Log rotate.
 
 namespace cta::server {
 
@@ -59,14 +57,13 @@ public:
    *
    */
 
-
   /**
    * Destructor
    */
   virtual ~Daemon() = default;
 
 private:
-/**
+  /**
    * Signal Handler Thread
    */
   std::unique_ptr<SignalHandlerThread> m_signalHandlerThread;
@@ -74,16 +71,16 @@ private:
   /**
    * Object representing the API of the CTA logging system.
    */
-  cta::log::Logger &m_log;
+  cta::log::Logger& m_log;
 
   // Daemon status codes as specified in
   // https://refspecs.linuxbase.org/LSB_3.1.1/LSB-Core-generic/LSB-Core-generic/iniscrptact.html
   enum DaemonStatus : uint8_t {
-    Running = 0, // Program is running or service is OK
+    Running = 0,  // Program is running or service is OK
     Dead = 1,
     DeadAndLockFile = 2,
-    NotRunning = 3, // Program is not running
-    Uknown = 4, //Unknow Status
+    NotRunning = 3,  // Program is not running
+    Uknown = 4,      //Unknow Status
     //   5 -  99 should be reserved for future LSB usage
     // 100 - 149 reserved for distribution use
     // 150 - 199 <- Values we can use
@@ -93,8 +90,8 @@ private:
 
   // Base set of error codes the Daemon can emit.
   enum BaseErrorCodes {
-    ConfigError = 0,     // Syntax error, missing something
-    ConnectionError = 1, // Cannot contact some of the required endpoints.
+    ConfigError = 0,      // Syntax error, missing something
+    ConnectionError = 1,  // Cannot contact some of the required endpoints.
 
   };
 
@@ -124,6 +121,6 @@ private:
    */
   virtual int runStage();
 
-}; // class Daemon
+};  // class Daemon
 
-} // namespace cta::server
+}  // namespace cta::server

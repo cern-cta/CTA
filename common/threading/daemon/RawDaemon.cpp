@@ -17,7 +17,6 @@
 
 #pragma once
 
-
 #include "RawDaemon.hpp"
 
 namespace

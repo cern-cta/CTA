@@ -114,8 +114,7 @@ void castor::tape::tapeserver::daemon::CleanerSession::setDriveDownAfterCleanerF
 // exceptionThrowingExecute
 //------------------------------------------------------------------------------
 castor::tape::tapeserver::daemon::Session::EndOfSessionAction
-  castor::tape::tapeserver::daemon::CleanerSession::exceptionThrowingExecute() {
-
+castor::tape::tapeserver::daemon::CleanerSession::exceptionThrowingExecute() {
   std::unique_ptr<drive::DriveInterface> drivePtr = createDrive();
   drive::DriveInterface &drive = *drivePtr.get();
 
