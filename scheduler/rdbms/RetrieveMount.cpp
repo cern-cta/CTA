@@ -46,7 +46,7 @@ RetrieveMount::getNextJobBatch(uint64_t filesRequested, uint64_t bytesRequested,
   cta::log::ScopedParamContainer params(logContext);
   try {
     std::vector<std::string> noSpaceDiskSystemNames = m_RelationalDB.getActiveSleepDiskSystemNamesToFilter();
-    auto [queuedJobs, nrows] = postgres::RetrieveJobQueueRow::moveJobsToDbQueue(txn,
+    auto [queuedJobs, nrows] = postgres::RetrieveJobQueueRow::moveJobsToDbActiveQueue(txn,
                                                                                 queriedJobStatus,
                                                                                 mountInfo,
                                                                                 noSpaceDiskSystemNames,
@@ -56,7 +56,7 @@ RetrieveMount::getNextJobBatch(uint64_t filesRequested, uint64_t bytesRequested,
     params.add("updateMountInfoRowCount", nrows);
     params.add("MountID", mountInfo.mountId);
     logContext.log(cta::log::INFO,
-                   "In postgres::RetrieveJobQueueRow::moveJobsToDbQueue: successfully assigned Mount ID to DB jobs.");
+                   "In postgres::RetrieveJobQueueRow::moveJobsToDbActiveQueue: successfully assigned Mount ID to DB jobs.");
     retVector.reserve(nrows);
     // Fetch job info only in case there were jobs found and updated
     if (!queuedJobs.isEmpty()) {
@@ -76,9 +76,9 @@ RetrieveMount::getNextJobBatch(uint64_t filesRequested, uint64_t bytesRequested,
       params.add("queuedJobCount", retVector.size());
       timings.insertAndReset("mountJobInitBatchTime", t);
       logContext.log(cta::log::INFO,
-                     "In postgres::RetrieveJobQueueRow::moveJobsToDbQueue: successfully queued to the DB.");
+                     "In postgres::RetrieveJobQueueRow::moveJobsToDbActiveQueue: successfully queued to the DB.");
     } else {
-      logContext.log(cta::log::WARNING, "In postgres::RetrieveJobQueueRow::moveJobsToDbQueue: no jobs queued.");
+      logContext.log(cta::log::WARNING, "In postgres::RetrieveJobQueueRow::moveJobsToDbActiveQueue: no jobs queued.");
       txn.commit();
       return ret;
     }
@@ -86,7 +86,7 @@ RetrieveMount::getNextJobBatch(uint64_t filesRequested, uint64_t bytesRequested,
     params.add("exceptionMessage", ex.getMessageValue());
     logContext.log(
       cta::log::ERR,
-      "In postgres::RetrieveJobQueueRow::moveJobsToDbQueue: failed to queue jobs. Aborting the transaction.");
+      "In postgres::RetrieveJobQueueRow::moveJobsToDbActiveQueue: failed to queue jobs. Aborting the transaction.");
     txn.abort();
     throw;
   }

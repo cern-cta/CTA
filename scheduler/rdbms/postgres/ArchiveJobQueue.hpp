@@ -465,7 +465,7 @@ public:
    *
    * @return  result set containing job IDs of the rows which were updated
    */
-  static std::pair<rdbms::Rset, uint64_t> moveJobsToDbQueue(Transaction& txn,
+  static std::pair<rdbms::Rset, uint64_t> moveJobsToDbActiveQueue(Transaction& txn,
                                                             ArchiveJobStatus newStatus,
                                                             const SchedulerDatabase::ArchiveMount::MountInfo& mountInfo,
                                                             uint64_t maxBytesRequested,

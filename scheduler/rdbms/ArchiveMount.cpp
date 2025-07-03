@@ -54,7 +54,7 @@ ArchiveMount::getNextJobBatch(uint64_t filesRequested, uint64_t bytesRequested, 
   cta::log::ScopedParamContainer params(logContext);
   try {
     auto [queuedJobs, nrows] =
-      postgres::ArchiveJobQueueRow::moveJobsToDbQueue(txn, queriedJobStatus, mountInfo, bytesRequested, filesRequested);
+      postgres::ArchiveJobQueueRow::moveJobsToDbActiveQueue(txn, queriedJobStatus, mountInfo, bytesRequested, filesRequested);
     timings.insertAndReset("mountUpdateBatchTime", t);
     params.add("updateMountInfoRowCount", nrows);
     params.add("MountID", mountInfo.mountId);
@@ -80,16 +80,16 @@ ArchiveMount::getNextJobBatch(uint64_t filesRequested, uint64_t bytesRequested, 
       params.add("queuedJobCount", retVector.size());
       timings.insertAndReset("mountJobInitBatchTime", t);
       logContext.log(cta::log::INFO,
-                     "In postgres::ArchiveJobQueueRow::moveJobsToDbQueue: successfully queued to the DB.");
+                     "In postgres::ArchiveJobQueueRow::moveJobsToDbActiveQueue: successfully queued to the DB.");
     } else {
-      logContext.log(cta::log::WARNING, "In postgres::ArchiveJobQueueRow::moveJobsToDbQueue: no jobs queued.");
+      logContext.log(cta::log::WARNING, "In postgres::ArchiveJobQueueRow::moveJobsToDbActiveQueue: no jobs queued.");
       txn.commit();
       return ret;
     }
   } catch (exception::Exception& ex) {
     params.add("exceptionMessage", ex.getMessageValue());
     logContext.log(cta::log::ERR,
-                   "In postgres::ArchiveJobQueueRow::moveJobsToDbQueue: failed to queue jobs." + ex.getMessageValue());
+                   "In postgres::ArchiveJobQueueRow::moveJobsToDbActiveQueue: failed to queue jobs." + ex.getMessageValue());
     txn.abort();
     throw;
   }
