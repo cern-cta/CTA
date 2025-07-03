@@ -1,6 +1,6 @@
 image:
   repository: ghcr.io/open-telemetry/opentelemetry-collector-releases/opentelemetry-collector-contrib
-  tag: 0.123.1
+  tag: 0.129.1
 
 mode: deployment
 
@@ -25,8 +25,6 @@ config:
       metrics:
         receivers:
         - otlp
-        processors:
-        - batch
         exporters:
         - prometheus
         - debug
@@ -35,10 +33,6 @@ config:
       logs:
         level: "info"
 
-  processors:
-    batch:
-      timeout: 10s
-      send_batch_size: 8192
 ports:
   metrics:
     enabled: true
