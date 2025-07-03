@@ -44,22 +44,19 @@
 //------------------------------------------------------------------------------
 // constructor
 //------------------------------------------------------------------------------
-cta::server::Daemon::Daemon(cta::log::Logger &log) noexcept :
-  m_log(log),
-  m_foreground(false),
-  m_commandLineHasBeenParsed(false) {
-}
+cta::server::Daemon::Daemon(cta::log::Logger& log) noexcept
+    : m_log(log),
+      m_foreground(false),
+      m_commandLineHasBeenParsed(false) {}
 
 //------------------------------------------------------------------------------
 // getForeground
 //------------------------------------------------------------------------------
-bool cta::server::Daemon::getForeground() const
-   {
-  if(!m_commandLineHasBeenParsed) {
+bool cta::server::Daemon::getForeground() const {
+  if (!m_commandLineHasBeenParsed) {
     CommandLineNotParsed ex;
-    ex.getMessage() <<
-      "Failed to determine whether or not the daemon should run in the"
-      " foreground because the command-line has not yet been parsed";
+    ex.getMessage() << "Failed to determine whether or not the daemon should run in the"
+                       " foreground because the command-line has not yet been parsed";
     throw ex;
   }
 
@@ -84,8 +81,7 @@ void cta::server::Daemon::daemonizeIfNotRunInForeground() {
 
     {
       pid_t pid = 0;
-      cta::exception::Errnum::throwOnMinusOne(pid = fork(),
-        "Failed to daemonize: Failed to fork");
+      cta::exception::Errnum::throwOnMinusOne(pid = fork(), "Failed to daemonize: Failed to fork");
       // If we got a good PID, then we can exit the parent process
       if (0 < pid) {
         exit(EXIT_SUCCESS);
@@ -101,20 +97,16 @@ void cta::server::Daemon::daemonizeIfNotRunInForeground() {
     umask(077);
 
     // Run the daemon in a new session
-    cta::exception::Errnum::throwOnMinusOne(setsid(),
-      "Failed to daemonize: Failed to run daemon is a new session");
+    cta::exception::Errnum::throwOnMinusOne(setsid(), "Failed to daemonize: Failed to run daemon is a new session");
 
     // Redirect standard files to /dev/null
-    cta::exception::Errnum::throwOnNull(
-      freopen("/dev/null", "r", stdin),
-      "Failed to daemonize: Falied to freopen stdin");
-    cta::exception::Errnum::throwOnNull(
-      freopen("/dev/null", "w", stdout),
-      "Failed to daemonize: Failed to freopen stdout");
-    cta::exception::Errnum::throwOnNull(
-      freopen("/dev/null", "w", stderr),
-      "Failed to daemonize: Failed to freopen stderr");
-  } // if (!m_foreground)
+    cta::exception::Errnum::throwOnNull(freopen("/dev/null", "r", stdin),
+                                        "Failed to daemonize: Falied to freopen stdin");
+    cta::exception::Errnum::throwOnNull(freopen("/dev/null", "w", stdout),
+                                        "Failed to daemonize: Failed to freopen stdout");
+    cta::exception::Errnum::throwOnNull(freopen("/dev/null", "w", stderr),
+                                        "Failed to daemonize: Failed to freopen stderr");
+  }  // if (!m_foreground)
 
   // Ignore SIGPIPE (connection lost with client)
   // and SIGXFSZ (a file is too big)

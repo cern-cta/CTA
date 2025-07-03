@@ -50,7 +50,7 @@ static void setProc(const cap_t cap) {
   }
 }
 
-namespace cta::server::ProcessCap{
+namespace cta::server::ProcessCap {
 //------------------------------------------------------------------------------
 // setProcText
 //------------------------------------------------------------------------------
@@ -67,4 +67,4 @@ void setProcText(const std::string& text) {
     throw ex;
   }
 }
-} //namespace cta::server::ProcessCap
+}  //namespace cta::server::ProcessCap

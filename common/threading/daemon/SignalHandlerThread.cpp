@@ -26,17 +26,16 @@
 //------------------------------------------------------------------------------
 // Constructor
 //------------------------------------------------------------------------------
-cta::server::SignalHandlerThread::SignalHandlerThread(const cta::log::LogContext& logContext):
-  m_sigFd(-1), m_logContext(logContext) {
+cta::server::SignalHandlerThread::SignalHandlerThread(const cta::log::LogContext& logContext)
+    : m_sigFd(-1),
+      m_logContext(logContext) {
   // Main thread already blocked all signals. So lets read them all.
   // We will ignore non handled singals in the main logic.
   ::sigset_t sigMask;
   ::sigfillset(&sigMask);
   m_sigFd = ::signalfd(-1, &sigMask, 0);
-  cta::exception::Errnum::throwOnMinusOne(m_sigFd,
-    "In SignalHandlerThread::SignalHandlerThread(): signalfd() failed");
+  cta::exception::Errnum::throwOnMinusOne(m_sigFd, "In SignalHandlerThread::SignalHandlerThread(): signalfd() failed");
 }
-
 
 //------------------------------------------------------------------------------
 // Destructor
@@ -51,21 +50,21 @@ cta::server::SignalHandlerThread::~SignalHandlerThread() noexcept {
 // SignalHandlerThread::run
 //------------------------------------------------------------------------------
 void cta::server::SignalHandlerThread::run() {
-
   // Create file descritr to read from.
   struct ::signalfd_siginfo sigInf;
 
   // Loop until we receive a signal that forces us to exit the daemon
-  while(g_sigTERMINT){
+  while (g_sigTERMINT) {
     // Block until we have something to read from the file descriptor.
     int rc = ::read(m_sigFd, &sigInf, sizeof(sigInf));
     cta::exception::Errnum::throwOnMinusOne(rc);
 
     // We should get exactly sizeof(sigInf) bytes.
-    if (rc!=sizeof(sigInf)) {
+    if (rc != sizeof(sigInf)) {
       std::stringstream err;
       err << "In SignalHandlerThread::run(): unexpected size for read: "
-      "got=" << rc << " expected=" << sizeof(sigInf);
+             "got="
+          << rc << " expected=" << sizeof(sigInf);
       throw cta::exception::Exception(err.str());
     }
 
@@ -87,8 +86,7 @@ void cta::server::SignalHandlerThread::run() {
         break;
       }
       default: {
-        m_logContext().log(log::INFO,
-                           "In signal handler, ignoring signal number " + sigInf.ssi_signo);
+        m_logContext().log(log::INFO, "In signal handler, ignoring signal number " + sigInf.ssi_signo);
         break;
       }
     }

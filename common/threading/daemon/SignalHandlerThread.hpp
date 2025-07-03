@@ -19,9 +19,7 @@
 
 namespace cta::server {
 class SignalHandlerThread : private cta::threading::Thread {
-
 public:
-
   /**
    * Constructor
    * @param logContext The log context used to
@@ -41,16 +39,15 @@ public:
   void run() override;
 
 private:
-
-    /**
+  /**
      * Log
      */
-    const cta::log::LogContext m_logContext;
+  const cta::log::LogContext m_logContext;
 
-    /**
+  /**
      * File descriptor to read signals from the blocked signals.
      */
-    int m_sigFd;
+  int m_sigFd;
 };
 
-}
+}  // namespace cta::server

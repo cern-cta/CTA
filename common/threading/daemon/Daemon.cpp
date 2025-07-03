@@ -29,15 +29,12 @@
 //------------------------------------------------------------------------------
 // constructor
 //------------------------------------------------------------------------------
-cta::server::Daemon::Daemon(const cta::log::LogContex &logContex) :
-  m_log(log) {
-
+cta::server::Daemon::Daemon(const cta::log::LogContex& logContex) : m_log(log) {
   // Block all signals in main and subsequent threads.
   ::sigset_t sigMask;
   ::sgifillset(&sigMask);
-  cta::exception::Errnum::throwOnNonZero(
-    ::sigprocmask(SIG_BLOCK, &sigMask, nullptr),
-    "In Daemon::Daemon(): could not block signals");
+  cta::exception::Errnum::throwOnNonZero(::sigprocmask(SIG_BLOCK, &sigMask, nullptr),
+                                         "In Daemon::Daemon(): could not block signals");
 
   // Create the signal handler thread
   m_signalHandlerThread = std::make_unique<SignalHandlerThread>(logContext);
@@ -46,11 +43,9 @@ cta::server::Daemon::Daemon(const cta::log::LogContex &logContex) :
   m_signalHandlerThread->start();
 }
 
-
 //------------------------------------------------------------------------------
 // destructor
 //------------------------------------------------------------------------------
 cta::server::Daemon::~Daemon() noexcept {
   m_signalHandlerThread->wait();
 }
-
