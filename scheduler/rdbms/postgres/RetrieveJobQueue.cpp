@@ -22,7 +22,7 @@
 namespace cta::schedulerdb::postgres {
 
 std::pair<rdbms::Rset, uint64_t>
-RetrieveJobQueueRow::moveJobsToDbQueue(Transaction& txn,
+RetrieveJobQueueRow::moveJobsToDbActiveQueue(Transaction& txn,
                                        RetrieveJobStatus newStatus,
                                        const SchedulerDatabase::RetrieveMount::MountInfo& mountInfo,
                                        std::vector<std::string>& noSpaceDiskSystemNames,

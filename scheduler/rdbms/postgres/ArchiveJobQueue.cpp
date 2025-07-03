@@ -24,7 +24,7 @@
 
 namespace cta::schedulerdb::postgres {
 std::pair<rdbms::Rset, uint64_t>
-ArchiveJobQueueRow::moveJobsToDbQueue(Transaction& txn,
+ArchiveJobQueueRow::moveJobsToDbActiveQueue(Transaction& txn,
                                       ArchiveJobStatus newStatus,
                                       const SchedulerDatabase::ArchiveMount::MountInfo& mountInfo,
                                       uint64_t maxBytesRequested,
