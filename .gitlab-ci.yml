@@ -143,7 +143,7 @@ variables:
 
   # Images
   IMAGE_DEFAULT: gitlab-registry.cern.ch/cta/public_registry/container_registry/cta-ci-default:2025-07-01-12342757.el9
-  IMAGE_LINT: gitlab-registry.cern.ch/cta/public_registry/container_registry/cta-ci-lint:2025-07-01-12342757.el9
+  IMAGE_LINT: gitlab-registry.cern.ch/cta/public_registry/container_registry/cta-ci-lint:2025-07-01-12342757.el
   IMAGE_BUILD: gitlab-registry.cern.ch/cta/public_registry/container_registry/cta-ci-build:2025-07-01-12342757.el9
   IMAGE_TEST: gitlab-registry.cern.ch/cta/public_registry/container_registry/cta-ci-test:2025-07-01-12342757.el9
   IMAGE_RELEASE: gitlab-registry.cern.ch/cta/public_registry/container_registry/cta-ci-release:2025-07-01-12342757.el9
