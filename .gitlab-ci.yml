@@ -148,7 +148,7 @@ variables:
   IMAGE_TEST: gitlab-registry.cern.ch/cta/public_registry/container_registry/cta-ci-test:2025-07-03-12359397.el9
   IMAGE_RELEASE: gitlab-registry.cern.ch/cta/public_registry/container_registry/cta-ci-release:2025-07-03-12359397.el9
   IMAGE_DANGER: gitlab-registry.cern.ch/cta/public_registry/container_registry/cta-ci-danger:2025-07-03-12359397.el9
-  IMAGE_DOCKER_IMAGE_BUILDER: gcr.io/kaniko-project/executor:debug
+  IMAGE_DOCKER_IMAGE_BUILDER: registry.cern.ch/gcr.io/kaniko-project/executor:debug
 
 default:
   image: $IMAGE_DEFAULT
