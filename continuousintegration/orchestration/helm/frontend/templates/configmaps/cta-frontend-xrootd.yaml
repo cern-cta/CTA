@@ -98,8 +98,14 @@ data:
     # Export the SSI resource
     all.export /ctafrontend nolock r/w
 
-    # Telemetrysssss
+    # Telemetry
     cta.telemetry.metricsBackend {{ .Values.xrd.conf.telemetry.metricsBackend }}
     cta.telemetry.metricsOtlpEndpoint {{ .Values.xrd.conf.telemetry.metricsOtlpEndpoint }}
+    {{- if .Values.xrd.conf.telemetry.metricsExportInterval }}
+    cta.telemetry.metricsExportInterval {{ .Values.xrd.conf.telemetry.metricsExportInterval }}
+    {{- end }}
+    {{- if .Values.xrd.conf.telemetry.metricsExportTimeout }}
+    cta.telemetry.metricsExportTimeout {{ .Values.xrd.conf.telemetry.metricsExportTimeout }}
+    {{- end }}
 
 {{- end }}

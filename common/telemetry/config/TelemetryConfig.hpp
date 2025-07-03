@@ -9,6 +9,9 @@ namespace cta::telemetry {
 
 enum class MetricsBackend { NOOP, STDOUT, OTLP };
 
+MetricsBackend stringToMetricsBackend(const std::string& string);
+std::string metricsBackendToString(MetricsBackend backend);
+
 typedef struct TelemetryConfig {
   std::string serviceName;
   std::string serviceNamespace;

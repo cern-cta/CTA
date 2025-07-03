@@ -25,15 +25,34 @@ namespace metrics_sdk = opentelemetry::sdk::metrics;
 namespace metrics_api = opentelemetry::metrics;
 namespace otlp = opentelemetry::exporter::otlp;
 
-void initMetrics(const TelemetryConfig& config) {
+void initMetrics(const TelemetryConfig& config, cta::log::LogContext& lc) {
   if (config.metrics.backend == MetricsBackend::NOOP) {
     std::shared_ptr<metrics_api::MeterProvider> noopProvider = std::make_shared<metrics_api::NoopMeterProvider>();
     metrics_api::Provider::SetMeterProvider(noopProvider);
     return;
   }
 
-  std::unique_ptr<metrics_sdk::PushMetricExporter> exporter;
+  std::string processName = cta::utils::getProcessName();
+  std::string hostname = cta::utils::getShortHostname();
+  std::string serviceInstanceId;
+  if (config.serviceInstanceHint.empty()) {
+    // No instance hint, so we don't care about a deterministic/persistent ServiceInstanceId across restarts
+    serviceInstanceId = hostname + ":" + processName + ":" + cta::utils::generateUuid();
+  } else {
+    serviceInstanceId = hostname + ":" + processName + ":" + config.serviceInstanceHint;
+  }
 
+  log::ScopedParamContainer params(lc);
+  params.add("serviceName", config.serviceName)
+    .add("serviceNamespace", config.serviceNamespace)
+    .add("serviceInstanceId", serviceInstanceId)
+    .add("serviceVersion", CTA_VERSION)
+    .add("metricsBackend", metricsBackendToString(config.metrics.backend))
+    .add("exportInterval", std::chrono::duration_cast<std::chrono::milliseconds>(config.metrics.exportInterval).count())
+    .add("exportTimeout", std::chrono::duration_cast<std::chrono::milliseconds>(config.metrics.exportTimeout).count())
+    .add("otlpEndpoint", config.metrics.otlpEndpoint);
+
+  std::unique_ptr<metrics_sdk::PushMetricExporter> exporter;
   switch (config.metrics.backend) {
     case MetricsBackend::STDOUT:
       exporter = opentelemetry::exporter::metrics::OStreamMetricExporterFactory::Create();
@@ -51,10 +70,12 @@ void initMetrics(const TelemetryConfig& config) {
     }
 
     default:
-      throw std::runtime_error("initMetrics: Unsupported metrics backend provided");
+      lc.log(log::ERR, "In initMetrics: Unsupported metrics backend provided");
+      throw std::runtime_error("initMetrics: Unsupported metrics backend provided.");
   }
   if (!exporter) {
-    throw std::runtime_error("initMetrics: failed to initialise exporter");
+    lc.log(log::ERR, "In initMetrics: failed to initialise exporter.");
+    throw std::runtime_error("initMetrics: failed to initialise exporter.");
   }
 
   metrics_sdk::PeriodicExportingMetricReaderOptions readerOptions {config.metrics.exportInterval,
@@ -62,23 +83,13 @@ void initMetrics(const TelemetryConfig& config) {
 
   auto reader = metrics_sdk::PeriodicExportingMetricReaderFactory::Create(std::move(exporter), readerOptions);
 
-  std::string processName = cta::utils::getProcessName();
-  std::string serviceInstanceId;
-  if (config.serviceInstanceHint.empty()) {
-    // No instance hint, so we don't care about a deterministic/persistent ServiceInstanceId across restarts
-    serviceInstanceId = cta::utils::getShortHostname() + ":" + processName + ":" + cta::utils::generateUuid();
-  } else {
-    serviceInstanceId = cta::utils::getShortHostname() + ":" + processName + ":" + config.serviceInstanceHint;
-  }
-
   // These metrics should make sure that each and every process is uniquely identifiable
   // Otherwise, metrics will not be aggregated correctly.
   opentelemetry::sdk::common::AttributeMap attributes = {
     {opentelemetry::sdk::resource::SemanticConventions::kServiceName,       config.serviceName     },
     {opentelemetry::sdk::resource::SemanticConventions::kServiceNamespace,  config.serviceNamespace},
     {opentelemetry::sdk::resource::SemanticConventions::kServiceVersion,    CTA_VERSION            },
-    {opentelemetry::sdk::resource::SemanticConventions::kServiceInstanceId, serviceInstanceId      },
-    {"process.name",                                                        processName            },
+    {opentelemetry::sdk::resource::SemanticConventions::kServiceInstanceId, serviceInstanceId      }
   };
   for (const auto& kv : config.resourceAttributes) {
     attributes.SetAttribute(kv.first, kv.second);
@@ -91,11 +102,12 @@ void initMetrics(const TelemetryConfig& config) {
   std::shared_ptr<metrics_api::MeterProvider> apiProvider(std::move(meterProvider));
 
   metrics_api::Provider::SetMeterProvider(apiProvider);
+  lc.log(log::INFO, "In initMetrics(): Telemetry metrics initialised.");
 }
 
-void initTelemetry(const TelemetryConfig& config) {
+void initTelemetry(const TelemetryConfig& config, cta::log::LogContext& lc) {
   // Eventually we can init e.g. traces here as well
-  initMetrics(config);
+  initMetrics(config, lc);
   // Ensure we can reuse the config when re-initialise the metrics after e.g. a fork
   cta::telemetry::TelemetryConfigSingleton::initialize(config);
 }
@@ -105,12 +117,19 @@ void initTelemetryConfig(const TelemetryConfig& config) {
   cta::telemetry::TelemetryConfigSingleton::initialize(config);
 }
 
-void reinitTelemetry() {
-  initTelemetry(cta::telemetry::TelemetryConfigSingleton::get());
+void reinitTelemetry(cta::log::LogContext& lc) {
+  initTelemetry(cta::telemetry::TelemetryConfigSingleton::get(), lc);
   cta::telemetry::metrics::InstrumentProvider::instance().reset();
 }
 
-void resetTelemetry() {
+void resetTelemetry(cta::log::LogContext& lc) {
+  const auto config = cta::telemetry::TelemetryConfigSingleton::get();
+  if (config.metrics.backend == MetricsBackend::NOOP) {
+    // Nothing to reset
+    return;
+  }
+
+  lc.log(log::INFO, "In initMetrics(): Clearing telemetry state.");
   auto provider = metrics_api::Provider::GetMeterProvider();
   if (provider) {
     auto sdkProvider = dynamic_cast<metrics_sdk::MeterProvider*>(provider.get());
