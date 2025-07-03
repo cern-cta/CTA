@@ -1026,9 +1026,10 @@ std::string OStoreDB::queueArchive(const std::string& instanceName,
            arRelockTime + arTotalQueueingTime + arTotalCommitTime + arTotalQueueUnlockTime + arOwnerResetTime +
              arLockRelease + agOwnershipResetTime)
       .log(log::INFO, "In OStoreDB::queueArchive(): Finished enqueueing request.");
-      m_queueingCounter->Add(1, {{cta::telemetry::constants::kTransferTypeKey, cta::telemetry::constants::kTransferTypeArchive},
-                                 {cta::telemetry::constants::kDiskInstanceKey, archiveFile.diskInstance},
-                                 {cta::telemetry::constants::kBackendKey, cta::telemetry::constants::kBackendSchedulerObjectstore}});
+      // m_queueingCounter->Add(1, {{cta::telemetry::constants::kTransferTypeKey, cta::telemetry::constants::kTransferTypeArchive},
+      //                            {cta::telemetry::constants::kDiskInstanceKey, archiveFile.diskInstance},
+      //                            {cta::telemetry::constants::kBackendKey, cta::telemetry::constants::kBackendSchedulerObjectstore}});
+                                 m_queueingCounter->Add(1);
   });
   mlForHelgrind.unlock();
   m_enqueueingTasksQueue.push(et);
@@ -1536,9 +1537,10 @@ jobFound: {
       .add("agentOwnershipResetTime", agOwnershipResetTime)
       .add("totalTime", rLockTime + qTime + cTime + qUnlockTime + rUnlockTime + agOwnershipResetTime)
       .log(log::INFO, "In OStoreDB::queueRetrieve(): added job to queue (enqueueing finished).");
-      m_queueingCounter->Add(1, {{cta::telemetry::constants::kTransferTypeKey, cta::telemetry::constants::kTransferTypeRetrieve},
-                                 {cta::telemetry::constants::kDiskInstanceKey, rReq->getArchiveFile().diskInstance},
-                                 {cta::telemetry::constants::kBackendKey, cta::telemetry::constants::kBackendSchedulerObjectstore}});
+      // m_queueingCounter->Add(1, {{cta::telemetry::constants::kTransferTypeKey, cta::telemetry::constants::kTransferTypeRetrieve},
+      //                            {cta::telemetry::constants::kDiskInstanceKey, rReq->getArchiveFile().diskInstance},
+      //                            {cta::telemetry::constants::kBackendKey, cta::telemetry::constants::kBackendSchedulerObjectstore}});
+      m_queueingCounter->Add(1);
   });
   mlForHelgrind.unlock();
   m_enqueueingTasksQueue.push(et);

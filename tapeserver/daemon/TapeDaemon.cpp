@@ -90,6 +90,9 @@ void  cta::tape::daemon::TapeDaemon::exceptionThrowingMain()  {
 // mainEventLoop
 //------------------------------------------------------------------------------
 void cta::tape::daemon::TapeDaemon::mainEventLoop() {
+  // Create the log context
+  log::LogContext lc(m_log);
+
   const DriveConfigEntry dce{m_globalConfiguration.driveName.value(),
                              m_globalConfiguration.driveLogicalLibrary.value(),
                              m_globalConfiguration.driveDevice.value(),
@@ -97,7 +100,7 @@ void cta::tape::daemon::TapeDaemon::mainEventLoop() {
   std::string processName = dce.getShortUnitName() + "-parent";
   prctl(PR_SET_NAME, processName.c_str());
   // Initialise telemetry only after the process name is available
-  cta::telemetry::reinitTelemetry();
+  cta::telemetry::reinitTelemetry(lc);
 
   // Create the log context
   log::LogContext lc(m_log);
