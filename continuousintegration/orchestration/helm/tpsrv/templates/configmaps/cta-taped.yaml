@@ -36,5 +36,12 @@ data:
     # Telemetry
     telemetry metricsBackend {{ $.Values.conf.telemetry.metricsBackend }}
     telemetry metricsOtlpEndpoint {{ $.Values.conf.telemetry.metricsOtlpEndpoint }}
+    {{- if $.Values.conf.telemetry.metricsExportInterval }}
+    telemetry metricsExportInterval {{ $.Values.conf.telemetry.metricsExportInterval }}
+    {{- end }}
+    {{- if $.Values.conf.telemetry.metricsExportTimeout }}
+    telemetry metricsExportTimeout {{ $.Values.conf.telemetry.metricsExportTimeout }}
+    {{- end }}
+
 ---
 {{- end }}
