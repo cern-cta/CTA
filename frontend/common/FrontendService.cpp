@@ -478,9 +478,6 @@ FrontendService::FrontendService(const std::string& configFilename) : m_archiveF
       auto xrdPort = config.getOptionValueStr("xrd.port");
       auto grpcPort = config.getOptionValueStr("grpc.port");
       std::string servicePort = xrdPort.has_value() ? xrdPort.value() : grpcPort.value();
-
-      log(log::INFO, "Instantiating telemetry", {{"metricsBackend", telemetryMetricsBackend},
-                                                 {"otlpEndpoint", telemetryMetricsOltpEndpoint.value()}});
       cta::telemetry::TelemetryConfig telemetryConfig = cta::telemetry::TelemetryConfigBuilder()
         .serviceName(cta::telemetry::constants::kFrontendMeter)
         .serviceNamespace(m_instanceName)
@@ -490,7 +487,8 @@ FrontendService::FrontendService(const std::string& configFilename) : m_archiveF
         .metricsExportTimeout(std::chrono::milliseconds(telemetryMetricsExportTimeout.value()))
         .metricsOtlpEndpoint(telemetryMetricsOltpEndpoint.value())
         .build();
-      cta::telemetry::initTelemetry(telemetryConfig);
+      cta::log::LogContext lc(log); // temporary log context
+      cta::telemetry::initTelemetry(telemetryConfig, lc);
     } catch(exception::Exception& ex) {
       std::string ex_str("Failed to instantiate OpenTelemetry: ");
       throw exception::Exception(ex_str + ex.getMessage().str());
