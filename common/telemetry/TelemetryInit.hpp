@@ -1,7 +1,9 @@
 #pragma once
 
-#include "config/TelemetryConfig.hpp"
 #include <opentelemetry/metrics/meter.h>
+
+#include "config/TelemetryConfig.hpp"
+#include "common/log/LogContext.hpp"
 
 namespace cta::telemetry {
 
@@ -13,7 +15,7 @@ namespace cta::telemetry {
  *
  * If this function is not called, any telemetry-related functionality will be a NOOP
  */
-void initTelemetry(const TelemetryConfig& config);
+void initTelemetry(const TelemetryConfig& config, cta::log::LogContext& lc);
 
 /**
  * Initialises the telemetry config, but not telemetry itself
@@ -26,11 +28,11 @@ void initTelemetryConfig(const TelemetryConfig& config);
  * Requires initTelemetry or initTelemetryConfig to have been called prior to this.
  *
  */
-void reinitTelemetry();
+void reinitTelemetry(cta::log::LogContext& lc);
 
 /**
  * Sets telemetry to NOOP
  */
-void resetTelemetry();
+void resetTelemetry(cta::log::LogContext& lc);
 
 }  // namespace cta::telemetry
