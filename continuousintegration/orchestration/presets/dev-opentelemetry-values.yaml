@@ -1,13 +1,8 @@
 image:
-  repository: ghcr.io/open-telemetry/opentelemetry-collector-releases/opentelemetry-collector-contrib
+  repository: registry.cern.ch/ghcr.io/open-telemetry/opentelemetry-collector-releases/opentelemetry-collector-contrib
   tag: 0.129.1
 
 mode: deployment
-
-presets:
-  # Associates metrics with pods
-  kubernetesAttributes:
-    enabled: true
 
 config:
   receivers:
