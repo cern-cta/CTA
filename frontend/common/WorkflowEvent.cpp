@@ -90,7 +90,7 @@ xrd::Response WorkflowEvent::process() {
   namespace tc = cta::telemetry::constants;
   auto& instrumentProvider = cta::telemetry::metrics::InstrumentProvider::instance();
 
-  using TelemAttrList = std::vector<std::pair<opentelemetry::nostd::string_view, opentelemetry::common::AttributeValue>>;
+  using TelemAttrList = std::vector<std::pair<std::string_view, opentelemetry::common::AttributeValue>>;
   TelemAttrList telemetryAttributes = {{
     {tc::kRequestTypeKey, "workflow_event"},
     {tc::kEventTypeKey,   m_event.wf().event()}
