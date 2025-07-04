@@ -175,6 +175,13 @@ delete_instance() {
   echo "Deleting ${namespace} instance"
   kubectl delete namespace ${namespace} --now
   echo "Deletion finished"
+
+  # Clean up remaining cluster-level resources
+  # These should not be created, but depending on the configuration they might be
+  kubectl delete clusterrole otel-opentelemetry-collector --ignore-not-found
+  kubectl delete clusterrolebinding otel-opentelemetry-collector --ignore-not-found
+  kubectl delete clusterrole prometheus-server --ignore-not-found
+  kubectl delete clusterrolebinding prometheus-server --ignore-not-found
 }
 
 delete_instance "$@"
