@@ -17,8 +17,6 @@ end
 
 # --- Description checks ---
 
-
-
 required_checklist_items = [
   "- [x] Documentation reflects the changes made.",
   "- [x] Merge Request title is clear, concise, and suitable as a changelog entry."
@@ -74,6 +72,10 @@ end
 
 if other_labels.empty?
   warn("**No Scoping Labels Found**\n\nAdd at least one additional label to indicate the affected component or context.")
+end
+
+if !labels.include?("changelog: required")
+  warn("**Changelog Label Missing**\n\nIf this MR requires a changelog entry, please add the `changelog: required` label.")
 end
 
 
