@@ -400,11 +400,11 @@ uint64_t RetrieveJobQueueRow::requeueFailedJob(Transaction& txn,
       M.MIN_RETRIEVE_REQUEST_AGE,
       M.ARCHIVE_FILE_ID,
       M.SIZE_IN_BYTES,
-      M.COPY_NB,
+      :COPY_NB AS COPY_NB,
       M.START_TIME,
       M.CHECKSUMBLOB,
-      M.FSEQ,
-      M.BLOCK_ID,
+      :FSEQ AS FSEQ,
+      :BLOCK_ID AS BLOCK_ID,
       M.CREATION_TIME,
       M.DISK_INSTANCE,
       M.DISK_FILE_ID,
@@ -461,6 +461,9 @@ uint64_t RetrieveJobQueueRow::requeueFailedJob(Transaction& txn,
   stmt.bindUint32(":RETRIES_WITHIN_MOUNT", retriesWithinMount);
   stmt.bindUint64(":LAST_MOUNT_WITH_FAILURE", lastMountWithFailure);
   stmt.bindString(":VID", vid);
+  stmt.bindString(":FSEQ", fSeq);
+  stmt.bindString(":COPY_NB", copyNb);
+  stmt.bindString(":BLOCK_ID", blockId);
   stmt.bindString(":FAILURE_LOG", failureLogs.value_or(""));
   if (userowjid) {
     stmt.bindUint64(":JOB_ID", jobId);
@@ -685,7 +688,7 @@ RetrieveJobQueueRow::handlePendingRetrieveJobsAfterTapeStateChange(Transaction& 
       M.JOB_ID,
       M.RETRIEVE_REQUEST_ID,
       M.REQUEST_JOB_COUNT,
-      M.TAPE_POOL,
+      :TAPE_POOL AS TAPE_POOL,
       M.MOUNT_POLICY,
       M.PRIORITY,
       M.MIN_RETRIEVE_REQUEST_AGE,
@@ -717,9 +720,9 @@ RetrieveJobQueueRow::handlePendingRetrieveJobsAfterTapeStateChange(Transaction& 
       M.ALTERNATE_BLOCK_IDS,
       M.ALTERNATE_VIDS,
       M.ALTERNATE_COPY_NBS,
-      M.DRIVE,
-      M.HOST,
-      M.LOGICAL_LIBRARY,
+      :DRIVE AS DRIVE,
+      :HOST AS HOST,
+      :LOGICAL_LIBRARY AS LOGICAL_LIBRARY,
       M.ACTIVITY,
       M.SRR_USERNAME,
       M.SRR_HOST,
@@ -731,8 +734,8 @@ RetrieveJobQueueRow::handlePendingRetrieveJobsAfterTapeStateChange(Transaction& 
       M.LIFECYCLE_COMPLETED_TIME,
       M.DISK_SYSTEM_NAME,
       M.FAILURE_LOG || :FAILURE_LOG AS FAILURE_LOG,
-      M.RETRIES_WITHIN_MOUNT + 1 AS RETRIES_WITHIN_MOUNT,
-      M.TOTAL_RETRIES + 1 AS TOTAL_RETRIES,
+      M.RETRIES_WITHIN_MOUNT AS RETRIES_WITHIN_MOUNT,
+      M.TOTAL_RETRIES AS TOTAL_RETRIES,
       M.LAST_MOUNT_WITH_FAILURE,
       :STATUS AS STATUS,
       NULL AS MOUNT_ID
@@ -740,9 +743,13 @@ RetrieveJobQueueRow::handlePendingRetrieveJobsAfterTapeStateChange(Transaction& 
   )SQL";
 
   auto stmt = txn.getConn().createStmt(sql);
+  stmt.bindString(":DRIVE", "NONE");
+  stmt.bindString(":HOST", "NONE");
+  stmt.bindString(":LOGICAL_LIBRARY", "NONE");
+  stmt.bindString(":TAPE_POOL", "NONE");
   stmt.bindString(":VID", vid);
   stmt.bindString(":STATUS", to_string(RetrieveJobStatus::RJS_ToReportToUserForFailure));
-  stmt.bindString(":FAILURE_LOG", "VID_STATE_CHANGE_JOBS_REQUEUED");
+  stmt.bindString(":FAILURE_LOG", "TAPE_STATE_CHANGE_JOBS_TO_REPORT_FOR_FAILURE");
   stmt.executeNonQuery();
   return stmt.getNbAffectedRows();
 }

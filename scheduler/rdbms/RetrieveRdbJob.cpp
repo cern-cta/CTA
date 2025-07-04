@@ -185,7 +185,13 @@ void RetrieveRdbJob::requeueToNewMount(cta::schedulerdb::Transaction& txn,
     // requeue by changing status, reset the mount_id to NULL and updating all other stat fields
     // change VID if alternate exists trying to fetch the file from another tape !
     m_jobRow.retriesWithinMount = 0;
-    std::string newVid = cta::utils::selectNextString(m_jobRow.vid, m_jobRow.alternateVids);
+    auto [newVid, index]  = cta::utils::selectNextString(m_jobRow.vid, m_jobRow.alternateVids);
+    std::vector<std::string> alternateCopyNbsVec = splitStringToVector(m_jobRow.alternateCopyNbs);
+    std::vector<std::string> alternateFSeqVec = splitStringToVector(m_jobRow.alternateFSeq);
+    std::vector<std::string> alternateBlockIdVec = splitStringToVector(m_jobRow.alternateBlockId);
+    m_jobRow.copyNb = alternateCopyNbsVec[index]
+    m_jobRow.fSeq = alternateFSeqVec[index]
+    m_jobRow.blockId = alternateBlockIdVec[index];
     m_jobRow.vid = newVid;
     uint64_t nrows = m_jobRow.requeueFailedJob(txn, RetrieveJobStatus::RJS_ToTransfer, false);
     txn.commit();
