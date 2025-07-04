@@ -1,14 +1,10 @@
 * See [Tagging a new CTA release](https://eoscta.docs.cern.ch/latest/dev/ci/tagging_releases/)
 
-<!-- To obtain the commit id, first update the Release Notes with the version number of the next release and commit to master. -->
+## Release Requirements
 
-### Initial code references for release
+<!-- Add any features/fixes that must be in the release here -->
 
-This release should be based on `<commit_id>` from branch [`main`](https://gitlab.cern.ch/cta/CTA/-/tree/main).
-
-This release will be tagged as version `v5.X.Y.Z-R`.
-
-### Additional details
+## Additional Details
 
 <!-- Should this release be used in production straight away? Normally, NO, it should be deployed and tested on PPS first. -->
 
@@ -18,8 +14,27 @@ This release will be tagged as version `v5.X.Y.Z-R`.
 
 <!-- Add additional notes if this version is part of a longer-term development/testing effort, *e.g.* tagged on a specific branch to fix an urgent production bug -->
 
-### Stress test results
+## Release Checklist
 
-<!-- Add stress test screenshots for the commit_id referenced above. If everything goes well for the stress test, create the Deployment ticket in the Operations repo. Otherwise, iterate in the comments to solve any problems. -->
+- [ ] Stress test run
+    - [ ] Stress test screenshot added
+    - [ ] Stress test job linked
+    - [ ] Stress test dashboard linked with timeframe
+- [ ] Changelog updated
+- [ ] Tag created
+- [ ] RPMs present in unstable repository
+
+Further actions such as adding RPMs to `testing` or `stable` can be done at a later point in time.
+Once all steps have been completed, this issue can be closed.
+
+## Stress Test
+
+Screenshot of the stress test results:
+
+Link to the CI `stress-test` job:
+
+Link to the monitoring dashboard (with the correct timeframe):
+
+<!-- If everything goes well for the stress test, create the Deployment ticket in the Operations repo. Otherwise, iterate in the comments to solve any problems. -->
 
 /label ~type::release
