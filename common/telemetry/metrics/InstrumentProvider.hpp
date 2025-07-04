@@ -23,32 +23,42 @@ public:
 
   std::shared_ptr<metrics_api::Counter<uint64_t>> getUInt64Counter(const std::string& meterName,
                                                                     const std::string& componentName,
-                                                                    const std::string& description = "",
+                                                                    const std::string& description,
                                                                     const std::string& unit = "");
 
   std::shared_ptr<metrics_api::Counter<double>> getDoubleCounter(const std::string& meterName,
                                                                   const std::string& componentName,
-                                                                  const std::string& description = "",
+                                                                  const std::string& description,
                                                                   const std::string& unit = "");
 
   std::shared_ptr<metrics_api::Histogram<uint64_t>> getUInt64Histogram(const std::string& meterName,
                                                                         const std::string& componentName,
-                                                                        const std::string& description = "",
+                                                                        const std::string& description,
                                                                         const std::string& unit = "");
 
   std::shared_ptr<metrics_api::Histogram<double>> getDoubleHistogram(const std::string& meterName,
                                                                       const std::string& componentName,
-                                                                      const std::string& description = "",
+                                                                      const std::string& description,
                                                                       const std::string& unit = "");
 
   std::shared_ptr<metrics_api::UpDownCounter<int64_t>> getInt64UpDownCounter(const std::string& meterName,
                                                                              const std::string& componentName,
-                                                                             const std::string& description = "",
+                                                                             const std::string& description,
                                                                              const std::string& unit = "");
 
   std::shared_ptr<metrics_api::UpDownCounter<double>> getDoubleUpDownCounter(const std::string& meterName,
                                                                              const std::string& componentName,
-                                                                             const std::string& description = "",
+                                                                             const std::string& description,
+                                                                             const std::string& unit = "");
+
+  std::shared_ptr<metrics_api::ObservableInstrument> getInt64ObservableGauge(const std::string& meterName,
+                                                                             const std::string& componentName,
+                                                                             const std::string& description,
+                                                                             const std::string& unit = "");
+
+  std::shared_ptr<metrics_api::ObservableInstrument> getDoubleObservableGauge(const std::string& meterName,
+                                                                             const std::string& componentName,
+                                                                             const std::string& description,
                                                                              const std::string& unit = "");
 
 private:
@@ -79,6 +89,9 @@ private:
 
   std::unordered_map<std::string, std::shared_ptr<metrics_api::UpDownCounter<double>>> m_doubleUpDownCounters;
   std::shared_mutex m_doubleUpDownCounterMutex;
+
+  std::unordered_map<std::string, std::shared_ptr<metrics_api::ObservableInstrument>> m_observableGauges;
+  std::shared_mutex m_observableGaugeMutex;
 };
 
 }  // namespace cta::telemetry::metrics

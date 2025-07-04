@@ -81,7 +81,7 @@ SubprocessHandler::ProcessingStatus MaintenanceHandler::fork() {
     // First prepare a socket pair for this new subprocess
     m_socketPair.reset(new cta::server::SocketPair());
     // We don't want to fork telemetry state
-    cta::telemetry::resetTelemetry(m_processManager.logContext());
+    cta::telemetry::shutdownTelemetry(m_processManager.logContext());
     // and fork
     m_pid=::fork();
     exception::Errnum::throwOnMinusOne(m_pid, "In MaintenanceHandler::fork(): failed to fork()");
