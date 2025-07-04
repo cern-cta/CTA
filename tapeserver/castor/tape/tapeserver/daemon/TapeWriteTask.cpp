@@ -177,7 +177,7 @@ void TapeWriteTask::execute(const std::unique_ptr<castor::tape::tapeFile::WriteS
     // Log the successful transfer
     logWithStats(cta::log::INFO, "File successfully transmitted to drive", lc);
     auto transferCounter = cta::telemetry::metrics::InstrumentProvider::instance().getUInt64Counter(cta::telemetry::constants::kTapedMeter,
-                                                                                                    cta::telemetry::constants::kTapedTransferCount);
+                                                                                                    cta::telemetry::constants::kTapedTransferCount, "Total number of files transferred to and from tape");
     transferCounter->Add(1, {{cta::telemetry::constants::kTransferTypeKey, cta::telemetry::constants::kTransferTypeArchive}});
   } catch (const castor::tape::tapeserver::daemon::ErrorFlag&) {
     // We end up there because another task has failed

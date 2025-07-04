@@ -345,9 +345,11 @@ class ScopedSharedLock: public ScopedLock {
 public:
   ScopedSharedLock()
   : lockCounter(cta::telemetry::metrics::InstrumentProvider::instance().getUInt64Counter(cta::telemetry::constants::kSchedulerMeter,
-                                                                                         cta::telemetry::constants::kObjectstoreLockAcquireCount)),
+                                                                                         cta::telemetry::constants::kObjectstoreLockAcquireCount,
+                                                                                        "Total number of locks acquired on the objectstore")),
     lockAcquireDurationHistogram(cta::telemetry::metrics::InstrumentProvider::instance().getDoubleHistogram(cta::telemetry::constants::kSchedulerMeter,
-                                                                                                            cta::telemetry::constants::kObjectstoreLockAcquireDuration)) {}
+                                                                                                            cta::telemetry::constants::kObjectstoreLockAcquireDuration,
+                                                                                                          "Duration taken to acquire a lock, measured from wait start to acquisition")) {}
   explicit ScopedSharedLock(ObjectOpsBase& oo) : ScopedSharedLock() {
     lock(oo);
   }
@@ -390,9 +392,11 @@ class ScopedExclusiveLock: public ScopedLock {
 public:
   ScopedExclusiveLock()
   : lockCounter(cta::telemetry::metrics::InstrumentProvider::instance().getUInt64Counter(cta::telemetry::constants::kSchedulerMeter,
-                                                                                         cta::telemetry::constants::kObjectstoreLockAcquireCount)),
+                                                                                         cta::telemetry::constants::kObjectstoreLockAcquireCount,
+                                                                                        "Total number of locks acquired on the objectstore")),
     lockAcquireDurationHistogram(cta::telemetry::metrics::InstrumentProvider::instance().getDoubleHistogram(cta::telemetry::constants::kSchedulerMeter,
-                                                                                                            cta::telemetry::constants::kObjectstoreLockAcquireDuration)) {}
+                                                                                                            cta::telemetry::constants::kObjectstoreLockAcquireDuration,
+                                                                                                          "Duration taken to acquire a lock, measured from wait start to acquisition")) {}
 
   ScopedExclusiveLock(ObjectOpsBase & oo, uint64_t timeout_us = 0) : ScopedExclusiveLock() {
     lock(oo, timeout_us);

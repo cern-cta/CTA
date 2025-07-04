@@ -9,7 +9,7 @@ namespace cta::telemetry {
 
 /**
  * Initialises telemetry according to the provided config.
- * Note that this method is not "fork-safe". That is, before doing a fork, reset the MeterProvider by calling resetTelemetry
+ * Note that this method is not "fork-safe". That is, before doing a fork, reset the MeterProvider by calling shutdownTelemetry
  * Immediately after the fork, call reinitTelemetry. Provided that there are no meters actively being instantiated at the time of forking,
  * this will ensure both parent and child process end up with correct state.
  *
@@ -31,8 +31,8 @@ void initTelemetryConfig(const TelemetryConfig& config);
 void reinitTelemetry(cta::log::LogContext& lc);
 
 /**
- * Sets telemetry to NOOP
+ * Sets telemetry to NOOP and flushes any remaining metrics still in the buffer.
  */
-void resetTelemetry(cta::log::LogContext& lc);
+void shutdownTelemetry(cta::log::LogContext& lc);
 
 }  // namespace cta::telemetry
