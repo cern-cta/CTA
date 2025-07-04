@@ -150,7 +150,7 @@ SubprocessHandler::ProcessingStatus DriveHandler::fork() {
     // First prepare a socket pair for this new subprocess
     m_socketPair = std::make_unique<cta::server::SocketPair>();
     // We don't want to fork telemetry state
-    cta::telemetry::resetTelemetry(m_lc);
+    cta::telemetry::shutdownTelemetry(m_lc);
     // and fork
     m_pid = ::fork();
     exception::Errnum::throwOnMinusOne(m_pid, "In DriveHandler::fork(): failed to fork()");
