@@ -64,7 +64,7 @@ public:
 private:
   InstrumentProvider();
   static std::string makeKey(const std::string& meterName, const std::string& componentName);
-  static opentelemetry::nostd::shared_ptr<opentelemetry::metrics::Meter> getMeter(const std::string& componentName);
+  static std::shared_ptr<opentelemetry::metrics::Meter> getMeter(const std::string& componentName);
 
   template<typename T>
   T getOrCreateInstrument(const std::string& key,
@@ -90,8 +90,8 @@ private:
   std::unordered_map<std::string, std::shared_ptr<metrics_api::UpDownCounter<double>>> m_doubleUpDownCounters;
   std::shared_mutex m_doubleUpDownCounterMutex;
 
-  std::unordered_map<std::string, std::shared_ptr<metrics_api::ObservableInstrument>> m_observableGauges;
-  std::shared_mutex m_observableGaugeMutex;
+  std::unordered_map<std::string, std::shared_ptr<metrics_api::ObservableInstrument>> m_observableInstruments;
+  std::shared_mutex m_observableInstrumentMutex;
 };
 
 }  // namespace cta::telemetry::metrics
