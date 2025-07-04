@@ -40,11 +40,6 @@ TelemetryConfigBuilder& TelemetryConfigBuilder::serviceNamespace(std::string ser
   return *this;
 }
 
-TelemetryConfigBuilder& TelemetryConfigBuilder::serviceInstanceHint(std::string serviceInstanceHint) {
-  m_config.serviceInstanceHint = std::move(serviceInstanceHint);
-  return *this;
-}
-
 TelemetryConfigBuilder& TelemetryConfigBuilder::resourceAttribute(std::string key, std::string value) {
   m_config.resourceAttributes[std::move(key)] = std::move(value);
   return *this;

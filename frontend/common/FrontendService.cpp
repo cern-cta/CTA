@@ -473,15 +473,9 @@ FrontendService::FrontendService(const std::string& configFilename) : m_archiveF
         telemetryMetricsOltpEndpoint = "";
       }
 
-      // For the time being it seems that only grpc populates m_port as xrootd abstracts all this away
-      // For extra clarity, I will get both of them again.
-      auto xrdPort = config.getOptionValueStr("xrd.port");
-      auto grpcPort = config.getOptionValueStr("grpc.port");
-      std::string servicePort = xrdPort.has_value() ? xrdPort.value() : grpcPort.value();
       cta::telemetry::TelemetryConfig telemetryConfig = cta::telemetry::TelemetryConfigBuilder()
         .serviceName(cta::telemetry::constants::kFrontendMeter)
         .serviceNamespace(m_instanceName)
-        .serviceInstanceHint(servicePort)
         .metricsBackend(telemetryMetricsBackend.value())
         .metricsExportInterval(std::chrono::milliseconds(telemetryMetricsExportInterval.value()))
         .metricsExportTimeout(std::chrono::milliseconds(telemetryMetricsExportTimeout.value()))

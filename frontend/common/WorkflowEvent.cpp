@@ -96,7 +96,7 @@ xrd::Response WorkflowEvent::process() {
     {tc::kEventTypeKey,   m_event.wf().event()}
   }};
 
-  auto requestCounter = instrumentProvider.getUInt64Counter(tc::kFrontendMeter, tc::kFrontendRequestCount);
+  auto requestCounter = instrumentProvider.getUInt64Counter(tc::kFrontendMeter, tc::kFrontendRequestCount, "Total number of requests served by the frontend");
   requestCounter->Add(1, telemetryAttributes);
   utils::Timer timer;
 
@@ -131,7 +131,7 @@ xrd::Response WorkflowEvent::process() {
 
   // Record request duration
   const auto requestProcessingDuration = timer.secs();
-  auto requestDurationHistogram = instrumentProvider.getDoubleHistogram(tc::kFrontendMeter, tc::kFrontendRequestDuration);
+  auto requestDurationHistogram = instrumentProvider.getDoubleHistogram(tc::kFrontendMeter, tc::kFrontendRequestDuration, "Duration to serve a frontend request number of requests served by the frontend");
   requestDurationHistogram->Record(requestProcessingDuration, telemetryAttributes, opentelemetry::context::RuntimeContext::GetCurrent());
 
   return response;
