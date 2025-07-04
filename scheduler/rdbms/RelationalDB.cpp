@@ -52,7 +52,7 @@ RelationalDB::RelationalDB(const std::string& ownerId,
       m_connPoolInsertOnly(login, nbConns),
       m_catalogue(catalogue),
       m_logger(logger),
-      m_queueingCounter(cta::telemetry::metrics::InstrumentProvider::instance().getUInt64Counter(cta::telemetry::constants::kSchedulerMeter, cta::telemetry::constants::kSchedulerQueueingCount)) {
+      m_queueingCounter(cta::telemetry::metrics::InstrumentProvider::instance().getUInt64Counter(cta::telemetry::constants::kSchedulerMeter, cta::telemetry::constants::kSchedulerQueueingCount, "Total number of files enqueued on the scheduler")) {
   m_tapeDrivesState = std::make_unique<TapeDrivesCatalogueState>(m_catalogue);
 }
 

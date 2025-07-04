@@ -28,7 +28,7 @@ namespace cta::rdbms {
 //-----------------------------------------------------------------------------
 Stmt::Stmt():
   m_stmtPool(nullptr),
-  m_queryCounter(cta::telemetry::metrics::InstrumentProvider::instance().getUInt64Counter(cta::telemetry::constants::kCatalogueMeter, cta::telemetry::constants::kCatalogueQueryCount)) {
+  m_queryCounter(cta::telemetry::metrics::InstrumentProvider::instance().getUInt64Counter(cta::telemetry::constants::kCatalogueMeter, cta::telemetry::constants::kCatalogueQueryCount, "Total number of queries performed on the catalogue")) {
 }
 
 //-----------------------------------------------------------------------------
@@ -37,7 +37,7 @@ Stmt::Stmt():
 Stmt::Stmt(std::unique_ptr<wrapper::StmtWrapper> stmt, StmtPool &stmtPool):
   m_stmt(std::move(stmt)),
   m_stmtPool(&stmtPool),
-  m_queryCounter(cta::telemetry::metrics::InstrumentProvider::instance().getUInt64Counter(cta::telemetry::constants::kCatalogueMeter, cta::telemetry::constants::kCatalogueQueryCount)) {
+  m_queryCounter(cta::telemetry::metrics::InstrumentProvider::instance().getUInt64Counter(cta::telemetry::constants::kCatalogueMeter, cta::telemetry::constants::kCatalogueQueryCount, "Total number of queries performed on the catalogue")) {
 }
 
 //-----------------------------------------------------------------------------
@@ -46,7 +46,7 @@ Stmt::Stmt(std::unique_ptr<wrapper::StmtWrapper> stmt, StmtPool &stmtPool):
 Stmt::Stmt(Stmt &&other) noexcept :
   m_stmt(std::move(other.m_stmt)),
   m_stmtPool(other.m_stmtPool),
-  m_queryCounter(cta::telemetry::metrics::InstrumentProvider::instance().getUInt64Counter(cta::telemetry::constants::kCatalogueMeter, cta::telemetry::constants::kCatalogueQueryCount)) {
+  m_queryCounter(cta::telemetry::metrics::InstrumentProvider::instance().getUInt64Counter(cta::telemetry::constants::kCatalogueMeter, cta::telemetry::constants::kCatalogueQueryCount, "Total number of queries performed on the catalogue")) {
 }
 
 //-----------------------------------------------------------------------------

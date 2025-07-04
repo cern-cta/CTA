@@ -29,18 +29,13 @@ void initMetrics(const TelemetryConfig& config, cta::log::LogContext& lc) {
   if (config.metrics.backend == MetricsBackend::NOOP) {
     std::shared_ptr<metrics_api::MeterProvider> noopProvider = std::make_shared<metrics_api::NoopMeterProvider>();
     metrics_api::Provider::SetMeterProvider(noopProvider);
+    lc.log(log::INFO, "In initMetrics(): Telemetry is disabled.");
     return;
   }
 
   std::string processName = cta::utils::getProcessName();
   std::string hostname = cta::utils::getShortHostname();
-  std::string serviceInstanceId;
-  if (config.serviceInstanceHint.empty()) {
-    // No instance hint, so we don't care about a deterministic/persistent ServiceInstanceId across restarts
-    serviceInstanceId = hostname + ":" + processName + ":" + cta::utils::generateUuid();
-  } else {
-    serviceInstanceId = hostname + ":" + processName + ":" + config.serviceInstanceHint;
-  }
+  std::string serviceInstanceId = cta::utils::generateUuid();
 
   log::ScopedParamContainer params(lc);
   params.add("serviceName", config.serviceName)
@@ -89,7 +84,8 @@ void initMetrics(const TelemetryConfig& config, cta::log::LogContext& lc) {
     {opentelemetry::sdk::resource::SemanticConventions::kServiceName,       config.serviceName     },
     {opentelemetry::sdk::resource::SemanticConventions::kServiceNamespace,  config.serviceNamespace},
     {opentelemetry::sdk::resource::SemanticConventions::kServiceVersion,    CTA_VERSION            },
-    {opentelemetry::sdk::resource::SemanticConventions::kServiceInstanceId, serviceInstanceId      }
+    {opentelemetry::sdk::resource::SemanticConventions::kServiceInstanceId, serviceInstanceId      },
+    {"process.name",                                                        processName            }
   };
   for (const auto& kv : config.resourceAttributes) {
     attributes.SetAttribute(kv.first, kv.second);
@@ -122,7 +118,7 @@ void reinitTelemetry(cta::log::LogContext& lc) {
   cta::telemetry::metrics::InstrumentProvider::instance().reset();
 }
 
-void resetTelemetry(cta::log::LogContext& lc) {
+void shutdownTelemetry(cta::log::LogContext& lc) {
   const auto config = cta::telemetry::TelemetryConfigSingleton::get();
   if (config.metrics.backend == MetricsBackend::NOOP) {
     // Nothing to reset

@@ -20,6 +20,9 @@ config:
     prometheus:
       endpoint: ${env:MY_POD_IP}:8889
 
+    debug:
+      verbosity: normal
+
   service:
     pipelines:
       metrics:

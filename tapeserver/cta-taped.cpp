@@ -228,12 +228,9 @@ int main(const int argc, char **const argv) {
 
   // Instantiate telemetry
   try {
-    (*logPtr)(log::INFO, "Instantiating telemetry", {{"metricsBackend", globalConfig.telemetryMetricsBackend.value()},
-                                                     {"otlpEndpoint", globalConfig.telemetryMetricsOltpEndpoint.value()}});
     cta::telemetry::TelemetryConfig telemetryConfig = cta::telemetry::TelemetryConfigBuilder()
       .serviceName(cta::telemetry::constants::kTapedMeter)
       .serviceNamespace(globalConfig.instanceName.value())
-      .serviceInstanceHint(globalConfig.driveName.value()) // This allows us to have a service.instance.id that is consistent across restarts/forks
       .metricsBackend(globalConfig.telemetryMetricsBackend.value())
       .metricsExportInterval(std::chrono::milliseconds(globalConfig.telemetryMetricsExportInterval.value()))
       .metricsExportTimeout(std::chrono::milliseconds(globalConfig.telemetryMetricsExportTimeout.value()))
