@@ -50,7 +50,7 @@ struct RetrieveJobQueueRow {
   std::string alternateCopyNbs = "";
   time_t startTime = 0;  //!< Time the job was inserted into the queue
   time_t creationTime = 0;
-  std::string retrieveReportURL = "NOT_DEFINED";
+  std::string retrieveReportURL = "";
   std::string retrieveErrorReportURL = "";
   std::string requesterName = "";
   std::string requesterGroup = "";
@@ -604,16 +604,17 @@ public:
                             std::optional<std::list<std::string>> jobIDs = std::nullopt);
 
   /**
-  * Move from RETRIEVE_ACTIVE_QUEUE to RETRIEVE_PENDING_QUEUE
-  * a all jobs of the tape VID specified
-  * This method updates also the retry statistics
+  * @brief This method will check if RETRIEVE_ERROR_REPORT_URL column is not NULL and not empty
+  * if the URL exists, it will move all the jobs of this VID from RETRIEVE_PENDING_QUEUE
+  * to RETRIEVE_ACTIVE_QUEUE and set the status to RJS_ToReportToUserForFailure
+  * In case the RETRIEVE_ERROR_REPORT_URL does not exist, it will directly delete these job
+  * rows assuming reporting is not required
   *
   * @param txn                  Transaction to use for this query
-  * @param newStatus            Retrieve Job Status to set
   * @param vid                  tape VID to requeue
   * @return                     Number of updated rows
   */
-  static uint64_t requeueAllTapeJobs(Transaction& txn, RetrieveJobStatus newStatus, std::string vid);
+  static uint64_t handlePendingRetrieveJobsAfterTapeStateChange(Transaction& txn, std::string vid);
 
 
   /**

@@ -213,15 +213,12 @@ void ArchiveRdbJob::failReport(const std::string& failureReason, log::LogContext
     .add("reportFailureReason", m_jobRow.reportFailureLogs.value_or(""));
   lc.log(log::INFO, "In schedulerdb::ArchiveRdbJob::failReport(): reporting failed.");
   m_jobRow.updateJobRowFailureLog(failureReason, true);
-  /* We could use reportType NoReportRequired for cancelling the request.
-   * For the moment it is not used and we directly delete the job.
-   * We could also use it for a case when a previous attempt to report failed
-   * due to an exception, for example if the file was deleted on close. */
   cta::schedulerdb::Transaction txn(m_connPool);
   try {
     cta::utils::Timer t;
     uint64_t deletionCount = 0;
     if (reportType == ReportType::NoReportRequired || m_jobRow.totalReportRetries >= m_jobRow.maxReportRetries) {
+      // the job will be moved to FAILED_QUEUE table, and delted from the ACTIVE_QUEUE.
       uint64_t nrows = m_jobRow.updateJobStatusForFailedReport(txn, ArchiveJobStatus::ReadyForDeletion);
       deletionCount = nrows;
       if (nrows != 1) {

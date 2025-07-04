@@ -2322,6 +2322,87 @@ std::list<common::dataStructures::QueueAndMountSummary> Scheduler::getQueuesAndM
   return ret;
 }
 
+void Scheduler::updateTapeStateFromPending(const std::string& queueVid, cta::log::LogContext& logContext) {
+  cta::common::dataStructures::Tape tapeDataRefreshed;
+  cta::common::dataStructures::SecurityIdentity admin;
+  admin.username = "Scheduler::updateTapeStateFromPending()";
+  admin.host = cta::utils::getShortHostname();
+  try {
+    auto vidToTapesMapRefreshed = m_catalogue.Tape()->getTapesByVid(queueVid);
+    tapeDataRefreshed = vidToTapesMapRefreshed.at(queueVid);
+  } catch (const catalogue::TapeNotFound& ex) {
+    log::ScopedParamContainer params(logContext);
+    params.add("tapeVid", queueVid).add("exceptionMessage", ex.getMessageValue());
+    logContext.log(
+      log::WARNING,
+      "In Scheduler::updateTapeStateFromPending(): Failed to find a tape in the database. Unable to update tape state.");
+    return;  // early exit, no further processing possible
+  }
+
+  std::optional<std::string> prevReason = tapeDataRefreshed.stateReason;
+  using Tape = common::dataStructures::Tape;
+  try {
+    switch (tapeDataRefreshed.state) {
+      case Tape::REPACKING_PENDING:
+        m_catalogue.Tape()->modifyTapeState(
+          admin,
+          queueVid,
+          Tape::REPACKING,
+          Tape::REPACKING_PENDING,
+          prevReason.value_or("Scheduler::updateTapeStateFromPending(): changed tape state to REPACKING"));
+        m_db.clearStatisticsCache(queueVid);
+        break;
+
+      case Tape::BROKEN_PENDING:
+        m_catalogue.Tape()->modifyTapeState(
+          admin,
+          queueVid,
+          Tape::BROKEN,
+          Tape::BROKEN_PENDING,
+          prevReason.value_or("Scheduler::updateTapeStateFromPending(): changed tape state to BROKEN"));
+        m_db.clearStatisticsCache(queueVid);
+        break;
+
+      case Tape::EXPORTED_PENDING:
+        m_catalogue.Tape()->modifyTapeState(
+          admin,
+          queueVid,
+          Tape::EXPORTED,
+          Tape::EXPORTED_PENDING,
+          prevReason.value_or("Scheduler::updateTapeStateFromPending(): changed tape state to EXPORTED"));
+        m_db.clearStatisticsCache(queueVid);
+        break;
+
+      default: {
+        log::ScopedParamContainer paramsWarnMsg(logContext);
+        paramsWarnMsg.add("tapeVid", queueVid)
+          .add("actualState", Tape::stateToString(tapeDataRefreshed.state));
+        logContext.log(log::WARNING,
+                       "In Scheduler::updateTapeStateFromPending(): Cleaned up tape is not in a PENDING state. Unable to "
+                       "change it to its corresponding final state.");
+      } break;
+    }
+  } catch (const catalogue::UserSpecifiedAWrongPrevState& ex) {
+    auto tapeDataRefreshedUpdated = m_catalogue.Tape()->getTapesByVid(queueVid).at(queueVid);
+    log::ScopedParamContainer paramsWarnMsg(logContext);
+    paramsWarnMsg.add("tapeVid", queueVid)
+      .add("expectedPrevState", common::dataStructures::Tape::stateToString(tapeDataRefreshed.state))
+      .add("actualPrevState", common::dataStructures::Tape::stateToString(tapeDataRefreshedUpdated.state));
+
+    if ((tapeDataRefreshed.state == Tape::REPACKING_PENDING && tapeDataRefreshedUpdated.state == Tape::REPACKING) ||
+        (tapeDataRefreshed.state == Tape::BROKEN_PENDING && tapeDataRefreshedUpdated.state == Tape::BROKEN) ||
+        (tapeDataRefreshed.state == Tape::EXPORTED_PENDING && tapeDataRefreshedUpdated.state == Tape::EXPORTED)) {
+      logContext.log(log::WARNING,
+                     "In Scheduler::updateTapeStateFromPending(): Tape already moved into its final state, probably by "
+                     "another agent.");
+    } else {
+      logContext.log(log::ERR,
+                     "In Scheduler::updateTapeStateFromPending(): Tape moved into an unexpected final state, probably by "
+                     "another agent.");
+    }
+  }
+}
+
 //------------------------------------------------------------------------------
 // triggerTapeStateChange
 //------------------------------------------------------------------------------
@@ -2386,7 +2467,6 @@ void Scheduler::triggerTapeStateChange(const common::dataStructures::SecurityIde
 
   // Validation of tape state change request is complete
   // Proceed with tape state change...
-#ifndef CTA_PGSCHED
   switch (new_state) {
     case Tape::ACTIVE:
     case Tape::DISABLED:
@@ -2403,7 +2483,12 @@ void Scheduler::triggerTapeStateChange(const common::dataStructures::SecurityIde
                              std::regex(Tape::stateToString(Tape::BROKEN_PENDING)),
                              Tape::stateToString(Tape::BROKEN)));
       }
+      #ifndef CTA_PGSCHED
       m_db.setRetrieveQueueCleanupFlag(vid, true, logContext);
+      #else
+      m_db.cleanRetrieveQueueForVid(vid, logContext);
+      updateTapeStateFromPending(vid, logContext);
+      #endif
       break;
     case Tape::REPACKING:
       if (prev_state == Tape::REPACKING_DISABLED) {
@@ -2418,7 +2503,13 @@ void Scheduler::triggerTapeStateChange(const common::dataStructures::SecurityIde
                                std::regex(Tape::stateToString(Tape::REPACKING_PENDING)),
                                Tape::stateToString(Tape::REPACKING)));
         }
+        #ifndef CTA_PGSCHED
         m_db.setRetrieveQueueCleanupFlag(vid, true, logContext);
+        #else
+        // PGSCHED TO-DO wee need to check the REPACKING RETRIEVE TABLE not the RETRIEVE TABLE HERE !!!
+        m_db.cleanRetrieveQueueForVid(vid, logContext);
+        updateTapeStateFromPending(vid, logContext);
+        #endif
       }
       break;
     case Tape::EXPORTED:
@@ -2430,67 +2521,16 @@ void Scheduler::triggerTapeStateChange(const common::dataStructures::SecurityIde
                              std::regex(Tape::stateToString(Tape::EXPORTED_PENDING)),
                              Tape::stateToString(Tape::EXPORTED)));
       }
+      #ifndef CTA_PGSCHED
       m_db.setRetrieveQueueCleanupFlag(vid, true, logContext);
+      #else
+      m_db.cleanRetrieveQueueForVid(vid, logContext);
+      updateTapeStateFromPending(vid, logContext);
+      #endif
       break;
     default:
       throw cta::exception::UserError("Unknown procedure to change tape state to " + Tape::stateToString(new_state));
   }
-#else
-  switch (new_state) {
-    case Tape::ACTIVE:
-    case Tape::DISABLED:
-    case Tape::REPACKING_DISABLED:
-      // Simply set the new tape state
-      m_catalogue.Tape()->modifyTapeState(admin, vid, new_state, prev_state, stateReason);
-      break;
-    case Tape::BROKEN:
-      // For Postgres Scheduler DB we do not have a queue cleanup runner as the requests are deleted
-      // by one request to the DB per VID with the setRetrieveQueueCleanupFlag() call
-      m_db.setRetrieveQueueCleanupFlag(vid, true, logContext);
-      try {
-        // no need for intermediate state, we set the tape directly to status BROKEN
-        m_catalogue.Tape()->modifyTapeState(admin, vid, Tape::BROKEN, prev_state, stateReason);
-      } catch (catalogue::UserSpecifiedAnEmptyStringReasonWhenTapeStateNotActive& ex) {
-        throw catalogue::UserSpecifiedAnEmptyStringReasonWhenTapeStateNotActive(
-          std::regex_replace(ex.getMessageValue(),
-                             std::regex(Tape::stateToString(Tape::BROKEN)),
-                             Tape::stateToString(Tape::BROKEN)));
-      }
-      break;
-    case Tape::REPACKING:
-      if (prev_state == Tape::REPACKING_DISABLED) {
-        // If tape is on REPACKING_DISABLED state, move it directly to REPACKING
-        m_catalogue.Tape()->modifyTapeState(admin, vid, new_state, prev_state, stateReason);
-      } else {
-        m_db.setRetrieveQueueCleanupFlag(vid, true, logContext);
-        try {
-          m_catalogue.Tape()->modifyTapeState(admin, vid, Tape::REPACKING, prev_state, stateReason);
-        } catch (catalogue::UserSpecifiedAnEmptyStringReasonWhenTapeStateNotActive& ex) {
-          throw catalogue::UserSpecifiedAnEmptyStringReasonWhenTapeStateNotActive(
-            std::regex_replace(ex.getMessageValue(),
-                               std::regex(Tape::stateToString(Tape::REPACKING)),
-                               Tape::stateToString(Tape::REPACKING)));
-        }
-      }
-      break;
-    case Tape::EXPORTED:
-      // For Postgres Scheduler DB we do not have a queue cleanup runner as the requests are deleted
-      // by one request to the DB per VID with the setRetrieveQueueCleanupFlag() call
-      m_db.setRetrieveQueueCleanupFlag(vid, true, logContext);
-      try {
-        m_catalogue.Tape()->modifyTapeState(admin, vid, Tape::EXPORTED, prev_state, stateReason);
-      } catch (catalogue::UserSpecifiedAnEmptyStringReasonWhenTapeStateNotActive& ex) {
-        throw catalogue::UserSpecifiedAnEmptyStringReasonWhenTapeStateNotActive(
-          std::regex_replace(ex.getMessageValue(),
-                             std::regex(Tape::stateToString(Tape::EXPORTED)),
-                             Tape::stateToString(Tape::EXPORTED)));
-      }
-      break;
-    default:
-      throw cta::exception::UserError("Unknown procedure to change tape state to " + Tape::stateToString(new_state));
-  }
-#endif
-
   m_db.clearStatisticsCache(vid);
 }
 

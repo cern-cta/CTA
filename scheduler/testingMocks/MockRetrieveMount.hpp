@@ -89,6 +89,9 @@ public:
   void flushAsyncSuccessReports(std::queue<std::unique_ptr<cta::RetrieveJob>>& successfulRetrieveJobs,
                                 cta::log::LogContext& logContext) override {};
 
+  void setJobBatchTransferred(std::queue<std::unique_ptr<cta::RetrieveJob>>& successfulRetrieveJobs,
+                                cta::log::LogContext& logContext) override {};
+
   uint64_t requeueJobBatch(const std::list<std::string>& jobIDsList, cta::log::LogContext& logContext) const override {
     return 0;
   };

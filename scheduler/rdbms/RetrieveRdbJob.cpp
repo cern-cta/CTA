@@ -251,17 +251,12 @@ void RetrieveRdbJob::failReport(const std::string& failureReason, log::LogContex
     .add("tapePool", m_tapePool)
     .add("reportFailureReason", m_jobRow.reportFailureLogs.value_or(""))
     .log(log::INFO, "In schedulerdb::RetrieveRdbJob::failReport(): reporting failed.");
-
-  // We could use reportType NoReportRequired for cancelling the request. For the moment it is not used
-  // and we directly delet ethe job.
-  // We could also use it for a case whena a previous attempt to report failed
-  // due to an exception, for example if the file was deleted on close.
   cta::schedulerdb::Transaction txn(m_connPool);
   try {
     cta::utils::Timer t;
     uint64_t nrowsdeleted = 0;
     if (reportType == ReportType::NoReportRequired || m_jobRow.totalReportRetries >= m_jobRow.maxReportRetries) {
-      //m_jobRow.updateJobStatusForFailedReport(txn, RetrieveJobStatus::RJS_Failed);
+      // the job will be moved to FAILED_QUEUE table, and delted from the ACTIVE_QUEUE.
       uint64_t nrows = m_jobRow.updateJobStatusForFailedReport(txn, RetrieveJobStatus::ReadyForDeletion);
       nrowsdeleted = nrows;
       if (nrows != 1) {

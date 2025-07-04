@@ -192,7 +192,7 @@ void RetrieveMount::setTapeSessionStats(const castor::tape::tapeserver::daemon::
   m_RelationalDB.m_tapeDrivesState->updateDriveStatistics(driveInfo, inputs, lc);
 }
 
-void RetrieveMount::updateRetrieveJobStatus(const std::vector<std::string>& jobIDs,
+void RetrieveMount::updateRetrieveJobStatusWrapper(const std::vector<std::string>& jobIDs,
                                             cta::schedulerdb::RetrieveJobStatus newStatus,
                                             log::LogContext& lc) {
   cta::schedulerdb::Transaction txn(m_connPool);
@@ -208,7 +208,7 @@ void RetrieveMount::updateRetrieveJobStatus(const std::vector<std::string>& jobI
           .add("jobListSize", jobIDs.size())
           .add("targetStatus", to_string(newStatus))
           .log(log::ERR,
-               "In RetrieveMount::updateRetrieveJobStatus(): Failed to update all jobs to target status. Aborting transaction.");
+               "In RetrieveMount::updateRetrieveJobStatusWrapper(): Failed to update all jobs to target status. Aborting transaction.");
         txn.abort();
         return;
       }
@@ -218,17 +218,17 @@ void RetrieveMount::updateRetrieveJobStatus(const std::vector<std::string>& jobI
         .add("rowUpdateCount", nrows)
         .add("rowUpdateTime", t.secs())
         .add("targetStatus", to_string(newStatus))
-        .log(log::INFO, "In RetrieveMount::updateRetrieveJobStatus(): updated job statuses.");
+        .log(log::INFO, "In RetrieveMount::updateRetrieveJobStatusWrapper(): updated job statuses.");
     }
   } catch (const exception::Exception& ex) {
     lc.log(cta::log::ERR,
-           "In RetrieveMount::updateRetrieveJobStatus(): Exception while updating job status. Aborting transaction. " +
+           "In RetrieveMount::updateRetrieveJobStatusWrapper(): Exception while updating job status. Aborting transaction. " +
              ex.getMessageValue());
     txn.abort();
   }
 }
 
-void RetrieveMount::flushAsyncSuccessReports(std::list<std::unique_ptr<SchedulerDatabase::RetrieveJob>>& jobsBatch,
+void RetrieveMount::setJobBatchTransferred(std::list<std::unique_ptr<SchedulerDatabase::RetrieveJob>>& jobsBatch,
                                              log::LogContext& lc) {
   std::vector<std::string> jobIDs_success, jobIDs_repackSuccess, jobIDs_reportToUser;
   // This method will remove the rows of the jobs from the DB or update jobs to get reported to the disk buffer
@@ -259,11 +259,11 @@ void RetrieveMount::flushAsyncSuccessReports(std::list<std::unique_ptr<Scheduler
                                                                   diskSpaceReservationRequest,
                                                                   lc);
   if (!jobIDs_success.empty())
-    updateRetrieveJobStatus(jobIDs_success, RetrieveJobStatus::ReadyForDeletion, lc);
+    updateRetrieveJobStatusWrapper(jobIDs_success, RetrieveJobStatus::ReadyForDeletion, lc);
   if (!jobIDs_repackSuccess.empty())
-    updateRetrieveJobStatus(jobIDs_repackSuccess, RetrieveJobStatus::RJS_ToReportToRepackForSuccess, lc);
+    updateRetrieveJobStatusWrapper(jobIDs_repackSuccess, RetrieveJobStatus::RJS_ToReportToRepackForSuccess, lc);
   if (!jobIDs_reportToUser.empty())
-    updateRetrieveJobStatus(jobIDs_reportToUser, RetrieveJobStatus::RJS_ToReportToUserForSuccess, lc);
+    updateRetrieveJobStatusWrapper(jobIDs_reportToUser, RetrieveJobStatus::RJS_ToReportToUserForSuccess, lc);
   // After processing - we free the memory object
   // in case the flush and DB update failed, we still want to clean the jobs from memory
   // (they need to be garbage collected in case of a crash)

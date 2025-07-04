@@ -39,8 +39,8 @@ namespace unitTests{
     }
 
     void setTapeSessionStats(const castor::tape::tapeserver::daemon::TapeSessionStats &stats) override { throw std::runtime_error("Not implemented"); }
+    void setJobBatchTransferred(std::list<std::unique_ptr<cta::SchedulerDatabase::RetrieveJob>>& jobsBatch, cta::log::LogContext& lc) override { throw std::runtime_error("Not implemented"); }
     void flushAsyncSuccessReports(std::list<cta::SchedulerDatabase::RetrieveJob*>& jobsBatch, cta::log::LogContext& lc) override { throw std::runtime_error("Not implemented"); }
-    void flushAsyncSuccessReports(std::list<std::unique_ptr<cta::SchedulerDatabase::RetrieveJob>>& jobsBatch, cta::log::LogContext& lc) override { throw std::runtime_error("Not implemented"); }
     void addDiskSystemToSkip(const cta::SchedulerDatabase::RetrieveMount::DiskSystemToSkip &diskSystemToSkip) override { throw std::runtime_error("Not implemented"); }
     void requeueJobBatch(std::list<std::unique_ptr<cta::SchedulerDatabase::RetrieveJob>>& jobBatch, cta::log::LogContext& logContext) override { throw std::runtime_error("Not implemented"); }
     uint64_t requeueJobBatch(const std::list<std::string>& jobIDsList, cta::log::LogContext& logContext) const override { throw std::runtime_error("Not implemented"); }
