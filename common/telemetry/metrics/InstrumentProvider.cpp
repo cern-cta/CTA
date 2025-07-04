@@ -7,6 +7,8 @@ InstrumentProvider& InstrumentProvider::instance() {
   return instance;
 }
 
+// TODO: add #HELP with description and #TYPE with the instrument type
+
 InstrumentProvider::InstrumentProvider() = default;
 
 void InstrumentProvider::reset() {
