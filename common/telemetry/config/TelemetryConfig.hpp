@@ -15,7 +15,6 @@ std::string metricsBackendToString(MetricsBackend backend);
 typedef struct TelemetryConfig {
   std::string serviceName;
   std::string serviceNamespace;
-  std::string serviceInstanceHint;
   std::map<std::string, std::string> resourceAttributes;
 
   struct Metrics {
@@ -46,16 +45,6 @@ public:
    * See https://opentelemetry.io/docs/specs/semconv/registry/attributes/service/
    */
   TelemetryConfigBuilder& serviceNamespace(std::string serviceNamespace);
-  /**
-   * Used to generate service.instance.id as follows: <hostname.processname.serviceInstanceHint>.
-   * When providing this, take care that the serviceInstanceHint is sufficient to distinguish between
-   * replicaes of a service running on the same host.
-   *
-   * The triplet (service.namespace, service.name, service.instance.id) must be globally unique.
-   *
-   * See https://opentelemetry.io/docs/specs/semconv/registry/attributes/service/
-   */
-  TelemetryConfigBuilder& serviceInstanceHint(std::string serviceInstanceHint);
   TelemetryConfigBuilder& resourceAttribute(std::string key, std::string value);
   TelemetryConfigBuilder& metricsBackend(const std::string& backendType);
   TelemetryConfigBuilder& metricsExportInterval(std::chrono::milliseconds interval);
