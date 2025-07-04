@@ -110,11 +110,36 @@ std::shared_ptr<metrics_api::UpDownCounter<double>> InstrumentProvider::getDoubl
     });
 }
 
+std::shared_ptr<metrics_api::ObservableInstrument> InstrumentProvider::getInt64ObservableGauge(const std::string& meterName,
+                                                                             const std::string& componentName,
+                                                                             const std::string& description,
+                                                                             const std::string& unit) {
+  auto key = makeKey(meterName, componentName);
+  return getOrCreateInstrument<std::shared_ptr<metrics_api::ObservableInstrument>>(
+    key, m_observableInstruments, m_observableInstrumentMutex, [=]() {
+      auto meter = getMeter(meterName);
+      return meter->CreateInt64ObservableGauge(componentName, description, unit);
+    });
+}
+
+std::shared_ptr<metrics_api::ObservableInstrument> InstrumentProvider::getDoubleObservableGauge(const std::string& meterName,
+                                                                             const std::string& componentName,
+                                                                             const std::string& description,
+                                                                             const std::string& unit) {
+  auto key = makeKey(meterName, componentName);
+  return getOrCreateInstrument<std::shared_ptr<metrics_api::ObservableInstrument>>(
+    key, m_observableInstruments, m_observableInstrumentMutex, [=]() {
+      auto meter = getMeter(meterName);
+      return meter->CreateDoubleObservableGauge(componentName, description, unit);
+    });
+}
+
+
 std::string InstrumentProvider::makeKey(const std::string& meterName, const std::string& componentName) {
   return meterName + "." + componentName;
 }
 
-opentelemetry::nostd::shared_ptr<opentelemetry::metrics::Meter> InstrumentProvider::getMeter(const std::string& componentName) {
+std::shared_ptr<opentelemetry::metrics::Meter> InstrumentProvider::getMeter(const std::string& componentName) {
   auto provider = opentelemetry::metrics::Provider::GetMeterProvider();
   return provider->GetMeter(componentName, CTA_VERSION);
 }
@@ -167,5 +192,9 @@ template std::shared_ptr<metrics_api::UpDownCounter<int64_t>> InstrumentProvider
 template std::shared_ptr<metrics_api::UpDownCounter<double>> InstrumentProvider::getOrCreateInstrument(
   const std::string&, std::unordered_map<std::string, std::shared_ptr<metrics_api::UpDownCounter<double>>>&,
   std::shared_mutex&, const std::function<std::shared_ptr<metrics_api::UpDownCounter<double>>()>&);
+
+template std::shared_ptr<metrics_api::ObservableInstrument> InstrumentProvider::getOrCreateInstrument(
+  const std::string&, std::unordered_map<std::string, std::shared_ptr<metrics_api::ObservableInstrument>>&,
+  std::shared_mutex&, const std::function<std::shared_ptr<metrics_api::ObservableInstrument>()>&);
 
 } // namespace cta::telemetry::metrics
