@@ -68,7 +68,7 @@ OStoreDB::OStoreDB(objectstore::Backend& be, catalogue::Catalogue& catalogue, lo
       m_objectStore(be),
       m_catalogue(catalogue),
       m_logger(logger),
-      m_queueingCounter(cta::telemetry::metrics::InstrumentProvider::instance().getUInt64Counter(cta::telemetry::constants::kSchedulerMeter, cta::telemetry::constants::kSchedulerQueueingCount)) {
+      m_queueingCounter(cta::telemetry::metrics::InstrumentProvider::instance().getUInt64Counter(cta::telemetry::constants::kSchedulerMeter, cta::telemetry::constants::kSchedulerQueueingCount, "Total number of files enqueued on the scheduler")) {
   m_tapeDrivesState = std::make_unique<TapeDrivesCatalogueState>(m_catalogue);
   for (size_t i = 0; i < 5; i++) {
     m_enqueueingWorkerThreads.emplace_back(new EnqueueingWorkerThread(m_enqueueingTasksQueue));
