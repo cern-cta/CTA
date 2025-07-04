@@ -611,17 +611,21 @@ RetrieveJobQueueRow::requeueJobBatch(Transaction& txn, RetrieveJobStatus newStat
   return stmt.getNbAffectedRows();
 }
 
-// before using the following method we need to - check if alternative copy nb exists to be used and use it,
-// otherwise change the state to failure and leave the reporting to take care of it
 uint64_t
-RetrieveJobQueueRow::requeueAllTapeJobs(Transaction& txn, RetrieveJobStatus newStatus, std::string vid) {
+RetrieveJobQueueRow::handlePendingRetrieveJobsAfterTapeStateChange(Transaction& txn, std::string vid) {
   std::string sql = R"SQL(
+
     WITH MOVED_ROWS AS (
-        DELETE FROM RETRIEVE_ACTIVE_QUEUE
-        WHERE VID = :VID
-        RETURNING *
+      DELETE FROM RETRIEVE_PENDING_QUEUE
+      WHERE VID = :VID
+      RETURNING *
+    ),
+    TO_MOVE AS (
+        SELECT * FROM MOVED_ROWS
+        WHERE RETRIEVE_ERROR_REPORT_URL IS NOT NULL
+          AND RETRIEVE_ERROR_REPORT_URL <> ''
     )
-    INSERT INTO RETRIEVE_PENDING_QUEUE (
+    INSERT INTO RETRIEVE_ACTIVE_QUEUE (
       JOB_ID,
       RETRIEVE_REQUEST_ID,
       REQUEST_JOB_COUNT,
@@ -732,12 +736,12 @@ RetrieveJobQueueRow::requeueAllTapeJobs(Transaction& txn, RetrieveJobStatus newS
       M.LAST_MOUNT_WITH_FAILURE,
       :STATUS AS STATUS,
       NULL AS MOUNT_ID
-        FROM MOVED_ROWS M;
+    FROM TO_MOVE M;
   )SQL";
 
   auto stmt = txn.getConn().createStmt(sql);
   stmt.bindString(":VID", vid);
-  stmt.bindString(":STATUS", to_string(newStatus));
+  stmt.bindString(":STATUS", to_string(RetrieveJobStatus::RJS_ToReportToUserForFailure));
   stmt.bindString(":FAILURE_LOG", "VID_STATE_CHANGE_JOBS_REQUEUED");
   stmt.executeNonQuery();
   return stmt.getNbAffectedRows();

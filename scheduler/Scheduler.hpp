@@ -401,6 +401,27 @@ public:
   std::list<common::dataStructures::QueueAndMountSummary> getQueuesAndMountSummaries(log::LogContext& lc);
 
   /**
+   * @brief Updates the tape state for a given tape identified by its VID if it is currently in a PENDING state.
+   *
+   * This method attempts to retrieve the tape information for the specified `queueVid` from the catalogue.
+   * If the tape is found and its state is one of the PENDING states (REPACKING_PENDING, BROKEN_PENDING, EXPORTED_PENDING),
+   * it updates the tape state to the corresponding final state (REPACKING, BROKEN, EXPORTED), preserving the previous
+   * state reason with an additional prepended message.
+   *
+   * The method also clears the database statistics cache for the tape VID after successful state modification.
+   *
+   * In case the tape is not found in the catalogue, a warning is logged and the method returns early.
+   * If the tape is not in a recognized PENDING state, a warning is logged and no state change occurs.
+   *
+   * If there is a state mismatch error when modifying the tape state (UserSpecifiedAWrongPrevState exception),
+   * the method attempts to detect if the tape state was already updated by another agent and logs accordingly.
+   *
+   * @param queueVid The unique identifier (VID) of the tape whose state is to be updated.
+   * @param logContext Logging context for recording informational and error messages.
+   */
+  void updateTapeStateFromPending(const std::string& queueVid, cta::log::LogContext& logContext);
+
+  /**
   * Modify the state of the specified tape. Intermediate states may be temporarily applied
   * until the final desired state is achieved.
   * @param admin, the person or the system who modified the state of the tape

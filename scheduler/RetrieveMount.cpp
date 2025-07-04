@@ -355,15 +355,25 @@ void cta::RetrieveMount::putQueueToSleep(const std::string& diskSystemName,
 //------------------------------------------------------------------------------
 // waitAndFinishSettingJobsBatchRetrieved()
 //------------------------------------------------------------------------------
+#ifdef CTA_PGSCHED
 void cta::RetrieveMount::flushAsyncSuccessReports(std::queue<std::unique_ptr<cta::RetrieveJob>>& successfulRetrieveJobs,
                                                   cta::log::LogContext& logContext) {
-  std::list<std::unique_ptr<cta::RetrieveJob>>
-    validatedSuccessfulRetrieveJobs;  //List to ensure the destruction of the retrieve jobs at the end of this method
-#ifdef CTA_PGSCHED
+  throw cta::exception::Exception("Not implemented");
+}
+void cta::RetrieveMount::setJobBatchTransferred(std::queue<std::unique_ptr<cta::RetrieveJob>>& successfulRetrieveJobs,
+                                                cta::log::LogContext& logContext) {
   std::list<std::unique_ptr<cta::SchedulerDatabase::RetrieveJob>> validatedSuccessfulDBRetrieveJobs;
 #else
+void cta::RetrieveMount::setJobBatchTransferred(std::queue<std::unique_ptr<cta::RetrieveJob>>& successfulRetrieveJobs,
+                                                  cta::log::LogContext& logContext) {
+  throw cta::exception::Exception("Not implemented");
+}
+void cta::RetrieveMount::flushAsyncSuccessReports(std::queue<std::unique_ptr<cta::RetrieveJob>>& successfulRetrieveJobs,
+                                                  cta::log::LogContext& logContext) {
   std::list<cta::SchedulerDatabase::RetrieveJob *> validatedSuccessfulDBRetrieveJobs;
 #endif
+  std::list<std::unique_ptr<cta::RetrieveJob>>
+    validatedSuccessfulRetrieveJobs;  //List to ensure the destruction of the retrieve jobs at the end of this method
   std::unique_ptr<cta::RetrieveJob> job;
   double waitUpdateCompletionTime = 0;
   double jobBatchFinishingTime = 0;
@@ -392,7 +402,12 @@ void cta::RetrieveMount::flushAsyncSuccessReports(std::queue<std::unique_ptr<cta
     waitUpdateCompletionTime = t.secs(utils::Timer::resetCounter);
     tl.insertAndReset("waitUpdateCompletionTime", t);
     // Complete the cleaning up of the jobs in the mount
+#ifdef CTA_PGSCHED
+    m_dbMount->setJobBatchTransferred(validatedSuccessfulDBRetrieveJobs, logContext);
+#else
     m_dbMount->flushAsyncSuccessReports(validatedSuccessfulDBRetrieveJobs, logContext);
+#endif
+
     jobBatchFinishingTime = t.secs();
     tl.insertOrIncrement("jobBatchFinishingTime", jobBatchFinishingTime);
     schedulerDbTime = jobBatchFinishingTime + waitUpdateCompletionTime;

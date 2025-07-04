@@ -382,6 +382,7 @@ public:
    */
   virtual std::list<RetrieveQueueCleanupInfo> getRetrieveQueuesCleanupInfo(log::LogContext& logContext) = 0;
   virtual void setRetrieveQueueCleanupFlag(const std::string& vid, bool val, log::LogContext& logContext) = 0;
+  virtual void cleanRetrieveQueueForVid(const std::string& vid, log::LogContext& logContext) = 0;
 
   /**
    * A representation of an existing retrieve queue. This is a (simpler) relative
@@ -582,7 +583,7 @@ public:
 
     virtual void flushAsyncSuccessReports(std::list<cta::SchedulerDatabase::RetrieveJob*>& jobsBatch,
                                           log::LogContext& lc) = 0;
-    virtual void flushAsyncSuccessReports(std::list<std::unique_ptr<cta::SchedulerDatabase::RetrieveJob>>& jobsBatch,
+    virtual void setJobBatchTransferred(std::list<std::unique_ptr<SchedulerDatabase::RetrieveJob>>& jobsBatch,
                                           log::LogContext& lc) = 0;
 
     struct DiskSystemToSkip {

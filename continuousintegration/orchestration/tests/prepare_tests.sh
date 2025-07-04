@@ -235,7 +235,7 @@ kubectl --namespace ${NAMESPACE} exec ${CTA_CLI_POD} -c cta-cli -- cta-admin arc
 
 kubectl --namespace ${NAMESPACE} exec ${CTA_CLI_POD} -c cta-cli -- cta-admin storageclass add \
   --name ctaStorageClass_3_copy                                            \
-  --numberofcopies 3                                                       \
+  --numberofcopies 1                                                       \
   --vo vo                                                                  \
   --comment "ctasystest"
 kubectl --namespace ${NAMESPACE} exec ${CTA_CLI_POD} -c cta-cli -- cta-admin archiveroute add \
