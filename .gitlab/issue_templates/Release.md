@@ -1,3 +1,5 @@
+<!-- Ensure the title of this ticket is the name of the release. E.g. `v5.X.Y.Z-R` -->
+
 * See [Tagging a new CTA release](https://eoscta.docs.cern.ch/latest/dev/ci/tagging_releases/)
 
 ## Release Requirements
@@ -22,7 +24,7 @@
     - [ ] Stress test dashboard linked with timeframe
 - [ ] Changelog updated
 - [ ] Tag created
-- [ ] RPMs present in unstable repository
+- [ ] RPMs present in `unstable` repository
 
 Further actions such as adding RPMs to `testing` or `stable` can be done at a later point in time.
 Once all steps have been completed, this issue can be closed.
