@@ -4,19 +4,19 @@ frontend:
     conf:
       telemetry:
         metricsBackend: "OTLP"
-        metricsOtlpEndpoint: "http://opentelemetry-opentelemetry-collector:4318/v1/metrics"
+        metricsOtlpEndpoint: "http://otel-opentelemetry-collector:4318/v1/metrics"
 
   grpc:
     conf:
       telemetry:
         metricsBackend: "OTLP"
-        metricsOtlpEndpoint: "http://opentelemetry-opentelemetry-collector:4318/v1/metrics"
+        metricsOtlpEndpoint: "http://otel-opentelemetry-collector:4318/v1/metrics"
 
 tpsrv:
   conf:
     telemetry:
       metricsBackend: "OTLP"
-      metricsOtlpEndpoint: "http://opentelemetry-opentelemetry-collector:4318/v1/metrics"
+      metricsOtlpEndpoint: "http://otel-opentelemetry-collector:4318/v1/metrics"
   extraEnv:
   - name: OPENTELEMETRY_LOG_LEVEL
     value: "debug"
