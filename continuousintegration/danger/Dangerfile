@@ -74,7 +74,7 @@ if other_labels.empty?
   warn("**No Scoping Labels Found**\n\nAdd at least one additional label to indicate the affected component or context.")
 end
 
-unless labels.include?("changelog: required")
+if !labels.include?("changelog: required")
   warn("**Changelog Label Missing**\n\nIf this MR requires a changelog entry, please add the `changelog: required` label.")
 end
 
