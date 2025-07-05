@@ -584,7 +584,7 @@ public:
     virtual void flushAsyncSuccessReports(std::list<cta::SchedulerDatabase::RetrieveJob*>& jobsBatch,
                                           log::LogContext& lc) = 0;
     virtual void setJobBatchTransferred(std::list<std::unique_ptr<SchedulerDatabase::RetrieveJob>>& jobsBatch,
-                                          log::LogContext& lc) = 0;
+                                        log::LogContext& lc) = 0;
 
     struct DiskSystemToSkip {
       std::string name;

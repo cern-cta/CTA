@@ -365,12 +365,12 @@ void cta::RetrieveMount::setJobBatchTransferred(std::queue<std::unique_ptr<cta::
   std::list<std::unique_ptr<cta::SchedulerDatabase::RetrieveJob>> validatedSuccessfulDBRetrieveJobs;
 #else
 void cta::RetrieveMount::setJobBatchTransferred(std::queue<std::unique_ptr<cta::RetrieveJob>>& successfulRetrieveJobs,
-                                                  cta::log::LogContext& logContext) {
+                                                cta::log::LogContext& logContext) {
   throw cta::exception::Exception("Not implemented");
 }
 void cta::RetrieveMount::flushAsyncSuccessReports(std::queue<std::unique_ptr<cta::RetrieveJob>>& successfulRetrieveJobs,
                                                   cta::log::LogContext& logContext) {
-  std::list<cta::SchedulerDatabase::RetrieveJob *> validatedSuccessfulDBRetrieveJobs;
+  std::list<cta::SchedulerDatabase::RetrieveJob*> validatedSuccessfulDBRetrieveJobs;
 #endif
   std::list<std::unique_ptr<cta::RetrieveJob>>
     validatedSuccessfulRetrieveJobs;  //List to ensure the destruction of the retrieve jobs at the end of this method

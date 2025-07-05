@@ -179,13 +179,13 @@ void RetrieveRdbJob::handleExceedTotalRetries(cta::schedulerdb::Transaction& txn
 }
 
 void RetrieveRdbJob::requeueToNewMount(cta::schedulerdb::Transaction& txn,
-                                      log::LogContext& lc,
-                                      const std::string& reason) {
+                                       log::LogContext& lc,
+                                       const std::string& reason) {
   try {
     // requeue by changing status, reset the mount_id to NULL and updating all other stat fields
     // change VID if alternate exists trying to fetch the file from another tape !
     m_jobRow.retriesWithinMount = 0;
-    auto [newVid, index]  = cta::utils::selectNextString(m_jobRow.vid, m_jobRow.alternateVids);
+    auto [newVid, index] = cta::utils::selectNextString(m_jobRow.vid, m_jobRow.alternateVids);
     std::vector<std::string> alternateCopyNbsVec = splitStringToVector(m_jobRow.alternateCopyNbs);
     std::vector<std::string> alternateFSeqVec = splitStringToVector(m_jobRow.alternateFSeq);
     std::vector<std::string> alternateBlockIdVec = splitStringToVector(m_jobRow.alternateBlockId);
@@ -203,7 +203,8 @@ void RetrieveRdbJob::requeueToNewMount(cta::schedulerdb::Transaction& txn,
     // set reportType to a particular value here
   } catch (const exception::Exception& ex) {
     lc.log(log::WARNING,
-           "RetrieveRdbJob::requeueToNewMount(): Failed to requeue to new mount. Aborting txn: " + ex.getMessageValue());
+           "RetrieveRdbJob::requeueToNewMount(): Failed to requeue to new mount. Aborting txn: " +
+             ex.getMessageValue());
     txn.abort();
   }
 }

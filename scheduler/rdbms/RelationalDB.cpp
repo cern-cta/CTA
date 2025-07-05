@@ -417,7 +417,6 @@ RelationalDB::queueRetrieve(cta::common::dataStructures::RetrieveRequest& rqst,
   }
 }
 
-
 void RelationalDB::cancelRetrieve(const std::string& instanceName,
                                   const cta::common::dataStructures::CancelRetrieveRequest& request,
                                   log::LogContext& lc) {
@@ -699,7 +698,8 @@ void RelationalDB::setRetrieveJobBatchReportedToUser(std::list<SchedulerDatabase
                                                      log::TimingList& timingList,
                                                      utils::Timer& t,
                                                      log::LogContext& lc) {
-  lc.log(log::WARNING, "RelationalDB::setRetrieveJobBatchReportedToUser() half-dummy implementation for successful jobs !");
+  lc.log(log::WARNING,
+         "RelationalDB::setRetrieveJobBatchReportedToUser() half-dummy implementation for successful jobs !");
   // If job is done we will delete it (if the full request was served) - to be implemented !
   std::vector<std::string> jobIDsList_success;
   std::vector<std::string> jobIDsList_failure;
@@ -720,8 +720,9 @@ void RelationalDB::setRetrieveJobBatchReportedToUser(std::list<SchedulerDatabase
           .add("jobID", (*jobsBatchItor)->jobID)
           .add("archiveFileID", (*jobsBatchItor)->archiveFile.archiveFileID)
           .add("diskInstance", (*jobsBatchItor)->archiveFile.diskInstance)
-          .log(cta::log::WARNING,
-               "In schedulerdb::RelationalDB::setRetrieveJobBatchReportedToUser(): Skipping handling of a reported job");
+          .log(
+            cta::log::WARNING,
+            "In schedulerdb::RelationalDB::setRetrieveJobBatchReportedToUser(): Skipping handling of a reported job");
         jobsBatchItor++;
         continue;
     }
@@ -739,10 +740,10 @@ void RelationalDB::setRetrieveJobBatchReportedToUser(std::list<SchedulerDatabase
     cta::utils::Timer t2;
     uint64_t deletionCount = 0;
     if (!jobIDsList_success.empty()) {
-      uint64_t nrows =
-        schedulerdb::postgres::RetrieveJobQueueRow::updateJobStatus(txn,
-                                                                   cta::schedulerdb::RetrieveJobStatus::ReadyForDeletion,
-                                                                   jobIDsList_success);
+      uint64_t nrows = schedulerdb::postgres::RetrieveJobQueueRow::updateJobStatus(
+        txn,
+        cta::schedulerdb::RetrieveJobStatus::ReadyForDeletion,
+        jobIDsList_success);
       deletionCount += nrows;
       if (nrows != jobIDsList_success.size()) {
         log::ScopedParamContainer(lc)
@@ -756,8 +757,8 @@ void RelationalDB::setRetrieveJobBatchReportedToUser(std::list<SchedulerDatabase
     if (!jobIDsList_failure.empty()) {
       uint64_t nrows =
         schedulerdb::postgres::RetrieveJobQueueRow::updateJobStatus(txn,
-                                                                   cta::schedulerdb::RetrieveJobStatus::RJS_Failed,
-                                                                   jobIDsList_failure);
+                                                                    cta::schedulerdb::RetrieveJobStatus::RJS_Failed,
+                                                                    jobIDsList_failure);
       if (nrows != jobIDsList_failure.size()) {
         log::ScopedParamContainer(lc)
           .add("updatedRows", nrows)
@@ -1105,9 +1106,11 @@ void RelationalDB::cleanRetrieveQueueForVid(const std::string& vid, log::LogCont
            "pending queue. If error report URL was available, it moved jobs to the reporting workflow.");
     txn.commit();
   } catch (exception::Exception& ex) {
-    logContext.log(cta::log::ERR,
-           "In RelationalDB::cleanRetrieveQueueForVid(): failed to remove retrieve jobs from the pending queue of the "
-           "specified tape VID. Aborting the transaction." + ex.getMessageValue());
+    logContext.log(
+      cta::log::ERR,
+      "In RelationalDB::cleanRetrieveQueueForVid(): failed to remove retrieve jobs from the pending queue of the "
+      "specified tape VID. Aborting the transaction." +
+        ex.getMessageValue());
     txn.abort();
     throw;
   }

@@ -339,8 +339,12 @@ public:
     void addDiskSystemToSkip(const SchedulerDatabase::RetrieveMount::DiskSystemToSkip& diskSystemToSkip) override;
     void flushAsyncSuccessReports(std::list<cta::SchedulerDatabase::RetrieveJob*>& jobsBatch,
                                   log::LogContext& lc) override;
+
     void setJobBatchTransferred(std::list<std::unique_ptr<cta::SchedulerDatabase::RetrieveJob>>& jobsBatch,
-                                  log::LogContext& lc) override { throw cta::exception::Exception("In SchedulerDatabase::RetrieveMount::setJobBatchTransferred(): Not Implemented, for RelationalDB compatibility only.");  }
+                                log::LogContext& lc) override {
+      throw cta::exception::Exception("In SchedulerDatabase::RetrieveMount::setJobBatchTransferred(): Not Implemented, "
+                                      "for RelationalDB compatibility only.");
+    }
   };
   friend class RetrieveMount;
 

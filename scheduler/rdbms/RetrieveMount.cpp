@@ -47,16 +47,17 @@ RetrieveMount::getNextJobBatch(uint64_t filesRequested, uint64_t bytesRequested,
   try {
     std::vector<std::string> noSpaceDiskSystemNames = m_RelationalDB.getActiveSleepDiskSystemNamesToFilter();
     auto [queuedJobs, nrows] = postgres::RetrieveJobQueueRow::moveJobsToDbActiveQueue(txn,
-                                                                                queriedJobStatus,
-                                                                                mountInfo,
-                                                                                noSpaceDiskSystemNames,
-                                                                                bytesRequested,
-                                                                                filesRequested);
+                                                                                      queriedJobStatus,
+                                                                                      mountInfo,
+                                                                                      noSpaceDiskSystemNames,
+                                                                                      bytesRequested,
+                                                                                      filesRequested);
     timings.insertAndReset("mountUpdateBatchTime", t);
     params.add("updateMountInfoRowCount", nrows);
     params.add("MountID", mountInfo.mountId);
-    logContext.log(cta::log::INFO,
-                   "In postgres::RetrieveJobQueueRow::moveJobsToDbActiveQueue: successfully assigned Mount ID to DB jobs.");
+    logContext.log(
+      cta::log::INFO,
+      "In postgres::RetrieveJobQueueRow::moveJobsToDbActiveQueue: successfully assigned Mount ID to DB jobs.");
     retVector.reserve(nrows);
     // Fetch job info only in case there were jobs found and updated
     if (!queuedJobs.isEmpty()) {
@@ -193,8 +194,8 @@ void RetrieveMount::setTapeSessionStats(const castor::tape::tapeserver::daemon::
 }
 
 void RetrieveMount::updateRetrieveJobStatusWrapper(const std::vector<std::string>& jobIDs,
-                                            cta::schedulerdb::RetrieveJobStatus newStatus,
-                                            log::LogContext& lc) {
+                                                   cta::schedulerdb::RetrieveJobStatus newStatus,
+                                                   log::LogContext& lc) {
   cta::schedulerdb::Transaction txn(m_connPool);
   try {
     cta::utils::Timer t;
@@ -208,7 +209,8 @@ void RetrieveMount::updateRetrieveJobStatusWrapper(const std::vector<std::string
           .add("jobListSize", jobIDs.size())
           .add("targetStatus", to_string(newStatus))
           .log(log::ERR,
-               "In RetrieveMount::updateRetrieveJobStatusWrapper(): Failed to update all jobs to target status. Aborting transaction.");
+               "In RetrieveMount::updateRetrieveJobStatusWrapper(): Failed to update all jobs to target status. "
+               "Aborting transaction.");
         txn.abort();
         return;
       }
@@ -222,14 +224,15 @@ void RetrieveMount::updateRetrieveJobStatusWrapper(const std::vector<std::string
     }
   } catch (const exception::Exception& ex) {
     lc.log(cta::log::ERR,
-           "In RetrieveMount::updateRetrieveJobStatusWrapper(): Exception while updating job status. Aborting transaction. " +
+           "In RetrieveMount::updateRetrieveJobStatusWrapper(): Exception while updating job status. Aborting "
+           "transaction. " +
              ex.getMessageValue());
     txn.abort();
   }
 }
 
 void RetrieveMount::setJobBatchTransferred(std::list<std::unique_ptr<SchedulerDatabase::RetrieveJob>>& jobsBatch,
-                                             log::LogContext& lc) {
+                                           log::LogContext& lc) {
   std::vector<std::string> jobIDs_success, jobIDs_repackSuccess, jobIDs_reportToUser;
   // This method will remove the rows of the jobs from the DB or update jobs to get reported to the disk buffer
   // REPACK USE CASE TO-BE-DONE
@@ -258,12 +261,15 @@ void RetrieveMount::setJobBatchTransferred(std::list<std::unique_ptr<SchedulerDa
                                                                   mountInfo.mountId,
                                                                   diskSpaceReservationRequest,
                                                                   lc);
-  if (!jobIDs_success.empty())
+  if (!jobIDs_success.empty()) {
     updateRetrieveJobStatusWrapper(jobIDs_success, RetrieveJobStatus::ReadyForDeletion, lc);
-  if (!jobIDs_repackSuccess.empty())
+  }
+  if (!jobIDs_repackSuccess.empty()) {
     updateRetrieveJobStatusWrapper(jobIDs_repackSuccess, RetrieveJobStatus::RJS_ToReportToRepackForSuccess, lc);
-  if (!jobIDs_reportToUser.empty())
+  }
+  if (!jobIDs_reportToUser.empty()) {
     updateRetrieveJobStatusWrapper(jobIDs_reportToUser, RetrieveJobStatus::RJS_ToReportToUserForSuccess, lc);
+  }
   // After processing - we free the memory object
   // in case the flush and DB update failed, we still want to clean the jobs from memory
   // (they need to be garbage collected in case of a crash)

@@ -257,7 +257,7 @@ public:
                                         cta::log::LogContext& logContext);
 
   virtual void setJobBatchTransferred(std::queue<std::unique_ptr<cta::RetrieveJob>>& successfulRetrieveJobs,
-                                        cta::log::LogContext& logContext);
+                                      cta::log::LogContext& logContext);
 
   /**
     * Creates a disk reporter for the retrieve job (this is a wrapper).
