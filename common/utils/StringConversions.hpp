@@ -146,9 +146,9 @@ std::vector<std::string> splitStringToVector(const std::string& input, const cha
 /**
  * @brief Selects the next VID from alternateStrings relative to currentString.
  * @param currentString The current VID.
- * @param alternateStrings A comma-separated list of alternate VIDs.
- * @return The next VID, or currentString if no valid next VID found.
+ * @param alternateStrings A comma-separated list of strings, e.g. alternate VIDs.
+ * @return The next string and index of it or currentString, 0 if no valid next string is found .
  */
-std::string selectNextString(const std::string& currentString, const std::string& alternateStrings);
+std::pair<std::string, size_t> selectNextString(const std::string& currentString, const std::string& alternateStrings);
 
 }  // namespace cta::utils
