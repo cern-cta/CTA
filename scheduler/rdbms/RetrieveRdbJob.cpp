@@ -186,9 +186,9 @@ void RetrieveRdbJob::requeueToNewMount(cta::schedulerdb::Transaction& txn,
     // change VID if alternate exists trying to fetch the file from another tape !
     m_jobRow.retriesWithinMount = 0;
     auto [newVid, index] = cta::utils::selectNextString(m_jobRow.vid, m_jobRow.alternateVids);
-    std::vector<std::string> alternateCopyNbsVec = splitStringToVector(m_jobRow.alternateCopyNbs);
-    std::vector<std::string> alternateFSeqVec = splitStringToVector(m_jobRow.alternateFSeq);
-    std::vector<std::string> alternateBlockIdVec = splitStringToVector(m_jobRow.alternateBlockId);
+    std::vector<std::string> alternateCopyNbsVec = cta::utils::splitStringToVector(m_jobRow.alternateCopyNbs);
+    std::vector<std::string> alternateFSeqVec = cta::utils::splitStringToVector(m_jobRow.alternateFSeq);
+    std::vector<std::string> alternateBlockIdVec = cta::utils::splitStringToVector(m_jobRow.alternateBlockId);
     m_jobRow.copyNb = alternateCopyNbsVec[index];
     m_jobRow.fSeq = alternateFSeqVec[index];
     m_jobRow.blockId = alternateBlockIdVec[index];
