@@ -605,7 +605,6 @@ public:
   */
   static uint64_t handlePendingRetrieveJobsAfterTapeStateChange(Transaction& txn, std::string vid);
 
-
   /**
   * Move from RETRIEVE_ACTIVE_QUEUE to RETRIEVE_PENDING_QUEUE
   * a batch of jobs so that they can be requeued to drive queues later

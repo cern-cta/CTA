@@ -23,11 +23,11 @@ namespace cta::schedulerdb::postgres {
 
 std::pair<rdbms::Rset, uint64_t>
 RetrieveJobQueueRow::moveJobsToDbActiveQueue(Transaction& txn,
-                                       RetrieveJobStatus newStatus,
-                                       const SchedulerDatabase::RetrieveMount::MountInfo& mountInfo,
-                                       std::vector<std::string>& noSpaceDiskSystemNames,
-                                       uint64_t maxBytesRequested,
-                                       uint64_t limit) {
+                                             RetrieveJobStatus newStatus,
+                                             const SchedulerDatabase::RetrieveMount::MountInfo& mountInfo,
+                                             std::vector<std::string>& noSpaceDiskSystemNames,
+                                             uint64_t maxBytesRequested,
+                                             uint64_t limit) {
   // we first check if there are any disk systems
   // we should avoid querying jobs for
   std::string sql_dsn_exclusion_part = "";
@@ -616,7 +616,6 @@ RetrieveJobQueueRow::requeueJobBatch(Transaction& txn, RetrieveJobStatus newStat
 
 uint64_t RetrieveJobQueueRow::handlePendingRetrieveJobsAfterTapeStateChange(Transaction& txn, std::string vid) {
   std::string sql = R"SQL(
-
     WITH MOVED_ROWS AS (
       DELETE FROM RETRIEVE_PENDING_QUEUE
       WHERE VID = :VID
@@ -901,7 +900,6 @@ uint64_t RetrieveJobQueueRow::cancelRetrieveJob(Transaction& txn, uint64_t archi
   auto stmt = txn.getConn().createStmt(sqlActive);
   stmt.bindUint64(":ARCHIVE_FILE_ID", archiveFileID);
   stmt.executeNonQuery();
-  
   return stmt.getNbAffectedRows();
 }
 }  // namespace cta::schedulerdb::postgres
