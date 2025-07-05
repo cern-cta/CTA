@@ -461,9 +461,9 @@ uint64_t RetrieveJobQueueRow::requeueFailedJob(Transaction& txn,
   stmt.bindUint32(":RETRIES_WITHIN_MOUNT", retriesWithinMount);
   stmt.bindUint64(":LAST_MOUNT_WITH_FAILURE", lastMountWithFailure);
   stmt.bindString(":VID", vid);
-  stmt.bindString(":FSEQ", fSeq);
-  stmt.bindString(":COPY_NB", copyNb);
-  stmt.bindString(":BLOCK_ID", blockId);
+  stmt.bindUint64(":FSEQ", fSeq);
+  stmt.bindUint8(":COPY_NB", copyNb);
+  stmt.bindUint64(":BLOCK_ID", blockId);
   stmt.bindString(":FAILURE_LOG", failureLogs.value_or(""));
   if (userowjid) {
     stmt.bindUint64(":JOB_ID", jobId);
