@@ -522,17 +522,6 @@ public:
   static uint64_t cancelRetrieveJob(Transaction& txn, uint64_t archiveFileID);
 
   /**
-  * When Tape is BROKEN and queue shall be cleaned up,
-  * the following method ensures removal from the pending queue
-  *
-  * @param txn           Transaction handling the connection to the backend database
-  * @param vid           The Tape VID for which all jobs shall be cancelled
-  *
-  * @return  The number of affected jobs
-  */
-  static uint64_t cancelRetrieveJobsForTapeVID(Transaction&  txn, std::string vid);
-
-  /**
     * Select any jobs with specified status(es) from the report,
     * flag them as being reported and return the job IDs
     *
@@ -564,11 +553,11 @@ public:
   */
   static std::pair<rdbms::Rset, uint64_t>
   moveJobsToDbActiveQueue(Transaction& txn,
-                    RetrieveJobStatus newStatus,
-                    const SchedulerDatabase::RetrieveMount::MountInfo& mountInfo,
-                    std::vector<std::string>& noSpaceDiskSystemNames,
-                    uint64_t maxBytesRequested,
-                    uint64_t limit);
+                          RetrieveJobStatus newStatus,
+                          const SchedulerDatabase::RetrieveMount::MountInfo& mountInfo,
+                          std::vector<std::string>& noSpaceDiskSystemNames,
+                          uint64_t maxBytesRequested,
+                          uint64_t limit);
   /**
   * Update job status
   *

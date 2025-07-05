@@ -53,8 +53,11 @@ ArchiveMount::getNextJobBatch(uint64_t filesRequested, uint64_t bytesRequested, 
   std::vector<std::unique_ptr<SchedulerDatabase::ArchiveJob>> retVector;
   cta::log::ScopedParamContainer params(logContext);
   try {
-    auto [queuedJobs, nrows] =
-      postgres::ArchiveJobQueueRow::moveJobsToDbActiveQueue(txn, queriedJobStatus, mountInfo, bytesRequested, filesRequested);
+    auto [queuedJobs, nrows] = postgres::ArchiveJobQueueRow::moveJobsToDbActiveQueue(txn,
+                                                                                     queriedJobStatus,
+                                                                                     mountInfo,
+                                                                                     bytesRequested,
+                                                                                     filesRequested);
     timings.insertAndReset("mountUpdateBatchTime", t);
     params.add("updateMountInfoRowCount", nrows);
     params.add("MountID", mountInfo.mountId);
@@ -89,7 +92,8 @@ ArchiveMount::getNextJobBatch(uint64_t filesRequested, uint64_t bytesRequested, 
   } catch (exception::Exception& ex) {
     params.add("exceptionMessage", ex.getMessageValue());
     logContext.log(cta::log::ERR,
-                   "In postgres::ArchiveJobQueueRow::moveJobsToDbActiveQueue: failed to queue jobs." + ex.getMessageValue());
+                   "In postgres::ArchiveJobQueueRow::moveJobsToDbActiveQueue: failed to queue jobs." +
+                     ex.getMessageValue());
     txn.abort();
     throw;
   }

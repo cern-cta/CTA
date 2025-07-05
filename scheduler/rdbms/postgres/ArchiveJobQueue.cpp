@@ -25,10 +25,10 @@
 namespace cta::schedulerdb::postgres {
 std::pair<rdbms::Rset, uint64_t>
 ArchiveJobQueueRow::moveJobsToDbActiveQueue(Transaction& txn,
-                                      ArchiveJobStatus newStatus,
-                                      const SchedulerDatabase::ArchiveMount::MountInfo& mountInfo,
-                                      uint64_t maxBytesRequested,
-                                      uint64_t limit) {
+                                            ArchiveJobStatus newStatus,
+                                            const SchedulerDatabase::ArchiveMount::MountInfo& mountInfo,
+                                            uint64_t maxBytesRequested,
+                                            uint64_t limit) {
   /* using write row lock FOR UPDATE for the select statement
    * since it is the same lock used for UPDATE
    * we first apply the LIMIT on the selection to limit

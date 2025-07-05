@@ -2333,9 +2333,9 @@ void Scheduler::updateTapeStateFromPending(const std::string& queueVid, cta::log
   } catch (const catalogue::TapeNotFound& ex) {
     log::ScopedParamContainer params(logContext);
     params.add("tapeVid", queueVid).add("exceptionMessage", ex.getMessageValue());
-    logContext.log(
-      log::WARNING,
-      "In Scheduler::updateTapeStateFromPending(): Failed to find a tape in the database. Unable to update tape state.");
+    logContext.log(log::WARNING,
+                   "In Scheduler::updateTapeStateFromPending(): Failed to find a tape in the database. Unable to "
+                   "update tape state.");
     return;  // early exit, no further processing possible
   }
 
@@ -2375,11 +2375,11 @@ void Scheduler::updateTapeStateFromPending(const std::string& queueVid, cta::log
 
       default: {
         log::ScopedParamContainer paramsWarnMsg(logContext);
-        paramsWarnMsg.add("tapeVid", queueVid)
-          .add("actualState", Tape::stateToString(tapeDataRefreshed.state));
-        logContext.log(log::WARNING,
-                       "In Scheduler::updateTapeStateFromPending(): Cleaned up tape is not in a PENDING state. Unable to "
-                       "change it to its corresponding final state.");
+        paramsWarnMsg.add("tapeVid", queueVid).add("actualState", Tape::stateToString(tapeDataRefreshed.state));
+        logContext.log(
+          log::WARNING,
+          "In Scheduler::updateTapeStateFromPending(): Cleaned up tape is not in a PENDING state. Unable to "
+          "change it to its corresponding final state.");
       } break;
     }
   } catch (const catalogue::UserSpecifiedAWrongPrevState& ex) {
@@ -2396,9 +2396,10 @@ void Scheduler::updateTapeStateFromPending(const std::string& queueVid, cta::log
                      "In Scheduler::updateTapeStateFromPending(): Tape already moved into its final state, probably by "
                      "another agent.");
     } else {
-      logContext.log(log::ERR,
-                     "In Scheduler::updateTapeStateFromPending(): Tape moved into an unexpected final state, probably by "
-                     "another agent.");
+      logContext.log(
+        log::ERR,
+        "In Scheduler::updateTapeStateFromPending(): Tape moved into an unexpected final state, probably by "
+        "another agent.");
     }
   }
 }
@@ -2483,12 +2484,12 @@ void Scheduler::triggerTapeStateChange(const common::dataStructures::SecurityIde
                              std::regex(Tape::stateToString(Tape::BROKEN_PENDING)),
                              Tape::stateToString(Tape::BROKEN)));
       }
-      #ifndef CTA_PGSCHED
+#ifndef CTA_PGSCHED
       m_db.setRetrieveQueueCleanupFlag(vid, true, logContext);
-      #else
+#else
       m_db.cleanRetrieveQueueForVid(vid, logContext);
       updateTapeStateFromPending(vid, logContext);
-      #endif
+#endif
       break;
     case Tape::REPACKING:
       if (prev_state == Tape::REPACKING_DISABLED) {
@@ -2503,13 +2504,13 @@ void Scheduler::triggerTapeStateChange(const common::dataStructures::SecurityIde
                                std::regex(Tape::stateToString(Tape::REPACKING_PENDING)),
                                Tape::stateToString(Tape::REPACKING)));
         }
-        #ifndef CTA_PGSCHED
+#ifndef CTA_PGSCHED
         m_db.setRetrieveQueueCleanupFlag(vid, true, logContext);
-        #else
+#else
         // PGSCHED TO-DO wee need to check the REPACKING RETRIEVE TABLE not the RETRIEVE TABLE HERE !!!
         m_db.cleanRetrieveQueueForVid(vid, logContext);
         updateTapeStateFromPending(vid, logContext);
-        #endif
+#endif
       }
       break;
     case Tape::EXPORTED:
@@ -2521,12 +2522,12 @@ void Scheduler::triggerTapeStateChange(const common::dataStructures::SecurityIde
                              std::regex(Tape::stateToString(Tape::EXPORTED_PENDING)),
                              Tape::stateToString(Tape::EXPORTED)));
       }
-      #ifndef CTA_PGSCHED
+#ifndef CTA_PGSCHED
       m_db.setRetrieveQueueCleanupFlag(vid, true, logContext);
-      #else
+#else
       m_db.cleanRetrieveQueueForVid(vid, logContext);
       updateTapeStateFromPending(vid, logContext);
-      #endif
+#endif
       break;
     default:
       throw cta::exception::UserError("Unknown procedure to change tape state to " + Tape::stateToString(new_state));
