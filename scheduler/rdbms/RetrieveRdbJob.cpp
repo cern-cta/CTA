@@ -191,7 +191,7 @@ void RetrieveRdbJob::requeueToNewMount(cta::schedulerdb::Transaction& txn,
     std::vector<std::string> alternateBlockIdVec = cta::utils::splitStringToVector(m_jobRow.alternateBlockId);
     m_jobRow.copyNb = static_cast<uint8_t>(std::stoi(alternateCopyNbsVec[index]));
     m_jobRow.fSeq = static_cast<uint64_t>(std::stoi(alternateFSeqVec[index]));
-    m_jobRow.blockId = static_cast<uint64_t>(std::stoi(aalternateBlockIdVec[index]));
+    m_jobRow.blockId = static_cast<uint64_t>(std::stoi(alternateBlockIdVec[index]));
     m_jobRow.vid = newVid;
     uint64_t nrows = m_jobRow.requeueFailedJob(txn, RetrieveJobStatus::RJS_ToTransfer, false);
     txn.commit();
