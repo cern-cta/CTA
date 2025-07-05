@@ -134,7 +134,6 @@ bool isUpper(const std::string& str);
  */
 void toLower(std::string& str);
 
-
 /**
  * @brief Splits a comma-separated string into a vector of strings.
  * @param input The comma-separated string.
