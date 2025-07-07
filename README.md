@@ -36,8 +36,6 @@ CTA is:
 - Scalable, for small and large installations
 - Self-hostable, on-premise
 
-test
-
 CTA is designed to operate on physical tape infrastructure and is used in combination with a disk buffer system such as [EOS](https://eos-web.web.cern.ch/eos-web/) or [dCache](https://www.dcache.org/). For development purposes it is also possible to run a containerized setup of the CTA components. For this, you can have a look at the [Development documentation](https://eoscta.docs.cern.ch/latest/dev/introduction/).
 
 ## License
