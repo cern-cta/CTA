@@ -17,6 +17,7 @@
 
 #include "catalogue/Catalogue.hpp"
 #include "common/checksum/ChecksumBlobSerDeser.hpp"
+#include "common/telemetry/metrics/instruments/FrontendInstruments.hpp"
 #include "PbException.hpp"
 #include "WorkflowEvent.hpp"
 
@@ -88,16 +89,13 @@ xrd::Response WorkflowEvent::process() {
 
   // Record request count
   namespace tc = cta::telemetry::constants;
-  auto& instrumentProvider = cta::telemetry::metrics::InstrumentProvider::instance();
-
   using TelemAttrList = std::vector<std::pair<std::string_view, opentelemetry::common::AttributeValue>>;
   TelemAttrList telemetryAttributes = {{
     {tc::kRequestTypeKey, "workflow_event"},
     {tc::kEventTypeKey,   m_event.wf().event()}
   }};
 
-  auto requestCounter = instrumentProvider.getUInt64Counter(tc::kFrontendMeter, tc::kFrontendRequestCount, "Total number of requests served by the frontend");
-  requestCounter->Add(1, telemetryAttributes);
+  cta::telemetry::metrics::frontendRequestCounter->Add(1, telemetryAttributes);
   utils::Timer timer;
 
   switch(m_event.wf().event()) {
@@ -131,8 +129,10 @@ xrd::Response WorkflowEvent::process() {
 
   // Record request duration
   const auto requestProcessingDuration = timer.secs();
-  auto requestDurationHistogram = instrumentProvider.getDoubleHistogram(tc::kFrontendMeter, tc::kFrontendRequestDuration, "Duration to serve a frontend request number of requests served by the frontend");
-  requestDurationHistogram->Record(requestProcessingDuration, telemetryAttributes, opentelemetry::context::RuntimeContext::GetCurrent());
+  cta::telemetry::metrics::frontendRequestDurationHistogram->Record(
+    requestProcessingDuration,
+    telemetryAttributes,
+    opentelemetry::context::RuntimeContext::GetCurrent());
 
   return response;
 }

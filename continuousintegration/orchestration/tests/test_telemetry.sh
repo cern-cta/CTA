@@ -79,7 +79,7 @@ echo "Setting up environment for tests."
 kubectl -n ${NAMESPACE} exec ${CLIENT_POD} -c client -- bash -c "/root/client_setup.sh -n ${NB_FILES} -s ${FILE_SIZE_KB} -p ${NB_PROCS} -d /eos/ctaeos/preprod -r -c xrd" || exit 1
 
 echo "Putting all tape drives up"
-kubectl -n ${NAMESPACE} exec ctacli -- cta-admin dr up '.*'
+kubectl -n ${NAMESPACE} exec cta-cli-0 -- cta-admin dr up '.*'
 
 echo
 echo "Launching client_archive.sh on client pod"

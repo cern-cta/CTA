@@ -33,7 +33,7 @@
 #include "tapeserver/castor/tape/tapeserver/daemon/EncryptionControl.hpp"
 #include "common/Timer.hpp"
 #include "common/telemetry/TelemetryConstants.hpp"
-#include "common/telemetry/metrics/InstrumentProvider.hpp"
+#include "common/telemetry/metrics/instruments/TapedInstruments.hpp"
 
 namespace castor::tape::tapeserver::daemon {
 
@@ -98,10 +98,9 @@ protected:
       const std::string modeAsString = "R";
       scoped.add("MCMountTime", timer.secs()).add("mode", modeAsString);
       m_logContext.log(cta::log::INFO, "Tape mounted for read-only access");
-      auto mountCounter = cta::telemetry::metrics::InstrumentProvider::instance().getUInt64Counter(cta::telemetry::constants::kTapedMeter,
-                                                                                                   cta::telemetry::constants::kTapedMountCount, "Total number of tape mounts");
-      mountCounter->Add(1, {{cta::telemetry::constants::kTransferTypeKey, cta::telemetry::constants::kTransferTypeRetrieve},
-                            {cta::telemetry::constants::kTapeVidKey, m_vid}});
+      cta::telemetry::metrics::tapedMountCounter->Add(1, {
+        {cta::telemetry::constants::kTransferTypeKey, cta::telemetry::constants::kTransferTypeRetrieve},
+        {cta::telemetry::constants::kTapeVidKey, m_vid}});
     }
     catch (cta::exception::Exception& ex) {
       scoped.add("exceptionMessage", ex.getMessageValue());
@@ -122,10 +121,9 @@ protected:
       const std::string modeAsString = "RW";
       scoped.add("MCMountTime", timer.secs()).add("mode", modeAsString);
       m_logContext.log(cta::log::INFO, "Tape mounted for read/write access");
-      auto mountCounter = cta::telemetry::metrics::InstrumentProvider::instance().getUInt64Counter(cta::telemetry::constants::kTapedMeter,
-                                                                                                   cta::telemetry::constants::kTapedMountCount, "Total number of tape mounts");
-      mountCounter->Add(1, {{cta::telemetry::constants::kTransferTypeKey, cta::telemetry::constants::kTransferTypeArchive},
-                            {cta::telemetry::constants::kTapeVidKey, m_vid}});
+      cta::telemetry::metrics::tapedMountCounter->Add(1, {
+        {cta::telemetry::constants::kTransferTypeKey, cta::telemetry::constants::kTransferTypeArchive},
+        {cta::telemetry::constants::kTapeVidKey, m_vid}});
     }
     catch (cta::exception::Exception& ex) {
       scoped.add("exceptionMessage", ex.getMessageValue());

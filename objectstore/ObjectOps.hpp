@@ -26,7 +26,7 @@
 #include "common/Timer.hpp"
 #include "common/utils/utils.hpp"
 #include "common/telemetry/TelemetryConstants.hpp"
-#include "common/telemetry/metrics/InstrumentProvider.hpp"
+#include "common/telemetry/metrics/instruments/SchedulerInstruments.hpp"
 #include <opentelemetry/context/runtime_context.h>
 
 namespace cta {
@@ -343,13 +343,7 @@ protected:
 
 class ScopedSharedLock: public ScopedLock {
 public:
-  ScopedSharedLock()
-  : lockCounter(cta::telemetry::metrics::InstrumentProvider::instance().getUInt64Counter(cta::telemetry::constants::kSchedulerMeter,
-                                                                                         cta::telemetry::constants::kObjectstoreLockAcquireCount,
-                                                                                        "Total number of locks acquired on the objectstore")),
-    lockAcquireDurationHistogram(cta::telemetry::metrics::InstrumentProvider::instance().getDoubleHistogram(cta::telemetry::constants::kSchedulerMeter,
-                                                                                                            cta::telemetry::constants::kObjectstoreLockAcquireDuration,
-                                                                                                          "Duration taken to acquire a lock, measured from wait start to acquisition")) {}
+  ScopedSharedLock() {}
   explicit ScopedSharedLock(ObjectOpsBase& oo) : ScopedSharedLock() {
     lock(oo);
   }
@@ -373,30 +367,19 @@ public:
       m_locked = true;
     }
     const auto lockAcquireTime = timer.secs();
-    lockAcquireDurationHistogram->Record(lockAcquireTime, {{cta::telemetry::constants::kLockTypeKey, "ScopedSharedLock"}},
+    cta::telemetry::metrics::objectstoreLockAcquireDurationHistogram->Record(lockAcquireTime, {{cta::telemetry::constants::kLockTypeKey, "ScopedSharedLock"}},
                                          opentelemetry::context::RuntimeContext::GetCurrent());
-    lockCounter->Add(1, {{cta::telemetry::constants::kLockTypeKey, "ScopedSharedLock"}});
+    cta::telemetry::metrics::objectstoreLockAcquireCounter->Add(1, {{cta::telemetry::constants::kLockTypeKey, "ScopedSharedLock"}});
   }
 
   virtual ~ScopedSharedLock() {
     releaseIfNeeded();
   }
-
-private:
-  std::shared_ptr<opentelemetry::metrics::Counter<uint64_t>> lockCounter;
-  std::shared_ptr<opentelemetry::metrics::Histogram<double>> lockAcquireDurationHistogram;
-
 };
 
 class ScopedExclusiveLock: public ScopedLock {
 public:
-  ScopedExclusiveLock()
-  : lockCounter(cta::telemetry::metrics::InstrumentProvider::instance().getUInt64Counter(cta::telemetry::constants::kSchedulerMeter,
-                                                                                         cta::telemetry::constants::kObjectstoreLockAcquireCount,
-                                                                                        "Total number of locks acquired on the objectstore")),
-    lockAcquireDurationHistogram(cta::telemetry::metrics::InstrumentProvider::instance().getDoubleHistogram(cta::telemetry::constants::kSchedulerMeter,
-                                                                                                            cta::telemetry::constants::kObjectstoreLockAcquireDuration,
-                                                                                                          "Duration taken to acquire a lock, measured from wait start to acquisition")) {}
+  ScopedExclusiveLock() {}
 
   ScopedExclusiveLock(ObjectOpsBase & oo, uint64_t timeout_us = 0) : ScopedExclusiveLock() {
     lock(oo, timeout_us);
@@ -424,9 +407,9 @@ public:
       m_locked = true;
     }
     const auto lockAcquireTime = timer.secs();
-    lockAcquireDurationHistogram->Record(lockAcquireTime, {{cta::telemetry::constants::kLockTypeKey, "ScopedExclusiveLock"}},
+    cta::telemetry::metrics::objectstoreLockAcquireDurationHistogram->Record(lockAcquireTime, {{cta::telemetry::constants::kLockTypeKey, "ScopedExclusiveLock"}},
       opentelemetry::context::RuntimeContext::GetCurrent());
-    lockCounter->Add(1, {{cta::telemetry::constants::kLockTypeKey, "ScopedExclusiveLock"}});
+    cta::telemetry::metrics::objectstoreLockAcquireCounter->Add(1, {{cta::telemetry::constants::kLockTypeKey, "ScopedExclusiveLock"}});
   }
 
   /** Move the locked object reference to a new one. This is done when the locked
@@ -453,10 +436,6 @@ public:
   virtual ~ScopedExclusiveLock() {
     releaseIfNeeded();
   }
-
-private:
-    std::shared_ptr<opentelemetry::metrics::Counter<uint64_t>> lockCounter;
-    std::shared_ptr<opentelemetry::metrics::Histogram<double>> lockAcquireDurationHistogram;
 };
 
 template <class PayloadType, serializers::ObjectType PayloadTypeId>

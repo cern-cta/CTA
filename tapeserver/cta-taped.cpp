@@ -229,7 +229,7 @@ int main(const int argc, char **const argv) {
   // Instantiate telemetry
   try {
     cta::telemetry::TelemetryConfig telemetryConfig = cta::telemetry::TelemetryConfigBuilder()
-      .serviceName(cta::telemetry::constants::kTapedMeter)
+      .serviceName("cta.taped")
       .serviceNamespace(globalConfig.instanceName.value())
       .metricsBackend(globalConfig.telemetryMetricsBackend.value())
       .metricsExportInterval(std::chrono::milliseconds(globalConfig.telemetryMetricsExportInterval.value()))
