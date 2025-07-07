@@ -23,6 +23,7 @@
 #include "common/log/TimingList.hpp"
 #include "common/utils/utils.hpp"
 #include "common/telemetry/TelemetryConstants.hpp"
+#include "common/telemetry/metrics/instruments/SchedulerInstruments.hpp"
 #include "common/threading/MutexLocker.hpp"
 #include "scheduler/rdbms/postgres/Transaction.hpp"
 #include "scheduler/rdbms/postgres/ArchiveJobSummary.hpp"
@@ -51,8 +52,7 @@ RelationalDB::RelationalDB(const std::string& ownerId,
       m_connPool(login, nbConns),
       m_connPoolInsertOnly(login, nbConns),
       m_catalogue(catalogue),
-      m_logger(logger),
-      m_queueingCounter(cta::telemetry::metrics::InstrumentProvider::instance().getUInt64Counter(cta::telemetry::constants::kSchedulerMeter, cta::telemetry::constants::kSchedulerQueueingCount, "Total number of files enqueued on the scheduler")) {
+      m_logger(logger) {
   m_tapeDrivesState = std::make_unique<TapeDrivesCatalogueState>(m_catalogue);
 }
 
@@ -145,9 +145,9 @@ std::string RelationalDB::queueArchive(const std::string& instanceName,
     .add("insertTime", timeInsert.secs())
     .add("totalTime", timeTotal.secs());
   logContext.log(log::INFO, "In RelationalDB::queueArchive(): Finished enqueueing request.");
-  m_queueingCounter->Add(1, {{cta::telemetry::constants::kTransferTypeKey, cta::telemetry::constants::kTransferTypeArchive},
-                             {cta::telemetry::constants::kDiskInstanceKey, aFile.diskInstance},
-                             {cta::telemetry::constants::kBackendKey, cta::telemetry::constants::kBackendSchedulerPostgres}});
+  cta::telemetry::metrics::schedulerQueueingCounter->Add(1, {
+    {cta::telemetry::constants::kTransferTypeKey, cta::telemetry::constants::kTransferTypeArchive},
+    {cta::telemetry::constants::kBackendKey, cta::telemetry::constants::kBackendSchedulerPostgres}});
   return aReq.getIdStr();
 }
 
@@ -406,19 +406,18 @@ RelationalDB::queueRetrieve(cta::common::dataStructures::RetrieveRequest& rqst,
     rReq.fillJobsSetRetrieveFileQueueCriteria(criteria);  // fills also m_jobs
     rReq.setActiveCopyNumber(bestCopyNb);
     rReq.setIsVerifyOnly(rqst.isVerifyOnly);
-    std::string diskSystemNameStr = "unknown";
     if (diskSystemName) {
-      diskSystemNameStr = diskSystemName.value();
-      rReq.setDiskSystemName(diskSystemNameStr);
+      rReq.setDiskSystemName(diskSystemName.value());
     }
     rreqMutex.release();
     rReq.insert();
     log::ScopedParamContainer(logContext)
       .add("totalTime", timeTotal.secs())
       .log(cta::log::INFO, "In RelationalDB::queueRetrieve(): Finished enqueueing request.");
-    m_queueingCounter->Add(1, {{cta::telemetry::constants::kTransferTypeKey, cta::telemetry::constants::kTransferTypeRetrieve},
-                               {cta::telemetry::constants::kDiskInstanceKey, diskSystemNameStr},
-                               {cta::telemetry::constants::kBackendKey, cta::telemetry::constants::kBackendSchedulerPostgres}});
+    cta::telemetry::metrics::schedulerQueueingCounter->Add(1, {
+      {cta::telemetry::constants::kTransferTypeKey, cta::telemetry::constants::kTransferTypeRetrieve},
+      {cta::telemetry::constants::kBackendKey, cta::telemetry::constants::kBackendSchedulerPostgres}});
+
     return ret;
   } catch (exception::Exception& ex) {
     logContext.log(cta::log::ERR,

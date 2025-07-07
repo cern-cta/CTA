@@ -28,7 +28,7 @@
 #include "common/dataStructures/JobQueueType.hpp"
 #include "common/dataStructures/LabelFormat.hpp"
 #include "common/log/Logger.hpp"
-#include "common/telemetry/metrics/InstrumentProvider.hpp"
+#include "common/telemetry/metrics/instruments/SchedulerInstruments.hpp"
 #include "common/threading/BlockingQueue.hpp"
 #include "common/threading/Thread.hpp"
 #include "objectstore/Agent.hpp"

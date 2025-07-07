@@ -41,7 +41,6 @@
 #include "common/dataStructures/RetrieveRequest.hpp"
 #include "common/dataStructures/SecurityIdentity.hpp"
 #include "common/log/Logger.hpp"
-#include "common/telemetry/metrics/InstrumentProvider.hpp"
 #include "common/threading/Mutex.hpp"
 #include "common/utils/utils.hpp"
 #include "rdbms/ConnPool.hpp"
@@ -289,7 +288,6 @@ private:
   catalogue::Catalogue& m_catalogue;
   log::Logger& m_logger;
   std::unique_ptr<TapeDrivesCatalogueState> m_tapeDrivesState;
-  std::shared_ptr<opentelemetry::metrics::Counter<uint64_t>> m_queueingCounter;
 
   void populateRepackRequestsStatistics(SchedulerDatabase::RepackRequestStatistics& stats);
   /*
