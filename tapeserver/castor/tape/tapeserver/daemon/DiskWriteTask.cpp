@@ -21,7 +21,7 @@
 #include "castor/tape/tapeserver/daemon/MemBlock.hpp"
 #include "common/Timer.hpp"
 #include "common/telemetry/TelemetryConstants.hpp"
-#include "common/telemetry/metrics/InstrumentProvider.hpp"
+#include "common/telemetry/metrics/instruments/TapedInstruments.hpp"
 
 namespace castor::tape::tapeserver::daemon {
 
@@ -137,9 +137,7 @@ bool DiskWriteTask::execute(RecallReportPacker& reporter, cta::log::LogContext& 
     m_stats.totalTime = totalTime.secs();
     logWithStat(cta::log::INFO, isVerifyOnly ? "File successfully verified" : "File successfully transfered to disk", lc);
     watchdog.deleteParameter("stillOpenFileForThread" + std::to_string((long long)threadID));
-    auto transferCounter = cta::telemetry::metrics::InstrumentProvider::instance().getUInt64Counter(cta::telemetry::constants::kTapedMeter,
-                                                                                                    cta::telemetry::constants::kTapedTransferCount, "Total number of files transferred to and from tape");
-    transferCounter->Add(1, {{cta::telemetry::constants::kTransferTypeKey, cta::telemetry::constants::kTransferTypeRetrieve}});
+    cta::telemetry::metrics::tapedTransferCounter->Add(1, {{cta::telemetry::constants::kTransferTypeKey, cta::telemetry::constants::kTransferTypeRetrieve}});
     //everything went well, return true
     return true;
   } //end of try
