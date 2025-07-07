@@ -34,7 +34,7 @@ void initAllInstruments();
  *   Additionally, it also bypasses the need for thread-safety in the initialisation of the instruments
  *   because the init functions are only called once at any given time (at startup, after initialisation, at reset)
  * - It makes the instrument files self-contained and ensures there is a clear dependency hierarchy. This allows these
- *   files to be put into there respective library directories if so desired.
+ *   files to be put into their respective library directories if so desired.
  *
  * Usage:
  *
