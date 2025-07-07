@@ -228,6 +228,7 @@ stress-test:
   variables:
     NAMESPACE: stress-${CI_COMMIT_SHORT_SHA}-${CI_PIPELINE_ID}
     # Passed to the create_instance.sh script verbatim
+    EXTRA_ARGS: "--keep-namespace"
     EXTRA_SPAWN_ARGS: "--enable-telemetry"
   before_script:
     - bash ./continuousintegration/checks/check_runner_healthy.sh
@@ -271,6 +272,6 @@ stress-test:
       fi
     # This also gets called if the job is cancelled to ensure we properly clean up after ourselves
     - cd continuousintegration/orchestration/
-    - ./delete_instance.sh --namespace ${NAMESPACE} --discard-logs --keep-namespace
+    - ./delete_instance.sh --namespace ${NAMESPACE} --discard-logs
   tags:
     - stress
