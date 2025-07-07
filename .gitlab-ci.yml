@@ -158,6 +158,7 @@ workflow:
   name: $CTA_PIPELINE_NAME
   auto_cancel:
     on_job_failure: all
+    on_new_commit: all
   rules:
     # If we are in a merge request and there are no changes, don't run the pipeline
     - if: $CI_PIPELINE_SOURCE == "merge_request_event"
@@ -168,6 +169,7 @@ workflow:
     - if: $CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH || $CI_COMMIT_TAG || $CI_PIPELINE_SOURCE == "trigger"
       auto_cancel:
         on_job_failure: none
+        on_new_commit: none
     # Push events to main will still trigger the pipeline as per the previous rule
     # But we want to prevent dual pipelines on MRs
     - if: $CI_PIPELINE_SOURCE != "push"
