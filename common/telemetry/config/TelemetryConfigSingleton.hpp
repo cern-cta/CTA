@@ -1,3 +1,5 @@
+#pragma once
+
 #include "TelemetryConfig.hpp"
 
 namespace cta::telemetry {

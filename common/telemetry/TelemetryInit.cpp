@@ -15,7 +15,7 @@
 #include <opentelemetry/sdk/common/attribute_utils.h>
 
 #include "config/TelemetryConfigSingleton.hpp"
-#include "metrics/InstrumentProvider.hpp"
+#include "metrics/InstrumentRegistry.hpp"
 #include "common/utils/utils.hpp"
 #include "version.h"
 
@@ -24,6 +24,11 @@ namespace cta::telemetry {
 namespace metrics_sdk = opentelemetry::sdk::metrics;
 namespace metrics_api = opentelemetry::metrics;
 namespace otlp = opentelemetry::exporter::otlp;
+
+// This is a hack for the taped parent process to maintain the same service.instance.id
+// after forking, since forking requires a shutdown of telemetry prior to it
+// Once we remove forking entirely from taped, this can go away
+static std::string previousServiceInstanceId;
 
 void initMetrics(const TelemetryConfig& config, cta::log::LogContext& lc) {
   if (config.metrics.backend == MetricsBackend::NOOP) {
@@ -35,7 +40,13 @@ void initMetrics(const TelemetryConfig& config, cta::log::LogContext& lc) {
 
   std::string processName = cta::utils::getProcessName();
   std::string hostname = cta::utils::getShortHostname();
-  std::string serviceInstanceId = cta::utils::generateUuid();
+  std::string serviceInstanceId;
+  if (!previousServiceInstanceId.empty()) {
+    serviceInstanceId = previousServiceInstanceId;
+  } else {
+    serviceInstanceId = cta::utils::generateUuid();
+    previousServiceInstanceId = serviceInstanceId;
+  }
 
   log::ScopedParamContainer params(lc);
   params.add("serviceName", config.serviceName)
@@ -98,6 +109,7 @@ void initMetrics(const TelemetryConfig& config, cta::log::LogContext& lc) {
   std::shared_ptr<metrics_api::MeterProvider> apiProvider(std::move(meterProvider));
 
   metrics_api::Provider::SetMeterProvider(apiProvider);
+  cta::telemetry::metrics::initAllInstruments();
   lc.log(log::INFO, "In initMetrics(): Telemetry metrics initialised.");
 }
 
@@ -113,9 +125,11 @@ void initTelemetryConfig(const TelemetryConfig& config) {
   cta::telemetry::TelemetryConfigSingleton::initialize(config);
 }
 
-void reinitTelemetry(cta::log::LogContext& lc) {
+void reinitTelemetry(cta::log::LogContext& lc, bool persistServiceInstanceId) {
+  if(!persistServiceInstanceId) {
+    previousServiceInstanceId = "";
+  }
   initTelemetry(cta::telemetry::TelemetryConfigSingleton::get(), lc);
-  cta::telemetry::metrics::InstrumentProvider::instance().reset();
 }
 
 void shutdownTelemetry(cta::log::LogContext& lc) {
@@ -125,7 +139,7 @@ void shutdownTelemetry(cta::log::LogContext& lc) {
     return;
   }
 
-  lc.log(log::INFO, "In initMetrics(): Clearing telemetry state.");
+  lc.log(log::INFO, "In shutdownTelemetry(): Clearing telemetry state.");
   auto provider = metrics_api::Provider::GetMeterProvider();
   if (provider) {
     auto sdkProvider = dynamic_cast<metrics_sdk::MeterProvider*>(provider.get());
@@ -135,8 +149,11 @@ void shutdownTelemetry(cta::log::LogContext& lc) {
   }
 
   // This will invoke shutdown and clean up the background threads as needed before a fork
-  std::shared_ptr<metrics_api::MeterProvider> none;
-  metrics_api::Provider::SetMeterProvider(none);
+  auto noop = std::make_shared<metrics_api::NoopMeterProvider>();
+  metrics_api::Provider::SetMeterProvider(noop);
+  // Ensure all of our instruments are NOOP again
+  cta::telemetry::metrics::initAllInstruments();
+  lc.log(log::INFO, "In shutdownTelemetry(): Telemetry state cleared.");
 }
 
 }  // namespace cta::telemetry

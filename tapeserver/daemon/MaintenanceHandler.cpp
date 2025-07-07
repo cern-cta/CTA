@@ -284,7 +284,7 @@ void MaintenanceHandler::exceptionThrowingRunChild(){
 
   // Set the thread name for process ID:
   prctl(PR_SET_NAME, "cta-tpd-maint");
-  // Initialise telemetry only after the process name is available
+
   cta::telemetry::reinitTelemetry(m_processManager.logContext());
 
   // Before anything, we will check for access to the scheduler's central storage.
