@@ -59,7 +59,7 @@ exec_prometheus_query "sum by (exported_job) (rate(objectstore_lock_acquire_dura
 echo
 
 echo "Scheduling queueing counts:"
-exec_prometheus_query "sum(max_over_time(scheduler_queueing_count[2h]))"
+exec_prometheus_query "sum(max_over_time(scheduler_queueing_count_total[2h]))"
 echo
 
 echo "Catalogue query count (average per service):"
