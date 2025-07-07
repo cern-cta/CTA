@@ -29,7 +29,7 @@
 #include "common/exception/Errnum.hpp"
 #include "common/exception/Exception.hpp"
 #include "common/telemetry/TelemetryConstants.hpp"
-#include "common/telemetry/metrics/InstrumentProvider.hpp"
+#include "common/telemetry/metrics/instruments/TapedInstruments.hpp"
 
 #include <memory>
 #include <string>
@@ -176,9 +176,7 @@ void TapeWriteTask::execute(const std::unique_ptr<castor::tape::tapeFile::WriteS
     m_taskStats.totalTime = localTime.secs();
     // Log the successful transfer
     logWithStats(cta::log::INFO, "File successfully transmitted to drive", lc);
-    auto transferCounter = cta::telemetry::metrics::InstrumentProvider::instance().getUInt64Counter(cta::telemetry::constants::kTapedMeter,
-                                                                                                    cta::telemetry::constants::kTapedTransferCount, "Total number of files transferred to and from tape");
-    transferCounter->Add(1, {{cta::telemetry::constants::kTransferTypeKey, cta::telemetry::constants::kTransferTypeArchive}});
+    cta::telemetry::metrics::tapedTransferCounter->Add(1, {{cta::telemetry::constants::kTransferTypeKey, cta::telemetry::constants::kTransferTypeArchive}});
   } catch (const castor::tape::tapeserver::daemon::ErrorFlag&) {
     // We end up there because another task has failed
     // so we just log, circulate blocks and don't even send a report

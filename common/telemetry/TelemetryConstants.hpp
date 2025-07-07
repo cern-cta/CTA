@@ -1,41 +1,35 @@
+/*
+ * @project      The CERN Tape Archive (CTA)
+ * @copyright    Copyright © 2025 CERN
+ * @license      This program is free software, distributed under the terms of the GNU General Public
+ *               Licence version 3 (GPL Version 3), copied verbatim in the file "COPYING". You can
+ *               redistribute it and/or modify it under the terms of the GPL Version 3, or (at your
+ *               option) any later version.
+ *
+ *               This program is distributed in the hope that it will be useful, but WITHOUT ANY
+ *               WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A
+ *               PARTICULAR PURPOSE. See the GNU General Public License for more details.
+ *
+ *               In applying this licence, CERN does not waive the privileges and immunities
+ *               granted to it by virtue of its status as an Intergovernmental Organization or
+ *               submit itself to any jurisdiction.
+ */
 #pragma once
 
 #include <string>
 
+/**
+ * This defines a set of common constants to ensure consistency
+ */
 namespace cta::telemetry::constants {
 
-
-// Not ideal, but these are all const std::string instead of const std::string
-// since the template deduction of the opentelemetry API fails otherwise
-
 // These constants follow the conventions as detailed here: https://opentelemetry.io/docs/specs/semconv/general/naming/
-
-// -------------------- Meter Names --------------------
-inline const std::string kSchedulerMeter = "cta.scheduler";
-inline const std::string kFrontendMeter = "cta.frontend";
-inline const std::string kCatalogueMeter = "cta.catalogue";
-inline const std::string kTapedMeter = "cta.taped";
-
-// -------------------- Metric Names --------------------
-inline const std::string kObjectstoreLockAcquireCount = "objectstore.lock.acquire.count";
-inline const std::string kObjectstoreLockAcquireDuration = "objectstore.lock.acquire.duration";
-
-inline const std::string kFrontendRequestCount = "frontend.request.count";
-inline const std::string kFrontendRequestDuration = "frontend.request.duration";
-
-inline const std::string kCatalogueQueryCount = "catalogue.query.count";
-
-inline const std::string kSchedulerQueueingCount = "scheduler.queueing.count";
-
-inline const std::string kTapedTransferCount = "taped.transfer.count";
-inline const std::string kTapedMountCount = "taped.mount.count";
 
 // -------------------- Attribute Keys --------------------
 inline const std::string kTransferTypeKey = "transfer.type";
 inline const std::string kLockTypeKey = "lock.type";
 inline const std::string kRequestTypeKey = "request.type";
 inline const std::string kEventTypeKey = "event.type";
-inline const std::string kDiskInstanceKey = "disk.instance";
 inline const std::string kBackendKey = "backend";
 inline const std::string kTapeVidKey = "tape.vid";
 
