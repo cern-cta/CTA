@@ -172,8 +172,7 @@ workflow:
         on_new_commit: none
     # Push events to main will still trigger the pipeline as per the previous rule
     # But we want to prevent dual pipelines on MRs
-    - if: '$CI_PIPELINE_SOURCE == "push"'
-      when: never
+    - if: $CI_PIPELINE_SOURCE != "push"
 
 include:
   - local: .gitlab/ci/*.gitlab-ci.yml
