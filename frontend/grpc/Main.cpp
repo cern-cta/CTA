@@ -177,6 +177,12 @@ int main(const int argc, char *const *const argv) {
     // Listen on the given address without any authentication mechanism.
     builder.AddListeningPort(server_address, creds);
 
+    // Set thread pool size
+    builder.SetSyncServerOption(grpc::ServerBuilder::SyncServerOption::NUM_CQS, 4); // default is 1, in include/grpcpp/server_builder.h
+    builder.SetSyncServerOption(grpc::ServerBuilder::SyncServerOption::MIN_POLLERS, 2); // default is 1
+    builder.SetSyncServerOption(grpc::ServerBuilder::SyncServerOption::MAX_POLLERS, 8); // default is 2
+    builder.SetSyncServerOption(grpc::ServerBuilder::SyncServerOption::CQ_TIMEOUT_MSEC, 20000); // default is 20000
+
     // fixed the number of request threads
     ResourceQuota quota;
     quota.SetMaxThreads(threads);
