@@ -56,8 +56,8 @@ xrd:
       ssiLogLevel: "warning"
 
   keytab:
-    secretName: cta-frontend-sss-keytab
-    subPath: eos.sss.keytab
+    secretName: cta-frontend-keytab
+    subPath: cta-frontend.keytab
 
 pod:
   extraSpec:

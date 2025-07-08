@@ -1,7 +1,11 @@
 apiVersion: v1
 kind: ConfigMap
 metadata:
-  name: scripts-kdc
+  name: scripts-auth
 data:
   kdc.sh: |
     {{ .Files.Get "scripts/kdc.sh" | nindent 4 }}
+  generate_secret_files.sh: |
+    {{ .Files.Get "scripts/generate_secret_files.sh" | nindent 4 }}
+  generate_secrets.sh: |
+    {{ .Files.Get "scripts/generate_secrets.sh" | nindent 4 }}
