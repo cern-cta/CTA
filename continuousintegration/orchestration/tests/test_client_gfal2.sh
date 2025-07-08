@@ -180,6 +180,9 @@ if [[ $? == 1 ]]; then
     exit 1
 fi
 
+echo "Sleeping 10 seconds to give Prometheus time to scrape the metrics"
+sleep 10
+
 # Test that telemetry agrees with the amount of files archived and retrieved
 TOTAL_FILES_ARCHIVED_RETRIEVED=$((NB_FILES * 2))
 kubectl -n ${NAMESPACE} exec ${CLIENT_POD} -c client -- bash -c "/root/client_telemetry_summary.sh $TOTAL_FILES_ARCHIVED_RETRIEVED" || exit 1
