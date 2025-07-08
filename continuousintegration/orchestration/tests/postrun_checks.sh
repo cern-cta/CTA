@@ -15,16 +15,24 @@
 #                 You should have received a copy of the GNU General Public License
 #                 along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
+
+set -euo pipefail
+
 usage() { cat <<EOF 1>&2
-Usage: $0 -n <namespace>
+Usage: $0 -n <namespace> [-w <whitelist-file-path>]
 EOF
 exit 1
 }
 
-while getopts "n:q" o; do
+WHITELIST_FILE=""
+
+while getopts "n:w:q" o; do
     case "${o}" in
         n)
             NAMESPACE=${OPTARG}
+            ;;
+        w)
+            WHITELIST_FILE=${OPTARG}
             ;;
         *)
             usage
@@ -41,41 +49,34 @@ echo "Performing postrun checks"
 
 general_errors=0
 core_dump_counter=0
-uncaught_exc_counter=0
-# We get all the pod details in one go so that we don't have to do too many kubectl calls
+logged_error_counter=0
+all_logged_error_messages=""
+
 pods=$(kubectl --namespace "${NAMESPACE}" get pods -o json | jq -r '.items[]')
 
-# Iterate over pods
 for pod in $(echo "${pods}" | jq -r '.metadata.name'); do
-  # Check if logs are accessible
   if ! kubectl --namespace "${NAMESPACE}" logs "${pod}" > /dev/null 2>&1; then
     echo "Pod contents are not accessible: ${pod}"
     exit 1
   fi
 
-  # Check for pod restarts
   restart_count=$(echo "${pods}" | jq -r "select(.metadata.name==\"${pod}\") | .status.containerStatuses[].restartCount" | awk '{s+=$1} END {print s}')
   if [[ "$restart_count" -gt 0 ]]; then
     echo "WARNING: Pod ${pod} has restarted ${restart_count} times."
   fi
 
-  # Check for pod crashes/failures
   pod_status=$(echo "${pods}" | jq -r "select(.metadata.name==\"${pod}\") | .status.phase")
-  if [ "${pod_status}" != "Succeeded" ] && [ "${pod_status}" != "Running" ] ; then
+  if [ "${pod_status}" != "Succeeded" ] && [ "${pod_status}" != "Running" ]; then
     echo "Error: ${pod} is in state ${pod_status}"
     general_errors=$((general_errors + 1))
     continue
   fi
-  # Only pods that are running can be executed into
   if [[ "${pod_status}" != "Running" ]]; then
     continue
   fi
 
-  # Get containers for the pod
   containers=$(echo "${pods}" | jq -r " select(.metadata.name==\"${pod}\") | .spec.containers[].name")
   for container in ${containers}; do
-    # Check for core dumps
-    # We ignore core dumps of xrdcp on the client pod (see #1113)
     coredumpfiles=$(kubectl --namespace "${NAMESPACE}" exec "${pod}" -c "${container}" -- \
                       bash -c "find /var/log/tmp/ -type f -name '*.core' 2>/dev/null \
                                | grep -v -E 'client-0-[0-9]+-xrdcp-.*\.core$' \
@@ -85,31 +86,52 @@ for pod in $(echo "${pods}" | jq -r '.metadata.name'); do
       echo "Found ${num_files} core dump files in pod ${pod} - container ${container}"
       core_dump_counter=$((core_dump_counter + num_files))
     fi
-    # Check for uncaught exceptions if there are logs in the /var/log/cta directory
-    false_positives=("Cannot update status for drive [A-Za-z0-9_-]+. Drive not found")
-    exclude_patterns=""
-    for pattern in "${false_positives[@]}"; do
-        exclude_patterns+=" | grep -v -E '${pattern}'"
-    done
-    uncaught_exc=$(kubectl --namespace "${NAMESPACE}" exec "${pod}" -c "${container}" -- \
+
+    # We hardcode ignore the error here for cta_admin because it occurs in the exceptionmessage
+    # With the test rewrite, this should be done in a better way; or we should revisit whether this should not
+    # be a fatal error instead (instead of an uncaught exception)
+    logged_error_messages=$(kubectl --namespace "${NAMESPACE}" exec "${pod}" -c "${container}" -- \
                   bash -c "cat /var/log/cta/* 2> /dev/null \
-                           | grep -a '\"log_level\":\"ERROR\"' \
-                           | grep uncaught -i \
-                           ${exclude_patterns} \
+                           | grep -a -E '\"log_level\":\"(ERROR|CRITICAL)\"' \
+                           | grep -v -E 'Cannot update status for drive [A-Za-z0-9_-]+. Drive not found' \
                            || true")
-    if [ -n "${uncaught_exc}" ]; then
-      num_exc=$(wc -l <<< "${uncaught_exc}")
-      echo "Found ${num_exc} uncaught exceptions in pod ${pod} - container ${container}"
-      uncaught_exc_counter=$((uncaught_exc_counter + num_exc))
+    if [ -n "${logged_error_messages}" ]; then
+      num_errors=$(wc -l <<< "${logged_error_messages}")
+      all_logged_error_messages+="$logged_error_messages"$'\n'
+      echo "Found ${num_errors} logged errors in pod ${pod} - container ${container}"
     fi
   done
 done
 
-echo "Summary:"
+echo ""
+echo "Summary of logged error messages:"
+non_whitelisted_errors=0
+if [ -n "${all_logged_error_messages}" ]; then
+  while read -r count message; do
+    if grep -Fxq "${message}" "${WHITELIST_FILE}"; then
+      echo "(whitelisted) Count: ${count}, Message: \"${message}\""
+    else
+      echo "              Count: ${count}, Message: \"${message}\""
+      non_whitelisted_errors=$(( non_whitelisted_errors + count ))
+    fi
+  done < <(echo "${all_logged_error_messages}" \
+    | jq -r '.message' \
+    | sort \
+    | uniq -c \
+    | sort -nr)
+else
+  echo "No logged errors found."
+fi
+
+echo ""
+echo "Summary of other issues:"
+echo "Found ${general_errors} general pod errors."
 echo "Found ${core_dump_counter} core dumps."
-echo "Found ${uncaught_exc_counter} uncaught exceptions."
-if [ "${core_dump_counter}" -gt 0 ] || [ "${uncaught_exc_counter}" -gt 0 ] || [ "${general_errors}" -gt 0 ]; then
-  echo "Failing..."
+echo "Found ${non_whitelisted_errors} logged errors not in the whitelist."
+
+if [ "${core_dump_counter}" -gt 0 ] || [ "${non_whitelisted_errors}" -gt 0 ] || [ "${general_errors}" -gt 0 ]; then
+  echo "Failing due to non-whitelisted errors or core dumps or general errors."
   exit 1
 fi
 echo "Success"
+
