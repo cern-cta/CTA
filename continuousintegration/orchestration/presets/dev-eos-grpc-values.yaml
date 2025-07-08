@@ -104,7 +104,7 @@ mgm:
       emptyDir: {}
     - name: grpc-certs
       secret:
-        secretName: ca-cert
+        secretName: ca-crt
 
 fst:
   replicaCount: 1
@@ -156,7 +156,7 @@ fst:
       emptyDir: {}
     - name: grpc-certs
       secret:
-        secretName: ca-cert
+        secretName: ca-crt
 
 qdb:
   replicaCount: 1
