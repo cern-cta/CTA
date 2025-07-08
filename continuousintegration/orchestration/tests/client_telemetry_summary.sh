@@ -42,9 +42,17 @@ echo "Total number of archives:"
 archives=$(exec_prometheus_query "sum(max_over_time(taped_transfer_count_total{transfer_type=\"archive\"}[2h]))")
 echo "$archives"
 
+echo "Archive rate:"
+exec_prometheus_query "sum(rate(taped_transfer_count_total{transfer_type=\"archive\"}[1m]))"
+echo
+
 echo "Total number of retrieves:"
 retrieves=$(exec_prometheus_query "sum(max_over_time(taped_transfer_count_total{transfer_type=\"retrieve\"}[2h]))")
 echo "$retrieves"
+
+echo "Retrieve rate:"
+exec_prometheus_query "sum(rate(taped_transfer_count_total{transfer_type=\"retrieve\"}[1m]))"
+echo
 
 echo "Mount count:"
 exec_prometheus_query "sum(max_over_time(taped_mount_count_total[2h]))"
@@ -54,24 +62,40 @@ echo "Objectstore lock count total per service:"
 exec_prometheus_query "sum by (exported_job) (max_over_time(objectstore_lock_acquire_count_total[2h]))"
 echo
 
-echo "Objectstore lock acquire duration (average per service):"
-exec_prometheus_query "sum by (exported_job) (rate(objectstore_lock_acquire_duration_sum[2h])) / sum by (exported_job) (rate(objectstore_lock_acquire_duration_count[2h]))"
+echo "Objectstore lock rate per service:"
+exec_prometheus_query "sum by (exported_job) (rate(objectstore_lock_acquire_count_total[1m]))"
 echo
 
-echo "Scheduling queueing counts:"
+echo "Objectstore lock acquire duration (average per service):"
+exec_prometheus_query "sum by (exported_job) (rate(objectstore_lock_acquire_duration_sum[1m])) / sum by (exported_job) (rate(objectstore_lock_acquire_duration_count[1m]))"
+echo
+
+echo "Scheduler queueing counts:"
 exec_prometheus_query "sum(max_over_time(scheduler_queueing_count_total[2h]))"
+echo
+
+echo "Scheduler queueing rates:"
+exec_prometheus_query "rate(scheduler_queueing_count_total[1m])"
 echo
 
 echo "Catalogue query count (average per service):"
 exec_prometheus_query "sum by (exported_job) (max_over_time(catalogue_query_count_total[2h]))"
 echo
 
+echo "Catalogue query rate (average per service):"
+exec_prometheus_query "sum by (exported_job) (rate(catalogue_query_count_total[1m]))"
+echo
+
 echo "Frontend request count:"
 exec_prometheus_query "sum(max_over_time(frontend_request_count_total[2h]))"
 echo
 
+echo "Frontend request rate:"
+exec_prometheus_query "rate(frontend_request_count_total[1m])"
+echo
+
 echo "Frontend request duration (average):"
-exec_prometheus_query "sum(rate(frontend_request_duration_sum[2h])) / sum(rate(frontend_request_duration_count[2h]))"
+exec_prometheus_query "sum(rate(frontend_request_duration_sum[1m])) / sum(rate(frontend_request_duration_count[1m]))"
 echo
 
 archive_count=$(echo "$archives" | jq -r '.[].value[1]')
