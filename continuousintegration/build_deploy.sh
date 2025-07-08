@@ -406,6 +406,7 @@ build_deploy() {
     echo "Building image from ${rpm_src}"
     ./continuousintegration/build/build_image.sh --tag ${image_tag} \
       --rpm-src "${rpm_src}" \
+      --rpm-version "${cta_version}-${vcs_version}" \
       --container-runtime "${container_runtime}" \
       --load-into-minikube \
       ${extra_image_build_options}

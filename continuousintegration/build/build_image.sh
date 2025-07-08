@@ -24,6 +24,7 @@ usage() {
   echo "Builds an image based on the CTA rpms"
   echo "  -t, --tag <image_tag>:          Docker image tag. For example \"-t dev\""
   echo "  -s, --rpm-src <rpm source>:     Path to the RPMs to be installed. Can be absolute or relative to where the script is executed from. For example \"-s build_rpm/RPM/RPMS/x86_64\""
+  echo "      --rpm-version <version>:    Version of the RPMs to ensure the correct RPMs are copied from the RPM source. Only files of the structure \"*{version}*.rpm\" will be copied."
   echo ""
   echo "options:"
   echo "  -h, --help:                         Shows help output."
@@ -49,6 +50,7 @@ buildImage() {
   local load_into_minikube=false
   # Note that the capitalization here is intentional as this is passed directly as a build arg
   local use_internal_repos="FALSE"
+  local rpm_version=""
 
   while [[ "$#" -gt 0 ]]; do
     case "$1" in
@@ -72,6 +74,15 @@ buildImage() {
         shift
       else
         echo "Error: -s|--rpm-src requires an argument"
+        exit 1
+      fi
+      ;;
+    --rpm-version)
+      if [[ $# -gt 1 ]]; then
+        rpm_version="$2"
+        shift
+      else
+        echo "Error: --rpm-version requires an argument"
         exit 1
       fi
       ;;
@@ -126,6 +137,11 @@ buildImage() {
     usage
   fi
 
+  if [ -z "${rpm_version}" ]; then
+    echo "Failure: Missing mandatory argument --rpm-version"
+    usage
+  fi
+
   # navigate to root directory
   cd "${project_root}"
 
@@ -136,7 +152,7 @@ buildImage() {
   # Copy the rpms into a predefined rpm directory
   # This is important to ensure that the RPMs are accessible from the Docker build context
   # (as the provided location might be outside of the project root)
-  cp -r "${rpm_src}" "${rpm_default_src}"
+  cp -r ${rpm_src}/*${rpm_version}*.rpm "${rpm_default_src}"
 
   echo "Building image ${image_name}:${image_tag}"
   (
