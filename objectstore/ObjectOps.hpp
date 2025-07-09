@@ -366,7 +366,7 @@ public:
       ScopedSharedLock::setObjectLocked(m_objectOps);
       m_locked = true;
     }
-    const auto lockAcquireTime = timer.secs();
+    const uint64_t lockAcquireTime = timer.msecs();
     cta::telemetry::metrics::objectstoreLockAcquireDurationHistogram->Record(lockAcquireTime, {{cta::telemetry::constants::kLockTypeKey, "ScopedSharedLock"}},
                                          opentelemetry::context::RuntimeContext::GetCurrent());
     cta::telemetry::metrics::objectstoreLockAcquireCounter->Add(1, {{cta::telemetry::constants::kLockTypeKey, "ScopedSharedLock"}});
@@ -406,7 +406,7 @@ public:
       m_objectOps->m_exclusiveLock = this;
       m_locked = true;
     }
-    const auto lockAcquireTime = timer.secs();
+    const uint64_t lockAcquireTime = timer.msecs();
     cta::telemetry::metrics::objectstoreLockAcquireDurationHistogram->Record(lockAcquireTime, {{cta::telemetry::constants::kLockTypeKey, "ScopedExclusiveLock"}},
       opentelemetry::context::RuntimeContext::GetCurrent());
     cta::telemetry::metrics::objectstoreLockAcquireCounter->Add(1, {{cta::telemetry::constants::kLockTypeKey, "ScopedExclusiveLock"}});
