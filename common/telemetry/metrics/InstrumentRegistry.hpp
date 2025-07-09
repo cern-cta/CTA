@@ -45,7 +45,6 @@ void initAllInstruments();
  * Note that the anonymous namespace is important here and this must be defined in the source file, not the header file
  */
 struct InstrumentRegistrar {
-
   /**
    * Runs the init function and registers it for later use to ensure that initAllInstruments()
    * calls the correct set of init functions.

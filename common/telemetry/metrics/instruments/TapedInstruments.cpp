@@ -1,7 +1,7 @@
 
 #include <opentelemetry/metrics/provider.h>
 #include "common/telemetry/metrics/InstrumentRegistry.hpp"
-#include "common/telemetry/metrics/MeterProvider.hpp"
+#include "common/telemetry/metrics/MetricsUtils.hpp"
 #include "version.h"
 
 namespace cta::telemetry::metrics {
@@ -18,10 +18,10 @@ void initInstruments() {
   // Instrument initialisation
 
   cta::telemetry::metrics::tapedTransferCounter =
-    meter->CreateUInt64Counter("taped.transfer.count", "Total number of transfers to/from tape");
+    meter->CreateUInt64Counter("taped.transfer.count", "Total number of transfers to/from tape", "1");
 
   cta::telemetry::metrics::tapedMountCounter =
-    meter->CreateUInt64Counter("taped.mount.count", "Total number of tape mounts");
+    meter->CreateUInt64Counter("taped.mount.count", "Total number of tape mounts", "1");
 }
 
 // Register and run this init function at start time

@@ -139,6 +139,13 @@ variables:
       - "presets/stress-eos-xrd-values.yaml"
       - "presets/stress-eos-grpc-values.yaml"
 
+  TELEMETRY_COLLECTION_ENABLED:
+    description: "Whether to enable telemetry collection in the CI Prometheus tenant or not"
+    value: "FALSE"
+    options:
+      - "TRUE"
+      - "FALSE"
+
   # Meta CI
   CTA_BUILD_ID: ${CI_PIPELINE_ID}git${CI_COMMIT_SHORT_SHA}
   CTA_PIPELINE_NAME: "$CI_COMMIT_TITLE -- Pipeline: $PIPELINE_TYPE, Scheduler: $SCHEDULER_TYPE, Oracle support: $ORACLE_SUPPORT"
@@ -181,6 +188,8 @@ workflow:
       auto_cancel:
         on_job_failure: none
         on_new_commit: none
+      variables:
+        TELEMETRY_COLLECTION_ENABLED: "TRUE"
     # Push events to main will still trigger the pipeline as per the previous rule
     # But we want to prevent dual pipelines on MRs
     - if: $CI_PIPELINE_SOURCE != "push"
