@@ -127,7 +127,7 @@ set (COMMON_LIB_SRC_FILES
   remoteFS/RemotePathAndStatus.cpp
   telemetry/TelemetryInit.cpp
   telemetry/config/TelemetryConfig.cpp
-  telemetry/metrics/MeterProvider.cpp
+  telemetry/metrics/MetricsUtils.cpp
   telemetry/metrics/InstrumentRegistry.cpp
   telemetry/metrics/instruments/CatalogueInstruments.cpp
   telemetry/metrics/instruments/FrontendInstruments.cpp
