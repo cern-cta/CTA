@@ -128,7 +128,7 @@ xrd::Response WorkflowEvent::process() {
   }
 
   // Record request duration
-  const auto requestProcessingDuration = timer.secs();
+  const uint64_t requestProcessingDuration = timer.msecs();
   cta::telemetry::metrics::frontendRequestDurationHistogram->Record(
     requestProcessingDuration,
     telemetryAttributes,

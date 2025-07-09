@@ -22,4 +22,4 @@ namespace cta::telemetry::metrics {
 
 std::shared_ptr<opentelemetry::metrics::Meter> getMeter(std::string_view componentName);
 
-}
+}  // namespace cta::telemetry::metrics
