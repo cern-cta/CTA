@@ -1,7 +1,7 @@
 
 #include <opentelemetry/metrics/provider.h>
 #include "common/telemetry/metrics/InstrumentRegistry.hpp"
-#include "common/telemetry/metrics/MeterProvider.hpp"
+#include "common/telemetry/metrics/MetricsUtils.hpp"
 #include "version.h"
 
 namespace cta::telemetry::metrics {
@@ -17,7 +17,7 @@ void initInstruments() {
   // Instrument initialisation
 
   cta::telemetry::metrics::catalogueQueryCounter =
-    meter->CreateUInt64Counter("catalogue.query.count", "Total number of queries executed");
+    meter->CreateUInt64Counter("catalogue.query.count", "Total number of queries executed", "1");
 }
 
 // Register and run this init function at start time
