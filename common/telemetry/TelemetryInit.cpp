@@ -14,9 +14,9 @@
 #include <opentelemetry/sdk/resource/semantic_conventions.h>
 #include <opentelemetry/sdk/common/attribute_utils.h>
 
-#include "config/TelemetryConfigSingleton.hpp"
-#include "metrics/InstrumentRegistry.hpp"
 #include "common/utils/utils.hpp"
+#include "common/telemetry/config/TelemetryConfigSingleton.hpp"
+#include "common/telemetry/metrics/InstrumentRegistry.hpp"
 #include "version.h"
 
 namespace cta::telemetry {
@@ -91,6 +91,7 @@ void initMetrics(const TelemetryConfig& config, cta::log::LogContext& lc) {
 
   // These metrics should make sure that each and every process is uniquely identifiable
   // Otherwise, metrics will not be aggregated correctly.
+  // The processName can go once we get rid of the forking in taped
   opentelemetry::sdk::common::AttributeMap attributes = {
     {opentelemetry::sdk::resource::SemanticConventions::kServiceName,       config.serviceName     },
     {opentelemetry::sdk::resource::SemanticConventions::kServiceNamespace,  config.serviceNamespace},
@@ -126,7 +127,7 @@ void initTelemetryConfig(const TelemetryConfig& config) {
 }
 
 void reinitTelemetry(cta::log::LogContext& lc, bool persistServiceInstanceId) {
-  if(!persistServiceInstanceId) {
+  if (!persistServiceInstanceId) {
     previousServiceInstanceId = "";
   }
   initTelemetry(cta::telemetry::TelemetryConfigSingleton::get(), lc);
