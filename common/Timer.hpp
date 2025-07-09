@@ -47,6 +47,12 @@ public:
   int64_t usecs(reset_t reset = keepRunning);
 
   /**
+   * Returns the elapsed time in milliseconds since the reference time.
+   * Optionally resets the reference time.
+   */
+  int64_t msecs(reset_t reset = keepRunning);
+
+  /**
    * Returns the elapsed time in seconds (with microsecond precision).
    * Optionally resets the reference time.
    */

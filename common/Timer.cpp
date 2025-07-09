@@ -39,6 +39,18 @@ int64_t Timer::usecs(reset_t reset) {
 }
 
 //------------------------------------------------------------------------------
+// msecs
+//------------------------------------------------------------------------------
+int64_t Timer::msecs(reset_t reset) {
+  auto now = std::chrono::steady_clock::now();
+  int64_t elapsed = std::chrono::duration_cast<std::chrono::milliseconds>(now - m_reference).count();
+  if (reset == resetCounter) {
+    m_reference = now;
+  }
+  return elapsed;
+}
+
+//------------------------------------------------------------------------------
 // secs
 //------------------------------------------------------------------------------
 double Timer::secs(reset_t reset) {
