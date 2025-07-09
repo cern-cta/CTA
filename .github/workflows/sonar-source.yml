@@ -26,7 +26,7 @@ jobs:
       - name: Install dependencies
         run: |
           dnf -y update
-          dnf -y install epel-release almalinux-release-devel python3-dnf-plugin-versionlock
+          dnf -y install epel-release almalinux-release-devel python3-dnf-plugin-versionlock jq
           dnf -y --enablerepo=crb install git gcc gcc-c++ cmake3 make rpm-build dnf-utils unzip nodejs ninja-build
 
       - name: Download CTA
