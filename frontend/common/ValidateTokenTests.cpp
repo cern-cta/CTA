@@ -11,14 +11,6 @@
 #include <gtest/gtest.h>
 
 namespace unitTests {
-class JwkCacheTest: public cta::JwkCache {
-public:
-    JwkCacheTest(const std::string& jwkUri, int cacheRefreshInterval, int pubkeyTimeout, const cta::log::LogContext& lc)
-        : JwkCache(jwkUri, cacheRefreshInterval, pubkeyTimeout, lc) {}
-    
-        std::string fetchJWKS(const std::string& jwksUrl);
-};
-// Fake fetchJWKS for testing
 
 std::string const rsa_priv_key = R"(-----BEGIN PRIVATE KEY-----
 MIIEvAIBADANBgkqhkiG9w0BAQEFAASCBKYwggSiAgEAAoIBAQCHSBjxCyh1svTq
@@ -78,9 +70,17 @@ std::string raw_jwks = R"({
         "e": "AQAB"
     }]
     })";
-
-std::string JwkCacheTest::fetchJWKS(const std::string& uri) {
-    return raw_jwks;
+class JwkCacheValidateTokenTest: public cta::JwkCache {
+public:
+    JwkCacheValidateTokenTest(const std::string& jwkUri, int cacheRefreshInterval, int pubkeyTimeout, const cta::log::LogContext& lc)
+        : JwkCache(jwkUri, cacheRefreshInterval, pubkeyTimeout, lc) { jwks = raw_jwks; }
+    
+        std::string fetchJWKS(const std::string& jwksUrl);
+        std::string jwks;
+};
+// Fake fetchJWKS for testing
+std::string JwkCacheValidateTokenTest::fetchJWKS(const std::string& uri) {
+    return jwks;
 }
 
 std::string pubkeyPem = jwt::helper::convert_base64_der_to_pem(sample_cert_base64_der);
@@ -99,7 +99,7 @@ std::string createTestJwt(bool expired, const std::string& kid) {
 TEST(ValidateTokenTests, ValidTokenWithCachedKey) {
     cta::log::StringLogger log("dummy","ValidateTokenTests_ValidTokenWithCachedKey",cta::log::DEBUG);
     cta::log::LogContext lc(log);
-    JwkCacheTest cache("http://fake-jwks-uri", 1200, 1200, lc);
+    JwkCacheValidateTokenTest cache("http://fake-jwks-uri", 1200, 1200, lc);
 
     std::string token = createTestJwt(false /*expired*/, "test-kid");
     cache.insert("test-kid", {std::time(nullptr), pubkeyPem}); // insert a not-expired entry
@@ -107,10 +107,40 @@ TEST(ValidateTokenTests, ValidTokenWithCachedKey) {
     ASSERT_TRUE(cta::ValidateToken(token, cache, lc));
 }
 
+TEST(ValidateTokenTests, ValidTokenWithoutCachedKeyCacheFetchSucceeds) {
+    cta::log::StringLogger log("dummy","ValidateTokenTests_ValidTokenWithoutCachedKeyCacheFetchSucceeds",cta::log::DEBUG);
+    cta::log::LogContext lc(log);
+    JwkCacheValidateTokenTest cache("http://fake-jwks-uri", 1200, 1200, lc);
+
+    std::string token = createTestJwt(false /*expired*/, "test-kid");
+    auto entry = cache.find("test-kid");
+    ASSERT_FALSE(entry.has_value());
+    ASSERT_TRUE(cta::ValidateToken(token, cache, lc)); // validate will succeed even if the key is not already present in the cache
+    // because it will be fetched
+    entry = cache.find("test-kid");
+    ASSERT_TRUE(entry.has_value());
+}
+
+TEST(ValidateTokenTests, ValidTokenWithoutCachedKeyCacheFetchFails) {
+    cta::log::StringLogger log("dummy","ValidateTokenTests_ValidTokenWithoutCachedKeyCacheFetchFails",cta::log::DEBUG);
+    cta::log::LogContext lc(log);
+    JwkCacheValidateTokenTest cache("http://fake-jwks-uri", 1200, 1200, lc);
+    cache.jwks = "";
+    EXPECT_EQ(cache.jwks, "");
+
+    std::string token = createTestJwt(false /*expired*/, "test-kid");
+    auto entry = cache.find("test-kid");
+    ASSERT_FALSE(entry.has_value());
+    EXPECT_FALSE(cta::ValidateToken(token, cache, lc)); // validate will fail if we cannot find the public key
+    // because it will be fetched
+    entry = cache.find("test-kid");
+    ASSERT_FALSE(entry.has_value());
+}
+
 TEST(ValidateTokenTests, ExpiredToken) {
     cta::log::StringLogger log("dummy","ValidateTokenTests_ExpiredToken",cta::log::DEBUG);
     cta::log::LogContext lc(log);
-    JwkCacheTest cache("http://fake-jwks-uri", 1200, 1200, lc);
+    JwkCacheValidateTokenTest cache("http://fake-jwks-uri", 1200, 1200, lc);
     std::string token = createTestJwt(true /*expired*/, "test-kid");
     cache.insert("test-kid", {std::time(nullptr), pubkeyPem});
 
