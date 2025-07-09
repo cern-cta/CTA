@@ -12,7 +12,7 @@
 
 namespace unitTests {
 
-std::string const rsa_priv_key = R"(-----BEGIN PRIVATE KEY-----
+std::string rsa_priv_key = R"(-----BEGIN PRIVATE KEY-----
 MIIEvAIBADANBgkqhkiG9w0BAQEFAASCBKYwggSiAgEAAoIBAQCHSBjxCyh1svTq
 Wza9G5j0RMF587aWUWSl9ikTF1PRZV42ruJXkBcP6nIjWse3q5rn2Ce+FIXCkipw
 wXUNdbgu5AgXLSFM5g8MGlu3pgENvmKYceiwT6lZS7p9T90HLSbRynzjPT9QcO4d
@@ -143,6 +143,107 @@ TEST(ValidateTokenTests, ExpiredToken) {
     JwkCacheValidateTokenTest cache("http://fake-jwks-uri", 1200, 1200, lc);
     std::string token = createTestJwt(true /*expired*/, "test-kid");
     cache.insert("test-kid", {std::time(nullptr), pubkeyPem});
+
+    ASSERT_FALSE(cta::ValidateToken(token, cache, lc));
+}
+
+// Tests for invalid/malformed tokens
+TEST(ValidateTokenTests, BadTokenMissingKid) {
+    cta::log::StringLogger log("dummy","ValidateTokenTests_BadTokenMissingKid",cta::log::DEBUG);
+    cta::log::LogContext lc(log);
+    JwkCacheValidateTokenTest cache("http://fake-jwks-uri", 1200, 1200, lc);
+    std::string token = jwt::create()
+        .set_issuer("test")
+        .set_payload_claim("exp", jwt::claim(std::chrono::system_clock::now() + std::chrono::minutes(60)))
+        .sign(jwt::algorithm::rs256("", rsa_priv_key, "", ""));
+
+    ASSERT_FALSE(cta::ValidateToken(token, cache, lc));
+}
+
+TEST(ValidateTokenTests, BadTokenMissingExp) {
+    cta::log::StringLogger log("dummy","ValidateTokenTests_BadTokenMissingExp",cta::log::DEBUG);
+    cta::log::LogContext lc(log);
+    JwkCacheValidateTokenTest cache("http://fake-jwks-uri", 1200, 1200, lc);
+    std::string token = jwt::create()
+        .set_issuer("test")
+        .set_header_claim("kid", jwt::claim(std::string("test-kid")))
+        .sign(jwt::algorithm::rs256("", rsa_priv_key, "", ""));
+
+    ASSERT_FALSE(cta::ValidateToken(token, cache, lc));
+}
+
+TEST(ValidateTokenTests, BadTokenInvalidSignature) {
+    cta::log::StringLogger log("dummy","ValidateTokenTests_BadTokenInvalidSignature",cta::log::DEBUG);
+    cta::log::LogContext lc(log);
+    JwkCacheValidateTokenTest cache("http://fake-jwks-uri", 1200, 1200, lc);
+
+    std::string wrongPrivateKey = R"(-----BEGIN PRIVATE KEY-----
+MIIEvAIBADANBgkqhkiG9w0BAQEFAASCBKYwggSiAgEAAoIBAQCHSBjxCyh1svTq
+Wza9G5j0RMF587aWUWSl9ikTF1PRZV42ruJXkBcP6nIjWse3q5rn2Ce+FIXCkipw
+wXUNdbgu5AgXLSFM5g8MGlu3pgENvmKYceiwT6lZS7p9T90HLSbRynzjPT9QcO4d
+BJhiwMwMudJMiT8XyTiJ0+Rl+hg3ZruA1OIx/Ezsy+gmRnjcVJT8tWebZ3Kaf7kt
+kkdPn6hkvHvS2M0GoJKKuhhOYdae7v1qBavRiK/dT1QoKSObPeEd6ZzPmYl2ge1p
+Ud7b4WimudPSlj+fIsVyaWxOwgNgdNlGL2x8T9GcLYA1pZXhPcv8Ms86CHLnqAYg
+JEBe51SrAgMBAAECggEAHafF4+1EwMxqmQdG0BzBImcCHLg6wef0ztbP+UHnW2ND
+zGv47SYGkDQeMjbfyhkhu4osaCQ6kEUXbaFTBhDUv964EVCQ2Lkj+ky6517KI1el
+aHKsBh5oas1Jg9fihYS12k5voybVfs5KvGy59Qf7kxyXB7Ucg7vnu3sKOfqhnV8j
+yw6+cb3/6HhPmC13lJqiT3G5Mq9GsWUrgjyN2pxbnKwpPM7PqkB8BgzoHKV8p57I
+SGbW9tRmo8nVaIJipYpKFKWo0XiO7o8H3RRoEheabn1tnDoLJGpP8vYjIukhFcHl
+EzPVnI7CSvhRSjXrNtPSq7z7V/82zOxRw/XH071GhQKBgQC6t0PMMLc8/3izgeK9
+0rhXULBlJMbJA7AJ58TCdEm2JsqwPtYI5yjxq262/tPpenucu0FaunzdgbK0Y6f2
+TwYcCsD+P9KnKiDYXByxJ1TUBR5Z/Kq+kj+lffCyuy9catY5Gj9wR8U7v8f7vnOF
+PGnBTICjUh2KKsMGky6cpIVrpwKBgQC5eu4H8iIiQ3ojts39srF0y1qldSGYf1Y9
+SOJpEJNo5Aqnl8CBelV0grmLbPIJz8ZaykcPERaKX6qJk5gwDVgFPjbtyJrIeeh0
+0a/KPQO/DF1mnWUECk3h2+W26WBrexqWkLmBlYijCL8kv8UDPUn6dffFn7jSqEsZ
+XZ82DyofXQKBgHp0GLXAuVv63Ek2BOOjYBx7ocQjs28/yOMmKoexRmp81G90NmEO
+YW7llK3VQFueZZVrxbfgGGYZWn8t4IkMWKBpeRsFWRONG5b+Ch8xAVQvqzEvITfs
+qGs7xnEhjDUbKDW4/iQAHd1KsLhstkyKS31nU/JIt3DXDKKyQl6fH5V/AoGAMu56
+plvq25XD2EK+VcfXysZ8YarESufMeo+k/Ey87bSQ6GxXRDafeJrc8Fg+LkuLoCqj
+UJPUqLKUVardw3Qmk2n+E1Vei2ZOWqWpq9MNUEzI6QCXWICr2jVT4uI6w8jOCEI9
+bkPtfTdNpX2zT6xowAncu7ucONxVouV+bo3Dd1ECgYBHMrGUrJS0ofnNdXHt8QzY
+4jYTbci5EF6LKcoo6pCcWaaIi0R6dlstVCBYuLWRONGHWmmgMLp2XuXfgnRkY+PF
+2YmhJeKlj/ScUGL528Uwr7YB7SHR4A/KZleVgdFkXH3VYXwdTG2COCsvVGWWRONG
+az8ZaVQPvmSthMu8suOc8w==
+-----END PRIVATE KEY-----)";
+
+    std::string token = jwt::create()
+        .set_issuer("test")
+        .set_payload_claim("exp", jwt::claim(std::chrono::system_clock::now() + std::chrono::minutes(60)))
+        .set_header_claim("kid", jwt::claim(std::string("test-kid")))
+        .sign(jwt::algorithm::rs256("", wrongPrivateKey, "", ""));
+
+    ASSERT_FALSE(cta::ValidateToken(token, cache, lc));
+}
+
+TEST(ValidateTokenTests, BadTokenUnsupportedAlgorithm) {
+    cta::log::StringLogger log("dummy","ValidateTokenTests_BadTokenUnsupportedAlgorithm",cta::log::DEBUG);
+    cta::log::LogContext lc(log);
+    JwkCacheValidateTokenTest cache("http://fake-jwks-uri", 1200, 1200, lc);
+    std::string token = jwt::create()
+        .set_issuer("test")
+        .set_payload_claim("exp", jwt::claim(std::chrono::system_clock::now() + std::chrono::minutes(60)))
+        .set_header_claim("kid", jwt::claim(std::string("test-kid")))
+        .sign(jwt::algorithm::hs256(rsa_priv_key)); // we accept RS256 only
+
+    ASSERT_FALSE(cta::ValidateToken(token, cache, lc));
+}
+
+TEST(ValidateTokenTests, BadTokenMalformedToken) {
+    cta::log::StringLogger log("dummy","ValidateTokenTests_BadTokenMalformedToken",cta::log::DEBUG);
+    cta::log::LogContext lc(log);
+    JwkCacheValidateTokenTest cache("http://fake-jwks-uri", 1200, 1200, lc);
+    auto token = createTestJwt(false, "test-kid");
+    // append some garbage to the token string
+    token+="GARBAGE";
+
+    ASSERT_FALSE(cta::ValidateToken(token, cache, lc));
+}
+
+TEST(ValidateTokenTests, BadTokenEmtpyToken) {
+    cta::log::StringLogger log("dummy","ValidateTokenTests_BadTokenEmptyToken",cta::log::DEBUG);
+    cta::log::LogContext lc(log);
+    JwkCacheValidateTokenTest cache("http://fake-jwks-uri", 1200, 1200, lc);
+    auto token = "";
 
     ASSERT_FALSE(cta::ValidateToken(token, cache, lc));
 }
