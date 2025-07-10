@@ -357,7 +357,11 @@ void cta::RetrieveMount::putQueueToSleep(const std::string& diskSystemName,
 //------------------------------------------------------------------------------
 void cta::RetrieveMount::setJobBatchTransferred(std::queue<std::unique_ptr<cta::RetrieveJob>>& successfulRetrieveJobs,
                                                 cta::log::LogContext& logContext) {
+#ifdef CTA_PGSCHED
   std::list<std::unique_ptr<cta::SchedulerDatabase::RetrieveJob>> validatedSuccessfulDBRetrieveJobs;
+#else
+  std::list<cta::SchedulerDatabase::RetrieveJob*> validatedSuccessfulDBRetrieveJobs;
+#endif
   std::list<std::unique_ptr<cta::RetrieveJob>>
     validatedSuccessfulRetrieveJobs;  //List to ensure the destruction of the retrieve jobs at the end of this method
   std::unique_ptr<cta::RetrieveJob> job;
