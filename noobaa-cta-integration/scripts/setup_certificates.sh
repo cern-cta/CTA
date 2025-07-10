@@ -18,76 +18,77 @@ error() {
 
 # Configuration
 CTA_CLUSTER_CONTEXT="${CTA_CLUSTER_CONTEXT:-minikube}"
-NOOBAA_CLUSTER_CONTEXT="${NOOBAA_CLUSTER_CONTEXT:-minikube01}"
+NOOBAA_CLUSTER_CONTEXT="${NOOBAA_CLUSTER_CONTEXT:-minikube}"
 CTA_NAMESPACE="${CTA_NAMESPACE:-dev}"
-NOOBAA_NAMESPACE="${NOOBAA_NAMESPACE:-default}"
+NOOBAA_NAMESPACE="${NOOBAA_NAMESPACE:-noobaa}"
 EOS_MGM_POD="${EOS_MGM_POD:-}"
 NOOBAA_POD="${NOOBAA_POD:-}"
 EOS_CERT_PATH="/etc/grid-security/certificates"
 NOOBAA_CERT_PATH="/tmp/grid-security/certificates"
 
-# Load cross-cluster configuration if available
+# Load single-cluster configuration if available
 if [[ -f "/tmp/cluster_config.env" ]]; then
     source /tmp/cluster_config.env
-    log "Loaded cross-cluster configuration"
+    log "Loaded single-cluster configuration"
 fi
 
 check_prerequisites() {
-    log "Checking prerequisites for cross-cluster setup..."
+    log "Checking prerequisites for single-cluster setup..."
     
     # Check kubectl is available
     if ! command -v kubectl &> /dev/null; then
         error "kubectl command not found. Please install kubectl."
     fi
     
-    # Validate cluster contexts
+    # Validate cluster context
     kubectl config get-contexts "${CTA_CLUSTER_CONTEXT}" &>/dev/null || {
-        error "CTA cluster context '${CTA_CLUSTER_CONTEXT}' not found"
+        error "Cluster context '${CTA_CLUSTER_CONTEXT}' not found"
     }
     
+    # Both use same cluster context
     kubectl config get-contexts "${NOOBAA_CLUSTER_CONTEXT}" &>/dev/null || {
-        error "NooBaa cluster context '${NOOBAA_CLUSTER_CONTEXT}' not found"
+        error "Cluster context '${NOOBAA_CLUSTER_CONTEXT}' not found"
     }
     
     # Auto-discover pod names if not set
     if [[ -z "${EOS_MGM_POD}" ]]; then
         EOS_MGM_POD=$(kubectl --context="${CTA_CLUSTER_CONTEXT}" get pods -n "${CTA_NAMESPACE}" \
             -o name | grep -E "(eos|mgm|ctaeos)" | head -1 | sed 's|pod/||' || echo "")
-        [[ -n "${EOS_MGM_POD}" ]] || error "EOS MGM pod not found in CTA cluster (${CTA_NAMESPACE} namespace)"
+        [[ -n "${EOS_MGM_POD}" ]] || error "EOS MGM pod not found in ${CTA_NAMESPACE} namespace"
         log "Auto-discovered EOS MGM pod: ${EOS_MGM_POD}"
     fi
     
     if [[ -z "${NOOBAA_POD}" ]]; then
         NOOBAA_POD=$(kubectl --context="${NOOBAA_CLUSTER_CONTEXT}" get pods -n "${NOOBAA_NAMESPACE}" \
             -o name | grep "noobaa-core" | head -1 | sed 's|pod/||' || echo "")
-        [[ -n "${NOOBAA_POD}" ]] || error "NooBaa core pod not found in NooBaa cluster (${NOOBAA_NAMESPACE} namespace)"
+        [[ -n "${NOOBAA_POD}" ]] || error "NooBaa core pod not found in ${NOOBAA_NAMESPACE} namespace"
         log "Auto-discovered NooBaa pod: ${NOOBAA_POD}"
     fi
     
-    # Check if pods exist in their respective clusters and namespaces
+    # Check if pods exist in their respective namespaces
     kubectl --context="${CTA_CLUSTER_CONTEXT}" -n "${CTA_NAMESPACE}" get pod "${EOS_MGM_POD}" &> /dev/null || {
-        error "EOS MGM pod '${EOS_MGM_POD}' not found in CTA cluster (${CTA_NAMESPACE} namespace)"
+        error "EOS MGM pod '${EOS_MGM_POD}' not found in ${CTA_NAMESPACE} namespace"
     }
     
     kubectl --context="${NOOBAA_CLUSTER_CONTEXT}" -n "${NOOBAA_NAMESPACE}" get pod "${NOOBAA_POD}" &> /dev/null || {
-        error "NooBaa pod '${NOOBAA_POD}' not found in NooBaa cluster (${NOOBAA_NAMESPACE} namespace)"
+        error "NooBaa pod '${NOOBAA_POD}' not found in ${NOOBAA_NAMESPACE} namespace"
     }
     
-    log "Prerequisites check passed for cross-cluster setup"
+    log "Prerequisites check passed for single-cluster setup"
 }
 
 setup_certificates() {
-    log "Setting up certificates for cross-cluster communication..."
+    log "Setting up certificates for inter-namespace communication..."
     
     # Create temporary directory for certificates
     local temp_cert_dir="/tmp/certificates-$(date +%s)"
     mkdir -p "${temp_cert_dir}"
     
-    # Copy certificates from EOS MGM pod (CTA cluster) to local temp directory
+    # Copy certificates from EOS MGM pod (CTA namespace) to local temp directory
     log "Copying certificates from EOS MGM pod: ${EOS_MGM_POD} (${CTA_CLUSTER_CONTEXT}/${CTA_NAMESPACE})"
     kubectl --context="${CTA_CLUSTER_CONTEXT}" -n "${CTA_NAMESPACE}" cp \
         "${EOS_MGM_POD}:${EOS_CERT_PATH}/" "${temp_cert_dir}/" -c eos-mgm || {
-        error "Failed to copy certificates from EOS MGM pod in CTA cluster"
+        error "Failed to copy certificates from EOS MGM pod in CTA namespace"
     }
     
     # Create certificate directory in NooBaa pod first
@@ -97,21 +98,21 @@ setup_certificates() {
         error "Failed to create certificate directory in NooBaa pod"
     }
     
-    # Copy certificates from temp directory to NooBaa pod (NooBaa cluster)
+    # Copy certificates from temp directory to NooBaa pod (NooBaa namespace)
     log "Copying certificates to NooBaa pod: ${NOOBAA_POD} (${NOOBAA_CLUSTER_CONTEXT}/${NOOBAA_NAMESPACE})"
     kubectl --context="${NOOBAA_CLUSTER_CONTEXT}" -n "${NOOBAA_NAMESPACE}" cp \
         "${temp_cert_dir}/." "${NOOBAA_POD}:${NOOBAA_CERT_PATH}/" -c core || {
-        error "Failed to copy certificates to NooBaa pod in NooBaa cluster"
+        error "Failed to copy certificates to NooBaa pod in NooBaa namespace"
     }
     
     # Cleanup temporary directory
     rm -rf "${temp_cert_dir}"
     
-    log "Cross-cluster certificate setup completed successfully"
+    log "Inter-namespace certificate setup completed successfully"
 }
 
 verify_certificates() {
-    log "Verifying certificate installation in NooBaa cluster..."
+    log "Verifying certificate installation in NooBaa namespace..."
     
     # Check if certificates are accessible in NooBaa pod
     local cert_count
@@ -122,11 +123,11 @@ verify_certificates() {
         error "No certificates found in NooBaa pod at ${NOOBAA_CERT_PATH}"
     fi
     
-    log "Certificate verification passed. Found ${cert_count} certificate files in NooBaa cluster."
+    log "Certificate verification passed. Found ${cert_count} certificate files in NooBaa namespace."
     
-    # Test connectivity to CTA cluster (if cluster IPs are available)
+    # Test connectivity to CTA namespace (if cluster IPs are available)
     if [[ -n "${CTA_CLUSTER_IP:-}" ]]; then
-        log "Testing connectivity from NooBaa to CTA cluster..."
+        log "Testing connectivity from NooBaa to CTA services..."
         kubectl --context="${NOOBAA_CLUSTER_CONTEXT}" -n "${NOOBAA_NAMESPACE}" exec "${NOOBAA_POD}" -c core -- \
             curl -k --connect-timeout 10 "https://${CTA_CLUSTER_IP}:8443/.well-known/wlcg-tape-rest-api" &>/dev/null && {
             log "✓ NooBaa can reach EOS HTTP TAPE REST API"
