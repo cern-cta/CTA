@@ -96,22 +96,25 @@ std::string createTestJwt(bool expired, const std::string& kid) {
     return token;
 }
 
-TEST(ValidateTokenTests, ValidTokenWithCachedKey) {
-    cta::log::StringLogger log("dummy","ValidateTokenTests_ValidTokenWithCachedKey",cta::log::DEBUG);
-    cta::log::LogContext lc(log);
-    JwkCacheValidateTokenTest cache("http://fake-jwks-uri", 1200, 1200, lc);
+class ValidateTokenTestFixture : public ::testing::Test {
+protected:
+    cta::log::StringLogger log;
+    cta::log::LogContext lc;
+    JwkCacheValidateTokenTest cache;
 
+    ValidateTokenTestFixture() : log("dummy","ValidateTokenTests",cta::log::DEBUG),
+                                 lc(log),
+                                 cache("http://fake-jwks-uri", 1200, 1200, lc) {}
+};
+
+TEST_F(ValidateTokenTestFixture, ValidTokenWithCachedKey) {
     std::string token = createTestJwt(false /*expired*/, "test-kid");
     cache.insert("test-kid", {std::time(nullptr), pubkeyPem}); // insert a not-expired entry
 
     ASSERT_TRUE(cta::ValidateToken(token, cache, lc));
 }
 
-TEST(ValidateTokenTests, ValidTokenWithoutCachedKeyCacheFetchSucceeds) {
-    cta::log::StringLogger log("dummy","ValidateTokenTests_ValidTokenWithoutCachedKeyCacheFetchSucceeds",cta::log::DEBUG);
-    cta::log::LogContext lc(log);
-    JwkCacheValidateTokenTest cache("http://fake-jwks-uri", 1200, 1200, lc);
-
+TEST_F(ValidateTokenTestFixture, ValidTokenWithoutCachedKeyCacheFetchSucceeds) {
     std::string token = createTestJwt(false /*expired*/, "test-kid");
     auto entry = cache.find("test-kid");
     ASSERT_FALSE(entry.has_value());
@@ -121,10 +124,7 @@ TEST(ValidateTokenTests, ValidTokenWithoutCachedKeyCacheFetchSucceeds) {
     ASSERT_TRUE(entry.has_value());
 }
 
-TEST(ValidateTokenTests, ValidTokenWithoutCachedKeyCacheFetchFails) {
-    cta::log::StringLogger log("dummy","ValidateTokenTests_ValidTokenWithoutCachedKeyCacheFetchFails",cta::log::DEBUG);
-    cta::log::LogContext lc(log);
-    JwkCacheValidateTokenTest cache("http://fake-jwks-uri", 1200, 1200, lc);
+TEST_F(ValidateTokenTestFixture, ValidTokenWithoutCachedKeyCacheFetchFails) {
     cache.jwks = "";
     EXPECT_EQ(cache.jwks, "");
 
@@ -137,10 +137,7 @@ TEST(ValidateTokenTests, ValidTokenWithoutCachedKeyCacheFetchFails) {
     ASSERT_FALSE(entry.has_value());
 }
 
-TEST(ValidateTokenTests, ExpiredToken) {
-    cta::log::StringLogger log("dummy","ValidateTokenTests_ExpiredToken",cta::log::DEBUG);
-    cta::log::LogContext lc(log);
-    JwkCacheValidateTokenTest cache("http://fake-jwks-uri", 1200, 1200, lc);
+TEST_F(ValidateTokenTestFixture, ExpiredToken) {
     std::string token = createTestJwt(true /*expired*/, "test-kid");
     cache.insert("test-kid", {std::time(nullptr), pubkeyPem});
 
@@ -148,10 +145,7 @@ TEST(ValidateTokenTests, ExpiredToken) {
 }
 
 // Tests for invalid/malformed tokens
-TEST(ValidateTokenTests, BadTokenMissingKid) {
-    cta::log::StringLogger log("dummy","ValidateTokenTests_BadTokenMissingKid",cta::log::DEBUG);
-    cta::log::LogContext lc(log);
-    JwkCacheValidateTokenTest cache("http://fake-jwks-uri", 1200, 1200, lc);
+TEST_F(ValidateTokenTestFixture, BadTokenMissingKid) {
     std::string token = jwt::create()
         .set_issuer("test")
         .set_payload_claim("exp", jwt::claim(std::chrono::system_clock::now() + std::chrono::minutes(60)))
@@ -160,10 +154,7 @@ TEST(ValidateTokenTests, BadTokenMissingKid) {
     ASSERT_FALSE(cta::ValidateToken(token, cache, lc));
 }
 
-TEST(ValidateTokenTests, BadTokenMissingExp) {
-    cta::log::StringLogger log("dummy","ValidateTokenTests_BadTokenMissingExp",cta::log::DEBUG);
-    cta::log::LogContext lc(log);
-    JwkCacheValidateTokenTest cache("http://fake-jwks-uri", 1200, 1200, lc);
+TEST_F(ValidateTokenTestFixture, BadTokenMissingExp) {
     std::string token = jwt::create()
         .set_issuer("test")
         .set_header_claim("kid", jwt::claim(std::string("test-kid")))
@@ -172,10 +163,7 @@ TEST(ValidateTokenTests, BadTokenMissingExp) {
     ASSERT_FALSE(cta::ValidateToken(token, cache, lc));
 }
 
-TEST(ValidateTokenTests, BadTokenInvalidSignature) {
-    cta::log::StringLogger log("dummy","ValidateTokenTests_BadTokenInvalidSignature",cta::log::DEBUG);
-    cta::log::LogContext lc(log);
-    JwkCacheValidateTokenTest cache("http://fake-jwks-uri", 1200, 1200, lc);
+TEST_F(ValidateTokenTestFixture, BadTokenInvalidSignature) {
 
     std::string wrongPrivateKey = R"(-----BEGIN PRIVATE KEY-----
 MIIEvAIBADANBgkqhkiG9w0BAQEFAASCBKYwggSiAgEAAoIBAQCHSBjxCyh1svTq
@@ -215,10 +203,7 @@ az8ZaVQPvmSthMu8suOc8w==
     ASSERT_FALSE(cta::ValidateToken(token, cache, lc));
 }
 
-TEST(ValidateTokenTests, BadTokenUnsupportedAlgorithm) {
-    cta::log::StringLogger log("dummy","ValidateTokenTests_BadTokenUnsupportedAlgorithm",cta::log::DEBUG);
-    cta::log::LogContext lc(log);
-    JwkCacheValidateTokenTest cache("http://fake-jwks-uri", 1200, 1200, lc);
+TEST_F(ValidateTokenTestFixture, BadTokenUnsupportedAlgorithm) {
     std::string token = jwt::create()
         .set_issuer("test")
         .set_payload_claim("exp", jwt::claim(std::chrono::system_clock::now() + std::chrono::minutes(60)))
@@ -228,10 +213,7 @@ TEST(ValidateTokenTests, BadTokenUnsupportedAlgorithm) {
     ASSERT_FALSE(cta::ValidateToken(token, cache, lc));
 }
 
-TEST(ValidateTokenTests, BadTokenMalformedToken) {
-    cta::log::StringLogger log("dummy","ValidateTokenTests_BadTokenMalformedToken",cta::log::DEBUG);
-    cta::log::LogContext lc(log);
-    JwkCacheValidateTokenTest cache("http://fake-jwks-uri", 1200, 1200, lc);
+TEST_F(ValidateTokenTestFixture, BadTokenMalformedToken) {
     auto token = createTestJwt(false, "test-kid");
     // append some garbage to the token string
     token+="GARBAGE";
@@ -239,12 +221,8 @@ TEST(ValidateTokenTests, BadTokenMalformedToken) {
     ASSERT_FALSE(cta::ValidateToken(token, cache, lc));
 }
 
-TEST(ValidateTokenTests, BadTokenEmtpyToken) {
-    cta::log::StringLogger log("dummy","ValidateTokenTests_BadTokenEmptyToken",cta::log::DEBUG);
-    cta::log::LogContext lc(log);
-    JwkCacheValidateTokenTest cache("http://fake-jwks-uri", 1200, 1200, lc);
+TEST_F(ValidateTokenTestFixture, BadTokenEmtpyToken) {
     auto token = "";
-
     ASSERT_FALSE(cta::ValidateToken(token, cache, lc));
 }
 
