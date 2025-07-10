@@ -732,7 +732,7 @@ TEST_P(SchedulerTest, archive_report_and_retrieve_new_file_no_report) {
     retrieveJob->asyncSetSuccessful();
     std::queue<std::unique_ptr<cta::RetrieveJob> > jobQueue;
     jobQueue.push(std::move(retrieveJob));
-    retrieveMount->flushAsyncSuccessReports(jobQueue, lc);
+    retrieveMount->setJobBatchTransferred(jobQueue, lc);
     jobBatch = retrieveMount->getNextJobBatch(1,1,lc);
     ASSERT_EQ(0, jobBatch.size());
   }
@@ -955,7 +955,7 @@ TEST_P(SchedulerTest, archive_report_and_retrieve_new_file_with_report) {
     retrieveJob->asyncSetSuccessful();
     std::queue<std::unique_ptr<cta::RetrieveJob> > jobQueue;
     jobQueue.push(std::move(retrieveJob));
-    retrieveMount->flushAsyncSuccessReports(jobQueue, lc);
+    retrieveMount->setJobBatchTransferred(jobQueue, lc);
     jobBatch = retrieveMount->getNextJobBatch(1,1,lc);
     ASSERT_EQ(0, jobBatch.size());
   }
@@ -1189,7 +1189,7 @@ TEST_P(SchedulerTest, archive_report_and_retrieve_new_file_with_specific_mount_p
     retrieveJob->asyncSetSuccessful();
     std::queue<std::unique_ptr<cta::RetrieveJob> > jobQueue;
     jobQueue.push(std::move(retrieveJob));
-    retrieveMount->flushAsyncSuccessReports(jobQueue, lc);
+    retrieveMount->setJobBatchTransferred(jobQueue, lc);
     jobBatch = retrieveMount->getNextJobBatch(1,1,lc);
     ASSERT_EQ(0, jobBatch.size());
   }
@@ -1623,7 +1623,7 @@ TEST_P(SchedulerTest, archive_report_and_retrieve_new_dual_copy_file) {
     retrieveJob->asyncSetSuccessful();
     std::queue<std::unique_ptr<cta::RetrieveJob> > jobQueue;
     jobQueue.push(std::move(retrieveJob));
-    retrieveMount->flushAsyncSuccessReports(jobQueue, lc);
+    retrieveMount->setJobBatchTransferred(jobQueue, lc);
     jobBatch = retrieveMount->getNextJobBatch(1,1,lc);
     ASSERT_EQ(0, jobBatch.size());
   }
@@ -4701,7 +4701,7 @@ TEST_P(SchedulerTest, DISABLED_archiveReportMultipleAndQueueRetrievesWithActivit
     retrieveJob->asyncSetSuccessful();
     std::queue<std::unique_ptr<cta::RetrieveJob> > jobQueue;
     jobQueue.push(std::move(retrieveJob));
-    retrieveMount->flushAsyncSuccessReports(jobQueue, lc);
+    retrieveMount->setJobBatchTransferred(jobQueue, lc);
     jobBatch = retrieveMount->getNextJobBatch(1,1,lc);
     ASSERT_EQ(0, jobBatch.size());
   }
