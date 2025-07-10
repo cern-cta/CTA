@@ -45,7 +45,6 @@ NB_FILES=1
 NB_DIRS=1
 FILE_KB_SIZE=1 # NB bs for dd
 DD_BS=16 # DD bs option DO NOT USE SHORTNAME: NO 1k BUT 1024!!!
-VERBOSE=0
 REMOVE=0
 TAILPID=''
 TAPEAWAREGC=0
@@ -63,8 +62,7 @@ die() {
 
 
 usage() { cat <<EOF 1>&2
-Usage: $0 [-n <nb_files_perdir>] [-N <nb_dir>] [-s <file_kB_size>] [-p <# parallel procs>] [-v] [-d <eos_dest_dir>] [-e <eos_instance>] [-S <data_source_file>] [-r]
-  -v		Verbose mode: displays live logs of rmcd to see tapes being mounted/dismounted in real time
+Usage: $0 [-n <nb_files_perdir>] [-N <nb_dir>] [-s <file_kB_size>] [-p <# parallel procs>] [-d <eos_dest_dir>] [-e <eos_instance>] [-S <data_source_file>] [-r]
   -r		Remove files at the end: launches the delete workflow on the files that were deleted. WARNING: THIS CAN BE FATAL TO THE NAMESPACE IF THERE ARE TOO MANY FILES AND XROOTD STARTS TO TIMEOUT.
   -a		Archiveonly mode: exits after file archival
   -g		Tape aware GC?
@@ -202,11 +200,6 @@ ERROR_FILE=$(mktemp)
 echo "$(date +%s): ERROR_FILE=${ERROR_FILE}"
 EOS_BATCHFILE=$(mktemp --suffix=.eosh)
 echo "$(date +%s): EOS_BATCHFILE=${EOS_BATCHFILE}"
-
-if [[ $VERBOSE == 1 ]]; then
-  tail -v -f /mnt/logs/cta-tpsrv0*/cta-rmcd/cta/cta-rmcd.log &
-  TAILPID=$!
-fi
 
 # get some common useful helpers for krb5
 . /root/client_helper.sh

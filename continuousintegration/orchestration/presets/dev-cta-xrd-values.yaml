@@ -1,3 +1,20 @@
 frontend:
   xrd:
     enabled: true
+
+  # Enabled to allow debugging after a crash
+  postRun:
+    enabled: true
+    script: |
+      #!/usr/bin/bash
+      echo "Process crashed. Sleeping..."
+      sleep infinity
+
+tpsrv:
+  # Enabled to allow debugging after a crash
+  postRun:
+    enabled: true
+    script: |
+      #!/usr/bin/bash
+      echo "Process crashed. Sleeping..."
+      sleep infinity

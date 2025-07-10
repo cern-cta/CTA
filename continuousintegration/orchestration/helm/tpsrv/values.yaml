@@ -23,13 +23,10 @@ preRun:
     #!/usr/bin/bash
 
 # Script to execute in the main container after the taped process exited
-# Enabled by default to allow debugging
 postRun:
-  enabled: true
+  enabled: false
   script: |
     #!/usr/bin/bash
-    echo "Process crashed. Sleeping..."
-    sleep infinity
 
 # tapeServers: {}
 # The following is an example format of tapeServers
