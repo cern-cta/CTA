@@ -46,17 +46,18 @@ RetrieveMount::getNextJobBatch(uint64_t filesRequested, uint64_t bytesRequested,
   cta::log::ScopedParamContainer params(logContext);
   try {
     std::vector<std::string> noSpaceDiskSystemNames = m_RelationalDB.getActiveSleepDiskSystemNamesToFilter();
-    auto [queuedJobs, nrows] = postgres::RetrieveJobQueueRow::moveJobsToDbQueue(txn,
-                                                                                queriedJobStatus,
-                                                                                mountInfo,
-                                                                                noSpaceDiskSystemNames,
-                                                                                bytesRequested,
-                                                                                filesRequested);
+    auto [queuedJobs, nrows] = postgres::RetrieveJobQueueRow::moveJobsToDbActiveQueue(txn,
+                                                                                      queriedJobStatus,
+                                                                                      mountInfo,
+                                                                                      noSpaceDiskSystemNames,
+                                                                                      bytesRequested,
+                                                                                      filesRequested);
     timings.insertAndReset("mountUpdateBatchTime", t);
     params.add("updateMountInfoRowCount", nrows);
     params.add("MountID", mountInfo.mountId);
-    logContext.log(cta::log::INFO,
-                   "In postgres::RetrieveJobQueueRow::moveJobsToDbQueue: successfully assigned Mount ID to DB jobs.");
+    logContext.log(
+      cta::log::INFO,
+      "In postgres::RetrieveJobQueueRow::moveJobsToDbActiveQueue: successfully assigned Mount ID to DB jobs.");
     retVector.reserve(nrows);
     // Fetch job info only in case there were jobs found and updated
     if (!queuedJobs.isEmpty()) {
@@ -76,9 +77,9 @@ RetrieveMount::getNextJobBatch(uint64_t filesRequested, uint64_t bytesRequested,
       params.add("queuedJobCount", retVector.size());
       timings.insertAndReset("mountJobInitBatchTime", t);
       logContext.log(cta::log::INFO,
-                     "In postgres::RetrieveJobQueueRow::moveJobsToDbQueue: successfully queued to the DB.");
+                     "In postgres::RetrieveJobQueueRow::moveJobsToDbActiveQueue: successfully queued to the DB.");
     } else {
-      logContext.log(cta::log::WARNING, "In postgres::RetrieveJobQueueRow::moveJobsToDbQueue: no jobs queued.");
+      logContext.log(cta::log::WARNING, "In postgres::RetrieveJobQueueRow::moveJobsToDbActiveQueue: no jobs queued.");
       txn.commit();
       return ret;
     }
@@ -86,7 +87,7 @@ RetrieveMount::getNextJobBatch(uint64_t filesRequested, uint64_t bytesRequested,
     params.add("exceptionMessage", ex.getMessageValue());
     logContext.log(
       cta::log::ERR,
-      "In postgres::RetrieveJobQueueRow::moveJobsToDbQueue: failed to queue jobs. Aborting the transaction.");
+      "In postgres::RetrieveJobQueueRow::moveJobsToDbActiveQueue: failed to queue jobs. Aborting the transaction.");
     txn.abort();
     throw;
   }
@@ -136,11 +137,14 @@ void RetrieveMount::requeueJobBatch(std::list<std::unique_ptr<SchedulerDatabase:
     // handle the case of failed bunch update of the jobs !
     std::string jobIDsString;
     for (const auto& piece : jobIDsList) {
-      jobIDsString += piece;
+      jobIDsString += piece + ",";
+    }
+    if (!jobIDsString.empty()) {
+      jobIDsString.pop_back();
     }
     logContext.log(cta::log::ERR,
                    std::string("In RetrieveMount::requeueJobBatch(): Did not requeue all task jobs of "
-                               "the queue for this there was no space on disk, job IDs attempting to update were: ") +
+                               "the queue, there was no space on disk, job IDs attempting to update were: ") +
                      jobIDsString);
   }
 }
@@ -189,62 +193,82 @@ void RetrieveMount::setTapeSessionStats(const castor::tape::tapeserver::daemon::
   m_RelationalDB.m_tapeDrivesState->updateDriveStatistics(driveInfo, inputs, lc);
 }
 
-void RetrieveMount::flushAsyncSuccessReports(std::list<std::unique_ptr<SchedulerDatabase::RetrieveJob>>& jobsBatch,
-                                             log::LogContext& lc) {
-  // this method will remove the rows of the jobs from the DB
-  //if (isRepack) {
-  // If the job is from a repack subrequest, we change its status (to report
-  // for repack success). Queueing will be done in batch in
+void RetrieveMount::updateRetrieveJobStatusWrapper(const std::vector<std::string>& jobIDs,
+                                                   cta::schedulerdb::RetrieveJobStatus newStatus,
+                                                   log::LogContext& lc) {
+  cta::schedulerdb::Transaction txn(m_connPool);
+  try {
+    cta::utils::Timer t;
+
+    if (!jobIDs.empty()) {
+      uint64_t nrows = schedulerdb::postgres::RetrieveJobQueueRow::updateJobStatus(txn, newStatus, jobIDs);
+
+      if (nrows != jobIDs.size()) {
+        log::ScopedParamContainer(lc)
+          .add("updatedRows", nrows)
+          .add("jobListSize", jobIDs.size())
+          .add("targetStatus", to_string(newStatus))
+          .log(log::ERR,
+               "In RetrieveMount::updateRetrieveJobStatusWrapper(): Failed to update all jobs to target status. "
+               "Aborting transaction.");
+        txn.abort();
+        return;
+      }
+
+      txn.commit();
+      log::ScopedParamContainer(lc)
+        .add("rowUpdateCount", nrows)
+        .add("rowUpdateTime", t.secs())
+        .add("targetStatus", to_string(newStatus))
+        .log(log::INFO, "In RetrieveMount::updateRetrieveJobStatusWrapper(): updated job statuses.");
+    }
+  } catch (const exception::Exception& ex) {
+    lc.log(cta::log::ERR,
+           "In RetrieveMount::updateRetrieveJobStatusWrapper(): Exception while updating job status. Aborting "
+           "transaction. " +
+             ex.getMessageValue());
+    txn.abort();
+  }
+}
+
+void RetrieveMount::setJobBatchTransferred(std::list<std::unique_ptr<SchedulerDatabase::RetrieveJob>>& jobsBatch,
+                                           log::LogContext& lc) {
+  std::vector<std::string> jobIDs_success, jobIDs_repackSuccess, jobIDs_reportToUser;
+  // This method will remove the rows of the jobs from the DB or update jobs to get reported to the disk buffer
   // REPACK USE CASE TO-BE-DONE
-  // }
   // we update/release the space reservation of the drive in the catalogue
   cta::DiskSpaceReservationRequest diskSpaceReservationRequest;
-  std::vector<std::string> jobIDsList_success;
-  jobIDsList_success.reserve(jobsBatch.size());
+  jobIDs_success.reserve(jobsBatch.size());
   for (const auto& rdbJob : jobsBatch) {
     if (rdbJob->diskSystemName) {
       diskSpaceReservationRequest.addRequest(rdbJob->diskSystemName.value(), rdbJob->archiveFile.fileSize);
     }
-    jobIDsList_success.emplace_back(std::to_string(rdbJob->jobID));
-    // we collect the jobIDs to delete form the JOB table since they are done successfully
+    // Once we implement Repack we can compare mountInfo.vo with the defaultRepack VO of the scheduler
+    bool isRepackMount = false;
+    if (isRepackMount) {
+      // If the job is from a repack subrequest, we change its status (to report
+      // for repack success). Queueing will be done in batch in
+      jobIDs_repackSuccess.push_back(std::to_string(rdbJob->jobID));
+    } else if (rdbJob->retrieveRequest.retrieveReportURL.empty()) {
+      // Set the user transfer request as successful (delete it).
+      jobIDs_success.push_back(std::to_string(rdbJob->jobID));
+    } else {
+      // else we change its status (to report for transfer success).
+      jobIDs_reportToUser.push_back(std::to_string(rdbJob->jobID));
+    }
   }
   this->m_RelationalDB.m_catalogue.DriveState()->releaseDiskSpace(mountInfo.drive,
                                                                   mountInfo.mountId,
                                                                   diskSpaceReservationRequest,
                                                                   lc);
-  cta::schedulerdb::Transaction txn(m_connPool);
-  try {
-    uint64_t deletionCount = 0;
-    cta::utils::Timer t;
-    if (!jobIDsList_success.empty()) {
-      uint64_t nrows = schedulerdb::postgres::RetrieveJobQueueRow::updateJobStatus(
-        txn,
-        cta::schedulerdb::RetrieveJobStatus::ReadyForDeletion,
-        jobIDsList_success);
-      deletionCount = nrows;
-      if (nrows != jobIDsList_success.size()) {
-        log::ScopedParamContainer(lc)
-          .add("updatedRows", nrows)
-          .add("jobListSize", jobIDsList_success.size())
-          .log(log::ERR,
-               "In RetrieveMount::flushAsyncSuccessReports(): Failed to RetrieveJobQueueRow::updateJobStatus() - job "
-               "deletion - "
-               "for the full entire list of successful retrieve jobs. Aborting the transaction.");
-        txn.abort();
-      } else {
-        txn.commit();
-        log::ScopedParamContainer(lc)
-          .add("rowDeletionCount", deletionCount)
-          .add("rowDeletionTime", t.secs())
-          .log(log::INFO, "In RetrieveMount::flushAsyncSuccessReports(): deleted jobs.");
-      }
-    }
-  } catch (exception::Exception& ex) {
-    lc.log(cta::log::ERR,
-           "In schedulerdb::RetrieveMount::flushAsyncSuccessReports(): Failed to delete jobs. "
-           "Aborting the transaction." +
-             ex.getMessageValue());
-    txn.abort();
+  if (!jobIDs_success.empty()) {
+    updateRetrieveJobStatusWrapper(jobIDs_success, RetrieveJobStatus::ReadyForDeletion, lc);
+  }
+  if (!jobIDs_repackSuccess.empty()) {
+    updateRetrieveJobStatusWrapper(jobIDs_repackSuccess, RetrieveJobStatus::RJS_ToReportToRepackForSuccess, lc);
+  }
+  if (!jobIDs_reportToUser.empty()) {
+    updateRetrieveJobStatusWrapper(jobIDs_reportToUser, RetrieveJobStatus::RJS_ToReportToUserForSuccess, lc);
   }
   // After processing - we free the memory object
   // in case the flush and DB update failed, we still want to clean the jobs from memory

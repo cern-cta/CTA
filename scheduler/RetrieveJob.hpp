@@ -97,7 +97,7 @@ public:
    * The checksum and the size of the transfer should already stored in the 
    * object beforehand. Result setting and calling complete are done in 2 
    * different threads (disk write and reporter thread, respectively).
-   * Completion will be checked implicitly in RetrieveMount::flushAsyncSuccessReports()
+   * Completion will be checked implicitly in RetrieveMount::setJobBatchTransferred()
    */
   virtual void asyncSetSuccessful();
   /**

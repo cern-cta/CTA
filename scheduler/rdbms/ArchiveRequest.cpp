@@ -32,6 +32,25 @@ void ArchiveRequest::insert() {
   for (const auto& aj : m_jobs) {
     try {
       cta::schedulerdb::postgres::ArchiveJobQueueRow ajr;
+      if (areq_job_count == 1) {
+        ajr.diskFileId = std::move(m_archiveFile.diskFileId);
+        ajr.diskInstance = std::move(m_archiveFile.diskInstance);
+        ajr.storageClass = std::move(m_archiveFile.storageClass);
+        ajr.diskFileInfoPath = std::move(m_archiveFile.diskFileInfo.path);
+        ajr.checksumBlob = std::move(m_archiveFile.checksumBlob);
+        ajr.archiveReportURL = std::move(m_archiveReportURL);
+        ajr.archiveErrorReportURL = std::move(m_archiveErrorReportURL);
+        ajr.srcUrl = std::move(m_srcURL);
+      } else {
+        ajr.diskFileId = m_archiveFile.diskFileId;
+        ajr.diskInstance = m_archiveFile.diskInstance;
+        ajr.storageClass = m_archiveFile.storageClass;
+        ajr.diskFileInfoPath = m_archiveFile.diskFileInfo.path;
+        ajr.checksumBlob = m_archiveFile.checksumBlob;
+        ajr.archiveReportURL = m_archiveReportURL;
+        ajr.archiveErrorReportURL = m_archiveErrorReportURL;
+        ajr.srcUrl = m_srcURL;
+      }
       ajr.reqId = areq_id;
       ajr.reqJobCount = areq_job_count;
       ajr.tapePool = aj.tapepool;
@@ -39,23 +58,15 @@ void ArchiveRequest::insert() {
       ajr.priority = m_mountPolicy.archivePriority;
       ajr.minArchiveRequestAge = m_mountPolicy.archiveMinRequestAge;
       ajr.archiveFileID = m_archiveFile.archiveFileID;
-      ajr.diskFileId = std::move(m_archiveFile.diskFileId);
-      ajr.diskInstance = std::move(m_archiveFile.diskInstance);
       ajr.fileSize = m_archiveFile.fileSize;
-      ajr.storageClass = std::move(m_archiveFile.storageClass);
-      ajr.diskFileInfoPath = std::move(m_archiveFile.diskFileInfo.path);
       ajr.diskFileInfoOwnerUid = m_archiveFile.diskFileInfo.owner_uid;
       ajr.diskFileInfoGid = m_archiveFile.diskFileInfo.gid;
-      ajr.checksumBlob = std::move(m_archiveFile.checksumBlob);
 
       ajr.creationTime = m_entryLog.time;  // Time the job was received by the CTA Frontend
       ajr.copyNb = aj.copyNb;
       ajr.startTime = time(nullptr);  // Time the job was queued in the DB
-      ajr.archiveReportURL = m_archiveReportURL;
-      ajr.archiveErrorReportURL = m_archiveErrorReportURL;
       ajr.requesterName = m_requesterIdentity.name;
       ajr.requesterGroup = m_requesterIdentity.group;
-      ajr.srcUrl = m_srcURL;
       ajr.retriesWithinMount = aj.retriesWithinMount;
       ajr.maxRetriesWithinMount = aj.maxRetriesWithinMount;
       ajr.maxReportRetries = aj.maxReportRetries;

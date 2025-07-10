@@ -92,10 +92,9 @@ std::string RelationalDB::queueArchive(const std::string& instanceName,
   utils::Timer timeGetConn;
   auto sqlconn = m_connPoolInsertOnly.getConn();
   log::ScopedParamContainer params(logContext);
-  params.add("connCountOnLoad",m_connPoolInsertOnly.getNbConnsOnLoan());
+  params.add("connCountOnLoad", m_connPoolInsertOnly.getNbConnsOnLoan());
   params.add("getConnTime", timeGetConn.secs());
   schedulerdb::ArchiveRequest aReq(sqlconn, logContext);
-
 
   // Summarize all as an archiveFile
   common::dataStructures::ArchiveFile aFile;
@@ -148,17 +147,17 @@ std::string RelationalDB::queueArchive(const std::string& instanceName,
 }
 
 std::map<std::string, std::list<common::dataStructures::ArchiveJob>, std::less<>> RelationalDB::getArchiveJobs() const {
-  throw cta::exception::Exception("Not implemented");
+  throw cta::exception::Exception(std::string(__FUNCTION__) + std::string("Not implemented"));
 }
 
 std::list<cta::common::dataStructures::ArchiveJob> RelationalDB::getArchiveJobs(const std::string& tapePoolName) const {
-  throw cta::exception::Exception("Not implemented");
+  throw cta::exception::Exception(std::string(__FUNCTION__) + std::string("Not implemented"));
 }
 
 std::unique_ptr<SchedulerDatabase::IArchiveJobQueueItor>
 RelationalDB::getArchiveJobQueueItor(const std::string& tapePoolName,
                                      common::dataStructures::JobQueueType queueType) const {
-  throw cta::exception::Exception("Not implemented");
+  throw cta::exception::Exception(std::string(__FUNCTION__) + std::string("Not implemented"));
 }
 
 std::list<std::unique_ptr<SchedulerDatabase::ArchiveJob>>
@@ -170,7 +169,7 @@ RelationalDB::getNextArchiveJobsToReportBatch(uint64_t filesRequested, log::LogC
   schedulerdb::Transaction txn(m_connPool);
   // retrieve batch up to file limit
   std::list<schedulerdb::ArchiveJobStatus> statusList;
-  statusList.emplace_back(schedulerdb::ArchiveJobStatus::AJS_ToReportToUserForTransfer);
+  statusList.emplace_back(schedulerdb::ArchiveJobStatus::AJS_ToReportToUserForSuccess);
   statusList.emplace_back(schedulerdb::ArchiveJobStatus::AJS_ToReportToUserForFailure);
   rdbms::Rset resultSet;
   try {
@@ -223,25 +222,25 @@ SchedulerDatabase::JobsFailedSummary RelationalDB::getArchiveJobsFailedSummary(l
 
 std::list<std::unique_ptr<SchedulerDatabase::RetrieveJob>>
 RelationalDB::getNextRetrieveJobsToTransferBatch(const std::string& vid, uint64_t filesRequested, log::LogContext& lc) {
-  throw cta::exception::Exception("Not implemented");
+  throw cta::exception::Exception(std::string(__FUNCTION__) + std::string("Not implemented"));
 }
 
 void RelationalDB::requeueRetrieveRequestJobs(std::list<cta::SchedulerDatabase::RetrieveJob*>& jobs,
                                               const std::string& toReportQueueAddress,
                                               log::LogContext& lc) {
-  throw cta::exception::Exception("Not implemented");
+  throw cta::exception::Exception(std::string(__FUNCTION__) + std::string("Not implemented"));
 }
 
 std::string RelationalDB::blockRetrieveQueueForCleanup(const std::string& vid) {
-  throw cta::exception::Exception("Not implemented");
+  throw cta::exception::Exception(std::string(__FUNCTION__) + std::string("Not implemented"));
 }
 
 void RelationalDB::unblockRetrieveQueueForCleanup(const std::string& vid){
-  throw cta::exception::Exception("Not implemented");
+  throw cta::exception::Exception(std::string(__FUNCTION__) + std::string("Not implemented"));
 };
 
 bool RelationalDB::trimEmptyToReportQueue(const std::string& queueName, log::LogContext& lc) {
-  throw cta::exception::Exception("Not implemented");
+  throw cta::exception::Exception(std::string(__FUNCTION__) + std::string("Not implemented"));
 }
 
 void RelationalDB::setArchiveJobBatchReported(std::list<SchedulerDatabase::ArchiveJob*>& jobsBatch,
@@ -335,7 +334,7 @@ void RelationalDB::setArchiveJobBatchReported(std::list<SchedulerDatabase::Archi
 std::list<SchedulerDatabase::RetrieveQueueStatistics>
 RelationalDB::getRetrieveQueueStatistics(const cta::common::dataStructures::RetrieveFileQueueCriteria& criteria,
                                          const std::set<std::string>& vidsToConsider) {
-  throw cta::exception::Exception("Not implemented");
+  throw cta::exception::Exception(std::string(__FUNCTION__) + std::string("Not implemented"));
 }
 
 void RelationalDB::clearStatisticsCache(const std::string& vid) {
@@ -419,39 +418,58 @@ RelationalDB::queueRetrieve(cta::common::dataStructures::RetrieveRequest& rqst,
 }
 
 void RelationalDB::cancelRetrieve(const std::string& instanceName,
-                                  const cta::common::dataStructures::CancelRetrieveRequest& rqst,
+                                  const cta::common::dataStructures::CancelRetrieveRequest& request,
                                   log::LogContext& lc) {
-  throw cta::exception::Exception("Not implemented");
+  schedulerdb::Transaction txn(m_connPool);
+  try {
+    uint64_t cancelledJobs = schedulerdb::postgres::RetrieveJobQueueRow::cancelRetrieveJob(txn, request.archiveFileID);
+    log::ScopedParamContainer(lc)
+      .add("archiveFileID", request.archiveFileID)
+      .add("cancelledJobs", cancelledJobs)
+      .log(log::INFO, "In RelationalDB::cancelRetrieve(): removing retrieve request from the queue");
+    if (cancelledJobs != 1) {
+      lc.log(cta::log::WARNING,
+             "In RelationalDB::cancelRetrieve(): cancellation affected more than 1 job, check if that is expected !");
+    }
+    txn.commit();
+  } catch (exception::Exception& ex) {
+    lc.log(cta::log::ERR,
+           "In RelationalDB::cancelRetrieve(): failed to cancel retrieve job. Aborting the transaction." +
+             ex.getMessageValue());
+    txn.abort();
+    throw;
+  }
+  return;
 }
 
 std::map<std::string, std::list<RetrieveRequestDump>> RelationalDB::getRetrieveRequests() const {
-  throw cta::exception::Exception("Not implemented");
+  throw cta::exception::Exception(std::string(__FUNCTION__) + std::string("Not implemented"));
 }
 
 std::list<RetrieveRequestDump> RelationalDB::getRetrieveRequestsByVid(const std::string& vid) const {
-  throw cta::exception::Exception("Not implemented");
+  throw cta::exception::Exception(std::string(__FUNCTION__) + std::string("Not implemented"));
 }
 
 std::list<RetrieveRequestDump> RelationalDB::getRetrieveRequestsByRequester(const std::string& vid) const {
-  throw cta::exception::Exception("Not implemented");
+  throw cta::exception::Exception(std::string(__FUNCTION__) + std::string("Not implemented"));
 }
 
 void RelationalDB::deleteRetrieveRequest(const common::dataStructures::SecurityIdentity& requester,
                                          const std::string& remoteFile) {
-  throw cta::exception::Exception("Not implemented");
+  throw cta::exception::Exception(std::string(__FUNCTION__) + std::string("Not implemented"));
 }
 
 void RelationalDB::cancelArchive(const common::dataStructures::DeleteArchiveRequest& request, log::LogContext& lc) {
   schedulerdb::Transaction txn(m_connPool);
   try {
-    uint64_t nrows =
+    uint64_t cancelledJobs =
       schedulerdb::postgres::ArchiveJobQueueRow::cancelArchiveJob(txn, request.diskInstance, request.archiveFileID);
     log::ScopedParamContainer(lc)
       .add("archiveFileID", request.archiveFileID)
       .add("diskInstance", request.diskInstance)
-      .add("n_affectedJobs", nrows)
-      .log(log::INFO, "In RelationalDB::cancelArchive(): removed archive request from the queue");
-    if (nrows != 1) {
+      .add("cancelledJobs", cancelledJobs)
+      .log(log::INFO, "In RelationalDB::cancelArchive(): removing archive request from the queue");
+    if (cancelledJobs != 1) {
       lc.log(cta::log::WARNING,
              "In RelationalDB::cancelArchive(): cancellation affected more than 1 job, check if that is expected !");
     }
@@ -467,21 +485,21 @@ void RelationalDB::cancelArchive(const common::dataStructures::DeleteArchiveRequ
 }
 
 void RelationalDB::deleteFailed(const std::string& objectId, log::LogContext& lc) {
-  throw cta::exception::Exception("Not implemented");
+  throw cta::exception::Exception(std::string(__FUNCTION__) + std::string("Not implemented"));
 }
 
 std::map<std::string, std::list<common::dataStructures::RetrieveJob>, std::less<>>
 RelationalDB::getRetrieveJobs() const {
-  throw cta::exception::Exception("Not implemented");
+  throw cta::exception::Exception(std::string(__FUNCTION__) + std::string("Not implemented"));
 }
 
 std::list<cta::common::dataStructures::RetrieveJob> RelationalDB::getRetrieveJobs(const std::string& vid) const {
-  throw cta::exception::Exception("Not implemented");
+  throw cta::exception::Exception(std::string(__FUNCTION__) + std::string("Not implemented"));
 }
 
 std::unique_ptr<SchedulerDatabase::IRetrieveJobQueueItor>
 RelationalDB::getRetrieveJobQueueItor(const std::string& vid, common::dataStructures::JobQueueType queueType) const {
-  throw cta::exception::Exception("Not implemented");
+  throw cta::exception::Exception(std::string(__FUNCTION__) + std::string("Not implemented"));
 }
 
 std::string RelationalDB::queueRepack(const SchedulerDatabase::QueueRepackRequest& repackRequest,
@@ -511,7 +529,7 @@ std::string RelationalDB::queueRepack(const SchedulerDatabase::QueueRepackReques
 // RelationalDB::repackExists()
 //------------------------------------------------------------------------------
 bool RelationalDB::repackExists() {
-  throw cta::exception::Exception("Not implemented");
+  throw cta::exception::Exception(std::string(__FUNCTION__) + std::string("Not implemented"));
 }
 
 std::list<common::dataStructures::RepackInfo> RelationalDB::getRepackInfo() {
@@ -522,14 +540,15 @@ std::list<common::dataStructures::RepackInfo> RelationalDB::getRepackInfo() {
 }
 
 common::dataStructures::RepackInfo RelationalDB::getRepackInfo(const std::string& vid) {
-  log::LogContext lc(m_logger);
-  lc.log(log::WARNING, "RelationalDB::getRepackInfo() dummy implementation !");
-  common::dataStructures::RepackInfo ret;
-  return ret;
+  throw exception::UserError("No repack request for this VID (not yet implemented).");
+  //log::LogContext lc(m_logger);
+  //lc.log(log::WARNING, "RelationalDB::getRepackInfo() dummy implementation !");
+  //common::dataStructures::RepackInfo ret;
+  //return ret;
 }
 
 void RelationalDB::cancelRepack(const std::string& vid, log::LogContext& lc) {
-  throw cta::exception::Exception("Not implemented");
+  throw cta::exception::Exception(std::string(__FUNCTION__) + std::string("Not implemented"));
 }
 
 cta::rdbms::Conn RelationalDB::getConn() {
@@ -593,15 +612,47 @@ std::unique_ptr<SchedulerDatabase::RepackRequest> RelationalDB::getNextRepackJob
 
 std::list<std::unique_ptr<SchedulerDatabase::RetrieveJob>>
 RelationalDB::getNextRetrieveJobsToReportBatch(uint64_t filesRequested, log::LogContext& logContext) {
-  log::LogContext lc(m_logger);
-  lc.log(log::WARNING, "RelationalDB::getNextRetrieveJobsToReportBatch() dummy implementation !");
+  log::TimingList timings;
+  cta::utils::Timer t;
+  cta::log::ScopedParamContainer logParams(logContext);
   std::list<std::unique_ptr<SchedulerDatabase::RetrieveJob>> ret;
+  schedulerdb::Transaction txn(m_connPool);
+  // retrieve batch up to file limit
+  std::list<schedulerdb::RetrieveJobStatus> statusList;
+  statusList.emplace_back(schedulerdb::RetrieveJobStatus::RJS_ToReportToUserForSuccess);
+  statusList.emplace_back(schedulerdb::RetrieveJobStatus::RJS_ToReportToUserForFailure);
+  rdbms::Rset resultSet;
+  try {
+    // gc_delay 3h delay for each report, if not reported, requeue for reporting
+    uint64_t gc_delay = 10800;
+    resultSet =
+      schedulerdb::postgres::RetrieveJobQueueRow::flagReportingJobsByStatus(txn, statusList, gc_delay, filesRequested);
+    if (resultSet.isEmpty()) {
+      logContext.log(cta::log::INFO, "In RelationalDB::getNextRetrieveJobsToReportBatch(): nothing to report.");
+      return ret;
+    }
+    while (resultSet.next()) {
+      ret.emplace_back(std::make_unique<schedulerdb::RetrieveRdbJob>(m_connPool, resultSet));
+    }
+    txn.commit();
+    timings.insertAndReset("fetchedRetrieveJobs", t);
+    timings.addToLog(logParams);
+    logContext.log(cta::log::INFO, "Successfully flagged jobs for reporting.");
+  } catch (exception::Exception& ex) {
+    logContext.log(cta::log::ERR,
+                   "In RelationalDB::getNextRetrieveJobsToReportBatch(): failed to flagReportingJobsByStatus: " +
+                     ex.getMessageValue());
+    txn.abort();
+    return ret;
+  }
+  logContext.log(log::INFO,
+                 "In RelationalDB::getNextRetrieveJobsToReportBatch(): Finished getting retrieve jobs for reporting.");
   return ret;
 }
 
 std::list<std::unique_ptr<SchedulerDatabase::RetrieveJob>>
 RelationalDB::getNextRetrieveJobsFailedBatch(uint64_t filesRequested, log::LogContext& logContext) {
-  throw cta::exception::Exception("Not implemented");
+  throw cta::exception::Exception(std::string(__FUNCTION__) + std::string("Not implemented"));
 }
 
 std::unique_ptr<SchedulerDatabase::RepackReportBatch> RelationalDB::getNextRepackReportBatch(log::LogContext& lc) {
@@ -640,15 +691,101 @@ RelationalDB::getRepackReportBatches(log::LogContext& lc) {
   return ret;
 }
 
+// The name of setRetrieveJobBatchReportedToUser method shall be aligned with
+// the Archive method (OStoreDB refactoring task)
+// and since they are very similar code duplication shall be avoided
 void RelationalDB::setRetrieveJobBatchReportedToUser(std::list<SchedulerDatabase::RetrieveJob*>& jobsBatch,
                                                      log::TimingList& timingList,
                                                      utils::Timer& t,
                                                      log::LogContext& lc) {
-  throw cta::exception::Exception("Not implemented");
+  lc.log(log::WARNING,
+         "RelationalDB::setRetrieveJobBatchReportedToUser() half-dummy implementation for successful jobs !");
+  // If job is done we will delete it (if the full request was served) - to be implemented !
+  std::vector<std::string> jobIDsList_success;
+  std::vector<std::string> jobIDsList_failure;
+  // reserving space to avoid multiple re-allocations during emplace_back
+  jobIDsList_success.reserve(jobsBatch.size());
+  jobIDsList_failure.reserve(jobsBatch.size());
+  auto jobsBatchItor = jobsBatch.begin();
+  while (jobsBatchItor != jobsBatch.end()) {
+    switch ((*jobsBatchItor)->reportType) {
+      case SchedulerDatabase::RetrieveJob::ReportType::CompletionReport:
+        jobIDsList_success.emplace_back(std::to_string((*jobsBatchItor)->jobID));
+        break;
+      case SchedulerDatabase::RetrieveJob::ReportType::FailureReport:
+        jobIDsList_failure.emplace_back(std::to_string((*jobsBatchItor)->jobID));
+        break;
+      default:
+        log::ScopedParamContainer(lc)
+          .add("jobID", (*jobsBatchItor)->jobID)
+          .add("archiveFileID", (*jobsBatchItor)->archiveFile.archiveFileID)
+          .add("diskInstance", (*jobsBatchItor)->archiveFile.diskInstance)
+          .log(
+            cta::log::WARNING,
+            "In schedulerdb::RelationalDB::setRetrieveJobBatchReportedToUser(): Skipping handling of a reported job");
+        jobsBatchItor++;
+        continue;
+    }
+    log::ScopedParamContainer(lc)
+      .add("jobID", (*jobsBatchItor)->jobID)
+      .add("archiveFileID", (*jobsBatchItor)->archiveFile.archiveFileID)
+      .add("diskInstance", (*jobsBatchItor)->archiveFile.diskInstance)
+      .log(log::INFO,
+           "In schedulerdb::RelationalDB::setRetrieveJobBatchReportedToUser(): received a reported job for a "
+           "status change to Failed or Completed.");
+    jobsBatchItor++;
+  }
+  schedulerdb::Transaction txn(m_connPool);
+  try {
+    cta::utils::Timer t2;
+    uint64_t deletionCount = 0;
+    if (!jobIDsList_success.empty()) {
+      uint64_t nrows = schedulerdb::postgres::RetrieveJobQueueRow::updateJobStatus(
+        txn,
+        cta::schedulerdb::RetrieveJobStatus::ReadyForDeletion,
+        jobIDsList_success);
+      deletionCount += nrows;
+      if (nrows != jobIDsList_success.size()) {
+        log::ScopedParamContainer(lc)
+          .add("updatedRows", nrows)
+          .add("jobListSize", jobIDsList_success.size())
+          .log(log::ERR,
+               "In RelationalDB::setRetrieveJobBatchReportedToUser(): Failed to RetrieveJobQueueRow::updateJobStatus() "
+               "for entire job list provided.");
+      }
+    }
+    if (!jobIDsList_failure.empty()) {
+      uint64_t nrows =
+        schedulerdb::postgres::RetrieveJobQueueRow::updateJobStatus(txn,
+                                                                    cta::schedulerdb::RetrieveJobStatus::RJS_Failed,
+                                                                    jobIDsList_failure);
+      if (nrows != jobIDsList_failure.size()) {
+        log::ScopedParamContainer(lc)
+          .add("updatedRows", nrows)
+          .add("jobListSize", jobIDsList_failure.size())
+          .log(log::ERR,
+               "In RelationalDB::setRetrieveJobBatchReportedToUser(): Failed to RetrieveJobQueueRow::updateJobStatus() "
+               "for entire job list provided.");
+      }
+    }
+    txn.commit();
+    log::ScopedParamContainer(lc)
+      .add("rowDeletionTime", t2.secs())
+      .add("rowDeletionCount", deletionCount)
+      .log(log::INFO, "RelationalDB::setRetrieveJobBatchReportedToUser(): deleted job.");
+
+  } catch (exception::Exception& ex) {
+    lc.log(cta::log::ERR,
+           "In schedulerdb::RelationalDB::setRetrieveJobBatchReportedToUser(): failed to update job status. "
+           "Aborting the transaction." +
+             ex.getMessageValue());
+    txn.abort();
+  }
+  return;
 }
 
 SchedulerDatabase::JobsFailedSummary RelationalDB::getRetrieveJobsFailedSummary(log::LogContext& logContext) {
-  throw cta::exception::Exception("Not implemented");
+  throw cta::exception::Exception(std::string(__FUNCTION__) + std::string("Not implemented"));
 }
 
 std::unique_ptr<SchedulerDatabase::TapeMountDecisionInfo> RelationalDB::getMountInfo(log::LogContext& logContext) {
@@ -684,7 +821,7 @@ RelationalDB::getMountInfo(std::string_view logicalLibraryName, log::LogContext&
 }
 
 void RelationalDB::trimEmptyQueues(log::LogContext& lc) {
-  throw cta::exception::Exception("Not implemented");
+  throw cta::exception::Exception(std::string(__FUNCTION__) + std::string("Not implemented"));
 }
 
 std::unique_ptr<SchedulerDatabase::TapeMountDecisionInfo>
@@ -927,7 +1064,7 @@ void RelationalDB::fetchMountInfo(SchedulerDatabase::TapeMountDecisionInfo& tmdi
 
 std::list<SchedulerDatabase::RetrieveQueueCleanupInfo>
 RelationalDB::getRetrieveQueuesCleanupInfo(log::LogContext& logContext) {
-  throw cta::exception::Exception("Not implemented");
+  throw cta::exception::Exception(std::string(__FUNCTION__) + std::string("Not implemented"));
 }
 
 std::vector<std::string> RelationalDB::getActiveSleepDiskSystemNamesToFilter() {
@@ -956,8 +1093,28 @@ std::vector<std::string> RelationalDB::getActiveSleepDiskSystemNamesToFilter() {
   return validDiskNames;
 }
 
-void RelationalDB::setRetrieveQueueCleanupFlag(const std::string& vid, bool val, log::LogContext& logContext) {
-  throw cta::exception::Exception("Not implemented");
+void RelationalDB::cleanRetrieveQueueForVid(const std::string& vid, log::LogContext& logContext) {
+  schedulerdb::Transaction txn(m_connPool);
+  try {
+    uint64_t movedJobsForReporting =
+      schedulerdb::postgres::RetrieveJobQueueRow::handlePendingRetrieveJobsAfterTapeStateChange(txn, vid);
+    log::ScopedParamContainer(logContext)
+      .add("VID", vid)
+      .add("movedJobsForReporting", movedJobsForReporting)
+      .log(log::INFO,
+           "In RelationalDB::cleanRetrieveQueueForVid(): removed all retrieve jobs of the specified VID from the "
+           "pending queue. If error report URL was available, it moved jobs to the reporting workflow.");
+    txn.commit();
+  } catch (exception::Exception& ex) {
+    logContext.log(
+      cta::log::ERR,
+      "In RelationalDB::cleanRetrieveQueueForVid(): failed to remove retrieve jobs from the pending queue of the "
+      "specified tape VID. Aborting the transaction." +
+        ex.getMessageValue());
+    txn.abort();
+    throw;
+  }
+  return;
 }
 
 }  // namespace cta

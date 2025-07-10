@@ -305,4 +305,48 @@ void toLower(std::string& str) {
     c = std::tolower(static_cast<unsigned char>(c));
   }
 }
+
+//------------------------------------------------------------------------------
+// Splits a comma-separated string into a vector of strings.
+//------------------------------------------------------------------------------
+std::vector<std::string> splitStringToVector(const std::string& input, const char separator) {
+  std::vector<std::string> result;
+  std::stringstream ss(input);
+  std::string item;
+
+  while (std::getline(ss, item, separator)) {
+    if (!item.empty()) {
+      result.push_back(item);
+    }
+  }
+
+  return result;
+}
+
+//------------------------------------------------------------------------------
+// Select a string to the right of the provided current string in the alternateStrings vector
+//------------------------------------------------------------------------------
+std::pair<std::string, size_t> selectNextString(const std::string& currentString, const std::string& alternateStrings) {
+  if (alternateStrings.empty()) {
+    return std::pair {currentString, 0};
+  }
+
+  std::vector<std::string> stringVec = splitStringToVector(alternateStrings);
+  if (stringVec.empty()) {
+    return std::pair {currentString, 0};
+  }
+
+  for (size_t i = 0; i < stringVec.size(); ++i) {
+    if (stringVec[i] == currentString) {
+      if (i + 1 < stringVec.size()) {
+        // If not the last, return next
+        return std::pair {stringVec[i + 1], i + 1};
+      } else {
+        // If current is last, wrap around
+        return std::pair {stringVec[0], 0};
+      }
+    }
+  }
+  return std::pair {currentString, 0};
+}
 }  // namespace cta::utils

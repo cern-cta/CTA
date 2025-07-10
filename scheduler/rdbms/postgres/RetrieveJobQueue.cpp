@@ -22,12 +22,12 @@
 namespace cta::schedulerdb::postgres {
 
 std::pair<rdbms::Rset, uint64_t>
-RetrieveJobQueueRow::moveJobsToDbQueue(Transaction& txn,
-                                       RetrieveJobStatus newStatus,
-                                       const SchedulerDatabase::RetrieveMount::MountInfo& mountInfo,
-                                       std::vector<std::string>& noSpaceDiskSystemNames,
-                                       uint64_t maxBytesRequested,
-                                       uint64_t limit) {
+RetrieveJobQueueRow::moveJobsToDbActiveQueue(Transaction& txn,
+                                             RetrieveJobStatus newStatus,
+                                             const SchedulerDatabase::RetrieveMount::MountInfo& mountInfo,
+                                             std::vector<std::string>& noSpaceDiskSystemNames,
+                                             uint64_t maxBytesRequested,
+                                             uint64_t limit) {
   // we first check if there are any disk systems
   // we should avoid querying jobs for
   std::string sql_dsn_exclusion_part = "";
@@ -306,7 +306,7 @@ void RetrieveJobQueueRow::updateRetryCounts(uint64_t mountId) {
 
 // requeueFailedJob is used to requeue jobs which were not processed due to finished mount or failed jobs
 // In case of unexpected crashed the job stays in the RETRIEVE_PENDING_QUEUE and needs to be identified
-// in some garbage collection process - TO-BE-DONE.
+// in some garbage collection process - TO-BE-DONE. ALTERNATE_VIDS
 uint64_t RetrieveJobQueueRow::requeueFailedJob(Transaction& txn,
                                                RetrieveJobStatus newStatus,
                                                bool keepMountId,
@@ -400,11 +400,11 @@ uint64_t RetrieveJobQueueRow::requeueFailedJob(Transaction& txn,
       M.MIN_RETRIEVE_REQUEST_AGE,
       M.ARCHIVE_FILE_ID,
       M.SIZE_IN_BYTES,
-      M.COPY_NB,
+      :COPY_NB AS COPY_NB,
       M.START_TIME,
       M.CHECKSUMBLOB,
-      M.FSEQ,
-      M.BLOCK_ID,
+      :FSEQ AS FSEQ,
+      :BLOCK_ID AS BLOCK_ID,
       M.CREATION_TIME,
       M.DISK_INSTANCE,
       M.DISK_FILE_ID,
@@ -421,7 +421,7 @@ uint64_t RetrieveJobQueueRow::requeueFailedJob(Transaction& txn,
       M.MAX_RETRIES_WITHIN_MOUNT,
       M.TOTAL_REPORT_RETRIES,
       M.MAX_REPORT_RETRIES,
-      M.VID,
+      :VID AS VID,
       M.ALTERNATE_FSEQS,
       M.ALTERNATE_BLOCK_IDS,
       M.ALTERNATE_VIDS,
@@ -460,6 +460,10 @@ uint64_t RetrieveJobQueueRow::requeueFailedJob(Transaction& txn,
   stmt.bindUint32(":TOTAL_RETRIES", totalRetries);
   stmt.bindUint32(":RETRIES_WITHIN_MOUNT", retriesWithinMount);
   stmt.bindUint64(":LAST_MOUNT_WITH_FAILURE", lastMountWithFailure);
+  stmt.bindString(":VID", vid);
+  stmt.bindUint64(":FSEQ", fSeq);
+  stmt.bindUint8(":COPY_NB", copyNb);
+  stmt.bindUint64(":BLOCK_ID", blockId);
   stmt.bindString(":FAILURE_LOG", failureLogs.value_or(""));
   if (userowjid) {
     stmt.bindUint64(":JOB_ID", jobId);
@@ -610,6 +614,144 @@ RetrieveJobQueueRow::requeueJobBatch(Transaction& txn, RetrieveJobStatus newStat
   return stmt.getNbAffectedRows();
 }
 
+uint64_t RetrieveJobQueueRow::handlePendingRetrieveJobsAfterTapeStateChange(Transaction& txn, std::string vid) {
+  std::string sql = R"SQL(
+    WITH MOVED_ROWS AS (
+      DELETE FROM RETRIEVE_PENDING_QUEUE
+      WHERE VID = :VID
+      RETURNING *
+    ),
+    TO_MOVE AS (
+        SELECT * FROM MOVED_ROWS
+        WHERE RETRIEVE_ERROR_REPORT_URL IS NOT NULL
+          AND RETRIEVE_ERROR_REPORT_URL <> ''
+    )
+    INSERT INTO RETRIEVE_ACTIVE_QUEUE (
+      JOB_ID,
+      RETRIEVE_REQUEST_ID,
+      REQUEST_JOB_COUNT,
+      TAPE_POOL,
+      MOUNT_POLICY,
+      PRIORITY,
+      MIN_RETRIEVE_REQUEST_AGE,
+      ARCHIVE_FILE_ID,
+      SIZE_IN_BYTES,
+      COPY_NB,
+      START_TIME,
+      CHECKSUMBLOB,
+      FSEQ,
+      BLOCK_ID,
+      CREATION_TIME,
+      DISK_INSTANCE,
+      DISK_FILE_ID,
+      DISK_FILE_OWNER_UID,
+      DISK_FILE_GID,
+      DISK_FILE_PATH,
+      RETRIEVE_REPORT_URL,
+      RETRIEVE_ERROR_REPORT_URL,
+      REQUESTER_NAME,
+      REQUESTER_GROUP,
+      DST_URL,
+      STORAGE_CLASS,
+      MAX_TOTAL_RETRIES,
+      MAX_RETRIES_WITHIN_MOUNT,
+      TOTAL_REPORT_RETRIES,
+      MAX_REPORT_RETRIES,
+      VID,
+      ALTERNATE_FSEQS,
+      ALTERNATE_BLOCK_IDS,
+      ALTERNATE_VIDS,
+      ALTERNATE_COPY_NBS,
+      DRIVE,
+      HOST,
+      LOGICAL_LIBRARY,
+      ACTIVITY,
+      SRR_USERNAME,
+      SRR_HOST,
+      SRR_TIME,
+      SRR_MOUNT_POLICY,
+      SRR_ACTIVITY,
+      LIFECYCLE_CREATION_TIME,
+      LIFECYCLE_FIRST_SELECTED_TIME,
+      LIFECYCLE_COMPLETED_TIME,
+      DISK_SYSTEM_NAME,
+      FAILURE_LOG,
+      RETRIES_WITHIN_MOUNT,
+      TOTAL_RETRIES,
+      LAST_MOUNT_WITH_FAILURE,
+      STATUS,
+      MOUNT_ID
+    )
+    SELECT
+      M.JOB_ID,
+      M.RETRIEVE_REQUEST_ID,
+      M.REQUEST_JOB_COUNT,
+      :TAPE_POOL AS TAPE_POOL,
+      M.MOUNT_POLICY,
+      M.PRIORITY,
+      M.MIN_RETRIEVE_REQUEST_AGE,
+      M.ARCHIVE_FILE_ID,
+      M.SIZE_IN_BYTES,
+      M.COPY_NB,
+      M.START_TIME,
+      M.CHECKSUMBLOB,
+      M.FSEQ,
+      M.BLOCK_ID,
+      M.CREATION_TIME,
+      M.DISK_INSTANCE,
+      M.DISK_FILE_ID,
+      M.DISK_FILE_OWNER_UID,
+      M.DISK_FILE_GID,
+      M.DISK_FILE_PATH,
+      M.RETRIEVE_REPORT_URL,
+      M.RETRIEVE_ERROR_REPORT_URL,
+      M.REQUESTER_NAME,
+      M.REQUESTER_GROUP,
+      M.DST_URL,
+      M.STORAGE_CLASS,
+      M.MAX_TOTAL_RETRIES,
+      M.MAX_RETRIES_WITHIN_MOUNT,
+      M.TOTAL_REPORT_RETRIES,
+      M.MAX_REPORT_RETRIES,
+      M.VID,
+      M.ALTERNATE_FSEQS,
+      M.ALTERNATE_BLOCK_IDS,
+      M.ALTERNATE_VIDS,
+      M.ALTERNATE_COPY_NBS,
+      :DRIVE AS DRIVE,
+      :HOST AS HOST,
+      :LOGICAL_LIBRARY AS LOGICAL_LIBRARY,
+      M.ACTIVITY,
+      M.SRR_USERNAME,
+      M.SRR_HOST,
+      M.SRR_TIME,
+      M.SRR_MOUNT_POLICY,
+      M.SRR_ACTIVITY,
+      M.LIFECYCLE_CREATION_TIME,
+      M.LIFECYCLE_FIRST_SELECTED_TIME,
+      M.LIFECYCLE_COMPLETED_TIME,
+      M.DISK_SYSTEM_NAME,
+      M.FAILURE_LOG || :FAILURE_LOG AS FAILURE_LOG,
+      M.RETRIES_WITHIN_MOUNT AS RETRIES_WITHIN_MOUNT,
+      M.TOTAL_RETRIES AS TOTAL_RETRIES,
+      M.LAST_MOUNT_WITH_FAILURE,
+      :STATUS AS STATUS,
+      NULL AS MOUNT_ID
+    FROM TO_MOVE M;
+  )SQL";
+
+  auto stmt = txn.getConn().createStmt(sql);
+  stmt.bindString(":DRIVE", "NONE");
+  stmt.bindString(":HOST", "NONE");
+  stmt.bindString(":LOGICAL_LIBRARY", "NONE");
+  stmt.bindString(":TAPE_POOL", "NONE");
+  stmt.bindString(":VID", vid);
+  stmt.bindString(":STATUS", to_string(RetrieveJobStatus::RJS_ToReportToUserForFailure));
+  stmt.bindString(":FAILURE_LOG", "TAPE_STATE_CHANGE_JOBS_TO_REPORT_FOR_FAILURE");
+  stmt.executeNonQuery();
+  return stmt.getNbAffectedRows();
+}
+
 uint64_t RetrieveJobQueueRow::moveJobToFailedQueueTable(Transaction& txn) {
   // DISABLE DELETION FOR DEBUGGING
   std::string sql = R"SQL(
@@ -738,41 +880,19 @@ uint64_t RetrieveJobQueueRow::getNextRetrieveRequestID(rdbms::Conn& conn) {
   }
 }
 
-uint64_t
-RetrieveJobQueueRow::cancelRetrieveJob(Transaction& txn, const std::string& diskInstance, uint64_t archiveFileID) {
-  std::string sqlpart;
-  /* As of now, there is no way to remove job from the in-memory
-   * (task) queue of the disk/tape processes !
-   * All jobs picked up by the mount will run and later fail
-   * due to missing DB entries. Deleting the archive request blindly
-   * can cause updates on non-existent DB rows. A better strategy is needed—
-   * either notify disk/tape processes or have them verify job presence
-   * in Scheduler DB before execution.
+uint64_t RetrieveJobQueueRow::cancelRetrieveJob(Transaction& txn, uint64_t archiveFileID) {
+  /* All jobs which were already picked up by the
+   * mount to the task queue will run and not be deleted.
+   * Deletes only from RETRIEVE_PENDING_QUEUE
    */
-  std::string sql = R"SQL(
-      DELETE FROM RETRIEVE_ACTIVE_QUEUE
-      WHERE
-        DISK_INSTANCE = :DISK_INSTANCE AND
-        ARCHIVE_FILE_ID = :ARCHIVE_FILE_ID
-    )SQL";
-  auto stmt = txn.getConn().createStmt(sql);
-  stmt.bindString(":DISK_INSTANCE", diskInstance);
-  stmt.bindUint64(":ARCHIVE_FILE_ID", archiveFileID);
-
-  stmt.executeNonQuery();
-  uint64_t nrows = stmt.getNbAffectedRows();
-  sql = R"SQL(
+  std::string sqlActive = R"SQL(
     DELETE FROM RETRIEVE_PENDING_QUEUE
     WHERE
-      DISK_INSTANCE = :DISK_INSTANCE AND
       ARCHIVE_FILE_ID = :ARCHIVE_FILE_ID
   )SQL";
-  stmt = txn.getConn().createStmt(sql);
-  stmt.bindString(":DISK_INSTANCE", diskInstance);
+  auto stmt = txn.getConn().createStmt(sqlActive);
   stmt.bindUint64(":ARCHIVE_FILE_ID", archiveFileID);
   stmt.executeNonQuery();
-  nrows += stmt.getNbAffectedRows();
-  return nrows;
+  return stmt.getNbAffectedRows();
 }
-
 }  // namespace cta::schedulerdb::postgres

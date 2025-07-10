@@ -24,11 +24,11 @@
 
 namespace cta::schedulerdb::postgres {
 std::pair<rdbms::Rset, uint64_t>
-ArchiveJobQueueRow::moveJobsToDbQueue(Transaction& txn,
-                                      ArchiveJobStatus newStatus,
-                                      const SchedulerDatabase::ArchiveMount::MountInfo& mountInfo,
-                                      uint64_t maxBytesRequested,
-                                      uint64_t limit) {
+ArchiveJobQueueRow::moveJobsToDbActiveQueue(Transaction& txn,
+                                            ArchiveJobStatus newStatus,
+                                            const SchedulerDatabase::ArchiveMount::MountInfo& mountInfo,
+                                            uint64_t maxBytesRequested,
+                                            uint64_t limit) {
   /* using write row lock FOR UPDATE for the select statement
    * since it is the same lock used for UPDATE
    * we first apply the LIMIT on the selection to limit
@@ -623,61 +623,20 @@ uint64_t ArchiveJobQueueRow::getNextArchiveRequestID(rdbms::Conn& conn) {
 
 uint64_t
 ArchiveJobQueueRow::cancelArchiveJob(Transaction& txn, const std::string& diskInstance, uint64_t archiveFileID) {
-  std::string sqlpart;
-  /* flagging jobs ReadyForDeletion - alternative strategy
-     * for deletion by dropping partitions
-     std::string sql = R"SQL(
-      UPDATE ARCHIVE_ACTIVE_QUEUE SET
-        STATUS = :NEWSTATUS
-      WHERE
-        DISK_INSTANCE = :DISK_INSTANCE AND
-        ARCHIVE_FILE_ID = :ARCHIVE_FILE_ID AND
-        STATUS NOT IN (:COMPLETE, :FAILED, :FORDELETION)
-    )SQL";
-    std::string sql = R"SQL(
-      UPDATE ARCHIVE_ACTIVE_QUEUE SET
-        STATUS = :NEWSTATUS
-      WHERE
-        DISK_INSTANCE = :DISK_INSTANCE AND
-        ARCHIVE_FILE_ID = :ARCHIVE_FILE_ID AND
-        STATUS NOT IN (:COMPLETE, :FAILED, :FORDELETION)
-    )SQL";
-
-    stmt.bindString(":NEWSTATUS",
-                    to_string(ArchiveJobStatus::ReadyForDeletion));
-    stmt.bindString(":COMPLETE",
-                    to_string(ArchiveJobStatus::AJS_Complete));
-    stmt.bindString(":FORDELETION",
-                    to_string(ArchiveJobStatus::ReadyForDeletion));
-    stmt.bindString(":FAILED",
-                    to_string(ArchiveJobStatus::AJS_Failed));
-     */
-  // directly deleting the archive request irrespectively in which state it is
-  // this can result in attempts to update rows of the DB which will not exist anymore
-  // better strategy might be needed
-  std::string sql = R"SQL(
-      DELETE FROM ARCHIVE_ACTIVE_QUEUE
-      WHERE
-        DISK_INSTANCE = :DISK_INSTANCE AND
-        ARCHIVE_FILE_ID = :ARCHIVE_FILE_ID
-    )SQL";
-  auto stmt = txn.getConn().createStmt(sql);
-  stmt.bindString(":DISK_INSTANCE", diskInstance);
-  stmt.bindUint64(":ARCHIVE_FILE_ID", archiveFileID);
-
-  stmt.executeNonQuery();
-  uint64_t nrows = stmt.getNbAffectedRows();
-  sql = R"SQL(
+  /* All jobs which were already picked up by the
+   * mount to the task queue will run and not be deleted.
+   * Deletes only from ARCHIVE_PENDING_QUEUE
+   */
+  std::string sqlActive = R"SQL(
     DELETE FROM ARCHIVE_PENDING_QUEUE
     WHERE
       DISK_INSTANCE = :DISK_INSTANCE AND
       ARCHIVE_FILE_ID = :ARCHIVE_FILE_ID
   )SQL";
-  stmt = txn.getConn().createStmt(sql);
+  auto stmt = txn.getConn().createStmt(sqlActive);
   stmt.bindString(":DISK_INSTANCE", diskInstance);
   stmt.bindUint64(":ARCHIVE_FILE_ID", archiveFileID);
   stmt.executeNonQuery();
-  nrows += stmt.getNbAffectedRows();
-  return nrows;
+  return stmt.getNbAffectedRows();
 }
 }  // namespace cta::schedulerdb::postgres

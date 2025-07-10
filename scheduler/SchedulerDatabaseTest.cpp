@@ -720,7 +720,7 @@ TEST_P(SchedulerDatabaseTest, popRetrieveRequestsWithDisksytem) {
   }
   schedulerRetrieveMount->setExternalFreeDiskSpaceScript("/usr/bin/cta-eosdf.sh");
   schedulerRetrieveMount->reserveDiskSpace(reservationRequest, lc);
-  schedulerRetrieveMount->flushAsyncSuccessReports(jobQueue, lc);
+  schedulerRetrieveMount->setJobBatchTransferred(jobQueue, lc);
   ASSERT_EQ(0, schedulerRetrieveMount->getNextJobBatch(20,20*1000, lc).size());
   rjb.clear();
 }

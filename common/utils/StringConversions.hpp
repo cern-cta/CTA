@@ -22,6 +22,7 @@
 #include <sstream>
 #include <stdint.h>
 #include <string>
+#include <vector>
 
 namespace cta::utils {
 
@@ -132,5 +133,21 @@ bool isUpper(const std::string& str);
  * @param In/out parameter: The string to be converted.
  */
 void toLower(std::string& str);
+
+/**
+ * @brief Splits a comma-separated string into a vector of strings.
+ * @param input The comma-separated string.
+ * @param separator by default a comma ","
+ * @return A vector of strings.
+ */
+std::vector<std::string> splitStringToVector(const std::string& input, const char separator = ',');
+
+/**
+ * @brief Selects the next VID from alternateStrings relative to currentString.
+ * @param currentString The current VID.
+ * @param alternateStrings A comma-separated list of strings, e.g. alternate VIDs.
+ * @return The next string and index of it or currentString, 0 if no valid next string is found .
+ */
+std::pair<std::string, size_t> selectNextString(const std::string& currentString, const std::string& alternateStrings);
 
 }  // namespace cta::utils

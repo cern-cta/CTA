@@ -53,8 +53,11 @@ ArchiveMount::getNextJobBatch(uint64_t filesRequested, uint64_t bytesRequested, 
   std::vector<std::unique_ptr<SchedulerDatabase::ArchiveJob>> retVector;
   cta::log::ScopedParamContainer params(logContext);
   try {
-    auto [queuedJobs, nrows] =
-      postgres::ArchiveJobQueueRow::moveJobsToDbQueue(txn, queriedJobStatus, mountInfo, bytesRequested, filesRequested);
+    auto [queuedJobs, nrows] = postgres::ArchiveJobQueueRow::moveJobsToDbActiveQueue(txn,
+                                                                                     queriedJobStatus,
+                                                                                     mountInfo,
+                                                                                     bytesRequested,
+                                                                                     filesRequested);
     timings.insertAndReset("mountUpdateBatchTime", t);
     params.add("updateMountInfoRowCount", nrows);
     params.add("MountID", mountInfo.mountId);
@@ -80,16 +83,17 @@ ArchiveMount::getNextJobBatch(uint64_t filesRequested, uint64_t bytesRequested, 
       params.add("queuedJobCount", retVector.size());
       timings.insertAndReset("mountJobInitBatchTime", t);
       logContext.log(cta::log::INFO,
-                     "In postgres::ArchiveJobQueueRow::moveJobsToDbQueue: successfully queued to the DB.");
+                     "In postgres::ArchiveJobQueueRow::moveJobsToDbActiveQueue: successfully queued to the DB.");
     } else {
-      logContext.log(cta::log::WARNING, "In postgres::ArchiveJobQueueRow::moveJobsToDbQueue: no jobs queued.");
+      logContext.log(cta::log::WARNING, "In postgres::ArchiveJobQueueRow::moveJobsToDbActiveQueue: no jobs queued.");
       txn.commit();
       return ret;
     }
   } catch (exception::Exception& ex) {
     params.add("exceptionMessage", ex.getMessageValue());
     logContext.log(cta::log::ERR,
-                   "In postgres::ArchiveJobQueueRow::moveJobsToDbQueue: failed to queue jobs." + ex.getMessageValue());
+                   "In postgres::ArchiveJobQueueRow::moveJobsToDbActiveQueue: failed to queue jobs." +
+                     ex.getMessageValue());
     txn.abort();
     throw;
   }
@@ -175,7 +179,7 @@ void ArchiveMount::setJobBatchTransferred(std::list<std::unique_ptr<SchedulerDat
                                           log::LogContext& lc) {
   lc.log(log::WARNING,
          "In schedulerdb::ArchiveMount::setJobBatchTransferred(): passes as half-dummy implementation "
-         "valid only for AJS_ToReportToUserForTransfer !");
+         "valid only for AJS_ToReportToUserForSuccess !");
   std::vector<std::string> jobIDsList;
   jobIDsList.reserve(jobsBatch.size());
   auto jobsBatchItor = jobsBatch.begin();
@@ -194,7 +198,7 @@ void ArchiveMount::setJobBatchTransferred(std::list<std::unique_ptr<SchedulerDat
   try {
     // all jobs for which setJobBatchTransferred is called shall be reported as successful
     uint64_t nrows =
-      postgres::ArchiveJobQueueRow::updateJobStatus(txn, ArchiveJobStatus::AJS_ToReportToUserForTransfer, jobIDsList);
+      postgres::ArchiveJobQueueRow::updateJobStatus(txn, ArchiveJobStatus::AJS_ToReportToUserForSuccess, jobIDsList);
     txn.commit();
     if (nrows != jobIDsList.size()) {
       log::ScopedParamContainer(lc)

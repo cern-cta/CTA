@@ -93,7 +93,7 @@ void RetrieveRdbJob::initialize(const rdbms::Rset& rset) {
   }
   // Reset or update other member variables as necessary
   // Re-initialize report type
-  if (m_jobRow.status == RetrieveJobStatus::RJS_ToTransfer) {
+  if (m_jobRow.status == RetrieveJobStatus::RJS_ToReportToUserForSuccess) {
     reportType = ReportType::CompletionReport;
   } else if (m_jobRow.status == RetrieveJobStatus::RJS_ToReportToUserForFailure) {
     reportType = ReportType::FailureReport;
@@ -179,11 +179,20 @@ void RetrieveRdbJob::handleExceedTotalRetries(cta::schedulerdb::Transaction& txn
 }
 
 void RetrieveRdbJob::requeueToNewMount(cta::schedulerdb::Transaction& txn,
-                                      log::LogContext& lc,
-                                      const std::string& reason) {
+                                       log::LogContext& lc,
+                                       const std::string& reason) {
   try {
     // requeue by changing status, reset the mount_id to NULL and updating all other stat fields
+    // change VID if alternate exists trying to fetch the file from another tape !
     m_jobRow.retriesWithinMount = 0;
+    auto [newVid, index] = cta::utils::selectNextString(m_jobRow.vid, m_jobRow.alternateVids);
+    std::vector<std::string> alternateCopyNbsVec = cta::utils::splitStringToVector(m_jobRow.alternateCopyNbs);
+    std::vector<std::string> alternateFSeqVec = cta::utils::splitStringToVector(m_jobRow.alternateFSeq);
+    std::vector<std::string> alternateBlockIdVec = cta::utils::splitStringToVector(m_jobRow.alternateBlockId);
+    m_jobRow.copyNb = static_cast<uint8_t>(std::stoi(alternateCopyNbsVec[index]));
+    m_jobRow.fSeq = static_cast<uint64_t>(std::stoi(alternateFSeqVec[index]));
+    m_jobRow.blockId = static_cast<uint64_t>(std::stoi(alternateBlockIdVec[index]));
+    m_jobRow.vid = newVid;
     uint64_t nrows = m_jobRow.requeueFailedJob(txn, RetrieveJobStatus::RJS_ToTransfer, false);
     txn.commit();
     if (nrows != 1) {
@@ -194,7 +203,8 @@ void RetrieveRdbJob::requeueToNewMount(cta::schedulerdb::Transaction& txn,
     // set reportType to a particular value here
   } catch (const exception::Exception& ex) {
     lc.log(log::WARNING,
-           "RetrieveRdbJob::requeueToNewMount(): Failed to requeue to new mount. Aborting txn: " + ex.getMessageValue());
+           "RetrieveRdbJob::requeueToNewMount(): Failed to requeue to new mount. Aborting txn: " +
+             ex.getMessageValue());
     txn.abort();
   }
 }
@@ -248,17 +258,12 @@ void RetrieveRdbJob::failReport(const std::string& failureReason, log::LogContex
     .add("tapePool", m_tapePool)
     .add("reportFailureReason", m_jobRow.reportFailureLogs.value_or(""))
     .log(log::INFO, "In schedulerdb::RetrieveRdbJob::failReport(): reporting failed.");
-
-  // We could use reportType NoReportRequired for cancelling the request. For the moment it is not used
-  // and we directly delet ethe job.
-  // We could also use it for a case whena a previous attempt to report failed
-  // due to an exception, for example if the file was deleted on close.
   cta::schedulerdb::Transaction txn(m_connPool);
   try {
     cta::utils::Timer t;
     uint64_t nrowsdeleted = 0;
     if (reportType == ReportType::NoReportRequired || m_jobRow.totalReportRetries >= m_jobRow.maxReportRetries) {
-      //m_jobRow.updateJobStatusForFailedReport(txn, RetrieveJobStatus::RJS_Failed);
+      // the job will be moved to FAILED_QUEUE table, and delted from the ACTIVE_QUEUE.
       uint64_t nrows = m_jobRow.updateJobStatusForFailedReport(txn, RetrieveJobStatus::ReadyForDeletion);
       nrowsdeleted = nrows;
       if (nrows != 1) {

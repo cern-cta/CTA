@@ -339,8 +339,12 @@ public:
     void addDiskSystemToSkip(const SchedulerDatabase::RetrieveMount::DiskSystemToSkip& diskSystemToSkip) override;
     void flushAsyncSuccessReports(std::list<cta::SchedulerDatabase::RetrieveJob*>& jobsBatch,
                                   log::LogContext& lc) override;
-    void flushAsyncSuccessReports(std::list<std::unique_ptr<cta::SchedulerDatabase::RetrieveJob>>& jobsBatch,
-                                  log::LogContext& lc) override { /* empty implementaion, for CTA_PGSCHED only */  }
+
+    void setJobBatchTransferred(std::list<std::unique_ptr<cta::SchedulerDatabase::RetrieveJob>>& jobsBatch,
+                                log::LogContext& lc) override {
+      throw cta::exception::Exception("In SchedulerDatabase::RetrieveMount::setJobBatchTransferred(): Not Implemented, "
+                                      "for RelationalDB compatibility only.");
+    }
   };
   friend class RetrieveMount;
 
@@ -360,7 +364,12 @@ public:
     void failReport(const std::string& failureReason, log::LogContext& lc) override;
     // initialize and releaseToPool methods are here with empty implementation only since it is needed by PGSCHED in the baseclass
     void initialize(const rdbms::Rset& resultSet) override {};
-    bool releaseToPool() override { throw cta::exception::Exception("In SchedulerDatabase::RetrieveJob::releaseToPool(): Not Implemented for OStoreDB."); };
+
+    bool releaseToPool() override {
+      throw cta::exception::Exception(
+        "In SchedulerDatabase::RetrieveJob::releaseToPool(): Not Implemented for OStoreDB.");
+    };
+
     void abort(const std::string& abortReason, log::LogContext& lc) override;
     void fail() override;
     ~RetrieveJob() override;
@@ -442,6 +451,10 @@ public:
   /* === Retrieve requests handling  ======================================== */
   std::list<RetrieveQueueCleanupInfo> getRetrieveQueuesCleanupInfo(log::LogContext& logContext) override;
   void setRetrieveQueueCleanupFlag(const std::string& vid, bool val, log::LogContext& logContext) override;
+
+  void cleanRetrieveQueueForVid(const std::string& vid, log::LogContext& logContext) override {
+    throw cta::exception::Exception("Not supported for OStoreDB implementation.");
+  };
 
   std::list<RetrieveQueueStatistics>
   getRetrieveQueueStatistics(const cta::common::dataStructures::RetrieveFileQueueCriteria& criteria,

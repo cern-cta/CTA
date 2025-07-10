@@ -50,7 +50,7 @@ struct RetrieveJobQueueRow {
   std::string alternateCopyNbs = "";
   time_t startTime = 0;  //!< Time the job was inserted into the queue
   time_t creationTime = 0;
-  std::string retrieveReportURL = "NOT_DEFINED";
+  std::string retrieveReportURL = "";
   std::string retrieveErrorReportURL = "";
   std::string requesterName = "";
   std::string requesterGroup = "";
@@ -511,16 +511,16 @@ public:
   }
 
   /**
-  * When CTA received the deleteRetrieve request from the disk buffer,
-  * this ensures removal from the queue
+  * When CTA received the PREPARE_ABORT request from the disk buffer,
+  * the following method ensures removal from the pending queue
   *
   * @param txn           Transaction handling the connection to the backend database
-  * @param diskInstance  Name of the disk instance where the retrieve request was issued from
   * @param archiveFileID The retrieve file ID assigned originally
   *
   * @return  The number of affected jobs
   */
-  static uint64_t cancelRetrieveJob(Transaction& txn, const std::string& diskInstance, uint64_t archiveFileID);
+  static uint64_t cancelRetrieveJob(Transaction& txn, uint64_t archiveFileID);
+
   /**
     * Select any jobs with specified status(es) from the report,
     * flag them as being reported and return the job IDs
@@ -538,8 +538,8 @@ public:
 
   /**
   * Assign a mount ID and VID to a selection of rows
-  * which will be moved from Insert queue
-  * to Job queue table in the DB
+  * which will be moved from the RETRIEVE_PENDING_QUEUE table
+  * to the RETRIEVE_ACTIVE_QUEUE table in the DB
   *
   *
   * @param txn        Transaction to use for this query
@@ -552,12 +552,12 @@ public:
   * @return  result set containing job IDs of the rows which were updated
   */
   static std::pair<rdbms::Rset, uint64_t>
-  moveJobsToDbQueue(Transaction& txn,
-                    RetrieveJobStatus newStatus,
-                    const SchedulerDatabase::RetrieveMount::MountInfo& mountInfo,
-                    std::vector<std::string>& noSpaceDiskSystemNames,
-                    uint64_t maxBytesRequested,
-                    uint64_t limit);
+  moveJobsToDbActiveQueue(Transaction& txn,
+                          RetrieveJobStatus newStatus,
+                          const SchedulerDatabase::RetrieveMount::MountInfo& mountInfo,
+                          std::vector<std::string>& noSpaceDiskSystemNames,
+                          uint64_t maxBytesRequested,
+                          uint64_t limit);
   /**
   * Update job status
   *
@@ -578,8 +578,9 @@ public:
   uint64_t updateFailedJobStatus(Transaction& txn, RetrieveJobStatus newStatus);
 
   /**
-  * Move from ARCHIVE_ACTIVE_QUEUE to ARCHIVE_PENDING_QUEUE
-  * a failed job so that it can be to drive queues requeued.
+  * Move a failed job from RETRIEVE_ACTIVE_QUEUE
+  * to RETRIEVE_PENDING_QUEUE so that it can be picked up
+  * by a different drive process again.
   * This method updates also the retry statistics
   *
   * @param txn                  Transaction to use for this query
@@ -593,7 +594,20 @@ public:
                             std::optional<std::list<std::string>> jobIDs = std::nullopt);
 
   /**
-  * Move from ARCHIVE_ACTIVE_QUEUE to ARCHIVE_PENDING_QUEUE
+  * @brief This method will check if RETRIEVE_ERROR_REPORT_URL column is not NULL and not empty
+  * if the URL exists, it will move all the jobs of this VID from RETRIEVE_PENDING_QUEUE
+  * to RETRIEVE_ACTIVE_QUEUE and set the status to RJS_ToReportToUserForFailure
+  * In case the RETRIEVE_ERROR_REPORT_URL does not exist, it will directly delete these job
+  * rows assuming reporting is not required
+  *
+  * @param txn                  Transaction to use for this query
+  * @param vid                  tape VID to requeue
+  * @return                     Number of updated rows
+  */
+  static uint64_t handlePendingRetrieveJobsAfterTapeStateChange(Transaction& txn, std::string vid);
+
+  /**
+  * Move from RETRIEVE_ACTIVE_QUEUE to RETRIEVE_PENDING_QUEUE
   * a batch of jobs so that they can be requeued to drive queues later
   * This methos is static and does not udate any retry statistics
   * It is used for batch of jobs not processed, returning from the task queue

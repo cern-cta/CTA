@@ -111,7 +111,7 @@ public:
 
   /**
    * Get all archive queues with status:
-   * AJS_ToReportToUserForTransfer or AJS_ToReportToUserForFailure
+   * AJS_ToReportToUserForSuccess or AJS_ToReportToUserForFailure
    *
    * @param filesRequested  number of rows to be reported from the scheduler DB
    * @param logContext      logging context
@@ -140,7 +140,27 @@ public:
   std::list<SchedulerDatabase::RetrieveQueueCleanupInfo>
   getRetrieveQueuesCleanupInfo(log::LogContext& logContext) override;
 
-  void setRetrieveQueueCleanupFlag(const std::string& vid, bool val, log::LogContext& logContext) override;
+  void setRetrieveQueueCleanupFlag(const std::string& vid, bool val, log::LogContext& logContext) override {
+    throw cta::exception::Exception("Not supported for RelationalDB implementation.");
+  };
+
+  /**
+   * Cleans up retrieve jobs for the specified Tape VID in the scheduler database.
+   *
+   * This method checks the `RETRIEVE_ERROR_REPORT_URL` column for each job in the
+   * `RETRIEVE_PENDING_QUEUE` associated with the given VID.
+   *
+   * - If the `RETRIEVE_ERROR_REPORT_URL` is **not NULL and not empty**, the job is moved to the
+   *   `RETRIEVE_ACTIVE_QUEUE` with its status updated to `RJS_ToReportToUserForFailure`,
+   *   indicating that a failure report should be sent to the user.
+   *
+   * - If the `RETRIEVE_ERROR_REPORT_URL` is **NULL or empty**, the job is considered to not require
+   *   reporting and is **deleted** from the `RETRIEVE_PENDING_QUEUE`.
+   *
+   * @param vid         The volume identifier for which pending retrieve jobs should be processed.
+   * @param logContext  The logging context for recording operation details.
+   */
+  void cleanRetrieveQueueForVid(const std::string& vid, log::LogContext& logContext) override;
 
   std::list<RetrieveQueueStatistics>
   getRetrieveQueueStatistics(const cta::common::dataStructures::RetrieveFileQueueCriteria& criteria,

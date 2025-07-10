@@ -142,6 +142,10 @@ public:
     m_SchedDB->setRetrieveQueueCleanupFlag(vid, val, lc);
   }
 
+  void cleanRetrieveQueueForVid(const std::string& vid, log::LogContext& lc) override {
+    m_SchedDB->cleanRetrieveQueueForVid(vid, lc);
+  }
+
   std::list<std::unique_ptr<RetrieveJob>> getNextRetrieveJobsToReportBatch(uint64_t filesRequested,
                                                                            log::LogContext& lc) override {
     return m_SchedDB->getNextRetrieveJobsToReportBatch(filesRequested, lc);
