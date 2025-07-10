@@ -27,8 +27,8 @@ fi
 
 echo "$(date '+%Y-%m-%d %H:%M:%S') [$(basename "${BASH_SOURCE[0]}")] Ready"
 
-tail -F /var/log/cta/cta-frontend-grpc.log &
-runuser --shell='/bin/bash' --session-command='/usr/bin/cta-frontend-grpc >> /var/log/cta/cta-frontend-grpc.log' cta
+tail -F /var/log/cta/cta-frontend.log &
+runuser --shell='/bin/bash' --session-command='/usr/bin/cta-frontend-grpc >> /var/log/cta/cta-frontend.log' cta
 
 echo "ctafrontend died"
 echo "analysing core file if any"
