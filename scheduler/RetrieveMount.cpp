@@ -352,14 +352,17 @@ void cta::RetrieveMount::putQueueToSleep(const std::string& diskSystemName,
   m_dbMount->putQueueToSleep(diskSystemName, sleepTime, logContext);
 }
 
-//------------------------------------------------------------------------------
-// waitAndFinishSettingJobsBatchRetrieved()
-//------------------------------------------------------------------------------
 #ifdef CTA_PGSCHED
+//------------------------------------------------------------------------------
+// flushAsyncSuccessReports()
+//------------------------------------------------------------------------------
 void cta::RetrieveMount::flushAsyncSuccessReports(std::queue<std::unique_ptr<cta::RetrieveJob>>& successfulRetrieveJobs,
                                                   cta::log::LogContext& logContext) {
   throw cta::exception::Exception("Not implemented");
 }
+//------------------------------------------------------------------------------
+// setJobBatchTransferred()
+//------------------------------------------------------------------------------
 void cta::RetrieveMount::setJobBatchTransferred(std::queue<std::unique_ptr<cta::RetrieveJob>>& successfulRetrieveJobs,
                                                 cta::log::LogContext& logContext) {
   std::list<std::unique_ptr<cta::SchedulerDatabase::RetrieveJob>> validatedSuccessfulDBRetrieveJobs;

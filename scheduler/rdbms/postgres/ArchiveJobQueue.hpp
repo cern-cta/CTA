@@ -453,8 +453,8 @@ public:
 
   /**
    * Assign a mount ID and VID to a selection of rows
-   * which will be moved from Insert queue
-   * to Job queue table in the DB
+   * which will be moved from the ARCHIVE_PENDING_QUEUE table
+   * to the ARCHIVE_ACTIVE_QUEUE table in the DB
    *
    *
    * @param txn        Transaction to use for this query
@@ -492,8 +492,9 @@ public:
   uint64_t updateFailedJobStatus(Transaction& txn, ArchiveJobStatus newStatus);
 
   /**
-   * Move from ARCHIVE_ACTIVE_QUEUE to ARCHIVE_PENDING_QUEUE
-   * a failed job so that it can be to drive queues requeued.
+   * Move a failed job from ARCHIVE_ACTIVE_QUEUE
+   * to ARCHIVE_PENDING_QUEUE so that it can be picked up
+   * by a different drive process again.
    * This method updates also the retry statistics
    *
    * @param txn                  Transaction to use for this query

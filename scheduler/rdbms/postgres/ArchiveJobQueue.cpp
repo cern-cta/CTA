@@ -623,7 +623,10 @@ uint64_t ArchiveJobQueueRow::getNextArchiveRequestID(rdbms::Conn& conn) {
 
 uint64_t
 ArchiveJobQueueRow::cancelArchiveJob(Transaction& txn, const std::string& diskInstance, uint64_t archiveFileID) {
-  // Delete from ARCHIVE_PENDING_QUEUE
+  /* All jobs which were already picked up by the
+   * mount to the task queue will run and not be deleted.
+   * Deletes only from ARCHIVE_PENDING_QUEUE
+   */
   std::string sqlActive = R"SQL(
     DELETE FROM ARCHIVE_PENDING_QUEUE
     WHERE

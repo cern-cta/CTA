@@ -218,7 +218,7 @@ void ArchiveRdbJob::failReport(const std::string& failureReason, log::LogContext
     cta::utils::Timer t;
     uint64_t deletionCount = 0;
     if (reportType == ReportType::NoReportRequired || m_jobRow.totalReportRetries >= m_jobRow.maxReportRetries) {
-      // the job will be moved to FAILED_QUEUE table, and delted from the ACTIVE_QUEUE.
+      // the job will be moved to FAILED_QUEUE table, and deleted from the ACTIVE_QUEUE.
       uint64_t nrows = m_jobRow.updateJobStatusForFailedReport(txn, ArchiveJobStatus::ReadyForDeletion);
       deletionCount = nrows;
       if (nrows != 1) {

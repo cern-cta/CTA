@@ -881,17 +881,10 @@ uint64_t RetrieveJobQueueRow::getNextRetrieveRequestID(rdbms::Conn& conn) {
 }
 
 uint64_t RetrieveJobQueueRow::cancelRetrieveJob(Transaction& txn, uint64_t archiveFileID) {
-  /* As of now, there is no way to remove job from the in-memory
-   * (task) queue of the Mount session (disk/tape) processes
-   * All jobs picked up by the mount to the task queue will run and later fail
-   * due to missing DB entries. Deleting the archive request blindly
-   * can cause updates on non-existent DB rows. Strategy improvement
-   * would be good in the future (+ batching) — either notify disk/tape processes
-   * or have them verify job presence in Scheduler DB before execution.
-   * We could also delete from both tables in one go using
-   * WITH ... RETURNING 1; SELECT ... statement style
+  /* All jobs which were already picked up by the
+   * mount to the task queue will run and not be deleted.
+   * Deletes only from RETRIEVE_PENDING_QUEUE
    */
-  // Delete from RETRIEVE_PENDING_QUEUE
   std::string sqlActive = R"SQL(
     DELETE FROM RETRIEVE_PENDING_QUEUE
     WHERE
