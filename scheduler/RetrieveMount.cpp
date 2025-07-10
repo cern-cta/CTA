@@ -352,29 +352,12 @@ void cta::RetrieveMount::putQueueToSleep(const std::string& diskSystemName,
   m_dbMount->putQueueToSleep(diskSystemName, sleepTime, logContext);
 }
 
-#ifdef CTA_PGSCHED
-//------------------------------------------------------------------------------
-// flushAsyncSuccessReports()
-//------------------------------------------------------------------------------
-void cta::RetrieveMount::flushAsyncSuccessReports(std::queue<std::unique_ptr<cta::RetrieveJob>>& successfulRetrieveJobs,
-                                                  cta::log::LogContext& logContext) {
-  throw cta::exception::Exception("Not implemented");
-}
 //------------------------------------------------------------------------------
 // setJobBatchTransferred()
 //------------------------------------------------------------------------------
 void cta::RetrieveMount::setJobBatchTransferred(std::queue<std::unique_ptr<cta::RetrieveJob>>& successfulRetrieveJobs,
                                                 cta::log::LogContext& logContext) {
   std::list<std::unique_ptr<cta::SchedulerDatabase::RetrieveJob>> validatedSuccessfulDBRetrieveJobs;
-#else
-void cta::RetrieveMount::setJobBatchTransferred(std::queue<std::unique_ptr<cta::RetrieveJob>>& successfulRetrieveJobs,
-                                                cta::log::LogContext& logContext) {
-  throw cta::exception::Exception("Not implemented");
-}
-void cta::RetrieveMount::flushAsyncSuccessReports(std::queue<std::unique_ptr<cta::RetrieveJob>>& successfulRetrieveJobs,
-                                                  cta::log::LogContext& logContext) {
-  std::list<cta::SchedulerDatabase::RetrieveJob*> validatedSuccessfulDBRetrieveJobs;
-#endif
   std::list<std::unique_ptr<cta::RetrieveJob>>
     validatedSuccessfulRetrieveJobs;  //List to ensure the destruction of the retrieve jobs at the end of this method
   std::unique_ptr<cta::RetrieveJob> job;
@@ -421,7 +404,7 @@ void cta::RetrieveMount::flushAsyncSuccessReports(std::queue<std::unique_ptr<cta
       tl.addToLog(params);
       //TODO : if repack, add log to say that the jobs were marked as RJS_Succeeded
       logContext.log(cta::log::DEBUG,
-                     "In cta::RetrieveMount::flushAsyncSuccessReports(): deleted complete retrieve jobs.");
+                     "In cta::RetrieveMount::setJobBatchTransferred(): deleted complete retrieve jobs.");
     }
   } catch (const cta::exception::NoSuchObject& ex) {
     cta::log::ScopedParamContainer params(logContext);
@@ -433,7 +416,7 @@ void cta::RetrieveMount::flushAsyncSuccessReports(std::queue<std::unique_ptr<cta
         .add("lastKnownDiskPath", job->archiveFile.diskFileInfo.path);
     }
     const std::string msg_error =
-      "In cta::RetrieveMount::flushAsyncSuccessReports(): unable to access jobs, they do not exist in the objectstore.";
+      "In cta::RetrieveMount::setJobBatchTransferred(): unable to access jobs, they do not exist in the objectstore.";
     logContext.log(cta::log::WARNING, msg_error);
   } catch (const cta::exception::Exception& e) {
     cta::log::ScopedParamContainer params(logContext);
@@ -444,7 +427,7 @@ void cta::RetrieveMount::flushAsyncSuccessReports(std::queue<std::unique_ptr<cta
         .add("diskFileId", job->archiveFile.diskFileId)
         .add("lastKnownDiskPath", job->archiveFile.diskFileInfo.path);
     }
-    const std::string msg_error = "In cta::RetrieveMount::flushAsyncSuccessReports(): got an exception";
+    const std::string msg_error = "In cta::RetrieveMount::setJobBatchTransferred(): got an exception";
     logContext.log(cta::log::ERR, msg_error);
     logContext.logBacktrace(cta::log::INFO, e.backtrace());
     // Failing here does not really affect the session so we can carry on. Reported jobs are reported, non-reported ones
@@ -458,7 +441,7 @@ void cta::RetrieveMount::flushAsyncSuccessReports(std::queue<std::unique_ptr<cta
         .add("diskFileId", job->archiveFile.diskFileId)
         .add("lastKnownDiskPath", job->archiveFile.diskFileInfo.path);
     }
-    const std::string msg_error = "In cta::RetrieveMount::flushAsyncSuccessReports(): got an standard exception";
+    const std::string msg_error = "In cta::RetrieveMount::setJobBatchTransferred(): got an standard exception";
     logContext.log(cta::log::ERR, msg_error);
     // Failing here does not really affect the session so we can carry on. Reported jobs are reported, non-reported ones
     // will be retried.

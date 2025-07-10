@@ -86,9 +86,6 @@ public:
 
   void setTapeMounted(log::LogContext& logContext) const override {};
 
-  void flushAsyncSuccessReports(std::queue<std::unique_ptr<cta::RetrieveJob>>& successfulRetrieveJobs,
-                                cta::log::LogContext& logContext) override {};
-
   void setJobBatchTransferred(std::queue<std::unique_ptr<cta::RetrieveJob>>& successfulRetrieveJobs,
                               cta::log::LogContext& logContext) override {};
 

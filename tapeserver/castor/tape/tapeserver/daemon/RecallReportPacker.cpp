@@ -391,7 +391,7 @@ bool RecallReportPacker::errorHappened() {
 //fullCheckAndFinishAsyncExecute()
 //------------------------------------------------------------------------------
 void RecallReportPacker::fullCheckAndFinishAsyncExecute() {
-  m_retrieveMount->flushAsyncSuccessReports(m_successfulRetrieveJobs, m_lc);
+  m_retrieveMount->setJobBatchTransferred(m_successfulRetrieveJobs, m_lc);
 }
 
 //------------------------------------------------------------------------------

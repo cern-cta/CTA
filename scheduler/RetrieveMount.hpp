@@ -245,17 +245,15 @@ public:
   virtual bool testReserveDiskSpace(const cta::DiskSpaceReservationRequest& request, log::LogContext& logContext);
 
   /**
-    * Wait and complete reporting of a batch of jobs successes. The per jobs handling has
-    * already been launched in the background using cta::RetrieveJob::asyncComplete().
+    * Complete reporting of a batch of jobs successes. In case ofobjectstore implementation,
+    * the per jobs handling has already been launched in the background using cta::RetrieveJob::asyncComplete().
     * This function will check completion of those async completes and then proceed
-    * with any necessary common handling.
+    * with any necessary common handling. In case of RelationalDB imnplementation (PGSCHED)
+    * this is simply a updating the rows in the DB releasing these jobs to be picked up for reporting
     *
     * @param successfulRetrieveJobs the jobs to report
     * @param logContext
     */
-  virtual void flushAsyncSuccessReports(std::queue<std::unique_ptr<cta::RetrieveJob>>& successfulRetrieveJobs,
-                                        cta::log::LogContext& logContext);
-
   virtual void setJobBatchTransferred(std::queue<std::unique_ptr<cta::RetrieveJob>>& successfulRetrieveJobs,
                                       cta::log::LogContext& logContext);
 
