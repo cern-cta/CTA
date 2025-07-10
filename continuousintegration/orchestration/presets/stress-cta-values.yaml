@@ -34,9 +34,6 @@ global:
 
 
 frontend:
-  xrd:
-    enabled: true
-
   preRun:
     enabled: true
     # Mount /var/log contents in /mnt/logs so that the fluentd can consume it

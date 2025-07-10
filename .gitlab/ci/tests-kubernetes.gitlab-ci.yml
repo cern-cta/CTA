@@ -241,6 +241,7 @@ stress-test:
     - *setup-k8s-test-variables
   script:
     - |
+      EXTRA_SPAWN_ARGS="--cta-config presets/stress-cta-values.yaml --eos-config presets/stress-eos-values.yaml ${EXTRA_SPAWN_ARGS}"
       extra_args=($EXTRA_ARGS)
       if [[ -n "${EXTRA_SPAWN_ARGS}" ]]; then extra_args+=(--spawn-options "${EXTRA_SPAWN_ARGS}"); fi
       EXTRA_STRESS_TEST_OPTIONS=""
@@ -258,7 +259,6 @@ stress-test:
                           --catalogue-config ${CATALOGUE_CONFIG}
                           --scheduler-config ${SCHEDULER_CONFIG}
                           --test-script tests/prepare_tests.sh
-                          --spawn-options " --cta-config presets/stress-cta-values.yaml --eos-config presets/stress-eos-values.yaml"
                           "${extra_args[@]}"
     # Set up monitoring
     - git clone https://gitlab+deploy-token-3624:${CI_CTA_DEPLOY_TOKEN_READONLY}@gitlab.cern.ch/cta/sandbox/ci_monitoring.git
