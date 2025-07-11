@@ -27,7 +27,7 @@ grpc:
 
     logger:
       logLevel: "INFO"
-      logFormat: default
+      logFormat: json
 
 xrd:
   enabled: true
