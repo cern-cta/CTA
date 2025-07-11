@@ -184,7 +184,8 @@ echo "Sleeping 10 seconds to give Prometheus time to scrape the metrics"
 sleep 10
 
 # Test that telemetry agrees with the amount of files archived and retrieved
-telemetry_summary.sh -n $NAMESPACE
+kubectl -n ${NAMESPACE} exec ${CLIENT_POD} -c client -- bash -c "/root/client_telemetry_summary.sh"  || exit 1
+kubectl -n ${NAMESPACE} cp ${CLIENT_POD}:/metrics.txt ../../../metrics.txt
 
 # Test activity
 TEST_PRERUN=". /root/client_env "

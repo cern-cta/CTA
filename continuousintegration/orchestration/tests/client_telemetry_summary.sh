@@ -22,36 +22,8 @@ write_metric() {
   echo "$name $value" >> "$METRICS_FILE"
 }
 
-usage() { cat <<EOF 1>&2
-Usage: $0 -n <namespace>
-EOF
-exit 1
-}
-
-while getopts "n:" o; do
-    case "${o}" in
-        n)
-            NAMESPACE=${OPTARG}
-            ;;
-        *)
-            usage
-            ;;
-    esac
-done
-shift $((OPTIND-1))
-
-if [ -z "${NAMESPACE}" ]; then
-    usage
-fi
-
-# Ensure we clean up the portforward
-trap "trap - SIGTERM && kill -- -$$" SIGINT SIGTERM EXIT
-kubectl port-forward -n $NAMESPACE svc/prometheus-server 9090:80 >/dev/null 2>&1 &
-PF_PID=$!
-sleep 1  # Give it a moment to bind
-
-PROM_URL="http://localhost:9090"
-METRICS_FILE="../../../metrics.txt"
+PROM_URL="http://prometheus-server"
+METRICS_FILE="metrics.txt"
 
 # Clear output
 > "$METRICS_FILE"
