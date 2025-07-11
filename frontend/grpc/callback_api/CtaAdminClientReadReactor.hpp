@@ -30,6 +30,9 @@
 #include "cta_frontend.pb.h"
 #include "cta_frontend.grpc.pb.h"
 
+#include <condition_variable>
+
+
 constexpr unsigned int cmd_pair(cta::admin::AdminCmd::Cmd cmd, cta::admin::AdminCmd::SubCmd subcmd) {
     return (cmd << 16) + subcmd;
 }
