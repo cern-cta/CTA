@@ -31,16 +31,33 @@ TapeFileLsWriteReactor::TapeFileLsWriteReactor(cta::catalogue::Catalogue &catalo
     cta::catalogue::TapeFileSearchCriteria searchCriteria;
 
     searchCriteria.vid = requestMsg.getOptional(OptionString::VID, &has_any);
-    // Disk file IDs can be a list or a single ID
-    auto diskFileId = requestMsg.getOptional(OptionString::FXID, &has_any);
-    searchCriteria.diskFileIds = requestMsg.getOptional(OptionStrList::FILE_ID, &has_any);
-    if(diskFileId.has_value()) {
-        if (auto fid = diskFileId.value(); !utils::isValidID(fid)) {
-            std::cout << fid << " is not a valid file ID, will throw" << std::endl;
-            throw cta::exception::UserError(fid + " is not a valid file ID");
+
+    auto getAndValidateDiskFileIdOptional = [requestMsg](bool* has_any) -> std::optional<std::string> {
+        using namespace cta::admin;
+        auto diskFileIdHex  = requestMsg.getOptional(OptionString::FXID, has_any);
+        auto diskFileIdStr  = requestMsg.getOptional(OptionString::DISK_FILE_ID, has_any);
+
+        if(diskFileIdHex && diskFileIdStr) {
+            throw exception::UserError("File ID can't be received in both string (" + diskFileIdStr.value() + ") and hexadecimal (" + diskFileIdHex.value() + ") formats");
         }
+
+        if(diskFileIdHex) {
+            // If provided, convert FXID (hexadecimal) to DISK_FILE_ID (decimal)
+            if (!utils::isValidHex(diskFileIdHex.value())) {
+                throw cta::exception::UserError(diskFileIdHex.value() + " is not a valid hexadecimal file ID value");
+            }
+            return cta::utils::hexadecimalToDecimal(diskFileIdHex.value());
+        }
+
+        return diskFileIdStr;
+    };
+
+    // Disk file IDs can be a list or a single ID
+    auto diskFileIdStr = getAndValidateDiskFileIdOptional(&has_any);
+    searchCriteria.diskFileIds = requestMsg.getOptional(OptionStrList::FILE_ID, &has_any);
+    if(diskFileIdStr) {
         if(!searchCriteria.diskFileIds) searchCriteria.diskFileIds = std::vector<std::string>();
-        searchCriteria.diskFileIds->push_back(diskFileId.value());
+        searchCriteria.diskFileIds->push_back(diskFileIdStr.value());
     }
     searchCriteria.diskInstance = requestMsg.getOptional(OptionString::INSTANCE, &has_any);
 
