@@ -12,6 +12,7 @@
 #include "common/dataStructures/LogicalLibrary.hpp"
 #include "common/dataStructures/PhysicalLibrary.hpp"
 #include "common/dataStructures/DriveStatusSerDeser.hpp"
+#include "common/dataStructures/AdminUser.hpp"
 
 inline void fillDiskInstanceItem(const cta::common::dataStructures::DiskInstance &di,
     cta::admin::DiskInstanceLsItem *di_item,
@@ -383,4 +384,18 @@ inline void fillDriveItem(const cta::common::dataStructures::TapeDrive &dr,
             // clang-format on
         }
         dr_item->set_drive_status_since(drive_time);
+    }
+
+inline void fillAdminItem(const cta::common::dataStructures::AdminUser &ad,
+    cta::admin::AdminLsItem *ad_item,
+    const std::string& m_instanceName) {
+        ad_item->set_user(ad.name);
+        ad_item->mutable_creation_log()->set_username(ad.creationLog.username);
+        ad_item->mutable_creation_log()->set_host(ad.creationLog.host);
+        ad_item->mutable_creation_log()->set_time(ad.creationLog.time);
+        ad_item->mutable_last_modification_log()->set_username(ad.lastModificationLog.username);
+        ad_item->mutable_last_modification_log()->set_host(ad.lastModificationLog.host);
+        ad_item->mutable_last_modification_log()->set_time(ad.lastModificationLog.time);
+        ad_item->set_comment(ad.comment);
+        ad_item->set_instance_name(m_instanceName);
     }
