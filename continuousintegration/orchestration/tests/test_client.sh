@@ -70,7 +70,7 @@ kubectl -n ${NAMESPACE} cp refresh_log_fd.sh "${CTA_TPSRV_POD}:/root/" -c cta-ta
 
 NB_FILES=10000
 FILE_SIZE_KB=15
-NB_PROCS=100
+NB_PROCS=20
 
 echo
 echo "Setting up environment for tests."
