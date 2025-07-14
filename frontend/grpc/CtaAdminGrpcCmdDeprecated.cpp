@@ -39,6 +39,7 @@
 
 #include <cryptopp/base64.h>
 #include <getopt.h>
+#include <fstream>
 
 std::atomic<bool> cta::frontend::grpc::client::CtaAdminGrpcCmdDeprecated::m_abIsJson(false);
 
