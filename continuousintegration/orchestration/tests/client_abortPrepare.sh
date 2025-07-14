@@ -117,9 +117,6 @@ for d in $(echo ${INITIAL_DRIVES_STATE} | jq -r '.[] | select (.driveStatus == "
   admin_cta dr up $d
 done
 
-echo "$(date +%s): Waiting for retrieve queues to be cleared:"
-sleep 10
-
 SECONDS_PASSED=0
 WAIT_FOR_RETRIEVE_QUEUES_CLEAR_TIMEOUT=$((60))
 # Wait for Requests to be removed.
