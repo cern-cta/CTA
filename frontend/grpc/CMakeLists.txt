@@ -31,9 +31,11 @@ add_executable(cta-frontend-grpc Main.cpp FrontendGrpcService.cpp
 
 if(CTA_USE_PGSCHED)
   target_link_libraries(cta-frontend-grpc
+    ${GRPC_GRPC++_REFLECTION_LIBRARY}
     ctascheduler ctacommon ctacatalogue ctagrpc)
 else()
   target_link_libraries(cta-frontend-grpc
+    ${GRPC_GRPC++_REFLECTION_LIBRARY}
     ctascheduler ctacommon ctaobjectstore ctacatalogue ctagrpc)
 endif()
 
@@ -49,6 +51,11 @@ install (FILES cta-frontend-grpc.conf.example DESTINATION ${CMAKE_INSTALL_SYSCON
 ## cta-admin-grpc
 ## Eventually this will be unified with the streaming commands implementation and renamed to cta-admin-grpc
 ##
+include_directories(${XRD_SSI_PB_DIR}/eos_cta/include)
+
+# Compiled protocol buffers
+include_directories(${CMAKE_BINARY_DIR}/eos_cta ${PROTOBUF3_INCLUDE_DIRS})
+
 add_executable(cta-admin-grpc
   CtaAdminGrpcCmd.cpp
   ${PROJECT_SOURCE_DIR}/frontend/common/AdminCmd.cpp

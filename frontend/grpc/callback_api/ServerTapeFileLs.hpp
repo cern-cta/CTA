@@ -53,7 +53,13 @@ TapeFileLsWriteReactor::TapeFileLsWriteReactor(cta::catalogue::Catalogue &catalo
     };
 
     // Disk file IDs can be a list or a single ID
-    auto diskFileIdStr = getAndValidateDiskFileIdOptional(&has_any);
+    std::optional<std::string> diskFileIdStr;
+    try {
+        diskFileIdStr = getAndValidateDiskFileIdOptional(&has_any);
+    } catch (const cta::exception::UserError &ex) {
+        Finish(Status(::grpc::StatusCode::INVALID_ARGUMENT, ex.getMessageValue()));
+        return;
+    }
     searchCriteria.diskFileIds = requestMsg.getOptional(OptionStrList::FILE_ID, &has_any);
     if(diskFileIdStr) {
         if(!searchCriteria.diskFileIds) searchCriteria.diskFileIds = std::vector<std::string>();
@@ -64,8 +70,8 @@ TapeFileLsWriteReactor::TapeFileLsWriteReactor(cta::catalogue::Catalogue &catalo
     searchCriteria.archiveFileId = requestMsg.getOptional(OptionUInt64::ARCHIVE_FILE_ID, &has_any);
 
     if(!has_any) {
-        std::cout << "Must specify at least one of the following search options: vid, fxid, fxidfile or archiveFileId, will throw" << std::endl;
-        throw cta::exception::UserError("Must specify at least one of the following search options: vid, fxid, fxidfile or archiveFileId");
+        Finish(Status(::grpc::StatusCode::INVALID_ARGUMENT, "Must specify at least one of the following search options: vid, fxid, fxidfile or archiveFileId"));
+        return;
     }
 
     m_tapeFileItor = catalogue.ArchiveFile()->getArchiveFilesItor(searchCriteria);

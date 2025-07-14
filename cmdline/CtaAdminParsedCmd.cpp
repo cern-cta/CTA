@@ -20,8 +20,8 @@
 #include <iostream>
 #include <fstream>
 
-#include <XrdSsiPbLog.hpp>
-#include <XrdSsiPbIStreamBuffer.hpp>
+// #include <XrdSsiPbLog.hpp>
+// #include <XrdSsiPbIStreamBuffer.hpp>
 
 #include <cmdline/CtaAdminParsedCmd.hpp>
 #include <cmdline/CtaAdminTextFormatter.hpp>

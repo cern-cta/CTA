@@ -53,7 +53,13 @@ RecycleTapeFileLsWriteReactor::RecycleTapeFileLsWriteReactor(cta::catalogue::Cat
         return diskFileIdStr;
     };
     
-    auto diskFileIdStr = getAndValidateDiskFileIdOptional(&has_any);
+    std::optional<std::string> diskFileIdStr;
+    try {
+       diskFileIdStr = getAndValidateDiskFileIdOptional(&has_any);
+    } catch (const cta::exception::UserError &ex) {
+        Finish(Status(::grpc::StatusCode::INVALID_ARGUMENT, ex.getMessageValue()));
+        return;
+    }
 
     searchCriteria.diskFileIds = requestMsg.getOptional(OptionStrList::FILE_ID, &has_any);
     
@@ -73,7 +79,8 @@ RecycleTapeFileLsWriteReactor::RecycleTapeFileLsWriteReactor(cta::catalogue::Cat
     searchCriteria.copynb = requestMsg.getOptional(OptionUInt64::COPY_NUMBER);
 
     if(!has_any){
-        throw cta::exception::UserError("Must specify at least one of the following search options: vid, fxid, fxidfile, archiveFileId, instance, vo, ltmin, ltmax");
+        Finish(Status(::grpc::INVALID_ARGUMENT, "Must specify at least one of the following search options: vid, fxid, fxidfile, archiveFileId, instance, vo, ltmin, ltmax"));
+        return;
     }
     
     m_fileRecycleLogItor = catalogue.FileRecycleLog()->getFileRecycleLogItor(searchCriteria);
