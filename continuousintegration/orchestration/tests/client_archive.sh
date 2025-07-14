@@ -90,8 +90,6 @@ while test ${TO_BE_ARCHIVED} != ${ARCHIVED}; do
   ARCHIVED=0
   for ((subdir=0; subdir < ${NB_DIRS}; subdir++)); do
     ARCHIVED=$(( ${ARCHIVED} + $(eos root://${EOS_MGM_HOST} ls -y ${EOS_DIR}/${subdir} | grep '^d0::t1' | wc -l) ))
-    sleep 1 # do not hammer eos too hard
-    let SECONDS_PASSED=SECONDS_PASSED+1
   done
   end_check=$(date +%s)
   duration=$((end_check - start_check))
