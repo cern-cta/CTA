@@ -7,9 +7,10 @@
 #include "cta_frontend.grpc.pb.h"
 #include <grpcpp/grpcpp.h>
 #include "CtaAdminServerWriteReactor.hpp"
+#include <tuple>
 
 namespace cta::frontend::grpc {
-template<typename T, typename MessageItem, typename FillFunc>
+template<typename T, typename MessageItem, typename FillFunc, typename... ExtraArgs>
 class TemplateAdminCmdStream : public CtaAdminServerWriteReactor {
 public:
     using Iterator = typename std::list<T>::const_iterator;
@@ -19,9 +20,10 @@ public:
                                const std::string& instanceName,
                                const std::list<T>& itemList,
                                cta::admin::HeaderType headerType,
-                               FillFunc fillFunc)
+                               FillFunc fillFunc,
+                               ExtraArgs... extraArgs)
     : CtaAdminServerWriteReactor(catalogue, scheduler, instanceName),
-      m_itemList(itemList), m_fillFunc(fillFunc), m_headerType(headerType)
+      m_itemList(itemList), m_fillFunc(fillFunc), m_headerType(headerType), m_extraArgs(extraArgs...)
     {
         m_iter = m_itemList.cbegin();
         NextWrite();
@@ -45,7 +47,10 @@ public:
             const auto& item = *m_iter++;
             auto *data = new cta::xrd::Data();
             MessageItem *messageItem = getMessageField(data);
-            m_fillFunc(item, messageItem, m_instanceName);
+            // Properly expand the tuple
+            std::apply([&](const ExtraArgs&... args) {
+                m_fillFunc(item, messageItem, m_instanceName, args...);
+            }, m_extraArgs);
             m_response.set_allocated_data(data);
             CtaAdminServerWriteReactor::StartWrite(&m_response);
             return;
@@ -61,5 +66,6 @@ protected:
     Iterator m_iter;
     FillFunc m_fillFunc;
     cta::admin::HeaderType m_headerType;
+    std::tuple<ExtraArgs...> m_extraArgs;
 };
 }
