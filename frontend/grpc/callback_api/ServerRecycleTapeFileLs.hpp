@@ -12,6 +12,7 @@
 #include "common/dataStructures/FileRecycleLog.hpp"
 #include "../RequestMessage.hpp"
 #include "CtaAdminServerWriteReactor.hpp"
+#include "cmdline/admin_common/DataItemMessageFill.hpp"
 
 namespace cta::frontend::grpc {
 
@@ -108,39 +109,7 @@ void RecycleTapeFileLsWriteReactor::NextWrite() {
             cta::xrd::Data* data = new cta::xrd::Data();
             cta::admin::RecycleTapeFileLsItem *recycleLogToReturn = data->mutable_rtfls_item();
 
-            recycleLogToReturn->set_vid(fileRecycleLog.vid);
-            recycleLogToReturn->set_fseq(fileRecycleLog.fSeq);
-            recycleLogToReturn->set_block_id(fileRecycleLog.blockId);
-            recycleLogToReturn->set_copy_nb(fileRecycleLog.copyNb);
-            recycleLogToReturn->set_tape_file_creation_time(fileRecycleLog.tapeFileCreationTime);
-            recycleLogToReturn->set_archive_file_id(fileRecycleLog.archiveFileId);
-            recycleLogToReturn->set_disk_instance(fileRecycleLog.diskInstanceName);
-            recycleLogToReturn->set_disk_file_id(fileRecycleLog.diskFileId);
-            recycleLogToReturn->set_disk_file_id_when_deleted(fileRecycleLog.diskFileIdWhenDeleted);
-            recycleLogToReturn->set_disk_file_uid(fileRecycleLog.diskFileUid);
-            recycleLogToReturn->set_disk_file_gid(fileRecycleLog.diskFileGid);
-            recycleLogToReturn->set_size_in_bytes(fileRecycleLog.sizeInBytes);
-            
-            // Checksum
-            common::ChecksumBlob csb;
-            checksum::ChecksumBlobToProtobuf(fileRecycleLog.checksumBlob, csb);
-            for(auto csb_it = csb.cs().begin(); csb_it != csb.cs().end(); ++csb_it) {
-              auto cs_ptr = recycleLogToReturn->add_checksum();
-              cs_ptr->set_type(csb_it->type());
-              cs_ptr->set_value(checksum::ChecksumBlob::ByteArrayToHex(csb_it->value()));
-            }
-            recycleLogToReturn->set_storage_class(fileRecycleLog.storageClassName);
-            recycleLogToReturn->set_virtual_organization(fileRecycleLog.vo);
-            recycleLogToReturn->set_archive_file_creation_time(fileRecycleLog.archiveFileCreationTime);
-            recycleLogToReturn->set_reconciliation_time(fileRecycleLog.reconciliationTime);
-            if(fileRecycleLog.collocationHint){
-              recycleLogToReturn->set_collocation_hint(fileRecycleLog.collocationHint.value());
-            }
-            if(fileRecycleLog.diskFilePath){
-              recycleLogToReturn->set_disk_file_path(fileRecycleLog.diskFilePath.value());
-            }
-            recycleLogToReturn->set_reason_log(fileRecycleLog.reasonLog);
-            recycleLogToReturn->set_recycle_log_time(fileRecycleLog.recycleLogTime);
+            fillRecycleTapeFileItem(fileRecycleLog, recycleLogToReturn, m_instanceName);
         
             m_response.set_allocated_data(data);
             StartWrite(&m_response);

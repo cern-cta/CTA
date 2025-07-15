@@ -16,6 +16,8 @@
 #include "common/dataStructures/DiskInstanceSpace.hpp"
 #include "disk/DiskSystem.hpp"
 #include "catalogue/MediaTypeWithLogs.hpp"
+#include "common/dataStructures/FileRecycleLog.hpp"
+#include "common/checksum/ChecksumBlobSerDeser.hpp"
 
 inline void fillDiskInstanceItem(const cta::common::dataStructures::DiskInstance &di,
     cta::admin::DiskInstanceLsItem *di_item,
@@ -477,4 +479,42 @@ inline void fillMountPolicyItem(const cta::common::dataStructures::MountPolicy &
         mp_item->mutable_last_modification_log()->set_host(mp.lastModificationLog.host);
         mp_item->mutable_last_modification_log()->set_time(mp.lastModificationLog.time);
         mp_item->set_comment(mp.comment);
+}
+
+inline void fillRecycleTapeFileItem(const cta::common::dataStructures::FileRecycleLog &fileRecycleLog,
+    cta::admin::RecycleTapeFileLsItem *recycleLogToReturn,
+    const std::string& m_instanceName) {
+        recycleLogToReturn->set_vid(fileRecycleLog.vid);
+        recycleLogToReturn->set_fseq(fileRecycleLog.fSeq);
+        recycleLogToReturn->set_block_id(fileRecycleLog.blockId);
+        recycleLogToReturn->set_copy_nb(fileRecycleLog.copyNb);
+        recycleLogToReturn->set_tape_file_creation_time(fileRecycleLog.tapeFileCreationTime);
+        recycleLogToReturn->set_archive_file_id(fileRecycleLog.archiveFileId);
+        recycleLogToReturn->set_disk_instance(fileRecycleLog.diskInstanceName);
+        recycleLogToReturn->set_disk_file_id(fileRecycleLog.diskFileId);
+        recycleLogToReturn->set_disk_file_id_when_deleted(fileRecycleLog.diskFileIdWhenDeleted);
+        recycleLogToReturn->set_disk_file_uid(fileRecycleLog.diskFileUid);
+        recycleLogToReturn->set_disk_file_gid(fileRecycleLog.diskFileGid);
+        recycleLogToReturn->set_size_in_bytes(fileRecycleLog.sizeInBytes);
+        
+        // Checksum
+        cta::common::ChecksumBlob csb;
+        cta::checksum::ChecksumBlobToProtobuf(fileRecycleLog.checksumBlob, csb);
+        for(auto csb_it = csb.cs().begin(); csb_it != csb.cs().end(); ++csb_it) {
+          auto cs_ptr = recycleLogToReturn->add_checksum();
+          cs_ptr->set_type(csb_it->type());
+          cs_ptr->set_value(cta::checksum::ChecksumBlob::ByteArrayToHex(csb_it->value()));
+        }
+        recycleLogToReturn->set_storage_class(fileRecycleLog.storageClassName);
+        recycleLogToReturn->set_virtual_organization(fileRecycleLog.vo);
+        recycleLogToReturn->set_archive_file_creation_time(fileRecycleLog.archiveFileCreationTime);
+        recycleLogToReturn->set_reconciliation_time(fileRecycleLog.reconciliationTime);
+        if(fileRecycleLog.collocationHint){
+          recycleLogToReturn->set_collocation_hint(fileRecycleLog.collocationHint.value());
+        }
+        if(fileRecycleLog.diskFilePath){
+          recycleLogToReturn->set_disk_file_path(fileRecycleLog.diskFilePath.value());
+        }
+        recycleLogToReturn->set_reason_log(fileRecycleLog.reasonLog);
+        recycleLogToReturn->set_recycle_log_time(fileRecycleLog.recycleLogTime);
 }
