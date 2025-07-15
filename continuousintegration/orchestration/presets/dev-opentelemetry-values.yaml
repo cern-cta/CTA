@@ -11,21 +11,29 @@ config:
         http:
           endpoint: 0.0.0.0:4318
 
+  processors:
+    metricstransform/aggregate_by_instance:
+      transforms:
+        - include: taped_mount_count_total
+          action: update
+          operations:
+            - action: aggregate_labels
+              aggregation_type: sum
+              label_set: [service_instance_id=]
+
   exporters:
     prometheus:
       endpoint: ${env:MY_POD_IP}:8889
-
-    debug:
-      verbosity: normal
 
   service:
     pipelines:
       metrics:
         receivers:
         - otlp
+        processors:
+          - metricstransform/aggregate_by_instance
         exporters:
         - prometheus
-        - debug
 
     telemetry:
       logs:
