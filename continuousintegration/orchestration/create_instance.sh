@@ -52,10 +52,10 @@ usage() {
   echo "      --eos-image-repository <repo>:  Docker image for EOS chart. Should be the full image name, e.g. \"gitlab-registry.cern.ch/dss/eos/eos-ci\"."
   echo "      --eos-config <file>:            Values file to use for the EOS chart. Defaults to presets/dev-eos-xrd-values.yaml."
   echo "      --eos-enabled <true|false>:     Whether to spawn an EOS instance or not. Defaults to true."
-  echo "      --dcache-enabled <true|false>: Whether to spawn a dCache instance or not. Defaults to false."
+  echo "      --dcache-enabled <true|false>:  Whether to spawn a dCache instance or not. Defaults to false."
   echo "      --cta-config <file>:            Values file to use for the CTA chart. Defaults to presets/dev-cta-xrd-values.yaml."
-  echo "      --enable-telemetry:             Spawns an OpenTelemetry and Collector and Prometheus scraper."
-  echo
+  echo "      --enable-telemetry:             Spawns an OpenTelemetry and Collector and Prometheus scraper. Changes the default cta-config to presets/dev-cta-telemetry-values.yaml"
+  echo "      --prometheus-config <file>:     Path to the values file to use for the Prometheus Helm chart."
   exit 1
 }
 
@@ -95,11 +95,13 @@ create_instance() {
   project_json_path="../../project.json"
   # Argument defaults
   # Not that some arguments below intentionally use false and not 0/1 as they are directly passed as a helm option
-  # Note that it is fine for not all of these secrets to exist
-  registry_secrets="ctaregsecret reg-eoscta-operations reg-ctageneric" # Secrets to be copied to the namespace (space separated)
+  # Note that it is fine for not all of these secrets to exist; eventually the reg-* format will be how the minikube_cta_ci setup inits things
+  secrets="ctaregsecret reg-eoscta-operations reg-ctageneric prometheus-remote-write-secret" # Secrets to be copied to the namespace (space separated)
   catalogue_config=presets/dev-catalogue-postgres-values.yaml
   scheduler_config=presets/dev-scheduler-vfs-values.yaml
   cta_config="presets/dev-cta-xrd-values.yaml"
+  prometheus_config="presets/dev-prometheus-values.yaml"
+  opentelemetry_collector_config="presets/dev-opentelemetry-values.yaml"
   # By default keep Database and keep Scheduler datastore data
   # default should not make user loose data if he forgot the option
   reset_catalogue=false
@@ -179,6 +181,9 @@ create_instance() {
       --cta-config)
         cta_config="$2"
         test -f "${cta_config}" || die "CTA config file ${cta_config} does not exist"
+        shift ;;
+      --prometheus-config)
+        prometheus_config="$2"
         shift ;;
       *)
         echo "Unsupported argument: $1"
@@ -291,12 +296,10 @@ create_instance() {
     echo "Creating ${namespace} namespace"
     kubectl create namespace "${namespace}"
     echo "Copying secrets into ${namespace} namespace"
-    for secret_name in ${registry_secrets}; do
+    for secret_name in ${secrets}; do
       # If the secret exists...
       if kubectl get secret "${secret_name}" &> /dev/null; then
         kubectl get secret "${secret_name}" -o yaml | grep -v '^ *namespace:' | kubectl --namespace "${namespace}" create -f -
-      else
-        echo "Secret ${secret_name} not found. Skipping..."
       fi
     done
   fi
@@ -309,11 +312,11 @@ create_instance() {
     helm repo add prometheus-community https://prometheus-community.github.io/helm-charts
     helm install otel open-telemetry/opentelemetry-collector \
           --namespace "${namespace}" \
-          --values presets/dev-opentelemetry-values.yaml \
+          --values "${opentelemetry_collector_config}" \
           --wait --timeout 2m
     helm install prometheus prometheus-community/prometheus \
           --namespace "${namespace}" \
-          --values presets/dev-prometheus-values.yaml \
+          --values "${prometheus_config}" \
           --wait --timeout 2m
   fi
 
