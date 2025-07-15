@@ -28,3 +28,17 @@ server:
 
   persistentVolume:
     enabled: false
+
+  extraSecretMounts:
+    - name: prometheus-remote-write-secret
+      mountPath: /etc/prometheus/secrets/remote-write
+      secretName: prometheus-remote-write-secret
+      readOnly: true
+
+  remoteWrite:
+    - url: "http://monit-prom-lts.cern.ch/api/v1/push"
+      basic_auth:
+        username_file: /etc/prometheus/secrets/remote-write/username
+        password_file: /etc/prometheus/secrets/remote-write/password
+
+
