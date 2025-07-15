@@ -14,6 +14,7 @@
 #include "common/dataStructures/DriveStatusSerDeser.hpp"
 #include "common/dataStructures/AdminUser.hpp"
 #include "common/dataStructures/DiskInstanceSpace.hpp"
+#include "disk/DiskSystem.hpp"
 
 inline void fillDiskInstanceItem(const cta::common::dataStructures::DiskInstance &di,
     cta::admin::DiskInstanceLsItem *di_item,
@@ -417,4 +418,23 @@ inline void fillDiskInstanceSpaceItem(const cta::common::dataStructures::DiskIns
         dis_item->mutable_last_modification_log()->set_host(dis.lastModificationLog.host);
         dis_item->mutable_last_modification_log()->set_time(dis.lastModificationLog.time);
         dis_item->set_comment(dis.comment);
+    }
+
+inline void fillDiskSystemItem(const cta::disk::DiskSystem &ds,
+    cta::admin::DiskSystemLsItem *ds_item,
+    const std::string& m_instanceName) {
+        ds_item->set_name(ds.name);
+        ds_item->set_instance_name(m_instanceName);
+        ds_item->set_file_regexp(ds.fileRegexp);
+        ds_item->set_disk_instance(ds.diskInstanceSpace.diskInstance);
+        ds_item->set_disk_instance_space(ds.diskInstanceSpace.name);
+        ds_item->set_targeted_free_space(ds.targetedFreeSpace);
+        ds_item->set_sleep_time(ds.sleepTime);
+        ds_item->mutable_creation_log()->set_username(ds.creationLog.username);
+        ds_item->mutable_creation_log()->set_host(ds.creationLog.host);
+        ds_item->mutable_creation_log()->set_time(ds.creationLog.time);
+        ds_item->mutable_last_modification_log()->set_username(ds.lastModificationLog.username);
+        ds_item->mutable_last_modification_log()->set_host(ds.lastModificationLog.host);
+        ds_item->mutable_last_modification_log()->set_time(ds.lastModificationLog.time);
+        ds_item->set_comment(ds.comment);
     }
