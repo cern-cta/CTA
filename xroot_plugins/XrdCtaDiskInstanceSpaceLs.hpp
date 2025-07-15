@@ -19,6 +19,7 @@
 
 #include "xroot_plugins/XrdCtaStream.hpp"
 #include "common/dataStructures/DiskInstanceSpace.hpp"
+#include "cmdline/admin_common/DataItemMessageFill.hpp"
 
 namespace cta::xrd {
 
@@ -73,18 +74,7 @@ int DiskInstanceSpaceLsStream::fillBuffer(XrdSsiPb::OStreamBuffer<Data> *streamb
     auto &dis      = m_diskInstanceSpaceList.front();
     auto  dis_item = record.mutable_disls_item();
 
-    dis_item->set_name(dis.name);
-    dis_item->set_instance_name(dis.name);
-    dis_item->set_disk_instance(dis.diskInstance);
-    dis_item->set_refresh_interval(dis.refreshInterval);
-    dis_item->set_free_space_query_url(dis.freeSpaceQueryURL);
-    dis_item->set_free_space(dis.freeSpace);
-    dis_item->mutable_creation_log()->set_username(dis.creationLog.username);
-    dis_item->mutable_creation_log()->set_host(dis.creationLog.host);
-    dis_item->mutable_creation_log()->set_time(dis.creationLog.time);
-    dis_item->mutable_last_modification_log()->set_username(dis.lastModificationLog.username);
-    dis_item->mutable_last_modification_log()->set_host(dis.lastModificationLog.host);
-    dis_item->mutable_last_modification_log()->set_time(dis.lastModificationLog.time);
+    fillDiskInstanceSpaceItem(dis, dis_item, m_instanceName);
     dis_item->set_comment(dis.comment);
 
     is_buffer_full = streambuf->Push(record);
