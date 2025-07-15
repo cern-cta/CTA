@@ -18,6 +18,7 @@
 #pragma once
 
 #include "xroot_plugins/XrdCtaStream.hpp"
+#include "cmdline/admin_common/DataItemMessageFill.hpp"
 
 namespace cta::xrd {
 
@@ -72,19 +73,7 @@ int MountPolicyLsStream::fillBuffer(XrdSsiPb::OStreamBuffer<Data> *streambuf) {
     auto &mp      = m_mountPolicyList.front();
     auto  mp_item = record.mutable_mpls_item();
 
-    mp_item->set_name(mp.name);
-    mp_item->set_instance_name(m_instanceName);
-    mp_item->set_archive_priority(mp.archivePriority);
-    mp_item->set_archive_min_request_age(mp.archiveMinRequestAge);
-    mp_item->set_retrieve_priority(mp.retrievePriority);
-    mp_item->set_retrieve_min_request_age(mp.retrieveMinRequestAge);
-    mp_item->mutable_creation_log()->set_username(mp.creationLog.username);
-    mp_item->mutable_creation_log()->set_host(mp.creationLog.host);
-    mp_item->mutable_creation_log()->set_time(mp.creationLog.time);
-    mp_item->mutable_last_modification_log()->set_username(mp.lastModificationLog.username);
-    mp_item->mutable_last_modification_log()->set_host(mp.lastModificationLog.host);
-    mp_item->mutable_last_modification_log()->set_time(mp.lastModificationLog.time);
-    mp_item->set_comment(mp.comment);
+    fillMountPolicyItem(mp, mp_item, m_instanceName);
 
     is_buffer_full = streambuf->Push(record);
   }
