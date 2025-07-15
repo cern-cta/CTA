@@ -535,3 +535,19 @@ inline void fillRequesterMountRuleItem(const cta::common::dataStructures::Reques
         rmr_item->mutable_last_modification_log()->set_time(rmr.lastModificationLog.time);
         rmr_item->set_comment(rmr.comment);
 }
+
+inline void fillStorageClassItem(const cta::common::dataStructures::StorageClass &sc,
+    cta::admin::StorageClassLsItem *sc_item,
+    const std::string& m_instanceName) {
+        sc_item->set_name(sc.name);
+        sc_item->set_nb_copies(sc.nbCopies);
+        sc_item->set_vo(sc.vo.name);
+        sc_item->mutable_creation_log()->set_username(sc.creationLog.username);
+        sc_item->mutable_creation_log()->set_host(sc.creationLog.host);
+        sc_item->mutable_creation_log()->set_time(sc.creationLog.time);
+        sc_item->mutable_last_modification_log()->set_username(sc.lastModificationLog.username);
+        sc_item->mutable_last_modification_log()->set_host(sc.lastModificationLog.host);
+        sc_item->mutable_last_modification_log()->set_time(sc.lastModificationLog.time);
+        sc_item->set_comment(sc.comment);
+        sc_item->set_instance_name(m_instanceName);
+}
