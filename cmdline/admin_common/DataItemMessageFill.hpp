@@ -18,6 +18,7 @@
 #include "catalogue/MediaTypeWithLogs.hpp"
 #include "common/dataStructures/FileRecycleLog.hpp"
 #include "common/checksum/ChecksumBlobSerDeser.hpp"
+#include "common/dataStructures/RequesterMountRule.hpp"
 
 inline void fillDiskInstanceItem(const cta::common::dataStructures::DiskInstance &di,
     cta::admin::DiskInstanceLsItem *di_item,
@@ -517,4 +518,20 @@ inline void fillRecycleTapeFileItem(const cta::common::dataStructures::FileRecyc
         }
         recycleLogToReturn->set_reason_log(fileRecycleLog.reasonLog);
         recycleLogToReturn->set_recycle_log_time(fileRecycleLog.recycleLogTime);
+}
+
+inline void fillRequesterMountRuleItem(const cta::common::dataStructures::RequesterMountRule &rmr,
+    cta::admin::RequesterMountRuleLsItem *rmr_item,
+    const std::string& m_instanceName) {
+        rmr_item->set_instance_name(m_instanceName);
+        rmr_item->set_disk_instance(rmr.diskInstance);
+        rmr_item->set_requester_mount_rule(rmr.name);
+        rmr_item->set_mount_policy(rmr.mountPolicy);
+        rmr_item->mutable_creation_log()->set_username(rmr.creationLog.username);
+        rmr_item->mutable_creation_log()->set_host(rmr.creationLog.host);
+        rmr_item->mutable_creation_log()->set_time(rmr.creationLog.time);
+        rmr_item->mutable_last_modification_log()->set_username(rmr.lastModificationLog.username);
+        rmr_item->mutable_last_modification_log()->set_host(rmr.lastModificationLog.host);
+        rmr_item->mutable_last_modification_log()->set_time(rmr.lastModificationLog.time);
+        rmr_item->set_comment(rmr.comment);
 }

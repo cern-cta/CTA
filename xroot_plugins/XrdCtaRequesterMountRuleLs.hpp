@@ -19,6 +19,7 @@
 
 #include "common/dataStructures/RequesterMountRule.hpp"
 #include "xroot_plugins/XrdCtaStream.hpp"
+#include "cmdline/admin_common/DataItemMessageFill.hpp"
 
 namespace cta::xrd {
 
@@ -73,17 +74,7 @@ int RequesterMountRuleLsStream::fillBuffer(XrdSsiPb::OStreamBuffer<Data> *stream
     auto &rmr      = m_requesterMountRuleList.front();
     auto  rmr_item = record.mutable_rmrls_item();
 
-    rmr_item->set_instance_name(m_instanceName);
-    rmr_item->set_disk_instance(rmr.diskInstance);
-    rmr_item->set_requester_mount_rule(rmr.name);
-    rmr_item->set_mount_policy(rmr.mountPolicy);
-    rmr_item->mutable_creation_log()->set_username(rmr.creationLog.username);
-    rmr_item->mutable_creation_log()->set_host(rmr.creationLog.host);
-    rmr_item->mutable_creation_log()->set_time(rmr.creationLog.time);
-    rmr_item->mutable_last_modification_log()->set_username(rmr.lastModificationLog.username);
-    rmr_item->mutable_last_modification_log()->set_host(rmr.lastModificationLog.host);
-    rmr_item->mutable_last_modification_log()->set_time(rmr.lastModificationLog.time);
-    rmr_item->set_comment(rmr.comment);
+    fillRequesterMountRuleItem(rmr, rmr_item, m_instanceName);
 
     is_buffer_full = streambuf->Push(record);
   }
