@@ -99,7 +99,11 @@ CtaRpcStreamImpl::GenericAdminStream(::grpc::CallbackServerContext* context, con
 
   switch(cmd_pair(request->admincmd().cmd(), request->admincmd().subcmd())) {
     case cmd_pair(cta::admin::AdminCmd::CMD_TAPE, cta::admin::AdminCmd::SUBCMD_LS):
+    try {
       return new TapeLsWriteReactor(m_catalogue, m_scheduler, m_instanceName, request);
+    } catch (const std::invalid_argument &ex) {
+      return new DefaultWriteReactor(ex.what());
+    }
     case cmd_pair(cta::admin::AdminCmd::CMD_STORAGECLASS, cta::admin::AdminCmd::SUBCMD_LS):
       return new StorageClassLsWriteReactor(m_catalogue, m_scheduler, m_instanceName, request);
     case cmd_pair(cta::admin::AdminCmd::CMD_TAPEPOOL, cta::admin::AdminCmd::SUBCMD_LS):
