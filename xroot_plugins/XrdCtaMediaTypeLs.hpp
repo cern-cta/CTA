@@ -19,6 +19,7 @@
 
 #include "catalogue/MediaTypeWithLogs.hpp"
 #include "xroot_plugins/XrdCtaStream.hpp"
+#include "cmdline/admin_common/DataItemMessageFill.hpp"
 
 namespace cta::xrd {
 
@@ -73,22 +74,7 @@ int MediaTypeLsStream::fillBuffer(XrdSsiPb::OStreamBuffer<Data> *streambuf) {
     auto &mt      = m_mediaTypeList.front();
     auto  mt_item = record.mutable_mtls_item();
 
-    mt_item->set_name(mt.name);
-    mt_item->set_instance_name(m_instanceName);
-    mt_item->set_cartridge(mt.cartridge);
-    mt_item->set_capacity(mt.capacityInBytes);
-    if (mt.primaryDensityCode) mt_item->set_primary_density_code(mt.primaryDensityCode.value());
-    if (mt.secondaryDensityCode) mt_item->set_secondary_density_code(mt.secondaryDensityCode.value());
-    if (mt.nbWraps) mt_item->set_number_of_wraps(mt.nbWraps.value());
-    if (mt.minLPos) mt_item->set_min_lpos(mt.minLPos.value());
-    if (mt.maxLPos) mt_item->set_max_lpos(mt.maxLPos.value());
-    mt_item->set_comment(mt.comment);
-    mt_item->mutable_creation_log()->set_username(mt.creationLog.username);
-    mt_item->mutable_creation_log()->set_host(mt.creationLog.host);
-    mt_item->mutable_creation_log()->set_time(mt.creationLog.time);
-    mt_item->mutable_last_modification_log()->set_username(mt.lastModificationLog.username);
-    mt_item->mutable_last_modification_log()->set_host(mt.lastModificationLog.host);
-    mt_item->mutable_last_modification_log()->set_time(mt.lastModificationLog.time);
+    fillMediaTypeItem(mt, mt_item, m_instanceName);
 
     is_buffer_full = streambuf->Push(record);
   }
