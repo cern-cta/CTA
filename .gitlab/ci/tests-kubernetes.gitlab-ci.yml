@@ -37,6 +37,10 @@
         fi
         EXTRA_SPAWN_ARGS+=" --catalogue-version ${catalogue_version}"
       fi
+    - |
+      if [ $CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH ]; then
+        EXTRA_SPAWN_ARGS+=" --prometheus-config presets/ci-prometheus-values.yaml"
+      fi
     # Export all variables here so that it is clear which ones are available
     - export SCHEDULER_CONFIG CATALOGUE_CONFIG IMAGE_TAG EXTRA_SPAWN_ARGS
 
@@ -232,7 +236,7 @@ stress-test:
     NAMESPACE: stress-${CI_COMMIT_SHORT_SHA}-${CI_PIPELINE_ID}
     # Passed to the create_instance.sh script verbatim
     EXTRA_ARGS: "--keep-namespace"
-    EXTRA_SPAWN_ARGS: "--enable-telemetry"
+    EXTRA_SPAWN_ARGS: "--enable-telemetry --prometheus-config presets/ci-prometheus-values.yaml"
   before_script:
     - bash ./continuousintegration/checks/check_runner_healthy.sh
     - *setup-k8s-test-variables
