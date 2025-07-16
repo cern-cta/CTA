@@ -8,6 +8,7 @@
 #include "common/dataStructures/JobQueueType.hpp"
 #include "../RequestMessage.hpp"
 #include "CtaAdminServerWriteReactor.hpp"
+#include "cmdline/admin_common/DataItemMessageFill.hpp"
 
 namespace cta::frontend::grpc {
 
@@ -106,25 +107,7 @@ void FailedRequestLsWriteReactor::NextWrite() {
                 cta::admin::FailedRequestLsItem *fr_item = data->mutable_frls_item();
                 auto &tapepool = m_archiveQueueItorPtr->qid();
 
-                fr_item->set_object_id(item.objectId);
-                fr_item->set_request_type(admin::RequestType::ARCHIVE_REQUEST);
-                fr_item->set_tapepool(tapepool);
-                fr_item->set_copy_nb(item.copyNumber);
-                fr_item->mutable_requester()->set_username(item.request.requester.name);
-                fr_item->mutable_requester()->set_groupname(item.request.requester.group);
-                fr_item->mutable_af()->set_archive_id(item.archiveFileID);
-                fr_item->mutable_af()->set_disk_instance(item.instanceName);
-                fr_item->mutable_af()->set_disk_id(item.request.diskFileID);
-                fr_item->mutable_af()->set_size(item.request.fileSize);
-                fr_item->mutable_af()->set_storage_class(item.request.storageClass);
-                fr_item->mutable_af()->mutable_df()->set_path(item.request.diskFileInfo.path);
-                fr_item->mutable_af()->set_creation_time(item.request.creationLog.time);
-                fr_item->set_totalretries(item.totalRetries);
-                fr_item->set_totalreportretries(item.totalReportRetries);
-                if (m_isLogEntries) {
-                    *fr_item->mutable_failurelogs() = { item.failurelogs.begin(), item.failurelogs.end() };
-                    *fr_item->mutable_reportfailurelogs() = { item.reportfailurelogs.begin(), item.reportfailurelogs.end() };
-                }
+                fillArchiveJobFailedRequestItem(item, fr_item, m_instanceName, m_scheduler.getSchedulerBackendName(), tapepool, m_isLogEntries);
                 m_response.set_allocated_data(data);
                 StartWrite(&m_response);
             }
@@ -137,33 +120,7 @@ void FailedRequestLsWriteReactor::NextWrite() {
                 cta::admin::FailedRequestLsItem *fr_item = data->mutable_frls_item();
                 auto &vid = m_archiveQueueItorPtr->qid();
 
-                fr_item->set_object_id(item.objectId);
-                fr_item->set_request_type(admin::RequestType::RETRIEVE_REQUEST);
-                fr_item->set_copy_nb(item.tapeCopies.at(vid).first);
-                fr_item->mutable_requester()->set_username(item.request.requester.name);
-                fr_item->mutable_requester()->set_groupname(item.request.requester.group);
-                fr_item->mutable_af()->set_archive_id(item.request.archiveFileID);
-                fr_item->mutable_af()->set_size(item.fileSize);
-                fr_item->mutable_af()->mutable_df()->set_path(item.request.diskFileInfo.path);
-                fr_item->mutable_af()->set_creation_time(item.request.creationLog.time);
-                fr_item->mutable_tf()->set_vid(vid);
-                fr_item->set_totalretries(item.totalRetries);
-                fr_item->set_totalreportretries(item.totalReportRetries);
-
-                // Find the correct tape copy
-                for (auto &tapecopy : item.tapeCopies) {
-                    auto &tf = tapecopy.second.second;
-                    if (tf.vid == vid) {
-                    fr_item->mutable_tf()->set_f_seq(tf.fSeq);
-                    fr_item->mutable_tf()->set_block_id(tf.blockId);
-                    break;
-                    }
-                }
-
-                if (m_isLogEntries) {
-                    *fr_item->mutable_failurelogs() = { item.failurelogs.begin(), item.failurelogs.end() };
-                    *fr_item->mutable_reportfailurelogs() = {item.reportfailurelogs.begin(), item.reportfailurelogs.end()};
-                }
+                fillRetrieveJobFailedRequestItem(item, fr_item, m_instanceName, m_scheduler.getSchedulerBackendName(), vid, m_isLogEntries);
                 m_response.set_allocated_data(data);
                 StartWrite(&m_response);
             } // end for

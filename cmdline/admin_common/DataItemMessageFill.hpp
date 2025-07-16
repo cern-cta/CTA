@@ -581,3 +581,69 @@ inline void fillTapePoolItem(const cta::catalogue::TapePool& tp,
             tp_item->add_supply_destination(destination);
         }
 }
+
+inline void fillArchiveJobFailedRequestItem(const cta::common::dataStructures::ArchiveJob& item,
+    cta::admin::FailedRequestLsItem* fr_item,
+    const std::string& instanceName,
+    const std::string& schedulerBackendName,
+    const std::string& tapepool,
+    bool isLogEntries) {
+        fr_item->set_object_id(item.objectId);
+        fr_item->set_request_type(cta::admin::RequestType::ARCHIVE_REQUEST);
+        fr_item->set_tapepool(tapepool);
+        fr_item->set_copy_nb(item.copyNumber);
+        fr_item->mutable_requester()->set_username(item.request.requester.name);
+        fr_item->mutable_requester()->set_groupname(item.request.requester.group);
+        fr_item->mutable_af()->set_archive_id(item.archiveFileID);
+        fr_item->mutable_af()->set_disk_instance(item.instanceName);
+        fr_item->mutable_af()->set_disk_id(item.request.diskFileID);
+        fr_item->mutable_af()->set_size(item.request.fileSize);
+        fr_item->mutable_af()->set_storage_class(item.request.storageClass);
+        fr_item->mutable_af()->mutable_df()->set_path(item.request.diskFileInfo.path);
+        fr_item->mutable_af()->set_creation_time(item.request.creationLog.time);
+        fr_item->set_totalretries(item.totalRetries);
+        fr_item->set_totalreportretries(item.totalReportRetries);
+        if (isLogEntries) {
+            *fr_item->mutable_failurelogs() = { item.failurelogs.begin(), item.failurelogs.end() };
+            *fr_item->mutable_reportfailurelogs() = { item.reportfailurelogs.begin(), item.reportfailurelogs.end() };
+        }
+        fr_item->set_scheduler_backend_name(schedulerBackendName);
+        fr_item->set_instance_name(instanceName);
+    }
+
+inline void fillRetrieveJobFailedRequestItem(const cta::common::dataStructures::RetrieveJob& item,
+    cta::admin::FailedRequestLsItem* fr_item,
+    const std::string& instanceName,
+    const std::string& schedulerBackendName, // maybe should be optional
+    const std::string& vid,
+    bool isLogEntries) {
+        fr_item->set_object_id(item.objectId);
+        fr_item->set_request_type(cta::admin::RequestType::RETRIEVE_REQUEST);
+        fr_item->set_copy_nb(item.tapeCopies.at(vid).first);
+        fr_item->mutable_requester()->set_username(item.request.requester.name);
+        fr_item->mutable_requester()->set_groupname(item.request.requester.group);
+        fr_item->mutable_af()->set_archive_id(item.request.archiveFileID);
+        fr_item->mutable_af()->set_size(item.fileSize);
+        fr_item->mutable_af()->mutable_df()->set_path(item.request.diskFileInfo.path);
+        fr_item->mutable_af()->set_creation_time(item.request.creationLog.time);
+        fr_item->mutable_tf()->set_vid(vid);
+        fr_item->set_totalretries(item.totalRetries);
+        fr_item->set_totalreportretries(item.totalReportRetries);
+
+        // Find the correct tape copy
+        for (auto &tapecopy : item.tapeCopies) {
+            auto &tf = tapecopy.second.second;
+            if (tf.vid == vid) {
+            fr_item->mutable_tf()->set_f_seq(tf.fSeq);
+            fr_item->mutable_tf()->set_block_id(tf.blockId);
+            break;
+            }
+        }
+
+        if (isLogEntries) {
+            *fr_item->mutable_failurelogs() = { item.failurelogs.begin(), item.failurelogs.end() };
+            *fr_item->mutable_reportfailurelogs() = {item.reportfailurelogs.begin(), item.reportfailurelogs.end()};
+        }
+        fr_item->set_scheduler_backend_name(schedulerBackendName);
+        fr_item->set_instance_name(instanceName);
+    }

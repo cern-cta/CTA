@@ -21,6 +21,7 @@
 
 #include "xroot_plugins/XrdCtaStream.hpp"
 #include "common/dataStructures/JobQueueType.hpp"
+#include "cmdline/admin_common/DataItemMessageFill.hpp"
 
 namespace cta::xrd {
 
@@ -141,28 +142,9 @@ pushRecord(XrdSsiPb::OStreamBuffer<Data> *streambuf, const common::dataStructure
 {
   auto &tapepool = m_archiveQueueItorPtr->qid();
   Data record;
+  auto fr_item = record.mutable_frls_item();
+  fillArchiveJobFailedRequestItem(item, fr_item, m_instanceName, m_schedulerBackendName.value_or(""), tapepool, m_isLogEntries);
 
-  record.mutable_frls_item()->set_object_id(item.objectId);
-  record.mutable_frls_item()->set_request_type(admin::RequestType::ARCHIVE_REQUEST);
-  record.mutable_frls_item()->set_tapepool(tapepool);
-  record.mutable_frls_item()->set_copy_nb(item.copyNumber);
-  record.mutable_frls_item()->mutable_requester()->set_username(item.request.requester.name);
-  record.mutable_frls_item()->mutable_requester()->set_groupname(item.request.requester.group);
-  record.mutable_frls_item()->mutable_af()->set_archive_id(item.archiveFileID);
-  record.mutable_frls_item()->mutable_af()->set_disk_instance(item.instanceName);
-  record.mutable_frls_item()->mutable_af()->set_disk_id(item.request.diskFileID);
-  record.mutable_frls_item()->mutable_af()->set_size(item.request.fileSize);
-  record.mutable_frls_item()->mutable_af()->set_storage_class(item.request.storageClass);
-  record.mutable_frls_item()->mutable_af()->mutable_df()->set_path(item.request.diskFileInfo.path);
-  record.mutable_frls_item()->mutable_af()->set_creation_time(item.request.creationLog.time);
-  record.mutable_frls_item()->set_totalretries(item.totalRetries);
-  record.mutable_frls_item()->set_totalreportretries(item.totalReportRetries);
-  if (m_isLogEntries) {
-    *record.mutable_frls_item()->mutable_failurelogs() = { item.failurelogs.begin(), item.failurelogs.end() };
-    *record.mutable_frls_item()->mutable_reportfailurelogs() = { item.reportfailurelogs.begin(), item.reportfailurelogs.end() };
-  }
-  record.mutable_frls_item()->set_scheduler_backend_name(m_schedulerBackendName.value_or(""));
-  record.mutable_frls_item()->set_instance_name(m_instanceName);
   return streambuf->Push(record);
 }
 
@@ -176,36 +158,8 @@ pushRecord(XrdSsiPb::OStreamBuffer<Data> *streambuf, const common::dataStructure
   auto &vid = m_retrieveQueueItorPtr->qid();
 
   Data record;
-
-  record.mutable_frls_item()->set_object_id(item.objectId);
-  record.mutable_frls_item()->set_request_type(admin::RequestType::RETRIEVE_REQUEST);
-  record.mutable_frls_item()->set_copy_nb(item.tapeCopies.at(vid).first);
-  record.mutable_frls_item()->mutable_requester()->set_username(item.request.requester.name);
-  record.mutable_frls_item()->mutable_requester()->set_groupname(item.request.requester.group);
-  record.mutable_frls_item()->mutable_af()->set_archive_id(item.request.archiveFileID);
-  record.mutable_frls_item()->mutable_af()->set_size(item.fileSize);
-  record.mutable_frls_item()->mutable_af()->mutable_df()->set_path(item.request.diskFileInfo.path);
-  record.mutable_frls_item()->mutable_af()->set_creation_time(item.request.creationLog.time);
-  record.mutable_frls_item()->mutable_tf()->set_vid(vid);
-  record.mutable_frls_item()->set_totalretries(item.totalRetries);
-  record.mutable_frls_item()->set_totalreportretries(item.totalReportRetries);
-
-  // Find the correct tape copy
-  for (auto &tapecopy : item.tapeCopies) {
-    auto &tf = tapecopy.second.second;
-    if (tf.vid == vid) {
-      record.mutable_frls_item()->mutable_tf()->set_f_seq(tf.fSeq);
-      record.mutable_frls_item()->mutable_tf()->set_block_id(tf.blockId);
-      break;
-    }
-  }
-
-  if (m_isLogEntries) {
-    *record.mutable_frls_item()->mutable_failurelogs() = { item.failurelogs.begin(), item.failurelogs.end() };
-    *record.mutable_frls_item()->mutable_reportfailurelogs() = {item.reportfailurelogs.begin(), item.reportfailurelogs.end()};
-  }
-  record.mutable_frls_item()->set_scheduler_backend_name(m_schedulerBackendName.value_or(""));
-  record.mutable_frls_item()->set_instance_name(m_instanceName);
+  auto fr_item = record.mutable_frls_item();
+  fillRetrieveJobFailedRequestItem(item, fr_item, m_instanceName, m_schedulerBackendName.value_or(""), vid, m_isLogEntries);
   return streambuf->Push(record);
 }
 
