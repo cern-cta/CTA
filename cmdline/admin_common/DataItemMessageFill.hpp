@@ -220,8 +220,8 @@ inline void fillGroupMountRuleItem(const cta::common::dataStructures::RequesterG
 
 inline void fillRepackRequestItem(const cta::common::dataStructures::RepackInfo &repackRequest,
     cta::admin::RepackLsItem *repackRequestItem,
-    cta::common::dataStructures::VidToTapeMap tapeVidMap,
-    const std::string& m_instanceName) {
+    const std::string& m_instanceName,
+    cta::common::dataStructures::VidToTapeMap tapeVidMap) {
         uint64_t filesLeftToRetrieve = repackRequest.totalFilesToRetrieve - repackRequest.retrievedFiles;
         uint64_t filesLeftToArchive = repackRequest.totalFilesToArchive - repackRequest.archivedFiles;
         uint64_t totalFilesToRetrieve = repackRequest.totalFilesToRetrieve;

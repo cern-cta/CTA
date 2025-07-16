@@ -68,7 +68,7 @@ namespace cta::xrd {
         auto &repackRequest = m_repackList.front();
         auto repackRequestItem = record.mutable_rels_item();
         
-        fillRepackRequestItem(repackRequest, repackRequestItem, tapeVidMap, m_instanceName);
+        fillRepackRequestItem(repackRequest, repackRequestItem, m_instanceName, tapeVidMap);
         
         is_buffer_full = streambuf->Push(record);
       }
