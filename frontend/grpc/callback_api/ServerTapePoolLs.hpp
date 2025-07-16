@@ -9,96 +9,41 @@
 #include <grpcpp/grpcpp.h>
 #include "../RequestMessage.hpp"
 #include "common/dataStructures/LabelFormatSerDeser.hpp"
-#include "CtaAdminServerWriteReactor.hpp"
+#include "TemplateAdminCmdStream.hpp"
+#include "cmdline/admin_common/DataItemMessageFill.hpp"
 
 namespace cta::frontend::grpc {
 
-class TapePoolLsWriteReactor : public CtaAdminServerWriteReactor {
-    public:
-        TapePoolLsWriteReactor(cta::catalogue::Catalogue &catalogue, cta::Scheduler &scheduler, const std::string& instanceName, const cta::xrd::Request* request);
-        void NextWrite() override;
-    private:
-        std::list<cta::catalogue::TapePool> m_tapePoolList;
-        std::list<cta::catalogue::TapePool>::const_iterator next_tape_pool;
+class TapePoolLsWriteReactor : public TemplateAdminCmdStream<cta::catalogue::TapePool, cta::admin::TapePoolLsItem, decltype(&fillTapePoolItem)> {
+public:
+    cta::admin::TapePoolLsItem* getMessageField(cta::xrd::Data* data) override { return data->mutable_tpls_item(); }
+    TapePoolLsWriteReactor(cta::catalogue::Catalogue& catalogue,
+                            cta::Scheduler& scheduler,
+                            const std::string& instanceName,
+                            const cta::xrd::Request* request);
+
 };
 
-TapePoolLsWriteReactor::TapePoolLsWriteReactor(cta::catalogue::Catalogue &catalogue, cta::Scheduler &scheduler, const std::string& instanceName, const cta::xrd::Request* request)
-: CtaAdminServerWriteReactor(catalogue, scheduler, instanceName) {
-    using namespace cta::admin;
+TapePoolLsWriteReactor::TapePoolLsWriteReactor(cta::catalogue::Catalogue &catalogue, 
+                                              cta::Scheduler &scheduler, 
+                                              const std::string& instanceName, 
+                                              const cta::xrd::Request* request)
+: TemplateAdminCmdStream(
+    catalogue, 
+    scheduler, 
+    instanceName,
+    [&catalogue, request]() -> std::list<cta::catalogue::TapePool> {
+        using namespace cta::admin;
+        request::RequestMessage requestMsg(*request);
+        cta::catalogue::TapePoolSearchCriteria searchCriteria;
 
-    request::RequestMessage requestMsg(*request);
-    cta::catalogue::TapePoolSearchCriteria searchCriteria;
-
-    searchCriteria.name = requestMsg.getOptional(OptionString::TAPE_POOL);
-    searchCriteria.vo = requestMsg.getOptional(OptionString::VO);
-    searchCriteria.encrypted = requestMsg.getOptional(OptionBoolean::ENCRYPTED);
-  
-    m_tapePoolList = catalogue.TapePool()->getTapePools(searchCriteria);
-
-    next_tape_pool = m_tapePoolList.cbegin();
-    NextWrite();
-}
-
-void TapePoolLsWriteReactor::NextWrite() {
-    std::cout << "In TapePoolLsWriteReactor::NextWrite(), just entered!" << std::endl;
-    m_response.Clear();
-    static int iteration = 0;
-    // is this the first item? Then write the header
-    if (!m_isHeaderSent) {
-        cta::xrd::Response *header = new cta::xrd::Response(); // https://stackoverflow.com/questions/75693340/how-to-set-oneof-field-in-c-grpc-server-and-read-from-client
-        std::cout << "header is not sent, sending the header" << std::endl;
-        header->set_type(cta::xrd::Response::RSP_SUCCESS);
-        header->set_show_header(cta::admin::HeaderType::TAPEPOOL_LS);
-        m_response.set_allocated_header(header); // now the message takes ownership of the allocated object, we don't need to free header
-
-        m_isHeaderSent = true;
-        std::cout << "about to call StartWrite on the server side" << std::endl;
-        StartWrite(&m_response); // this will trigger the OnWriteDone method
-        std::cout << "called StartWrite on the server" << std::endl;
-        return; // because we'll be called in a loop by OnWriteDone
-    } else {
-        std::cout << "header was sent, now entering the loop to send the data, should send " << m_tapePoolList.size() << " records!" << std::endl;
-        while(next_tape_pool != m_tapePoolList.cend()) {
-            iteration++;
-            // cta::xrd::Data record;
-            std::cout << "Inside the for loop for the tapes, this is iteration number " << iteration << " and records left are " << m_tapePoolList.size() << std::endl;
-            // auto &tape = m_tapePoolList.front();
-            const auto& tp = *next_tape_pool;
-            ++next_tape_pool;
-            cta::xrd::Data* data = new cta::xrd::Data();
-            cta::admin::TapePoolLsItem *tp_item = data->mutable_tpls_item();
-            
-            tp_item->set_name(tp.name);
-            tp_item->set_vo(tp.vo.name);
-            tp_item->set_num_tapes(tp.nbTapes);
-            tp_item->set_num_partial_tapes(tp.nbPartialTapes);
-            tp_item->set_num_physical_files(tp.nbPhysicalFiles);
-            tp_item->set_capacity_bytes(tp.capacityBytes);
-            tp_item->set_data_bytes(tp.dataBytes);
-            tp_item->set_encrypt(tp.encryption);
-            tp_item->set_supply(tp.supply ? tp.supply.value() : "");
-            tp_item->mutable_created()->set_username(tp.creationLog.username);
-            tp_item->mutable_created()->set_host(tp.creationLog.host);
-            tp_item->mutable_created()->set_time(tp.creationLog.time);
-            tp_item->mutable_modified()->set_username(tp.lastModificationLog.username);
-            tp_item->mutable_modified()->set_host(tp.lastModificationLog.host);
-            tp_item->mutable_modified()->set_time(tp.lastModificationLog.time);
-            tp_item->set_comment(tp.comment);
-            for (auto& source : tp.supply_source_set) {
-            tp_item->add_supply_source(source);
-            }
-            for (auto& destination : tp.supply_destination_set) {
-            tp_item->add_supply_destination(destination);
-            }
-
-            std::cout << "Calling StartWrite on the server, with some data this time" << std::endl;
-            m_response.set_allocated_data(data);
-            StartWrite(&m_response);
-            return; // because we will be called in a loop by OnWriteDone()
-        } // end while
-        std::cout << "Finishing the call on the server side" << std::endl;
-        // Finish the call
-        Finish(::grpc::Status::OK);
-    }
-}
+        searchCriteria.name = requestMsg.getOptional(OptionString::TAPE_POOL);
+        searchCriteria.vo = requestMsg.getOptional(OptionString::VO);
+        searchCriteria.encrypted = requestMsg.getOptional(OptionBoolean::ENCRYPTED);
+        
+        return catalogue.TapePool()->getTapePools(searchCriteria);
+    }(),
+    cta::admin::HeaderType::TAPEPOOL_LS,
+    &fillTapePoolItem
+) {}
 } // namespace cta::frontend::grpc
