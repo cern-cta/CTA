@@ -46,7 +46,7 @@ data:
     cta.archivefile.zero_length_files_forbidden_vo_exception_list {{ .Values.grpc.conf.frontend.zeroLengthFilesForbiddenVoExceptionList }}
 
     # CTA Frontend log URL
-    cta.log.url file:/var/log/cta/cta-frontend-grpc.log
+    cta.log.url file:/var/log/cta/cta-frontend.log
 
     # CTA Logger log level
     # Valid log levels are EMERG, ALERT, CRIT, ERR, WARNING, NOTICE (==USERERR), INFO, DEBUG
@@ -69,5 +69,5 @@ data:
 
     # TLS related variables
     grpc.tls false
-    grpc.numberofthreads 2048
+    grpc.numberofthreads 4096
 {{- end }}
