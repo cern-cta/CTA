@@ -29,10 +29,11 @@ log_run() {
 }
 
 usage() {
+  echo
   echo "Performs a helm upgrade of a running CTA system. For any values not provided, this will reuse the existing values of the deployment."
-  echo ""
+  echo
   echo "Usage: $0 -n <namespace> [options]"
-  echo ""
+  echo
   echo "options:"
   echo "  -h, --help:                         Shows help output."
   echo "  -n, --namespace <namespace>:        Specify the Kubernetes namespace."
@@ -42,6 +43,7 @@ usage() {
   echo "  -i, --cta-image-tag <tag>:          The CTA Docker image tag."
   echo "  -c, --catalogue-version <version>:  Set the catalogue schema version."
   echo "      --force:                        Force redeploy all pods in the CTA chart."
+  echo
   exit 1
 }
 

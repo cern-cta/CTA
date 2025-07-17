@@ -18,14 +18,16 @@
 set -e
 
 usage() {
+  echo
   echo "Initialises kerberos for the cta-cli and client pods in the provided namespace."
-  echo ""
+  echo
   echo "Usage: $0 [options] -n <namespace>"
-  echo ""
+  echo
   echo "Options:"
   echo "  -h, --help:                   Show help output."
   echo "  -n|--namespace:               The kubernetes namespaces to execute this in."
   echo "  -r|--krb5-realm <realm>:      The kerberos realm to use. Defaults to TEST.CTA"
+  echo
   exit 1
 }
 

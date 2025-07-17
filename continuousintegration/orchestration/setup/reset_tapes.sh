@@ -18,13 +18,15 @@
 set -e
 
 usage() {
+  echo
   echo "Unloads any tapes still in the drives. This concerns all drives belonging to the library devices in use by the provided namespace."
-  echo ""
+  echo
   echo "Usage: $0 [options]"
-  echo ""
+  echo
   echo "Options:"
-  echo "  -h, --help:              Show help output."
+  echo "  -h, --help:         Show help output."
   echo "  -n|--namespace:     The kubernetes namespaces to execute this in."
+  echo
   exit 1
 }
 

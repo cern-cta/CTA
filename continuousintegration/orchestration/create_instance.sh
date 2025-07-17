@@ -29,10 +29,11 @@ log_run() {
 }
 
 usage() {
+  echo
   echo "Spawns a CTA system using Helm and Kubernetes. Requires a setup according to the Minikube CTA CI repository."
-  echo ""
+  echo
   echo "Usage: $0 -n <namespace> -i <image tag> [options]"
-  echo ""
+  echo
   echo "options:"
   echo "  -h, --help:                         Shows help output."
   echo "  -n, --namespace <namespace>:        Specify the Kubernetes namespace."
@@ -54,6 +55,7 @@ usage() {
   echo "      --eos-enabled <true|false>:     Whether to spawn an EOS instance or not. Defaults to true."
   echo "      --dcache-enabled <true|false>: Whether to spawn a dCache instance or not. Defaults to false."
   echo "      --cta-config <file>:            Values file to use for the CTA chart. Defaults to presets/dev-cta-xrd-values.yaml."
+  echo
   exit 1
 }
 

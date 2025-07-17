@@ -18,16 +18,17 @@
 set -e
 
 usage() {
+  echo
   echo "Usage: $0 [options] <cta_repo_dir>"
-  echo ""
+  echo
   echo "Validates the CTA repository."
   echo "  <cta_repo_dir>:          Path to the CTA repository."
-  echo ""
+  echo
   echo "options:"
   echo "  -p:                      Validate pivot release."
   echo "  -n:                      Validate non-pivot release."
   echo "  -t:                      Validate CTA catalogue schema submodule tag."
-  echo ""
+  echo
   exit 1
 }
 

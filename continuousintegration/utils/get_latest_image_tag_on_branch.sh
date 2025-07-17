@@ -21,13 +21,15 @@ die() {
 }
 
 usage() {
+  echo
   echo "Script to automatically find the latest docker image tag on a given branch."
-  echo ""
+  echo
   echo "Usage: $0 [options]"
-  echo ""
+  echo
   echo "Options:"
   echo "  -h, --help:             Show help output."
   echo "  -b|--branch branch:     The branch on which to find the latest image tag."
+  echo
   exit 1
 }
 

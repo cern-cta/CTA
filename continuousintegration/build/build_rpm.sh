@@ -18,8 +18,9 @@
 set -e
 
 usage() {
+  echo
   echo "Usage: $0 [options] --build-dir <build-dir> --srpm-dir <srpm-directory> --scheduler-type <scheduler-type> --cta-version <cta-version> --vcs-version <vcs-version> --xrootd-ssi-version <xrootd-ssi-version>"
-  echo ""
+  echo
   echo "Builds the rpms."
   echo "  --build-dir <build-directory>:                Sets the build directory for the RPMs. Can be absolute or relative to where the script is being executed from. Ex: build_rpm"
   echo "  --build-generator <generator>:                Specifies the build generator for cmake. Ex: [\"Unix Makefiles\", \"Ninja\"]."
@@ -30,7 +31,7 @@ usage() {
   echo "  --xrootd-ssi-version <xrootd-ssi-version>:    Sets the XROOTD_SSI_PROTOBUF_INTERFACE_VERSION variable in cmake."
   echo "  --cmake-build-type <type>:                    Specifies the build type for cmake. Must be one of [Release, Debug, RelWithDebInfo, or MinSizeRel]."
   echo "  --platform <platform>:                        Which platform the build is running for."
-  echo ""
+  echo
   echo "options:"
   echo "      --install-srpms:                          Installs only the SRPMS."
   echo "  -j, --jobs <num_jobs>:                        How many jobs to use for make."
@@ -42,6 +43,7 @@ usage() {
   echo "      --skip-unit-tests                         Skips the unit tests. Speeds up the build time by not running the unit tests."
   echo "      --oracle-support <ON/OFF>:                When set to OFF, will disable Oracle support. Oracle support is enabled by default."
   echo "      --use-internal-repos                      Use the internal yum repos instead of the public yum repos."
+  echo
   exit 1
 }
 

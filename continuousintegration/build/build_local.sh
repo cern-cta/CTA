@@ -20,10 +20,11 @@ source "$(dirname "${BASH_SOURCE[0]}")/../utils/log_wrapper.sh"
 
 # Help message
 usage() {
+  echo
   echo "Builds CTA (non-containerized)."
-  echo ""
+  echo
   echo "Usage: $0 [options]"
-  echo ""
+  echo
   echo "options:"
   echo "  -h, --help:                           Shows help output."
   echo "      --build-generator <generator>:    Specifies the build generator for cmake. Supported: [\"Unix Makefiles\", \"Ninja\"]."
@@ -38,6 +39,7 @@ usage() {
   echo "      --skip-srpms:                     Skips the building of the SRPMs."
   echo "      --install <platform>:             Installs the required yum packages for the given platform."
   echo "      --scheduler-type <type>:          The scheduler type. Ex: objectstore."
+  echo
   exit 1
 }
 

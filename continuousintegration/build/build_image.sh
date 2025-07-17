@@ -19,13 +19,14 @@ set -e
 source "$(dirname "${BASH_SOURCE[0]}")/../utils/log_wrapper.sh"
 
 usage() {
+  echo
   echo "Usage: $0 [options] -t|--tag <image_tag> -s|--rpm-src <rpm source>"
-  echo ""
+  echo
   echo "Builds an image based on the CTA rpms"
   echo "  -t, --tag <image_tag>:          Docker image tag. For example \"-t dev\""
   echo "  -s, --rpm-src <rpm source>:     Path to the RPMs to be installed. Can be absolute or relative to where the script is executed from. For example \"-s build_rpm/RPM/RPMS/x86_64\""
   echo "      --rpm-version <version>:    Version of the RPMs to ensure the correct RPMs are copied from the RPM source. Only files of the structure \"*{version}*.rpm\" will be copied."
-  echo ""
+  echo
   echo "options:"
   echo "  -h, --help:                         Shows help output."
   echo "  -n, --name:                         The Docker image name. Defaults to ctageneric"
@@ -33,6 +34,7 @@ usage() {
   echo "  -c, --container-runtime <runtime>:  The container runtime to use for the build container. Defaults to podman."
   echo "      --dockerfile <path>:            Path to the Dockerfile (default: 'continuousintegration/docker/{defaultplatform}/local-rpms.Dockerfile'). Should be relative to the repository root."
   echo "      --use-internal-repos:           Use the internal yum repos instead of the public repos."
+  echo
   exit 1
 }
 

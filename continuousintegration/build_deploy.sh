@@ -20,14 +20,15 @@ source "$(dirname "${BASH_SOURCE[0]}")/utils/log_wrapper.sh"
 
 # Help message
 usage() {
+  echo
   echo "Performs the build of CTA through a dedicated build container."
   echo "The container persists between runs of this script (unless the --reset flag is specified), which ensures that the build does not need to happen from scratch."
   echo "It is also able to deploy the built rpms via minikube for a basic testing setup."
-  echo ""
+  echo
   echo "Important prerequisite: to run the tests, your machine will need to have access to a kubernetes cluster setup using the CTA CI Minikube repo."
-  echo ""
+  echo
   echo "Usage: $0 [options]"
-  echo ""
+  echo
   echo "options:"
   echo "  -h, --help:                           Shows help output."
   echo "  -r, --reset:                          Shut down the build container and start a new one to ensure a fresh build. Also cleans the build directories."
@@ -62,6 +63,7 @@ usage() {
   echo "      --platform <platform>:            Which platform to build for. Defaults to the default platform in the project.json."
   echo "      --eos-enabled <true|false>:       Whether to spawn an EOS or not. Defaults to true."
   echo "      --dcache-enabled <true|false>:    Whether to spawn a dCache or not. Defaults to false."
+  echo
   exit 1
 }
 

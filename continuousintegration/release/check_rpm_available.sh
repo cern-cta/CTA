@@ -18,9 +18,11 @@
 set -e
 
 usage() {
+  echo
   echo "Usage: $0 --repository-url <repo> --package <package> --version <version>"
-  echo ""
+  echo
   echo "Checks whether a package of a given version is available in a given (dnf/yum) repo."
+  echo
   exit 1
 }
 
