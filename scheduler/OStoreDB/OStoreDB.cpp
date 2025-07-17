@@ -38,8 +38,6 @@
 #include "common/exception/UserError.hpp"
 #include "common/log/StdoutLogger.hpp"
 #include "common/utils/utils.hpp"
-#include "common/telemetry/TelemetryConstants.hpp"
-#include "common/telemetry/metrics/instruments/SchedulerInstruments.hpp"
 #include "disk/DiskFile.hpp"
 #include "MemQueues.hpp"
 #include "objectstore/AgentWrapper.hpp"
@@ -1026,9 +1024,6 @@ std::string OStoreDB::queueArchive(const std::string& instanceName,
            arRelockTime + arTotalQueueingTime + arTotalCommitTime + arTotalQueueUnlockTime + arOwnerResetTime +
              arLockRelease + agOwnershipResetTime)
       .log(log::INFO, "In OStoreDB::queueArchive(): Finished enqueueing request.");
-      cta::telemetry::metrics::schedulerQueueingCounter->Add(1, {
-        {cta::telemetry::constants::kTransferTypeKey, cta::telemetry::constants::kTransferTypeArchive},
-        {cta::telemetry::constants::kBackendKey, cta::telemetry::constants::kBackendSchedulerObjectstore}});
   });
   mlForHelgrind.unlock();
   m_enqueueingTasksQueue.push(et);
@@ -1536,9 +1531,6 @@ jobFound: {
       .add("agentOwnershipResetTime", agOwnershipResetTime)
       .add("totalTime", rLockTime + qTime + cTime + qUnlockTime + rUnlockTime + agOwnershipResetTime)
       .log(log::INFO, "In OStoreDB::queueRetrieve(): added job to queue (enqueueing finished).");
-      cta::telemetry::metrics::schedulerQueueingCounter->Add(1, {
-        {cta::telemetry::constants::kTransferTypeKey, cta::telemetry::constants::kTransferTypeRetrieve},
-        {cta::telemetry::constants::kBackendKey, cta::telemetry::constants::kBackendSchedulerObjectstore}});
   });
   mlForHelgrind.unlock();
   m_enqueueingTasksQueue.push(et);

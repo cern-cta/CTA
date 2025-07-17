@@ -12,14 +12,17 @@ config:
           endpoint: 0.0.0.0:4318
 
   processors:
-    metricstransform/aggregate_by_instance:
+    groupbyattrs/aggregate_per_instance:
+      keys: ["job", "transfer_type"]  # aggregate over all 'instance's for each job/type
+
+    metricstransform/drop_instance_label:
       transforms:
-        - include: taped_mount_count_total
+        - include: "taped_transfer_count_total"
+          match_type: strict
           action: update
           operations:
-            - action: aggregate_labels
-              aggregation_type: sum
-              label_set: [service_instance_id=]
+            - action: delete_label
+              label: "instance"
 
   exporters:
     prometheus:
@@ -31,7 +34,8 @@ config:
         receivers:
         - otlp
         processors:
-          - metricstransform/aggregate_by_instance
+          - groupbyattrs/aggregate_per_instance
+          - metricstransform/drop_instance_label
         exporters:
         - prometheus
 
