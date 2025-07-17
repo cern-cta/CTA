@@ -29,16 +29,18 @@ log_run() {
 }
 
 usage() {
+  echo
   echo "Deploys EOS to a given namespace. If a deployment already exists, it will try and perform an upgrade."
-  echo ""
+  echo
   echo "Usage: $0 -n <namespace> [options]"
-  echo ""
+  echo
   echo "options:"
   echo "  -h, --help:                         Shows help output."
   echo "  -n, --namespace <namespace>:        Specify the Kubernetes namespace."
   echo "  -r, --eos-image-repository <repo>:  The EOS Docker image name."
   echo "  -i, --eos-image-tag <tag>:          The EOS Docker image tag."
   echo "      --eos-config <file>:            Values file to use for the EOS chart. Defaults to presets/dev-eos-values.yaml."
+  echo
   exit 1
 }
 

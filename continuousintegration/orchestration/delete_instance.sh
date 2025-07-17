@@ -25,15 +25,17 @@ die() {
 }
 
 usage() {
+  echo
   echo "Deletes a given Kubernetes namespace and optionally collects the logs in said namespace."
-  echo ""
+  echo
   echo "Usage: $0 -n <namespace> [options]"
-  echo ""
+  echo
   echo "options:"
   echo "  -h, --help:                         Shows help output."
   echo "  -n, --namespace <namespace>:        Specify the Kubernetes namespace."
   echo "  -l, --log-dir <dir>:                Base directory to output the logs to. Defaults to /tmp."
   echo "  -D, --discard-logs:                 Do not collect the logs when deleting an instance."
+  echo
   exit 1
 }
 

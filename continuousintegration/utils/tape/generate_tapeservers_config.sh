@@ -24,12 +24,13 @@ die() {
 
 # Function to show usage information
 usage() {
+  echo
   echo "Generates a tape servers configuration (as a values.yaml) containing a list of tape servers with the drives available in said library."
   echo "For each tape server, a library is specified and the drives it is responsible for."
   echo "The library configuration is based on the provided SCSI library devices and will be written to the provided target file."
-  echo ""
+  echo
   echo "Usage: $0 --target-file <file> --library-type --library-devices <device1,device2> [options]"
-  echo ""
+  echo
   echo "Options:"
   echo "  -h, --help                    Show this help message and exit."
   echo "  -o, --target-file             Path to the output the configuration file to."
@@ -37,6 +38,7 @@ usage() {
   echo "  -d, --library-devices         A comma separated list of library devices to generate to include in the configuration file."
   echo "  -m, --max-drives-per-tpsrv    The maximum number of drives that a single tape server can be responsible for. Defaults to 2."
   echo "      --max-tapeservers         The maximum number of tape servers that will be present in the config. Defaults to 2."
+  echo
   exit 1
 }
 

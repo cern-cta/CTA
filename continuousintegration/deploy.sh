@@ -20,9 +20,10 @@ source "$(dirname "${BASH_SOURCE[0]}")/utils/log_wrapper.sh"
 
 # Help message
 usage() {
+  echo
   echo "Calls create_instance.sh with some reasonable defaults. A CTA image tag must be provided."
   echo "Usage: $0 --cta-image-tag <tag> [options]"
-  echo ""
+  echo
   echo "options:"
   echo "  -h, --help:                           Shows help output."
   echo "      --cta-image-tag:                  Image to use for spawning CTA."
@@ -33,6 +34,7 @@ usage() {
   echo "      --scheduler-config <path>:        Path to the yaml file containing the type and credentials to configure the Scheduler. Defaults to: presets/dev-scheduler-vfs-values.yaml"
   echo "      --catalogue-config <path>:        Path to the yaml file containing the type and credentials to configure the Catalogue. Defaults to: presets/dev-catalogue-postgres-values.yaml"
   echo "      --tapeservers-config <path>:      Path to the yaml file containing the tapeservers config. If not provided, this will be auto-generated."
+  echo
   exit 1
 }
 
@@ -133,6 +135,11 @@ deploy() {
     esac
     shift
   done
+
+  if [ -z "${cta_image_tag}" ]; then
+    echo "Missing mandatory argument: --cta-image-tag"
+    usage
+  fi
 
   # Navigate to root directory
   local project_root=$(git rev-parse --show-toplevel)

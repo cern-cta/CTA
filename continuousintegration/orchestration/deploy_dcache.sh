@@ -29,15 +29,17 @@ log_run() {
 }
 
 usage() {
+  echo
   echo "Deploys dCache to a given namespace. If a deployment already exists, it will try and perform an upgrade."
-  echo ""
+  echo
   echo "Usage: $0 -n <namespace> [options]"
-  echo ""
+  echo
   echo "options:"
   echo "  -h, --help:                             Shows help output."
   echo "  -n, --namespace <namespace>:            Specify the Kubernetes namespace."
   echo "  -i, --dcache-image-tag <tag>:           The EOS Docker image tag."
   echo "      --dcache-config <file>:             Values file to use for the dCache chart. Defaults to presets/dev-dcache-values.yaml."
+  echo
   exit 1
 }
 

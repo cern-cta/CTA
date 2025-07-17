@@ -25,20 +25,22 @@
 set -e
 
 usage() {
+  echo
   echo "Usage: $0 [arguments]"
-  echo ""
+  echo
   echo "Credentials:"
   echo "  --eos-username     <username>    :    Account username for EOS."
   echo "  --eos-password     <password>    :    Account password for EOS."
-  echo ""
+  echo
   echo "Directory selection:"
   echo "  --local-source-dir <dir>         :    Local directory that will be uploaded to the provided --eos-target-dir."
   echo "  --eos-source-dir   <dir>         :    EOS directory that will be copied to the provided --eos-target-dir. Must be used with --cta-version."
   echo "  --eos-target-dir   <dir>         :    EOS directory where to upload the files to."
   echo "  --cta-version      <cta_version> :    CTA release version."
-  echo ""
+  echo
   echo "Other:"
   echo "  --hook             <hook>        :    Hook to run on lxplus."
+  echo
   exit 1
 }
 

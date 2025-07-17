@@ -1,0 +1,11 @@
+cta_archives_total 2000
+cta_retrieves_total 2000
+cta_mounts_total 7
+cta_objectstore_lock_total 15529
+cta_objectstore_lock_duration_avg_seconds null
+cta_objectstore_lock_duration_90th_percentile null
+cta_scheduler_queue_total 6000
+cta_catalogue_queries_total 23206
+cta_frontend_requests_total 8000
+cta_frontend_latency_avg_seconds null
+cta_frontend_latency_90th_percentile null

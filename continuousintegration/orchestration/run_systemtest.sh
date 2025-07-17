@@ -27,10 +27,11 @@ die() {
 }
 
 usage() {
+  echo
   echo "Script to create a Kubernetes instance and run a system test script in this instance."
-  echo ""
+  echo
   echo "Usage: $0 -n <namespace> -s <systemtest_script> -o <scheduler_config> -d <catalogue_config> -i <image_tag> [options]"
-  echo ""
+  echo
   echo "options:"
   echo "  -h, --help:                         Shows help output."
   echo "  -n, --namespace <namespace>:        Specify the Kubernetes namespace."
@@ -47,6 +48,7 @@ usage() {
   echo "  -K, --keep-namespace:               Keep the namespace after the system test script run if successful."
   echo "  -C, --cleanup-namespaces:           Clean up leftover Kubernetes namespaces."
   echo "      --skip-preflight:               Skips the preflight tests."
+  echo
   exit 1
 }
 

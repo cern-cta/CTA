@@ -19,13 +19,15 @@ set -e
 
 # Function to show usage information
 usage() {
+  echo
   echo "Lists all tapes for a given library."
-  echo ""
+  echo
   echo "Usage: $0 --library-device <device> [options]"
-  echo ""
+  echo
   echo "Options:"
   echo "  -h, --help              Show this help message and exit."
   echo "  -d, --library-device    SCSI library device to put in the configuration."
+  echo
   exit 1
 }
 
