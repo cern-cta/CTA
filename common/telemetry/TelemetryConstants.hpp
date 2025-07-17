@@ -28,16 +28,15 @@ namespace cta::telemetry::constants {
 // -------------------- Attribute Keys --------------------
 inline const std::string kTransferTypeKey = "transfer.type";
 inline const std::string kLockTypeKey = "lock.type";
-inline const std::string kRequestTypeKey = "request.type";
 inline const std::string kEventTypeKey = "event.type";
-inline const std::string kBackendKey = "backend";
-inline const std::string kTapeVidKey = "tape.vid";
+inline const std::string kSchedulerBackendNameKey = "scheduler.backend_name";
 
 // -------------------- Attribute Values --------------------
 inline const std::string kTransferTypeArchive = "archive";
 inline const std::string kTransferTypeRetrieve = "retrieve";
 
-inline const std::string kBackendSchedulerObjectstore = "objectstore";
-inline const std::string kBackendSchedulerPostgres = "postgres";
+// These are not the only options; event type is flexible
+inline const std::string kEventTypeEnqueue = "enqueue";
+inline const std::string kEventTypeCancel = "cancel";
 
 }  // namespace cta::telemetry::constants
