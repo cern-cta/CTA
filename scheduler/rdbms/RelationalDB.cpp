@@ -22,8 +22,6 @@
 #include "common/exception/Exception.hpp"
 #include "common/log/TimingList.hpp"
 #include "common/utils/utils.hpp"
-#include "common/telemetry/TelemetryConstants.hpp"
-#include "common/telemetry/metrics/instruments/SchedulerInstruments.hpp"
 #include "common/threading/MutexLocker.hpp"
 #include "scheduler/rdbms/postgres/Transaction.hpp"
 #include "scheduler/rdbms/postgres/ArchiveJobSummary.hpp"
@@ -145,9 +143,6 @@ std::string RelationalDB::queueArchive(const std::string& instanceName,
     .add("insertTime", timeInsert.secs())
     .add("totalTime", timeTotal.secs());
   logContext.log(log::INFO, "In RelationalDB::queueArchive(): Finished enqueueing request.");
-  cta::telemetry::metrics::schedulerQueueingCounter->Add(1, {
-    {cta::telemetry::constants::kTransferTypeKey, cta::telemetry::constants::kTransferTypeArchive},
-    {cta::telemetry::constants::kBackendKey, cta::telemetry::constants::kBackendSchedulerPostgres}});
   return aReq.getIdStr();
 }
 
@@ -414,10 +409,6 @@ RelationalDB::queueRetrieve(cta::common::dataStructures::RetrieveRequest& rqst,
     log::ScopedParamContainer(logContext)
       .add("totalTime", timeTotal.secs())
       .log(cta::log::INFO, "In RelationalDB::queueRetrieve(): Finished enqueueing request.");
-    cta::telemetry::metrics::schedulerQueueingCounter->Add(1, {
-      {cta::telemetry::constants::kTransferTypeKey, cta::telemetry::constants::kTransferTypeRetrieve},
-      {cta::telemetry::constants::kBackendKey, cta::telemetry::constants::kBackendSchedulerPostgres}});
-
     return ret;
   } catch (exception::Exception& ex) {
     logContext.log(cta::log::ERR,
