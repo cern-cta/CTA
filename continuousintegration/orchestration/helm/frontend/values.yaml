@@ -6,7 +6,7 @@ grpc:
   enabled: false
   port: 10956
   conf:
-    numberOfThreads: 512
+    numberOfThreads: 4096
     catalogue:
       numberOfConnections: 10
       # Reduced value for test environment
