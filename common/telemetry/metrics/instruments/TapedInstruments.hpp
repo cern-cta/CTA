@@ -23,5 +23,6 @@ namespace cta::telemetry::metrics {
 
 extern std::unique_ptr<opentelemetry::metrics::Counter<uint64_t>> tapedTransferCounter;
 extern std::unique_ptr<opentelemetry::metrics::Counter<uint64_t>> tapedMountCounter;
+// TODO: add gauge for transfer speed
 
 }  // namespace cta::telemetry::metrics
