@@ -262,9 +262,11 @@ Rset Stmt::executeQuery() {
       cta::telemetry::metrics::catalogueQueryCounter->Add(1);
       return Rset(m_stmt->executeQuery());
     } else {
+      cta::telemetry::metrics::catalogueQueryErrorCounter->Add(1);
       throw exception::Exception("Stmt does not contain a cached statement");
     }
   } catch(exception::Exception &ex) {
+    cta::telemetry::metrics::catalogueQueryErrorCounter->Add(1);
     ex.getMessage().str(std::string(__FUNCTION__) + " failed: " + ex.getMessage().str());
     throw;
   }
@@ -279,9 +281,11 @@ void Stmt::executeNonQuery() {
       cta::telemetry::metrics::catalogueQueryCounter->Add(1);
       return m_stmt->executeNonQuery();
     } else {
+      cta::telemetry::metrics::catalogueQueryErrorCounter->Add(1);
       throw exception::Exception("Stmt does not contain a cached statement");
     }
   } catch(exception::Exception &ex) {
+    cta::telemetry::metrics::catalogueQueryErrorCounter->Add(1);
     ex.getMessage().str(std::string(__FUNCTION__) + " failed: " + ex.getMessage().str());
     throw;
   }

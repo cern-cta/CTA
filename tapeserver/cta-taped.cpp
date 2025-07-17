@@ -231,6 +231,7 @@ int main(const int argc, char **const argv) {
     cta::telemetry::TelemetryConfig telemetryConfig = cta::telemetry::TelemetryConfigBuilder()
       .serviceName("cta.taped")
       .serviceNamespace(globalConfig.instanceName.value())
+      .resourceAttribute(cta::telemetry::constants::kSchedulerBackendNameKey, globalConfig.schedulerBackendName.value())
       .metricsBackend(globalConfig.telemetryMetricsBackend.value())
       .metricsExportInterval(std::chrono::milliseconds(globalConfig.telemetryMetricsExportInterval.value()))
       .metricsExportTimeout(std::chrono::milliseconds(globalConfig.telemetryMetricsExportTimeout.value()))
