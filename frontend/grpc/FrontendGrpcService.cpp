@@ -41,7 +41,7 @@ static std::string ToString(const ::grpc::string_ref& r) {
 
 
 Status
-CtaRpcImpl::ExtractAuthHeaderAndValidate(::grpc::ServerContext* context) {
+CtaRpcImpl::ExtractAuthHeaderAndValidate(::grpc::CallbackServerContext* context) {
   cta::log::LogContext lc(m_frontendService->getLogContext());
   cta::log::ScopedParamContainer sp(lc);
   // skip any metadata checks in case JWT Auth is disabled
@@ -76,8 +76,8 @@ CtaRpcImpl::ExtractAuthHeaderAndValidate(::grpc::ServerContext* context) {
   }
 }
 
-Status
-CtaRpcImpl::ProcessGrpcRequest(const cta::xrd::Request* request, cta::xrd::Response* response, cta::log::LogContext &lc) const {
+void
+CtaRpcImpl::ProcessGrpcRequest(::grpc::ServerUnaryReactor* reactor, const cta::xrd::Request* request, cta::xrd::Response* response, cta::log::LogContext &lc) const {
 
   try {
     cta::common::dataStructures::SecurityIdentity clientIdentity(request->notification().wf().instance().name(), cta::utils::getShortHostname());
@@ -87,7 +87,8 @@ CtaRpcImpl::ProcessGrpcRequest(const cta::xrd::Request* request, cta::xrd::Respo
     lc.log(cta::log::ERR, ex.getMessageValue());
     response->set_type(cta::xrd::Response::RSP_ERR_PROTOBUF);
     response->set_message_txt(ex.getMessageValue());
-    return ::grpc::Status(::grpc::StatusCode::INVALID_ARGUMENT, ex.getMessageValue());
+    reactor->Finish(::grpc::Status(::grpc::StatusCode::INVALID_ARGUMENT, ex.getMessageValue()));
+    return;
   } catch (cta::exception::UserError &ex) {
     lc.log(cta::log::ERR, ex.getMessageValue());
     response->set_type(cta::xrd::Response::RSP_ERR_USER);
@@ -96,34 +97,41 @@ CtaRpcImpl::ProcessGrpcRequest(const cta::xrd::Request* request, cta::xrd::Respo
      * differentiate between different kinds of errors on the client side,
      * which is why we return ABORTED
      */
-    return ::grpc::Status(::grpc::StatusCode::ABORTED, ex.getMessageValue());
+    reactor->Finish(::grpc::Status(::grpc::StatusCode::ABORTED, ex.getMessageValue()));
+    return;
   } catch (cta::exception::Exception &ex) {
     lc.log(cta::log::ERR, ex.getMessageValue());
     response->set_type(cta::xrd::Response::RSP_ERR_CTA);
     response->set_message_txt(ex.getMessageValue());
-    return ::grpc::Status(::grpc::StatusCode::FAILED_PRECONDITION, ex.getMessageValue());
+    reactor->Finish(::grpc::Status(::grpc::StatusCode::FAILED_PRECONDITION, ex.getMessageValue()));
+    return;
   } catch (std::runtime_error &ex) {
     lc.log(cta::log::ERR, ex.what());
     response->set_type(cta::xrd::Response::RSP_ERR_CTA);
     response->set_message_txt(ex.what());
-    return ::grpc::Status(::grpc::StatusCode::FAILED_PRECONDITION, ex.what());
+    reactor->Finish(::grpc::Status(::grpc::StatusCode::FAILED_PRECONDITION, ex.what()));
+    return;
   } catch (...) {
     response->set_type(cta::xrd::Response::RSP_ERR_CTA);
-    return ::grpc::Status(::grpc::StatusCode::FAILED_PRECONDITION, "Error processing gRPC request");
+    reactor->Finish(::grpc::Status(::grpc::StatusCode::FAILED_PRECONDITION, "Error processing gRPC request"));
+    return;
   }
-  return Status::OK;
+  reactor->Finish(Status::OK);
 }
 
-Status
-CtaRpcImpl::Create(::grpc::ServerContext* context, const cta::xrd::Request* request, cta::xrd::Response* response) {
+::grpc::ServerUnaryReactor*
+CtaRpcImpl::Create(::grpc::CallbackServerContext* context, const cta::xrd::Request* request, cta::xrd::Response* response) {
   cta::log::LogContext lc(m_frontendService->getLogContext());
   cta::log::ScopedParamContainer sp(lc);
+
+  auto* reactor = context->DefaultReactor();
 
   Status status = ExtractAuthHeaderAndValidate(context);
   if (!status.ok()) {
     response->set_type(cta::xrd::Response::RSP_ERR_USER);
     response->set_message_txt(status.error_message());
-    return status;
+    reactor->Finish(status);
+    return reactor;
   }
 
   sp.add("remoteHost", context->peer());
@@ -132,20 +140,25 @@ CtaRpcImpl::Create(::grpc::ServerContext* context, const cta::xrd::Request* requ
   if (auto event = request->notification().wf().event(); event != cta::eos::Workflow::CREATE) {
     response->set_type(cta::xrd::Response::RSP_ERR_USER);
     response->set_message_txt("Unexpected workflow event type. Expected CREATE, found " + cta::eos::Workflow_EventType_Name(event));
-    return ::grpc::Status(::grpc::StatusCode::INVALID_ARGUMENT, "Unexpected workflow event type. Expected CREATE, found " + cta::eos::Workflow_EventType_Name(event));
+    reactor->Finish(::grpc::Status(::grpc::StatusCode::INVALID_ARGUMENT, "Unexpected workflow event type. Expected CREATE, found " + cta::eos::Workflow_EventType_Name(event)));
+    return reactor;
   }
-  return ProcessGrpcRequest(request, response, lc);
+  ProcessGrpcRequest(reactor, request, response, lc);
+  return reactor;
 }
 
-Status
-CtaRpcImpl::Archive(::grpc::ServerContext* context, const cta::xrd::Request* request, cta::xrd::Response* response) {
+::grpc::ServerUnaryReactor*
+CtaRpcImpl::Archive(::grpc::CallbackServerContext* context, const cta::xrd::Request* request, cta::xrd::Response* response) {
   cta::log::LogContext lc(m_frontendService->getLogContext());
   cta::log::ScopedParamContainer sp(lc);
+  auto *reactor = context->DefaultReactor();
+
   Status status = ExtractAuthHeaderAndValidate(context);
   if (!status.ok()) {
     response->set_type(cta::xrd::Response::RSP_ERR_USER);
     response->set_message_txt(status.error_message());
-    return status;
+    reactor->Finish(status);
+    return reactor;
   }
 
   sp.add("remoteHost", context->peer());
@@ -155,25 +168,32 @@ CtaRpcImpl::Archive(::grpc::ServerContext* context, const cta::xrd::Request* req
   if (storageClass.empty()) {
     response->set_type(cta::xrd::Response::RSP_ERR_USER);
     response->set_message_txt("Storage class is not set.");
-    return ::grpc::Status(::grpc::StatusCode::INVALID_ARGUMENT, "Storage class is not set.");
+    reactor->Finish(::grpc::Status(::grpc::StatusCode::INVALID_ARGUMENT, "Storage class is not set."));
+    return reactor;
   }
 
   if (auto event = request->notification().wf().event(); event != cta::eos::Workflow::CLOSEW) {
     response->set_type(cta::xrd::Response::RSP_ERR_USER);
     response->set_message_txt("Unexpected workflow event type. Expected CLOSEW, found " + cta::eos::Workflow_EventType_Name(event));
-    return ::grpc::Status(::grpc::StatusCode::INVALID_ARGUMENT, "Unexpected workflow event type. Expected CLOSEW, found " + cta::eos::Workflow_EventType_Name(event));
+    reactor->Finish(::grpc::Status(::grpc::StatusCode::INVALID_ARGUMENT, "Unexpected workflow event type. Expected CLOSEW, found " + cta::eos::Workflow_EventType_Name(event)));
+    return reactor;
   }
 
-  return ProcessGrpcRequest(request, response, lc);
+  ProcessGrpcRequest(reactor, request, response, lc);
+  return reactor;
 }
 
-Status
-CtaRpcImpl::Delete(::grpc::ServerContext* context, const cta::xrd::Request* request, cta::xrd::Response* response) {
+::grpc::ServerUnaryReactor*
+CtaRpcImpl::Delete(::grpc::CallbackServerContext* context, const cta::xrd::Request* request, cta::xrd::Response* response) {
+
+  auto* reactor = context->DefaultReactor();
+
   Status status = ExtractAuthHeaderAndValidate(context);
   if (!status.ok()) {
     response->set_type(cta::xrd::Response::RSP_ERR_USER);
     response->set_message_txt(status.error_message());
-    return status;
+    reactor->Finish(status);
+    return reactor;
   }
 
   cta::log::LogContext lc(m_frontendService->getLogContext());
@@ -186,27 +206,33 @@ CtaRpcImpl::Delete(::grpc::ServerContext* context, const cta::xrd::Request* requ
   if (auto event = request->notification().wf().event(); event != cta::eos::Workflow::DELETE) {
     response->set_type(cta::xrd::Response::RSP_ERR_USER);
     response->set_message_txt("Unexpected workflow event type. Expected DELETE, found " + cta::eos::Workflow_EventType_Name(event));
-    return ::grpc::Status(::grpc::StatusCode::INVALID_ARGUMENT, "Unexpected workflow event type. Expected DELETE, found " + cta::eos::Workflow_EventType_Name(event));
+    reactor->Finish(::grpc::Status(::grpc::StatusCode::INVALID_ARGUMENT, "Unexpected workflow event type. Expected DELETE, found " + cta::eos::Workflow_EventType_Name(event)));
+    return reactor;
   }
 
   if (request->notification().file().archive_file_id() == 0) {
     lc.log(cta::log::WARNING, "Invalid archive file id");
     response->set_type(cta::xrd::Response::RSP_ERR_USER);
     response->set_message_txt("Invalid archive file id");
-    return ::grpc::Status(::grpc::StatusCode::INVALID_ARGUMENT, "Invalid archive file id.");
+    reactor->Finish(::grpc::Status(::grpc::StatusCode::INVALID_ARGUMENT, "Invalid archive file id."));
+    return reactor;
   }
 
   // done with validation, now do the workflow processing
-  return ProcessGrpcRequest(request, response, lc);
+  ProcessGrpcRequest(reactor, request, response, lc);
+  return reactor;
 }
 
-Status
-CtaRpcImpl::Retrieve(::grpc::ServerContext* context, const cta::xrd::Request* request, cta::xrd::Response* response) {
+::grpc::ServerUnaryReactor*
+CtaRpcImpl::Retrieve(::grpc::CallbackServerContext* context, const cta::xrd::Request* request, cta::xrd::Response* response) {
+  auto* reactor = context->DefaultReactor();
+
   Status status = ExtractAuthHeaderAndValidate(context);
   if (!status.ok()) {
     response->set_type(cta::xrd::Response::RSP_ERR_USER);
     response->set_message_txt(status.error_message());
-    return status;
+    reactor->Finish(status);
+    return reactor;
   }
 
   cta::log::LogContext lc(m_frontendService->getLogContext());
@@ -218,14 +244,16 @@ CtaRpcImpl::Retrieve(::grpc::ServerContext* context, const cta::xrd::Request* re
   if (auto event = request->notification().wf().event(); event != cta::eos::Workflow::PREPARE) {
     response->set_type(cta::xrd::Response::RSP_ERR_USER);
     response->set_message_txt("Unexpected workflow event type. Expected PREPARE, found " + cta::eos::Workflow_EventType_Name(event));
-    return ::grpc::Status(::grpc::StatusCode::INVALID_ARGUMENT, "Unexpected workflow event type. Expected PREPARE, found " + cta::eos::Workflow_EventType_Name(event));
+    reactor->Finish(::grpc::Status(::grpc::StatusCode::INVALID_ARGUMENT, "Unexpected workflow event type. Expected PREPARE, found " + cta::eos::Workflow_EventType_Name(event)));
+    return reactor;
   }
 
   const std::string storageClass = request->notification().file().storage_class();
   if (storageClass.empty()) {
     response->set_type(cta::xrd::Response::RSP_ERR_USER);
     response->set_message_txt("Storage class is not set");
-    return ::grpc::Status(::grpc::StatusCode::INVALID_ARGUMENT, "Storage class is not set.");
+    reactor->Finish(::grpc::Status(::grpc::StatusCode::INVALID_ARGUMENT, "Storage class is not set."));
+    return reactor;
   }
 
   // check validate request args
@@ -233,7 +261,8 @@ CtaRpcImpl::Retrieve(::grpc::ServerContext* context, const cta::xrd::Request* re
     lc.log(cta::log::WARNING, "Invalid archive file id");
     response->set_type(cta::xrd::Response::RSP_ERR_USER);
     response->set_message_txt("Invalid archive file id");
-    return ::grpc::Status(::grpc::StatusCode::INVALID_ARGUMENT, "Invalid archive file id.");
+    reactor->Finish(::grpc::Status(::grpc::StatusCode::INVALID_ARGUMENT, "Invalid archive file id."));
+    return reactor;
   }
 
   auto instance = request->notification().wf().instance().name();
@@ -245,17 +274,21 @@ CtaRpcImpl::Retrieve(::grpc::ServerContext* context, const cta::xrd::Request* re
   sp.add("archiveID", request->notification().file().archive_file_id());
   sp.add("fileID", request->notification().file().disk_file_id());
 
-  return ProcessGrpcRequest(request, response, lc);
+  ProcessGrpcRequest(reactor, request, response, lc);
+  return reactor;
 }
 
-Status CtaRpcImpl::CancelRetrieve(::grpc::ServerContext* context,
+::grpc::ServerUnaryReactor* CtaRpcImpl::CancelRetrieve(::grpc::CallbackServerContext* context,
                                   const cta::xrd::Request* request,
                                   cta::xrd::Response* response) {
+  auto* reactor = context->DefaultReactor();
+
   Status status = ExtractAuthHeaderAndValidate(context);
   if (!status.ok()) {
     response->set_type(cta::xrd::Response::RSP_ERR_USER);
     response->set_message_txt(status.error_message());
-    return status;
+    reactor->Finish(status);
+    return reactor;
   }
 
   cta::log::LogContext lc(m_frontendService->getLogContext());
@@ -270,14 +303,16 @@ Status CtaRpcImpl::CancelRetrieve(::grpc::ServerContext* context,
   if (auto event = request->notification().wf().event(); event != cta::eos::Workflow::ABORT_PREPARE) {
     response->set_type(cta::xrd::Response::RSP_ERR_USER);
     response->set_message_txt("Unexpected workflow event type. Expected ABORT_PREPARE, found " + cta::eos::Workflow_EventType_Name(event));
-    return ::grpc::Status(::grpc::StatusCode::INVALID_ARGUMENT, "Unexpected workflow event type. Expected ABORT_PREPARE, found " + cta::eos::Workflow_EventType_Name(event));
+    reactor->Finish(::grpc::Status(::grpc::StatusCode::INVALID_ARGUMENT, "Unexpected workflow event type. Expected ABORT_PREPARE, found " + cta::eos::Workflow_EventType_Name(event)));
+    return reactor;
   }
 
   if (!request->notification().file().archive_file_id()) {
     lc.log(cta::log::WARNING, "Invalid archive file id");
     response->set_type(cta::xrd::Response::RSP_ERR_USER);
     response->set_message_txt("Invalid archive file id");
-    return ::grpc::Status(::grpc::StatusCode::INVALID_ARGUMENT, "Invalid archive file id.");
+    reactor->Finish(::grpc::Status(::grpc::StatusCode::INVALID_ARGUMENT, "Invalid archive file id."));
+    return reactor;
   }
 
   auto instance = request->notification().wf().instance().name();
@@ -289,7 +324,8 @@ Status CtaRpcImpl::CancelRetrieve(::grpc::ServerContext* context,
   sp.add("schedulerJobID", request->notification().file().archive_file_id());
 
   // field verification done, now try to call the process method
-  return ProcessGrpcRequest(request, response, lc);
+  ProcessGrpcRequest(reactor, request, response, lc);
+  return reactor;
 }
 
 /* initialize the frontend service
