@@ -6,6 +6,8 @@
 namespace cta::telemetry::metrics {
 
 std::unique_ptr<opentelemetry::metrics::Counter<uint64_t>> schedulerQueueingCounter;
+std::unique_ptr<opentelemetry::metrics::Counter<uint64_t>> schedulerRepackCounter;
+std::unique_ptr<opentelemetry::metrics::Counter<uint64_t>> schedulerTapeStateChangeCounter;
 std::unique_ptr<opentelemetry::metrics::Counter<uint64_t>> objectstoreLockAcquireCounter;
 std::unique_ptr<opentelemetry::metrics::Histogram<uint64_t>> objectstoreLockAcquireDurationHistogram;
 
@@ -19,7 +21,13 @@ void initInstruments() {
   // Instrument initialisation
 
   cta::telemetry::metrics::schedulerQueueingCounter =
-    meter->CreateUInt64Counter("scheduler.queueing.count", "Total number of files enqueued in the scheduler", "1");
+    meter->CreateUInt64Counter("scheduler.queueing.count", "Total number of transfer events in the scheduler", "1");
+  cta::telemetry::metrics::schedulerRepackCounter =
+    meter->CreateUInt64Counter("scheduler.repack.count", "Total number of repack events in the scheduler", "1");
+  cta::telemetry::metrics::schedulerTapeStateChangeCounter =
+    meter->CreateUInt64Counter("scheduler.tape.state_change.count", "Total number of state changes for all tapes", "1");
+
+
   cta::telemetry::metrics::objectstoreLockAcquireCounter =
     meter->CreateUInt64Counter("objectstore.lock.acquire.count",
                                "Total number of locks acquired on the objectstore",

@@ -42,6 +42,8 @@
 #include "common/exception/NonRetryableError.hpp"
 #include "common/exception/NoSuchObject.hpp"
 #include "common/exception/UserError.hpp"
+#include "common/telemetry/TelemetryConstants.hpp"
+#include "common/telemetry/metrics/instruments/SchedulerInstruments.hpp"
 #include "common/Timer.hpp"
 #include "common/utils/utils.hpp"
 #include "disk/DiskFileImplementations.hpp"
@@ -194,6 +196,10 @@ std::string Scheduler::queueArchiveWithGivenId(const uint64_t archiveFileId,
     .add("schedulerDbTime", schedulerDbTime);
   request.checksumBlob.addFirstChecksumToLog(spc);
   lc.log(log::INFO, "In Scheduler::queueArchiveWithGivenId(): Queued archive request");
+
+  cta::telemetry::metrics::schedulerQueueingCounter->Add(1, {
+    {cta::telemetry::constants::kTransferTypeKey, cta::telemetry::constants::kTransferTypeArchive},
+    {cta::telemetry::constants::kEventTypeKey, cta::telemetry::constants::kEventTypeEnqueue}});
   return archiveReqAddr;
 }
 
@@ -289,6 +295,9 @@ std::string Scheduler::queueRetrieve(const std::string& instanceName,
     spc.add("activity", request.activity.value());
   }
   lc.log(log::INFO, "In Scheduler::queueRetrieve(): Queued retrieve request");
+  cta::telemetry::metrics::schedulerQueueingCounter->Add(1, {
+    {cta::telemetry::constants::kTransferTypeKey, cta::telemetry::constants::kTransferTypeRetrieve},
+    {cta::telemetry::constants::kEventTypeKey, cta::telemetry::constants::kEventTypeEnqueue}});
   return requestInfo.requestId;
 }
 
@@ -314,6 +323,10 @@ void Scheduler::deleteArchive([[maybe_unused]] std::string_view instanceName,
   log::ScopedParamContainer spc(lc);
   tl.addToLog(spc);
   lc.log(log::INFO, "In Scheduler::deleteArchive(): success.");
+
+  cta::telemetry::metrics::schedulerQueueingCounter->Add(1, {
+    {cta::telemetry::constants::kTransferTypeKey, cta::telemetry::constants::kTransferTypeArchive},
+    {cta::telemetry::constants::kEventTypeKey, cta::telemetry::constants::kEventTypeCancel}});
 }
 
 //------------------------------------------------------------------------------
@@ -323,6 +336,9 @@ void Scheduler::abortRetrieve(const std::string& instanceName,
                               const common::dataStructures::CancelRetrieveRequest& request,
                               log::LogContext& lc) {
   m_db.cancelRetrieve(instanceName, request, lc);
+  cta::telemetry::metrics::schedulerQueueingCounter->Add(1, {
+    {cta::telemetry::constants::kTransferTypeKey, cta::telemetry::constants::kTransferTypeRetrieve},
+    {cta::telemetry::constants::kEventTypeKey, cta::telemetry::constants::kEventTypeCancel}});
 }
 
 void Scheduler::deleteFailed(const std::string& objectId, log::LogContext& lc) {
@@ -413,6 +429,8 @@ void Scheduler::queueRepack(const common::dataStructures::SecurityIdentity& cliI
     .add("repackRequestAddress", repackRequestAddress);
   tl.addToLog(params);
   lc.log(log::INFO, "In Scheduler::queueRepack(): success.");
+  cta::telemetry::metrics::schedulerRepackCounter->Add(1, {
+    {cta::telemetry::constants::kEventTypeKey, cta::telemetry::constants::kEventTypeEnqueue}});
 }
 
 //------------------------------------------------------------------------------
@@ -422,6 +440,8 @@ void Scheduler::cancelRepack([[maybe_unused]] const common::dataStructures::Secu
                              const std::string& vid,
                              log::LogContext& lc) {
   m_db.cancelRepack(vid, lc);
+  cta::telemetry::metrics::schedulerRepackCounter->Add(1, {
+    {cta::telemetry::constants::kEventTypeKey, cta::telemetry::constants::kEventTypeCancel}});
 }
 
 //------------------------------------------------------------------------------
@@ -2533,6 +2553,7 @@ void Scheduler::triggerTapeStateChange(const common::dataStructures::SecurityIde
       throw cta::exception::UserError("Unknown procedure to change tape state to " + Tape::stateToString(new_state));
   }
   m_db.clearStatisticsCache(vid);
+  cta::telemetry::metrics::schedulerTapeStateChangeCounter->Add(1);
 }
 
 //------------------------------------------------------------------------------

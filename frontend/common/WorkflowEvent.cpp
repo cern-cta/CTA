@@ -88,11 +88,8 @@ xrd::Response WorkflowEvent::process() {
   xrd::Response response;
 
   // Record request count
-  namespace tc = cta::telemetry::constants;
-  using TelemAttrList = std::vector<std::pair<std::string_view, opentelemetry::common::AttributeValue>>;
-  TelemAttrList telemetryAttributes = {{
-    {tc::kRequestTypeKey, "workflow_event"},
-    {tc::kEventTypeKey,   m_event.wf().event()}
+  std::vector<std::pair<std::string_view, opentelemetry::common::AttributeValue>> telemetryAttributes = {{
+    {cta::telemetry::constants::kEventTypeKey, Workflow_EventType_Name(m_event.wf().event())}
   }};
 
   cta::telemetry::metrics::frontendRequestCounter->Add(1, telemetryAttributes);
