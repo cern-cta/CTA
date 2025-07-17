@@ -145,6 +145,7 @@ FrontendService::FrontendService(const std::string& configFilename) : m_archiveF
       cta::telemetry::TelemetryConfig telemetryConfig = cta::telemetry::TelemetryConfigBuilder()
         .serviceName("cta.frontend")
         .serviceNamespace(m_instanceName)
+        .resourceAttribute(cta::telemetry::constants::kSchedulerBackendNameKey, m_schedulerBackendName)
         .metricsBackend(telemetryMetricsBackend.value())
         .metricsExportInterval(std::chrono::milliseconds(telemetryMetricsExportInterval.value()))
         .metricsExportTimeout(std::chrono::milliseconds(telemetryMetricsExportTimeout.value()))
