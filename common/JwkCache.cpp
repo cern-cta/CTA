@@ -13,7 +13,7 @@ JwkCache::JwkCache(const std::string& jwkUri, int cacheRefreshInterval, int pubk
 // Function to handle curl responses
 size_t WriteCallback(void* contents, size_t size, size_t nmemb, std::string* output) {
   size_t totalSize = size * nmemb;
-  output->append((char*) contents, totalSize);
+  output->append(reinterpret_cast<char*>(contents), totalSize);
   return totalSize;
 };
 
@@ -36,8 +36,7 @@ std::string JwkCache::fetchJWKS(const std::string& jwksUrl) {
   }
   curl_global_cleanup();
 
-  std::string jwks = readBuffer;
-  return jwks;
+  return readBuffer;
 }
 
 JwkCache::~JwkCache() {
@@ -60,7 +59,6 @@ std::optional<JwkCacheEntry> JwkCache::find(const std::string& key) {
 }
 
 void JwkCache::insert(const std::string& key, const JwkCacheEntry& e) {
-  log::LogContext lc(m_lc);
   std::unique_lock<std::shared_mutex> lock(m_mutex);
   m_keymap[key] = e;
 }
@@ -72,7 +70,6 @@ void JwkCache::startRefreshThread() {
   }
   log::LogContext lc(m_lc);
   lc.log(log::DEBUG, "Starting cache refresh thread");
-  m_stopThread = false;
   m_refreshThread = std::thread(&JwkCache::refreshLoop, this);
   lc.log(log::DEBUG, "Cache refresh thread started");
 }
@@ -80,7 +77,7 @@ void JwkCache::startRefreshThread() {
 void JwkCache::stopRefreshThread() {
   log::LogContext lc(m_lc);
   lc.log(log::DEBUG, "In StopRefreshThread, stopping the thread and notifying the cv");
-  m_stopThread = true;
+  m_shouldStopThread = true;
   m_cv.notify_all();  // Wake the thread if sleeping
   lc.log(log::DEBUG, "Notified condition variable");
   if (m_refreshThread.joinable()) {
@@ -90,20 +87,14 @@ void JwkCache::stopRefreshThread() {
 
 void JwkCache::refreshLoop() {
   log::LogContext lc(m_lc);
-  while (!m_stopThread.load()) {
-    try {
-      time_t now = time(NULL);
-      updateCache(now);
-    } catch (const std::exception& ex) {
-      log::ScopedParamContainer params(lc);
-      lc.log(log::ERR, "Some exception thrown in the RefreshLoop");
-      params.add("exceptionMessage", ex.what());
-    }
+  while (!m_shouldStopThread.load()) {
+    time_t now = time(NULL);
+    updateCache(now);
     std::unique_lock<std::mutex> lk(m_cv_mutex);
     m_cv.wait_for(lk, std::chrono::seconds(m_cacheRefreshInterval), [this]() {
       log::LogContext lc(m_lc);
       lc.log(log::DEBUG, "Waiting on condition variable or explicit wakeup...");
-      return m_stopThread.load();
+      return m_shouldStopThread.load();
     });
   }
   lc.log(log::DEBUG, "Received notification in RefreshLoop");
@@ -137,13 +128,12 @@ void JwkCache::updateCache(time_t now) {
       ++it;
     }
   }
-  // add they new keys
+  // add the new keys
   auto jwks = jwt::parse_jwks(raw_jwks);
   std::string kid;
   std::string x5c;
   // now iterate over the keys, add the key if it's used for signing
-  for (auto it = jwks.begin(); it != jwks.end(); ++it) {
-    auto jwk = *it;
+  for (const auto& jwk : jwks) {
     try {
       std::string use = jwk.get_use();
       if (use != "sig") {
