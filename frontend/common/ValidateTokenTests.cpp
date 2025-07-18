@@ -41,22 +41,21 @@ bkPtfTdNpX2zT6xowAncu7ucONxVouV+bo3Dd1ECgYBHMrGUrJS0ofnNdXHt8QzY
 az8ZaVQPvmSthMu8suOc8w==
 -----END PRIVATE KEY-----)";
 
-std::string sample_cert_base64_der = 
-    "MIIDSTCCAjGgAwIBAgIUQQp5TK9J3SemQXrCF+ffmED4qy4wDQYJKoZIhvcNAQELBQAwTTELMAkG"
-    "A1UEBhMCQ0gxDzANBgNVBAgMBkdlbmV2YTEPMA0GA1UEBwwGR2VuZXZhMRwwGgYDVQQKDBNEZWZh"
-    "dWx0IENvbXBhbnkgTHRkMB4XDTI1MDcwOTA4NDYyN1oXDTM1MDcwNzA4NDYyN1owTTELMAkGA1UE"
-    "BhMCQ0gxDzANBgNVBAgMBkdlbmV2YTEPMA0GA1UEBwwGR2VuZXZhMRwwGgYDVQQKDBNEZWZhdWx0"
-    "IENvbXBhbnkgTHRkMIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEAh0gY8QsodbL06ls2"
-    "vRuY9ETBefO2llFkpfYpExdT0WVeNq7iV5AXD+pyI1rHt6ua59gnvhSFwpIqcMF1DXW4LuQIFy0h"
-    "TOYPDBpbt6YBDb5imHHosE+pWUu6fU/dBy0m0cp84z0/UHDuHQSYYsDMDLnSTIk/F8k4idPkZfoY"
-    "N2a7gNTiMfxM7MvoJkZ43FSU/LVnm2dymn+5LZJHT5+oZLx70tjNBqCSiroYTmHWnu79agWr0Yiv"
-    "3U9UKCkjmz3hHemcz5mJdoHtaVHe2+FoprnT0pY/nyLFcmlsTsIDYHTZRi9sfE/RnC2ANaWV4T3L"
-    "/DLPOghy56gGICRAXudUqwIDAQABoyEwHzAdBgNVHQ4EFgQUZxkzqXZASKTRanmOKg6r52Wcj1Mw"
-    "DQYJKoZIhvcNAQELBQADggEBACVb/KiCg1PD+DYSHet5eZ0sskx6AtB4CwCsErTzy4z6Noy3zSuH"
-    "3RjYFR/1nsG2M8ZMn6LrB3T6VCnGdZAc6DLHaDZWzt+8g1yNP/9+0p3H9FcemIOVEwdvE/ExwFu9"
-    "W0AKcHVrhUK7OT7RemSfEodzUU+e6Ze/2Joq1vDNW7/ui/pC8XDljqSkwJqPCJeU4KGlTtloXWPw"
-    "GREcpm5DVoJKJ9li9xIj2VHxmXPcdsmeiBL/5BB/1ldcOueirUPTyGiXxR2R1paHrjHZNBXKZ5Du"
-    "2N4HyvOmkj/xht5wkZU3OqA31aScrWF5MjMIu4FBVO3fY7El5s0rCp/cJivDq0Y=";
+std::string sample_cert_base64_der = "MIIDSTCCAjGgAwIBAgIUQQp5TK9J3SemQXrCF+ffmED4qy4wDQYJKoZIhvcNAQELBQAwTTELMAkG"
+                                     "A1UEBhMCQ0gxDzANBgNVBAgMBkdlbmV2YTEPMA0GA1UEBwwGR2VuZXZhMRwwGgYDVQQKDBNEZWZh"
+                                     "dWx0IENvbXBhbnkgTHRkMB4XDTI1MDcwOTA4NDYyN1oXDTM1MDcwNzA4NDYyN1owTTELMAkGA1UE"
+                                     "BhMCQ0gxDzANBgNVBAgMBkdlbmV2YTEPMA0GA1UEBwwGR2VuZXZhMRwwGgYDVQQKDBNEZWZhdWx0"
+                                     "IENvbXBhbnkgTHRkMIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEAh0gY8QsodbL06ls2"
+                                     "vRuY9ETBefO2llFkpfYpExdT0WVeNq7iV5AXD+pyI1rHt6ua59gnvhSFwpIqcMF1DXW4LuQIFy0h"
+                                     "TOYPDBpbt6YBDb5imHHosE+pWUu6fU/dBy0m0cp84z0/UHDuHQSYYsDMDLnSTIk/F8k4idPkZfoY"
+                                     "N2a7gNTiMfxM7MvoJkZ43FSU/LVnm2dymn+5LZJHT5+oZLx70tjNBqCSiroYTmHWnu79agWr0Yiv"
+                                     "3U9UKCkjmz3hHemcz5mJdoHtaVHe2+FoprnT0pY/nyLFcmlsTsIDYHTZRi9sfE/RnC2ANaWV4T3L"
+                                     "/DLPOghy56gGICRAXudUqwIDAQABoyEwHzAdBgNVHQ4EFgQUZxkzqXZASKTRanmOKg6r52Wcj1Mw"
+                                     "DQYJKoZIhvcNAQELBQADggEBACVb/KiCg1PD+DYSHet5eZ0sskx6AtB4CwCsErTzy4z6Noy3zSuH"
+                                     "3RjYFR/1nsG2M8ZMn6LrB3T6VCnGdZAc6DLHaDZWzt+8g1yNP/9+0p3H9FcemIOVEwdvE/ExwFu9"
+                                     "W0AKcHVrhUK7OT7RemSfEodzUU+e6Ze/2Joq1vDNW7/ui/pC8XDljqSkwJqPCJeU4KGlTtloXWPw"
+                                     "GREcpm5DVoJKJ9li9xIj2VHxmXPcdsmeiBL/5BB/1ldcOueirUPTyGiXxR2R1paHrjHZNBXKZ5Du"
+                                     "2N4HyvOmkj/xht5wkZU3OqA31aScrWF5MjMIu4FBVO3fY7El5s0rCp/cJivDq0Y=";
 
 std::string raw_jwks = R"({
     "keys": [{
@@ -65,107 +64,119 @@ std::string raw_jwks = R"({
         "kty": "RSA",
         "use": "sig",
         "x5c": [
-        ")" + sample_cert_base64_der + R"("
+        ")" + sample_cert_base64_der +
+                       R"("
         ],
         "e": "AQAB"
     }]
     })";
-class JwkCacheValidateTokenTest: public cta::JwkCache {
+
+class JwkCacheValidateTokenTest : public cta::JwkCache {
 public:
-    JwkCacheValidateTokenTest(const std::string& jwkUri, int cacheRefreshInterval, int pubkeyTimeout, const cta::log::LogContext& lc)
-        : JwkCache(jwkUri, cacheRefreshInterval, pubkeyTimeout, lc) { jwks = raw_jwks; }
-    
-        std::string fetchJWKS(const std::string& jwksUrl);
-        std::string jwks;
+  JwkCacheValidateTokenTest(const std::string& jwkUri,
+                            int cacheRefreshInterval,
+                            int pubkeyTimeout,
+                            const cta::log::LogContext& lc)
+      : JwkCache(jwkUri, cacheRefreshInterval, pubkeyTimeout, lc) {
+    jwks = raw_jwks;
+  }
+
+  std::string fetchJWKS(const std::string& jwksUrl);
+  std::string jwks;
 };
+
 // Fake fetchJWKS for testing
 std::string JwkCacheValidateTokenTest::fetchJWKS(const std::string& uri) {
-    return jwks;
+  return jwks;
 }
 
 std::string pubkeyPem = jwt::helper::convert_base64_der_to_pem(sample_cert_base64_der);
 
 std::string createTestJwt(bool expired, const std::string& kid) {
-    // first get the public key in pem format, then use it to sign stuff
+  // first get the public key in pem format, then use it to sign stuff
 
-    auto token = jwt::create()
-        .set_issuer("test")
-        .set_payload_claim("exp", jwt::claim(std::chrono::system_clock::now() + (expired ? -std::chrono::minutes(60) : std::chrono::minutes(60))))
-        .set_header_claim("kid", jwt::claim(kid))
-        .sign(jwt::algorithm::rs256("", rsa_priv_key, "", ""));
-    return token;
+  auto token = jwt::create()
+                 .set_issuer("test")
+                 .set_payload_claim("exp",
+                                    jwt::claim(std::chrono::system_clock::now() +
+                                               (expired ? -std::chrono::minutes(60) : std::chrono::minutes(60))))
+                 .set_header_claim("kid", jwt::claim(kid))
+                 .sign(jwt::algorithm::rs256("", rsa_priv_key, "", ""));
+  return token;
 }
 
 class ValidateTokenTestFixture : public ::testing::Test {
 protected:
-    cta::log::StringLogger log;
-    cta::log::LogContext lc;
-    JwkCacheValidateTokenTest cache;
+  cta::log::StringLogger log;
+  cta::log::LogContext lc;
+  JwkCacheValidateTokenTest cache;
 
-    ValidateTokenTestFixture() : log("dummy","ValidateTokenTests",cta::log::DEBUG),
-                                 lc(log),
-                                 cache("http://fake-jwks-uri", 1200, 1200, lc) {}
+  ValidateTokenTestFixture()
+      : log("dummy", "ValidateTokenTests", cta::log::DEBUG),
+        lc(log),
+        cache("http://fake-jwks-uri", 1200, 1200, lc) {}
 };
 
 TEST_F(ValidateTokenTestFixture, ValidTokenWithCachedKey) {
-    std::string token = createTestJwt(false /*expired*/, "test-kid");
-    cache.insert("test-kid", {std::time(nullptr), pubkeyPem}); // insert a not-expired entry
+  std::string token = createTestJwt(false /*expired*/, "test-kid");
+  cache.insert("test-kid", {std::time(nullptr), pubkeyPem});  // insert a not-expired entry
 
-    ASSERT_TRUE(cta::ValidateToken(token, cache, lc));
+  ASSERT_TRUE(cta::ValidateToken(token, cache, lc));
 }
 
 TEST_F(ValidateTokenTestFixture, ValidTokenWithoutCachedKeyCacheFetchSucceeds) {
-    std::string token = createTestJwt(false /*expired*/, "test-kid");
-    auto entry = cache.find("test-kid");
-    ASSERT_FALSE(entry.has_value());
-    ASSERT_TRUE(cta::ValidateToken(token, cache, lc)); // validate will succeed even if the key is not already present in the cache
-    // because it will be fetched
-    entry = cache.find("test-kid");
-    ASSERT_TRUE(entry.has_value());
+  std::string token = createTestJwt(false /*expired*/, "test-kid");
+  auto entry = cache.find("test-kid");
+  ASSERT_FALSE(entry.has_value());
+  ASSERT_TRUE(
+    cta::ValidateToken(token, cache, lc));  // validate will succeed even if the key is not already present in the cache
+  // because it will be fetched
+  entry = cache.find("test-kid");
+  ASSERT_TRUE(entry.has_value());
 }
 
 TEST_F(ValidateTokenTestFixture, ValidTokenWithoutCachedKeyCacheFetchFails) {
-    cache.jwks = "";
-    EXPECT_EQ(cache.jwks, "");
+  cache.jwks = "";
+  EXPECT_EQ(cache.jwks, "");
 
-    std::string token = createTestJwt(false /*expired*/, "test-kid");
-    auto entry = cache.find("test-kid");
-    ASSERT_FALSE(entry.has_value());
-    EXPECT_FALSE(cta::ValidateToken(token, cache, lc)); // validate will fail if we cannot find the public key
-    // because it will be fetched
-    entry = cache.find("test-kid");
-    ASSERT_FALSE(entry.has_value());
+  std::string token = createTestJwt(false /*expired*/, "test-kid");
+  auto entry = cache.find("test-kid");
+  ASSERT_FALSE(entry.has_value());
+  EXPECT_FALSE(cta::ValidateToken(token, cache, lc));  // validate will fail if we cannot find the public key
+  // because it will be fetched
+  entry = cache.find("test-kid");
+  ASSERT_FALSE(entry.has_value());
 }
 
 TEST_F(ValidateTokenTestFixture, ExpiredToken) {
-    std::string token = createTestJwt(true /*expired*/, "test-kid");
-    cache.insert("test-kid", {std::time(nullptr), pubkeyPem});
+  std::string token = createTestJwt(true /*expired*/, "test-kid");
+  cache.insert("test-kid", {std::time(nullptr), pubkeyPem});
 
-    ASSERT_FALSE(cta::ValidateToken(token, cache, lc));
+  ASSERT_FALSE(cta::ValidateToken(token, cache, lc));
 }
 
 // Tests for invalid/malformed tokens
 TEST_F(ValidateTokenTestFixture, BadTokenMissingKid) {
-    std::string token = jwt::create()
-        .set_issuer("test")
-        .set_payload_claim("exp", jwt::claim(std::chrono::system_clock::now() + std::chrono::minutes(60)))
-        .sign(jwt::algorithm::rs256("", rsa_priv_key, "", ""));
+  std::string token =
+    jwt::create()
+      .set_issuer("test")
+      .set_payload_claim("exp", jwt::claim(std::chrono::system_clock::now() + std::chrono::minutes(60)))
+      .sign(jwt::algorithm::rs256("", rsa_priv_key, "", ""));
 
-    ASSERT_FALSE(cta::ValidateToken(token, cache, lc));
+  ASSERT_FALSE(cta::ValidateToken(token, cache, lc));
 }
 
 TEST_F(ValidateTokenTestFixture, BadTokenMissingExp) {
-    std::string token = jwt::create()
-        .set_issuer("test")
-        .set_header_claim("kid", jwt::claim(std::string("test-kid")))
-        .sign(jwt::algorithm::rs256("", rsa_priv_key, "", ""));
+  std::string token = jwt::create()
+                        .set_issuer("test")
+                        .set_header_claim("kid", jwt::claim(std::string("test-kid")))
+                        .sign(jwt::algorithm::rs256("", rsa_priv_key, "", ""));
 
-    ASSERT_FALSE(cta::ValidateToken(token, cache, lc));
+  ASSERT_FALSE(cta::ValidateToken(token, cache, lc));
 }
 
 TEST_F(ValidateTokenTestFixture, BadTokenInvalidSignature) {
-
-    std::string wrongPrivateKey = R"(-----BEGIN PRIVATE KEY-----
+  std::string wrongPrivateKey = R"(-----BEGIN PRIVATE KEY-----
 MIIEvAIBADANBgkqhkiG9w0BAQEFAASCBKYwggSiAgEAAoIBAQCHSBjxCyh1svTq
 Wza9G5j0RMF587aWUWSl9ikTF1PRZV42ruJXkBcP6nIjWse3q5rn2Ce+FIXCkipw
 wXUNdbgu5AgXLSFM5g8MGlu3pgENvmKYceiwT6lZS7p9T90HLSbRynzjPT9QcO4d
@@ -194,37 +205,38 @@ bkPtfTdNpX2zT6xowAncu7ucONxVouV+bo3Dd1ECgYBHMrGUrJS0ofnNdXHt8QzY
 az8ZaVQPvmSthMu8suOc8w==
 -----END PRIVATE KEY-----)";
 
-    std::string token = jwt::create()
-        .set_issuer("test")
-        .set_payload_claim("exp", jwt::claim(std::chrono::system_clock::now() + std::chrono::minutes(60)))
-        .set_header_claim("kid", jwt::claim(std::string("test-kid")))
-        .sign(jwt::algorithm::rs256("", wrongPrivateKey, "", ""));
+  std::string token =
+    jwt::create()
+      .set_issuer("test")
+      .set_payload_claim("exp", jwt::claim(std::chrono::system_clock::now() + std::chrono::minutes(60)))
+      .set_header_claim("kid", jwt::claim(std::string("test-kid")))
+      .sign(jwt::algorithm::rs256("", wrongPrivateKey, "", ""));
 
-    ASSERT_FALSE(cta::ValidateToken(token, cache, lc));
+  ASSERT_FALSE(cta::ValidateToken(token, cache, lc));
 }
 
 TEST_F(ValidateTokenTestFixture, BadTokenUnsupportedAlgorithm) {
-    std::string token = jwt::create()
-        .set_issuer("test")
-        .set_payload_claim("exp", jwt::claim(std::chrono::system_clock::now() + std::chrono::minutes(60)))
-        .set_header_claim("kid", jwt::claim(std::string("test-kid")))
-        .sign(jwt::algorithm::hs256(rsa_priv_key)); // we accept RS256 only
+  std::string token =
+    jwt::create()
+      .set_issuer("test")
+      .set_payload_claim("exp", jwt::claim(std::chrono::system_clock::now() + std::chrono::minutes(60)))
+      .set_header_claim("kid", jwt::claim(std::string("test-kid")))
+      .sign(jwt::algorithm::hs256(rsa_priv_key));  // we accept RS256 only
 
-    ASSERT_FALSE(cta::ValidateToken(token, cache, lc));
+  ASSERT_FALSE(cta::ValidateToken(token, cache, lc));
 }
 
 TEST_F(ValidateTokenTestFixture, BadTokenMalformedToken) {
-    auto token = createTestJwt(false, "test-kid");
-    // append some garbage to the token string
-    token+="GARBAGE";
+  auto token = createTestJwt(false, "test-kid");
+  // append some garbage to the token string
+  token += "GARBAGE";
 
-    ASSERT_FALSE(cta::ValidateToken(token, cache, lc));
+  ASSERT_FALSE(cta::ValidateToken(token, cache, lc));
 }
 
 TEST_F(ValidateTokenTestFixture, BadTokenEmtpyToken) {
-    auto token = "";
-    ASSERT_FALSE(cta::ValidateToken(token, cache, lc));
+  auto token = "";
+  ASSERT_FALSE(cta::ValidateToken(token, cache, lc));
 }
 
-}
-
+}  // namespace unitTests

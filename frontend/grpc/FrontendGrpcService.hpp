@@ -40,9 +40,8 @@ public:
   CtaRpcImpl(const std::string& config);
 
   FrontendService& getFrontendService() const { return *m_frontendService; }
-  void setHealthCheckService(
-    ::grpc::HealthCheckServiceInterface* healthCheckService) {
-      m_healthCheckService = healthCheckService;
+  void setHealthCheckService(::grpc::HealthCheckServiceInterface* healthCheckService) {
+    m_healthCheckService = healthCheckService;
   }
 
   void StartJwksRefreshThread() { return m_pubkeyCache.startRefreshThread(); }
