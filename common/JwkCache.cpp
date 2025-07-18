@@ -46,9 +46,9 @@ JwkCache::~JwkCache() {
 
 std::optional<JwkCacheEntry> JwkCache::find(const std::string& key) {
     log::LogContext lc(m_lc);
-    lc.log(log::INFO, "Waiting to acquire shared_lock in JwkCache::find");
+    lc.log(log::DEBUG, "Waiting to acquire shared_lock in JwkCache::find");
     std::shared_lock<std::shared_mutex> lock(m_mutex);
-    lc.log(log::INFO, "Just acquired the shared_lock in JwkCache::find");
+    lc.log(log::DEBUG, "Just acquired the shared_lock in JwkCache::find");
     auto it = m_keymap.find(key);
     if (it == m_keymap.end()) {
         lc.log(log::INFO, std::string("Entry not found for kid ") + key);
@@ -61,9 +61,7 @@ std::optional<JwkCacheEntry> JwkCache::find(const std::string& key) {
 
 void JwkCache::insert(const std::string &key, const JwkCacheEntry& e) {
     log::LogContext lc(m_lc);
-    lc.log(log::INFO, "Waiting to acquire unique_lock in JwkCache::Insert");
     std::unique_lock<std::shared_mutex> lock(m_mutex);
-    lc.log(log::INFO, "Just acquired the unique_lock in JwkCache::Insert");
     m_keymap[key] = e;
 }
 
@@ -73,18 +71,18 @@ void JwkCache::startRefreshThread() {
         return;
     }
     log::LogContext lc(m_lc);
-    lc.log(log::INFO, "Starting cache refresh thread");
+    lc.log(log::DEBUG, "Starting cache refresh thread");
     m_stopThread = false;
     m_refreshThread = std::thread(&JwkCache::refreshLoop, this);
-    lc.log(log::INFO, "Cache refresh thread started");
+    lc.log(log::DEBUG, "Cache refresh thread started");
 }
 
 void JwkCache::stopRefreshThread() {
     log::LogContext lc(m_lc);
-    lc.log(log::INFO, "In StopRefershThread, stopping the thread and notifying the cv");
+    lc.log(log::DEBUG, "In StopRefershThread, stopping the thread and notifying the cv");
     m_stopThread = true;
     m_cv.notify_all();  // Wake the thread if sleeping
-    lc.log(log::INFO, "Notified condition variable");
+    lc.log(log::DEBUG, "Notified condition variable");
     if (m_refreshThread.joinable()) {
         m_refreshThread.join();
     }
@@ -92,7 +90,6 @@ void JwkCache::stopRefreshThread() {
 
 void JwkCache::refreshLoop() {
     log::LogContext lc(m_lc);
-    lc.log(log::INFO, "Entering function Refresh loop");
     while (!m_stopThread.load()) {
         try {
             time_t now = time(NULL);
@@ -106,17 +103,17 @@ void JwkCache::refreshLoop() {
         std::unique_lock<std::mutex> lk(m_cv_mutex);
         m_cv.wait_for(lk, std::chrono::seconds(m_cacheRefreshInterval), [this]() {
             log::LogContext lc(m_lc);
-            lc.log(log::INFO, "Waiting on condition variable or explicit wakeup...");
+            lc.log(log::DEBUG, "Waiting on condition variable or explicit wakeup...");
             return m_stopThread.load();
         });
     }
-    lc.log(log::INFO, "Received notification in RefreshLoop");
+    lc.log(log::DEBUG, "Received notification in RefreshLoop");
 }
 
 void JwkCache::updateCache(time_t now) {
     log::LogContext lc(m_lc);
     log::ScopedParamContainer spc(lc);
-    lc.log(log::INFO, "In function updateCache");
+    lc.log(log::DEBUG, "In function updateCache");
     std::string raw_jwks;
     // jwks<traits::nlohmann_json> jwks;
     try {
@@ -129,9 +126,9 @@ void JwkCache::updateCache(time_t now) {
         return;
     }
     // purge any keys that have expired
-    lc.log(log::INFO, "In function updateCache, waiting to acquire unique lock");
+    lc.log(log::DEBUG, "In function updateCache, waiting to acquire unique lock");
     std::unique_lock<std::shared_mutex> lock(m_mutex);
-    lc.log(log::INFO, "In updateCache, just acquired the unique lock");
+    lc.log(log::DEBUG, "In updateCache, just acquired the unique lock");
     for (auto it = m_keymap.begin(); it != m_keymap.end() ;) {
         int lastRefresh = it->second.last_refresh_time;
         if (lastRefresh + m_pubkeyTimeout <= now) {
