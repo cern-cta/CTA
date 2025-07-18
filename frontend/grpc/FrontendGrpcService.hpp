@@ -45,7 +45,6 @@ public:
   }
 
   void StartJwksRefreshThread() { return m_pubkeyCache.startRefreshThread(); }
-  void StopJwksRefreshThread() { return m_pubkeyCache.stopRefreshThread(); }
   // Archive/Retrieve interface
   Status Create(::grpc::ServerContext* context, const cta::xrd::Request* request, cta::xrd::Response* response);
   Status Archive(::grpc::ServerContext* context, const cta::xrd::Request* request, cta::xrd::Response* response);
