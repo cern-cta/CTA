@@ -19,7 +19,7 @@ variables:
   #   - IMAGE_FROM_CTA_VERSION: generate a docker image from a set of CTA RPMS avaiable in repos and run the tests.
   PIPELINE_TYPE:
     description: "What kind of pipeline to run. Use IMAGE_FROM_CTA_VERSION if you want to build a new Docker image based of existing CTA RPMs"
-    value: "DEFAULT"
+    value: "SYSTEM_TEST_ONLY"
     options:
       - "DEFAULT"
       - "SYSTEM_TEST_ONLY"

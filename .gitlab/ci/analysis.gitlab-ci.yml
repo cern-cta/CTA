@@ -132,6 +132,9 @@ catalogue-schema-version-check:
 validate-pipeline-variables:
   stage: analysis
   image: $IMAGE_ANALYSIS
+  rules:
+    - if: $PIPELINE_TYPE == "SYSTEM_TEST_ONLY"
+      when: never
   script:
     - |
       if [ "$USE_INTERNAL_REPOS" == "TRUE" ]; then
@@ -146,5 +149,8 @@ validate-pipeline-variables:
 validate-project-json:
   stage: analysis
   image: $IMAGE_ANALYSIS
+  rules:
+    - if: $PIPELINE_TYPE == "SYSTEM_TEST_ONLY"
+      when: never
   script:
     - python3 ./continuousintegration/utils/project-json/validate_project_json.py
