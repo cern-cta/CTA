@@ -97,7 +97,7 @@ def check_image_tag_available(image_tag: str, repository: str):
     """
     full_image = f"{repository}:{image_tag}"
     try:
-        run_cmd(f"podman manifest inspect {full_image}")
+        run_cmd(f"podman --log-level=error manifest inspect {full_image}")
     except SystemExit:
         sys.exit(f"ERROR: Image tag '{image_tag}' not found in repository '{repository}'")
 
