@@ -142,12 +142,12 @@ variables:
   FF_TIMESTAMPS: true
 
   # Images
-  IMAGE_DEFAULT: gitlab-registry.cern.ch/cta/public_registry/container_registry/cta-ci-default:2025-07-15-12440514.el9
-  IMAGE_LINT: gitlab-registry.cern.ch/cta/public_registry/container_registry/cta-ci-lint:2025-07-15-12440514.el9
-  IMAGE_BUILD: gitlab-registry.cern.ch/cta/public_registry/container_registry/cta-ci-build:2025-07-15-12440514.el9
-  IMAGE_TEST: gitlab-registry.cern.ch/cta/public_registry/container_registry/cta-ci-test:2025-07-15-12440514.el9
-  IMAGE_RELEASE: gitlab-registry.cern.ch/cta/public_registry/container_registry/cta-ci-release:2025-07-15-12440514.el9
-  IMAGE_DANGER: gitlab-registry.cern.ch/cta/public_registry/container_registry/cta-ci-danger:2025-07-15-12440514.el9
+  IMAGE_DEFAULT: gitlab-registry.cern.ch/cta/public_registry/container_registry/cta-ci-default:2025-07-22-12493522.el9
+  IMAGE_LINT: gitlab-registry.cern.ch/cta/public_registry/container_registry/cta-ci-lint:2025-07-22-12493522.el9
+  IMAGE_BUILD: gitlab-registry.cern.ch/cta/public_registry/container_registry/cta-ci-build:2025-07-22-12493522.el9
+  IMAGE_TEST: gitlab-registry.cern.ch/cta/public_registry/container_registry/cta-ci-test:2025-07-22-12493522.el9
+  IMAGE_RELEASE: gitlab-registry.cern.ch/cta/public_registry/container_registry/cta-ci-release:2025-07-22-12493522.el9
+  IMAGE_DANGER: gitlab-registry.cern.ch/cta/public_registry/container_registry/cta-ci-danger:2025-07-22-12493522.el9
   IMAGE_DOCKER_IMAGE_BUILDER: registry.cern.ch/gcr.io/kaniko-project/executor:debug
 
 default:
