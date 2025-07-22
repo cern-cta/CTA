@@ -39,10 +39,6 @@ std::string JwkCache::fetchJWKS(const std::string& jwksUrl) {
   return readBuffer;
 }
 
-JwkCache::~JwkCache() {
-  stopRefreshThread();
-}
-
 std::optional<JwkCacheEntry> JwkCache::find(const std::string& key) {
   log::LogContext lc(m_lc);
   lc.log(log::DEBUG, "Waiting to acquire shared_lock in JwkCache::find");
@@ -61,43 +57,6 @@ std::optional<JwkCacheEntry> JwkCache::find(const std::string& key) {
 void JwkCache::insert(const std::string& key, const JwkCacheEntry& e) {
   std::unique_lock<std::shared_mutex> lock(m_mutex);
   m_keymap[key] = e;
-}
-
-void JwkCache::startRefreshThread() {
-  if (m_refreshThread.joinable()) {
-    // Already running
-    return;
-  }
-  log::LogContext lc(m_lc);
-  lc.log(log::DEBUG, "Starting cache refresh thread");
-  m_refreshThread = std::thread(&JwkCache::refreshLoop, this);
-  lc.log(log::DEBUG, "Cache refresh thread started");
-}
-
-void JwkCache::stopRefreshThread() {
-  log::LogContext lc(m_lc);
-  lc.log(log::DEBUG, "In StopRefreshThread, stopping the thread and notifying the cv");
-  m_shouldStopThread = true;
-  m_cv.notify_all();  // Wake the thread if sleeping
-  lc.log(log::DEBUG, "Notified condition variable");
-  if (m_refreshThread.joinable()) {
-    m_refreshThread.join();
-  }
-}
-
-void JwkCache::refreshLoop() {
-  log::LogContext lc(m_lc);
-  while (!m_shouldStopThread.load()) {
-    time_t now = time(NULL);
-    updateCache(now);
-    std::unique_lock<std::mutex> lk(m_cv_mutex);
-    m_cv.wait_for(lk, std::chrono::seconds(m_cacheRefreshInterval), [this]() {
-      log::LogContext lc(m_lc);
-      lc.log(log::DEBUG, "Waiting on condition variable or explicit wakeup...");
-      return m_shouldStopThread.load();
-    });
-  }
-  lc.log(log::DEBUG, "Received notification in RefreshLoop");
 }
 
 void JwkCache::updateCache(time_t now) {

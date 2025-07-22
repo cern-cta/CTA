@@ -2,7 +2,7 @@
 #include "jwt-cpp/jwt.h"
 
 namespace cta {
-bool ValidateToken(const std::string& encodedJWT, JwkCache& pubkeyCache, log::LogContext logContext) {
+bool ValidateToken(const std::string& encodedJWT, std::shared_ptr<JwkCache> pubkeyCache, log::LogContext logContext) {
   // this is thread-safe because it makes a copy of logContext for each thread
   cta::log::LogContext lc(logContext);
   cta::log::ScopedParamContainer sp(lc);
@@ -22,7 +22,7 @@ bool ValidateToken(const std::string& encodedJWT, JwkCache& pubkeyCache, log::Lo
     // Get the JWKS endpoint, find the matching with our token, obtain the public key
     // used to sign the token and validate it
     // first try to use the cached value
-    auto entry = pubkeyCache.find(kid);
+    auto entry = pubkeyCache->find(kid);
     if (!entry.has_value()) {
       lc.log(cta::log::INFO, "No cached key found, will fetch keys from endpoint");
       sp.add("kid", kid);
@@ -33,8 +33,8 @@ bool ValidateToken(const std::string& encodedJWT, JwkCache& pubkeyCache, log::Lo
       // add the key to the cache, after fetching
       const auto now = std::chrono::system_clock::now();
       time_t nowt = std::chrono::system_clock::to_time_t(now);
-      pubkeyCache.updateCache(nowt);
-      entry = pubkeyCache.find(kid);
+      pubkeyCache->updateCache(nowt);
+      entry = pubkeyCache->find(kid);
       if (!entry.has_value()) {
         // unable to fetch the public key for validation, fail the request
         lc.log(cta::log::WARNING, "Unable to find the public key for the token, authentication failed");

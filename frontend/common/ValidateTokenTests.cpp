@@ -109,48 +109,48 @@ class ValidateTokenTestFixture : public ::testing::Test {
 protected:
   cta::log::StringLogger log;
   cta::log::LogContext lc;
-  JwkCacheValidateTokenTest cache;
+  std::shared_ptr<JwkCacheValidateTokenTest> cache;
 
   ValidateTokenTestFixture()
       : log("dummy", "ValidateTokenTests", cta::log::DEBUG),
         lc(log),
-        cache("http://fake-jwks-uri", 1200, 1200, lc) {}
+        cache(std::make_unique<JwkCacheValidateTokenTest>("http://fake-jwks-uri", 1200, 1200, lc)) {}
 };
 
 TEST_F(ValidateTokenTestFixture, ValidTokenWithCachedKey) {
   std::string token = createTestJwt(false /*expired*/, "test-kid");
-  cache.insert("test-kid", {std::time(nullptr), pubkeyPem});  // insert a not-expired entry
+  cache->insert("test-kid", {std::time(nullptr), pubkeyPem});  // insert a not-expired entry
 
   ASSERT_TRUE(cta::ValidateToken(token, cache, lc));
 }
 
 TEST_F(ValidateTokenTestFixture, ValidTokenWithoutCachedKeyCacheFetchSucceeds) {
   std::string token = createTestJwt(false /*expired*/, "test-kid");
-  auto entry = cache.find("test-kid");
+  auto entry = cache->find("test-kid");
   ASSERT_FALSE(entry.has_value());
   ASSERT_TRUE(
     cta::ValidateToken(token, cache, lc));  // validate will succeed even if the key is not already present in the cache
   // because it will be fetched
-  entry = cache.find("test-kid");
+  entry = cache->find("test-kid");
   ASSERT_TRUE(entry.has_value());
 }
 
 TEST_F(ValidateTokenTestFixture, ValidTokenWithoutCachedKeyCacheFetchFails) {
-  cache.jwks = "";
-  EXPECT_EQ(cache.jwks, "");
+  cache->jwks = "";
+  EXPECT_EQ(cache->jwks, "");
 
   std::string token = createTestJwt(false /*expired*/, "test-kid");
-  auto entry = cache.find("test-kid");
+  auto entry = cache->find("test-kid");
   ASSERT_FALSE(entry.has_value());
   EXPECT_FALSE(cta::ValidateToken(token, cache, lc));  // validate will fail if we cannot find the public key
   // because it will be fetched
-  entry = cache.find("test-kid");
+  entry = cache->find("test-kid");
   ASSERT_FALSE(entry.has_value());
 }
 
 TEST_F(ValidateTokenTestFixture, ExpiredToken) {
   std::string token = createTestJwt(true /*expired*/, "test-kid");
-  cache.insert("test-kid", {std::time(nullptr), pubkeyPem});
+  cache->insert("test-kid", {std::time(nullptr), pubkeyPem});
 
   ASSERT_FALSE(cta::ValidateToken(token, cache, lc));
 }

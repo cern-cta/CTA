@@ -34,7 +34,7 @@ private:
   std::unique_ptr<cta::frontend::FrontendService> m_frontendService;
   ::grpc::HealthCheckServiceInterface* m_healthCheckService = nullptr;
   bool m_isServing = true;
-  JwkCache m_pubkeyCache;
+  std::shared_ptr<JwkCache> m_pubkeyCache;
 
 public:
   CtaRpcImpl(const std::string& config);
@@ -43,8 +43,9 @@ public:
   void setHealthCheckService(::grpc::HealthCheckServiceInterface* healthCheckService) {
     m_healthCheckService = healthCheckService;
   }
-
-  void StartJwksRefreshThread() { return m_pubkeyCache.startRefreshThread(); }
+  std::shared_ptr<JwkCache> getPubkeyCache() {
+    return m_pubkeyCache;
+  }
   // Archive/Retrieve interface
   Status Create(::grpc::ServerContext* context, const cta::xrd::Request* request, cta::xrd::Response* response);
   Status Archive(::grpc::ServerContext* context, const cta::xrd::Request* request, cta::xrd::Response* response);

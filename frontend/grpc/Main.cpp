@@ -26,6 +26,7 @@
 #include "common/log/LogLevel.hpp"
 #include "common/log/StdoutLogger.hpp"
 #include "rdbms/Login.hpp"
+#include "common/JwkCache.hpp"
 #ifdef CTA_PGSCHED
 #include "scheduler/rdbms/RelationalDBInit.hpp"
 #else
@@ -34,6 +35,8 @@
 
 #include <getopt.h>
 #include <fstream>
+#include <condition_variable>
+#include <thread>
 
 using namespace cta;
 using namespace cta::common;
@@ -72,6 +75,39 @@ std::string file2string(std::string filename){
     return as_string.str();
 }
 
+void JwksCacheRefreshLoop(std::weak_ptr<JwkCache> weakCache,
+                 std::atomic<bool>& shouldStopThread,
+                 std::condition_variable& cv,
+                 std::mutex& cvMutex,
+                 int cacheRefreshInterval,
+                 log::LogContext lc) {
+    log::LogContext threadLc(lc);
+    threadLc.log(log::INFO, "Detached refresh thread started");
+
+    while (true) {
+        auto cache = weakCache.lock();
+        if (!cache) {
+            threadLc.log(log::INFO, "JwkCache no longer exists, exiting refresh thread");
+            break;  // Cache destroyed
+        }
+        if (shouldStopThread.load()) {
+            threadLc.log(log::INFO, "Stop requested, exiting refresh thread");
+            break;
+        }
+
+        time_t now = time(nullptr);
+        cache->updateCache(now);
+
+        std::unique_lock<std::mutex> lk(cvMutex);
+        cv.wait_for(lk, std::chrono::seconds(cacheRefreshInterval), [&shouldStopThread, &threadLc]() {
+            threadLc.log(log::INFO, "Waiting on condition variable or explicit wakeup...");
+            return shouldStopThread.load();
+        });
+    }
+
+    threadLc.log(log::INFO, "Detached refresh thread ended");
+}
+
 int main(const int argc, char *const *const argv) {
 
     std::string config_file("/etc/cta/cta-frontend-grpc.conf");
@@ -104,7 +140,21 @@ int main(const int argc, char *const *const argv) {
     // get the log context
     log::LogContext lc = svc.getFrontendService().getLogContext();
     // if token authentication is specified, then also start the refresh thread, otherwise no point in doing this
-    svc.StartJwksRefreshThread();
+    auto jwkCache = svc.getPubkeyCache();
+    std::weak_ptr<JwkCache> weakCache = jwkCache;
+    std::mutex cv_mutex;
+    std::condition_variable cv;  //!< condition: stop the refresh thread, will be performed in destructor
+    //!< this is needed because the refresh thread might be sleeping, if not actively performing cache update
+    std::atomic<bool> shouldStopThread{false};
+    std::thread cacheRefreshThread([weakCache,
+                                    &shouldStopThread,
+                                    &cv,
+                                    &cv_mutex,
+                                    refreshInterval = svc.getFrontendService().getCacheRefreshInterval().value_or(600),
+                                    lc = svc.getFrontendService().getLogContext()]() mutable {
+                                        JwksCacheRefreshLoop(weakCache, shouldStopThread, cv, cv_mutex, refreshInterval, lc);
+    });
+    cacheRefreshThread.detach();
 
     // use castor config to avoid dependency on xroot-ssi
     // Configuration config(config_file);
@@ -194,4 +244,14 @@ int main(const int argc, char *const *const argv) {
 
     lc.log(cta::log::INFO, "Listening on socket address: " + server_address);
     server->Wait();
+
+    // if we ever receive a shutdown, or want to handle termination of the frontend gracefully,
+    // add the following lines:
+    /*
+     * 
+     *
+     *
+        shouldStopThread.store(true);
+        cv.notify_all();
+     */
 }
