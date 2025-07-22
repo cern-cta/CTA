@@ -60,6 +60,9 @@
       optional: true
     - job: modify-catalogue-version
       optional: true
+    - job: modify-project-json
+      optional: true
+      artifacts: true
   rules:
     - if: $CI_COMMIT_TAG
       when: never
