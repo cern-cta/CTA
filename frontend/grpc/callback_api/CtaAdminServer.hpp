@@ -87,8 +87,6 @@ class CtaRpcStreamImpl : public cta::xrd::CtaRpcStream::CallbackService {
     std::string               m_instanceName;  //!< Instance name
     cta::SchedulerDB_t        &m_schedDb;      //!< Reference to CTA SchedulerDB
     std::string m_catalogueConnString; //!< Provided by frontendService
-    // I do not think a reactor could be a member of this class because it must be reinitialized upon each call
-    // CtaAdminServerWriteReactor *m_reactor;      // this will have to be initialized to TapeLs or StorageClassLs or whatever...
 };
 
 // request object will be filled in by the Parser of the command on the client-side.

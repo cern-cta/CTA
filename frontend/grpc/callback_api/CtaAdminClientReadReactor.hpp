@@ -22,11 +22,7 @@
 #include "version.h"
 #include <grpcpp/grpcpp.h>
 #include <google/protobuf/util/json_util.h>
-// #include <grpcpp/resource_quota.h>
-// #include <grpcpp/security/server_credentials.h>
 
-// #include <scheduler/Scheduler.hpp> // what happens if I skip this?
-// #include "common/log/Logger.hpp"
 #include "cta_frontend.pb.h"
 #include "cta_frontend.grpc.pb.h"
 
@@ -294,31 +290,12 @@ public:
     }
 
     CtaAdminClientReadReactor(cta::xrd::CtaRpcStream::Stub* client_stub, const cta::admin::CtaAdminParsedCmd &parsedCmd) {
-        // or Otherwise, I can have a generic method
-        setenv("GRPC_VERBOSITY", "debug", 1);
-        setenv("GRPC_TRACE", "all", 1);
-
         const auto request = parsedCmd.getRequest();
         client_stub->async()->GenericAdminStream(&m_context, &request, this);
         m_isJson = parsedCmd.isJson();
-        // switch (cmd_pair(request.admincmd().cmd(), request.admincmd().subcmd())) {
-        //     case cmd_pair(cta::admin::AdminCmd::CMD_TAPE, cta::admin::AdminCmd::SUBCMD_LS):
-        //         stub->async()->TapeLs(context, request, this); 
-        //         break;
-        //     case cmd_pair(cta::admin::AdminCmd::CMD_STORAGECLASS, cta::admin::AdminCmd::SUBCMD_LS):
-        //         stub->async()->StorageClassLs(context, request, this);
-        //         break;
-        // }
         StartRead(&m_response); // where to store the received response?
         StartCall(); // activate the RPC!
     }
-    // This method I will put in a separate class, that will inherit from CtaAdminClientReactor
-    // void ProcessTapeLs() {
-    //     stub->async()->TapeLs(context, request, this); // all these steps I will do in the respective call path
-    //     StartRead(&m_response); // where to store the received response?
-    //     StartCall(); // activate the RPC!
-    //     // the onReadDone method should be implemented separately for each of the commands
-    // }
 
 private:
     ::grpc::ClientContext m_context;
