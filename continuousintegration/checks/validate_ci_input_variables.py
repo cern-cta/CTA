@@ -70,7 +70,7 @@ def run_cmd(cmd: str):
     except subprocess.TimeoutExpired as e:
         sys.exit(f"ERROR: Timeout reached for command: {cmd}")
     except subprocess.CalledProcessError as e:
-        sys.exit(f"ERROR: Command failed: {e.stderr}")
+        sys.exit(f"ERROR: Command '{cmd}' failed with error: {e.stderr}")
 
     return cmd_call.stdout.strip()
 
@@ -96,10 +96,7 @@ def check_image_tag_available(image_tag: str, repository: str):
     Checks that the image tag is available in the given repository.
     """
     full_image = f"{repository}:{image_tag}"
-    try:
-        run_cmd(f"podman --log-level=error manifest inspect {full_image}")
-    except SystemExit:
-        sys.exit(f"ERROR: Image tag '{image_tag}' not found in repository '{repository}'")
+    run_cmd(f"podman --log-level=error manifest inspect {full_image}")
 
 def validate_default(ci_input_vars):
     """
