@@ -52,6 +52,8 @@
 
 .kubernetes-test:
   needs:
+    - job: modify-project-json
+      optional: true
     - job: build-ctageneric-from-local-rpms
       optional: true # Otherwise the SYSTEM_TEST_ONLY PIPELINE_TYPE won't work
     - job: build-ctageneric-from-remote-rpms
