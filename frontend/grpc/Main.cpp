@@ -139,22 +139,25 @@ int main(const int argc, char *const *const argv) {
     frontend::grpc::CtaRpcImpl svc(config_file);
     // get the log context
     log::LogContext lc = svc.getFrontendService().getLogContext();
-    // if token authentication is specified, then also start the refresh thread, otherwise no point in doing this
     auto jwkCache = svc.getPubkeyCache();
     std::weak_ptr<JwkCache> weakCache = jwkCache;
     std::mutex cv_mutex;
     std::condition_variable cv;  //!< condition: stop the refresh thread, will be performed in destructor
     //!< this is needed because the refresh thread might be sleeping, if not actively performing cache update
     std::atomic<bool> shouldStopThread{false};
-    std::thread cacheRefreshThread([weakCache,
-                                    &shouldStopThread,
-                                    &cv,
-                                    &cv_mutex,
-                                    refreshInterval = svc.getFrontendService().getCacheRefreshInterval().value_or(600),
-                                    lc = svc.getFrontendService().getLogContext()]() mutable {
-                                        JwksCacheRefreshLoop(weakCache, shouldStopThread, cv, cv_mutex, refreshInterval, lc);
-    });
-    cacheRefreshThread.detach();
+    // if token authentication is specified, then also start the refresh thread, otherwise no point in doing this
+    if (svc.getFrontendService().getJwtAuth()) {
+        lc.log(log::INFO, "Starting the cache refresh thread for JWKS cache");
+        std::thread cacheRefreshThread([weakCache,
+                                        &shouldStopThread,
+                                        &cv,
+                                        &cv_mutex,
+                                        refreshInterval = svc.getFrontendService().getCacheRefreshInterval().value_or(600),
+                                        lc = svc.getFrontendService().getLogContext()]() mutable {
+                                            JwksCacheRefreshLoop(weakCache, shouldStopThread, cv, cv_mutex, refreshInterval, lc);
+        });
+        cacheRefreshThread.detach();
+    }
 
     // use castor config to avoid dependency on xroot-ssi
     // Configuration config(config_file);
