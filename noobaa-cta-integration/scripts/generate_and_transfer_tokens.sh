@@ -26,29 +26,31 @@ error() {
     echo "$(date '+%Y-%m-%d %H:%M:%S') [TOKEN-GEN] ERROR: $*" >&2
 }
 
-# Find EOS MGM pod
-find_eos_mgm_pod() {
-    local eos_pod
+# Find CTA client pod (better user context than MGM pod)
+find_cta_client_pod() {
+    local client_pod
     
-    # Try to find by label first
-    eos_pod=$(kubectl get pods -n "${CTA_NAMESPACE}" -l app=eos-mgm -o jsonpath='{.items[0].metadata.name}' 2>/dev/null)
+    # Try to find CTA client pod first
+    client_pod=$(kubectl get pods -n "${CTA_NAMESPACE}" -o jsonpath='{.items[*].metadata.name}' | tr ' ' '\n' | grep -E '^cta-client-[0-9]+$' | head -1)
     
-    # If not found by label, try by name pattern
-    if [[ -z "${eos_pod}" ]]; then
-        eos_pod=$(kubectl get pods -n "${CTA_NAMESPACE}" -o jsonpath='{.items[*].metadata.name}' | tr ' ' '\n' | grep -E '^eos-mgm-[0-9]+$' | head -1)
-    fi
-    
-    if [[ -z "${eos_pod}" ]]; then
-        error "No EOS MGM pod found in namespace ${CTA_NAMESPACE}"
+    if [[ -z "${client_pod}" ]]; then
+        error "No CTA client pod found in namespace ${CTA_NAMESPACE}"
         return 1
     fi
     
-    echo "${eos_pod}"
+    echo "${client_pod}"
 }
 
 # Find NooBaa core pod
 find_noobaa_pod() {
     local noobaa_pod
+    
+    # Try to find noobaa-core-0 specifically first
+    noobaa_pod=$(kubectl get pods -n "${NOOBAA_NAMESPACE}" -o jsonpath='{.items[*].metadata.name}' | tr ' ' '\n' | grep -E '^noobaa-core-[0-9]+$' | head -1)
+    if [[ -n "${noobaa_pod}" ]]; then
+        echo "${noobaa_pod}"
+        return 0
+    fi
     
     # Try common NooBaa pod names
     for pod_pattern in "noobaa-core" "noobaa-operator"; do
@@ -59,8 +61,8 @@ find_noobaa_pod() {
         fi
     done
     
-    # Fallback: get any pod with noobaa in the name
-    noobaa_pod=$(kubectl get pods -n "${NOOBAA_NAMESPACE}" -o jsonpath='{.items[*].metadata.name}' | tr ' ' '\n' | grep -i noobaa | head -1)
+    # Fallback: get any pod with noobaa in the name but exclude backing store pods
+    noobaa_pod=$(kubectl get pods -n "${NOOBAA_NAMESPACE}" -o jsonpath='{.items[*].metadata.name}' | tr ' ' '\n' | grep -i noobaa | grep -v 'backing-store' | head -1)
     
     if [[ -z "${noobaa_pod}" ]]; then
         error "No NooBaa pod found in namespace ${NOOBAA_NAMESPACE}"
@@ -70,22 +72,22 @@ find_noobaa_pod() {
     echo "${noobaa_pod}"
 }
 
-# Generate token in EOS pod
-generate_token_in_eos() {
-    local eos_pod="$1"
+# Generate token in CTA client pod
+generate_token_in_client() {
+    local client_pod="$1"
     local now later
     
-    log "Generating EOS user token in pod ${eos_pod}..."
+    log "Generating EOS user token in CTA client pod ${client_pod}..."
     
     now=$(date +%s)
     later=$((now + TOKEN_VALIDITY_HOURS * 3600))
     
-    # Generate token using eos command in EOS pod
+    # Generate token using eos command in CTA client pod (has proper user1:eosusers context)
     local token_command="eos root://${EOS_MGM_HOST} token --tree --path '/eos/ctaeos' --expires ${later} --owner user1 --group eosusers --permission rwx"
     
     local token
-    token=$(kubectl exec -n "${CTA_NAMESPACE}" "${eos_pod}" -c eos-mgm -- bash -c "${token_command}" 2>/dev/null) || {
-        error "Failed to generate EOS user token in pod ${eos_pod}"
+    token=$(kubectl exec -n "${CTA_NAMESPACE}" "${client_pod}" -- bash -c "${token_command}" 2>/dev/null) || {
+        error "Failed to generate EOS user token in CTA client pod ${client_pod}"
         return 1
     }
     
@@ -164,16 +166,16 @@ main() {
     log "Starting token generation and transfer process..."
     
     # Find required pods
-    local eos_pod noobaa_pod
-    eos_pod=$(find_eos_mgm_pod) || exit 1
+    local client_pod noobaa_pod
+    client_pod=$(find_cta_client_pod) || exit 1
     noobaa_pod=$(find_noobaa_pod) || exit 1
     
-    log "Using EOS pod: ${eos_pod} (namespace: ${CTA_NAMESPACE})"
+    log "Using CTA client pod: ${client_pod} (namespace: ${CTA_NAMESPACE})"
     log "Using NooBaa pod: ${noobaa_pod} (namespace: ${NOOBAA_NAMESPACE})"
     
-    # Generate token in EOS pod
+    # Generate token in CTA client pod
     local token_data
-    token_data=$(generate_token_in_eos "${eos_pod}" 2>&1 | grep -E '^[0-9]+:' | tail -1) || exit 1
+    token_data=$(generate_token_in_client "${client_pod}" 2>&1 | grep -E '^[0-9]+:' | tail -1) || exit 1
     
     if [[ -z "${token_data}" ]]; then
         error "Failed to capture token data"
