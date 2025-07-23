@@ -90,7 +90,7 @@ save_logs() {
         echo "Collecting /var/log from ${pod} - ${container}"
         mkdir -p "${tmpdir}/varlogs/${output_dir}"
         # Only tar part of the logs
-        subdirs_to_tar=("cta" "eos" "tmp" "xrootd")
+        subdirs_to_tar=("cta" "eos" "tmp" "xrootd" "*/xrd_errors")
         existing_dirs=$(kubectl exec -n "${namespace}" "${pod}" -c "${container}" -- \
             bash -c "cd /var/log && find ${subdirs_to_tar[*]} -maxdepth 0 -type d 2>/dev/null || true")
         kubectl exec -n "${namespace}" "${pod}" -c "${container}" -- \
