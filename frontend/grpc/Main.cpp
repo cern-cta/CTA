@@ -130,15 +130,15 @@ int main(const int argc, char *const *const argv) {
     std::weak_ptr<JwkCache> weakCache = jwkCache;
     std::promise<void> shouldStopThreadPromise;
     std::future<void> shouldStopThreadFuture = shouldStopThreadPromise.get_future();
+    std::thread cacheRefreshThread;
     // if token authentication is specified, then also start the refresh thread, otherwise no point in doing this
     if (svc.getFrontendService().getJwtAuth()) {
         lc.log(log::INFO, "Starting the cache refresh thread for JWKS cache");
-        std::thread cacheRefreshThread(JwksCacheRefreshLoop,
-                                       weakCache,
-                                       std::move(shouldStopThreadFuture),
-                                       svc.getFrontendService().getCacheRefreshInterval().value_or(600),
-                                       svc.getFrontendService().getLogContext());
-        cacheRefreshThread.detach();
+        cacheRefreshThread = std::thread(JwksCacheRefreshLoop,
+                                         weakCache,
+                                         std::move(shouldStopThreadFuture),
+                                         svc.getFrontendService().getCacheRefreshInterval().value_or(600),
+                                         svc.getFrontendService().getLogContext());
     }
 
     // use castor config to avoid dependency on xroot-ssi
@@ -232,4 +232,6 @@ int main(const int argc, char *const *const argv) {
     // if we ever receive a shutdown, or want to handle termination of the frontend gracefully,
     // add the following line:
     shouldStopThreadPromise.set_value();
+    if (cacheRefreshThread.joinable())
+        cacheRefreshThread.join();
 }
