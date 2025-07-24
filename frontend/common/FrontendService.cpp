@@ -442,7 +442,7 @@ FrontendService::FrontendService(const std::string& configFilename) : m_archiveF
       m_pubkeyTimeout = std::optional<int>(600);
     }
     if (m_pubkeyTimeout.value() < m_cacheRefreshInterval.value()) {
-      log(log::ERR,
+      log(log::WARNING,
           "Cannot use a value for grpc.jwks.cache.timeout_secs that is less than grpc.jwks.cache.refresh_interval_secs."
           "Setting timeout_secs equal to cache_refresh_interval_secs.");
       m_pubkeyTimeout = std::optional<int>(m_cacheRefreshInterval.value());
