@@ -24,8 +24,8 @@ namespace unitTests {
 
 class JwkCacheTest : public cta::JwkCache {
 public:
-  JwkCacheTest(const std::string& jwkUri, int cacheRefreshInterval, int pubkeyTimeout, const cta::log::LogContext& lc)
-      : JwkCache(jwkUri, cacheRefreshInterval, pubkeyTimeout, lc) {}
+  JwkCacheTest(const std::string& jwkUri, int pubkeyTimeout, const cta::log::LogContext& lc)
+      : JwkCache(jwkUri, pubkeyTimeout, lc) {}
 
   std::string fetchJWKS(const std::string& jwksUrl);
   void insert(const std::string& key, const cta::JwkCacheEntry& e) {
@@ -73,7 +73,7 @@ std::string JwkCacheTest::fetchJWKS(const std::string& uri) {
 TEST(JwkCacheTest, UpdateCacheAddsKey) {
   cta::log::StringLogger log("dummy", "JwkCacheTest_UpdateCacheAddsKey", cta::log::DEBUG);
   cta::log::LogContext lc(log);
-  JwkCacheTest cache("http://fake-jwks-uri", 1200, 1200, lc);
+  JwkCacheTest cache("http://fake-jwks-uri", 1200, lc);
 
   time_t fakeNow = 1000;
   cache.updateCache(fakeNow);
@@ -87,7 +87,7 @@ TEST(JwkCacheTest, UpdateCacheAddsKey) {
 TEST(JwkCacheTest, UpdateCacheRemovesExpiredKeys) {
   cta::log::StringLogger log("dummy", "JwkCacheTest_UpdateCacheRemovesExpiredKeys", cta::log::DEBUG);
   cta::log::LogContext lc(log);
-  JwkCacheTest cache("http://fake-jwks-uri", 100, 200, lc);  // very short pubkeyTimeout
+  JwkCacheTest cache("http://fake-jwks-uri", 200, lc);  // very short pubkeyTimeout
 
   time_t lastRefreshTime = 1000;
   cache.updateCache(lastRefreshTime);

@@ -24,7 +24,7 @@ struct JwkCacheEntry {
 
 class JwkCache {
 public:
-  JwkCache(const std::string& jwkUri, int cacheRefreshInterval, int pubkeyTimeout, const cta::log::LogContext& lc);
+  JwkCache(const std::string& jwkUri, int pubkeyTimeout, const cta::log::LogContext& lc);
 
   void updateCache(time_t now);
   std::optional<JwkCacheEntry> find(const std::string& key);
@@ -37,7 +37,6 @@ private:
   virtual std::string fetchJWKS(const std::string& jwksUrl);
 
   std::string m_jwksUri;
-  int m_cacheRefreshInterval;  //!< value in seconds
   //!< This gives the option to keep public keys around for longer than the refresh interval.
   int m_pubkeyTimeout;
   //!< The logging context

@@ -4,9 +4,8 @@
 #include <mutex>
 
 namespace cta {
-JwkCache::JwkCache(const std::string& jwkUri, int cacheRefreshInterval, int pubkeyTimeout, const log::LogContext& lc)
+JwkCache::JwkCache(const std::string& jwkUri, int pubkeyTimeout, const log::LogContext& lc)
     : m_jwksUri(jwkUri),
-      m_cacheRefreshInterval(cacheRefreshInterval),
       m_pubkeyTimeout(pubkeyTimeout),
       m_lc(lc) {};
 

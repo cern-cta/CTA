@@ -299,7 +299,6 @@ CtaRpcImpl::CtaRpcImpl(const std::string& config)
     : m_frontendService(std::make_unique<cta::frontend::FrontendService>(config)),
       m_pubkeyCache(std::make_shared<JwkCache>(
         m_frontendService->getJwksUri().value_or(""),
-        m_frontendService->getCacheRefreshInterval().value_or(600),  // only empty if jwtAuth is not enabled
         m_frontendService->getPubkeyTimeout().value_or(600),         // only empty if jwtAuth is not enabled
         m_frontendService->getLogContext())) {}
 } // namespace cta::frontend::grpc

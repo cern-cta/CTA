@@ -74,10 +74,9 @@ std::string raw_jwks = R"({
 class JwkCacheValidateTokenTest : public cta::JwkCache {
 public:
   JwkCacheValidateTokenTest(const std::string& jwkUri,
-                            int cacheRefreshInterval,
                             int pubkeyTimeout,
                             const cta::log::LogContext& lc)
-      : JwkCache(jwkUri, cacheRefreshInterval, pubkeyTimeout, lc) {
+      : JwkCache(jwkUri, pubkeyTimeout, lc) {
     jwks = raw_jwks;
   }
 
@@ -120,7 +119,7 @@ protected:
   ValidateTokenTestFixture()
       : log("dummy", "ValidateTokenTests", cta::log::DEBUG),
         lc(log),
-        cache(std::make_unique<JwkCacheValidateTokenTest>("http://fake-jwks-uri", 1200, 1200, lc)) {}
+        cache(std::make_unique<JwkCacheValidateTokenTest>("http://fake-jwks-uri", 1200, lc)) {}
 };
 
 TEST_F(ValidateTokenTestFixture, ValidTokenWithCachedKey) {

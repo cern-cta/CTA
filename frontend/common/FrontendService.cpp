@@ -435,7 +435,7 @@ FrontendService::FrontendService(const std::string& configFilename) : m_archiveF
   if (m_jwtAuth) {
     if (!m_cacheRefreshInterval.has_value()) {
       log(log::WARNING, "No value set for grpc.jwks.cache.refresh_interval_secs, using default value");
-      m_cacheRefreshInterval = std::optional<int>(600);
+      m_cacheRefreshInterval = 600;
     }
     if (!m_pubkeyTimeout.has_value()) {
       log(log::WARNING, "No value set for grpc.jwks.cache.timeout_secs, using default value");
