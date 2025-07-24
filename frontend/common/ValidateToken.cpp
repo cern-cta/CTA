@@ -45,14 +45,9 @@ bool validateToken(const std::string& encodedJWT, std::shared_ptr<JwkCache> pubk
     auto verifier = jwt::verify().allow_algorithm(jwt::algorithm::rs256(pubkeyPem, "", "", ""));
     verifier.verify(decoded);
     return true;
-  } catch (const std::system_error& e) {
-    lc.log(cta::log::ERR, std::string("There was a failure in token verification. ") + e.what());
-    return false;
-  } catch (const std::runtime_error& e) {
-    lc.log(cta::log::ERR, std::string("Failure in token verification, ") + e.what());
-    return false;
-  } catch (...) {
-    lc.log(cta::log::ERR, "Unknown exception thrown in ValidateToken");
+  } catch (const std::exception& e) {
+    lc.log(cta::log::ERR, "There was a failure in token verification");
+    sp.add("exceptionMessage", e.what());
     return false;
   }
 }
