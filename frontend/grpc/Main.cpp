@@ -82,16 +82,16 @@ void JwksCacheRefreshLoop(std::weak_ptr<JwkCache> weakCache,
                  int cacheRefreshInterval,
                  log::LogContext lc) {
     log::LogContext threadLc(lc);
-    threadLc.log(log::INFO, "Detached refresh thread started");
+    threadLc.log(log::INFO, "Detached JWKS cache refresh thread started");
 
     while (true) {
         auto cache = weakCache.lock();
         if (!cache) {
-            threadLc.log(log::INFO, "JwkCache no longer exists, exiting refresh thread");
+            threadLc.log(log::INFO, "JwkCache no longer exists, exiting JWKS cache refresh thread");
             break;  // Cache destroyed
         }
         if (shouldStopThread.load()) {
-            threadLc.log(log::INFO, "Stop requested, exiting refresh thread");
+            threadLc.log(log::INFO, "Stop requested, exiting JWKS cache refresh thread");
             break;
         }
 
@@ -105,7 +105,7 @@ void JwksCacheRefreshLoop(std::weak_ptr<JwkCache> weakCache,
         });
     }
 
-    threadLc.log(log::INFO, "Detached refresh thread ended");
+    threadLc.log(log::INFO, "Detached JWKS cache refresh thread ended");
 }
 
 int main(const int argc, char *const *const argv) {
