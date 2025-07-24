@@ -27,8 +27,11 @@ public:
   JwkCache(const std::string& jwkUri, int cacheRefreshInterval, int pubkeyTimeout, const cta::log::LogContext& lc);
 
   void updateCache(time_t now);
-  void insert(const std::string& key, const JwkCacheEntry& e);  //!< only used for tests
   std::optional<JwkCacheEntry> find(const std::string& key);
+
+protected:
+  std::shared_mutex m_mutex;  //!< mutex to handle parallel requests
+  std::map<std::string, JwkCacheEntry> m_keymap;
 
 private:
   virtual std::string fetchJWKS(const std::string& jwksUrl);
@@ -37,8 +40,6 @@ private:
   int m_cacheRefreshInterval;  //!< value in seconds
   //!< This gives the option to keep public keys around for longer than the refresh interval.
   int m_pubkeyTimeout;
-  std::shared_mutex m_mutex;  //!< mutex to handle parallel requests
-  std::map<std::string, JwkCacheEntry> m_keymap;
   //!< The logging context
   cta::log::LogContext m_lc;  //!< always make a copy for thread safety
 };

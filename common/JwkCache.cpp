@@ -54,10 +54,6 @@ std::optional<JwkCacheEntry> JwkCache::find(const std::string& key) {
   }
 }
 
-void JwkCache::insert(const std::string& key, const JwkCacheEntry& e) {
-  std::unique_lock<std::shared_mutex> lock(m_mutex);
-  m_keymap[key] = e;
-}
 
 void JwkCache::updateCache(time_t now) {
   log::LogContext lc(m_lc);

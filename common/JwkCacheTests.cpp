@@ -28,6 +28,10 @@ public:
       : JwkCache(jwkUri, cacheRefreshInterval, pubkeyTimeout, lc) {}
 
   std::string fetchJWKS(const std::string& jwksUrl);
+  void insert(const std::string& key, const cta::JwkCacheEntry& e) {
+    std::unique_lock<std::shared_mutex> lock(m_mutex);
+    m_keymap[key] = e;
+  }
 };
 // Fake fetchJWKS for testing
 

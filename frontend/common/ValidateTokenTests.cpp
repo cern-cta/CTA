@@ -83,11 +83,17 @@ public:
 
   std::string fetchJWKS(const std::string& jwksUrl);
   std::string jwks;
+  void insert(const std::string& key, const cta::JwkCacheEntry& e);
 };
 
 // Fake fetchJWKS for testing
 std::string JwkCacheValidateTokenTest::fetchJWKS(const std::string& uri) {
   return jwks;
+}
+
+void JwkCacheValidateTokenTest::insert(const std::string& key, const cta::JwkCacheEntry& e) {
+  std::unique_lock<std::shared_mutex> lock(m_mutex);
+  m_keymap[key] = e;
 }
 
 std::string pubkeyPem = jwt::helper::convert_base64_der_to_pem(sample_cert_base64_der);
