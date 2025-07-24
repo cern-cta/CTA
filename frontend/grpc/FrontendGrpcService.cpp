@@ -34,11 +34,6 @@
 
 namespace cta::frontend::grpc {
 
-// helper function for converting from grpc structure to std::string
-static std::string ToString(const ::grpc::string_ref& r) {
-  return std::string(r.data(), r.size());
-}
-
 Status
 CtaRpcImpl::ExtractAuthHeaderAndValidate(::grpc::ServerContext* context) {
   cta::log::LogContext lc(m_frontendService->getLogContext());
@@ -56,7 +51,9 @@ CtaRpcImpl::ExtractAuthHeaderAndValidate(::grpc::ServerContext* context) {
   // Search for the authorization token in the metadata
   auto it = metadata.find("authorization");
   if (it != metadata.end()) {
-      std::string auth_header = ToString(it->second);  // "Bearer <token>"
+      // convert from grpc structure to string
+      const ::grpc::string_ref& r = it->second;
+      std::string auth_header = std::string(r.data(), r.size());  // "Bearer <token>"
       token = auth_header.substr(7); // Extract the token part, use substr(7) because that is the length of "Bearer" plus a space character
       lc.log(cta::log::DEBUG, std::string("Received token: ") + token);
       if (token.empty()) {
