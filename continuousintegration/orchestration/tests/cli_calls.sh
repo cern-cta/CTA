@@ -42,7 +42,7 @@ elif [[ "${CLI_TARGET}" == "gfal2-https" ]]; then
   SRC=$(mktemp)
   dd if=/dev/zero of=${SRC} bs=1k count=15 2>/dev/null
   export DAVIX_USE_LIBCURL=1
-  archive='BEARER_TOKEN=${TOKEN} gfal-copy -vvv ${SRC} https://${EOS_MGM_HOST}:8443/${EOS_DIR}/${subdir}/${subdir}TEST_FILE_NUM 1\>/dev/null'
+  archive='BEARER_TOKEN=${TOKEN} gfal-copy -vvv ${SRC} https://${EOS_MGM_HOST}:8443/${EOS_DIR}/${subdir}/${subdir}TEST_FILE_NUM'
 
   retrieve='BEARER_TOKEN=${TOKEN_EOSPOWER} gfal-bringonline https://${EOS_MGM_HOST}:8443/${EOS_DIR}/${subdir}/${subdir}TEST_FILE_NAME'
 
