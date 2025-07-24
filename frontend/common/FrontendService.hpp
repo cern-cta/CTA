@@ -165,12 +165,6 @@ public:
    */
   const std::optional<int> getPubkeyTimeout() const { return m_pubkeyTimeout; }
 
-  void setCacheRefreshInterval(int cacheRefreshInterval) {
-    m_cacheRefreshInterval = std::optional<int>(cacheRefreshInterval);
-  }
-
-  void setPubkeyTimeout(int pubkeyTimeout) { m_pubkeyTimeout = std::optional<int>(pubkeyTimeout); }
-
   /*
    * Get the jwtAuth value
    */
