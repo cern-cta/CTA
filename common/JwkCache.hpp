@@ -22,11 +22,10 @@ struct JwkCacheEntry {
   std::string pubkey;  //!< public key in PEM format
 };
 
-class JwkCache : public std::enable_shared_from_this<JwkCache> {
+class JwkCache {
 public:
   JwkCache(const std::string& jwkUri, int cacheRefreshInterval, int pubkeyTimeout, const cta::log::LogContext& lc);
 
-  void purgeCache();  //!< remove all entries
   void updateCache(time_t now);
   void insert(const std::string& key, const JwkCacheEntry& e);  //!< only used for tests
   std::optional<JwkCacheEntry> find(const std::string& key);

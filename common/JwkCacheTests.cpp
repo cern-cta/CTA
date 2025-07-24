@@ -80,19 +80,6 @@ TEST(JwkCacheTest, UpdateCacheAddsKey) {
   EXPECT_FALSE(entry.value().pubkey.empty());
 }
 
-TEST(JwkCacheTest, PurgeCacheClearsKeys) {
-  cta::log::StringLogger log("dummy", "JwkCacheTest_PurgeCacheClearsKeys", cta::log::DEBUG);
-  cta::log::LogContext lc(log);
-  JwkCacheTest cache("http://fake-jwks-uri", 600, 600, lc);
-
-  time_t fakeNow = 1000;
-  cache.updateCache(fakeNow);
-
-  cache.purgeCache();
-  auto entry = cache.find("test-kid");
-  EXPECT_FALSE(entry.has_value());
-}
-
 TEST(JwkCacheTest, UpdateCacheRemovesExpiredKeys) {
   cta::log::StringLogger log("dummy", "JwkCacheTest_UpdateCacheRemovesExpiredKeys", cta::log::DEBUG);
   cta::log::LogContext lc(log);

@@ -123,10 +123,4 @@ void JwkCache::updateCache(time_t now) {
 
   // json_object_put(jwks); // Clean up ref count
 }
-
-// Remove all entries from the cache
-void JwkCache::purgeCache() {
-  std::unique_lock<std::shared_mutex> lock(m_mutex);
-  m_keymap.clear();
-}
-}
+} // namespace cta
