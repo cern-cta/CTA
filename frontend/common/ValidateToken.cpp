@@ -35,7 +35,7 @@ bool validateToken(const std::string& encodedJWT, std::shared_ptr<JwkCache> pubk
       entry = pubkeyCache->find(kid);
       if (!entry.has_value()) {
         // unable to fetch the public key for validation, fail the request
-        lc.log(cta::log::WARNING, "Unable to find the public key for the token, authentication failed");
+        lc.log(cta::log::ERR, "Unable to find the public key for the token, authentication failed");
         return false;
       }
     }
@@ -43,8 +43,6 @@ bool validateToken(const std::string& encodedJWT, std::shared_ptr<JwkCache> pubk
     pubkeyPem = entry.value().pubkey;
     // Validate signature
     auto verifier = jwt::verify().allow_algorithm(jwt::algorithm::rs256(pubkeyPem, "", "", ""));
-    // .allow_algorithm(jwt::algorithm::rs256(x5c));
-    // .with_issuer("http://auth-keycloak:8080/realms/master");
     verifier.verify(decoded);
     return true;
   } catch (const std::system_error& e) {

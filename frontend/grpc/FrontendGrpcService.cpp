@@ -35,7 +35,7 @@
 namespace cta::frontend::grpc {
 
 Status
-CtaRpcImpl::ExtractAuthHeaderAndValidate(::grpc::ServerContext* context) {
+CtaRpcImpl::extractAuthHeaderAndValidate(::grpc::ServerContext* context) {
   cta::log::LogContext lc(m_frontendService->getLogContext());
   cta::log::ScopedParamContainer sp(lc);
   // skip any metadata checks in case JWT Auth is disabled
@@ -115,7 +115,7 @@ CtaRpcImpl::Create(::grpc::ServerContext* context, const cta::xrd::Request* requ
   cta::log::LogContext lc(m_frontendService->getLogContext());
   cta::log::ScopedParamContainer sp(lc);
 
-  Status status = ExtractAuthHeaderAndValidate(context);
+  Status status = extractAuthHeaderAndValidate(context);
   if (!status.ok()) {
     response->set_type(cta::xrd::Response::RSP_ERR_USER);
     response->set_message_txt(status.error_message());
@@ -137,7 +137,7 @@ Status
 CtaRpcImpl::Archive(::grpc::ServerContext* context, const cta::xrd::Request* request, cta::xrd::Response* response) {
   cta::log::LogContext lc(m_frontendService->getLogContext());
   cta::log::ScopedParamContainer sp(lc);
-  Status status = ExtractAuthHeaderAndValidate(context);
+  Status status = extractAuthHeaderAndValidate(context);
   if (!status.ok()) {
     response->set_type(cta::xrd::Response::RSP_ERR_USER);
     response->set_message_txt(status.error_message());
@@ -165,7 +165,7 @@ CtaRpcImpl::Archive(::grpc::ServerContext* context, const cta::xrd::Request* req
 
 Status
 CtaRpcImpl::Delete(::grpc::ServerContext* context, const cta::xrd::Request* request, cta::xrd::Response* response) {
-  Status status = ExtractAuthHeaderAndValidate(context);
+  Status status = extractAuthHeaderAndValidate(context);
   if (!status.ok()) {
     response->set_type(cta::xrd::Response::RSP_ERR_USER);
     response->set_message_txt(status.error_message());
@@ -198,7 +198,7 @@ CtaRpcImpl::Delete(::grpc::ServerContext* context, const cta::xrd::Request* requ
 
 Status
 CtaRpcImpl::Retrieve(::grpc::ServerContext* context, const cta::xrd::Request* request, cta::xrd::Response* response) {
-  Status status = ExtractAuthHeaderAndValidate(context);
+  Status status = extractAuthHeaderAndValidate(context);
   if (!status.ok()) {
     response->set_type(cta::xrd::Response::RSP_ERR_USER);
     response->set_message_txt(status.error_message());
@@ -247,7 +247,7 @@ CtaRpcImpl::Retrieve(::grpc::ServerContext* context, const cta::xrd::Request* re
 Status CtaRpcImpl::CancelRetrieve(::grpc::ServerContext* context,
                                   const cta::xrd::Request* request,
                                   cta::xrd::Response* response) {
-  Status status = ExtractAuthHeaderAndValidate(context);
+  Status status = extractAuthHeaderAndValidate(context);
   if (!status.ok()) {
     response->set_type(cta::xrd::Response::RSP_ERR_USER);
     response->set_message_txt(status.error_message());
