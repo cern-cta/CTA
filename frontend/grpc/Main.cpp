@@ -35,8 +35,8 @@
 
 #include <getopt.h>
 #include <fstream>
-#include <condition_variable>
 #include <thread>
+#include <future>
 
 using namespace cta;
 using namespace cta::common;
@@ -76,35 +76,22 @@ std::string file2string(std::string filename){
 }
 
 void JwksCacheRefreshLoop(std::weak_ptr<JwkCache> weakCache,
-                 std::atomic<bool>& shouldStopThread,
-                 std::condition_variable& cv,
-                 std::mutex& cvMutex,
+                 std::future<void> shouldStopThread,
                  int cacheRefreshInterval,
                  log::LogContext lc) {
     log::LogContext threadLc(lc);
     threadLc.log(log::INFO, "Detached JWKS cache refresh thread started");
 
-    while (true) {
+    while (shouldStopThread.wait_for(std::chrono::seconds(cacheRefreshInterval)) == std::future_status::timeout) {
         auto cache = weakCache.lock();
         if (!cache) {
             threadLc.log(log::INFO, "JwkCache no longer exists, exiting JWKS cache refresh thread");
             break;  // Cache destroyed
         }
-        if (shouldStopThread.load()) {
-            threadLc.log(log::INFO, "Stop requested, exiting JWKS cache refresh thread");
-            break;
-        }
-
         time_t now = time(nullptr);
+        threadLc.log(log::INFO, "Updating the JWKS cache");
         cache->updateCache(now);
-
-        std::unique_lock<std::mutex> lk(cvMutex);
-        cv.wait_for(lk, std::chrono::seconds(cacheRefreshInterval), [&shouldStopThread, &threadLc]() {
-            threadLc.log(log::INFO, "Waiting on condition variable or explicit wakeup...");
-            return shouldStopThread.load();
-        });
     }
-
     threadLc.log(log::INFO, "Detached JWKS cache refresh thread ended");
 }
 
@@ -141,21 +128,16 @@ int main(const int argc, char *const *const argv) {
     log::LogContext lc = svc.getFrontendService().getLogContext();
     auto jwkCache = svc.getPubkeyCache();
     std::weak_ptr<JwkCache> weakCache = jwkCache;
-    std::mutex cv_mutex;
-    std::condition_variable cv;  //!< condition: stop the refresh thread, will be performed in destructor
-    //!< this is needed because the refresh thread might be sleeping, if not actively performing cache update
-    std::atomic<bool> shouldStopThread{false};
+    std::promise<void> shouldStopThreadPromise;
+    std::future<void> shouldStopThreadFuture = shouldStopThreadPromise.get_future();
     // if token authentication is specified, then also start the refresh thread, otherwise no point in doing this
     if (svc.getFrontendService().getJwtAuth()) {
         lc.log(log::INFO, "Starting the cache refresh thread for JWKS cache");
-        std::thread cacheRefreshThread([weakCache,
-                                        &shouldStopThread,
-                                        &cv,
-                                        &cv_mutex,
-                                        refreshInterval = svc.getFrontendService().getCacheRefreshInterval().value_or(600),
-                                        lc = svc.getFrontendService().getLogContext()]() mutable {
-                                            JwksCacheRefreshLoop(weakCache, shouldStopThread, cv, cv_mutex, refreshInterval, lc);
-        });
+        std::thread cacheRefreshThread(JwksCacheRefreshLoop,
+                                       weakCache,
+                                       std::move(shouldStopThreadFuture),
+                                       svc.getFrontendService().getCacheRefreshInterval().value_or(600),
+                                       svc.getFrontendService().getLogContext());
         cacheRefreshThread.detach();
     }
 
@@ -248,12 +230,6 @@ int main(const int argc, char *const *const argv) {
     server->Wait();
 
     // if we ever receive a shutdown, or want to handle termination of the frontend gracefully,
-    // add the following lines:
-    /*
-     * 
-     *
-     *
-        shouldStopThread.store(true);
-        cv.notify_all();
-     */
+    // add the following line:
+    shouldStopThreadPromise.set_value();
 }
