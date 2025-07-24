@@ -23,13 +23,11 @@ bool validateToken(const std::string& encodedJWT, std::shared_ptr<JwkCache> pubk
     // used to sign the token and validate it
     // first try to use the cached value
     auto entry = pubkeyCache->find(kid);
-    if (!entry.has_value()) {
+    if (entry.has_value()) {
+      pubkeyPem = entry.value().pubkey;
+    } else {
       lc.log(cta::log::INFO, "No cached key found, will fetch keys from endpoint");
       sp.add("kid", kid);
-    } else {
-      pubkeyPem = entry.value().pubkey;
-    }
-    if (!entry.has_value()) {
       // add the key to the cache, after fetching
       const auto now = std::chrono::system_clock::now();
       time_t nowt = std::chrono::system_clock::to_time_t(now);
