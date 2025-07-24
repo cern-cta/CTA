@@ -243,7 +243,6 @@ int main(const int argc, char *const *const argv) {
     builder.RegisterService(&svc);
 
     std::unique_ptr <Server> server(builder.BuildAndStart());
-    svc.setHealthCheckService(server->GetHealthCheckService());
 
     lc.log(cta::log::INFO, "Listening on socket address: " + server_address);
     server->Wait();

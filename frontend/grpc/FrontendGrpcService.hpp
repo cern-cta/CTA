@@ -33,16 +33,12 @@ class CtaRpcImpl : public CtaRpc::Service {
 private:
   std::unique_ptr<cta::frontend::FrontendService> m_frontendService;
   ::grpc::HealthCheckServiceInterface* m_healthCheckService = nullptr;
-  bool m_isServing = true;
   std::shared_ptr<JwkCache> m_pubkeyCache;
 
 public:
   CtaRpcImpl(const std::string& config);
 
   FrontendService& getFrontendService() const { return *m_frontendService; }
-  void setHealthCheckService(::grpc::HealthCheckServiceInterface* healthCheckService) {
-    m_healthCheckService = healthCheckService;
-  }
   std::shared_ptr<JwkCache> getPubkeyCache() {
     return m_pubkeyCache;
   }
