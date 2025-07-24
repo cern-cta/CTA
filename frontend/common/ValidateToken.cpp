@@ -2,7 +2,7 @@
 #include "jwt-cpp/jwt.h"
 
 namespace cta {
-bool ValidateToken(const std::string& encodedJWT, std::shared_ptr<JwkCache> pubkeyCache, log::LogContext logContext) {
+bool validateToken(const std::string& encodedJWT, std::shared_ptr<JwkCache> pubkeyCache, log::LogContext logContext) {
   // this is thread-safe because it makes a copy of logContext for each thread
   cta::log::LogContext lc(logContext);
   cta::log::ScopedParamContainer sp(lc);

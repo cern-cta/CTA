@@ -67,7 +67,7 @@ CtaRpcImpl::ExtractAuthHeaderAndValidate(::grpc::ServerContext* context) {
       lc.log(cta::log::WARNING, "Authorization header missing");
       return ::grpc::Status(::grpc::StatusCode::UNAUTHENTICATED, "Missing Authorization header");
   }
-  if (ValidateToken(token, m_pubkeyCache, lc)) {
+  if (validateToken(token, m_pubkeyCache, lc)) {
     return ::grpc::Status::OK;
   } else {
     lc.log(cta::log::WARNING, "JWT authorization process error. Token validation failed.");
