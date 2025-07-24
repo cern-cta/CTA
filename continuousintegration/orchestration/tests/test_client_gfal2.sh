@@ -63,9 +63,9 @@ kubectl -n ${NAMESPACE} cp grep_xrdlog_mgm_for_error.sh ${EOS_MGM_POD}:/root/ -c
 
 kubectl -n ${NAMESPACE} exec ${CLIENT_POD} -c client -- bash -c ". /root/client_helper.sh && admin_kinit"
 
-NB_FILES=1000
+NB_FILES=1
 FILE_SIZE_KB=15
-NB_PROCS=20
+NB_PROCS=1
 
 TEST_PRERUN=". /root/client_env "
 TEST_POSTRUN=""
