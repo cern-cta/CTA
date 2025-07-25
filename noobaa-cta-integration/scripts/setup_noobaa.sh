@@ -362,6 +362,109 @@ verify_installation() {
     log "Installation verification passed"
 }
 
+apply_nsfs_configuration() {
+    log "Applying NSFS configuration for Glacier functionality..."
+    
+    # Apply NSFS backing store and bucket class configuration
+    if [[ -f "${CONFIG_DIR}/glacier-bucket-class.yaml" ]]; then
+        log "Applying NSFS backing store and bucket class..."
+        kubectl --context="${NOOBAA_CLUSTER_CONTEXT}" apply -f "${CONFIG_DIR}/glacier-bucket-class.yaml" || {
+            error "Failed to apply NSFS backing store configuration"
+        }
+    else
+        error "NSFS backing store configuration not found: ${CONFIG_DIR}/glacier-bucket-class.yaml"
+    fi
+    
+    # Apply NSFS Glacier configuration
+    if [[ -f "${CONFIG_DIR}/nsfs-glacier-config.yaml" ]]; then
+        log "Applying NSFS Glacier configuration..."
+        kubectl --context="${NOOBAA_CLUSTER_CONTEXT}" apply -f "${CONFIG_DIR}/nsfs-glacier-config.yaml" || {
+            error "Failed to apply NSFS Glacier configuration"
+        }
+    else
+        error "NSFS Glacier configuration not found: ${CONFIG_DIR}/nsfs-glacier-config.yaml"
+    fi
+    
+    # Wait for backing store to be ready
+    log "Waiting for NSFS backing store to be ready..."
+    kubectl --context="${NOOBAA_CLUSTER_CONTEXT}" -n "${NAMESPACE}" wait --for=condition=Available \
+        backingstore/glacier-nsfs-backing-store --timeout=300s || {
+        log "Warning: NSFS backing store may not be ready yet"
+    }
+    
+    # Wait for bucket class to be ready
+    log "Waiting for bucket class to be ready..."
+    kubectl --context="${NOOBAA_CLUSTER_CONTEXT}" -n "${NAMESPACE}" wait --for=condition=Available \
+        bucketclass/glacier-bucket-class --timeout=300s || {
+        log "Warning: Bucket class may not be ready yet"
+    }
+    
+    log "NSFS configuration applied successfully"
+}
+
+configure_noobaa_glacier_system() {
+    log "Configuring NooBaa system for Glacier support..."
+    
+    # Apply the NooBaa configuration override
+    if [[ -f "${CONFIG_DIR}/nsfs-glacier-config.yaml" ]]; then
+        log "Applying NooBaa Glacier system configuration..."
+        kubectl --context="${NOOBAA_CLUSTER_CONTEXT}" apply -f "${CONFIG_DIR}/nsfs-glacier-config.yaml" || {
+            error "Failed to apply NooBaa Glacier system configuration"
+        }
+    else
+        error "NooBaa Glacier system configuration not found: ${CONFIG_DIR}/nsfs-glacier-config.yaml"
+    fi
+    
+    # Patch the NooBaa core StatefulSet to mount the config override
+    log "Patching NooBaa core StatefulSet to mount Glacier configuration..."
+    kubectl --context="${NOOBAA_CLUSTER_CONTEXT}" -n "${NAMESPACE}" patch statefulset noobaa-core --type='merge' -p='
+{
+  "spec": {
+    "template": {
+      "spec": {
+        "containers": [
+          {
+            "name": "noobaa-core",
+            "env": [
+              {
+                "name": "NSFS_GLACIER_ENABLED",
+                "value": "true"
+              },
+              {
+                "name": "NSFS_GLACIER_LOGS_ENABLED", 
+                "value": "true"
+              },
+              {
+                "name": "NSFS_GLACIER_BACKEND",
+                "value": "TAPECLOUD"
+              },
+              {
+                "name": "NSFS_GLACIER_TAPECLOUD_BIN_DIR",
+                "value": "/tmp/glacier/bin"
+              },
+              {
+                "name": "NSFS_GLACIER_LOGS_DIR",
+                "value": "/tmp/glacier/logs"
+              }
+            ]
+          }
+        ]
+      }
+    }
+  }
+}' || {
+        log "Warning: Failed to patch NooBaa core StatefulSet for Glacier configuration"
+    }
+    
+    # Wait for the StatefulSet to be ready after patching
+    log "Waiting for NooBaa core to restart with Glacier configuration..."
+    kubectl --context="${NOOBAA_CLUSTER_CONTEXT}" -n "${NAMESPACE}" rollout status statefulset/noobaa-core --timeout=300s || {
+        log "Warning: NooBaa core restart may not have completed"
+    }
+    
+    log "NooBaa system configured for Glacier support"
+}
+
 main() {
     log "Starting NooBaa setup for CTA integration"
     
@@ -372,6 +475,8 @@ main() {
     install_executables
     create_noobaa_config
     setup_environment
+    apply_nsfs_configuration
+    configure_noobaa_glacier_system
     verify_installation
     
     log "NooBaa archival setup completed successfully"
@@ -379,6 +484,7 @@ main() {
     log "Next steps:"
     log "1. Configure token authentication for EOS file uploads"
     log "2. Test file archival with migrate script"
+    log "3. Test S3 Glacier workflow with NSFS backing store"
     log ""
     log "Configuration location in NooBaa pod: ${NOOBAA_CONFIG_DIR}"
     log "Migrate executable location in NooBaa pod: ${NOOBAA_BIN_DIR}/migrate"
