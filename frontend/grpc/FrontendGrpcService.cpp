@@ -294,8 +294,10 @@ Status CtaRpcImpl::CancelRetrieve(::grpc::ServerContext* context,
  */
 CtaRpcImpl::CtaRpcImpl(const std::string& config)
     : m_frontendService(std::make_unique<cta::frontend::FrontendService>(config)),
-      m_pubkeyCache(std::make_shared<JwkCache>(
-        m_frontendService->getJwksUri().value_or(""),
-        m_frontendService->getPubkeyTimeout().value_or(600),         // only empty if jwtAuth is not enabled
-        m_frontendService->getLogContext())) {}
+      m_pubkeyCache(m_frontendService->getJwtAuth() ?
+                      std::make_shared<JwkCache>(
+                        m_frontendService->getJwksUri().value_or(""),
+                        m_frontendService->getPubkeyTimeout().value_or(600),  // only empty if jwtAuth is not enabled
+                        m_frontendService->getLogContext()) :
+                      nullptr) {}
 } // namespace cta::frontend::grpc
