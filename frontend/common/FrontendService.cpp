@@ -374,17 +374,17 @@ FrontendService::FrontendService(const std::string& configFilename) : m_archiveF
   // Get the mount policy name for verification requests
 
   // Get the gRPC-specific values, if they are set (getOptionValue returns an std::optional)
-  std::optional<bool> tls = config.getOptionValueBool("grpc.tls");
+  std::optional<bool> tls = config.getOptionValueBool("grpc.tls.enabled");
   m_tls = tls.value_or(false);  // default value is false
-  auto TlsKey = config.getOptionValueStr("grpc.tls.key");
+  auto TlsKey = config.getOptionValueStr("grpc.tls.server_key_path");
   if (TlsKey.has_value()) {
     m_tlsKey = TlsKey.value();
   }
-  auto TlsCert = config.getOptionValueStr("grpc.tls.cert");
+  auto TlsCert = config.getOptionValueStr("grpc.tls.server_cert_path");
   if (TlsCert.has_value()) {
     m_tlsCert = TlsCert.value();
   }
-  auto TlsChain = config.getOptionValueStr("grpc.tls.chain");
+  auto TlsChain = config.getOptionValueStr("grpc.tls.chain_cert_path");
   if (TlsChain.has_value()) {
     m_tlsChain = TlsChain.value();
   }
@@ -405,7 +405,7 @@ FrontendService::FrontendService(const std::string& configFilename) : m_archiveF
     m_jwksUri = jwksUri.value();
   }
 
-  std::optional<bool> jwtAuth = config.getOptionValueBool("grpc.jwt.auth");
+  std::optional<bool> jwtAuth = config.getOptionValueBool("grpc.jwt.enabled");
   m_jwtAuth = jwtAuth.value_or(false);  // default value is false
   if (!m_tls && m_jwtAuth) {
     throw exception::UserError("grpc.jwt.auth is set to true when grpc.tls is set to false in configuration file " +
