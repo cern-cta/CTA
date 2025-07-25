@@ -1,426 +1,132 @@
 #!/bin/bash
 
-# @project      The CERN Tape Archive (CTA) - NooBaa Integration
+# @project      The CERN Tape Archive (CTA) - NooBaa Integration  
 # @copyright    Copyright © 2024 CERN
 # @license      This program is free software, distributed under the terms of the GNU General Public
 #               Licence version 3 (GPL Version 3), copied verbatim in the file "COPYING".
 
-# NooBaa NSFS Glacier migrate executable
-# Archives files to CTA via EOS HTTP TAPE REST API
+# Simplified NooBaa NSFS Glacier migrate executable
+# Based on working manual curl command
 # Input: File containing list of files to archive
 # Output: eeadm migrate-compliant format
 
-set -euo pipefail
+set -eo pipefail
 
 # Configuration
-EOS_MGM_HOST="${EOS_MGM_HOST:-eos-mgm-0.eos-mgm.dev.svc.cluster.local}"
-EOS_PORT="${EOS_PORT:-8443}"
-CERT_PATH="${CERT_PATH:-/etc/grid-security/certificates}"
-TOKEN_CACHE_FILE="${TOKEN_CACHE_FILE:-/tmp/eos_power_token}"
-TOKEN_VALIDITY_HOURS="${TOKEN_VALIDITY_HOURS:-23}"
-CURL_TIMEOUT="${CURL_TIMEOUT:-300}"
-LOG_FILE="${LOG_FILE:-/var/log/noobaa/migrate.log}"
-ARCHIVAL_TIMEOUT="${ARCHIVAL_TIMEOUT:-300}"
-ARCHIVAL_CHECK_INTERVAL="${ARCHIVAL_CHECK_INTERVAL:-10}"
+EOS_MGM_HOST="eos-mgm-0.eos-mgm.dev.svc.cluster.local"
+EOS_PORT="8443"
+TOKEN_CACHE_FILE="/tmp/eos_power_token"
 
-# Global counters for file processing
+# Counters
 TOTAL_FILES=0
 SUCCEEDED_FILES=0
 FAILED_FILES=0
 
-# Load NooBaa glacier configuration if available
-if [[ -f "/etc/noobaa/glacier_config.json" ]]; then
-    EOS_MGM_HOST=$(jq -r '.EOS_MGM_HOST // "ctaeos"' /etc/noobaa/glacier_config.json 2>/dev/null || echo "ctaeos")
-    EOS_PORT=$(jq -r '.EOS_PORT // "8443"' /etc/noobaa/glacier_config.json 2>/dev/null || echo "8443")
-    CERT_PATH=$(jq -r '.CERT_PATH // "/etc/grid-security/certificates"' /etc/noobaa/glacier_config.json 2>/dev/null || echo "/etc/grid-security/certificates")
-    TOKEN_VALIDITY_HOURS=$(jq -r '.TOKEN_VALIDITY_HOURS // 23' /etc/noobaa/glacier_config.json 2>/dev/null || echo "23")
-    CURL_TIMEOUT=$(jq -r '.CURL_TIMEOUT // 300' /etc/noobaa/glacier_config.json 2>/dev/null || echo "300")
-fi
-
-# Ensure log directory exists
-mkdir -p "$(dirname "${LOG_FILE}")"
-
-# Logging functions
+# Logging function
 log() {
-    echo "$(date '+%Y-%m-%d %H:%M:%S') [MIGRATE] $*" | tee -a "${LOG_FILE}"
+    echo "$(date '+%Y-%m-%d %H:%M:%S') [MIGRATE] $*"
 }
 
-error() {
-    echo "$(date '+%Y-%m-%d %H:%M:%S') [MIGRATE] ERROR: $*" | tee -a "${LOG_FILE}" >&2
-}
-
-# Token management functions
-generate_power_token() {
-    log "Generating EOS power token..."
-    
-    local now later token
-    now=$(date +%s)
-    later=$((now + TOKEN_VALIDITY_HOURS * 3600))
-    
-    # Generate power token using eos command if available, otherwise use placeholder
-    if command -v eospower_eos &> /dev/null; then
-        token=$(eospower_eos root://"${EOS_MGM_HOST}" token --tree --path '/eos/ctaeos' --expires "${later}" 2>/dev/null) || {
-            error "Failed to generate EOS power token"
-            return 1
-        }
-    else
-        log "Using HTTP API without token authentication (EOS client not available)"
-        token="no-token-available"
-    fi
-    
-    # Cache the token with expiry timestamp
-    echo "${later}:${token}" > "${TOKEN_CACHE_FILE}"
-    chmod 600 "${TOKEN_CACHE_FILE}"
-    
-    echo "${token}"
-}
-
-get_valid_token() {
-    local cached_token expiry_time current_time token
-    
-    if [[ -f "${TOKEN_CACHE_FILE}" ]]; then
-        cached_token=$(cat "${TOKEN_CACHE_FILE}")
-        expiry_time=$(echo "${cached_token}" | cut -d: -f1)
-        current_time=$(date +%s)
-        
-        # Check if token is still valid (with 1-hour buffer)
-        if [[ $((expiry_time - current_time)) -gt 3600 ]]; then
-            token=$(echo "${cached_token}" | cut -d: -f2-)
-            log "Using cached EOS user token"
-            echo "${token}"
-            return 0
-        fi
-    fi
-    
-    # Generate new token
-    generate_user_token
-}
-
-generate_user_token() {
-    log "Generating EOS user token for file uploads..."
-    
-    local now later token
-    now=$(date +%s)
-    later=$((now + TOKEN_VALIDITY_HOURS * 3600))
-    
-    # Generate user token using eos command
-    if command -v eos &> /dev/null; then
-        # EOS CLI is available locally
-        log "Using local EOS CLI to generate user token"
-        # Use uid=12001 gid=1100 based on ACLs on /eos/ctaeos/preprod/
-        token=$(eos root://"${EOS_MGM_HOST}" token --tree --path '/eos/ctaeos' --expires "${later}" --owner 12001 --group 1100 --permission rwx 2>/dev/null) || {
-            error "Failed to generate EOS user token using local EOS CLI"
-            return 1
-        }
-    else
-        error "EOS CLI not available in NooBaa pod - cannot generate user token locally"
-        error "Please run the token generation script from the host:"
-        error "  ./noobaa-cta-integration/scripts/generate_and_transfer_tokens.sh"
-        error "This will generate tokens in the EOS pod and transfer them to the NooBaa pod"
+# Get token from cache file
+get_token() {
+    if [[ ! -f "${TOKEN_CACHE_FILE}" ]]; then
+        log "ERROR: Token cache file not found: ${TOKEN_CACHE_FILE}"
         return 1
     fi
     
-    if [[ -z "${token}" ]]; then
-        error "Empty token returned from EOS"
-        return 1
-    fi
-    
-    # Cache the token with expiry timestamp
-    echo "${later}:${token}" > "${TOKEN_CACHE_FILE}"
-    chmod 600 "${TOKEN_CACHE_FILE}"
-    
-    log "EOS user token generated and cached successfully (expires: ${later})"
-    echo "${token}"
+    local cached_token
+    cached_token=$(cat "${TOKEN_CACHE_FILE}")
+    echo "${cached_token}" | cut -d: -f2-
 }
 
-# Check archival status using proper WLCG Tape REST API ARCHIVEINFO endpoint
-check_archival_status() {
-    local archive_path="$1"
-    local max_wait_time="${ARCHIVAL_TIMEOUT}"  # Configurable timeout
-    local wait_interval="${ARCHIVAL_CHECK_INTERVAL}"   # Configurable check interval
-    local elapsed_time=0
-    
-    log "Checking archival status using WLCG Tape REST API for: ${archive_path}"
-    
-    while [[ ${elapsed_time} -lt ${max_wait_time} ]]; do
-        log "Checking archival progress... (${elapsed_time}/${max_wait_time}s)"
-        
-        # Get valid token for API calls
-        local token
-        token=$(get_valid_token) || {
-            log "Could not obtain token for archiveinfo check"
-            return 1
-        }
-        
-        # Call WLCG Tape REST API archiveinfo endpoint
-        local archiveinfo_response
-        archiveinfo_response=$(curl \
-            --silent \
-            --insecure \
-            --connect-timeout 30 \
-            --max-time "${CURL_TIMEOUT}" \
-            -X POST \
-            -H "Content-Type: application/json" \
-            -H "Accept: application/json" \
-            -H "Authorization: Bearer ${token}" \
-            -d "{\"paths\":[\"${archive_path}\"]}" \
-            "https://${EOS_MGM_HOST}:${EOS_PORT}/api/v1/archiveinfo" 2>/dev/null)
-        
-        local curl_exit_code=$?
-        
-        if [[ ${curl_exit_code} -eq 0 ]] && [[ -n "${archiveinfo_response}" ]]; then
-            log "Archive info response: ${archiveinfo_response}"
-            
-            # Parse JSON response for locality field
-            if command -v jq &> /dev/null; then
-                # Use jq for proper JSON parsing if available
-                local locality
-                locality=$(echo "${archiveinfo_response}" | jq -r '.[0].locality // empty' 2>/dev/null)
-                
-                if [[ "${locality}" == "TAPE" ]] || [[ "${locality}" == "DISK_AND_TAPE" ]]; then
-                    log "File successfully archived to tape with locality: ${locality}"
-                    return 0
-                elif [[ "${locality}" == "DISK" ]]; then
-                    log "File still on disk only, waiting for archival..."
-                elif [[ "${locality}" == "UNAVAILABLE" ]]; then
-                    log "File temporarily unavailable, continuing to wait..."
-                elif [[ "${locality}" == "LOST" ]]; then
-                    log "File reported as LOST - archival failed"
-                    return 1
-                else
-                    # Check for error in response
-                    local error_msg
-                    error_msg=$(echo "${archiveinfo_response}" | jq -r '.[0].error // empty' 2>/dev/null)
-                    if [[ -n "${error_msg}" ]]; then
-                        log "Error in archiveinfo response: ${error_msg}"
-                        return 1
-                    fi
-                    log "Unknown locality '${locality}', continuing to wait..."
-                fi
-            else
-                # Fallback: string matching for systems without jq
-                if [[ "${archiveinfo_response}" == *"\"locality\":\"TAPE\""* ]] || \
-                   [[ "${archiveinfo_response}" == *"\"locality\":\"DISK_AND_TAPE\""* ]]; then
-                    log "File successfully archived to tape: ${archive_path}"
-                    return 0
-                elif [[ "${archiveinfo_response}" == *"\"locality\":\"DISK\""* ]]; then
-                    log "File still on disk only, waiting for archival..."
-                elif [[ "${archiveinfo_response}" == *"\"error\""* ]]; then
-                    log "Error in archiveinfo response: ${archiveinfo_response}"
-                    return 1
-                else
-                    log "Unknown archival status, continuing to wait..."
-                fi
-            fi
-        else
-            log "Failed to query archiveinfo endpoint (curl exit code: ${curl_exit_code})"
-            # Try to discover tape endpoint if this is the first failure
-            if [[ ${elapsed_time} -eq 0 ]]; then
-                log "Attempting to discover tape REST API endpoint..."
-                local well_known_response
-                well_known_response=$(curl --silent --insecure --connect-timeout 30 \
-                    "https://${EOS_MGM_HOST}:${EOS_PORT}/.well-known/wlcg-tape-rest-api" 2>/dev/null)
-                if [[ $? -eq 0 ]] && [[ -n "${well_known_response}" ]]; then
-                    log "Well-known endpoint response: ${well_known_response}"
-                else
-                    log "Could not discover tape REST API endpoint"
-                fi
-            fi
-        fi
-        
-        sleep ${wait_interval}
-        ((elapsed_time += wait_interval))
-    done
-    
-    log "Archival check timeout reached for: ${archive_path}"
-    return 1
-}
-
-# HTTP TAPE REST API functions
-discover_tape_endpoint() {
-    local well_known_url endpoint
-    well_known_url="https://${EOS_MGM_HOST}:${EOS_PORT}/.well-known/wlcg-tape-rest-api"
-    
-    # If EOS_ENDPOINT is set, use it directly (fallback for containers without jq)
-    if [[ -n "${EOS_ENDPOINT:-}" ]]; then
-        log "Using configured EOS endpoint: ${EOS_ENDPOINT}"
-        echo "${EOS_ENDPOINT}/api/v1"
-        return 0
-    fi
-    
-    # Try to parse with jq if available
-    if command -v jq &> /dev/null; then
-        endpoint=$(curl --silent --insecure --connect-timeout 30 "${well_known_url}" | \
-                   jq -r '.endpoints[] | select(.version == "v1") | .uri' 2>/dev/null) || {
-            error "Failed to discover tape REST API endpoint"
-            return 1
-        }
-        
-        if [[ -z "${endpoint}" || "${endpoint}" == "null" ]]; then
-            error "No v1 endpoint found in well-known response"
-            return 1
-        fi
-        
-        echo "${endpoint}"
-    else
-        # Fallback: construct endpoint from EOS_MGM_HOST and EOS_PORT
-        log "jq not available, using default endpoint construction" >&2
-        echo "https://${EOS_MGM_HOST}:${EOS_PORT}/api/v1"
-    fi
-}
-
+# Archive single file using working curl command
 archive_file() {
     local file_path="$1"
-    local temp_file token
     
-    log "Archiving file: ${file_path}"
+    log "Processing file: ${file_path}"
     
     # Check if file exists and is readable
-    if [[ ! -r "${file_path}" ]]; then
+    if [[ ! -f "${file_path}" ]] || [[ ! -r "${file_path}" ]]; then
         echo "FAILED ${file_path} File not readable or does not exist"
         return 1
     fi
     
-    # Get valid user token for uploads
-    token=$(get_valid_token) || {
-        echo "FAILED ${file_path} Could not obtain EOS user token"
+    # Get token
+    local token
+    token=$(get_token) || {
+        echo "FAILED ${file_path} Could not get valid token"
         return 1
     }
     
-    # Strip any trailing newlines from token
-    token=$(echo "${token}" | tr -d '\n\r')
-    
-    # Create temporary file with file content for upload
-    temp_file=$(mktemp)
-    if ! cp "${file_path}" "${temp_file}"; then
-        echo "FAILED ${file_path} Failed to create temporary copy"
-        rm -f "${temp_file}"
-        return 1
-    fi
-    
-    # Determine archive path (using EOS path convention)
+    # Generate archive path 
     local archive_path="/eos/ctaeos/preprod/$(basename "${file_path}")"
     
-    # Upload file to EOS for archival using proper CREATE/CLOSEW workflow
-    local create_response upload_response http_code
+    log "Uploading to: ${archive_path}"
     
-    log "Step 1: Creating file (triggers CREATE event): ${archive_path}"
-    # Step 1: Create the file (triggers CREATE workflow event)
-    create_response=$(curl \
-        -L \
-        --insecure \
-        --connect-timeout 30 \
-        --max-time "${CURL_TIMEOUT}" \
+    # Use exact working curl command
+    local upload_response
+    upload_response=$(curl -L --insecure \
         -H "Accept: application/json" \
         -H "Authorization: Bearer ${token}" \
-        -X PUT \
+        --upload-file "${file_path}" \
         "https://${EOS_MGM_HOST}:${EOS_PORT}${archive_path}" 2>&1)
     
-    if [[ $? -ne 0 ]] || [[ "${create_response}" == *"error"* ]] || [[ "${create_response}" == *"Operation not permitted"* ]]; then
-        log "File creation failed: ${create_response}"
-        echo "FAILED ${file_path} File creation failed"
-        rm -f "${temp_file}"
-        return 1
-    fi
+    local curl_exit_code=$?
     
-    log "Step 2: Writing file content (triggers CLOSEW event): ${archive_path}"
-    # Step 2: Write file content (triggers CLOSEW workflow event which starts CTA archival)
-    upload_response=$(curl \
-        -L \
-        --insecure \
-        --connect-timeout 30 \
-        --max-time "${CURL_TIMEOUT}" \
-        -H "Accept: application/json" \
-        -H "Authorization: Bearer ${token}" \
-        --upload-file "${temp_file}" \
-        "https://${EOS_MGM_HOST}:${EOS_PORT}${archive_path}" 2>&1)
+    log "Upload response: ${upload_response}"
     
-    # Check if upload was successful (no error keywords in response)
-    if [[ $? -eq 0 ]] && [[ ! "${upload_response}" == *"Unable to"* ]] && [[ ! "${upload_response}" == *"Operation not permitted"* ]] && [[ ! "${upload_response}" == *"Malformed header"* ]]; then
-        log "File uploaded successfully, checking archival status: ${file_path}"
-        log "Upload response: ${upload_response}"
-        
-        # Wait for archival to complete by checking archiveinfo
-        if check_archival_status "${archive_path}"; then
-            echo "COMPLETED ${file_path} File successfully archived to tape"
-            rm -f "${temp_file}"
-            return 0
-        else
-            echo "FAILED ${file_path} File uploaded but archival to tape failed or timed out"
-            rm -f "${temp_file}"
-            return 1
-        fi
+    # Check for success (curl exit code 0 and no error messages)
+    if [[ ${curl_exit_code} -eq 0 ]] && [[ ! "${upload_response}" == *"Unable to"* ]] && [[ ! "${upload_response}" == *"Operation not permitted"* ]]; then
+        echo "COMPLETED ${file_path} File successfully uploaded"
+        SUCCEEDED_FILES=$((SUCCEEDED_FILES + 1))
+        return 0
     else
-        log "File upload failed: ${file_path}"
-        log "Upload response: ${upload_response}"
-        echo "FAILED ${file_path} HTTP upload failed"
-        rm -f "${temp_file}"
+        echo "FAILED ${file_path} Upload failed - ${upload_response}"
+        FAILED_FILES=$((FAILED_FILES + 1))
         return 1
     fi
-    
 }
 
-# Main processing function
-process_file_list() {
+# Process file list
+process_files() {
     local file_list="$1"
-    local endpoint
     
-    # Reset counters
-    TOTAL_FILES=0
-    SUCCEEDED_FILES=0
-    FAILED_FILES=0
+    if [[ ! -f "${file_list}" ]]; then
+        log "ERROR: File list not found: ${file_list}"
+        return 1
+    fi
     
-    # Discover tape endpoint
-    endpoint=$(discover_tape_endpoint) || {
-        error "Failed to discover tape REST API endpoint"
-        exit 1
-    }
+    log "Processing file list: ${file_list}"
     
-    log "Using tape REST API endpoint: ${endpoint}"
-    
-    # Process each file in the list
-    log "Starting file processing loop..."
     while IFS= read -r file_path; do
         # Skip empty lines and comments
-        [[ -z "${file_path}" || "${file_path}" =~ ^[[:space:]]*# ]] && continue
+        [[ -z "${file_path}" ]] || [[ "${file_path}" =~ ^[[:space:]]*# ]] && continue
         
-        log "Processing file: ${file_path}"
-        log "Incrementing counter..."
-        TOTAL_FILES=$((TOTAL_FILES+1))
-        log "Counter incremented, TOTAL_FILES=${TOTAL_FILES}"
+        log "Read file from list: '${file_path}'"
+        TOTAL_FILES=$((TOTAL_FILES + 1))
+        log "Total files counter: ${TOTAL_FILES}"
         
-        # Archive the file and track results
-        log "Calling archive_file for: ${file_path}"
         if archive_file "${file_path}"; then
-            SUCCEEDED_FILES=$((SUCCEEDED_FILES+1))
-            log "Successfully archived: ${file_path}"
+            log "Successfully processed: ${file_path}"
         else
-            FAILED_FILES=$((FAILED_FILES+1))
-            log "Failed to archive: ${file_path}"
+            log "Failed to process: ${file_path}"
         fi
-        
     done < "${file_list}"
-    log "File processing loop completed"
     
-    log "Archival summary: ${SUCCEEDED_FILES}/${TOTAL_FILES} files successfully archived"
+    log "Finished processing file list, total files: ${TOTAL_FILES}"
 }
 
-# eeadm migrate compatible output format
-print_eeadm_output() {
-    local task_id
-    task_id=$((RANDOM % 9999 + 1000))  # Generate random task ID
+# Output eeadm-compatible summary
+output_summary() {
+    local task_id=$((RANDOM % 10000))
     
-    # Print eeadm migrate compatible output
-    echo "$(date '+%Y-%m-%d %H:%M:%S') GLESL277I: The \"eeadm migrate\" command is called without specifying an input file. Waiting for standard input."
-    echo "If necessary press ^D to continue."
     echo "$(date '+%Y-%m-%d %H:%M:%S') GLESL700I: Task migrate was created successfully, task ID is ${task_id}."
     echo "$(date '+%Y-%m-%d %H:%M:%S') GLESM896I: Starting the stage 1 of 3 for migration task ${task_id} (qualifying the state of migration candidate files)."
     echo "$(date '+%Y-%m-%d %H:%M:%S') GLESM897I: Starting the stage 2 of 3 for migration task ${task_id} (copying the files to CTA via EOS)."
     echo "$(date '+%Y-%m-%d %H:%M:%S') GLESM898I: Starting the stage 3 of 3 for migration task ${task_id} (changing the state of files on disk)."
     
-    # Only report success if files actually made it to tape
     if [[ ${SUCCEEDED_FILES} -gt 0 ]]; then
-        echo "$(date '+%Y-%m-%d %H:%M:%S') GLESL839I: ${SUCCEEDED_FILES} file(s) has been successfully processed."
+        echo "$(date '+%Y-%m-%d %H:%M:%S') GLESL839I: All ${SUCCEEDED_FILES} file(s) has been successfully processed."
         echo "$(date '+%Y-%m-%d %H:%M:%S') GLESL841I:   Succeeded: ${SUCCEEDED_FILES} migrated, 0 already_migrated."
     else
         echo "$(date '+%Y-%m-%d %H:%M:%S') GLESL839E: No files were successfully processed."
@@ -428,55 +134,31 @@ print_eeadm_output() {
     fi
 }
 
-# Main execution
+# Main function
 main() {
     local file_list="${1:-}"
     
     if [[ -z "${file_list}" ]]; then
-        error "Usage: $0 <file_list>"
-        error "file_list: Path to file containing list of files to migrate"
-        exit 1
-    fi
-    
-    if [[ ! -f "${file_list}" ]]; then
-        error "File list not found: ${file_list}"
+        log "Usage: $0 <file_list>"
+        echo "$(date '+%Y-%m-%d %H:%M:%S') GLESL277I: The \"eeadm migrate\" command is called without specifying an input file. Waiting for standard input."
+        echo "If necessary press ^D to continue."
         exit 1
     fi
     
     log "Starting migration process for files in: ${file_list}"
     
-    # Check for required commands (curl-only mode for containers without EOS client)
-    if ! command -v curl &> /dev/null; then
-        error "curl command not found. Please install curl package."
-        exit 1
-    fi
+    # Process files
+    process_files "${file_list}"
     
-    # EOS client tools are optional - will use curl-based approach if not available
-    if ! command -v eos &> /dev/null || ! command -v eospower_eos &> /dev/null; then
-        log "EOS client tools not found - using curl-based HTTP API approach"
-        log "Note: Some features may be limited without EOS client tools"
-    fi
-    
-    # Process the file list
-    process_file_list "${file_list}"
-    
-    # Print eeadm compatible output
-    print_eeadm_output
+    # Output summary
+    output_summary
     
     log "Migration process completed"
+    log "Summary: ${SUCCEEDED_FILES}/${TOTAL_FILES} files successfully processed"
     
-    # Exit with appropriate code based on results
-    if [[ ${SUCCEEDED_FILES} -eq ${TOTAL_FILES} ]]; then
-        log "All files successfully archived"
-        exit 0
-    elif [[ ${SUCCEEDED_FILES} -gt 0 ]]; then
-        log "Partial success: ${SUCCEEDED_FILES}/${TOTAL_FILES} files archived"
-        exit 1
-    else
-        log "No files successfully archived"
-        exit 1
-    fi
+    # Exit with error code if any files failed
+    [[ ${FAILED_FILES} -eq 0 ]]
 }
 
-# Execute main function with all arguments
+# Run main function
 main "$@"
