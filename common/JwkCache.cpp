@@ -75,7 +75,8 @@ void JwkCache::updateCache(time_t now) {
   lc.log(log::DEBUG, "In updateCache, just acquired the unique lock");
   for (auto it = m_keymap.begin(); it != m_keymap.end();) {
     int lastRefresh = it->second.last_refresh_time;
-    if (lastRefresh + m_pubkeyTimeout <= now) {
+    // if pubkeyTimeout is 0, then we don't want public keys to expire
+    if ((m_pubkeyTimeout != 0) && (lastRefresh + m_pubkeyTimeout <= now)) {
       lc.log(log::DEBUG, std::string("Removing entry for key with kid ") + it->first);
       it = m_keymap.erase(it);  // erase returns next valid iterator
     } else {

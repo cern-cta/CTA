@@ -95,7 +95,7 @@ cta.log.url file:/var/log/cta/cta-frontend.log
 # refresh interval in seconds
 # grpc.jwks.cache.refresh_interval_secs 600
 #
-# public key caching interval (can be different from the cache refresh interval)
+# public key caching interval (can be different from the cache refresh interval, if not set it means no expiration)
 # grpc.jwks.cache.timeout_secs 600
 
 # gRPC number of threads

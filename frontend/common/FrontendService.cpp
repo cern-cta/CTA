@@ -438,10 +438,10 @@ FrontendService::FrontendService(const std::string& configFilename) : m_archiveF
       m_cacheRefreshInterval = 600;
     }
     if (!m_pubkeyTimeout.has_value()) {
-      log(log::WARNING, "No value set for grpc.jwks.cache.timeout_secs, using default value");
-      m_pubkeyTimeout = std::optional<int>(600);
+      log(log::WARNING, "No value set for grpc.jwks.cache.timeout_secs, cached public keys will not expire");
+      m_pubkeyTimeout = 0;
     }
-    if (m_pubkeyTimeout.value() < m_cacheRefreshInterval.value()) {
+    if (m_pubkeyTimeout.value() != 0 && m_pubkeyTimeout.value() < m_cacheRefreshInterval.value()) {
       log(log::WARNING,
           "Cannot use a value for grpc.jwks.cache.timeout_secs that is less than grpc.jwks.cache.refresh_interval_secs."
           "Setting timeout_secs equal to cache_refresh_interval_secs.");
