@@ -116,23 +116,6 @@ process_files() {
     log "Finished processing file list, total files: ${TOTAL_FILES}"
 }
 
-# Output eeadm-compatible summary
-output_summary() {
-    local task_id=$((RANDOM % 10000))
-    
-    echo "$(date '+%Y-%m-%d %H:%M:%S') GLESL700I: Task migrate was created successfully, task ID is ${task_id}."
-    echo "$(date '+%Y-%m-%d %H:%M:%S') GLESM896I: Starting the stage 1 of 3 for migration task ${task_id} (qualifying the state of migration candidate files)."
-    echo "$(date '+%Y-%m-%d %H:%M:%S') GLESM897I: Starting the stage 2 of 3 for migration task ${task_id} (copying the files to CTA via EOS)."
-    echo "$(date '+%Y-%m-%d %H:%M:%S') GLESM898I: Starting the stage 3 of 3 for migration task ${task_id} (changing the state of files on disk)."
-    
-    if [[ ${SUCCEEDED_FILES} -gt 0 ]]; then
-        echo "$(date '+%Y-%m-%d %H:%M:%S') GLESL839I: All ${SUCCEEDED_FILES} file(s) has been successfully processed."
-        echo "$(date '+%Y-%m-%d %H:%M:%S') GLESL841I:   Succeeded: ${SUCCEEDED_FILES} migrated, 0 already_migrated."
-    else
-        echo "$(date '+%Y-%m-%d %H:%M:%S') GLESL839E: No files were successfully processed."
-        echo "$(date '+%Y-%m-%d %H:%M:%S') GLESL841E:   Succeeded: 0 migrated, ${FAILED_FILES} failed."
-    fi
-}
 
 # Main function
 main() {
@@ -140,7 +123,6 @@ main() {
     
     if [[ -z "${file_list}" ]]; then
         log "Usage: $0 <file_list>"
-        echo "$(date '+%Y-%m-%d %H:%M:%S') GLESL277I: The \"eeadm migrate\" command is called without specifying an input file. Waiting for standard input."
         echo "If necessary press ^D to continue."
         exit 1
     fi
@@ -151,7 +133,6 @@ main() {
     process_files "${file_list}"
     
     # Output summary
-    output_summary
     
     log "Migration process completed"
     log "Summary: ${SUCCEEDED_FILES}/${TOTAL_FILES} files successfully processed"
