@@ -106,11 +106,22 @@ main() {
     if [[ $migrate_exit_code -eq 0 ]]; then
         log "SUCCESS: Migrate script completed successfully"
         
-        # Step 12: Verify CTA integration
-        log "Step 11: Checking CTA frontend for archival activity"
+        # Step 12: Verify actual archival using EOS extended attributes
+        log "Step 11: Checking EOS for actual archival status"
         echo ""
-        echo "=== Recent CTA Frontend Activity ==="
-        kubectl logs -n dev cta-frontend-0 --tail=3 | grep -E "(queueArchive|diskFilePath)" || echo "No recent CTA activity"
+        echo "=== Verifying File Archival Status in EOS ==="
+        
+        # Check if our test file was actually archived to tape
+        local archived_count
+        archived_count=$(kubectl exec -n dev eos-mgm-0 -c eos-mgm -- eos root://ctaeos ls -y /eos/ctaeos/preprod | grep "s3_test.txt" | grep 'd0::t1' | wc -l)
+        
+        if [[ $archived_count -eq 1 ]]; then
+            log "✅ SUCCESS: File successfully archived to tape (d0::t1 status)"
+            echo "File shows d0::t1 extended attributes indicating successful tape archival"
+        else
+            log "❌ WARNING: File not found with archived status (count: $archived_count)"
+            echo "File may still be in progress or archival failed"
+        fi
         echo ""
         
         # Step 13: Check EOS status
