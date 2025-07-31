@@ -1,0 +1,212 @@
+#!/bin/bash
+
+# @project      The CERN Tape Archive (CTA) - NooBaa Integration
+# @copyright    Copyright © 2024 CERN
+# @license      This program is free software, distributed under the terms of the GNU General Public
+#               Licence version 3 (GPL Version 3), copied verbatim in the file "COPYING".
+
+# NooBaa NSFS Glacier recall executable - Exact CTA reference implementation
+# Based on /continuousintegration/orchestration/tests/client_rest_api.sh
+
+set -eo pipefail
+
+# Configuration - exact match to CTA reference
+EOS_MGM_HOST="eos-mgm-0.eos-mgm.dev.svc.cluster.local"
+TOKEN_CACHE_FILE="/tmp/eos_power_token"
+TIMEOUT=300
+
+# Counters
+TOTAL_FILES=0
+SUCCEEDED_FILES=0
+FAILED_FILES=0
+
+# Logging function
+log() {
+    echo "$(date '+%Y-%m-%d %H:%M:%S') [RECALL] $*"
+}
+
+# Get token from cache file - extract just the token part (zteos64:...)
+get_token() {
+    if [[ ! -f "${TOKEN_CACHE_FILE}" ]]; then
+        log "ERROR: Token cache file not found: ${TOKEN_CACHE_FILE}"
+        return 1
+    fi
+    
+    local cached_token
+    cached_token=$(cat "${TOKEN_CACHE_FILE}")
+    # Extract just the token part (everything after first colon)
+    echo "${cached_token}" | cut -d: -f2-
+}
+
+# Discover TAPE REST API endpoint - exact CTA pattern with jq
+discover_endpoint() {
+    local https_uri
+    
+    # Check if jq is available, use it if possible
+    if command -v jq &> /dev/null; then
+        https_uri=$(curl --insecure "https://${EOS_MGM_HOST}:8443/.well-known/wlcg-tape-rest-api" | jq -r '.endpoints[] | select(.version == "v1") | .uri' 2>/dev/null || echo "")
+    else
+        # Fallback: simple grep parsing if jq not available
+        https_uri=$(curl --insecure "https://${EOS_MGM_HOST}:8443/.well-known/wlcg-tape-rest-api" | grep -o '"uri" : "[^"]*"' | head -1 | cut -d'"' -f4 || echo "")
+    fi
+    
+    if [[ -z "${https_uri}" ]]; then
+        log "ERROR: Failed to discover tape REST API endpoint"
+        return 1
+    fi
+    
+    log "Discovered endpoint: ${https_uri}"
+    echo "${https_uri}"
+}
+
+# Stage file from tape - exact CTA reference pattern
+stage_file() {
+    local file_path="$1"
+    local token="$2"
+    local https_uri="$3"
+    
+    log "Staging file from tape: ${file_path}"
+    
+    # Send stage request - exact CTA pattern with proper curl options
+    local stage_response req_id
+    stage_response=$(curl -s -L --insecure -H "Accept: application/json" -H "Authorization: Bearer ${token}" "${https_uri}/stage/" -d "{\"files\":[{\"path\":\"${file_path}\"}]}")
+    
+    log "Stage response: ${stage_response}"
+    
+    # Extract request ID - use jq if available, fallback to grep with spaces
+    if command -v jq &> /dev/null; then
+        req_id=$(echo "${stage_response}" | jq -r '.requestId' 2>/dev/null || echo "")
+    else
+        req_id=$(echo "${stage_response}" | grep -o '"requestId"[[:space:]]*:[[:space:]]*"[^"]*"' | sed 's/.*"\([^"]*\)"/\1/' || echo "")
+    fi
+    
+    if [[ -z "${req_id}" ]] || [[ "${req_id}" == "null" ]]; then
+        log "ERROR: Failed to get request ID from stage response"
+        return 1
+    fi
+    
+    log "Stage request submitted with ID: ${req_id}"
+    
+    # Wait for staging to complete - exact CTA pattern
+    local seconds_passed=0
+    local final_count=0
+    local filename=$(basename "${file_path}")
+    
+    while [[ ${final_count} -eq 0 ]]; do
+        log "Waiting for file to be staged... (${seconds_passed}s/${TIMEOUT}s)"
+        
+        if [[ ${seconds_passed} -eq ${TIMEOUT} ]]; then
+            log "ERROR: Timed out waiting for file to be staged"
+            return 1
+        fi
+        
+        # Check if file is now on disk (d1::t1 = disk and tape) - exact CTA pattern
+        final_count=$(curl -s --insecure -H "Authorization: Bearer ${token}" "https://${EOS_MGM_HOST}:8443/proc/user/?mgm.cmd=ls&mgm.path=/eos/ctaeos/preprod&mgm.option=y" | grep "${filename}" | grep 'd1::t1' | wc -l || echo 0)
+        
+        ((seconds_passed++))
+        sleep 1
+    done
+    
+    log "File staged successfully: ${file_path}"
+    return 0
+}
+
+# Recall single file from tape
+recall_file() {
+    local file_path="$1"
+    
+    log "Processing file: ${file_path}"
+    TOTAL_FILES=$((TOTAL_FILES + 1))
+    
+    # Get token
+    local token
+    token=$(get_token) || {
+        echo "FAILED ${file_path} Could not get valid token"
+        FAILED_FILES=$((FAILED_FILES + 1))
+        return 1
+    }
+    
+    # Discover endpoint
+    local https_uri
+    https_uri=$(discover_endpoint) || {
+        echo "FAILED ${file_path} Could not discover REST API endpoint"
+        FAILED_FILES=$((FAILED_FILES + 1))
+        return 1
+    }
+    
+    # Check current file status using EOS API
+    log "Checking file status: ${file_path}"
+    local filename=$(basename "${file_path}")
+    local current_status
+    current_status=$(curl -s --insecure -H "Authorization: Bearer ${token}" "https://${EOS_MGM_HOST}:8443/proc/user/?mgm.cmd=ls&mgm.path=/eos/ctaeos/preprod&mgm.option=y" | grep "${filename}" || echo "")
+    
+    log "Current file status: ${current_status}"
+    
+    if [[ "${current_status}" == *"d1::t1"* ]]; then
+        echo "COMPLETED ${file_path} File already available on disk"
+        SUCCEEDED_FILES=$((SUCCEEDED_FILES + 1))
+        return 0
+    elif [[ "${current_status}" == *"d0::t1"* ]]; then
+        log "File is on tape only, staging required"
+        
+        # Stage file from tape
+        if stage_file "${file_path}" "${token}" "${https_uri}"; then
+            echo "COMPLETED ${file_path} File successfully recalled from tape"
+            SUCCEEDED_FILES=$((SUCCEEDED_FILES + 1))
+            return 0
+        else
+            echo "FAILED ${file_path} Staging failed"
+            FAILED_FILES=$((FAILED_FILES + 1))
+            return 1
+        fi
+    else
+        echo "FAILED ${file_path} File not found or unknown status"
+        FAILED_FILES=$((FAILED_FILES + 1))
+        return 1
+    fi
+}
+
+# Process file list
+process_files() {
+    local file_list="$1"
+    
+    if [[ ! -f "${file_list}" ]]; then
+        log "ERROR: File list not found: ${file_list}"
+        return 1
+    fi
+    
+    log "Processing file list: ${file_list}"
+    
+    while IFS= read -r file_path; do
+        # Skip empty lines and comments
+        [[ -z "${file_path}" ]] || [[ "${file_path}" =~ ^[[:space:]]*# ]] && continue
+        
+        recall_file "${file_path}"
+    done < "${file_list}"
+    
+    log "Finished processing file list, total files: ${TOTAL_FILES}"
+}
+
+# Main function
+main() {
+    local file_list="${1:-}"
+    
+    if [[ -z "${file_list}" ]]; then
+        log "Usage: $0 <file_list>"
+        exit 1
+    fi
+    
+    log "Starting recall process for files in: ${file_list}"
+    
+    # Process files
+    process_files "${file_list}"
+    
+    log "Recall process completed"
+    log "Summary: ${SUCCEEDED_FILES}/${TOTAL_FILES} files successfully recalled"
+    
+    # Exit with error code if any files failed
+    [[ ${FAILED_FILES} -eq 0 ]]
+}
+
+# Run main function
+main "$@"
