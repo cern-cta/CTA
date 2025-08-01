@@ -22,6 +22,7 @@ add_executable(cta-frontend-grpc Main.cpp FrontendGrpcService.cpp
   ../common/WorkflowEvent.cpp
   ../common/FrontendService.cpp
   ../common/AdminCmd.cpp
+  ../common/AdminCmdOptions.cpp
   ${PROJECT_SOURCE_DIR}/cmdline/CtaAdminTextFormatter.cpp
   ${PROJECT_SOURCE_DIR}/cmdline/CtaAdminCmdParser.cpp
   ${PROJECT_SOURCE_DIR}/common/config/Config.cpp
@@ -59,6 +60,7 @@ include_directories(${CMAKE_BINARY_DIR}/eos_cta ${PROTOBUF3_INCLUDE_DIRS})
 add_executable(cta-admin-grpc
   CtaAdminGrpcCmd.cpp
   ${PROJECT_SOURCE_DIR}/frontend/common/AdminCmd.cpp
+  ${PROJECT_SOURCE_DIR}/frontend/common/AdminCmdOptions.cpp
   ${PROJECT_SOURCE_DIR}/cmdline/CtaAdminParsedCmd.cpp
   ${PROJECT_SOURCE_DIR}/cmdline/CtaAdminTextFormatter.cpp
   ${PROJECT_SOURCE_DIR}/cmdline/CtaAdminCmdParser.cpp
