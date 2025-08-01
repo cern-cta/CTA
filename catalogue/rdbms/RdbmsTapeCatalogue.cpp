@@ -32,6 +32,7 @@
 #include "catalogue/TapeSearchCriteria.hpp"
 #include "common/dataStructures/SecurityIdentity.hpp"
 #include "common/dataStructures/Tape.hpp"
+#include "common/dataStructures/LabelFormat.hpp"
 #include "common/exception/Exception.hpp"
 #include "common/exception/UserError.hpp"
 #include "common/log/LogContext.hpp"
@@ -1140,7 +1141,8 @@ void RdbmsTapeCatalogue::tapeLabelled(const std::string &vid, const std::string 
   const char* const sql = R"SQL(
     UPDATE TAPE SET 
       LABEL_DRIVE = :LABEL_DRIVE,
-      LABEL_TIME = :LABEL_TIME 
+      LABEL_TIME = :LABEL_TIME,
+      LABEL_FORMAT = :LABEL_FORMAT 
     WHERE 
       VID = :VID
   )SQL";
@@ -1148,6 +1150,7 @@ void RdbmsTapeCatalogue::tapeLabelled(const std::string &vid, const std::string 
   auto stmt = conn.createStmt(sql);
   stmt.bindString(":LABEL_DRIVE", drive);
   stmt.bindUint64(":LABEL_TIME", now);
+  stmt.bindUint8(":LABEL_FORMAT", static_cast<std::uint8_t>(cta::common::dataStructures::Label::Format::CTA));
   stmt.bindString(":VID", vid);
   stmt.executeNonQuery();
 
