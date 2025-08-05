@@ -4,6 +4,12 @@ image:
 
 mode: deployment
 
+# presets:
+#   hostMetrics:
+#     enabled: true
+#   kubernetesAttributes:
+#     enabled: true
+
 config:
   receivers:
     otlp:
@@ -12,17 +18,15 @@ config:
           endpoint: 0.0.0.0:4318
 
   processors:
-    groupbyattrs/aggregate_per_instance:
-      keys: ["job", "transfer_type"]  # aggregate over all 'instance's for each job/type
-
-    metricstransform/drop_instance_label:
+    metricstransform/aggregate:
       transforms:
-        - include: "taped_transfer_count_total"
-          match_type: strict
+        - include: ".*"
+          match_type: regexp
           action: update
           operations:
-            - action: delete_label
-              label: "instance"
+            - action: aggregate_labels
+              aggregation_type: sum
+              label_set: [job]
 
   exporters:
     prometheus:
@@ -34,8 +38,7 @@ config:
         receivers:
         - otlp
         processors:
-          - groupbyattrs/aggregate_per_instance
-          - metricstransform/drop_instance_label
+        - metricstransform/aggregate
         exporters:
         - prometheus
 
