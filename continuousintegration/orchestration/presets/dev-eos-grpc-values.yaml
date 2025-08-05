@@ -95,7 +95,52 @@ mgm:
         -s)
 
       admin_access_token=$(echo ${response} | jq -r .access_token)
-      printf "$admin_access_token" > /etc/grid-security/jwt-token-grpc
+      # with this access token, update the client scopes
+      dnf install -y jq
+
+      # ## 1. get the client-uuid for grpc-client, get the scope-id for custom-sub
+      CLIENT_ID=$(curl -s \
+        -H "Authorization: Bearer $admin_access_token" \
+        http://auth-keycloak:8080/admin/realms/master/clients?clientId=grpc-client | jq -r '.[] .id')
+
+      CUSTOM_SCOPE_ID=$(curl -s \
+        -H "Authorization: Bearer $admin_access_token" \
+        http://auth-keycloak:8080/admin/realms/master/client-scopes | jq -r '.[] | select(.name == "grpc-custom-sub") | .id')
+      echo $CUSTOM_SCOPE_ID > /etc/grid-security/jwt-token-grpc
+      # CUSTOM_SCOPE_ID=$(echo {CLIENT_SCOPES} | jq -r '.[] | select(.name == "grpc-custom-sub") | .id')
+      ## 2. Make a PUT request using client id and scope id
+      # Check if the scope is already assigned to the client
+      EXISTING_SCOPE=$(curl -s \
+        -H "Authorization: Bearer $admin_access_token" \
+        http://auth-keycloak:8080/admin/realms/master/clients/${CLIENT_ID}/default-client-scopes | jq -r '.[] | select(.name == "grpc-custom-sub") | .id')
+
+      if [ -z "$EXISTING_SCOPE" ]; then
+        echo "Scope not found on client, adding it..."
+
+        CUSTOM_SCOPE_ID=$(curl -s \
+          -H "Authorization: Bearer $admin_access_token" \
+          http://auth-keycloak:8080/admin/realms/master/client-scopes | jq -r '.[] | select(.name == "grpc-custom-sub") | .id')
+
+        curl -X PUT http://auth-keycloak:8080/admin/realms/master/clients/${CLIENT_ID}/default-client-scopes/${CUSTOM_SCOPE_ID} \
+          -H "Authorization: Bearer $admin_access_token" \
+          -H "Content-Type: application/json" \
+          -s
+      else
+        echo "Scope already assigned to client, skipping..."
+      fi
+
+      # Obtain an access token with the diskInstanceName set in the "sub" claim
+      response=$(curl -X POST http://auth-keycloak:8080/realms/master/protocol/openid-connect/token \
+        -H "Content-Type: application/x-www-form-urlencoded" \
+        -d "grant_type=password" \
+        -d "client_id=grpc-client" \
+        -d "username=${KEYCLOAK_ADMIN}" \
+        -d "password=${KEYCLOAK_ADMIN_PASSWORD}" \
+        -s)
+
+      grpc_access_token=$(echo ${response} | jq -r .access_token)
+
+      printf "$grpc_access_token" > /etc/grid-security/jwt-token-grpc
     spec:
       env:
         - name: KEYCLOAK_ADMIN
@@ -173,7 +218,53 @@ fst:
       -s)
 
       admin_access_token=$(echo ${response} | jq -r .access_token)
-      printf "$admin_access_token" > /etc/grid-security/jwt-token-grpc
+
+      admin_access_token=$(echo ${response} | jq -r .access_token)
+      # with this access token, update the client scopes
+      dnf install -y jq
+
+      # ## 1. get the client-uuid for grpc-client, get the scope-id for custom-sub
+      CLIENT_ID=$(curl -s \
+        -H "Authorization: Bearer $admin_access_token" \
+        http://auth-keycloak:8080/admin/realms/master/clients?clientId=grpc-client | jq -r '.[] .id')
+
+      CUSTOM_SCOPE_ID=$(curl -s \
+        -H "Authorization: Bearer $admin_access_token" \
+        http://auth-keycloak:8080/admin/realms/master/client-scopes | jq -r '.[] | select(.name == "grpc-custom-sub") | .id')
+
+      ## 2. Make a PUT request using client id and scope id
+      # Check if the scope is already assigned to the client
+      EXISTING_SCOPE=$(curl -s \
+        -H "Authorization: Bearer $admin_access_token" \
+        http://auth-keycloak:8080/admin/realms/master/clients/${CLIENT_ID}/default-client-scopes | jq -r '.[] | select(.name == "grpc-custom-sub") | .id')
+
+      if [ -z "$EXISTING_SCOPE" ]; then
+        echo "Scope not found on client, adding it..."
+
+        CUSTOM_SCOPE_ID=$(curl -s \
+          -H "Authorization: Bearer $admin_access_token" \
+          http://auth-keycloak:8080/admin/realms/master/client-scopes | jq -r '.[] | select(.name == "grpc-custom-sub") | .id')
+
+        curl -X PUT http://auth-keycloak:8080/admin/realms/master/clients/${CLIENT_ID}/default-client-scopes/${CUSTOM_SCOPE_ID} \
+          -H "Authorization: Bearer $admin_access_token" \
+          -H "Content-Type: application/json" \
+          -s
+      else
+        echo "Scope already assigned to client, skipping..."
+      fi
+
+      # Obtain an access token with the diskInstanceName set in the "sub" claim
+      response=$(curl -X POST http://auth-keycloak:8080/realms/master/protocol/openid-connect/token \
+        -H "Content-Type: application/x-www-form-urlencoded" \
+        -d "grant_type=password" \
+        -d "client_id=grpc-client" \
+        -d "username=${KEYCLOAK_ADMIN}" \
+        -d "password=${KEYCLOAK_ADMIN_PASSWORD}" \
+        -s)
+
+      grpc_access_token=$(echo ${response} | jq -r .access_token)
+
+      printf "$grpc_access_token" > /etc/grid-security/jwt-token-grpc
     spec:
       env:
         - name: KEYCLOAK_ADMIN

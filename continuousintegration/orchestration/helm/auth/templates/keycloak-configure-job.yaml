@@ -41,6 +41,82 @@ spec:
 
               echo "Updated accessTokenLifespan to {{ .Values.keycloak.accessTokenLifespan }} seconds."
               echo "Updated ssoSessionMaxLifespan to {{ .Values.keycloak.ssoSessionMaxLifespan }} seconds."
+
+              ## Now we need to create: a new client, a new scope for that client, a new role mapping for that scope
+
+              REALM="master"
+              CLIENT_ID="grpc-client"
+              CUSTOM_SCOPE_NAME="grpc-custom-sub"
+              CUSTOM_ATTRIBUTE="diskInstanceName"
+
+              # Create or get grpc-client
+              GRPC_CLIENT_ID=$(/opt/keycloak/bin/kcadm.sh get clients -r master -q clientId=grpc-client --fields id 2>/dev/null | grep '"id"' | head -1 | sed 's/.*"id" : "\([^"]*\)".*/\1/')
+              if [ -z "$GRPC_CLIENT_ID" ]; then
+                echo "Creating grpc-client..."
+                /opt/keycloak/bin/kcadm.sh create clients \
+                  -r master \
+                  -s clientId="grpc-client" \
+                  -s enabled=true \
+                  -s publicClient=true \
+                  -s directAccessGrantsEnabled=true \
+                  -s serviceAccountsEnabled=false \
+                  -s standardFlowEnabled=true \
+                  -s protocol="openid-connect"
+                GRPC_CLIENT_ID=$(/opt/keycloak/bin/kcadm.sh get clients -r master -q clientId=grpc-client --fields id | grep '"id"' | head -1 | sed 's/.*"id" : "\([^"]*\)".*/\1/')
+                echo "Created grpc-client (ID: $GRPC_CLIENT_ID)."
+              else
+                echo "grpc-client already exists (ID: $GRPC_CLIENT_ID)."
+              fi
+
+              ## enable unmanaged attributes - this is required to allow us to set a custom diskInstanceName attribute that will override the sub claim
+              ##  through a protocol mapper
+              /opt/keycloak/bin/kcadm.sh update users/profile -r master -s unmanagedAttributePolicy=ENABLED
+              # Set diskInstanceName attribute on admin user
+              ADMIN_USER_ID=$(/opt/keycloak/bin/kcadm.sh get users -r master -q username="${KEYCLOAK_ADMIN}" --fields id | grep '"id"' | head -1 | sed 's/.*"id" : "\([^"]*\)".*/\1/')
+              if [ -n "$ADMIN_USER_ID" ]; then
+                echo "Setting diskInstanceName attribute for admin user (ID: $ADMIN_USER_ID)..."
+                /opt/keycloak/bin/kcadm.sh update users/$ADMIN_USER_ID \
+                  -r master \
+                  -s 'attributes.diskInstanceName=["ctaeos"]'
+                echo "Set diskInstanceName attribute."
+              else
+                echo "Admin user not found."
+              fi
+
+              CUSTOM_SCOPE=$(/opt/keycloak/bin/kcadm.sh create client-scopes -r master \
+                -s name="grpc-custom-sub" \
+                -s description="Custom client scope to override sub claim" \
+                -s protocol="openid-connect" \
+                -s 'attributes={"include.in.token.scope":"true","display.on.consent.screen":"false"}'
+              )
+              echo "CUSTOM_SCOPE IS $CUSTOM_SCOPE"
+              echo "Attempting to get the scope id of the new scope"
+              ## Get the client scope id
+              CUSTOM_SCOPE_ID=$(/opt/keycloak/bin/kcadm.sh get client-scopes -r master -q name=grpc-custom-sub --fields id,name --format csv \
+                | grep grpc | sed 's/^\("\([^"]*\)\)".*/\2/')
+                # we need to specify format csv and grep to get the output in one line, because the -q filtering does not work (perhaps a bug)
+
+              echo "Got the custom scope id, it is $CUSTOM_SCOPE_ID"
+
+              # Create the Protocol Mapper inside that client scope
+              echo "Creating new protocol mapper"
+
+              /opt/keycloak/bin/kcadm.sh create client-scopes/$CUSTOM_SCOPE_ID/protocol-mappers/models -r master \
+              -s name="custom-sub-mapper" \
+              -s protocol="openid-connect" \
+              -s protocolMapper="oidc-usermodel-attribute-mapper" \
+              -s 'config={
+                    "user.attribute":"diskInstanceName",
+                    "claim.name":"sub",
+                    "jsonType.label":"String",
+                    "id.token":"true",
+                    "access.token":"true",
+                    "access.token.claim":"true",
+                    "userinfo.token":"false",
+                    "multivalued":"false"
+                  }'
+
+
           env:
             - name: KEYCLOAK_ADMIN
               valueFrom:
