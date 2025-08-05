@@ -28,6 +28,7 @@
 #include "scheduler/RepackRequestManager.hpp"
 #include "scheduler/Scheduler.hpp"
 #include "tapeserver/daemon/MaintenanceHandler.hpp"
+#include "tapeserver/daemon/DriveConfigEntry.hpp"
 
 #ifdef CTA_PGSCHED
 #include "scheduler/rdbms/RelationalDBInit.hpp"
