@@ -28,6 +28,7 @@
 #include "scheduler/RepackRequestManager.hpp"
 #include "scheduler/Scheduler.hpp"
 #include "tapeserver/daemon/MaintenanceHandler.hpp"
+#include "tapeserver/daemon/DriveConfigEntry.hpp"
 
 #ifdef CTA_PGSCHED
 #include "scheduler/rdbms/RelationalDBInit.hpp"
@@ -277,8 +278,15 @@ void MaintenanceHandler::exceptionThrowingRunChild(){
   // We do not have to care for previous crashed sessions as we will garbage
   // collect them like any other crashed agent.
 
-  // Set the thread name for process ID:
-  prctl(PR_SET_NAME, "cta-tpd-maint");
+  // Set the process name for process ID:
+  // We construct the drive config entry here again to prevent having to pass it around
+  // This will make removal of this easier down the line once the maintenance process is split
+  const DriveConfigEntry dce{m_tapedConfig.driveName.value(),
+                             m_tapedConfig.driveLogicalLibrary.value(),
+                             m_tapedConfig.driveDevice.value(),
+                             m_tapedConfig.driveControlPath.value()};
+  std::string processName = dce.getShortUnitName() + "-maint";
+  prctl(PR_SET_NAME, processName.c_str());
 
   // Before anything, we will check for access to the scheduler's central storage.
   // If we fail to access it, we cannot work. We expect the drive processes to
