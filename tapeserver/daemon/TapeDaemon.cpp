@@ -103,7 +103,6 @@ void cta::tape::daemon::TapeDaemon::mainEventLoop() {
                              m_globalConfiguration.driveLogicalLibrary.value(),
                              m_globalConfiguration.driveDevice.value(),
                              m_globalConfiguration.driveControlPath.value()};
-
   auto dh = std::make_unique<DriveHandler>(m_globalConfiguration,
                                            dce,
                                            pm);
