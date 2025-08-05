@@ -82,9 +82,6 @@ std::string cta::tape::daemon::TapeDaemon::getHostName() const {
 void  cta::tape::daemon::TapeDaemon::exceptionThrowingMain()  {
   daemonizeIfNotRunInForeground();
   setDumpable();
-
-  // Set the name of the (unique) thread for easy process identification.
-  prctl(PR_SET_NAME, "cta-tpd-master");
   mainEventLoop();
 }
 
@@ -103,6 +100,8 @@ void cta::tape::daemon::TapeDaemon::mainEventLoop() {
                              m_globalConfiguration.driveLogicalLibrary.value(),
                              m_globalConfiguration.driveDevice.value(),
                              m_globalConfiguration.driveControlPath.value()};
+  std::string processName = dce.getShortUnitName() + "-parent";
+  prctl(PR_SET_NAME, processName.c_str());
   auto dh = std::make_unique<DriveHandler>(m_globalConfiguration,
                                            dce,
                                            pm);
