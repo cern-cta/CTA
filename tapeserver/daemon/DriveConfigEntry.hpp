@@ -97,6 +97,9 @@ public:
   DriveConfigEntry& operator=(const DriveConfigEntry& o);
 
   static const size_t maxNameLen = 100;
+  // Used in the process name, which can be a max of 16 bytes
+  // We need at least 2 characters for the suffix and 1 for the null character
+  static const size_t maxShortDriveNameLen = 13;
 }; // struct DriveConfigEntry
 
 } // namespace cta::tape::daemon
