@@ -13,9 +13,8 @@ alertmanager:
 kube-state-metrics:
   enabled: false
 
-# We want to get metrics on CPU/memory usage
 prometheus-node-exporter:
-  enabled: true
+  enabled: false
 
 prometheus-pushgateway:
   enabled: false
