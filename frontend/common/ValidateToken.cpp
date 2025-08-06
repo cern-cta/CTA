@@ -2,17 +2,26 @@
 #include "jwt-cpp/jwt.h"
 
 namespace cta {
-bool validateToken(const std::string& encodedJWT, std::shared_ptr<JwkCache> pubkeyCache, log::LogContext logContext) {
+TokenValidationResult validateToken(const std::string& encodedJWT, std::shared_ptr<JwkCache> pubkeyCache, log::LogContext logContext) {
   // this is thread-safe because it makes a copy of logContext for each thread
   cta::log::LogContext lc(logContext);
   cta::log::ScopedParamContainer sp(lc);
   try {
     auto decoded = jwt::decode(encodedJWT);
-    // Example validation: check if the token is expired
+    // Extract the "sub" claim
+    std::optional<std::string> subjectClaim = std::nullopt;
+    if (decoded.has_payload_claim("sub")) {
+      subjectClaim = decoded.get_payload_claim("sub").as_string();
+      sp.add("extractedSubject", subjectClaim.value());
+    } else {
+      lc.log(cta::log::ERR, "Token does not contain a 'sub' claim");
+      return {false, subjectClaim};
+    }
+    // Validation: check if the token is expired
     auto exp = decoded.get_payload_claim("exp").as_date();
     if (exp < std::chrono::system_clock::now()) {
       lc.log(cta::log::WARNING, "In ValidateToken, Passed-in token has expired!");
-      return false;  // Token has expired
+      return {false, subjectClaim};  // Token has expired
     }
     auto header = decoded.get_header_json();
     std::string kid = header["kid"].get<std::string>();
@@ -35,7 +44,7 @@ bool validateToken(const std::string& encodedJWT, std::shared_ptr<JwkCache> pubk
       if (!entry.has_value()) {
         // unable to fetch the public key for validation, fail the request
         lc.log(cta::log::ERR, "Unable to find the public key for the token, authentication failed");
-        return false;
+        return {false, subjectClaim};
       }
     }
 
@@ -43,11 +52,11 @@ bool validateToken(const std::string& encodedJWT, std::shared_ptr<JwkCache> pubk
     // Validate signature
     auto verifier = jwt::verify().allow_algorithm(jwt::algorithm::rs256(pubkeyPem, "", "", ""));
     verifier.verify(decoded);
-    return true;
+    return {true, subjectClaim};
   } catch (const std::exception& e) {
     sp.add("exceptionMessage", e.what());
     lc.log(cta::log::ERR, "There was a failure in token verification");
-    return false;
+    return {false, std::nullopt};
   }
 }
 }  // namespace cta

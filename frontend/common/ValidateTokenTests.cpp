@@ -98,6 +98,7 @@ std::string createTestJwt(bool expired, const std::string& kid) {
                                     jwt::claim(std::chrono::system_clock::now() +
                                                (expired ? -std::chrono::minutes(60) : std::chrono::minutes(60))))
                  .set_header_claim("kid", jwt::claim(kid))
+                 .set_payload_claim("sub", jwt::claim(std::string("subjectClaim")))
                  .sign(jwt::algorithm::rs256("", rsa_priv_key, "", ""));
   return token;
 }
@@ -130,7 +131,8 @@ TEST_F(ValidateTokenTestFixture, ValidTokenWithCachedKey) {
   // First populate cache by calling updateCache
   cache->updateCache(std::time(nullptr));
 
-  ASSERT_TRUE(cta::validateToken(token, cache, lc));
+  auto result = cta::validateToken(token, cache, lc);
+  ASSERT_TRUE(result.isValid);
 }
 
 TEST_F(ValidateTokenTestFixture, ValidTokenWithoutCachedKeyCacheFetchSucceeds) {
@@ -138,8 +140,8 @@ TEST_F(ValidateTokenTestFixture, ValidTokenWithoutCachedKeyCacheFetchSucceeds) {
   std::string token = createTestJwt(false /*expired*/, "test-kid");
   auto entry = cache->find("test-kid");
   ASSERT_FALSE(entry.has_value());
-  ASSERT_TRUE(
-    cta::validateToken(token, cache, lc));  // validate will succeed even if the key is not already present in the cache
+  auto result = cta::validateToken(token, cache, lc);
+  ASSERT_TRUE(result.isValid);  // validate will succeed even if the key is not already present in the cache
   // because it will be fetched
   entry = cache->find("test-kid");
   ASSERT_TRUE(entry.has_value());
@@ -151,7 +153,8 @@ TEST_F(ValidateTokenTestFixture, ValidTokenWithoutCachedKeyCacheFetchFails) {
   std::string token = createTestJwt(false /*expired*/, "test-kid");
   auto entry = cache->find("test-kid");
   ASSERT_FALSE(entry.has_value());
-  EXPECT_FALSE(cta::validateToken(token, cache, lc));  // validate will fail if we cannot find the public key
+  auto result = cta::validateToken(token, cache, lc);
+  EXPECT_FALSE(result.isValid);  // validate will fail if we cannot find the public key
   // because it will be fetched
   entry = cache->find("test-kid");
   ASSERT_FALSE(entry.has_value());
@@ -164,7 +167,8 @@ TEST_F(ValidateTokenTestFixture, ExpiredToken) {
   // Populate cache by calling updateCache
   cache->updateCache(std::time(nullptr));
 
-  ASSERT_FALSE(cta::validateToken(token, cache, lc));
+  auto result = cta::validateToken(token, cache, lc);
+  ASSERT_FALSE(result.isValid);
 }
 
 // Tests for invalid/malformed tokens
@@ -174,9 +178,11 @@ TEST_F(ValidateTokenTestFixture, BadTokenMissingKid) {
     jwt::create()
       .set_issuer("test")
       .set_payload_claim("exp", jwt::claim(std::chrono::system_clock::now() + std::chrono::minutes(60)))
+      .set_payload_claim("sub", jwt::claim(std::string("subjectClaim")))
       .sign(jwt::algorithm::rs256("", rsa_priv_key, "", ""));
 
-  ASSERT_FALSE(cta::validateToken(token, cache, lc));
+  auto result = cta::validateToken(token, cache, lc);
+  ASSERT_FALSE(result.isValid);
 }
 
 TEST_F(ValidateTokenTestFixture, BadTokenMissingExp) {
@@ -184,9 +190,11 @@ TEST_F(ValidateTokenTestFixture, BadTokenMissingExp) {
   std::string token = jwt::create()
                         .set_issuer("test")
                         .set_header_claim("kid", jwt::claim(std::string("test-kid")))
+                        .set_payload_claim("sub", jwt::claim(std::string("subjectClaim")))
                         .sign(jwt::algorithm::rs256("", rsa_priv_key, "", ""));
 
-  ASSERT_FALSE(cta::validateToken(token, cache, lc));
+  auto result = cta::validateToken(token, cache, lc);
+  ASSERT_FALSE(result.isValid);
 }
 
 TEST_F(ValidateTokenTestFixture, BadTokenInvalidSignature) {
@@ -224,10 +232,12 @@ az8ZaVQPvmSthMu8suOc8w==
       .set_issuer("test")
       .set_payload_claim("exp", jwt::claim(std::chrono::system_clock::now() + std::chrono::minutes(60)))
       .set_header_claim("kid", jwt::claim(std::string("test-kid")))
+      .set_payload_claim("sub", jwt::claim(std::string("subjectClaim")))
       .sign(jwt::algorithm::rs256("", wrongPrivateKey, "", ""));
 
   auto cache = createCacheWithMockFetcher();
-  ASSERT_FALSE(cta::validateToken(token, cache, lc));
+  auto result = cta::validateToken(token, cache, lc);
+  ASSERT_FALSE(result.isValid);
 }
 
 TEST_F(ValidateTokenTestFixture, BadTokenUnsupportedAlgorithm) {
@@ -237,9 +247,11 @@ TEST_F(ValidateTokenTestFixture, BadTokenUnsupportedAlgorithm) {
       .set_issuer("test")
       .set_payload_claim("exp", jwt::claim(std::chrono::system_clock::now() + std::chrono::minutes(60)))
       .set_header_claim("kid", jwt::claim(std::string("test-kid")))
+      .set_payload_claim("sub", jwt::claim(std::string("subjectClaim")))
       .sign(jwt::algorithm::hs256(rsa_priv_key));  // we accept RS256 only
 
-  ASSERT_FALSE(cta::validateToken(token, cache, lc));
+  auto result = cta::validateToken(token, cache, lc);
+  ASSERT_FALSE(result.isValid);
 }
 
 TEST_F(ValidateTokenTestFixture, BadTokenMalformedToken) {
@@ -248,13 +260,28 @@ TEST_F(ValidateTokenTestFixture, BadTokenMalformedToken) {
   // append some garbage to the token string
   token += "GARBAGE";
 
-  ASSERT_FALSE(cta::validateToken(token, cache, lc));
+  auto result = cta::validateToken(token, cache, lc);
+  ASSERT_FALSE(result.isValid);
 }
 
 TEST_F(ValidateTokenTestFixture, BadTokenEmtpyToken) {
   auto cache = createCacheWithMockFetcher();
   auto token = "";
-  ASSERT_FALSE(cta::validateToken(token, cache, lc));
+  auto result = cta::validateToken(token, cache, lc);
+  ASSERT_FALSE(result.isValid);
+}
+
+TEST_F(ValidateTokenTestFixture, BadTokenMissingSub) {
+  auto cache = createCacheWithMockFetcher();
+  // missing "sub" claim, validation will fail
+  std::string token = jwt::create()
+                        .set_issuer("test")
+                        .set_payload_claim("exp", jwt::claim(std::chrono::system_clock::now() + std::chrono::minutes(60)))
+                        .set_header_claim("kid", jwt::claim(std::string("test-kid")))
+                        .sign(jwt::algorithm::rs256("", rsa_priv_key, "", ""));
+
+  auto result = cta::validateToken(token, cache, lc);
+  ASSERT_FALSE(result.isValid);
 }
 
 }  // namespace unitTests

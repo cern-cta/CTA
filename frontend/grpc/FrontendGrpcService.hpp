@@ -50,7 +50,7 @@ public:
   Status CancelRetrieve(::grpc::ServerContext* context, const cta::xrd::Request* request, cta::xrd::Response* response);
   Status Delete(::grpc::ServerContext* context, const cta::xrd::Request* request, cta::xrd::Response* response);
 private:
-  Status ProcessGrpcRequest(const cta::xrd::Request* request, cta::xrd::Response* response, cta::log::LogContext &lc) const;
-  Status extractAuthHeaderAndValidate(::grpc::ServerContext* context);
+  Status processGrpcRequest(const cta::xrd::Request* request, cta::xrd::Response* response, cta::log::LogContext &lc, const cta::common::dataStructures::SecurityIdentity& clientIdentity) const;
+  std::pair<Status, std::optional<cta::common::dataStructures::SecurityIdentity>> extractAuthHeaderAndValidate(::grpc::ServerContext* context, const cta::xrd::Request* request);
 };
 } // namespace cta::frontend::grpc
