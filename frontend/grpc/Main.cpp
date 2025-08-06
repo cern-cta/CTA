@@ -15,7 +15,7 @@
  *                 You should have received a copy of the GNU General Public License
  *                 along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
-#include "FrontendGrpcService.h"
+#include "FrontendGrpcService.hpp"
 #include "version.h"
 
 #include "catalogue/Catalogue.hpp"
@@ -26,6 +26,7 @@
 #include "common/log/LogLevel.hpp"
 #include "common/log/StdoutLogger.hpp"
 #include "rdbms/Login.hpp"
+#include "common/JwkCache.hpp"
 #ifdef CTA_PGSCHED
 #include "scheduler/rdbms/RelationalDBInit.hpp"
 #else
@@ -34,6 +35,8 @@
 
 #include <getopt.h>
 #include <fstream>
+#include <thread>
+#include <future>
 
 using namespace cta;
 using namespace cta::common;
@@ -72,6 +75,26 @@ std::string file2string(std::string filename){
     return as_string.str();
 }
 
+void JwksCacheRefreshLoop(std::weak_ptr<JwkCache> weakCache,
+                 std::future<void> shouldStopThread,
+                 int cacheRefreshInterval,
+                 log::LogContext lc) {
+    log::LogContext threadLc(lc);
+    threadLc.log(log::INFO, "Detached JWKS cache refresh thread started");
+
+    while (shouldStopThread.wait_for(std::chrono::seconds(cacheRefreshInterval)) == std::future_status::timeout) {
+        auto cache = weakCache.lock();
+        if (!cache) {
+            threadLc.log(log::INFO, "JwkCache no longer exists, exiting JWKS cache refresh thread");
+            break;  // Cache destroyed
+        }
+        time_t now = time(nullptr);
+        threadLc.log(log::INFO, "Updating the JWKS cache");
+        cache->updateCache(now);
+    }
+    threadLc.log(log::INFO, "Detached JWKS cache refresh thread ended");
+}
+
 int main(const int argc, char *const *const argv) {
 
     std::string config_file("/etc/cta/cta-frontend-grpc.conf");
@@ -103,6 +126,20 @@ int main(const int argc, char *const *const argv) {
     frontend::grpc::CtaRpcImpl svc(config_file);
     // get the log context
     log::LogContext lc = svc.getFrontendService().getLogContext();
+    auto jwkCache = svc.getPubkeyCache();
+    std::weak_ptr<JwkCache> weakCache = jwkCache;
+    std::promise<void> shouldStopThreadPromise;
+    std::future<void> shouldStopThreadFuture = shouldStopThreadPromise.get_future();
+    std::thread cacheRefreshThread;
+    // if token authentication is specified, then also start the refresh thread, otherwise no point in doing this
+    if (svc.getFrontendService().getJwtAuth()) {
+        lc.log(log::INFO, "Starting the cache refresh thread for JWKS cache");
+        cacheRefreshThread = std::thread(JwksCacheRefreshLoop,
+                                         weakCache,
+                                         std::move(shouldStopThreadFuture),
+                                         svc.getFrontendService().getCacheRefreshInterval().value_or(600),
+                                         svc.getFrontendService().getLogContext());
+    }
 
     // use castor config to avoid dependency on xroot-ssi
     // Configuration config(config_file);
@@ -129,13 +166,13 @@ int main(const int argc, char *const *const argv) {
     // read TLS value from config
     useTLS = svc.getFrontendService().getTls();
 
-    // get number of threads, maybe consider setting it too if unset?
+    // get number of threads
     int threads = svc.getFrontendService().getThreads().value_or(8 * std::thread::hardware_concurrency());
     
 
     if (useTLS) {
         lc.log(log::INFO, "Using gRPC over TLS");
-        grpc::SslServerCredentialsOptions tls_options;
+        grpc::SslServerCredentialsOptions tls_options(GRPC_SSL_DONT_REQUEST_CLIENT_CERTIFICATE);
         grpc::SslServerCredentialsOptions::PemKeyCertPair cert;
 
         if (!svc.getFrontendService().getTlsKey().has_value()) {
@@ -188,8 +225,13 @@ int main(const int argc, char *const *const argv) {
     builder.RegisterService(&svc);
 
     std::unique_ptr <Server> server(builder.BuildAndStart());
-    svc.setHealthCheckService(server->GetHealthCheckService());
 
     lc.log(cta::log::INFO, "Listening on socket address: " + server_address);
     server->Wait();
+
+    // if we ever receive a shutdown, or want to handle termination of the frontend gracefully,
+    // add the following line:
+    shouldStopThreadPromise.set_value();
+    if (cacheRefreshThread.joinable())
+        cacheRefreshThread.join();
 }

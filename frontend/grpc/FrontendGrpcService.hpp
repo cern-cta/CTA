@@ -14,6 +14,7 @@
 #include "cta_frontend.pb.h"
 #include "cta_frontend.grpc.pb.h"
 #include "frontend/common/FrontendService.hpp"
+#include "common/JwkCache.hpp"
 
 using cta::Scheduler;
 using cta::catalogue::Catalogue;
@@ -32,17 +33,16 @@ class CtaRpcImpl : public CtaRpc::Service {
 private:
   std::unique_ptr<cta::frontend::FrontendService> m_frontendService;
   ::grpc::HealthCheckServiceInterface* m_healthCheckService = nullptr;
-  bool m_isServing = true;
+  CurlJwksFetcher m_jwksFetcher;
+  std::shared_ptr<JwkCache> m_pubkeyCache;
 
 public:
   CtaRpcImpl(const std::string& config);
 
   FrontendService& getFrontendService() const { return *m_frontendService; }
-  void setHealthCheckService(
-    ::grpc::HealthCheckServiceInterface* healthCheckService) {
-      m_healthCheckService = healthCheckService;
+  std::shared_ptr<JwkCache> getPubkeyCache() {
+    return m_pubkeyCache;
   }
-
   // Archive/Retrieve interface
   Status Create(::grpc::ServerContext* context, const cta::xrd::Request* request, cta::xrd::Response* response);
   Status Archive(::grpc::ServerContext* context, const cta::xrd::Request* request, cta::xrd::Response* response);
@@ -50,6 +50,7 @@ public:
   Status CancelRetrieve(::grpc::ServerContext* context, const cta::xrd::Request* request, cta::xrd::Response* response);
   Status Delete(::grpc::ServerContext* context, const cta::xrd::Request* request, cta::xrd::Response* response);
 private:
-  Status ProcessGrpcRequest(const cta::xrd::Request* request, cta::xrd::Response* response, cta::log::LogContext &lc) const;
+  Status processGrpcRequest(const cta::xrd::Request* request, cta::xrd::Response* response, cta::log::LogContext &lc, const cta::common::dataStructures::SecurityIdentity& clientIdentity) const;
+  std::pair<Status, std::optional<cta::common::dataStructures::SecurityIdentity>> extractAuthHeaderAndValidate(::grpc::ServerContext* context, const cta::xrd::Request* request);
 };
 } // namespace cta::frontend::grpc

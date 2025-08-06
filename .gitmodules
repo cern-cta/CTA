@@ -7,3 +7,6 @@
 [submodule "catalogue/cta-catalogue-schema"]
 	path = catalogue/cta-catalogue-schema
 	url = https://:@gitlab.cern.ch:8443/cta/cta-catalogue-schema.git
+[submodule "common/jwt-cpp"]
+	path = common/jwt-cpp
+	url = https://github.com/Thalhammer/jwt-cpp.git
