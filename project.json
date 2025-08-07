@@ -8,7 +8,7 @@
     15
   ],
   "dev": {
-    "cppVersion": "c++17",
+    "cppVersion": "c++20",
     "defaultPlatform": "el9",
     "defaultBuildType": "Debug",
     "ctaImageRepository": "gitlab-registry.cern.ch/cta/ctageneric",
