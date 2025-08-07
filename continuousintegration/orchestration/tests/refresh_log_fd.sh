@@ -30,30 +30,30 @@ echo "Installing missing RPMs in ${tape_server}... "
 dnf -y install strace lsof
 
 # Get PID of all taped processes
-tpd_master_pid=$(pgrep "cta-tpd-master")
-tpd_maint_pid=$(pgrep "cta-tpd-maint")
+tpd_parent_pid=$(pgrep "parent" -u cta)
+tpd_maint_pid=$(pgrep "maint" -u cta)
 drive_name=$(ls /etc/cta | grep -E "cta-taped-.*\.conf" | xargs -I{} cat /etc/cta/{} | grep "DriveName" | awk '{print $NF}')
 tpd_srv_pid=$(pgrep ${drive_name})
 
-if [ -z "${tpd_master_pid}" ]; then
-    echo "ERROR: No 'cta-tpd-master' process found."
+if [ -z "${tpd_parent_pid}" ]; then
+    echo "ERROR: No 'XXXXX-parent' process found."
     exit 1
 fi
 if [ -z "${tpd_maint_pid}" ]; then
-    echo "ERROR: No 'cta-tpd-maint' process found."
+    echo "ERROR: No 'XXXXX-parent' process found."
     exit 1
 fi
 if [ -z "${tpd_srv_pid}" ]; then
-    echo "ERROR: No 'cta-tpd-XXXXX' drive handler process found."
+    echo "ERROR: No 'XXXXX-rive' process found."
     exit 1
 fi
 
-echo "Found 'cta-tpd-master' process PID: ${tpd_master_pid}"
-echo "Found 'cta-tpd-maint' process PID: ${tpd_maint_pid}"
-echo "Found 'cta-tpd-XXXXX' drive handler process PID: ${tpd_srv_pid}"
+echo "Found 'XXXXX-parent' process PID: ${tpd_parent_pid}"
+echo "Found 'XXXXX-maint' process PID: ${tpd_maint_pid}"
+echo "Found 'XXXXX-drive' process PID: ${tpd_srv_pid}"
 
 # Get number of file descriptor used to open the log file
-log_file_fd=$(lsof -p "${tpd_master_pid}" | grep "${log_file}" | awk '{print $4}' | awk -F'[^0-9]' '{print $1}')
+log_file_fd=$(lsof -p "${tpd_parent_pid}" | grep "${log_file}" | awk '{print $4}' | awk -F'[^0-9]' '{print $1}')
 if [ -z "${log_file_fd}" ]; then
   echo "ERROR: No file descriptor found for log file ${log_file}."
   exit 1
@@ -68,7 +68,7 @@ tpm_srv_tmp_file=$(mktemp)
 
 # Run strace in the background for each taped process
 echo "Launching 'strace' for all cta-taped processes (background execution)..."
-strace -e trace=close,open,openat -fp "${tpd_master_pid}" -o "${tpd_master_tmp_file}" &
+strace -e trace=close,open,openat -fp "${tpd_parent_pid}" -o "${tpd_master_tmp_file}" &
 tpd_master_strace_pid=$!
 strace -e trace=close,open,openat -fp "${tpd_maint_pid}" -o "${tpd_maint_tmp_file}" &
 tpd_maint_strace_pid=$!
@@ -79,8 +79,8 @@ tpd_srv_strace_pid=$!
 sleep 1
 
 # Send signal to trigger log rotation in all the taped processes
-echo "Sending 'USR1' signal to 'cta-tpd-master' process"
-kill -SIGUSR1 "${tpd_master_pid}"
+echo "Sending 'USR1' signal to 'XXXXX-parent' process"
+kill -SIGUSR1 "${tpd_parent_pid}"
 
 # Sleep for ${STRACE_SLEEP_SECS} seconds to allow for strace to register events
 echo "Waiting for ${STRACE_SLEEP_SECS} seconds..."
@@ -96,44 +96,44 @@ kill "${tpd_srv_strace_pid}"
 sleep 1
 
 # Confirm that the file descriptor was reopened in all processes
-echo "Checking 'cta-tpd-master' file descriptor reopening..."
+echo "Checking 'XXXXX-parent' file descriptor reopening..."
 if [ "$(grep -c "close(${log_file_fd})" "${tpd_master_tmp_file}")" -eq 0 ]; then
-  echo "ERROR: File descriptor #${log_file_fd} not closed in 'cta-tpd-master'."
+  echo "ERROR: File descriptor #${log_file_fd} not closed in 'XXXXX-parent'."
   exit 1
 elif [ "$(grep -c "close(${log_file_fd})" "${tpd_master_tmp_file}")" -gt 1 ]; then
-  echo "ERROR: File descriptor #${log_file_fd} closed more than once in 'cta-tpd-master'."
+  echo "ERROR: File descriptor #${log_file_fd} closed more than once in 'XXXXX-parent'."
   exit 1
 else
-  echo "OK: File descriptor #${log_file_fd} closed once in 'cta-tpd-master'."
+  echo "OK: File descriptor #${log_file_fd} closed once in 'XXXXX-parent'."
 fi
 if [ "$(grep "open" "${tpd_master_tmp_file}" | grep -c "${log_file}")" -eq 0 ]; then
-  echo "ERROR: File descriptor for ${log_file} not reopened in 'cta-tpd-master'."
+  echo "ERROR: File descriptor for ${log_file} not reopened in 'XXXXX-parent'."
   exit 1
 elif [ "$(grep "open" "${tpd_master_tmp_file}" | grep -c "${log_file}")" -gt 1 ]; then
-  echo "ERROR: File descriptor for ${log_file} reopened more than once in 'cta-tpd-master'."
+  echo "ERROR: File descriptor for ${log_file} reopened more than once in 'XXXXX-parent'."
   exit 1
 else
-  echo "OK: File descriptor for ${log_file} reopened once in 'cta-tpd-master'."
+  echo "OK: File descriptor for ${log_file} reopened once in 'XXXXX-parent'."
 fi
 
-echo "Checking 'cta-tpd-maint' file descriptor reopening..."
+echo "Checking 'XXXXX-maint' file descriptor reopening..."
 if [ "$(grep -c "close(${log_file_fd})" "${tpd_maint_tmp_file}")" -eq 0 ]; then
-  echo "ERROR: File descriptor #${log_file_fd} not closed in 'cta-tpd-maint'."
+  echo "ERROR: File descriptor #${log_file_fd} not closed in 'XXXXX-maint'."
   exit 1
 elif [ "$(grep -c "close(${log_file_fd})" "${tpd_maint_tmp_file}")" -gt 1 ]; then
-  echo "ERROR: File descriptor #${log_file_fd} closed more than once in 'cta-tpd-maint'."
+  echo "ERROR: File descriptor #${log_file_fd} closed more than once in 'XXXXX-maint'."
   exit 1
 else
-  echo "OK: File descriptor #${log_file_fd} closed once in 'cta-tpd-maint'."
+  echo "OK: File descriptor #${log_file_fd} closed once in 'XXXXX-maint'."
 fi
 if [ "$(grep "open" "${tpd_maint_tmp_file}" | grep -c "${log_file}")" -eq 0 ]; then
-  echo "ERROR: File descriptor for ${log_file} not reopened in 'cta-tpd-maint'."
+  echo "ERROR: File descriptor for ${log_file} not reopened in 'XXXXX-maint'."
   exit 1
 elif [ "$(grep "open" "${tpd_maint_tmp_file}" | grep -c "${log_file}")" -gt 1 ]; then
-  echo "ERROR: File descriptor for ${log_file} reopened more than once in 'cta-tpd-maint'."
+  echo "ERROR: File descriptor for ${log_file} reopened more than once in 'XXXXX-maint'."
   exit 1
 else
-  echo "OK: File descriptor #${log_file_fd} reopened once in 'cta-tpd-maint'."
+  echo "OK: File descriptor #${log_file_fd} reopened once in 'XXXXX-maint'."
 fi
 
 echo "Checking 'cta-tpd-XXXXX' drive handler file descriptor reopening..."
