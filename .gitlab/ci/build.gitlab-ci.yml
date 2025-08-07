@@ -33,7 +33,6 @@
       - ${BUILD_PATH}
 
 # Generic build jobs for rpms and srpms
-
 build-cta-srpm:
   stage: build
   extends:
@@ -114,9 +113,15 @@ build-cta-rpm:
                                                  --install-srpms
                                                  --platform ${PLATFORM}
                                                  ${BUILD_OPTIONS}
+    - ls ./build_rpm/
+
+  artifacts:
+    paths:
+      - ./build_rpm/RPM/RPMS
+      - ./build_rpm/compile_commands.json
+
 
 # Documentation export
-
 export-docs:
   needs: []
   stage: build
