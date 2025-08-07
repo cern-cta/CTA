@@ -281,10 +281,10 @@ void MaintenanceHandler::exceptionThrowingRunChild(){
   // Set the process name for process ID:
   // We construct the drive config entry here again to prevent having to pass it around
   // This will make removal of this easier down the line once the maintenance process is split
-  const DriveConfigEntry dce{m_tapedConfig.driveName.value(),
-                             m_tapedConfig.driveLogicalLibrary.value(),
-                             m_tapedConfig.driveDevice.value(),
-                             m_tapedConfig.driveControlPath.value()};
+  const DriveConfigEntry dce {m_tapedConfig.driveName.value(),
+                              m_tapedConfig.driveLogicalLibrary.value(),
+                              m_tapedConfig.driveDevice.value(),
+                              m_tapedConfig.driveControlPath.value()};
   std::string processName = dce.getShortUnitName() + "-maint";
   prctl(PR_SET_NAME, processName.c_str());
 
