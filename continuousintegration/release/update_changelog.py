@@ -81,6 +81,7 @@ def create_merge_request(
     target_branch: str,
     title: str,
     description: str,
+    assignee: str,
     reviewers: list[str],
     labels: list[str],
 ) -> Optional[int]:
@@ -91,6 +92,7 @@ def create_merge_request(
         "target_branch": target_branch,
         "title": title,
         "description": description,
+        "assignee_id": assignee,
         "reviewer_ids": reviewers,
         "labels": labels,
         "allow_collaboration": True,
@@ -217,16 +219,6 @@ if __name__ == "__main__":
         required=True,
         help="A path to a file containing the description for the merge request.",
     )
-    parser.add_argument(
-        "--user-name",
-        required=True,
-        help="The full name of the person that should end up in the spec.in changelog.",
-    )
-    parser.add_argument(
-        "--user-email",
-        required=True,
-        help="The email of the person that should end up in the spec.in changelog.",
-    )
 
     args = parser.parse_args()
 
@@ -245,16 +237,16 @@ if __name__ == "__main__":
         print(f"Failed to read description file: {args.description_file}")
         sys.exit(1)
 
-    mr_description = textwrap.dedent(f"""\
-        ### Description
-
-        {description_body}
-
-        ### Checklist
-
-        - [x] Documentation reflects the changes made.
-        - [x] Merge Request title is clear, concise, and suitable as a changelog entry.
-    """)
+    mr_description = "\n".join([
+        "### Description",
+        "",
+        description_body.strip(),
+        "",
+        "### Checklist",
+        "",
+        "- [x] Documentation reflects the changes made.",
+        "- [x] Merge Request title is clear, concise, and suitable as a changelog entry.",
+    ])
 
     # Create new branch
     success: bool = create_new_branch(api, branch=branch_name, source_branch=args.source_branch)
@@ -270,15 +262,15 @@ if __name__ == "__main__":
 
     # Create Merge Request
     mr_title: str = f"[Misc] Update changelog for release {release_version}"
-    reviewers: list[str] = [args.reviewer]
-    labels: list[str] = ["workflow::in review"]
+    labels: list[str] = ["workflow::in review", "type::release", "priority::low"]
     mr_id: Optional[int] = create_merge_request(
         api,
         source_branch=branch_name,
         target_branch=args.source_branch,
         title=mr_title,
         description=mr_description,
-        reviewers=reviewers,
+        assignee=args.reviewer,
+        reviewers=[args.reviewer],
         labels=labels,
     )
     if mr_id is None:
