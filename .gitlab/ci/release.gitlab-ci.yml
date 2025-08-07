@@ -79,8 +79,6 @@ changelog-update:
                                                                 --release-version ${RELEASE_VERSION}
                                                                 --reviewer ${GITLAB_USER_ID}
                                                                 --source-branch ${SOURCE_BRANCH}
-                                                                --user-name "${GITLAB_USER_NAME}"
-                                                                --user-email "${GITLAB_USER_EMAIL}"
                                                                 --description-file changelog_report.md
                                                                 --verbose
 
