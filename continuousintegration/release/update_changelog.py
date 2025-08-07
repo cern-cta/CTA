@@ -240,10 +240,21 @@ if __name__ == "__main__":
 
     branch_name: str = args.release_version + "-changelog-update"
     with open(args.description_file, "r") as file:
-        mr_description = file.read()
-    if mr_description is None:
+        description_body = file.read()
+    if description_body is None:
         print(f"Failed to read description file: {args.description_file}")
         sys.exit(1)
+
+    mr_description = textwrap.dedent(f"""\
+        ### Description
+
+        {description_body}
+
+        ### Checklist
+
+        - [x] Documentation reflects the changes made.
+        - [x] Merge Request title is clear, concise, and suitable as a changelog entry.
+    """)
 
     # Create new branch
     success: bool = create_new_branch(api, branch=branch_name, source_branch=args.source_branch)
