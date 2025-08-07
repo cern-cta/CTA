@@ -2,21 +2,21 @@
 
 ### New Features
 
-- [frontend] Add JWT authentication to gRPC frontend (cta/CTA!901)
+- [Frontend] Add JWT authentication to gRPC frontend (cta/CTA!901)
 
 ### Changes
 
-- [frontend] Set log level to INFO for UserError thrown in gRPC Frontend WFE (cta/CTA!990)
-- [frontend] Lower log priority when failing to remove a file from the Catalogue (cta/CTA!943)
-- [scheduler] Don't fail failed retrieve jobs that got reported to the user (cta/CTA!945)
+- [Frontend] Set log level to INFO for UserError thrown in gRPC Frontend WFE (cta/CTA!990)
+- [Frontend] Lower log priority when failing to remove a file from the Catalogue (cta/CTA!943)
+- [Scheduler] Don't fail failed retrieve jobs that got reported to the user (cta/CTA!945)
 
 ### Bug Fixes
 
 - [CI] Make modified project.json artifact propagate through pipeline stages (cta/CTA!987)
 - [CI] Fix wrong EOS tag validation in validate_ci_input_variables script (cta/CTA!985)
 - [Tools] Ensure cta-tape-label updates the label_format field (cta/CTA!991)
-- [frontend] Change cta-admin command to allow arbitrary Disk File IDs strings (cta/CTA!956)
-- [frontend] Set value of grpc server processing threads from config (cta/CTA!958)
+- [Frontend] Change cta-admin command to allow arbitrary Disk File IDs strings (cta/CTA!956)
+- [Frontend] Set value of grpc server processing threads from config (cta/CTA!958)
 
 ### Other
 
