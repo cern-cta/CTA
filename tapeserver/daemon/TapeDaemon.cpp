@@ -101,10 +101,11 @@ void cta::tape::daemon::TapeDaemon::mainEventLoop() {
                              m_globalConfiguration.driveDevice.value(),
                              m_globalConfiguration.driveControlPath.value()};
 
-  const auto shortName = cde.getShortUnitName();
   // Used in the process name, which can be a max of 16 bytes
   // We need at least 2 characters for the suffix and 1 for the null character
-  if (shortName.size() > 13) {
+  const int maxShortDriveNameLen = 13;
+  const auto shortName = cde.getShortUnitName();
+  if (shortName.size() > maxShortDriveNameLen) {
     lc.log(log::WARN,
            "DriveConfigEntry::DriveConfigEntry - short unitName '" + shortName + "' exceeds max length of " +
              std::to_string(maxShortDriveNameLen) + " (got " + std::to_string(shortName.size()) + ")");
