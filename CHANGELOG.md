@@ -1,3 +1,42 @@
+## 5.11.11.1-1 (2025-08-07)
+
+### New Features
+
+- [frontend] Add JWT authentication to gRPC frontend (cta/CTA!901)
+
+
+### Changes
+
+- [frontend] Set log level to INFO for UserError thrown in gRPC Frontend WFE (cta/CTA!990)
+
+- [scheduler] Don't fail failed retrieve jobs that got reported to the user (cta/CTA!945)
+
+- [frontend] Lower log priority when failing to remove a file from the Catalogue (cta/CTA!943)
+
+
+### Bug Fixes
+
+- [Tools] Ensure cta-tape-label updates the label_format field (cta/CTA!991)
+
+- [CI] Make modified project.json artifact propagate through pipeline stages (cta/CTA!987)
+
+- [CI] Fix wrong EOS tag validation in validate_ci_input_variables script (cta/CTA!985)
+
+- [frontend] Change cta-admin command to allow arbitrary Disk File IDs strings (cta/CTA!956)
+
+- [frontend] Set value of grpc server processing threads from config (cta/CTA!958)
+
+
+### Other
+
+- [Misc] Bump EOS version to 5.3.16 (cta/CTA!992)
+
+- [Misc] Bump EOS version to 5.3.14 (cta/CTA!959)
+
+- [CI] Add dCache compatibility with CTA Helm charts (cta/CTA!909)
+
+- [Misc] Centralise version management using project.json (cta/CTA!765)
+
 ## 5.11.11.0-1
 
 ### New Features
