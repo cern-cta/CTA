@@ -39,13 +39,6 @@ cta::tape::daemon::DriveConfigEntry::DriveConfigEntry(const std::string& unitNam
                                     std::to_string(unitName.size()) + ")");
   }
 
-  const auto shortName = getShortUnitName();
-  if (shortName.size() > maxShortDriveNameLen) {
-    throw cta::exception::Exception("DriveConfigEntry::DriveConfigEntry - short unitName '" + shortName +
-                                    "' exceeds max length of " + std::to_string(maxShortDriveNameLen) + " (got " +
-                                    std::to_string(shortName.size()) + ")");
-  }
-
   if (logicalLibrary.size() > maxNameLen) {
     throw cta::exception::Exception("DriveConfigEntry::DriveConfigEntry - logicalLibrary '" + logicalLibrary +
                                     "' exceeds max length of " + std::to_string(maxNameLen) + " (got " +
