@@ -55,6 +55,18 @@ struct TapedConfiguration {
    */
   static std::string getFirstDriveName();
 
+  /**
+   * @brief Construct a process name by combining the short drive name and a postfix.
+   *
+   * Extracts the short drive name by taking the substring after the last '-' in the given unit name,
+   * then appends the provided postfix, separated by a hyphen.
+   *
+   * @param unitName Full name of the drive or a pattern, expected to contain at least one '-'.
+   * @param postfix String to append to the short drive name.
+   * @return std::string Combined process name in the format "<short-name>-<postfix>".
+   */
+  static std::string constructProcessName(const std::string& unitName, const std::string& postfix) const;
+
   //----------------------------------------------------------------------------
   // The actual parameters:
   //----------------------------------------------------------------------------
@@ -82,15 +94,15 @@ struct TapedConfiguration {
   cta::SourcedParameter<uint64_t> bufferCount{
     "taped", "BufferCount", 5000, "Compile time default"};
   //----------------------------------------------------------------------------
-  // Batched metadata access and tape write flush parameters 
+  // Batched metadata access and tape write flush parameters
   //----------------------------------------------------------------------------
-  /// The fetch size for archive requests 
+  /// The fetch size for archive requests
   cta::SourcedParameter<FetchReportOrFlushLimits> archiveFetchBytesFiles{
     "taped", "ArchiveFetchBytesFiles", {80L*1000*1000*1000, 4000}, "Compile time default"};
   /// The flush to tape criteria for archiving
   cta::SourcedParameter<FetchReportOrFlushLimits> archiveFlushBytesFiles{
     "taped", "ArchiveFlushBytesFiles", {32L*1000*1000*1000, 200}, "Compile time default"};
-  /// The fetch and report size for retrieve requests 
+  /// The fetch and report size for retrieve requests
   cta::SourcedParameter<FetchReportOrFlushLimits> retrieveFetchBytesFiles{
     "taped", "RetrieveFetchBytesFiles", {80L*1000*1000*1000, 4000}, "Compile time default"};
   //----------------------------------------------------------------------------
@@ -154,7 +166,7 @@ struct TapedConfiguration {
     "taped", "WatchdogGetNextMountMaxSecs", 15 * 60, "Compile time default"};
   //----------------------------------------------------------------------------
   // The central storage access configuration
-  //---------------------------------------------------------------------------- 
+  //----------------------------------------------------------------------------
   /// URL of the object store.
   cta::SourcedParameter<std::string> backendPath{
     "ObjectStore", "BackendPath"};
@@ -164,14 +176,14 @@ struct TapedConfiguration {
 
   //----------------------------------------------------------------------------
   // The authentication configuration
-  //---------------------------------------------------------------------------- 
+  //----------------------------------------------------------------------------
   /// The authentication protocol
   cta::SourcedParameter<std::string> authenticationProtocol{
     "environment", "XrdSecPROTOCOL"};
   /// The authentication protocol
   cta::SourcedParameter<std::string> authenticationSSSKeytab{
     "environment", "XrdSecSSSKT"};
-    
+
   //----------------------------------------------------------------------------
   // Maintenance process configuration
   //----------------------------------------------------------------------------
@@ -179,12 +191,12 @@ struct TapedConfiguration {
   cta::SourcedParameter<std::string> useRepackManagement {
     "taped","UseRepackManagement","yes","Compile time default"
   };
-  
+
   /// Usage of MaintenanceProcess for repack-related operations, Garbage collection and disk reporting
   cta::SourcedParameter<std::string> useMaintenanceProcess {
     "taped","UseMaintenanceProcess","yes","Compile time default"
   };
-  
+
 
   /// Max number of repacks to promote to ToExpand state.
   cta::SourcedParameter<std::uint64_t> repackMaxRequestsToExpand{
@@ -211,7 +223,7 @@ struct TapedConfiguration {
 
   //----------------------------------------------------------------------------
   // RMC Connection Options
-  //----------------------------------------------------------------------------  
+  //----------------------------------------------------------------------------
   cta::SourcedParameter<uint16_t> rmcPort {
     "taped", "RmcPort", 5014, "Compile time default"
   };
@@ -269,7 +281,7 @@ struct TapedConfiguration {
   };
 
 private:
-  /** A private dummy logger which will simplify the implementation of the 
+  /** A private dummy logger which will simplify the implementation of the
    * functions (just unconditionally log things). */
   static cta::log::DummyLogger gDummyLogger;
 } ;

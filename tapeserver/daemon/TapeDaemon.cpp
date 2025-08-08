@@ -101,16 +101,14 @@ void cta::tape::daemon::TapeDaemon::mainEventLoop() {
                              m_globalConfiguration.driveDevice.value(),
                              m_globalConfiguration.driveControlPath.value()};
 
-  // Used in the process name, which can be a max of 16 bytes
-  // We need at least 2 characters for the suffix and 1 for the null character
-  const int maxShortDriveNameLen = 13;
-  const auto shortName = dce.getShortUnitName();
-  if (shortName.size() > maxShortDriveNameLen) {
+  // Used in the process name, which can be a max of 16 bytes (including null terminator)
+  const int maxProcessNameLen = 15;
+  const auto processName = TapedConfiguration::constructProcessName(m_globalConfiguration.driveName.value(), "parent");
+  if (processName.size() > maxProcessNameLen) {
     lc.log(log::WARNING,
-           "DriveConfigEntry::DriveConfigEntry - short unitName '" + shortName + "' exceeds max length of " +
-             std::to_string(maxShortDriveNameLen) + " (got " + std::to_string(shortName.size()) + ")");
+           "TapeDaemon::mainEventLoop - processName '" + processName + "' exceeds max length of " +
+             std::to_string(maxProcessNameLen) + " (got " + std::to_string(processName.size()) + ")");
   }
-  std::string processName = dce.getShortUnitName() + "-parent";
   prctl(PR_SET_NAME, processName.c_str());
   auto dh = std::make_unique<DriveHandler>(m_globalConfiguration,
                                            dce,

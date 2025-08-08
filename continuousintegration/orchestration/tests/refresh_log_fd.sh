@@ -80,7 +80,7 @@ sleep 1
 
 # Send signal to trigger log rotation in all the taped processes
 echo "Sending 'USR1' signal to 'XXXXX-parent' process"
-kill -SIGUSR1 "${tpd_parent_pid}"
+/bin/pkill -SIGUSR1 -u cta -f '.*-parent$' 2> /dev/null || true
 
 # Sleep for ${STRACE_SLEEP_SECS} seconds to allow for strace to register events
 echo "Waiting for ${STRACE_SLEEP_SECS} seconds..."

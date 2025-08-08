@@ -96,8 +96,6 @@ public:
    */
   DriveConfigEntry& operator=(const DriveConfigEntry& o);
 
-  std::string getShortUnitName() const;
-
   static const size_t maxNameLen = 100;
 }; // struct DriveConfigEntry
 
