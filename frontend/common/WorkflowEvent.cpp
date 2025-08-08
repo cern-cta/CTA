@@ -86,13 +86,6 @@ WorkflowEvent::WorkflowEvent(const frontend::FrontendService& frontendService,
 
 xrd::Response WorkflowEvent::process() {
   xrd::Response response;
-
-  // Record request count
-  std::vector<std::pair<std::string_view, opentelemetry::common::AttributeValue>> telemetryAttributes = {{
-    {cta::telemetry::constants::kEventTypeKey, Workflow_EventType_Name(m_event.wf().event())}
-  }};
-
-  cta::telemetry::metrics::frontendRequestCounter->Add(1, telemetryAttributes);
   utils::Timer timer;
 
   switch(m_event.wf().event()) {
@@ -128,7 +121,7 @@ xrd::Response WorkflowEvent::process() {
   const uint64_t requestProcessingDuration = timer.msecs();
   cta::telemetry::metrics::frontendRequestDurationHistogram->Record(
     requestProcessingDuration,
-    telemetryAttributes,
+    {{cta::telemetry::constants::kEventTypeKey, Workflow_EventType_Name(m_event.wf().event())}},
     opentelemetry::context::RuntimeContext::GetCurrent());
 
   return response;
