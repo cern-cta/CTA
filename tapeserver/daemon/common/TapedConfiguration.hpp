@@ -65,7 +65,7 @@ struct TapedConfiguration {
    * @param postfix String to append to the short drive name.
    * @return std::string Combined process name in the format "<short-name>-<postfix>".
    */
-  static std::string constructProcessName(const std::string& unitName, const std::string& postfix) const;
+  static std::string constructProcessName(const std::string& unitName, const std::string& postfix);
 
   //----------------------------------------------------------------------------
   // The actual parameters:

@@ -278,7 +278,7 @@ void MaintenanceHandler::exceptionThrowingRunChild(){
   // collect them like any other crashed agent.
 
   // Set the process name for process ID:
-  const auto processName = TapedConfiguration::constructProcessName(m_tapedConfig.driveName.value(), "maint");
+  const auto processName = common::TapedConfiguration::constructProcessName(m_tapedConfig.driveName.value(), "maint");
   prctl(PR_SET_NAME, processName.c_str());
 
   // Before anything, we will check for access to the scheduler's central storage.
