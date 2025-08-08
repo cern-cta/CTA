@@ -492,42 +492,6 @@ FrontendService::FrontendService(const std::string& configFilename) : m_archiveF
       m_pubkeyTimeout = std::optional<int>(m_cacheRefreshInterval.value());
       }
   }
-  // Instantiate telemetry
-  {
-    try {
-      // If we stick with this config parsing, would be nice to have the option to provide a default/fallback value
-      auto telemetryMetricsBackend = config.getOptionValueStr("cta.telemetry.metricsBackend");
-      if (!telemetryMetricsBackend.has_value()) {
-        telemetryMetricsBackend = "NOOP";
-      }
-      auto telemetryMetricsExportInterval = config.getOptionValueUInt("cta.telemetry.metricsExportInterval");
-      if (!telemetryMetricsExportInterval.has_value()) {
-        telemetryMetricsExportInterval = 1000;
-      }
-      auto telemetryMetricsExportTimeout = config.getOptionValueUInt("cta.telemetry.metricsExportTimeout");
-      if (!telemetryMetricsExportTimeout.has_value()) {
-        telemetryMetricsExportTimeout = 500;
-      }
-      auto telemetryMetricsOltpEndpoint = config.getOptionValueStr("cta.telemetry.metricsOtlpEndpoint");
-      if (!telemetryMetricsOltpEndpoint.has_value()) {
-        telemetryMetricsOltpEndpoint = "";
-      }
-
-      cta::telemetry::TelemetryConfig telemetryConfig = cta::telemetry::TelemetryConfigBuilder()
-        .serviceName(cta::telemetry::constants::kFrontendMeter)
-        .serviceNamespace(m_instanceName)
-        .metricsBackend(telemetryMetricsBackend.value())
-        .metricsExportInterval(std::chrono::milliseconds(telemetryMetricsExportInterval.value()))
-        .metricsExportTimeout(std::chrono::milliseconds(telemetryMetricsExportTimeout.value()))
-        .metricsOtlpEndpoint(telemetryMetricsOltpEndpoint.value())
-        .build();
-      cta::log::LogContext lc(log); // temporary log context
-      cta::telemetry::initTelemetry(telemetryConfig, lc);
-    } catch(exception::Exception& ex) {
-      std::string ex_str("Failed to instantiate OpenTelemetry: ");
-      throw exception::Exception(ex_str + ex.getMessage().str());
-    }
-  }
 
   // All done
   log(log::INFO, std::string("cta-frontend started"), {log::Param("version", CTA_VERSION)});
