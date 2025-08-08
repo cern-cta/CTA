@@ -6,7 +6,6 @@
 
 namespace cta::telemetry::metrics {
 
-std::unique_ptr<opentelemetry::metrics::Counter<uint64_t>> frontendRequestCounter;
 std::unique_ptr<opentelemetry::metrics::Histogram<uint64_t>> frontendRequestDurationHistogram;
 
 }  // namespace cta::telemetry::metrics
@@ -16,11 +15,8 @@ void initInstruments() {
   auto meter = cta::telemetry::metrics::getMeter("cta.frontend");
   // Instrument initialisation
 
-  cta::telemetry::metrics::frontendRequestCounter =
-    meter->CreateUInt64Counter("frontend.request.count", "Total number of requests served by the frontend", "1");
-
   cta::telemetry::metrics::frontendRequestDurationHistogram =
-    meter->CreateUInt64Histogram("frontend.request.duration",
+    meter->CreateUInt64Histogram("cta.frontend.request.duration",
                                  "Duration in milliseconds to serve a frontend request",
                                  "ms");
 }

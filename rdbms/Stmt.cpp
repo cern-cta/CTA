@@ -259,14 +259,14 @@ void Stmt::bindString(const std::string &paramName, const std::optional<std::str
 Rset Stmt::executeQuery() {
   try {
     if(nullptr != m_stmt) {
-      cta::telemetry::metrics::catalogueQueryCounter->Add(1);
+      cta::telemetry::metrics::databaseQueryCounter->Add(1);
       return Rset(m_stmt->executeQuery());
     } else {
-      cta::telemetry::metrics::catalogueQueryErrorCounter->Add(1);
+      cta::telemetry::metrics::databaseQueryErrorCounter->Add(1);
       throw exception::Exception("Stmt does not contain a cached statement");
     }
   } catch(exception::Exception &ex) {
-    cta::telemetry::metrics::catalogueQueryErrorCounter->Add(1);
+    cta::telemetry::metrics::databaseQueryErrorCounter->Add(1);
     ex.getMessage().str(std::string(__FUNCTION__) + " failed: " + ex.getMessage().str());
     throw;
   }
@@ -278,14 +278,14 @@ Rset Stmt::executeQuery() {
 void Stmt::executeNonQuery() {
   try {
     if(nullptr != m_stmt) {
-      cta::telemetry::metrics::catalogueQueryCounter->Add(1);
+      cta::telemetry::metrics::databaseQueryCounter->Add(1);
       return m_stmt->executeNonQuery();
     } else {
-      cta::telemetry::metrics::catalogueQueryErrorCounter->Add(1);
+      cta::telemetry::metrics::databaseQueryErrorCounter->Add(1);
       throw exception::Exception("Stmt does not contain a cached statement");
     }
   } catch(exception::Exception &ex) {
-    cta::telemetry::metrics::catalogueQueryErrorCounter->Add(1);
+    cta::telemetry::metrics::databaseQueryErrorCounter->Add(1);
     ex.getMessage().str(std::string(__FUNCTION__) + " failed: " + ex.getMessage().str());
     throw;
   }
