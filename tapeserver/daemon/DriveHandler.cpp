@@ -602,7 +602,7 @@ int DriveHandler::runChild() {
   // schedule itself info an empty drive probe, archive, retrieve or label session.
 
   // Set the process name for process ID:
-  const auto processName = TapedConfiguration::constructProcessName(m_tapedConfig.driveName.value(), "drive");
+  const auto processName = common::TapedConfiguration::constructProcessName(m_tapedConfig.driveName.value(), "drive");
   prctl(PR_SET_NAME, processName.c_str());
 
   // Create the channel to talk back to the parent process.
