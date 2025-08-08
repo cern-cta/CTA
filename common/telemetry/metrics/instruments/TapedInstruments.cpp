@@ -18,10 +18,10 @@ void initInstruments() {
   // Instrument initialisation
 
   cta::telemetry::metrics::tapedTransferCounter =
-    meter->CreateUInt64Counter("taped.transfer.count", "Total number of transfers to/from tape", "1");
+    meter->CreateUInt64Counter("cta.taped.transfer.count", "Total number of transfers to/from tape", "1");
 
   cta::telemetry::metrics::tapedMountCounter =
-    meter->CreateUInt64Counter("taped.mount.count", "Total number of tape mounts", "1");
+    meter->CreateUInt64Counter("cta.taped.mount.count", "Total number of tape mounts", "1");
 }
 
 // Register and run this init function at start time
