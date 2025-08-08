@@ -22,7 +22,7 @@
 namespace cta::telemetry::metrics {
 
 // TODO: replace counter by histogram for duration?
-extern std::unique_ptr<opentelemetry::metrics::Counter<uint64_t>> catalogueQueryCounter;
-extern std::unique_ptr<opentelemetry::metrics::Counter<uint64_t>> catalogueQueryErrorCounter;
+extern std::unique_ptr<opentelemetry::metrics::Counter<uint64_t>> databaseQueryCounter;
+extern std::unique_ptr<opentelemetry::metrics::Counter<uint64_t>> databaseQueryErrorCounter;
 
 }  // namespace cta::telemetry::metrics

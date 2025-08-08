@@ -18,19 +18,42 @@ config:
           endpoint: 0.0.0.0:4318
 
   processors:
+    resourcedetection:
+      detectors: [system]
+      system:
+        hostname_sources: ["os"]
+    groupbyattrs/process_name:
+      keys:
+        - service.instance.id
+    batch:
+      timeout: 5s
+    # See https://github.com/open-telemetry/opentelemetry-collector-contrib/tree/main/processor/transformprocessor
+    transform/promote_resource_labels:
+      metric_statements:
+        # Add the process.name to ensure each process can still be uniquely identified for a given host
+        - set(datapoint.attributes["process.name"], resource.attributes["process.name"])
+        - set(datapoint.attributes["host.name"], resource.attributes["host.name"])
+        - delete_key(datapoint.attributes, "service.instance.id")
+        - set(datapoint.attributes["service.instance.id"], concat(datapoint.attributes["host.name"], "-", datapoint.attributes["process.name"]))
+    transform/compact_resources:
+      metric_statements:
+        - delete_key(resource.attributes, "service.instance.id")
+        - set(resource.attributes["service.instance.id"], concat(resource.attributes["host.name"], "-", resource.attributes["process.name"]))
     metricstransform/aggregate:
       transforms:
-        - include: ".*"
+        - include: "cta.*"
           match_type: regexp
           action: update
           operations:
             - action: aggregate_labels
               aggregation_type: sum
-              label_set: [job]
+              label_set: ["process.name", "host.name"]
 
   exporters:
     prometheus:
       endpoint: ${env:MY_POD_IP}:8889
+    debug:
+      verbosity: detailed
 
   service:
     pipelines:
@@ -38,8 +61,19 @@ config:
         receivers:
         - otlp
         processors:
+        # Batch metrics together to ensure we are not dealing with individual metrics
+        - batch
+        - resourcedetection
+        # Promote identifying labels (process name and hostname) from resource labels to metric labels
+        - transform/promote_resource_labels
+        # Drop the service.instance.id from the resource labels
+        - transform/compact_resources
+        # Aggregate metrics to reduce cardinality
         - metricstransform/aggregate
+        # Associate the metrics to the correct resource
+        # - groupbyattrs/process_name
         exporters:
+        - debug
         - prometheus
 
     telemetry:
