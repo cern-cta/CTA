@@ -128,6 +128,14 @@ check-compile-commands:
       artifacts: true
   allow_failure: true
   script:
+    # Check if we are rebased on main, if not, the job will succeed.
+    - git fetch --depth=0 --no-tags origin main:main
+    #- git checkout main
+    #- git pull origin main
+    #- git checkout ${CI_COMMIT_SHA}
+    - git rev-list --count origin/main --not @ || echo "We are behind main. Exiting." && exit 0
+    # Remove unnecesary flag that varies from commit to commit.
+    - sed -i 's/-DVERSION_API=\\\\"[^"]*\\\\" *//g' ./build_rpm/compile_commands.json
     - diff ./compile_commands.json ./build_rpm/compile_commands.json
   artifacts:
     when: on_failure
@@ -145,7 +153,6 @@ update-compile-commands:
       artifacts: true
   variables:
     REPO_REMOTE: https://gitlab-ci-token:${CI_PUSH_TOKEN}@${CI_SERVER_HOST}/${CI_PROJECT_PATH}.git
-    CLANG_FORMAT_REPORT: clang-format.diff
   before_script:
     - git config user.email $GITLAB_USER_EMAIL
     - git config user.name $GITLAB_USER_LOGIN
