@@ -113,13 +113,47 @@ build-cta-rpm:
                                                  --install-srpms
                                                  --platform ${PLATFORM}
                                                  ${BUILD_OPTIONS}
-    - ls ./build_rpm/
-
   artifacts:
     paths:
       - ./build_rpm/RPM/RPMS
       - ./build_rpm/compile_commands.json
 
+check-compile-commands:
+  retry: 0
+  stage: build
+  extends:
+    - .build-cta
+  needs:
+    - job: build-cta-rpm
+      artifacts: true
+  allow_failure: true
+  script:
+    - diff ./compile_commands.json ./build_rpm/compile_commands.json
+  artifacts:
+    when: on_failure
+    paths:
+      - ./build_rpm/compile_commands.json
+
+update-compile-commands:
+  stage: build
+  extends:
+    - .build-cta
+  rules:
+    - when: manual
+  needs:
+    - job: build-cta-rpm
+      artifacts: true
+  variables:
+    REPO_REMOTE: https://gitlab-ci-token:${CI_PUSH_TOKEN}@${CI_SERVER_HOST}/${CI_PROJECT_PATH}.git
+    CLANG_FORMAT_REPORT: clang-format.diff
+  before_script:
+    - git config user.email $GITLAB_USER_EMAIL
+    - git config user.name $GITLAB_USER_LOGIN
+  script:
+    - cp ./build_rpm/compile_commands.json ./compile_commands.json
+    - git add ./compile_commands.json
+    - git commit -m "Update compilation database"
+    - git push $REPO_REMOTE HEAD:$CI_COMMIT_REF_NAME
 
 # Documentation export
 export-docs:
