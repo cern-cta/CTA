@@ -112,6 +112,14 @@ std::string TapedConfiguration::getFirstDriveName() {
 }
 
 //------------------------------------------------------------------------------
+// TapedConfiguration::constructProcessName
+//------------------------------------------------------------------------------
+std::string TapedConfiguration::constructProcessName(const std::string& unitName, const std::string& postfix) const {
+  const auto pos = unitName.find_last_of('-');
+  return unitName.substr(pos + 1) + "-" + postfix;
+}
+
+//------------------------------------------------------------------------------
 // TapedConfiguration::createFromConfigPath
 //------------------------------------------------------------------------------
 TapedConfiguration TapedConfiguration::createFromConfigPath(

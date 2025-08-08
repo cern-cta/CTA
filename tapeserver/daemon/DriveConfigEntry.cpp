@@ -83,9 +83,4 @@ DriveConfigEntry& DriveConfigEntry::operator=(const DriveConfigEntry& o) {
   return *this;
 }
 
-std::string DriveConfigEntry::getShortUnitName() const {
-  const auto pos = unitName.find_last_of('-');
-  return unitName.substr(pos + 1);
-}
-
 }  // namespace cta::tape::daemon
