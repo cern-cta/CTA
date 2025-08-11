@@ -123,6 +123,11 @@ check-compile-commands:
   stage: build
   extends:
     - .build-cta
+  rules:
+    - !reference [.build-cta, rules]
+    - if: $PIPELINE_TYPE == "REGR_AGAINST_CTA_MAIN"
+      when: never
+    - when: on_success
   needs:
     - job: build-cta-rpm
       artifacts: true
@@ -144,9 +149,12 @@ update-compile-commands:
   extends:
     - .build-cta
   rules:
+    - !reference [.build-cta, rules]
+    - if: $PIPELINE_TYPE == "REGR_AGAINST_CTA_MAIN"
+      when: never
     - when: manual
   needs:
-    - job: build-cta-rpm
+    - job: check-compile-commands
       artifacts: true
   variables:
     REPO_REMOTE: https://gitlab-ci-token:${CI_PUSH_TOKEN}@${CI_SERVER_HOST}/${CI_PROJECT_PATH}.git
