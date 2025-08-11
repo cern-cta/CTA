@@ -46,6 +46,12 @@ public:
   size_t getBlockSize();
 
   /**
+    * Returns the block id of the current position
+    * @return blockId of current position
+    */
+  uint32_t getPosition();
+
+  /**
     * Reads the next data block from the file. The buffer should be equal to or bigger than the
     * block size.
     * It has to throw EndOfFile() exception when it reache the End Of File.
