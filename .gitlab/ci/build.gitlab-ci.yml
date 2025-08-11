@@ -130,7 +130,7 @@ check-compile-commands:
   script:
     # Check if we are rebased on main, if not, the job will succeed.
     - git fetch --unshallow --no-tags origin main:main
-    - test $(git rev-list --count origin/main --not @) == 0 || echo "We are behind main. Exiting." && exit 0
+    - test $(git rev-list --count origin/main --not @) == 0 || (echo "We are behind main. Exiting."; exit 0)
     # Remove unnecesary flag that varies from commit to commit.
     - sed -i 's/-DVERSION_API=\\\\"[^"]*\\\\" *//g' ./build_rpm/compile_commands.json
     - diff ./compile_commands.json ./build_rpm/compile_commands.json
