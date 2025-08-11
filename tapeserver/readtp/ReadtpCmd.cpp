@@ -353,19 +353,20 @@ void ReadtpCmd::readTapeFiles(castor::tape::tapeserver::drive::DriveInterface& d
     }
   }
 
-  TapeFseqRangeListSequence fSeqRangeListSequence(&m_fSeqRangeList);
-  std::string destinationFile = getNextDestinationUrl();
-  uint64_t fSeq;
-  while (fSeqRangeListSequence.hasMore()) {
-    try {
-      fSeq = fSeqRangeListSequence.next();
-      if (fSeq > tape.lastFSeq) {
-        break;  //reached end of tape
-      }
-      std::unique_ptr<cta::disk::WriteFile> wfptr;
-      wfptr.reset(fileFactory.createWriteFile(destinationFile));
-      cta::disk::WriteFile& wf = *wfptr.get();
-      readTapeFile(drive, fSeq, wf, volInfo);
+  const auto readSession = castor::tape::tapeFile::ReadSessionFactory::create(drive, volInfo, m_useLbp);
+    TapeFseqRangeListSequence fSeqRangeListSequence(&m_fSeqRangeList);
+    std::string destinationFile = getNextDestinationUrl();
+    uint64_t fSeq;
+    while (fSeqRangeListSequence.hasMore()) {
+      try {
+        fSeq = fSeqRangeListSequence.next();
+        if (fSeq > tape.lastFSeq) {
+          break; //reached end of tape
+        }
+        std::unique_ptr<cta::disk::WriteFile> wfptr;
+        wfptr.reset(fileFactory.createWriteFile(destinationFile));
+        cta::disk::WriteFile &wf = *wfptr.get();
+        readTapeFile(*readSession, fSeq, wf, volInfo);
       m_nbSuccessReads++;  // if readTapeFile returns, file was read successfully
       destinationFile = getNextDestinationUrl();
     } catch (tapeserver::readtp::NoSuchFSeqException&) {
@@ -402,7 +403,7 @@ void ReadtpCmd::readTapeFiles(castor::tape::tapeserver::drive::DriveInterface& d
 //------------------------------------------------------------------------------
 // readTapeFile
 //------------------------------------------------------------------------------
-void ReadtpCmd::readTapeFile(castor::tape::tapeserver::drive::DriveInterface& drive,
+void ReadtpCmd::readTapeFile(castor::tape::tapeFile::ReadSession& readSession,
                              const uint64_t& fSeq,
                              cta::disk::WriteFile& wf,
                              const castor::tape::tapeserver::daemon::VolumeInfo& volInfo) {
@@ -415,8 +416,6 @@ void ReadtpCmd::readTapeFile(castor::tape::tapeserver::drive::DriveInterface& dr
   params.emplace_back("useLbp", boolToStr(m_useLbp));
   params.emplace_back("driveSupportLbp", boolToStr(m_driveSupportLbp));
   params.emplace_back("destinationURL", wf.URL());
-
-  const auto readSession = castor::tape::tapeFile::ReadSessionFactory::create(drive, volInfo, m_useLbp);
 
   catalogue::TapeFileSearchCriteria searchCriteria;
   searchCriteria.vid = m_vid;
@@ -438,7 +437,7 @@ void ReadtpCmd::readTapeFile(castor::tape::tapeserver::drive::DriveInterface& dr
   fileToRecall.selectedTapeFile().fSeq = fSeq;
   fileToRecall.positioningMethod = cta::PositioningMethod::ByFSeq;
 
-  const auto reader = castor::tape::tapeFile::FileReaderFactory::create(*readSession, fileToRecall);
+  const auto reader = castor::tape::tapeFile::FileReaderFactory::create(readSession, fileToRecall);
   auto checksum_adler32 = castor::tape::tapeserver::daemon::Payload::zeroAdler32();
   const size_t buffer_size = 1 * 1024 * 1024 * 1024;  // 1Gb
   size_t read_data_size = 0;
