@@ -16,6 +16,8 @@
 #include "tapeserver/castor/tape/tapeserver/daemon/VolumeInfo.hpp"
 #include "tapeserver/castor/tape/tapeserver/drive/DriveGeneric.hpp"
 #include "tapeserver/castor/tape/tapeserver/drive/DriveInterface.hpp"
+#include "tapeserver/castor/tape/tapeserver/file/ReadSession.hpp"
+#include "common/CmdLineTool.hpp"
 #include "tapeserver/daemon/common/TapedConfiguration.hpp"
 #include "tapeserver/readtp/ReadtpCmdLineArgs.hpp"
 #include "tapeserver/readtp/TapeFseqRange.hpp"
