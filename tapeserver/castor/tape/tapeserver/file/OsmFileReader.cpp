@@ -104,6 +104,11 @@ void OsmFileReader::useBlockID(const cta::RetrieveJob& fileToRecall) {
   const uint32_t destination_block =
     fileToRecall.selectedTapeFile().blockId > 2 ? fileToRecall.selectedTapeFile().blockId : 3;
 
+  // Do not reposition if drive is already at the right location
+  if (const uint32_t current_block = getPosition(); current_block == destination_block) {
+    return;
+  }
+
   /*
   we position using the sg locate because it is supposed to do the
   right thing possibly in a more optimized way (better than st's
