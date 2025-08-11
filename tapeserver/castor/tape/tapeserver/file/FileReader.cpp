@@ -53,6 +53,10 @@ size_t FileReader::getBlockSize()  {
   return m_currentBlockSize;
 }
 
+uint32_t FileReader::getPosition()  {
+  return m_session.m_drive.getPositionInfo().currentPosition;
+}
+
 std::string FileReader::getLBPMode() {
   return m_LBPMode;
 }
