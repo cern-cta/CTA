@@ -175,10 +175,10 @@ private:
 
   /**
    * Read a specific file from tape
-   * @param drive Object representing the drive hardware.
+   * @param readSession read session object.
    * @param fSeq The tape file fSeq.
    */
-  void readTapeFile(castor::tape::tapeserver::drive::DriveInterface& drive,
+  void readTapeFile(castor::tape::tapeFile::ReadSession& readSession,
                     const uint64_t& fSeq,
                     cta::disk::WriteFile& wf,
                     const castor::tape::tapeserver::daemon::VolumeInfo& volInfo);
