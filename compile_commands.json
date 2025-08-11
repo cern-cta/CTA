@@ -427,745 +427,745 @@
 },
 {
   "directory": "/builds/cta/CTA/build_rpm/catalogue",
-  "command": "/usr/bin/c++ -DSUPPORT_OCCI -DVERSION_API=\\\"5-12639388gitc44adf3f\\\" -Dctacatalogueocci_EXPORTS -I/builds/cta/CTA -I/builds/cta/CTA/build_rpm -I/usr/include/oracle/23/client64 -fPIC -pedantic -Wall -Wextra -Werror -Wno-unused-parameter -fstack-protector-all -std=c++20 -Wshadow -g -fPIC -o CMakeFiles/ctacatalogueocci.dir/OracleCatalogueFactory.cpp.o -c /builds/cta/CTA/catalogue/OracleCatalogueFactory.cpp",
+  "command": "/usr/bin/c++ -DSUPPORT_OCCI -DVERSION_API=\\\"5-12639709git078702b7\\\" -Dctacatalogueocci_EXPORTS -I/builds/cta/CTA -I/builds/cta/CTA/build_rpm -I/usr/include/oracle/23/client64 -fPIC -pedantic -Wall -Wextra -Werror -Wno-unused-parameter -fstack-protector-all -std=c++20 -Wshadow -g -fPIC -o CMakeFiles/ctacatalogueocci.dir/OracleCatalogueFactory.cpp.o -c /builds/cta/CTA/catalogue/OracleCatalogueFactory.cpp",
   "file": "/builds/cta/CTA/catalogue/OracleCatalogueFactory.cpp",
   "output": "catalogue/CMakeFiles/ctacatalogueocci.dir/OracleCatalogueFactory.cpp.o"
 },
 {
   "directory": "/builds/cta/CTA/build_rpm/catalogue",
-  "command": "/usr/bin/c++ -DSUPPORT_OCCI -DVERSION_API=\\\"5-12639388gitc44adf3f\\\" -Dctacatalogueocci_EXPORTS -I/builds/cta/CTA -I/builds/cta/CTA/build_rpm -I/usr/include/oracle/23/client64 -fPIC -pedantic -Wall -Wextra -Werror -Wno-unused-parameter -fstack-protector-all -std=c++20 -Wshadow -g -fPIC -o CMakeFiles/ctacatalogueocci.dir/rdbms/oracle/OracleArchiveFileCatalogue.cpp.o -c /builds/cta/CTA/catalogue/rdbms/oracle/OracleArchiveFileCatalogue.cpp",
+  "command": "/usr/bin/c++ -DSUPPORT_OCCI -DVERSION_API=\\\"5-12639709git078702b7\\\" -Dctacatalogueocci_EXPORTS -I/builds/cta/CTA -I/builds/cta/CTA/build_rpm -I/usr/include/oracle/23/client64 -fPIC -pedantic -Wall -Wextra -Werror -Wno-unused-parameter -fstack-protector-all -std=c++20 -Wshadow -g -fPIC -o CMakeFiles/ctacatalogueocci.dir/rdbms/oracle/OracleArchiveFileCatalogue.cpp.o -c /builds/cta/CTA/catalogue/rdbms/oracle/OracleArchiveFileCatalogue.cpp",
   "file": "/builds/cta/CTA/catalogue/rdbms/oracle/OracleArchiveFileCatalogue.cpp",
   "output": "catalogue/CMakeFiles/ctacatalogueocci.dir/rdbms/oracle/OracleArchiveFileCatalogue.cpp.o"
 },
 {
   "directory": "/builds/cta/CTA/build_rpm/catalogue",
-  "command": "/usr/bin/c++ -DSUPPORT_OCCI -DVERSION_API=\\\"5-12639388gitc44adf3f\\\" -Dctacatalogueocci_EXPORTS -I/builds/cta/CTA -I/builds/cta/CTA/build_rpm -I/usr/include/oracle/23/client64 -fPIC -pedantic -Wall -Wextra -Werror -Wno-unused-parameter -fstack-protector-all -std=c++20 -Wshadow -g -fPIC -o CMakeFiles/ctacatalogueocci.dir/rdbms/oracle/OracleCatalogue.cpp.o -c /builds/cta/CTA/catalogue/rdbms/oracle/OracleCatalogue.cpp",
+  "command": "/usr/bin/c++ -DSUPPORT_OCCI -DVERSION_API=\\\"5-12639709git078702b7\\\" -Dctacatalogueocci_EXPORTS -I/builds/cta/CTA -I/builds/cta/CTA/build_rpm -I/usr/include/oracle/23/client64 -fPIC -pedantic -Wall -Wextra -Werror -Wno-unused-parameter -fstack-protector-all -std=c++20 -Wshadow -g -fPIC -o CMakeFiles/ctacatalogueocci.dir/rdbms/oracle/OracleCatalogue.cpp.o -c /builds/cta/CTA/catalogue/rdbms/oracle/OracleCatalogue.cpp",
   "file": "/builds/cta/CTA/catalogue/rdbms/oracle/OracleCatalogue.cpp",
   "output": "catalogue/CMakeFiles/ctacatalogueocci.dir/rdbms/oracle/OracleCatalogue.cpp.o"
 },
 {
   "directory": "/builds/cta/CTA/build_rpm/catalogue",
-  "command": "/usr/bin/c++ -DSUPPORT_OCCI -DVERSION_API=\\\"5-12639388gitc44adf3f\\\" -Dctacatalogueocci_EXPORTS -I/builds/cta/CTA -I/builds/cta/CTA/build_rpm -I/usr/include/oracle/23/client64 -fPIC -pedantic -Wall -Wextra -Werror -Wno-unused-parameter -fstack-protector-all -std=c++20 -Wshadow -g -fPIC -o CMakeFiles/ctacatalogueocci.dir/rdbms/oracle/OracleFileRecycleLogCatalogue.cpp.o -c /builds/cta/CTA/catalogue/rdbms/oracle/OracleFileRecycleLogCatalogue.cpp",
+  "command": "/usr/bin/c++ -DSUPPORT_OCCI -DVERSION_API=\\\"5-12639709git078702b7\\\" -Dctacatalogueocci_EXPORTS -I/builds/cta/CTA -I/builds/cta/CTA/build_rpm -I/usr/include/oracle/23/client64 -fPIC -pedantic -Wall -Wextra -Werror -Wno-unused-parameter -fstack-protector-all -std=c++20 -Wshadow -g -fPIC -o CMakeFiles/ctacatalogueocci.dir/rdbms/oracle/OracleFileRecycleLogCatalogue.cpp.o -c /builds/cta/CTA/catalogue/rdbms/oracle/OracleFileRecycleLogCatalogue.cpp",
   "file": "/builds/cta/CTA/catalogue/rdbms/oracle/OracleFileRecycleLogCatalogue.cpp",
   "output": "catalogue/CMakeFiles/ctacatalogueocci.dir/rdbms/oracle/OracleFileRecycleLogCatalogue.cpp.o"
 },
 {
   "directory": "/builds/cta/CTA/build_rpm/catalogue",
-  "command": "/usr/bin/c++ -DSUPPORT_OCCI -DVERSION_API=\\\"5-12639388gitc44adf3f\\\" -Dctacatalogueocci_EXPORTS -I/builds/cta/CTA -I/builds/cta/CTA/build_rpm -I/usr/include/oracle/23/client64 -fPIC -pedantic -Wall -Wextra -Werror -Wno-unused-parameter -fstack-protector-all -std=c++20 -Wshadow -g -fPIC -o CMakeFiles/ctacatalogueocci.dir/rdbms/oracle/OracleLogicalLibraryCatalogue.cpp.o -c /builds/cta/CTA/catalogue/rdbms/oracle/OracleLogicalLibraryCatalogue.cpp",
+  "command": "/usr/bin/c++ -DSUPPORT_OCCI -DVERSION_API=\\\"5-12639709git078702b7\\\" -Dctacatalogueocci_EXPORTS -I/builds/cta/CTA -I/builds/cta/CTA/build_rpm -I/usr/include/oracle/23/client64 -fPIC -pedantic -Wall -Wextra -Werror -Wno-unused-parameter -fstack-protector-all -std=c++20 -Wshadow -g -fPIC -o CMakeFiles/ctacatalogueocci.dir/rdbms/oracle/OracleLogicalLibraryCatalogue.cpp.o -c /builds/cta/CTA/catalogue/rdbms/oracle/OracleLogicalLibraryCatalogue.cpp",
   "file": "/builds/cta/CTA/catalogue/rdbms/oracle/OracleLogicalLibraryCatalogue.cpp",
   "output": "catalogue/CMakeFiles/ctacatalogueocci.dir/rdbms/oracle/OracleLogicalLibraryCatalogue.cpp.o"
 },
 {
   "directory": "/builds/cta/CTA/build_rpm/catalogue",
-  "command": "/usr/bin/c++ -DSUPPORT_OCCI -DVERSION_API=\\\"5-12639388gitc44adf3f\\\" -Dctacatalogueocci_EXPORTS -I/builds/cta/CTA -I/builds/cta/CTA/build_rpm -I/usr/include/oracle/23/client64 -fPIC -pedantic -Wall -Wextra -Werror -Wno-unused-parameter -fstack-protector-all -std=c++20 -Wshadow -g -fPIC -o CMakeFiles/ctacatalogueocci.dir/rdbms/oracle/OracleMediaTypeCatalogue.cpp.o -c /builds/cta/CTA/catalogue/rdbms/oracle/OracleMediaTypeCatalogue.cpp",
+  "command": "/usr/bin/c++ -DSUPPORT_OCCI -DVERSION_API=\\\"5-12639709git078702b7\\\" -Dctacatalogueocci_EXPORTS -I/builds/cta/CTA -I/builds/cta/CTA/build_rpm -I/usr/include/oracle/23/client64 -fPIC -pedantic -Wall -Wextra -Werror -Wno-unused-parameter -fstack-protector-all -std=c++20 -Wshadow -g -fPIC -o CMakeFiles/ctacatalogueocci.dir/rdbms/oracle/OracleMediaTypeCatalogue.cpp.o -c /builds/cta/CTA/catalogue/rdbms/oracle/OracleMediaTypeCatalogue.cpp",
   "file": "/builds/cta/CTA/catalogue/rdbms/oracle/OracleMediaTypeCatalogue.cpp",
   "output": "catalogue/CMakeFiles/ctacatalogueocci.dir/rdbms/oracle/OracleMediaTypeCatalogue.cpp.o"
 },
 {
   "directory": "/builds/cta/CTA/build_rpm/catalogue",
-  "command": "/usr/bin/c++ -DSUPPORT_OCCI -DVERSION_API=\\\"5-12639388gitc44adf3f\\\" -Dctacatalogueocci_EXPORTS -I/builds/cta/CTA -I/builds/cta/CTA/build_rpm -I/usr/include/oracle/23/client64 -fPIC -pedantic -Wall -Wextra -Werror -Wno-unused-parameter -fstack-protector-all -std=c++20 -Wshadow -g -fPIC -o CMakeFiles/ctacatalogueocci.dir/rdbms/oracle/OraclePhysicalLibraryCatalogue.cpp.o -c /builds/cta/CTA/catalogue/rdbms/oracle/OraclePhysicalLibraryCatalogue.cpp",
+  "command": "/usr/bin/c++ -DSUPPORT_OCCI -DVERSION_API=\\\"5-12639709git078702b7\\\" -Dctacatalogueocci_EXPORTS -I/builds/cta/CTA -I/builds/cta/CTA/build_rpm -I/usr/include/oracle/23/client64 -fPIC -pedantic -Wall -Wextra -Werror -Wno-unused-parameter -fstack-protector-all -std=c++20 -Wshadow -g -fPIC -o CMakeFiles/ctacatalogueocci.dir/rdbms/oracle/OraclePhysicalLibraryCatalogue.cpp.o -c /builds/cta/CTA/catalogue/rdbms/oracle/OraclePhysicalLibraryCatalogue.cpp",
   "file": "/builds/cta/CTA/catalogue/rdbms/oracle/OraclePhysicalLibraryCatalogue.cpp",
   "output": "catalogue/CMakeFiles/ctacatalogueocci.dir/rdbms/oracle/OraclePhysicalLibraryCatalogue.cpp.o"
 },
 {
   "directory": "/builds/cta/CTA/build_rpm/catalogue",
-  "command": "/usr/bin/c++ -DSUPPORT_OCCI -DVERSION_API=\\\"5-12639388gitc44adf3f\\\" -Dctacatalogueocci_EXPORTS -I/builds/cta/CTA -I/builds/cta/CTA/build_rpm -I/usr/include/oracle/23/client64 -fPIC -pedantic -Wall -Wextra -Werror -Wno-unused-parameter -fstack-protector-all -std=c++20 -Wshadow -g -fPIC -o CMakeFiles/ctacatalogueocci.dir/rdbms/oracle/OracleStorageClassCatalogue.cpp.o -c /builds/cta/CTA/catalogue/rdbms/oracle/OracleStorageClassCatalogue.cpp",
+  "command": "/usr/bin/c++ -DSUPPORT_OCCI -DVERSION_API=\\\"5-12639709git078702b7\\\" -Dctacatalogueocci_EXPORTS -I/builds/cta/CTA -I/builds/cta/CTA/build_rpm -I/usr/include/oracle/23/client64 -fPIC -pedantic -Wall -Wextra -Werror -Wno-unused-parameter -fstack-protector-all -std=c++20 -Wshadow -g -fPIC -o CMakeFiles/ctacatalogueocci.dir/rdbms/oracle/OracleStorageClassCatalogue.cpp.o -c /builds/cta/CTA/catalogue/rdbms/oracle/OracleStorageClassCatalogue.cpp",
   "file": "/builds/cta/CTA/catalogue/rdbms/oracle/OracleStorageClassCatalogue.cpp",
   "output": "catalogue/CMakeFiles/ctacatalogueocci.dir/rdbms/oracle/OracleStorageClassCatalogue.cpp.o"
 },
 {
   "directory": "/builds/cta/CTA/build_rpm/catalogue",
-  "command": "/usr/bin/c++ -DSUPPORT_OCCI -DVERSION_API=\\\"5-12639388gitc44adf3f\\\" -Dctacatalogueocci_EXPORTS -I/builds/cta/CTA -I/builds/cta/CTA/build_rpm -I/usr/include/oracle/23/client64 -fPIC -pedantic -Wall -Wextra -Werror -Wno-unused-parameter -fstack-protector-all -std=c++20 -Wshadow -g -fPIC -o CMakeFiles/ctacatalogueocci.dir/rdbms/oracle/OracleTapeCatalogue.cpp.o -c /builds/cta/CTA/catalogue/rdbms/oracle/OracleTapeCatalogue.cpp",
+  "command": "/usr/bin/c++ -DSUPPORT_OCCI -DVERSION_API=\\\"5-12639709git078702b7\\\" -Dctacatalogueocci_EXPORTS -I/builds/cta/CTA -I/builds/cta/CTA/build_rpm -I/usr/include/oracle/23/client64 -fPIC -pedantic -Wall -Wextra -Werror -Wno-unused-parameter -fstack-protector-all -std=c++20 -Wshadow -g -fPIC -o CMakeFiles/ctacatalogueocci.dir/rdbms/oracle/OracleTapeCatalogue.cpp.o -c /builds/cta/CTA/catalogue/rdbms/oracle/OracleTapeCatalogue.cpp",
   "file": "/builds/cta/CTA/catalogue/rdbms/oracle/OracleTapeCatalogue.cpp",
   "output": "catalogue/CMakeFiles/ctacatalogueocci.dir/rdbms/oracle/OracleTapeCatalogue.cpp.o"
 },
 {
   "directory": "/builds/cta/CTA/build_rpm/catalogue",
-  "command": "/usr/bin/c++ -DSUPPORT_OCCI -DVERSION_API=\\\"5-12639388gitc44adf3f\\\" -Dctacatalogueocci_EXPORTS -I/builds/cta/CTA -I/builds/cta/CTA/build_rpm -I/usr/include/oracle/23/client64 -fPIC -pedantic -Wall -Wextra -Werror -Wno-unused-parameter -fstack-protector-all -std=c++20 -Wshadow -g -fPIC -o CMakeFiles/ctacatalogueocci.dir/rdbms/oracle/OracleTapeFileCatalogue.cpp.o -c /builds/cta/CTA/catalogue/rdbms/oracle/OracleTapeFileCatalogue.cpp",
+  "command": "/usr/bin/c++ -DSUPPORT_OCCI -DVERSION_API=\\\"5-12639709git078702b7\\\" -Dctacatalogueocci_EXPORTS -I/builds/cta/CTA -I/builds/cta/CTA/build_rpm -I/usr/include/oracle/23/client64 -fPIC -pedantic -Wall -Wextra -Werror -Wno-unused-parameter -fstack-protector-all -std=c++20 -Wshadow -g -fPIC -o CMakeFiles/ctacatalogueocci.dir/rdbms/oracle/OracleTapeFileCatalogue.cpp.o -c /builds/cta/CTA/catalogue/rdbms/oracle/OracleTapeFileCatalogue.cpp",
   "file": "/builds/cta/CTA/catalogue/rdbms/oracle/OracleTapeFileCatalogue.cpp",
   "output": "catalogue/CMakeFiles/ctacatalogueocci.dir/rdbms/oracle/OracleTapeFileCatalogue.cpp.o"
 },
 {
   "directory": "/builds/cta/CTA/build_rpm/catalogue",
-  "command": "/usr/bin/c++ -DSUPPORT_OCCI -DVERSION_API=\\\"5-12639388gitc44adf3f\\\" -Dctacatalogueocci_EXPORTS -I/builds/cta/CTA -I/builds/cta/CTA/build_rpm -I/usr/include/oracle/23/client64 -fPIC -pedantic -Wall -Wextra -Werror -Wno-unused-parameter -fstack-protector-all -std=c++20 -Wshadow -g -fPIC -o CMakeFiles/ctacatalogueocci.dir/rdbms/oracle/OracleTapePoolCatalogue.cpp.o -c /builds/cta/CTA/catalogue/rdbms/oracle/OracleTapePoolCatalogue.cpp",
+  "command": "/usr/bin/c++ -DSUPPORT_OCCI -DVERSION_API=\\\"5-12639709git078702b7\\\" -Dctacatalogueocci_EXPORTS -I/builds/cta/CTA -I/builds/cta/CTA/build_rpm -I/usr/include/oracle/23/client64 -fPIC -pedantic -Wall -Wextra -Werror -Wno-unused-parameter -fstack-protector-all -std=c++20 -Wshadow -g -fPIC -o CMakeFiles/ctacatalogueocci.dir/rdbms/oracle/OracleTapePoolCatalogue.cpp.o -c /builds/cta/CTA/catalogue/rdbms/oracle/OracleTapePoolCatalogue.cpp",
   "file": "/builds/cta/CTA/catalogue/rdbms/oracle/OracleTapePoolCatalogue.cpp",
   "output": "catalogue/CMakeFiles/ctacatalogueocci.dir/rdbms/oracle/OracleTapePoolCatalogue.cpp.o"
 },
 {
   "directory": "/builds/cta/CTA/build_rpm/catalogue",
-  "command": "/usr/bin/c++ -DSUPPORT_OCCI -DVERSION_API=\\\"5-12639388gitc44adf3f\\\" -Dctacatalogueocci_EXPORTS -I/builds/cta/CTA -I/builds/cta/CTA/build_rpm -I/usr/include/oracle/23/client64 -fPIC -pedantic -Wall -Wextra -Werror -Wno-unused-parameter -fstack-protector-all -std=c++20 -Wshadow -g -fPIC -o CMakeFiles/ctacatalogueocci.dir/rdbms/oracle/OracleVirtualOrganizationCatalogue.cpp.o -c /builds/cta/CTA/catalogue/rdbms/oracle/OracleVirtualOrganizationCatalogue.cpp",
+  "command": "/usr/bin/c++ -DSUPPORT_OCCI -DVERSION_API=\\\"5-12639709git078702b7\\\" -Dctacatalogueocci_EXPORTS -I/builds/cta/CTA -I/builds/cta/CTA/build_rpm -I/usr/include/oracle/23/client64 -fPIC -pedantic -Wall -Wextra -Werror -Wno-unused-parameter -fstack-protector-all -std=c++20 -Wshadow -g -fPIC -o CMakeFiles/ctacatalogueocci.dir/rdbms/oracle/OracleVirtualOrganizationCatalogue.cpp.o -c /builds/cta/CTA/catalogue/rdbms/oracle/OracleVirtualOrganizationCatalogue.cpp",
   "file": "/builds/cta/CTA/catalogue/rdbms/oracle/OracleVirtualOrganizationCatalogue.cpp",
   "output": "catalogue/CMakeFiles/ctacatalogueocci.dir/rdbms/oracle/OracleVirtualOrganizationCatalogue.cpp.o"
 },
 {
   "directory": "/builds/cta/CTA/build_rpm/catalogue",
-  "command": "/usr/bin/c++ -DSUPPORT_OCCI -DVERSION_API=\\\"5-12639388gitc44adf3f\\\" -Dctacatalogueinmemory_EXPORTS -I/builds/cta/CTA -I/builds/cta/CTA/build_rpm -I/usr/include/oracle/23/client64 -fPIC -pedantic -Wall -Wextra -Werror -Wno-unused-parameter -fstack-protector-all -std=c++20 -Wshadow -g -fPIC -o CMakeFiles/ctacatalogueinmemory.dir/InMemoryCatalogue.cpp.o -c /builds/cta/CTA/catalogue/InMemoryCatalogue.cpp",
+  "command": "/usr/bin/c++ -DSUPPORT_OCCI -DVERSION_API=\\\"5-12639709git078702b7\\\" -Dctacatalogueinmemory_EXPORTS -I/builds/cta/CTA -I/builds/cta/CTA/build_rpm -I/usr/include/oracle/23/client64 -fPIC -pedantic -Wall -Wextra -Werror -Wno-unused-parameter -fstack-protector-all -std=c++20 -Wshadow -g -fPIC -o CMakeFiles/ctacatalogueinmemory.dir/InMemoryCatalogue.cpp.o -c /builds/cta/CTA/catalogue/InMemoryCatalogue.cpp",
   "file": "/builds/cta/CTA/catalogue/InMemoryCatalogue.cpp",
   "output": "catalogue/CMakeFiles/ctacatalogueinmemory.dir/InMemoryCatalogue.cpp.o"
 },
 {
   "directory": "/builds/cta/CTA/build_rpm/catalogue",
-  "command": "/usr/bin/c++ -DSUPPORT_OCCI -DVERSION_API=\\\"5-12639388gitc44adf3f\\\" -Dctacatalogueinmemory_EXPORTS -I/builds/cta/CTA -I/builds/cta/CTA/build_rpm -I/usr/include/oracle/23/client64 -fPIC -pedantic -Wall -Wextra -Werror -Wno-unused-parameter -fstack-protector-all -std=c++20 -Wshadow -g -fPIC -o CMakeFiles/ctacatalogueinmemory.dir/InMemoryCatalogueFactory.cpp.o -c /builds/cta/CTA/catalogue/InMemoryCatalogueFactory.cpp",
+  "command": "/usr/bin/c++ -DSUPPORT_OCCI -DVERSION_API=\\\"5-12639709git078702b7\\\" -Dctacatalogueinmemory_EXPORTS -I/builds/cta/CTA -I/builds/cta/CTA/build_rpm -I/usr/include/oracle/23/client64 -fPIC -pedantic -Wall -Wextra -Werror -Wno-unused-parameter -fstack-protector-all -std=c++20 -Wshadow -g -fPIC -o CMakeFiles/ctacatalogueinmemory.dir/InMemoryCatalogueFactory.cpp.o -c /builds/cta/CTA/catalogue/InMemoryCatalogueFactory.cpp",
   "file": "/builds/cta/CTA/catalogue/InMemoryCatalogueFactory.cpp",
   "output": "catalogue/CMakeFiles/ctacatalogueinmemory.dir/InMemoryCatalogueFactory.cpp.o"
 },
 {
   "directory": "/builds/cta/CTA/build_rpm/catalogue",
-  "command": "/usr/bin/c++ -DSUPPORT_OCCI -DVERSION_API=\\\"5-12639388gitc44adf3f\\\" -Dctacataloguesqlite_EXPORTS -I/builds/cta/CTA -I/builds/cta/CTA/build_rpm -I/usr/include/oracle/23/client64 -fPIC -pedantic -Wall -Wextra -Werror -Wno-unused-parameter -fstack-protector-all -std=c++20 -Wshadow -g -fPIC -o CMakeFiles/ctacataloguesqlite.dir/rdbms/sqlite/SqliteArchiveFileCatalogue.cpp.o -c /builds/cta/CTA/catalogue/rdbms/sqlite/SqliteArchiveFileCatalogue.cpp",
+  "command": "/usr/bin/c++ -DSUPPORT_OCCI -DVERSION_API=\\\"5-12639709git078702b7\\\" -Dctacataloguesqlite_EXPORTS -I/builds/cta/CTA -I/builds/cta/CTA/build_rpm -I/usr/include/oracle/23/client64 -fPIC -pedantic -Wall -Wextra -Werror -Wno-unused-parameter -fstack-protector-all -std=c++20 -Wshadow -g -fPIC -o CMakeFiles/ctacataloguesqlite.dir/rdbms/sqlite/SqliteArchiveFileCatalogue.cpp.o -c /builds/cta/CTA/catalogue/rdbms/sqlite/SqliteArchiveFileCatalogue.cpp",
   "file": "/builds/cta/CTA/catalogue/rdbms/sqlite/SqliteArchiveFileCatalogue.cpp",
   "output": "catalogue/CMakeFiles/ctacataloguesqlite.dir/rdbms/sqlite/SqliteArchiveFileCatalogue.cpp.o"
 },
 {
   "directory": "/builds/cta/CTA/build_rpm/catalogue",
-  "command": "/usr/bin/c++ -DSUPPORT_OCCI -DVERSION_API=\\\"5-12639388gitc44adf3f\\\" -Dctacataloguesqlite_EXPORTS -I/builds/cta/CTA -I/builds/cta/CTA/build_rpm -I/usr/include/oracle/23/client64 -fPIC -pedantic -Wall -Wextra -Werror -Wno-unused-parameter -fstack-protector-all -std=c++20 -Wshadow -g -fPIC -o CMakeFiles/ctacataloguesqlite.dir/rdbms/sqlite/SqliteCatalogue.cpp.o -c /builds/cta/CTA/catalogue/rdbms/sqlite/SqliteCatalogue.cpp",
+  "command": "/usr/bin/c++ -DSUPPORT_OCCI -DVERSION_API=\\\"5-12639709git078702b7\\\" -Dctacataloguesqlite_EXPORTS -I/builds/cta/CTA -I/builds/cta/CTA/build_rpm -I/usr/include/oracle/23/client64 -fPIC -pedantic -Wall -Wextra -Werror -Wno-unused-parameter -fstack-protector-all -std=c++20 -Wshadow -g -fPIC -o CMakeFiles/ctacataloguesqlite.dir/rdbms/sqlite/SqliteCatalogue.cpp.o -c /builds/cta/CTA/catalogue/rdbms/sqlite/SqliteCatalogue.cpp",
   "file": "/builds/cta/CTA/catalogue/rdbms/sqlite/SqliteCatalogue.cpp",
   "output": "catalogue/CMakeFiles/ctacataloguesqlite.dir/rdbms/sqlite/SqliteCatalogue.cpp.o"
 },
 {
   "directory": "/builds/cta/CTA/build_rpm/catalogue",
-  "command": "/usr/bin/c++ -DSUPPORT_OCCI -DVERSION_API=\\\"5-12639388gitc44adf3f\\\" -Dctacataloguesqlite_EXPORTS -I/builds/cta/CTA -I/builds/cta/CTA/build_rpm -I/usr/include/oracle/23/client64 -fPIC -pedantic -Wall -Wextra -Werror -Wno-unused-parameter -fstack-protector-all -std=c++20 -Wshadow -g -fPIC -o CMakeFiles/ctacataloguesqlite.dir/rdbms/sqlite/SqliteFileRecycleLogCatalogue.cpp.o -c /builds/cta/CTA/catalogue/rdbms/sqlite/SqliteFileRecycleLogCatalogue.cpp",
+  "command": "/usr/bin/c++ -DSUPPORT_OCCI -DVERSION_API=\\\"5-12639709git078702b7\\\" -Dctacataloguesqlite_EXPORTS -I/builds/cta/CTA -I/builds/cta/CTA/build_rpm -I/usr/include/oracle/23/client64 -fPIC -pedantic -Wall -Wextra -Werror -Wno-unused-parameter -fstack-protector-all -std=c++20 -Wshadow -g -fPIC -o CMakeFiles/ctacataloguesqlite.dir/rdbms/sqlite/SqliteFileRecycleLogCatalogue.cpp.o -c /builds/cta/CTA/catalogue/rdbms/sqlite/SqliteFileRecycleLogCatalogue.cpp",
   "file": "/builds/cta/CTA/catalogue/rdbms/sqlite/SqliteFileRecycleLogCatalogue.cpp",
   "output": "catalogue/CMakeFiles/ctacataloguesqlite.dir/rdbms/sqlite/SqliteFileRecycleLogCatalogue.cpp.o"
 },
 {
   "directory": "/builds/cta/CTA/build_rpm/catalogue",
-  "command": "/usr/bin/c++ -DSUPPORT_OCCI -DVERSION_API=\\\"5-12639388gitc44adf3f\\\" -Dctacataloguesqlite_EXPORTS -I/builds/cta/CTA -I/builds/cta/CTA/build_rpm -I/usr/include/oracle/23/client64 -fPIC -pedantic -Wall -Wextra -Werror -Wno-unused-parameter -fstack-protector-all -std=c++20 -Wshadow -g -fPIC -o CMakeFiles/ctacataloguesqlite.dir/rdbms/sqlite/SqliteLogicalLibraryCatalogue.cpp.o -c /builds/cta/CTA/catalogue/rdbms/sqlite/SqliteLogicalLibraryCatalogue.cpp",
+  "command": "/usr/bin/c++ -DSUPPORT_OCCI -DVERSION_API=\\\"5-12639709git078702b7\\\" -Dctacataloguesqlite_EXPORTS -I/builds/cta/CTA -I/builds/cta/CTA/build_rpm -I/usr/include/oracle/23/client64 -fPIC -pedantic -Wall -Wextra -Werror -Wno-unused-parameter -fstack-protector-all -std=c++20 -Wshadow -g -fPIC -o CMakeFiles/ctacataloguesqlite.dir/rdbms/sqlite/SqliteLogicalLibraryCatalogue.cpp.o -c /builds/cta/CTA/catalogue/rdbms/sqlite/SqliteLogicalLibraryCatalogue.cpp",
   "file": "/builds/cta/CTA/catalogue/rdbms/sqlite/SqliteLogicalLibraryCatalogue.cpp",
   "output": "catalogue/CMakeFiles/ctacataloguesqlite.dir/rdbms/sqlite/SqliteLogicalLibraryCatalogue.cpp.o"
 },
 {
   "directory": "/builds/cta/CTA/build_rpm/catalogue",
-  "command": "/usr/bin/c++ -DSUPPORT_OCCI -DVERSION_API=\\\"5-12639388gitc44adf3f\\\" -Dctacataloguesqlite_EXPORTS -I/builds/cta/CTA -I/builds/cta/CTA/build_rpm -I/usr/include/oracle/23/client64 -fPIC -pedantic -Wall -Wextra -Werror -Wno-unused-parameter -fstack-protector-all -std=c++20 -Wshadow -g -fPIC -o CMakeFiles/ctacataloguesqlite.dir/rdbms/sqlite/SqliteMediaTypeCatalogue.cpp.o -c /builds/cta/CTA/catalogue/rdbms/sqlite/SqliteMediaTypeCatalogue.cpp",
+  "command": "/usr/bin/c++ -DSUPPORT_OCCI -DVERSION_API=\\\"5-12639709git078702b7\\\" -Dctacataloguesqlite_EXPORTS -I/builds/cta/CTA -I/builds/cta/CTA/build_rpm -I/usr/include/oracle/23/client64 -fPIC -pedantic -Wall -Wextra -Werror -Wno-unused-parameter -fstack-protector-all -std=c++20 -Wshadow -g -fPIC -o CMakeFiles/ctacataloguesqlite.dir/rdbms/sqlite/SqliteMediaTypeCatalogue.cpp.o -c /builds/cta/CTA/catalogue/rdbms/sqlite/SqliteMediaTypeCatalogue.cpp",
   "file": "/builds/cta/CTA/catalogue/rdbms/sqlite/SqliteMediaTypeCatalogue.cpp",
   "output": "catalogue/CMakeFiles/ctacataloguesqlite.dir/rdbms/sqlite/SqliteMediaTypeCatalogue.cpp.o"
 },
 {
   "directory": "/builds/cta/CTA/build_rpm/catalogue",
-  "command": "/usr/bin/c++ -DSUPPORT_OCCI -DVERSION_API=\\\"5-12639388gitc44adf3f\\\" -Dctacataloguesqlite_EXPORTS -I/builds/cta/CTA -I/builds/cta/CTA/build_rpm -I/usr/include/oracle/23/client64 -fPIC -pedantic -Wall -Wextra -Werror -Wno-unused-parameter -fstack-protector-all -std=c++20 -Wshadow -g -fPIC -o CMakeFiles/ctacataloguesqlite.dir/rdbms/sqlite/SqlitePhysicalLibraryCatalogue.cpp.o -c /builds/cta/CTA/catalogue/rdbms/sqlite/SqlitePhysicalLibraryCatalogue.cpp",
+  "command": "/usr/bin/c++ -DSUPPORT_OCCI -DVERSION_API=\\\"5-12639709git078702b7\\\" -Dctacataloguesqlite_EXPORTS -I/builds/cta/CTA -I/builds/cta/CTA/build_rpm -I/usr/include/oracle/23/client64 -fPIC -pedantic -Wall -Wextra -Werror -Wno-unused-parameter -fstack-protector-all -std=c++20 -Wshadow -g -fPIC -o CMakeFiles/ctacataloguesqlite.dir/rdbms/sqlite/SqlitePhysicalLibraryCatalogue.cpp.o -c /builds/cta/CTA/catalogue/rdbms/sqlite/SqlitePhysicalLibraryCatalogue.cpp",
   "file": "/builds/cta/CTA/catalogue/rdbms/sqlite/SqlitePhysicalLibraryCatalogue.cpp",
   "output": "catalogue/CMakeFiles/ctacataloguesqlite.dir/rdbms/sqlite/SqlitePhysicalLibraryCatalogue.cpp.o"
 },
 {
   "directory": "/builds/cta/CTA/build_rpm/catalogue",
-  "command": "/usr/bin/c++ -DSUPPORT_OCCI -DVERSION_API=\\\"5-12639388gitc44adf3f\\\" -Dctacataloguesqlite_EXPORTS -I/builds/cta/CTA -I/builds/cta/CTA/build_rpm -I/usr/include/oracle/23/client64 -fPIC -pedantic -Wall -Wextra -Werror -Wno-unused-parameter -fstack-protector-all -std=c++20 -Wshadow -g -fPIC -o CMakeFiles/ctacataloguesqlite.dir/rdbms/sqlite/SqliteStorageClassCatalogue.cpp.o -c /builds/cta/CTA/catalogue/rdbms/sqlite/SqliteStorageClassCatalogue.cpp",
+  "command": "/usr/bin/c++ -DSUPPORT_OCCI -DVERSION_API=\\\"5-12639709git078702b7\\\" -Dctacataloguesqlite_EXPORTS -I/builds/cta/CTA -I/builds/cta/CTA/build_rpm -I/usr/include/oracle/23/client64 -fPIC -pedantic -Wall -Wextra -Werror -Wno-unused-parameter -fstack-protector-all -std=c++20 -Wshadow -g -fPIC -o CMakeFiles/ctacataloguesqlite.dir/rdbms/sqlite/SqliteStorageClassCatalogue.cpp.o -c /builds/cta/CTA/catalogue/rdbms/sqlite/SqliteStorageClassCatalogue.cpp",
   "file": "/builds/cta/CTA/catalogue/rdbms/sqlite/SqliteStorageClassCatalogue.cpp",
   "output": "catalogue/CMakeFiles/ctacataloguesqlite.dir/rdbms/sqlite/SqliteStorageClassCatalogue.cpp.o"
 },
 {
   "directory": "/builds/cta/CTA/build_rpm/catalogue",
-  "command": "/usr/bin/c++ -DSUPPORT_OCCI -DVERSION_API=\\\"5-12639388gitc44adf3f\\\" -Dctacataloguesqlite_EXPORTS -I/builds/cta/CTA -I/builds/cta/CTA/build_rpm -I/usr/include/oracle/23/client64 -fPIC -pedantic -Wall -Wextra -Werror -Wno-unused-parameter -fstack-protector-all -std=c++20 -Wshadow -g -fPIC -o CMakeFiles/ctacataloguesqlite.dir/rdbms/sqlite/SqliteTapeCatalogue.cpp.o -c /builds/cta/CTA/catalogue/rdbms/sqlite/SqliteTapeCatalogue.cpp",
+  "command": "/usr/bin/c++ -DSUPPORT_OCCI -DVERSION_API=\\\"5-12639709git078702b7\\\" -Dctacataloguesqlite_EXPORTS -I/builds/cta/CTA -I/builds/cta/CTA/build_rpm -I/usr/include/oracle/23/client64 -fPIC -pedantic -Wall -Wextra -Werror -Wno-unused-parameter -fstack-protector-all -std=c++20 -Wshadow -g -fPIC -o CMakeFiles/ctacataloguesqlite.dir/rdbms/sqlite/SqliteTapeCatalogue.cpp.o -c /builds/cta/CTA/catalogue/rdbms/sqlite/SqliteTapeCatalogue.cpp",
   "file": "/builds/cta/CTA/catalogue/rdbms/sqlite/SqliteTapeCatalogue.cpp",
   "output": "catalogue/CMakeFiles/ctacataloguesqlite.dir/rdbms/sqlite/SqliteTapeCatalogue.cpp.o"
 },
 {
   "directory": "/builds/cta/CTA/build_rpm/catalogue",
-  "command": "/usr/bin/c++ -DSUPPORT_OCCI -DVERSION_API=\\\"5-12639388gitc44adf3f\\\" -Dctacataloguesqlite_EXPORTS -I/builds/cta/CTA -I/builds/cta/CTA/build_rpm -I/usr/include/oracle/23/client64 -fPIC -pedantic -Wall -Wextra -Werror -Wno-unused-parameter -fstack-protector-all -std=c++20 -Wshadow -g -fPIC -o CMakeFiles/ctacataloguesqlite.dir/rdbms/sqlite/SqliteTapeFileCatalogue.cpp.o -c /builds/cta/CTA/catalogue/rdbms/sqlite/SqliteTapeFileCatalogue.cpp",
+  "command": "/usr/bin/c++ -DSUPPORT_OCCI -DVERSION_API=\\\"5-12639709git078702b7\\\" -Dctacataloguesqlite_EXPORTS -I/builds/cta/CTA -I/builds/cta/CTA/build_rpm -I/usr/include/oracle/23/client64 -fPIC -pedantic -Wall -Wextra -Werror -Wno-unused-parameter -fstack-protector-all -std=c++20 -Wshadow -g -fPIC -o CMakeFiles/ctacataloguesqlite.dir/rdbms/sqlite/SqliteTapeFileCatalogue.cpp.o -c /builds/cta/CTA/catalogue/rdbms/sqlite/SqliteTapeFileCatalogue.cpp",
   "file": "/builds/cta/CTA/catalogue/rdbms/sqlite/SqliteTapeFileCatalogue.cpp",
   "output": "catalogue/CMakeFiles/ctacataloguesqlite.dir/rdbms/sqlite/SqliteTapeFileCatalogue.cpp.o"
 },
 {
   "directory": "/builds/cta/CTA/build_rpm/catalogue",
-  "command": "/usr/bin/c++ -DSUPPORT_OCCI -DVERSION_API=\\\"5-12639388gitc44adf3f\\\" -Dctacataloguesqlite_EXPORTS -I/builds/cta/CTA -I/builds/cta/CTA/build_rpm -I/usr/include/oracle/23/client64 -fPIC -pedantic -Wall -Wextra -Werror -Wno-unused-parameter -fstack-protector-all -std=c++20 -Wshadow -g -fPIC -o CMakeFiles/ctacataloguesqlite.dir/rdbms/sqlite/SqliteTapePoolCatalogue.cpp.o -c /builds/cta/CTA/catalogue/rdbms/sqlite/SqliteTapePoolCatalogue.cpp",
+  "command": "/usr/bin/c++ -DSUPPORT_OCCI -DVERSION_API=\\\"5-12639709git078702b7\\\" -Dctacataloguesqlite_EXPORTS -I/builds/cta/CTA -I/builds/cta/CTA/build_rpm -I/usr/include/oracle/23/client64 -fPIC -pedantic -Wall -Wextra -Werror -Wno-unused-parameter -fstack-protector-all -std=c++20 -Wshadow -g -fPIC -o CMakeFiles/ctacataloguesqlite.dir/rdbms/sqlite/SqliteTapePoolCatalogue.cpp.o -c /builds/cta/CTA/catalogue/rdbms/sqlite/SqliteTapePoolCatalogue.cpp",
   "file": "/builds/cta/CTA/catalogue/rdbms/sqlite/SqliteTapePoolCatalogue.cpp",
   "output": "catalogue/CMakeFiles/ctacataloguesqlite.dir/rdbms/sqlite/SqliteTapePoolCatalogue.cpp.o"
 },
 {
   "directory": "/builds/cta/CTA/build_rpm/catalogue",
-  "command": "/usr/bin/c++ -DSUPPORT_OCCI -DVERSION_API=\\\"5-12639388gitc44adf3f\\\" -Dctacataloguesqlite_EXPORTS -I/builds/cta/CTA -I/builds/cta/CTA/build_rpm -I/usr/include/oracle/23/client64 -fPIC -pedantic -Wall -Wextra -Werror -Wno-unused-parameter -fstack-protector-all -std=c++20 -Wshadow -g -fPIC -o CMakeFiles/ctacataloguesqlite.dir/rdbms/sqlite/SqliteVirtualOrganizationCatalogue.cpp.o -c /builds/cta/CTA/catalogue/rdbms/sqlite/SqliteVirtualOrganizationCatalogue.cpp",
+  "command": "/usr/bin/c++ -DSUPPORT_OCCI -DVERSION_API=\\\"5-12639709git078702b7\\\" -Dctacataloguesqlite_EXPORTS -I/builds/cta/CTA -I/builds/cta/CTA/build_rpm -I/usr/include/oracle/23/client64 -fPIC -pedantic -Wall -Wextra -Werror -Wno-unused-parameter -fstack-protector-all -std=c++20 -Wshadow -g -fPIC -o CMakeFiles/ctacataloguesqlite.dir/rdbms/sqlite/SqliteVirtualOrganizationCatalogue.cpp.o -c /builds/cta/CTA/catalogue/rdbms/sqlite/SqliteVirtualOrganizationCatalogue.cpp",
   "file": "/builds/cta/CTA/catalogue/rdbms/sqlite/SqliteVirtualOrganizationCatalogue.cpp",
   "output": "catalogue/CMakeFiles/ctacataloguesqlite.dir/rdbms/sqlite/SqliteVirtualOrganizationCatalogue.cpp.o"
 },
 {
   "directory": "/builds/cta/CTA/build_rpm/catalogue",
-  "command": "/usr/bin/c++ -DSUPPORT_OCCI -DVERSION_API=\\\"5-12639388gitc44adf3f\\\" -Dctacataloguepostrgres_EXPORTS -I/builds/cta/CTA -I/builds/cta/CTA/build_rpm -I/usr/include/oracle/23/client64 -fPIC -pedantic -Wall -Wextra -Werror -Wno-unused-parameter -fstack-protector-all -std=c++20 -Wshadow -g -fPIC -o CMakeFiles/ctacataloguepostrgres.dir/PostgresqlCatalogueFactory.cpp.o -c /builds/cta/CTA/catalogue/PostgresqlCatalogueFactory.cpp",
+  "command": "/usr/bin/c++ -DSUPPORT_OCCI -DVERSION_API=\\\"5-12639709git078702b7\\\" -Dctacataloguepostrgres_EXPORTS -I/builds/cta/CTA -I/builds/cta/CTA/build_rpm -I/usr/include/oracle/23/client64 -fPIC -pedantic -Wall -Wextra -Werror -Wno-unused-parameter -fstack-protector-all -std=c++20 -Wshadow -g -fPIC -o CMakeFiles/ctacataloguepostrgres.dir/PostgresqlCatalogueFactory.cpp.o -c /builds/cta/CTA/catalogue/PostgresqlCatalogueFactory.cpp",
   "file": "/builds/cta/CTA/catalogue/PostgresqlCatalogueFactory.cpp",
   "output": "catalogue/CMakeFiles/ctacataloguepostrgres.dir/PostgresqlCatalogueFactory.cpp.o"
 },
 {
   "directory": "/builds/cta/CTA/build_rpm/catalogue",
-  "command": "/usr/bin/c++ -DSUPPORT_OCCI -DVERSION_API=\\\"5-12639388gitc44adf3f\\\" -Dctacataloguepostrgres_EXPORTS -I/builds/cta/CTA -I/builds/cta/CTA/build_rpm -I/usr/include/oracle/23/client64 -fPIC -pedantic -Wall -Wextra -Werror -Wno-unused-parameter -fstack-protector-all -std=c++20 -Wshadow -g -fPIC -o CMakeFiles/ctacataloguepostrgres.dir/rdbms/postgres/PostgresArchiveFileCatalogue.cpp.o -c /builds/cta/CTA/catalogue/rdbms/postgres/PostgresArchiveFileCatalogue.cpp",
+  "command": "/usr/bin/c++ -DSUPPORT_OCCI -DVERSION_API=\\\"5-12639709git078702b7\\\" -Dctacataloguepostrgres_EXPORTS -I/builds/cta/CTA -I/builds/cta/CTA/build_rpm -I/usr/include/oracle/23/client64 -fPIC -pedantic -Wall -Wextra -Werror -Wno-unused-parameter -fstack-protector-all -std=c++20 -Wshadow -g -fPIC -o CMakeFiles/ctacataloguepostrgres.dir/rdbms/postgres/PostgresArchiveFileCatalogue.cpp.o -c /builds/cta/CTA/catalogue/rdbms/postgres/PostgresArchiveFileCatalogue.cpp",
   "file": "/builds/cta/CTA/catalogue/rdbms/postgres/PostgresArchiveFileCatalogue.cpp",
   "output": "catalogue/CMakeFiles/ctacataloguepostrgres.dir/rdbms/postgres/PostgresArchiveFileCatalogue.cpp.o"
 },
 {
   "directory": "/builds/cta/CTA/build_rpm/catalogue",
-  "command": "/usr/bin/c++ -DSUPPORT_OCCI -DVERSION_API=\\\"5-12639388gitc44adf3f\\\" -Dctacataloguepostrgres_EXPORTS -I/builds/cta/CTA -I/builds/cta/CTA/build_rpm -I/usr/include/oracle/23/client64 -fPIC -pedantic -Wall -Wextra -Werror -Wno-unused-parameter -fstack-protector-all -std=c++20 -Wshadow -g -fPIC -o CMakeFiles/ctacataloguepostrgres.dir/rdbms/postgres/PostgresCatalogue.cpp.o -c /builds/cta/CTA/catalogue/rdbms/postgres/PostgresCatalogue.cpp",
+  "command": "/usr/bin/c++ -DSUPPORT_OCCI -DVERSION_API=\\\"5-12639709git078702b7\\\" -Dctacataloguepostrgres_EXPORTS -I/builds/cta/CTA -I/builds/cta/CTA/build_rpm -I/usr/include/oracle/23/client64 -fPIC -pedantic -Wall -Wextra -Werror -Wno-unused-parameter -fstack-protector-all -std=c++20 -Wshadow -g -fPIC -o CMakeFiles/ctacataloguepostrgres.dir/rdbms/postgres/PostgresCatalogue.cpp.o -c /builds/cta/CTA/catalogue/rdbms/postgres/PostgresCatalogue.cpp",
   "file": "/builds/cta/CTA/catalogue/rdbms/postgres/PostgresCatalogue.cpp",
   "output": "catalogue/CMakeFiles/ctacataloguepostrgres.dir/rdbms/postgres/PostgresCatalogue.cpp.o"
 },
 {
   "directory": "/builds/cta/CTA/build_rpm/catalogue",
-  "command": "/usr/bin/c++ -DSUPPORT_OCCI -DVERSION_API=\\\"5-12639388gitc44adf3f\\\" -Dctacataloguepostrgres_EXPORTS -I/builds/cta/CTA -I/builds/cta/CTA/build_rpm -I/usr/include/oracle/23/client64 -fPIC -pedantic -Wall -Wextra -Werror -Wno-unused-parameter -fstack-protector-all -std=c++20 -Wshadow -g -fPIC -o CMakeFiles/ctacataloguepostrgres.dir/rdbms/postgres/PostgresFileRecycleLogCatalogue.cpp.o -c /builds/cta/CTA/catalogue/rdbms/postgres/PostgresFileRecycleLogCatalogue.cpp",
+  "command": "/usr/bin/c++ -DSUPPORT_OCCI -DVERSION_API=\\\"5-12639709git078702b7\\\" -Dctacataloguepostrgres_EXPORTS -I/builds/cta/CTA -I/builds/cta/CTA/build_rpm -I/usr/include/oracle/23/client64 -fPIC -pedantic -Wall -Wextra -Werror -Wno-unused-parameter -fstack-protector-all -std=c++20 -Wshadow -g -fPIC -o CMakeFiles/ctacataloguepostrgres.dir/rdbms/postgres/PostgresFileRecycleLogCatalogue.cpp.o -c /builds/cta/CTA/catalogue/rdbms/postgres/PostgresFileRecycleLogCatalogue.cpp",
   "file": "/builds/cta/CTA/catalogue/rdbms/postgres/PostgresFileRecycleLogCatalogue.cpp",
   "output": "catalogue/CMakeFiles/ctacataloguepostrgres.dir/rdbms/postgres/PostgresFileRecycleLogCatalogue.cpp.o"
 },
 {
   "directory": "/builds/cta/CTA/build_rpm/catalogue",
-  "command": "/usr/bin/c++ -DSUPPORT_OCCI -DVERSION_API=\\\"5-12639388gitc44adf3f\\\" -Dctacataloguepostrgres_EXPORTS -I/builds/cta/CTA -I/builds/cta/CTA/build_rpm -I/usr/include/oracle/23/client64 -fPIC -pedantic -Wall -Wextra -Werror -Wno-unused-parameter -fstack-protector-all -std=c++20 -Wshadow -g -fPIC -o CMakeFiles/ctacataloguepostrgres.dir/rdbms/postgres/PostgresLogicalLibraryCatalogue.cpp.o -c /builds/cta/CTA/catalogue/rdbms/postgres/PostgresLogicalLibraryCatalogue.cpp",
+  "command": "/usr/bin/c++ -DSUPPORT_OCCI -DVERSION_API=\\\"5-12639709git078702b7\\\" -Dctacataloguepostrgres_EXPORTS -I/builds/cta/CTA -I/builds/cta/CTA/build_rpm -I/usr/include/oracle/23/client64 -fPIC -pedantic -Wall -Wextra -Werror -Wno-unused-parameter -fstack-protector-all -std=c++20 -Wshadow -g -fPIC -o CMakeFiles/ctacataloguepostrgres.dir/rdbms/postgres/PostgresLogicalLibraryCatalogue.cpp.o -c /builds/cta/CTA/catalogue/rdbms/postgres/PostgresLogicalLibraryCatalogue.cpp",
   "file": "/builds/cta/CTA/catalogue/rdbms/postgres/PostgresLogicalLibraryCatalogue.cpp",
   "output": "catalogue/CMakeFiles/ctacataloguepostrgres.dir/rdbms/postgres/PostgresLogicalLibraryCatalogue.cpp.o"
 },
 {
   "directory": "/builds/cta/CTA/build_rpm/catalogue",
-  "command": "/usr/bin/c++ -DSUPPORT_OCCI -DVERSION_API=\\\"5-12639388gitc44adf3f\\\" -Dctacataloguepostrgres_EXPORTS -I/builds/cta/CTA -I/builds/cta/CTA/build_rpm -I/usr/include/oracle/23/client64 -fPIC -pedantic -Wall -Wextra -Werror -Wno-unused-parameter -fstack-protector-all -std=c++20 -Wshadow -g -fPIC -o CMakeFiles/ctacataloguepostrgres.dir/rdbms/postgres/PostgresMediaTypeCatalogue.cpp.o -c /builds/cta/CTA/catalogue/rdbms/postgres/PostgresMediaTypeCatalogue.cpp",
+  "command": "/usr/bin/c++ -DSUPPORT_OCCI -DVERSION_API=\\\"5-12639709git078702b7\\\" -Dctacataloguepostrgres_EXPORTS -I/builds/cta/CTA -I/builds/cta/CTA/build_rpm -I/usr/include/oracle/23/client64 -fPIC -pedantic -Wall -Wextra -Werror -Wno-unused-parameter -fstack-protector-all -std=c++20 -Wshadow -g -fPIC -o CMakeFiles/ctacataloguepostrgres.dir/rdbms/postgres/PostgresMediaTypeCatalogue.cpp.o -c /builds/cta/CTA/catalogue/rdbms/postgres/PostgresMediaTypeCatalogue.cpp",
   "file": "/builds/cta/CTA/catalogue/rdbms/postgres/PostgresMediaTypeCatalogue.cpp",
   "output": "catalogue/CMakeFiles/ctacataloguepostrgres.dir/rdbms/postgres/PostgresMediaTypeCatalogue.cpp.o"
 },
 {
   "directory": "/builds/cta/CTA/build_rpm/catalogue",
-  "command": "/usr/bin/c++ -DSUPPORT_OCCI -DVERSION_API=\\\"5-12639388gitc44adf3f\\\" -Dctacataloguepostrgres_EXPORTS -I/builds/cta/CTA -I/builds/cta/CTA/build_rpm -I/usr/include/oracle/23/client64 -fPIC -pedantic -Wall -Wextra -Werror -Wno-unused-parameter -fstack-protector-all -std=c++20 -Wshadow -g -fPIC -o CMakeFiles/ctacataloguepostrgres.dir/rdbms/postgres/PostgresPhysicalLibraryCatalogue.cpp.o -c /builds/cta/CTA/catalogue/rdbms/postgres/PostgresPhysicalLibraryCatalogue.cpp",
+  "command": "/usr/bin/c++ -DSUPPORT_OCCI -DVERSION_API=\\\"5-12639709git078702b7\\\" -Dctacataloguepostrgres_EXPORTS -I/builds/cta/CTA -I/builds/cta/CTA/build_rpm -I/usr/include/oracle/23/client64 -fPIC -pedantic -Wall -Wextra -Werror -Wno-unused-parameter -fstack-protector-all -std=c++20 -Wshadow -g -fPIC -o CMakeFiles/ctacataloguepostrgres.dir/rdbms/postgres/PostgresPhysicalLibraryCatalogue.cpp.o -c /builds/cta/CTA/catalogue/rdbms/postgres/PostgresPhysicalLibraryCatalogue.cpp",
   "file": "/builds/cta/CTA/catalogue/rdbms/postgres/PostgresPhysicalLibraryCatalogue.cpp",
   "output": "catalogue/CMakeFiles/ctacataloguepostrgres.dir/rdbms/postgres/PostgresPhysicalLibraryCatalogue.cpp.o"
 },
 {
   "directory": "/builds/cta/CTA/build_rpm/catalogue",
-  "command": "/usr/bin/c++ -DSUPPORT_OCCI -DVERSION_API=\\\"5-12639388gitc44adf3f\\\" -Dctacataloguepostrgres_EXPORTS -I/builds/cta/CTA -I/builds/cta/CTA/build_rpm -I/usr/include/oracle/23/client64 -fPIC -pedantic -Wall -Wextra -Werror -Wno-unused-parameter -fstack-protector-all -std=c++20 -Wshadow -g -fPIC -o CMakeFiles/ctacataloguepostrgres.dir/rdbms/postgres/PostgresStorageClassCatalogue.cpp.o -c /builds/cta/CTA/catalogue/rdbms/postgres/PostgresStorageClassCatalogue.cpp",
+  "command": "/usr/bin/c++ -DSUPPORT_OCCI -DVERSION_API=\\\"5-12639709git078702b7\\\" -Dctacataloguepostrgres_EXPORTS -I/builds/cta/CTA -I/builds/cta/CTA/build_rpm -I/usr/include/oracle/23/client64 -fPIC -pedantic -Wall -Wextra -Werror -Wno-unused-parameter -fstack-protector-all -std=c++20 -Wshadow -g -fPIC -o CMakeFiles/ctacataloguepostrgres.dir/rdbms/postgres/PostgresStorageClassCatalogue.cpp.o -c /builds/cta/CTA/catalogue/rdbms/postgres/PostgresStorageClassCatalogue.cpp",
   "file": "/builds/cta/CTA/catalogue/rdbms/postgres/PostgresStorageClassCatalogue.cpp",
   "output": "catalogue/CMakeFiles/ctacataloguepostrgres.dir/rdbms/postgres/PostgresStorageClassCatalogue.cpp.o"
 },
 {
   "directory": "/builds/cta/CTA/build_rpm/catalogue",
-  "command": "/usr/bin/c++ -DSUPPORT_OCCI -DVERSION_API=\\\"5-12639388gitc44adf3f\\\" -Dctacataloguepostrgres_EXPORTS -I/builds/cta/CTA -I/builds/cta/CTA/build_rpm -I/usr/include/oracle/23/client64 -fPIC -pedantic -Wall -Wextra -Werror -Wno-unused-parameter -fstack-protector-all -std=c++20 -Wshadow -g -fPIC -o CMakeFiles/ctacataloguepostrgres.dir/rdbms/postgres/PostgresTapeCatalogue.cpp.o -c /builds/cta/CTA/catalogue/rdbms/postgres/PostgresTapeCatalogue.cpp",
+  "command": "/usr/bin/c++ -DSUPPORT_OCCI -DVERSION_API=\\\"5-12639709git078702b7\\\" -Dctacataloguepostrgres_EXPORTS -I/builds/cta/CTA -I/builds/cta/CTA/build_rpm -I/usr/include/oracle/23/client64 -fPIC -pedantic -Wall -Wextra -Werror -Wno-unused-parameter -fstack-protector-all -std=c++20 -Wshadow -g -fPIC -o CMakeFiles/ctacataloguepostrgres.dir/rdbms/postgres/PostgresTapeCatalogue.cpp.o -c /builds/cta/CTA/catalogue/rdbms/postgres/PostgresTapeCatalogue.cpp",
   "file": "/builds/cta/CTA/catalogue/rdbms/postgres/PostgresTapeCatalogue.cpp",
   "output": "catalogue/CMakeFiles/ctacataloguepostrgres.dir/rdbms/postgres/PostgresTapeCatalogue.cpp.o"
 },
 {
   "directory": "/builds/cta/CTA/build_rpm/catalogue",
-  "command": "/usr/bin/c++ -DSUPPORT_OCCI -DVERSION_API=\\\"5-12639388gitc44adf3f\\\" -Dctacataloguepostrgres_EXPORTS -I/builds/cta/CTA -I/builds/cta/CTA/build_rpm -I/usr/include/oracle/23/client64 -fPIC -pedantic -Wall -Wextra -Werror -Wno-unused-parameter -fstack-protector-all -std=c++20 -Wshadow -g -fPIC -o CMakeFiles/ctacataloguepostrgres.dir/rdbms/postgres/PostgresTapeFileCatalogue.cpp.o -c /builds/cta/CTA/catalogue/rdbms/postgres/PostgresTapeFileCatalogue.cpp",
+  "command": "/usr/bin/c++ -DSUPPORT_OCCI -DVERSION_API=\\\"5-12639709git078702b7\\\" -Dctacataloguepostrgres_EXPORTS -I/builds/cta/CTA -I/builds/cta/CTA/build_rpm -I/usr/include/oracle/23/client64 -fPIC -pedantic -Wall -Wextra -Werror -Wno-unused-parameter -fstack-protector-all -std=c++20 -Wshadow -g -fPIC -o CMakeFiles/ctacataloguepostrgres.dir/rdbms/postgres/PostgresTapeFileCatalogue.cpp.o -c /builds/cta/CTA/catalogue/rdbms/postgres/PostgresTapeFileCatalogue.cpp",
   "file": "/builds/cta/CTA/catalogue/rdbms/postgres/PostgresTapeFileCatalogue.cpp",
   "output": "catalogue/CMakeFiles/ctacataloguepostrgres.dir/rdbms/postgres/PostgresTapeFileCatalogue.cpp.o"
 },
 {
   "directory": "/builds/cta/CTA/build_rpm/catalogue",
-  "command": "/usr/bin/c++ -DSUPPORT_OCCI -DVERSION_API=\\\"5-12639388gitc44adf3f\\\" -Dctacataloguepostrgres_EXPORTS -I/builds/cta/CTA -I/builds/cta/CTA/build_rpm -I/usr/include/oracle/23/client64 -fPIC -pedantic -Wall -Wextra -Werror -Wno-unused-parameter -fstack-protector-all -std=c++20 -Wshadow -g -fPIC -o CMakeFiles/ctacataloguepostrgres.dir/rdbms/postgres/PostgresTapePoolCatalogue.cpp.o -c /builds/cta/CTA/catalogue/rdbms/postgres/PostgresTapePoolCatalogue.cpp",
+  "command": "/usr/bin/c++ -DSUPPORT_OCCI -DVERSION_API=\\\"5-12639709git078702b7\\\" -Dctacataloguepostrgres_EXPORTS -I/builds/cta/CTA -I/builds/cta/CTA/build_rpm -I/usr/include/oracle/23/client64 -fPIC -pedantic -Wall -Wextra -Werror -Wno-unused-parameter -fstack-protector-all -std=c++20 -Wshadow -g -fPIC -o CMakeFiles/ctacataloguepostrgres.dir/rdbms/postgres/PostgresTapePoolCatalogue.cpp.o -c /builds/cta/CTA/catalogue/rdbms/postgres/PostgresTapePoolCatalogue.cpp",
   "file": "/builds/cta/CTA/catalogue/rdbms/postgres/PostgresTapePoolCatalogue.cpp",
   "output": "catalogue/CMakeFiles/ctacataloguepostrgres.dir/rdbms/postgres/PostgresTapePoolCatalogue.cpp.o"
 },
 {
   "directory": "/builds/cta/CTA/build_rpm/catalogue",
-  "command": "/usr/bin/c++ -DSUPPORT_OCCI -DVERSION_API=\\\"5-12639388gitc44adf3f\\\" -Dctacataloguepostrgres_EXPORTS -I/builds/cta/CTA -I/builds/cta/CTA/build_rpm -I/usr/include/oracle/23/client64 -fPIC -pedantic -Wall -Wextra -Werror -Wno-unused-parameter -fstack-protector-all -std=c++20 -Wshadow -g -fPIC -o CMakeFiles/ctacataloguepostrgres.dir/rdbms/postgres/PostgresVirtualOrganizationCatalogue.cpp.o -c /builds/cta/CTA/catalogue/rdbms/postgres/PostgresVirtualOrganizationCatalogue.cpp",
+  "command": "/usr/bin/c++ -DSUPPORT_OCCI -DVERSION_API=\\\"5-12639709git078702b7\\\" -Dctacataloguepostrgres_EXPORTS -I/builds/cta/CTA -I/builds/cta/CTA/build_rpm -I/usr/include/oracle/23/client64 -fPIC -pedantic -Wall -Wextra -Werror -Wno-unused-parameter -fstack-protector-all -std=c++20 -Wshadow -g -fPIC -o CMakeFiles/ctacataloguepostrgres.dir/rdbms/postgres/PostgresVirtualOrganizationCatalogue.cpp.o -c /builds/cta/CTA/catalogue/rdbms/postgres/PostgresVirtualOrganizationCatalogue.cpp",
   "file": "/builds/cta/CTA/catalogue/rdbms/postgres/PostgresVirtualOrganizationCatalogue.cpp",
   "output": "catalogue/CMakeFiles/ctacataloguepostrgres.dir/rdbms/postgres/PostgresVirtualOrganizationCatalogue.cpp.o"
 },
 {
   "directory": "/builds/cta/CTA/build_rpm/catalogue",
-  "command": "/usr/bin/c++ -DSUPPORT_OCCI -DVERSION_API=\\\"5-12639388gitc44adf3f\\\" -Dctacatalogue_EXPORTS -I/builds/cta/CTA -I/builds/cta/CTA/build_rpm -I/usr/include/oracle/23/client64 -fPIC -pedantic -Wall -Wextra -Werror -Wno-unused-parameter -fstack-protector-all -std=c++20 -Wshadow -g -fPIC -o CMakeFiles/ctacatalogue.dir/ArchiveFileRow.cpp.o -c /builds/cta/CTA/catalogue/ArchiveFileRow.cpp",
+  "command": "/usr/bin/c++ -DSUPPORT_OCCI -DVERSION_API=\\\"5-12639709git078702b7\\\" -Dctacatalogue_EXPORTS -I/builds/cta/CTA -I/builds/cta/CTA/build_rpm -I/usr/include/oracle/23/client64 -fPIC -pedantic -Wall -Wextra -Werror -Wno-unused-parameter -fstack-protector-all -std=c++20 -Wshadow -g -fPIC -o CMakeFiles/ctacatalogue.dir/ArchiveFileRow.cpp.o -c /builds/cta/CTA/catalogue/ArchiveFileRow.cpp",
   "file": "/builds/cta/CTA/catalogue/ArchiveFileRow.cpp",
   "output": "catalogue/CMakeFiles/ctacatalogue.dir/ArchiveFileRow.cpp.o"
 },
 {
   "directory": "/builds/cta/CTA/build_rpm/catalogue",
-  "command": "/usr/bin/c++ -DSUPPORT_OCCI -DVERSION_API=\\\"5-12639388gitc44adf3f\\\" -Dctacatalogue_EXPORTS -I/builds/cta/CTA -I/builds/cta/CTA/build_rpm -I/usr/include/oracle/23/client64 -fPIC -pedantic -Wall -Wextra -Werror -Wno-unused-parameter -fstack-protector-all -std=c++20 -Wshadow -g -fPIC -o CMakeFiles/ctacatalogue.dir/ArchiveFileRowWithoutTimestamps.cpp.o -c /builds/cta/CTA/catalogue/ArchiveFileRowWithoutTimestamps.cpp",
+  "command": "/usr/bin/c++ -DSUPPORT_OCCI -DVERSION_API=\\\"5-12639709git078702b7\\\" -Dctacatalogue_EXPORTS -I/builds/cta/CTA -I/builds/cta/CTA/build_rpm -I/usr/include/oracle/23/client64 -fPIC -pedantic -Wall -Wextra -Werror -Wno-unused-parameter -fstack-protector-all -std=c++20 -Wshadow -g -fPIC -o CMakeFiles/ctacatalogue.dir/ArchiveFileRowWithoutTimestamps.cpp.o -c /builds/cta/CTA/catalogue/ArchiveFileRowWithoutTimestamps.cpp",
   "file": "/builds/cta/CTA/catalogue/ArchiveFileRowWithoutTimestamps.cpp",
   "output": "catalogue/CMakeFiles/ctacatalogue.dir/ArchiveFileRowWithoutTimestamps.cpp.o"
 },
 {
   "directory": "/builds/cta/CTA/build_rpm/catalogue",
-  "command": "/usr/bin/c++ -DSUPPORT_OCCI -DVERSION_API=\\\"5-12639388gitc44adf3f\\\" -Dctacatalogue_EXPORTS -I/builds/cta/CTA -I/builds/cta/CTA/build_rpm -I/usr/include/oracle/23/client64 -fPIC -pedantic -Wall -Wextra -Werror -Wno-unused-parameter -fstack-protector-all -std=c++20 -Wshadow -g -fPIC -o CMakeFiles/ctacatalogue.dir/CatalogueFactoryFactory.cpp.o -c /builds/cta/CTA/catalogue/CatalogueFactoryFactory.cpp",
+  "command": "/usr/bin/c++ -DSUPPORT_OCCI -DVERSION_API=\\\"5-12639709git078702b7\\\" -Dctacatalogue_EXPORTS -I/builds/cta/CTA -I/builds/cta/CTA/build_rpm -I/usr/include/oracle/23/client64 -fPIC -pedantic -Wall -Wextra -Werror -Wno-unused-parameter -fstack-protector-all -std=c++20 -Wshadow -g -fPIC -o CMakeFiles/ctacatalogue.dir/CatalogueFactoryFactory.cpp.o -c /builds/cta/CTA/catalogue/CatalogueFactoryFactory.cpp",
   "file": "/builds/cta/CTA/catalogue/CatalogueFactoryFactory.cpp",
   "output": "catalogue/CMakeFiles/ctacatalogue.dir/CatalogueFactoryFactory.cpp.o"
 },
 {
   "directory": "/builds/cta/CTA/build_rpm/catalogue",
-  "command": "/usr/bin/c++ -DSUPPORT_OCCI -DVERSION_API=\\\"5-12639388gitc44adf3f\\\" -Dctacatalogue_EXPORTS -I/builds/cta/CTA -I/builds/cta/CTA/build_rpm -I/usr/include/oracle/23/client64 -fPIC -pedantic -Wall -Wextra -Werror -Wno-unused-parameter -fstack-protector-all -std=c++20 -Wshadow -g -fPIC -o CMakeFiles/ctacatalogue.dir/CatalogueSchema.cpp.o -c /builds/cta/CTA/catalogue/CatalogueSchema.cpp",
+  "command": "/usr/bin/c++ -DSUPPORT_OCCI -DVERSION_API=\\\"5-12639709git078702b7\\\" -Dctacatalogue_EXPORTS -I/builds/cta/CTA -I/builds/cta/CTA/build_rpm -I/usr/include/oracle/23/client64 -fPIC -pedantic -Wall -Wextra -Werror -Wno-unused-parameter -fstack-protector-all -std=c++20 -Wshadow -g -fPIC -o CMakeFiles/ctacatalogue.dir/CatalogueSchema.cpp.o -c /builds/cta/CTA/catalogue/CatalogueSchema.cpp",
   "file": "/builds/cta/CTA/catalogue/CatalogueSchema.cpp",
   "output": "catalogue/CMakeFiles/ctacatalogue.dir/CatalogueSchema.cpp.o"
 },
 {
   "directory": "/builds/cta/CTA/build_rpm/catalogue",
-  "command": "/usr/bin/c++ -DSUPPORT_OCCI -DVERSION_API=\\\"5-12639388gitc44adf3f\\\" -Dctacatalogue_EXPORTS -I/builds/cta/CTA -I/builds/cta/CTA/build_rpm -I/usr/include/oracle/23/client64 -fPIC -pedantic -Wall -Wextra -Werror -Wno-unused-parameter -fstack-protector-all -std=c++20 -Wshadow -g -fPIC -o CMakeFiles/ctacatalogue.dir/CmdLineTool.cpp.o -c /builds/cta/CTA/catalogue/CmdLineTool.cpp",
+  "command": "/usr/bin/c++ -DSUPPORT_OCCI -DVERSION_API=\\\"5-12639709git078702b7\\\" -Dctacatalogue_EXPORTS -I/builds/cta/CTA -I/builds/cta/CTA/build_rpm -I/usr/include/oracle/23/client64 -fPIC -pedantic -Wall -Wextra -Werror -Wno-unused-parameter -fstack-protector-all -std=c++20 -Wshadow -g -fPIC -o CMakeFiles/ctacatalogue.dir/CmdLineTool.cpp.o -c /builds/cta/CTA/catalogue/CmdLineTool.cpp",
   "file": "/builds/cta/CTA/catalogue/CmdLineTool.cpp",
   "output": "catalogue/CMakeFiles/ctacatalogue.dir/CmdLineTool.cpp.o"
 },
 {
   "directory": "/builds/cta/CTA/build_rpm/catalogue",
-  "command": "/usr/bin/c++ -DSUPPORT_OCCI -DVERSION_API=\\\"5-12639388gitc44adf3f\\\" -Dctacatalogue_EXPORTS -I/builds/cta/CTA -I/builds/cta/CTA/build_rpm -I/usr/include/oracle/23/client64 -fPIC -pedantic -Wall -Wextra -Werror -Wno-unused-parameter -fstack-protector-all -std=c++20 -Wshadow -g -fPIC -o CMakeFiles/ctacatalogue.dir/DriveConfig.cpp.o -c /builds/cta/CTA/catalogue/DriveConfig.cpp",
+  "command": "/usr/bin/c++ -DSUPPORT_OCCI -DVERSION_API=\\\"5-12639709git078702b7\\\" -Dctacatalogue_EXPORTS -I/builds/cta/CTA -I/builds/cta/CTA/build_rpm -I/usr/include/oracle/23/client64 -fPIC -pedantic -Wall -Wextra -Werror -Wno-unused-parameter -fstack-protector-all -std=c++20 -Wshadow -g -fPIC -o CMakeFiles/ctacatalogue.dir/DriveConfig.cpp.o -c /builds/cta/CTA/catalogue/DriveConfig.cpp",
   "file": "/builds/cta/CTA/catalogue/DriveConfig.cpp",
   "output": "catalogue/CMakeFiles/ctacatalogue.dir/DriveConfig.cpp.o"
 },
 {
   "directory": "/builds/cta/CTA/build_rpm/catalogue",
-  "command": "/usr/bin/c++ -DSUPPORT_OCCI -DVERSION_API=\\\"5-12639388gitc44adf3f\\\" -Dctacatalogue_EXPORTS -I/builds/cta/CTA -I/builds/cta/CTA/build_rpm -I/usr/include/oracle/23/client64 -fPIC -pedantic -Wall -Wextra -Werror -Wno-unused-parameter -fstack-protector-all -std=c++20 -Wshadow -g -fPIC -o CMakeFiles/ctacatalogue.dir/TapeDrivesCatalogueState.cpp.o -c /builds/cta/CTA/catalogue/TapeDrivesCatalogueState.cpp",
+  "command": "/usr/bin/c++ -DSUPPORT_OCCI -DVERSION_API=\\\"5-12639709git078702b7\\\" -Dctacatalogue_EXPORTS -I/builds/cta/CTA -I/builds/cta/CTA/build_rpm -I/usr/include/oracle/23/client64 -fPIC -pedantic -Wall -Wextra -Werror -Wno-unused-parameter -fstack-protector-all -std=c++20 -Wshadow -g -fPIC -o CMakeFiles/ctacatalogue.dir/TapeDrivesCatalogueState.cpp.o -c /builds/cta/CTA/catalogue/TapeDrivesCatalogueState.cpp",
   "file": "/builds/cta/CTA/catalogue/TapeDrivesCatalogueState.cpp",
   "output": "catalogue/CMakeFiles/ctacatalogue.dir/TapeDrivesCatalogueState.cpp.o"
 },
 {
   "directory": "/builds/cta/CTA/build_rpm/catalogue",
-  "command": "/usr/bin/c++ -DSUPPORT_OCCI -DVERSION_API=\\\"5-12639388gitc44adf3f\\\" -Dctacatalogue_EXPORTS -I/builds/cta/CTA -I/builds/cta/CTA/build_rpm -I/usr/include/oracle/23/client64 -fPIC -pedantic -Wall -Wextra -Werror -Wno-unused-parameter -fstack-protector-all -std=c++20 -Wshadow -g -fPIC -o CMakeFiles/ctacatalogue.dir/TapeFileWritten.cpp.o -c /builds/cta/CTA/catalogue/TapeFileWritten.cpp",
+  "command": "/usr/bin/c++ -DSUPPORT_OCCI -DVERSION_API=\\\"5-12639709git078702b7\\\" -Dctacatalogue_EXPORTS -I/builds/cta/CTA -I/builds/cta/CTA/build_rpm -I/usr/include/oracle/23/client64 -fPIC -pedantic -Wall -Wextra -Werror -Wno-unused-parameter -fstack-protector-all -std=c++20 -Wshadow -g -fPIC -o CMakeFiles/ctacatalogue.dir/TapeFileWritten.cpp.o -c /builds/cta/CTA/catalogue/TapeFileWritten.cpp",
   "file": "/builds/cta/CTA/catalogue/TapeFileWritten.cpp",
   "output": "catalogue/CMakeFiles/ctacatalogue.dir/TapeFileWritten.cpp.o"
 },
 {
   "directory": "/builds/cta/CTA/build_rpm/catalogue",
-  "command": "/usr/bin/c++ -DSUPPORT_OCCI -DVERSION_API=\\\"5-12639388gitc44adf3f\\\" -Dctacatalogue_EXPORTS -I/builds/cta/CTA -I/builds/cta/CTA/build_rpm -I/usr/include/oracle/23/client64 -fPIC -pedantic -Wall -Wextra -Werror -Wno-unused-parameter -fstack-protector-all -std=c++20 -Wshadow -g -fPIC -o CMakeFiles/ctacatalogue.dir/TapeForWriting.cpp.o -c /builds/cta/CTA/catalogue/TapeForWriting.cpp",
+  "command": "/usr/bin/c++ -DSUPPORT_OCCI -DVERSION_API=\\\"5-12639709git078702b7\\\" -Dctacatalogue_EXPORTS -I/builds/cta/CTA -I/builds/cta/CTA/build_rpm -I/usr/include/oracle/23/client64 -fPIC -pedantic -Wall -Wextra -Werror -Wno-unused-parameter -fstack-protector-all -std=c++20 -Wshadow -g -fPIC -o CMakeFiles/ctacatalogue.dir/TapeForWriting.cpp.o -c /builds/cta/CTA/catalogue/TapeForWriting.cpp",
   "file": "/builds/cta/CTA/catalogue/TapeForWriting.cpp",
   "output": "catalogue/CMakeFiles/ctacatalogue.dir/TapeForWriting.cpp.o"
 },
 {
   "directory": "/builds/cta/CTA/build_rpm/catalogue",
-  "command": "/usr/bin/c++ -DSUPPORT_OCCI -DVERSION_API=\\\"5-12639388gitc44adf3f\\\" -Dctacatalogue_EXPORTS -I/builds/cta/CTA -I/builds/cta/CTA/build_rpm -I/usr/include/oracle/23/client64 -fPIC -pedantic -Wall -Wextra -Werror -Wno-unused-parameter -fstack-protector-all -std=c++20 -Wshadow -g -fPIC -o CMakeFiles/ctacatalogue.dir/TapeItemImplementation.cpp.o -c /builds/cta/CTA/catalogue/TapeItemImplementation.cpp",
+  "command": "/usr/bin/c++ -DSUPPORT_OCCI -DVERSION_API=\\\"5-12639709git078702b7\\\" -Dctacatalogue_EXPORTS -I/builds/cta/CTA -I/builds/cta/CTA/build_rpm -I/usr/include/oracle/23/client64 -fPIC -pedantic -Wall -Wextra -Werror -Wno-unused-parameter -fstack-protector-all -std=c++20 -Wshadow -g -fPIC -o CMakeFiles/ctacatalogue.dir/TapeItemImplementation.cpp.o -c /builds/cta/CTA/catalogue/TapeItemImplementation.cpp",
   "file": "/builds/cta/CTA/catalogue/TapeItemImplementation.cpp",
   "output": "catalogue/CMakeFiles/ctacatalogue.dir/TapeItemImplementation.cpp.o"
 },
 {
   "directory": "/builds/cta/CTA/build_rpm/catalogue",
-  "command": "/usr/bin/c++ -DSUPPORT_OCCI -DVERSION_API=\\\"5-12639388gitc44adf3f\\\" -Dctacatalogue_EXPORTS -I/builds/cta/CTA -I/builds/cta/CTA/build_rpm -I/usr/include/oracle/23/client64 -fPIC -pedantic -Wall -Wextra -Werror -Wno-unused-parameter -fstack-protector-all -std=c++20 -Wshadow -g -fPIC -o CMakeFiles/ctacatalogue.dir/TapePool.cpp.o -c /builds/cta/CTA/catalogue/TapePool.cpp",
+  "command": "/usr/bin/c++ -DSUPPORT_OCCI -DVERSION_API=\\\"5-12639709git078702b7\\\" -Dctacatalogue_EXPORTS -I/builds/cta/CTA -I/builds/cta/CTA/build_rpm -I/usr/include/oracle/23/client64 -fPIC -pedantic -Wall -Wextra -Werror -Wno-unused-parameter -fstack-protector-all -std=c++20 -Wshadow -g -fPIC -o CMakeFiles/ctacatalogue.dir/TapePool.cpp.o -c /builds/cta/CTA/catalogue/TapePool.cpp",
   "file": "/builds/cta/CTA/catalogue/TapePool.cpp",
   "output": "catalogue/CMakeFiles/ctacatalogue.dir/TapePool.cpp.o"
 },
 {
   "directory": "/builds/cta/CTA/build_rpm/catalogue",
-  "command": "/usr/bin/c++ -DSUPPORT_OCCI -DVERSION_API=\\\"5-12639388gitc44adf3f\\\" -Dctacatalogue_EXPORTS -I/builds/cta/CTA -I/builds/cta/CTA/build_rpm -I/usr/include/oracle/23/client64 -fPIC -pedantic -Wall -Wextra -Werror -Wno-unused-parameter -fstack-protector-all -std=c++20 -Wshadow -g -fPIC -o CMakeFiles/ctacatalogue.dir/dummy/DummyAdminUserCatalogue.cpp.o -c /builds/cta/CTA/catalogue/dummy/DummyAdminUserCatalogue.cpp",
+  "command": "/usr/bin/c++ -DSUPPORT_OCCI -DVERSION_API=\\\"5-12639709git078702b7\\\" -Dctacatalogue_EXPORTS -I/builds/cta/CTA -I/builds/cta/CTA/build_rpm -I/usr/include/oracle/23/client64 -fPIC -pedantic -Wall -Wextra -Werror -Wno-unused-parameter -fstack-protector-all -std=c++20 -Wshadow -g -fPIC -o CMakeFiles/ctacatalogue.dir/dummy/DummyAdminUserCatalogue.cpp.o -c /builds/cta/CTA/catalogue/dummy/DummyAdminUserCatalogue.cpp",
   "file": "/builds/cta/CTA/catalogue/dummy/DummyAdminUserCatalogue.cpp",
   "output": "catalogue/CMakeFiles/ctacatalogue.dir/dummy/DummyAdminUserCatalogue.cpp.o"
 },
 {
   "directory": "/builds/cta/CTA/build_rpm/catalogue",
-  "command": "/usr/bin/c++ -DSUPPORT_OCCI -DVERSION_API=\\\"5-12639388gitc44adf3f\\\" -Dctacatalogue_EXPORTS -I/builds/cta/CTA -I/builds/cta/CTA/build_rpm -I/usr/include/oracle/23/client64 -fPIC -pedantic -Wall -Wextra -Werror -Wno-unused-parameter -fstack-protector-all -std=c++20 -Wshadow -g -fPIC -o CMakeFiles/ctacatalogue.dir/dummy/DummyArchiveFileCatalogue.cpp.o -c /builds/cta/CTA/catalogue/dummy/DummyArchiveFileCatalogue.cpp",
+  "command": "/usr/bin/c++ -DSUPPORT_OCCI -DVERSION_API=\\\"5-12639709git078702b7\\\" -Dctacatalogue_EXPORTS -I/builds/cta/CTA -I/builds/cta/CTA/build_rpm -I/usr/include/oracle/23/client64 -fPIC -pedantic -Wall -Wextra -Werror -Wno-unused-parameter -fstack-protector-all -std=c++20 -Wshadow -g -fPIC -o CMakeFiles/ctacatalogue.dir/dummy/DummyArchiveFileCatalogue.cpp.o -c /builds/cta/CTA/catalogue/dummy/DummyArchiveFileCatalogue.cpp",
   "file": "/builds/cta/CTA/catalogue/dummy/DummyArchiveFileCatalogue.cpp",
   "output": "catalogue/CMakeFiles/ctacatalogue.dir/dummy/DummyArchiveFileCatalogue.cpp.o"
 },
 {
   "directory": "/builds/cta/CTA/build_rpm/catalogue",
-  "command": "/usr/bin/c++ -DSUPPORT_OCCI -DVERSION_API=\\\"5-12639388gitc44adf3f\\\" -Dctacatalogue_EXPORTS -I/builds/cta/CTA -I/builds/cta/CTA/build_rpm -I/usr/include/oracle/23/client64 -fPIC -pedantic -Wall -Wextra -Werror -Wno-unused-parameter -fstack-protector-all -std=c++20 -Wshadow -g -fPIC -o CMakeFiles/ctacatalogue.dir/dummy/DummyArchiveRouteCatalogue.cpp.o -c /builds/cta/CTA/catalogue/dummy/DummyArchiveRouteCatalogue.cpp",
+  "command": "/usr/bin/c++ -DSUPPORT_OCCI -DVERSION_API=\\\"5-12639709git078702b7\\\" -Dctacatalogue_EXPORTS -I/builds/cta/CTA -I/builds/cta/CTA/build_rpm -I/usr/include/oracle/23/client64 -fPIC -pedantic -Wall -Wextra -Werror -Wno-unused-parameter -fstack-protector-all -std=c++20 -Wshadow -g -fPIC -o CMakeFiles/ctacatalogue.dir/dummy/DummyArchiveRouteCatalogue.cpp.o -c /builds/cta/CTA/catalogue/dummy/DummyArchiveRouteCatalogue.cpp",
   "file": "/builds/cta/CTA/catalogue/dummy/DummyArchiveRouteCatalogue.cpp",
   "output": "catalogue/CMakeFiles/ctacatalogue.dir/dummy/DummyArchiveRouteCatalogue.cpp.o"
 },
 {
   "directory": "/builds/cta/CTA/build_rpm/catalogue",
-  "command": "/usr/bin/c++ -DSUPPORT_OCCI -DVERSION_API=\\\"5-12639388gitc44adf3f\\\" -Dctacatalogue_EXPORTS -I/builds/cta/CTA -I/builds/cta/CTA/build_rpm -I/usr/include/oracle/23/client64 -fPIC -pedantic -Wall -Wextra -Werror -Wno-unused-parameter -fstack-protector-all -std=c++20 -Wshadow -g -fPIC -o CMakeFiles/ctacatalogue.dir/dummy/DummyCatalogue.cpp.o -c /builds/cta/CTA/catalogue/dummy/DummyCatalogue.cpp",
+  "command": "/usr/bin/c++ -DSUPPORT_OCCI -DVERSION_API=\\\"5-12639709git078702b7\\\" -Dctacatalogue_EXPORTS -I/builds/cta/CTA -I/builds/cta/CTA/build_rpm -I/usr/include/oracle/23/client64 -fPIC -pedantic -Wall -Wextra -Werror -Wno-unused-parameter -fstack-protector-all -std=c++20 -Wshadow -g -fPIC -o CMakeFiles/ctacatalogue.dir/dummy/DummyCatalogue.cpp.o -c /builds/cta/CTA/catalogue/dummy/DummyCatalogue.cpp",
   "file": "/builds/cta/CTA/catalogue/dummy/DummyCatalogue.cpp",
   "output": "catalogue/CMakeFiles/ctacatalogue.dir/dummy/DummyCatalogue.cpp.o"
 },
 {
   "directory": "/builds/cta/CTA/build_rpm/catalogue",
-  "command": "/usr/bin/c++ -DSUPPORT_OCCI -DVERSION_API=\\\"5-12639388gitc44adf3f\\\" -Dctacatalogue_EXPORTS -I/builds/cta/CTA -I/builds/cta/CTA/build_rpm -I/usr/include/oracle/23/client64 -fPIC -pedantic -Wall -Wextra -Werror -Wno-unused-parameter -fstack-protector-all -std=c++20 -Wshadow -g -fPIC -o CMakeFiles/ctacatalogue.dir/dummy/DummyDiskInstanceCatalogue.cpp.o -c /builds/cta/CTA/catalogue/dummy/DummyDiskInstanceCatalogue.cpp",
+  "command": "/usr/bin/c++ -DSUPPORT_OCCI -DVERSION_API=\\\"5-12639709git078702b7\\\" -Dctacatalogue_EXPORTS -I/builds/cta/CTA -I/builds/cta/CTA/build_rpm -I/usr/include/oracle/23/client64 -fPIC -pedantic -Wall -Wextra -Werror -Wno-unused-parameter -fstack-protector-all -std=c++20 -Wshadow -g -fPIC -o CMakeFiles/ctacatalogue.dir/dummy/DummyDiskInstanceCatalogue.cpp.o -c /builds/cta/CTA/catalogue/dummy/DummyDiskInstanceCatalogue.cpp",
   "file": "/builds/cta/CTA/catalogue/dummy/DummyDiskInstanceCatalogue.cpp",
   "output": "catalogue/CMakeFiles/ctacatalogue.dir/dummy/DummyDiskInstanceCatalogue.cpp.o"
 },
 {
   "directory": "/builds/cta/CTA/build_rpm/catalogue",
-  "command": "/usr/bin/c++ -DSUPPORT_OCCI -DVERSION_API=\\\"5-12639388gitc44adf3f\\\" -Dctacatalogue_EXPORTS -I/builds/cta/CTA -I/builds/cta/CTA/build_rpm -I/usr/include/oracle/23/client64 -fPIC -pedantic -Wall -Wextra -Werror -Wno-unused-parameter -fstack-protector-all -std=c++20 -Wshadow -g -fPIC -o CMakeFiles/ctacatalogue.dir/dummy/DummyDiskInstanceSpaceCatalogue.cpp.o -c /builds/cta/CTA/catalogue/dummy/DummyDiskInstanceSpaceCatalogue.cpp",
+  "command": "/usr/bin/c++ -DSUPPORT_OCCI -DVERSION_API=\\\"5-12639709git078702b7\\\" -Dctacatalogue_EXPORTS -I/builds/cta/CTA -I/builds/cta/CTA/build_rpm -I/usr/include/oracle/23/client64 -fPIC -pedantic -Wall -Wextra -Werror -Wno-unused-parameter -fstack-protector-all -std=c++20 -Wshadow -g -fPIC -o CMakeFiles/ctacatalogue.dir/dummy/DummyDiskInstanceSpaceCatalogue.cpp.o -c /builds/cta/CTA/catalogue/dummy/DummyDiskInstanceSpaceCatalogue.cpp",
   "file": "/builds/cta/CTA/catalogue/dummy/DummyDiskInstanceSpaceCatalogue.cpp",
   "output": "catalogue/CMakeFiles/ctacatalogue.dir/dummy/DummyDiskInstanceSpaceCatalogue.cpp.o"
 },
 {
   "directory": "/builds/cta/CTA/build_rpm/catalogue",
-  "command": "/usr/bin/c++ -DSUPPORT_OCCI -DVERSION_API=\\\"5-12639388gitc44adf3f\\\" -Dctacatalogue_EXPORTS -I/builds/cta/CTA -I/builds/cta/CTA/build_rpm -I/usr/include/oracle/23/client64 -fPIC -pedantic -Wall -Wextra -Werror -Wno-unused-parameter -fstack-protector-all -std=c++20 -Wshadow -g -fPIC -o CMakeFiles/ctacatalogue.dir/dummy/DummyDiskSystemCatalogue.cpp.o -c /builds/cta/CTA/catalogue/dummy/DummyDiskSystemCatalogue.cpp",
+  "command": "/usr/bin/c++ -DSUPPORT_OCCI -DVERSION_API=\\\"5-12639709git078702b7\\\" -Dctacatalogue_EXPORTS -I/builds/cta/CTA -I/builds/cta/CTA/build_rpm -I/usr/include/oracle/23/client64 -fPIC -pedantic -Wall -Wextra -Werror -Wno-unused-parameter -fstack-protector-all -std=c++20 -Wshadow -g -fPIC -o CMakeFiles/ctacatalogue.dir/dummy/DummyDiskSystemCatalogue.cpp.o -c /builds/cta/CTA/catalogue/dummy/DummyDiskSystemCatalogue.cpp",
   "file": "/builds/cta/CTA/catalogue/dummy/DummyDiskSystemCatalogue.cpp",
   "output": "catalogue/CMakeFiles/ctacatalogue.dir/dummy/DummyDiskSystemCatalogue.cpp.o"
 },
 {
   "directory": "/builds/cta/CTA/build_rpm/catalogue",
-  "command": "/usr/bin/c++ -DSUPPORT_OCCI -DVERSION_API=\\\"5-12639388gitc44adf3f\\\" -Dctacatalogue_EXPORTS -I/builds/cta/CTA -I/builds/cta/CTA/build_rpm -I/usr/include/oracle/23/client64 -fPIC -pedantic -Wall -Wextra -Werror -Wno-unused-parameter -fstack-protector-all -std=c++20 -Wshadow -g -fPIC -o CMakeFiles/ctacatalogue.dir/dummy/DummyDriveConfigCatalogue.cpp.o -c /builds/cta/CTA/catalogue/dummy/DummyDriveConfigCatalogue.cpp",
+  "command": "/usr/bin/c++ -DSUPPORT_OCCI -DVERSION_API=\\\"5-12639709git078702b7\\\" -Dctacatalogue_EXPORTS -I/builds/cta/CTA -I/builds/cta/CTA/build_rpm -I/usr/include/oracle/23/client64 -fPIC -pedantic -Wall -Wextra -Werror -Wno-unused-parameter -fstack-protector-all -std=c++20 -Wshadow -g -fPIC -o CMakeFiles/ctacatalogue.dir/dummy/DummyDriveConfigCatalogue.cpp.o -c /builds/cta/CTA/catalogue/dummy/DummyDriveConfigCatalogue.cpp",
   "file": "/builds/cta/CTA/catalogue/dummy/DummyDriveConfigCatalogue.cpp",
   "output": "catalogue/CMakeFiles/ctacatalogue.dir/dummy/DummyDriveConfigCatalogue.cpp.o"
 },
 {
   "directory": "/builds/cta/CTA/build_rpm/catalogue",
-  "command": "/usr/bin/c++ -DSUPPORT_OCCI -DVERSION_API=\\\"5-12639388gitc44adf3f\\\" -Dctacatalogue_EXPORTS -I/builds/cta/CTA -I/builds/cta/CTA/build_rpm -I/usr/include/oracle/23/client64 -fPIC -pedantic -Wall -Wextra -Werror -Wno-unused-parameter -fstack-protector-all -std=c++20 -Wshadow -g -fPIC -o CMakeFiles/ctacatalogue.dir/dummy/DummyDriveStateCatalogue.cpp.o -c /builds/cta/CTA/catalogue/dummy/DummyDriveStateCatalogue.cpp",
+  "command": "/usr/bin/c++ -DSUPPORT_OCCI -DVERSION_API=\\\"5-12639709git078702b7\\\" -Dctacatalogue_EXPORTS -I/builds/cta/CTA -I/builds/cta/CTA/build_rpm -I/usr/include/oracle/23/client64 -fPIC -pedantic -Wall -Wextra -Werror -Wno-unused-parameter -fstack-protector-all -std=c++20 -Wshadow -g -fPIC -o CMakeFiles/ctacatalogue.dir/dummy/DummyDriveStateCatalogue.cpp.o -c /builds/cta/CTA/catalogue/dummy/DummyDriveStateCatalogue.cpp",
   "file": "/builds/cta/CTA/catalogue/dummy/DummyDriveStateCatalogue.cpp",
   "output": "catalogue/CMakeFiles/ctacatalogue.dir/dummy/DummyDriveStateCatalogue.cpp.o"
 },
 {
   "directory": "/builds/cta/CTA/build_rpm/catalogue",
-  "command": "/usr/bin/c++ -DSUPPORT_OCCI -DVERSION_API=\\\"5-12639388gitc44adf3f\\\" -Dctacatalogue_EXPORTS -I/builds/cta/CTA -I/builds/cta/CTA/build_rpm -I/usr/include/oracle/23/client64 -fPIC -pedantic -Wall -Wextra -Werror -Wno-unused-parameter -fstack-protector-all -std=c++20 -Wshadow -g -fPIC -o CMakeFiles/ctacatalogue.dir/dummy/DummyFileRecycleLogCatalogue.cpp.o -c /builds/cta/CTA/catalogue/dummy/DummyFileRecycleLogCatalogue.cpp",
+  "command": "/usr/bin/c++ -DSUPPORT_OCCI -DVERSION_API=\\\"5-12639709git078702b7\\\" -Dctacatalogue_EXPORTS -I/builds/cta/CTA -I/builds/cta/CTA/build_rpm -I/usr/include/oracle/23/client64 -fPIC -pedantic -Wall -Wextra -Werror -Wno-unused-parameter -fstack-protector-all -std=c++20 -Wshadow -g -fPIC -o CMakeFiles/ctacatalogue.dir/dummy/DummyFileRecycleLogCatalogue.cpp.o -c /builds/cta/CTA/catalogue/dummy/DummyFileRecycleLogCatalogue.cpp",
   "file": "/builds/cta/CTA/catalogue/dummy/DummyFileRecycleLogCatalogue.cpp",
   "output": "catalogue/CMakeFiles/ctacatalogue.dir/dummy/DummyFileRecycleLogCatalogue.cpp.o"
 },
 {
   "directory": "/builds/cta/CTA/build_rpm/catalogue",
-  "command": "/usr/bin/c++ -DSUPPORT_OCCI -DVERSION_API=\\\"5-12639388gitc44adf3f\\\" -Dctacatalogue_EXPORTS -I/builds/cta/CTA -I/builds/cta/CTA/build_rpm -I/usr/include/oracle/23/client64 -fPIC -pedantic -Wall -Wextra -Werror -Wno-unused-parameter -fstack-protector-all -std=c++20 -Wshadow -g -fPIC -o CMakeFiles/ctacatalogue.dir/dummy/DummyLogicalLibraryCatalogue.cpp.o -c /builds/cta/CTA/catalogue/dummy/DummyLogicalLibraryCatalogue.cpp",
+  "command": "/usr/bin/c++ -DSUPPORT_OCCI -DVERSION_API=\\\"5-12639709git078702b7\\\" -Dctacatalogue_EXPORTS -I/builds/cta/CTA -I/builds/cta/CTA/build_rpm -I/usr/include/oracle/23/client64 -fPIC -pedantic -Wall -Wextra -Werror -Wno-unused-parameter -fstack-protector-all -std=c++20 -Wshadow -g -fPIC -o CMakeFiles/ctacatalogue.dir/dummy/DummyLogicalLibraryCatalogue.cpp.o -c /builds/cta/CTA/catalogue/dummy/DummyLogicalLibraryCatalogue.cpp",
   "file": "/builds/cta/CTA/catalogue/dummy/DummyLogicalLibraryCatalogue.cpp",
   "output": "catalogue/CMakeFiles/ctacatalogue.dir/dummy/DummyLogicalLibraryCatalogue.cpp.o"
 },
 {
   "directory": "/builds/cta/CTA/build_rpm/catalogue",
-  "command": "/usr/bin/c++ -DSUPPORT_OCCI -DVERSION_API=\\\"5-12639388gitc44adf3f\\\" -Dctacatalogue_EXPORTS -I/builds/cta/CTA -I/builds/cta/CTA/build_rpm -I/usr/include/oracle/23/client64 -fPIC -pedantic -Wall -Wextra -Werror -Wno-unused-parameter -fstack-protector-all -std=c++20 -Wshadow -g -fPIC -o CMakeFiles/ctacatalogue.dir/dummy/DummyMediaTypeCatalogue.cpp.o -c /builds/cta/CTA/catalogue/dummy/DummyMediaTypeCatalogue.cpp",
+  "command": "/usr/bin/c++ -DSUPPORT_OCCI -DVERSION_API=\\\"5-12639709git078702b7\\\" -Dctacatalogue_EXPORTS -I/builds/cta/CTA -I/builds/cta/CTA/build_rpm -I/usr/include/oracle/23/client64 -fPIC -pedantic -Wall -Wextra -Werror -Wno-unused-parameter -fstack-protector-all -std=c++20 -Wshadow -g -fPIC -o CMakeFiles/ctacatalogue.dir/dummy/DummyMediaTypeCatalogue.cpp.o -c /builds/cta/CTA/catalogue/dummy/DummyMediaTypeCatalogue.cpp",
   "file": "/builds/cta/CTA/catalogue/dummy/DummyMediaTypeCatalogue.cpp",
   "output": "catalogue/CMakeFiles/ctacatalogue.dir/dummy/DummyMediaTypeCatalogue.cpp.o"
 },
 {
   "directory": "/builds/cta/CTA/build_rpm/catalogue",
-  "command": "/usr/bin/c++ -DSUPPORT_OCCI -DVERSION_API=\\\"5-12639388gitc44adf3f\\\" -Dctacatalogue_EXPORTS -I/builds/cta/CTA -I/builds/cta/CTA/build_rpm -I/usr/include/oracle/23/client64 -fPIC -pedantic -Wall -Wextra -Werror -Wno-unused-parameter -fstack-protector-all -std=c++20 -Wshadow -g -fPIC -o CMakeFiles/ctacatalogue.dir/dummy/DummyMountPolicyCatalogue.cpp.o -c /builds/cta/CTA/catalogue/dummy/DummyMountPolicyCatalogue.cpp",
+  "command": "/usr/bin/c++ -DSUPPORT_OCCI -DVERSION_API=\\\"5-12639709git078702b7\\\" -Dctacatalogue_EXPORTS -I/builds/cta/CTA -I/builds/cta/CTA/build_rpm -I/usr/include/oracle/23/client64 -fPIC -pedantic -Wall -Wextra -Werror -Wno-unused-parameter -fstack-protector-all -std=c++20 -Wshadow -g -fPIC -o CMakeFiles/ctacatalogue.dir/dummy/DummyMountPolicyCatalogue.cpp.o -c /builds/cta/CTA/catalogue/dummy/DummyMountPolicyCatalogue.cpp",
   "file": "/builds/cta/CTA/catalogue/dummy/DummyMountPolicyCatalogue.cpp",
   "output": "catalogue/CMakeFiles/ctacatalogue.dir/dummy/DummyMountPolicyCatalogue.cpp.o"
 },
 {
   "directory": "/builds/cta/CTA/build_rpm/catalogue",
-  "command": "/usr/bin/c++ -DSUPPORT_OCCI -DVERSION_API=\\\"5-12639388gitc44adf3f\\\" -Dctacatalogue_EXPORTS -I/builds/cta/CTA -I/builds/cta/CTA/build_rpm -I/usr/include/oracle/23/client64 -fPIC -pedantic -Wall -Wextra -Werror -Wno-unused-parameter -fstack-protector-all -std=c++20 -Wshadow -g -fPIC -o CMakeFiles/ctacatalogue.dir/dummy/DummyRequesterActivityMountRuleCatalogue.cpp.o -c /builds/cta/CTA/catalogue/dummy/DummyRequesterActivityMountRuleCatalogue.cpp",
+  "command": "/usr/bin/c++ -DSUPPORT_OCCI -DVERSION_API=\\\"5-12639709git078702b7\\\" -Dctacatalogue_EXPORTS -I/builds/cta/CTA -I/builds/cta/CTA/build_rpm -I/usr/include/oracle/23/client64 -fPIC -pedantic -Wall -Wextra -Werror -Wno-unused-parameter -fstack-protector-all -std=c++20 -Wshadow -g -fPIC -o CMakeFiles/ctacatalogue.dir/dummy/DummyRequesterActivityMountRuleCatalogue.cpp.o -c /builds/cta/CTA/catalogue/dummy/DummyRequesterActivityMountRuleCatalogue.cpp",
   "file": "/builds/cta/CTA/catalogue/dummy/DummyRequesterActivityMountRuleCatalogue.cpp",
   "output": "catalogue/CMakeFiles/ctacatalogue.dir/dummy/DummyRequesterActivityMountRuleCatalogue.cpp.o"
 },
 {
   "directory": "/builds/cta/CTA/build_rpm/catalogue",
-  "command": "/usr/bin/c++ -DSUPPORT_OCCI -DVERSION_API=\\\"5-12639388gitc44adf3f\\\" -Dctacatalogue_EXPORTS -I/builds/cta/CTA -I/builds/cta/CTA/build_rpm -I/usr/include/oracle/23/client64 -fPIC -pedantic -Wall -Wextra -Werror -Wno-unused-parameter -fstack-protector-all -std=c++20 -Wshadow -g -fPIC -o CMakeFiles/ctacatalogue.dir/dummy/DummyRequesterGroupMountRuleCatalogue.cpp.o -c /builds/cta/CTA/catalogue/dummy/DummyRequesterGroupMountRuleCatalogue.cpp",
+  "command": "/usr/bin/c++ -DSUPPORT_OCCI -DVERSION_API=\\\"5-12639709git078702b7\\\" -Dctacatalogue_EXPORTS -I/builds/cta/CTA -I/builds/cta/CTA/build_rpm -I/usr/include/oracle/23/client64 -fPIC -pedantic -Wall -Wextra -Werror -Wno-unused-parameter -fstack-protector-all -std=c++20 -Wshadow -g -fPIC -o CMakeFiles/ctacatalogue.dir/dummy/DummyRequesterGroupMountRuleCatalogue.cpp.o -c /builds/cta/CTA/catalogue/dummy/DummyRequesterGroupMountRuleCatalogue.cpp",
   "file": "/builds/cta/CTA/catalogue/dummy/DummyRequesterGroupMountRuleCatalogue.cpp",
   "output": "catalogue/CMakeFiles/ctacatalogue.dir/dummy/DummyRequesterGroupMountRuleCatalogue.cpp.o"
 },
 {
   "directory": "/builds/cta/CTA/build_rpm/catalogue",
-  "command": "/usr/bin/c++ -DSUPPORT_OCCI -DVERSION_API=\\\"5-12639388gitc44adf3f\\\" -Dctacatalogue_EXPORTS -I/builds/cta/CTA -I/builds/cta/CTA/build_rpm -I/usr/include/oracle/23/client64 -fPIC -pedantic -Wall -Wextra -Werror -Wno-unused-parameter -fstack-protector-all -std=c++20 -Wshadow -g -fPIC -o CMakeFiles/ctacatalogue.dir/dummy/DummyRequesterMountRuleCatalogue.cpp.o -c /builds/cta/CTA/catalogue/dummy/DummyRequesterMountRuleCatalogue.cpp",
+  "command": "/usr/bin/c++ -DSUPPORT_OCCI -DVERSION_API=\\\"5-12639709git078702b7\\\" -Dctacatalogue_EXPORTS -I/builds/cta/CTA -I/builds/cta/CTA/build_rpm -I/usr/include/oracle/23/client64 -fPIC -pedantic -Wall -Wextra -Werror -Wno-unused-parameter -fstack-protector-all -std=c++20 -Wshadow -g -fPIC -o CMakeFiles/ctacatalogue.dir/dummy/DummyRequesterMountRuleCatalogue.cpp.o -c /builds/cta/CTA/catalogue/dummy/DummyRequesterMountRuleCatalogue.cpp",
   "file": "/builds/cta/CTA/catalogue/dummy/DummyRequesterMountRuleCatalogue.cpp",
   "output": "catalogue/CMakeFiles/ctacatalogue.dir/dummy/DummyRequesterMountRuleCatalogue.cpp.o"
 },
 {
   "directory": "/builds/cta/CTA/build_rpm/catalogue",
-  "command": "/usr/bin/c++ -DSUPPORT_OCCI -DVERSION_API=\\\"5-12639388gitc44adf3f\\\" -Dctacatalogue_EXPORTS -I/builds/cta/CTA -I/builds/cta/CTA/build_rpm -I/usr/include/oracle/23/client64 -fPIC -pedantic -Wall -Wextra -Werror -Wno-unused-parameter -fstack-protector-all -std=c++20 -Wshadow -g -fPIC -o CMakeFiles/ctacatalogue.dir/dummy/DummySchemaCatalogue.cpp.o -c /builds/cta/CTA/catalogue/dummy/DummySchemaCatalogue.cpp",
+  "command": "/usr/bin/c++ -DSUPPORT_OCCI -DVERSION_API=\\\"5-12639709git078702b7\\\" -Dctacatalogue_EXPORTS -I/builds/cta/CTA -I/builds/cta/CTA/build_rpm -I/usr/include/oracle/23/client64 -fPIC -pedantic -Wall -Wextra -Werror -Wno-unused-parameter -fstack-protector-all -std=c++20 -Wshadow -g -fPIC -o CMakeFiles/ctacatalogue.dir/dummy/DummySchemaCatalogue.cpp.o -c /builds/cta/CTA/catalogue/dummy/DummySchemaCatalogue.cpp",
   "file": "/builds/cta/CTA/catalogue/dummy/DummySchemaCatalogue.cpp",
   "output": "catalogue/CMakeFiles/ctacatalogue.dir/dummy/DummySchemaCatalogue.cpp.o"
 },
 {
   "directory": "/builds/cta/CTA/build_rpm/catalogue",
-  "command": "/usr/bin/c++ -DSUPPORT_OCCI -DVERSION_API=\\\"5-12639388gitc44adf3f\\\" -Dctacatalogue_EXPORTS -I/builds/cta/CTA -I/builds/cta/CTA/build_rpm -I/usr/include/oracle/23/client64 -fPIC -pedantic -Wall -Wextra -Werror -Wno-unused-parameter -fstack-protector-all -std=c++20 -Wshadow -g -fPIC -o CMakeFiles/ctacatalogue.dir/dummy/DummyStorageClassCatalogue.cpp.o -c /builds/cta/CTA/catalogue/dummy/DummyStorageClassCatalogue.cpp",
+  "command": "/usr/bin/c++ -DSUPPORT_OCCI -DVERSION_API=\\\"5-12639709git078702b7\\\" -Dctacatalogue_EXPORTS -I/builds/cta/CTA -I/builds/cta/CTA/build_rpm -I/usr/include/oracle/23/client64 -fPIC -pedantic -Wall -Wextra -Werror -Wno-unused-parameter -fstack-protector-all -std=c++20 -Wshadow -g -fPIC -o CMakeFiles/ctacatalogue.dir/dummy/DummyStorageClassCatalogue.cpp.o -c /builds/cta/CTA/catalogue/dummy/DummyStorageClassCatalogue.cpp",
   "file": "/builds/cta/CTA/catalogue/dummy/DummyStorageClassCatalogue.cpp",
   "output": "catalogue/CMakeFiles/ctacatalogue.dir/dummy/DummyStorageClassCatalogue.cpp.o"
 },
 {
   "directory": "/builds/cta/CTA/build_rpm/catalogue",
-  "command": "/usr/bin/c++ -DSUPPORT_OCCI -DVERSION_API=\\\"5-12639388gitc44adf3f\\\" -Dctacatalogue_EXPORTS -I/builds/cta/CTA -I/builds/cta/CTA/build_rpm -I/usr/include/oracle/23/client64 -fPIC -pedantic -Wall -Wextra -Werror -Wno-unused-parameter -fstack-protector-all -std=c++20 -Wshadow -g -fPIC -o CMakeFiles/ctacatalogue.dir/dummy/DummyTapeCatalogue.cpp.o -c /builds/cta/CTA/catalogue/dummy/DummyTapeCatalogue.cpp",
+  "command": "/usr/bin/c++ -DSUPPORT_OCCI -DVERSION_API=\\\"5-12639709git078702b7\\\" -Dctacatalogue_EXPORTS -I/builds/cta/CTA -I/builds/cta/CTA/build_rpm -I/usr/include/oracle/23/client64 -fPIC -pedantic -Wall -Wextra -Werror -Wno-unused-parameter -fstack-protector-all -std=c++20 -Wshadow -g -fPIC -o CMakeFiles/ctacatalogue.dir/dummy/DummyTapeCatalogue.cpp.o -c /builds/cta/CTA/catalogue/dummy/DummyTapeCatalogue.cpp",
   "file": "/builds/cta/CTA/catalogue/dummy/DummyTapeCatalogue.cpp",
   "output": "catalogue/CMakeFiles/ctacatalogue.dir/dummy/DummyTapeCatalogue.cpp.o"
 },
 {
   "directory": "/builds/cta/CTA/build_rpm/catalogue",
-  "command": "/usr/bin/c++ -DSUPPORT_OCCI -DVERSION_API=\\\"5-12639388gitc44adf3f\\\" -Dctacatalogue_EXPORTS -I/builds/cta/CTA -I/builds/cta/CTA/build_rpm -I/usr/include/oracle/23/client64 -fPIC -pedantic -Wall -Wextra -Werror -Wno-unused-parameter -fstack-protector-all -std=c++20 -Wshadow -g -fPIC -o CMakeFiles/ctacatalogue.dir/dummy/DummyTapeFileCatalogue.cpp.o -c /builds/cta/CTA/catalogue/dummy/DummyTapeFileCatalogue.cpp",
+  "command": "/usr/bin/c++ -DSUPPORT_OCCI -DVERSION_API=\\\"5-12639709git078702b7\\\" -Dctacatalogue_EXPORTS -I/builds/cta/CTA -I/builds/cta/CTA/build_rpm -I/usr/include/oracle/23/client64 -fPIC -pedantic -Wall -Wextra -Werror -Wno-unused-parameter -fstack-protector-all -std=c++20 -Wshadow -g -fPIC -o CMakeFiles/ctacatalogue.dir/dummy/DummyTapeFileCatalogue.cpp.o -c /builds/cta/CTA/catalogue/dummy/DummyTapeFileCatalogue.cpp",
   "file": "/builds/cta/CTA/catalogue/dummy/DummyTapeFileCatalogue.cpp",
   "output": "catalogue/CMakeFiles/ctacatalogue.dir/dummy/DummyTapeFileCatalogue.cpp.o"
 },
 {
   "directory": "/builds/cta/CTA/build_rpm/catalogue",
-  "command": "/usr/bin/c++ -DSUPPORT_OCCI -DVERSION_API=\\\"5-12639388gitc44adf3f\\\" -Dctacatalogue_EXPORTS -I/builds/cta/CTA -I/builds/cta/CTA/build_rpm -I/usr/include/oracle/23/client64 -fPIC -pedantic -Wall -Wextra -Werror -Wno-unused-parameter -fstack-protector-all -std=c++20 -Wshadow -g -fPIC -o CMakeFiles/ctacatalogue.dir/dummy/DummyTapePoolCatalogue.cpp.o -c /builds/cta/CTA/catalogue/dummy/DummyTapePoolCatalogue.cpp",
+  "command": "/usr/bin/c++ -DSUPPORT_OCCI -DVERSION_API=\\\"5-12639709git078702b7\\\" -Dctacatalogue_EXPORTS -I/builds/cta/CTA -I/builds/cta/CTA/build_rpm -I/usr/include/oracle/23/client64 -fPIC -pedantic -Wall -Wextra -Werror -Wno-unused-parameter -fstack-protector-all -std=c++20 -Wshadow -g -fPIC -o CMakeFiles/ctacatalogue.dir/dummy/DummyTapePoolCatalogue.cpp.o -c /builds/cta/CTA/catalogue/dummy/DummyTapePoolCatalogue.cpp",
   "file": "/builds/cta/CTA/catalogue/dummy/DummyTapePoolCatalogue.cpp",
   "output": "catalogue/CMakeFiles/ctacatalogue.dir/dummy/DummyTapePoolCatalogue.cpp.o"
 },
 {
   "directory": "/builds/cta/CTA/build_rpm/catalogue",
-  "command": "/usr/bin/c++ -DSUPPORT_OCCI -DVERSION_API=\\\"5-12639388gitc44adf3f\\\" -Dctacatalogue_EXPORTS -I/builds/cta/CTA -I/builds/cta/CTA/build_rpm -I/usr/include/oracle/23/client64 -fPIC -pedantic -Wall -Wextra -Werror -Wno-unused-parameter -fstack-protector-all -std=c++20 -Wshadow -g -fPIC -o CMakeFiles/ctacatalogue.dir/dummy/DummyVirtualOrganizationCatalogue.cpp.o -c /builds/cta/CTA/catalogue/dummy/DummyVirtualOrganizationCatalogue.cpp",
+  "command": "/usr/bin/c++ -DSUPPORT_OCCI -DVERSION_API=\\\"5-12639709git078702b7\\\" -Dctacatalogue_EXPORTS -I/builds/cta/CTA -I/builds/cta/CTA/build_rpm -I/usr/include/oracle/23/client64 -fPIC -pedantic -Wall -Wextra -Werror -Wno-unused-parameter -fstack-protector-all -std=c++20 -Wshadow -g -fPIC -o CMakeFiles/ctacatalogue.dir/dummy/DummyVirtualOrganizationCatalogue.cpp.o -c /builds/cta/CTA/catalogue/dummy/DummyVirtualOrganizationCatalogue.cpp",
   "file": "/builds/cta/CTA/catalogue/dummy/DummyVirtualOrganizationCatalogue.cpp",
   "output": "catalogue/CMakeFiles/ctacatalogue.dir/dummy/DummyVirtualOrganizationCatalogue.cpp.o"
 },
 {
   "directory": "/builds/cta/CTA/build_rpm/catalogue",
-  "command": "/usr/bin/c++ -DSUPPORT_OCCI -DVERSION_API=\\\"5-12639388gitc44adf3f\\\" -Dctacatalogue_EXPORTS -I/builds/cta/CTA -I/builds/cta/CTA/build_rpm -I/usr/include/oracle/23/client64 -fPIC -pedantic -Wall -Wextra -Werror -Wno-unused-parameter -fstack-protector-all -std=c++20 -Wshadow -g -fPIC -o CMakeFiles/ctacatalogue.dir/rdbms/RdbmsAdminUserCatalogue.cpp.o -c /builds/cta/CTA/catalogue/rdbms/RdbmsAdminUserCatalogue.cpp",
+  "command": "/usr/bin/c++ -DSUPPORT_OCCI -DVERSION_API=\\\"5-12639709git078702b7\\\" -Dctacatalogue_EXPORTS -I/builds/cta/CTA -I/builds/cta/CTA/build_rpm -I/usr/include/oracle/23/client64 -fPIC -pedantic -Wall -Wextra -Werror -Wno-unused-parameter -fstack-protector-all -std=c++20 -Wshadow -g -fPIC -o CMakeFiles/ctacatalogue.dir/rdbms/RdbmsAdminUserCatalogue.cpp.o -c /builds/cta/CTA/catalogue/rdbms/RdbmsAdminUserCatalogue.cpp",
   "file": "/builds/cta/CTA/catalogue/rdbms/RdbmsAdminUserCatalogue.cpp",
   "output": "catalogue/CMakeFiles/ctacatalogue.dir/rdbms/RdbmsAdminUserCatalogue.cpp.o"
 },
 {
   "directory": "/builds/cta/CTA/build_rpm/catalogue",
-  "command": "/usr/bin/c++ -DSUPPORT_OCCI -DVERSION_API=\\\"5-12639388gitc44adf3f\\\" -Dctacatalogue_EXPORTS -I/builds/cta/CTA -I/builds/cta/CTA/build_rpm -I/usr/include/oracle/23/client64 -fPIC -pedantic -Wall -Wextra -Werror -Wno-unused-parameter -fstack-protector-all -std=c++20 -Wshadow -g -fPIC -o CMakeFiles/ctacatalogue.dir/rdbms/RdbmsArchiveFileCatalogue.cpp.o -c /builds/cta/CTA/catalogue/rdbms/RdbmsArchiveFileCatalogue.cpp",
+  "command": "/usr/bin/c++ -DSUPPORT_OCCI -DVERSION_API=\\\"5-12639709git078702b7\\\" -Dctacatalogue_EXPORTS -I/builds/cta/CTA -I/builds/cta/CTA/build_rpm -I/usr/include/oracle/23/client64 -fPIC -pedantic -Wall -Wextra -Werror -Wno-unused-parameter -fstack-protector-all -std=c++20 -Wshadow -g -fPIC -o CMakeFiles/ctacatalogue.dir/rdbms/RdbmsArchiveFileCatalogue.cpp.o -c /builds/cta/CTA/catalogue/rdbms/RdbmsArchiveFileCatalogue.cpp",
   "file": "/builds/cta/CTA/catalogue/rdbms/RdbmsArchiveFileCatalogue.cpp",
   "output": "catalogue/CMakeFiles/ctacatalogue.dir/rdbms/RdbmsArchiveFileCatalogue.cpp.o"
 },
 {
   "directory": "/builds/cta/CTA/build_rpm/catalogue",
-  "command": "/usr/bin/c++ -DSUPPORT_OCCI -DVERSION_API=\\\"5-12639388gitc44adf3f\\\" -Dctacatalogue_EXPORTS -I/builds/cta/CTA -I/builds/cta/CTA/build_rpm -I/usr/include/oracle/23/client64 -fPIC -pedantic -Wall -Wextra -Werror -Wno-unused-parameter -fstack-protector-all -std=c++20 -Wshadow -g -fPIC -o CMakeFiles/ctacatalogue.dir/rdbms/RdbmsArchiveRouteCatalogue.cpp.o -c /builds/cta/CTA/catalogue/rdbms/RdbmsArchiveRouteCatalogue.cpp",
+  "command": "/usr/bin/c++ -DSUPPORT_OCCI -DVERSION_API=\\\"5-12639709git078702b7\\\" -Dctacatalogue_EXPORTS -I/builds/cta/CTA -I/builds/cta/CTA/build_rpm -I/usr/include/oracle/23/client64 -fPIC -pedantic -Wall -Wextra -Werror -Wno-unused-parameter -fstack-protector-all -std=c++20 -Wshadow -g -fPIC -o CMakeFiles/ctacatalogue.dir/rdbms/RdbmsArchiveRouteCatalogue.cpp.o -c /builds/cta/CTA/catalogue/rdbms/RdbmsArchiveRouteCatalogue.cpp",
   "file": "/builds/cta/CTA/catalogue/rdbms/RdbmsArchiveRouteCatalogue.cpp",
   "output": "catalogue/CMakeFiles/ctacatalogue.dir/rdbms/RdbmsArchiveRouteCatalogue.cpp.o"
 },
 {
   "directory": "/builds/cta/CTA/build_rpm/catalogue",
-  "command": "/usr/bin/c++ -DSUPPORT_OCCI -DVERSION_API=\\\"5-12639388gitc44adf3f\\\" -Dctacatalogue_EXPORTS -I/builds/cta/CTA -I/builds/cta/CTA/build_rpm -I/usr/include/oracle/23/client64 -fPIC -pedantic -Wall -Wextra -Werror -Wno-unused-parameter -fstack-protector-all -std=c++20 -Wshadow -g -fPIC -o CMakeFiles/ctacatalogue.dir/rdbms/RdbmsCatalogue.cpp.o -c /builds/cta/CTA/catalogue/rdbms/RdbmsCatalogue.cpp",
+  "command": "/usr/bin/c++ -DSUPPORT_OCCI -DVERSION_API=\\\"5-12639709git078702b7\\\" -Dctacatalogue_EXPORTS -I/builds/cta/CTA -I/builds/cta/CTA/build_rpm -I/usr/include/oracle/23/client64 -fPIC -pedantic -Wall -Wextra -Werror -Wno-unused-parameter -fstack-protector-all -std=c++20 -Wshadow -g -fPIC -o CMakeFiles/ctacatalogue.dir/rdbms/RdbmsCatalogue.cpp.o -c /builds/cta/CTA/catalogue/rdbms/RdbmsCatalogue.cpp",
   "file": "/builds/cta/CTA/catalogue/rdbms/RdbmsCatalogue.cpp",
   "output": "catalogue/CMakeFiles/ctacatalogue.dir/rdbms/RdbmsCatalogue.cpp.o"
 },
 {
   "directory": "/builds/cta/CTA/build_rpm/catalogue",
-  "command": "/usr/bin/c++ -DSUPPORT_OCCI -DVERSION_API=\\\"5-12639388gitc44adf3f\\\" -Dctacatalogue_EXPORTS -I/builds/cta/CTA -I/builds/cta/CTA/build_rpm -I/usr/include/oracle/23/client64 -fPIC -pedantic -Wall -Wextra -Werror -Wno-unused-parameter -fstack-protector-all -std=c++20 -Wshadow -g -fPIC -o CMakeFiles/ctacatalogue.dir/rdbms/RdbmsCatalogueGetArchiveFilesForRepackItor.cpp.o -c /builds/cta/CTA/catalogue/rdbms/RdbmsCatalogueGetArchiveFilesForRepackItor.cpp",
+  "command": "/usr/bin/c++ -DSUPPORT_OCCI -DVERSION_API=\\\"5-12639709git078702b7\\\" -Dctacatalogue_EXPORTS -I/builds/cta/CTA -I/builds/cta/CTA/build_rpm -I/usr/include/oracle/23/client64 -fPIC -pedantic -Wall -Wextra -Werror -Wno-unused-parameter -fstack-protector-all -std=c++20 -Wshadow -g -fPIC -o CMakeFiles/ctacatalogue.dir/rdbms/RdbmsCatalogueGetArchiveFilesForRepackItor.cpp.o -c /builds/cta/CTA/catalogue/rdbms/RdbmsCatalogueGetArchiveFilesForRepackItor.cpp",
   "file": "/builds/cta/CTA/catalogue/rdbms/RdbmsCatalogueGetArchiveFilesForRepackItor.cpp",
   "output": "catalogue/CMakeFiles/ctacatalogue.dir/rdbms/RdbmsCatalogueGetArchiveFilesForRepackItor.cpp.o"
 },
 {
   "directory": "/builds/cta/CTA/build_rpm/catalogue",
-  "command": "/usr/bin/c++ -DSUPPORT_OCCI -DVERSION_API=\\\"5-12639388gitc44adf3f\\\" -Dctacatalogue_EXPORTS -I/builds/cta/CTA -I/builds/cta/CTA/build_rpm -I/usr/include/oracle/23/client64 -fPIC -pedantic -Wall -Wextra -Werror -Wno-unused-parameter -fstack-protector-all -std=c++20 -Wshadow -g -fPIC -o CMakeFiles/ctacatalogue.dir/rdbms/RdbmsCatalogueGetArchiveFilesItor.cpp.o -c /builds/cta/CTA/catalogue/rdbms/RdbmsCatalogueGetArchiveFilesItor.cpp",
+  "command": "/usr/bin/c++ -DSUPPORT_OCCI -DVERSION_API=\\\"5-12639709git078702b7\\\" -Dctacatalogue_EXPORTS -I/builds/cta/CTA -I/builds/cta/CTA/build_rpm -I/usr/include/oracle/23/client64 -fPIC -pedantic -Wall -Wextra -Werror -Wno-unused-parameter -fstack-protector-all -std=c++20 -Wshadow -g -fPIC -o CMakeFiles/ctacatalogue.dir/rdbms/RdbmsCatalogueGetArchiveFilesItor.cpp.o -c /builds/cta/CTA/catalogue/rdbms/RdbmsCatalogueGetArchiveFilesItor.cpp",
   "file": "/builds/cta/CTA/catalogue/rdbms/RdbmsCatalogueGetArchiveFilesItor.cpp",
   "output": "catalogue/CMakeFiles/ctacatalogue.dir/rdbms/RdbmsCatalogueGetArchiveFilesItor.cpp.o"
 },
 {
   "directory": "/builds/cta/CTA/build_rpm/catalogue",
-  "command": "/usr/bin/c++ -DSUPPORT_OCCI -DVERSION_API=\\\"5-12639388gitc44adf3f\\\" -Dctacatalogue_EXPORTS -I/builds/cta/CTA -I/builds/cta/CTA/build_rpm -I/usr/include/oracle/23/client64 -fPIC -pedantic -Wall -Wextra -Werror -Wno-unused-parameter -fstack-protector-all -std=c++20 -Wshadow -g -fPIC -o CMakeFiles/ctacatalogue.dir/rdbms/RdbmsCatalogueGetFileRecycleLogItor.cpp.o -c /builds/cta/CTA/catalogue/rdbms/RdbmsCatalogueGetFileRecycleLogItor.cpp",
+  "command": "/usr/bin/c++ -DSUPPORT_OCCI -DVERSION_API=\\\"5-12639709git078702b7\\\" -Dctacatalogue_EXPORTS -I/builds/cta/CTA -I/builds/cta/CTA/build_rpm -I/usr/include/oracle/23/client64 -fPIC -pedantic -Wall -Wextra -Werror -Wno-unused-parameter -fstack-protector-all -std=c++20 -Wshadow -g -fPIC -o CMakeFiles/ctacatalogue.dir/rdbms/RdbmsCatalogueGetFileRecycleLogItor.cpp.o -c /builds/cta/CTA/catalogue/rdbms/RdbmsCatalogueGetFileRecycleLogItor.cpp",
   "file": "/builds/cta/CTA/catalogue/rdbms/RdbmsCatalogueGetFileRecycleLogItor.cpp",
   "output": "catalogue/CMakeFiles/ctacatalogue.dir/rdbms/RdbmsCatalogueGetFileRecycleLogItor.cpp.o"
 },
 {
   "directory": "/builds/cta/CTA/build_rpm/catalogue",
-  "command": "/usr/bin/c++ -DSUPPORT_OCCI -DVERSION_API=\\\"5-12639388gitc44adf3f\\\" -Dctacatalogue_EXPORTS -I/builds/cta/CTA -I/builds/cta/CTA/build_rpm -I/usr/include/oracle/23/client64 -fPIC -pedantic -Wall -Wextra -Werror -Wno-unused-parameter -fstack-protector-all -std=c++20 -Wshadow -g -fPIC -o CMakeFiles/ctacatalogue.dir/rdbms/RdbmsCatalogueTapeContentsItor.cpp.o -c /builds/cta/CTA/catalogue/rdbms/RdbmsCatalogueTapeContentsItor.cpp",
+  "command": "/usr/bin/c++ -DSUPPORT_OCCI -DVERSION_API=\\\"5-12639709git078702b7\\\" -Dctacatalogue_EXPORTS -I/builds/cta/CTA -I/builds/cta/CTA/build_rpm -I/usr/include/oracle/23/client64 -fPIC -pedantic -Wall -Wextra -Werror -Wno-unused-parameter -fstack-protector-all -std=c++20 -Wshadow -g -fPIC -o CMakeFiles/ctacatalogue.dir/rdbms/RdbmsCatalogueTapeContentsItor.cpp.o -c /builds/cta/CTA/catalogue/rdbms/RdbmsCatalogueTapeContentsItor.cpp",
   "file": "/builds/cta/CTA/catalogue/rdbms/RdbmsCatalogueTapeContentsItor.cpp",
   "output": "catalogue/CMakeFiles/ctacatalogue.dir/rdbms/RdbmsCatalogueTapeContentsItor.cpp.o"
 },
 {
   "directory": "/builds/cta/CTA/build_rpm/catalogue",
-  "command": "/usr/bin/c++ -DSUPPORT_OCCI -DVERSION_API=\\\"5-12639388gitc44adf3f\\\" -Dctacatalogue_EXPORTS -I/builds/cta/CTA -I/builds/cta/CTA/build_rpm -I/usr/include/oracle/23/client64 -fPIC -pedantic -Wall -Wextra -Werror -Wno-unused-parameter -fstack-protector-all -std=c++20 -Wshadow -g -fPIC -o CMakeFiles/ctacatalogue.dir/rdbms/RdbmsCatalogueUtils.cpp.o -c /builds/cta/CTA/catalogue/rdbms/RdbmsCatalogueUtils.cpp",
+  "command": "/usr/bin/c++ -DSUPPORT_OCCI -DVERSION_API=\\\"5-12639709git078702b7\\\" -Dctacatalogue_EXPORTS -I/builds/cta/CTA -I/builds/cta/CTA/build_rpm -I/usr/include/oracle/23/client64 -fPIC -pedantic -Wall -Wextra -Werror -Wno-unused-parameter -fstack-protector-all -std=c++20 -Wshadow -g -fPIC -o CMakeFiles/ctacatalogue.dir/rdbms/RdbmsCatalogueUtils.cpp.o -c /builds/cta/CTA/catalogue/rdbms/RdbmsCatalogueUtils.cpp",
   "file": "/builds/cta/CTA/catalogue/rdbms/RdbmsCatalogueUtils.cpp",
   "output": "catalogue/CMakeFiles/ctacatalogue.dir/rdbms/RdbmsCatalogueUtils.cpp.o"
 },
 {
   "directory": "/builds/cta/CTA/build_rpm/catalogue",
-  "command": "/usr/bin/c++ -DSUPPORT_OCCI -DVERSION_API=\\\"5-12639388gitc44adf3f\\\" -Dctacatalogue_EXPORTS -I/builds/cta/CTA -I/builds/cta/CTA/build_rpm -I/usr/include/oracle/23/client64 -fPIC -pedantic -Wall -Wextra -Werror -Wno-unused-parameter -fstack-protector-all -std=c++20 -Wshadow -g -fPIC -o CMakeFiles/ctacatalogue.dir/rdbms/RdbmsDiskInstanceCatalogue.cpp.o -c /builds/cta/CTA/catalogue/rdbms/RdbmsDiskInstanceCatalogue.cpp",
+  "command": "/usr/bin/c++ -DSUPPORT_OCCI -DVERSION_API=\\\"5-12639709git078702b7\\\" -Dctacatalogue_EXPORTS -I/builds/cta/CTA -I/builds/cta/CTA/build_rpm -I/usr/include/oracle/23/client64 -fPIC -pedantic -Wall -Wextra -Werror -Wno-unused-parameter -fstack-protector-all -std=c++20 -Wshadow -g -fPIC -o CMakeFiles/ctacatalogue.dir/rdbms/RdbmsDiskInstanceCatalogue.cpp.o -c /builds/cta/CTA/catalogue/rdbms/RdbmsDiskInstanceCatalogue.cpp",
   "file": "/builds/cta/CTA/catalogue/rdbms/RdbmsDiskInstanceCatalogue.cpp",
   "output": "catalogue/CMakeFiles/ctacatalogue.dir/rdbms/RdbmsDiskInstanceCatalogue.cpp.o"
 },
 {
   "directory": "/builds/cta/CTA/build_rpm/catalogue",
-  "command": "/usr/bin/c++ -DSUPPORT_OCCI -DVERSION_API=\\\"5-12639388gitc44adf3f\\\" -Dctacatalogue_EXPORTS -I/builds/cta/CTA -I/builds/cta/CTA/build_rpm -I/usr/include/oracle/23/client64 -fPIC -pedantic -Wall -Wextra -Werror -Wno-unused-parameter -fstack-protector-all -std=c++20 -Wshadow -g -fPIC -o CMakeFiles/ctacatalogue.dir/rdbms/RdbmsDiskInstanceSpaceCatalogue.cpp.o -c /builds/cta/CTA/catalogue/rdbms/RdbmsDiskInstanceSpaceCatalogue.cpp",
+  "command": "/usr/bin/c++ -DSUPPORT_OCCI -DVERSION_API=\\\"5-12639709git078702b7\\\" -Dctacatalogue_EXPORTS -I/builds/cta/CTA -I/builds/cta/CTA/build_rpm -I/usr/include/oracle/23/client64 -fPIC -pedantic -Wall -Wextra -Werror -Wno-unused-parameter -fstack-protector-all -std=c++20 -Wshadow -g -fPIC -o CMakeFiles/ctacatalogue.dir/rdbms/RdbmsDiskInstanceSpaceCatalogue.cpp.o -c /builds/cta/CTA/catalogue/rdbms/RdbmsDiskInstanceSpaceCatalogue.cpp",
   "file": "/builds/cta/CTA/catalogue/rdbms/RdbmsDiskInstanceSpaceCatalogue.cpp",
   "output": "catalogue/CMakeFiles/ctacatalogue.dir/rdbms/RdbmsDiskInstanceSpaceCatalogue.cpp.o"
 },
 {
   "directory": "/builds/cta/CTA/build_rpm/catalogue",
-  "command": "/usr/bin/c++ -DSUPPORT_OCCI -DVERSION_API=\\\"5-12639388gitc44adf3f\\\" -Dctacatalogue_EXPORTS -I/builds/cta/CTA -I/builds/cta/CTA/build_rpm -I/usr/include/oracle/23/client64 -fPIC -pedantic -Wall -Wextra -Werror -Wno-unused-parameter -fstack-protector-all -std=c++20 -Wshadow -g -fPIC -o CMakeFiles/ctacatalogue.dir/rdbms/RdbmsDiskSystemCatalogue.cpp.o -c /builds/cta/CTA/catalogue/rdbms/RdbmsDiskSystemCatalogue.cpp",
+  "command": "/usr/bin/c++ -DSUPPORT_OCCI -DVERSION_API=\\\"5-12639709git078702b7\\\" -Dctacatalogue_EXPORTS -I/builds/cta/CTA -I/builds/cta/CTA/build_rpm -I/usr/include/oracle/23/client64 -fPIC -pedantic -Wall -Wextra -Werror -Wno-unused-parameter -fstack-protector-all -std=c++20 -Wshadow -g -fPIC -o CMakeFiles/ctacatalogue.dir/rdbms/RdbmsDiskSystemCatalogue.cpp.o -c /builds/cta/CTA/catalogue/rdbms/RdbmsDiskSystemCatalogue.cpp",
   "file": "/builds/cta/CTA/catalogue/rdbms/RdbmsDiskSystemCatalogue.cpp",
   "output": "catalogue/CMakeFiles/ctacatalogue.dir/rdbms/RdbmsDiskSystemCatalogue.cpp.o"
 },
 {
   "directory": "/builds/cta/CTA/build_rpm/catalogue",
-  "command": "/usr/bin/c++ -DSUPPORT_OCCI -DVERSION_API=\\\"5-12639388gitc44adf3f\\\" -Dctacatalogue_EXPORTS -I/builds/cta/CTA -I/builds/cta/CTA/build_rpm -I/usr/include/oracle/23/client64 -fPIC -pedantic -Wall -Wextra -Werror -Wno-unused-parameter -fstack-protector-all -std=c++20 -Wshadow -g -fPIC -o CMakeFiles/ctacatalogue.dir/rdbms/RdbmsDriveConfigCatalogue.cpp.o -c /builds/cta/CTA/catalogue/rdbms/RdbmsDriveConfigCatalogue.cpp",
+  "command": "/usr/bin/c++ -DSUPPORT_OCCI -DVERSION_API=\\\"5-12639709git078702b7\\\" -Dctacatalogue_EXPORTS -I/builds/cta/CTA -I/builds/cta/CTA/build_rpm -I/usr/include/oracle/23/client64 -fPIC -pedantic -Wall -Wextra -Werror -Wno-unused-parameter -fstack-protector-all -std=c++20 -Wshadow -g -fPIC -o CMakeFiles/ctacatalogue.dir/rdbms/RdbmsDriveConfigCatalogue.cpp.o -c /builds/cta/CTA/catalogue/rdbms/RdbmsDriveConfigCatalogue.cpp",
   "file": "/builds/cta/CTA/catalogue/rdbms/RdbmsDriveConfigCatalogue.cpp",
   "output": "catalogue/CMakeFiles/ctacatalogue.dir/rdbms/RdbmsDriveConfigCatalogue.cpp.o"
 },
 {
   "directory": "/builds/cta/CTA/build_rpm/catalogue",
-  "command": "/usr/bin/c++ -DSUPPORT_OCCI -DVERSION_API=\\\"5-12639388gitc44adf3f\\\" -Dctacatalogue_EXPORTS -I/builds/cta/CTA -I/builds/cta/CTA/build_rpm -I/usr/include/oracle/23/client64 -fPIC -pedantic -Wall -Wextra -Werror -Wno-unused-parameter -fstack-protector-all -std=c++20 -Wshadow -g -fPIC -o CMakeFiles/ctacatalogue.dir/rdbms/RdbmsDriveStateCatalogue.cpp.o -c /builds/cta/CTA/catalogue/rdbms/RdbmsDriveStateCatalogue.cpp",
+  "command": "/usr/bin/c++ -DSUPPORT_OCCI -DVERSION_API=\\\"5-12639709git078702b7\\\" -Dctacatalogue_EXPORTS -I/builds/cta/CTA -I/builds/cta/CTA/build_rpm -I/usr/include/oracle/23/client64 -fPIC -pedantic -Wall -Wextra -Werror -Wno-unused-parameter -fstack-protector-all -std=c++20 -Wshadow -g -fPIC -o CMakeFiles/ctacatalogue.dir/rdbms/RdbmsDriveStateCatalogue.cpp.o -c /builds/cta/CTA/catalogue/rdbms/RdbmsDriveStateCatalogue.cpp",
   "file": "/builds/cta/CTA/catalogue/rdbms/RdbmsDriveStateCatalogue.cpp",
   "output": "catalogue/CMakeFiles/ctacatalogue.dir/rdbms/RdbmsDriveStateCatalogue.cpp.o"
 },
 {
   "directory": "/builds/cta/CTA/build_rpm/catalogue",
-  "command": "/usr/bin/c++ -DSUPPORT_OCCI -DVERSION_API=\\\"5-12639388gitc44adf3f\\\" -Dctacatalogue_EXPORTS -I/builds/cta/CTA -I/builds/cta/CTA/build_rpm -I/usr/include/oracle/23/client64 -fPIC -pedantic -Wall -Wextra -Werror -Wno-unused-parameter -fstack-protector-all -std=c++20 -Wshadow -g -fPIC -o CMakeFiles/ctacatalogue.dir/rdbms/RdbmsFileRecycleLogCatalogue.cpp.o -c /builds/cta/CTA/catalogue/rdbms/RdbmsFileRecycleLogCatalogue.cpp",
+  "command": "/usr/bin/c++ -DSUPPORT_OCCI -DVERSION_API=\\\"5-12639709git078702b7\\\" -Dctacatalogue_EXPORTS -I/builds/cta/CTA -I/builds/cta/CTA/build_rpm -I/usr/include/oracle/23/client64 -fPIC -pedantic -Wall -Wextra -Werror -Wno-unused-parameter -fstack-protector-all -std=c++20 -Wshadow -g -fPIC -o CMakeFiles/ctacatalogue.dir/rdbms/RdbmsFileRecycleLogCatalogue.cpp.o -c /builds/cta/CTA/catalogue/rdbms/RdbmsFileRecycleLogCatalogue.cpp",
   "file": "/builds/cta/CTA/catalogue/rdbms/RdbmsFileRecycleLogCatalogue.cpp",
   "output": "catalogue/CMakeFiles/ctacatalogue.dir/rdbms/RdbmsFileRecycleLogCatalogue.cpp.o"
 },
 {
   "directory": "/builds/cta/CTA/build_rpm/catalogue",
-  "command": "/usr/bin/c++ -DSUPPORT_OCCI -DVERSION_API=\\\"5-12639388gitc44adf3f\\\" -Dctacatalogue_EXPORTS -I/builds/cta/CTA -I/builds/cta/CTA/build_rpm -I/usr/include/oracle/23/client64 -fPIC -pedantic -Wall -Wextra -Werror -Wno-unused-parameter -fstack-protector-all -std=c++20 -Wshadow -g -fPIC -o CMakeFiles/ctacatalogue.dir/rdbms/RdbmsLogicalLibraryCatalogue.cpp.o -c /builds/cta/CTA/catalogue/rdbms/RdbmsLogicalLibraryCatalogue.cpp",
+  "command": "/usr/bin/c++ -DSUPPORT_OCCI -DVERSION_API=\\\"5-12639709git078702b7\\\" -Dctacatalogue_EXPORTS -I/builds/cta/CTA -I/builds/cta/CTA/build_rpm -I/usr/include/oracle/23/client64 -fPIC -pedantic -Wall -Wextra -Werror -Wno-unused-parameter -fstack-protector-all -std=c++20 -Wshadow -g -fPIC -o CMakeFiles/ctacatalogue.dir/rdbms/RdbmsLogicalLibraryCatalogue.cpp.o -c /builds/cta/CTA/catalogue/rdbms/RdbmsLogicalLibraryCatalogue.cpp",
   "file": "/builds/cta/CTA/catalogue/rdbms/RdbmsLogicalLibraryCatalogue.cpp",
   "output": "catalogue/CMakeFiles/ctacatalogue.dir/rdbms/RdbmsLogicalLibraryCatalogue.cpp.o"
 },
 {
   "directory": "/builds/cta/CTA/build_rpm/catalogue",
-  "command": "/usr/bin/c++ -DSUPPORT_OCCI -DVERSION_API=\\\"5-12639388gitc44adf3f\\\" -Dctacatalogue_EXPORTS -I/builds/cta/CTA -I/builds/cta/CTA/build_rpm -I/usr/include/oracle/23/client64 -fPIC -pedantic -Wall -Wextra -Werror -Wno-unused-parameter -fstack-protector-all -std=c++20 -Wshadow -g -fPIC -o CMakeFiles/ctacatalogue.dir/rdbms/RdbmsMediaTypeCatalogue.cpp.o -c /builds/cta/CTA/catalogue/rdbms/RdbmsMediaTypeCatalogue.cpp",
+  "command": "/usr/bin/c++ -DSUPPORT_OCCI -DVERSION_API=\\\"5-12639709git078702b7\\\" -Dctacatalogue_EXPORTS -I/builds/cta/CTA -I/builds/cta/CTA/build_rpm -I/usr/include/oracle/23/client64 -fPIC -pedantic -Wall -Wextra -Werror -Wno-unused-parameter -fstack-protector-all -std=c++20 -Wshadow -g -fPIC -o CMakeFiles/ctacatalogue.dir/rdbms/RdbmsMediaTypeCatalogue.cpp.o -c /builds/cta/CTA/catalogue/rdbms/RdbmsMediaTypeCatalogue.cpp",
   "file": "/builds/cta/CTA/catalogue/rdbms/RdbmsMediaTypeCatalogue.cpp",
   "output": "catalogue/CMakeFiles/ctacatalogue.dir/rdbms/RdbmsMediaTypeCatalogue.cpp.o"
 },
 {
   "directory": "/builds/cta/CTA/build_rpm/catalogue",
-  "command": "/usr/bin/c++ -DSUPPORT_OCCI -DVERSION_API=\\\"5-12639388gitc44adf3f\\\" -Dctacatalogue_EXPORTS -I/builds/cta/CTA -I/builds/cta/CTA/build_rpm -I/usr/include/oracle/23/client64 -fPIC -pedantic -Wall -Wextra -Werror -Wno-unused-parameter -fstack-protector-all -std=c++20 -Wshadow -g -fPIC -o CMakeFiles/ctacatalogue.dir/rdbms/RdbmsMountPolicyCatalogue.cpp.o -c /builds/cta/CTA/catalogue/rdbms/RdbmsMountPolicyCatalogue.cpp",
+  "command": "/usr/bin/c++ -DSUPPORT_OCCI -DVERSION_API=\\\"5-12639709git078702b7\\\" -Dctacatalogue_EXPORTS -I/builds/cta/CTA -I/builds/cta/CTA/build_rpm -I/usr/include/oracle/23/client64 -fPIC -pedantic -Wall -Wextra -Werror -Wno-unused-parameter -fstack-protector-all -std=c++20 -Wshadow -g -fPIC -o CMakeFiles/ctacatalogue.dir/rdbms/RdbmsMountPolicyCatalogue.cpp.o -c /builds/cta/CTA/catalogue/rdbms/RdbmsMountPolicyCatalogue.cpp",
   "file": "/builds/cta/CTA/catalogue/rdbms/RdbmsMountPolicyCatalogue.cpp",
   "output": "catalogue/CMakeFiles/ctacatalogue.dir/rdbms/RdbmsMountPolicyCatalogue.cpp.o"
 },
 {
   "directory": "/builds/cta/CTA/build_rpm/catalogue",
-  "command": "/usr/bin/c++ -DSUPPORT_OCCI -DVERSION_API=\\\"5-12639388gitc44adf3f\\\" -Dctacatalogue_EXPORTS -I/builds/cta/CTA -I/builds/cta/CTA/build_rpm -I/usr/include/oracle/23/client64 -fPIC -pedantic -Wall -Wextra -Werror -Wno-unused-parameter -fstack-protector-all -std=c++20 -Wshadow -g -fPIC -o CMakeFiles/ctacatalogue.dir/rdbms/RdbmsPhysicalLibraryCatalogue.cpp.o -c /builds/cta/CTA/catalogue/rdbms/RdbmsPhysicalLibraryCatalogue.cpp",
+  "command": "/usr/bin/c++ -DSUPPORT_OCCI -DVERSION_API=\\\"5-12639709git078702b7\\\" -Dctacatalogue_EXPORTS -I/builds/cta/CTA -I/builds/cta/CTA/build_rpm -I/usr/include/oracle/23/client64 -fPIC -pedantic -Wall -Wextra -Werror -Wno-unused-parameter -fstack-protector-all -std=c++20 -Wshadow -g -fPIC -o CMakeFiles/ctacatalogue.dir/rdbms/RdbmsPhysicalLibraryCatalogue.cpp.o -c /builds/cta/CTA/catalogue/rdbms/RdbmsPhysicalLibraryCatalogue.cpp",
   "file": "/builds/cta/CTA/catalogue/rdbms/RdbmsPhysicalLibraryCatalogue.cpp",
   "output": "catalogue/CMakeFiles/ctacatalogue.dir/rdbms/RdbmsPhysicalLibraryCatalogue.cpp.o"
 },
 {
   "directory": "/builds/cta/CTA/build_rpm/catalogue",
-  "command": "/usr/bin/c++ -DSUPPORT_OCCI -DVERSION_API=\\\"5-12639388gitc44adf3f\\\" -Dctacatalogue_EXPORTS -I/builds/cta/CTA -I/builds/cta/CTA/build_rpm -I/usr/include/oracle/23/client64 -fPIC -pedantic -Wall -Wextra -Werror -Wno-unused-parameter -fstack-protector-all -std=c++20 -Wshadow -g -fPIC -o CMakeFiles/ctacatalogue.dir/rdbms/RdbmsRequesterActivityMountRuleCatalogue.cpp.o -c /builds/cta/CTA/catalogue/rdbms/RdbmsRequesterActivityMountRuleCatalogue.cpp",
+  "command": "/usr/bin/c++ -DSUPPORT_OCCI -DVERSION_API=\\\"5-12639709git078702b7\\\" -Dctacatalogue_EXPORTS -I/builds/cta/CTA -I/builds/cta/CTA/build_rpm -I/usr/include/oracle/23/client64 -fPIC -pedantic -Wall -Wextra -Werror -Wno-unused-parameter -fstack-protector-all -std=c++20 -Wshadow -g -fPIC -o CMakeFiles/ctacatalogue.dir/rdbms/RdbmsRequesterActivityMountRuleCatalogue.cpp.o -c /builds/cta/CTA/catalogue/rdbms/RdbmsRequesterActivityMountRuleCatalogue.cpp",
   "file": "/builds/cta/CTA/catalogue/rdbms/RdbmsRequesterActivityMountRuleCatalogue.cpp",
   "output": "catalogue/CMakeFiles/ctacatalogue.dir/rdbms/RdbmsRequesterActivityMountRuleCatalogue.cpp.o"
 },
 {
   "directory": "/builds/cta/CTA/build_rpm/catalogue",
-  "command": "/usr/bin/c++ -DSUPPORT_OCCI -DVERSION_API=\\\"5-12639388gitc44adf3f\\\" -Dctacatalogue_EXPORTS -I/builds/cta/CTA -I/builds/cta/CTA/build_rpm -I/usr/include/oracle/23/client64 -fPIC -pedantic -Wall -Wextra -Werror -Wno-unused-parameter -fstack-protector-all -std=c++20 -Wshadow -g -fPIC -o CMakeFiles/ctacatalogue.dir/rdbms/RdbmsRequesterGroupMountRuleCatalogue.cpp.o -c /builds/cta/CTA/catalogue/rdbms/RdbmsRequesterGroupMountRuleCatalogue.cpp",
+  "command": "/usr/bin/c++ -DSUPPORT_OCCI -DVERSION_API=\\\"5-12639709git078702b7\\\" -Dctacatalogue_EXPORTS -I/builds/cta/CTA -I/builds/cta/CTA/build_rpm -I/usr/include/oracle/23/client64 -fPIC -pedantic -Wall -Wextra -Werror -Wno-unused-parameter -fstack-protector-all -std=c++20 -Wshadow -g -fPIC -o CMakeFiles/ctacatalogue.dir/rdbms/RdbmsRequesterGroupMountRuleCatalogue.cpp.o -c /builds/cta/CTA/catalogue/rdbms/RdbmsRequesterGroupMountRuleCatalogue.cpp",
   "file": "/builds/cta/CTA/catalogue/rdbms/RdbmsRequesterGroupMountRuleCatalogue.cpp",
   "output": "catalogue/CMakeFiles/ctacatalogue.dir/rdbms/RdbmsRequesterGroupMountRuleCatalogue.cpp.o"
 },
 {
   "directory": "/builds/cta/CTA/build_rpm/catalogue",
-  "command": "/usr/bin/c++ -DSUPPORT_OCCI -DVERSION_API=\\\"5-12639388gitc44adf3f\\\" -Dctacatalogue_EXPORTS -I/builds/cta/CTA -I/builds/cta/CTA/build_rpm -I/usr/include/oracle/23/client64 -fPIC -pedantic -Wall -Wextra -Werror -Wno-unused-parameter -fstack-protector-all -std=c++20 -Wshadow -g -fPIC -o CMakeFiles/ctacatalogue.dir/rdbms/RdbmsRequesterMountRuleCatalogue.cpp.o -c /builds/cta/CTA/catalogue/rdbms/RdbmsRequesterMountRuleCatalogue.cpp",
+  "command": "/usr/bin/c++ -DSUPPORT_OCCI -DVERSION_API=\\\"5-12639709git078702b7\\\" -Dctacatalogue_EXPORTS -I/builds/cta/CTA -I/builds/cta/CTA/build_rpm -I/usr/include/oracle/23/client64 -fPIC -pedantic -Wall -Wextra -Werror -Wno-unused-parameter -fstack-protector-all -std=c++20 -Wshadow -g -fPIC -o CMakeFiles/ctacatalogue.dir/rdbms/RdbmsRequesterMountRuleCatalogue.cpp.o -c /builds/cta/CTA/catalogue/rdbms/RdbmsRequesterMountRuleCatalogue.cpp",
   "file": "/builds/cta/CTA/catalogue/rdbms/RdbmsRequesterMountRuleCatalogue.cpp",
   "output": "catalogue/CMakeFiles/ctacatalogue.dir/rdbms/RdbmsRequesterMountRuleCatalogue.cpp.o"
 },
 {
   "directory": "/builds/cta/CTA/build_rpm/catalogue",
-  "command": "/usr/bin/c++ -DSUPPORT_OCCI -DVERSION_API=\\\"5-12639388gitc44adf3f\\\" -Dctacatalogue_EXPORTS -I/builds/cta/CTA -I/builds/cta/CTA/build_rpm -I/usr/include/oracle/23/client64 -fPIC -pedantic -Wall -Wextra -Werror -Wno-unused-parameter -fstack-protector-all -std=c++20 -Wshadow -g -fPIC -o CMakeFiles/ctacatalogue.dir/rdbms/RdbmsSchemaCatalogue.cpp.o -c /builds/cta/CTA/catalogue/rdbms/RdbmsSchemaCatalogue.cpp",
+  "command": "/usr/bin/c++ -DSUPPORT_OCCI -DVERSION_API=\\\"5-12639709git078702b7\\\" -Dctacatalogue_EXPORTS -I/builds/cta/CTA -I/builds/cta/CTA/build_rpm -I/usr/include/oracle/23/client64 -fPIC -pedantic -Wall -Wextra -Werror -Wno-unused-parameter -fstack-protector-all -std=c++20 -Wshadow -g -fPIC -o CMakeFiles/ctacatalogue.dir/rdbms/RdbmsSchemaCatalogue.cpp.o -c /builds/cta/CTA/catalogue/rdbms/RdbmsSchemaCatalogue.cpp",
   "file": "/builds/cta/CTA/catalogue/rdbms/RdbmsSchemaCatalogue.cpp",
   "output": "catalogue/CMakeFiles/ctacatalogue.dir/rdbms/RdbmsSchemaCatalogue.cpp.o"
 },
 {
   "directory": "/builds/cta/CTA/build_rpm/catalogue",
-  "command": "/usr/bin/c++ -DSUPPORT_OCCI -DVERSION_API=\\\"5-12639388gitc44adf3f\\\" -Dctacatalogue_EXPORTS -I/builds/cta/CTA -I/builds/cta/CTA/build_rpm -I/usr/include/oracle/23/client64 -fPIC -pedantic -Wall -Wextra -Werror -Wno-unused-parameter -fstack-protector-all -std=c++20 -Wshadow -g -fPIC -o CMakeFiles/ctacatalogue.dir/rdbms/RdbmsStorageClassCatalogue.cpp.o -c /builds/cta/CTA/catalogue/rdbms/RdbmsStorageClassCatalogue.cpp",
+  "command": "/usr/bin/c++ -DSUPPORT_OCCI -DVERSION_API=\\\"5-12639709git078702b7\\\" -Dctacatalogue_EXPORTS -I/builds/cta/CTA -I/builds/cta/CTA/build_rpm -I/usr/include/oracle/23/client64 -fPIC -pedantic -Wall -Wextra -Werror -Wno-unused-parameter -fstack-protector-all -std=c++20 -Wshadow -g -fPIC -o CMakeFiles/ctacatalogue.dir/rdbms/RdbmsStorageClassCatalogue.cpp.o -c /builds/cta/CTA/catalogue/rdbms/RdbmsStorageClassCatalogue.cpp",
   "file": "/builds/cta/CTA/catalogue/rdbms/RdbmsStorageClassCatalogue.cpp",
   "output": "catalogue/CMakeFiles/ctacatalogue.dir/rdbms/RdbmsStorageClassCatalogue.cpp.o"
 },
 {
   "directory": "/builds/cta/CTA/build_rpm/catalogue",
-  "command": "/usr/bin/c++ -DSUPPORT_OCCI -DVERSION_API=\\\"5-12639388gitc44adf3f\\\" -Dctacatalogue_EXPORTS -I/builds/cta/CTA -I/builds/cta/CTA/build_rpm -I/usr/include/oracle/23/client64 -fPIC -pedantic -Wall -Wextra -Werror -Wno-unused-parameter -fstack-protector-all -std=c++20 -Wshadow -g -fPIC -o CMakeFiles/ctacatalogue.dir/rdbms/RdbmsTapeCatalogue.cpp.o -c /builds/cta/CTA/catalogue/rdbms/RdbmsTapeCatalogue.cpp",
+  "command": "/usr/bin/c++ -DSUPPORT_OCCI -DVERSION_API=\\\"5-12639709git078702b7\\\" -Dctacatalogue_EXPORTS -I/builds/cta/CTA -I/builds/cta/CTA/build_rpm -I/usr/include/oracle/23/client64 -fPIC -pedantic -Wall -Wextra -Werror -Wno-unused-parameter -fstack-protector-all -std=c++20 -Wshadow -g -fPIC -o CMakeFiles/ctacatalogue.dir/rdbms/RdbmsTapeCatalogue.cpp.o -c /builds/cta/CTA/catalogue/rdbms/RdbmsTapeCatalogue.cpp",
   "file": "/builds/cta/CTA/catalogue/rdbms/RdbmsTapeCatalogue.cpp",
   "output": "catalogue/CMakeFiles/ctacatalogue.dir/rdbms/RdbmsTapeCatalogue.cpp.o"
 },
 {
   "directory": "/builds/cta/CTA/build_rpm/catalogue",
-  "command": "/usr/bin/c++ -DSUPPORT_OCCI -DVERSION_API=\\\"5-12639388gitc44adf3f\\\" -Dctacatalogue_EXPORTS -I/builds/cta/CTA -I/builds/cta/CTA/build_rpm -I/usr/include/oracle/23/client64 -fPIC -pedantic -Wall -Wextra -Werror -Wno-unused-parameter -fstack-protector-all -std=c++20 -Wshadow -g -fPIC -o CMakeFiles/ctacatalogue.dir/rdbms/RdbmsTapeFileCatalogue.cpp.o -c /builds/cta/CTA/catalogue/rdbms/RdbmsTapeFileCatalogue.cpp",
+  "command": "/usr/bin/c++ -DSUPPORT_OCCI -DVERSION_API=\\\"5-12639709git078702b7\\\" -Dctacatalogue_EXPORTS -I/builds/cta/CTA -I/builds/cta/CTA/build_rpm -I/usr/include/oracle/23/client64 -fPIC -pedantic -Wall -Wextra -Werror -Wno-unused-parameter -fstack-protector-all -std=c++20 -Wshadow -g -fPIC -o CMakeFiles/ctacatalogue.dir/rdbms/RdbmsTapeFileCatalogue.cpp.o -c /builds/cta/CTA/catalogue/rdbms/RdbmsTapeFileCatalogue.cpp",
   "file": "/builds/cta/CTA/catalogue/rdbms/RdbmsTapeFileCatalogue.cpp",
   "output": "catalogue/CMakeFiles/ctacatalogue.dir/rdbms/RdbmsTapeFileCatalogue.cpp.o"
 },
 {
   "directory": "/builds/cta/CTA/build_rpm/catalogue",
-  "command": "/usr/bin/c++ -DSUPPORT_OCCI -DVERSION_API=\\\"5-12639388gitc44adf3f\\\" -Dctacatalogue_EXPORTS -I/builds/cta/CTA -I/builds/cta/CTA/build_rpm -I/usr/include/oracle/23/client64 -fPIC -pedantic -Wall -Wextra -Werror -Wno-unused-parameter -fstack-protector-all -std=c++20 -Wshadow -g -fPIC -o CMakeFiles/ctacatalogue.dir/rdbms/RdbmsTapePoolCatalogue.cpp.o -c /builds/cta/CTA/catalogue/rdbms/RdbmsTapePoolCatalogue.cpp",
+  "command": "/usr/bin/c++ -DSUPPORT_OCCI -DVERSION_API=\\\"5-12639709git078702b7\\\" -Dctacatalogue_EXPORTS -I/builds/cta/CTA -I/builds/cta/CTA/build_rpm -I/usr/include/oracle/23/client64 -fPIC -pedantic -Wall -Wextra -Werror -Wno-unused-parameter -fstack-protector-all -std=c++20 -Wshadow -g -fPIC -o CMakeFiles/ctacatalogue.dir/rdbms/RdbmsTapePoolCatalogue.cpp.o -c /builds/cta/CTA/catalogue/rdbms/RdbmsTapePoolCatalogue.cpp",
   "file": "/builds/cta/CTA/catalogue/rdbms/RdbmsTapePoolCatalogue.cpp",
   "output": "catalogue/CMakeFiles/ctacatalogue.dir/rdbms/RdbmsTapePoolCatalogue.cpp.o"
 },
 {
   "directory": "/builds/cta/CTA/build_rpm/catalogue",
-  "command": "/usr/bin/c++ -DSUPPORT_OCCI -DVERSION_API=\\\"5-12639388gitc44adf3f\\\" -Dctacatalogue_EXPORTS -I/builds/cta/CTA -I/builds/cta/CTA/build_rpm -I/usr/include/oracle/23/client64 -fPIC -pedantic -Wall -Wextra -Werror -Wno-unused-parameter -fstack-protector-all -std=c++20 -Wshadow -g -fPIC -o CMakeFiles/ctacatalogue.dir/rdbms/RdbmsVirtualOrganizationCatalogue.cpp.o -c /builds/cta/CTA/catalogue/rdbms/RdbmsVirtualOrganizationCatalogue.cpp",
+  "command": "/usr/bin/c++ -DSUPPORT_OCCI -DVERSION_API=\\\"5-12639709git078702b7\\\" -Dctacatalogue_EXPORTS -I/builds/cta/CTA -I/builds/cta/CTA/build_rpm -I/usr/include/oracle/23/client64 -fPIC -pedantic -Wall -Wextra -Werror -Wno-unused-parameter -fstack-protector-all -std=c++20 -Wshadow -g -fPIC -o CMakeFiles/ctacatalogue.dir/rdbms/RdbmsVirtualOrganizationCatalogue.cpp.o -c /builds/cta/CTA/catalogue/rdbms/RdbmsVirtualOrganizationCatalogue.cpp",
   "file": "/builds/cta/CTA/catalogue/rdbms/RdbmsVirtualOrganizationCatalogue.cpp",
   "output": "catalogue/CMakeFiles/ctacatalogue.dir/rdbms/RdbmsVirtualOrganizationCatalogue.cpp.o"
 },
 {
   "directory": "/builds/cta/CTA/build_rpm/catalogue",
-  "command": "/usr/bin/c++ -DSUPPORT_OCCI -DVERSION_API=\\\"5-12639388gitc44adf3f\\\" -Dctacatalogue_EXPORTS -I/builds/cta/CTA -I/builds/cta/CTA/build_rpm -I/usr/include/oracle/23/client64 -fPIC -pedantic -Wall -Wextra -Werror -Wno-unused-parameter -fstack-protector-all -std=c++20 -Wshadow -g -fPIC -o CMakeFiles/ctacatalogue.dir/retrywrappers/AdminUserCatalogueRetryWrapper.cpp.o -c /builds/cta/CTA/catalogue/retrywrappers/AdminUserCatalogueRetryWrapper.cpp",
+  "command": "/usr/bin/c++ -DSUPPORT_OCCI -DVERSION_API=\\\"5-12639709git078702b7\\\" -Dctacatalogue_EXPORTS -I/builds/cta/CTA -I/builds/cta/CTA/build_rpm -I/usr/include/oracle/23/client64 -fPIC -pedantic -Wall -Wextra -Werror -Wno-unused-parameter -fstack-protector-all -std=c++20 -Wshadow -g -fPIC -o CMakeFiles/ctacatalogue.dir/retrywrappers/AdminUserCatalogueRetryWrapper.cpp.o -c /builds/cta/CTA/catalogue/retrywrappers/AdminUserCatalogueRetryWrapper.cpp",
   "file": "/builds/cta/CTA/catalogue/retrywrappers/AdminUserCatalogueRetryWrapper.cpp",
   "output": "catalogue/CMakeFiles/ctacatalogue.dir/retrywrappers/AdminUserCatalogueRetryWrapper.cpp.o"
 },
 {
   "directory": "/builds/cta/CTA/build_rpm/catalogue",
-  "command": "/usr/bin/c++ -DSUPPORT_OCCI -DVERSION_API=\\\"5-12639388gitc44adf3f\\\" -Dctacatalogue_EXPORTS -I/builds/cta/CTA -I/builds/cta/CTA/build_rpm -I/usr/include/oracle/23/client64 -fPIC -pedantic -Wall -Wextra -Werror -Wno-unused-parameter -fstack-protector-all -std=c++20 -Wshadow -g -fPIC -o CMakeFiles/ctacatalogue.dir/retrywrappers/ArchiveFileCatalogueRetryWrapper.cpp.o -c /builds/cta/CTA/catalogue/retrywrappers/ArchiveFileCatalogueRetryWrapper.cpp",
+  "command": "/usr/bin/c++ -DSUPPORT_OCCI -DVERSION_API=\\\"5-12639709git078702b7\\\" -Dctacatalogue_EXPORTS -I/builds/cta/CTA -I/builds/cta/CTA/build_rpm -I/usr/include/oracle/23/client64 -fPIC -pedantic -Wall -Wextra -Werror -Wno-unused-parameter -fstack-protector-all -std=c++20 -Wshadow -g -fPIC -o CMakeFiles/ctacatalogue.dir/retrywrappers/ArchiveFileCatalogueRetryWrapper.cpp.o -c /builds/cta/CTA/catalogue/retrywrappers/ArchiveFileCatalogueRetryWrapper.cpp",
   "file": "/builds/cta/CTA/catalogue/retrywrappers/ArchiveFileCatalogueRetryWrapper.cpp",
   "output": "catalogue/CMakeFiles/ctacatalogue.dir/retrywrappers/ArchiveFileCatalogueRetryWrapper.cpp.o"
 },
 {
   "directory": "/builds/cta/CTA/build_rpm/catalogue",
-  "command": "/usr/bin/c++ -DSUPPORT_OCCI -DVERSION_API=\\\"5-12639388gitc44adf3f\\\" -Dctacatalogue_EXPORTS -I/builds/cta/CTA -I/builds/cta/CTA/build_rpm -I/usr/include/oracle/23/client64 -fPIC -pedantic -Wall -Wextra -Werror -Wno-unused-parameter -fstack-protector-all -std=c++20 -Wshadow -g -fPIC -o CMakeFiles/ctacatalogue.dir/retrywrappers/ArchiveRouteCatalogueRetryWrapper.cpp.o -c /builds/cta/CTA/catalogue/retrywrappers/ArchiveRouteCatalogueRetryWrapper.cpp",
+  "command": "/usr/bin/c++ -DSUPPORT_OCCI -DVERSION_API=\\\"5-12639709git078702b7\\\" -Dctacatalogue_EXPORTS -I/builds/cta/CTA -I/builds/cta/CTA/build_rpm -I/usr/include/oracle/23/client64 -fPIC -pedantic -Wall -Wextra -Werror -Wno-unused-parameter -fstack-protector-all -std=c++20 -Wshadow -g -fPIC -o CMakeFiles/ctacatalogue.dir/retrywrappers/ArchiveRouteCatalogueRetryWrapper.cpp.o -c /builds/cta/CTA/catalogue/retrywrappers/ArchiveRouteCatalogueRetryWrapper.cpp",
   "file": "/builds/cta/CTA/catalogue/retrywrappers/ArchiveRouteCatalogueRetryWrapper.cpp",
   "output": "catalogue/CMakeFiles/ctacatalogue.dir/retrywrappers/ArchiveRouteCatalogueRetryWrapper.cpp.o"
 },
 {
   "directory": "/builds/cta/CTA/build_rpm/catalogue",
-  "command": "/usr/bin/c++ -DSUPPORT_OCCI -DVERSION_API=\\\"5-12639388gitc44adf3f\\\" -Dctacatalogue_EXPORTS -I/builds/cta/CTA -I/builds/cta/CTA/build_rpm -I/usr/include/oracle/23/client64 -fPIC -pedantic -Wall -Wextra -Werror -Wno-unused-parameter -fstack-protector-all -std=c++20 -Wshadow -g -fPIC -o CMakeFiles/ctacatalogue.dir/retrywrappers/CatalogueRetryWrapper.cpp.o -c /builds/cta/CTA/catalogue/retrywrappers/CatalogueRetryWrapper.cpp",
+  "command": "/usr/bin/c++ -DSUPPORT_OCCI -DVERSION_API=\\\"5-12639709git078702b7\\\" -Dctacatalogue_EXPORTS -I/builds/cta/CTA -I/builds/cta/CTA/build_rpm -I/usr/include/oracle/23/client64 -fPIC -pedantic -Wall -Wextra -Werror -Wno-unused-parameter -fstack-protector-all -std=c++20 -Wshadow -g -fPIC -o CMakeFiles/ctacatalogue.dir/retrywrappers/CatalogueRetryWrapper.cpp.o -c /builds/cta/CTA/catalogue/retrywrappers/CatalogueRetryWrapper.cpp",
   "file": "/builds/cta/CTA/catalogue/retrywrappers/CatalogueRetryWrapper.cpp",
   "output": "catalogue/CMakeFiles/ctacatalogue.dir/retrywrappers/CatalogueRetryWrapper.cpp.o"
 },
 {
   "directory": "/builds/cta/CTA/build_rpm/catalogue",
-  "command": "/usr/bin/c++ -DSUPPORT_OCCI -DVERSION_API=\\\"5-12639388gitc44adf3f\\\" -Dctacatalogue_EXPORTS -I/builds/cta/CTA -I/builds/cta/CTA/build_rpm -I/usr/include/oracle/23/client64 -fPIC -pedantic -Wall -Wextra -Werror -Wno-unused-parameter -fstack-protector-all -std=c++20 -Wshadow -g -fPIC -o CMakeFiles/ctacatalogue.dir/retrywrappers/DiskInstanceCatalogueRetryWrapper.cpp.o -c /builds/cta/CTA/catalogue/retrywrappers/DiskInstanceCatalogueRetryWrapper.cpp",
+  "command": "/usr/bin/c++ -DSUPPORT_OCCI -DVERSION_API=\\\"5-12639709git078702b7\\\" -Dctacatalogue_EXPORTS -I/builds/cta/CTA -I/builds/cta/CTA/build_rpm -I/usr/include/oracle/23/client64 -fPIC -pedantic -Wall -Wextra -Werror -Wno-unused-parameter -fstack-protector-all -std=c++20 -Wshadow -g -fPIC -o CMakeFiles/ctacatalogue.dir/retrywrappers/DiskInstanceCatalogueRetryWrapper.cpp.o -c /builds/cta/CTA/catalogue/retrywrappers/DiskInstanceCatalogueRetryWrapper.cpp",
   "file": "/builds/cta/CTA/catalogue/retrywrappers/DiskInstanceCatalogueRetryWrapper.cpp",
   "output": "catalogue/CMakeFiles/ctacatalogue.dir/retrywrappers/DiskInstanceCatalogueRetryWrapper.cpp.o"
 },
 {
   "directory": "/builds/cta/CTA/build_rpm/catalogue",
-  "command": "/usr/bin/c++ -DSUPPORT_OCCI -DVERSION_API=\\\"5-12639388gitc44adf3f\\\" -Dctacatalogue_EXPORTS -I/builds/cta/CTA -I/builds/cta/CTA/build_rpm -I/usr/include/oracle/23/client64 -fPIC -pedantic -Wall -Wextra -Werror -Wno-unused-parameter -fstack-protector-all -std=c++20 -Wshadow -g -fPIC -o CMakeFiles/ctacatalogue.dir/retrywrappers/DiskInstanceSpaceCatalogueRetryWrapper.cpp.o -c /builds/cta/CTA/catalogue/retrywrappers/DiskInstanceSpaceCatalogueRetryWrapper.cpp",
+  "command": "/usr/bin/c++ -DSUPPORT_OCCI -DVERSION_API=\\\"5-12639709git078702b7\\\" -Dctacatalogue_EXPORTS -I/builds/cta/CTA -I/builds/cta/CTA/build_rpm -I/usr/include/oracle/23/client64 -fPIC -pedantic -Wall -Wextra -Werror -Wno-unused-parameter -fstack-protector-all -std=c++20 -Wshadow -g -fPIC -o CMakeFiles/ctacatalogue.dir/retrywrappers/DiskInstanceSpaceCatalogueRetryWrapper.cpp.o -c /builds/cta/CTA/catalogue/retrywrappers/DiskInstanceSpaceCatalogueRetryWrapper.cpp",
   "file": "/builds/cta/CTA/catalogue/retrywrappers/DiskInstanceSpaceCatalogueRetryWrapper.cpp",
   "output": "catalogue/CMakeFiles/ctacatalogue.dir/retrywrappers/DiskInstanceSpaceCatalogueRetryWrapper.cpp.o"
 },
 {
   "directory": "/builds/cta/CTA/build_rpm/catalogue",
-  "command": "/usr/bin/c++ -DSUPPORT_OCCI -DVERSION_API=\\\"5-12639388gitc44adf3f\\\" -Dctacatalogue_EXPORTS -I/builds/cta/CTA -I/builds/cta/CTA/build_rpm -I/usr/include/oracle/23/client64 -fPIC -pedantic -Wall -Wextra -Werror -Wno-unused-parameter -fstack-protector-all -std=c++20 -Wshadow -g -fPIC -o CMakeFiles/ctacatalogue.dir/retrywrappers/DiskSystemCatalogueRetryWrapper.cpp.o -c /builds/cta/CTA/catalogue/retrywrappers/DiskSystemCatalogueRetryWrapper.cpp",
+  "command": "/usr/bin/c++ -DSUPPORT_OCCI -DVERSION_API=\\\"5-12639709git078702b7\\\" -Dctacatalogue_EXPORTS -I/builds/cta/CTA -I/builds/cta/CTA/build_rpm -I/usr/include/oracle/23/client64 -fPIC -pedantic -Wall -Wextra -Werror -Wno-unused-parameter -fstack-protector-all -std=c++20 -Wshadow -g -fPIC -o CMakeFiles/ctacatalogue.dir/retrywrappers/DiskSystemCatalogueRetryWrapper.cpp.o -c /builds/cta/CTA/catalogue/retrywrappers/DiskSystemCatalogueRetryWrapper.cpp",
   "file": "/builds/cta/CTA/catalogue/retrywrappers/DiskSystemCatalogueRetryWrapper.cpp",
   "output": "catalogue/CMakeFiles/ctacatalogue.dir/retrywrappers/DiskSystemCatalogueRetryWrapper.cpp.o"
 },
 {
   "directory": "/builds/cta/CTA/build_rpm/catalogue",
-  "command": "/usr/bin/c++ -DSUPPORT_OCCI -DVERSION_API=\\\"5-12639388gitc44adf3f\\\" -Dctacatalogue_EXPORTS -I/builds/cta/CTA -I/builds/cta/CTA/build_rpm -I/usr/include/oracle/23/client64 -fPIC -pedantic -Wall -Wextra -Werror -Wno-unused-parameter -fstack-protector-all -std=c++20 -Wshadow -g -fPIC -o CMakeFiles/ctacatalogue.dir/retrywrappers/DriveConfigCatalogueRetryWrapper.cpp.o -c /builds/cta/CTA/catalogue/retrywrappers/DriveConfigCatalogueRetryWrapper.cpp",
+  "command": "/usr/bin/c++ -DSUPPORT_OCCI -DVERSION_API=\\\"5-12639709git078702b7\\\" -Dctacatalogue_EXPORTS -I/builds/cta/CTA -I/builds/cta/CTA/build_rpm -I/usr/include/oracle/23/client64 -fPIC -pedantic -Wall -Wextra -Werror -Wno-unused-parameter -fstack-protector-all -std=c++20 -Wshadow -g -fPIC -o CMakeFiles/ctacatalogue.dir/retrywrappers/DriveConfigCatalogueRetryWrapper.cpp.o -c /builds/cta/CTA/catalogue/retrywrappers/DriveConfigCatalogueRetryWrapper.cpp",
   "file": "/builds/cta/CTA/catalogue/retrywrappers/DriveConfigCatalogueRetryWrapper.cpp",
   "output": "catalogue/CMakeFiles/ctacatalogue.dir/retrywrappers/DriveConfigCatalogueRetryWrapper.cpp.o"
 },
 {
   "directory": "/builds/cta/CTA/build_rpm/catalogue",
-  "command": "/usr/bin/c++ -DSUPPORT_OCCI -DVERSION_API=\\\"5-12639388gitc44adf3f\\\" -Dctacatalogue_EXPORTS -I/builds/cta/CTA -I/builds/cta/CTA/build_rpm -I/usr/include/oracle/23/client64 -fPIC -pedantic -Wall -Wextra -Werror -Wno-unused-parameter -fstack-protector-all -std=c++20 -Wshadow -g -fPIC -o CMakeFiles/ctacatalogue.dir/retrywrappers/DriveStateCatalogueRetryWrapper.cpp.o -c /builds/cta/CTA/catalogue/retrywrappers/DriveStateCatalogueRetryWrapper.cpp",
+  "command": "/usr/bin/c++ -DSUPPORT_OCCI -DVERSION_API=\\\"5-12639709git078702b7\\\" -Dctacatalogue_EXPORTS -I/builds/cta/CTA -I/builds/cta/CTA/build_rpm -I/usr/include/oracle/23/client64 -fPIC -pedantic -Wall -Wextra -Werror -Wno-unused-parameter -fstack-protector-all -std=c++20 -Wshadow -g -fPIC -o CMakeFiles/ctacatalogue.dir/retrywrappers/DriveStateCatalogueRetryWrapper.cpp.o -c /builds/cta/CTA/catalogue/retrywrappers/DriveStateCatalogueRetryWrapper.cpp",
   "file": "/builds/cta/CTA/catalogue/retrywrappers/DriveStateCatalogueRetryWrapper.cpp",
   "output": "catalogue/CMakeFiles/ctacatalogue.dir/retrywrappers/DriveStateCatalogueRetryWrapper.cpp.o"
 },
 {
   "directory": "/builds/cta/CTA/build_rpm/catalogue",
-  "command": "/usr/bin/c++ -DSUPPORT_OCCI -DVERSION_API=\\\"5-12639388gitc44adf3f\\\" -Dctacatalogue_EXPORTS -I/builds/cta/CTA -I/builds/cta/CTA/build_rpm -I/usr/include/oracle/23/client64 -fPIC -pedantic -Wall -Wextra -Werror -Wno-unused-parameter -fstack-protector-all -std=c++20 -Wshadow -g -fPIC -o CMakeFiles/ctacatalogue.dir/retrywrappers/FileRecycleLogCatalogueRetryWrapper.cpp.o -c /builds/cta/CTA/catalogue/retrywrappers/FileRecycleLogCatalogueRetryWrapper.cpp",
+  "command": "/usr/bin/c++ -DSUPPORT_OCCI -DVERSION_API=\\\"5-12639709git078702b7\\\" -Dctacatalogue_EXPORTS -I/builds/cta/CTA -I/builds/cta/CTA/build_rpm -I/usr/include/oracle/23/client64 -fPIC -pedantic -Wall -Wextra -Werror -Wno-unused-parameter -fstack-protector-all -std=c++20 -Wshadow -g -fPIC -o CMakeFiles/ctacatalogue.dir/retrywrappers/FileRecycleLogCatalogueRetryWrapper.cpp.o -c /builds/cta/CTA/catalogue/retrywrappers/FileRecycleLogCatalogueRetryWrapper.cpp",
   "file": "/builds/cta/CTA/catalogue/retrywrappers/FileRecycleLogCatalogueRetryWrapper.cpp",
   "output": "catalogue/CMakeFiles/ctacatalogue.dir/retrywrappers/FileRecycleLogCatalogueRetryWrapper.cpp.o"
 },
 {
   "directory": "/builds/cta/CTA/build_rpm/catalogue",
-  "command": "/usr/bin/c++ -DSUPPORT_OCCI -DVERSION_API=\\\"5-12639388gitc44adf3f\\\" -Dctacatalogue_EXPORTS -I/builds/cta/CTA -I/builds/cta/CTA/build_rpm -I/usr/include/oracle/23/client64 -fPIC -pedantic -Wall -Wextra -Werror -Wno-unused-parameter -fstack-protector-all -std=c++20 -Wshadow -g -fPIC -o CMakeFiles/ctacatalogue.dir/retrywrappers/LogicalLibraryCatalogueRetryWrapper.cpp.o -c /builds/cta/CTA/catalogue/retrywrappers/LogicalLibraryCatalogueRetryWrapper.cpp",
+  "command": "/usr/bin/c++ -DSUPPORT_OCCI -DVERSION_API=\\\"5-12639709git078702b7\\\" -Dctacatalogue_EXPORTS -I/builds/cta/CTA -I/builds/cta/CTA/build_rpm -I/usr/include/oracle/23/client64 -fPIC -pedantic -Wall -Wextra -Werror -Wno-unused-parameter -fstack-protector-all -std=c++20 -Wshadow -g -fPIC -o CMakeFiles/ctacatalogue.dir/retrywrappers/LogicalLibraryCatalogueRetryWrapper.cpp.o -c /builds/cta/CTA/catalogue/retrywrappers/LogicalLibraryCatalogueRetryWrapper.cpp",
   "file": "/builds/cta/CTA/catalogue/retrywrappers/LogicalLibraryCatalogueRetryWrapper.cpp",
   "output": "catalogue/CMakeFiles/ctacatalogue.dir/retrywrappers/LogicalLibraryCatalogueRetryWrapper.cpp.o"
 },
 {
   "directory": "/builds/cta/CTA/build_rpm/catalogue",
-  "command": "/usr/bin/c++ -DSUPPORT_OCCI -DVERSION_API=\\\"5-12639388gitc44adf3f\\\" -Dctacatalogue_EXPORTS -I/builds/cta/CTA -I/builds/cta/CTA/build_rpm -I/usr/include/oracle/23/client64 -fPIC -pedantic -Wall -Wextra -Werror -Wno-unused-parameter -fstack-protector-all -std=c++20 -Wshadow -g -fPIC -o CMakeFiles/ctacatalogue.dir/retrywrappers/MediaTypeCatalogueRetryWrapper.cpp.o -c /builds/cta/CTA/catalogue/retrywrappers/MediaTypeCatalogueRetryWrapper.cpp",
+  "command": "/usr/bin/c++ -DSUPPORT_OCCI -DVERSION_API=\\\"5-12639709git078702b7\\\" -Dctacatalogue_EXPORTS -I/builds/cta/CTA -I/builds/cta/CTA/build_rpm -I/usr/include/oracle/23/client64 -fPIC -pedantic -Wall -Wextra -Werror -Wno-unused-parameter -fstack-protector-all -std=c++20 -Wshadow -g -fPIC -o CMakeFiles/ctacatalogue.dir/retrywrappers/MediaTypeCatalogueRetryWrapper.cpp.o -c /builds/cta/CTA/catalogue/retrywrappers/MediaTypeCatalogueRetryWrapper.cpp",
   "file": "/builds/cta/CTA/catalogue/retrywrappers/MediaTypeCatalogueRetryWrapper.cpp",
   "output": "catalogue/CMakeFiles/ctacatalogue.dir/retrywrappers/MediaTypeCatalogueRetryWrapper.cpp.o"
 },
 {
   "directory": "/builds/cta/CTA/build_rpm/catalogue",
-  "command": "/usr/bin/c++ -DSUPPORT_OCCI -DVERSION_API=\\\"5-12639388gitc44adf3f\\\" -Dctacatalogue_EXPORTS -I/builds/cta/CTA -I/builds/cta/CTA/build_rpm -I/usr/include/oracle/23/client64 -fPIC -pedantic -Wall -Wextra -Werror -Wno-unused-parameter -fstack-protector-all -std=c++20 -Wshadow -g -fPIC -o CMakeFiles/ctacatalogue.dir/retrywrappers/MountPolicyCatalogueRetryWrapper.cpp.o -c /builds/cta/CTA/catalogue/retrywrappers/MountPolicyCatalogueRetryWrapper.cpp",
+  "command": "/usr/bin/c++ -DSUPPORT_OCCI -DVERSION_API=\\\"5-12639709git078702b7\\\" -Dctacatalogue_EXPORTS -I/builds/cta/CTA -I/builds/cta/CTA/build_rpm -I/usr/include/oracle/23/client64 -fPIC -pedantic -Wall -Wextra -Werror -Wno-unused-parameter -fstack-protector-all -std=c++20 -Wshadow -g -fPIC -o CMakeFiles/ctacatalogue.dir/retrywrappers/MountPolicyCatalogueRetryWrapper.cpp.o -c /builds/cta/CTA/catalogue/retrywrappers/MountPolicyCatalogueRetryWrapper.cpp",
   "file": "/builds/cta/CTA/catalogue/retrywrappers/MountPolicyCatalogueRetryWrapper.cpp",
   "output": "catalogue/CMakeFiles/ctacatalogue.dir/retrywrappers/MountPolicyCatalogueRetryWrapper.cpp.o"
 },
 {
   "directory": "/builds/cta/CTA/build_rpm/catalogue",
-  "command": "/usr/bin/c++ -DSUPPORT_OCCI -DVERSION_API=\\\"5-12639388gitc44adf3f\\\" -Dctacatalogue_EXPORTS -I/builds/cta/CTA -I/builds/cta/CTA/build_rpm -I/usr/include/oracle/23/client64 -fPIC -pedantic -Wall -Wextra -Werror -Wno-unused-parameter -fstack-protector-all -std=c++20 -Wshadow -g -fPIC -o CMakeFiles/ctacatalogue.dir/retrywrappers/PhysicalLibraryCatalogueRetryWrapper.cpp.o -c /builds/cta/CTA/catalogue/retrywrappers/PhysicalLibraryCatalogueRetryWrapper.cpp",
+  "command": "/usr/bin/c++ -DSUPPORT_OCCI -DVERSION_API=\\\"5-12639709git078702b7\\\" -Dctacatalogue_EXPORTS -I/builds/cta/CTA -I/builds/cta/CTA/build_rpm -I/usr/include/oracle/23/client64 -fPIC -pedantic -Wall -Wextra -Werror -Wno-unused-parameter -fstack-protector-all -std=c++20 -Wshadow -g -fPIC -o CMakeFiles/ctacatalogue.dir/retrywrappers/PhysicalLibraryCatalogueRetryWrapper.cpp.o -c /builds/cta/CTA/catalogue/retrywrappers/PhysicalLibraryCatalogueRetryWrapper.cpp",
   "file": "/builds/cta/CTA/catalogue/retrywrappers/PhysicalLibraryCatalogueRetryWrapper.cpp",
   "output": "catalogue/CMakeFiles/ctacatalogue.dir/retrywrappers/PhysicalLibraryCatalogueRetryWrapper.cpp.o"
 },
 {
   "directory": "/builds/cta/CTA/build_rpm/catalogue",
-  "command": "/usr/bin/c++ -DSUPPORT_OCCI -DVERSION_API=\\\"5-12639388gitc44adf3f\\\" -Dctacatalogue_EXPORTS -I/builds/cta/CTA -I/builds/cta/CTA/build_rpm -I/usr/include/oracle/23/client64 -fPIC -pedantic -Wall -Wextra -Werror -Wno-unused-parameter -fstack-protector-all -std=c++20 -Wshadow -g -fPIC -o CMakeFiles/ctacatalogue.dir/retrywrappers/RequesterActivityMountRuleCatalogueRetryWrapper.cpp.o -c /builds/cta/CTA/catalogue/retrywrappers/RequesterActivityMountRuleCatalogueRetryWrapper.cpp",
+  "command": "/usr/bin/c++ -DSUPPORT_OCCI -DVERSION_API=\\\"5-12639709git078702b7\\\" -Dctacatalogue_EXPORTS -I/builds/cta/CTA -I/builds/cta/CTA/build_rpm -I/usr/include/oracle/23/client64 -fPIC -pedantic -Wall -Wextra -Werror -Wno-unused-parameter -fstack-protector-all -std=c++20 -Wshadow -g -fPIC -o CMakeFiles/ctacatalogue.dir/retrywrappers/RequesterActivityMountRuleCatalogueRetryWrapper.cpp.o -c /builds/cta/CTA/catalogue/retrywrappers/RequesterActivityMountRuleCatalogueRetryWrapper.cpp",
   "file": "/builds/cta/CTA/catalogue/retrywrappers/RequesterActivityMountRuleCatalogueRetryWrapper.cpp",
   "output": "catalogue/CMakeFiles/ctacatalogue.dir/retrywrappers/RequesterActivityMountRuleCatalogueRetryWrapper.cpp.o"
 },
 {
   "directory": "/builds/cta/CTA/build_rpm/catalogue",
-  "command": "/usr/bin/c++ -DSUPPORT_OCCI -DVERSION_API=\\\"5-12639388gitc44adf3f\\\" -Dctacatalogue_EXPORTS -I/builds/cta/CTA -I/builds/cta/CTA/build_rpm -I/usr/include/oracle/23/client64 -fPIC -pedantic -Wall -Wextra -Werror -Wno-unused-parameter -fstack-protector-all -std=c++20 -Wshadow -g -fPIC -o CMakeFiles/ctacatalogue.dir/retrywrappers/RequesterGroupMountRuleCatalogueRetryWrapper.cpp.o -c /builds/cta/CTA/catalogue/retrywrappers/RequesterGroupMountRuleCatalogueRetryWrapper.cpp",
+  "command": "/usr/bin/c++ -DSUPPORT_OCCI -DVERSION_API=\\\"5-12639709git078702b7\\\" -Dctacatalogue_EXPORTS -I/builds/cta/CTA -I/builds/cta/CTA/build_rpm -I/usr/include/oracle/23/client64 -fPIC -pedantic -Wall -Wextra -Werror -Wno-unused-parameter -fstack-protector-all -std=c++20 -Wshadow -g -fPIC -o CMakeFiles/ctacatalogue.dir/retrywrappers/RequesterGroupMountRuleCatalogueRetryWrapper.cpp.o -c /builds/cta/CTA/catalogue/retrywrappers/RequesterGroupMountRuleCatalogueRetryWrapper.cpp",
   "file": "/builds/cta/CTA/catalogue/retrywrappers/RequesterGroupMountRuleCatalogueRetryWrapper.cpp",
   "output": "catalogue/CMakeFiles/ctacatalogue.dir/retrywrappers/RequesterGroupMountRuleCatalogueRetryWrapper.cpp.o"
 },
 {
   "directory": "/builds/cta/CTA/build_rpm/catalogue",
-  "command": "/usr/bin/c++ -DSUPPORT_OCCI -DVERSION_API=\\\"5-12639388gitc44adf3f\\\" -Dctacatalogue_EXPORTS -I/builds/cta/CTA -I/builds/cta/CTA/build_rpm -I/usr/include/oracle/23/client64 -fPIC -pedantic -Wall -Wextra -Werror -Wno-unused-parameter -fstack-protector-all -std=c++20 -Wshadow -g -fPIC -o CMakeFiles/ctacatalogue.dir/retrywrappers/RequesterMountRuleCatalogueRetryWrapper.cpp.o -c /builds/cta/CTA/catalogue/retrywrappers/RequesterMountRuleCatalogueRetryWrapper.cpp",
+  "command": "/usr/bin/c++ -DSUPPORT_OCCI -DVERSION_API=\\\"5-12639709git078702b7\\\" -Dctacatalogue_EXPORTS -I/builds/cta/CTA -I/builds/cta/CTA/build_rpm -I/usr/include/oracle/23/client64 -fPIC -pedantic -Wall -Wextra -Werror -Wno-unused-parameter -fstack-protector-all -std=c++20 -Wshadow -g -fPIC -o CMakeFiles/ctacatalogue.dir/retrywrappers/RequesterMountRuleCatalogueRetryWrapper.cpp.o -c /builds/cta/CTA/catalogue/retrywrappers/RequesterMountRuleCatalogueRetryWrapper.cpp",
   "file": "/builds/cta/CTA/catalogue/retrywrappers/RequesterMountRuleCatalogueRetryWrapper.cpp",
   "output": "catalogue/CMakeFiles/ctacatalogue.dir/retrywrappers/RequesterMountRuleCatalogueRetryWrapper.cpp.o"
 },
 {
   "directory": "/builds/cta/CTA/build_rpm/catalogue",
-  "command": "/usr/bin/c++ -DSUPPORT_OCCI -DVERSION_API=\\\"5-12639388gitc44adf3f\\\" -Dctacatalogue_EXPORTS -I/builds/cta/CTA -I/builds/cta/CTA/build_rpm -I/usr/include/oracle/23/client64 -fPIC -pedantic -Wall -Wextra -Werror -Wno-unused-parameter -fstack-protector-all -std=c++20 -Wshadow -g -fPIC -o CMakeFiles/ctacatalogue.dir/retrywrappers/SchemaCatalogueRetryWrapper.cpp.o -c /builds/cta/CTA/catalogue/retrywrappers/SchemaCatalogueRetryWrapper.cpp",
+  "command": "/usr/bin/c++ -DSUPPORT_OCCI -DVERSION_API=\\\"5-12639709git078702b7\\\" -Dctacatalogue_EXPORTS -I/builds/cta/CTA -I/builds/cta/CTA/build_rpm -I/usr/include/oracle/23/client64 -fPIC -pedantic -Wall -Wextra -Werror -Wno-unused-parameter -fstack-protector-all -std=c++20 -Wshadow -g -fPIC -o CMakeFiles/ctacatalogue.dir/retrywrappers/SchemaCatalogueRetryWrapper.cpp.o -c /builds/cta/CTA/catalogue/retrywrappers/SchemaCatalogueRetryWrapper.cpp",
   "file": "/builds/cta/CTA/catalogue/retrywrappers/SchemaCatalogueRetryWrapper.cpp",
   "output": "catalogue/CMakeFiles/ctacatalogue.dir/retrywrappers/SchemaCatalogueRetryWrapper.cpp.o"
 },
 {
   "directory": "/builds/cta/CTA/build_rpm/catalogue",
-  "command": "/usr/bin/c++ -DSUPPORT_OCCI -DVERSION_API=\\\"5-12639388gitc44adf3f\\\" -Dctacatalogue_EXPORTS -I/builds/cta/CTA -I/builds/cta/CTA/build_rpm -I/usr/include/oracle/23/client64 -fPIC -pedantic -Wall -Wextra -Werror -Wno-unused-parameter -fstack-protector-all -std=c++20 -Wshadow -g -fPIC -o CMakeFiles/ctacatalogue.dir/retrywrappers/StorageClassCatalogueRetryWrapper.cpp.o -c /builds/cta/CTA/catalogue/retrywrappers/StorageClassCatalogueRetryWrapper.cpp",
+  "command": "/usr/bin/c++ -DSUPPORT_OCCI -DVERSION_API=\\\"5-12639709git078702b7\\\" -Dctacatalogue_EXPORTS -I/builds/cta/CTA -I/builds/cta/CTA/build_rpm -I/usr/include/oracle/23/client64 -fPIC -pedantic -Wall -Wextra -Werror -Wno-unused-parameter -fstack-protector-all -std=c++20 -Wshadow -g -fPIC -o CMakeFiles/ctacatalogue.dir/retrywrappers/StorageClassCatalogueRetryWrapper.cpp.o -c /builds/cta/CTA/catalogue/retrywrappers/StorageClassCatalogueRetryWrapper.cpp",
   "file": "/builds/cta/CTA/catalogue/retrywrappers/StorageClassCatalogueRetryWrapper.cpp",
   "output": "catalogue/CMakeFiles/ctacatalogue.dir/retrywrappers/StorageClassCatalogueRetryWrapper.cpp.o"
 },
 {
   "directory": "/builds/cta/CTA/build_rpm/catalogue",
-  "command": "/usr/bin/c++ -DSUPPORT_OCCI -DVERSION_API=\\\"5-12639388gitc44adf3f\\\" -Dctacatalogue_EXPORTS -I/builds/cta/CTA -I/builds/cta/CTA/build_rpm -I/usr/include/oracle/23/client64 -fPIC -pedantic -Wall -Wextra -Werror -Wno-unused-parameter -fstack-protector-all -std=c++20 -Wshadow -g -fPIC -o CMakeFiles/ctacatalogue.dir/retrywrappers/TapeCatalogueRetryWrapper.cpp.o -c /builds/cta/CTA/catalogue/retrywrappers/TapeCatalogueRetryWrapper.cpp",
+  "command": "/usr/bin/c++ -DSUPPORT_OCCI -DVERSION_API=\\\"5-12639709git078702b7\\\" -Dctacatalogue_EXPORTS -I/builds/cta/CTA -I/builds/cta/CTA/build_rpm -I/usr/include/oracle/23/client64 -fPIC -pedantic -Wall -Wextra -Werror -Wno-unused-parameter -fstack-protector-all -std=c++20 -Wshadow -g -fPIC -o CMakeFiles/ctacatalogue.dir/retrywrappers/TapeCatalogueRetryWrapper.cpp.o -c /builds/cta/CTA/catalogue/retrywrappers/TapeCatalogueRetryWrapper.cpp",
   "file": "/builds/cta/CTA/catalogue/retrywrappers/TapeCatalogueRetryWrapper.cpp",
   "output": "catalogue/CMakeFiles/ctacatalogue.dir/retrywrappers/TapeCatalogueRetryWrapper.cpp.o"
 },
 {
   "directory": "/builds/cta/CTA/build_rpm/catalogue",
-  "command": "/usr/bin/c++ -DSUPPORT_OCCI -DVERSION_API=\\\"5-12639388gitc44adf3f\\\" -Dctacatalogue_EXPORTS -I/builds/cta/CTA -I/builds/cta/CTA/build_rpm -I/usr/include/oracle/23/client64 -fPIC -pedantic -Wall -Wextra -Werror -Wno-unused-parameter -fstack-protector-all -std=c++20 -Wshadow -g -fPIC -o CMakeFiles/ctacatalogue.dir/retrywrappers/TapeFileCatalogueRetryWrapper.cpp.o -c /builds/cta/CTA/catalogue/retrywrappers/TapeFileCatalogueRetryWrapper.cpp",
+  "command": "/usr/bin/c++ -DSUPPORT_OCCI -DVERSION_API=\\\"5-12639709git078702b7\\\" -Dctacatalogue_EXPORTS -I/builds/cta/CTA -I/builds/cta/CTA/build_rpm -I/usr/include/oracle/23/client64 -fPIC -pedantic -Wall -Wextra -Werror -Wno-unused-parameter -fstack-protector-all -std=c++20 -Wshadow -g -fPIC -o CMakeFiles/ctacatalogue.dir/retrywrappers/TapeFileCatalogueRetryWrapper.cpp.o -c /builds/cta/CTA/catalogue/retrywrappers/TapeFileCatalogueRetryWrapper.cpp",
   "file": "/builds/cta/CTA/catalogue/retrywrappers/TapeFileCatalogueRetryWrapper.cpp",
   "output": "catalogue/CMakeFiles/ctacatalogue.dir/retrywrappers/TapeFileCatalogueRetryWrapper.cpp.o"
 },
 {
   "directory": "/builds/cta/CTA/build_rpm/catalogue",
-  "command": "/usr/bin/c++ -DSUPPORT_OCCI -DVERSION_API=\\\"5-12639388gitc44adf3f\\\" -Dctacatalogue_EXPORTS -I/builds/cta/CTA -I/builds/cta/CTA/build_rpm -I/usr/include/oracle/23/client64 -fPIC -pedantic -Wall -Wextra -Werror -Wno-unused-parameter -fstack-protector-all -std=c++20 -Wshadow -g -fPIC -o CMakeFiles/ctacatalogue.dir/retrywrappers/TapePoolRetryCatalogueWrapper.cpp.o -c /builds/cta/CTA/catalogue/retrywrappers/TapePoolRetryCatalogueWrapper.cpp",
+  "command": "/usr/bin/c++ -DSUPPORT_OCCI -DVERSION_API=\\\"5-12639709git078702b7\\\" -Dctacatalogue_EXPORTS -I/builds/cta/CTA -I/builds/cta/CTA/build_rpm -I/usr/include/oracle/23/client64 -fPIC -pedantic -Wall -Wextra -Werror -Wno-unused-parameter -fstack-protector-all -std=c++20 -Wshadow -g -fPIC -o CMakeFiles/ctacatalogue.dir/retrywrappers/TapePoolRetryCatalogueWrapper.cpp.o -c /builds/cta/CTA/catalogue/retrywrappers/TapePoolRetryCatalogueWrapper.cpp",
   "file": "/builds/cta/CTA/catalogue/retrywrappers/TapePoolRetryCatalogueWrapper.cpp",
   "output": "catalogue/CMakeFiles/ctacatalogue.dir/retrywrappers/TapePoolRetryCatalogueWrapper.cpp.o"
 },
 {
   "directory": "/builds/cta/CTA/build_rpm/catalogue",
-  "command": "/usr/bin/c++ -DSUPPORT_OCCI -DVERSION_API=\\\"5-12639388gitc44adf3f\\\" -Dctacatalogue_EXPORTS -I/builds/cta/CTA -I/builds/cta/CTA/build_rpm -I/usr/include/oracle/23/client64 -fPIC -pedantic -Wall -Wextra -Werror -Wno-unused-parameter -fstack-protector-all -std=c++20 -Wshadow -g -fPIC -o CMakeFiles/ctacatalogue.dir/retrywrappers/VirtualOrganizationCatalogueRetryWrapper.cpp.o -c /builds/cta/CTA/catalogue/retrywrappers/VirtualOrganizationCatalogueRetryWrapper.cpp",
+  "command": "/usr/bin/c++ -DSUPPORT_OCCI -DVERSION_API=\\\"5-12639709git078702b7\\\" -Dctacatalogue_EXPORTS -I/builds/cta/CTA -I/builds/cta/CTA/build_rpm -I/usr/include/oracle/23/client64 -fPIC -pedantic -Wall -Wextra -Werror -Wno-unused-parameter -fstack-protector-all -std=c++20 -Wshadow -g -fPIC -o CMakeFiles/ctacatalogue.dir/retrywrappers/VirtualOrganizationCatalogueRetryWrapper.cpp.o -c /builds/cta/CTA/catalogue/retrywrappers/VirtualOrganizationCatalogueRetryWrapper.cpp",
   "file": "/builds/cta/CTA/catalogue/retrywrappers/VirtualOrganizationCatalogueRetryWrapper.cpp",
   "output": "catalogue/CMakeFiles/ctacatalogue.dir/retrywrappers/VirtualOrganizationCatalogueRetryWrapper.cpp.o"
 },
 {
   "directory": "/builds/cta/CTA/build_rpm/catalogue",
-  "command": "/usr/bin/c++ -DSUPPORT_OCCI -DVERSION_API=\\\"5-12639388gitc44adf3f\\\" -Dctacatalogue_EXPORTS -I/builds/cta/CTA -I/builds/cta/CTA/build_rpm -I/usr/include/oracle/23/client64 -fPIC -pedantic -Wall -Wextra -Werror -Wno-unused-parameter -fstack-protector-all -std=c++20 -Wshadow -g -fPIC -o CMakeFiles/ctacatalogue.dir/SchemaCreatingSqliteCatalogue.cpp.o -c /builds/cta/CTA/catalogue/SchemaCreatingSqliteCatalogue.cpp",
+  "command": "/usr/bin/c++ -DSUPPORT_OCCI -DVERSION_API=\\\"5-12639709git078702b7\\\" -Dctacatalogue_EXPORTS -I/builds/cta/CTA -I/builds/cta/CTA/build_rpm -I/usr/include/oracle/23/client64 -fPIC -pedantic -Wall -Wextra -Werror -Wno-unused-parameter -fstack-protector-all -std=c++20 -Wshadow -g -fPIC -o CMakeFiles/ctacatalogue.dir/SchemaCreatingSqliteCatalogue.cpp.o -c /builds/cta/CTA/catalogue/SchemaCreatingSqliteCatalogue.cpp",
   "file": "/builds/cta/CTA/catalogue/SchemaCreatingSqliteCatalogue.cpp",
   "output": "catalogue/CMakeFiles/ctacatalogue.dir/SchemaCreatingSqliteCatalogue.cpp.o"
 },
 {
   "directory": "/builds/cta/CTA/build_rpm/catalogue",
-  "command": "/usr/bin/c++ -DSUPPORT_OCCI -DVERSION_API=\\\"5-12639388gitc44adf3f\\\" -Dctacatalogue_EXPORTS -I/builds/cta/CTA -I/builds/cta/CTA/build_rpm -I/usr/include/oracle/23/client64 -fPIC -pedantic -Wall -Wextra -Werror -Wno-unused-parameter -fstack-protector-all -std=c++20 -Wshadow -g -fPIC -o CMakeFiles/ctacatalogue.dir/SchemaVersion.cpp.o -c /builds/cta/CTA/catalogue/SchemaVersion.cpp",
+  "command": "/usr/bin/c++ -DSUPPORT_OCCI -DVERSION_API=\\\"5-12639709git078702b7\\\" -Dctacatalogue_EXPORTS -I/builds/cta/CTA -I/builds/cta/CTA/build_rpm -I/usr/include/oracle/23/client64 -fPIC -pedantic -Wall -Wextra -Werror -Wno-unused-parameter -fstack-protector-all -std=c++20 -Wshadow -g -fPIC -o CMakeFiles/ctacatalogue.dir/SchemaVersion.cpp.o -c /builds/cta/CTA/catalogue/SchemaVersion.cpp",
   "file": "/builds/cta/CTA/catalogue/SchemaVersion.cpp",
   "output": "catalogue/CMakeFiles/ctacatalogue.dir/SchemaVersion.cpp.o"
 },
 {
   "directory": "/builds/cta/CTA/build_rpm/catalogue",
-  "command": "/usr/bin/c++ -DSUPPORT_OCCI -DVERSION_API=\\\"5-12639388gitc44adf3f\\\" -Dctacatalogue_EXPORTS -I/builds/cta/CTA -I/builds/cta/CTA/build_rpm -I/usr/include/oracle/23/client64 -fPIC -pedantic -Wall -Wextra -Werror -Wno-unused-parameter -fstack-protector-all -std=c++20 -Wshadow -g -fPIC -o CMakeFiles/ctacatalogue.dir/SqliteCatalogueSchema.cpp.o -c /builds/cta/CTA/build_rpm/catalogue/SqliteCatalogueSchema.cpp",
+  "command": "/usr/bin/c++ -DSUPPORT_OCCI -DVERSION_API=\\\"5-12639709git078702b7\\\" -Dctacatalogue_EXPORTS -I/builds/cta/CTA -I/builds/cta/CTA/build_rpm -I/usr/include/oracle/23/client64 -fPIC -pedantic -Wall -Wextra -Werror -Wno-unused-parameter -fstack-protector-all -std=c++20 -Wshadow -g -fPIC -o CMakeFiles/ctacatalogue.dir/SqliteCatalogueSchema.cpp.o -c /builds/cta/CTA/build_rpm/catalogue/SqliteCatalogueSchema.cpp",
   "file": "/builds/cta/CTA/build_rpm/catalogue/SqliteCatalogueSchema.cpp",
   "output": "catalogue/CMakeFiles/ctacatalogue.dir/SqliteCatalogueSchema.cpp.o"
 },
@@ -3517,145 +3517,145 @@
 },
 {
   "directory": "/builds/cta/CTA/build_rpm/rdbms/wrapper",
-  "command": "/usr/bin/c++ -DSUPPORT_OCCI -DVERSION_API=\\\"5-12639388gitc44adf3f\\\" -Dctardbmsocci_EXPORTS -I/builds/cta/CTA -I/builds/cta/CTA/build_rpm -I/usr/include/oracle/23/client64 -fPIC -pedantic -Wall -Wextra -Werror -Wno-unused-parameter -fstack-protector-all -std=c++20 -Wshadow -g -fPIC -o CMakeFiles/ctardbmsocci.dir/OcciColumn.cpp.o -c /builds/cta/CTA/rdbms/wrapper/OcciColumn.cpp",
+  "command": "/usr/bin/c++ -DSUPPORT_OCCI -DVERSION_API=\\\"5-12639709git078702b7\\\" -Dctardbmsocci_EXPORTS -I/builds/cta/CTA -I/builds/cta/CTA/build_rpm -I/usr/include/oracle/23/client64 -fPIC -pedantic -Wall -Wextra -Werror -Wno-unused-parameter -fstack-protector-all -std=c++20 -Wshadow -g -fPIC -o CMakeFiles/ctardbmsocci.dir/OcciColumn.cpp.o -c /builds/cta/CTA/rdbms/wrapper/OcciColumn.cpp",
   "file": "/builds/cta/CTA/rdbms/wrapper/OcciColumn.cpp",
   "output": "rdbms/wrapper/CMakeFiles/ctardbmsocci.dir/OcciColumn.cpp.o"
 },
 {
   "directory": "/builds/cta/CTA/build_rpm/rdbms/wrapper",
-  "command": "/usr/bin/c++ -DSUPPORT_OCCI -DVERSION_API=\\\"5-12639388gitc44adf3f\\\" -Dctardbmsocci_EXPORTS -I/builds/cta/CTA -I/builds/cta/CTA/build_rpm -I/usr/include/oracle/23/client64 -fPIC -pedantic -Wall -Wextra -Werror -Wno-unused-parameter -fstack-protector-all -std=c++20 -Wshadow -g -fPIC -o CMakeFiles/ctardbmsocci.dir/OcciConn.cpp.o -c /builds/cta/CTA/rdbms/wrapper/OcciConn.cpp",
+  "command": "/usr/bin/c++ -DSUPPORT_OCCI -DVERSION_API=\\\"5-12639709git078702b7\\\" -Dctardbmsocci_EXPORTS -I/builds/cta/CTA -I/builds/cta/CTA/build_rpm -I/usr/include/oracle/23/client64 -fPIC -pedantic -Wall -Wextra -Werror -Wno-unused-parameter -fstack-protector-all -std=c++20 -Wshadow -g -fPIC -o CMakeFiles/ctardbmsocci.dir/OcciConn.cpp.o -c /builds/cta/CTA/rdbms/wrapper/OcciConn.cpp",
   "file": "/builds/cta/CTA/rdbms/wrapper/OcciConn.cpp",
   "output": "rdbms/wrapper/CMakeFiles/ctardbmsocci.dir/OcciConn.cpp.o"
 },
 {
   "directory": "/builds/cta/CTA/build_rpm/rdbms/wrapper",
-  "command": "/usr/bin/c++ -DSUPPORT_OCCI -DVERSION_API=\\\"5-12639388gitc44adf3f\\\" -Dctardbmsocci_EXPORTS -I/builds/cta/CTA -I/builds/cta/CTA/build_rpm -I/usr/include/oracle/23/client64 -fPIC -pedantic -Wall -Wextra -Werror -Wno-unused-parameter -fstack-protector-all -std=c++20 -Wshadow -g -fPIC -o CMakeFiles/ctardbmsocci.dir/OcciConnFactory.cpp.o -c /builds/cta/CTA/rdbms/wrapper/OcciConnFactory.cpp",
+  "command": "/usr/bin/c++ -DSUPPORT_OCCI -DVERSION_API=\\\"5-12639709git078702b7\\\" -Dctardbmsocci_EXPORTS -I/builds/cta/CTA -I/builds/cta/CTA/build_rpm -I/usr/include/oracle/23/client64 -fPIC -pedantic -Wall -Wextra -Werror -Wno-unused-parameter -fstack-protector-all -std=c++20 -Wshadow -g -fPIC -o CMakeFiles/ctardbmsocci.dir/OcciConnFactory.cpp.o -c /builds/cta/CTA/rdbms/wrapper/OcciConnFactory.cpp",
   "file": "/builds/cta/CTA/rdbms/wrapper/OcciConnFactory.cpp",
   "output": "rdbms/wrapper/CMakeFiles/ctardbmsocci.dir/OcciConnFactory.cpp.o"
 },
 {
   "directory": "/builds/cta/CTA/build_rpm/rdbms/wrapper",
-  "command": "/usr/bin/c++ -DSUPPORT_OCCI -DVERSION_API=\\\"5-12639388gitc44adf3f\\\" -Dctardbmsocci_EXPORTS -I/builds/cta/CTA -I/builds/cta/CTA/build_rpm -I/usr/include/oracle/23/client64 -fPIC -pedantic -Wall -Wextra -Werror -Wno-unused-parameter -fstack-protector-all -std=c++20 -Wshadow -g -fPIC -o CMakeFiles/ctardbmsocci.dir/OcciEnv.cpp.o -c /builds/cta/CTA/rdbms/wrapper/OcciEnv.cpp",
+  "command": "/usr/bin/c++ -DSUPPORT_OCCI -DVERSION_API=\\\"5-12639709git078702b7\\\" -Dctardbmsocci_EXPORTS -I/builds/cta/CTA -I/builds/cta/CTA/build_rpm -I/usr/include/oracle/23/client64 -fPIC -pedantic -Wall -Wextra -Werror -Wno-unused-parameter -fstack-protector-all -std=c++20 -Wshadow -g -fPIC -o CMakeFiles/ctardbmsocci.dir/OcciEnv.cpp.o -c /builds/cta/CTA/rdbms/wrapper/OcciEnv.cpp",
   "file": "/builds/cta/CTA/rdbms/wrapper/OcciEnv.cpp",
   "output": "rdbms/wrapper/CMakeFiles/ctardbmsocci.dir/OcciEnv.cpp.o"
 },
 {
   "directory": "/builds/cta/CTA/build_rpm/rdbms/wrapper",
-  "command": "/usr/bin/c++ -DSUPPORT_OCCI -DVERSION_API=\\\"5-12639388gitc44adf3f\\\" -Dctardbmsocci_EXPORTS -I/builds/cta/CTA -I/builds/cta/CTA/build_rpm -I/usr/include/oracle/23/client64 -fPIC -pedantic -Wall -Wextra -Werror -Wno-unused-parameter -fstack-protector-all -std=c++20 -Wshadow -g -fPIC -o CMakeFiles/ctardbmsocci.dir/OcciEnvSingleton.cpp.o -c /builds/cta/CTA/rdbms/wrapper/OcciEnvSingleton.cpp",
+  "command": "/usr/bin/c++ -DSUPPORT_OCCI -DVERSION_API=\\\"5-12639709git078702b7\\\" -Dctardbmsocci_EXPORTS -I/builds/cta/CTA -I/builds/cta/CTA/build_rpm -I/usr/include/oracle/23/client64 -fPIC -pedantic -Wall -Wextra -Werror -Wno-unused-parameter -fstack-protector-all -std=c++20 -Wshadow -g -fPIC -o CMakeFiles/ctardbmsocci.dir/OcciEnvSingleton.cpp.o -c /builds/cta/CTA/rdbms/wrapper/OcciEnvSingleton.cpp",
   "file": "/builds/cta/CTA/rdbms/wrapper/OcciEnvSingleton.cpp",
   "output": "rdbms/wrapper/CMakeFiles/ctardbmsocci.dir/OcciEnvSingleton.cpp.o"
 },
 {
   "directory": "/builds/cta/CTA/build_rpm/rdbms/wrapper",
-  "command": "/usr/bin/c++ -DSUPPORT_OCCI -DVERSION_API=\\\"5-12639388gitc44adf3f\\\" -Dctardbmsocci_EXPORTS -I/builds/cta/CTA -I/builds/cta/CTA/build_rpm -I/usr/include/oracle/23/client64 -fPIC -pedantic -Wall -Wextra -Werror -Wno-unused-parameter -fstack-protector-all -std=c++20 -Wshadow -g -fPIC -o CMakeFiles/ctardbmsocci.dir/OcciRset.cpp.o -c /builds/cta/CTA/rdbms/wrapper/OcciRset.cpp",
+  "command": "/usr/bin/c++ -DSUPPORT_OCCI -DVERSION_API=\\\"5-12639709git078702b7\\\" -Dctardbmsocci_EXPORTS -I/builds/cta/CTA -I/builds/cta/CTA/build_rpm -I/usr/include/oracle/23/client64 -fPIC -pedantic -Wall -Wextra -Werror -Wno-unused-parameter -fstack-protector-all -std=c++20 -Wshadow -g -fPIC -o CMakeFiles/ctardbmsocci.dir/OcciRset.cpp.o -c /builds/cta/CTA/rdbms/wrapper/OcciRset.cpp",
   "file": "/builds/cta/CTA/rdbms/wrapper/OcciRset.cpp",
   "output": "rdbms/wrapper/CMakeFiles/ctardbmsocci.dir/OcciRset.cpp.o"
 },
 {
   "directory": "/builds/cta/CTA/build_rpm/rdbms/wrapper",
-  "command": "/usr/bin/c++ -DSUPPORT_OCCI -DVERSION_API=\\\"5-12639388gitc44adf3f\\\" -Dctardbmsocci_EXPORTS -I/builds/cta/CTA -I/builds/cta/CTA/build_rpm -I/usr/include/oracle/23/client64 -fPIC -pedantic -Wall -Wextra -Werror -Wno-unused-parameter -fstack-protector-all -std=c++20 -Wshadow -g -fPIC -o CMakeFiles/ctardbmsocci.dir/OcciStmt.cpp.o -c /builds/cta/CTA/rdbms/wrapper/OcciStmt.cpp",
+  "command": "/usr/bin/c++ -DSUPPORT_OCCI -DVERSION_API=\\\"5-12639709git078702b7\\\" -Dctardbmsocci_EXPORTS -I/builds/cta/CTA -I/builds/cta/CTA/build_rpm -I/usr/include/oracle/23/client64 -fPIC -pedantic -Wall -Wextra -Werror -Wno-unused-parameter -fstack-protector-all -std=c++20 -Wshadow -g -fPIC -o CMakeFiles/ctardbmsocci.dir/OcciStmt.cpp.o -c /builds/cta/CTA/rdbms/wrapper/OcciStmt.cpp",
   "file": "/builds/cta/CTA/rdbms/wrapper/OcciStmt.cpp",
   "output": "rdbms/wrapper/CMakeFiles/ctardbmsocci.dir/OcciStmt.cpp.o"
 },
 {
   "directory": "/builds/cta/CTA/build_rpm/rdbms/wrapper",
-  "command": "/usr/bin/c++ -DSUPPORT_OCCI -DVERSION_API=\\\"5-12639388gitc44adf3f\\\" -Dctardbmssqlite_EXPORTS -I/builds/cta/CTA -I/builds/cta/CTA/build_rpm -I/usr/include/oracle/23/client64 -fPIC -pedantic -Wall -Wextra -Werror -Wno-unused-parameter -fstack-protector-all -std=c++20 -Wshadow -g -fPIC -o CMakeFiles/ctardbmssqlite.dir/Sqlite.cpp.o -c /builds/cta/CTA/rdbms/wrapper/Sqlite.cpp",
+  "command": "/usr/bin/c++ -DSUPPORT_OCCI -DVERSION_API=\\\"5-12639709git078702b7\\\" -Dctardbmssqlite_EXPORTS -I/builds/cta/CTA -I/builds/cta/CTA/build_rpm -I/usr/include/oracle/23/client64 -fPIC -pedantic -Wall -Wextra -Werror -Wno-unused-parameter -fstack-protector-all -std=c++20 -Wshadow -g -fPIC -o CMakeFiles/ctardbmssqlite.dir/Sqlite.cpp.o -c /builds/cta/CTA/rdbms/wrapper/Sqlite.cpp",
   "file": "/builds/cta/CTA/rdbms/wrapper/Sqlite.cpp",
   "output": "rdbms/wrapper/CMakeFiles/ctardbmssqlite.dir/Sqlite.cpp.o"
 },
 {
   "directory": "/builds/cta/CTA/build_rpm/rdbms/wrapper",
-  "command": "/usr/bin/c++ -DSUPPORT_OCCI -DVERSION_API=\\\"5-12639388gitc44adf3f\\\" -Dctardbmssqlite_EXPORTS -I/builds/cta/CTA -I/builds/cta/CTA/build_rpm -I/usr/include/oracle/23/client64 -fPIC -pedantic -Wall -Wextra -Werror -Wno-unused-parameter -fstack-protector-all -std=c++20 -Wshadow -g -fPIC -o CMakeFiles/ctardbmssqlite.dir/SqliteConn.cpp.o -c /builds/cta/CTA/rdbms/wrapper/SqliteConn.cpp",
+  "command": "/usr/bin/c++ -DSUPPORT_OCCI -DVERSION_API=\\\"5-12639709git078702b7\\\" -Dctardbmssqlite_EXPORTS -I/builds/cta/CTA -I/builds/cta/CTA/build_rpm -I/usr/include/oracle/23/client64 -fPIC -pedantic -Wall -Wextra -Werror -Wno-unused-parameter -fstack-protector-all -std=c++20 -Wshadow -g -fPIC -o CMakeFiles/ctardbmssqlite.dir/SqliteConn.cpp.o -c /builds/cta/CTA/rdbms/wrapper/SqliteConn.cpp",
   "file": "/builds/cta/CTA/rdbms/wrapper/SqliteConn.cpp",
   "output": "rdbms/wrapper/CMakeFiles/ctardbmssqlite.dir/SqliteConn.cpp.o"
 },
 {
   "directory": "/builds/cta/CTA/build_rpm/rdbms/wrapper",
-  "command": "/usr/bin/c++ -DSUPPORT_OCCI -DVERSION_API=\\\"5-12639388gitc44adf3f\\\" -Dctardbmssqlite_EXPORTS -I/builds/cta/CTA -I/builds/cta/CTA/build_rpm -I/usr/include/oracle/23/client64 -fPIC -pedantic -Wall -Wextra -Werror -Wno-unused-parameter -fstack-protector-all -std=c++20 -Wshadow -g -fPIC -o CMakeFiles/ctardbmssqlite.dir/SqliteConnFactory.cpp.o -c /builds/cta/CTA/rdbms/wrapper/SqliteConnFactory.cpp",
+  "command": "/usr/bin/c++ -DSUPPORT_OCCI -DVERSION_API=\\\"5-12639709git078702b7\\\" -Dctardbmssqlite_EXPORTS -I/builds/cta/CTA -I/builds/cta/CTA/build_rpm -I/usr/include/oracle/23/client64 -fPIC -pedantic -Wall -Wextra -Werror -Wno-unused-parameter -fstack-protector-all -std=c++20 -Wshadow -g -fPIC -o CMakeFiles/ctardbmssqlite.dir/SqliteConnFactory.cpp.o -c /builds/cta/CTA/rdbms/wrapper/SqliteConnFactory.cpp",
   "file": "/builds/cta/CTA/rdbms/wrapper/SqliteConnFactory.cpp",
   "output": "rdbms/wrapper/CMakeFiles/ctardbmssqlite.dir/SqliteConnFactory.cpp.o"
 },
 {
   "directory": "/builds/cta/CTA/build_rpm/rdbms/wrapper",
-  "command": "/usr/bin/c++ -DSUPPORT_OCCI -DVERSION_API=\\\"5-12639388gitc44adf3f\\\" -Dctardbmssqlite_EXPORTS -I/builds/cta/CTA -I/builds/cta/CTA/build_rpm -I/usr/include/oracle/23/client64 -fPIC -pedantic -Wall -Wextra -Werror -Wno-unused-parameter -fstack-protector-all -std=c++20 -Wshadow -g -fPIC -o CMakeFiles/ctardbmssqlite.dir/SqliteRset.cpp.o -c /builds/cta/CTA/rdbms/wrapper/SqliteRset.cpp",
+  "command": "/usr/bin/c++ -DSUPPORT_OCCI -DVERSION_API=\\\"5-12639709git078702b7\\\" -Dctardbmssqlite_EXPORTS -I/builds/cta/CTA -I/builds/cta/CTA/build_rpm -I/usr/include/oracle/23/client64 -fPIC -pedantic -Wall -Wextra -Werror -Wno-unused-parameter -fstack-protector-all -std=c++20 -Wshadow -g -fPIC -o CMakeFiles/ctardbmssqlite.dir/SqliteRset.cpp.o -c /builds/cta/CTA/rdbms/wrapper/SqliteRset.cpp",
   "file": "/builds/cta/CTA/rdbms/wrapper/SqliteRset.cpp",
   "output": "rdbms/wrapper/CMakeFiles/ctardbmssqlite.dir/SqliteRset.cpp.o"
 },
 {
   "directory": "/builds/cta/CTA/build_rpm/rdbms/wrapper",
-  "command": "/usr/bin/c++ -DSUPPORT_OCCI -DVERSION_API=\\\"5-12639388gitc44adf3f\\\" -Dctardbmssqlite_EXPORTS -I/builds/cta/CTA -I/builds/cta/CTA/build_rpm -I/usr/include/oracle/23/client64 -fPIC -pedantic -Wall -Wextra -Werror -Wno-unused-parameter -fstack-protector-all -std=c++20 -Wshadow -g -fPIC -o CMakeFiles/ctardbmssqlite.dir/SqliteStmt.cpp.o -c /builds/cta/CTA/rdbms/wrapper/SqliteStmt.cpp",
+  "command": "/usr/bin/c++ -DSUPPORT_OCCI -DVERSION_API=\\\"5-12639709git078702b7\\\" -Dctardbmssqlite_EXPORTS -I/builds/cta/CTA -I/builds/cta/CTA/build_rpm -I/usr/include/oracle/23/client64 -fPIC -pedantic -Wall -Wextra -Werror -Wno-unused-parameter -fstack-protector-all -std=c++20 -Wshadow -g -fPIC -o CMakeFiles/ctardbmssqlite.dir/SqliteStmt.cpp.o -c /builds/cta/CTA/rdbms/wrapper/SqliteStmt.cpp",
   "file": "/builds/cta/CTA/rdbms/wrapper/SqliteStmt.cpp",
   "output": "rdbms/wrapper/CMakeFiles/ctardbmssqlite.dir/SqliteStmt.cpp.o"
 },
 {
   "directory": "/builds/cta/CTA/build_rpm/rdbms/wrapper",
-  "command": "/usr/bin/c++ -DSUPPORT_OCCI -DVERSION_API=\\\"5-12639388gitc44adf3f\\\" -Dctardbmspostgres_EXPORTS -I/builds/cta/CTA -I/builds/cta/CTA/build_rpm -I/usr/include/oracle/23/client64 -fPIC -pedantic -Wall -Wextra -Werror -Wno-unused-parameter -fstack-protector-all -std=c++20 -Wshadow -g -fPIC -o CMakeFiles/ctardbmspostgres.dir/PostgresConn.cpp.o -c /builds/cta/CTA/rdbms/wrapper/PostgresConn.cpp",
+  "command": "/usr/bin/c++ -DSUPPORT_OCCI -DVERSION_API=\\\"5-12639709git078702b7\\\" -Dctardbmspostgres_EXPORTS -I/builds/cta/CTA -I/builds/cta/CTA/build_rpm -I/usr/include/oracle/23/client64 -fPIC -pedantic -Wall -Wextra -Werror -Wno-unused-parameter -fstack-protector-all -std=c++20 -Wshadow -g -fPIC -o CMakeFiles/ctardbmspostgres.dir/PostgresConn.cpp.o -c /builds/cta/CTA/rdbms/wrapper/PostgresConn.cpp",
   "file": "/builds/cta/CTA/rdbms/wrapper/PostgresConn.cpp",
   "output": "rdbms/wrapper/CMakeFiles/ctardbmspostgres.dir/PostgresConn.cpp.o"
 },
 {
   "directory": "/builds/cta/CTA/build_rpm/rdbms/wrapper",
-  "command": "/usr/bin/c++ -DSUPPORT_OCCI -DVERSION_API=\\\"5-12639388gitc44adf3f\\\" -Dctardbmspostgres_EXPORTS -I/builds/cta/CTA -I/builds/cta/CTA/build_rpm -I/usr/include/oracle/23/client64 -fPIC -pedantic -Wall -Wextra -Werror -Wno-unused-parameter -fstack-protector-all -std=c++20 -Wshadow -g -fPIC -o CMakeFiles/ctardbmspostgres.dir/PostgresConnFactory.cpp.o -c /builds/cta/CTA/rdbms/wrapper/PostgresConnFactory.cpp",
+  "command": "/usr/bin/c++ -DSUPPORT_OCCI -DVERSION_API=\\\"5-12639709git078702b7\\\" -Dctardbmspostgres_EXPORTS -I/builds/cta/CTA -I/builds/cta/CTA/build_rpm -I/usr/include/oracle/23/client64 -fPIC -pedantic -Wall -Wextra -Werror -Wno-unused-parameter -fstack-protector-all -std=c++20 -Wshadow -g -fPIC -o CMakeFiles/ctardbmspostgres.dir/PostgresConnFactory.cpp.o -c /builds/cta/CTA/rdbms/wrapper/PostgresConnFactory.cpp",
   "file": "/builds/cta/CTA/rdbms/wrapper/PostgresConnFactory.cpp",
   "output": "rdbms/wrapper/CMakeFiles/ctardbmspostgres.dir/PostgresConnFactory.cpp.o"
 },
 {
   "directory": "/builds/cta/CTA/build_rpm/rdbms/wrapper",
-  "command": "/usr/bin/c++ -DSUPPORT_OCCI -DVERSION_API=\\\"5-12639388gitc44adf3f\\\" -Dctardbmspostgres_EXPORTS -I/builds/cta/CTA -I/builds/cta/CTA/build_rpm -I/usr/include/oracle/23/client64 -fPIC -pedantic -Wall -Wextra -Werror -Wno-unused-parameter -fstack-protector-all -std=c++20 -Wshadow -g -fPIC -o CMakeFiles/ctardbmspostgres.dir/PostgresRset.cpp.o -c /builds/cta/CTA/rdbms/wrapper/PostgresRset.cpp",
+  "command": "/usr/bin/c++ -DSUPPORT_OCCI -DVERSION_API=\\\"5-12639709git078702b7\\\" -Dctardbmspostgres_EXPORTS -I/builds/cta/CTA -I/builds/cta/CTA/build_rpm -I/usr/include/oracle/23/client64 -fPIC -pedantic -Wall -Wextra -Werror -Wno-unused-parameter -fstack-protector-all -std=c++20 -Wshadow -g -fPIC -o CMakeFiles/ctardbmspostgres.dir/PostgresRset.cpp.o -c /builds/cta/CTA/rdbms/wrapper/PostgresRset.cpp",
   "file": "/builds/cta/CTA/rdbms/wrapper/PostgresRset.cpp",
   "output": "rdbms/wrapper/CMakeFiles/ctardbmspostgres.dir/PostgresRset.cpp.o"
 },
 {
   "directory": "/builds/cta/CTA/build_rpm/rdbms/wrapper",
-  "command": "/usr/bin/c++ -DSUPPORT_OCCI -DVERSION_API=\\\"5-12639388gitc44adf3f\\\" -Dctardbmspostgres_EXPORTS -I/builds/cta/CTA -I/builds/cta/CTA/build_rpm -I/usr/include/oracle/23/client64 -fPIC -pedantic -Wall -Wextra -Werror -Wno-unused-parameter -fstack-protector-all -std=c++20 -Wshadow -g -fPIC -o CMakeFiles/ctardbmspostgres.dir/PostgresStmt.cpp.o -c /builds/cta/CTA/rdbms/wrapper/PostgresStmt.cpp",
+  "command": "/usr/bin/c++ -DSUPPORT_OCCI -DVERSION_API=\\\"5-12639709git078702b7\\\" -Dctardbmspostgres_EXPORTS -I/builds/cta/CTA -I/builds/cta/CTA/build_rpm -I/usr/include/oracle/23/client64 -fPIC -pedantic -Wall -Wextra -Werror -Wno-unused-parameter -fstack-protector-all -std=c++20 -Wshadow -g -fPIC -o CMakeFiles/ctardbmspostgres.dir/PostgresStmt.cpp.o -c /builds/cta/CTA/rdbms/wrapper/PostgresStmt.cpp",
   "file": "/builds/cta/CTA/rdbms/wrapper/PostgresStmt.cpp",
   "output": "rdbms/wrapper/CMakeFiles/ctardbmspostgres.dir/PostgresStmt.cpp.o"
 },
 {
   "directory": "/builds/cta/CTA/build_rpm/rdbms/wrapper",
-  "command": "/usr/bin/c++ -DSUPPORT_OCCI -DVERSION_API=\\\"5-12639388gitc44adf3f\\\" -Dctardbmspostgres_EXPORTS -I/builds/cta/CTA -I/builds/cta/CTA/build_rpm -I/usr/include/oracle/23/client64 -fPIC -pedantic -Wall -Wextra -Werror -Wno-unused-parameter -fstack-protector-all -std=c++20 -Wshadow -g -fPIC -o CMakeFiles/ctardbmspostgres.dir/PostgresColumn.cpp.o -c /builds/cta/CTA/rdbms/wrapper/PostgresColumn.cpp",
+  "command": "/usr/bin/c++ -DSUPPORT_OCCI -DVERSION_API=\\\"5-12639709git078702b7\\\" -Dctardbmspostgres_EXPORTS -I/builds/cta/CTA -I/builds/cta/CTA/build_rpm -I/usr/include/oracle/23/client64 -fPIC -pedantic -Wall -Wextra -Werror -Wno-unused-parameter -fstack-protector-all -std=c++20 -Wshadow -g -fPIC -o CMakeFiles/ctardbmspostgres.dir/PostgresColumn.cpp.o -c /builds/cta/CTA/rdbms/wrapper/PostgresColumn.cpp",
   "file": "/builds/cta/CTA/rdbms/wrapper/PostgresColumn.cpp",
   "output": "rdbms/wrapper/CMakeFiles/ctardbmspostgres.dir/PostgresColumn.cpp.o"
 },
 {
   "directory": "/builds/cta/CTA/build_rpm/rdbms/wrapper",
-  "command": "/usr/bin/c++ -DSUPPORT_OCCI -DVERSION_API=\\\"5-12639388gitc44adf3f\\\" -Dctardbmswrapper_EXPORTS -I/builds/cta/CTA -I/builds/cta/CTA/build_rpm -I/usr/include/oracle/23/client64 -fPIC -pedantic -Wall -Wextra -Werror -Wno-unused-parameter -fstack-protector-all -std=c++20 -Wshadow -g -fPIC -o CMakeFiles/ctardbmswrapper.dir/ColumnNameToIdx.cpp.o -c /builds/cta/CTA/rdbms/wrapper/ColumnNameToIdx.cpp",
+  "command": "/usr/bin/c++ -DSUPPORT_OCCI -DVERSION_API=\\\"5-12639709git078702b7\\\" -Dctardbmswrapper_EXPORTS -I/builds/cta/CTA -I/builds/cta/CTA/build_rpm -I/usr/include/oracle/23/client64 -fPIC -pedantic -Wall -Wextra -Werror -Wno-unused-parameter -fstack-protector-all -std=c++20 -Wshadow -g -fPIC -o CMakeFiles/ctardbmswrapper.dir/ColumnNameToIdx.cpp.o -c /builds/cta/CTA/rdbms/wrapper/ColumnNameToIdx.cpp",
   "file": "/builds/cta/CTA/rdbms/wrapper/ColumnNameToIdx.cpp",
   "output": "rdbms/wrapper/CMakeFiles/ctardbmswrapper.dir/ColumnNameToIdx.cpp.o"
 },
 {
   "directory": "/builds/cta/CTA/build_rpm/rdbms/wrapper",
-  "command": "/usr/bin/c++ -DSUPPORT_OCCI -DVERSION_API=\\\"5-12639388gitc44adf3f\\\" -Dctardbmswrapper_EXPORTS -I/builds/cta/CTA -I/builds/cta/CTA/build_rpm -I/usr/include/oracle/23/client64 -fPIC -pedantic -Wall -Wextra -Werror -Wno-unused-parameter -fstack-protector-all -std=c++20 -Wshadow -g -fPIC -o CMakeFiles/ctardbmswrapper.dir/ColumnNameToIdxAndType.cpp.o -c /builds/cta/CTA/rdbms/wrapper/ColumnNameToIdxAndType.cpp",
+  "command": "/usr/bin/c++ -DSUPPORT_OCCI -DVERSION_API=\\\"5-12639709git078702b7\\\" -Dctardbmswrapper_EXPORTS -I/builds/cta/CTA -I/builds/cta/CTA/build_rpm -I/usr/include/oracle/23/client64 -fPIC -pedantic -Wall -Wextra -Werror -Wno-unused-parameter -fstack-protector-all -std=c++20 -Wshadow -g -fPIC -o CMakeFiles/ctardbmswrapper.dir/ColumnNameToIdxAndType.cpp.o -c /builds/cta/CTA/rdbms/wrapper/ColumnNameToIdxAndType.cpp",
   "file": "/builds/cta/CTA/rdbms/wrapper/ColumnNameToIdxAndType.cpp",
   "output": "rdbms/wrapper/CMakeFiles/ctardbmswrapper.dir/ColumnNameToIdxAndType.cpp.o"
 },
 {
   "directory": "/builds/cta/CTA/build_rpm/rdbms/wrapper",
-  "command": "/usr/bin/c++ -DSUPPORT_OCCI -DVERSION_API=\\\"5-12639388gitc44adf3f\\\" -Dctardbmswrapper_EXPORTS -I/builds/cta/CTA -I/builds/cta/CTA/build_rpm -I/usr/include/oracle/23/client64 -fPIC -pedantic -Wall -Wextra -Werror -Wno-unused-parameter -fstack-protector-all -std=c++20 -Wshadow -g -fPIC -o CMakeFiles/ctardbmswrapper.dir/ConnFactoryFactory.cpp.o -c /builds/cta/CTA/rdbms/wrapper/ConnFactoryFactory.cpp",
+  "command": "/usr/bin/c++ -DSUPPORT_OCCI -DVERSION_API=\\\"5-12639709git078702b7\\\" -Dctardbmswrapper_EXPORTS -I/builds/cta/CTA -I/builds/cta/CTA/build_rpm -I/usr/include/oracle/23/client64 -fPIC -pedantic -Wall -Wextra -Werror -Wno-unused-parameter -fstack-protector-all -std=c++20 -Wshadow -g -fPIC -o CMakeFiles/ctardbmswrapper.dir/ConnFactoryFactory.cpp.o -c /builds/cta/CTA/rdbms/wrapper/ConnFactoryFactory.cpp",
   "file": "/builds/cta/CTA/rdbms/wrapper/ConnFactoryFactory.cpp",
   "output": "rdbms/wrapper/CMakeFiles/ctardbmswrapper.dir/ConnFactoryFactory.cpp.o"
 },
 {
   "directory": "/builds/cta/CTA/build_rpm/rdbms/wrapper",
-  "command": "/usr/bin/c++ -DSUPPORT_OCCI -DVERSION_API=\\\"5-12639388gitc44adf3f\\\" -Dctardbmswrapper_EXPORTS -I/builds/cta/CTA -I/builds/cta/CTA/build_rpm -I/usr/include/oracle/23/client64 -fPIC -pedantic -Wall -Wextra -Werror -Wno-unused-parameter -fstack-protector-all -std=c++20 -Wshadow -g -fPIC -o CMakeFiles/ctardbmswrapper.dir/ConnWrapper.cpp.o -c /builds/cta/CTA/rdbms/wrapper/ConnWrapper.cpp",
+  "command": "/usr/bin/c++ -DSUPPORT_OCCI -DVERSION_API=\\\"5-12639709git078702b7\\\" -Dctardbmswrapper_EXPORTS -I/builds/cta/CTA -I/builds/cta/CTA/build_rpm -I/usr/include/oracle/23/client64 -fPIC -pedantic -Wall -Wextra -Werror -Wno-unused-parameter -fstack-protector-all -std=c++20 -Wshadow -g -fPIC -o CMakeFiles/ctardbmswrapper.dir/ConnWrapper.cpp.o -c /builds/cta/CTA/rdbms/wrapper/ConnWrapper.cpp",
   "file": "/builds/cta/CTA/rdbms/wrapper/ConnWrapper.cpp",
   "output": "rdbms/wrapper/CMakeFiles/ctardbmswrapper.dir/ConnWrapper.cpp.o"
 },
 {
   "directory": "/builds/cta/CTA/build_rpm/rdbms/wrapper",
-  "command": "/usr/bin/c++ -DSUPPORT_OCCI -DVERSION_API=\\\"5-12639388gitc44adf3f\\\" -Dctardbmswrapper_EXPORTS -I/builds/cta/CTA -I/builds/cta/CTA/build_rpm -I/usr/include/oracle/23/client64 -fPIC -pedantic -Wall -Wextra -Werror -Wno-unused-parameter -fstack-protector-all -std=c++20 -Wshadow -g -fPIC -o CMakeFiles/ctardbmswrapper.dir/ParamNameToIdx.cpp.o -c /builds/cta/CTA/rdbms/wrapper/ParamNameToIdx.cpp",
+  "command": "/usr/bin/c++ -DSUPPORT_OCCI -DVERSION_API=\\\"5-12639709git078702b7\\\" -Dctardbmswrapper_EXPORTS -I/builds/cta/CTA -I/builds/cta/CTA/build_rpm -I/usr/include/oracle/23/client64 -fPIC -pedantic -Wall -Wextra -Werror -Wno-unused-parameter -fstack-protector-all -std=c++20 -Wshadow -g -fPIC -o CMakeFiles/ctardbmswrapper.dir/ParamNameToIdx.cpp.o -c /builds/cta/CTA/rdbms/wrapper/ParamNameToIdx.cpp",
   "file": "/builds/cta/CTA/rdbms/wrapper/ParamNameToIdx.cpp",
   "output": "rdbms/wrapper/CMakeFiles/ctardbmswrapper.dir/ParamNameToIdx.cpp.o"
 },
 {
   "directory": "/builds/cta/CTA/build_rpm/rdbms/wrapper",
-  "command": "/usr/bin/c++ -DSUPPORT_OCCI -DVERSION_API=\\\"5-12639388gitc44adf3f\\\" -Dctardbmswrapper_EXPORTS -I/builds/cta/CTA -I/builds/cta/CTA/build_rpm -I/usr/include/oracle/23/client64 -fPIC -pedantic -Wall -Wextra -Werror -Wno-unused-parameter -fstack-protector-all -std=c++20 -Wshadow -g -fPIC -o CMakeFiles/ctardbmswrapper.dir/RsetWrapper.cpp.o -c /builds/cta/CTA/rdbms/wrapper/RsetWrapper.cpp",
+  "command": "/usr/bin/c++ -DSUPPORT_OCCI -DVERSION_API=\\\"5-12639709git078702b7\\\" -Dctardbmswrapper_EXPORTS -I/builds/cta/CTA -I/builds/cta/CTA/build_rpm -I/usr/include/oracle/23/client64 -fPIC -pedantic -Wall -Wextra -Werror -Wno-unused-parameter -fstack-protector-all -std=c++20 -Wshadow -g -fPIC -o CMakeFiles/ctardbmswrapper.dir/RsetWrapper.cpp.o -c /builds/cta/CTA/rdbms/wrapper/RsetWrapper.cpp",
   "file": "/builds/cta/CTA/rdbms/wrapper/RsetWrapper.cpp",
   "output": "rdbms/wrapper/CMakeFiles/ctardbmswrapper.dir/RsetWrapper.cpp.o"
 },
 {
   "directory": "/builds/cta/CTA/build_rpm/rdbms/wrapper",
-  "command": "/usr/bin/c++ -DSUPPORT_OCCI -DVERSION_API=\\\"5-12639388gitc44adf3f\\\" -Dctardbmswrapper_EXPORTS -I/builds/cta/CTA -I/builds/cta/CTA/build_rpm -I/usr/include/oracle/23/client64 -fPIC -pedantic -Wall -Wextra -Werror -Wno-unused-parameter -fstack-protector-all -std=c++20 -Wshadow -g -fPIC -o CMakeFiles/ctardbmswrapper.dir/StmtWrapper.cpp.o -c /builds/cta/CTA/rdbms/wrapper/StmtWrapper.cpp",
+  "command": "/usr/bin/c++ -DSUPPORT_OCCI -DVERSION_API=\\\"5-12639709git078702b7\\\" -Dctardbmswrapper_EXPORTS -I/builds/cta/CTA -I/builds/cta/CTA/build_rpm -I/usr/include/oracle/23/client64 -fPIC -pedantic -Wall -Wextra -Werror -Wno-unused-parameter -fstack-protector-all -std=c++20 -Wshadow -g -fPIC -o CMakeFiles/ctardbmswrapper.dir/StmtWrapper.cpp.o -c /builds/cta/CTA/rdbms/wrapper/StmtWrapper.cpp",
   "file": "/builds/cta/CTA/rdbms/wrapper/StmtWrapper.cpp",
   "output": "rdbms/wrapper/CMakeFiles/ctardbmswrapper.dir/StmtWrapper.cpp.o"
 },
