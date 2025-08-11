@@ -129,7 +129,7 @@ check-compile-commands:
   allow_failure: true
   script:
     # Check if we are rebased on main, if not, the job will succeed.
-    - git fetch --depth=0 --no-tags origin main:main
+    - git fetch --unshallow --no-tags origin main:main
     #- git checkout main
     #- git pull origin main
     #- git checkout ${CI_COMMIT_SHA}
