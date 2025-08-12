@@ -37,6 +37,7 @@
 #include "common/log/StdoutLogger.hpp"
 #include "objectstore/BackendVFS.hpp"
 #include "QueueCleanupRunner.hpp"
+#include "GarbageCollector.hpp"
 #include "scheduler/OStoreDB/OStoreDBFactory.hpp"
 #include "scheduler/OStoreDB/OStoreDBWithAgent.hpp"
 #include "scheduler/Scheduler.hpp"
@@ -349,7 +350,7 @@ TEST_P(QueueCleanupRunnerConcurrentTest, CleanupRunnerParameterizedTest) {
     cta::maintenance::QueueCleanupRunner qCleanupRunnerOk(agentForCleanupRef, oKOStore, catalogue, GetParam().cleanupTimeout);
 
     // We now run the GarbageCollector to clear the CleanupInfo 
-    cta::objectstore::GarbageCollector gc(be, agentForCleanupRef, catalogue);
+    cta::maintenance::GarbageCollector gc(be, agentForCleanupRef, catalogue);
     ASSERT_NO_THROW(gc.runOnePass(lc));
 
     // Try to move the requests after agent got garbage collected

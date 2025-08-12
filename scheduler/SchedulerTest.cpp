@@ -6998,7 +6998,7 @@ TEST_P(SchedulerTest, toTransfereRetrieveQueueMissingReservationInfo)
     retrieveQueue1.commit();
   }
   // Garbage collect the first agent
-  GarbageCollector gc(backend, agentReference, catalogue);
+  cta::maintenance::GarbageCollector gc(backend, agentReference, catalogue);
   gc.runOnePass(lc);
 
   // Check that the queue cleanup information has not been cleared.

@@ -27,7 +27,6 @@ namespace cta::objectstore {
 
 class GenericObject;
 class AgentReference;
-class GarbageCollector;
 class Sorter;
 
 /**

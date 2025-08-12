@@ -19,18 +19,18 @@
 
 #include "common/log/LogContext.hpp"
 #include "disk/DiskReporterFactory.hpp"
+#include "scheduler/Scheduler.hpp"
 
 namespace cta {
 
-class Scheduler;
 
 class DiskReportRunner {
 public:
-  explicit DiskReportRunner(Scheduler& scheduler) : m_scheduler(scheduler) {}
+  explicit DiskReportRunner(cta::Scheduler& scheduler) : m_scheduler(scheduler) {}
   void runOnePass(log::LogContext& lc);
   
 private:
-  Scheduler& m_scheduler;
+  cta::Scheduler& m_scheduler;
   disk::DiskReporterFactory m_reporterFactory;
 };
 

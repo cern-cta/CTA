@@ -18,14 +18,10 @@
 #include <algorithm>
 #include <unistd.h>
 
-#include "AgentReference.hpp"
-#include "ArchiveQueueAlgorithms.hpp"
-#include "ArchiveRequest.hpp"
+#include "GarbageCollector.hpp"
 #include "common/dataStructures/RetrieveJobToAdd.cpp"
 #include "common/exception/NoSuchObject.hpp"
-#include "GarbageCollector.hpp"
-
-#include "common/exception/NoSuchObject.hpp"
+#include "objectstore/ArchiveQueueAlgorithms.hpp"
 #include "objectstore/Agent.hpp"
 #include "objectstore/AgentReference.hpp"
 #include "objectstore/AgentWatchdog.hpp"
@@ -392,8 +388,8 @@ void GarbageCollector::OwnedObjectSorter::sortFetchedObjects(objectstore::Agent&
         // Back to the transfer case.
         std::string vid;
         try {
-          vid=Helpers::selectBestRetrieveQueue(candidateVids, catalogue, objectStore, lc, isRepack);
-        } catch (Helpers::NoTapeAvailableForRetrieve & ex) {
+          vid=objectstore::Helpers::selectBestRetrieveQueue(candidateVids, catalogue, objectStore, lc, isRepack);
+        } catch (objectstore::Helpers::NoTapeAvailableForRetrieve & ex) {
           log::ScopedParamContainer params3(lc);
           params3.add("fileId", rr->getArchiveFile().archiveFileID);
           lc.log(log::INFO, "In GarbageCollector::OwnedObjectSorter::sortFetchedObjects(): No available tape found. Marking request for normal GC (and probably deletion).");
