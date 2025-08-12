@@ -39,6 +39,8 @@
 #include "tapeserver/readtp/TapeFseqRange.hpp"
 #include "tapeserver/readtp/TapeFseqRangeListSequence.hpp"
 
+#include <chrono>
+
 namespace cta::tapeserver::readtp {
 
 //------------------------------------------------------------------------------
@@ -375,6 +377,9 @@ void ReadtpCmd::readTapeFiles(
     TapeFseqRangeListSequence fSeqRangeListSequence(&m_fSeqRangeList);
     std::string destinationFile = getNextDestinationUrl();
     uint64_t fSeq;
+    size_t totalDataSize = 0;
+    auto t_begin = std::chrono::high_resolution_clock::now();
+
     while (fSeqRangeListSequence.hasMore()) {
       try {
         fSeq = fSeqRangeListSequence.next();
@@ -384,7 +389,7 @@ void ReadtpCmd::readTapeFiles(
         std::unique_ptr<cta::disk::WriteFile> wfptr;
         wfptr.reset(fileFactory.createWriteFile(destinationFile));
         cta::disk::WriteFile &wf = *wfptr.get();
-        readTapeFile(*readSession, fSeq, wf, volInfo);
+        totalDataSize += readTapeFile(*readSession, fSeq, wf, volInfo);
         m_nbSuccessReads++; // if readTapeFile returns, file was read successfully
         destinationFile = getNextDestinationUrl();
       } catch (tapeserver::readtp::NoSuchFSeqException&) {
@@ -404,6 +409,10 @@ void ReadtpCmd::readTapeFiles(
         m_nbFailedReads++; 
       }
     }
+
+  auto t_end = std::chrono::high_resolution_clock::now();
+  std::chrono::duration<double> elapsedTimeSec = t_end - t_begin;
+  auto throughputMBs = (static_cast<double>(totalDataSize) / elapsedTimeSec.count()) / (1024 * 1024);
   std::list<cta::log::Param> params;
   params.push_back(cta::log::Param("userName", getUsername()));
   params.push_back(cta::log::Param("tapeVid", m_vid));
@@ -413,6 +422,9 @@ void ReadtpCmd::readTapeFiles(
   params.push_back(cta::log::Param("driveSupportLbp",boolToStr(m_driveSupportLbp)));
   params.push_back(cta::log::Param("nbReads", m_nbSuccessReads + m_nbFailedReads));
   params.push_back(cta::log::Param("nbSuccessfullReads", m_nbSuccessReads));
+  params.push_back(cta::log::Param("totalDataMB", totalDataSize / (1024 * 1024)));
+  params.push_back(cta::log::Param("elapsedTimeSec", elapsedTimeSec));
+  params.push_back(cta::log::Param("throughputMBs", throughputMBs));
   params.push_back(cta::log::Param("nbFailedReads", m_nbFailedReads));
 
   m_log(cta::log::INFO, "Finished reading tape", params);
@@ -422,7 +434,7 @@ void ReadtpCmd::readTapeFiles(
 //------------------------------------------------------------------------------
 // readTapeFile
 //------------------------------------------------------------------------------
-void ReadtpCmd::readTapeFile(
+size_t ReadtpCmd::readTapeFile(
   castor::tape::tapeFile::ReadSession& readSession, const uint64_t &fSeq, cta::disk::WriteFile &wf,
   const castor::tape::tapeserver::daemon::VolumeInfo &volInfo) {
   std::list<cta::log::Param> params;
@@ -453,7 +465,7 @@ void ReadtpCmd::readTapeFile(
   fileToRecall.selectedCopyNb = 0;
   fileToRecall.archiveFile.tapeFiles.push_back(cta::common::dataStructures::TapeFile());
   fileToRecall.selectedTapeFile().fSeq = fSeq;
-  fileToRecall.positioningMethod = cta::PositioningMethod::ByFSeq;
+  fileToRecall.positioningMethod = m_searchByBlockID ? cta::PositioningMethod::ByBlock : cta::PositioningMethod::ByFSeq;
 
   const auto reader = castor::tape::tapeFile::FileReaderFactory::create(readSession, fileToRecall, m_searchByBlockID);
   auto checksum_adler32 = castor::tape::tapeserver::daemon::Payload::zeroAdler32();
@@ -488,6 +500,7 @@ void ReadtpCmd::readTapeFile(
   params.push_back(cta::log::Param("checksumValue", "0x" + sstream.str()));
   params.push_back(cta::log::Param("readFileSize", read_data_size));
   m_log(cta::log::INFO, "Read file from tape successfully", params);
+  return read_data_size;
 }
 
 //------------------------------------------------------------------------------
