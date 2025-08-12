@@ -35,6 +35,10 @@ danger-review-gate:
       optional: true
     - job: test-cta-admin
       optional: true
+    - job: clang-format-report
+      optional: true
+    - job: cppcheck
+      optional: true
   rules:
     - if: $CI_PIPELINE_SOURCE == "merge_request_event"
       when: always
