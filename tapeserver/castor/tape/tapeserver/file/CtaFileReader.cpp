@@ -36,10 +36,15 @@ void CtaFileReader::positionByFseq(const cta::RetrieveJob& fileToRecall) {
 
   const int64_t fSeq_delta =
     static_cast<int64_t>(fileToRecall.selectedTapeFile().fSeq) - static_cast<int64_t>(m_session.getCurrentFseq());
-  if (fileToRecall.selectedTapeFile().fSeq == 1) {
-    moveToFirstHeaderBlock();
-  } else {
-    moveReaderByFSeqDelta(fSeq_delta);
+
+  {
+    ChronoTimer timer;
+    if (fileToRecall.selectedTapeFile().fSeq == 1) {
+      moveToFirstHeaderBlock();
+    } else {
+      moveReaderByFSeqDelta(fSeq_delta);
+    }
+    m_readerTimer.positioning = timer.elapsedTime();
   }
   checkHeaders(fileToRecall);
 }
@@ -56,7 +61,11 @@ void CtaFileReader::positionByBlockID(const cta::RetrieveJob& fileToRecall) {
            << fileToRecall.selectedTapeFile().blockId;
     throw cta::exception::Exception(ex_str.str());
   }
-  useBlockID(fileToRecall);
+  {
+    ChronoTimer timer;
+    useBlockID(fileToRecall);
+    m_readerTimer.positioning = timer.elapsedTime();
+  }
   checkHeaders(fileToRecall);
 }
 
@@ -83,10 +92,29 @@ void CtaFileReader::checkTrailers() {
   EOF1 eof1;
   EOF2 eof2;
   UTL1 utl1;
-  m_session.m_drive.readExactBlock(reinterpret_cast<void*>(&eof1), sizeof(eof1), "[FileReader::read] - Reading HDR1");
-  m_session.m_drive.readExactBlock(reinterpret_cast<void*>(&eof2), sizeof(eof2), "[FileReader::read] - Reading HDR2");
-  m_session.m_drive.readExactBlock(reinterpret_cast<void*>(&utl1), sizeof(utl1), "[FileReader::read] - Reading UTL1");
-  m_session.m_drive.readFileMark("[FileReader::read] - Reading file mark at the end of file trailer");
+  {
+    ChronoTimer timer;
+    m_session.m_drive.readExactBlock(reinterpret_cast<void *>(&eof1), sizeof(eof1),
+      "[FileReader::read] - Reading HDR1");
+    m_readerTimer.trailerBlocks[0] = timer.elapsedTime();
+  }
+  {
+    ChronoTimer timer;
+    m_session.m_drive.readExactBlock(reinterpret_cast<void *>(&eof2), sizeof(eof2),
+      "[FileReader::read] - Reading HDR2");
+    m_readerTimer.trailerBlocks[1] = timer.elapsedTime();
+  }
+  {
+    ChronoTimer timer;
+    m_session.m_drive.readExactBlock(reinterpret_cast<void *>(&utl1), sizeof(utl1),
+      "[FileReader::read] - Reading UTL1");
+    m_readerTimer.trailerBlocks[2] = timer.elapsedTime();
+  }
+  {
+    ChronoTimer timer;
+    m_session.m_drive.readFileMark("[FileReader::read] - Reading file mark at the end of file trailer");
+    m_readerTimer.trailerTM = timer.elapsedTime();
+  }
 
   m_session.setCurrentFseq(m_session.getCurrentFseq() + 1);  // moving on to the header of the next file
   m_session.setCurrentFilePart(PartOfFile::Header);
@@ -105,7 +133,17 @@ size_t CtaFileReader::readNextDataBlock(void* data, const size_t size) {
   if (size != m_currentBlockSize) {
     throw WrongBlockSize();
   }
-  size_t bytes_read = m_session.m_drive.readBlock(data, size);
+  size_t bytes_read;
+  {
+    ChronoTimer timer;
+    bytes_read = m_session.m_drive.readBlock(data, size);
+    if (bytes_read) {
+      m_readerTimer.dataBlocks.emplace_back(timer.elapsedTime());
+    } else {
+      // Tape mark has been reached when we find ourselves at the end of file
+      m_readerTimer.dataTM = timer.elapsedTime();
+    }
+  }
   // end of file reached! we will keep on reading until we have read the file mark at the end of the trailers
   if (!bytes_read) {
     checkTrailers();
@@ -162,16 +200,29 @@ void CtaFileReader::checkHeaders(const cta::RetrieveJob& fileToRecall) {
   HDR1 hdr1;
   HDR2 hdr2;
   UHL1 uhl1;
-  m_session.m_drive.readExactBlock(reinterpret_cast<void*>(&hdr1),
-                                   sizeof(hdr1),
-                                   "[FileReader::position] - Reading HDR1");
-  m_session.m_drive.readExactBlock(reinterpret_cast<void*>(&hdr2),
-                                   sizeof(hdr2),
-                                   "[FileReader::position] - Reading HDR2");
-  m_session.m_drive.readExactBlock(reinterpret_cast<void*>(&uhl1),
-                                   sizeof(uhl1),
-                                   "[FileReader::position] - Reading UHL1");
-  m_session.m_drive.readFileMark("[FileReader::position] - Reading file mark at the end of file header");
+  {
+    ChronoTimer timer;
+    m_session.m_drive.readExactBlock(reinterpret_cast<void *>(&hdr1), sizeof(hdr1),
+      "[FileReader::position] - Reading HDR1");
+    m_readerTimer.headerBlocks[0] = timer.elapsedTime();
+  }
+  {
+    ChronoTimer timer;
+    m_session.m_drive.readExactBlock(reinterpret_cast<void *>(&hdr2), sizeof(hdr2),
+      "[FileReader::position] - Reading HDR2");
+    m_readerTimer.headerBlocks[1] = timer.elapsedTime();
+  }
+  {
+    ChronoTimer timer;
+    m_session.m_drive.readExactBlock(reinterpret_cast<void *>(&uhl1), sizeof(uhl1),
+      "[FileReader::position] - Reading UHL1");
+    m_readerTimer.headerBlocks[2] = timer.elapsedTime();
+  }
+  {
+    ChronoTimer timer;
+    m_session.m_drive.readFileMark("[FileReader::position] - Reading file mark at the end of file header");
+    m_readerTimer.headerTM = timer.elapsedTime();
+  }
   // after this we should be where we want, i.e. at the beginning of the file
   m_session.setCurrentFilePart(PartOfFile::Payload);
 
