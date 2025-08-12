@@ -327,6 +327,11 @@ private:
    */
   bool m_isTapeEncrypted;
 
+  /**
+   * Search by block id instead of fsec
+   */
+  bool m_searchByBlockID;
+
 
 }; // class ReadtpCmd
 

@@ -19,6 +19,7 @@
 #include <sstream>
 
 #include "castor/tape/tapeserver/file/CtaReadSession.hpp"
+#include "castor/tape/tapeserver/file/CtaReadSession2.hpp"
 #include "castor/tape/tapeserver/file/EnstoreReadSession.hpp"
 #include "castor/tape/tapeserver/file/EnstoreLargeReadSession.hpp"
 #include "castor/tape/tapeserver/file/OsmReadSession.hpp"
@@ -28,12 +29,16 @@
 namespace castor::tape::tapeFile {
 
 std::unique_ptr<ReadSession> ReadSessionFactory::create(tapeserver::drive::DriveInterface &drive,
-  const tapeserver::daemon::VolumeInfo &volInfo, const bool useLbp) {
+  const tapeserver::daemon::VolumeInfo &volInfo, const bool useLbp, bool useAlternative) {
   using LabelFormat = cta::common::dataStructures::Label::Format;
   const LabelFormat labelFormat = volInfo.labelFormat;
   switch (labelFormat) {
     case LabelFormat::CTA:
-      return std::make_unique<CtaReadSession>(drive, volInfo, useLbp);
+      if (useAlternative) {
+        return std::make_unique<CtaReadSession2>(drive, volInfo, useLbp);
+      } else {
+        return std::make_unique<CtaReadSession>(drive, volInfo, useLbp);
+      }
     case LabelFormat::OSM:
       return std::make_unique<OsmReadSession>(drive, volInfo, useLbp);
     case LabelFormat::Enstore:
