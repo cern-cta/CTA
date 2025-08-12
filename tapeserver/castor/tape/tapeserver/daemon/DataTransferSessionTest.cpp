@@ -470,6 +470,7 @@ protected:
 TEST_P(DataTransferSessionTest, DataTransferSessionGooddayRecall) {
   // 0) Prepare the logger for everyone
   cta::log::StringLogger logger("dummy", "tapeServerUnitTest", cta::log::DEBUG);
+  logger.setLogFormat("unstructured");
   cta::log::LogContext logContext(logger);
 
   setupDefaultCatalogue();
@@ -651,6 +652,7 @@ TEST_P(DataTransferSessionTest, DataTransferSessionGooddayRecall) {
 TEST_P(DataTransferSessionTest, DataTransferSessionWrongChecksumRecall) {
   // 0) Prepare the logger for everyone
   cta::log::StringLogger logger("dummy", "tapeServerUnitTest",cta::log::DEBUG);
+  logger.setLogFormat("unstructured");
   cta::log::LogContext logContext(logger);
 
   setupDefaultCatalogue();
@@ -852,6 +854,7 @@ TEST_P(DataTransferSessionTest, DataTransferSessionWrongRecall) {
 
   // 0) Prepare the logger for everyone
   cta::log::StringLogger logger("dummy", "tapeServerUnitTest", cta::log::DEBUG);
+  logger.setLogFormat("unstructured");
   cta::log::LogContext logContext(logger);
 
   setupDefaultCatalogue();
@@ -1047,6 +1050,7 @@ TEST_P(DataTransferSessionTest, DataTransferSessionWrongRecall) {
 TEST_P(DataTransferSessionTest, DataTransferSessionRAORecall) {
   // 0) Prepare the logger for everyone
   cta::log::StringLogger logger("dummy", "tapeServerUnitTest", cta::log::DEBUG);
+  logger.setLogFormat("unstructured");
   cta::log::LogContext logContext(logger);
 
   setupDefaultCatalogue();
@@ -1238,6 +1242,7 @@ TEST_P(DataTransferSessionTest, DataTransferSessionRAORecall) {
 TEST_P(DataTransferSessionTest, DataTransferSessionRAORecallLinearAlgorithm) {
   // 0) Prepare the logger for everyone
   cta::log::StringLogger logger("dummy", "tapeServerUnitTest", cta::log::DEBUG);
+  logger.setLogFormat("unstructured");
   cta::log::LogContext logContext(logger);
 
   setupDefaultCatalogue();
@@ -1426,6 +1431,7 @@ TEST_P(DataTransferSessionTest, DataTransferSessionRAORecallLinearAlgorithm) {
 TEST_P(DataTransferSessionTest, DataTransferSessionRAORecallRAOAlgoDoesNotExistShouldApplyLinear) {
   // 0) Prepare the logger for everyone
   cta::log::StringLogger logger("dummy", "tapeServerUnitTest", cta::log::DEBUG);
+  logger.setLogFormat("unstructured");
   cta::log::LogContext logContext(logger);
 
   setupDefaultCatalogue();
@@ -1618,6 +1624,7 @@ TEST_P(DataTransferSessionTest, DataTransferSessionRAORecallRAOAlgoDoesNotExistS
 TEST_P(DataTransferSessionTest, DataTransferSessionRAORecallSLTFRAOAlgorithm) {
   // 0) Prepare the logger for everyone
   cta::log::StringLogger logger("dummy", "tapeServerUnitTest", cta::log::DEBUG);
+  logger.setLogFormat("unstructured");
   cta::log::LogContext logContext(logger);
 
   setupDefaultCatalogue();
@@ -1961,6 +1968,7 @@ TEST_P(DataTransferSessionTest, DataTransferSessionFailtoMount) {
 
   // 0) Prepare the logger for everyone
   cta::log::StringLogger logger("dummy", "tapeServerUnitTest", cta::log::DEBUG);
+  logger.setLogFormat("unstructured");
   cta::log::LogContext logContext(logger);
 
   setupDefaultCatalogue();
@@ -2127,6 +2135,7 @@ TEST_P(DataTransferSessionTest, DataTransferSessionGooddayMigration) {
 
   // 0) Prepare the logger for everyone
   cta::log::StringLogger logger("dummy", "tapeServerUnitTest", cta::log::DEBUG);
+  logger.setLogFormat("unstructured");
   cta::log::LogContext logContext(logger);
 
   setupDefaultCatalogue();
@@ -2279,6 +2288,7 @@ TEST_P(DataTransferSessionTest, DataTransferSessionWrongFileSizeMigration) {
 
   // 0) Prepare the logger for everyone
   cta::log::StringLogger logger("dummy","tapeServerUnitTest",cta::log::DEBUG);
+  logger.setLogFormat("unstructured");
   cta::log::LogContext logContext(logger);
 
   setupDefaultCatalogue();
@@ -2438,6 +2448,7 @@ TEST_P(DataTransferSessionTest, DataTransferSessionWrongChecksumMigration) {
 
   // 0) Prepare the logger for everyone
   cta::log::StringLogger logger("dummy","tapeServerUnitTest",cta::log::DEBUG);
+  logger.setLogFormat("unstructured");
   cta::log::LogContext logContext(logger);
 
   setupDefaultCatalogue();
@@ -2596,6 +2607,7 @@ TEST_P(DataTransferSessionTest, DataTransferSessionWrongFilesizeInMiddleOfBatchM
 
   // 0) Prepare the logger for everyone
   cta::log::StringLogger logger("dummy","tapeServerUnitTest",cta::log::DEBUG);
+  logger.setLogFormat("unstructured");
   cta::log::LogContext logContext(logger);
 
   setupDefaultCatalogue();
@@ -2757,6 +2769,7 @@ TEST_P(DataTransferSessionTest, DataTransferSessionMissingFilesMigration) {
 
   // 0) Prepare the logger for everyone
   cta::log::StringLogger logger("dummy", "tapeServerUnitTest", cta::log::DEBUG);
+  logger.setLogFormat("unstructured");
   cta::log::LogContext logContext(logger);
 
   setupDefaultCatalogue();
@@ -2924,6 +2937,7 @@ TEST_P(DataTransferSessionTest, DataTransferSessionMissingFilesMigration) {
 TEST_P(DataTransferSessionTest, DataTransferSessionTapeFullMigration) {
   // 0) Prepare the logger for everyone
   cta::log::StringLogger logger("dummy", "tapeServerUnitTest", cta::log::DEBUG);
+  logger.setLogFormat("unstructured");
   cta::log::LogContext logContext(logger);
 
   setupDefaultCatalogue();
@@ -3096,6 +3110,7 @@ TEST_P(DataTransferSessionTest, DataTransferSessionTapeFullMigration) {
 TEST_P(DataTransferSessionTest, DataTransferSessionTapeFullOnFlushMigration) {
   // 0) Prepare the logger for everyone
   cta::log::StringLogger logger("dummy", "tapeServerUnitTest", cta::log::DEBUG);
+  logger.setLogFormat("unstructured");
   cta::log::LogContext logContext(logger);
 
   setupDefaultCatalogue();

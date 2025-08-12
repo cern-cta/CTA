@@ -408,9 +408,9 @@ TEST_F(DriveHandlerTests, runChildAndFailSchedulerMethods) {
   ASSERT_EQ(m_driveHandler->runChild(), EndOfSessionAction::MARK_DRIVE_AS_DOWN);
   checkReport();
   logToCheck = m_logger.getLog();
-  ASSERT_NE(std::string::npos, logToCheck.find("LVL=\"CRIT\""));
-  ASSERT_NE(std::string::npos, logToCheck.find("MSG=\"In DriveHandler::runChild(): failed to instantiate scheduler."));
-  ASSERT_NE(std::string::npos, logToCheck.find("errorMessage=\"createScheduler failed to create scheduler\""));
+  ASSERT_NE(std::string::npos, logToCheck.find("\"log_level\":\"CRIT\""));
+  ASSERT_NE(std::string::npos, logToCheck.find("\"message\":\"In DriveHandler::runChild(): failed to instantiate scheduler."));
+  ASSERT_NE(std::string::npos, logToCheck.find("\"errorMessage\":\"createScheduler failed to create scheduler\""));
 
   // It cannot ping the database or the objectstore, so it should mark the drive as down
   // There are two reasons to fail the ping, one produced by WrongSchemaVersionException and a general exception
@@ -423,19 +423,19 @@ TEST_F(DriveHandlerTests, runChildAndFailSchedulerMethods) {
   ASSERT_EQ(m_driveHandler->runChild(), EndOfSessionAction::MARK_DRIVE_AS_DOWN);
   checkReport();
   logToCheck = m_logger.getLog();
-  ASSERT_NE(std::string::npos, logToCheck.find("LVL=\"CRIT\""));
-  ASSERT_NE(std::string::npos, logToCheck.find("MSG=\"In DriveHandler::runChild(): "
+  ASSERT_NE(std::string::npos, logToCheck.find("\"log_level\":\"CRIT\""));
+  ASSERT_NE(std::string::npos, logToCheck.find("\"message\":\"In DriveHandler::runChild(): "
                                                "failed to ping central storage before session."));
-  ASSERT_NE(std::string::npos, logToCheck.find("errorMessage=\"Failed to ping scheduler\""));
+  ASSERT_NE(std::string::npos, logToCheck.find("\"errorMessage\":\"Failed to ping scheduler\""));
   // Second exception (WrongSchemaVersionException)
   m_logger.clearLog();
   ASSERT_EQ(m_driveHandler->runChild(), EndOfSessionAction::MARK_DRIVE_AS_DOWN);
   checkReport();
   logToCheck = m_logger.getLog();
-  ASSERT_NE(std::string::npos, logToCheck.find("LVL=\"CRIT\""));
-  ASSERT_NE(std::string::npos, logToCheck.find("MSG=\"In DriveHandler::runChild(): "
+  ASSERT_NE(std::string::npos, logToCheck.find("\"log_level\":\"CRIT\""));
+  ASSERT_NE(std::string::npos, logToCheck.find("\"message\":\"In DriveHandler::runChild(): "
                                                "catalogue MAJOR version mismatch"));
-  ASSERT_NE(std::string::npos, logToCheck.find("errorMessage=\"Catalogue MAJOR version mismatch\""));
+  ASSERT_NE(std::string::npos, logToCheck.find("\"errorMessage\":\"Catalogue MAJOR version mismatch\""));
 
   // It cannot create the drive status, so it should mark the drive as down
   EXPECT_CALL(*m_scheduler, checkDriveCanBeCreated(_, _)).WillOnce(
@@ -451,7 +451,7 @@ TEST_F(DriveHandlerTests, runChildAndFailSchedulerMethods) {
     Return(cta::common::dataStructures::DesiredDriveState()));
   ASSERT_EQ(m_driveHandler->runChild(), EndOfSessionAction::MARK_DRIVE_AS_UP);
   logToCheck = m_logger.getLog();
-  ASSERT_NE(std::string::npos, logToCheck.find("MSG=\"In DriveHandler::runChild(): "
+  ASSERT_NE(std::string::npos, logToCheck.find("\"message\":\"In DriveHandler::runChild(): "
                                                "the desired drive state doesn't exist in the Catalogue DB"));
 
   // It cannot create the tape drive in the catalogue, so it should mark the drive as down, and the session
@@ -462,11 +462,11 @@ TEST_F(DriveHandlerTests, runChildAndFailSchedulerMethods) {
   ASSERT_EQ(m_driveHandler->runChild(), EndOfSessionAction::MARK_DRIVE_AS_DOWN);
   checkReport();
   logToCheck = m_logger.getLog();
-  ASSERT_NE(std::string::npos, logToCheck.find("LVL=\"CRIT\""));
-  ASSERT_NE(std::string::npos, logToCheck.find("Backtrace="));
-  ASSERT_NE(std::string::npos, logToCheck.find("MSG=\"In DriveHandler::runChild(): "
+  ASSERT_NE(std::string::npos, logToCheck.find("\"log_level\":\"CRIT\""));
+  ASSERT_NE(std::string::npos, logToCheck.find("\"Backtrace\":"));
+  ASSERT_NE(std::string::npos, logToCheck.find("\"message\":\"In DriveHandler::runChild(): "
                                                "failed to set drive down"));
-  ASSERT_NE(std::string::npos, logToCheck.find("Message=\"Failed to create tape drive status\""));
+  ASSERT_NE(std::string::npos, logToCheck.find("\"exceptionMessage\":\"Failed to create tape drive status\""));
 
   // It cannot set desired drive state into the catalogue, so it should mark the drive as down, and the session
   // cannot continue.
@@ -476,11 +476,11 @@ TEST_F(DriveHandlerTests, runChildAndFailSchedulerMethods) {
   ASSERT_EQ(m_driveHandler->runChild(), EndOfSessionAction::MARK_DRIVE_AS_DOWN);
   checkReport();
   logToCheck = m_logger.getLog();
-  ASSERT_NE(std::string::npos, logToCheck.find("LVL=\"CRIT\""));
-  ASSERT_NE(std::string::npos, logToCheck.find("Backtrace="));
-  ASSERT_NE(std::string::npos, logToCheck.find("MSG=\"In DriveHandler::runChild(): "
+  ASSERT_NE(std::string::npos, logToCheck.find("\"log_level\":\"CRIT\""));
+  ASSERT_NE(std::string::npos, logToCheck.find("\"Backtrace\":"));
+  ASSERT_NE(std::string::npos, logToCheck.find("\"message\":\"In DriveHandler::runChild(): "
                                                "failed to set drive down"));
-  ASSERT_NE(std::string::npos, logToCheck.find("Message=\"Failed to set desired drive state\""));
+  ASSERT_NE(std::string::npos, logToCheck.find("\"exceptionMessage\":\"Failed to set desired drive state\""));
 
   // It cannot report the drive configuration to the catalogue, so it should mark the drive as down, and the session
   // cannot continue.
@@ -490,11 +490,11 @@ TEST_F(DriveHandlerTests, runChildAndFailSchedulerMethods) {
   ASSERT_EQ(m_driveHandler->runChild(), EndOfSessionAction::MARK_DRIVE_AS_DOWN);
   checkReport();
   logToCheck = m_logger.getLog();
-  ASSERT_NE(std::string::npos, logToCheck.find("LVL=\"CRIT\""));
-  ASSERT_NE(std::string::npos, logToCheck.find("Backtrace="));
-  ASSERT_NE(std::string::npos, logToCheck.find("MSG=\"In DriveHandler::runChild(): "
+  ASSERT_NE(std::string::npos, logToCheck.find("\"log_level\":\"CRIT\""));
+  ASSERT_NE(std::string::npos, logToCheck.find("\"Backtrace\":"));
+  ASSERT_NE(std::string::npos, logToCheck.find("\"message\":\"In DriveHandler::runChild(): "
                                                "failed to set drive down"));
-  ASSERT_NE(std::string::npos, logToCheck.find("Message=\"Failed to report drive config\""));
+  ASSERT_NE(std::string::npos, logToCheck.find("\"exceptionMessage\":\"Failed to report drive config\""));
   
   // After all the problems with scheduler, we should be able to run a good session
   ASSERT_EQ(m_driveHandler->runChild(), EndOfSessionAction::MARK_DRIVE_AS_UP);
@@ -530,7 +530,7 @@ TEST_F(DriveHandlerTests, runChildAfterCrashedSessionWhenRunning) {
                                      std::string(""));
   ASSERT_EQ(m_driveHandler->runChild(), EndOfSessionAction::MARK_DRIVE_AS_DOWN);
   logToCheck = m_logger.getLog();
-  ASSERT_NE(std::string::npos, logToCheck.find("LVL=\"ERROR\""));
+  ASSERT_NE(std::string::npos, logToCheck.find("\"log_level\":\"ERROR\""));
   ASSERT_NE(std::string::npos, logToCheck.find("Should run cleaner but VID is missing. Putting the drive down."));
 
   // Previous Vid is empty, it should have a vid of the previous session, but some problem to report drive status
@@ -542,7 +542,7 @@ TEST_F(DriveHandlerTests, runChildAfterCrashedSessionWhenRunning) {
   ASSERT_EQ(m_driveHandler->runChild(), EndOfSessionAction::MARK_DRIVE_AS_DOWN);
   logToCheck = m_logger.getLog();
   ASSERT_NE(std::string::npos, logToCheck.find("Should run cleaner but VID is missing. Putting the drive down."));
-  ASSERT_NE(std::string::npos, logToCheck.find("LVL=\"CRIT\""));
+  ASSERT_NE(std::string::npos, logToCheck.find("\"log_level\":\"CRIT\""));
   ASSERT_NE(std::string::npos, logToCheck.find("failed to set the drive down. Reporting fatal error."));
 
   // Correct starting of the cleaning session
@@ -564,7 +564,7 @@ TEST_F(DriveHandlerTests, runChildAfterCrashedSessionWhenRunning) {
                                      std::string("TAPE0001"));
   ASSERT_EQ(m_driveHandler->runChild(), EndOfSessionAction::MARK_DRIVE_AS_DOWN);
   logToCheck = m_logger.getLog();
-  ASSERT_NE(std::string::npos, logToCheck.find("LVL=\"ERROR\""));
+  ASSERT_NE(std::string::npos, logToCheck.find("\"log_level\":\"ERROR\""));
   ASSERT_NE(std::string::npos, logToCheck.find("the cleaner session crashed. Putting the drive down."));
 
   // Session crashed during the cleaning session something happens with scheduler method setDesiredDriveState
@@ -577,7 +577,7 @@ TEST_F(DriveHandlerTests, runChildAfterCrashedSessionWhenRunning) {
                                      std::string("TAPE0001"));
   ASSERT_EQ(m_driveHandler->runChild(), EndOfSessionAction::MARK_DRIVE_AS_DOWN);
   logToCheck = m_logger.getLog();
-  ASSERT_NE(std::string::npos, logToCheck.find("LVL=\"CRIT\""));
+  ASSERT_NE(std::string::npos, logToCheck.find("\"log_level\":\"CRIT\""));
   ASSERT_NE(std::string::npos, logToCheck.find("failed to set the drive down. Reporting fatal error."));
   ASSERT_NE(std::string::npos, logToCheck.find("Failed to set desired drive state."));
 }
