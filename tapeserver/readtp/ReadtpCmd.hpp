@@ -180,7 +180,7 @@ private:
    * @param readSession read session object.
    * @param fSeq The tape file fSeq.
    */
-  void readTapeFile(castor::tape::tapeFile::ReadSession& readSession,
+  size_t readTapeFile(castor::tape::tapeFile::ReadSession& readSession,
                     const uint64_t& fSeq,
                     cta::disk::WriteFile& wf,
                     const castor::tape::tapeserver::daemon::VolumeInfo& volInfo);
