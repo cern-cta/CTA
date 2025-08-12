@@ -49,7 +49,6 @@ const std::string gHelpString =
     "\n"
     "where options can be:\n"
     "\n"
-    "\t--foreground             or -f         \tRemain in the Foreground\n"
     "\t--stdout                 or -s         \tPrint logs to standard output. Required --foreground\n"
     "\t--log-to-file <log-file> or -l         \tLogs to a given file (instead of default syslog)\n"
     "\t--log-format <format>    or -o         \tOutput format for log messages (default or json)\n"
@@ -58,7 +57,6 @@ const std::string gHelpString =
 
 static struct option longopts[] = {
   // { .name, .has_args, .flag, .val } (see getopt.h))
-  { "foreground", no_argument, nullptr, 'f' },
   { "config", required_argument, nullptr, 'c' },
   { "help", no_argument, nullptr, 'h' },
   { "stdout", no_argument, nullptr, 's' },
@@ -177,9 +175,8 @@ int main(const int argc, char **const argv) {
   // Check daemon is being launched with cta:tape user:group IDs.
 
   // Options
-  bool foreground = false;
   bool logToStdout = false;
-  bool logToFile = false;
+  bool logToFile = true;
   std::string logFilePath;
   std::string logFormat;
   std::string configFileLocation;
@@ -190,13 +187,11 @@ int main(const int argc, char **const argv) {
   // Prevent getopt from printing out errors on stdout
   opterr=0;
   // We ask getopt to not reshuffle argv ('+')
-  while ((c = getopt_long(argc, argv, "+fsc:l:h", longopts, nullptr)) != -1) {
+  while ((c = getopt_long(argc, argv, "+sc:l:h", longopts, nullptr)) != -1) {
     switch (c) {
-    case 'f':
-      foreground = true;
-      break;
     case 's':
       logToStdout = true;
+      logToFile = false;
       break;
     case 'c':
       configFileLocation = optarg;
@@ -207,6 +202,7 @@ int main(const int argc, char **const argv) {
     case 'l':
       logFilePath = optarg;
       logToFile = true;
+      logToStdout = false;
       break;
     case 'o':
       logFormat = optarg;
@@ -215,9 +211,6 @@ int main(const int argc, char **const argv) {
       break;
     }
   }
-
-  if(foreground)
-	  return EXIT_FAILURE;
 
   std::string shortHostName;
   try {
