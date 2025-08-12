@@ -33,15 +33,15 @@ spec:
         command: ["sh", "-c"]
         args:
         - |
-          cp /root/sss_keytab/input/eos.keytab /root/sss_keytab/output/cta-maintenance.sss.keytab;
-          chmod 600 /root/sss_keytab/output/cta-maintenance.sss.keytab;
-          # Make CTA user owner
+          cp /root/sss_keytab/input/maintenance.keytab /root/sss_keytab/output/cta-maintenance.sss.keytab;
+          chmod 400 /root/sss_keytab/output/cta-maintenance.sss.keytab;
+          # Make CTA user owner (group 33 is tape)
           chown -R 1000:33 /root/sss_keytab/output/cta-maintenance.sss.keytab
         volumeMounts:
-          - name: eos-sss-keytab
-            mountPath: /root/sss_keytab/input/eos.keytab
-            subPath: eos.keytab
-          - name: eos-sss-keytab-fixedownership
+          - name: maintenance-sss-keytab
+            mountPath: /root/sss_keytab/input/maintenance.keytab
+            subPath: {{ $.Values.keytab.subPath }}
+          - name: maintenance-sss-keytab-fixedownership
             mountPath: /root/sss_keytab/output
       containers:
       - name: {{ $name }}
@@ -74,9 +74,9 @@ spec:
         - name: SCHEDULER_BACKEND
           value: {{ $schedulerConfig.backend | quote }}
         - name: XrdSecPROTOCOL
-          value: {{ $.Values.conf.maintenance.secProtocol }}
+          value: sss
         - name: XrdSecSSSKT
-          value: {{ $.Values.conf.maintenance.secSssktPath }}/{{ $.Values.conf.maintenance.ctaMaintenanceSss }}
+          value: /etc/cta/cta-maintenance.sss.keytab
         volumeMounts:
         - name: scripts-volume
           mountPath: /scripts/maintenance.sh
@@ -87,7 +87,7 @@ spec:
         - name: catalogue-config
           mountPath: /etc/cta/cta-catalogue.conf
           subPath: cta-catalogue.conf
-        - name: eos-sss-keytab-fixedownership
+        - name: maintenance-sss-keytab-fixedownership
           mountPath: /etc/cta/cta-maintenance.sss.keytab
           subPath: cta-maintenance.sss.keytab
         {{- if eq $schedulerConfig.backend "postgres" }}
@@ -131,10 +131,10 @@ spec:
       - name: cta-maintenance-config
         configMap:
           name: cta-maintenance-conf
-      - name: eos-sss-keytab
+      - name: maintenance-sss-keytab
         secret:
-          secretName: eos-sss-keytab
-      - name: eos-sss-keytab-fixedownership
+          secretName: {{ $.Values.keytab.secretName }}
+      - name: maintenance-sss-keytab-fixedownership
         emptyDir: {}
       {{- if $.Values.global.volumes }}
       {{ $.Values.global.volumes | toYaml | nindent 6 }}

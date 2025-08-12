@@ -3,15 +3,17 @@ isPrivileged: true
 
 conf:
   maintenance:
-    secProtocol: "sss"
-    secSssktPath: "/etc/cta"
-    ctaMaintenanceSss: "cta-maintenance.sss.keytab"
     catalogueConfigPath: "/etc/cta/cta-catalogue.conf"
     repackMaxRequestsToExpand: 2
     tapeCacheMaxAgeSecs: 600
     retrieveQueueCacheMaxAgeSecs: 10
   general:
     instanceName: "CI"
+
+# SSS keytab to communicate to the disk buffer
+keytab:
+  secretName: eos-keytab
+  subPath: eos.keytab
 
 pod:
   extraSpec:
