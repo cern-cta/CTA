@@ -11,8 +11,8 @@ metadata:
 data:
   cta-maintenance.conf: |-
     # General
-    General InstanceName {{ $.Values.conf.general.instanceName }}
-    General SchedulerBackendName {{ $schedulerConfig.backend }}
+    InstanceName {{ $.Values.conf.general.instanceName }}
+    SchedulerBackendName {{ $schedulerConfig.backend }}
     # Maintenance
     BackendPath {{ include "global.schedulerUrl" $ }}
     CatalogueConfigFile {{ $.Values.conf.maintenance.catalogueConfigPath }}
