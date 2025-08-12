@@ -128,10 +128,10 @@ check-compile-commands:
     - if: $PIPELINE_TYPE == "REGR_AGAINST_CTA_MAIN"
       when: never
     - when: on_success
+      allow_failure: true
   needs:
     - job: build-cta-rpm
       artifacts: true
-  allow_failure: true
   script:
     # Check if we are rebased on main, if not, the job will succeed.
     - git fetch --unshallow --no-tags origin main:main
@@ -151,6 +151,7 @@ update-compile-commands:
     - .build-cta
   rules:
     - when: manual
+      allow_failure: true
   needs:
     - job: check-compile-commands
       optional: false
