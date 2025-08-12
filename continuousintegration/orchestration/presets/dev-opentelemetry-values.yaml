@@ -4,11 +4,9 @@ image:
 
 mode: deployment
 
-# presets:
-#   hostMetrics:
-#     enabled: true
-#   kubernetesAttributes:
-#     enabled: true
+presets:
+  kubernetesAttributes:
+    enabled: true
 
 config:
   receivers:
@@ -18,27 +16,35 @@ config:
           endpoint: 0.0.0.0:4318
 
   processors:
-    resourcedetection:
-      detectors: [system]
-      system:
-        hostname_sources: ["os"]
-    groupbyattrs/process_name:
-      keys:
-        - service.instance.id
+    k8sattributes:
+      auth_type: serviceAccount
+      extract:
+        metadata:
+          - k8s.pod.name
+          - k8s.namespace.name
+          - k8s.container.name
+          - k8s.node.name
+      pod_association:
+        - sources:
+            - from: resource_attribute
+              name: k8s.pod.uid
+        - sources:
+            - from: connection
+
     batch:
       timeout: 5s
-    # See https://github.com/open-telemetry/opentelemetry-collector-contrib/tree/main/processor/transformprocessor
-    transform/promote_resource_labels:
+
+
+    # Ensure datapoints have sufficient identifying info so that we can reduce cardinality
+    # later on by dropping the service.instance.id
+    transform/add_identifying_labels:
+      error_mode: ignore
       metric_statements:
-        # Add the process.name to ensure each process can still be uniquely identified for a given host
+        - set(datapoint.attributes["k8s.pod.name"], resource.attributes["k8s.pod.name"])
         - set(datapoint.attributes["process.name"], resource.attributes["process.name"])
-        - set(datapoint.attributes["host.name"], resource.attributes["host.name"])
-        - delete_key(datapoint.attributes, "service.instance.id")
-        - set(datapoint.attributes["service.instance.id"], concat(datapoint.attributes["host.name"], "-", datapoint.attributes["process.name"]))
-    transform/compact_resources:
-      metric_statements:
-        - delete_key(resource.attributes, "service.instance.id")
-        - set(resource.attributes["service.instance.id"], concat(resource.attributes["host.name"], "-", resource.attributes["process.name"]))
+
+
+    # Aggregate all CTA metrics using the stable identity
     metricstransform/aggregate:
       transforms:
         - include: "cta.*"
@@ -47,34 +53,45 @@ config:
           operations:
             - action: aggregate_labels
               aggregation_type: sum
-              label_set: ["process.name", "host.name"]
+              label_set: ["service.instance.id", "transfer.type", "event.type", "lock.type", "scheduler.backend_name"]
+
+    # Drop some unwantend labels
+    transform/strip_labels:
+      error_mode: ignore
+      metric_statements:
+        - delete_key(datapoint.attributes, "service.instance.id")
+
+    # The namespace will add as the ci run id
+    transform/add_ci_run_id:
+      error_mode: ignore
+      metric_statements:
+        - set(datapoint.attributes["ci.run.id"], resource.attributes["k8s.namespace.name"])
+          where resource.attributes["k8s.namespace.name"] != nil
 
   exporters:
     prometheus:
       endpoint: ${env:MY_POD_IP}:8889
+      resource_to_telemetry_conversion:
+        enabled: true
     debug:
       verbosity: detailed
 
+  # TODO: do the remote write in the prometheus with recording rules
   service:
     pipelines:
       metrics:
         receivers:
-        - otlp
+          - otlp
         processors:
-        # Batch metrics together to ensure we are not dealing with individual metrics
-        - batch
-        - resourcedetection
-        # Promote identifying labels (process name and hostname) from resource labels to metric labels
-        - transform/promote_resource_labels
-        # Drop the service.instance.id from the resource labels
-        - transform/compact_resources
-        # Aggregate metrics to reduce cardinality
-        - metricstransform/aggregate
-        # Associate the metrics to the correct resource
-        # - groupbyattrs/process_name
+          # - k8sattributes
+          - batch
+          # - transform/add_identifying_labels
+          # - metricstransform/aggregate
+          # - transform/strip_labels
+          # - transform/add_ci_run_id
         exporters:
-        - debug
-        - prometheus
+          - prometheus
+          - debug
 
     telemetry:
       logs:
