@@ -148,7 +148,7 @@ static int exceptionThrowingMain(const common::Config config, cta::log::Logger& 
     statisticsCacheConfig.retrieveQueueCacheMaxAgeSecs = config.getOptionValueInt("RetrieveQueueCacheMaxAgeSecs").value();
     sched_db->setStatisticsCacheConfig(statisticsCacheConfig);
     // TODO: we have hardcoded the mount policy parameters here temporarily we will remove them once we know where to put them
-    scheduler = std::make_unique<cta::Scheduler>(*catalogue, *sched_db, 5, 2*1000*1000);
+    scheduler = std::make_unique<cta::Scheduler>(*catalogue, *sched_db, config.getOptionValueStr("schedulerBackendName").value(), 5, 2*1000*1000);
 
     // Before launching the maintenance loop, we validate that the scheduler is reachable.
     scheduler->ping(lc);
