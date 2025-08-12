@@ -25,6 +25,7 @@ FileReader::FileReader(ReadSession& rs, const cta::RetrieveJob& fileToRecall)
     throw SessionCorrupted();
   }
   m_session.lock();
+
 }
 
 FileReader::~FileReader() noexcept {
@@ -45,6 +46,10 @@ size_t FileReader::getBlockSize() {
 
 uint32_t FileReader::getPosition()  {
   return m_session.m_drive.getPositionInfo().currentPosition;
+}
+
+FileReader::BlockReadTimer FileReader::getReaderTimer() {
+  return m_readerTimer;
 }
 
 std::string FileReader::getLBPMode() {

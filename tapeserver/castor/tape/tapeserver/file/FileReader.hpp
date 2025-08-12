@@ -9,6 +9,8 @@
 
 #include <memory>
 #include <string>
+#include <vector>
+#include <chrono>
 
 namespace cta {
 class RetrieveJob;
@@ -22,6 +24,28 @@ class FileReader {
   friend class FileReaderFactory;
 
 public:
+  struct BlockReadTimer {
+    double positioning = 0;
+    std::array<double, 3> headerBlocks = {0,0,0};
+    double headerTM = 0;
+    std::vector<double> dataBlocks;
+    double dataTM = 0;
+    std::array<double, 3> trailerBlocks = {0,0,0};
+    double trailerTM = 0;
+  };
+
+  class ChronoTimer {
+  public:
+    ChronoTimer() : startTime(std::chrono::high_resolution_clock::now()) {}
+    double elapsedTime() const {
+      auto currentTime = std::chrono::high_resolution_clock::now();
+      std::chrono::duration<double> elapsedTimeSec = currentTime - startTime;
+      return elapsedTimeSec.count();
+    }
+  private:
+    std::chrono::high_resolution_clock::time_point startTime;
+  };
+
   /**
    * Constructor
    *
@@ -50,6 +74,12 @@ public:
     * @return blockId of current position
     */
   uint32_t getPosition();
+
+  /**
+   *
+   * @return vector containing the time spent on reading all blocks, from all files
+   */
+  BlockReadTimer getReaderTimer();
 
   /**
     * Reads the next data block from the file. The buffer should be equal to or bigger than the
@@ -92,6 +122,12 @@ protected:
     * What kind of command we use to position ourself on the tape (fseq or blockid)
     */
   cta::PositioningMethod m_positionCommandCode;
+
+  /**
+   * Block read timers
+   * One for each file
+   */
+  BlockReadTimer m_readerTimer;
 
 private:
   /**

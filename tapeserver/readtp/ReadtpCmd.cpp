@@ -28,6 +28,7 @@
 #include "tapeserver/readtp/TapeFseqRangeListSequence.hpp"
 
 #include <chrono>
+#include <numeric>
 
 namespace cta::tapeserver::readtp {
 
@@ -362,7 +363,9 @@ void ReadtpCmd::readTapeFiles(castor::tape::tapeserver::drive::DriveInterface& d
     std::string destinationFile = getNextDestinationUrl();
     uint64_t fSeq;
     size_t totalDataSize = 0;
-    auto t_begin = std::chrono::high_resolution_clock::now();
+
+    std::vector<castor::tape::tapeFile::FileReader::BlockReadTimer> fileTimers;
+    castor::tape::tapeFile::FileReader::ChronoTimer t_begin;
 
     while (fSeqRangeListSequence.hasMore()) {
       try {
@@ -373,7 +376,9 @@ void ReadtpCmd::readTapeFiles(castor::tape::tapeserver::drive::DriveInterface& d
         std::unique_ptr<cta::disk::WriteFile> wfptr;
         wfptr.reset(fileFactory.createWriteFile(destinationFile));
         cta::disk::WriteFile &wf = *wfptr.get();
-        totalDataSize += readTapeFile(*readSession, fSeq, wf, volInfo);
+        auto [dataSize, readTimer] = readTapeFile(*readSession, fSeq, wf, volInfo);
+        totalDataSize += dataSize;
+        fileTimers.push_back(readTimer);
       m_nbSuccessReads++;  // if readTapeFile returns, file was read successfully
       destinationFile = getNextDestinationUrl();
     } catch (tapeserver::readtp::NoSuchFSeqException&) {
@@ -394,9 +399,8 @@ void ReadtpCmd::readTapeFiles(castor::tape::tapeserver::drive::DriveInterface& d
     }
   }
 
-  auto t_end = std::chrono::high_resolution_clock::now();
-  std::chrono::duration<double> elapsedTimeSec = t_end - t_begin;
-  auto throughputMBs = (static_cast<double>(totalDataSize) / elapsedTimeSec.count()) / (1024 * 1024);
+  double elapsedTimeSec = t_begin.elapsedTime();
+  auto throughputMBs = (static_cast<double>(totalDataSize) / elapsedTimeSec) / (1024 * 1024);
   std::vector<cta::log::Param> params;
   params.emplace_back("userName", getUsername());
   params.emplace_back("tapeVid", m_vid);
@@ -406,9 +410,9 @@ void ReadtpCmd::readTapeFiles(castor::tape::tapeserver::drive::DriveInterface& d
   params.emplace_back("driveSupportLbp", boolToStr(m_driveSupportLbp));
   params.emplace_back("nbReads", m_nbSuccessReads + m_nbFailedReads);
   params.emplace_back("nbSuccessfullReads", m_nbSuccessReads);
-  params.push_back(cta::log::Param("totalDataMB", totalDataSize / (1024 * 1024)));
-  params.push_back(cta::log::Param("elapsedTimeSec", elapsedTimeSec.count()));
-  params.push_back(cta::log::Param("throughputMBs", throughputMBs));
+  params.emplace_back("totalDataMB", totalDataSize / (1024 * 1024));
+  params.emplace_back("totalElapsedTimeSec", elapsedTimeSec);
+  params.emplace_back("globalThroughputMBs", throughputMBs);
   params.emplace_back("nbFailedReads", m_nbFailedReads);
 
   m_log(cta::log::INFO, "Finished reading tape", params);
@@ -417,7 +421,7 @@ void ReadtpCmd::readTapeFiles(castor::tape::tapeserver::drive::DriveInterface& d
 //------------------------------------------------------------------------------
 // readTapeFile
 //------------------------------------------------------------------------------
-size_t ReadtpCmd::readTapeFile(castor::tape::tapeFile::ReadSession& readSession,
+std::tuple<size_t, castor::tape::tapeFile::FileReader::BlockReadTimer> ReadtpCmd::readTapeFile(castor::tape::tapeFile::ReadSession& readSession,
                              const uint64_t& fSeq,
                              cta::disk::WriteFile& wf,
                              const castor::tape::tapeserver::daemon::VolumeInfo& volInfo) {
@@ -477,14 +481,19 @@ size_t ReadtpCmd::readTapeFile(castor::tape::tapeFile::ReadSession& readSession,
   auto cb = cta::checksum::ChecksumBlob(cta::checksum::ChecksumType::ADLER32, checksum_adler32);
 
   archiveFile.checksumBlob.validate(cb);  //exception thrown if checksums differ
+  auto readTimer = reader->getReaderTimer();
 
   params.emplace_back("checksumType", "ADLER32");
   std::stringstream sstream;
   sstream << std::hex << checksum_adler32;
   params.emplace_back("checksumValue", "0x" + sstream.str());
   params.emplace_back("readFileSize", read_data_size);
+  params.emplace_back("timerPositionSec", readTimer.positioning);
+  params.emplace_back("timerHeaderSec", std::accumulate(readTimer.headerBlocks.begin(), readTimer.headerBlocks.end(), 0.0) + readTimer.headerTM);
+  params.emplace_back("timerDataSec", std::accumulate(readTimer.dataBlocks.begin(), readTimer.dataBlocks.end(), 0.0) + readTimer.dataTM);
+  params.emplace_back("timerHeaderSec", std::accumulate(readTimer.trailerBlocks.begin(), readTimer.trailerBlocks.end(), 0.0) + readTimer.trailerTM);
   m_log(cta::log::INFO, "Read file from tape successfully", params);
-  return read_data_size;
+  return {read_data_size, readTimer};
 }
 
 //------------------------------------------------------------------------------
