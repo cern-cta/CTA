@@ -5,7 +5,7 @@ extraScrapeConfigs: |
         - otel-opentelemetry-collector:8889
 
 rbac:
-  create: false
+  create: true
 
 alertmanager:
   enabled: false
@@ -14,7 +14,7 @@ kube-state-metrics:
   enabled: false
 
 prometheus-node-exporter:
-  enabled: false
+  enabled: true
 
 prometheus-pushgateway:
   enabled: false
@@ -27,3 +27,51 @@ server:
 
   persistentVolume:
     enabled: false
+
+serverFiles:
+  recording_rules.yml:
+    groups:
+    - name: ci-histograms-generic
+      interval: 30s
+      rules:
+      # TODO: needs the db instance
+      - record: ci_cta_database_query_count_total
+        expr: |
+          sum by (k8s_namespace_name, k8s_node_name, k8s_pod_name, service_version) (max_over_time(cta_database_query_count_total[2m]))
+      # TODO: needs the scheduler instance
+      - record: ci_cta_scheduler_queueing_count_total
+        expr: |
+          sum by (k8s_namespace_name, k8s_node_name, k8s_pod_name, service_version, transfer_type) (max_over_time(cta_database_query_count_total[2m]))
+      - record: ci_cta_taped_mount_count_total
+        expr: |
+          sum by (k8s_namespace_name, k8s_node_name, k8s_pod_name, service_version, transfer_type) (max_over_time(cta_taped_mount_count_total[2m]))
+      - record: ci_cta_taped_transfer_count_total
+        expr: |
+          sum by (k8s_namespace_name, k8s_node_name, k8s_pod_name, service_version, transfer_type) (max_over_time(cta_taped_transfer_count_total[2m]))
+      - record: ci_cta_frontend_request_duration_milliseconds_bucket
+        expr: |
+          sum by (k8s_namespace_name, k8s_node_name, k8s_pod_name, service_version, event_type, le) (max_over_time(cta_frontend_request_duration_milliseconds_bucket[2m]))
+      - record: ci_cta_frontend_request_duration_milliseconds_count
+        expr: |
+          sum by (k8s_namespace_name, k8s_node_name, k8s_pod_name, service_version, event_type) (max_over_time(cta_frontend_request_duration_milliseconds_count[2m]))
+      - record: ci_cta_frontend_request_duration_milliseconds_sum
+        expr: |
+          sum by (k8s_namespace_name, k8s_node_name, k8s_pod_name, service_version, event_type) (max_over_time(cta_frontend_request_duration_milliseconds_sum[2m]))
+      - record: ci_cta_objectstore_lock_acquire_duration_milliseconds_bucket
+        expr: |
+          sum by (k8s_namespace_name, k8s_node_name, k8s_pod_name, service_version, lock_type, le) (max_over_time(cta_objectstore_lock_acquire_duration_milliseconds_bucket[2m]))
+      - record: ci_cta_objectstore_lock_acquire_duration_milliseconds_count
+        expr: |
+          sum by (k8s_namespace_name, k8s_node_name, k8s_pod_name, service_version, lock_type) (max_over_time(cta_objectstore_lock_acquire_duration_milliseconds_count[2m]))
+      - record: ci_cta_objectstore_lock_acquire_duration_milliseconds_sum
+        expr: |
+          sum by (k8s_namespace_name, k8s_node_name, k8s_pod_name, service_version, lock_type) (max_over_time(cta_objectstore_lock_acquire_duration_milliseconds_sum[2m]))
+      - record: ci_cpu_usage
+        expr: |
+          100 - (avg by (instance)(irate(node_cpu_seconds_total{mode="idle"}[5m])) * 100)
+      - record: ci_memory_usage
+        expr: |
+          (1 - node_memory_MemAvailable_bytes / node_memory_MemTotal_bytes) * 100
+      - record: ci_disk_read_throughput
+        expr: |
+          sum by (instance)(irate(node_disk_read_bytes_total[5m]))
