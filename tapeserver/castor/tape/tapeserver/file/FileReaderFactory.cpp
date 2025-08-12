@@ -6,6 +6,7 @@
 #include "castor/tape/tapeserver/file/FileReaderFactory.hpp"
 
 #include "castor/tape/tapeserver/file/CtaFileReader.hpp"
+#include "castor/tape/tapeserver/file/CtaFileReader2.hpp"
 #include "castor/tape/tapeserver/file/EnstoreFileReader.hpp"
 #include "castor/tape/tapeserver/file/EnstoreLargeFileReader.hpp"
 #include "castor/tape/tapeserver/file/OsmFileReader.hpp"
@@ -17,13 +18,17 @@
 
 namespace castor::tape::tapeFile {
 
-std::unique_ptr<FileReader> FileReaderFactory::create(ReadSession& readSession, const cta::RetrieveJob& fileToRecall) {
+std::unique_ptr<FileReader> FileReaderFactory::create(ReadSession& readSession, const cta::RetrieveJob& fileToRecall, bool useAlternative) {
   using LabelFormat = cta::common::dataStructures::Label::Format;
   const LabelFormat labelFormat = readSession.getVolumeInfo().labelFormat;
   std::unique_ptr<FileReader> reader;
   switch (labelFormat) {
     case LabelFormat::CTA: {
-      reader = std::make_unique<CtaFileReader>(readSession, fileToRecall);
+      if (useAlternative) {
+        reader = std::make_unique<CtaFileReader2>(readSession, fileToRecall);
+      } else {
+        reader = std::make_unique<CtaFileReader>(readSession, fileToRecall);
+      }
       break;
     }
     case LabelFormat::OSM: {
