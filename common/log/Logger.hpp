@@ -33,8 +33,8 @@ namespace cta::log {
  * Log lines are output as key-value pairs
  */
 enum class LogFormat {
-  DEFAULT,  //!< Text format
-  JSON      //!< JSON format
+  UNSTRUCTURED,  //!< Text format
+  JSON           //!< [Default] JSON format
 };
 
 /**
@@ -218,7 +218,7 @@ protected:
   /**
    * Log output format
    */
-  std::atomic<LogFormat> m_logFormat = LogFormat::DEFAULT;
+  std::atomic<LogFormat> m_logFormat = LogFormat::JSON;
 
   /**
    * String containing static parameters, expected to always be printed in a log massage.
