@@ -1,12 +1,12 @@
 ---
-date: 2024-07-18
+date: 2025-08-12
 section: 1cta
 title: CTA-TAPED
 header: The CERN Tape Archive (CTA)
 ---
 <!---
 @project      The CERN Tape Archive (CTA)
-@copyright    Copyright © 2020-2024 CERN
+@copyright    Copyright © 2020-2025 CERN
 @license      This program is free software, distributed under the terms of the GNU General Public
               Licence version 3 (GPL Version 3), copied verbatim in the file "COPYING". You can
               redistribute it and/or modify it under the terms of the GPL Version 3, or (at your
