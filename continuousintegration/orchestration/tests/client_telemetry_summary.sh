@@ -19,52 +19,46 @@ exec_prometheus_query_scalar() {
 write_metric() {
   local name="$1"
   local value="$2"
-  echo "$name $value" >> "$METRICS_FILE"
+  printf "%s %.2f\n" "$name" "$value" >> "$METRICS_FILE"
 }
 
 PROM_URL="http://prometheus-server"
 METRICS_FILE="metrics.txt"
 
 # Clear output
-> "$METRICS_FILE"
+: > "$METRICS_FILE"
 
-# === Archive & Retrieve Metrics ===
-archives=$(exec_prometheus_query_scalar 'sum(max_over_time(taped_transfer_count_total{transfer_type="archive"}[2h]))')
-retrieves=$(exec_prometheus_query_scalar 'sum(max_over_time(taped_transfer_count_total{transfer_type="retrieve"}[2h]))')
+ns_filter="k8s_namespace_name=\"${MY_NAMESPACE}\""
+
+# === CTA high-level counters (from recorded ci_* metrics) ===
+archives=$(exec_prometheus_query_scalar "sum(ci_cta_taped_transfer_count_total{transfer_type=\"archive\",${ns_filter}})")
+retrieves=$(exec_prometheus_query_scalar "sum(ci_cta_taped_transfer_count_total{transfer_type=\"retrieve\",${ns_filter}})")
+mounts=$(exec_prometheus_query_scalar "sum(ci_cta_taped_mount_count_total{${ns_filter}})")
 
 write_metric "cta_archives_total" "$archives"
 write_metric "cta_retrieves_total" "$retrieves"
-
-# === Mounts ===
-mounts=$(exec_prometheus_query_scalar 'sum(max_over_time(taped_mount_count_total[2h]))')
 write_metric "cta_mounts_total" "$mounts"
 
-# === Objectstore Locks ===
-lock_count=$(exec_prometheus_query_scalar 'sum(max_over_time(objectstore_lock_acquire_count_total[2h]))')
-lock_dur_avg=$(exec_prometheus_query_scalar 'sum(rate(objectstore_lock_acquire_duration_sum[20m])) / sum(rate(objectstore_lock_acquire_duration_count[20m]))')
-lock_dur_percentile=$(exec_prometheus_query_scalar 'histogram_quantile(0.9, sum(rate(objectstore_lock_acquire_duration_bucket[20m])) by (le))')
+# === Objectstore locks (histogram: use recorded *_sum/_count/_bucket) ===
+locks_total=$(exec_prometheus_query_scalar "sum(ci_cta_objectstore_lock_acquire_duration_milliseconds_count{${ns_filter}})")
+lock_avg_ms=$(exec_prometheus_query_scalar "sum(ci_cta_objectstore_lock_acquire_duration_milliseconds_sum{${ns_filter}}) / clamp_min(sum(ci_cta_objectstore_lock_acquire_duration_milliseconds_count{${ns_filter}}),1)")
 
-write_metric "cta_objectstore_lock_total" "$lock_count"
-write_metric "cta_objectstore_lock_duration_avg_seconds" "$lock_dur_avg"
-write_metric "cta_objectstore_lock_duration_90th_percentile" "$lock_dur_percentile"
+write_metric "cta_objectstore_locks_total" "$locks_total"
+write_metric "cta_objectstore_lock_latency_avg_ms" "$lock_avg_ms"
 
-# === Scheduler ===
-sched_count=$(exec_prometheus_query_scalar 'sum(max_over_time(scheduler_queueing_count_total[2h]))')
+# === Frontend (histogram) ===
+fe_req_total=$(exec_prometheus_query_scalar "sum(ci_cta_frontend_request_duration_milliseconds_count{${ns_filter}})")
+fe_avg_ms=$(exec_prometheus_query_scalar "sum(ci_cta_frontend_request_duration_milliseconds_sum{${ns_filter}}) / clamp_min(sum(ci_cta_frontend_request_duration_milliseconds_count{${ns_filter}}),1)")
 
-write_metric "cta_scheduler_queue_total" "$sched_count"
+write_metric "cta_frontend_requests_total" "$fe_req_total"
+write_metric "cta_frontend_latency_avg_ms" "$fe_avg_ms"
 
-# === Catalogue ===
-cat_query_total=$(exec_prometheus_query_scalar 'sum(max_over_time(catalogue_query_count_total[2h]))')
+# === Scheduler & Catalogue ===
+sched_total=$(exec_prometheus_query_scalar "sum(ci_cta_scheduler_queueing_count_total{${ns_filter}})")
+db_queries_total=$(exec_prometheus_query_scalar "sum(ci_cta_database_query_count_total{${ns_filter}})")
 
-write_metric "cta_catalogue_queries_total" "$cat_query_total"
+write_metric "cta_scheduler_queue_events_total" "$sched_total"
+write_metric "cta_database_queries_total" "$db_queries_total"
 
-# === Frontend ===
-frontend_req_total=$(exec_prometheus_query_scalar 'sum(max_over_time(frontend_request_count_total[2h]))')
-frontend_dur_avg=$(exec_prometheus_query_scalar 'sum(rate(frontend_request_duration_sum[20m])) / sum(rate(frontend_request_duration_count[20m]))')
-frontend_dur_percentile=$(exec_prometheus_query_scalar 'histogram_quantile(0.9, sum(rate(frontend_request_duration_bucket[20m])) by (le))')
-
-write_metric "cta_frontend_requests_total" "$frontend_req_total"
-write_metric "cta_frontend_latency_avg_seconds" "$frontend_dur_avg"
-write_metric "cta_frontend_latency_90th_percentile" "$frontend_dur_percentile"
 
 cat $METRICS_FILE
