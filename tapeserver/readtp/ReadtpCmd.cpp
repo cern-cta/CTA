@@ -42,6 +42,7 @@ int ReadtpCmd::exceptionThrowingMain(const int argc, char* const* const argv) {
   std::vector<cta::log::Param> params;
   params.emplace_back("userName", getUsername());
   params.emplace_back("tapeVid", cmdLineArgs.m_vid);
+  params.push_back(cta::log::Param("searchBy", cmdLineArgs.m_searchByBlockID ? "BlockId" : "FSec"));
   m_log(cta::log::INFO, "Started", params);
 
   readAndSetConfiguration(getUsername(), cmdLineArgs);
@@ -91,6 +92,7 @@ void ReadtpCmd::readAndSetConfiguration(const std::string& userName, const Readt
   m_fSeqRangeList = cmdLineArgs.m_fSeqRangeList;
   m_userName = userName;
   m_destinationFiles = readListFromFile(cmdLineArgs.m_destinationFileListURL);
+  m_searchByBlockID = cmdLineArgs.m_searchByBlockID;
 
   // Read taped config file
   const cta::tape::daemon::common::TapedConfiguration driveConfig =
@@ -353,7 +355,7 @@ void ReadtpCmd::readTapeFiles(castor::tape::tapeserver::drive::DriveInterface& d
     }
   }
 
-  const auto readSession = castor::tape::tapeFile::ReadSessionFactory::create(drive, volInfo, m_useLbp);
+  const auto readSession = castor::tape::tapeFile::ReadSessionFactory::create(drive, volInfo, m_useLbp, m_searchByBlockID);
     TapeFseqRangeListSequence fSeqRangeListSequence(&m_fSeqRangeList);
     std::string destinationFile = getNextDestinationUrl();
     uint64_t fSeq;
@@ -437,7 +439,7 @@ void ReadtpCmd::readTapeFile(castor::tape::tapeFile::ReadSession& readSession,
   fileToRecall.selectedTapeFile().fSeq = fSeq;
   fileToRecall.positioningMethod = cta::PositioningMethod::ByFSeq;
 
-  const auto reader = castor::tape::tapeFile::FileReaderFactory::create(readSession, fileToRecall);
+  const auto reader = castor::tape::tapeFile::FileReaderFactory::create(readSession, fileToRecall, m_searchByBlockID);
   auto checksum_adler32 = castor::tape::tapeserver::daemon::Payload::zeroAdler32();
   const size_t buffer_size = 1 * 1024 * 1024 * 1024;  // 1Gb
   size_t read_data_size = 0;
