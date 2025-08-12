@@ -423,7 +423,7 @@ void ReadtpCmd::readTapeFiles(
   params.push_back(cta::log::Param("nbReads", m_nbSuccessReads + m_nbFailedReads));
   params.push_back(cta::log::Param("nbSuccessfullReads", m_nbSuccessReads));
   params.push_back(cta::log::Param("totalDataMB", totalDataSize / (1024 * 1024)));
-  params.push_back(cta::log::Param("elapsedTimeSec", elapsedTimeSec));
+  params.push_back(cta::log::Param("elapsedTimeSec", elapsedTimeSec.count()));
   params.push_back(cta::log::Param("throughputMBs", throughputMBs));
   params.push_back(cta::log::Param("nbFailedReads", m_nbFailedReads));
 
