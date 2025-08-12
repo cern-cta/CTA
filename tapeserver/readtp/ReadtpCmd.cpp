@@ -27,6 +27,8 @@
 #include "tapeserver/readtp/TapeFseqRange.hpp"
 #include "tapeserver/readtp/TapeFseqRangeListSequence.hpp"
 
+#include <chrono>
+
 namespace cta::tapeserver::readtp {
 
 //------------------------------------------------------------------------------
@@ -359,6 +361,9 @@ void ReadtpCmd::readTapeFiles(castor::tape::tapeserver::drive::DriveInterface& d
     TapeFseqRangeListSequence fSeqRangeListSequence(&m_fSeqRangeList);
     std::string destinationFile = getNextDestinationUrl();
     uint64_t fSeq;
+    size_t totalDataSize = 0;
+    auto t_begin = std::chrono::high_resolution_clock::now();
+
     while (fSeqRangeListSequence.hasMore()) {
       try {
         fSeq = fSeqRangeListSequence.next();
@@ -368,7 +373,7 @@ void ReadtpCmd::readTapeFiles(castor::tape::tapeserver::drive::DriveInterface& d
         std::unique_ptr<cta::disk::WriteFile> wfptr;
         wfptr.reset(fileFactory.createWriteFile(destinationFile));
         cta::disk::WriteFile &wf = *wfptr.get();
-        readTapeFile(*readSession, fSeq, wf, volInfo);
+        totalDataSize += readTapeFile(*readSession, fSeq, wf, volInfo);
       m_nbSuccessReads++;  // if readTapeFile returns, file was read successfully
       destinationFile = getNextDestinationUrl();
     } catch (tapeserver::readtp::NoSuchFSeqException&) {
@@ -388,6 +393,10 @@ void ReadtpCmd::readTapeFiles(castor::tape::tapeserver::drive::DriveInterface& d
       m_nbFailedReads++;
     }
   }
+
+  auto t_end = std::chrono::high_resolution_clock::now();
+  std::chrono::duration<double> elapsedTimeSec = t_end - t_begin;
+  auto throughputMBs = (static_cast<double>(totalDataSize) / elapsedTimeSec.count()) / (1024 * 1024);
   std::vector<cta::log::Param> params;
   params.emplace_back("userName", getUsername());
   params.emplace_back("tapeVid", m_vid);
@@ -397,6 +406,9 @@ void ReadtpCmd::readTapeFiles(castor::tape::tapeserver::drive::DriveInterface& d
   params.emplace_back("driveSupportLbp", boolToStr(m_driveSupportLbp));
   params.emplace_back("nbReads", m_nbSuccessReads + m_nbFailedReads);
   params.emplace_back("nbSuccessfullReads", m_nbSuccessReads);
+  params.push_back(cta::log::Param("totalDataMB", totalDataSize / (1024 * 1024)));
+  params.push_back(cta::log::Param("elapsedTimeSec", elapsedTimeSec));
+  params.push_back(cta::log::Param("throughputMBs", throughputMBs));
   params.emplace_back("nbFailedReads", m_nbFailedReads);
 
   m_log(cta::log::INFO, "Finished reading tape", params);
@@ -405,7 +417,7 @@ void ReadtpCmd::readTapeFiles(castor::tape::tapeserver::drive::DriveInterface& d
 //------------------------------------------------------------------------------
 // readTapeFile
 //------------------------------------------------------------------------------
-void ReadtpCmd::readTapeFile(castor::tape::tapeFile::ReadSession& readSession,
+size_t ReadtpCmd::readTapeFile(castor::tape::tapeFile::ReadSession& readSession,
                              const uint64_t& fSeq,
                              cta::disk::WriteFile& wf,
                              const castor::tape::tapeserver::daemon::VolumeInfo& volInfo) {
@@ -437,7 +449,7 @@ void ReadtpCmd::readTapeFile(castor::tape::tapeFile::ReadSession& readSession,
   fileToRecall.selectedCopyNb = 0;
   fileToRecall.archiveFile.tapeFiles.emplace_back();
   fileToRecall.selectedTapeFile().fSeq = fSeq;
-  fileToRecall.positioningMethod = cta::PositioningMethod::ByFSeq;
+  fileToRecall.positioningMethod = m_searchByBlockID ? cta::PositioningMethod::ByBlock : cta::PositioningMethod::ByFSeq;
 
   const auto reader = castor::tape::tapeFile::FileReaderFactory::create(readSession, fileToRecall, m_searchByBlockID);
   auto checksum_adler32 = castor::tape::tapeserver::daemon::Payload::zeroAdler32();
@@ -472,6 +484,7 @@ void ReadtpCmd::readTapeFile(castor::tape::tapeFile::ReadSession& readSession,
   params.emplace_back("checksumValue", "0x" + sstream.str());
   params.emplace_back("readFileSize", read_data_size);
   m_log(cta::log::INFO, "Read file from tape successfully", params);
+  return read_data_size;
 }
 
 //------------------------------------------------------------------------------
