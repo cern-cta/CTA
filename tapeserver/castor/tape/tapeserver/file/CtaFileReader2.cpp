@@ -22,14 +22,14 @@
 
 #include "castor/tape/tapeserver/drive/DriveInterface.hpp"
 #include "castor/tape/tapeserver/file/HeaderChecker.hpp"
-#include "castor/tape/tapeserver/file/CtaFileReader.hpp"
-#include "castor/tape/tapeserver/file/CtaReadSession.hpp"
+#include "castor/tape/tapeserver/file/CtaFileReader2.hpp"
+#include "castor/tape/tapeserver/file/CtaReadSession2.hpp"
 #include "castor/tape/tapeserver/file/Structures.hpp"
 #include "scheduler/RetrieveJob.hpp"
 
 namespace castor::tape::tapeFile {
 
-void CtaFileReader::positionByFseq(const cta::RetrieveJob &fileToRecall) {
+void CtaFileReader2::positionByFseq(const cta::RetrieveJob &fileToRecall) {
   if (m_session.getCurrentFilePart() != PartOfFile::Header) {
     m_session.setCorrupted();
     throw SessionCorrupted();
@@ -55,7 +55,7 @@ void CtaFileReader::positionByFseq(const cta::RetrieveJob &fileToRecall) {
   checkHeaders(fileToRecall);
 }
 
-void CtaFileReader::positionByBlockID(const cta::RetrieveJob &fileToRecall) {
+void CtaFileReader2::positionByBlockID(const cta::RetrieveJob &fileToRecall) {
   // Make sure the session state is advanced to cover our failures
   // and allow next call to position to discover we failed half way
   m_session.setCurrentFilePart(PartOfFile::HeaderProcessing);
@@ -71,7 +71,7 @@ void CtaFileReader::positionByBlockID(const cta::RetrieveJob &fileToRecall) {
   checkHeaders(fileToRecall);
 }
 
-void CtaFileReader::moveToFirstHeaderBlock() {
+void CtaFileReader2::moveToFirstHeaderBlock() {
   // special case: we can rewind the tape to be faster
   // (TODO: in the future we could also think of a threshold above
   // which we rewind the tape anyway and then space forward)
@@ -86,7 +86,7 @@ void CtaFileReader::moveToFirstHeaderBlock() {
   }
 }
 
-void CtaFileReader::checkTrailers() {
+void CtaFileReader2::checkTrailers() {
   m_session.setCurrentFilePart(PartOfFile::Trailer);
 
   // let's read and check the trailers
@@ -115,7 +115,7 @@ void CtaFileReader::checkTrailers() {
   }
 }
 
-size_t CtaFileReader::readNextDataBlock(void *data, const size_t size) {
+size_t CtaFileReader2::readNextDataBlock(void *data, const size_t size) {
   if (size != m_currentBlockSize) {
     throw WrongBlockSize();
   }
@@ -129,7 +129,7 @@ size_t CtaFileReader::readNextDataBlock(void *data, const size_t size) {
   return bytes_read;
 }
 
-void CtaFileReader::moveReaderByFSeqDelta(const int64_t fSeq_delta) {
+void CtaFileReader2::moveReaderByFSeqDelta(const int64_t fSeq_delta) {
   if (fSeq_delta == 0) {
     // do nothing we are in the correct place
   } else if (fSeq_delta > 0) {
@@ -145,10 +145,16 @@ void CtaFileReader::moveReaderByFSeqDelta(const int64_t fSeq_delta) {
   }
 }
 
-void CtaFileReader::useBlockID(const cta::RetrieveJob &fileToRecall) {
+void CtaFileReader2::useBlockID(const cta::RetrieveJob &fileToRecall) {
   // if we want the first file on tape (fileInfo.blockId==0) we need to skip the VOL1 header
   const uint32_t destination_block = fileToRecall.selectedTapeFile().blockId ?
     fileToRecall.selectedTapeFile().blockId : 1;
+
+  // Do not reposition if drive is already at the right location
+  if (const uint32_t current_block = getPosition(); current_block == destination_block) {
+    return;
+  }
+
   /*
   we position using the sg locate because it is supposed to do the
   right thing possibly in a more optimized way (better than st's
@@ -160,7 +166,7 @@ void CtaFileReader::useBlockID(const cta::RetrieveJob &fileToRecall) {
   m_session.m_drive.positionToLogicalObject(destination_block);
 }
 
-void CtaFileReader::setBlockSize(const UHL1 &uhl1)  {
+void CtaFileReader2::setBlockSize(const UHL1 &uhl1)  {
   m_currentBlockSize = static_cast<size_t>(atol(uhl1.getBlockSize().c_str()));
   if (m_currentBlockSize < 1) {
     std::ostringstream ex_str;
@@ -169,7 +175,7 @@ void CtaFileReader::setBlockSize(const UHL1 &uhl1)  {
   }
 }
 
-void CtaFileReader::checkHeaders(const cta::RetrieveJob &fileToRecall) {
+void CtaFileReader2::checkHeaders(const cta::RetrieveJob &fileToRecall) {
   // save the current fSeq into the read session
   m_session.setCurrentFseq(fileToRecall.selectedTapeFile().fSeq);
 
