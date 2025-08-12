@@ -1,5 +1,5 @@
 # @project      The CERN Tape Archive (CTA)
-# @copyright    Copyright © 2015-2022 CERN
+# @copyright    Copyright © 2015-2025 CERN
 # @license      This program is free software, distributed under the terms of the GNU General Public
 #               Licence version 3 (GPL Version 3), copied verbatim in the file "COPYING". You can
 #               redistribute it and/or modify it under the terms of the GPL Version 3, or (at your
@@ -15,30 +15,30 @@
 
 ####################################################################################################
 # 
-# CTA Tape Server Configuration
+# CTA Maintenance Service Configuration
 # 
 ####################################################################################################
 
 #
-# TAPE SERVER CONFIGURATION OPTIONS
+# MAINTENANCE SERVICE CONFIGURATION OPTIONS
 #
 
-# The user of the cta-taped daemon process
-# taped DaemonUserName cta
+# The expected user of the cta-maintenance daemon process. In the process user does not match the process will exit.
+# DaemonUserName cta
 #
-# The group of the cta-taped daemon process
-# taped DaemonGroupName tape
+# The expected group of the cta-maintenance daemon process. If the process groups does not match the process will exit.
+# DaemonGroupName tape
 #
 # Logs with a level lower than the LogMask value will be masked. Possible values are EMERG, ALERT,
 # CRIT, ERR, WARNING, NOTICE (USERERR), INFO, DEBUG.
-# taped LogMask INFO
+# LogMask INFO
 #
-# Log format. Possible values are default, json.
-# taped LogFormat default
+# Log format. Possible values are unstructured, json.
+# LogFormat json
 #
 #
 # Path to the CTA Catalogue configuration file
-# taped CatalogueConfigFile /etc/cta/cta-catalogue.conf
+# CatalogueConfigFile /etc/cta/cta-catalogue.conf
 #
 # URL of the objectstore (CTA Scheduler Database). Usually this will be the URL of a Ceph RADOS
 # objectstore. For testing or small installations, a file-based objectstore can be used instead.
@@ -46,28 +46,10 @@ ObjectStore BackendPath rados://cta@tapecta:cta
 # ObjectStore BackendPath /path/to/local/objectstore
 
 #
-# DRIVE OPTIONS
-#
-# The name of the drive. Will be included for every line in the logs. This can help identifying
-# a problematic maintenance process of the drive after log agregation.
-# taped DriveName
-#
-# CTA's logical library the tape drive will be linked to.
-# taped DriveLogicalLibrary
-#
-# Path to the character special device used to access the drive.
-# taped DriveDevice
-#
-# The SCSI media changer address of the drive. This is "smc" + the drive ordinal number of the
-# device, which can be obtained with "cta-smc -q D"
-# taped DriveControlPath
-
-#
 # GENERAL OPTIONS
-# This options will be included in every log line of the tape daemon to enhance log identification
-# when swapping drives between different backends.
+# This options will be included in every log line of the maintenance process to enhance log identification.
 #
-# Unique string to identify CTA's instance the tape daemon is serving (i.e: production, preproduction).
+# Unique string to identify CTA's instance the maintenance process is serving (i.e: production, preproduction).
 # Each of these instances should be associated with a specific CTA catalogue instance.
 # general InstanceName production
 #
@@ -76,169 +58,48 @@ ObjectStore BackendPath rados://cta@tapecta:cta
 # general SchedulerBackendName cephUser
 
 #
-# MEMORY MANAGEMENT OPTIONS
+# MAINTENANCE PROCESS RUNNER CONFIGURATION OPTIONS
+#
+# Run the Disk Reporter to report the state (fail or success) of transfer jobs.
+# DiskReportRunner yes
+#
+# Run the Garbage Collector for garbage collection of objectstore's dead agents.
+# GarbageCollectorRunner yes
+#
+# Run the Queue Cleanup.
+# QueueCleanupRunner yes
+#
+# Run the Repack Request Manager for repack-related operations.
+# RepackRequestRunner yes
 #
 
-# Number of memory buffers per drive in the data transfer cache. This value should be configured
-# according to the physical memory available.
-# taped BufferCount 5000
-
-# Size of one memory buffer in the data transfer cache, in bytes. Default is 5 MB.
-# taped BufferSizeBytes 5000000
-
 #
-# BATCHED METADATA ACCESS AND TAPE WRITE FLUSH OPTIONS
-#
-
-# Maximum batch size for processing archive requests, specified as a tuple (number of bytes, number of
-# files). Defaults to 80 GB and 4000 files.
-# taped ArchiveFetchBytesFiles 80000000000,4000
-# 
-# Flush  to tape criteria. During archiving operations, this parameter defines the maximum number of
-# bytes and number of files that will be written to tape before a flush to # tape (synchronised tape
-# mark). Defaults to 32 GB and 200 files.
-# taped ArchiveFlushBytesFiles 32000000000,200
-# 
-# Maximum batch size for processing retrieve requests, specified as a tuple (number of bytes, number of
-# files). When cta-taped fetches a batch of retrieve requests, the batch cannot exceed the number of
-# bytes and number of files specified by this parameter. Defaults to 80 GB and 4000 files.
-# taped RetrieveFetchBytesFiles 80000000000,4000
-
-#
-# SCHEDULING OPTIONS
-#
-
-# Criteria to mount a tape, specified as a tuple (number of bytes, number of files). An archival or
-# retrieval queue must contain at least this number of bytes or this number of files before a tape mount
-# will be triggered. This does not apply when the timeout specified in the applicable mount rule is
-# exceeded. Defaults to 500 GB and 10000 files.
-# taped MountCriteria 500000000000,10000
-
-#
-# TAPED CACHE TIMEOUT OPTIONS
+# CACHE TIMEOUT OPTIONS
 #
 # Defaults to 600 seconds if not set.
-# taped TapeCacheMaxAgeSecs 600
+# TapeCacheMaxAgeSecs 600
 #
 # Defaults to 10 seconds if not set.
-# taped RetrieveQueueCacheMaxAgeSecs 10
+# RetrieveQueueCacheMaxAgeSecs 10
+
 
 #
-# DISK FILE ACCESS OPTIONS
+# DISK REPORT RUNNER CONFIGURATION OPTIONS
 #
 
-# The number of disk I/O threads. This determines the maximum number of parallel file transfers.
-# taped NbDiskThreads 10
 
 #
-# TAPE ENCRYPTION SUPPORT
+# GARBAGE COLLECTOR RUNNER CONFIGURATION OPTIONS
 #
 
-# Enable tape hardware encryption. Encryption will be enabled only for tapes where a valid encryption
-# key has been configured for the tape or tape pool.
-# taped UseEncryption yes
-# 
-# Path to the external script used to obtain encryption keys.
-taped externalEncryptionKeyScript /usr/local/bin/cta-get-encryption-key.sh
-
-# 
-# DISK SPACE MANAGEMENT OPTIONS
-#
-
-# Path to the external script used to determine free disk space in the retrieve buffer.
-taped externalFreeDiskSpaceScript /usr/bin/cta-eosdf.sh
 
 #
-# RECOMMENDED ACCESS ORDER (RAO) OPTIONS
-#
-#
-
-# ##### WARNING #####
-#
-# The default RAO options should provide the best retrieve performance out of the box. These options
-# should only be changed by expert users for specific tests.
-#
-# ##### WARNING #####
-
-# Enable Recommended Access Order (RAO) if available. This setting is used to enable both hardware
-# and software RAO for all drives that support it. Hardware RAO in IBM Enterprise and LTO drives
-# generation 9 or later needs no further configuration. The additional RAO options below are for
-# software RAO on LTO-8 drives.
-# taped UseRAO yes
-# 
-# On LTO-8 tape drives, specify which software RAO algorithm to use. Valid options are linear,
-# random, sltf. This should be set to sltf in production environments.
-# taped RAOLTOAlgorithm sltf
-# 
-# Specify options for the software RAO algorithm.
-# taped RAOLTOAlgorithmOptions cost_heuristic_name:cta
-
-#
-# MAINTENANCE PROCESS CONFIGURATION OPTIONS
+# QUEUE CLEANUP RUNNER CONFIGURATION OPTIONS
 #
 
-# ##### WARNING #####
-#
-# The CTA secheduler is fully distributed. By default, all cta-taped processes will handle reporting
-# jobs and repack requests. These values should only be changed by expert users. Misconfiguration can
-# stop CTA from functioning.
-#
-# ##### WARNING #####
 
-# Enable RepackRequestManager for repack-related operations.
-# taped UseRepackManagement yes
-# 
-# Enable MaintenanceProcess for repack-related operations, garbage collection and disk reporting.
-# taped UseMaintenanceProcess yes
+#
+# REPACK REQUEST RUNNER CONFIGURATION OPTIONS
 #
 # Set the maximum number of simultaneous repacks to be promoted to ToExpand
-# taped repackMaxToToExpand 2
-
-#
-# TIMEOUT OPTIONS
-#
-
-# Maximum time to wait for a tape to load, in seconds.
-# taped TapeLoadTimeout 300
-#
-# Maximum time allowed to determine a drive is ready, in seconds.
-# taped WatchdogCheckMaxSecs 120
-#
-# Maximum time allowed to schedule a single mount, in seconds.
-# taped WatchdogScheduleMaxSecs 300
-#
-# Maximum time allowed to mount a tape, in seconds.
-# taped WatchdogMountMaxSecs 600
-#
-# Maximum time allowed to unmount a tape, in seconds.
-# taped WatchdogUnmountMaxSecs 600
-#
-# Maximum time allowed to drain a file to disk during retrieve, in seconds.
-# taped WatchdogDrainMaxSecs 1800
-#
-# Maximum time allowed to shutdown of a tape session, in seconds.
-# taped WatchdogShutdownMaxSecs 900
-# 
-# Maximum time allowed after mounting without any tape blocks being read/written, in seconds.
-# taped WatchdogNoBlockMoveMaxSecs 1800
-# 
-# Maximum time to wait after scheduling came up idle, in seconds.
-# taped WatchdogIdleSessionTimer 10
-
-# Time to wait after which the tape server stops trying to get the next mount, in seconds.
-# taped WatchdogGetNextMountMaxSecs 900
-
-#
-# RMC Connection Options
-#
-
-# The default TCP/IP port on which the CASTOR rmcd daemon listens for incoming\
-# TCP/IP connections from the tape server.
-# taped RmcPort 5014
-#
-# The network timeout of rmc communications should be several minutes due
-# to the time it takes to mount and unmount tapes.
-# taped RmcNetTimeout 600
-#
-# The number of attempts a retriable RMC request should be issued.
-# taped RmcRequestAttempts 10
+# repackMaxToToExpand 2
