@@ -43,6 +43,11 @@ struct ReadtpCmdLineArgs {
   std::string m_destinationFileListURL;
 
   /**
+   * Enable if we intend to find the files by blockId
+   */
+  bool m_searchByBlockID = false;
+
+  /**
    * Constructor that parses the specified command-line arguments.
    *
    * @param argc The number of command-line arguments including the name of the

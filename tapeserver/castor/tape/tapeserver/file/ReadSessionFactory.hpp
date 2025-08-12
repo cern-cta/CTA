@@ -23,7 +23,7 @@ class ReadSession;
 class ReadSessionFactory {
 public:
   static std::unique_ptr<ReadSession>
-  create(tapeserver::drive::DriveInterface& drive, const tapeserver::daemon::VolumeInfo& volInfo, const bool useLbp);
+  create(tapeserver::drive::DriveInterface& drive, const tapeserver::daemon::VolumeInfo& volInfo, const bool useLbp, bool useAlternative=false);
 };
 
 }  // namespace tapeFile

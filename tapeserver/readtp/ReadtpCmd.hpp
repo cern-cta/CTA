@@ -321,7 +321,13 @@ private:
    */
   bool m_isTapeEncrypted;
 
-};  // class ReadtpCmd
+  /**
+   * Search by block id instead of fsec
+   */
+  bool m_searchByBlockID;
+
+
+}; // class ReadtpCmd
 
 CTA_GENERATE_EXCEPTION_CLASS(NoSuchFSeqException);
 
