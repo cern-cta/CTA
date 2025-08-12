@@ -407,7 +407,7 @@ void ReadtpCmd::readTapeFiles(castor::tape::tapeserver::drive::DriveInterface& d
   params.emplace_back("nbReads", m_nbSuccessReads + m_nbFailedReads);
   params.emplace_back("nbSuccessfullReads", m_nbSuccessReads);
   params.push_back(cta::log::Param("totalDataMB", totalDataSize / (1024 * 1024)));
-  params.push_back(cta::log::Param("elapsedTimeSec", elapsedTimeSec));
+  params.push_back(cta::log::Param("elapsedTimeSec", elapsedTimeSec.count()));
   params.push_back(cta::log::Param("throughputMBs", throughputMBs));
   params.emplace_back("nbFailedReads", m_nbFailedReads);
 
