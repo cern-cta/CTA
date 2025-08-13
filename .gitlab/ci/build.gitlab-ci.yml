@@ -139,7 +139,8 @@ check-compile-commands:
     - test $(git rev-list --count origin/main --not @) == 0 || (echo "We are behind main. Exiting."; exit 0)
     # Remove unnecesary flag that varies from commit to commit.
     - sed -Ei 's/(^| )-DVERSION_API=(\\?"[^"]*"|[^ ]+)( |$)/\1\3/g' ./build_rpm/compile_commands.json
-    - sed -i 's/ -DCTA_PGSCHED //g' ./build_rpm/compile_commands.json
+    - if [[ $SCHEDULER_TYPE == "pgsched" ]]; then sed -i 's/ -DCTA_PGSCHED //g' ./build_rpm/compile_commands.json; fi
+    - if [[ $BUILD_GENERATOR == "Ninja" ]]; then sed -i 's| -o .*/CMake| -o CMake|g'; fi
     - python3 ./continuousintegration/checks/check_compile_commands.py ./compile_commands.json ./build_rpm/compile_commands.json
   artifacts:
     when: on_failure
