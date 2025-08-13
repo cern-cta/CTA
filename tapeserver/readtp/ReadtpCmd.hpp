@@ -332,6 +332,10 @@ private:
    */
   bool m_searchByBlockID;
 
+  /**
+   * Enable to test new features
+   */
+  bool m_testNew;
 
 }; // class ReadtpCmd
 
