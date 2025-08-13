@@ -15,6 +15,64 @@
 #               granted to it by virtue of its status as an Intergovernmental Organization or
 #               submit itself to any jurisdiction.
 
-echo "Testing CI setup"
+# NooBaa-CTA Integration Test Suite
+# Runs test_client.sh and test_retrieval.sh in CI environment
 
-exit 0
+SECONDS_FILE_NAME=`basename $0`
+echo "Launching test ${SECONDS_FILE_NAME}..."
+
+usage() { cat <<EOF 1>&2
+Usage: $0 -n <namespace>
+EOF
+exit 1
+}
+
+while getopts "n:" o; do
+    case "${o}" in
+        n) NAMESPACE=${OPTARG} ;;
+        *) usage ;;
+    esac
+done
+
+if [ -z "${NAMESPACE}" ]; then usage; fi
+
+# Source common test preparation
+. prepare_tests.sh -n ${NAMESPACE}
+
+echo "Starting NooBaa-CTA integration tests in namespace: ${NAMESPACE}"
+
+# Change to NooBaa integration scripts directory
+cd ../../../noobaa-cta-integration/scripts/
+
+# Run test_client.sh (S3 Glacier archival workflow)
+echo "🚀 Running S3 Glacier archival test..."
+./test_client_simple.sh
+archival_result=$?
+
+# Run test_retrieval.sh (S3 Glacier retrieval workflow) 
+echo "🚀 Running S3 Glacier retrieval test..."
+./test_retrieval_simple.sh
+retrieval_result=$?
+
+# Report results
+echo "=== NOOBAA-CTA INTEGRATION TEST RESULTS ==="
+if [ $archival_result -eq 0 ]; then
+    echo "✅ S3 Glacier Archival Test: PASSED"
+else
+    echo "❌ S3 Glacier Archival Test: FAILED"
+fi
+
+if [ $retrieval_result -eq 0 ]; then
+    echo "✅ S3 Glacier Retrieval Test: PASSED"
+else
+    echo "❌ S3 Glacier Retrieval Test: FAILED"
+fi
+
+# Set CI exit code
+if [ $archival_result -eq 0 ] && [ $retrieval_result -eq 0 ]; then
+    echo "🎉 ALL NOOBAA-CTA TESTS PASSED"
+    exit 0
+else
+    echo "SOME NOOBAA-CTA TESTS FAILED"
+    exit 1
+fi
