@@ -38,6 +38,7 @@ ReadtpCmdLineArgs::ReadtpCmdLineArgs(const int argc, char* const* const argv) {
     {"destination_files", required_argument, nullptr, 'f'},
     {"drive",             required_argument, nullptr, 'u'},
     {"use_blockid",       no_argument,       nullptr, 'b'},
+    {"test_new",          no_argument,       nullptr, 'n'},
     {"help",              no_argument,       nullptr, 'h'},
     {nullptr,             0,                 nullptr, 0  }
   };
@@ -56,6 +57,9 @@ ReadtpCmdLineArgs::ReadtpCmdLineArgs(const int argc, char* const* const argv) {
         break;
       case 'b':
         m_searchByBlockID = true;
+        break;
+      case 'n':
+        m_testNew = true;
         break;
       case 'h':
         help = true;
