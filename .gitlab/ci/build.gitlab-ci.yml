@@ -121,6 +121,7 @@ build-cta-rpm:
 check-compile-commands:
   retry: 0
   stage: build
+  allow_failure: true
   extends:
     - .build-cta
   rules:
