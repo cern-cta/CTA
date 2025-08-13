@@ -101,14 +101,7 @@ void cta::tape::daemon::TapeDaemon::mainEventLoop() {
                              m_globalConfiguration.driveDevice.value(),
                              m_globalConfiguration.driveControlPath.value()};
 
-  // Used in the process name, which can be a max of 16 bytes (including null terminator)
-  const int maxProcessNameLen = 15;
-  const auto processName = common::TapedConfiguration::constructProcessName(m_globalConfiguration.driveName.value(), "parent");
-  if (processName.size() > maxProcessNameLen) {
-    lc.log(log::WARNING,
-           "TapeDaemon::mainEventLoop - processName '" + processName + "' exceeds max length of " +
-             std::to_string(maxProcessNameLen) + " (got " + std::to_string(processName.size()) + ")");
-  }
+  const auto processName = m_globalConfiguration.constructProcessName(lc, "parent");
   prctl(PR_SET_NAME, processName.c_str());
   auto dh = std::make_unique<DriveHandler>(m_globalConfiguration,
                                            dce,

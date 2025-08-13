@@ -114,9 +114,44 @@ std::string TapedConfiguration::getFirstDriveName() {
 //------------------------------------------------------------------------------
 // TapedConfiguration::constructProcessName
 //------------------------------------------------------------------------------
-std::string TapedConfiguration::constructProcessName(const std::string& unitName, const std::string& postfix) {
+std::string TapedConfiguration::constructProcessName(cta::log::LogContext& lc, const std::string& postfix) const {
+  // Max len is 16 for a process name, but we remove 1 for the null terminator and 1 for the hyphen
+  // Postfix can be maximum 6 characters (enough for "parent")
+  // That leaves 16 - 1 - 1 - 6 = 8 characters for the drive name
+  const int maxShortnameLen = 8;
+  const int maxPostfixLen = 6;
+
+  // drivename checks
+  const std::string unitName = driveName.value();
   const auto pos = unitName.find_last_of('-');
-  return unitName.substr(pos + 1) + "-" + postfix;
+  std::string shortName;
+  if (pos == std::string::npos) {
+    shortName = unitName;
+  } else {
+    shortName = unitName.substr(pos + 1);
+  }
+
+  if (shortName.length() > maxShortnameLen) {
+    lc.log(log::WARNING,
+           "TapedConfiguration::constructProcessName - short drivename '" + shortName + "' exceeds max length of " +
+             std::to_string(maxShortnameLen) + "; truncating");
+    shortName = shortName.substr(0, maxShortnameLen);
+  }
+
+  // postfix checks
+  if (postfix.empty()) {
+    lc.log(log::WARNING, "TapedConfiguration::constructProcessName - empty postfix; using unit name as process name");
+    return shortName;
+  }
+
+  std::string px = postfix;
+  if (px.length() > maxPostfixLen) {
+    lc.log(log::WARNING,
+           "TapedConfiguration::constructProcessName - postfix '" + px + "' exceeds max length of " +
+             std::to_string(maxPostfixLen) + "; truncating");
+    px = px.substr(0, maxPostfixLen);
+  }
+  return shortName + "-" + px;
 }
 
 //------------------------------------------------------------------------------
