@@ -135,7 +135,7 @@ std::string TapedConfiguration::constructProcessName(cta::log::LogContext& lc, c
     lc.log(log::WARNING,
            "TapedConfiguration::constructProcessName - short drivename '" + shortName + "' exceeds max length of " +
              std::to_string(maxShortnameLen) + "; truncating");
-    shortName = shortName.substr(0, maxShortnameLen);
+    shortName.resize(maxShortnameLen);
   }
 
   // postfix checks
@@ -149,7 +149,7 @@ std::string TapedConfiguration::constructProcessName(cta::log::LogContext& lc, c
     lc.log(log::WARNING,
            "TapedConfiguration::constructProcessName - postfix '" + px + "' exceeds max length of " +
              std::to_string(maxPostfixLen) + "; truncating");
-    px = px.substr(0, maxPostfixLen);
+    px.resize(maxPostfixLen);
   }
   return shortName + "-" + px;
 }
