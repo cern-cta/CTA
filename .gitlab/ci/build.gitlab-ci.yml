@@ -139,7 +139,7 @@ check-compile-commands:
     # Remove unnecesary flag that varies from commit to commit.
     - sed -Ei 's/(^| )-DVERSION_API=(\\?"[^"]*"|[^ ]+)( |$)/\1\3/g' ./build_rpm/compile_commands.json
     - sed -i 's/ -DCTA_PGSCHED //g' ./build_rpm/compile_commands.json
-    - diff ./compile_commands.json ./build_rpm/compile_commands.json
+    - python3 ./continuousintegration/checks/check_compile_commands.py ./compile_commands.json ./build_rpm/compile_commands.json
   artifacts:
     when: on_failure
     paths:
