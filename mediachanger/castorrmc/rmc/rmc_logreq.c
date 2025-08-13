@@ -16,7 +16,7 @@
  */
 
 #include "rmc_constants.h"
-#include "rmc_logit.h"
+#include "json_logger.h"
 #include "rmc_logreq.h"
 
 #include <string.h>
@@ -41,7 +41,7 @@ void rmc_logreq(const char *const func, char *const logbuf) {
 		savechrs1[1] = *(p + n1 + 1);
 		*(p + n1) = '\\';
 		*(p + n1 + 1) = '\0';
-		rmc_logit (func, RMC98, p);
+		json_log_info (__FUNCTION__,RMC98, p);
 		if (p != logbuf) {
 			*p = savechrs2[0];
 			*(p + 1) = savechrs2[1];
@@ -55,7 +55,7 @@ void rmc_logreq(const char *const func, char *const logbuf) {
 		*(p + 3) = savechrs1[1];
 		n2 -= n1;
 	}
-	rmc_logit (func, RMC98, p);
+	json_log_info (__FUNCTION__,RMC98, p);
 	if (p != logbuf) {
 		*p = savechrs2[0];
 		*(p + 1) = savechrs2[1];

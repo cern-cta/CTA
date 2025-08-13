@@ -23,7 +23,7 @@
 #include "marshall.h"
 #include "net.h"
 #include "rmc_constants.h"
-#include "rmc_logit.h"
+#include "json_logger.h"
 #include "rmc_sendrep.h"
 #include <unistd.h>
 
@@ -46,7 +46,6 @@ int rmc_sendrep(const int rpfd, const int rep_type, ...)
 	int rc;
 	char repbuf[RMC_REPBUFSZ];
 	int repsize;
-	const char* const func = "rmc_sendrep";
 
 	rbp = repbuf;
 	marshall_LONG (rbp, RMC_MAGIC);
@@ -58,7 +57,7 @@ int rmc_sendrep(const int rpfd, const int rep_type, ...)
 		vsprintf (prtbuf, msg, args);
 		marshall_LONG (rbp, strlen (prtbuf) + 1);
 		marshall_STRING (rbp, prtbuf);
-		rmc_logit (func, "%s", prtbuf);
+		json_log_info (__FUNCTION__,"%s", prtbuf);
 		break;
 	case MSG_DATA:
 		n = va_arg (args, int);
@@ -76,8 +75,8 @@ int rmc_sendrep(const int rpfd, const int rep_type, ...)
 	repsize = rbp - repbuf;
 	if (netwrite (rpfd, repbuf, repsize) != repsize) {
                 const char *const neterror_str = neterror();
-		rmc_logit (func, RMC02, "send", neterror_str);
-		rmc_logit (func, "Call to netwrite() failed"
+		json_log_info (__FUNCTION__,RMC02, "send", neterror_str);
+		json_log_err (__FUNCTION__,"Call to netwrite() failed"
 			": rep_type=%s neterror=%s\n",
 			rep_type_to_str(rep_type), neterror_str);
 		if (rep_type == RMC_RC)

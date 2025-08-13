@@ -19,7 +19,7 @@
 #include "Castor_limits.h"
 
 #define RMC_CHECKI  5   /* max interval to check for work to be done */
-#define RMC_PRTBUFSZ 180
+#define RMC_PRTBUFSZ 512
 #define RMC_REPBUFSZ 524288 /* must be >= max media changer server reply size */
 #define RMC_REQBUFSZ 256    /* must be >= max media changer server request size */
 #define RMC_MAGIC	0x120D0301

@@ -19,6 +19,7 @@
 #include "serrno.h"   /* special error numbers and codes              */
 #include "Cglobals.h"
 #include "strerror_r_wrapper.h"
+#include "json_logger.h"
 
 #include <stdio.h>      /* standard input/output                        */
 #include <errno.h>      /* error numbers and codes                      */
@@ -621,10 +622,10 @@ void sperror(char    *msg)
   if (serrno)     {
     if(sstrerror_r(serrno, buf, sizeof(buf))) {
       /* sstrerror_r() failed so just print msg */
-      fprintf(stderr,"%s\n",msg);
+      json_log_err(__FUNCTION__,"%s",msg);
     } else {
       /* sstrerror_r() succeeded so print both msg and buf */
-      fprintf(stderr,"%s: %s\n", msg, buf);
+      json_log_err(__FUNCTION__,"%s: %s", msg, buf);
     }
   } else    {
     perror(msg);

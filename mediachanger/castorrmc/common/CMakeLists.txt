@@ -21,14 +21,12 @@ set (CTARMCCOMMON_LIB_SRC_FILES
   Cglobals.c
   Cinitdaemon.c
   Cnetdb.c
-  Csnprintf.c
   getconfent.c
   marshall.c
-  readc.c
   serror.c
   socket.c
+  json_logger.c
   socket_timeout.c
-  strerror_r_wrapper.cpp
-  util.c)
+  strerror_r_wrapper.cpp)
 
 add_library(ctarmccommon ${CTARMCCOMMON_LIB_SRC_FILES})

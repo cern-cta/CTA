@@ -28,6 +28,8 @@
 #include <string.h>
 #include <serrno.h>
 
+#include "json_logger.h"
+
 int Cinitdaemon(const char *const name,
 		void (*const wait4child) (int))
 {
@@ -38,22 +40,22 @@ int Cinitdaemon(const char *const name,
         maxfds = getdtablesize();
         /* Background */
         if ((c = fork()) < 0) {
-                fprintf (stderr, "%s: cannot fork: %s\n",name,sstrerror(errno));
+                json_log_err(__FUNCTION__, "%s: cannot fork: %s\n",name,sstrerror(errno));
                 exit(1);
         } else
                 if (c > 0) exit (0);
         c = setsid();
         /* Redirect standard files to /dev/null */
         if (freopen( "/dev/null", "r", stdin) == NULL) {
-                fprintf (stderr, "%s: cannot freeopen stdin: %s\n",name,sstrerror(errno));
+                json_log_err(__FUNCTION__, "%s: cannot freeopen stdin: %s\n",name,sstrerror(errno));
                 exit(1);
         }
         if (freopen( "/dev/null", "w", stdout) == NULL) {
-                fprintf (stderr, "%s: cannot freeopen stdout: %s\n",name,sstrerror(errno));
+                json_log_err(__FUNCTION__, "%s: cannot freeopen stdout: %s\n",name,sstrerror(errno));
                 exit(1);
         }
         if (freopen( "/dev/null", "w", stderr) == NULL) {
-                fprintf (stderr, "%s: cannot freeopen stderr: %s\n",name,sstrerror(errno));
+                json_log_err(__FUNCTION__, "%s: cannot freeopen stderr: %s\n",name,sstrerror(errno));
                 exit(1);
         }
 

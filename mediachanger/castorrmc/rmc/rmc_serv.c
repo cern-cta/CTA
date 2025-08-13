@@ -36,7 +36,7 @@
 #include "net.h"
 #include "rbtsubr_constants.h"
 #include "rmc_constants.h"
-#include "rmc_logit.h"
+#include "json_logger.h"
 #include "rmc_procreq.h"
 #include "rmc_sendrep.h"
 #include "rmc_smcsubr.h"
@@ -55,8 +55,6 @@ static void rmc_procreq(const int rpfd, const int req_type, char *const req_data
 static int rmc_dispatchRqstHandler(const int req_type, const struct rmc_srv_rqst_context *const rqst_context);
 static void rmc_doit(const int rpfd);
 
-/* extern globals */
-int g_jid;
 struct extended_robot_info g_extended_robot_info;
 
 /* globals with file scope */
@@ -87,10 +85,8 @@ int rmc_main(const char *const robot)
 	int s;
 	struct sockaddr_in sin;
 	struct smc_status smc_status;
-	const char* const func = "rmc_serv";
 
-	g_jid = getpid();
-	rmc_logit (func, "started\n");
+	json_log_info (__FUNCTION__, "started");
 
 	char localhost[CA_MAXHOSTNAMELEN+1];
 	gethostname(localhost, CA_MAXHOSTNAMELEN+1);
@@ -99,15 +95,15 @@ int rmc_main(const char *const robot)
 		strncpy(g_localhost, localhost, CA_MAXHOSTNAMELEN+1);
 	} else {
 		if(Cdomainname(domainname, sizeof(domainname)) < 0) {
-			rmc_logit(func, "Unable to get domainname\n");
+			json_log_warn(__FUNCTION__, "Unable to get domainname\n");
 		}
 		if(snprintf(g_localhost, CA_MAXHOSTNAMELEN+1, "%s.%s", localhost, domainname) != 0) {
-			rmc_logit(func, "localhost.domainname exceeds maximum length\n");
+			json_log_warn(__FUNCTION__, "localhost.domainname exceeds maximum length");
 		}
 	}
 
 	if(*robot == '\0') {
-		rmc_logit(func, RMC06, "robot");
+		json_log_info(__FUNCTION__, RMC06, "robot");
 		exit(USERR);
 	}
 
@@ -118,7 +114,7 @@ int rmc_main(const char *const robot)
 		snprintf(g_extended_robot_info.smc_ldr, CA_MAXRBTNAMELEN+1, "/dev/%s", robot);
 	}
 	if(g_extended_robot_info.smc_ldr[CA_MAXRBTNAMELEN] != '\0') {
-		rmc_logit(func, RMC06, "robot");
+		json_log_info(__FUNCTION__, RMC06, "robot");
 		exit(USERR);
 	}
 	g_extended_robot_info.smc_fd = -1;
@@ -128,18 +124,18 @@ int rmc_main(const char *const robot)
 		const int max_nb_attempts = 3;
 		int attempt_nb = 1;
 		for(attempt_nb = 1; attempt_nb <= max_nb_attempts; attempt_nb++) {
-      rmc_logit (func, "Trying to get geometry of tape library: attempt_nb=%d\n", attempt_nb);
+      json_log_info (__FUNCTION__,"Trying to get geometry of tape library: attempt_nb=%d", attempt_nb);
 			c = smc_get_geometry (g_extended_robot_info.smc_fd,
                             g_extended_robot_info.smc_ldr,
                             &g_extended_robot_info.robot_info);
 
 			if(0 == c) {
-        rmc_logit (func, "Got geometry of tape library\n");
+        json_log_info (__FUNCTION__,"Got geometry of tape library");
 				break;
 			}
 
 			c = smc_lasterror (&smc_status, &msgaddr);
-			rmc_logit (func, RMC02, "get_geometry", msgaddr);
+			json_log_info (__FUNCTION__,RMC02, "get_geometry", msgaddr);
 
       // If this was the last attempt
 			if(max_nb_attempts == attempt_nb) {
@@ -156,7 +152,7 @@ int rmc_main(const char *const robot)
 	/* open request socket */
 
 	if ((s = socket (AF_INET, SOCK_STREAM | O_NONBLOCK, 0)) < 0) {
-		rmc_logit (func, RMC02, "socket", neterror());
+		json_log_err (__FUNCTION__,RMC02, "socket", neterror());
 		exit (CONFERR);
 	}
 	memset ((char *)&sin, 0, sizeof(struct sockaddr_in)) ;
@@ -172,10 +168,10 @@ int rmc_main(const char *const robot)
 	// rmcd should only accept connections from the loopback interface
 	sin.sin_addr.s_addr = htonl(INADDR_LOOPBACK);
 	if (setsockopt (s, SOL_SOCKET, SO_REUSEADDR, (char *)&on, sizeof(on)) < 0) {
-		rmc_logit (func, RMC02, "setsockopt", neterror());
+		json_log_err (__FUNCTION__,RMC02, "setsockopt", neterror());
   }
 	if (bind (s, (struct sockaddr *) &sin, sizeof(sin)) < 0) {
-		rmc_logit (func, RMC02, "bind", neterror());
+		json_log_err (__FUNCTION__,RMC02, "bind", neterror());
 		exit (CONFERR);
 	}
 	listen (s, 5) ;
@@ -233,22 +229,22 @@ int main(const int argc, char **argv)
 
 	switch(argc) {
 	case 1:
-		fprintf(stderr, "RMC01 - wrong arguments given ,specify the device file of the tape library\n");
+		json_log_err(__FUNCTION__, "RMC01 - wrong arguments given ,specify the device file of the tape library");
 		exit (USERR);
 	case 2:
 		if(0 == nb_cmdline_options) {
 			robot = argv[1];
 		} else {
-			fprintf(stderr, "RMC01 - robot parameter is mandatory\n");
+			json_log_err(__FUNCTION__, "RMC01 - robot parameter is mandatory");
 			exit (USERR);
 		}
 		break;
 	case 3:
 		if(0 == nb_cmdline_options) {
-			fprintf(stderr, "Too many robot parameters\n");
+			json_log_err(__FUNCTION__, "Too many robot parameters");
 			exit (USERR);
 		} else if(2 == nb_cmdline_options) {
-			fprintf(stderr, "RMC01 - robot parameter is mandatory\n");
+			json_log_err(__FUNCTION__, "RMC01 - robot parameter is mandatory");
 			exit (USERR);
 		/* At this point there is one argument starting with '-' */
 		} else if(0 == strcmp(argv[1], "-f")) {
@@ -256,12 +252,12 @@ int main(const int argc, char **argv)
 		} else if(0 == strcmp(argv[2], "-f")) {
 			robot = argv[1];
 		} else {
-			fprintf(stderr, "Unknown option\n");
+			json_log_err(__FUNCTION__, "Unknown option");
 			exit (USERR);
 		}
 		break;
 	default:
-		fprintf(stderr, "Too many command-line arguments\n");
+		json_log_err(__FUNCTION__, "Too many command-line arguments");
 		exit (USERR);
 	}
 
@@ -306,7 +302,6 @@ static int rmc_getreq(
 	int n;
 	char *rbp;
 	char req_hdr[3*LONGSIZE];
-	const char* const func = "rmc_getreq";
 
 	l = netread_timeout (s, req_hdr, sizeof(req_hdr), RMC_TIMEOUT);
 	if (l == sizeof(req_hdr)) {
@@ -316,13 +311,13 @@ static int rmc_getreq(
 		*req_type = n;
 		unmarshall_LONG (rbp, msglen);
 		if (msglen > RMC_REQBUFSZ) {
-			rmc_logit (func, RMC46, RMC_REQBUFSZ);
+			json_log_err (__FUNCTION__,RMC46, RMC_REQBUFSZ);
 			return (-1);
 		}
 		l = msglen - sizeof(req_hdr);
 		n = netread_timeout (s, req_data, l, RMC_TIMEOUT);
 		if (getpeername (s, (struct sockaddr *) &from, &fromlen) < 0) {
-			rmc_logit (func, RMC02, "getpeername", neterror());
+			json_log_err (__FUNCTION__,RMC02, "getpeername", neterror());
 			return (ERMCUNREC);
 		}
 		struct hostent hbuf;
@@ -344,9 +339,9 @@ static int rmc_getreq(
     return 0;
 	} else {
 		if (l > 0) {
-			rmc_logit (func, RMC04, l);
+			json_log_info (__FUNCTION__,RMC04, l);
 		} else if (l < 0) {
-			rmc_logit (func, RMC02, "netread", sstrerror(serrno));
+			json_log_err (__FUNCTION__,RMC02, "netread", sstrerror(serrno));
     }
 		return (ERMCUNREC);
 	}

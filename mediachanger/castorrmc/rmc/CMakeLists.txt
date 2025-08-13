@@ -17,7 +17,6 @@ include_directories (${PROJECT_SOURCE_DIR}/mediachanger/castorrmc/h)
 
 set (RMCD_SRC_FILES
   rmc_serv.c
-  rmc_logit.c
   rmc_logreq.c
   rmc_marshall_element.c
   rmc_procreq.c
@@ -43,7 +42,6 @@ install (FILES cta-rmcd.service DESTINATION /etc/systemd/system)
 
 set (SMC_SRC_FILES
   rmc_dismount.c
-  rmc_errmsg.c
   rmc_export.c
   rmc_find_cartridge.c
   rmc_get_geometry.c
