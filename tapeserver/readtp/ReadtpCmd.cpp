@@ -96,6 +96,7 @@ void ReadtpCmd::readAndSetConfiguration(const std::string& userName, const Readt
   m_userName = userName;
   m_destinationFiles = readListFromFile(cmdLineArgs.m_destinationFileListURL);
   m_searchByBlockID = cmdLineArgs.m_searchByBlockID;
+  m_testNew = cmdLineArgs.m_testNew;
 
   // Read taped config file
   const cta::tape::daemon::common::TapedConfiguration driveConfig =
@@ -358,7 +359,11 @@ void ReadtpCmd::readTapeFiles(castor::tape::tapeserver::drive::DriveInterface& d
     }
   }
 
-  const auto readSession = castor::tape::tapeFile::ReadSessionFactory::create(drive, volInfo, m_useLbp, m_searchByBlockID);
+  std::unique_ptr<castor::tape::tapeFile::ReadSession> readSession;
+    // We should test the impact of creating a single read session for all vs one-per-file
+    if (m_testNew) {
+      readSession = castor::tape::tapeFile::ReadSessionFactory::create(drive, volInfo, m_useLbp, m_searchByBlockID);
+    }
     TapeFseqRangeListSequence fSeqRangeListSequence(&m_fSeqRangeList);
     std::string destinationFile = getNextDestinationUrl();
     uint64_t fSeq;
@@ -376,6 +381,10 @@ void ReadtpCmd::readTapeFiles(castor::tape::tapeserver::drive::DriveInterface& d
         std::unique_ptr<cta::disk::WriteFile> wfptr;
         wfptr.reset(fileFactory.createWriteFile(destinationFile));
         cta::disk::WriteFile &wf = *wfptr.get();
+        // This is the old behaviour, which we want to be able to test against
+        if (!m_testNew) {
+          readSession = castor::tape::tapeFile::ReadSessionFactory::create(drive, volInfo, m_useLbp, m_searchByBlockID);
+        }
         auto [dataSize, readTimer] = readTapeFile(*readSession, fSeq, wf, volInfo);
         totalDataSize += dataSize;
         fileTimers.push_back(readTimer);
@@ -455,7 +464,7 @@ std::tuple<size_t, castor::tape::tapeFile::FileReader::BlockReadTimer> ReadtpCmd
   fileToRecall.selectedTapeFile().fSeq = fSeq;
   fileToRecall.positioningMethod = m_searchByBlockID ? cta::PositioningMethod::ByBlock : cta::PositioningMethod::ByFSeq;
 
-  const auto reader = castor::tape::tapeFile::FileReaderFactory::create(readSession, fileToRecall, m_searchByBlockID);
+  const auto reader = castor::tape::tapeFile::FileReaderFactory::create(readSession, fileToRecall, m_testNew);
   auto checksum_adler32 = castor::tape::tapeserver::daemon::Payload::zeroAdler32();
   const size_t buffer_size = 1 * 1024 * 1024 * 1024;  // 1Gb
   size_t read_data_size = 0;

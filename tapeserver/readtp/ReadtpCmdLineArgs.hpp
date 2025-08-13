@@ -48,6 +48,11 @@ struct ReadtpCmdLineArgs {
   bool m_searchByBlockID = false;
 
   /**
+   * Enable to test new features
+   */
+  bool m_testNew = false;
+
+  /**
    * Constructor that parses the specified command-line arguments.
    *
    * @param argc The number of command-line arguments including the name of the
