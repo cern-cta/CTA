@@ -362,7 +362,7 @@ void ReadtpCmd::readTapeFiles(castor::tape::tapeserver::drive::DriveInterface& d
   std::unique_ptr<castor::tape::tapeFile::ReadSession> readSession;
     // We should test the impact of creating a single read session for all vs one-per-file
     if (m_testNew) {
-      readSession = castor::tape::tapeFile::ReadSessionFactory::create(drive, volInfo, m_useLbp, m_searchByBlockID);
+      readSession = castor::tape::tapeFile::ReadSessionFactory::create(drive, volInfo, m_useLbp, m_testNew);
     }
     TapeFseqRangeListSequence fSeqRangeListSequence(&m_fSeqRangeList);
     std::string destinationFile = getNextDestinationUrl();
@@ -383,7 +383,7 @@ void ReadtpCmd::readTapeFiles(castor::tape::tapeserver::drive::DriveInterface& d
         cta::disk::WriteFile &wf = *wfptr.get();
         // This is the old behaviour, which we want to be able to test against
         if (!m_testNew) {
-          readSession = castor::tape::tapeFile::ReadSessionFactory::create(drive, volInfo, m_useLbp, m_searchByBlockID);
+          readSession = castor::tape::tapeFile::ReadSessionFactory::create(drive, volInfo, m_useLbp, m_testNew);
         }
         auto [dataSize, readTimer] = readTapeFile(*readSession, fSeq, wf, volInfo);
         totalDataSize += dataSize;
@@ -455,13 +455,15 @@ std::tuple<size_t, castor::tape::tapeFile::FileReader::BlockReadTimer> ReadtpCmd
 
   m_log(cta::log::INFO, "Reading file from tape", params);
 
-  const auto archiveFile = itor.next();
+  auto archiveFile = itor.next();
+  archiveFile.tapeFiles.removeAllVidsExcept(m_vid);
 
   BasicRetrieveJob fileToRecall;
   fileToRecall.retrieveRequest.archiveFileID = archiveFile.archiveFileID;
   fileToRecall.selectedCopyNb = 0;
   fileToRecall.archiveFile.tapeFiles.emplace_back();
   fileToRecall.selectedTapeFile().fSeq = fSeq;
+  fileToRecall.selectedTapeFile().blockId = archiveFile.tapeFiles.front().blockId;
   fileToRecall.positioningMethod = m_searchByBlockID ? cta::PositioningMethod::ByBlock : cta::PositioningMethod::ByFSeq;
 
   const auto reader = castor::tape::tapeFile::FileReaderFactory::create(readSession, fileToRecall, m_testNew);
