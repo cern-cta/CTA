@@ -43,14 +43,24 @@ struct ReadtpCmdLineArgs {
   std::string m_destinationFileListURL;
 
   /**
-   * Enable if we intend to find the files by blockId
+   * Search by block id, with no optimizations
    */
-  bool m_searchByBlockID = false;
+  bool m_enablePositionByBlockID0;
 
   /**
-   * Enable to test new features
+   * Search by block id, with optimization 1
    */
-  bool m_testNew = false;
+  bool m_enablePositionByBlockID1;
+
+  /**
+   * Search by block id, with optimization 2
+   */
+  bool m_enablePositionByBlockID2;
+
+  /**
+   * Enable global read session, instead of 1 session per file
+   */
+  bool m_enableGlobalReadSession;
 
   /**
    * Constructor that parses the specified command-line arguments.

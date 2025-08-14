@@ -6,6 +6,7 @@
 #include "castor/tape/tapeserver/file/ReadSessionFactory.hpp"
 
 #include "castor/tape/tapeserver/file/CtaReadSession.hpp"
+#include "castor/tape/tapeserver/file/CtaReadSession1.hpp"
 #include "castor/tape/tapeserver/file/CtaReadSession2.hpp"
 #include "castor/tape/tapeserver/file/EnstoreReadSession.hpp"
 #include "castor/tape/tapeserver/file/EnstoreLargeReadSession.hpp"
@@ -20,15 +21,25 @@ namespace castor::tape::tapeFile {
 
 std::unique_ptr<ReadSession> ReadSessionFactory::create(tapeserver::drive::DriveInterface& drive,
                                                         const tapeserver::daemon::VolumeInfo& volInfo,
-                                                        const bool useLbp, bool useAlternative) {
+                                                        const bool useLbp, cta::utils::ReadTapeTestMode testMode) {
   using LabelFormat = cta::common::dataStructures::Label::Format;
   const LabelFormat labelFormat = volInfo.labelFormat;
   switch (labelFormat) {
     case LabelFormat::CTA:
-      if (useAlternative) {
-        return std::make_unique<CtaReadSession2>(drive, volInfo, useLbp);
-      } else {
-        return std::make_unique<CtaReadSession>(drive, volInfo, useLbp);
+      switch (testMode) {
+        case cta::utils::ReadTapeTestMode::USE_FSEC:
+        case cta::utils::ReadTapeTestMode::USE_BLOCK_ID_DEFAULT: {
+          return std::make_unique<CtaReadSession>(drive, volInfo, useLbp);
+        }
+        case cta::utils::ReadTapeTestMode::USE_BLOCK_ID_1: {
+          return std::make_unique<CtaReadSession1>(drive, volInfo, useLbp);
+        }
+        case cta::utils::ReadTapeTestMode::USE_BLOCK_ID_2: {
+          return std::make_unique<CtaReadSession2>(drive, volInfo, useLbp);
+        }
+        default: {
+          throw TapeFormatError("In FileReaderFactory::create(): unknown test mode");
+        }
       }
     case LabelFormat::OSM:
       return std::make_unique<OsmReadSession>(drive, volInfo, useLbp);

@@ -5,6 +5,9 @@
 
 #pragma once
 
+#include <memory>
+#include <readtp/ReadtpCmd.hpp>
+
 #include "common/dataStructures/LabelFormat.hpp"
 
 #include <memory>
@@ -20,7 +23,7 @@ class ReadSession;
 
 class FileReaderFactory {
 public:
-  static std::unique_ptr<FileReader> create(ReadSession& readSession, const cta::RetrieveJob& fileToRecall, bool useAlternative=false);
+  static std::unique_ptr<FileReader> create(ReadSession& readSession, const cta::RetrieveJob& fileToRecall, cta::utils::ReadTapeTestMode testMode=cta::utils::ReadTapeTestMode::USE_FSEC);
 };
 
 }  // namespace castor::tape::tapeFile

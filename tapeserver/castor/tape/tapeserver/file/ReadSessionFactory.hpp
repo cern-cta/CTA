@@ -5,10 +5,10 @@
 
 #pragma once
 
+#include <memory>
+#include "common/ReadTapeTestMode.hpp"
 #include "castor/tape/tapeserver/daemon/VolumeInfo.hpp"
 #include "common/dataStructures/LabelFormat.hpp"
-
-#include <memory>
 
 namespace castor::tape {
 
@@ -23,7 +23,7 @@ class ReadSession;
 class ReadSessionFactory {
 public:
   static std::unique_ptr<ReadSession>
-  create(tapeserver::drive::DriveInterface& drive, const tapeserver::daemon::VolumeInfo& volInfo, const bool useLbp, bool useAlternative=false);
+  create(tapeserver::drive::DriveInterface& drive, const tapeserver::daemon::VolumeInfo& volInfo, const bool useLbp, cta::utils::ReadTapeTestMode testMode=cta::utils::ReadTapeTestMode::USE_FSEC);
 };
 
 }  // namespace tapeFile

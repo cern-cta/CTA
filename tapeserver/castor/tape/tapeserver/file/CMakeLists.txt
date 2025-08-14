@@ -11,8 +11,10 @@ include_directories(/usr/include/tirpc) # rpc headers are now provided by libtir
 
 set(TAPESERVER_FILE_LIBRARY_SRCS
   CtaFileReader.cpp
+  CtaFileReader1.cpp
   CtaFileReader2.cpp
   CtaReadSession.cpp
+  CtaReadSession1.cpp
   CtaReadSession2.cpp
   FileReader.cpp
   FileReaderFactory.cpp
