@@ -23,6 +23,7 @@
 #include "common/log/DummyLogger.hpp"
 #include "common/log/LogContext.hpp"
 #include "common/log/StdoutLogger.hpp"
+#include "common/ReadTapeTestMode.hpp"
 #include "disk/DiskFile.hpp"
 #include "mediachanger/MediaChangerFacade.hpp"
 #include "tapeserver/castor/tape/tapeserver/daemon/EncryptionControl.hpp"
@@ -54,6 +55,7 @@ namespace tapeserver::readtp {
  */
 class ReadtpCmd: public common::CmdLineTool {
 public:
+
   /**
    * Constructor
    *
@@ -329,14 +331,14 @@ private:
   bool m_isTapeEncrypted;
 
   /**
-   * Search by block id instead of fsec
+   * Search by block id, type
    */
-  bool m_searchByBlockID;
+  cta::utils::ReadTapeTestMode m_testMode;
 
   /**
-   * Enable to test new features
+   * Enable global read session, instead of 1 session per file
    */
-  bool m_testNew;
+  bool m_enableGlobalReadSession;
 
 }; // class ReadtpCmd
 
