@@ -20,6 +20,7 @@
 
 import json
 import sys
+from pathlib import Path
 
 def compare_commands(map1, map2):
     """
@@ -58,4 +59,20 @@ def main(file1_path, file2_path):
         sys.exit(1)
 
 if __name__ == "__main__":
-    main(sys.argv[1], sys.argv[2])
+    if len(sys.argv) != 3:
+        print("ERROR: Incorrect number of arguments")
+        print(f"Usage: {Path(sys.argv[0]).name} <file1> <file2>")
+        sys.exit(1)
+
+    file1 = Path(sys.argv[1])
+    file2 = Path(sys.argv[2])
+
+    # Check file existence
+    if not file1.exists():
+        print(f"ERROR: File '{file1}' not found.")
+        sys.exit(1)
+    if not file2.exists():
+        print(f"ERROR: File '{file2}' not found.")
+        sys.exit(1)
+
+    main(file1, file2)
