@@ -134,7 +134,7 @@ variables:
       - "presets/stress-cta-grpc-values.yaml"
   STRESS_EOS_VALUES_FILE:
     description: "Path to a values.yaml file to be passed to the EOS Helm chart for the stress test."
-    value: "presets/stress-eos-values.yaml"
+    value: "presets/stress-eos-xrd-values.yaml"
     options:
       - "presets/stress-eos-xrd-values.yaml"
       - "presets/stress-eos-grpc-values.yaml"
