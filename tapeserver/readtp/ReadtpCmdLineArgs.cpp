@@ -50,29 +50,29 @@ ReadtpCmdLineArgs::ReadtpCmdLineArgs(const int argc, char* const* const argv) {
   int opt_index = 3;
 
   while ((opt = getopt_long(argc, argv, ":d:f:u:p:h", longopts, &opt_index)) != -1) {
-    switch (opt) {
-      case 'f':
-        m_destinationFileListURL = std::string(optarg);
-        break;
-      case 'u':
-        m_unitName = std::string(optarg);
-        break;
-      case 'g':
-        m_enableGlobalReadSession = true;
-        break;
-      case '0':
-        m_enablePositionByBlockID0 = true;
-        break;
-      case '1':
-        m_enablePositionByBlockID1 = true;
-        break;
-      case '2':
-        m_enablePositionByBlockID2 = true;
-        break;
-      case 'h':
-        help = true;
-        break;
-      case ':':  // Missing parameter
+    switch(opt) {
+    case 'f':
+      m_destinationFileListURL = std::string(optarg);
+      break;
+    case 'u':
+      m_unitName = std::string(optarg);
+      break;
+    case 'g':
+      m_enableGlobalReadSession = true;
+      break;
+    case '0':
+      m_enablePositionByBlockID0 = true;
+      break;
+    case '1':
+      m_enablePositionByBlockID1 = true;
+      break;
+    case '2':
+      m_enablePositionByBlockID2 = true;
+      break;
+    case 'h':
+      help = true;
+      break;
+    case ':': // Missing parameter
       {
         exception::CommandLineNotParsed ex;
         ex.getMessage() << "The -" << (char) optopt << " option requires a parameter";
