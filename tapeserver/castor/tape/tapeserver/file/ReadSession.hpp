@@ -75,6 +75,14 @@ public:
 
   inline uint32_t getCurrentFseq() const { return m_fseq; }
 
+  inline void setCurrentBlockId(uint32_t blockId) {
+    m_blockId = blockId;
+  }
+
+  inline uint32_t getCurrentBlockId() const {
+    return m_blockId;
+  }
+
   inline const tapeserver::daemon::VolumeInfo& getVolumeInfo() const { return m_volInfo; }
 
   inline void setCurrentFilePart(const PartOfFile& currentFilePart) { m_currentFilePart = currentFilePart; }
@@ -118,6 +126,12 @@ protected:
     * Current fSeq, used only for positioning by fseq
     */
   uint32_t m_fseq = 1;
+
+  /**
+  * Current blockId, used only for positioning by blockId
+  * May be invalidated
+  */
+  uint32_t m_blockId;
 
   /**
     * Part of the file we are reading
