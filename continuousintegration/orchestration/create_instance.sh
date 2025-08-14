@@ -50,7 +50,7 @@ usage() {
   echo "      --dry-run:                      Render the Helm-generated yaml files without touching any existing deployments."
   echo "      --eos-image-tag <tag>:          Docker image tag for the EOS chart."
   echo "      --eos-image-repository <repo>:  Docker image for EOS chart. Should be the full image name, e.g. \"gitlab-registry.cern.ch/dss/eos/eos-ci\"."
-  echo "      --eos-config <file>:            Values file to use for the EOS chart. Defaults to presets/dev-eos-values.yaml."
+  echo "      --eos-config <file>:            Values file to use for the EOS chart. Defaults to presets/dev-eos-xrd-values.yaml."
   echo "      --eos-enabled <true|false>:     Whether to spawn an EOS instance or not. Defaults to true."
   echo "      --dcache-enabled <true|false>: Whether to spawn a dCache instance or not. Defaults to false."
   echo "      --cta-config <file>:            Values file to use for the CTA chart. Defaults to presets/dev-cta-xrd-values.yaml."
@@ -111,7 +111,7 @@ create_instance() {
   # EOS related
   eos_image_tag=$(jq -r .dev.eosImageTag ${project_json_path})
   eos_image_repository=$(jq -r .dev.eosImageRepository ${project_json_path})
-  eos_config=presets/dev-eos-values.yaml
+  eos_config=presets/dev-eos-xrd-values.yaml
   eos_enabled=true
   # dCache
   dcache_image_tag=$(jq -r .dev.dCacheImageTag ${project_json_path})
