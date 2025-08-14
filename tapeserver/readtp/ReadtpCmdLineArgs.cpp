@@ -35,12 +35,14 @@ ReadtpCmdLineArgs::ReadtpCmdLineArgs(const int argc, char* const* const argv) {
   m_fSeqRangeList = TapeFileSequenceParser::parse(argv[2]);
 
   static struct option longopts[] = {
-    {"destination_files", required_argument, nullptr, 'f'},
-    {"drive",             required_argument, nullptr, 'u'},
-    {"use_blockid",       no_argument,       nullptr, 'b'},
-    {"test_new",          no_argument,       nullptr, 'n'},
-    {"help",              no_argument,       nullptr, 'h'},
-    {nullptr,             0,                 nullptr, 0  }
+    {"destination_files",          required_argument, nullptr, 'f'},
+    {"drive",                      required_argument, nullptr, 'u'},
+    {"enable_global_read_session", no_argument,       nullptr, 'g'},
+    {"enable_blockid_0",           no_argument,       nullptr, '0'},
+    {"enable_blockid_1",           no_argument,       nullptr, '1'},
+    {"enable_blockid_2",           no_argument,       nullptr, '2'},
+    {"help",                       no_argument,       nullptr, 'h'},
+    {nullptr,                      0,                 nullptr,   0}
   };
 
   opterr = 0;
@@ -55,11 +57,17 @@ ReadtpCmdLineArgs::ReadtpCmdLineArgs(const int argc, char* const* const argv) {
       case 'u':
         m_unitName = std::string(optarg);
         break;
-      case 'b':
-        m_searchByBlockID = true;
+      case 'g':
+        m_enableGlobalReadSession = true;
         break;
-      case 'n':
-        m_testNew = true;
+      case '0':
+        m_enablePositionByBlockID0 = true;
+        break;
+      case '1':
+        m_enablePositionByBlockID1 = true;
+        break;
+      case '2':
+        m_enablePositionByBlockID2 = true;
         break;
       case 'h':
         help = true;
@@ -87,6 +95,12 @@ ReadtpCmdLineArgs::ReadtpCmdLineArgs(const int argc, char* const* const argv) {
       }
     }  // switch(opt)
   }  // while getopt_long()
+
+  if (m_enablePositionByBlockID0 + m_enablePositionByBlockID1 + m_enablePositionByBlockID2 > 1) {
+    exception::CommandLineNotParsed ex;
+    ex.getMessage() << "Only one --enable_blockid_<0|1|2> argument allowed";
+    throw ex;
+  }
 
   if (m_destinationFileListURL.empty()) {
     m_destinationFileListURL = "/dev/null";  // Equivalent to an empty file

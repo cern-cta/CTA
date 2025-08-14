@@ -12,6 +12,7 @@
 #include "catalogue/CatalogueItor.hpp"
 #include "catalogue/TapeSearchCriteria.hpp"
 #include "common/Constants.hpp"
+#include "common/ReadTapeTestMode.hpp"
 #include "common/exception/EncryptionException.hpp"
 #include "common/log/DummyLogger.hpp"
 #include "disk/DiskFile.hpp"
@@ -42,13 +43,36 @@ int ReadtpCmd::exceptionThrowingMain(const int argc, char* const* const argv) {
     return 0;
   }
 
+  auto useBlockId = cmdLineArgs.m_enablePositionByBlockID0 | cmdLineArgs.m_enablePositionByBlockID1 | cmdLineArgs.m_enablePositionByBlockID2;
+
+  readAndSetConfiguration(getUsername(), cmdLineArgs);
+
+  std::string testMode;
+
+  switch (m_testMode) {
+    case utils::ReadTapeTestMode::USE_FSEC:
+      testMode = "FSec";
+      break;
+    case utils::ReadTapeTestMode::USE_BLOCK_ID_DEFAULT:
+      testMode = "BlockID - Default";
+      break;
+    case utils::ReadTapeTestMode::USE_BLOCK_ID_1:
+      testMode = "BlockID - Test 1";
+      break;
+    case utils::ReadTapeTestMode::USE_BLOCK_ID_2:
+      testMode = "BlockID - Test 2";
+      break;
+    default:
+      testMode = "unknown";
+      break;
+  }
+
   std::vector<cta::log::Param> params;
   params.emplace_back("userName", getUsername());
   params.emplace_back("tapeVid", cmdLineArgs.m_vid);
-  params.push_back(cta::log::Param("searchBy", cmdLineArgs.m_searchByBlockID ? "BlockId" : "FSec"));
+  params.push_back(cta::log::Param("searchBy", useBlockId  ? "BlockId" : "FSec"));
+  params.push_back(cta::log::Param("testMode", testMode));
   m_log(cta::log::INFO, "Started", params);
-
-  readAndSetConfiguration(getUsername(), cmdLineArgs);
 
   std::unique_ptr<castor::tape::tapeserver::drive::DriveInterface> drivePtr = createDrive();
   castor::tape::tapeserver::drive::DriveInterface& drive = *drivePtr.get();
@@ -95,8 +119,17 @@ void ReadtpCmd::readAndSetConfiguration(const std::string& userName, const Readt
   m_fSeqRangeList = cmdLineArgs.m_fSeqRangeList;
   m_userName = userName;
   m_destinationFiles = readListFromFile(cmdLineArgs.m_destinationFileListURL);
-  m_searchByBlockID = cmdLineArgs.m_searchByBlockID;
-  m_testNew = cmdLineArgs.m_testNew;
+
+  m_enableGlobalReadSession = cmdLineArgs.m_enableGlobalReadSession;
+  if (cmdLineArgs.m_enablePositionByBlockID0) {
+    m_testMode = cta::utils::ReadTapeTestMode::USE_BLOCK_ID_DEFAULT;
+  } else if (cmdLineArgs.m_enablePositionByBlockID1) {
+    m_testMode = cta::utils::ReadTapeTestMode::USE_BLOCK_ID_1;
+  } else if (cmdLineArgs.m_enablePositionByBlockID2) {
+    m_testMode = cta::utils::ReadTapeTestMode::USE_BLOCK_ID_2;
+  } else {
+    m_testMode = cta::utils::ReadTapeTestMode::USE_FSEC;
+  }
 
   // Read taped config file
   const cta::tape::daemon::common::TapedConfiguration driveConfig =
@@ -361,8 +394,8 @@ void ReadtpCmd::readTapeFiles(castor::tape::tapeserver::drive::DriveInterface& d
 
   std::unique_ptr<castor::tape::tapeFile::ReadSession> readSession;
     // We should test the impact of creating a single read session for all vs one-per-file
-    if (m_testNew) {
-      readSession = castor::tape::tapeFile::ReadSessionFactory::create(drive, volInfo, m_useLbp, m_testNew);
+    if (m_enableGlobalReadSession) {
+      readSession = castor::tape::tapeFile::ReadSessionFactory::create(drive, volInfo, m_useLbp, m_testMode);
     }
     TapeFseqRangeListSequence fSeqRangeListSequence(&m_fSeqRangeList);
     std::string destinationFile = getNextDestinationUrl();
@@ -382,8 +415,8 @@ void ReadtpCmd::readTapeFiles(castor::tape::tapeserver::drive::DriveInterface& d
         wfptr.reset(fileFactory.createWriteFile(destinationFile));
         cta::disk::WriteFile &wf = *wfptr.get();
         // This is the old behaviour, which we want to be able to test against
-        if (!m_testNew) {
-          readSession = castor::tape::tapeFile::ReadSessionFactory::create(drive, volInfo, m_useLbp, m_testNew);
+        if (!m_enableGlobalReadSession) {
+          readSession = castor::tape::tapeFile::ReadSessionFactory::create(drive, volInfo, m_useLbp, m_testMode);
         }
         auto [dataSize, readTimer] = readTapeFile(*readSession, fSeq, wf, volInfo);
         totalDataSize += dataSize;
@@ -407,6 +440,8 @@ void ReadtpCmd::readTapeFiles(castor::tape::tapeserver::drive::DriveInterface& d
       m_nbFailedReads++;
     }
   }
+
+  // Get the average of all timings, except the first one (because actual positioning may happen here...)
 
   double elapsedTimeSec = t_begin.elapsedTime();
   auto throughputMBs = (static_cast<double>(totalDataSize) / elapsedTimeSec) / (1024 * 1024);
@@ -464,9 +499,9 @@ std::tuple<size_t, castor::tape::tapeFile::FileReader::BlockReadTimer> ReadtpCmd
   fileToRecall.archiveFile.tapeFiles.emplace_back();
   fileToRecall.selectedTapeFile().fSeq = fSeq;
   fileToRecall.selectedTapeFile().blockId = archiveFile.tapeFiles.front().blockId;
-  fileToRecall.positioningMethod = m_searchByBlockID ? cta::PositioningMethod::ByBlock : cta::PositioningMethod::ByFSeq;
+  fileToRecall.positioningMethod = m_testMode == utils::ReadTapeTestMode::USE_FSEC ? cta::PositioningMethod::ByFSeq : cta::PositioningMethod::ByBlock;
 
-  const auto reader = castor::tape::tapeFile::FileReaderFactory::create(readSession, fileToRecall, m_testNew);
+  const auto reader = castor::tape::tapeFile::FileReaderFactory::create(readSession, fileToRecall, m_testMode);
   auto checksum_adler32 = castor::tape::tapeserver::daemon::Payload::zeroAdler32();
   const size_t buffer_size = 1 * 1024 * 1024 * 1024;  // 1Gb
   size_t read_data_size = 0;
@@ -500,9 +535,12 @@ std::tuple<size_t, castor::tape::tapeFile::FileReader::BlockReadTimer> ReadtpCmd
   params.emplace_back("checksumValue", "0x" + sstream.str());
   params.emplace_back("readFileSize", read_data_size);
   params.emplace_back("timerPositionSec", readTimer.positioning);
-  params.emplace_back("timerHeaderSec", std::accumulate(readTimer.headerBlocks.begin(), readTimer.headerBlocks.end(), 0.0) + readTimer.headerTM);
-  params.emplace_back("timerDataSec", std::accumulate(readTimer.dataBlocks.begin(), readTimer.dataBlocks.end(), 0.0) + readTimer.dataTM);
-  params.emplace_back("timerHeaderSec", std::accumulate(readTimer.trailerBlocks.begin(), readTimer.trailerBlocks.end(), 0.0) + readTimer.trailerTM);
+  params.emplace_back("timerHeaderSec", std::accumulate(readTimer.headerBlocks.begin(), readTimer.headerBlocks.end(), 0.0));
+  params.emplace_back("timerHeaderTMSec", readTimer.headerTM);
+  params.emplace_back("timerDataSec", std::accumulate(readTimer.dataBlocks.begin(), readTimer.dataBlocks.end(), 0.0));
+  params.emplace_back("timerDataTMSec", readTimer.dataTM);
+  params.emplace_back("timerHeaderSec", std::accumulate(readTimer.trailerBlocks.begin(), readTimer.trailerBlocks.end(), 0.0));
+  params.emplace_back("timerHeaderTMSec", readTimer.trailerTM);
   m_log(cta::log::INFO, "Read file from tape successfully", params);
   return {read_data_size, readTimer};
 }

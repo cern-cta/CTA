@@ -6,6 +6,7 @@
 #include "castor/tape/tapeserver/file/FileReaderFactory.hpp"
 
 #include "castor/tape/tapeserver/file/CtaFileReader.hpp"
+#include "castor/tape/tapeserver/file/CtaFileReader1.hpp"
 #include "castor/tape/tapeserver/file/CtaFileReader2.hpp"
 #include "castor/tape/tapeserver/file/EnstoreFileReader.hpp"
 #include "castor/tape/tapeserver/file/EnstoreLargeFileReader.hpp"
@@ -18,16 +19,29 @@
 
 namespace castor::tape::tapeFile {
 
-std::unique_ptr<FileReader> FileReaderFactory::create(ReadSession& readSession, const cta::RetrieveJob& fileToRecall, bool useAlternative) {
+std::unique_ptr<FileReader> FileReaderFactory::create(ReadSession& readSession, const cta::RetrieveJob& fileToRecall, cta::utils::ReadTapeTestMode testMode) {
   using LabelFormat = cta::common::dataStructures::Label::Format;
   const LabelFormat labelFormat = readSession.getVolumeInfo().labelFormat;
   std::unique_ptr<FileReader> reader;
   switch (labelFormat) {
     case LabelFormat::CTA: {
-      if (useAlternative) {
-        reader = std::make_unique<CtaFileReader2>(readSession, fileToRecall);
-      } else {
-        reader = std::make_unique<CtaFileReader>(readSession, fileToRecall);
+      switch (testMode) {
+        case cta::utils::ReadTapeTestMode::USE_FSEC:
+        case cta::utils::ReadTapeTestMode::USE_BLOCK_ID_DEFAULT: {
+          reader = std::make_unique<CtaFileReader>(readSession, fileToRecall);
+          break;
+        }
+        case cta::utils::ReadTapeTestMode::USE_BLOCK_ID_1: {
+          reader = std::make_unique<CtaFileReader1>(readSession, fileToRecall);
+          break;
+        }
+        case cta::utils::ReadTapeTestMode::USE_BLOCK_ID_2: {
+          reader = std::make_unique<CtaFileReader2>(readSession, fileToRecall);
+          break;
+        }
+        default: {
+          throw TapeFormatError("In FileReaderFactory::create(): unknown test mode");
+        }
       }
       break;
     }
