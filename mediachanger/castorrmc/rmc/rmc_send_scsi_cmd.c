@@ -241,7 +241,10 @@ int rmc_send_scsi_cmd (
 			return -1;
 		}
 	} else {
-		if (stat (path, &sbuf) < 0) {
+		struct stat sbufa;
+        dev_t sg_major = 0;
+        DIR *ddev = opendir("/dev");
+        if (stat (path, &sbuf) < 0) {
 			serrno = errno;
         	snprintf(rmc_err_msgbuf, RMC_ERR_MSG_BUFSZ, "%s : stat error : %s\n", path, strerror(errno));
 			rmc_err_msgbuf[sizeof(rmc_err_msgbuf) - 1] = '\0';
@@ -250,14 +253,12 @@ int rmc_send_scsi_cmd (
 		}
         /* Find the first available sg device and use its major number for comparison
            with the provided major number. If they are the same we can use the sgpath provided directly */
-		struct stat sbufa;
-        dev_t sg_major = 0;
-        DIR *ddev = opendir("/dev");
-        if (ddev) {
+		if (ddev) {
             struct dirent *ddeve;
             while ((ddeve = readdir(ddev))) {
                 if (strncmp(ddeve->d_name, "sg", 2) == 0) {
-                    char fullpath[SGPATH_BUFSZ-1] = '\0';
+                    char fullpath[SGPATH_BUFSZ-1];
+                    memset(fullpath, 0, sizeof(fullpath));
                     snprintf(fullpath, sizeof(fullpath), "/dev/%s", ddeve->d_name);
                     if (stat(fullpath, &sbufa) == 0) {
                         sg_major = major(sbufa.st_rdev);
@@ -271,7 +272,8 @@ int rmc_send_scsi_cmd (
         /* If the major device ID of the specified device is the same as the major device ID of any sg* device,
            we can use the path directly */
 		if (sg_major != 0 && major(sbuf.st_rdev) == sg_major) {
-          sgpath[SGPATH_BUFSZ-1] = '\0';
+          sgpath[SGPATH_BUFSZ-1];
+          memset(sgpath, 0, sizeof(sgpath));
 		  strncpy(sgpath, path, SGPATH_BUFSZ);
 		  if(sgpath[SGPATH_BUFSZ-1] != '\0') {
 		    snprintf(rmc_err_msgbuf, RMC_ERR_MSG_BUFSZ, "path exceeds maximum length");
