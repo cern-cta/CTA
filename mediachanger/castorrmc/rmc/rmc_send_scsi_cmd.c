@@ -272,7 +272,7 @@ int rmc_send_scsi_cmd (
         /* If the major device ID of the specified device is the same as the major device ID of any sg* device,
            we can use the path directly */
 		if (sg_major != 0 && major(sbuf.st_rdev) == sg_major) {
-          sgpath[SGPATH_BUFSZ-1];
+          sgpath[SGPATH_BUFSZ-1] = '\0';
           memset(sgpath, 0, sizeof(sgpath));
 		  strncpy(sgpath, path, SGPATH_BUFSZ);
 		  if(sgpath[SGPATH_BUFSZ-1] != '\0') {
