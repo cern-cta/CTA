@@ -45,22 +45,22 @@ struct ReadtpCmdLineArgs {
   /**
    * Search by block id, with no optimizations
    */
-  bool m_enablePositionByBlockID0;
+  bool m_enablePositionByBlockID0 = false;
 
   /**
    * Search by block id, with optimization 1
    */
-  bool m_enablePositionByBlockID1;
+  bool m_enablePositionByBlockID1 = false;
 
   /**
    * Search by block id, with optimization 2
    */
-  bool m_enablePositionByBlockID2;
+  bool m_enablePositionByBlockID2 = false;
 
   /**
    * Enable global read session, instead of 1 session per file
    */
-  bool m_enableGlobalReadSession;
+  bool m_enableGlobalReadSession = false;
 
   /**
    * Constructor that parses the specified command-line arguments.
