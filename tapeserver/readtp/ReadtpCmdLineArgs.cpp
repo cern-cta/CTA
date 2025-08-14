@@ -38,9 +38,9 @@ ReadtpCmdLineArgs::ReadtpCmdLineArgs(const int argc, char* const* const argv) {
     {"destination_files",          required_argument, nullptr, 'f'},
     {"drive",                      required_argument, nullptr, 'u'},
     {"enable_global_read_session", no_argument,       nullptr, 'g'},
-    {"enable_blockid_0",           no_argument,       nullptr, '0'},
-    {"enable_blockid_1",           no_argument,       nullptr, '1'},
-    {"enable_blockid_2",           no_argument,       nullptr, '2'},
+    {"enable_blockid_0",           no_argument,       nullptr, 'a'},
+    {"enable_blockid_1",           no_argument,       nullptr, 'b'},
+    {"enable_blockid_2",           no_argument,       nullptr, 'c'},
     {"help",                       no_argument,       nullptr, 'h'},
     {nullptr,                      0,                 nullptr,   0}
   };
@@ -49,7 +49,7 @@ ReadtpCmdLineArgs::ReadtpCmdLineArgs(const int argc, char* const* const argv) {
   int opt = 0;
   int opt_index = 3;
 
-  while ((opt = getopt_long(argc, argv, ":d:f:u:p:h", longopts, &opt_index)) != -1) {
+  while ((opt = getopt_long(argc, argv, ":d:f:u:p:gabch", longopts, &opt_index)) != -1) {
     switch(opt) {
     case 'f':
       m_destinationFileListURL = std::string(optarg);
@@ -60,13 +60,13 @@ ReadtpCmdLineArgs::ReadtpCmdLineArgs(const int argc, char* const* const argv) {
     case 'g':
       m_enableGlobalReadSession = true;
       break;
-    case '0':
+    case 'a':
       m_enablePositionByBlockID0 = true;
       break;
-    case '1':
+    case 'b':
       m_enablePositionByBlockID1 = true;
       break;
-    case '2':
+    case 'c':
       m_enablePositionByBlockID2 = true;
       break;
     case 'h':
