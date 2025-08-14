@@ -467,13 +467,13 @@ void ReadtpCmd::readTapeFiles(castor::tape::tapeserver::drive::DriveInterface& d
   params.push_back(cta::log::Param("timerTrailerSec_1st", std::accumulate(fileTimers[0].trailerBlocks.begin(), fileTimers[0].trailerBlocks.end(), 0.0)));
   params.push_back(cta::log::Param("timerTrailerTMSec_1st", fileTimers[0].trailerTM));
 
-  params.push_back(cta::log::Param("timerPositionSec_avg_2-end", std::accumulate(fileTimers.begin()+1, fileTimers.end(), 0.0, [](double acc, const auto& val){ return acc + val.positioning; } )));
-  params.push_back(cta::log::Param("timerHeaderSec_avg_2-end", std::accumulate(fileTimers.begin()+1, fileTimers.end(), 0.0, [](double acc, const auto& val) { return acc + std::accumulate(val.headerBlocks.begin(), val.headerBlocks.end(), 0.0);} )));
-  params.push_back(cta::log::Param("timerHeaderTMSec_avg_2-end", std::accumulate(fileTimers.begin()+1, fileTimers.end(), 0.0, [](double acc, const auto& val){ return acc + val.headerTM; } )));
-  params.push_back(cta::log::Param("timerDataSec_avg_2-end", std::accumulate(fileTimers.begin()+1, fileTimers.end(), 0.0, [](double acc, const auto& val) { return acc + std::accumulate(val.dataBlocks.begin(), val.dataBlocks.end(), 0.0);} )));
-  params.push_back(cta::log::Param("timerDataTMSec_avg_2-end", std::accumulate(fileTimers.begin()+1, fileTimers.end(), 0.0, [](double acc, const auto& val){ return acc + val.dataTM; } )));
-  params.push_back(cta::log::Param("timerTrailerSec_avg_2-end", std::accumulate(fileTimers.begin()+1, fileTimers.end(), 0.0, [](double acc, const auto& val) { return acc + std::accumulate(val.trailerBlocks.begin(), val.trailerBlocks.end(), 0.0);} )));
-  params.push_back(cta::log::Param("timerTrailerTMSec_avg_2-end", std::accumulate(fileTimers.begin()+1, fileTimers.end(), 0.0, [](double acc, const auto& val){ return acc + val.trailerTM; } )));
+  params.push_back(cta::log::Param("timerPositionSec_avg_2-end", std::accumulate(fileTimers.begin()+1, fileTimers.end(), 0.0, [](double acc, const auto& val){ return acc + val.positioning; } ) / (m_nbSuccessReads-1)));
+  params.push_back(cta::log::Param("timerHeaderSec_avg_2-end", std::accumulate(fileTimers.begin()+1, fileTimers.end(), 0.0, [](double acc, const auto& val) { return acc + std::accumulate(val.headerBlocks.begin(), val.headerBlocks.end(), 0.0);} ) / (m_nbSuccessReads-1)));
+  params.push_back(cta::log::Param("timerHeaderTMSec_avg_2-end", std::accumulate(fileTimers.begin()+1, fileTimers.end(), 0.0, [](double acc, const auto& val){ return acc + val.headerTM; } ) / (m_nbSuccessReads-1)));
+  params.push_back(cta::log::Param("timerDataSec_avg_2-end", std::accumulate(fileTimers.begin()+1, fileTimers.end(), 0.0, [](double acc, const auto& val) { return acc + std::accumulate(val.dataBlocks.begin(), val.dataBlocks.end(), 0.0);} ) / (m_nbSuccessReads-1)));
+  params.push_back(cta::log::Param("timerDataTMSec_avg_2-end", std::accumulate(fileTimers.begin()+1, fileTimers.end(), 0.0, [](double acc, const auto& val){ return acc + val.dataTM; } ) / (m_nbSuccessReads-1)));
+  params.push_back(cta::log::Param("timerTrailerSec_avg_2-end", std::accumulate(fileTimers.begin()+1, fileTimers.end(), 0.0, [](double acc, const auto& val) { return acc + std::accumulate(val.trailerBlocks.begin(), val.trailerBlocks.end(), 0.0);} ) / (m_nbSuccessReads-1)));
+  params.push_back(cta::log::Param("timerTrailerTMSec_avg_2-end", std::accumulate(fileTimers.begin()+1, fileTimers.end(), 0.0, [](double acc, const auto& val){ return acc + val.trailerTM; } ) / (m_nbSuccessReads-1)));
 
   m_log(cta::log::INFO, "Finished reading tape", params);
 }
