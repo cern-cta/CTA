@@ -78,7 +78,7 @@ ReadtpCmdLineArgs::ReadtpCmdLineArgs(const int argc, char *const *const argv) :
       break;
     case '1':
       m_enablePositionByBlockID1 = true;
-    break;
+      break;
     case '2':
       m_enablePositionByBlockID2 = true;
       break;
