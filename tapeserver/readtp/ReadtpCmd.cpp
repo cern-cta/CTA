@@ -441,8 +441,6 @@ void ReadtpCmd::readTapeFiles(castor::tape::tapeserver::drive::DriveInterface& d
     }
   }
 
-  // Get the average of all timings, except the first one (because actual positioning may happen here...)
-
   double elapsedTimeSec = t_begin.elapsedTime();
   auto throughputMBs = (static_cast<double>(totalDataSize) / elapsedTimeSec) / (1024 * 1024);
   std::vector<cta::log::Param> params;
@@ -458,6 +456,24 @@ void ReadtpCmd::readTapeFiles(castor::tape::tapeserver::drive::DriveInterface& d
   params.emplace_back("totalElapsedTimeSec", elapsedTimeSec);
   params.emplace_back("globalThroughputMBs", throughputMBs);
   params.emplace_back("nbFailedReads", m_nbFailedReads);
+
+  // Get the average of the timing for all files, but treat the first one separately (because actual positioning may happen here...)
+
+  params.push_back(cta::log::Param("timerPositionSec_1st", fileTimers[0].positioning));
+  params.push_back(cta::log::Param("timerHeaderSec_1st", std::accumulate(fileTimers[0].headerBlocks.begin(), fileTimers[0].headerBlocks.end(), 0.0)));
+  params.push_back(cta::log::Param("timerHeaderTMSec_1st", fileTimers[0].headerTM));
+  params.push_back(cta::log::Param("timerDataSec_1st", std::accumulate(fileTimers[0].dataBlocks.begin(), fileTimers[0].dataBlocks.end(), 0.0)));
+  params.push_back(cta::log::Param("timerDataTMSec_1st", fileTimers[0].dataTM));
+  params.push_back(cta::log::Param("timerTrailerSec_1st", std::accumulate(fileTimers[0].trailerBlocks.begin(), fileTimers[0].trailerBlocks.end(), 0.0)));
+  params.push_back(cta::log::Param("timerTrailerTMSec_1st", fileTimers[0].trailerTM));
+
+  params.push_back(cta::log::Param("timerPositionSec_avg_2-end", std::accumulate(fileTimers.begin()+1, fileTimers.end(), 0.0, [](double acc, const auto& val){ return acc + val.positioning; } )));
+  params.push_back(cta::log::Param("timerHeaderSec_avg_2-end", std::accumulate(fileTimers.begin()+1, fileTimers.end(), 0.0, [](double acc, const auto& val) { return acc + std::accumulate(val.headerBlocks.begin(), val.headerBlocks.end(), 0.0);} )));
+  params.push_back(cta::log::Param("timerHeaderTMSec_avg_2-end", std::accumulate(fileTimers.begin()+1, fileTimers.end(), 0.0, [](double acc, const auto& val){ return acc + val.headerTM; } )));
+  params.push_back(cta::log::Param("timerDataSec_avg_2-end", std::accumulate(fileTimers.begin()+1, fileTimers.end(), 0.0, [](double acc, const auto& val) { return acc + std::accumulate(val.dataBlocks.begin(), val.dataBlocks.end(), 0.0);} )));
+  params.push_back(cta::log::Param("timerDataTMSec_avg_2-end", std::accumulate(fileTimers.begin()+1, fileTimers.end(), 0.0, [](double acc, const auto& val){ return acc + val.dataTM; } )));
+  params.push_back(cta::log::Param("timerTrailerSec_avg_2-end", std::accumulate(fileTimers.begin()+1, fileTimers.end(), 0.0, [](double acc, const auto& val) { return acc + std::accumulate(val.trailerBlocks.begin(), val.trailerBlocks.end(), 0.0);} )));
+  params.push_back(cta::log::Param("timerTrailerTMSec_avg_2-end", std::accumulate(fileTimers.begin()+1, fileTimers.end(), 0.0, [](double acc, const auto& val){ return acc + val.trailerTM; } )));
 
   m_log(cta::log::INFO, "Finished reading tape", params);
 }
@@ -539,8 +555,8 @@ std::tuple<size_t, castor::tape::tapeFile::FileReader::BlockReadTimer> ReadtpCmd
   params.emplace_back("timerHeaderTMSec", readTimer.headerTM);
   params.emplace_back("timerDataSec", std::accumulate(readTimer.dataBlocks.begin(), readTimer.dataBlocks.end(), 0.0));
   params.emplace_back("timerDataTMSec", readTimer.dataTM);
-  params.emplace_back("timerHeaderSec", std::accumulate(readTimer.trailerBlocks.begin(), readTimer.trailerBlocks.end(), 0.0));
-  params.emplace_back("timerHeaderTMSec", readTimer.trailerTM);
+  params.emplace_back("timerTrailerSec", std::accumulate(readTimer.trailerBlocks.begin(), readTimer.trailerBlocks.end(), 0.0));
+  params.emplace_back("timerTrailerTMSec", readTimer.trailerTM);
   m_log(cta::log::INFO, "Read file from tape successfully", params);
   return {read_data_size, readTimer};
 }
