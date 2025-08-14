@@ -100,12 +100,17 @@ int rmc_main(const char *const robot)
 	} else {
 		if(Cdomainname(domainname, sizeof(domainname)) < 0) {
 			rmc_logit(func, "Unable to get domainname\n");
-		}
-		if(snprintf(g_localhost, CA_MAXHOSTNAMELEN+1, "%s.%s", localhost, domainname) != 0) {
-			rmc_logit(func, "localhost.domainname exceeds maximum length\n");
-		}
+		} else {
+            // Truncate at first space to avoid multiple domains
+            char *first_space = strchr(domainname, ' ');
+            if(first_space) *first_space = '\0';
+        }
+        int ret = snprintf(g_localhost, CA_MAXHOSTNAMELEN, "%s.%s", localhost, domainname);
+        if(ret < 0 || ret >= CA_MAXHOSTNAMELEN) {
+            rmc_logit(func, "localhost.domainname exceeds maximum length\n");
+        }
+        rmc_logit(func, "found the following localhost.domainname: %s", g_localhost);
 	}
-
 	if(*robot == '\0') {
 		rmc_logit(func, RMC06, "robot");
 		exit(USERR);
