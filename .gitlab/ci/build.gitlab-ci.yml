@@ -122,13 +122,11 @@ check-compile-commands:
   retry: 0
   stage: build
   allow_failure: true
-  extends:
-    - .build-cta
+  image: $IMAGE_BUILD
   rules:
-    - !reference [.build-cta, rules]
-    - if: $PIPELINE_TYPE == "REGR_AGAINST_CTA_MAIN"
-      when: never
-    - when: on_success
+    - if: $CI_PIPELINE_SOURCE == "merge_request_event"
+      when: always
+    - when: never
       allow_failure: true
   needs:
     - job: build-cta-rpm
@@ -149,8 +147,7 @@ check-compile-commands:
 
 update-compile-commands:
   stage: build
-  extends:
-    - .build-cta
+  image: $IMAGE_BUILD
   rules:
     - when: manual
       allow_failure: true
