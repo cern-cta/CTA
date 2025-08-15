@@ -26,7 +26,7 @@
 #include <XrdSsiPbIStreamBuffer.hpp>
 
 #include "common/log/StdoutLogger.hpp"
-#include "xrootd-ssi-protobuf-interface/eos_cta/include/CtaFrontendApi.hpp"
+#include "CtaFrontendApi.hpp"
 #include "cta_frontend.pb.h"                               //!< Auto-generated message types from .proto file
 
 #include "version.h"

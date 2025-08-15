@@ -1,12 +1,12 @@
-[submodule "xrootd-ssi-protobuf-interface"]
-	path = xrootd-ssi-protobuf-interface
+[submodule "external/xrootd-ssi-protobuf-interface"]
+	path = external/xrootd-ssi-protobuf-interface
 	url = https://:@gitlab.cern.ch:8443/eos/xrootd-ssi-protobuf-interface.git
-[submodule "eos_cta/grpc-proto"]
-	path = eos_cta/grpc-proto
+[submodule "external/grpc-proto"]
+	path = external/grpc-proto
 	url = https://:@gitlab.cern.ch:8443/eos/grpc-proto.git
-[submodule "catalogue/cta-catalogue-schema"]
-	path = catalogue/cta-catalogue-schema
+[submodule "external/cta-catalogue-schema"]
+	path = external/cta-catalogue-schema
 	url = https://:@gitlab.cern.ch:8443/cta/cta-catalogue-schema.git
-[submodule "common/jwt-cpp"]
-	path = common/jwt-cpp
+[submodule "external/jwt-cpp"]
+	path = external/jwt-cpp
 	url = https://github.com/Thalhammer/jwt-cpp.git

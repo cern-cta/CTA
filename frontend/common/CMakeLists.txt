@@ -28,7 +28,7 @@ set_property(TARGET ctafrontendcommonconfigunittests PROPERTY   VERSION "${CTA_L
 install(TARGETS ctafrontendcommonconfigunittests DESTINATION usr/${CMAKE_INSTALL_LIBDIR})
 
 ## add a library for the unit tests I am adding for token validation
-include_directories(${CMAKE_SOURCE_DIR}/common/jwt-cpp/include/)
+include_directories(${CMAKE_SOURCE_DIR}/external/jwt-cpp/include/)
 
 set (FRONTEND_COMMON_TOKEN_VALIDATION_UNIT_TESTS_LIB_SRC_FILES
   ValidateTokenTests.cpp

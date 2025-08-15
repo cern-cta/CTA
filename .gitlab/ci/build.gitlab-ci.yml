@@ -72,7 +72,7 @@ build-cta-rpm:
     - when: on_success
   variables:
     BUILD_PATH: "build_rpm/RPM/RPMS"
-    XRD_SSI_PATH: "xrootd-ssi-protobuf-interface"
+    XRD_SSI_PATH: "external/xrootd-ssi-protobuf-interface"
   script:
     - |
       if [ -z "${CI_COMMIT_TAG}" ]; then

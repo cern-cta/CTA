@@ -15,7 +15,12 @@
 
 cmake_minimum_required (VERSION 3.17)
 
-add_subdirectory(cta-catalogue-schema)
+set (CTA_CATALOGUE_SCHEMA_SRC_DIR ${PROJECT_SOURCE_DIR}/external/cta-catalogue-schema)
+set (CTA_CATALOGUE_SCHEMA_BIN_DIR ${CMAKE_BINARY_DIR}/external/cta-catalogue-schema)
+add_subdirectory(
+  ${CTA_CATALOGUE_SCHEMA_SRC_DIR}
+  ${CTA_CATALOGUE_SCHEMA_BIN_DIR}
+)
 
 add_manpage(
   cta-catalogue-admin-user-create
@@ -99,7 +104,7 @@ target_compile_definitions(ctacatalogueinmemory PRIVATE VERSION_API="${CTA_VERSI
 
 install(TARGETS ctacatalogueinmemory DESTINATION usr/${CMAKE_INSTALL_LIBDIR})
 
-# SQLITE - Sqlite file based databases are not supported 
+# SQLITE - Sqlite file based databases are not supported
 file (GLOB CATALOGUE_SQLITE_LIB_SRC_FILES
   rdbms/sqlite/*.cpp
 )
@@ -163,7 +168,7 @@ endif()
 
 add_custom_command(
   OUTPUT AllCatalogueSchema.hpp
-  COMMAND ${CMAKE_COMMAND} -E env "LC_ALL=C" sh ${CMAKE_CURRENT_SOURCE_DIR}/CreateAllSchemasCppFile.sh ${CMAKE_CURRENT_SOURCE_DIR}
+  COMMAND ${CMAKE_COMMAND} -E env "LC_ALL=C" sh ${CMAKE_CURRENT_SOURCE_DIR}/CreateAllSchemasCppFile.sh ${CTA_CATALOGUE_SCHEMA_SRC_DIR}
   DEPENDS
     ${CMAKE_CURRENT_SOURCE_DIR}/CreateAllSchemasCppFile.sh
     ${CMAKE_CURRENT_SOURCE_DIR}/AllCatalogueSchema.hpp.in
@@ -171,12 +176,12 @@ add_custom_command(
 
 add_custom_command(
   OUTPUT sqlite_catalogue_schema.cpp postgres_catalogue_schema.cpp
-  COMMAND ${CMAKE_COMMAND} -E env "LC_ALL=C" sed 's/^/\ \ \"/' cta-catalogue-schema/sqlite_catalogue_schema.sql | sed 's/$$/\"/' > sqlite_catalogue_schema.cpp
-  COMMAND ${CMAKE_COMMAND} -E env "LC_ALL=C" sed 's/^/\ \ \"/' cta-catalogue-schema/postgres_catalogue_schema.sql | sed 's/$$/\"/' > postgres_catalogue_schema.cpp
+  COMMAND ${CMAKE_COMMAND} -E env "LC_ALL=C" sed 's/^/\ \ \"/' ${CTA_CATALOGUE_SCHEMA_SRC_DIR}/sqlite_catalogue_schema.sql | sed 's/$$/\"/' > sqlite_catalogue_schema.cpp
+  COMMAND ${CMAKE_COMMAND} -E env "LC_ALL=C" sed 's/^/\ \ \"/' ${CTA_CATALOGUE_SCHEMA_SRC_DIR}/postgres_catalogue_schema.sql | sed 's/$$/\"/' > postgres_catalogue_schema.cpp
   DEPENDS
     create_all_schemas_SQL
-    ${CMAKE_CURRENT_BINARY_DIR}/cta-catalogue-schema/sqlite_catalogue_schema.sql
-    ${CMAKE_CURRENT_BINARY_DIR}/cta-catalogue-schema/postgres_catalogue_schema.sql
+    ${CTA_CATALOGUE_SCHEMA_BIN_DIR}/sqlite_catalogue_schema.sql
+    ${CTA_CATALOGUE_SCHEMA_BIN_DIR}/postgres_catalogue_schema.sql
 )
 
 add_custom_command(
@@ -200,10 +205,10 @@ if (OCCI_SUPPORT)
 
   add_custom_command(
     OUTPUT ${ORACLE_SCHEMA_CPP}
-    COMMAND ${CMAKE_COMMAND} -E env "LC_ALL=C" sed 's/^/\ \ \"/' ${CMAKE_CURRENT_BINARY_DIR}/cta-catalogue-schema/oracle_catalogue_schema.sql | sed 's/$$/\"/' > ${ORACLE_SCHEMA_CPP}
+    COMMAND ${CMAKE_COMMAND} -E env "LC_ALL=C" sed 's/^/\ \ \"/' ${CTA_CATALOGUE_SCHEMA_SRC_DIR}/oracle_catalogue_schema.sql | sed 's/$$/\"/' > ${ORACLE_SCHEMA_CPP}
     DEPENDS
       create_all_schemas_SQL
-      ${CMAKE_CURRENT_BINARY_DIR}/cta-catalogue-schema/oracle_catalogue_schema.sql
+      ${CTA_CATALOGUE_SCHEMA_BIN_DIR}/oracle_catalogue_schema.sql
     COMMENT "Creating oracle_catalogue_schema.cpp"
   )
 

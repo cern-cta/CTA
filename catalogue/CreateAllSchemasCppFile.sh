@@ -42,16 +42,18 @@ die() {
   exit 1
 }
 
+catalogue_dir="$(dirname ${BASH_SOURCE[0]})"
+
 databaseTypes=('oracle' 'sqlite' 'postgres')
 schemaPostfix='_catalogue_schema.sql'
-cd $1/cta-catalogue-schema
+cd $1
 buffFile="./temp"
-tempFilePath="../TMPAllCatalogueSchema.hpp"
-finalFilePath="../AllCatalogueSchema.hpp"
+tempFilePath="$catalogue_dir/TMPAllCatalogueSchema.hpp"
+finalFilePath="$catalogue_dir/AllCatalogueSchema.hpp"
 
 trap "rm -f $buffFile" EXIT
 
-schemaVersionsDirectories=`find . -type d -regex '^./[0-9]+\.[0-9]+$' | sort`
+schemaVersionsDirectories=$(find . -type d -regex '^./[0-9]+\.[0-9]+$' | sort)
 
 mapSchemaCode='
 {
@@ -66,8 +68,8 @@ do
   for databaseType in ${databaseTypes[@]}
   do
     schemaSqlFilePath="$schemaVersionDir/$databaseType$schemaPostfix"
-    notTranslatedSchemaSQL=`cat $schemaSqlFilePath` || die "Unable to open file $schemaSqlFilePath"
-    schemaSql=`cat $schemaVersionDir/$databaseType$schemaPostfix | sed 's/^/\ \ \"/' | sed 's/$/\"/'`
+    notTranslatedSchemaSQL=$(cat $schemaSqlFilePath) || die "Unable to open file $schemaSqlFilePath"
+    schemaSql=$(cat $schemaVersionDir/$databaseType$schemaPostfix | sed 's/^/\ \ \"/' | sed 's/$/\"/')
     mapSchemaCode+="  {\"$databaseType\",$schemaSql
       },
 "
@@ -78,7 +80,7 @@ do
 done
 mapSchemaCode+="};"
 echo "$mapSchemaCode" > $buffFile
-sed "/ALL_SCHEMA_MAP/r $buffFile" ../AllCatalogueSchema.hpp.in > $tempFilePath || die "Unable to create the map containing all catalogue schemas"
+sed "/ALL_SCHEMA_MAP/r $buffFile" "$catalogue_dir/AllCatalogueSchema.hpp.in" > $tempFilePath || die "Unable to create the map containing all catalogue schemas"
 #awk -v r="$mapSchemaCode" '{gsub(/ALL_SCHEMA_MAP/,r)}1' ./AllCatalogueSchema.hpp.in > ./AllCatalogueSchema.hpp || die "Unable to create the map containing all catalogue schemas"
 
 # Compare the temporary output file with the existing output file to avoid regenerating it if it hasn't changed

@@ -80,11 +80,11 @@ extract_cmake_set_val() {
 }
 
 # Get CTA catalogue version, as defined in the submodule 'cta-catalogue-schema'
-CTA_SUB_REPO__CATALOGUE_MAJOR_VERSION=$(extract_cmake_set_val ${cta_repo_dir}/catalogue/cta-catalogue-schema/CTACatalogueSchemaVersion.cmake CTA_CATALOGUE_SCHEMA_VERSION_MAJOR)
-CTA_SUB_REPO__CATALOGUE_MINOR_VERSION=$(extract_cmake_set_val ${cta_repo_dir}/catalogue/cta-catalogue-schema/CTACatalogueSchemaVersion.cmake CTA_CATALOGUE_SCHEMA_VERSION_MINOR)
+CTA_SUB_REPO__CATALOGUE_MAJOR_VERSION=$(extract_cmake_set_val ${cta_repo_dir}/external/cta-catalogue-schema/CTACatalogueSchemaVersion.cmake CTA_CATALOGUE_SCHEMA_VERSION_MAJOR)
+CTA_SUB_REPO__CATALOGUE_MINOR_VERSION=$(extract_cmake_set_val ${cta_repo_dir}/external/cta-catalogue-schema/CTACatalogueSchemaVersion.cmake CTA_CATALOGUE_SCHEMA_VERSION_MINOR)
 # Get all tags from current commit of submodule 'cta-catalogue-schema', separated by whitespaces, and extract MAJOR version
 CTA_SUB_REPO__TAGS=$(
-  cd ${cta_repo_dir}/catalogue/cta-catalogue-schema
+  cd ${cta_repo_dir}/external/cta-catalogue-schema
   git tag
 )
 
@@ -167,7 +167,7 @@ echo "- If schema migration scripts exist: "
 for PREV_VERSION in $(echo $CTA_PROJECT_PREV_CATALOGUE_VERSIONS); do
   migration_script_name_1="${PREV_VERSION}to${CURR_VERSION}.sql"
   migration_script_name_2="${PREV_VERSION}.0to${CURR_VERSION}.0.sql"
-  migration_scripts_dir="${cta_repo_dir}/catalogue/cta-catalogue-schema/migrations/liquibase"
+  migration_scripts_dir="${cta_repo_dir}/external/cta-catalogue-schema/migrations/liquibase"
   if [ "$PREV_VERSION" -eq "$CURR_VERSION" ]; then
     # Skip if versions are the same
     echo "  - No script needed for non-pivot release: OK"

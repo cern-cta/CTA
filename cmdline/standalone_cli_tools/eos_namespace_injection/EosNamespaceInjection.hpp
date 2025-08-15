@@ -22,7 +22,7 @@
 
 #include "cmdline/standalone_cli_tools/common/CmdLineTool.hpp"
 #include "cmdline/standalone_cli_tools/eos_namespace_injection/MetaData.hpp"
-#include "xrootd-ssi-protobuf-interface/eos_cta/include/CtaFrontendApi.hpp"
+#include "CtaFrontendApi.hpp"
 
 namespace {
 using cid = uint64_t;
@@ -196,7 +196,7 @@ class EosNamespaceInjection final: public CmdLineTool {
     cta::log::StdoutLogger &m_log;
 
     /**
-    * When a file is skipped due to inconsistent meta data between EOS and CTA, 
+    * When a file is skipped due to inconsistent meta data between EOS and CTA,
     * they are added to this vector
     */
     std::vector<MetaDataObject> m_inconsistentMetadata;

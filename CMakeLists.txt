@@ -172,7 +172,7 @@ ELSE(DEFINED PackageOnly)
   #
   # Location of git submodule containing the XRootD SSI Protocol Buffer bindings
   #
-  set(XRD_SSI_PB_DIR ${PROJECT_SOURCE_DIR}/xrootd-ssi-protobuf-interface)
+  set(XRD_SSI_PB_DIR ${PROJECT_SOURCE_DIR}/external/xrootd-ssi-protobuf-interface)
 
   # Pandocology (to create man pages from Markdown)
   include(cmake/Pandocology.cmake)

@@ -18,7 +18,7 @@ set(CTA_RELEASE 1)
 set(XROOTD_SSI_PROTOBUF_INTERFACE_VERSION "v0.0")
 
 # Catalogue Schema Version
-include(catalogue/cta-catalogue-schema/CTACatalogueSchemaVersion.cmake)
+include(external/cta-catalogue-schema/CTACatalogueSchemaVersion.cmake)
 
 # Scheduler Schema Version
 set(CTA_SCHEDULER_SCHEMA_VERSION_MAJOR 1)
