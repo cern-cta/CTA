@@ -424,8 +424,8 @@ void ReadtpCmd::readTapeFiles(castor::tape::tapeserver::drive::DriveInterface& d
         auto [dataSize, readTimer] = readTapeFile(*readSession, fSeq, wf, volInfo);
         if (is_first_block) {
           is_first_block = false;
-        } else {
           t_begin_2nd = castor::tape::tapeFile::FileReader::ChronoTimer();
+        } else {
           totalDataSize2nd += dataSize;
         }
         totalDataSize += dataSize;
