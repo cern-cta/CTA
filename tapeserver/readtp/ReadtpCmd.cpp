@@ -401,9 +401,12 @@ void ReadtpCmd::readTapeFiles(castor::tape::tapeserver::drive::DriveInterface& d
     std::string destinationFile = getNextDestinationUrl();
     uint64_t fSeq;
     size_t totalDataSize = 0;
+    size_t totalDataSize2nd = 0;
 
     std::vector<castor::tape::tapeFile::FileReader::BlockReadTimer> fileTimers;
     castor::tape::tapeFile::FileReader::ChronoTimer t_begin;
+    castor::tape::tapeFile::FileReader::ChronoTimer t_begin_2nd;
+    bool is_first_block = true;
 
     while (fSeqRangeListSequence.hasMore()) {
       try {
@@ -419,6 +422,12 @@ void ReadtpCmd::readTapeFiles(castor::tape::tapeserver::drive::DriveInterface& d
           readSession = castor::tape::tapeFile::ReadSessionFactory::create(drive, volInfo, m_useLbp, m_testMode);
         }
         auto [dataSize, readTimer] = readTapeFile(*readSession, fSeq, wf, volInfo);
+        if (is_first_block) {
+          is_first_block = false;
+        } else {
+          t_begin_2nd = castor::tape::tapeFile::FileReader::ChronoTimer();
+          totalDataSize2nd += dataSize;
+        }
         totalDataSize += dataSize;
         fileTimers.push_back(readTimer);
       m_nbSuccessReads++;  // if readTapeFile returns, file was read successfully
@@ -443,6 +452,8 @@ void ReadtpCmd::readTapeFiles(castor::tape::tapeserver::drive::DriveInterface& d
 
   double elapsedTimeSec = t_begin.elapsedTime();
   auto throughputMBs = (static_cast<double>(totalDataSize) / elapsedTimeSec) / (1024 * 1024);
+  double elapsedTime2ndSec = t_begin_2nd.elapsedTime();
+  auto throughput2ndMBs = (static_cast<double>(totalDataSize2nd) / elapsedTime2ndSec) / (1024 * 1024);
   std::vector<cta::log::Param> params;
   params.emplace_back("userName", getUsername());
   params.emplace_back("tapeVid", m_vid);
@@ -455,6 +466,9 @@ void ReadtpCmd::readTapeFiles(castor::tape::tapeserver::drive::DriveInterface& d
   params.emplace_back("totalDataMB", totalDataSize / (1024 * 1024));
   params.emplace_back("totalElapsedTimeSec", elapsedTimeSec);
   params.emplace_back("globalThroughputMBs", throughputMBs);
+  params.emplace_back("totalDataMB_2nd-end", totalDataSize2nd / (1024 * 1024));
+  params.emplace_back("totalElapsedTimeSec_2nd-end", elapsedTime2ndSec);
+  params.emplace_back("globalThroughputMBs_2nd-end", throughput2ndMBs);
   params.emplace_back("nbFailedReads", m_nbFailedReads);
 
   // Get the average of the timing for all files, but treat the first one separately (because actual positioning may happen here...)
