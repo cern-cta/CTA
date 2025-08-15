@@ -33,6 +33,8 @@ test-cta-valgrind:
     - /usr/bin/cta-unitPlusIntegrationTests.sh
 
 integration-test-cta:
+  # Sometimes flaky due to "resource unavailable" error
+  retry: 1
   stage: test
   needs:
     - job: build-cta-rpm
