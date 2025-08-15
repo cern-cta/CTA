@@ -481,6 +481,9 @@ void ReadtpCmd::readTapeFiles(castor::tape::tapeserver::drive::DriveInterface& d
   params.push_back(cta::log::Param("timerTrailerSec_1st", std::accumulate(fileTimers[0].trailerBlocks.begin(), fileTimers[0].trailerBlocks.end(), 0.0)));
   params.push_back(cta::log::Param("timerTrailerTMSec_1st", fileTimers[0].trailerTM));
 
+  params.push_back(cta::log::Param("timerChecksumsSec_1st", fileTimers[0].checksums));
+  params.push_back(cta::log::Param("timerPayloadFlushingSec_1st", fileTimers[0].payloadFlushing));
+
   params.push_back(cta::log::Param("timerPositionSec_avg_2-end", std::accumulate(fileTimers.begin()+1, fileTimers.end(), 0.0, [](double acc, const auto& val){ return acc + val.positioning; } ) / (m_nbSuccessReads-1)));
   params.push_back(cta::log::Param("timerHeaderSec_avg_2-end", std::accumulate(fileTimers.begin()+1, fileTimers.end(), 0.0, [](double acc, const auto& val) { return acc + std::accumulate(val.headerBlocks.begin(), val.headerBlocks.end(), 0.0);} ) / (m_nbSuccessReads-1)));
   params.push_back(cta::log::Param("timerHeaderTMSec_avg_2-end", std::accumulate(fileTimers.begin()+1, fileTimers.end(), 0.0, [](double acc, const auto& val){ return acc + val.headerTM; } ) / (m_nbSuccessReads-1)));
@@ -488,6 +491,9 @@ void ReadtpCmd::readTapeFiles(castor::tape::tapeserver::drive::DriveInterface& d
   params.push_back(cta::log::Param("timerDataTMSec_avg_2-end", std::accumulate(fileTimers.begin()+1, fileTimers.end(), 0.0, [](double acc, const auto& val){ return acc + val.dataTM; } ) / (m_nbSuccessReads-1)));
   params.push_back(cta::log::Param("timerTrailerSec_avg_2-end", std::accumulate(fileTimers.begin()+1, fileTimers.end(), 0.0, [](double acc, const auto& val) { return acc + std::accumulate(val.trailerBlocks.begin(), val.trailerBlocks.end(), 0.0);} ) / (m_nbSuccessReads-1)));
   params.push_back(cta::log::Param("timerTrailerTMSec_avg_2-end", std::accumulate(fileTimers.begin()+1, fileTimers.end(), 0.0, [](double acc, const auto& val){ return acc + val.trailerTM; } ) / (m_nbSuccessReads-1)));
+
+  params.push_back(cta::log::Param("timerChecksumsSec_avg_2-end", std::accumulate(fileTimers.begin()+1, fileTimers.end(), 0.0, [](double acc, const auto& val){ return acc + val.checksums; } ) / (m_nbSuccessReads-1)));
+  params.push_back(cta::log::Param("timerPayloadFlushingSec_avg_2-end", std::accumulate(fileTimers.begin()+1, fileTimers.end(), 0.0, [](double acc, const auto& val){ return acc + val.payloadFlushing; } ) / (m_nbSuccessReads-1)));
 
   m_log(cta::log::INFO, "Finished reading tape", params);
 }
@@ -531,12 +537,15 @@ std::tuple<size_t, castor::tape::tapeFile::FileReader::BlockReadTimer> ReadtpCmd
   fileToRecall.selectedTapeFile().blockId = archiveFile.tapeFiles.front().blockId;
   fileToRecall.positioningMethod = m_testMode == utils::ReadTapeTestMode::USE_FSEC ? cta::PositioningMethod::ByFSeq : cta::PositioningMethod::ByBlock;
 
-  if (readSession.getCurrentBlockId() != fileToRecall.selectedTapeFile().blockId) {
+  if (readSession.getCurrentBlockId() != fileToRecall.selectedTapeFile().blockId && m_testMode == utils::ReadTapeTestMode::USE_BLOCK_ID_2) {
     params.push_back(cta::log::Param("currentSessionBlockIdPosition", readSession.getCurrentBlockId()));
     params.push_back(cta::log::Param("desiredBlockIdPosition", fileToRecall.selectedTapeFile().blockId));
     params.push_back(cta::log::Param("fSec", fileToRecall.selectedTapeFile().fSeq));
     m_log(cta::log::WARNING, "Block ID position mismatch", params);
   }
+
+  double timeChecksums = 0;
+  double timePayloadFlushing = 0;
 
   const auto reader = castor::tape::tapeFile::FileReaderFactory::create(readSession, fileToRecall, m_testMode);
   auto checksum_adler32 = castor::tape::tapeserver::daemon::Payload::zeroAdler32();
@@ -549,9 +558,17 @@ std::tuple<size_t, castor::tape::tapeFile::FileReader::BlockReadTimer> ReadtpCmd
       if (payload->remainingFreeSpace() <= reader->getBlockSize()) {
         // buffer is full, flush to file and update checksum
         read_data_size += payload->size();
-        checksum_adler32 = payload->adler32(checksum_adler32);
-        payload->write(wf);
-        payload->reset();
+        {
+          castor::tape::tapeFile::FileReader::ChronoTimer t_adler32;
+          checksum_adler32 = payload->adler32(checksum_adler32);
+          timeChecksums += t_adler32.elapsedTime();
+        }
+        {
+          castor::tape::tapeFile::FileReader::ChronoTimer t_payloadFlushing;
+          payload->write(wf);
+          payload->reset();
+          timePayloadFlushing += t_payloadFlushing.elapsedTime();
+        }
       }
       payload->append(*reader);
     }
@@ -559,12 +576,22 @@ std::tuple<size_t, castor::tape::tapeFile::FileReader::BlockReadTimer> ReadtpCmd
     // File completely read
   }
   read_data_size += payload->size();
-  checksum_adler32 = payload->adler32(checksum_adler32);
-  payload->write(wf);
+  {
+    castor::tape::tapeFile::FileReader::ChronoTimer t_adler32;
+    checksum_adler32 = payload->adler32(checksum_adler32);
+    timeChecksums += t_adler32.elapsedTime();
+  }
+  {
+    castor::tape::tapeFile::FileReader::ChronoTimer t_payloadFlushing;
+    payload->write(wf);
+    timePayloadFlushing += t_payloadFlushing.elapsedTime();
+  }
   auto cb = cta::checksum::ChecksumBlob(cta::checksum::ChecksumType::ADLER32, checksum_adler32);
 
   archiveFile.checksumBlob.validate(cb);  //exception thrown if checksums differ
   auto readTimer = reader->getReaderTimer();
+  readTimer.checksums = timeChecksums;
+  readTimer.payloadFlushing = timePayloadFlushing;
 
   params.emplace_back("checksumType", "ADLER32");
   std::stringstream sstream;
@@ -578,6 +605,8 @@ std::tuple<size_t, castor::tape::tapeFile::FileReader::BlockReadTimer> ReadtpCmd
   params.emplace_back("timerDataTMSec", readTimer.dataTM);
   params.emplace_back("timerTrailerSec", std::accumulate(readTimer.trailerBlocks.begin(), readTimer.trailerBlocks.end(), 0.0));
   params.emplace_back("timerTrailerTMSec", readTimer.trailerTM);
+  params.emplace_back("timerChecksumsSec", readTimer.checksums);
+  params.emplace_back("timerPayloadFlushingSec", readTimer.payloadFlushing);
   m_log(cta::log::INFO, "Read file from tape successfully", params);
   return {read_data_size, readTimer};
 }
