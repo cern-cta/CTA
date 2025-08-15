@@ -38,7 +38,7 @@ if [ -z "${tpd_parent_pid}" ]; then
     exit 1
 fi
 if [ -z "${tpd_maint_pid}" ]; then
-    echo "ERROR: No '$DRIVE_NAME-parent' process found."
+    echo "ERROR: No '$DRIVE_NAME-maint' process found."
     exit 1
 fi
 if [ -z "${tpd_drv_pid}" ]; then
@@ -78,7 +78,7 @@ sleep 1
 
 # Send signal to trigger log rotation in all the taped processes
 echo "Sending 'USR1' signal to '$DRIVE_NAME-parent' process"
-/bin/pkill -SIGUSR1 -u cta -f '.*-parent$' 2> /dev/null || true
+/bin/pkill -SIGUSR1 -u cta -f '-parent$' 2> /dev/null || true
 
 # Sleep for ${STRACE_SLEEP_SECS} seconds to allow for strace to register events
 echo "Waiting for ${STRACE_SLEEP_SECS} seconds..."

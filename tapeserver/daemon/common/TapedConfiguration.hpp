@@ -60,9 +60,10 @@ struct TapedConfiguration {
    *
    * Extracts the short drive name by taking the substring after the last '-' in the unit (drive) name,
    * then appends the provided postfix, separated by a hyphen.
+   * If the short drive name is longer than 8 characters, it will be truncated.
    *
    * @param lc Log context.
-   * @param postfix String to append to the short drive name.
+   * @param postfix String to append to the short drive name. Can be at most 6 characters.
    * @return std::string Combined process name in the format "<short-name>-<postfix>".
    */
   std::string constructProcessName(cta::log::LogContext& lc, const std::string& postfix) const;
