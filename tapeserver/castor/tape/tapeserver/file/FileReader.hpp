@@ -32,6 +32,8 @@ public:
     double dataTM = 0;
     std::array<double, 3> trailerBlocks = {0,0,0};
     double trailerTM = 0;
+    double checksums = 0;
+    double payloadFlushing = 0;
   };
 
   class ChronoTimer {
