@@ -19,6 +19,8 @@ project(cta)
 # Populate various cmake variables from the project.json
 include(cmake/LoadProjectJson.cmake)
 
+set(CMAKE_EXPORT_COMPILE_COMMANDS on)
+
 set(CMAKE_C_FLAGS "-fPIC -Wall -Wextra -Werror -Wno-unused-parameter")
 
 # Please note that the -fms-extensions option should be dropped when this
