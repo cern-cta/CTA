@@ -51,7 +51,7 @@
 #define RMC_ERR_MSG_BUFSZ 132
 #define ST_DEV_BUFSZ 64
 #define SYSPATH_BUFSZ 256
-#define SGPATH_BUFSZ 80
+#define SGPATH_BUFSZ 256
 
 static char rmc_err_msgbuf[RMC_ERR_MSG_BUFSZ];
 static const char *sk_msg[] = {
