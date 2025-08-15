@@ -115,19 +115,19 @@ build-cta-rpm:
                                                  ${BUILD_OPTIONS}
   artifacts:
     paths:
-      - ./build_rpm/RPM/RPMS
+      - ${BUILD_PATH}
       - ./build_rpm/compile_commands.json
+    expire_in: 30 days
+
 
 check-compile-commands:
-  retry: 0
   stage: build
   allow_failure: true
   image: $IMAGE_BUILD
   rules:
     - if: $CI_PIPELINE_SOURCE == "merge_request_event"
-      when: always
+      when: on_success
     - when: never
-      allow_failure: true
   needs:
     - job: build-cta-rpm
       artifacts: true
@@ -141,9 +141,11 @@ check-compile-commands:
     - if [[ $BUILD_GENERATOR == "Ninja" ]]; then sed -i 's| -o .*/CMake| -o CMake|g'; fi
     - python3 ./continuousintegration/checks/check_compile_commands.py ./compile_commands.json ./build_rpm/compile_commands.json
   artifacts:
+    expire_in: 30 days
     when: on_failure
     paths:
       - ./build_rpm/compile_commands.json
+
 
 update-compile-commands:
   stage: build
@@ -153,7 +155,6 @@ update-compile-commands:
       allow_failure: true
   needs:
     - job: check-compile-commands
-      optional: false
       artifacts: true
   variables:
     REPO_REMOTE: https://gitlab-ci-token:${CI_PUSH_TOKEN}@${CI_SERVER_HOST}/${CI_PROJECT_PATH}.git

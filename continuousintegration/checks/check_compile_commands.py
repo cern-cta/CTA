@@ -41,7 +41,15 @@ def compare_commands(map1, map2):
 
     return differences
 
-def main(file1_path, file2_path):
+def compare_files(file1_path, file2_path):
+    # Check file existence
+    if not file1.exists():
+        print(f"ERROR: File '{file1}' not found.")
+        sys.exit(1)
+    if not file2.exists():
+        print(f"ERROR: File '{file2}' not found.")
+        sys.exit(1)
+
     with open(file1_path, 'r', encoding='utf8') as data1, open(file2_path, 'r', encoding='utf-8') as data2:
       map1 = {entry['file']: entry['command'] for entry in json.load(data1)}
       map2 = {entry['file']: entry['command'] for entry in json.load(data2)}
@@ -67,12 +75,4 @@ if __name__ == "__main__":
     file1 = Path(sys.argv[1])
     file2 = Path(sys.argv[2])
 
-    # Check file existence
-    if not file1.exists():
-        print(f"ERROR: File '{file1}' not found.")
-        sys.exit(1)
-    if not file2.exists():
-        print(f"ERROR: File '{file2}' not found.")
-        sys.exit(1)
-
-    main(file1, file2)
+    compare_files(file1, file2)
