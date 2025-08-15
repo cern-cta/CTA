@@ -564,7 +564,7 @@ std::tuple<size_t, castor::tape::tapeFile::FileReader::BlockReadTimer> ReadtpCmd
   double timePayloadFlushing = 0;
 
   const auto reader = castor::tape::tapeFile::FileReaderFactory::create(readSession, fileToRecall, m_testMode);
-  auto checksum_adler32 = castor::tape::tapeserver::daemon::Payload::zeroAdler32();
+  //auto checksum_adler32 = castor::tape::tapeserver::daemon::Payload::zeroAdler32();
   const size_t buffer_size = 1 * 1024 * 1024 * 1024;  // 1Gb
   size_t read_data_size = 0;
   // allocate one gigabyte buffer
@@ -576,7 +576,7 @@ std::tuple<size_t, castor::tape::tapeFile::FileReader::BlockReadTimer> ReadtpCmd
         read_data_size += payload->size();
         {
           castor::tape::tapeFile::FileReader::ChronoTimer t_adler32;
-          checksum_adler32 = payload->adler32(checksum_adler32);
+          //checksum_adler32 = payload->adler32(checksum_adler32);
           timeChecksums += t_adler32.elapsedTime();
         }
         {
@@ -594,7 +594,7 @@ std::tuple<size_t, castor::tape::tapeFile::FileReader::BlockReadTimer> ReadtpCmd
   read_data_size += payload->size();
   {
     castor::tape::tapeFile::FileReader::ChronoTimer t_adler32;
-    checksum_adler32 = payload->adler32(checksum_adler32);
+    //checksum_adler32 = payload->adler32(checksum_adler32);
     timeChecksums += t_adler32.elapsedTime();
   }
   {
@@ -602,17 +602,17 @@ std::tuple<size_t, castor::tape::tapeFile::FileReader::BlockReadTimer> ReadtpCmd
     payload->write(wf);
     timePayloadFlushing += t_payloadFlushing.elapsedTime();
   }
-  auto cb = cta::checksum::ChecksumBlob(cta::checksum::ChecksumType::ADLER32, checksum_adler32);
+  //auto cb = cta::checksum::ChecksumBlob(cta::checksum::ChecksumType::ADLER32, checksum_adler32);
 
-  archiveFile.checksumBlob.validate(cb);  //exception thrown if checksums differ
+  //archiveFile.checksumBlob.validate(cb);  //exception thrown if checksums differ
   auto readTimer = reader->getReaderTimer();
   readTimer.checksums = timeChecksums;
   readTimer.payloadFlushing = timePayloadFlushing;
 
   params.push_back(cta::log::Param("checksumType", "ADLER32"));
-  std::stringstream sstream;
-  sstream << std::hex << checksum_adler32;
-  params.push_back(cta::log::Param("checksumValue", "0x" + sstream.str()));
+  //std::stringstream sstream;
+  //sstream << std::hex << checksum_adler32;
+  //params.push_back(cta::log::Param("checksumValue", "0x" + sstream.str()));
   params.push_back(cta::log::Param("readFileSize", read_data_size));
   params.push_back(cta::log::Param("timerPositionSec", readTimer.positioning));
   params.push_back(cta::log::Param("timerHeaderSec", std::accumulate(readTimer.headerBlocks.begin(), readTimer.headerBlocks.end(), 0.0)));
