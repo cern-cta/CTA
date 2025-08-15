@@ -108,21 +108,18 @@ void CtaFileReader2::checkTrailers() {
     m_session.m_drive.readExactBlock(reinterpret_cast<void *>(&eof1), sizeof(eof1),
       "[FileReader::read] - Reading HDR1");
     m_readerTimer.trailerBlocks[0] = timer.elapsedTime();
-    m_session.setCurrentBlockId(m_session.getCurrentBlockId() + 1);
   }
   {
     ChronoTimer timer;
     m_session.m_drive.readExactBlock(reinterpret_cast<void *>(&eof2), sizeof(eof2),
       "[FileReader::read] - Reading HDR2");
     m_readerTimer.trailerBlocks[1] = timer.elapsedTime();
-    m_session.setCurrentBlockId(m_session.getCurrentBlockId() + 1);
   }
   {
     ChronoTimer timer;
     m_session.m_drive.readExactBlock(reinterpret_cast<void *>(&utl1), sizeof(utl1),
       "[FileReader::read] - Reading UTL1");
     m_readerTimer.trailerBlocks[2] = timer.elapsedTime();
-    m_session.setCurrentBlockId(m_session.getCurrentBlockId() + 1);
   }
   {
     ChronoTimer timer;
@@ -131,6 +128,7 @@ void CtaFileReader2::checkTrailers() {
   }
 
   m_session.setCurrentFseq(m_session.getCurrentFseq() + 1);  // moving on to the header of the next file
+  m_session.setCurrentBlockId(m_session.getCurrentBlockId() + 4); // 3 data blocks + 1 file mark
   m_session.setCurrentFilePart(PartOfFile::Header);
 
   // the size of the headers is fine, now let's check each header
@@ -154,11 +152,11 @@ size_t CtaFileReader2::readNextDataBlock(void *data, const size_t size) {
     bytes_read = m_session.m_drive.readBlock(data, size);
     if (bytes_read) {
       m_readerTimer.dataBlocks.emplace_back(timer.elapsedTime());
-      m_session.setCurrentBlockId(m_session.getCurrentBlockId() + 1);
     } else {
       // Tape mark has been reached when we find ourselves at the end of file
       m_readerTimer.dataTM = timer.elapsedTime();
     }
+    m_session.setCurrentBlockId(m_session.getCurrentBlockId() + 1); //Tape mark also increases the block address
   }
   // end of file reached! we will keep on reading until we have read the file mark at the end of the trailers
   if (!bytes_read) {
@@ -230,21 +228,18 @@ void CtaFileReader2::checkHeaders(const cta::RetrieveJob &fileToRecall) {
     m_session.m_drive.readExactBlock(reinterpret_cast<void *>(&hdr1), sizeof(hdr1),
       "[FileReader::position] - Reading HDR1");
     m_readerTimer.headerBlocks[0] = timer.elapsedTime();
-    m_session.setCurrentBlockId(m_session.getCurrentBlockId() + 1);
   }
   {
     ChronoTimer timer;
     m_session.m_drive.readExactBlock(reinterpret_cast<void *>(&hdr2), sizeof(hdr2),
       "[FileReader::position] - Reading HDR2");
     m_readerTimer.headerBlocks[1] = timer.elapsedTime();
-    m_session.setCurrentBlockId(m_session.getCurrentBlockId() + 1);
   }
   {
     ChronoTimer timer;
     m_session.m_drive.readExactBlock(reinterpret_cast<void *>(&uhl1), sizeof(uhl1),
       "[FileReader::position] - Reading UHL1");
     m_readerTimer.headerBlocks[2] = timer.elapsedTime();
-    m_session.setCurrentBlockId(m_session.getCurrentBlockId() + 1);
   }
   {
     ChronoTimer timer;
@@ -252,6 +247,7 @@ void CtaFileReader2::checkHeaders(const cta::RetrieveJob &fileToRecall) {
     m_readerTimer.headerTM = timer.elapsedTime();
   }
   // after this we should be where we want, i.e. at the beginning of the file
+  m_session.setCurrentBlockId(m_session.getCurrentBlockId() + 4); // 3 data blocks + 1 file mark
   m_session.setCurrentFilePart(PartOfFile::Payload);
 
   // the size of the headers is fine, now let's check each header
