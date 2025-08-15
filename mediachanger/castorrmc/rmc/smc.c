@@ -133,7 +133,7 @@ static int smc_qdrive (
 		nbelem = 1;
 	}
 	if ((element_info = malloc (nbelem * sizeof(struct smc_element_info))) == NULL) {
-		json_log_err (__FUNCTION__, SR012);
+		json_log(L_ERR, __FUNCTION__, SR012);
 		return (USERR);
 	}
 	if ((c = rmc_read_elem_status (rmchost, 4,
@@ -255,7 +255,7 @@ static int smc_qport (
 
 	nbelem = robot_info->port_count;
 	if ((element_info = malloc (nbelem * sizeof(struct smc_element_info))) == NULL) {
-		json_log_err (__FUNCTION__, SR012);
+		json_log(L_ERR, __FUNCTION__, SR012);
 		return (USERR);
 	}
 
@@ -319,7 +319,7 @@ static int smc_qslot (
 	if (slotaddr < 0)
 		slotaddr = 0;
 	if ((element_info = malloc (nbelem * sizeof(struct smc_element_info))) == NULL) {
-		json_log_err (__FUNCTION__, SR012);
+		json_log(L_ERR, __FUNCTION__, SR012);
 		return (USERR);
 	}
 
@@ -410,7 +410,7 @@ static int smc_qvid (
 			nbelem = 1;
 	}
 	if ((element_info = malloc (nbelem * sizeof(struct smc_element_info))) == NULL) {
-		json_log_err (__FUNCTION__, SR012);
+		json_log(L_ERR, __FUNCTION__, SR012);
 		return (USERR);
 	}
 
@@ -466,28 +466,28 @@ int main(const int argc,
 		case 'D':	/* drive ordinal */
 			drvord = strtol (optarg, &dp, 10);
 			if (*dp != '\0' || drvord < 0) {
-				json_log_err (__FUNCTION__, SR001);
+				json_log(L_ERR, __FUNCTION__, SR001);
 				errflg++;
 			}
 			break;
 		case 'd':	/* demount */
 		case 'e':	/* export */
 			if (req_type) {
-				json_log_err (__FUNCTION__, SR002, req_type, c);
+				json_log(L_ERR, __FUNCTION__, SR002, req_type, c);
 				errflg++;
 			} else
 				req_type = c;
 			break;
 		case 'i':	/* import */
 			if (req_type) {
-				json_log_err (__FUNCTION__, SR002, req_type, c);
+				json_log(L_ERR, __FUNCTION__, SR002, req_type, c);
 				errflg++;
 			} else
 				req_type = c;
 			break;
 		case 'm':	/* mount */
 			if (req_type) {
-				json_log_err (__FUNCTION__, SR002, req_type, c);
+				json_log(L_ERR, __FUNCTION__, SR002, req_type, c);
 				errflg++;
 			} else
 				req_type = c;
@@ -495,13 +495,13 @@ int main(const int argc,
 		case 'N':	/* number of elements */
 			nbelem = strtol (optarg, &dp, 10);
 			if (*dp != '\0' || nbelem <= 0) {
-				json_log_err (__FUNCTION__, SR010);
+				json_log(L_ERR, __FUNCTION__, SR010);
 				errflg++;
 			}
 			break;
 		case 'q':	/* query */
 			if (req_type) {
-				json_log_err (__FUNCTION__, SR002, req_type, c);
+				json_log(L_ERR, __FUNCTION__, SR002, req_type, c);
 				errflg++;
 			} else {
 				req_type = c;
@@ -509,7 +509,7 @@ int main(const int argc,
 				if (qry_type != 'D' && qry_type != 'L' &&
 				    qry_type != 'P' && qry_type != 'S' &&
 				    qry_type != 'V') {
-					json_log_err (__FUNCTION__, SR003, qry_type);
+					json_log(L_ERR, __FUNCTION__, SR003, qry_type);
 					errflg++;
 				}
 			}
@@ -517,7 +517,7 @@ int main(const int argc,
 		case 'S':	/* starting slot */
 			slotaddr = strtol (optarg, &dp, 10);
 			if (*dp != '\0' || slotaddr < 0) {
-				json_log_err (__FUNCTION__, SR001);
+				json_log(L_ERR, __FUNCTION__, SR001);
 				errflg++;
 			}
 			break;
@@ -525,7 +525,7 @@ int main(const int argc,
 			vid[sizeof(vid)-1] = '\0';
 			strncpy(vid, optarg, sizeof(vid));
 			if(vid[sizeof(vid)-1] != '\0') {
-				json_log_err (__FUNCTION__, SR004, optarg);
+				json_log(L_ERR, __FUNCTION__, SR004, optarg);
 				errflg++;
 				vid[sizeof(vid)-1] = '\0';
 			}
@@ -540,19 +540,19 @@ int main(const int argc,
 		}
 	}
 	if (req_type && *rmchost == '\0') {
-		json_log_err (__FUNCTION__, "rmcserver must be specified\n");
+		json_log(L_ERR, __FUNCTION__, "rmcserver must be specified\n");
 		errflg++;
 	}
 	if (req_type == 'd' && drvord < 0) {
-		json_log_err (__FUNCTION__, SR006);
+		json_log(L_ERR, __FUNCTION__, SR006);
 		errflg++;
 	}
 	if (req_type == 'e' && *vid =='\0') {
-		json_log_err (__FUNCTION__, SR011);
+		json_log(L_ERR, __FUNCTION__, SR011);
 		errflg++;
 	}
 	if (req_type == 'm' && (*vid =='\0' || drvord < 0)) {
-		json_log_err (__FUNCTION__, SR007);
+		json_log(L_ERR, __FUNCTION__, SR007);
 		errflg++;
 	}
 	if (errflg || req_type == 0) {
@@ -566,11 +566,11 @@ int main(const int argc,
 	}
 
 	if (drvord >= robot_info.device_count) {
-		json_log_err (__FUNCTION__, SR008, robot_info.device_count);
+		json_log(L_ERR, __FUNCTION__, SR008, robot_info.device_count);
 		exit (USERR);
 	}
 	if (slotaddr > (robot_info.slot_count + robot_info.slot_start)) {
-		json_log_err (__FUNCTION__, SR016, robot_info.slot_count + robot_info.slot_start);
+		json_log(L_ERR, __FUNCTION__, SR016, robot_info.slot_count + robot_info.slot_start);
 		exit (USERR);
 	}
 

@@ -622,10 +622,10 @@ void sperror(char    *msg)
   if (serrno)     {
     if(sstrerror_r(serrno, buf, sizeof(buf))) {
       /* sstrerror_r() failed so just print msg */
-      json_log_err(__FUNCTION__,"%s",msg);
+      JSON_LOG(L_ERR,"%s",msg);
     } else {
       /* sstrerror_r() succeeded so print both msg and buf */
-      json_log_err(__FUNCTION__,"%s: %s", msg, buf);
+      JSON_LOG(L_ERR,"%s: %s", msg, buf);
     }
   } else    {
     perror(msg);

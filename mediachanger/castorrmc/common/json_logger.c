@@ -28,7 +28,7 @@
 
 #define HOST_NAME_MAX 24
 
-static const char *short_hostname(void) {
+static const char* short_hostname(void) {
   static char cached[HOST_NAME_MAX + 1];
   static int init = 0;
 
@@ -37,133 +37,180 @@ static const char *short_hostname(void) {
       strncpy(cached, "unknown", sizeof cached);
       cached[sizeof cached - 1] = '\0';
     } else {
-      char *dot = strchr(cached, '.');
-      if (dot) *dot = '\0';
+      char* dot = strchr(cached, '.');
+      if (dot) {
+        *dot = '\0';
+      }
     }
     init = 1;
   }
   return cached;
 }
 
-static void json_escape(const char *src, char *dst, size_t dst_size) {
-    size_t out = 0;
-    for (; *src && out + 1 < dst_size; src++) {
-        unsigned char c = (unsigned char)*src;
-        const char *esc = NULL;
-        switch (c) {
-            case '\"': esc = "\\\""; break;
-            case '\\': esc = "\\\\"; break;
-            case '\n': esc = "";  break;
-            case '\r': esc = "";  break;
-            case '\t': esc = "    ";  break;
-            default:
-                if (c < 0x20) {
-                    /* Optional: hex escape for other control chars */
-                    static char buf[7];
-                    snprintf(buf, sizeof(buf), "\\u%04X", c);
-                    esc = buf;
-                }
-                break;
-        }
-        if (esc) {
-            size_t len = strlen(esc);
-            if (out + len >= dst_size - 1) break;
-            memcpy(dst + out, esc, len);
-            out += len;
-        } else {
-            dst[out++] = (char)c;
-        }
-    }
-    dst[out] = '\0';
+static const char* getLogLevel(enum LogLevel lvl) {
+  static const char* logLevels[] = {"DEBUG", "INFO", "WARNING", "ERROR", "CRITICAL"};
+  size_t numLogLevels = sizeof(logLevels) / sizeof(logLevels[0]);
+  if (lvl < 0 || lvl >= numLogLevels) {
+    // Just log with info in this case
+    return "INFO";
+  }
+  return logLevels[lvl];
 }
 
-int rmc_logit(const char *const lvl, const char *const msg) {
-  // 1 for the msg buffer and 1 for the rest
-  char prtbuf[2*RMC_PRTBUFSZ];
-  int save_errno = save_errno = errno;
+static void json_escape(const char* src, char* dst, size_t dst_size) {
+  size_t out = 0;
+  for (; *src && out + 1 < dst_size; src++) {
+    unsigned char c = (unsigned char) *src;
+    const char* esc = NULL;
+    switch (c) {
+      case '\"':
+        esc = "\\\"";
+        break;
+      case '\\':
+        esc = "\\\\";
+        break;
+      case '\n':
+        esc = "";
+        break;
+      case '\r':
+        esc = "";
+        break;
+      case '\t':
+        esc = "    ";
+        break;
+      default:
+        if (c < 0x20) {
+          /* Optional: hex escape for other control chars */
+          static char buf[7];
+          snprintf(buf, sizeof(buf), "\\u%04X", c);
+          esc = buf;
+        }
+        break;
+    }
+    if (esc) {
+      size_t len = strlen(esc);
+      if (out + len >= dst_size - 1) {
+        break;
+      }
+      memcpy(dst + out, esc, len);
+      out += len;
+    } else {
+      dst[out++] = (char) c;
+    }
+  }
+  dst[out] = '\0';
+}
 
-  struct timespec ts;
-  clock_gettime(CLOCK_REALTIME, &ts);
-
-  struct tm local_tm;
-  localtime_r(&ts.tv_sec, &local_tm);
-  char local_time_str[64];
-  strftime(local_time_str, sizeof(local_time_str), "%FT%T%z", &local_tm);
-
-  const char *hostname = short_hostname();
-  const char *program = "cta-rmcd";
-
-  char esc_msg[RMC_PRTBUFSZ];
-  json_escape(msg, esc_msg, sizeof esc_msg);
-  snprintf(prtbuf, sizeof(prtbuf),
-            "{\"epoch_time\":%lld.%09ld,"
-            "\"local_time\":\"%s\","
-            "\"hostname\":\"%s\","
-            "\"program\":\"%s\","
-            "\"log_level\":\"%s\","
-            "\"pid\":%d,"
-            "\"message\":\"%s\""
-            "}\n",
-            (long long)ts.tv_sec, ts.tv_nsec,
-            local_time_str,
-            hostname,
-            program,
-            lvl,
-            getpid(),
-            esc_msg);
-
+int log_to_file(const char* const msg) {
   int fd_log = open("/var/log/cta/cta-rmcd.log", O_WRONLY | O_CREAT | O_APPEND, 0640);
-  if(fd_log < 0) {
-    errno = save_errno;
+  if (fd_log < 0) {
     return -1;
   }
-  write(fd_log, prtbuf, strnlen(prtbuf, RMC_PRTBUFSZ));
+
+  write(fd_log, msg, strnlen(msg, RMC_PRTBUFSZ));
   close(fd_log);
-  errno = save_errno;
   return 0;
 }
 
-// There is some duplicate code in the following functions, but reducing this is
-// not trivial due to the variadic arguments
-// simpler to just keep it separate
-int json_log_info(const char *const func, const char *const msg, ...) {
-  va_list args;
-  char msgbuf[RMC_PRTBUFSZ];
-  int off = snprintf(msgbuf, sizeof msgbuf, "In %s(): ", func);
-  if (off < 0) off = 0;
-  if ((size_t)off >= sizeof msgbuf) off = (int)sizeof msgbuf - 1;
-
-  va_start(args, msg);
-  vsnprintf(msgbuf + off, sizeof msgbuf - (size_t)off, msg, args);
-  va_end(args);
-
-  return rmc_logit("INFO", msgbuf);
+void write_kv(FILE* logstream, const struct kv field) {
+  switch (field.type) {
+    case KV_STRING: {
+      char esc_val[RMC_PRTBUFSZ];
+      json_escape(field.val.vstr ? field.val.vstr : "", esc_val, sizeof esc_val);
+      fprintf(logstream, "\"%s\":\"%s\"", field.key, esc_val);
+    } break;
+    case KV_STRING_UNQUOTED: {
+      char esc_val[RMC_PRTBUFSZ];
+      json_escape(field.val.vstr ? field.val.vstr : "", esc_val, sizeof esc_val);
+      fprintf(logstream, "\"%s\":%s", field.key, esc_val);
+    } break;
+    case KV_INT64:
+      fprintf(logstream, "\"%s\":%lld", field.key, (long long) field.val.vint64);
+      break;
+    case KV_DOUBLE:
+      fprintf(logstream, "\"%s\":%.17g", field.key, field.val.vdouble);
+      break;
+    case KV_BOOL:
+      fprintf(logstream, "\"%s\":%s", field.key, field.val.vbool ? "true" : "false");
+      break;
+  }
 }
 
-int json_log_err(const char *const func, const char *const msg, ...) {
-  va_list args;
-  char msgbuf[RMC_PRTBUFSZ];
-  int off = snprintf(msgbuf, sizeof msgbuf, "In %s(): ", func);
-  if (off < 0) off = 0;
-  if ((size_t)off >= sizeof msgbuf) off = (int)sizeof msgbuf - 1;
+const char* constr_log_line(enum LogLevel lvl, const char* msg, const struct kv* fields, size_t nfields) {
+  const int short_buffer_size = 64;
 
-  va_start(args, msg);
-  vsnprintf(msgbuf + off, sizeof msgbuf - (size_t)off, msg, args);
-  va_end(args);
+  // Get some timing info
+  struct timespec ts;
+  clock_gettime(CLOCK_REALTIME, &ts);
+  struct tm local_tm;
+  localtime_r(&ts.tv_sec, &local_tm);
+  char local_time_str[short_buffer_size];
+  strftime(local_time_str, sizeof(local_time_str), "%FT%T%z", &local_tm);
+  const char epochbuf[short_buffer_size];
+  snprintf(epochbuf, short_buffer_size, "%lld.%09ld", (long long) ts.tv_sec, ts.tv_nsec);
 
-  return rmc_logit("ERROR", msgbuf);
+  struct kv base_labels[] = {KV_STR_U("epoch_time", epochbuf),
+                             KV_STR("local_time", local_time_str),
+                             KV_STR("hostname", short_hostname()),
+                             KV_STR("program", "cta-rmcd"),
+                             KV_STR("log_level", getLogLevel(lvl)),
+                             KV_INT("pid", getpid()),
+                             KV_STR("message", msg)};
+  const int nbaselabels = 7;
+
+  // Build string
+  char* buf = NULL;
+  size_t len = 0;
+  FILE* logstream = open_memstream(&buf, &len);
+  if (!logstream) {
+    return NULL;
+  }
+  fprintf(logstream, "{");
+  for (int i = 0; i < nbaselabels; i++) {
+    write_kv(logstream, base_labels[i]);
+    fprintf(logstream, ",");
+  }
+  for (int i = 0; i < nfields; i++) {
+    write_kv(logstream, fields[i]);
+    if (i != nfields - 1) {
+      fprintf(logstream, ",");
+    }
+  }
+  fprintf(logstream, "}\n");
+  fflush(logstream);
+  fclose(logstream);
+
+  return buf;
 }
 
-int json_log_warn(const char *const func, const char *const msg, ...) {
+int json_log_kv(enum LogLevel lvl,
+                const char* const func,
+                const struct kv* fields,
+                size_t nfields,
+                const char* const msg,
+                ...) {
+  int save_errno = errno;
+
   va_list args;
   char msgbuf[RMC_PRTBUFSZ];
   int off = snprintf(msgbuf, sizeof msgbuf, "In %s(): ", func);
-  if (off < 0) off = 0;
-  if ((size_t)off >= sizeof msgbuf) off = (int)sizeof msgbuf - 1;
+  if (off < 0) {
+    off = 0;
+  }
+  if ((size_t) off >= sizeof msgbuf) {
+    off = (int) sizeof msgbuf - 1;
+  }
 
   va_start(args, msg);
-  vsnprintf(msgbuf + off, sizeof msgbuf - (size_t)off, msg, args);
+  vsnprintf(msgbuf + off, sizeof msgbuf - (size_t) off, msg, args);
   va_end(args);
 
-  return rmc_logit("WARN", msgbuf);
+  const char* log_line = constr_log_line(lvl, msgbuf, fields, nfields);
+  if (log_line == NULL) {
+    return -1;
+  }
+  int success = log_to_file(log_line);
+  free(log_line);
+  errno = save_errno;
+  return success;
 }

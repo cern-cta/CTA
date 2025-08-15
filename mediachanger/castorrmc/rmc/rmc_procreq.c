@@ -52,20 +52,25 @@ int rmc_srv_export(const struct rmc_srv_rqst_context *const rqst_context) {
 	const char* req_data_end = rqst_context->req_data+REQ_DATA_SIZE;
 	unmarshall_LONG (rbp, uid);
 	unmarshall_LONG (rbp, gid);
-	json_log_info (__FUNCTION__,RMC92, "export", uid, gid, rqst_context->clienthost);
+
+  char fieldsbuf[RMC_PRTBUFSZ];
+
+
+
+	json_log(L_INFO, __FUNCTION__,RMC92, "export", uid, gid, rqst_context->clienthost);
 	/* Unmarshall and ignore the loader field as it is no longer used */
 	{
 		char smc_ldr[CA_MAXRBTNAMELEN+1];
 		if(unmarshall_STRINGN(&rbp, req_data_end, smc_ldr, CA_MAXRBTNAMELEN+1)) {
 			rmc_sendrep (rqst_context->rpfd, MSG_ERR, RMC06,
 				"loader");
-			json_log_info (__FUNCTION__,"returns %d", ERMCUNREC);
+			json_log(L_ERR, __FUNCTION__,"returns %d", ERMCUNREC);
 			return ERMCUNREC;
 		}
 	}
 	if(unmarshall_STRINGN(&rbp, req_data_end, vid, CA_MAXVIDLEN+1)) {
 		rmc_sendrep (rqst_context->rpfd, MSG_ERR, RMC06, "vid");
-		json_log_info (__FUNCTION__,"returns %d", ERMCUNREC);
+		json_log(L_ERR, __FUNCTION__,"returns %d", ERMCUNREC);
 		return ERMCUNREC;
 	}
 	snprintf (logbuf, CA_MAXVIDLEN+8, "export %s", vid);
@@ -74,7 +79,7 @@ int rmc_srv_export(const struct rmc_srv_rqst_context *const rqst_context) {
 	c = smc_export (rqst_context->rpfd, g_extended_robot_info.smc_fd,
           g_extended_robot_info.smc_ldr, &g_extended_robot_info.robot_info, vid);
 	if (c) c += ERMCRBTERR;
-	json_log_info (__FUNCTION__,"returns %d", c);
+	json_log(L_INFO, __FUNCTION__,"returns %d", c);
 	return c;
 }
 
@@ -102,20 +107,20 @@ int rmc_srv_findcart(const struct rmc_srv_rqst_context *const rqst_context) {
 	const char* req_data_end = rqst_context->req_data+REQ_DATA_SIZE;
 	unmarshall_LONG (rbp, uid);
 	unmarshall_LONG (rbp, gid);
-	json_log_info (__FUNCTION__,RMC92, "findcart", uid, gid, rqst_context->clienthost);
+	json_log(L_INFO, __FUNCTION__,RMC92, "findcart", uid, gid, rqst_context->clienthost);
 	/* Unmarshall and ignore the loader fiel as it is no longer used */
 	{
 		char smc_ldr[CA_MAXRBTNAMELEN+1];
 		if(unmarshall_STRINGN(&rbp, req_data_end, smc_ldr, CA_MAXRBTNAMELEN+1)) {
 			rmc_sendrep (rqst_context->rpfd, MSG_ERR, RMC06,
 				"loader");
-			json_log_info (__FUNCTION__,"returns %d", ERMCUNREC);
+			json_log(L_ERR, __FUNCTION__,"returns %d", ERMCUNREC);
 			return ERMCUNREC;
 		}
 	}
 	if(unmarshall_STRINGN(&rbp, req_data_end, template, 40)) {
 		rmc_sendrep (rqst_context->rpfd, MSG_ERR, RMC06, "template");
-		json_log_err (__FUNCTION__,"returns %d", ERMCUNREC);
+		json_log(L_ERR, __FUNCTION__,"returns %d", ERMCUNREC);
 		return ERMCUNREC;
 	}
 	unmarshall_LONG (rbp, type);
@@ -126,12 +131,12 @@ int rmc_srv_findcart(const struct rmc_srv_rqst_context *const rqst_context) {
 
 	if (nbelem < 1) {
 		rmc_sendrep (rqst_context->rpfd, MSG_ERR, RMC06, "nbelem");
-		json_log_err (__FUNCTION__,"returns %d", ERMCUNREC);
+		json_log(L_ERR, __FUNCTION__,"returns %d", ERMCUNREC);
 		return ERMCUNREC;
 	}
 	if ((element_info = malloc (nbelem * sizeof(struct smc_element_info))) == NULL) {
 		rmc_sendrep (rqst_context->rpfd, MSG_ERR, RMC05);
-		json_log_err (__FUNCTION__,"returns %d", ERMCUNREC);
+		json_log(L_ERR, __FUNCTION__,"returns %d", ERMCUNREC);
 		return ERMCUNREC;
 	}
 	c = smc_find_cartridge (g_extended_robot_info.smc_fd,
@@ -143,13 +148,13 @@ int rmc_srv_findcart(const struct rmc_srv_rqst_context *const rqst_context) {
 		rmc_sendrep (rqst_context->rpfd, MSG_ERR, RMC02,
 			"smc_find_cartridge", msgaddr);
 		c += ERMCRBTERR;
-		json_log_err (__FUNCTION__,"returns %d", c);
+		json_log(L_ERR, __FUNCTION__,"returns %d", c);
 		return c;
 	}
 	if ((repbuf = malloc (c * 18 + 4)) == NULL) {
 		rmc_sendrep (rqst_context->rpfd, MSG_ERR, RMC05);
 		free (element_info);
-		json_log_err (__FUNCTION__,"returns %d", ERMCUNREC);
+		json_log(L_ERR, __FUNCTION__,"returns %d", ERMCUNREC);
 		return ERMCUNREC;
 	}
 	sbp = repbuf;
@@ -159,7 +164,7 @@ int rmc_srv_findcart(const struct rmc_srv_rqst_context *const rqst_context) {
 	free (element_info);
 	rmc_sendrep (rqst_context->rpfd, MSG_DATA, sbp - repbuf, repbuf);
 	free (repbuf);
-	json_log_info (__FUNCTION__,"returns %d", 0);
+	json_log(L_INFO, __FUNCTION__,"returns %d", 0);
 	return 0;
 }
 
@@ -177,14 +182,14 @@ int rmc_srv_getgeom(const struct rmc_srv_rqst_context *const rqst_context) {
 	const char* req_data_end = rqst_context->req_data+REQ_DATA_SIZE;
 	unmarshall_LONG (rbp, uid);
 	unmarshall_LONG (rbp, gid);
-	json_log_info (__FUNCTION__,RMC92, "getgeom", uid, gid, rqst_context->clienthost);
+	json_log(L_INFO, __FUNCTION__,RMC92, "getgeom", uid, gid, rqst_context->clienthost);
 	/* Unmarshall and ignore the loader field as it is no longer used */
 	{
 		char smc_ldr[CA_MAXRBTNAMELEN+1];
 		if(unmarshall_STRINGN(&rbp, req_data_end, smc_ldr, CA_MAXRBTNAMELEN+1)) {
 			rmc_sendrep (rqst_context->rpfd, MSG_ERR, RMC06,
 				"loader");
-			json_log_err (__FUNCTION__,"returns %d", ERMCUNREC);
+			json_log(L_ERR, __FUNCTION__,"returns %d", ERMCUNREC);
 			return ERMCUNREC;
 		}
 	}
@@ -202,7 +207,7 @@ int rmc_srv_getgeom(const struct rmc_srv_rqst_context *const rqst_context) {
 	marshall_LONG (sbp, g_extended_robot_info.robot_info.device_start);
 	marshall_LONG (sbp, g_extended_robot_info.robot_info.device_count);
 	rmc_sendrep (rqst_context->rpfd, MSG_DATA, sbp - repbuf, repbuf);
-	json_log_info (__FUNCTION__,"returns %d", 0);
+	json_log(L_INFO, __FUNCTION__,"returns %d", 0);
 	return 0;
 }
 
@@ -220,20 +225,20 @@ int rmc_srv_import(const struct rmc_srv_rqst_context *const rqst_context) {
 	const char* req_data_end = rqst_context->req_data+REQ_DATA_SIZE;
 	unmarshall_LONG (rbp, uid);
 	unmarshall_LONG (rbp, gid);
-	json_log_info (__FUNCTION__,RMC92, "import", uid, gid, rqst_context->clienthost);
+	json_log(L_INFO, __FUNCTION__,RMC92, "import", uid, gid, rqst_context->clienthost);
 	/* Unmarshall and ignore the loader field as it is no longer used */
 	{
 		char smc_ldr[CA_MAXRBTNAMELEN+1];
 		if(unmarshall_STRINGN(&rbp, req_data_end, smc_ldr, CA_MAXRBTNAMELEN+1)) {
 			rmc_sendrep (rqst_context->rpfd, MSG_ERR, RMC06,
 				"loader");
-			json_log_err (__FUNCTION__,"returns %d", ERMCUNREC);
+			json_log(L_ERR, __FUNCTION__,"returns %d", ERMCUNREC);
 			return ERMCUNREC;
 		}
 	}
 	if(unmarshall_STRINGN(&rbp, req_data_end, vid, CA_MAXVIDLEN+1)) {
 		rmc_sendrep (rqst_context->rpfd, MSG_ERR, RMC06, "vid");
-		json_log_err (__FUNCTION__,"returns %d", ERMCUNREC);
+		json_log(L_ERR, __FUNCTION__,"returns %d", ERMCUNREC);
 		return ERMCUNREC;
 	}
 	snprintf (logbuf, CA_MAXVIDLEN+8, "import %s", vid);
@@ -242,7 +247,7 @@ int rmc_srv_import(const struct rmc_srv_rqst_context *const rqst_context) {
 	c = smc_import (rqst_context->rpfd, g_extended_robot_info.smc_fd,
 	  g_extended_robot_info.smc_ldr, &g_extended_robot_info.robot_info, vid);
 	if (c) c += ERMCRBTERR;
-	json_log_info (__FUNCTION__,"returns %d", c);
+	json_log(L_INFO, __FUNCTION__,"returns %d", c);
 	return c;
 }
 
@@ -262,20 +267,20 @@ int rmc_srv_mount(const struct rmc_srv_rqst_context *const rqst_context) {
 	const char* req_data_end = rqst_context->req_data+REQ_DATA_SIZE;
 	unmarshall_LONG (rbp, uid);
 	unmarshall_LONG (rbp, gid);
-	json_log_info (__FUNCTION__,RMC92, "mount", uid, gid, rqst_context->clienthost);
+	json_log(L_INFO, __FUNCTION__,RMC92, "mount", uid, gid, rqst_context->clienthost);
 	/* Unmarshall and ignore the loader field as it is no longer used */
 	{
 		char smc_ldr[CA_MAXRBTNAMELEN+1];
 		if(unmarshall_STRINGN(&rbp, req_data_end, smc_ldr, CA_MAXRBTNAMELEN+1)) {
 			rmc_sendrep (rqst_context->rpfd, MSG_ERR, RMC06,
 				"loader");
-			json_log_err (__FUNCTION__,"returns %d", ERMCUNREC);
+			json_log(L_ERR, __FUNCTION__,"returns %d", ERMCUNREC);
 			return ERMCUNREC;
 		}
 	}
 	if(unmarshall_STRINGN(&rbp, req_data_end, vid, CA_MAXVIDLEN+1)) {
 		rmc_sendrep (rqst_context->rpfd, MSG_ERR, RMC06, "vid");
-		json_log_err (__FUNCTION__,"returns %d", ERMCUNREC);
+		json_log(L_ERR, __FUNCTION__,"returns %d", ERMCUNREC);
 		return ERMCUNREC;
 	}
 	unmarshall_WORD (rbp, invert);
@@ -287,7 +292,7 @@ int rmc_srv_mount(const struct rmc_srv_rqst_context *const rqst_context) {
 	  g_extended_robot_info.smc_ldr, &g_extended_robot_info.robot_info, drvord,
 	  vid, invert);
 	if (c) c += ERMCRBTERR;
-	json_log_info (__FUNCTION__,"returns %d", c);
+	json_log(L_INFO, __FUNCTION__,"returns %d", c);
 	return c;
 }
 
@@ -314,14 +319,14 @@ int rmc_srv_readelem(const struct rmc_srv_rqst_context *const rqst_context) {
 	const char* req_data_end = rqst_context->req_data+REQ_DATA_SIZE;
 	unmarshall_LONG (rbp, uid);
 	unmarshall_LONG (rbp, gid);
-	json_log_info (__FUNCTION__,RMC92, "readelem", uid, gid, rqst_context->clienthost);
+	json_log(L_INFO, __FUNCTION__,RMC92, "readelem", uid, gid, rqst_context->clienthost);
 	/* Unmarshall and ignore the loader field as it is no longer used */
 	{
 		char smc_ldr[CA_MAXRBTNAMELEN+1];
 		if(unmarshall_STRINGN(&rbp, req_data_end, smc_ldr, CA_MAXRBTNAMELEN+1)) {
 			rmc_sendrep (rqst_context->rpfd, MSG_ERR, RMC06,
 				"loader");
-			json_log_err (__FUNCTION__,"returns %d", ERMCUNREC);
+			json_log(L_ERR, __FUNCTION__,"returns %d", ERMCUNREC);
 			return ERMCUNREC;
 		}
 	}
@@ -333,17 +338,17 @@ int rmc_srv_readelem(const struct rmc_srv_rqst_context *const rqst_context) {
 
 	if (type < 0 || type > 4) {
 		rmc_sendrep (rqst_context->rpfd, MSG_ERR, RMC06, "type");
-		json_log_err (__FUNCTION__,"returns %d", ERMCUNREC);
+		json_log(L_ERR, __FUNCTION__,"returns %d", ERMCUNREC);
 		return ERMCUNREC;
 	}
 	if (nbelem < 1) {
 		rmc_sendrep (rqst_context->rpfd, MSG_ERR, RMC06, "nbelem");
-		json_log_err (__FUNCTION__,"returns %d", ERMCUNREC);
+		json_log(L_ERR, __FUNCTION__,"returns %d", ERMCUNREC);
 		return ERMCUNREC;
 	}
 	if ((element_info = malloc (nbelem * sizeof(struct smc_element_info))) == NULL) {
 		rmc_sendrep (rqst_context->rpfd, MSG_ERR, RMC05);
-		json_log_err (__FUNCTION__,"returns %d", ERMCUNREC);
+		json_log(L_ERR, __FUNCTION__,"returns %d", ERMCUNREC);
 		return ERMCUNREC;
 	}
 	if ((c = smc_read_elem_status (g_extended_robot_info.smc_fd,
@@ -354,13 +359,13 @@ int rmc_srv_readelem(const struct rmc_srv_rqst_context *const rqst_context) {
 		rmc_sendrep (rqst_context->rpfd, MSG_ERR, RMC02,
 			"smc_read_elem_status", msgaddr);
 		c += ERMCRBTERR;
-		json_log_err (__FUNCTION__,"returns %d", c);
+		json_log(L_ERR, __FUNCTION__,"returns %d", c);
 		return c;
 	}
 	if ((repbuf = malloc (c * 18 + 4)) == NULL) {
 		rmc_sendrep (rqst_context->rpfd, MSG_ERR, RMC05);
 		free (element_info);
-		json_log_err (__FUNCTION__,"returns %d", ERMCUNREC);
+		json_log(L_ERR, __FUNCTION__,"returns %d", ERMCUNREC);
 		return ERMCUNREC;
 	}
 	sbp = repbuf;
@@ -370,7 +375,7 @@ int rmc_srv_readelem(const struct rmc_srv_rqst_context *const rqst_context) {
 	free (element_info);
 	rmc_sendrep (rqst_context->rpfd, MSG_DATA, sbp - repbuf, repbuf);
 	free (repbuf);
-	json_log_info (__FUNCTION__,"returns %d", 0);
+	json_log(L_INFO, __FUNCTION__,"returns %d", 0);
 	return 0;
 }
 
@@ -390,19 +395,19 @@ int rmc_srv_unmount(const struct rmc_srv_rqst_context *const rqst_context) {
 	const char* req_data_end = rqst_context->req_data+REQ_DATA_SIZE;
 	unmarshall_LONG (rbp, uid);
 	unmarshall_LONG (rbp, gid);
-	json_log_info (__FUNCTION__,RMC92, "unmount", uid, gid, rqst_context->clienthost);
+	json_log(L_INFO, __FUNCTION__,RMC92, "unmount", uid, gid, rqst_context->clienthost);
 	/* Unmarshall and ignore the loader field as it is no longer used */
 	{
 		char smc_ldr[CA_MAXRBTNAMELEN+1];
 		if(unmarshall_STRINGN(&rbp, req_data_end, smc_ldr, CA_MAXRBTNAMELEN+1)) {
 			rmc_sendrep (rqst_context->rpfd, MSG_ERR, RMC06, "loader");
-			json_log_err (__FUNCTION__,"returns %d", ERMCUNREC);
+			json_log(L_ERR, __FUNCTION__,"returns %d", ERMCUNREC);
 			return ERMCUNREC;
 		}
 	}
 	if(unmarshall_STRINGN(&rbp, req_data_end, vid, CA_MAXVIDLEN+1)) {
 		rmc_sendrep (rqst_context->rpfd, MSG_ERR, RMC06, "vid");
-		json_log_err (__FUNCTION__,"returns %d", ERMCUNREC);
+		json_log(L_ERR, __FUNCTION__,"returns %d", ERMCUNREC);
 		return ERMCUNREC;
 	}
 	unmarshall_WORD (rbp, drvord);
@@ -414,7 +419,7 @@ int rmc_srv_unmount(const struct rmc_srv_rqst_context *const rqst_context) {
 	  g_extended_robot_info.smc_ldr, &g_extended_robot_info.robot_info, drvord,
 	  force == 0 ? vid : "");
 	if (c) c += ERMCRBTERR;
-	json_log_info (__FUNCTION__,"returns %d", c);
+	json_log(L_INFO, __FUNCTION__,"returns %d", c);
 	return c;
 }
 

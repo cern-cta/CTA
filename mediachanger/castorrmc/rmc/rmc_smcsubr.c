@@ -534,7 +534,7 @@ int smc_lasterror(
 {
 	unsigned int i;
 
-	json_log_info(__FUNCTION__, "Function entered:"
+	json_log(L_INFO,__FUNCTION__, "Function entered:"
 		" asc=%d ascq=%d save_errno=%d rc=%d sensekey=%d skvalid=%d",
 		smc_status.asc, smc_status.ascq, smc_status.save_errno,
 		smc_status.rc, smc_status.sensekey, smc_status.skvalid);
@@ -558,14 +558,14 @@ int smc_lasterror(
 				action_to_str(scsierr_acttbl[i].action);
 			*msgaddr = scsierr_acttbl[i].txt;
 
-			json_log_info(__FUNCTION__, "Entry found in scsierr_acttbl:"
+			json_log(L_INFO, __FUNCTION__, "Entry found in scsierr_acttbl:"
 				" action_str=%s", action_str);
 
 			return (scsierr_acttbl[i].action);
 		}
 	}
 
-	json_log_info(__FUNCTION__, "No matching entry in scsierr_acttbl");
+	json_log(L_INFO, __FUNCTION__, "No matching entry in scsierr_acttbl");
 
 	return (RBT_NORETRY);
 }

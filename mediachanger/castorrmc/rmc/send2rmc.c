@@ -71,26 +71,26 @@ int send2rmc(
 		serrno = 0;
 	}
 	if ((hp = Cgethostbyname (rmchost)) == NULL) {
-		json_log_err (__FUNCTION__,RMC09, "Host unknown:", rmchost);
+		json_log(L_ERR, __FUNCTION__,RMC09, "Host unknown:", rmchost);
 		serrno = ERMCUNREC;
 		return (-1);
 	}
 	sin.sin_addr.s_addr = ((struct in_addr *)(hp->h_addr))->s_addr;
 
 	if ((s = socket (AF_INET, SOCK_STREAM, 0)) < 0) {
-		json_log_err (__FUNCTION__,RMC02, "socket", neterror());
+		json_log(L_ERR, __FUNCTION__,RMC02, "socket", neterror());
 		serrno = SECOMERR;
 		return (-1);
 	}
 
 	if (connect (s, (struct sockaddr *) &sin, sizeof(sin)) < 0) {
 		if (errno == ECONNREFUSED) {
-			json_log_err (__FUNCTION__,RMC00, rmchost);
+			json_log(L_ERR, __FUNCTION__,RMC00, rmchost);
 			(void) close (s);
 			serrno = ERMCNACT;
 			return (-1);
 		} else {
-			json_log_err (__FUNCTION__,RMC02, "connect", neterror());
+			json_log(L_ERR, __FUNCTION__,RMC02, "connect", neterror());
 			(void) close (s);
 			serrno = SECOMERR;
 			return (-1);
@@ -101,9 +101,9 @@ int send2rmc(
 
 	if ((n = netwrite (s, reqp, reql)) <= 0) {
 		if (n == 0)
-			json_log_err (__FUNCTION__,RMC02, "send", sys_serrlist[SERRNO]);
+			json_log(L_ERR, __FUNCTION__,RMC02, "send", sys_serrlist[SERRNO]);
 		else
-			json_log_err (__FUNCTION__,RMC02, "send", neterror());
+			json_log(L_ERR, __FUNCTION__,RMC02, "send", neterror());
 		(void) close (s);
 		serrno = SECOMERR;
 		return (-1);
@@ -119,9 +119,9 @@ int send2rmc(
 	while (1) {
 		if ((n = netread (s, repbuf, 3 * LONGSIZE)) <= 0) {
 			if (n == 0)
-				json_log_err (__FUNCTION__,RMC02, "recv", sys_serrlist[SERRNO]);
+				json_log(L_ERR, __FUNCTION__,RMC02, "recv", sys_serrlist[SERRNO]);
 			else
-				json_log_err (__FUNCTION__,RMC02, "recv", neterror());
+				json_log(L_ERR, __FUNCTION__,RMC02, "recv", neterror());
 			(void) close (s);
 			serrno = SECOMERR;
 			return (-1);
@@ -140,9 +140,9 @@ int send2rmc(
 		}
 		if ((n = netread (s, repbuf, c)) <= 0) {
 			if (n == 0)
-				json_log_err (__FUNCTION__,RMC02, "recv", sys_serrlist[SERRNO]);
+				json_log(L_ERR, __FUNCTION__,RMC02, "recv", sys_serrlist[SERRNO]);
 			else
-				json_log_err (__FUNCTION__,RMC02, "recv", neterror());
+				json_log(L_ERR, __FUNCTION__,RMC02, "recv", neterror());
 			(void) close (s);
 			serrno = SECOMERR;
 			return (-1);
@@ -150,7 +150,7 @@ int send2rmc(
 		p = repbuf;
 		if (rep_type == MSG_ERR) {
 			unmarshall_STRING (p, prtbuf);
-			json_log_err (NULL, "%s", prtbuf);
+			json_log(L_ERR, NULL, "%s", prtbuf);
 		} else {
 			if (actual_replen + c <= user_repbuf_len)
 				n = c;

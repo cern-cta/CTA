@@ -27,37 +27,8 @@
  *	A backslash is appended to a line to be continued
  *	A continuation line is prefixed by '+ '
  */
-void rmc_logreq(const char *const func, char *const logbuf) {
-	int n1, n2;
-	char *p;
-	char savechrs1[2];
-	char savechrs2[2] = { '\0', '\0' };
-
-	n1 = RMC_LOGBUFSZ - strlen (func) - 36;
-	n2 = strlen (logbuf);
-	p = logbuf;
-	while (n2 > n1) {
-		savechrs1[0] = *(p + n1);
-		savechrs1[1] = *(p + n1 + 1);
-		*(p + n1) = '\\';
-		*(p + n1 + 1) = '\0';
-		json_log_info (__FUNCTION__,RMC98, p);
-		if (p != logbuf) {
-			*p = savechrs2[0];
-			*(p + 1) = savechrs2[1];
-		}
-		p += n1 - 2;
-		savechrs2[0] = *p;
-		savechrs2[1] = *(p + 1);
-		*p = '+';
-		*(p + 1) = ' ';
-		*(p + 2) = savechrs1[0];
-		*(p + 3) = savechrs1[1];
-		n2 -= n1;
-	}
-	json_log_info (__FUNCTION__,RMC98, p);
-	if (p != logbuf) {
-		*p = savechrs2[0];
-		*(p + 1) = savechrs2[1];
-	}
+void rmc_logreq(enum LogLevel lvl, const char *const func, const char *const operation, const char *const status, const char *const msg) {
+  char fieldsbuf[RMC_PRTBUFSZ];
+  int off = snprintf(fieldsbuf, sizeof fieldsbuf, ",\"operation\":\"%s\",\"status\":\"%s\"", operation, status);
+  json_log_with_fields(lvl, fieldsbuf, func, msg);
 }
