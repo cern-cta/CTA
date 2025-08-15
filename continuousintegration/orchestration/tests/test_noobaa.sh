@@ -46,12 +46,12 @@ cd ../../../noobaa-cta-integration/scripts/
 
 # Run test_client.sh (S3 Glacier archival workflow)
 echo "🚀 Running S3 Glacier archival test..."
-./test_client_simple.sh
+./test_client.sh
 archival_result=$?
 
 # Run test_retrieval.sh (S3 Glacier retrieval workflow) 
 echo "🚀 Running S3 Glacier retrieval test..."
-./test_retrieval_simple.sh
+./test_retrieval.sh
 retrieval_result=$?
 
 # Report results
