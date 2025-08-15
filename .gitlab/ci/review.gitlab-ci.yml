@@ -13,6 +13,7 @@ danger-review:
   variables:
     DANGER_GITLAB_USE_THREADS: 1
   script:
+    - exit_code=0
     - danger --verbose --dangerfile=continuousintegration/danger/Dangerfile --fail-on-errors=true || exit_code=$?
     - echo $exit_code > danger_status.txt
   artifacts:
