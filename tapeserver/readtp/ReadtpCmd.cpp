@@ -517,6 +517,13 @@ std::tuple<size_t, castor::tape::tapeFile::FileReader::BlockReadTimer> ReadtpCmd
   fileToRecall.selectedTapeFile().blockId = archiveFile.tapeFiles.front().blockId;
   fileToRecall.positioningMethod = m_testMode == utils::ReadTapeTestMode::USE_FSEC ? cta::PositioningMethod::ByFSeq : cta::PositioningMethod::ByBlock;
 
+  if (readSession.getCurrentBlockId() != fileToRecall.selectedTapeFile().blockId) {
+    params.push_back(cta::log::Param("currentSessionBlockId", readSession.getCurrentBlockId()));
+    params.push_back(cta::log::Param("desiredBlockId", fileToRecall.selectedTapeFile().blockId));
+    params.push_back(cta::log::Param("fSec", fileToRecall.selectedTapeFile().fSeq));
+    m_log(cta::log::WARNING, "Block ID mismatch", params);
+  }
+
   const auto reader = castor::tape::tapeFile::FileReaderFactory::create(readSession, fileToRecall, m_testMode);
   auto checksum_adler32 = castor::tape::tapeserver::daemon::Payload::zeroAdler32();
   const size_t buffer_size = 1 * 1024 * 1024 * 1024;  // 1Gb
