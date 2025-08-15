@@ -12,10 +12,10 @@
   <p align="center">
     The CERN Tape Archive open source tape data management software.
     <br />
-    <a href="https://eoscta.docs.cern.ch/"><strong>Explore the docs »</strong></a>
+    <a href="https://cta.docs.cern.ch/"><strong>Explore the docs »</strong></a>
     <br />
     <br />
-    <a href="https://eoscta.docs.cern.ch/latest/overview/getting_started/">Getting Started</a>
+    <a href="https://eoscta.docs.cern.ch/latest/overview/introduction/">CTA Overview</a>
     ·
     <a href="https://cta.web.cern.ch/">CTA Website</a>
     ·
@@ -36,7 +36,7 @@ CTA is:
 - Scalable, for small and large installations
 - Self-hostable, on-premise
 
-CTA is designed to operate on physical tape infrastructure and is used in combination with a disk buffer system such as [EOS](https://eos-web.web.cern.ch/eos-web/) or [dCache](https://www.dcache.org/). For development purposes it is also possible to run a containerized setup of the CTA components. For this, you can have a look at the [Development documentation](https://eoscta.docs.cern.ch/latest/dev/introduction/).
+CTA is designed to operate on physical tape infrastructure and is used in combination with a disk buffer system such as [EOS](https://eos-web.web.cern.ch/eos-web/) or [dCache](https://www.dcache.org/). For development purposes it is also possible to run a containerized setup of the CTA components. For this, you can have a look at the [Development documentation](https://eoscta.docs.cern.ch/latest/dev/getting_started/).
 
 ## License
 
