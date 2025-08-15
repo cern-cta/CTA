@@ -20,7 +20,6 @@
 #include "rdbms/Login.hpp"
 #include "scheduler/RetrieveJob.hpp"
 #include "tapeserver/castor/tape/tapeserver/daemon/EncryptionControl.hpp"
-#include "tapeserver/castor/tape/tapeserver/daemon/Payload.hpp"
 #include "tapeserver/castor/tape/tapeserver/file/ReadSession.hpp"
 #include "tapeserver/castor/tape/tapeserver/file/ReadSessionFactory.hpp"
 #include "tapeserver/castor/tape/tapeserver/file/Structures.hpp"
@@ -549,15 +548,20 @@ std::tuple<size_t, castor::tape::tapeFile::FileReader::BlockReadTimer> ReadtpCmd
 
   const auto reader = castor::tape::tapeFile::FileReaderFactory::create(readSession, fileToRecall, m_testMode);
   //auto checksum_adler32 = castor::tape::tapeserver::daemon::Payload::zeroAdler32();
-  const size_t buffer_size = 1 * 1024 * 1024 * 1024;  // 1Gb
+  const size_t buffer_size = (1024 + 512) * 1024 * 1024;  // 1.5Gb - Increased buffer size
   size_t read_data_size = 0;
   // allocate one gigabyte buffer
-  auto payload = std::make_unique<castor::tape::tapeserver::daemon::Payload>(buffer_size);
+  if (!m_payload) {
+    // Will allocate on the first file only
+    m_payload = std::make_unique<castor::tape::tapeserver::daemon::Payload>(buffer_size);
+  } else {
+    m_payload->reset();
+  }
   try {
     while (1) {
-      if (payload->remainingFreeSpace() <= reader->getBlockSize()) {
+      if (m_payload->remainingFreeSpace() <= reader->getBlockSize()) {
         // buffer is full, flush to file and update checksum
-        read_data_size += payload->size();
+        read_data_size += m_payload->size();
         {
           castor::tape::tapeFile::FileReader::ChronoTimer t_adler32;
           //checksum_adler32 = payload->adler32(checksum_adler32);
@@ -565,17 +569,17 @@ std::tuple<size_t, castor::tape::tapeFile::FileReader::BlockReadTimer> ReadtpCmd
         }
         {
           castor::tape::tapeFile::FileReader::ChronoTimer t_payloadFlushing;
-          payload->write(wf);
-          payload->reset();
+          m_payload->write(wf);
+          m_payload->reset();
           timePayloadFlushing += t_payloadFlushing.elapsedTime();
         }
       }
-      payload->append(*reader);
+      m_payload->append(*reader);
     }
   } catch (cta::exception::EndOfFile&) {
     // File completely read
   }
-  read_data_size += payload->size();
+  read_data_size += m_payload->size();
   {
     castor::tape::tapeFile::FileReader::ChronoTimer t_adler32;
     //checksum_adler32 = payload->adler32(checksum_adler32);
@@ -583,7 +587,7 @@ std::tuple<size_t, castor::tape::tapeFile::FileReader::BlockReadTimer> ReadtpCmd
   }
   {
     castor::tape::tapeFile::FileReader::ChronoTimer t_payloadFlushing;
-    payload->write(wf);
+    m_payload->write(wf);
     timePayloadFlushing += t_payloadFlushing.elapsedTime();
   }
   //auto cb = cta::checksum::ChecksumBlob(cta::checksum::ChecksumType::ADLER32, checksum_adler32);

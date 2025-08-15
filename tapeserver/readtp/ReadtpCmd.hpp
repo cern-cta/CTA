@@ -19,6 +19,7 @@
 #include "tapeserver/castor/tape/tapeserver/drive/DriveInterface.hpp"
 #include "tapeserver/castor/tape/tapeserver/file/ReadSession.hpp"
 #include "tapeserver/castor/tape/tapeserver/file/FileReader.hpp"
+#include "tapeserver/castor/tape/tapeserver/daemon/Payload.hpp"
 #include "common/CmdLineTool.hpp"
 #include "tapeserver/daemon/common/TapedConfiguration.hpp"
 #include "tapeserver/readtp/ReadtpCmdLineArgs.hpp"
@@ -333,6 +334,8 @@ private:
    * Enable global read session, instead of 1 session per file
    */
   bool m_enableGlobalReadSession;
+
+  std::unique_ptr<castor::tape::tapeserver::daemon::Payload> m_payload;
 
 }; // class ReadtpCmd
 
