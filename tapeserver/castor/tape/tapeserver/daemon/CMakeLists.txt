@@ -21,7 +21,7 @@ include_directories(${PROJECT_BINARY_DIR}/tapeserver)
 include_directories(${CMAKE_SOURCE_DIR})
 include_directories(${PROJECT_BINARY_DIR})
 
-find_package( ZLIB REQUIRED )
+find_package(ZLIB REQUIRED)
 
 set(CTATAPESERVERDAEMON_LIBRARY_SRCS
   CleanerSession.cpp
@@ -47,7 +47,7 @@ set(CTATAPESERVERDAEMON_LIBRARY_SRCS
 add_library(ctaTapeServerDaemon
   ${CTATAPESERVERDAEMON_LIBRARY_SRCS})
 
-target_link_libraries(ctaTapeServerDaemon ctacommon ctascheduler ctacatalogue ctamediachanger TapeDrive ctarao)
+target_link_libraries(ctaTapeServerDaemon ctacommon ctascheduler ctacatalogue ctamediachanger TapeDrive ctarao ZLIB::ZLIB)
 
 add_library(ctatapeserverdaemonunittests SHARED
   DataTransferSessionTest.cpp
