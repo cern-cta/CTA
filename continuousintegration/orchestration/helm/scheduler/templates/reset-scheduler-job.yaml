@@ -9,7 +9,9 @@ metadata:
   labels:
     {{- include "common.labels.standard" . | nindent 4 }}
   annotations:
+    {{- if eq $schedulerConfig.backend "postgres" }}
     "helm.sh/hook": post-install   # Note that we need to be sure the postgres pod has been started before we do anything with it
+    {{- end }}
     "helm.sh/hook-delete-policy": keep
 spec:
   backoffLimit: 0
@@ -60,17 +62,15 @@ spec:
           volumeMounts:
             - name: scripts-volume
               mountPath: /scripts
-          {{- if eq $schedulerConfig.backend "postgres" }}
+            {{- if eq $schedulerConfig.backend "postgres" }}
             - name: scheduler-config
               mountPath: /etc/cta/cta-scheduler.conf
               subPath: cta-scheduler.conf
-          {{- else }}
+            {{- else }}
             - name: scheduler-config
               mountPath: /etc/cta/cta-objectstore-tools.conf
               subPath: cta-objectstore-tools.conf
-          {{- end }}
-            - mountPath: /shared
-              name: shared
+            {{- end }}
             {{- if eq $schedulerConfig.backend "ceph" }}
             - name: ceph-config
               mountPath: /etc/ceph/ceph.conf
@@ -78,6 +78,14 @@ spec:
             - name: ceph-config
               mountPath: /etc/ceph/ceph.client.{{ $schedulerConfig.cephConfig.id }}.keyring
               subPath: ceph.client.{{ $schedulerConfig.cephConfig.id }}.keyring
+            {{- end }}
+            {{- if eq $schedulerConfig.backend "vfs" }}
+            - name: vfs-storage-volume
+              mountPath: /objectstore
+            {{- end }}
+            {{- if eq $schedulerConfig.backend "vfsDeprecated" }}
+            - mountPath: /shared
+              name: shared
             {{- end }}
       volumes:
         - name: scripts-volume
@@ -93,12 +101,19 @@ spec:
           configMap:
             name: cta-objectstore-conf
         {{- end }}
-        - name: shared
-          hostPath:
-            path: /opt/cta
         {{- if eq $schedulerConfig.backend "ceph" }}
         - name: ceph-config
           configMap:
             name: ceph-conf
+        {{- end }}
+        {{- if eq $schedulerConfig.backend "vfs" }}
+        - name: vfs-storage-volume
+          persistentVolumeClaim:
+            claimName: scheduler-vfs-pvc
+        {{- end }}
+        {{- if eq $schedulerConfig.backend "vfsDeprecated" }}
+        - name: shared
+          hostPath:
+            path: /opt/cta
         {{- end }}
 {{- end }}

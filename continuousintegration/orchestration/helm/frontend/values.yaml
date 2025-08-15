@@ -71,6 +71,18 @@ xrd:
     secretName: cta-frontend-keytab
     subPath: cta-frontend.keytab
 
+# Script to execute in the main container before starting the frontend service
+preRun:
+  enabled: false
+  script: |
+    #!/usr/bin/bash
+
+# Script to execute in the main container after frontend exited
+postRun:
+  enabled: false
+  script: |
+    #!/usr/bin/bash
+
 pod:
   extraSpec:
     terminationGracePeriodSeconds: 1

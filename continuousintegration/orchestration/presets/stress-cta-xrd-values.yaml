@@ -1,0 +1,74 @@
+
+global:
+
+  # With the /var/log custom mounts, we need to be both priviledged and allowPrivilegeEscalation
+  securityContext:
+    allowPrivilegeEscalation: True
+    privileged: True
+
+  extraObjects:
+    - |
+      apiVersion: v1
+      kind: PersistentVolumeClaim
+      metadata:
+        name: logstorage-pvc
+      spec:
+        accessModes:
+          - ReadWriteOnce
+        storageClassName: fast-ssd
+        resources:
+          requests:
+            storage: 50Gi
+
+  # It should be noted that many logs also go to stdout which is still written to /var/log on the node itself
+  # So this means not all log-related writes go to an SSD
+  extraVolumes:
+    volumes:
+    - name: logstorage
+      persistentVolumeClaim:
+        claimName: logstorage-pvc
+    volumeMounts:
+    - name: logstorage
+      mountPath: /mnt/logs
+
+
+
+frontend:
+  preRun:
+    enabled: true
+    # Mount /var/log contents in /mnt/logs so that the fluentd can consume it
+    script: |
+      #!/bin/bash
+      LOGMOUNT=/mnt/logs
+      PV_PATH=""
+      if [ "-${MY_CONTAINER}-" != "--" ]; then
+        PV_PATH="${LOGMOUNT}/${MY_NAME}/${MY_CONTAINER}"
+      else
+        PV_PATH="${LOGMOUNT}/${MY_NAME}"
+      fi
+      mkdir -p ${PV_PATH}
+      echo "Copying initial /var/log content to ${PV_PATH}"
+      cd /var/log
+      tar -c . | tar -C ${PV_PATH} -xv
+      echo "Mounting logs volume ${PV_PATH} in /var/log"
+      mount --bind ${PV_PATH} /var/log
+
+tpsrv:
+  preRun:
+    enabled: true
+    # Mount /var/log contents in /mnt/logs so that the fluentd can consume it
+    script: |
+      #!/bin/bash
+      LOGMOUNT=/mnt/logs
+      PV_PATH=""
+      if [ "-${MY_CONTAINER}-" != "--" ]; then
+        PV_PATH="${LOGMOUNT}/${MY_NAME}/${MY_CONTAINER}"
+      else
+        PV_PATH="${LOGMOUNT}/${MY_NAME}"
+      fi
+      mkdir -p ${PV_PATH}
+      echo "Copying initial /var/log content to ${PV_PATH}"
+      cd /var/log
+      tar -c . | tar -C ${PV_PATH} -xv
+      echo "Mounting logs volume ${PV_PATH} in /var/log"
+      mount --bind ${PV_PATH} /var/log

@@ -9,7 +9,7 @@ resetImage:
   - reg-ctageneric
 
 # configuration:
-#   backend: "" # Options: file, ceph, postgres
+#   backend: "" # Options: vfs, vfsDeprecated ceph, postgres
 #   cephConfig:
 #     mon: ""
 #     monport: ""
@@ -23,6 +23,12 @@ resetImage:
 #     database: ""
 #     server: ""
 #   vfsConfig:
+#     storageClass: ""
+#     annotations: {}
+#     accessModes:
+#       - ReadWriteOnce
+#     size: 20Gi
+#   vfsDeprecated Config:
 #     path: ""
 
 # This is only for the postgres pod

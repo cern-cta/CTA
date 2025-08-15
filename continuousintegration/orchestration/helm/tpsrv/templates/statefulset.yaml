@@ -55,6 +55,9 @@ spec:
         securityContext:
           allowPrivilegeEscalation: {{ include "common.securityContext.allowPrivilegeEscalation" $ }}
           privileged: {{ include "common.securityContext.privileged" $ }}
+          capabilities:
+            add:
+              - SYS_RAWIO
         stdin: true
         command: ["bash", "/scripts/rmcd.sh"]
         args: []
@@ -82,8 +85,7 @@ spec:
         {{- end }}
         volumeMounts:
         - name: scripts-volume
-          mountPath: /scripts/rmcd.sh
-          subPath: rmcd.sh
+          mountPath: /scripts
         {{ include "common.extraVolumeMounts" $ | nindent 8 }}
       # For each drive, spawn a separate taped container
       {{- range $index, $drive := .drives }}
@@ -93,7 +95,11 @@ spec:
         securityContext:
           allowPrivilegeEscalation: {{ include "common.securityContext.allowPrivilegeEscalation" $ }}
           privileged: {{ include "common.securityContext.privileged" $ }}
-        command: ["bash", "/scripts/taped.sh"]
+          capabilities:
+            add:
+              - SYS_RAWIO
+        command: ["/bin/bash", "-c"]
+        args: ["{{- if $.Values.preRun.enabled }}/scripts/pre_run.sh;{{- end }} /scripts/taped.sh; {{- if $.Values.postRun.enabled }}/scripts/post_run.sh;{{- end }}"]
         readinessProbe:
           exec:
             command: ["sh", "-c", "pgrep -f /usr/bin/cta-taped > /dev/null"]
@@ -129,8 +135,7 @@ spec:
         {{- end }}
         volumeMounts:
         - name: scripts-volume
-          mountPath: /scripts/taped.sh
-          subPath: taped.sh
+          mountPath: /scripts
         - name: cta-taped-config
           mountPath: /etc/cta/cta-taped-{{ $drive.name }}.conf
           subPath: cta-taped-{{ $drive.name }}.conf
@@ -157,6 +162,10 @@ spec:
           mountPath: /etc/ceph/ceph.client.{{ $schedulerConfig.cephConfig.id }}.keyring
           subPath: ceph.client.{{ $schedulerConfig.cephConfig.id }}.keyring
         {{- end }}
+        {{- if eq $schedulerConfig.backend "vfs" }}
+        - name: vfs-storage-volume
+          mountPath: /objectstore
+        {{- end }}
         {{ include "common.extraVolumeMounts" $ | nindent 8 }}
       {{- end }} # End of containers loop
       volumes:
@@ -180,6 +189,11 @@ spec:
       - name: cta-ceph-volume
         configMap:
           name: ceph-conf
+      {{- end }}
+      {{- if eq $schedulerConfig.backend "vfs" }}
+      - name: vfs-storage-volume
+        persistentVolumeClaim:
+          claimName: scheduler-vfs-pvc
       {{- end }}
       {{- range $index, $drive := .drives }} # configmap for each drive in the tape server
       - name: cta-taped-config

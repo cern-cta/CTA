@@ -1,3 +1,4 @@
+
 conf:
   taped:
     bufferSizeBytes: 262144
@@ -14,6 +15,18 @@ conf:
 keytab:
   secretName: eos-keytab
   subPath: eos.keytab
+
+# Script to execute in the main container before starting the tpsrv/rmcd services
+preRun:
+  enabled: false
+  script: |
+    #!/usr/bin/bash
+
+# Script to execute in the main container after the taped process exited
+postRun:
+  enabled: false
+  script: |
+    #!/usr/bin/bash
 
 # tapeServers: {}
 # The following is an example format of tapeServers
@@ -34,6 +47,11 @@ keytab:
 #   drives:
 #     - name: "VDSTK03"
 #       device: "nst1"
+
+# We need to be privileged to handle the tape drives
+securityContext:
+  privileged: true
+  allowPrivilegeEscalation: true
 
 pod:
   extraSpec:

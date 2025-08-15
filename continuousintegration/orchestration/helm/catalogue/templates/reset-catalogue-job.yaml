@@ -9,7 +9,9 @@ metadata:
   labels:
     {{- include "common.labels.standard" . | nindent 4 }}
   annotations:
+    {{- if eq $catalogueConfig.backend "postgres" }}
     "helm.sh/hook": post-install   # Note that we need to be sure the postgres pod has been started before we do anything with it
+    {{- end }}
     "helm.sh/hook-delete-policy": keep
 spec:
   backoffLimit: 0
@@ -55,8 +57,6 @@ spec:
           - name: catalogue-config
             mountPath: /etc/cta/cta-catalogue.conf
             subPath: cta-catalogue.conf
-          - mountPath: /shared
-            name: shared
       volumes:
       - name: scripts-volume
         configMap:
@@ -71,7 +71,4 @@ spec:
       - name: catalogue-config
         configMap:
           name: cta-catalogue-conf
-      - name: shared
-        hostPath:
-          path: /opt/cta
 {{- end }}

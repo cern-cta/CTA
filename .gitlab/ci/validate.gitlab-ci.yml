@@ -35,11 +35,10 @@ validate-pipeline-variables:
   rules:
     - when: on_success
   script:
+    - cp -f continuousintegration/docker/${PLATFORM}/etc/yum.repos.d-public/*.repo /etc/yum.repos.d/
     - |
       if [ "$USE_INTERNAL_REPOS" == "TRUE" ]; then
         cp -f continuousintegration/docker/${PLATFORM}/etc/yum.repos.d-internal/*.repo /etc/yum.repos.d/
-      else
-        cp -f continuousintegration/docker/${PLATFORM}/etc/yum.repos.d-public/*.repo /etc/yum.repos.d/
       fi
     # This repo is a special case as it provides CTA itself
     - cp -f continuousintegration/docker/${PLATFORM}/cta-public-testing.repo /etc/yum.repos.d/

@@ -29,9 +29,8 @@ log_run() {
 }
 
 usage() {
-  echo
-  echo "Spawns a CTA system using Helm and Kubernetes. Requires a setup according to the Minikube CTA CI repository."
-  echo
+  echo "Spawns a CTA system using Helm and Kubernetes. Requires access to a kubernetes cluster setup with one or more nodes that have mhvtl installed."
+  echo ""
   echo "Usage: $0 -n <namespace> -i <image tag> [options]"
   echo
   echo "options:"
@@ -51,7 +50,7 @@ usage() {
   echo "      --dry-run:                      Render the Helm-generated yaml files without touching any existing deployments."
   echo "      --eos-image-tag <tag>:          Docker image tag for the EOS chart."
   echo "      --eos-image-repository <repo>:  Docker image for EOS chart. Should be the full image name, e.g. \"gitlab-registry.cern.ch/dss/eos/eos-ci\"."
-  echo "      --eos-config <file>:            Values file to use for the EOS chart. Defaults to presets/dev-eos-values.yaml."
+  echo "      --eos-config <file>:            Values file to use for the EOS chart. Defaults to presets/dev-eos-xrd-values.yaml."
   echo "      --eos-enabled <true|false>:     Whether to spawn an EOS instance or not. Defaults to true."
   echo "      --dcache-enabled <true|false>: Whether to spawn a dCache instance or not. Defaults to false."
   echo "      --cta-config <file>:            Values file to use for the CTA chart. Defaults to presets/dev-cta-xrd-values.yaml."
@@ -95,7 +94,7 @@ create_instance() {
   project_json_path="../../project.json"
   # Argument defaults
   # Not that some arguments below intentionally use false and not 0/1 as they are directly passed as a helm option
-  # Note that it is fine for not all of these secrets to exist; eventually the reg-* format will be how the minikube_cta_ci setup inits things
+  # Note that it is fine for not all of these secrets to exist
   registry_secrets="ctaregsecret reg-eoscta-operations reg-ctageneric" # Secrets to be copied to the namespace (space separated)
   catalogue_config=presets/dev-catalogue-postgres-values.yaml
   scheduler_config=presets/dev-scheduler-vfs-values.yaml
@@ -112,7 +111,7 @@ create_instance() {
   # EOS related
   eos_image_tag=$(jq -r .dev.eosImageTag ${project_json_path})
   eos_image_repository=$(jq -r .dev.eosImageRepository ${project_json_path})
-  eos_config=presets/dev-eos-values.yaml
+  eos_config=presets/dev-eos-xrd-values.yaml
   eos_enabled=true
   # dCache
   dcache_image_tag=$(jq -r .dev.dCacheImageTag ${project_json_path})
@@ -250,6 +249,39 @@ create_instance() {
   echo "---"
   cat "$tapeservers_config"
   echo "---"
+
+  if [ "$scheduler_config" == "presets/dev-scheduler-vfs-values.yaml" ]; then
+    if kubectl get pods -n local-path-storage -l app=local-path-provisioner 2>/dev/null | grep -q Running; then
+      echo "Local path provisioning is enabled. Using VFS scheduler is okay."
+    else
+      echo "==============================================================================="
+      echo "!!!!!!!!DEPRECATION WARNING!!!!!!!!"
+      echo "==============================================================================="
+      echo
+      echo "It seems that your machine does not have local path provisioning enabled"
+      echo "Support for running without local path provisioning will be removed soon."
+      echo
+      echo "Please follow these instructions to enable local path provisioning."
+      echo " 1. ssh into your machine as root"
+      echo " 2. navigate to the minikube_cta_ci repo you used to instantiate your dev machine"
+      echo " 3. Run: git pull"
+      echo " 4. Run: ./01_bootstrap_minikube.sh"
+      echo " 5. Reboot the machine"
+      echo "The storage-provisioner-rancher addon should now be enabled."
+      echo "This addon provides dynamic local path provisioning"
+      echo
+      echo "Alternatively if you prefer to do it manually:"
+      echo " 1. Run: minikube addons enable storage-provisioner-rancher"
+      echo " 2. Add this same line to /usr/local/bin/start_minikube.sh to ensure it persists over restarts"
+      echo
+      echo "Changing scheduler config to \"presets/dev-scheduler-vfs-deprecated-values.yaml\"...."
+      echo "==============================================================================="
+      echo
+      echo
+      scheduler_config=presets/dev-scheduler-vfs-deprecated-values.yaml
+    fi
+  fi
+
 
   # Create the namespace if necessary
   if [ $dry_run == 0 ] ; then

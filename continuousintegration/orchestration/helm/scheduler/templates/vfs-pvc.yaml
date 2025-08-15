@@ -1,0 +1,24 @@
+{{- $schedulerConfig := include "scheduler.config" . | fromYaml }}
+{{- if eq $schedulerConfig.backend "vfs" }}
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: scheduler-vfs-pvc
+  annotations:
+    {{- if $schedulerConfig.vfsConfig.annotations }}
+    {{- toYaml $schedulerConfig.vfsConfig.annotations | nindent 4 }}
+    {{- end }}
+spec:
+  accessModes:
+    {{- range $schedulerConfig.vfsConfig.accessModes }}
+    - {{ . | quote }}
+    {{- end }}
+  resources:
+    requests:
+      storage: {{ $schedulerConfig.vfsConfig.size | quote }}
+  {{- if (eq "-" $schedulerConfig.vfsConfig.storageClass) }}
+  storageClassName: ""
+  {{- else }}
+  storageClassName: "{{ $schedulerConfig.vfsConfig.storageClass }}"
+  {{- end }}
+{{- end }}

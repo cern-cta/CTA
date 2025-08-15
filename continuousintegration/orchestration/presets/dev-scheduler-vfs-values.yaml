@@ -1,3 +1,6 @@
-backend: "VFS"
+backend: "vfs"
 vfsConfig:
-  path: /shared/%NAMESPACE/objectstore
+  storageClass: local-path
+  accessModes:
+    - ReadWriteOnce
+  size: 10Gi

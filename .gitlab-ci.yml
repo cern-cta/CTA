@@ -113,20 +113,31 @@ variables:
       - "FALSE"
 
   # Pass a file here (must be absolute or relative to the orchestration directory, e.g. presets/dev...)
-  CUSTOM_CTA_VALUES_FILE:
+  DEFAULT_CTA_VALUES_FILE:
     description: "Path to a values.yaml file to be passed to the CTA Helm chart."
-    value: ""
+    value: "presets/dev-cta-xrd-values.yaml"
     options:
-      - ""
       - "presets/dev-cta-xrd-values.yaml"
       - "presets/dev-cta-grpc-values.yaml"
-  CUSTOM_EOS_VALUES_FILE:
+  DEFAULT_EOS_VALUES_FILE:
     description: "Path to a values.yaml file to be passed to the EOS Helm chart."
-    value: ""
+    value: "presets/dev-eos-xrd-values.yaml"
     options:
-      - ""
-      - "presets/dev-eos-values.yaml"
+      - "presets/dev-eos-xrd-values.yaml"
       - "presets/dev-eos-grpc-values.yaml"
+
+  STRESS_CTA_VALUES_FILE:
+    description: "Path to a values.yaml file to be passed to the CTA Helm chart for the stress test."
+    value: "presets/stress-cta-xrd-values.yaml"
+    options:
+      - "presets/stress-cta-xrd-values.yaml"
+      - "presets/stress-cta-grpc-values.yaml"
+  STRESS_EOS_VALUES_FILE:
+    description: "Path to a values.yaml file to be passed to the EOS Helm chart for the stress test."
+    value: "presets/stress-eos-xrd-values.yaml"
+    options:
+      - "presets/stress-eos-xrd-values.yaml"
+      - "presets/stress-eos-grpc-values.yaml"
 
   # Meta CI
   CTA_BUILD_ID: ${CI_PIPELINE_ID}git${CI_COMMIT_SHORT_SHA}

@@ -5,7 +5,7 @@ metadata:
 data:
   ctafrontend-xrd.sh: |
     {{ .Files.Get "scripts/ctafrontend-xrd.sh" | nindent 4 }}
-  ctafrontend-backtrace.sh: |
-    {{ .Files.Get "scripts/ctafrontend-backtrace.sh" | nindent 4 }}
   ctafrontend-grpc.sh: |
     {{ .Files.Get "scripts/ctafrontend-grpc.sh" | nindent 4 }}
+  pre_run.sh: {{ .Values.preRun.script | toYaml | nindent 4 }}
+  post_run.sh: {{ .Values.postRun.script | toYaml | nindent 4 }}

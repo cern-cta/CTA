@@ -23,10 +23,10 @@ usage() {
   echo
   echo "Performs the build of CTA through a dedicated build container."
   echo "The container persists between runs of this script (unless the --reset flag is specified), which ensures that the build does not need to happen from scratch."
-  echo "It is also able to deploy the built rpms via minikube for a basic testing setup."
-  echo
-  echo "Important prerequisite: to run the tests, your machine will need to have access to a kubernetes cluster setup using the CTA CI Minikube repo."
-  echo
+  echo "It is also able to deploy the built rpms on a kubernetes cluster for a basic testing setup."
+  echo ""
+  echo "Important prerequisite: to run the tests, your machine will need to have access to a kubernetes cluster setup with nodes that have mhvtl installed."
+  echo ""
   echo "Usage: $0 [options]"
   echo
   echo "options:"
@@ -46,8 +46,8 @@ usage() {
   echo "      --skip-cmake:                     Skips the cmake step of the build_rpm stage during the build process."
   echo "      --skip-debug-packages             Skips the building of the debug RPM packages."
   echo "      --skip-unit-tests:                Skips the unit tests. Speeds up the build time by not running the unit tests."
-  echo "      --skip-image-reload:              Skips the step where the image is reloaded into Minikube. This allows easy redeployment with the image that is already loaded."
-  echo "      --skip-image-cleanup:             Skip the cleanup of the ctageneric images in both the container runtime and minikube before deploying a new instance."
+  echo "      --skip-image-reload:              Skips the step where the image is reloaded into Kubernetes cluster. This allows easy redeployment with the image that is already loaded."
+  echo "      --skip-image-cleanup:             Skip the cleanup of the ctageneric images in both the container runtime and the cluster before deploying a new instance."
   echo "      --scheduler-type <type>:          The scheduler type. Must be one of [objectstore, pgsched]."
   echo "      --spawn-options <options>:        Additional options to pass for the deployment. These are passed verbatim to the create/upgrade instance scripts."
   echo "      --image-build-options <options>:  Additional options to pass for the image building. These are passed verbatim to the build_image.sh script."
@@ -58,7 +58,7 @@ usage() {
   echo "      --upgrade-eos:                    Upgrades the existing EOS instance with a new image instead of spawning an instance from scratch."
   echo "      --eos-image-tag:                  Image to use for spawning EOS. If not provided, will default to the image specified in the create_instance script."
   echo "      --cta-config <path>:              Custom Values file to pass to the CTA Helm chart. Defaults to: presets/dev-cta-xrd-values.yaml"
-  echo "      --eos-config <path>:              Custom Values file to pass to the EOS Helm chart. Defaults to: presets/dev-eos-values.yaml"
+  echo "      --eos-config <path>:              Custom Values file to pass to the EOS Helm chart. Defaults to: presets/dev-eos-xrd-values.yaml"
   echo "      --use-public-repos:               Use the public yum repos instead of the internal yum repos. Use when you do not have access to the CERN network."
   echo "      --platform <platform>:            Which platform to build for. Defaults to the default platform in the project.json."
   echo "      --eos-enabled <true|false>:       Whether to spawn an EOS or not. Defaults to true."
