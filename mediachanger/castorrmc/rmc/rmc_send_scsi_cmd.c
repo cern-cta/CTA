@@ -51,7 +51,7 @@
 #define RMC_ERR_MSG_BUFSZ 132
 #define ST_DEV_BUFSZ 64
 #define SYSPATH_BUFSZ 256
-#define SGPATH_BUFSZ 256
+#define SGPATH_BUFSZ 80
 
 static char rmc_err_msgbuf[RMC_ERR_MSG_BUFSZ];
 static const char *sk_msg[] = {
@@ -259,8 +259,9 @@ int rmc_send_scsi_cmd (
                 if (strncmp(ddeve->d_name, "sg", 2) == 0) {
                     char fullpath[SGPATH_BUFSZ-1];
                     memset(fullpath, 0, sizeof(fullpath));
-                    snprintf(fullpath, sizeof(fullpath), "/dev/%s", ddeve->d_name);
-                    if (stat(fullpath, &sbufa) == 0) {
+                    snprintf(fullpath, sizeof(fullpath), "/dev/%.*s", (int) (sizeof(fullpath) - strlen("/dev/") - 1),
+                             ddeve->d_name);
+                  if (stat(fullpath, &sbufa) == 0) {
                         sg_major = major(sbufa.st_rdev);
                         break;
                     }
