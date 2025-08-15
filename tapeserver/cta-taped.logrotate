@@ -5,6 +5,6 @@
     rotate 500
     delaycompress
     postrotate
-        /bin/pkill -SIGUSR1 -u cta -f '.*-parent$' 2> /dev/null || true
+        /bin/pkill -SIGUSR1 -u cta -f '-parent$' 2> /dev/null || true
     endscript
 }
