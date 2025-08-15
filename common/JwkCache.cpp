@@ -26,6 +26,8 @@ std::string CurlJwksFetcher::fetchJWKS(const std::string& jwksUrl) {
   curl = curl_easy_init();
   if (curl) {
     curl_easy_setopt(curl, CURLOPT_URL, jwksUrl.c_str());
+    // use TLS 1.2 or later
+    curl_easy_setopt(curl, CURLOPT_SSLVERSION, CURL_SSLVERSION_TLSv1_2);
     curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, WriteCallback);
     curl_easy_setopt(curl, CURLOPT_WRITEDATA, &readBuffer);
     res = curl_easy_perform(curl);
@@ -120,4 +122,4 @@ void JwkCache::updateCache(time_t now) {
 
   // json_object_put(jwks); // Clean up ref count
 }
-} // namespace cta
+}  // namespace cta
