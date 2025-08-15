@@ -91,6 +91,9 @@ void  cta::tape::daemon::TapeDaemon::exceptionThrowingMain()  {
 void cta::tape::daemon::TapeDaemon::mainEventLoop() {
   // Create the log context
   log::LogContext lc(m_log);
+  // Set process name
+  const auto processName = m_globalConfiguration.constructProcessName(lc, "parent");
+  prctl(PR_SET_NAME, processName.c_str());
   // Create the process manager and signal handler
   ProcessManager pm(lc);
   auto sh = std::make_unique<SignalHandler>(pm);
@@ -101,8 +104,6 @@ void cta::tape::daemon::TapeDaemon::mainEventLoop() {
                              m_globalConfiguration.driveDevice.value(),
                              m_globalConfiguration.driveControlPath.value()};
 
-  const auto processName = m_globalConfiguration.constructProcessName(lc, "parent");
-  prctl(PR_SET_NAME, processName.c_str());
   auto dh = std::make_unique<DriveHandler>(m_globalConfiguration,
                                            dce,
                                            pm);
