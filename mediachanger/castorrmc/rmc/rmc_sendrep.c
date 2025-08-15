@@ -57,10 +57,10 @@ int rmc_sendrep(const int rpfd, const int rep_type, ...)
 		vsprintf (prtbuf, msg, args);
 		marshall_LONG (rbp, strlen (prtbuf) + 1);
 		marshall_STRING (rbp, prtbuf);
-    struct kv fields[] = {
-      KV_S("rep_type", rep_type_to_str(rep_type))
+    struct kv log_context[] = {
+      KV_STR("rep_type", rep_type_to_str(rep_type))
     };
-		JSON_LOG_WITH_FIELDS(L_ERR,fields,"%s", prtbuf);
+		JSON_LOG_CONTEXT(L_ERR,log_context,"%s", prtbuf);
 		break;
 	case MSG_DATA:
 		n = va_arg (args, int);
@@ -77,12 +77,11 @@ int rmc_sendrep(const int rpfd, const int rep_type, ...)
 	va_end (args);
 	repsize = rbp - repbuf;
 	if (netwrite (rpfd, repbuf, repsize) != repsize) {
-                const char *const neterror_str = neterror();
-    struct kv fields[] = {
-      KV_S("neterror", "neterror_str"),
-      KV_S("rep_type", rep_type_to_str(rep_type))
+    struct kv log_context[] = {
+      KV_STR("neterror", neterror()),
+      KV_STR("rep_type", rep_type_to_str(rep_type))
     };
-		JSON_LOG_WITH_FIELDS(L_ERR, fields, "Call to netwrite() failed");
+		JSON_LOG_CONTEXT(L_ERR, log_context, "Call to netwrite() failed");
 		if (rep_type == RMC_RC)
 			close (rpfd);
 		return (-1);

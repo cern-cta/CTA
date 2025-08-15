@@ -18,39 +18,41 @@
 #pragma once
 
 #include "osdep.h"
+#include <stddef.h>
 #include <stdbool.h>
 
-enum LogLevel {
-  L_DEBUG,
-  L_INFO,
-  L_WARN,
-  L_ERR,
-  L_CRIT
-};
+enum LogLevel { L_DEBUG, L_INFO, L_WARN, L_ERR, L_CRIT };
 
-enum kv_type { KV_STRING, KV_STRING_UNQUOTED,KV_INT64, KV_DOUBLE, KV_BOOL };
+enum kv_type { KVT_STR, KVT_STR_UNQUOTED, KVT_INT64, KVT_DOUBLE, KVT_BOOL };
 
 struct kv {
-  const char *key;
+  const char* key;
   enum kv_type type;
+
   union {
-    const char *vstr;
-    long long   vint64;
-    double      vdouble;
-    bool        vbool;
+    const char* vstr;
+    long long vint64;
+    double vdouble;
+    bool vbool;
   } val;
 };
 
-#define KV_STR(k, v)      ((struct kv){ (k), KV_STRING, .val.vstr = (v) })
-#define KV_STR_U(k, v)    ((struct kv){ (k), KV_STRING_UNQUOTED, .val.vstr = (v) })
-#define KV_INT(k, v)      ((struct kv){ (k), KV_INT64,  .val.vint64 = (v) })
-#define KV_DOUBLE(k, v)   ((struct kv){ (k), KV_DOUBLE, .val.vdouble = (v) })
-#define KV_BOOL(k, v)     ((struct kv){ (k), KV_BOOL,   .val.vbool = (v) })
+// Some convenience definitions to be able to easily construct a key-value pair
+#define KV_STR(k, v)    ((struct kv) {(k), KVT_STR, .val.vstr = (v)})
+#define KV_STR_U(k, v)  ((struct kv) {(k), KVT_STR_UNQUOTED, .val.vstr = (v)})
+#define KV_INT(k, v)    ((struct kv) {(k), KVT_INT64, .val.vint64 = (v)})
+#define KV_DOUBLE(k, v) ((struct kv) {(k), KVT_DOUBLE, .val.vdouble = (v)})
+#define KV_BOOL(k, v)   ((struct kv) {(k), KVT_BOOL, .val.vbool = (v)})
 
-
+// Actual logging definitions
 #define JSON_LOG(lvl, msg, ...) \
   json_log_kv((lvl), __FUNCTION__, NULL, 0, (msg), ##__VA_ARGS__)
-#define JSON_LOG_WITH_FIELDS(lvl, fields, msg, ...) \
-  json_log_kv((lvl), __FUNCTION__,  (fields), sizeof(fields)/sizeof((fields)[0]), (msg), ##__VA_ARGS__)
+#define JSON_LOG_CONTEXT(lvl, log_context, msg, ...) \
+  json_log_kv((lvl), __FUNCTION__, (log_context), sizeof(log_context) / sizeof((log_context)[0]), (msg), ##__VA_ARGS__)
 
-EXTERN_C int json_log_kv(enum LogLevel lvl, const char *const func, const struct kv *fields, size_t nfields, const char *const msg, ...);
+EXTERN_C int json_log_kv(enum LogLevel lvl,
+                         const char* const func,
+                         const struct kv* fields,
+                         size_t nfields,
+                         const char* const msg,
+                         ...);

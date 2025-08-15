@@ -18,4 +18,4 @@
 
 #include "osdep.h"
 
-EXTERN_C void rmc_logreq(const char *const func, char *const logbuf);
+// EXTERN_C void rmc_logreq(const char *const func, char *const logbuf);

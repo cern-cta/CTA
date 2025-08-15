@@ -27,8 +27,8 @@
  *	A backslash is appended to a line to be continued
  *	A continuation line is prefixed by '+ '
  */
-void rmc_logreq(enum LogLevel lvl, const char *const func, const char *const operation, const char *const status, const char *const msg) {
-  char fieldsbuf[RMC_PRTBUFSZ];
-  int off = snprintf(fieldsbuf, sizeof fieldsbuf, ",\"operation\":\"%s\",\"status\":\"%s\"", operation, status);
-  json_log_with_fields(lvl, fieldsbuf, func, msg);
-}
+// void rmc_logreq(enum LogLevel lvl, const char *const func, const char *const operation, const char *const status, const char *const msg) {
+//   char fieldsbuf[RMC_PRTBUFSZ];
+//   int off = snprintf(fieldsbuf, sizeof fieldsbuf, ",\"operation\":\"%s\",\"status\":\"%s\"", operation, status);
+//   JSON_LOG_CONTEXT(lvl, fieldsbuf, func, msg);
+// }

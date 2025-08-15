@@ -98,15 +98,16 @@ int rmc_main(const char *const robot)
 			JSON_LOG(L_WARN, "Unable to get domainname\n");
 		}
 		if(snprintf(g_localhost, CA_MAXHOSTNAMELEN+1, "%s.%s", localhost, domainname) != 0) {
-      struct kv fields[] = {
-        KV_S("rep_type", rep_type_to_str(rep_type))
+      struct kv log_context[] = {
+        KV_STR("localhost", localhost),
+        KV_STR("domainname", domainname)
       };
-			JSON_LOG(L_WARN, "localhost.domainname exceeds maximum length");
+			JSON_LOG_CONTEXT(L_WARN, log_context, "localhost.domainname exceeds maximum length");
 		}
 	}
 
 	if(*robot == '\0') {
-		json_log(L_CRIT, __FUNCTION__, RMC06, "robot");
+		JSON_LOG(L_CRIT, RMC06, "robot");
 		exit(USERR);
 	}
 
@@ -117,7 +118,7 @@ int rmc_main(const char *const robot)
 		snprintf(g_extended_robot_info.smc_ldr, CA_MAXRBTNAMELEN+1, "/dev/%s", robot);
 	}
 	if(g_extended_robot_info.smc_ldr[CA_MAXRBTNAMELEN] != '\0') {
-		json_log(L_CRIT, __FUNCTION__, RMC06, "robot");
+		JSON_LOG(L_CRIT, RMC06, "robot");
 		exit(USERR);
 	}
 	g_extended_robot_info.smc_fd = -1;
@@ -127,18 +128,20 @@ int rmc_main(const char *const robot)
 		const int max_nb_attempts = 3;
 		int attempt_nb = 1;
 		for(attempt_nb = 1; attempt_nb <= max_nb_attempts; attempt_nb++) {
-      json_log(L_INFO, __FUNCTION__,"Trying to get geometry of tape library: attempt_nb=%d", attempt_nb);
+      JSON_LOG(L_INFO, "Trying to get geometry of tape library: attempt_nb=%d", attempt_nb);
 			c = smc_get_geometry (g_extended_robot_info.smc_fd,
                             g_extended_robot_info.smc_ldr,
                             &g_extended_robot_info.robot_info);
 
 			if(0 == c) {
-        json_log(L_INFO, __FUNCTION__,"Got geometry of tape library");
+        // TODO: log with context here
+        JSON_LOG(L_INFO, "Got geometry of tape library");
 				break;
 			}
 
 			c = smc_lasterror (&smc_status, &msgaddr);
-			json_log(L_INFO, __FUNCTION__,RMC02, "get_geometry", msgaddr);
+      // TODO: log with context here and remove upper message
+			JSON_LOG(L_ERR, RMC02, "get_geometry", msgaddr);
 
       // If this was the last attempt
 			if(max_nb_attempts == attempt_nb) {
@@ -155,7 +158,7 @@ int rmc_main(const char *const robot)
 	/* open request socket */
 
 	if ((s = socket (AF_INET, SOCK_STREAM | O_NONBLOCK, 0)) < 0) {
-		json_log(L_CRIT, __FUNCTION__,RMC02, "socket", neterror());
+		JSON_LOG(L_CRIT, RMC02, "socket", neterror());
 		exit (CONFERR);
 	}
 	memset ((char *)&sin, 0, sizeof(struct sockaddr_in)) ;
@@ -171,10 +174,10 @@ int rmc_main(const char *const robot)
 	// rmcd should only accept connections from the loopback interface
 	sin.sin_addr.s_addr = htonl(INADDR_LOOPBACK);
 	if (setsockopt (s, SOL_SOCKET, SO_REUSEADDR, (char *)&on, sizeof(on)) < 0) {
-		json_log(L_ERR, __FUNCTION__,RMC02, "setsockopt", neterror());
+		JSON_LOG(L_ERR, RMC02, "setsockopt", neterror());
   }
 	if (bind (s, (struct sockaddr *) &sin, sizeof(sin)) < 0) {
-		json_log(L_CRIT, __FUNCTION__,RMC02, "bind", neterror());
+		JSON_LOG(L_CRIT, RMC02, "bind", neterror());
 		exit (CONFERR);
 	}
 	listen (s, 5) ;
@@ -232,22 +235,22 @@ int main(const int argc, char **argv)
 
 	switch(argc) {
 	case 1:
-		json_log(L_CRIT, __FUNCTION__, "RMC01 - wrong arguments given ,specify the device file of the tape library");
+		JSON_LOG(L_CRIT, "RMC01 - wrong arguments given, specify the device file of the tape library");
 		exit (USERR);
 	case 2:
 		if(0 == nb_cmdline_options) {
 			robot = argv[1];
 		} else {
-			json_log(L_CRIT, __FUNCTION__, "RMC01 - robot parameter is mandatory");
+			JSON_LOG(L_CRIT, "RMC01 - robot parameter is mandatory");
 			exit (USERR);
 		}
 		break;
 	case 3:
 		if(0 == nb_cmdline_options) {
-			json_log(L_CRIT, __FUNCTION__, "Too many robot parameters");
+			JSON_LOG(L_CRIT, "Too many robot parameters");
 			exit (USERR);
 		} else if(2 == nb_cmdline_options) {
-			json_log(L_CRIT, __FUNCTION__, "RMC01 - robot parameter is mandatory");
+			JSON_LOG(L_CRIT, "RMC01 - robot parameter is mandatory");
 			exit (USERR);
 		/* At this point there is one argument starting with '-' */
 		} else if(0 == strcmp(argv[1], "-f")) {
@@ -255,12 +258,12 @@ int main(const int argc, char **argv)
 		} else if(0 == strcmp(argv[2], "-f")) {
 			robot = argv[1];
 		} else {
-			json_log(L_CRIT, __FUNCTION__, "Unknown option");
+			JSON_LOG(L_CRIT, "Unknown option");
 			exit (USERR);
 		}
 		break;
 	default:
-		json_log(L_CRIT, __FUNCTION__, "Too many command-line arguments");
+		JSON_LOG(L_CRIT, "Too many command-line arguments");
 		exit (USERR);
 	}
 
@@ -314,13 +317,13 @@ static int rmc_getreq(
 		*req_type = n;
 		unmarshall_LONG (rbp, msglen);
 		if (msglen > RMC_REQBUFSZ) {
-			json_log(L_ERR, __FUNCTION__,RMC46, RMC_REQBUFSZ);
+			JSON_LOG(L_ERR, RMC46, RMC_REQBUFSZ);
 			return (-1);
 		}
 		l = msglen - sizeof(req_hdr);
 		n = netread_timeout (s, req_data, l, RMC_TIMEOUT);
 		if (getpeername (s, (struct sockaddr *) &from, &fromlen) < 0) {
-			json_log(L_ERR, __FUNCTION__,RMC02, "getpeername", neterror());
+			JSON_LOG(L_ERR, RMC02, "getpeername", neterror());
 			return (ERMCUNREC);
 		}
 		struct hostent hbuf;
@@ -342,9 +345,9 @@ static int rmc_getreq(
     return 0;
 	} else {
 		if (l > 0) {
-			json_log(L_ERR, __FUNCTION__,RMC04, l);
+			JSON_LOG(L_ERR, RMC04, l);
 		} else if (l < 0) {
-			json_log(L_ERR, __FUNCTION__,RMC02, "netread", sstrerror(serrno));
+			JSON_LOG(L_ERR, RMC02, "netread", sstrerror(serrno));
     }
 		return (ERMCUNREC);
 	}

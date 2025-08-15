@@ -23,6 +23,7 @@
 #include <time.h>
 #include <stdarg.h>
 #include <unistd.h>
+#include <stdlib.h>
 #include "rmc_constants.h"
 #include "json_logger.h"
 
@@ -114,29 +115,29 @@ int log_to_file(const char* const msg) {
 
 void write_kv(FILE* logstream, const struct kv field) {
   switch (field.type) {
-    case KV_STRING: {
+    case KVT_STR: {
       char esc_val[RMC_PRTBUFSZ];
       json_escape(field.val.vstr ? field.val.vstr : "", esc_val, sizeof esc_val);
       fprintf(logstream, "\"%s\":\"%s\"", field.key, esc_val);
     } break;
-    case KV_STRING_UNQUOTED: {
+    case KVT_STR_UNQUOTED: {
       char esc_val[RMC_PRTBUFSZ];
       json_escape(field.val.vstr ? field.val.vstr : "", esc_val, sizeof esc_val);
       fprintf(logstream, "\"%s\":%s", field.key, esc_val);
     } break;
-    case KV_INT64:
+    case KVT_INT64:
       fprintf(logstream, "\"%s\":%lld", field.key, (long long) field.val.vint64);
       break;
-    case KV_DOUBLE:
+    case KVT_DOUBLE:
       fprintf(logstream, "\"%s\":%.17g", field.key, field.val.vdouble);
       break;
-    case KV_BOOL:
+    case KVT_BOOL:
       fprintf(logstream, "\"%s\":%s", field.key, field.val.vbool ? "true" : "false");
       break;
   }
 }
 
-const char* constr_log_line(enum LogLevel lvl, const char* msg, const struct kv* fields, size_t nfields) {
+char* constr_log_line(enum LogLevel lvl, const char* msg, const struct kv* fields, size_t nfields) {
   const int short_buffer_size = 64;
 
   // Get some timing info
@@ -146,17 +147,17 @@ const char* constr_log_line(enum LogLevel lvl, const char* msg, const struct kv*
   localtime_r(&ts.tv_sec, &local_tm);
   char local_time_str[short_buffer_size];
   strftime(local_time_str, sizeof(local_time_str), "%FT%T%z", &local_tm);
-  const char epochbuf[short_buffer_size];
+  char epochbuf[short_buffer_size];
   snprintf(epochbuf, short_buffer_size, "%lld.%09ld", (long long) ts.tv_sec, ts.tv_nsec);
 
-  struct kv base_labels[] = {KV_STR_U("epoch_time", epochbuf),
+  struct kv base_fields[] = {KV_STR_U("epoch_time", epochbuf),
                              KV_STR("local_time", local_time_str),
                              KV_STR("hostname", short_hostname()),
                              KV_STR("program", "cta-rmcd"),
                              KV_STR("log_level", getLogLevel(lvl)),
                              KV_INT("pid", getpid()),
                              KV_STR("message", msg)};
-  const int nbaselabels = 7;
+  const size_t nbase_fields = 7;
 
   // Build string
   char* buf = NULL;
@@ -166,11 +167,13 @@ const char* constr_log_line(enum LogLevel lvl, const char* msg, const struct kv*
     return NULL;
   }
   fprintf(logstream, "{");
-  for (int i = 0; i < nbaselabels; i++) {
-    write_kv(logstream, base_labels[i]);
-    fprintf(logstream, ",");
+  for (size_t i = 0; i < nbase_fields; i++) {
+    write_kv(logstream, base_fields[i]);
+    if (!(i == nbase_fields - 1 && nfields == 0)) {
+      fprintf(logstream, ",");
+    }
   }
-  for (int i = 0; i < nfields; i++) {
+  for (size_t i = 0; i < nfields; i++) {
     write_kv(logstream, fields[i]);
     if (i != nfields - 1) {
       fprintf(logstream, ",");
@@ -205,7 +208,7 @@ int json_log_kv(enum LogLevel lvl,
   vsnprintf(msgbuf + off, sizeof msgbuf - (size_t) off, msg, args);
   va_end(args);
 
-  const char* log_line = constr_log_line(lvl, msgbuf, fields, nfields);
+  char* log_line = constr_log_line(lvl, msgbuf, fields, nfields);
   if (log_line == NULL) {
     return -1;
   }
