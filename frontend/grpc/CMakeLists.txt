@@ -17,7 +17,7 @@ cmake_minimum_required (VERSION 3.17)
 
 include_directories(${CMAKE_BINARY_DIR}/eos_cta ${PROTOBUF3_INCLUDE_DIRS})
 
-include_directories(${CMAKE_SOURCE_DIR}/common/jwt-cpp/include/)
+include_directories(${CMAKE_SOURCE_DIR}/external/jwt-cpp/include/)
 
 add_executable(cta-frontend-grpc
   Main.cpp

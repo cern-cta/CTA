@@ -22,7 +22,7 @@ if ! rpm -q --quiet rh-postgresql12-postgresql-server; then
   exit 1
 fi
 
-if [[ !  ( -x ./catalogue/cta-catalogue-schema-create && -x ./tests/cta-rdbmsUnitTests ) ]]; then
+if [[ !  ( -x ./external/cta-catalogue-schema-create && -x ./tests/cta-rdbmsUnitTests ) ]]; then
   echo "Please run this script from a build tree of CTA."
   exit 1
 fi

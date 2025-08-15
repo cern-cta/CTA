@@ -21,7 +21,7 @@ include_directories(${PROTOBUF3_INCLUDE_DIRS})
 
 # Select protobuf files
 set(PROTOBUF_CTA_FRONTEND_DIR ${XRD_SSI_PB_DIR}/eos_cta/protobuf)
-set(PROTOBUF_EOS_MGM_DIR ${PROJECT_SOURCE_DIR}/eos_cta/grpc-proto/protobuf)
+set(PROTOBUF_EOS_MGM_DIR ${PROJECT_SOURCE_DIR}/external/grpc-proto/protobuf)
 file(GLOB ProtoFilesCtaFrontend "${PROTOBUF_CTA_FRONTEND_DIR}/*.proto")
 file(GLOB ProtoFilesEOSMGM "${PROTOBUF_EOS_MGM_DIR}/*.proto")
 
