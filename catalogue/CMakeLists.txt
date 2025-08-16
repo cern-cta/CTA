@@ -176,8 +176,8 @@ add_custom_command(
 
 add_custom_command(
   OUTPUT sqlite_catalogue_schema.cpp postgres_catalogue_schema.cpp
-  COMMAND ${CMAKE_COMMAND} -E env "LC_ALL=C" sed 's/^/\ \ \"/' ${CTA_CATALOGUE_SCHEMA_SRC_DIR}/sqlite_catalogue_schema.sql | sed 's/$$/\"/' > sqlite_catalogue_schema.cpp
-  COMMAND ${CMAKE_COMMAND} -E env "LC_ALL=C" sed 's/^/\ \ \"/' ${CTA_CATALOGUE_SCHEMA_SRC_DIR}/postgres_catalogue_schema.sql | sed 's/$$/\"/' > postgres_catalogue_schema.cpp
+  COMMAND ${CMAKE_COMMAND} -E env "LC_ALL=C" sed 's/^/\ \ \"/' ${CTA_CATALOGUE_SCHEMA_BIN_DIR}/sqlite_catalogue_schema.sql | sed 's/$$/\"/' > sqlite_catalogue_schema.cpp
+  COMMAND ${CMAKE_COMMAND} -E env "LC_ALL=C" sed 's/^/\ \ \"/' ${CTA_CATALOGUE_SCHEMA_BIN_DIR}/postgres_catalogue_schema.sql | sed 's/$$/\"/' > postgres_catalogue_schema.cpp
   DEPENDS
     create_all_schemas_SQL
     ${CTA_CATALOGUE_SCHEMA_BIN_DIR}/sqlite_catalogue_schema.sql
@@ -205,7 +205,7 @@ if (OCCI_SUPPORT)
 
   add_custom_command(
     OUTPUT ${ORACLE_SCHEMA_CPP}
-    COMMAND ${CMAKE_COMMAND} -E env "LC_ALL=C" sed 's/^/\ \ \"/' ${CTA_CATALOGUE_SCHEMA_SRC_DIR}/oracle_catalogue_schema.sql | sed 's/$$/\"/' > ${ORACLE_SCHEMA_CPP}
+    COMMAND ${CMAKE_COMMAND} -E env "LC_ALL=C" sed 's/^/\ \ \"/' ${CTA_CATALOGUE_SCHEMA_BIN_DIR}/oracle_catalogue_schema.sql | sed 's/$$/\"/' > ${ORACLE_SCHEMA_CPP}
     DEPENDS
       create_all_schemas_SQL
       ${CTA_CATALOGUE_SCHEMA_BIN_DIR}/oracle_catalogue_schema.sql

@@ -67,8 +67,6 @@ do
     "
   for databaseType in ${databaseTypes[@]}
   do
-    schemaSqlFilePath="$schemaVersionDir/$databaseType$schemaPostfix"
-    notTranslatedSchemaSQL=$(cat $schemaSqlFilePath) || die "Unable to open file $schemaSqlFilePath"
     schemaSql=$(cat $schemaVersionDir/$databaseType$schemaPostfix | sed 's/^/\ \ \"/' | sed 's/$/\"/')
     mapSchemaCode+="  {\"$databaseType\",$schemaSql
       },
