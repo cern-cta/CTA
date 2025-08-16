@@ -22,7 +22,6 @@ build-ctageneric-from-local-rpms:
     - .build-ctageneric
   needs:
     - job: build-cta-rpm
-    - job: unit-test-cta
     - job: modify-project-json
       optional: true
   rules:
