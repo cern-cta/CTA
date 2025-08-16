@@ -90,11 +90,6 @@ build-cta-rpm:
         exit 1
       fi
     - BUILD_OPTIONS=""
-    # For now we automatically skip the unit tests for the postgres scheduler.
-    - |
-      if [ "${SKIP_UNIT_TESTS}" == "TRUE" ]; then
-        BUILD_OPTIONS+=" --skip-unit-tests"
-      fi
     - |
       if [ "$USE_INTERNAL_REPOS" == "TRUE" ]; then
         BUILD_OPTIONS+=" --use-internal-repos"
@@ -112,6 +107,7 @@ build-cta-rpm:
                                                  --jobs $(nproc --ignore=1)
                                                  --install-srpms
                                                  --platform ${PLATFORM}
+                                                 --skip-unit-tests
                                                  ${BUILD_OPTIONS}
   artifacts:
     paths:

@@ -15,6 +15,7 @@ test-cta-valgrind:
   stage: test
   needs:
     - job: build-cta-rpm
+    - job: unit-test-cta
   rules:
     - if: $PIPELINE_TYPE != "DEFAULT"
       when: never
@@ -38,6 +39,7 @@ integration-test-cta:
   stage: test
   needs:
     - job: build-cta-rpm
+    - job: unit-test-cta
   rules:
     - if: $CI_COMMIT_TAG
       when: never
@@ -52,10 +54,37 @@ integration-test-cta:
   script:
     - /usr/bin/cta-integrationTests
 
+unit-test-cta:
+  stage: test
+  needs:
+    - job: build-cta-rpm
+  rules:
+    - if: $PIPELINE_TYPE == "REGR_AGAINST_CTA_VERSION"
+      when: never
+    - if: $PIPELINE_TYPE == "IMAGE_FROM_CTA_VERSION"
+      when: never
+    - if: $PIPELINE_TYPE == "SYSTEM_TEST_ONLY"
+      when: never
+    # For pivot CTA releases: vX.Y.0
+    - if: $CI_COMMIT_TAG && $CI_COMMIT_TAG =~ /^.*\.0\.[0-9]+-[^-]*$/
+      when: on_success
+    # For non-pivot CTA releases
+    - if: $CI_COMMIT_TAG && $CI_COMMIT_TAG !~ /^.*\.0\.[0-9]+-[^-]*$/
+      when: manual
+    - when: on_success
+  image: $IMAGE_TEST
+  variables:
+    CTAREPODIR: /tmp/repo
+  before_script:
+    - *setup-cta-install
+  script:
+    - /usr/bin/cta-unitTests
+
 unit-test-postgresql:
   stage: test
   needs:
     - job: build-cta-rpm
+    - job: unit-test-cta
   rules:
     - if: $CI_COMMIT_TAG
       when: never
