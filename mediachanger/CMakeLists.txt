@@ -14,7 +14,7 @@
 #               submit itself to any jurisdiction.
 cmake_minimum_required (VERSION 3.17)
 
-add_subdirectory(castorrmc)
+add_subdirectory(rmcd)
 
 set (MEDIACHANGER_LIB_SRC_FILES
   CmdLine.cpp
