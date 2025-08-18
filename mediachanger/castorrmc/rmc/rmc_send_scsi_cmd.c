@@ -257,8 +257,7 @@ int rmc_send_scsi_cmd (
             struct dirent *ddeve;
             while ((ddeve = readdir(ddev))) {
                 if (strncmp(ddeve->d_name, "sg", 2) == 0) {
-                    char fullpath[SGPATH_BUFSZ-1];
-                    memset(fullpath, 0, sizeof(fullpath));
+                    char fullpath[SGPATH_BUFSZ];
                     snprintf(fullpath, sizeof(fullpath), "/dev/%.*s", (int) (sizeof(fullpath) - strlen("/dev/") - 1),
                              ddeve->d_name);
                   if (stat(fullpath, &sbufa) == 0) {
@@ -272,7 +271,7 @@ int rmc_send_scsi_cmd (
 
         /* If the major device ID of the specified device is the same as the major device ID of any sg* device,
            we can use the path directly */
-		if (sg_major != 0 && major(sbuf.st_rdev) == sg_major) {
+		if (sg_major > 0 && major(sbuf.st_rdev) == sg_major) {
           sgpath[SGPATH_BUFSZ-1] = '\0';
           memset(sgpath, 0, sizeof(sgpath));
 		  strncpy(sgpath, path, SGPATH_BUFSZ);

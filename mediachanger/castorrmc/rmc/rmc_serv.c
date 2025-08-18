@@ -101,6 +101,7 @@ int rmc_main(const char *const robot)
 		if(Cdomainname(domainname, sizeof(domainname)) < 0) {
 			rmc_logit(func, "Unable to get domainname\n");
 		} else {
+            rmc_logit(func, "Using first word from the list as domain name: %s", domainname);
             // Truncate at first space to avoid multiple domains
             char *first_space = strchr(domainname, ' ');
             if(first_space) *first_space = '\0';
