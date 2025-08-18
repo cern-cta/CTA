@@ -30,7 +30,7 @@ test-cta-valgrind:
   before_script:
     - *setup-cta-install
   script:
-    - /usr/bin/cta-unitPlusIntegrationTests.sh
+    - /usr/bin/cta-valgrindUnitTests.sh
 
 integration-test-cta:
   # Sometimes flaky due to "resource unavailable" error

@@ -1,5 +1,5 @@
 # @project      The CERN Tape Archive (CTA)
-# @copyright    Copyright © 2025 CERN
+# @copyright    Copyright © 2015-2024 CERN
 # @license      This program is free software, distributed under the terms of the GNU General Public
 #               Licence version 3 (GPL Version 3), copied verbatim in the file "COPYING". You can
 #               redistribute it and/or modify it under the terms of the GPL Version 3, or (at your
@@ -12,7 +12,20 @@
 #               In applying this licence, CERN does not waive the privileges and immunities
 #               granted to it by virtue of its status as an Intergovernmental Organization or
 #               submit itself to any jurisdiction.
+cmake_minimum_required (VERSION 3.17)
 
-add_subdirectory("unit")
-add_subdirectory("integration")
-add_subdirectory("system")
+add_executable(cta-immutable-file-test
+  ImmutableFileTest.cpp
+  ImmutableFileTestMain.cpp
+  ImmutableFileTestCmdLineArgs.cpp)
+
+set_property (TARGET cta-immutable-file-test APPEND PROPERTY INCLUDE_DIRECTORIES "/usr/include/xrootd")
+
+target_link_libraries(cta-immutable-file-test
+  ctacommon XrdCl)
+
+install(
+  TARGETS
+    cta-immutable-file-test
+  DESTINATION
+    usr/bin)
