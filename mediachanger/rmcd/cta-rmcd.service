@@ -1,0 +1,15 @@
+
+[Unit]
+Description=CERN Tape Archive (CTA) rmcd daemon
+After=network-online.target
+
+[Service]
+User=cta
+EnvironmentFile=-/etc/sysconfig/cta-rmcd
+ExecStart=/usr/bin/cta-rmcd ${CTA_RMCD_OPTIONS}
+LimitCORE=infinity
+Type=forking
+Restart=no
+
+[Install]
+WantedBy=default.target
