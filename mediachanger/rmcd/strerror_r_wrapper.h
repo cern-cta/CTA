@@ -1,6 +1,6 @@
 /*
  * @project      The CERN Tape Archive (CTA)
- * @copyright    Copyright © 2003-2022 CERN
+ * @copyright    Copyright © 2003-2025 CERN
  * @license      This program is free software, distributed under the terms of the GNU General Public
  *               Licence version 3 (GPL Version 3), copied verbatim in the file "COPYING". You can
  *               redistribute it and/or modify it under the terms of the GPL Version 3, or (at your
@@ -18,19 +18,6 @@
 #pragma once
 
 #include <stddef.h>
-
-/* The following EXTERN_C marco has been intentionally copied from          */
-/* h/osdep.h instead of just including h/osdep.h.  The reason for this is   */
-/* this header file must include the minimum number of header files because */
-/* the implementation file common/strerror_r_wrapper.cpp will undefine      */
-/* _GNU_SOURCE and define _XOPEN_SOURCE as being 600.                       */
-/*                                                                          */
-/* Macros for externalization (UNIX) (J.-D.Durand)                          */
-#if defined(__cplusplus)
-#define EXTERN_C extern "C"
-#else
-#define EXTERN_C extern
-#endif
 
 /**
  * This function wraps the XSI compliant version of strerror_r() and therefore
@@ -54,4 +41,4 @@
  * to either EINVAL to indicate the error number is invalid, or to ERANGE to
  * indicate the supplied error buffer is not large enough.
  */
-EXTERN_C int strerror_r_wrapper(int errnum, char *buf, size_t buflen);
+int strerror_r_wrapper(int errnum, char *buf, size_t buflen);

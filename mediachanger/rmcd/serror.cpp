@@ -1,6 +1,6 @@
 /*
  * @project      The CERN Tape Archive (CTA)
- * @copyright    Copyright © 1990-2022 CERN
+ * @copyright    Copyright © 1990-2025 CERN
  * @license      This program is free software, distributed under the terms of the GNU General Public
  *               Licence version 3 (GPL Version 3), copied verbatim in the file "COPYING". You can
  *               redistribute it and/or modify it under the terms of the GPL Version 3, or (at your
@@ -585,11 +585,7 @@ int sstrerror_r(const int n, char *const buf, const size_t buflen) {
      * Security specific error messages
      */
     tmpstr = sys_secerrlist[n-ESECBASEOFF];
-  } else if ((n>0)
-#ifndef __linux__
-             && (n<sys_nerr)
-#endif
-             ) {
+  } else if(n > 0) {
     /*
      * SYSTEM error messages
      */

@@ -1,6 +1,6 @@
 /*
  * @project      The CERN Tape Archive (CTA)
- * @copyright    Copyright © 1990-2022 CERN
+ * @copyright    Copyright © 1990-2025 CERN
  * @license      This program is free software, distributed under the terms of the GNU General Public
  *               Licence version 3 (GPL Version 3), copied verbatim in the file "COPYING". You can
  *               redistribute it and/or modify it under the terms of the GPL Version 3, or (at your
@@ -17,9 +17,6 @@
 
 #pragma once
 
-#ifndef _SHIFT_H_INCLUDED_
-#include "osdep.h"                      /* EXTERN_C   */
-#endif
 #include <sys/types.h>                  /* For size_t                   */
 #include <stddef.h>                     /* For size_t on _WIN32         */
 
@@ -480,7 +477,7 @@
 /*
  * Multi-thread (MT) environment
  */
-EXTERN_C int *C__serrno (void);
+int *C__serrno (void);
 
 /*
  * Thread safe serrno. Note, C__serrno is defined in Cglobals.c rather
@@ -502,7 +499,7 @@ EXTERN_C int *C__serrno (void);
  * @return 0 on success or -1 on failure.  In the case of a failure both errno
  * and serrno are set to indicate the type of error.
  */
-EXTERN_C int sstrerror_r (const int n, char *const buf, const size_t buflen);
+int sstrerror_r (const int n, char *const buf, const size_t buflen);
 
 /**
  * Returns the string representation of the specified error code.
@@ -515,8 +512,8 @@ EXTERN_C int sstrerror_r (const int n, char *const buf, const size_t buflen);
  * @param n The numeric error code.
  * @return The string representation.
  */
-EXTERN_C const char *sstrerror (const int n);
+const char *sstrerror (const int n);
 
-EXTERN_C void sperror (char *);
+void sperror (char *);
 
 extern const char *sys_serrlist[]; /* Error text array             */

@@ -1,6 +1,6 @@
 /*
  * @project      The CERN Tape Archive (CTA)
- * @copyright    Copyright © 2003-2022 CERN
+ * @copyright    Copyright © 2003-2025 CERN
  * @license      This program is free software, distributed under the terms of the GNU General Public
  *               Licence version 3 (GPL Version 3), copied verbatim in the file "COPYING". You can
  *               redistribute it and/or modify it under the terms of the GPL Version 3, or (at your
@@ -19,7 +19,7 @@
 
 #include "osdep.h"
 
-EXTERN_C int rmc_send_scsi_cmd (
+int rmc_send_scsi_cmd (
   const int tapefd,
   const char *const path,
   const int do_not_open,

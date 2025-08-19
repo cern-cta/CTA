@@ -1,6 +1,6 @@
 /*
  * @project      The CERN Tape Archive (CTA)
- * @copyright    Copyright © 1998-2022 CERN
+ * @copyright    Copyright © 1998-2025 CERN
  * @license      This program is free software, distributed under the terms of the GNU General Public
  *               Licence version 3 (GPL Version 3), copied verbatim in the file "COPYING". You can
  *               redistribute it and/or modify it under the terms of the GPL Version 3, or (at your
@@ -20,7 +20,7 @@
 #include "osdep.h"
 #include "smc_struct.h"
 
-EXTERN_C int smc_dismount (
+int smc_dismount (
   const int rpfd,
   const int fd,
   const char *const loader,
@@ -28,21 +28,21 @@ EXTERN_C int smc_dismount (
   const int drvord,
   const char *const vid);
 
-EXTERN_C int smc_export (
+int smc_export (
   const int rpfd,
   const int fd,
   const char *const loader,
   struct robot_info *const robot_info,
   const char *const vid);
 
-EXTERN_C int smc_import (
+int smc_import (
   const int rpfd,
   const int fd,
   const char *const loader,
   struct robot_info *const robot_info,
   const char *const vid);
 
-EXTERN_C int smc_mount (
+int smc_mount (
   const int rpfd,
   const int fd,
   const char *const loader,

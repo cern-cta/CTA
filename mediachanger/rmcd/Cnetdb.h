@@ -1,6 +1,6 @@
 /*
  * @project      The CERN Tape Archive (CTA)
- * @copyright    Copyright © 1999-2022 CERN
+ * @copyright    Copyright © 1999-2025 CERN
  * @license      This program is free software, distributed under the terms of the GNU General Public
  *               Licence version 3 (GPL Version 3), copied verbatim in the file "COPYING". You can
  *               redistribute it and/or modify it under the terms of the GPL Version 3, or (at your
@@ -20,6 +20,6 @@
 #include "osdep.h"
 #include <netdb.h>
 
-EXTERN_C struct hostent *Cgethostbyname (const char *);
-EXTERN_C struct hostent *Cgethostbyaddr (const void *, size_t, int);
-EXTERN_C struct servent *Cgetservbyname (const char *, const char *);
+struct hostent* Cgethostbyname(const char*);
+struct hostent* Cgethostbyaddr(const void*, size_t, int);
+struct servent* Cgetservbyname(const char*, const char*);

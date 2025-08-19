@@ -1,6 +1,6 @@
 /*
  * @project      The CERN Tape Archive (CTA)
- * @copyright    Copyright © 1990-2022 CERN
+ * @copyright    Copyright © 1990-2025 CERN
  * @license      This program is free software, distributed under the terms of the GNU General Public
  *               Licence version 3 (GPL Version 3), copied verbatim in the file "COPYING". You can
  *               redistribute it and/or modify it under the terms of the GPL Version 3, or (at your
@@ -68,13 +68,3 @@ typedef U_HYPER TIME_T;
 
 #define NETERROR  perror
 #define OSERROR   perror
-
-/* Macros for externalization (UNIX) (J.-D.Durand) */
-#ifdef EXTERN_C
-#undef EXTERN_C
-#endif
-#if defined(__cplusplus)
-#define EXTERN_C extern "C"
-#else
-#define EXTERN_C extern
-#endif

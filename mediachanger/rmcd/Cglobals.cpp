@@ -1,6 +1,6 @@
 /*
  * @project      The CERN Tape Archive (CTA)
- * @copyright    Copyright © 1990-2022 CERN
+ * @copyright    Copyright © 1990-2025 CERN
  * @license      This program is free software, distributed under the terms of the GNU General Public
  *               Licence version 3 (GPL Version 3), copied verbatim in the file "COPYING". You can
  *               redistribute it and/or modify it under the terms of the GPL Version 3, or (at your
@@ -67,21 +67,21 @@ const int alloc_size = 1000;
  * Note that we cannot include serrno.h to get the definitions
  * since it re-defines serrno if _REENTRANT.
  */
-EXTERN_C int serrno;
+extern int serrno;
 int serrno;
-EXTERN_C int rfio_errno;
+extern int rfio_errno;
 int rfio_errno;
-EXTERN_C int Copterr;
+extern int Copterr;
 int Copterr;
-EXTERN_C int Coptind;
+extern int Coptind;
 int Coptind;
-EXTERN_C int Coptopt;
+extern int Coptopt;
 int Coptopt;
-EXTERN_C int Coptreset;
+extern int Coptreset;
 int Coptreset;
-EXTERN_C char *Coptarg;
+extern char *Coptarg;
 char *Coptarg;
-EXTERN_C int Coptarg_key;
+extern int Coptarg_key;
 int Coptarg_key;
 /*
  * Function prototypes for multi-thread env. version of errno externals
