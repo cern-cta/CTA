@@ -87,7 +87,6 @@ int rmc_srv_findcart(const struct rmc_srv_rqst_context *const rqst_context) {
 	struct smc_element_info *elemp;
 	gid_t gid;
 	int i;
-	char logbuf[CA_MAXVIDLEN+15];
 	const char *msgaddr;
 	int nbelem;
 	char *rbp;
@@ -96,6 +95,7 @@ int rmc_srv_findcart(const struct rmc_srv_rqst_context *const rqst_context) {
 	struct smc_status smc_status;
 	int startaddr;
 	char fmt_template[40];
+	char logbuf[sizeof(fmt_template)+16];
 	int type;
 	uid_t uid;
 	const char* const func = "rmc_srv_findcart";
@@ -123,7 +123,7 @@ int rmc_srv_findcart(const struct rmc_srv_rqst_context *const rqst_context) {
 	unmarshall_LONG (rbp, type);
 	unmarshall_LONG (rbp, startaddr);
 	unmarshall_LONG (rbp, nbelem);
-	snprintf (logbuf, sizeof(fmt_template)+15, "findcart %s %d", fmt_template, nbelem);
+	snprintf (logbuf, sizeof(logbuf)-1, "findcart %s %d", fmt_template, nbelem);
 	rmc_logreq (func, logbuf);
 
 	if (nbelem < 1) {

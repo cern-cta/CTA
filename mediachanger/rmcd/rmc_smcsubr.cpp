@@ -185,6 +185,7 @@ static int get_element_info(
 	else
 		len += 32;	/* possibly four element headers */
 	data = (unsigned char *)malloc (len);
+	if(data == nullptr) return -1;
 	memset (cdb, 0, sizeof(cdb));
 	cdb[0] = opcode;	/* read element status or request volume element address */
 	cdb[1] = 0x10 + type;
