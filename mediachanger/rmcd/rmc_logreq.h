@@ -18,4 +18,4 @@
 
 #include "osdep.h"
 
-void rmc_logreq(const char *const func, char *const logbuf);
+void rmc_logreq(const char* const func, char* const logbuf);

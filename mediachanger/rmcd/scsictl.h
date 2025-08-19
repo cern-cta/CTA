@@ -20,10 +20,10 @@
 #define MAXSENSE 255
 
 /* Values of the 'flags' field for function send_cmd */
-#define SCSI_IN            1
-#define SCSI_OUT           2
-#define SCSI_IN_OUT        4
-#define SCSI_NONE          8
+#define SCSI_IN           1
+#define SCSI_OUT          2
+#define SCSI_IN_OUT       4
+#define SCSI_NONE         8
 #define SCSI_SEL_WITH_ATN 16
 #define SCSI_SYNC         32
 #define SCSI_WIDE         64
@@ -46,16 +46,16 @@
 #define CAM_NODEVICE 3 /* Device doesn't respond (inexistant device) */
 
 /* SCSI 3 Sense key */
-#define SCSI_SENSEKEY_NO_SENSE         0
-#define SCSI_SENSEKEY_RECOVERED_ERROR  1
-#define SCSI_SENSEKEY_NOT_READY        2
-#define SCSI_SENSEKEY_MEDIUM_ERROR     3
-#define SCSI_SENSEKEY_HARDWARE_ERROR   4
-#define SCSI_SENSEKEY_ILLEGAL_REQUEST  5
-#define SCSI_SENSEKEY_UNIT_ATTENTION   6
-#define SCSI_SENSEKEY_DATA_PROTECT     7
-#define SCSI_SENSEKEY_BLANK_CHECK      8
-#define SCSI_SENSEKEY_VENDOR_SPECIFIC  9
+#define SCSI_SENSEKEY_NO_SENSE        0
+#define SCSI_SENSEKEY_RECOVERED_ERROR 1
+#define SCSI_SENSEKEY_NOT_READY       2
+#define SCSI_SENSEKEY_MEDIUM_ERROR    3
+#define SCSI_SENSEKEY_HARDWARE_ERROR  4
+#define SCSI_SENSEKEY_ILLEGAL_REQUEST 5
+#define SCSI_SENSEKEY_UNIT_ATTENTION  6
+#define SCSI_SENSEKEY_DATA_PROTECT    7
+#define SCSI_SENSEKEY_BLANK_CHECK     8
+#define SCSI_SENSEKEY_VENDOR_SPECIFIC 9
 #define SCSI_SENSEKEY_COPY_ABORTED    10
 #define SCSI_SENSEKEY_ABORTED_COMMAND 11
 #define SCSI_SENSEKEY_EQUAL           12
@@ -74,7 +74,7 @@
 #define SCSI_PERIPH_OPTICAL           7
 #define SCSI_PERIPH_AUTOCHANGER       8
 #define SCSI_PERIPH_COMMUNICATION     9
-#define SCSI_PERIPH_ASC1             10
-#define SCSI_PERIPH_ASC2             11
-#define SCSI_PERIPH_RAID             12
-#define SCSI_PERIPH_UNKNOWN          31
+#define SCSI_PERIPH_ASC1              10
+#define SCSI_PERIPH_ASC2              11
+#define SCSI_PERIPH_RAID              12
+#define SCSI_PERIPH_UNKNOWN           31

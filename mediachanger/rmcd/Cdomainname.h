@@ -17,4 +17,4 @@
 
 #pragma once
 
-int Cdomainname (char*, int);
+int Cdomainname(char*, int);

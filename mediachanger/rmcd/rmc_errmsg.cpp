@@ -22,17 +22,15 @@
 #include <sys/types.h>
 #include "rmc_constants.h"
 
-static char *errbufp = NULL;
+static char* errbufp = NULL;
 static int errbuflen;
 
-void rmc_seterrbuf(char *buffer, int buflen)
-{
+void rmc_seterrbuf(char* buffer, int buflen) {
   errbufp = buffer;
   errbuflen = buflen;
 }
 
-int rmc_errmsg(const char* const func, const char* const msg, ...)
-{
+int rmc_errmsg(const char* const func, const char* const msg, ...) {
   va_list args;
   char prtbuf[RMC_PRTBUFSZ];
   size_t prtbufLen;
@@ -40,20 +38,20 @@ int rmc_errmsg(const char* const func, const char* const msg, ...)
 
   save_errno = errno;
   va_start(args, msg);
-  if(func) {
+  if (func) {
     snprintf(prtbuf, RMC_PRTBUFSZ, "%s: ", func);
     prtbufLen = strlen(prtbuf);
   } else {
     *prtbuf = '\0';
     prtbufLen = 0;
   }
-  vsnprintf(prtbuf+prtbufLen, RMC_PRTBUFSZ-prtbufLen, msg, args);
-  if(errbufp) {
-    errbufp[errbuflen-1] = '\0';
+  vsnprintf(prtbuf + prtbufLen, RMC_PRTBUFSZ - prtbufLen, msg, args);
+  if (errbufp) {
+    errbufp[errbuflen - 1] = '\0';
     strncpy(errbufp, prtbuf, errbuflen);
-    if(errbufp[errbuflen-1] != '\0') {
-      errbufp[errbuflen-2] = '\n';
-      errbufp[errbuflen-1] = '\0';
+    if (errbufp[errbuflen - 1] != '\0') {
+      errbufp[errbuflen - 2] = '\n';
+      errbufp[errbuflen - 1] = '\0';
     }
   } else {
     fprintf(stderr, "%s", prtbuf);

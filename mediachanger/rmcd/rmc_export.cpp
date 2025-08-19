@@ -24,41 +24,41 @@
 #include "rmc_api.h"
 #include "rmc_constants.h"
 #include "serrno.h"
-int rmc_export(const char *const server, const char *const vid)
-{
-	int c;
-	gid_t gid;
-	int msglen;
-	char *q;
-	char repbuf[1];
-	char *sbp;
-	char sendbuf[RMC_REQBUFSZ];
-	uid_t uid;
 
-	uid = getuid();
-	gid = getgid();
+int rmc_export(const char* const server, const char* const vid) {
+  int c;
+  gid_t gid;
+  int msglen;
+  char* q;
+  char repbuf[1];
+  char* sbp;
+  char sendbuf[RMC_REQBUFSZ];
+  uid_t uid;
 
-	/* Build request header */
+  uid = getuid();
+  gid = getgid();
 
-	sbp = sendbuf;
-	marshall_LONG (sbp, RMC_MAGIC);
-	marshall_LONG (sbp, RMC_EXPORT);
-	q = sbp;	/* save pointer. The next field will be updated */
-	msglen = 3 * LONGSIZE;
-	marshall_LONG (sbp, msglen);
+  /* Build request header */
 
-	/* Build request body */
+  sbp = sendbuf;
+  marshall_LONG(sbp, RMC_MAGIC);
+  marshall_LONG(sbp, RMC_EXPORT);
+  q = sbp; /* save pointer. The next field will be updated */
+  msglen = 3 * LONGSIZE;
+  marshall_LONG(sbp, msglen);
 
-	marshall_LONG (sbp, uid);
-	marshall_LONG (sbp, gid);
-	marshall_STRING (sbp, ""); /* loader field is no longer used */
-	marshall_STRING (sbp, vid);
+  /* Build request body */
 
-	msglen = sbp - sendbuf;
-	marshall_LONG (q, msglen);	/* update length field */
+  marshall_LONG(sbp, uid);
+  marshall_LONG(sbp, gid);
+  marshall_STRING(sbp, ""); /* loader field is no longer used */
+  marshall_STRING(sbp, vid);
 
-        while ((c = send2rmc (server, sendbuf, msglen, repbuf, sizeof(repbuf))) &&
-            serrno == ERMCNACT)
-                sleep (RMC_RETRYI);
-	return (c);
+  msglen = sbp - sendbuf;
+  marshall_LONG(q, msglen); /* update length field */
+
+  while ((c = send2rmc(server, sendbuf, msglen, repbuf, sizeof(repbuf))) && serrno == ERMCNACT) {
+    sleep(RMC_RETRYI);
+  }
+  return (c);
 }

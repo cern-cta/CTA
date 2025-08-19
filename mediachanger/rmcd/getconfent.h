@@ -20,7 +20,7 @@
 
 #include "osdep.h"
 
-char *getconfent (const char *, const char *, int);
-char *getconfent_fromfile (const char *, const char *, const char *, int);
+char* getconfent(const char*, const char*, int);
+char* getconfent_fromfile(const char*, const char*, const char*, int);
 
 #endif /* __getconfent_h */

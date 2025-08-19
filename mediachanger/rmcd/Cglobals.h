@@ -18,10 +18,8 @@
 #pragma once
 
 #include "osdep.h"
-#include <stddef.h>                 /* For size_t                    */
+#include <stddef.h> /* For size_t                    */
 
-void Cglobals_init (int (*) (int *, void **),
-			     int (*) (int *, void *),
-			     int (*) (void));
-int Cglobals_get (int *, void **, size_t size);
-void Cglobals_getTid (int *);
+void Cglobals_init(int (*)(int*, void**), int (*)(int*, void*), int (*)(void));
+int Cglobals_get(int*, void**, size_t size);
+void Cglobals_getTid(int*);

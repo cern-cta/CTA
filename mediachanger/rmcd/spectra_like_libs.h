@@ -19,4 +19,4 @@
 
 #include "smc_struct.h"
 
-int is_library_spectra_like(const struct robot_info *const robot_info);
+int is_library_spectra_like(const struct robot_info* const robot_info);

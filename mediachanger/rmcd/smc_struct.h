@@ -31,8 +31,8 @@ struct robot_info {
 };
 
 struct extended_robot_info {
-  int     smc_fd;
-  char    smc_ldr[CA_MAXRBTNAMELEN+1];
+  int smc_fd;
+  char smc_ldr[CA_MAXRBTNAMELEN + 1];
   struct robot_info robot_info;
 };
 
@@ -51,7 +51,7 @@ struct smc_status {
   unsigned char asc;
   unsigned char ascq;
   int save_errno;
-  int rc;		/* return code from send_scsi_cmd */
+  int rc; /* return code from send_scsi_cmd */
   unsigned char sensekey;
-  int skvalid;	/* sense key is valid */
+  int skvalid; /* sense key is valid */
 };
