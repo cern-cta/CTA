@@ -17,7 +17,7 @@
 
 #pragma once
 
-#include <osdep.h>              /* Operating system dependencies        */
+#include "osdep.h"              /* Operating system dependencies        */
 #include <memory.h>             /* memory operations definition         */
 #include <arpa/inet.h>
 

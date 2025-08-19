@@ -16,7 +16,7 @@
  */
 
 #include <ctype.h>
-#include <osdep.h>
+#include "osdep.h"
 
 /**
  * Checks whether the given string is a size.

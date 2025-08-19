@@ -18,7 +18,7 @@
 #include <sys/types.h>
 #include <sys/socket.h>
 #include <errno.h>
-#include <serrno.h>
+#include "serrno.h"
 
 int netread(int s, char *buf, int nbytes) {
   int n, nb;

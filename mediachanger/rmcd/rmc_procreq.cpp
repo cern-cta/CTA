@@ -95,7 +95,7 @@ int rmc_srv_findcart(const struct rmc_srv_rqst_context *const rqst_context) {
 	char *sbp;
 	struct smc_status smc_status;
 	int startaddr;
-	char template[40];
+	char fmt_template[40];
 	int type;
 	uid_t uid;
 	const char* const func = "rmc_srv_findcart";
@@ -115,15 +115,15 @@ int rmc_srv_findcart(const struct rmc_srv_rqst_context *const rqst_context) {
 			return ERMCUNREC;
 		}
 	}
-	if(unmarshall_STRINGN(&rbp, req_data_end, template, 40)) {
-		rmc_sendrep (rqst_context->rpfd, MSG_ERR, RMC06, "template");
+	if(unmarshall_STRINGN(&rbp, req_data_end, fmt_template, 40)) {
+		rmc_sendrep (rqst_context->rpfd, MSG_ERR, RMC06, "fmt_template");
 		rmc_logit (func, "returns %d\n", ERMCUNREC);
 		return ERMCUNREC;
 	}
 	unmarshall_LONG (rbp, type);
 	unmarshall_LONG (rbp, startaddr);
 	unmarshall_LONG (rbp, nbelem);
-	snprintf (logbuf, sizeof(template)+15, "findcart %s %d", template, nbelem);
+	snprintf (logbuf, sizeof(fmt_template)+15, "findcart %s %d", fmt_template, nbelem);
 	rmc_logreq (func, logbuf);
 
 	if (nbelem < 1) {
@@ -131,13 +131,13 @@ int rmc_srv_findcart(const struct rmc_srv_rqst_context *const rqst_context) {
 		rmc_logit (func, "returns %d\n", ERMCUNREC);
 		return ERMCUNREC;
 	}
-	if ((element_info = malloc (nbelem * sizeof(struct smc_element_info))) == NULL) {
+	if ((element_info = reinterpret_cast<smc_element_info*>(malloc (nbelem * sizeof(struct smc_element_info)))) == NULL) {
 		rmc_sendrep (rqst_context->rpfd, MSG_ERR, RMC05);
 		rmc_logit (func, "returns %d\n", ERMCUNREC);
 		return ERMCUNREC;
 	}
 	c = smc_find_cartridge (g_extended_robot_info.smc_fd,
-	    g_extended_robot_info.smc_ldr, template, type, startaddr,
+	    g_extended_robot_info.smc_ldr, fmt_template, type, startaddr,
 	    nbelem, element_info, &g_extended_robot_info.robot_info);
 	if (c < 0) {
 		c = smc_lasterror (&smc_status, &msgaddr);
@@ -148,7 +148,7 @@ int rmc_srv_findcart(const struct rmc_srv_rqst_context *const rqst_context) {
 		rmc_logit (func, "returns %d\n", c);
 		return c;
 	}
-	if ((repbuf = malloc (c * 18 + 4)) == NULL) {
+	if ((repbuf = reinterpret_cast<char*>(malloc (c * 18 + 4))) == NULL) {
 		rmc_sendrep (rqst_context->rpfd, MSG_ERR, RMC05);
 		free (element_info);
 		rmc_logit (func, "returns %d\n", ERMCUNREC);
@@ -347,7 +347,7 @@ int rmc_srv_readelem(const struct rmc_srv_rqst_context *const rqst_context) {
 		rmc_logit (func, "returns %d\n", ERMCUNREC);
 		return ERMCUNREC;
 	}
-	if ((element_info = malloc (nbelem * sizeof(struct smc_element_info))) == NULL) {
+	if ((element_info = reinterpret_cast<smc_element_info*>(malloc (nbelem * sizeof(struct smc_element_info)))) == NULL) {
 		rmc_sendrep (rqst_context->rpfd, MSG_ERR, RMC05);
 		rmc_logit (func, "returns %d\n", ERMCUNREC);
 		return ERMCUNREC;
@@ -363,7 +363,7 @@ int rmc_srv_readelem(const struct rmc_srv_rqst_context *const rqst_context) {
 		rmc_logit (func, "returns %d\n", c);
 		return c;
 	}
-	if ((repbuf = malloc (c * 18 + 4)) == NULL) {
+	if ((repbuf = reinterpret_cast<char*>(malloc (c * 18 + 4))) == NULL) {
 		rmc_sendrep (rqst_context->rpfd, MSG_ERR, RMC05);
 		free (element_info);
 		rmc_logit (func, "returns %d\n", ERMCUNREC);

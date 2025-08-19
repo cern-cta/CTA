@@ -65,7 +65,7 @@ static void smc_usage(const char *const cmd)
 void smc_qdrive_humanPrint(const struct robot_info *const robot_info,
   const struct smc_element_info *const element_info, const int numberOfElements,
   const int useSpectraLib) {
-  char *pstatus;
+  const char *pstatus;
   int i;
   printf (TEXT_RED "Drive Ordinal\tElement Addr.\t  Status     Vid" TEXT_NORMAL "\n");
   for (i = 0; i < numberOfElements; i++) {
@@ -86,7 +86,7 @@ void smc_qdrive_humanPrint(const struct robot_info *const robot_info,
 void smc_qdrive_jsonPrint(const struct robot_info *const robot_info,
   const struct smc_element_info *const element_info, const int numberOfElements,
   const int useSpectraLib) {
-  char *pstatus;
+  const char *pstatus;
   int i;
   printf ("[");
   for (i = 0; i < numberOfElements; i++) {
@@ -130,7 +130,7 @@ static int smc_qdrive (
 	} else {
 		nbelem = 1;
 	}
-	if ((element_info = malloc (nbelem * sizeof(struct smc_element_info))) == NULL) {
+	if ((element_info = reinterpret_cast<smc_element_info*>(malloc (nbelem * sizeof(struct smc_element_info)))) == NULL) {
 		fprintf (stderr, SR012);
 		return (USERR);
 	}
@@ -200,7 +200,7 @@ static int smc_qlib (const struct robot_info *const robot_info,
 
 void smc_qport_humanPrint(const struct smc_element_info *const element_info,
   const int numberOfElements) {
-  char *pstatus;
+  const char *pstatus;
   int i;
   printf (TEXT_RED "Element Addr.\tVid\tImpExp" TEXT_NORMAL "\n");
   for (i = 0; i < numberOfElements; i++) {
@@ -218,7 +218,7 @@ void smc_qport_humanPrint(const struct smc_element_info *const element_info,
 
 void smc_qport_jsonPrint(const struct smc_element_info *const element_info,
   const int numberOfElements) {
-  char *pstatus;
+  const char *pstatus;
   int i;
   printf ("[");
   for (i = 0; i < numberOfElements; i++) {
@@ -252,7 +252,7 @@ static int smc_qport (
 	int nbelem;
 
 	nbelem = robot_info->port_count;
-	if ((element_info = malloc (nbelem * sizeof(struct smc_element_info))) == NULL) {
+	if ((element_info = reinterpret_cast<smc_element_info*>(malloc (nbelem * sizeof(struct smc_element_info)))) == NULL) {
 		fprintf (stderr, SR012);
 		return (USERR);
 	}
@@ -316,7 +316,7 @@ static int smc_qslot (
 	}
 	if (slotaddr < 0)
 		slotaddr = 0;
-	if ((element_info = malloc (nbelem * sizeof(struct smc_element_info))) == NULL) {
+	if ((element_info = reinterpret_cast<smc_element_info*>(malloc (nbelem * sizeof(struct smc_element_info)))) == NULL) {
 		fprintf (stderr, SR012);
 		return (USERR);
 	}
@@ -338,7 +338,7 @@ static int smc_qslot (
 void smc_qvid_humanPrint(const struct smc_element_info *const element_info,
   const int numberOfElements){
   int i;
-  char *ptype;
+  const char *ptype;
   char ptypes[5][6] = {"", "hand", "slot", "port", "drive"};
   printf (TEXT_RED "Vid\tElement Addr.\tElement Type" TEXT_NORMAL "\n");
   for (i = 0; i < numberOfElements; i++) {
@@ -359,7 +359,7 @@ void smc_qvid_humanPrint(const struct smc_element_info *const element_info,
 void smc_qvid_jsonPrint(const struct smc_element_info *const element_info,
   const int numberOfElements){
   int i;
-  char *ptype;
+  const char *ptype;
   char ptypes[5][6] = {"", "hand", "slot", "port", "drive"};
   printf ("[");
   for (i = 0; i < numberOfElements; i++) {
@@ -407,7 +407,7 @@ static int smc_qvid (
 		else
 			nbelem = 1;
 	}
-	if ((element_info = malloc (nbelem * sizeof(struct smc_element_info))) == NULL) {
+	if ((element_info = reinterpret_cast<smc_element_info*>(malloc (nbelem * sizeof(struct smc_element_info)))) == NULL) {
 		fprintf (stderr, SR012);
 		return (USERR);
 	}

@@ -347,7 +347,7 @@ int smc_read_elem_status(
 	const int nbelem,
 	struct smc_element_info element_info[])
 {
-	return get_element_info(0xB8, fd, rbtdev, type, start, nbelem, element_info);
+	return get_element_info('\xb8', fd, rbtdev, type, start, nbelem, element_info);
 }
 
 int smc_find_cartridgeWithoutSendVolumeTag (
@@ -467,7 +467,7 @@ int smc_find_cartridge(
 		}
 		return (-1);
 	}
-	return get_element_info (0xB5, fd, rbtdev, type, start, nbelem, element_info);
+	return get_element_info ('\xb5', fd, rbtdev, type, start, nbelem, element_info);
 }
 
 

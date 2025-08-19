@@ -129,7 +129,7 @@ ssize_t netread_timeout(int fd,
 
 	/* If not timeout, we go to normal function */
 	if (timeout <= 0) {
-		return(netread(fd,vptr,(int) n));
+		return(netread(fd,reinterpret_cast<char*>(vptr),(int) n));
 	}
 
 	/* In any case we catch and trap SIGPIPE */
@@ -137,7 +137,7 @@ ssize_t netread_timeout(int fd,
 		return(-1);
 	}
 
-	ptr   = vptr;
+	ptr   = reinterpret_cast<char*>(vptr);
 	nleft = n;
 	nread = 0;
 
@@ -227,7 +227,7 @@ ssize_t netwrite_timeout(int fd,
 
 	/* If not timeout, we go to normal function */
 	if (timeout <= 0) {
-		return(netwrite(fd,vptr,(int) n));
+		return(netwrite(fd,reinterpret_cast<char*>(vptr),(int) n));
 	}
 
 	/* In any case we catch and trap SIGPIPE */
@@ -235,7 +235,7 @@ ssize_t netwrite_timeout(int fd,
 		return(-1);
 	}
 
-	ptr      = vptr;
+	ptr      = reinterpret_cast<char*>(vptr);
 	nleft    = n;
 
 	time_start = time(NULL);

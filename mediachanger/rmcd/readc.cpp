@@ -34,7 +34,7 @@
 
 #include <stdio.h>
 #include <sys/types.h>
-#include <osdep.h>
+#include "osdep.h"
 
 void read_s_(FILE **stream,
              char *  buff,

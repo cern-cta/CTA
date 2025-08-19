@@ -28,6 +28,7 @@
 #include "rmc_api.h"
 #include "rmc_constants.h"
 #include "serrno.h"
+#include "getconfent.h"
 
 #define PATH_CONF "/etc/cta/cta-rmcd.conf"
 /* send2tpd - send a request to the SCSI media changer server and wait for the reply */
@@ -41,9 +42,6 @@ int send2rmc(
 {
 	int actual_replen = 0;
 	int c;
-	char *getconfent();
-	char *getconfent_fromfile();
-	char *getenv();
 	struct hostent *hp;
 	int magic;
 	int n;

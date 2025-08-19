@@ -42,10 +42,8 @@ static char *getconfent_r(const char *filename,
 {
     FILE    *fp;
     char    *p, *cp;
-    char    *getenv();
     int     found = 0;
     char    path_config[CA_MAXPATHLEN+1];
-    char    *separator;
     char *last = NULL;
 
     if (filename == NULL) {
@@ -80,12 +78,11 @@ static char *getconfent_r(const char *filename,
             if ( strcmp(cp,name) == 0) { /* A match */
                 if (flags != 0) {
                     /* Don't tokenize next arg */
-                    separator = "#\n";
+                    cp = strtok(NULL, "#\n");
                 } else {
-                    separator = "#\t \n";
+                    cp = strtok(NULL, "#\t \n");
                 }
-
-                if ( (cp = strtok(NULL, separator)) == NULL ) continue;
+                if (cp == NULL) continue;
                 if (*cp == '#') continue;
                 found++;
                 break;
