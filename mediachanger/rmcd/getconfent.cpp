@@ -21,7 +21,6 @@
 #include "Cglobals.h"
 #include "serrno.h"
 #include "getconfent.h"
-#include "Csnprintf.h"
 #include "Castor_limits.h"
 
 #ifndef PATH_CONFIG

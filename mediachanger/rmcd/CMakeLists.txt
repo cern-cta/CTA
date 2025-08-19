@@ -23,15 +23,13 @@ set(CTARMCCOMMON_LIB_SRC_FILES
   Cglobals.cpp
   Cinitdaemon.cpp
   Cnetdb.cpp
-  Csnprintf.cpp
   getconfent.cpp
   marshall.cpp
-  readc.cpp
   serror.cpp
   socket.cpp
   socket_timeout.cpp
   strerror_r_wrapper.cpp
-  util.cpp)
+  spectra_like_libs.cpp)
 
 add_library(ctarmccommon ${CTARMCCOMMON_LIB_SRC_FILES})
 
@@ -47,9 +45,7 @@ set(RMCD_SRC_FILES
   rmc_procreq.cpp
   rmc_sendrep.cpp
   rmc_send_scsi_cmd.cpp
-  rmc_smcsubr.cpp
-  spectra_like_libs.cpp #### repeated - move to common?
-)
+  rmc_smcsubr.cpp)
 
 # Add -Wno-format-overflow compiler flag
 set_property(SOURCE rmc_send_scsi_cmd.cpp APPEND_STRING PROPERTY COMPILE_FLAGS " -Wno-format-overflow")
@@ -76,15 +72,15 @@ set(SMC_SRC_FILES
   rmc_mount.cpp
   rmc_read_elem_status.cpp
   send2rmc.cpp
-  spectra_like_libs.cpp
   smc.cpp)
+
 add_executable(cta-smc ${SMC_SRC_FILES})
 target_link_libraries(cta-smc ctarmccommon)
 
 install (TARGETS cta-smc DESTINATION /usr/bin)
 
 #
-# documentation
+# documentation and example config
 #
 
 add_manpage(cta-rmcd cta-smc)
