@@ -37,7 +37,7 @@ RetrieveRdbJob::RetrieveRdbJob(rdbms::ConnPool& connPool)
   reset();
 };
 
-void RetrieveRdbJob::initialize(const rdbms::Rset& rset) {
+void RetrieveRdbJob::initialize(const rdbms::Rset& rset, bool rowIsRepack) {
   //cta::log::TimingList timings;
   //cta::utils::Timer t;
   // we can safely move the values from m_jobRow since any further DB
@@ -83,7 +83,7 @@ void RetrieveRdbJob::initialize(const rdbms::Rset& rset) {
                                      std::move(m_jobRow.checksumBlob));
   errorReportURL = std::move(m_jobRow.retrieveErrorReportURL);
   selectedCopyNb = m_jobRow.copyNb;
-  isRepack = false;  // for the moment hardcoded as repqck is not implemented
+  isRepack = rowIsRepack;
 
   if (m_jobRow.activity) {
     retrieveRequest.activity = m_jobRow.activity.value();
@@ -95,7 +95,7 @@ void RetrieveRdbJob::initialize(const rdbms::Rset& rset) {
   // Re-initialize report type
   if (m_jobRow.status == RetrieveJobStatus::RJS_ToReportToUserForSuccess) {
     reportType = ReportType::CompletionReport;
-  } else if (m_jobRow.status == RetrieveJobStatus::RJS_ToReportToUserForFailure) {
+  } else if (m_jobRow.status == RetrieveJobStatus::RJS_ToReportToUserForFailure || m_jobRow.status == RetrieveJobStatus::RJS_ToReportToRepackForFailure) {
     reportType = ReportType::FailureReport;
   } else {
     reportType = ReportType::NoReportRequired;
@@ -103,8 +103,8 @@ void RetrieveRdbJob::initialize(const rdbms::Rset& rset) {
 }
 
 // contructor to get next job batch to report
-RetrieveRdbJob::RetrieveRdbJob(rdbms::ConnPool& connPool, const rdbms::Rset& rset) : RetrieveRdbJob(connPool) {
-  initialize(rset);
+RetrieveRdbJob::RetrieveRdbJob(rdbms::ConnPool& connPool, const rdbms::Rset& rset, bool rowFromRepack) : RetrieveRdbJob(connPool) {
+  initialize(rset, rowFromRepack);
 };
 
 void RetrieveRdbJob::reset() {
@@ -163,7 +163,7 @@ void RetrieveRdbJob::handleExceedTotalRetries(cta::schedulerdb::Transaction& txn
   }
 
   try {
-    uint64_t nrows = m_jobRow.updateFailedJobStatus(txn, RetrieveJobStatus::RJS_ToReportToUserForFailure);
+    uint64_t nrows = m_jobRow.updateFailedJobStatus(txn, isRepack);
     txn.commit();
     if (nrows != 1) {
       lc.log(log::WARNING,
@@ -193,7 +193,7 @@ void RetrieveRdbJob::requeueToNewMount(cta::schedulerdb::Transaction& txn,
     m_jobRow.fSeq = static_cast<uint64_t>(std::stoi(alternateFSeqVec[index]));
     m_jobRow.blockId = static_cast<uint64_t>(std::stoi(alternateBlockIdVec[index]));
     m_jobRow.vid = newVid;
-    uint64_t nrows = m_jobRow.requeueFailedJob(txn, RetrieveJobStatus::RJS_ToTransfer, false);
+    uint64_t nrows = m_jobRow.requeueFailedJob(txn, RetrieveJobStatus::RJS_ToTransfer, false, isRepack);
     txn.commit();
     if (nrows != 1) {
       lc.log(log::WARNING,
@@ -212,7 +212,7 @@ void RetrieveRdbJob::requeueToNewMount(cta::schedulerdb::Transaction& txn,
 void RetrieveRdbJob::requeueToSameMount(cta::schedulerdb::Transaction& txn, log::LogContext& lc, const std::string& reason) {
   try {
     // requeue to the same mount simply by moving it to PENDING QUEUE and updating all other stat fields
-    uint64_t nrows = m_jobRow.requeueFailedJob(txn, RetrieveJobStatus::RJS_ToTransfer, true);
+    uint64_t nrows = m_jobRow.requeueFailedJob(txn, RetrieveJobStatus::RJS_ToTransfer, true, isRepack);
     txn.commit();
     if (nrows != 1) {
       lc.log(log::WARNING, "RetrieveRdbJob::requeueFailedJob(): (same mount) failed; job not found.");

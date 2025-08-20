@@ -19,100 +19,110 @@
 
 namespace cta::schedulerdb {
 
+
+cta::schedulerdb::postgres::RetrieveJobQueueRow
+RetrieveRequest::makeJobRow() const {
+  cta::schedulerdb::postgres::RetrieveJobQueueRow rjr;
+  rjr.retrieveRequestId = cta::schedulerdb::postgres::RetrieveJobQueueRow::getNextRetrieveRequestID(m_conn);
+  rjr.repackRequestId = m_repackInfo.repackRequestId;
+  rjr.reqJobCount = m_jobs.size();
+
+  // rdbms request members
+  rjr.diskSystemName = m_diskSystemName;
+  rjr.requesterName = m_schedRetrieveReq.requester.name;
+  rjr.requesterGroup = m_schedRetrieveReq.requester.group;
+  rjr.dstURL = m_schedRetrieveReq.dstURL;
+  rjr.retrieveReportURL = m_schedRetrieveReq.retrieveReportURL;
+  rjr.retrieveErrorReportURL = m_schedRetrieveReq.errorReportURL;
+  rjr.isVerifyOnly = m_isVerifyOnly;
+  rjr.srrUsername = m_schedRetrieveReq.creationLog.username;
+  rjr.srrHost = m_schedRetrieveReq.creationLog.host;
+  rjr.srrTime = m_schedRetrieveReq.creationLog.time;
+  rjr.lifecycleTimings_creation_time = m_schedRetrieveReq.lifecycleTimings.creation_time;
+  rjr.lifecycleTimings_first_selected_time = m_schedRetrieveReq.lifecycleTimings.first_selected_time;
+  rjr.lifecycleTimings_completed_time = m_schedRetrieveReq.lifecycleTimings.completed_time;
+  rjr.activity = m_activity;
+
+  rjr.copyNb = m_actCopyNb;
+  rjr.status = RetrieveJobStatus::RJS_ToTransfer;
+  rjr.vid = m_vid;
+  rjr.fSeq = m_fSeq;
+  rjr.blockId = m_blockId;
+  rjr.mountPolicy = m_mountPolicyName;
+  rjr.priority = m_priority;
+  rjr.minRetrieveRequestAge = m_retrieveMinReqAge;
+
+  rjr.archiveFileID = m_archiveFile.archiveFileID;
+  rjr.diskFileId = m_archiveFile.diskFileId;
+  rjr.diskInstance = m_archiveFile.diskInstance;
+  rjr.fileSize = m_archiveFile.fileSize;
+  rjr.storageClass = m_archiveFile.storageClass;
+  rjr.diskFileInfoPath = m_archiveFile.diskFileInfo.path;
+  rjr.diskFileInfoOwnerUid = m_archiveFile.diskFileInfo.owner_uid;
+  rjr.diskFileInfoGid = m_archiveFile.diskFileInfo.gid;
+  rjr.checksumBlob = m_archiveFile.checksumBlob;
+  rjr.startTime = time(nullptr);
+
+  // Populate alternates from jobs
+  int i = 0;
+  for (const auto &rj : m_jobs) {
+    rjr.alternateVids     += rj.vid + ",";
+    rjr.alternateCopyNbs  += std::to_string(rj.copyNb) + ",";
+    rjr.alternateFSeq     += std::to_string(rj.fSeq) + ",";
+    rjr.alternateBlockId  += std::to_string(rj.blockId) + ",";
+
+    if (i++ == 0) {
+      rjr.retriesWithinMount   = rj.retriesWithinMount;
+      rjr.maxRetriesWithinMount = rj.maxRetriesWithinMount;
+      rjr.maxReportRetries     = rj.maxReportRetries;
+      rjr.totalRetries         = rj.totalRetries;
+      rjr.totalReportRetries   = rj.totalReportRetries;
+      rjr.lastMountWithFailure = rj.lastMountWithFailure;
+      rjr.maxTotalRetries      = rj.maxTotalRetries;
+    }
+  }
+
+  if (!rjr.alternateVids.empty())        rjr.alternateVids.pop_back();
+  if (!rjr.alternateCopyNbs.empty())     rjr.alternateCopyNbs.pop_back();
+  if (!rjr.alternateFSeq.empty())        rjr.alternateFSeq.pop_back();
+  if (!rjr.alternateBlockId.empty())     rjr.alternateBlockId.pop_back();
+
+  // For any additional copies that will need to be archive for repack,
+  // we need to record the additional requested copyNbs
+  std::string copyNbsToRearchiveString = "";
+  std::string tapePoolsForReparchiveCopyNbsString = "";
+  for (const auto& copyNb : m_repackInfo.copyNbsToRearchive) {
+    if (copyNb == 0) { continue; }
+    if (!copyNbsToRearchiveString.empty()) {
+      copyNbsToRearchiveString += ",";
+      tapePoolsForReparchiveCopyNbsString += ",";
+    }
+    copyNbsToRearchiveString += std::to_string(copyNb);
+    tapePoolsForReparchiveCopyNbsString += m_repackInfo.archiveRouteMap.at(copyNb);
+  }
+  log::ScopedParamContainer(m_lc)
+      .add("copyNbsToRearchiveString", copyNbsToRearchiveString)
+      .add("tapePoolsForReparchiveCopyNbsString", tapePoolsForReparchiveCopyNbsString)
+      .log(log::DEBUG, "In RetrieveRequest::insert(): copyNbsToRearchiveString check.");
+  if (!copyNbsToRearchiveString.empty()){
+    rjr.rearchiveCopyNbs = copyNbsToRearchiveString;
+  }
+  if (!tapePoolsForReparchiveCopyNbsString.empty()){
+    rjr.rearchiveTapePools = tapePoolsForReparchiveCopyNbsString;
+  }
+  rjr.srrMountPolicy = "?";
+  rjr.srrActivity    = m_schedRetrieveReq.activity.value_or("?");
+
+  return rjr;
+}
+
+// Inserts one row into DB
 void RetrieveRequest::insert() {
-  m_lc.log(log::INFO, "In RetrieveRequest::insert(): getting request ID from DB.");
-  uint64_t rreq_id = cta::schedulerdb::postgres::RetrieveJobQueueRow::getNextRetrieveRequestID(m_conn);
-  uint32_t rreq_job_count = m_jobs.size();
-  m_lc.log(log::INFO, "In RetrieveRequest::insert(): creating jobs.");
-
-  // Inserting the jobs to the DB
-  try {
-    cta::schedulerdb::postgres::RetrieveJobQueueRow rjr;
-    rjr.retrieveRequestId = rreq_id;
-    rjr.reqJobCount = rreq_job_count;
-
-    // rdbms request members
-    rjr.diskSystemName = m_diskSystemName;
-    // m_schedRetrieveReq metadata fields
-    rjr.requesterName = m_schedRetrieveReq.requester.name;
-    rjr.requesterGroup = m_schedRetrieveReq.requester.group;
-    rjr.dstURL = m_schedRetrieveReq.dstURL;
-    rjr.retrieveReportURL = m_schedRetrieveReq.retrieveReportURL;
-    rjr.retrieveErrorReportURL = m_schedRetrieveReq.errorReportURL;
-    rjr.isVerifyOnly =
-      m_isVerifyOnly;  // m_schedRetrieveReq.isVerifyOnly; // true = retrieve file from tape but do not write a disk copy
-    rjr.srrUsername = m_schedRetrieveReq.creationLog.username;
-    rjr.srrHost = m_schedRetrieveReq.creationLog.host;
-    rjr.srrTime = m_schedRetrieveReq.creationLog.time;
-    rjr.lifecycleTimings_creation_time = m_schedRetrieveReq.lifecycleTimings.creation_time;
-    rjr.lifecycleTimings_first_selected_time = m_schedRetrieveReq.lifecycleTimings.first_selected_time;
-    rjr.lifecycleTimings_completed_time = m_schedRetrieveReq.lifecycleTimings.completed_time;
-    rjr.activity = m_activity;  // from m_schedRetrieveReq.activity; set if needed only
-
-    /* Think about when to register this and when to put another vid found in queueRetrieve:
-     * std::optional<std::string> m_schedRetrieveReq.vid; limit retrieve requests to the specified vid (in the case of dual-copy files)
-     * std::optional<std::string> m_schedRetrieveReq.mountPolicy; limit retrieve requests to a specified mount policy (only used for verification requests)
-     * std::optional<std::string> activity;
-     * setActiveCopyNumber sets also vid and status;
-     */
-    rjr.copyNb = m_actCopyNb;
-    rjr.status = RetrieveJobStatus::RJS_ToTransfer;  // m_status;
-    rjr.vid = m_vid;
-    rjr.fSeq = m_fSeq;
-    rjr.blockId = m_blockId;
-    // info from criteria passed to fillJobsSetRetrieveFileQueueCriteria()
-    rjr.mountPolicy = m_mountPolicyName;
-    rjr.priority = m_priority;
-    rjr.minRetrieveRequestAge = m_retrieveMinReqAge;
-
-    rjr.archiveFileID = m_archiveFile.archiveFileID;
-    rjr.diskFileId = std::move(m_archiveFile.diskFileId);
-    rjr.diskInstance = std::move(m_archiveFile.diskInstance);
-    rjr.fileSize = m_archiveFile.fileSize;
-    rjr.storageClass = std::move(m_archiveFile.storageClass);
-    rjr.diskFileInfoPath = std::move(m_archiveFile.diskFileInfo.path);
-    rjr.diskFileInfoOwnerUid = m_archiveFile.diskFileInfo.owner_uid;
-    rjr.diskFileInfoGid = m_archiveFile.diskFileInfo.gid;
-    rjr.checksumBlob = std::move(m_archiveFile.checksumBlob);
-    rjr.startTime = time(nullptr);  // Time the job was queued in the DB
-
-    // For each tape file concatenate the copyNb and vids into alternate strings to save for retrial/requeueing
-
-    int i = 0;
-    for (const auto& rj : m_jobs) {
-      i++;
-      rjr.alternateVids += rj.vid + std::string(",");
-      rjr.alternateCopyNbs += std::to_string(rj.copyNb) + std::string(",");
-      rjr.alternateFSeq += std::to_string(rj.fSeq) + std::string(",");
-      rjr.alternateBlockId += std::to_string(rj.blockId) + std::string(",");
-
-      if (i == 1) {
-        rjr.retriesWithinMount = rj.retriesWithinMount;
-        rjr.maxRetriesWithinMount = rj.maxRetriesWithinMount;
-        rjr.maxReportRetries = rj.maxReportRetries;
-        rjr.totalRetries = rj.totalRetries;
-        rjr.totalReportRetries = rj.totalReportRetries;
-        rjr.lastMountWithFailure = rj.lastMountWithFailure;
-        rjr.maxTotalRetries = rj.maxTotalRetries;
-      }
-    }
-    if (!rjr.alternateVids.empty()) {
-      rjr.alternateVids.pop_back();
-    }
-    if (!rjr.alternateCopyNbs.empty()) {
-      rjr.alternateCopyNbs.pop_back();
-    }
-    if (!rjr.alternateFSeq.empty()) {
-      rjr.alternateFSeq.pop_back();
-    }
-    if (!rjr.alternateBlockId.empty()) {
-      rjr.alternateBlockId.pop_back();
-    }
-    rjr.srrMountPolicy = "?";                                     // ? what was this for ?
-    rjr.srrActivity = m_schedRetrieveReq.activity.value_or("?");  // ? what was this for ?
+  try{
+    cta::schedulerdb::postgres::RetrieveJobQueueRow row = makeJobRow();
     log::ScopedParamContainer params(m_lc);
-    rjr.addParamsToLogContext(params);
-    rjr.insert(m_conn);
+    row.addParamsToLogContext(params);
+    row.insert(m_conn);
     m_lc.log(log::INFO, "In RetrieveRequest::insert(): added jobs to queue.");
   } catch (exception::Exception& ex) {
     log::ScopedParamContainer params(m_lc);
@@ -122,24 +132,6 @@ void RetrieveRequest::insert() {
     throw;
   }
 }
-
-/* [Protobuf to-be-replaced] keeping this logic in a comment to facilitate
- * future rewrite using DB columns directly instead of inserting Protobuf objects
- *
- * ri.set_fseq(m_repackInfo.fSeq);
- * ri.set_file_buffer_url(m_repackInfo.fileBufferURL);
- * ri.set_has_user_provided_file(m_repackInfo.hasUserProvidedFile);
- * for(const auto &[key, value]: m_repackInfo.archiveRouteMap) {
- *   schedulerdb::blobser::RetrieveRequestArchiveRoute *ar = ri.add_archive_routes();
- *   ar->set_copynb(key);
- *   ar->set_tapepool(value);
- * }
- * for(auto &c: m_repackInfo.copyNbsToRearchive) {
- *   ri.add_copy_nbs_to_rearchive(c);
- * }
- * rj.SerializeToString(&row.retrieveJobsProtoBuf);
- * ri.SerializeToString(&row.repackInfoProtoBuf);
- */
 
 void RetrieveRequest::update() const {
   throw RetrieveRequestException("update not implemented.");
@@ -159,12 +151,12 @@ void RetrieveRequest::commit() {
   throw RetrieveRequestException("addJobFailure not implemented.");
 }
 
-void RetrieveRequest::setRepackInfo(const cta::schedulerdb::RetrieveRequest::RetrieveReqRepackInfo& repackInfo) const {
-  throw RetrieveRequestException("setRepackInfo not implemented.");
+void RetrieveRequest::setRepackInfo(const cta::schedulerdb::RetrieveRequest::RetrieveReqRepackInfo& repackInfo) {
+  m_repackInfo = repackInfo;
 }
 
-void RetrieveRequest::setJobStatus(uint32_t copyNumber, const cta::schedulerdb::RetrieveJobStatus& status) const {
-  throw RetrieveRequestException("setJobStatus not implemented.");
+void RetrieveRequest::setJobStatus(uint32_t copyNumber, const cta::schedulerdb::RetrieveJobStatus& status)  {
+  m_status = status;
 }
 
 void RetrieveRequest::setSchedulerRequest(const cta::common::dataStructures::RetrieveRequest& retrieveRequest) {
@@ -183,16 +175,19 @@ void RetrieveRequest::fillJobsSetRetrieveFileQueueCriteria(
 
   // create jobs for each tapefile in the archiveFile;
   for (const auto& tf : m_archiveFile.tapeFiles) {
-    m_jobs.emplace_back();
-    m_jobs.back().copyNb = tf.copyNb;
-    m_jobs.back().vid = tf.vid;
-    m_jobs.back().maxRetriesWithinMount = m_repackInfo.isRepack ? RETRIES_WITHIN_MOUNT_FOR_REPACK : RETRIES_WITHIN_MOUNT_FOR_USER;
-    m_jobs.back().maxTotalRetries = m_repackInfo.isRepack ? TOTAL_RETRIES_FOR_REPACK : TOTAL_RETRIES_FOR_USER;
-    m_jobs.back().maxReportRetries = REPORT_RETRIES;
-    m_jobs.back().status = schedulerdb::RetrieveJobStatus::RJS_ToTransfer;
-    // in case we need these for retrieval we should save them in DB as well !
-    m_jobs.back().fSeq = tf.fSeq;
-    m_jobs.back().blockId = tf.blockId;
+    if(!m_repackInfo.isRepack ||
+            (m_repackInfo.isRepack && m_repackInfo.copyNbsToRearchive.find(tf.copyNb) != m_repackInfo.copyNbsToRearchive.end())){
+      m_jobs.emplace_back();
+      m_jobs.back().copyNb = tf.copyNb;
+      m_jobs.back().vid = tf.vid;
+      m_jobs.back().maxRetriesWithinMount = m_repackInfo.isRepack ? RETRIES_WITHIN_MOUNT_FOR_REPACK : RETRIES_WITHIN_MOUNT_FOR_USER;
+      m_jobs.back().maxTotalRetries = m_repackInfo.isRepack ? TOTAL_RETRIES_FOR_REPACK : TOTAL_RETRIES_FOR_USER;
+      m_jobs.back().maxReportRetries = REPORT_RETRIES;
+      m_jobs.back().status = schedulerdb::RetrieveJobStatus::RJS_ToTransfer;
+      // in case we need these for retrieval we should save them in DB as well !
+      m_jobs.back().fSeq = tf.fSeq;
+      m_jobs.back().blockId = tf.blockId;
+    }
   }
 }
 
@@ -201,7 +196,7 @@ void RetrieveRequest::setActivityIfNeeded(const cta::common::dataStructures::Ret
   m_activity = retrieveRequest.activity;
 }
 
-void RetrieveRequest::setDiskSystemName(std::string_view diskSystemName) {
+void RetrieveRequest::setDiskSystemName(std::optional<std::string> diskSystemName) {
   m_diskSystemName = diskSystemName;
 }
 

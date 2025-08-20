@@ -89,8 +89,21 @@ struct ArchiveJobSummaryRow {
         ARCHIVE_PRIORITY,
         ARCHIVE_MIN_REQUEST_AGE, 
         LAST_JOB_UPDATE_TIME
-      FROM 
-        ARCHIVE_QUEUE_SUMMARY
+      FROM ARCHIVE_QUEUE_SUMMARY
+
+      UNION ALL
+
+      SELECT
+        STATUS,
+        TAPE_POOL,
+        MOUNT_POLICY,
+        JOBS_COUNT,
+        JOBS_TOTAL_SIZE,
+        OLDEST_JOB_START_TIME,
+        ARCHIVE_PRIORITY,
+        ARCHIVE_MIN_REQUEST_AGE,
+        LAST_JOB_UPDATE_TIME
+      FROM REPACK_ARCHIVE_QUEUE_SUMMARY
     )SQL";
 
     auto stmt = txn.getConn().createStmt(sql);

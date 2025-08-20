@@ -67,7 +67,7 @@ set (CTA_SCHEDULER_PG_SRC_FILES ${CTA_SCHEDULER_SRC_FILES}
   rdbms/TapeMountDecisionInfo.cpp
   rdbms/postgres/ArchiveJobQueue.cpp
   rdbms/postgres/RetrieveJobQueue.cpp
-  rdbms/postgres/RepackJobQueue.cpp
+  rdbms/postgres/RepackRequestTracker.cpp
   rdbms/postgres/Transaction.cpp)
 
 # End of definitions specific to Postgres scheduler lib compilation

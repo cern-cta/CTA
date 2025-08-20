@@ -20,6 +20,7 @@
 #include "rdbms/ConnPool.hpp"
 #include "scheduler/rdbms/postgres/Enums.hpp"
 #include "scheduler/rdbms/postgres/Transaction.hpp"
+#include "scheduler/rdbms/postgres/ArchiveJobQueue.hpp"
 
 #include "common/dataStructures/ArchiveFile.hpp"
 #include "common/dataStructures/EntryLog.hpp"
@@ -34,6 +35,7 @@ class ArchiveRequest {
 public:
   ArchiveRequest(rdbms::Conn& conn, log::LogContext& lc) : m_conn(conn), m_lc(lc) {}
 
+  std::vector<postgres::ArchiveJobQueueRow> makeJobRows() const;
   void insert();
   [[noreturn]] void update() const;
 

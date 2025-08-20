@@ -38,19 +38,23 @@ enum class ArchiveJobStatus : uint8_t {
   AJS_Failed,
   AJS_Abandoned,
   AJS_ToTransferForRepack,
+  AJS_ToReportToRepackForSuccess,
   AJS_ToReportToRepackForFailure,
-  ReadyForDeletion
+  ReadyForDeletion,
+  Cancelled
 };
 
-constexpr const std::array<const char*, 9> StringsArchiveJobStatus = {"AJS_ToTransferForUser",
+constexpr const std::array<const char*, 11> StringsArchiveJobStatus = {"AJS_ToTransferForUser",
                                                                       "AJS_ToReportToUserForSuccess",
                                                                       "AJS_Complete",
                                                                       "AJS_ToReportToUserForFailure",
                                                                       "AJS_Failed",
                                                                       "AJS_Abandoned",
                                                                       "AJS_ToTransferForRepack",
+                                                                      "AJS_ToReportToRepackForSuccess",
                                                                       "AJS_ToReportToRepackForFailure",
-                                                                      "ReadyForDeletion"};
+                                                                      "ReadyForDeletion",
+                                                                      "Cancelled"};
 
 // ================================ Job Queue Type =============================
 
@@ -82,17 +86,19 @@ enum class RetrieveJobStatus : uint8_t {
   RJS_Complete,
   RJS_ToReportToRepackForSuccess,
   RJS_ToReportToRepackForFailure,
-  ReadyForDeletion
+  ReadyForDeletion,
+  Cancelled
 };
 
-constexpr const std::array<const char*, 8> StringsRetrieveJobStatus = {"RJS_ToTransfer",
+constexpr const std::array<const char*, 9> StringsRetrieveJobStatus = {"RJS_ToTransfer",
                                                                        "RJS_ToReportToUserForSuccess",
                                                                        "RJS_ToReportToUserForFailure",
                                                                        "RJS_Failed",
                                                                        "RJS_Complete",
                                                                        "RJS_ToReportToRepackForSuccess",
                                                                        "RJS_ToReportToRepackForFailure",
-                                                                       "ReadyForDeletion"};
+                                                                       "ReadyForDeletion",
+                                                                       "Cancelled"};
 
 // ============================== Repack Job Status ===========================
 

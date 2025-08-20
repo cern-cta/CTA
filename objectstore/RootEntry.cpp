@@ -981,7 +981,6 @@ std::string RootEntry::addOrGetRepackQueueAndCommit(AgentReference& agentRef, co
     break;
   case common::dataStructures::RepackQueueType::ToExpand:
     m_payload.mutable_repackrequeststoexpandqueuepointer()->set_address(repackQueueAddress);
-    break;
   }
   // We must commit here to ensure the repack queue is referenced.
   commit();
