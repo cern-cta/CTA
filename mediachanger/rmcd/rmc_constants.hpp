@@ -17,38 +17,38 @@
 
 #pragma once
 
-#define RMC_CHECKI   5 //!< max interval to check for work to be done
+#define RMC_CHECKI   5  //!< max interval to check for work to be done
 #define RMC_PRTBUFSZ 180
-#define RMC_REPBUFSZ 524288 //!< must be >= max media changer server reply size
-#define RMC_REQBUFSZ 256    //!< must be >= max media changer server request size
+#define RMC_REPBUFSZ 524288  //!< must be >= max media changer server reply size
+#define RMC_REQBUFSZ 256     //!< must be >= max media changer server request size
 #define RMC_MAGIC    0x120D0301
-#define RMC_TIMEOUT  5 //!< netread timeout while receiving a request
+#define RMC_TIMEOUT  5  //!< netread timeout while receiving a request
 #define RMC_RETRYI   60
 #define RMC_LOGBUFSZ 1024
 
-#define REQ_DATA_SIZE (RMC_REQBUFSZ - 3 * LONGSIZE) //!< Size of buffer pointed to by rqst_context.req_data
+#define REQ_DATA_SIZE (RMC_REQBUFSZ - 3 * LONGSIZE)  //!< Size of buffer pointed to by rqst_context.req_data
 
 #define RMC_PORT 5014
 
-#define RMC_MAXRQSTATTEMPTS 10 //!< Maximum number of attempts a retriable RMC request should be issued
+#define RMC_MAXRQSTATTEMPTS 10  //!< Maximum number of attempts a retriable RMC request should be issued
 
 // SCSI media changer utilities exit codes
 
-#define USERR   1 //!< user error
-#define SYERR   2 //!< system error
-#define CONFERR 4 //!< configuration error
+#define USERR   1  //!< user error
+#define SYERR   2  //!< system error
+#define CONFERR 4  //!< configuration error
 
 // Request types
 
-#define RMC_GETGEOM        1 //!< Get robot geometry
-#define RMC_FINDCART       2 //!< Find cartridge(s)
-#define RMC_READELEM       3 //!< Read element status
-#define RMC_MOUNT          4 //!< Mount request
-#define RMC_UNMOUNT        5 //!< Unmount request
-#define RMC_EXPORT         6 //!< Export tape request
-#define RMC_IMPORT         7 //!< Import tape request
-#define RMC_GENERICMOUNT   8 //!< Generic (SCSI or ACS) mount request
-#define RMC_GENERICUNMOUNT 9 //!< Generic (SCSI or ACS) mount request
+#define RMC_GETGEOM        1  //!< Get robot geometry
+#define RMC_FINDCART       2  //!< Find cartridge(s)
+#define RMC_READELEM       3  //!< Read element status
+#define RMC_MOUNT          4  //!< Mount request
+#define RMC_UNMOUNT        5  //!< Unmount request
+#define RMC_EXPORT         6  //!< Export tape request
+#define RMC_IMPORT         7  //!< Import tape request
+#define RMC_GENERICMOUNT   8  //!< Generic (SCSI or ACS) mount request
+#define RMC_GENERICUNMOUNT 9  //!< Generic (SCSI or ACS) mount request
 
 // SCSI media changer server reply types
 

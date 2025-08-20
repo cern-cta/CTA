@@ -21,7 +21,7 @@
 #include <arpa/inet.h>
 #include "osdep.hpp"
 
-#define SHORT WORD
+#define SHORT     WORD
 #define SHORTSIZE WORDSIZE
 #define SHORTADDR WORDADDR
 
@@ -35,11 +35,11 @@
  * BIT manipulation
  */
 
-#define BITSOFBYTE 8 //!< number of bits in a byte
+#define BITSOFBYTE 8  //!< number of bits in a byte
 
-#define bitsof(t) sizeof(t) * BITSOFBYTE //!< number of bits in a type
+#define bitsof(t) sizeof(t) * BITSOFBYTE  //!< number of bits in a type
 
-typedef char* bitvct; //!< bit vector type definition
+typedef char* bitvct;  //!< bit vector type definition
 
 /*
  * Allocate enough memory for a 'bitvct' type variable containing

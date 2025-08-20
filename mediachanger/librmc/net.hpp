@@ -17,9 +17,9 @@
 
 #pragma once
 
-int netread(int, char*, int);                    //!< Network receive function
-int netwrite(const int, const char*, const int); //!< Network send function
-char* neterror(void);                            //!< Network error function
+int netread(int, char*, int);                     //!< Network receive function
+int netwrite(const int, const char*, const int);  //!< Network send function
+char* neterror(void);                             //!< Network error function
 
 ssize_t netread_timeout(int, void*, ssize_t, int);
 ssize_t netwrite_timeout(int, void*, ssize_t, int);

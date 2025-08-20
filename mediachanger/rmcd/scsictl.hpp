@@ -40,10 +40,10 @@
 #define SCSI_STATUS_QUEUE_FULL                 0x28
 
 // Generic SCSI driver status
-#define CAM_OK       0 //!< No error at the CAM level
-#define CAM_TIMEOUT  1 //!< Command timeout
-#define CAM_ERROR    2 //!< Error at the CAM level
-#define CAM_NODEVICE 3 //!< Device doesn't respond (inexistant device)
+#define CAM_OK       0  //!< No error at the CAM level
+#define CAM_TIMEOUT  1  //!< Command timeout
+#define CAM_ERROR    2  //!< Error at the CAM level
+#define CAM_NODEVICE 3  //!< Device doesn't respond (inexistant device)
 
 // SCSI 3 Sense key
 #define SCSI_SENSEKEY_NO_SENSE        0

@@ -18,7 +18,7 @@
 #include <stdio.h>
 #include <errno.h>
 #include <string.h>
-#include "serrno.hpp" //!< special error numbers and codes
+#include "serrno.hpp"  //!< special error numbers and codes
 #include "Cglobals.hpp"
 #include "strerror_r_wrapper.hpp"
 
