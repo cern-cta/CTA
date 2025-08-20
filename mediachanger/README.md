@@ -13,3 +13,10 @@ mediachanger/          RMC client library for rmcd (linked by the tape server)
 mediachanger/rmcd      Remote Media Changer Daemon
 mediachanger/smc       SCSI Media Changer, client for rmcd (command-line tool)
 mediachanger/librmc    Common library functions shared by rmcd and smc
+
+## git history
+
+The RMC code was substantially reorganised in August 2025. It was converted from
+C to C++, reformatted with clang and reorganised into a new directory structure.
+To view the history of the software prior to 2025, see:
+https://gitlab.cern.ch/cta/CTA-old/-/tree/master/mediachanger/castorrmc
