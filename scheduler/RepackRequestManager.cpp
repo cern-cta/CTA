@@ -30,13 +30,14 @@ void RepackRequestManager::runOnePass(log::LogContext &lc,
   // First expand any request to expand
   // Next promote requests to ToExpand if needed
   lc.log(log::DEBUG,"In RepackRequestManager::runOnePass(): before promoteRepackRequestsToToExpand()");
-
   //Putting pending repack request into the RepackQueueToExpand queue
   m_scheduler.promoteRepackRequestsToToExpand(lc, repackMaxRequestsToExpand);
   lc.log(log::DEBUG,"In RepackRequestManager::runOnePass(): after promoteRepackRequestsToToExpand()");
 
   //Retrieve the first repack request from the RepackQueueToExpand queue
   if(const auto repackRequest = m_scheduler.getNextRepackRequestToExpand(); repackRequest != nullptr) {
+    log::ScopedParamContainer params(lc);
+    params.add("repackInfo.vid", repackRequest->getRepackInfo().vid);
     lc.log(log::DEBUG,"In RepackRequestManager::runOnePass(): after getNextRepackRequestToExpand()");
     //We have a RepackRequest that has the status ToExpand, expand it
     try{

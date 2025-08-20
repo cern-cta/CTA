@@ -248,10 +248,13 @@ std::string Scheduler::queueRetrieve(const std::string& instanceName,
   // Determine disk system for this request, if any
   std::optional<std::string> diskSystemName;
   try {
+    lc.log(log::DEBUG, "Extracting diskSystemName from :" + request.dstURL);
     diskSystemName = diskSystemList.getDSName(request.dstURL);
+    lc.log(log::DEBUG, "Extracted diskSystemName :" + diskSystemName.value_or(""));
   } catch (std::out_of_range&) {
     // If there is no match the function throws an out of range exception.
     // Not a real out of range exception.
+    lc.log(log::DEBUG, "Threw fake out_of_range exception because no match was found:" + diskSystemName.value_or(""));
   }
   lc.log(log::DEBUG, "Queueing retrieve request.");
   auto requestInfo = m_db.queueRetrieve(request, queueCriteria, diskSystemName, lc);
@@ -537,7 +540,7 @@ void Scheduler::promoteRepackRequestsToToExpand(log::LogContext& lc, size_t repa
       log::ScopedParamContainer params(lc);
       params.add("promotedRequests", stats.promotedRequests)
         .add("pendingBefore", stats.pendingBefore)
-        .add("toEnpandBefore", stats.toEnpandBefore)
+        .add("toExpandBefore", stats.toExpandBefore)
         .add("pendingAfter", stats.pendingAfter)
         .add("toExpandAfter", stats.toExpandAfter);
       lc.log(log::INFO, "In Scheduler::promoteRepackRequestsToToExpand(): Promoted repack request to \"to expand\"");
@@ -558,6 +561,7 @@ std::unique_ptr<RepackRequest> Scheduler::getNextRepackRequestToExpand() {
   }
   return nullptr;
 }
+
 
 //------------------------------------------------------------------------------
 // expandRepackRequest
@@ -589,7 +593,9 @@ void Scheduler::expandRepackRequest(const std::unique_ptr<RepackRequest>& repack
   }
   uint64_t fSeq;
   cta::SchedulerDatabase::RepackRequest::TotalStatsFiles totalStatsFile;
+  lc.log(log::DEBUG, "In Scheduler::expandRepackRequest(): before  fillLastExpandedFSeqAndTotalStatsFile.");
   repackRequest->m_dbReq->fillLastExpandedFSeqAndTotalStatsFile(fSeq, totalStatsFile);
+  lc.log(log::DEBUG, "In Scheduler::expandRepackRequest(): after  fillLastExpandedFSeqAndTotalStatsFile.");
   timingList.insertAndReset("fillTotalStatsFileBeforeExpandTime", t);
   cta::catalogue::ArchiveFileItor archiveFilesForCatalogue =
     m_catalogue.ArchiveFile()->getArchiveFilesForRepackItor(repackInfo.vid, fSeq);
@@ -624,8 +630,20 @@ void Scheduler::expandRepackRequest(const std::unique_ptr<RepackRequest>& repack
   }
 
   std::list<common::dataStructures::StorageClass> storageClasses = m_catalogue.StorageClass()->getStorageClasses();
+  lc.log(log::DEBUG, "In Scheduler::expandRepackRequest(): before  setExpandStartedAndChangeStatus().");
+  if (!repackRequest || !repackRequest->m_dbReq) {
+    lc.log(log::ERR, "In Scheduler::expandRepackRequest():  m_dbReq is null!");
+  }
+  try{
+    repackRequest->m_dbReq->setExpandStartedAndChangeStatus();
+   } catch (cta::exception::Exception &e) {
+      std::string bt = e.backtrace();
+      lc.log(log::ERR,
+               "In Scheduler::expandRepackRequest(): setExpandStartedAndChangeStatus() Exception thrown: " +
+               bt);
+    }
+  lc.log(log::DEBUG, "In Scheduler::expandRepackRequest(): after  setExpandStartedAndChangeStatus().");
 
-  repackRequest->m_dbReq->setExpandStartedAndChangeStatus();
   uint64_t nbRetrieveSubrequestsQueued = 0;
 
   std::list<cta::common::dataStructures::ArchiveFile> archiveFilesFromCatalogue;
@@ -692,6 +710,9 @@ void Scheduler::expandRepackRequest(const std::unique_ptr<RepackRequest>& repack
     auto& retrieveSubRequest = retrieveSubrequests.back();
 
     retrieveSubRequest.archiveFile = archiveFile;
+    log::ScopedParamContainer params(lc);
+        params.add("archiveFile.diskFileInfo.path", retrieveSubRequest.archiveFile.diskFileInfo.path)
+        .log(log::DEBUG, "In Scheduler::expandRepackRequest(): checking archiveFile to have diskFineInfo path.");
     retrieveSubRequest.fSeq = std::numeric_limits<decltype(retrieveSubRequest.fSeq)>::max();
 
     //Check that all the archive routes have been configured, if one archive route is missing, we fail the repack request.
@@ -832,6 +853,8 @@ void Scheduler::expandRepackRequest(const std::unique_ptr<RepackRequest>& repack
     // We know that the fSeq processed on the tape are >= initial fSeq + filesCount - 1 (or fSeq - 1 as we counted).
     // We pass this information to the db for recording in the repack request. This will allow restarting from the right
     // value in case of crash.
+    lc.log(log::DEBUG, "In Scheduler::expandRepackRequest(): before addSubrequestsAndUpdateStats().");
+
     nbRetrieveSubrequestsQueued = repackRequest->m_dbReq->addSubrequestsAndUpdateStats(retrieveSubrequests,
                                                                                        archiveRoutesMap,
                                                                                        fSeq,
@@ -839,6 +862,8 @@ void Scheduler::expandRepackRequest(const std::unique_ptr<RepackRequest>& repack
                                                                                        totalStatsFile,
                                                                                        diskSystemList,
                                                                                        lc);
+    lc.log(log::DEBUG, "In Scheduler::expandRepackRequest(): after addSubrequestsAndUpdateStats().");
+
   } catch (const cta::ExpandRepackRequestException&) {
     deleteRepackBuffer(std::move(dir), lc);
     throw;
@@ -851,7 +876,7 @@ void Scheduler::expandRepackRequest(const std::unique_ptr<RepackRequest>& repack
 
   if (archiveFilesFromCatalogue.empty() && totalStatsFile.totalFilesToArchive == 0 &&
       (totalStatsFile.totalFilesToRetrieve == 0 || nbRetrieveSubrequestsQueued == 0)) {
-    //If no files have been retrieve, the repack buffer will have to be deleted
+    //If no files have been retrieved, the repack buffer will have to be deleted
     //TODO : in case of Repack tape repair, we should not try to delete the buffer
     deleteRepackBuffer(std::move(dir), lc);
   }
@@ -2764,59 +2789,49 @@ void Scheduler::triggerTapeStateChange(const common::dataStructures::SecurityIde
                                        const std::optional<std::string>& stateReason,
                                        log::LogContext& logContext) {
   using Tape = common::dataStructures::Tape;
-
   // Tape must exist on catalogue
   if (!m_catalogue.Tape()->tapeExists(vid)) {
     throw cta::exception::UserError("The VID " + vid + " does not exist");
   }
-
   // Validate tape state change based on previous state
   auto tape_meta_data = m_catalogue.Tape()->getTapesByVid(vid)[vid];
   auto prev_state = tape_meta_data.state;
   auto prev_reason = tape_meta_data.stateReason;
-
   // User is not allowed to select explicitly a temporary state
   if (new_state == Tape::BROKEN_PENDING || new_state == Tape::EXPORTED_PENDING ||
       new_state == Tape::REPACKING_PENDING) {
     throw cta::exception::UserError("Internal states cannot be set directly by the user");
   }
-
   // If previous and desired states are the same, do nothing but changing the reason if provided
   if (prev_state == new_state && stateReason && stateReason.value() != prev_reason) {
     m_catalogue.Tape()->modifyTapeState(admin, vid, new_state, prev_state, stateReason);
     return;
   }
-
   if (prev_state == new_state) {
     return;
   }
-
   // If previous state is PENDING (not of the same type), user should wait for it to complete
   if ((prev_state == Tape::BROKEN_PENDING && new_state != Tape::BROKEN) ||
       (prev_state == Tape::EXPORTED_PENDING && new_state != Tape::EXPORTED) ||
       (prev_state == Tape::REPACKING_PENDING && new_state != Tape::REPACKING)) {
     throw cta::exception::UserError("Cannot modify tape " + vid + " state while it is in a temporary internal state");
   }
-
   // Moving out of REPACKING/REPACKING_DISABLED is only allowed if there is no repacking ongoing
   if ((prev_state == Tape::REPACKING || prev_state == Tape::REPACKING_DISABLED) &&
       !(new_state == Tape::REPACKING || new_state == Tape::REPACKING_DISABLED) && isBeingRepacked(vid)) {
     throw cta::exception::UserError("Cannot modify tape " + vid + " state because there is a repack for that tape");
   }
-
   // REPACKING_DISABLED can only be set while in REPACKING
   if (prev_state != Tape::REPACKING && new_state == Tape::REPACKING_DISABLED) {
     throw cta::exception::UserError("Cannot modify tape " + vid + " state from " + Tape::stateToString(prev_state) +
                                     " to " + Tape::stateToString(new_state));
   }
-
   // REPACKING_DISABLED can only be modified to REPACKING, BROKEN or EXPORTED
   if (prev_state == Tape::REPACKING_DISABLED &&
       !(new_state == Tape::REPACKING || new_state == Tape::BROKEN || new_state == Tape::EXPORTED)) {
     throw cta::exception::UserError("Cannot modify tape " + vid + " state from " + Tape::stateToString(prev_state) +
                                     " to " + Tape::stateToString(new_state));
   }
-
   // Validation of tape state change request is complete
   // Proceed with tape state change...
   switch (new_state) {
@@ -2856,6 +2871,7 @@ void Scheduler::triggerTapeStateChange(const common::dataStructures::SecurityIde
                                Tape::stateToString(Tape::REPACKING)));
         }
 #ifndef CTA_PGSCHED
+
         m_db.setRetrieveQueueCleanupFlag(vid, true, logContext);
 #else
         // PGSCHED TO-DO wee need to check the REPACKING RETRIEVE TABLE not the RETRIEVE TABLE HERE !!!

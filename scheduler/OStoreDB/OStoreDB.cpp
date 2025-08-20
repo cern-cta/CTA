@@ -2041,7 +2041,7 @@ auto OStoreDB::RepackRequestPromotionStatistics::promotePendingRequestsForExpans
   PromotionToToExpandResult ret;
   typedef common::dataStructures::RepackInfo::Status Status;
   ret.pendingBefore = at(Status::Pending);
-  ret.toEnpandBefore = at(Status::ToExpand);
+  ret.toExpandBefore = at(Status::ToExpand);
   typedef objectstore::ContainerAlgorithms<RepackQueue, RepackQueuePending> RQPAlgo;
   RQPAlgo::PoppedElementsBatch poppedElements;
   {
@@ -2070,7 +2070,7 @@ auto OStoreDB::RepackRequestPromotionStatistics::promotePendingRequestsForExpans
   }
   ret.promotedRequests = poppedElements.summary.requests;
   ret.pendingAfter = ret.pendingBefore - ret.promotedRequests;
-  ret.toExpandAfter = ret.toEnpandBefore + ret.promotedRequests;
+  ret.toExpandAfter = ret.toExpandBefore + ret.promotedRequests;
   return ret;
 }
 

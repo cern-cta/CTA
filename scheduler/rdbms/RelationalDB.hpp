@@ -47,6 +47,8 @@
 #include "rdbms/Login.hpp"
 #include "scheduler/RetrieveJob.hpp"
 #include "scheduler/SchedulerDatabase.hpp"
+#include "scheduler/rdbms/postgres/Transaction.hpp"
+
 
 namespace cta {
 
@@ -80,6 +82,7 @@ public:
 
   /*============ Basic IO check: validate Postgres DB store access ===============*/
   void ping() override;
+
 
   /*
    * Insert jobs from ArchiveRequest object to the Scheduler DB backend
@@ -205,7 +208,6 @@ public:
 
   bool repackExists() override;
   std::list<common::dataStructures::RepackInfo> getRepackInfo() override;
-
   common::dataStructures::RepackInfo getRepackInfo(const std::string& vid) override;
 
   void cancelRepack(const std::string& vid, log::LogContext& lc) override;
@@ -252,6 +254,8 @@ public:
 
   std::unique_ptr<SchedulerDatabase::TapeMountDecisionInfo>
   getMountInfo(std::string_view logicalLibraryName, log::LogContext& logContext, uint64_t timeout_us) override;
+  std::optional<common::dataStructures::VirtualOrganization> getDefaultRepackVo();
+
 
   void trimEmptyQueues(log::LogContext& lc) override;
   bool trimEmptyToReportQueue(const std::string& queueName, log::LogContext& lc) override;
@@ -263,6 +267,20 @@ public:
    * Provides access to a connection from the connection pool
    */
   cta::rdbms::Conn getConn();
+
+  /*
+   * for retrieve queue sleep mechanism (filter out disk systems which do not have space)
+   * we put in place DiskSleepEntry, m_diskSystemSleepCacheMap and diskSystemSleepCacheMutex
+   */
+  struct DiskSleepEntry {
+    uint64_t sleepTime;
+    uint64_t timestamp;
+    DiskSleepEntry() : sleepTime(0), timestamp(0) {}
+    DiskSleepEntry(uint64_t st, uint64_t ts) : sleepTime(st), timestamp(ts) {}
+  };
+
+  //std::unordered_map <std::string, DiskSleepEntry> m_diskSystemSleepCacheMap;
+  cta::threading::Mutex m_diskSystemSleepMutex;
   /*
    * Get list of diskSystemNames for which the system should
    * not be picking up jobs for retrieve
@@ -270,7 +288,17 @@ public:
    *
    * @return list of diskSystemName strings
    */
-  std::vector<std::string> getActiveSleepDiskSystemNamesToFilter();
+  std::unordered_map<std::string, RelationalDB::DiskSleepEntry> getActiveSleepDiskSystemNamesToFilter(log::LogContext& logContext);
+  uint64_t insertOrUpdateDiskSleepEntry(
+          schedulerdb::Transaction &txn,
+          const std::string &diskSystemName,
+          const DiskSleepEntry &entry);
+
+  uint64_t removeDiskSystemSleepEntry(schedulerdb::Transaction &txn,
+                                      const std::vector <std::string> &expiredDiskSystemNames);
+
+  std::unordered_map <std::string, DiskSleepEntry> getDiskSystemSleepStatus(rdbms::Conn &conn);
+
 private:
   /*
    * Get all the tape pools and tapes with queues (potential mounts)
@@ -283,41 +311,35 @@ private:
   void fetchMountInfo(SchedulerDatabase::TapeMountDecisionInfo& tmdi,
                       SchedulerDatabase::PurposeGetMountInfo purpose,
                       log::LogContext& lc);
-
+  std::list<common::dataStructures::RepackInfo> fetchRepackInfo(const std::string& vid);
   std::string m_ownerId;
   rdbms::ConnPool m_connPool;
-  rdbms::ConnPool m_connPoolInsertOnly;
   catalogue::Catalogue& m_catalogue;
   log::Logger& m_logger;
   std::unique_ptr<TapeDrivesCatalogueState> m_tapeDrivesState;
 
+  const size_t c_repackArchiveReportBatchSize = 10000;
+  const size_t c_repackRetrieveReportBatchSize = 10000;
+
   void populateRepackRequestsStatistics(SchedulerDatabase::RepackRequestStatistics& stats);
-  /*
-   * for retrieve queue sleep mechanism (filter out disk systems which do not have space)
-   * we put in place DiskSleepEntry, m_diskSystemSleepCacheMap and diskSystemSleepCacheMutex
-   */
-  struct DiskSleepEntry {
-    uint64_t sleepTime;
-    time_t timestamp;
-    DiskSleepEntry() : sleepTime(0), timestamp(0) {}
-    DiskSleepEntry(uint64_t st, time_t ts) : sleepTime(st), timestamp(ts) {}
-  };
-  std::unordered_map<std::string, DiskSleepEntry> m_diskSystemSleepCacheMap;
-  cta::threading::Mutex m_diskSystemSleepCacheMutex;
+
+
   /**
   * Candidate for redesign/removal once we start improving Scheduler algorithm
   * A class holding a lock on the pending repack request queue. This is the first
   * container we will have to lock if we decide to pop a/some request(s)
   */
-  class RepackRequestPromotionStatistics : public SchedulerDatabase::RepackRequestStatistics {
+  class RepackRequestPromotionStatistics
+      : public SchedulerDatabase::RepackRequestStatistics {
     friend class RelationalDB;
 
   public:
-    PromotionToToExpandResult promotePendingRequestsForExpansion(size_t requestCount, log::LogContext& lc) override;
-    ~RepackRequestPromotionStatistics() override = default;
-
+    PromotionToToExpandResult promotePendingRequestsForExpansion(
+        size_t requestCount, log::LogContext &lc) override;
+    explicit RepackRequestPromotionStatistics(RelationalDB &parent);
   private:
-    RepackRequestPromotionStatistics();
+
+    RelationalDB &m_parentdb;
   };
 
   /**

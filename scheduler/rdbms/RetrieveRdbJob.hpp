@@ -42,7 +42,7 @@ public:
 
   // Constructor to create empty RetrieveJob object with a reference to the connection pool
   explicit RetrieveRdbJob(rdbms::ConnPool& connPool);
-  explicit RetrieveRdbJob(rdbms::ConnPool& connPool, const rdbms::Rset& rset);
+  explicit RetrieveRdbJob(rdbms::ConnPool& connPool, const rdbms::Rset& rset, bool rowFromRepack);
 
   /*
    * Sets the status of the job as failed in the Scheduler DB
@@ -71,7 +71,7 @@ public:
    * @param connPool
    * @param rset
    */
-  void initialize(const rdbms::Rset& rset) final;
+  void initialize(const rdbms::Rset& rset, bool rowIsRepack) final;
 
   /**
    * @brief Returns this job instance back to its originating pool.

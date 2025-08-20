@@ -30,6 +30,19 @@ const SchedulerDatabase::RetrieveMount::MountInfo& RetrieveMount::getMountInfo()
   return mountInfo;
 }
 
+  void RetrieveMount::setIsRepack(std::string_view defaultRepackVO, log::LogContext &logContext) {
+    m_isRepack = false;
+    if (defaultRepackVO.empty()) {
+      logContext.log(cta::log::WARNING,
+                     "In RetrieveMount::setIsRepack(): no default repack VO found, no repack jobs will get picked up !");
+    }
+    if (mountInfo.vo == defaultRepackVO) {
+      logContext.log(cta::log::INFO,
+                     "In RetrieveMount::setIsRepack(): Marked RetrieveMount for repack.");
+      m_isRepack = true;
+    }
+  }
+
 std::list<std::unique_ptr<SchedulerDatabase::RetrieveJob>>
 RetrieveMount::getNextJobBatch(uint64_t filesRequested, uint64_t bytesRequested, log::LogContext& logContext) {
   logContext.log(cta::log::DEBUG, "Entering RetrieveMount::getNextJobBatch()");
@@ -39,19 +52,26 @@ RetrieveMount::getNextJobBatch(uint64_t filesRequested, uint64_t bytesRequested,
   cta::schedulerdb::Transaction txn(m_connPool);
   // require VID named lock in order to minimise tapePool fragmentation of the rows
   txn.takeNamedLock(mountInfo.vid);
+
   cta::log::TimingList timings;
   cta::utils::Timer t;
   std::list<std::unique_ptr<SchedulerDatabase::RetrieveJob>> ret;
   std::vector<std::unique_ptr<SchedulerDatabase::RetrieveJob>> retVector;
   cta::log::ScopedParamContainer params(logContext);
   try {
-    std::vector<std::string> noSpaceDiskSystemNames = m_RelationalDB.getActiveSleepDiskSystemNamesToFilter();
+    auto noSpaceDiskSystemNamesMap = m_RelationalDB.getActiveSleepDiskSystemNamesToFilter(logContext);
+    std::vector<std::string> noSpaceDiskSystemNames;
+    noSpaceDiskSystemNames.reserve(noSpaceDiskSystemNamesMap.size());
+    for (const auto &pair : noSpaceDiskSystemNamesMap) {
+        noSpaceDiskSystemNames.push_back(pair.first);
+    }
     auto [queuedJobs, nrows] = postgres::RetrieveJobQueueRow::moveJobsToDbActiveQueue(txn,
                                                                                       queriedJobStatus,
                                                                                       mountInfo,
                                                                                       noSpaceDiskSystemNames,
                                                                                       bytesRequested,
-                                                                                      filesRequested);
+                                                                                      filesRequested,
+                                                                                      m_isRepack);
     timings.insertAndReset("mountUpdateBatchTime", t);
     params.add("updateMountInfoRowCount", nrows);
     params.add("MountID", mountInfo.mountId);
@@ -71,7 +91,7 @@ RetrieveMount::getNextJobBatch(uint64_t filesRequested, uint64_t bytesRequested,
           throw exception::Exception("In RetrieveMount::getNextJobBatch(): Failed to acquire job from pool.");
         }
         retVector.emplace_back(std::move(job));
-        retVector.back()->initialize(queuedJobs);
+        retVector.back()->initialize(queuedJobs, m_isRepack);
       }
       txn.commit();
       params.add("queuedJobCount", retVector.size());
@@ -107,7 +127,7 @@ uint64_t RetrieveMount::requeueJobBatch(const std::list<std::string>& jobIDsList
   cta::schedulerdb::Transaction txn(m_connPool);
   uint64_t nrows = 0;
   try {
-    nrows = postgres::RetrieveJobQueueRow::requeueJobBatch(txn, RetrieveJobStatus::RJS_ToTransfer, jobIDsList);
+    nrows = postgres::RetrieveJobQueueRow::requeueJobBatch(txn, RetrieveJobStatus::RJS_ToTransfer, jobIDsList, m_isRepack);
     if (nrows != jobIDsList.size()) {
       cta::log::ScopedParamContainer params(logContext);
       params.add("jobsToRequeue", jobIDsList.size());
@@ -201,7 +221,7 @@ void RetrieveMount::updateRetrieveJobStatusWrapper(const std::vector<std::string
     cta::utils::Timer t;
 
     if (!jobIDs.empty()) {
-      uint64_t nrows = schedulerdb::postgres::RetrieveJobQueueRow::updateJobStatus(txn, newStatus, jobIDs);
+      uint64_t nrows = schedulerdb::postgres::RetrieveJobQueueRow::updateJobStatus(txn, newStatus, jobIDs, m_isRepack);
 
       if (nrows != jobIDs.size()) {
         log::ScopedParamContainer(lc)
@@ -244,10 +264,9 @@ void RetrieveMount::setJobBatchTransferred(std::list<std::unique_ptr<SchedulerDa
       diskSpaceReservationRequest.addRequest(rdbJob->diskSystemName.value(), rdbJob->archiveFile.fileSize);
     }
     // Once we implement Repack we can compare mountInfo.vo with the defaultRepack VO of the scheduler
-    bool isRepackMount = false;
-    if (isRepackMount) {
+    if (m_isRepack) {
       // If the job is from a repack subrequest, we change its status (to report
-      // for repack success). Queueing will be done in batch in
+      // for repack success).
       jobIDs_repackSuccess.push_back(std::to_string(rdbJob->jobID));
     } else if (rdbJob->retrieveRequest.retrieveReportURL.empty()) {
       // Set the user transfer request as successful (delete it).
@@ -281,13 +300,25 @@ void RetrieveMount::addDiskSystemToSkip(const DiskSystemToSkip& diskSystemToSkip
   throw cta::exception::Exception("Not implemented");
 }
 
-void RetrieveMount::putQueueToSleep(const std::string& diskSystemName,
+void RetrieveMount::putQueueToSleep(const std::string &diskSystemName,
                                     const uint64_t sleepTime,
-                                    log::LogContext& logContext) {
+                                    log::LogContext &logContext) {
   if (!diskSystemName.empty()) {
     RelationalDB::DiskSleepEntry dse(sleepTime, time(nullptr));
-    cta::threading::MutexLocker ml(m_RelationalDB.m_diskSystemSleepCacheMutex);
-    m_RelationalDB.m_diskSystemSleepCacheMap[diskSystemName] = dse;
+    cta::threading::MutexLocker ml(m_RelationalDB.m_diskSystemSleepMutex);
+    //m_RelationalDB.m_diskSystemSleepCacheMap[diskSystemName] = dse;
+    cta::schedulerdb::Transaction txn(m_connPool);
+    try {
+      m_RelationalDB.insertOrUpdateDiskSleepEntry(txn, diskSystemName, dse);
+      txn.commit();
+
+    } catch (const exception::Exception &ex) {
+      logContext.log(cta::log::ERR,
+             "In RetrieveMount::putQueueToSleep(): Exception while updating job status. Aborting "
+             "transaction. " +
+             ex.getMessageValue());
+      txn.abort();
+    }
   }
 }
 
