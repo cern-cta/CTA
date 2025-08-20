@@ -19,7 +19,7 @@
 
 #include "scheduler/rdbms/RelationalDB.hpp"
 #include "scheduler/rdbms/postgres/Transaction.hpp"
-#include "scheduler/rdbms/postgres/RepackJobQueue.hpp"
+#include "scheduler/rdbms/postgres/RepackRequestTracker.hpp"
 #include "common/dataStructures/ArchiveRoute.hpp"
 #include "common/log/LogContext.hpp"
 #include "disk/DiskSystem.hpp"
@@ -41,14 +41,14 @@ public:
   RepackRequest(rdbms::Conn& conn,
                 catalogue::Catalogue& catalogue,
                 log::LogContext& lc,
-                const schedulerdb::postgres::RepackJobQueueRow& row)
+                const schedulerdb::postgres::RepackRequestTrackingRow& row)
       : m_conn(conn),
         m_catalogue(catalogue),
         m_lc(lc) {
     *this = row;
   }
 
-  RepackRequest& operator=(const schedulerdb::postgres::RepackJobQueueRow& row);
+  RepackRequest& operator=(const schedulerdb::postgres::RepackRequestTrackingRow& row);
 
   uint64_t getLastExpandedFSeq() override;
   void setLastExpandedFSeq(uint64_t fseq) override;

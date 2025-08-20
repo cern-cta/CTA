@@ -504,19 +504,15 @@ RelationalDB::getRetrieveJobQueueItor(const std::string& vid, common::dataStruct
 
 std::string RelationalDB::queueRepack(const SchedulerDatabase::QueueRepackRequest& repackRequest,
                                       log::LogContext& logContext) {
-  std::string vid = repackRequest.m_vid;
-  common::dataStructures::RepackInfo::Type repackType = repackRequest.m_repackType;
 
-  std::string bufferURL = repackRequest.m_repackBufferURL;
-  common::dataStructures::MountPolicy mountPolicy = repackRequest.m_mountPolicy;
   // Prepare the repack request object in memory.
   cta::utils::Timer t;
   auto sqlconn = m_connPool.getConn();
   auto rr = std::make_unique<cta::schedulerdb::RepackRequest>(sqlconn, m_catalogue, logContext);
-  rr->setVid(vid);
-  rr->setType(repackType);
-  rr->setBufferURL(bufferURL);
-  rr->setMountPolicy(mountPolicy);
+  rr->setVid(repackRequest.m_vid);
+  rr->setType(repackRequest.m_repackType);
+  rr->setBufferURL(repackRequest.m_repackBufferURL);
+  rr->setMountPolicy(repackRequest.m_mountPolicy);
   rr->setNoRecall(repackRequest.m_noRecall);
   rr->setCreationLog(repackRequest.m_creationLog);
   rr->insert();

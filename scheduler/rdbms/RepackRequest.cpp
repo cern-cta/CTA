@@ -384,7 +384,7 @@ void RepackRequest::update() const {
 }
 
 void RepackRequest::insert() {
-  cta::schedulerdb::postgres::RepackJobQueueRow rjr;
+  cta::schedulerdb::postgres::RepackRequestTrackingRow rjr;
 
   rjr.vid = repackInfo.vid;
   rjr.bufferUrl = repackInfo.repackBufferBaseURL;
@@ -434,7 +434,7 @@ void RepackRequest::commit() {
   m_txn.reset();
 }
 
-RepackRequest& RepackRequest::operator=(const schedulerdb::postgres::RepackJobQueueRow& row) {
+RepackRequest& RepackRequest::operator=(const schedulerdb::postgres::RepackRequestTrackingRow& row) {
   /* [Protobuf to-be-replaced] keeping this logic in a comment to facilitate
    * future rewrite using DB columns directly instead of inserting Protobuf objects
    *
