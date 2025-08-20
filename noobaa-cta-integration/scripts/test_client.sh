@@ -121,12 +121,9 @@ main() {
         else
             log "❌ WARNING: File not found with archived status (count: $archived_count)"
             echo "File may still be in progress or archival failed"
+            return 1
         fi
         echo ""
-        
-        # Step 13: Check EOS status
-        log "Step 12: Checking EOS tape status"
-        kubectl exec -n dev eos-mgm-0 -c eos-mgm -- eos space ls | grep tape || echo "No tape information"
         
         log "END-TO-END TEST COMPLETED SUCCESSFULLY"
         log "Workflow tested: S3 Client → NooBaa S3 API → migrate script → EOS/CTA"
