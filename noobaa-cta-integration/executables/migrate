@@ -77,9 +77,48 @@ archive_file() {
     
     # Check for success (curl exit code 0 and no error messages)
     if [[ ${curl_exit_code} -eq 0 ]] && [[ ! "${upload_response}" == *"Unable to"* ]] && [[ ! "${upload_response}" == *"Operation not permitted"* ]]; then
-        echo "COMPLETED ${file_path} File successfully uploaded"
-        SUCCEEDED_FILES=$((SUCCEEDED_FILES + 1))
-        return 0
+        log "Upload successful, polling archiveinfo endpoint for archival status"
+        
+        # Poll archiveinfo endpoint to validate archival
+        local archive_filename
+        archive_filename=$(basename "${file_path}")
+        local max_attempts=30
+        local attempt=1
+        local archived=false
+        
+        while [[ ${attempt} -le ${max_attempts} ]]; do
+            log "Archival check attempt ${attempt}/${max_attempts} for ${archive_filename}"
+            
+            local archiveinfo_response
+            archiveinfo_response=$(curl -L --insecure \
+                -H "Accept: application/json" \
+                -H "Authorization: Bearer ${token}" \
+                "https://${EOS_MGM_HOST}:${EOS_PORT}/api/v1/archiveinfo/" \
+                -d "{\"paths\":[\"${archive_path}\"]}" 2>&1)
+            
+            local archiveinfo_exit_code=$?
+            
+            if [[ ${archiveinfo_exit_code} -eq 0 ]] && [[ "${archiveinfo_response}" == *'"locality" : "TAPE"'* ]]; then
+                log "File successfully archived to tape: ${archive_filename}"
+                archived=true
+                break
+            else
+                log "File not yet archived (attempt ${attempt}): ${archiveinfo_response}"
+                sleep 10
+            fi
+            
+            attempt=$((attempt + 1))
+        done
+        
+        if [[ "${archived}" == "true" ]]; then
+            echo "COMPLETED ${file_path} File successfully uploaded and archived to tape"
+            SUCCEEDED_FILES=$((SUCCEEDED_FILES + 1))
+            return 0
+        else
+            echo "FAILED ${file_path} File uploaded but archival validation failed after ${max_attempts} attempts"
+            FAILED_FILES=$((FAILED_FILES + 1))
+            return 1
+        fi
     else
         echo "FAILED ${file_path} Upload failed - ${upload_response}"
         FAILED_FILES=$((FAILED_FILES + 1))
