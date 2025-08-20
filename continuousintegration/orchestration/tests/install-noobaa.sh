@@ -75,9 +75,14 @@ echo "Namespace: $NOOBAA_NAMESPACE"
 # Verify we're in the correct cluster context
 echo "Current context: $(kubectl config current-context)"
 
-# Install NooBaa operator in default namespace
-echo "Installing NooBaa operator..."
-./noobaa-operator install --namespace=$NOOBAA_NAMESPACE
+# Install NooBaa operator with CERN registry images
+echo "Installing NooBaa operator with CERN pull-through cache images..."
+./noobaa-operator install --namespace=$NOOBAA_NAMESPACE --noobaa-image='registry.cern.ch/docker.io/noobaa/noobaa-core:5.19.0' --operator-image='registry.cern.ch/docker.io/noobaa/noobaa-operator:5.19.0'
+
+# Wait for pods to restart with new images
+echo "Waiting for NooBaa pods to be ready with correct images..."
+kubectl wait --for=condition=ready pod -l app=noobaa-operator -n $NOOBAA_NAMESPACE --timeout=300s || echo "Warning: noobaa-operator pod may not be ready"
+kubectl wait --for=condition=ready pod -l app=noobaa-core -n $NOOBAA_NAMESPACE --timeout=300s || echo "Warning: noobaa-core pod may not be ready"
 
 # Show system status
 echo "NooBaa status:"
