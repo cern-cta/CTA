@@ -245,7 +245,7 @@ public:
     void failTransfer(const std::string& failureReason, log::LogContext& lc) override;
     void failReport(const std::string& failureReason, log::LogContext& lc) override;
     // initialize and releaseToPool methods are here with empty implementation only since it is needed by PGSCHED in the baseclass
-    void initialize(const rdbms::Rset& resultSet) override {};
+    void initialize(const rdbms::Rset& resultSet, bool rowIsRepack) override {};
     bool releaseToPool() override { throw cta::exception::Exception("In SchedulerDatabase::RetrieveJob::releaseToPool(): Not Implemented for OStoreDB."); };
 
   private:
@@ -351,7 +351,7 @@ public:
     void failTransfer(const std::string& failureReason, log::LogContext& lc) override;
     void failReport(const std::string& failureReason, log::LogContext& lc) override;
     // initialize and releaseToPool methods are here with empty implementation only since it is needed by PGSCHED in the baseclass
-    void initialize(const rdbms::Rset& resultSet) override {};
+    void initialize(const rdbms::Rset& resultSet, bool rowIsRepack) override {};
 
     bool releaseToPool() override {
       throw cta::exception::Exception(

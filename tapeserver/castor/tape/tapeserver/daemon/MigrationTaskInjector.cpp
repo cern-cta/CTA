@@ -180,7 +180,7 @@ void MigrationTaskInjector::WorkerThread::run() {
       if (jobs.empty()) {
         m_parent.m_lc.log(cta::log::DEBUG, "MigrationTaskInjector::WorkerThread::run(): No jobs were found");
         if (req.lastCall) {
-          m_parent.m_lc.log(cta::log::INFO, "No more file to migrate: triggering the end of session.");
+          m_parent.m_lc.log(cta::log::INFO, "No more files to migrate: triggering the end of session.");
           m_parent.signalEndDataMovement();
           break;
         } else {

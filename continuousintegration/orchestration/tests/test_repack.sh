@@ -119,6 +119,7 @@ roundTripRepack() {
     exit 1
   fi
 
+  echo "Removing repack request for ${VID_TO_REPACK}"
   removeRepackRequest ${VID_TO_REPACK}
   echo "Setting the tape ${VID_TO_REPACK} back to ACTIVE"
   modifyTapeState ${VID_TO_REPACK} ACTIVE
@@ -373,23 +374,41 @@ repackCancellation() {
   do
     lastExpandedFSeq=`kubectl -n ${NAMESPACE} exec ${CTA_CLI_POD} -c cta-cli -- cta-admin --json repack ls --vid ${VID_TO_REPACK} | jq -r ".[0] | .lastExpandedFseq" || 0`
   done
-
+  nbFilesOnQueue=`kubectl -n ${NAMESPACE} exec ${CTA_CLI_POD} -c cta-cli -- cta-admin --json showqueues | jq -r ". [] | select(.vid == \"${VID_TO_REPACK}\") | .queuedFiles"`
+  echo "Expansion finished with the following number of files in the retrieve queue: ${nbFilesOnQueue}."
+  schedulerBackendName=`kubectl -n ${NAMESPACE} exec ${CTA_CLI_POD} -c cta-cli -- cta-admin --json version | jq -r '.[] | .schedulerBackendName'`
+  echo "schedulerBackendName = ${schedulerBackendName}"
+  if [[ "$schedulerBackendName" == "postgres" ]]; then
+    if [[ -z $nbFilesOnQueue || $nbFilesOnQueue -eq  0 ]]
+      then
+        echo "Nb files queued is zero, test Failed"
+        exit 1
+    fi
+  fi
   echo "Expansion finished, deleting the Repack Request"
   kubectl -n ${NAMESPACE} exec ${CLIENT_POD} -c client -- bash -c 'kill $(pgrep -f /root/repack_systemtest.sh)'
   kubectl -n ${NAMESPACE} exec ${CTA_CLI_POD} -c cta-cli -- cta-admin repack rm --vid ${VID_TO_REPACK} || echo "Error while removing the Repack Request. Test FAILED"
 
   echo
-  echo "Checking that the Retrieve queue of the VID ${VID_TO_REPACK} contains the Retrieve Requests created from the Repack Request expansion"
+  echo "Checking if the Retrieve queue of the VID ${VID_TO_REPACK} contains the Retrieve Requests created from the Repack Request expansion"
   nbFilesOnTapeToRepack=`kubectl -n ${NAMESPACE} exec ${CTA_CLI_POD} -c cta-cli -- cta-admin --json tapefile ls --vid ${VID_TO_REPACK} | jq "length"`
   echo "Nb files on tape = $nbFilesOnTapeToRepack"
 
   nbFilesOnQueue=`kubectl -n ${NAMESPACE} exec ${CTA_CLI_POD} -c cta-cli -- cta-admin --json showqueues | jq -r ". [] | select(.vid == \"${VID_TO_REPACK}\") | .queuedFiles"`
   echo "Nb files on the queue ${VID_TO_REPACK} = $nbFilesOnQueue"
-
-  if [[ $nbFilesOnTapeToRepack != $nbFilesOnQueue ]]
-  then
-    echo "Nb files on tape != nb files queued, test Failed"
-    exit 1
+  if [[ "$schedulerBackendName" == "postgres" ]]; then
+    echo "Scheduler backend is postgres. Expecting no queued files for retrieval after repack request has been cancelled."
+    if [[ -n $nbFilesOnQueue && $nbFilesOnQueue -ne 0 ]]; then
+      echo "Nb files queued is not zero, test Failed"
+      exit 1
+    fi
+  else
+    echo "Scheduler backend is NOT postgres. It is: ${schedulerBackendName}. Expecting the retrieve queue to have jobs, checking."
+    if [[ $nbFilesOnTapeToRepack != $nbFilesOnQueue ]]
+    then
+      echo "Nb files on tape != nb files queued, test Failed"
+      exit 1
+    fi
   fi
 
   echo "Putting all drives up"

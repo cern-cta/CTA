@@ -37,7 +37,7 @@ struct RepackInfo {
     uint64_t bytes = 0;
     typedef std::list<RepackDestinationInfo> List;
   };
-
+  uint64_t repackReqId = 0;
   std::string vid;
   std::string repackBufferBaseURL;
   enum class Type {
@@ -75,10 +75,12 @@ struct RepackInfo {
   uint64_t archivedBytes;
   uint64_t maxFilesToSelect;
   bool isExpandFinished;
+  bool isExpandStarted;
   bool noRecall;
   common::dataStructures::EntryLog creationLog;
   time_t repackFinishedTime = 0;
   RepackDestinationInfo::List destinationInfos;
+  std::string mountPolicy;
 //  std::string tag;
 //  uint64_t totalFiles;
 //  uint64_t totalSize;
