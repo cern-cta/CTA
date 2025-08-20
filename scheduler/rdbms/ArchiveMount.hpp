@@ -108,13 +108,14 @@ public:
     * @return number of jobs re-queued in the DB
     */
   uint64_t requeueJobBatch(const std::list<std::string>& jobIDsList, cta::log::LogContext& logContext) const override;
-
+  void setIsRepack(log::LogContext &logContext);
 private:
   cta::RelationalDB& m_RelationalDB;
   cta::rdbms::ConnPool& m_connPool;
   const std::string& m_ownerId;
   common::dataStructures::JobQueueType m_queueType;
   std::shared_ptr<schedulerdb::JobPool<schedulerdb::ArchiveRdbJob>> m_jobPool;
+  bool m_isRepack = false;
 
   void recycleTransferredJobs(std::list<std::unique_ptr<SchedulerDatabase::ArchiveJob>>& jobsBatch, log::LogContext& lc);
 };

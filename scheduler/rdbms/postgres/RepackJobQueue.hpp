@@ -70,7 +70,7 @@ struct RepackJobQueueRow {
   explicit RepackJobQueueRow(const rdbms::Rset& rset) { *this = rset; }
 
   RepackJobQueueRow& operator=(const rdbms::Rset& rset) {
-    repackReqId = rset.columnUint64("REPACK_REQID");
+    repackReqId = rset.columnUint64("REPACK_REQUEST_ID");
     vid = rset.columnString("VID");
     bufferUrl = rset.columnString("BUFFER_URL");
     status = from_string<RepackJobStatus>(rset.columnString("STATUS"));
@@ -105,7 +105,7 @@ struct RepackJobQueueRow {
     createLog.username = rset.columnString("CREATE_USERNAME");
     createLog.host = rset.columnString("CREATE_HOST");
     createLog.time = rset.columnUint64("CREATE_TIME");
-    repackFinishedTime = rset.columnUint64("REPACK_FINIHSED_TIME");
+    repackFinishedTime = rset.columnUint64("REPACK_FINISHED_TIME");
 
     return *this;
   }
@@ -281,7 +281,7 @@ struct RepackJobQueueRow {
   static rdbms::Rset select(Transaction& txn, RepackJobStatus status, uint32_t limit) {
     const char* const sql = R"SQL(
       SELECT 
-        REPACK_REQID AS REPACK_REQID,
+        REPACK_REQUEST_ID AS REPACK_REQUEST_ID,
         VID AS VID,
         BUFFER_URL AS BUFFER_URL,
         STATUS AS STATUS,
@@ -320,7 +320,7 @@ struct RepackJobQueueRow {
         REPACK_ACTIVE_QUEUE
       WHERE 
         STATUS = :STATUS 
-      ORDER BY REPACK_REQID 
+      ORDER BY REPACK_REQUEST_ID
         LIMIT :LIMIT
     )SQL";
 

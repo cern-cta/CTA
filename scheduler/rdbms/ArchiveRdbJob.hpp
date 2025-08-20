@@ -40,7 +40,7 @@ class ArchiveRdbJob final : public SchedulerDatabase::ArchiveJob {
 
 public:
   // Constructor to convert ArchiveJobQueueRow to ArchiveRdbJob
-  explicit ArchiveRdbJob(rdbms::ConnPool& connPool, const rdbms::Rset& rset);
+  explicit ArchiveRdbJob(rdbms::ConnPool& connPool, const rdbms::Rset& rset, bool rowFromRepack);
 
   // Constructor to create empty ArchiveJob object with a reference to the connection pool
   explicit ArchiveRdbJob(rdbms::ConnPool& connPool);
@@ -77,7 +77,7 @@ public:
   * @param connPool
   * @param rset
   */
-  void initialize(const rdbms::Rset& rset) final;
+  void initialize(const rdbms::Rset& rset, bool rowIsRepack) final;
 
  /**
   * @brief Returns the job instance back to its originating JobPool.

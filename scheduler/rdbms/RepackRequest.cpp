@@ -25,511 +25,692 @@
 
 namespace cta::schedulerdb {
 
-uint64_t RepackRequest::getLastExpandedFSeq() {
-  throw cta::exception::Exception("Not implemented");
-}
-
-void RepackRequest::setLastExpandedFSeq(uint64_t fseq) {
-  throw cta::exception::Exception("Not implemented");
-}
-
-void RepackRequest::setTotalStats(const cta::SchedulerDatabase::RepackRequest::TotalStatsFiles& totalStatsFiles) {
-  repackInfo.totalFilesOnTapeAtStart = totalStatsFiles.totalFilesOnTapeAtStart;
-  repackInfo.totalBytesOnTapeAtStart = totalStatsFiles.totalBytesOnTapeAtStart;
-  repackInfo.allFilesSelectedAtStart = totalStatsFiles.allFilesSelectedAtStart;
-  repackInfo.totalFilesToRetrieve = totalStatsFiles.totalFilesToRetrieve;
-  repackInfo.totalFilesToArchive = totalStatsFiles.totalFilesToArchive;
-  repackInfo.totalBytesToArchive = totalStatsFiles.totalBytesToArchive;
-  repackInfo.totalBytesToRetrieve = totalStatsFiles.totalBytesToRetrieve;
-  repackInfo.userProvidedFiles = totalStatsFiles.userProvidedFiles;
-}
-
-[[noreturn]] void RepackRequest::reportRetrieveCreationFailures(
-  [[maybe_unused]] const std::list<Subrequest>& notCreatedSubrequests) const {
-  throw cta::exception::Exception("Not implemented");
-}
-
-uint64_t
-RepackRequest::addSubrequestsAndUpdateStats(std::list<Subrequest>& repackSubrequests,
-                                            cta::common::dataStructures::ArchiveRoute::FullMap& archiveRoutesMap,
-                                            uint64_t maxFSeqLowBound,
-                                            const uint64_t maxAddedFSeq,
-                                            const TotalStatsFiles& totalStatsFiles,
-                                            disk::DiskSystemList diskSystemList,
-                                            log::LogContext& lc) {
-  // refactor this entire method and remove goto statements wherever possible !
-  if (!m_txn) {
-    throw cta::ExpandRepackRequestException("In schedulerdb::RepackRequest::addSubrequestsAndUpdateStats(), "
-                                            "no active database transaction");
+  uint64_t RepackRequest::getLastExpandedFSeq() {
+    return repackInfo.lastExpandedFseq;
   }
 
-  // We need to prepare retrieve requests and insert them.
-  uint64_t nbRetrieveSubrequestsCreated = 0;
-
-  // use a map of fSeq -> subreuest*
-  std::map<uint64_t, SubrequestPointer*> srmap;
-  for (auto& r : m_subreqp) {
-    srmap[r.fSeq] = &r;
+  void RepackRequest::setLastExpandedFSeq(uint64_t fseq) {
+    repackInfo.lastExpandedFseq = fseq;
   }
 
-  // go through and if needed add them to our
-  // subrequest (retrieve or archive request) pointers
-  bool newSubsCreated = false;
-  for (const auto& r : repackSubrequests) {
-    if (srmap.find(r.fSeq) == srmap.end()) {
-      newSubsCreated = true;
-      m_subreqp.emplace_back();
-      m_subreqp.back().address = "????";  // todo
-      m_subreqp.back().fSeq = r.fSeq;
-      srmap[r.fSeq] = &m_subreqp.back();
+  void RepackRequest::setTotalStats(const cta::SchedulerDatabase::RepackRequest::TotalStatsFiles &totalStatsFiles) {
+    repackInfo.totalFilesOnTapeAtStart = totalStatsFiles.totalFilesOnTapeAtStart;
+    repackInfo.totalBytesOnTapeAtStart = totalStatsFiles.totalBytesOnTapeAtStart;
+    repackInfo.allFilesSelectedAtStart = totalStatsFiles.allFilesSelectedAtStart;
+    repackInfo.totalFilesToRetrieve = totalStatsFiles.totalFilesToRetrieve;
+    repackInfo.totalFilesToArchive = totalStatsFiles.totalFilesToArchive;
+    repackInfo.totalBytesToArchive = totalStatsFiles.totalBytesToArchive;
+    repackInfo.totalBytesToRetrieve = totalStatsFiles.totalBytesToRetrieve;
+    repackInfo.userProvidedFiles = totalStatsFiles.userProvidedFiles;
+  }
+
+  void RepackRequest::reportRetrieveCreationFailures(const uint64_t failedToRetrieveFiles,
+                                                     const uint64_t failedToRetrieveBytes,
+                                                     const uint64_t failedArchiveReq) {
+    m_failedToCreateArchiveReq += failedArchiveReq;
+    repackInfo.failedFilesToRetrieve += failedToRetrieveFiles;
+    repackInfo.failedBytesToRetrieve += failedToRetrieveBytes;
+    auto newStatus = getCurrentStatus();
+    repackInfo.status = newStatus;
+    cta::schedulerdb::Transaction txn(m_connPool);
+    try {
+
+      uint64_t nrows = postgres::RepackRequestTrackingRow::updateRepackRequestFailures(txn,
+                                                                                       repackInfo.repackReqId,
+                                                                                       failedToRetrieveFiles,
+                                                                                       failedToRetrieveBytes,
+                                                                                       failedArchiveReq,
+                                                                                       mapRepackInfoStatusToJobStatus(
+                                                                                               repackInfo.status));
+      log::ScopedParamContainer(m_lc).add("nrows", nrows).log(log::INFO,
+                                                              "In RepackRequest::reportRetrieveCreationFailures(): updateRepackRequestFailures() called successfully after expansion.");
+      txn.commit();
+    } catch (cta::exception::Exception &e) {
+      std::string bt = e.backtrace();
+      m_lc.log(log::ERR,
+               "In RepackRequest::reportRetrieveCreationFailures(): updateRepackRequestFailures() Exception thrown: " +
+               bt);
+      txn.abort();
     }
   }
 
-  if (newSubsCreated) {
-    // update row: todo //
-  }
 
-  setTotalStats(totalStatsFiles);
-  uint64_t fSeq = std::max(maxFSeqLowBound + 1, maxAddedFSeq + 1);
-  bool noRecall = repackInfo.noRecall;
+  uint64_t RepackRequest::addSubrequestsAndUpdateStats(
+          std::list <Subrequest> &repackSubrequests,
+          cta::common::dataStructures::ArchiveRoute::FullMap &archiveRoutesMap,
+          uint64_t maxFSeqLowBound,
+          const uint64_t maxAddedFSeq,
+          const TotalStatsFiles &totalStatsFiles,
+          disk::DiskSystemList diskSystemList,
+          log::LogContext &lc) {
+    uint64_t nbRetrieveSubrequestsCreated = 0;
 
-  // todo: we need to ensure the deleted boolean of each subrequest does
-  // not change while we attempt creating them (or we would face double creation).
+    // Map existing subrequests by fSeq
+    std::map < uint64_t, SubrequestPointer * > srmap;
+    for (auto &r: m_subreqp) srmap[r.fSeq] = &r;
 
-  StatsValues failedCreationStats;
-  std::list<Subrequest> notCreatedSubrequests;
+    // Add new subrequests if needed
+    for (auto &r: repackSubrequests) {
+      lc.log(log::DEBUG, "In RepackRequest::addSubrequestsAndUpdateStats(): repackSubrequests ");
+      if (srmap.find(r.fSeq) == srmap.end()) {
+        m_subreqp.emplace_back();
+        auto &newSub = m_subreqp.back();
+        newSub.archiveCopyNbsSet = r.copyNbsToRearchive;
+        newSub.fSeq = r.fSeq;
+        srmap[r.fSeq] = &newSub;
+      }
+    }
 
-  //We will insert the jobs by batch of 500
-  auto subReqItor = repackSubrequests.begin();
-  while (subReqItor != repackSubrequests.end()) {
-    uint64_t nbSubReqProcessed = 0;
+    setTotalStats(totalStatsFiles);
+    uint64_t fSeq = std::max(maxFSeqLowBound + 1, maxAddedFSeq + 1);
+    bool noRecall = repackInfo.noRecall;
 
-    while (subReqItor != repackSubrequests.end() && nbSubReqProcessed < 500) {
-      auto& rsr = *subReqItor;
+    StatsValues failedCreationStats;
+    uint64_t failedArchiveReq = 0;
 
-      // Requests marked as deleted are guaranteed to have already been created => we will not re-attempt.
-      if (!srmap.at(rsr.fSeq)->isSubreqDeleted) {
-        // We need to try and create the subrequest.
-        // Create the sub request (it's a retrieve request now).
-        auto rr = std::make_shared<schedulerdb::RetrieveRequest>(m_conn, m_lc /*srmap.at(rsr.fSeq)->address*/);
+    auto subReqItor = repackSubrequests.begin();
+    while (subReqItor != repackSubrequests.end()) {
+      uint64_t nbSubReqProcessed = 0;
+      std::vector <cta::schedulerdb::postgres::RetrieveJobQueueRow> rrRowBunchToTransfer;
+      std::vector <cta::schedulerdb::postgres::RetrieveJobQueueRow> rrRowBunchNoRecall;
+      while (subReqItor != repackSubrequests.end() && nbSubReqProcessed < 500) {
+        auto &rsr = *subReqItor;
 
-        // Set the file info
-        common::dataStructures::RetrieveRequest schedReq;
-        schedReq.archiveFileID = rsr.archiveFile.archiveFileID;
-        schedReq.dstURL = rsr.fileBufferURL;
-        schedReq.appendFileSizeToDstURL(rsr.archiveFile.fileSize);
-        schedReq.diskFileInfo = rsr.archiveFile.diskFileInfo;
-
-        // dsrr.errorReportURL:  We leave this bank as the reporting will be done to the repack request,
-        // stored in the repack info.
-        rr->setSchedulerRequest(schedReq);
-
-        // Add the disk system information if needed.
-        try {
-          auto dsName = diskSystemList.getDSName(schedReq.dstURL);
-          rr->setDiskSystemName(dsName);
-        } catch (std::out_of_range&) {}
-
-        // Set the repack info.
-        RetrieveRequest::RetrieveReqRepackInfo rRRepackInfo;
-        try {
-          for (const auto& [first, second] : archiveRoutesMap.at(rsr.archiveFile.storageClass)) {
-            rRRepackInfo.archiveRouteMap[second.copyNb] = second.tapePoolName;
-          }
-
-          //Check that we do not have the same destination tapepool for two different copyNb
-          for (const auto& currentCopyNbTapePool : rRRepackInfo.archiveRouteMap) {
-            int nbTapepool =
-              std::count_if(rRRepackInfo.archiveRouteMap.begin(),
-                            rRRepackInfo.archiveRouteMap.end(),
-                            [&currentCopyNbTapePool](const std::pair<uint32_t, std::string>& copyNbTapepool) {
-                              return copyNbTapepool.second == currentCopyNbTapePool.second;
-                            });
-            if (nbTapepool != 1) {
-              throw cta::ExpandRepackRequestException("In schedulerdb::RepackRequest::addSubrequestsAndUpdateStats(), "
-                                                      "found the same destination tapepool for different copyNb.");
-            }
-          }
-        } catch (std::out_of_range&) {
-          notCreatedSubrequests.emplace_back(rsr);
-          failedCreationStats.files++;
-          failedCreationStats.bytes += rsr.archiveFile.fileSize;
-
-          log::ScopedParamContainer params(lc);
-          params.add("fileID", rsr.archiveFile.archiveFileID)
-            .add("diskInstance", rsr.archiveFile.diskInstance)
-            .add("storageClass", rsr.archiveFile.storageClass);
-
-          std::stringstream storageClassList;
-          bool first = true;
-          for (auto& sc : archiveRoutesMap) {
-            std::string storageClass;
-            storageClass = sc.first;
-            storageClassList << (first ? "" : " ") << " sc=" << storageClass << " rc=" << sc.second.size();
-          }
-
-          params.add("storageClassList", storageClassList.str());
-          lc.log(log::ERR, "In schedulerdb::RepackRequest::addSubrequests(): not such archive route.");
-          goto nextSubrequest;
-        }
-        rRRepackInfo.copyNbsToRearchive = rsr.copyNbsToRearchive;
-        rRRepackInfo.fileBufferURL = rsr.fileBufferURL;
-        rRRepackInfo.fSeq = rsr.fSeq;
-        rRRepackInfo.isRepack = true;
-        rRRepackInfo.repackRequestId = 0;  // todo: m_repackRequest.getAddressIfSet();
-        if (rsr.hasUserProvidedFile) {
-          rRRepackInfo.hasUserProvidedFile = true;
-        }
-        rr->setRepackInfo(rRRepackInfo);
-
-        // Set the queueing parameters
-        common::dataStructures::RetrieveFileQueueCriteria fileQueueCriteria;
-        fileQueueCriteria.archiveFile = rsr.archiveFile;
-        fileQueueCriteria.mountPolicy = m_mountPolicy;
-        rr->fillJobsSetRetrieveFileQueueCriteria(fileQueueCriteria);
-
-        // Decide of which vid we are going to retrieve from. Here, if we can retrieve from the repack VID, we
-        // will set the initial recall on it. Retries will we requeue to best VID as usual if needed.
-        std::string bestVid;
-        uint32_t activeCopyNumber = 0;
-        if (noRecall) {
-          bestVid = repackInfo.vid;
-        } else {
-          //No --no-recall flag, make sure we have a copy on the vid we intend to repack.
-          for (auto& tc : rsr.archiveFile.tapeFiles) {
-            if (tc.vid == repackInfo.vid) {
-              try {
-                // Try to select the repack VID from a one-vid list.
-                Helpers::selectBestVid4Retrieve({repackInfo.vid}, m_catalogue, m_txn->getConn(), true);
-                bestVid = repackInfo.vid;
-                activeCopyNumber = tc.copyNb;
-              } catch (Helpers::NoTapeAvailableForRetrieve&) {}
-              break;
-            }
-          }
-        }
-
-        // The repack vid was not appropriate, let's try all candidates.
-        if (bestVid.empty()) {
-          std::set<std::string, std::less<>> candidateVids;
-          for (auto& tc : rsr.archiveFile.tapeFiles) {
-            candidateVids.insert(tc.vid);
-          }
+        // Requests marked as deleted are guaranteed to have already been created => we will not re-attempt.
+        if (!srmap.at(rsr.fSeq)->isSubreqDeleted) {
           try {
-            bestVid = Helpers::selectBestVid4Retrieve(candidateVids, m_catalogue, m_txn->getConn(), true);
-          } catch (Helpers::NoTapeAvailableForRetrieve&) {
-            // Count the failure for this subrequest.
-            notCreatedSubrequests.emplace_back(rsr);
+            auto conn = m_connPool.getConn();
+            RetrieveRequest rr(conn, lc);
+
+            // Set scheduler request
+            common::dataStructures::RetrieveRequest schedReq;
+            schedReq.archiveFileID = rsr.archiveFile.archiveFileID;
+            schedReq.dstURL = rsr.fileBufferURL;
+            schedReq.appendFileSizeToDstURL(rsr.archiveFile.fileSize);
+            log::ScopedParamContainer(m_lc)
+                    .add("diskFileInfo.path", rsr.archiveFile.diskFileInfo.path)
+                    .add("archiveFile.fileSize", rsr.archiveFile.fileSize)
+                    .log(log::DEBUG, "In RepackRequest::addSubrequestsAndUpdateStats(): diskFileInfo.path ?");
+            schedReq.diskFileInfo = rsr.archiveFile.diskFileInfo;
+            rr.setSchedulerRequest(schedReq);
+            // rr.setIsVerifyOnly(rsr.isVerifyOnly); // rsr.isVerifyOnly does not exist
+
+            // Disk system
+            try {
+              m_lc.log(log::DEBUG, "In RepackRequest::addSubrequestsAndUpdateStats(): Extracting diskSystemName from :" + schedReq.dstURL);
+              rr.setDiskSystemName(diskSystemList.getDSName(schedReq.dstURL));
+            } catch (std::out_of_range &) {
+              m_lc.log(log::DEBUG, "In RepackRequest::addSubrequestsAndUpdateStats(): Extracting diskSystemName threw fake out_of_range exception no disk system from the list matched.");
+            }
+
+            // Set repack info
+            RetrieveRequest::RetrieveReqRepackInfo rRRepackInfo;
+            rRRepackInfo.fSeq = rsr.fSeq;
+            rRRepackInfo.fileBufferURL = rsr.fileBufferURL;
+            rRRepackInfo.copyNbsToRearchive = rsr.copyNbsToRearchive;
+            rRRepackInfo.isRepack = true;
+            rRRepackInfo.repackRequestId = repackInfo.repackReqId;
+            rRRepackInfo.hasUserProvidedFile = rsr.hasUserProvidedFile;
+
+            std::ostringstream oss;
+            for (auto nb : rRRepackInfo.copyNbsToRearchive) {
+              if (oss.tellp() > 0) oss << ",";
+              oss << nb;
+            }
+            log::ScopedParamContainer(m_lc)
+                .add("copyNbsToRearchive_raw", oss.str())
+                .log(log::DEBUG, "Pre-makeJobRow() raw copyNbsToRearchive set.");
+
+            // Archive route map
+            try {
+              for (auto &ar: archiveRoutesMap.at(rsr.archiveFile.storageClass)) {
+                rRRepackInfo.archiveRouteMap[ar.second.copyNb] = ar.second.tapePoolName;
+              }
+              //Check that we do not have the same destination tapepool for two different copyNb
+              for (auto &currentCopyNbTapePool: rRRepackInfo.archiveRouteMap) {
+                int nbTapepool =
+                        std::count_if(rRRepackInfo.archiveRouteMap.begin(),
+                                      rRRepackInfo.archiveRouteMap.end(),
+                                      [&currentCopyNbTapePool](
+                                              const std::pair <uint64_t, std::string> &copyNbTapepool) {
+                                        return copyNbTapepool.second == currentCopyNbTapePool.second;
+                                      });
+                if (nbTapepool != 1) {
+                  throw cta::ExpandRepackRequestException("In RepackRequest::addSubrequestsAndUpdateStats(), "
+                                                          "found the same destination tapepool for different copyNb.");
+                }
+              }
+            } catch (std::out_of_range &) {
+              failedCreationStats.files++;
+              failedCreationStats.bytes += rsr.archiveFile.fileSize;
+              failedArchiveReq += rsr.copyNbsToRearchive.size();
+              m_lc.log(log::ERR, "Archive route not found for subrequest");
+              ++subReqItor;
+              ++nbSubReqProcessed;
+              std::stringstream storageClassList;
+              bool first = true;
+              for (auto &sc: archiveRoutesMap) {
+                std::string storageClass;
+                storageClass = sc.first;
+                storageClassList << (first ? "" : " ") << " sc=" << storageClass << " rc=" << sc.second.size();
+              }
+              log::ScopedParamContainer(m_lc)
+                      .add("fileID", rsr.archiveFile.archiveFileID)
+                      .add("diskInstance", rsr.archiveFile.diskInstance)
+                      .add("storageClass", rsr.archiveFile.storageClass)
+                      .add("storageClassList", storageClassList.str())
+                      .log(log::ERR,
+                           "In RepackRequest::addSubrequestsAndUpdateStats(): not such archive route.");
+              continue;
+            }
+
+            rr.setRepackInfo(rRRepackInfo);
+
+            // Set queueing criteria
+            common::dataStructures::RetrieveFileQueueCriteria fileQueueCriteria;
+            fileQueueCriteria.archiveFile = rsr.archiveFile;
+            fileQueueCriteria.mountPolicy = m_mountPolicy;
+            rr.fillJobsSetRetrieveFileQueueCriteria(fileQueueCriteria);
+
+            // Decide from which VID we are going to retrieve the file. Here, if we can retrieve from the repack VID, we
+            // will set the initial recall on it. Retries will we requeue to best VID as usual if needed.
+            std::string bestVid;
+            uint32_t activeCopyNumber = 0;
+
+            if (noRecall) {
+              bestVid = repackInfo.vid;
+            } else {
+              //No --no-recall flag, make sure we have a copy on the vid we intend to repack.
+              for (auto &tc: rsr.archiveFile.tapeFiles) {
+
+                if (tc.vid == repackInfo.vid) {
+                  try {
+                    auto conn = m_connPool.getConn();
+                    Helpers::selectBestVid4Retrieve({repackInfo.vid}, m_catalogue, conn, true);
+                    bestVid = repackInfo.vid;
+                    activeCopyNumber = tc.copyNb;
+                  } catch (Helpers::NoTapeAvailableForRetrieve &) {
+                    log::ScopedParamContainer(m_lc)
+                            .add("VID", repackInfo.vid)
+                            .log(log::WARNING,
+                                 "In RepackRequest::addSubrequestsAndUpdateStats(): Tape VID not available for retrieve at the moment.");
+                  }
+                  break;
+                }
+              }
+            }
+            bool foundCopyNb = false;
+            for (auto &tc: rsr.archiveFile.tapeFiles) {
+              if (tc.vid == bestVid) {
+                activeCopyNumber = tc.copyNb;
+                foundCopyNb = true;
+                break;
+              }
+            }
+            if (!foundCopyNb) {
+              log::ScopedParamContainer(m_lc)
+                      .add("fileId", rsr.archiveFile.archiveFileID)
+                      .add("repackVid", repackInfo.vid)
+                      .add("chosenVid", bestVid)
+                      .log(log::ERR,
+                           "In RepackRequest::addSubrequestsAndUpdateStats(): could not find the copyNb "
+                           "for the chosen VID. Subrequest failed.");
+              failedCreationStats.files++;
+              failedCreationStats.bytes += rsr.archiveFile.fileSize;
+              failedArchiveReq += rsr.copyNbsToRearchive.size();
+              ++subReqItor;
+              ++nbSubReqProcessed;
+              continue;
+            }
+            rr.setActiveCopyNumber(activeCopyNumber);
+            m_lc.log(log::DEBUG,
+                     "In RepackRequest::addSubrequestsAndUpdateStats(): about to emplace the row to vector.");
+            if (rsr.hasUserProvidedFile) {
+              rr.setJobStatus(activeCopyNumber, RetrieveJobStatus::RJS_ToReportToRepackForSuccess);
+              rrRowBunchNoRecall.emplace_back(rr.makeJobRow());
+              log::ScopedParamContainer(m_lc)
+                      .add("rearchiveCopyNbs", rrRowBunchNoRecall.back().rearchiveCopyNbs)
+                      .log(log::DEBUG,
+                     "In RepackRequest::addSubrequestsAndUpdateStats(): rrRowBunchNoRecall.back().rearchiveCopyNbs.");
+            } else {
+              rr.setJobStatus(activeCopyNumber, RetrieveJobStatus::RJS_ToTransfer);
+              rrRowBunchToTransfer.emplace_back(rr.makeJobRow());
+              log::ScopedParamContainer(m_lc)
+                      .add("rearchiveCopyNbs back", rrRowBunchToTransfer.back().rearchiveCopyNbs)
+                      .log(log::DEBUG,
+                     "In RepackRequest::addSubrequestsAndUpdateStats(): rrRowBunchToTransfer.back().rearchiveCopyNbs.");
+            }
+          } catch (exception::Exception &ex) {
             failedCreationStats.files++;
             failedCreationStats.bytes += rsr.archiveFile.fileSize;
-            log::ScopedParamContainer params(lc);
-            params.add("fileId", rsr.archiveFile.archiveFileID).add("repackVid", repackInfo.vid);
-            lc.log(log::ERR,
-                   "In schedulerdb::RepackRequest::addSubrequests(): could not "
-                   "queue a retrieve subrequest. Subrequest failed. Maybe the tape "
-                   "to repack is disabled ?");
-            goto nextSubrequest;
+            failedArchiveReq += rsr.copyNbsToRearchive.size();
+            m_lc.log(log::ERR, "Failed to create subrequest: " + ex.getMessageValue());
           }
         }
-        for (auto& tc : rsr.archiveFile.tapeFiles) {
-          if (tc.vid == bestVid) {
-            activeCopyNumber = tc.copyNb;
-            goto copyNbFound;
-          }
-        }
-        {
-          // Count the failure for this subrequest.
-          notCreatedSubrequests.emplace_back(rsr);
-          failedCreationStats.files++;
-          failedCreationStats.bytes += rsr.archiveFile.fileSize;
+        ++subReqItor;
+        ++nbSubReqProcessed;
+      }
+      m_lc.log(log::DEBUG, "In RepackRequest::addSubrequestsAndUpdateStats(): about to insert bunch to the DB.");
 
-          log::ScopedParamContainer params(lc);
-          params.add("fileId", rsr.archiveFile.archiveFileID)
-            .add("repackVid", repackInfo.vid)
-            .add("chosenVid", bestVid);
-          lc.log(log::ERR,
-                 "In schedulerdb::RepackRequest::addSubrequests(): could not "
-                 "find the copyNb for the chosen VID. Subrequest failed.");
-          goto nextSubrequest;
-        }
-copyNbFound:;
-        if (rsr.hasUserProvidedFile) {
-          /**
-             * As the user has provided the file through the Repack buffer folder,
-             * we will not Retrieve the file from the tape. We create the Retrieve
-             * Request but directly with the status RJS_ToReportToRepackForSuccess so that
-             * this retrieve request is queued and then transformed into an ArchiveRequest.
-             */
-          rr->setJobStatus(activeCopyNumber, RetrieveJobStatus::RJS_ToReportToRepackForSuccess);
-        }
-
-        // We have the best VID. The request is ready to be created after comleting its information.
-        rr->setActiveCopyNumber(activeCopyNumber);
-
-        // We can now try to insert the request. It could alredy have been created (in which case it must exist).
+      // --- Insert ToTransfer jobs ---
+      if (!rrRowBunchToTransfer.empty()) {
+        log::ScopedParamContainer params(m_lc);
+        params.add("nrows", rrRowBunchToTransfer.size());
+        auto conn = m_connPool.getConn();
         try {
-          rr->insert();
-          nbRetrieveSubrequestsCreated++;
-        } catch (rdbms::UniqueConstraintError& objExists) {
-          //The retrieve subrequest already exists and is not deleted, we log and don't do anything
-          log::ScopedParamContainer params(lc);
-          params.add("copyNb", activeCopyNumber)
-            .add("repackVid", repackInfo.vid)
-            .add("bestVid", bestVid)
-            .add("fileId", rsr.archiveFile.archiveFileID);
-          lc.log(log::ERR,
-                 "In schedulerdb::RepackRequest::addSubrequests(): could not "
-                 "insert the subrequest because it already exists, continuing expansion");
-          goto nextSubrequest;
-        } catch (exception::Exception& ex) {
-          // We can fail to serialize here...
-          // Count the failure for this subrequest.
-          notCreatedSubrequests.emplace_back(rsr);
-          failedCreationStats.files++;
-          failedCreationStats.bytes += rsr.archiveFile.fileSize;
-
-          log::ScopedParamContainer params(lc);
-          params.add("fileId", rsr.archiveFile.archiveFileID)
-            .add("repackVid", repackInfo.vid)
-            .add("bestVid", bestVid)
-            .add("ExceptionMessage", ex.getMessageValue());
-          lc.log(log::ERR,
-                 "In schedulerdb::RepackRequest::addSubrequests(): could not "
-                 "insert the subrequest.");
+          cta::schedulerdb::postgres::RetrieveJobQueueRow::insertBunch(conn, rrRowBunchToTransfer, true);
+          nbRetrieveSubrequestsCreated += rrRowBunchToTransfer.size();
+          m_lc.log(log::INFO,
+                   "In RepackRequest::addSubrequestsAndUpdateStats(): inserted bunch of 'ToTransfer' retrieve jobs.");
+        } catch (exception::Exception &ex) {
+          params.add("exceptionMessage", ex.getMessageValue());
+          m_lc.log(log::ERR,
+                   "In RepackRequest::addSubrequestsAndUpdateStats(): failed to insert 'ToTransfer' retrieve jobs.");
+          conn.rollback();
+          // all these failed rows should be counted as not created
+          for (auto &row: rrRowBunchToTransfer) {
+            failedCreationStats.files++;
+            failedCreationStats.bytes += row.fileSize;
+            failedArchiveReq += srmap[row.fSeq]->archiveCopyNbsSet.size();
+          }
         }
       }
-nextSubrequest:
-      nbSubReqProcessed++;
-      subReqItor++;
+
+      // --- Insert NoRecall jobs ---
+      if (!rrRowBunchNoRecall.empty()) {
+        log::ScopedParamContainer params(m_lc);
+        params.add("nrows", rrRowBunchNoRecall.size());
+        auto conn = m_connPool.getConn();
+        try {
+          cta::schedulerdb::postgres::RetrieveJobQueueRow::insertBunch(conn, rrRowBunchNoRecall, true);
+          nbRetrieveSubrequestsCreated += rrRowBunchNoRecall.size();
+          m_lc.log(log::INFO,
+                   "In RepackRequest::addSubrequestsAndUpdateStats(): inserted bunch of 'NoRecall' retrieve jobs.");
+        } catch (exception::Exception &ex) {
+          params.add("exceptionMessage", ex.getMessageValue());
+          m_lc.log(log::ERR,
+                   "In RepackRequest::addSubrequestsAndUpdateStats(): failed to insert 'NoRecall' retrieve jobs.");
+          conn.rollback();
+          for (auto &row: rrRowBunchNoRecall) {
+            failedCreationStats.files++;
+            failedCreationStats.bytes += row.fileSize;
+            failedArchiveReq += srmap[row.fSeq]->archiveCopyNbsSet.size();
+          }
+        }
+      }
+
+      if (failedArchiveReq != 0 || failedCreationStats.files != 0) {
+        reportRetrieveCreationFailures(failedCreationStats.files, failedCreationStats.bytes, failedArchiveReq);
+        failedArchiveReq = 0;
+        failedCreationStats = StatsValues{};
+      }
     }
-
-    if (notCreatedSubrequests.size()) {
-      log::ScopedParamContainer params(lc);
-      params.add("files", failedCreationStats.files);
-      params.add("bytes", failedCreationStats.bytes);
-      reportRetrieveCreationFailures(notCreatedSubrequests);
-      update();
-      commit();
-      lc.log(log::ERR,
-             "In schedulerdb::RepackRequest::addSubRequests(), reported the "
-             "failed creation of Retrieve Requests to the Repack request");
+    setLastExpandedFSeq(fSeq);
+    cta::schedulerdb::Transaction txn(m_connPool);
+    try {
+      uint64_t nrows = postgres::RepackRequestTrackingRow::updateRepackRequest(txn,
+                                                                               repackInfo.repackReqId,
+                                                                               totalStatsFiles,
+                                                                               nbRetrieveSubrequestsCreated,
+                                                                               fSeq,
+                                                                               mapRepackInfoStatusToJobStatus(
+                                                                                       repackInfo.status));
+      log::ScopedParamContainer(m_lc).add("nrows", nrows).log(log::INFO,
+                                                              "In RepackRequest::addSubrequestsAndUpdateStats(): updateRepackRequest() called successfully after expansion.");
+      txn.commit();
+    } catch (cta::exception::Exception &e) {
+      std::string bt = e.backtrace();
+      m_lc.log(log::ERR,
+               "In RepackRequest::addSubrequestsAndUpdateStats(): updateRepackRequest() Exception thrown: " +
+               bt);
+      txn.abort();
     }
+    return nbRetrieveSubrequestsCreated;
+
   }
 
-  setLastExpandedFSeq(fSeq);
-  update();
-  commit();
-  return nbRetrieveSubrequestsCreated;
-}
-
-void RepackRequest::expandDone() {
-  throw cta::exception::Exception("Not implemented");
-}
-
-void RepackRequest::fail() {
-  throw cta::exception::Exception("Not implemented");
-}
-
-void RepackRequest::requeueInToExpandQueue(log::LogContext& lc) {
-  throw cta::exception::Exception("Not implemented");
-}
-
-void RepackRequest::setExpandStartedAndChangeStatus() {
-  throw cta::exception::Exception("Not implemented");
-}
-
-void RepackRequest::fillLastExpandedFSeqAndTotalStatsFile(uint64_t& fSeq, TotalStatsFiles& totalStatsFiles) {
-  throw cta::exception::Exception("Not implemented");
-}
-
-void RepackRequest::setVid(const std::string& vid) {
-  repackInfo.vid = vid;
-}
-
-void RepackRequest::setType(common::dataStructures::RepackInfo::Type repackType) {
-  typedef common::dataStructures::RepackInfo::Type RepackType;
-  switch (repackType) {
-    case RepackType::MoveAndAddCopies:
-      // Nothing to do, this is the default case.
-      break;
-    case RepackType::AddCopiesOnly:
-      m_isMove = false;
-      break;
-    case RepackType::MoveOnly:
-      m_addCopies = false;
-      break;
-    default:
-      throw exception::Exception("In RepackRequest::setType(): unexpected type.");
-  }
-}
-
-void RepackRequest::setBufferURL(const std::string& bufferURL) {
-  repackInfo.repackBufferBaseURL = bufferURL;
-}
-
-void RepackRequest::setMountPolicy(const common::dataStructures::MountPolicy& mp) {
-  m_mountPolicy = mp;
-}
-
-void RepackRequest::setNoRecall(const bool noRecall) {
-  m_noRecall = noRecall;
-}
-
-void RepackRequest::setCreationLog(const common::dataStructures::EntryLog& creationLog) {
-  m_creationLog = creationLog;
-}
-
-void RepackRequest::update() const {
-  throw cta::exception::Exception("Not implemented");
-}
-
-void RepackRequest::insert() {
-  cta::schedulerdb::postgres::RepackJobQueueRow rjr;
-
-  rjr.vid = repackInfo.vid;
-  rjr.bufferUrl = repackInfo.repackBufferBaseURL;
-  rjr.mountPolicyName = m_mountPolicy.name;
-  rjr.isNoRecall = m_noRecall;
-  rjr.createLog = m_creationLog;
-  rjr.isMove = m_isMove;
-  rjr.isAddCopies = m_addCopies;
-
-  /* [Protobuf to-be-replaced] keeping this logic in a comment to facilitate
-   * future rewrite using DB columns directly instead of inserting Protobuf objects
-   *
-   * // when request is inserted we expect there to be no subrequests or destinatioInfos
-   * // set yet; just check
-   * schedulerdb::blobser::RepackSubRequestPointers srp;
-   * schedulerdb::blobser::RepackDestinationInfos di;
-   */
-  if (repackInfo.destinationInfos.size() > 0 || m_subreqp.size() > 0) {
-    throw cta::exception::Exception("RepackRequest::insert expected zero subreqs and desintionInfos in new request");
+  void RepackRequest::expandDone() {
+    repackInfo.isExpandFinished = true;
+    setExpandStartedAndChangeStatus();
   }
 
-  /* [Protobuf to-be-replaced] keeping this logic in a comment to facilitate
-   * future rewrite using DB columns directly instead of inserting Protobuf objects
-   *
-   * srp.SerializeToString(&rjr.subReqProtoBuf);
-   * di.SerializeToString(&rjr.destInfoProtoBuf);
-   */
-  log::ScopedParamContainer params(m_lc);
-  rjr.addParamsToLogContext(params);
-  //m_txn.reset(new schedulerdb::Transaction(m_conn));
-
-  //try {
-  //  rjr.insert(*m_txn);
-  //} catch(exception::Exception &ex) {
-  //  params.add("exceptionMessage", ex.getMessageValue());
-  //  m_lc.log(log::ERR, "In RepackRequest::insert(): failed to queue request.");
-  //  throw;
-  //}
-
-  m_lc.log(log::INFO, "In RepackRequest::insert(): added request to queue.");
-}
-
-void RepackRequest::commit() {
-  if (m_txn) {
-    m_txn->commit();
-  }
-  m_txn.reset();
-}
-
-RepackRequest& RepackRequest::operator=(const schedulerdb::postgres::RepackJobQueueRow& row) {
-  /* [Protobuf to-be-replaced] keeping this logic in a comment to facilitate
-   * future rewrite using DB columns directly instead of inserting Protobuf objects
-   *
-   * schedulerdb::blobser::RepackSubRequestPointers srp;
-   * schedulerdb::blobser::RepackDestinationInfos di;
-   * srp.ParseFromString(row.subReqProtoBuf);
-   * di.ParseFromString(row.destInfoProtoBuf);
-   */
-  repackInfo.vid = row.vid;
-  repackInfo.repackBufferBaseURL = row.bufferUrl;
-  repackInfo.type = common::dataStructures::RepackInfo::Type::Undefined;
-  if (row.isMove) {
-    if (row.isAddCopies) {
-      repackInfo.type = common::dataStructures::RepackInfo::Type::MoveAndAddCopies;
-    } else {
-      repackInfo.type = common::dataStructures::RepackInfo::Type::MoveOnly;
-    }
-  } else if (row.isAddCopies) {
-    repackInfo.type = common::dataStructures::RepackInfo::Type::AddCopiesOnly;
-  }
-
-  switch (row.status) {
-    case RepackJobStatus::RRS_Pending:
-      repackInfo.status = common::dataStructures::RepackInfo::Status::Pending;
-      break;
-    case RepackJobStatus::RRS_ToExpand:
-      repackInfo.status = common::dataStructures::RepackInfo::Status::ToExpand;
-      break;
-    case RepackJobStatus::RRS_Starting:
-      repackInfo.status = common::dataStructures::RepackInfo::Status::Starting;
-      break;
-    case RepackJobStatus::RRS_Running:
-      repackInfo.status = common::dataStructures::RepackInfo::Status::Running;
-      break;
-    case RepackJobStatus::RRS_Complete:
-      repackInfo.status = common::dataStructures::RepackInfo::Status::Complete;
-      break;
-    case RepackJobStatus::RRS_Failed:
+  void RepackRequest::fail() {
+    cta::schedulerdb::Transaction txn(m_connPool);
+    try {
       repackInfo.status = common::dataStructures::RepackInfo::Status::Failed;
-      break;
-    default:
-      repackInfo.status = common::dataStructures::RepackInfo::Status::Undefined;
-      break;
+      uint64_t nrows =
+                postgres::RepackRequestTrackingRow::updateStatusAndFinishTime(
+                        txn,
+                        repackInfo.repackReqId,
+                        repackInfo.isExpandFinished,
+                        RepackJobStatus::RRS_Failed,
+                        time(nullptr));
+
+        log::ScopedParamContainer(m_lc).add("nrows", nrows)
+                .add("newStatus", to_string(RepackJobStatus::RRS_Failed))
+                .log(log::INFO,
+                "In RepackRequest::fail(): marked repack request as failed.");
+      txn.commit();
+    } catch (cta::exception::Exception &e) {
+      log::ScopedParamContainer(m_lc)
+                .add("newStatus", to_string(RepackJobStatus::RRS_Failed))
+                .add("repackInfo.repackReqId", repackInfo.repackReqId)
+                .add("repackInfo.repackFinishedTime", repackInfo.repackFinishedTime)
+                .log(log::ERR, "Exception updating status: " + e.backtrace());
+      txn.abort();
+    }
   }
 
-  repackInfo.totalFilesOnTapeAtStart = row.totalFilesOnTapeAtStart;
-  repackInfo.totalBytesOnTapeAtStart = row.totalBytesOnTapeAtStart;
-  repackInfo.allFilesSelectedAtStart = row.allFilesSelectedAtStart;
-  repackInfo.totalFilesToArchive = row.totalFilesToArchive;
-  repackInfo.totalBytesToArchive = row.totalBytesToArchive;
-  repackInfo.totalFilesToRetrieve = row.totalFilesToRetrieve;
-  repackInfo.totalBytesToRetrieve = row.totalBytesToRetrieve;
-  repackInfo.failedFilesToArchive = row.failedToArchiveFiles;
-  repackInfo.failedBytesToArchive = row.failedToArchiveBytes;
-  repackInfo.failedFilesToRetrieve = row.failedToRetrieveFiles;
-  repackInfo.failedBytesToRetrieve = row.failedToRetrieveBytes;
-  repackInfo.lastExpandedFseq = row.lastExpandedFseq;
-  repackInfo.userProvidedFiles = row.userProvidedFiles;
-  repackInfo.retrievedFiles = row.retrievedFiles;
-  repackInfo.retrievedBytes = row.retrievedBytes;
-  repackInfo.archivedFiles = row.archivedFiles;
-  repackInfo.archivedBytes = row.archivedBytes;
-  repackInfo.isExpandFinished = row.isExpandFinished;
-  repackInfo.noRecall = row.isNoRecall;
-  repackInfo.creationLog = row.createLog;
-  repackInfo.repackFinishedTime = row.repackFinishedTime;
+  void RepackRequest::requeueInToExpandQueue(log::LogContext &lc) {
+    throw cta::exception::Exception("Not implemented");
+  }
 
-  repackInfo.destinationInfos.clear();
-  /* [Protobuf to-be-replaced] keeping this logic in a comment to facilitate
-   * future rewrite using DB columns directly instead of inserting Protobuf objects
-   *
-   * for(auto &d: di.infos()) {
-   *   repackInfo.destinationInfos.emplace_back();
-   *   repackInfo.destinationInfos.back().vid   = d.vid();
-   *   repackInfo.destinationInfos.back().files = d.files();
-   *   repackInfo.destinationInfos.back().bytes = d.bytes();
-   *   }
-   */
+  void RepackRequest::setExpandStartedAndChangeStatus() {
 
-  m_subreqp.clear();
-  /* [Protobuf to-be-replaced] keeping this logic in a comment to facilitate
-   * future rewrite using DB columns directly instead of inserting Protobuf objects
-   *
-   * for(auto &s: srp.reqs()) {
-   *   m_subreqp.emplace_back();
-   *   m_subreqp.back().fSeq                = s.fseq();
-   *   m_subreqp.back().address             = s.address();
-   *   m_subreqp.back().isRetrieveAccounted = s.retrieve_accounted();
-   *   for(auto &re: s.archive_copynb_accounted()) {
-   *     m_subreqp.back().archiveCopyNbAccounted.insert(re);
-   *   }
-   *   m_subreqp.back().isSubreqDeleted     = s.subrequest_deleted();
-   * }
-   */
-  return *this;
-}
+    if (!repackInfo.isExpandStarted) {
+      throw exception::Exception(
+              "In RepackRequest::setExpandStartedAndChangeStatus(): "
+              "should not attempt to run, IS_EXPAND_STARTED is false.");
+    }
+
+    // Evaluate new status
+    auto newStatus = getCurrentStatus();
+    repackInfo.status = newStatus;
+
+    cta::schedulerdb::Transaction txn(m_connPool);
+
+    try {
+      if (newStatus == common::dataStructures::RepackInfo::Status::Complete ||
+          newStatus == common::dataStructures::RepackInfo::Status::Failed) {
+
+        repackInfo.repackFinishedTime = time(nullptr);
+        log::ScopedParamContainer(m_lc)
+                .add("newStatus", to_string(mapRepackInfoStatusToJobStatus(newStatus))).log(
+                log::DEBUG,
+                "RepackRequest::setExpandStartedAndChangeStatus(): updateStatusAndFinishTime() before update");
+
+        uint64_t nrows =
+                postgres::RepackRequestTrackingRow::updateStatusAndFinishTime(
+                        txn,
+                        repackInfo.repackReqId,
+                        repackInfo.isExpandFinished,
+                        mapRepackInfoStatusToJobStatus(newStatus),
+                        repackInfo.repackFinishedTime);
+
+        log::ScopedParamContainer(m_lc).add("nrows", nrows)
+                .add("newStatus", to_string(mapRepackInfoStatusToJobStatus(newStatus))).log(
+                log::INFO,
+                "updateStatusAndFinishTime finished");
+      } else {
+        uint64_t nrows =
+                postgres::RepackRequestTrackingRow::updateStatus(
+                        txn,
+                        repackInfo.repackReqId,
+                        repackInfo.isExpandFinished,
+                        mapRepackInfoStatusToJobStatus(newStatus));
+
+        log::ScopedParamContainer(m_lc).add("nrows", nrows).log(
+                log::INFO,
+                "updateStatus finished");
+      }
+      txn.commit();
+    } catch (cta::exception::Exception &e) {
+      log::ScopedParamContainer(m_lc)
+                .add("newStatus", to_string(mapRepackInfoStatusToJobStatus(newStatus)))
+                .add("repackInfo.repackReqId", repackInfo.repackReqId)
+                .add("repackInfo.isExpandFinished", repackInfo.isExpandFinished)
+                .add("repackInfo.repackFinishedTime", repackInfo.repackFinishedTime)
+                .log(log::ERR, "Exception updating status: " + e.backtrace());
+      txn.abort();
+    }
+  }
+
+  common::dataStructures::RepackInfo::Status RepackRequest::getCurrentStatus() const {
+    bool finishedExpansion = repackInfo.isExpandFinished;
+
+    bool allRetrieveDone =
+            (repackInfo.retrievedFiles + repackInfo.failedFilesToRetrieve) >= repackInfo.totalFilesToRetrieve;
+
+    bool allArchiveDone =
+            (repackInfo.archivedFiles + repackInfo.failedFilesToArchive + m_failedToCreateArchiveReq) >=
+            repackInfo.totalFilesToArchive;
+
+    if (finishedExpansion && allRetrieveDone && allArchiveDone) {
+      if (repackInfo.failedFilesToRetrieve > 0 || repackInfo.failedFilesToArchive > 0) {
+        return common::dataStructures::RepackInfo::Status::Failed;
+      } else {
+        return common::dataStructures::RepackInfo::Status::Complete;
+      }
+    }
+
+    if (repackInfo.retrievedFiles > 0 || repackInfo.failedFilesToRetrieve > 0 ||
+        repackInfo.archivedFiles > 0 || repackInfo.failedFilesToArchive > 0) {
+      return common::dataStructures::RepackInfo::Status::Running;
+    }
+
+    return common::dataStructures::RepackInfo::Status::Starting;
+  }
+
+
+  void RepackRequest::fillLastExpandedFSeqAndTotalStatsFile(uint64_t &fSeq, TotalStatsFiles &totalStatsFiles) {
+    fSeq = repackInfo.lastExpandedFseq;
+    totalStatsFiles = getTotalStatsFile();
+  }
+
+//------------------------------------------------------------------------------
+// RepackRequest::getTotalStatsFile()
+//------------------------------------------------------------------------------
+  cta::SchedulerDatabase::RepackRequest::TotalStatsFiles RepackRequest::getTotalStatsFile() {
+    cta::SchedulerDatabase::RepackRequest::TotalStatsFiles ret;
+    ret.totalFilesOnTapeAtStart = repackInfo.totalFilesOnTapeAtStart;
+    ret.totalBytesOnTapeAtStart = repackInfo.totalBytesOnTapeAtStart;
+    ret.allFilesSelectedAtStart = repackInfo.allFilesSelectedAtStart;
+    ret.totalBytesToRetrieve = repackInfo.totalBytesToRetrieve;
+    ret.totalBytesToArchive = repackInfo.totalBytesToArchive;
+    ret.totalFilesToRetrieve = repackInfo.totalFilesToRetrieve;
+    ret.totalFilesToArchive = repackInfo.totalFilesToArchive;
+    ret.userProvidedFiles = repackInfo.userProvidedFiles;
+    return ret;
+  }
+
+  void RepackRequest::setVid(const std::string &vid) {
+    repackInfo.vid = vid;
+  }
+
+  void RepackRequest::setType(common::dataStructures::RepackInfo::Type repackType) {
+    typedef common::dataStructures::RepackInfo::Type RepackType;
+    switch (repackType) {
+      case RepackType::MoveAndAddCopies:
+        // Nothing to do, this is the default case.
+        break;
+      case RepackType::AddCopiesOnly:
+        m_isMove = false;
+        break;
+      case RepackType::MoveOnly:
+        m_addCopies = false;
+        break;
+      default:
+        throw exception::Exception("In RepackRequest::setType(): unexpected type.");
+    }
+  }
+
+  void RepackRequest::setBufferURL(const std::string &bufferURL) {
+    repackInfo.repackBufferBaseURL = bufferURL;
+  }
+
+  void RepackRequest::setMountPolicy(const common::dataStructures::MountPolicy &mp) {
+    m_mountPolicy = mp;
+  }
+
+  void RepackRequest::setNoRecall(const bool noRecall) {
+    m_noRecall = noRecall;
+  }
+
+  void RepackRequest::setCreationLog(const common::dataStructures::EntryLog &creationLog) {
+    m_creationLog = creationLog;
+  }
+
+  void RepackRequest::setMaxFilesToSelect(const uint64_t maxFilesToSelect) {
+    m_maxFilesToSelect = maxFilesToSelect;
+  }
+
+//void RepackRequest::update() const {
+//  throw cta::exception::Exception("Not implemented");
+//}
+
+  void RepackRequest::insert() {
+    log::ScopedParamContainer params(m_lc);
+
+    try {
+      cta::schedulerdb::postgres::RepackRequestTrackingRow rjr;
+
+      rjr.vid = repackInfo.vid;
+      rjr.bufferUrl = repackInfo.repackBufferBaseURL;
+      rjr.mountPolicyName = m_mountPolicy.name;
+      rjr.isNoRecall = m_noRecall;
+      rjr.createLog = m_creationLog;
+      rjr.isMove = m_isMove;
+      rjr.isAddCopies = m_addCopies;
+      rjr.maxFilesToSelect = m_maxFilesToSelect;
+
+      if (repackInfo.destinationInfos.size() > 0 || m_subreqp.size() > 0) {
+        throw cta::exception::Exception(
+                "RepackRequest::insert expected zero subreqs and desintionInfos in new request");
+      }
+
+      rjr.addParamsToLogContext(params);
+      m_lc.log(log::INFO, "In RepackRequest::insert(): before inserting row");
+      auto conn = m_connPool.getConn();
+      rjr.insert(conn);
+    } catch (exception::Exception &ex) {
+      params.add("exceptionMessage", ex.getMessageValue());
+      m_lc.log(log::ERR, "In RepackRequest::insert(): failed to queue request.");
+      throw;
+    }
+    m_lc.log(log::INFO, "In RepackRequest::insert(): added request to queue.");
+  }
+
+  void RepackRequest::assignJobStatusToRepackInfoStatus(const RepackJobStatus &dbStatus) {
+
+    switch (dbStatus) {
+      case RepackJobStatus::RRS_Pending:
+        repackInfo.status = common::dataStructures::RepackInfo::Status::Pending;
+        break;
+      case RepackJobStatus::RRS_ToExpand:
+        repackInfo.status = common::dataStructures::RepackInfo::Status::ToExpand;
+        break;
+      case RepackJobStatus::RRS_Starting:
+        repackInfo.status = common::dataStructures::RepackInfo::Status::Starting;
+        break;
+      case RepackJobStatus::RRS_Running:
+        repackInfo.status = common::dataStructures::RepackInfo::Status::Running;
+        break;
+      case RepackJobStatus::RRS_Complete:
+        repackInfo.status = common::dataStructures::RepackInfo::Status::Complete;
+        break;
+      case RepackJobStatus::RRS_Failed:
+        repackInfo.status = common::dataStructures::RepackInfo::Status::Failed;
+        break;
+      default:
+        repackInfo.status = common::dataStructures::RepackInfo::Status::Undefined;
+        break;
+    }
+  }
+
+  RepackJobStatus RepackRequest::mapRepackInfoStatusToJobStatus(
+          const common::dataStructures::RepackInfo::Status &infoStatus) {
+
+    switch (infoStatus) {
+      case common::dataStructures::RepackInfo::Status::Pending:
+        return RepackJobStatus::RRS_Pending;
+      case common::dataStructures::RepackInfo::Status::ToExpand:
+        return RepackJobStatus::RRS_ToExpand;
+      case common::dataStructures::RepackInfo::Status::Starting:
+        return RepackJobStatus::RRS_Starting;
+      case common::dataStructures::RepackInfo::Status::Running:
+        return RepackJobStatus::RRS_Running;
+      case common::dataStructures::RepackInfo::Status::Complete:
+        return RepackJobStatus::RRS_Complete;
+      case common::dataStructures::RepackInfo::Status::Failed:
+        return RepackJobStatus::RRS_Failed;
+      default:
+        throw cta::exception::Exception(
+                "In RepackRequest::mapRepackInfoStatusToJobStatus(): unknown RepackInfo Status.");
+    }
+  }
+
+  RepackRequest &RepackRequest::operator=(const schedulerdb::postgres::RepackRequestTrackingRow &row) {
+    m_failedToCreateArchiveReq = row.failedToCreateArchiveReq;
+    repackInfo.repackReqId = row.repackReqId;
+    repackInfo.mountPolicy = row.mountPolicyName;
+    repackInfo.vid = row.vid;
+    repackInfo.repackBufferBaseURL = row.bufferUrl;
+    repackInfo.type = common::dataStructures::RepackInfo::Type::Undefined;
+    if (row.isMove) {
+      if (row.isAddCopies) {
+        repackInfo.type = common::dataStructures::RepackInfo::Type::MoveAndAddCopies;
+      } else {
+        repackInfo.type = common::dataStructures::RepackInfo::Type::MoveOnly;
+      }
+    } else if (row.isAddCopies) {
+      repackInfo.type = common::dataStructures::RepackInfo::Type::AddCopiesOnly;
+    }
+    assignJobStatusToRepackInfoStatus(row.status);
+
+    repackInfo.totalFilesOnTapeAtStart = row.totalFilesOnTapeAtStart;
+    repackInfo.totalBytesOnTapeAtStart = row.totalBytesOnTapeAtStart;
+    repackInfo.allFilesSelectedAtStart = row.allFilesSelectedAtStart;
+    repackInfo.totalFilesToArchive = row.totalFilesToArchive;
+    repackInfo.totalBytesToArchive = row.totalBytesToArchive;
+    repackInfo.totalFilesToRetrieve = row.totalFilesToRetrieve;
+    repackInfo.totalBytesToRetrieve = row.totalBytesToRetrieve;
+    repackInfo.failedFilesToArchive = row.failedToArchiveFiles;
+    repackInfo.failedBytesToArchive = row.failedToArchiveBytes;
+    repackInfo.failedFilesToRetrieve = row.failedToRetrieveFiles;
+    repackInfo.failedBytesToRetrieve = row.failedToRetrieveBytes;
+    repackInfo.lastExpandedFseq = row.lastExpandedFseq;
+    repackInfo.userProvidedFiles = row.userProvidedFiles;
+    repackInfo.retrievedFiles = row.retrievedFiles;
+    repackInfo.retrievedBytes = row.retrievedBytes;
+    repackInfo.archivedFiles = row.archivedFiles;
+    repackInfo.archivedBytes = row.archivedBytes;
+    repackInfo.isExpandStarted = row.isExpandStarted;
+    repackInfo.isExpandFinished = row.isExpandFinished;
+    repackInfo.noRecall = row.isNoRecall;
+    repackInfo.creationLog = row.createLog;
+    repackInfo.repackFinishedTime = row.repackFinishedTime;
+    repackInfo.maxFilesToSelect = row.maxFilesToSelect;
+    // The repackInfo.destinationInfos are not filled here, but rather separately
+    // when getRepackInfo is requested explicitly
+    // This could be improved by refactoring.
+    m_subreqp.clear();
+
+    // m_mountPolicy
+    m_mountPolicy.name = row.mountPolicyName;
+    //
+    //  std::string_view policyName = row.mountPolicyName;
+    //  uint64_t archivePriority = row.archivePriority;             // needs new DB column
+    //  uint64_t archiveMinRequestAge = row.archiveMinRequestAge;   // needs new DB column
+    //  uint64_t retrievePriority = row.retrievePriority;           // needs new DB column
+    //  uint64_t retrieveMinRequestAge = row.retrieveMinRequestAge; // needs new DB column
+    //
+    //  // Create MountPolicy
+    //  repackInfo.mountPolicyObject = common::dataStructures::MountPolicy(
+    //      policyName,
+    //      archivePriority,
+    //      archiveMinRequestAge,
+    //      retrievePriority,
+    //      retrieveMinRequestAge
+    //  );
+
+    m_noRecall = row.isNoRecall;
+    common::dataStructures::EntryLog m_creationLog;
+    m_addCopies = row.isAddCopies;
+    m_isMove = row.isMove;
+    m_isComplete = row.isComplete;
+    m_maxFilesToSelect = row.maxFilesToSelect;
+    m_failedToCreateArchiveReq = row.failedToCreateArchiveReq;
+    return *this;
+  }
 
 }  // namespace cta::schedulerdb

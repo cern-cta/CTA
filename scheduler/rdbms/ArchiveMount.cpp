@@ -34,6 +34,14 @@ const SchedulerDatabase::ArchiveMount::MountInfo& ArchiveMount::getMountInfo() {
   return mountInfo;
 }
 
+void ArchiveMount::setIsRepack(log::LogContext &logContext) {
+  if (mountInfo.mountType == common::dataStructures::MountType::ArchiveForRepack) {
+    m_isRepack = true;
+    logContext.log(cta::log::INFO,
+                   "In ArchiveMount::setIsRepack(): Marked ArchiveMount for repack.");
+  }
+}
+
 std::list<std::unique_ptr<SchedulerDatabase::ArchiveJob>>
 ArchiveMount::getNextJobBatch(uint64_t filesRequested, uint64_t bytesRequested, log::LogContext& logContext) {
   logContext.log(cta::log::DEBUG, "Entering ArchiveMount::getNextJobBatch()");
@@ -57,7 +65,7 @@ ArchiveMount::getNextJobBatch(uint64_t filesRequested, uint64_t bytesRequested, 
                                                                                      queriedJobStatus,
                                                                                      mountInfo,
                                                                                      bytesRequested,
-                                                                                     filesRequested);
+                                                                                     filesRequested, m_isRepack);
     timings.insertAndReset("mountUpdateBatchTime", t);
     params.add("updateMountInfoRowCount", nrows);
     params.add("MountID", mountInfo.mountId);
@@ -74,7 +82,7 @@ ArchiveMount::getNextJobBatch(uint64_t filesRequested, uint64_t bytesRequested, 
           throw exception::Exception("In ArchiveMount::getNextJobBatch(): Failed to acquire job from pool.");
         }
         retVector.emplace_back(std::move(job));
-        retVector.back()->initialize(queuedJobs);
+        retVector.back()->initialize(queuedJobs, m_isRepack);
         auto& tapeFile = retVector.back()->tapeFile;
         tapeFile.fSeq = ++nbFilesCurrentlyOnTape;
         tapeFile.blockId = maxBlockId;
@@ -156,7 +164,13 @@ uint64_t ArchiveMount::requeueJobBatch(const std::list<std::string>& jobIDsList,
   cta::schedulerdb::Transaction txn(m_connPool);
   uint64_t nrows = 0;
   try {
-    nrows = postgres::ArchiveJobQueueRow::requeueJobBatch(txn, ArchiveJobStatus::AJS_ToTransferForUser, jobIDsList);
+    if (m_isRepack) {
+      nrows = postgres::ArchiveJobQueueRow::requeueJobBatch(txn, ArchiveJobStatus::AJS_ToTransferForRepack, m_isRepack,
+                                                            jobIDsList);
+    } else {
+      nrows = postgres::ArchiveJobQueueRow::requeueJobBatch(txn, ArchiveJobStatus::AJS_ToTransferForUser, m_isRepack,
+                                                            jobIDsList);
+    }
     if (nrows != jobIDsList.size()) {
       cta::log::ScopedParamContainer params(logContext);
       params.add("jobsToRequeue", jobIDsList.size());
@@ -178,8 +192,8 @@ uint64_t ArchiveMount::requeueJobBatch(const std::list<std::string>& jobIDsList,
 void ArchiveMount::setJobBatchTransferred(std::list<std::unique_ptr<SchedulerDatabase::ArchiveJob>>& jobsBatch,
                                           log::LogContext& lc) {
   lc.log(log::WARNING,
-         "In schedulerdb::ArchiveMount::setJobBatchTransferred(): passes as half-dummy implementation "
-         "valid only for AJS_ToReportToUserForSuccess !");
+         "In schedulerdb::ArchiveMount::setJobBatchTransferred(): implementation "
+         "valid only for AJS_ToReportToUserForSuccess and AJS_ToReportToRepackForSuccess !");
   std::vector<std::string> jobIDsList;
   jobIDsList.reserve(jobsBatch.size());
   auto jobsBatchItor = jobsBatch.begin();
@@ -191,23 +205,41 @@ void ArchiveMount::setJobBatchTransferred(std::list<std::unique_ptr<SchedulerDat
       .add("archiveFileID", (*jobsBatchItor)->archiveFile.archiveFileID)
       .add("diskInstance", (*jobsBatchItor)->archiveFile.diskInstance)
       .log(log::INFO,
-           "In schedulerdb::ArchiveMount::setJobBatchTransferred(): received a job to sent to report queue.");
+           "In schedulerdb::ArchiveMount::setJobBatchTransferred(): received a job to send to report queue.");
     jobsBatchItor++;
   }
+  // For Repack workflow: We know that as oon as the recall of a file is done,
+  // the row will get moved to the archive pending table and any additional
+  // copies needed will be recorded as a separate row in this table as well.
+  // This means that as soon as there is a request for one successful job to be updated/deleted
+  // the second on will have its state in the table already as well
+  // we need to check in the query if any rows with the same archive number exist.
+  // if they do and if they do not have already the status AJS_ToReportToRepackForSuccess
+  // we will update the status of its sibling job, but we do not return them back for deletion.
   cta::schedulerdb::Transaction txn(m_connPool);
   try {
     // all jobs for which setJobBatchTransferred is called shall be reported as successful
-    uint64_t nrows =
-      postgres::ArchiveJobQueueRow::updateJobStatus(txn, ArchiveJobStatus::AJS_ToReportToUserForSuccess, jobIDsList);
-    txn.commit();
-    if (nrows != jobIDsList.size()) {
-      log::ScopedParamContainer(lc)
-        .add("updatedRows", nrows)
-        .add("jobListSize", jobIDsList.size())
-        .log(log::ERR,
-             "In ArchiveMount::setJobBatchTransferred(): Failed to ArchiveJobQueueRow::updateJobStatus() for "
-             "entire job list provided.");
+    uint64_t nrows = 0;
+    if (m_isRepack) {
+      nrows =
+              postgres::ArchiveJobQueueRow::updateJobStatus(txn, ArchiveJobStatus::AJS_ToReportToRepackForSuccess,
+                                                            m_isRepack, jobIDsList);
+
+    } else {
+      nrows =
+              postgres::ArchiveJobQueueRow::updateJobStatus(txn, ArchiveJobStatus::AJS_ToReportToUserForSuccess,
+                                                            m_isRepack, jobIDsList);
+        if (nrows != jobIDsList.size()) {
+        log::ScopedParamContainer(lc)
+          .add("updatedRows", nrows)
+          .add("jobListSize", jobIDsList.size())
+          .log(log::ERR,
+               "In ArchiveMount::setJobBatchTransferred(): Failed to ArchiveJobQueueRow::updateJobStatus() for "
+               "entire job list provided.");
+      }
     }
+    txn.commit();
+
     // After processing, return the job object to the job pool for re-use
     recycleTransferredJobs(jobsBatch, lc);
   } catch (exception::Exception& ex) {
@@ -216,7 +248,47 @@ void ArchiveMount::setJobBatchTransferred(std::list<std::unique_ptr<SchedulerDat
            "reporting. Aborting the transaction." +
              ex.getMessageValue());
     txn.abort();
+    return;
   }
+
+  //if(m_isRepack){
+  //  try {
+  //      //Subrequest deleted, async delete the file from the disk
+  //      cta::disk::AsyncDiskFileRemoverFactory asyncDiskFileRemoverFactory;
+  //      std::unique_ptr<cta::disk::AsyncDiskFileRemover> asyncRemover(
+  //        asyncDiskFileRemoverFactory.createAsyncDiskFileRemover(d.subrequestInfo.repackInfo.fileBufferURL));
+  //      diskFileRemoverList.push_back({std::move(asyncRemover), d.subrequestInfo});
+  //      diskFileRemoverList.back().asyncRemover->asyncDelete();
+  //    } catch (const cta::exception::Exception& ex) {
+  //      log::ScopedParamContainer(lc)
+  //        .add("fileId", d.subrequestInfo.archiveFile.archiveFileID)
+  //        .add("subrequestAddress", d.subrequestInfo.subrequest->getAddressIfSet())
+  //        .add("exceptionMsg", ex.getMessageValue())
+  //        .log(log::ERR, "In OStoreDB::RepackArchiveReportBatch::report(): async deletion of disk file failed.");
+  //    }
+//
+  //  for (auto& dfr : diskFileRemoverList) {
+  //  try {
+  //    dfr.asyncRemover->wait();
+  //    log::ScopedParamContainer(lc)
+  //      .add("fileId", dfr.subrequestInfo.archiveFile.archiveFileID)
+  //      .add("subrequestAddress", dfr.subrequestInfo.subrequest->getAddressIfSet())
+  //      .add("fileBufferURL", dfr.subrequestInfo.repackInfo.fileBufferURL)
+  //      .log(log::INFO, "In OStoreDB::RepackArchiveReportBatch::report(): async deleted file.");
+  //  } catch (const cta::exception::Exception& ex) {
+  //    // Log the error
+  //    log::ScopedParamContainer(lc)
+  //      .add("fileId", dfr.subrequestInfo.archiveFile.archiveFileID)
+  //      .add("subrequestAddress", dfr.subrequestInfo.subrequest->getAddressIfSet())
+  //      .add("fileBufferURL", dfr.subrequestInfo.repackInfo.fileBufferURL)
+  //      .add("exceptionMsg", ex.getMessageValue())
+  //      .log(log::ERR, "In OStoreDB::RepackArchiveReportBatch::report(): async file not deleted.");
+  //  }
+  //}
+  //}
+//
+
+
 }
 
 void ArchiveMount::recycleTransferredJobs(std::list<std::unique_ptr<SchedulerDatabase::ArchiveJob>>& jobsBatch,

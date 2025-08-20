@@ -33,7 +33,8 @@ ArchiveRdbJob::ArchiveRdbJob(rdbms::ConnPool& connPool)
   reset();
 };
 
-void ArchiveRdbJob::initialize(const rdbms::Rset& rset) {
+void ArchiveRdbJob::initialize(const rdbms::Rset& rset, bool rowIsRepack) {
+  isRepack = rowIsRepack;
   m_jobRow = rset;
   // Reset or update other member variables as necessary
   m_jobOwned = (m_jobRow.mountId.value_or(0) != 0);
@@ -59,17 +60,17 @@ void ArchiveRdbJob::initialize(const rdbms::Rset& rset) {
   tapeFile.vid = std::move(m_jobRow.vid);
   tapeFile.copyNb = m_jobRow.copyNb;
   // Re-initialize report type
-  if (m_jobRow.status == ArchiveJobStatus::AJS_ToReportToUserForSuccess) {
+  if (m_jobRow.status == ArchiveJobStatus::AJS_ToReportToUserForSuccess || m_jobRow.status == ArchiveJobStatus::AJS_ToReportToRepackForSuccess) {
     reportType = ReportType::CompletionReport;
-  } else if (m_jobRow.status == ArchiveJobStatus::AJS_ToReportToUserForFailure) {
+  } else if (m_jobRow.status == ArchiveJobStatus::AJS_ToReportToUserForFailure || m_jobRow.status == ArchiveJobStatus::AJS_ToReportToRepackForFailure) {
     reportType = ReportType::FailureReport;
   } else {
     reportType = ReportType::NoReportRequired;
   }
 }
 
-ArchiveRdbJob::ArchiveRdbJob(rdbms::ConnPool& connPool, const rdbms::Rset& rset) : ArchiveRdbJob(connPool) {
-  initialize(rset);
+ArchiveRdbJob::ArchiveRdbJob(rdbms::ConnPool& connPool, const rdbms::Rset& rset, bool rowFromRepack) : ArchiveRdbJob(connPool) {
+  initialize(rset, rowFromRepack);
 };
 
 void ArchiveRdbJob::reset() {
@@ -97,6 +98,7 @@ void ArchiveRdbJob::reset() {
   m_tapePool.clear();                         // Clearing the tape pool name
   m_jobOwned = false;                         // Resetting ownership flag
   reportType = ReportType::NoReportRequired;  // Resetting report type
+  isRepack = false;
 
   // No need to reset the connection pool (m_connPool) as it's shared and passed by reference
 }
@@ -111,7 +113,7 @@ void ArchiveRdbJob::handleExceedTotalRetries(cta::schedulerdb::Transaction& txn,
   }
 
   try {
-    uint64_t nrows = m_jobRow.updateFailedJobStatus(txn, ArchiveJobStatus::AJS_ToReportToUserForFailure);
+    uint64_t nrows = m_jobRow.updateFailedJobStatus(txn, isRepack);
     txn.commit();
     if (nrows != 1) {
       lc.log(log::WARNING,
@@ -132,7 +134,14 @@ void ArchiveRdbJob::requeueToNewMount(cta::schedulerdb::Transaction& txn,
   try {
     // requeue by changing status, reset the mount_id to NULL and updating all other stat fields
     m_jobRow.retriesWithinMount = 0;
-    uint64_t nrows = m_jobRow.requeueFailedJob(txn, ArchiveJobStatus::AJS_ToTransferForUser, false);
+    uint64_t nrows = 0;
+    if (isRepack) {
+      nrows = m_jobRow.requeueFailedJob(txn, ArchiveJobStatus::AJS_ToTransferForUser, true, false);
+
+    } else {
+      nrows = m_jobRow.requeueFailedJob(txn, ArchiveJobStatus::AJS_ToTransferForRepack, true, true);
+
+    }
     txn.commit();
     if (nrows != 1) {
       lc.log(log::WARNING,
@@ -150,7 +159,14 @@ void ArchiveRdbJob::requeueToNewMount(cta::schedulerdb::Transaction& txn,
 void ArchiveRdbJob::requeueToSameMount(cta::schedulerdb::Transaction& txn, log::LogContext& lc, const std::string& reason) {
   try {
     // requeue to the same mount simply by moving it to PENDING QUEUE and updating all other stat fields
-    uint64_t nrows = m_jobRow.requeueFailedJob(txn, ArchiveJobStatus::AJS_ToTransferForUser, true);
+    uint64_t nrows = 0;
+    if (isRepack) {
+      nrows = m_jobRow.requeueFailedJob(txn, ArchiveJobStatus::AJS_ToTransferForUser, true, false);
+
+    } else {
+      nrows = m_jobRow.requeueFailedJob(txn, ArchiveJobStatus::AJS_ToTransferForRepack, true, true);
+
+    }
     txn.commit();
     if (nrows != 1) {
       lc.log(log::WARNING, "ArchiveRdbJob::requeueFailedJob(): (same mount) failed; job not found.");
