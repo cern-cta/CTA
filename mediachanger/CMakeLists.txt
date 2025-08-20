@@ -14,7 +14,9 @@
 #               submit itself to any jurisdiction.
 cmake_minimum_required (VERSION 3.17)
 
+add_subdirectory(librmc)
 add_subdirectory(rmcd)
+add_subdirectory(smc)
 
 set (MEDIACHANGER_LIB_SRC_FILES
   CmdLine.cpp
@@ -63,4 +65,3 @@ target_link_libraries (ctamediachangerunittests
   ctamediachanger)
 
 install (TARGETS ctamediachangerunittests DESTINATION usr/${CMAKE_INSTALL_LIBDIR})
-

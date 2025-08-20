@@ -1,9 +1,0 @@
-
-/var/log/cta/cta-rmcd*.log {
-    compress
-    daily
-    missingok
-    rotate 500
-    delaycompress
-    endscript
-}
