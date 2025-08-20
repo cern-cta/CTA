@@ -53,7 +53,7 @@
 #define CA_MAXSHORTHOSTLEN    10    //!< maximum length for a hostname without domain
 #define CA_MAXSNLEN           24    //!< maximum length for a cartridge serial nb
 // CA_MAXSTGRIDLEN must be >= nb digits in CA_MAXSTGREQID + CA_MAXHOSTNAMELEN + 8
-#define CA_MAXSTGRIDLEN       77    //!< maximum length for a stager full request id 
+#define CA_MAXSTGRIDLEN     77      //!< maximum length for a stager full request id
 #define CA_MAXSTGREQID      999999  //!< maximum value for a stager request id
 #define CA_MAXSYMLINKS      5       //!< maximum number of symbolic links
 #define CA_MAXTAGLEN        255     //!< maximum length for a volume tag
