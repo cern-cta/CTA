@@ -17,10 +17,10 @@
 
 #pragma once
 
-#include "osdep.h"
-#include "smc_struct.h"
-
-/*  function prototypes */
+#include "mediachanger/librmc/smc_struct.hpp"
+#include "mediachanger/rmcd/rmc_constants.hpp"
+#include "mediachanger/rmcd/smc_constants.hpp"
+#include "mediachanger/rmcd/rbtsubr_constants.hpp"
 
 int rmc_dismount(const char* const server, const char* const vid, const int drvord, const int force);
 

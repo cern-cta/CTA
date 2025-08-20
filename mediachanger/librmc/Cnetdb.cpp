@@ -25,7 +25,7 @@
 #include <netinet/in.h>
 #include <netdb.h>
 #include "Cglobals.hpp"
-//#include "Cnetdb.hpp"
+#include "Cnetdb.hpp"
 
 struct hostent* Cgethostbyname(const char* name) {
   static int hostent_key = -1;

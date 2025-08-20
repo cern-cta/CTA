@@ -38,15 +38,11 @@
 #include <sys/sysmacros.h>
 #include <linux/version.h>
 #include <sys/param.h>
-/* Impossible unless very very old kernels: */
-#ifndef KERNEL_VERSION
-#define KERNEL_VERSION(a, b, c) (((a) << 16) + ((b) << 8) + (c))
-#endif
-#include "/usr/include/scsi/sg.h"
+#include <scsi/sg.h>
 #include <sys/stat.h>
-#include "scsictl.h"
-#include "serrno.h"
-#include "rmc_send_scsi_cmd.h"
+#include "mediachanger/librmc/serrno.hpp"
+#include "scsictl.hpp"
+#include "rmc_send_scsi_cmd.hpp"
 
 #define RMC_ERR_MSG_BUFSZ 132
 #define ST_DEV_BUFSZ      64

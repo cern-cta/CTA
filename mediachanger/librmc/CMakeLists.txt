@@ -12,13 +12,13 @@
 #               In applying this licence, CERN does not waive the privileges and immunities
 #               granted to it by virtue of its status as an Intergovernmental Organization or
 #               submit itself to any jurisdiction.
-cmake_minimum_required (VERSION 3.17)
+cmake_minimum_required(VERSION 3.17)
 
 #
-# libctarmccommon
+# libctarmc
 #
 
-set(CTARMCCOMMON_LIB_SRC_FILES
+set(CTARMC_LIB_SRC_FILES
   Cdomainname.cpp
   Cglobals.cpp
   Cinitdaemon.cpp
@@ -31,4 +31,4 @@ set(CTARMCCOMMON_LIB_SRC_FILES
   strerror_r_wrapper.cpp
   spectra_like_libs.cpp)
 
-add_library(ctarmccommon ${CTARMCCOMMON_LIB_SRC_FILES})
+add_library(ctarmc ${CTARMC_LIB_SRC_FILES})

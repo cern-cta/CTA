@@ -17,8 +17,7 @@
 
 #pragma once
 
-#include "osdep.h"
-#include "smc_struct.h"
+#include "mediachanger/librmc/smc_struct.hpp"
 
 int smc_get_geometry(const int fd, const char* const rbtdev, struct robot_info* const robot_info);
 

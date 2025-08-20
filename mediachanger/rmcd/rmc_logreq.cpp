@@ -15,17 +15,18 @@
  *               submit itself to any jurisdiction.
  */
 
-#include "rmc_constants.h"
-#include "rmc_logit.h"
-#include "rmc_logreq.h"
+#include "rmc_constants.hpp"
+#include "rmc_logit.hpp"
+#include "rmc_logreq.hpp"
 
 #include <string.h>
 
-/*	rmc_logreq - log a request */
-
-/*	Split the message into lines so they don't exceed LOGBUFSZ-1 characters
- *	A backslash is appended to a line to be continued
- *	A continuation line is prefixed by '+ '
+/*
+ * rmc_logreq - log a request
+ *
+ * Split the message into lines so they don't exceed LOGBUFSZ-1 characters
+ * A backslash is appended to a line to be continued
+ * A continuation line is prefixed by '+ '
  */
 void rmc_logreq(const char* const func, char* const logbuf) {
   int n1, n2;

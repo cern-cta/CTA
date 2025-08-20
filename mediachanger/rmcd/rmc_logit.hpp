@@ -17,6 +17,4 @@
 
 #pragma once
 
-#include "osdep.h"
-
 int rmc_logit(const char* const func, const char* const msg, ...);

@@ -15,8 +15,8 @@
  *               submit itself to any jurisdiction.
  */
 
-#include "marshall.h"
-#include "rmc_marshall_element.h"
+#include "mediachanger/librmc/marshall.hpp"
+#include "rmc_marshall_element.hpp"
 
 int rmc_marshall_element(char** const sbpp, const struct smc_element_info* const element_info) {
   char* sbp = *sbpp;

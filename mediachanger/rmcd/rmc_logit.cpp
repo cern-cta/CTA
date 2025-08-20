@@ -23,8 +23,8 @@
 #include <time.h>
 #include <stdarg.h>
 #include <unistd.h>
-#include "rmc_constants.h"
-#include "rmc_logit.h"
+#include "rmc_constants.hpp"
+#include "rmc_logit.hpp"
 
 /* Set in rmc_serv.c */
 extern int g_jid;

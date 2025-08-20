@@ -24,28 +24,27 @@
 #include <sys/types.h>
 #include <sys/time.h>
 #include <sys/types.h>
+#include <sys/stat.h>
+#include <sys/socket.h>
 #include <unistd.h>
 #include <netdb.h>
-#include <sys/socket.h>
 #include <poll.h>
 #include <netinet/in.h>
 #include <arpa/inet.h>
-#include "Cinit.h"
-#include "getconfent.h"
-#include "marshall.h"
-#include "net.h"
-#include "rbtsubr_constants.h"
-#include "rmc_constants.h"
-#include "rmc_logit.h"
-#include "rmc_procreq.h"
-#include "rmc_sendrep.h"
-#include "rmc_smcsubr.h"
-#include "scsictl.h"
-#include "serrno.h"
-#include "Cdomainname.h"
-#include <sys/types.h>
-#include <sys/stat.h>
-#include "rmc_send_scsi_cmd.h"
+
+#include "mediachanger/librmc/smc_struct.hpp"
+#include "mediachanger/librmc/Cdomainname.hpp"
+#include "mediachanger/librmc/net.hpp"
+#include "mediachanger/librmc/getconfent.hpp"
+#include "mediachanger/librmc/marshall.hpp"
+#include "mediachanger/librmc/serrno.hpp"
+#include "mediachanger/librmc/osdep.hpp"
+#include "rmc_logit.hpp"
+#include "rmc_constants.hpp"
+#include "rmc_smcsubr.hpp"
+#include "rmc_sendrep.hpp"
+#include "Cinit.hpp"
+#include "rmc_procreq.hpp"
 
 #define PATH_CONF "/etc/cta/cta-rmcd.conf"
 

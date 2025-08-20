@@ -33,7 +33,7 @@
  */
 
 #include <stdlib.h>
-//#include "Cglobals.hpp"
+#include "Cglobals.hpp"
 
 /*
  * Define a structure to maintain global data in a single-threaded

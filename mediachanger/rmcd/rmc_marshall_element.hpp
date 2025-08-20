@@ -1,6 +1,6 @@
 /*
  * @project      The CERN Tape Archive (CTA)
- * @copyright    Copyright © 1998-2025 CERN
+ * @copyright    Copyright © 2001-2025 CERN
  * @license      This program is free software, distributed under the terms of the GNU General Public
  *               Licence version 3 (GPL Version 3), copied verbatim in the file "COPYING". You can
  *               redistribute it and/or modify it under the terms of the GPL Version 3, or (at your
@@ -17,6 +17,6 @@
 
 #pragma once
 
-#include "osdep.h"
+#include "mediachanger/librmc/smc_struct.hpp"
 
-int rmc_sendrep(const int rpfd, const int rep_type, ...);
+int rmc_marshall_element(char** const sbpp, const struct smc_element_info* const element_info);

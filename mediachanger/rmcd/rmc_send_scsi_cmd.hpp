@@ -17,8 +17,6 @@
 
 #pragma once
 
-#include "osdep.h"
-
 int rmc_send_scsi_cmd(const int tapefd,
                       const char* const path,
                       const int do_not_open,

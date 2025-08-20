@@ -27,6 +27,7 @@
 #include "Castor_limits.hpp"
 #include "Cnetdb.hpp"
 #include "serrno.hpp"
+#include "Cdomainname.hpp"
 
 /* Cdomainname - get domain name */
 

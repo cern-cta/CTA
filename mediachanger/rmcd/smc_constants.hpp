@@ -17,7 +17,7 @@
 
 #pragma once
 
-/* error messages */
+// error messages
 
 #define SR001 "SR001 - drive ordinal must be a non negative integer\n"
 #define SR002 "SR002 - option -%c and -%c are mutually exclusive\n"

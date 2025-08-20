@@ -20,12 +20,12 @@
 #include <string.h>
 #include <stdarg.h>
 #include <stdio.h>
-#include "marshall.h"
-#include "net.h"
-#include "rmc_constants.h"
-#include "rmc_logit.h"
-#include "rmc_sendrep.h"
 #include <unistd.h>
+#include "mediachanger/librmc/marshall.hpp"
+#include "mediachanger/librmc/net.hpp"
+#include "rmc_constants.hpp"
+#include "rmc_logit.hpp"
+#include "rmc_sendrep.hpp"
 
 static const char* rep_type_to_str(const int rep_type) {
   switch (rep_type) {

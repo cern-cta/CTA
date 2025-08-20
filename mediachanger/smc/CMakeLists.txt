@@ -15,33 +15,28 @@
 cmake_minimum_required (VERSION 3.17)
 
 #
-# rmcd
+# smc
 #
 
-set(RMCD_SRC_FILES
-  rmc_serv.cpp
-  rmc_logit.cpp
-  rmc_logreq.cpp
-  rmc_marshall_element.cpp
-  rmc_procreq.cpp
-  rmc_sendrep.cpp
-  rmc_send_scsi_cmd.cpp
-  rmc_smcsubr.cpp)
+set(SMC_SRC_FILES
+  rmc_dismount.cpp
+  rmc_errmsg.cpp
+  rmc_export.cpp
+  rmc_find_cartridge.cpp
+  rmc_get_geometry.cpp
+  rmc_import.cpp
+  rmc_mount.cpp
+  rmc_read_elem_status.cpp
+  send2rmc.cpp
+  smc.cpp)
 
-# Add -Wno-format-overflow compiler flag
-# set_property(SOURCE rmc_send_scsi_cmd.cpp APPEND_STRING PROPERTY COMPILE_FLAGS " -Wno-format-overflow")
-
-add_executable(cta-rmcd ${RMCD_SRC_FILES})
-target_link_libraries(cta-rmcd ctarmc)
-install(TARGETS cta-rmcd DESTINATION /usr/bin)
-install(FILES cta-rmcd.logrotate DESTINATION /etc/logrotate.d RENAME cta-rmcd)
-install(FILES cta-rmcd.sysconfig DESTINATION /etc/sysconfig RENAME cta-rmcd)
-install(FILES cta-rmcd.service DESTINATION /etc/systemd/system)
+add_executable(cta-smc ${SMC_SRC_FILES})
+target_link_libraries(cta-smc ctarmc)
+install(TARGETS cta-smc DESTINATION /usr/bin)
 
 #
-# documentation and example config
+# documentation
 #
 
-add_manpage(cta-rmcd)
-install(FILES ${CMAKE_CURRENT_BINARY_DIR}/cta-rmcd.1cta DESTINATION /usr/share/man/man1)
-install(FILES cta-rmcd.conf.example DESTINATION ${CMAKE_INSTALL_SYSCONFDIR}/cta)
+add_manpage(cta-smc)
+install(FILES ${CMAKE_CURRENT_BINARY_DIR}/cta-smc.1cta DESTINATION /usr/share/man/man1)

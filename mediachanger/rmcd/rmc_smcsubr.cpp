@@ -23,18 +23,16 @@
 #include <unistd.h>
 #include <sys/types.h>
 
-#include "getconfent.h"
-#include "rbtsubr_constants.h"
-#include "rmc_constants.h"
-#include "rmc_logit.h"
-#include "rmc_send_scsi_cmd.h"
-#include "rmc_sendrep.h"
-#include "rmc_smcsubr.h"
-#include "rmc_smcsubr2.h"
-#include "scsictl.h"
-#include "serrno.h"
-#include "smc_constants.h"
-#include "spectra_like_libs.h"
+#include "mediachanger/librmc/smc_struct.hpp"
+#include "mediachanger/librmc/serrno.hpp"
+#include "scsictl.hpp"
+#include "rmc_send_scsi_cmd.hpp"
+#include "rbtsubr_constants.hpp"
+#include "rmc_logit.hpp"
+#include "rmc_constants.hpp"
+#include "rmc_sendrep.hpp"
+#include "smc_constants.hpp"
+#include "rmc_smcsubr.hpp"
 
 #define RBT_XTRA_PROC 10
 #define ERR_MSG_BUFSZ 132
