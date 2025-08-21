@@ -54,7 +54,7 @@ getconfent_r(const char* filename, const char* category, const char* name, int f
 
   if ((fp = fopen(path_config, "r")) == NULL) {
     serrno = SENOCONFIG;
-    return (NULL);
+    return NULL;
   }
 
   for (;;) {
@@ -99,12 +99,12 @@ getconfent_r(const char* filename, const char* category, const char* name, int f
     }
   }
   if (fclose(fp)) {
-    return (NULL);
+    return NULL;
   }
   if (found == 0) {
-    return (NULL);
+    return NULL;
   } else {
-    return (cp);
+    return cp;
   }
 }
 
@@ -115,10 +115,10 @@ char* getconfent(const char* category, const char* name, int flags) {
 
   Cglobals_get(&value_key, (void**) &value, BUFSIZ + 1);
   if (value == NULL) {
-    return (NULL);
+    return NULL;
   }
 
-  return (getconfent_r(NULL, category, name, flags, value, BUFSIZ + 1));
+  return getconfent_r(NULL, category, name, flags, value, BUFSIZ + 1);
 }
 
 char* getconfent_fromfile(const char* filename, const char* category, const char* name, int flags) {
@@ -126,8 +126,8 @@ char* getconfent_fromfile(const char* filename, const char* category, const char
 
   Cglobals_get(&value_key, (void**) &value, BUFSIZ + 1);
   if (value == NULL) {
-    return (NULL);
+    return NULL;
   }
 
-  return (getconfent_r(filename, category, name, flags, value, BUFSIZ + 1));
+  return getconfent_r(filename, category, name, flags, value, BUFSIZ + 1);
 }

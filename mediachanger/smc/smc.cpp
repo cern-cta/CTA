@@ -144,11 +144,11 @@ static int smc_qdrive(const char* const rmchost,
   }
   if ((element_info = reinterpret_cast<smc_element_info*>(malloc(nbelem * sizeof(struct smc_element_info)))) == NULL) {
     fprintf(stderr, SR012);
-    return (USERR);
+    return USERR;
   }
   if ((c = rmc_read_elem_status(rmchost, 4, robot_info->device_start + drvord, nbelem, element_info)) < 0) {
     free(element_info);
-    return (c);
+    return c;
   }
   if (is_library_spectra_like(robot_info)) {
     useSpectraLib = 1;
@@ -159,7 +159,7 @@ static int smc_qdrive(const char* const rmchost,
     smc_qdrive_humanPrint(robot_info, element_info, c, useSpectraLib);
   }
   free(element_info);
-  return (0);
+  return 0;
 }
 
 void smc_qlib_humanPrint(const struct robot_info* const robot_info) {
@@ -195,7 +195,7 @@ static int smc_qlib(const struct robot_info* const robot_info, const int isJsonE
   } else {
     smc_qlib_humanPrint(robot_info);
   }
-  return (0);
+  return 0;
 }
 
 void smc_qport_humanPrint(const struct smc_element_info* const element_info, const int numberOfElements) {
@@ -248,12 +248,12 @@ smc_qport(const char* const rmchost, const int fd, const struct robot_info* cons
   nbelem = robot_info->port_count;
   if ((element_info = reinterpret_cast<smc_element_info*>(malloc(nbelem * sizeof(struct smc_element_info)))) == NULL) {
     fprintf(stderr, SR012);
-    return (USERR);
+    return USERR;
   }
 
   if ((c = rmc_read_elem_status(rmchost, 3, robot_info->port_start, nbelem, element_info)) < 0) {
     free(element_info);
-    return (serrno - ERMCRBTERR);
+    return serrno-ERMCRBTERR;
   }
   if (isJsonEnabled) {
     smc_qport_jsonPrint(element_info, c);
@@ -261,7 +261,7 @@ smc_qport(const char* const rmchost, const int fd, const struct robot_info* cons
     smc_qport_humanPrint(element_info, c);
   }
   free(element_info);
-  return (0);
+  return 0;
 }
 
 void smc_qslot_humanPrint(const struct smc_element_info* element_info, const int numberOfElements) {
@@ -308,12 +308,12 @@ static int smc_qslot(const char* const rmchost,
   }
   if ((element_info = reinterpret_cast<smc_element_info*>(malloc(nbelem * sizeof(struct smc_element_info)))) == NULL) {
     fprintf(stderr, SR012);
-    return (USERR);
+    return USERR;
   }
 
   if ((c = rmc_read_elem_status(rmchost, 2, slotaddr, nbelem, element_info)) < 0) {
     free(element_info);
-    return (serrno - ERMCRBTERR);
+    return serrno-ERMCRBTERR;
   }
   if (isJsonEnabled) {
     smc_qslot_jsonPrint(element_info, c);
@@ -321,7 +321,7 @@ static int smc_qslot(const char* const rmchost,
     smc_qslot_humanPrint(element_info, c);
   }
   free(element_info);
-  return (0);
+  return 0;
 }
 
 void smc_qvid_humanPrint(const struct smc_element_info* const element_info, const int numberOfElements) {
@@ -393,12 +393,12 @@ static int smc_qvid(const char* const rmchost,
   }
   if ((element_info = reinterpret_cast<smc_element_info*>(malloc(nbelem * sizeof(struct smc_element_info)))) == NULL) {
     fprintf(stderr, SR012);
-    return (USERR);
+    return USERR;
   }
 
   if ((c = rmc_find_cartridge(rmchost, vid, 0, 0, nbelem, element_info)) < 0) {
     free(element_info);
-    return (serrno - ERMCRBTERR);
+    return serrno-ERMCRBTERR;
   }
   if (isJsonEnabled) {
     smc_qvid_jsonPrint(element_info, c);
@@ -406,7 +406,7 @@ static int smc_qvid(const char* const rmchost,
     smc_qvid_humanPrint(element_info, c);
   }
   free(element_info);
-  return (0);
+  return 0;
 }
 
 int main(const int argc, char** argv) {

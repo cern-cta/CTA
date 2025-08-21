@@ -84,5 +84,5 @@ int rmc_find_cartridge(const char* const server,
       unmarshall_STRING(rbp, elemp->name);
     }
   }
-  return (c);
+  return c;
 }

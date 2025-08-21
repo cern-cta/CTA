@@ -42,7 +42,7 @@ struct hostent* Cgethostbyname(const char* name) {
 
   if (result == NULL || buffer == NULL) {
     h_errno = NO_RECOVERY;
-    return (NULL);
+    return NULL;
   }
   rc = gethostbyname_r(name,
                        reinterpret_cast<hostent*>(result),
@@ -54,7 +54,7 @@ struct hostent* Cgethostbyname(const char* name) {
   if (rc == -1) {
     hp = NULL;
   }
-  return (hp);
+  return hp;
 }
 
 struct hostent* Cgethostbyaddr(const void* addr, size_t len, int type) {
@@ -72,7 +72,7 @@ struct hostent* Cgethostbyaddr(const void* addr, size_t len, int type) {
 
   if (result == NULL || buffer == NULL) {
     h_errno = NO_RECOVERY;
-    return (NULL);
+    return NULL;
   }
   rc = gethostbyaddr_r(addr,
                        len,
@@ -86,7 +86,7 @@ struct hostent* Cgethostbyaddr(const void* addr, size_t len, int type) {
   if (rc == -1) {
     hp = NULL;
   }
-  return (hp);
+  return hp;
 }
 
 struct servent* Cgetservbyname(const char* name, const char* proto) {
@@ -102,11 +102,11 @@ struct servent* Cgetservbyname(const char* name, const char* proto) {
   Cglobals_get(&servdata_key, &buffer, bufsize);
 
   if (result == NULL || buffer == NULL) {
-    return (NULL);
+    return NULL;
   }
   rc = getservbyname_r(name, proto, reinterpret_cast<servent*>(result), reinterpret_cast<char*>(buffer), bufsize, &sp);
   if (rc == -1) {
     sp = NULL;
   }
-  return (sp);
+  return sp;
 }

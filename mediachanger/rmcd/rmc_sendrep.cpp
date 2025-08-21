@@ -88,10 +88,10 @@ int rmc_sendrep(const int rpfd, const int rep_type, ...) {
     if (rep_type == RMC_RC) {
       close(rpfd);
     }
-    return (-1);
+    return -1;
   }
   if (rep_type == RMC_RC) {
     close(rpfd);
   }
-  return (0);
+  return 0;
 }

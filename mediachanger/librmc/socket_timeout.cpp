@@ -44,7 +44,7 @@ int netconnect_timeout(int fd, struct sockaddr* addr, size_t addr_size, int time
 
   /* In any case we catch and trap SIGPIPE */
   if ((sigpipe = _netsignal(SIGPIPE, SIG_IGN)) == SIG_ERR) {
-    return (-1);
+    return -1;
   }
 
   rc = 0;
@@ -103,7 +103,7 @@ int netconnect_timeout(int fd, struct sockaddr* addr, size_t addr_size, int time
     }
   }
 
-  return (rc);
+  return rc;
 }
 
 ssize_t netread_timeout(int fd, void* vptr, ssize_t n, int timeout) {
@@ -119,17 +119,17 @@ ssize_t netread_timeout(int fd, void* vptr, ssize_t n, int timeout) {
   /* If n < 0 it is an app. error */
   if (n < 0) {
     serrno = EINVAL;
-    return (-1);
+    return -1;
   }
 
   /* If not timeout, we go to normal function */
   if (timeout <= 0) {
-    return (netread(fd, reinterpret_cast<char*>(vptr), (int) n));
+    return netread(fd, reinterpret_cast<char*>(vptr), (int) n);
   }
 
   /* In any case we catch and trap SIGPIPE */
   if ((sigpipe = _netsignal(SIGPIPE, SIG_IGN)) == SIG_ERR) {
-    return (-1);
+    return -1;
   }
 
   ptr = reinterpret_cast<char*>(vptr);
@@ -194,10 +194,10 @@ ssize_t netread_timeout(int fd, void* vptr, ssize_t n, int timeout) {
 
   if (flag != 0) {
     /* Return -1 if error */
-    return (-1);
+    return -1;
   }
   /* Return the number of bytes read ( >= 0) */
-  return (n - nleft);
+  return n-nleft;
 }
 
 ssize_t netwrite_timeout(int fd, void* vptr, ssize_t n, int timeout) {
@@ -213,17 +213,17 @@ ssize_t netwrite_timeout(int fd, void* vptr, ssize_t n, int timeout) {
   /* If n < 0 it is an app. error */
   if (n < 0) {
     serrno = EINVAL;
-    return (-1);
+    return -1;
   }
 
   /* If not timeout, we go to normal function */
   if (timeout <= 0) {
-    return (netwrite(fd, reinterpret_cast<char*>(vptr), (int) n));
+    return netwrite(fd, reinterpret_cast<char*>(vptr), (int) n);
   }
 
   /* In any case we catch and trap SIGPIPE */
   if ((sigpipe = _netsignal(SIGPIPE, SIG_IGN)) == SIG_ERR) {
-    return (-1);
+    return -1;
   }
 
   ptr = reinterpret_cast<char*>(vptr);
@@ -284,10 +284,10 @@ ssize_t netwrite_timeout(int fd, void* vptr, ssize_t n, int timeout) {
 
   if (flag != 0) {
     /* Return -1 if error */
-    return (-1);
+    return -1;
   }
   /* Return the number of bytes writen ( >= 0) */
-  return (n - nleft);
+  return n-nleft;
 }
 
 Sigfunc* _netsignal(int signo, Sigfunc* func) {
@@ -308,9 +308,9 @@ Sigfunc* _netsignal(int signo, Sigfunc* func) {
   }
   n = sigaction(signo, &act, &oact);
   if (n < 0) {
-    return (SIG_ERR);
+    return SIG_ERR;
   }
-  return (oact.sa_handler);
+  return oact.sa_handler;
 }
 
 int _net_isclosed(int fd) {
@@ -339,7 +339,7 @@ int _net_writable(int fd, int timeout) {
   pollit.revents = 0;
 
   /* Will return > 0 if the descriptor is writable */
-  return (poll(&pollit, 1, timeout * 1000));
+  return poll(&pollit, 1, timeout * 1000);
 }
 
 int _net_readable(int fd, int timeout) {
@@ -350,7 +350,7 @@ int _net_readable(int fd, int timeout) {
   pollit.revents = 0;
 
   /* Will return > 0 if the descriptor is readable */
-  return (poll(&pollit, 1, timeout * 1000));
+  return poll(&pollit, 1, timeout * 1000);
 }
 
 int _net_connectable(int fd, int timeout) {
@@ -362,43 +362,39 @@ int _net_connectable(int fd, int timeout) {
   pollit.events = POLLOUT;
   pollit.revents = 0;
 
-  /* Will return > 0 if the descriptor is connected */
+  // Will return > 0 if the descriptor is connected
   rc = poll(&pollit, 1, timeout * 1000);
 
-  /*
-	 * Timeout ?
-	 */
+  // Timeout?
   if (rc == 0) {
     serrno = SETIMEDOUT;
-    return (-1);
+    return -1;
   }
 
-  /*
-	 * Other error ?
-	 */
+  // Other error?
   if (rc < 0) {
     serrno = 0;
-    return (-1);
+    return -1;
   }
 
   /*
-	 * Check if a socket error was reported. Connection errors
-	 * are reported through socket layer errors since the connect is
-	 * non-blocking. In this case, select() has returned a positive
-	 * value indicating that a socket was ready for writing. Note that
-	 * most systems seem to require that one always checks the socket
-	 * error for the connect() completion. Some systems (Windows) sets
-	 * the exception set to indicate that there was an error.
-	 */
+   * Check if a socket error was reported. Connection errors
+   * are reported through socket layer errors since the connect is
+   * non-blocking. In this case, select() has returned a positive
+   * value indicating that a socket was ready for writing. Note that
+   * most systems seem to require that one always checks the socket
+   * error for the connect() completion. Some systems (Windows) sets
+   * the exception set to indicate that there was an error.
+   */
   errval_len = (socklen_t) sizeof(errval);
   if (getsockopt(fd, SOL_SOCKET, SO_ERROR, (char*) &errval, &errval_len) == -1) {
     serrno = 0;
-    return (-1);
+    return -1;
   }
 
   if (errval == 0) {
-    return (0);
+    return 0;
   }
   serrno = errval;
-  return (-1);
+  return -1;
 }

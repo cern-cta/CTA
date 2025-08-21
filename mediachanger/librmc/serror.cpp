@@ -602,6 +602,6 @@ const char* sstrerror(const int n) {
     return "Unknown error"
            ": sstrerror_r() failed";
   } else {
-    return (char*) buf;
+    return reinterpret_cast<char*>(buf);
   }
 }

@@ -64,10 +64,7 @@ int netwrite(const int s, const char* buf, const int nbytes) {
   return nbytes;
 }
 
-char* neterror() { /* return last error message    */
-  if (serrno != 0) {
-    return ((char*) sstrerror(serrno));
-  } else {
-    return ((char*) sstrerror(errno));
-  }
+// return last error message
+const char* neterror() {
+  return reinterpret_cast<const char*>(serrno == 0 ? sstrerror(errno) : sstrerror(serrno));
 }
