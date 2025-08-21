@@ -22,7 +22,7 @@
 #include <sys/types.h>
 #include "rmc_api.hpp"
 
-static char* errbufp = NULL;
+static char* errbufp = nullptr;
 static int errbuflen;
 
 void rmc_seterrbuf(char* buffer, int buflen) {

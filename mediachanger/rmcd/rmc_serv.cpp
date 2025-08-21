@@ -97,7 +97,7 @@ int rmc_main(const char* const robot) {
   char localhost[CA_MAXHOSTNAMELEN + 1];
   gethostname(localhost, CA_MAXHOSTNAMELEN + 1);
   localhost[CA_MAXHOSTNAMELEN] = '\0';
-  if (strchr(localhost, '.') != NULL) {
+  if (strchr(localhost, '.') != nullptr) {
     strncpy(g_localhost, localhost, CA_MAXHOSTNAMELEN + 1);
   } else {
     if (Cdomainname(domainname, sizeof(domainname)) < 0) {
@@ -275,7 +275,7 @@ int main(const int argc, char** argv) {
   }
 
   if (run_rmcd_in_background(argc, argv)) {
-    if (Cinitdaemon("rmcd", NULL) < 0) {
+    if (Cinitdaemon("rmcd", nullptr) < 0) {
       exit(SYERR);
     }
   }
@@ -284,13 +284,13 @@ int main(const int argc, char** argv) {
 
 static void rmc_doit(const int rpfd) {
   int c;
-  char* clienthost = NULL;
+  char* clienthost = nullptr;
   char req_data[REQ_DATA_SIZE];
   int req_type = 0;
 
   if ((c = rmc_getreq(rpfd, &req_type, req_data, &clienthost)) == 0) {
     rmc_procreq(rpfd, req_type, req_data, clienthost);
-    if (clienthost != NULL) {
+    if (clienthost != nullptr) {
       free(clienthost);
     }
   } else if (c > 0) {
@@ -329,7 +329,7 @@ static int rmc_getreq(const int s, int* const req_type, char* const req_data, ch
       return ERMCUNREC;
     }
     struct hostent hbuf;
-    struct hostent* hp = NULL;
+    struct hostent* hp = nullptr;
     char buffer[1024];
     char client_ip[INET6_ADDRSTRLEN];
     int h_err;
@@ -341,8 +341,8 @@ static int rmc_getreq(const int s, int* const req_type, char* const req_data, ch
                         sizeof(buffer),
                         &hp,
                         &h_err) != 0 ||
-        hp == NULL) {
-      if (inet_ntop(AF_INET, &from.sin_addr, client_ip, sizeof(client_ip)) == NULL) {
+        hp == nullptr) {
+      if (inet_ntop(AF_INET, &from.sin_addr, client_ip, sizeof(client_ip)) == nullptr) {
         perror("inet_ntop");
         return ERMCUNREC;
       }

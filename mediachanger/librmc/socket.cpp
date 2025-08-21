@@ -30,11 +30,10 @@ int netread(int s, char* buf, int nbytes) {
   for (; nb > 0;) {
     n = recv(s, buf, nb, 0);
     nb -= n;
-    if (n <= 0) {
-      if (n == 0) {
-        serrno = SECONNDROP;
-        return 0;
-      }
+    if (n == 0) {
+      serrno = SECONNDROP;
+      return 0;
+    } else if (n < 0) {
       return n;
     }
     buf += n;
@@ -52,11 +51,10 @@ int netwrite(const int s, const char* buf, const int nbytes) {
   for (; nb > 0;) {
     n = send(s, buf, nb, 0);
     nb -= n;
-    if (n <= 0) {
-      if (n == 0) {
-        serrno = SECONNDROP;
-        return 0;
-      }
+    if (n == 0) {
+      serrno = SECONNDROP;
+      return 0;
+    } else if (n < 0) {
       return n;
     }
     buf += n;
@@ -66,5 +64,5 @@ int netwrite(const int s, const char* buf, const int nbytes) {
 
 // return last error message
 const char* neterror() {
-  return reinterpret_cast<const char*>(serrno == 0 ? sstrerror(errno) : sstrerror(serrno));
+  return reinterpret_cast<const char*>(sstrerror(serrno == 0 ? errno : serrno));
 }

@@ -373,11 +373,11 @@ int smc_find_cartridgeWithoutSendVolumeTag(const int fd,
 
   tot_nbelem = robot_info.transport_count + robot_info.slot_count + robot_info.port_count + robot_info.device_count;
 
-  if ((inventory_info = (struct smc_element_info*) malloc(tot_nbelem * sizeof(struct smc_element_info))) == NULL) {
+  if ((inventory_info = (struct smc_element_info*) malloc(tot_nbelem * sizeof(struct smc_element_info))) == nullptr) {
     serrno = errno;
     snprintf(err_msgbuf, ERR_MSG_BUFSZ, "malloc error: %s", strerror(errno));
     msgaddr = err_msgbuf;
-    save_error(-1, 0, NULL, msgaddr);
+    save_error(-1, 0, nullptr, msgaddr);
     return -1;
   }
 
@@ -598,7 +598,7 @@ int smc_move_medium(const int fd, const char* const rbtdev, const int from, cons
   cdb[10] = invert;
 
   while (pause_mode) {
-    rc = rmc_send_scsi_cmd(fd, rbtdev, 0, cdb, 12, NULL, 0, sense, 38, SCSI_NONE, &nb_sense_ret, &msgaddr);
+    rc = rmc_send_scsi_cmd(fd, rbtdev, 0, cdb, 12, nullptr, 0, sense, 38, SCSI_NONE, &nb_sense_ret, &msgaddr);
     if (rc < 0) {
       if (rc == -4 && nb_sense_ret >= 14 && (sense[12] == 0x04) && (sense[13] == -0X7B)) {
         sleep(60);
@@ -734,7 +734,7 @@ int smc_export(const int rpfd,
   struct smc_element_info element_info;
   int i = 0;
   struct smc_element_info* impexp_info;
-  const char* msgaddr = NULL;
+  const char* msgaddr = nullptr;
   int nbelem = 0;
   struct smc_status smc_status;
   const char* const func = "smc_export";
@@ -758,7 +758,7 @@ int smc_export(const int rpfd,
   /* look for a free export slot */
 
   nbelem = robot_info->port_count;
-  if ((impexp_info = (struct smc_element_info*) malloc(nbelem * sizeof(struct smc_element_info))) == NULL) {
+  if ((impexp_info = (struct smc_element_info*) malloc(nbelem * sizeof(struct smc_element_info))) == nullptr) {
     rmc_usrmsg(rpfd, func, SR012);
     return RBT_NORETRY;
   }
@@ -817,7 +817,7 @@ int smc_import(const int rpfd,
   const char* const func = "smc_import";
 
   nbelem = robot_info->transport_count + robot_info->slot_count + robot_info->port_count + robot_info->device_count;
-  if ((element_info = (struct smc_element_info*) malloc(nbelem * sizeof(struct smc_element_info))) == NULL) {
+  if ((element_info = (struct smc_element_info*) malloc(nbelem * sizeof(struct smc_element_info))) == nullptr) {
     rmc_usrmsg(rpfd, func, SR012);
     return RBT_NORETRY;
   }

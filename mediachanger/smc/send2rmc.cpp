@@ -67,7 +67,7 @@ int send2rmc(const char* const host,
     gethostname(rmchost, CA_MAXHOSTNAMELEN + 1);
     serrno = 0;
   }
-  if ((hp = Cgethostbyname(rmchost)) == NULL) {
+  if ((hp = Cgethostbyname(rmchost)) == nullptr) {
     rmc_errmsg(func, RMC09, "Host unknown:", rmchost);
     serrno = ERMCUNREC;
     return -1;
@@ -107,7 +107,7 @@ int send2rmc(const char* const host,
     return -1;
   }
 
-  if (user_repbuf == NULL) { /* does not want a reply */
+  if (user_repbuf == nullptr) { /* does not want a reply */
     (void) close(s);
     return 0;
   }
@@ -150,7 +150,7 @@ int send2rmc(const char* const host,
     p = repbuf;
     if (rep_type == MSG_ERR) {
       unmarshall_STRING(p, prtbuf);
-      rmc_errmsg(NULL, "%s", prtbuf);
+      rmc_errmsg(nullptr, "%s", prtbuf);
     } else {
       if (actual_replen + c <= user_repbuf_len) {
         n = c;

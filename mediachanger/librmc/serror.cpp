@@ -458,14 +458,14 @@ int sstrerror_r(const int n, char* const buf, const size_t buflen) {
   const char* tmpstr;
   char strerror_r_buf[100];
 
-  if (buf == NULL || buflen <= 0) {
+  if (buf == nullptr || buflen <= 0) {
     errno = EINVAL;
     serrno = EINVAL;
     return -1;
   }
 
   memset(buf, '\0', buflen);
-  tmpstr = NULL;
+  tmpstr = nullptr;
 
   if ((n > SEBASEOFF) && (n <= SEMAXERR)) {
     /*
@@ -559,7 +559,7 @@ int sstrerror_r(const int n, char* const buf, const size_t buflen) {
     }
   }
 
-  if (tmpstr != NULL) {
+  if (tmpstr != nullptr) {
     strncpy(buf, tmpstr, buflen);
     buf[buflen - 1] = '\0';
   } else {
@@ -589,7 +589,7 @@ void sperror(char* msg) {
 static int sstrerror_key = -1;
 
 const char* sstrerror(const int n) {
-  void* buf = NULL;
+  void* buf = nullptr;
   int buflen = 80;
 
   if (0 > Cglobals_get(&sstrerror_key, &buf, buflen)) {
