@@ -427,6 +427,7 @@ Tools allowing initialization and inspection of the object store.
 %attr(0755,root,root) %{_bindir}/cta-objectstore-dereference-removed-queues
 %attr(0755,root,root) %{_bindir}/cta-objectstore-collect-orphaned-object
 %attr(0755,root,root) %{_bindir}/cta-objectstore-create-missing-repack-index
+%attr(0644,root,root) %config(noreplace) %{_sysconfdir}/cta/cta-objectstore-tools.conf.example
 %endif
 
 #cta-integrationtests installs libraries so we need ldconfig.
