@@ -224,7 +224,7 @@ int rmc_send_scsi_cmd(const int tapefd,
              sg_big_buff_val - sizeof(struct sg_header) - cdblen);
     *msgaddr = rmc_err_msgbuf;
     serrno = EINVAL;
-    return (-1);
+    return -1;
   }
   if ((int) sizeof(struct sg_header) + cdblen + buflen > sg_bufsiz) {
     if (sg_bufsiz > 0) {
@@ -234,7 +234,7 @@ int rmc_send_scsi_cmd(const int tapefd,
       serrno = errno;
       snprintf(rmc_err_msgbuf, RMC_ERR_MSG_BUFSZ, "cannot get memory");
       *msgaddr = rmc_err_msgbuf;
-      return (-1);
+      return -1;
     }
     sg_bufsiz = sizeof(struct sg_header) + cdblen + buflen;
   }
@@ -257,7 +257,7 @@ int rmc_send_scsi_cmd(const int tapefd,
       snprintf(rmc_err_msgbuf, RMC_ERR_MSG_BUFSZ, "%s : stat error : %s\n", path, strerror(errno));
       rmc_err_msgbuf[sizeof(rmc_err_msgbuf) - 1] = '\0';
       *msgaddr = rmc_err_msgbuf;
-      return (-1);
+      return -1;
     }
     /* Find the first available sg device and use its major number for comparison
            with the provided major number. If they are the same we can use the sgpath provided directly */
@@ -303,7 +303,7 @@ int rmc_send_scsi_cmd(const int tapefd,
       snprintf(rmc_err_msgbuf, RMC_ERR_MSG_BUFSZ, "%s : open error : %s\n", sgpath, strerror(errno));
       rmc_err_msgbuf[RMC_ERR_MSG_BUFSZ - 1] = '\0';
       *msgaddr = rmc_err_msgbuf;
-      return (-1);
+      return -1;
     }
   }
   if (sg_buffer == NULL) {
@@ -336,7 +336,7 @@ int rmc_send_scsi_cmd(const int tapefd,
     if (!do_not_open) {
       close(fd);
     }
-    return (-2);
+    return -2;
   }
   if ((n = read(fd, sg_buffer, sizeof(struct sg_header) + ((flags & SCSI_IN) ? buflen : 0))) < 0) {
     *msgaddr = (char*) strerror(errno);
@@ -347,7 +347,7 @@ int rmc_send_scsi_cmd(const int tapefd,
     if (!do_not_open) {
       close(fd);
     }
-    return (-2);
+    return -2;
   }
   if (!do_not_open) {
     close(fd);
@@ -374,14 +374,14 @@ int rmc_send_scsi_cmd(const int tapefd,
     snprintf(rmc_err_msgbuf, RMC_ERR_MSG_BUFSZ, "%s : scsi error : %s\n", sgpath, tmp_msgbuf);
     rmc_err_msgbuf[sizeof(rmc_err_msgbuf) - 1] = '\0';
     *msgaddr = rmc_err_msgbuf;
-    return (-4);
+    return -4;
   } else if (sg_hd->result) {
     *msgaddr = (char*) strerror(sg_hd->result);
     serrno = sg_hd->result;
     snprintf(rmc_err_msgbuf, RMC_ERR_MSG_BUFSZ, "%s : read error : %s\n", sgpath, *msgaddr);
     rmc_err_msgbuf[sizeof(rmc_err_msgbuf) - 1] = '\0';
     *msgaddr = rmc_err_msgbuf;
-    return (-2);
+    return -2;
   }
   if (n) {
     n -= sizeof(struct sg_header) + resid;
@@ -389,5 +389,5 @@ int rmc_send_scsi_cmd(const int tapefd,
   if (n && (flags & SCSI_IN)) {
     memcpy(buffer, sg_buffer + sizeof(struct sg_header), n);
   }
-  return ((flags & SCSI_IN) ? n : buflen - resid);
+  return (flags & SCSI_IN) ? n : buflen-resid;
 }

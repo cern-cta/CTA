@@ -87,7 +87,7 @@ int Cdomainname(char* name, int namelen) {
     }
     if ((haddrarray = (struct in_addr*) malloc(naddr * sizeof(struct in_addr))) == NULL) {
       serrno = ENOMEM;
-      return (-1);
+      return -1;
     }
     haddrlist = (struct in_addr**) hp->h_addr_list;
     for (i = 0; i < naddr; i++) {
@@ -132,5 +132,5 @@ int Cdomainname(char* name, int namelen) {
     free(haddrarray);
   }
   serrno = SEINTERNAL;
-  return (-1);
+  return -1;
 }

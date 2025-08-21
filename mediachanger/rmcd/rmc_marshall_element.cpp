@@ -30,5 +30,5 @@ int rmc_marshall_element(char** const sbpp, const struct smc_element_info* const
   marshall_WORD(sbp, element_info->source_address);
   marshall_STRING(sbp, element_info->name);
   *sbpp = sbp;
-  return (0);
+  return 0;
 }

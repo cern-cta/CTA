@@ -65,5 +65,5 @@ int Cinitdaemon(const char* const name, void (*const wait4child)(int)) {
     sa.sa_flags = SA_RESTART;
     sigaction(SIGCHLD, &sa, NULL);
   }
-  return (maxfds);
+  return maxfds;
 }

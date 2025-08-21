@@ -160,20 +160,20 @@ void Cglobals_init(int (*getspec)(int*, void**), int (*setspec)(int*, void*), in
  */
 int Cglobals_get(int* key, void** addr, size_t size) {
   if (key == NULL || addr == NULL || size <= (size_t) 0) {
-    return (-1);
+    return -1;
   }
   if (local_setspec == NULL) {
     if (*key <= 0) {
       Cglobals_t* tmp;
 
       if ((*addr = calloc(1, size)) == NULL) {
-        return (-1);
+        return -1;
       }
       if (single_thread_globals == NULL) {
         if ((single_thread_globals = (Cglobals_t**) malloc(sizeof(Cglobals_t*) * alloc_size)) == NULL) {
           free(*addr);
           *addr = NULL;
-          return (-1);
+          return -1;
         }
       } else if (nb_globals == alloc_size) {
         Cglobals_t** dummy;
@@ -182,24 +182,24 @@ int Cglobals_get(int* key, void** addr, size_t size) {
             NULL) {
           free(*addr);
           *addr = NULL;
-          return (-1);
+          return -1;
         }
         single_thread_globals = dummy;
       }
       if ((tmp = (Cglobals_t*) malloc(sizeof(Cglobals_t))) == NULL) {
         free(*addr);
         *addr = NULL;
-        return (-1);
+        return -1;
       }
       tmp->addr = *addr;
       tmp->key = key;
       single_thread_globals[nb_globals] = tmp;
       nb_globals++;
       *key = nb_globals;
-      return (1);
+      return 1;
     } else {
       *addr = (void*) single_thread_globals[(*key) - 1]->addr;
-      return (0);
+      return 0;
     }
   } else {
     int rc;
@@ -207,17 +207,17 @@ int Cglobals_get(int* key, void** addr, size_t size) {
     rc = local_getspec(key, addr);
     if ((rc == -1) || (*addr == NULL)) {
       if ((*addr = calloc(1, size)) == NULL) {
-        return (-1);
+        return -1;
       }
       if ((rc = local_setspec(key, *addr)) != 0) {
         free(*addr);
         *addr = NULL;
-        return (-1);
+        return -1;
       } else {
-        return (1);
+        return 1;
       }
     } else {
-      return (0);
+      return 0;
     }
   }
 }
@@ -247,7 +247,7 @@ int* C__serrno() {
   void* addr;
 
   if (local_setspec == NULL) {
-    return (&serrno);
+    return &serrno;
   } else {
     addr = NULL;
     /*
@@ -266,7 +266,7 @@ int* C__serrno() {
          * hidden de-reference of C__serrno().
          */
     if (addr == NULL) {
-      return (&serrno);
+      return &serrno;
     } else {
       return reinterpret_cast<int*>(addr);
     }
@@ -278,7 +278,7 @@ int* C__rfio_errno() {
   void* addr;
 
   if (local_setspec == NULL) {
-    return (&rfio_errno);
+    return &rfio_errno;
   } else {
     addr = NULL;
     /*
@@ -297,7 +297,7 @@ int* C__rfio_errno() {
          * hidden de-reference of C__rfio_errno().
          */
     if (addr == NULL) {
-      return (&rfio_errno);
+      return &rfio_errno;
     } else {
       return reinterpret_cast<int*>(addr);
     }
@@ -309,7 +309,7 @@ int* C__Copterr() {
   void* addr;
 
   if (local_setspec == NULL) {
-    return (&Copterr);
+    return &Copterr;
   } else {
     addr = NULL;
     /*
@@ -328,7 +328,7 @@ int* C__Copterr() {
          * hidden de-reference of C_Copterr.
          */
     if (addr == NULL) {
-      return (&Copterr);
+      return &Copterr;
     } else {
       return reinterpret_cast<int*>(addr);
     }
@@ -340,7 +340,7 @@ int* C__Coptind() {
   void* addr;
 
   if (local_setspec == NULL) {
-    return (&Coptind);
+    return &Coptind;
   } else {
     addr = NULL;
     /*
@@ -359,7 +359,7 @@ int* C__Coptind() {
          * hidden de-reference of C__Coptind.
          */
     if (addr == NULL) {
-      return (&Coptind);
+      return &Coptind;
     } else {
       return reinterpret_cast<int*>(addr);
     }
@@ -371,7 +371,7 @@ int* C__Coptopt() {
   void* addr;
 
   if (local_setspec == NULL) {
-    return (&Coptopt);
+    return &Coptopt;
   } else {
     addr = NULL;
     /*
@@ -390,7 +390,7 @@ int* C__Coptopt() {
          * hidden de-reference of C__Coptopt.
          */
     if (addr == NULL) {
-      return (&Coptopt);
+      return &Coptopt;
     } else {
       return reinterpret_cast<int*>(addr);
     }
@@ -402,7 +402,7 @@ int* C__Coptreset() {
   void* addr;
 
   if (local_setspec == NULL) {
-    return (&Coptreset);
+    return &Coptreset;
   } else {
     addr = NULL;
     /*
@@ -421,7 +421,7 @@ int* C__Coptreset() {
          * hidden de-reference of C__Coptreset.
          */
     if (addr == NULL) {
-      return (&Coptreset);
+      return &Coptreset;
     } else {
       return reinterpret_cast<int*>(addr);
     }
@@ -433,7 +433,7 @@ char** C__Coptarg() {
   void* addr;
 
   if (local_setspec == NULL) {
-    return (&Coptarg);
+    return &Coptarg;
   } else {
     addr = NULL;
     /*
@@ -452,7 +452,7 @@ char** C__Coptarg() {
          * hidden de-reference of C__Coptarg.
          */
     if (addr == NULL) {
-      return (&Coptarg);
+      return &Coptarg;
     } else {
       return reinterpret_cast<char**>(addr);
     }

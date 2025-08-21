@@ -72,5 +72,5 @@ int rmc_get_geometry(const char* const server, struct robot_info* const robot_in
     unmarshall_LONG(rbp, robot_info->device_start);
     unmarshall_LONG(rbp, robot_info->device_count);
   }
-  return (c);
+  return c;
 }

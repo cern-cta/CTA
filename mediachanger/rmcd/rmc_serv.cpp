@@ -320,13 +320,13 @@ static int rmc_getreq(const int s, int* const req_type, char* const req_data, ch
     unmarshall_LONG(rbp, msglen);
     if (msglen > RMC_REQBUFSZ) {
       rmc_logit(func, RMC46, RMC_REQBUFSZ);
-      return (-1);
+      return -1;
     }
     l = msglen - sizeof(req_hdr);
     n = netread_timeout(s, req_data, l, RMC_TIMEOUT);
     if (getpeername(s, (struct sockaddr*) &from, &fromlen) < 0) {
       rmc_logit(func, RMC02, "getpeername", neterror());
-      return (ERMCUNREC);
+      return ERMCUNREC;
     }
     struct hostent hbuf;
     struct hostent* hp = NULL;
@@ -358,7 +358,7 @@ static int rmc_getreq(const int s, int* const req_type, char* const req_data, ch
     } else if (l < 0) {
       rmc_logit(func, RMC02, "netread", sstrerror(serrno));
     }
-    return (ERMCUNREC);
+    return ERMCUNREC;
   }
 }
 
