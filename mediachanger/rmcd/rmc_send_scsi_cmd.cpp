@@ -187,7 +187,6 @@ int rmc_send_scsi_cmd(const int tapefd,
   /* 28/01/2014 is 900 seconds and therefore 900000 milliseconds             */
   const int timeout = 900000; /* milliseconds */
   int fd;
-  FILE* fopen();
   int n;
   int resid = 0;
   struct stat sbuf;
