@@ -51,11 +51,11 @@ typedef struct Cglobals {
  */
 extern int (*local_getspec)(int*, void**);
 extern int (*local_setspec)(int*, void*);
-int (*local_getspec)(int*, void**) = NULL;
-int (*local_setspec)(int*, void*) = NULL;
-static int (*local_getTid)(void) = NULL;
+int (*local_getspec)(int*, void**) = nullptr;
+int (*local_setspec)(int*, void*) = nullptr;
+static int (*local_getTid)(void) = nullptr;
 
-static Cglobals_t** single_thread_globals = NULL;
+static Cglobals_t** single_thread_globals = nullptr;
 static int nb_globals = 0;
 /*
  * Single thread globals table allocation size.
@@ -104,17 +104,17 @@ void Cglobals_init(int (*getspec)(int*, void**), int (*setspec)(int*, void*), in
   int* key;
   void* addr;
 
-  if (getspec != NULL && local_getspec == NULL) {
+  if (getspec != nullptr && local_getspec == nullptr) {
     local_getspec = getspec;
   }
-  if (setspec != NULL && local_setspec == NULL) {
+  if (setspec != nullptr && local_setspec == nullptr) {
     local_setspec = setspec;
   }
-  if (getTid != NULL && local_getTid == NULL) {
+  if (getTid != nullptr && local_getTid == nullptr) {
     local_getTid = getTid;
   }
-  if (local_getspec != NULL && local_setspec != NULL) {
-    if (single_thread_globals != NULL) {
+  if (local_getspec != nullptr && local_setspec != nullptr) {
+    if (single_thread_globals != nullptr) {
       /*
              * Re-assign all old single-thread globals to thread
              * specific data for the calling thread.
@@ -122,12 +122,12 @@ void Cglobals_init(int (*getspec)(int*, void**), int (*setspec)(int*, void*), in
       for (i = 0; i < nb_globals; i++) {
         key = single_thread_globals[i]->key;
         rc = local_getspec(key, &addr);
-        if (rc == -1 || addr == NULL) {
+        if (rc == -1 || addr == nullptr) {
           addr = single_thread_globals[i]->addr;
           rc = local_setspec(key, addr);
         }
         free(single_thread_globals[i]);
-        single_thread_globals[i] = NULL;
+        single_thread_globals[i] = nullptr;
       }
       free(single_thread_globals);
     }
@@ -142,7 +142,7 @@ void Cglobals_init(int (*getspec)(int*, void**), int (*setspec)(int*, void*), in
     *C__Coptreset() = Coptreset;
     *C__Coptarg() = Coptarg;
 
-    single_thread_globals = NULL;
+    single_thread_globals = nullptr;
   }
   return;
 }
@@ -159,36 +159,36 @@ void Cglobals_init(int (*getspec)(int*, void**), int (*setspec)(int*, void*), in
  *                 1            on success and first call (e.g. alloc)
  */
 int Cglobals_get(int* key, void** addr, size_t size) {
-  if (key == NULL || addr == NULL || size <= (size_t) 0) {
+  if (key == nullptr || addr == nullptr || size <= (size_t) 0) {
     return -1;
   }
-  if (local_setspec == NULL) {
+  if (local_setspec == nullptr) {
     if (*key <= 0) {
       Cglobals_t* tmp;
 
-      if ((*addr = calloc(1, size)) == NULL) {
+      if ((*addr = calloc(1, size)) == nullptr) {
         return -1;
       }
-      if (single_thread_globals == NULL) {
-        if ((single_thread_globals = (Cglobals_t**) malloc(sizeof(Cglobals_t*) * alloc_size)) == NULL) {
+      if (single_thread_globals == nullptr) {
+        if ((single_thread_globals = (Cglobals_t**) malloc(sizeof(Cglobals_t*) * alloc_size)) == nullptr) {
           free(*addr);
-          *addr = NULL;
+          *addr = nullptr;
           return -1;
         }
       } else if (nb_globals == alloc_size) {
         Cglobals_t** dummy;
 
         if ((dummy = (Cglobals_t**) realloc(single_thread_globals, sizeof(Cglobals_t*) * (nb_globals + alloc_size))) ==
-            NULL) {
+            nullptr) {
           free(*addr);
-          *addr = NULL;
+          *addr = nullptr;
           return -1;
         }
         single_thread_globals = dummy;
       }
-      if ((tmp = (Cglobals_t*) malloc(sizeof(Cglobals_t))) == NULL) {
+      if ((tmp = (Cglobals_t*) malloc(sizeof(Cglobals_t))) == nullptr) {
         free(*addr);
-        *addr = NULL;
+        *addr = nullptr;
         return -1;
       }
       tmp->addr = *addr;
@@ -205,13 +205,13 @@ int Cglobals_get(int* key, void** addr, size_t size) {
     int rc;
 
     rc = local_getspec(key, addr);
-    if ((rc == -1) || (*addr == NULL)) {
-      if ((*addr = calloc(1, size)) == NULL) {
+    if ((rc == -1) || (*addr == nullptr)) {
+      if ((*addr = calloc(1, size)) == nullptr) {
         return -1;
       }
       if ((rc = local_setspec(key, *addr)) != 0) {
         free(*addr);
-        *addr = NULL;
+        *addr = nullptr;
         return -1;
       } else {
         return 1;
@@ -231,10 +231,10 @@ int Cglobals_get(int* key, void** addr, size_t size) {
  *
  */
 void Cglobals_getTid(int* Tid) {
-  if (Tid == NULL) {
+  if (Tid == nullptr) {
     return;
   }
-  if (local_getTid == NULL) {
+  if (local_getTid == nullptr) {
     *Tid = -1;
   } else {
     *Tid = local_getTid();
@@ -246,15 +246,15 @@ int* C__serrno() {
   int rc;
   void* addr;
 
-  if (local_setspec == NULL) {
+  if (local_setspec == nullptr) {
     return &serrno;
   } else {
-    addr = NULL;
+    addr = nullptr;
     /*
          * We re-use the old single thread serrno as key
          */
     rc = local_getspec(&serrno, &addr);
-    if (rc == -1 || addr == NULL) {
+    if (rc == -1 || addr == nullptr) {
       addr = (int*) calloc(1, sizeof(int));
       rc = local_setspec(&serrno, addr);
     }
@@ -265,7 +265,7 @@ int* C__serrno() {
          * will not die with a strange coredump in a
          * hidden de-reference of C__serrno().
          */
-    if (addr == NULL) {
+    if (addr == nullptr) {
       return &serrno;
     } else {
       return reinterpret_cast<int*>(addr);
@@ -277,15 +277,15 @@ int* C__rfio_errno() {
   int rc;
   void* addr;
 
-  if (local_setspec == NULL) {
+  if (local_setspec == nullptr) {
     return &rfio_errno;
   } else {
-    addr = NULL;
+    addr = nullptr;
     /*
          * We re-use the old single thread rfio_errno as key
          */
     rc = local_getspec(&rfio_errno, &addr);
-    if (rc == -1 || addr == NULL) {
+    if (rc == -1 || addr == nullptr) {
       addr = (int*) calloc(1, sizeof(int));
       rc = local_setspec(&rfio_errno, addr);
     }
@@ -296,7 +296,7 @@ int* C__rfio_errno() {
          * will not die with a strange coredump in a
          * hidden de-reference of C__rfio_errno().
          */
-    if (addr == NULL) {
+    if (addr == nullptr) {
       return &rfio_errno;
     } else {
       return reinterpret_cast<int*>(addr);
@@ -308,15 +308,15 @@ int* C__Copterr() {
   int rc;
   void* addr;
 
-  if (local_setspec == NULL) {
+  if (local_setspec == nullptr) {
     return &Copterr;
   } else {
-    addr = NULL;
+    addr = nullptr;
     /*
          * We re-use the old single thread Copterr as key
          */
     rc = local_getspec(&Copterr, &addr);
-    if (rc == -1 || addr == NULL) {
+    if (rc == -1 || addr == nullptr) {
       addr = (int*) calloc(1, sizeof(int));
       rc = local_setspec(&Copterr, addr);
     }
@@ -327,7 +327,7 @@ int* C__Copterr() {
          * will not die with a strange coredump in a
          * hidden de-reference of C_Copterr.
          */
-    if (addr == NULL) {
+    if (addr == nullptr) {
       return &Copterr;
     } else {
       return reinterpret_cast<int*>(addr);
@@ -339,15 +339,15 @@ int* C__Coptind() {
   int rc;
   void* addr;
 
-  if (local_setspec == NULL) {
+  if (local_setspec == nullptr) {
     return &Coptind;
   } else {
-    addr = NULL;
+    addr = nullptr;
     /*
          * We re-use the old single thread rfio_errno as key
          */
     rc = local_getspec(&Coptind, &addr);
-    if (rc == -1 || addr == NULL) {
+    if (rc == -1 || addr == nullptr) {
       addr = (int*) calloc(1, sizeof(int));
       rc = local_setspec(&Coptind, addr);
     }
@@ -358,7 +358,7 @@ int* C__Coptind() {
          * will not die with a strange coredump in a
          * hidden de-reference of C__Coptind.
          */
-    if (addr == NULL) {
+    if (addr == nullptr) {
       return &Coptind;
     } else {
       return reinterpret_cast<int*>(addr);
@@ -370,15 +370,15 @@ int* C__Coptopt() {
   int rc;
   void* addr;
 
-  if (local_setspec == NULL) {
+  if (local_setspec == nullptr) {
     return &Coptopt;
   } else {
-    addr = NULL;
+    addr = nullptr;
     /*
          * We re-use the old single thread rfio_errno as key
          */
     rc = local_getspec(&Coptopt, &addr);
-    if (rc == -1 || addr == NULL) {
+    if (rc == -1 || addr == nullptr) {
       addr = (int*) calloc(1, sizeof(int));
       rc = local_setspec(&Coptopt, addr);
     }
@@ -389,7 +389,7 @@ int* C__Coptopt() {
          * will not die with a strange coredump in a
          * hidden de-reference of C__Coptopt.
          */
-    if (addr == NULL) {
+    if (addr == nullptr) {
       return &Coptopt;
     } else {
       return reinterpret_cast<int*>(addr);
@@ -401,15 +401,15 @@ int* C__Coptreset() {
   int rc;
   void* addr;
 
-  if (local_setspec == NULL) {
+  if (local_setspec == nullptr) {
     return &Coptreset;
   } else {
-    addr = NULL;
+    addr = nullptr;
     /*
          * We re-use the old single thread rfio_errno as key
          */
     rc = local_getspec(&Coptreset, &addr);
-    if (rc == -1 || addr == NULL) {
+    if (rc == -1 || addr == nullptr) {
       addr = (int*) calloc(1, sizeof(int));
       rc = local_setspec(&Coptreset, addr);
     }
@@ -420,7 +420,7 @@ int* C__Coptreset() {
          * will not die with a strange coredump in a
          * hidden de-reference of C__Coptreset.
          */
-    if (addr == NULL) {
+    if (addr == nullptr) {
       return &Coptreset;
     } else {
       return reinterpret_cast<int*>(addr);
@@ -432,15 +432,15 @@ char** C__Coptarg() {
   int rc;
   void* addr;
 
-  if (local_setspec == NULL) {
+  if (local_setspec == nullptr) {
     return &Coptarg;
   } else {
-    addr = NULL;
+    addr = nullptr;
     /*
          * We re-use the old single thread rfio_errno as key
          */
     rc = local_getspec(&Coptarg_key, &addr);
-    if (rc == -1 || addr == NULL) {
+    if (rc == -1 || addr == nullptr) {
       addr = (char**) calloc(1, sizeof(char*));
       rc = local_setspec(&Coptarg_key, addr);
     }
@@ -451,7 +451,7 @@ char** C__Coptarg() {
          * will not die with a strange coredump in a
          * hidden de-reference of C__Coptarg.
          */
-    if (addr == NULL) {
+    if (addr == nullptr) {
       return &Coptarg;
     } else {
       return reinterpret_cast<char**>(addr);

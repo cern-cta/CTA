@@ -150,9 +150,8 @@
 #define EDB_D_DNSCHECK  EDBBASEOFF + 45  //!< Cdb daemon        : double DNS check error
 #define EDB_D_REJECTED  EDBBASEOFF + 46  //!< Cdb daemon        : Connection rejected (not authorised)
 #define EDB_D_INIT      EDBBASEOFF + 47  //!< Cdb daemon        : init in progress
-#define EDB_D_INCONST \
-  EDBBASEOFF +        \
-    48  //!< Cdb daemon        : inconsistent request (unstop and no previous stop, unfreeze and no previous freeze)
+#define EDB_D_INCONST   EDBBASEOFF + 48  //!< Cdb daemon        : inconsistent request
+                                         //!< (unstop and no previous stop, unfreeze and no previous freeze)
 #define EDB_D_FREEHASHSIZE EDBBASEOFF + 49  //!< Cdb daemon     : bad free hash size
 #define EDB_DS_MALLOC      EDBBASEOFF + 50  //!< Cdb daemon system : malloc() error
 #define EDB_DS_CALLOC      EDBBASEOFF + 51  //!< Cdb daemon system : calloc() error

@@ -39,7 +39,7 @@
 extern char* optarg;
 
 static void smc_str_upper(char* const s) {
-  char* c = NULL;
+  char* c = nullptr;
 
   for (c = s; *c; c++) {
     *c = toupper(*c);
@@ -142,7 +142,7 @@ static int smc_qdrive(const char* const rmchost,
   } else {
     nbelem = 1;
   }
-  if ((element_info = reinterpret_cast<smc_element_info*>(malloc(nbelem * sizeof(struct smc_element_info)))) == NULL) {
+  if ((element_info = reinterpret_cast<smc_element_info*>(malloc(nbelem * sizeof(struct smc_element_info)))) == nullptr) {
     fprintf(stderr, SR012);
     return USERR;
   }
@@ -246,7 +246,7 @@ smc_qport(const char* const rmchost, const int fd, const struct robot_info* cons
   int nbelem;
 
   nbelem = robot_info->port_count;
-  if ((element_info = reinterpret_cast<smc_element_info*>(malloc(nbelem * sizeof(struct smc_element_info)))) == NULL) {
+  if ((element_info = reinterpret_cast<smc_element_info*>(malloc(nbelem * sizeof(struct smc_element_info)))) == nullptr) {
     fprintf(stderr, SR012);
     return USERR;
   }
@@ -306,7 +306,7 @@ static int smc_qslot(const char* const rmchost,
   if (slotaddr < 0) {
     slotaddr = 0;
   }
-  if ((element_info = reinterpret_cast<smc_element_info*>(malloc(nbelem * sizeof(struct smc_element_info)))) == NULL) {
+  if ((element_info = reinterpret_cast<smc_element_info*>(malloc(nbelem * sizeof(struct smc_element_info)))) == nullptr) {
     fprintf(stderr, SR012);
     return USERR;
   }
@@ -391,7 +391,7 @@ static int smc_qvid(const char* const rmchost,
       nbelem = 1;
     }
   }
-  if ((element_info = reinterpret_cast<smc_element_info*>(malloc(nbelem * sizeof(struct smc_element_info)))) == NULL) {
+  if ((element_info = reinterpret_cast<smc_element_info*>(malloc(nbelem * sizeof(struct smc_element_info)))) == nullptr) {
     fprintf(stderr, SR012);
     return USERR;
   }
@@ -427,20 +427,20 @@ int main(const int argc, char** argv) {
 
   /* parse and check command options */
   struct option longopts[] = {
-    {"drive",    required_argument, NULL, 'D'},
-    {"dismount", no_argument,       NULL, 'd'},
-    {"export",   no_argument,       NULL, 'e'},
-    {"import",   no_argument,       NULL, 'i'},
-    {"mount",    no_argument,       NULL, 'm'},
-    {"nbelem",   required_argument, NULL, 'N'},
-    {"query",    required_argument, NULL, 'q'},
-    {"slot",     required_argument, NULL, 'S'},
-    {"vid",      required_argument, NULL, 'V'},
-    {"json",     no_argument,       NULL, 'j'},
-    {NULL,       0,                 NULL, 0  }
+    {"drive",    required_argument, nullptr, 'D'},
+    {"dismount", no_argument,       nullptr, 'd'},
+    {"export",   no_argument,       nullptr, 'e'},
+    {"import",   no_argument,       nullptr, 'i'},
+    {"mount",    no_argument,       nullptr, 'm'},
+    {"nbelem",   required_argument, nullptr, 'N'},
+    {"query",    required_argument, nullptr, 'q'},
+    {"slot",     required_argument, nullptr, 'S'},
+    {"vid",      required_argument, nullptr, 'V'},
+    {"json",     no_argument,       nullptr, 'j'},
+    {nullptr,    0,                 nullptr, 0  }
   };
   memset(vid, '\0', sizeof(vid));
-  while ((c = getopt_long(argc, argv, "D:deimN:q:S:V:j", longopts, NULL)) != EOF) {
+  while ((c = getopt_long(argc, argv, "D:deimN:q:S:V:j", longopts, nullptr)) != EOF) {
     switch (c) {
       case 'D': /* drive ordinal */
         drvord = strtol(optarg, &dp, 10);

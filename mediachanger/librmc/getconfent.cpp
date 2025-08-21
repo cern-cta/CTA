@@ -37,13 +37,13 @@ getconfent_r(const char* filename, const char* category, const char* name, int f
   char *p, *cp;
   int found = 0;
   char path_config[CA_MAXPATHLEN + 1];
-  char* last = NULL;
+  char* last = nullptr;
 
-  if (filename == NULL) {
+  if (filename == nullptr) {
     /* Use default config file is not in the parameters */
     filename = PATH_CONFIG;
     /* But give precedence to $PATH_CONFIG environment variable */
-    if ((p = getenv("PATH_CONFIG")) != NULL) {
+    if ((p = getenv("PATH_CONFIG")) != nullptr) {
       filename = p;
     }
   }
@@ -52,25 +52,25 @@ getconfent_r(const char* filename, const char* category, const char* name, int f
   /* Who knows */
   path_config[CA_MAXPATHLEN] = '\0';
 
-  if ((fp = fopen(path_config, "r")) == NULL) {
+  if ((fp = fopen(path_config, "r")) == nullptr) {
     serrno = SENOCONFIG;
-    return NULL;
+    return nullptr;
   }
 
   for (;;) {
     p = fgets(buffer, bufsiz - 1, fp);
-    if (p == NULL) {
+    if (p == nullptr) {
       break;
     }
 
-    if ((cp = strtok(p, " \t")) == NULL) {
+    if ((cp = strtok(p, " \t")) == nullptr) {
       continue; /* empty line */
     }
     if (*cp == '#') {
       continue; /* comment */
     }
     if (strcmp(cp, category) == 0) { /* A category match */
-      if ((cp = strtok(NULL, " \t")) == NULL) {
+      if ((cp = strtok(nullptr, " \t")) == nullptr) {
         continue;
       }
       if (*cp == '#') {
@@ -79,11 +79,11 @@ getconfent_r(const char* filename, const char* category, const char* name, int f
       if (strcmp(cp, name) == 0) { /* A match */
         if (flags != 0) {
           /* Don't tokenize next arg */
-          cp = strtok(NULL, "#\n");
+          cp = strtok(nullptr, "#\n");
         } else {
-          cp = strtok(NULL, "#\t \n");
+          cp = strtok(nullptr, "#\t \n");
         }
-        if (cp == NULL) {
+        if (cp == nullptr) {
           continue;
         }
         if (*cp == '#') {
@@ -99,10 +99,10 @@ getconfent_r(const char* filename, const char* category, const char* name, int f
     }
   }
   if (fclose(fp)) {
-    return NULL;
+    return nullptr;
   }
   if (found == 0) {
-    return NULL;
+    return nullptr;
   } else {
     return cp;
   }
@@ -111,22 +111,22 @@ getconfent_r(const char* filename, const char* category, const char* name, int f
 static int value_key = -1;
 
 char* getconfent(const char* category, const char* name, int flags) {
-  char* value = NULL;
+  char* value = nullptr;
 
   Cglobals_get(&value_key, (void**) &value, BUFSIZ + 1);
-  if (value == NULL) {
-    return NULL;
+  if (value == nullptr) {
+    return nullptr;
   }
 
-  return getconfent_r(NULL, category, name, flags, value, BUFSIZ + 1);
+  return getconfent_r(nullptr, category, name, flags, value, BUFSIZ + 1);
 }
 
 char* getconfent_fromfile(const char* filename, const char* category, const char* name, int flags) {
-  char* value = NULL;
+  char* value = nullptr;
 
   Cglobals_get(&value_key, (void**) &value, BUFSIZ + 1);
-  if (value == NULL) {
-    return NULL;
+  if (value == nullptr) {
+    return nullptr;
   }
 
   return getconfent_r(filename, category, name, flags, value, BUFSIZ + 1);

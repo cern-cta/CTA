@@ -70,12 +70,12 @@ int netconnect_timeout(int fd, struct sockaddr* addr, size_t addr_size, int time
   }
 
   if (timeout >= 0 && rc != -1) {
-    time_t time_start = time(NULL);
+    time_t time_start = time(nullptr);
     int time_elapsed = 0;
     for (;;) {
       rc = _net_connectable(fd, timeout - time_elapsed);
       if ((rc == -1) && (errno == EINTR)) {
-        time_elapsed = (int) (time(NULL) - time_start);
+        time_elapsed = (int) (time(nullptr) - time_start);
         if (time_elapsed >= timeout) {
           rc = -1;
           serrno = SETIMEDOUT;
@@ -110,7 +110,7 @@ ssize_t netread_timeout(int fd, void* vptr, ssize_t n, int timeout) {
   size_t nleft;      /* Bytes to read */
   ssize_t nread = 0; /* Bytes yet read */
   ssize_t flag = 0;  /* != 0 means error */
-  char* ptr = NULL;  /* Temp. pointer */
+  char* ptr = nullptr;  /* Temp. pointer */
   int select_status = 0;
   Sigfunc* sigpipe; /* Old SIGPIPE handler */
   time_t time_start;
@@ -136,7 +136,7 @@ ssize_t netread_timeout(int fd, void* vptr, ssize_t n, int timeout) {
   nleft = n;
   nread = 0;
 
-  time_start = time(NULL);
+  time_start = time(nullptr);
   time_elapsed = 0;
 
   while (nleft > 0) {
@@ -175,7 +175,7 @@ ssize_t netread_timeout(int fd, void* vptr, ssize_t n, int timeout) {
       ptr += nread;
     }
     if (nleft > 0) {
-      time_elapsed = (int) (time(NULL) - time_start);
+      time_elapsed = (int) (time(nullptr) - time_start);
       if (time_elapsed >= timeout) {
         /* Timeout */
         serrno = SETIMEDOUT;
@@ -204,7 +204,7 @@ ssize_t netwrite_timeout(int fd, void* vptr, ssize_t n, int timeout) {
   size_t nleft;         /* Bytes to read */
   ssize_t nwritten = 0; /* Bytes yet read */
   ssize_t flag = 0;     /* != 0 means error */
-  char* ptr = NULL;     /* Temp. pointer */
+  char* ptr = nullptr;     /* Temp. pointer */
   Sigfunc* sigpipe;     /* Old SIGPIPE handler */
   int select_status = 0;
   time_t time_start;
@@ -229,7 +229,7 @@ ssize_t netwrite_timeout(int fd, void* vptr, ssize_t n, int timeout) {
   ptr = reinterpret_cast<char*>(vptr);
   nleft = n;
 
-  time_start = time(NULL);
+  time_start = time(nullptr);
   time_elapsed = 0;
 
   while (nleft > 0) {
@@ -265,7 +265,7 @@ ssize_t netwrite_timeout(int fd, void* vptr, ssize_t n, int timeout) {
       ptr += nwritten;
     }
     if (nleft > 0) {
-      time_elapsed = (int) (time(NULL) - time_start);
+      time_elapsed = (int) (time(nullptr) - time_start);
       if (time_elapsed >= timeout) {
         /* Timeout */
         serrno = SETIMEDOUT;

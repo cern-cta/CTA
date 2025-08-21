@@ -208,9 +208,9 @@ int rmc_send_scsi_cmd(const int tapefd,
     nbread = read(procfd, procbuf, sizeof(procbuf) - 1);
     if (nbread > 0) {
       long int tmp;
-      char* endptr = NULL;
+      char* endptr = nullptr;
       tmp = strtol(procbuf, &endptr, 10);
-      if (endptr == NULL || *endptr == '\n') {
+      if (endptr == nullptr || *endptr == '\n') {
         sg_big_buff_val = (int) tmp;
       }
     }
@@ -230,7 +230,7 @@ int rmc_send_scsi_cmd(const int tapefd,
     if (sg_bufsiz > 0) {
       free(sg_buffer);
     }
-    if ((sg_buffer = (char*) malloc(sizeof(struct sg_header) + cdblen + buflen)) == NULL) {
+    if ((sg_buffer = (char*) malloc(sizeof(struct sg_header) + cdblen + buflen)) == nullptr) {
       serrno = errno;
       snprintf(rmc_err_msgbuf, RMC_ERR_MSG_BUFSZ, "cannot get memory");
       *msgaddr = rmc_err_msgbuf;
@@ -306,7 +306,7 @@ int rmc_send_scsi_cmd(const int tapefd,
       return -1;
     }
   }
-  if (sg_buffer == NULL) {
+  if (sg_buffer == nullptr) {
     serrno = EFAULT;
     snprintf(rmc_err_msgbuf, RMC_ERR_MSG_BUFSZ, "sg_buffer points to NULL");
     *msgaddr = rmc_err_msgbuf;
