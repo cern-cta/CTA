@@ -1,0 +1,7 @@
+#
+# CTA Objectstore Tools options
+#
+
+# CTA Objectstore backend
+BackendPath rados://cta@tapecta:cta
+#BackendPath /path/to/local/objectstore
