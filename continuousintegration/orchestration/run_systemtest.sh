@@ -189,7 +189,7 @@ run_systemtest() {
     rm -rf "${log_dir:?}/"*
   fi
 
-  old_namespaces=$(kubectl get namespace -o json | jq -r '.items[].metadata.name | select(. != "default" and (test("^kube-") | not))')
+  old_namespaces=$(kubectl get namespace -o json | jq -r '.items[].metadata.name | select(. != "default" and ("noobaa"|not) and (test("^kube-")| not))')
   if [ $cleanup_namespaces == 1 ]; then
     echo "Cleaning up old namespaces"
     echo $old_namespaces
