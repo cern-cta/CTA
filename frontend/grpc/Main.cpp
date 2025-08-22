@@ -76,23 +76,23 @@ std::string file2string(std::string filename){
 }
 
 void JwksCacheRefreshLoop(std::weak_ptr<JwkCache> weakCache,
-                 std::future<void> shouldStopThread,
-                 int cacheRefreshInterval,
-                 log::LogContext lc) {
-    log::LogContext threadLc(lc);
-    threadLc.log(log::INFO, "Detached JWKS cache refresh thread started");
+                          std::future<void> shouldStopThread,
+                          int cacheRefreshInterval,
+                          const log::LogContext& lc) {
+  log::LogContext threadLc(lc);
+  threadLc.log(log::INFO, "Detached JWKS cache refresh thread started");
 
-    while (shouldStopThread.wait_for(std::chrono::seconds(cacheRefreshInterval)) == std::future_status::timeout) {
-        auto cache = weakCache.lock();
-        if (!cache) {
-            threadLc.log(log::INFO, "JwkCache no longer exists, exiting JWKS cache refresh thread");
-            break;  // Cache destroyed
-        }
-        time_t now = time(nullptr);
-        threadLc.log(log::INFO, "Updating the JWKS cache");
-        cache->updateCache(now);
+  while (shouldStopThread.wait_for(std::chrono::seconds(cacheRefreshInterval)) == std::future_status::timeout) {
+    auto cache = weakCache.lock();
+    if (!cache) {
+      threadLc.log(log::INFO, "JwkCache no longer exists, exiting JWKS cache refresh thread");
+      break;  // Cache destroyed
     }
-    threadLc.log(log::INFO, "Detached JWKS cache refresh thread ended");
+    time_t now = time(nullptr);
+    threadLc.log(log::INFO, "Updating the JWKS cache");
+    cache->updateCache(now);
+  }
+  threadLc.log(log::INFO, "Detached JWKS cache refresh thread ended");
 }
 
 int main(const int argc, char *const *const argv) {
@@ -138,7 +138,7 @@ int main(const int argc, char *const *const argv) {
                                          weakCache,
                                          std::move(shouldStopThreadFuture),
                                          svc.getFrontendService().getCacheRefreshInterval().value_or(600),
-                                         svc.getFrontendService().getLogContext());
+                                         std::cref(lc));
     }
 
     // use castor config to avoid dependency on xroot-ssi

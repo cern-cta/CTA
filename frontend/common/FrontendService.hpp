@@ -153,17 +153,17 @@ public:
   /*
    * Get the url to query for the public keys
    */
-  const std::optional<std::string> getJwksUri() const { return m_jwksUri; }
+  std::optional<std::string> getJwksUri() const { return m_jwksUri; }
 
   /*
    * Get the interval (in seconds) after which to update the cache of public keys
    */
-  const std::optional<int> getCacheRefreshInterval() const { return m_cacheRefreshInterval; }
+  std::optional<int> getCacheRefreshInterval() const { return m_cacheRefreshInterval; }
 
   /*
    * Get the interval (in seconds) after which to update public key entries in the cache
    */
-  const std::optional<int> getPubkeyTimeout() const { return m_pubkeyTimeout; }
+  std::optional<int> getPubkeyTimeout() const { return m_pubkeyTimeout; }
 
   /*
    * Get the jwtAuth value
