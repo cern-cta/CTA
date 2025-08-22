@@ -2,7 +2,7 @@
 #include "jwt-cpp/jwt.h"
 
 namespace cta {
-TokenValidationResult validateToken(const std::string& encodedJWT, std::shared_ptr<JwkCache> pubkeyCache, log::LogContext logContext) {
+TokenValidationResult validateToken(const std::string& encodedJWT, std::shared_ptr<JwkCache> pubkeyCache, log::LogContext& logContext) {
   // this is thread-safe because it makes a copy of logContext for each thread
   cta::log::LogContext lc(logContext);
   cta::log::ScopedParamContainer sp(lc);
@@ -18,8 +18,7 @@ TokenValidationResult validateToken(const std::string& encodedJWT, std::shared_p
       return {false, subjectClaim};
     }
     // Validation: check if the token is expired
-    auto exp = decoded.get_payload_claim("exp").as_date();
-    if (exp < std::chrono::system_clock::now()) {
+    if (auto exp = decoded.get_payload_claim("exp").as_date(); exp < std::chrono::system_clock::now()) {
       lc.log(cta::log::WARNING, "In ValidateToken, Passed-in token has expired!");
       return {false, subjectClaim};  // Token has expired
     }

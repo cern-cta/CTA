@@ -43,7 +43,7 @@ private:
   JwksFetcher& m_jwksFetcher;
   std::string m_jwksUri;
   std::shared_mutex m_mutex;  //!< mutex to handle parallel requests
-  std::map<std::string, JwkCacheEntry> m_keymap;
+  std::map<std::string, JwkCacheEntry, std::less<>> m_keymap;
   //!< This gives the option to keep public keys around for longer than the refresh interval.
   int m_pubkeyTimeout;
   //!< The logging context

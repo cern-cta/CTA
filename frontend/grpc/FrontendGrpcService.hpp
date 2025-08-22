@@ -40,7 +40,7 @@ public:
   CtaRpcImpl(const std::string& config);
 
   FrontendService& getFrontendService() const { return *m_frontendService; }
-  std::shared_ptr<JwkCache> getPubkeyCache() {
+  std::shared_ptr<JwkCache> getPubkeyCache() const {
     return m_pubkeyCache;
   }
   // Archive/Retrieve interface
@@ -51,6 +51,6 @@ public:
   Status Delete(::grpc::ServerContext* context, const cta::xrd::Request* request, cta::xrd::Response* response);
 private:
   Status processGrpcRequest(const cta::xrd::Request* request, cta::xrd::Response* response, cta::log::LogContext &lc, const cta::common::dataStructures::SecurityIdentity& clientIdentity) const;
-  std::pair<Status, std::optional<cta::common::dataStructures::SecurityIdentity>> extractAuthHeaderAndValidate(::grpc::ServerContext* context, const cta::xrd::Request* request);
+  std::pair<Status, std::optional<cta::common::dataStructures::SecurityIdentity>> extractAuthHeaderAndValidate(const ::grpc::ServerContext* context, const cta::xrd::Request* request) const;
 };
 } // namespace cta::frontend::grpc

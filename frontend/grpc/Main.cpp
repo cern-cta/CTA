@@ -78,7 +78,7 @@ std::string file2string(std::string filename){
 void JwksCacheRefreshLoop(std::weak_ptr<JwkCache> weakCache,
                  std::future<void> shouldStopThread,
                  int cacheRefreshInterval,
-                 log::LogContext lc) {
+                 const log::LogContext& lc) {
     log::LogContext threadLc(lc);
     threadLc.log(log::INFO, "Detached JWKS cache refresh thread started");
 
@@ -138,7 +138,7 @@ int main(const int argc, char *const *const argv) {
                                          weakCache,
                                          std::move(shouldStopThreadFuture),
                                          svc.getFrontendService().getCacheRefreshInterval().value_or(600),
-                                         svc.getFrontendService().getLogContext());
+                                         std::cref(lc));
     }
 
     // use castor config to avoid dependency on xroot-ssi

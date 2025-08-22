@@ -400,8 +400,7 @@ FrontendService::FrontendService(const std::string& configFilename) : m_archiveF
     m_threads = threads.value();
   }
 
-  auto jwksUri = config.getOptionValueStr("grpc.jwks.uri");
-  if (jwksUri.has_value()) {
+  if (auto jwksUri = config.getOptionValueStr("grpc.jwks.uri"); jwksUri.has_value()) {
     m_jwksUri = jwksUri.value();
   }
 

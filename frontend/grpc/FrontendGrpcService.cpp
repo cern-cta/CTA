@@ -34,12 +34,11 @@
 
 namespace cta::frontend::grpc {
 
-std::pair<Status, std::optional<cta::common::dataStructures::SecurityIdentity>> CtaRpcImpl::extractAuthHeaderAndValidate(::grpc::ServerContext* context, const cta::xrd::Request* request) {
+std::pair<Status, std::optional<cta::common::dataStructures::SecurityIdentity>> CtaRpcImpl::extractAuthHeaderAndValidate(const ::grpc::ServerContext* context, const cta::xrd::Request* request) const {
   cta::log::LogContext lc(m_frontendService->getLogContext());
   cta::log::ScopedParamContainer sp(lc);
   // skip any metadata checks in case JWT Auth is disabled
-  auto jwtAuth = m_frontendService->getJwtAuth();
-  if (!jwtAuth) {
+  if (auto jwtAuth = m_frontendService->getJwtAuth(); !jwtAuth) {
     lc.log(cta::log::INFO, "Skipping token validation step as token authentication is disabled");
     cta::common::dataStructures::SecurityIdentity clientIdentity(request->notification().wf().instance().name(), context->peer());
     return {::grpc::Status::OK, clientIdentity};
@@ -49,11 +48,10 @@ std::pair<Status, std::optional<cta::common::dataStructures::SecurityIdentity>> 
   std::string token;
 
   // Search for the authorization token in the metadata
-  auto it = metadata.find("authorization");
-  if (it != metadata.end()) {
+  if (auto it = metadata.find("authorization"); it != metadata.end()) {
     // convert from grpc structure to string
     const ::grpc::string_ref& r = it->second;
-    std::string auth_header = std::string(r.data(), r.size());  // "Bearer <token>"
+    auto auth_header = std::string(r.data(), r.size());  // "Bearer <token>"
     token = auth_header.substr(
       7);  // Extract the token part, use substr(7) because that is the length of "Bearer" plus a space character
     lc.log(cta::log::DEBUG, std::string("Received token: ") + token);

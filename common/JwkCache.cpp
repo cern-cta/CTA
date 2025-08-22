@@ -46,7 +46,7 @@ std::string CurlJwksFetcher::fetchJWKS(const std::string& jwksUrl) {
 std::optional<JwkCacheEntry> JwkCache::find(const std::string& key) {
   log::LogContext lc(m_lc);
   lc.log(log::DEBUG, "Waiting to acquire shared_lock in JwkCache::find");
-  std::shared_lock<std::shared_mutex> lock(m_mutex);
+  std::shared_lock lock(m_mutex);
   lc.log(log::DEBUG, "Just acquired the shared_lock in JwkCache::find");
   auto it = m_keymap.find(key);
   if (it == m_keymap.end()) {
@@ -64,7 +64,6 @@ void JwkCache::updateCache(time_t now) {
   log::ScopedParamContainer spc(lc);
   lc.log(log::DEBUG, "In function updateCache");
   std::string raw_jwks;
-  // jwks<traits::nlohmann_json> jwks;
   try {
     raw_jwks = m_jwksFetcher.fetchJWKS(m_jwksUri);
   } catch (CurlException& ex) {
@@ -76,7 +75,7 @@ void JwkCache::updateCache(time_t now) {
   std::unique_lock<std::shared_mutex> lock(m_mutex);
   lc.log(log::DEBUG, "In updateCache, just acquired the unique lock");
   for (auto it = m_keymap.begin(); it != m_keymap.end();) {
-    int lastRefresh = it->second.last_refresh_time;
+    auto lastRefresh = it->second.last_refresh_time;
     // if pubkeyTimeout is 0, then we don't want public keys to expire
     if ((m_pubkeyTimeout != 0) && (lastRefresh + m_pubkeyTimeout <= now)) {
       lc.log(log::DEBUG, std::string("Removing entry for key with kid ") + it->first);
@@ -92,8 +91,7 @@ void JwkCache::updateCache(time_t now) {
   // now iterate over the keys, add the key if it's used for signing
   for (const auto& jwk : jwks) {
     try {
-      std::string use = jwk.get_use();
-      if (use != "sig") {
+      if (std::string use = jwk.get_use(); use != "sig") {
         continue;
       }
       kid = jwk.get_key_id();
@@ -120,6 +118,5 @@ void JwkCache::updateCache(time_t now) {
     spc.add("cachedTime", std::to_string(now));
   }
 
-  // json_object_put(jwks); // Clean up ref count
 }
 }  // namespace cta
