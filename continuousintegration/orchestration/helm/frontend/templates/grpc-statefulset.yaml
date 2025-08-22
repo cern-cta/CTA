@@ -44,7 +44,7 @@ spec:
         imagePullPolicy: {{ include "ctafrontend.imagePullPolicy" . }}
         stdin: true
         command: ["/bin/bash", "-c"]
-        args: ["{{- if .Values.preRun.enabled }}/scripts/pre_run.sh;{{- end }} /scripts/ctafrontend-xrd.sh; {{- if .Values.postRun.enabled }}/scripts/post_run.sh;{{- end }}"]
+        args: ["{{- if .Values.preRun.enabled }}/scripts/pre_run.sh;{{- end }} /scripts/ctafrontend-grpc.sh; {{- if .Values.postRun.enabled }}/scripts/post_run.sh;{{- end }}"]
         readinessProbe:
           exec:
             command:
