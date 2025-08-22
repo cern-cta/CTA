@@ -12,6 +12,6 @@ struct TokenValidationResult {
   std::optional<std::string> subjectClaim;
 };
 
-TokenValidationResult validateToken(const std::string& encodedJWT, std::shared_ptr<JwkCache> pubkeyCache, cta::log::LogContext& logContext);
-
+TokenValidationResult
+validateToken(const std::string& encodedJWT, std::shared_ptr<JwkCache> pubkeyCache, cta::log::LogContext& logContext);
 }

@@ -117,6 +117,5 @@ void JwkCache::updateCache(time_t now) {
     spc.add("kid", kid);
     spc.add("cachedTime", std::to_string(now));
   }
-
 }
 }  // namespace cta

@@ -34,7 +34,8 @@
 
 namespace cta::frontend::grpc {
 
-std::pair<Status, std::optional<cta::common::dataStructures::SecurityIdentity>> CtaRpcImpl::extractAuthHeaderAndValidate(const ::grpc::ServerContext* context, const cta::xrd::Request* request) const {
+std::pair<Status, std::optional<cta::common::dataStructures::SecurityIdentity>>
+CtaRpcImpl::extractAuthHeaderAndValidate(const ::grpc::ServerContext* context, const cta::xrd::Request* request) const {
   cta::log::LogContext lc(m_frontendService->getLogContext());
   cta::log::ScopedParamContainer sp(lc);
   // skip any metadata checks in case JWT Auth is disabled
