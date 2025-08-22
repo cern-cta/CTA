@@ -24,14 +24,13 @@ modify-project-json:
     - trimmed_eos_version=$(echo "$CUSTOM_EOS_VERSION" | xargs)
     - |
       if [ -n "$trimmed_eos_version" ]; then
-        eos_image_tag="${trimmed_eos_version}.${PLATFORM}"
+        eos_image_tag="${trimmed_eos_version}"
         echo "Updating EOS version to: $trimmed_eos_version."
         tmp_file=$(mktemp)
-        jq --arg new_eos_version "$trimmed_eos_version" \
-          --arg new_xrd_version "$trimmed_xrootd_version" \
+        jq --arg new_eos_version "${trimmed_eos_version}" \
+          --arg new_xrd_version "${trimmed_xrootd_version}" \
           --arg platform "$PLATFORM" \
-          '.platforms[$platform].versionlock["group-eos"] = $new_eos_version' \
-          '.platforms[$platform].versionlock["group-eosxrootd"] = $new_xrd_version' \
+          '.platforms[$platform].versionlock["group-eos"] = $new_eos_version | .platforms[$platform].versionlock["group-eosxrootd"] = $new_xrd_version' \
           "$project_json_file" > "$tmp_file" && mv "$tmp_file" "$project_json_file"
       else
         echo "CUSTOM_EOS_VERSION is not provided. Skipping EOS version replacement."
