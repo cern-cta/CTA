@@ -40,6 +40,6 @@ packages = project_json["platforms"][platform]["versionlock"]
 for package, version in packages.items():
     if package in project_json["packageGroups"]:
         for package_name in project_json["packageGroups"][package]:
-            print(f"{package_name}-{version}.{platform}.*")
+            print(f"{package_name}-{version}.*")
     else:
-        print(f"{package}-{version}.{platform}.*")
+        print(f"{package}-{version}.*")
