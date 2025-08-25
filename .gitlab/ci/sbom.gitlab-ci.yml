@@ -33,7 +33,7 @@ prepare-rootfs:
           --releasever=9
           --setopt=reposdir="$ROOTFS/etc/yum.repos.d"
           --setopt=install_weak_deps=False --nodocs
-          $CTA_RPMS_PATH
+          cta-*
     - rm -rf "${ROOTFS}"/var/cache/dnf/* || true
     - tar -C "${ROOTFS}" -czf installroot.tar.gz .
   artifacts:
