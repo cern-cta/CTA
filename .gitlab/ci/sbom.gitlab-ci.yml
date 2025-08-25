@@ -9,7 +9,8 @@ prepare-rootfs:
   script:
     - dnf -y install dnf-plugins-core
     - rm -rf "$ROOTFS" && mkdir -p "$ROOTFS"
-    - cat >/etc/yum.repos.d/cta.repo <<EOF
+    - |
+      cat >/etc/yum.repos.d/cta.repo <<EOF
       [cta]
       name=CTA RPM repo
       baseurl=file://${CTA_RPMS_PATH}
@@ -32,7 +33,7 @@ prepare-rootfs:
           --releasever=9
           --setopt=reposdir="$ROOTFS/etc/yum.repos.d"
           --setopt=install_weak_deps=False --nodocs
-          cta-*
+          $CTA_RPMS_PATH
     - rm -rf "${ROOTFS}"/var/cache/dnf/* || true
     - tar -C "${ROOTFS}" -czf installroot.tar.gz .
   artifacts:
