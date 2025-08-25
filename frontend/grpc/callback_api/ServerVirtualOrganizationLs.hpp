@@ -1,27 +1,62 @@
-// #include "CtaAdminServer.hpp" // need this for the class CtaAdminServerWriteReactor, nothing else
-#include <catalogue/Catalogue.hpp>
-#include <scheduler/Scheduler.hpp>
+#pragma once
 
-#include "cta_frontend.pb.h"
-#include "cta_frontend.grpc.pb.h"
-
-#include <grpcpp/grpcpp.h>
+#include "CtaAdminServerWriteReactor.hpp"
+#include "cmdline/VirtualOrganizationLsResponseStream.hpp"
 #include "../RequestMessage.hpp"
-#include "common/dataStructures/LabelFormatSerDeser.hpp"
-#include "TemplateAdminCmdStream.hpp"
-#include "cmdline/admin_common/DataItemMessageFill.hpp"
 
 namespace cta::frontend::grpc {
 
-class VirtualOrganizationLsWriteReactor : public TemplateAdminCmdStream<cta::common::dataStructures::VirtualOrganization, cta::admin::VirtualOrganizationLsItem, decltype(&fillVirtualOrganizationItem)> {
-    public:
-        VirtualOrganizationLsWriteReactor(cta::catalogue::Catalogue &catalogue, cta::Scheduler &scheduler, const std::string& instanceName, const cta::xrd::Request* request);
-        cta::admin::VirtualOrganizationLsItem* getMessageField(cta::xrd::Data* data) { return data->mutable_vols_item(); }
+class VirtualOrganizationLsWriteReactor : public CtaAdminServerWriteReactor {
+public:
+    VirtualOrganizationLsWriteReactor(cta::catalogue::Catalogue& catalogue,
+                                     cta::Scheduler& scheduler,
+                                     const std::string& instanceName,
+                                     const cta::xrd::Request* request);
+    void NextWrite() override;
+
+private:
+    std::unique_ptr<cta::cmdline::VirtualOrganizationLsResponseStream> m_stream;
 };
 
-VirtualOrganizationLsWriteReactor::VirtualOrganizationLsWriteReactor(cta::catalogue::Catalogue &catalogue, cta::Scheduler &scheduler, const std::string& instanceName, const cta::xrd::Request* request)
-    : TemplateAdminCmdStream<cta::common::dataStructures::VirtualOrganization,
-        cta::admin::VirtualOrganizationLsItem,
-        decltype(&fillVirtualOrganizationItem)>
-        (catalogue, scheduler, instanceName, catalogue.VO()->getVirtualOrganizations(), cta::admin::HeaderType::VIRTUALORGANIZATION_LS, &fillVirtualOrganizationItem) {}
+VirtualOrganizationLsWriteReactor::VirtualOrganizationLsWriteReactor(cta::catalogue::Catalogue& catalogue,
+                                                                    cta::Scheduler& scheduler,
+                                                                    const std::string& instanceName,
+                                                                    const cta::xrd::Request* request)
+    : CtaAdminServerWriteReactor(catalogue, scheduler, instanceName) {
+    
+    try {
+        m_stream = std::make_unique<cta::cmdline::VirtualOrganizationLsResponseStream>(
+            catalogue, scheduler, instanceName);
+        
+        m_stream->init(request->admincmd());
+        
+        NextWrite();
+    } catch (const std::exception& ex) {
+        Finish(Status(::grpc::StatusCode::INVALID_ARGUMENT, ex.what()));
+    }
+}
+
+void VirtualOrganizationLsWriteReactor::NextWrite() {
+    m_response.Clear();
+    
+    if (!m_isHeaderSent) {
+        cta::xrd::Response *header = new cta::xrd::Response();
+        header->set_type(cta::xrd::Response::RSP_SUCCESS);
+        header->set_show_header(cta::admin::HeaderType::VIRTUALORGANIZATION_LS);
+        m_response.set_allocated_header(header);
+        m_isHeaderSent = true;
+        StartWrite(&m_response);
+        return;
+    }
+    
+    if (!m_stream->isDone()) {
+        cta::xrd::Data* data = new cta::xrd::Data(m_stream->next());
+        m_response.set_allocated_data(data);
+        StartWrite(&m_response);
+        return;
+    }
+    
+    Finish(::grpc::Status::OK);
+}
+
 } // namespace cta::frontend::grpc

@@ -17,82 +17,49 @@
 
 #pragma once
 
-#include "catalogue/TapePool.hpp"
-#include "catalogue/TapePoolSearchCriteria.hpp"
 #include "XrdCtaStream.hpp"
-#include <sstream>
-#include "cmdline/admin_common/DataItemMessageFill.hpp"
+#include "cmdline/TapePoolLsResponseStream.hpp"
 
 namespace cta::xrd {
 
-/*!
- * Stream object which implements "tapepool ls" command
- */
-class TapePoolLsStream: public XrdCtaStream{
+class TapePoolLsStream : public XrdCtaStream {
 public:
-  /*!
-   * Constructor
-   *
-   * @param[in]    requestMsg    RequestMessage containing command-line arguments
-   * @param[in]    catalogue     CTA Catalogue
-   * @param[in]    scheduler     CTA Scheduler
-   */
-  TapePoolLsStream(const frontend::AdminCmdStream& requestMsg, cta::catalogue::Catalogue &catalogue, cta::Scheduler &scheduler);
+    TapePoolLsStream(const frontend::AdminCmdStream& requestMsg, 
+                    cta::catalogue::Catalogue& catalogue, 
+                    cta::Scheduler& scheduler);
 
 private:
-  /*!
-   * Can we close the stream?
-   */
-  virtual bool isDone() const {
-    return m_tapePoolList.empty();
-  }
-
-  /*!
-   * Fill the buffer
-   */
-  virtual int fillBuffer(XrdSsiPb::OStreamBuffer<Data> *streambuf);
-
-  std::list<cta::catalogue::TapePool> m_tapePoolList;                     //!< List of tape pools from the catalogue
-  const std::string m_instanceName;
-
-  static constexpr const char* const LOG_SUFFIX  = "TapePoolLsStream";    //!< Identifier for log messages
+    bool isDone() const override { return m_stream->isDone(); }
+    int fillBuffer(XrdSsiPb::OStreamBuffer<Data>* streambuf) override;
+    
+    std::unique_ptr<cta::cmdline::TapePoolLsResponseStream> m_stream;
+    
+    static constexpr const char* const LOG_SUFFIX = "TapePoolLsStream";
 };
 
-
-TapePoolLsStream::TapePoolLsStream(const frontend::AdminCmdStream& requestMsg, cta::catalogue::Catalogue &catalogue, cta::Scheduler &scheduler) :
-  XrdCtaStream(catalogue, scheduler),
-  m_tapePoolList(catalogue.TapePool()->getTapePools()),
-  m_instanceName(requestMsg.getInstanceName())
-{
-  using namespace cta::admin;
-
+TapePoolLsStream::TapePoolLsStream(const frontend::AdminCmdStream& requestMsg, 
+                                  cta::catalogue::Catalogue& catalogue, 
+                                  cta::Scheduler& scheduler)
+    : XrdCtaStream(catalogue, scheduler) {
   XrdSsiPb::Log::Msg(XrdSsiPb::Log::DEBUG, LOG_SUFFIX, "TapePoolLsStream() constructor");
-  cta::catalogue::TapePoolSearchCriteria searchCriteria;
 
-  searchCriteria.name = requestMsg.getOptional(OptionString::TAPE_POOL);
-  searchCriteria.vo = requestMsg.getOptional(OptionString::VO);
-  searchCriteria.encrypted = requestMsg.getOptional(OptionBoolean::ENCRYPTED);
-  searchCriteria.encryptionKeyName = requestMsg.getOptional(OptionString::ENCRYPTION_KEY_NAME);
+  try {
+    m_stream = std::make_unique<cta::cmdline::TapePoolLsResponseStream>(catalogue,
+                                                                        scheduler,
+                                                                        requestMsg.getInstanceName());
 
-  if(searchCriteria.encrypted && searchCriteria.encryptionKeyName) {
-    throw exception::UserError("Do not request both '--encrypted' and '--encryptionkeyname' at same time.");
+    m_stream->init(requestMsg.getAdminCmd());
+  } catch (const std::exception& ex) {
+    throw exception::UserError(ex.what());
   }
-
-  m_tapePoolList = m_catalogue.TapePool()->getTapePools(searchCriteria);
 }
 
-int TapePoolLsStream::fillBuffer(XrdSsiPb::OStreamBuffer<Data> *streambuf) {
-  for(bool is_buffer_full = false; !m_tapePoolList.empty() && !is_buffer_full; m_tapePoolList.pop_front()) {
-    Data record;
-
-    auto &tp      = m_tapePoolList.front();
-    auto  tp_item = record.mutable_tpls_item();
-
-    fillTapePoolItem(tp, tp_item, m_instanceName);
-
-    is_buffer_full = streambuf->Push(record);
-  }
-  return streambuf->Size();
+int TapePoolLsStream::fillBuffer(XrdSsiPb::OStreamBuffer<Data>* streambuf) {
+    for (bool is_buffer_full = false; !m_stream->isDone() && !is_buffer_full;) {
+        Data record = m_stream->next();
+        is_buffer_full = streambuf->Push(record);
+    }
+    return streambuf->Size();
 }
 
 } // namespace cta::xrd
