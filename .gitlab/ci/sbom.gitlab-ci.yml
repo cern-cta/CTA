@@ -102,7 +102,7 @@ enrich-sbom-cern-info:
   script:
     # TODO: figure out correct values for the annotator and contact
     - |
-      export APP_NAME="CI_PROJECT_NAME"
+      export APP_NAME="$CI_PROJECT_NAME"
       export SERVICE_ELEMENT="CTA for Physics"
       export UNIT="IT-SD-TAB"
       export CONTACT="$GITLAB_USER_EMAIL"
