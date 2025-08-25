@@ -11,8 +11,8 @@ prepare-rootfs:
     - dnf -y install dnf-plugins-core createrepo
     - rm -rf "$ROOTFS" && mkdir -p "$ROOTFS"
     - mkdir -p "${CTA_REPO_DIR}/RPMS/x86_64"
-    - createrepo "${CTA_REPO_DIR}"
     - cp -r ${CTA_RPMS_PATH} ${CTA_REPO_DIR}/RPMS/x86_64
+    - createrepo "${CTA_REPO_DIR}"
     - |
       cat >/etc/yum.repos.d/cta.repo <<EOF
       [cta]
@@ -24,7 +24,8 @@ prepare-rootfs:
     - dnf clean all
     - dnf install -y --installroot="${ROOTFS}"
           --releasever=9
-          --setopt=install_weak_deps=False --nodocs
+          --setopt=install_weak_deps=False
+          --setopt=tsflags=nodocs
           cta-release epel-release
     # Bunch of hacky things because cta-release doesn't play nice with a custom installroot
     - touch /etc/yum/pluginconf.d/versionlock.list # doesn't exist in ROOTFS
@@ -36,7 +37,8 @@ prepare-rootfs:
     - dnf install -y --installroot="${ROOTFS}"
           --releasever=9
           --setopt=reposdir="$ROOTFS/etc/yum.repos.d"
-          --setopt=install_weak_deps=False --nodocs
+          --setopt=install_weak_deps=False
+          --setopt=tsflags=nodocs
           cta-*
     - rm -rf "${ROOTFS}"/var/cache/dnf/* || true
     - tar -C "${ROOTFS}" -czf installroot.tar.gz .
