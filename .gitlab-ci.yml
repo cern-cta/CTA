@@ -6,6 +6,7 @@ stages:
   - build:image
   - test
   - system-test
+  - sbom
   - review
   - release
 
