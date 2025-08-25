@@ -148,6 +148,7 @@ score-sbom:
     EXTRA_FLAGS: ""
   script:
     - /app/sbomqs score sboms/cta.cdx.json $EXTRA_FLAGS
-  reports:
-    cyclonedx:
-      - sboms/cta.cdx.json
+  artifacts:
+    reports:
+      cyclonedx:
+        - sboms/cta.cdx.json
