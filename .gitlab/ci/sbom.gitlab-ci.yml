@@ -82,7 +82,7 @@ generate-sbom-syft:
     - tar -C "$ROOTFS" -xzf installroot.tar.gz
   script:
     - curl -sSfL https://get.anchore.io/syft | sh -s -- -b /usr/local/bin
-    - syft "dir:${ROOTFS}" -o cyclonedx-json --select-catalogers os > "${SBOM_OUT_PATH}"
+    - syft "dir:${ROOTFS}" -o cyclonedx-json --select-catalogers rpm > "${SBOM_OUT_PATH}"
   artifacts:
     expire_in: 30 days
     paths:
@@ -100,7 +100,7 @@ enrich-sbom-parlay:
     SBOM_OUT_FILE: sboms/enriched-parlay.cdx.json
     SNYK_PARLAY_VERSION: 0.9.0
   before_script:
-    - dnf install -y wget diff
+    - dnf install -y wget diffutils
     - wget https://github.com/snyk/parlay/releases/download/v${SNYK_PARLAY_VERSION}/parlay_${SNYK_PARLAY_VERSION}_linux_amd64.rpm
     - dnf install -y parlay_${SNYK_PARLAY_VERSION}_linux_amd64.rpm
   script:
