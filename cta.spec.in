@@ -63,6 +63,7 @@ Release: %{ctaRelease}%{mydist}
 Source: %{name}-%{ctaVersion}-%{ctaRelease}.tar.gz
 License: %{ctaLicense}
 Group: Application/cta
+Vendor: CERN
 
 BuildRoot: %{_builddir}/%{name}-%{version}-root
 
