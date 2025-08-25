@@ -1,49 +1,61 @@
-#include <catalogue/Catalogue.hpp>
-#include <scheduler/Scheduler.hpp>
+#pragma once
 
-#include "cta_frontend.pb.h"
-#include "cta_frontend.grpc.pb.h"
-#include <grpcpp/grpcpp.h>
-#include "../RequestMessage.hpp"
-#include "common/dataStructures/LogicalLibrary.hpp"
-#include "TemplateAdminCmdStream.hpp"
-#include "cmdline/admin_common/DataItemMessageFill.hpp"
+#include "CtaAdminServerWriteReactor.hpp"
+#include "cmdline/LogicalLibraryLsResponseStream.hpp"
 
 namespace cta::frontend::grpc {
 
-class LogicalLibraryLsWriteReactor : public TemplateAdminCmdStream<cta::common::dataStructures::LogicalLibrary, cta::admin::LogicalLibraryLsItem, decltype(&fillLogicalLibraryItem)> {
-    public:
-        LogicalLibraryLsWriteReactor(cta::catalogue::Catalogue &catalogue, cta::Scheduler &scheduler, const std::string& instanceName, const cta::xrd::Request* request);
-        cta::admin::LogicalLibraryLsItem* getMessageField(cta::xrd::Data* data) override;
-    private:
-        static std::list<common::dataStructures::LogicalLibrary> buildLogicalLibraryList(cta::catalogue::Catalogue& catalogue, const cta::xrd::Request* request) {
-            using namespace cta::admin;
-            request::RequestMessage requestMsg(*request);
-            std::optional<bool> disabled = requestMsg.getOptional(admin::OptionBoolean::DISABLED);
-            std::list<cta::common::dataStructures::LogicalLibrary> logicalLibraryList = catalogue.LogicalLibrary()->getLogicalLibraries();
-            std::list<cta::common::dataStructures::LogicalLibrary>::iterator next_ll;
-            
-            next_ll = logicalLibraryList.begin();
-            while (next_ll != logicalLibraryList.end()) {
-                if (disabled && disabled.value() != (*next_ll).isDisabled) {
-                    // pop this entry from the list
-                    next_ll = logicalLibraryList.erase(next_ll); // erase returns the next valid element
-                } else {
-                    ++next_ll;
-                }
-            }
-            return logicalLibraryList;
-        }
+class LogicalLibraryLsWriteReactor : public CtaAdminServerWriteReactor {
+public:
+    LogicalLibraryLsWriteReactor(cta::catalogue::Catalogue& catalogue,
+                                cta::Scheduler& scheduler,
+                                const std::string& instanceName,
+                                const cta::xrd::Request* request);
+    void NextWrite() override;
+
+private:
+    std::unique_ptr<cta::cmdline::LogicalLibraryLsResponseStream> m_stream;
 };
 
-LogicalLibraryLsWriteReactor::LogicalLibraryLsWriteReactor(cta::catalogue::Catalogue &catalogue, cta::Scheduler &scheduler, const std::string& instanceName, const cta::xrd::Request* request)
-    : TemplateAdminCmdStream<cta::common::dataStructures::LogicalLibrary,
-        cta::admin::LogicalLibraryLsItem,
-        decltype(&fillLogicalLibraryItem)>
-        (catalogue, scheduler, instanceName, buildLogicalLibraryList(catalogue, request), cta::admin::HeaderType::LOGICALLIBRARY_LS, &fillLogicalLibraryItem) {}
+LogicalLibraryLsWriteReactor::LogicalLibraryLsWriteReactor(cta::catalogue::Catalogue& catalogue,
+                                                          cta::Scheduler& scheduler,
+                                                          const std::string& instanceName,
+                                                          const cta::xrd::Request* request)
+    : CtaAdminServerWriteReactor(catalogue, scheduler, instanceName) {
+    
+    try {
+        m_stream = std::make_unique<cta::cmdline::LogicalLibraryLsResponseStream>(
+            catalogue, scheduler, instanceName);
+        
+        m_stream->init(request->admincmd());
+        
+        NextWrite();
+    } catch (const std::exception& ex) {
+        Finish(Status(::grpc::StatusCode::INVALID_ARGUMENT, ex.what()));
+    }
+}
 
-cta::admin::LogicalLibraryLsItem* LogicalLibraryLsWriteReactor::getMessageField(cta::xrd::Data* data) {
-    return data->mutable_llls_item();
+void LogicalLibraryLsWriteReactor::NextWrite() {
+    m_response.Clear();
+    
+    if (!m_isHeaderSent) {
+        cta::xrd::Response *header = new cta::xrd::Response();
+        header->set_type(cta::xrd::Response::RSP_SUCCESS);
+        header->set_show_header(cta::admin::HeaderType::LOGICALLIBRARY_LS);
+        m_response.set_allocated_header(header);
+        m_isHeaderSent = true;
+        StartWrite(&m_response);
+        return;
+    }
+    
+    if (!m_stream->isDone()) {
+        cta::xrd::Data* data = new cta::xrd::Data(m_stream->next());
+        m_response.set_allocated_data(data);
+        StartWrite(&m_response);
+        return;
+    }
+    
+    Finish(::grpc::Status::OK);
 }
 
 } // namespace cta::frontend::grpc

@@ -17,79 +17,49 @@
 
 #pragma once
 
-#include <list>
-
-#include "xroot_plugins/XrdCtaStream.hpp"
-#include "cmdline/admin_common/DataItemMessageFill.hpp"
+#include "XrdCtaStream.hpp"
+#include "cmdline/LogicalLibraryLsResponseStream.hpp"
 
 namespace cta::xrd {
 
-/*!
- * Stream object which implements "tapepool ls" command
- */
-class LogicalLibraryLsStream: public XrdCtaStream{
+class LogicalLibraryLsStream : public XrdCtaStream {
 public:
-  /*!
-   * Constructor
-   *
-   * @param[in]    requestMsg    RequestMessage containing command-line arguments
-   * @param[in]    catalogue     CTA Catalogue
-   * @param[in]    scheduler     CTA Scheduler
-   * @param[in]    disabled      Logical Library disable status
-   */
-  LogicalLibraryLsStream(const frontend::AdminCmdStream& requestMsg, cta::catalogue::Catalogue &catalogue,
-    cta::Scheduler &scheduler, const std::optional<bool>& disabled);
+    LogicalLibraryLsStream(const frontend::AdminCmdStream& requestMsg, 
+                          cta::catalogue::Catalogue& catalogue, 
+                          cta::Scheduler& scheduler);
 
 private:
-  /*!
-   * Can we close the stream?
-   */
-  bool isDone() const override {
-    return m_logicalLibraryList.empty();
-  }
-
-  /*!
-   * Fill the buffer
-   */
-  int fillBuffer(XrdSsiPb::OStreamBuffer<Data> *streambuf) override;
-
-  // List of logical libraries from the catalogue
-  std::list<cta::common::dataStructures::LogicalLibrary> m_logicalLibraryList;
-  const std::optional<bool> m_disabled;
-  const std::string m_instanceName;
-
-  static constexpr const char* const LOG_SUFFIX  = "LogicalLibraryLsStream";      //!< Identifier for log messages
+    bool isDone() const override { return m_stream->isDone(); }
+    int fillBuffer(XrdSsiPb::OStreamBuffer<Data>* streambuf) override;
+    
+    std::unique_ptr<cta::cmdline::LogicalLibraryLsResponseStream> m_stream;
+    
+    static constexpr const char* const LOG_SUFFIX = "LogicalLibraryLsStream";
 };
 
-
-LogicalLibraryLsStream::LogicalLibraryLsStream(const frontend::AdminCmdStream& requestMsg, cta::catalogue::Catalogue &catalogue,
-  cta::Scheduler &scheduler, const std::optional<bool>& disabled) :
-  XrdCtaStream(catalogue, scheduler),
-  m_logicalLibraryList(catalogue.LogicalLibrary()->getLogicalLibraries()),
-  m_disabled(disabled),
-  m_instanceName(requestMsg.getInstanceName()) {
-  using namespace cta::admin;
-
+LogicalLibraryLsStream::LogicalLibraryLsStream(const frontend::AdminCmdStream& requestMsg, 
+                                              cta::catalogue::Catalogue& catalogue, 
+                                              cta::Scheduler& scheduler)
+    : XrdCtaStream(catalogue, scheduler) {
   XrdSsiPb::Log::Msg(XrdSsiPb::Log::DEBUG, LOG_SUFFIX, "LogicalLibraryLsStream() constructor");
+
+  try {
+    m_stream = std::make_unique<cta::cmdline::LogicalLibraryLsResponseStream>(catalogue,
+                                                                             scheduler,
+                                                                             requestMsg.getInstanceName());
+
+    m_stream->init(requestMsg.getAdminCmd());
+  } catch (const std::exception& ex) {
+    throw exception::UserError(ex.what());
+  }
 }
 
-int LogicalLibraryLsStream::fillBuffer(XrdSsiPb::OStreamBuffer<Data> *streambuf) {
-  for (bool is_buffer_full = false; !m_logicalLibraryList.empty()
-    && !is_buffer_full; m_logicalLibraryList.pop_front()) {
-    Data record;
-
-    auto &ll      = m_logicalLibraryList.front();
-    auto  ll_item = record.mutable_llls_item();
-
-    if (m_disabled && m_disabled.value() != ll.isDisabled) {
-      continue;
+int LogicalLibraryLsStream::fillBuffer(XrdSsiPb::OStreamBuffer<Data>* streambuf) {
+    for (bool is_buffer_full = false; !m_stream->isDone() && !is_buffer_full;) {
+        Data record = m_stream->next();
+        is_buffer_full = streambuf->Push(record);
     }
-
-    fillLogicalLibraryItem(ll, ll_item, m_instanceName);
-
-    is_buffer_full = streambuf->Push(record);
-  }
-  return streambuf->Size();
+    return streambuf->Size();
 }
 
 } // namespace cta::xrd

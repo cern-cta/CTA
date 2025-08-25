@@ -210,9 +210,7 @@ void AdminCmdStream::processGroupMountRule_Ls(xrd::Response& response) {
 }
 
 void AdminCmdStream::processLogicalLibrary_Ls(xrd::Response& response) {
-  const auto disabled = getOptional(admin::OptionBoolean::DISABLED);
-
-  m_stream = new xrd::LogicalLibraryLsStream(*this, m_catalogue, m_scheduler, disabled);
+  m_stream = new xrd::LogicalLibraryLsStream(*this, m_catalogue, m_scheduler);
 
   response.set_show_header(admin::HeaderType::LOGICALLIBRARY_LS);
   response.set_type(xrd::Response::RSP_SUCCESS);

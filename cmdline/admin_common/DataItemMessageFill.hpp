@@ -193,28 +193,6 @@ inline void fillRepackRequestItem(const cta::common::dataStructures::RepackInfo 
         }
 }
 
-inline void fillLogicalLibraryItem(const cta::common::dataStructures::LogicalLibrary &ll,
-    cta::admin::LogicalLibraryLsItem *ll_item,
-    const std::string& m_instanceName) {
-    
-        ll_item->set_name(ll.name);
-        ll_item->set_is_disabled(ll.isDisabled);
-        if(ll.physicalLibraryName) {
-        ll_item->set_physical_library(ll.physicalLibraryName.value());
-        }
-        if (ll.disabledReason) {
-        ll_item->set_disabled_reason(ll.disabledReason.value());
-        }
-        ll_item->mutable_creation_log()->set_username(ll.creationLog.username);
-        ll_item->mutable_creation_log()->set_host(ll.creationLog.host);
-        ll_item->mutable_creation_log()->set_time(ll.creationLog.time);
-        ll_item->mutable_last_modification_log()->set_username(ll.lastModificationLog.username);
-        ll_item->mutable_last_modification_log()->set_host(ll.lastModificationLog.host);
-        ll_item->mutable_last_modification_log()->set_time(ll.lastModificationLog.time);
-        ll_item->set_comment(ll.comment);
-        ll_item->set_instance_name(m_instanceName);
-}
-
 inline void fillPhysicalLibraryItem(const cta::common::dataStructures::PhysicalLibrary &pl,
     cta::admin::PhysicalLibraryLsItem *pl_item,
     const std::string& m_instanceName) {
