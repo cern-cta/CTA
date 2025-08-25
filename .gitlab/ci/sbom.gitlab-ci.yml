@@ -6,14 +6,16 @@ prepare-rootfs:
   variables:
     ROOTFS: '/tmp/installroot'
     CTA_RPMS_PATH: "build_rpm/RPM/RPMS"
+    CTA_REPO_DIR: /opt/repo
   script:
     - dnf -y install dnf-plugins-core
     - rm -rf "$ROOTFS" && mkdir -p "$ROOTFS"
+    - cp ${CTA_RPMS_PATH} ${CTA_REPO_DIR}/RPMS/x86_64
     - |
       cat >/etc/yum.repos.d/cta.repo <<EOF
       [cta]
       name=CTA RPM repo
-      baseurl=file://${CTA_RPMS_PATH}
+      baseurl=file://${CTA_REPO_DIR}
       enabled=1
       gpgcheck=0
       EOF
