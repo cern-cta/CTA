@@ -1,0 +1,94 @@
+#pragma once
+
+#include "CtaAdminResponseStream.hpp"
+#include <catalogue/Catalogue.hpp>
+#include <scheduler/Scheduler.hpp>
+#include "common/dataStructures/StorageClass.hpp"
+#include "frontend/common/AdminCmdOptions.hpp"
+#include <list>
+
+#include "cta_frontend.pb.h"
+
+namespace cta::cmdline {
+
+class StorageClassLsResponseStream : public CtaAdminResponseStream {
+public:
+    StorageClassLsResponseStream(cta::catalogue::Catalogue& catalogue, 
+                                cta::Scheduler& scheduler, 
+                                const std::string& instanceName);
+        
+    bool isDone() override;
+    cta::xrd::Data next() override;
+    void init(const admin::AdminCmd& admincmd) override;
+
+private:
+    cta::catalogue::Catalogue& m_catalogue;
+    cta::Scheduler& m_scheduler;
+    const std::string m_instanceName;
+    
+    std::list<cta::common::dataStructures::StorageClass> m_storageClasses;
+    
+    std::list<cta::common::dataStructures::StorageClass> buildStorageClassList(const admin::AdminCmd& admincmd);
+};
+
+StorageClassLsResponseStream::StorageClassLsResponseStream(cta::catalogue::Catalogue& catalogue, 
+                                                          cta::Scheduler& scheduler, 
+                                                          const std::string& instanceName)
+    : m_catalogue(catalogue), 
+      m_scheduler(scheduler), 
+      m_instanceName(instanceName) {
+}
+
+void StorageClassLsResponseStream::init(const admin::AdminCmd& admincmd) {
+    m_storageClasses = buildStorageClassList(admincmd);
+}
+
+std::list<cta::common::dataStructures::StorageClass> StorageClassLsResponseStream::buildStorageClassList(const admin::AdminCmd& admincmd) {
+    cta::frontend::AdminCmdOptions request;
+    request.importOptions(admincmd);
+    
+    std::optional<std::string> storageClassName = request.getOptional(cta::admin::OptionString::STORAGE_CLASS);
+
+    std::list<cta::common::dataStructures::StorageClass> storageClassList;
+
+    if (storageClassName.has_value()) {
+        storageClassList.push_back(m_catalogue.StorageClass()->getStorageClass(storageClassName.value()));
+    } else {
+        for (const auto& storageClass : m_catalogue.StorageClass()->getStorageClasses()) {
+            storageClassList.push_back(storageClass);
+        }
+    }
+
+    return storageClassList;
+}
+
+bool StorageClassLsResponseStream::isDone() {
+    return m_storageClasses.empty();
+}
+
+cta::xrd::Data StorageClassLsResponseStream::next() {
+    if (isDone()) {
+        throw std::runtime_error("Stream is exhausted");
+    }
+    
+    const auto sc = m_storageClasses.front();
+    m_storageClasses.pop_front();
+    
+    cta::xrd::Data data;
+    auto scItem = data.mutable_scls_item();
+    
+    scItem->set_name(sc.name);
+    scItem->set_nb_copies(sc.nbCopies);
+    scItem->set_vo(sc.vo.name);
+    scItem->mutable_creation_log()->set_username(sc.creationLog.username);
+    scItem->mutable_creation_log()->set_host(sc.creationLog.host);
+    scItem->mutable_creation_log()->set_time(sc.creationLog.time);
+    scItem->mutable_last_modification_log()->set_username(sc.lastModificationLog.username);
+    scItem->mutable_last_modification_log()->set_host(sc.lastModificationLog.host);
+    scItem->mutable_last_modification_log()->set_time(sc.lastModificationLog.time);
+    scItem->set_comment(sc.comment);
+    scItem->set_instance_name(m_instanceName);    
+    return data;
+}
+
+} // namespace cta::cmdline

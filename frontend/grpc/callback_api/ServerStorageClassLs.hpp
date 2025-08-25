@@ -1,56 +1,62 @@
 #pragma once
 
-#include <catalogue/Catalogue.hpp>
-#include <scheduler/Scheduler.hpp>
-
-#include "cta_frontend.pb.h"
-#include "cta_frontend.grpc.pb.h"
-#include <grpcpp/grpcpp.h>
-#include "../RequestMessage.hpp"
 #include "CtaAdminServerWriteReactor.hpp"
-#include "TemplateAdminCmdStream.hpp"
-#include "cmdline/admin_common/DataItemMessageFill.hpp"
+#include "cmdline/StorageClassLsResponseStream.hpp"
+#include "../RequestMessage.hpp"
 
 namespace cta::frontend::grpc {
 
-class StorageClassLsWriteReactor : public TemplateAdminCmdStream<common::dataStructures::StorageClass,
-                                                                 cta::admin::StorageClassLsItem,
-                                                                 decltype(&fillStorageClassItem)> {
+class StorageClassLsWriteReactor : public CtaAdminServerWriteReactor {
 public:
-  StorageClassLsWriteReactor(cta::catalogue::Catalogue& catalogue,
-                             cta::Scheduler& scheduler,
-                             const std::string& instanceName,
-                             const cta::xrd::Request* request)
-      : TemplateAdminCmdStream<common::dataStructures::StorageClass,
-                               cta::admin::StorageClassLsItem,
-                               decltype(&fillStorageClassItem)>(catalogue,
-                                                                scheduler,
-                                                                instanceName,
-                                                                buildStorageClassList(catalogue, request),
-                                                                cta::admin::HeaderType::STORAGECLASS_LS,
-                                                                &fillStorageClassItem) {}
-
-protected:
-  cta::admin::StorageClassLsItem* getMessageField(cta::xrd::Data* data) override { return data->mutable_scls_item(); }
+    StorageClassLsWriteReactor(cta::catalogue::Catalogue& catalogue,
+                              cta::Scheduler& scheduler,
+                              const std::string& instanceName,
+                              const cta::xrd::Request* request);
+    void NextWrite() override;
 
 private:
-  static std::list<common::dataStructures::StorageClass> buildStorageClassList(cta::catalogue::Catalogue& catalogue,
-                                                                               const cta::xrd::Request* request) {
-    request::RequestMessage requestMsg(*request);
-    std::optional<std::string> storageClassName = requestMsg.getOptional(cta::admin::OptionString::STORAGE_CLASS);
-
-    std::list<common::dataStructures::StorageClass> storageClassList;
-
-    if (storageClassName.has_value()) {
-        storageClassList.push_back(catalogue.StorageClass()->getStorageClass(storageClassName.value()));
-    } else {
-        for (const auto& storageClass : catalogue.StorageClass()->getStorageClasses()) {
-            storageClassList.push_back(storageClass);
-        }
-    }
-
-        return storageClassList;
-    }
+    std::unique_ptr<cta::cmdline::StorageClassLsResponseStream> m_stream;
 };
+
+StorageClassLsWriteReactor::StorageClassLsWriteReactor(cta::catalogue::Catalogue& catalogue,
+                                                      cta::Scheduler& scheduler,
+                                                      const std::string& instanceName,
+                                                      const cta::xrd::Request* request)
+    : CtaAdminServerWriteReactor(catalogue, scheduler, instanceName) {
+    
+    try {
+        m_stream = std::make_unique<cta::cmdline::StorageClassLsResponseStream>(
+            catalogue, scheduler, instanceName);
+        
+        m_stream->init(request->admincmd());
+        
+        NextWrite();
+    } catch (const std::exception& ex) {
+        Finish(Status(::grpc::StatusCode::INVALID_ARGUMENT, ex.what()));
+    }
+}
+
+void StorageClassLsWriteReactor::NextWrite() {
+    m_response.Clear();
+    
+    if (!m_isHeaderSent) {
+        cta::xrd::Response *header = new cta::xrd::Response();
+        header->set_type(cta::xrd::Response::RSP_SUCCESS);
+        header->set_show_header(cta::admin::HeaderType::STORAGECLASS_LS);
+        m_response.set_allocated_header(header);
+        m_isHeaderSent = true;
+        StartWrite(&m_response);
+        return;
+    }
+    
+    if (!m_stream->isDone()) {
+        cta::xrd::Data* data = new cta::xrd::Data(m_stream->next());
+        m_response.set_allocated_data(data);
+        StartWrite(&m_response);
+        return;
+    }
+    
+    Finish(::grpc::Status::OK);
+}
 
 } // namespace cta::frontend::grpc

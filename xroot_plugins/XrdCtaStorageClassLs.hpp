@@ -17,78 +17,49 @@
 
 #pragma once
 
-#include <optional>
-#include "xroot_plugins/XrdCtaStream.hpp"
-#include "cmdline/admin_common/DataItemMessageFill.hpp"
+#include "XrdCtaStream.hpp"
+#include "cmdline/StorageClassLsResponseStream.hpp"
 
 namespace cta::xrd {
 
-/*!
- * Stream object which implements "tapepool ls" command
- */
-class StorageClassLsStream: public XrdCtaStream{
+class StorageClassLsStream : public XrdCtaStream {
 public:
-  /*!
-   * Constructor
-   *
-   * @param[in]    requestMsg    RequestMessage containing command-line arguments
-   * @param[in]    catalogue     CTA Catalogue
-   * @param[in]    scheduler     CTA Scheduler
-   */
-  StorageClassLsStream(const frontend::AdminCmdStream& requestMsg, cta::catalogue::Catalogue &catalogue, cta::Scheduler &scheduler, const std::optional<std::string> storageClassName);
+    StorageClassLsStream(const frontend::AdminCmdStream& requestMsg, 
+                        cta::catalogue::Catalogue& catalogue, 
+                        cta::Scheduler& scheduler);
 
 private:
-  /*!
-   * Can we close the stream?
-   */
-  virtual bool isDone() const {
-    return m_storageClassList.empty();
-  }
-
-  /*!
-   * Fill the buffer
-   */
-  virtual int fillBuffer(XrdSsiPb::OStreamBuffer<Data> *streambuf);
-
-  std::list<cta::common::dataStructures::StorageClass> m_storageClassList;    //!< List of storage classes from the catalogue
-
-  std::optional<std::string> m_storageClassName;
-  const std::string m_instanceName;
-
-  static constexpr const char* const LOG_SUFFIX  = "StorageClassLsStream";    //!< Identifier for log messages
+    bool isDone() const override { return m_stream->isDone(); }
+    int fillBuffer(XrdSsiPb::OStreamBuffer<Data>* streambuf) override;
+    
+    std::unique_ptr<cta::cmdline::StorageClassLsResponseStream> m_stream;
+    
+    static constexpr const char* const LOG_SUFFIX = "StorageClassLsStream";
 };
 
-
-StorageClassLsStream::StorageClassLsStream(const frontend::AdminCmdStream& requestMsg, cta::catalogue::Catalogue &catalogue, cta::Scheduler &scheduler, const std::optional<std::string> storageClassName) :
-  XrdCtaStream(catalogue, scheduler),
-  m_storageClassName(storageClassName),
-  m_instanceName(requestMsg.getInstanceName())
-{
-  using namespace cta::admin;
-
+StorageClassLsStream::StorageClassLsStream(const frontend::AdminCmdStream& requestMsg, 
+                                          cta::catalogue::Catalogue& catalogue, 
+                                          cta::Scheduler& scheduler)
+    : XrdCtaStream(catalogue, scheduler) {
   XrdSsiPb::Log::Msg(XrdSsiPb::Log::DEBUG, LOG_SUFFIX, "StorageClassLsStream() constructor");
 
-  if(m_storageClassName) {
-    m_storageClassList.push_back(m_catalogue.StorageClass()->getStorageClass(m_storageClassName.value()));
-  } else {
-    for(const auto &storageClass : m_catalogue.StorageClass()->getStorageClasses()) {
-      m_storageClassList.push_back(storageClass);
-    }
+  try {
+    m_stream = std::make_unique<cta::cmdline::StorageClassLsResponseStream>(catalogue,
+                                                                           scheduler,
+                                                                           requestMsg.getInstanceName());
+
+    m_stream->init(requestMsg.getAdminCmd());
+  } catch (const std::exception& ex) {
+    throw exception::UserError(ex.what());
   }
 }
 
-int StorageClassLsStream::fillBuffer(XrdSsiPb::OStreamBuffer<Data> *streambuf) {
-  for(bool is_buffer_full = false; !m_storageClassList.empty() && !is_buffer_full; m_storageClassList.pop_front()) {
-    Data record;
-
-    auto &sc      = m_storageClassList.front();
-    auto  sc_item = record.mutable_scls_item();
-
-    fillStorageClassItem(sc, sc_item, m_instanceName);
-
-    is_buffer_full = streambuf->Push(record);
-  }
-  return streambuf->Size();
+int StorageClassLsStream::fillBuffer(XrdSsiPb::OStreamBuffer<Data>* streambuf) {
+    for (bool is_buffer_full = false; !m_stream->isDone() && !is_buffer_full;) {
+        Data record = m_stream->next();
+        is_buffer_full = streambuf->Push(record);
+    }
+    return streambuf->Size();
 }
 
 } // namespace cta::xrd
