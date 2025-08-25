@@ -66,6 +66,28 @@ generate-sbom-trivy:
     paths:
       - ${SBOM_OUT_PATH}
 
+generate-sbom-syft:
+  stage: sbom
+  image: gitlab-registry.cern.ch/linuxsupport/alma9-base:latest
+  needs:
+    - job: prepare-rootfs
+  rules:
+    - when: on_success
+  variables:
+    SBOM_OUT_PATH: sboms/sbom-trivy.json
+    ROOTFS: '/tmp/installroot'
+  before_script:
+    - mkdir -p sboms
+    - mkdir -p "$ROOTFS"
+    - tar -C "$ROOTFS" -xzf installroot.tar.gz
+  script:
+    - curl -sSfL https://get.anchore.io/syft | sh -s -- -b /usr/local/bin
+    - syft "dir:${ROOTFS}" -o cyclonedx-json > "${SBOM_OUT_PATH}"
+  artifacts:
+    expire_in: 30 days
+    paths:
+      - ${SBOM_OUT_PATH}
+
 enrich-sbom-parlay:
   stage: sbom
   image: gitlab-registry.cern.ch/linuxsupport/alma9-base:latest
@@ -84,6 +106,7 @@ enrich-sbom-parlay:
   script:
     - cat $SBOM_IN_FILE | parlay ecosystems enrich - | parlay scorecard enrich - > $SBOM_OUT_FILE
     - test -s $SBOM_OUT_FILE
+    - diff $SBOM_IN_FILE $SBOM_OUT_FILE
   artifacts:
     expire_in: 30 days
     paths:
