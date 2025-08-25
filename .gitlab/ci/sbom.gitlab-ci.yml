@@ -31,7 +31,7 @@ prepare-rootfs:
           --releasever=9
           --setopt=install_weak_deps=False
           --setopt=tsflags=nodocs
-          cta-*
+          "cta-*"
     - rm -rf "${ROOTFS}"/var/cache/dnf/* || true
     - tar -C "${ROOTFS}" -czf installroot.tar.gz .
   artifacts:
