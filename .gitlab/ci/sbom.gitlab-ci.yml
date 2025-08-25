@@ -36,10 +36,9 @@ prepare-rootfs:
     - tar -C "${ROOTFS}" -czf installroot.tar.gz .
   artifacts:
     # Don't keep this artifact too long as it is quite large
-    expire_in: 1 days
+    expire_in: 3 hours
     paths:
       - installroot.tar.gz
-
 
 generate-sbom-trivy:
   stage: sbom
@@ -66,66 +65,18 @@ generate-sbom-trivy:
     paths:
       - ${SBOM_OUT_PATH}
 
-generate-sbom-syft:
+enrich-sbom-cern-info:
   stage: sbom
-  image: gitlab-registry.cern.ch/linuxsupport/alma9-base:latest
-  needs:
-    - job: prepare-rootfs
-  rules:
-    - when: on_success
-  variables:
-    SBOM_OUT_PATH: sboms/sbom-syft.json
-    ROOTFS: '/tmp/installroot'
-  before_script:
-    - mkdir -p sboms
-    - mkdir -p "$ROOTFS"
-    - tar -C "$ROOTFS" -xzf installroot.tar.gz
-  script:
-    - curl -sSfL https://get.anchore.io/syft | sh -s -- -b /usr/local/bin
-    - syft "dir:${ROOTFS}" -o cyclonedx-json --select-catalogers -file > "${SBOM_OUT_PATH}"
-  artifacts:
-    expire_in: 30 days
-    paths:
-      - ${SBOM_OUT_PATH}
-
-enrich-sbom-parlay:
-  stage: sbom
-  image: gitlab-registry.cern.ch/linuxsupport/alma9-base:latest
+  image: registry.cern.ch/code-scanners/sbom-helper:latest
   needs:
     - job: generate-sbom-trivy
   rules:
     - when: on_success
   variables:
     SBOM_IN_FILE: sboms/sbom-trivy.json
-    SBOM_OUT_FILE: sboms/enriched-parlay.cdx.json
-    SNYK_PARLAY_VERSION: 0.9.0
-  before_script:
-    - dnf install -y wget diffutils
-    - wget https://github.com/snyk/parlay/releases/download/v${SNYK_PARLAY_VERSION}/parlay_${SNYK_PARLAY_VERSION}_linux_amd64.rpm
-    - dnf install -y parlay_${SNYK_PARLAY_VERSION}_linux_amd64.rpm
+    SBOM_OUT_FILE: sboms/cta.cdx.json
+    APP_RPM_PREFIX: "cta-"
   script:
-    - cat $SBOM_IN_FILE | parlay ecosystems enrich - | parlay scorecard enrich - > $SBOM_OUT_FILE
-    - test -s $SBOM_OUT_FILE
-    - jq -S . "$SBOM_IN_FILE" > in.norm.json
-    - jq -S . "$SBOM_OUT_FILE" > out.norm.json
-    - diff in.norm.json out.norm.json
-  artifacts:
-    expire_in: 30 days
-    paths:
-      - $SBOM_OUT_FILE
-
-enrich-sbom-cern-info:
-  stage: sbom
-  image: registry.cern.ch/code-scanners/sbom-helper:latest
-  needs:
-    - job: enrich-sbom-parlay
-  rules:
-    - when: on_success
-  variables:
-    SBOM_IN_FILE: sboms/enriched-parlay.cdx.json
-    SBOM_OUT_FILE: sboms/enriched-cern.cdx.json
-  script:
-    # TODO: figure out correct values for the annotator and contact
     - |
       export APP_NAME="$CI_PROJECT_NAME"
       export SERVICE_ELEMENT="CTA for Physics"
@@ -134,25 +85,7 @@ enrich-sbom-cern-info:
       export ANNOTATOR="$GITLAB_USER_NAME"
       export URL="$CI_PROJECT_URL"
     - python /app/src/sbom-helper/main.py --env -i $SBOM_IN_FILE
-    - cp sboms-output/$SBOM_IN_FILE $SBOM_OUT_FILE
-  artifacts:
-    expire_in: 30 days
-    paths:
-      - $SBOM_OUT_FILE
-
-update-app-deps:
-  stage: sbom
-  image: gitlab-registry.cern.ch/linuxsupport/alma9-base:latest
-  needs:
-    - job: enrich-sbom-cern-info
-  rules:
-    - when: on_success
-  variables:
-    SBOM_IN_FILE: sboms/enriched-cern.cdx.json
-    SBOM_OUT_FILE: sboms/cta.cdx.json
-    APP_RPM_PREFIX: "cta-"
-  script:
-    - python3 continuousintegration/sbom/update_app_deps.py --in $SBOM_IN_FILE
+    - python3 continuousintegration/sbom/update_app_deps.py --in sboms-output/$SBOM_IN_FILE
                                                             --out $SBOM_OUT_FILE
                                                             --prefix "$APP_RPM_PREFIX"
   artifacts:
@@ -164,7 +97,7 @@ score-sbom:
   stage: sbom
   image: registry.cern.ch/ghcr.io/interlynk-io/sbomqs
   needs:
-    - job: update-app-deps
+    - job: enrich-sbom-cern-info
   rules:
     - when: on_success
   variables:
