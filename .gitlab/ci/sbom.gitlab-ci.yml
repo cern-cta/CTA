@@ -27,16 +27,12 @@ prepare-rootfs:
           --setopt=install_weak_deps=False
           --setopt=tsflags=nodocs
           cta-release epel-release
-    # Bunch of hacky things because cta-release doesn't play nice with a custom installroot
-    - touch /etc/yum/pluginconf.d/versionlock.list # doesn't exist in ROOTFS
+    - cp -f ${ROOTFS}/etc/pki/rpm-gpg/* /etc/pki/rpm-gpg # gpg keys end up here from the install but we need this on the host
+    - touch /etc/yum/pluginconf.d/versionlock.list # doesn't exist by default
     - cp ${ROOTFS}/etc/yum/pluginconf.d/versionlock.cta /etc/yum/pluginconf.d/versionlock.cta # cta-versionlock reads from the root system; not rootfs
     - ${ROOTFS}/usr/bin/cta-versionlock apply
-    - cp /etc/yum/pluginconf.d/versionlock.list ${ROOTFS}/etc/yum/pluginconf.d/versionlock.list # copy back to rootfs
-    - cp /etc/yum.repos.d/cta.repo ${ROOTFS}/etc/yum.repos.d/cta.repo # copy back to rootfs
-    - cp -f ${ROOTFS}/etc/pki/rpm-gpg/* /etc/pki/rpm-gpg # gpg keys end up here from the install but we need this on the host
     - dnf install -y --installroot="${ROOTFS}"
           --releasever=9
-          --setopt=reposdir="$ROOTFS/etc/yum.repos.d"
           --setopt=install_weak_deps=False
           --setopt=tsflags=nodocs
           cta-*
