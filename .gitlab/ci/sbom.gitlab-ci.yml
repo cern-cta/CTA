@@ -21,16 +21,12 @@ prepare-rootfs:
       enabled=1
       gpgcheck=0
       EOF
-    - dnf clean all
-    - dnf install -y --installroot="${ROOTFS}"
+    - dnf install -y
           --releasever=9
           --setopt=install_weak_deps=False
           --setopt=tsflags=nodocs
           cta-release epel-release
-    - cp -f ${ROOTFS}/etc/pki/rpm-gpg/* /etc/pki/rpm-gpg # gpg keys end up here from the install but we need this on the host
-    - touch /etc/yum/pluginconf.d/versionlock.list # doesn't exist by default
-    - cp ${ROOTFS}/etc/yum/pluginconf.d/versionlock.cta /etc/yum/pluginconf.d/versionlock.cta # cta-versionlock reads from the root system; not rootfs
-    - ${ROOTFS}/usr/bin/cta-versionlock apply
+    - cta-versionlock apply
     - dnf install -y --installroot="${ROOTFS}"
           --releasever=9
           --setopt=install_weak_deps=False
