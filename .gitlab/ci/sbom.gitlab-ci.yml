@@ -10,7 +10,7 @@ prepare-rootfs:
   script:
     - dnf -y install dnf-plugins-core createrepo
     - rm -rf "$ROOTFS" && mkdir -p "$ROOTFS"
-    - mkdir -p "${CTA_REPO_DIR}"
+    - mkdir -p "${CTA_REPO_DIR}/RPMS/x86_64"
     - createrepo "${CTA_REPO_DIR}"
     - cp -r ${CTA_RPMS_PATH} ${CTA_REPO_DIR}/RPMS/x86_64
     - |
