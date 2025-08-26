@@ -70,6 +70,13 @@ def main():
     # 7) prune components to reachable set only
     pruned_components = [c for c in components if c.get("bom-ref") in reachable or c.get("type") == "operating-system" and os_ref in reachable]
 
+    # See https://gitlab.cern.ch/help/development/sec/cyclonedx_property_taxonomy.md
+    sbom.setdefault("metadata", {}).setdefault("properties", [])
+    sbom["metadata"]["properties"].append({
+        "name": "gitlab:meta:schema_version",
+        "value": "1"
+    })
+
     # write back
     sbom["components"] = pruned_components
     sbom["dependencies"] = pruned_deps
