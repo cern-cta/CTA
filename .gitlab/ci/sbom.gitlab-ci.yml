@@ -58,6 +58,7 @@ generate-sbom-trivy:
     - trivy rootfs --pkg-types os
                    --format cyclonedx
                    --disable-telemetry
+                   --scanners vuln
                    --output "${SBOM_OUT_PATH}"
                    "${ROOTFS}"
   artifacts:
