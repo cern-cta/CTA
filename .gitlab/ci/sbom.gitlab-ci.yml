@@ -85,9 +85,9 @@ enrich-sbom-cern-info:
       export ANNOTATOR="$GITLAB_USER_NAME"
       export URL="$CI_PROJECT_URL"
     - python /app/src/sbom-helper/main.py --env -i $SBOM_IN_FILE
-    - python3 continuousintegration/sbom/prune_and_update_sbom.py.py --in sboms-output/$SBOM_IN_FILE
-                                                                     --out $SBOM_OUT_FILE
-                                                                     --prefix "$APP_RPM_PREFIX"
+    - python3 continuousintegration/sbom/prune_and_update_sbom.py --in sboms-output/$SBOM_IN_FILE
+                                                                  --out $SBOM_OUT_FILE
+                                                                  --prefix "$APP_RPM_PREFIX"
   artifacts:
     expire_in: 30 days
     paths:
