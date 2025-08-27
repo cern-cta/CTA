@@ -19,7 +19,11 @@
 #include "rdbms/Stmt.hpp"
 #include "rdbms/StmtPool.hpp"
 #include "rdbms/wrapper/StmtWrapper.hpp"
+#include "common/telemetry/metrics/instruments/DatabaseInstruments.hpp"
 #include "common/telemetry/TelemetryConstants.hpp"
+#include "common/Timer.hpp"
+
+#include <opentelemetry/context/runtime_context.h>
 
 namespace cta::rdbms {
 
@@ -259,8 +263,12 @@ void Stmt::bindString(const std::string &paramName, const std::optional<std::str
 Rset Stmt::executeQuery() {
   try {
     if(nullptr != m_stmt) {
-      cta::telemetry::metrics::databaseQueryCounter->Add(1);
-      return Rset(m_stmt->executeQuery());
+      utils::Timer timer;
+      auto result = Rset(m_stmt->executeQuery());
+      const uint64_t queryProcessingDuration = timer.msecs();
+      cta::telemetry::metrics::databaseQueryDurationHistogram->Record(
+        queryProcessingDuration, {}, opentelemetry::context::RuntimeContext::GetCurrent());
+      return result;
     } else {
       cta::telemetry::metrics::databaseQueryErrorCounter->Add(1);
       throw exception::Exception("Stmt does not contain a cached statement");
@@ -278,8 +286,11 @@ Rset Stmt::executeQuery() {
 void Stmt::executeNonQuery() {
   try {
     if(nullptr != m_stmt) {
-      cta::telemetry::metrics::databaseQueryCounter->Add(1);
-      return m_stmt->executeNonQuery();
+      utils::Timer timer;
+      m_stmt->executeNonQuery();
+      const uint64_t queryProcessingDuration = timer.msecs();
+      cta::telemetry::metrics::databaseQueryDurationHistogram->Record(
+        queryProcessingDuration, {}, opentelemetry::context::RuntimeContext::GetCurrent());
     } else {
       cta::telemetry::metrics::databaseQueryErrorCounter->Add(1);
       throw exception::Exception("Stmt does not contain a cached statement");

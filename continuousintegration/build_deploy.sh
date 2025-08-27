@@ -64,6 +64,7 @@ usage() {
   echo "      --eos-enabled <true|false>:       Whether to spawn an EOS or not. Defaults to true."
   echo "      --dcache-enabled <true|false>:    Whether to spawn a dCache or not. Defaults to false."
   echo "      --enable-telemetry:               Enables telemetry for the spawned instance."
+  echo "      --deploy-namespace <namespace>:   Deploy the CTA instance in a given namespace. Defaults to dev."
   exit 1
 }
 
@@ -262,6 +263,15 @@ build_deploy() {
         shift
       else
         echo "Error: ---imagebuild-options requires an argument"
+        exit 1
+      fi
+      ;;
+    --deploy-namespace)
+      if [[ $# -gt 1 ]]; then
+        deploy_namespace="$2"
+        shift
+      else
+        echo "Error: ---deploy-namespace requires an argument"
         exit 1
       fi
       ;;
