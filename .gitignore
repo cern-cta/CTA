@@ -14,7 +14,6 @@ image_rpms/
 pod_logs/
 tmp/
 *.core
-metrics.txt
 
 # Helm files
 Chart.lock

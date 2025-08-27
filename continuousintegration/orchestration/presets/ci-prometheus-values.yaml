@@ -41,4 +41,66 @@ server:
         username_file: /etc/prometheus/secrets/remote-write/username
         password_file: /etc/prometheus/secrets/remote-write/password
 
+serverFiles:
+  recording_rules.yml:
+    groups:
+    - name: ci-histograms-generic
+      interval: 15s
+      rules:
+      # TODO: needs the db instance
+      - record: test_ci_cta_database_query_duration_milliseconds_bucket
+        expr: |
+          sum by (k8s_namespace_name, k8s_node_name, k8s_pod_name, service_version, event_type, le) (max_over_time(cta_database_query_duration_milliseconds_bucket[2m]))
+      - record: test_ci_cta_database_query_duration_milliseconds_count
+        expr: |
+          sum by (k8s_namespace_name, k8s_node_name, k8s_pod_name, service_version, event_type) (max_over_time(cta_database_query_duration_milliseconds_count[2m]))
+      - record: test_ci_cta_database_query_duration_milliseconds_sum
+        expr: |
+          sum by (k8s_namespace_name, k8s_node_name, k8s_pod_name, service_version, event_type) (max_over_time(cta_database_query_duration_milliseconds_sum[2m]))
+      - record: test_ci_cta_scheduler_queueing_count_total
+        expr: |
+          sum by (k8s_namespace_name, k8s_node_name, k8s_pod_name, service_version, transfer_type, scheduler_backend_name) (max_over_time(cta_scheduler_queueing_count_total[2m]))
+      - record: test_ci_cta_taped_mount_count_total
+        expr: |
+          sum by (k8s_namespace_name, k8s_node_name, k8s_pod_name, service_version, transfer_type) (max_over_time(cta_taped_mount_count_total[2m]))
+      - record: test_ci_cta_taped_transfer_count_total
+        expr: |
+          sum by (k8s_namespace_name, k8s_node_name, k8s_pod_name, service_version, transfer_type) (max_over_time(cta_taped_transfer_count_total[2m]))
+      - record: test_ci_cta_frontend_request_duration_milliseconds_bucket
+        expr: |
+          sum by (k8s_namespace_name, k8s_node_name, k8s_pod_name, service_version, event_type, le) (max_over_time(cta_frontend_request_duration_milliseconds_bucket[2m]))
+      - record: test_ci_cta_frontend_request_duration_milliseconds_count
+        expr: |
+          sum by (k8s_namespace_name, k8s_node_name, k8s_pod_name, service_version, event_type) (max_over_time(cta_frontend_request_duration_milliseconds_count[2m]))
+      - record: test_ci_cta_frontend_request_duration_milliseconds_sum
+        expr: |
+          sum by (k8s_namespace_name, k8s_node_name, k8s_pod_name, service_version, event_type) (max_over_time(cta_frontend_request_duration_milliseconds_sum[2m]))
+      - record: test_ci_cta_objectstore_lock_acquire_duration_milliseconds_bucket
+        expr: |
+          sum by (k8s_namespace_name, k8s_node_name, k8s_pod_name, service_version, lock_type, le, scheduler_backend_name) (max_over_time(cta_objectstore_lock_acquire_duration_milliseconds_bucket[2m]))
+      - record: test_ci_cta_objectstore_lock_acquire_duration_milliseconds_count
+        expr: |
+          sum by (k8s_namespace_name, k8s_node_name, k8s_pod_name, service_version, lock_type, scheduler_backend_name) (max_over_time(cta_objectstore_lock_acquire_duration_milliseconds_count[2m]))
+      - record: test_ci_cta_objectstore_lock_acquire_duration_milliseconds_sum
+        expr: |
+          sum by (k8s_namespace_name, k8s_node_name, k8s_pod_name, service_version, lock_type, scheduler_backend_name) (max_over_time(cta_objectstore_lock_acquire_duration_milliseconds_sum[2m]))
+      - record: test_ci_cpu_usage
+        expr: |
+          100 * (1 - avg by (instance) (irate(node_cpu_seconds_total{mode="idle"}[2m])))
+      - record: test_ci_memory_usage
+        expr: |
+          (1 - node_memory_MemAvailable_bytes / node_memory_MemTotal_bytes) * 100
+      - record: test_ci_disk_read_throughput
+        expr: |
+          sum by (instance) (irate(node_disk_read_bytes_total[2m]))
+      - record: test_ci_disk_write_throughput
+        expr: |
+          sum by (instance) (irate(node_disk_written_bytes_total[2m]))
+      - record: test_ci_network_receive_throughput
+        expr: |
+          sum by (instance) (irate(node_network_receive_bytes_total{device!~"lo"}[2m]))
+      - record: test_ci_network_transmit_throughput
+        expr: |
+          sum by (instance) (irate(node_network_transmit_bytes_total{device!~"lo"}[2m]))
+
 
