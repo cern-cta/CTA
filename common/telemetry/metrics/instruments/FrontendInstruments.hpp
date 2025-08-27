@@ -22,6 +22,6 @@
 namespace cta::telemetry::metrics {
 
 extern std::unique_ptr<opentelemetry::metrics::Histogram<uint64_t>> frontendRequestDurationHistogram;
-// TODO: add Gauge for in-flight requests
+// TODO: add Gauge for in-flight requests; something with occupancy
 
 }  // namespace cta::telemetry::metrics
