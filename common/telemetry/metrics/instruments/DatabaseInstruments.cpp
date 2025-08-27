@@ -6,7 +6,7 @@
 
 namespace cta::telemetry::metrics {
 
-std::unique_ptr<opentelemetry::metrics::Counter<uint64_t>> databaseQueryCounter;
+std::unique_ptr<opentelemetry::metrics::Histogram<uint64_t>> databaseQueryDurationHistogram;
 std::unique_ptr<opentelemetry::metrics::Counter<uint64_t>> databaseQueryErrorCounter;
 
 }  // namespace cta::telemetry::metrics
@@ -17,8 +17,10 @@ void initInstruments() {
 
   // Instrument initialisation
 
-  cta::telemetry::metrics::databaseQueryCounter =
-    meter->CreateUInt64Counter("cta.database.query.count", "Total number of queries executed", "1");
+  cta::telemetry::metrics::databaseQueryDurationHistogram =
+    meter->CreateUInt64Histogram("cta.database.query.duration",
+                                 "Duration in milliseconds to execute a database query",
+                                 "ms");
 
   cta::telemetry::metrics::databaseQueryErrorCounter =
     meter->CreateUInt64Counter("cta.database.query.error_count", "Total number of queries resulting in an error", "1");
