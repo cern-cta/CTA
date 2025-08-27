@@ -26,6 +26,8 @@ void initAllInstruments();
 
 /**
  * The purpose of this struct is to be able to run and register an instrument init function at start time.
+ * By declaring this struct as a static variable in an anonymous namespace, we ensure that this is executed at start time.
+ *
  * This solves two problems:
  * - It ensures all instruments are initialised to a NOOP when the program starts.
  *   This is important to ensure we are not accessing a nullptr when using an instrument
@@ -42,7 +44,7 @@ void initAllInstruments();
  *     const auto _ = cta::telemetry::metrics::InstrumentRegistrar(myInstrumentInitFunction);
  * }
  *
- * Note that the anonymous namespace is important here and this must be defined in the source file, not the header file
+ * Note that the anonymous namespace is important here and this must be defined in the source file, not the header file.
  */
 struct InstrumentRegistrar {
   /**
