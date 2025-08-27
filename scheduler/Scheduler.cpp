@@ -199,7 +199,8 @@ std::string Scheduler::queueArchiveWithGivenId(const uint64_t archiveFileId,
 
   cta::telemetry::metrics::schedulerQueueingCounter->Add(1, {
     {cta::telemetry::constants::kTransferTypeKey, cta::telemetry::constants::kTransferTypeArchive},
-    {cta::telemetry::constants::kEventTypeKey, cta::telemetry::constants::kEventTypeEnqueue}});
+    {cta::telemetry::constants::kEventTypeKey, cta::telemetry::constants::kEventTypeEnqueue},
+    {cta::telemetry::constants::kSchedulerBackendNameKey, m_schedulerBackendName}});
   return archiveReqAddr;
 }
 
@@ -297,7 +298,8 @@ std::string Scheduler::queueRetrieve(const std::string& instanceName,
   lc.log(log::INFO, "In Scheduler::queueRetrieve(): Queued retrieve request");
   cta::telemetry::metrics::schedulerQueueingCounter->Add(1, {
     {cta::telemetry::constants::kTransferTypeKey, cta::telemetry::constants::kTransferTypeRetrieve},
-    {cta::telemetry::constants::kEventTypeKey, cta::telemetry::constants::kEventTypeEnqueue}});
+    {cta::telemetry::constants::kEventTypeKey, cta::telemetry::constants::kEventTypeEnqueue},
+    {cta::telemetry::constants::kSchedulerBackendNameKey, m_schedulerBackendName}});
   return requestInfo.requestId;
 }
 
@@ -326,7 +328,8 @@ void Scheduler::deleteArchive([[maybe_unused]] std::string_view instanceName,
 
   cta::telemetry::metrics::schedulerQueueingCounter->Add(1, {
     {cta::telemetry::constants::kTransferTypeKey, cta::telemetry::constants::kTransferTypeArchive},
-    {cta::telemetry::constants::kEventTypeKey, cta::telemetry::constants::kEventTypeCancel}});
+    {cta::telemetry::constants::kEventTypeKey, cta::telemetry::constants::kEventTypeCancel},
+    {cta::telemetry::constants::kSchedulerBackendNameKey, m_schedulerBackendName}});
 }
 
 //------------------------------------------------------------------------------
@@ -338,7 +341,8 @@ void Scheduler::abortRetrieve(const std::string& instanceName,
   m_db.cancelRetrieve(instanceName, request, lc);
   cta::telemetry::metrics::schedulerQueueingCounter->Add(1, {
     {cta::telemetry::constants::kTransferTypeKey, cta::telemetry::constants::kTransferTypeRetrieve},
-    {cta::telemetry::constants::kEventTypeKey, cta::telemetry::constants::kEventTypeCancel}});
+    {cta::telemetry::constants::kEventTypeKey, cta::telemetry::constants::kEventTypeCancel},
+    {cta::telemetry::constants::kSchedulerBackendNameKey, m_schedulerBackendName}});
 }
 
 void Scheduler::deleteFailed(const std::string& objectId, log::LogContext& lc) {

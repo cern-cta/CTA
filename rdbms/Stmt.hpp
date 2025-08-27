@@ -17,7 +17,6 @@
 
 #pragma once
 
-#include "common/telemetry/metrics/instruments/DatabaseInstruments.hpp"
 #include "rdbms/AutocommitMode.hpp"
 #include "rdbms/Rset.hpp"
 

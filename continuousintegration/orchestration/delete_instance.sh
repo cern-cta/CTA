@@ -215,6 +215,12 @@ delete_instance() {
   else
     echo "Skipping reclaiming of released Persistent Volumes"
   fi
+  # Clean up remaining cluster-level resources
+  # These should not be created, but depending on the configuration they might be
+  kubectl delete clusterrole otel-opentelemetry-collector --ignore-not-found
+  kubectl delete clusterrolebinding otel-opentelemetry-collector --ignore-not-found
+  kubectl delete clusterrole prometheus-server --ignore-not-found
+  kubectl delete clusterrolebinding prometheus-server --ignore-not-found
 }
 
 delete_instance "$@"
