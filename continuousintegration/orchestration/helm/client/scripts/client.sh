@@ -15,6 +15,7 @@
 #               granted to it by virtue of its status as an Intergovernmental Organization or
 #               submit itself to any jurisdiction.
 # Install missing RPMs
+cat /etc/yum/pluginconf.d/*
 dnf install -y cta-cli cta-immutable-file-test xrootd-client eos-client
 
 echo "$(date '+%Y-%m-%d %H:%M:%S') [$(basename "${BASH_SOURCE[0]}")] Ready"
