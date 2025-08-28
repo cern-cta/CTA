@@ -47,6 +47,8 @@ public:
    */
   ConnPool(const Login& login, const uint64_t maxNbConns);
 
+  ~ConnPool();
+
   CTA_GENERATE_EXCEPTION_CLASS(ConnPoolConfiguredWithZeroConns);
 
   /**

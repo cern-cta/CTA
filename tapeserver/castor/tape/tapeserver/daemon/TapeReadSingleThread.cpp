@@ -21,6 +21,7 @@
 #include "castor/tape/tapeserver/drive/DriveInterface.hpp"
 #include "castor/tape/tapeserver/file/ReadSession.hpp"
 #include "castor/tape/tapeserver/file/ReadSessionFactory.hpp"
+#include "common/telemetry/metrics/instruments/TapedInstruments.hpp"
 
 //------------------------------------------------------------------------------
 // Constructor for TapeReadSingleThread
@@ -50,7 +51,13 @@ castor::tape::tapeserver::daemon::TapeReadSingleThread::TapeReadSingleThread(
   m_useLbp(useLbp),
   m_useRAO(useRAO),
   m_retrieveMount(retrieveMount),
-  m_catalogue(catalogue) {}
+  m_catalogue(catalogue) {
+  cta::telemetry::metrics::tapedTapeThreadUpDownCounter->Add(1, {{cta::telemetry::constants::kTransferTypeKey, cta::telemetry::constants::kTransferTypeRetrieve}});
+}
+
+castor::tape::tapeserver::daemon::TapeReadSingleThread::~TapeReadSingleThread() {
+  cta::telemetry::metrics::tapedTapeThreadUpDownCounter->Add(-1, {{cta::telemetry::constants::kTransferTypeKey, cta::telemetry::constants::kTransferTypeRetrieve}});
+}
 
 //------------------------------------------------------------------------------
 //TapeCleaning::~TapeCleaning()
@@ -85,7 +92,7 @@ castor::tape::tapeserver::daemon::TapeReadSingleThread::TapeCleaning::~TapeClean
   try { m_this.logSCSIMetrics(); } catch (...) {}
 
   // Log safely errors at the end of the session
-  // This out-of-try-catch variables allows us to record the stage of the 
+  // This out-of-try-catch variables allows us to record the stage of the
   // process we're in, and to count the error if it occurs.
   // We will not record errors for an empty string. This will allow us to
   // prevent counting where error happened upstream.
@@ -216,7 +223,7 @@ castor::tape::tapeserver::daemon::TapeReadSingleThread::popAndRequestMoreJobs() 
   }
   else if (vrp.remaining == 10) {
     // This is not a last call: we are close to the end of current tasks queue.
-    // 10 is a magic number that will allow us to get new tasks 
+    // 10 is a magic number that will allow us to get new tasks
     // before we are done with current batch
     m_taskInjector->requestInjection(false);
   }
