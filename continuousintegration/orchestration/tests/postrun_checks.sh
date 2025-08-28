@@ -52,7 +52,7 @@ core_dump_counter=0
 logged_error_counter=0
 all_logged_error_messages=""
 
-pods=$(kubectl --namespace "${NAMESPACE}" get pods -o json | jq -r '.items[]')
+pods=$(kubectl --namespace "${NAMESPACE}" get pods -o json | jq -r '.items[] | select(.metadata.name | startswith("cta-"))')
 
 for pod in $(echo "${pods}" | jq -r '.metadata.name'); do
   if ! kubectl --namespace "${NAMESPACE}" logs "${pod}" > /dev/null 2>&1; then
