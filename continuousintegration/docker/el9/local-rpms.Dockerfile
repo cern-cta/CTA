@@ -49,6 +49,7 @@ gpgcheck=0\n\
 enabled=1\n\
 priority=2" > /etc/yum.repos.d/cta-local-testing.repo && \
     dnf install -y "cta-release" && \
+    cat /etc/yum/pluginconf.d/versionlock.list && \
     dnf clean all --enablerepo=\* && \
     rm -rf /etc/rc.d/rc.local
 
