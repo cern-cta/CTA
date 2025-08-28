@@ -232,7 +232,7 @@ stress-test:
   variables:
     NAMESPACE: stress-${CI_COMMIT_SHORT_SHA}-${CI_PIPELINE_ID}
     # Passed to the create_instance.sh script verbatim
-    EXTRA_ARGS: "--keep-namespace"
+    EXTRA_ARGS: ""
     EXTRA_SPAWN_ARGS: "--enable-telemetry --prometheus-config presets/ci-prometheus-values.yaml"
   before_script:
     - bash ./continuousintegration/checks/check_runner_healthy.sh
