@@ -23,5 +23,6 @@ namespace cta::telemetry::metrics {
 
 extern std::unique_ptr<opentelemetry::metrics::Histogram<uint64_t>> databaseQueryDurationHistogram;
 extern std::unique_ptr<opentelemetry::metrics::Counter<uint64_t>> databaseQueryErrorCounter;
+extern std::unique_ptr<opentelemetry::metrics::UpDownCounter<int64_t>> databaseConnectionsUpDownCounter;
 
 }  // namespace cta::telemetry::metrics
