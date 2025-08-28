@@ -433,8 +433,6 @@ void Scheduler::queueRepack(const common::dataStructures::SecurityIdentity& cliI
     .add("repackRequestAddress", repackRequestAddress);
   tl.addToLog(params);
   lc.log(log::INFO, "In Scheduler::queueRepack(): success.");
-  cta::telemetry::metrics::schedulerRepackCounter->Add(1, {
-    {cta::telemetry::constants::kEventTypeKey, cta::telemetry::constants::kEventTypeEnqueue}});
 }
 
 //------------------------------------------------------------------------------
@@ -444,8 +442,6 @@ void Scheduler::cancelRepack([[maybe_unused]] const common::dataStructures::Secu
                              const std::string& vid,
                              log::LogContext& lc) {
   m_db.cancelRepack(vid, lc);
-  cta::telemetry::metrics::schedulerRepackCounter->Add(1, {
-    {cta::telemetry::constants::kEventTypeKey, cta::telemetry::constants::kEventTypeCancel}});
 }
 
 //------------------------------------------------------------------------------
@@ -2557,7 +2553,8 @@ void Scheduler::triggerTapeStateChange(const common::dataStructures::SecurityIde
       throw cta::exception::UserError("Unknown procedure to change tape state to " + Tape::stateToString(new_state));
   }
   m_db.clearStatisticsCache(vid);
-  cta::telemetry::metrics::schedulerTapeStateChangeCounter->Add(1);
+  cta::telemetry::metrics::schedulerTapeStateChangeCounter->Add(1, {
+    {cta::telemetry::constants::kSchedulerBackendNameKey, m_schedulerBackendName}});
 }
 
 //------------------------------------------------------------------------------

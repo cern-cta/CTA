@@ -20,6 +20,7 @@
 #include <sys/epoll.h>
 #include <unistd.h>
 #include <algorithm>
+#include "common/telemetry/TelemetryInit.hpp"
 
 namespace cta::tape::daemon {
 
@@ -174,7 +175,7 @@ ProcessManager::RunPartStatus ProcessManager::runForkManagement() {
       m_logContext.log(log::INFO, "Subprocess handler will fork");
       auto newStatus = sp.handler->fork();
       switch (newStatus.forkState) {
-      case SubprocessHandler::ForkState::child:
+      case SubprocessHandler::ForkState::child: {
         // We are in the child side.
         // Instruct all other handlers to proceed with a post-fork cleanup.
         for (auto & sp2: m_subprocessHandlers) {
@@ -184,7 +185,11 @@ ProcessManager::RunPartStatus ProcessManager::runForkManagement() {
         }
         // We are in the child side: run the subprocess and exit.
         m_logContext.log(log::INFO, "In child process. Running child.");
-        ::exit(sp.handler->runChild());
+        int exitCode = sp.handler->runChild();
+        // Shut down telemetry to flush metrics
+        cta::telemetry::shutdownTelemetry(m_logContext);
+        ::exit(exitCode);
+      }
       case SubprocessHandler::ForkState::parent:
         // We are parent side. Record the new state for this handler
         newStatus.forkState = SubprocessHandler::ForkState::notForking;
