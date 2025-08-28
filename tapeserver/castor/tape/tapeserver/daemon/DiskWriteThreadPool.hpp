@@ -20,6 +20,7 @@
 #include "common/threading/BlockingQueue.hpp"
 #include "common/threading/Thread.hpp"
 #include "common/log/LogContext.hpp"
+#include "common/telemetry/metrics/instruments/TapedInstruments.hpp"
 #include "castor/tape/tapeserver/utils/suppressUnusedVariable.hpp"
 #include "castor/tape/tapeserver/daemon/RecallReportPacker.hpp"
 #include "castor/tape/tapeserver/daemon/DiskWriteTask.hpp"
@@ -36,7 +37,7 @@
 namespace castor::tape::tapeserver::daemon {
 
 /**
- * Container for the threads that will execute the disk writes tasks in the 
+ * Container for the threads that will execute the disk writes tasks in the
  * migration.
  */
 class DiskWriteThreadPool {
@@ -104,9 +105,13 @@ private:
       m_lc(m_parentThreadPool.m_lc),
       m_diskFileFactory(manager.m_xrootTimeout, manager.m_striperPool) {
       // This thread id will remain for the rest of the thread's lifetime
-      // (and also context's lifetime), so no need for a scope
+      // (and also context's lifetime), so no need for a scoper
+      cta::telemetry::metrics::tapedDiskThreadUpDownCounter->Add(1, {{cta::telemetry::constants::kTransferTypeKey, cta::telemetry::constants::kTransferTypeArchive}});
       m_lc.pushOrReplace(cta::log::Param("threadID", m_threadID));
       m_lc.log(cta::log::INFO, "DiskWrite Thread created");
+    }
+    ~DiskWriteWorkerThread() {
+      cta::telemetry::metrics::tapedDiskThreadUpDownCounter->Add(-1, {{cta::telemetry::constants::kTransferTypeKey, cta::telemetry::constants::kTransferTypeArchive}});
     }
     void start() { cta::threading::Thread::start(); }
     void wait() { cta::threading::Thread::wait(); }
@@ -120,7 +125,7 @@ private:
     DiskStats m_threadStat;
 
     /**
-     * To identify the thread 
+     * To identify the thread
      */
     const int m_threadID;
 
@@ -185,7 +190,7 @@ protected:
 
 private:
   /**
-   * Aggregate all threads' stats 
+   * Aggregate all threads' stats
    */
   DiskStats m_pooldStat;
 
@@ -194,7 +199,7 @@ private:
    */
   cta::utils::Timer m_totalTime;
 
-  /** Reference to the report packer where tasks report the result of their 
+  /** Reference to the report packer where tasks report the result of their
    * individual files and the end of session (for the last thread) */
   RecallReportPacker& m_reporter;
 

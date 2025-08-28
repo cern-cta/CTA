@@ -18,6 +18,7 @@
 #include "castor/tape/tapeserver/daemon/TapeWriteSingleThread.hpp"
 #include "castor/tape/tapeserver/daemon/TapeSessionReporter.hpp"
 #include "castor/tape/tapeserver/daemon/MigrationTaskInjector.hpp"
+#include "common/telemetry/metrics/instruments/TapedInstruments.hpp"
 
 //------------------------------------------------------------------------------
 // Constructor for TapeWriteSingleThread
@@ -54,7 +55,13 @@ castor::tape::tapeserver::daemon::TapeWriteSingleThread::TapeWriteSingleThread(
       m_useLbp(useLbp),
       m_watchdog(watchdog),
       m_archiveMount(archiveMount),
-      m_catalogue(catalogue) {}
+      m_catalogue(catalogue) {
+  cta::telemetry::metrics::tapedTapeThreadUpDownCounter->Add(1, {{cta::telemetry::constants::kTransferTypeKey, cta::telemetry::constants::kTransferTypeArchive}});
+}
+
+castor::tape::tapeserver::daemon::TapeWriteSingleThread::~TapeWriteSingleThread() {
+  cta::telemetry::metrics::tapedTapeThreadUpDownCounter->Add(-1, {{cta::telemetry::constants::kTransferTypeKey, cta::telemetry::constants::kTransferTypeArchive}});
+}
 
 //------------------------------------------------------------------------------
 //TapeCleaning::~TapeCleaning()
