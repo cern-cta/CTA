@@ -124,7 +124,6 @@ test-client-gfal2:
   variables:
     TEST_SCRIPT: "tests/test_client_gfal2.sh"
     EXTRA_RUN_ARGS: "--test-timeout 2400"
-    EXTRA_SPAWN_ARGS: "--enable-telemetry"
 
 test-repack:
   # test is flaky and we want to prevent cancelling everything
