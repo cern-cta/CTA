@@ -31,7 +31,7 @@ grpc:
       logFormat: json
     
     tls:
-      enabled: false
+      enabled: true
       serverKey: /etc/grpc-certs/key/server.key
       serverCert: /etc/grpc-certs/cert/server.crt
       caCert: ""
