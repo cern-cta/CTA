@@ -57,7 +57,7 @@ mgm:
       mgmofs.protowfendpoint cta-frontend-grpc:10956
       mgmofs.protowfresource /ctafrontend
       mgmofs.protowfusegrpc true
-      mgmofs.protowfusegrpctls false
+      mgmofs.protowfusegrpctls true
       mgmofs.jwttokenpath /etc/grid-security/jwt-token-grpc
       tpc.trace  all
       tpc.header2cgi  ArchiveMetadata archivemetadata
@@ -190,7 +190,7 @@ fst:
       fstofs.protowfresource /ctafrontend
       fstofs.filemd_handler  attr
       fstofs.protowfusegrpc true
-      fstofs.protowfusegrpctls false
+      fstofs.protowfusegrpctls true
       fstofs.jwttokenpath /etc/grid-security/jwt-token-grpc
       tpc.trace  all
 
