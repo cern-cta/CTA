@@ -45,8 +45,7 @@ TEST(cta_Daemon, TapedConfiguration) {
 
   ASSERT_THROW(cta::tape::daemon::common::TapedConfiguration::createFromConfigPath(incompleteConfFile.path()),
     cta::SourcedParameter<std::string>::MandatoryParameterNotDefined);
-  auto completeConfig =
-    cta::tape::daemon::common::TapedConfiguration::createFromConfigPath(completeConfFile.path());
+  auto completeConfig = cta::tape::daemon::common::TapedConfiguration::createFromConfigPath(completeConfFile.path());
   ASSERT_EQ(completeConfFile.path()+":2", completeConfig.backendPath.source());
   ASSERT_EQ("vfsObjectStore:///tmp/dir", completeConfig.backendPath.value());
 }
@@ -74,7 +73,7 @@ TEST(cta_Daemon, TapedConfigurationFull) {
 
   // The log parameter can be uncommented to inspect the result on the output.
   auto completeConfig =
-    cta::tape::daemon::common::TapedConfiguration::createFromConfigPath(completeConfFile.path()/*, log*/);
+    cta::tape::daemon::common::TapedConfiguration::createFromConfigPath(completeConfFile.path() /*, log*/);
   ASSERT_EQ(completeConfFile.path()+":2", completeConfig.backendPath.source());
   ASSERT_EQ("vfsObjectStore:///tmp/dir", completeConfig.backendPath.value());
   ASSERT_EQ(completeConfFile.path()+":3", completeConfig.fileCatalogConfigFile.source());
@@ -89,24 +88,25 @@ TEST(cta_Daemon, TapedConfigurationFull) {
 
 TempFile getDummyDriveConfig(const std::string& driveName) {
   TempFile completeConfFile;
-  completeConfFile.stringFill(
-  "# A good enough configuration file for taped\n"
+  completeConfFile.stringFill("# A good enough configuration file for taped\n"
 
-  "taped DriveName " + driveName + "\n"
-  "taped DriveLogicalLibrary dummyLL\n"
-  "taped DriveDevice /dummy/Device\n"
-  "taped DriveControlPath dummyControlPath\n"
+                              "taped DriveName " +
+                              driveName +
+                              "\n"
+                              "taped DriveLogicalLibrary dummyLL\n"
+                              "taped DriveDevice /dummy/Device\n"
+                              "taped DriveControlPath dummyControlPath\n"
 
-  "general InstanceName production\n"
-  "general SchedulerBackendName dummyProdUser\n"
-  "general ServiceName dummy-service-name\n"
+                              "general InstanceName production\n"
+                              "general SchedulerBackendName dummyProdUser\n"
+                              "general ServiceName dummy-service-name\n"
 
-  "ObjectStore BackendPath vfsObjectStore:///tmp/dir\n");
+                              "ObjectStore BackendPath vfsObjectStore:///tmp/dir\n");
   return completeConfFile;
 }
 
 TEST(cta_Daemon, constructProcessName) {
-  cta::log::StringLogger dlog("dummy","unitTest", cta::log::DEBUG);
+  cta::log::StringLogger dlog("dummy", "unitTest", cta::log::DEBUG);
   cta::log::LogContext lc(dlog);
 
   const auto driveName = "SPECTRALIB3-LTO9-F10B1S2";
@@ -120,7 +120,7 @@ TEST(cta_Daemon, constructProcessName) {
 }
 
 TEST(cta_Daemon, constructProcessNameDriveNameTooLong) {
-  cta::log::StringLogger dlog("dummy","unitTest", cta::log::DEBUG);
+  cta::log::StringLogger dlog("dummy", "unitTest", cta::log::DEBUG);
   cta::log::LogContext lc(dlog);
 
   const auto driveName = "SPECTRALIB3-LTO9-F10B1S21TOOLONG";
@@ -135,7 +135,7 @@ TEST(cta_Daemon, constructProcessNameDriveNameTooLong) {
 }
 
 TEST(cta_Daemon, constructProcessNameWithoutHyphen) {
-  cta::log::StringLogger dlog("dummy","unitTest", cta::log::DEBUG);
+  cta::log::StringLogger dlog("dummy", "unitTest", cta::log::DEBUG);
   cta::log::LogContext lc(dlog);
 
   const auto driveName = "F10B1S2";
@@ -150,7 +150,7 @@ TEST(cta_Daemon, constructProcessNameWithoutHyphen) {
 }
 
 TEST(cta_Daemon, constructProcessNameWithoutHyphenTooLong) {
-  cta::log::StringLogger dlog("dummy","unitTest", cta::log::DEBUG);
+  cta::log::StringLogger dlog("dummy", "unitTest", cta::log::DEBUG);
   cta::log::LogContext lc(dlog);
 
   const auto driveName = "F10B1S21TOOLONG";
@@ -165,7 +165,7 @@ TEST(cta_Daemon, constructProcessNameWithoutHyphenTooLong) {
 }
 
 TEST(cta_Daemon, constructProcessNameNoPostfix) {
-  cta::log::StringLogger dlog("dummy","unitTest", cta::log::DEBUG);
+  cta::log::StringLogger dlog("dummy", "unitTest", cta::log::DEBUG);
   cta::log::LogContext lc(dlog);
 
   const auto driveName = "SPECTRALIB3-LTO9-F10B1S2";
@@ -180,7 +180,7 @@ TEST(cta_Daemon, constructProcessNameNoPostfix) {
 }
 
 TEST(cta_Daemon, constructProcessNamePostfixTooLong) {
-  cta::log::StringLogger dlog("dummy","unitTest", cta::log::DEBUG);
+  cta::log::StringLogger dlog("dummy", "unitTest", cta::log::DEBUG);
   cta::log::LogContext lc(dlog);
 
   const auto driveName = "SPECTRALIB3-LTO9-F10B1S2";
