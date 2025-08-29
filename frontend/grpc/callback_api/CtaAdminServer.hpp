@@ -92,10 +92,8 @@ class CtaRpcStreamImpl : public cta::xrd::CtaRpcStream::CallbackService {
 };
 
 // request object will be filled in by the Parser of the command on the client-side.
-// Currently I am calling this class CtaAdminCmdStreamingClient
 ::grpc::ServerWriteReactor<cta::xrd::StreamResponse>*
 CtaRpcStreamImpl::GenericAdminStream(::grpc::CallbackServerContext* context, const cta::xrd::Request* request) {
-  std::cout << "In GenericAdminStream, just entered" << std::endl;
 
   switch(cmd_pair(request->admincmd().cmd(), request->admincmd().subcmd())) {
     case cmd_pair(cta::admin::AdminCmd::CMD_TAPE, cta::admin::AdminCmd::SUBCMD_LS):
