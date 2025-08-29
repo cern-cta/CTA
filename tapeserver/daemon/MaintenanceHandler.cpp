@@ -277,8 +277,9 @@ void MaintenanceHandler::exceptionThrowingRunChild(){
   // We do not have to care for previous crashed sessions as we will garbage
   // collect them like any other crashed agent.
 
-  // Set the thread name for process ID:
-  prctl(PR_SET_NAME, "cta-tpd-maint");
+  // Set the process name for process ID:
+  const auto processName = m_tapedConfig.constructProcessName(m_processManager.logContext(), "maint");
+  prctl(PR_SET_NAME, processName.c_str());
 
   // Before anything, we will check for access to the scheduler's central storage.
   // If we fail to access it, we cannot work. We expect the drive processes to

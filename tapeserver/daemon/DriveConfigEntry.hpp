@@ -95,6 +95,7 @@ public:
    * @return a reference to the object
    */
   DriveConfigEntry& operator=(const DriveConfigEntry& o);
+
   static const size_t maxNameLen = 100;
 }; // struct DriveConfigEntry
 
