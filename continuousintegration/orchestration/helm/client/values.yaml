@@ -3,6 +3,10 @@ replicaCount: 1
 conf:
   cta:
     endpoint: cta-frontend:10955
+    grpc:
+      tls:
+        chain_cert_path: /etc/grpc-certs/ca.crt
+        enabled: true
 
 users:
   - user1
@@ -19,5 +23,11 @@ extraEnv:
 
 extraVolumes:
   volumes:
+    - name: grpc-certs
+      secret:
+        secretName: ca-crt
   volumeMounts:
+    - name: grpc-certs
+      mountPath: /etc/grpc-certs
+      readOnly: true
 

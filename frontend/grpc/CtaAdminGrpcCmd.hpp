@@ -23,13 +23,14 @@
 
 #include "cta_frontend.pb.h"
 #include "cta_frontend.grpc.pb.h"
+#include "common/config/Config.hpp"
 
 namespace cta::admin {
 
 class CtaAdminGrpcCmd {
 public:
-  //! Send the protocol buffer across the gRPC transport
-  void send(const CtaAdminParsedCmd& parsedCmd, std::string endpoint) const;
+   //! Send the protocol buffer across the gRPC transport
+   void send(const CtaAdminParsedCmd& parsedCmd, cta::common::Config& config, const std::string& config_file) const;
 };
 
 }  // namespace cta::admin

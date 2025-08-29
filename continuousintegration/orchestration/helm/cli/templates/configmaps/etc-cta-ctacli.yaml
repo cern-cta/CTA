@@ -8,3 +8,6 @@ data:
   cta-cli.conf: |-
     # solved by kubernetes DNS server so KIS...
     cta.endpoint {{ .Values.conf.cta.endpoint }}
+
+    grpc.tls.enabled {{ .Values.conf.cta.grpc.tls.enabled }}
+    grpc.tls.chain_cert_path {{ .Values.conf.cta.grpc.tls.chain_cert_path }}
