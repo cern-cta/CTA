@@ -140,8 +140,8 @@ variables:
       - "presets/stress-eos-grpc-values.yaml"
 
   TELEMETRY_COLLECTION_ENABLED:
-    description: "Whether to enable telemetry collection for the system tests"
-    value: "FALSE"
+    description: "Whether to enable telemetry collection for the stress test"
+    value: "TRUE"
     options:
       - "TRUE"
       - "FALSE"
