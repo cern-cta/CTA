@@ -11,7 +11,7 @@ alertmanager:
   enabled: false
 
 kube-state-metrics:
-  enabled: false
+  enabled: true
 
 # We want to get metrics on CPU/memory usage
 prometheus-node-exporter:
@@ -28,100 +28,3 @@ server:
 
   persistentVolume:
     enabled: false
-
-  extraSecretMounts:
-    - name: prometheus-remote-write-secret
-      mountPath: /etc/prometheus/secrets/remote-write
-      secretName: prometheus-remote-write-secret
-      readOnly: true
-
-  remoteWrite:
-    - url: "http://monit-prom-lts.cern.ch/api/v1/push"
-      basic_auth:
-        username_file: /etc/prometheus/secrets/remote-write/username
-        password_file: /etc/prometheus/secrets/remote-write/password
-      write_relabel_configs:
-        - source_labels: ["__name__"]
-          regex: "test_ci.*"
-          action: keep
-
-# Note that these max_over_time functions are designed such that we can get a total count on any counters
-# For CI this is useful, but production this is not feasible, as the time frame would need to be too long
-# However, for production, one is typically only interested in rates, so the only constraint there
-# would be for the max_over_time time frame to be longer than whatever the rate queries will use
-serverFiles:
-  recording_rules.yml:
-    groups:
-    - name: ci-histograms-generic
-      interval: 15s
-      rules:
-      # Database
-      - record: test_ci_cta_database_connections_count
-        expr: |
-          sum by (k8s_namespace_name, k8s_node_name, k8s_pod_name, service_version, transfer_type) (cta_database_connections_count)
-      - record: test_ci_cta_database_query_error_count
-        expr: |
-          sum by (k8s_namespace_name, k8s_node_name, k8s_pod_name, service_version, transfer_type) (max_over_time(cta_database_query_error_count[7d]))
-      - record: test_ci_cta_database_query_duration_milliseconds_bucket
-        expr: |
-          sum by (k8s_namespace_name, k8s_node_name, k8s_pod_name, service_version, event_type, le) (max_over_time(cta_database_query_duration_milliseconds_bucket{le=~"5.0|10.0|50.0|100.0|500.0|1000.0|5000.0|10000.0|100000.0"}[7d]))
-      - record: test_ci_cta_database_query_duration_milliseconds_count
-        expr: |
-          sum by (k8s_namespace_name, k8s_node_name, k8s_pod_name, service_version, event_type) (max_over_time(cta_database_query_duration_milliseconds_count[7d]))
-      - record: test_ci_cta_database_query_duration_milliseconds_sum
-        expr: |
-          sum by (k8s_namespace_name, k8s_node_name, k8s_pod_name, service_version, event_type) (max_over_time(cta_database_query_duration_milliseconds_sum[7d]))
-      # Frontend
-      - record: test_ci_cta_frontend_request_duration_milliseconds_bucket
-        expr: |
-          sum by (k8s_namespace_name, k8s_node_name, k8s_pod_name, service_version, event_type, le) (max_over_time(cta_frontend_request_duration_milliseconds_bucket{le=~"5.0|10.0|50.0|100.0|500.0|1000.0|5000.0|10000.0|100000.0"}[7d]))
-      - record: test_ci_cta_frontend_request_duration_milliseconds_count
-        expr: |
-          sum by (k8s_namespace_name, k8s_node_name, k8s_pod_name, service_version, event_type) (max_over_time(cta_frontend_request_duration_milliseconds_count[7d]))
-      - record: test_ci_cta_frontend_request_duration_milliseconds_sum
-        expr: |
-          sum by (k8s_namespace_name, k8s_node_name, k8s_pod_name, service_version, event_type) (max_over_time(cta_frontend_request_duration_milliseconds_sum[7d]))
-      # Scheduler
-      - record: test_ci_cta_scheduler_queueing_count_total
-        expr: |
-          sum by (k8s_namespace_name, k8s_node_name, k8s_pod_name, service_version, transfer_type, scheduler_backend_name) (max_over_time(cta_scheduler_queueing_count_total[7d]))
-      - record: test_ci_cta_objectstore_lock_acquire_duration_milliseconds_bucket
-        expr: |
-          sum by (k8s_namespace_name, k8s_node_name, k8s_pod_name, service_version, lock_type, le, scheduler_backend_name) (max_over_time(cta_objectstore_lock_acquire_duration_milliseconds_bucket{le=~"5.0|10.0|50.0|100.0|500.0|1000.0|5000.0|10000.0|100000.0"}[7d]))
-      - record: test_ci_cta_objectstore_lock_acquire_duration_milliseconds_count
-        expr: |
-          sum by (k8s_namespace_name, k8s_node_name, k8s_pod_name, service_version, lock_type, scheduler_backend_name) (max_over_time(cta_objectstore_lock_acquire_duration_milliseconds_count[7d]))
-      - record: test_ci_cta_objectstore_lock_acquire_duration_milliseconds_sum
-        expr: |
-          sum by (k8s_namespace_name, k8s_node_name, k8s_pod_name, service_version, lock_type, scheduler_backend_name) (max_over_time(cta_objectstore_lock_acquire_duration_milliseconds_sum[7d]))
-      - record: test_ci_cta_scheduler_tape_state_change_count
-        expr: |
-          sum by (k8s_namespace_name, k8s_node_name, k8s_pod_name, service_version, scheduler_backend_name) (max_over_time(cta_scheduler_tape_state_change_count[7d]))
-      # Taped
-      - record: test_ci_cta_taped_mount_count_total
-        expr: |
-          sum by (k8s_namespace_name, k8s_node_name, k8s_pod_name, service_version, transfer_type) (max_over_time(cta_taped_mount_count_total[7d]))
-      - record: test_ci_cta_taped_transfer_count_total
-        expr: |
-          sum by (k8s_namespace_name, k8s_node_name, k8s_pod_name, service_version, transfer_type) (max_over_time(cta_taped_transfer_count_total[7d]))
-      - record: test_ci_cta_taped_disk_thread_count
-        expr: |
-          sum by (k8s_namespace_name, k8s_node_name, k8s_pod_name, service_version, transfer_type) (cta_taped_disk_thread_count)
-      - record: test_ci_cta_taped_tape_thread_count
-        expr: |
-          sum by (k8s_namespace_name, k8s_node_name, k8s_pod_name, service_version, transfer_type) (cta_taped_tape_thread_count)
-      # Node exporter
-      - record: test_ci_cpu_usage
-        expr: |
-          100 * (1 - avg by (instance,namespace,node) (irate(node_cpu_seconds_total{mode="idle"}[2m])))
-      - record: test_ci_memory_usage
-        expr: |
-          sum by (instance,namespace,node) ((1 - node_memory_MemAvailable_bytes / node_memory_MemTotal_bytes) * 100)
-      - record: test_ci_disk_read_throughput
-        expr: |
-          sum by (instance,namespace,node) (irate(node_disk_read_bytes_total[2m]))
-      - record: test_ci_disk_write_throughput
-        expr: |
-          sum by (instance,namespace,node) (irate(node_disk_written_bytes_total[2m]))
-
-
