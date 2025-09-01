@@ -2553,8 +2553,6 @@ void Scheduler::triggerTapeStateChange(const common::dataStructures::SecurityIde
       throw cta::exception::UserError("Unknown procedure to change tape state to " + Tape::stateToString(new_state));
   }
   m_db.clearStatisticsCache(vid);
-  cta::telemetry::metrics::schedulerTapeStateChangeCounter->Add(1, {
-    {cta::telemetry::constants::kSchedulerBackendNameKey, m_schedulerBackendName}});
 }
 
 //------------------------------------------------------------------------------
