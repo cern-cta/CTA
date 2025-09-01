@@ -140,7 +140,7 @@ variables:
       - "presets/stress-eos-grpc-values.yaml"
 
   TELEMETRY_COLLECTION_ENABLED:
-    description: "Whether to enable telemetry collection in the CI Prometheus tenant or not"
+    description: "Whether to enable telemetry collection for the system tests"
     value: "FALSE"
     options:
       - "TRUE"
