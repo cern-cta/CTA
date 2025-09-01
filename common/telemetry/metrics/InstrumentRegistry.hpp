@@ -25,20 +25,6 @@ void registerInstrumentInit(std::function<void()> initFunction);
 void initAllInstruments();
 
 /**
- * The purpose of this struct is to be able to run and register an instrument init function at start time.
- * By declaring this struct as a static variable in an anonymous namespace, we ensure that this is executed at start time.
- *
- * This solves two problems:
- * - It ensures all instruments are initialised to a NOOP when the program starts.
- *   This is important to ensure we are not accessing a nullptr when using an instrument
- *   For applications that don't require telemetry, it should not be mandatory to explicitly initialise this to a NOOP.
- *   Take e.g. the CLI tools: they require the catalogue library which has telemetry. It should work out of the box.
- *   Additionally, it also bypasses the need for thread-safety in the initialisation of the instruments
- *   because the init functions are only called once at any given time (at startup, after initialisation, at reset)
- * - It makes the instrument files self-contained and ensures there is a clear dependency hierarchy. This allows these
- *   files to be put into their respective library directories if so desired.
- *
- * Usage:
  *
  * namespace {
  *     const auto _ = cta::telemetry::metrics::InstrumentRegistrar(myInstrumentInitFunction);
