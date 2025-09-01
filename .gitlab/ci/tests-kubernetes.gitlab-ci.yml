@@ -37,10 +37,6 @@
         fi
         EXTRA_SPAWN_ARGS+=" --catalogue-version ${catalogue_version}"
       fi
-    - |
-      if [ $TELEMETRY_COLLECTION_ENABLED == "TRUE" ]; then
-        EXTRA_SPAWN_ARGS+=" --telemetry-enabled --prometheus-config presets/ci-prometheus-values.yaml"
-      fi
     # Export all variables here so that it is clear which ones are available
     - export SCHEDULER_CONFIG CATALOGUE_CONFIG IMAGE_TAG EXTRA_SPAWN_ARGS
 
@@ -232,13 +228,16 @@ stress-test:
     NAMESPACE: stress-${CI_COMMIT_SHORT_SHA}-${CI_PIPELINE_ID}
     # Passed to the create_instance.sh script verbatim
     EXTRA_ARGS: ""
-    EXTRA_SPAWN_ARGS: "--enable-telemetry --prometheus-config presets/ci-prometheus-values.yaml"
+    EXTRA_SPAWN_ARGS: ""
   before_script:
     - bash ./continuousintegration/checks/check_runner_healthy.sh
     - *setup-k8s-test-variables
   script:
     - |
       EXTRA_SPAWN_ARGS="--cta-config ${STRESS_CTA_VALUES_FILE} --eos-config ${STRESS_EOS_VALUES_FILE} ${EXTRA_SPAWN_ARGS}"
+      if [ $TELEMETRY_COLLECTION_ENABLED == "TRUE" ]; then
+        EXTRA_SPAWN_ARGS+=" --telemetry-enabled --prometheus-config presets/ci-prometheus-values.yaml"
+      fi
       extra_args=($EXTRA_ARGS)
       if [[ -n "${EXTRA_SPAWN_ARGS}" ]]; then extra_args+=(--spawn-options "${EXTRA_SPAWN_ARGS}"); fi
       EXTRA_STRESS_TEST_OPTIONS=""
