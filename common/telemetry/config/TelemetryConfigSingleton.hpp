@@ -5,8 +5,8 @@
 namespace cta::telemetry {
 
 /**
- * Used for ensuring initMetrics can be called from anywhere without passing the MetricsConfig along everywhere
- * Must be initialised once before using
+ * Used for ensuring initMetrics can be called from anywhere without passing the MetricsConfig along everywhere.
+ * Must be initialised once before using, which is handled in TelemetryInit.
  */
 class TelemetryConfigSingleton {
 public:
