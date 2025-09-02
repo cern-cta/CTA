@@ -67,45 +67,4 @@ SchedulingInfosLsStream::SchedulingInfosLsStream(const frontend::AdminCmdStream&
   XrdSsiPb::Log::Msg(XrdSsiPb::Log::DEBUG, LOG_SUFFIX, "SchedulingInfosLsStream() constructor");
 }
 
-int SchedulingInfosLsStream::fillBuffer(XrdSsiPb::OStreamBuffer<Data> *streambuf) {
-  using namespace cta::admin;
-
-  for(bool is_buffer_full = false; !isDone() && !is_buffer_full; ) {
-    cta::SchedulerDatabase::PotentialMount potentialMount;
-
-    if(m_potentialMountList.empty()) {
-      m_logicalLibrary = m_schedulingInfoList.front().getLogicalLibraryName();
-      m_potentialMountList = m_schedulingInfoList.front().getPotentialMounts();
-      m_schedulingInfoList.pop_front();
-      continue;
-    } else {
-      potentialMount = m_potentialMountList.front();
-      m_potentialMountList.pop_front();
-    }
-
-    Data record;
-
-    auto sils_item = record.mutable_sils_item();
-    sils_item->set_logical_library(m_logicalLibrary);
-    sils_item->set_vid(potentialMount.vid);
-    sils_item->set_tapepool(potentialMount.tapePool);
-    sils_item->set_vo(potentialMount.vo);
-    sils_item->set_media_type(potentialMount.mediaType);
-    sils_item->set_vendor(potentialMount.vendor);
-    sils_item->set_mount_type(MountTypeToProtobuf(potentialMount.type));
-    sils_item->set_tape_capacity_in_bytes(potentialMount.capacityInBytes);
-    sils_item->set_mount_policy_priority(potentialMount.priority);
-    sils_item->set_mount_policy_min_request_age(potentialMount.minRequestAge);
-    sils_item->set_files_queued(potentialMount.filesQueued);
-    sils_item->set_bytes_queued(potentialMount.bytesQueued);
-    sils_item->set_oldest_job_start_time(potentialMount.oldestJobStartTime);
-    sils_item->set_sleeping_mount(potentialMount.sleepingMount);
-    sils_item->set_sleep_time(potentialMount.sleepTime);
-    sils_item->set_disk_system_slept_for(potentialMount.diskSystemSleptFor);
-    sils_item->set_mount_count(potentialMount.mountCount);
-    is_buffer_full = streambuf->Push(record);
-  }
-  return streambuf->Size();
-}
-
 } // namespace cta::xrd

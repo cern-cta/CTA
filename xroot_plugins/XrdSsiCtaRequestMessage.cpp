@@ -20,6 +20,7 @@
 #include "frontend/common/AdminCmd.hpp"
 #include "AdminCmdStream.hpp"
 #include "XrdSsiCtaRequestMessage.hpp"
+#include "cmdline/CtaAdminCmdParser.hpp"
 
 namespace cta::xrd {
 
@@ -39,7 +40,7 @@ void RequestMessage::process(const cta::xrd::Request& request, cta::xrd::Respons
         break;
       }
 
-      if(frontend::AdminCmdStream::isStreamCmd(request.admincmd())) {
+      if (cta::admin::isStreamCmd(request.admincmd())) {
         frontend::AdminCmdStream adminCmdStream(m_service.getFrontendService(), m_cliIdentity, request.admincmd(), stream);
         response = adminCmdStream.process();
       } else {

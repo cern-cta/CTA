@@ -49,14 +49,11 @@ public:
   frontend::Version getClientVersion() const;
 
   /*!
-   * Checks if an admin command is a stream command
-   */
-  static bool isStreamCmd(const admin::AdminCmd& adminCmd);
-
-  /*!
    * Get CTA instance Name (set in the CTA Frontend config file)
    */
   const std::string& getInstanceName() const { return m_instanceName; }
+
+  const admin::AdminCmd& getAdminCmd() const { return m_adminCmd; }
 
 private:
   /*!
