@@ -109,13 +109,29 @@ void cta::frontend::grpc::server::NegotiationRequestHandler::acquireCreds(const 
   gss_OID_set gssMechs = GSS_C_NO_OID_SET;
 
   gssNameBuf.value = const_cast<char*>(strService.c_str());
-  gssNameBuf.length = strService.size() + 1;
-  gssMajStat = gss_import_name(&gssMinStat, &gssNameBuf,
-                             (gss_OID) gss_nt_service_name, &gssServerName);
+  gssNameBuf.length = strlen(strService.c_str()); // strService.size() + 1;
+
+  // Prefer to import as a krb5 principal if available
+  // GSS_KRB5_NT_PRINCIPAL_NAME is defined in gssapi_krb5.h on many installs.
+  // If it's not available at compile time, fall back to hostbased service only if necessary.
+  #if defined(GSS_KRB5_NT_PRINCIPAL_NAME)
+    gssMajStat = gss_import_name(&gssMinStat, &gssNameBuf,
+                                 (gss_OID) GSS_KRB5_NT_PRINCIPAL_NAME, &gssServerName);
+  #else
+    // Fallback: try exact user-style name first (GSS_C_NT_USER_NAME)
+    gssMajStat = gss_import_name(&gssMinStat, &gssNameBuf,
+                                 (gss_OID) GSS_C_NT_USER_NAME, &gssServerName);
+    if (gssMajStat != GSS_S_COMPLETE) {
+      // If user name import fails, try hostbased service (old behavior)
+      gssMajStat = gss_import_name(&gssMinStat, &gssNameBuf,
+                                   (gss_OID) gss_nt_service_name, &gssServerName);
+    }
+  #endif
+
   if (gssMajStat != GSS_S_COMPLETE) {
     logGSSErrors("In grpc::server::NegotiationRequestHandler::acquireCreds(): gss_import_name() major status.", gssMajStat, GSS_C_GSS_CODE);
     logGSSErrors("In grpc::server::NegotiationRequestHandler::acquireCreds(): gss_import_name() minor status.", gssMinStat, GSS_C_MECH_CODE);
-    throw cta::exception::Exception("In grpc::server::NegotiationRequestHandler::acquireCreds(): Failed to get Kerberos credentials");
+    throw cta::exception::Exception("In grpc::server::NegotiationRequestHandler::acquireCreds(): Failed to import service principal: " + strService);
   }
 
   if (gssMech != GSS_C_NO_OID) {

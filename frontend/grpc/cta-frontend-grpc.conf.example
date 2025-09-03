@@ -177,3 +177,6 @@ cta.telemetry.metrics.export.timeout 3000
 
 # File location to write to in case the FILE backend is used
 # cta.telemetry.metrics.export.file.endpoint path
+
+# service principal (if not specified, defaults to cta/<hostname>)
+#grpc.service_principal ctaeos+

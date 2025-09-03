@@ -24,6 +24,13 @@
 #include <cmdline/CtaAdminTextFormatter.hpp>
 #include "tapeserver/daemon/common/TapedConfiguration.hpp"
 #include "callback_api/CtaAdminClientReadReactor.hpp"
+#include "AsyncClient.hpp"
+#include "KerberosAuthenticator.hpp"
+#include "ClientNegotiationRequestHandler.hpp"
+#include "utils.hpp"
+#include "common/log/Logger.hpp"
+#include "common/log/LogContext.hpp"
+#include "common/log/StdoutLogger.hpp"
 
 static std::string file2string(std::string filename){
     std::ifstream as_stream(filename);
@@ -71,11 +78,79 @@ void CtaAdminGrpcCmd::send(const CtaAdminParsedCmd& parsedCmd, cta::common::Conf
     credentials = grpc::InsecureChannelCredentials();
   }
 
+  // first do a negotiation call to obtain a kerberos token, which will be attached to the call metadata
+  // gRPC stream server
+  std::string strGrpcHost = "cta-frontend-grpc";
+  const std::string GRPC_SERVER = endpoint.value();
+  // Service name
+  const std::string GSS_SPN = "grpc/" + strGrpcHost;
+  // Storage for the KRB token
+  std::string strToken {""};
+  // Encoded token to be send as part of metadata
+  std::string strEncodedToken {""};
+  // Create a channel to the KRB-GSI negotiation service 
+  std::shared_ptr<::grpc::Channel> spChannelNegotiation {::grpc::CreateChannel(GRPC_SERVER, credentials)};
+  cta::log::StdoutLogger log(GRPC_SERVER, "cta-admin-grpc");
+  cta::log::LogContext lc(log);
+  cta::frontend::grpc::client::AsyncClient<cta::xrd::Negotiation> clientNeg(log, spChannelNegotiation);
+  try {
+    strToken = clientNeg.exe<cta::frontend::grpc::client::NegotiationRequestHandler>(GSS_SPN)->token();
+    /*
+     * TODO: ???
+     *        Move encoder to client::NegotiationRequestHandler
+     *        or server::NegotiationRequestHandler
+     *        or KerberosAuthenticator
+     *       ???
+     */
+    cta::frontend::grpc::utils::encode(strToken, strEncodedToken);
+
+  } catch(const cta::exception::Exception& e) {
+    /*
+     * In case of any problems with the negotiation service,
+     * log and stop the execution
+     */
+    lc.log(cta::log::CRIT, "In cta::frontend::grpc::client::CtaAdminGrpcCmdDeprecated::exe(): Problem with the negotiation service.");
+    throw; // rethrow
+  }
+  /*
+    * Channel arguments can be overriden e.g: 
+    * ::grpc::ChannelArguments channelArgs;ClientContext
+    * channelArgs.SetString(GRPC_SSL_TARGET_NAME_OVERRIDE_ARG, "ok.org");
+    * std::shared_ptr<::grpc::Channel> spChannel {::grpc::CreateCustomChannel("0.0.0.0:17017", spCredentials, channelArgs)};
+    */
+  //--- ref: https://grpc.io/docs/guides/auth/#credential-types
+  /*
+    * Credentials can be of two types:
+    * - Channel credentials, which are attached to a Channel, such as SSL credentials.
+    * - Call credentials, which are attached to a call (or ClientContext in C++).
+    * CompositeChannelCredentials associates a ChannelCredentials and a CallCredentials
+    * to create a new ChannelCredentials
+    */
+    /*
+    * Individual CallCredentials can also be composed using CompositeCallCredentials.
+    * The resulting CallCredentials when used in a call will trigger the sending of
+    * the authentication data associated with the two CallCredentials.
+    * !!! It dose not work with InsecureChannelCredentials !!!
+    */
+  //---
+  /*
+    * Call credentails can be set manually in a client's conspCallCredentialstext
+    * e.g.:
+    *   m_ctx.set_credentials(spCallCredentials);
+    */
+  std::shared_ptr<::grpc::CallCredentials> spCallCredentials =
+    ::grpc::MetadataCredentialsFromPlugin(std::unique_ptr<::grpc::MetadataCredentialsPlugin>(
+    new cta::frontend::grpc::client::KerberosAuthenticator(strEncodedToken)));
+  std::shared_ptr<::grpc::ChannelCredentials> spCompositeCredentials = ::grpc::CompositeChannelCredentials(credentials, spCallCredentials);
+  std::shared_ptr<::grpc::Channel> spChannel {::grpc::CreateChannel(GRPC_SERVER, spCompositeCredentials)};
+  // Execute the TapeLs command
+
+
   if (!isStreamCmd(request.admincmd())) {
     cta::xrd::Response response;
 
     // need method to obtain credentials - configuration will tell me which credentials to use
-    std::unique_ptr<cta::xrd::CtaRpc::Stub> client_stub = cta::xrd::CtaRpc::NewStub(grpc::CreateChannel(endpoint.value(), credentials));
+    std::unique_ptr<cta::xrd::CtaRpc::Stub> client_stub = cta::xrd::CtaRpc::NewStub(spChannel);
 
     // do all the filling in of the command to send
     status = client_stub->Admin(&context, request, &response);
@@ -94,7 +169,7 @@ void CtaAdminGrpcCmd::send(const CtaAdminParsedCmd& parsedCmd, cta::common::Conf
   }
   else {
     // insecure channel credentials won't work anymore, need TLS
-    std::unique_ptr<cta::xrd::CtaRpcStream::Stub> client_stub = cta::xrd::CtaRpcStream::NewStub(grpc::CreateChannel(endpoint.value(), credentials));
+    std::unique_ptr<cta::xrd::CtaRpcStream::Stub> client_stub = cta::xrd::CtaRpcStream::NewStub(spChannel);
     // Also create a ClientReadReactor instance to handle the command
     try {
       auto client_reactor = CtaAdminClientReadReactor(client_stub.get(), parsedCmd);

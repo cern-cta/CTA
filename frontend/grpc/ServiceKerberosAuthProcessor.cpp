@@ -55,6 +55,10 @@
   if (strAuthMetadataValue == "/cta.xrd.Negotiation/Negotiate") {
     return ::grpc::Status::OK;
   }
+  // Skip authentication for gRPC health checks
+  if (strAuthMetadataValue == "/grpc.health.v1.Health/Check") {
+    return ::grpc::Status::OK;
+  }
   /*
    * Checking the presence of the token.
    */
