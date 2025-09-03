@@ -31,7 +31,11 @@ add_executable(cta-frontend-grpc Main.cpp FrontendGrpcService.cpp
   ${PROJECT_SOURCE_DIR}/cmdline/CtaAdminTextFormatter.cpp
   ${PROJECT_SOURCE_DIR}/cmdline/CtaAdminCmdParser.cpp
   ${PROJECT_SOURCE_DIR}/common/config/Config.cpp
-  callback_api/CtaAdminServerWriteReactor.cpp) # This is needed for the Impl Class that serves the streaming commands
+  callback_api/CtaAdminServerWriteReactor.cpp
+  ServerNegotiationRequestHandler.cpp
+  ServiceKerberosAuthProcessor.cpp
+  TokenStorage.cpp
+  utils.cpp)
 # target_link_libraries(cta-frontend-grpc ProtoCtaFrontend)
 
 if(CTA_USE_PGSCHED)
@@ -68,10 +72,12 @@ add_executable(cta-admin-grpc
   ${PROJECT_SOURCE_DIR}/cmdline/CtaAdminParsedCmd.cpp
   ${PROJECT_SOURCE_DIR}/cmdline/CtaAdminTextFormatter.cpp
   ${PROJECT_SOURCE_DIR}/cmdline/CtaAdminCmdParser.cpp
+  ClientNegotiationRequestHandler.cpp
+  utils.cpp
 )
 
 target_link_libraries(cta-admin-grpc
-  ctacommon stdc++fs ctatapedaemoncommon ctascheduler ctaobjectstore ctacatalogue ctagrpc
+  ctacommon stdc++fs ctatapedaemoncommon ctascheduler ctaobjectstore ctacatalogue ctagrpc gssapi_krb5
 )
 # if(CTA_USE_PGSCHED)
 #   target_link_libraries(cta-admin-grpc ctaobjectstore)

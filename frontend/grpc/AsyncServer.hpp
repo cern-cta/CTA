@@ -42,6 +42,9 @@ public:
   
   AsyncServer() = delete;
   AsyncServer(cta::log::Logger& log, cta::catalogue::Catalogue& catalogue, TokenStorage& tokenStorage, const unsigned int uiPort, const unsigned int uiNoThreads = 1) ;
+  AsyncServer(cta::log::LogContext& lc, cta::catalogue::Catalogue& catalogue, TokenStorage& tokenStorage,
+              std::unique_ptr<::grpc::ServerBuilder> builder, std::unique_ptr<::grpc::ServerCompletionQueue> completionQueue,
+              const unsigned int uiPort, const unsigned int uiNoThreads = 1) ;
   ~AsyncServer();
   // Delete default construcotrs
   AsyncServer(const AsyncServer&)            = delete;
@@ -122,21 +125,22 @@ public:
   
   cta::frontend::grpc::request::IHandler& getHandler(const cta::frontend::grpc::request::Tag tag);
   void releaseHandler(const cta::frontend::grpc::request::Tag tag);
-  void run(const std::shared_ptr<::grpc::ServerCredentials>& spServerCredentials, const std::shared_ptr<::grpc::AuthMetadataProcessor>& spAuthProcessor);
+  void run(std::unique_ptr<::grpc::ServerBuilder>& server, const std::shared_ptr<::grpc::AuthMetadataProcessor>& spAuthProcessor); // assumes we've already registered the authProcessor..?
+  void startServerAndRun(const std::shared_ptr<::grpc::ServerCredentials>& spServerCredentials, const std::shared_ptr<::grpc::AuthMetadataProcessor>& spAuthProcessor);
 
 private:
   cta::log::Logger& m_log;
   cta::catalogue::Catalogue& m_catalogue;
   TokenStorage& m_tokenStorage;
-  std::unique_ptr<::grpc::ServerCompletionQueue> m_upCompletionQueue;
-  std::unique_ptr<::grpc::Server>                m_upServer;
-  unsigned int                                   m_uiPort;
+  std::unique_ptr<::grpc::ServerCompletionQueue> m_upCompletionQueue = nullptr;
+  std::unique_ptr<::grpc::Server>                m_upServer = nullptr;
+  unsigned int                                   m_uiPort = 0;
   const unsigned int                             m_uiNoThreads = 1; 
   std::unordered_map<cta::frontend::grpc::request::Tag, std::unique_ptr<cta::frontend::grpc::request::IHandler>> m_umapHandlers;
   std::vector<std::unique_ptr<::grpc::Service>>  m_vServices;
   std::mutex m_mtxLockHandler;
   std::mutex m_mtxLockService;
-  std::unique_ptr<::grpc::ServerBuilder> m_upServerBuilder;
+  std::unique_ptr<::grpc::ServerBuilder> m_upServerBuilder = nullptr;
   std::vector<std::thread> m_vThreads;
   std::shared_ptr<::grpc::AuthMetadataProcessor> m_spAuthProcessor = nullptr;
   //

@@ -90,7 +90,7 @@ void cta::frontend::grpc::server::AsyncServer::releaseHandler(const cta::fronten
   m_umapHandlers.erase(itorFind);
 }
 
-void cta::frontend::grpc::server::AsyncServer::run(const std::shared_ptr<::grpc::ServerCredentials>& spServerCredentials, const std::shared_ptr<::grpc::AuthMetadataProcessor>& spAuthProcessor) {
+void cta::frontend::grpc::server::AsyncServer::startServerAndRun(const std::shared_ptr<::grpc::ServerCredentials>& spServerCredentials, const std::shared_ptr<::grpc::AuthMetadataProcessor>& spAuthProcessor) {
   log::LogContext lc(m_log);
   m_upCompletionQueue = m_upServerBuilder->AddCompletionQueue();
   // 
@@ -118,8 +118,14 @@ void cta::frontend::grpc::server::AsyncServer::run(const std::shared_ptr<::grpc:
    * strAddress: Valid values include dns:///localhost:1234, 192.168.1.1:31416, dns:///[::1]:27182, etc.
    * spServerCredentials: The credentials associated with the server. 
    */
-  m_upServerBuilder->AddListeningPort(strAddress, spServerCredentials);
-  m_upServer = m_upServerBuilder->BuildAndStart();
+  m_upServerBuilder->AddListeningPort(strAddress, spServerCredentials); // not needed, will be done by main.cpp
+  m_upServer = m_upServerBuilder->BuildAndStart(); // this can be called by the Main.cpp for the grpc frontend
+  
+  run(server, spAuthProcessor);
+  
+}
+
+void cta::frontend::grpc::server::AsyncServer::run(std::unique_ptr<::grpc::Server> server, const std::shared_ptr<::grpc::AuthMetadataProcessor>& spAuthProcessor) {
   // Initialise all registered handlers
   for(const auto &item : m_umapHandlers) {
     const std::unique_ptr<cta::frontend::grpc::request::IHandler>& upIHandler = item.second;
@@ -143,7 +149,6 @@ void cta::frontend::grpc::server::AsyncServer::run(const std::shared_ptr<::grpc:
   for (std::thread& worker : m_vThreads) {
     worker.join();
   }
-  
 }
 
 void cta::frontend::grpc::server::AsyncServer::process(unsigned int uiId) {

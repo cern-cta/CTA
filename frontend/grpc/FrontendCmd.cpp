@@ -265,7 +265,7 @@ int cta::frontend::grpc::server::FrontendCmd::main(const int argc, char** argv) 
     
     std::shared_ptr<ServiceKerberosAuthProcessor> spAuthProcessor = std::make_shared<ServiceKerberosAuthProcessor>(tokenStorage);
     
-    server.run(spServerCredentials, spAuthProcessor);
+    server.startServerAndRun(spServerCredentials, spAuthProcessor);
   } catch(const cta::exception::Exception& e) {
     log::ScopedParamContainer params(lc);
     params.add("exceptionMessage", e.getMessageValue());

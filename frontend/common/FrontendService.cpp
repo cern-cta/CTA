@@ -388,6 +388,10 @@ FrontendService::FrontendService(const std::string& configFilename) : m_archiveF
   if (TlsChain.has_value()) {
     m_tlsChain = TlsChain.value();
   }
+  auto keytab = config.getOptionValueStr("grpc.keytab");
+  if (keytab.has_value()) {
+    m_keytab = keytab.value();
+  }
   auto port = config.getOptionValueStr("grpc.port");
   if (port.has_value()) {
     m_port = port.value();
