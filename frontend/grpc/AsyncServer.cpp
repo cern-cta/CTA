@@ -39,6 +39,21 @@ cta::frontend::grpc::server::AsyncServer::AsyncServer(cta::log::Logger& log,
                                                                   
 }
 
+cta::frontend::grpc::server::AsyncServer::AsyncServer(cta::log::LogContext& lc, cta::catalogue::Catalogue& catalogue, TokenStorage& tokenStorage,
+              std::unique_ptr<::grpc::ServerBuilder> builder, std::unique_ptr<::grpc::ServerCompletionQueue> completionQueue,
+              const unsigned int uiPort, const unsigned int uiNoThreads) : 
+              m_log(lc.logger()),
+              m_lc(lc),
+              m_catalogue(catalogue),
+              m_tokenStorage(tokenStorage),
+              m_upCompletionQueue(std::move(completionQueue)),
+              m_uiPort(uiPort),
+              m_uiNoThreads(uiNoThreads),
+              m_upServerBuilder(builder) {
+}
+
+
+
 cta::frontend::grpc::server::AsyncServer::~AsyncServer() {
   if (m_upServer) {
     m_upServer->Shutdown();
@@ -90,6 +105,32 @@ void cta::frontend::grpc::server::AsyncServer::releaseHandler(const cta::fronten
   m_umapHandlers.erase(itorFind);
 }
 
+void cta::frontend::grpc::server::AsyncServer::run(std::unique_ptr<::grpc::Server> server, const std::shared_ptr<::grpc::AuthMetadataProcessor>& spAuthProcessor) {
+  // Initialise all registered handlers
+  log::LogContext lc(m_log);
+  for(const auto &item : m_umapHandlers) {
+    const std::unique_ptr<cta::frontend::grpc::request::IHandler>& upIHandler = item.second;
+    upIHandler.get()->next(true);
+    //TODO: Log names of initialised handlers;
+  } 
+  // Proceed to the server's main loop.
+  m_vThreads.resize(m_uiNoThreads);
+  unsigned int uiThreadId = 0;
+  for (std::thread& worker : m_vThreads) {
+    std::thread t(&AsyncServer::process, this, uiThreadId);
+    worker.swap(t);
+    uiThreadId++;
+  }
+  {
+    log::ScopedParamContainer params(lc);
+    params.add("threads", m_uiNoThreads);
+    lc.log(cta::log::INFO, "In grpc::AsyncServer::run(): Server is listening.");
+  }
+  for (std::thread& worker : m_vThreads) {
+    worker.join();
+  }
+}
+
 void cta::frontend::grpc::server::AsyncServer::startServerAndRun(const std::shared_ptr<::grpc::ServerCredentials>& spServerCredentials, const std::shared_ptr<::grpc::AuthMetadataProcessor>& spAuthProcessor) {
   log::LogContext lc(m_log);
   m_upCompletionQueue = m_upServerBuilder->AddCompletionQueue();
@@ -121,34 +162,8 @@ void cta::frontend::grpc::server::AsyncServer::startServerAndRun(const std::shar
   m_upServerBuilder->AddListeningPort(strAddress, spServerCredentials); // not needed, will be done by main.cpp
   m_upServer = m_upServerBuilder->BuildAndStart(); // this can be called by the Main.cpp for the grpc frontend
   
-  run(server, spAuthProcessor);
+  run(std::move(m_upServer), m_spAuthProcessor);
   
-}
-
-void cta::frontend::grpc::server::AsyncServer::run(std::unique_ptr<::grpc::Server> server, const std::shared_ptr<::grpc::AuthMetadataProcessor>& spAuthProcessor) {
-  // Initialise all registered handlers
-  for(const auto &item : m_umapHandlers) {
-    const std::unique_ptr<cta::frontend::grpc::request::IHandler>& upIHandler = item.second;
-    upIHandler.get()->next(true);
-    //TODO: Log names of initialised handlers;
-  } 
-  // Proceed to the server's main loop.
-  m_vThreads.resize(m_uiNoThreads);
-  unsigned int uiThreadId = 0;
-  for (std::thread& worker : m_vThreads) {
-    std::thread t(&AsyncServer::process, this, uiThreadId);
-    worker.swap(t);
-    uiThreadId++;
-  }
-  {
-    log::ScopedParamContainer params(lc);
-    params.add("address", strAddress);
-    params.add("threads", m_uiNoThreads);
-    lc.log(cta::log::INFO, "In grpc::AsyncServer::run(): Server is listening.");
-  }
-  for (std::thread& worker : m_vThreads) {
-    worker.join();
-  }
 }
 
 void cta::frontend::grpc::server::AsyncServer::process(unsigned int uiId) {

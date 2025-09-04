@@ -238,7 +238,7 @@ int main(const int argc, char *const *const argv) {
     std::string strKeytab;
     std::string strService;
 
-    strKeytab = svc.getFrontendService().getKeytab();
+    strKeytab = svc.getFrontendService().getKeytab().value_or("");
     
     if (strKeytab.empty()) {
         strKeytab = "/etc/cta/cta-frontend.keytab"; // default path
@@ -254,7 +254,7 @@ int main(const int argc, char *const *const argv) {
     cq = builder.AddCompletionQueue();
 
     cta::frontend::grpc::server::AsyncServer negotiationServer(lc, svc.getFrontendService().getCatalogue(),
-                                                    tokenStorage, builder, cq);
+                                                    tokenStorage, builder, std::move(cq));
     // Register services & run
     try {
         // SERVICE: Negotiation
