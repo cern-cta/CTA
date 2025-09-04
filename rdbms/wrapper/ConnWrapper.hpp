@@ -84,7 +84,7 @@ public:
   virtual void rollback() = 0;
 
   /**
-   * Returns the names of all the column and their type as a map for the given 
+   * Returns the names of all the column and their type as a map for the given
    * table in the database schema.
    *
    * @param tableName The table name to get the columns.
@@ -142,21 +142,21 @@ public:
   /**
    * Returns the names of all the tables that have been set as PARALLEL
    * in alphabetical order.
-   * 
+   *
    * If the underlying database technologies does not support PARALLEL
    * them this method simply returns an empty list.
-   * 
+   *
    * @return the names of all the tables that have been set as PARALLEL
-   * in alphabetical order. 
+   * in alphabetical order.
    */
   virtual std::list<std::string> getParallelTableNames() = 0;
 
   /**
    * Returns the Constraint names of a given table in the database schema
-   * 
+   *
    * If the underlying database technologies does not support constraints informations
    * this method simply returns an empty list.
-   * 
+   *
    * @param tableName the table name to get the constraint names from
    * @return the list of the names of the constraints that the given table has.
    */
@@ -165,30 +165,30 @@ public:
   /**
    *
    * Returns the stored procedure names of the database
-   * 
+   *
    * If the underlying database technologies does not support stored procedures informations
    * this method simply returns an empty list.
-   * 
+   *
    * @return the list of the names of the stored procedures in the database
    */
   virtual std::list<std::string> getStoredProcedureNames() = 0;
 
   /**
    * Returns the synonym names of the database
-   * 
+   *
    * If the underlying database technologies does not support synonym informations
    * this method simply returns an empty list.
-   * 
+   *
    * @return the list of the names of the synonyms in the database
    */
   virtual std::list<std::string> getSynonymNames() = 0;
 
   /**
    * Returns the type names of the database
-   * 
+   *
    * If the underlying database technologies does not support type informations
    * this method simply returns an empty list.
-   * 
+   *
    * @return the list of the names of the types in the database
    */
   virtual std::list<std::string> getTypeNames() = 0;
@@ -202,6 +202,17 @@ public:
    * @return the list of the names of the views in the database
    */
   virtual std::list<std::string> getViewNames() = 0;
+
+    /**
+   * @brief Get the logical database namespace.
+   *
+   * This should return the OpenTelemetry semantic convention attribute
+   * `db.namespace`. It identifies the logical database, schema, or
+   * namespace where the operation is executed.
+   *
+   * @return A string representing the database namespace.
+   */
+  virtual std::string getDbNamespace() const = 0;
 
 };  // class ConnWrapper
 

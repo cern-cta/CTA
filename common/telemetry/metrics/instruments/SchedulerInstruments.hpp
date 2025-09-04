@@ -21,7 +21,6 @@
 
 namespace cta::telemetry::metrics {
 
-extern std::unique_ptr<opentelemetry::metrics::Counter<uint64_t>> schedulerQueueingCounter;
-extern std::unique_ptr<opentelemetry::metrics::Histogram<uint64_t>> objectstoreLockAcquireDurationHistogram;
+extern std::unique_ptr<opentelemetry::metrics::Counter<uint64_t>> schedulerQueueingCount;
 
 }  // namespace cta::telemetry::metrics

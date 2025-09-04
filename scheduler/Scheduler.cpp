@@ -42,7 +42,7 @@
 #include "common/exception/NonRetryableError.hpp"
 #include "common/exception/NoSuchObject.hpp"
 #include "common/exception/UserError.hpp"
-#include "common/telemetry/TelemetryConstants.hpp"
+#include "common/semconv/SemConv.hpp"
 #include "common/telemetry/metrics/instruments/SchedulerInstruments.hpp"
 #include "common/Timer.hpp"
 #include "common/utils/utils.hpp"
@@ -197,10 +197,9 @@ std::string Scheduler::queueArchiveWithGivenId(const uint64_t archiveFileId,
   request.checksumBlob.addFirstChecksumToLog(spc);
   lc.log(log::INFO, "In Scheduler::queueArchiveWithGivenId(): Queued archive request");
 
-  cta::telemetry::metrics::schedulerQueueingCounter->Add(1, {
-    {cta::telemetry::constants::kTransferTypeKey, cta::telemetry::constants::kTransferTypeArchive},
-    {cta::telemetry::constants::kEventTypeKey, cta::telemetry::constants::kEventTypeEnqueue},
-    {cta::telemetry::constants::kSchedulerBackendNameKey, m_schedulerBackendName}});
+  cta::telemetry::metrics::schedulerQueueingCount->Add(1, {
+    {cta::semconv::kTransferDirection, cta::semconv::kTransferDirectionArchive},
+    {cta::semconv::kEventName, cta::semconv::kEventNameEnqueue}});
   return archiveReqAddr;
 }
 
@@ -296,10 +295,9 @@ std::string Scheduler::queueRetrieve(const std::string& instanceName,
     spc.add("activity", request.activity.value());
   }
   lc.log(log::INFO, "In Scheduler::queueRetrieve(): Queued retrieve request");
-  cta::telemetry::metrics::schedulerQueueingCounter->Add(1, {
-    {cta::telemetry::constants::kTransferTypeKey, cta::telemetry::constants::kTransferTypeRetrieve},
-    {cta::telemetry::constants::kEventTypeKey, cta::telemetry::constants::kEventTypeEnqueue},
-    {cta::telemetry::constants::kSchedulerBackendNameKey, m_schedulerBackendName}});
+  cta::telemetry::metrics::schedulerQueueingCount->Add(1, {
+    {cta::semconv::kTransferDirection, cta::semconv::kTransferDirectionRetrieve},
+    {cta::semconv::kEventName, cta::semconv::kEventNameEnqueue}});
   return requestInfo.requestId;
 }
 
@@ -326,10 +324,9 @@ void Scheduler::deleteArchive([[maybe_unused]] std::string_view instanceName,
   tl.addToLog(spc);
   lc.log(log::INFO, "In Scheduler::deleteArchive(): success.");
 
-  cta::telemetry::metrics::schedulerQueueingCounter->Add(1, {
-    {cta::telemetry::constants::kTransferTypeKey, cta::telemetry::constants::kTransferTypeArchive},
-    {cta::telemetry::constants::kEventTypeKey, cta::telemetry::constants::kEventTypeCancel},
-    {cta::telemetry::constants::kSchedulerBackendNameKey, m_schedulerBackendName}});
+  cta::telemetry::metrics::schedulerQueueingCount->Add(1, {
+    {cta::semconv::kTransferDirection, cta::semconv::kTransferDirectionArchive},
+    {cta::semconv::kEventName, cta::semconv::kEventNameCancel}});
 }
 
 //------------------------------------------------------------------------------
@@ -339,10 +336,9 @@ void Scheduler::abortRetrieve(const std::string& instanceName,
                               const common::dataStructures::CancelRetrieveRequest& request,
                               log::LogContext& lc) {
   m_db.cancelRetrieve(instanceName, request, lc);
-  cta::telemetry::metrics::schedulerQueueingCounter->Add(1, {
-    {cta::telemetry::constants::kTransferTypeKey, cta::telemetry::constants::kTransferTypeRetrieve},
-    {cta::telemetry::constants::kEventTypeKey, cta::telemetry::constants::kEventTypeCancel},
-    {cta::telemetry::constants::kSchedulerBackendNameKey, m_schedulerBackendName}});
+  cta::telemetry::metrics::schedulerQueueingCount->Add(1, {
+    {cta::semconv::kTransferDirection, cta::semconv::kTransferDirectionRetrieve},
+    {cta::semconv::kEventName, cta::semconv::kEventNameCancel}});
 }
 
 void Scheduler::deleteFailed(const std::string& objectId, log::LogContext& lc) {

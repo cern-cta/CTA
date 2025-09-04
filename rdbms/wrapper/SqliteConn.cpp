@@ -42,6 +42,7 @@ SqliteConn::SqliteConn(const std::string &filename) {
       sqlite3_close(m_sqliteConn);
       throw exception::Exception(msg);
     }
+    m_dbNamespace = filename;
 
     // Enable extended result codes
     sqlite3_extended_result_codes(m_sqliteConn, 1);
@@ -202,13 +203,13 @@ void SqliteConn::rollback() {
 void SqliteConn::printSchema(std::ostream &os) {
   try {
     const char* const sql = R"SQL(
-      SELECT 
-        NAME AS NAME, 
-        TYPE AS TYPE 
-      FROM 
-        SQLITE_MASTER 
-      ORDER BY 
-        TYPE, 
+      SELECT
+        NAME AS NAME,
+        TYPE AS TYPE
+      FROM
+        SQLITE_MASTER
+      ORDER BY
+        TYPE,
         NAME
     )SQL";
     auto stmt = createStmt(sql);
@@ -232,17 +233,17 @@ std::map<std::string, std::string, std::less<>> SqliteConn::getColumns(const std
   try {
     std::map<std::string, std::string, std::less<>> columnNamesAndTypes;
     const char* const sql = R"SQL(
-      SELECT 
-        SQL AS SQL 
-      FROM 
+      SELECT
+        SQL AS SQL
+      FROM
         (
-          SELECT TBL_NAME, TYPE, SQL FROM SQLITE_MASTER 
-            UNION ALL 
+          SELECT TBL_NAME, TYPE, SQL FROM SQLITE_MASTER
+            UNION ALL
           SELECT TBL_NAME, TYPE, SQL FROM SQLITE_TEMP_MASTER
-        ) 
-      WHERE 
-        TBL_NAME = :TABLE_NAME 
-      AND 
+        )
+      WHERE
+        TBL_NAME = :TABLE_NAME
+      AND
       TYPE = 'table'
     )SQL";
     const std::string columnTypes = "NUMERIC|"
@@ -293,17 +294,17 @@ std::map<std::string, std::string, std::less<>> SqliteConn::getColumns(const std
 std::list<std::string> SqliteConn::getTableNames() {
   try {
     const char* const sql = R"SQL(
-      SELECT 
-        NAME AS NAME 
-      FROM 
+      SELECT
+        NAME AS NAME
+      FROM
         (
-          SELECT NAME, TYPE FROM SQLITE_MASTER 
-            UNION ALL 
+          SELECT NAME, TYPE FROM SQLITE_MASTER
+            UNION ALL
           SELECT NAME, TYPE FROM SQLITE_TEMP_MASTER
-        ) 
-      WHERE 
-        TYPE = 'table' 
-      ORDER BY 
+        )
+      WHERE
+        TYPE = 'table'
+      ORDER BY
         NAME
     )SQL";
     auto stmt = createStmt(sql);
@@ -327,17 +328,17 @@ std::list<std::string> SqliteConn::getTableNames() {
 std::list<std::string> SqliteConn::getIndexNames() {
   try {
     const char* const sql = R"SQL(
-      SELECT 
-        NAME AS NAME 
-      FROM 
+      SELECT
+        NAME AS NAME
+      FROM
         (
-          SELECT NAME, TYPE FROM SQLITE_MASTER 
-            UNION ALL 
+          SELECT NAME, TYPE FROM SQLITE_MASTER
+            UNION ALL
           SELECT NAME, TYPE FROM SQLITE_TEMP_MASTER
-        ) 
-      WHERE 
-        TYPE = 'index' 
-      ORDER BY 
+        )
+      WHERE
+        TYPE = 'index'
+      ORDER BY
         NAME
     )SQL";
     auto stmt = createStmt(sql);
@@ -394,16 +395,16 @@ std::list<std::string> SqliteConn::getConstraintNames(const std::string &tableNa
   try {
     std::list<std::string> constraintNames;
     const char* const sql = R"SQL(
-      SELECT 
-        SQL AS SQL 
-      FROM 
+      SELECT
+        SQL AS SQL
+      FROM
         (
-          SELECT SQL, TYPE, NAME FROM SQLITE_MASTER 
-            UNION ALL 
+          SELECT SQL, TYPE, NAME FROM SQLITE_MASTER
+            UNION ALL
           SELECT SQL, TYPE, NAME FROM SQLITE_TEMP_MASTER
-        ) 
-      WHERE TYPE = 'table' 
-        AND NAME = :TABLE_NAME 
+        )
+      WHERE TYPE = 'table'
+        AND NAME = :TABLE_NAME
     )SQL";
     auto stmt = createStmt(sql);
     stmt->bindString(":TABLE_NAME", tableName);
@@ -460,6 +461,13 @@ std::list<std::string> SqliteConn::getTypeNames() {
 //------------------------------------------------------------------------------
 std::list<std::string> SqliteConn::getViewNames() {
   return std::list<std::string>();
+}
+
+//------------------------------------------------------------------------------
+// getDbNamespace
+//------------------------------------------------------------------------------
+std::string SqliteConn::getDbNamespace() const {
+  return m_dbNamespace;
 }
 
 } // namespace cta::rdbms::wrapper
