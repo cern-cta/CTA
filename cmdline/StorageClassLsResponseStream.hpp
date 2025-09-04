@@ -13,7 +13,7 @@ class StorageClassLsResponseStream : public CtaAdminResponseStream {
 public:
   StorageClassLsResponseStream(cta::catalogue::Catalogue& catalogue,
                                cta::Scheduler& scheduler,
-                               const std::string& instanceName);
+                               const frontend::AdminCmdStream& requestMsg);
 
   bool isDone() override;
   cta::xrd::Data next() override;
@@ -27,11 +27,12 @@ private:
 
 StorageClassLsResponseStream::StorageClassLsResponseStream(cta::catalogue::Catalogue& catalogue,
                                                            cta::Scheduler& scheduler,
-                                                           const std::string& instanceName)
-    : CtaAdminResponseStream(catalogue, scheduler, instanceName) {}
+                                                           const frontend::AdminCmdStream& requestMsg)
+    : CtaAdminResponseStream(catalogue, scheduler, requestMsg.getInstanceName()),
+      m_storageClasses(buildStorageClassList(requestMsg.getAdminCmd())) {}
 
 void StorageClassLsResponseStream::init(const admin::AdminCmd& admincmd) {
-  m_storageClasses = buildStorageClassList(admincmd);
+  // Logic moved to constructor
 }
 
 std::list<cta::common::dataStructures::StorageClass>

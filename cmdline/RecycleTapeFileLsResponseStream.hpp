@@ -15,7 +15,7 @@ class RecycleTapeFileLsResponseStream : public CtaAdminResponseStream {
 public:
   RecycleTapeFileLsResponseStream(cta::catalogue::Catalogue& catalogue,
                                   cta::Scheduler& scheduler,
-                                  const std::string& instanceName);
+                                  const frontend::AdminCmdStream& requestMsg);
   bool isDone() override;
   cta::xrd::Data next() override;
   void init(const admin::AdminCmd& admincmd) override;
@@ -26,10 +26,9 @@ private:
 
 RecycleTapeFileLsResponseStream::RecycleTapeFileLsResponseStream(cta::catalogue::Catalogue& catalogue,
                                                                  cta::Scheduler& scheduler,
-                                                                 const std::string& instanceName)
-    : CtaAdminResponseStream(catalogue, scheduler, instanceName) {}
-
-void RecycleTapeFileLsResponseStream::init(const admin::AdminCmd& admincmd) {
+                                                                 const frontend::AdminCmdStream& requestMsg)
+    : CtaAdminResponseStream(catalogue, scheduler, requestMsg.getInstanceName()) {
+  const admin::AdminCmd& admincmd = requestMsg.getAdminCmd();
   using namespace cta::admin;
 
   cta::frontend::AdminCmdOptions request;
@@ -71,6 +70,10 @@ void RecycleTapeFileLsResponseStream::init(const admin::AdminCmd& admincmd) {
   while (fileRecycleLogItor.hasMore()) {
     m_fileRecycleLogs.emplace_back(fileRecycleLogItor.next());
   }
+}
+
+void RecycleTapeFileLsResponseStream::init(const admin::AdminCmd& admincmd) {
+  // Logic moved to constructor
 }
 
 bool RecycleTapeFileLsResponseStream::isDone() {

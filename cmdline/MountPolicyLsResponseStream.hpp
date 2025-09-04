@@ -12,7 +12,7 @@ class MountPolicyLsResponseStream : public CtaAdminResponseStream {
 public:
   MountPolicyLsResponseStream(cta::catalogue::Catalogue& catalogue,
                               cta::Scheduler& scheduler,
-                              const std::string& instanceName);
+                              const frontend::AdminCmdStream& requestMsg);
 
   bool isDone() override;
   cta::xrd::Data next() override;
@@ -24,12 +24,12 @@ private:
 
 MountPolicyLsResponseStream::MountPolicyLsResponseStream(cta::catalogue::Catalogue& catalogue,
                                                          cta::Scheduler& scheduler,
-                                                         const std::string& instanceName)
-    : CtaAdminResponseStream(catalogue, scheduler, instanceName) {}
+                                                         const frontend::AdminCmdStream& requestMsg)
+    : CtaAdminResponseStream(catalogue, scheduler, requestMsg.getInstanceName()),
+      m_mountPolicies(catalogue.MountPolicy()->getMountPolicies()) {}
 
 void MountPolicyLsResponseStream::init(const admin::AdminCmd& admincmd) {
-  // Mount policy ls doesn't have specific search criteria - it just gets all policies
-  m_mountPolicies = m_catalogue.MountPolicy()->getMountPolicies();
+  // Logic moved to constructor
 }
 
 bool MountPolicyLsResponseStream::isDone() {

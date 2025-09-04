@@ -18,7 +18,7 @@ class ShowQueuesResponseStream : public CtaAdminResponseStream {
 public:
   ShowQueuesResponseStream(cta::catalogue::Catalogue& catalogue,
                            cta::Scheduler& scheduler,
-                           const std::string& instanceName,
+                           const frontend::AdminCmdStream& requestMsg,
                            cta::log::LogContext& lc);
 
   bool isDone() override;
@@ -34,19 +34,21 @@ private:
 
 ShowQueuesResponseStream::ShowQueuesResponseStream(cta::catalogue::Catalogue& catalogue,
                                                    cta::Scheduler& scheduler,
-                                                   const std::string& instanceName,
+                                                   const frontend::AdminCmdStream& requestMsg,
                                                    cta::log::LogContext& lc)
-    : CtaAdminResponseStream(catalogue, scheduler, instanceName),
+    : CtaAdminResponseStream(catalogue, scheduler, requestMsg.getInstanceName()),
       m_lc(lc),
       m_schedulerBackendName(scheduler.getSchedulerBackendName()) {
   if (!m_schedulerBackendName) {
     m_lc.log(cta::log::ERR,
              "ShowQueuesStream constructor, the cta.scheduler_backend_name is not set in the frontend configuration.");
   }
+  
+  m_queuesAndMountsList = m_scheduler.getQueuesAndMountSummaries(m_lc);
 }
 
 void ShowQueuesResponseStream::init(const admin::AdminCmd& admincmd) {
-  m_queuesAndMountsList = m_scheduler.getQueuesAndMountSummaries(m_lc);
+  // Logic moved to constructor
 }
 
 bool ShowQueuesResponseStream::isDone() {

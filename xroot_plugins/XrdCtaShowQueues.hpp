@@ -49,8 +49,8 @@ ShowQueuesStream::ShowQueuesStream(const frontend::AdminCmdStream& requestMsg,
                                    cta::catalogue::Catalogue& catalogue,
                                    cta::Scheduler& scheduler,
                                    log::LogContext& lc)
-    : XrdCtaStream(catalogue, scheduler) {
-  initializeStream<cta::cmdline::ShowQueuesResponseStream>(requestMsg, LOG_SUFFIX, lc);
+    : XrdCtaStream(catalogue, scheduler, std::make_unique<cta::cmdline::ShowQueuesResponseStream>(catalogue, scheduler, requestMsg, lc)) {
+  XrdSsiPb::Log::Msg(XrdSsiPb::Log::DEBUG, LOG_SUFFIX, " constructor");
 }
 
 int ShowQueuesStream::fillBuffer(XrdSsiPb::OStreamBuffer<Data> *streambuf) {

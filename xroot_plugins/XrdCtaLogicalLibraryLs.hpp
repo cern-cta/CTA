@@ -35,8 +35,10 @@ private:
 LogicalLibraryLsStream::LogicalLibraryLsStream(const frontend::AdminCmdStream& requestMsg,
                                                cta::catalogue::Catalogue& catalogue,
                                                cta::Scheduler& scheduler)
-    : XrdCtaStream(catalogue, scheduler) {
-  initializeStream<cta::cmdline::LogicalLibraryLsResponseStream>(requestMsg, LOG_SUFFIX);
+    : XrdCtaStream(catalogue, scheduler, std::make_unique<cta::cmdline::LogicalLibraryLsResponseStream>(catalogue, scheduler, requestMsg)) {
+  // initializeStream<cta::cmdline::LogicalLibraryLsResponseStream>(requestMsg, LOG_SUFFIX);
+    XrdSsiPb::Log::Msg(XrdSsiPb::Log::DEBUG, LOG_SUFFIX, " constructor");
+
 }
 
 } // namespace cta::xrd

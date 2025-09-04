@@ -12,7 +12,7 @@ class DiskInstanceSpaceLsResponseStream : public CtaAdminResponseStream {
 public:
   DiskInstanceSpaceLsResponseStream(cta::catalogue::Catalogue& catalogue,
                                     cta::Scheduler& scheduler,
-                                    const std::string& instanceName);
+                                    const frontend::AdminCmdStream& requestMsg);
 
   bool isDone() override;
   cta::xrd::Data next() override;
@@ -24,11 +24,12 @@ private:
 
 DiskInstanceSpaceLsResponseStream::DiskInstanceSpaceLsResponseStream(cta::catalogue::Catalogue& catalogue,
                                                                      cta::Scheduler& scheduler,
-                                                                     const std::string& instanceName)
-    : CtaAdminResponseStream(catalogue, scheduler, instanceName) {}
+                                                                     const frontend::AdminCmdStream& requestMsg)
+    : CtaAdminResponseStream(catalogue, scheduler, requestMsg.getInstanceName()),
+      m_diskInstanceSpaces(catalogue.DiskInstanceSpace()->getAllDiskInstanceSpaces()) {}
 
 void DiskInstanceSpaceLsResponseStream::init(const admin::AdminCmd& admincmd) {
-  m_diskInstanceSpaces = m_catalogue.DiskInstanceSpace()->getAllDiskInstanceSpaces();
+  // Logic moved to constructor
 }
 
 bool DiskInstanceSpaceLsResponseStream::isDone() {

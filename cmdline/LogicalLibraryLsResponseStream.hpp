@@ -13,7 +13,7 @@ class LogicalLibraryLsResponseStream : public CtaAdminResponseStream {
 public:
   LogicalLibraryLsResponseStream(cta::catalogue::Catalogue& catalogue,
                                  cta::Scheduler& scheduler,
-                                 const std::string& instanceName);
+                                 const frontend::AdminCmdStream& admincmd);
 
   bool isDone() override;
   cta::xrd::Data next() override;
@@ -27,11 +27,11 @@ private:
 
 LogicalLibraryLsResponseStream::LogicalLibraryLsResponseStream(cta::catalogue::Catalogue& catalogue,
                                                                cta::Scheduler& scheduler,
-                                                               const std::string& instanceName)
-    : CtaAdminResponseStream(catalogue, scheduler, instanceName) {}
+                                                               const frontend::AdminCmdStream& admincmd)
+    : CtaAdminResponseStream(catalogue, scheduler, admincmd.getInstanceName()), m_logicalLibraries(buildLogicalLibraryList(admincmd.getAdminCmd())) {}
 
 void LogicalLibraryLsResponseStream::init(const admin::AdminCmd& admincmd) {
-  m_logicalLibraries = buildLogicalLibraryList(admincmd);
+  // Logic moved to constructor
 }
 
 std::list<cta::common::dataStructures::LogicalLibrary>

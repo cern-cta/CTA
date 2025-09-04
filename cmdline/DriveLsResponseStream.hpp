@@ -18,7 +18,7 @@ class DriveLsResponseStream : public CtaAdminResponseStream {
 public:
   DriveLsResponseStream(cta::catalogue::Catalogue& catalogue,
                         cta::Scheduler& scheduler,
-                        const std::string& instanceName,
+                        const frontend::AdminCmdStream& requestMsg,
                         cta::log::LogContext& lc);
 
   bool isDone() override;
@@ -37,13 +37,12 @@ private:
 
 DriveLsResponseStream::DriveLsResponseStream(cta::catalogue::Catalogue& catalogue,
                                              cta::Scheduler& scheduler,
-                                             const std::string& instanceName,
+                                             const frontend::AdminCmdStream& requestMsg,
                                              cta::log::LogContext& lc)
-    : CtaAdminResponseStream(catalogue, scheduler, instanceName),
+    : CtaAdminResponseStream(catalogue, scheduler, requestMsg.getInstanceName()),
       m_lc(lc),
-      m_listAllDrives(false) {}
-
-void DriveLsResponseStream::init(const admin::AdminCmd& admincmd) {
+      m_listAllDrives(false) {
+  const admin::AdminCmd& admincmd = requestMsg.getAdminCmd();
   using namespace cta::admin;
 
   cta::frontend::AdminCmdOptions request;
@@ -123,6 +122,10 @@ void DriveLsResponseStream::init(const admin::AdminCmd& admincmd) {
   if (driveRegexOpt && m_tapeDrives.empty()) {
     throw std::invalid_argument(std::string("Drive ") + driveRegexOpt.value() + " not found.");
   }
+}
+
+void DriveLsResponseStream::init(const admin::AdminCmd& admincmd) {
+  // Logic moved to constructor
 }
 
 bool DriveLsResponseStream::isDone() {

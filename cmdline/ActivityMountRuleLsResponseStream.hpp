@@ -15,7 +15,7 @@ class ActivityMountRuleLsResponseStream : public CtaAdminResponseStream {
 public:
   ActivityMountRuleLsResponseStream(cta::catalogue::Catalogue& catalogue,
                                     cta::Scheduler& scheduler,
-                                    const std::string& instanceName);
+                                    const frontend::AdminCmdStream& requestMsg);
 
   bool isDone() override;
   cta::xrd::Data next() override;
@@ -27,11 +27,12 @@ private:
 
 ActivityMountRuleLsResponseStream::ActivityMountRuleLsResponseStream(cta::catalogue::Catalogue& catalogue,
                                                                      cta::Scheduler& scheduler,
-                                                                     const std::string& instanceName)
-    : CtaAdminResponseStream(catalogue, scheduler, instanceName) {}
+                                                                     const frontend::AdminCmdStream& requestMsg)
+    : CtaAdminResponseStream(catalogue, scheduler, requestMsg.getInstanceName()),
+      m_activityMountRules(catalogue.RequesterActivityMountRule()->getRequesterActivityMountRules()) {}
 
 void ActivityMountRuleLsResponseStream::init(const admin::AdminCmd& admincmd) {
-  m_activityMountRules = m_catalogue.RequesterActivityMountRule()->getRequesterActivityMountRules();
+  // Logic moved to constructor
 }
 
 bool ActivityMountRuleLsResponseStream::isDone() {

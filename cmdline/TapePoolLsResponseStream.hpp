@@ -14,7 +14,7 @@ class TapePoolLsResponseStream : public CtaAdminResponseStream {
 public:
   TapePoolLsResponseStream(cta::catalogue::Catalogue& catalogue,
                            cta::Scheduler& scheduler,
-                           const std::string& instanceName);
+                           const frontend::AdminCmdStream& requestMsg);
 
   bool isDone() override;
   cta::xrd::Data next() override;
@@ -28,11 +28,12 @@ private:
 
 TapePoolLsResponseStream::TapePoolLsResponseStream(cta::catalogue::Catalogue& catalogue,
                                                    cta::Scheduler& scheduler,
-                                                   const std::string& instanceName)
-    : CtaAdminResponseStream(catalogue, scheduler, instanceName) {}
+                                                   const frontend::AdminCmdStream& requestMsg)
+    : CtaAdminResponseStream(catalogue, scheduler, requestMsg.getInstanceName()),
+      m_tapePools(buildTapePoolList(requestMsg.getAdminCmd())) {}
 
 void TapePoolLsResponseStream::init(const admin::AdminCmd& admincmd) {
-  m_tapePools = buildTapePoolList(admincmd);
+  // Logic moved to constructor
 }
 
 std::list<cta::catalogue::TapePool> TapePoolLsResponseStream::buildTapePoolList(const admin::AdminCmd& admincmd) {

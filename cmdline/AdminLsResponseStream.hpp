@@ -14,7 +14,7 @@ class AdminLsResponseStream : public CtaAdminResponseStream {
 public:
   AdminLsResponseStream(cta::catalogue::Catalogue& catalogue,
                         cta::Scheduler& scheduler,
-                        const std::string& instanceName);
+                        const frontend::AdminCmdStream& requestMsg);
 
   bool isDone() override;
   cta::xrd::Data next() override;
@@ -26,11 +26,12 @@ private:
 
 AdminLsResponseStream::AdminLsResponseStream(cta::catalogue::Catalogue& catalogue,
                                              cta::Scheduler& scheduler,
-                                             const std::string& instanceName)
-    : CtaAdminResponseStream(catalogue, scheduler, instanceName) {}
+                                             const frontend::AdminCmdStream& requestMsg)
+    : CtaAdminResponseStream(catalogue, scheduler, requestMsg.getInstanceName()),
+      m_adminUsers(catalogue.AdminUser()->getAdminUsers()) {}
 
 void AdminLsResponseStream::init(const admin::AdminCmd& admincmd) {
-  m_adminUsers = m_catalogue.AdminUser()->getAdminUsers();
+  // Logic moved to constructor
 }
 
 bool AdminLsResponseStream::isDone() {

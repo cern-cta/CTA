@@ -4,6 +4,7 @@
 #include "catalogue/TapeSearchCriteria.hpp"
 #include "common/dataStructures/Tape.hpp"
 #include "common/log/LogContext.hpp"
+
 #include <list>
 #include "common/dataStructures/LabelFormatSerDeser.hpp"
 
@@ -15,7 +16,7 @@ class TapeLsResponseStream : public CtaAdminResponseStream {
 public:
   TapeLsResponseStream(cta::catalogue::Catalogue& catalogue,
                        cta::Scheduler& scheduler,
-                       const std::string& instanceName,
+                       const frontend::AdminCmdStream& requestMsg,
                        uint64_t missingFileCopiesMinAgeSecs);
 
   bool isDone() override;
@@ -32,12 +33,11 @@ private:
 
 TapeLsResponseStream::TapeLsResponseStream(cta::catalogue::Catalogue& catalogue,
                                            cta::Scheduler& scheduler,
-                                           const std::string& instanceName,
+                                           const frontend::AdminCmdStream& requestMsg,
                                            uint64_t missingFileCopiesMinAgeSecs)
-    : CtaAdminResponseStream(catalogue, scheduler, instanceName),
-      m_missingFileCopiesMinAgeSecs(missingFileCopiesMinAgeSecs) {}
-
-void TapeLsResponseStream::init(const admin::AdminCmd& admincmd) {
+    : CtaAdminResponseStream(catalogue, scheduler, requestMsg.getInstanceName()),
+      m_missingFileCopiesMinAgeSecs(missingFileCopiesMinAgeSecs) {
+  const admin::AdminCmd& admincmd = requestMsg.getAdminCmd();
   using namespace cta::admin;
 
   cta::frontend::AdminCmdOptions request;
@@ -76,6 +76,10 @@ void TapeLsResponseStream::init(const admin::AdminCmd& admincmd) {
 
   // Execute the search and get the tapes
   m_tapes = m_catalogue.Tape()->getTapes(m_searchCriteria);
+}
+
+void TapeLsResponseStream::init(const admin::AdminCmd& admincmd) {
+  // Logic moved to constructor
 }
 
 bool TapeLsResponseStream::isDone() {

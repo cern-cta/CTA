@@ -12,7 +12,7 @@ class MediaTypeLsResponseStream : public CtaAdminResponseStream {
 public:
   MediaTypeLsResponseStream(cta::catalogue::Catalogue& catalogue,
                             cta::Scheduler& scheduler,
-                            const std::string& instanceName);
+                            const frontend::AdminCmdStream& requestMsg);
 
   bool isDone() override;
   cta::xrd::Data next() override;
@@ -24,12 +24,12 @@ private:
 
 MediaTypeLsResponseStream::MediaTypeLsResponseStream(cta::catalogue::Catalogue& catalogue,
                                                      cta::Scheduler& scheduler,
-                                                     const std::string& instanceName)
-    : CtaAdminResponseStream(catalogue, scheduler, instanceName) {}
+                                                     const frontend::AdminCmdStream& requestMsg)
+    : CtaAdminResponseStream(catalogue, scheduler, requestMsg.getInstanceName()),
+      m_mediaTypes(catalogue.MediaType()->getMediaTypes()) {}
 
 void MediaTypeLsResponseStream::init(const admin::AdminCmd& admincmd) {
-  // Media type ls doesn't have specific search criteria - it just gets all media types
-  m_mediaTypes = m_catalogue.MediaType()->getMediaTypes();
+  // Logic moved to constructor
 }
 
 bool MediaTypeLsResponseStream::isDone() {

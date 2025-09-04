@@ -16,7 +16,7 @@ class RepackLsResponseStream : public CtaAdminResponseStream {
 public:
   RepackLsResponseStream(cta::catalogue::Catalogue& catalogue,
                          cta::Scheduler& scheduler,
-                         const std::string& instanceName);
+                         const frontend::AdminCmdStream& requestMsg);
 
   bool isDone() override;
   cta::xrd::Data next() override;
@@ -30,10 +30,9 @@ private:
 
 RepackLsResponseStream::RepackLsResponseStream(cta::catalogue::Catalogue& catalogue,
                                                cta::Scheduler& scheduler,
-                                               const std::string& instanceName)
-    : CtaAdminResponseStream(catalogue, scheduler, instanceName) {}
-
-void RepackLsResponseStream::init(const admin::AdminCmd& admincmd) {
+                                               const frontend::AdminCmdStream& requestMsg)
+    : CtaAdminResponseStream(catalogue, scheduler, requestMsg.getInstanceName()) {
+  const admin::AdminCmd& admincmd = requestMsg.getAdminCmd();
   using namespace cta::admin;
 
   cta::frontend::AdminCmdOptions request;
@@ -44,6 +43,10 @@ void RepackLsResponseStream::init(const admin::AdminCmd& admincmd) {
   auto vid = request.getOptional(OptionString::VID, &has_any);
 
   collectRepacks(vid);
+}
+
+void RepackLsResponseStream::init(const admin::AdminCmd& admincmd) {
+  // Logic moved to constructor
 }
 
 void RepackLsResponseStream::collectRepacks(const std::optional<std::string>& vid) {

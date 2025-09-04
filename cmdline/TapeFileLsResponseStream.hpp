@@ -15,7 +15,7 @@ class TapeFileLsResponseStream : public CtaAdminResponseStream {
 public:
   TapeFileLsResponseStream(cta::catalogue::Catalogue& catalogue,
                            cta::Scheduler& scheduler,
-                           const std::string& instanceName);
+                           const frontend::AdminCmdStream& requestMsg);
 
   bool isDone() override;
   cta::xrd::Data next() override;
@@ -35,10 +35,9 @@ private:
 
 TapeFileLsResponseStream::TapeFileLsResponseStream(cta::catalogue::Catalogue& catalogue,
                                                    cta::Scheduler& scheduler,
-                                                   const std::string& instanceName)
-    : CtaAdminResponseStream(catalogue, scheduler, instanceName) {}
-
-void TapeFileLsResponseStream::init(const admin::AdminCmd& admincmd) {
+                                                   const frontend::AdminCmdStream& requestMsg)
+    : CtaAdminResponseStream(catalogue, scheduler, requestMsg.getInstanceName()) {
+  const admin::AdminCmd& admincmd = requestMsg.getAdminCmd();
   using namespace cta::admin;
 
   cta::frontend::AdminCmdOptions request;
@@ -71,6 +70,10 @@ void TapeFileLsResponseStream::init(const admin::AdminCmd& admincmd) {
 
   m_tapeFileItor = m_catalogue.ArchiveFile()->getArchiveFilesItor(searchCriteria);
   m_currentArchiveFile = std::nullopt;
+}
+
+void TapeFileLsResponseStream::init(const admin::AdminCmd& admincmd) {
+  // Logic moved to constructor
 }
 
 bool TapeFileLsResponseStream::isDone() {

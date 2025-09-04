@@ -14,7 +14,7 @@ class RequesterMountRuleLsResponseStream : public CtaAdminResponseStream {
 public:
   RequesterMountRuleLsResponseStream(cta::catalogue::Catalogue& catalogue,
                                      cta::Scheduler& scheduler,
-                                     const std::string& instanceName);
+                                     const frontend::AdminCmdStream& admincmd);
   bool isDone() override;
   cta::xrd::Data next() override;
   void init(const admin::AdminCmd& admincmd) override;
@@ -25,11 +25,11 @@ private:
 
 RequesterMountRuleLsResponseStream::RequesterMountRuleLsResponseStream(cta::catalogue::Catalogue& catalogue,
                                                                        cta::Scheduler& scheduler,
-                                                                       const std::string& instanceName)
-    : CtaAdminResponseStream(catalogue, scheduler, instanceName) {}
+                                                                       const frontend::AdminCmdStream& admincmd)
+    : CtaAdminResponseStream(catalogue, scheduler, admincmd.getInstanceName()), m_requesterMountRules(catalogue.RequesterMountRule()->getRequesterMountRules()) {}
 
 void RequesterMountRuleLsResponseStream::init(const admin::AdminCmd& admincmd) {
-  m_requesterMountRules = m_catalogue.RequesterMountRule()->getRequesterMountRules();
+  // m_requesterMountRules = m_catalogue.RequesterMountRule()->getRequesterMountRules();
 }
 
 bool RequesterMountRuleLsResponseStream::isDone() {

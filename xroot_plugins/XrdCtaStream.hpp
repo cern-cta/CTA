@@ -31,6 +31,15 @@ namespace cta::xrd {
 class XrdCtaStream : public XrdSsiStream
 {
 public:
+  XrdCtaStream(cta::catalogue::Catalogue &catalogue, cta::Scheduler &scheduler, std::unique_ptr<cta::cmdline::CtaAdminResponseStream> stream) :
+    XrdSsiStream(XrdSsiStream::isActive),
+    m_catalogue(catalogue),
+    m_scheduler(scheduler),
+    m_stream(std::move(stream))
+  {
+    XrdSsiPb::Log::Msg(XrdSsiPb::Log::DEBUG, LOG_SUFFIX, "XrdCtaStream() constructor");
+  }
+
   XrdCtaStream(cta::catalogue::Catalogue &catalogue, cta::Scheduler &scheduler) :
     XrdSsiStream(XrdSsiStream::isActive),
     m_catalogue(catalogue),

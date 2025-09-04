@@ -14,7 +14,7 @@ class DiskSystemLsResponseStream : public CtaAdminResponseStream {
 public:
   DiskSystemLsResponseStream(cta::catalogue::Catalogue& catalogue,
                              cta::Scheduler& scheduler,
-                             const std::string& instanceName);
+                             const frontend::AdminCmdStream& requestMsg);
 
   bool isDone() override;
   cta::xrd::Data next() override;
@@ -26,11 +26,12 @@ private:
 
 DiskSystemLsResponseStream::DiskSystemLsResponseStream(cta::catalogue::Catalogue& catalogue,
                                                        cta::Scheduler& scheduler,
-                                                       const std::string& instanceName)
-    : CtaAdminResponseStream(catalogue, scheduler, instanceName) {}
+                                                       const frontend::AdminCmdStream& requestMsg)
+    : CtaAdminResponseStream(catalogue, scheduler, requestMsg.getInstanceName()),
+      m_diskSystems(catalogue.DiskSystem()->getAllDiskSystems()) {}
 
 void DiskSystemLsResponseStream::init(const admin::AdminCmd& admincmd) {
-  m_diskSystems = m_catalogue.DiskSystem()->getAllDiskSystems();
+  // Logic moved to constructor
 }
 
 bool DiskSystemLsResponseStream::isDone() {

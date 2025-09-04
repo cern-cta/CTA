@@ -16,7 +16,7 @@ class FailedRequestLsResponseStream : public CtaAdminResponseStream {
 public:
   FailedRequestLsResponseStream(cta::catalogue::Catalogue& catalogue,
                                 cta::Scheduler& scheduler,
-                                const std::string& instanceName,
+                                const frontend::AdminCmdStream& requestMsg,
                                 SchedulerDatabase& schedDb,
                                 cta::log::LogContext& lc);
 
@@ -44,16 +44,15 @@ private:
 
 FailedRequestLsResponseStream::FailedRequestLsResponseStream(cta::catalogue::Catalogue& catalogue,
                                                              cta::Scheduler& scheduler,
-                                                             const std::string& instanceName,
+                                                             const frontend::AdminCmdStream& requestMsg,
                                                              SchedulerDatabase& schedDb,
                                                              cta::log::LogContext& lc)
-    : CtaAdminResponseStream(catalogue, scheduler, instanceName),
+    : CtaAdminResponseStream(catalogue, scheduler, requestMsg.getInstanceName()),
       m_schedDb(schedDb),
       m_lc(lc),
       m_isSummary(false),
-      m_isLogEntries(false) {}
-
-void FailedRequestLsResponseStream::init(const admin::AdminCmd& admincmd) {
+      m_isLogEntries(false) {
+  const admin::AdminCmd& admincmd = requestMsg.getAdminCmd();
   using namespace cta::admin;
 
   cta::frontend::AdminCmdOptions request;
@@ -88,6 +87,10 @@ void FailedRequestLsResponseStream::init(const admin::AdminCmd& admincmd) {
       collectRetrieveJobs(vid);
     }
   }
+}
+
+void FailedRequestLsResponseStream::init(const admin::AdminCmd& admincmd) {
+  // Logic moved to constructor
 }
 
 void FailedRequestLsResponseStream::collectArchiveJobs(const std::optional<std::string>& tapepool) {

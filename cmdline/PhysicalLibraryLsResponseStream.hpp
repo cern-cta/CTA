@@ -12,7 +12,7 @@ class PhysicalLibraryLsResponseStream : public CtaAdminResponseStream {
 public:
   PhysicalLibraryLsResponseStream(cta::catalogue::Catalogue& catalogue,
                                   cta::Scheduler& scheduler,
-                                  const std::string& instanceName);
+                                  const frontend::AdminCmdStream& requestMsg);
 
   bool isDone() override;
   cta::xrd::Data next() override;
@@ -24,11 +24,12 @@ private:
 
 PhysicalLibraryLsResponseStream::PhysicalLibraryLsResponseStream(cta::catalogue::Catalogue& catalogue,
                                                                  cta::Scheduler& scheduler,
-                                                                 const std::string& instanceName)
-    : CtaAdminResponseStream(catalogue, scheduler, instanceName) {}
+                                                                 const frontend::AdminCmdStream& requestMsg)
+    : CtaAdminResponseStream(catalogue, scheduler, requestMsg.getInstanceName()),
+      m_physicalLibraries(catalogue.PhysicalLibrary()->getPhysicalLibraries()) {}
 
 void PhysicalLibraryLsResponseStream::init(const admin::AdminCmd& admincmd) {
-  m_physicalLibraries = m_catalogue.PhysicalLibrary()->getPhysicalLibraries();
+  // Logic moved to constructor
 }
 
 bool PhysicalLibraryLsResponseStream::isDone() {

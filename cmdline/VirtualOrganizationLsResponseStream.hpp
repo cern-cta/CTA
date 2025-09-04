@@ -12,7 +12,7 @@ class VirtualOrganizationLsResponseStream : public CtaAdminResponseStream {
 public:
   VirtualOrganizationLsResponseStream(cta::catalogue::Catalogue& catalogue,
                                       cta::Scheduler& scheduler,
-                                      const std::string& instanceName);
+                                      const frontend::AdminCmdStream& requestMsg);
 
   bool isDone() override;
   cta::xrd::Data next() override;
@@ -24,12 +24,12 @@ private:
 
 VirtualOrganizationLsResponseStream::VirtualOrganizationLsResponseStream(cta::catalogue::Catalogue& catalogue,
                                                                          cta::Scheduler& scheduler,
-                                                                         const std::string& instanceName)
-    : CtaAdminResponseStream(catalogue, scheduler, instanceName) {}
+                                                                         const frontend::AdminCmdStream& requestMsg)
+    : CtaAdminResponseStream(catalogue, scheduler, requestMsg.getInstanceName()),
+      m_virtualOrganizations(catalogue.VO()->getVirtualOrganizations()) {}
 
 void VirtualOrganizationLsResponseStream::init(const admin::AdminCmd& admincmd) {
-  // VirtualOrganization ls doesn't have specific search criteria - it just gets all VOs
-  m_virtualOrganizations = m_catalogue.VO()->getVirtualOrganizations();
+  // Logic moved to constructor
 }
 
 bool VirtualOrganizationLsResponseStream::isDone() {

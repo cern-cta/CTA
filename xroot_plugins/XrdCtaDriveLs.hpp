@@ -37,8 +37,8 @@ DriveLsStream::DriveLsStream(const frontend::AdminCmdStream& requestMsg,
                              cta::catalogue::Catalogue& catalogue,
                              cta::Scheduler& scheduler,
                              cta::log::LogContext& lc)
-    : XrdCtaStream(catalogue, scheduler) {
-  initializeStream<cta::cmdline::DriveLsResponseStream>(requestMsg, LOG_SUFFIX, lc);
+    : XrdCtaStream(catalogue, scheduler, std::make_unique<cta::cmdline::DriveLsResponseStream>(catalogue, scheduler, requestMsg, lc)) {
+  XrdSsiPb::Log::Msg(XrdSsiPb::Log::DEBUG, LOG_SUFFIX, " constructor");
 }
 
 }  // namespace cta::xrd
