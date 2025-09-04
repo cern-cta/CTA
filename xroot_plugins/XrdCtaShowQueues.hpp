@@ -38,10 +38,6 @@ public:
     cta::Scheduler& scheduler, log::LogContext& lc);
 
 private:
-  bool isDone() const override { return m_stream->isDone(); }
-
-  virtual int fillBuffer(XrdSsiPb::OStreamBuffer<Data>* streambuf) override;
-
   static constexpr const char* const LOG_SUFFIX  = "ShowQueuesStream";                   //!< Identifier for log messages
 };
 
@@ -51,14 +47,6 @@ ShowQueuesStream::ShowQueuesStream(const frontend::AdminCmdStream& requestMsg,
                                    log::LogContext& lc)
     : XrdCtaStream(catalogue, scheduler, std::make_unique<cta::cmdline::ShowQueuesResponseStream>(catalogue, scheduler, requestMsg, lc)) {
   XrdSsiPb::Log::Msg(XrdSsiPb::Log::DEBUG, LOG_SUFFIX, " constructor");
-}
-
-int ShowQueuesStream::fillBuffer(XrdSsiPb::OStreamBuffer<Data> *streambuf) {
-  for (bool is_buffer_full = false; !m_stream->isDone() && !is_buffer_full;) {
-    Data record = m_stream->next();
-    is_buffer_full = streambuf->Push(record);
-  }
-  return streambuf->Size();
 }
 
 } // namespace cta::xrd
