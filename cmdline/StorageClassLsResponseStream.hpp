@@ -28,8 +28,7 @@ StorageClassLsResponseStream::StorageClassLsResponseStream(cta::catalogue::Catal
                                                            const frontend::AdminCmdStream& requestMsg)
     : CtaAdminResponseStream(catalogue, scheduler, requestMsg.getInstanceName()) {
 
-        cta::frontend::AdminCmdOptions request;
-        request.importOptions(requestMsg.getAdminCmd());
+        cta::frontend::AdminCmdOptions request(requestMsg.getAdminCmd());
 
         std::optional<std::string> storageClassName = request.getOptional(cta::admin::OptionString::STORAGE_CLASS);
 

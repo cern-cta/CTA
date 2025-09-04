@@ -45,8 +45,7 @@ DriveLsResponseStream::DriveLsResponseStream(cta::catalogue::Catalogue& catalogu
   const admin::AdminCmd& admincmd = requestMsg.getAdminCmd();
   using namespace cta::admin;
 
-  cta::frontend::AdminCmdOptions request;
-  request.importOptions(admincmd);
+  cta::frontend::AdminCmdOptions request(admincmd);
   bool has_any = false;
 
   // Get drives and drive configs

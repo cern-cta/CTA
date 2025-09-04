@@ -31,8 +31,7 @@ RecycleTapeFileLsResponseStream::RecycleTapeFileLsResponseStream(cta::catalogue:
   const admin::AdminCmd& admincmd = requestMsg.getAdminCmd();
   using namespace cta::admin;
 
-  cta::frontend::AdminCmdOptions request;
-  request.importOptions(admincmd);
+  cta::frontend::AdminCmdOptions request(admincmd);
   bool has_any = false;
 
   cta::catalogue::RecycleTapeFileSearchCriteria searchCriteria;

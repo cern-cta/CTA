@@ -55,8 +55,7 @@ FailedRequestLsResponseStream::FailedRequestLsResponseStream(cta::catalogue::Cat
   const admin::AdminCmd& admincmd = requestMsg.getAdminCmd();
   using namespace cta::admin;
 
-  cta::frontend::AdminCmdOptions request;
-  request.importOptions(admincmd);
+  cta::frontend::AdminCmdOptions request(admincmd);
 
   // Parse options
   m_isSummary = request.has_flag(OptionBoolean::SUMMARY);

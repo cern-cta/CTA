@@ -28,6 +28,7 @@ namespace cta::frontend {
 class AdminCmdOptions {
 public:
   AdminCmdOptions() = default;
+  explicit AdminCmdOptions(const admin::AdminCmd& adminCmd);
   virtual ~AdminCmdOptions() = default;
 
   /*!

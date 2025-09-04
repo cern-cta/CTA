@@ -27,8 +27,7 @@ LogicalLibraryLsResponseStream::LogicalLibraryLsResponseStream(cta::catalogue::C
                                                                cta::Scheduler& scheduler,
                                                                const frontend::AdminCmdStream& requestMsg)
     : CtaAdminResponseStream(catalogue, scheduler, requestMsg.getInstanceName()) {
-      cta::frontend::AdminCmdOptions request;
-      request.importOptions(requestMsg.getAdminCmd());
+      cta::frontend::AdminCmdOptions request(requestMsg.getAdminCmd());
 
       std::optional<bool> disabled = request.getOptional(cta::admin::OptionBoolean::DISABLED);
       m_logicalLibraries = m_catalogue.LogicalLibrary()->getLogicalLibraries();

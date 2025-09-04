@@ -39,8 +39,7 @@ TapeFileLsResponseStream::TapeFileLsResponseStream(cta::catalogue::Catalogue& ca
   const admin::AdminCmd& admincmd = requestMsg.getAdminCmd();
   using namespace cta::admin;
 
-  cta::frontend::AdminCmdOptions request;
-  request.importOptions(admincmd);
+  cta::frontend::AdminCmdOptions request(admincmd);
   bool has_any = false;
 
   cta::catalogue::TapeFileSearchCriteria searchCriteria;

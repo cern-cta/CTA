@@ -35,8 +35,7 @@ RepackLsResponseStream::RepackLsResponseStream(cta::catalogue::Catalogue& catalo
   const admin::AdminCmd& admincmd = requestMsg.getAdminCmd();
   using namespace cta::admin;
 
-  cta::frontend::AdminCmdOptions request;
-  request.importOptions(admincmd);
+  cta::frontend::AdminCmdOptions request(admincmd);
 
   // Get optional VID parameter
   bool has_any = false;

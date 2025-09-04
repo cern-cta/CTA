@@ -34,8 +34,7 @@ TapePoolLsResponseStream::TapePoolLsResponseStream(cta::catalogue::Catalogue& ca
 
 
 std::list<cta::catalogue::TapePool> TapePoolLsResponseStream::buildTapePoolList(const admin::AdminCmd& admincmd) {
-  cta::frontend::AdminCmdOptions request;
-  request.importOptions(admincmd);
+  cta::frontend::AdminCmdOptions request(admincmd);
 
   cta::catalogue::TapePoolSearchCriteria searchCriteria;
   searchCriteria.name = request.getOptional(cta::admin::OptionString::TAPE_POOL);

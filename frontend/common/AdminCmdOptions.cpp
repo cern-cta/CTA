@@ -22,6 +22,10 @@
 
 namespace cta::frontend {
 
+AdminCmdOptions::AdminCmdOptions(const admin::AdminCmd& adminCmd) {
+  importOptions(adminCmd);
+}
+
 void AdminCmdOptions::importOptions(const admin::AdminCmd& adminCmd) {
   // Validate the Protocol Buffer
   validateCmd(adminCmd);

@@ -40,8 +40,7 @@ TapeLsResponseStream::TapeLsResponseStream(cta::catalogue::Catalogue& catalogue,
   const admin::AdminCmd& admincmd = requestMsg.getAdminCmd();
   using namespace cta::admin;
 
-  cta::frontend::AdminCmdOptions request;
-  request.importOptions(admincmd);
+  cta::frontend::AdminCmdOptions request(admincmd);
   bool has_any = false;  // set to true if at least one optional option is set
 
   // Get the search criteria from the optional options
