@@ -24,6 +24,7 @@
 #include "TokenStorage.hpp"
 #include "catalogue/Catalogue.hpp"
 #include "common/log/Logger.hpp"
+#include "common/log/LogContext.hpp"
 #include "common/exception/Exception.hpp"
 
 #include <grpcpp/grpcpp.h>
@@ -44,7 +45,7 @@ public:
   AsyncServer(cta::log::Logger& log, cta::catalogue::Catalogue& catalogue, TokenStorage& tokenStorage, const unsigned int uiPort, const unsigned int uiNoThreads = 1) ;
   AsyncServer(cta::log::LogContext& lc, cta::catalogue::Catalogue& catalogue, TokenStorage& tokenStorage,
               std::unique_ptr<::grpc::ServerBuilder> builder, std::unique_ptr<::grpc::ServerCompletionQueue> completionQueue,
-              const unsigned int uiPort, const unsigned int uiNoThreads = 1) ;
+              const unsigned int uiPort = 0, const unsigned int uiNoThreads = 1) ;
   ~AsyncServer();
   // Delete default construcotrs
   AsyncServer(const AsyncServer&)            = delete;
@@ -125,11 +126,12 @@ public:
   
   cta::frontend::grpc::request::IHandler& getHandler(const cta::frontend::grpc::request::Tag tag);
   void releaseHandler(const cta::frontend::grpc::request::Tag tag);
-  void run(std::unique_ptr<::grpc::ServerBuilder>& server, const std::shared_ptr<::grpc::AuthMetadataProcessor>& spAuthProcessor); // assumes we've already registered the authProcessor..?
+  void run(std::unique_ptr<::grpc::Server> server, const std::shared_ptr<::grpc::AuthMetadataProcessor>& spAuthProcessor); // assumes we've already registered the authProcessor..?
   void startServerAndRun(const std::shared_ptr<::grpc::ServerCredentials>& spServerCredentials, const std::shared_ptr<::grpc::AuthMetadataProcessor>& spAuthProcessor);
 
 private:
   cta::log::Logger& m_log;
+  cta::log::LogContext m_lc;
   cta::catalogue::Catalogue& m_catalogue;
   TokenStorage& m_tokenStorage;
   std::unique_ptr<::grpc::ServerCompletionQueue> m_upCompletionQueue = nullptr;
