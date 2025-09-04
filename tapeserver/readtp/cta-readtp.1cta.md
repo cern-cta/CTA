@@ -72,7 +72,7 @@ cta-readtp V01007 10002,10004-10006,10008-
 
 # SEE ALSO
 
-CERN Tape Archive documentation [https://eoscta.docs.cern.ch/](https://eoscta.docs.cern.ch/)
+CERN Tape Archive documentation [https://cta.docs.cern.ch/](https://cta.docs.cern.ch/)
 
 # COPYRIGHT
 

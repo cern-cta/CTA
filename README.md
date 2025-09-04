@@ -15,7 +15,7 @@
     <a href="https://cta.docs.cern.ch/"><strong>Explore the docs »</strong></a>
     <br />
     <br />
-    <a href="https://eoscta.docs.cern.ch/latest/overview/introduction/">CTA Overview</a>
+    <a href="https://cta.docs.cern.ch/latest/overview/introduction/">CTA Overview</a>
     ·
     <a href="https://cta.web.cern.ch/">CTA Website</a>
     ·
@@ -36,7 +36,7 @@ CTA is:
 - Scalable, for small and large installations
 - Self-hostable, on-premise
 
-CTA is designed to operate on physical tape infrastructure and is used in combination with a disk buffer system such as [EOS](https://eos-web.web.cern.ch/eos-web/) or [dCache](https://www.dcache.org/). For development purposes it is also possible to run a containerized setup of the CTA components. For this, you can have a look at the [Development documentation](https://eoscta.docs.cern.ch/latest/dev/getting_started/).
+CTA is designed to operate on physical tape infrastructure and is used in combination with a disk buffer system such as [EOS](https://eos-web.web.cern.ch/eos-web/) or [dCache](https://www.dcache.org/). For development purposes it is also possible to run a containerized setup of the CTA components. For this, you can have a look at the [Development documentation](https://cta.docs.cern.ch/latest/dev/getting-started/).
 
 ## License
 

@@ -166,7 +166,7 @@ int RestoreFilesCmd::exceptionThrowingMain(const int argc, char *const *const ar
 
   listDeletedFilesCta();
   for (auto& file : deletedTapeFiles) {
-    /* From https://eoscta.docs.cern.ch/lifecycle/Delete/:
+    /* From https://cta.docs.cern.ch/lifecycle/Delete/:
      *
      * When a user deletes a file, there are three scenarios for recovery:
      * - The file has been deleted in the EOS namespace and the CTA catalogue (normal case, must restore in both places)
@@ -496,7 +496,7 @@ bool RestoreFilesCmd::archiveFileExistsCTA(const uint64_t &archiveFileId) const 
     stream_future.wait();
   }
   if (ret) {
-    m_log(cta::log::DEBUG, "Archive file is present in the CTA catalogue", params);  
+    m_log(cta::log::DEBUG, "Archive file is present in the CTA catalogue", params);
   } else {
     m_log(cta::log::DEBUG, "Archive file is missing in the CTA catalogue", params);
   }
@@ -593,7 +593,7 @@ uint64_t RestoreFilesCmd::restoreDeletedFileEos(const cta::admin::RecycleTapeFil
   file.set_size(rtfls_item.size_in_bytes());
   file.set_layout_id(m_defaultFileLayout);
 
-  // Filemode: filter out S_ISUID, S_ISGID and S_ISVTX because EOS does not follow POSIX semantics for these bits  
+  // Filemode: filter out S_ISUID, S_ISGID and S_ISVTX because EOS does not follow POSIX semantics for these bits
   uint64_t filemode = (S_IRWXU | S_IRGRP | S_IWGRP | S_IROTH | S_IWOTH); // 0755
   filemode &= ~(S_ISUID | S_ISGID | S_ISVTX);
   file.set_flags(filemode);
