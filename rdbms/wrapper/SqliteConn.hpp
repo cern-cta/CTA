@@ -100,7 +100,7 @@ public:
   void rollback() override;
 
   /**
-   * Returns the names of all the column and their type as a map for the given 
+   * Returns the names of all the column and their type as a map for the given
    * table in the database schema.
    *
    * @param tableName The table name to get the columns.
@@ -158,12 +158,12 @@ public:
   /**
    * Returns the names of all the tables that have been set as PARALLEL
    * in alphabetical order.
-   * 
+   *
    * If the underlying database technologies does not support PARALLEL
    * them this method simply returns an empty list.
-   * 
+   *
    * @return the names of all the tables that have been set as PARALLEL
-   * in alphabetical order. 
+   * in alphabetical order.
    */
   std::list<std::string> getParallelTableNames() override;
 
@@ -175,32 +175,32 @@ public:
   std::list<std::string> getConstraintNames(const std::string& tableName) override;
 
   /**
-   * 
+   *
    * Returns the stored procedure names of the database
-   * 
+   *
    * If the underlying database technologies does not support stored procedures informations
    * this method simply returns an empty list.
-   * 
+   *
    * @return the list of the names of the stored procedures in the database
    */
   std::list<std::string> getStoredProcedureNames() override;
 
   /**
    * Returns the synonym names of the database
-   * 
+   *
    * If the underlying database technologies does not support synonym informations
    * this method simply returns an empty list.
-   * 
+   *
    * @return the list of the names of the synonyms in the database
    */
   std::list<std::string> getSynonymNames() override;
 
   /**
    * Returns the type names of the database
-   * 
+   *
    * If the underlying database technologies does not support type informations
    * this method simply returns an empty list.
-   * 
+   *
    * @return the list of the names of the types in the database
    */
   std::list<std::string> getTypeNames() override;
@@ -226,6 +226,8 @@ public:
    */
   void printSchema(std::ostream& os);
 
+  std::string getDbNamespace() const override;
+
 private:
   /**
    * Mutex used to serialize access to the database connection.
@@ -236,6 +238,8 @@ private:
    * The database connection.
    */
   sqlite3* m_sqliteConn;
+
+  std::string m_dbNamespace;
 
 };  // class SqliteConn
 

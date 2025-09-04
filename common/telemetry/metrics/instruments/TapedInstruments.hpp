@@ -21,10 +21,8 @@
 
 namespace cta::telemetry::metrics {
 
-extern std::unique_ptr<opentelemetry::metrics::Counter<uint64_t>> tapedTransferCounter;
-extern std::unique_ptr<opentelemetry::metrics::Counter<uint64_t>> tapedMountCounter;
-extern std::unique_ptr<opentelemetry::metrics::UpDownCounter<int64_t>> tapedDiskThreadUpDownCounter;
-extern std::unique_ptr<opentelemetry::metrics::UpDownCounter<int64_t>> tapedTapeThreadUpDownCounter;
-// TODO: add gauge for buffer size?
+extern std::unique_ptr<opentelemetry::metrics::Counter<uint64_t>> tapedTransferCount;
+extern std::unique_ptr<opentelemetry::metrics::Counter<uint64_t>> tapedMountCount;
+extern std::unique_ptr<opentelemetry::metrics::UpDownCounter<int64_t>> tapedThreadCount;
 
 }  // namespace cta::telemetry::metrics

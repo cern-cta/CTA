@@ -359,4 +359,19 @@ bool SqliteStmt::autocommitModeToBool(const AutocommitMode autocommitMode) {
   }
 }
 
+//------------------------------------------------------------------------------
+// getDbSystemName
+//------------------------------------------------------------------------------
+std::string SqliteStmt::getDbSystemName() const {
+  return "sqlite";
+}
+
+//------------------------------------------------------------------------------
+// getDbNamespace
+//------------------------------------------------------------------------------
+std::string SqliteStmt::getDbNamespace() const {
+  return m_conn.getDbNamespace();
+}
+
+
 } // namespace cta::rdbms::wrapper

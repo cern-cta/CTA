@@ -55,7 +55,7 @@ std::unique_ptr<ConnWrapper> OcciEnv::createConn(
       throw exception::Exception("oracle::occi::createConnection() returned a nullptr pointer");
     }
 
-    return std::make_unique<OcciConn>(m_env, conn);
+    return std::make_unique<OcciConn>(m_env, conn, username);
   } catch(exception::Exception &ex) {
     throw exception::Exception(std::string(__FUNCTION__) + " failed: " + ex.getMessage().str());
   } catch(std::exception &se) {

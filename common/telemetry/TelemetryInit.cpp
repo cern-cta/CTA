@@ -17,7 +17,7 @@
 #include "common/utils/utils.hpp"
 #include "common/telemetry/config/TelemetryConfigSingleton.hpp"
 #include "common/telemetry/metrics/InstrumentRegistry.hpp"
-#include "version.h"
+#include "common/semconv/SemConv.hpp"
 
 namespace cta::telemetry {
 
@@ -39,7 +39,6 @@ void initMetrics(const TelemetryConfig& config, cta::log::LogContext& lc) {
   }
 
   std::string processName = cta::utils::getProcessName();
-  std::string hostname = cta::utils::getShortHostname();
   std::string serviceInstanceId;
   if (!previousServiceInstanceId.empty()) {
     serviceInstanceId = previousServiceInstanceId;
@@ -52,7 +51,7 @@ void initMetrics(const TelemetryConfig& config, cta::log::LogContext& lc) {
   params.add("serviceName", config.serviceName)
     .add("serviceNamespace", config.serviceNamespace)
     .add("serviceInstanceId", serviceInstanceId)
-    .add("serviceVersion", CTA_VERSION)
+    .add("serviceVersion", config.serviceVersion)
     .add("metricsBackend", metricsBackendToString(config.metrics.backend))
     .add("exportInterval", std::chrono::duration_cast<std::chrono::milliseconds>(config.metrics.exportInterval).count())
     .add("exportTimeout", std::chrono::duration_cast<std::chrono::milliseconds>(config.metrics.exportTimeout).count())
@@ -93,12 +92,13 @@ void initMetrics(const TelemetryConfig& config, cta::log::LogContext& lc) {
   // Otherwise, metrics will not be aggregated correctly.
   // The processName can go once we get rid of the forking in taped
   opentelemetry::sdk::common::AttributeMap attributes = {
-    {opentelemetry::sdk::resource::SemanticConventions::kServiceName,       config.serviceName     },
-    {opentelemetry::sdk::resource::SemanticConventions::kServiceNamespace,  config.serviceNamespace},
-    {opentelemetry::sdk::resource::SemanticConventions::kServiceVersion,    CTA_VERSION            },
-    {opentelemetry::sdk::resource::SemanticConventions::kServiceInstanceId, serviceInstanceId      },
-    {"process.name",                                                        processName            }
+    {cta::semconv::kServiceName,       config.serviceName     },
+    {cta::semconv::kServiceNamespace,  config.serviceNamespace},
+    {cta::semconv::kServiceVersion,    config.serviceVersion  },
+    {cta::semconv::kServiceInstanceId, serviceInstanceId      },
+    {cta::semconv::kProcessTitle,      processName            }
   };
+
   for (const auto& kv : config.resourceAttributes) {
     attributes.SetAttribute(kv.first, kv.second);
   }
