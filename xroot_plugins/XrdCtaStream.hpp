@@ -115,11 +115,6 @@ private:
 
     for (bool is_buffer_full = false; !m_stream->isDone() && !is_buffer_full;) {
       Data record = m_stream->next();
-      // is_buffer_full is set to true when we have one full block of data in the buffer, i.e.
-      // enough data to send to the client. The actual buffer size is double the block size,
-      // so we can keep writing a few additional records after is_buffer_full is true. These
-      // will be sent on the next iteration. If we exceed the hard limit of double the block
-      // size, Push() will throw an exception.
       is_buffer_full = streambuf->Push(record);
     }
     return streambuf->Size();
