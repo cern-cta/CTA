@@ -52,11 +52,11 @@ castor::tape::tapeserver::daemon::TapeReadSingleThread::TapeReadSingleThread(
   m_useRAO(useRAO),
   m_retrieveMount(retrieveMount),
   m_catalogue(catalogue) {
-  cta::telemetry::metrics::tapedTapeThreadUpDownCounter->Add(1, {{cta::telemetry::constants::kTransferTypeKey, cta::telemetry::constants::kTransferTypeRetrieve}});
+  cta::telemetry::metrics::tapedThreadCount->Add(1, {{cta::semconv::kTransferDirection, cta::semconv::kTransferDirectionRetrieve}, {cta::semconv::kThreadPoolName, cta::semconv::kThreadPoolNameTape}});
 }
 
 castor::tape::tapeserver::daemon::TapeReadSingleThread::~TapeReadSingleThread() {
-  cta::telemetry::metrics::tapedTapeThreadUpDownCounter->Add(-1, {{cta::telemetry::constants::kTransferTypeKey, cta::telemetry::constants::kTransferTypeRetrieve}});
+  cta::telemetry::metrics::tapedThreadCount->Add(-1, {{cta::semconv::kTransferDirection, cta::semconv::kTransferDirectionRetrieve}, {cta::semconv::kThreadPoolName, cta::semconv::kThreadPoolNameTape}});
 }
 
 //------------------------------------------------------------------------------

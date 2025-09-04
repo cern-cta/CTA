@@ -56,11 +56,11 @@ castor::tape::tapeserver::daemon::TapeWriteSingleThread::TapeWriteSingleThread(
       m_watchdog(watchdog),
       m_archiveMount(archiveMount),
       m_catalogue(catalogue) {
-  cta::telemetry::metrics::tapedTapeThreadUpDownCounter->Add(1, {{cta::telemetry::constants::kTransferTypeKey, cta::telemetry::constants::kTransferTypeArchive}});
+  cta::telemetry::metrics::tapedThreadCount->Add(1, {{cta::semconv::kTransferDirection, cta::semconv::kTransferDirectionArchive}, {cta::semconv::kThreadPoolName, cta::semconv::kThreadPoolNameTape}});
 }
 
 castor::tape::tapeserver::daemon::TapeWriteSingleThread::~TapeWriteSingleThread() {
-  cta::telemetry::metrics::tapedTapeThreadUpDownCounter->Add(-1, {{cta::telemetry::constants::kTransferTypeKey, cta::telemetry::constants::kTransferTypeArchive}});
+  cta::telemetry::metrics::tapedThreadCount->Add(-1, {{cta::semconv::kTransferDirection, cta::semconv::kTransferDirectionArchive}, {cta::semconv::kThreadPoolName, cta::semconv::kThreadPoolNameTape}});
 }
 
 //------------------------------------------------------------------------------

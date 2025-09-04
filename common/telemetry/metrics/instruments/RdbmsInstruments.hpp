@@ -16,27 +16,13 @@
  */
 #pragma once
 
-#include <string>
+#include <opentelemetry/metrics/meter.h>
+#include <opentelemetry/metrics/provider.h>
 
-/**
- * This defines a set of common constants to ensure consistency
- */
-namespace cta::telemetry::constants {
+namespace cta::telemetry::metrics {
 
-// These constants follow the conventions as detailed here: https://opentelemetry.io/docs/specs/semconv/general/naming/
+extern std::unique_ptr<opentelemetry::metrics::Histogram<double>> rdbmsOperationDuration;
+// TODO: add attributes to the recordings here
+extern std::unique_ptr<opentelemetry::metrics::UpDownCounter<int64_t>> rdbmsConnectionCount;
 
-// -------------------- Attribute Keys --------------------
-inline const std::string kTransferTypeKey = "transfer.type";
-inline const std::string kLockTypeKey = "lock.type";
-inline const std::string kEventTypeKey = "event.type";
-inline const std::string kSchedulerBackendNameKey = "scheduler.backend_name";
-
-// -------------------- Attribute Values --------------------
-inline const std::string kTransferTypeArchive = "archive";
-inline const std::string kTransferTypeRetrieve = "retrieve";
-
-// These are not the only options; event type is flexible
-inline const std::string kEventTypeEnqueue = "enqueue";
-inline const std::string kEventTypeCancel = "cancel";
-
-}  // namespace cta::telemetry::constants
+}  // namespace cta::telemetry::metrics

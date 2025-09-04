@@ -209,6 +209,33 @@ public:
    */
   std::string getSqlForException(const std::string::size_type maxSqlLenInExceptions = MAX_SQL_LEN_IN_EXCEPTIONS) const;
 
+  /**
+   * @brief Get the database system identifier.
+   *
+   * This should return the OpenTelemetry semantic convention attribute
+   * `db.system`. It identifies which kind of database management system
+   * (DBMS) is in use. Typical values include:
+   *   - "postgresql"
+   *   - "mysql"
+   *   - "oracle"
+   *   - "other_sql"
+   *
+   * @return A string identifying the DBMS product.
+   */
+  virtual std::string getDbSystemName() const = 0;
+
+
+  /**
+   * @brief Get the logical database namespace.
+   *
+   * This should return the OpenTelemetry semantic convention attribute
+   * `db.namespace`. It identifies the logical database, schema, or
+   * namespace where the operation is executed.
+   *
+   * @return A string representing the database namespace.
+   */
+  virtual std::string getDbNamespace() const = 0;
+
 private:
 
   /**
