@@ -24,8 +24,9 @@
 #include "common/log/LogLevel.hpp"
 #include "common/log/StdoutLogger.hpp"
 #include "common/telemetry/TelemetryInit.hpp"
-#include "common/telemetry/TelemetryConstants.hpp"
+#include "common/semconv/SemConv.hpp"
 #include "common/telemetry/config/TelemetryConfig.hpp"
+#include "common/semconv/SemConv.hpp"
 #include <opentelemetry/sdk/common/global_log_handler.h>
 
 #include "rdbms/Login.hpp"
@@ -143,9 +144,10 @@ FrontendService::FrontendService(const std::string& configFilename) : m_archiveF
       }
 
       cta::telemetry::TelemetryConfig telemetryConfig = cta::telemetry::TelemetryConfigBuilder()
-        .serviceName("cta.frontend")
+        .serviceName(cta::semconv::kServiceNameCtaFrontend)
         .serviceNamespace(m_instanceName)
-        .resourceAttribute(cta::telemetry::constants::kSchedulerBackendNameKey, m_schedulerBackendName)
+        .serviceVersion(CTA_VERSION)
+        .resourceAttribute(cta::semconv::kSchedulerBackendNameKey, m_schedulerBackendName)
         .metricsBackend(telemetryMetricsBackend.value())
         .metricsExportInterval(std::chrono::milliseconds(telemetryMetricsExportInterval.value()))
         .metricsExportTimeout(std::chrono::milliseconds(telemetryMetricsExportTimeout.value()))

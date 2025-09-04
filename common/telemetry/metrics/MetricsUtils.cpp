@@ -10,9 +10,9 @@ namespace cta::telemetry::metrics {
 
 namespace metrics_sdk = opentelemetry::sdk::metrics;
 
-std::shared_ptr<opentelemetry::metrics::Meter> getMeter(std::string_view componentName) {
+std::shared_ptr<opentelemetry::metrics::Meter> getMeter(std::string_view libraryName, std::string_view libraryVersion) {
   auto provider = opentelemetry::metrics::Provider::GetMeterProvider();
-  return provider->GetMeter(componentName, CTA_VERSION);
+  return provider->GetMeter(libraryName, libraryVersion);
 }
 
 }  // namespace cta::telemetry::metrics

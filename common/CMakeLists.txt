@@ -129,8 +129,9 @@ set (COMMON_LIB_SRC_FILES
   telemetry/config/TelemetryConfig.cpp
   telemetry/metrics/MetricsUtils.cpp
   telemetry/metrics/InstrumentRegistry.cpp
-  telemetry/metrics/instruments/DatabaseInstruments.cpp
   telemetry/metrics/instruments/FrontendInstruments.cpp
+  telemetry/metrics/instruments/ObjectstoreInstruments.cpp
+  telemetry/metrics/instruments/RdbmsInstruments.cpp
   telemetry/metrics/instruments/SchedulerInstruments.cpp
   telemetry/metrics/instruments/TapedInstruments.cpp
   SourcedParameter.cpp
