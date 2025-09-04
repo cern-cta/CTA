@@ -21,36 +21,26 @@ public:
 
 private:
   std::list<cta::common::dataStructures::StorageClass> m_storageClasses;
-
-  std::list<cta::common::dataStructures::StorageClass> buildStorageClassList(const admin::AdminCmd& admincmd);
 };
 
 StorageClassLsResponseStream::StorageClassLsResponseStream(cta::catalogue::Catalogue& catalogue,
                                                            cta::Scheduler& scheduler,
                                                            const frontend::AdminCmdStream& requestMsg)
-    : CtaAdminResponseStream(catalogue, scheduler, requestMsg.getInstanceName()),
-      m_storageClasses(buildStorageClassList(requestMsg.getAdminCmd())) {}
+    : CtaAdminResponseStream(catalogue, scheduler, requestMsg.getInstanceName()) {
 
+        cta::frontend::AdminCmdOptions request;
+        request.importOptions(requestMsg.getAdminCmd());
 
-std::list<cta::common::dataStructures::StorageClass>
-StorageClassLsResponseStream::buildStorageClassList(const admin::AdminCmd& admincmd) {
-  cta::frontend::AdminCmdOptions request;
-  request.importOptions(admincmd);
+        std::optional<std::string> storageClassName = request.getOptional(cta::admin::OptionString::STORAGE_CLASS);
 
-  std::optional<std::string> storageClassName = request.getOptional(cta::admin::OptionString::STORAGE_CLASS);
-
-  std::list<cta::common::dataStructures::StorageClass> storageClassList;
-
-  if (storageClassName.has_value()) {
-    storageClassList.push_back(m_catalogue.StorageClass()->getStorageClass(storageClassName.value()));
-  } else {
-    for (const auto& storageClass : m_catalogue.StorageClass()->getStorageClasses()) {
-      storageClassList.push_back(storageClass);
-    }
-  }
-
-  return storageClassList;
-}
+        if (storageClassName.has_value()) {
+          m_storageClasses.push_back(m_catalogue.StorageClass()->getStorageClass(storageClassName.value()));
+        } else {
+          for (const auto& storageClass : m_catalogue.StorageClass()->getStorageClasses()) {
+            m_storageClasses.push_back(storageClass);
+          }
+        }
+      }
 
 bool StorageClassLsResponseStream::isDone() {
   return m_storageClasses.empty();
