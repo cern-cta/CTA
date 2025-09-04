@@ -1,6 +1,6 @@
 <!-- Ensure the title of this ticket is the name of the release. E.g. `v5.X.Y.Z-R` -->
 
-* See [Tagging a new CTA release](https://eoscta.docs.cern.ch/latest/dev/ci/tagging_releases/)
+* See [Releasing a new version of CTA](https://cta.docs.cern.ch/latest/dev/ci/releases/)
 
 ## Release Requirements
 

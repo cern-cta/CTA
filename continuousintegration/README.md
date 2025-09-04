@@ -8,5 +8,5 @@ This directory contains all the files necessary for development and automation w
 * `orchestration/`: Files to set up a local development cluster and all the tests that can run on this.
 * `release/`: Scripts used by the CI pipeline when doing a new release of the CTA software
 * `utils/`: Collection of utility scripts
-* `build_deploy.sh`: The main script used for development: builds the project, the corresponding Docker image and deploys a local CTA test instance. See [the docs on development commands](https://eoscta.docs.cern.ch/latest/dev/development_commands/) for more details.
+* `build_deploy.sh`: The main script used for development: builds the project, the corresponding Docker image and deploys a local CTA test instance. See [the docs on Build & Deploy](https://cta.docs.cern.ch/latest/dev/setup/build-deploy/) for more details.
 * `deploy.sh`: Convenience script for deploying a custom CTA image.

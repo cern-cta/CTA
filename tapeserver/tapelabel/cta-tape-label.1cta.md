@@ -90,7 +90,7 @@ cta-tape-label \--vid L54321 \--force
 
 # SEE ALSO
 
-CERN Tape Archive documentation [https://eoscta.docs.cern.ch/](https://eoscta.docs.cern.ch/)
+CERN Tape Archive documentation [https://cta.docs.cern.ch/](https://cta.docs.cern.ch/)
 
 # COPYRIGHT
 

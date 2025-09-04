@@ -119,7 +119,7 @@ disksystem (ds)
     The two options below are provided to configure backpressure for retrieve operations. Backpressure
     is a mechanism to postpone retrieval of files from tape to the disk buffer when there is insufficient
     disk space. It can be configured separately for each disk system.
-    
+
     Before a retrieve mount, the destination URL of each file is pattern-matched to identify the disk
     system. The corresponding disk instance space is queried to determine if there is sufficient free
     space to perform the mount. If there is insufficient space, the tape server sleeps for the specified
@@ -446,7 +446,7 @@ to handle integers with more than 32-bit precision.
 
 # SEE ALSO
 
-CERN Tape Archive documentation [https://eoscta.docs.cern.ch/](https://eoscta.docs.cern.ch/)
+CERN Tape Archive documentation [https://cta.docs.cern.ch/](https://cta.docs.cern.ch/)
 
 # COPYRIGHT
 

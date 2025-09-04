@@ -198,7 +198,7 @@ To get the status of tapes for which the VID starts with JK200
 
 # SEE ALSO
 
-CERN Tape Archive documentation [https://eoscta.docs.cern.ch/](https://eoscta.docs.cern.ch/)
+CERN Tape Archive documentation [https://cta.docs.cern.ch/](https://cta.docs.cern.ch/)
 
 # COPYRIGHT
 

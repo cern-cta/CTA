@@ -62,7 +62,7 @@ cta-catalogue-schema-create /etc/cta/cta-catalogue.conf
 
 # SEE ALSO
 
-CERN Tape Archive documentation [https://eoscta.docs.cern.ch/](https://eoscta.docs.cern.ch/)
+CERN Tape Archive documentation [https://cta.docs.cern.ch/](https://cta.docs.cern.ch/)
 
 # COPYRIGHT
 
