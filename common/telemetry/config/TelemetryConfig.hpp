@@ -18,6 +18,7 @@ std::string metricsBackendToString(MetricsBackend backend);
 typedef struct TelemetryConfig {
   std::string serviceName;
   std::string serviceNamespace;
+  std::string serviceVersion;
   std::map<std::string, std::string> resourceAttributes;
 
   struct Metrics {
@@ -48,6 +49,13 @@ public:
    * See https://opentelemetry.io/docs/specs/semconv/registry/attributes/service/
    */
   TelemetryConfigBuilder& serviceNamespace(std::string serviceNamespace);
+
+  /**
+   * Version of the service. Used to construct service.version
+   *
+   * See https://opentelemetry.io/docs/specs/semconv/registry/attributes/service/
+   */
+  TelemetryConfigBuilder& serviceVersion(std::string serviceVersion);
 
   /**
    * Can be used to add additional resource-level attributes. These can be used to help identify

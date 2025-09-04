@@ -57,36 +57,36 @@ serverFiles:
     - name: ci-metrics
       interval: 15s
       rules:
+      # TODO: replace k8s namespace with service namespace, add process name and add host name
+      # TODO: scheduler backend name should be included in more
+      # TODO: fix buckets from milliseconds to seconds
       # Database
-      - record: test_ci_cta_database_connections_count
+      - record: test_ci_db_client_connection_count
         expr: |
-          sum by (k8s_namespace_name, k8s_node_name, k8s_pod_name, service_version, transfer_type) (cta_database_connections_count)
-      - record: test_ci_cta_database_query_error_count
+          sum by (k8s_namespace_name, k8s_node_name, k8s_pod_name, service_version, transfer_direction) (db_client_connection_count)
+      - record: test_ci_db_client_operation_duration_bucket
         expr: |
-          sum by (k8s_namespace_name, k8s_node_name, k8s_pod_name, service_version, transfer_type) (max_over_time(cta_database_query_error_count[7d]))
-      - record: test_ci_cta_database_query_duration_milliseconds_bucket
+          sum by (k8s_namespace_name, k8s_node_name, k8s_pod_name, service_version, event_name, le) (max_over_time(db_client_operation_duration_bucket{le=~"5.0|10.0|50.0|100.0|500.0|1000.0|5000.0|10000.0|100000.0|\\+Inf"}[7d]))
+      - record: test_ci_db_client_operation_duration_count
         expr: |
-          sum by (k8s_namespace_name, k8s_node_name, k8s_pod_name, service_version, event_type, le) (max_over_time(cta_database_query_duration_milliseconds_bucket{le=~"5.0|10.0|50.0|100.0|500.0|1000.0|5000.0|10000.0|100000.0|\\+Inf"}[7d]))
-      - record: test_ci_cta_database_query_duration_milliseconds_count
+          sum by (k8s_namespace_name, k8s_node_name, k8s_pod_name, service_version, event_name) (max_over_time(db_client_operation_duration_count[7d]))
+      - record: test_ci_db_client_operation_duration_sum
         expr: |
-          sum by (k8s_namespace_name, k8s_node_name, k8s_pod_name, service_version, event_type) (max_over_time(cta_database_query_duration_milliseconds_count[7d]))
-      - record: test_ci_cta_database_query_duration_milliseconds_sum
-        expr: |
-          sum by (k8s_namespace_name, k8s_node_name, k8s_pod_name, service_version, event_type) (max_over_time(cta_database_query_duration_milliseconds_sum[7d]))
+          sum by (k8s_namespace_name, k8s_node_name, k8s_pod_name, service_version, event_name) (max_over_time(db_client_operation_duration_sum[7d]))
       # Frontend
       - record: test_ci_cta_frontend_request_duration_milliseconds_bucket
         expr: |
-          sum by (k8s_namespace_name, k8s_node_name, k8s_pod_name, service_version, event_type, le) (max_over_time(cta_frontend_request_duration_milliseconds_bucket{le=~"5.0|10.0|50.0|100.0|500.0|1000.0|5000.0|10000.0|100000.0|\\+Inf"}[7d]))
+          sum by (k8s_namespace_name, k8s_node_name, k8s_pod_name, service_version, event_name, le) (max_over_time(cta_frontend_request_duration_milliseconds_bucket{le=~"5.0|10.0|50.0|100.0|500.0|1000.0|5000.0|10000.0|100000.0|\\+Inf"}[7d]))
       - record: test_ci_cta_frontend_request_duration_milliseconds_count
         expr: |
-          sum by (k8s_namespace_name, k8s_node_name, k8s_pod_name, service_version, event_type) (max_over_time(cta_frontend_request_duration_milliseconds_count[7d]))
+          sum by (k8s_namespace_name, k8s_node_name, k8s_pod_name, service_version, event_name) (max_over_time(cta_frontend_request_duration_milliseconds_count[7d]))
       - record: test_ci_cta_frontend_request_duration_milliseconds_sum
         expr: |
-          sum by (k8s_namespace_name, k8s_node_name, k8s_pod_name, service_version, event_type) (max_over_time(cta_frontend_request_duration_milliseconds_sum[7d]))
+          sum by (k8s_namespace_name, k8s_node_name, k8s_pod_name, service_version, event_name) (max_over_time(cta_frontend_request_duration_milliseconds_sum[7d]))
       # Scheduler
       - record: test_ci_cta_scheduler_queueing_count_total
         expr: |
-          sum by (k8s_namespace_name, k8s_node_name, k8s_pod_name, service_version, transfer_type, scheduler_backend_name) (max_over_time(cta_scheduler_queueing_count_total[7d]))
+          sum by (k8s_namespace_name, k8s_node_name, k8s_pod_name, service_version, transfer_direction, scheduler_backend_name) (max_over_time(cta_scheduler_queueing_count_total[7d]))
       - record: test_ci_cta_objectstore_lock_acquire_duration_milliseconds_bucket
         expr: |
           sum by (k8s_namespace_name, k8s_node_name, k8s_pod_name, service_version, lock_type, le, scheduler_backend_name) (max_over_time(cta_objectstore_lock_acquire_duration_milliseconds_bucket{le=~"5.0|10.0|50.0|100.0|500.0|1000.0|5000.0|10000.0|100000.0|\\+Inf"}[7d]))
@@ -102,17 +102,18 @@ serverFiles:
       # Taped
       - record: test_ci_cta_taped_mount_count_total
         expr: |
-          sum by (k8s_namespace_name, k8s_node_name, k8s_pod_name, service_version, transfer_type) (max_over_time(cta_taped_mount_count_total[7d]))
+          sum by (k8s_namespace_name, k8s_node_name, k8s_pod_name, service_version, transfer_direction) (max_over_time(cta_taped_mount_count_total[7d]))
       - record: test_ci_cta_taped_transfer_count_total
         expr: |
-          sum by (k8s_namespace_name, k8s_node_name, k8s_pod_name, service_version, transfer_type) (max_over_time(cta_taped_transfer_count_total[7d]))
+          sum by (k8s_namespace_name, k8s_node_name, k8s_pod_name, service_version, transfer_direction) (max_over_time(cta_taped_transfer_count_total[7d]))
       - record: test_ci_cta_taped_disk_thread_count
         expr: |
-          sum by (k8s_namespace_name, k8s_node_name, k8s_pod_name, service_version, transfer_type) (cta_taped_disk_thread_count)
+          sum by (k8s_namespace_name, k8s_node_name, k8s_pod_name, service_version, transfer_direction) (cta_taped_disk_thread_count)
       - record: test_ci_cta_taped_tape_thread_count
         expr: |
-          sum by (k8s_namespace_name, k8s_node_name, k8s_pod_name, service_version, transfer_type) (cta_taped_tape_thread_count)
+          sum by (k8s_namespace_name, k8s_node_name, k8s_pod_name, service_version, transfer_direction) (cta_taped_tape_thread_count)
       # Kube State Metrics
+      # TODO: if possible associate this to hostname (which should be the same hostname as above)
       - record: test_ci_pod_cpu_system_seconds_total
         expr: |
           sum by (instance, pod, namespace) (rate(container_cpu_system_seconds_total{container="",pod=~"cta.*|eos.*"}[1m]))

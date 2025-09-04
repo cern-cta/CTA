@@ -20,9 +20,10 @@
 #include "common/log/StdoutLogger.hpp"
 #include "common/processCap/ProcessCap.hpp"
 #include "common/threading/System.hpp"
-#include "common/telemetry/TelemetryConstants.hpp"
+#include "common/semconv/SemConv.hpp"
 #include "common/telemetry/TelemetryInit.hpp"
 #include "common/telemetry/config/TelemetryConfig.hpp"
+#include "common/semconv/SemConv.hpp"
 #include "tapeserver/daemon/CommandLineParams.hpp"
 #include "tapeserver/daemon/common/TapedConfiguration.hpp"
 #include "tapeserver/daemon/TapeDaemon.hpp"
@@ -229,9 +230,10 @@ int main(const int argc, char **const argv) {
   // Instantiate telemetry
   try {
     cta::telemetry::TelemetryConfig telemetryConfig = cta::telemetry::TelemetryConfigBuilder()
-      .serviceName("cta.taped")
+      .serviceName(cta::semconv::kServiceNameCtaTaped)
       .serviceNamespace(globalConfig.instanceName.value())
-      .resourceAttribute(cta::telemetry::constants::kSchedulerBackendNameKey, globalConfig.schedulerBackendName.value())
+      .serviceVersion(CTA_VERSION)
+      .resourceAttribute(cta::semconv::kSchedulerBackendNameKey, globalConfig.schedulerBackendName.value())
       .metricsBackend(globalConfig.telemetryMetricsBackend.value())
       .metricsExportInterval(std::chrono::milliseconds(globalConfig.telemetryMetricsExportInterval.value()))
       .metricsExportTimeout(std::chrono::milliseconds(globalConfig.telemetryMetricsExportTimeout.value()))

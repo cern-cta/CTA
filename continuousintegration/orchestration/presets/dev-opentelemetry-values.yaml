@@ -4,6 +4,7 @@ image:
 
 mode: deployment
 
+# TODO: we might not need this
 presets:
   kubernetesAttributes:
     enabled: true
@@ -18,6 +19,10 @@ config:
   processors:
     batch:
       timeout: 5s
+    resourcedetection/system:
+      detectors: ["system"]
+      system:
+        hostname_sources: ["os"]
 
   exporters:
     prometheus:
@@ -34,6 +39,7 @@ config:
           - otlp
         processors:
           - batch
+          - resourcedetection/system
         exporters:
           - prometheus
           - debug

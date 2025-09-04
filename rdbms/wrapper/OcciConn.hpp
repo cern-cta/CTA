@@ -46,7 +46,7 @@ public:
    * @param env The OCCI environment.
    * @param conn The OCCI connection.
    */
-  OcciConn(oracle::occi::Environment *env, oracle::occi::Connection *const conn);
+  OcciConn(oracle::occi::Environment *env, oracle::occi::Connection *const conn, const std::string& dbNamespace);
 
   /**
    * Destructor.
@@ -215,6 +215,8 @@ public:
    */
   std::list<std::string> getViewNames() override;
 
+  std::string getDbNamespace() const override;
+
 private:
 
   friend OcciStmt;
@@ -250,6 +252,8 @@ private:
    * @param stmt The OCCI statement to be closed.
    */
   void closeStmt(oracle::occi::Statement *const stmt);
+
+  std::string m_dbNamespace;
 
 }; // class OcciConn
 

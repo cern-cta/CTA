@@ -25,8 +25,9 @@
 #include "common/log/LogContext.hpp"
 #include "common/Timer.hpp"
 #include "common/utils/utils.hpp"
-#include "common/telemetry/TelemetryConstants.hpp"
+#include "common/semconv/SemConv.hpp"
 #include "common/telemetry/metrics/instruments/SchedulerInstruments.hpp"
+#include "common/telemetry/metrics/instruments/ObjectstoreInstruments.hpp"
 #include <opentelemetry/context/runtime_context.h>
 
 namespace cta {
@@ -366,8 +367,7 @@ public:
       ScopedSharedLock::setObjectLocked(m_objectOps);
       m_locked = true;
     }
-    const uint64_t lockAcquireTime = timer.msecs();
-    cta::telemetry::metrics::objectstoreLockAcquireDurationHistogram->Record(lockAcquireTime, {{cta::telemetry::constants::kLockTypeKey, "ScopedSharedLock"}},
+    cta::telemetry::metrics::objectstoreLockAcquireDuration->Record(timer.secs(), {{cta::semconv::kLockType, cta::semconv::kLockTypeScopedShared}},
                                          opentelemetry::context::RuntimeContext::GetCurrent());
   }
 
@@ -405,8 +405,7 @@ public:
       m_objectOps->m_exclusiveLock = this;
       m_locked = true;
     }
-    const uint64_t lockAcquireTime = timer.msecs();
-    cta::telemetry::metrics::objectstoreLockAcquireDurationHistogram->Record(lockAcquireTime, {{cta::telemetry::constants::kLockTypeKey, "ScopedExclusiveLock"}},
+    cta::telemetry::metrics::objectstoreLockAcquireDuration->Record(timer.secs(), {{cta::semconv::kLockType, cta::semconv::kLockTypeScopedExclusive}},
       opentelemetry::context::RuntimeContext::GetCurrent());
   }
 

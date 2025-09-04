@@ -40,6 +40,11 @@ TelemetryConfigBuilder& TelemetryConfigBuilder::serviceNamespace(std::string ser
   return *this;
 }
 
+TelemetryConfigBuilder& TelemetryConfigBuilder::serviceVersion(std::string serviceVersion) {
+  m_config.serviceVersion = std::move(serviceVersion);
+  return *this;
+}
+
 TelemetryConfigBuilder& TelemetryConfigBuilder::resourceAttribute(std::string key, std::string value) {
   m_config.resourceAttributes[std::move(key)] = std::move(value);
   return *this;
@@ -77,6 +82,10 @@ TelemetryConfig TelemetryConfigBuilder::build() const {
 
   if (m_config.serviceNamespace.empty()) {
     throw std::invalid_argument("TelemetryConfig: serviceNamespace is required.");
+  }
+
+  if (m_config.serviceVersion.empty()) {
+    throw std::invalid_argument("TelemetryConfig: serviceVersion is required.");
   }
 
   if (m_config.metrics.backend == MetricsBackend::OTLP && m_config.metrics.otlpEndpoint.empty()) {
