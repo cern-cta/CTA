@@ -21,38 +21,29 @@ public:
 
 private:
   std::list<cta::common::dataStructures::LogicalLibrary> m_logicalLibraries;
-
-  std::list<cta::common::dataStructures::LogicalLibrary> buildLogicalLibraryList(const admin::AdminCmd& admincmd);
 };
 
 LogicalLibraryLsResponseStream::LogicalLibraryLsResponseStream(cta::catalogue::Catalogue& catalogue,
                                                                cta::Scheduler& scheduler,
-                                                               const frontend::AdminCmdStream& admincmd)
-    : CtaAdminResponseStream(catalogue, scheduler, admincmd.getInstanceName()), m_logicalLibraries(buildLogicalLibraryList(admincmd.getAdminCmd())) {}
+                                                               const frontend::AdminCmdStream& requestMsg)
+    : CtaAdminResponseStream(catalogue, scheduler, requestMsg.getInstanceName()) {
+      cta::frontend::AdminCmdOptions request;
+      request.importOptions(requestMsg.getAdminCmd());
 
+      std::optional<bool> disabled = request.getOptional(cta::admin::OptionBoolean::DISABLED);
+      m_logicalLibraries = m_catalogue.LogicalLibrary()->getLogicalLibraries();
 
-std::list<cta::common::dataStructures::LogicalLibrary>
-LogicalLibraryLsResponseStream::buildLogicalLibraryList(const admin::AdminCmd& admincmd) {
-  cta::frontend::AdminCmdOptions request;
-  request.importOptions(admincmd);
-
-  std::optional<bool> disabled = request.getOptional(cta::admin::OptionBoolean::DISABLED);
-  std::list<cta::common::dataStructures::LogicalLibrary> logicalLibraryList =
-    m_catalogue.LogicalLibrary()->getLogicalLibraries();
-
-  if (disabled) {
-    std::list<cta::common::dataStructures::LogicalLibrary>::iterator next_ll = logicalLibraryList.begin();
-    while (next_ll != logicalLibraryList.end()) {
-      if (disabled.value() != (*next_ll).isDisabled) {
-        next_ll = logicalLibraryList.erase(next_ll);
-      } else {
-        ++next_ll;
+      if (disabled) {
+        std::list<cta::common::dataStructures::LogicalLibrary>::iterator next_ll = m_logicalLibraries.begin();
+        while (next_ll != m_logicalLibraries.end()) {
+          if (disabled.value() != (*next_ll).isDisabled) {
+            next_ll = m_logicalLibraries.erase(next_ll);
+          } else {
+            ++next_ll;
+          }
+        }
       }
     }
-  }
-
-  return logicalLibraryList;
-}
 
 bool LogicalLibraryLsResponseStream::isDone() {
   return m_logicalLibraries.empty();
