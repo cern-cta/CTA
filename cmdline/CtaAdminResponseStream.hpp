@@ -18,8 +18,6 @@ public:
   virtual ~CtaAdminResponseStream() = default;
   virtual bool isDone() = 0;
   virtual cta::xrd::Data next() = 0;
-  virtual void init(const admin::AdminCmd& request) = 0;  //!< initializes the list of items to be streamed
-  //!< init could throw because of the validateCmd call which can throw
 
 protected:
   cta::catalogue::Catalogue& m_catalogue;

@@ -18,7 +18,7 @@ public:
 
   bool isDone() override;
   cta::xrd::Data next() override;
-  void init(const admin::AdminCmd& admincmd) override;
+  
 
 private:
   std::list<cta::common::dataStructures::AdminUser> m_adminUsers;
@@ -30,9 +30,6 @@ AdminLsResponseStream::AdminLsResponseStream(cta::catalogue::Catalogue& catalogu
     : CtaAdminResponseStream(catalogue, scheduler, requestMsg.getInstanceName()),
       m_adminUsers(catalogue.AdminUser()->getAdminUsers()) {}
 
-void AdminLsResponseStream::init(const admin::AdminCmd& admincmd) {
-  // Logic moved to constructor
-}
 
 bool AdminLsResponseStream::isDone() {
   return m_adminUsers.empty();

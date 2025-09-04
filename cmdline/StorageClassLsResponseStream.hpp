@@ -17,7 +17,7 @@ public:
 
   bool isDone() override;
   cta::xrd::Data next() override;
-  void init(const admin::AdminCmd& admincmd) override;
+  
 
 private:
   std::list<cta::common::dataStructures::StorageClass> m_storageClasses;
@@ -31,9 +31,6 @@ StorageClassLsResponseStream::StorageClassLsResponseStream(cta::catalogue::Catal
     : CtaAdminResponseStream(catalogue, scheduler, requestMsg.getInstanceName()),
       m_storageClasses(buildStorageClassList(requestMsg.getAdminCmd())) {}
 
-void StorageClassLsResponseStream::init(const admin::AdminCmd& admincmd) {
-  // Logic moved to constructor
-}
 
 std::list<cta::common::dataStructures::StorageClass>
 StorageClassLsResponseStream::buildStorageClassList(const admin::AdminCmd& admincmd) {

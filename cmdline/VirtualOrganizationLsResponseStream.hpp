@@ -16,7 +16,7 @@ public:
 
   bool isDone() override;
   cta::xrd::Data next() override;
-  void init(const admin::AdminCmd& admincmd) override;
+  
 
 private:
   std::list<cta::common::dataStructures::VirtualOrganization> m_virtualOrganizations;
@@ -28,9 +28,6 @@ VirtualOrganizationLsResponseStream::VirtualOrganizationLsResponseStream(cta::ca
     : CtaAdminResponseStream(catalogue, scheduler, requestMsg.getInstanceName()),
       m_virtualOrganizations(catalogue.VO()->getVirtualOrganizations()) {}
 
-void VirtualOrganizationLsResponseStream::init(const admin::AdminCmd& admincmd) {
-  // Logic moved to constructor
-}
 
 bool VirtualOrganizationLsResponseStream::isDone() {
   return m_virtualOrganizations.empty();

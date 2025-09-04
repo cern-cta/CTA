@@ -19,7 +19,7 @@ public:
 
   bool isDone() override;
   cta::xrd::Data next() override;
-  void init(const admin::AdminCmd& admincmd) override;
+  
 
 private:
   std::list<cta::common::dataStructures::RequesterActivityMountRule> m_activityMountRules;
@@ -30,10 +30,6 @@ ActivityMountRuleLsResponseStream::ActivityMountRuleLsResponseStream(cta::catalo
                                                                      const frontend::AdminCmdStream& requestMsg)
     : CtaAdminResponseStream(catalogue, scheduler, requestMsg.getInstanceName()),
       m_activityMountRules(catalogue.RequesterActivityMountRule()->getRequesterActivityMountRules()) {}
-
-void ActivityMountRuleLsResponseStream::init(const admin::AdminCmd& admincmd) {
-  // Logic moved to constructor
-}
 
 bool ActivityMountRuleLsResponseStream::isDone() {
   return m_activityMountRules.empty();

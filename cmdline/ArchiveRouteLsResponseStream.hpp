@@ -19,7 +19,7 @@ public:
 
   bool isDone() override;
   cta::xrd::Data next() override;
-  void init(const admin::AdminCmd& admincmd) override;
+  
 
 private:
   std::list<cta::common::dataStructures::ArchiveRoute> m_archiveRoutes;
@@ -31,9 +31,6 @@ ArchiveRouteLsResponseStream::ArchiveRouteLsResponseStream(cta::catalogue::Catal
     : CtaAdminResponseStream(catalogue, scheduler, requestMsg.getInstanceName()),
       m_archiveRoutes(catalogue.ArchiveRoute()->getArchiveRoutes()) {}
 
-void ArchiveRouteLsResponseStream::init(const admin::AdminCmd& admincmd) {
-  // Logic moved to constructor
-}
 
 bool ArchiveRouteLsResponseStream::isDone() {
   return m_archiveRoutes.empty();

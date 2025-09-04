@@ -17,7 +17,7 @@ public:
                                      const frontend::AdminCmdStream& admincmd);
   bool isDone() override;
   cta::xrd::Data next() override;
-  void init(const admin::AdminCmd& admincmd) override;
+  
 
 private:
   std::list<cta::common::dataStructures::RequesterMountRule> m_requesterMountRules;
@@ -28,9 +28,6 @@ RequesterMountRuleLsResponseStream::RequesterMountRuleLsResponseStream(cta::cata
                                                                        const frontend::AdminCmdStream& admincmd)
     : CtaAdminResponseStream(catalogue, scheduler, admincmd.getInstanceName()), m_requesterMountRules(catalogue.RequesterMountRule()->getRequesterMountRules()) {}
 
-void RequesterMountRuleLsResponseStream::init(const admin::AdminCmd& admincmd) {
-  // m_requesterMountRules = m_catalogue.RequesterMountRule()->getRequesterMountRules();
-}
 
 bool RequesterMountRuleLsResponseStream::isDone() {
   return m_requesterMountRules.empty();

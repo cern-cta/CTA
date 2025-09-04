@@ -23,7 +23,7 @@ public:
 
   bool isDone() override;
   cta::xrd::Data next() override;
-  void init(const admin::AdminCmd& admincmd) override;
+  
 
 private:
   cta::log::LogContext& m_lc;
@@ -47,9 +47,6 @@ ShowQueuesResponseStream::ShowQueuesResponseStream(cta::catalogue::Catalogue& ca
   m_queuesAndMountsList = m_scheduler.getQueuesAndMountSummaries(m_lc);
 }
 
-void ShowQueuesResponseStream::init(const admin::AdminCmd& admincmd) {
-  // Logic moved to constructor
-}
 
 bool ShowQueuesResponseStream::isDone() {
   return m_queuesAndMountsList.empty();

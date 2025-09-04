@@ -31,19 +31,11 @@ namespace cta::xrd {
 class XrdCtaStream : public XrdSsiStream
 {
 public:
-  XrdCtaStream(cta::catalogue::Catalogue &catalogue, cta::Scheduler &scheduler, std::unique_ptr<cta::cmdline::CtaAdminResponseStream> stream) :
+  XrdCtaStream(cta::catalogue::Catalogue &catalogue, cta::Scheduler &scheduler, std::unique_ptr<cta::cmdline::CtaAdminResponseStream> stream = nullptr) :
     XrdSsiStream(XrdSsiStream::isActive),
     m_catalogue(catalogue),
     m_scheduler(scheduler),
     m_stream(std::move(stream))
-  {
-    XrdSsiPb::Log::Msg(XrdSsiPb::Log::DEBUG, LOG_SUFFIX, "XrdCtaStream() constructor");
-  }
-
-  XrdCtaStream(cta::catalogue::Catalogue &catalogue, cta::Scheduler &scheduler) :
-    XrdSsiStream(XrdSsiStream::isActive),
-    m_catalogue(catalogue),
-    m_scheduler(scheduler)
   {
     XrdSsiPb::Log::Msg(XrdSsiPb::Log::DEBUG, LOG_SUFFIX, "XrdCtaStream() constructor");
   }
@@ -137,22 +129,6 @@ protected:
   cta::catalogue::Catalogue &m_catalogue;    //!< Reference to CTA Catalogue
   cta::Scheduler            &m_scheduler;    //!< Reference to CTA Scheduler
   std::unique_ptr<cta::cmdline::CtaAdminResponseStream> m_stream;  //!< Response stream
-
-  // Template factory method to initialize any ResponseStream type
-  template<typename ResponseStreamType, typename... Args>
-  void initializeStream(const frontend::AdminCmdStream& requestMsg, const char* logSuffix, Args&&... args) {
-    XrdSsiPb::Log::Msg(XrdSsiPb::Log::DEBUG, logSuffix, " constructor");
-
-    try {
-      m_stream = std::make_unique<ResponseStreamType>(m_catalogue,
-                                                      m_scheduler,
-                                                      requestMsg.getInstanceName(),
-                                                      std::forward<Args>(args)...);
-      m_stream->init(requestMsg.getAdminCmd());
-    } catch (const std::exception& ex) {
-      throw exception::UserError(ex.what());
-    }
-  }
 
 private:
   static constexpr const char* const LOG_SUFFIX  = "XrdCtaStream";    //!< Identifier for log messages

@@ -23,7 +23,7 @@ public:
 
   bool isDone() override;
   cta::xrd::Data next() override;
-  void init(const admin::AdminCmd& admincmd) override;
+  
 
 private:
   cta::log::LogContext& m_lc;
@@ -124,9 +124,6 @@ DriveLsResponseStream::DriveLsResponseStream(cta::catalogue::Catalogue& catalogu
   }
 }
 
-void DriveLsResponseStream::init(const admin::AdminCmd& admincmd) {
-  // Logic moved to constructor
-}
 
 bool DriveLsResponseStream::isDone() {
   return m_tapeDrives.empty();

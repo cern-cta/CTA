@@ -18,7 +18,7 @@ public:
                                   const frontend::AdminCmdStream& requestMsg);
   bool isDone() override;
   cta::xrd::Data next() override;
-  void init(const admin::AdminCmd& admincmd) override;
+  
 
 private:
   std::list<common::dataStructures::FileRecycleLog> m_fileRecycleLogs;
@@ -72,9 +72,6 @@ RecycleTapeFileLsResponseStream::RecycleTapeFileLsResponseStream(cta::catalogue:
   }
 }
 
-void RecycleTapeFileLsResponseStream::init(const admin::AdminCmd& admincmd) {
-  // Logic moved to constructor
-}
 
 bool RecycleTapeFileLsResponseStream::isDone() {
   return m_fileRecycleLogs.empty();

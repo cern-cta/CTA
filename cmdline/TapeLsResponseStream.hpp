@@ -21,7 +21,7 @@ public:
 
   bool isDone() override;
   cta::xrd::Data next() override;
-  void init(const admin::AdminCmd& admincmd) override;
+  
 
 private:
   std::list<common::dataStructures::Tape> m_tapes;
@@ -78,9 +78,6 @@ TapeLsResponseStream::TapeLsResponseStream(cta::catalogue::Catalogue& catalogue,
   m_tapes = m_catalogue.Tape()->getTapes(m_searchCriteria);
 }
 
-void TapeLsResponseStream::init(const admin::AdminCmd& admincmd) {
-  // Logic moved to constructor
-}
 
 bool TapeLsResponseStream::isDone() {
   return m_tapes.empty();

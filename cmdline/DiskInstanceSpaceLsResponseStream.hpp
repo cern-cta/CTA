@@ -16,7 +16,7 @@ public:
 
   bool isDone() override;
   cta::xrd::Data next() override;
-  void init(const admin::AdminCmd& admincmd) override;
+  
 
 private:
   std::list<cta::common::dataStructures::DiskInstanceSpace> m_diskInstanceSpaces;
@@ -28,9 +28,6 @@ DiskInstanceSpaceLsResponseStream::DiskInstanceSpaceLsResponseStream(cta::catalo
     : CtaAdminResponseStream(catalogue, scheduler, requestMsg.getInstanceName()),
       m_diskInstanceSpaces(catalogue.DiskInstanceSpace()->getAllDiskInstanceSpaces()) {}
 
-void DiskInstanceSpaceLsResponseStream::init(const admin::AdminCmd& admincmd) {
-  // Logic moved to constructor
-}
 
 bool DiskInstanceSpaceLsResponseStream::isDone() {
   return m_diskInstanceSpaces.empty();

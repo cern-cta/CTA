@@ -16,7 +16,7 @@ public:
 
   bool isDone() override;
   cta::xrd::Data next() override;
-  void init(const admin::AdminCmd& admincmd) override;
+  
 
 private:
   std::list<common::dataStructures::MountPolicy> m_mountPolicies;
@@ -28,9 +28,6 @@ MountPolicyLsResponseStream::MountPolicyLsResponseStream(cta::catalogue::Catalog
     : CtaAdminResponseStream(catalogue, scheduler, requestMsg.getInstanceName()),
       m_mountPolicies(catalogue.MountPolicy()->getMountPolicies()) {}
 
-void MountPolicyLsResponseStream::init(const admin::AdminCmd& admincmd) {
-  // Logic moved to constructor
-}
 
 bool MountPolicyLsResponseStream::isDone() {
   return m_mountPolicies.empty();

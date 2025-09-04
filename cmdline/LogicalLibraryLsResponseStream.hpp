@@ -17,7 +17,7 @@ public:
 
   bool isDone() override;
   cta::xrd::Data next() override;
-  void init(const admin::AdminCmd& admincmd) override;
+  
 
 private:
   std::list<cta::common::dataStructures::LogicalLibrary> m_logicalLibraries;
@@ -30,9 +30,6 @@ LogicalLibraryLsResponseStream::LogicalLibraryLsResponseStream(cta::catalogue::C
                                                                const frontend::AdminCmdStream& admincmd)
     : CtaAdminResponseStream(catalogue, scheduler, admincmd.getInstanceName()), m_logicalLibraries(buildLogicalLibraryList(admincmd.getAdminCmd())) {}
 
-void LogicalLibraryLsResponseStream::init(const admin::AdminCmd& admincmd) {
-  // Logic moved to constructor
-}
 
 std::list<cta::common::dataStructures::LogicalLibrary>
 LogicalLibraryLsResponseStream::buildLogicalLibraryList(const admin::AdminCmd& admincmd) {

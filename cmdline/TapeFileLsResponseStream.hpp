@@ -19,7 +19,6 @@ public:
 
   bool isDone() override;
   cta::xrd::Data next() override;
-  void init(const admin::AdminCmd& admincmd) override;
 
 private:
   catalogue::ArchiveFileItor m_tapeFileItor;
@@ -70,10 +69,6 @@ TapeFileLsResponseStream::TapeFileLsResponseStream(cta::catalogue::Catalogue& ca
 
   m_tapeFileItor = m_catalogue.ArchiveFile()->getArchiveFilesItor(searchCriteria);
   m_currentArchiveFile = std::nullopt;
-}
-
-void TapeFileLsResponseStream::init(const admin::AdminCmd& admincmd) {
-  // Logic moved to constructor
 }
 
 bool TapeFileLsResponseStream::isDone() {

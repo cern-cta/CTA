@@ -20,7 +20,7 @@ public:
 
   bool isDone() override;
   cta::xrd::Data next() override;
-  void init(const admin::AdminCmd& admincmd) override;
+  
 
 private:
   std::list<cta::xrd::Data> m_repackItems;
@@ -45,9 +45,6 @@ RepackLsResponseStream::RepackLsResponseStream(cta::catalogue::Catalogue& catalo
   collectRepacks(vid);
 }
 
-void RepackLsResponseStream::init(const admin::AdminCmd& admincmd) {
-  // Logic moved to constructor
-}
 
 void RepackLsResponseStream::collectRepacks(const std::optional<std::string>& vid) {
   std::list<common::dataStructures::RepackInfo> repackList;

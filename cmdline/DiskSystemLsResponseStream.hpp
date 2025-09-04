@@ -18,7 +18,7 @@ public:
 
   bool isDone() override;
   cta::xrd::Data next() override;
-  void init(const admin::AdminCmd& admincmd) override;
+  
 
 private:
   std::list<cta::disk::DiskSystem> m_diskSystems;
@@ -30,9 +30,6 @@ DiskSystemLsResponseStream::DiskSystemLsResponseStream(cta::catalogue::Catalogue
     : CtaAdminResponseStream(catalogue, scheduler, requestMsg.getInstanceName()),
       m_diskSystems(catalogue.DiskSystem()->getAllDiskSystems()) {}
 
-void DiskSystemLsResponseStream::init(const admin::AdminCmd& admincmd) {
-  // Logic moved to constructor
-}
 
 bool DiskSystemLsResponseStream::isDone() {
   return m_diskSystems.empty();
