@@ -39,6 +39,7 @@ void initMetrics(const TelemetryConfig& config, cta::log::LogContext& lc) {
   }
 
   std::string processName = cta::utils::getProcessName();
+  std::string hostName = cta::utils::getShortHostname();
   std::string serviceInstanceId;
   if (!previousServiceInstanceId.empty()) {
     serviceInstanceId = previousServiceInstanceId;
@@ -90,13 +91,14 @@ void initMetrics(const TelemetryConfig& config, cta::log::LogContext& lc) {
 
   // These metrics should make sure that each and every process is uniquely identifiable
   // Otherwise, metrics will not be aggregated correctly.
-  // The processName can go once we get rid of the forking in taped
+  // The processName could go once we get rid of the forking in taped
   opentelemetry::sdk::common::AttributeMap attributes = {
     {cta::semconv::kServiceName,       config.serviceName     },
     {cta::semconv::kServiceNamespace,  config.serviceNamespace},
     {cta::semconv::kServiceVersion,    config.serviceVersion  },
     {cta::semconv::kServiceInstanceId, serviceInstanceId      },
-    {cta::semconv::kProcessTitle,      processName            }
+    {cta::semconv::kProcessTitle,      processName            },
+    {cta::semconv::kHostName,          hostName               }
   };
 
   for (const auto& kv : config.resourceAttributes) {

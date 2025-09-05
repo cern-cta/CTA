@@ -367,7 +367,7 @@ public:
       ScopedSharedLock::setObjectLocked(m_objectOps);
       m_locked = true;
     }
-    cta::telemetry::metrics::objectstoreLockAcquireDuration->Record(timer.secs(), {{cta::semconv::kLockType, cta::semconv::kLockTypeScopedShared}},
+    cta::telemetry::metrics::objectstoreLockAcquireDuration->Record(timer.msecs(), {{cta::semconv::kLockType, cta::semconv::LockTypeValues::kScopedShared}},
                                          opentelemetry::context::RuntimeContext::GetCurrent());
   }
 
@@ -405,7 +405,7 @@ public:
       m_objectOps->m_exclusiveLock = this;
       m_locked = true;
     }
-    cta::telemetry::metrics::objectstoreLockAcquireDuration->Record(timer.secs(), {{cta::semconv::kLockType, cta::semconv::kLockTypeScopedExclusive}},
+    cta::telemetry::metrics::objectstoreLockAcquireDuration->Record(timer.msecs(), {{cta::semconv::kLockType, cta::semconv::LockTypeValues::kScopedExclusive}},
       opentelemetry::context::RuntimeContext::GetCurrent());
   }
 

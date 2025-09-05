@@ -20,6 +20,7 @@
 #include "rdbms/ConnPool.hpp"
 #include "rdbms/wrapper/ConnFactoryFactory.hpp"
 #include "common/telemetry/metrics/instruments/RdbmsInstruments.hpp"
+#include "common/semconv/SemConv.hpp"
 
 #include <memory>
 
@@ -34,7 +35,7 @@ ConnPool::ConnPool(const Login& login, const uint64_t maxNbConns)
       m_nbConnsOnLoan(0) {}
 
 ConnPool::~ConnPool() {
-    cta::telemetry::metrics::rdbmsConnectionCount->Add(-m_nbConnsOnLoan);
+  addNbConnsOnLoan(-m_nbConnsOnLoan);
 }
 
 //------------------------------------------------------------------------------
@@ -62,8 +63,7 @@ Conn ConnPool::getConn() {
       connAndStmts = std::move(m_connsAndStmts.front());
       m_connsAndStmts.pop_front();
     }
-    m_nbConnsOnLoan++;
-    cta::telemetry::metrics::rdbmsConnectionCount->Add(1);
+    addNbConnsOnLoan(1);
   }
   // Checks conn->isOpen() after releasing the lock, and if it's closed:
   // just replaces the conn and stmtPool inside the existing ConnAndStmts
@@ -105,8 +105,7 @@ void ConnPool::returnConn(std::unique_ptr<ConnAndStmts> connAndStmts) {
         if (0 == m_nbConnsOnLoan) {
           throw exception::Exception("Would have reached -1 connections on loan");
         }
-        m_nbConnsOnLoan--;
-        cta::telemetry::metrics::rdbmsConnectionCount->Add(-1);
+        addNbConnsOnLoan(-1);
         m_connsAndStmtsCv.signal();
         return;
       }
@@ -119,8 +118,7 @@ void ConnPool::returnConn(std::unique_ptr<ConnAndStmts> connAndStmts) {
       if (0 == m_nbConnsOnLoan) {
         throw exception::Exception("Would have reached -1 connections on loan");
       }
-      m_nbConnsOnLoan--;
-      cta::telemetry::metrics::rdbmsConnectionCount->Add(-1);
+      addNbConnsOnLoan(-1);
       m_connsAndStmts.push_back(std::move(connAndStmts));
       m_connsAndStmtsCv.signal();
 
@@ -137,13 +135,20 @@ void ConnPool::returnConn(std::unique_ptr<ConnAndStmts> connAndStmts) {
       if (0 == m_nbConnsOnLoan) {
         throw exception::Exception("Would have reached -1 connections on loan");
       }
-      m_nbConnsOnLoan--;
-      cta::telemetry::metrics::rdbmsConnectionCount->Add(-1);
+      addNbConnsOnLoan(-1);
       m_connsAndStmtsCv.signal();
     }
   } catch (exception::Exception& ex) {
     throw exception::Exception(std::string(__FUNCTION__) + " failed: " + ex.getMessage().str());
   }
+}
+
+//------------------------------------------------------------------------------
+// addNbConnsOnLoan
+//------------------------------------------------------------------------------
+void ConnPool::addNbConnsOnLoan(int nbConns) {
+  m_nbConnsOnLoan += nbConns;
+  cta::telemetry::metrics::rdbmsConnectionCount->Add(nbConns, {{cta::semconv::kDbSystemName, m_connFactory->getDbSystemName()}, {cta::semconv::kDbNamespace, m_connFactory->getDbNamespace()}});
 }
 
 }  // namespace cta::rdbms

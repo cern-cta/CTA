@@ -88,6 +88,12 @@ private:
    */
   void returnConn(std::unique_ptr<ConnAndStmts> connAndStmts);
 
+
+  /**
+   * Adds a number of connections on loan. Can be negative if the number of connections decreases.
+   */
+  void addNbConnsOnLoan(int nbConns);
+
   /**
    * The database connection factory.
    */

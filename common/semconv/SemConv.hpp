@@ -18,51 +18,74 @@
 
 #include <string>
 
-// As this file grows we can split it up into more logical groupings
+// As this file grows we should split it up into more logical groupings
+// However, before doing that we first need to collect enough to understand what these logical groupings will be
 namespace cta::semconv {
 
 // -------------------- Attribute Keys --------------------
-static constexpr const char *kSchedulerBackendNameKey = "scheduler.backend.name";
-static constexpr const char *kServiceName = "service.name";
-static constexpr const char *kServiceNamespace = "service.namespace";
-static constexpr const char *kServiceVersion = "service.version";
-static constexpr const char *kServiceInstanceId = "service.instance.id";
-static constexpr const char *kProcessTitle = "process.name";
+static constexpr const char* kServiceName = "service.name";
+static constexpr const char* kServiceNamespace = "service.namespace";
+static constexpr const char* kServiceVersion = "service.version";
+static constexpr const char* kServiceInstanceId = "service.instance.id";
+// See https://opentelemetry.io/docs/specs/semconv/registry/attributes/process/#process-title why we go for process.title instead of process.name
+static constexpr const char* kProcessTitle = "process.title";
+// See https://opentelemetry.io/docs/specs/semconv/registry/attributes/host/ why we go for host.name instead of hostname
+static constexpr const char* kHostName = "host.name";
 
-static constexpr const char *kEventName = "event.name";
-static constexpr const char *kErrorType = "error.type";
-static constexpr const char *kState = "state";
+static constexpr const char* kEventName = "event.name";
+static constexpr const char* kErrorType = "error.type";
+static constexpr const char* kState = "state";
 
-static constexpr const char *kDbSystemName = "db.system.name";
-static constexpr const char *kDbNamespace = "db.namespace";
+static constexpr const char* kDbSystemName = "db.system.name";
+static constexpr const char* kDbNamespace = "db.namespace";
 
-// Non-standard
-static constexpr const char *kLockType = "lock.type";
-static constexpr const char *kThreadPoolName = "thread_pool.name";
+// Non-standard -- CTA-specific
+static constexpr const char* kSchedulerBackendName = "scheduler.backend.name";
+static constexpr const char* kLockType = "lock.type";
+static constexpr const char* kThreadPoolName = "thread_pool.name";
 // similar to disk.io.direction
-static constexpr const char *kTransferDirection = "transfer.direction";
+static constexpr const char* kTransferDirection = "transfer.direction";
 
 // -------------------- Attribute Values --------------------
 
-static constexpr const char *kServiceNameCtaFrontend = "cta.frontend";
-static constexpr const char *kServiceNameCtaTaped = "cta.taped";
+namespace ServiceNameValues {
+static constexpr const char* kCtaFrontend = "cta.frontend";
+static constexpr const char* kCtaTaped = "cta.taped";
+}  // namespace ServiceNameValues
 
-static constexpr const char *kTransferDirectionArchive = "archive";
-static constexpr const char *kTransferDirectionRetrieve = "retrieve";
+namespace TransferDirectionValues {
+static constexpr const char* kArchive = "archive";
+static constexpr const char* kRetrieve = "retrieve";
+}  // namespace TransferDirectionValues
 
-static constexpr const char *kEventNameEnqueue = "enqueue";
-static constexpr const char *kEventNameCancel = "cancel";
+namespace EventNameValues {
+static constexpr const char* kEnqueue = "enqueue";
+static constexpr const char* kCancel = "cancel";
+}  // namespace EventNameValues
 
-static constexpr const char *kErrorTypeException = "exception";
+namespace ErrorTypeValues {
+static constexpr const char* kException = "exception";
+}  // namespace ErrorTypeValues
 
-static constexpr const char *kStateIdle = "idle";
-static constexpr const char *kStateUsed = "used";
+namespace StateValues {
+static constexpr const char* kIdle = "idle";
+static constexpr const char* kUsed = "used";
+}  // namespace StateValues
 
+namespace ThreadPoolNameValues {
+static constexpr const char* kDisk = "disk";
+static constexpr const char* kTape = "tape";
+}  // namespace ThreadPoolNameValues
 
-static constexpr const char *kThreadPoolNameDisk = "disk";
-static constexpr const char *kThreadPoolNameTape = "tape";
+namespace LockTypeValues {
+static constexpr const char* kScopedShared = "scoped_shared";
+static constexpr const char* kScopedExclusive = "scoped_exclusive";
+}  // namespace LockTypeValues
 
-static constexpr const char *kLockTypeScopedShared = "scoped_shared";
-static constexpr const char *kLockTypeScopedExclusive = "scoped_exclusive";
+namespace DbSystemNameValues {
+static constexpr const char* kOracle = "oracle";
+static constexpr const char* kPostgres = "postgres";
+static constexpr const char* kSqlite = "sqlite";
+}  // namespace DbSystemNameValues
 
-}  // namespace cta::telemetry::constants
+}  // namespace cta::semconv
