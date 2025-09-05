@@ -102,9 +102,6 @@ void ConnPool::returnConn(std::unique_ptr<ConnAndStmts> connAndStmts) {
         while (!m_connsAndStmts.empty()) {
           m_connsAndStmts.pop_front();
         }
-        if (0 == m_nbConnsOnLoan) {
-          throw exception::Exception("Would have reached -1 connections on loan");
-        }
         removeNbConnsOnLoan(1);
         m_connsAndStmtsCv.signal();
         return;
@@ -115,9 +112,6 @@ void ConnPool::returnConn(std::unique_ptr<ConnAndStmts> connAndStmts) {
       connAndStmts->conn->setAutocommitMode(AutocommitMode::AUTOCOMMIT_ON);
 
       threading::MutexLocker locker(m_connsAndStmtsMutex);
-      if (0 == m_nbConnsOnLoan) {
-        throw exception::Exception("Would have reached -1 connections on loan");
-      }
       removeNbConnsOnLoan(1);
       m_connsAndStmts.push_back(std::move(connAndStmts));
       m_connsAndStmtsCv.signal();
@@ -131,9 +125,6 @@ void ConnPool::returnConn(std::unique_ptr<ConnAndStmts> connAndStmts) {
       threading::MutexLocker locker(m_connsAndStmtsMutex);
       while (!m_connsAndStmts.empty()) {
         m_connsAndStmts.pop_front();
-      }
-      if (0 == m_nbConnsOnLoan) {
-        throw exception::Exception("Would have reached -1 connections on loan");
       }
       removeNbConnsOnLoan(1);
       m_connsAndStmtsCv.signal();
@@ -155,6 +146,9 @@ void ConnPool::addNbConnsOnLoan(uint64_t nbConns) {
 // removeNbConnsOnLoan
 //------------------------------------------------------------------------------
 void ConnPool::removeNbConnsOnLoan(uint64_t nbConns) {
+  if (nbConns > m_nbConnsOnLoan) {
+    throw exception::Exception("Would have reached a negative number connections on loan");
+  }
   m_nbConnsOnLoan -= nbConns;
   cta::telemetry::metrics::rdbmsConnectionCount->Add(-nbConns, {{cta::semconv::kDbSystemName, m_connFactory->getDbSystemName()}, {cta::semconv::kDbNamespace, m_connFactory->getDbNamespace()}});
 }

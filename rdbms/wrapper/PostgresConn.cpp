@@ -45,7 +45,7 @@ PostgresConn::PostgresConn(const std::string& conninfo) {
     m_pgsqlConn = nullptr;
     throw exception::Exception(std::string(__FUNCTION__) + " connection failed: " + pqmsgstr);
   }
-
+  m_dbNamespace = std::string(PQdb(m_pgsqlConn));
   const int sVer = PQserverVersion(m_pgsqlConn);
   if (sVer < 90500) {
     PQfinish(m_pgsqlConn);
@@ -61,7 +61,6 @@ PostgresConn::PostgresConn(const std::string& conninfo) {
 
   PQsetNoticeProcessor(m_pgsqlConn, PostgresConn::noticeProcessor, nullptr);
 
-  m_dbNamespace = std::string(PQdb(m_pgsqlConn));
 }
 
 //------------------------------------------------------------------------------
