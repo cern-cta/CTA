@@ -103,14 +103,18 @@ private:
   /*!
    * Returns true if there is nothing more to send (i.e. we can close the stream)
    */
-  virtual bool isDone() const { return m_stream ? m_stream->isDone() : true; }
+  virtual bool isDone() const { 
+    if (!m_stream)
+      throw cta::exception::Exception("Unable to call isDone, as stream has not been initialised!");
+    return m_stream->isDone();
+  }
 
   /*!
    * Fills the stream buffer
    */
   virtual int fillBuffer(XrdSsiPb::OStreamBuffer<Data>* streambuf) {
     if (!m_stream) {
-      return 0;
+      throw cta::exception::Exception("Unable to call fillBuffer, as stream has not been initialised!");
     }
 
     for (bool is_buffer_full = false; !m_stream->isDone() && !is_buffer_full;) {
