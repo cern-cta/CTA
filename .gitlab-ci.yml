@@ -139,7 +139,7 @@ variables:
       - "presets/stress-eos-xrd-values.yaml"
       - "presets/stress-eos-grpc-values.yaml"
 
-  TELEMETRY_COLLECTION_ENABLED:
+  ENABLE_TELEMETRY_COLLECTION:
     description: "Whether to enable telemetry collection for the stress test"
     value: "TRUE"
     options:
@@ -189,7 +189,7 @@ workflow:
         on_job_failure: none
         on_new_commit: none
       variables:
-        TELEMETRY_COLLECTION_ENABLED: "TRUE"
+        ENABLE_TELEMETRY_COLLECTION: "TRUE"
     # Push events to main will still trigger the pipeline as per the previous rule
     # But we want to prevent dual pipelines on MRs
     - if: $CI_PIPELINE_SOURCE != "push"

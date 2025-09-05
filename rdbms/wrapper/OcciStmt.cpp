@@ -19,6 +19,7 @@
 #include "common/exception/LostDatabaseConnection.hpp"
 #include "common/threading/MutexLocker.hpp"
 #include "common/utils/utils.hpp"
+#include "common/semconv/SemConv.hpp"
 #include "rdbms/CheckConstraintError.hpp"
 #include "rdbms/PrimaryKeyError.hpp"
 #include "rdbms/UniqueConstraintError.hpp"
@@ -369,7 +370,7 @@ bool OcciStmt::connShouldBeClosed(const oracle::occi::SQLException &ex) {
 // getDbSystemName
 //------------------------------------------------------------------------------
 std::string OcciStmt::getDbSystemName() const {
-  return "oracle";
+  return cta::semconv::DbSystemNameValues::kOracle;
 }
 
 //------------------------------------------------------------------------------

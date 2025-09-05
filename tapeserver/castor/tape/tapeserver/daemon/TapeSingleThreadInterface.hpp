@@ -99,7 +99,7 @@ protected:
       scoped.add("MCMountTime", timer.secs()).add("mode", modeAsString);
       m_logContext.log(cta::log::INFO, "Tape mounted for read-only access");
       cta::telemetry::metrics::tapedMountCount->Add(1, {
-        {cta::semconv::kTransferDirection, cta::semconv::kTransferDirectionRetrieve}});
+        {cta::semconv::kTransferDirection, cta::semconv::TransferDirectionValues::kRetrieve}});
     }
     catch (cta::exception::Exception& ex) {
       scoped.add("exceptionMessage", ex.getMessageValue());
@@ -121,7 +121,7 @@ protected:
       scoped.add("MCMountTime", timer.secs()).add("mode", modeAsString);
       m_logContext.log(cta::log::INFO, "Tape mounted for read/write access");
       cta::telemetry::metrics::tapedMountCount->Add(1, {
-        {cta::semconv::kTransferDirection, cta::semconv::kTransferDirectionArchive}});
+        {cta::semconv::kTransferDirection, cta::semconv::TransferDirectionValues::kArchive}});
     }
     catch (cta::exception::Exception& ex) {
       scoped.add("exceptionMessage", ex.getMessageValue());

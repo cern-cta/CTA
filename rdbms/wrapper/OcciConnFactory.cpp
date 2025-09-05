@@ -16,6 +16,7 @@
  */
 
 #include "common/exception/Exception.hpp"
+#include "common/semconv/SemConv.hpp"
 #include "rdbms/wrapper/OcciConnFactory.hpp"
 #include "rdbms/wrapper/OcciEnvSingleton.hpp"
 #include "plugin-manager/PluginInterface.hpp"
@@ -43,6 +44,20 @@ std::unique_ptr<ConnWrapper> OcciConnFactory::create() {
   } catch(exception::Exception &ex) {
     throw exception::Exception(std::string(__FUNCTION__) + " failed: " + ex.getMessage().str());
   }
+}
+
+//------------------------------------------------------------------------------
+// getDbSystemName
+//------------------------------------------------------------------------------
+std::string OcciConnFactory::getDbSystemName() const {
+  return cta::semconv::DbSystemNameValues::kOracle;
+}
+
+//------------------------------------------------------------------------------
+// getDbNamespace
+//------------------------------------------------------------------------------
+std::string OcciConnFactory::getDbNamespace() const {
+  return m_username;
 }
 
 } // namespace cta::rdbms::wrapper

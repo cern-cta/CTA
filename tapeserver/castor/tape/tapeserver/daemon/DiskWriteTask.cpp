@@ -137,7 +137,7 @@ bool DiskWriteTask::execute(RecallReportPacker& reporter, cta::log::LogContext& 
     m_stats.totalTime = totalTime.secs();
     logWithStat(cta::log::INFO, isVerifyOnly ? "File successfully verified" : "File successfully transfered to disk", lc);
     watchdog.deleteParameter("stillOpenFileForThread" + std::to_string((long long)threadID));
-    cta::telemetry::metrics::tapedTransferCount->Add(1, {{cta::semconv::kTransferDirection, cta::semconv::kTransferDirectionRetrieve}});
+    cta::telemetry::metrics::tapedTransferCount->Add(1, {{cta::semconv::kTransferDirection, cta::semconv::TransferDirectionValues::kRetrieve}});
     //everything went well, return true
     return true;
   } //end of try
