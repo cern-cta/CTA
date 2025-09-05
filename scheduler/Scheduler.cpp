@@ -198,8 +198,8 @@ std::string Scheduler::queueArchiveWithGivenId(const uint64_t archiveFileId,
   lc.log(log::INFO, "In Scheduler::queueArchiveWithGivenId(): Queued archive request");
 
   cta::telemetry::metrics::schedulerQueueingCount->Add(1, {
-    {cta::semconv::kTransferDirection, cta::semconv::kTransferDirectionArchive},
-    {cta::semconv::kEventName, cta::semconv::kEventNameEnqueue}});
+    {cta::semconv::kTransferDirection, cta::semconv::TransferDirectionValues::kArchive},
+    {cta::semconv::kEventName, cta::semconv::EventNameValues::kEnqueue}});
   return archiveReqAddr;
 }
 
@@ -296,8 +296,8 @@ std::string Scheduler::queueRetrieve(const std::string& instanceName,
   }
   lc.log(log::INFO, "In Scheduler::queueRetrieve(): Queued retrieve request");
   cta::telemetry::metrics::schedulerQueueingCount->Add(1, {
-    {cta::semconv::kTransferDirection, cta::semconv::kTransferDirectionRetrieve},
-    {cta::semconv::kEventName, cta::semconv::kEventNameEnqueue}});
+    {cta::semconv::kTransferDirection, cta::semconv::TransferDirectionValues::kRetrieve},
+    {cta::semconv::kEventName, cta::semconv::EventNameValues::kEnqueue}});
   return requestInfo.requestId;
 }
 
@@ -325,8 +325,8 @@ void Scheduler::deleteArchive([[maybe_unused]] std::string_view instanceName,
   lc.log(log::INFO, "In Scheduler::deleteArchive(): success.");
 
   cta::telemetry::metrics::schedulerQueueingCount->Add(1, {
-    {cta::semconv::kTransferDirection, cta::semconv::kTransferDirectionArchive},
-    {cta::semconv::kEventName, cta::semconv::kEventNameCancel}});
+    {cta::semconv::kTransferDirection, cta::semconv::TransferDirectionValues::kArchive},
+    {cta::semconv::kEventName, cta::semconv::EventNameValues::kCancel}});
 }
 
 //------------------------------------------------------------------------------
@@ -337,8 +337,8 @@ void Scheduler::abortRetrieve(const std::string& instanceName,
                               log::LogContext& lc) {
   m_db.cancelRetrieve(instanceName, request, lc);
   cta::telemetry::metrics::schedulerQueueingCount->Add(1, {
-    {cta::semconv::kTransferDirection, cta::semconv::kTransferDirectionRetrieve},
-    {cta::semconv::kEventName, cta::semconv::kEventNameCancel}});
+    {cta::semconv::kTransferDirection, cta::semconv::TransferDirectionValues::kRetrieve},
+    {cta::semconv::kEventName, cta::semconv::EventNameValues::kCancel}});
 }
 
 void Scheduler::deleteFailed(const std::string& objectId, log::LogContext& lc) {

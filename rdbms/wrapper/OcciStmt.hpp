@@ -189,7 +189,7 @@ public:
    */
   static bool connShouldBeClosed(const oracle::occi::SQLException &ex);
 
-    /**
+  /**
    * @brief Get the database system identifier.
    *
    * This should return the OpenTelemetry semantic convention attribute

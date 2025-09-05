@@ -16,6 +16,7 @@
  */
 
 #include "common/exception/Exception.hpp"
+#include "common/semconv/SemConv.hpp"
 #include "rdbms/wrapper/PostgresConn.hpp"
 #include "rdbms/wrapper/PostgresConnFactory.hpp"
 #include "plugin-manager/PluginInterface.hpp"
@@ -40,6 +41,22 @@ std::unique_ptr<ConnWrapper> PostgresConnFactory::create() {
   } catch(exception::Exception &ex) {
     throw exception::Exception(std::string(__FUNCTION__) + " failed: " + ex.getMessage().str());
   }
+}
+
+//------------------------------------------------------------------------------
+// getDbSystemName
+//------------------------------------------------------------------------------
+std::string PostgresConnFactory::getDbSystemName() const {
+  return cta::semconv::DbSystemNameValues::kPostgres;
+}
+
+//------------------------------------------------------------------------------
+// getDbNamespace
+//------------------------------------------------------------------------------
+std::string PostgresConnFactory::getDbNamespace() const {
+  // TODO: how do we get this? How do we define the namespace for this?
+  // We probably need to modify the login
+  return "unknown";
 }
 
 } // namespace cta::rdbms::wrapper
