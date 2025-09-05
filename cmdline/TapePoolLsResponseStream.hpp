@@ -43,7 +43,7 @@ std::list<cta::catalogue::TapePool> TapePoolLsResponseStream::buildTapePoolList(
   searchCriteria.encryptionKeyName = request.getOptional(cta::admin::OptionString::ENCRYPTION_KEY_NAME);
 
   if (searchCriteria.encrypted && searchCriteria.encryptionKeyName) {
-    throw std::invalid_argument("Do not request both '--encrypted' and '--encryptionkeyname' at same time.");
+    throw cta::exception::UserError("Do not request both '--encrypted' and '--encryptionkeyname' at same time.");
   }
 
   return m_catalogue.TapePool()->getTapePools(searchCriteria);

@@ -62,7 +62,7 @@ FailedRequestLsResponseStream::FailedRequestLsResponseStream(cta::catalogue::Cat
   m_isLogEntries = request.has_flag(OptionBoolean::SHOW_LOG_ENTRIES);
 
   if (m_isLogEntries && m_isSummary) {
-    throw std::invalid_argument("--log and --summary are mutually exclusive");
+    throw cta::exception::UserError("--log and --summary are mutually exclusive");
   }
 
   m_schedulerBackendName = m_scheduler.getSchedulerBackendName();
@@ -73,7 +73,7 @@ FailedRequestLsResponseStream::FailedRequestLsResponseStream(cta::catalogue::Cat
   bool justretrieve = request.has_flag(OptionBoolean::JUSTRETRIEVE) || vid.has_value();
 
   if (justarchive && justretrieve) {
-    throw std::invalid_argument("--justarchive/--tapepool and --justretrieve/--vid options are mutually exclusive");
+    throw cta::exception::UserError("--justarchive/--tapepool and --justretrieve/--vid options are mutually exclusive");
   }
 
   if (m_isSummary) {

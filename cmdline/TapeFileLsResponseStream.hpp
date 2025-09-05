@@ -51,7 +51,7 @@ TapeFileLsResponseStream::TapeFileLsResponseStream(cta::catalogue::Catalogue& ca
   try {
     diskFileIdStr = request.getAndValidateDiskFileIdOptional(&has_any);
   } catch (const cta::exception::UserError& ex) {
-    throw std::invalid_argument(ex.getMessageValue());
+    throw cta::exception::UserError(ex.getMessageValue());
   }
   searchCriteria.diskFileIds = request.getOptional(OptionStrList::FILE_ID, &has_any);
   if (diskFileIdStr) {
@@ -145,7 +145,7 @@ void TapeFileLsResponseStream::populateDataItem(cta::xrd::Data& data,
 
 void TapeFileLsResponseStream::validateSearchCriteria(bool hasAnySearchOption) const {
   if (!hasAnySearchOption) {
-    throw std::invalid_argument(
+    throw cta::exception::UserError(
       "Must specify at least one of the following search options: vid, fxid, fxidfile or archiveFileId");
   }
 }

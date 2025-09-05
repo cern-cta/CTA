@@ -153,9 +153,9 @@ cta::xrd::Data TapeLsResponseStream::next() {
 
 void TapeLsResponseStream::validateSearchCriteria(bool hasAllFlag, bool hasAnySearchOption) const {
   if (!(hasAllFlag || hasAnySearchOption)) {
-    throw std::invalid_argument("Must specify at least one search option, or --all");
+    throw cta::exception::UserError("Must specify at least one search option, or --all");
   } else if (hasAllFlag && hasAnySearchOption) {
-    throw std::invalid_argument("Cannot specify --all together with other search options");
+    throw cta::exception::UserError("Cannot specify --all together with other search options");
   }
 }
 

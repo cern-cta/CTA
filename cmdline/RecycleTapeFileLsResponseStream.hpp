@@ -58,7 +58,7 @@ RecycleTapeFileLsResponseStream::RecycleTapeFileLsResponseStream(cta::catalogue:
   searchCriteria.copynb = request.getOptional(OptionUInt64::COPY_NUMBER);
 
   if (!has_any) {
-    throw std::invalid_argument("Must specify at least one of the following search options: vid, fxid, fxidfile, "
+    throw cta::exception::UserError("Must specify at least one of the following search options: vid, fxid, fxidfile, "
                                 "archiveFileId, instance, vo, ltmin, ltmax");
   }
 

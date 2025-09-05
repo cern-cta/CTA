@@ -119,7 +119,7 @@ DriveLsResponseStream::DriveLsResponseStream(cta::catalogue::Catalogue& catalogu
 
   // Check if any drives match the regex filter (only if regex was specified)
   if (driveRegexOpt && m_tapeDrives.empty()) {
-    throw std::invalid_argument(std::string("Drive ") + driveRegexOpt.value() + " not found.");
+    throw cta::exception::UserError(std::string("Drive ") + driveRegexOpt.value() + " not found.");
   }
 }
 
