@@ -90,9 +90,14 @@ private:
 
 
   /**
-   * Adds a number of connections on loan. Can be negative if the number of connections decreases.
+   * Adds a number of connections on loan.
    */
-  void addNbConnsOnLoan(int nbConns);
+  void addNbConnsOnLoan(uint64_t nbConns);
+
+  /**
+   * Adds a number of connections on loan.
+   */
+  void removeNbConnsOnLoan(uint64_t nbConns);
 
   /**
    * The database connection factory.
