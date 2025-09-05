@@ -37,7 +37,7 @@ protected:
 TEST_F(cta_rdbms_StmtPoolTest, getStmt) {
   using namespace cta::rdbms;
 
-  const Login login(Login::DBTYPE_SQLITE, "", "", "file::memory:?cache=shared", "", 0);
+  const Login login = Login::getInMemory();
   auto connFactory = wrapper::ConnFactoryFactory::create(login);
   auto conn = connFactory->create();
   const char* const sql = R"SQL(
@@ -55,7 +55,7 @@ TEST_F(cta_rdbms_StmtPoolTest, getStmt) {
 TEST_F(cta_rdbms_StmtPoolTest, moveAssignment) {
   using namespace cta::rdbms;
 
-  const Login login(Login::DBTYPE_SQLITE, "", "", "file::memory:?cache=shared", "", 0);
+  const Login login = Login::getInMemory();
   auto connFactory = wrapper::ConnFactoryFactory::create(login);
   auto conn = connFactory->create();
   const char* const sql = R"SQL(
@@ -75,7 +75,7 @@ TEST_F(cta_rdbms_StmtPoolTest, moveAssignment) {
 TEST_F(cta_rdbms_StmtPoolTest, moveConstructor) {
   using namespace cta::rdbms;
 
-  const Login login(Login::DBTYPE_SQLITE, "", "", "file::memory:?cache=shared", "", 0);
+  const Login login = Login::getInMemory();
   auto connFactory = wrapper::ConnFactoryFactory::create(login);
   auto conn = connFactory->create();
   const char* const sql = R"SQL(
@@ -110,7 +110,7 @@ TEST_F(cta_rdbms_StmtPoolTest, createSameTableInTwoSeparateInMemoryDatabases) {
 
   // First in-memory database
   {
-    const Login login(Login::DBTYPE_SQLITE, "", "", "file::memory:?cache=shared", "", 0);
+    const Login login = Login::getInMemory();
     auto connFactory = wrapper::ConnFactoryFactory::create(login);
     auto conn = connFactory->create();
 
@@ -145,7 +145,7 @@ TEST_F(cta_rdbms_StmtPoolTest, createSameTableInTwoSeparateInMemoryDatabases) {
 
   // Second in-memory database
   {
-    const Login login(Login::DBTYPE_SQLITE, "", "", "file::memory:?cache=shared", "", 0);
+    const Login login = Login::getInMemory();
     auto connFactory = wrapper::ConnFactoryFactory::create(login);
     auto conn = connFactory->create();
 
@@ -187,7 +187,7 @@ TEST_F(cta_rdbms_StmtPoolTest, createSameTableInTwoSeparateInMemoryDatabases_get
 
   // First in-memory database
   {
-    const Login login(Login::DBTYPE_SQLITE, "", "", "file::memory:?cache=shared", "", 0);
+    const Login login = Login::getInMemory();
     auto connFactory = wrapper::ConnFactoryFactory::create(login);
     auto conn = connFactory->create();
 
@@ -205,7 +205,7 @@ TEST_F(cta_rdbms_StmtPoolTest, createSameTableInTwoSeparateInMemoryDatabases_get
 
   // Second in-memory database
   {
-    const Login login(Login::DBTYPE_SQLITE, "", "", "file::memory:?cache=shared", "", 0);
+    const Login login = Login::getInMemory();
     auto connFactory = wrapper::ConnFactoryFactory::create(login);
     auto conn = connFactory->create();
 
@@ -225,7 +225,7 @@ TEST_F(cta_rdbms_StmtPoolTest, createSameTableInTwoSeparateInMemoryDatabases_get
 TEST_F(cta_rdbms_StmtPoolTest, sameSqlTwoCachedStmts) {
   using namespace cta::rdbms;
 
-  const Login login(Login::DBTYPE_SQLITE, "", "", "file::memory:?cache=shared", "", 0);
+  const Login login = Login::getInMemory();
   auto connFactory = wrapper::ConnFactoryFactory::create(login);
   auto conn = connFactory->create();
   const char* const sql = R"SQL(

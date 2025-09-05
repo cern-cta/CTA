@@ -26,8 +26,7 @@ namespace cta::rdbms::wrapper {
 //------------------------------------------------------------------------------
 // constructor
 //------------------------------------------------------------------------------
-SqliteConnFactory::SqliteConnFactory(const std::string &filename):
-  m_filename(filename) {
+SqliteConnFactory::SqliteConnFactory(const rdbms::Login &login) : m_login(login) {
 }
 
 //------------------------------------------------------------------------------
@@ -35,7 +34,7 @@ SqliteConnFactory::SqliteConnFactory(const std::string &filename):
 //------------------------------------------------------------------------------
 std::unique_ptr<ConnWrapper> SqliteConnFactory::create() {
   try {
-    return std::make_unique<SqliteConn>(m_filename);
+    return std::make_unique<SqliteConn>(m_login);
   } catch(exception::Exception &ex) {
     throw exception::Exception(std::string(__FUNCTION__) + " failed: " + ex.getMessage().str());
   }
@@ -52,7 +51,7 @@ std::string SqliteConnFactory::getDbSystemName() const {
 // getDbNamespace
 //------------------------------------------------------------------------------
 std::string SqliteConnFactory::getDbNamespace() const {
-  return m_filename;
+  return m_login.dbNamespace;
 }
 
 } // namespace cta::rdbms::wrapper
@@ -60,8 +59,7 @@ std::string SqliteConnFactory::getDbNamespace() const {
 extern "C" {
 
 void factory(cta::plugin::Interface<cta::rdbms::wrapper::ConnFactory,
-    cta::plugin::Args<const std::string&>,
-    cta::plugin::Args<const std::string&, const std::string&, const std::string&>>& interface) {
+    cta::plugin::Args<const cta::rdbms::Login&>>& interface) {
 
   interface.SET<cta::plugin::DATA::PLUGIN_NAME>("ctardbmssqlite")
     .SET<cta::plugin::DATA::API_VERSION>(VERSION_API)

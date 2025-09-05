@@ -18,6 +18,7 @@
 #pragma once
 
 #include "rdbms/wrapper/ConnFactory.hpp"
+#include "rdbms/Login.hpp"
 
 namespace cta::rdbms::wrapper {
 
@@ -30,9 +31,9 @@ public:
   /**
    * Constructor
    *
-   * @param filename The filename to be passed to the sqlite3_open() function
+   * @param login The database login information.
    */
-  explicit SqliteConnFactory(const std::string& filename);
+  SqliteConnFactory(const rdbms::Login& login);
 
   /**
    * Destructor.
@@ -72,9 +73,9 @@ public:
 private:
 
   /**
-   * The filename to be passed to the sqlite3_open() function.
+   * The database login information.
    */
-  std::string m_filename;
+  const rdbms::Login m_login;
 
 }; // class SqliteConnFactory
 
