@@ -18,6 +18,7 @@
 #pragma once
 
 #include "rdbms/wrapper/ConnFactory.hpp"
+#include "rdbms/Login.hpp"
 
 #include <vector>
 
@@ -32,9 +33,9 @@ public:
   /**
    * Constructor
    *
-   * @param conninfo The conninfo string to pass to PQconnectdb. This is a series of key=value pairs separated by white space.
+   * @param login The database login information.
    */
-  explicit PostgresConnFactory(const std::string& conninfo);
+  PostgresConnFactory(const rdbms::Login &login);
 
   /**
    * Destructor.
@@ -74,9 +75,9 @@ public:
 private:
 
   /**
-   * The conninfo string
+   * The database login information.
    */
-  std::string m_conninfo;
+  const rdbms::Login m_login;
 
 }; // class PostgresConnFactory
 

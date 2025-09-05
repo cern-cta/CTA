@@ -34,10 +34,10 @@ namespace cta::rdbms::wrapper {
 //------------------------------------------------------------------------------
 // constructor
 //------------------------------------------------------------------------------
-PostgresConn::PostgresConn(const std::string& conninfo) {
+PostgresConn::PostgresConn(const rdbms::Login& login) : m_dbNamespace(login.dbNamespace) {
   // establish the connection and create the PGconn data structure
 
-  m_pgsqlConn = PQconnectdb(conninfo.c_str());
+  m_pgsqlConn = PQconnectdb(login.database.c_str());
 
   if (PQstatus(m_pgsqlConn) != CONNECTION_OK) {
     const std::string pqmsgstr = PQerrorMessage(m_pgsqlConn);
@@ -45,7 +45,6 @@ PostgresConn::PostgresConn(const std::string& conninfo) {
     m_pgsqlConn = nullptr;
     throw exception::Exception(std::string(__FUNCTION__) + " connection failed: " + pqmsgstr);
   }
-  m_dbNamespace = std::string(PQdb(m_pgsqlConn));
   const int sVer = PQserverVersion(m_pgsqlConn);
   if (sVer < 90500) {
     PQfinish(m_pgsqlConn);

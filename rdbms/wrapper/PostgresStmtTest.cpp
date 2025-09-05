@@ -41,7 +41,8 @@ protected:
 
   virtual void SetUp() {
     m_connstring = "postgresql://ctaunittest:ctaunittest@localhost/ctaunittest";
-    m_conn = std::make_unique<cta::rdbms::wrapper::PostgresConn>(m_connstring);
+    m_login = cta::rdbms::Login::parsePostgresql(m_connstring);
+    m_conn = std::make_unique<cta::rdbms::wrapper::PostgresConn>(m_login);
     // Try to drop anything owned by ctaunittest currently in the db
     m_conn->executeNonQuery(R"SQL(drop owned by ctaunittest)SQL");
     ASSERT_TRUE(m_conn->getTableNames().empty());
@@ -53,6 +54,7 @@ protected:
 
   std::string m_connstring;
   std::unique_ptr<cta::rdbms::wrapper::PostgresConn> m_conn;
+  cta::rdbms::Login m_login;
 };
 
 TEST_F(DISABLED_cta_rdbms_wrapper_PostgresStmtTest, create_table) {
@@ -74,8 +76,8 @@ TEST_F(DISABLED_cta_rdbms_wrapper_PostgresStmtTest, create_table) {
   // Test for the existence of the test table
   {
     const char* const sql = R"SQL(
-      SELECT COUNT(*) NB_TABLES FROM pg_catalog.pg_tables c 
-        WHERE c.schemaname NOT IN ('pg_catalog', 'information_schema') 
+      SELECT COUNT(*) NB_TABLES FROM pg_catalog.pg_tables c
+        WHERE c.schemaname NOT IN ('pg_catalog', 'information_schema')
         AND c.tablename = 'test1'
     )SQL";
     auto stmt = m_conn->createStmt(sql);
@@ -104,8 +106,8 @@ TEST_F(DISABLED_cta_rdbms_wrapper_PostgresStmtTest, create_table) {
   // Test for the existence of the second test table
   {
     const char* const sql = R"SQL(
-      SELECT COUNT(*) NB_TABLES FROM pg_catalog.pg_tables c 
-        WHERE c.schemaname NOT IN ('pg_catalog', 'information_schema') 
+      SELECT COUNT(*) NB_TABLES FROM pg_catalog.pg_tables c
+        WHERE c.schemaname NOT IN ('pg_catalog', 'information_schema')
         AND c.tablename = 'test2'
     )SQL";
     auto stmt = m_conn->createStmt(sql);
@@ -147,11 +149,11 @@ TEST_F(DISABLED_cta_rdbms_wrapper_PostgresStmtTest, select_from_empty_table) {
   // Select from the empty table
   {
     const char* const sql = R"SQL(
-      SELECT 
+      SELECT
         COL1,
         COL2,
-        COL3 
-      FROM 
+        COL3
+      FROM
         TEST
     )SQL";
     auto stmt = m_conn->createStmt(sql);
@@ -199,11 +201,11 @@ TEST_F(DISABLED_cta_rdbms_wrapper_PostgresStmtTest, insert_without_bind) {
   // Select the row back from the table
   {
     const char* const sql = R"SQL(
-      SELECT 
+      SELECT
         COL1 AS COL1,
         COL2 AS COL2,
-        COL3 AS COL3 
-      FROM 
+        COL3 AS COL3
+      FROM
         TEST
     )SQL";
     auto stmt = m_conn->createStmt(sql);
@@ -268,11 +270,11 @@ TEST_F(DISABLED_cta_rdbms_wrapper_PostgresStmtTest, insert_with_bind) {
   // Select the row back from the table
   {
     const char* const sql = R"SQL(
-      SELECT 
+      SELECT
         COL1 AS COL1,
         COL2 AS COL2,
-        COL3 AS COL3 
-      FROM 
+        COL3 AS COL3
+      FROM
         TEST
     )SQL";
     auto stmt = m_conn->createStmt(sql);
@@ -319,7 +321,7 @@ TEST_F(DISABLED_cta_rdbms_wrapper_PostgresStmtTest, isolated_transaction) {
 
   // Create second connection to a local database
   // Insert a row but do not commit using the separate connection
-  PostgresConn connForInsert(m_connstring);
+  PostgresConn connForInsert(m_login);
   {
     const char* const sql = R"SQL(
       INSERT INTO TEST(
@@ -337,14 +339,14 @@ TEST_F(DISABLED_cta_rdbms_wrapper_PostgresStmtTest, isolated_transaction) {
   }
 
   // Count the number of rows in the table from within another connection: should be 0
-  PostgresConn connForSelect(m_connstring);
+  PostgresConn connForSelect(m_login);
   ASSERT_EQ(1, connForSelect.getTableNames().size());
   ASSERT_EQ("TEST", connForSelect.getTableNames().front());
   {
     const char* const sql = R"SQL(
-      SELECT 
-        COUNT(*) AS NB_ROWS 
-      FROM 
+      SELECT
+        COUNT(*) AS NB_ROWS
+      FROM
         TEST
     )SQL";
     auto stmt = connForSelect.createStmt(sql);
@@ -364,9 +366,9 @@ TEST_F(DISABLED_cta_rdbms_wrapper_PostgresStmtTest, isolated_transaction) {
   // count the rows again on the select connection: should be 1
   {
     const char* const sql = R"SQL(
-      SELECT 
-        COUNT(*) AS NB_ROWS 
-      FROM 
+      SELECT
+        COUNT(*) AS NB_ROWS
+      FROM
         TEST
     )SQL";
     auto stmt = connForSelect.createStmt(sql);
@@ -387,7 +389,7 @@ TEST_F(DISABLED_cta_rdbms_wrapper_PostgresStmtTest, executeNonQuery_insert_viola
   using namespace cta::rdbms::wrapper;
 
   // Create a connection to a local database
-  PostgresConn conn(m_connstring);
+  PostgresConn conn(m_login);
 
   // Try to drop anything owned by ctaunittest currently in the db
   { conn.executeNonQuery(R"SQL(drop owned by ctaunittest)SQL"); }
@@ -517,9 +519,9 @@ TEST_F(DISABLED_cta_rdbms_wrapper_PostgresStmtTest, insert_with_large_uint64) {
   // Select the row back from the table
   {
     const char* const sql = R"SQL(
-      SELECT 
-        COL1 AS COL1 
-      FROM 
+      SELECT
+        COL1 AS COL1
+      FROM
         TEST
     )SQL";
     auto stmt = m_conn->createStmt(sql);
@@ -578,7 +580,7 @@ TEST_F(DISABLED_cta_rdbms_wrapper_PostgresStmtTest, executeCopyInsert_10000_rows
       COPY TEST(
         COL1,
         COL2,
-        COL3) 
+        COL3)
       FROM STDIN --
         :MYCOL1,
         :MYCOL2,
@@ -596,9 +598,9 @@ TEST_F(DISABLED_cta_rdbms_wrapper_PostgresStmtTest, executeCopyInsert_10000_rows
 
   {
     const char* const sql = R"SQL(
-      SELECT 
-        COUNT(*) AS NB_ROWS 
-      FROM 
+      SELECT
+        COUNT(*) AS NB_ROWS
+      FROM
         TEST
     )SQL";
     auto stmt = m_conn->createStmt(sql);
@@ -614,11 +616,11 @@ TEST_F(DISABLED_cta_rdbms_wrapper_PostgresStmtTest, executeCopyInsert_10000_rows
 
   {
     const char* const sql = R"SQL(
-      SELECT 
+      SELECT
         COL1 AS COL1,
         COL2 AS COL2,
-        COL3 AS COL3 
-      FROM 
+        COL3 AS COL3
+      FROM
         TEST
     )SQL";
     auto stmt = m_conn->createStmt(sql);
@@ -674,7 +676,7 @@ TEST_F(DISABLED_cta_rdbms_wrapper_PostgresStmtTest, nbaffected) {
     ASSERT_EQ("TEST", m_conn->getTableNames().front());
 
     const char* const sql_populate = R"SQL(
-      INSERT INTO TEST(COL1,COL2,COL3) VALUES 
+      INSERT INTO TEST(COL1,COL2,COL3) VALUES
         ('val1',NULL,55),
         ('val1',NULL,56),
         ('val2',NULL,56),

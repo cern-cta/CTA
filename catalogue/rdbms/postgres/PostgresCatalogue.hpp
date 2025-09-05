@@ -32,9 +32,7 @@ public:
    * Constructor.
    *
    * @param log Object representing the API to the CTA logging system.
-   * @param username The database username.
-   * @param password The database password.
-   * @param database The database name.
+   * @param login The database login details.
    * @param nbConns The maximum number of concurrent connections to the
    * underlying relational database for all operations accept listing archive
    * files which can be relatively long operations.

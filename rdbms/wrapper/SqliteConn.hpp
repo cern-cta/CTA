@@ -19,6 +19,7 @@
 
 #include "common/threading/Mutex.hpp"
 #include "rdbms/wrapper/ConnWrapper.hpp"
+#include "rdbms/Login.hpp"
 
 #include <sqlite3.h>
 
@@ -44,9 +45,9 @@ public:
   /**
    * Constructor
    *
-   * @param filename The filename to be passed to the sqlite3_open() function
+   * @param login The database login information.
    */
-  explicit SqliteConn(const std::string& filename);
+  explicit SqliteConn(const rdbms::Login &login);
 
   /**
    * Destructor.

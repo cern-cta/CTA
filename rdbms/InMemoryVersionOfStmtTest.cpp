@@ -39,7 +39,7 @@ public:
    * @return A newly created Login object.
    */
   virtual cta::rdbms::Login create() {
-    return cta::rdbms::Login(cta::rdbms::Login::DBTYPE_IN_MEMORY, "", "", "", "", 0);
+    return cta::rdbms::Login(cta::rdbms::Login::DBTYPE_IN_MEMORY, "", "", "", "", 0, "");
   }
 }; // class RdbmsInMemoryLoginFactory
 

@@ -40,16 +40,17 @@ TEST_F(cta_rdbms_wrapper_SqliteStmtTest, create_table) {
   using namespace cta;
   using namespace cta::rdbms::wrapper;
   // Create a connection a memory resident database
-  SqliteConn conn(":memory:");
+  const rdbms::Login login = rdbms::Login::parseSqlite(":memory:");
+  SqliteConn conn(login);
 
   // Assert that there are currently no tables in the database
   {
     const char* const sql = R"SQL(
-      SELECT 
-        COUNT(*) NB_TABLES 
-      FROM 
-        SQLITE_MASTER 
-      WHERE 
+      SELECT
+        COUNT(*) NB_TABLES
+      FROM
+        SQLITE_MASTER
+      WHERE
         TYPE = 'table'
     )SQL";
     auto stmt = conn.createStmt(sql);
@@ -77,11 +78,11 @@ TEST_F(cta_rdbms_wrapper_SqliteStmtTest, create_table) {
   // Test for the existence of the test table
   {
     const char* const sql = R"SQL(
-      SELECT 
-        COUNT(*) NB_TABLES 
-      FROM SQLITE_MASTER 
-      WHERE 
-        NAME = 'TEST1' AND 
+      SELECT
+        COUNT(*) NB_TABLES
+      FROM SQLITE_MASTER
+      WHERE
+        NAME = 'TEST1' AND
         TYPE = 'table'
     )SQL";
     auto stmt = conn.createStmt(sql);
@@ -110,11 +111,11 @@ TEST_F(cta_rdbms_wrapper_SqliteStmtTest, create_table) {
   // Test for the existence of the second test table
   {
     const char* const sql = R"SQL(
-      SELECT 
-        COUNT(*) NB_TABLES 
-      FROM SQLITE_MASTER 
-      WHERE 
-        NAME = 'TEST2' AND 
+      SELECT
+        COUNT(*) NB_TABLES
+      FROM SQLITE_MASTER
+      WHERE
+        NAME = 'TEST2' AND
         TYPE = 'table'
     )SQL";
     auto stmt = conn.createStmt(sql);
@@ -139,7 +140,8 @@ TEST_F(cta_rdbms_wrapper_SqliteStmtTest, select_from_empty_table) {
   using namespace cta;
   using namespace cta::rdbms::wrapper;
   // Create a connection a memory resident database
-  SqliteConn conn(":memory:");
+  const rdbms::Login login = rdbms::Login::parseSqlite(":memory:");
+  SqliteConn conn(login);
 
   ASSERT_TRUE(conn.getTableNames().empty());
 
@@ -160,11 +162,11 @@ TEST_F(cta_rdbms_wrapper_SqliteStmtTest, select_from_empty_table) {
   // Select from the empty table
   {
     const char* const sql = R"SQL(
-      SELECT 
+      SELECT
         COL1,
         COL2,
-        COL3 
-      FROM 
+        COL3
+      FROM
         TEST
     )SQL";
     auto stmt = conn.createStmt(sql);
@@ -177,7 +179,8 @@ TEST_F(cta_rdbms_wrapper_SqliteStmtTest, insert_without_bind) {
   using namespace cta;
   using namespace cta::rdbms::wrapper;
   // Create a connection a memory resident database
-  SqliteConn conn(":memory:");
+  const rdbms::Login login = rdbms::Login::parseSqlite(":memory:");
+  SqliteConn conn(login);
 
   ASSERT_TRUE(conn.getTableNames().empty());
 
@@ -214,11 +217,11 @@ TEST_F(cta_rdbms_wrapper_SqliteStmtTest, insert_without_bind) {
   // Select the row back from the table
   {
     const char* const sql = R"SQL(
-      SELECT 
+      SELECT
         COL1 AS COL1,
         COL2 AS COL2,
-        COL3 AS COL3 
-      FROM 
+        COL3 AS COL3
+      FROM
         TEST
     )SQL";
     auto stmt = conn.createStmt(sql);
@@ -246,7 +249,8 @@ TEST_F(cta_rdbms_wrapper_SqliteStmtTest, insert_with_bind) {
   using namespace cta::rdbms::wrapper;
 
   // Create a connection a memory resident database
-  SqliteConn conn(":memory:");
+  const rdbms::Login login = rdbms::Login::parseSqlite(":memory:");
+  SqliteConn conn(login);
 
   ASSERT_TRUE(conn.getTableNames().empty());
 
@@ -286,11 +290,11 @@ TEST_F(cta_rdbms_wrapper_SqliteStmtTest, insert_with_bind) {
   // Select the row back from the table
   {
     const char* const sql = R"SQL(
-      SELECT 
+      SELECT
         COL1 AS COL1,
         COL2 AS COL2,
-        COL3 AS COL3 
-      FROM 
+        COL3 AS COL3
+      FROM
         TEST
     )SQL";
     auto stmt = conn.createStmt(sql);
@@ -317,10 +321,10 @@ TEST_F(cta_rdbms_wrapper_SqliteStmtTest, isolated_transaction) {
   using namespace cta;
   using namespace cta::rdbms::wrapper;
 
-  const std::string dbFilename = "file::memory:?cache=shared";
+  rdbms::Login login = rdbms::Login::getInMemory();
 
   // Create a table in an in-memory resident database
-  SqliteConn connForCreate(dbFilename);
+  SqliteConn connForCreate(login);
   ASSERT_TRUE(connForCreate.getTableNames().empty());
   {
     const char* const sql = R"SQL(
@@ -336,7 +340,7 @@ TEST_F(cta_rdbms_wrapper_SqliteStmtTest, isolated_transaction) {
   }
 
   // Insert a row but do not commit using a separate connection
-  SqliteConn connForInsert(dbFilename);
+  SqliteConn connForInsert(login);
   {
     const char* const sql = R"SQL(
       INSERT INTO TEST(
@@ -353,14 +357,14 @@ TEST_F(cta_rdbms_wrapper_SqliteStmtTest, isolated_transaction) {
   }
 
   // Count the number of rows in the table from within another connection
-  SqliteConn connForSelect(dbFilename);
+  SqliteConn connForSelect(login);
   ASSERT_EQ(1, connForSelect.getTableNames().size());
   ASSERT_EQ("TEST", connForSelect.getTableNames().front());
   {
     const char* const sql = R"SQL(
-      SELECT 
-        COUNT(*) AS NB_ROWS 
-      FROM 
+      SELECT
+        COUNT(*) AS NB_ROWS
+      FROM
         TEST
     )SQL";
     auto stmt = connForSelect.createStmt(sql);
@@ -381,7 +385,8 @@ TEST_F(cta_rdbms_wrapper_SqliteStmtTest, executeNonQuery_insert_violating_primar
   using namespace cta::rdbms::wrapper;
 
   // Create a connection a memory resident database
-  SqliteConn conn(":memory:");
+  const rdbms::Login login = rdbms::Login::parseSqlite(":memory:");
+  SqliteConn conn(login);
 
   ASSERT_TRUE(conn.getTableNames().empty());
 
@@ -431,7 +436,8 @@ TEST_F(cta_rdbms_wrapper_SqliteStmtTest, executeQuery_insert_violating_primary_k
   using namespace cta::rdbms::wrapper;
 
   // Create a connection a memory resident database
-  SqliteConn conn(":memory:");
+  const rdbms::Login login = rdbms::Login::parseSqlite(":memory:");
+  SqliteConn conn(login);
 
   ASSERT_TRUE(conn.getTableNames().empty());
 

@@ -18,6 +18,7 @@
 #pragma once
 
 #include "rdbms/wrapper/ConnFactory.hpp"
+#include "rdbms/Login.hpp"
 
 namespace cta::rdbms::wrapper {
 
@@ -30,14 +31,9 @@ public:
   /**
    * Constructor.
    *
-   * @param username The database username.
-   * @param password The database password.
-   * @param database The database name.
+   * @param login The database login details.
    */
-  OcciConnFactory(
-    const std::string &username,
-    const std::string &password,
-    const std::string &database);
+  OcciConnFactory(const rdbms::Login &login);
 
   /**
    * Destructor
@@ -77,19 +73,9 @@ public:
 private:
 
   /**
-   * The database username.
+   * The database login information.
    */
-  std::string m_username;
-
-  /**
-   * The database password.
-   */
-  std::string m_password;
-
-  /**
-   * The database name.
-   */
-  std::string m_database;
+  const rdbms::Login m_login;
 
 }; // class OcciConnFactory
 
