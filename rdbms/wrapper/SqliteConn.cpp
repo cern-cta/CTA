@@ -34,7 +34,7 @@ namespace cta::rdbms::wrapper {
 //------------------------------------------------------------------------------
 // constructor
 //------------------------------------------------------------------------------
-SqliteConn::SqliteConn(const std::string &filename) {
+SqliteConn::SqliteConn(const std::string &filename): m_dbNamespace(filename) {
   try {
     m_sqliteConn = nullptr;
     if(sqlite3_open_v2(filename.c_str(), &m_sqliteConn, SQLITE_OPEN_READWRITE|SQLITE_OPEN_CREATE|SQLITE_OPEN_URI, nullptr)) {
@@ -42,7 +42,6 @@ SqliteConn::SqliteConn(const std::string &filename) {
       sqlite3_close(m_sqliteConn);
       throw exception::Exception(msg);
     }
-    m_dbNamespace = filename;
 
     // Enable extended result codes
     sqlite3_extended_result_codes(m_sqliteConn, 1);
