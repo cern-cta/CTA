@@ -17,6 +17,7 @@
 
 #include <limits>
 #include <memory>
+#include <source_location>
 #include <sstream>
 #include <string>
 
@@ -49,7 +50,7 @@ void EnstoreLargeFileReader::positionByFseq(const cta::RetrieveJob& fileToRecall
 
   if (fileToRecall.selectedTapeFile().fSeq < 1) {
     std::ostringstream err;
-    err << std::string(__FUNCTION__) << ": "
+    err << std::string(std::source_location::current().function_name()) << ": "
         << "Unexpected fileId. fSeq expected >=1, got: " << fileToRecall.selectedTapeFile().fSeq << ")";
     throw cta::exception::InvalidArgument(err.str());
   }
@@ -69,7 +70,7 @@ void EnstoreLargeFileReader::setBlockSize(const UHL1& uhl1) {  // Could inherit
   m_currentBlockSize = static_cast<size_t>(atol(uhl1.getBlockSize().c_str()));
   if (m_currentBlockSize < 1) {
     std::ostringstream ex_str;
-    ex_str << std::string(__FUNCTION__) << ": "
+    ex_str << std::string(std::source_location::current().function_name()) << ": "
            << "Invalid block size in uhl1 detected";
     throw TapeFormatError(ex_str.str());
   }
@@ -80,7 +81,7 @@ void EnstoreLargeFileReader::setTargetFileSize(const UHL2& uhl2) {  // Could inh
   bytes_to_read = static_cast<size_t>(atol(uhl2.getTargetFileSize().c_str()));
   if (bytes_to_read < 1) {
     std::ostringstream ex_str;
-    ex_str << std::string(__FUNCTION__) << ": "
+    ex_str << std::string(std::source_location::current().function_name()) << ": "
            << "Invalid file size in uhl2 detected";
     throw TapeFormatError(ex_str.str());
   }
@@ -107,7 +108,7 @@ size_t EnstoreLargeFileReader::readNextDataBlock(void* data, const size_t size) 
   return bytes_read;
 }
 
-void EnstoreLargeFileReader::moveToFirstHeaderBlock() {
+__attribute__((noreturn)) void EnstoreLargeFileReader::moveToFirstHeaderBlock() {
   throw NotImplemented("EnstoreLargeFileReader::moveToFirstHeaderBlock() Not implemented.");
 }
 
@@ -124,9 +125,10 @@ void EnstoreLargeFileReader::moveReaderByFSeqDelta(const int64_t fSeq_delta) {
     // (trailer, payload, header) + 1 to go on the BOT (beginning of tape) side
     // of the file mark before the header of the file we want to read
     m_session.m_drive.spaceFileMarksBackwards(static_cast<uint32_t>(std::abs(fSeq_delta)) * 3 + 1);
-    m_session.m_drive.readFileMark(std::string(__FUNCTION__) + ": " +
-                                   "Reading file mark right before the header of the file we want to read");
+    m_session.m_drive.readFileMark(std::string(std::source_location::current().function_name()) + ": " 
+                                   + "Reading file mark right before the header of the file we want to read");
   }
+  return;
 }
 
 void EnstoreLargeFileReader::checkTrailers() {
@@ -135,23 +137,22 @@ void EnstoreLargeFileReader::checkTrailers() {
   // let's read and check the trailers
 
   size_t blockSize = 256 * 1024;
-  char* data = new char[blockSize + 1];
-  size_t bytes_read = m_session.m_drive.readBlock(data, blockSize);
+  auto data = std::make_unique<char[]>(blockSize + 1);
+  size_t bytes_read = m_session.m_drive.readBlock(data.get(), blockSize);
 
   EOF1 eof1;
   EOF2 eof2;
   UTL1 utl1;
 
   if (bytes_read < sizeof(eof1) + sizeof(eof2) + sizeof(utl1)) {
-    throw cta::exception::Exception(std::string(__FUNCTION__) +
+    throw cta::exception::Exception(std::string(std::source_location::current().function_name()) +
                                     " failed: Too few bytes read for headers:" + std::to_string(bytes_read));
   }
-  memcpy(&eof1, data, sizeof(eof1));
-  memcpy(&eof2, data + sizeof(eof1), sizeof(eof2));
-  memcpy(&utl1, data + sizeof(eof1) + sizeof(eof2), sizeof(utl1));
-  delete[] data;
+  memcpy(&eof1, data.get(), sizeof(eof1));
+  memcpy(&eof2, data.get() + sizeof(eof1), sizeof(eof2));
+  memcpy(&utl1, data.get() + sizeof(eof1) + sizeof(eof2), sizeof(utl1));
 
-  m_session.m_drive.readFileMark(std::string(__FUNCTION__) + ": " + "Reading file mark at the end of file header");
+  m_session.m_drive.readFileMark(std::string(std::source_location::current().function_name()) + ": " + "Reading file mark at the end of file header");
 
   m_session.setCurrentFseq(m_session.getCurrentFseq() + 1);  // moving on to the header of the next file
   m_session.setCurrentFilePart(PartOfFile::Header);
@@ -172,8 +173,8 @@ void EnstoreLargeFileReader::checkHeaders(const cta::RetrieveJob& fileToRecall) 
   m_session.setCurrentFseq(fileToRecall.selectedTapeFile().fSeq);
 
   size_t blockSize = 256 * 1024;
-  char* data = new char[blockSize + 1];
-  size_t bytes_read = m_session.m_drive.readBlock(data, blockSize);
+  auto data = std::make_unique<char[]>(blockSize + 1);
+  size_t bytes_read = m_session.m_drive.readBlock(data.get(), blockSize);
 
   HDR1 hdr1;
   HDR2 hdr2;
@@ -181,16 +182,15 @@ void EnstoreLargeFileReader::checkHeaders(const cta::RetrieveJob& fileToRecall) 
   UHL2 uhl2;
 
   if (bytes_read < sizeof(hdr1) + sizeof(hdr2) + sizeof(uhl1)) {
-    throw cta::exception::Exception(std::string(__FUNCTION__) +
+    throw cta::exception::Exception(std::string(std::source_location::current().function_name()) +
                                     " failed: Too few bytes read for headers:" + std::to_string(bytes_read));
   }
-  memcpy(&hdr1, data, sizeof(hdr1));
-  memcpy(&hdr2, data + sizeof(hdr1), sizeof(hdr1));
-  memcpy(&uhl1, data + sizeof(hdr1) + sizeof(hdr2), sizeof(uhl1));
-  memcpy(&uhl2, data + sizeof(hdr1) + sizeof(hdr2) + sizeof(uhl1), sizeof(uhl2));
-  delete[] data;
+  memcpy(&hdr1, data.get(), sizeof(hdr1));
+  memcpy(&hdr2, data.get() + sizeof(hdr1), sizeof(hdr1));
+  memcpy(&uhl1, data.get() + sizeof(hdr1) + sizeof(hdr2), sizeof(uhl1));
+  memcpy(&uhl2, data.get() + sizeof(hdr1) + sizeof(hdr2) + sizeof(uhl1), sizeof(uhl2));
 
-  m_session.m_drive.readFileMark(std::string(__FUNCTION__) + ": " + "Reading file mark at the end of file header");
+  m_session.m_drive.readFileMark(std::string(std::source_location::current().function_name()) + ": " + "Reading file mark at the end of file header");
   // after this we should be where we want, i.e. at the beginning of the file
   m_session.setCurrentFilePart(PartOfFile::Payload);
 
