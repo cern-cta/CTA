@@ -34,14 +34,12 @@ namespace cta::catalogue {
 
 OracleCatalogue::OracleCatalogue(
   log::Logger &log,
-  const std::string &username,
-  const std::string &password,
-  const std::string &database,
+  const rdbms::Login &login,
   const uint64_t nbConns,
   const uint64_t nbArchiveFileListingConns):
   RdbmsCatalogue(
     log,
-    rdbms::Login(rdbms::Login::DBTYPE_ORACLE, username, password, database, "", 0),
+    login,
     nbConns,
     nbArchiveFileListingConns) {
   RdbmsCatalogue::m_fileRecycleLog = std::make_unique<OracleFileRecycleLogCatalogue>(m_log, m_connPool, this);

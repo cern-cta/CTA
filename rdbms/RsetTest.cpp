@@ -46,7 +46,7 @@ TEST_F(cta_rdbms_RsetTest, constructor) {
 TEST_F(cta_rdbms_RsetTest, next) {
   using namespace cta::rdbms;
 
-  const Login login(Login::DBTYPE_SQLITE, "", "", "file::memory:?cache=shared", "", 0);
+  const Login login = Login::getInMemory();
   auto connFactory = wrapper::ConnFactoryFactory::create(login);
   auto conn = connFactory->create();
   StmtPool pool;
@@ -57,7 +57,7 @@ TEST_F(cta_rdbms_RsetTest, next) {
     Stmt stmt = pool.getStmt(*conn, sql);
     stmt.executeNonQuery();
   }
-  
+
   {
     const char* const sql = R"SQL(
       INSERT INTO RSET_TEST(ID) VALUES(1)

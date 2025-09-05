@@ -41,9 +41,7 @@ PostgresCatalogue::PostgresCatalogue(
   const uint64_t nbArchiveFileListingConns)
   : RdbmsCatalogue(
       log,
-      rdbms::Login(rdbms::Login::DBTYPE_POSTGRESQL,
-                  login.username, login.password, login.database,
-                  login.hostname, login.port),
+      login,
       nbConns,
       nbArchiveFileListingConns) {
   RdbmsCatalogue::m_vo = std::make_unique<PostgresVirtualOrganizationCatalogue>(m_log, m_connPool, this);

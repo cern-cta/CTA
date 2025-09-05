@@ -34,10 +34,10 @@ namespace cta::rdbms::wrapper {
 //------------------------------------------------------------------------------
 // constructor
 //------------------------------------------------------------------------------
-SqliteConn::SqliteConn(const std::string &filename): m_dbNamespace(filename) {
+SqliteConn::SqliteConn(const rdbms::Login& login): m_dbNamespace(login.dbNamespace) {
   try {
     m_sqliteConn = nullptr;
-    if(sqlite3_open_v2(filename.c_str(), &m_sqliteConn, SQLITE_OPEN_READWRITE|SQLITE_OPEN_CREATE|SQLITE_OPEN_URI, nullptr)) {
+    if(sqlite3_open_v2(login.database.c_str(), &m_sqliteConn, SQLITE_OPEN_READWRITE|SQLITE_OPEN_CREATE|SQLITE_OPEN_URI, nullptr)) {
       std::string msg = sqlite3_errmsg(m_sqliteConn);
       sqlite3_close(m_sqliteConn);
       throw exception::Exception(msg);

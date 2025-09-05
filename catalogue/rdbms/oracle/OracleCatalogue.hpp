@@ -34,9 +34,7 @@ public:
    * Constructor.
    *
    * @param log Object representing the API to the CTA logging system.
-   * @param username The database username.
-   * @param password The database password.
-   * @param database The database name.
+   * @param login The database login details.
    * @param nbConns The maximum number of concurrent connections to the
    * underlying relational database for all operations accept listing archive
    * files which can be relatively long operations.
@@ -46,9 +44,7 @@ public:
    */
   OracleCatalogue(
     log::Logger       &log,
-    const std::string &username,
-    const std::string &password,
-    const std::string &database,
+    const rdbms::Login &login,
     const uint64_t nbConns,
     const uint64_t nbArchiveFileListingConns);
 
