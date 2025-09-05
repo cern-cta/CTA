@@ -26,26 +26,23 @@
 namespace cta::frontend {
 
 AdminCmd::AdminCmd(const frontend::FrontendService& frontendService,
-  const common::dataStructures::SecurityIdentity& clientIdentity,
-  const admin::AdminCmd& adminCmd) :
-  m_adminCmd(adminCmd),
-  m_catalogue(frontendService.getCatalogue()),
-  m_scheduler(frontendService.getScheduler()),
-  m_lc(frontendService.getLogContext()),
-  m_cliIdentity(clientIdentity),
-  m_archiveFileMaxSize(frontendService.getArchiveFileMaxSize()),
-  m_repackBufferURL(frontendService.getRepackBufferURL()),
-  m_repackMaxFilesToSelect(frontendService.getRepackMaxFilesToSelect()),
-  m_missingFileCopiesMinAgeSecs(frontendService.getMissingFileCopiesMinAgeSecs()),
-  m_schedulerBackendName(m_scheduler.getSchedulerBackendName())
-{
+                   const common::dataStructures::SecurityIdentity& clientIdentity,
+                   const admin::AdminCmd& adminCmd)
+    : AdminCmdOptions(adminCmd),
+      m_adminCmd(adminCmd),
+      m_catalogue(frontendService.getCatalogue()),
+      m_scheduler(frontendService.getScheduler()),
+      m_lc(frontendService.getLogContext()),
+      m_cliIdentity(clientIdentity),
+      m_archiveFileMaxSize(frontendService.getArchiveFileMaxSize()),
+      m_repackBufferURL(frontendService.getRepackBufferURL()),
+      m_repackMaxFilesToSelect(frontendService.getRepackMaxFilesToSelect()),
+      m_missingFileCopiesMinAgeSecs(frontendService.getMissingFileCopiesMinAgeSecs()),
+      m_schedulerBackendName(m_scheduler.getSchedulerBackendName()) {
   m_lc.pushOrReplace({"user", m_cliIdentity.username + "@" + m_cliIdentity.host});
 
   // Check that the user is authorized
   m_scheduler.authorizeAdmin(m_cliIdentity, m_lc);
-
-  // Validate the Protocol Buffer and import options into maps
-  importOptions();
 }
 
 xrd::Response AdminCmd::process() {
@@ -258,41 +255,6 @@ xrd::Response AdminCmd::process() {
     throw ex;
   }
   return response;
-}
-
-void AdminCmd::importOptions() {
-  // Validate the Protocol Buffer
-  validateCmd(m_adminCmd);
-
-  // Import Boolean options
-  std::for_each(m_adminCmd.option_bool().begin(),
-                m_adminCmd.option_bool().end(),
-                [this](auto opt){
-                  m_option_bool.insert(std::make_pair(opt.key(), opt.value()));
-                });
-
-  // Import UInt64 options
-  std::for_each(m_adminCmd.option_uint64().begin(),
-                m_adminCmd.option_uint64().end(),
-                [this](auto opt){
-                  m_option_uint64.insert(std::make_pair(opt.key(), opt.value()));
-                });
-
-  // Import String options
-  std::for_each(m_adminCmd.option_str().begin(),
-                m_adminCmd.option_str().end(),
-                [this](auto opt){
-                  m_option_str.insert(std::make_pair(opt.key(), opt.value()));
-                });
-
-  // Import String List options
-  for(auto opt_it = m_adminCmd.option_str_list().begin(); opt_it != m_adminCmd.option_str_list().end(); ++opt_it) {
-    std::vector<std::string> items;
-    for(auto item_it = opt_it->item().begin(); item_it != opt_it->item().end(); ++item_it) {
-      items.push_back(*item_it);
-    }
-    m_option_str_list.try_emplace(opt_it->key(), items);
-  }
 }
 
 void AdminCmd::logAdminCmd(const std::string& function, const std::string& status, const std::string& reason, utils::Timer& t) {
@@ -1606,26 +1568,6 @@ std::string AdminCmd::setDriveState(const std::string& regex, const common::data
   }
 
   return cmdlineOutput.str();
-}
-
-std::optional<std::string> AdminCmd::getAndValidateDiskFileIdOptional(bool* has_any) const {
-  using namespace cta::admin;
-  auto diskFileIdHex  = getOptional(OptionString::FXID, has_any);
-  auto diskFileIdStr  = getOptional(OptionString::DISK_FILE_ID, has_any);
-
-  if(diskFileIdHex && diskFileIdStr) {
-    throw exception::UserError("File ID can't be received in both string (" + diskFileIdStr.value() + ") and hexadecimal (" + diskFileIdHex.value() + ") formats");
-  }
-
-  if(diskFileIdHex) {
-    // If provided, convert FXID (hexadecimal) to DISK_FILE_ID (decimal)
-    if (!utils::isValidHex(diskFileIdHex.value())) {
-      throw cta::exception::UserError(diskFileIdHex.value() + " is not a valid hexadecimal file ID value");
-    }
-    return utils::hexadecimalToDecimal(diskFileIdHex.value());
-  }
-
-  return diskFileIdStr;
 }
 
 void AdminCmd::processRecycleTapeFile_Restore(xrd::Response& response) {

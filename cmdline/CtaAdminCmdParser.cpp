@@ -19,6 +19,10 @@
 
 namespace cta::admin {
 
+bool isStreamCmd(const admin::AdminCmd& adminCmd) {
+  return streamCmds.count(std::make_pair(adminCmd.cmd(), adminCmd.subcmd())) > 0;
+}
+
 void Option::validateCmd(const AdminCmd& admincmd) const {
   if (m_is_optional) {
     return;

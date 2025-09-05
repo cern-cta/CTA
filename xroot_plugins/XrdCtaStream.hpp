@@ -20,8 +20,8 @@
 #include <XrdSsiPbOStreamBuffer.hpp>
 #include <catalogue/Catalogue.hpp>
 #include <scheduler/Scheduler.hpp>
-
-
+#include "cmdline/CtaAdminResponseStream.hpp"
+#include "AdminCmdStream.hpp"
 
 namespace cta::xrd {
 
@@ -31,11 +31,13 @@ namespace cta::xrd {
 class XrdCtaStream : public XrdSsiStream
 {
 public:
-  XrdCtaStream(cta::catalogue::Catalogue &catalogue, cta::Scheduler &scheduler) :
-    XrdSsiStream(XrdSsiStream::isActive),
-    m_catalogue(catalogue),
-    m_scheduler(scheduler)
-  {
+  XrdCtaStream(cta::catalogue::Catalogue& catalogue,
+               cta::Scheduler& scheduler,
+               std::unique_ptr<cta::cmdline::CtaAdminResponseStream> stream = nullptr)
+      : XrdSsiStream(XrdSsiStream::isActive),
+        m_catalogue(catalogue),
+        m_scheduler(scheduler),
+        m_stream(std::move(stream)) {
     XrdSsiPb::Log::Msg(XrdSsiPb::Log::DEBUG, LOG_SUFFIX, "XrdCtaStream() constructor");
   }
 
@@ -102,16 +104,32 @@ private:
   /*!
    * Returns true if there is nothing more to send (i.e. we can close the stream)
    */
-  virtual bool isDone() const = 0;
+  virtual bool isDone() const {
+    if (!m_stream) {
+      throw cta::exception::Exception("Unable to call isDone, as stream has not been initialised!");
+    }
+    return m_stream->isDone();
+  }
 
   /*!
    * Fills the stream buffer
    */
-  virtual int fillBuffer(XrdSsiPb::OStreamBuffer<Data> *streambuf) = 0;
+  virtual int fillBuffer(XrdSsiPb::OStreamBuffer<Data>* streambuf) {
+    if (!m_stream) {
+      throw cta::exception::Exception("Unable to call fillBuffer, as stream has not been initialised!");
+    }
+
+    for (bool is_buffer_full = false; !m_stream->isDone() && !is_buffer_full;) {
+      Data record = m_stream->next();
+      is_buffer_full = streambuf->Push(record);
+    }
+    return streambuf->Size();
+  }
 
 protected:
   cta::catalogue::Catalogue &m_catalogue;    //!< Reference to CTA Catalogue
   cta::Scheduler            &m_scheduler;    //!< Reference to CTA Scheduler
+  std::unique_ptr<cta::cmdline::CtaAdminResponseStream> m_stream;  //!< Response stream
 
 private:
   static constexpr const char* const LOG_SUFFIX  = "XrdCtaStream";    //!< Identifier for log messages
