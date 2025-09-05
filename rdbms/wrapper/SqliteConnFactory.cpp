@@ -16,6 +16,7 @@
  */
 
 #include "common/exception/Exception.hpp"
+#include "common/semconv/SemConv.hpp"
 #include "rdbms/wrapper/SqliteConn.hpp"
 #include "rdbms/wrapper/SqliteConnFactory.hpp"
 #include "plugin-manager/PluginInterface.hpp"
@@ -38,6 +39,20 @@ std::unique_ptr<ConnWrapper> SqliteConnFactory::create() {
   } catch(exception::Exception &ex) {
     throw exception::Exception(std::string(__FUNCTION__) + " failed: " + ex.getMessage().str());
   }
+}
+
+//------------------------------------------------------------------------------
+// getDbSystemName
+//------------------------------------------------------------------------------
+std::string SqliteConnFactory::getDbSystemName() const {
+  return cta::semconv::DbSystemNameValues::kSqlite;
+}
+
+//------------------------------------------------------------------------------
+// getDbNamespace
+//------------------------------------------------------------------------------
+std::string SqliteConnFactory::getDbNamespace() const {
+  return m_filename;
 }
 
 } // namespace cta::rdbms::wrapper

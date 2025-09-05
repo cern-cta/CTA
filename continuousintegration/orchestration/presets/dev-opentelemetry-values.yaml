@@ -2,12 +2,9 @@ image:
   repository: registry.cern.ch/ghcr.io/open-telemetry/opentelemetry-collector-releases/opentelemetry-collector-contrib
   tag: 0.129.1
 
+# TODO: this should be a daemonset if we want this to scale nicely to multiple machines/nodes
+# However, this also complicates the Prometheus setup.
 mode: deployment
-
-# TODO: we might not need this
-presets:
-  kubernetesAttributes:
-    enabled: true
 
 config:
   receivers:
@@ -19,18 +16,15 @@ config:
   processors:
     batch:
       timeout: 5s
-    resourcedetection/system:
-      detectors: ["system"]
-      system:
-        hostname_sources: ["os"]
 
   exporters:
     prometheus:
       endpoint: ${env:MY_POD_IP}:8889
+      # Ensures all resource-level attributes becomes metric-level attributes
+      # We lose the service.instance.id during aggregation, so without doing
+      # this we have no way to correlate the metric to the resource
       resource_to_telemetry_conversion:
         enabled: true
-    debug:
-      verbosity: detailed
 
   service:
     pipelines:
@@ -39,10 +33,8 @@ config:
           - otlp
         processors:
           - batch
-          - resourcedetection/system
         exporters:
           - prometheus
-          - debug
 
     telemetry:
       logs:

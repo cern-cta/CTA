@@ -230,10 +230,10 @@ int main(const int argc, char **const argv) {
   // Instantiate telemetry
   try {
     cta::telemetry::TelemetryConfig telemetryConfig = cta::telemetry::TelemetryConfigBuilder()
-      .serviceName(cta::semconv::kServiceNameCtaTaped)
+      .serviceName(cta::semconv::ServiceNameValues::kCtaTaped)
       .serviceNamespace(globalConfig.instanceName.value())
       .serviceVersion(CTA_VERSION)
-      .resourceAttribute(cta::semconv::kSchedulerBackendNameKey, globalConfig.schedulerBackendName.value())
+      .resourceAttribute(cta::semconv::kSchedulerBackendName, globalConfig.schedulerBackendName.value())
       .metricsBackend(globalConfig.telemetryMetricsBackend.value())
       .metricsExportInterval(std::chrono::milliseconds(globalConfig.telemetryMetricsExportInterval.value()))
       .metricsExportTimeout(std::chrono::milliseconds(globalConfig.telemetryMetricsExportTimeout.value()))
