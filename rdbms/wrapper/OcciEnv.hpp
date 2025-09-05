@@ -18,6 +18,7 @@
 #pragma once
 
 #include "rdbms/wrapper/ConnWrapper.hpp"
+#include "rdbms/Login.hpp"
 
 #include <memory>
 #include <occi.h>
@@ -50,15 +51,10 @@ public:
    * This method will throw an exception if either the username, password ori
    * database parameters are nullptr pointers.
    *
-   * @param username The name of the database user.
-   * @param password The database password.
-   * @param database The name of the database.
+   * @param login The database login information.
    * @return The newly created OCCI connection.
    */
-  std::unique_ptr<ConnWrapper> createConn(
-    const std::string &username,
-    const std::string &password,
-    const std::string &database);
+  std::unique_ptr<ConnWrapper> createConn(const rdbms::Login &login);
 
 private:
 

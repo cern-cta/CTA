@@ -43,7 +43,7 @@ TEST_F(cta_rdbms_wrapper_ConnTest, createSameTableInTwoSeparateInMemoryDatabases
 
   // First in-memory database
   {
-    const rdbms::Login login(rdbms::Login::DBTYPE_SQLITE, "", "", "file::memory:?cache=shared", "", 0);
+    const rdbms::Login login = rdbms::Login::getInMemory();
     auto connFactory = ConnFactoryFactory::create(login);
     auto conn = connFactory->create();
 
@@ -57,7 +57,7 @@ TEST_F(cta_rdbms_wrapper_ConnTest, createSameTableInTwoSeparateInMemoryDatabases
 
   // Second in-memory database
   {
-    const rdbms::Login login(rdbms::Login::DBTYPE_SQLITE, "", "", "file::memory:?cache=shared", "", 0);
+    const rdbms::Login login = rdbms::Login::getInMemory();
     auto connFactory = ConnFactoryFactory::create(login);
     auto conn = connFactory->create();
 

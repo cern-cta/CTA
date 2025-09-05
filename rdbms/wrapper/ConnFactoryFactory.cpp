@@ -32,8 +32,7 @@ namespace cta::rdbms::wrapper {
 std::unique_ptr<ConnFactory> ConnFactoryFactory::create(const Login &login) {
   try {
     static cta::plugin::Manager<rdbms::wrapper::ConnFactory,
-      cta::plugin::Args<const std::string&>,
-      cta::plugin::Args<const std::string&, const std::string&, const std::string&>> pm;
+      cta::plugin::Args<const cta::rdbms::Login&>> pm;
 
     pm.onRegisterPlugin([](const auto& plugin) {
         // API VERSION CHECKING
@@ -50,12 +49,11 @@ std::unique_ptr<ConnFactory> ConnFactoryFactory::create(const Login &login) {
     switch (login.dbType) {
     case Login::DBTYPE_IN_MEMORY:
     {
-      const std::string FILE_NAME = "file::memory:?cache=shared";
       pm.load("libctardbmssqlite.so");
       if (!pm.isRegistered("ctardbmssqlite")) {
         pm.bootstrap("factory");
       }
-      return pm.plugin("ctardbmssqlite").make("SqliteConnFactory", FILE_NAME);
+      return pm.plugin("ctardbmssqlite").make("SqliteConnFactory", login);
     }
     case Login::DBTYPE_ORACLE:
 #ifdef SUPPORT_OCCI
@@ -63,7 +61,7 @@ std::unique_ptr<ConnFactory> ConnFactoryFactory::create(const Login &login) {
       if (!pm.isRegistered("ctardbmsocci")) {
         pm.bootstrap("factory");
       }
-      return pm.plugin("ctardbmsocci").make("OcciConnFactory", login.username, login.password, login.database);
+      return pm.plugin("ctardbmsocci").make("OcciConnFactory", login);
 #else
       throw exception::NoSupportedDB("Oracle Catalogue Schema is not supported. Compile CTA with Oracle support.");
 #endif
@@ -72,13 +70,13 @@ std::unique_ptr<ConnFactory> ConnFactoryFactory::create(const Login &login) {
       if (!pm.isRegistered("ctardbmssqlite")) {
         pm.bootstrap("factory");
       }
-      return pm.plugin("ctardbmssqlite").make("SqliteConnFactory", login.database);
+      return pm.plugin("ctardbmssqlite").make("SqliteConnFactory", login);
     case Login::DBTYPE_POSTGRESQL:
       pm.load("libctardbmspostgres.so");
       if (!pm.isRegistered("ctardbmspostgres")) {
         pm.bootstrap("factory");
       }
-      return pm.plugin("ctardbmspostgres").make("PostgresConnFactory", login.database);
+      return pm.plugin("ctardbmspostgres").make("PostgresConnFactory", login);
     case Login::DBTYPE_NONE:
       throw exception::Exception("Cannot create a catalogue without a database type");
     default:

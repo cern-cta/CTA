@@ -28,8 +28,7 @@ namespace cta::rdbms::wrapper {
 //------------------------------------------------------------------------------
 // constructor
 //------------------------------------------------------------------------------
-PostgresConnFactory::PostgresConnFactory(const std::string& conninfo)
-    : m_conninfo(conninfo) {
+PostgresConnFactory::PostgresConnFactory(const rdbms::Login& login) : m_login(login) {
 }
 
 //------------------------------------------------------------------------------
@@ -37,7 +36,7 @@ PostgresConnFactory::PostgresConnFactory(const std::string& conninfo)
 //------------------------------------------------------------------------------
 std::unique_ptr<ConnWrapper> PostgresConnFactory::create() {
   try {
-    return std::make_unique<PostgresConn>(m_conninfo);
+    return std::make_unique<PostgresConn>(m_login);
   } catch(exception::Exception &ex) {
     throw exception::Exception(std::string(__FUNCTION__) + " failed: " + ex.getMessage().str());
   }
@@ -54,9 +53,7 @@ std::string PostgresConnFactory::getDbSystemName() const {
 // getDbNamespace
 //------------------------------------------------------------------------------
 std::string PostgresConnFactory::getDbNamespace() const {
-  // TODO: how do we get this? How do we define the namespace for this?
-  // We probably need to modify the login
-  return "unknown";
+  return m_login.dbNamespace;
 }
 
 } // namespace cta::rdbms::wrapper
@@ -64,8 +61,8 @@ std::string PostgresConnFactory::getDbNamespace() const {
 extern "C" {
 
 void factory(cta::plugin::Interface<cta::rdbms::wrapper::ConnFactory,
-    cta::plugin::Args<const std::string&>,
-    cta::plugin::Args<const std::string&, const std::string&, const std::string&>>& interface) {
+    cta::plugin::Args<const cta::rdbms::Login&>,
+    cta::plugin::Args<const cta::rdbms::Login&>>& interface) {
 
   interface.SET<cta::plugin::DATA::PLUGIN_NAME>("ctardbmspostgres")
     .SET<cta::plugin::DATA::API_VERSION>(VERSION_API)

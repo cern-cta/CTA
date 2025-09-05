@@ -42,7 +42,7 @@ SqliteCatalogue::SqliteCatalogue(
   const uint64_t nbArchiveFileListingConns):
   RdbmsCatalogue(
     log,
-    rdbms::Login(rdbms::Login::DBTYPE_SQLITE, "", "", filename, "", 0),
+    rdbms::Login(rdbms::Login::DBTYPE_SQLITE, "", "", filename, "", 0, filename),
     nbConns,
     nbArchiveFileListingConns) {
   RdbmsCatalogue::m_fileRecycleLog = std::make_unique<SqliteFileRecycleLogCatalogue>(m_log, m_connPool, this);

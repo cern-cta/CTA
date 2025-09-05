@@ -132,7 +132,7 @@ TEST_P(cta_rdbms_ConnTest, createTableInMemoryDatabase_executeNonQuery) {
   )SQL";
 
   {
-    const Login login(Login::DBTYPE_SQLITE, "", "", "file::memory:?cache=shared", "", 0);
+    const Login login = Login::getInMemory();
     const uint64_t maxNbConns = 1;
     ConnPool connPool(login, maxNbConns);
     auto conn = connPool.getConn();
@@ -154,7 +154,7 @@ TEST_P(cta_rdbms_ConnTest, createSameTableInTwoSeparateInMemoryDatabases_execute
 
   // First in-memory database
   {
-    const Login login(Login::DBTYPE_SQLITE, "", "", "file::memory:?cache=shared", "", 0);
+    const Login login = Login::getInMemory();
     const uint64_t maxNbConns = 1;
     ConnPool connPool(login, maxNbConns);
     auto conn = connPool.getConn();
@@ -168,7 +168,7 @@ TEST_P(cta_rdbms_ConnTest, createSameTableInTwoSeparateInMemoryDatabases_execute
 
   // Second in-memory database
   {
-    const Login login(Login::DBTYPE_SQLITE, "", "", "file::memory:?cache=shared", "", 0);
+    const Login login = Login::getInMemory();
     const uint64_t maxNbConns = 1;
     ConnPool connPool(login, maxNbConns);
     auto conn = connPool.getConn();
