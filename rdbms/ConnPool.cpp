@@ -35,7 +35,7 @@ ConnPool::ConnPool(const Login& login, const uint64_t maxNbConns)
       m_nbConnsOnLoan(0) {}
 
 ConnPool::~ConnPool() {
-  addNbConnsOnLoan(-m_nbConnsOnLoan);
+  removeNbConnsOnLoan(m_nbConnsOnLoan);
 }
 
 //------------------------------------------------------------------------------
@@ -105,7 +105,7 @@ void ConnPool::returnConn(std::unique_ptr<ConnAndStmts> connAndStmts) {
         if (0 == m_nbConnsOnLoan) {
           throw exception::Exception("Would have reached -1 connections on loan");
         }
-        addNbConnsOnLoan(-1);
+        removeNbConnsOnLoan(1);
         m_connsAndStmtsCv.signal();
         return;
       }
@@ -118,7 +118,7 @@ void ConnPool::returnConn(std::unique_ptr<ConnAndStmts> connAndStmts) {
       if (0 == m_nbConnsOnLoan) {
         throw exception::Exception("Would have reached -1 connections on loan");
       }
-      addNbConnsOnLoan(-1);
+      removeNbConnsOnLoan(1);
       m_connsAndStmts.push_back(std::move(connAndStmts));
       m_connsAndStmtsCv.signal();
 
@@ -135,7 +135,7 @@ void ConnPool::returnConn(std::unique_ptr<ConnAndStmts> connAndStmts) {
       if (0 == m_nbConnsOnLoan) {
         throw exception::Exception("Would have reached -1 connections on loan");
       }
-      addNbConnsOnLoan(-1);
+      removeNbConnsOnLoan(1);
       m_connsAndStmtsCv.signal();
     }
   } catch (exception::Exception& ex) {
@@ -146,9 +146,18 @@ void ConnPool::returnConn(std::unique_ptr<ConnAndStmts> connAndStmts) {
 //------------------------------------------------------------------------------
 // addNbConnsOnLoan
 //------------------------------------------------------------------------------
-void ConnPool::addNbConnsOnLoan(int nbConns) {
+void ConnPool::addNbConnsOnLoan(uint64_t nbConns) {
   m_nbConnsOnLoan += nbConns;
   cta::telemetry::metrics::rdbmsConnectionCount->Add(nbConns, {{cta::semconv::kDbSystemName, m_connFactory->getDbSystemName()}, {cta::semconv::kDbNamespace, m_connFactory->getDbNamespace()}});
 }
+
+//------------------------------------------------------------------------------
+// removeNbConnsOnLoan
+//------------------------------------------------------------------------------
+void ConnPool::removeNbConnsOnLoan(uint64_t nbConns) {
+  m_nbConnsOnLoan -= nbConns;
+  cta::telemetry::metrics::rdbmsConnectionCount->Add(-nbConns, {{cta::semconv::kDbSystemName, m_connFactory->getDbSystemName()}, {cta::semconv::kDbNamespace, m_connFactory->getDbNamespace()}});
+}
+
 
 }  // namespace cta::rdbms
