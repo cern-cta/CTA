@@ -170,7 +170,7 @@ SubprocessHandler::ProcessingStatus DriveHandler::fork() {
       // Register our socket pair side for epoll
       m_processManager.addFile(m_socketPair->getFdForAccess(server::SocketPair::Side::child), this);
       // Ensure the parent has telemetry available
-      cta::telemetry::reinitTelemetry(m_lc, true);
+      cta::telemetry::reinitTelemetry(m_lc);
       // Create a catalogue handler in the parent process,
       // to be able to properly handle a drive shutdown without having to reload the plugin catalogue libraries
       if (!m_catalogue) {

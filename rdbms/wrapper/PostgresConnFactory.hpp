@@ -48,6 +48,29 @@ public:
    */
   std::unique_ptr<ConnWrapper> create() override;
 
+  /**
+   * @brief Get the database system identifier.
+   *
+   * This should return the OpenTelemetry semantic convention attribute
+   * `db.system`. It identifies which kind of database management system
+   * (DBMS) is in use.
+   *
+   * @return The string "oracle".
+   */
+  std::string getDbSystemName() const override;
+
+
+  /**
+   * @brief Get the logical database namespace.
+   *
+   * This should return the OpenTelemetry semantic convention attribute
+   * `db.namespace`. It identifies the logical database, schema, or
+   * namespace where the operation is executed.
+   *
+   * @return A string representing the database namespace.
+   */
+  std::string getDbNamespace() const override;
+
 private:
 
   /**

@@ -21,6 +21,6 @@
 
 namespace cta::telemetry::metrics {
 
-extern std::unique_ptr<opentelemetry::metrics::Histogram<double>> frontendRequestDuration;
+extern std::unique_ptr<opentelemetry::metrics::Histogram<uint64_t>> frontendRequestDuration;
 
 }  // namespace cta::telemetry::metrics

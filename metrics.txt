@@ -1,9 +1,0 @@
-cta_archives_total 0.00
-cta_retrieves_total 0.00
-cta_mounts_total 0.00
-cta_objectstore_locks_total 0.00
-cta_objectstore_lock_latency_avg_ms 0.00
-cta_frontend_requests_total 0.00
-cta_frontend_latency_avg_ms 0.00
-cta_scheduler_queue_events_total 0.00
-cta_database_queries_total 0.00

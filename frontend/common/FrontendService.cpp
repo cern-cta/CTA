@@ -144,10 +144,10 @@ FrontendService::FrontendService(const std::string& configFilename) : m_archiveF
       }
 
       cta::telemetry::TelemetryConfig telemetryConfig = cta::telemetry::TelemetryConfigBuilder()
-        .serviceName(cta::semconv::kServiceNameCtaFrontend)
+        .serviceName(cta::semconv::ServiceNameValues::kCtaFrontend)
         .serviceNamespace(m_instanceName)
         .serviceVersion(CTA_VERSION)
-        .resourceAttribute(cta::semconv::kSchedulerBackendNameKey, m_schedulerBackendName)
+        .resourceAttribute(cta::semconv::kSchedulerBackendName, m_schedulerBackendName)
         .metricsBackend(telemetryMetricsBackend.value())
         .metricsExportInterval(std::chrono::milliseconds(telemetryMetricsExportInterval.value()))
         .metricsExportTimeout(std::chrono::milliseconds(telemetryMetricsExportTimeout.value()))

@@ -8,7 +8,7 @@
 
 namespace cta::telemetry::metrics {
 
-std::unique_ptr<opentelemetry::metrics::Histogram<double>> rdbmsOperationDuration;
+std::unique_ptr<opentelemetry::metrics::Histogram<uint64_t>> rdbmsOperationDuration;
 std::unique_ptr<opentelemetry::metrics::UpDownCounter<int64_t>> rdbmsConnectionCount;
 
 }  // namespace cta::telemetry::metrics
@@ -21,11 +21,11 @@ void initInstruments() {
 
 
   // See https://opentelemetry.io/docs/specs/semconv/database/database-metrics/#metric-dbclientoperationduration
-  // TODO: specify explicit bucket boundaries with seconds as units to follow the spec
+  // TODO: specify explicit bucket boundaries to follow the spec
   cta::telemetry::metrics::rdbmsOperationDuration =
-    meter->CreateDoubleHistogram("db.client.operation.duration",
+    meter->CreateUInt64Histogram("db.client.operation.duration",
                                  "Duration of database client operations.",
-                                 "s");
+                                 "ms");
 
   // See https://opentelemetry.io/docs/specs/semconv/database/database-metrics/#metric-dbclientconnectioncount
   cta::telemetry::metrics::rdbmsConnectionCount =

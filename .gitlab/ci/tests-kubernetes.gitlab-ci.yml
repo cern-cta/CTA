@@ -235,8 +235,8 @@ stress-test:
   script:
     - |
       EXTRA_SPAWN_ARGS="--cta-config ${STRESS_CTA_VALUES_FILE} --eos-config ${STRESS_EOS_VALUES_FILE} ${EXTRA_SPAWN_ARGS}"
-      if [ $TELEMETRY_COLLECTION_ENABLED == "TRUE" ]; then
-        EXTRA_SPAWN_ARGS+=" --telemetry-enabled --prometheus-config presets/ci-prometheus-values.yaml"
+      if [ $ENABLE_TELEMETRY_COLLECTION == "TRUE" ]; then
+        EXTRA_SPAWN_ARGS+=" --enable-telemetry --prometheus-config presets/ci-prometheus-values.yaml"
       fi
       extra_args=($EXTRA_ARGS)
       if [[ -n "${EXTRA_SPAWN_ARGS}" ]]; then extra_args+=(--spawn-options "${EXTRA_SPAWN_ARGS}"); fi
