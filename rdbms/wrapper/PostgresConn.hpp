@@ -20,6 +20,7 @@
 #include "common/threading/RWLock.hpp"
 #include "rdbms/wrapper/ConnWrapper.hpp"
 #include "rdbms/wrapper/Postgres.hpp"
+#include "rdbms/Login.hpp"
 
 #include <list>
 #include <memory>
@@ -44,10 +45,9 @@ public:
   /**
    * Constructor
    *
-   * @param conninfo The conninfo string to pass to PQconnectdb. This is a postgres URI or a series of key=value pairs separated by white space.
-   *
+   * @param login The database login information.
    */
-  explicit PostgresConn(const std::string& conninfo);
+  explicit PostgresConn(const rdbms::Login &login);
 
   /**
    * Destructor.
