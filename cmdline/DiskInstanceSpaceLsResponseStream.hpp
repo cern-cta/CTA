@@ -16,7 +16,6 @@ public:
 
   bool isDone() override;
   cta::xrd::Data next() override;
-  
 
 private:
   std::list<cta::common::dataStructures::DiskInstanceSpace> m_diskInstanceSpaces;
@@ -27,7 +26,6 @@ DiskInstanceSpaceLsResponseStream::DiskInstanceSpaceLsResponseStream(cta::catalo
                                                                      const frontend::AdminCmdStream& requestMsg)
     : CtaAdminResponseStream(catalogue, scheduler, requestMsg.getInstanceName()),
       m_diskInstanceSpaces(catalogue.DiskInstanceSpace()->getAllDiskInstanceSpaces()) {}
-
 
 bool DiskInstanceSpaceLsResponseStream::isDone() {
   return m_diskInstanceSpaces.empty();

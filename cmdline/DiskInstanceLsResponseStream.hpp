@@ -16,7 +16,6 @@ public:
 
   bool isDone() override;
   cta::xrd::Data next() override;
-  
 
 private:
   std::list<cta::common::dataStructures::DiskInstance> m_diskInstances;  //!< List of disk instances from the catalogue
@@ -27,7 +26,6 @@ DiskInstanceLsResponseStream::DiskInstanceLsResponseStream(cta::catalogue::Catal
                                                            const frontend::AdminCmdStream& requestMsg)
     : CtaAdminResponseStream(catalogue, scheduler, requestMsg.getInstanceName()),
       m_diskInstances(catalogue.DiskInstance()->getAllDiskInstances()) {}
-
 
 bool DiskInstanceLsResponseStream::isDone() {
   return m_diskInstances.empty();

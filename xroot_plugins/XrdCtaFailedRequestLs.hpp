@@ -39,7 +39,10 @@ FailedRequestLsStream::FailedRequestLsStream(const frontend::AdminCmdStream& req
                                              cta::Scheduler& scheduler,
                                              SchedulerDatabase& schedDb,
                                              cta::log::LogContext& lc)
-    : XrdCtaStream(catalogue, scheduler, std::make_unique<cta::cmdline::FailedRequestLsResponseStream>(catalogue, scheduler, requestMsg, schedDb, lc)) {
+    : XrdCtaStream(
+        catalogue,
+        scheduler,
+        std::make_unique<cta::cmdline::FailedRequestLsResponseStream>(catalogue, scheduler, requestMsg, schedDb, lc)) {
   XrdSsiPb::Log::Msg(XrdSsiPb::Log::DEBUG, LOG_SUFFIX, " constructor");
 }
 

@@ -18,7 +18,6 @@ public:
 
   bool isDone() override;
   cta::xrd::Data next() override;
-  
 
 private:
   std::list<cta::catalogue::TapePool> m_tapePools;
@@ -31,7 +30,6 @@ TapePoolLsResponseStream::TapePoolLsResponseStream(cta::catalogue::Catalogue& ca
                                                    const frontend::AdminCmdStream& requestMsg)
     : CtaAdminResponseStream(catalogue, scheduler, requestMsg.getInstanceName()),
       m_tapePools(buildTapePoolList(requestMsg.getAdminCmd())) {}
-
 
 std::list<cta::catalogue::TapePool> TapePoolLsResponseStream::buildTapePoolList(const admin::AdminCmd& admincmd) {
   cta::frontend::AdminCmdOptions request(admincmd);

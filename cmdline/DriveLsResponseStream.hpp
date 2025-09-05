@@ -23,7 +23,6 @@ public:
 
   bool isDone() override;
   cta::xrd::Data next() override;
-  
 
 private:
   cta::log::LogContext& m_lc;
@@ -122,7 +121,6 @@ DriveLsResponseStream::DriveLsResponseStream(cta::catalogue::Catalogue& catalogu
     throw cta::exception::UserError(std::string("Drive ") + driveRegexOpt.value() + " not found.");
   }
 }
-
 
 bool DriveLsResponseStream::isDone() {
   return m_tapeDrives.empty();

@@ -21,7 +21,6 @@ public:
 
   bool isDone() override;
   cta::xrd::Data next() override;
-  
 
 private:
   std::list<common::dataStructures::Tape> m_tapes;
@@ -76,7 +75,6 @@ TapeLsResponseStream::TapeLsResponseStream(cta::catalogue::Catalogue& catalogue,
   // Execute the search and get the tapes
   m_tapes = m_catalogue.Tape()->getTapes(m_searchCriteria);
 }
-
 
 bool TapeLsResponseStream::isDone() {
   return m_tapes.empty();

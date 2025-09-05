@@ -31,12 +31,13 @@ namespace cta::xrd {
 class XrdCtaStream : public XrdSsiStream
 {
 public:
-  XrdCtaStream(cta::catalogue::Catalogue &catalogue, cta::Scheduler &scheduler, std::unique_ptr<cta::cmdline::CtaAdminResponseStream> stream = nullptr) :
-    XrdSsiStream(XrdSsiStream::isActive),
-    m_catalogue(catalogue),
-    m_scheduler(scheduler),
-    m_stream(std::move(stream))
-  {
+  XrdCtaStream(cta::catalogue::Catalogue& catalogue,
+               cta::Scheduler& scheduler,
+               std::unique_ptr<cta::cmdline::CtaAdminResponseStream> stream = nullptr)
+      : XrdSsiStream(XrdSsiStream::isActive),
+        m_catalogue(catalogue),
+        m_scheduler(scheduler),
+        m_stream(std::move(stream)) {
     XrdSsiPb::Log::Msg(XrdSsiPb::Log::DEBUG, LOG_SUFFIX, "XrdCtaStream() constructor");
   }
 
@@ -103,9 +104,10 @@ private:
   /*!
    * Returns true if there is nothing more to send (i.e. we can close the stream)
    */
-  virtual bool isDone() const { 
-    if (!m_stream)
+  virtual bool isDone() const {
+    if (!m_stream) {
       throw cta::exception::Exception("Unable to call isDone, as stream has not been initialised!");
+    }
     return m_stream->isDone();
   }
 

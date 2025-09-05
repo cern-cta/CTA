@@ -17,7 +17,6 @@ public:
                                  const frontend::AdminCmdStream& requestMsg);
   bool isDone() override;
   cta::xrd::Data next() override;
-  
 
 private:
   std::list<cta::common::dataStructures::RequesterGroupMountRule> m_groupMountRules;
@@ -28,7 +27,6 @@ GroupMountRuleLsResponseStream::GroupMountRuleLsResponseStream(cta::catalogue::C
                                                                const frontend::AdminCmdStream& requestMsg)
     : CtaAdminResponseStream(catalogue, scheduler, requestMsg.getInstanceName()),
       m_groupMountRules(catalogue.RequesterGroupMountRule()->getRequesterGroupMountRules()) {}
-
 
 bool GroupMountRuleLsResponseStream::isDone() {
   return m_groupMountRules.empty();

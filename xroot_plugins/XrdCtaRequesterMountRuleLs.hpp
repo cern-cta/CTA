@@ -35,7 +35,10 @@ private:
 RequesterMountRuleLsStream::RequesterMountRuleLsStream(const frontend::AdminCmdStream& requestMsg,
                                                        cta::catalogue::Catalogue& catalogue,
                                                        cta::Scheduler& scheduler)
-    : XrdCtaStream(catalogue, scheduler, std::make_unique<cta::cmdline::RequesterMountRuleLsResponseStream>(catalogue, scheduler, requestMsg)) {
+    : XrdCtaStream(
+        catalogue,
+        scheduler,
+        std::make_unique<cta::cmdline::RequesterMountRuleLsResponseStream>(catalogue, scheduler, requestMsg)) {
   XrdSsiPb::Log::Msg(XrdSsiPb::Log::DEBUG, LOG_SUFFIX, " constructor");
 }
 

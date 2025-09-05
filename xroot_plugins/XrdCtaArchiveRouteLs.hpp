@@ -35,7 +35,9 @@ private:
 ArchiveRouteLsStream::ArchiveRouteLsStream(const frontend::AdminCmdStream& requestMsg,
                                            cta::catalogue::Catalogue& catalogue,
                                            cta::Scheduler& scheduler)
-    : XrdCtaStream(catalogue, scheduler, std::make_unique<cta::cmdline::ArchiveRouteLsResponseStream>(catalogue, scheduler, requestMsg)) {
+    : XrdCtaStream(catalogue,
+                   scheduler,
+                   std::make_unique<cta::cmdline::ArchiveRouteLsResponseStream>(catalogue, scheduler, requestMsg)) {
   XrdSsiPb::Log::Msg(XrdSsiPb::Log::DEBUG, LOG_SUFFIX, " constructor");
 }
 

@@ -17,7 +17,6 @@ public:
 
   bool isDone() override;
   cta::xrd::Data next() override;
-  
 
 private:
   std::list<cta::common::dataStructures::StorageClass> m_storageClasses;
@@ -27,19 +26,18 @@ StorageClassLsResponseStream::StorageClassLsResponseStream(cta::catalogue::Catal
                                                            cta::Scheduler& scheduler,
                                                            const frontend::AdminCmdStream& requestMsg)
     : CtaAdminResponseStream(catalogue, scheduler, requestMsg.getInstanceName()) {
+  cta::frontend::AdminCmdOptions request(requestMsg.getAdminCmd());
 
-        cta::frontend::AdminCmdOptions request(requestMsg.getAdminCmd());
+  std::optional<std::string> storageClassName = request.getOptional(cta::admin::OptionString::STORAGE_CLASS);
 
-        std::optional<std::string> storageClassName = request.getOptional(cta::admin::OptionString::STORAGE_CLASS);
-
-        if (storageClassName.has_value()) {
-          m_storageClasses.push_back(m_catalogue.StorageClass()->getStorageClass(storageClassName.value()));
-        } else {
-          for (const auto& storageClass : m_catalogue.StorageClass()->getStorageClasses()) {
-            m_storageClasses.push_back(storageClass);
-          }
-        }
-      }
+  if (storageClassName.has_value()) {
+    m_storageClasses.push_back(m_catalogue.StorageClass()->getStorageClass(storageClassName.value()));
+  } else {
+    for (const auto& storageClass : m_catalogue.StorageClass()->getStorageClasses()) {
+      m_storageClasses.push_back(storageClass);
+    }
+  }
+}
 
 bool StorageClassLsResponseStream::isDone() {
   return m_storageClasses.empty();

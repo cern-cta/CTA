@@ -18,7 +18,6 @@ public:
                                   const frontend::AdminCmdStream& requestMsg);
   bool isDone() override;
   cta::xrd::Data next() override;
-  
 
 private:
   std::list<common::dataStructures::FileRecycleLog> m_fileRecycleLogs;
@@ -59,7 +58,7 @@ RecycleTapeFileLsResponseStream::RecycleTapeFileLsResponseStream(cta::catalogue:
 
   if (!has_any) {
     throw cta::exception::UserError("Must specify at least one of the following search options: vid, fxid, fxidfile, "
-                                "archiveFileId, instance, vo, ltmin, ltmax");
+                                    "archiveFileId, instance, vo, ltmin, ltmax");
   }
 
   // Get all matching file recycle logs
@@ -70,7 +69,6 @@ RecycleTapeFileLsResponseStream::RecycleTapeFileLsResponseStream(cta::catalogue:
     m_fileRecycleLogs.emplace_back(fileRecycleLogItor.next());
   }
 }
-
 
 bool RecycleTapeFileLsResponseStream::isDone() {
   return m_fileRecycleLogs.empty();

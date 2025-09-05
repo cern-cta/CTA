@@ -19,7 +19,6 @@ public:
 
   bool isDone() override;
   cta::xrd::Data next() override;
-  
 
 private:
   std::list<cta::common::dataStructures::ArchiveRoute> m_archiveRoutes;
@@ -30,7 +29,6 @@ ArchiveRouteLsResponseStream::ArchiveRouteLsResponseStream(cta::catalogue::Catal
                                                            const frontend::AdminCmdStream& requestMsg)
     : CtaAdminResponseStream(catalogue, scheduler, requestMsg.getInstanceName()),
       m_archiveRoutes(catalogue.ArchiveRoute()->getArchiveRoutes()) {}
-
 
 bool ArchiveRouteLsResponseStream::isDone() {
   return m_archiveRoutes.empty();

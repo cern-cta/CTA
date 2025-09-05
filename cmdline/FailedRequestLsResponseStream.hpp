@@ -22,7 +22,6 @@ public:
 
   bool isDone() override;
   cta::xrd::Data next() override;
-  
 
 private:
   SchedulerDatabase& m_schedDb;
@@ -87,7 +86,6 @@ FailedRequestLsResponseStream::FailedRequestLsResponseStream(cta::catalogue::Cat
     }
   }
 }
-
 
 void FailedRequestLsResponseStream::collectArchiveJobs(const std::optional<std::string>& tapepool) {
   using common::dataStructures::JobQueueType;

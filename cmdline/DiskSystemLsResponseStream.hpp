@@ -18,7 +18,6 @@ public:
 
   bool isDone() override;
   cta::xrd::Data next() override;
-  
 
 private:
   std::list<cta::disk::DiskSystem> m_diskSystems;
@@ -29,7 +28,6 @@ DiskSystemLsResponseStream::DiskSystemLsResponseStream(cta::catalogue::Catalogue
                                                        const frontend::AdminCmdStream& requestMsg)
     : CtaAdminResponseStream(catalogue, scheduler, requestMsg.getInstanceName()),
       m_diskSystems(catalogue.DiskSystem()->getAllDiskSystems()) {}
-
 
 bool DiskSystemLsResponseStream::isDone() {
   return m_diskSystems.empty();

@@ -17,7 +17,6 @@ public:
 
   bool isDone() override;
   cta::xrd::Data next() override;
-  
 
 private:
   std::list<cta::common::dataStructures::LogicalLibrary> m_logicalLibraries;
@@ -27,22 +26,22 @@ LogicalLibraryLsResponseStream::LogicalLibraryLsResponseStream(cta::catalogue::C
                                                                cta::Scheduler& scheduler,
                                                                const frontend::AdminCmdStream& requestMsg)
     : CtaAdminResponseStream(catalogue, scheduler, requestMsg.getInstanceName()) {
-      cta::frontend::AdminCmdOptions request(requestMsg.getAdminCmd());
+  cta::frontend::AdminCmdOptions request(requestMsg.getAdminCmd());
 
-      std::optional<bool> disabled = request.getOptional(cta::admin::OptionBoolean::DISABLED);
-      m_logicalLibraries = m_catalogue.LogicalLibrary()->getLogicalLibraries();
+  std::optional<bool> disabled = request.getOptional(cta::admin::OptionBoolean::DISABLED);
+  m_logicalLibraries = m_catalogue.LogicalLibrary()->getLogicalLibraries();
 
-      if (disabled) {
-        std::list<cta::common::dataStructures::LogicalLibrary>::iterator next_ll = m_logicalLibraries.begin();
-        while (next_ll != m_logicalLibraries.end()) {
-          if (disabled.value() != (*next_ll).isDisabled) {
-            next_ll = m_logicalLibraries.erase(next_ll);
-          } else {
-            ++next_ll;
-          }
-        }
+  if (disabled) {
+    std::list<cta::common::dataStructures::LogicalLibrary>::iterator next_ll = m_logicalLibraries.begin();
+    while (next_ll != m_logicalLibraries.end()) {
+      if (disabled.value() != (*next_ll).isDisabled) {
+        next_ll = m_logicalLibraries.erase(next_ll);
+      } else {
+        ++next_ll;
       }
     }
+  }
+}
 
 bool LogicalLibraryLsResponseStream::isDone() {
   return m_logicalLibraries.empty();

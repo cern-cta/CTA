@@ -23,7 +23,6 @@ public:
 
   bool isDone() override;
   cta::xrd::Data next() override;
-  
 
 private:
   cta::log::LogContext& m_lc;
@@ -43,10 +42,9 @@ ShowQueuesResponseStream::ShowQueuesResponseStream(cta::catalogue::Catalogue& ca
     m_lc.log(cta::log::ERR,
              "ShowQueuesStream constructor, the cta.scheduler_backend_name is not set in the frontend configuration.");
   }
-  
+
   m_queuesAndMountsList = m_scheduler.getQueuesAndMountSummaries(m_lc);
 }
-
 
 bool ShowQueuesResponseStream::isDone() {
   return m_queuesAndMountsList.empty();

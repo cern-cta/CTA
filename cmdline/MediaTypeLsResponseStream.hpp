@@ -16,7 +16,6 @@ public:
 
   bool isDone() override;
   cta::xrd::Data next() override;
-  
 
 private:
   std::list<cta::catalogue::MediaTypeWithLogs> m_mediaTypes;
@@ -27,7 +26,6 @@ MediaTypeLsResponseStream::MediaTypeLsResponseStream(cta::catalogue::Catalogue& 
                                                      const frontend::AdminCmdStream& requestMsg)
     : CtaAdminResponseStream(catalogue, scheduler, requestMsg.getInstanceName()),
       m_mediaTypes(catalogue.MediaType()->getMediaTypes()) {}
-
 
 bool MediaTypeLsResponseStream::isDone() {
   return m_mediaTypes.empty();

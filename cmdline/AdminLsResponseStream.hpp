@@ -18,7 +18,6 @@ public:
 
   bool isDone() override;
   cta::xrd::Data next() override;
-  
 
 private:
   std::list<cta::common::dataStructures::AdminUser> m_adminUsers;
@@ -29,7 +28,6 @@ AdminLsResponseStream::AdminLsResponseStream(cta::catalogue::Catalogue& catalogu
                                              const frontend::AdminCmdStream& requestMsg)
     : CtaAdminResponseStream(catalogue, scheduler, requestMsg.getInstanceName()),
       m_adminUsers(catalogue.AdminUser()->getAdminUsers()) {}
-
 
 bool AdminLsResponseStream::isDone() {
   return m_adminUsers.empty();

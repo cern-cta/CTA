@@ -16,7 +16,6 @@ public:
 
   bool isDone() override;
   cta::xrd::Data next() override;
-  
 
 private:
   std::list<cta::common::dataStructures::PhysicalLibrary> m_physicalLibraries;
@@ -27,7 +26,6 @@ PhysicalLibraryLsResponseStream::PhysicalLibraryLsResponseStream(cta::catalogue:
                                                                  const frontend::AdminCmdStream& requestMsg)
     : CtaAdminResponseStream(catalogue, scheduler, requestMsg.getInstanceName()),
       m_physicalLibraries(catalogue.PhysicalLibrary()->getPhysicalLibraries()) {}
-
 
 bool PhysicalLibraryLsResponseStream::isDone() {
   return m_physicalLibraries.empty();

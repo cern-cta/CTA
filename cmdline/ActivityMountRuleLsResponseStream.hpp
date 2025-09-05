@@ -19,7 +19,6 @@ public:
 
   bool isDone() override;
   cta::xrd::Data next() override;
-  
 
 private:
   std::list<cta::common::dataStructures::RequesterActivityMountRule> m_activityMountRules;

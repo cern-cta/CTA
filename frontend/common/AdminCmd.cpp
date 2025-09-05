@@ -26,20 +26,19 @@
 namespace cta::frontend {
 
 AdminCmd::AdminCmd(const frontend::FrontendService& frontendService,
-  const common::dataStructures::SecurityIdentity& clientIdentity,
-  const admin::AdminCmd& adminCmd) :
-  AdminCmdOptions(adminCmd),
-  m_adminCmd(adminCmd),
-  m_catalogue(frontendService.getCatalogue()),
-  m_scheduler(frontendService.getScheduler()),
-  m_lc(frontendService.getLogContext()),
-  m_cliIdentity(clientIdentity),
-  m_archiveFileMaxSize(frontendService.getArchiveFileMaxSize()),
-  m_repackBufferURL(frontendService.getRepackBufferURL()),
-  m_repackMaxFilesToSelect(frontendService.getRepackMaxFilesToSelect()),
-  m_missingFileCopiesMinAgeSecs(frontendService.getMissingFileCopiesMinAgeSecs()),
-  m_schedulerBackendName(m_scheduler.getSchedulerBackendName())
-{
+                   const common::dataStructures::SecurityIdentity& clientIdentity,
+                   const admin::AdminCmd& adminCmd)
+    : AdminCmdOptions(adminCmd),
+      m_adminCmd(adminCmd),
+      m_catalogue(frontendService.getCatalogue()),
+      m_scheduler(frontendService.getScheduler()),
+      m_lc(frontendService.getLogContext()),
+      m_cliIdentity(clientIdentity),
+      m_archiveFileMaxSize(frontendService.getArchiveFileMaxSize()),
+      m_repackBufferURL(frontendService.getRepackBufferURL()),
+      m_repackMaxFilesToSelect(frontendService.getRepackMaxFilesToSelect()),
+      m_missingFileCopiesMinAgeSecs(frontendService.getMissingFileCopiesMinAgeSecs()),
+      m_schedulerBackendName(m_scheduler.getSchedulerBackendName()) {
   m_lc.pushOrReplace({"user", m_cliIdentity.username + "@" + m_cliIdentity.host});
 
   // Check that the user is authorized
