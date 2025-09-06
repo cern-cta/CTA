@@ -114,7 +114,7 @@ namespace cta::schedulerdb::postgres {
   // Bind TotalStatsFiles values
   stmt.bindUint64(":TOTAL_FILES_ON_TAPE_AT_START", totalStatsFiles.totalFilesOnTapeAtStart);
   stmt.bindUint64(":TOTAL_BYTES_ON_TAPE_AT_START", totalStatsFiles.totalBytesOnTapeAtStart);
-  stmt.bindString(":ALL_FILES_SELECTED_AT_START", totalStatsFiles.allFilesSelectedAtStart ? "Y" : "N");
+  stmt.bindString(":ALL_FILES_SELECTED_AT_START", totalStatsFiles.allFilesSelectedAtStart);
   stmt.bindUint64(":TOTAL_FILES_TO_RETRIEVE", totalStatsFiles.totalFilesToRetrieve);
   stmt.bindUint64(":TOTAL_BYTES_TO_RETRIEVE", totalStatsFiles.totalBytesToRetrieve);
   stmt.bindUint64(":TOTAL_FILES_TO_ARCHIVE", totalStatsFiles.totalFilesToArchive);
