@@ -54,7 +54,7 @@ public:
    */
   [[noreturn]] void setFailureReason(std::string_view reason) const;
   [[noreturn]] bool addJobFailure(uint32_t copyNumber, uint64_t mountId, std::string_view failureReason) const;
-  void setJobStatus(uint32_t copyNumber, const cta::schedulerdb::RetrieveJobStatus& status) const;
+  void setJobStatus(uint32_t copyNumber, const cta::schedulerdb::RetrieveJobStatus& status);
   void setSchedulerRequest(const cta::common::dataStructures::RetrieveRequest& retrieveRequest);
   void setActivityIfNeeded(const cta::common::dataStructures::RetrieveRequest& retrieveRequest,
                            const cta::common::dataStructures::RetrieveFileQueueCriteria& criteria);
@@ -67,6 +67,7 @@ public:
   void setIsVerifyOnly(bool isVerifyOnly);
   void setFailed() const;
 
+  cta::schedulerdb::postgres::RetrieveJobQueueRow makeJobRow() const;
   /* OStoreDB compatibility function returning a request ID as string
    *
    * 'bogus' string is returned by getIdStr() and passed to EOS as Archive Request ID
@@ -181,7 +182,7 @@ public:
   *
   * @return void
   */
-  void setRepackInfo(const cta::schedulerdb::RetrieveRequest::RetrieveReqRepackInfo& repackInfo) const;
+  void setRepackInfo(const cta::schedulerdb::RetrieveRequest::RetrieveReqRepackInfo& repackInfo);
 
   // ============================== Job management =============================
 

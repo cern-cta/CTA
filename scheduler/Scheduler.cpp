@@ -488,7 +488,7 @@ void Scheduler::promoteRepackRequestsToToExpand(log::LogContext& lc, size_t repa
       log::ScopedParamContainer params(lc);
       params.add("promotedRequests", stats.promotedRequests)
         .add("pendingBefore", stats.pendingBefore)
-        .add("toEnpandBefore", stats.toEnpandBefore)
+        .add("toExpandBefore", stats.toExpandBefore)
         .add("pendingAfter", stats.pendingAfter)
         .add("toExpandAfter", stats.toExpandAfter);
       lc.log(log::INFO, "In Scheduler::promoteRepackRequestsToToExpand(): Promoted repack request to \"to expand\"");
@@ -509,6 +509,7 @@ std::unique_ptr<RepackRequest> Scheduler::getNextRepackRequestToExpand() {
   }
   return nullptr;
 }
+
 
 //------------------------------------------------------------------------------
 // expandRepackRequest
@@ -540,7 +541,9 @@ void Scheduler::expandRepackRequest(const std::unique_ptr<RepackRequest>& repack
   }
   uint64_t fSeq;
   cta::SchedulerDatabase::RepackRequest::TotalStatsFiles totalStatsFile;
+  lc.log(log::DEBUG, "In Scheduler::expandRepackRequest(): before  fillLastExpandedFSeqAndTotalStatsFile.");
   repackRequest->m_dbReq->fillLastExpandedFSeqAndTotalStatsFile(fSeq, totalStatsFile);
+  lc.log(log::DEBUG, "In Scheduler::expandRepackRequest(): after  fillLastExpandedFSeqAndTotalStatsFile.");
   timingList.insertAndReset("fillTotalStatsFileBeforeExpandTime", t);
   cta::catalogue::ArchiveFileItor archiveFilesForCatalogue =
     m_catalogue.ArchiveFile()->getArchiveFilesForRepackItor(repackInfo.vid, fSeq);
@@ -575,8 +578,20 @@ void Scheduler::expandRepackRequest(const std::unique_ptr<RepackRequest>& repack
   }
 
   std::list<common::dataStructures::StorageClass> storageClasses = m_catalogue.StorageClass()->getStorageClasses();
+  lc.log(log::DEBUG, "In Scheduler::expandRepackRequest(): before  setExpandStartedAndChangeStatus().");
+  if (!repackRequest || !repackRequest->m_dbReq) {
+    lc.log(log::ERR, "In Scheduler::expandRepackRequest():  m_dbReq is null!");
+  }
+  try{
+    repackRequest->m_dbReq->setExpandStartedAndChangeStatus();
+   } catch (cta::exception::Exception &e) {
+      std::string bt = e.backtrace();
+      lc.log(log::ERR,
+               "In Scheduler::expandRepackRequest(): setExpandStartedAndChangeStatus() Exception thrown: " +
+               bt);
+    }
+  lc.log(log::DEBUG, "In Scheduler::expandRepackRequest(): after  setExpandStartedAndChangeStatus().");
 
-  repackRequest->m_dbReq->setExpandStartedAndChangeStatus();
   uint64_t nbRetrieveSubrequestsQueued = 0;
 
   std::list<cta::common::dataStructures::ArchiveFile> archiveFilesFromCatalogue;
@@ -643,6 +658,9 @@ void Scheduler::expandRepackRequest(const std::unique_ptr<RepackRequest>& repack
     auto& retrieveSubRequest = retrieveSubrequests.back();
 
     retrieveSubRequest.archiveFile = archiveFile;
+    log::ScopedParamContainer params(lc);
+        params.add("archiveFile.diskFileInfo.path", retrieveSubRequest.archiveFile.diskFileInfo.path)
+        .log(log::DEBUG, "In Scheduler::expandRepackRequest(): checking archiveFile to have diskFineInfo path.");
     retrieveSubRequest.fSeq = std::numeric_limits<decltype(retrieveSubRequest.fSeq)>::max();
 
     //Check that all the archive routes have been configured, if one archive route is missing, we fail the repack request.
@@ -783,6 +801,8 @@ void Scheduler::expandRepackRequest(const std::unique_ptr<RepackRequest>& repack
     // We know that the fSeq processed on the tape are >= initial fSeq + filesCount - 1 (or fSeq - 1 as we counted).
     // We pass this information to the db for recording in the repack request. This will allow restarting from the right
     // value in case of crash.
+    lc.log(log::DEBUG, "In Scheduler::expandRepackRequest(): before addSubrequestsAndUpdateStats().");
+
     nbRetrieveSubrequestsQueued = repackRequest->m_dbReq->addSubrequestsAndUpdateStats(retrieveSubrequests,
                                                                                        archiveRoutesMap,
                                                                                        fSeq,
@@ -790,6 +810,8 @@ void Scheduler::expandRepackRequest(const std::unique_ptr<RepackRequest>& repack
                                                                                        totalStatsFile,
                                                                                        diskSystemList,
                                                                                        lc);
+    lc.log(log::DEBUG, "In Scheduler::expandRepackRequest(): after addSubrequestsAndUpdateStats().");
+
   } catch (const cta::ExpandRepackRequestException&) {
     deleteRepackBuffer(std::move(dir), lc);
     throw;
@@ -802,7 +824,7 @@ void Scheduler::expandRepackRequest(const std::unique_ptr<RepackRequest>& repack
 
   if (archiveFilesFromCatalogue.empty() && totalStatsFile.totalFilesToArchive == 0 &&
       (totalStatsFile.totalFilesToRetrieve == 0 || nbRetrieveSubrequestsQueued == 0)) {
-    //If no files have been retrieve, the repack buffer will have to be deleted
+    //If no files have been retrieved, the repack buffer will have to be deleted
     //TODO : in case of Repack tape repair, we should not try to delete the buffer
     deleteRepackBuffer(std::move(dir), lc);
   }

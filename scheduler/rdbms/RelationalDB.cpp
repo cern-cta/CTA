@@ -23,7 +23,6 @@
 #include "common/log/TimingList.hpp"
 #include "common/utils/utils.hpp"
 #include "common/threading/MutexLocker.hpp"
-#include "scheduler/rdbms/postgres/Transaction.hpp"
 #include "scheduler/rdbms/postgres/ArchiveJobSummary.hpp"
 #include "scheduler/rdbms/postgres/RetrieveJobSummary.hpp"
 #include "scheduler/rdbms/ArchiveRdbJob.hpp"
@@ -48,7 +47,6 @@ RelationalDB::RelationalDB(const std::string& ownerId,
                            const uint64_t nbConns)
     : m_ownerId(ownerId),
       m_connPool(login, nbConns),
-      m_connPoolInsertOnly(login, nbConns),
       m_catalogue(catalogue),
       m_logger(logger) {
   m_tapeDrivesState = std::make_unique<TapeDrivesCatalogueState>(m_catalogue);
@@ -83,6 +81,10 @@ void RelationalDB::ping() {
   }
 }
 
+std::optional<common::dataStructures::VirtualOrganization> RelationalDB::getDefaultRepackVo(){
+    return m_catalogue.VO()->getDefaultVirtualOrganizationForRepack();
+}
+
 std::string RelationalDB::queueArchive(const std::string& instanceName,
                                        const cta::common::dataStructures::ArchiveRequest& request,
                                        const cta::common::dataStructures::ArchiveFileQueueCriteriaAndFileId& criteria,
@@ -90,9 +92,9 @@ std::string RelationalDB::queueArchive(const std::string& instanceName,
   // Construct the archive request object
   utils::Timer timeTotal;
   utils::Timer timeGetConn;
-  auto sqlconn = m_connPoolInsertOnly.getConn();
+  auto sqlconn = m_connPool.getConn();
   log::ScopedParamContainer params(logContext);
-  params.add("connCountOnLoad", m_connPoolInsertOnly.getNbConnsOnLoan());
+  params.add("connCountOnLoad", m_connPool.getNbConnsOnLoan());
   params.add("getConnTime", timeGetConn.secs());
   schedulerdb::ArchiveRequest aReq(sqlconn, logContext);
 
@@ -369,7 +371,7 @@ RelationalDB::queueRetrieve(cta::common::dataStructures::RetrieveRequest& rqst,
     }
     logContext.log(cta::log::INFO, "In schedulerdb::RelationalDB::queueRetrieve(): before sqlconn selection. ");
 
-    auto sqlconn = m_connPoolInsertOnly.getConn();
+    auto sqlconn = m_connPool.getConn();
     /* The current selectBestVid4Retrieve implementation makes
      * a query for every single file to the scheduler db summary stats
      * for existing queues, this is very inefficient !
@@ -505,19 +507,18 @@ RelationalDB::getRetrieveJobQueueItor(const std::string& vid, common::dataStruct
 std::string RelationalDB::queueRepack(const SchedulerDatabase::QueueRepackRequest& repackRequest,
                                       log::LogContext& logContext) {
 
-  // Prepare the repack request object in memory.
   cta::utils::Timer t;
-  auto sqlconn = m_connPool.getConn();
-  auto rr = std::make_unique<cta::schedulerdb::RepackRequest>(sqlconn, m_catalogue, logContext);
+  log::LogContext lc(m_logger);
+  auto rr = std::make_unique<cta::schedulerdb::RepackRequest>(m_connPool, m_catalogue, lc);
   rr->setVid(repackRequest.m_vid);
   rr->setType(repackRequest.m_repackType);
   rr->setBufferURL(repackRequest.m_repackBufferURL);
   rr->setMountPolicy(repackRequest.m_mountPolicy);
   rr->setNoRecall(repackRequest.m_noRecall);
   rr->setCreationLog(repackRequest.m_creationLog);
+  rr->setMaxFilesToSelect(repackRequest.m_maxFilesToSelect);
   rr->insert();
-  rr->commit();
-  sqlconn.reset();
+  logContext.log(log::INFO, "RelationalDB::queueRepack() successfully queued request.");
   return rr->getIdStr();
 }
 
@@ -543,8 +544,31 @@ common::dataStructures::RepackInfo RelationalDB::getRepackInfo(const std::string
   //return ret;
 }
 
-void RelationalDB::cancelRepack(const std::string& vid, log::LogContext& lc) {
-  throw cta::exception::Exception(std::string(__FUNCTION__) + std::string("Not implemented"));
+  void RelationalDB::cancelRepack(const std::string &vid, log::LogContext &lc) {
+    schedulerdb::Transaction txn(m_connPool);
+    try {
+      uint64_t cancelledRepackRequests =
+              schedulerdb::postgres::RepackRequestTrackingRow::cancelRepack(txn, vid);
+      log::ScopedParamContainer(lc)
+              .add("VID", vid);
+      if (cancelledRepackRequests > 1) {
+        lc.log(cta::log::WARNING,
+               "In RelationalDB::cancelRepack(): deleted more than 1 request in ToExpand or Pending state, please check if that is expected !");
+      } else if (cancelledRepackRequests == 1) {
+        lc.log(log::INFO, "In RelationalDB::cancelRepack(): deleted repack request.");
+      } else if (cancelledRepackRequests == 0) {
+        lc.log(cta::log::WARNING,
+               "In RelationalDB::cancelRepack(): nothing to cancel, failed to find request in ToExpand or Pending state.");
+      }
+      txn.commit();
+    } catch (exception::Exception &ex) {
+      lc.log(cta::log::ERR,
+             "In RelationalDB::cancelRepack(): failed to cancel repack request. Aborting the transaction." +
+             ex.getMessageValue());
+    txn.abort();
+    throw;
+  }
+  return;
 }
 
 cta::rdbms::Conn RelationalDB::getConn() {
@@ -554,57 +578,144 @@ cta::rdbms::Conn RelationalDB::getConn() {
 //------------------------------------------------------------------------------
 // RelationalDB::RepackRequestPromotionStatistics::RepackRequestPromotionStatistics()
 //------------------------------------------------------------------------------
-RelationalDB::RepackRequestPromotionStatistics::RepackRequestPromotionStatistics() = default;
+RelationalDB::RepackRequestPromotionStatistics::RepackRequestPromotionStatistics(RelationalDB &parent) : m_parentdb(parent) {}
 
 //------------------------------------------------------------------------------
 // RelationalDB::RepackRequestPromotionStatistics::promotePendingRequestsForExpansion()
 //------------------------------------------------------------------------------
-auto RelationalDB::RepackRequestPromotionStatistics::promotePendingRequestsForExpansion(size_t requestCount,
-                                                                                        log::LogContext& lc)
-  -> PromotionToToExpandResult {
-  lc.log(log::WARNING,
-         "RelationalDB::RepackRequestPromotionStatistics::promotePendingRequestsForExpansion() dummy implementation !");
-  PromotionToToExpandResult ret;
-  using Status = common::dataStructures::RepackInfo::Status;
-  ret.pendingBefore = at(Status::Pending);
-  ret.toEnpandBefore = at(Status::ToExpand);
-  return ret;
-}
+  auto RelationalDB::RepackRequestPromotionStatistics::promotePendingRequestsForExpansion(
+          size_t requestCount, log::LogContext &lc) -> PromotionToToExpandResult {
+    lc.log(log::INFO,
+           "RelationalDB::RepackRequestPromotionStatistics::promotePendingRequestsForExpansion() updating request to ToExpand state.");
+    PromotionToToExpandResult ret;
+    using Status = common::dataStructures::RepackInfo::Status;
+    ret.pendingBefore = at(Status::Pending);
+    ret.toExpandBefore = at(Status::ToExpand);
+    schedulerdb::Transaction txn(m_parentdb.m_connPool);
+    try {
+      txn.takeNamedLock("promotePendingRequestsForExpansion");
+      auto nrows = schedulerdb::postgres::RepackRequestTrackingRow::updateRepackRequestForExpansion(txn, requestCount);
+      log::ScopedParamContainer(lc)
+              .add("updatedRows", nrows)
+              .add("requestCount", requestCount);
+      if (nrows != requestCount) {
+        lc.log(log::WARNING,
+               "In RelationalDB::RepackRequestPromotionStatistics::promotePendingRequestsForExpansion(): updated less rows than specified requestCount. Check if this is expected.");
+      }
+      ret.promotedRequests = nrows;
+      ret.pendingAfter = ret.pendingBefore - nrows;
+      ret.toExpandAfter = ret.toExpandBefore + nrows;
+    } catch (exception::Exception &ex) {
+      lc.log(cta::log::ERR,
+             "In RelationalDB::RepackRequestPromotionStatistics::promotePendingRequestsForExpansion(): failed to update rows." +
+             ex.getMessageValue());
+      txn.abort();
+    }
+    txn.commit();
+    return ret;
+  }
 
 //------------------------------------------------------------------------------
 // RelationalDB::populateRepackRequestsStatistics()
 //------------------------------------------------------------------------------
-void RelationalDB::populateRepackRequestsStatistics(SchedulerDatabase::RepackRequestStatistics& stats) {
+void RelationalDB::populateRepackRequestsStatistics(SchedulerDatabase::RepackRequestStatistics &stats) {
   log::LogContext lc(m_logger);
-  lc.log(log::WARNING, "RelationalDB::populateRepackRequestsStatistics() dummy implementation !");
+  lc.log(log::INFO, "RelationalDB::populateRepackRequestsStatistics(): fetching repack tracking summary from Scheduler DB.");
+  auto sqlconn = m_connPool.getConn();
+  auto rSet = schedulerdb::postgres::RepackRequestTrackingRow::getRepackRequestStatistics(sqlconn);
   // Ensure existence of stats for important statuses
   using Status = common::dataStructures::RepackInfo::Status;
-  for (auto s : {Status::Pending, Status::ToExpand, Status::Starting, Status::Running}) {
+  for (auto s: {Status::Pending, Status::ToExpand, Status::Starting, Status::Running}) {
     stats[s] = 0;
+  }
+  while (rSet.next()) {
+    auto &row = rSet;
+    auto status = from_string<cta::schedulerdb::RepackJobStatus>(row.columnString("STATUS"));
+    auto repackInfoStatus = common::dataStructures::RepackInfo::Status::Undefined;
+    switch (status) {
+
+      case cta::schedulerdb::RepackJobStatus::RRS_Pending:
+        repackInfoStatus = common::dataStructures::RepackInfo::Status::Pending;
+        break;
+      case cta::schedulerdb::RepackJobStatus::RRS_ToExpand:
+        repackInfoStatus = common::dataStructures::RepackInfo::Status::ToExpand;
+        break;
+      case cta::schedulerdb::RepackJobStatus::RRS_Starting:
+        repackInfoStatus = common::dataStructures::RepackInfo::Status::Starting;
+        break;
+      case cta::schedulerdb::RepackJobStatus::RRS_Running:
+        repackInfoStatus = common::dataStructures::RepackInfo::Status::Running;
+        break;
+      case cta::schedulerdb::RepackJobStatus::RRS_Complete:
+        repackInfoStatus = common::dataStructures::RepackInfo::Status::Complete;
+        break;
+      case cta::schedulerdb::RepackJobStatus::RRS_Failed:
+        repackInfoStatus = common::dataStructures::RepackInfo::Status::Failed;
+        break;
+      default:
+        repackInfoStatus = common::dataStructures::RepackInfo::Status::Undefined;
+        break;
+    }
+    stats[repackInfoStatus] += row.columnUint64("JOBS_COUNT");
   }
 }
 
-auto RelationalDB::getRepackStatisticsNoLock() -> std::unique_ptr<SchedulerDatabase::RepackRequestStatistics> {
+auto RelationalDB::getRepackStatisticsNoLock()
+    -> std::unique_ptr<SchedulerDatabase::RepackRequestStatistics> {
   log::LogContext lc(m_logger);
-  lc.log(log::WARNING, "RelationalDB::getRepackStatisticsNoLock() dummy implementation !");
-  auto typedRet = std::make_unique<RelationalDB::RepackRequestPromotionStatisticsNoLock>();
-  populateRepackRequestsStatistics(*typedRet);
-  std::unique_ptr<SchedulerDatabase::RepackRequestStatistics> ret(typedRet.release());
+  lc.log(log::WARNING,
+         "RelationalDB::getRepackStatisticsNoLock(): calling populateRepackRequestsStatistics() select call to the DB.");
+
+  //auto typedRet = std::make_unique<RelationalDB::RepackRequestPromotionStatisticsNoLock>();
+  auto ret = std::make_unique<RelationalDB::RepackRequestPromotionStatistics>(*this);
+  populateRepackRequestsStatistics(*ret);
   return ret;
 }
 
 auto RelationalDB::getRepackStatistics() -> std::unique_ptr<SchedulerDatabase::RepackRequestStatistics> {
   log::LogContext lc(m_logger);
-  lc.log(log::WARNING, "RelationalDB::getRepackStatistics() dummy implementation !");
+  lc.log(log::WARNING, "RelationalDB::getRepackStatistics() calling getRepackStatisticsNoLock as no lock is taken anyway !");
   return getRepackStatisticsNoLock();
 }
 
-std::unique_ptr<SchedulerDatabase::RepackRequest> RelationalDB::getNextRepackJobToExpand() {
-  log::LogContext lc(m_logger);
-  lc.log(log::WARNING, "RelationalDB::getNextRepackJobToExpand() dummy implementation !");
-  std::unique_ptr<SchedulerDatabase::RepackRequest> ret;
-  return ret;
-}
+  std::unique_ptr <SchedulerDatabase::RepackRequest>
+  RelationalDB::getNextRepackJobToExpand() {
+   log::LogContext lc(m_logger);
+    lc.log(log::INFO,
+           "In RelationalDB::getNextRepackJobToExpand(): marking one request as IS_EXPAND_STARTED.");
+    schedulerdb::Transaction txn(m_connPool);
+    txn.takeNamedLock("getNextRepackJobToExpand");
+    cta::schedulerdb::postgres::RepackRequestTrackingRow rrjtr;
+    bool found = false;
+    try {
+      auto rset  = schedulerdb::postgres::RepackRequestTrackingRow::markStartOfExpansion(txn);
+      while (rset.next()) {
+        found = true;
+        rrjtr = cta::schedulerdb::postgres::RepackRequestTrackingRow(rset);
+        log::ScopedParamContainer params(lc);
+        params.add("row.vid", rrjtr.vid);
+        params.add("row.bufferUrl", rrjtr.bufferUrl);
+        lc.log(log::DEBUG,
+           "In RelationalDB::getNextRepackJobToExpand(): RepackRequest row constructed.");
+      }
+      txn.commit();
+    } catch (exception::Exception &ex) {
+      lc.log(cta::log::ERR,
+             "In RelationalDB::getNextRepackJobToExpand(): failed to mark IS_EXPAND_STARTED: " +
+             ex.getMessageValue());
+      txn.abort();
+      return nullptr;
+    }
+    if (!found) {
+      lc.log(log::DEBUG,
+             "In RelationalDB::getNextRepackJobToExpand(): no repack request found, returning nullptr.");
+      return nullptr;
+    }
+    lc.log(log::DEBUG,
+           "In RelationalDB::getNextRepackJobToExpand(): finished marking IS_EXPAND_STARTED.");
+    auto rreq = std::make_unique<schedulerdb::RepackRequest>(m_connPool, m_catalogue, lc, rrjtr);
+    return rreq;
+  }
 
 std::list<std::unique_ptr<SchedulerDatabase::RetrieveJob>>
 RelationalDB::getNextRetrieveJobsToReportBatch(uint64_t filesRequested, log::LogContext& logContext) {
@@ -628,7 +739,7 @@ RelationalDB::getNextRetrieveJobsToReportBatch(uint64_t filesRequested, log::Log
       return ret;
     }
     while (resultSet.next()) {
-      ret.emplace_back(std::make_unique<schedulerdb::RetrieveRdbJob>(m_connPool, resultSet));
+      ret.emplace_back(std::make_unique<schedulerdb::RetrieveRdbJob>(m_connPool, resultSet, false));
     }
     txn.commit();
     timings.insertAndReset("fetchedRetrieveJobs", t);
@@ -931,6 +1042,26 @@ void RelationalDB::fetchMountInfo(SchedulerDatabase::TapeMountDecisionInfo& tmdi
       }
     }
   }
+  auto repack_rrset = cta::schedulerdb::postgres::RetrieveJobSummaryRow::selectNewRepackJobs(*txn);
+  while (repack_rrset.next()) {
+    cnt++;
+    rjsr_vector.emplace_back(repack_rrset);
+    if (cnt == 1) {
+      highestPriority = rjsr_vector.back().priority;
+      highestPriorityMountPolicyName = rjsr_vector.back().mountPolicy;
+      lowestRequestAge = rjsr_vector.back().minRetrieveRequestAge;
+      lowestRequestAgeMountPolicyName = rjsr_vector.back().mountPolicy;
+    } else {
+      if (rjsr_vector.back().priority > highestPriority) {
+        highestPriority = rjsr_vector.back().priority;
+        highestPriorityMountPolicyName = rjsr_vector.back().mountPolicy;
+      }
+      if (rjsr_vector.back().minRetrieveRequestAge < lowestRequestAge) {
+        lowestRequestAge = rjsr_vector.back().minRetrieveRequestAge;
+        lowestRequestAgeMountPolicyName = rjsr_vector.back().mountPolicy;
+      }
+    }
+  }
   // for now we create a mount per summary row (assuming there would not be
   // the same activity twice with 2 mount policies or 2 different VIDs selected)
   for (const auto& rjsr : rjsr_vector) {
@@ -1063,32 +1194,6 @@ RelationalDB::getRetrieveQueuesCleanupInfo(log::LogContext& logContext) {
   throw cta::exception::Exception(std::string(__FUNCTION__) + std::string("Not implemented"));
 }
 
-std::vector<std::string> RelationalDB::getActiveSleepDiskSystemNamesToFilter() {
-  std::vector<std::string> validDiskNames;
-  if (m_diskSystemSleepCacheMap.empty()) {
-    return validDiskNames;
-  }
-  cta::threading::MutexLocker ml(m_diskSystemSleepCacheMutex);
-  uint64_t currentTime = std::chrono::system_clock::to_time_t(std::chrono::system_clock::now());
-
-  validDiskNames.reserve(m_diskSystemSleepCacheMap.size());
-
-  auto it = m_diskSystemSleepCacheMap.begin();
-  while (it != m_diskSystemSleepCacheMap.end()) {
-    const std::string& diskName = it->first;
-    const DiskSleepEntry& entry = it->second;
-    if (currentTime - entry.timestamp > entry.sleepTime) {
-      // erase; iterator is invalidated, but the next one is returned
-      it = m_diskSystemSleepCacheMap.erase(it);
-    } else {
-      validDiskNames.push_back(diskName);
-      ++it;
-    }
-  }
-
-  return validDiskNames;
-}
-
 void RelationalDB::cleanRetrieveQueueForVid(const std::string& vid, log::LogContext& logContext) {
   schedulerdb::Transaction txn(m_connPool);
   try {
@@ -1111,6 +1216,125 @@ void RelationalDB::cleanRetrieveQueueForVid(const std::string& vid, log::LogCont
     throw;
   }
   return;
+}
+
+uint64_t RelationalDB::insertOrUpdateDiskSleepEntry(
+          schedulerdb::Transaction &txn,
+          const std::string &diskSystemName,
+          const RelationalDB::DiskSleepEntry &entry)
+{
+    std::string sql = R"SQL(
+        INSERT INTO DISK_SYSTEM_SLEEP_TRACKING (DISK_SYSTEM_NAME, SLEEP_TIME, LAST_UPDATE_TIME)
+        VALUES (:DISK_SYSTEM_NAME, :SLEEP_TIME, :LAST_UPDATE_TIME)
+        ON CONFLICT (DISK_SYSTEM_NAME)
+        DO UPDATE SET
+            SLEEP_TIME = EXCLUDED.SLEEP_TIME,
+            LAST_UPDATE_TIME = EXCLUDED.LAST_UPDATE_TIME
+    )SQL";
+
+    auto stmt = txn.getConn().createStmt(sql);
+
+    stmt.bindString(":DISK_SYSTEM_NAME", diskSystemName);
+    stmt.bindUint64(":SLEEP_TIME", entry.sleepTime);
+    stmt.bindUint64(":LAST_UPDATE_TIME", static_cast<uint64_t>(entry.timestamp));
+
+    stmt.executeNonQuery();
+
+    return stmt.getNbAffectedRows();
+}
+
+std::unordered_map<std::string, RelationalDB::DiskSleepEntry> RelationalDB::getDiskSystemSleepStatus(rdbms::Conn &conn) {
+  // SQL to fetch all rows from the table
+  std::string sql = R"SQL(
+      SELECT DISK_SYSTEM_NAME, SLEEP_TIME, LAST_UPDATE_TIME
+      FROM DISK_SYSTEM_SLEEP_TRACKING
+  )SQL";
+
+  auto stmt = conn.createStmt(sql);
+  auto reader = stmt.executeQuery();
+
+  std::unordered_map<std::string, RelationalDB::DiskSleepEntry> sleepEntries;
+
+  while (reader.next()) {
+    std::string name = reader.columnString("DISK_SYSTEM_NAME");
+    uint64_t sleepTime = reader.columnUint64("SLEEP_TIME");
+    uint64_t ts = reader.columnUint64("LAST_UPDATE_TIME");
+    sleepEntries[name] = RelationalDB::DiskSleepEntry(sleepTime, static_cast<time_t>(ts));
+  }
+
+  return sleepEntries;
+}
+
+uint64_t RelationalDB::removeDiskSystemSleepEntry(schedulerdb::Transaction &txn,
+                                                  const std::vector <std::string> &expiredDiskSystemNames) {
+  if (expiredDiskSystemNames.empty()) {
+    return 0;
+  }
+  // Construct the SQL with placeholders for each disk name
+  std::string sql = "DELETE FROM DISK_SYSTEM_SLEEP_TRACKING WHERE DISK_SYSTEM_NAME IN (";
+  for (size_t i = 0; i < expiredDiskSystemNames.size(); ++i) {
+    sql += ":DISKNAME" + std::to_string(i);
+    if (i < expiredDiskSystemNames.size() - 1) {
+      sql += ", ";
+    }
+  }
+  sql += ")";
+
+  auto stmt = txn.getConn().createStmt(sql);
+
+  // Bind each disk name to its corresponding placeholder
+  for (size_t i = 0; i < expiredDiskSystemNames.size(); ++i) {
+    stmt.bindString(":DISKNAME" + std::to_string(i), expiredDiskSystemNames[i]);
+  }
+
+  stmt.executeNonQuery();
+  return stmt.getNbAffectedRows();
+}
+
+std::vector<std::string> RelationalDB::getActiveSleepDiskSystemNamesToFilter(log::LogContext& logContext) {
+  std::vector<std::string> validDiskNames;
+  cta::threading::MutexLocker ml(m_diskSystemSleepMutex);
+  auto conn = m_connPool.getConn();
+  std::unordered_map<std::string, RelationalDB::DiskSleepEntry> diskSystemSleepMap = getDiskSystemSleepStatus(conn);
+  conn.commit();
+  if (diskSystemSleepMap.empty()) {
+    return validDiskNames;
+  }
+  uint64_t currentTime = std::chrono::system_clock::to_time_t(std::chrono::system_clock::now());
+
+  validDiskNames.reserve(diskSystemSleepMap.size());
+  std::vector<std::string> expiredDiskSystems;
+  auto it = diskSystemSleepMap.begin();
+  while (it != diskSystemSleepMap.end()) {
+    const std::string& diskName = it->first;
+    const RelationalDB::DiskSleepEntry& entry = it->second;
+    if (currentTime - entry.timestamp > entry.sleepTime) {
+      // erase; iterator is invalidated, but the next one is returned
+      it = diskSystemSleepMap.erase(it);
+      expiredDiskSystems.push_back(diskName);
+    } else {
+      validDiskNames.push_back(diskName);
+      ++it;
+    }
+  }
+  if(!expiredDiskSystems.empty()){
+    schedulerdb::Transaction txn(m_connPool);
+    try{
+      uint64_t nrows = removeDiskSystemSleepEntry(txn, expiredDiskSystems);
+      txn.commit();
+      cta::log::ScopedParamContainer(logContext)
+              .add("nrows", nrows)
+              .log(cta::log::INFO,
+                   "In RelationalDB::getActiveSleepDiskSystemNamesToFilter(): Removed disk system sleep entries from the DB.");
+     } catch (const std::exception& ex) {
+      cta::log::ScopedParamContainer(logContext)
+          .add("exceptionWhat", ex.what())
+          .log(cta::log::ERR, "In RelationalDB::getActiveSleepDiskSystemNamesToFilter(): Failed to remove disk system sleep entries from DB.");
+      txn.abort();
+    }
+  }
+
+  return validDiskNames;
 }
 
 }  // namespace cta

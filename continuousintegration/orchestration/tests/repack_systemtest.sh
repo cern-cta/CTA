@@ -167,7 +167,7 @@ if [ ! -z $BACKPRESSURE_TEST ]; then
     admin_cta dis add -n repackDiskInstanceSpace --di ${EOS_INSTANCE_NAME} -u "eosSpace:default" -i 5 -m toto
     admin_cta ds add -n repackBuffer --di ${EOS_INSTANCE_NAME} --dis repackDiskInstanceSpace -r "root://${EOS_MGM_HOST}/${REPACK_BUFFER_BASEDIR}" -f 111222333444555 -s 20 -m toto
   else
-    echo "Disk system repackBuffer alread defined. Ensuring too high free space requirements."
+    echo "Disk system repackBuffer already defined. Ensuring too high free space requirements."
     admin_cta ds ch -n repackBuffer -f 111222333444555
   fi
   admin_cta ds ls
@@ -191,8 +191,8 @@ if [ ! -z $MAX_FILES_TO_SELECT ]; then
 fi
 
 # Record number of files already in the recycle table
-amountRecyleTapeFilesPrev=$(admin_cta --json recycletf ls --vid ${VID_TO_REPACK} | jq "length")
-
+amountRecyleTapeFilesPrev=0 #$(admin_cta --json recycletf ls --vid ${VID_TO_REPACK} | jq "length")
+echo "admin_cta repack add --mountpolicy ${MOUNT_POLICY_NAME} --vid ${VID_TO_REPACK} ${REPACK_OPTION} --bufferurl ${FULL_REPACK_BUFFER_URL} ${NO_RECALL_FLAG} ${MAX_FILES_TO_SELECT_ARG}"
 admin_cta repack add --mountpolicy ${MOUNT_POLICY_NAME} --vid ${VID_TO_REPACK} ${REPACK_OPTION} --bufferurl ${FULL_REPACK_BUFFER_URL} ${NO_RECALL_FLAG} ${MAX_FILES_TO_SELECT_ARG} || exit 1
 
 if [ ! -z $BACKPRESSURE_TEST ]; then

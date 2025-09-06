@@ -623,7 +623,7 @@ public:
     virtual void failTransfer(const std::string& failureReason, log::LogContext& lc) = 0;
     virtual void failReport(const std::string& failureReason, log::LogContext& lc) = 0;
     virtual void abort(const std::string& abortReason, log::LogContext& lc) = 0;
-    virtual void initialize(const rdbms::Rset& resultSet) = 0;
+    virtual void initialize(const rdbms::Rset& resultSet, bool rowIsRepack) = 0;
     virtual bool releaseToPool() = 0;
     virtual void fail() = 0;
     virtual ~RetrieveJob() = default;
@@ -668,7 +668,7 @@ public:
 
     struct PromotionToToExpandResult {
       size_t pendingBefore;
-      size_t toEnpandBefore;
+      size_t toExpandBefore;
       size_t pendingAfter;
       size_t toExpandAfter;
       size_t promotedRequests;
@@ -737,6 +737,7 @@ public:
 
   /***/
   virtual std::unique_ptr<RepackRequest> getNextRepackJobToExpand() = 0;
+
   virtual std::list<std::unique_ptr<RetrieveJob>>
   getNextRetrieveJobsToTransferBatch(const std::string& vid, uint64_t filesRequested, log::LogContext& logContext) = 0;
   virtual void requeueRetrieveRequestJobs(std::list<cta::SchedulerDatabase::RetrieveJob*>& jobs,

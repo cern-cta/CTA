@@ -35,6 +35,7 @@ namespace cta::schedulerdb::postgres {
 struct RetrieveJobQueueRow {
   uint64_t jobId = 0;
   uint64_t retrieveRequestId = 0;
+  uint64_t repackRequestId = 0;
   uint32_t reqJobCount = 1;
   std::optional<std::uint64_t> mountId = std::nullopt;
   RetrieveJobStatus status = RetrieveJobStatus::RJS_ToTransfer;
@@ -139,6 +140,7 @@ public:
   void reset() {
     jobId = 0;
     retrieveRequestId = 0;
+    repackRequestId = 0;
     reqJobCount = 1;
     mountId = std::nullopt;
     status = RetrieveJobStatus::RJS_ToTransfer;
@@ -198,6 +200,7 @@ public:
   RetrieveJobQueueRow& operator=(const rdbms::Rset& rset) {
     jobId = rset.columnUint64NoOpt("JOB_ID");
     retrieveRequestId = rset.columnUint64NoOpt("RETRIEVE_REQUEST_ID");
+    repackRequestId = rset.columnUint64NoOpt("REPACK_REQUEST_ID");
     reqJobCount = rset.columnUint32NoOpt("REQUEST_JOB_COUNT");
     mountId = rset.columnOptionalUint64("MOUNT_ID");
     status = from_string<RetrieveJobStatus>(rset.columnStringNoOpt("STATUS"));
@@ -266,11 +269,12 @@ public:
     return *this;
   }
 
-  void insert(rdbms::Conn& conn) const {
-    // does not set mountId and the following
-    std::string sql = R"(
-       INSERT INTO RETRIEVE_PENDING_QUEUE (
+  void insert(rdbms::Conn &conn) const {
+    //std::string insert_table_name_prefix = isRepack ? "REPACK_" : "";
+    std::string sql = R"(INSERT INTO
+       RETRIEVE_PENDING_QUEUE (
            RETRIEVE_REQUEST_ID,
+           REPACK_REQUEST_ID,
            REQUEST_JOB_COUNT,
            STATUS,
            CREATION_TIME,
@@ -329,6 +333,7 @@ public:
     sql += R"(
        ) VALUES (
            :RETRIEVE_REQUEST_ID,
+           :REPACK_REQUEST_ID,
            :REQUEST_JOB_COUNT,
            :STATUS,
            :CREATION_TIME,
@@ -388,6 +393,7 @@ public:
 
     auto stmt = conn.createStmt(sql);
     stmt.bindUint64(":RETRIEVE_REQUEST_ID", retrieveRequestId);
+    stmt.bindUint64(":REPACK_REQUEST_ID", repackRequestId);
     stmt.bindUint32(":REQUEST_JOB_COUNT", reqJobCount);
     stmt.bindString(":STATUS", to_string(status));
     stmt.bindUint64(":CREATION_TIME", creationTime);
@@ -455,6 +461,7 @@ public:
 
   void addParamsToLogContext(log::ScopedParamContainer& params) const {
     params.add("retrieveReqId", retrieveRequestId);
+    params.add("repackReqId", repackRequestId);
     params.add("mountId", mountId);
     params.add("status", to_string(status));
     params.add("vid", vid);
@@ -510,6 +517,210 @@ public:
     //params.add("isFailed", isFailed);
   }
 
+static void insertBunch(rdbms::Conn &conn,
+                       const std::vector<RetrieveJobQueueRow> &rows,
+                       bool isRepack) {
+  if (rows.empty()) return;
+
+  // detect optional columns
+  bool hasDiskSystemName = false;
+  bool hasActivity = false;
+  bool hasSrrActivity = false;
+  for (const auto &row : rows) {
+    if (row.diskSystemName.has_value()) hasDiskSystemName = true;
+    if (row.activity.has_value()) hasActivity = true;
+    if (!row.srrActivity.empty()) hasSrrActivity = true;
+  }
+
+  std::string prefix = isRepack ? "REPACK_" : "";
+  std::string sql = "INSERT INTO " + prefix;
+  sql += R"SQL(RETRIEVE_PENDING_QUEUE (
+      RETRIEVE_REQUEST_ID,
+      REPACK_REQUEST_ID,
+      REQUEST_JOB_COUNT,
+      STATUS,
+      CREATION_TIME,
+      STORAGE_CLASS,
+      SIZE_IN_BYTES,
+      ARCHIVE_FILE_ID,
+      CHECKSUMBLOB,
+      FSEQ,
+      BLOCK_ID,
+      DISK_INSTANCE,)SQL";
+      sql += " DISK_FILE_PATH,";
+      sql += "RETRIEVE_ERROR_REPORT_URL,";
+      sql += "REQUESTER_NAME,";
+      sql += "REQUESTER_GROUP,";
+      sql += "SRR_USERNAME,";
+      sql += "SRR_HOST,";
+      sql += "SRR_TIME,";
+      sql += "SRR_MOUNT_POLICY,";
+  sql += R"SQL(DISK_FILE_ID,
+      DISK_FILE_GID,
+      DISK_FILE_OWNER_UID,
+      MOUNT_POLICY,
+      VID,
+      ALTERNATE_VIDS,
+      PRIORITY,
+      MIN_RETRIEVE_REQUEST_AGE,
+      COPY_NB,
+      ALTERNATE_COPY_NBS,
+      ALTERNATE_FSEQS,
+      ALTERNATE_BLOCK_IDS,
+      START_TIME,
+      DST_URL,
+      RETRIES_WITHIN_MOUNT,
+      TOTAL_RETRIES,
+      LAST_MOUNT_WITH_FAILURE,
+      MAX_TOTAL_RETRIES,
+      MAX_RETRIES_WITHIN_MOUNT,
+      MAX_REPORT_RETRIES,
+      TOTAL_REPORT_RETRIES,
+      IS_VERIFY_ONLY,
+      IS_REPORTING,
+      LIFECYCLE_CREATION_TIME,
+      LIFECYCLE_FIRST_SELECTED_TIME,
+      LIFECYCLE_COMPLETED_TIME,
+      RETRIEVE_REPORT_URL)SQL";
+
+  if (hasDiskSystemName) sql += ",DISK_SYSTEM_NAME";
+  if (hasActivity)       sql += ",ACTIVITY";
+  if (hasSrrActivity)    sql += ",SRR_ACTIVITY";
+
+  sql += ") VALUES ";
+
+  // Generate VALUES placeholders for each row
+  for (size_t i = 0; i < rows.size(); ++i) {
+    sql += "(";
+    sql += ":RETRIEVE_REQUEST_ID"      + std::to_string(i) + ",";
+    sql += ":REPACK_REQUEST_ID"        + std::to_string(i) + ",";
+    sql += ":REQUEST_JOB_COUNT"        + std::to_string(i) + ",";
+    sql += ":STATUS"                   + std::to_string(i) + ",";
+    sql += ":CREATION_TIME"            + std::to_string(i) + ",";
+    sql += ":STORAGE_CLASS"            + std::to_string(i) + ",";
+    sql += ":SIZE_IN_BYTES"            + std::to_string(i) + ",";
+    sql += ":ARCHIVE_FILE_ID"          + std::to_string(i) + ",";
+    sql += ":CHECKSUMBLOB"             + std::to_string(i) + ",";
+    sql += ":FSEQ"                     + std::to_string(i) + ",";
+    sql += ":BLOCK_ID"                 + std::to_string(i) + ",";
+    sql += ":DISK_INSTANCE"            + std::to_string(i) + ",";
+    sql += ":DISK_FILE_PATH"           + std::to_string(i) + ",";
+    sql += ":RETRIEVE_ERROR_REPORT_URL"+ std::to_string(i) + ",";
+    sql += ":REQUESTER_NAME"           + std::to_string(i) + ",";
+    sql += ":REQUESTER_GROUP"          + std::to_string(i) + ",";
+    sql += ":SRR_USERNAME"             + std::to_string(i) + ",";
+    sql += ":SRR_HOST"                 + std::to_string(i) + ",";
+    sql += ":SRR_TIME"                 + std::to_string(i) + ",";
+    sql += ":SRR_MOUNT_POLICY"         + std::to_string(i) + ",";
+    sql += ":DISK_FILE_ID"             + std::to_string(i) + ",";
+    sql += ":DISK_FILE_GID"            + std::to_string(i) + ",";
+    sql += ":DISK_FILE_OWNER_UID"      + std::to_string(i) + ",";
+    sql += ":MOUNT_POLICY"             + std::to_string(i) + ",";
+    sql += ":VID"                      + std::to_string(i) + ",";
+    sql += ":ALTERNATE_VIDS"           + std::to_string(i) + ",";
+    sql += ":PRIORITY"                 + std::to_string(i) + ",";
+    sql += ":MIN_RETRIEVE_REQUEST_AGE" + std::to_string(i) + ",";
+    sql += ":COPY_NB"                  + std::to_string(i) + ",";
+    sql += ":ALTERNATE_COPY_NBS"       + std::to_string(i) + ",";
+    sql += ":ALTERNATE_FSEQS"          + std::to_string(i) + ",";
+    sql += ":ALTERNATE_BLOCK_IDS"      + std::to_string(i) + ",";
+    sql += ":START_TIME"               + std::to_string(i) + ",";
+    sql += ":DST_URL"                  + std::to_string(i) + ",";
+    sql += ":RETRIES_WITHIN_MOUNT"     + std::to_string(i) + ",";
+    sql += ":TOTAL_RETRIES"            + std::to_string(i) + ",";
+    sql += ":LAST_MOUNT_WITH_FAILURE"  + std::to_string(i) + ",";
+    sql += ":MAX_TOTAL_RETRIES"        + std::to_string(i) + ",";
+    sql += ":MAX_RETRIES_WITHIN_MOUNT" + std::to_string(i) + ",";
+    sql += ":MAX_REPORT_RETRIES"       + std::to_string(i) + ",";
+    sql += ":TOTAL_REPORT_RETRIES"     + std::to_string(i) + ",";
+    sql += ":IS_VERIFY_ONLY"           + std::to_string(i) + ",";
+    sql += ":IS_REPORTING"             + std::to_string(i) + ",";
+    sql += ":LIFECYCLE_CREATION_TIME"  + std::to_string(i) + ",";
+    sql += ":LIFECYCLE_FIRST_SELECTED_TIME" + std::to_string(i) + ",";
+    sql += ":LIFECYCLE_COMPLETED_TIME" + std::to_string(i) + ",";
+    sql += ":RETRIEVE_REPORT_URL"      + std::to_string(i);
+    if (hasDiskSystemName) sql += ",:DISK_SYSTEM_NAME" + std::to_string(i);
+    if (hasActivity)       sql += ",:ACTIVITY" + std::to_string(i);
+    if (hasSrrActivity)    sql += ",:SRR_ACTIVITY" + std::to_string(i);
+    sql += ")";
+    if (i < rows.size() - 1) sql += ",";
+  }
+
+  auto stmt = conn.createStmt(sql);
+
+  // Bind values for each row with distinct names
+  for (size_t i = 0; i < rows.size(); ++i) {
+    const auto &row = rows[i];
+    std::string idx = std::to_string(i);
+
+    stmt.bindUint64(":RETRIEVE_REQUEST_ID" + idx, row.retrieveRequestId);
+    stmt.bindUint64(":REPACK_REQUEST_ID" + idx, row.repackRequestId);
+    stmt.bindUint32(":REQUEST_JOB_COUNT" + idx, row.reqJobCount);
+    stmt.bindString(":STATUS" + idx, to_string(row.status));
+    stmt.bindUint64(":CREATION_TIME" + idx, row.creationTime);
+    stmt.bindString(":STORAGE_CLASS" + idx, row.storageClass);
+    stmt.bindUint64(":SIZE_IN_BYTES" + idx, row.fileSize);
+    stmt.bindUint64(":ARCHIVE_FILE_ID" + idx, row.archiveFileID);
+    stmt.bindBlob(":CHECKSUMBLOB" + idx, row.checksumBlob.serialize());
+    stmt.bindUint64(":FSEQ" + idx, row.fSeq);
+    stmt.bindUint64(":BLOCK_ID" + idx, row.blockId);
+    stmt.bindString(":DISK_INSTANCE" + idx, row.diskInstance);
+    // for Repack the following columns are not populated
+    stmt.bindString(":DISK_FILE_PATH" + idx,
+        !row.diskFileInfoPath.empty() ? row.diskFileInfoPath : "NOT_PROVIDED");
+    stmt.bindString(":RETRIEVE_ERROR_REPORT_URL" + idx,
+        !row.retrieveErrorReportURL.empty() ? row.retrieveErrorReportURL : "NOT_PROVIDED");
+    stmt.bindString(":REQUESTER_NAME" + idx,
+        !row.requesterName.empty() ? row.requesterName : "NOT_PROVIDED");
+    stmt.bindString(":REQUESTER_GROUP" + idx,
+        !row.requesterGroup.empty() ? row.requesterGroup : "NOT_PROVIDED");
+    stmt.bindString(":SRR_USERNAME" + idx,
+        !row.srrUsername.empty() ? row.srrUsername : "NOT_PROVIDED");
+    stmt.bindString(":SRR_HOST" + idx,
+        !row.srrHost.empty() ? row.srrHost : "NOT_PROVIDED");
+    stmt.bindUint64(":SRR_TIME" + idx,
+        row.srrTime != 0 ? row.srrTime : 0); // keep 0 as sentinel for "NOT_PROVIDED"
+    stmt.bindString(":SRR_MOUNT_POLICY" + idx,
+        !row.srrMountPolicy.empty() ? row.srrMountPolicy : "NOT_PROVIDED");
+    stmt.bindString(":RETRIEVE_REPORT_URL" + idx,
+        !row.retrieveReportURL.empty() ? row.retrieveReportURL : "NOT_PROVIDED");
+    stmt.bindString(":DISK_FILE_ID" + idx, row.diskFileId);
+    stmt.bindUint32(":DISK_FILE_GID" + idx, row.diskFileInfoGid);
+    stmt.bindUint32(":DISK_FILE_OWNER_UID" + idx, row.diskFileInfoOwnerUid);
+    stmt.bindString(":MOUNT_POLICY" + idx, row.mountPolicy);
+    stmt.bindString(":VID" + idx, row.vid);
+    stmt.bindString(":ALTERNATE_VIDS" + idx, row.alternateVids);
+    stmt.bindUint32(":PRIORITY" + idx, row.priority);
+    stmt.bindUint32(":MIN_RETRIEVE_REQUEST_AGE" + idx, row.minRetrieveRequestAge);
+    stmt.bindUint8(":COPY_NB" + idx, row.copyNb);
+    stmt.bindString(":ALTERNATE_COPY_NBS" + idx, row.alternateCopyNbs);
+    stmt.bindString(":ALTERNATE_FSEQS" + idx, row.alternateFSeq);
+    stmt.bindString(":ALTERNATE_BLOCK_IDS" + idx, row.alternateBlockId);
+    stmt.bindUint64(":START_TIME" + idx, row.startTime);
+    stmt.bindString(":DST_URL" + idx, row.dstURL);
+    stmt.bindUint32(":RETRIES_WITHIN_MOUNT" + idx, row.retriesWithinMount);
+    stmt.bindUint32(":TOTAL_RETRIES" + idx, row.totalRetries);
+    stmt.bindUint64(":LAST_MOUNT_WITH_FAILURE" + idx, row.lastMountWithFailure);
+    stmt.bindUint32(":MAX_TOTAL_RETRIES" + idx, row.maxTotalRetries);
+    stmt.bindUint32(":MAX_RETRIES_WITHIN_MOUNT" + idx, row.maxRetriesWithinMount);
+    stmt.bindUint32(":MAX_REPORT_RETRIES" + idx, row.maxReportRetries);
+    stmt.bindUint32(":TOTAL_REPORT_RETRIES" + idx, row.totalReportRetries);
+    stmt.bindBool(":IS_VERIFY_ONLY" + idx, row.isVerifyOnly);
+    stmt.bindBool(":IS_REPORTING" + idx, row.isReporting);
+    stmt.bindUint64(":LIFECYCLE_CREATION_TIME" + idx, row.lifecycleTimings_creation_time);
+    stmt.bindUint64(":LIFECYCLE_FIRST_SELECTED_TIME" + idx, row.lifecycleTimings_first_selected_time);
+    stmt.bindUint64(":LIFECYCLE_COMPLETED_TIME" + idx, row.lifecycleTimings_completed_time);
+
+    if (hasDiskSystemName)
+      stmt.bindString(":DISK_SYSTEM_NAME" + idx, row.diskSystemName.value_or(""));
+    if (hasActivity)
+      stmt.bindString(":ACTIVITY" + idx, row.activity.value_or(""));
+    if (hasSrrActivity)
+      stmt.bindString(":SRR_ACTIVITY" + idx, row.srrActivity);
+  }
+
+  stmt.executeNonQuery();
+}
   /**
   * When CTA received the PREPARE_ABORT request from the disk buffer,
   * the following method ensures removal from the pending queue
@@ -551,13 +762,15 @@ public:
   *
   * @return  result set containing job IDs of the rows which were updated
   */
-  static std::pair<rdbms::Rset, uint64_t>
-  moveJobsToDbActiveQueue(Transaction& txn,
+  static std::pair <rdbms::Rset, uint64_t>
+  moveJobsToDbActiveQueue(Transaction &txn,
                           RetrieveJobStatus newStatus,
-                          const SchedulerDatabase::RetrieveMount::MountInfo& mountInfo,
-                          std::vector<std::string>& noSpaceDiskSystemNames,
+                          const SchedulerDatabase::RetrieveMount::MountInfo &mountInfo,
+                          std::vector <std::string> &noSpaceDiskSystemNames,
                           uint64_t maxBytesRequested,
-                          uint64_t limit);
+                          uint64_t limit,
+                          bool isRepack);
+
   /**
   * Update job status
   *
@@ -590,7 +803,7 @@ public:
   */
   uint64_t requeueFailedJob(Transaction& txn,
                             RetrieveJobStatus newStatus,
-                            bool keepMountId,
+                            bool keepMountId, bool isRepack,
                             std::optional<std::list<std::string>> jobIDs = std::nullopt);
 
   /**
@@ -618,7 +831,7 @@ public:
   * @param keepMountId          true or false
   * @return                     Number of updated rows
   */
-  static uint64_t requeueJobBatch(Transaction& txn, RetrieveJobStatus newStatus, const std::list<std::string>& jobIDs);
+  static uint64_t requeueJobBatch(Transaction& txn, RetrieveJobStatus newStatus, const std::list<std::string>& jobIDs, bool isRepack);
 
   /**
   * Update job status when job report failed

@@ -24,6 +24,7 @@
 
 namespace cta::schedulerdb {
 
+
 class RepackRequestPromotionStatistics : public SchedulerDatabase::RepackRequestStatistics {
  friend class cta::RelationalDB;
 

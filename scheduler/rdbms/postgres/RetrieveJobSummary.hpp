@@ -151,6 +151,33 @@ struct RetrieveJobSummaryRow {
     return stmt.executeQuery();
   }
 
+  /**
+   * Select jobs which do not belong to any drive yet.
+   * This is used for deciding if a new mount shall be created
+   * @param txn        Transaction to use for this query
+   * @return result set containing all rows in the table
+   */
+  static rdbms::Rset selectNewRepackJobs(Transaction& txn) {
+    const char* const sql = R"SQL(
+      SELECT
+        VID,
+        MOUNT_POLICY,
+        ACTIVITY,
+        PRIORITY,
+        JOBS_COUNT,
+        JOBS_TOTAL_SIZE,
+        OLDEST_JOB_START_TIME,
+        YOUNGEST_JOB_START_TIME,
+        RETRIEVE_MIN_REQUEST_AGE,
+        LAST_JOB_UPDATE_TIME
+      FROM
+        REPACK_RETRIEVE_QUEUE_SUMMARY
+    )SQL";
+
+    auto stmt = txn.getConn().createStmt(sql);
+    return stmt.executeQuery();
+  }
+
 };
 
 }  // namespace cta::schedulerdb::postgres

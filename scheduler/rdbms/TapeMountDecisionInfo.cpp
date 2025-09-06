@@ -18,6 +18,7 @@
 #include "scheduler/rdbms/ArchiveMount.hpp"
 #include "scheduler/rdbms/RetrieveMount.hpp"
 #include "scheduler/rdbms/TapeMountDecisionInfo.hpp"
+#include "common/dataStructures/VirtualOrganization.hpp"
 #include "common/exception/Exception.hpp"
 #include "scheduler/rdbms/postgres/Enums.hpp"
 #include "scheduler/rdbms/postgres/Mounts.hpp"
@@ -153,6 +154,15 @@ TapeMountDecisionInfo::createRetrieveMount(const cta::SchedulerDatabase::Potenti
   rm.mountInfo.capacityInBytes = mount.capacityInBytes;
   rm.mountInfo.activity = mount.activity;
   rm.mountInfo.encryptionKeyName = mount.encryptionKeyName;
+
+  // check if isRepack mount
+  auto defaultRepackVO = m_RelationalDB.getDefaultRepackVo();
+  std::string defaultRepackVoName = "";
+  if (defaultRepackVO.has_value()) {
+    defaultRepackVoName = defaultRepackVO->name;
+  }
+  log::LogContext lc(m_logger);
+  rm.setIsRepack(defaultRepackVoName, lc);
 
   // Return the mount session object to the user
   std::unique_ptr<SchedulerDatabase::RetrieveMount> ret(privateRet.release());

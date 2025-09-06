@@ -27,7 +27,8 @@ RetrieveJobQueueRow::moveJobsToDbActiveQueue(Transaction& txn,
                                              const SchedulerDatabase::RetrieveMount::MountInfo& mountInfo,
                                              std::vector<std::string>& noSpaceDiskSystemNames,
                                              uint64_t maxBytesRequested,
-                                             uint64_t limit) {
+                                             uint64_t limit,
+                                             bool isRepack) {
   // we first check if there are any disk systems
   // we should avoid querying jobs for
   std::string sql_dsn_exclusion_part = "";
@@ -44,6 +45,9 @@ RetrieveJobQueueRow::moveJobsToDbActiveQueue(Transaction& txn,
     }
     sql_dsn_exclusion_part += R"SQL( ]) )SQL";
   }
+
+  std::string repack_table_name_prefix = isRepack ? "REPACK_" : "";
+
   /* using write row lock FOR UPDATE for the select statement
    * since it is the same lock used for UPDATE
    * we first apply the LIMIT on the selection to limit
@@ -52,7 +56,9 @@ RetrieveJobQueueRow::moveJobsToDbActiveQueue(Transaction& txn,
   std::string sql = R"SQL(
     WITH SET_SELECTION AS (
       SELECT JOB_ID, PRIORITY, SIZE_IN_BYTES
-      FROM RETRIEVE_PENDING_QUEUE
+      FROM )SQL";
+  sql += repack_table_name_prefix + "RETRIEVE_PENDING_QUEUE";
+  sql += R"SQL(
       WHERE VID = :VID
       AND STATUS = :STATUS
       AND (MOUNT_ID IS NULL OR MOUNT_ID = :SAME_MOUNT_ID)
@@ -74,14 +80,20 @@ RetrieveJobQueueRow::moveJobsToDbActiveQueue(Transaction& txn,
         WHERE CUMULATIVE_SIZE <= :BYTES_REQUESTED
     ),
     MOVED_ROWS AS (
-        DELETE FROM RETRIEVE_PENDING_QUEUE RIQ
+        DELETE FROM
+    )SQL";
+  sql += repack_table_name_prefix + "RETRIEVE_PENDING_QUEUE";
+  sql += R"SQL( RIQ
         USING CUMULATIVE_SELECTION CSEL
         WHERE RIQ.JOB_ID = CSEL.JOB_ID
         RETURNING RIQ.*
     )
-    INSERT INTO RETRIEVE_ACTIVE_QUEUE (
+    INSERT INTO )SQL";
+  sql += repack_table_name_prefix + "RETRIEVE_ACTIVE_QUEUE";
+  sql += R"SQL( (
         JOB_ID,
         RETRIEVE_REQUEST_ID,
+        REPACK_REQUEST_ID,
         REQUEST_JOB_COUNT,
         STATUS,
         TAPE_POOL,
@@ -137,6 +149,7 @@ RetrieveJobQueueRow::moveJobsToDbActiveQueue(Transaction& txn,
     SELECT
         M.JOB_ID,
         M.RETRIEVE_REQUEST_ID,
+        M.REPACK_REQUEST_ID,
         M.REQUEST_JOB_COUNT,
         M.STATUS,
         :TAPE_POOL AS TAPE_POOL,
@@ -213,6 +226,7 @@ RetrieveJobQueueRow::moveJobsToDbActiveQueue(Transaction& txn,
   auto nrows = stmt.getNbAffectedRows();
   return std::make_pair(std::move(result), nrows);
 }
+
 
 uint64_t RetrieveJobQueueRow::updateJobStatus(Transaction& txn,
                                               RetrieveJobStatus newStatus,
@@ -310,11 +324,15 @@ void RetrieveJobQueueRow::updateRetryCounts(uint64_t mountId) {
 uint64_t RetrieveJobQueueRow::requeueFailedJob(Transaction& txn,
                                                RetrieveJobStatus newStatus,
                                                bool keepMountId,
-                                               std::optional<std::list<std::string>> jobIDs) {
+                                               bool isRepack,
+                                               std::optional<std::list<std::string>> jobIDs
+                                               ) {
+  std::string repack_table_name_prefix = isRepack ? "REPACK_" : "";
   std::string sql = R"SQL(
     WITH MOVED_ROWS AS (
-        DELETE FROM RETRIEVE_ACTIVE_QUEUE
+        DELETE FROM
   )SQL";
+  sql += repack_table_name_prefix + "RETRIEVE_ACTIVE_QUEUE ";
   bool userowjid = true;
   if (jobIDs.has_value() && !jobIDs.value().empty()) {
     userowjid = false;
@@ -334,9 +352,13 @@ uint64_t RetrieveJobQueueRow::requeueFailedJob(Transaction& txn,
   sql += R"SQL(
         RETURNING *
     )
-    INSERT INTO RETRIEVE_PENDING_QUEUE (
+    INSERT INTO
+  )SQL";
+  sql += repack_table_name_prefix + "RETRIEVE_PENDING_QUEUE ";
+  sql += R"SQL( (
       JOB_ID,
       RETRIEVE_REQUEST_ID,
+      REPACK_REQUEST_ID,
       REQUEST_JOB_COUNT,
       TAPE_POOL,
       MOUNT_POLICY,
@@ -393,6 +415,7 @@ uint64_t RetrieveJobQueueRow::requeueFailedJob(Transaction& txn,
     SELECT
       M.JOB_ID,
       M.RETRIEVE_REQUEST_ID,
+      M.REPACK_REQUEST_ID,
       M.REQUEST_JOB_COUNT,
       M.TAPE_POOL,
       M.MOUNT_POLICY,
@@ -473,11 +496,13 @@ uint64_t RetrieveJobQueueRow::requeueFailedJob(Transaction& txn,
 };
 
 uint64_t
-RetrieveJobQueueRow::requeueJobBatch(Transaction& txn, RetrieveJobStatus newStatus, const std::list<std::string>& jobIDs) {
+RetrieveJobQueueRow::requeueJobBatch(Transaction& txn, RetrieveJobStatus newStatus, const std::list<std::string>& jobIDs, bool isRepack) {
+  std::string repack_table_name_prefix = isRepack ? "REPACK_" : "";
   std::string sql = R"SQL(
     WITH MOVED_ROWS AS (
-        DELETE FROM RETRIEVE_ACTIVE_QUEUE
+        DELETE FROM
   )SQL";
+  sql += repack_table_name_prefix + "RETRIEVE_ACTIVE_QUEUE ";
   if (!jobIDs.empty()) {
     std::string sqlpart;
     for (const auto& jid : jobIDs) {
@@ -493,9 +518,14 @@ RetrieveJobQueueRow::requeueJobBatch(Transaction& txn, RetrieveJobStatus newStat
   sql += R"SQL(
         RETURNING *
     )
-    INSERT INTO RETRIEVE_PENDING_QUEUE (
+    INSERT INTO
+  )SQL";
+  sql += repack_table_name_prefix + "RETRIEVE_PENDING_QUEUE ";
+  sql += R"SQL(
+     (
       JOB_ID,
       RETRIEVE_REQUEST_ID,
+      REPACK_REQUEST_ID,
       REQUEST_JOB_COUNT,
       TAPE_POOL,
       MOUNT_POLICY,
@@ -552,6 +582,7 @@ RetrieveJobQueueRow::requeueJobBatch(Transaction& txn, RetrieveJobStatus newStat
     SELECT
       M.JOB_ID,
       M.RETRIEVE_REQUEST_ID,
+      M.REPACK_REQUEST_ID,
       M.REQUEST_JOB_COUNT,
       M.TAPE_POOL,
       M.MOUNT_POLICY,
@@ -629,6 +660,7 @@ uint64_t RetrieveJobQueueRow::handlePendingRetrieveJobsAfterTapeStateChange(Tran
     INSERT INTO RETRIEVE_ACTIVE_QUEUE (
       JOB_ID,
       RETRIEVE_REQUEST_ID,
+      REPACK_REQUEST_ID,
       REQUEST_JOB_COUNT,
       TAPE_POOL,
       MOUNT_POLICY,
@@ -685,6 +717,7 @@ uint64_t RetrieveJobQueueRow::handlePendingRetrieveJobsAfterTapeStateChange(Tran
     SELECT
       M.JOB_ID,
       M.RETRIEVE_REQUEST_ID,
+      M.REPACK_REQUEST_ID,
       M.REQUEST_JOB_COUNT,
       :TAPE_POOL AS TAPE_POOL,
       M.MOUNT_POLICY,

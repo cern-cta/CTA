@@ -18,6 +18,7 @@
 #pragma once
 
 #include "common/log/LogContext.hpp"
+#include "scheduler/SchedulerDatabase.hpp"
 #include "scheduler/rdbms/postgres/Transaction.hpp"
 #include "scheduler/rdbms/postgres/Enums.hpp"
 #include "common/dataStructures/EntryLog.hpp"
@@ -31,6 +32,7 @@ struct RepackRequestTrackingRow {
   RepackJobStatus status = RepackJobStatus::RRS_Pending;
   bool isAddCopies = true;
   bool isMove = true;
+  uint64_t maxFilesToSelect = 0;
   uint64_t totalFilesOnTapeAtStart = 0;
   uint64_t totalBytesOnTapeAtStart = 0;
   bool allFilesSelectedAtStart = true;
@@ -59,6 +61,7 @@ struct RepackRequestTrackingRow {
   std::string destInfoProtoBuf;
   common::dataStructures::EntryLog createLog;
   time_t repackFinishedTime = 0;
+  time_t lastUpdateTime = 0;
 
   RepackRequestTrackingRow() = default;
 
@@ -70,12 +73,14 @@ struct RepackRequestTrackingRow {
   explicit RepackRequestTrackingRow(const rdbms::Rset& rset) { *this = rset; }
 
   RepackRequestTrackingRow& operator=(const rdbms::Rset& rset) {
-    repackReqId = rset.columnUint64("REPACK_REQID");
+    repackReqId = rset.columnUint64("REPACK_REQUEST_ID");
     vid = rset.columnString("VID");
     bufferUrl = rset.columnString("BUFFER_URL");
     status = from_string<RepackJobStatus>(rset.columnString("STATUS"));
     isAddCopies = rset.columnBool("IS_ADD_COPIES");
     isMove = rset.columnBool("IS_MOVE");
+    isNoRecall = rset.columnBool("IS_NO_RECALL");
+    maxFilesToSelect = rset.columnUint64("MAX_FILES_TO_EXPAND");
     totalFilesOnTapeAtStart = rset.columnUint64("TOTAL_FILES_ON_TAPE_AT_START");
     totalBytesOnTapeAtStart = rset.columnUint64("TOTAL_BYTES_ON_TAPE_AT_START");
     allFilesSelectedAtStart = rset.columnBool("ALL_FILES_SELECTED_AT_START");
@@ -99,18 +104,18 @@ struct RepackRequestTrackingRow {
     isExpandStarted = rset.columnBool("IS_EXPAND_STARTED");
     mountPolicyName = rset.columnString("MOUNT_POLICY");
     isComplete = rset.columnBool("IS_COMPLETE");
-    isNoRecall = rset.columnBool("IS_NO_RECALL");
     subReqProtoBuf = rset.columnBlob("SUBREQ_PB");
     destInfoProtoBuf = rset.columnBlob("DESTINFO_PB");
     createLog.username = rset.columnString("CREATE_USERNAME");
     createLog.host = rset.columnString("CREATE_HOST");
     createLog.time = rset.columnUint64("CREATE_TIME");
-    repackFinishedTime = rset.columnUint64("REPACK_FINIHSED_TIME");
+    repackFinishedTime = rset.columnUint64("REPACK_FINISHED_TIME");
+    lastUpdateTime = rset.columnUint64("LAST_UPDATE_TIME");
 
     return *this;
   }
 
-  void insert(Transaction& txn) const {
+  void insert(rdbms::Conn& conn) const {
     // setting repackReqId; todo
     const char* const sql = R"SQL(
       INSERT INTO REPACK_REQUEST_TRACKING(
@@ -119,6 +124,7 @@ struct RepackRequestTrackingRow {
         STATUS,
         IS_ADD_COPIES,
         IS_MOVE,
+        MAX_FILES_TO_EXPAND,
         TOTAL_FILES_ON_TAPE_AT_START,
         TOTAL_BYTES_ON_TAPE_AT_START,
         ALL_FILES_SELECTED_AT_START,
@@ -154,13 +160,14 @@ struct RepackRequestTrackingRow {
         :STATUS,
         :IS_ADD_COPIES,
         :IS_MOVE,
+        :MAX_FILES_TO_EXPAND,
         :TOTAL_FILES_ON_TAPE_AT_START,
         :TOTAL_BYTES_ON_TAPE_AT_START,
         :ALL_FILES_SELECTED_AT_START,
         :TOTAL_FILES_TO_RETRIEVE,
         :TOTAL_BYTES_TO_RETRIEVE,
         :TOTAL_FILES_TO_ARCHIVE,
-        :TOTAL_BYTES_ARCHIVE,
+        :TOTAL_BYTES_TO_ARCHIVE,
         :USER_PROVIDED_FILES,
         :USER_PROVIDED_BYTES,
         :RETRIEVED_FILES,
@@ -186,12 +193,13 @@ struct RepackRequestTrackingRow {
         :REPACK_FINISHED_TIME)
     )SQL";
 
-    auto stmt = txn.getConn().createStmt(sql);
+    auto stmt = conn.createStmt(sql);
     stmt.bindString(":VID", vid);
     stmt.bindString(":BUFFER_URL", bufferUrl);
     stmt.bindString(":STATUS", to_string(status));
     stmt.bindBool(":IS_ADD_COPIES", isAddCopies);
     stmt.bindBool(":IS_MOVE", isMove);
+    stmt.bindUint64(":MAX_FILES_TO_EXPAND", maxFilesToSelect);
     stmt.bindUint64(":TOTAL_FILES_ON_TAPE_AT_START", totalFilesOnTapeAtStart);
     stmt.bindUint64(":TOTAL_BYTES_ON_TAPE_AT_START", totalBytesOnTapeAtStart);
     stmt.bindBool(":ALL_FILES_SELECTED_AT_START", allFilesSelectedAtStart);
@@ -233,6 +241,7 @@ struct RepackRequestTrackingRow {
     params.add("status", to_string(status));
     params.add("isAddCopies", isAddCopies);
     params.add("isMove", isMove);
+    params.add("maxFilesToSelect", maxFilesToSelect);
     params.add("totalFilesOnTapeAtStart", totalFilesOnTapeAtStart);
     params.add("totalBytesOnTapeAtStart", totalBytesOnTapeAtStart);
     params.add("allFilesSelectedAtStart", allFilesSelectedAtStart);
@@ -269,6 +278,29 @@ struct RepackRequestTrackingRow {
   }
 
   /**
+   * Get Repack Request Statistics
+   *
+   * @return result set containing grouped statistics from REPACK_REQUEST_TRACKING
+   */
+  static rdbms::Rset getRepackRequestStatistics(rdbms::Conn& conn) {
+    const char* const sql = R"SQL(
+      SELECT
+        STATUS,
+        COUNT(*) AS JOBS_COUNT,
+        COALESCE(SUM(TOTAL_BYTES_TO_RETRIEVE), 0) AS RETRIEVE_TOTAL_SIZE,
+        COALESCE(SUM(TOTAL_BYTES_TO_ARCHIVE), 0) AS ARCHIVE_TOTAL_SIZE,
+        MIN(CREATE_TIME) AS OLDEST_JOB_START_TIME,
+        MAX(CREATE_TIME) AS YOUNGEST_JOB_START_TIME,
+        MAX(REPACK_FINISHED_TIME) AS LAST_JOB_UPDATE_TIME
+      FROM REPACK_REQUEST_TRACKING
+      GROUP BY STATUS
+    )SQL";
+
+    auto stmt = conn.createStmt(sql);
+    return stmt.executeQuery();
+  }
+
+  /**
    * Select unowned jobs from the queue
    *
    * @param txn        Transaction to use for this query
@@ -281,7 +313,7 @@ struct RepackRequestTrackingRow {
   static rdbms::Rset select(Transaction& txn, RepackJobStatus status, uint32_t limit) {
     const char* const sql = R"SQL(
       SELECT 
-        REPACK_REQID AS REPACK_REQID,
+        REPACK_REQUEST_ID AS REPACK_REQUEST_ID,
         VID AS VID,
         BUFFER_URL AS BUFFER_URL,
         STATUS AS STATUS,
@@ -320,7 +352,7 @@ struct RepackRequestTrackingRow {
         REPACK_REQUEST_TRACKING
       WHERE
         STATUS = :STATUS 
-      ORDER BY REPACK_REQID 
+      ORDER BY REPACK_REQUEST_ID
         LIMIT :LIMIT
     )SQL";
 
@@ -330,6 +362,106 @@ struct RepackRequestTrackingRow {
 
     return stmt.executeQuery();
   }
+  /**
+   * When CTA received the deleteArchive request from the disk buffer,
+   * the following method ensures removal from the pending queue
+   *
+   * @param txn    Transaction handling the connection to the backend database
+   * @param vid    VID of the tape for which the repack operation shall be marked for cancellation
+   *
+   * @return  The number of affected jobs
+   */
+  static uint64_t cancelRepack(Transaction &txn, const std::string &vid);
+
+  /**
+   * Update a limited number of pending repack requests to "ToExpand"
+   * and return updated summary statistics.
+   *
+   * @param txn Transaction object
+   * @param requestCount maximum number of requests to update
+   * @return uint64_t number of rows effectively updated in REPACK_REQUEST_TRACKING
+   */
+  static uint64_t updateRepackRequestForExpansion(Transaction &txn, const uint32_t requestCount);
+
+  /**
+   * Atomically fetch and mark the next request to expand.
+   *
+   * This will:
+   *  - Select the oldest request with STATUS = 'RRS_ToExpand' and IS_EXPAND_STARTED = '0'
+   *  - Update IS_EXPAND_STARTED = '1'
+   *  - Return the updated row in a result set
+   *
+   * Concurrency safety:
+   *  - Uses FOR UPDATE SKIP LOCKED so concurrent workers don't process the same row.
+   *
+   * @param txn Active transaction
+   * @return rdbms::Rset containing one row (or empty if none found)
+   */
+  static rdbms::Rset markStartOfExpansion(Transaction& txn);
+
+/**
+   * @brief Updates the status of a repack request.
+   *
+   * @param txn Active transaction to run the update within.
+   * @param reqId The REPACK_REQUEST_ID of the request to update.
+   * @param isExpandFinished boolean expressing if expansion finished
+   * @param newStatus The new job status to set.
+   * @return The number of affected rows (should be 1 if successful).
+   */
+  static uint64_t updateStatus(
+      Transaction &txn,
+      const uint64_t &reqId,
+      const bool isExpandFinished,
+      const RepackJobStatus &newStatus);
+
+  /**
+   * @brief Updates the status and finish time of a repack request.
+   *
+   * @param txn Active transaction to run the update within.
+   * @param reqId The REPACK_REQUEST_ID of the request to update.
+   * @param isExpandFinished boolean expressing if expansion finished
+   * @param newStatus The new job status to set.
+   * @param finishTime The finish time (epoch or timestamp value) to set.
+   * @return The number of affected rows (should be 1 if successful).
+   */
+  static uint64_t updateStatusAndFinishTime(
+      Transaction &txn,
+      const uint64_t &reqId,
+      const bool isExpandFinished,
+      const RepackJobStatus &newStatus,
+      const uint64_t &finishTime);
+
+  /**
+   * @brief Update an existing repack request in the REPACK_REQUEST_TRACKING table.
+   *
+   * This method updates the status and key statistics of a repack request row,
+   * including file/byte counts, expansion progress, and completion time.
+   *
+   * @param txn                          Active transaction context used to execute the update.
+   * @param reqId                        The unique identifier of the repack request to update.
+   * @param totalStatsFiles              Aggregated statistics about files and bytes for this repack job.
+   * @param nbRetrieveSubrequestsCreated Number of retrieve subrequests expanded for this repack request.
+   * @param lastExpandedFseq             Last file sequence number expanded in this repack request.
+   * @param newStatus                    The new status value for the repack request.
+   *
+   * @return The number of rows affected (should be 1 if the update succeeded).
+   */
+  static uint64_t updateRepackRequest(Transaction &txn,
+                                      const uint64_t &reqId,
+                                      const cta::SchedulerDatabase::RepackRequest::TotalStatsFiles &totalStatsFiles,
+                                      const uint64_t nbRetrieveSubrequestsCreated,
+                                      const uint64_t lastExpandedFseq,
+                                      const RepackJobStatus &newStatus);
+
+  // Update failure counters and status (overwrite values)
+  static uint64_t updateRepackRequestFailures(
+          Transaction &txn,
+          const uint64_t reqId,
+          const uint64_t failedFilesToRetrieve,
+          const uint64_t failedBytesToRetrieve,
+          const uint64_t failedToCreateArchiveReq,
+          const RepackJobStatus newStatus);
+
 };
 
-}  // namespace cta::schedulerdb::postgres
+}// namespace cta::schedulerdb::postgres
