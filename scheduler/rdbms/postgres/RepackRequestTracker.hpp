@@ -303,65 +303,64 @@ struct RepackRequestTrackingRow {
   /**
    * Select unowned jobs from the queue
    *
-   * @param txn        Transaction to use for this query
-   * @param status     Archive Job Status to select on
-   * @param tapepool   Tapepool to select on
-   * @param limit      Maximum number of rows to return
+   * @param conn    DB connection
    *
    * @return  result set
    */
-  static rdbms::Rset select(Transaction& txn, RepackJobStatus status, uint32_t limit) {
-    const char* const sql = R"SQL(
+  static rdbms::Rset selectRepackRows(rdbms::Conn& conn, const std::string& vid) {
+    std::string sql = R"SQL(
       SELECT 
-        REPACK_REQUEST_ID AS REPACK_REQUEST_ID,
-        VID AS VID,
-        BUFFER_URL AS BUFFER_URL,
-        STATUS AS STATUS,
-        IS_ADD_COPIES AS IS_ADD_COPIES,
-        IS_MOVE AS IS_MOVE,
-        TOTAL_FILES_ON_TAPE_AT_START AS TOTAL_FILES_ON_TAPE_AT_START,
-        TOTAL_BYTES_ON_TAPE_AT_START AS TOTAL_BYTES_ON_TAPE_AT_START,
-        ALL_FILES_SELECTED_AT_START AS ALL_FILES_SELECTED_AT_START,
-        TOTAL_FILES_TO_RETRIEVE AS TOTAL_FILES_TO_RETRIEVE,
-        TOTAL_BYTES_TO_RETRIEVE AS TOTAL_BYTES_TO_RETRIEVE,
-        TOTAL_FILES_TO_ARCHIVE AS TOTAL_FILES_TO_ARCHIVE,
-        TOTAL_BYTES_TO_ARCHIVE AS TOTAL_BYTES_TO_ARCHIVE,
-        USER_PROVIDED_FILES AS USER_PROVIDED_FILES,
-        USER_PROVIDED_BYTES AS USER_PROVIDED_BYTES,
-        RETRIEVED_FILES AS RETRIEVED_FILES,
-        RETRIEVED_BYTES AS RETRIEVED_BYTES,
-        ARCHIVED_FILES AS ARCHIVED_FILES,
-        ARCHIVED_BYTES AS ARCHIVED_BYTES,
-        FAILED_TO_RETRIEVE_FILES AS FAILED_TO_RETRIEVE_FILES,
-        FAILED_TO_RETRIEVE_BYTES AS FAILED_TO_RETRIEVE_BYTES,
-        FAILED_TO_CREATE_ARCHIVE_REQ AS FAILED_TO_CREATE_ARCHIVE_REQ,
-        FAILED_TO_ARCHIVE_FILES AS FAILED_TO_ARCHIVE_FILES,
-        FAILED_TO_ARCHIVE_BYTES AS FAILED_TO_ARCHIVE_BYTES,
-        LAST_EXPANDED_FSEQ AS LAST_EXPANDED_FSEQ,
-        IS_EXPAND_FINISHED AS IS_EXPAND_FINISHED,
-        IS_EXPAND_STARTED AS IS_EXPAND_STARTED,
-        MOUNT_POLICY AS MOUNT_POLICY,
-        IS_COMPLETE AS IS_COMPLETE,
-        IS_NO_RECALL AS IS_NO_RECALL,
-        SUBREQ_PB AS SUBREQ_PB,
-        CREATE_USERNAME AS CREATE_USERNAME,
-        CREATE_HOST AS CREATE_HOST,
-        CREATE_TIME AS CREATE_TIME,
-        REPACK_FINISHED_TIME AS REPACK_FINISHED_TIME 
-      FROM 
+        REPACK_REQUEST_ID,
+        VID,
+        BUFFER_URL,
+        STATUS,
+        IS_ADD_COPIES,
+        IS_MOVE,
+        MAX_FILES_TO_EXPAND,
+        TOTAL_FILES_ON_TAPE_AT_START,
+        TOTAL_BYTES_ON_TAPE_AT_START,
+        ALL_FILES_SELECTED_AT_START,
+        TOTAL_FILES_TO_RETRIEVE,
+        TOTAL_BYTES_TO_RETRIEVE,
+        TOTAL_FILES_TO_ARCHIVE,
+        TOTAL_BYTES_TO_ARCHIVE,
+        USER_PROVIDED_FILES,
+        USER_PROVIDED_BYTES,
+        RETRIEVED_FILES,
+        RETRIEVED_BYTES,
+        ARCHIVED_FILES,
+        ARCHIVED_BYTES,
+        FAILED_TO_RETRIEVE_FILES,
+        FAILED_TO_RETRIEVE_BYTES,
+        FAILED_TO_CREATE_ARCHIVE_REQ,
+        FAILED_TO_ARCHIVE_FILES,
+        FAILED_TO_ARCHIVE_BYTES,
+        LAST_EXPANDED_FSEQ,
+        RETRIEVE_SUBREQUESTS_EXPANDED,
+        IS_EXPAND_FINISHED,
+        IS_EXPAND_STARTED,
+        MOUNT_POLICY,
+        IS_COMPLETE,
+        IS_NO_RECALL,
+        SUBREQ_PB,
+        DESTINFO_PB,
+        CREATE_USERNAME,
+        CREATE_HOST,
+        CREATE_TIME,
+        REPACK_FINISHED_TIME,
+        LAST_UPDATE_TIME
+      FROM
         REPACK_REQUEST_TRACKING
-      WHERE
-        STATUS = :STATUS 
-      ORDER BY REPACK_REQUEST_ID
-        LIMIT :LIMIT
     )SQL";
-
-    auto stmt = txn.getConn().createStmt(sql);
-    stmt.bindString(":STATUS", to_string(status));
-    stmt.bindUint32(":LIMIT", limit);
-
+    if (vid != "all") {
+     sql += " WHERE VID = :VID ";
+    }
+    auto stmt = conn.createStmt(sql);
+    if (vid != "all") {
+      stmt.bindString(":VID", vid);
+    }
     return stmt.executeQuery();
-  }
+}
   /**
    * When CTA received the deleteArchive request from the disk buffer,
    * the following method ensures removal from the pending queue

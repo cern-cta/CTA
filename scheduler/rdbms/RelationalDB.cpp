@@ -25,6 +25,7 @@
 #include "common/threading/MutexLocker.hpp"
 #include "scheduler/rdbms/postgres/ArchiveJobSummary.hpp"
 #include "scheduler/rdbms/postgres/RetrieveJobSummary.hpp"
+#include "scheduler/rdbms/postgres/RepackRequestTracker.hpp"
 #include "scheduler/rdbms/ArchiveRdbJob.hpp"
 #include "scheduler/rdbms/ArchiveRequest.hpp"
 #include "scheduler/rdbms/TapeMountDecisionInfo.hpp"
@@ -403,9 +404,7 @@ RelationalDB::queueRetrieve(cta::common::dataStructures::RetrieveRequest& rqst,
     rReq.fillJobsSetRetrieveFileQueueCriteria(criteria);  // fills also m_jobs
     rReq.setActiveCopyNumber(bestCopyNb);
     rReq.setIsVerifyOnly(rqst.isVerifyOnly);
-    if (diskSystemName) {
-      rReq.setDiskSystemName(diskSystemName.value());
-    }
+    rReq.setDiskSystemName(diskSystemName.value_or(""));
     rreqMutex.release();
     rReq.insert();
     log::ScopedParamContainer(logContext)
@@ -530,19 +529,91 @@ bool RelationalDB::repackExists() {
 }
 
 std::list<common::dataStructures::RepackInfo> RelationalDB::getRepackInfo() {
-  log::LogContext lc(m_logger);
-  lc.log(log::WARNING, "RelationalDB::getRepackInfo() dummy implementation !");
+  return RelationalDB::fetchRepackInfo("all");
+}
+
+std::list<common::dataStructures::RepackInfo> RelationalDB::fetchRepackInfo(const std::string& vid) {
+    log::LogContext lc(m_logger);
+  lc.log(log::DEBUG, "In RelationalDB::getRepackInfo().");
+  auto sqlconn = m_connPool.getConn();
   std::list<common::dataStructures::RepackInfo> ret;
+  try{
+    auto rset = cta::schedulerdb::postgres::RepackRequestTrackingRow::selectRepackRows(sqlconn, vid);
+    while (rset.next()) {
+      cta::schedulerdb::postgres::RepackRequestTrackingRow rrtrackrow(rset);
+      auto rr = std::make_unique<cta::schedulerdb::RepackRequest>(m_connPool, m_catalogue, lc, rrtrackrow);
+      ret.emplace_back(rr->repackInfo);
+    }
+  } catch (exception::Exception& ex) {
+    lc.log(cta::log::ERR,
+           "In RelationalDB::getRepackInfo(): failed to get repack info." +
+             ex.getMessageValue());
+  }
+  sqlconn.commit();
   return ret;
 }
 
 common::dataStructures::RepackInfo RelationalDB::getRepackInfo(const std::string& vid) {
-  throw exception::UserError("No repack request for this VID (not yet implemented).");
-  //log::LogContext lc(m_logger);
-  //lc.log(log::WARNING, "RelationalDB::getRepackInfo() dummy implementation !");
-  //common::dataStructures::RepackInfo ret;
-  //return ret;
+  auto result = RelationalDB::fetchRepackInfo(vid);
+  return result.front();
 }
+
+// //------------------------------------------------------------------------------
+// // OStoreDB::getRepackInfo()
+// //------------------------------------------------------------------------------
+// std::list<common::dataStructures::RepackInfo> OStoreDB::getRepackInfo() {
+//   RootEntry re(m_objectStore);
+//   re.fetchNoLock();
+//   RepackIndex ri(m_objectStore);
+//   std::list<common::dataStructures::RepackInfo> ret;
+//   // First, try to get the address of of the repack index lockfree.
+//   try {
+//     ri.setAddress(re.getRepackIndexAddress());
+//   } catch (cta::exception::Exception&) {
+//     return ret;
+//   }
+//   ri.fetchNoLock();
+//   auto rrAddresses = ri.getRepackRequestsAddresses();
+//   for (auto& rra : rrAddresses) {
+//     try {
+//       objectstore::RepackRequest rr(rra.repackRequestAddress, m_objectStore);
+//       rr.fetchNoLock();
+//       ret.push_back(rr.getInfo());
+//     } catch (cta::exception::Exception&) {}
+//   }
+//   return ret;
+// }
+//
+// //------------------------------------------------------------------------------
+// // OStoreDB::getRepackInfo()
+// //------------------------------------------------------------------------------
+// common::dataStructures::RepackInfo OStoreDB::getRepackInfo(const std::string& vid) {
+//   RootEntry re(m_objectStore);
+//   re.fetchNoLock();
+//   RepackIndex ri(m_objectStore);
+//   // First, try to get the address of of the repack index lockfree.
+//   try {
+//     ri.setAddress(re.getRepackIndexAddress());
+//   } catch (cta::exception::Exception&) {
+//     throw exception::UserError("No repack request for this VID (index not present).");
+//   }
+//   ri.fetchNoLock();
+//   auto rrAddresses = ri.getRepackRequestsAddresses();
+//   for (auto& rra : rrAddresses) {
+//     if (rra.vid == vid) {
+//       try {
+//         objectstore::RepackRequest rr(rra.repackRequestAddress, m_objectStore);
+//         rr.fetchNoLock();
+//         if (rr.getInfo().vid != vid) {
+//           throw exception::Exception("In OStoreDB::getRepackInfo(): unexpected vid when reading request");
+//         }
+//         return rr.getInfo();
+//       } catch (cta::exception::Exception&) {}
+//     }
+//   }
+//   throw exception::UserError("No repack request for this VID.");
+// }
+
 
   void RelationalDB::cancelRepack(const std::string &vid, log::LogContext &lc) {
     schedulerdb::Transaction txn(m_connPool);
@@ -1062,6 +1133,8 @@ void RelationalDB::fetchMountInfo(SchedulerDatabase::TapeMountDecisionInfo& tmdi
       }
     }
   }
+  //getting info about sleep disk systems
+  std::unordered_map<std::string, RelationalDB::DiskSleepEntry> diskSystemSleepMap = getActiveSleepDiskSystemNamesToFilter(lc);
   // for now we create a mount per summary row (assuming there would not be
   // the same activity twice with 2 mount policies or 2 different VIDs selected)
   for (const auto& rjsr : rjsr_vector) {
@@ -1094,7 +1167,22 @@ void RelationalDB::fetchMountInfo(SchedulerDatabase::TapeMountDecisionInfo& tmdi
     m.vo = "";                     // The vo is not known here, and will be determined by the caller.
     m.capacityInBytes = 0;         // The capacity is not known here, and will be determined by the caller.
     m.labelFormat = std::nullopt;  // The labelFormat is not known here, and may be determined by the caller.
-    /* not sure what mountPolicyNames is for ???
+
+    auto it = diskSystemSleepMap.find(rjsr.diskSystemName);
+    if (it != diskSystemSleepMap.end()) {
+        const auto &entry = it->second;
+        auto now = static_cast<uint64_t>(::time(nullptr));
+
+        if (now < (entry.timestamp + entry.sleepTime)) {
+            m.sleepingMount = true;
+            m.sleepStartTime = entry.timestamp;
+            m.diskSystemSleptFor = now - entry.timestamp;  // how long it has already slept
+            m.sleepTime = entry.sleepTime;
+        } else {
+          m.sleepingMount = false;
+        }
+    }
+        /* not sure what mountPolicyNames is for ???
     * are we mounting with multiple mount policies in the game ?
     * m.mountPolicyNames = queueMountPolicyNames;
     * sleepInfo - TO BE REVIEWED BEFORE IMPLEMENTING !
@@ -1226,11 +1314,12 @@ uint64_t RelationalDB::insertOrUpdateDiskSleepEntry(
     std::string sql = R"SQL(
         INSERT INTO DISK_SYSTEM_SLEEP_TRACKING (DISK_SYSTEM_NAME, SLEEP_TIME, LAST_UPDATE_TIME)
         VALUES (:DISK_SYSTEM_NAME, :SLEEP_TIME, :LAST_UPDATE_TIME)
-        ON CONFLICT (DISK_SYSTEM_NAME)
-        DO UPDATE SET
-            SLEEP_TIME = EXCLUDED.SLEEP_TIME,
-            LAST_UPDATE_TIME = EXCLUDED.LAST_UPDATE_TIME
+        ON CONFLICT (DISK_SYSTEM_NAME)  DO NOTHING
     )SQL";
+    //    DO UPDATE SET
+    //        SLEEP_TIME = EXCLUDED.SLEEP_TIME,
+    //        LAST_UPDATE_TIME = EXCLUDED.LAST_UPDATE_TIME
+    //)SQL";
 
     auto stmt = txn.getConn().createStmt(sql);
 
@@ -1251,15 +1340,15 @@ std::unordered_map<std::string, RelationalDB::DiskSleepEntry> RelationalDB::getD
   )SQL";
 
   auto stmt = conn.createStmt(sql);
-  auto reader = stmt.executeQuery();
+  auto rset = stmt.executeQuery();
 
   std::unordered_map<std::string, RelationalDB::DiskSleepEntry> sleepEntries;
 
-  while (reader.next()) {
-    std::string name = reader.columnString("DISK_SYSTEM_NAME");
-    uint64_t sleepTime = reader.columnUint64("SLEEP_TIME");
-    uint64_t ts = reader.columnUint64("LAST_UPDATE_TIME");
-    sleepEntries[name] = RelationalDB::DiskSleepEntry(sleepTime, static_cast<time_t>(ts));
+  while (rset.next()) {
+    std::string name = rset.columnString("DISK_SYSTEM_NAME");
+    uint64_t sleepTime = rset.columnUint64("SLEEP_TIME");
+    uint64_t ts = rset.columnUint64("LAST_UPDATE_TIME");
+    sleepEntries[name] = RelationalDB::DiskSleepEntry(sleepTime, ts);
   }
 
   return sleepEntries;
@@ -1291,29 +1380,35 @@ uint64_t RelationalDB::removeDiskSystemSleepEntry(schedulerdb::Transaction &txn,
   return stmt.getNbAffectedRows();
 }
 
-std::vector<std::string> RelationalDB::getActiveSleepDiskSystemNamesToFilter(log::LogContext& logContext) {
-  std::vector<std::string> validDiskNames;
+std::unordered_map<std::string, RelationalDB::DiskSleepEntry> RelationalDB::getActiveSleepDiskSystemNamesToFilter(log::LogContext& logContext) {
   cta::threading::MutexLocker ml(m_diskSystemSleepMutex);
   auto conn = m_connPool.getConn();
   std::unordered_map<std::string, RelationalDB::DiskSleepEntry> diskSystemSleepMap = getDiskSystemSleepStatus(conn);
   conn.commit();
   if (diskSystemSleepMap.empty()) {
-    return validDiskNames;
+    return diskSystemSleepMap;
   }
-  uint64_t currentTime = std::chrono::system_clock::to_time_t(std::chrono::system_clock::now());
+  uint64_t currentTime = static_cast<uint64_t>(std::chrono::system_clock::to_time_t(
+    std::chrono::system_clock::now()));
 
-  validDiskNames.reserve(diskSystemSleepMap.size());
+  //validDiskNames.reserve(diskSystemSleepMap.size());
   std::vector<std::string> expiredDiskSystems;
   auto it = diskSystemSleepMap.begin();
   while (it != diskSystemSleepMap.end()) {
     const std::string& diskName = it->first;
     const RelationalDB::DiskSleepEntry& entry = it->second;
+    cta::log::ScopedParamContainer(logContext)
+              .add("currentTime", currentTime)
+              .add("entry.timestamp", entry.timestamp)
+              .add("entry.sleepTime", entry.sleepTime)
+              .add("currentTime-entry.timestamp", currentTime - entry.timestamp)
+              .log(cta::log::DEBUG,
+                   "In RelationalDB::getActiveSleepDiskSystemNamesToFilter(): Checking sleeping disk systems.");
     if (currentTime - entry.timestamp > entry.sleepTime) {
       // erase; iterator is invalidated, but the next one is returned
       it = diskSystemSleepMap.erase(it);
       expiredDiskSystems.push_back(diskName);
     } else {
-      validDiskNames.push_back(diskName);
       ++it;
     }
   }
@@ -1334,7 +1429,8 @@ std::vector<std::string> RelationalDB::getActiveSleepDiskSystemNamesToFilter(log
     }
   }
 
-  return validDiskNames;
+  //return validDiskNames;
+  return diskSystemSleepMap;
 }
 
 }  // namespace cta

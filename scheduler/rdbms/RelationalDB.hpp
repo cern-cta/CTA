@@ -208,7 +208,6 @@ public:
 
   bool repackExists() override;
   std::list<common::dataStructures::RepackInfo> getRepackInfo() override;
-
   common::dataStructures::RepackInfo getRepackInfo(const std::string& vid) override;
 
   void cancelRepack(const std::string& vid, log::LogContext& lc) override;
@@ -273,9 +272,9 @@ public:
    */
   struct DiskSleepEntry {
     uint64_t sleepTime;
-    time_t timestamp;
+    uint64_t timestamp;
     DiskSleepEntry() : sleepTime(0), timestamp(0) {}
-    DiskSleepEntry(uint64_t st, time_t ts) : sleepTime(st), timestamp(ts) {}
+    DiskSleepEntry(uint64_t st, uint64_t ts) : sleepTime(st), timestamp(ts) {}
   };
 
   //std::unordered_map <std::string, DiskSleepEntry> m_diskSystemSleepCacheMap;
@@ -287,7 +286,7 @@ public:
    *
    * @return list of diskSystemName strings
    */
-  std::vector<std::string> getActiveSleepDiskSystemNamesToFilter(log::LogContext& logContext);
+  std::unordered_map<std::string, RelationalDB::DiskSleepEntry> getActiveSleepDiskSystemNamesToFilter(log::LogContext& logContext);
   uint64_t insertOrUpdateDiskSleepEntry(
           schedulerdb::Transaction &txn,
           const std::string &diskSystemName,
@@ -310,7 +309,7 @@ private:
   void fetchMountInfo(SchedulerDatabase::TapeMountDecisionInfo& tmdi,
                       SchedulerDatabase::PurposeGetMountInfo purpose,
                       log::LogContext& lc);
-
+  std::list<common::dataStructures::RepackInfo> fetchRepackInfo(const std::string& vid);
   std::string m_ownerId;
   rdbms::ConnPool m_connPool;
   catalogue::Catalogue& m_catalogue;

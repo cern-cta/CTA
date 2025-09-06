@@ -59,7 +59,12 @@ RetrieveMount::getNextJobBatch(uint64_t filesRequested, uint64_t bytesRequested,
   std::vector<std::unique_ptr<SchedulerDatabase::RetrieveJob>> retVector;
   cta::log::ScopedParamContainer params(logContext);
   try {
-    std::vector<std::string> noSpaceDiskSystemNames = m_RelationalDB.getActiveSleepDiskSystemNamesToFilter(logContext);
+    auto noSpaceDiskSystemNamesMap = m_RelationalDB.getActiveSleepDiskSystemNamesToFilter(logContext);
+    std::vector<std::string> noSpaceDiskSystemNames;
+    noSpaceDiskSystemNames.reserve(noSpaceDiskSystemNamesMap.size());
+    for (const auto &pair : noSpaceDiskSystemNamesMap) {
+        noSpaceDiskSystemNames.push_back(pair.first);
+    }
     auto [queuedJobs, nrows] = postgres::RetrieveJobQueueRow::moveJobsToDbActiveQueue(txn,
                                                                                       queriedJobStatus,
                                                                                       mountInfo,
@@ -259,8 +264,7 @@ void RetrieveMount::setJobBatchTransferred(std::list<std::unique_ptr<SchedulerDa
       diskSpaceReservationRequest.addRequest(rdbJob->diskSystemName.value(), rdbJob->archiveFile.fileSize);
     }
     // Once we implement Repack we can compare mountInfo.vo with the defaultRepack VO of the scheduler
-    bool isRepackMount = false;
-    if (isRepackMount) {
+    if (m_isRepack) {
       // If the job is from a repack subrequest, we change its status (to report
       // for repack success). Queueing will be done in batch in
       jobIDs_repackSuccess.push_back(std::to_string(rdbJob->jobID));
@@ -310,7 +314,7 @@ void RetrieveMount::putQueueToSleep(const std::string &diskSystemName,
 
     } catch (const exception::Exception &ex) {
       logContext.log(cta::log::ERR,
-             "In RetrieveMount::updateRetrieveJobStatusWrapper(): Exception while updating job status. Aborting "
+             "In RetrieveMount::putQueueToSleep(): Exception while updating job status. Aborting "
              "transaction. " +
              ex.getMessageValue());
       txn.abort();
