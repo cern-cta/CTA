@@ -344,8 +344,8 @@ protected:
 
 class ScopedSharedLock: public ScopedLock {
 public:
-  ScopedSharedLock() {}
-  explicit ScopedSharedLock(ObjectOpsBase& oo) : ScopedSharedLock() {
+  ScopedSharedLock() = default;
+  explicit ScopedSharedLock(ObjectOpsBase& oo) {
     lock(oo);
   }
 
@@ -378,9 +378,9 @@ public:
 
 class ScopedExclusiveLock: public ScopedLock {
 public:
-  ScopedExclusiveLock() {}
+  ScopedExclusiveLock() = default;
 
-  ScopedExclusiveLock(ObjectOpsBase & oo, uint64_t timeout_us = 0) : ScopedExclusiveLock() {
+  ScopedExclusiveLock(ObjectOpsBase & oo, uint64_t timeout_us = 0) {
     lock(oo, timeout_us);
   }
 
