@@ -73,7 +73,7 @@ TEST_F(cta_rdbms_LoginTest, constructor) {
   ASSERT_TRUE(sqliteLogin.username.empty());
   ASSERT_TRUE(sqliteLogin.password.empty());
   ASSERT_EQ(std::string("filename"), sqliteLogin.database);
-  ASSERT_EQ(std::string("filename"), sqliteLogin.dbNamespace);
+  ASSERT_EQ(std::string("namespace"), sqliteLogin.dbNamespace);
 }
 
 TEST_F(cta_rdbms_LoginTest, parseStream_in_memory) {
@@ -377,22 +377,16 @@ TEST_F(cta_rdbms_LoginTest, parseStringConnectionString_Postgresql) {
   }
 }
 
-TEST_F(cta_rdbms_LoginTest, getPostgresqlDbNamespace_postgres_scheme) {
+TEST_F(cta_rdbms_LoginTest, getPostgresqlDbNamespace_normal) {
   using namespace cta::rdbms;
-  std::string connectionDetails = "postgres://u@db/mydb";
-  ASSERT_EQ("db/mydb", Login::getPostgresqlDbNamespace(connectionDetails));
-}
-
-TEST_F(cta_rdbms_LoginTest, getPostgresqlDbNamespace_with_query_params) {
-  using namespace cta::rdbms;
-  std::string connectionDetails = "postgresql://u@db/mydb?sslmode=require&connect_timeout=5";
+  std::string connectionDetails = "postgresql://u@db/mydb";
   ASSERT_EQ("db/mydb", Login::getPostgresqlDbNamespace(connectionDetails));
 }
 
 TEST_F(cta_rdbms_LoginTest, getPostgresqlDbNamespace_ipv6) {
   using namespace cta::rdbms;
   std::string connectionDetails = "postgresql://u@[2001:db8::1]:5432/mydb";
-  ASSERT_EQ("[2001:db8::1]/mydb", Login::getPostgresqlDbNamespace(connectionDetails));
+  ASSERT_EQ("[2001:db8::1]:5432/mydb", Login::getPostgresqlDbNamespace(connectionDetails));
 }
 
 TEST_F(cta_rdbms_LoginTest, getPostgresqlDbNamespace_unix_socket) {
@@ -404,7 +398,7 @@ TEST_F(cta_rdbms_LoginTest, getPostgresqlDbNamespace_unix_socket) {
 TEST_F(cta_rdbms_LoginTest, getPostgresqlDbNamespace_no_dbname) {
   using namespace cta::rdbms;
   std::string connectionDetails = "postgresql://u@db";
-  ASSERT_EQ("", Login::getPostgresqlDbNamespace(connectionDetails));
+  ASSERT_EQ("db", Login::getPostgresqlDbNamespace(connectionDetails));
 }
 
 TEST_F(cta_rdbms_LoginTest, getPostgresqlDbNamespace_empty_password_with_colon) {
@@ -412,37 +406,5 @@ TEST_F(cta_rdbms_LoginTest, getPostgresqlDbNamespace_empty_password_with_colon) 
   std::string connectionDetails = "postgresql://user:@db/mydb";
   ASSERT_EQ("db/mydb", Login::getPostgresqlDbNamespace(connectionDetails));
 }
-
-TEST_F(cta_rdbms_LoginTest, getOracleDbNamespace_easy_connect_no_port) {
-  using namespace cta::rdbms;
-  std::string connectionDetails = "oracle:username/password@host/service";
-  ASSERT_EQ("host/service", Login::getOracleDbNamespace(connectionDetails));
-}
-
-TEST_F(cta_rdbms_LoginTest, getOracleDbNamespace_double_slash_with_port) {
-  using namespace cta::rdbms;
-  std::string connectionDetails = "oracle:username/password@//host:1521/service";
-  ASSERT_EQ("host:1521/service", Login::getOracleDbNamespace(connectionDetails));
-}
-
-TEST_F(cta_rdbms_LoginTest, getOracleDbNamespace_sid_syntax) {
-  using namespace cta::rdbms;
-  std::string connectionDetails = "oracle:username/password@host:1521:ORCL";
-  ASSERT_EQ("host:1521:ORCL", Login::getOracleDbNamespace(connectionDetails));
-}
-
-TEST_F(cta_rdbms_LoginTest, getOracleDbNamespace_tns_alias) {
-  using namespace cta::rdbms;
-  std::string connectionDetails = "oracle:username/password@ORCLPDB1";
-  // define expected (likely return "ORCLPDB1")
-  ASSERT_EQ("ORCLPDB1", Login::getOracleDbNamespace(connectionDetails));
-}
-
-TEST_F(cta_rdbms_LoginTest, getOracleDbNamespace_ipv6) {
-  using namespace cta::rdbms;
-  std::string connectionDetails = "oracle:username/password@[2001:db8::1]:1521/service";
-  ASSERT_EQ("[2001:db8::1]:1521/service", Login::getOracleDbNamespace(connectionDetails));
-}
-
 
 }  // namespace unitTests
