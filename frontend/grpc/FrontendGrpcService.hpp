@@ -15,6 +15,7 @@
 #include "cta_frontend.grpc.pb.h"
 #include "frontend/common/FrontendService.hpp"
 #include "common/JwkCache.hpp"
+#include "frontend/common/AdminCmd.hpp"
 
 using cta::Scheduler;
 using cta::catalogue::Catalogue;
@@ -48,6 +49,9 @@ public:
   Status Retrieve(::grpc::ServerContext* context, const cta::xrd::Request* request, cta::xrd::Response* response);
   Status CancelRetrieve(::grpc::ServerContext* context, const cta::xrd::Request* request, cta::xrd::Response* response);
   Status Delete(::grpc::ServerContext* context, const cta::xrd::Request* request, cta::xrd::Response* response);
+  // Non-streaming cta-admin commands interface
+  Status Admin(::grpc::ServerContext* context, const cta::xrd::Request* request, cta::xrd::Response* response);
+
 private:
   Status processGrpcRequest(const cta::xrd::Request* request, cta::xrd::Response* response, cta::log::LogContext &lc, const cta::common::dataStructures::SecurityIdentity& clientIdentity) const;
   std::pair<Status, std::optional<cta::common::dataStructures::SecurityIdentity>>

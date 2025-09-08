@@ -9,6 +9,7 @@
 #include <algorithm>
 
 #include "cta_frontend.pb.h"
+#include "cta_admin.pb.h"
 
 namespace cta::cmdline {
 
@@ -16,7 +17,8 @@ class RepackLsResponseStream : public CtaAdminResponseStream {
 public:
   RepackLsResponseStream(cta::catalogue::Catalogue& catalogue,
                          cta::Scheduler& scheduler,
-                         const frontend::AdminCmdStream& requestMsg);
+                         const std::string instanceName,
+                         const admin::AdminCmd& adminCmd);
 
   bool isDone() override;
   cta::xrd::Data next() override;
@@ -29,12 +31,12 @@ private:
 
 RepackLsResponseStream::RepackLsResponseStream(cta::catalogue::Catalogue& catalogue,
                                                cta::Scheduler& scheduler,
-                                               const frontend::AdminCmdStream& requestMsg)
-    : CtaAdminResponseStream(catalogue, scheduler, requestMsg.getInstanceName()) {
-  const admin::AdminCmd& admincmd = requestMsg.getAdminCmd();
+                                               const std::string instanceName,
+                                               const admin::AdminCmd& adminCmd)
+    : CtaAdminResponseStream(catalogue, scheduler, instanceName) {
   using namespace cta::admin;
 
-  cta::frontend::AdminCmdOptions request(admincmd);
+  cta::frontend::AdminCmdOptions request(adminCmd);
 
   // Get optional VID parameter
   bool has_any = false;

@@ -11,6 +11,7 @@
 #include "common/dataStructures/DriveStatusSerDeser.hpp"
 
 #include "cta_frontend.pb.h"
+#include "cta_admin.pb.h"
 
 namespace cta::cmdline {
 
@@ -18,7 +19,8 @@ class DriveLsResponseStream : public CtaAdminResponseStream {
 public:
   DriveLsResponseStream(cta::catalogue::Catalogue& catalogue,
                         cta::Scheduler& scheduler,
-                        const frontend::AdminCmdStream& requestMsg,
+                        const std::string instanceName,
+                        const admin::AdminCmd& adminCmd,
                         cta::log::LogContext& lc);
 
   bool isDone() override;
@@ -36,15 +38,15 @@ private:
 
 DriveLsResponseStream::DriveLsResponseStream(cta::catalogue::Catalogue& catalogue,
                                              cta::Scheduler& scheduler,
-                                             const frontend::AdminCmdStream& requestMsg,
+                                             const std::string instanceName,
+                                             const admin::AdminCmd& adminCmd,
                                              cta::log::LogContext& lc)
-    : CtaAdminResponseStream(catalogue, scheduler, requestMsg.getInstanceName()),
+    : CtaAdminResponseStream(catalogue, scheduler, instanceName),
       m_lc(lc),
       m_listAllDrives(false) {
-  const admin::AdminCmd& admincmd = requestMsg.getAdminCmd();
   using namespace cta::admin;
 
-  cta::frontend::AdminCmdOptions request(admincmd);
+  cta::frontend::AdminCmdOptions request(adminCmd);
   bool has_any = false;
 
   // Get drives and drive configs
