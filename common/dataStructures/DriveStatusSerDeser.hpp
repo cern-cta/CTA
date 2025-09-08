@@ -22,7 +22,7 @@
 
 namespace cta::admin {
 
-common::dataStructures::DriveStatus ProtobufToDriveStatus(DriveLsItem::DriveStatus driveStatus) {
+inline common::dataStructures::DriveStatus ProtobufToDriveStatus(DriveLsItem::DriveStatus driveStatus) {
   using namespace common::dataStructures;
 
   switch(driveStatus) {
@@ -43,7 +43,7 @@ common::dataStructures::DriveStatus ProtobufToDriveStatus(DriveLsItem::DriveStat
   }
 }
 
-DriveLsItem::DriveStatus DriveStatusToProtobuf(common::dataStructures::DriveStatus driveStatus) {
+inline DriveLsItem::DriveStatus DriveStatusToProtobuf(common::dataStructures::DriveStatus driveStatus) {
   using namespace common::dataStructures;
 
   switch(driveStatus) {

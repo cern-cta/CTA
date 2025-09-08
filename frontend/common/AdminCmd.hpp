@@ -28,7 +28,8 @@ class AdminCmd : public AdminCmdOptions {
 public:
   AdminCmd(const frontend::FrontendService& frontendService,
     const common::dataStructures::SecurityIdentity& clientIdentity,
-    const admin::AdminCmd& adminCmd);
+    const admin::AdminCmd& adminCmd,
+    const bool check_authorized = true);
 
   ~AdminCmd() = default;
 

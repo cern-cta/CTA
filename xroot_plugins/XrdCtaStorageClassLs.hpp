@@ -37,7 +37,10 @@ StorageClassLsStream::StorageClassLsStream(const frontend::AdminCmdStream& reque
                                            cta::Scheduler& scheduler)
     : XrdCtaStream(catalogue,
                    scheduler,
-                   std::make_unique<cta::cmdline::StorageClassLsResponseStream>(catalogue, scheduler, requestMsg)) {
+                   std::make_unique<cta::cmdline::StorageClassLsResponseStream>(catalogue,
+                                                                                scheduler,
+                                                                                requestMsg.getInstanceName(),
+                                                                                requestMsg.getAdminCmd())) {
   XrdSsiPb::Log::Msg(XrdSsiPb::Log::DEBUG, LOG_SUFFIX, " constructor");
 }
 
