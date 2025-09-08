@@ -39,7 +39,11 @@ DriveLsStream::DriveLsStream(const frontend::AdminCmdStream& requestMsg,
                              cta::log::LogContext& lc)
     : XrdCtaStream(catalogue,
                    scheduler,
-                   std::make_unique<cta::cmdline::DriveLsResponseStream>(catalogue, scheduler, requestMsg, lc)) {
+                   std::make_unique<cta::cmdline::DriveLsResponseStream>(catalogue,
+                                                                         scheduler,
+                                                                         requestMsg.getInstanceName(),
+                                                                         requestMsg.getAdminCmd(),
+                                                                         lc)) {
   XrdSsiPb::Log::Msg(XrdSsiPb::Log::DEBUG, LOG_SUFFIX, " constructor");
 }
 

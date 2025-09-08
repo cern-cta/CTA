@@ -18,6 +18,13 @@
 ####################################
 cta.experimental.telemetry.enabled false
 
+# Disable admin authorization check for gRPC calls
+# WARNING: Setting this to true disables security checks - use only for testing/development
+# cta.experimental.grpc.bypass_admin_auth_check.enabled false
+
+# Disable admin commands completely
+# cta.experimental.grpc.cta_admin_commands.enabled false
+
 ####################################
 # GENERAL OPTIONS (required)
 ####################################
@@ -105,6 +112,7 @@ cta.log.url file:/var/log/cta/cta-frontend.log
 
 # gRPC number of threads
 #grpc.numberofthreads nthreads
+
 
 ####################################
 # CTA Scheduler DB cache timeout options

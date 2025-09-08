@@ -8,6 +8,7 @@
 #include "common/checksum/ChecksumBlobSerDeser.hpp"
 
 #include "cta_frontend.pb.h"
+#include "cta_admin.pb.h"
 
 namespace cta::cmdline {
 
@@ -15,7 +16,8 @@ class ActivityMountRuleLsResponseStream : public CtaAdminResponseStream {
 public:
   ActivityMountRuleLsResponseStream(cta::catalogue::Catalogue& catalogue,
                                     cta::Scheduler& scheduler,
-                                    const frontend::AdminCmdStream& requestMsg);
+                                    const std::string instanceName,
+                                    const admin::AdminCmd& adminCmd);
 
   bool isDone() override;
   cta::xrd::Data next() override;
@@ -26,8 +28,9 @@ private:
 
 ActivityMountRuleLsResponseStream::ActivityMountRuleLsResponseStream(cta::catalogue::Catalogue& catalogue,
                                                                      cta::Scheduler& scheduler,
-                                                                     const frontend::AdminCmdStream& requestMsg)
-    : CtaAdminResponseStream(catalogue, scheduler, requestMsg.getInstanceName()),
+                                                                     const std::string instanceName,
+                                                                     const admin::AdminCmd& adminCmd)
+    : CtaAdminResponseStream(catalogue, scheduler, instanceName),
       m_activityMountRules(catalogue.RequesterActivityMountRule()->getRequesterActivityMountRules()) {}
 
 bool ActivityMountRuleLsResponseStream::isDone() {

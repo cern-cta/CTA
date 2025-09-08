@@ -31,14 +31,20 @@ grpc:
       logFormat: json
 
     tls:
-      enabled: true
+      enabled: false
       serverKey: /etc/grpc-certs/key/server.key
       serverCert: /etc/grpc-certs/cert/server.crt
       caCert: ""
 
     jwtAuth:
-      enabled: true
+      enabled: false
       jwksUri: http://auth-keycloak:8080/realms/master/protocol/openid-connect/certs
+
+    experimental:
+        bypassAdminAuthCheck:
+          enabled: true
+        ctaAdminCommands:
+          enabled: true
 
     telemetry:
       enabled: false

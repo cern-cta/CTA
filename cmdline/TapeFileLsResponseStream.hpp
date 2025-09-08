@@ -8,6 +8,7 @@
 #include "common/exception/UserError.hpp"
 
 #include "cta_frontend.pb.h"
+#include "cta_admin.pb.h"
 
 namespace cta::cmdline {
 
@@ -15,7 +16,8 @@ class TapeFileLsResponseStream : public CtaAdminResponseStream {
 public:
   TapeFileLsResponseStream(cta::catalogue::Catalogue& catalogue,
                            cta::Scheduler& scheduler,
-                           const frontend::AdminCmdStream& requestMsg);
+                           const std::string instanceName,
+                           const admin::AdminCmd& adminCmd);
 
   bool isDone() override;
   cta::xrd::Data next() override;
@@ -34,12 +36,12 @@ private:
 
 TapeFileLsResponseStream::TapeFileLsResponseStream(cta::catalogue::Catalogue& catalogue,
                                                    cta::Scheduler& scheduler,
-                                                   const frontend::AdminCmdStream& requestMsg)
-    : CtaAdminResponseStream(catalogue, scheduler, requestMsg.getInstanceName()) {
-  const admin::AdminCmd& admincmd = requestMsg.getAdminCmd();
+                                                   const std::string instanceName,
+                                                   const admin::AdminCmd& adminCmd)
+    : CtaAdminResponseStream(catalogue, scheduler, instanceName) {
   using namespace cta::admin;
 
-  cta::frontend::AdminCmdOptions request(admincmd);
+  cta::frontend::AdminCmdOptions request(adminCmd);
   bool has_any = false;
 
   cta::catalogue::TapeFileSearchCriteria searchCriteria;

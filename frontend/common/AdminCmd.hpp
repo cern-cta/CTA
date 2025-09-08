@@ -29,8 +29,9 @@ enum class AdminCmdStatus { SUCCESS, USER_ERROR, EXCEPTION };
 class AdminCmd : public AdminCmdOptions {
 public:
   AdminCmd(const frontend::FrontendService& frontendService,
-    const common::dataStructures::SecurityIdentity& clientIdentity,
-    const admin::AdminCmd& adminCmd);
+           const common::dataStructures::SecurityIdentity& clientIdentity,
+           const admin::AdminCmd& adminCmd,
+           const bool bypassAdminCheck = false);
 
   ~AdminCmd() = default;
 

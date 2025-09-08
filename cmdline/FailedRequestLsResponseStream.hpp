@@ -9,6 +9,7 @@
 #include <list>
 
 #include "cta_frontend.pb.h"
+#include "cta_admin.pb.h"
 
 namespace cta::cmdline {
 
@@ -16,7 +17,8 @@ class FailedRequestLsResponseStream : public CtaAdminResponseStream {
 public:
   FailedRequestLsResponseStream(cta::catalogue::Catalogue& catalogue,
                                 cta::Scheduler& scheduler,
-                                const frontend::AdminCmdStream& requestMsg,
+                                const std::string instanceName,
+                                const admin::AdminCmd& adminCmd,
                                 SchedulerDatabase& schedDb,
                                 cta::log::LogContext& lc);
 
@@ -43,18 +45,18 @@ private:
 
 FailedRequestLsResponseStream::FailedRequestLsResponseStream(cta::catalogue::Catalogue& catalogue,
                                                              cta::Scheduler& scheduler,
-                                                             const frontend::AdminCmdStream& requestMsg,
+                                                             const std::string instanceName,
+                                                             const admin::AdminCmd& adminCmd,
                                                              SchedulerDatabase& schedDb,
                                                              cta::log::LogContext& lc)
-    : CtaAdminResponseStream(catalogue, scheduler, requestMsg.getInstanceName()),
+    : CtaAdminResponseStream(catalogue, scheduler, instanceName),
       m_schedDb(schedDb),
       m_lc(lc),
       m_isSummary(false),
       m_isLogEntries(false) {
-  const admin::AdminCmd& admincmd = requestMsg.getAdminCmd();
   using namespace cta::admin;
 
-  cta::frontend::AdminCmdOptions request(admincmd);
+  cta::frontend::AdminCmdOptions request(adminCmd);
 
   // Parse options
   m_isSummary = request.has_flag(OptionBoolean::SUMMARY);
