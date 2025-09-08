@@ -54,7 +54,6 @@ install (FILES cta-frontend-grpc.conf.example DESTINATION ${CMAKE_INSTALL_SYSCON
 
 ##
 ## cta-admin-grpc
-## Eventually this will be unified with the streaming commands implementation and renamed to cta-admin-grpc
 ##
 include_directories(${XRD_SSI_PB_DIR}/eos_cta/include)
 
@@ -103,26 +102,3 @@ else()
   target_link_libraries(cta-frontend-async-grpc
           ctascheduler ctacommon ctatapedaemoncommon ctaobjectstore ctacatalogue gssapi_krb5 ctagrpc)
 endif()
-
-##
-## cta-frontend-grpc-stream-client
-##
-
-add_executable(cta-admin-grpc-stream-client
-  CtaAdminGrpcCmdDeprecated.cpp
-  ClientTapeLsRequestHandler.cpp
-  ClientNegotiationRequestHandler.cpp
-  utils.cpp
-  ${PROJECT_SOURCE_DIR}/cmdline/CtaAdminTextFormatter.cpp
-  ${PROJECT_SOURCE_DIR}/cmdline/CtaAdminCmdParser.cpp
-)
-
-if(CTA_USE_PGSCHED)
-  target_link_libraries(cta-admin-grpc-stream-client
-          ctascheduler ctacommon ctatapedaemoncommon ctacatalogue gssapi_krb5 ctagrpc)
-else()
-  target_link_libraries(cta-admin-grpc-stream-client
-          ctascheduler ctacommon ctatapedaemoncommon ctaobjectstore ctacatalogue gssapi_krb5 ctagrpc)
-endif()
-
-# add_subdirectory(callback_api)
