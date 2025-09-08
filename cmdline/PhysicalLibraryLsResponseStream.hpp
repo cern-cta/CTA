@@ -5,6 +5,7 @@
 #include <list>
 
 #include "cta_frontend.pb.h"
+#include "cta_admin.pb.h"
 
 namespace cta::cmdline {
 
@@ -12,7 +13,8 @@ class PhysicalLibraryLsResponseStream : public CtaAdminResponseStream {
 public:
   PhysicalLibraryLsResponseStream(cta::catalogue::Catalogue& catalogue,
                                   cta::Scheduler& scheduler,
-                                  const frontend::AdminCmdStream& requestMsg);
+                                  const std::string instanceName,
+                                  const admin::AdminCmd& adminCmd);
 
   bool isDone() override;
   cta::xrd::Data next() override;
@@ -23,8 +25,9 @@ private:
 
 PhysicalLibraryLsResponseStream::PhysicalLibraryLsResponseStream(cta::catalogue::Catalogue& catalogue,
                                                                  cta::Scheduler& scheduler,
-                                                                 const frontend::AdminCmdStream& requestMsg)
-    : CtaAdminResponseStream(catalogue, scheduler, requestMsg.getInstanceName()),
+                                                                 const std::string instanceName,
+                                                                 const admin::AdminCmd& adminCmd)
+    : CtaAdminResponseStream(catalogue, scheduler, instanceName),
       m_physicalLibraries(catalogue.PhysicalLibrary()->getPhysicalLibraries()) {}
 
 bool PhysicalLibraryLsResponseStream::isDone() {

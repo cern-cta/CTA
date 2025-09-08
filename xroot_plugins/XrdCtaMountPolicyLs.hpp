@@ -37,7 +37,10 @@ MountPolicyLsStream::MountPolicyLsStream(const frontend::AdminCmdStream& request
                                          cta::Scheduler& scheduler)
     : XrdCtaStream(catalogue,
                    scheduler,
-                   std::make_unique<cta::cmdline::MountPolicyLsResponseStream>(catalogue, scheduler, requestMsg)) {
+                   std::make_unique<cta::cmdline::MountPolicyLsResponseStream>(catalogue,
+                                                                               scheduler,
+                                                                               requestMsg.getInstanceName(),
+                                                                               requestMsg.getAdminCmd())) {
   XrdSsiPb::Log::Msg(XrdSsiPb::Log::DEBUG, LOG_SUFFIX, " constructor");
 }
 

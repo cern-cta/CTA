@@ -27,7 +27,8 @@ namespace cta::frontend {
 
 AdminCmd::AdminCmd(const frontend::FrontendService& frontendService,
                    const common::dataStructures::SecurityIdentity& clientIdentity,
-                   const admin::AdminCmd& adminCmd)
+                   const admin::AdminCmd& adminCmd,
+                   const bool check_authorized)
     : AdminCmdOptions(adminCmd),
       m_adminCmd(adminCmd),
       m_catalogue(frontendService.getCatalogue()),
@@ -42,7 +43,8 @@ AdminCmd::AdminCmd(const frontend::FrontendService& frontendService,
   m_lc.pushOrReplace({"user", m_cliIdentity.username + "@" + m_cliIdentity.host});
 
   // Check that the user is authorized
-  m_scheduler.authorizeAdmin(m_cliIdentity, m_lc);
+  if (check_authorized)
+    m_scheduler.authorizeAdmin(m_cliIdentity, m_lc);
 }
 
 xrd::Response AdminCmd::process() {

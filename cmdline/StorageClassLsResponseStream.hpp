@@ -6,6 +6,7 @@
 #include <list>
 
 #include "cta_frontend.pb.h"
+#include "cta_admin.pb.h"
 
 namespace cta::cmdline {
 
@@ -13,7 +14,8 @@ class StorageClassLsResponseStream : public CtaAdminResponseStream {
 public:
   StorageClassLsResponseStream(cta::catalogue::Catalogue& catalogue,
                                cta::Scheduler& scheduler,
-                               const frontend::AdminCmdStream& requestMsg);
+                               const std::string instanceName,
+                               const admin::AdminCmd& adminCmd);
 
   bool isDone() override;
   cta::xrd::Data next() override;
@@ -24,9 +26,10 @@ private:
 
 StorageClassLsResponseStream::StorageClassLsResponseStream(cta::catalogue::Catalogue& catalogue,
                                                            cta::Scheduler& scheduler,
-                                                           const frontend::AdminCmdStream& requestMsg)
-    : CtaAdminResponseStream(catalogue, scheduler, requestMsg.getInstanceName()) {
-  cta::frontend::AdminCmdOptions request(requestMsg.getAdminCmd());
+                                                           const std::string instanceName,
+                                                           const admin::AdminCmd& adminCmd)
+    : CtaAdminResponseStream(catalogue, scheduler, instanceName) {
+  cta::frontend::AdminCmdOptions request(adminCmd);
 
   std::optional<std::string> storageClassName = request.getOptional(cta::admin::OptionString::STORAGE_CLASS);
 

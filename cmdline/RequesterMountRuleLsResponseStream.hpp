@@ -7,6 +7,7 @@
 #include <list>
 
 #include "cta_frontend.pb.h"
+#include "cta_admin.pb.h"
 
 namespace cta::cmdline {
 
@@ -14,7 +15,8 @@ class RequesterMountRuleLsResponseStream : public CtaAdminResponseStream {
 public:
   RequesterMountRuleLsResponseStream(cta::catalogue::Catalogue& catalogue,
                                      cta::Scheduler& scheduler,
-                                     const frontend::AdminCmdStream& admincmd);
+                                     const std::string instanceName,
+                                     const admin::AdminCmd& adminCmd);
   bool isDone() override;
   cta::xrd::Data next() override;
 
@@ -24,8 +26,9 @@ private:
 
 RequesterMountRuleLsResponseStream::RequesterMountRuleLsResponseStream(cta::catalogue::Catalogue& catalogue,
                                                                        cta::Scheduler& scheduler,
-                                                                       const frontend::AdminCmdStream& admincmd)
-    : CtaAdminResponseStream(catalogue, scheduler, admincmd.getInstanceName()),
+                                                                       const std::string instanceName,
+                                                                       const admin::AdminCmd& adminCmd)
+    : CtaAdminResponseStream(catalogue, scheduler, instanceName),
       m_requesterMountRules(catalogue.RequesterMountRule()->getRequesterMountRules()) {}
 
 bool RequesterMountRuleLsResponseStream::isDone() {

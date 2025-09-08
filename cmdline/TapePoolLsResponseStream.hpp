@@ -7,6 +7,7 @@
 #include <list>
 
 #include "cta_frontend.pb.h"
+#include "cta_admin.pb.h"
 
 namespace cta::cmdline {
 
@@ -14,7 +15,8 @@ class TapePoolLsResponseStream : public CtaAdminResponseStream {
 public:
   TapePoolLsResponseStream(cta::catalogue::Catalogue& catalogue,
                            cta::Scheduler& scheduler,
-                           const frontend::AdminCmdStream& requestMsg);
+                           const std::string instanceName,
+                           const admin::AdminCmd& adminCmd);
 
   bool isDone() override;
   cta::xrd::Data next() override;
@@ -27,9 +29,10 @@ private:
 
 TapePoolLsResponseStream::TapePoolLsResponseStream(cta::catalogue::Catalogue& catalogue,
                                                    cta::Scheduler& scheduler,
-                                                   const frontend::AdminCmdStream& requestMsg)
-    : CtaAdminResponseStream(catalogue, scheduler, requestMsg.getInstanceName()),
-      m_tapePools(buildTapePoolList(requestMsg.getAdminCmd())) {}
+                                                   const std::string instanceName,
+                                                   const admin::AdminCmd& adminCmd)
+    : CtaAdminResponseStream(catalogue, scheduler, instanceName),
+      m_tapePools(buildTapePoolList(adminCmd)) {}
 
 std::list<cta::catalogue::TapePool> TapePoolLsResponseStream::buildTapePoolList(const admin::AdminCmd& admincmd) {
   cta::frontend::AdminCmdOptions request(admincmd);
