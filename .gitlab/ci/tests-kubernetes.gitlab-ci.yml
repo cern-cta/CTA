@@ -72,7 +72,7 @@
     - EXTRA_SPAWN_ARGS="--cta-config ${DEFAULT_CTA_VALUES_FILE} --eos-config ${DEFAULT_EOS_VALUES_FILE} ${EXTRA_SPAWN_ARGS}"
     # Keep the namespace name under 64 characters;
     # Otherwise the eos mgm fqdn becomes too long and things start failing
-    - NAMESPACE="${CI_JOB_NAME_SLUG:0:18}-${CI_PIPELINE_ID}"
+    - NAMESPACE="${CI_JOB_NAME_SLUG:0:18}-${CI_JOB_ID}"
     # Set up the additional arguments array to pass to the run_systemtest.sh script
     - extra_args=($EXTRA_ARGS)
     - if [[ -n "${EXTRA_SPAWN_ARGS}" ]]; then extra_args+=(--spawn-options "${EXTRA_SPAWN_ARGS}"); fi
@@ -90,7 +90,7 @@
                           ${EXTRA_RUN_ARGS}
   after_script:
     # Repeat the namespace declaration here as the after_script does not have access to previously exported variables
-    - NAMESPACE="${CI_JOB_NAME_SLUG:0:18}-${CI_PIPELINE_ID}"
+    - NAMESPACE="${CI_JOB_NAME_SLUG:0:18}-${CI_JOB_ID}"
     # This also gets called if the job is cancelled to ensure we properly clean up after ourselves
     - cd continuousintegration/orchestration/
     - ./delete_instance.sh --namespace ${NAMESPACE}
@@ -225,7 +225,7 @@ stress-test:
     - when: manual
       allow_failure: true # Otherwise this blocks the pipeline
   variables:
-    NAMESPACE: stress-${CI_COMMIT_SHORT_SHA}-${CI_PIPELINE_ID}
+    NAMESPACE: stress-${CI_JOB_ID}
     # Passed to the create_instance.sh script verbatim
     EXTRA_ARGS: ""
     EXTRA_SPAWN_ARGS: ""

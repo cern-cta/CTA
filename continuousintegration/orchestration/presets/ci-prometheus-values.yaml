@@ -101,9 +101,6 @@ serverFiles:
       - record: ci_pod_memory_usage_bytes
         expr: |
           sum by (instance, pod, namespace) (container_memory_usage_bytes{container="", pod=~"cta.*|eos.*"})
-      - record: ci_pod_fs_usage_bytes
-        expr: |
-          sum by (instance, pod, namespace) (container_fs_usage_bytes{pod=~"cta.*|eos.*"})
       - record: ci_pod_disk_read_throughput
         expr: |
           sum by (instance, namespace, pod) (rate(container_fs_reads_bytes_total{pod=~"cta.*|eos.*"}[1m]))
