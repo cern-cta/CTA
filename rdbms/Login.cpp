@@ -246,8 +246,7 @@ Login Login::parseSqlite(const std::string &connectionDetails) {
 Login Login::getInMemory() {
   const std::string &filename = "file::memory:?cache=shared";
 
-  Login login(DBTYPE_IN_MEMORY, "", "", filename, "", 0, filename);
-  login.connectionString = Login::DbTypeAndConnectionDetails::in_memory+":"+filename;
+  Login login(DBTYPE_IN_MEMORY, "", "", filename, "", 0, "inmemory");
   return login;
 }
 
