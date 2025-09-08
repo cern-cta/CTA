@@ -216,7 +216,7 @@ Login Login::parseOracle(const std::string &connectionDetails) {
   const std::string &user = userAndPassTokens[0];
   const std::string &pass = userAndPassTokens[1];
 
-  Login login(DBTYPE_ORACLE, user, pass, db, "", 0, getOracleDbNamespace(connectionDetails));
+  Login login(DBTYPE_ORACLE, user, pass, db, "", 0, db);
   login.setOracleConnectionString(user, db);
   return login;
 }
@@ -298,20 +298,18 @@ bool Login::postgresqlHasPassword(const std::string& connectionDetails) {
 }
 
 std::string Login::getPostgresqlDbNamespace(const std::string &connectionDetails) {
-  cta::utils::Regex regex("postgresql://.*:.*@(.*)");
-  const std::vector<std::string> result = regex.exec(connectionDetails);
-  if (result.empty()) {
-    throw exception::Exception("Invalid connection string");
+  if (connectionDetails.find("@") == std::string::npos) {
+    cta::utils::Regex regex("postgresql://(.*)");
+    const std::vector<std::string> result = regex.exec(connectionDetails);
+    if (result.empty()) {
+      throw exception::Exception("Invalid connection string "  + connectionDetails);
+    }
+    return result[1];
   }
-  if (result.size() >= 2) return result[1];
-  return {};
-}
-
-std::string Login::getOracleDbNamespace(const std::string &connectionDetails) {
-  cta::utils::Regex regex("^oracle:[^@]+@/?/?([^?#]+)");
+  cta::utils::Regex regex("postgresql://[^@]+@(.*)");
   const std::vector<std::string> result = regex.exec(connectionDetails);
   if (result.empty()) {
-    throw exception::Exception("Invalid connection string");
+    throw exception::Exception("Invalid connection string "  + connectionDetails);
   }
   if (result.size() >= 2) return result[1];
   return {};
