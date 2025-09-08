@@ -254,12 +254,6 @@ struct Login {
    */
   static std::string getPostgresqlDbNamespace(const std::string &connectionDetails);
 
-  /**
-   * Constructs the database namespace of a Oracle database based on the provided connection details.
-   * @param connectionDetails The connectionDetails retrieved from the configuration file.
-   * @return The database namespace.
-   */
-  static std::string getOracleDbNamespace(const std::string &connectionDetails);
 
   static const std::list<std::string> dbTypeStr;
 
@@ -304,7 +298,7 @@ struct Login {
    * @param connectionDetails the connectionDetails retrieved from the configuration file
    * @return  true if the Postgresql connectionDetails contains a password, false otherwise
    */
-  bool postgresqlHasPassword(const std::string & connectionDetails);
+  static bool postgresqlHasPassword(const std::string & connectionDetails);
 };  // class Login
 
 } // namespace cta::rdbms
