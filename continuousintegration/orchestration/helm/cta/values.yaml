@@ -36,9 +36,13 @@ global:
     - name: shared
       hostPath:
         path: /opt/cta
+    - name: coredumps
+      emptyDir: {}
     volumeMounts:
     - name: shared
       mountPath: /shared
+    - name: coredumps
+      mountPath: /var/log/tmp
 
 
   securityContext:
