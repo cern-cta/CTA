@@ -253,12 +253,15 @@ int main(const int argc, char *const *const argv) {
     std::unique_ptr<::grpc::ServerCompletionQueue> cq;
     cq = builder.AddCompletionQueue();
 
+    // Create AsyncServer with separate builder for internal use, but register services on main builder
+    std::unique_ptr<::grpc::ServerBuilder> separateBuilder = std::make_unique<::grpc::ServerBuilder>();
+    
     cta::frontend::grpc::server::AsyncServer negotiationServer(lc, svc.getFrontendService().getCatalogue(),
-                                                    tokenStorage, builder, std::move(cq));
+                                                    tokenStorage, std::move(separateBuilder), std::move(cq));
     // Register services & run
     try {
-        // SERVICE: Negotiation
-        negotiationServer.registerService<cta::xrd::Negotiation::AsyncService>();
+        // SERVICE: Negotiation - register on main builder for single server
+        negotiationServer.registerServiceOnBuilder<cta::xrd::Negotiation::AsyncService>(builder);
         try {
         negotiationServer
             .registerHandler<cta::frontend::grpc::server::NegotiationRequestHandler, cta::xrd::Negotiation::AsyncService>(
@@ -306,8 +309,9 @@ int main(const int argc, char *const *const argv) {
     // grpc::reflection::InitProtoReflectionServerBuilderPlugin();
     std::unique_ptr <Server> server(builder.BuildAndStart());
 
-    negotiationServer.run(server, kerberosAuthProcessor);
-
+    // Start AsyncServer processing threads without taking server ownership
+    negotiationServer.startProcessingThreads(kerberosAuthProcessor);
+    
     lc.log(cta::log::INFO, "Listening on socket address: " + server_address);
     server->Wait();
 

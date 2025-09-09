@@ -31,6 +31,7 @@ cta::frontend::grpc::server::AsyncServer::AsyncServer(cta::log::Logger& log,
                                                                   unsigned int uiPort,
                                                                   const unsigned int uiNoThreads) :
                                                                   m_log(log),
+                                                                  m_lc(log),
                                                                   m_catalogue(catalogue),
                                                                   m_tokenStorage(tokenStorage),
                                                                   m_uiPort(uiPort),
@@ -49,7 +50,7 @@ cta::frontend::grpc::server::AsyncServer::AsyncServer(cta::log::LogContext& lc, 
               m_upCompletionQueue(std::move(completionQueue)),
               m_uiPort(uiPort),
               m_uiNoThreads(uiNoThreads),
-              m_upServerBuilder(builder) {
+              m_upServerBuilder(std::move(builder)) {
 }
 
 
@@ -65,6 +66,12 @@ cta::frontend::grpc::server::AsyncServer::~AsyncServer() {
     void* pTag;
     bool bOk = false;
     while (m_upCompletionQueue->Next(&pTag, &bOk)) {
+    }
+  }
+  // Join all processing threads
+  for (std::thread& worker : m_vThreads) {
+    if (worker.joinable()) {
+      worker.join();
     }
   }
 }
@@ -129,6 +136,30 @@ void cta::frontend::grpc::server::AsyncServer::run(std::unique_ptr<::grpc::Serve
   for (std::thread& worker : m_vThreads) {
     worker.join();
   }
+}
+
+void cta::frontend::grpc::server::AsyncServer::startProcessingThreads(const std::shared_ptr<::grpc::AuthMetadataProcessor>& spAuthProcessor) {
+  // Initialise all registered handlers
+  log::LogContext lc(m_log);
+  for(const auto &item : m_umapHandlers) {
+    const std::unique_ptr<cta::frontend::grpc::request::IHandler>& upIHandler = item.second;
+    upIHandler.get()->next(true);
+    //TODO: Log names of initialised handlers;
+  } 
+  // Start the processing threads (but don't wait for them - let main thread handle server->Wait())
+  m_vThreads.resize(m_uiNoThreads);
+  unsigned int uiThreadId = 0;
+  for (std::thread& worker : m_vThreads) {
+    std::thread t(&AsyncServer::process, this, uiThreadId);
+    worker.swap(t);
+    uiThreadId++;
+  }
+  {
+    log::ScopedParamContainer params(lc);
+    params.add("threads", m_uiNoThreads);
+    lc.log(cta::log::INFO, "In grpc::AsyncServer::startProcessingThreads(): Processing threads started.");
+  }
+  // Note: We don't join the threads here - they will be joined in the destructor
 }
 
 void cta::frontend::grpc::server::AsyncServer::startServerAndRun(const std::shared_ptr<::grpc::ServerCredentials>& spServerCredentials, const std::shared_ptr<::grpc::AuthMetadataProcessor>& spAuthProcessor) {
