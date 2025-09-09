@@ -307,6 +307,13 @@ create_instance() {
   update_local_cta_chart_dependencies
 
   if [ "$enable_telemetry" == "true" ] ; then
+    echo "Cleaning up clusterroles..."
+    kubectl delete clusterrole otel-opentelemetry-collector --ignore-not-found
+    kubectl delete clusterrolebinding otel-opentelemetry-collector --ignore-not-found
+    kubectl delete clusterrole prometheus-server --ignore-not-found
+    kubectl delete clusterrolebinding prometheus-server --ignore-not-found
+    kubectl delete clusterrole prometheus-kube-state-metrics --ignore-not-found
+    kubectl delete clusterrolebinding prometheus-kube-state-metrics --ignore-not-found
     echo "Installing Telemetry and Prometheus charts..."
     helm repo add open-telemetry https://open-telemetry.github.io/opentelemetry-helm-charts
     helm repo add prometheus-community https://prometheus-community.github.io/helm-charts

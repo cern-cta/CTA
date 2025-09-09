@@ -157,7 +157,7 @@
         "group-eosxrootd": "5.8.3-2",
         "group-xrootd": "1:5.8.3-1",
         "group-oracle-instantclient": "23.6.0.24.10-1",
-        "opentelemetry-cpp": "1:1.21.0-1"
+        "opentelemetry-cpp": "1:1.22.0-1"
       },
       "runRequires": {
         "xrootd": ">= 1:5.7.1",
@@ -183,8 +183,6 @@
         "libattr-devel": ">= 2.4.44",
         "cmake3": ">= 3.19",
         "valgrind": ">= 3.8.1",
-        "openssl-devel": "",
-        "libcurl-devel": "",
         "valgrind-devel": "",
         "group-grpc": "",
         "postgresql-devel": "",
