@@ -83,7 +83,7 @@ void RetrieveRdbJob::initialize(const rdbms::Rset& rset, bool rowIsRepack) {
                                      std::move(m_jobRow.checksumBlob));
   errorReportURL = std::move(m_jobRow.retrieveErrorReportURL);
   selectedCopyNb = m_jobRow.copyNb;
-  isRepack = rowIsRepack;  // for the moment hardcoded as repqck is not implemented
+  isRepack = rowIsRepack;
 
   if (m_jobRow.activity) {
     retrieveRequest.activity = m_jobRow.activity.value();

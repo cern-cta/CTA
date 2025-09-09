@@ -275,16 +275,19 @@ void RetrieveRequest::fillJobsSetRetrieveFileQueueCriteria(
 
   // create jobs for each tapefile in the archiveFile;
   for (const auto& tf : m_archiveFile.tapeFiles) {
-    m_jobs.emplace_back();
-    m_jobs.back().copyNb = tf.copyNb;
-    m_jobs.back().vid = tf.vid;
-    m_jobs.back().maxRetriesWithinMount = m_repackInfo.isRepack ? RETRIES_WITHIN_MOUNT_FOR_REPACK : RETRIES_WITHIN_MOUNT_FOR_USER;
-    m_jobs.back().maxTotalRetries = m_repackInfo.isRepack ? TOTAL_RETRIES_FOR_REPACK : TOTAL_RETRIES_FOR_USER;
-    m_jobs.back().maxReportRetries = REPORT_RETRIES;
-    m_jobs.back().status = schedulerdb::RetrieveJobStatus::RJS_ToTransfer;
-    // in case we need these for retrieval we should save them in DB as well !
-    m_jobs.back().fSeq = tf.fSeq;
-    m_jobs.back().blockId = tf.blockId;
+    if(!m_repackInfo.isRepack ||
+            (m_repackInfo.isRepack && m_repackInfo.copyNbsToRearchive.find(tf.copyNb) != m_repackInfo.copyNbsToRearchive.end())){
+      m_jobs.emplace_back();
+      m_jobs.back().copyNb = tf.copyNb;
+      m_jobs.back().vid = tf.vid;
+      m_jobs.back().maxRetriesWithinMount = m_repackInfo.isRepack ? RETRIES_WITHIN_MOUNT_FOR_REPACK : RETRIES_WITHIN_MOUNT_FOR_USER;
+      m_jobs.back().maxTotalRetries = m_repackInfo.isRepack ? TOTAL_RETRIES_FOR_REPACK : TOTAL_RETRIES_FOR_USER;
+      m_jobs.back().maxReportRetries = REPORT_RETRIES;
+      m_jobs.back().status = schedulerdb::RetrieveJobStatus::RJS_ToTransfer;
+      // in case we need these for retrieval we should save them in DB as well !
+      m_jobs.back().fSeq = tf.fSeq;
+      m_jobs.back().blockId = tf.blockId;
+    }
   }
 }
 

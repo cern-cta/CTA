@@ -131,6 +131,96 @@ namespace cta::schedulerdb::postgres {
   return stmt.getNbAffectedRows();
 }
 
+
+
+//uint64_t RepackRequestTrackingRow::updateRepackRequestProgress(Transaction &txn, std::vector<RepackRequestProgress> progressReport,
+//                                                         const RepackJobStatus &newStatus) {
+//  const char *const sql = R"SQL(
+//    UPDATE REPACK_REQUEST_TRACKING
+//    SET STATUS = :STATUS::REPACK_REQ_STATUS,
+//        RETRIEVED_FILES += :RETRIEVED_FILES,
+//        RETRIEVED_BYTES += :RETRIEVED_BYTES,
+//        ARCHIVED_FILES += :ARCHIVED_FILES,
+//        ARCHIVED_BYTES += :ARCHIVED_BYTES,
+//        REARCHIVE_COPYNBS += :REARCHIVE_COPYNBS,
+//    WHERE REPACK_REQUEST_ID = :REQID
+//  )SQL";
+//
+//  auto stmt = txn.getConn().createStmt(sql);
+//
+//  stmt.bindString(":STATUS", to_string(newStatus));
+//  stmt.bindUint64(":RETRIEVED_FILES", retrieved_files);
+//  stmt.bindUint64(":RETRIEVED_BYTES", retrieved_bytes);
+//  stmt.bindUint64(":ARCHIVED_FILES", archived_files);
+//  stmt.bindUint64(":ARCHIVED_BYTES", archived_bytes);
+//  stmt.bindUint64(":REARCHIVE_COPYNBS", rearchive_copynbs);
+//  stmt.bindUint64(":REQID", reqId);
+//
+//  // Execute
+//  stmt.executeNonQuery();
+//  return stmt.getNbAffectedRows();
+//}
+
+uint64_t RepackRequestTrackingRow::updateRepackRequestsProgress(
+    Transaction& txn,
+    const std::vector<RepackRequestProgress>& updates,
+    const RepackJobStatus& newStatus) {
+
+    if (updates.empty()) return 0;
+
+    // Build SQL with placeholders for each row
+    std::string sql =
+        "WITH UPDATE_TABLE (REPACK_REQUEST_ID, RETRIEVED_FILES, RETRIEVED_BYTES, ARCHIVED_FILES, ARCHIVED_BYTES, REARCHIVE_COPYNBS, REARCHIVE_BYTES, STATUS) AS (VALUES ";
+
+    for (size_t i = 0; i < updates.size(); ++i) {
+        if (i > 0) sql += ",";
+        sql += "("
+            ":REQID" + std::to_string(i) + "::BIGINT" + ","
+            ":RETR_FILES" + std::to_string(i) + "::BIGINT" + ","
+            ":RETR_BYTES" + std::to_string(i) + "::BIGINT" + ","
+            ":ARCH_FILES" + std::to_string(i) + "::BIGINT" + ","
+            ":ARCH_BYTES" + std::to_string(i) + "::BIGINT" + ","
+            ":REARCH_COPY" + std::to_string(i) + "::BIGINT" + ","
+            ":REARCH_BYTES" + std::to_string(i) + "::BIGINT" + ","
+            ":STATUS" + std::to_string(i) + "::REPACK_REQ_STATUS" +
+            ")";
+    }
+
+    sql += ") "
+           "UPDATE REPACK_REQUEST_TRACKING trk "
+           "SET "
+           "STATUS = upd.STATUS::REPACK_REQ_STATUS, "
+           "RETRIEVED_FILES = trk.RETRIEVED_FILES + upd.RETRIEVED_FILES, "
+           "RETRIEVED_BYTES = trk.RETRIEVED_BYTES + upd.RETRIEVED_BYTES, "
+           "ARCHIVED_FILES = trk.ARCHIVED_FILES + upd.ARCHIVED_FILES, "
+           "ARCHIVED_BYTES = trk.ARCHIVED_BYTES + upd.ARCHIVED_BYTES, "
+           "REARCHIVE_COPYNBS = trk.REARCHIVE_COPYNBS + upd.REARCHIVE_COPYNBS, "
+           "REARCHIVE_BYTES = trk.REARCHIVE_BYTES + upd.REARCHIVE_BYTES "
+           "FROM UPDATE_TABLE upd "
+           "WHERE trk.REPACK_REQUEST_ID = upd.REPACK_REQUEST_ID;";
+
+    auto stmt = txn.getConn().createStmt(sql);
+
+    // Bind each row's values
+    for (size_t i = 0; i < updates.size(); ++i) {
+        const auto& u = updates[i];
+        std::string idx = std::to_string(i);
+
+        stmt.bindUint64(":REQID" + idx, u.reqId);
+        stmt.bindUint64(":RETR_FILES" + idx, u.retrievedFiles);
+        stmt.bindUint64(":RETR_BYTES" + idx, u.retrievedBytes);
+        stmt.bindUint64(":ARCH_FILES" + idx, u.archivedFiles);
+        stmt.bindUint64(":ARCH_BYTES" + idx, u.archivedBytes);
+        stmt.bindUint64(":REARCH_COPY" + idx, u.rearchiveCopyNbs);
+        stmt.bindUint64(":REARCH_BYTES" + idx, u.rearchiveBytes);
+        stmt.bindString(":STATUS" + idx, to_string(newStatus));
+    }
+
+    stmt.executeNonQuery();
+    return stmt.getNbAffectedRows();
+}
+
+
   uint64_t RepackRequestTrackingRow::updateRepackRequestFailures(
           Transaction &txn,
           uint64_t reqId,

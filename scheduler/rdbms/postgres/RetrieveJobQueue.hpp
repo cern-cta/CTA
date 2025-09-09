@@ -460,8 +460,8 @@ public:
   }
 
   void addParamsToLogContext(log::ScopedParamContainer& params) const {
-    params.add("retrieveReqId", retrieveRequestId);
-    params.add("repackReqId", repackRequestId);
+    params.add("retrieveRequestId", retrieveRequestId);
+    params.add("repackRequestId", repackRequestId);
     params.add("mountId", mountId);
     params.add("status", to_string(status));
     params.add("vid", vid);
@@ -779,7 +779,7 @@ static void insertBunch(rdbms::Conn &conn,
   * @param jobIDs     List of jobID strings to select
   * @return           Number of updated rows
   */
-  static uint64_t updateJobStatus(Transaction& txn, RetrieveJobStatus newStatus, const std::vector<std::string>& jobIDs);
+  static uint64_t updateJobStatus(Transaction& txn, RetrieveJobStatus newStatus, const std::vector<std::string>& jobIDs, bool isRepack);
 
   /**
   * Update failed job status
@@ -834,6 +834,23 @@ static void insertBunch(rdbms::Conn &conn,
   static uint64_t requeueJobBatch(Transaction& txn, RetrieveJobStatus newStatus, const std::list<std::string>& jobIDs, bool isRepack);
 
   /**
+   * @brief Atomically moves a batch of retrieve jobs from the active queue to the archive queue.
+   *
+   * This method selects up to @p limit jobs from the REPACK_RETRIEVE_ACTIVE_QUEUE,
+   * and moves them into REPACK_ARCHIVE_PENDING_QUEUE.
+   * All additional copies are created from the ALTERNATE_COPYNBS column on the DB side
+   * (as filled when queueing the original retrieve request for repack)
+   *
+   * @param txn       Active database transaction handle.
+   * @param limit     Maximum number of jobs to move in this batch.
+   *
+   * @return The rset containing statistics summary info
+   *
+   * @throws std::runtime_error if the database query fails.
+   */
+  static rdbms::Rset transformJobBatchToArchive(Transaction& txn, const size_t limit);
+
+  /**
   * Update job status when job report failed
   *
   * @param txn                  Transaction to use for this query
@@ -856,7 +873,7 @@ static void insertBunch(rdbms::Conn &conn,
   * @param txn                  Transaction to use for this query
   * @return nrows               The number of rows moved.
   */
-  static uint64_t moveJobBatchToFailedQueueTable(Transaction& txn, const std::vector<std::string>& jobIDs);
+  static uint64_t moveJobBatchToFailedQueueTable(Transaction& txn, const std::vector<std::string>& jobIDs, bool isRepack);
 
   /**
   * Increment Retrieve Request ID and return the new value

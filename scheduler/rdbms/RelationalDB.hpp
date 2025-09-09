@@ -316,6 +316,9 @@ private:
   log::Logger& m_logger;
   std::unique_ptr<TapeDrivesCatalogueState> m_tapeDrivesState;
 
+  const size_t c_repackArchiveReportBatchSize = 10000;
+  const size_t c_repackRetrieveReportBatchSize = 10000;
+
   void populateRepackRequestsStatistics(SchedulerDatabase::RepackRequestStatistics& stats);
 
 

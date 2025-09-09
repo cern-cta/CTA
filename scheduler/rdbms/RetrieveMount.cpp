@@ -221,7 +221,7 @@ void RetrieveMount::updateRetrieveJobStatusWrapper(const std::vector<std::string
     cta::utils::Timer t;
 
     if (!jobIDs.empty()) {
-      uint64_t nrows = schedulerdb::postgres::RetrieveJobQueueRow::updateJobStatus(txn, newStatus, jobIDs);
+      uint64_t nrows = schedulerdb::postgres::RetrieveJobQueueRow::updateJobStatus(txn, newStatus, jobIDs, m_isRepack);
 
       if (nrows != jobIDs.size()) {
         log::ScopedParamContainer(lc)
@@ -266,7 +266,7 @@ void RetrieveMount::setJobBatchTransferred(std::list<std::unique_ptr<SchedulerDa
     // Once we implement Repack we can compare mountInfo.vo with the defaultRepack VO of the scheduler
     if (m_isRepack) {
       // If the job is from a repack subrequest, we change its status (to report
-      // for repack success). Queueing will be done in batch in
+      // for repack success).
       jobIDs_repackSuccess.push_back(std::to_string(rdbJob->jobID));
     } else if (rdbJob->retrieveRequest.retrieveReportURL.empty()) {
       // Set the user transfer request as successful (delete it).
