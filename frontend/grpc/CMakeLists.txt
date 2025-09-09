@@ -32,6 +32,7 @@ add_executable(cta-frontend-grpc Main.cpp FrontendGrpcService.cpp
   ${PROJECT_SOURCE_DIR}/cmdline/CtaAdminCmdParser.cpp
   ${PROJECT_SOURCE_DIR}/common/config/Config.cpp
   callback_api/CtaAdminServerWriteReactor.cpp
+  AsyncServer.cpp
   ServerNegotiationRequestHandler.cpp
   ServiceKerberosAuthProcessor.cpp
   TokenStorage.cpp
@@ -41,11 +42,11 @@ add_executable(cta-frontend-grpc Main.cpp FrontendGrpcService.cpp
 if(CTA_USE_PGSCHED)
   target_link_libraries(cta-frontend-grpc
     ${GRPC_GRPC++_REFLECTION_LIBRARY}
-    ctascheduler ctacommon ctacatalogue ctagrpc JwkCache)
+    ctascheduler ctacommon ctacatalogue ctagrpc JwkCache gssapi_krb5)
 else()
   target_link_libraries(cta-frontend-grpc
     ${GRPC_GRPC++_REFLECTION_LIBRARY}
-    ctascheduler ctacommon ctaobjectstore ctacatalogue ctagrpc JwkCache)
+    ctascheduler ctacommon ctaobjectstore ctacatalogue ctagrpc JwkCache gssapi_krb5)
 endif()
 
 add_manpage(cta-frontend-grpc)

@@ -70,6 +70,23 @@ public:
     m_vServices.push_back(std::move(upService));
   }
   /**
+   * Register service on external builder
+   */
+  template<class SERVICE, class... ARGS> void registerServiceOnBuilder(::grpc::ServerBuilder& externalBuilder, ARGS... args) {
+    std::lock_guard<std::mutex> lck(m_mtxLockService);
+   
+    std::unique_ptr<::grpc::Service> upService; // Empty
+    upService = std::make_unique<SERVICE>(std::move(args)...);
+    /*
+     * Register a service on external builder.
+     * This call does not take ownership of the service.
+     * The service must exist for the lifetime of the Server instance returned by BuildAndStart().
+     */
+    externalBuilder.RegisterService(upService.get());
+    // Move ownership
+    m_vServices.push_back(std::move(upService));
+  }
+  /**
    * Get servcie
    */
   template<class SERVICE> SERVICE& service() {
@@ -127,6 +144,7 @@ public:
   cta::frontend::grpc::request::IHandler& getHandler(const cta::frontend::grpc::request::Tag tag);
   void releaseHandler(const cta::frontend::grpc::request::Tag tag);
   void run(std::unique_ptr<::grpc::Server> server, const std::shared_ptr<::grpc::AuthMetadataProcessor>& spAuthProcessor); // assumes we've already registered the authProcessor..?
+  void startProcessingThreads(const std::shared_ptr<::grpc::AuthMetadataProcessor>& spAuthProcessor); // start processing without taking server ownership
   void startServerAndRun(const std::shared_ptr<::grpc::ServerCredentials>& spServerCredentials, const std::shared_ptr<::grpc::AuthMetadataProcessor>& spAuthProcessor);
 
 private:
