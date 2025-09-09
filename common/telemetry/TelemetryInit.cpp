@@ -11,7 +11,6 @@
 #include <opentelemetry/sdk/metrics/meter_context.h>
 #include <opentelemetry/sdk/metrics/meter_context_factory.h>
 #include <opentelemetry/sdk/resource/resource.h>
-#include <opentelemetry/sdk/resource/semantic_conventions.h>
 #include <opentelemetry/sdk/common/attribute_utils.h>
 
 #include "common/utils/utils.hpp"
