@@ -1,5 +1,6 @@
 #include "TelemetryInit.hpp"
 
+#include <fstream>
 #include <opentelemetry/exporters/otlp/otlp_http_metric_exporter_factory.h>
 #include <opentelemetry/exporters/otlp/otlp_http_metric_exporter_options.h>
 #include <opentelemetry/exporters/ostream/metric_exporter_factory.h>
@@ -62,7 +63,11 @@ void initMetrics(const TelemetryConfig& config, cta::log::LogContext& lc) {
     case MetricsBackend::STDOUT:
       exporter = opentelemetry::exporter::metrics::OStreamMetricExporterFactory::Create();
       break;
-
+    case MetricsBackend::FILE: {
+      static std::ofstream fileStream(config.metrics.fileEndpoint, std::ios::app);
+      exporter = opentelemetry::exporter::metrics::OStreamMetricExporterFactory::Create(fileStream);
+      break;
+    }
     case MetricsBackend::OTLP: {
       otlp::OtlpHttpMetricExporterOptions opts;
       opts.url = config.metrics.otlpEndpoint;
