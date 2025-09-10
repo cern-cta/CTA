@@ -61,9 +61,11 @@ void initMetrics(const TelemetryConfig& config, cta::log::LogContext& lc) {
   std::unique_ptr<metrics_sdk::PushMetricExporter> exporter;
   switch (config.metrics.backend) {
     case MetricsBackend::STDOUT:
+      lc.log(log::WARNING, "OpenTelemetry backend STDOUT is meant for testing/debugging only and should not be used in production.");
       exporter = opentelemetry::exporter::metrics::OStreamMetricExporterFactory::Create();
       break;
     case MetricsBackend::FILE: {
+      lc.log(log::WARNING, "OpenTelemetry backend FILE is meant for testing/debugging only and should not be used in production.");
       static std::ofstream fileStream(config.metrics.fileEndpoint, std::ios::app);
       exporter = opentelemetry::exporter::metrics::OStreamMetricExporterFactory::Create(fileStream);
       break;
