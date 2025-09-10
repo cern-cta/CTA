@@ -45,6 +45,16 @@ mgm:
   http:
     # Generated using: openssl rand -base64 64 | base64 -w 0
     macaroonsSecretKey: ZjZsMWxPT1lEc1poNFBKRTJiK05aaEhMdC9iUzdsSmxxNGZXT1Z4dE9PWElsR2I0MHhqZ3RnRDNzWnhVTW5iZAp1YWFSYmR6d0hSL3FMem1ncDNCWHFRPT0K
+    sciTokens:
+      enabled: true
+      config: |
+        [Global]
+        audience = https://wlcg.cern.ch/jwt/v1/any
+        [Issuer OSG-Connect]
+        issuer = https://dteam-auth.cern.ch/
+        base_path = /
+        map_subject = False
+        default_user = ctaeos
 
   xrd:
     # Additional tape-specific config
