@@ -291,6 +291,9 @@ struct TapedConfiguration {
   cta::SourcedParameter<std::string> telemetryMetricsOltpEndpoint{
     "telemetry", "metricsOtlpEndpoint", "", "Compile time default"};
 
+  cta::SourcedParameter<std::string> telemetryMetricsFileEndpoint{
+    "telemetry", "metricsFileEndpoint", "/var/log/cta/cta-taped-metrics.txt", "Compile time default"};
+
   cta::SourcedParameter<uint32_t> telemetryMetricsExportInterval{
     "telemetry", "metricsExportInterval", 1000, "Compile time default"};
 

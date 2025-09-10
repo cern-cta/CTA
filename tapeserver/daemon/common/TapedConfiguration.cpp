@@ -229,6 +229,7 @@ TapedConfiguration TapedConfiguration::createFromConfigPath(
   // Telemetry options
   ret.telemetryMetricsBackend.setFromConfigurationFile(cf, driveTapedConfigPath);
   ret.telemetryMetricsOltpEndpoint.setFromConfigurationFile(cf, driveTapedConfigPath);
+  ret.telemetryMetricsFileEndpoint.setFromConfigurationFile(cf, driveTapedConfigPath);
   ret.telemetryMetricsExportInterval.setFromConfigurationFile(cf, driveTapedConfigPath);
   ret.telemetryMetricsExportTimeout.setFromConfigurationFile(cf, driveTapedConfigPath);
 

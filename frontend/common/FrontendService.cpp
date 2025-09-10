@@ -142,6 +142,10 @@ FrontendService::FrontendService(const std::string& configFilename) : m_archiveF
       if (!telemetryMetricsOltpEndpoint.has_value()) {
         telemetryMetricsOltpEndpoint = "";
       }
+      auto telemetryMetricsFileEndpoint = config.getOptionValueStr("cta.telemetry.metricsFileEndpoint");
+      if (!telemetryMetricsFileEndpoint.has_value()) {
+        telemetryMetricsFileEndpoint = "/var/log/cta/cta-frontend-metrics.txt";
+      }
 
       cta::telemetry::TelemetryConfig telemetryConfig = cta::telemetry::TelemetryConfigBuilder()
         .serviceName(cta::semconv::ServiceNameValues::kCtaFrontend)
@@ -152,6 +156,7 @@ FrontendService::FrontendService(const std::string& configFilename) : m_archiveF
         .metricsExportInterval(std::chrono::milliseconds(telemetryMetricsExportInterval.value()))
         .metricsExportTimeout(std::chrono::milliseconds(telemetryMetricsExportTimeout.value()))
         .metricsOtlpEndpoint(telemetryMetricsOltpEndpoint.value())
+        .metricsFileEndpoint(telemetryMetricsFileEndpoint.value())
         .build();
       cta::log::LogContext lc(log); // temporary log context
       cta::telemetry::initTelemetry(telemetryConfig, lc);

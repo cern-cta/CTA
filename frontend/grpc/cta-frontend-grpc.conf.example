@@ -150,3 +150,6 @@ cta.catalogue.missing_file_copies_min_age_secs 86400
 #
 # Service location of the OTLP collector in case the OTLP backend is used
 # cta.telemetry.metricsOtlpEndpoint endpoint:port
+#
+# File location to write to in case the FILE backend is used
+# cta.telemetry.metricsFileEndpoint path
