@@ -244,7 +244,7 @@ int main(const int argc, char *const *const argv) {
         strKeytab = "/etc/cta/cta-frontend.keytab"; // default path
     }
 
-    strService = "cta/" + shortHostName; // default service principal
+    strService = svc.getFrontendService().getServicePrincipal().value_or("cta/" + shortHostName);
     
     lc.log(log::INFO, "Using keytab: " + strKeytab);
     lc.log(log::INFO, "Using service principal: " + strService);

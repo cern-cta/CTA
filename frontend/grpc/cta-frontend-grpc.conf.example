@@ -136,3 +136,6 @@ cta.catalogue.missing_file_copies_min_age_secs 86400
 
 # keytab file
 #grpc.keytab /path/to/keytab
+
+# service principal (if not specified, defaults to cta/<hostname>)
+#grpc.service_principal ctaeos+

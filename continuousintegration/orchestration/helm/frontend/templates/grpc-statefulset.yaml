@@ -26,7 +26,25 @@ spec:
       {{ .Values.pod.extraSpec | toYaml | nindent 6 }}
       {{- end }}
       initContainers:
-      - name: init-download-grpc-health-probe
+      - name: init1-get-krb5-keytab
+        image: {{ include "ctafrontend.image" . }}
+        imagePullPolicy: {{ include "ctafrontend.imagePullPolicy" . }}
+        command: ["/bin/bash", "-c"]
+        args:
+        - |
+          sukadmin() { echo {{ .Values.global.kerberos.adminPrinc.password }} | kadmin -r {{ .Values.global.kerberos.defaultRealm | upper }} -p {{ .Values.global.kerberos.adminPrinc.name }}/admin $@; };
+          sukadmin addprinc -randkey cta/{{ $name }};
+          sukadmin ktadd -k /root/ctafrontend_keytab/output/cta-frontend.krb5.keytab cta/{{ $name }};
+          chmod 400 /root/ctafrontend_keytab/output/cta-frontend.krb5.keytab
+          # Make CTA user owner (group 33 is tape)
+          chown -R 1000:33 /root/ctafrontend_keytab/output/cta-frontend.krb5.keytab
+        volumeMounts:
+        - name: krb5-conf
+          mountPath: /etc/krb5.conf
+          subPath: krb5.conf
+        - name: cta-frontend-krb5-keytab
+          mountPath: /root/ctafrontend_keytab/output
+      - name: init2-download-grpc-health-probe
         image: {{ include "common.images.busybox" . }}
         command: ["sh", "-c"]
         args:
@@ -114,6 +132,12 @@ spec:
         - name: grpc-config
           mountPath: /etc/cta/cta-frontend-grpc.conf
           subPath: cta-frontend-grpc.conf
+        - name: cta-frontend-krb5-keytab
+          mountPath: /etc/cta/cta-frontend.krb5.keytab
+          subPath: cta-frontend.krb5.keytab
+        - name: krb5-conf
+          mountPath: /etc/krb5.conf
+          subPath: krb5.conf
         - name: grpc-server-crt
           mountPath: /etc/grpc-certs/cert
         - name: grpc-server-key
@@ -152,6 +176,8 @@ spec:
       - name: grpc-config
         configMap:
           name: cta-frontend-grpc-conf
+      - name: cta-frontend-krb5-keytab
+        emptyDir: {}
       - name: grpc-server-crt
         secret:
           secretName: server-crt

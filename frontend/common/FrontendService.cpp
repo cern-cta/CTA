@@ -392,6 +392,10 @@ FrontendService::FrontendService(const std::string& configFilename) : m_archiveF
   if (keytab.has_value()) {
     m_keytab = keytab.value();
   }
+  auto servicePrincipal = config.getOptionValueStr("grpc.service_principal");
+  if (servicePrincipal.has_value()) {
+    m_servicePrincipal = servicePrincipal.value();
+  }
   auto port = config.getOptionValueStr("grpc.port");
   if (port.has_value()) {
     m_port = port.value();
