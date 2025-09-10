@@ -248,7 +248,7 @@ taped externalFreeDiskSpaceScript /usr/bin/cta-eosdf.sh
 # Telemetry Options
 
 
-# Metrics backend to use. Possible options are NOOP, OTLP, STDOUT
+# Metrics backend to use. Possible options are NOOP, OTLP, STDOUT, FILE
 # Default is NOOP, meaning no metrics are collected/exported
 # telemetry metricsBackend NOOP
 #
@@ -259,3 +259,6 @@ taped externalFreeDiskSpaceScript /usr/bin/cta-eosdf.sh
 #
 # Service location of the OTLP collector in case the OTLP backend is used
 # telemetry metricsOtlpEndpoint endpoint:port
+#
+# File location to write to in case the FILE backend is used
+# telemetry metricsFileEndpoint path

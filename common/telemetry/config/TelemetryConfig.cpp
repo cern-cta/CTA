@@ -11,6 +11,9 @@ MetricsBackend stringToMetricsBackend(const std::string& name) {
   if (name == "STDOUT") {
     return MetricsBackend::STDOUT;
   }
+  if (name == "FILE") {
+    return MetricsBackend::FILE;
+  }
   if (name == "OTLP") {
     return MetricsBackend::OTLP;
   }
@@ -23,6 +26,8 @@ std::string metricsBackendToString(MetricsBackend backend) {
       return "NOOP";
     case MetricsBackend::STDOUT:
       return "STDOUT";
+    case MetricsBackend::FILE:
+      return "FILE";
     case MetricsBackend::OTLP:
       return "OTLP";
   }
@@ -67,6 +72,11 @@ TelemetryConfigBuilder& TelemetryConfigBuilder::metricsExportTimeout(std::chrono
 
 TelemetryConfigBuilder& TelemetryConfigBuilder::metricsOtlpEndpoint(std::string endpoint) {
   m_config.metrics.otlpEndpoint = std::move(endpoint);
+  return *this;
+}
+
+TelemetryConfigBuilder& TelemetryConfigBuilder::metricsFileEndpoint(std::string endpoint) {
+  m_config.metrics.fileEndpoint = std::move(endpoint);
   return *this;
 }
 

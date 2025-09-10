@@ -7,7 +7,7 @@
 
 namespace cta::telemetry {
 
-enum class MetricsBackend { NOOP, STDOUT, OTLP };
+enum class MetricsBackend { NOOP, STDOUT, FILE, OTLP };
 
 MetricsBackend stringToMetricsBackend(const std::string& string);
 std::string metricsBackendToString(MetricsBackend backend);
@@ -26,6 +26,7 @@ typedef struct TelemetryConfig {
     std::chrono::milliseconds exportInterval;
     std::chrono::milliseconds exportTimeout;
     std::string otlpEndpoint;
+    std::string fileEndpoint;
     std::map<std::string, std::string> headers;
   } metrics;
 } TelemetryConfig;
@@ -90,6 +91,11 @@ public:
    * If the metrics backend is "OTLP", this endpoint tells the telemetry SDK where to push the metrics to.
    */
   TelemetryConfigBuilder& metricsOtlpEndpoint(std::string endpoint);
+
+  /**
+   * If the metrics backend is "FILE", this endpoint tells the telemetry SDK which file to write the metrics to.
+   */
+  TelemetryConfigBuilder& metricsFileEndpoint(std::string endpoint);
 
   /**
    * Additional headers that will be included when pushing to the "OTLP" backend.
