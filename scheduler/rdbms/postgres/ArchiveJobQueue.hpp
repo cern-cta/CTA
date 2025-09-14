@@ -602,7 +602,7 @@ public:
                           ArchiveJobStatus newStatus,
                           const SchedulerDatabase::ArchiveMount::MountInfo& mountInfo,
                           uint64_t maxBytesRequested,
-                          uint64_t limit);
+                          uint64_t limit, bool isRepack);
 
   /**
    * Update job status
@@ -612,7 +612,7 @@ public:
    * @param jobIDs     List of jobID strings to select
    * @return           Number of updated rows
    */
-  static uint64_t updateJobStatus(Transaction& txn, ArchiveJobStatus newStatus, const std::vector<std::string>& jobIDs);
+  static uint64_t updateJobStatus(Transaction& txn, ArchiveJobStatus newStatus, bool isRepack, const std::vector<std::string>& jobIDs);
 
   /**
    * Update failed job status
@@ -636,7 +636,7 @@ public:
    */
   uint64_t requeueFailedJob(Transaction& txn,
                             ArchiveJobStatus newStatus,
-                            bool keepMountId,
+                            bool keepMountId, bool isRepack,
                             std::optional<std::list<std::string>> jobIDs = std::nullopt);
 
   /**
@@ -653,6 +653,7 @@ public:
    */
   static uint64_t requeueJobBatch(Transaction& txn,
                                   ArchiveJobStatus newStatus,
+                                  bool isRepack,
                                   const std::list<std::string>& jobIDs);
 
   /**
@@ -702,5 +703,8 @@ public:
    * Increments the number of retries and updates the last failed mount accordingly.
    */
   void updateRetryCounts(uint64_t mountId);
+
+  static rdbms::Rset deleteSuccessfulRepackArchiveJobBatch(Transaction &txn,
+                                                           const size_t limit);
 };
 };  // namespace cta::schedulerdb::postgres

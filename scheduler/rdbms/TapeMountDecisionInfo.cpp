@@ -87,6 +87,9 @@ TapeMountDecisionInfo::createArchiveMount(const cta::SchedulerDatabase::Potentia
     am.mountInfo.vendor = tape.vendor;
     am.mountInfo.capacityInBytes = tape.capacityInBytes;
     am.mountInfo.encryptionKeyName = tape.encryptionKeyName;
+    log::LogContext lc(m_logger);
+    am.setIsRepack(lc);
+
     // release the named lock on the DB,
     // so that other tape servers can query the job summary
     commit();

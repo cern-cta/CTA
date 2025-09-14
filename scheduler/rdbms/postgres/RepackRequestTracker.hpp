@@ -397,12 +397,11 @@ namespace cta::schedulerdb::postgres {
     * @param updates Vector of per-request progress updates, each containing a request ID,
     *                progress counters, and the new status.
     *
-    * @return The number of rows affected in REPACK_REQUEST_TRACKING.
+    * @return The result set with VID list where changes were made.
     */
-    static uint64_t updateRepackRequestsProgress(
+    static rdbms::Rset updateRepackRequestsProgress(
             Transaction &txn,
-            const std::vector <RepackRequestProgress> &updates,
-            const RepackJobStatus &newStatus);
+            const std::vector <RepackRequestProgress> &updates);
 
     /**
      * When CTA received the deleteArchive request from the disk buffer,

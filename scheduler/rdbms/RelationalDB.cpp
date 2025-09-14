@@ -185,7 +185,8 @@ RelationalDB::getNextArchiveJobsToReportBatch(uint64_t filesRequested, log::LogC
       return ret;
     }
     while (resultSet.next()) {
-      ret.emplace_back(std::make_unique<schedulerdb::ArchiveRdbJob>(m_connPool, resultSet));
+      // for the moment this method is not being used for repack !
+      ret.emplace_back(std::make_unique<schedulerdb::ArchiveRdbJob>(m_connPool, resultSet, false));
     }
     txn.commit();
     timings.insertAndReset("fetchedArchiveJobs", t);
@@ -292,7 +293,7 @@ void RelationalDB::setArchiveJobBatchReported(std::list<SchedulerDatabase::Archi
     if (!jobIDsList_success.empty()) {
       uint64_t nrows =
         schedulerdb::postgres::ArchiveJobQueueRow::updateJobStatus(txn,
-                                                                   cta::schedulerdb::ArchiveJobStatus::ReadyForDeletion,
+                                                                   cta::schedulerdb::ArchiveJobStatus::ReadyForDeletion, false,
                                                                    jobIDsList_success);
       deletionCount += nrows;
       if (nrows != jobIDsList_success.size()) {
@@ -307,7 +308,7 @@ void RelationalDB::setArchiveJobBatchReported(std::list<SchedulerDatabase::Archi
     if (!jobIDsList_failure.empty()) {
       uint64_t nrows =
         schedulerdb::postgres::ArchiveJobQueueRow::updateJobStatus(txn,
-                                                                   cta::schedulerdb::ArchiveJobStatus::AJS_Failed,
+                                                                   cta::schedulerdb::ArchiveJobStatus::AJS_Failed, false,
                                                                    jobIDsList_failure);
       if (nrows != jobIDsList_failure.size()) {
         log::ScopedParamContainer(lc)
@@ -840,7 +841,7 @@ std::unique_ptr<SchedulerDatabase::RepackReportBatch> RelationalDB::getNextRepac
 
 std::unique_ptr<SchedulerDatabase::RepackReportBatch>
 RelationalDB::getNextSuccessfulRetrieveRepackReportBatch(log::LogContext& lc) {
-  lc.log(log::WARNING, "RelationalDB::getNextSuccessfulRetrieveRepackReportBatch() implementation needs review !");
+  lc.log(log::INFO, "RelationalDB::getNextSuccessfulRetrieveRepackReportBatch(): starting job transformation and reporting.");
   cta::utils::Timer t;
   log::TimingList timings;
   std::unique_ptr<SchedulerDatabase::RepackReportBatch> ret;
@@ -886,7 +887,11 @@ RelationalDB::getNextSuccessfulRetrieveRepackReportBatch(log::LogContext& lc) {
   schedulerdb::Transaction txn2(m_connPool);
   // report back to the REPACK_REQUEST_TRACKING table
   try {
-   uint64_t nrepreq = schedulerdb::postgres::RepackRequestTrackingRow::updateRepackRequestsProgress(txn2, statUpdates, cta::schedulerdb::RepackJobStatus::RRS_Running);
+   auto vidrset = schedulerdb::postgres::RepackRequestTrackingRow::updateRepackRequestsProgress(txn2, statUpdates);
+   uint64_t nrepreq = 0;
+   while (vidrset.next()) {
+     nrepreq++;
+   }
    log::ScopedParamContainer params(lc);
    params.add("updatedRepackRequests", nrepreq);
    lc.log(cta::log::INFO, "In RelationalDB::getNextSuccessfulRetrieveRepackReportBatch(): no Repack Retrieve jobs finished, nothing to archive.");
@@ -900,57 +905,78 @@ RelationalDB::getNextSuccessfulRetrieveRepackReportBatch(log::LogContext& lc) {
   // return empty report batch since the rest of the OStoreDB machinery is not needed here
   return ret;
 }
-//    typedef objectstore::ContainerAlgorithms<RetrieveQueue, RetrieveQueueToReportToRepackForSuccess> Carqtrtrfs;
-//  Carqtrtrfs algo(this->m_objectStore, *m_agentReference);
-//  // Decide from which queue we are going to pop.
-//  RootEntry re(m_objectStore);
-//  while (true) {
-//    re.fetchNoLock();
-//    auto queueList = re.dumpRetrieveQueues(common::dataStructures::JobQueueType::JobsToReportToRepackForSuccess);
-//    if (queueList.empty()) {
-//      throw NoRepackReportBatchFound("In OStoreDB::getNextSuccessfulRetrieveRepackReportBatch(): no queue found.");
-//    }
-//
-//    // Try to get jobs from the first queue. If it is empty, it will be trimmed, so we can go for another round.
-//    Carqtrtrfs::PopCriteria criteria;
-//    criteria.files = c_repackRetrieveReportBatchSize;
-//    auto jobs = algo.popNextBatch(queueList.front().vid, criteria, lc);
-//    if (jobs.elements.empty()) {
-//      continue;
-//    }
-//    std::unique_ptr<RepackRetrieveSuccessesReportBatch> privateRet;
-//    privateRet.reset(new RepackRetrieveSuccessesReportBatch(m_objectStore, *this));
-//    std::set<std::string> repackRequestAddresses;
-//    for (auto& j : jobs.elements) {
-//      privateRet->m_subrequestList.emplace_back(RepackRetrieveSuccessesReportBatch::SubrequestInfo());
-//      auto& sr = privateRet->m_subrequestList.back();
-//      sr.repackInfo = j.repackInfo;
-//      sr.archiveFile = j.archiveFile;
-//      sr.owner = m_agentReference;
-//      sr.subrequest.reset(j.retrieveRequest.release());
-//      repackRequestAddresses.insert(j.repackInfo.repackRequestAddress);
-//    }
-//    // As we are popping from a single report queue, all requests should concern only one repack request.
-//    if (repackRequestAddresses.size() != 1) {
-//      std::stringstream err;
-//      err << "In OStoreDB::getNextSuccessfulRetrieveRepackReportBatch(): reports for several repack requests in the "
-//             "same queue. ";
-//      for (auto& rr : repackRequestAddresses) {
-//        err << rr << " ";
-//      }
-//      throw exception::Exception(err.str());
-//    }
-//    privateRet->m_repackRequest.setAddress(*repackRequestAddresses.begin());
-//
-//    return std::unique_ptr<SchedulerDatabase::RepackReportBatch>(privateRet.release());
-//  }
-//  throw NoRepackReportBatchFound("In OStoreDB::getNextSuccessfulRetrieveRepackReportBatch(): no report found.");
 
 std::unique_ptr<SchedulerDatabase::RepackReportBatch>
 RelationalDB::getNextSuccessfulArchiveRepackReportBatch(log::LogContext& lc) {
-  lc.log(log::WARNING, "RelationalDB::getNextSuccessfulArchiveRepackReportBatch() dummy implementation !");
-  throw NoRepackReportBatchFound("In RelationalDB::getNextSuccessfulArchiveRepackReportBatch(): no report found.");
+  lc.log(log::INFO, "RelationalDB::getNextSuccessfulArchiveRepackReportBatch(): deleting successfully processed job rows and collecting statistics.");
+  cta::utils::Timer t;
+  log::TimingList timings;
+  std::unique_ptr<SchedulerDatabase::RepackReportBatch> ret;
+  std::vector <schedulerdb::postgres::RepackRequestProgress> statUpdates;
+  schedulerdb::Transaction txn(m_connPool);
+  // move all finished REPACK_RETRIEVE_ACTIVE_QUEUE to the REPACK_ARCHIVE_PENDING_QUEUE
+  // return back two numbers:
+  //   1) the number of all retrieve rows moved to archive table
+  //   2) the number of rearchive copies inserted additionally
+  // 1)+2) = the total number of columns being queued to the REPACK_ARCHIVE_PENDING_QUEUE
+  try {
+    auto count_rset  =
+      schedulerdb::postgres::ArchiveJobQueueRow::deleteSuccessfulRepackArchiveJobBatch(txn, c_repackArchiveReportBatchSize);
+    while (count_rset.next()) {
+      schedulerdb::postgres::RepackRequestProgress update;
+      update.reqId = count_rset.columnUint64("REPACK_REQUEST_ID");
+      update.archivedFiles = count_rset.columnUint64("ARCHIVED_COUNT");
+      update.archivedBytes = count_rset.columnUint64("ARCHIVED_BYTES");
+      log::ScopedParamContainer params(lc);
+      params.add("repackRequestId", update.reqId);
+      params.add("archivedFiles", update.archivedFiles);
+      params.add("archivedBytes", update.archivedBytes);
+      lc.log(cta::log::INFO, "In RelationalDB::getNextSuccessfulArchiveRepackReportBatch(): Successfully deleted jobs.");
+      statUpdates.emplace_back(update);
+    }
+    txn.commit();
+    timings.insertAndReset("deletedArchiveRepackJobs", t);
+  } catch (exception::Exception& ex) {
+    lc.log(cta::log::ERR,
+                   "In RelationalDB::getNextSuccessfulArchiveRepackReportBatch(): Failed to delete jobs: " +
+                     ex.getMessageValue());
+    txn.abort();
+    return ret;
+  }
+  if (statUpdates.empty()) {
+    lc.log(cta::log::INFO, "In RelationalDB::getNextSuccessfulArchiveRepackReportBatch(): No Repack progress statistics collected.");
+    // return empty report batch since the rest of the OStoreDB machinery is not needed here
+    return ret;
+  }
+
+  schedulerdb::Transaction txn2(m_connPool);
+  // report back to the REPACK_REQUEST_TRACKING table
+  uint64_t nrepreq = 0;
+  try {
+   auto vidrset = schedulerdb::postgres::RepackRequestTrackingRow::updateRepackRequestsProgress(txn2, statUpdates);
+   while (vidrset.next()) {
+     nrepreq++;
+     // Get the repack request VID for which files were deleted !
+     // PS: the deletion from the catalogue was handled by the Scheduler before,
+     // the deletion of the temporary file from EOS disk was handled via the ArchiveMount
+     this->m_catalogue.Tape()->setTapeDirty(vidrset.columnString("VID"));
+   }
+   log::ScopedParamContainer params(lc);
+   params.add("updatedRepackRequests", nrepreq);
+   lc.log(cta::log::INFO, "In RelationalDB::getNextSuccessfulArchiveRepackReportBatch(): Updated Repack progress statistics.");
+   txn2.commit();
+  } catch (exception::Exception& ex) {
+    lc.log(cta::log::ERR,
+                   "In RelationalDB::getNextSuccessfulArchiveRepackReportBatch(): failed to update  Repack progress statistics: " +
+                     ex.getMessageValue());
+    txn2.abort();
+  }
+  // return empty report batch since the rest of the OStoreDB machinery is not needed here
+  return ret;
 }
+
+
+
 
 std::unique_ptr<SchedulerDatabase::RepackReportBatch>
 RelationalDB::getNextFailedRetrieveRepackReportBatch(log::LogContext& lc) {
@@ -1145,6 +1171,9 @@ void RelationalDB::fetchMountInfo(SchedulerDatabase::TapeMountDecisionInfo& tmdi
   timings.insertAndReset("fetchMountPolicyCatalogueTime", t);
   // Iterate over all archive queues
   auto rset = cta::schedulerdb::postgres::ArchiveJobSummaryRow::selectNewJobs(*txn);
+  // here we do not do a separate call to the DB as we drive the difference betwee User table and Repack table by the status
+  // this can be done for retrieve as well, or, if we want to separate the summaries, we can separate the calls here as well
+  // This could be best decided once we design better the summaries (using triggers for example).
   while (rset.next()) {
     cta::schedulerdb::postgres::ArchiveJobSummaryRow ajsr(rset);
     // Set the queue type

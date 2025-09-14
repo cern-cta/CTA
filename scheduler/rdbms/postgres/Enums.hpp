@@ -38,17 +38,19 @@ enum class ArchiveJobStatus : uint8_t {
   AJS_Failed,
   AJS_Abandoned,
   AJS_ToTransferForRepack,
+  AJS_ToReportToRepackForSuccess,
   AJS_ToReportToRepackForFailure,
   ReadyForDeletion
 };
 
-constexpr const std::array<const char*, 9> StringsArchiveJobStatus = {"AJS_ToTransferForUser",
+constexpr const std::array<const char*, 10> StringsArchiveJobStatus = {"AJS_ToTransferForUser",
                                                                       "AJS_ToReportToUserForSuccess",
                                                                       "AJS_Complete",
                                                                       "AJS_ToReportToUserForFailure",
                                                                       "AJS_Failed",
                                                                       "AJS_Abandoned",
                                                                       "AJS_ToTransferForRepack",
+                                                                      "AJS_ToReportToRepackForSuccess",
                                                                       "AJS_ToReportToRepackForFailure",
                                                                       "ReadyForDeletion"};
 

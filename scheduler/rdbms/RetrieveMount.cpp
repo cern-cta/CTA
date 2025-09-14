@@ -38,7 +38,7 @@ const SchedulerDatabase::RetrieveMount::MountInfo& RetrieveMount::getMountInfo()
     }
     if (mountInfo.vo == defaultRepackVO) {
       logContext.log(cta::log::INFO,
-                     "In RetrieveMount::setIsRepack(): Created RetrieveMount for repack.");
+                     "In RetrieveMount::setIsRepack(): Marked RetrieveMount for repack.");
       m_isRepack = true;
     }
   }
