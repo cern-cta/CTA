@@ -906,27 +906,83 @@ RelationalDB::getNextSuccessfulRetrieveRepackReportBatch(log::LogContext& lc) {
   return ret;
 }
 
+
+// this method shall be renamed (as many other methods) to something making more sense for rdbms workflow processNextSuccessfulArchiveRepackReportBatch
 std::unique_ptr<SchedulerDatabase::RepackReportBatch>
 RelationalDB::getNextSuccessfulArchiveRepackReportBatch(log::LogContext& lc) {
   lc.log(log::INFO, "RelationalDB::getNextSuccessfulArchiveRepackReportBatch(): deleting successfully processed job rows and collecting statistics.");
   cta::utils::Timer t;
   log::TimingList timings;
   std::unique_ptr<SchedulerDatabase::RepackReportBatch> ret;
-  std::vector <schedulerdb::postgres::RepackRequestProgress> statUpdates;
   schedulerdb::Transaction txn(m_connPool);
-  // move all finished REPACK_RETRIEVE_ACTIVE_QUEUE to the REPACK_ARCHIVE_PENDING_QUEUE
-  // return back two numbers:
-  //   1) the number of all retrieve rows moved to archive table
-  //   2) the number of rearchive copies inserted additionally
-  // 1)+2) = the total number of columns being queued to the REPACK_ARCHIVE_PENDING_QUEUE
+  std::vector<std::string> jobIDs;
+  std::vector<std::string> jobSrcUrls;
+  try {
+    auto batch_rset = schedulerdb::postgres::ArchiveJobQueueRow::getNextSuccessfulArchiveRepackReportBatch(txn,
+                                                                                                           c_repackArchiveReportBatchSize);
+    while (batch_rset.next()) {
+      jobIDs.emplace_back(batch_rset.columnString("JOB_ID"));
+      jobSrcUrls.emplace_back(batch_rset.columnString("SRC_URL"));
+    }
+    txn.commit();
+  } catch (exception::Exception &ex) {
+    lc.log(cta::log::ERR,
+           "In RelationalDB::getNextSuccessfulArchiveRepackReportBatch(): Failed to get jobs: " +
+           ex.getMessageValue());
+    txn.abort();
+    return ret;
+  }
+  // ------------------------------------------
+  // calling the deletion for the jobSrcUrls
+  // TO-BE-DONE
+  // ------------------------------------------
+  struct DiskFileRemovers {
+    std::unique_ptr<cta::disk::AsyncDiskFileRemover> asyncRemover;
+    std::string jobUrl;
+    typedef std::list<DiskFileRemovers> List;
+  };
+  DiskFileRemovers::List deletersList;
+  for (const auto& jobUrl : jobSrcUrls){
+    // async delete the file from the disk
+    try {
+      cta::disk::AsyncDiskFileRemoverFactory asyncDiskFileRemoverFactory;
+      std::unique_ptr<cta::disk::AsyncDiskFileRemover> asyncRemover(
+        asyncDiskFileRemoverFactory.createAsyncDiskFileRemover(jobUrl));
+      deletersList.emplace_back(DiskFileRemovers{std::move(asyncRemover), jobUrl});
+      deletersList.back().asyncRemover->asyncDelete();
+    } catch (const cta::exception::Exception& ex) {
+        log::ScopedParamContainer(lc)
+          .add("jobUrl", jobUrl)
+          .log(log::ERR, "In RelationalDB::getNextSuccessfulArchiveRepackReportBatch(): async deletion of disk file failed.");
+        return ret;
+      }
+  }
+  for (auto& dfr : deletersList) {
+    try {
+      dfr.asyncRemover->wait();
+      log::ScopedParamContainer(lc)
+        .add("jobUrl", dfr.jobUrl)
+        .log(log::INFO, "In RelationalDB::getNextSuccessfulArchiveRepackReportBatch(): async deleted file.");
+    } catch (const cta::exception::Exception& ex) {
+      // Log the error
+      log::ScopedParamContainer(lc)
+        .add("jobUrl", dfr.jobUrl)
+        .log(log::ERR, "In RelationalDB::getNextSuccessfulArchiveRepackReportBatch(): async file not deleted.");
+      return ret;
+    }
+  }
+  std::vector <schedulerdb::postgres::RepackRequestProgress> statUpdates;
+  schedulerdb::Transaction txn2(m_connPool);
   try {
     auto count_rset  =
-      schedulerdb::postgres::ArchiveJobQueueRow::deleteSuccessfulRepackArchiveJobBatch(txn, c_repackArchiveReportBatchSize);
+      schedulerdb::postgres::ArchiveJobQueueRow::deleteSuccessfulRepackArchiveJobBatch(txn2, jobIDs);
     while (count_rset.next()) {
       schedulerdb::postgres::RepackRequestProgress update;
       update.reqId = count_rset.columnUint64("REPACK_REQUEST_ID");
       update.archivedFiles = count_rset.columnUint64("ARCHIVED_COUNT");
       update.archivedBytes = count_rset.columnUint64("ARCHIVED_BYTES");
+      // cta::utils::splitStringToVector(count_rset.columnString("SRC_URLS"));
+      // cta::utils::splitStringToVector(count_rset.columnString("JOB_IDS"));
       log::ScopedParamContainer params(lc);
       params.add("repackRequestId", update.reqId);
       params.add("archivedFiles", update.archivedFiles);
@@ -934,13 +990,13 @@ RelationalDB::getNextSuccessfulArchiveRepackReportBatch(log::LogContext& lc) {
       lc.log(cta::log::INFO, "In RelationalDB::getNextSuccessfulArchiveRepackReportBatch(): Successfully deleted jobs.");
       statUpdates.emplace_back(update);
     }
-    txn.commit();
+    txn2.commit();
     timings.insertAndReset("deletedArchiveRepackJobs", t);
   } catch (exception::Exception& ex) {
     lc.log(cta::log::ERR,
                    "In RelationalDB::getNextSuccessfulArchiveRepackReportBatch(): Failed to delete jobs: " +
                      ex.getMessageValue());
-    txn.abort();
+    txn2.abort();
     return ret;
   }
   if (statUpdates.empty()) {
@@ -949,27 +1005,27 @@ RelationalDB::getNextSuccessfulArchiveRepackReportBatch(log::LogContext& lc) {
     return ret;
   }
 
-  schedulerdb::Transaction txn2(m_connPool);
+  schedulerdb::Transaction txn3(m_connPool);
   // report back to the REPACK_REQUEST_TRACKING table
   uint64_t nrepreq = 0;
   try {
-   auto vidrset = schedulerdb::postgres::RepackRequestTrackingRow::updateRepackRequestsProgress(txn2, statUpdates);
+   auto vidrset = schedulerdb::postgres::RepackRequestTrackingRow::updateRepackRequestsProgress(txn3, statUpdates);
    while (vidrset.next()) {
      nrepreq++;
      // Get the repack request VID for which files were deleted !
      // PS: the deletion from the catalogue was handled by the Scheduler before,
-     // the deletion of the temporary file from EOS disk was handled via the ArchiveMount
+     // PPS: the deletion of the temporary file from EOS disk was handled above
      this->m_catalogue.Tape()->setTapeDirty(vidrset.columnString("VID"));
    }
    log::ScopedParamContainer params(lc);
    params.add("updatedRepackRequests", nrepreq);
    lc.log(cta::log::INFO, "In RelationalDB::getNextSuccessfulArchiveRepackReportBatch(): Updated Repack progress statistics.");
-   txn2.commit();
+   txn3.commit();
   } catch (exception::Exception& ex) {
     lc.log(cta::log::ERR,
                    "In RelationalDB::getNextSuccessfulArchiveRepackReportBatch(): failed to update  Repack progress statistics: " +
                      ex.getMessageValue());
-    txn2.abort();
+    txn3.abort();
   }
   // return empty report batch since the rest of the OStoreDB machinery is not needed here
   return ret;

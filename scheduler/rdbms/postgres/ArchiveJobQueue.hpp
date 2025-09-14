@@ -704,7 +704,9 @@ public:
    */
   void updateRetryCounts(uint64_t mountId);
 
+  static rdbms::Rset getNextSuccessfulArchiveRepackReportBatch(Transaction &txn,
+                                                               const size_t limit);
   static rdbms::Rset deleteSuccessfulRepackArchiveJobBatch(Transaction &txn,
-                                                           const size_t limit);
+                                                           std::vector<std::string>& jobIDs);
 };
 };  // namespace cta::schedulerdb::postgres

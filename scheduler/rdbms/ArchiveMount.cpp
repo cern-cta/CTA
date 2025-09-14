@@ -208,6 +208,14 @@ void ArchiveMount::setJobBatchTransferred(std::list<std::unique_ptr<SchedulerDat
            "In schedulerdb::ArchiveMount::setJobBatchTransferred(): received a job to send to report queue.");
     jobsBatchItor++;
   }
+  // For Repack workflow: We know that as oon as the recall of a file is done,
+  // the row will get moved to the archive pending table and any additional
+  // copies needed will be recorded as a separate row in this table as well.
+  // This means that as soon as there is a request for one successful job to be updated/deleted
+  // the second on will have its state in the table already as well
+  // we need to check in the query if any rows with the same archive number exist.
+  // if they do and if they do not have already the status AJS_ToReportToRepackForSuccess
+  // we will update the status of its sibling job, but we do not return them back for deletion.
   cta::schedulerdb::Transaction txn(m_connPool);
   try {
     // all jobs for which setJobBatchTransferred is called shall be reported as successful
@@ -239,7 +247,47 @@ void ArchiveMount::setJobBatchTransferred(std::list<std::unique_ptr<SchedulerDat
            "reporting. Aborting the transaction." +
              ex.getMessageValue());
     txn.abort();
+    return;
   }
+
+  //if(m_isRepack){
+  //  try {
+  //      //Subrequest deleted, async delete the file from the disk
+  //      cta::disk::AsyncDiskFileRemoverFactory asyncDiskFileRemoverFactory;
+  //      std::unique_ptr<cta::disk::AsyncDiskFileRemover> asyncRemover(
+  //        asyncDiskFileRemoverFactory.createAsyncDiskFileRemover(d.subrequestInfo.repackInfo.fileBufferURL));
+  //      diskFileRemoverList.push_back({std::move(asyncRemover), d.subrequestInfo});
+  //      diskFileRemoverList.back().asyncRemover->asyncDelete();
+  //    } catch (const cta::exception::Exception& ex) {
+  //      log::ScopedParamContainer(lc)
+  //        .add("fileId", d.subrequestInfo.archiveFile.archiveFileID)
+  //        .add("subrequestAddress", d.subrequestInfo.subrequest->getAddressIfSet())
+  //        .add("exceptionMsg", ex.getMessageValue())
+  //        .log(log::ERR, "In OStoreDB::RepackArchiveReportBatch::report(): async deletion of disk file failed.");
+  //    }
+//
+  //  for (auto& dfr : diskFileRemoverList) {
+  //  try {
+  //    dfr.asyncRemover->wait();
+  //    log::ScopedParamContainer(lc)
+  //      .add("fileId", dfr.subrequestInfo.archiveFile.archiveFileID)
+  //      .add("subrequestAddress", dfr.subrequestInfo.subrequest->getAddressIfSet())
+  //      .add("fileBufferURL", dfr.subrequestInfo.repackInfo.fileBufferURL)
+  //      .log(log::INFO, "In OStoreDB::RepackArchiveReportBatch::report(): async deleted file.");
+  //  } catch (const cta::exception::Exception& ex) {
+  //    // Log the error
+  //    log::ScopedParamContainer(lc)
+  //      .add("fileId", dfr.subrequestInfo.archiveFile.archiveFileID)
+  //      .add("subrequestAddress", dfr.subrequestInfo.subrequest->getAddressIfSet())
+  //      .add("fileBufferURL", dfr.subrequestInfo.repackInfo.fileBufferURL)
+  //      .add("exceptionMsg", ex.getMessageValue())
+  //      .log(log::ERR, "In OStoreDB::RepackArchiveReportBatch::report(): async file not deleted.");
+  //  }
+  //}
+  //}
+//
+
+
 }
 
 void ArchiveMount::recycleTransferredJobs(std::list<std::unique_ptr<SchedulerDatabase::ArchiveJob>>& jobsBatch,
