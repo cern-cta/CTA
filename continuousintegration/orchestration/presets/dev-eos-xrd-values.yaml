@@ -54,7 +54,7 @@ mgm:
         issuer = https://dteam-auth.cern.ch/
         base_path = /
         map_subject = False
-        default_user = ctaeos
+        default_user = poweruser1
 
   xrd:
     # Additional tape-specific config
