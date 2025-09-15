@@ -55,6 +55,7 @@ mgm:
         base_path = /
         map_subject = False
         default_user = poweruser1
+        authorization_strategy = mapping
 
   xrd:
     # Additional tape-specific config
