@@ -1,3 +1,5 @@
+#!/bin/bash
+
 # Move to root
 cd /
 
