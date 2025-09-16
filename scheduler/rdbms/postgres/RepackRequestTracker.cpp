@@ -28,35 +28,35 @@ namespace cta::schedulerdb::postgres {
     DELETE FROM REPACK_REQUEST_TRACKING
     WHERE
       VID = :VID
-      AND STATUS = ANY(ARRAY[
+      AND STATUS = ANY(ARRAY['RRS_Pending','RRS_ToExpand','RRS_Complete','RRS_Failed']::REPACK_REQ_STATUS[])
     )SQL";
     // we can move this to new bindArray method for stmt
-    std::vector <std::string> statusVec;
-    std::vector <std::string> placeholderVec;
-    std::list <RepackJobStatus> statusList;
-    statusList.emplace_back(RepackJobStatus::RRS_Pending);
-    statusList.emplace_back(RepackJobStatus::RRS_ToExpand);
-    size_t j = 1;
-    for (const auto &jstatus: statusList) {
-      statusVec.emplace_back(to_string(jstatus));
-      std::string plch = std::string(":STATUS") + std::to_string(j);
-      placeholderVec.emplace_back(plch);
-      sql += plch;
-      if (&jstatus != &statusList.back()) {
-        sql += std::string(",");
-      }
-      j++;
-    }
-    sql += R"SQL(
-        ]::REPACK_REQ_STATUS[])
-  )SQL";
+    //std::vector <std::string> statusVec;
+    //std::vector <std::string> placeholderVec;
+    //std::vector <RepackJobStatus> statusList;
+    //statusList.emplace_back(RepackJobStatus::RRS_Pending);
+    //statusList.emplace_back(RepackJobStatus::RRS_ToExpand);
+    //statusList.emplace_back(RepackJobStatus::RRS_Complete);
+    //statusList.emplace_back(RepackJobStatus::RRS_Failed);
+    //for (size_t j = 0; j < statusList.size(); ++j) {
+    //  statusVec.emplace_back(to_string(statusList[j]));
+    //  std::string plch = ":STATUS" + std::to_string(j + 1);
+    //  placeholderVec.emplace_back(plch);
+    //  sql += plch;
+    //  if (j < statusList.size() - 1) {
+    //      sql += ",";
+    //  }
+    //}
+    //sql += R"SQL(
+    //    )
+    //)SQL";
     auto stmt = txn.getConn().createStmt(sql);
     stmt.bindString(":VID", vid);
     // we can move the array binding to new bindArray method for STMT
-    size_t sz = statusVec.size();
-    for (size_t i = 0; i < sz; ++i) {
-      stmt.bindString(placeholderVec[i], statusVec[i]);
-    }
+    //size_t sz = statusVec.size();
+    //for (size_t i = 0; i < sz; ++i) {
+    //  stmt.bindString(placeholderVec[i], statusVec[i]);
+    //}
     stmt.executeNonQuery();
     return stmt.getNbAffectedRows();
   }
@@ -195,6 +195,11 @@ rdbms::Rset RepackRequestTrackingRow::updateRepackRequestsProgress(
                THEN :STATUS_COMPLETE::REPACK_REQ_STATUS
              ELSE :STATUS_RUNNING::REPACK_REQ_STATUS
            END,
+           IS_COMPLETE = CASE
+             WHEN (trk.ARCHIVED_FILES + upd.ARCHIVED_FILES) = trk.TOTAL_FILES_TO_ARCHIVE
+               THEN TRUE
+             ELSE FALSE
+           END,
            RETRIEVED_FILES = trk.RETRIEVED_FILES + upd.RETRIEVED_FILES,
            RETRIEVED_BYTES = trk.RETRIEVED_BYTES + upd.RETRIEVED_BYTES,
            ARCHIVED_FILES = trk.ARCHIVED_FILES + upd.ARCHIVED_FILES,
@@ -203,7 +208,16 @@ rdbms::Rset RepackRequestTrackingRow::updateRepackRequestsProgress(
            REARCHIVE_BYTES = trk.REARCHIVE_BYTES + upd.REARCHIVE_BYTES
            FROM UPDATE_TABLE upd
            WHERE trk.REPACK_REQUEST_ID = upd.REPACK_REQUEST_ID
-           RETURNING trk.VID
+           RETURNING trk.VID,
+           CASE
+             WHEN IS_COMPLETE = CASE
+                    WHEN (trk.ARCHIVED_FILES + upd.ARCHIVED_FILES) = trk.TOTAL_FILES_TO_ARCHIVE
+                      THEN TRUE
+                    ELSE FALSE
+                  END
+               THEN FALSE
+             ELSE TRUE
+           END AS IS_COMPLETE_CHANGED, BUFFER_URL
     )SQL";
 
     auto stmt = txn.getConn().createStmt(sql);

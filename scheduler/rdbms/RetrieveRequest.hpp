@@ -58,7 +58,7 @@ public:
   void setSchedulerRequest(const cta::common::dataStructures::RetrieveRequest& retrieveRequest);
   void setActivityIfNeeded(const cta::common::dataStructures::RetrieveRequest& retrieveRequest,
                            const cta::common::dataStructures::RetrieveFileQueueCriteria& criteria);
-  void setDiskSystemName(std::string_view diskSystemName);
+  void setDiskSystemName(std::optional<std::string> diskSystemName);
   void setCreationTime(const uint64_t creationTime);
   void setFirstSelectedTime(const uint64_t firstSelectedTime) const;
   void setCompletedTime(const uint64_t completedTime) const;

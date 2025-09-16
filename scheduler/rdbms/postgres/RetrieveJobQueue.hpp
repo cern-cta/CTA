@@ -712,9 +712,9 @@ static void insertBunch(rdbms::Conn &conn,
     stmt.bindUint64(":LIFECYCLE_COMPLETED_TIME" + idx, row.lifecycleTimings_completed_time);
 
     if (hasDiskSystemName)
-      stmt.bindString(":DISK_SYSTEM_NAME" + idx, row.diskSystemName.value_or(""));
+      stmt.bindString(":DISK_SYSTEM_NAME" + idx, row.diskSystemName.value());
     if (hasActivity)
-      stmt.bindString(":ACTIVITY" + idx, row.activity.value_or(""));
+      stmt.bindString(":ACTIVITY" + idx, row.activity.value());
     if (hasSrrActivity)
       stmt.bindString(":SRR_ACTIVITY" + idx, row.srrActivity);
   }

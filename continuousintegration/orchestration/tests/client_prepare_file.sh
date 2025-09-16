@@ -76,7 +76,7 @@ do
   done
   sleep 1
   let SECONDS_PASSED=SECONDS_PASSED+1
-  echo "Waiting for file to be retrieved. Seconds passed = $SECONDS_PASSED"
+  echo "Waiting for file to be retrieved to ${directory}. Files retrieved = ${nbFilesRetrieved}/${nbFilesToRetrieve}. Seconds passed = $SECONDS_PASSED."
   if test ${SECONDS_PASSED} == ${WAIT_FOR_RETRIEVED_FILE_TIMEOUT}; then
     die "$(date +%s): Timed out after ${WAIT_FOR_RETRIEVED_FILE_TIMEOUT} seconds waiting for files to be retrieved from tape"
   fi

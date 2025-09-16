@@ -119,6 +119,7 @@ roundTripRepack() {
     exit 1
   fi
 
+  echo "Removing repack request for ${VID_TO_REPACK}"
   removeRepackRequest ${VID_TO_REPACK}
   echo "Setting the tape ${VID_TO_REPACK} back to ACTIVE"
   modifyTapeState ${VID_TO_REPACK} ACTIVE

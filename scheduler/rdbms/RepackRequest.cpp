@@ -135,8 +135,11 @@ namespace cta::schedulerdb {
 
             // Disk system
             try {
+              m_lc.log(log::DEBUG, "In RepackRequest::addSubrequestsAndUpdateStats(): Extracting diskSystemName from :" + schedReq.dstURL);
               rr.setDiskSystemName(diskSystemList.getDSName(schedReq.dstURL));
-            } catch (std::out_of_range &) {}
+            } catch (std::out_of_range &) {
+              m_lc.log(log::DEBUG, "In RepackRequest::addSubrequestsAndUpdateStats(): Extracting diskSystemName threw fake out_of_range exception no disk system from the list matched.");
+            }
 
             // Set repack info
             RetrieveRequest::RetrieveReqRepackInfo rRRepackInfo;
@@ -649,18 +652,14 @@ namespace cta::schedulerdb {
     repackInfo.creationLog = row.createLog;
     repackInfo.repackFinishedTime = row.repackFinishedTime;
     repackInfo.maxFilesToSelect = row.maxFilesToSelect;
-
+    // TO-DO: THIS NEEDS TO BE MADE A LOOP ON comma separated string FOR NEW COLUMNS
+    // IN THE TRACKING TABLE FILLED AFTER SUCCESSFUL ARCHIVAL IS REPORTED !
+    // Curently wrongly fills the origin VID !!!
     repackInfo.destinationInfos.clear();
-    /* [Protobuf to-be-replaced] keeping this logic in a comment to facilitate
-     * future rewrite using DB columns directly instead of inserting Protobuf objects
-     *
-     * for(auto &d: di.infos()) {
-     *   repackInfo.destinationInfos.emplace_back();
-     *   repackInfo.destinationInfos.back().vid   = d.vid();
-     *   repackInfo.destinationInfos.back().files = d.files();
-     *   repackInfo.destinationInfos.back().bytes = d.bytes();
-     *   }
-     */
+    repackInfo.destinationInfos.emplace_back();
+    repackInfo.destinationInfos.back().vid   = row.vid;
+    repackInfo.destinationInfos.back().files = row.archivedFiles;
+    repackInfo.destinationInfos.back().bytes = row.archivedBytes;
 
     m_subreqp.clear();
     /* [Protobuf to-be-replaced] keeping this logic in a comment to facilitate

@@ -34,7 +34,7 @@ struct RetrieveJobSummaryRow {
   //schedulerdb::RetrieveJobStatus status;
   std::string mountPolicy;
   uint64_t minRetrieveRequestAge;
-  std::string diskSystemName;
+  std::optional<std::string> diskSystemName;
 
   RetrieveJobSummaryRow() = default;
 
@@ -49,7 +49,7 @@ struct RetrieveJobSummaryRow {
     vid = rset.columnString("VID");
     //status = from_string<schedulerdb::RetrieveJobStatus>(rset.columnString("STATUS"));
     activity = rset.columnOptionalString("ACTIVITY");
-    diskSystemName = rset.columnString("DISK_SYSTEM_NAME");
+    diskSystemName = rset.columnOptionalString("DISK_SYSTEM_NAME");
     jobsCount = rset.columnUint64("JOBS_COUNT");
     jobsTotalSize = rset.columnUint64("JOBS_TOTAL_SIZE");
     priority = rset.columnUint64("PRIORITY");

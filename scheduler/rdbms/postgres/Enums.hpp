@@ -100,7 +100,7 @@ constexpr const std::array<const char*, 8> StringsRetrieveJobStatus = {"RJS_ToTr
 
 enum class RepackJobStatus : uint8_t { RRS_Pending, RRS_ToExpand, RRS_Starting, RRS_Running, RRS_Complete, RRS_Failed };
 
-constexpr const std::array<const char*, 7> StringsRepackJobStatus =
+constexpr const std::array<const char*, 6> StringsRepackJobStatus =
   {"RRS_Pending", "RRS_ToExpand", "RRS_Starting", "RRS_Running", "RRS_Complete", "RRS_Failed"};
 }  // namespace cta::schedulerdb
 

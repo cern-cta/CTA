@@ -405,7 +405,7 @@ RelationalDB::queueRetrieve(cta::common::dataStructures::RetrieveRequest& rqst,
     rReq.fillJobsSetRetrieveFileQueueCriteria(criteria);  // fills also m_jobs
     rReq.setActiveCopyNumber(bestCopyNb);
     rReq.setIsVerifyOnly(rqst.isVerifyOnly);
-    rReq.setDiskSystemName(diskSystemName.value_or(""));
+    rReq.setDiskSystemName(diskSystemName);
     rreqMutex.release();
     rReq.insert();
     log::ScopedParamContainer(logContext)
@@ -526,7 +526,12 @@ std::string RelationalDB::queueRepack(const SchedulerDatabase::QueueRepackReques
 // RelationalDB::repackExists()
 //------------------------------------------------------------------------------
 bool RelationalDB::repackExists() {
-  throw cta::exception::Exception(std::string(__FUNCTION__) + std::string("Not implemented"));
+  std::list <common::dataStructures::RepackInfo> repack_list = RelationalDB::fetchRepackInfo("all");
+  if (repack_list.empty()) {
+    return true;
+  } else {
+    return false;
+  }
 }
 
 std::list<common::dataStructures::RepackInfo> RelationalDB::getRepackInfo() {
@@ -549,6 +554,7 @@ std::list<common::dataStructures::RepackInfo> RelationalDB::fetchRepackInfo(cons
     lc.log(cta::log::ERR,
            "In RelationalDB::getRepackInfo(): failed to get repack info." +
              ex.getMessageValue());
+    throw;
   }
   sqlconn.commit();
   return ret;
@@ -556,6 +562,9 @@ std::list<common::dataStructures::RepackInfo> RelationalDB::fetchRepackInfo(cons
 
 common::dataStructures::RepackInfo RelationalDB::getRepackInfo(const std::string& vid) {
   auto result = RelationalDB::fetchRepackInfo(vid);
+  if (result.empty()) {
+    throw exception::UserError("No repack request found for VID: " + vid);
+  }
   return result.front();
 }
 
@@ -615,31 +624,42 @@ common::dataStructures::RepackInfo RelationalDB::getRepackInfo(const std::string
 //   throw exception::UserError("No repack request for this VID.");
 // }
 
-
-  void RelationalDB::cancelRepack(const std::string &vid, log::LogContext &lc) {
-    schedulerdb::Transaction txn(m_connPool);
-    try {
-      uint64_t cancelledRepackRequests =
-              schedulerdb::postgres::RepackRequestTrackingRow::cancelRepack(txn, vid);
-      log::ScopedParamContainer(lc)
-              .add("VID", vid);
-      if (cancelledRepackRequests > 1) {
-        lc.log(cta::log::WARNING,
-               "In RelationalDB::cancelRepack(): deleted more than 1 request in ToExpand or Pending state, please check if that is expected !");
-      } else if (cancelledRepackRequests == 1) {
-        lc.log(log::INFO, "In RelationalDB::cancelRepack(): deleted repack request.");
-      } else if (cancelledRepackRequests == 0) {
-        lc.log(cta::log::WARNING,
-               "In RelationalDB::cancelRepack(): nothing to cancel, failed to find request in ToExpand or Pending state.");
-      }
-      txn.commit();
-    } catch (exception::Exception &ex) {
-      lc.log(cta::log::ERR,
-             "In RelationalDB::cancelRepack(): failed to cancel repack request. Aborting the transaction." +
-             ex.getMessageValue());
+// this method should be rather called DELETE REPACK,
+// cancelling could be made available as well before the deletion
+void RelationalDB::cancelRepack(const std::string &vid, log::LogContext &lc) {
+  schedulerdb::Transaction txn(m_connPool);
+  try {
+    uint64_t cancelledRepackRequests =
+            schedulerdb::postgres::RepackRequestTrackingRow::cancelRepack(txn, vid);
+    log::ScopedParamContainer(lc)
+            .add("VID", vid);
+    if (cancelledRepackRequests > 1) {
+      lc.log(cta::log::WARNING,
+             "In RelationalDB::cancelRepack(): deleted more than 1 request in ToExpand or Pending state, please check if that is expected !");
+    } else if (cancelledRepackRequests == 1) {
+      lc.log(log::INFO, "In RelationalDB::cancelRepack(): deleted repack request.");
+    } else if (cancelledRepackRequests == 0) {
+      lc.log(cta::log::WARNING,
+             "In RelationalDB::cancelRepack(): nothing to cancel, failed to find request in ToExpand or Pending state.");
+    }
+    txn.commit();
+  } catch (exception::Exception &ex) {
+    lc.log(cta::log::ERR,
+           "In RelationalDB::cancelRepack(): failed to cancel repack request. Aborting the transaction." +
+           ex.getMessageValue());
     txn.abort();
     throw;
-  }
+  } catch (std::exception &ex) {
+    lc.log(cta::log::ERR,
+           std::string("In RelationalDB::cancelRepack(): unexpected std::exception: ") + ex.what());
+    txn.abort();
+    throw;
+} catch (...) {
+    lc.log(cta::log::ERR,
+           "In RelationalDB::cancelRepack(): unknown exception occurred. Aborting the transaction.");
+    txn.abort();
+    throw;
+}
   return;
 }
 
@@ -915,6 +935,8 @@ RelationalDB::getNextSuccessfulArchiveRepackReportBatch(log::LogContext& lc) {
   log::TimingList timings;
   std::unique_ptr<SchedulerDatabase::RepackReportBatch> ret;
   schedulerdb::Transaction txn(m_connPool);
+  std::vector<std::string> vids;
+  std::vector<std::string> fileBytes;
   std::vector<std::string> jobIDs;
   std::vector<std::string> jobSrcUrls;
   try {
@@ -967,37 +989,41 @@ RelationalDB::getNextSuccessfulArchiveRepackReportBatch(log::LogContext& lc) {
       // Log the error
       log::ScopedParamContainer(lc)
         .add("jobUrl", dfr.jobUrl)
-        .log(log::ERR, "In RelationalDB::getNextSuccessfulArchiveRepackReportBatch(): async file not deleted.");
+        .log(log::ERR, "In RelationalDB::getNextSuccessfulArchiveRepackReportBatch(): async file not deleted. Exception thrown: " +
+             ex.getMessageValue());
       return ret;
     }
   }
   std::vector <schedulerdb::postgres::RepackRequestProgress> statUpdates;
-  schedulerdb::Transaction txn2(m_connPool);
-  try {
-    auto count_rset  =
-      schedulerdb::postgres::ArchiveJobQueueRow::deleteSuccessfulRepackArchiveJobBatch(txn2, jobIDs);
-    while (count_rset.next()) {
-      schedulerdb::postgres::RepackRequestProgress update;
-      update.reqId = count_rset.columnUint64("REPACK_REQUEST_ID");
-      update.archivedFiles = count_rset.columnUint64("ARCHIVED_COUNT");
-      update.archivedBytes = count_rset.columnUint64("ARCHIVED_BYTES");
-      // cta::utils::splitStringToVector(count_rset.columnString("SRC_URLS"));
-      // cta::utils::splitStringToVector(count_rset.columnString("JOB_IDS"));
-      log::ScopedParamContainer params(lc);
-      params.add("repackRequestId", update.reqId);
-      params.add("archivedFiles", update.archivedFiles);
-      params.add("archivedBytes", update.archivedBytes);
-      lc.log(cta::log::INFO, "In RelationalDB::getNextSuccessfulArchiveRepackReportBatch(): Successfully deleted jobs.");
-      statUpdates.emplace_back(update);
+  if (!jobIDs.empty()) {
+    schedulerdb::Transaction txn2(m_connPool);
+    try {
+      auto count_rset =
+              schedulerdb::postgres::ArchiveJobQueueRow::deleteSuccessfulRepackArchiveJobBatch(txn2, jobIDs);
+      while (count_rset.next()) {
+        schedulerdb::postgres::RepackRequestProgress update;
+        update.reqId = count_rset.columnUint64("REPACK_REQUEST_ID");
+        update.archivedFiles = count_rset.columnUint64("ARCHIVED_COUNT");
+        update.archivedBytes = count_rset.columnUint64("ARCHIVED_BYTES");
+        // cta::utils::splitStringToVector(count_rset.columnString("SRC_URLS"));
+        // cta::utils::splitStringToVector(count_rset.columnString("JOB_IDS"));
+        log::ScopedParamContainer params(lc);
+        params.add("repackRequestId", update.reqId);
+        params.add("archivedFiles", update.archivedFiles);
+        params.add("archivedBytes", update.archivedBytes);
+        lc.log(cta::log::INFO,
+               "In RelationalDB::getNextSuccessfulArchiveRepackReportBatch(): Successfully deleted finished archive jobs.");
+        statUpdates.emplace_back(update);
+      }
+      txn2.commit();
+      timings.insertAndReset("deletedArchiveRepackJobs", t);
+    } catch (exception::Exception &ex) {
+      lc.log(cta::log::ERR,
+             "In RelationalDB::getNextSuccessfulArchiveRepackReportBatch(): Failed to delete jobs: " +
+             ex.getMessageValue());
+      txn2.abort();
+      return ret;
     }
-    txn2.commit();
-    timings.insertAndReset("deletedArchiveRepackJobs", t);
-  } catch (exception::Exception& ex) {
-    lc.log(cta::log::ERR,
-                   "In RelationalDB::getNextSuccessfulArchiveRepackReportBatch(): Failed to delete jobs: " +
-                     ex.getMessageValue());
-    txn2.abort();
-    return ret;
   }
   if (statUpdates.empty()) {
     lc.log(cta::log::INFO, "In RelationalDB::getNextSuccessfulArchiveRepackReportBatch(): No Repack progress statistics collected.");
@@ -1008,6 +1034,7 @@ RelationalDB::getNextSuccessfulArchiveRepackReportBatch(log::LogContext& lc) {
   schedulerdb::Transaction txn3(m_connPool);
   // report back to the REPACK_REQUEST_TRACKING table
   uint64_t nrepreq = 0;
+  std::vector<std::string> repackBufferUrlsToDelete;
   try {
    auto vidrset = schedulerdb::postgres::RepackRequestTrackingRow::updateRepackRequestsProgress(txn3, statUpdates);
    while (vidrset.next()) {
@@ -1015,7 +1042,13 @@ RelationalDB::getNextSuccessfulArchiveRepackReportBatch(log::LogContext& lc) {
      // Get the repack request VID for which files were deleted !
      // PS: the deletion from the catalogue was handled by the Scheduler before,
      // PPS: the deletion of the temporary file from EOS disk was handled above
-     this->m_catalogue.Tape()->setTapeDirty(vidrset.columnString("VID"));
+     std::string repack_vid = vidrset.columnString("VID");
+     std::string repack_buffer_path = vidrset.columnString("BUFFER_URL") + "/" + repack_vid;
+     this->m_catalogue.Tape()->setTapeDirty(repack_vid);
+     bool isCompleteStatusChanged = vidrset.columnBool("IS_COMPLETE_CHANGED");
+     if(isCompleteStatusChanged){
+       repackBufferUrlsToDelete.push_back(repack_buffer_path);
+     }
    }
    log::ScopedParamContainer params(lc);
    params.add("updatedRepackRequests", nrepreq);
@@ -1027,12 +1060,29 @@ RelationalDB::getNextSuccessfulArchiveRepackReportBatch(log::LogContext& lc) {
                      ex.getMessageValue());
     txn3.abort();
   }
+  // check if status is Failed or Complete and delete the disk directory for this repack in such a case
+  for(auto& bufferURL: repackBufferUrlsToDelete){
+      //Repack Request is complete, delete the directory in the buffer
+      cta::disk::DirectoryFactory directoryFactory;
+      // std::string directoryPath = cta::utils::getEnclosingPath(bufferURL);
+      std::unique_ptr<cta::disk::Directory> directory;
+      try {
+        directory.reset(directoryFactory.createDirectory(bufferURL));
+        directory->rmdir();
+        log::ScopedParamContainer(lc)
+          .add("bufferURL", bufferURL)
+          .log(log::INFO,
+               "In RelationalDB::getNextSuccessfulArchiveRepackReportBatch(): deleted the repack buffer directory");
+      } catch (const cta::exception::Exception& ex) {
+        log::ScopedParamContainer(lc)
+          .add("bufferURL", bufferURL)
+          .log(log::ERR,
+               "In RelationalDB::getNextSuccessfulArchiveRepackReportBatch(): failed to remove the repack buffer directory");
+      }
+  }
   // return empty report batch since the rest of the OStoreDB machinery is not needed here
   return ret;
 }
-
-
-
 
 std::unique_ptr<SchedulerDatabase::RepackReportBatch>
 RelationalDB::getNextFailedRetrieveRepackReportBatch(log::LogContext& lc) {
@@ -1354,22 +1404,23 @@ void RelationalDB::fetchMountInfo(SchedulerDatabase::TapeMountDecisionInfo& tmdi
     m.vo = "";                     // The vo is not known here, and will be determined by the caller.
     m.capacityInBytes = 0;         // The capacity is not known here, and will be determined by the caller.
     m.labelFormat = std::nullopt;  // The labelFormat is not known here, and may be determined by the caller.
-
-    auto it = diskSystemSleepMap.find(rjsr.diskSystemName);
-    if (it != diskSystemSleepMap.end()) {
+    if (rjsr.diskSystemName) {
+      auto it = diskSystemSleepMap.find(rjsr.diskSystemName.value());
+      if (it != diskSystemSleepMap.end()) {
         const auto &entry = it->second;
         auto now = static_cast<uint64_t>(::time(nullptr));
 
         if (now < (entry.timestamp + entry.sleepTime)) {
-            m.sleepingMount = true;
-            m.sleepStartTime = entry.timestamp;
-            m.diskSystemSleptFor = now - entry.timestamp;  // how long it has already slept
-            m.sleepTime = entry.sleepTime;
+          m.sleepingMount = true;
+          m.sleepStartTime = entry.timestamp;
+          m.diskSystemSleptFor = now - entry.timestamp;  // how long it has already slept
+          m.sleepTime = entry.sleepTime;
         } else {
           m.sleepingMount = false;
         }
+      }
     }
-        /* not sure what mountPolicyNames is for ???
+    /* not sure what mountPolicyNames is for ???
     * are we mounting with multiple mount policies in the game ?
     * m.mountPolicyNames = queueMountPolicyNames;
     * sleepInfo - TO BE REVIEWED BEFORE IMPLEMENTING !

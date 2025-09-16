@@ -296,7 +296,7 @@ void RetrieveRequest::setActivityIfNeeded(const cta::common::dataStructures::Ret
   m_activity = retrieveRequest.activity;
 }
 
-void RetrieveRequest::setDiskSystemName(std::string_view diskSystemName) {
+void RetrieveRequest::setDiskSystemName(std::optional<std::string> diskSystemName) {
   m_diskSystemName = diskSystemName;
 }
 
