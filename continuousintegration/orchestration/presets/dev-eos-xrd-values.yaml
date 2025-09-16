@@ -52,10 +52,9 @@ mgm:
         audience = https://wlcg.cern.ch/jwt/v1/any
         [Issuer OSG-Connect]
         issuer = https://dteam-auth.cern.ch/
-        base_path = /
+        base_path = /eos/ctaeos/
         map_subject = true
         default_user = poweruser1
-        authorization_strategy = mapping
 
   xrd:
     # Additional tape-specific config
