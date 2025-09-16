@@ -52,7 +52,7 @@ mgm:
         audience = https://wlcg.cern.ch/jwt/v1/any
         [Issuer OSG-Connect]
         issuer = https://dteam-auth.cern.ch/
-        base_path = /api/v1
+        base_path = /
         map_subject = false
         default_user = poweruser1
 
