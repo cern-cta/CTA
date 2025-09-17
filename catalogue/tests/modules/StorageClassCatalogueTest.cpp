@@ -139,6 +139,10 @@ TEST_P(cta_catalogue_StorageClassTest, deleteStorageClass_non_existent) {
     cta::exception::UserError);
 }
 
+TEST_P(cta_catalogue_StorageClassTest, getStorageClassNonExistent) {
+  ASSERT_THROW(m_catalogue->StorageClass()->getStorageClass("non_existent_storage_class"), cta::exception::UserError);
+}
+
 TEST_P(cta_catalogue_StorageClassTest, modifyStorageClassNbCopies) {
   m_catalogue->DiskInstance()->createDiskInstance(m_admin, m_diskInstance.name, m_diskInstance.comment);
   m_catalogue->VO()->createVirtualOrganization(m_admin, m_vo);
