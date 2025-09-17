@@ -25,11 +25,6 @@ namespace metrics_sdk = opentelemetry::sdk::metrics;
 namespace metrics_api = opentelemetry::metrics;
 namespace otlp = opentelemetry::exporter::otlp;
 
-// This is a hack for the taped parent process to maintain the same service.instance.id
-// after forking, since forking requires a shutdown of telemetry prior to it
-// Once we remove forking entirely from taped, this can go away
-static std::string previousServiceInstanceId;
-
 void initMetrics(const TelemetryConfig& config, cta::log::LogContext& lc) {
   if (config.metrics.backend == MetricsBackend::NOOP) {
     std::shared_ptr<metrics_api::MeterProvider> noopProvider = std::make_shared<metrics_api::NoopMeterProvider>();
@@ -40,13 +35,7 @@ void initMetrics(const TelemetryConfig& config, cta::log::LogContext& lc) {
 
   std::string processName = cta::utils::getProcessName();
   std::string hostName = cta::utils::getShortHostname();
-  std::string serviceInstanceId;
-  if (!previousServiceInstanceId.empty()) {
-    serviceInstanceId = previousServiceInstanceId;
-  } else {
-    serviceInstanceId = cta::utils::generateUuid();
-    previousServiceInstanceId = serviceInstanceId;
-  }
+  std::string serviceInstanceId = cta::utils::generateUuid();
 
   log::ScopedParamContainer params(lc);
   params.add("serviceName", config.serviceName)
