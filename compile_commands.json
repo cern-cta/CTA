@@ -282,6 +282,12 @@
   "output": "xroot_plugins/CMakeFiles/XrdSsiCta.dir/__/frontend/common/AdminCmd.cpp.o"
 },
 {
+  "directory": "/builds/cta/CTA/build_rpm/xroot_plugins",
+  "command": "/usr/bin/c++ -DXrdSsiCta_EXPORTS -I/builds/cta/CTA -I/builds/cta/CTA/build_rpm -I/usr/include/xrootd -I/usr/include/xrootd/private -I/builds/cta/CTA/tapeserver -I/builds/cta/CTA/xrootd-ssi-protobuf-interface/include -I/builds/cta/CTA/xrootd-ssi-protobuf-interface/eos_cta/include -I/builds/cta/CTA/build_rpm/eos_cta -fPIC -pedantic -Wall -Wextra -Werror -Wno-unused-parameter -fstack-protector-all -std=c++20 -g -fPIC -o CMakeFiles/XrdSsiCta.dir/__/frontend/common/AdminCmdOptions.cpp.o -c /builds/cta/CTA/frontend/common/AdminCmdOptions.cpp",
+  "file": "/builds/cta/CTA/frontend/common/AdminCmdOptions.cpp",
+  "output": "xroot_plugins/CMakeFiles/XrdSsiCta.dir/__/frontend/common/AdminCmdOptions.cpp.o"
+},
+{
   "directory": "/builds/cta/CTA/build_rpm/frontend/grpc",
   "command": "/usr/bin/c++  -I/builds/cta/CTA -I/builds/cta/CTA/build_rpm -I/builds/cta/CTA/build_rpm/eos_cta -I/builds/cta/CTA/common/jwt-cpp/include -fPIC -pedantic -Wall -Wextra -Werror -Wno-unused-parameter -fstack-protector-all -std=c++20 -g -o CMakeFiles/cta-frontend-grpc.dir/Main.cpp.o -c /builds/cta/CTA/frontend/grpc/Main.cpp",
   "file": "/builds/cta/CTA/frontend/grpc/Main.cpp",
