@@ -19,7 +19,6 @@ void initInstruments() {
 
   // Instrument initialisation
 
-
   // See https://opentelemetry.io/docs/specs/semconv/database/database-metrics/#metric-dbclientoperationduration
   // TODO: specify explicit bucket boundaries to follow the spec
   cta::telemetry::metrics::rdbmsOperationDuration =
