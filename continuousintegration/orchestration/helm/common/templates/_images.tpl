@@ -75,14 +75,6 @@
 {{- end }}
 
 {{/*
-   common.images.kubectl:
-   Returns the predefined kubectl image in the format <repository>:<tag>.
-*/}}
-{{- define "common.images.kubectl" -}}
-  "registry.cern.ch/docker.io/bitnami/kubectl:1.32.4"
-{{- end }}
-
-{{/*
    common.images.defaultPullPolicy:
    Returns the default pull policy, "IfNotPresent".
 */}}
