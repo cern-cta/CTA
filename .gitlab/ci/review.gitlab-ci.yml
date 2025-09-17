@@ -13,6 +13,9 @@ danger-review:
   variables:
     DANGER_GITLAB_USE_THREADS: 1
   script:
+    # this is needed to produce the danger_status.txt file, see
+    # https://gitlab.docs.cern.ch/docs/Build%20your%20application/CI-CD/Runners/TroubleShooting/yum-install-hang/
+    - ulimit -n 1048576
     - exit_code=0
     - danger --verbose --dangerfile=continuousintegration/danger/Dangerfile --fail-on-errors=true || exit_code=$?
     - echo $exit_code > danger_status.txt
