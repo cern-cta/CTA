@@ -15,7 +15,49 @@
 #               granted to it by virtue of its status as an Intergovernmental Organization or
 #               submit itself to any jurisdiction.
 
-set -euo pipefail
+# set -euo pipefail
+
+k8s_create_secret() {
+  local secret_name="$1"
+  local filename="$2"
+  local filepath="$3"
+  local namespace="${NAMESPACE:-default}"
+
+  # Encode file contents base64 (no line wraps)
+  local filedata
+  filedata=$(base64 -w0 < "$filepath")
+
+  # Construct JSON payload
+  read -r -d '' payload <<EOF
+{
+  "apiVersion": "v1",
+  "kind": "Secret",
+  "metadata": {
+    "name": "${secret_name}",
+    "namespace": "${namespace}"
+  },
+  "type": "Opaque",
+  "data": {
+    "${filename}": "${filedata}"
+  }
+}
+EOF
+
+  # Set up API access from in-cluster env
+  local host="https://${KUBERNETES_SERVICE_HOST}:${KUBERNETES_SERVICE_PORT}"
+  local token
+  token=$(cat /var/run/secrets/kubernetes.io/serviceaccount/token)
+  local cacert="/var/run/secrets/kubernetes.io/serviceaccount/ca.crt"
+
+  # POST to create a new secret
+  curl -sS --cacert "$cacert" \
+       -H "Authorization: Bearer $token" \
+       -H "Content-Type: application/json" \
+       -X POST \
+       -d "$payload" \
+       "${host}/api/v1/namespaces/${namespace}/secrets"
+}
+
 
 : "${NAMESPACE:?NAMESPACE env var must be set}"
 INPUT_DIR="/input"
@@ -40,8 +82,5 @@ for filepath in "$INPUT_DIR"/*; do
   fi
 
   echo "Creating secret: $secret_name from $filename"
-  kubectl create secret generic "$secret_name" \
-    --from-file="$filename=$filepath" \
-    --namespace "$NAMESPACE" \
-    --dry-run=client -o yaml | kubectl apply -f -
+  k8s_create_secret "$secret_name" "$filename" "$filepath"
 done
