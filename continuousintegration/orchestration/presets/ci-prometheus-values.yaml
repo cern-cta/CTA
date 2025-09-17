@@ -60,40 +60,40 @@ serverFiles:
       # Database
       - record: ci_db_client_connection_count
         expr: |
-          sum by (service_namespace, service_name, service_version, process_title, host_name, scheduler_backend_name, db_namespace, db_system_name) (db_client_connection_count)
+          sum by (service_namespace, service_name, service_version, process_title, host_name, scheduler_backend_name, db_namespace, db_system_name) (max_over_time(db_client_connection_count[1d]))
       - record: ci_db_client_operation_duration_milliseconds_bucket
         expr: |
-          sum by (service_namespace, service_name, service_version, process_title, host_name, scheduler_backend_name, db_namespace, db_system_name, le) (max_over_time(db_client_operation_duration_milliseconds_bucket{le=~"5.0|10.0|50.0|100.0|500.0|1000.0|5000.0|10000.0|100000.0|\\+Inf"}[7d]))
+          sum by (service_namespace, service_name, service_version, process_title, host_name, scheduler_backend_name, db_namespace, db_system_name, le) (max_over_time(db_client_operation_duration_milliseconds_bucket{le=~"5.0|10.0|50.0|100.0|500.0|1000.0|5000.0|10000.0|100000.0|\\+Inf"}[1d]))
       - record: ci_db_client_operation_duration_milliseconds_count
         expr: |
-          sum by (service_namespace, service_name, service_version, process_title, host_name, scheduler_backend_name, db_namespace, db_system_name) (max_over_time(db_client_operation_duration_milliseconds_count[7d]))
+          sum by (service_namespace, service_name, service_version, process_title, host_name, scheduler_backend_name, db_namespace, db_system_name) (max_over_time(db_client_operation_duration_milliseconds_count[1d]))
       # Frontend
       - record: ci_cta_frontend_request_duration_milliseconds_bucket
         expr: |
-          sum by (service_namespace, service_name, service_version, process_title, host_name, scheduler_backend_name, event_name, le) (max_over_time(cta_frontend_request_duration_milliseconds_bucket{le=~"5.0|10.0|50.0|100.0|500.0|1000.0|5000.0|10000.0|100000.0|\\+Inf"}[7d]))
+          sum by (service_namespace, service_name, service_version, process_title, host_name, scheduler_backend_name, event_name, le) (max_over_time(cta_frontend_request_duration_milliseconds_bucket{le=~"5.0|10.0|50.0|100.0|500.0|1000.0|5000.0|10000.0|100000.0|\\+Inf"}[1d]))
       - record: ci_cta_frontend_request_duration_milliseconds_count
         expr: |
-          sum by (service_namespace, service_name, service_version, process_title, host_name, scheduler_backend_name, event_name) (max_over_time(cta_frontend_request_duration_milliseconds_count[7d]))
+          sum by (service_namespace, service_name, service_version, process_title, host_name, scheduler_backend_name, event_name) (max_over_time(cta_frontend_request_duration_milliseconds_count[1d]))
       # Scheduler
       - record: ci_cta_scheduler_queueing_count_total
         expr: |
-          sum by (service_namespace, service_name, service_version, process_title, host_name, scheduler_backend_name, transfer_direction) (max_over_time(cta_scheduler_queueing_count_total[7d]))
+          sum by (service_namespace, service_name, service_version, process_title, host_name, scheduler_backend_name, transfer_direction) (max_over_time(cta_scheduler_queueing_count_total[1d]))
       - record: ci_cta_objectstore_lock_acquire_duration_milliseconds_bucket
         expr: |
-          sum by (service_namespace, service_name, service_version, process_title, host_name, scheduler_backend_name, lock_type, le) (max_over_time(cta_objectstore_lock_acquire_duration_milliseconds_bucket{le=~"5.0|10.0|50.0|100.0|500.0|1000.0|5000.0|10000.0|100000.0|\\+Inf"}[7d]))
+          sum by (service_namespace, service_name, service_version, process_title, host_name, scheduler_backend_name, lock_type, le) (max_over_time(cta_objectstore_lock_acquire_duration_milliseconds_bucket{le=~"5.0|10.0|50.0|100.0|500.0|1000.0|5000.0|10000.0|100000.0|\\+Inf"}[1d]))
       - record: ci_cta_objectstore_lock_acquire_duration_milliseconds_count
         expr: |
-          sum by (service_namespace, service_name, service_version, process_title, host_name, scheduler_backend_name, lock_type) (max_over_time(cta_objectstore_lock_acquire_duration_milliseconds_count[7d]))
+          sum by (service_namespace, service_name, service_version, process_title, host_name, scheduler_backend_name, lock_type) (max_over_time(cta_objectstore_lock_acquire_duration_milliseconds_count[1d]))
       # Taped
       - record: ci_cta_taped_mount_count_total
         expr: |
-          sum by (service_namespace, service_name, service_version, process_title, host_name, scheduler_backend_name, transfer_direction) (max_over_time(cta_taped_mount_count_total[7d]))
+          sum by (service_namespace, service_name, service_version, process_title, host_name, scheduler_backend_name, transfer_direction) (max_over_time(cta_taped_mount_count_total[1d]))
       - record: ci_cta_taped_transfer_count_total
         expr: |
-          sum by (service_namespace, service_name, service_version, process_title, host_name, scheduler_backend_name, transfer_direction) (max_over_time(cta_taped_transfer_count_total[7d]))
+          sum by (service_namespace, service_name, service_version, process_title, host_name, scheduler_backend_name, transfer_direction) (max_over_time(cta_taped_transfer_count_total[1d]))
       - record: ci_cta_taped_thread_count
         expr: |
-          sum by (service_namespace, service_name, service_version, process_title, host_name, scheduler_backend_name, transfer_direction, thread_pool_name) (cta_taped_thread_count)
+          sum by (service_namespace, service_name, service_version, process_title, host_name, scheduler_backend_name, transfer_direction, thread_pool_name) (max_over_time(cta_taped_thread_count[1d]))
       # Kube State Metrics
       - record: ci_pod_cpu_system_seconds_total
         expr: |
