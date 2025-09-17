@@ -15,7 +15,7 @@
 #               granted to it by virtue of its status as an Intergovernmental Organization or
 #               submit itself to any jurisdiction.
 
-# set -euo pipefail
+set -euo pipefail
 
 k8s_create_secret() {
   local secret_name="$1"
