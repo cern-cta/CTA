@@ -282,6 +282,12 @@
   "output": "xroot_plugins/CMakeFiles/XrdSsiCta.dir/__/frontend/common/AdminCmd.cpp.o"
 },
 {
+  "directory": "/builds/cta/CTA/build_rpm/xroot_plugins",
+  "command": "/usr/bin/c++ -DXrdSsiCta_EXPORTS -I/builds/cta/CTA -I/builds/cta/CTA/build_rpm -I/usr/include/xrootd -I/usr/include/xrootd/private -I/builds/cta/CTA/tapeserver -I/builds/cta/CTA/xrootd-ssi-protobuf-interface/include -I/builds/cta/CTA/xrootd-ssi-protobuf-interface/eos_cta/include -I/builds/cta/CTA/build_rpm/eos_cta -fPIC -pedantic -Wall -Wextra -Werror -Wno-unused-parameter -fstack-protector-all -std=c++20 -g -fPIC -o CMakeFiles/XrdSsiCta.dir/__/frontend/common/AdminCmdOptions.cpp.o -c /builds/cta/CTA/frontend/common/AdminCmdOptions.cpp",
+  "file": "/builds/cta/CTA/frontend/common/AdminCmdOptions.cpp",
+  "output": "xroot_plugins/CMakeFiles/XrdSsiCta.dir/__/frontend/common/AdminCmdOptions.cpp.o"
+},
+{
   "directory": "/builds/cta/CTA/build_rpm/frontend/grpc",
   "command": "/usr/bin/c++  -I/builds/cta/CTA -I/builds/cta/CTA/build_rpm -I/builds/cta/CTA/build_rpm/eos_cta -I/builds/cta/CTA/common/jwt-cpp/include -fPIC -pedantic -Wall -Wextra -Werror -Wno-unused-parameter -fstack-protector-all -std=c++20 -g -o CMakeFiles/cta-frontend-grpc.dir/Main.cpp.o -c /builds/cta/CTA/frontend/grpc/Main.cpp",
   "file": "/builds/cta/CTA/frontend/grpc/Main.cpp",
@@ -2790,202 +2796,178 @@
   "output": "mediachanger/CMakeFiles/ctamediachangerunittests.dir/ScsiLibrarySlotTest.cpp.o"
 },
 {
-  "directory": "/builds/cta/CTA/build_rpm/mediachanger/castorrmc/common",
-  "command": "/usr/bin/cc  -I/builds/cta/CTA -I/builds/cta/CTA/build_rpm -I/builds/cta/CTA/mediachanger/castorrmc/h -fPIC -Wall -Wextra -Werror -Wno-unused-parameter -g -o CMakeFiles/ctarmccommon.dir/Cdomainname.c.o -c /builds/cta/CTA/mediachanger/castorrmc/common/Cdomainname.c",
-  "file": "/builds/cta/CTA/mediachanger/castorrmc/common/Cdomainname.c",
-  "output": "mediachanger/castorrmc/common/CMakeFiles/ctarmccommon.dir/Cdomainname.c.o"
+  "directory": "/builds/cta/CTA/build_rpm/mediachanger/librmc",
+  "command": "/usr/bin/c++  -I/builds/cta/CTA -I/builds/cta/CTA/build_rpm -fPIC -pedantic -Wall -Wextra -Werror -Wno-unused-parameter -fstack-protector-all -std=c++20 -g -o CMakeFiles/ctarmc.dir/Cdomainname.cpp.o -c /builds/cta/CTA/mediachanger/librmc/Cdomainname.cpp",
+  "file": "/builds/cta/CTA/mediachanger/librmc/Cdomainname.cpp",
+  "output": "mediachanger/librmc/CMakeFiles/ctarmc.dir/Cdomainname.cpp.o"
 },
 {
-  "directory": "/builds/cta/CTA/build_rpm/mediachanger/castorrmc/common",
-  "command": "/usr/bin/cc  -I/builds/cta/CTA -I/builds/cta/CTA/build_rpm -I/builds/cta/CTA/mediachanger/castorrmc/h -fPIC -Wall -Wextra -Werror -Wno-unused-parameter -g -o CMakeFiles/ctarmccommon.dir/Cglobals.c.o -c /builds/cta/CTA/mediachanger/castorrmc/common/Cglobals.c",
-  "file": "/builds/cta/CTA/mediachanger/castorrmc/common/Cglobals.c",
-  "output": "mediachanger/castorrmc/common/CMakeFiles/ctarmccommon.dir/Cglobals.c.o"
+  "directory": "/builds/cta/CTA/build_rpm/mediachanger/librmc",
+  "command": "/usr/bin/c++  -I/builds/cta/CTA -I/builds/cta/CTA/build_rpm -fPIC -pedantic -Wall -Wextra -Werror -Wno-unused-parameter -fstack-protector-all -std=c++20 -g -o CMakeFiles/ctarmc.dir/Cglobals.cpp.o -c /builds/cta/CTA/mediachanger/librmc/Cglobals.cpp",
+  "file": "/builds/cta/CTA/mediachanger/librmc/Cglobals.cpp",
+  "output": "mediachanger/librmc/CMakeFiles/ctarmc.dir/Cglobals.cpp.o"
 },
 {
-  "directory": "/builds/cta/CTA/build_rpm/mediachanger/castorrmc/common",
-  "command": "/usr/bin/cc  -I/builds/cta/CTA -I/builds/cta/CTA/build_rpm -I/builds/cta/CTA/mediachanger/castorrmc/h -fPIC -Wall -Wextra -Werror -Wno-unused-parameter -g -o CMakeFiles/ctarmccommon.dir/Cinitdaemon.c.o -c /builds/cta/CTA/mediachanger/castorrmc/common/Cinitdaemon.c",
-  "file": "/builds/cta/CTA/mediachanger/castorrmc/common/Cinitdaemon.c",
-  "output": "mediachanger/castorrmc/common/CMakeFiles/ctarmccommon.dir/Cinitdaemon.c.o"
+  "directory": "/builds/cta/CTA/build_rpm/mediachanger/librmc",
+  "command": "/usr/bin/c++  -I/builds/cta/CTA -I/builds/cta/CTA/build_rpm -fPIC -pedantic -Wall -Wextra -Werror -Wno-unused-parameter -fstack-protector-all -std=c++20 -g -o CMakeFiles/ctarmc.dir/Cinitdaemon.cpp.o -c /builds/cta/CTA/mediachanger/librmc/Cinitdaemon.cpp",
+  "file": "/builds/cta/CTA/mediachanger/librmc/Cinitdaemon.cpp",
+  "output": "mediachanger/librmc/CMakeFiles/ctarmc.dir/Cinitdaemon.cpp.o"
 },
 {
-  "directory": "/builds/cta/CTA/build_rpm/mediachanger/castorrmc/common",
-  "command": "/usr/bin/cc  -I/builds/cta/CTA -I/builds/cta/CTA/build_rpm -I/builds/cta/CTA/mediachanger/castorrmc/h -fPIC -Wall -Wextra -Werror -Wno-unused-parameter -g -o CMakeFiles/ctarmccommon.dir/Cnetdb.c.o -c /builds/cta/CTA/mediachanger/castorrmc/common/Cnetdb.c",
-  "file": "/builds/cta/CTA/mediachanger/castorrmc/common/Cnetdb.c",
-  "output": "mediachanger/castorrmc/common/CMakeFiles/ctarmccommon.dir/Cnetdb.c.o"
+  "directory": "/builds/cta/CTA/build_rpm/mediachanger/librmc",
+  "command": "/usr/bin/c++  -I/builds/cta/CTA -I/builds/cta/CTA/build_rpm -fPIC -pedantic -Wall -Wextra -Werror -Wno-unused-parameter -fstack-protector-all -std=c++20 -g -o CMakeFiles/ctarmc.dir/Cnetdb.cpp.o -c /builds/cta/CTA/mediachanger/librmc/Cnetdb.cpp",
+  "file": "/builds/cta/CTA/mediachanger/librmc/Cnetdb.cpp",
+  "output": "mediachanger/librmc/CMakeFiles/ctarmc.dir/Cnetdb.cpp.o"
 },
 {
-  "directory": "/builds/cta/CTA/build_rpm/mediachanger/castorrmc/common",
-  "command": "/usr/bin/cc  -I/builds/cta/CTA -I/builds/cta/CTA/build_rpm -I/builds/cta/CTA/mediachanger/castorrmc/h -fPIC -Wall -Wextra -Werror -Wno-unused-parameter -g -o CMakeFiles/ctarmccommon.dir/Csnprintf.c.o -c /builds/cta/CTA/mediachanger/castorrmc/common/Csnprintf.c",
-  "file": "/builds/cta/CTA/mediachanger/castorrmc/common/Csnprintf.c",
-  "output": "mediachanger/castorrmc/common/CMakeFiles/ctarmccommon.dir/Csnprintf.c.o"
+  "directory": "/builds/cta/CTA/build_rpm/mediachanger/librmc",
+  "command": "/usr/bin/c++  -I/builds/cta/CTA -I/builds/cta/CTA/build_rpm -fPIC -pedantic -Wall -Wextra -Werror -Wno-unused-parameter -fstack-protector-all -std=c++20 -g -o CMakeFiles/ctarmc.dir/getconfent.cpp.o -c /builds/cta/CTA/mediachanger/librmc/getconfent.cpp",
+  "file": "/builds/cta/CTA/mediachanger/librmc/getconfent.cpp",
+  "output": "mediachanger/librmc/CMakeFiles/ctarmc.dir/getconfent.cpp.o"
 },
 {
-  "directory": "/builds/cta/CTA/build_rpm/mediachanger/castorrmc/common",
-  "command": "/usr/bin/cc  -I/builds/cta/CTA -I/builds/cta/CTA/build_rpm -I/builds/cta/CTA/mediachanger/castorrmc/h -fPIC -Wall -Wextra -Werror -Wno-unused-parameter -g -o CMakeFiles/ctarmccommon.dir/getconfent.c.o -c /builds/cta/CTA/mediachanger/castorrmc/common/getconfent.c",
-  "file": "/builds/cta/CTA/mediachanger/castorrmc/common/getconfent.c",
-  "output": "mediachanger/castorrmc/common/CMakeFiles/ctarmccommon.dir/getconfent.c.o"
+  "directory": "/builds/cta/CTA/build_rpm/mediachanger/librmc",
+  "command": "/usr/bin/c++  -I/builds/cta/CTA -I/builds/cta/CTA/build_rpm -fPIC -pedantic -Wall -Wextra -Werror -Wno-unused-parameter -fstack-protector-all -std=c++20 -g -o CMakeFiles/ctarmc.dir/marshall.cpp.o -c /builds/cta/CTA/mediachanger/librmc/marshall.cpp",
+  "file": "/builds/cta/CTA/mediachanger/librmc/marshall.cpp",
+  "output": "mediachanger/librmc/CMakeFiles/ctarmc.dir/marshall.cpp.o"
 },
 {
-  "directory": "/builds/cta/CTA/build_rpm/mediachanger/castorrmc/common",
-  "command": "/usr/bin/cc  -I/builds/cta/CTA -I/builds/cta/CTA/build_rpm -I/builds/cta/CTA/mediachanger/castorrmc/h -fPIC -Wall -Wextra -Werror -Wno-unused-parameter -g -o CMakeFiles/ctarmccommon.dir/marshall.c.o -c /builds/cta/CTA/mediachanger/castorrmc/common/marshall.c",
-  "file": "/builds/cta/CTA/mediachanger/castorrmc/common/marshall.c",
-  "output": "mediachanger/castorrmc/common/CMakeFiles/ctarmccommon.dir/marshall.c.o"
+  "directory": "/builds/cta/CTA/build_rpm/mediachanger/librmc",
+  "command": "/usr/bin/c++  -I/builds/cta/CTA -I/builds/cta/CTA/build_rpm -fPIC -pedantic -Wall -Wextra -Werror -Wno-unused-parameter -fstack-protector-all -std=c++20 -g -o CMakeFiles/ctarmc.dir/serror.cpp.o -c /builds/cta/CTA/mediachanger/librmc/serror.cpp",
+  "file": "/builds/cta/CTA/mediachanger/librmc/serror.cpp",
+  "output": "mediachanger/librmc/CMakeFiles/ctarmc.dir/serror.cpp.o"
 },
 {
-  "directory": "/builds/cta/CTA/build_rpm/mediachanger/castorrmc/common",
-  "command": "/usr/bin/cc  -I/builds/cta/CTA -I/builds/cta/CTA/build_rpm -I/builds/cta/CTA/mediachanger/castorrmc/h -fPIC -Wall -Wextra -Werror -Wno-unused-parameter -g -o CMakeFiles/ctarmccommon.dir/readc.c.o -c /builds/cta/CTA/mediachanger/castorrmc/common/readc.c",
-  "file": "/builds/cta/CTA/mediachanger/castorrmc/common/readc.c",
-  "output": "mediachanger/castorrmc/common/CMakeFiles/ctarmccommon.dir/readc.c.o"
+  "directory": "/builds/cta/CTA/build_rpm/mediachanger/librmc",
+  "command": "/usr/bin/c++  -I/builds/cta/CTA -I/builds/cta/CTA/build_rpm -fPIC -pedantic -Wall -Wextra -Werror -Wno-unused-parameter -fstack-protector-all -std=c++20 -g -o CMakeFiles/ctarmc.dir/socket.cpp.o -c /builds/cta/CTA/mediachanger/librmc/socket.cpp",
+  "file": "/builds/cta/CTA/mediachanger/librmc/socket.cpp",
+  "output": "mediachanger/librmc/CMakeFiles/ctarmc.dir/socket.cpp.o"
 },
 {
-  "directory": "/builds/cta/CTA/build_rpm/mediachanger/castorrmc/common",
-  "command": "/usr/bin/cc  -I/builds/cta/CTA -I/builds/cta/CTA/build_rpm -I/builds/cta/CTA/mediachanger/castorrmc/h -fPIC -Wall -Wextra -Werror -Wno-unused-parameter -g -o CMakeFiles/ctarmccommon.dir/serror.c.o -c /builds/cta/CTA/mediachanger/castorrmc/common/serror.c",
-  "file": "/builds/cta/CTA/mediachanger/castorrmc/common/serror.c",
-  "output": "mediachanger/castorrmc/common/CMakeFiles/ctarmccommon.dir/serror.c.o"
+  "directory": "/builds/cta/CTA/build_rpm/mediachanger/librmc",
+  "command": "/usr/bin/c++  -I/builds/cta/CTA -I/builds/cta/CTA/build_rpm -fPIC -pedantic -Wall -Wextra -Werror -Wno-unused-parameter -fstack-protector-all -std=c++20 -g -o CMakeFiles/ctarmc.dir/socket_timeout.cpp.o -c /builds/cta/CTA/mediachanger/librmc/socket_timeout.cpp",
+  "file": "/builds/cta/CTA/mediachanger/librmc/socket_timeout.cpp",
+  "output": "mediachanger/librmc/CMakeFiles/ctarmc.dir/socket_timeout.cpp.o"
 },
 {
-  "directory": "/builds/cta/CTA/build_rpm/mediachanger/castorrmc/common",
-  "command": "/usr/bin/cc  -I/builds/cta/CTA -I/builds/cta/CTA/build_rpm -I/builds/cta/CTA/mediachanger/castorrmc/h -fPIC -Wall -Wextra -Werror -Wno-unused-parameter -g -o CMakeFiles/ctarmccommon.dir/socket.c.o -c /builds/cta/CTA/mediachanger/castorrmc/common/socket.c",
-  "file": "/builds/cta/CTA/mediachanger/castorrmc/common/socket.c",
-  "output": "mediachanger/castorrmc/common/CMakeFiles/ctarmccommon.dir/socket.c.o"
+  "directory": "/builds/cta/CTA/build_rpm/mediachanger/librmc",
+  "command": "/usr/bin/c++  -I/builds/cta/CTA -I/builds/cta/CTA/build_rpm -fPIC -pedantic -Wall -Wextra -Werror -Wno-unused-parameter -fstack-protector-all -std=c++20 -g -o CMakeFiles/ctarmc.dir/strerror_r_wrapper.cpp.o -c /builds/cta/CTA/mediachanger/librmc/strerror_r_wrapper.cpp",
+  "file": "/builds/cta/CTA/mediachanger/librmc/strerror_r_wrapper.cpp",
+  "output": "mediachanger/librmc/CMakeFiles/ctarmc.dir/strerror_r_wrapper.cpp.o"
 },
 {
-  "directory": "/builds/cta/CTA/build_rpm/mediachanger/castorrmc/common",
-  "command": "/usr/bin/cc  -I/builds/cta/CTA -I/builds/cta/CTA/build_rpm -I/builds/cta/CTA/mediachanger/castorrmc/h -fPIC -Wall -Wextra -Werror -Wno-unused-parameter -g -o CMakeFiles/ctarmccommon.dir/socket_timeout.c.o -c /builds/cta/CTA/mediachanger/castorrmc/common/socket_timeout.c",
-  "file": "/builds/cta/CTA/mediachanger/castorrmc/common/socket_timeout.c",
-  "output": "mediachanger/castorrmc/common/CMakeFiles/ctarmccommon.dir/socket_timeout.c.o"
+  "directory": "/builds/cta/CTA/build_rpm/mediachanger/librmc",
+  "command": "/usr/bin/c++  -I/builds/cta/CTA -I/builds/cta/CTA/build_rpm -fPIC -pedantic -Wall -Wextra -Werror -Wno-unused-parameter -fstack-protector-all -std=c++20 -g -o CMakeFiles/ctarmc.dir/spectra_like_libs.cpp.o -c /builds/cta/CTA/mediachanger/librmc/spectra_like_libs.cpp",
+  "file": "/builds/cta/CTA/mediachanger/librmc/spectra_like_libs.cpp",
+  "output": "mediachanger/librmc/CMakeFiles/ctarmc.dir/spectra_like_libs.cpp.o"
 },
 {
-  "directory": "/builds/cta/CTA/build_rpm/mediachanger/castorrmc/common",
-  "command": "/usr/bin/c++  -I/builds/cta/CTA -I/builds/cta/CTA/build_rpm -I/builds/cta/CTA/mediachanger/castorrmc/h -fPIC -pedantic -Wall -Wextra -Werror -Wno-unused-parameter -fstack-protector-all -std=c++20 -g -o CMakeFiles/ctarmccommon.dir/strerror_r_wrapper.cpp.o -c /builds/cta/CTA/mediachanger/castorrmc/common/strerror_r_wrapper.cpp",
-  "file": "/builds/cta/CTA/mediachanger/castorrmc/common/strerror_r_wrapper.cpp",
-  "output": "mediachanger/castorrmc/common/CMakeFiles/ctarmccommon.dir/strerror_r_wrapper.cpp.o"
+  "directory": "/builds/cta/CTA/build_rpm/mediachanger/rmcd",
+  "command": "/usr/bin/c++  -I/builds/cta/CTA -I/builds/cta/CTA/build_rpm -fPIC -pedantic -Wall -Wextra -Werror -Wno-unused-parameter -fstack-protector-all -std=c++20 -g -o CMakeFiles/cta-rmcd.dir/rmc_serv.cpp.o -c /builds/cta/CTA/mediachanger/rmcd/rmc_serv.cpp",
+  "file": "/builds/cta/CTA/mediachanger/rmcd/rmc_serv.cpp",
+  "output": "mediachanger/rmcd/CMakeFiles/cta-rmcd.dir/rmc_serv.cpp.o"
 },
 {
-  "directory": "/builds/cta/CTA/build_rpm/mediachanger/castorrmc/common",
-  "command": "/usr/bin/cc  -I/builds/cta/CTA -I/builds/cta/CTA/build_rpm -I/builds/cta/CTA/mediachanger/castorrmc/h -fPIC -Wall -Wextra -Werror -Wno-unused-parameter -g -o CMakeFiles/ctarmccommon.dir/util.c.o -c /builds/cta/CTA/mediachanger/castorrmc/common/util.c",
-  "file": "/builds/cta/CTA/mediachanger/castorrmc/common/util.c",
-  "output": "mediachanger/castorrmc/common/CMakeFiles/ctarmccommon.dir/util.c.o"
+  "directory": "/builds/cta/CTA/build_rpm/mediachanger/rmcd",
+  "command": "/usr/bin/c++  -I/builds/cta/CTA -I/builds/cta/CTA/build_rpm -fPIC -pedantic -Wall -Wextra -Werror -Wno-unused-parameter -fstack-protector-all -std=c++20 -g -o CMakeFiles/cta-rmcd.dir/rmc_logit.cpp.o -c /builds/cta/CTA/mediachanger/rmcd/rmc_logit.cpp",
+  "file": "/builds/cta/CTA/mediachanger/rmcd/rmc_logit.cpp",
+  "output": "mediachanger/rmcd/CMakeFiles/cta-rmcd.dir/rmc_logit.cpp.o"
 },
 {
-  "directory": "/builds/cta/CTA/build_rpm/mediachanger/castorrmc/rmc",
-  "command": "/usr/bin/cc  -I/builds/cta/CTA -I/builds/cta/CTA/build_rpm -I/builds/cta/CTA/mediachanger/castorrmc/h -fPIC -Wall -Wextra -Werror -Wno-unused-parameter -g -o CMakeFiles/cta-rmcd.dir/rmc_serv.c.o -c /builds/cta/CTA/mediachanger/castorrmc/rmc/rmc_serv.c",
-  "file": "/builds/cta/CTA/mediachanger/castorrmc/rmc/rmc_serv.c",
-  "output": "mediachanger/castorrmc/rmc/CMakeFiles/cta-rmcd.dir/rmc_serv.c.o"
+  "directory": "/builds/cta/CTA/build_rpm/mediachanger/rmcd",
+  "command": "/usr/bin/c++  -I/builds/cta/CTA -I/builds/cta/CTA/build_rpm -fPIC -pedantic -Wall -Wextra -Werror -Wno-unused-parameter -fstack-protector-all -std=c++20 -g -o CMakeFiles/cta-rmcd.dir/rmc_logreq.cpp.o -c /builds/cta/CTA/mediachanger/rmcd/rmc_logreq.cpp",
+  "file": "/builds/cta/CTA/mediachanger/rmcd/rmc_logreq.cpp",
+  "output": "mediachanger/rmcd/CMakeFiles/cta-rmcd.dir/rmc_logreq.cpp.o"
 },
 {
-  "directory": "/builds/cta/CTA/build_rpm/mediachanger/castorrmc/rmc",
-  "command": "/usr/bin/cc  -I/builds/cta/CTA -I/builds/cta/CTA/build_rpm -I/builds/cta/CTA/mediachanger/castorrmc/h -fPIC -Wall -Wextra -Werror -Wno-unused-parameter -g -o CMakeFiles/cta-rmcd.dir/rmc_logit.c.o -c /builds/cta/CTA/mediachanger/castorrmc/rmc/rmc_logit.c",
-  "file": "/builds/cta/CTA/mediachanger/castorrmc/rmc/rmc_logit.c",
-  "output": "mediachanger/castorrmc/rmc/CMakeFiles/cta-rmcd.dir/rmc_logit.c.o"
+  "directory": "/builds/cta/CTA/build_rpm/mediachanger/rmcd",
+  "command": "/usr/bin/c++  -I/builds/cta/CTA -I/builds/cta/CTA/build_rpm -fPIC -pedantic -Wall -Wextra -Werror -Wno-unused-parameter -fstack-protector-all -std=c++20 -g -o CMakeFiles/cta-rmcd.dir/rmc_marshall_element.cpp.o -c /builds/cta/CTA/mediachanger/rmcd/rmc_marshall_element.cpp",
+  "file": "/builds/cta/CTA/mediachanger/rmcd/rmc_marshall_element.cpp",
+  "output": "mediachanger/rmcd/CMakeFiles/cta-rmcd.dir/rmc_marshall_element.cpp.o"
 },
 {
-  "directory": "/builds/cta/CTA/build_rpm/mediachanger/castorrmc/rmc",
-  "command": "/usr/bin/cc  -I/builds/cta/CTA -I/builds/cta/CTA/build_rpm -I/builds/cta/CTA/mediachanger/castorrmc/h -fPIC -Wall -Wextra -Werror -Wno-unused-parameter -g -o CMakeFiles/cta-rmcd.dir/rmc_logreq.c.o -c /builds/cta/CTA/mediachanger/castorrmc/rmc/rmc_logreq.c",
-  "file": "/builds/cta/CTA/mediachanger/castorrmc/rmc/rmc_logreq.c",
-  "output": "mediachanger/castorrmc/rmc/CMakeFiles/cta-rmcd.dir/rmc_logreq.c.o"
+  "directory": "/builds/cta/CTA/build_rpm/mediachanger/rmcd",
+  "command": "/usr/bin/c++  -I/builds/cta/CTA -I/builds/cta/CTA/build_rpm -fPIC -pedantic -Wall -Wextra -Werror -Wno-unused-parameter -fstack-protector-all -std=c++20 -g -o CMakeFiles/cta-rmcd.dir/rmc_procreq.cpp.o -c /builds/cta/CTA/mediachanger/rmcd/rmc_procreq.cpp",
+  "file": "/builds/cta/CTA/mediachanger/rmcd/rmc_procreq.cpp",
+  "output": "mediachanger/rmcd/CMakeFiles/cta-rmcd.dir/rmc_procreq.cpp.o"
 },
 {
-  "directory": "/builds/cta/CTA/build_rpm/mediachanger/castorrmc/rmc",
-  "command": "/usr/bin/cc  -I/builds/cta/CTA -I/builds/cta/CTA/build_rpm -I/builds/cta/CTA/mediachanger/castorrmc/h -fPIC -Wall -Wextra -Werror -Wno-unused-parameter -g -o CMakeFiles/cta-rmcd.dir/rmc_marshall_element.c.o -c /builds/cta/CTA/mediachanger/castorrmc/rmc/rmc_marshall_element.c",
-  "file": "/builds/cta/CTA/mediachanger/castorrmc/rmc/rmc_marshall_element.c",
-  "output": "mediachanger/castorrmc/rmc/CMakeFiles/cta-rmcd.dir/rmc_marshall_element.c.o"
+  "directory": "/builds/cta/CTA/build_rpm/mediachanger/rmcd",
+  "command": "/usr/bin/c++  -I/builds/cta/CTA -I/builds/cta/CTA/build_rpm -fPIC -pedantic -Wall -Wextra -Werror -Wno-unused-parameter -fstack-protector-all -std=c++20 -g -o CMakeFiles/cta-rmcd.dir/rmc_sendrep.cpp.o -c /builds/cta/CTA/mediachanger/rmcd/rmc_sendrep.cpp",
+  "file": "/builds/cta/CTA/mediachanger/rmcd/rmc_sendrep.cpp",
+  "output": "mediachanger/rmcd/CMakeFiles/cta-rmcd.dir/rmc_sendrep.cpp.o"
 },
 {
-  "directory": "/builds/cta/CTA/build_rpm/mediachanger/castorrmc/rmc",
-  "command": "/usr/bin/cc  -I/builds/cta/CTA -I/builds/cta/CTA/build_rpm -I/builds/cta/CTA/mediachanger/castorrmc/h -fPIC -Wall -Wextra -Werror -Wno-unused-parameter -g -o CMakeFiles/cta-rmcd.dir/rmc_procreq.c.o -c /builds/cta/CTA/mediachanger/castorrmc/rmc/rmc_procreq.c",
-  "file": "/builds/cta/CTA/mediachanger/castorrmc/rmc/rmc_procreq.c",
-  "output": "mediachanger/castorrmc/rmc/CMakeFiles/cta-rmcd.dir/rmc_procreq.c.o"
+  "directory": "/builds/cta/CTA/build_rpm/mediachanger/rmcd",
+  "command": "/usr/bin/c++  -I/builds/cta/CTA -I/builds/cta/CTA/build_rpm -fPIC -pedantic -Wall -Wextra -Werror -Wno-unused-parameter -fstack-protector-all -std=c++20 -g -o CMakeFiles/cta-rmcd.dir/rmc_send_scsi_cmd.cpp.o -c /builds/cta/CTA/mediachanger/rmcd/rmc_send_scsi_cmd.cpp",
+  "file": "/builds/cta/CTA/mediachanger/rmcd/rmc_send_scsi_cmd.cpp",
+  "output": "mediachanger/rmcd/CMakeFiles/cta-rmcd.dir/rmc_send_scsi_cmd.cpp.o"
 },
 {
-  "directory": "/builds/cta/CTA/build_rpm/mediachanger/castorrmc/rmc",
-  "command": "/usr/bin/cc  -I/builds/cta/CTA -I/builds/cta/CTA/build_rpm -I/builds/cta/CTA/mediachanger/castorrmc/h -fPIC -Wall -Wextra -Werror -Wno-unused-parameter -g -o CMakeFiles/cta-rmcd.dir/rmc_sendrep.c.o -c /builds/cta/CTA/mediachanger/castorrmc/rmc/rmc_sendrep.c",
-  "file": "/builds/cta/CTA/mediachanger/castorrmc/rmc/rmc_sendrep.c",
-  "output": "mediachanger/castorrmc/rmc/CMakeFiles/cta-rmcd.dir/rmc_sendrep.c.o"
+  "directory": "/builds/cta/CTA/build_rpm/mediachanger/rmcd",
+  "command": "/usr/bin/c++  -I/builds/cta/CTA -I/builds/cta/CTA/build_rpm -fPIC -pedantic -Wall -Wextra -Werror -Wno-unused-parameter -fstack-protector-all -std=c++20 -g -o CMakeFiles/cta-rmcd.dir/rmc_smcsubr.cpp.o -c /builds/cta/CTA/mediachanger/rmcd/rmc_smcsubr.cpp",
+  "file": "/builds/cta/CTA/mediachanger/rmcd/rmc_smcsubr.cpp",
+  "output": "mediachanger/rmcd/CMakeFiles/cta-rmcd.dir/rmc_smcsubr.cpp.o"
 },
 {
-  "directory": "/builds/cta/CTA/build_rpm/mediachanger/castorrmc/rmc",
-  "command": "/usr/bin/cc  -I/builds/cta/CTA -I/builds/cta/CTA/build_rpm -I/builds/cta/CTA/mediachanger/castorrmc/h -fPIC -Wall -Wextra -Werror -Wno-unused-parameter -g  -Wno-format-overflow -o CMakeFiles/cta-rmcd.dir/rmc_send_scsi_cmd.c.o -c /builds/cta/CTA/mediachanger/castorrmc/rmc/rmc_send_scsi_cmd.c",
-  "file": "/builds/cta/CTA/mediachanger/castorrmc/rmc/rmc_send_scsi_cmd.c",
-  "output": "mediachanger/castorrmc/rmc/CMakeFiles/cta-rmcd.dir/rmc_send_scsi_cmd.c.o"
+  "directory": "/builds/cta/CTA/build_rpm/mediachanger/smc",
+  "command": "/usr/bin/c++  -I/builds/cta/CTA -I/builds/cta/CTA/build_rpm -fPIC -pedantic -Wall -Wextra -Werror -Wno-unused-parameter -fstack-protector-all -std=c++20 -g -o CMakeFiles/cta-smc.dir/rmc_dismount.cpp.o -c /builds/cta/CTA/mediachanger/smc/rmc_dismount.cpp",
+  "file": "/builds/cta/CTA/mediachanger/smc/rmc_dismount.cpp",
+  "output": "mediachanger/smc/CMakeFiles/cta-smc.dir/rmc_dismount.cpp.o"
 },
 {
-  "directory": "/builds/cta/CTA/build_rpm/mediachanger/castorrmc/rmc",
-  "command": "/usr/bin/cc  -I/builds/cta/CTA -I/builds/cta/CTA/build_rpm -I/builds/cta/CTA/mediachanger/castorrmc/h -fPIC -Wall -Wextra -Werror -Wno-unused-parameter -g -o CMakeFiles/cta-rmcd.dir/rmc_smcsubr.c.o -c /builds/cta/CTA/mediachanger/castorrmc/rmc/rmc_smcsubr.c",
-  "file": "/builds/cta/CTA/mediachanger/castorrmc/rmc/rmc_smcsubr.c",
-  "output": "mediachanger/castorrmc/rmc/CMakeFiles/cta-rmcd.dir/rmc_smcsubr.c.o"
+  "directory": "/builds/cta/CTA/build_rpm/mediachanger/smc",
+  "command": "/usr/bin/c++  -I/builds/cta/CTA -I/builds/cta/CTA/build_rpm -fPIC -pedantic -Wall -Wextra -Werror -Wno-unused-parameter -fstack-protector-all -std=c++20 -g -o CMakeFiles/cta-smc.dir/rmc_errmsg.cpp.o -c /builds/cta/CTA/mediachanger/smc/rmc_errmsg.cpp",
+  "file": "/builds/cta/CTA/mediachanger/smc/rmc_errmsg.cpp",
+  "output": "mediachanger/smc/CMakeFiles/cta-smc.dir/rmc_errmsg.cpp.o"
 },
 {
-  "directory": "/builds/cta/CTA/build_rpm/mediachanger/castorrmc/rmc",
-  "command": "/usr/bin/cc  -I/builds/cta/CTA -I/builds/cta/CTA/build_rpm -I/builds/cta/CTA/mediachanger/castorrmc/h -fPIC -Wall -Wextra -Werror -Wno-unused-parameter -g -o CMakeFiles/cta-rmcd.dir/spectra_like_libs.c.o -c /builds/cta/CTA/mediachanger/castorrmc/rmc/spectra_like_libs.c",
-  "file": "/builds/cta/CTA/mediachanger/castorrmc/rmc/spectra_like_libs.c",
-  "output": "mediachanger/castorrmc/rmc/CMakeFiles/cta-rmcd.dir/spectra_like_libs.c.o"
+  "directory": "/builds/cta/CTA/build_rpm/mediachanger/smc",
+  "command": "/usr/bin/c++  -I/builds/cta/CTA -I/builds/cta/CTA/build_rpm -fPIC -pedantic -Wall -Wextra -Werror -Wno-unused-parameter -fstack-protector-all -std=c++20 -g -o CMakeFiles/cta-smc.dir/rmc_export.cpp.o -c /builds/cta/CTA/mediachanger/smc/rmc_export.cpp",
+  "file": "/builds/cta/CTA/mediachanger/smc/rmc_export.cpp",
+  "output": "mediachanger/smc/CMakeFiles/cta-smc.dir/rmc_export.cpp.o"
 },
 {
-  "directory": "/builds/cta/CTA/build_rpm/mediachanger/castorrmc/rmc",
-  "command": "/usr/bin/cc  -I/builds/cta/CTA -I/builds/cta/CTA/build_rpm -I/builds/cta/CTA/mediachanger/castorrmc/h -fPIC -Wall -Wextra -Werror -Wno-unused-parameter -g -o CMakeFiles/cta-smc.dir/rmc_dismount.c.o -c /builds/cta/CTA/mediachanger/castorrmc/rmc/rmc_dismount.c",
-  "file": "/builds/cta/CTA/mediachanger/castorrmc/rmc/rmc_dismount.c",
-  "output": "mediachanger/castorrmc/rmc/CMakeFiles/cta-smc.dir/rmc_dismount.c.o"
+  "directory": "/builds/cta/CTA/build_rpm/mediachanger/smc",
+  "command": "/usr/bin/c++  -I/builds/cta/CTA -I/builds/cta/CTA/build_rpm -fPIC -pedantic -Wall -Wextra -Werror -Wno-unused-parameter -fstack-protector-all -std=c++20 -g -o CMakeFiles/cta-smc.dir/rmc_find_cartridge.cpp.o -c /builds/cta/CTA/mediachanger/smc/rmc_find_cartridge.cpp",
+  "file": "/builds/cta/CTA/mediachanger/smc/rmc_find_cartridge.cpp",
+  "output": "mediachanger/smc/CMakeFiles/cta-smc.dir/rmc_find_cartridge.cpp.o"
 },
 {
-  "directory": "/builds/cta/CTA/build_rpm/mediachanger/castorrmc/rmc",
-  "command": "/usr/bin/cc  -I/builds/cta/CTA -I/builds/cta/CTA/build_rpm -I/builds/cta/CTA/mediachanger/castorrmc/h -fPIC -Wall -Wextra -Werror -Wno-unused-parameter -g -o CMakeFiles/cta-smc.dir/rmc_errmsg.c.o -c /builds/cta/CTA/mediachanger/castorrmc/rmc/rmc_errmsg.c",
-  "file": "/builds/cta/CTA/mediachanger/castorrmc/rmc/rmc_errmsg.c",
-  "output": "mediachanger/castorrmc/rmc/CMakeFiles/cta-smc.dir/rmc_errmsg.c.o"
+  "directory": "/builds/cta/CTA/build_rpm/mediachanger/smc",
+  "command": "/usr/bin/c++  -I/builds/cta/CTA -I/builds/cta/CTA/build_rpm -fPIC -pedantic -Wall -Wextra -Werror -Wno-unused-parameter -fstack-protector-all -std=c++20 -g -o CMakeFiles/cta-smc.dir/rmc_get_geometry.cpp.o -c /builds/cta/CTA/mediachanger/smc/rmc_get_geometry.cpp",
+  "file": "/builds/cta/CTA/mediachanger/smc/rmc_get_geometry.cpp",
+  "output": "mediachanger/smc/CMakeFiles/cta-smc.dir/rmc_get_geometry.cpp.o"
 },
 {
-  "directory": "/builds/cta/CTA/build_rpm/mediachanger/castorrmc/rmc",
-  "command": "/usr/bin/cc  -I/builds/cta/CTA -I/builds/cta/CTA/build_rpm -I/builds/cta/CTA/mediachanger/castorrmc/h -fPIC -Wall -Wextra -Werror -Wno-unused-parameter -g -o CMakeFiles/cta-smc.dir/rmc_export.c.o -c /builds/cta/CTA/mediachanger/castorrmc/rmc/rmc_export.c",
-  "file": "/builds/cta/CTA/mediachanger/castorrmc/rmc/rmc_export.c",
-  "output": "mediachanger/castorrmc/rmc/CMakeFiles/cta-smc.dir/rmc_export.c.o"
+  "directory": "/builds/cta/CTA/build_rpm/mediachanger/smc",
+  "command": "/usr/bin/c++  -I/builds/cta/CTA -I/builds/cta/CTA/build_rpm -fPIC -pedantic -Wall -Wextra -Werror -Wno-unused-parameter -fstack-protector-all -std=c++20 -g -o CMakeFiles/cta-smc.dir/rmc_import.cpp.o -c /builds/cta/CTA/mediachanger/smc/rmc_import.cpp",
+  "file": "/builds/cta/CTA/mediachanger/smc/rmc_import.cpp",
+  "output": "mediachanger/smc/CMakeFiles/cta-smc.dir/rmc_import.cpp.o"
 },
 {
-  "directory": "/builds/cta/CTA/build_rpm/mediachanger/castorrmc/rmc",
-  "command": "/usr/bin/cc  -I/builds/cta/CTA -I/builds/cta/CTA/build_rpm -I/builds/cta/CTA/mediachanger/castorrmc/h -fPIC -Wall -Wextra -Werror -Wno-unused-parameter -g -o CMakeFiles/cta-smc.dir/rmc_find_cartridge.c.o -c /builds/cta/CTA/mediachanger/castorrmc/rmc/rmc_find_cartridge.c",
-  "file": "/builds/cta/CTA/mediachanger/castorrmc/rmc/rmc_find_cartridge.c",
-  "output": "mediachanger/castorrmc/rmc/CMakeFiles/cta-smc.dir/rmc_find_cartridge.c.o"
+  "directory": "/builds/cta/CTA/build_rpm/mediachanger/smc",
+  "command": "/usr/bin/c++  -I/builds/cta/CTA -I/builds/cta/CTA/build_rpm -fPIC -pedantic -Wall -Wextra -Werror -Wno-unused-parameter -fstack-protector-all -std=c++20 -g -o CMakeFiles/cta-smc.dir/rmc_mount.cpp.o -c /builds/cta/CTA/mediachanger/smc/rmc_mount.cpp",
+  "file": "/builds/cta/CTA/mediachanger/smc/rmc_mount.cpp",
+  "output": "mediachanger/smc/CMakeFiles/cta-smc.dir/rmc_mount.cpp.o"
 },
 {
-  "directory": "/builds/cta/CTA/build_rpm/mediachanger/castorrmc/rmc",
-  "command": "/usr/bin/cc  -I/builds/cta/CTA -I/builds/cta/CTA/build_rpm -I/builds/cta/CTA/mediachanger/castorrmc/h -fPIC -Wall -Wextra -Werror -Wno-unused-parameter -g -o CMakeFiles/cta-smc.dir/rmc_get_geometry.c.o -c /builds/cta/CTA/mediachanger/castorrmc/rmc/rmc_get_geometry.c",
-  "file": "/builds/cta/CTA/mediachanger/castorrmc/rmc/rmc_get_geometry.c",
-  "output": "mediachanger/castorrmc/rmc/CMakeFiles/cta-smc.dir/rmc_get_geometry.c.o"
+  "directory": "/builds/cta/CTA/build_rpm/mediachanger/smc",
+  "command": "/usr/bin/c++  -I/builds/cta/CTA -I/builds/cta/CTA/build_rpm -fPIC -pedantic -Wall -Wextra -Werror -Wno-unused-parameter -fstack-protector-all -std=c++20 -g -o CMakeFiles/cta-smc.dir/rmc_read_elem_status.cpp.o -c /builds/cta/CTA/mediachanger/smc/rmc_read_elem_status.cpp",
+  "file": "/builds/cta/CTA/mediachanger/smc/rmc_read_elem_status.cpp",
+  "output": "mediachanger/smc/CMakeFiles/cta-smc.dir/rmc_read_elem_status.cpp.o"
 },
 {
-  "directory": "/builds/cta/CTA/build_rpm/mediachanger/castorrmc/rmc",
-  "command": "/usr/bin/cc  -I/builds/cta/CTA -I/builds/cta/CTA/build_rpm -I/builds/cta/CTA/mediachanger/castorrmc/h -fPIC -Wall -Wextra -Werror -Wno-unused-parameter -g -o CMakeFiles/cta-smc.dir/rmc_import.c.o -c /builds/cta/CTA/mediachanger/castorrmc/rmc/rmc_import.c",
-  "file": "/builds/cta/CTA/mediachanger/castorrmc/rmc/rmc_import.c",
-  "output": "mediachanger/castorrmc/rmc/CMakeFiles/cta-smc.dir/rmc_import.c.o"
+  "directory": "/builds/cta/CTA/build_rpm/mediachanger/smc",
+  "command": "/usr/bin/c++  -I/builds/cta/CTA -I/builds/cta/CTA/build_rpm -fPIC -pedantic -Wall -Wextra -Werror -Wno-unused-parameter -fstack-protector-all -std=c++20 -g -o CMakeFiles/cta-smc.dir/send2rmc.cpp.o -c /builds/cta/CTA/mediachanger/smc/send2rmc.cpp",
+  "file": "/builds/cta/CTA/mediachanger/smc/send2rmc.cpp",
+  "output": "mediachanger/smc/CMakeFiles/cta-smc.dir/send2rmc.cpp.o"
 },
 {
-  "directory": "/builds/cta/CTA/build_rpm/mediachanger/castorrmc/rmc",
-  "command": "/usr/bin/cc  -I/builds/cta/CTA -I/builds/cta/CTA/build_rpm -I/builds/cta/CTA/mediachanger/castorrmc/h -fPIC -Wall -Wextra -Werror -Wno-unused-parameter -g -o CMakeFiles/cta-smc.dir/rmc_mount.c.o -c /builds/cta/CTA/mediachanger/castorrmc/rmc/rmc_mount.c",
-  "file": "/builds/cta/CTA/mediachanger/castorrmc/rmc/rmc_mount.c",
-  "output": "mediachanger/castorrmc/rmc/CMakeFiles/cta-smc.dir/rmc_mount.c.o"
-},
-{
-  "directory": "/builds/cta/CTA/build_rpm/mediachanger/castorrmc/rmc",
-  "command": "/usr/bin/cc  -I/builds/cta/CTA -I/builds/cta/CTA/build_rpm -I/builds/cta/CTA/mediachanger/castorrmc/h -fPIC -Wall -Wextra -Werror -Wno-unused-parameter -g -o CMakeFiles/cta-smc.dir/rmc_read_elem_status.c.o -c /builds/cta/CTA/mediachanger/castorrmc/rmc/rmc_read_elem_status.c",
-  "file": "/builds/cta/CTA/mediachanger/castorrmc/rmc/rmc_read_elem_status.c",
-  "output": "mediachanger/castorrmc/rmc/CMakeFiles/cta-smc.dir/rmc_read_elem_status.c.o"
-},
-{
-  "directory": "/builds/cta/CTA/build_rpm/mediachanger/castorrmc/rmc",
-  "command": "/usr/bin/cc  -I/builds/cta/CTA -I/builds/cta/CTA/build_rpm -I/builds/cta/CTA/mediachanger/castorrmc/h -fPIC -Wall -Wextra -Werror -Wno-unused-parameter -g -o CMakeFiles/cta-smc.dir/send2rmc.c.o -c /builds/cta/CTA/mediachanger/castorrmc/rmc/send2rmc.c",
-  "file": "/builds/cta/CTA/mediachanger/castorrmc/rmc/send2rmc.c",
-  "output": "mediachanger/castorrmc/rmc/CMakeFiles/cta-smc.dir/send2rmc.c.o"
-},
-{
-  "directory": "/builds/cta/CTA/build_rpm/mediachanger/castorrmc/rmc",
-  "command": "/usr/bin/cc  -I/builds/cta/CTA -I/builds/cta/CTA/build_rpm -I/builds/cta/CTA/mediachanger/castorrmc/h -fPIC -Wall -Wextra -Werror -Wno-unused-parameter -g -o CMakeFiles/cta-smc.dir/spectra_like_libs.c.o -c /builds/cta/CTA/mediachanger/castorrmc/rmc/spectra_like_libs.c",
-  "file": "/builds/cta/CTA/mediachanger/castorrmc/rmc/spectra_like_libs.c",
-  "output": "mediachanger/castorrmc/rmc/CMakeFiles/cta-smc.dir/spectra_like_libs.c.o"
-},
-{
-  "directory": "/builds/cta/CTA/build_rpm/mediachanger/castorrmc/rmc",
-  "command": "/usr/bin/cc  -I/builds/cta/CTA -I/builds/cta/CTA/build_rpm -I/builds/cta/CTA/mediachanger/castorrmc/h -fPIC -Wall -Wextra -Werror -Wno-unused-parameter -g -o CMakeFiles/cta-smc.dir/smc.c.o -c /builds/cta/CTA/mediachanger/castorrmc/rmc/smc.c",
-  "file": "/builds/cta/CTA/mediachanger/castorrmc/rmc/smc.c",
-  "output": "mediachanger/castorrmc/rmc/CMakeFiles/cta-smc.dir/smc.c.o"
+  "directory": "/builds/cta/CTA/build_rpm/mediachanger/smc",
+  "command": "/usr/bin/c++  -I/builds/cta/CTA -I/builds/cta/CTA/build_rpm -fPIC -pedantic -Wall -Wextra -Werror -Wno-unused-parameter -fstack-protector-all -std=c++20 -g -o CMakeFiles/cta-smc.dir/smc.cpp.o -c /builds/cta/CTA/mediachanger/smc/smc.cpp",
+  "file": "/builds/cta/CTA/mediachanger/smc/smc.cpp",
+  "output": "mediachanger/smc/CMakeFiles/cta-smc.dir/smc.cpp.o"
 },
 {
   "directory": "/builds/cta/CTA/build_rpm/objectstore",
