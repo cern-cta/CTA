@@ -63,8 +63,10 @@ constexpr unsigned int cmd_pair(cta::admin::AdminCmd::Cmd cmd, cta::admin::Admin
 
 namespace cta::frontend::grpc {
 
-// callbackService class is the one that must implement the rpc methods
-// a streaming rpc method must have return type ServerWriteReactor
+/* CallbackService class is the one that must implement the rpc methods,
+ * using gRPC's async callback API (https://grpc.io/docs/languages/cpp/callback/)
+ * this is the recommended way of implementing asynchronous calls (https://grpc.io/docs/languages/cpp/best_practices/).
+ */
 class CtaRpcStreamImpl : public cta::xrd::CtaRpcStream::CallbackService {
 public:
   cta::log::LogContext getLogContext() const { return m_lc; }
@@ -85,7 +87,7 @@ public:
         m_catalogueConnString(connstr),
         m_missingFileCopiesMinAgeSecs(missingFileCopiesMinAgeSecs) {}
 
-  /* CtaAdminServerWriteReactor is what the type of GenericAdminStream could be */
+  /* gRPC expects the return type of an RPC implemented using the callback API to be a pointer to ::grpc::ServerWriteReactor */
   ::grpc::ServerWriteReactor<cta::xrd::StreamResponse>* GenericAdminStream(::grpc::CallbackServerContext* context,
                                                                            const cta::xrd::Request* request);
 
@@ -277,7 +279,7 @@ CtaRpcStreamImpl::GenericAdminStream(::grpc::CallbackServerContext* context, con
   } catch (const cta::exception::UserError& ex) {
     return new DefaultWriteReactor(ex.what());
   }  // try-catch
-  // normal execution if no exception was thrown
+  // proceed with command execution if no exception was thrown
   return new CtaAdminServerWriteReactor(m_catalogue, m_scheduler, m_instanceName, std::move(stream), headerType);
 }
 }  // namespace cta::frontend::grpc
