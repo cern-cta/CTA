@@ -16,6 +16,7 @@
         - cta.spec.in
         - project.json
         - version.hpp.in
+        - xrootd-ssi-protobuf-interface
         # To be safe, all files in all sub-directories
         # Once we have a src/ directory, we can be a bit more specific without having to specify a long list here
         - '*/**/*'
