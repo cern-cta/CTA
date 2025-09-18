@@ -75,13 +75,13 @@ CommandLineParams::CommandLineParams(int argc, char** argv) {
 
 std::list<cta::log::Param> CommandLineParams::toLogParams() const {
   std::list<cta::log::Param> ret;
-  ret.push_back({"foreground", foreground});
-  ret.push_back({"logToStdout", logToStdout});
-  ret.push_back({"logToFile", logToFile});
-  ret.push_back({"logFilePath", logFilePath});
-  ret.push_back({"logFormat", logFormat});
-  ret.push_back({"configFileLocation", configFileLocation});
-  ret.push_back({"helpRequested", helpRequested});
+  ret.emplace_back("foreground", foreground);
+  ret.emplace_back("logToStdout", logToStdout);
+  ret.emplace_back("logToFile", logToFile);
+  ret.emplace_back("logFilePath", logFilePath);
+  ret.emplace_back("logFormat", logFormat);
+  ret.emplace_back("configFileLocation", configFileLocation);
+  ret.emplace_back("helpRequested", helpRequested);
   return ret;
 }
 

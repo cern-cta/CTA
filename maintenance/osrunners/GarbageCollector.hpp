@@ -17,13 +17,15 @@
 
 #pragma once
 
-#include "Agent.hpp"
-#include "AgentRegister.hpp"
-#include "AgentWatchdog.hpp"
 #include "common/dataStructures/JobQueueType.hpp"
 #include "common/log/LogContext.hpp"
-#include "GenericObject.hpp"
-#include "Sorter.hpp"
+#include "objectstore/Agent.hpp"
+#include "objectstore/AgentRegister.hpp"
+#include "objectstore/AgentWatchdog.hpp"
+#include "objectstore/GenericObject.hpp"
+#include "objectstore/Sorter.hpp"
+
+
 
 /**
  * Plan => Garbage collector keeps track of the agents.
@@ -33,14 +35,14 @@
  * (and expensive) than the usual one. It can for example prevent double posting.
  */
 
-namespace cta::objectstore {
+namespace cta::maintenance {
 
-class ArchiveRequest;
-class RetrieveRequest;
+//class objectstore::ArchiveRequest;
+//class objectstore::RetrieveRequest;
 
 class GarbageCollector {
 public:
-  GarbageCollector(Backend & os, AgentReference & agentReference, catalogue::Catalogue & catalogue);
+  GarbageCollector(objectstore::Backend & os, objectstore::AgentReference & agentReference, catalogue::Catalogue & catalogue);
   ~GarbageCollector();
   void runOnePass(log::LogContext & lc);
 
@@ -56,43 +58,41 @@ public:
     * one batch per queue. */
   struct OwnedObjectSorter {
     //tuple[0] = containerIdentifier (tapepool or Repack Request's address), tuple[1]=jobQueueType, tuple[2]=tapepoolOfTheJob
-    std::map<std::tuple<std::string, common::dataStructures::JobQueueType , std::string>, std::list<std::shared_ptr <ArchiveRequest>>> archiveQueuesAndRequests;
+    std::map<std::tuple<std::string, common::dataStructures::JobQueueType , std::string>, std::list<std::shared_ptr <objectstore::ArchiveRequest>>> archiveQueuesAndRequests;
     //tuple[0] = containerIdentifier (vid or Repack Request's address), tuple[1]=jobQueueType, tuple[2]=vidOfTheJob
-    std::map<std::tuple<std::string, common::dataStructures::JobQueueType, std::string>, std::list<std::shared_ptr <RetrieveRequest>>> retrieveQueuesAndRequests;
-    std::list<std::shared_ptr<GenericObject>> otherObjects;
-    //Sorter m_sorter;
+    std::map<std::tuple<std::string, common::dataStructures::JobQueueType, std::string>, std::list<std::shared_ptr <objectstore::RetrieveRequest>>> retrieveQueuesAndRequests;
+    std::list<std::shared_ptr<objectstore::GenericObject>> otherObjects;
     /// Fill up the fetchedObjects with objects of interest.
-    void fetchOwnedObjects(Agent & agent, std::list<std::shared_ptr<GenericObject>> & fetchedObjects, Backend & objectStore,
+    void fetchOwnedObjects(objectstore::Agent & agent, std::list<std::shared_ptr<objectstore::GenericObject>> & fetchedObjects, objectstore::Backend & objectStore,
         log::LogContext & lc);
     /// Fill up the sorter with the fetched objects
-    void sortFetchedObjects(Agent & agent, std::list<std::shared_ptr<GenericObject>> & fetchedObjects, Backend & objectStore,
+    void sortFetchedObjects(objectstore::Agent & agent, std::list<std::shared_ptr<objectstore::GenericObject>> & fetchedObjects, objectstore::Backend & objectStore,
         cta::catalogue::Catalogue & catalogue, log::LogContext & lc);
     /// Lock, fetch and update archive jobs
-    void lockFetchAndUpdateArchiveJobs(Agent & agent, AgentReference & agentReference, Backend & objectStore, log::LogContext & lc);
+    void lockFetchAndUpdateArchiveJobs(objectstore::Agent & agent, objectstore::AgentReference & agentReference, objectstore::Backend & objectStore, log::LogContext & lc);
     /// Lock, fetch and update retrieve jobs
-    void lockFetchAndUpdateRetrieveJobs(Agent & agent, AgentReference & agentReference, Backend & objectStore, log::LogContext & lc);
+    void lockFetchAndUpdateRetrieveJobs(objectstore::Agent & agent, objectstore::AgentReference & agentReference, objectstore::Backend & objectStore, log::LogContext & lc);
     // Lock, fetch and update other objects
-    void lockFetchAndUpdateOtherObjects(Agent & agent, AgentReference & agentReference, Backend & objectStore,
+    void lockFetchAndUpdateOtherObjects(objectstore::Agent & agent, objectstore::AgentReference & agentReference, objectstore::Backend & objectStore,
         cta::catalogue::Catalogue & catalogue, log::LogContext & lc);
-    //Sorter& getSorter();
 
   private:
-    std::string dispatchArchiveAlgorithms(std::list<std::shared_ptr<ArchiveRequest>> &jobs,const common::dataStructures::JobQueueType& jobQueueType, const std::string& containerIdentifier,
+    std::string dispatchArchiveAlgorithms(std::list<std::shared_ptr<objectstore::ArchiveRequest>> &jobs,const common::dataStructures::JobQueueType& jobQueueType, const std::string& containerIdentifier,
         const std::string& tapepool,std::set<std::string> & jobsIndividuallyGCed,
-        Agent& agent, AgentReference& agentReference, Backend & objectstore, log::LogContext &lc);
+        objectstore::Agent& agent, objectstore::AgentReference& agentReference, objectstore::Backend & objectstore, log::LogContext &lc);
 
     template<typename ArchiveSpecificQueue>
-    void executeArchiveAlgorithm(std::list<std::shared_ptr<ArchiveRequest>> &jobs,std::string &queueAddress, const std::string& containerIdentifier, const std::string& tapepool,
-        std::set<std::string> & jobsIndividuallyGCed, Agent& agent, AgentReference& agentReference,
-        Backend &objectStore, log::LogContext& lc);
+    void executeArchiveAlgorithm(std::list<std::shared_ptr<objectstore::ArchiveRequest>> &jobs,std::string &queueAddress, const std::string& containerIdentifier, const std::string& tapepool,
+        std::set<std::string> & jobsIndividuallyGCed, objectstore::Agent& agent, objectstore::AgentReference& agentReference,
+        objectstore::Backend &objectStore, log::LogContext& lc);
   };
 
 private:
-  Backend & m_objectStore;
+  objectstore::Backend & m_objectStore;
   catalogue::Catalogue & m_catalogue;
-  AgentReference & m_ourAgentReference;
-  AgentRegister m_agentRegister;
-  std::map<std::string, AgentWatchdog * > m_watchedAgents;
+  objectstore::AgentReference & m_ourAgentReference;
+  objectstore::AgentRegister m_agentRegister;
+  std::map<std::string, objectstore::AgentWatchdog * > m_watchedAgents;
 };
 
-} // namespace cta::objectstore
+} // namespace cta::maintenance

@@ -27,8 +27,8 @@
 #include <uuid/uuid.h>
 
 #include "objectstore/ObjectStoreFixture.hpp"
+#include "objectstore/RetrieveQueueAlgorithms.hpp"
 #include "objectstore/BackendVFS.hpp"
-#include "objectstore/GarbageCollector.hpp"
 #include "scheduler/Scheduler.hpp"
 
 namespace unitTests {

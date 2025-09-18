@@ -1,0 +1,26 @@
+# If required, the user can specify a custom image here
+isPrivileged: true
+
+conf:
+  maintenance:
+    catalogueConfigPath: "/etc/cta/cta-catalogue.conf"
+    repackMaxRequestsToExpand: 2
+    tapeCacheMaxAgeSecs: 600
+    retrieveQueueCacheMaxAgeSecs: 10
+  general:
+    instanceName: "CI"
+
+# SSS keytab to communicate to the disk buffer
+keytab:
+  secretName: eos-keytab
+  subPath: eos.keytab
+
+pod:
+  extraSpec:
+    terminationGracePeriodSeconds: 1
+
+extraEnv:
+
+extraVolumes:
+  volumes:
+  volumeMounts:

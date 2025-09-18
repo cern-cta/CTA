@@ -16,7 +16,7 @@
  */
 #pragma once
 
-#include "Scheduler.hpp"
+#include "scheduler/Scheduler.hpp"
 #include "common/threading/Thread.hpp"
 
 namespace cta {

@@ -126,8 +126,8 @@ void Logger::setLogMask(std::string_view logMask) {
 // setLogFormat
 //------------------------------------------------------------------------------
 void Logger::setLogFormat(std::string_view logFormat) {
-  if(logFormat == "default") {
-    m_logFormat = LogFormat::DEFAULT;
+  if(logFormat == "unstructured") {
+    m_logFormat = LogFormat::UNSTRUCTURED;
   } else if(logFormat == "json") {
     m_logFormat = LogFormat::JSON;
   } else {
@@ -145,7 +145,7 @@ void Logger::setStaticParams(const std::map<std::string, std::string> &staticPar
     throw exception::Exception("Static log params have already been set.");
   }
   switch(m_logFormat){
-  case LogFormat::DEFAULT:
+  case LogFormat::UNSTRUCTURED:
     for(const auto& [headerKey, headerValue] : staticParams){
       os << headerKey << "=\""  << headerValue << "\" ";
     }
@@ -179,7 +179,7 @@ std::string Logger::createMsgHeader(const TimestampT& timeStamp) const {
   localtime_r(&ts_t, &localTime);
 
   switch(m_logFormat) {
-    case LogFormat::DEFAULT:
+    case LogFormat::UNSTRUCTURED:
       os << std::put_time(&localTime, "%b %e %T")
          << '.' << std::setfill('0') << std::setw(9) << ts_ns_fraction << ' '
          << m_hostName << " "
@@ -246,7 +246,7 @@ std::string Logger::createMsgBody(std::string_view logLevel, std::string_view ms
 
   // Append the log level, the thread id and the message text
   switch(m_logFormat) {
-    case LogFormat::DEFAULT:
+    case LogFormat::UNSTRUCTURED:
       os << R"(LVL=")" << logLevel << R"(" PID=")" << pid << R"(" TID=")" << tid << R"(" MSG=")" << msg << R"(" )";
       break;
     case LogFormat::JSON:
@@ -263,7 +263,7 @@ std::string Logger::createMsgBody(std::string_view logLevel, std::string_view ms
   for(auto& param : params) {
     // Write the name and value to the buffer
     switch(m_logFormat) {
-      case LogFormat::DEFAULT:
+      case LogFormat::UNSTRUCTURED:
         {
           // If parameter name is an empty string, set the value to "Undefined"
           const std::string name_str = param.getName() == "" ? "Undefined" : cleanString(param.getName(), true);

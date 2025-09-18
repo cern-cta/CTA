@@ -39,9 +39,9 @@
 #include "common/exception/NoSuchObject.hpp"
 #include "common/log/DummyLogger.hpp"
 #include "common/Timer.hpp"
+#include "maintenance/osrunners/GarbageCollector.hpp"
 #include "objectstore/Algorithms.hpp"
 #include "objectstore/BackendRadosTestSwitch.hpp"
-#include "objectstore/GarbageCollector.hpp"
 #include "objectstore/RepackIndex.hpp"
 #include "objectstore/RootEntry.hpp"
 #include "scheduler/ArchiveMount.hpp"
@@ -1849,7 +1849,7 @@ TEST_P(SchedulerTest, archive_and_retrieve_failure) {
       gcAgent.initialize();
       gcAgent.insertAndRegisterSelf(lc);
       {
-        cta::objectstore::GarbageCollector gc(getSchedulerDB().getBackend(), gcAgentRef, catalogue);
+        cta::maintenance::GarbageCollector gc(getSchedulerDB().getBackend(), gcAgentRef, catalogue);
         gc.runOnePass(lc);
       }
       // Assign a new agent to replace the stale agent reference in the DB
@@ -2102,7 +2102,7 @@ TEST_P(SchedulerTest, archive_and_retrieve_report_failure) {
       gcAgent.initialize();
       gcAgent.insertAndRegisterSelf(lc);
       {
-        cta::objectstore::GarbageCollector gc(getSchedulerDB().getBackend(), gcAgentRef, catalogue);
+        cta::maintenance::GarbageCollector gc(getSchedulerDB().getBackend(), gcAgentRef, catalogue);
         gc.runOnePass(lc);
       }
       // Assign a new agent to replace the stale agent reference in the DB
@@ -6998,7 +6998,7 @@ TEST_P(SchedulerTest, toTransfereRetrieveQueueMissingReservationInfo)
     retrieveQueue1.commit();
   }
   // Garbage collect the first agent
-  GarbageCollector gc(backend, agentReference, catalogue);
+  cta::maintenance::GarbageCollector gc(backend, agentReference, catalogue);
   gc.runOnePass(lc);
 
   // Check that the queue cleanup information has not been cleared.

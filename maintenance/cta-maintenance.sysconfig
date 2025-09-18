@@ -1,4 +1,4 @@
-# Environment variables to configue the libXrdCl.so linked with cta-taped
+# Environment variables to configue the libXrdCl.so linked with cta-maintenance
 #
 # These two variables set the authentication mechanism to Simple Shared Secret
 # (SSS) and set the SSS key to be that of the tape server

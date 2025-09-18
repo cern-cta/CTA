@@ -22,14 +22,11 @@ add_subdirectory(rdbms/schema)
 set (CTA_SCHEDULER_SRC_FILES
   ArchiveJob.cpp
   ArchiveMount.cpp
-  DiskReportRunner.cpp
   LabelMount.cpp
   MountType.cpp
   MountType.cpp
   PositioningMethod.cpp
-  RepackReportThread.cpp
   RepackRequest.cpp
-  RepackRequestManager.cpp
   RetrieveJob.cpp
   RetrieveMount.cpp
   Scheduler.cpp
@@ -98,6 +95,7 @@ if(NOT CTA_USE_PGSCHED)
     SchedulerDatabaseFactory.cpp
     SchedulerDatabaseTest.cpp
     SchedulerTest.cpp
+    ../maintenance/osrunners/GarbageCollector.cpp
     OStoreDB/OStoreDBTest.cpp)
 else()
   add_library (ctaschedulerunittests SHARED

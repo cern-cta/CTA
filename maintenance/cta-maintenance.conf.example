@@ -1,0 +1,105 @@
+# @project      The CERN Tape Archive (CTA)
+# @copyright    Copyright © 2015-2025 CERN
+# @license      This program is free software, distributed under the terms of the GNU General Public
+#               Licence version 3 (GPL Version 3), copied verbatim in the file "COPYING". You can
+#               redistribute it and/or modify it under the terms of the GPL Version 3, or (at your
+#               option) any later version.
+# 
+#               This program is distributed in the hope that it will be useful, but WITHOUT ANY
+#               WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A
+#               PARTICULAR PURPOSE. See the GNU General Public License for more details.
+# 
+#               In applying this licence, CERN does not waive the privileges and immunities
+#               granted to it by virtue of its status as an Intergovernmental Organization or
+#               submit itself to any jurisdiction.
+
+####################################################################################################
+# 
+# CTA Maintenance Service Configuration
+# 
+####################################################################################################
+
+#
+# MAINTENANCE SERVICE CONFIGURATION OPTIONS
+#
+
+# The expected user of the cta-maintenance daemon process. In the process user does not match the process will exit.
+# DaemonUserName cta
+#
+# The expected group of the cta-maintenance daemon process. If the process groups does not match the process will exit.
+# DaemonGroupName tape
+#
+# Logs with a level lower than the LogMask value will be masked. Possible values are EMERG, ALERT,
+# CRIT, ERR, WARNING, NOTICE (USERERR), INFO, DEBUG.
+# LogMask INFO
+#
+# Log format. Possible values are unstructured, json.
+# LogFormat json
+#
+#
+# Path to the CTA Catalogue configuration file
+# CatalogueConfigFile /etc/cta/cta-catalogue.conf
+#
+# URL of the objectstore (CTA Scheduler Database). Usually this will be the URL of a Ceph RADOS
+# objectstore. For testing or small installations, a file-based objectstore can be used instead.
+ObjectStore BackendPath rados://cta@tapecta:cta
+# ObjectStore BackendPath /path/to/local/objectstore
+
+#
+# GENERAL OPTIONS
+# This options will be included in every log line of the maintenance process to enhance log identification.
+#
+# Unique string to identify CTA's instance the maintenance process is serving (i.e: production, preproduction).
+# Each of these instances should be associated with a specific CTA catalogue instance.
+# general InstanceName production
+#
+# The unique string to identify the backend scheduler resources. As an example, it can be structured as:
+# "[ceph|postgres|vfs][User|Repack]".
+# general SchedulerBackendName cephUser
+
+#
+# MAINTENANCE PROCESS RUNNER CONFIGURATION OPTIONS
+#
+# Run the Disk Reporter to report the state (fail or success) of transfer jobs.
+# DiskReportRunner yes
+#
+# Run the Garbage Collector for garbage collection of objectstore's dead agents.
+# GarbageCollectorRunner yes
+#
+# Run the Queue Cleanup.
+# QueueCleanupRunner yes
+#
+# Run the Repack Request Manager for repack-related operations.
+# RepackRequestRunner yes
+#
+
+#
+# CACHE TIMEOUT OPTIONS
+#
+# Defaults to 600 seconds if not set.
+# TapeCacheMaxAgeSecs 600
+#
+# Defaults to 10 seconds if not set.
+# RetrieveQueueCacheMaxAgeSecs 10
+
+
+#
+# DISK REPORT RUNNER CONFIGURATION OPTIONS
+#
+
+
+#
+# GARBAGE COLLECTOR RUNNER CONFIGURATION OPTIONS
+#
+
+
+#
+# QUEUE CLEANUP RUNNER CONFIGURATION OPTIONS
+#
+
+
+#
+# REPACK REQUEST RUNNER CONFIGURATION OPTIONS
+#
+# Set the maximum number of simultaneous repacks to be promoted to ToExpand
+# repackMaxToToExpand 2

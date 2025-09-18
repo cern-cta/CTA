@@ -64,18 +64,16 @@ const std::string gHelpString =
     "\t--help                   or -h         \tPrint this help and exit\n";
 
 //------------------------------------------------------------------------------
-// Logs the start of the daemon.
-//------------------------------------------------------------------------------
-void logStartOfDaemon(cta::log::Logger &log,
-  const daemon::CommandLineParams& commandLine);
-
-//------------------------------------------------------------------------------
 // exceptionThrowingMain
 //------------------------------------------------------------------------------
 static int exceptionThrowingMain(const cta::daemon::CommandLineParams& commandLine, cta::log::Logger& log) {
   using namespace cta::tape::daemon::common;
 
-  logStartOfDaemon(log, commandLine);
+  {
+    std::list<cta::log::Param> params = {cta::log::Param("version", CTA_VERSION)};
+    params.splice(params.end(), commandLine.toLogParams());
+    log(log::INFO, "Starting cta-taped", params);
+  }
 
   // Parse /etc/cta/cta-taped-unitName.conf parameters
   const TapedConfiguration globalConfig = TapedConfiguration::createFromConfigPath(commandLine.configFileLocation, log);
@@ -112,18 +110,6 @@ static int exceptionThrowingMain(const cta::daemon::CommandLineParams& commandLi
 
   // Run the tapeserverd daemon
   return daemon.main();
-}
-
-//------------------------------------------------------------------------------
-// logStartOfDaemon
-//------------------------------------------------------------------------------
-void logStartOfDaemon(cta::log::Logger &log,
-  const cta::daemon::CommandLineParams & commandLine) {
-  using namespace cta;
-
-  std::list<cta::log::Param> params = {cta::log::Param("version", CTA_VERSION)};
-  params.splice(params.end(), commandLine.toLogParams());
-  log(log::INFO, "Starting cta-taped", params);
 }
 
 } // namespace cta::taped
