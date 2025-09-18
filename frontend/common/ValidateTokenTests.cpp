@@ -10,6 +10,10 @@
 #include <jwt-cpp/jwt.h>
 #include <gtest/gtest.h>
 
+#include <openssl/rand.h>
+#include <openssl/rsa.h>
+#include <openssl/pem.h>
+
 namespace unitTests {
 
 std::string rsa_priv_key = R"(-----BEGIN PRIVATE KEY-----
@@ -112,6 +116,76 @@ protected:
   ValidateTokenTestFixture()
       : log("dummy", "ValidateTokenTests", cta::log::DEBUG),
         lc(log) {}
+
+  static void SetUpTestSuite() {
+    // Create an EVP_PKEY context for RSA
+    EVP_PKEY_CTX *ctx = EVP_PKEY_CTX_new_id(EVP_PKEY_RSA, nullptr);
+    if (!ctx) {
+      throw std::runtime_error("Failed to create EVP_PKEY_CTX");
+    }
+
+    EVP_PKEY *pkey = nullptr;
+
+    // Initialize keygen
+    if (EVP_PKEY_keygen_init(ctx) <= 0) {
+      EVP_PKEY_CTX_free(ctx);
+      throw std::runtime_error("Failed to initialize RSA keygen");
+    }
+
+    // Set key size (2048 bits is standard now, instead of 1024)
+    if (EVP_PKEY_CTX_set_rsa_keygen_bits(ctx, 2048) <= 0) {
+      EVP_PKEY_CTX_free(ctx);
+      throw std::runtime_error("Failed to set RSA keygen bits");
+    }
+
+    // Generate the key
+    if (EVP_PKEY_keygen(ctx, &pkey) <= 0) {
+      EVP_PKEY_CTX_free(ctx);
+      throw std::runtime_error("Failed to generate RSA key");
+    }
+
+    // Test sign something with the new key
+    EVP_MD_CTX *mdctx = EVP_MD_CTX_new();
+    if (!mdctx) {
+      EVP_PKEY_free(pkey);
+      EVP_PKEY_CTX_free(ctx);
+      throw std::runtime_error("Failed to create EVP_MD_CTX");
+    }
+
+    const unsigned char data[] = "test";
+
+    // Step 1: Init signing
+    if (EVP_DigestSignInit(mdctx, nullptr, EVP_sha256(), nullptr, pkey) <= 0 ||
+        EVP_DigestSignUpdate(mdctx, data, sizeof(data)) <= 0) {
+      EVP_MD_CTX_free(mdctx);
+      EVP_PKEY_free(pkey);
+      EVP_PKEY_CTX_free(ctx);
+      throw std::runtime_error("Failed to init/update signing");
+    }
+
+    // Step 2: Determine required signature size
+    size_t siglen = 0;
+    if (EVP_DigestSignFinal(mdctx, nullptr, &siglen) <= 0) {
+      EVP_MD_CTX_free(mdctx);
+      EVP_PKEY_free(pkey);
+      EVP_PKEY_CTX_free(ctx);
+      throw std::runtime_error("Failed to get signature length");
+    }
+
+    // Step 3: Allocate buffer and sign
+    std::vector<unsigned char> sig(siglen);
+    if (EVP_DigestSignFinal(mdctx, sig.data(), &siglen) <= 0) {
+      EVP_MD_CTX_free(mdctx);
+      EVP_PKEY_free(pkey);
+      EVP_PKEY_CTX_free(ctx);
+      throw std::runtime_error("Failed to finalize signing");
+    }
+
+    // Cleanup
+    EVP_MD_CTX_free(mdctx);
+    EVP_PKEY_free(pkey);
+    EVP_PKEY_CTX_free(ctx);
+  }
         
   std::shared_ptr<cta::JwkCache> createCacheWithMockFetcher() {
     return std::make_shared<cta::JwkCache>(m_mockFetcher, "http://fake-jwks-uri", 1200, lc);
