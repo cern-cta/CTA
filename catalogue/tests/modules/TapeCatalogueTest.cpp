@@ -2620,7 +2620,7 @@ TEST_P(cta_catalogue_TapeTest, getTapes_non_existent_tape_pool) {
   {
     cta::catalogue::TapeSearchCriteria criteria;
     criteria.tapePool = "non_existent";
-    ASSERT_THROW(m_catalogue->Tape()->getTapes(criteria), cta::catalogue::UserSpecifiedANonExistentTapePool);
+    ASSERT_EQ(m_catalogue->Tape()->getTapes(criteria).size(), 0);
   }
 }
 
@@ -3060,30 +3060,40 @@ TEST_P(cta_catalogue_TapeTest, createTape_many_tapes) {
     cta::catalogue::TapeSearchCriteria searchCriteria;
     searchCriteria.mediaType = "";
     ASSERT_THROW(m_catalogue->Tape()->getTapes(searchCriteria), cta::exception::UserError);
+    searchCriteria.mediaType = "nonexistent";
+    ASSERT_EQ(m_catalogue->Tape()->getTapes(searchCriteria).size(), 0);
   }
 
   {
     cta::catalogue::TapeSearchCriteria searchCriteria;
     searchCriteria.vendor = "";
     ASSERT_THROW(m_catalogue->Tape()->getTapes(searchCriteria), cta::exception::UserError);
+    searchCriteria.vendor = "nonexistent";
+    ASSERT_EQ(m_catalogue->Tape()->getTapes(searchCriteria).size(), 0);
   }
 
   {
     cta::catalogue::TapeSearchCriteria searchCriteria;
     searchCriteria.logicalLibrary = "";
     ASSERT_THROW(m_catalogue->Tape()->getTapes(searchCriteria), cta::exception::UserError);
+    searchCriteria.logicalLibrary = "nonexistent";
+    ASSERT_EQ(m_catalogue->Tape()->getTapes(searchCriteria).size(), 0);
   }
 
   {
     cta::catalogue::TapeSearchCriteria searchCriteria;
     searchCriteria.tapePool = "";
     ASSERT_THROW(m_catalogue->Tape()->getTapes(searchCriteria), cta::exception::UserError);
+    searchCriteria.tapePool = "nonexistent";
+    ASSERT_EQ(m_catalogue->Tape()->getTapes(searchCriteria).size(), 0);
   }
 
   {
     cta::catalogue::TapeSearchCriteria searchCriteria;
     searchCriteria.vo = "";
     ASSERT_THROW(m_catalogue->Tape()->getTapes(searchCriteria), cta::exception::UserError);
+    searchCriteria.vo = "nonexistent";
+    ASSERT_EQ(m_catalogue->Tape()->getTapes(searchCriteria).size(), 0);
   }
 
   {
@@ -3192,8 +3202,7 @@ TEST_P(cta_catalogue_TapeTest, createTape_many_tapes) {
   {
     cta::catalogue::TapeSearchCriteria searchCriteria;
     searchCriteria.vid = "non_existent_vid";
-    const std::list<cta::common::dataStructures::Tape> tapes = m_catalogue->Tape()->getTapes(searchCriteria);
-    ASSERT_TRUE(tapes.empty());
+    ASSERT_THROW(m_catalogue->Tape()->getTapes(searchCriteria), cta::exception::Exception);
   }
 
   {

@@ -227,11 +227,11 @@ common::dataStructures::StorageClass RdbmsStorageClassCatalogue::getStorageClass
   auto stmt = conn.createStmt(sql);
   stmt.bindString(":STORAGE_CLASS_NAME", name);
   auto rset = stmt.executeQuery();
+  rset.next();
   if (rset.isEmpty()) {
     throw exception::UserError(std::string("Cannot get storage class : ") + name +
       " because it does not exist");
   }
-  rset.next();
   common::dataStructures::StorageClass storageClass;
 
   storageClass.name = rset.columnString("STORAGE_CLASS_NAME");

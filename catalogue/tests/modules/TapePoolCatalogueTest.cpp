@@ -233,7 +233,8 @@ TEST_P(cta_catalogue_TapePoolTest, createTapePool_tapes_of_mixed_state) {
 
   cta::catalogue::TapeSearchCriteria criteria;
   criteria.vid = m_tape1.vid;
-  ASSERT_EQ(0,m_catalogue->Tape()->getTapes(criteria).size());
+  // cannot list tapes with a nonexistent VID
+  ASSERT_THROW(m_catalogue->Tape()->getTapes(criteria), cta::exception::UserError);
 
   m_catalogue->Tape()->createTape(m_admin, m_tape1);
 

@@ -1238,9 +1238,9 @@ std::list<common::dataStructures::Tape> RdbmsTapeCatalogue::getTapes(rdbms::Conn
   if(RdbmsCatalogueUtils::isSetAndEmpty(searchCriteria.physicalLibraryName))
     throw exception::UserError("Physical library name cannot be empty");
 
-  if(searchCriteria.tapePool && !RdbmsCatalogueUtils::tapePoolExists(conn, searchCriteria.tapePool.value())) {
-    UserSpecifiedANonExistentTapePool ex;
-    ex.getMessage() << "Cannot list tapes because tape pool " + searchCriteria.tapePool.value() + " does not exist";
+  if (searchCriteria.vid && !RdbmsCatalogueUtils::tapeExists(conn, searchCriteria.vid.value())) {
+    cta::exception::UserError ex;
+    ex.getMessage() << "Cannot list tapes because tape with vid " + searchCriteria.vid.value() + " does not exist";
     throw ex;
   }
 
