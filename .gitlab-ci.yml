@@ -98,8 +98,8 @@ variables:
       - "TRUE"
       - "FALSE"
 
-  VALGRIND_DB_UNIT_TESTS:
-    description: "Whether to run the DataBase unit tests with valgrind."
+  VALGRIND_UNIT_TESTS:
+    description: "Whether to run the unit tests with valgrind."
     value: "FALSE"
     options:
       - "TRUE"
