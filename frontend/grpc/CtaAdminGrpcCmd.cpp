@@ -82,8 +82,7 @@ void CtaAdminGrpcCmd::send(const CtaAdminParsedCmd& parsedCmd, std::string endpo
       }
     } catch (std::exception &ex) {
       // what to do in catch? Maybe print an error?
-      std::cout << "An exception was thrown in CtaAdminClientReactor" << std::endl;
-      throw ex;
+      std::cout << "An exception was thrown in CtaAdminClientReactor: " << ex.what() << std::endl;
     }
   }
 }
