@@ -256,7 +256,7 @@ xrd::Response AdminCmd::process() {
   }
   cta::telemetry::metrics::ctaFrontendRequestDuration->Record(
     timer.msecs(),
-    {{cta::semconv::kEventName, "admin"}},
+    {{cta::semconv::kCtaEventName, "ADMIN"}},
     opentelemetry::context::RuntimeContext::GetCurrent());
   return response;
 }
