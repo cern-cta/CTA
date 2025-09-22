@@ -33,6 +33,7 @@ set_source_files_properties(CRC.cpp PROPERTIES COMPILE_FLAGS -O2)
 
 set (COMMON_LIB_SRC_FILES
   checksum/ChecksumBlob.cpp
+  CmdLineParams.cpp
   CmdLineTool.cpp
   config/Config.cpp
   ConfigurationFile.cpp

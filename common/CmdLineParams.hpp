@@ -1,6 +1,6 @@
 /*
  * @project      The CERN Tape Archive (CTA)
- * @copyright    Copyright © 2021-2022 CERN
+ * @copyright    Copyright © 2021-2025 CERN
  * @license      This program is free software, distributed under the terms of the GNU General Public
  *               Licence version 3 (GPL Version 3), copied verbatim in the file "COPYING". You can
  *               redistribute it and/or modify it under the terms of the GPL Version 3, or (at your
@@ -21,13 +21,13 @@
 #include <list>
 #include "common/log/Param.hpp"
 
-namespace cta::daemon {
+namespace cta::common {
 
-struct CommandLineParams {
+struct CmdLineParams {
   /**
    * Translates the command line parameters into a struct
    */
-  CommandLineParams(int argc, char **argv);
+  CmdLineParams(int argc, char **argv);
   bool foreground = false;                                      ///< Prevents daemonisation
   bool logToStdout = false;                                     ///< Log to stdout instead. Foreground is required. Logging to stdout is the default, but this option is kept for compatibility reasons
   bool logToFile = false;                                       ///< Log to file intead of stdout.

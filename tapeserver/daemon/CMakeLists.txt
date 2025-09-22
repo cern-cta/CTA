@@ -28,7 +28,6 @@ SET_SOURCE_FILES_PROPERTIES(DriveHandler.cpp PROPERTIES OBJECT_DEPENDS ${WDMsgHe
 
 add_library(ctatapedaemon
   ${WDMsgSources}
-  CommandLineParams.cpp
   DriveHandler.cpp
   DriveHandlerProxy.cpp
   DriveHandlerStateReporter.cpp

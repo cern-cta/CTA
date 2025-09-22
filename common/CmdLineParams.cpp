@@ -1,6 +1,6 @@
 /*
  * @project      The CERN Tape Archive (CTA)
- * @copyright    Copyright © 2021-2022 CERN
+ * @copyright    Copyright © 2021-2025 CERN
  * @license      This program is free software, distributed under the terms of the GNU General Public
  *               Licence version 3 (GPL Version 3), copied verbatim in the file "COPYING". You can
  *               redistribute it and/or modify it under the terms of the GPL Version 3, or (at your
@@ -15,21 +15,43 @@
  *               submit itself to any jurisdiction.
  */
 
-#include "tapeserver/daemon/CommandLineParams.hpp"
+#include "common/CmdLineParams.hpp"
 #include "common/exception/Exception.hpp"
 #include <getopt.h>
 #include <string.h>
 
-namespace cta::daemon {
+namespace cta::common {
 
-CommandLineParams::CommandLineParams(int argc, char** argv) {
+CmdLineParams::CmdLineParams(int argc, char** argv, std::string procName) {
+
+//------------------------------------------------------------------------------
+// The help string
+//------------------------------------------------------------------------------
+std::string gHelpString =
+    "Usage: " + procName + " [options]\n"
+    "\n"
+    "where options can be:\n"
+    "\n";
+
+  if (procName == "cta-taped") {
+    gHelpString +=
+      "\t--foreground             or -f         \tRemain in the Foreground\n";
+  }
+
+  gHelpString +=
+    "\t--stdout                 or -s         \tPrint logs to standard output. Requires --foreground. Logging to stdout is the default, but this option is kept for compatibility reasons\n"
+    "\t--log-to-file <log-file> or -l         \tLogs to a given file (instead of default stdout)\n"
+    "\t--log-format <format>    or -o         \tOutput format for log messages (default or json)\n"
+    "\t--config <config-file>   or -c         \tConfiguration file\n"
+    "\t--help                   or -h         \tPrint this help and exit\n";
+
+
   struct ::option longopts[] = {
     // { .name, .has_args, .flag, .val } (see getopt.h))
     { "foreground", no_argument, nullptr, 'f' },
     { "config", required_argument, nullptr, 'c' },
     { "help", no_argument, nullptr, 'h' },
-    { "stdout", no_argument, nullptr, 's' },
-    { "log-to-file", required_argument, nullptr, 'l' },
+    { "log-to", required_argument, nullptr, 'l' },
     { "log-format", required_argument, nullptr, 'o' },
     { nullptr, 0, nullptr, '\0' }
   };
@@ -52,8 +74,8 @@ CommandLineParams::CommandLineParams(int argc, char** argv) {
       configFileLocation = optarg;
       break;
     case 'h':
-      helpRequested = true;
-      break;
+      std::cout << gHelpString << std::endl;
+      std::exit(EXIT_SUCCESS);
     case 'l':
       logFilePath = optarg;
       logToFile = true;
@@ -65,15 +87,19 @@ CommandLineParams::CommandLineParams(int argc, char** argv) {
       break;
     }
   }
+
+  const std::string errPrefix = "Failed to interpret the command line parameters: In CmdLineParams::CmdLineParams(): ";
   if (logToStdout && !foreground) {
-    throw cta::exception::Exception("In CommandLineParams::CommandLineParams(): cannot log to stdout without running in the foreground");
+    std::cerr << "cannot log to stdout without running in the foreground";
+    std::exut(EXIT_FAILURE);
   }
   if (logToFile && logToStdout) {
-    throw cta::exception::Exception("In CommandLineParams::CommandLineParams(): cannot log to both stdout and file");
+    std::cerr << "cannot log to both stdout and file";
+    std::exit(EXIT_SUCCESS);
   }
 }
 
-std::list<cta::log::Param> CommandLineParams::toLogParams() const {
+std::list<cta::log::Param> CmdLineParams::toLogParams() const {
   std::list<cta::log::Param> ret;
   ret.emplace_back("foreground", foreground);
   ret.emplace_back("logToStdout", logToStdout);
@@ -85,4 +111,4 @@ std::list<cta::log::Param> CommandLineParams::toLogParams() const {
   return ret;
 }
 
-} // namespace cta::daemon
+} // namespace cta::common

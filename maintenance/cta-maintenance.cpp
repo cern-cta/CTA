@@ -28,6 +28,7 @@
 #include "catalogue/CatalogueFactory.hpp"
 #include "catalogue/CatalogueFactoryFactory.hpp"
 #include "common/exception/Errnum.hpp"
+#include "common/CmdLineParams.hpp"
 #include "common/config/Config.hpp"
 #include "common/log/FileLogger.hpp"
 #include "common/log/StdoutLogger.hpp"
@@ -39,32 +40,6 @@
 #else
 #include "scheduler/OStoreDB/OStoreDBInit.hpp"
 #endif
-
-
-//------------------------------------------------------------------------------
-// The help string
-//------------------------------------------------------------------------------
-const std::string gHelpString =
-    "Usage: cta-maintenance [options]\n"
-    "\n"
-    "where options can be:\n"
-    "\n"
-    "\t--stdout                 or -s         \tPrint logs to standard output. Required --foreground\n"
-    "\t--log-to-file <log-file> or -l         \tLogs to a given file (instead of default syslog)\n"
-    "\t--log-format <format>    or -o         \tOutput format for log messages (default or json)\n"
-    "\t--config <config-file>   or -c         \tConfiguration file\n"
-    "\t--help                   or -h         \tPrint this help and exit\n";
-
-static struct option longopts[] = {
-  // { .name, .has_args, .flag, .val } (see getopt.h))
-  { "config", required_argument, nullptr, 'c' },
-  { "help", no_argument, nullptr, 'h' },
-  { "stdout", no_argument, nullptr, 's' },
-  { "log-to-file", required_argument, nullptr, 'l' },
-  { "log-format", required_argument, nullptr, 'o' },
-  { nullptr, 0, nullptr, '\0' }
-};
-
 
 
 namespace cta::maintenance {
@@ -79,43 +54,6 @@ namespace cta::maintenance {
 // @param argv The command-line arguments.
 // @param log The logging system.
 //------------------------------------------------------------------------------
-static int exceptionThrowingMain(const common::Config config, cta::log::Logger &log);
-void maintenanceLoop(DiskReportRunner& drr, RepackRequestManager& rrm, QueueCleanupRunner& qcr, GarbageCollector& gc, log::LogContext& lc);
-
-
-void maintenanceLoop(DiskReportRunner& drr, RepackRequestManager& rrm, QueueCleanupRunner& qcr, GarbageCollector& gc, log::LogContext& lc){
-  // Run the maintenance in a loop: queue cleanup, garbage collector and disk reporter
-  try {
-    do {
-      utils::Timer t;
-      qcr.runOnePass(lc);
-      gc.runOnePass(lc);
-      drr.runOnePass(lc);
-      rrm.runOnePass(lc, 2);
-      lc.log(log::INFO, "Did one round of cleaning. Sleeping for X seconds.");
-      sleep(1);
-    } while (true);
-    lc.log(log::INFO, "In Maintenance::maintenanceLoop(): Received shutdown message. Exiting.");
-  } catch(cta::exception::Exception & ex) {
-    log::ScopedParamContainer exParams(lc);
-    exParams.add("exceptionMessage", ex.getMessageValue());
-    lc.log(log::ERR,
-        "In Maintenance::maintenanceLoop(): received an exception. Backtrace follows.");
-
-    lc.logBacktrace(log::INFO, ex.backtrace());
-    throw ex;
-  } catch(std::exception &ex) {
-    log::ScopedParamContainer exParams(lc);
-    exParams.add("exceptionMessage", ex.what());
-    lc.log(log::ERR, "In Maintenance::maintenanceLoop(): received a std::exception.");
-    throw ex;
-  } catch(...) {
-    lc.log(log::ERR, "In Maintenance::maintenanceLoop(): received an unknown exception.");
-    throw;
-  }
-}
-
-
 static int exceptionThrowingMain(const common::Config config, cta::log::Logger& log) {
   log::LogContext lc(log);
 
@@ -171,45 +109,9 @@ static int exceptionThrowingMain(const common::Config config, cta::log::Logger& 
 int main(const int argc, char **const argv) {
   using namespace cta;
 
-  // Check daemon is being launched with cta:tape user:group IDs.
-
-  // Options
-  bool logToStdout = false;
-  bool logToFile = true;
-  std::string logFilePath;
-  std::string logFormat;
-  std::string configFileLocation;
-
-  char c;
-  // Reset getopt's global variables to make sure we start fresh
-  optind=0;
-  // Prevent getopt from printing out errors on stdout
-  opterr=0;
-  // We ask getopt to not reshuffle argv ('+')
-  while ((c = getopt_long(argc, argv, "+sc:l:h", longopts, nullptr)) != -1) {
-    switch (c) {
-    case 's':
-      logToStdout = true;
-      logToFile = false;
-      break;
-    case 'c':
-      configFileLocation = optarg;
-      break;
-    case 'h':
-      std::cout << gHelpString << std:: endl;
-      return EXIT_SUCCESS;
-    case 'l':
-      logFilePath = optarg;
-      logToFile = true;
-      logToStdout = false;
-      break;
-    case 'o':
-      logFormat = optarg;
-      break;
-    default:
-      break;
-    }
-  }
+  // Interpret the command line
+  std::unique_ptr<common::CmdLineParams> cmdLineParams;
+  commandLine.reset(new common::CmdLineParams(argc, argv, "cta-maintenance"));
 
   std::string shortHostName;
   try {
@@ -222,26 +124,46 @@ int main(const int argc, char **const argv) {
   std::unique_ptr<log::Logger> logPtr;
   logPtr.reset(new log::StdoutLogger(shortHostName, "cta-maintenance"));
 
+  const common::Config config(cmdLineParams->configFileLocation);
+
+  // Change user and group
+  const std::string userName = config.daemonUserName.value();
+  const std::string groupName = config.daemonGroupName.value();
+
   try {
-    if(logToFile) {
-      logPtr.reset(new log::FileLogger(shortHostName, "cta-maintenance", logFilePath, log::DEBUG));
-    } else if(logToStdout) {
+    (*logPtr)(log::INFO, "Setting user name and group name of current process",
+                  {{"userName", userName}, {"groupName", groupName}});
+    cta::System::setUserAndGroup(userName, groupName);
+    // There is no longer any need for the process to be able to change user,
+    // however the process should still be permitted to make the raw IO
+    // capability effective in the future when needed.
+    cta::server::ProcessCap::setProcText("cap_sys_rawio+p");
+
+  } catch (exception::Exception& ex) {
+    std::list<log::Param> params = {
+      log::Param("exceptionMessage", ex.getMessage().str())};
+    (*logPtr)(log::ERR, "Caught an unexpected CTA, cta-taped cannot start", params);
+    return EXIT_FAILURE;
+  }
+
+  // Try to instantiate the logging system API
+  try {
+    if(cmdLineParams->logToFile) {
+      logPtr.reset(new log::FileLogger(shortHostName, "cta-maintenance", cmdLineParams->logFilePath, log::DEBUG));
+    } else if(cmdLineParams->logToStdout) {
       logPtr.reset(new log::StdoutLogger(shortHostName, "cta-maintenance"));
     }
-    if (! logFormat.empty()) {
-      logPtr->setLogFormat(logFormat);
+    if (!cmdLineParams->logFormat.empty()) {
+      logPtr->setLogFormat(cmdLineParams->logFormat);
     }
   } catch (exception::Exception& ex) {
-    std::cerr << "Failes to instantiate object representing CTA logging system: " << ex.getMessage().str() << std::endl;
+    std::cerr << "Failed to instantiate object representing CTA logging system: " << ex.getMessage().str() << std::endl;
     return EXIT_FAILURE;
   }
 
   log::Logger& log = *logPtr;
 
-  const common::Config config(configFileLocation);
-
   int programRc = EXIT_FAILURE;
-
   try {
     programRc = maintenance::exceptionThrowingMain(config, log);
   }  catch(exception::Exception &ex) {
