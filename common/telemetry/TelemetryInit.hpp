@@ -44,7 +44,7 @@ void initTelemetryConfig(const TelemetryConfig& config);
  * Requires initTelemetry or initTelemetryConfig to have been called prior to this.
  *
  */
-void reinitTelemetry(cta::log::LogContext& lc, bool persistServiceInstanceId = false);
+void reinitTelemetry(cta::log::LogContext& lc);
 
 /**
  * Sets telemetry to NOOP and flushes any remaining metrics still in the buffer.

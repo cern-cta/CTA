@@ -21,8 +21,8 @@
 
 namespace cta::telemetry::metrics {
 
-extern std::unique_ptr<opentelemetry::metrics::Counter<uint64_t>> tapedTransferCount;
-extern std::unique_ptr<opentelemetry::metrics::Counter<uint64_t>> tapedMountCount;
-extern std::unique_ptr<opentelemetry::metrics::UpDownCounter<int64_t>> tapedThreadCount;
+extern std::unique_ptr<opentelemetry::metrics::Counter<uint64_t>> ctaTapedTransfers;
+extern std::unique_ptr<opentelemetry::metrics::Counter<uint64_t>> ctaTapedMounts;
+extern std::unique_ptr<opentelemetry::metrics::UpDownCounter<int64_t>> ctaTapedThreadPoolSize;
 
 }  // namespace cta::telemetry::metrics

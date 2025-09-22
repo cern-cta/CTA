@@ -8,7 +8,7 @@
 
 namespace cta::telemetry::metrics {
 
-std::unique_ptr<opentelemetry::metrics::Histogram<uint64_t>> objectstoreLockAcquireDuration;
+std::unique_ptr<opentelemetry::metrics::Histogram<uint64_t>> ctaObjectstoreLockAcquireDuration;
 
 }  // namespace cta::telemetry::metrics
 
@@ -19,10 +19,10 @@ void initInstruments() {
 
   // Instrument initialisation
 
-  cta::telemetry::metrics::objectstoreLockAcquireDuration = meter->CreateUInt64Histogram(
-    "cta.objectstore.lock.acquire.duration",
-    "Duration taken to acquire a lock, measured from wait start to acquisition",
-    "ms");
+  cta::telemetry::metrics::ctaObjectstoreLockAcquireDuration =
+    meter->CreateUInt64Histogram("cta.objectstore.lock.acquire.duration",
+                                 "Duration taken to acquire a lock, measured from wait start to acquisition",
+                                 "ms");
 }
 
 // Register and run this init function at start time

@@ -123,10 +123,7 @@ void initTelemetryConfig(const TelemetryConfig& config) {
   cta::telemetry::TelemetryConfigSingleton::initialize(config);
 }
 
-void reinitTelemetry(cta::log::LogContext& lc, bool persistServiceInstanceId) {
-  if (!persistServiceInstanceId) {
-    previousServiceInstanceId = "";
-  }
+void reinitTelemetry(cta::log::LogContext& lc) {
   initTelemetry(cta::telemetry::TelemetryConfigSingleton::get(), lc);
 }
 

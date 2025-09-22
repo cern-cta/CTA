@@ -52,11 +52,11 @@ castor::tape::tapeserver::daemon::TapeReadSingleThread::TapeReadSingleThread(
   m_useRAO(useRAO),
   m_retrieveMount(retrieveMount),
   m_catalogue(catalogue) {
-  cta::telemetry::metrics::tapedThreadCount->Add(1, {{cta::semconv::kTransferDirection, cta::semconv::TransferDirectionValues::kRetrieve}, {cta::semconv::kThreadPoolName, cta::semconv::ThreadPoolNameValues::kTape}});
+  cta::telemetry::metrics::ctaTapedThreadPoolSize->Add(1, {{cta::semconv::kTransferDirection, cta::semconv::TransferDirectionValues::kRetrieve}, {cta::semconv::kThreadPoolName, cta::semconv::ThreadPoolNameValues::kTape}});
 }
 
 castor::tape::tapeserver::daemon::TapeReadSingleThread::~TapeReadSingleThread() {
-  cta::telemetry::metrics::tapedThreadCount->Add(-1, {{cta::semconv::kTransferDirection, cta::semconv::TransferDirectionValues::kRetrieve}, {cta::semconv::kThreadPoolName, cta::semconv::ThreadPoolNameValues::kTape}});
+  cta::telemetry::metrics::ctaTapedThreadPoolSize->Add(-1, {{cta::semconv::kTransferDirection, cta::semconv::TransferDirectionValues::kRetrieve}, {cta::semconv::kThreadPoolName, cta::semconv::ThreadPoolNameValues::kTape}});
 }
 
 //------------------------------------------------------------------------------

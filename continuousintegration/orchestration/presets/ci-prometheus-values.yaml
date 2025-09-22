@@ -40,11 +40,11 @@ server:
       basic_auth:
         username_file: /etc/prometheus/secrets/remote-write/username
         password_file: /etc/prometheus/secrets/remote-write/password
-      # Remote write only the time series starting with the given prefix.
+      # Remote write only the time series with the ci usecase.
       # Important so that we don't explode the cardinality of the central DB
       write_relabel_configs:
-        - source_labels: ["__name__"]
-          regex: "ci.*"
+        - source_labels: ["usecase"]
+          regex: "ci"
           action: keep
 
 # Note that these max_over_time functions are designed such that we can get a total count on any counters.
@@ -58,66 +58,109 @@ serverFiles:
       interval: 15s
       rules:
       # Database
-      - record: ci_db_client_connection_count
+      - record: db_client_connection_count
+        labels:
+          usecase: "ci"
         expr: |
-          sum by (service_namespace, service_name, service_version, process_title, host_name, scheduler_backend_name, db_namespace, db_system_name) (max_over_time(db_client_connection_count[1d]))
-      - record: ci_db_client_operation_duration_milliseconds_bucket
+          sum by (service_namespace, service_name, service_version, process_title, host_name, cta_scheduler_backend_name, db_namespace, db_system_name) (max_over_time(db_client_connection_count[1d]))
+      - record: db_client_operation_duration_milliseconds_bucket
+        labels:
+          usecase: "ci"
         expr: |
-          sum by (service_namespace, service_name, service_version, process_title, host_name, scheduler_backend_name, db_namespace, db_system_name, le) (max_over_time(db_client_operation_duration_milliseconds_bucket{le=~"5.0|10.0|50.0|100.0|500.0|1000.0|5000.0|10000.0|100000.0|\\+Inf"}[1d]))
-      - record: ci_db_client_operation_duration_milliseconds_count
+          sum by (service_namespace, service_name, service_version, process_title, host_name, cta_scheduler_backend_name, db_namespace, db_system_name, le) (max_over_time(db_client_operation_duration_milliseconds_bucket{le=~"5.0|10.0|50.0|100.0|500.0|1000.0|5000.0|10000.0|100000.0|\\+Inf"}[1d]))
+      - record: db_client_operation_duration_milliseconds_count
+        labels:
+          usecase: "ci"
         expr: |
-          sum by (service_namespace, service_name, service_version, process_title, host_name, scheduler_backend_name, db_namespace, db_system_name) (max_over_time(db_client_operation_duration_milliseconds_count[1d]))
+          sum by (service_namespace, service_name, service_version, process_title, host_name, cta_scheduler_backend_name, db_namespace, db_system_name) (max_over_time(db_client_operation_duration_milliseconds_count[1d]))
       # Frontend
-      - record: ci_cta_frontend_request_duration_milliseconds_bucket
+      - record: cta_frontend_request_duration_milliseconds_bucket
+        labels:
+          usecase: "ci"
         expr: |
-          sum by (service_namespace, service_name, service_version, process_title, host_name, scheduler_backend_name, event_name, le) (max_over_time(cta_frontend_request_duration_milliseconds_bucket{le=~"5.0|10.0|50.0|100.0|500.0|1000.0|5000.0|10000.0|100000.0|\\+Inf"}[1d]))
-      - record: ci_cta_frontend_request_duration_milliseconds_count
+          sum by (service_namespace, service_name, service_version, process_title, host_name, cta_scheduler_backend_name, cta_event_name, le) (max_over_time(cta_frontend_request_duration_milliseconds_bucket{le=~"5.0|10.0|50.0|100.0|500.0|1000.0|5000.0|10000.0|100000.0|\\+Inf"}[1d]))
+      - record: cta_frontend_request_duration_milliseconds_count
+        labels:
+          usecase: "ci"
         expr: |
-          sum by (service_namespace, service_name, service_version, process_title, host_name, scheduler_backend_name, event_name) (max_over_time(cta_frontend_request_duration_milliseconds_count[1d]))
+          sum by (service_namespace, service_name, service_version, process_title, host_name, cta_scheduler_backend_name, cta_event_name) (max_over_time(cta_frontend_request_duration_milliseconds_count[1d]))
       # Scheduler
-      - record: ci_cta_scheduler_queueing_count_total
+      - record: cta_scheduling_operation_duration_milliseconds_bucket
+        labels:
+          usecase: "ci"
         expr: |
-          sum by (service_namespace, service_name, service_version, process_title, host_name, scheduler_backend_name, transfer_direction) (max_over_time(cta_scheduler_queueing_count_total[1d]))
-      - record: ci_cta_objectstore_lock_acquire_duration_milliseconds_bucket
+          sum by (service_namespace, service_name, service_version, process_title, host_name, cta_scheduler_backend_name, cta_scheduling_operation_name, le) (max_over_time(cta_scheduling_operation_duration_milliseconds_bucket{le=~"5.0|10.0|50.0|100.0|500.0|1000.0|5000.0|10000.0|100000.0|\\+Inf"}[1d]))
+      - record: cta_scheduling_operation_duration_milliseconds_count
+        labels:
+          usecase: "ci"
         expr: |
-          sum by (service_namespace, service_name, service_version, process_title, host_name, scheduler_backend_name, lock_type, le) (max_over_time(cta_objectstore_lock_acquire_duration_milliseconds_bucket{le=~"5.0|10.0|50.0|100.0|500.0|1000.0|5000.0|10000.0|100000.0|\\+Inf"}[1d]))
-      - record: ci_cta_objectstore_lock_acquire_duration_milliseconds_count
+          sum by (service_namespace, service_name, service_version, process_title, host_name, cta_scheduler_backend_name, cta_scheduling_operation_name) (max_over_time(cta_scheduling_operation_duration_milliseconds_count[1d]))
+      - record: cta_objectstore_lock_acquire_duration_milliseconds_bucket
+        labels:
+          usecase: "ci"
         expr: |
-          sum by (service_namespace, service_name, service_version, process_title, host_name, scheduler_backend_name, lock_type) (max_over_time(cta_objectstore_lock_acquire_duration_milliseconds_count[1d]))
+          sum by (service_namespace, service_name, service_version, process_title, host_name, cta_scheduler_backend_name, cta_lock_type, le) (max_over_time(cta_objectstore_lock_acquire_duration_milliseconds_bucket{le=~"5.0|10.0|50.0|100.0|500.0|1000.0|5000.0|10000.0|100000.0|\\+Inf"}[1d]))
+      - record: cta_objectstore_lock_acquire_duration_milliseconds_count
+        labels:
+          usecase: "ci"
+        expr: |
+          sum by (service_namespace, service_name, service_version, process_title, host_name, cta_scheduler_backend_name, cta_lock_type) (max_over_time(cta_objectstore_lock_acquire_duration_milliseconds_count[1d]))
       # Taped
-      - record: ci_cta_taped_mount_count_total
+      - record: cta_taped_mounts_total
+        labels:
+          usecase: "ci"
         expr: |
-          sum by (service_namespace, service_name, service_version, process_title, host_name, scheduler_backend_name, transfer_direction) (max_over_time(cta_taped_mount_count_total[1d]))
-      - record: ci_cta_taped_transfer_count_total
+          sum by (service_namespace, service_name, service_version, process_title, host_name, cta_scheduler_backend_name, cta_transfer_direction) (max_over_time(cta_taped_mounts_total[1d]))
+      - record: cta_taped_transfers_total
+        labels:
+          usecase: "ci"
         expr: |
-          sum by (service_namespace, service_name, service_version, process_title, host_name, scheduler_backend_name, transfer_direction) (max_over_time(cta_taped_transfer_count_total[1d]))
-      - record: ci_cta_taped_thread_count
+          sum by (service_namespace, service_name, service_version, process_title, host_name, cta_scheduler_backend_name, cta_transfer_direction) (max_over_time(cta_taped_transfers_total[1d]))
+      - record: cta_taped_thread_pool_size
+        labels:
+          usecase: "ci"
         expr: |
-          sum by (service_namespace, service_name, service_version, process_title, host_name, scheduler_backend_name, transfer_direction, thread_pool_name) (max_over_time(cta_taped_thread_count[1d]))
+          sum by (service_namespace, service_name, service_version, process_title, host_name, cta_scheduler_backend_name, cta_transfer_direction, cta_taped_thread_pool_name) (max_over_time(cta_taped_thread_pool_size[1d]))
       # Kube State Metrics
-      - record: ci_pod_cpu_system_seconds_total
+      - record: pod_cpu_system_seconds_total
+        labels:
+          usecase: "ci"
         expr: |
           sum by (instance, pod, namespace) (rate(container_cpu_system_seconds_total{container="",pod=~"cta.*|eos.*"}[1m]))
-      - record: ci_pod_memory_working_set_bytes
+      - record: pod_memory_working_set_bytes
+        labels:
+          usecase: "ci"
         expr: |
           sum by (instance, pod, namespace) (container_memory_working_set_bytes{container="", pod=~"cta.*|eos.*"})
-      - record: ci_pod_disk_read_throughput
+      - record: pod_disk_read_throughput
+        labels:
+          usecase: "ci"
         expr: |
           sum by (instance, namespace, pod) (rate(container_fs_reads_bytes_total{pod=~"cta.*|eos.*"}[1m]))
-      - record: ci_pod_disk_write_throughput
+      - record: pod_disk_write_throughput
+        labels:
+          usecase: "ci"
         expr: |
           sum by (instance, namespace, pod) (rate(container_fs_writes_bytes_total{pod=~"cta.*|eos.*"}[1m]))
       # Node exporter
-      - record: ci_node_cpu_usage_percentage
+      - record: node_cpu_usage_percentage
+        labels:
+          usecase: "ci"
         expr: |
           100 * (1 - avg by (instance,namespace,node) (rate(node_cpu_seconds_total{mode="idle"}[1m])))
-      - record: ci_node_memory_usage_percentage
+      - record: node_memory_usage_percentage
+        labels:
+          usecase: "ci"
         expr: |
           sum by (instance,namespace,node) ((1 - node_memory_MemAvailable_bytes / node_memory_MemTotal_bytes) * 100)
-      - record: ci_node_disk_read_throughput
+      - record: node_disk_read_throughput
+        labels:
+          usecase: "ci"
         expr: |
           sum by (instance,namespace,node) (rate(node_disk_read_bytes_total[1m]))
-      - record: ci_node_disk_write_throughput
+      - record: node_disk_write_throughput
+        labels:
+          usecase: "ci"
         expr: |
           sum by (instance,namespace,node) (rate(node_disk_written_bytes_total[1m]))
 
