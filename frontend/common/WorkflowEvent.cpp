@@ -120,7 +120,7 @@ xrd::Response WorkflowEvent::process() {
   // Record request duration
   cta::telemetry::metrics::ctaFrontendRequestDuration->Record(
     timer.msecs(),
-    {{cta::semconv::kEventName, Workflow_EventType_Name(m_event.wf().event())}},
+    {{cta::semconv::kCtaEventName, Workflow_EventType_Name(m_event.wf().event())}},
     opentelemetry::context::RuntimeContext::GetCurrent());
 
   return response;
