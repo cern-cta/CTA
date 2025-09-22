@@ -254,6 +254,10 @@ xrd::Response AdminCmd::process() {
     logAdminCmd(__FUNCTION__, "failure", ex.what(), t);
     throw ex;
   }
+  cta::telemetry::metrics::ctaFrontendRequestDuration->Record(
+    timer.msecs(),
+    {{cta::semconv::kEventName, "admin"}},
+    opentelemetry::context::RuntimeContext::GetCurrent());
   return response;
 }
 

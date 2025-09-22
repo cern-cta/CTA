@@ -7,7 +7,7 @@
 
 namespace cta::telemetry::metrics {
 
-std::unique_ptr<opentelemetry::metrics::Counter<uint64_t>> schedulerQueueingCount;
+std::unique_ptr<opentelemetry::metrics::Histogram<uint64_t>> ctaSchedulingOperationDuration;
 
 }  // namespace cta::telemetry::metrics
 
@@ -18,9 +18,9 @@ void initInstruments() {
 
   // Instrument initialisation
 
-  cta::telemetry::metrics::schedulerQueueingCount =
-    meter->CreateUInt64Counter("cta.scheduler.queueing.count", "Total number of transfer events in the scheduler", "1");
-
+  // Based on https://opentelemetry.io/docs/specs/semconv/messaging/messaging-metrics/#metric-messagingclientoperationduration
+  cta::telemetry::metrics::ctaSchedulingOperationDuration =
+    meter->CreateUInt64Histogram("cta.scheduling.operation.duration", "Duration of a CTA scheduling operation", "ms");
 }
 
 // Register and run this init function at start time

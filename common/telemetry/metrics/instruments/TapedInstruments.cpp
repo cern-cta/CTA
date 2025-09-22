@@ -7,9 +7,9 @@
 
 namespace cta::telemetry::metrics {
 
-std::unique_ptr<opentelemetry::metrics::Counter<uint64_t>> tapedTransferCount;
-std::unique_ptr<opentelemetry::metrics::Counter<uint64_t>> tapedMountCount;
-std::unique_ptr<opentelemetry::metrics::UpDownCounter<int64_t>> tapedThreadCount;
+std::unique_ptr<opentelemetry::metrics::Counter<uint64_t>> ctaTapedTransfers;
+std::unique_ptr<opentelemetry::metrics::Counter<uint64_t>> ctaTapedMounts;
+std::unique_ptr<opentelemetry::metrics::UpDownCounter<int64_t>> ctaTapedThreadPoolSize;
 
 }  // namespace cta::telemetry::metrics
 
@@ -19,14 +19,16 @@ void initInstruments() {
 
   // Instrument initialisation
 
-  cta::telemetry::metrics::tapedTransferCount =
-    meter->CreateUInt64Counter("cta.taped.transfer.count", "Total number of transfers to/from tape", "1");
+  // It seems that there is a common .io suffix used, but this is only used for data flow in bytes.
+  // Here we count files; not bytes.... Maybe we should be counting bytes? In that case: cta.taped.io
+  cta::telemetry::metrics::ctaTapedTransfers =
+    meter->CreateUInt64Counter("cta.taped.transfers", "Number of transfers to/from tape", "1");
 
-  cta::telemetry::metrics::tapedMountCount =
-    meter->CreateUInt64Counter("cta.taped.mount.count", "Total number of tape mounts", "1");
+  cta::telemetry::metrics::ctaTapedMounts =
+    meter->CreateUInt64Counter("cta.taped.mounts", "Number of tape mounts", "1");
 
-  cta::telemetry::metrics::tapedThreadCount =
-    meter->CreateInt64UpDownCounter("cta.taped.thread.count", "Total number of active threads", "1");
+  cta::telemetry::metrics::ctaTapedThreadPoolSize =
+    meter->CreateInt64UpDownCounter("cta.taped.thread_pool.size", "Number of active threads", "1");
 }
 
 // Register and run this init function at start time

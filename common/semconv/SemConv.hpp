@@ -31,8 +31,6 @@ static constexpr const char* kServiceInstanceId = "service.instance.id";
 static constexpr const char* kProcessTitle = "process.title";
 // See https://opentelemetry.io/docs/specs/semconv/registry/attributes/host/ why we go for host.name instead of hostname
 static constexpr const char* kHostName = "host.name";
-
-static constexpr const char* kEventName = "event.name";
 static constexpr const char* kErrorType = "error.type";
 static constexpr const char* kState = "state";
 
@@ -40,11 +38,13 @@ static constexpr const char* kDbSystemName = "db.system.name";
 static constexpr const char* kDbNamespace = "db.namespace";
 
 // Non-standard -- CTA-specific
-static constexpr const char* kSchedulerBackendName = "scheduler.backend.name";
-static constexpr const char* kLockType = "lock.type";
-static constexpr const char* kThreadPoolName = "thread_pool.name";
+static constexpr const char* kCtaEventName = "cta.event.name";
+static constexpr const char* kSchedulerBackendName = "cta.scheduler.backend.name";
+static constexpr const char* kCtaSchedulingOperationName = "cta.scheduling.operation.name";
+static constexpr const char* kLockType = "cta.lock.type";
+static constexpr const char* kThreadPoolName = "cta.taped.thread_pool.name";
 // similar to disk.io.direction
-static constexpr const char* kTransferDirection = "transfer.direction";
+static constexpr const char* kTransferDirection = "cta.transfer.direction";
 
 // -------------------- Attribute Values --------------------
 
@@ -81,6 +81,15 @@ namespace LockTypeValues {
 static constexpr const char* kScopedShared = "scoped_shared";
 static constexpr const char* kScopedExclusive = "scoped_exclusive";
 }  // namespace LockTypeValues
+
+namespace SchedulingOperationNameValues {
+static constexpr const char* kEnqueueArchive = "enqueue_archive";
+static constexpr const char* kEnqueueRetrieve = "enqueue_retrieve";
+static constexpr const char* kEnqueueRepack = "enqueue_repack";
+static constexpr const char* kCancelArchive = "cancel_archive";
+static constexpr const char* kCancelRetrieve = "cancel_retrieve";
+static constexpr const char* kCancelRepack = "cancel_repack";
+}  // namespace SchedulingOperationNameValues
 
 namespace DbSystemNameValues {
 static constexpr const char* kOracle = "oracle";

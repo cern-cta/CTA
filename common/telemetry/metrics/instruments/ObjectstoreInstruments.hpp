@@ -21,6 +21,6 @@
 
 namespace cta::telemetry::metrics {
 
-extern std::unique_ptr<opentelemetry::metrics::Histogram<uint64_t>> objectstoreLockAcquireDuration;
+extern std::unique_ptr<opentelemetry::metrics::Histogram<uint64_t>> ctaObjectstoreLockAcquireDuration;
 
 }  // namespace cta::telemetry::metrics

@@ -8,7 +8,7 @@
 
 namespace cta::telemetry::metrics {
 
-std::unique_ptr<opentelemetry::metrics::Histogram<uint64_t>> frontendRequestDuration;
+std::unique_ptr<opentelemetry::metrics::Histogram<uint64_t>> ctaFrontendRequestDuration;
 
 }  // namespace cta::telemetry::metrics
 
@@ -17,14 +17,12 @@ void initInstruments() {
   auto meter = cta::telemetry::metrics::getMeter("cta.frontend", CTA_VERSION);
   // Instrument initialisation
 
-  // This should probably be replaced/augmented by: https://opentelemetry.io/docs/specs/semconv/rpc/rpc-metrics/
-  // Also note, according to the specs this should technically be in seconds.
-  // However, opentelemetry-cpp currently does not provide a nice way to set explicit bucket boundaries.
-  // See: https://github.com/open-telemetry/opentelemetry-cpp/issues/2132
-  cta::telemetry::metrics::frontendRequestDuration =
-    meter->CreateUInt64Histogram("cta.frontend.request.duration",
-                                 "Duration to serve a frontend request",
-                                 "ms");
+  /**
+   * Loosely based on https://opentelemetry.io/docs/specs/semconv/rpc/rpc-metrics/
+   * We don't use the rpc metric because we only instrument the core method behind it; not the full RPC call.
+   */
+  cta::telemetry::metrics::ctaFrontendRequestDuration =
+    meter->CreateUInt64Histogram("cta.frontend.request.duration", "Duration the frontend takes to process a request.", "ms");
 }
 
 // Register and run this init function at start time

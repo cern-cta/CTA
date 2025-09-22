@@ -21,7 +21,7 @@
 
 namespace cta::telemetry::metrics {
 
-extern std::unique_ptr<opentelemetry::metrics::Histogram<uint64_t>> rdbmsOperationDuration;
+extern std::unique_ptr<opentelemetry::metrics::Histogram<uint64_t>> dbClientOperationDuration;
 extern std::unique_ptr<opentelemetry::metrics::UpDownCounter<int64_t>> rdbmsConnectionCount;
 
 }  // namespace cta::telemetry::metrics
