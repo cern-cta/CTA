@@ -44,10 +44,10 @@ NOW=$(date +%s)
 LATER=$(echo "${NOW}+86400" | bc)
 
 # Generate Tokens
-TOKEN_EOSUSER=$(eos root://"${EOS_MGM_HOST}" token --tree --path '/eos/ctaeos' --expires "${LATER}" --owner user1 --group eosusers --permission rwx)
+TOKEN_EOSUSER1=$(XrdSecPROTOCOL=sss XrdSecSSSKT=/etc/sss.keytab eos root://"${EOS_MGM_HOST}" token --tree --path '/eos/ctaeos' --expires "${LATER}" --owner user1 --group eosusers --permission rwx)
 
 echo "Printing eosuser token dump"
-eos root://"${EOS_MGM_HOST}" token --token "${TOKEN_EOSUSER}" | jq .
+eos root://"${EOS_MGM_HOST}" token --token "${TOKEN_EOSUSER1}" | jq .
 echo
 
 # Delete the file in case it exists
@@ -59,4 +59,4 @@ TMP_FILE=$(mktemp)
 echo "Dummy" > "${TMP_FILE}"
 
 echo "Making curl request"
-curl -X PUT -L --insecure -H "Accept: application/json" -H "ArchiveMetadata: ${METADATA}" -H "Authorization: Bearer ${TOKEN_EOSUSER}" "https://${EOS_MGM_HOST}:8443/${FILE_LOCATION}" --upload-file "${TMP_FILE}"
+curl -X PUT -L --insecure -H "Accept: application/json" -H "ArchiveMetadata: ${METADATA}" -H "Authorization: Bearer ${TOKEN_EOSUSER1}" "https://${EOS_MGM_HOST}:8443/${FILE_LOCATION}" --upload-file "${TMP_FILE}"
