@@ -31,16 +31,16 @@ valid_metadata="{${site_name}: {\"activity\": \"CTA-Test-HTTP-CI-TEST-activity-p
 echo "Metadata contents: ${valid_metadata}"
 
 # Bring online with valid activity
-BEARER_TOKEN=${TOKEN_EOSPOWER} gfal-bringonline --staging-metadata "${valid_metadata}" "davs://${EOS_MGM_HOST}:8443/${EOS_DIR}/test_valid_instance"
+BEARER_TOKEN=${TOKEN_EOSPOWER1} gfal-bringonline --staging-metadata "${valid_metadata}" "davs://${EOS_MGM_HOST}:8443/${EOS_DIR}/test_valid_instance"
 
 # Evict
-BEARER_TOKEN=${TOKEN_EOSPOWER} gfal-evict https://${EOS_MGM_HOST}:8443/${EOS_DIR}/test_valid_instance
+BEARER_TOKEN=${TOKEN_EOSPOWER1} gfal-evict https://${EOS_MGM_HOST}:8443/${EOS_DIR}/test_valid_instance
 
 # Bring online for different instance: No activity should be logged in xrdmgm.log or eosreport
 invalid_metadata="{\"NotTheSiteName\": {\"activity\": \"CTA-Test-HTTP-CI-TEST-activity-passing\"}}"
 echo "Wrong instance metadata: ${invalid_metadata}"
 
-BEARER_TOKEN=${TOKEN_EOSPOWER} gfal-bringonline --staging-metadata "${invalid_metadata}" "davs://${EOS_MGM_HOST}:8443/${EOS_DIR}/test_invalid_instance"
+BEARER_TOKEN=${TOKEN_EOSPOWER1} gfal-bringonline --staging-metadata "${invalid_metadata}" "davs://${EOS_MGM_HOST}:8443/${EOS_DIR}/test_invalid_instance"
 
 # Evict the retrieved file
-BEARER_TOKEN=${TOKEN_EOSPOWER} gfal-evict https://${EOS_MGM_HOST}:8443/${EOS_DIR}/test_invalid_instance
+BEARER_TOKEN=${TOKEN_EOSPOWER1} gfal-evict https://${EOS_MGM_HOST}:8443/${EOS_DIR}/test_invalid_instance
