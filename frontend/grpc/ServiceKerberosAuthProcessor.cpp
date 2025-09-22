@@ -19,6 +19,7 @@
 #include "ServiceKerberosAuthProcessor.hpp"
 
 #include "common/exception/Exception.hpp"
+#include <unordered_set>
 
 ::grpc::Status cta::frontend::grpc::server::ServiceKerberosAuthProcessor::Process(
   const ::grpc::AuthMetadataProcessor::InputMetadata& authMetadata, ::grpc::AuthContext* pAuthCtx,
@@ -57,6 +58,17 @@
   }
   // Skip authentication for gRPC health checks
   if (strAuthMetadataValue == "/grpc.health.v1.Health/Check") {
+    return ::grpc::Status::OK;
+  }
+  // Skip Kerberos auth for the physics workflow events, because these will be checked inside the rpc implementation for credentials
+  std::unordered_set<std::string> allowed{
+    "/cta.xrd.CtaRpc/Create",
+    "/cta.xrd.CtaRpc/Archive",
+    "/cta.xrd.CtaRpc/Retrieve",
+    "/cta.xrd.CtaRpc/Delete",
+    "/cta.xrd.CtaRpc/CancelRetrieve"
+  };
+  if (allowed.contains(strAuthMetadataValue)) {
     return ::grpc::Status::OK;
   }
   /*
