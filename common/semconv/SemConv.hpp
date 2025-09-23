@@ -40,7 +40,7 @@ static constexpr const char* kDbNamespace = "db.namespace";
 // Non-standard -- CTA-specific
 static constexpr const char* kCtaEventName = "cta.event.name";
 static constexpr const char* kSchedulerBackendName = "cta.scheduler.backend.name";
-static constexpr const char* kCtaSchedulingOperationName = "cta.scheduling.operation.name";
+static constexpr const char* kCtaSchedulingOperationName = "cta.scheduler.operation.name";
 static constexpr const char* kLockType = "cta.lock.type";
 static constexpr const char* kThreadPoolName = "cta.taped.thread_pool.name";
 // similar to disk.io.direction
