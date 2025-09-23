@@ -37,12 +37,24 @@ config:
           - prometheus
 
     telemetry:
-      logs:
-        level: "info"
+      metrics:
+        readers:
+          - pull:
+              exporter:
+                prometheus:
+                  host: ${env:MY_POD_IP}
+                  port: 8888
 
+    extensions:
+      - health_check
 ports:
   metrics:
     enabled: true
     containerPort: 8889
     servicePort: 8889
+    protocol: TCP
+  internals:
+    enabled: true
+    containerPort: 8888
+    servicePort: 8888
     protocol: TCP
