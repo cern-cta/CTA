@@ -20,7 +20,7 @@ void initInstruments() {
 
   // Based on https://opentelemetry.io/docs/specs/semconv/messaging/messaging-metrics/#metric-messagingclientoperationduration
   cta::telemetry::metrics::ctaSchedulingOperationDuration =
-    meter->CreateUInt64Histogram("cta.scheduling.operation.duration", "Duration of a CTA scheduling operation", "ms");
+    meter->CreateUInt64Histogram("cta.scheduler.operation.duration", "Duration of a CTA scheduling operation", "ms");
 }
 
 // Register and run this init function at start time
