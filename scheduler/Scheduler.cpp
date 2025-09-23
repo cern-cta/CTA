@@ -29,6 +29,8 @@
 #include <sstream>
 #include <regex>
 
+#include <opentelemetry/context/runtime_context.h>
+
 #include "catalogue/Catalogue.hpp"
 #include "catalogue/CatalogueItor.hpp"
 #include "catalogue/DriveConfig.hpp"
