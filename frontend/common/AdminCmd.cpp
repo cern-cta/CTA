@@ -20,6 +20,7 @@
 #include "catalogue/MediaType.hpp"
 #include "cmdline/CtaAdminCmdParser.hpp"
 #include "common/dataStructures/PhysicalLibrary.hpp"
+#include "common/telemetry/metrics/instruments/FrontendInstruments.hpp"
 #include "AdminCmd.hpp"
 #include "PbException.hpp"
 
@@ -254,14 +255,23 @@ xrd::Response AdminCmd::process() {
     logAdminCmd(__FUNCTION__, "failure", ex.what(), t);
     throw ex;
   }
-  cta::telemetry::metrics::ctaFrontendRequestDuration->Record(
-    timer.msecs(),
-    {{cta::semconv::kCtaEventName, "ADMIN"}},
-    opentelemetry::context::RuntimeContext::GetCurrent());
   return response;
 }
 
 void AdminCmd::logAdminCmd(const std::string& function, const std::string& status, const std::string& reason, utils::Timer& t) {
+  // We do the metric recording here to prevent repetition in the catch statements
+  if (status == "failure") {
+    cta::telemetry::metrics::ctaFrontendRequestDuration->Record(
+      t.msecs(),
+      {{cta::semconv::kCtaEventName, "ADMIN"}, {cta::semconv::kErrorType, cta::semconv::ErrorTypeValues::kException}},
+      opentelemetry::context::RuntimeContext::GetCurrent());
+  } else {
+    cta::telemetry::metrics::ctaFrontendRequestDuration->Record(
+      t.msecs(),
+      {{cta::semconv::kCtaEventName, "ADMIN"}},
+      opentelemetry::context::RuntimeContext::GetCurrent());
+  }
+
   log::ScopedParamContainer params(m_lc);
 
   std::string log_msg = "In RequestMessage::" + function + "(): Admin command succeeded.";
