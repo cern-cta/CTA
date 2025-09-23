@@ -83,7 +83,7 @@ void CtaAdminGrpcCmd::send(const CtaAdminParsedCmd& parsedCmd, cta::common::Conf
   std::string strGrpcHost = "cta-frontend-grpc";
   const std::string GRPC_SERVER = endpoint.value();
   // Service name
-  const std::string GSS_SPN = "grpc/" + strGrpcHost;
+  const std::string GSS_SPN = "cta/" + strGrpcHost;
   // Storage for the KRB token
   std::string strToken {""};
   // Encoded token to be send as part of metadata
