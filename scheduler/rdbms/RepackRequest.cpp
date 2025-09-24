@@ -57,9 +57,9 @@ namespace cta::schedulerdb {
 
       uint64_t nrows = postgres::RepackRequestTrackingRow::updateRepackRequestFailures(txn,
                                                                                        repackInfo.repackReqId,
-                                                                                       repackInfo.failedFilesToRetrieve,
-                                                                                       repackInfo.failedBytesToRetrieve,
-                                                                                       m_failedToCreateArchiveReq,
+                                                                                       failedToRetrieveFiles,
+                                                                                       failedToRetrieveBytes,
+                                                                                       failedArchiveReq,
                                                                                        mapRepackInfoStatusToJobStatus(
                                                                                                repackInfo.status));
       log::ScopedParamContainer(m_lc).add("nrows", nrows).log(log::INFO,
@@ -91,6 +91,7 @@ namespace cta::schedulerdb {
 
     // Add new subrequests if needed
     for (auto &r: repackSubrequests) {
+      lc.log(log::DEBUG, "In RepackRequest::addSubrequestsAndUpdateStats(): repackSubrequests ");
       if (srmap.find(r.fSeq) == srmap.end()) {
         m_subreqp.emplace_back();
         auto &newSub = m_subreqp.back();
@@ -128,6 +129,7 @@ namespace cta::schedulerdb {
             schedReq.appendFileSizeToDstURL(rsr.archiveFile.fileSize);
             log::ScopedParamContainer(m_lc)
                     .add("diskFileInfo.path", rsr.archiveFile.diskFileInfo.path)
+                    .add("archiveFile.fileSize", rsr.archiveFile.fileSize)
                     .log(log::DEBUG, "In RepackRequest::addSubrequestsAndUpdateStats(): diskFileInfo.path ?");
             schedReq.diskFileInfo = rsr.archiveFile.diskFileInfo;
             rr.setSchedulerRequest(schedReq);
@@ -382,6 +384,10 @@ namespace cta::schedulerdb {
           newStatus == common::dataStructures::RepackInfo::Status::Failed) {
 
         repackInfo.repackFinishedTime = time(nullptr);
+        log::ScopedParamContainer(m_lc)
+                .add("newStatus", to_string(mapRepackInfoStatusToJobStatus(newStatus))).log(
+                log::DEBUG,
+                "RepackRequest::setExpandStartedAndChangeStatus(): updateStatusAndFinishTime() before update");
 
         uint64_t nrows =
                 postgres::RepackRequestTrackingRow::updateStatusAndFinishTime(
@@ -391,7 +397,8 @@ namespace cta::schedulerdb {
                         mapRepackInfoStatusToJobStatus(newStatus),
                         repackInfo.repackFinishedTime);
 
-        log::ScopedParamContainer(m_lc).add("nrows", nrows).log(
+        log::ScopedParamContainer(m_lc).add("nrows", nrows)
+                .add("newStatus", to_string(mapRepackInfoStatusToJobStatus(newStatus))).log(
                 log::INFO,
                 "updateStatusAndFinishTime finished");
       } else {
@@ -408,7 +415,12 @@ namespace cta::schedulerdb {
       }
       txn.commit();
     } catch (cta::exception::Exception &e) {
-      m_lc.log(log::ERR, "Exception updating status: " + e.backtrace());
+      log::ScopedParamContainer(m_lc)
+                .add("newStatus", to_string(mapRepackInfoStatusToJobStatus(newStatus)))
+                .add("repackInfo.repackReqId", repackInfo.repackReqId)
+                .add("repackInfo.isExpandFinished", repackInfo.isExpandFinished)
+                .add("repackInfo.repackFinishedTime", repackInfo.repackFinishedTime)
+                .log(log::ERR, "Exception updating status: " + e.backtrace());
       txn.abort();
     }
   }
@@ -553,49 +565,47 @@ namespace cta::schedulerdb {
   }
 
   void RepackRequest::assignJobStatusToRepackInfoStatus(const RepackJobStatus &dbStatus) {
-    using RepackInfoStatus = common::dataStructures::RepackInfo::Status;
 
     switch (dbStatus) {
       case RepackJobStatus::RRS_Pending:
-        repackInfo.status = RepackInfoStatus::Pending;
+        repackInfo.status = common::dataStructures::RepackInfo::Status::Pending;
         break;
       case RepackJobStatus::RRS_ToExpand:
-        repackInfo.status = RepackInfoStatus::ToExpand;
+        repackInfo.status = common::dataStructures::RepackInfo::Status::ToExpand;
         break;
       case RepackJobStatus::RRS_Starting:
-        repackInfo.status = RepackInfoStatus::Starting;
+        repackInfo.status = common::dataStructures::RepackInfo::Status::Starting;
         break;
       case RepackJobStatus::RRS_Running:
-        repackInfo.status = RepackInfoStatus::Running;
+        repackInfo.status = common::dataStructures::RepackInfo::Status::Running;
         break;
       case RepackJobStatus::RRS_Complete:
-        repackInfo.status = RepackInfoStatus::Complete;
+        repackInfo.status = common::dataStructures::RepackInfo::Status::Complete;
         break;
       case RepackJobStatus::RRS_Failed:
-        repackInfo.status = RepackInfoStatus::Failed;
+        repackInfo.status = common::dataStructures::RepackInfo::Status::Failed;
         break;
       default:
-        repackInfo.status = RepackInfoStatus::Undefined;
+        repackInfo.status = common::dataStructures::RepackInfo::Status::Undefined;
         break;
     }
   }
 
   RepackJobStatus RepackRequest::mapRepackInfoStatusToJobStatus(
           const common::dataStructures::RepackInfo::Status &infoStatus) {
-    using RepackInfoStatus = common::dataStructures::RepackInfo::Status;
 
     switch (infoStatus) {
-      case RepackInfoStatus::Pending:
+      case common::dataStructures::RepackInfo::Status::Pending:
         return RepackJobStatus::RRS_Pending;
-      case RepackInfoStatus::ToExpand:
+      case common::dataStructures::RepackInfo::Status::ToExpand:
         return RepackJobStatus::RRS_ToExpand;
-      case RepackInfoStatus::Starting:
+      case common::dataStructures::RepackInfo::Status::Starting:
         return RepackJobStatus::RRS_Starting;
-      case RepackInfoStatus::Running:
+      case common::dataStructures::RepackInfo::Status::Running:
         return RepackJobStatus::RRS_Running;
-      case RepackInfoStatus::Complete:
+      case common::dataStructures::RepackInfo::Status::Complete:
         return RepackJobStatus::RRS_Complete;
-      case RepackInfoStatus::Failed:
+      case common::dataStructures::RepackInfo::Status::Failed:
         return RepackJobStatus::RRS_Failed;
       default:
         throw cta::exception::Exception(
@@ -652,14 +662,16 @@ namespace cta::schedulerdb {
     repackInfo.creationLog = row.createLog;
     repackInfo.repackFinishedTime = row.repackFinishedTime;
     repackInfo.maxFilesToSelect = row.maxFilesToSelect;
-    // TO-DO: THIS NEEDS TO BE MADE A LOOP ON comma separated string FOR NEW COLUMNS
+    // The destination info is not filled here, but rather separately
+    // when getRepackInfo is requested explicitly
+    // This could be improved by refactoring.
     // IN THE TRACKING TABLE FILLED AFTER SUCCESSFUL ARCHIVAL IS REPORTED !
     // Curently wrongly fills the origin VID !!!
-    repackInfo.destinationInfos.clear();
-    repackInfo.destinationInfos.emplace_back();
-    repackInfo.destinationInfos.back().vid   = row.vid;
-    repackInfo.destinationInfos.back().files = row.archivedFiles;
-    repackInfo.destinationInfos.back().bytes = row.archivedBytes;
+    //repackInfo.destinationInfos.clear();
+    //repackInfo.destinationInfos.emplace_back();
+    //repackInfo.destinationInfos.back().vid   = row.vid;
+    //repackInfo.destinationInfos.back().files = row.archivedFiles;
+    //repackInfo.destinationInfos.back().bytes = row.archivedBytes;
 
     m_subreqp.clear();
     /* [Protobuf to-be-replaced] keeping this logic in a comment to facilitate

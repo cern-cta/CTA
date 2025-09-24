@@ -95,7 +95,7 @@ void RetrieveRdbJob::initialize(const rdbms::Rset& rset, bool rowIsRepack) {
   // Re-initialize report type
   if (m_jobRow.status == RetrieveJobStatus::RJS_ToReportToUserForSuccess) {
     reportType = ReportType::CompletionReport;
-  } else if (m_jobRow.status == RetrieveJobStatus::RJS_ToReportToUserForFailure) {
+  } else if (m_jobRow.status == RetrieveJobStatus::RJS_ToReportToUserForFailure || m_jobRow.status == RetrieveJobStatus::RJS_ToReportToRepackForFailure) {
     reportType = ReportType::FailureReport;
   } else {
     reportType = ReportType::NoReportRequired;
@@ -163,7 +163,7 @@ void RetrieveRdbJob::handleExceedTotalRetries(cta::schedulerdb::Transaction& txn
   }
 
   try {
-    uint64_t nrows = m_jobRow.updateFailedJobStatus(txn, RetrieveJobStatus::RJS_ToReportToUserForFailure);
+    uint64_t nrows = m_jobRow.updateFailedJobStatus(txn, isRepack);
     txn.commit();
     if (nrows != 1) {
       lc.log(log::WARNING,

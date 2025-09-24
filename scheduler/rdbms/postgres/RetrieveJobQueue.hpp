@@ -215,6 +215,13 @@ public:
     alternateBlockId = rset.columnStringNoOpt("ALTERNATE_BLOCK_IDS");
     startTime = rset.columnUint64NoOpt("START_TIME");
     retrieveReportURL = rset.columnStringNoOpt("RETRIEVE_REPORT_URL");
+    // The following is necessary value translation as the current rdbms API
+    // does not allow to bind and save an empty string [""], only nullptr or value are allowed.
+    // In addition, NULL is throwing an error in columnString() recall, so we can not use NULL either.
+    // For this particular field we do need [""] as the start DiskReporterFactory::createDiskReporter() later depends on it.
+    if (retrieveReportURL == "NOT_PROVIDED"){
+      retrieveReportURL = "";
+    }
     retrieveErrorReportURL = rset.columnStringNoOpt("RETRIEVE_ERROR_REPORT_URL");
     requesterName = rset.columnStringNoOpt("REQUESTER_NAME");
     requesterGroup = rset.columnStringNoOpt("REQUESTER_GROUP");
@@ -448,6 +455,9 @@ public:
     if (!retrieveReportURL.empty()) {
       stmt.bindString(":RETRIEVE_REPORT_URL", retrieveReportURL);
     } else {
+      // Requires an empty string in order to still have a null reporter created by
+      // DiskReporterFactory::createDiskReporter() later ! Since empty string is not
+      // permitted in the current implementation of bindString and columnString, we pass a dummy value
       stmt.bindString(":RETRIEVE_REPORT_URL", "NOT_PROVIDED");
     }
     if (activity.has_value()) {
@@ -788,7 +798,7 @@ static void insertBunch(rdbms::Conn &conn,
   * @param newStatus            Retrieve Job Status to select on
   * @return                     Number of updated rows
   */
-  uint64_t updateFailedJobStatus(Transaction& txn, RetrieveJobStatus newStatus);
+  uint64_t updateFailedJobStatus(Transaction& txn, bool isRepack);
 
   /**
   * Move a failed job from RETRIEVE_ACTIVE_QUEUE
@@ -871,9 +881,19 @@ static void insertBunch(rdbms::Conn &conn,
   * Move the job rows to the ARCHIVE FAILED JOB TABLE (static alternate for multiple jobs)
   *
   * @param txn                  Transaction to use for this query
-  * @return nrows               The number of rows moved.
+  * @param jobIDs               The jobIDs to be moved
+  * @return nrows               The number of rows moved
   */
   static uint64_t moveJobBatchToFailedQueueTable(Transaction& txn, const std::vector<std::string>& jobIDs, bool isRepack);
+
+  /**
+  * Move the failed job rows to the ARCHIVE FAILED JOB TABLE for REPACK
+  *
+  * @param txn                  Transaction to use for this query
+  * @param limit                The number of rows moved.
+  * @return Rset                Rset with statistics about the failed retrieves
+  */
+  static rdbms::Rset moveFailedRepackJobBatchToFailedQueueTable(Transaction& txn, uint64_t limit);
 
   /**
   * Increment Retrieve Request ID and return the new value

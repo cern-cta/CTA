@@ -27,6 +27,7 @@ namespace cta::schedulerdb::postgres {
 
   struct RepackRequestProgress {
     uint64_t reqId = 0;
+    std::string vid  = "";
     uint64_t retrievedFiles = 0;
     uint64_t retrievedBytes = 0;
     uint64_t archivedFiles = 0;
@@ -329,55 +330,63 @@ namespace cta::schedulerdb::postgres {
      */
     static rdbms::Rset selectRepackRows(rdbms::Conn &conn, const std::string &vid) {
       std::string sql = R"SQL(
-      SELECT
-        REPACK_REQUEST_ID,
-        VID,
-        BUFFER_URL,
-        STATUS,
-        IS_ADD_COPIES,
-        IS_MOVE,
-        MAX_FILES_TO_EXPAND,
-        TOTAL_FILES_ON_TAPE_AT_START,
-        TOTAL_BYTES_ON_TAPE_AT_START,
-        ALL_FILES_SELECTED_AT_START,
-        TOTAL_FILES_TO_RETRIEVE,
-        TOTAL_BYTES_TO_RETRIEVE,
-        TOTAL_FILES_TO_ARCHIVE,
-        TOTAL_BYTES_TO_ARCHIVE,
-        USER_PROVIDED_FILES,
-        USER_PROVIDED_BYTES,
-        RETRIEVED_FILES,
-        RETRIEVED_BYTES,
-        ARCHIVED_FILES,
-        ARCHIVED_BYTES,
-        REARCHIVE_COPYNBS,
-        REARCHIVE_BYTES,
-        FAILED_TO_RETRIEVE_FILES,
-        FAILED_TO_RETRIEVE_BYTES,
-        FAILED_TO_CREATE_ARCHIVE_REQ,
-        FAILED_TO_ARCHIVE_FILES,
-        FAILED_TO_ARCHIVE_BYTES,
-        LAST_EXPANDED_FSEQ,
-        RETRIEVE_SUBREQUESTS_EXPANDED,
-        IS_EXPAND_FINISHED,
-        IS_EXPAND_STARTED,
-        MOUNT_POLICY,
-        IS_COMPLETE,
-        IS_NO_RECALL,
-        SUBREQ_PB,
-        DESTINFO_PB,
-        CREATE_USERNAME,
-        CREATE_HOST,
-        CREATE_TIME,
-        REPACK_FINISHED_TIME,
-        LAST_UPDATE_TIME
+            SELECT
+        trk.REPACK_REQUEST_ID,
+        trk.VID,
+        trk.BUFFER_URL,
+        trk.STATUS,
+        trk.IS_ADD_COPIES,
+        trk.IS_MOVE,
+        trk.MAX_FILES_TO_EXPAND,
+        trk.TOTAL_FILES_ON_TAPE_AT_START,
+        trk.TOTAL_BYTES_ON_TAPE_AT_START,
+        trk.ALL_FILES_SELECTED_AT_START,
+        trk.TOTAL_FILES_TO_RETRIEVE,
+        trk.TOTAL_BYTES_TO_RETRIEVE,
+        trk.TOTAL_FILES_TO_ARCHIVE,
+        trk.TOTAL_BYTES_TO_ARCHIVE,
+        trk.USER_PROVIDED_FILES,
+        trk.USER_PROVIDED_BYTES,
+        trk.RETRIEVED_FILES,
+        trk.RETRIEVED_BYTES,
+        trk.ARCHIVED_FILES,
+        trk.ARCHIVED_BYTES,
+        trk.REARCHIVE_COPYNBS,
+        trk.REARCHIVE_BYTES,
+        trk.FAILED_TO_RETRIEVE_FILES,
+        trk.FAILED_TO_RETRIEVE_BYTES,
+        trk.FAILED_TO_CREATE_ARCHIVE_REQ,
+        trk.FAILED_TO_ARCHIVE_FILES,
+        trk.FAILED_TO_ARCHIVE_BYTES,
+        trk.LAST_EXPANDED_FSEQ,
+        trk.RETRIEVE_SUBREQUESTS_EXPANDED,
+        trk.IS_EXPAND_FINISHED,
+        trk.IS_EXPAND_STARTED,
+        trk.MOUNT_POLICY,
+        trk.IS_COMPLETE,
+        trk.IS_NO_RECALL,
+        trk.SUBREQ_PB,
+        trk.DESTINFO_PB,
+        trk.CREATE_USERNAME,
+        trk.CREATE_HOST,
+        trk.CREATE_TIME,
+        trk.REPACK_FINISHED_TIME,
+        trk.LAST_UPDATE_TIME,
+        dst.VID AS DESTINATION_VID,
+        dst.ARCHIVED_FILES AS DESTINATION_ARCHIVED_FILES,
+        dst.ARCHIVED_BYTES AS DESTINATION_ARCHIVED_BYTES
       FROM
-        REPACK_REQUEST_TRACKING
-    )SQL";
-      if (vid != "all") {
-        sql += " WHERE VID = :VID ";
+        REPACK_REQUEST_TRACKING trk
+      LEFT JOIN REPACK_REQUEST_DESTINATION_STATISTICS dst
+           ON dst.REPACK_REQUEST_ID = trk.REPACK_REQUEST_ID
+     )SQL";
+     if (vid != "all") {
+        sql += " WHERE trk.VID = :VID ";
       }
-      auto stmt = conn.createStmt(sql);
+      sql += R"SQL(
+      ORDER BY trk.REPACK_REQUEST_ID, dst.VID;
+    )SQL";
+       auto stmt = conn.createStmt(sql);
       if (vid != "all") {
         stmt.bindString(":VID", vid);
       }
@@ -503,6 +512,14 @@ namespace cta::schedulerdb::postgres {
             const uint64_t failedBytesToRetrieve,
             const uint64_t failedToCreateArchiveReq,
             const RepackJobStatus newStatus);
+
+
+    static uint64_t updateRepackRequestFailuresBatch(
+            Transaction &txn,
+            const std::vector <uint64_t> &reqIds,
+            const std::vector <uint64_t> &failedFiles,
+            const std::vector <uint64_t> &failedBytes,
+            bool isRetrieve);
 
   };
 

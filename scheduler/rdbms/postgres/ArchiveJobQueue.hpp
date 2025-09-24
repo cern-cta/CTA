@@ -621,7 +621,7 @@ public:
    * @param newStatus            Archive Job Status to select on
    * @return                     Number of updated rows
    */
-  uint64_t updateFailedJobStatus(Transaction& txn, ArchiveJobStatus newStatus);
+  uint64_t updateFailedJobStatus(Transaction& txn, bool isRepack);
 
   /**
    * Move a failed job from ARCHIVE_ACTIVE_QUEUE
@@ -680,7 +680,7 @@ public:
    * @return nrows               The number of rows moved.
    */
   static uint64_t moveJobBatchToFailedQueueTable(Transaction& txn, const std::vector<std::string>& jobIDs);
-
+  static rdbms::Rset moveFailedRepackJobBatchToFailedQueueTable(Transaction& txn, uint64_t limit);
   /**
    * Increment Archive Request ID and return the new value
    *

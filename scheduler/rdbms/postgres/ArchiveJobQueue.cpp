@@ -275,14 +275,13 @@ ArchiveJobQueueRow::updateJobStatus(Transaction& txn, ArchiveJobStatus newStatus
   return stmt1.getNbAffectedRows();
 };
 
-
 rdbms::Rset ArchiveJobQueueRow::getNextSuccessfulArchiveRepackReportBatch(Transaction& txn,
                                                           const size_t limit) {
     std::string sql = R"SQL(
         SELECT SRC_URL, JOB_ID FROM REPACK_ARCHIVE_ACTIVE_QUEUE
             WHERE STATUS = :STATUS
                 ORDER BY JOB_ID
-                LIMIT :LIMIT
+                LIMIT :LIMIT FOR UPDATE SKIP LOCKED
   )SQL";
 
   auto stmt = txn.getConn().createStmt(sql);
@@ -314,14 +313,14 @@ rdbms::Rset ArchiveJobQueueRow::deleteSuccessfulRepackArchiveJobBatch(Transactio
     return rset;
   }
   sql += R"SQL(
-        RETURNING REPACK_REQUEST_ID, SIZE_IN_BYTES
+        RETURNING REPACK_REQUEST_ID, VID, SIZE_IN_BYTES
     )
     SELECT
-        REPACK_REQUEST_ID,
+        REPACK_REQUEST_ID, VID,
         COUNT(*) AS ARCHIVED_COUNT,
         COALESCE(SUM(SIZE_IN_BYTES), 0) AS ARCHIVED_BYTES
     FROM DELETED_ROWS
-    GROUP BY REPACK_REQUEST_ID;
+    GROUP BY REPACK_REQUEST_ID, VID;
   )SQL";
 
   auto stmt = txn.getConn().createStmt(sql);
@@ -329,9 +328,18 @@ rdbms::Rset ArchiveJobQueueRow::deleteSuccessfulRepackArchiveJobBatch(Transactio
   return rset;
 }
 
-uint64_t ArchiveJobQueueRow::updateFailedJobStatus(Transaction& txn, ArchiveJobStatus newStatus) {
+uint64_t ArchiveJobQueueRow::updateFailedJobStatus(Transaction& txn, bool isRepack) {
+  ArchiveJobStatus newStatus;
+  std::string repack_table_name_prefix = "";
+  if (isRepack) {
+    repack_table_name_prefix = "REPACK_";
+    newStatus = ArchiveJobStatus::AJS_ToReportToRepackForFailure;
+  } else {
+    newStatus = ArchiveJobStatus::AJS_ToReportToUserForFailure;
+  }
   std::string sql = R"SQL(
-      UPDATE ARCHIVE_ACTIVE_QUEUE SET
+      UPDATE )SQL";
+  sql += repack_table_name_prefix + R"SQL(ARCHIVE_ACTIVE_QUEUE SET
         STATUS = :STATUS,
         TOTAL_RETRIES = :TOTAL_RETRIES,
         RETRIES_WITHIN_MOUNT = :RETRIES_WITHIN_MOUNT,
@@ -668,6 +676,38 @@ uint64_t ArchiveJobQueueRow::moveJobBatchToFailedQueueTable(Transaction& txn, co
   stmt.executeNonQuery();
   return stmt.getNbAffectedRows();
   ;
+}
+
+rdbms::Rset ArchiveJobQueueRow::moveFailedRepackJobBatchToFailedQueueTable(Transaction& txn, uint64_t limit) {
+  std::string sql = R"SQL(
+    WITH MOVED_ROWS AS (
+        DELETE FROM REPACK_ARCHIVE_ACTIVE_QUEUE
+        WHERE JOB_ID IN (
+            SELECT JOB_ID
+            FROM REPACK_ARCHIVE_ACTIVE_QUEUE
+            WHERE STATUS = 'AJS_ToReportToRepackForFailure'
+            ORDER BY JOB_ID
+            LIMIT :LIMIT
+            FOR UPDATE SKIP LOCKED
+        )
+        RETURNING *
+    ),
+    INSERTED_ROWS AS (
+        INSERT INTO REPACK_ARCHIVE_FAILED_QUEUE
+        SELECT * FROM MOVED_ROWS
+        RETURNING *
+    )
+    SELECT
+        REPACK_REQUEST_ID,
+        COUNT(*) AS FILE_COUNT,
+        SUM(SIZE_IN_BYTES) AS FILE_BYTES
+    FROM INSERTED_ROWS
+    GROUP BY REPACK_REQUEST_ID
+  )SQL";
+  auto stmt = txn.getConn().createStmt(sql);
+  stmt.bindUint64(":LIMIT", limit);
+  auto rset = stmt.executeQuery();
+  return rset;
 }
 
 uint64_t ArchiveJobQueueRow::updateJobStatusForFailedReport(Transaction& txn, ArchiveJobStatus newStatus) {

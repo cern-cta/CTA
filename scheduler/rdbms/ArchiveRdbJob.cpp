@@ -113,7 +113,7 @@ void ArchiveRdbJob::handleExceedTotalRetries(cta::schedulerdb::Transaction& txn,
   }
 
   try {
-    uint64_t nrows = m_jobRow.updateFailedJobStatus(txn, ArchiveJobStatus::AJS_ToReportToUserForFailure);
+    uint64_t nrows = m_jobRow.updateFailedJobStatus(txn, isRepack);
     txn.commit();
     if (nrows != 1) {
       lc.log(log::WARNING,

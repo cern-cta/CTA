@@ -28,7 +28,7 @@ namespace cta::schedulerdb::postgres {
     DELETE FROM REPACK_REQUEST_TRACKING
     WHERE
       VID = :VID
-      AND STATUS = ANY(ARRAY['RRS_Pending','RRS_ToExpand','RRS_Complete','RRS_Failed']::REPACK_REQ_STATUS[])
+      AND STATUS = ANY(ARRAY['RRS_Pending','RRS_ToExpand','RRS_Starting','RRS_Complete','RRS_Failed']::REPACK_REQ_STATUS[])
     )SQL";
     // we can move this to new bindArray method for stmt
     //std::vector <std::string> statusVec;
@@ -172,46 +172,72 @@ rdbms::Rset RepackRequestTrackingRow::updateRepackRequestsProgress(
 
     // Build SQL with placeholders for each row
     std::string sql =
-        "WITH UPDATE_TABLE (REPACK_REQUEST_ID, RETRIEVED_FILES, RETRIEVED_BYTES, ARCHIVED_FILES, ARCHIVED_BYTES, REARCHIVE_COPYNBS, REARCHIVE_BYTES) AS (VALUES ";
+        "WITH UPDATE_TABLE (REPACK_REQUEST_ID, DEST_VID, RETRIEVED_FILES, RETRIEVED_BYTES, ARCHIVED_FILES, ARCHIVED_BYTES, REARCHIVE_COPYNBS, REARCHIVE_BYTES) AS (VALUES ";
 
     for (size_t i = 0; i < updates.size(); ++i) {
         if (i > 0) sql += ",";
         sql += "("
-            ":REQID" + std::to_string(i) + "::BIGINT" + ","
-            ":RETR_FILES" + std::to_string(i) + "::BIGINT" + ","
-            ":RETR_BYTES" + std::to_string(i) + "::BIGINT" + ","
-            ":ARCH_FILES" + std::to_string(i) + "::BIGINT" + ","
-            ":ARCH_BYTES" + std::to_string(i) + "::BIGINT" + ","
-            ":REARCH_COPY" + std::to_string(i) + "::BIGINT" + ","
+            ":REQID" + std::to_string(i) + "::BIGINT,"
+            ":DEST_VID" + std::to_string(i) + "::TEXT,"
+            ":RETR_FILES" + std::to_string(i) + "::BIGINT,"
+            ":RETR_BYTES" + std::to_string(i) + "::BIGINT,"
+            ":ARCH_FILES" + std::to_string(i) + "::BIGINT,"
+            ":ARCH_BYTES" + std::to_string(i) + "::BIGINT,"
+            ":REARCH_COPY" + std::to_string(i) + "::BIGINT,"
             ":REARCH_BYTES" + std::to_string(i) + "::BIGINT" +
             ")";
     }
 
     sql += R"SQL()
+           , UPSERT_DEST AS (INSERT INTO REPACK_REQUEST_DESTINATION_STATISTICS (
+                   REPACK_REQUEST_ID, VID,
+                   ARCHIVED_FILES, ARCHIVED_BYTES
+               )
+               SELECT
+                   upd.REPACK_REQUEST_ID, upd.DEST_VID,
+                   upd.ARCHIVED_FILES, upd.ARCHIVED_BYTES
+               FROM UPDATE_TABLE upd
+               WHERE upd.DEST_VID IS NOT NULL AND upd.DEST_VID <> ''
+               ON CONFLICT (REPACK_REQUEST_ID, VID) DO UPDATE
+               SET
+                   ARCHIVED_FILES = REPACK_REQUEST_DESTINATION_STATISTICS.ARCHIVED_FILES + EXCLUDED.ARCHIVED_FILES,
+                   ARCHIVED_BYTES = REPACK_REQUEST_DESTINATION_STATISTICS.ARCHIVED_BYTES + EXCLUDED.ARCHIVED_BYTES
+           ),
+           AGG AS (
+             SELECT REPACK_REQUEST_ID,
+                    SUM(ARCHIVED_FILES) AS ARCHIVED_FILES_INC,
+                    SUM(ARCHIVED_BYTES) AS ARCHIVED_BYTES_INC,
+                    SUM(RETRIEVED_FILES) AS RETRIEVED_FILES_INC,
+                    SUM(RETRIEVED_BYTES) AS RETRIEVED_BYTES_INC,
+                    SUM(REARCHIVE_COPYNBS) AS REARCHIVE_COPYNBS_INC,
+                    SUM(REARCHIVE_BYTES) AS REARCHIVE_BYTES_INC
+             FROM UPDATE_TABLE
+             GROUP BY REPACK_REQUEST_ID
+           )
            UPDATE REPACK_REQUEST_TRACKING trk
            SET
            STATUS = CASE
-             WHEN (trk.ARCHIVED_FILES + upd.ARCHIVED_FILES) = trk.TOTAL_FILES_TO_ARCHIVE
+             WHEN (trk.ARCHIVED_FILES + agg.ARCHIVED_FILES_INC) = trk.TOTAL_FILES_TO_ARCHIVE
                THEN :STATUS_COMPLETE::REPACK_REQ_STATUS
              ELSE :STATUS_RUNNING::REPACK_REQ_STATUS
            END,
            IS_COMPLETE = CASE
-             WHEN (trk.ARCHIVED_FILES + upd.ARCHIVED_FILES) = trk.TOTAL_FILES_TO_ARCHIVE
+             WHEN (trk.ARCHIVED_FILES + agg.ARCHIVED_FILES_INC) = trk.TOTAL_FILES_TO_ARCHIVE
                THEN TRUE
              ELSE FALSE
            END,
-           RETRIEVED_FILES = trk.RETRIEVED_FILES + upd.RETRIEVED_FILES,
-           RETRIEVED_BYTES = trk.RETRIEVED_BYTES + upd.RETRIEVED_BYTES,
-           ARCHIVED_FILES = trk.ARCHIVED_FILES + upd.ARCHIVED_FILES,
-           ARCHIVED_BYTES = trk.ARCHIVED_BYTES + upd.ARCHIVED_BYTES,
-           REARCHIVE_COPYNBS = trk.REARCHIVE_COPYNBS + upd.REARCHIVE_COPYNBS,
-           REARCHIVE_BYTES = trk.REARCHIVE_BYTES + upd.REARCHIVE_BYTES
-           FROM UPDATE_TABLE upd
-           WHERE trk.REPACK_REQUEST_ID = upd.REPACK_REQUEST_ID
+           RETRIEVED_FILES = trk.RETRIEVED_FILES + agg.RETRIEVED_FILES_INC,
+           RETRIEVED_BYTES = trk.RETRIEVED_BYTES + agg.RETRIEVED_BYTES_INC,
+           ARCHIVED_FILES = trk.ARCHIVED_FILES + agg.ARCHIVED_FILES_INC,
+           ARCHIVED_BYTES = trk.ARCHIVED_BYTES + agg.ARCHIVED_BYTES_INC,
+           REARCHIVE_COPYNBS = trk.REARCHIVE_COPYNBS + agg.REARCHIVE_COPYNBS_INC,
+           REARCHIVE_BYTES = trk.REARCHIVE_BYTES + agg.REARCHIVE_BYTES_INC
+           FROM AGG agg
+           WHERE trk.REPACK_REQUEST_ID = agg.REPACK_REQUEST_ID
            RETURNING trk.VID,
            CASE
              WHEN IS_COMPLETE = CASE
-                    WHEN (trk.ARCHIVED_FILES + upd.ARCHIVED_FILES) = trk.TOTAL_FILES_TO_ARCHIVE
+                    WHEN (trk.ARCHIVED_FILES + agg.RETRIEVED_FILES_INC) = trk.TOTAL_FILES_TO_ARCHIVE
                       THEN TRUE
                     ELSE FALSE
                   END
@@ -228,6 +254,11 @@ rdbms::Rset RepackRequestTrackingRow::updateRepackRequestsProgress(
         std::string idx = std::to_string(i);
 
         stmt.bindUint64(":REQID" + idx, u.reqId);
+        if (u.vid == ""){
+          stmt.bindString(":DEST_VID" + idx, std::nullopt);
+        } else {
+          stmt.bindString(":DEST_VID" + idx, u.vid);
+        }
         stmt.bindUint64(":RETR_FILES" + idx, u.retrievedFiles);
         stmt.bindUint64(":RETR_BYTES" + idx, u.retrievedBytes);
         stmt.bindUint64(":ARCH_FILES" + idx, u.archivedFiles);
@@ -251,9 +282,9 @@ rdbms::Rset RepackRequestTrackingRow::updateRepackRequestsProgress(
           RepackJobStatus newStatus) {
     std::string sql = R"SQL(
         UPDATE REPACK_REQUEST_TRACKING
-        SET FAILED_TO_RETRIEVE_FILES            = :FAILED_FILES,
-            FAILED_TO_RETRIEVE_BYTES            = :FAILED_BYTES,
-            FAILED_TO_CREATE_ARCHIVE_REQ        = :FAILED_ARCH_REQS,
+        SET FAILED_TO_RETRIEVE_FILES     = COALESCE(FAILED_TO_RETRIEVE_FILES, 0) + :FAILED_FILES,
+            FAILED_TO_RETRIEVE_BYTES     = COALESCE(FAILED_TO_RETRIEVE_BYTES, 0) + :FAILED_BYTES,
+            FAILED_TO_CREATE_ARCHIVE_REQ = COALESCE(FAILED_TO_CREATE_ARCHIVE_REQ, 0) + :FAILED_ARCH_REQS,
             STATUS                     = :STATUS::REPACK_REQ_STATUS
         WHERE REPACK_REQUEST_ID = :REQID
     )SQL";
@@ -269,6 +300,73 @@ rdbms::Rset RepackRequestTrackingRow::updateRepackRequestsProgress(
     return stmt.getNbAffectedRows();
   }
 
+
+  uint64_t RepackRequestTrackingRow::updateRepackRequestFailuresBatch(
+          Transaction &txn,
+          const std::vector <uint64_t> &reqIds,
+          const std::vector <uint64_t> &failedFiles,
+          const std::vector <uint64_t> &failedBytes,
+          bool isRetrieve) {
+
+    if (reqIds.empty()) {
+      return 0;
+    }
+    if (reqIds.size() != failedFiles.size() || reqIds.size() != failedBytes.size()) {
+      throw cta::exception::Exception(
+              "In RepackRequestTrackingRow::updateRepackRequestFailuresBatch(): Input vector size mismatch.");
+    }
+    std::string sql =
+            "WITH FAILURE_TABLE (REPACK_REQUEST_ID, FAILED_FILES, FAILED_BYTES) AS (VALUES ";
+
+    for (size_t i = 0; i < reqIds.size(); ++i) {
+      if (i > 0) sql += ",";
+      sql += "("
+             ":REQID" + std::to_string(i) + "::BIGINT,"
+             ":FAILED_FILES" + std::to_string(i) + "::BIGINT,"
+             ":FAILED_BYTES" + std::to_string(i) + "::BIGINT"
+             ")";
+    }
+    sql += R"SQL()
+            )
+            UPDATE REPACK_REQUEST_TRACKING trk
+            SET
+           )SQL";
+    if (isRetrieve) {
+      sql += R"SQL(
+              FAILED_TO_RETRIEVE_FILES     = trk.FAILED_TO_RETRIEVE_FILES + ft.FAILED_FILES,
+              FAILED_TO_RETRIEVE_BYTES     = trk.FAILED_TO_RETRIEVE_BYTES + ft.FAILED_BYTES,
+          )SQL";
+    } else {
+      sql += R"SQL(
+              FAILED_TO_ARCHIVE_FILES     = trk.FAILED_TO_ARCHIVE_FILES + ft.FAILED_FILES,
+              FAILED_TO_ARCHIVE_BYTES     = trk.FAILED_TO_ARCHIVE_BYTES + ft.FAILED_BYTES,
+          )SQL";
+    }
+    sql += R"SQL(
+            STATUS = 'RRS_Failed'
+            FROM FAILURE_TABLE ft
+            WHERE trk.REPACK_REQUEST_ID = ft.REPACK_REQUEST_ID
+          )SQL";
+
+
+    auto stmt = txn.getConn().createStmt(sql);
+
+    // Bind each row's values
+    for (size_t i = 0; i < reqIds.size(); ++i) {
+      const auto &rId = reqIds[i];
+      const auto &ffl = failedFiles[i];
+      const auto &fb = failedBytes[i];
+      const std::string idx = std::to_string(i);
+
+      stmt.bindUint64(":REQID" + idx, rId);
+      stmt.bindUint64(":FAILED_FILES" + idx, ffl);
+      stmt.bindUint64(":FAILED_BYTES" + idx, fb);
+    }
+
+    stmt.executeQuery();
+
+    return stmt.getNbAffectedRows();
+  }
 
   rdbms::Rset RepackRequestTrackingRow::markStartOfExpansion(Transaction &txn) {
     const char *const sql = R"SQL(
@@ -302,8 +400,8 @@ rdbms::Rset RepackRequestTrackingRow::updateRepackRequestsProgress(
 {
   std::string sql = R"SQL(
     UPDATE REPACK_REQUEST_TRACKING
-    SET STATUS = :STATUS::REPACK_REQ_STATUS,
-        FINISH_TIME = :FINISH_TIME
+    SET STATUS = :STATUS,
+        REPACK_FINISHED_TIME = :REPACK_FINISHED_TIME
   )SQL";
     if (isExpandFinished){
    sql += ", IS_EXPAND_FINISHED = '1' ";
@@ -312,7 +410,7 @@ rdbms::Rset RepackRequestTrackingRow::updateRepackRequestsProgress(
 
   auto stmt = txn.getConn().createStmt(sql);
   stmt.bindString(":STATUS", to_string(newStatus));
-  stmt.bindUint64(":FINISH_TIME", finishTime);
+  stmt.bindUint64(":REPACK_FINISHED_TIME", finishTime);
   stmt.bindUint64(":REQID", reqId);
 
   stmt.executeNonQuery();

@@ -2438,62 +2438,49 @@ void Scheduler::triggerTapeStateChange(const common::dataStructures::SecurityIde
                                        const std::optional<std::string>& stateReason,
                                        log::LogContext& logContext) {
   using Tape = common::dataStructures::Tape;
-  logContext.log(log::INFO,"MODIFTAPE_0");
   // Tape must exist on catalogue
   if (!m_catalogue.Tape()->tapeExists(vid)) {
     throw cta::exception::UserError("The VID " + vid + " does not exist");
   }
-  logContext.log(log::INFO,"MODIFTAPE_00");
   // Validate tape state change based on previous state
   auto tape_meta_data = m_catalogue.Tape()->getTapesByVid(vid)[vid];
-  logContext.log(log::INFO,"MODIFTAPE_000");
   auto prev_state = tape_meta_data.state;
   auto prev_reason = tape_meta_data.stateReason;
-  logContext.log(log::INFO,"MODIFTAPE_0000");
   // User is not allowed to select explicitly a temporary state
   if (new_state == Tape::BROKEN_PENDING || new_state == Tape::EXPORTED_PENDING ||
       new_state == Tape::REPACKING_PENDING) {
     throw cta::exception::UserError("Internal states cannot be set directly by the user");
   }
-  logContext.log(log::INFO,"MODIFTAPE_0000-");
   // If previous and desired states are the same, do nothing but changing the reason if provided
   if (prev_state == new_state && stateReason && stateReason.value() != prev_reason) {
-    logContext.log(log::INFO,"MODIFTAPE_0000-1");
     m_catalogue.Tape()->modifyTapeState(admin, vid, new_state, prev_state, stateReason);
-    logContext.log(log::INFO,"MODIFTAPE_0000-11");
     return;
   }
-  logContext.log(log::INFO,"MODIFTAPE_0000-111");
   if (prev_state == new_state) {
     return;
   }
-  logContext.log(log::INFO,"MODIFTAPE_0000-1111");
   // If previous state is PENDING (not of the same type), user should wait for it to complete
   if ((prev_state == Tape::BROKEN_PENDING && new_state != Tape::BROKEN) ||
       (prev_state == Tape::EXPORTED_PENDING && new_state != Tape::EXPORTED) ||
       (prev_state == Tape::REPACKING_PENDING && new_state != Tape::REPACKING)) {
     throw cta::exception::UserError("Cannot modify tape " + vid + " state while it is in a temporary internal state");
   }
-  logContext.log(log::INFO,"MODIFTAPE_0000-1111-2");
   // Moving out of REPACKING/REPACKING_DISABLED is only allowed if there is no repacking ongoing
   if ((prev_state == Tape::REPACKING || prev_state == Tape::REPACKING_DISABLED) &&
       !(new_state == Tape::REPACKING || new_state == Tape::REPACKING_DISABLED) && isBeingRepacked(vid)) {
     throw cta::exception::UserError("Cannot modify tape " + vid + " state because there is a repack for that tape");
   }
-  logContext.log(log::INFO,"MODIFTAPE_0000-1111-22");
   // REPACKING_DISABLED can only be set while in REPACKING
   if (prev_state != Tape::REPACKING && new_state == Tape::REPACKING_DISABLED) {
     throw cta::exception::UserError("Cannot modify tape " + vid + " state from " + Tape::stateToString(prev_state) +
                                     " to " + Tape::stateToString(new_state));
   }
-  logContext.log(log::INFO,"MODIFTAPE_0000-1111-222");
   // REPACKING_DISABLED can only be modified to REPACKING, BROKEN or EXPORTED
   if (prev_state == Tape::REPACKING_DISABLED &&
       !(new_state == Tape::REPACKING || new_state == Tape::BROKEN || new_state == Tape::EXPORTED)) {
     throw cta::exception::UserError("Cannot modify tape " + vid + " state from " + Tape::stateToString(prev_state) +
                                     " to " + Tape::stateToString(new_state));
   }
-  logContext.log(log::INFO,"MODIFTAPE_1");
   // Validation of tape state change request is complete
   // Proceed with tape state change...
   switch (new_state) {
@@ -2515,14 +2502,8 @@ void Scheduler::triggerTapeStateChange(const common::dataStructures::SecurityIde
 #ifndef CTA_PGSCHED
       m_db.setRetrieveQueueCleanupFlag(vid, true, logContext);
 #else
-      logContext.log(log::INFO,"MODIFTAPE_2");
-
       m_db.cleanRetrieveQueueForVid(vid, logContext);
-      logContext.log(log::INFO,"MODIFTAPE_3");
-
       updateTapeStateFromPending(vid, logContext);
-      logContext.log(log::INFO,"MODIFTAPE_4");
-
 #endif
       break;
     case Tape::REPACKING:
@@ -2531,12 +2512,8 @@ void Scheduler::triggerTapeStateChange(const common::dataStructures::SecurityIde
         m_catalogue.Tape()->modifyTapeState(admin, vid, new_state, prev_state, stateReason);
       } else {
         try {
-          logContext.log(log::INFO,"MODIFTAPE_5");
-
           m_catalogue.Tape()->modifyTapeState(admin, vid, Tape::REPACKING_PENDING, prev_state, stateReason);
         } catch (catalogue::UserSpecifiedAnEmptyStringReasonWhenTapeStateNotActive& ex) {
-          logContext.log(log::INFO,"MODIFTAPE_6");
-
           throw catalogue::UserSpecifiedAnEmptyStringReasonWhenTapeStateNotActive(
             std::regex_replace(ex.getMessageValue(),
                                std::regex(Tape::stateToString(Tape::REPACKING_PENDING)),
@@ -2547,11 +2524,8 @@ void Scheduler::triggerTapeStateChange(const common::dataStructures::SecurityIde
         m_db.setRetrieveQueueCleanupFlag(vid, true, logContext);
 #else
         // PGSCHED TO-DO wee need to check the REPACKING RETRIEVE TABLE not the RETRIEVE TABLE HERE !!!
-        logContext.log(log::INFO,"MODIFTAPE_7");
         m_db.cleanRetrieveQueueForVid(vid, logContext);
-        logContext.log(log::INFO,"MODIFTAPE_8");
         updateTapeStateFromPending(vid, logContext);
-        logContext.log(log::INFO,"MODIFTAPE_9");
 #endif
       }
       break;
@@ -2567,19 +2541,14 @@ void Scheduler::triggerTapeStateChange(const common::dataStructures::SecurityIde
 #ifndef CTA_PGSCHED
       m_db.setRetrieveQueueCleanupFlag(vid, true, logContext);
 #else
-      logContext.log(log::INFO,"MODIFTAPE_10");
       m_db.cleanRetrieveQueueForVid(vid, logContext);
-      logContext.log(log::INFO,"MODIFTAPE_11");
       updateTapeStateFromPending(vid, logContext);
-      logContext.log(log::INFO,"MODIFTAPE_12");
 #endif
       break;
     default:
       throw cta::exception::UserError("Unknown procedure to change tape state to " + Tape::stateToString(new_state));
   }
-  logContext.log(log::INFO,"MODIFTAPE_13");
   m_db.clearStatisticsCache(vid);
-  logContext.log(log::INFO,"MODIFTAPE_14");
 }
 
 //------------------------------------------------------------------------------

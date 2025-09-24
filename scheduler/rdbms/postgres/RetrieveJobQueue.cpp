@@ -282,9 +282,18 @@ uint64_t RetrieveJobQueueRow::updateJobStatus(Transaction& txn,
   return stmt1.getNbAffectedRows();
 };
 
-uint64_t RetrieveJobQueueRow::updateFailedJobStatus(Transaction& txn, RetrieveJobStatus newStatus) {
+uint64_t RetrieveJobQueueRow::updateFailedJobStatus(Transaction& txn, bool isRepack) {
+  RetrieveJobStatus newStatus;
+  std::string repack_table_name_prefix = "";
+  if(isRepack){
+    repack_table_name_prefix = "REPACK_";
+    newStatus = RetrieveJobStatus::RJS_ToReportToRepackForFailure;
+  } else {
+   newStatus = RetrieveJobStatus::RJS_ToReportToUserForFailure;
+  }
   std::string sql = R"SQL(
-      UPDATE RETRIEVE_ACTIVE_QUEUE SET
+      UPDATE )SQL";
+  sql += repack_table_name_prefix + R"SQL(RETRIEVE_ACTIVE_QUEUE SET
         STATUS = :STATUS,
         TOTAL_RETRIES = :TOTAL_RETRIES,
         RETRIES_WITHIN_MOUNT = :RETRIES_WITHIN_MOUNT,
@@ -1046,6 +1055,39 @@ uint64_t RetrieveJobQueueRow::moveJobBatchToFailedQueueTable(Transaction& txn, c
   auto stmt = txn.getConn().createStmt(sql);
   stmt.executeNonQuery();
   return stmt.getNbAffectedRows();
+}
+
+
+rdbms::Rset RetrieveJobQueueRow::moveFailedRepackJobBatchToFailedQueueTable(Transaction& txn, uint64_t limit) {
+  std::string sql = R"SQL(
+    WITH MOVED_ROWS AS (
+        DELETE FROM REPACK_RETRIEVE_ACTIVE_QUEUE
+        WHERE JOB_ID IN (
+            SELECT JOB_ID
+            FROM REPACK_RETRIEVE_ACTIVE_QUEUE
+            WHERE STATUS = 'RJS_ToReportToRepackForFailure'
+            ORDER BY JOB_ID
+            LIMIT :LIMIT
+            FOR UPDATE SKIP LOCKED
+        )
+        RETURNING *
+    ),
+    INSERTED_ROWS AS (
+        INSERT INTO REPACK_RETRIEVE_FAILED_QUEUE
+        SELECT * FROM MOVED_ROWS
+        RETURNING *
+    )
+    SELECT
+        REPACK_REQUEST_ID,
+        COUNT(*) AS FILE_COUNT,
+        SUM(SIZE_IN_BYTES) AS FILE_BYTES
+    FROM INSERTED_ROWS
+    GROUP BY REPACK_REQUEST_ID
+  )SQL";
+  auto stmt = txn.getConn().createStmt(sql);
+  stmt.bindUint64(":LIMIT", limit);
+  auto rset = stmt.executeQuery();
+  return rset;
 }
 
 uint64_t RetrieveJobQueueRow::updateJobStatusForFailedReport(Transaction& txn, RetrieveJobStatus newStatus) {
