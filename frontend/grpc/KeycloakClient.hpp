@@ -1,6 +1,6 @@
 /*
  * @project      The CERN Tape Archive (CTA)
- * @copyright    Copyright © 2021-2022 CERN
+ * @copyright    Copyright © 2021-2023 CERN
  * @license      This program is free software, distributed under the terms of the GNU General Public
  *               Licence version 3 (GPL Version 3), copied verbatim in the file "COPYING". You can
  *               redistribute it and/or modify it under the terms of the GPL Version 3, or (at your
@@ -17,21 +17,29 @@
 
 #pragma once
 
-#include "cmdline/CtaAdminParsedCmd.hpp"
-#include "common/config/Config.hpp"
-#include "version.h"
-#include <grpcpp/grpcpp.h>
+#include <string>
+#include <curl/curl.h>
+#include "common/log/LogContext.hpp"
 
-#include "cta_frontend.pb.h"
-#include "cta_frontend.grpc.pb.h"
+namespace cta::frontend::grpc::client {
 
-namespace cta::admin {
-
-class CtaAdminGrpcCmd
-{
+class KeycloakClient {
 public:
-   //! Send the protocol buffer across the gRPC transport
-   void send(const CtaAdminParsedCmd& parsedCmd, std::string endpoint, cta::common::Config& config) const;
+    KeycloakClient(const std::string& keycloakUrl, const std::string& realm, cta::log::LogContext& lc);
+    ~KeycloakClient();
+
+    // Get JWT token using Kerberos SPNEGO authentication
+    std::string getJWTToken();
+
+private:
+    std::string m_keycloakUrl;
+    std::string m_realm;
+    std::string m_tokenEndpoint;
+    cta::log::LogContext& m_lc;
+    CURL* m_curl;
+
+    static size_t WriteCallback(void* contents, size_t size, size_t nmemb, std::string* response);
+    std::string extractAccessToken(const std::string& jsonResponse);
 };
 
-} // namespace cta::admin
+} // namespace cta::frontend::grpc::client

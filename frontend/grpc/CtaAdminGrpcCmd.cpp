@@ -24,12 +24,14 @@
 #include "tapeserver/daemon/common/TapedConfiguration.hpp"
 #include "common/config/Config.hpp"
 #include "callback_api/CtaAdminClientReadReactor.hpp"
+#include "KeycloakClient.hpp"
+#include "common/log/StdoutLogger.hpp"
 
 namespace cta::admin {
 
 
 // Implement the send() method here, by wrapping the Admin rpc call
-void CtaAdminGrpcCmd::send(const CtaAdminParsedCmd& parsedCmd, std::string endpoint) const {
+void CtaAdminGrpcCmd::send(const CtaAdminParsedCmd& parsedCmd, std::string endpoint, cta::common::Config& config) const {
   const auto &request = parsedCmd.getRequest();
   // Validate the Protocol Buffer
   try {
@@ -39,10 +41,36 @@ void CtaAdminGrpcCmd::send(const CtaAdminParsedCmd& parsedCmd, std::string endpo
     parsedCmd.throwUsage(ex.what());
   }
 
+  // Set up logging
+  cta::log::StdoutLogger log(endpoint, "cta-admin-grpc");
+  cta::log::LogContext lc(log);
+
+  // Get JWT token from Keycloak using Kerberos authentication
+  std::string jwtToken;
+  auto keycloakUrl = config.getOptionValueStr("keycloak.url");
+  auto keycloakRealm = config.getOptionValueStr("keycloak.realm").value_or("master");
+
+  if (!keycloakUrl.has_value()) {
+    throw std::runtime_error("Configuration error: keycloak.url missing from config file");
+  }
+
+  try {
+    cta::frontend::grpc::client::KeycloakClient keycloakClient(
+      keycloakUrl.value(), keycloakRealm, lc);
+    jwtToken = keycloakClient.getJWTToken();
+    lc.log(cta::log::DEBUG, "Successfully obtained JWT from Keycloak");
+  } catch(const std::exception& e) {
+    lc.log(cta::log::CRIT, "Failed to get JWT from Keycloak: " + std::string(e.what()));
+    throw;
+  }
+
   // now construct the Admin call
   // get a client stub in order to make it
   grpc::ClientContext context;
   grpc::Status status;
+
+  // Add JWT token to request headers
+  context.AddMetadata("authorization", "Bearer " + jwtToken);
 
   if (!isStreamCmd(request.admincmd())) {
     cta::xrd::Response response;
@@ -114,7 +142,7 @@ int main(int argc, const char** argv) {
     }
     CtaAdminGrpcCmd cmd;
     // Send the protocol buffer
-    cmd.send(parsedCmd, endpoint.value());
+    cmd.send(parsedCmd, endpoint.value(), config);
 
     // Delete all global objects allocated by libprotobuf
     google::protobuf::ShutdownProtobufLibrary();

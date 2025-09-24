@@ -62,6 +62,7 @@ include_directories(${CMAKE_BINARY_DIR}/eos_cta ${PROTOBUF3_INCLUDE_DIRS})
 
 add_executable(cta-admin-grpc
   CtaAdminGrpcCmd.cpp
+  KeycloakClient.cpp
   ${PROJECT_SOURCE_DIR}/frontend/common/AdminCmd.cpp
   ${PROJECT_SOURCE_DIR}/frontend/common/AdminCmdOptions.cpp
   ${PROJECT_SOURCE_DIR}/cmdline/CtaAdminParsedCmd.cpp
@@ -70,7 +71,7 @@ add_executable(cta-admin-grpc
 )
 
 target_link_libraries(cta-admin-grpc
-  ctacommon stdc++fs ctatapedaemoncommon ctascheduler ctaobjectstore ctacatalogue ctagrpc
+  ctacommon stdc++fs ctatapedaemoncommon ctascheduler ctaobjectstore ctacatalogue ctagrpc curl
 )
 # if(CTA_USE_PGSCHED)
 #   target_link_libraries(cta-admin-grpc ctaobjectstore)
