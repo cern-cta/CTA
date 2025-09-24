@@ -1,3 +1,9 @@
+global:
+  securityContext:
+    # These are set to True to allow attaching with gdb to the grpc frontend.
+    allowPrivilegeEscalation: True
+    privileged: True
+
 frontend:
   grpc:
     enabled: true
