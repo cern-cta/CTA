@@ -44,7 +44,7 @@ static constexpr const char* kCtaSchedulingOperationName = "cta.scheduler.operat
 static constexpr const char* kLockType = "cta.lock.type";
 static constexpr const char* kThreadPoolName = "cta.taped.thread_pool.name";
 // similar to disk.io.direction
-static constexpr const char* kTransferDirection = "cta.transfer.direction";
+static constexpr const char* kCtaTransferDirection = "cta.transfer.direction";
 
 // -------------------- Attribute Values --------------------
 
@@ -53,10 +53,10 @@ static constexpr const char* kCtaFrontend = "cta.frontend";
 static constexpr const char* kCtaTaped = "cta.taped";
 }  // namespace ServiceNameValues
 
-namespace TransferDirectionValues {
+namespace CtaTransferDirectionValues {
 static constexpr const char* kArchive = "archive";
 static constexpr const char* kRetrieve = "retrieve";
-}  // namespace TransferDirectionValues
+}  // namespace CtaTransferDirectionValues
 
 namespace EventNameValues {
 static constexpr const char* kEnqueue = "enqueue";

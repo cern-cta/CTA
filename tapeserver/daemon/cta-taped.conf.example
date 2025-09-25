@@ -244,9 +244,12 @@ taped externalFreeDiskSpaceScript /usr/bin/cta-eosdf.sh
 # taped RmcRequestAttempts 10
 
 #
-#
 # Telemetry Options
+#
 
+# Telemetry is considered experimental and feature-gated.
+# To use telemetry, this option must be enabled
+# cta.features.experimental.telemetry.enabled false
 
 # Metrics backend to use. Possible options are NOOP, OTLP, STDOUT, FILE
 # Default is NOOP, meaning no metrics are collected/exported

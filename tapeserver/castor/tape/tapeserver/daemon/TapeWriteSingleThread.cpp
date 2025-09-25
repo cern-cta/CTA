@@ -56,11 +56,11 @@ castor::tape::tapeserver::daemon::TapeWriteSingleThread::TapeWriteSingleThread(
       m_watchdog(watchdog),
       m_archiveMount(archiveMount),
       m_catalogue(catalogue) {
-  cta::telemetry::metrics::ctaTapedThreadPoolSize->Add(1, {{cta::semconv::kTransferDirection, cta::semconv::TransferDirectionValues::kArchive}, {cta::semconv::kThreadPoolName, cta::semconv::ThreadPoolNameValues::kTape}});
+  cta::telemetry::metrics::ctaTapedThreadPoolSize->Add(1, {{cta::semconv::kCtaTransferDirection, cta::semconv::CtaTransferDirectionValues::kArchive}, {cta::semconv::kThreadPoolName, cta::semconv::ThreadPoolNameValues::kTape}});
 }
 
 castor::tape::tapeserver::daemon::TapeWriteSingleThread::~TapeWriteSingleThread() {
-  cta::telemetry::metrics::ctaTapedThreadPoolSize->Add(-1, {{cta::semconv::kTransferDirection, cta::semconv::TransferDirectionValues::kArchive}, {cta::semconv::kThreadPoolName, cta::semconv::ThreadPoolNameValues::kTape}});
+  cta::telemetry::metrics::ctaTapedThreadPoolSize->Add(-1, {{cta::semconv::kCtaTransferDirection, cta::semconv::CtaTransferDirectionValues::kArchive}, {cta::semconv::kThreadPoolName, cta::semconv::ThreadPoolNameValues::kTape}});
 }
 
 //------------------------------------------------------------------------------
