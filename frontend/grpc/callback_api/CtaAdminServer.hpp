@@ -277,7 +277,7 @@ CtaRpcStreamImpl::GenericAdminStream(::grpc::CallbackServerContext* context, con
         return new DefaultWriteReactor(errMsg);
     }  // switch
   } catch (const cta::exception::UserError& ex) {
-    return new DefaultWriteReactor(ex.what());
+    return new DefaultWriteReactor(ex.getMessageValue());
   }  // try-catch
   // proceed with command execution if no exception was thrown
   return new CtaAdminServerWriteReactor(m_catalogue, m_scheduler, m_instanceName, std::move(stream), headerType);
