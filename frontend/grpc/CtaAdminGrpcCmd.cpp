@@ -74,7 +74,7 @@ void CtaAdminGrpcCmd::send(const CtaAdminParsedCmd& parsedCmd, std::string endpo
       auto client_reactor = CtaAdminClientReadReactor(client_stub.get(), parsedCmd);
       status = client_reactor.Await();
       if (!status.ok()) {
-        std::cout << "gRPC call failed. Error code: " + std::to_string(status.error_code()) + " Error message: " + status.error_message() << std::endl;
+        std::cerr << "gRPC call failed. Error code: " + std::to_string(status.error_code()) + " Error message: " + status.error_message() << std::endl;
       }
       // close the json delimiter, open is done inside command execution
       if (parsedCmd.isJson()) {
@@ -82,7 +82,7 @@ void CtaAdminGrpcCmd::send(const CtaAdminParsedCmd& parsedCmd, std::string endpo
       }
     } catch (std::exception &ex) {
       // what to do in catch? Maybe print an error?
-      std::cout << "An exception was thrown in CtaAdminClientReactor: " << ex.what() << std::endl;
+      std::cerr << "An exception was thrown in CtaAdminClientReactor: " << ex.what() << std::endl;
     }
   }
 }
