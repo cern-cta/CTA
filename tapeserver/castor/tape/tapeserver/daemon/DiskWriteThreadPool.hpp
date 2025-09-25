@@ -106,12 +106,12 @@ private:
       m_diskFileFactory(manager.m_xrootTimeout, manager.m_striperPool) {
       // This thread id will remain for the rest of the thread's lifetime
       // (and also context's lifetime), so no need for a scoper
-      cta::telemetry::metrics::ctaTapedThreadPoolSize->Add(1, {{cta::semconv::kTransferDirection, cta::semconv::TransferDirectionValues::kArchive}, {cta::semconv::kThreadPoolName, cta::semconv::ThreadPoolNameValues::kDisk}});
+      cta::telemetry::metrics::ctaTapedThreadPoolSize->Add(1, {{cta::semconv::kCtaTransferDirection, cta::semconv::CtaTransferDirectionValues::kArchive}, {cta::semconv::kThreadPoolName, cta::semconv::ThreadPoolNameValues::kDisk}});
       m_lc.pushOrReplace(cta::log::Param("threadID", m_threadID));
       m_lc.log(cta::log::INFO, "DiskWrite Thread created");
     }
     ~DiskWriteWorkerThread() {
-      cta::telemetry::metrics::ctaTapedThreadPoolSize->Add(-1, {{cta::semconv::kTransferDirection, cta::semconv::TransferDirectionValues::kArchive}, {cta::semconv::kThreadPoolName, cta::semconv::ThreadPoolNameValues::kDisk}});
+      cta::telemetry::metrics::ctaTapedThreadPoolSize->Add(-1, {{cta::semconv::kCtaTransferDirection, cta::semconv::CtaTransferDirectionValues::kArchive}, {cta::semconv::kThreadPoolName, cta::semconv::ThreadPoolNameValues::kDisk}});
     }
     void start() { cta::threading::Thread::start(); }
     void wait() { cta::threading::Thread::wait(); }

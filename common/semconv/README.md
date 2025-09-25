@@ -34,5 +34,5 @@ The namespace name MUST be the attribute key expressed using CamelCasing, append
 
 For example, the attribute key `transfer.direction` might have as a possible value `read`.
 
-- The attribute key variable would be `cta::semconv::kTransferDirection`.
-- The attribute value variable would be `cta::semconv::TransferDirectionValues::kRead`
+- The attribute key variable would be `cta::semconv::kCtaTransferDirection`.
+- The attribute value variable would be `cta::semconv::CtaTransferDirectionValues::kRead`
