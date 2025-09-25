@@ -1,10 +1,13 @@
 #!/bin/bash
 
+EOS_COMMIT=4e6e89bb
+#EOS_COMMIT=5.3.16
+
 # Move to root
 cd /
 
 # Clone EOS project (to cover for missing debuginfo)
-git clone --depth 1 --branch 5.3.16 https://gitlab.cern.ch/dss/eos.git
+git clone --depth 1 --branch ${EOS_COMMIT} https://gitlab.cern.ch/dss/eos.git
 
 # Install debuginfo for other dependencies
 dnf -y debuginfo-install eos-xrootd-5.8.3-3.el9.x86_64
