@@ -71,6 +71,11 @@ struct TapedConfiguration {
   //----------------------------------------------------------------------------
   // The actual parameters:
   //----------------------------------------------------------------------------
+  // Experimental features
+  //---------------------------------------------------------------------------
+  cta::SourcedParameter<bool> telemetryEnabled{
+    "experimentalFeatures", "telemetryEnabled", false, "Compile time default"};
+  //----------------------------------------------------------------------------
   // Basics: tape daemon config
   //----------------------------------------------------------------------------
   /// The user name of the cta-taped daemon process
@@ -285,19 +290,25 @@ struct TapedConfiguration {
   // Telemetry Options
   //----------------------------------------------------------------------------
 
-  cta::SourcedParameter<std::string> telemetryMetricsBackend{
+  cta::SourcedParameter<bool> retainInstanceIdOnRestart{
+    "telemetry", "retainInstanceIdOnRestart", false, "Compile time default"};
+
+  cta::SourcedParameter<std::string> metricsBackend{
     "telemetry", "metricsBackend", "NOOP", "Compile time default"};
 
-  cta::SourcedParameter<std::string> telemetryMetricsOltpEndpoint{
-    "telemetry", "metricsOtlpEndpoint", "", "Compile time default"};
+  cta::SourcedParameter<std::string> metricsExportOtlpHttpEndpoint{
+    "telemetry", "metricsExportOtlpHttpEndpoint", "", "Compile time default"};
 
-  cta::SourcedParameter<std::string> telemetryMetricsFileEndpoint{
-    "telemetry", "metricsFileEndpoint", "/var/log/cta/cta-taped-metrics.txt", "Compile time default"};
+  cta::SourcedParameter<std::string> metricsExportOtlpHttpBasicAuthFile{
+    "telemetry", "metricsExportOtlpHttpBasicAuthFile", "", "Compile time default"};
 
-  cta::SourcedParameter<uint32_t> telemetryMetricsExportInterval{
+  cta::SourcedParameter<std::string> metricsExportFileEndpoint{
+    "telemetry", "metricsExportFileEndpoint", "/var/log/cta/cta-taped-metrics.txt", "Compile time default"};
+
+  cta::SourcedParameter<uint32_t> metricsExportInterval{
     "telemetry", "metricsExportInterval", 1000, "Compile time default"};
 
-  cta::SourcedParameter<uint32_t> telemetryMetricsExportTimeout{
+  cta::SourcedParameter<uint32_t> metricsExportTimeout{
     "telemetry", "metricsExportTimeout", 500, "Compile time default"};
 
 private:

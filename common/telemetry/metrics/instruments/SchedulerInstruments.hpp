@@ -21,6 +21,9 @@
 
 namespace cta::telemetry::metrics {
 
+/**
+ * Duration of a CTA scheduling operation.
+ */
 extern std::unique_ptr<opentelemetry::metrics::Histogram<uint64_t>> ctaSchedulingOperationDuration;
 
 }  // namespace cta::telemetry::metrics

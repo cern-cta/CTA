@@ -54,8 +54,8 @@ usage() {
   echo "      --eos-enabled <true|false>:     Whether to spawn an EOS instance or not. Defaults to true."
   echo "      --dcache-enabled <true|false>:  Whether to spawn a dCache instance or not. Defaults to false."
   echo "      --cta-config <file>:            Values file to use for the CTA chart. Defaults to presets/dev-cta-xrd-values.yaml."
-  echo "      --enable-telemetry:             Spawns an OpenTelemetry and Collector and Prometheus scraper. Changes the default cta-config to presets/dev-cta-telemetry-values.yaml"
-  echo "      --prometheus-config <file>:     Path to the values file to use for the Prometheus Helm chart."
+  echo "      --local-telemetry:              Spawns an OpenTelemetry and Collector and Prometheus scraper. Changes the default cta-config to presets/dev-cta-telemetry-values.yaml"
+  echo "      --publish-telemetry:            Publishes telemetry to a pre-configured central observability backend. See presets/ci-cta-telemetry-values.yaml"
   exit 1
 }
 
@@ -96,7 +96,7 @@ create_instance() {
   # Argument defaults
   # Not that some arguments below intentionally use false and not 0/1 as they are directly passed as a helm option
   # Note that it is fine for not all of these secrets to exist; eventually the reg-* format will be how the minikube_cta_ci setup inits things
-  secrets="ctaregsecret reg-eoscta-operations reg-ctageneric prometheus-remote-write-secret" # Secrets to be copied to the namespace (space separated)
+  secrets="ctaregsecret reg-eoscta-operations reg-ctageneric monit-collector-auth" # Secrets to be copied to the namespace (space separated)
   catalogue_config=presets/dev-catalogue-postgres-values.yaml
   scheduler_config=presets/dev-scheduler-vfs-values.yaml
   cta_config="presets/dev-cta-xrd-values.yaml"
@@ -111,7 +111,7 @@ create_instance() {
   num_library_devices=1 # For the auto-generated tapeservers config
   max_drives_per_tpsrv=1
   max_tapeservers=2
-  enable_telemetry=false
+  local_telemetry=false
   # EOS related
   eos_image_tag=$(jq -r .dev.eosImageTag ${project_json_path})
   eos_image_repository=$(jq -r .dev.eosImageRepository ${project_json_path})
@@ -160,7 +160,7 @@ create_instance() {
         shift ;;
       -O|--reset-scheduler) reset_scheduler=true ;;
       -D|--reset-catalogue) reset_catalogue=true ;;
-      --enable-telemetry) enable_telemetry=true ;;
+      --local-telemetry) local_telemetry=true ;;
       --dry-run) dry_run=1 ;;
       --eos-config)
         eos_config="$2"
@@ -182,9 +182,7 @@ create_instance() {
         cta_config="$2"
         test -f "${cta_config}" || die "CTA config file ${cta_config} does not exist"
         shift ;;
-      --prometheus-config)
-        prometheus_config="$2"
-        shift ;;
+      --publish-telemetry) prometheus_config="presets/ci-cta-telemetry-values.yaml" ;;
       *)
         echo "Unsupported argument: $1"
         usage
@@ -306,7 +304,7 @@ create_instance() {
 
   update_local_cta_chart_dependencies
 
-  if [ "$enable_telemetry" == "true" ] ; then
+  if [ "$local_telemetry" == "true" ] ; then
     echo "Cleaning up clusterroles..."
     kubectl delete clusterrole otel-opentelemetry-collector --ignore-not-found
     kubectl delete clusterrolebinding otel-opentelemetry-collector --ignore-not-found
@@ -380,7 +378,7 @@ create_instance() {
   wait $scheduler_pid || exit 1
 
   extra_cta_chart_flags=""
-  if [ "$enable_telemetry" == "true" ]; then
+  if [ "$local_telemetry" == "true" ]; then
     extra_cta_chart_flags+="--values presets/dev-cta-telemetry-values.yaml"
   fi
 

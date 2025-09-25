@@ -21,7 +21,7 @@ void initInstruments() {
 
   cta::telemetry::metrics::ctaObjectstoreLockAcquireDuration =
     meter->CreateUInt64Histogram("cta.objectstore.lock.acquire.duration",
-                                 "Duration taken to acquire a lock, measured from wait start to acquisition",
+                                 "Duration taken to acquire an objectstore lock",
                                  "ms");
 }
 

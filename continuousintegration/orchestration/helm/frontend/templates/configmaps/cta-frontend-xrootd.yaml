@@ -99,13 +99,24 @@ data:
     all.export /ctafrontend nolock r/w
 
     # Telemetry
-    cta.telemetry.metricsBackend {{ .Values.xrd.conf.telemetry.metricsBackend }}
-    cta.telemetry.metricsOtlpEndpoint {{ .Values.xrd.conf.telemetry.metricsOtlpEndpoint }}
+    cta.features.experimental.telemetry.enabled {{ .Values.xrd.conf.telemetry.enabled }}
+
+    cta.telemetry.retain_instance_id_on_restart {{ .Values.xrd.conf.telemetry.retainInstanceIdOnRestart }}
+    cta.telemetry.metrics.backend {{ .Values.xrd.conf.telemetry.metricsBackend }}
     {{- if .Values.xrd.conf.telemetry.metricsExportInterval }}
-    cta.telemetry.metricsExportInterval {{ .Values.xrd.conf.telemetry.metricsExportInterval }}
+    cta.telemetry.metrics.export.interval {{ .Values.xrd.conf.telemetry.metricsExportInterval }}
     {{- end }}
     {{- if .Values.xrd.conf.telemetry.metricsExportTimeout }}
-    cta.telemetry.metricsExportTimeout {{ .Values.xrd.conf.telemetry.metricsExportTimeout }}
+    cta.telemetry.metrics.export.timeout {{ .Values.xrd.conf.telemetry.metricsExportTimeout }}
+    {{- end }}
+    {{- if .Values.xrd.conf.telemetry.metricsExportOtlpHttpEndpoint }}
+    cta.telemetry.metrics.export.otlp_http.endpoint {{ .Values.xrd.conf.telemetry.metricsExportOtlpHttpEndpoint }}
+    {{- end }}
+    {{- if .Values.xrd.conf.telemetry.metricsExportOtlpHttpBasicAuthFile }}
+    cta.telemetry.metrics.export.otlp_http.basic_auth_file /etc/cta/otlp-basic-auth.conf
+    {{- end }}
+    {{- if .Values.xrd.conf.telemetry.metricsExportFileEndpoint }}
+    cta.telemetry.metrics.export.file.endpoint {{ .Values.xrd.conf.telemetry.metricsExportFileEndpoint }}
     {{- end }}
 
 {{- end }}

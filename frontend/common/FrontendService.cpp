@@ -123,44 +123,63 @@ FrontendService::FrontendService(const std::string& configFilename) : m_archiveF
 
   // Instantiate telemetry
   // Must be instantiated before the catalogue and scheduler are initialised
-  {
+  auto experimentalTelemetryEnabled = config.getOptionValueBool("cta.features.experimental.telemetry.enabled");
+  if (!experimentalTelemetryEnabled.has_value()) {
+    experimentalTelemetryEnabled = false;
+  }
+  if (experimentalTelemetryEnabled.value()) {
     try {
       // If we stick with this config parsing, would be nice to have the option to provide a default/fallback value
-      auto telemetryMetricsBackend = config.getOptionValueStr("cta.telemetry.metricsBackend");
-      if (!telemetryMetricsBackend.has_value()) {
-        telemetryMetricsBackend = "NOOP";
+
+      auto retainInstanceIdOnRestart = config.getOptionValueBool("cta.telemetry.retain_instance_id_on_restart");
+      if (!retainInstanceIdOnRestart.has_value()) {
+        retainInstanceIdOnRestart = false;
       }
-      auto telemetryMetricsExportInterval = config.getOptionValueUInt("cta.telemetry.metricsExportInterval");
-      if (!telemetryMetricsExportInterval.has_value()) {
-        telemetryMetricsExportInterval = 1000;
+      auto metricsBackend = config.getOptionValueStr("cta.telemetry.metrics.backend");
+      if (!metricsBackend.has_value()) {
+        metricsBackend = "NOOP";
       }
-      auto telemetryMetricsExportTimeout = config.getOptionValueUInt("cta.telemetry.metricsExportTimeout");
-      if (!telemetryMetricsExportTimeout.has_value()) {
-        telemetryMetricsExportTimeout = 500;
+      auto metricsExportInterval = config.getOptionValueUInt("cta.telemetry.metrics.export.interval");
+      if (!metricsExportInterval.has_value()) {
+        metricsExportInterval = 1000;
       }
-      auto telemetryMetricsOltpEndpoint = config.getOptionValueStr("cta.telemetry.metricsOtlpEndpoint");
-      if (!telemetryMetricsOltpEndpoint.has_value()) {
-        telemetryMetricsOltpEndpoint = "";
+      auto metricsExportTimeout = config.getOptionValueUInt("cta.telemetry.metrics.export.timeout");
+      if (!metricsExportTimeout.has_value()) {
+        metricsExportTimeout = 500;
       }
-      auto telemetryMetricsFileEndpoint = config.getOptionValueStr("cta.telemetry.metricsFileEndpoint");
-      if (!telemetryMetricsFileEndpoint.has_value()) {
-        telemetryMetricsFileEndpoint = "/var/log/cta/cta-frontend-metrics.txt";
+      auto metricsOtlpHttpEndpoint = config.getOptionValueStr("cta.telemetry.metrics.export.otlp_http.endpoint");
+      if (!metricsOtlpHttpEndpoint.has_value()) {
+        metricsOtlpHttpEndpoint = "";
+      }
+      auto metricsExportOtlpHttpBasicAuthFile =
+        config.getOptionValueStr("cta.telemetry.metrics.export.otlp_http.basic_auth_file");
+      std::string metricsExportOtlpHttpBasicAuthString = "";
+      if (metricsExportOtlpHttpBasicAuthFile.has_value()) {
+        metricsExportOtlpHttpBasicAuthString =
+          cta::telemetry::authStringFromFile(metricsExportOtlpHttpBasicAuthFile.value());
+      }
+      auto metricsFileEndpoint = config.getOptionValueStr("cta.telemetry.metrics.export.file.endpoint");
+      if (!metricsFileEndpoint.has_value()) {
+        metricsFileEndpoint = "/var/log/cta/cta-frontend-metrics.txt";
       }
 
-      cta::telemetry::TelemetryConfig telemetryConfig = cta::telemetry::TelemetryConfigBuilder()
-        .serviceName(cta::semconv::ServiceNameValues::kCtaFrontend)
-        .serviceNamespace(m_instanceName)
-        .serviceVersion(CTA_VERSION)
-        .resourceAttribute(cta::semconv::kSchedulerBackendName, m_schedulerBackendName)
-        .metricsBackend(telemetryMetricsBackend.value())
-        .metricsExportInterval(std::chrono::milliseconds(telemetryMetricsExportInterval.value()))
-        .metricsExportTimeout(std::chrono::milliseconds(telemetryMetricsExportTimeout.value()))
-        .metricsOtlpEndpoint(telemetryMetricsOltpEndpoint.value())
-        .metricsFileEndpoint(telemetryMetricsFileEndpoint.value())
-        .build();
-      cta::log::LogContext lc(log); // temporary log context
+      cta::telemetry::TelemetryConfig telemetryConfig =
+        cta::telemetry::TelemetryConfigBuilder()
+          .serviceName(cta::semconv::ServiceNameValues::kCtaFrontend)
+          .serviceNamespace(m_instanceName)
+          .serviceVersion(CTA_VERSION)
+          .retainInstanceIdOnRestart(retainInstanceIdOnRestart.value())
+          .resourceAttribute(cta::semconv::kSchedulerBackendName, m_schedulerBackendName)
+          .metricsBackend(metricsBackend.value())
+          .metricsExportInterval(std::chrono::milliseconds(metricsExportInterval.value()))
+          .metricsExportTimeout(std::chrono::milliseconds(metricsExportTimeout.value()))
+          .metricsOtlpHttpEndpoint(metricsOtlpHttpEndpoint.value())
+          .metricsOtlpHttpBasicAuthString(metricsExportOtlpHttpBasicAuthString)
+          .metricsFileEndpoint(metricsFileEndpoint.value())
+          .build();
+      cta::log::LogContext lc(log);  // temporary log context
       cta::telemetry::initTelemetry(telemetryConfig, lc);
-    } catch(exception::Exception& ex) {
+    } catch (exception::Exception& ex) {
       std::string ex_str("Failed to instantiate OpenTelemetry: ");
       throw exception::Exception(ex_str + ex.getMessage().str());
     }

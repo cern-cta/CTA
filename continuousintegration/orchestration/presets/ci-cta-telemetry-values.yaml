@@ -1,0 +1,30 @@
+# See https://monit.docs.cern.ch/other/metrics/
+
+# Note that this values can be used in combination with other values files
+frontend:
+  xrd:
+    conf:
+      telemetry:
+        enabled: false
+        retainInstanceIdOnRestart: false
+        metricsBackend: "NOOP"
+        metricsExportOtlpHttpEndpoint: "http://monit-otlp.cern.ch:4319"
+        metricsExportOtlpHttpBasicAuthSecret: monit-collector-auth
+
+  grpc:
+    conf:
+      telemetry:
+        enabled: false
+        retainInstanceIdOnRestart: false
+        metricsBackend: "NOOP"
+        metricsExportOtlpHttpEndpoint: "http://monit-otlp.cern.ch:4319"
+        metricsExportOtlpHttpBasicAuthSecret: monit-collector-auth
+
+tpsrv:
+  conf:
+    telemetry:
+      enabled: false
+      retainInstanceIdOnRestart: false
+      metricsBackend: "NOOP"
+      metricsExportOtlpHttpEndpoint: "http://monit-otlp.cern.ch:4319"
+      metricsExportOtlpHttpBasicAuthSecret: monit-collector-auth

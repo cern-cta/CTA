@@ -21,8 +21,17 @@
 
 namespace cta::telemetry::metrics {
 
+/**
+ * Number of file transfers to/from tape.
+ */
 extern std::unique_ptr<opentelemetry::metrics::Counter<uint64_t>> ctaTapedTransfers;
+/**
+ * Number of tape mounts.
+ */
 extern std::unique_ptr<opentelemetry::metrics::Counter<uint64_t>> ctaTapedMounts;
+/**
+ * Number of active threads in the cta taped tape pools
+ */
 extern std::unique_ptr<opentelemetry::metrics::UpDownCounter<int64_t>> ctaTapedThreadPoolSize;
 
 }  // namespace cta::telemetry::metrics

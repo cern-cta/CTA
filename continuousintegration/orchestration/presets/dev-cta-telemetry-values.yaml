@@ -3,17 +3,23 @@ frontend:
   xrd:
     conf:
       telemetry:
-        metricsBackend: "OTLP"
-        metricsOtlpEndpoint: "http://otel-opentelemetry-collector:4318/v1/metrics"
+        enabled: true
+        retainInstanceIdOnRestart: false
+        metricsBackend: "OTLP_HTTP"
+        metricsExportOtlpHttpEndpoint: "http://otel-opentelemetry-collector:4318/v1/metrics"
 
   grpc:
     conf:
       telemetry:
-        metricsBackend: "OTLP"
-        metricsOtlpEndpoint: "http://otel-opentelemetry-collector:4318/v1/metrics"
+        enabled: true
+        retainInstanceIdOnRestart: false
+        metricsBackend: "OTLP_HTTP"
+        metricsExportOtlpHttpEndpoint: "http://otel-opentelemetry-collector:4318/v1/metrics"
 
 tpsrv:
   conf:
     telemetry:
-      metricsBackend: "OTLP"
-      metricsOtlpEndpoint: "http://otel-opentelemetry-collector:4318/v1/metrics"
+      enabled: true
+      retainInstanceIdOnRestart: false
+      metricsBackend: "OTLP_HTTP"
+      metricsExportOtlpHttpEndpoint: "http://otel-opentelemetry-collector:4318/v1/metrics"

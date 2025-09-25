@@ -76,13 +76,25 @@ data:
     grpc.jwt.enabled {{ .Values.grpc.conf.jwtAuth.enabled }}
 
     # Telemetry
-    cta.telemetry.metricsBackend {{ .Values.grpc.conf.telemetry.metricsBackend }}
-    cta.telemetry.metricsOtlpEndpoint {{ .Values.grpc.conf.telemetry.metricsOtlpEndpoint }}
+    cta.features.experimental.telemetry.enabled {{ .Values.grpc.conf.telemetry.enabled }}
+
+    cta.telemetry.retain_instance_id_on_restart {{ .Values.grpc.conf.telemetry.retainInstanceIdOnRestart }}
+    cta.telemetry.metrics.backend {{ .Values.grpc.conf.telemetry.metricsBackend }}
     {{- if .Values.grpc.conf.telemetry.metricsExportInterval }}
-    cta.telemetry.metricsExportInterval {{ .Values.grpc.conf.telemetry.metricsExportInterval }}
+    cta.telemetry.metrics.export.interval {{ .Values.grpc.conf.telemetry.metricsExportInterval }}
     {{- end }}
     {{- if .Values.grpc.conf.telemetry.metricsExportTimeout }}
-    cta.telemetry.metricsExportTimeout {{ .Values.grpc.conf.telemetry.metricsExportTimeout }}
+    cta.telemetry.metrics.export.timeout {{ .Values.grpc.conf.telemetry.metricsExportTimeout }}
     {{- end }}
+    {{- if .Values.grpc.conf.telemetry.metricsExportOtlpHttpEndpoint }}
+    cta.telemetry.metrics.export.otlp_http.endpoint {{ .Values.grpc.conf.telemetry.metricsExportOtlpHttpEndpoint }}
+    {{- end }}
+    {{- if .Values.grpc.conf.telemetry.metricsExportOtlpHttpBasicAuthFile }}
+    cta.telemetry.metrics.export.otlp_http.basic_auth_file /etc/cta/otlp-basic-auth.conf
+    {{- end }}
+    {{- if .Values.grpc.conf.telemetry.metricsExportFileEndpoint }}
+    cta.telemetry.metrics.export.file.endpoint {{ .Values.grpc.conf.telemetry.metricsExportFileEndpoint }}
+    {{- end }}
+
 
 {{- end }}

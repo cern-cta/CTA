@@ -1,6 +1,7 @@
 #include "TelemetryInit.hpp"
 
 #include <fstream>
+#include <opentelemetry/exporters/otlp/otlp_grpc_metric_exporter_factory.h>
 #include <opentelemetry/exporters/otlp/otlp_http_metric_exporter_factory.h>
 #include <opentelemetry/exporters/otlp/otlp_http_metric_exporter_options.h>
 #include <opentelemetry/exporters/ostream/metric_exporter_factory.h>
@@ -23,7 +24,58 @@ namespace cta::telemetry {
 
 namespace metrics_sdk = opentelemetry::sdk::metrics;
 namespace metrics_api = opentelemetry::metrics;
-namespace otlp = opentelemetry::exporter::otlp;
+
+std::unique_ptr<metrics_sdk::PushMetricExporter> createExporter(const TelemetryConfig& config,
+                                                                cta::log::LogContext& lc) {
+  std::unique_ptr<metrics_sdk::PushMetricExporter> exporter;
+  switch (config.metrics.backend) {
+    case MetricsBackend::STDOUT:
+      lc.log(log::WARNING,
+             "In createExporter(): OpenTelemetry backend STDOUT is meant for testing/debugging only and should not be "
+             "used in production.");
+      exporter = opentelemetry::exporter::metrics::OStreamMetricExporterFactory::Create();
+      break;
+    case MetricsBackend::FILE: {
+      log::ScopedParamContainer params(lc);
+      params.add("exportFileEndpoint", config.metrics.fileEndpoint);
+      lc.log(log::WARNING,
+             "In createExporter(): OpenTelemetry backend FILE is meant for testing/debugging only and should not be "
+             "used in production.");
+      static std::ofstream fileStream(config.metrics.fileEndpoint, std::ios::app);
+      exporter = opentelemetry::exporter::metrics::OStreamMetricExporterFactory::Create(fileStream);
+      break;
+    }
+    case MetricsBackend::OTLP_HTTP: {
+      log::ScopedParamContainer params(lc);
+      params.add("exportOtlpHttpEndpoint", config.metrics.otlpHttpEndpoint);
+      opentelemetry::exporter::otlp::OtlpHttpMetricExporterOptions opts;
+      opts.url = config.metrics.otlpHttpEndpoint;
+
+      for (const auto& kv : config.metrics.otlpHttpHeaders) {
+        opts.http_headers.insert({kv.first, kv.second});
+      }
+      exporter = opentelemetry::exporter::otlp::OtlpHttpMetricExporterFactory::Create(opts);
+      break;
+    }
+    case MetricsBackend::OTLP_GRPC: {
+      // All configuration goes via environment options here
+      exporter = opentelemetry::exporter::otlp::OtlpGrpcMetricExporterFactory::Create();
+      break;
+    }
+
+    default:
+      lc.log(log::ERR, "In createExporter: Unsupported metrics backend provided");
+      throw std::runtime_error("createExporter: Unsupported metrics backend provided.");
+  }
+  if (!exporter) {
+    lc.log(log::ERR, "In createExporter: failed to initialise exporter.");
+    throw std::runtime_error("createExporter: failed to initialise exporter.");
+  }
+  lc.log(log::DEBUG,
+         "In createExporter(): OpenTelemetry exporter initialised"
+         "used in production.");
+  return exporter;
+}
 
 void initMetrics(const TelemetryConfig& config, cta::log::LogContext& lc) {
   if (config.metrics.backend == MetricsBackend::NOOP) {
@@ -35,7 +87,14 @@ void initMetrics(const TelemetryConfig& config, cta::log::LogContext& lc) {
 
   std::string processName = cta::utils::getProcessName();
   std::string hostName = cta::utils::getShortHostname();
-  std::string serviceInstanceId = cta::utils::generateUuid();
+  std::string serviceInstanceId;
+  if (config.retainInstanceIdOnRestart) {
+    // Note that this requires the process name to be unique on a given host
+    // However, it controls cardinality across restarts (in particular important for drive sessions)
+    serviceInstanceId = hostName + ":" + processName;
+  } else {
+    serviceInstanceId = cta::utils::generateUuid();
+  }
 
   log::ScopedParamContainer params(lc);
   params.add("serviceName", config.serviceName)
@@ -44,41 +103,9 @@ void initMetrics(const TelemetryConfig& config, cta::log::LogContext& lc) {
     .add("serviceVersion", config.serviceVersion)
     .add("metricsBackend", metricsBackendToString(config.metrics.backend))
     .add("exportInterval", std::chrono::duration_cast<std::chrono::milliseconds>(config.metrics.exportInterval).count())
-    .add("exportTimeout", std::chrono::duration_cast<std::chrono::milliseconds>(config.metrics.exportTimeout).count())
-    .add("otlpEndpoint", config.metrics.otlpEndpoint);
+    .add("exportTimeout", std::chrono::duration_cast<std::chrono::milliseconds>(config.metrics.exportTimeout).count());
 
-  std::unique_ptr<metrics_sdk::PushMetricExporter> exporter;
-  switch (config.metrics.backend) {
-    case MetricsBackend::STDOUT:
-      lc.log(log::WARNING, "In initMetrics(): OpenTelemetry backend STDOUT is meant for testing/debugging only and should not be used in production.");
-      exporter = opentelemetry::exporter::metrics::OStreamMetricExporterFactory::Create();
-      break;
-    case MetricsBackend::FILE: {
-      lc.log(log::WARNING, "In initMetrics(): OpenTelemetry backend FILE is meant for testing/debugging only and should not be used in production.");
-      static std::ofstream fileStream(config.metrics.fileEndpoint, std::ios::app);
-      exporter = opentelemetry::exporter::metrics::OStreamMetricExporterFactory::Create(fileStream);
-      break;
-    }
-    case MetricsBackend::OTLP: {
-      otlp::OtlpHttpMetricExporterOptions opts;
-      opts.url = config.metrics.otlpEndpoint;
-
-      for (const auto& kv : config.metrics.headers) {
-        opts.http_headers.insert({kv.first, kv.second});
-      }
-      exporter = otlp::OtlpHttpMetricExporterFactory::Create(opts);
-      break;
-    }
-
-    default:
-      lc.log(log::ERR, "In initMetrics: Unsupported metrics backend provided");
-      throw std::runtime_error("initMetrics: Unsupported metrics backend provided.");
-  }
-  if (!exporter) {
-    lc.log(log::ERR, "In initMetrics: failed to initialise exporter.");
-    throw std::runtime_error("initMetrics: failed to initialise exporter.");
-  }
-
+  std::unique_ptr<metrics_sdk::PushMetricExporter> exporter = createExporter(config, lc);
   metrics_sdk::PeriodicExportingMetricReaderOptions readerOptions {config.metrics.exportInterval,
                                                                    config.metrics.exportTimeout};
 
@@ -86,7 +113,6 @@ void initMetrics(const TelemetryConfig& config, cta::log::LogContext& lc) {
 
   // These metrics should make sure that each and every process is uniquely identifiable
   // Otherwise, metrics will not be aggregated correctly.
-  // The processName could go once we get rid of the forking in taped
   opentelemetry::sdk::common::AttributeMap attributes = {
     {cta::semconv::kServiceName,       config.serviceName     },
     {cta::semconv::kServiceNamespace,  config.serviceNamespace},

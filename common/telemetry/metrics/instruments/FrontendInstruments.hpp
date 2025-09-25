@@ -21,6 +21,9 @@
 
 namespace cta::telemetry::metrics {
 
+/**
+ * Duration the frontend takes to process a request.
+ */
 extern std::unique_ptr<opentelemetry::metrics::Histogram<uint64_t>> ctaFrontendRequestDuration;
 
 }  // namespace cta::telemetry::metrics

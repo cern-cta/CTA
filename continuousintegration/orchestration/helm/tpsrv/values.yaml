@@ -11,8 +11,11 @@ conf:
     retrieveQueueCacheMaxAgeSecs: 1
     externalFreeDiskSpaceScript: "/usr/bin/cta-eosdf.sh"
   telemetry:
+    enabled: false
+    retainInstanceIdOnRestart: false
     metricsBackend: "NOOP"
-    metricsOtlpEndpoint: ""
+    metricsExportInterval: 1000
+    metricsExportTimeout: 500
 
 # SSS keytab to communicate to the disk buffer
 keytab:

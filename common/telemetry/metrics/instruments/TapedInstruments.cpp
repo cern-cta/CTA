@@ -22,7 +22,7 @@ void initInstruments() {
   // It seems that there is a common .io suffix used, but this is only used for data flow in bytes.
   // Here we count files; not bytes.... Maybe we should be counting bytes? In that case: cta.taped.io
   cta::telemetry::metrics::ctaTapedTransfers =
-    meter->CreateUInt64Counter("cta.taped.transfers", "Number of transfers to/from tape", "1");
+    meter->CreateUInt64Counter("cta.taped.transfers", "Number of file transfers to/from tape", "1");
 
   cta::telemetry::metrics::ctaTapedMounts =
     meter->CreateUInt64Counter("cta.taped.mounts", "Number of tape mounts", "1");

@@ -41,8 +41,11 @@ grpc:
       jwksUri: http://auth-keycloak:8080/realms/master/protocol/openid-connect/certs
 
     telemetry:
+      enabled: false
+      retainInstanceIdOnRestart: false
       metricsBackend: "NOOP"
-      metricsOtlpEndpoint: ""
+      metricsExportInterval: 1000
+      metricsExportTimeout: 500
 xrd:
   enabled: true
   port: 10955
@@ -69,8 +72,11 @@ xrd:
       logLevel: "INFO"
       ssiLogLevel: "warning"
     telemetry:
+      enabled: false
+      retainInstanceIdOnRestart: false
       metricsBackend: "NOOP"
-      metricsOtlpEndpoint: ""
+      metricsExportInterval: 1000
+      metricsExportTimeout: 500
 
   keytab:
     secretName: cta-frontend-keytab
