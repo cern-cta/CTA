@@ -8,7 +8,7 @@ cd /
 
 # Clone EOS project (to cover for missing debuginfo)
 git clone https://gitlab.cern.ch/dss/eos.git
-git checkout ${EOS_COMMIT}
+(cd eos; git checkout ${EOS_COMMIT})
 
 # Install debuginfo for other dependencies
 dnf -y debuginfo-install eos-xrootd-5.8.3-3.el9.x86_64
