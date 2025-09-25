@@ -7,7 +7,7 @@ EOS_COMMIT=4e6e89bb
 cd /
 
 # Clone EOS project (to cover for missing debuginfo)
-git clone ${EOS_COMMIT} https://gitlab.cern.ch/dss/eos.git
+git clone https://gitlab.cern.ch/dss/eos.git
 git checkout ${EOS_COMMIT}
 
 # Install debuginfo for other dependencies
