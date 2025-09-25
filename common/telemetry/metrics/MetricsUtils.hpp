@@ -20,6 +20,9 @@
 
 namespace cta::telemetry::metrics {
 
+/**
+ * Convenience function to obtain a meter for a given library name and version.
+ */
 std::shared_ptr<opentelemetry::metrics::Meter> getMeter(std::string_view libraryName, std::string_view libraryVersion);
 
 }  // namespace cta::telemetry::metrics

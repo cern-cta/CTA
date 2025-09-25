@@ -1,6 +1,8 @@
 #include "TelemetryConfig.hpp"
 
 #include <stdexcept>
+#include <fstream>
+#include <string>
 
 namespace cta::telemetry {
 
@@ -14,26 +16,47 @@ MetricsBackend stringToMetricsBackend(const std::string& name) {
   if (name == "FILE") {
     return MetricsBackend::FILE;
   }
-  if (name == "OTLP") {
-    return MetricsBackend::OTLP;
+  if (name == "OTLP_GRPC") {
+    return MetricsBackend::OTLP_GRPC;
+  }
+  if (name == "OTLP_HTTP") {
+    return MetricsBackend::OTLP_HTTP;
   }
   throw std::invalid_argument("Invalid MetricBackend: " + name);
 }
 
 std::string metricsBackendToString(MetricsBackend backend) {
-  switch(backend) {
+  switch (backend) {
     case MetricsBackend::NOOP:
       return "NOOP";
     case MetricsBackend::STDOUT:
       return "STDOUT";
     case MetricsBackend::FILE:
       return "FILE";
-    case MetricsBackend::OTLP:
-      return "OTLP";
+    case MetricsBackend::OTLP_GRPC:
+      return "OTLP_GRPC";
+    case MetricsBackend::OTLP_HTTP:
+      return "OTLP_HTTP";
   }
   throw std::invalid_argument("Provided MetricsBackend cannot be converted to string");
 }
 
+// TODO: this can probably be done cleaner
+std::string authStringFromFile(const std::string& filePath) {
+  std::ifstream file(filePath);
+  if (!file.is_open()) {
+    throw std::runtime_error("Failed to open auth file: " + filePath);
+  }
+
+  std::string line;
+  while (std::getline(file, line)) {
+    // Skip comment lines
+    if (!line.empty() && line[0] != '#') {
+      return line;
+    }
+  }
+  throw std::runtime_error("No valid auth string found in file: " + filePath);
+}
 
 TelemetryConfigBuilder& TelemetryConfigBuilder::serviceName(std::string serviceName) {
   m_config.serviceName = std::move(serviceName);
@@ -49,6 +72,12 @@ TelemetryConfigBuilder& TelemetryConfigBuilder::serviceVersion(std::string servi
   m_config.serviceVersion = std::move(serviceVersion);
   return *this;
 }
+
+TelemetryConfigBuilder& TelemetryConfigBuilder::retainInstanceIdOnRestart(bool retainInstanceIdOnRestart) {
+  m_config.retainInstanceIdOnRestart = retainInstanceIdOnRestart;
+  return *this;
+}
+
 
 TelemetryConfigBuilder& TelemetryConfigBuilder::resourceAttribute(std::string key, std::string value) {
   m_config.resourceAttributes[std::move(key)] = std::move(value);
@@ -70,18 +99,22 @@ TelemetryConfigBuilder& TelemetryConfigBuilder::metricsExportTimeout(std::chrono
   return *this;
 }
 
-TelemetryConfigBuilder& TelemetryConfigBuilder::metricsOtlpEndpoint(std::string endpoint) {
-  m_config.metrics.otlpEndpoint = std::move(endpoint);
+TelemetryConfigBuilder& TelemetryConfigBuilder::metricsOtlpHttpEndpoint(std::string endpoint) {
+  m_config.metrics.otlpHttpEndpoint = std::move(endpoint);
+  return *this;
+}
+
+TelemetryConfigBuilder& TelemetryConfigBuilder::metricsOtlpHttpBasicAuthString(std::string authString) {
+  if (authString.empty()) {
+    // Ensure we don't add any headers if not configured
+    return *this;
+  }
+  m_config.metrics.otlpHttpHeaders["authorization"] = "Basic " + authString;
   return *this;
 }
 
 TelemetryConfigBuilder& TelemetryConfigBuilder::metricsFileEndpoint(std::string endpoint) {
   m_config.metrics.fileEndpoint = std::move(endpoint);
-  return *this;
-}
-
-TelemetryConfigBuilder& TelemetryConfigBuilder::metricsHeader(std::string key, std::string value) {
-  m_config.metrics.headers[std::move(key)] = std::move(value);
   return *this;
 }
 
@@ -97,9 +130,17 @@ TelemetryConfig TelemetryConfigBuilder::build() const {
   if (m_config.serviceVersion.empty()) {
     throw std::invalid_argument("TelemetryConfig: serviceVersion is required.");
   }
+  if (m_config.metrics.backend == MetricsBackend::OTLP_HTTP && m_config.metrics.otlpHttpEndpoint.empty()) {
+    throw std::invalid_argument("TelemetryConfig: OTLP_HTTP metrics backend requires an otlpHttpEndpoint.");
+  }
 
-  if (m_config.metrics.backend == MetricsBackend::OTLP && m_config.metrics.otlpEndpoint.empty()) {
-    throw std::invalid_argument("TelemetryConfig: OTLP metrics backend requires otlpEndpoint.");
+  // See https://github.com/open-telemetry/opentelemetry-cpp/blob/main/exporters/otlp/src/otlp_environment.cc#L133
+  constexpr char kGrpcEndpointSignalEnv[] = "OTEL_EXPORTER_OTLP_METRICS_ENDPOINT";
+  constexpr char kGrpcEndpointGenericEnv[] = "OTEL_EXPORTER_OTLP_ENDPOINT";
+  if (m_config.metrics.backend == MetricsBackend::OTLP_GRPC && !std::getenv(kGrpcEndpointSignalEnv) &&
+      !std::getenv(kGrpcEndpointGenericEnv)) {
+    throw std::invalid_argument("TelemetryConfig: OTLP_GRPC metrics backend requires the env variables "
+                                "OTEL_EXPORTER_OTLP_METRICS_ENDPOINT or OTEL_EXPORTER_OTLP_ENDPOINT.");
   }
 
   return m_config;

@@ -21,7 +21,13 @@
 
 namespace cta::telemetry::metrics {
 
+/**
+ * Duration of database client operations.
+ */
 extern std::unique_ptr<opentelemetry::metrics::Histogram<uint64_t>> dbClientOperationDuration;
+/**
+ * The number of connections that are currently in state described by the state attribute.
+ */
 extern std::unique_ptr<opentelemetry::metrics::UpDownCounter<int64_t>> rdbmsConnectionCount;
 
 }  // namespace cta::telemetry::metrics

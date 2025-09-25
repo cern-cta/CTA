@@ -121,6 +121,10 @@ spec:
         - name: grpc-health-probe-bin
           mountPath: /grpc-health-probe
           subPath: grpc-health-probe
+        {{- if .Values.grpc.conf.telemetry.metricsExportOtlpHttpBasicAuthFile }}
+        - name: otlp-basic-auth
+          mountPath: /etc/cta/otlp-basic-auth.conf
+        {{- end }}
         {{ include "common.extraVolumeMounts" . | nindent 8 }}
       volumes:
       - name: scripts-volume
@@ -165,5 +169,10 @@ spec:
       - name: krb5-conf
         configMap:
           name: {{ .Values.global.kerberos.clientConfig.configMap }}
+      {{- if .Values.grpc.conf.telemetry.metricsExportOtlpHttpBasicAuthFile }}
+      - name: otlp-basic-auth
+        secret:
+          secretName: {{ .Values.grpc.conf.telemetry.metricsExportOtlpHttpBasicAuthFile }}
+      {{- end }}
       {{ include "common.extraVolumes" . | nindent 6 }}
 {{- end }}

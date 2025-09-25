@@ -29,4 +29,28 @@ TEST(cta_Daemon, SourcedParameter) {
   ASSERT_EQ(34, mountCriteria.value().maxFiles);
 }
 
-} // namespace unitTests
+class SourcedParameterBoolTest : public ::testing::TestWithParam<std::pair<const char*, bool>> {};
+
+INSTANTIATE_TEST_SUITE_P(ValidBooleanValues,
+                         SourcedParameterBoolTest,
+                         ::testing::Values(std::make_pair("true", true),
+                                           std::make_pair("TRUE", true),
+                                           std::make_pair("1", true),
+                                           std::make_pair("yes", true),
+                                           std::make_pair("YES", true),
+                                           std::make_pair("false", false),
+                                           std::make_pair("FALSE", false),
+                                           std::make_pair("0", false),
+                                           std::make_pair("no", false),
+                                           std::make_pair("NO", false)));
+
+TEST_P(SourcedParameterBoolTest, ValidValues) {
+  cta::SourcedParameter<bool> param("unitTest", "boolKey");
+  const auto [input, expected] = GetParam();
+
+  param.set(input, "Unit test");
+  ASSERT_EQ(expected, param.value());
+  ASSERT_EQ("Unit test", param.source());
+}
+
+}  // namespace unitTests

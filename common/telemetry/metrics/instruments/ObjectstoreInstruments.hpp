@@ -21,6 +21,9 @@
 
 namespace cta::telemetry::metrics {
 
+/**
+ * Duration taken to acquire an objectstore lock.
+ */
 extern std::unique_ptr<opentelemetry::metrics::Histogram<uint64_t>> ctaObjectstoreLockAcquireDuration;
 
 }  // namespace cta::telemetry::metrics

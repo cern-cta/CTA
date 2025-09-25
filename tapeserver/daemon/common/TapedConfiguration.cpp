@@ -164,6 +164,9 @@ TapedConfiguration TapedConfiguration::createFromConfigPath(
   // Parse config file
   ConfigurationFile cf(driveTapedConfigPath);
 
+  // Experimental features
+  ret.telemetryEnabled.setFromConfigurationFile(cf, driveTapedConfigPath);
+
   // Extract configuration from parsed config file
   ret.daemonUserName.setFromConfigurationFile(cf, driveTapedConfigPath);
   ret.daemonGroupName.setFromConfigurationFile(cf, driveTapedConfigPath);
@@ -227,11 +230,13 @@ TapedConfiguration TapedConfiguration::createFromConfigPath(
   ret.retrieveQueueCacheMaxAgeSecs.setFromConfigurationFile(cf, driveTapedConfigPath);
 
   // Telemetry options
-  ret.telemetryMetricsBackend.setFromConfigurationFile(cf, driveTapedConfigPath);
-  ret.telemetryMetricsOltpEndpoint.setFromConfigurationFile(cf, driveTapedConfigPath);
-  ret.telemetryMetricsFileEndpoint.setFromConfigurationFile(cf, driveTapedConfigPath);
-  ret.telemetryMetricsExportInterval.setFromConfigurationFile(cf, driveTapedConfigPath);
-  ret.telemetryMetricsExportTimeout.setFromConfigurationFile(cf, driveTapedConfigPath);
+  ret.retainInstanceIdOnRestart.setFromConfigurationFile(cf, driveTapedConfigPath);
+  ret.metricsBackend.setFromConfigurationFile(cf, driveTapedConfigPath);
+  ret.metricsExportOtlpHttpEndpoint.setFromConfigurationFile(cf, driveTapedConfigPath);
+  ret.metricsExportOtlpHttpBasicAuthFile.setFromConfigurationFile(cf, driveTapedConfigPath);
+  ret.metricsExportFileEndpoint.setFromConfigurationFile(cf, driveTapedConfigPath);
+  ret.metricsExportInterval.setFromConfigurationFile(cf, driveTapedConfigPath);
+  ret.metricsExportTimeout.setFromConfigurationFile(cf, driveTapedConfigPath);
 
   // If we get here, the configuration file is good enough to be logged.
   ret.daemonUserName.log(log);
