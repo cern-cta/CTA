@@ -103,7 +103,7 @@ TelemetryConfigBuilder& TelemetryConfigBuilder::metricsOtlpHttpEndpoint(std::str
   return *this;
 }
 
-TelemetryConfigBuilder& TelemetryConfigBuilder::metricsOtlpHttpBasicAuthString(std::string authString) {
+TelemetryConfigBuilder& TelemetryConfigBuilder::metricsOtlpHttpBasicAuthString(const std::string& authString) {
   if (authString.empty()) {
     // Ensure we don't add any headers if not configured
     return *this;
