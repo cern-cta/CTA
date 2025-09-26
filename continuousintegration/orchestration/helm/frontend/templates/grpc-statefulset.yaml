@@ -123,7 +123,7 @@ spec:
           subPath: grpc-health-probe
         {{- if .Values.grpc.conf.telemetry.metricsExportOtlpHttpBasicAuthSecret }}
         - name: otlp-basic-auth
-          mountPath: /etc/cta
+          mountPath: /etc/cta/otlp-basic-auth.conf
           subPath: otlp-basic-auth.conf
         {{- end }}
         {{ include "common.extraVolumeMounts" . | nindent 8 }}
