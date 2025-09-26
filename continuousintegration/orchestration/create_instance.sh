@@ -55,7 +55,7 @@ usage() {
   echo "      --dcache-enabled <true|false>:  Whether to spawn a dCache instance or not. Defaults to false."
   echo "      --cta-config <file>:            Values file to use for the CTA chart. Defaults to presets/dev-cta-xrd-values.yaml."
   echo "      --local-telemetry:              Spawns an OpenTelemetry and Collector and Prometheus scraper. Changes the default cta-config to presets/dev-cta-telemetry-values.yaml"
-  echo "      --publish-telemetry:            Publishes telemetry to a pre-configured central observability backend. See presets/ci-cta-telemetry-values.yaml"
+  echo "      --publish-telemetry:            Publishes telemetry to a pre-configured central observability backend. See presets/ci-cta-telemetry-http-values.yaml"
   exit 1
 }
 
@@ -101,7 +101,7 @@ create_instance() {
   scheduler_config=presets/dev-scheduler-vfs-values.yaml
   cta_config="presets/dev-cta-xrd-values.yaml"
   prometheus_config="presets/dev-prometheus-values.yaml"
-  opentelemetry_collector_config="presets/dev-opentelemetry-values.yaml"
+  opentelemetry_collector_config="presets/dev-otel-collector-values.yaml"
   # By default keep Database and keep Scheduler datastore data
   # default should not make user loose data if he forgot the option
   reset_catalogue=false
@@ -111,7 +111,6 @@ create_instance() {
   num_library_devices=1 # For the auto-generated tapeservers config
   max_drives_per_tpsrv=1
   max_tapeservers=2
-  local_telemetry=false
   # EOS related
   eos_image_tag=$(jq -r .dev.eosImageTag ${project_json_path})
   eos_image_repository=$(jq -r .dev.eosImageRepository ${project_json_path})
@@ -121,6 +120,9 @@ create_instance() {
   dcache_image_tag=$(jq -r .dev.dCacheImageTag ${project_json_path})
   dcache_config=presets/dev-dcache-values.yaml
   dcache_enabled=false
+  # Telemetry
+  local_telemetry=false
+  publish_telemetry=false
 
   # Parse command line arguments
   while [[ "$#" -gt 0 ]]; do
@@ -182,7 +184,7 @@ create_instance() {
         cta_config="$2"
         test -f "${cta_config}" || die "CTA config file ${cta_config} does not exist"
         shift ;;
-      --publish-telemetry) prometheus_config="presets/ci-cta-telemetry-values.yaml" ;;
+      --publish-telemetry) publish_telemetry=true ;;
       *)
         echo "Unsupported argument: $1"
         usage
@@ -203,6 +205,10 @@ create_instance() {
   if [ -z "${catalogue_schema_version}" ]; then
     echo "No catalogue schema version provided: using project.json value"
     catalogue_schema_version=$(jq .catalogueVersion ${project_json_path})
+  fi
+
+  if [ "$local_telemetry" == "true" ] && [ "$publish_telemetry" == "true" ]; then
+    die "--local-telemetry and --publish-telemetry cannot be active at the same time"
   fi
 
   if [ $dry_run == 1 ]; then
@@ -380,6 +386,9 @@ create_instance() {
   extra_cta_chart_flags=""
   if [ "$local_telemetry" == "true" ]; then
     extra_cta_chart_flags+="--values presets/dev-cta-telemetry-values.yaml"
+  fi
+  if [ "$publish_telemetry" == "true" ]; then
+    extra_cta_chart_flags+="--values presets/ci-cta-telemetry-http-values.yaml"
   fi
 
   echo "Installing CTA chart..."
