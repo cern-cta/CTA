@@ -155,7 +155,7 @@ cta.telemetry.retain_instance_id_on_restart false
 cta.telemetry.metrics.backend NOOP
 
 # Amount of time in milliseconds between exports
-cta.telemetry.metrics.export.interval 1000
+cta.telemetry.metrics.export.interval 15000
 # timeout for a single export
 cta.telemetry.metrics.export.timeout 500
 

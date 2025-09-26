@@ -14,8 +14,6 @@ conf:
     enabled: false
     retainInstanceIdOnRestart: false
     metricsBackend: "NOOP"
-    metricsExportInterval: 1000
-    metricsExportTimeout: 500
 
 # SSS keytab to communicate to the disk buffer
 keytab:

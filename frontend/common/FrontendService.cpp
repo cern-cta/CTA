@@ -141,7 +141,7 @@ FrontendService::FrontendService(const std::string& configFilename) : m_archiveF
       }
       auto metricsExportInterval = config.getOptionValueUInt("cta.telemetry.metrics.export.interval");
       if (!metricsExportInterval.has_value()) {
-        metricsExportInterval = 1000;
+        metricsExportInterval = 15000;
       }
       auto metricsExportTimeout = config.getOptionValueUInt("cta.telemetry.metrics.export.timeout");
       if (!metricsExportTimeout.has_value()) {
