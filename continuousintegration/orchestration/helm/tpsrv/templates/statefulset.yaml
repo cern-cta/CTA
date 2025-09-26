@@ -168,7 +168,8 @@ spec:
         {{- end }}
         {{- if $.Values.conf.telemetry.metricsExportOtlpHttpBasicAuthSecret }}
         - name: otlp-basic-auth
-          mountPath: /etc/cta/otlp-basic-auth.conf
+          mountPath: /etc/cta
+          subPath: otlp-basic-auth.conf
         {{- end }}
         {{ include "common.extraVolumeMounts" $ | nindent 8 }}
       {{- end }} # End of containers loop

@@ -136,9 +136,10 @@ spec:
         - name: krb5-conf
           mountPath: /etc/krb5.conf
           subPath: krb5.conf
-      {{- if .Values.xrd.conf.telemetry.metricsExportOtlpHttpBasicAuthFile }}
+      {{- if .Values.xrd.conf.telemetry.metricsExportOtlpHttpBasicAuthSecret }}
         - name: otlp-basic-auth
-          mountPath: /etc/cta/otlp-basic-auth.conf
+          mountPath: /etc/cta
+          subPath: otlp-basic-auth.conf
       {{- end }}
       {{- if eq $schedulerConfig.backend "vfs" }}
         - name: vfs-storage-volume
@@ -185,10 +186,10 @@ spec:
       - name: krb5-conf
         configMap:
           name: {{ .Values.global.kerberos.clientConfig.configMap }}
-      {{- if .Values.xrd.conf.telemetry.metricsExportOtlpHttpBasicAuthFile }}
+      {{- if .Values.xrd.conf.telemetry.metricsExportOtlpHttpBasicAuthSecret }}
       - name: otlp-basic-auth
         secret:
-          secretName: {{ .Values.xrd.conf.telemetry.metricsExportOtlpHttpBasicAuthFile }}
+          secretName: {{ .Values.xrd.conf.telemetry.metricsExportOtlpHttpBasicAuthSecret }}
       {{- end }}
       {{ include "common.extraVolumes" . | nindent 6 }}
 {{- end }}
