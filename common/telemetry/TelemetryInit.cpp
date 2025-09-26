@@ -14,16 +14,23 @@
 #include <opentelemetry/sdk/metrics/meter_context_factory.h>
 #include <opentelemetry/sdk/resource/resource.h>
 #include <opentelemetry/sdk/common/attribute_utils.h>
+#include <opentelemetry/sdk/common/global_log_handler.h>
 
 #include "common/utils/utils.hpp"
 #include "common/telemetry/config/TelemetryConfigSingleton.hpp"
 #include "common/telemetry/metrics/InstrumentRegistry.hpp"
+#include "common/telemetry/CtaTelemetryLogHandler.hpp"
 #include "common/semconv/SemConv.hpp"
 
 namespace cta::telemetry {
 
 namespace metrics_sdk = opentelemetry::sdk::metrics;
 namespace metrics_api = opentelemetry::metrics;
+
+void setOpenTelemetryLogHandler(cta::log::Logger& log) {
+  opentelemetry::sdk::common::internal_log::GlobalLogHandler::SetLogHandler(
+    std::unique_ptr<opentelemetry::sdk::common::internal_log::LogHandler>(new CtaTelemetryLogHandler(log)));
+}
 
 std::unique_ptr<metrics_sdk::PushMetricExporter> createExporter(const TelemetryConfig& config,
                                                                 cta::log::LogContext& lc) {
@@ -53,6 +60,8 @@ std::unique_ptr<metrics_sdk::PushMetricExporter> createExporter(const TelemetryC
 
       for (const auto& kv : config.metrics.otlpHttpHeaders) {
         opts.http_headers.insert({kv.first, kv.second});
+
+        lc.log(log::INFO, "In createExporter(): Adding header: " + kv.first + "=" + kv.second);
       }
       exporter = opentelemetry::exporter::otlp::OtlpHttpMetricExporterFactory::Create(opts);
       break;
@@ -71,9 +80,6 @@ std::unique_ptr<metrics_sdk::PushMetricExporter> createExporter(const TelemetryC
     lc.log(log::ERR, "In createExporter: failed to initialise exporter.");
     throw std::runtime_error("createExporter: failed to initialise exporter.");
   }
-  lc.log(log::DEBUG,
-         "In createExporter(): OpenTelemetry exporter initialised"
-         "used in production.");
   return exporter;
 }
 
@@ -138,6 +144,8 @@ void initMetrics(const TelemetryConfig& config, cta::log::LogContext& lc) {
 }
 
 void initTelemetry(const TelemetryConfig& config, cta::log::LogContext& lc) {
+  // We need the underlying logger (a longer lived object than the context)
+  setOpenTelemetryLogHandler(lc.logger());
   // Eventually we can init e.g. traces here as well
   initMetrics(config, lc);
   // Ensure we can reuse the config when re-initialise the metrics after e.g. a fork

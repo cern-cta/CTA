@@ -112,7 +112,7 @@ data:
     {{- if .Values.xrd.conf.telemetry.metricsExportOtlpHttpEndpoint }}
     cta.telemetry.metrics.export.otlp_http.endpoint {{ .Values.xrd.conf.telemetry.metricsExportOtlpHttpEndpoint }}
     {{- end }}
-    {{- if .Values.xrd.conf.telemetry.metricsExportOtlpHttpBasicAuthFile }}
+    {{- if .Values.xrd.conf.telemetry.metricsExportOtlpHttpBasicAuthSecret }}
     cta.telemetry.metrics.export.otlp_http.basic_auth_file /etc/cta/otlp-basic-auth.conf
     {{- end }}
     {{- if .Values.xrd.conf.telemetry.metricsExportFileEndpoint }}

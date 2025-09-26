@@ -41,7 +41,6 @@ std::string metricsBackendToString(MetricsBackend backend) {
   throw std::invalid_argument("Provided MetricsBackend cannot be converted to string");
 }
 
-// TODO: this can probably be done cleaner
 std::string authStringFromFile(const std::string& filePath) {
   std::ifstream file(filePath);
   if (!file.is_open()) {
@@ -109,7 +108,7 @@ TelemetryConfigBuilder& TelemetryConfigBuilder::metricsOtlpHttpBasicAuthString(s
     // Ensure we don't add any headers if not configured
     return *this;
   }
-  m_config.metrics.otlpHttpHeaders["authorization"] = "Basic " + authString;
+  m_config.metrics.otlpHttpHeaders["Authorization"] = "Basic " + authString;
   return *this;
 }
 

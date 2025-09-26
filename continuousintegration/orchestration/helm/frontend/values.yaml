@@ -44,8 +44,6 @@ grpc:
       enabled: false
       retainInstanceIdOnRestart: false
       metricsBackend: "NOOP"
-      metricsExportInterval: 1000
-      metricsExportTimeout: 500
 xrd:
   enabled: true
   port: 10955
@@ -75,8 +73,6 @@ xrd:
       enabled: false
       retainInstanceIdOnRestart: false
       metricsBackend: "NOOP"
-      metricsExportInterval: 1000
-      metricsExportTimeout: 500
 
   keytab:
     secretName: cta-frontend-keytab

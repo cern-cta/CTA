@@ -265,7 +265,7 @@ taped externalFreeDiskSpaceScript /usr/bin/cta-eosdf.sh
 # telemetry metricsBackend NOOP
 #
 # Amount of time in milliseconds between exports
-# telemetry metricsExportInterval 1000
+# telemetry metricsExportInterval 15000
 #
 # Timeout for a single export
 # telemetry metricsExportTimeout 500

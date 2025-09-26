@@ -306,7 +306,7 @@ struct TapedConfiguration {
     "telemetry", "metricsExportFileEndpoint", "/var/log/cta/cta-taped-metrics.txt", "Compile time default"};
 
   cta::SourcedParameter<uint32_t> metricsExportInterval{
-    "telemetry", "metricsExportInterval", 1000, "Compile time default"};
+    "telemetry", "metricsExportInterval", 15000, "Compile time default"};
 
   cta::SourcedParameter<uint32_t> metricsExportTimeout{
     "telemetry", "metricsExportTimeout", 500, "Compile time default"};
