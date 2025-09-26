@@ -5,26 +5,26 @@ frontend:
   xrd:
     conf:
       telemetry:
-        enabled: false
+        enabled: true
         retainInstanceIdOnRestart: false
-        metricsBackend: "NOOP"
+        metricsBackend: "OTLP_HTTP"
         metricsExportOtlpHttpEndpoint: "http://monit-otlp.cern.ch:4319"
         metricsExportOtlpHttpBasicAuthSecret: monit-collector-auth
 
   grpc:
     conf:
       telemetry:
-        enabled: false
+        enabled: true
         retainInstanceIdOnRestart: false
-        metricsBackend: "NOOP"
+        metricsBackend: "OTLP_HTTP"
         metricsExportOtlpHttpEndpoint: "http://monit-otlp.cern.ch:4319"
         metricsExportOtlpHttpBasicAuthSecret: monit-collector-auth
 
 tpsrv:
   conf:
     telemetry:
-      enabled: false
+      enabled: true
       retainInstanceIdOnRestart: false
-      metricsBackend: "NOOP"
+      metricsBackend: "OTLP_HTTP"
       metricsExportOtlpHttpEndpoint: "http://monit-otlp.cern.ch:4319"
       metricsExportOtlpHttpBasicAuthSecret: monit-collector-auth

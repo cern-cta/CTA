@@ -81,7 +81,7 @@ void initMetrics(const TelemetryConfig& config, cta::log::LogContext& lc) {
   if (config.metrics.backend == MetricsBackend::NOOP) {
     std::shared_ptr<metrics_api::MeterProvider> noopProvider = std::make_shared<metrics_api::NoopMeterProvider>();
     metrics_api::Provider::SetMeterProvider(noopProvider);
-    lc.log(log::INFO, "In initMetrics(): NOOP backend provided. Telemetry will be disabled.");
+    lc.log(log::DEBUG, "In initMetrics(): NOOP backend provided. Telemetry will be disabled.");
     return;
   }
 
