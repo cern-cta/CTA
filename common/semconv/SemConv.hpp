@@ -31,6 +31,7 @@ static constexpr const char* kServiceInstanceId = "service.instance.id";
 static constexpr const char* kProcessTitle = "process.title";
 // See https://opentelemetry.io/docs/specs/semconv/registry/attributes/host/ why we go for host.name instead of hostname
 static constexpr const char* kHostName = "host.name";
+
 static constexpr const char* kErrorType = "error.type";
 static constexpr const char* kState = "state";
 
@@ -38,11 +39,12 @@ static constexpr const char* kDbSystemName = "db.system.name";
 static constexpr const char* kDbNamespace = "db.namespace";
 
 // Non-standard -- CTA-specific
-static constexpr const char* kCtaEventName = "cta.event.name";
-static constexpr const char* kSchedulerBackendName = "cta.scheduler.backend.name";
-static constexpr const char* kCtaSchedulingOperationName = "cta.scheduler.operation.name";
+static constexpr const char* kSchedulerNamespace = "cta.scheduler.namespace";  // schedulerBackendName but better
+static constexpr const char* kSchedulerOperationName = "cta.scheduler.operation.name";
+static constexpr const char* kEventName = "cta.event.name";
 static constexpr const char* kLockType = "cta.lock.type";
 static constexpr const char* kThreadPoolName = "cta.taped.thread_pool.name";
+static constexpr const char* kFrontendRequestInitiator = "cta.frontend.request.initiator";
 // similar to disk.io.direction
 static constexpr const char* kCtaTransferDirection = "cta.transfer.direction";
 

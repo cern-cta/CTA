@@ -16,8 +16,6 @@ namespace {
 void initInstruments() {
   auto meter = cta::telemetry::metrics::getMeter("cta.scheduler", CTA_VERSION);
 
-  // Instrument initialisation
-
   // Based on https://opentelemetry.io/docs/specs/semconv/messaging/messaging-metrics/#metric-messagingclientoperationduration
   cta::telemetry::metrics::ctaSchedulingOperationDuration =
     meter->CreateUInt64Histogram("cta.scheduler.operation.duration", "Duration of a CTA scheduling operation", "ms");

@@ -17,8 +17,6 @@ namespace {
 void initInstruments() {
   auto meter = cta::telemetry::metrics::getMeter("cta.objectstore", CTA_VERSION);
 
-  // Instrument initialisation
-
   cta::telemetry::metrics::ctaObjectstoreLockAcquireDuration =
     meter->CreateUInt64Histogram("cta.objectstore.lock.acquire.duration",
                                  "Duration taken to acquire an objectstore lock",

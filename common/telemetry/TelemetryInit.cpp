@@ -27,11 +27,6 @@ namespace cta::telemetry {
 namespace metrics_sdk = opentelemetry::sdk::metrics;
 namespace metrics_api = opentelemetry::metrics;
 
-void setOpenTelemetryLogHandler(cta::log::Logger& log) {
-  opentelemetry::sdk::common::internal_log::GlobalLogHandler::SetLogHandler(
-    std::unique_ptr<opentelemetry::sdk::common::internal_log::LogHandler>(new CtaTelemetryLogHandler(log)));
-}
-
 std::unique_ptr<metrics_sdk::PushMetricExporter> createExporter(const TelemetryConfig& config,
                                                                 cta::log::LogContext& lc) {
   std::unique_ptr<metrics_sdk::PushMetricExporter> exporter;
@@ -60,7 +55,6 @@ std::unique_ptr<metrics_sdk::PushMetricExporter> createExporter(const TelemetryC
 
       for (const auto& kv : config.metrics.otlpHttpHeaders) {
         opts.http_headers.insert({kv.first, kv.second});
-
         lc.log(log::INFO, "In createExporter(): Adding header: " + kv.first + "=" + kv.second);
       }
       exporter = opentelemetry::exporter::otlp::OtlpHttpMetricExporterFactory::Create(opts);
@@ -144,8 +138,9 @@ void initMetrics(const TelemetryConfig& config, cta::log::LogContext& lc) {
 }
 
 void initTelemetry(const TelemetryConfig& config, cta::log::LogContext& lc) {
-  // We need the underlying logger (a longer lived object than the context)
-  setOpenTelemetryLogHandler(lc.logger());
+  // Ensure any logged messages go through the CTA logging system
+  opentelemetry::sdk::common::internal_log::GlobalLogHandler::SetLogHandler(
+    std::unique_ptr<opentelemetry::sdk::common::internal_log::LogHandler>(new CtaTelemetryLogHandler(lc.logger())));
   // Eventually we can init e.g. traces here as well
   initMetrics(config, lc);
   // Ensure we can reuse the config when re-initialise the metrics after e.g. a fork

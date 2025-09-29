@@ -17,8 +17,6 @@ namespace {
 void initInstruments() {
   auto meter = cta::telemetry::metrics::getMeter("cta.taped", CTA_VERSION);
 
-  // Instrument initialisation
-
   // It seems that there is a common .io suffix used, but this is only used for data flow in bytes.
   // Here we count files; not bytes.... Maybe we should be counting bytes? In that case: cta.taped.io
   cta::telemetry::metrics::ctaTapedTransfers =
@@ -28,7 +26,9 @@ void initInstruments() {
     meter->CreateUInt64Counter("cta.taped.mounts", "Number of tape mounts", "1");
 
   cta::telemetry::metrics::ctaTapedThreadPoolSize =
-    meter->CreateInt64UpDownCounter("cta.taped.thread_pool.size", "Number of active threads", "1");
+    meter->CreateInt64UpDownCounter("cta.taped.thread_pool.size",
+                                    "Number of active threads in the cta taped tape pools",
+                                    "1");
 }
 
 // Register and run this init function at start time

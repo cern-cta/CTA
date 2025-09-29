@@ -17,8 +17,6 @@ namespace {
 void initInstruments() {
   auto meter = cta::telemetry::metrics::getMeter("cta.rdbms", CTA_VERSION);
 
-  // Instrument initialisation
-
   // See https://opentelemetry.io/docs/specs/semconv/database/database-metrics/#metric-dbclientoperationduration
   // TODO: specify explicit bucket boundaries to follow the spec
   cta::telemetry::metrics::dbClientOperationDuration =
