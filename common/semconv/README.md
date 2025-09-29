@@ -32,7 +32,7 @@ The variable names for attribute values MUST be the same as their values with th
 In addition, values MUST live in a separate namespace specific to the attribute key that they are for.
 The namespace name MUST be the attribute key expressed using CamelCasing, appended by `Values`.
 
-For example, the attribute key `transfer.direction` might have as a possible value `read`.
+For example, the attribute key `cta.transfer.direction` might have as a possible value `archive`.
 
 - The attribute key variable would be `cta::semconv::kCtaTransferDirection`.
-- The attribute value variable would be `cta::semconv::CtaTransferDirectionValues::kRead`
+- The attribute value variable would be `cta::semconv::CtaTransferDirectionValues::kArchive`

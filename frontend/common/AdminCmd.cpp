@@ -263,12 +263,15 @@ void AdminCmd::logAdminCmd(const std::string& function, const std::string& statu
   if (status == "failure") {
     cta::telemetry::metrics::ctaFrontendRequestDuration->Record(
       t.msecs(),
-      {{cta::semconv::kCtaEventName, "ADMIN"}, {cta::semconv::kErrorType, cta::semconv::ErrorTypeValues::kException}},
+      {{cta::semconv::kEventName, "ADMIN"},
+       {cta::semconv::kFrontendRequestInitiator, "ADMIN"},
+       {cta::semconv::kErrorType, cta::semconv::ErrorTypeValues::kException}},
       opentelemetry::context::RuntimeContext::GetCurrent());
   } else {
     cta::telemetry::metrics::ctaFrontendRequestDuration->Record(
       t.msecs(),
-      {{cta::semconv::kCtaEventName, "ADMIN"}},
+      {{cta::semconv::kEventName, "ADMIN"},
+       {cta::semconv::kFrontendRequestInitiator, "ADMIN"}},
       opentelemetry::context::RuntimeContext::GetCurrent());
   }
 

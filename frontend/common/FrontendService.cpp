@@ -169,7 +169,7 @@ FrontendService::FrontendService(const std::string& configFilename) : m_archiveF
           .serviceNamespace(m_instanceName)
           .serviceVersion(CTA_VERSION)
           .retainInstanceIdOnRestart(retainInstanceIdOnRestart.value())
-          .resourceAttribute(cta::semconv::kSchedulerBackendName, m_schedulerBackendName)
+          .resourceAttribute(cta::semconv::kSchedulerNamespace, m_schedulerBackendName)
           .metricsBackend(metricsBackend.value())
           .metricsExportInterval(std::chrono::milliseconds(metricsExportInterval.value()))
           .metricsExportTimeout(std::chrono::milliseconds(metricsExportTimeout.value()))

@@ -21,6 +21,11 @@
 
 namespace cta::telemetry {
 
+/**
+ * An implementation of the internal log handler from OpenTelemetry that ensures the internal
+ * OpenTelemetry logs are written in the same file and format as the CTA logs.
+ * Note that by default, this only concerns errors and should therefore not pollute the logs unnecessarily.
+ */
 class CtaTelemetryLogHandler : public opentelemetry::sdk::common::internal_log::LogHandler {
 public:
   explicit CtaTelemetryLogHandler(log::Logger& log);

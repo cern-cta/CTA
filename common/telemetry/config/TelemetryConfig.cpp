@@ -138,7 +138,7 @@ TelemetryConfig TelemetryConfigBuilder::build() const {
   constexpr char kGrpcEndpointGenericEnv[] = "OTEL_EXPORTER_OTLP_ENDPOINT";
   if (m_config.metrics.backend == MetricsBackend::OTLP_GRPC && !std::getenv(kGrpcEndpointSignalEnv) &&
       !std::getenv(kGrpcEndpointGenericEnv)) {
-    throw std::invalid_argument("TelemetryConfig: OTLP_GRPC metrics backend requires the env variables "
+    throw std::invalid_argument("TelemetryConfig: OTLP_GRPC metrics backend requires the env variable "
                                 "OTEL_EXPORTER_OTLP_METRICS_ENDPOINT or OTEL_EXPORTER_OTLP_ENDPOINT.");
   }
 
