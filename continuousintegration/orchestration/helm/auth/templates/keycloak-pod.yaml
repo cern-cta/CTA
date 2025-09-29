@@ -48,4 +48,22 @@ spec:
             secretKeyRef:
               name: keycloak-admin-credentials
               key: password
+        - name: KRB5_CONFIG
+          value: /etc/krb5.conf
+      volumeMounts:
+        - name: krb5-conf
+          mountPath: /etc/krb5.conf
+          subPath: krb5.conf
+        - name: keycloak-keytab
+          mountPath: /etc/keycloak.keytab
+          subPath: keycloak.keytab
+          readOnly: true
+  volumes:
+    - name: krb5-conf
+      configMap:
+        name: krb5-conf
+    - name: keycloak-keytab
+      secret:
+        secretName: keycloak-keytab
+        optional: true
 

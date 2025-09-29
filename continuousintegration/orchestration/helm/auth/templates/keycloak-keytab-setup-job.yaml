@@ -1,0 +1,53 @@
+{{- $kdcName := include "kdc.fullname" . }}
+{{- $keycloakName := include "keycloak.fullname" . }}
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: {{ .Release.Name }}-setup-keycloak-keytab-job
+  namespace: {{ .Release.Namespace | quote }}
+  annotations:
+    "helm.sh/hook": post-install
+    "helm.sh/hook-weight": "-5"   # Run before the keycloak configure job
+    "helm.sh/hook-delete-policy": delete
+spec:
+  backoffLimit: 0
+  ttlSecondsAfterFinished: 300
+  template:
+    spec:
+      automountServiceAccountToken: true
+      restartPolicy: Never
+      serviceAccountName: secret-writer
+      containers:
+        - name: setup-keytab
+          image: bitnami/kubectl:latest
+          securityContext:
+            allowPrivilegeEscalation: {{ include "common.securityContext.allowPrivilegeEscalation" . }}
+          command:
+            - /bin/bash
+            - -c
+            - |
+              set -e
+
+              echo "Setting up Kerberos keytab for Keycloak..."
+
+              # Wait for KDC to be ready
+              echo "Waiting for KDC to be ready..."
+              until kubectl get pod {{ $kdcName }} -n {{ .Release.Namespace }} --no-headers | grep -q Running; do
+                echo "Waiting for KDC pod to be running..."
+                sleep 5
+              done
+
+              # Copy keytab file from KDC pod
+              echo "Copying keytab file from KDC..."
+              kubectl cp {{ .Release.Namespace }}/{{ $kdcName }}:/tmp/keycloak.keytab ./keycloak.keytab
+
+              # Create Kubernetes secret with the keytab
+              echo "Creating Kubernetes secret with keytab..."
+              kubectl create secret generic keycloak-keytab -n {{ .Release.Namespace }} \
+                --from-file=keycloak.keytab=./keycloak.keytab \
+                --dry-run=client -o yaml | kubectl apply -f -
+
+              echo "Kerberos keytab setup completed successfully!"
+          env:
+            - name: KRB5_REALM
+              value: {{ .Values.kerberos.defaultRealm }}
