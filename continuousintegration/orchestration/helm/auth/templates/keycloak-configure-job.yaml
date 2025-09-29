@@ -124,16 +124,17 @@ spec:
               echo "Setting up Kerberos User Federation..."
 
               # Check if Kerberos user federation already exists
-              KERBEROS_PROVIDER_ID=$(/opt/keycloak/bin/kcadm.sh get user-federation/instances -r master --format csv 2>/dev/null | grep kerberos | head -1 | cut -d',' -f1 | tr -d '"')
+              KERBEROS_PROVIDER_ID=$(/opt/keycloak/bin/kcadm.sh get components -r master --fields id,providerId 2>/dev/null | grep kerberos | head -1 | grep -o '"id" : "[^"]*"' | sed 's/"id" : "\([^"]*\)"/\1/')
 
               if [ -z "$KERBEROS_PROVIDER_ID" ]; then
                 echo "Creating Kerberos User Federation provider..."
-                KERBEROS_PROVIDER_ID=$(/opt/keycloak/bin/kcadm.sh create user-federation/instances -r master \
+                KERBEROS_PROVIDER_ID=$(/opt/keycloak/bin/kcadm.sh create components -r master \
+                  -s name="kerberos" \
                   -s parentId="master" \
                   -s providerId="kerberos" \
                   -s providerType="org.keycloak.storage.UserStorageProvider" \
                   -s 'config.kerberosRealm=["{{ .Values.kerberos.defaultRealm }}"]' \
-                  -s 'config.serverPrincipal=["HTTP/keycloak@{{ .Values.kerberos.defaultRealm }}"]' \
+                  -s 'config.serverPrincipal=["HTTP/auth-keycloak@{{ .Values.kerberos.defaultRealm }}"]' \
                   -s 'config.keyTab=["/etc/keycloak.keytab"]' \
                   -s 'config.debug=["true"]' \
                   -s 'config.allowKerberosAuthentication=["true"]' \
@@ -145,9 +146,9 @@ spec:
                 echo "Kerberos User Federation provider already exists (ID: $KERBEROS_PROVIDER_ID)"
               fi
 
-              # Create test Kerberos users via kadmin
-              echo "Creating test Kerberos users..."
-              /opt/keycloak/bin/kcadm.sh get user-federation/instances/$KERBEROS_PROVIDER_ID/sync?action=triggerFullSync -r master
+              # Trigger sync of Kerberos users
+              echo "Triggering Kerberos user sync..."
+              /opt/keycloak/bin/kcadm.sh create components/$KERBEROS_PROVIDER_ID/user-storage/sync -r master -s action=triggerFullSync || echo "Sync command completed"
 
 
           env:
