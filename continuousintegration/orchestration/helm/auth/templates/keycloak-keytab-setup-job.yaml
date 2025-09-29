@@ -19,7 +19,7 @@ spec:
       serviceAccountName: secret-writer
       containers:
         - name: setup-keytab
-          image: bitnami/kubectl:latest
+          image: {{ include "kdc.image" . }}
           securityContext:
             allowPrivilegeEscalation: {{ include "common.securityContext.allowPrivilegeEscalation" . }}
           command:
@@ -29,6 +29,12 @@ spec:
               set -e
 
               echo "Setting up Kerberos keytab for Keycloak..."
+
+              # Install kubectl
+              echo "Installing kubectl..."
+              curl -LO "https://dl.k8s.io/release/$(curl -L -s https://dl.k8s.io/release/stable.txt)/bin/linux/amd64/kubectl"
+              chmod +x kubectl
+              mv kubectl /usr/local/bin/
 
               # Wait for KDC to be ready
               echo "Waiting for KDC to be ready..."
