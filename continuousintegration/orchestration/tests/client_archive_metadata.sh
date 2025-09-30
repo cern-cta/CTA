@@ -44,7 +44,7 @@ NOW=$(date +%s)
 LATER=$(echo "${NOW}+86400" | bc)
 
 # Generate Tokens
-TOKEN_EOSUSER1=$(XrdSecPROTOCOL=sss XrdSecSSSKT=/etc/sss.keytab eos root://"${EOS_MGM_HOST}" token --tree --path '/eos/ctaeos/://:/api/' --expires "${LATER}" --owner user1 --group eosusers --permission rwx)
+TOKEN_EOSUSER1=$(eosadmin_eos root://"${EOS_MGM_HOST}" token --tree --path '/eos/ctaeos/://:/api/' --expires "${LATER}" --owner user1 --group eosusers --permission rwx)
 
 echo "Printing eosuser token dump"
 eos root://"${EOS_MGM_HOST}" token --token "${TOKEN_EOSUSER1}" | jq .
