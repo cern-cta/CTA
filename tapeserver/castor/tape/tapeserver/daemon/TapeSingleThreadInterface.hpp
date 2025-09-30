@@ -22,6 +22,8 @@
 
 #pragma once
 
+#include <opentelemetry/context/runtime_context.h>
+
 #include "mediachanger/MediaChangerFacade.hpp"
 #include "common/log/LogContext.hpp"
 #include "common/threading/BlockingQueue.hpp"
@@ -32,7 +34,7 @@
 #include "tapeserver/castor/tape/tapeserver/drive/DriveInterface.hpp"
 #include "tapeserver/castor/tape/tapeserver/daemon/EncryptionControl.hpp"
 #include "common/Timer.hpp"
-#include "common/semconv/SemConv.hpp"
+#include "common/semconv/Attributes.hpp"
 #include "common/telemetry/metrics/instruments/TapedInstruments.hpp"
 
 namespace castor::tape::tapeserver::daemon {
@@ -97,9 +99,10 @@ protected:
       m_mediaChanger.mountTapeReadOnly(m_volInfo.vid, m_drive.config.librarySlot());
       const std::string modeAsString = "R";
       scoped.add("MCMountTime", timer.secs()).add("mode", modeAsString);
+      cta::telemetry::metrics::ctaTapedMountDuration->Record(timer.msecs(), {
+        {cta::semconv::attr::kCtaTransferDirection, cta::semconv::attr::CtaTransferDirectionValues::kRetrieve}},
+      opentelemetry::context::RuntimeContext::GetCurrent());
       m_logContext.log(cta::log::INFO, "Tape mounted for read-only access");
-      cta::telemetry::metrics::ctaTapedMounts->Add(1, {
-        {cta::semconv::kCtaTransferDirection, cta::semconv::CtaTransferDirectionValues::kRetrieve}});
     }
     catch (cta::exception::Exception& ex) {
       scoped.add("exceptionMessage", ex.getMessageValue());
@@ -119,9 +122,10 @@ protected:
       m_mediaChanger.mountTapeReadWrite(m_volInfo.vid, m_drive.config.librarySlot());
       const std::string modeAsString = "RW";
       scoped.add("MCMountTime", timer.secs()).add("mode", modeAsString);
+      cta::telemetry::metrics::ctaTapedMountDuration->Record(timer.msecs(), {
+        {cta::semconv::attr::kCtaTransferDirection, cta::semconv::attr::CtaTransferDirectionValues::kArchive}},
+      opentelemetry::context::RuntimeContext::GetCurrent());
       m_logContext.log(cta::log::INFO, "Tape mounted for read/write access");
-      cta::telemetry::metrics::ctaTapedMounts->Add(1, {
-        {cta::semconv::kCtaTransferDirection, cta::semconv::CtaTransferDirectionValues::kArchive}});
     }
     catch (cta::exception::Exception& ex) {
       scoped.add("exceptionMessage", ex.getMessageValue());

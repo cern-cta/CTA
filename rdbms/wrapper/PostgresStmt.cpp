@@ -19,7 +19,7 @@
 #include "common/exception/Exception.hpp"
 #include "common/exception/LostDatabaseConnection.hpp"
 #include "common/threading/RWLockRdLocker.hpp"
-#include "common/semconv/SemConv.hpp"
+#include "common/semconv/Attributes.hpp"
 
 #include "rdbms/wrapper/PostgresColumn.hpp"
 #include "rdbms/wrapper/PostgresConn.hpp"
@@ -635,7 +635,7 @@ void PostgresStmt::throwDBIfNotStatus(const PGresult* res,
 // getDbSystemName
 //------------------------------------------------------------------------------
 std::string PostgresStmt::getDbSystemName() const {
-  return cta::semconv::DbSystemNameValues::kPostgres;
+  return cta::semconv::attr::DbSystemNameValues::kPostgres;
 }
 
 //------------------------------------------------------------------------------

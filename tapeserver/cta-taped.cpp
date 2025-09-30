@@ -20,10 +20,10 @@
 #include "common/log/StdoutLogger.hpp"
 #include "common/processCap/ProcessCap.hpp"
 #include "common/threading/System.hpp"
-#include "common/semconv/SemConv.hpp"
+#include "common/semconv/Attributes.hpp"
 #include "common/telemetry/TelemetryInit.hpp"
 #include "common/telemetry/config/TelemetryConfig.hpp"
-#include "common/semconv/SemConv.hpp"
+#include "common/semconv/Attributes.hpp"
 #include "tapeserver/daemon/CommandLineParams.hpp"
 #include "tapeserver/daemon/common/TapedConfiguration.hpp"
 #include "tapeserver/daemon/TapeDaemon.hpp"
@@ -240,11 +240,11 @@ int main(const int argc, char **const argv) {
       std::string otlpHttpBasicAuthFile = globalConfig.metricsExportOtlpHttpBasicAuthFile.value();
       std::string otlpHttpBasicAuthString = otlpHttpBasicAuthFile.empty() ? "" : cta::telemetry::authStringFromFile(otlpHttpBasicAuthFile);
       cta::telemetry::TelemetryConfig telemetryConfig = cta::telemetry::TelemetryConfigBuilder()
-        .serviceName(cta::semconv::ServiceNameValues::kCtaTaped)
+        .serviceName(cta::semconv::attr::ServiceNameValues::kCtaTaped)
         .serviceNamespace(globalConfig.instanceName.value())
         .serviceVersion(CTA_VERSION)
         .retainInstanceIdOnRestart(globalConfig.retainInstanceIdOnRestart.value())
-        .resourceAttribute(cta::semconv::kSchedulerNamespace, globalConfig.schedulerBackendName.value())
+        .resourceAttribute(cta::semconv::attr::kSchedulerNamespace, globalConfig.schedulerBackendName.value())
         .metricsBackend(metricsBackend)
         .metricsExportInterval(std::chrono::milliseconds(globalConfig.metricsExportInterval.value()))
         .metricsExportTimeout(std::chrono::milliseconds(globalConfig.metricsExportTimeout.value()))

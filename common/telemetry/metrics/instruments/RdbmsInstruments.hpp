@@ -28,6 +28,6 @@ extern std::unique_ptr<opentelemetry::metrics::Histogram<uint64_t>> dbClientOper
 /**
  * The number of connections that are currently in state described by the state attribute.
  */
-extern std::unique_ptr<opentelemetry::metrics::UpDownCounter<int64_t>> rdbmsConnectionCount;
+extern std::unique_ptr<opentelemetry::metrics::UpDownCounter<int64_t>> dbClientConnectionCount;
 
 }  // namespace cta::telemetry::metrics

@@ -1,10 +1,12 @@
 #include "FrontendInstruments.hpp"
 
 #include <opentelemetry/metrics/provider.h>
+
+#include "version.h"
 #include "common/telemetry/metrics/InstrumentRegistry.hpp"
 #include "common/telemetry/metrics/MetricsUtils.hpp"
-#include "version.h"
-#include "common/semconv/SemConv.hpp"
+#include "common/semconv/Meter.hpp"
+#include "common/semconv/Metrics.hpp"
 
 namespace cta::telemetry::metrics {
 
@@ -14,16 +16,12 @@ std::unique_ptr<opentelemetry::metrics::Histogram<uint64_t>> ctaFrontendRequestD
 
 namespace {
 void initInstruments() {
-  auto meter = cta::telemetry::metrics::getMeter("cta.frontend", CTA_VERSION);
+  auto meter = cta::telemetry::metrics::getMeter(cta::semconv::meter::kCtaFrontend, CTA_VERSION);
 
-  /**
-   * Loosely based on https://opentelemetry.io/docs/specs/semconv/rpc/rpc-metrics/
-   * We don't use the rpc metric because we only instrument the core method behind it; not the full RPC call.
-   */
   cta::telemetry::metrics::ctaFrontendRequestDuration =
-    meter->CreateUInt64Histogram("cta.frontend.request.duration",
-                                 "Duration the frontend takes to process a request.",
-                                 "ms");
+    meter->CreateUInt64Histogram(cta::semconv::metrics::kMetricCtaFrontendRequestDuration,
+                                 cta::semconv::metrics::descrCtaFrontendRequestDuration,
+                                 cta::semconv::metrics::unitCtaFrontendRequestDuration);
 }
 
 // Register and run this init function at start time

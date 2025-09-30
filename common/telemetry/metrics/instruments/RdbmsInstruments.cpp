@@ -1,32 +1,33 @@
 #include "RdbmsInstruments.hpp"
 
 #include <opentelemetry/metrics/provider.h>
+
+#include "version.h"
 #include "common/telemetry/metrics/InstrumentRegistry.hpp"
 #include "common/telemetry/metrics/MetricsUtils.hpp"
-#include "version.h"
-#include <opentelemetry/semconv/incubating/process_attributes.h>
+#include "common/semconv/Meter.hpp"
+#include "common/semconv/Metrics.hpp"
 
 namespace cta::telemetry::metrics {
 
 std::unique_ptr<opentelemetry::metrics::Histogram<uint64_t>> dbClientOperationDuration;
-std::unique_ptr<opentelemetry::metrics::UpDownCounter<int64_t>> rdbmsConnectionCount;
+std::unique_ptr<opentelemetry::metrics::UpDownCounter<int64_t>> dbClientConnectionCount;
 
 }  // namespace cta::telemetry::metrics
 
 namespace {
 void initInstruments() {
-  auto meter = cta::telemetry::metrics::getMeter("cta.rdbms", CTA_VERSION);
+  auto meter = cta::telemetry::metrics::getMeter(cta::semconv::meter::kCtaRdbms, CTA_VERSION);
 
-  // See https://opentelemetry.io/docs/specs/semconv/database/database-metrics/#metric-dbclientoperationduration
-  // TODO: specify explicit bucket boundaries to follow the spec
   cta::telemetry::metrics::dbClientOperationDuration =
-    meter->CreateUInt64Histogram("db.client.operation.duration", "Duration of database client operations.", "ms");
+    meter->CreateUInt64Histogram(cta::semconv::metrics::kMetricDbClientOperationDuration,
+                                 cta::semconv::metrics::descrDbClientOperationDuration,
+                                 cta::semconv::metrics::unitDbClientOperationDuration);
 
-  // See https://opentelemetry.io/docs/specs/semconv/database/database-metrics/#metric-dbclientconnectioncount
-  cta::telemetry::metrics::rdbmsConnectionCount = meter->CreateInt64UpDownCounter(
-    "db.client.connection.count",
-    "The number of connections that are currently in state described by the state attribute.",
-    "1");
+  cta::telemetry::metrics::dbClientConnectionCount =
+    meter->CreateInt64UpDownCounter(cta::semconv::metrics::kMetricDbClientConnectionCount,
+                                    cta::semconv::metrics::descrDbClientConnectionCount,
+                                    cta::semconv::metrics::unitDbClientConnectionCount);
 }
 
 // Register and run this init function at start time

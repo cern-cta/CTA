@@ -16,7 +16,7 @@
  */
 
 #include "common/exception/Exception.hpp"
-#include "common/semconv/SemConv.hpp"
+#include "common/semconv/Attributes.hpp"
 #include "rdbms/wrapper/PostgresConn.hpp"
 #include "rdbms/wrapper/PostgresConnFactory.hpp"
 #include "plugin-manager/PluginInterface.hpp"
@@ -46,7 +46,7 @@ std::unique_ptr<ConnWrapper> PostgresConnFactory::create() {
 // getDbSystemName
 //------------------------------------------------------------------------------
 std::string PostgresConnFactory::getDbSystemName() const {
-  return cta::semconv::DbSystemNameValues::kPostgres;
+  return cta::semconv::attr::DbSystemNameValues::kPostgres;
 }
 
 //------------------------------------------------------------------------------

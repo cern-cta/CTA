@@ -16,14 +16,16 @@
  */
 #pragma once
 
-#include <opentelemetry/metrics/meter.h>
-#include <opentelemetry/metrics/provider.h>
+#include <string>
 
-namespace cta::telemetry::metrics {
+// At the moment only used for meter names.
+// However, if these values are used in other places in the future, we can make this more generic.
+namespace cta::semconv::meter {
 
-/**
- * Duration of a CTA scheduling operation.
- */
-extern std::unique_ptr<opentelemetry::metrics::Histogram<uint64_t>> ctaSchedulerOperationDuration;
+static constexpr const char* kCtaFrontend = "cta.frontend";
+static constexpr const char* kCtaRdbms = "cta.rdbms";
+static constexpr const char* kCtaScheduler = "cta.scheduler";
+static constexpr const char* kCtaObjectstore = "cta.objectstore";
+static constexpr const char* kCtaTaped = "cta.taped";
 
-}  // namespace cta::telemetry::metrics
+}  // namespace cta::semconv::metrics
