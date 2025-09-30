@@ -4,6 +4,8 @@
 #include <fstream>
 #include <string>
 
+#include "common/utils/Base64.hpp"
+
 namespace cta::telemetry {
 
 MetricsBackend stringToMetricsBackend(const std::string& name) {
@@ -77,7 +79,6 @@ TelemetryConfigBuilder& TelemetryConfigBuilder::retainInstanceIdOnRestart(bool r
   return *this;
 }
 
-
 TelemetryConfigBuilder& TelemetryConfigBuilder::resourceAttribute(std::string key, std::string value) {
   m_config.resourceAttributes[std::move(key)] = std::move(value);
   return *this;
@@ -108,7 +109,9 @@ TelemetryConfigBuilder& TelemetryConfigBuilder::metricsOtlpHttpBasicAuthString(c
     // Ensure we don't add any headers if not configured
     return *this;
   }
-  m_config.metrics.otlpHttpHeaders["Authorization"] = "Basic " + authString;
+  std::string authStringBase64;
+  cta::utils::base64encode(authString, authStringBase64);
+  m_config.metrics.otlpHttpHeaders["Authorization"] = "Basic " + authStringBase64;
   return *this;
 }
 

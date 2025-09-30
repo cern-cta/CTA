@@ -128,7 +128,7 @@ public:
 
   /**
    * If the metrics backend is "OTLP_HTTP", setting this option will add the header "authorization: Basic <base64(username:password)>"
-   * @param authString <base64(username:password)
+   * @param authString The raw string "username:password" (not base64 encoded).
    */
   TelemetryConfigBuilder& metricsOtlpHttpBasicAuthString(const std::string& authString);
 

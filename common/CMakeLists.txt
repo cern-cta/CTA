@@ -149,6 +149,7 @@ set (COMMON_LIB_SRC_FILES
   threading/System.cpp
   threading/Thread.cpp
   Timer.cpp
+  utils/Base64.cpp
   utils/GetOptThreadSafe.cpp
   utils/Regex.cpp
   utils/strerror_r_wrapper.cpp
@@ -170,6 +171,7 @@ target_link_libraries (ctacommon
   uuid
   cap
   json-c
+  cryptopp
   ${OPENTELEMETRY_CPP_LIBRARIES}
 )
 
