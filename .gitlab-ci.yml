@@ -60,12 +60,14 @@ variables:
 
   # Building Configuration
   BUILD_CTA_VERSION: 5
+
   BUILD_GENERATOR:
     description: "Specifies the build generated for building the CTA RPMs"
     value: "Unix Makefiles"
     options:
       - "Unix Makefiles"
       - "Ninja"
+
   CMAKE_BUILD_TYPE:
     description: "Specifies the build type used to compile the CTA RPMs"
     value: "Debug"
@@ -82,9 +84,17 @@ variables:
     options:
       - "pgsched"
       - "objectstore"
+
   ORACLE_SUPPORT:
     description: "Whether to build the CTA RPMs with Oracle support or not"
     value: "TRUE"
+    options:
+      - "TRUE"
+      - "FALSE"
+
+  GENERATE_SBOM:
+    description: "Whether to generate a Software Bill of Materials in the pipeline"
+    value: "FALSE"
     options:
       - "TRUE"
       - "FALSE"

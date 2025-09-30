@@ -3,6 +3,10 @@ prepare-rootfs:
   image: gitlab-registry.cern.ch/linuxsupport/alma9-base:latest
   needs:
     - job: build-cta-rpm
+  rules:
+    - if: $GENERATE_SBOM == "TRUE"
+      when: on_success
+    - when: never
   variables:
     ROOTFS: '/tmp/installroot'
     CTA_RPMS_PATH: "build_rpm/RPM/RPMS"
@@ -46,7 +50,9 @@ generate-sbom-trivy:
   needs:
     - job: prepare-rootfs
   rules:
-    - when: on_success
+    - if: $GENERATE_SBOM == "TRUE"
+      when: on_success
+    - when: never
   variables:
     SBOM_OUT_PATH: sboms/sbom-trivy.json
     ROOTFS: '/tmp/installroot'
@@ -72,7 +78,9 @@ enrich-sbom-cern-info:
   needs:
     - job: generate-sbom-trivy
   rules:
-    - when: on_success
+    - if: $GENERATE_SBOM == "TRUE"
+      when: on_success
+    - when: never
   variables:
     SBOM_IN_FILE: sboms/sbom-trivy.json
     SBOM_OUT_FILE: sboms/cta.cdx.json
@@ -102,7 +110,9 @@ score-sbom:
   needs:
     - job: enrich-sbom-cern-info
   rules:
-    - when: on_success
+    - if: $GENERATE_SBOM == "TRUE"
+      when: on_success
+    - when: never
   variables:
     # Can be used for e.g. --detailed
     EXTRA_FLAGS: ""
