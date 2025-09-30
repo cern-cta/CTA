@@ -76,7 +76,7 @@ data:
     grpc.jwt.enabled {{ .Values.grpc.conf.jwtAuth.enabled }}
 
     # Telemetry
-    cta.features.experimental.telemetry.enabled {{ .Values.grpc.conf.telemetry.enabled }}
+    cta.experimental.telemetry.enabled {{ .Values.grpc.conf.telemetry.enabled }}
 
     cta.telemetry.retain_instance_id_on_restart {{ .Values.grpc.conf.telemetry.retainInstanceIdOnRestart }}
     cta.telemetry.metrics.backend {{ .Values.grpc.conf.telemetry.metricsBackend }}

@@ -25,7 +25,7 @@
 
 # Must be enabled before telemetry can be used
 # Note that this flag alone is not sufficient to start producing telemetry. See Telemetry section
-# experimentalFeatures telemetryEnabled false
+# experimental telemetryEnabled false
 
 #
 # TAPE SERVER CONFIGURATION OPTIONS

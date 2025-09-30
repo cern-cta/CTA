@@ -16,7 +16,7 @@
 ####################################
 # Experimental feature flags
 ####################################
-cta.features.experimental.telemetry.enabled false
+cta.experimental.telemetry.enabled false
 
 ####################################
 # GENERAL OPTIONS (required)

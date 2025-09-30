@@ -123,7 +123,7 @@ FrontendService::FrontendService(const std::string& configFilename) : m_archiveF
 
   // Instantiate telemetry
   // Must be instantiated before the catalogue and scheduler are initialised
-  auto experimentalTelemetryEnabled = config.getOptionValueBool("cta.features.experimental.telemetry.enabled");
+  auto experimentalTelemetryEnabled = config.getOptionValueBool("cta.experimental.telemetry.enabled");
   if (!experimentalTelemetryEnabled.has_value()) {
     experimentalTelemetryEnabled = false;
   }
