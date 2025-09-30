@@ -73,7 +73,7 @@ static constexpr const char* unitCtaObjectstoreLockAcquireDuration = "ms";
 // -------------------- TAPED --------------------
 
 static constexpr const char* kMetricCtaTapedTransferCount = "cta.taped.transfer.count";
-static constexpr const char* descrCtaTapedTransferCount = "Number of file transfers to/from tape";
+static constexpr const char* descrCtaTapedTransferCount = "Number of files transferred to/from tape";
 static constexpr const char* unitCtaTapedTransferCount = "1";
 
 static constexpr const char* kMetricCtaTapedTransferIO = "cta.taped.transfer.io";
@@ -85,7 +85,7 @@ static constexpr const char* descrCtaTapedMountDuration = "Duration to mount a t
 static constexpr const char* unitCtaTapedMountDuration = "ms";
 
 static constexpr const char* kMetricCtaTapedThreadPoolSize = "cta.taped.thread_pool.size";
-static constexpr const char* descrCtaTapedThreadPoolSize = "cta.taped.thread_pool.size";
+static constexpr const char* descrCtaTapedThreadPoolSize = "Number of active threads in the cta taped tape pools";
 static constexpr const char* unitCtaTapedThreadPoolSize = "1";
 
 }  // namespace cta::semconv::metrics

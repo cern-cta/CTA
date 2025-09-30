@@ -36,6 +36,7 @@ static constexpr const char* kHostName = "host.name";
 static constexpr const char* kEventName = "event.name";
 static constexpr const char* kErrorType = "error.type";
 static constexpr const char* kState = "state";
+static constexpr const char* kLockType = "lock.type";
 
 static constexpr const char* kDbSystemName = "db.system.name";
 static constexpr const char* kDbNamespace = "db.namespace";
@@ -43,7 +44,6 @@ static constexpr const char* kDbNamespace = "db.namespace";
 // Non-standard -- CTA-specific
 static constexpr const char* kSchedulerNamespace = "cta.scheduler.namespace";  // schedulerBackendName but better
 static constexpr const char* kSchedulerOperationName = "cta.scheduler.operation.name";
-static constexpr const char* kLockType = "cta.lock.type";
 static constexpr const char* kThreadPoolName = "cta.taped.thread_pool.name";
 static constexpr const char* kFrontendRequesterName = "cta.frontend.requester.name";
 static constexpr const char* kCtaTransferDirection = "cta.transfer.direction";  // similar to disk.io.direction
@@ -60,11 +60,6 @@ static constexpr const char* kArchive = "archive";
 static constexpr const char* kRetrieve = "retrieve";
 }  // namespace CtaTransferDirectionValues
 
-namespace EventNameValues {
-static constexpr const char* kEnqueue = "enqueue";
-static constexpr const char* kCancel = "cancel";
-}  // namespace EventNameValues
-
 namespace ErrorTypeValues {
 static constexpr const char* kException = "exception";
 }  // namespace ErrorTypeValues
@@ -80,18 +75,18 @@ static constexpr const char* kTape = "tape";
 }  // namespace ThreadPoolNameValues
 
 namespace LockTypeValues {
-static constexpr const char* kScopedShared = "scoped_shared";
-static constexpr const char* kScopedExclusive = "scoped_exclusive";
+static constexpr const char* kScopedShared = "shared";
+static constexpr const char* kScopedExclusive = "exclusive";
 }  // namespace LockTypeValues
 
-namespace SchedulingOperationNameValues {
+namespace SchedulerOperationNameValues {
 static constexpr const char* kEnqueueArchive = "enqueue_archive";
 static constexpr const char* kEnqueueRetrieve = "enqueue_retrieve";
 static constexpr const char* kEnqueueRepack = "enqueue_repack";
 static constexpr const char* kCancelArchive = "cancel_archive";
 static constexpr const char* kCancelRetrieve = "cancel_retrieve";
 static constexpr const char* kCancelRepack = "cancel_repack";
-}  // namespace SchedulingOperationNameValues
+}  // namespace SchedulerOperationNameValues
 
 namespace DbSystemNameValues {
 static constexpr const char* kOracle = "oracle";
