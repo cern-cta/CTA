@@ -99,7 +99,7 @@ data:
     all.export /ctafrontend nolock r/w
 
     # Telemetry
-    cta.features.experimental.telemetry.enabled {{ .Values.xrd.conf.telemetry.enabled }}
+    cta.experimental.telemetry.enabled {{ .Values.xrd.conf.telemetry.enabled }}
 
     cta.telemetry.retain_instance_id_on_restart {{ .Values.xrd.conf.telemetry.retainInstanceIdOnRestart }}
     cta.telemetry.metrics.backend {{ .Values.xrd.conf.telemetry.metricsBackend }}

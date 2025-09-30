@@ -3,7 +3,7 @@
 #
 
 # Experimental feature flags
-cta.features.experimental.telemetry.enabled false
+cta.experimental.telemetry.enabled false
 
 
 # Unique string to identify CTA's instance the frontend is serving (i.e: production, preproduction).
@@ -120,7 +120,7 @@ cta.telemetry.metrics.export.timeout 500
 # Service location of the OTLP collector in case the OTLP backend is used
 #cta.telemetry.metrics.export.otlp_http.endpoint endpoint:port/v1/metrics
 
-# File location containing "username:password" (not base64 encoded) to set up basic auth for push metrics over HTTP
+# File location containing "username:password" (not base64 encoded) to set up basic auth for push metrics wover HTTP
 # Adds the header "authorization: Basic <base64(username:password)>"
 # cta.telemetry.metrics.export.otlp_http.basic_auth_file /path/to/base64/encoded/username/password
 

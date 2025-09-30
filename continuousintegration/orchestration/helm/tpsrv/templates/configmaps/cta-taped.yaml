@@ -34,7 +34,7 @@ data:
     taped externalFreeDiskSpaceScript {{ $.Values.conf.taped.externalFreeDiskSpaceScript }}
 
     # Telemetry
-    experimentalFeatures telemetryEnabled {{ $.Values.conf.telemetry.enabled }}
+    experimental telemetryEnabled {{ $.Values.conf.telemetry.enabled }}
 
     telemetry retainInstanceIdOnRestart {{ $.Values.conf.telemetry.retainInstanceIdOnRestart }}
     telemetry metricsBackend {{ $.Values.conf.telemetry.metricsBackend }}
