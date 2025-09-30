@@ -1,6 +1,6 @@
 /*
  * @project      The CERN Tape Archive (CTA)
- * @copyright    Copyright © 2021-2022 CERN
+ * @copyright    Copyright © 2025 CERN
  * @license      This program is free software, distributed under the terms of the GNU General Public
  *               Licence version 3 (GPL Version 3), copied verbatim in the file "COPYING". You can
  *               redistribute it and/or modify it under the terms of the GPL Version 3, or (at your
@@ -15,32 +15,24 @@
  *               submit itself to any jurisdiction.
  */
 
-#include "utils.hpp"
-#include "common/exception/Exception.hpp"
+#pragma once
 
 #include <string>
-#include <sstream>
-#include <fstream>
 
-namespace cta::frontend::grpc::utils {
+namespace cta::utils {
 
 /**
- * Load the content of the file into a string
+ * Decodes a base64 encoded input string.
+ * @param input The encoded base64 string.
+ * @param output The decoded string will be put here.
  */
-void read(const std::string& strPath, std::string& strValu) {
-  if (strPath.empty()) {
-    throw cta::exception::Exception("Path is an empty string");
-  }
+void base64decode(const std::string& input, std::string& output);
 
-  std::ifstream ifs(strPath);
+/**
+ * Base64 encodes the provided input string.
+ * @param input The string that should be base64 encoded.
+ * @param output The base64 encoded will be put here.
+ */
+void base64encode(const std::string& input, std::string& output);
 
-  if (!ifs.is_open()) {
-    std::ostringstream osExMsg;
-    osExMsg << "Could not open the file: " << strPath;
-    throw cta::exception::Exception(osExMsg.str());
-  }
-
-  strValu.assign(std::istreambuf_iterator<char>(ifs), std::istreambuf_iterator<char>());
-}
-
-} // namespace cta::frontend::grpc::utils
+}  // namespace cta::utils

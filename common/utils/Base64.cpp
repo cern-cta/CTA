@@ -1,6 +1,6 @@
 /*
  * @project      The CERN Tape Archive (CTA)
- * @copyright    Copyright © 2021-2022 CERN
+ * @copyright    Copyright © 2025 CERN
  * @license      This program is free software, distributed under the terms of the GNU General Public
  *               Licence version 3 (GPL Version 3), copied verbatim in the file "COPYING". You can
  *               redistribute it and/or modify it under the terms of the GPL Version 3, or (at your
@@ -15,32 +15,31 @@
  *               submit itself to any jurisdiction.
  */
 
-#include "utils.hpp"
-#include "common/exception/Exception.hpp"
-
+#include <cryptopp/base64.h>
 #include <string>
 #include <sstream>
-#include <fstream>
 
-namespace cta::frontend::grpc::utils {
+namespace cta::utils {
 
 /**
- * Load the content of the file into a string
+ * https://cryptopp.com/wiki/Base64Decoder
  */
-void read(const std::string& strPath, std::string& strValu) {
-  if (strPath.empty()) {
-    throw cta::exception::Exception("Path is an empty string");
-  }
-
-  std::ifstream ifs(strPath);
-
-  if (!ifs.is_open()) {
-    std::ostringstream osExMsg;
-    osExMsg << "Could not open the file: " << strPath;
-    throw cta::exception::Exception(osExMsg.str());
-  }
-
-  strValu.assign(std::istreambuf_iterator<char>(ifs), std::istreambuf_iterator<char>());
+void base64decode(const std::string& input, std::string& output) {
+ CryptoPP::StringSource ss(input, true,
+   new CryptoPP::Base64Decoder(
+       new CryptoPP::StringSink(output)
+     ) // Base64Decoder
+ ); // StringSourc
+}
+/**
+ * https://cryptopp.com/wiki/Base64Encoder
+ */
+void base64encode(const std::string& input, std::string& output) {
+  CryptoPP::StringSource ss(input, true,
+      new CryptoPP::Base64Encoder(
+          new CryptoPP::StringSink(output), false // no new line
+      ) // Base64Encoder
+  ); // StringSource
 }
 
 } // namespace cta::frontend::grpc::utils

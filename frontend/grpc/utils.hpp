@@ -14,7 +14,7 @@
  *               granted to it by virtue of its status as an Intergovernmental Organization or
  *               submit itself to any jurisdiction.
  */
- 
+
 #pragma once
 
 #include <string>
@@ -25,13 +25,5 @@ namespace cta::frontend::grpc::utils {
  * Load the content of the file into a string
  */
 void read(const std::string& strPath, std::string& strValu);
-/**
- * https://cryptopp.com/wiki/Base64Decoder
- */
-void decode(const std::string& strEncoded, std::string& strDecoded);
-/**
- * https://cryptopp.com/wiki/Base64Encoder
- */
-void encode(const std::string& strDecoded, std::string& strEncoded);
 
 } // namespace cta::frontend::grpc::utils
