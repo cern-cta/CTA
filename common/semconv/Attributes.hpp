@@ -18,20 +18,22 @@
 
 #include <string>
 
-// As this file grows we should split it up into more logical groupings
-// However, before doing that we first need to collect enough to understand what these logical groupings will be
-namespace cta::semconv {
+// As this file grows it probably makes sense to split it up (e.g. per library)
+namespace cta::semconv::attr {
 
 // -------------------- Attribute Keys --------------------
+
+// https://opentelemetry.io/docs/specs/semconv/registry/attributes/service
 static constexpr const char* kServiceName = "service.name";
 static constexpr const char* kServiceNamespace = "service.namespace";
 static constexpr const char* kServiceVersion = "service.version";
 static constexpr const char* kServiceInstanceId = "service.instance.id";
-// See https://opentelemetry.io/docs/specs/semconv/registry/attributes/process/#process-title why we go for process.title instead of process.name
+// https://opentelemetry.io/docs/specs/semconv/registry/attributes/process/#process-title
 static constexpr const char* kProcessTitle = "process.title";
-// See https://opentelemetry.io/docs/specs/semconv/registry/attributes/host/ why we go for host.name instead of hostname
+// https://opentelemetry.io/docs/specs/semconv/registry/attributes/host/
 static constexpr const char* kHostName = "host.name";
 
+static constexpr const char* kEventName = "event.name";
 static constexpr const char* kErrorType = "error.type";
 static constexpr const char* kState = "state";
 
@@ -41,12 +43,10 @@ static constexpr const char* kDbNamespace = "db.namespace";
 // Non-standard -- CTA-specific
 static constexpr const char* kSchedulerNamespace = "cta.scheduler.namespace";  // schedulerBackendName but better
 static constexpr const char* kSchedulerOperationName = "cta.scheduler.operation.name";
-static constexpr const char* kEventName = "cta.event.name";
 static constexpr const char* kLockType = "cta.lock.type";
 static constexpr const char* kThreadPoolName = "cta.taped.thread_pool.name";
-static constexpr const char* kFrontendRequestInitiator = "cta.frontend.request.initiator";
-// similar to disk.io.direction
-static constexpr const char* kCtaTransferDirection = "cta.transfer.direction";
+static constexpr const char* kFrontendRequesterName = "cta.frontend.requester.name";
+static constexpr const char* kCtaTransferDirection = "cta.transfer.direction";  // similar to disk.io.direction
 
 // -------------------- Attribute Values --------------------
 

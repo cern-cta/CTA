@@ -137,12 +137,12 @@ private:
     explicit DiskReadWorkerThread(DiskReadThreadPool& parent) :
       m_parent(parent),m_threadID(parent.m_nbActiveThread++),m_lc(parent.m_lc), m_diskFileFactory(parent.m_xrootTimeout, parent.m_striperPool) {
 
-      cta::telemetry::metrics::ctaTapedThreadPoolSize->Add(1, {{cta::semconv::kCtaTransferDirection, cta::semconv::CtaTransferDirectionValues::kRetrieve}, {cta::semconv::kThreadPoolName, cta::semconv::ThreadPoolNameValues::kDisk}});
+      cta::telemetry::metrics::ctaTapedThreadPoolSize->Add(1, {{cta::semconv::attr::kCtaTransferDirection, cta::semconv::attr::CtaTransferDirectionValues::kRetrieve}, {cta::semconv::attr::kThreadPoolName, cta::semconv::attr::ThreadPoolNameValues::kDisk}});
       cta::log::LogContext::ScopedParam param(m_lc, cta::log::Param("threadID", m_threadID));
       m_lc.log(cta::log::INFO, "DiskReadThread created");
     }
     ~DiskReadWorkerThread() {
-      cta::telemetry::metrics::ctaTapedThreadPoolSize->Add(-1, {{cta::semconv::kCtaTransferDirection, cta::semconv::CtaTransferDirectionValues::kRetrieve}, {cta::semconv::kThreadPoolName, cta::semconv::ThreadPoolNameValues::kDisk}});
+      cta::telemetry::metrics::ctaTapedThreadPoolSize->Add(-1, {{cta::semconv::attr::kCtaTransferDirection, cta::semconv::attr::CtaTransferDirectionValues::kRetrieve}, {cta::semconv::attr::kThreadPoolName, cta::semconv::attr::ThreadPoolNameValues::kDisk}});
     }
 
     void start() { cta::threading::Thread::start(); }

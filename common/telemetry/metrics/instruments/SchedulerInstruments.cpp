@@ -1,24 +1,28 @@
 #include "SchedulerInstruments.hpp"
 
 #include <opentelemetry/metrics/provider.h>
+
+#include "version.h"
 #include "common/telemetry/metrics/InstrumentRegistry.hpp"
 #include "common/telemetry/metrics/MetricsUtils.hpp"
-#include "version.h"
+#include "common/semconv/Meter.hpp"
+#include "common/semconv/Metrics.hpp"
 
 namespace cta::telemetry::metrics {
 
-std::unique_ptr<opentelemetry::metrics::Histogram<uint64_t>> ctaSchedulingOperationDuration;
+std::unique_ptr<opentelemetry::metrics::Histogram<uint64_t>> ctaSchedulerOperationDuration;
 
 }  // namespace cta::telemetry::metrics
 
 namespace {
 
 void initInstruments() {
-  auto meter = cta::telemetry::metrics::getMeter("cta.scheduler", CTA_VERSION);
+  auto meter = cta::telemetry::metrics::getMeter(cta::semconv::meter::kCtaScheduler, CTA_VERSION);
 
-  // Based on https://opentelemetry.io/docs/specs/semconv/messaging/messaging-metrics/#metric-messagingclientoperationduration
-  cta::telemetry::metrics::ctaSchedulingOperationDuration =
-    meter->CreateUInt64Histogram("cta.scheduler.operation.duration", "Duration of a CTA scheduling operation", "ms");
+  cta::telemetry::metrics::ctaSchedulerOperationDuration =
+    meter->CreateUInt64Histogram(cta::semconv::metrics::kMetricCtaSchedulerOperationDuration,
+                                 cta::semconv::metrics::descrCtaSchedulerOperationDuration,
+                                 cta::semconv::metrics::unitCtaSchedulerOperationDuration);
 }
 
 // Register and run this init function at start time

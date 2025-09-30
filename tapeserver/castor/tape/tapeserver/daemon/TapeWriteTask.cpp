@@ -28,7 +28,7 @@
 #include "castor/tape/tapeserver/utils/suppressUnusedVariable.hpp"
 #include "common/exception/Errnum.hpp"
 #include "common/exception/Exception.hpp"
-#include "common/semconv/SemConv.hpp"
+#include "common/semconv/Attributes.hpp"
 #include "common/telemetry/metrics/instruments/TapedInstruments.hpp"
 
 #include <memory>
@@ -176,7 +176,8 @@ void TapeWriteTask::execute(const std::unique_ptr<castor::tape::tapeFile::WriteS
     m_taskStats.totalTime = localTime.secs();
     // Log the successful transfer
     logWithStats(cta::log::INFO, "File successfully transmitted to drive", lc);
-    cta::telemetry::metrics::ctaTapedTransfers->Add(1, {{cta::semconv::kCtaTransferDirection, cta::semconv::CtaTransferDirectionValues::kArchive}});
+    cta::telemetry::metrics::ctaTapedTransferCount->Add(1, {{cta::semconv::attr::kCtaTransferDirection, cta::semconv::attr::CtaTransferDirectionValues::kArchive}});
+    cta::telemetry::metrics::ctaTapedTransferIO->Add(m_taskStats.dataVolume, {{cta::semconv::attr::kCtaTransferDirection, cta::semconv::attr::CtaTransferDirectionValues::kArchive}});
   } catch (const castor::tape::tapeserver::daemon::ErrorFlag&) {
     // We end up there because another task has failed
     // so we just log, circulate blocks and don't even send a report

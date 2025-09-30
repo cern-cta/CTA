@@ -16,7 +16,7 @@
  */
 
 #include "common/exception/Exception.hpp"
-#include "common/semconv/SemConv.hpp"
+#include "common/semconv/Attributes.hpp"
 #include "rdbms/wrapper/OcciConnFactory.hpp"
 #include "rdbms/wrapper/OcciEnvSingleton.hpp"
 #include "plugin-manager/PluginInterface.hpp"
@@ -44,7 +44,7 @@ std::unique_ptr<ConnWrapper> OcciConnFactory::create() {
 // getDbSystemName
 //------------------------------------------------------------------------------
 std::string OcciConnFactory::getDbSystemName() const {
-  return cta::semconv::DbSystemNameValues::kOracle;
+  return cta::semconv::attr::DbSystemNameValues::kOracle;
 }
 
 //------------------------------------------------------------------------------

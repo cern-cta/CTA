@@ -20,7 +20,7 @@
 #include "rdbms/StmtPool.hpp"
 #include "rdbms/wrapper/StmtWrapper.hpp"
 #include "common/telemetry/metrics/instruments/RdbmsInstruments.hpp"
-#include "common/semconv/SemConv.hpp"
+#include "common/semconv/Attributes.hpp"
 #include "common/Timer.hpp"
 
 #include <opentelemetry/context/runtime_context.h>
@@ -266,15 +266,15 @@ Rset Stmt::executeQuery() {
     if(nullptr != m_stmt) {
       auto result = Rset(m_stmt->executeQuery());
       cta::telemetry::metrics::dbClientOperationDuration->Record(
-        timer.msecs(), {{cta::semconv::kDbSystemName, m_stmt->getDbSystemName()},
-        {cta::semconv::kDbNamespace, m_stmt->getDbNamespace()}}, opentelemetry::context::RuntimeContext::GetCurrent());
+        timer.msecs(), {{cta::semconv::attr::kDbSystemName, m_stmt->getDbSystemName()},
+        {cta::semconv::attr::kDbNamespace, m_stmt->getDbNamespace()}}, opentelemetry::context::RuntimeContext::GetCurrent());
       return result;
     } else {
       throw exception::Exception("Stmt does not contain a cached statement");
     }
   } catch(exception::Exception &ex) {
     cta::telemetry::metrics::dbClientOperationDuration->Record(
-        timer.msecs(), {{cta::semconv::kDbSystemName, m_stmt->getDbSystemName()}, {cta::semconv::kDbNamespace, m_stmt->getDbNamespace()}, {cta::semconv::kErrorType, cta::semconv::ErrorTypeValues::kException}},
+        timer.msecs(), {{cta::semconv::attr::kDbSystemName, m_stmt->getDbSystemName()}, {cta::semconv::attr::kDbNamespace, m_stmt->getDbNamespace()}, {cta::semconv::attr::kErrorType, cta::semconv::attr::ErrorTypeValues::kException}},
         opentelemetry::context::RuntimeContext::GetCurrent());
     ex.getMessage().str(std::string(__FUNCTION__) + " failed: " + ex.getMessage().str());
     throw;
@@ -290,14 +290,14 @@ void Stmt::executeNonQuery() {
     if(nullptr != m_stmt) {
       m_stmt->executeNonQuery();
       cta::telemetry::metrics::dbClientOperationDuration->Record(
-        timer.msecs(), {{cta::semconv::kDbSystemName, m_stmt->getDbSystemName()},
-        {cta::semconv::kDbNamespace, m_stmt->getDbNamespace()}}, opentelemetry::context::RuntimeContext::GetCurrent());
+        timer.msecs(), {{cta::semconv::attr::kDbSystemName, m_stmt->getDbSystemName()},
+        {cta::semconv::attr::kDbNamespace, m_stmt->getDbNamespace()}}, opentelemetry::context::RuntimeContext::GetCurrent());
     } else {
       throw exception::Exception("Stmt does not contain a cached statement");
     }
   } catch(exception::Exception &ex) {
     cta::telemetry::metrics::dbClientOperationDuration->Record(
-        timer.msecs(), {{cta::semconv::kDbSystemName, m_stmt->getDbSystemName()}, {cta::semconv::kDbNamespace, m_stmt->getDbNamespace()}, {cta::semconv::kErrorType, cta::semconv::ErrorTypeValues::kException}},
+        timer.msecs(), {{cta::semconv::attr::kDbSystemName, m_stmt->getDbSystemName()}, {cta::semconv::attr::kDbNamespace, m_stmt->getDbNamespace()}, {cta::semconv::attr::kErrorType, cta::semconv::attr::ErrorTypeValues::kException}},
         opentelemetry::context::RuntimeContext::GetCurrent());
     ex.getMessage().str(std::string(__FUNCTION__) + " failed: " + ex.getMessage().str());
     throw;

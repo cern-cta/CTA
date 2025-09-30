@@ -17,7 +17,7 @@
 
 #include "common/exception/Exception.hpp"
 #include "common/threading/MutexLocker.hpp"
-#include "common/semconv/SemConv.hpp"
+#include "common/semconv/Attributes.hpp"
 #include "rdbms/CheckConstraintError.hpp"
 #include "rdbms/ConstraintError.hpp"
 #include "rdbms/PrimaryKeyError.hpp"
@@ -364,7 +364,7 @@ bool SqliteStmt::autocommitModeToBool(const AutocommitMode autocommitMode) {
 // getDbSystemName
 //------------------------------------------------------------------------------
 std::string SqliteStmt::getDbSystemName() const {
-  return cta::semconv::DbSystemNameValues::kSqlite;
+  return cta::semconv::attr::DbSystemNameValues::kSqlite;
 }
 
 //------------------------------------------------------------------------------

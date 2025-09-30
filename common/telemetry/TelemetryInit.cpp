@@ -20,7 +20,7 @@
 #include "common/telemetry/config/TelemetryConfigSingleton.hpp"
 #include "common/telemetry/metrics/InstrumentRegistry.hpp"
 #include "common/telemetry/CtaTelemetryLogHandler.hpp"
-#include "common/semconv/SemConv.hpp"
+#include "common/semconv/Attributes.hpp"
 
 namespace cta::telemetry {
 
@@ -114,12 +114,12 @@ void initMetrics(const TelemetryConfig& config, cta::log::LogContext& lc) {
   // These metrics should make sure that each and every process is uniquely identifiable
   // Otherwise, metrics will not be aggregated correctly.
   opentelemetry::sdk::common::AttributeMap attributes = {
-    {cta::semconv::kServiceName,       config.serviceName     },
-    {cta::semconv::kServiceNamespace,  config.serviceNamespace},
-    {cta::semconv::kServiceVersion,    config.serviceVersion  },
-    {cta::semconv::kServiceInstanceId, serviceInstanceId      },
-    {cta::semconv::kProcessTitle,      processName            },
-    {cta::semconv::kHostName,          hostName               }
+    {cta::semconv::attr::kServiceName,       config.serviceName     },
+    {cta::semconv::attr::kServiceNamespace,  config.serviceNamespace},
+    {cta::semconv::attr::kServiceVersion,    config.serviceVersion  },
+    {cta::semconv::attr::kServiceInstanceId, serviceInstanceId      },
+    {cta::semconv::attr::kProcessTitle,      processName            },
+    {cta::semconv::attr::kHostName,          hostName               }
   };
 
   for (const auto& kv : config.resourceAttributes) {

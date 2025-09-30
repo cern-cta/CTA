@@ -20,7 +20,7 @@
 #include "castor/tape/tapeserver/daemon/AutoReleaseBlock.hpp"
 #include "castor/tape/tapeserver/daemon/MemBlock.hpp"
 #include "common/Timer.hpp"
-#include "common/semconv/SemConv.hpp"
+#include "common/semconv/Attributes.hpp"
 #include "common/telemetry/metrics/instruments/TapedInstruments.hpp"
 
 namespace castor::tape::tapeserver::daemon {
@@ -137,7 +137,8 @@ bool DiskWriteTask::execute(RecallReportPacker& reporter, cta::log::LogContext& 
     m_stats.totalTime = totalTime.secs();
     logWithStat(cta::log::INFO, isVerifyOnly ? "File successfully verified" : "File successfully transfered to disk", lc);
     watchdog.deleteParameter("stillOpenFileForThread" + std::to_string((long long)threadID));
-    cta::telemetry::metrics::ctaTapedTransfers->Add(1, {{cta::semconv::kCtaTransferDirection, cta::semconv::CtaTransferDirectionValues::kRetrieve}});
+    cta::telemetry::metrics::ctaTapedTransferCount->Add(1, {{cta::semconv::attr::kCtaTransferDirection, cta::semconv::attr::CtaTransferDirectionValues::kRetrieve}});
+    cta::telemetry::metrics::ctaTapedTransferIO->Add(m_stats.dataVolume, {{cta::semconv::attr::kCtaTransferDirection, cta::semconv::attr::CtaTransferDirectionValues::kRetrieve}});
     //everything went well, return true
     return true;
   } //end of try

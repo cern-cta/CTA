@@ -1,10 +1,12 @@
 #include "ObjectstoreInstruments.hpp"
 
 #include <opentelemetry/metrics/provider.h>
+
+#include "version.h"
 #include "common/telemetry/metrics/InstrumentRegistry.hpp"
 #include "common/telemetry/metrics/MetricsUtils.hpp"
-#include "version.h"
-#include "common/semconv/SemConv.hpp"
+#include "common/semconv/Meter.hpp"
+#include "common/semconv/Metrics.hpp"
 
 namespace cta::telemetry::metrics {
 
@@ -15,12 +17,12 @@ std::unique_ptr<opentelemetry::metrics::Histogram<uint64_t>> ctaObjectstoreLockA
 namespace {
 
 void initInstruments() {
-  auto meter = cta::telemetry::metrics::getMeter("cta.objectstore", CTA_VERSION);
+  auto meter = cta::telemetry::metrics::getMeter(cta::semconv::meter::kCtaObjectstore, CTA_VERSION);
 
   cta::telemetry::metrics::ctaObjectstoreLockAcquireDuration =
-    meter->CreateUInt64Histogram("cta.objectstore.lock.acquire.duration",
-                                 "Duration taken to acquire an objectstore lock",
-                                 "ms");
+    meter->CreateUInt64Histogram(cta::semconv::metrics::kMetricCtaObjectstoreLockAcquireDuration,
+                                 cta::semconv::metrics::descrCtaObjectstoreLockAcquireDuration,
+                                 cta::semconv::metrics::unitCtaObjectstoreLockAcquireDuration);
 }
 
 // Register and run this init function at start time

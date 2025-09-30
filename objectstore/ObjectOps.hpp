@@ -25,7 +25,7 @@
 #include "common/log/LogContext.hpp"
 #include "common/Timer.hpp"
 #include "common/utils/utils.hpp"
-#include "common/semconv/SemConv.hpp"
+#include "common/semconv/Attributes.hpp"
 #include "common/telemetry/metrics/instruments/SchedulerInstruments.hpp"
 #include "common/telemetry/metrics/instruments/ObjectstoreInstruments.hpp"
 #include <opentelemetry/context/runtime_context.h>
@@ -367,7 +367,7 @@ public:
       ScopedSharedLock::setObjectLocked(m_objectOps);
       m_locked = true;
     }
-    cta::telemetry::metrics::ctaObjectstoreLockAcquireDuration->Record(timer.msecs(), {{cta::semconv::kLockType, cta::semconv::LockTypeValues::kScopedShared}},
+    cta::telemetry::metrics::ctaObjectstoreLockAcquireDuration->Record(timer.msecs(), {{cta::semconv::attr::kLockType, cta::semconv::attr::LockTypeValues::kScopedShared}},
                                          opentelemetry::context::RuntimeContext::GetCurrent());
   }
 
@@ -405,7 +405,7 @@ public:
       m_objectOps->m_exclusiveLock = this;
       m_locked = true;
     }
-    cta::telemetry::metrics::ctaObjectstoreLockAcquireDuration->Record(timer.msecs(), {{cta::semconv::kLockType, cta::semconv::LockTypeValues::kScopedExclusive}},
+    cta::telemetry::metrics::ctaObjectstoreLockAcquireDuration->Record(timer.msecs(), {{cta::semconv::attr::kLockType, cta::semconv::attr::LockTypeValues::kScopedExclusive}},
       opentelemetry::context::RuntimeContext::GetCurrent());
   }
 

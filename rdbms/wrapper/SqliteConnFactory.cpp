@@ -16,7 +16,7 @@
  */
 
 #include "common/exception/Exception.hpp"
-#include "common/semconv/SemConv.hpp"
+#include "common/semconv/Attributes.hpp"
 #include "rdbms/wrapper/SqliteConn.hpp"
 #include "rdbms/wrapper/SqliteConnFactory.hpp"
 #include "plugin-manager/PluginInterface.hpp"
@@ -44,7 +44,7 @@ std::unique_ptr<ConnWrapper> SqliteConnFactory::create() {
 // getDbSystemName
 //------------------------------------------------------------------------------
 std::string SqliteConnFactory::getDbSystemName() const {
-  return cta::semconv::DbSystemNameValues::kSqlite;
+  return cta::semconv::attr::DbSystemNameValues::kSqlite;
 }
 
 //------------------------------------------------------------------------------
