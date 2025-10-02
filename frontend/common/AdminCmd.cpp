@@ -15,15 +15,18 @@
  *               submit itself to any jurisdiction.
  */
 
+#include "AdminCmd.hpp"
+
+#include <opentelemetry/context/runtime_context.h>
+
 #include "catalogue/CreateMountPolicyAttributes.hpp"
 #include "catalogue/CreateTapeAttributes.hpp"
 #include "catalogue/MediaType.hpp"
 #include "cmdline/CtaAdminCmdParser.hpp"
 #include "common/dataStructures/PhysicalLibrary.hpp"
 #include "common/telemetry/metrics/instruments/FrontendInstruments.hpp"
-#include "AdminCmd.hpp"
+#include "common/semconv/Attributes.hpp"
 #include "PbException.hpp"
-
 
 
 namespace cta::frontend {

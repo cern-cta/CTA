@@ -34,6 +34,7 @@
 #include <opentelemetry/sdk/common/global_log_handler.h>
 
 #include "common/utils/utils.hpp"
+#include "common/utils/StringConversions.hpp"
 #include "common/telemetry/config/TelemetryConfigSingleton.hpp"
 #include "common/telemetry/metrics/InstrumentRegistry.hpp"
 #include "common/telemetry/CtaTelemetryLogHandler.hpp"
@@ -89,12 +90,13 @@ std::unique_ptr<metrics_sdk::PushMetricExporter> createExporter(const TelemetryC
           if (!first) {
               otlpExporterHeaders += ",";
           }
-          otlpExporterHeaders += kv.first + "=" + kv.second;
+          std::string lowerKey = kv.first;
+          cta::utils::toLower(lowerKey);
+          otlpExporterHeaders += lowerKey + "=" + kv.second;
           first = false;
       }
-      lc.log(log::INFO,
-             "In createExporter(): Setting headers to: " + otlpExporterHeaders);
       setenv("OTEL_EXPORTER_OTLP_METRICS_HEADERS", otlpExporterHeaders.c_str(), 1);
+      setenv("OTEL_EXPORTER_OTLP_METRICS_PROTOCOL", "grpc", 1);
       exporter = opentelemetry::exporter::otlp::OtlpGrpcMetricExporterFactory::Create();
       break;
     }
@@ -196,7 +198,6 @@ void shutdownTelemetry(cta::log::LogContext& lc) {
     return;
   }
 
-  lc.log(log::INFO, "In shutdownTelemetry(): Clearing telemetry state.");
   auto provider = metrics_api::Provider::GetMeterProvider();
   if (provider) {
     auto sdkProvider = dynamic_cast<metrics_sdk::MeterProvider*>(provider.get());
@@ -210,7 +211,7 @@ void shutdownTelemetry(cta::log::LogContext& lc) {
   metrics_api::Provider::SetMeterProvider(noop);
   // Ensure all of our instruments are NOOP again
   cta::telemetry::metrics::initAllInstruments();
-  lc.log(log::INFO, "In shutdownTelemetry(): Telemetry state cleared.");
+  lc.log(log::INFO, "In shutdownTelemetry(): Telemetry was reset.");
 }
 
 }  // namespace cta::telemetry

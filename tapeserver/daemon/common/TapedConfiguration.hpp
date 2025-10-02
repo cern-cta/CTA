@@ -309,7 +309,7 @@ struct TapedConfiguration {
     "telemetry", "metricsExportInterval", 15000, "Compile time default"};
 
   cta::SourcedParameter<uint32_t> metricsExportTimeout{
-    "telemetry", "metricsExportTimeout", 500, "Compile time default"};
+    "telemetry", "metricsExportTimeout", 3000, "Compile time default"};
 
 private:
   /** A private dummy logger which will simplify the implementation of the

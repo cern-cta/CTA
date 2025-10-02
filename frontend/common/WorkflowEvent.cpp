@@ -15,11 +15,15 @@
  *               submit itself to any jurisdiction.
  */
 
+#include "WorkflowEvent.hpp"
+
+#include <opentelemetry/context/runtime_context.h>
+
 #include "catalogue/Catalogue.hpp"
 #include "common/checksum/ChecksumBlobSerDeser.hpp"
 #include "common/telemetry/metrics/instruments/FrontendInstruments.hpp"
+#include "common/semconv/Attributes.hpp"
 #include "PbException.hpp"
-#include "WorkflowEvent.hpp"
 
 namespace cta::frontend {
 

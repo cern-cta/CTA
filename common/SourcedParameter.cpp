@@ -19,6 +19,8 @@
 
 #include <algorithm>
 
+#include "common/utils/StringConversions.hpp"
+
 
 namespace cta {
 
@@ -81,7 +83,7 @@ void SourcedParameter<uint64_t>::set(const std::string & value, const std::strin
 template<>
 void SourcedParameter<bool>::set(const std::string& value, const std::string& source) {
   std::string lower = value;
-  std::transform(lower.begin(), lower.end(), lower.begin(), [](unsigned char c) { return std::tolower(c); });
+  cta::utils::toLower(lower);
 
   if (lower == "true" || lower == "1" || lower == "yes") {
     m_value = true;

@@ -142,7 +142,7 @@ FrontendService::FrontendService(const std::string& configFilename) : m_archiveF
       }
       auto metricsExportTimeout = config.getOptionValueUInt("cta.telemetry.metrics.export.timeout");
       if (!metricsExportTimeout.has_value()) {
-        metricsExportTimeout = 500;
+        metricsExportTimeout = 3000;
       }
       auto metricsOtlpEndpoint = config.getOptionValueStr("cta.telemetry.metrics.export.otlp.endpoint");
       if (!metricsOtlpEndpoint.has_value()) {
