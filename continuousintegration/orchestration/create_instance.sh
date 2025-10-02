@@ -55,7 +55,7 @@ usage() {
   echo "      --dcache-enabled <true|false>:  Whether to spawn a dCache instance or not. Defaults to false."
   echo "      --cta-config <file>:            Values file to use for the CTA chart. Defaults to presets/dev-cta-xrd-values.yaml."
   echo "      --local-telemetry:              Spawns an OpenTelemetry and Collector and Prometheus scraper. Changes the default cta-config to presets/dev-cta-telemetry-values.yaml"
-  echo "      --publish-telemetry:            Publishes telemetry to a pre-configured central observability backend. See presets/ci-cta-telemetry-http-values.yaml"
+  echo "      --publish-telemetry:            Publishes telemetry to a pre-configured central observability backend. See presets/ci-cta-telemetry-grpc-values.yaml"
   exit 1
 }
 
@@ -388,7 +388,7 @@ create_instance() {
     extra_cta_chart_flags+="--values presets/dev-cta-telemetry-values.yaml"
   fi
   if [ "$publish_telemetry" == "true" ]; then
-    extra_cta_chart_flags+="--values presets/ci-cta-telemetry-http-values.yaml"
+    extra_cta_chart_flags+="--values presets/ci-cta-telemetry-grpc-values.yaml"
   fi
 
   echo "Installing CTA chart..."

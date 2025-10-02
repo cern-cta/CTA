@@ -66,9 +66,13 @@ std::unique_ptr<metrics_sdk::PushMetricExporter> createExporter(const TelemetryC
     }
     case MetricsBackend::OTLP_HTTP: {
       log::ScopedParamContainer params(lc);
-      params.add("exportOtlpEndpoint", config.metrics.otlpEndpoint);
+      std::string endpoint = config.metrics.otlpEndpoint;
+      if(!endpoint.ends_with("/v1/metrics")) {
+        endpoint += "/v1/metrics";
+      }
+      params.add("exportOtlpEndpoint", endpoint);
       opentelemetry::exporter::otlp::OtlpHttpMetricExporterOptions opts;
-      opts.url = config.metrics.otlpEndpoint;
+      opts.url = endpoint;
 
       for (const auto& kv : config.metrics.otlpHeaders) {
         opts.http_headers.insert({kv.first, kv.second});
@@ -80,9 +84,16 @@ std::unique_ptr<metrics_sdk::PushMetricExporter> createExporter(const TelemetryC
       // All configuration goes via environment options here
       setenv("OTEL_EXPORTER_OTLP_METRICS_ENDPOINT", config.metrics.otlpEndpoint.c_str(), 1);
       std::string otlpExporterHeaders = "";
-      for (const auto& kv : config.metrics.otlpHeaders) {
-        otlpExporterHeaders += " " + kv.first + "=" + kv.second;
+      bool first = true;
+      for (const auto &kv : config.metrics.otlpHeaders) {
+          if (!first) {
+              otlpExporterHeaders += ",";
+          }
+          otlpExporterHeaders += kv.first + "=" + kv.second;
+          first = false;
       }
+      lc.log(log::INFO,
+             "In createExporter(): Setting headers to: " + otlpExporterHeaders);
       setenv("OTEL_EXPORTER_OTLP_METRICS_HEADERS", otlpExporterHeaders.c_str(), 1);
       exporter = opentelemetry::exporter::otlp::OtlpGrpcMetricExporterFactory::Create();
       break;
