@@ -14,7 +14,7 @@
     "defaultBuildType": "Debug",
     "ctaImageRepository": "gitlab-registry.cern.ch/cta/ctageneric",
     "eosImageRepository": "gitlab-registry.cern.ch/dss/eos/eos-ci",
-    "eosImageTag": "594dd064.el9",
+    "eosImageTag": "6f0a1699.el9",
     "eosServerChartVersion": "0.5.1",
     "dCacheChartVersion": "0.1.0",
     "dCacheImageTag": "94471db7"
@@ -150,7 +150,7 @@
     "el9": {
       "versionlock": {
         "group-ceph": "2:17.2.8-0.el9",
-        "group-eos": "5.3.22-20250929101253git594dd064a.el9",
+        "group-eos": "5.3.22-20251001114941git6f0a16997.el9",
         "group-eos-folly": "2019.11.11.00-1.el9",
         "group-eosgrpc": "1.56.1-3.el9",
         "group-eosscitokens": "1.2.0-1.el9",
