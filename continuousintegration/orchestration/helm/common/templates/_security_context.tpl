@@ -1,3 +1,6 @@
+// SPDX-FileCopyrightText: 2025 CERN
+// SPDX-License-Identifier: GPL-3.0-or-later
+
 // Shamelessly copied from https://gitlab.cern.ch/eos/eos-charts/-/tree/master/utils/templates
 {{/*
 Privileged flag definition

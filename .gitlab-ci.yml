@@ -1,3 +1,6 @@
+# SPDX-FileCopyrightText: 2025 CERN
+# SPDX-License-Identifier: GPL-3.0-or-later
+
 stages:
   - prepare
   - validate
@@ -167,6 +170,7 @@ variables:
   IMAGE_RELEASE: gitlab-registry.cern.ch/cta/public_registry/container_registry/cta-ci-release:2025-10-07-13048191.el9
   IMAGE_DANGER: gitlab-registry.cern.ch/cta/public_registry/container_registry/cta-ci-danger:2025-10-07-13048191.el9
   IMAGE_DOCKER_IMAGE_BUILDER: registry.cern.ch/gcr.io/kaniko-project/executor:debug
+  IMAGE_LICENSE_CHECK: registry.cern.ch/docker.io/fsfe/reuse:latest
 
 default:
   image: $IMAGE_DEFAULT

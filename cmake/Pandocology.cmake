@@ -1,3 +1,5 @@
+##  SPDX-FileCopyrightText: 2015 Jeet Sukumaran
+##  SPDX-License-Identifier: BSD-3-Clause
 #################################################################################
 ##
 ## This file was obtained from https://github.com/jeetsukumaran/cmake-pandocology

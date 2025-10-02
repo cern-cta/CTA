@@ -1,3 +1,6 @@
+# SPDX-FileCopyrightText: 2025 CERN
+# SPDX-License-Identifier: GPL-3.0-or-later
+
 {{- $catalogueConfig := include "catalogue.config" . | fromYaml }}
 {{- if and (eq $catalogueConfig.backend "postgres") (not $catalogueConfig.postgresConfig.remote) }}
 {{- $name := include "cataloguePostgres.fullname" . }}

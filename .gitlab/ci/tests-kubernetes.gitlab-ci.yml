@@ -1,3 +1,6 @@
+# SPDX-FileCopyrightText: 2025 CERN
+# SPDX-License-Identifier: GPL-3.0-or-later
+
 # All of the below tests use only the docker image generated in the build:image stage
 # These are also the only tests executed on our personal runners instead of the GitLab runners
 

@@ -1,3 +1,5 @@
+# SPDX-FileCopyrightText: 2025 CERN
+# SPDX-License-Identifier: GPL-3.0-or-later
 [xrootd-stable]
 name=XRootD Stable Releases for Enterprise Linux $releasever
 baseurl=https://xrootd.web.cern.ch/repo/stable/el$releasever/x86_64/

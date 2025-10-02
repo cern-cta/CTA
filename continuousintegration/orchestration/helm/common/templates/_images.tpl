@@ -1,3 +1,6 @@
+// SPDX-FileCopyrightText: 2025 CERN
+// SPDX-License-Identifier: GPL-3.0-or-later
+
 {{/*
    _images.tpl
    This file contains helper functions to work with Docker images, including image name construction,

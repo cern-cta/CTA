@@ -1,5 +1,8 @@
+# SPDX-FileCopyrightText: 2025 CERN
+# SPDX-License-Identifier: GPL-3.0-or-later
+
 [Unit]
-Description=CTA frontend plugin for the XRoot deamon 
+Description=CTA frontend plugin for the XRoot deamon
 After=network-online.target
 
 [Service]

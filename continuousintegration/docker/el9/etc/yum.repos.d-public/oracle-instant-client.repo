@@ -1,3 +1,5 @@
+# SPDX-FileCopyrightText: 2025 CERN
+# SPDX-License-Identifier: GPL-3.0-or-later
 [cta-oracle-instant-client]
 name=Oracle instant client
 baseurl=https://yum.oracle.com/repo/OracleLinux/OL9/oracle/instantclient23/$basearch

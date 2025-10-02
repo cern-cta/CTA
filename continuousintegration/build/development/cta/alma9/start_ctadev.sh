@@ -1,5 +1,10 @@
 #!/bin/bash -e
 
+# SPDX-FileCopyrightText: 2025 CERN
+#
+# SPDX-License-Identifier: GPL-3.0-or-later
+
+
 usage() { cat <<EOF 1>&2
 Usage: $0 [-p <port>] [-v <volumemount>] <image_tag>
 Options:

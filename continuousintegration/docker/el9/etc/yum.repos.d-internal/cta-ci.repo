@@ -1,3 +1,5 @@
+# SPDX-FileCopyrightText: 2025 CERN
+# SPDX-License-Identifier: GPL-3.0-or-later
 # Contains the oracle instant client among other things
 [cta-ci-others]
 name=CTA CI repo any additional needed RPM cache

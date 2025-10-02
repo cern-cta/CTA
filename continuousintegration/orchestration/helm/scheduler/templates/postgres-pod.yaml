@@ -1,3 +1,6 @@
+# SPDX-FileCopyrightText: 2025 CERN
+# SPDX-License-Identifier: GPL-3.0-or-later
+
 {{- $schedulerConfig := include "scheduler.config" . | fromYaml }}
 {{- if and (eq $schedulerConfig.backend "postgres") (not $schedulerConfig.postgresConfig.remote) }}
 {{- $name := include "schedulerPostgres.fullname" . }}

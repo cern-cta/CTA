@@ -1,3 +1,6 @@
+# SPDX-FileCopyrightText: 2025 CERN
+# SPDX-License-Identifier: GPL-3.0-or-later
+
 cppcheck:
   stage: lint
   image:
@@ -110,3 +113,18 @@ trigger-sonarcloud:
         $TARGET_URL \
         -d "{\"ref\":\"${BRANCH_NAME}\"}"
     - echo "Please visit https://github.com/cern-cta/CTA/actions to see the progress of the analysis"
+
+check-licenses:
+  stage: lint
+  image:
+    name: $IMAGE_LICENSE_CHECK
+    entrypoint: [""]
+  rules:
+    - if: $CI_COMMIT_TAG
+      when: never
+    - if: $PIPELINE_TYPE != "DEFAULT"
+      when: never
+    - when: always
+  dependencies: []
+  script:
+    - reuse lint

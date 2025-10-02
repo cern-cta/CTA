@@ -1,4 +1,10 @@
 #!/bin/bash
+
+# SPDX-FileCopyrightText: 2025 CERN
+#
+# SPDX-License-Identifier: GPL-3.0-or-later
+
+
 EOS_MGM_HOST="ctaeos"
 PORT=9000
 DESTDIR=/eos/ctaeos/tape/

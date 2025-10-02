@@ -1,3 +1,6 @@
+# SPDX-FileCopyrightText: 2025 CERN
+# SPDX-License-Identifier: GPL-3.0-or-later
+
 # Arguments for the tape server daemon
 #   -f             keep process in the foreground, do not fork
 #   -h             display help and exit

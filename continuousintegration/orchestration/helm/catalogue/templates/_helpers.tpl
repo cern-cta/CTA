@@ -1,3 +1,6 @@
+// SPDX-FileCopyrightText: 2025 CERN
+// SPDX-License-Identifier: GPL-3.0-or-later
+
 {{/* Generate the catalogue URL based on backend type */}}
 {{- define "catalogue.url" -}}
 {{- $catalogueConfig := .Values.configuration }}
