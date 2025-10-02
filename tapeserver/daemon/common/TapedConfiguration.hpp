@@ -296,11 +296,11 @@ struct TapedConfiguration {
   cta::SourcedParameter<std::string> metricsBackend{
     "telemetry", "metricsBackend", "NOOP", "Compile time default"};
 
-  cta::SourcedParameter<std::string> metricsExportOtlpHttpEndpoint{
-    "telemetry", "metricsExportOtlpHttpEndpoint", "", "Compile time default"};
+  cta::SourcedParameter<std::string> metricsExportOtlpEndpoint{
+    "telemetry", "metricsExportOtlpEndpoint", "", "Compile time default"};
 
-  cta::SourcedParameter<std::string> metricsExportOtlpHttpBasicAuthFile{
-    "telemetry", "metricsExportOtlpHttpBasicAuthFile", "", "Compile time default"};
+  cta::SourcedParameter<std::string> metricsExportOtlpBasicAuthFile{
+    "telemetry", "metricsExportOtlpBasicAuthFile", "", "Compile time default"};
 
   cta::SourcedParameter<std::string> metricsExportFileEndpoint{
     "telemetry", "metricsExportFileEndpoint", "/var/log/cta/cta-taped-metrics.txt", "Compile time default"};

@@ -28,8 +28,6 @@
 
 namespace cta::frontend {
 
-enum AdminCmdStatus { SUCCESS, USER_ERROR, EXCEPTION };
-
 AdminCmd::AdminCmd(const frontend::FrontendService& frontendService,
                    const common::dataStructures::SecurityIdentity& clientIdentity,
                    const admin::AdminCmd& adminCmd)
@@ -265,7 +263,7 @@ xrd::Response AdminCmd::process() {
 void AdminCmd::logAdminCmd(const std::string& function, const AdminCmdStatus status, const std::string& reason, utils::Timer& t) {
   // We do the metric recording here to prevent repetition in the catch statements
   std::string statusStr;
-  switch(AdminCmdStatus) {
+  switch(status) {
     case AdminCmdStatus::SUCCESS: {
       statusStr = "success";
     cta::telemetry::metrics::ctaFrontendRequestDuration->Record(
@@ -274,7 +272,7 @@ void AdminCmd::logAdminCmd(const std::string& function, const AdminCmdStatus sta
        {cta::semconv::attr::kFrontendRequesterName, "admin"}},
       opentelemetry::context::RuntimeContext::GetCurrent());
       break;
-    };
+    }
     case AdminCmdStatus::USER_ERROR: {
       statusStr = "user_error";
     cta::telemetry::metrics::ctaFrontendRequestDuration->Record(

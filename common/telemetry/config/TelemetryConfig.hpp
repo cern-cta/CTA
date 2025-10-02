@@ -49,12 +49,9 @@ struct TelemetryConfig {
     MetricsBackend backend = MetricsBackend::NOOP;
     std::chrono::milliseconds exportInterval;
     std::chrono::milliseconds exportTimeout;
-    // Note that for grpc, configuration happens via ENV variables
     std::string fileEndpoint;
-    std::string otlpHttpEndpoint;
-    std::string otlpHttpUsername;
-    std::string otlpHttpPassword;
-    std::map<std::string, std::string> otlpHttpHeaders;
+    std::string otlpEndpoint;
+    std::map<std::string, std::string> otlpHeaders;
   } metrics;
 };
 
@@ -137,16 +134,16 @@ public:
   TelemetryConfigBuilder& metricsExportTimeout(std::chrono::milliseconds timeout);
 
   /**
-   * If the metrics backend is "OTLP_HTTP", this endpoint tells the telemetry SDK where to push the metrics to.
+   * If the metrics backend is "OTLP_HTTP" or "OTLP_GRPC", this endpoint tells the telemetry SDK where to push the metrics to.
    * @param endpoint HTTP endpoint to push the metrics to.
    */
-  TelemetryConfigBuilder& metricsOtlpHttpEndpoint(std::string endpoint);
+  TelemetryConfigBuilder& metricsOtlpEndpoint(std::string endpoint);
 
   /**
-   * If the metrics backend is "OTLP_HTTP", setting this option will add the header "authorization: Basic <base64(username:password)>"
+   * If the metrics backend is "OTLP_HTTP" or "OTLP_GRPC", setting this option will add the header "authorization: Basic <base64(username:password)>"
    * @param authString The raw string "username:password" (not base64 encoded).
    */
-  TelemetryConfigBuilder& metricsOtlpHttpBasicAuthString(const std::string& authString);
+  TelemetryConfigBuilder& metricsOtlpBasicAuthString(const std::string& authString);
 
   /**
    * If the metrics backend is "FILE", this endpoint tells the telemetry SDK which file to write the metrics to.

@@ -86,11 +86,11 @@ data:
     {{- if .Values.grpc.conf.telemetry.metricsExportTimeout }}
     cta.telemetry.metrics.export.timeout {{ .Values.grpc.conf.telemetry.metricsExportTimeout }}
     {{- end }}
-    {{- if .Values.grpc.conf.telemetry.metricsExportOtlpHttpEndpoint }}
-    cta.telemetry.metrics.export.otlp_http.endpoint {{ .Values.grpc.conf.telemetry.metricsExportOtlpHttpEndpoint }}
+    {{- if .Values.grpc.conf.telemetry.metricsExportOtlpEndpoint }}
+    cta.telemetry.metrics.export.otlp.endpoint {{ .Values.grpc.conf.telemetry.metricsExportOtlpEndpoint }}
     {{- end }}
-    {{- if .Values.grpc.conf.telemetry.metricsExportOtlpHttpBasicAuthSecret }}
-    cta.telemetry.metrics.export.otlp_http.basic_auth_file /etc/cta/otlp-basic-auth.conf
+    {{- if .Values.grpc.conf.telemetry.metricsExportOtlpBasicAuthSecret }}
+    cta.telemetry.metrics.export.otlp.basic_auth_file /etc/cta/otlp-basic-auth.conf
     {{- end }}
     {{- if .Values.grpc.conf.telemetry.metricsExportFileEndpoint }}
     cta.telemetry.metrics.export.file.endpoint {{ .Values.grpc.conf.telemetry.metricsExportFileEndpoint }}

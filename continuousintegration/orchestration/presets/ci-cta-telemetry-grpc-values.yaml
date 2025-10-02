@@ -7,8 +7,8 @@ frontend:
       telemetry:
         enabled: true
         retainInstanceIdOnRestart: false
-        metricsBackend: "OTLP_HTTP"
-        metricsExportOtlpEndpoint: "https://monit-otlp.cern.ch:4319/v1/metrics"
+        metricsBackend: "OTLP_GRPC"
+        metricsExportOtlpEndpoint: "https://monit-otlp.cern.ch:4316/v1/metrics"
         metricsExportOtlpBasicAuthSecret: monit-collector-auth
 
   grpc:
@@ -16,8 +16,8 @@ frontend:
       telemetry:
         enabled: true
         retainInstanceIdOnRestart: false
-        metricsBackend: "OTLP_HTTP"
-        metricsExportOtlpEndpoint: "https://monit-otlp.cern.ch:4319/v1/metrics"
+        metricsBackend: "OTLP_GRPC"
+        metricsExportOtlpEndpoint: "https://monit-otlp.cern.ch:4316/v1/metrics"
         metricsExportOtlpBasicAuthSecret: monit-collector-auth
 
 tpsrv:
@@ -25,6 +25,6 @@ tpsrv:
     telemetry:
       enabled: true
       retainInstanceIdOnRestart: true
-      metricsBackend: "OTLP_HTTP"
-      metricsExportOtlpEndpoint: "https://monit-otlp.cern.ch:4319/v1/metrics"
+      metricsBackend: "OTLP_GRPC"
+      metricsExportOtlpEndpoint: "https://monit-otlp.cern.ch:4316/v1/metrics"
       metricsExportOtlpBasicAuthSecret: monit-collector-auth

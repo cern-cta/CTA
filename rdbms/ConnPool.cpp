@@ -147,7 +147,7 @@ void ConnPool::addNbConnsOnLoan(uint64_t nbConns) {
 //------------------------------------------------------------------------------
 void ConnPool::removeNbConnsOnLoan(uint64_t nbConns) {
   // While hypothetically we could use addNbConnsOnLoan with a negative integer instead of using this separate method,
-  // Doing is rather error prone due to m_nbConnsOnLoan being unsigned while nbConnes would not be.
+  // doing is error prone due to m_nbConnsOnLoan being unsigned while nbConnes would not be.
   if (nbConns > m_nbConnsOnLoan) {
     throw exception::Exception("Would have reached a negative number connections on loan");
   }

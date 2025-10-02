@@ -136,7 +136,7 @@ spec:
         - name: krb5-conf
           mountPath: /etc/krb5.conf
           subPath: krb5.conf
-      {{- if .Values.xrd.conf.telemetry.metricsExportOtlpHttpBasicAuthSecret }}
+      {{- if .Values.xrd.conf.telemetry.metricsExportOtlpBasicAuthSecret }}
         - name: otlp-basic-auth
           mountPath: /etc/cta/otlp-basic-auth.conf
           subPath: otlp-basic-auth.conf
@@ -186,10 +186,10 @@ spec:
       - name: krb5-conf
         configMap:
           name: {{ .Values.global.kerberos.clientConfig.configMap }}
-      {{- if .Values.xrd.conf.telemetry.metricsExportOtlpHttpBasicAuthSecret }}
+      {{- if .Values.xrd.conf.telemetry.metricsExportOtlpBasicAuthSecret }}
       - name: otlp-basic-auth
         secret:
-          secretName: {{ .Values.xrd.conf.telemetry.metricsExportOtlpHttpBasicAuthSecret }}
+          secretName: {{ .Values.xrd.conf.telemetry.metricsExportOtlpBasicAuthSecret }}
       {{- end }}
       {{ include "common.extraVolumes" . | nindent 6 }}
 {{- end }}

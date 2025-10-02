@@ -116,18 +116,18 @@ TelemetryConfigBuilder& TelemetryConfigBuilder::metricsExportTimeout(std::chrono
   return *this;
 }
 
-TelemetryConfigBuilder& TelemetryConfigBuilder::metricsOtlpHttpEndpoint(std::string endpoint) {
-  m_config.metrics.otlpHttpEndpoint = std::move(endpoint);
+TelemetryConfigBuilder& TelemetryConfigBuilder::metricsOtlpEndpoint(std::string endpoint) {
+  m_config.metrics.otlpEndpoint = std::move(endpoint);
   return *this;
 }
 
-TelemetryConfigBuilder& TelemetryConfigBuilder::metricsOtlpHttpBasicAuthString(const std::string& authString) {
+TelemetryConfigBuilder& TelemetryConfigBuilder::metricsOtlpBasicAuthString(const std::string& authString) {
   if (authString.empty()) {
     // Ensure we don't add any headers if not configured
     return *this;
   }
   std::string authStringBase64 = cta::utils::base64encode(authString);
-  m_config.metrics.otlpHttpHeaders["Authorization"] = "Basic " + authStringBase64;
+  m_config.metrics.otlpHeaders["Authorization"] = "Basic " + authStringBase64;
   return *this;
 }
 
@@ -148,17 +148,12 @@ TelemetryConfig TelemetryConfigBuilder::build() const {
   if (m_config.serviceVersion.empty()) {
     throw cta::exception::InvalidArgument("TelemetryConfig: serviceVersion is required.");
   }
-  if (m_config.metrics.backend == MetricsBackend::OTLP_HTTP && m_config.metrics.otlpHttpEndpoint.empty()) {
-    throw cta::exception::InvalidArgument("TelemetryConfig: OTLP_HTTP metrics backend requires an otlpHttpEndpoint.");
+  if (m_config.metrics.backend == MetricsBackend::OTLP_HTTP && m_config.metrics.otlpEndpoint.empty()) {
+    throw cta::exception::InvalidArgument("TelemetryConfig: OTLP_HTTP metrics backend requires otlpEndpoint to be configured.");
   }
 
-  // See https://github.com/open-telemetry/opentelemetry-cpp/blob/main/exporters/otlp/src/otlp_environment.cc#L133
-  constexpr char kGrpcEndpointSignalEnv[] = "OTEL_EXPORTER_OTLP_METRICS_ENDPOINT";
-  constexpr char kGrpcEndpointGenericEnv[] = "OTEL_EXPORTER_OTLP_ENDPOINT";
-  if (m_config.metrics.backend == MetricsBackend::OTLP_GRPC && !std::getenv(kGrpcEndpointSignalEnv) &&
-      !std::getenv(kGrpcEndpointGenericEnv)) {
-    throw cta::exception::InvalidArgument("TelemetryConfig: OTLP_GRPC metrics backend requires the env variable "
-                                          "OTEL_EXPORTER_OTLP_METRICS_ENDPOINT or OTEL_EXPORTER_OTLP_ENDPOINT.");
+  if (m_config.metrics.backend == MetricsBackend::OTLP_GRPC && m_config.metrics.otlpEndpoint.empty()) {
+    throw cta::exception::InvalidArgument("TelemetryConfig: OTLP_HTTP metrics backend requires otlpEndpoint to be configured.");
   }
 
   return m_config;

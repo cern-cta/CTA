@@ -36,9 +36,4 @@ extern std::unique_ptr<opentelemetry::metrics::Counter<uint64_t>> ctaTapedTransf
  */
 extern std::unique_ptr<opentelemetry::metrics::Histogram<uint64_t>> ctaTapedMountDuration;
 
-/**
- * Number of active threads in the cta taped tape pools.
- */
-extern std::unique_ptr<opentelemetry::metrics::UpDownCounter<int64_t>> ctaTapedThreadPoolSize;
-
 }  // namespace cta::telemetry::metrics

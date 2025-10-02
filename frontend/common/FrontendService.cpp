@@ -144,16 +144,16 @@ FrontendService::FrontendService(const std::string& configFilename) : m_archiveF
       if (!metricsExportTimeout.has_value()) {
         metricsExportTimeout = 500;
       }
-      auto metricsOtlpHttpEndpoint = config.getOptionValueStr("cta.telemetry.metrics.export.otlp_http.endpoint");
-      if (!metricsOtlpHttpEndpoint.has_value()) {
-        metricsOtlpHttpEndpoint = "";
+      auto metricsOtlpEndpoint = config.getOptionValueStr("cta.telemetry.metrics.export.otlp.endpoint");
+      if (!metricsOtlpEndpoint.has_value()) {
+        metricsOtlpEndpoint = "";
       }
-      auto metricsExportOtlpHttpBasicAuthFile =
-        config.getOptionValueStr("cta.telemetry.metrics.export.otlp_http.basic_auth_file");
-      std::string metricsExportOtlpHttpBasicAuthString = "";
-      if (metricsExportOtlpHttpBasicAuthFile.has_value()) {
-        metricsExportOtlpHttpBasicAuthString =
-          cta::telemetry::authStringFromFile(metricsExportOtlpHttpBasicAuthFile.value());
+      auto metricsExportOtlpBasicAuthFile =
+        config.getOptionValueStr("cta.telemetry.metrics.export.otlp.basic_auth_file");
+      std::string metricsExportOtlpBasicAuthString = "";
+      if (metricsExportOtlpBasicAuthFile.has_value()) {
+        metricsExportOtlpBasicAuthString =
+          cta::telemetry::authStringFromFile(metricsExportOtlpBasicAuthFile.value());
       }
       auto metricsFileEndpoint = config.getOptionValueStr("cta.telemetry.metrics.export.file.endpoint");
       if (!metricsFileEndpoint.has_value()) {
@@ -170,8 +170,8 @@ FrontendService::FrontendService(const std::string& configFilename) : m_archiveF
           .metricsBackend(metricsBackend.value())
           .metricsExportInterval(std::chrono::milliseconds(metricsExportInterval.value()))
           .metricsExportTimeout(std::chrono::milliseconds(metricsExportTimeout.value()))
-          .metricsOtlpHttpEndpoint(metricsOtlpHttpEndpoint.value())
-          .metricsOtlpHttpBasicAuthString(metricsExportOtlpHttpBasicAuthString)
+          .metricsOtlpEndpoint(metricsOtlpEndpoint.value())
+          .metricsOtlpBasicAuthString(metricsExportOtlpBasicAuthString)
           .metricsFileEndpoint(metricsFileEndpoint.value())
           .build();
       cta::log::LogContext lc(log);  // temporary log context

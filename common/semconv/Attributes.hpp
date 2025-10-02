@@ -61,6 +61,7 @@ static constexpr const char* kRetrieve = "retrieve";
 }  // namespace CtaTransferDirectionValues
 
 namespace ErrorTypeValues {
+static constexpr const char* kUserError = "user_error";
 static constexpr const char* kException = "exception";
 }  // namespace ErrorTypeValues
 

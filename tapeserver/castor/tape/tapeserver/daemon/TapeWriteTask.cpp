@@ -228,6 +228,8 @@ void TapeWriteTask::execute(const std::unique_ptr<castor::tape::tapeFile::WriteS
     // We received a bad block or a block written failed
     // close failed
 
+    cta::telemetry::metrics::ctaTapedTransferCount->Add(1, {{cta::semconv::attr::kCtaTransferDirection, cta::semconv::attr::CtaTransferDirectionValues::kArchive}, {cta::semconv::attr::kErrorType, cta::semconv::attr::ErrorTypeValues::kException}});
+
     // First set the error flag: we can't proceed any further with writes.
     m_errorFlag.set();
 

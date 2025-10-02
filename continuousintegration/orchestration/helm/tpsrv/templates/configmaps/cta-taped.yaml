@@ -44,11 +44,11 @@ data:
     {{- if $.Values.conf.telemetry.metricsExportTimeout }}
     telemetry metricsExportTimeout {{ $.Values.conf.telemetry.metricsExportTimeout }}
     {{- end }}
-    {{- if $.Values.conf.telemetry.metricsExportOtlpHttpEndpoint }}
-    telemetry metricsExportOtlpHttpEndpoint {{ $.Values.conf.telemetry.metricsExportOtlpHttpEndpoint }}
+    {{- if $.Values.conf.telemetry.metricsExportOtlpEndpoint }}
+    telemetry metricsExportOtlpEndpoint {{ $.Values.conf.telemetry.metricsExportOtlpEndpoint }}
     {{- end }}
-    {{- if $.Values.conf.telemetry.metricsExportOtlpHttpBasicAuthSecret }}
-    telemetry metricsExportOtlpHttpBasicAuthFile /etc/cta/otlp-basic-auth.conf
+    {{- if $.Values.conf.telemetry.metricsExportOtlpBasicAuthSecret }}
+    telemetry metricsExportOtlpBasicAuthFile /etc/cta/otlp-basic-auth.conf
     {{- end }}
     {{- if $.Values.conf.telemetry.metricsExportFileEndpoint }}
     telemetry metricsExportFileEndpoint {{ $.Values.conf.telemetry.metricsExportFileEndpoint }}

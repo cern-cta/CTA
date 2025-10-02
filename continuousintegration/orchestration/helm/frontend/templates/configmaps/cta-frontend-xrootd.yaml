@@ -109,11 +109,11 @@ data:
     {{- if .Values.xrd.conf.telemetry.metricsExportTimeout }}
     cta.telemetry.metrics.export.timeout {{ .Values.xrd.conf.telemetry.metricsExportTimeout }}
     {{- end }}
-    {{- if .Values.xrd.conf.telemetry.metricsExportOtlpHttpEndpoint }}
-    cta.telemetry.metrics.export.otlp_http.endpoint {{ .Values.xrd.conf.telemetry.metricsExportOtlpHttpEndpoint }}
+    {{- if .Values.xrd.conf.telemetry.metricsExportOtlpEndpoint }}
+    cta.telemetry.metrics.export.otlp.endpoint {{ .Values.xrd.conf.telemetry.metricsExportOtlpEndpoint }}
     {{- end }}
-    {{- if .Values.xrd.conf.telemetry.metricsExportOtlpHttpBasicAuthSecret }}
-    cta.telemetry.metrics.export.otlp_http.basic_auth_file /etc/cta/otlp-basic-auth.conf
+    {{- if .Values.xrd.conf.telemetry.metricsExportOtlpBasicAuthSecret }}
+    cta.telemetry.metrics.export.otlp.basic_auth_file /etc/cta/otlp-basic-auth.conf
     {{- end }}
     {{- if .Values.xrd.conf.telemetry.metricsExportFileEndpoint }}
     cta.telemetry.metrics.export.file.endpoint {{ .Values.xrd.conf.telemetry.metricsExportFileEndpoint }}

@@ -232,8 +232,8 @@ TapedConfiguration TapedConfiguration::createFromConfigPath(
   // Telemetry options
   ret.retainInstanceIdOnRestart.setFromConfigurationFile(cf, driveTapedConfigPath);
   ret.metricsBackend.setFromConfigurationFile(cf, driveTapedConfigPath);
-  ret.metricsExportOtlpHttpEndpoint.setFromConfigurationFile(cf, driveTapedConfigPath);
-  ret.metricsExportOtlpHttpBasicAuthFile.setFromConfigurationFile(cf, driveTapedConfigPath);
+  ret.metricsExportOtlpEndpoint.setFromConfigurationFile(cf, driveTapedConfigPath);
+  ret.metricsExportOtlpBasicAuthFile.setFromConfigurationFile(cf, driveTapedConfigPath);
   ret.metricsExportFileEndpoint.setFromConfigurationFile(cf, driveTapedConfigPath);
   ret.metricsExportInterval.setFromConfigurationFile(cf, driveTapedConfigPath);
   ret.metricsExportTimeout.setFromConfigurationFile(cf, driveTapedConfigPath);
