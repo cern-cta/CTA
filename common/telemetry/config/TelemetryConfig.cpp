@@ -1,9 +1,26 @@
+/*
+ * @project      The CERN Tape Archive (CTA)
+ * @copyright    Copyright © 2025 CERN
+ * @license      This program is free software, distributed under the terms of the GNU General Public
+ *               Licence version 3 (GPL Version 3), copied verbatim in the file "COPYING". You can
+ *               redistribute it and/or modify it under the terms of the GPL Version 3, or (at your
+ *               option) any later version.
+ *
+ *               This program is distributed in the hope that it will be useful, but WITHOUT ANY
+ *               WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A
+ *               PARTICULAR PURPOSE. See the GNU General Public License for more details.
+ *
+ *               In applying this licence, CERN does not waive the privileges and immunities
+ *               granted to it by virtue of its status as an Intergovernmental Organization or
+ *               submit itself to any jurisdiction.
+ */
 #include "TelemetryConfig.hpp"
 
 #include <stdexcept>
 #include <fstream>
 #include <string>
 
+#include "common/exception/InvalidArgument.hpp"
 #include "common/utils/Base64.hpp"
 
 namespace cta::telemetry {
@@ -24,7 +41,7 @@ MetricsBackend stringToMetricsBackend(const std::string& name) {
   if (name == "OTLP_HTTP") {
     return MetricsBackend::OTLP_HTTP;
   }
-  throw std::invalid_argument("Invalid MetricBackend: " + name);
+  throw cta::exception::InvalidArgument("Invalid MetricBackend: " + name);
 }
 
 std::string metricsBackendToString(MetricsBackend backend) {
@@ -40,13 +57,13 @@ std::string metricsBackendToString(MetricsBackend backend) {
     case MetricsBackend::OTLP_HTTP:
       return "OTLP_HTTP";
   }
-  throw std::invalid_argument("Provided MetricsBackend cannot be converted to string");
+  throw cta::exception::InvalidArgument("Provided MetricsBackend cannot be converted to string");
 }
 
 std::string authStringFromFile(const std::string& filePath) {
   std::ifstream file(filePath);
   if (!file.is_open()) {
-    throw std::runtime_error("Failed to open auth file: " + filePath);
+    throw cta::exception::Exception("Failed to open auth file: " + filePath);
   }
 
   std::string line;
@@ -56,7 +73,7 @@ std::string authStringFromFile(const std::string& filePath) {
       return line;
     }
   }
-  throw std::runtime_error("No valid auth string found in file: " + filePath);
+  throw cta::exception::Exception("No valid auth string found in file: " + filePath);
 }
 
 TelemetryConfigBuilder& TelemetryConfigBuilder::serviceName(std::string serviceName) {
@@ -109,8 +126,7 @@ TelemetryConfigBuilder& TelemetryConfigBuilder::metricsOtlpHttpBasicAuthString(c
     // Ensure we don't add any headers if not configured
     return *this;
   }
-  std::string authStringBase64;
-  cta::utils::base64encode(authString, authStringBase64);
+  std::string authStringBase64 = cta::utils::base64encode(authString);
   m_config.metrics.otlpHttpHeaders["Authorization"] = "Basic " + authStringBase64;
   return *this;
 }
@@ -122,18 +138,18 @@ TelemetryConfigBuilder& TelemetryConfigBuilder::metricsFileEndpoint(std::string 
 
 TelemetryConfig TelemetryConfigBuilder::build() const {
   if (m_config.serviceName.empty()) {
-    throw std::invalid_argument("TelemetryConfig: serviceName is required.");
+    throw cta::exception::InvalidArgument("TelemetryConfig: serviceName is required.");
   }
 
   if (m_config.serviceNamespace.empty()) {
-    throw std::invalid_argument("TelemetryConfig: serviceNamespace is required.");
+    throw cta::exception::InvalidArgument("TelemetryConfig: serviceNamespace is required.");
   }
 
   if (m_config.serviceVersion.empty()) {
-    throw std::invalid_argument("TelemetryConfig: serviceVersion is required.");
+    throw cta::exception::InvalidArgument("TelemetryConfig: serviceVersion is required.");
   }
   if (m_config.metrics.backend == MetricsBackend::OTLP_HTTP && m_config.metrics.otlpHttpEndpoint.empty()) {
-    throw std::invalid_argument("TelemetryConfig: OTLP_HTTP metrics backend requires an otlpHttpEndpoint.");
+    throw cta::exception::InvalidArgument("TelemetryConfig: OTLP_HTTP metrics backend requires an otlpHttpEndpoint.");
   }
 
   // See https://github.com/open-telemetry/opentelemetry-cpp/blob/main/exporters/otlp/src/otlp_environment.cc#L133
@@ -141,8 +157,8 @@ TelemetryConfig TelemetryConfigBuilder::build() const {
   constexpr char kGrpcEndpointGenericEnv[] = "OTEL_EXPORTER_OTLP_ENDPOINT";
   if (m_config.metrics.backend == MetricsBackend::OTLP_GRPC && !std::getenv(kGrpcEndpointSignalEnv) &&
       !std::getenv(kGrpcEndpointGenericEnv)) {
-    throw std::invalid_argument("TelemetryConfig: OTLP_GRPC metrics backend requires the env variable "
-                                "OTEL_EXPORTER_OTLP_METRICS_ENDPOINT or OTEL_EXPORTER_OTLP_ENDPOINT.");
+    throw cta::exception::InvalidArgument("TelemetryConfig: OTLP_GRPC metrics backend requires the env variable "
+                                          "OTEL_EXPORTER_OTLP_METRICS_ENDPOINT or OTEL_EXPORTER_OTLP_ENDPOINT.");
   }
 
   return m_config;

@@ -320,17 +320,16 @@ void Scheduler::deleteArchive([[maybe_unused]] std::string_view instanceName,
     //Check if address is provided, we can remove the request from the objectstore
     m_db.cancelArchive(request, lc);
     // no need to do anything else, if file was failed it will not be in the catalogue.
+    cta::telemetry::metrics::ctaSchedulerOperationDuration->Record(t.msecs(), {
+      {cta::semconv::attr::kSchedulerOperationName, cta::semconv::attr::SchedulerOperationNameValues::kCancelArchive}},
+      opentelemetry::context::RuntimeContext::GetCurrent());
   }
   tl.insertAndReset("schedulerDbTime", t);
   m_catalogue.ArchiveFile()->moveArchiveFileToRecycleLog(request, lc);
   tl.insertAndReset("catalogueTime", t);
-  auto schedulerDbTimeMSecs = t.msecs();
   log::ScopedParamContainer spc(lc);
   tl.addToLog(spc);
   lc.log(log::INFO, "In Scheduler::deleteArchive(): success.");
-  cta::telemetry::metrics::ctaSchedulerOperationDuration->Record(schedulerDbTimeMSecs, {
-    {cta::semconv::attr::kSchedulerOperationName, cta::semconv::attr::SchedulerOperationNameValues::kCancelArchive}},
-    opentelemetry::context::RuntimeContext::GetCurrent());
 }
 
 //------------------------------------------------------------------------------

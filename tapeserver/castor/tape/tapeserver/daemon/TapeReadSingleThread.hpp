@@ -64,11 +64,6 @@ public:
                        cta::catalogue::Catalogue& catalogue);
 
   /**
-   * Destructor
-   */
-  ~TapeReadSingleThread();
-
-  /**
    * Sets up the pointer to the task injector. This cannot be done at
    * construction time as both task injector and tape write single thread refer to
    * each other. This function should be called before starting the threads.

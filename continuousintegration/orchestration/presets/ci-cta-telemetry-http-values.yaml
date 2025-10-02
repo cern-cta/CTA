@@ -15,7 +15,7 @@ frontend:
     conf:
       telemetry:
         enabled: true
-        retainInstanceIdOnRestart: true
+        retainInstanceIdOnRestart: false
         metricsBackend: "OTLP_HTTP"
         metricsExportOtlpHttpEndpoint: "https://monit-otlp.cern.ch:4319/v1/metrics"
         metricsExportOtlpHttpBasicAuthSecret: monit-collector-auth

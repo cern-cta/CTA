@@ -144,7 +144,7 @@ void cta::frontend::grpc::client::CtaAdminGrpcCmd::exe(cta::log::Logger& log, co
      *        or KerberosAuthenticator
      *       ???
      */
-    cta::utils::base64encode(strToken, strEncodedToken);
+    strEncodedToken = cta::utils::base64encode(strToken);
 
   } catch(const cta::exception::Exception& e) {
     /*

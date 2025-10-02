@@ -63,7 +63,7 @@ usage() {
   echo "      --platform <platform>:            Which platform to build for. Defaults to the default platform in the project.json."
   echo "      --eos-enabled <true|false>:       Whether to spawn an EOS or not. Defaults to true."
   echo "      --dcache-enabled <true|false>:    Whether to spawn a dCache or not. Defaults to false."
-  echo "      --local-telemetry:               Enables telemetry for the spawned instance."
+  echo "      --local-telemetry:                Spawns a local collector and Prometheus backends to which metrics will be sent."
   echo "      --publish-telemetry:              Publishes telemetry to a pre-configured central observability backend."
   echo "      --deploy-namespace <namespace>:   Deploy the CTA instance in a given namespace. Defaults to dev."
   exit 1

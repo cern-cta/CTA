@@ -2,8 +2,7 @@ image:
   repository: registry.cern.ch/ghcr.io/open-telemetry/opentelemetry-collector-releases/opentelemetry-collector-contrib
   tag: 0.129.1
 
-# TODO: this should be a daemonset if we want this to scale nicely to multiple machines/nodes
-# However, this also complicates the Prometheus setup.
+# Note that this is just for a simple single-node deployment
 mode: deployment
 
 config:
@@ -36,15 +35,6 @@ config:
         exporters:
           - prometheus
 
-    telemetry:
-      metrics:
-        readers:
-          - pull:
-              exporter:
-                prometheus:
-                  host: ${env:MY_POD_IP}
-                  port: 8888
-
     extensions:
       - health_check
 ports:
@@ -52,9 +42,4 @@ ports:
     enabled: true
     containerPort: 8889
     servicePort: 8889
-    protocol: TCP
-  internals:
-    enabled: true
-    containerPort: 8888
-    servicePort: 8888
     protocol: TCP

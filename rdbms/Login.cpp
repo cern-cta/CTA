@@ -296,6 +296,12 @@ bool Login::postgresqlHasPassword(const std::string& connectionDetails) {
   return true;
 }
 
+/**
+ * Connection string has the format:
+ * postgresql://[userspec@][hostspec][/dbname][?paramspec]
+ * For the namespace, we simple take "[hostspec][/dbname][?paramspec]".
+ * Note that technically [?paramspec] should not be included, but support for this is missing from the rest of the login methods as well.
+ */
 std::string Login::getPostgresqlDbNamespace(const std::string &connectionDetails) {
   if (connectionDetails.find("@") == std::string::npos) {
     cta::utils::Regex regex("postgresql://(.*)");

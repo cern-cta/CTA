@@ -20,6 +20,6 @@ tpsrv:
   conf:
     telemetry:
       enabled: true
-      retainInstanceIdOnRestart: false
+      retainInstanceIdOnRestart: true
       metricsBackend: "OTLP_HTTP"
       metricsExportOtlpHttpEndpoint: "http://otel-opentelemetry-collector:4318/v1/metrics"

@@ -21,7 +21,6 @@
 #include "castor/tape/tapeserver/drive/DriveInterface.hpp"
 #include "castor/tape/tapeserver/file/ReadSession.hpp"
 #include "castor/tape/tapeserver/file/ReadSessionFactory.hpp"
-#include "common/telemetry/metrics/instruments/TapedInstruments.hpp"
 
 //------------------------------------------------------------------------------
 // Constructor for TapeReadSingleThread
@@ -51,13 +50,7 @@ castor::tape::tapeserver::daemon::TapeReadSingleThread::TapeReadSingleThread(
   m_useLbp(useLbp),
   m_useRAO(useRAO),
   m_retrieveMount(retrieveMount),
-  m_catalogue(catalogue) {
-  cta::telemetry::metrics::ctaTapedThreadPoolSize->Add(1, {{cta::semconv::attr::kCtaTransferDirection, cta::semconv::attr::CtaTransferDirectionValues::kRetrieve}, {cta::semconv::attr::kThreadPoolName, cta::semconv::attr::ThreadPoolNameValues::kTape}});
-}
-
-castor::tape::tapeserver::daemon::TapeReadSingleThread::~TapeReadSingleThread() {
-  cta::telemetry::metrics::ctaTapedThreadPoolSize->Add(-1, {{cta::semconv::attr::kCtaTransferDirection, cta::semconv::attr::CtaTransferDirectionValues::kRetrieve}, {cta::semconv::attr::kThreadPoolName, cta::semconv::attr::ThreadPoolNameValues::kTape}});
-}
+  m_catalogue(catalogue) {}
 
 //------------------------------------------------------------------------------
 //TapeCleaning::~TapeCleaning()

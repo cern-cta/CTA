@@ -24,15 +24,15 @@ namespace cta::utils {
 /**
  * Decodes a base64 encoded input string.
  * @param input The encoded base64 string.
- * @param output The decoded string will be put here.
+ * @return The decoded string.
  */
-void base64decode(const std::string& input, std::string& output);
+std::string base64decode(const std::string& input);
 
 /**
  * Base64 encodes the provided input string.
  * @param input The string that should be base64 encoded.
- * @param output The base64 encoded will be put here.
+ * @return The base64 encoded string.
  */
-void base64encode(const std::string& input, std::string& output);
+std::string base64encode(const std::string& input);
 
 }  // namespace cta::utils
