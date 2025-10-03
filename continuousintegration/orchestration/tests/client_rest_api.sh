@@ -22,8 +22,8 @@
 admin_kdestroy &>/dev/null
 admin_kinit &>/dev/null
 
-eospower_kdestroy &>/dev/null
-eospower_kinit &>/dev/null
+eosadmin_kdestroy &>/dev/null
+eosadmin_kinit &>/dev/null
 
 #NOTE: In this context it should be eos service names.
 EOS_MGM_HOST="ctaeos"
@@ -31,9 +31,9 @@ NOW=$(date +%s)
 LATER=$(echo "${NOW}+86400" | bc)
 
 # Generate Tokens
-TOKEN_EOSUSER=$(eos root://"${EOS_MGM_HOST}" token --tree --path '/eos/ctaeos' --expires "${LATER}" --owner user1 --group eosusers --permission rwx)
+TOKEN_EOSUSER1=$(eosadmin_eos root://"${EOS_MGM_HOST}" token --tree --path '/eos/ctaeos/://:/api/' --expires "${LATER}" --owner user1 --group eosusers --permission rwx)
 
-TOKEN_EOSPOWER=$(eospower_eos root://"${EOS_MGM_HOST}" token --tree --path '/eos/ctaeos' --expires "${LATER}")
+TOKEN_EOSPOWER1=$(eosadmin_eos root://"${EOS_MGM_HOST}" token --tree --path '/eos/ctaeos/://:/api/' --expires "${LATER}" --owner poweruser1 --group powerusers --permission prwx)
 
 # By default check https connections certificates
 # disable for now on Alma9 so that this is not on the critical path
@@ -45,10 +45,10 @@ CURL_OPTS=""
 test 0 -eq ${CHECK_CERTIFICATES} && CURL_OPTS+="--insecure"
 
 echo "Printing eosuser token dump"
-eos root://"${EOS_MGM_HOST}" token --token "${TOKEN_EOSUSER}" | jq .
+eos root://"${EOS_MGM_HOST}" token --token "${TOKEN_EOSUSER1}" | jq .
 echo
 echo "Printing poweruser token dump"
-eos root://"${EOS_MGM_HOST}" token --token "${TOKEN_EOSPOWER}" | jq .
+eos root://"${EOS_MGM_HOST}" token --token "${TOKEN_EOSPOWER1}" | jq .
 echo
 
 # Discover endpoint of v1, /.well-known/wlcg-tape-rest-api in instance http(s)://ctaeos:8443
@@ -72,7 +72,7 @@ test "${INIT_COUNT}" -eq 0 || { echo "Test file test_http-rest-api already in EO
 tmp_file=$(mktemp)
 echo "Dummy" > "${tmp_file}"
 
-curl -L --insecure -H "Accept: application/json" -H "Authorization: Bearer ${TOKEN_EOSUSER}" "https://${EOS_MGM_HOST}:8443/eos/ctaeos/preprod/test_http-rest-api" --upload-file "${tmp_file}"
+curl -L --insecure -H "Accept: application/json" -H "Authorization: Bearer ${TOKEN_EOSUSER1}" "https://${EOS_MGM_HOST}:8443/eos/ctaeos/preprod/test_http-rest-api" --upload-file "${tmp_file}"
 
 FINAL_COUNT=0
 TIMEOUT=90
@@ -98,12 +98,12 @@ eos root://"${EOS_MGM_HOST}" ls -y /eos/ctaeos/preprod
 # Archive Info Request information about the progression of writing files
 # to tape.
 echo "$(date +%s): Showing archiveinfo..."
-curl ${CURL_OPTS} -L --capath /etc/grid-security/certificates -H "Accept: application/json" -H "Authorization: Bearer ${TOKEN_EOSPOWER}" ${HTTPS_URI}/archiveinfo/ -d '{"paths":["/eos/ctaeos/preprod/test_http-rest-api"]}' | jq .
+curl ${CURL_OPTS} -L --capath /etc/grid-security/certificates -H "Accept: application/json" -H "Authorization: Bearer ${TOKEN_EOSPOWER1}" ${HTTPS_URI}/archiveinfo/ -d '{"paths":["/eos/ctaeos/preprod/test_http-rest-api"]}' | jq .
 
 # Stage
 # Request that tape-stored files are made available with disk latency.
 
-REQ_ID=$(curl ${CURL_OPTS} -L --capath /etc/grid-security/certificates -H "Accept: application/json" -H "Authorization: Bearer ${TOKEN_EOSPOWER}" ${HTTPS_URI}/stage/ -d '{"files":[{"path":"/eos/ctaeos/preprod/test_http-rest-api"}]}' | jq -r .requestId)
+REQ_ID=$(curl ${CURL_OPTS} -L --capath /etc/grid-security/certificates -H "Accept: application/json" -H "Authorization: Bearer ${TOKEN_EOSPOWER1}" ${HTTPS_URI}/stage/ -d '{"files":[{"path":"/eos/ctaeos/preprod/test_http-rest-api"}]}' | jq -r .requestId)
 
 SECONDS_PASSED=0
 FINAL_COUNT=0
@@ -128,7 +128,7 @@ eos root://"${EOS_MGM_HOST}" ls -y /eos/ctaeos/preprod
 # For CTA the actual REQ_ID is not necessary, any character after 'release/'
 # will make the request valid. But dCache and StoRM use them. More info:
 #      https://gitlab.cern.ch/cta/CTA/-/issues/384
-curl ${CURL_OPTS} -L --capath /etc/grid-security/certificates -H "Accept: application/json" -H "Authorization: Bearer ${TOKEN_EOSPOWER}" "${HTTPS_URI}/release/${REQ_ID}" -d '{"paths":["/eos/ctaeos/preprod/test_http-rest-api"]}'
+curl ${CURL_OPTS} -L --capath /etc/grid-security/certificates -H "Accept: application/json" -H "Authorization: Bearer ${TOKEN_EOSPOWER1}" "${HTTPS_URI}/release/${REQ_ID}" -d '{"paths":["/eos/ctaeos/preprod/test_http-rest-api"]}'
 
 EVICT_COUNT=$(eos root://"${EOS_MGM_HOST}" ls -y /eos/ctaeos/preprod | grep 'test_http-rest-api' | grep 'd0::t1' | wc -l)
 test "${EVICT_COUNT}" -eq 1 || { echo "$(date +%s): File did not get evicted.";  exit 1; }
@@ -161,24 +161,24 @@ done
 
 #    3. Do request.
 IFS=$OLDIFS
-REQ_ID=$(curl ${CURL_OPTS} -L --capath /etc/grid-security/certificates -H "Accept: application/json" -H "Authorization: Bearer ${TOKEN_EOSPOWER}" ${HTTPS_URI}/stage/ -d '{"files":[{"path":"/eos/ctaeos/preprod/test_http-rest-api"}]}' | jq -r .requestId)
+REQ_ID=$(curl ${CURL_OPTS} -L --capath /etc/grid-security/certificates -H "Accept: application/json" -H "Authorization: Bearer ${TOKEN_EOSPOWER1}" ${HTTPS_URI}/stage/ -d '{"files":[{"path":"/eos/ctaeos/preprod/test_http-rest-api"}]}' | jq -r .requestId)
 echo "$(date +%s): Request id 1 - ${REQ_ID}"
 
 #    3.1 Check progress of request.
 echo "$(date +%s): Checking progress of request"
-curl ${CURL_OPTS} -L --capath /etc/grid-security/certificates -H "Accept: application/json" -H "Authorization: Bearer ${TOKEN_EOSPOWER}" "${HTTPS_URI}/stage/${REQ_ID}"
+curl ${CURL_OPTS} -L --capath /etc/grid-security/certificates -H "Accept: application/json" -H "Authorization: Bearer ${TOKEN_EOSPOWER1}" "${HTTPS_URI}/stage/${REQ_ID}"
 
 #    4. Cancel request.
 echo "$(date +%s): Cancelling stage request"
-curl ${CURL_OPTS} -L --capath /etc/grid-security/certificates -H "Accept: application/json" -H "Authorization: Bearer ${TOKEN_EOSPOWER}" "${HTTPS_URI}/stage/${REQ_ID}/cancel/" -d '{"paths":["/eos/ctaeos/preprod/test_http-rest-api"]}'
+curl ${CURL_OPTS} -L --capath /etc/grid-security/certificates -H "Accept: application/json" -H "Authorization: Bearer ${TOKEN_EOSPOWER1}" "${HTTPS_URI}/stage/${REQ_ID}/cancel/" -d '{"paths":["/eos/ctaeos/preprod/test_http-rest-api"]}'
 
 #    5. Do another request.
 IFS=$OLDIFS
-REQ_ID=$(curl ${CURL_OPTS} -L --capath /etc/grid-security/certificates -H "Accept: application/json" -H "Authorization: Bearer ${TOKEN_EOSPOWER}" ${HTTPS_URI}/stage/ -d '{"files":[{"path":"/eos/ctaeos/preprod/test_http-rest-api"}]}' | jq -r .requestId)
+REQ_ID=$(curl ${CURL_OPTS} -L --capath /etc/grid-security/certificates -H "Accept: application/json" -H "Authorization: Bearer ${TOKEN_EOSPOWER1}" ${HTTPS_URI}/stage/ -d '{"files":[{"path":"/eos/ctaeos/preprod/test_http-rest-api"}]}' | jq -r .requestId)
 echo "$(date +%s): Request id 2 - ${REQ_ID}"
 
 # 6. Delete the request.
-curl ${CURL_OPTS} -L -X DELETE --capath /etc/grid-security/certificates -H "Accept: application/json" -H "Authorization: Bearer ${TOKEN_EOSPOWER}" "${HTTPS_URI}/stage/${REQ_ID}"
+curl ${CURL_OPTS} -L -X DELETE --capath /etc/grid-security/certificates -H "Accept: application/json" -H "Authorization: Bearer ${TOKEN_EOSPOWER1}" "${HTTPS_URI}/stage/${REQ_ID}"
 
 #    5. Put drive up.
 for drive in "${dr_names[@]}"; do

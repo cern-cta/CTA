@@ -209,14 +209,17 @@ klist -s || die "Cannot get kerberos credentials for user ${USER}"
 eospower_kdestroy
 eospower_kinit
 
+eosadmin_kdestroy
+eosadmin_kinit
+
 # Get kerberos credentials for ctaadmin2
 admin_kinit
 
 NOW=$(date +%s)
 LATER=$(echo "${NOW}+${TOKEN_TIMEOUT}"  | bc)
-TOKEN=$(eos "root://${EOS_MGM_HOST}" token --tree --path '/eos/ctaeos' --expires "${LATER}" --owner user1 --group eosusers --permission rwxd)
+TOKEN_EOSUSER1=$(eosadmin_eos root://"${EOS_MGM_HOST}" token --tree --path '/eos/ctaeos/://:/api/' --expires "${LATER}" --owner user1 --group eosusers --permission rwx)
 
-TOKEN_EOSPOWER=$(eospower_eos root://"${EOS_MGM_HOST}" token --tree --path '/eos/ctaeos' --expires "${LATER}")
+TOKEN_EOSPOWER1=$(eosadmin_eos root://"${EOS_MGM_HOST}" token --tree --path '/eos/ctaeos/://:/api/' --expires "${LATER}" --owner poweruser1 --group powerusers --permission prwx)
 
 echo "Starting test ${TESTID}: ${COMMENT}"
 
