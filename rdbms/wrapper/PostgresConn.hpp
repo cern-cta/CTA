@@ -47,7 +47,7 @@ public:
    *
    * @param login The database login information.
    */
-  explicit PostgresConn(const rdbms::Login &login);
+  explicit PostgresConn(const rdbms::Login& login);
 
   /**
    * Destructor.

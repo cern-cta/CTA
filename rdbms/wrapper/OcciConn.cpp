@@ -34,11 +34,13 @@ namespace cta::rdbms::wrapper {
 //------------------------------------------------------------------------------
 // constructor
 //------------------------------------------------------------------------------
-OcciConn::OcciConn(oracle::occi::Environment *const env, oracle::occi::Connection *const conn, const std::string& dbNamespace):
-  m_env(env),
-  m_occiConn(conn),
-  m_autocommitMode(AutocommitMode::AUTOCOMMIT_ON),
-  m_dbNamespace(dbNamespace) {
+OcciConn::OcciConn(oracle::occi::Environment* const env,
+                   oracle::occi::Connection* const conn,
+                   const std::string& dbNamespace)
+    : m_env(env),
+      m_occiConn(conn),
+      m_autocommitMode(AutocommitMode::AUTOCOMMIT_ON),
+      m_dbNamespace(dbNamespace) {
   if(nullptr == conn) {
     throw exception::Exception(std::string(__FUNCTION__) + " failed"
       ": The OCCI connection is a nullptr pointer");

@@ -26,24 +26,24 @@ namespace cta::utils {
  */
 std::string base64decode(const std::string& input) {
   std::string output;
- CryptoPP::StringSource ss(input, true,
-   new CryptoPP::Base64Decoder(
-       new CryptoPP::StringSink(output)
-     ) // Base64Decoder
- ); // StringSource
+  CryptoPP::StringSource ss(input,
+                            true,
+                            new CryptoPP::Base64Decoder(new CryptoPP::StringSink(output))  // Base64Decoder
+  );                                                                                       // StringSource
   return output;
 }
+
 /**
  * https://cryptopp.com/wiki/Base64Encoder
  */
 std::string base64encode(const std::string& input) {
   std::string output;
-  CryptoPP::StringSource ss(input, true,
-      new CryptoPP::Base64Encoder(
-          new CryptoPP::StringSink(output), false // no new line
-      ) // Base64Encoder
-  ); // StringSource
+  CryptoPP::StringSource ss(input,
+                            true,
+                            new CryptoPP::Base64Encoder(new CryptoPP::StringSink(output), false  // no new line
+                                                        )                                        // Base64Encoder
+  );                                                                                             // StringSource
   return output;
 }
 
-} // namespace cta::frontend::grpc::utils
+}  // namespace cta::utils

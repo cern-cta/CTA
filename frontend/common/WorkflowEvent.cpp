@@ -125,8 +125,10 @@ xrd::Response WorkflowEvent::process() {
   // Note that m_cliIdentity.username should be low cardinality here as it corresponds to the disk instance name
   cta::telemetry::metrics::ctaFrontendRequestDuration->Record(
     timer.msecs(),
-    {{cta::semconv::attr::kEventName, Workflow_EventType_Name(m_event.wf().event())},
-     {cta::semconv::attr::kFrontendRequesterName, m_cliIdentity.username}},
+    {
+      {cta::semconv::attr::kEventName,             Workflow_EventType_Name(m_event.wf().event())},
+      {cta::semconv::attr::kFrontendRequesterName, m_cliIdentity.username                       }
+  },
     opentelemetry::context::RuntimeContext::GetCurrent());
 
   return response;

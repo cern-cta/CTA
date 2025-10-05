@@ -28,8 +28,9 @@ namespace castor::tape::tapeserver::daemon {
 //------------------------------------------------------------------------------
 // constructor
 //------------------------------------------------------------------------------
-DiskWriteTask::DiskWriteTask(cta::RetrieveJob *retrieveJob, RecallMemoryManager& mm):
-m_retrieveJob(retrieveJob),m_memManager(mm){}
+DiskWriteTask::DiskWriteTask(cta::RetrieveJob* retrieveJob, RecallMemoryManager& mm)
+    : m_retrieveJob(retrieveJob),
+      m_memManager(mm) {}
 
 //------------------------------------------------------------------------------
 // DiskWriteTask::execute
@@ -137,8 +138,16 @@ bool DiskWriteTask::execute(RecallReportPacker& reporter, cta::log::LogContext& 
     m_stats.totalTime = totalTime.secs();
     logWithStat(cta::log::INFO, isVerifyOnly ? "File successfully verified" : "File successfully transfered to disk", lc);
     watchdog.deleteParameter("stillOpenFileForThread" + std::to_string((long long)threadID));
-    cta::telemetry::metrics::ctaTapedTransferCount->Add(1, {{cta::semconv::attr::kCtaTransferDirection, cta::semconv::attr::CtaTransferDirectionValues::kRetrieve}});
-    cta::telemetry::metrics::ctaTapedTransferIO->Add(m_stats.dataVolume, {{cta::semconv::attr::kCtaTransferDirection, cta::semconv::attr::CtaTransferDirectionValues::kRetrieve}});
+    cta::telemetry::metrics::ctaTapedTransferCount->Add(
+      1,
+      {
+        {cta::semconv::attr::kCtaTransferDirection, cta::semconv::attr::CtaTransferDirectionValues::kRetrieve}
+    });
+    cta::telemetry::metrics::ctaTapedTransferIO->Add(
+      m_stats.dataVolume,
+      {
+        {cta::semconv::attr::kCtaTransferDirection, cta::semconv::attr::CtaTransferDirectionValues::kRetrieve}
+    });
     //everything went well, return true
     return true;
   } //end of try
@@ -151,7 +160,12 @@ bool DiskWriteTask::execute(RecallReportPacker& reporter, cta::log::LogContext& 
      * -- An error while writing the file
      */
 
-    cta::telemetry::metrics::ctaTapedTransferCount->Add(1, {{cta::semconv::attr::kCtaTransferDirection, cta::semconv::attr::CtaTransferDirectionValues::kRetrieve}, {cta::semconv::attr::kErrorType, cta::semconv::attr::ErrorTypeValues::kException}});
+    cta::telemetry::metrics::ctaTapedTransferCount->Add(
+      1,
+      {
+        {cta::semconv::attr::kCtaTransferDirection, cta::semconv::attr::CtaTransferDirectionValues::kRetrieve},
+        {cta::semconv::attr::kErrorType,            cta::semconv::attr::ErrorTypeValues::kException          }
+    });
 
     //there might still be some blocks into m_fifo
     // We need to empty it
@@ -180,7 +194,7 @@ bool DiskWriteTask::execute(RecallReportPacker& reporter, cta::log::LogContext& 
 //------------------------------------------------------------------------------
 // DiskWriteTask::getFreeBlock
 //------------------------------------------------------------------------------
-MemBlock *DiskWriteTask::getFreeBlock() {
+MemBlock* DiskWriteTask::getFreeBlock() {
   throw cta::exception::Exception("DiskWriteTask::getFreeBlock should mot be called");
 }
 
@@ -206,8 +220,9 @@ void DiskWriteTask::releaseAllBlock(){
   while(1){
     if(MemBlock* mb=m_fifo.pop())
       AutoReleaseBlock<RecallMemoryManager> release(mb,m_memManager);
-    else
+    else {
       break;
+    }
   }
 }
 
@@ -241,6 +256,7 @@ void DiskWriteTask::checkErrors(MemBlock* mb, uint64_t blockId, cta::log::LogCon
 const DiskStats DiskWriteTask::getTaskStats() const{
   return m_stats;
 }
+
 //------------------------------------------------------------------------------
 // logWithStat
 //------------------------------------------------------------------------------

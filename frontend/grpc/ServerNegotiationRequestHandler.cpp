@@ -20,7 +20,6 @@
 #include "RequestMessage.hpp"
 #include "common/log/LogContext.hpp"
 
-
 cta::frontend::grpc::server::NegotiationRequestHandler::NegotiationRequestHandler(
   cta::log::Logger& log,
   AsyncServer& asyncServer,
@@ -45,7 +44,6 @@ cta::frontend::grpc::server::NegotiationRequestHandler::~NegotiationRequestHandl
     logGSSErrors("In grpc::server::NegotiationRequestHandler::~NegotiationRequestHandler(): gss_release_cred() major status.", gssMajStat, GSS_C_GSS_CODE);
     logGSSErrors("IN grpc::server::NegotiationRequestHandler::~NegotiationRequestHandler(): gss_release_cred() minor status", gssMinStat, GSS_C_MECH_CODE);
   }
-
 }
 
 void cta::frontend::grpc::server::NegotiationRequestHandler::init() {
@@ -55,7 +53,6 @@ void cta::frontend::grpc::server::NegotiationRequestHandler::init() {
 }
 
 void cta::frontend::grpc::server::NegotiationRequestHandler::logGSSErrors(const std::string& strContext, OM_uint32 gssCode, int iType) {
-
   log::LogContext lc(m_log);
   log::ScopedParamContainer params(lc);
   std::ostringstream osMsgScopeParam;
@@ -134,8 +131,6 @@ void cta::frontend::grpc::server::NegotiationRequestHandler::acquireCreds(const 
     logGSSErrors("In grpc::server::NegotiationRequestHandler::acquireCreds(): gss_acquire_cred() minor status.", gssMinStat, GSS_C_MECH_CODE);
     throw cta::exception::Exception("In grpc::server::NegotiationRequestHandler::acquireCreds(): Failed to get Kerberos credentials.");
   }
-
-
 }
 
 bool cta::frontend::grpc::server::NegotiationRequestHandler::next(const bool bOk) {
@@ -251,9 +246,9 @@ bool cta::frontend::grpc::server::NegotiationRequestHandler::next(const bool bOk
         }
 
         releaseName("In grpc::server::NegotiationRequestHandler::next():", &gssSrcName);
-      }
+    }
 
-      break;
+    break;
     case StreamState::ERROR:
       m_streamState = StreamState::FINISH;
       m_rwNegotiation.Finish(::grpc::Status::CANCELLED, m_tag);
@@ -276,4 +271,3 @@ bool cta::frontend::grpc::server::NegotiationRequestHandler::next(const bool bOk
 
   return bNext;
 }
-

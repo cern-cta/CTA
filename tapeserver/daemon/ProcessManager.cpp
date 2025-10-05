@@ -103,12 +103,12 @@ cta::log::LogContext&  ProcessManager::logContext() {
 ProcessManager::RunPartStatus ProcessManager::runShutdownManagement() {
   // Check the current statuses for shutdown requests
   // If any process requests a shutdown, we will trigger it in all.
-  bool anyAskedShutdown = std::count_if(m_subprocessHandlers.cbegin(), m_subprocessHandlers.cend(),
-    [this](const SubprocessAndStatus &i) {
+  bool anyAskedShutdown =
+    std::count_if(m_subprocessHandlers.cbegin(), m_subprocessHandlers.cend(), [this](const SubprocessAndStatus& i) {
       if(i.status.shutdownRequested) {
-          cta::log::ScopedParamContainer params(m_logContext);
-          params.add("SubprocessName", i.handler->index);
-          m_logContext.log(log::INFO, "Subprocess requested shutdown");
+        cta::log::ScopedParamContainer params(m_logContext);
+        params.add("SubprocessName", i.handler->index);
+        m_logContext.log(log::INFO, "Subprocess requested shutdown");
       }
       return i.status.shutdownRequested;
     });
@@ -136,8 +136,8 @@ ProcessManager::RunPartStatus ProcessManager::runShutdownManagement() {
 
 ProcessManager::RunPartStatus ProcessManager::runKillManagement() {
   // If any process asks for a kill, we kill all sub processes and exit
-  bool anyAskedKill = std::count_if(m_subprocessHandlers.cbegin(), m_subprocessHandlers.cend(),
-    [this](const SubprocessAndStatus &i) {
+  bool anyAskedKill =
+    std::count_if(m_subprocessHandlers.cbegin(), m_subprocessHandlers.cend(), [this](const SubprocessAndStatus& i) {
       if(i.status.killRequested) {
         cta::log::ScopedParamContainer params(m_logContext);
         params.add("SubprocessName", i.handler->index);
@@ -146,7 +146,7 @@ ProcessManager::RunPartStatus ProcessManager::runKillManagement() {
       return i.status.killRequested;
     });
   if (anyAskedKill) {
-    for(auto & sp: m_subprocessHandlers) {
+    for (auto& sp : m_subprocessHandlers) {
       sp.handler->kill();
       cta::log::ScopedParamContainer params(m_logContext);
       params.add("SubprocessName", sp.handler->index);
@@ -175,21 +175,21 @@ ProcessManager::RunPartStatus ProcessManager::runForkManagement() {
       m_logContext.log(log::INFO, "Subprocess handler will fork");
       auto newStatus = sp.handler->fork();
       switch (newStatus.forkState) {
-      case SubprocessHandler::ForkState::child: {
-        // We are in the child side.
-        // Instruct all other handlers to proceed with a post-fork cleanup.
-        for (auto & sp2: m_subprocessHandlers) {
-          if (&sp2 != &sp) {
-            sp2.handler->postForkCleanup();
+        case SubprocessHandler::ForkState::child: {
+          // We are in the child side.
+          // Instruct all other handlers to proceed with a post-fork cleanup.
+          for (auto& sp2 : m_subprocessHandlers) {
+            if (&sp2 != &sp) {
+              sp2.handler->postForkCleanup();
+            }
           }
+          // We are in the child side: run the subprocess and exit.
+          m_logContext.log(log::INFO, "In child process. Running child.");
+          int exitCode = sp.handler->runChild();
+          // Shut down telemetry to flush metrics
+          cta::telemetry::shutdownTelemetry(m_logContext);
+          ::exit(exitCode);
         }
-        // We are in the child side: run the subprocess and exit.
-        m_logContext.log(log::INFO, "In child process. Running child.");
-        int exitCode = sp.handler->runChild();
-        // Shut down telemetry to flush metrics
-        cta::telemetry::shutdownTelemetry(m_logContext);
-        ::exit(exitCode);
-      }
       case SubprocessHandler::ForkState::parent:
         // We are parent side. Record the new state for this handler
         newStatus.forkState = SubprocessHandler::ForkState::notForking;
@@ -206,8 +206,8 @@ ProcessManager::RunPartStatus ProcessManager::runForkManagement() {
 ProcessManager::RunPartStatus ProcessManager::runSigChildManagement() {
   // If any process handler received sigChild, we signal it to all processes. Typically, this is
   // done by the signal handler
-  bool sigChild = std::count_if(m_subprocessHandlers.cbegin(), m_subprocessHandlers.cend(),
-    [this](const SubprocessAndStatus &i){
+  bool sigChild =
+    std::count_if(m_subprocessHandlers.cbegin(), m_subprocessHandlers.cend(), [this](const SubprocessAndStatus& i) {
       if(i.status.sigChild) {
         cta::log::ScopedParamContainer params(m_logContext);
         params.add("SubprocessName", i.handler->index);
@@ -278,9 +278,7 @@ void ProcessManager::runEventLoop() {
   }
   // We now compute the next timeout. epoll needs milliseconds
   int64_t nextTimeoutMs =
-      std::chrono::duration_cast<std::chrono::milliseconds>(
-        nextTimeout - std::chrono::steady_clock::now()
-      ).count();
+    std::chrono::duration_cast<std::chrono::milliseconds>(nextTimeout - std::chrono::steady_clock::now()).count();
   // Make sure the value is within a reasonable range (>=0, less that 5 minutes).
   nextTimeoutMs = std::max(0L, nextTimeoutMs);
   int64_t fiveMin = std::chrono::duration_cast<std::chrono::milliseconds>(
@@ -295,12 +293,11 @@ void ProcessManager::runEventLoop() {
   // epoll_wait can get interrupted by signal (like while debugging). This is should not be treated as an error.
   if (-1 == receivedEvents && EINTR == errno) receivedEvents = 0;
   cta::exception::Errnum::throwOnMinusOne(receivedEvents,
-      "In ProcessManager::runEventLoop(): failed to ::epoll_wait()");
+                                          "In ProcessManager::runEventLoop(): failed to ::epoll_wait()");
   for (int i=0; i< receivedEvents; i++) {
     // The subprocess handers registered themselves to epoll, so we have the
     // pointer to it.
-    SubprocessHandler::ProcessingStatus status =
-        ((SubprocessHandler*)ee[i].data.ptr)->processEvent();
+    SubprocessHandler::ProcessingStatus status = ((SubprocessHandler*) ee[i].data.ptr)->processEvent();
     // Record the status with the right handler
     for(auto & sp: m_subprocessHandlers) {
       if (ee[i].data.ptr == sp.handler.get()) {

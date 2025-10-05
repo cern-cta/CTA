@@ -27,7 +27,6 @@ namespace cta::catalogue {
  */
 class PostgresCatalogue: public RdbmsCatalogue {
 public:
-
   /**
    * Constructor.
    *

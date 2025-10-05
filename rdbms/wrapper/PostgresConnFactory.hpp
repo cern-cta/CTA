@@ -29,13 +29,12 @@ namespace cta::rdbms::wrapper {
  */
 class PostgresConnFactory: public ConnFactory {
 public:
-
   /**
    * Constructor
    *
    * @param login The database login information.
    */
-  PostgresConnFactory(const rdbms::Login &login);
+  PostgresConnFactory(const rdbms::Login& login);
 
   /**
    * Destructor.
@@ -60,7 +59,6 @@ public:
    */
   std::string getDbSystemName() const override;
 
-
   /**
    * @brief Get the logical database namespace.
    *
@@ -73,7 +71,6 @@ public:
   std::string getDbNamespace() const override;
 
 private:
-
   /**
    * The database login information.
    */

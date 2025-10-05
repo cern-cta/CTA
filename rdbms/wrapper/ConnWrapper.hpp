@@ -203,7 +203,7 @@ public:
    */
   virtual std::list<std::string> getViewNames() = 0;
 
-    /**
+  /**
    * @brief Get the logical database namespace.
    *
    * This should return the OpenTelemetry semantic convention attribute

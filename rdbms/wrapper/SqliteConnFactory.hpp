@@ -27,7 +27,6 @@ namespace cta::rdbms::wrapper {
  */
 class SqliteConnFactory: public ConnFactory {
 public:
-
   /**
    * Constructor
    *
@@ -58,7 +57,6 @@ public:
    */
   std::string getDbSystemName() const override;
 
-
   /**
    * @brief Get the logical database namespace.
    *
@@ -71,7 +69,6 @@ public:
   std::string getDbNamespace() const override;
 
 private:
-
   /**
    * The database login information.
    */

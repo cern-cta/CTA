@@ -99,9 +99,12 @@ protected:
       m_mediaChanger.mountTapeReadOnly(m_volInfo.vid, m_drive.config.librarySlot());
       const std::string modeAsString = "R";
       scoped.add("MCMountTime", timer.secs()).add("mode", modeAsString);
-      cta::telemetry::metrics::ctaTapedMountDuration->Record(timer.msecs(), {
-        {cta::semconv::attr::kCtaTransferDirection, cta::semconv::attr::CtaTransferDirectionValues::kRetrieve}},
-      opentelemetry::context::RuntimeContext::GetCurrent());
+      cta::telemetry::metrics::ctaTapedMountDuration->Record(
+        timer.msecs(),
+        {
+          {cta::semconv::attr::kCtaTransferDirection, cta::semconv::attr::CtaTransferDirectionValues::kRetrieve}
+      },
+        opentelemetry::context::RuntimeContext::GetCurrent());
       m_logContext.log(cta::log::INFO, "Tape mounted for read-only access");
     }
     catch (cta::exception::Exception& ex) {
@@ -122,9 +125,12 @@ protected:
       m_mediaChanger.mountTapeReadWrite(m_volInfo.vid, m_drive.config.librarySlot());
       const std::string modeAsString = "RW";
       scoped.add("MCMountTime", timer.secs()).add("mode", modeAsString);
-      cta::telemetry::metrics::ctaTapedMountDuration->Record(timer.msecs(), {
-        {cta::semconv::attr::kCtaTransferDirection, cta::semconv::attr::CtaTransferDirectionValues::kArchive}},
-      opentelemetry::context::RuntimeContext::GetCurrent());
+      cta::telemetry::metrics::ctaTapedMountDuration->Record(
+        timer.msecs(),
+        {
+          {cta::semconv::attr::kCtaTransferDirection, cta::semconv::attr::CtaTransferDirectionValues::kArchive}
+      },
+        opentelemetry::context::RuntimeContext::GetCurrent());
       m_logContext.log(cta::log::INFO, "Tape mounted for read/write access");
     }
     catch (cta::exception::Exception& ex) {

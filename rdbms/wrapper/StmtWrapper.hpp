@@ -224,7 +224,6 @@ public:
    */
   virtual std::string getDbSystemName() const = 0;
 
-
   /**
    * @brief Get the logical database namespace.
    *

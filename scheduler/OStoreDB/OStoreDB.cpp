@@ -2129,7 +2129,6 @@ std::string OStoreDB::blockRetrieveQueueForCleanup(const std::string& vid) {
   rqtt.commit();
   rqttl.release();
 
-
   // Create the ToReport queue or get it in case a previous agent died and we are
   // taking over. The second case is only possible if the agent that died has
   // already been garbage collected. We hold the root entry lock until we get
@@ -2141,8 +2140,9 @@ std::string OStoreDB::blockRetrieveQueueForCleanup(const std::string& vid) {
     ScopedExclusiveLock rqtrl;
     rel.lock(re);
     re.fetch();
-    reportQueueAddress = re.addOrGetRetrieveQueueAndCommit(vid, *m_agentReference,
-		                                        common::dataStructures::JobQueueType::JobsToReportToUser);
+    reportQueueAddress = re.addOrGetRetrieveQueueAndCommit(vid,
+                                                           *m_agentReference,
+                                                           common::dataStructures::JobQueueType::JobsToReportToUser);
 
     m_agentReference->addToOwnership(reportQueueAddress, m_objectStore);
 

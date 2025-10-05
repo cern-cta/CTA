@@ -28,4 +28,4 @@ static constexpr const char* kCtaScheduler = "cta.scheduler";
 static constexpr const char* kCtaObjectstore = "cta.objectstore";
 static constexpr const char* kCtaTaped = "cta.taped";
 
-}  // namespace cta::semconv::metrics
+}  // namespace cta::semconv::meter

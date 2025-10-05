@@ -62,7 +62,8 @@ protected:
    * @param[in]    reason      Reason for this log message (error message)
    * @param[in]    t           Timer
    */
-  void logAdminCmd(const std::string& function, const AdminCmdStatus status, const std::string& reason, utils::Timer& t);
+  void
+  logAdminCmd(const std::string& function, const AdminCmdStatus status, const std::string& reason, utils::Timer& t);
 
   /*!
    * Drive state enum

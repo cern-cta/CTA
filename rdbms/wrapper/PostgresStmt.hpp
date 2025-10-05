@@ -167,7 +167,7 @@ public:
    */
   void setColumn(PostgresColumn& col);
 
-    /**
+  /**
    * @brief Get the database system identifier.
    *
    * This should return the OpenTelemetry semantic convention attribute
@@ -177,7 +177,6 @@ public:
    * @return The string "postgresql".
    */
   std::string getDbSystemName() const override;
-
 
   /**
    * @brief Get the logical database namespace.

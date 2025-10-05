@@ -26,8 +26,7 @@ namespace cta::rdbms::wrapper {
 //------------------------------------------------------------------------------
 // constructor
 //------------------------------------------------------------------------------
-SqliteConnFactory::SqliteConnFactory(const rdbms::Login &login) : m_login(login) {
-}
+SqliteConnFactory::SqliteConnFactory(const rdbms::Login& login) : m_login(login) {}
 
 //------------------------------------------------------------------------------
 // create
@@ -58,9 +57,8 @@ std::string SqliteConnFactory::getDbNamespace() const {
 
 extern "C" {
 
-void factory(cta::plugin::Interface<cta::rdbms::wrapper::ConnFactory,
-    cta::plugin::Args<const cta::rdbms::Login&>>& interface) {
-
+void factory(
+  cta::plugin::Interface<cta::rdbms::wrapper::ConnFactory, cta::plugin::Args<const cta::rdbms::Login&>>& interface) {
   interface.SET<cta::plugin::DATA::PLUGIN_NAME>("ctardbmssqlite")
     .SET<cta::plugin::DATA::API_VERSION>(VERSION_API)
     .CLASS<cta::rdbms::wrapper::SqliteConnFactory>("SqliteConnFactory");

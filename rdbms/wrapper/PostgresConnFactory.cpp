@@ -28,8 +28,7 @@ namespace cta::rdbms::wrapper {
 //------------------------------------------------------------------------------
 // constructor
 //------------------------------------------------------------------------------
-PostgresConnFactory::PostgresConnFactory(const rdbms::Login& login) : m_login(login) {
-}
+PostgresConnFactory::PostgresConnFactory(const rdbms::Login& login) : m_login(login) {}
 
 //------------------------------------------------------------------------------
 // create
@@ -61,9 +60,8 @@ std::string PostgresConnFactory::getDbNamespace() const {
 extern "C" {
 
 void factory(cta::plugin::Interface<cta::rdbms::wrapper::ConnFactory,
-    cta::plugin::Args<const cta::rdbms::Login&>,
-    cta::plugin::Args<const cta::rdbms::Login&>>& interface) {
-
+                                    cta::plugin::Args<const cta::rdbms::Login&>,
+                                    cta::plugin::Args<const cta::rdbms::Login&>>& interface) {
   interface.SET<cta::plugin::DATA::PLUGIN_NAME>("ctardbmspostgres")
     .SET<cta::plugin::DATA::API_VERSION>(VERSION_API)
     .CLASS<cta::rdbms::wrapper::PostgresConnFactory>("PostgresConnFactory");

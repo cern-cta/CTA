@@ -68,7 +68,7 @@ std::unique_ptr<metrics_sdk::PushMetricExporter> createExporter(const TelemetryC
     case MetricsBackend::OTLP_HTTP: {
       log::ScopedParamContainer params(lc);
       std::string endpoint = config.metrics.otlpEndpoint;
-      if(!endpoint.ends_with("/v1/metrics")) {
+      if (!endpoint.ends_with("/v1/metrics")) {
         endpoint += "/v1/metrics";
       }
       params.add("exportOtlpEndpoint", endpoint);
@@ -86,14 +86,14 @@ std::unique_ptr<metrics_sdk::PushMetricExporter> createExporter(const TelemetryC
       setenv("OTEL_EXPORTER_OTLP_METRICS_ENDPOINT", config.metrics.otlpEndpoint.c_str(), 1);
       std::string otlpExporterHeaders = "";
       bool first = true;
-      for (const auto &kv : config.metrics.otlpHeaders) {
-          if (!first) {
-              otlpExporterHeaders += ",";
-          }
-          std::string lowerKey = kv.first;
-          cta::utils::toLower(lowerKey);
-          otlpExporterHeaders += lowerKey + "=" + kv.second;
-          first = false;
+      for (const auto& kv : config.metrics.otlpHeaders) {
+        if (!first) {
+          otlpExporterHeaders += ",";
+        }
+        std::string lowerKey = kv.first;
+        cta::utils::toLower(lowerKey);
+        otlpExporterHeaders += lowerKey + "=" + kv.second;
+        first = false;
       }
       setenv("OTEL_EXPORTER_OTLP_METRICS_HEADERS", otlpExporterHeaders.c_str(), 1);
       setenv("OTEL_EXPORTER_OTLP_METRICS_PROTOCOL", "grpc", 1);

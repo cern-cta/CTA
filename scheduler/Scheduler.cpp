@@ -200,8 +200,11 @@ std::string Scheduler::queueArchiveWithGivenId(const uint64_t archiveFileId,
   request.checksumBlob.addFirstChecksumToLog(spc);
   lc.log(log::INFO, "In Scheduler::queueArchiveWithGivenId(): Queued archive request");
 
-  cta::telemetry::metrics::ctaSchedulerOperationDuration->Record(schedulerDbTimeMSecs, {
-    {cta::semconv::attr::kSchedulerOperationName, cta::semconv::attr::SchedulerOperationNameValues::kEnqueueArchive}},
+  cta::telemetry::metrics::ctaSchedulerOperationDuration->Record(
+    schedulerDbTimeMSecs,
+    {
+      {cta::semconv::attr::kSchedulerOperationName, cta::semconv::attr::SchedulerOperationNameValues::kEnqueueArchive}
+  },
     opentelemetry::context::RuntimeContext::GetCurrent());
   return archiveReqAddr;
 }
@@ -299,8 +302,12 @@ std::string Scheduler::queueRetrieve(const std::string& instanceName,
     spc.add("activity", request.activity.value());
   }
   lc.log(log::INFO, "In Scheduler::queueRetrieve(): Queued retrieve request");
-  cta::telemetry::metrics::ctaSchedulerOperationDuration->Record(schedulerDbTimeMSecs, {
-    {cta::semconv::attr::kSchedulerOperationName, cta::semconv::attr::SchedulerOperationNameValues::kEnqueueRetrieve}},
+  cta::telemetry::metrics::ctaSchedulerOperationDuration->Record(
+    schedulerDbTimeMSecs,
+    {
+      {cta::semconv::attr::kSchedulerOperationName,
+       cta::semconv::attr::SchedulerOperationNameValues::kEnqueueRetrieve}
+  },
     opentelemetry::context::RuntimeContext::GetCurrent());
   return requestInfo.requestId;
 }
@@ -320,8 +327,12 @@ void Scheduler::deleteArchive([[maybe_unused]] std::string_view instanceName,
     //Check if address is provided, we can remove the request from the objectstore
     m_db.cancelArchive(request, lc);
     // no need to do anything else, if file was failed it will not be in the catalogue.
-    cta::telemetry::metrics::ctaSchedulerOperationDuration->Record(t.msecs(), {
-      {cta::semconv::attr::kSchedulerOperationName, cta::semconv::attr::SchedulerOperationNameValues::kCancelArchive}},
+    cta::telemetry::metrics::ctaSchedulerOperationDuration->Record(
+      t.msecs(),
+      {
+        {cta::semconv::attr::kSchedulerOperationName,
+         cta::semconv::attr::SchedulerOperationNameValues::kCancelArchive}
+    },
       opentelemetry::context::RuntimeContext::GetCurrent());
   }
   tl.insertAndReset("schedulerDbTime", t);
@@ -341,8 +352,11 @@ void Scheduler::abortRetrieve(const std::string& instanceName,
   utils::Timer t;
   m_db.cancelRetrieve(instanceName, request, lc);
   auto schedulerDbTimeMSecs = t.msecs();
-  cta::telemetry::metrics::ctaSchedulerOperationDuration->Record(schedulerDbTimeMSecs, {
-    {cta::semconv::attr::kSchedulerOperationName, cta::semconv::attr::SchedulerOperationNameValues::kCancelRetrieve}},
+  cta::telemetry::metrics::ctaSchedulerOperationDuration->Record(
+    schedulerDbTimeMSecs,
+    {
+      {cta::semconv::attr::kSchedulerOperationName, cta::semconv::attr::SchedulerOperationNameValues::kCancelRetrieve}
+  },
     opentelemetry::context::RuntimeContext::GetCurrent());
 }
 
@@ -435,8 +449,11 @@ void Scheduler::queueRepack(const common::dataStructures::SecurityIdentity& cliI
     .add("repackRequestAddress", repackRequestAddress);
   tl.addToLog(params);
   lc.log(log::INFO, "In Scheduler::queueRepack(): success.");
-  cta::telemetry::metrics::ctaSchedulerOperationDuration->Record(schedulerDbTimeMSecs, {
-    {cta::semconv::attr::kSchedulerOperationName, cta::semconv::attr::SchedulerOperationNameValues::kEnqueueRepack}},
+  cta::telemetry::metrics::ctaSchedulerOperationDuration->Record(
+    schedulerDbTimeMSecs,
+    {
+      {cta::semconv::attr::kSchedulerOperationName, cta::semconv::attr::SchedulerOperationNameValues::kEnqueueRepack}
+  },
     opentelemetry::context::RuntimeContext::GetCurrent());
 }
 
@@ -448,8 +465,11 @@ void Scheduler::cancelRepack([[maybe_unused]] const common::dataStructures::Secu
                              log::LogContext& lc) {
   utils::Timer t;
   m_db.cancelRepack(vid, lc);
-  cta::telemetry::metrics::ctaSchedulerOperationDuration->Record(t.msecs(), {
-    {cta::semconv::attr::kSchedulerOperationName, cta::semconv::attr::SchedulerOperationNameValues::kCancelRepack}},
+  cta::telemetry::metrics::ctaSchedulerOperationDuration->Record(
+    t.msecs(),
+    {
+      {cta::semconv::attr::kSchedulerOperationName, cta::semconv::attr::SchedulerOperationNameValues::kCancelRepack}
+  },
     opentelemetry::context::RuntimeContext::GetCurrent());
 }
 

@@ -41,7 +41,7 @@ public:
    */
   virtual std::unique_ptr<ConnWrapper> create() = 0;
 
-    /**
+  /**
    * @brief Get the database system identifier.
    *
    * This should return the OpenTelemetry semantic convention attribute

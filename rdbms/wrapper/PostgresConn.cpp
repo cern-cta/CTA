@@ -59,7 +59,6 @@ PostgresConn::PostgresConn(const rdbms::Login& login) : m_dbNamespace(login.dbNa
   }
 
   PQsetNoticeProcessor(m_pgsqlConn, PostgresConn::noticeProcessor, nullptr);
-
 }
 
 //------------------------------------------------------------------------------

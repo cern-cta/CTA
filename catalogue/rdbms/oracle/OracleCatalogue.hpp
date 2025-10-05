@@ -29,7 +29,6 @@ namespace cta::catalogue {
  */
 class OracleCatalogue: public RdbmsCatalogue {
 public:
-
   /**
    * Constructor.
    *
@@ -42,11 +41,10 @@ public:
    * connections to the underlying relational database for the sole purpose of
    * listing archive files.
    */
-  OracleCatalogue(
-    log::Logger       &log,
-    const rdbms::Login &login,
-    const uint64_t nbConns,
-    const uint64_t nbArchiveFileListingConns);
+  OracleCatalogue(log::Logger& log,
+                  const rdbms::Login& login,
+                  const uint64_t nbConns,
+                  const uint64_t nbArchiveFileListingConns);
 
   /**
    * Destructor.

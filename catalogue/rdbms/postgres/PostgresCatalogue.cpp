@@ -34,16 +34,11 @@
 
 namespace cta::catalogue {
 
-PostgresCatalogue::PostgresCatalogue(
-  log::Logger &log,
-  const rdbms::Login &login,
-  const uint64_t nbConns,
-  const uint64_t nbArchiveFileListingConns)
-  : RdbmsCatalogue(
-      log,
-      login,
-      nbConns,
-      nbArchiveFileListingConns) {
+PostgresCatalogue::PostgresCatalogue(log::Logger& log,
+                                     const rdbms::Login& login,
+                                     const uint64_t nbConns,
+                                     const uint64_t nbArchiveFileListingConns)
+    : RdbmsCatalogue(log, login, nbConns, nbArchiveFileListingConns) {
   RdbmsCatalogue::m_vo = std::make_unique<PostgresVirtualOrganizationCatalogue>(m_log, m_connPool, this);
   RdbmsCatalogue::m_mediaType = std::make_unique<PostgresMediaTypeCatalogue>(m_log, m_connPool, this);
   RdbmsCatalogue::m_storageClass = std::make_unique<PostgresStorageClassCatalogue>(m_log, m_connPool, this);

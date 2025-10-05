@@ -56,22 +56,20 @@ Login::Login():
 //------------------------------------------------------------------------------
 // constructor
 //------------------------------------------------------------------------------
-Login::Login(
-  const DbType type,
-  const std::string &user,
-  const std::string &passwd,
-  const std::string &db,
-  const std::string &host,
-  const uint16_t p,
-  const std::string &dbNs):
-  dbType(type),
-  username(user),
-  password(passwd),
-  database(db),
-  hostname(host),
-  port(p),
-  dbNamespace(dbNs) {
-}
+Login::Login(const DbType type,
+             const std::string& user,
+             const std::string& passwd,
+             const std::string& db,
+             const std::string& host,
+             const uint16_t p,
+             const std::string& dbNs)
+    : dbType(type),
+      username(user),
+      password(passwd),
+      database(db),
+      hostname(host),
+      port(p),
+      dbNamespace(dbNs) {}
 
 //------------------------------------------------------------------------------
 // parseFile
@@ -244,7 +242,7 @@ Login Login::parseSqlite(const std::string &connectionDetails) {
 // getInMemory
 //------------------------------------------------------------------------------
 Login Login::getInMemory() {
-  const std::string &filename = "file::memory:?cache=shared";
+  const std::string& filename = "file::memory:?cache=shared";
 
   Login login(DBTYPE_IN_MEMORY, "", "", filename, "", 0, "inmemory");
   return login;
@@ -302,21 +300,23 @@ bool Login::postgresqlHasPassword(const std::string& connectionDetails) {
  * For the namespace, we simple take "[hostspec][/dbname][?paramspec]".
  * Note that technically [?paramspec] should not be included, but support for this is missing from the rest of the login methods as well.
  */
-std::string Login::getPostgresqlDbNamespace(const std::string &connectionDetails) {
+std::string Login::getPostgresqlDbNamespace(const std::string& connectionDetails) {
   if (connectionDetails.find("@") == std::string::npos) {
     cta::utils::Regex regex("postgresql://(.*)");
     const std::vector<std::string> result = regex.exec(connectionDetails);
     if (result.empty()) {
-      throw exception::Exception("Invalid connection string "  + connectionDetails);
+      throw exception::Exception("Invalid connection string " + connectionDetails);
     }
     return result[1];
   }
   cta::utils::Regex regex("postgresql://[^@]+@(.*)");
   const std::vector<std::string> result = regex.exec(connectionDetails);
   if (result.empty()) {
-    throw exception::Exception("Invalid connection string "  + connectionDetails);
+    throw exception::Exception("Invalid connection string " + connectionDetails);
   }
-  if (result.size() >= 2) return result[1];
+  if (result.size() >= 2) {
+    return result[1];
+  }
   return {};
 }
 

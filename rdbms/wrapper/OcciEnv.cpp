@@ -47,7 +47,7 @@ OcciEnv::~OcciEnv() {
 //------------------------------------------------------------------------------
 std::unique_ptr<ConnWrapper> OcciEnv::createConn(const rdbms::Login& login) {
   try {
-    oracle::occi::Connection *const conn = m_env->createConnection(login.username, login.password, login.database);
+    oracle::occi::Connection* const conn = m_env->createConnection(login.username, login.password, login.database);
     if (nullptr == conn) {
       throw exception::Exception("oracle::occi::createConnection() returned a nullptr pointer");
     }

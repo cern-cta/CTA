@@ -149,11 +149,13 @@ TelemetryConfig TelemetryConfigBuilder::build() const {
     throw cta::exception::InvalidArgument("TelemetryConfig: serviceVersion is required.");
   }
   if (m_config.metrics.backend == MetricsBackend::OTLP_HTTP && m_config.metrics.otlpEndpoint.empty()) {
-    throw cta::exception::InvalidArgument("TelemetryConfig: OTLP_HTTP metrics backend requires otlpEndpoint to be configured.");
+    throw cta::exception::InvalidArgument(
+      "TelemetryConfig: OTLP_HTTP metrics backend requires otlpEndpoint to be configured.");
   }
 
   if (m_config.metrics.backend == MetricsBackend::OTLP_GRPC && m_config.metrics.otlpEndpoint.empty()) {
-    throw cta::exception::InvalidArgument("TelemetryConfig: OTLP_HTTP metrics backend requires otlpEndpoint to be configured.");
+    throw cta::exception::InvalidArgument(
+      "TelemetryConfig: OTLP_HTTP metrics backend requires otlpEndpoint to be configured.");
   }
 
   return m_config;

@@ -105,9 +105,13 @@ const uint32_t TEST_GROUP_2 = 9754;
 
   class MockArchiveJobExternalStats: public cta::MockArchiveJob {
   public:
-    MockArchiveJobExternalStats(cta::ArchiveMount & am, cta::catalogue::Catalogue & catalogue,
-       int & completes, int &failures):
-    MockArchiveJob(&am, catalogue), completesRef(completes), failuresRef(failures) {}
+    MockArchiveJobExternalStats(cta::ArchiveMount& am,
+                                cta::catalogue::Catalogue& catalogue,
+                                int& completes,
+                                int& failures)
+        : MockArchiveJob(&am, catalogue),
+          completesRef(completes),
+          failuresRef(failures) {}
 
     virtual void validate() override {}
     virtual cta::catalogue::TapeItemWrittenPointer validateAndGetTapeFileWritten() override {
@@ -204,7 +208,7 @@ const uint32_t TEST_GROUP_2 = 9754;
     job1->archiveFile.diskFileInfo.path="filePath1";
     job1->archiveFile.diskFileInfo.owner_uid=TEST_USER_1;
     job1->archiveFile.diskFileInfo.gid=TEST_GROUP_1;
-    job1->archiveFile.fileSize=1024;
+    job1->archiveFile.fileSize = 1024;
     job1->archiveFile.checksumBlob.insert(cta::checksum::MD5, cta::checksum::ChecksumBlob::HexToByteArray("b170288bf1f61b26a648358866f4d6c6"));
     job1->archiveFile.storageClass="storage_class";
     job1->tapeFile.vid="VTEST001";
@@ -227,7 +231,7 @@ const uint32_t TEST_GROUP_2 = 9754;
     job2->archiveFile.diskFileInfo.path="filePath2";
     job2->archiveFile.diskFileInfo.owner_uid=TEST_USER_2;
     job2->archiveFile.diskFileInfo.gid=TEST_GROUP_2;
-    job2->archiveFile.fileSize=1024;
+    job2->archiveFile.fileSize = 1024;
     job2->archiveFile.checksumBlob.insert(cta::checksum::MD5, cta::checksum::ChecksumBlob::HexToByteArray("b170288bf1f61b26a648358866f4d6c6"));
     job2->archiveFile.storageClass="storage_class";
     job2->tapeFile.vid="VTEST001";
@@ -383,7 +387,7 @@ const uint32_t TEST_GROUP_2 = 9754;
     migratedBigFile->archiveFile.diskFileInfo.path="filePath2";
     migratedBigFile->archiveFile.diskFileInfo.owner_uid=TEST_USER_2;
     migratedBigFile->archiveFile.diskFileInfo.gid=TEST_GROUP_2;
-    migratedBigFile->archiveFile.fileSize=100000;
+    migratedBigFile->archiveFile.fileSize = 100000;
     migratedBigFile->archiveFile.checksumBlob.insert(cta::checksum::MD5, cta::checksum::ChecksumBlob::HexToByteArray("b170288bf1f61b26a648358866f4d6c6"));
     migratedBigFile->archiveFile.storageClass="storage_class";
     migratedBigFile->tapeFile.vid="VTEST001";
@@ -399,7 +403,7 @@ const uint32_t TEST_GROUP_2 = 9754;
     migratedFileSmall->archiveFile.diskFileInfo.path="filePath3";
     migratedFileSmall->archiveFile.diskFileInfo.owner_uid=TEST_USER_2;
     migratedFileSmall->archiveFile.diskFileInfo.gid=TEST_GROUP_2;
-    migratedFileSmall->archiveFile.fileSize=1;
+    migratedFileSmall->archiveFile.fileSize = 1;
     migratedFileSmall->archiveFile.checksumBlob.insert(cta::checksum::MD5, cta::checksum::ChecksumBlob::HexToByteArray("b170288bf1f61b26a648358866f4d6c6"));
     migratedFileSmall->archiveFile.storageClass="storage_class";
     migratedFileSmall->tapeFile.vid="VTEST001";
@@ -415,7 +419,7 @@ const uint32_t TEST_GROUP_2 = 9754;
     migratedNullFile->archiveFile.diskFileInfo.path="filePath4";
     migratedNullFile->archiveFile.diskFileInfo.owner_uid=TEST_USER_2;
     migratedNullFile->archiveFile.diskFileInfo.gid=TEST_GROUP_2;
-    migratedNullFile->archiveFile.fileSize=0;
+    migratedNullFile->archiveFile.fileSize = 0;
     migratedNullFile->archiveFile.checksumBlob.insert(cta::checksum::MD5, cta::checksum::ChecksumBlob::HexToByteArray("b170288bf1f61b26a648358866f4d6c6"));
     migratedNullFile->archiveFile.storageClass="storage_class";
     migratedNullFile->tapeFile.vid="VTEST001";

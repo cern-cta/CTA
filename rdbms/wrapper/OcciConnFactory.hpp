@@ -27,13 +27,12 @@ namespace cta::rdbms::wrapper {
  */
 class OcciConnFactory: public ConnFactory {
 public:
-
   /**
    * Constructor.
    *
    * @param login The database login details.
    */
-  OcciConnFactory(const rdbms::Login &login);
+  OcciConnFactory(const rdbms::Login& login);
 
   /**
    * Destructor
@@ -58,7 +57,6 @@ public:
    */
   std::string getDbSystemName() const override;
 
-
   /**
    * @brief Get the logical database namespace.
    *
@@ -71,7 +69,6 @@ public:
   std::string getDbNamespace() const override;
 
 private:
-
   /**
    * The database login information.
    */

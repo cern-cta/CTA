@@ -70,14 +70,13 @@ struct Login {
    * @param p The TCP/IP port on which the database server is listening.
    * @param dbNamespace The namespace of the database.
    */
-  Login(
-    const DbType type,
-    const std::string &user,
-    const std::string &passwd,
-    const std::string &db,
-    const std::string &host,
-    const uint16_t p,
-    const std::string &dbNamespace);
+  Login(const DbType type,
+        const std::string& user,
+        const std::string& passwd,
+        const std::string& db,
+        const std::string& host,
+        const uint16_t p,
+        const std::string& dbNamespace);
 
   /**
    * The type of the database.
@@ -252,8 +251,7 @@ struct Login {
    * @param connectionDetails The connectionDetails retrieved from the configuration file.
    * @return The database namespace.
    */
-  static std::string getPostgresqlDbNamespace(const std::string &connectionDetails);
-
+  static std::string getPostgresqlDbNamespace(const std::string& connectionDetails);
 
   static const std::list<std::string> dbTypeStr;
 
@@ -298,7 +296,7 @@ struct Login {
    * @param connectionDetails the connectionDetails retrieved from the configuration file
    * @return  true if the Postgresql connectionDetails contains a password, false otherwise
    */
-  static bool postgresqlHasPassword(const std::string & connectionDetails);
+  static bool postgresqlHasPassword(const std::string& connectionDetails);
 };  // class Login
 
 } // namespace cta::rdbms

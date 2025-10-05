@@ -21,16 +21,14 @@
 
 #include "common/utils/StringConversions.hpp"
 
-
 namespace cta {
 
 template<>
-void SourcedParameter<time_t>::set(const std::string & value, const std::string & source) {
+void SourcedParameter<time_t>::set(const std::string& value, const std::string& source) {
   if (!utils::isValidUInt(value)) {
     BadlyFormattedInteger ex;
     ex.getMessage() << "In SourcedParameter<time_t>::set() : badly formatted integer"
-        << " for category=" << m_category << " key=" << m_key
-        << " value=\'" << value << "' at:" << source;
+                    << " for category=" << m_category << " key=" << m_key << " value=\'" << value << "' at:" << source;
     throw ex;
   }
   std::istringstream(value) >> m_value;
@@ -43,8 +41,7 @@ void SourcedParameter<uint16_t>:: set(const std::string &value, const std::strin
   if (!utils::isValidUInt(value)) {
     BadlyFormattedInteger ex;
     ex.getMessage() << "In SourcedParameter<uint16_t>::set() : badly formatted integer"
-        << " for category=" << m_category << " key=" << m_key
-        << " value=\'" << value << "' at:" << source;
+                    << " for category=" << m_category << " key=" << m_key << " value=\'" << value << "' at:" << source;
     throw ex;
   }
   std::istringstream(value) >> m_value;
@@ -57,8 +54,7 @@ void SourcedParameter<uint32_t>:: set(const std::string &value, const std::strin
   if (!utils::isValidUInt(value)) {
     BadlyFormattedInteger ex;
     ex.getMessage() << "In SourcedParameter<uint32_t>::set() : badly formatted integer"
-        << " for category=" << m_category << " key=" << m_key
-        << " value=\'" << value << "' at:" << source;
+                    << " for category=" << m_category << " key=" << m_key << " value=\'" << value << "' at:" << source;
     throw ex;
   }
   std::istringstream(value) >> m_value;
@@ -67,12 +63,11 @@ void SourcedParameter<uint32_t>:: set(const std::string &value, const std::strin
 }
 
 template<>
-void SourcedParameter<uint64_t>::set(const std::string & value, const std::string & source) {
+void SourcedParameter<uint64_t>::set(const std::string& value, const std::string& source) {
   if (!utils::isValidUInt(value)) {
     BadlyFormattedInteger ex;
     ex.getMessage() << "In SourcedParameter<uint64_t>::set() : badly formatted integer"
-        << " for category=" << m_category << " key=" << m_key
-        << " value=\'" << value << "' at:" << source;
+                    << " for category=" << m_category << " key=" << m_key << " value=\'" << value << "' at:" << source;
     throw ex;
   }
   std::istringstream(value) >> m_value;
@@ -101,7 +96,7 @@ void SourcedParameter<bool>::set(const std::string& value, const std::string& so
 }
 
 template<>
-void SourcedParameter<std::string>::set(const std::string & value, const std::string & source) {
+void SourcedParameter<std::string>::set(const std::string& value, const std::string& source) {
   m_value = value;
   m_source = source;
   m_set = true;

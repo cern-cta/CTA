@@ -110,13 +110,11 @@ cta::frontend::grpc::client::CtaAdminGrpcCmd::CtaAdminGrpcCmd(int argc, char** a
   }
 
   parseOptions(has_subcommand ? argno+1 : argno, argc, argv, option_list_it->second);
-
 }
 
 void cta::frontend::grpc::client::CtaAdminGrpcCmd::exe(cta::log::Logger& log, const std::string& strSslRoot,
                                                const std::string& strSslKey, const std::string& strSslCert,
                                                const std::string& strGrpcHost, const unsigned int& uiGrpcPort) {
-
   cta::log::LogContext lc(log);
   //
   cta::admin::validateCmd(m_request.admincmd());
@@ -175,7 +173,7 @@ void cta::frontend::grpc::client::CtaAdminGrpcCmd::exe(cta::log::Logger& log, co
          * CompositeChannelCredentials associates a ChannelCredentials and a CallCredentials
          * to create a new ChannelCredentials
          */
-         /*
+        /*
           * Individual CallCredentials can also be composed using CompositeCallCredentials.
           * The resulting CallCredentials when used in a call will trigger the sending of
           * the authentication data associated with the two CallCredentials.
@@ -209,7 +207,6 @@ void cta::frontend::grpc::client::CtaAdminGrpcCmd::exe(cta::log::Logger& log, co
         + "> is not implemented."
       );
   }
-
 }
 
 void cta::frontend::grpc::client::CtaAdminGrpcCmd::parseOptions(int start, int argc, char** argv, const cta::admin::cmd_val_t& options) {
@@ -375,7 +372,6 @@ void cta::frontend::grpc::client::CtaAdminGrpcCmd::throwUsage(const std::string 
 }
 
 int main(const int argc,  char** argv) {
-
   // Parse the command line arguments
   const int CMD_SSL_ARGC = 11;
   int iOptIdx = 0;

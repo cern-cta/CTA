@@ -28,7 +28,6 @@
 #include "common/semconv/Attributes.hpp"
 #include "PbException.hpp"
 
-
 namespace cta::frontend {
 
 AdminCmd::AdminCmd(const frontend::FrontendService& frontendService,
@@ -263,38 +262,47 @@ xrd::Response AdminCmd::process() {
   return response;
 }
 
-void AdminCmd::logAdminCmd(const std::string& function, const AdminCmdStatus status, const std::string& reason, utils::Timer& t) {
+void AdminCmd::logAdminCmd(const std::string& function,
+                           const AdminCmdStatus status,
+                           const std::string& reason,
+                           utils::Timer& t) {
   // We do the metric recording here to prevent repetition in the catch statements
   std::string statusStr;
-  switch(status) {
+  switch (status) {
     case AdminCmdStatus::SUCCESS: {
       statusStr = "success";
-    cta::telemetry::metrics::ctaFrontendRequestDuration->Record(
-      t.msecs(),
-      {{cta::semconv::attr::kEventName, "ADMIN"},
-       {cta::semconv::attr::kFrontendRequesterName, "admin"}},
-      opentelemetry::context::RuntimeContext::GetCurrent());
+      cta::telemetry::metrics::ctaFrontendRequestDuration->Record(
+        t.msecs(),
+        {
+          {cta::semconv::attr::kEventName,             "ADMIN"},
+          {cta::semconv::attr::kFrontendRequesterName, "admin"}
+      },
+        opentelemetry::context::RuntimeContext::GetCurrent());
       break;
     }
     case AdminCmdStatus::USER_ERROR: {
       statusStr = "user_error";
-    cta::telemetry::metrics::ctaFrontendRequestDuration->Record(
-      t.msecs(),
-      {{cta::semconv::attr::kEventName, "ADMIN"},
-       {cta::semconv::attr::kFrontendRequesterName, "admin"},
-       {cta::semconv::attr::kErrorType, cta::semconv::attr::ErrorTypeValues::kUserError}},
-      opentelemetry::context::RuntimeContext::GetCurrent());
+      cta::telemetry::metrics::ctaFrontendRequestDuration->Record(
+        t.msecs(),
+        {
+          {cta::semconv::attr::kEventName,             "ADMIN"                                        },
+          {cta::semconv::attr::kFrontendRequesterName, "admin"                                        },
+          {cta::semconv::attr::kErrorType,             cta::semconv::attr::ErrorTypeValues::kUserError}
+      },
+        opentelemetry::context::RuntimeContext::GetCurrent());
 
       break;
     }
     case AdminCmdStatus::EXCEPTION: {
       statusStr = "failure";
-    cta::telemetry::metrics::ctaFrontendRequestDuration->Record(
-      t.msecs(),
-      {{cta::semconv::attr::kEventName, "ADMIN"},
-       {cta::semconv::attr::kFrontendRequesterName, "admin"},
-       {cta::semconv::attr::kErrorType, cta::semconv::attr::ErrorTypeValues::kException}},
-      opentelemetry::context::RuntimeContext::GetCurrent());
+      cta::telemetry::metrics::ctaFrontendRequestDuration->Record(
+        t.msecs(),
+        {
+          {cta::semconv::attr::kEventName,             "ADMIN"                                        },
+          {cta::semconv::attr::kFrontendRequesterName, "admin"                                        },
+          {cta::semconv::attr::kErrorType,             cta::semconv::attr::ErrorTypeValues::kException}
+      },
+        opentelemetry::context::RuntimeContext::GetCurrent());
       break;
     }
   }

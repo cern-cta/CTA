@@ -139,7 +139,12 @@ void ConnPool::returnConn(std::unique_ptr<ConnAndStmts> connAndStmts) {
 //------------------------------------------------------------------------------
 void ConnPool::addNbConnsOnLoan(uint64_t nbConns) {
   m_nbConnsOnLoan += nbConns;
-  cta::telemetry::metrics::dbClientConnectionCount->Add(nbConns, {{cta::semconv::attr::kDbSystemName, m_connFactory->getDbSystemName()}, {cta::semconv::attr::kDbNamespace, m_connFactory->getDbNamespace()}});
+  cta::telemetry::metrics::dbClientConnectionCount->Add(
+    nbConns,
+    {
+      {cta::semconv::attr::kDbSystemName, m_connFactory->getDbSystemName()},
+      {cta::semconv::attr::kDbNamespace,  m_connFactory->getDbNamespace() }
+  });
 }
 
 //------------------------------------------------------------------------------
@@ -152,8 +157,12 @@ void ConnPool::removeNbConnsOnLoan(uint64_t nbConns) {
     throw exception::Exception("Would have reached a negative number connections on loan");
   }
   m_nbConnsOnLoan -= nbConns;
-  cta::telemetry::metrics::dbClientConnectionCount->Add(-nbConns, {{cta::semconv::attr::kDbSystemName, m_connFactory->getDbSystemName()}, {cta::semconv::attr::kDbNamespace, m_connFactory->getDbNamespace()}});
+  cta::telemetry::metrics::dbClientConnectionCount->Add(
+    -nbConns,
+    {
+      {cta::semconv::attr::kDbSystemName, m_connFactory->getDbSystemName()},
+      {cta::semconv::attr::kDbNamespace,  m_connFactory->getDbNamespace() }
+  });
 }
-
 
 }  // namespace cta::rdbms

@@ -46,7 +46,7 @@ public:
    * @param env The OCCI environment.
    * @param conn The OCCI connection.
    */
-  OcciConn(oracle::occi::Environment *env, oracle::occi::Connection *const conn, const std::string& dbNamespace);
+  OcciConn(oracle::occi::Environment* env, oracle::occi::Connection* const conn, const std::string& dbNamespace);
 
   /**
    * Destructor.

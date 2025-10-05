@@ -200,7 +200,6 @@ public:
    */
   std::string getDbSystemName() const override;
 
-
   /**
    * @brief Get the logical database namespace.
    *

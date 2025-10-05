@@ -152,8 +152,7 @@ FrontendService::FrontendService(const std::string& configFilename) : m_archiveF
         config.getOptionValueStr("cta.telemetry.metrics.export.otlp.basic_auth_file");
       std::string metricsExportOtlpBasicAuthString = "";
       if (metricsExportOtlpBasicAuthFile.has_value()) {
-        metricsExportOtlpBasicAuthString =
-          cta::telemetry::authStringFromFile(metricsExportOtlpBasicAuthFile.value());
+        metricsExportOtlpBasicAuthString = cta::telemetry::authStringFromFile(metricsExportOtlpBasicAuthFile.value());
       }
       auto metricsFileEndpoint = config.getOptionValueStr("cta.telemetry.metrics.export.file.endpoint");
       if (!metricsFileEndpoint.has_value()) {
@@ -181,7 +180,6 @@ FrontendService::FrontendService(const std::string& configFilename) : m_archiveF
       throw exception::Exception(ex_str + ex.getMessage().str());
     }
   }
-
 
   auto missingFileCopiesMinAgeSecs = config.getOptionValueUInt("cta.catalogue.missing_file_copies_min_age_secs");
   m_missingFileCopiesMinAgeSecs = missingFileCopiesMinAgeSecs.value_or(0);
@@ -513,7 +511,7 @@ FrontendService::FrontendService(const std::string& configFilename) : m_archiveF
           "Cannot use a value for grpc.jwks.cache.timeout_secs that is less than grpc.jwks.cache.refresh_interval_secs."
           "Setting timeout_secs equal to cache_refresh_interval_secs.");
       m_pubkeyTimeout = std::optional<int>(m_cacheRefreshInterval.value());
-      }
+    }
   }
 
   // All done

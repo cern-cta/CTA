@@ -95,4 +95,4 @@ static constexpr const char* kPostgres = "postgres";
 static constexpr const char* kSqlite = "sqlite";
 }  // namespace DbSystemNameValues
 
-}  // namespace cta::semconv
+}  // namespace cta::semconv::attr

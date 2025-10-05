@@ -54,7 +54,7 @@ public:
    * @param login The database login information.
    * @return The newly created OCCI connection.
    */
-  std::unique_ptr<ConnWrapper> createConn(const rdbms::Login &login);
+  std::unique_ptr<ConnWrapper> createConn(const rdbms::Login& login);
 
 private:
 

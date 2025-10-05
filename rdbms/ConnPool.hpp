@@ -88,7 +88,6 @@ private:
    */
   void returnConn(std::unique_ptr<ConnAndStmts> connAndStmts);
 
-
   /**
    * Adds a number of connections on loan.
    */

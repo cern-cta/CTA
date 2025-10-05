@@ -149,7 +149,11 @@ public:
 #ifdef USE_ORACLE_CATALOGUE
     cta::rdbms::Login login=cta::rdbms::Login::parseFile("/etc/cta/cta-catalogue.conf");
 
-    m_catalogue = std::make_unique<OracleCatalogueExposingConnection>(m_dummyLog, login, nbConns, nbArchiveFileListingConns, maxTriesToConnect);
+    m_catalogue = std::make_unique<OracleCatalogueExposingConnection>(m_dummyLog,
+                                                                      login,
+                                                                      nbConns,
+                                                                      nbArchiveFileListingConns,
+                                                                      maxTriesToConnect);
     try {
       // If we decide to create an oracle catalogue, we have to prepare it.
       // This is a striped down version of CreateSchemaCmd.

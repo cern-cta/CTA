@@ -47,7 +47,7 @@ public:
    *
    * @param login The database login information.
    */
-  explicit SqliteConn(const rdbms::Login &login);
+  explicit SqliteConn(const rdbms::Login& login);
 
   /**
    * Destructor.

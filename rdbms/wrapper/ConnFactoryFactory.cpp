@@ -31,8 +31,7 @@ namespace cta::rdbms::wrapper {
 //------------------------------------------------------------------------------
 std::unique_ptr<ConnFactory> ConnFactoryFactory::create(const Login &login) {
   try {
-    static cta::plugin::Manager<rdbms::wrapper::ConnFactory,
-      cta::plugin::Args<const cta::rdbms::Login&>> pm;
+    static cta::plugin::Manager<rdbms::wrapper::ConnFactory, cta::plugin::Args<const cta::rdbms::Login&>> pm;
 
     pm.onRegisterPlugin([](const auto& plugin) {
         // API VERSION CHECKING
@@ -47,14 +46,13 @@ std::unique_ptr<ConnFactory> ConnFactoryFactory::create(const Login &login) {
       });
 
     switch (login.dbType) {
-    case Login::DBTYPE_IN_MEMORY:
-    {
-      pm.load("libctardbmssqlite.so");
-      if (!pm.isRegistered("ctardbmssqlite")) {
-        pm.bootstrap("factory");
+      case Login::DBTYPE_IN_MEMORY: {
+        pm.load("libctardbmssqlite.so");
+        if (!pm.isRegistered("ctardbmssqlite")) {
+          pm.bootstrap("factory");
+        }
+        return pm.plugin("ctardbmssqlite").make("SqliteConnFactory", login);
       }
-      return pm.plugin("ctardbmssqlite").make("SqliteConnFactory", login);
-    }
     case Login::DBTYPE_ORACLE:
 #ifdef SUPPORT_OCCI
       pm.load("libctardbmsocci.so");

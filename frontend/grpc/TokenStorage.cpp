@@ -15,7 +15,6 @@
  *               submit itself to any jurisdiction.
  */
 
-
 #include "TokenStorage.hpp"
 
 #include "utils.hpp"
