@@ -109,12 +109,15 @@ cta::frontend::grpc::client::CtaAdminGrpcCmd::CtaAdminGrpcCmd(int argc, char** a
      throwUsage(std::string("Invalid subcommand: ") + argv[argno]);
   }
 
-  parseOptions(has_subcommand ? argno+1 : argno, argc, argv, option_list_it->second);
+  parseOptions(has_subcommand ? argno + 1 : argno, argc, argv, option_list_it->second);
 }
 
-void cta::frontend::grpc::client::CtaAdminGrpcCmd::exe(cta::log::Logger& log, const std::string& strSslRoot,
-                                               const std::string& strSslKey, const std::string& strSslCert,
-                                               const std::string& strGrpcHost, const unsigned int& uiGrpcPort) {
+void cta::frontend::grpc::client::CtaAdminGrpcCmd::exe(cta::log::Logger& log,
+                                                       const std::string& strSslRoot,
+                                                       const std::string& strSslKey,
+                                                       const std::string& strSslCert,
+                                                       const std::string& strGrpcHost,
+                                                       const unsigned int& uiGrpcPort) {
   cta::log::LogContext lc(log);
   //
   cta::admin::validateCmd(m_request.admincmd());
@@ -371,7 +374,7 @@ void cta::frontend::grpc::client::CtaAdminGrpcCmd::throwUsage(const std::string 
   throw std::runtime_error(help.str());
 }
 
-int main(const int argc,  char** argv) {
+int main(const int argc, char** argv) {
   // Parse the command line arguments
   const int CMD_SSL_ARGC = 11;
   int iOptIdx = 0;

@@ -52,7 +52,9 @@ void cta::frontend::grpc::server::NegotiationRequestHandler::init() {
     acquireCreds(m_strService, mech, &m_serverCreds);
 }
 
-void cta::frontend::grpc::server::NegotiationRequestHandler::logGSSErrors(const std::string& strContext, OM_uint32 gssCode, int iType) {
+void cta::frontend::grpc::server::NegotiationRequestHandler::logGSSErrors(const std::string& strContext,
+                                                                          OM_uint32 gssCode,
+                                                                          int iType) {
   log::LogContext lc(m_log);
   log::ScopedParamContainer params(lc);
   std::ostringstream osMsgScopeParam;
