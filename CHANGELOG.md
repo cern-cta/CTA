@@ -1,3 +1,39 @@
+## 5.11.12.1-1 (2025-10-05)
+
+### New Features
+
+- [Misc] Add OpenTelemetry metrics to CTA (cta/CTA!879)
+
+
+### Changes
+
+- [Misc] Update xrootd-ssi-protobuf-interface to v1.27 (cta/CTA!1037)
+
+- [taped] Update taped process names to always include drive name (cta/CTA!994)
+
+
+### Bug Fixes
+
+- [Tools] Fix cta-admin sc and tape ls exit code inconsistencies (cta/CTA!1035)
+
+- [rmcd] Fix bugs in rmc lookup for sgpath (cta/CTA!1010)
+
+
+### Security Fixes
+
+- [Misc] Use higher TLS version in JwkCache.cpp (cta/CTA!1003)
+
+
+### Other
+
+- [Misc] Upgrade EOS to 5.3.23 and fix token permissions in CI (cta/CTA!1044)
+
+- [Tools] Add cta-objectstore-tools.conf.example to repo and RPMs (cta/CTA!1023)
+
+- [rmcd] Convert mediachanger code from C to C++ (cta/CTA!1019)
+
+- [Misc] Upgrade from c++17 to c++20 (cta/CTA!1001)
+
 ## 5.11.11.0-1
 
 ### New Features
