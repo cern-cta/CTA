@@ -23,6 +23,12 @@
 #include "common/log/FileLogger.hpp"
 #include "common/log/LogLevel.hpp"
 #include "common/log/StdoutLogger.hpp"
+#include "common/telemetry/TelemetryInit.hpp"
+#include "common/semconv/Attributes.hpp"
+#include "common/telemetry/config/TelemetryConfig.hpp"
+#include "common/semconv/Attributes.hpp"
+#include <opentelemetry/sdk/common/global_log_handler.h>
+
 #include "rdbms/Login.hpp"
 
 #include "FrontendService.hpp"
@@ -113,6 +119,66 @@ FrontendService::FrontendService(const std::string& configFilename) : m_archiveF
     params.push_back(log::Param("logtoFile", std::to_string(logtoFile)));
     params.push_back(log::Param("logFilePath", logFilePath));
     log(log::INFO, std::string("Starting cta-frontend"), params);
+  }
+
+  // Instantiate telemetry
+  // Must be instantiated before the catalogue and scheduler are initialised
+  auto experimentalTelemetryEnabled = config.getOptionValueBool("cta.experimental.telemetry.enabled");
+  if (experimentalTelemetryEnabled.has_value() && experimentalTelemetryEnabled.value()) {
+    try {
+      // If we stick with this config parsing, would be nice to have the option to provide a default/fallback value
+
+      auto retainInstanceIdOnRestart = config.getOptionValueBool("cta.telemetry.retain_instance_id_on_restart");
+      if (!retainInstanceIdOnRestart.has_value()) {
+        retainInstanceIdOnRestart = false;
+      }
+      auto metricsBackend = config.getOptionValueStr("cta.telemetry.metrics.backend");
+      if (!metricsBackend.has_value()) {
+        metricsBackend = "NOOP";
+      }
+      auto metricsExportInterval = config.getOptionValueUInt("cta.telemetry.metrics.export.interval");
+      if (!metricsExportInterval.has_value()) {
+        metricsExportInterval = 15000;
+      }
+      auto metricsExportTimeout = config.getOptionValueUInt("cta.telemetry.metrics.export.timeout");
+      if (!metricsExportTimeout.has_value()) {
+        metricsExportTimeout = 3000;
+      }
+      auto metricsOtlpEndpoint = config.getOptionValueStr("cta.telemetry.metrics.export.otlp.endpoint");
+      if (!metricsOtlpEndpoint.has_value()) {
+        metricsOtlpEndpoint = "";
+      }
+      auto metricsExportOtlpBasicAuthFile =
+        config.getOptionValueStr("cta.telemetry.metrics.export.otlp.basic_auth_file");
+      std::string metricsExportOtlpBasicAuthString = "";
+      if (metricsExportOtlpBasicAuthFile.has_value()) {
+        metricsExportOtlpBasicAuthString = cta::telemetry::authStringFromFile(metricsExportOtlpBasicAuthFile.value());
+      }
+      auto metricsFileEndpoint = config.getOptionValueStr("cta.telemetry.metrics.export.file.endpoint");
+      if (!metricsFileEndpoint.has_value()) {
+        metricsFileEndpoint = "/var/log/cta/cta-frontend-metrics.txt";
+      }
+
+      cta::telemetry::TelemetryConfig telemetryConfig =
+        cta::telemetry::TelemetryConfigBuilder()
+          .serviceName(cta::semconv::attr::ServiceNameValues::kCtaFrontend)
+          .serviceNamespace(m_instanceName)
+          .serviceVersion(CTA_VERSION)
+          .retainInstanceIdOnRestart(retainInstanceIdOnRestart.value())
+          .resourceAttribute(cta::semconv::attr::kSchedulerNamespace, m_schedulerBackendName)
+          .metricsBackend(metricsBackend.value())
+          .metricsExportInterval(std::chrono::milliseconds(metricsExportInterval.value()))
+          .metricsExportTimeout(std::chrono::milliseconds(metricsExportTimeout.value()))
+          .metricsOtlpEndpoint(metricsOtlpEndpoint.value())
+          .metricsOtlpBasicAuthString(metricsExportOtlpBasicAuthString)
+          .metricsFileEndpoint(metricsFileEndpoint.value())
+          .build();
+      cta::log::LogContext lc(log);  // temporary log context
+      cta::telemetry::initTelemetry(telemetryConfig, lc);
+    } catch (exception::Exception& ex) {
+      std::string ex_str("Failed to instantiate OpenTelemetry: ");
+      throw exception::Exception(ex_str + ex.getMessage().str());
+    }
   }
 
   auto missingFileCopiesMinAgeSecs = config.getOptionValueUInt("cta.catalogue.missing_file_copies_min_age_secs");

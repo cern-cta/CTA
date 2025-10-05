@@ -14,13 +14,11 @@
  *               granted to it by virtue of its status as an Intergovernmental Organization or
  *               submit itself to any jurisdiction.
  */
- 
+
 #include "ServerNegotiationRequestHandler.hpp"
 #include "AsyncServer.hpp"
 #include "RequestMessage.hpp"
 #include "common/log/LogContext.hpp"
-
-#include <cryptopp/base64.h>
 
 cta::frontend::grpc::server::NegotiationRequestHandler::NegotiationRequestHandler(
   cta::log::Logger& log,
@@ -40,13 +38,12 @@ cta::frontend::grpc::server::NegotiationRequestHandler::NegotiationRequestHandle
 
 cta::frontend::grpc::server::NegotiationRequestHandler::~NegotiationRequestHandler() {
   OM_uint32 gssMajStat, gssMinStat;
-  
+
   gssMajStat = gss_release_cred(&gssMinStat, &m_serverCreds);
   if (gssMajStat != GSS_S_COMPLETE) {
     logGSSErrors("In grpc::server::NegotiationRequestHandler::~NegotiationRequestHandler(): gss_release_cred() major status.", gssMajStat, GSS_C_GSS_CODE);
     logGSSErrors("IN grpc::server::NegotiationRequestHandler::~NegotiationRequestHandler(): gss_release_cred() minor status", gssMinStat, GSS_C_MECH_CODE);
   }
-  
 }
 
 void cta::frontend::grpc::server::NegotiationRequestHandler::init() {
@@ -55,17 +52,18 @@ void cta::frontend::grpc::server::NegotiationRequestHandler::init() {
     acquireCreds(m_strService, mech, &m_serverCreds);
 }
 
-void cta::frontend::grpc::server::NegotiationRequestHandler::logGSSErrors(const std::string& strContext, OM_uint32 gssCode, int iType) {
-  
+void cta::frontend::grpc::server::NegotiationRequestHandler::logGSSErrors(const std::string& strContext,
+                                                                          OM_uint32 gssCode,
+                                                                          int iType) {
   log::LogContext lc(m_log);
   log::ScopedParamContainer params(lc);
   std::ostringstream osMsgScopeParam;
   OM_uint32 gssMinStat;
   gss_buffer_desc gssMsg;
   OM_uint32 gssMsgCtx = 0;
-  
+
   params.add("tag", m_tag);
-  
+
   /*
    * Because gss_display_status() only displays one status code at a time,
    * and some functions can return multiple status conditions,
@@ -79,13 +77,13 @@ void cta::frontend::grpc::server::NegotiationRequestHandler::logGSSErrors(const 
     osMsgScopeParam.str(""); // reset ostringstream
     gss_release_buffer(&gssMinStat, &gssMsg);
   } while(gssMsgCtx);
-  
+
   lc.log(cta::log::ERR, strContext);
 }
 
 void cta::frontend::grpc::server::NegotiationRequestHandler::registerKeytab(const std::string& strKeytab) {
   OM_uint32 gssMajStat;
-  
+
   gssMajStat = krb5_gss_register_acceptor_identity(m_strKeytab.c_str());
   if (gssMajStat != GSS_S_COMPLETE) {
     logGSSErrors("In grpc::server::NegotiationRequestHandler::registerKeytab(): krb5_gss_register_acceptor_identity() major status.", gssMajStat, GSS_C_GSS_CODE);
@@ -95,7 +93,7 @@ void cta::frontend::grpc::server::NegotiationRequestHandler::registerKeytab(cons
 
 void cta::frontend::grpc::server::NegotiationRequestHandler::releaseName(const std::string& strContext, gss_name_t* pGssName) {
   OM_uint32 gssMajStat, gssMinStat;
-  
+
   gssMajStat = gss_release_name(&gssMinStat, pGssName);
   if (gssMajStat != GSS_S_COMPLETE) {
     logGSSErrors(strContext + " gss_release_name() major status.", gssMajStat, GSS_C_GSS_CODE);
@@ -129,20 +127,18 @@ void cta::frontend::grpc::server::NegotiationRequestHandler::acquireCreds(const 
                               pGssServerCreds, nullptr, nullptr);
 
   releaseName("In grpc::server::NegotiationRequestHandler::acquireCreds():", &gssServerName);
-  
+
   if (gssMajStat != GSS_S_COMPLETE) {
     logGSSErrors("In grpc::server::NegotiationRequestHandler::acquireCreds(): gss_acquire_cred() major status.", gssMajStat, GSS_C_GSS_CODE);
     logGSSErrors("In grpc::server::NegotiationRequestHandler::acquireCreds(): gss_acquire_cred() minor status.", gssMinStat, GSS_C_MECH_CODE);
     throw cta::exception::Exception("In grpc::server::NegotiationRequestHandler::acquireCreds(): Failed to get Kerberos credentials.");
   }
-
-  
 }
 
 bool cta::frontend::grpc::server::NegotiationRequestHandler::next(const bool bOk) {
   bool bNext = false;
   log::LogContext lc(m_log);
-  
+
   // Check the state and report an error
   if(!bOk) {
     switch (m_streamState) {
@@ -165,7 +161,7 @@ bool cta::frontend::grpc::server::NegotiationRequestHandler::next(const bool bOk
   }
   // else everything is OK
   bNext = true;
-  
+
   switch (m_streamState) {
     case StreamState::NEW:
       m_ctaNegotiationSvc.RequestNegotiate(&m_ctx, &m_rwNegotiation, &m_asyncServer.completionQueue(), &m_asyncServer.completionQueue(), m_tag);
@@ -191,11 +187,11 @@ bool cta::frontend::grpc::server::NegotiationRequestHandler::next(const bool bOk
         OM_uint32 gssAccSecMinStat;
         OM_uint32 gssMinStat;
         OM_uint32 gssRetFlags;
-        
-        const uint8_t* pChallengeData = reinterpret_cast<const uint8_t*>(m_request.challenge().c_str()); 
+
+        const uint8_t* pChallengeData = reinterpret_cast<const uint8_t*>(m_request.challenge().c_str());
         gssRecvToken.length = m_request.challenge().size();
         gssRecvToken.value = const_cast<void*>(reinterpret_cast<const void*>(pChallengeData));
-        
+
         gssMajStat = gss_accept_sec_context(&gssAccSecMinStat, &m_gssCtx,
                                           m_serverCreds, &gssRecvToken,
                                           GSS_C_NO_CHANNEL_BINDINGS,
@@ -203,7 +199,7 @@ bool cta::frontend::grpc::server::NegotiationRequestHandler::next(const bool bOk
                                           &gssRetFlags,
                                           nullptr,  /* time_rec */
                                           nullptr); /* del_cred_handle */
-        
+
         switch (gssMajStat) {
           // https://www.ietf.org/archive/id/draft-perez-krb-wg-gss-preauth-03.html
           case GSS_S_CONTINUE_NEEDED:
@@ -250,11 +246,11 @@ bool cta::frontend::grpc::server::NegotiationRequestHandler::next(const bool bOk
             // No default
             break;
         }
-      
+
         releaseName("In grpc::server::NegotiationRequestHandler::next():", &gssSrcName);
-      }
-      
-      break;
+    }
+
+    break;
     case StreamState::ERROR:
       m_streamState = StreamState::FINISH;
       m_rwNegotiation.Finish(::grpc::Status::CANCELLED, m_tag);
@@ -274,7 +270,6 @@ bool cta::frontend::grpc::server::NegotiationRequestHandler::next(const bool bOk
       // no default
       break;
   }
-  
+
   return bNext;
 }
-  

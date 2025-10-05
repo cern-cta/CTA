@@ -20,6 +20,10 @@
 #include "common/log/StdoutLogger.hpp"
 #include "common/processCap/ProcessCap.hpp"
 #include "common/threading/System.hpp"
+#include "common/semconv/Attributes.hpp"
+#include "common/telemetry/TelemetryInit.hpp"
+#include "common/telemetry/config/TelemetryConfig.hpp"
+#include "common/semconv/Attributes.hpp"
 #include "tapeserver/daemon/CommandLineParams.hpp"
 #include "tapeserver/daemon/common/TapedConfiguration.hpp"
 #include "tapeserver/daemon/TapeDaemon.hpp"
@@ -165,7 +169,7 @@ int main(const int argc, char **const argv) {
   // Initial parse of config file
   tape::daemon::common::TapedConfiguration globalConfig;
   try {
-  globalConfig =
+    globalConfig =
       tape::daemon::common::TapedConfiguration::createFromConfigPath(commandLine->configFileLocation, *logPtr);
   } catch (const exception::Exception &ex) {
     std::list<cta::log::Param> params = {
@@ -222,8 +226,42 @@ int main(const int argc, char **const argv) {
     std::cerr << "Failed to instantiate object representing CTA logging system: " << ex.getMessage().str() << std::endl;
     return EXIT_FAILURE;
   }
-
   cta::log::Logger& log = *logPtr;
+
+  // Instantiate telemetry
+  if (globalConfig.telemetryEnabled.value()) {
+    try {
+      std::string metricsBackend = globalConfig.metricsBackend.value();
+      if (cta::telemetry::stringToMetricsBackend(metricsBackend) == cta::telemetry::MetricsBackend::STDOUT) {
+        log(log::WARNING, "OpenTelemetry backend STDOUT is not supported for cta-taped. Using NOOP backend instead...");
+        metricsBackend = cta::telemetry::metricsBackendToString(cta::telemetry::MetricsBackend::NOOP);
+      }
+
+      std::string otlpBasicAuthFile = globalConfig.metricsExportOtlpBasicAuthFile.value();
+      std::string otlpBasicAuthString =
+        otlpBasicAuthFile.empty() ? "" : cta::telemetry::authStringFromFile(otlpBasicAuthFile);
+      cta::telemetry::TelemetryConfig telemetryConfig =
+        cta::telemetry::TelemetryConfigBuilder()
+          .serviceName(cta::semconv::attr::ServiceNameValues::kCtaTaped)
+          .serviceNamespace(globalConfig.instanceName.value())
+          .serviceVersion(CTA_VERSION)
+          .retainInstanceIdOnRestart(globalConfig.retainInstanceIdOnRestart.value())
+          .resourceAttribute(cta::semconv::attr::kSchedulerNamespace, globalConfig.schedulerBackendName.value())
+          .metricsBackend(metricsBackend)
+          .metricsExportInterval(std::chrono::milliseconds(globalConfig.metricsExportInterval.value()))
+          .metricsExportTimeout(std::chrono::milliseconds(globalConfig.metricsExportTimeout.value()))
+          .metricsOtlpEndpoint(globalConfig.metricsExportOtlpEndpoint.value())
+          .metricsOtlpBasicAuthString(otlpBasicAuthString)
+          .metricsFileEndpoint(globalConfig.metricsExportFileEndpoint.value())
+          .build();
+      // taped is a special case where we only do initTelemetry after the process name has been set
+      cta::telemetry::initTelemetryConfig(telemetryConfig);
+    } catch (exception::Exception& ex) {
+      std::list<cta::log::Param> params = {cta::log::Param("exceptionMessage", ex.getMessage().str())};
+      log(log::ERR, "Failed to instantiate OpenTelemetry", params);
+      return EXIT_FAILURE;
+    }
+  }
 
   int programRc = EXIT_FAILURE; // Default return code when receiving an exception.
   try {

@@ -19,6 +19,7 @@
 #include "common/exception/LostDatabaseConnection.hpp"
 #include "common/threading/MutexLocker.hpp"
 #include "common/utils/utils.hpp"
+#include "common/semconv/Attributes.hpp"
 #include "rdbms/CheckConstraintError.hpp"
 #include "rdbms/PrimaryKeyError.hpp"
 #include "rdbms/UniqueConstraintError.hpp"
@@ -363,6 +364,20 @@ bool OcciStmt::connShouldBeClosed(const oracle::occi::SQLException &ex) {
   default:
     return false;
   };
+}
+
+//------------------------------------------------------------------------------
+// getDbSystemName
+//------------------------------------------------------------------------------
+std::string OcciStmt::getDbSystemName() const {
+  return cta::semconv::attr::DbSystemNameValues::kOracle;
+}
+
+//------------------------------------------------------------------------------
+// getDbNamespace
+//------------------------------------------------------------------------------
+std::string OcciStmt::getDbNamespace() const {
+  return m_conn.getDbNamespace();
 }
 
 } // namespace cta::rdbms::wrapper

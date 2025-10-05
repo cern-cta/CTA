@@ -14,11 +14,11 @@
  *               granted to it by virtue of its status as an Intergovernmental Organization or
  *               submit itself to any jurisdiction.
  */
- 
 
 #include "TokenStorage.hpp"
 
 #include "utils.hpp"
+#include "common/utils/Base64.hpp"
 
 void cta::frontend::grpc::server::TokenStorage::store(const std::string& strToken, const std::string& strSpn) {
   std::lock_guard<std::mutex> lck(m_mtxLockStorage);
@@ -27,10 +27,8 @@ void cta::frontend::grpc::server::TokenStorage::store(const std::string& strToke
 
 bool cta::frontend::grpc::server::TokenStorage::validate(const std::string& strToken) const {
   std::lock_guard<std::mutex> lck(m_mtxLockStorage);
-  std::string strDecodedToken = {""};
-  
-  grpc::utils::decode(strToken, strDecodedToken);
-  
+  std::string strDecodedToken = cta::utils::base64decode(strToken);
+
   if (m_umapTokens.find(strDecodedToken) != m_umapTokens.end()) {
     return true;
   }

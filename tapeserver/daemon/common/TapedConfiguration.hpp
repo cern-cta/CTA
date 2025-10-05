@@ -71,6 +71,10 @@ struct TapedConfiguration {
   //----------------------------------------------------------------------------
   // The actual parameters:
   //----------------------------------------------------------------------------
+  // Experimental features
+  //---------------------------------------------------------------------------
+  cta::SourcedParameter<bool> telemetryEnabled {"experimental", "telemetryEnabled", false, "Compile time default"};
+  //----------------------------------------------------------------------------
   // Basics: tape daemon config
   //----------------------------------------------------------------------------
   /// The user name of the cta-taped daemon process
@@ -279,6 +283,42 @@ struct TapedConfiguration {
   cta::SourcedParameter<std::string> schedulerBackendName {
     "general", SCHEDULER_NAME_CONFIG_KEY
   };
+
+  //----------------------------------------------------------------------------
+  // Telemetry Options
+  //----------------------------------------------------------------------------
+
+  cta::SourcedParameter<bool> retainInstanceIdOnRestart {"telemetry",
+                                                         "retainInstanceIdOnRestart",
+                                                         false,
+                                                         "Compile time default"};
+
+  cta::SourcedParameter<std::string> metricsBackend {"telemetry", "metricsBackend", "NOOP", "Compile time default"};
+
+  cta::SourcedParameter<std::string> metricsExportOtlpEndpoint {"telemetry",
+                                                                "metricsExportOtlpEndpoint",
+                                                                "",
+                                                                "Compile time default"};
+
+  cta::SourcedParameter<std::string> metricsExportOtlpBasicAuthFile {"telemetry",
+                                                                     "metricsExportOtlpBasicAuthFile",
+                                                                     "",
+                                                                     "Compile time default"};
+
+  cta::SourcedParameter<std::string> metricsExportFileEndpoint {"telemetry",
+                                                                "metricsExportFileEndpoint",
+                                                                "/var/log/cta/cta-taped-metrics.txt",
+                                                                "Compile time default"};
+
+  cta::SourcedParameter<uint32_t> metricsExportInterval {"telemetry",
+                                                         "metricsExportInterval",
+                                                         15000,
+                                                         "Compile time default"};
+
+  cta::SourcedParameter<uint32_t> metricsExportTimeout {"telemetry",
+                                                        "metricsExportTimeout",
+                                                        3000,
+                                                        "Compile time default"};
 
 private:
   /** A private dummy logger which will simplify the implementation of the

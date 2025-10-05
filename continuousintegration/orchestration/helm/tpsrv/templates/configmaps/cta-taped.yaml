@@ -32,5 +32,28 @@ data:
     general InstanceName {{ $.Release.Namespace }}
     general SchedulerBackendName {{ $schedulerConfig.backend }}
     taped externalFreeDiskSpaceScript {{ $.Values.conf.taped.externalFreeDiskSpaceScript }}
+
+    # Telemetry
+    experimental telemetryEnabled {{ $.Values.conf.telemetry.enabled }}
+
+    telemetry retainInstanceIdOnRestart {{ $.Values.conf.telemetry.retainInstanceIdOnRestart }}
+    telemetry metricsBackend {{ $.Values.conf.telemetry.metricsBackend }}
+    {{- if $.Values.conf.telemetry.metricsExportInterval }}
+    telemetry metricsExportInterval {{ $.Values.conf.telemetry.metricsExportInterval }}
+    {{- end }}
+    {{- if $.Values.conf.telemetry.metricsExportTimeout }}
+    telemetry metricsExportTimeout {{ $.Values.conf.telemetry.metricsExportTimeout }}
+    {{- end }}
+    {{- if $.Values.conf.telemetry.metricsExportOtlpEndpoint }}
+    telemetry metricsExportOtlpEndpoint {{ $.Values.conf.telemetry.metricsExportOtlpEndpoint }}
+    {{- end }}
+    {{- if $.Values.conf.telemetry.metricsExportOtlpBasicAuthSecret }}
+    telemetry metricsExportOtlpBasicAuthFile /etc/cta/otlp-basic-auth.conf
+    {{- end }}
+    {{- if $.Values.conf.telemetry.metricsExportFileEndpoint }}
+    telemetry metricsExportFileEndpoint {{ $.Values.conf.telemetry.metricsExportFileEndpoint }}
+    {{- end }}
+
+
 ---
 {{- end }}

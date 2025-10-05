@@ -18,6 +18,7 @@
 #pragma once
 
 #include "rdbms/wrapper/ConnFactory.hpp"
+#include "rdbms/Login.hpp"
 
 namespace cta::rdbms::wrapper {
 
@@ -26,18 +27,12 @@ namespace cta::rdbms::wrapper {
  */
 class OcciConnFactory: public ConnFactory {
 public:
-
   /**
    * Constructor.
    *
-   * @param username The database username.
-   * @param password The database password.
-   * @param database The database name.
+   * @param login The database login details.
    */
-  OcciConnFactory(
-    const std::string &username,
-    const std::string &password,
-    const std::string &database);
+  OcciConnFactory(const rdbms::Login& login);
 
   /**
    * Destructor
@@ -51,22 +46,33 @@ public:
    */
   std::unique_ptr<ConnWrapper> create() override;
 
+  /**
+   * @brief Get the database system identifier.
+   *
+   * This should return the OpenTelemetry semantic convention attribute
+   * `db.system`. It identifies which kind of database management system
+   * (DBMS) is in use.
+   *
+   * @return The string "oracle".
+   */
+  std::string getDbSystemName() const override;
+
+  /**
+   * @brief Get the logical database namespace.
+   *
+   * This should return the OpenTelemetry semantic convention attribute
+   * `db.namespace`. It identifies the logical database, schema, or
+   * namespace where the operation is executed.
+   *
+   * @return A string representing the database namespace.
+   */
+  std::string getDbNamespace() const override;
+
 private:
-
   /**
-   * The database username.
+   * The database login information.
    */
-  std::string m_username;
-
-  /**
-   * The database password.
-   */
-  std::string m_password;
-
-  /**
-   * The database name.
-   */
-  std::string m_database;
+  const rdbms::Login m_login;
 
 }; // class OcciConnFactory
 

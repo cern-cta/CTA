@@ -68,14 +68,15 @@ struct Login {
    * @param db The database name.
    * @param host The hostname of the database server.
    * @param p The TCP/IP port on which the database server is listening.
+   * @param dbNamespace The namespace of the database.
    */
-  Login(
-    const DbType type,
-    const std::string &user,
-    const std::string &passwd,
-    const std::string &db,
-    const std::string &host,
-    const uint16_t p);
+  Login(const DbType type,
+        const std::string& user,
+        const std::string& passwd,
+        const std::string& db,
+        const std::string& host,
+        const uint16_t p,
+        const std::string& dbNamespace);
 
   /**
    * The type of the database.
@@ -106,6 +107,11 @@ struct Login {
    * The TCP/IP port on which the database server is listening.
    */
   uint16_t port;
+
+  /**
+   * The database namespace.
+   */
+  std::string dbNamespace;
 
   /**
    * The connection string of the database (with hidden password)
@@ -210,6 +216,10 @@ struct Login {
    * @param connectionDetails The database connection details.
    */
   static Login parseSqlite(const std::string &connectionDetails);
+  /**
+   * Constructs a login object for an in memory DB.
+   */
+  static Login getInMemory();
 
   /**
    * Parses the specified connection details for the Postgres database.
@@ -235,6 +245,13 @@ struct Login {
    * @param connectionDetails The database connection details.
    */
   static Login parsePostgresql(const std::string &connectionDetails);
+
+  /**
+   * Constructs the database namespace of a Postgresql database based on the provided connection details.
+   * @param connectionDetails The connectionDetails retrieved from the configuration file.
+   * @return The database namespace.
+   */
+  static std::string getPostgresqlDbNamespace(const std::string& connectionDetails);
 
   static const std::list<std::string> dbTypeStr;
 
@@ -279,7 +296,7 @@ struct Login {
    * @param connectionDetails the connectionDetails retrieved from the configuration file
    * @return  true if the Postgresql connectionDetails contains a password, false otherwise
    */
-  bool postgresqlHasPassword(const std::string & connectionDetails);
+  static bool postgresqlHasPassword(const std::string& connectionDetails);
 };  // class Login
 
 } // namespace cta::rdbms

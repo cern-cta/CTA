@@ -56,14 +56,16 @@ usage() {
   echo "      --tapeservers-config <path>:      Path to the yaml file containing the tapeservers config. If not provided, this will be auto-generated."
   echo "      --upgrade-cta:                    Upgrades the existing CTA instance with a new image instead of spawning an instance from scratch."
   echo "      --upgrade-eos:                    Upgrades the existing EOS instance with a new image instead of spawning an instance from scratch."
-  echo "      --eos-image-tag:                  Image to use for spawning EOS. If not provided, will default to the image specified in the create_instance script."
+  echo "      --eos-image-tag <tag>:            Image to use for spawning EOS. If not provided, will default to the image specified in the create_instance script."
   echo "      --cta-config <path>:              Custom Values file to pass to the CTA Helm chart. Defaults to: presets/dev-cta-xrd-values.yaml"
   echo "      --eos-config <path>:              Custom Values file to pass to the EOS Helm chart. Defaults to: presets/dev-eos-xrd-values.yaml"
   echo "      --use-public-repos:               Use the public yum repos instead of the internal yum repos. Use when you do not have access to the CERN network."
   echo "      --platform <platform>:            Which platform to build for. Defaults to the default platform in the project.json."
   echo "      --eos-enabled <true|false>:       Whether to spawn an EOS or not. Defaults to true."
   echo "      --dcache-enabled <true|false>:    Whether to spawn a dCache or not. Defaults to false."
-  echo
+  echo "      --local-telemetry:                Spawns a local collector and Prometheus backends to which metrics will be sent."
+  echo "      --publish-telemetry:              Publishes telemetry to a pre-configured central observability backend."
+  echo "      --deploy-namespace <namespace>:   Deploy the CTA instance in a given namespace. Defaults to dev."
   exit 1
 }
 
@@ -91,6 +93,8 @@ build_deploy() {
   local skip_unit_tests=false
   local skip_debug_packages=false
   local skip_image_reload=false
+  local local_telemetry=false
+  local publish_telemetry=false
   local build_generator="Ninja"
   local cmake_build_type=$(jq -r .dev.defaultBuildType "${project_root}/project.json")
   local scheduler_type="objectstore"
@@ -135,6 +139,8 @@ build_deploy() {
     --upgrade-cta) upgrade_cta=true ;;
     --upgrade-eos) upgrade_eos=true ;;
     --use-public-repos) use_internal_repos=false ;;
+    --local-telemetry) local_telemetry=true ;;
+    --publish-telemetry) publish_telemetry=true ;;
     --eos-image-tag)
       if [[ $# -gt 1 ]]; then
         eos_image_tag="$2"
@@ -260,6 +266,15 @@ build_deploy() {
         shift
       else
         echo "Error: ---imagebuild-options requires an argument"
+        exit 1
+      fi
+      ;;
+    --deploy-namespace)
+      if [[ $# -gt 1 ]]; then
+        deploy_namespace="$2"
+        shift
+      else
+        echo "Error: ---deploy-namespace requires an argument"
         exit 1
       fi
       ;;
@@ -462,6 +477,12 @@ build_deploy() {
 
       if [ -n "${cta_config}" ]; then
         extra_spawn_options+=" --cta-config ${cta_config}"
+      fi
+      if [ "$local_telemetry" = true ]; then
+        extra_spawn_options+=" --local-telemetry"
+      fi
+      if [ "$publish_telemetry" = true ]; then
+        extra_spawn_options+=" --publish-telemetry"
       fi
 
       if [ -z "${scheduler_config}" ]; then

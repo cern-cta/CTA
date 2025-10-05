@@ -23,6 +23,12 @@
 #include "Backend.hpp"
 #include "objectstore/cta.pb.h"
 #include "common/log/LogContext.hpp"
+#include "common/Timer.hpp"
+#include "common/utils/utils.hpp"
+#include "common/semconv/Attributes.hpp"
+#include "common/telemetry/metrics/instruments/SchedulerInstruments.hpp"
+#include "common/telemetry/metrics/instruments/ObjectstoreInstruments.hpp"
+#include <opentelemetry/context/runtime_context.h>
 
 namespace cta {
 
@@ -152,7 +158,7 @@ public:
 
   std::string & getAddressIfSet() {
     if (!m_nameSet) {
-      throw AddressNotSet("In ObjectOpsBase::getNameIfSet: name not set yet");
+      throw AddressNotSet("In ObjectOpsBase::getAddressIfSet: name not set yet");
     }
     return m_name;
   }
@@ -352,23 +358,30 @@ public:
   }
 
   void lock(ObjectOpsBase & oo) {
-    checkNotLocked();
-    m_objectOps  = & oo;
-    checkObjectAndAddressSet();
-    m_lock.reset(m_objectOps->m_objectStore.lockShared(m_objectOps->getAddressIfSet()));
-    ScopedSharedLock::setObjectLocked(m_objectOps);
-    m_locked = true;
+    utils::Timer timer;
+    {
+      checkNotLocked();
+      m_objectOps = &oo;
+      checkObjectAndAddressSet();
+      m_lock.reset(m_objectOps->m_objectStore.lockShared(m_objectOps->getAddressIfSet()));
+      ScopedSharedLock::setObjectLocked(m_objectOps);
+      m_locked = true;
+    }
+    cta::telemetry::metrics::ctaObjectstoreLockAcquireDuration->Record(
+      timer.msecs(),
+      {
+        {cta::semconv::attr::kLockType, cta::semconv::attr::LockTypeValues::kScopedShared}
+    },
+      opentelemetry::context::RuntimeContext::GetCurrent());
   }
 
-  virtual ~ScopedSharedLock() {
-    releaseIfNeeded();
-  }
-
+  virtual ~ScopedSharedLock() { releaseIfNeeded(); }
 };
 
 class ScopedExclusiveLock: public ScopedLock {
 public:
   ScopedExclusiveLock() = default;
+
   ScopedExclusiveLock(ObjectOpsBase & oo, uint64_t timeout_us = 0) {
     lock(oo, timeout_us);
   }
@@ -384,13 +397,22 @@ public:
   }
 
   void lock(ObjectOpsBase & oo, uint64_t timeout_us = 0) {
-    checkNotLocked();
-    m_objectOps = &oo;
-    checkObjectAndAddressSet();
-    m_lock.reset(m_objectOps->m_objectStore.lockExclusive(m_objectOps->getAddressIfSet(), timeout_us));
-    ScopedExclusiveLock::setObjectLocked(m_objectOps);
-    m_objectOps->m_exclusiveLock = this;
-    m_locked = true;
+    utils::Timer timer;
+    {
+      checkNotLocked();
+      m_objectOps = &oo;
+      checkObjectAndAddressSet();
+      m_lock.reset(m_objectOps->m_objectStore.lockExclusive(m_objectOps->getAddressIfSet(), timeout_us));
+      ScopedExclusiveLock::setObjectLocked(m_objectOps);
+      m_objectOps->m_exclusiveLock = this;
+      m_locked = true;
+    }
+    cta::telemetry::metrics::ctaObjectstoreLockAcquireDuration->Record(
+      timer.msecs(),
+      {
+        {cta::semconv::attr::kLockType, cta::semconv::attr::LockTypeValues::kScopedExclusive}
+    },
+      opentelemetry::context::RuntimeContext::GetCurrent());
   }
 
   /** Move the locked object reference to a new one. This is done when the locked
@@ -414,10 +436,7 @@ public:
     ScopedLock::transfer(*m_objectOps, newObject);
   }
 
-  virtual ~ScopedExclusiveLock() {
-    releaseIfNeeded();
-  }
-
+  virtual ~ScopedExclusiveLock() { releaseIfNeeded(); }
 };
 
 template <class PayloadType, serializers::ObjectType PayloadTypeId>

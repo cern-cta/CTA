@@ -166,6 +166,11 @@ spec:
         - name: vfs-storage-volume
           mountPath: /objectstore
         {{- end }}
+        {{- if $.Values.conf.telemetry.metricsExportOtlpBasicAuthSecret }}
+        - name: otlp-basic-auth
+          mountPath: /etc/cta/otlp-basic-auth.conf
+          subPath: otlp-basic-auth.conf
+        {{- end }}
         {{ include "common.extraVolumeMounts" $ | nindent 8 }}
       {{- end }} # End of containers loop
       volumes:
@@ -205,6 +210,11 @@ spec:
           secretName: {{ $.Values.keytab.secretName }}
       - name: tpsrv-sss-keytab-fixedownership
         emptyDir: {}
+      {{- if $.Values.conf.telemetry.metricsExportOtlpBasicAuthSecret }}
+      - name: otlp-basic-auth
+        secret:
+          secretName: {{ $.Values.conf.telemetry.metricsExportOtlpBasicAuthSecret }}
+      {{- end }}
       {{ include "common.extraVolumes" $ | nindent 6 }}
 ---
 {{- end }}

@@ -18,6 +18,7 @@
 #pragma once
 
 #include "rdbms/wrapper/ConnFactory.hpp"
+#include "rdbms/Login.hpp"
 
 namespace cta::rdbms::wrapper {
 
@@ -26,13 +27,12 @@ namespace cta::rdbms::wrapper {
  */
 class SqliteConnFactory: public ConnFactory {
 public:
-
   /**
    * Constructor
    *
-   * @param filename The filename to be passed to the sqlite3_open() function
+   * @param login The database login information.
    */
-  explicit SqliteConnFactory(const std::string& filename);
+  SqliteConnFactory(const rdbms::Login& login);
 
   /**
    * Destructor.
@@ -46,12 +46,33 @@ public:
    */
   std::unique_ptr<ConnWrapper> create() override;
 
-private:
+  /**
+   * @brief Get the database system identifier.
+   *
+   * This should return the OpenTelemetry semantic convention attribute
+   * `db.system`. It identifies which kind of database management system
+   * (DBMS) is in use.
+   *
+   * @return The string "oracle".
+   */
+  std::string getDbSystemName() const override;
 
   /**
-   * The filename to be passed to the sqlite3_open() function.
+   * @brief Get the logical database namespace.
+   *
+   * This should return the OpenTelemetry semantic convention attribute
+   * `db.namespace`. It identifies the logical database, schema, or
+   * namespace where the operation is executed.
+   *
+   * @return A string representing the database namespace.
    */
-  std::string m_filename;
+  std::string getDbNamespace() const override;
+
+private:
+  /**
+   * The database login information.
+   */
+  const rdbms::Login m_login;
 
 }; // class SqliteConnFactory
 

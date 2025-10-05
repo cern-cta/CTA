@@ -54,8 +54,7 @@ OracleCatalogueFactory::OracleCatalogueFactory(
 //------------------------------------------------------------------------------
 std::unique_ptr<Catalogue> OracleCatalogueFactory::create() {
   try {
-    auto c = std::make_unique<OracleCatalogue>(m_log, m_login.username, m_login.password, m_login.database, m_nbConns,
-      m_nbArchiveFileListingConns);
+    auto c = std::make_unique<OracleCatalogue>(m_log, m_login, m_nbConns, m_nbArchiveFileListingConns);
     return std::make_unique<CatalogueRetryWrapper>(m_log, std::move(c), m_maxTriesToConnect);
   } catch(exception::Exception &ex) {
     throw exception::Exception(std::string(__FUNCTION__) + " failed: " + ex.getMessage().str());
@@ -66,19 +65,12 @@ std::unique_ptr<Catalogue> OracleCatalogueFactory::create() {
 
 extern "C" {
 
-void factory(cta::plugin::Interface<cta::catalogue::CatalogueFactory,
-    cta::plugin::Args<
-      cta::log::Logger&,
-      const u_int64_t,
-      const u_int64_t,
-      const u_int64_t>,
-    cta::plugin::Args<
-      cta::log::Logger&,
-      const cta::rdbms::Login&,
-      const u_int64_t,
-      const u_int64_t,
-      const u_int64_t>>& interface) {
-  
+void factory(
+  cta::plugin::Interface<
+    cta::catalogue::CatalogueFactory,
+    cta::plugin::Args<cta::log::Logger&, const u_int64_t, const u_int64_t, const u_int64_t>,
+    cta::plugin::Args<cta::log::Logger&, const cta::rdbms::Login&, const u_int64_t, const u_int64_t, const u_int64_t>>&
+    interface) {
   interface.SET<cta::plugin::DATA::PLUGIN_NAME>("ctacatalogueocci")
     .SET<cta::plugin::DATA::API_VERSION>(VERSION_API)
     .CLASS<cta::catalogue::OracleCatalogueFactory>("OracleCatalogueFactory");

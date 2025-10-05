@@ -15,10 +15,15 @@
  *               submit itself to any jurisdiction.
  */
 
+#include "WorkflowEvent.hpp"
+
+#include <opentelemetry/context/runtime_context.h>
+
 #include "catalogue/Catalogue.hpp"
 #include "common/checksum/ChecksumBlobSerDeser.hpp"
+#include "common/telemetry/metrics/instruments/FrontendInstruments.hpp"
+#include "common/semconv/Attributes.hpp"
 #include "PbException.hpp"
-#include "WorkflowEvent.hpp"
 
 namespace cta::frontend {
 
@@ -47,7 +52,7 @@ WorkflowEvent::WorkflowEvent(const frontend::FrontendService& frontendService,
         .add("diskFilePath", diskFilePath)
         .add("diskFileId", diskFileId);
   m_lc.log(log::INFO, "In WorkflowEvent::WorkflowEvent(): received event.");
-  
+
   // Validate that instance name in key used to authenticate == instance name in protocol buffer
   if(m_cliIdentity.username != event.wf().instance().name()) {
     // Special case:
@@ -85,6 +90,7 @@ WorkflowEvent::WorkflowEvent(const frontend::FrontendService& frontendService,
 
 xrd::Response WorkflowEvent::process() {
   xrd::Response response;
+  utils::Timer timer;
 
   switch(m_event.wf().event()) {
     using namespace cta::eos;
@@ -114,6 +120,17 @@ xrd::Response WorkflowEvent::process() {
       throw exception::PbException("Workflow event " + Workflow_EventType_Name(m_event.wf().event()) +
         " is not implemented.");
   }
+
+  // Record request duration
+  // Note that m_cliIdentity.username should be low cardinality here as it corresponds to the disk instance name
+  cta::telemetry::metrics::ctaFrontendRequestDuration->Record(
+    timer.msecs(),
+    {
+      {cta::semconv::attr::kEventName,             Workflow_EventType_Name(m_event.wf().event())},
+      {cta::semconv::attr::kFrontendRequesterName, m_cliIdentity.username                       }
+  },
+    opentelemetry::context::RuntimeContext::GetCurrent());
+
   return response;
 }
 
@@ -472,7 +489,7 @@ void WorkflowEvent::processDELETE(xrd::Response& response) {
     checksum::ProtobufToChecksumBlob(m_event.file().csb(), csb);
     request.checksumBlob = csb;
   }
-  
+
   // Log with file size
   if (m_event.file().size() != 0) {
     request.diskFileSize    = m_event.file().size();

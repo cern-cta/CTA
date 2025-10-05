@@ -24,6 +24,8 @@
 
 namespace cta::frontend {
 
+enum AdminCmdStatus { SUCCESS, USER_ERROR, EXCEPTION };
+
 class AdminCmd : public AdminCmdOptions {
 public:
   AdminCmd(const frontend::FrontendService& frontendService,
@@ -56,11 +58,12 @@ protected:
    * Log an admin command
    *
    * @param[in]    function    Calling function
-   * @param[in]    status      Success or failure
+   * @param[in]    status      Status of the executed admin command
    * @param[in]    reason      Reason for this log message (error message)
    * @param[in]    t           Timer
    */
-  void logAdminCmd(const std::string& function, const std::string& status, const std::string& reason, utils::Timer& t);
+  void
+  logAdminCmd(const std::string& function, const AdminCmdStatus status, const std::string& reason, utils::Timer& t);
 
   /*!
    * Drive state enum

@@ -139,6 +139,13 @@ variables:
       - "presets/stress-eos-xrd-values.yaml"
       - "presets/stress-eos-grpc-values.yaml"
 
+  PUBLISH_TELEMETRY_METRICS:
+    description: "Whether to publish telemetry metrics for the stress test"
+    value: "TRUE"
+    options:
+      - "TRUE"
+      - "FALSE"
+
   # Meta CI
   CTA_BUILD_ID: ${CI_PIPELINE_ID}git${CI_COMMIT_SHORT_SHA}
   CTA_PIPELINE_NAME: "$CI_COMMIT_TITLE -- Pipeline: $PIPELINE_TYPE, Scheduler: $SCHEDULER_TYPE, Oracle support: $ORACLE_SUPPORT"

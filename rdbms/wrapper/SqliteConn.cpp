@@ -34,10 +34,13 @@ namespace cta::rdbms::wrapper {
 //------------------------------------------------------------------------------
 // constructor
 //------------------------------------------------------------------------------
-SqliteConn::SqliteConn(const std::string &filename) {
+SqliteConn::SqliteConn(const rdbms::Login& login) : m_dbNamespace(login.dbNamespace) {
   try {
     m_sqliteConn = nullptr;
-    if(sqlite3_open_v2(filename.c_str(), &m_sqliteConn, SQLITE_OPEN_READWRITE|SQLITE_OPEN_CREATE|SQLITE_OPEN_URI, nullptr)) {
+    if (sqlite3_open_v2(login.database.c_str(),
+                        &m_sqliteConn,
+                        SQLITE_OPEN_READWRITE | SQLITE_OPEN_CREATE | SQLITE_OPEN_URI,
+                        nullptr)) {
       std::string msg = sqlite3_errmsg(m_sqliteConn);
       sqlite3_close(m_sqliteConn);
       throw exception::Exception(msg);
@@ -202,13 +205,13 @@ void SqliteConn::rollback() {
 void SqliteConn::printSchema(std::ostream &os) {
   try {
     const char* const sql = R"SQL(
-      SELECT 
-        NAME AS NAME, 
-        TYPE AS TYPE 
-      FROM 
-        SQLITE_MASTER 
-      ORDER BY 
-        TYPE, 
+      SELECT
+        NAME AS NAME,
+        TYPE AS TYPE
+      FROM
+        SQLITE_MASTER
+      ORDER BY
+        TYPE,
         NAME
     )SQL";
     auto stmt = createStmt(sql);
@@ -232,17 +235,17 @@ std::map<std::string, std::string, std::less<>> SqliteConn::getColumns(const std
   try {
     std::map<std::string, std::string, std::less<>> columnNamesAndTypes;
     const char* const sql = R"SQL(
-      SELECT 
-        SQL AS SQL 
-      FROM 
+      SELECT
+        SQL AS SQL
+      FROM
         (
-          SELECT TBL_NAME, TYPE, SQL FROM SQLITE_MASTER 
-            UNION ALL 
+          SELECT TBL_NAME, TYPE, SQL FROM SQLITE_MASTER
+            UNION ALL
           SELECT TBL_NAME, TYPE, SQL FROM SQLITE_TEMP_MASTER
-        ) 
-      WHERE 
-        TBL_NAME = :TABLE_NAME 
-      AND 
+        )
+      WHERE
+        TBL_NAME = :TABLE_NAME
+      AND
       TYPE = 'table'
     )SQL";
     const std::string columnTypes = "NUMERIC|"
@@ -293,17 +296,17 @@ std::map<std::string, std::string, std::less<>> SqliteConn::getColumns(const std
 std::list<std::string> SqliteConn::getTableNames() {
   try {
     const char* const sql = R"SQL(
-      SELECT 
-        NAME AS NAME 
-      FROM 
+      SELECT
+        NAME AS NAME
+      FROM
         (
-          SELECT NAME, TYPE FROM SQLITE_MASTER 
-            UNION ALL 
+          SELECT NAME, TYPE FROM SQLITE_MASTER
+            UNION ALL
           SELECT NAME, TYPE FROM SQLITE_TEMP_MASTER
-        ) 
-      WHERE 
-        TYPE = 'table' 
-      ORDER BY 
+        )
+      WHERE
+        TYPE = 'table'
+      ORDER BY
         NAME
     )SQL";
     auto stmt = createStmt(sql);
@@ -327,17 +330,17 @@ std::list<std::string> SqliteConn::getTableNames() {
 std::list<std::string> SqliteConn::getIndexNames() {
   try {
     const char* const sql = R"SQL(
-      SELECT 
-        NAME AS NAME 
-      FROM 
+      SELECT
+        NAME AS NAME
+      FROM
         (
-          SELECT NAME, TYPE FROM SQLITE_MASTER 
-            UNION ALL 
+          SELECT NAME, TYPE FROM SQLITE_MASTER
+            UNION ALL
           SELECT NAME, TYPE FROM SQLITE_TEMP_MASTER
-        ) 
-      WHERE 
-        TYPE = 'index' 
-      ORDER BY 
+        )
+      WHERE
+        TYPE = 'index'
+      ORDER BY
         NAME
     )SQL";
     auto stmt = createStmt(sql);
@@ -394,16 +397,16 @@ std::list<std::string> SqliteConn::getConstraintNames(const std::string &tableNa
   try {
     std::list<std::string> constraintNames;
     const char* const sql = R"SQL(
-      SELECT 
-        SQL AS SQL 
-      FROM 
+      SELECT
+        SQL AS SQL
+      FROM
         (
-          SELECT SQL, TYPE, NAME FROM SQLITE_MASTER 
-            UNION ALL 
+          SELECT SQL, TYPE, NAME FROM SQLITE_MASTER
+            UNION ALL
           SELECT SQL, TYPE, NAME FROM SQLITE_TEMP_MASTER
-        ) 
-      WHERE TYPE = 'table' 
-        AND NAME = :TABLE_NAME 
+        )
+      WHERE TYPE = 'table'
+        AND NAME = :TABLE_NAME
     )SQL";
     auto stmt = createStmt(sql);
     stmt->bindString(":TABLE_NAME", tableName);
@@ -460,6 +463,13 @@ std::list<std::string> SqliteConn::getTypeNames() {
 //------------------------------------------------------------------------------
 std::list<std::string> SqliteConn::getViewNames() {
   return std::list<std::string>();
+}
+
+//------------------------------------------------------------------------------
+// getDbNamespace
+//------------------------------------------------------------------------------
+std::string SqliteConn::getDbNamespace() const {
+  return m_dbNamespace;
 }
 
 } // namespace cta::rdbms::wrapper

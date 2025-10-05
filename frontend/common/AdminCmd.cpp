@@ -15,12 +15,17 @@
  *               submit itself to any jurisdiction.
  */
 
+#include "AdminCmd.hpp"
+
+#include <opentelemetry/context/runtime_context.h>
+
 #include "catalogue/CreateMountPolicyAttributes.hpp"
 #include "catalogue/CreateTapeAttributes.hpp"
 #include "catalogue/MediaType.hpp"
 #include "cmdline/CtaAdminCmdParser.hpp"
 #include "common/dataStructures/PhysicalLibrary.hpp"
-#include "AdminCmd.hpp"
+#include "common/telemetry/metrics/instruments/FrontendInstruments.hpp"
+#include "common/semconv/Attributes.hpp"
 #include "PbException.hpp"
 
 namespace cta::frontend {
@@ -240,24 +245,68 @@ xrd::Response AdminCmd::process() {
     }
 
     // Log the admin command
-    logAdminCmd(__FUNCTION__, "success", "", t);
+    logAdminCmd(__FUNCTION__, AdminCmdStatus::SUCCESS, "", t);
   } catch(exception::PbException& ex) {
-    logAdminCmd(__FUNCTION__, "failure", ex.what(), t);
+    logAdminCmd(__FUNCTION__, AdminCmdStatus::EXCEPTION, ex.what(), t);
     throw ex;
   } catch(exception::UserError& ex) {
-    logAdminCmd(__FUNCTION__, "failure", ex.getMessageValue(), t);
+    logAdminCmd(__FUNCTION__, AdminCmdStatus::USER_ERROR, ex.getMessageValue(), t);
     throw ex;
   } catch(exception::Exception& ex) {
-    logAdminCmd(__FUNCTION__, "failure", ex.what(), t);
+    logAdminCmd(__FUNCTION__, AdminCmdStatus::EXCEPTION, ex.what(), t);
     throw ex;
   } catch(std::runtime_error& ex) {
-    logAdminCmd(__FUNCTION__, "failure", ex.what(), t);
+    logAdminCmd(__FUNCTION__, AdminCmdStatus::EXCEPTION, ex.what(), t);
     throw ex;
   }
   return response;
 }
 
-void AdminCmd::logAdminCmd(const std::string& function, const std::string& status, const std::string& reason, utils::Timer& t) {
+void AdminCmd::logAdminCmd(const std::string& function,
+                           const AdminCmdStatus status,
+                           const std::string& reason,
+                           utils::Timer& t) {
+  // We do the metric recording here to prevent repetition in the catch statements
+  std::string statusStr;
+  switch (status) {
+    case AdminCmdStatus::SUCCESS: {
+      statusStr = "success";
+      cta::telemetry::metrics::ctaFrontendRequestDuration->Record(
+        t.msecs(),
+        {
+          {cta::semconv::attr::kEventName,             "ADMIN"},
+          {cta::semconv::attr::kFrontendRequesterName, "admin"}
+      },
+        opentelemetry::context::RuntimeContext::GetCurrent());
+      break;
+    }
+    case AdminCmdStatus::USER_ERROR: {
+      statusStr = "user_error";
+      cta::telemetry::metrics::ctaFrontendRequestDuration->Record(
+        t.msecs(),
+        {
+          {cta::semconv::attr::kEventName,             "ADMIN"                                        },
+          {cta::semconv::attr::kFrontendRequesterName, "admin"                                        },
+          {cta::semconv::attr::kErrorType,             cta::semconv::attr::ErrorTypeValues::kUserError}
+      },
+        opentelemetry::context::RuntimeContext::GetCurrent());
+
+      break;
+    }
+    case AdminCmdStatus::EXCEPTION: {
+      statusStr = "failure";
+      cta::telemetry::metrics::ctaFrontendRequestDuration->Record(
+        t.msecs(),
+        {
+          {cta::semconv::attr::kEventName,             "ADMIN"                                        },
+          {cta::semconv::attr::kFrontendRequesterName, "admin"                                        },
+          {cta::semconv::attr::kErrorType,             cta::semconv::attr::ErrorTypeValues::kException}
+      },
+        opentelemetry::context::RuntimeContext::GetCurrent());
+      break;
+    }
+  }
+
   log::ScopedParamContainer params(m_lc);
 
   std::string log_msg = "In RequestMessage::" + function + "(): Admin command succeeded.";
@@ -277,7 +326,7 @@ void AdminCmd::logAdminCmd(const std::string& function, const std::string& statu
     }
   }
 
-  params.add("status", status);
+  params.add("status", statusStr);
 
   if(!reason.empty()) {
     params.add("reason", reason);

@@ -18,6 +18,7 @@
 #pragma once
 
 #include "rdbms/wrapper/ConnFactory.hpp"
+#include "rdbms/Login.hpp"
 
 #include <vector>
 
@@ -28,13 +29,12 @@ namespace cta::rdbms::wrapper {
  */
 class PostgresConnFactory: public ConnFactory {
 public:
-
   /**
    * Constructor
    *
-   * @param conninfo The conninfo string to pass to PQconnectdb. This is a series of key=value pairs separated by white space.
+   * @param login The database login information.
    */
-  explicit PostgresConnFactory(const std::string& conninfo);
+  PostgresConnFactory(const rdbms::Login& login);
 
   /**
    * Destructor.
@@ -48,12 +48,33 @@ public:
    */
   std::unique_ptr<ConnWrapper> create() override;
 
-private:
+  /**
+   * @brief Get the database system identifier.
+   *
+   * This should return the OpenTelemetry semantic convention attribute
+   * `db.system`. It identifies which kind of database management system
+   * (DBMS) is in use.
+   *
+   * @return The string "oracle".
+   */
+  std::string getDbSystemName() const override;
 
   /**
-   * The conninfo string
+   * @brief Get the logical database namespace.
+   *
+   * This should return the OpenTelemetry semantic convention attribute
+   * `db.namespace`. It identifies the logical database, schema, or
+   * namespace where the operation is executed.
+   *
+   * @return A string representing the database namespace.
    */
-  std::string m_conninfo;
+  std::string getDbNamespace() const override;
+
+private:
+  /**
+   * The database login information.
+   */
+  const rdbms::Login m_login;
 
 }; // class PostgresConnFactory
 

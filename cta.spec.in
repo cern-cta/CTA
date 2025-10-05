@@ -19,6 +19,7 @@
 %define xrootdVersionConstraint @XROOTD_VERSION_CONSTRAINT@
 %define radosVersionConstraint @RADOS_VERSION_CONSTRAINT@
 %define gtestDevelVersionConstraint @GTEST_VERSION_CONSTRAINT@
+%define opentelemetryCppVersionConstraint @OPENTELEMETRY_CPP_VERSION_CONSTRAINT@
 
 # Neutral packaging (for srpm)
 #-----------------------------
@@ -244,6 +245,7 @@ Group: Application/CTA
 # Explicity require protobuf to avoid clash with eos-protobuf
 Requires: %{requiredProtobuf}
 Requires: xrootd-client-libs %{xrootdVersionConstraint}
+Requires: opentelemetry-cpp %{opentelemetryCppVersionConstraint}
 %description -n cta-lib-common
 CERN Tape Archive:
 The shared libraries base

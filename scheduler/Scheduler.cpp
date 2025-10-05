@@ -29,6 +29,8 @@
 #include <sstream>
 #include <regex>
 
+#include <opentelemetry/context/runtime_context.h>
+
 #include "catalogue/Catalogue.hpp"
 #include "catalogue/CatalogueItor.hpp"
 #include "catalogue/DriveConfig.hpp"
@@ -42,6 +44,8 @@
 #include "common/exception/NonRetryableError.hpp"
 #include "common/exception/NoSuchObject.hpp"
 #include "common/exception/UserError.hpp"
+#include "common/semconv/Attributes.hpp"
+#include "common/telemetry/metrics/instruments/SchedulerInstruments.hpp"
 #include "common/Timer.hpp"
 #include "common/utils/utils.hpp"
 #include "disk/DiskFileImplementations.hpp"
@@ -165,6 +169,7 @@ std::string Scheduler::queueArchiveWithGivenId(const uint64_t archiveFileId,
   cta::utils::Timer t2;
   std::string archiveReqAddr = m_db.queueArchive(instanceName, request, catalogueInfo, lc);
   auto schedulerDbTime = t.secs();
+  auto schedulerDbTimeMSecs = t.msecs();
   log::ScopedParamContainer spc(lc);
   spc.add("instanceName", instanceName)
     .add("storageClass", request.storageClass)
@@ -194,6 +199,13 @@ std::string Scheduler::queueArchiveWithGivenId(const uint64_t archiveFileId,
     .add("schedulerDbTime", schedulerDbTime);
   request.checksumBlob.addFirstChecksumToLog(spc);
   lc.log(log::INFO, "In Scheduler::queueArchiveWithGivenId(): Queued archive request");
+
+  cta::telemetry::metrics::ctaSchedulerOperationDuration->Record(
+    schedulerDbTimeMSecs,
+    {
+      {cta::semconv::attr::kSchedulerOperationName, cta::semconv::attr::SchedulerOperationNameValues::kEnqueueArchive}
+  },
+    opentelemetry::context::RuntimeContext::GetCurrent());
   return archiveReqAddr;
 }
 
@@ -245,6 +257,7 @@ std::string Scheduler::queueRetrieve(const std::string& instanceName,
   auto requestInfo = m_db.queueRetrieve(request, queueCriteria, diskSystemName, lc);
   lc.log(log::DEBUG, "Finished queueing retrieve request.");
   auto schedulerDbTime = t.secs();
+  auto schedulerDbTimeMSecs = t.msecs();
   log::ScopedParamContainer spc(lc);
   spc.add("fileId", request.archiveFileID)
     .add("instanceName", instanceName)
@@ -289,6 +302,13 @@ std::string Scheduler::queueRetrieve(const std::string& instanceName,
     spc.add("activity", request.activity.value());
   }
   lc.log(log::INFO, "In Scheduler::queueRetrieve(): Queued retrieve request");
+  cta::telemetry::metrics::ctaSchedulerOperationDuration->Record(
+    schedulerDbTimeMSecs,
+    {
+      {cta::semconv::attr::kSchedulerOperationName,
+       cta::semconv::attr::SchedulerOperationNameValues::kEnqueueRetrieve}
+  },
+    opentelemetry::context::RuntimeContext::GetCurrent());
   return requestInfo.requestId;
 }
 
@@ -307,6 +327,13 @@ void Scheduler::deleteArchive([[maybe_unused]] std::string_view instanceName,
     //Check if address is provided, we can remove the request from the objectstore
     m_db.cancelArchive(request, lc);
     // no need to do anything else, if file was failed it will not be in the catalogue.
+    cta::telemetry::metrics::ctaSchedulerOperationDuration->Record(
+      t.msecs(),
+      {
+        {cta::semconv::attr::kSchedulerOperationName,
+         cta::semconv::attr::SchedulerOperationNameValues::kCancelArchive}
+    },
+      opentelemetry::context::RuntimeContext::GetCurrent());
   }
   tl.insertAndReset("schedulerDbTime", t);
   m_catalogue.ArchiveFile()->moveArchiveFileToRecycleLog(request, lc);
@@ -322,7 +349,15 @@ void Scheduler::deleteArchive([[maybe_unused]] std::string_view instanceName,
 void Scheduler::abortRetrieve(const std::string& instanceName,
                               const common::dataStructures::CancelRetrieveRequest& request,
                               log::LogContext& lc) {
+  utils::Timer t;
   m_db.cancelRetrieve(instanceName, request, lc);
+  auto schedulerDbTimeMSecs = t.msecs();
+  cta::telemetry::metrics::ctaSchedulerOperationDuration->Record(
+    schedulerDbTimeMSecs,
+    {
+      {cta::semconv::attr::kSchedulerOperationName, cta::semconv::attr::SchedulerOperationNameValues::kCancelRetrieve}
+  },
+    opentelemetry::context::RuntimeContext::GetCurrent());
 }
 
 void Scheduler::deleteFailed(const std::string& objectId, log::LogContext& lc) {
@@ -398,6 +433,7 @@ void Scheduler::queueRepack(const common::dataStructures::SecurityIdentity& cliI
   utils::Timer t;
   checkTapeCanBeRepacked(vid, repackRequestToQueue);
   std::string repackRequestAddress = m_db.queueRepack(repackRequestToQueue, lc);
+  auto schedulerDbTimeMSecs = t.msecs();
   log::TimingList tl;
   tl.insertAndReset("schedulerDbTime", t);
   log::ScopedParamContainer params(lc);
@@ -413,6 +449,12 @@ void Scheduler::queueRepack(const common::dataStructures::SecurityIdentity& cliI
     .add("repackRequestAddress", repackRequestAddress);
   tl.addToLog(params);
   lc.log(log::INFO, "In Scheduler::queueRepack(): success.");
+  cta::telemetry::metrics::ctaSchedulerOperationDuration->Record(
+    schedulerDbTimeMSecs,
+    {
+      {cta::semconv::attr::kSchedulerOperationName, cta::semconv::attr::SchedulerOperationNameValues::kEnqueueRepack}
+  },
+    opentelemetry::context::RuntimeContext::GetCurrent());
 }
 
 //------------------------------------------------------------------------------
@@ -421,7 +463,14 @@ void Scheduler::queueRepack(const common::dataStructures::SecurityIdentity& cliI
 void Scheduler::cancelRepack([[maybe_unused]] const common::dataStructures::SecurityIdentity& cliIdentity,
                              const std::string& vid,
                              log::LogContext& lc) {
+  utils::Timer t;
   m_db.cancelRepack(vid, lc);
+  cta::telemetry::metrics::ctaSchedulerOperationDuration->Record(
+    t.msecs(),
+    {
+      {cta::semconv::attr::kSchedulerOperationName, cta::semconv::attr::SchedulerOperationNameValues::kCancelRepack}
+  },
+    opentelemetry::context::RuntimeContext::GetCurrent());
 }
 
 //------------------------------------------------------------------------------

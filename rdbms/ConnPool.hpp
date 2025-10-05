@@ -47,6 +47,8 @@ public:
    */
   ConnPool(const Login& login, const uint64_t maxNbConns);
 
+  ~ConnPool();
+
   CTA_GENERATE_EXCEPTION_CLASS(ConnPoolConfiguredWithZeroConns);
 
   /**
@@ -85,6 +87,16 @@ private:
    * @param connAndStmts The connection to be commited and returned to the pool.
    */
   void returnConn(std::unique_ptr<ConnAndStmts> connAndStmts);
+
+  /**
+   * Adds a number of connections on loan.
+   */
+  void addNbConnsOnLoan(uint64_t nbConns);
+
+  /**
+   * Adds a number of connections on loan.
+   */
+  void removeNbConnsOnLoan(uint64_t nbConns);
 
   /**
    * The database connection factory.

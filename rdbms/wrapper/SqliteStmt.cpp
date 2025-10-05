@@ -17,6 +17,7 @@
 
 #include "common/exception/Exception.hpp"
 #include "common/threading/MutexLocker.hpp"
+#include "common/semconv/Attributes.hpp"
 #include "rdbms/CheckConstraintError.hpp"
 #include "rdbms/ConstraintError.hpp"
 #include "rdbms/PrimaryKeyError.hpp"
@@ -357,6 +358,20 @@ bool SqliteStmt::autocommitModeToBool(const AutocommitMode autocommitMode) {
   case AutocommitMode::AUTOCOMMIT_OFF: return false;
   default: throw exception::Exception("Unknown autocommit mode");
   }
+}
+
+//------------------------------------------------------------------------------
+// getDbSystemName
+//------------------------------------------------------------------------------
+std::string SqliteStmt::getDbSystemName() const {
+  return cta::semconv::attr::DbSystemNameValues::kSqlite;
+}
+
+//------------------------------------------------------------------------------
+// getDbNamespace
+//------------------------------------------------------------------------------
+std::string SqliteStmt::getDbNamespace() const {
+  return m_conn.getDbNamespace();
 }
 
 } // namespace cta::rdbms::wrapper

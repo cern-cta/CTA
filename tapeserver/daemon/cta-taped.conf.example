@@ -4,20 +4,28 @@
 #               Licence version 3 (GPL Version 3), copied verbatim in the file "COPYING". You can
 #               redistribute it and/or modify it under the terms of the GPL Version 3, or (at your
 #               option) any later version.
-# 
+#
 #               This program is distributed in the hope that it will be useful, but WITHOUT ANY
 #               WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A
 #               PARTICULAR PURPOSE. See the GNU General Public License for more details.
-# 
+#
 #               In applying this licence, CERN does not waive the privileges and immunities
 #               granted to it by virtue of its status as an Intergovernmental Organization or
 #               submit itself to any jurisdiction.
 
 ####################################################################################################
-# 
+#
 # CTA Tape Server Configuration
-# 
+#
 ####################################################################################################
+
+#
+# EXPERIMENTAL FEATURE FLAGS
+#
+
+# Must be enabled before telemetry can be used
+# Note that this flag alone is not sufficient to start producing telemetry. See Telemetry section
+# experimental telemetryEnabled false
 
 #
 # TAPE SERVER CONFIGURATION OPTIONS
@@ -93,12 +101,12 @@ ObjectStore BackendPath rados://cta@tapecta:cta
 # Maximum batch size for processing archive requests, specified as a tuple (number of bytes, number of
 # files). Defaults to 80 GB and 4000 files.
 # taped ArchiveFetchBytesFiles 80000000000,4000
-# 
+#
 # Flush  to tape criteria. During archiving operations, this parameter defines the maximum number of
 # bytes and number of files that will be written to tape before a flush to # tape (synchronised tape
 # mark). Defaults to 32 GB and 200 files.
 # taped ArchiveFlushBytesFiles 32000000000,200
-# 
+#
 # Maximum batch size for processing retrieve requests, specified as a tuple (number of bytes, number of
 # files). When cta-taped fetches a batch of retrieve requests, the batch cannot exceed the number of
 # bytes and number of files specified by this parameter. Defaults to 80 GB and 4000 files.
@@ -137,11 +145,11 @@ ObjectStore BackendPath rados://cta@tapecta:cta
 # Enable tape hardware encryption. Encryption will be enabled only for tapes where a valid encryption
 # key has been configured for the tape or tape pool.
 # taped UseEncryption yes
-# 
+#
 # Path to the external script used to obtain encryption keys.
 taped externalEncryptionKeyScript /usr/local/bin/cta-get-encryption-key.sh
 
-# 
+#
 # DISK SPACE MANAGEMENT OPTIONS
 #
 
@@ -165,11 +173,11 @@ taped externalFreeDiskSpaceScript /usr/bin/cta-eosdf.sh
 # generation 9 or later needs no further configuration. The additional RAO options below are for
 # software RAO on LTO-8 drives.
 # taped UseRAO yes
-# 
+#
 # On LTO-8 tape drives, specify which software RAO algorithm to use. Valid options are linear,
 # random, sltf. This should be set to sltf in production environments.
 # taped RAOLTOAlgorithm sltf
-# 
+#
 # Specify options for the software RAO algorithm.
 # taped RAOLTOAlgorithmOptions cost_heuristic_name:cta
 
@@ -187,7 +195,7 @@ taped externalFreeDiskSpaceScript /usr/bin/cta-eosdf.sh
 
 # Enable RepackRequestManager for repack-related operations.
 # taped UseRepackManagement yes
-# 
+#
 # Enable MaintenanceProcess for repack-related operations, garbage collection and disk reporting.
 # taped UseMaintenanceProcess yes
 #
@@ -218,10 +226,10 @@ taped externalFreeDiskSpaceScript /usr/bin/cta-eosdf.sh
 #
 # Maximum time allowed to shutdown of a tape session, in seconds.
 # taped WatchdogShutdownMaxSecs 900
-# 
+#
 # Maximum time allowed after mounting without any tape blocks being read/written, in seconds.
 # taped WatchdogNoBlockMoveMaxSecs 1800
-# 
+#
 # Maximum time to wait after scheduling came up idle, in seconds.
 # taped WatchdogIdleSessionTimer 10
 
@@ -242,3 +250,32 @@ taped externalFreeDiskSpaceScript /usr/bin/cta-eosdf.sh
 #
 # The number of attempts a retriable RMC request should be issued.
 # taped RmcRequestAttempts 10
+
+#
+# Telemetry Options
+#
+
+# Used to control cardinality.
+# If set to false, each restart of a process will generate a new unique ID for the `service.instance.id`.
+# If set to true, `service.instance.id` remains constant across restarts.
+# telemetry retainInstanceIdOnRestart false
+
+# Metrics backend to use. Possible options are NOOP, OTLP_HTTP, OTLP_GRPC, STDOUT, FILE
+# Default is NOOP, meaning no metrics are collected/exported
+# telemetry metricsBackend NOOP
+#
+# Amount of time in milliseconds between exports
+# telemetry metricsExportInterval 15000
+#
+# Timeout for a single export
+# telemetry metricsExportTimeout 3000
+#
+# Service location of the OTLP collector in case the OTLP backend is used
+# telemetry metricsExportOtlpEndpoint endpoint:port
+#
+# File location containing "username:password" (not base64 encoded) to set up basic auth for push metrics over HTTP
+# Adds the header "authorization: Basic <base64(username:password)>"
+# telemetry metricsExportOtlpBasicAuthFile /path/to/base64/encoded/username/password
+#
+# File location to write to in case the FILE backend is used
+# telemetry metricsExportFileEndpoint path

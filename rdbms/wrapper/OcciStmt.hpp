@@ -118,15 +118,15 @@ public:
    */
   void bindDouble(const std::string &paramName, const std::optional<double> &paramValue) override;
 
-  /** 
+  /**
    * Binds an SQL parameter of type binary string (byte array).
    *
    * @param paramName The name of the parameter.
    * @param paramValue The value to be bound.
-   */ 
+   */
   void bindBlob(const std::string &paramName, const std::string &paramValue) override;
 
-  /** 
+  /**
    * Binds an SQL parameter of type optional-string.
    *
    * Please note that this method will throw an exception if the optional string
@@ -135,7 +135,7 @@ public:
    *
    * @param paramName The name of the parameter.
    * @param paramValue The value to be bound.
-   */ 
+   */
   void bindString(const std::string &paramName, const std::optional<std::string> &paramValue) override;
 
   /**
@@ -188,6 +188,28 @@ public:
    * @return True if the connection should be closed.
    */
   static bool connShouldBeClosed(const oracle::occi::SQLException &ex);
+
+  /**
+   * @brief Get the database system identifier.
+   *
+   * This should return the OpenTelemetry semantic convention attribute
+   * `db.system`. It identifies which kind of database management system
+   * (DBMS) is in use.
+   *
+   * @return The string "oracle".
+   */
+  std::string getDbSystemName() const override;
+
+  /**
+   * @brief Get the logical database namespace.
+   *
+   * This should return the OpenTelemetry semantic convention attribute
+   * `db.namespace`. It identifies the logical database, schema, or
+   * namespace where the operation is executed.
+   *
+   * @return A string representing the database namespace.
+   */
+  std::string getDbNamespace() const override;
 
 private:
 

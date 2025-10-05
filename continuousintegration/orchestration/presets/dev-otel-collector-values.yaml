@@ -1,0 +1,45 @@
+image:
+  repository: registry.cern.ch/ghcr.io/open-telemetry/opentelemetry-collector-releases/opentelemetry-collector-contrib
+  tag: 0.129.1
+
+# Note that this is just for a simple single-node deployment
+mode: deployment
+
+config:
+  receivers:
+    otlp:
+      protocols:
+        http:
+          endpoint: 0.0.0.0:4318
+
+  processors:
+    batch:
+      timeout: 5s
+
+  exporters:
+    prometheus:
+      endpoint: ${env:MY_POD_IP}:8889
+      # Ensures all resource-level attributes becomes metric-level attributes
+      # We lose the service.instance.id during aggregation, so without doing
+      # this we have no way to correlate the metric to the resource
+      resource_to_telemetry_conversion:
+        enabled: true
+
+  service:
+    pipelines:
+      metrics:
+        receivers:
+          - otlp
+        processors:
+          - batch
+        exporters:
+          - prometheus
+
+    extensions:
+      - health_check
+ports:
+  metrics:
+    enabled: true
+    containerPort: 8889
+    servicePort: 8889
+    protocol: TCP

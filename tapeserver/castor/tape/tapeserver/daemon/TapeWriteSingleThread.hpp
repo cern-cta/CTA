@@ -86,7 +86,7 @@ public:
    */
   void requeueUnprocessedTasks(const std::list<std::string>& jobIDsList, cta::log::LogContext& lc) const;
   /**
-   * 
+   *
    * @param lastFseq
    */
   void setlastFseq(uint64_t lastFseq);
@@ -117,9 +117,9 @@ private:
                     cta::log::ScopedParamContainer& params);
 
   /**
-   * Function to open the WriteSession 
+   * Function to open the WriteSession
    * If successful, returns a std::unique_ptr on it. A copy of that std::unique_ptr
-   * will give the caller the ownership of the opened session (see unique_ptr 
+   * will give the caller the ownership of the opened session (see unique_ptr
    * copy constructor, which has a move semantic)
    * @return the WriteSession we need to write on tape
    */
@@ -128,9 +128,9 @@ private:
   /**
    * Execute flush on tape, do some log and report the flush to the client
    * @param message the message the log will register
-   * @param bytes the number of bytes that have been written since the last flush  
+   * @param bytes the number of bytes that have been written since the last flush
    * (for logging)
-   * @param files the number of files that have been written since the last flush  
+   * @param files the number of files that have been written since the last flush
    * (also for logging)
    */
   void tapeFlush(const std::string& message, uint64_t bytes, uint64_t files,
@@ -138,14 +138,14 @@ private:
 
   /**
    * After waiting for the drive, we will dump the tape alert log content, if it
-   * is not empty 
+   * is not empty
    * @return true if any critical for write alert was detected
    */
   bool logAndCheckTapeAlertsForWrite();
 
   void run() override;
 
-  //m_filesBeforeFlush and m_bytesBeforeFlush are thresholds for flushing 
+  //m_filesBeforeFlush and m_bytesBeforeFlush are thresholds for flushing
   //the first one crossed will trigger the flush on tape
 
   ///how many file written before flushing on tape
@@ -158,20 +158,20 @@ private:
   MigrationReportPacker& m_reportPacker;
 
   /**
-   * the last fseq that has been written on the tape = the starting point 
+   * the last fseq that has been written on the tape = the starting point
    * of our session. The last Fseq is computed by subtracting 1 to fSeg
-   * of the first file to migrate we receive. That part is done by the 
-   * MigrationTaskInjector.::synchronousInjection. Thus, we compute it into 
+   * of the first file to migrate we receive. That part is done by the
+   * MigrationTaskInjector.::synchronousInjection. Thus, we compute it into
    * that function and retrieve/set it within DataTransferSession executeWrite
-   * after we make sure synchronousInjection returned true. 
-   * 
-   * It should be const, but it cant 
+   * after we make sure synchronousInjection returned true.
+   *
+   * It should be const, but it cant
    * (because there is no mutable function member in c++)
    */
   uint64_t m_lastFseq;
 
   /**
-   * Should the compression be enabled ? This is currently hard coded to true 
+   * Should the compression be enabled ? This is currently hard coded to true
    */
   const bool m_compress;
 
@@ -213,7 +213,7 @@ protected:
 
 private:
   /**
-   *  Pointer to the task injector allowing termination signaling 
+   *  Pointer to the task injector allowing termination signaling
    */
   MigrationTaskInjector *m_taskInjector;
 

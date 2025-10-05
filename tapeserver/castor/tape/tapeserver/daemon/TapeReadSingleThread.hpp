@@ -91,8 +91,8 @@ private:
   };
 
   /**
-   * Pop a task from its tasks and if there is not enough tasks left, it will 
-   * ask the task injector for more 
+   * Pop a task from its tasks and if there is not enough tasks left, it will
+   * ask the task injector for more
    * @return m_tasks.pop();
    */
   TapeReadTask *popAndRequestMoreJobs();

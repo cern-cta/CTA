@@ -34,6 +34,7 @@ usage() {
   echo "      --scheduler-config <path>:        Path to the yaml file containing the type and credentials to configure the Scheduler. Defaults to: presets/dev-scheduler-vfs-values.yaml"
   echo "      --catalogue-config <path>:        Path to the yaml file containing the type and credentials to configure the Catalogue. Defaults to: presets/dev-catalogue-postgres-values.yaml"
   echo "      --tapeservers-config <path>:      Path to the yaml file containing the tapeservers config. If not provided, this will be auto-generated."
+  echo "      --local-telemetry:               Enables telemetry for the spawned instance."
   echo
   exit 1
 }
@@ -48,6 +49,7 @@ deploy() {
   local catalogue_config="presets/dev-catalogue-postgres-values.yaml"
   local scheduler_config="presets/dev-scheduler-vfs-values.yaml"
   local extra_spawn_options=""
+  local local_telemetry=false
 
   # Defaults
   local deploy_namespace="dev"
@@ -56,6 +58,7 @@ deploy() {
   while [[ "$#" -gt 0 ]]; do
     case "$1" in
       -h | --help) usage ;;
+      --local-telemetry) local_telemetry=true ;;
       --cta-image-tag)
         if [[ $# -gt 1 ]]; then
           cta_image_tag="$2"
@@ -164,6 +167,10 @@ deploy() {
 
   if [ -n "${cta_config}" ]; then
     extra_spawn_options+=" --cta-config ${cta_config}"
+  fi
+
+  if [ "$local_telemetry" = true ]; then
+    extra_spawn_options+=" --local-telemetry"
   fi
 
   echo "Deploying CTA instance"

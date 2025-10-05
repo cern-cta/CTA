@@ -32,18 +32,11 @@
 
 namespace cta::catalogue {
 
-OracleCatalogue::OracleCatalogue(
-  log::Logger &log,
-  const std::string &username,
-  const std::string &password,
-  const std::string &database,
-  const uint64_t nbConns,
-  const uint64_t nbArchiveFileListingConns):
-  RdbmsCatalogue(
-    log,
-    rdbms::Login(rdbms::Login::DBTYPE_ORACLE, username, password, database, "", 0),
-    nbConns,
-    nbArchiveFileListingConns) {
+OracleCatalogue::OracleCatalogue(log::Logger& log,
+                                 const rdbms::Login& login,
+                                 const uint64_t nbConns,
+                                 const uint64_t nbArchiveFileListingConns)
+    : RdbmsCatalogue(log, login, nbConns, nbArchiveFileListingConns) {
   RdbmsCatalogue::m_fileRecycleLog = std::make_unique<OracleFileRecycleLogCatalogue>(m_log, m_connPool, this);
   RdbmsCatalogue::m_storageClass = std::make_unique<OracleStorageClassCatalogue>(m_log, m_connPool, this);
   RdbmsCatalogue::m_vo = std::make_unique<OracleVirtualOrganizationCatalogue>(m_log, m_connPool, this);

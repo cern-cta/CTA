@@ -19,6 +19,7 @@ find_package (binutils REQUIRED)
 find_package (libcap REQUIRED)
 find_package (libuuid REQUIRED)
 find_package (json-c REQUIRED)
+find_package (opentelemetry-cpp CONFIG REQUIRED)
 
 add_subdirectory (exception)
 
@@ -124,6 +125,16 @@ set (COMMON_LIB_SRC_FILES
   remoteFS/RemoteFileStatus.cpp
   remoteFS/RemotePath.cpp
   remoteFS/RemotePathAndStatus.cpp
+  telemetry/CtaTelemetryLogHandler.cpp
+  telemetry/TelemetryInit.cpp
+  telemetry/config/TelemetryConfig.cpp
+  telemetry/metrics/MetricsUtils.cpp
+  telemetry/metrics/InstrumentRegistry.cpp
+  telemetry/metrics/instruments/FrontendInstruments.cpp
+  telemetry/metrics/instruments/ObjectstoreInstruments.cpp
+  telemetry/metrics/instruments/RdbmsInstruments.cpp
+  telemetry/metrics/instruments/SchedulerInstruments.cpp
+  telemetry/metrics/instruments/TapedInstruments.cpp
   SourcedParameter.cpp
   threading/ChildProcess.cpp
   threading/CondVar.cpp
@@ -138,6 +149,7 @@ set (COMMON_LIB_SRC_FILES
   threading/System.cpp
   threading/Thread.cpp
   Timer.cpp
+  utils/Base64.cpp
   utils/GetOptThreadSafe.cpp
   utils/Regex.cpp
   utils/strerror_r_wrapper.cpp
@@ -152,11 +164,15 @@ set_property(TARGET ctacommon PROPERTY   VERSION "${CTA_LIBVERSION}")
 
 install (TARGETS ctacommon DESTINATION usr/${CMAKE_INSTALL_LIBDIR})
 
+target_include_directories(ctacommon PRIVATE ${OPENTELEMETRY_CPP_INCLUDE_DIRS})
+
 target_link_libraries (ctacommon
   ctaprotobuf
   uuid
   cap
   json-c
+  cryptopp
+  ${OPENTELEMETRY_CPP_LIBRARIES}
 )
 
 set (COMMON_UNIT_TESTS_LIB_SRC_FILES

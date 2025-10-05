@@ -37,6 +37,7 @@ public:
   CTA_GENERATE_EXCEPTION_CLASS(MandatoryParameterNotDefined);
   CTA_GENERATE_EXCEPTION_CLASS(UnsupportedParameterType);
   CTA_GENERATE_EXCEPTION_CLASS(BadlyFormattedInteger);
+  CTA_GENERATE_EXCEPTION_CLASS(BadlyFormattedBoolean);
   CTA_GENERATE_EXCEPTION_CLASS(BadlyFormattedSizeFileLimit);
 
   /// Constructor for mandatory options (they do not have default values)

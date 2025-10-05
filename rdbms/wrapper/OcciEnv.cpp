@@ -45,17 +45,14 @@ OcciEnv::~OcciEnv() {
 //------------------------------------------------------------------------------
 // createConn
 //------------------------------------------------------------------------------
-std::unique_ptr<ConnWrapper> OcciEnv::createConn(
-  const std::string &username,
-  const std::string &password,
-  const std::string &database) {
+std::unique_ptr<ConnWrapper> OcciEnv::createConn(const rdbms::Login& login) {
   try {
-    oracle::occi::Connection *const conn = m_env->createConnection(username, password, database);
+    oracle::occi::Connection* const conn = m_env->createConnection(login.username, login.password, login.database);
     if (nullptr == conn) {
       throw exception::Exception("oracle::occi::createConnection() returned a nullptr pointer");
     }
 
-    return std::make_unique<OcciConn>(m_env, conn);
+    return std::make_unique<OcciConn>(m_env, conn, login.dbNamespace);
   } catch(exception::Exception &ex) {
     throw exception::Exception(std::string(__FUNCTION__) + " failed: " + ex.getMessage().str());
   } catch(std::exception &se) {

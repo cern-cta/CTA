@@ -34,10 +34,10 @@ namespace cta::rdbms::wrapper {
 //------------------------------------------------------------------------------
 // constructor
 //------------------------------------------------------------------------------
-PostgresConn::PostgresConn(const std::string& conninfo) {
+PostgresConn::PostgresConn(const rdbms::Login& login) : m_dbNamespace(login.dbNamespace) {
   // establish the connection and create the PGconn data structure
 
-  m_pgsqlConn = PQconnectdb(conninfo.c_str());
+  m_pgsqlConn = PQconnectdb(login.database.c_str());
 
   if (PQstatus(m_pgsqlConn) != CONNECTION_OK) {
     const std::string pqmsgstr = PQerrorMessage(m_pgsqlConn);
@@ -45,7 +45,6 @@ PostgresConn::PostgresConn(const std::string& conninfo) {
     m_pgsqlConn = nullptr;
     throw exception::Exception(std::string(__FUNCTION__) + " connection failed: " + pqmsgstr);
   }
-
   const int sVer = PQserverVersion(m_pgsqlConn);
   if (sVer < 90500) {
     PQfinish(m_pgsqlConn);
@@ -170,7 +169,7 @@ std::list<std::string> PostgresConn::getSequenceNames() {
     }
 
     Postgres::Result res(PQexec(m_pgsqlConn, R"SQL(
-        SELECT c.relname AS SEQUENCE_NAME FROM pg_class c 
+        SELECT c.relname AS SEQUENCE_NAME FROM pg_class c
           WHERE c.relkind = 'S' ORDER BY SEQUENCE_NAME
       )SQL"));
 
@@ -205,12 +204,12 @@ std::map<std::string, std::string, std::less<>> PostgresConn::getColumns(const s
     auto lowercaseTableName = tableName;
     utils::toLower(lowercaseTableName);  // postgres work with lowercase
     const char* const sql = R"SQL(
-      SELECT 
-        COLUMN_NAME, 
-        DATA_TYPE 
-      FROM 
-        INFORMATION_SCHEMA.COLUMNS 
-      WHERE 
+      SELECT
+        COLUMN_NAME,
+        DATA_TYPE
+      FROM
+        INFORMATION_SCHEMA.COLUMNS
+      WHERE
         TABLE_NAME = :TABLE_NAME
     )SQL";
 
@@ -256,12 +255,12 @@ std::list<std::string> PostgresConn::getTableNames() {
     }
 
     Postgres::Result res(PQexec(m_pgsqlConn, R"SQL(
-      SELECT 
-        tablename 
-      FROM 
-        pg_catalog.pg_tables 
-      WHERE 
-        pg_catalog.pg_tables.schemaname = current_schema() 
+      SELECT
+        tablename
+      FROM
+        pg_catalog.pg_tables
+      WHERE
+        pg_catalog.pg_tables.schemaname = current_schema()
       ORDER BY tablename
     )SQL"));
 
@@ -294,13 +293,13 @@ std::list<std::string> PostgresConn::getIndexNames() {
   try {
     std::list<std::string> names;
     const char* const sql = R"SQL(
-      SELECT 
-        INDEXNAME 
-      FROM 
-        PG_INDEXES 
-      WHERE 
-        SCHEMANAME = 'public' 
-      ORDER BY 
+      SELECT
+        INDEXNAME
+      FROM
+        PG_INDEXES
+      WHERE
+        SCHEMANAME = 'public'
+      ORDER BY
         INDEXNAME
     )SQL";
     auto stmt = createStmt(sql);
@@ -340,15 +339,15 @@ std::list<std::string> PostgresConn::getConstraintNames(const std::string& table
   try {
     std::list<std::string> names;
     const char* const sql = R"SQL(
-      SELECT 
-        CON.CONNAME AS CONSTRAINT_NAME 
-      FROM 
-        PG_CATALOG.PG_CONSTRAINT CON 
-      INNER JOIN PG_CATALOG.PG_CLASS REL 
-        ON REL.OID=CON.CONRELID 
-      INNER JOIN PG_CATALOG.PG_NAMESPACE NSP 
-        ON NSP.OID = CONNAMESPACE 
-      WHERE 
+      SELECT
+        CON.CONNAME AS CONSTRAINT_NAME
+      FROM
+        PG_CATALOG.PG_CONSTRAINT CON
+      INNER JOIN PG_CATALOG.PG_CLASS REL
+        ON REL.OID=CON.CONRELID
+      INNER JOIN PG_CATALOG.PG_NAMESPACE NSP
+        ON NSP.OID = CONNAMESPACE
+      WHERE
         REL.RELNAME=:TABLE_NAME
     )SQL";
     auto stmt = createStmt(sql);
@@ -391,10 +390,10 @@ std::list<std::string> PostgresConn::getTypeNames() {
   try {
     std::list<std::string> names;
     const char* const sql = R"SQL(
-      SELECT 
-        TYPNAME 
-      FROM 
-        PG_TYPE 
+      SELECT
+        TYPNAME
+      FROM
+        PG_TYPE
       WHERE typnamespace = (SELECT oid FROM pg_namespace WHERE nspname = 'public')
     )SQL";
     auto stmt = createStmt(sql);
@@ -417,10 +416,10 @@ std::list<std::string> PostgresConn::getViewNames() {
   try {
     std::list<std::string> names;
     const char* const sql = R"SQL(
-      SELECT 
-        TABLE_NAME 
-      FROM 
-        INFORMATION_SCHEMA.VIEWS 
+      SELECT
+        TABLE_NAME
+      FROM
+        INFORMATION_SCHEMA.VIEWS
       WHERE table_schema = 'public'
     )SQL";
     auto stmt = createStmt(sql);
@@ -545,6 +544,13 @@ void PostgresConn::throwDBIfNotStatus(const PGresult* res,
       throw exception::Exception(std::string(__FUNCTION__) + " failed: " + ldbex.getMessage().str());
     }
   }
+}
+
+//------------------------------------------------------------------------------
+// getDbNamespace
+//------------------------------------------------------------------------------
+std::string PostgresConn::getDbNamespace() const {
+  return m_dbNamespace;
 }
 
 }  // namespace cta::rdbms::wrapper

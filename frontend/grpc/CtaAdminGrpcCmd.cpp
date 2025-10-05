@@ -14,7 +14,7 @@
  *               granted to it by virtue of its status as an Intergovernmental Organization or
  *               submit itself to any jurisdiction.
  */
- 
+
 #include <fstream>
 
 #include "CtaAdminGrpcCmd.hpp"
@@ -31,6 +31,7 @@
 #include "common/log/StdoutLogger.hpp"
 #include "common/log/Logger.hpp"
 #include "common/log/LogContext.hpp"
+#include "common/utils/Base64.hpp"
 #include "common/utils/utils.hpp"
 #include "common/exception/Exception.hpp"
 #include "tapeserver/daemon/common/TapedConfiguration.hpp"
@@ -38,7 +39,6 @@
 
 #include "version.h"
 
-#include <cryptopp/base64.h>
 #include <getopt.h>
 
 std::atomic<bool> cta::frontend::grpc::client::CtaAdminGrpcCmd::m_abIsJson(false);
@@ -79,7 +79,7 @@ cta::frontend::grpc::client::CtaAdminGrpcCmd::CtaAdminGrpcCmd(int argc, char** a
   }
 
   // Help is a special subcommand which suppresses errors and prints usage
-  
+
   if(argc > argno && std::string(argv[argno]) == "help") {
      throwUsage();
   }
@@ -109,14 +109,15 @@ cta::frontend::grpc::client::CtaAdminGrpcCmd::CtaAdminGrpcCmd(int argc, char** a
      throwUsage(std::string("Invalid subcommand: ") + argv[argno]);
   }
 
-  parseOptions(has_subcommand ? argno+1 : argno, argc, argv, option_list_it->second);
-  
+  parseOptions(has_subcommand ? argno + 1 : argno, argc, argv, option_list_it->second);
 }
 
-void cta::frontend::grpc::client::CtaAdminGrpcCmd::exe(cta::log::Logger& log, const std::string& strSslRoot,
-                                               const std::string& strSslKey, const std::string& strSslCert,
-                                               const std::string& strGrpcHost, const unsigned int& uiGrpcPort) {
-  
+void cta::frontend::grpc::client::CtaAdminGrpcCmd::exe(cta::log::Logger& log,
+                                                       const std::string& strSslRoot,
+                                                       const std::string& strSslKey,
+                                                       const std::string& strSslCert,
+                                                       const std::string& strGrpcHost,
+                                                       const unsigned int& uiGrpcPort) {
   cta::log::LogContext lc(log);
   //
   cta::admin::validateCmd(m_request.admincmd());
@@ -124,7 +125,7 @@ void cta::frontend::grpc::client::CtaAdminGrpcCmd::exe(cta::log::Logger& log, co
   const std::string GRPC_SERVER {strGrpcHost + ":" + std::to_string(uiGrpcPort)};
   // Service name
   const std::string GSS_SPN {"grpc/" + strGrpcHost};
-  // Common text formatter for commands output 
+  // Common text formatter for commands output
   cta::admin::TextFormatter textFormatter {1000};
   // Storage for the KRB token
   std::string strToken {""};
@@ -132,7 +133,7 @@ void cta::frontend::grpc::client::CtaAdminGrpcCmd::exe(cta::log::Logger& log, co
   std::string strEncodedToken {""};
   // Create a default SSL ChannelCredentials
   std::shared_ptr<::grpc::ChannelCredentials> spChannelCreds = ::grpc::SslCredentials({strSslRoot, strSslKey, strSslCert});
-  // Create a channel to the KRB-GSI negotiation service 
+  // Create a channel to the KRB-GSI negotiation service
   std::shared_ptr<::grpc::Channel> spChannelNegotiation {::grpc::CreateChannel(GRPC_SERVER, spChannelCreds)};
   cta::frontend::grpc::client::AsyncClient<cta::xrd::Negotiation> clientNeg(log, spChannelNegotiation);
   try {
@@ -144,7 +145,7 @@ void cta::frontend::grpc::client::CtaAdminGrpcCmd::exe(cta::log::Logger& log, co
      *        or KerberosAuthenticator
      *       ???
      */
-    grpc::utils::encode(strToken, strEncodedToken);
+    strEncodedToken = cta::utils::base64encode(strToken);
 
   } catch(const cta::exception::Exception& e) {
     /*
@@ -162,7 +163,7 @@ void cta::frontend::grpc::client::CtaAdminGrpcCmd::exe(cta::log::Logger& log, co
     case cmd_pair(cta::admin::AdminCmd::CMD_TAPE, cta::admin::AdminCmd::SUBCMD_LS):
       try {
         /*
-         * Channel arguments can be overriden e.g: 
+         * Channel arguments can be overriden e.g:
          * ::grpc::ChannelArguments channelArgs;ClientContext
          * channelArgs.SetString(GRPC_SSL_TARGET_NAME_OVERRIDE_ARG, "ok.org");
          * std::shared_ptr<::grpc::Channel> spChannel {::grpc::CreateCustomChannel("0.0.0.0:17017", spCredentials, channelArgs)};
@@ -175,7 +176,7 @@ void cta::frontend::grpc::client::CtaAdminGrpcCmd::exe(cta::log::Logger& log, co
          * CompositeChannelCredentials associates a ChannelCredentials and a CallCredentials
          * to create a new ChannelCredentials
          */
-         /*
+        /*
           * Individual CallCredentials can also be composed using CompositeCallCredentials.
           * The resulting CallCredentials when used in a call will trigger the sending of
           * the authentication data associated with the two CallCredentials.
@@ -209,7 +210,6 @@ void cta::frontend::grpc::client::CtaAdminGrpcCmd::exe(cta::log::Logger& log, co
         + "> is not implemented."
       );
   }
-    
 }
 
 void cta::frontend::grpc::client::CtaAdminGrpcCmd::parseOptions(int start, int argc, char** argv, const cta::admin::cmd_val_t& options) {
@@ -372,10 +372,9 @@ void cta::frontend::grpc::client::CtaAdminGrpcCmd::throwUsage(const std::string 
   }
 
   throw std::runtime_error(help.str());
-} 
+}
 
-int main(const int argc,  char** argv) {
-  
+int main(const int argc, char** argv) {
   // Parse the command line arguments
   const int CMD_SSL_ARGC = 11;
   int iOptIdx = 0;
@@ -390,21 +389,21 @@ int main(const int argc,  char** argv) {
   std::string strSslCert;
   unsigned int iSllAgrcEnd = ((CMD_SSL_ARGC > argc) ? argc : CMD_SSL_ARGC);
   unsigned int iCmdAgrcBegin = ((CMD_SSL_ARGC > argc) ? 0 : CMD_SSL_ARGC);
-  
+
   std::string strGrpcHost;
   unsigned int uiGrpcPort = 0;
-  
+
   /*
    * TODO: configuration script
    * !!! Parameters ONLY for test purpose:
    * - get ssl related cert/key
-   * - get host & port of gRPC server 
+   * - get host & port of gRPC server
    */
   std::vector<char*> vArgvSSLgRPC(argv, argv + iSllAgrcEnd);
   std::vector<char*> vArgvCMD(argv + iCmdAgrcBegin, argv + argc);
   // Copy exec name
   vArgvCMD.insert(vArgvCMD.begin(), argv[0]);
-  
+
   static struct option longOpt[] = {
     { "cacert", required_argument, nullptr, 'r' }, // root
     { "key",    required_argument, nullptr, 'k' },
@@ -414,7 +413,7 @@ int main(const int argc,  char** argv) {
     { "help",   no_argument,       nullptr, 'h' },
     { nullptr,  0,                 nullptr, 0 }
   };
-  
+
   while ((c = getopt_long(vArgvSSLgRPC.size(), vArgvSSLgRPC.data(), ":r:k:c:s:p:h", longOpt, &iOptIdx)) != -1) {
     switch(c) {
       case 'r':
@@ -465,7 +464,7 @@ int main(const int argc,  char** argv) {
         return EXIT_FAILURE;
     }
   }
-  
+
   if (strSslRootFile.empty()) {
     std::cerr << strExecName << ": the ca-cert file is unspecified" << std::endl
           << "Try '" << strExecName << " -h' for more information." << std::endl;
@@ -502,10 +501,10 @@ int main(const int argc,  char** argv) {
   }
   // Command parsing
   cta::frontend::grpc::client::CtaAdminGrpcCmd ctaAdminGrpcCmd(vArgvCMD.size(), vArgvCMD.data());
-  
+
   // Init logger
   const std::string strShortHostname = cta::utils::getShortHostname();
-  
+
   // For now only StdoutLogger
   std::unique_ptr<cta::log::Logger> upLog = std::make_unique<cta::log::StdoutLogger>(strShortHostname, "grpc-streamserver");
   cta::log::LogContext lc(*upLog);
@@ -519,6 +518,6 @@ int main(const int argc,  char** argv) {
     lc.log(cta::log::CRIT, e.what());
     return EXIT_FAILURE;
   }
-  
+
   return EXIT_SUCCESS;
 }

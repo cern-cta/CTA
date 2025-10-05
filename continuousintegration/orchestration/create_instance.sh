@@ -46,15 +46,16 @@ usage() {
   echo "  -D, --reset-catalogue:              Reset catalogue content during initialization phase. Defaults to false."
   echo "      --num-libraries <n>:            If no tapeservers-config is provided, this will specifiy how many different libraries to generate the config for."
   echo "      --max-drives-per-tpsrv <n>:     If no tapeservers-config is provided, this will specifiy how many drives a single tape server (pod) can be responsible for."
-  echo "      --max-tapservers <n>:           If no tapeservers-config is provided, this will specifiy the limit of the number of tape servers (pods)."
+  echo "      --max-tapeservers <n>:          If no tapeservers-config is provided, this will specifiy the limit of the number of tape servers (pods)."
   echo "      --dry-run:                      Render the Helm-generated yaml files without touching any existing deployments."
   echo "      --eos-image-tag <tag>:          Docker image tag for the EOS chart."
   echo "      --eos-image-repository <repo>:  Docker image for EOS chart. Should be the full image name, e.g. \"gitlab-registry.cern.ch/dss/eos/eos-ci\"."
   echo "      --eos-config <file>:            Values file to use for the EOS chart. Defaults to presets/dev-eos-xrd-values.yaml."
   echo "      --eos-enabled <true|false>:     Whether to spawn an EOS instance or not. Defaults to true."
-  echo "      --dcache-enabled <true|false>: Whether to spawn a dCache instance or not. Defaults to false."
+  echo "      --dcache-enabled <true|false>:  Whether to spawn a dCache instance or not. Defaults to false."
   echo "      --cta-config <file>:            Values file to use for the CTA chart. Defaults to presets/dev-cta-xrd-values.yaml."
-  echo
+  echo "      --local-telemetry:              Spawns an OpenTelemetry and Collector and Prometheus scraper. Changes the default cta-config to presets/dev-cta-telemetry-values.yaml"
+  echo "      --publish-telemetry:            Publishes telemetry to a pre-configured central observability backend. See presets/ci-cta-telemetry-http-values.yaml"
   exit 1
 }
 
@@ -94,11 +95,13 @@ create_instance() {
   project_json_path="../../project.json"
   # Argument defaults
   # Not that some arguments below intentionally use false and not 0/1 as they are directly passed as a helm option
-  # Note that it is fine for not all of these secrets to exist
-  registry_secrets="ctaregsecret reg-eoscta-operations reg-ctageneric" # Secrets to be copied to the namespace (space separated)
+  # Note that it is fine for not all of these secrets to exist; eventually the reg-* format will be how the minikube_cta_ci setup inits things
+  secrets="ctaregsecret reg-eoscta-operations reg-ctageneric monit-collector-auth" # Secrets to be copied to the namespace (space separated)
   catalogue_config=presets/dev-catalogue-postgres-values.yaml
   scheduler_config=presets/dev-scheduler-vfs-values.yaml
   cta_config="presets/dev-cta-xrd-values.yaml"
+  prometheus_config="presets/dev-prometheus-values.yaml"
+  opentelemetry_collector_config="presets/dev-otel-collector-values.yaml"
   # By default keep Database and keep Scheduler datastore data
   # default should not make user loose data if he forgot the option
   reset_catalogue=false
@@ -117,6 +120,9 @@ create_instance() {
   dcache_image_tag=$(jq -r .dev.dCacheImageTag ${project_json_path})
   dcache_config=presets/dev-dcache-values.yaml
   dcache_enabled=false
+  # Telemetry
+  local_telemetry=false
+  publish_telemetry=false
 
   # Parse command line arguments
   while [[ "$#" -gt 0 ]]; do
@@ -156,6 +162,7 @@ create_instance() {
         shift ;;
       -O|--reset-scheduler) reset_scheduler=true ;;
       -D|--reset-catalogue) reset_catalogue=true ;;
+      --local-telemetry) local_telemetry=true ;;
       --dry-run) dry_run=1 ;;
       --eos-config)
         eos_config="$2"
@@ -177,6 +184,7 @@ create_instance() {
         cta_config="$2"
         test -f "${cta_config}" || die "CTA config file ${cta_config} does not exist"
         shift ;;
+      --publish-telemetry) publish_telemetry=true ;;
       *)
         echo "Unsupported argument: $1"
         usage
@@ -197,6 +205,10 @@ create_instance() {
   if [ -z "${catalogue_schema_version}" ]; then
     echo "No catalogue schema version provided: using project.json value"
     catalogue_schema_version=$(jq .catalogueVersion ${project_json_path})
+  fi
+
+  if [ "$local_telemetry" == "true" ] && [ "$publish_telemetry" == "true" ]; then
+    die "--local-telemetry and --publish-telemetry cannot be active at the same time"
   fi
 
   if [ $dry_run == 1 ]; then
@@ -288,17 +300,36 @@ create_instance() {
     echo "Creating ${namespace} namespace"
     kubectl create namespace "${namespace}"
     echo "Copying secrets into ${namespace} namespace"
-    for secret_name in ${registry_secrets}; do
+    for secret_name in ${secrets}; do
       # If the secret exists...
       if kubectl get secret "${secret_name}" &> /dev/null; then
         kubectl get secret "${secret_name}" -o yaml | grep -v '^ *namespace:' | kubectl --namespace "${namespace}" create -f -
-      else
-        echo "Secret ${secret_name} not found. Skipping..."
       fi
     done
   fi
 
   update_local_cta_chart_dependencies
+
+  if [ "$local_telemetry" == "true" ] ; then
+    echo "Cleaning up clusterroles..."
+    kubectl delete clusterrole otel-opentelemetry-collector --ignore-not-found
+    kubectl delete clusterrolebinding otel-opentelemetry-collector --ignore-not-found
+    kubectl delete clusterrole prometheus-server --ignore-not-found
+    kubectl delete clusterrolebinding prometheus-server --ignore-not-found
+    kubectl delete clusterrole prometheus-kube-state-metrics --ignore-not-found
+    kubectl delete clusterrolebinding prometheus-kube-state-metrics --ignore-not-found
+    echo "Installing Telemetry and Prometheus charts..."
+    helm repo add open-telemetry https://open-telemetry.github.io/opentelemetry-helm-charts
+    helm repo add prometheus-community https://prometheus-community.github.io/helm-charts
+    helm install otel open-telemetry/opentelemetry-collector \
+          --namespace "${namespace}" \
+          --values "${opentelemetry_collector_config}" \
+          --wait --timeout 2m
+    helm install prometheus prometheus-community/prometheus \
+          --namespace "${namespace}" \
+          --values "${prometheus_config}" \
+          --wait --timeout 2m
+  fi
 
   # Note that some of these charts are installed in parallel
   # See README.md for details on the order
@@ -352,6 +383,14 @@ create_instance() {
   wait $catalogue_pid || exit 1
   wait $scheduler_pid || exit 1
 
+  extra_cta_chart_flags=""
+  if [ "$local_telemetry" == "true" ]; then
+    extra_cta_chart_flags+="--values presets/dev-cta-telemetry-values.yaml"
+  fi
+  if [ "$publish_telemetry" == "true" ]; then
+    extra_cta_chart_flags+="--values presets/ci-cta-telemetry-http-values.yaml"
+  fi
+
   echo "Installing CTA chart..."
   log_run helm ${helm_command} cta helm/cta \
                                 --namespace "${namespace}" \
@@ -360,7 +399,8 @@ create_instance() {
                                 --set global.image.tag="${cta_image_tag}" \
                                 --set-file global.configuration.scheduler="${scheduler_config}" \
                                 --set-file tpsrv.tapeServers="${tapeservers_config}" \
-                                --wait --timeout 5m
+                                --wait --timeout 5m ${extra_cta_chart_flags}
+
   # At this point the disk buffer(s) should also be ready
   if [ $eos_enabled == "true" ] ; then
     wait $eos_pid || exit 1

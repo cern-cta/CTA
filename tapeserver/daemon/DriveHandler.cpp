@@ -29,6 +29,7 @@
 #include "common/exception/Errnum.hpp"
 #include "common/log/LogContext.hpp"
 #include "common/processCap/ProcessCap.hpp"
+#include "common/telemetry/TelemetryInit.hpp"
 #include "rdbms/Login.hpp"
 #include "tapeserver/castor/tape/tapeserver/daemon/CleanerSession.hpp"
 #include "tapeserver/castor/tape/tapeserver/daemon/DataTransferSession.hpp"
@@ -148,6 +149,8 @@ SubprocessHandler::ProcessingStatus DriveHandler::fork() {
     }
     // First prepare a socket pair for this new subprocess
     m_socketPair = std::make_unique<cta::server::SocketPair>();
+    // We don't want to fork telemetry state
+    cta::telemetry::shutdownTelemetry(m_lc);
     // and fork
     m_pid = ::fork();
     exception::Errnum::throwOnMinusOne(m_pid, "In DriveHandler::fork(): failed to fork()");
@@ -166,6 +169,8 @@ SubprocessHandler::ProcessingStatus DriveHandler::fork() {
       m_processingStatus.nextTimeout = nextTimeout();
       // Register our socket pair side for epoll
       m_processManager.addFile(m_socketPair->getFdForAccess(server::SocketPair::Side::child), this);
+      // Ensure the parent has telemetry available
+      cta::telemetry::reinitTelemetry(m_lc);
       // Create a catalogue handler in the parent process,
       // to be able to properly handle a drive shutdown without having to reload the plugin catalogue libraries
       if (!m_catalogue) {
@@ -604,6 +609,9 @@ int DriveHandler::runChild() {
   // Set the process name for process ID:
   const auto processName = m_tapedConfig.constructProcessName(m_lc, "drive");
   prctl(PR_SET_NAME, processName.c_str());
+
+  // Initialise telemetry only after the process name is available
+  cta::telemetry::reinitTelemetry(m_lc);
 
   // Create the channel to talk back to the parent process.
   const auto driveHandlerProxy = createDriveHandlerProxy();

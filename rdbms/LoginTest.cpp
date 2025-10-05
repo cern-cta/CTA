@@ -47,23 +47,33 @@ TEST_F(cta_rdbms_LoginTest, default_constructor) {
 TEST_F(cta_rdbms_LoginTest, constructor) {
   using namespace cta::rdbms;
 
-  const Login inMemoryLogin(Login::DBTYPE_IN_MEMORY, "", "", "", "", 0);
+  const Login inMemoryLogin(Login::DBTYPE_IN_MEMORY, "", "", "", "", 0, "");
   ASSERT_EQ(Login::DBTYPE_IN_MEMORY, inMemoryLogin.dbType);
   ASSERT_TRUE(inMemoryLogin.username.empty());
   ASSERT_TRUE(inMemoryLogin.password.empty());
   ASSERT_TRUE(inMemoryLogin.database.empty());
+  ASSERT_TRUE(inMemoryLogin.dbNamespace.empty());
 
-  const Login oracleLogin(Login::DBTYPE_ORACLE, "username", "password", "database", "", 0);
+  const Login oracleLogin(Login::DBTYPE_ORACLE, "username", "password", "database", "", 0, "namespace");
   ASSERT_EQ(Login::DBTYPE_ORACLE, oracleLogin.dbType);
   ASSERT_EQ(std::string("username"), oracleLogin.username);
   ASSERT_EQ(std::string("password"), oracleLogin.password);
   ASSERT_EQ(std::string("database"), oracleLogin.database);
+  ASSERT_EQ(std::string("namespace"), oracleLogin.dbNamespace);
 
-  const Login sqliteLogin(Login::DBTYPE_SQLITE, "", "", "filename", "", 0);
+  const Login postgresLogin(Login::DBTYPE_POSTGRESQL, "username", "password", "database", "", 0, "namespace");
+  ASSERT_EQ(Login::DBTYPE_POSTGRESQL, postgresLogin.dbType);
+  ASSERT_EQ(std::string("username"), postgresLogin.username);
+  ASSERT_EQ(std::string("password"), postgresLogin.password);
+  ASSERT_EQ(std::string("database"), postgresLogin.database);
+  ASSERT_EQ(std::string("namespace"), postgresLogin.dbNamespace);
+
+  const Login sqliteLogin(Login::DBTYPE_SQLITE, "", "", "filename", "", 0, "namespace");
   ASSERT_EQ(Login::DBTYPE_SQLITE, sqliteLogin.dbType);
   ASSERT_TRUE(sqliteLogin.username.empty());
   ASSERT_TRUE(sqliteLogin.password.empty());
   ASSERT_EQ(std::string("filename"), sqliteLogin.database);
+  ASSERT_EQ(std::string("namespace"), sqliteLogin.dbNamespace);
 }
 
 TEST_F(cta_rdbms_LoginTest, parseStream_in_memory) {
@@ -124,6 +134,7 @@ TEST_F(cta_rdbms_LoginTest, parseStream_oracle) {
   ASSERT_EQ(std::string("username"), login.username);
   ASSERT_EQ(std::string("password"), login.password);
   ASSERT_EQ(std::string("database"), login.database);
+  ASSERT_EQ(std::string("database"), login.dbNamespace);
 }
 
 TEST_F(cta_rdbms_LoginTest, parseStream_invalid_oracle) {
@@ -163,6 +174,7 @@ TEST_F(cta_rdbms_LoginTest, parseStream_oracle_password_with_a_hash) {
   ASSERT_EQ(std::string("username"), login.username);
   ASSERT_EQ(std::string("password_with_a_hash#"), login.password);
   ASSERT_EQ(std::string("database"), login.database);
+  ASSERT_EQ(std::string("database"), login.dbNamespace);
 }
 
 TEST_F(cta_rdbms_LoginTest, parseStream_sqlite) {
@@ -184,6 +196,7 @@ TEST_F(cta_rdbms_LoginTest, parseStream_sqlite) {
   ASSERT_TRUE(login.username.empty());
   ASSERT_TRUE(login.password.empty());
   ASSERT_EQ(std::string("filename"), login.database);
+  ASSERT_EQ(std::string("filename"), login.dbNamespace);
 }
 
 TEST_F(cta_rdbms_LoginTest, parseStream_invalid_sqlite) {
@@ -362,6 +375,36 @@ TEST_F(cta_rdbms_LoginTest, parseStringConnectionString_Postgresql) {
     Login login = Login::parsePostgresql(connectionString);
     ASSERT_EQ(expectedConnectionString,login.connectionString);
   }
+}
+
+TEST_F(cta_rdbms_LoginTest, getPostgresqlDbNamespace_normal) {
+  using namespace cta::rdbms;
+  std::string connectionDetails = "postgresql://u@db/mydb";
+  ASSERT_EQ("db/mydb", Login::getPostgresqlDbNamespace(connectionDetails));
+}
+
+TEST_F(cta_rdbms_LoginTest, getPostgresqlDbNamespace_ipv6) {
+  using namespace cta::rdbms;
+  std::string connectionDetails = "postgresql://u@[2001:db8::1]:5432/mydb";
+  ASSERT_EQ("[2001:db8::1]:5432/mydb", Login::getPostgresqlDbNamespace(connectionDetails));
+}
+
+TEST_F(cta_rdbms_LoginTest, getPostgresqlDbNamespace_unix_socket) {
+  using namespace cta::rdbms;
+  std::string connectionDetails = "postgresql://u@%2Fvar%2Frun%2Fpostgresql/mydb";
+  ASSERT_EQ("%2Fvar%2Frun%2Fpostgresql/mydb", Login::getPostgresqlDbNamespace(connectionDetails));
+}
+
+TEST_F(cta_rdbms_LoginTest, getPostgresqlDbNamespace_no_dbname) {
+  using namespace cta::rdbms;
+  std::string connectionDetails = "postgresql://u@db";
+  ASSERT_EQ("db", Login::getPostgresqlDbNamespace(connectionDetails));
+}
+
+TEST_F(cta_rdbms_LoginTest, getPostgresqlDbNamespace_empty_password_with_colon) {
+  using namespace cta::rdbms;
+  std::string connectionDetails = "postgresql://user:@db/mydb";
+  ASSERT_EQ("db/mydb", Login::getPostgresqlDbNamespace(connectionDetails));
 }
 
 }  // namespace unitTests

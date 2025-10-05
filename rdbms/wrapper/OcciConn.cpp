@@ -34,10 +34,13 @@ namespace cta::rdbms::wrapper {
 //------------------------------------------------------------------------------
 // constructor
 //------------------------------------------------------------------------------
-OcciConn::OcciConn(oracle::occi::Environment *const env, oracle::occi::Connection *const conn):
-  m_env(env),
-  m_occiConn(conn),
-  m_autocommitMode(AutocommitMode::AUTOCOMMIT_ON) {
+OcciConn::OcciConn(oracle::occi::Environment* const env,
+                   oracle::occi::Connection* const conn,
+                   const std::string& dbNamespace)
+    : m_env(env),
+      m_occiConn(conn),
+      m_autocommitMode(AutocommitMode::AUTOCOMMIT_ON),
+      m_dbNamespace(dbNamespace) {
   if(nullptr == conn) {
     throw exception::Exception(std::string(__FUNCTION__) + " failed"
       ": The OCCI connection is a nullptr pointer");
@@ -164,12 +167,12 @@ std::map<std::string, std::string, std::less<>> OcciConn::getColumns(const std::
   try {
     std::map<std::string, std::string, std::less<>> columnNamesAndTypes;
     const char* const sql = R"SQL(
-      SELECT 
-        COLUMN_NAME, 
-        DATA_TYPE 
-      FROM 
-        USER_TAB_COLUMNS 
-      WHERE 
+      SELECT
+        COLUMN_NAME,
+        DATA_TYPE
+      FROM
+        USER_TAB_COLUMNS
+      WHERE
         TABLE_NAME = :TABLE_NAME
     )SQL";
 
@@ -199,11 +202,11 @@ std::list<std::string> OcciConn::getTableNames() {
   try {
     std::list<std::string> names;
     const char* const sql = R"SQL(
-      SELECT 
-        TABLE_NAME 
-      FROM 
-        USER_TABLES 
-      ORDER BY 
+      SELECT
+        TABLE_NAME
+      FROM
+        USER_TABLES
+      ORDER BY
         TABLE_NAME
     )SQL";
     auto stmt = createStmt(sql);
@@ -228,11 +231,11 @@ std::list<std::string> OcciConn::getIndexNames() {
   try {
     std::list<std::string> names;
     const char* const sql = R"SQL(
-      SELECT 
-        INDEX_NAME 
-      FROM 
-        USER_INDEXES 
-      ORDER BY 
+      SELECT
+        INDEX_NAME
+      FROM
+        USER_INDEXES
+      ORDER BY
         INDEX_NAME
     )SQL";
     auto stmt = createStmt(sql);
@@ -257,11 +260,11 @@ std::list<std::string> OcciConn::getSequenceNames() {
   try {
     std::list<std::string> names;
     const char* const sql = R"SQL(
-      SELECT 
-        SEQUENCE_NAME 
-      FROM 
-        USER_SEQUENCES 
-      ORDER BY 
+      SELECT
+        SEQUENCE_NAME
+      FROM
+        USER_SEQUENCES
+      ORDER BY
         SEQUENCE_NAME
     )SQL";
     auto stmt = createStmt(sql);
@@ -291,13 +294,13 @@ std::list<std::string> OcciConn::getParallelTableNames() {
   try {
     std::list<std::string> names;
     const char* const sql = R"SQL(
-      SELECT 
-        TABLE_NAME 
-      FROM 
-        USER_TABLES 
-      WHERE 
-        TRIM(DEGREE) NOT LIKE '1' 
-      ORDER BY 
+      SELECT
+        TABLE_NAME
+      FROM
+        USER_TABLES
+      WHERE
+        TRIM(DEGREE) NOT LIKE '1'
+      ORDER BY
         TABLE_NAME
     )SQL";
     auto stmt = createStmt(sql);
@@ -320,11 +323,11 @@ std::list<std::string> OcciConn::getConstraintNames(const std::string& tableName
   try {
     std::list<std::string> names;
     const char* const sql = R"SQL(
-      SELECT 
-        CONSTRAINT_NAME 
-      FROM 
-        USER_CONSTRAINTS 
-      WHERE 
+      SELECT
+        CONSTRAINT_NAME
+      FROM
+        USER_CONSTRAINTS
+      WHERE
         TABLE_NAME=:TABLE_NAME
     )SQL";
     auto stmt = createStmt(sql);
@@ -347,9 +350,9 @@ std::list<std::string> OcciConn::getStoredProcedureNames() {
   try {
     std::list<std::string> names;
     const char* const sql = R"SQL(
-      SELECT 
-        OBJECT_NAME 
-      FROM 
+      SELECT
+        OBJECT_NAME
+      FROM
         USER_PROCEDURES
     )SQL";
     auto stmt = createStmt(sql);
@@ -371,9 +374,9 @@ std::list<std::string> OcciConn::getSynonymNames() {
   try {
     std::list<std::string> names;
     const char* const sql = R"SQL(
-      SELECT 
-        SYNONYM_NAME 
-      FROM 
+      SELECT
+        SYNONYM_NAME
+      FROM
         USER_SYNONYMS
     )SQL";
     auto stmt = createStmt(sql);
@@ -395,9 +398,9 @@ std::list<std::string> OcciConn::getTypeNames() {
   try {
     std::list<std::string> names;
     const char* const sql = R"SQL(
-      SELECT 
-        TYPE_NAME 
-      FROM 
+      SELECT
+        TYPE_NAME
+      FROM
         USER_TYPES
     )SQL";
     auto stmt = createStmt(sql);
@@ -447,6 +450,13 @@ void OcciConn::closeStmt(oracle::occi::Statement *const stmt) {
   } catch(std::exception &se) {
     throw exception::Exception(std::string(__FUNCTION__) + " failed: " + se.what());
   }
+}
+
+//------------------------------------------------------------------------------
+// getDbNamespace
+//------------------------------------------------------------------------------
+std::string OcciConn::getDbNamespace() const {
+  return m_dbNamespace;
 }
 
 } // namespace cta::rdbms::wrapper

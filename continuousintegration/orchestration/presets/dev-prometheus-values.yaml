@@ -1,0 +1,29 @@
+extraScrapeConfigs: |
+  - job_name: "otel-collector"
+    static_configs:
+      - targets:
+        - otel-opentelemetry-collector:8889
+
+rbac:
+  create: true
+
+alertmanager:
+  enabled: false
+
+kube-state-metrics:
+  enabled: true
+
+# We want to get metrics on CPU/memory usage
+prometheus-node-exporter:
+  enabled: true
+
+prometheus-pushgateway:
+  enabled: false
+
+server:
+  global:
+    scrape_interval: 30s
+    scrape_timeout: 3s
+
+  persistentVolume:
+    enabled: false

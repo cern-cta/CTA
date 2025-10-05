@@ -28,6 +28,8 @@
 #include "castor/tape/tapeserver/utils/suppressUnusedVariable.hpp"
 #include "common/exception/Errnum.hpp"
 #include "common/exception/Exception.hpp"
+#include "common/semconv/Attributes.hpp"
+#include "common/telemetry/metrics/instruments/TapedInstruments.hpp"
 
 #include <memory>
 #include <string>
@@ -174,6 +176,16 @@ void TapeWriteTask::execute(const std::unique_ptr<castor::tape::tapeFile::WriteS
     m_taskStats.totalTime = localTime.secs();
     // Log the successful transfer
     logWithStats(cta::log::INFO, "File successfully transmitted to drive", lc);
+    cta::telemetry::metrics::ctaTapedTransferCount->Add(
+      1,
+      {
+        {cta::semconv::attr::kCtaTransferDirection, cta::semconv::attr::CtaTransferDirectionValues::kArchive}
+    });
+    cta::telemetry::metrics::ctaTapedTransferIO->Add(
+      m_taskStats.dataVolume,
+      {
+        {cta::semconv::attr::kCtaTransferDirection, cta::semconv::attr::CtaTransferDirectionValues::kArchive}
+    });
   } catch (const castor::tape::tapeserver::daemon::ErrorFlag&) {
     // We end up there because another task has failed
     // so we just log, circulate blocks and don't even send a report
@@ -223,6 +235,13 @@ void TapeWriteTask::execute(const std::unique_ptr<castor::tape::tapeFile::WriteS
     // We failed to open the FileWriter
     // We received a bad block or a block written failed
     // close failed
+
+    cta::telemetry::metrics::ctaTapedTransferCount->Add(
+      1,
+      {
+        {cta::semconv::attr::kCtaTransferDirection, cta::semconv::attr::CtaTransferDirectionValues::kArchive},
+        {cta::semconv::attr::kErrorType,            cta::semconv::attr::ErrorTypeValues::kException         }
+    });
 
     // First set the error flag: we can't proceed any further with writes.
     m_errorFlag.set();

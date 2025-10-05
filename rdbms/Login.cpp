@@ -56,20 +56,20 @@ Login::Login():
 //------------------------------------------------------------------------------
 // constructor
 //------------------------------------------------------------------------------
-Login::Login(
-  const DbType type,
-  const std::string &user,
-  const std::string &passwd,
-  const std::string &db,
-  const std::string &host,
-  const uint16_t p):
-  dbType(type),
-  username(user),
-  password(passwd),
-  database(db),
-  hostname(host),
-  port(p) {
-}
+Login::Login(const DbType type,
+             const std::string& user,
+             const std::string& passwd,
+             const std::string& db,
+             const std::string& host,
+             const uint16_t p,
+             const std::string& dbNs)
+    : dbType(type),
+      username(user),
+      password(passwd),
+      database(db),
+      hostname(host),
+      port(p),
+      dbNamespace(dbNs) {}
 
 //------------------------------------------------------------------------------
 // parseFile
@@ -185,7 +185,7 @@ Login Login::parseInMemory(const std::string &connectionDetails) {
   if (!connectionDetails.empty()) {
     throw exception::Exception(std::string("Invalid connection string: Correct format is ") + s_fileFormat);
   }
-  Login login(DBTYPE_IN_MEMORY, "", "", "", "", 0);
+  Login login(DBTYPE_IN_MEMORY, "", "", "", "", 0, "");
   login.setInMemoryConnectionString();
   return login;
 }
@@ -214,7 +214,7 @@ Login Login::parseOracle(const std::string &connectionDetails) {
   const std::string &user = userAndPassTokens[0];
   const std::string &pass = userAndPassTokens[1];
 
-  Login login(DBTYPE_ORACLE, user, pass, db, "", 0);
+  Login login(DBTYPE_ORACLE, user, pass, db, "", 0, db);
   login.setOracleConnectionString(user, db);
   return login;
 }
@@ -233,8 +233,18 @@ Login Login::parseSqlite(const std::string &connectionDetails) {
     throw exception::Exception(std::string("Invalid connection string: Correct format is ") + s_fileFormat);
   }
 
-  Login login(DBTYPE_SQLITE, "", "", filename, "", 0);
+  Login login(DBTYPE_SQLITE, "", "", filename, "", 0, filename);
   login.setSqliteConnectionString(filename);
+  return login;
+}
+
+//------------------------------------------------------------------------------
+// getInMemory
+//------------------------------------------------------------------------------
+Login Login::getInMemory() {
+  const std::string& filename = "file::memory:?cache=shared";
+
+  Login login(DBTYPE_IN_MEMORY, "", "", filename, "", 0, "inmemory");
   return login;
 }
 
@@ -246,7 +256,7 @@ void Login::setSqliteConnectionString(const std::string & filename) {
 // parsePostgresql
 //------------------------------------------------------------------------------
 Login Login::parsePostgresql(const std::string &connectionDetails) {
-  Login login(DBTYPE_POSTGRESQL, "", "", connectionDetails, "", 0);
+  Login login(DBTYPE_POSTGRESQL, "", "", connectionDetails, "", 0, getPostgresqlDbNamespace(connectionDetails));
   login.setPostgresqlConnectionString(connectionDetails);
   return login;
 }
@@ -282,6 +292,32 @@ bool Login::postgresqlHasPassword(const std::string& connectionDetails) {
     return false;
   }
   return true;
+}
+
+/**
+ * Connection string has the format:
+ * postgresql://[userspec@][hostspec][/dbname][?paramspec]
+ * For the namespace, we simple take "[hostspec][/dbname][?paramspec]".
+ * Note that technically [?paramspec] should not be included, but support for this is missing from the rest of the login methods as well.
+ */
+std::string Login::getPostgresqlDbNamespace(const std::string& connectionDetails) {
+  if (connectionDetails.find("@") == std::string::npos) {
+    cta::utils::Regex regex("postgresql://(.*)");
+    const std::vector<std::string> result = regex.exec(connectionDetails);
+    if (result.empty()) {
+      throw exception::Exception("Invalid connection string " + connectionDetails);
+    }
+    return result[1];
+  }
+  cta::utils::Regex regex("postgresql://[^@]+@(.*)");
+  const std::vector<std::string> result = regex.exec(connectionDetails);
+  if (result.empty()) {
+    throw exception::Exception("Invalid connection string " + connectionDetails);
+  }
+  if (result.size() >= 2) {
+    return result[1];
+  }
+  return {};
 }
 
 } // namespace cta::rdbms

@@ -2030,7 +2030,7 @@ void OStoreDB::requeueRetrieveRequestJobs(std::list<cta::SchedulerDatabase::Retr
   std::map<std::string, std::list<common::dataStructures::RetrieveJobToAdd>> jobsToRequeue;
   std::list<common::dataStructures::RetrieveJobToAdd> jobsToFail;
 
-  // First we have to decide what we will do with each job.  
+  // First we have to decide what we will do with each job.
   for (auto& job : jobs) {
     auto oStoreJob = dynamic_cast<OStoreDB::RetrieveJob*>(job);
     auto rr =
@@ -2075,7 +2075,7 @@ void OStoreDB::requeueRetrieveRequestJobs(std::list<cta::SchedulerDatabase::Retr
   for(auto &[activeVid, requestList] : jobsToRequeue){
     log::ScopedParamContainer params(logContext);
     params.add("vidToRequeue", activeVid);
-    params.add("requeuedJobCount", requestList.size()); 
+    params.add("requeuedJobCount", requestList.size());
     logContext.log(log::INFO, "In OStoreDB::requeueRetrieveRequestJobs(): Requeueing to another VID");
     RetrieveQueue rq(m_objectStore);
     ScopedExclusiveLock rql;
@@ -2129,10 +2129,9 @@ std::string OStoreDB::blockRetrieveQueueForCleanup(const std::string& vid) {
   rqtt.commit();
   rqttl.release();
 
-
   // Create the ToReport queue or get it in case a previous agent died and we are
-  // taking over. The second case is only possible if the agent that died has 
-  // already been garbage collected. We hold the root entry lock until we get 
+  // taking over. The second case is only possible if the agent that died has
+  // already been garbage collected. We hold the root entry lock until we get
   // set the cleanupflag. This prevents trimEmptyQueues() to interfere with us.
   std::string reportQueueAddress;
   {
@@ -2141,8 +2140,9 @@ std::string OStoreDB::blockRetrieveQueueForCleanup(const std::string& vid) {
     ScopedExclusiveLock rqtrl;
     rel.lock(re);
     re.fetch();
-    reportQueueAddress = re.addOrGetRetrieveQueueAndCommit(vid, *m_agentReference, 
-		                                        common::dataStructures::JobQueueType::JobsToReportToUser);
+    reportQueueAddress = re.addOrGetRetrieveQueueAndCommit(vid,
+                                                           *m_agentReference,
+                                                           common::dataStructures::JobQueueType::JobsToReportToUser);
 
     m_agentReference->addToOwnership(reportQueueAddress, m_objectStore);
 
