@@ -21,17 +21,17 @@
 namespace cta::telemetry {
 
 int toSyslogLevel(opentelemetry::sdk::common::internal_log::LogLevel level) noexcept {
-  using Level = opentelemetry::sdk::common::internal_log::LogLevel;
   switch (level) {
-    case Level::Error:
+    using enum opentelemetry::sdk::common::internal_log::LogLevel;
+    case Error:
       return cta::log::ERR;
-    case Level::Warning:
+    case Warning:
       return cta::log::WARNING;
-    case Level::Info:
+    case Info:
       return cta::log::INFO;
-    case Level::Debug:
+    case Debug:
       return cta::log::DEBUG;
-    case Level::None:
+    case None:
     default:
       return cta::log::INFO;
   }

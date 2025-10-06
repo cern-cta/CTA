@@ -123,8 +123,7 @@ FrontendService::FrontendService(const std::string& configFilename) : m_archiveF
 
   // Instantiate telemetry
   // Must be instantiated before the catalogue and scheduler are initialised
-  auto experimentalTelemetryEnabled = config.getOptionValueBool("cta.experimental.telemetry.enabled");
-  if (experimentalTelemetryEnabled.has_value() && experimentalTelemetryEnabled.value()) {
+  if (auto experimentalTelemetryEnabled = config.getOptionValueBool("cta.experimental.telemetry.enabled"); experimentalTelemetryEnabled.has_value() && experimentalTelemetryEnabled.value()) {
     try {
       // If we stick with this config parsing, would be nice to have the option to provide a default/fallback value
 

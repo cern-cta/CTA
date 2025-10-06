@@ -41,7 +41,7 @@ struct TelemetryConfig {
   std::string serviceName;
   std::string serviceNamespace;
   std::string serviceVersion;
-  std::map<std::string, std::string> resourceAttributes;
+  std::map<std::string, std::string, std::less<>> resourceAttributes;
 
   bool retainInstanceIdOnRestart = false;
 
@@ -51,8 +51,10 @@ struct TelemetryConfig {
     std::chrono::milliseconds exportTimeout;
     std::string fileEndpoint;
     std::string otlpEndpoint;
-    std::map<std::string, std::string> otlpHeaders;
-  } metrics;
+    std::map<std::string, std::string, std::less<>> otlpHeaders;
+  };
+
+  Metrics metrics;
 };
 
 class TelemetryConfigBuilder {
