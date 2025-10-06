@@ -137,7 +137,6 @@ static int get_element_info(const char opcode,
   int avail_elem;
   unsigned char cdb[12];
   unsigned char* data;
-  int edl;
   int element_size;
   int i;
   int len;
@@ -154,46 +153,36 @@ static int get_element_info(const char opcode,
 
   if (type != 0) {
     element_size = get_element_size(fd, rbtdev, type);
-    if (element_size < 0) {
-      return (-1);
-    }
+    if (element_size < 0) return (-1);
   } else {
-    element_size = get_element_size(fd, rbtdev, 1); /* transport */
-    if (element_size < 0) {
-      return (-1);
-    }
-    i = get_element_size(fd, rbtdev, 2); /* slot */
-    if (i < 0) {
-      return (-1);
-    }
-    if (i > element_size) {
-      element_size = i;
-    }
-    i = get_element_size(fd, rbtdev, 3); /* port */
-    if (i < 0) {
-      return (-1);
-    }
-    if (i > element_size) {
-      element_size = i;
-    }
-    i = get_element_size(fd, rbtdev, 4); /* device */
-    if (i < 0) {
-      return (-1);
-    }
-    if (i > element_size) {
-      element_size = i;
-    }
+    /* transport */
+    element_size = get_element_size(fd, rbtdev, 1);
+    if (element_size < 0) return (-1);
+
+    /* slot */
+    i = get_element_size(fd, rbtdev, 2);
+    if (i < 0) return (-1);
+    if (i > element_size) element_size = i;
+
+    /* port */
+    i = get_element_size(fd, rbtdev, 3);
+    if (i < 0) return (-1);
+    if (i > element_size) element_size = i;
+
+    /* device */
+    i = get_element_size(fd, rbtdev, 4);
+    if (i < 0) return (-1);
+    if (i > element_size) element_size = i;
   }
+
+  /* allocate space for data */
   len = nbelem * element_size + 8;
-  if (type != 0 || nbelem == 1) {
-    len += 8; /* one element header */
-  } else {
-    len += 32; /* possibly four element headers */
-  }
+  /* possibly up to four element headers */
+  len += 32;
   data = (unsigned char*) malloc(len);
-  if (data == nullptr) {
+  if (data == nullptr)
     return -1;
-  }
+
   memset(cdb, 0, sizeof(cdb));
   cdb[0] = opcode; /* read element status or request volume element address */
   cdb[1] = 0x10 + type;
@@ -226,18 +215,23 @@ static int get_element_info(const char opcode,
     free(data);
     return (-1);
   }
+
   avail_elem = *(data + 2) * 256 + *(data + 3);
   nbReportBytesRemaining = *(data + 5) * 256 * 256 + *(data + 6) * 256 + *(data + 7);
   i = 0;
-  p = data + 8; /* point after data header */
+
+  /* point after data header */
+  p = data + 8;
   while (i < avail_elem && 0 < nbReportBytesRemaining) {
+    int edl = *(p + 2) * 256 + *(p + 3);
     nbReportBytesRemaining -= 8;
-    edl = *(p + 2) * 256 + *(p + 3);
-    page_start = p + 8; /* point after page header */
+
+    /* point after page header */
+    page_start = p + 8;
     page_end = page_start + (((*(p + 5) * 256 + *(p + 6)) * 256) + *(p + 7));
-    if (page_end > (data + len)) {
+    if (page_end > (data + len))
       page_end = data + len;
-    }
+
     for (p = page_start; p < page_end && i < avail_elem; p += edl, i++) {
       nbElementsInReport++;
       nbReportBytesRemaining -= edl;
@@ -263,6 +257,7 @@ static int get_element_info(const char opcode,
     }
   }
   free(data);
+
   return (nbElementsInReport);
 }
 
