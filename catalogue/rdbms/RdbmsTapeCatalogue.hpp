@@ -21,7 +21,7 @@
 
 #include "catalogue/interfaces/TapeCatalogue.hpp"
 #include "common/log/Logger.hpp"
-#include "common/threading/Mutex.hpp"
+#include "common/process/threading/Mutex.hpp"
 
 namespace cta {
 

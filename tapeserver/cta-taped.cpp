@@ -18,13 +18,13 @@
 #include "common/exception/Errnum.hpp"
 #include "common/log/FileLogger.hpp"
 #include "common/log/StdoutLogger.hpp"
-#include "common/processCap/ProcessCap.hpp"
-#include "common/threading/System.hpp"
+#include "common/process/ProcessCap.hpp"
+#include "common/process/threading/System.hpp"
+#include "common/CmdLineParams.hpp"
 #include "common/semconv/Attributes.hpp"
 #include "common/telemetry/TelemetryInit.hpp"
 #include "common/telemetry/config/TelemetryConfig.hpp"
 #include "common/semconv/Attributes.hpp"
-#include "tapeserver/daemon/CommandLineParams.hpp"
 #include "tapeserver/daemon/common/TapedConfiguration.hpp"
 #include "tapeserver/daemon/TapeDaemon.hpp"
 
@@ -49,37 +49,20 @@ namespace cta::taped {
 // @param argv The command-line arguments.
 // @param log The logging system.
 //------------------------------------------------------------------------------
-static int exceptionThrowingMain(const cta::daemon::CommandLineParams & commandLine,
+static int exceptionThrowingMain(const cta::common::CmdLineParams & commandLine,
   cta::log::Logger &log);
-
-//------------------------------------------------------------------------------
-// The help string
-//------------------------------------------------------------------------------
-const std::string gHelpString =
-    "Usage: cta-taped [options]\n"
-    "\n"
-    "where options can be:\n"
-    "\n"
-    "\t--foreground             or -f         \tRemain in the Foreground\n"
-    "\t--stdout                 or -s         \tPrint logs to standard output. Requires --foreground. Logging to stdout is the default, but this option is kept for compatibility reasons\n"
-    "\t--log-to-file <log-file> or -l         \tLogs to a given file (instead of default stdout)\n"
-    "\t--log-format <format>    or -o         \tOutput format for log messages (default or json)\n"
-    "\t--config <config-file>   or -c         \tConfiguration file\n"
-    "\t--help                   or -h         \tPrint this help and exit\n";
-
-//------------------------------------------------------------------------------
-// Logs the start of the daemon.
-//------------------------------------------------------------------------------
-void logStartOfDaemon(cta::log::Logger &log,
-  const daemon::CommandLineParams& commandLine);
 
 //------------------------------------------------------------------------------
 // exceptionThrowingMain
 //------------------------------------------------------------------------------
-static int exceptionThrowingMain(const cta::daemon::CommandLineParams& commandLine, cta::log::Logger& log) {
+static int exceptionThrowingMain(const cta::common::CmdLineParams& commandLine, cta::log::Logger& log) {
   using namespace cta::tape::daemon::common;
 
-  logStartOfDaemon(log, commandLine);
+  {
+    std::list<cta::log::Param> params = {cta::log::Param("version", CTA_VERSION)};
+    params.splice(params.end(), commandLine.toLogParams());
+    log(log::INFO, "Starting cta-taped", params);
+  }
 
   // Parse /etc/cta/cta-taped-unitName.conf parameters
   const TapedConfiguration globalConfig = TapedConfiguration::createFromConfigPath(commandLine.configFileLocation, log);
@@ -118,18 +101,6 @@ static int exceptionThrowingMain(const cta::daemon::CommandLineParams& commandLi
   return daemon.main();
 }
 
-//------------------------------------------------------------------------------
-// logStartOfDaemon
-//------------------------------------------------------------------------------
-void logStartOfDaemon(cta::log::Logger &log,
-  const cta::daemon::CommandLineParams & commandLine) {
-  using namespace cta;
-
-  std::list<cta::log::Param> params = {cta::log::Param("version", CTA_VERSION)};
-  params.splice(params.end(), commandLine.toLogParams());
-  log(log::INFO, "Starting cta-taped", params);
-}
-
 } // namespace cta::taped
 
 //------------------------------------------------------------------------------
@@ -139,19 +110,8 @@ int main(const int argc, char **const argv) {
   using namespace cta;
 
   // Interpret the command line
-  std::unique_ptr<cta::daemon::CommandLineParams> commandLine;
-  try {
-    commandLine.reset(new cta::daemon::CommandLineParams(argc, argv));
-  } catch (const exception::Exception &ex) {
-    std::cerr << "Failed to interpret the command line parameters: "
-              << ex.getMessage().str() << std::endl;
-    return EXIT_FAILURE;
-  }
-
-  if(commandLine->helpRequested) {
-    std::cout << cta::taped::gHelpString << std::endl;
-    return EXIT_SUCCESS;
-  }
+  std::unique_ptr<common::CmdLineParams> commandLine;
+  commandLine.reset(new common::CmdLineParams(argc, argv, "cta-taped"));
 
   std::string shortHostName;
   try {

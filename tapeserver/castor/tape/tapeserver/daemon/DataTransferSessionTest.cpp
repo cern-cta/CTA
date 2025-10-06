@@ -54,7 +54,7 @@
 #include "common/dataStructures/RequesterMountRule.hpp"
 #include "common/exception/Exception.hpp"
 #include "common/log/StringLogger.hpp"
-#include "common/threading/Thread.hpp"
+#include "common/process/threading/Thread.hpp"
 #include "common/utils/utils.hpp"
 #include "mediachanger/MediaChangerFacade.hpp"
 #include "scheduler/MountType.hpp"

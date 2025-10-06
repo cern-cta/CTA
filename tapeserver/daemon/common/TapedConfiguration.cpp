@@ -198,11 +198,6 @@ TapedConfiguration TapedConfiguration::createFromConfigPath(
   // The central storage access configuration
   ret.backendPath.setFromConfigurationFile(cf, driveTapedConfigPath);
   ret.fileCatalogConfigFile.setFromConfigurationFile(cf, driveTapedConfigPath);
-  // Repack management configuration
-  ret.useRepackManagement.setFromConfigurationFile(cf,driveTapedConfigPath);
-  // Maintenance process configuration
-  ret.useMaintenanceProcess.setFromConfigurationFile(cf,driveTapedConfigPath);
-  ret.repackMaxRequestsToExpand.setFromConfigurationFile(cf, driveTapedConfigPath);
   // External free disk space script configuration
   ret.externalFreeDiskSpaceScript.setFromConfigurationFile(cf,driveTapedConfigPath);
   // Timeout for tape load action
@@ -266,9 +261,6 @@ TapedConfiguration TapedConfiguration::createFromConfigPath(
   ret.backendPath.log(log);
   ret.fileCatalogConfigFile.log(log);
 
-  ret.useRepackManagement.log(log);
-  ret.useMaintenanceProcess.log(log);
-  ret.repackMaxRequestsToExpand.log(log);
   ret.externalFreeDiskSpaceScript.log(log);
 
   ret.tapeLoadTimeout.log(log);

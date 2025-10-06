@@ -53,6 +53,7 @@ static constexpr const char* kCtaTransferDirection = "cta.transfer.direction";  
 namespace ServiceNameValues {
 static constexpr const char* kCtaFrontend = "cta.frontend";
 static constexpr const char* kCtaTaped = "cta.taped";
+static constexpr const char* kCtaMaintenance = "cta.maintenance";
 }  // namespace ServiceNameValues
 
 namespace CtaTransferDirectionValues {

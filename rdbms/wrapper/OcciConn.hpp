@@ -17,8 +17,8 @@
 
 #pragma once
 
-#include "common/threading/MutexLocker.hpp"
-#include "common/threading/RWLock.hpp"
+#include "common/process/threading/MutexLocker.hpp"
+#include "common/process/threading/RWLock.hpp"
 #include "rdbms/wrapper/ConnWrapper.hpp"
 
 #include <occi.h>

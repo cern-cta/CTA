@@ -84,4 +84,6 @@ static constexpr const char* kMetricCtaTapedMountDuration = "cta.taped.mount.dur
 static constexpr const char* descrCtaTapedMountDuration = "Duration to mount a tape";
 static constexpr const char* unitCtaTapedMountDuration = "ms";
 
+// -------------------- MAINTENANCE --------------------
+
 }  // namespace cta::semconv::metrics

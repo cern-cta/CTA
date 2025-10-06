@@ -15,7 +15,7 @@
  *               submit itself to any jurisdiction.
  */
 
-#include "common/threading/SubProcess.hpp"
+#include "common/process/threading/SubProcess.hpp"
 #include "tests/TempFile.hpp"
 
 #include <gtest/gtest.h>

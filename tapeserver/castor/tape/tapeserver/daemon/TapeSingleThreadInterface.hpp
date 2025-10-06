@@ -26,8 +26,8 @@
 
 #include "mediachanger/MediaChangerFacade.hpp"
 #include "common/log/LogContext.hpp"
-#include "common/threading/BlockingQueue.hpp"
-#include "common/threading/Thread.hpp"
+#include "common/process/threading/BlockingQueue.hpp"
+#include "common/process/threading/Thread.hpp"
 #include "Session.hpp"
 #include "TapeSessionStats.hpp"
 #include "VolumeInfo.hpp"

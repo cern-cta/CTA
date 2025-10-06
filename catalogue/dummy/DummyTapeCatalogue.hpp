@@ -19,8 +19,8 @@
 
 #include "catalogue/interfaces/TapeCatalogue.hpp"
 #include "common/dataStructures/Tape.hpp"
-#include "common/threading/Mutex.hpp"
-#include "common/threading/MutexLocker.hpp"
+#include "common/process/threading/Mutex.hpp"
+#include "common/process/threading/MutexLocker.hpp"
 
 namespace cta::catalogue {
 
