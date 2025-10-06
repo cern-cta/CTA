@@ -76,7 +76,7 @@ std::unique_ptr<metrics_sdk::PushMetricExporter> createExporter(const TelemetryC
       opentelemetry::exporter::otlp::OtlpHttpMetricExporterOptions opts;
       opts.url = endpoint;
 
-      for (const auto& [headerName, headerValue]: config.metrics.otlpHeaders) {
+      for (const auto& [headerName, headerValue] : config.metrics.otlpHeaders) {
         opts.http_headers.insert({headerName, headerValue});
       }
       exporter = opentelemetry::exporter::otlp::OtlpHttpMetricExporterFactory::Create(opts);
@@ -175,7 +175,8 @@ void initMetrics(const TelemetryConfig& config, cta::log::LogContext& lc) {
 
 void initTelemetry(const TelemetryConfig& config, cta::log::LogContext& lc) {
   // Ensure any logged messages go through the CTA logging system
-  opentelemetry::sdk::common::internal_log::GlobalLogHandler::SetLogHandler(std::make_unique<CtaTelemetryLogHandler>(lc.logger()));
+  opentelemetry::sdk::common::internal_log::GlobalLogHandler::SetLogHandler(
+    std::make_unique<CtaTelemetryLogHandler>(lc.logger()));
   // Eventually we can init e.g. traces here as well
   initMetrics(config, lc);
   // Ensure we can reuse the config when re-initialise the metrics after e.g. a fork
@@ -192,7 +193,8 @@ void reinitTelemetry(cta::log::LogContext& lc) {
 }
 
 void shutdownTelemetry(cta::log::LogContext& lc) {
-  if (const auto& config = cta::telemetry::TelemetryConfigSingleton::get(); config.metrics.backend == MetricsBackend::NOOP) {
+  if (const auto& config = cta::telemetry::TelemetryConfigSingleton::get();
+      config.metrics.backend == MetricsBackend::NOOP) {
     // Nothing to reset
     return;
   }
