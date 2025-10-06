@@ -375,7 +375,7 @@ public:
       opentelemetry::context::RuntimeContext::GetCurrent());
   }
 
-  ~ScopedSharedLock() override final { releaseIfNeeded(); }
+  ~ScopedSharedLock() final { releaseIfNeeded(); }
 };
 
 class ScopedExclusiveLock: public ScopedLock {
@@ -436,7 +436,7 @@ public:
     ScopedLock::transfer(*m_objectOps, newObject);
   }
 
-  ~ScopedExclusiveLock() override final { releaseIfNeeded(); }
+  ~ScopedExclusiveLock() final { releaseIfNeeded(); }
 };
 
 template <class PayloadType, serializers::ObjectType PayloadTypeId>

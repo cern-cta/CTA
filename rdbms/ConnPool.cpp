@@ -35,12 +35,7 @@ ConnPool::ConnPool(const Login& login, const uint64_t maxNbConns)
       m_nbConnsOnLoan(0) {}
 
 ConnPool::~ConnPool() {
-  try {
-    removeNbConnsOnLoan(m_nbConnsOnLoan);
-  } catch(...) {
-    // In theory removeNbConnsOnLoan can throw if the argument we pass is larger than m_nbConnsOnLoan
-    // However, we pass m_nbConnsOnLoan so this should never throw
-  }
+  resetNbConnsOnLoan();
 }
 
 //------------------------------------------------------------------------------
@@ -168,6 +163,19 @@ void ConnPool::removeNbConnsOnLoan(uint64_t nbConns) {
       {cta::semconv::attr::kDbSystemName, m_connFactory->getDbSystemName()},
       {cta::semconv::attr::kDbNamespace,  m_connFactory->getDbNamespace() }
   });
+}
+
+//------------------------------------------------------------------------------
+// resetNbConnsOnLoan
+//------------------------------------------------------------------------------
+void ConnPool::resetNbConnsOnLoan() noexcept {
+  cta::telemetry::metrics::dbClientConnectionCount->Add(
+    -static_cast<int64_t>(m_nbConnsOnLoan),
+    {
+      {cta::semconv::attr::kDbSystemName, m_connFactory->getDbSystemName()},
+      {cta::semconv::attr::kDbNamespace,  m_connFactory->getDbNamespace() }
+  });
+  m_nbConnsOnLoan = 0;
 }
 
 }  // namespace cta::rdbms
