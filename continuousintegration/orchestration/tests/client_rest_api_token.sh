@@ -56,25 +56,26 @@ echo
 # Discover endpoint of v1, /.well-known/wlcg-tape-rest-api in instance http(s)://ctaeos:8443
 HTTPS_URI=$(curl --insecure "https://${EOS_MGM_HOST}:8443/.well-known/wlcg-tape-rest-api" | jq -r '.endpoints[] | select(.version == "v1") | .uri')
 
-echo "$(date +%s): Testing compliance of .well-known/wlcg-tape-rest-api endpoint"
-WELL_KNOWN=$(curl --insecure "https://${EOS_MGM_HOST}:8443/.well-known/wlcg-tape-rest-api")
-echo "Full well known: ${WELL_KNOWN}"
-
-test $(echo ${WELL_KNOWN} | jq -r .sitename | wc -l) -eq 1 && echo "Site name:  $(echo ${WELL_KNOWN} | jq -r .sitename)"  || { echo "ERROR: Sitename not in the response from .well-known"; exit 1; }
-echo "Description: $(echo ${WELL_KNOWN} | jq -r .description)"
-test   $(echo ${WELL_KNOWN} | jq -r .endpoints[0].uri | wc -l) -eq 1 && echo "URI:       $(echo ${WELL_KNOWN} | jq -r .endpoints[0].uri)" || { echo "ERROR: URI not found in the response from .well-known."; exit 1; }
-test $(echo ${WELL_KNOWN} | jq -r .endpoints[0].version | wc -l) -eq 1 && echo "Version:   $(echo ${WELL_KNOWN} | jq -r .endpoints[0].version)" || { echo "ERROR: Metadata not found in the response from .well-known"; exit 1;}
-echo "Metadata: $(echo ${WELL_KNOWN} | jq -r .endpoints[0].metadata)"
-
-# Archive the file.
-
-eos root://"${EOS_MGM_HOST}" rm /eos/ctaeos/preprod/test_http-rest-api 2>/dev/null # Delete the file if present so that we can run the test multiple times
-INIT_COUNT=$(eos root://"${EOS_MGM_HOST}" ls -y /eos/ctaeos/preprod/ | grep test_http-rest-api | wc -l)
-test "${INIT_COUNT}" -eq 0 || { echo "Test file test_http-rest-api already in EOS before archiving."; exit 1; }
 tmp_file=$(mktemp)
 echo "Dummy" > "${tmp_file}"
 
 curl -L --insecure -H "Accept: application/json" -H "Authorization: Bearer ${TOKEN_EOSUSER1}" "https://${EOS_MGM_HOST}:8443/eos/ctaeos/preprod/test_http-rest-api" --upload-file "${tmp_file}"
+
+# Archive files with the sci_token
+curl -L --insecure -H "Accept: application/json" -H "Authorization: Bearer ${SCI_TOKEN}" -X MKCOL "https://${EOS_MGM_HOST}:8443/eos/ctaeos/preprod/test1"
+curl -L --insecure -H "Accept: application/json" -H "Authorization: Bearer ${SCI_TOKEN}" -X MKCOL "https://${EOS_MGM_HOST}:8443/eos/ctaeos/preprod/test2"
+curl -L --insecure -H "Accept: application/json" -H "Authorization: Bearer ${SCI_TOKEN}" -X MKCOL "https://${EOS_MGM_HOST}:8443/eos/ctaeos/preprod/test3"
+curl -L --insecure -H "Accept: application/json" -H "Authorization: Bearer ${SCI_TOKEN}" -X MKCOL "https://${EOS_MGM_HOST}:8443/eos/ctaeos/preprod/test4"
+
+curl -L --insecure -H "Accept: application/json" -H "Authorization: Bearer ${SCI_TOKEN}" "https://${EOS_MGM_HOST}:8443/eos/ctaeos/preprod/test1/file" --upload-file "${tmp_file}"
+curl -L --insecure -H "Accept: application/json" -H "Authorization: Bearer ${SCI_TOKEN}" "https://${EOS_MGM_HOST}:8443/eos/ctaeos/preprod/test2/file" --upload-file "${tmp_file}"
+curl -L --insecure -H "Accept: application/json" -H "Authorization: Bearer ${SCI_TOKEN}" "https://${EOS_MGM_HOST}:8443/eos/ctaeos/preprod/test3/file" --upload-file "${tmp_file}"
+curl -L --insecure -H "Accept: application/json" -H "Authorization: Bearer ${SCI_TOKEN}" "https://${EOS_MGM_HOST}:8443/eos/ctaeos/preprod/test4/file" --upload-file "${tmp_file}"
+
+curl ${CURL_OPTS} -L --capath /etc/grid-security/certificates -H "Accept: application/json" -H "Authorization: Bearer ${SCI_TOKEN}" ${HTTPS_URI}/archiveinfo/ \
+  -d '{"paths":["/eos/ctaeos/preprod/test1/file", "/eos/ctaeos/preprod/test2/file", "/eos/ctaeos/preprod/test3/file", "/eos/ctaeos/preprod/test4/file"]}' | jq .
+
+exit 1
 
 FINAL_COUNT=0
 TIMEOUT=90
