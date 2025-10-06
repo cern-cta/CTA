@@ -138,6 +138,38 @@ The tape server daemon
 %systemd_postun cta-taped.service
 %systemdDaemonReload
 
+%package -n cta-maintenance
+Summary: CERN Tape Archive: maintenance daemon
+Group: Application/CTA
+Requires: logrotate
+Requires: cta-common = %{version}-%{release}
+Requires: cta-lib = %{version}-%{release}
+Requires: cta-lib-catalogue = %{version}-%{release}
+%description -n cta-maintenance
+CERN Tape Archive:
+%files -n cta-maintenance
+%defattr(-,root,root)
+%attr(0644,root,root) %config(noreplace) /etc/logrotate.d/cta-maintenance
+%attr(0755,root,root) %{_bindir}/cta-maintenance
+%attr(0644,root,root) %config(noreplace) %{_sysconfdir}/cta/cta-maintenance.conf.example
+%attr(0644,root,root) %doc /usr/share/man/man1/cta-maintenance.1cta.gz
+%attr(0644,root,root) %config(noreplace) /etc/sysconfig/cta-maintenance
+%attr(0644,root,root) %config(noreplace) /etc/systemd/system/cta-maintenance.service
+
+
+%post -n cta-maintenance
+%systemd_post cta-maintenance.service
+%systemdDaemonReload
+%systemdTryRestart cta-maintenance.service
+
+%preun -n cta-maintenance
+%systemd_preun cta-maintenance.service
+
+%postun -n cta-maintenance
+%systemd_postun cta-maintenance.service
+%systemdDaemonReload
+
+
 %package -n cta-frontend
 Summary: CERN Tape Archive: Xrootd plugin
 Group: Application/CTA
@@ -397,6 +429,7 @@ Unit tests and integration tests with virtual tape drives
 %{_libdir}/libctafrontendvalidatetokenunittests.so*
 %{_bindir}/cta-integrationTests
 %{_libdir}/libctadaemonunittests-multiprocess.so*
+%{_libdir}/libctaosdbrunnerunittests.so*
 %attr(0644,root,root) %{_datadir}/%{name}-%{ctaVersion}/unittest/*.suppr
 %attr(0644,root,root) %{_datadir}/%{name}-%{ctaVersion}/unittest/parallelTestsMakefile
 

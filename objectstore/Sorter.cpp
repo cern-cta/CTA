@@ -18,7 +18,7 @@
 #include <iostream>
 
 #include "common/exception/NoSuchObject.hpp"
-#include "common/threading/MutexLocker.hpp"
+#include "common/process/threading/MutexLocker.hpp"
 #include "Helpers.hpp"
 #include "Sorter.hpp"
 

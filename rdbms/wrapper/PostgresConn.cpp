@@ -18,8 +18,8 @@
 #include "common/utils/utils.hpp"
 #include "common/exception/Exception.hpp"
 #include "common/exception/LostDatabaseConnection.hpp"
-#include "common/threading/RWLockRdLocker.hpp"
-#include "common/threading/RWLockWrLocker.hpp"
+#include "common/process/threading/RWLockRdLocker.hpp"
+#include "common/process/threading/RWLockWrLocker.hpp"
 
 #include "rdbms/Conn.hpp"
 #include "rdbms/wrapper/PostgresConn.hpp"

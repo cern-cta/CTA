@@ -30,15 +30,10 @@ dnf -y install strace lsof
 
 # Get PID of all taped processes
 tpd_parent_pid=$(pgrep "parent" -u cta)
-tpd_maint_pid=$(pgrep "maint" -u cta)
 tpd_drv_pid=$(pgrep "drive" -u cta)
 
 if [ -z "${tpd_parent_pid}" ]; then
     echo "ERROR: No '$DRIVE_NAME-parent' process found."
-    exit 1
-fi
-if [ -z "${tpd_maint_pid}" ]; then
-    echo "ERROR: No '$DRIVE_NAME-maint' process found."
     exit 1
 fi
 if [ -z "${tpd_drv_pid}" ]; then
@@ -47,7 +42,6 @@ if [ -z "${tpd_drv_pid}" ]; then
 fi
 
 echo "Found '$DRIVE_NAME-parent' process PID: ${tpd_parent_pid}"
-echo "Found '$DRIVE_NAME-maint' process PID: ${tpd_maint_pid}"
 echo "Found '$DRIVE_NAME-drive' process PID: ${tpd_drv_pid}"
 
 # Get number of file descriptor used to open the log file
@@ -61,15 +55,12 @@ fi
 
 # Temporary files to store strace output
 tpd_parent_tmp_file=$(mktemp)
-tpd_maint_tmp_file=$(mktemp)
 tpm_srv_tmp_file=$(mktemp)
 
 # Run strace in the background for each taped process
 echo "Launching 'strace' for all cta-taped processes (background execution)..."
 strace -e trace=close,open,openat -fp "${tpd_parent_pid}" -o "${tpd_parent_tmp_file}" &
 tpd_master_strace_pid=$!
-strace -e trace=close,open,openat -fp "${tpd_maint_pid}" -o "${tpd_maint_tmp_file}" &
-tpd_maint_strace_pid=$!
 strace -e trace=close,open,openat -fp "${tpd_drv_pid}" -o "${tpm_srv_tmp_file}" &
 tpd_srv_strace_pid=$!
 
@@ -87,7 +78,6 @@ sleep ${STRACE_SLEEP_SECS}
 # Finally, close strace processes
 echo "Waiting is over. Stopping 'strace' processes."
 kill "${tpd_master_strace_pid}"
-kill "${tpd_maint_strace_pid}"
 kill "${tpd_srv_strace_pid}"
 
 # Wait for strace to stop
@@ -114,26 +104,6 @@ else
   echo "OK: File descriptor for ${log_file} reopened once in '$DRIVE_NAME-parent'."
 fi
 
-echo "Checking '$DRIVE_NAME-maint' file descriptor reopening..."
-if [ "$(grep -c "close(${log_file_fd})" "${tpd_maint_tmp_file}")" -eq 0 ]; then
-  echo "ERROR: File descriptor #${log_file_fd} not closed in '$DRIVE_NAME-maint'."
-  exit 1
-elif [ "$(grep -c "close(${log_file_fd})" "${tpd_maint_tmp_file}")" -gt 1 ]; then
-  echo "ERROR: File descriptor #${log_file_fd} closed more than once in '$DRIVE_NAME-maint'."
-  exit 1
-else
-  echo "OK: File descriptor #${log_file_fd} closed once in '$DRIVE_NAME-maint'."
-fi
-if [ "$(grep "open" "${tpd_maint_tmp_file}" | grep -c "${log_file}")" -eq 0 ]; then
-  echo "ERROR: File descriptor for ${log_file} not reopened in '$DRIVE_NAME-maint'."
-  exit 1
-elif [ "$(grep "open" "${tpd_maint_tmp_file}" | grep -c "${log_file}")" -gt 1 ]; then
-  echo "ERROR: File descriptor for ${log_file} reopened more than once in '$DRIVE_NAME-maint'."
-  exit 1
-else
-  echo "OK: File descriptor #${log_file_fd} reopened once in '$DRIVE_NAME-maint'."
-fi
-
 echo "Checking '$DRIVE_NAME-drive' drive handler file descriptor reopening..."
 if [ "$(grep -c "close(${log_file_fd})" "${tpm_srv_tmp_file}")" -eq 0 ]; then
   echo "ERROR: File descriptor #${log_file_fd} not closed in '$DRIVE_NAME-drive' drive handler ."
@@ -157,7 +127,6 @@ fi
 # Finish test
 echo "Cleaning up tmp files..."
 rm -f "${tpd_parent_tmp_file}"
-rm -f "${tpd_maint_tmp_file}"
 rm -f "${tpm_srv_tmp_file}"
 
 echo "Test successful"

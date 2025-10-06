@@ -1,0 +1,48 @@
+# If required, the user can specify a custom image here
+isPrivileged: true
+
+conf:
+  general:
+    instanceName: "CI"
+    user: "cta"
+    group: "tape"
+  log:
+    format: "json"
+    level: "INFO"
+  maintenance:
+    catalogueConfigPath: "/etc/cta/cta-catalogue.conf"
+    tapeCacheMaxAgeSecs: 600
+    retrieveQueueCacheMaxAgeSecs: 10
+  runners:
+    disk_reporter:
+      enabled: "true"
+      batchSize: 500
+      softTimeout: 30
+    garbage_collector:
+      enabled: "true"
+    queue_cleanup:
+      enabled: "true"
+      batchSize: 500
+    repack:
+      enabled: "true"
+      maxToToExpand: 2
+      softTimeout: 30
+  telemetry:
+    enabled: false
+    retainInstanceIdOnRestart: false
+    metricsBackend: "NOOP"
+
+# SSS keytab to communicate to the disk buffer
+keytab:
+  secretName: eos-keytab
+  subPath: eos.keytab
+
+pod:
+  extraSpec:
+    terminationGracePeriodSeconds: 1
+
+extraEnv:
+
+extraVolumes:
+  volumes:
+  volumeMounts:

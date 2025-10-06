@@ -1,0 +1,7 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: scripts-maintenance
+data:
+  maintenance.sh: |
+    {{ .Files.Get "scripts/maintenance.sh" | nindent 4 }}

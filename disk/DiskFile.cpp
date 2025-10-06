@@ -20,7 +20,7 @@
 #include "disk/DiskFileImplementations.hpp"
 #include "disk/RadosStriperPool.hpp"
 #include "common/exception/Errnum.hpp"
-#include "common/threading/MutexLocker.hpp"
+#include "common/process/threading/MutexLocker.hpp"
 #include "common/utils/utils.hpp"
 #include <rados/buffer.h>
 #include <xrootd/XrdCl/XrdClFile.hh>

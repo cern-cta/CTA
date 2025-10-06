@@ -19,7 +19,7 @@
 #include "catalogue/CatalogueFactory.hpp"
 #include "catalogue/CatalogueFactoryFactory.hpp"
 #include "common/Constants.hpp"
-#include "common/processCap/ProcessCap.hpp"
+#include "common/process/ProcessCap.hpp"
 #include "mediachanger/LibrarySlotParser.hpp"
 #include "rdbms/Login.hpp"
 #include "tapeserver/castor/tape/tapeserver/file/Exceptions.hpp"

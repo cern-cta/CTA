@@ -18,8 +18,8 @@
 #pragma once
 
 #include "objectstore/Backend.hpp"
-#include "common/threading/Mutex.hpp"
-#include "common/threading/MutexLocker.hpp"
+#include "common/process/threading/Mutex.hpp"
+#include "common/process/threading/MutexLocker.hpp"
 #include "common/log/Logger.hpp"
 #include "common/log/LogContext.hpp"
 #include "AgentReferenceInterface.hpp"

@@ -47,7 +47,7 @@ class RelationalDBQCR {
 public:
   RelationalDBQCR(catalogue::Catalogue& catalogue, RelationalDB& pgs) : m_conn(pgs.getConn()) {}
 
-  void runOnePass(log::LogContext& lc) {
+  void executeRunner(log::LogContext& lc) {
 
     /* cta::utils::Timer timer;
     // DELETE is implicit transaction in postgresql
@@ -59,13 +59,13 @@ public:
     try {
       m_conn.commit();
     } catch (exception::Exception &ex) {
-      lc.log(log::ERR, "In RelationalDBQCR::runOnePass(): failed to delete rows of ARCHIVE_ACTIVE_QUEUE" +
+      lc.log(log::ERR, "In RelationalDBQCR::executeRunner(): failed to delete rows of ARCHIVE_ACTIVE_QUEUE" +
                      ex.getMessageValue());
       m_conn.rollback();
     }
     auto ndelrows = stmt.getNbAffectedRows();
     auto tdelsec = timer.secs(cta::utils::Timer::resetCounter);
-    lc.log(log::INFO, std::string("In RelationalDBQCR::runOnePass(): Deleted ") +
+    lc.log(log::INFO, std::string("In RelationalDBQCR::executeRunner(): Deleted ") +
                       std::to_string(ndelrows) +
                       std::string(" rows from the ARCHIVE_ACTIVE_QUEUE. Operation took ") +
                       std::to_string(tdelsec) + std::string(" seconds."));
@@ -93,7 +93,7 @@ class RelationalDBGC {
 public:
   RelationalDBGC(void* pgstuff, catalogue::Catalogue& catalogue) {}
 
-  void runOnePass(log::LogContext& lc) {}
+  void executeRunner(log::LogContext& lc) {}
 };
 
 class RelationalDBInit {

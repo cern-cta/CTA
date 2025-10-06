@@ -18,7 +18,7 @@
 #pragma once
 
 #include "AgentReference.hpp"
-#include "common/threading/Thread.hpp"
+#include "common/process/threading/Thread.hpp"
 #include "common/log/Logger.hpp"
 
 #include <future>
