@@ -32,7 +32,7 @@ public:
    *
    * @param login The database login details.
    */
-  OcciConnFactory(const rdbms::Login& login);
+  explicit OcciConnFactory(const rdbms::Login& login);
 
   /**
    * Destructor

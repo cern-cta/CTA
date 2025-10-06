@@ -97,6 +97,11 @@ private:
    * Adds a number of connections on loan.
    */
   void removeNbConnsOnLoan(uint64_t nbConns);
+  /**
+   * Resets the number of connections on loan to 0.
+   * Noexcept so that this can be used in a destructor.
+   */
+  void resetNbConnsOnLoan() noexcept;
 
   /**
    * The database connection factory.

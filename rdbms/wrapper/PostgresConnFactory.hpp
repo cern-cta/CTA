@@ -34,7 +34,7 @@ public:
    *
    * @param login The database login information.
    */
-  PostgresConnFactory(const rdbms::Login& login);
+  explicit PostgresConnFactory(const rdbms::Login& login);
 
   /**
    * Destructor.

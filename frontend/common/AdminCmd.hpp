@@ -24,7 +24,7 @@
 
 namespace cta::frontend {
 
-enum AdminCmdStatus { SUCCESS, USER_ERROR, EXCEPTION };
+enum class AdminCmdStatus { SUCCESS, USER_ERROR, EXCEPTION };
 
 class AdminCmd : public AdminCmdOptions {
 public:

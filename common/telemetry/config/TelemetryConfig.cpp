@@ -46,15 +46,16 @@ MetricsBackend stringToMetricsBackend(const std::string& name) {
 
 std::string metricsBackendToString(MetricsBackend backend) {
   switch (backend) {
-    case MetricsBackend::NOOP:
+    using enum MetricsBackend;
+    case NOOP:
       return "NOOP";
-    case MetricsBackend::STDOUT:
+    case STDOUT:
       return "STDOUT";
-    case MetricsBackend::FILE:
+    case FILE:
       return "FILE";
-    case MetricsBackend::OTLP_GRPC:
+    case OTLP_GRPC:
       return "OTLP_GRPC";
-    case MetricsBackend::OTLP_HTTP:
+    case OTLP_HTTP:
       return "OTLP_HTTP";
   }
   throw cta::exception::InvalidArgument("Provided MetricsBackend cannot be converted to string");

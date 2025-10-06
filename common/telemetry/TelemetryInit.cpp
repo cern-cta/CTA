@@ -33,6 +33,7 @@
 #include <opentelemetry/sdk/common/attribute_utils.h>
 #include <opentelemetry/sdk/common/global_log_handler.h>
 
+#include "common/exception/Exception.hpp"
 #include "common/utils/utils.hpp"
 #include "common/utils/StringConversions.hpp"
 #include "common/telemetry/config/TelemetryConfigSingleton.hpp"
@@ -75,8 +76,8 @@ std::unique_ptr<metrics_sdk::PushMetricExporter> createExporter(const TelemetryC
       opentelemetry::exporter::otlp::OtlpHttpMetricExporterOptions opts;
       opts.url = endpoint;
 
-      for (const auto& kv : config.metrics.otlpHeaders) {
-        opts.http_headers.insert({kv.first, kv.second});
+      for (const auto& [headerName, headerValue] : config.metrics.otlpHeaders) {
+        opts.http_headers.insert({headerName, headerValue});
       }
       exporter = opentelemetry::exporter::otlp::OtlpHttpMetricExporterFactory::Create(opts);
       break;
@@ -86,13 +87,13 @@ std::unique_ptr<metrics_sdk::PushMetricExporter> createExporter(const TelemetryC
       setenv("OTEL_EXPORTER_OTLP_METRICS_ENDPOINT", config.metrics.otlpEndpoint.c_str(), 1);
       std::string otlpExporterHeaders = "";
       bool first = true;
-      for (const auto& kv : config.metrics.otlpHeaders) {
+      for (const auto& [headerName, headerValue] : config.metrics.otlpHeaders) {
         if (!first) {
           otlpExporterHeaders += ",";
         }
-        std::string lowerKey = kv.first;
+        std::string lowerKey = headerName;
         cta::utils::toLower(lowerKey);
-        otlpExporterHeaders += lowerKey + "=" + kv.second;
+        otlpExporterHeaders += lowerKey + "=" + headerValue;
         first = false;
       }
       setenv("OTEL_EXPORTER_OTLP_METRICS_HEADERS", otlpExporterHeaders.c_str(), 1);
@@ -103,11 +104,11 @@ std::unique_ptr<metrics_sdk::PushMetricExporter> createExporter(const TelemetryC
 
     default:
       lc.log(log::ERR, "In createExporter: Unsupported metrics backend provided");
-      throw std::runtime_error("createExporter: Unsupported metrics backend provided.");
+      throw cta::exception::Exception("createExporter: Unsupported metrics backend provided.");
   }
   if (!exporter) {
     lc.log(log::ERR, "In createExporter: failed to initialise exporter.");
-    throw std::runtime_error("createExporter: failed to initialise exporter.");
+    throw cta::exception::Exception("createExporter: failed to initialise exporter.");
   }
   return exporter;
 }
@@ -157,8 +158,8 @@ void initMetrics(const TelemetryConfig& config, cta::log::LogContext& lc) {
     {cta::semconv::attr::kHostName,          hostName               }
   };
 
-  for (const auto& kv : config.resourceAttributes) {
-    attributes.SetAttribute(kv.first, kv.second);
+  for (const auto& [key, value] : config.resourceAttributes) {
+    attributes.SetAttribute(key, value);
   }
   auto resource = opentelemetry::sdk::resource::Resource::Create(attributes);
   auto viewRegistry = std::make_unique<opentelemetry::sdk::metrics::ViewRegistry>();
@@ -175,7 +176,7 @@ void initMetrics(const TelemetryConfig& config, cta::log::LogContext& lc) {
 void initTelemetry(const TelemetryConfig& config, cta::log::LogContext& lc) {
   // Ensure any logged messages go through the CTA logging system
   opentelemetry::sdk::common::internal_log::GlobalLogHandler::SetLogHandler(
-    std::unique_ptr<opentelemetry::sdk::common::internal_log::LogHandler>(new CtaTelemetryLogHandler(lc.logger())));
+    std::make_unique<CtaTelemetryLogHandler>(lc.logger()));
   // Eventually we can init e.g. traces here as well
   initMetrics(config, lc);
   // Ensure we can reuse the config when re-initialise the metrics after e.g. a fork
@@ -192,14 +193,13 @@ void reinitTelemetry(cta::log::LogContext& lc) {
 }
 
 void shutdownTelemetry(cta::log::LogContext& lc) {
-  const auto config = cta::telemetry::TelemetryConfigSingleton::get();
-  if (config.metrics.backend == MetricsBackend::NOOP) {
+  if (const auto& config = cta::telemetry::TelemetryConfigSingleton::get();
+      config.metrics.backend == MetricsBackend::NOOP) {
     // Nothing to reset
     return;
   }
 
-  auto provider = metrics_api::Provider::GetMeterProvider();
-  if (provider) {
+  if (auto provider = metrics_api::Provider::GetMeterProvider(); provider) {
     auto sdkProvider = dynamic_cast<metrics_sdk::MeterProvider*>(provider.get());
     if (sdkProvider != nullptr) {
       sdkProvider->ForceFlush();
