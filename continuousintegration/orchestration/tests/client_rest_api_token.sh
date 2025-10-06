@@ -32,8 +32,10 @@ LATER=$(echo "${NOW}+86400" | bc)
 
 # Generate Tokens
 TOKEN_EOSUSER1=$(eosadmin_eos root://"${EOS_MGM_HOST}" token --tree --path '/eos/ctaeos/://:/api/' --expires "${LATER}" --owner user1 --group eosusers --permission rwx)
-
 TOKEN_EOSPOWER1=$(eosadmin_eos root://"${EOS_MGM_HOST}" token --tree --path '/eos/ctaeos/://:/api/' --expires "${LATER}" --owner poweruser1 --group powerusers --permission prwx)
+
+# Get SCI token
+SCI_TOKEN=$(cat /token_file)
 
 # By default check https connections certificates
 # disable for now on Alma9 so that this is not on the critical path
