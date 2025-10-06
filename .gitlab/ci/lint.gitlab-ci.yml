@@ -109,3 +109,4 @@ trigger-sonarcloud:
         -H "Authorization: Bearer $GITHUB_API_TOKEN" \
         $TARGET_URL \
         -d "{\"ref\":\"${BRANCH_NAME}\"}"
+    - echo "Please visit https://github.com/cern-cta/CTA/actions to see the progress of the analysis"
