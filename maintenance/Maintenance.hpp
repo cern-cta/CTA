@@ -57,6 +57,7 @@ private:
   std::unique_ptr<cta::catalogue::Catalogue> m_catalogue;
   std::unique_ptr<cta::SchedulerDB_t> m_scheddb;
 
+  int m_sleepInterval;
   //std::atomic<std::shared_ptr<cta::processSignals>> s_processSignals;
 };
 

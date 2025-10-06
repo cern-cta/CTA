@@ -25,6 +25,8 @@ data:
     cta.schedulerdb.tape_cache_max_age_secs {{ $.Values.conf.maintenance.tapeCacheMaxAgeSecs }}
     cta.schedulerdb.retrieve_queue_cache_max_age_secs {{ $.Values.conf.maintenance.retrieveQueueCacheMaxAgeSecs }}
 
+    cta.maintenance.sleep_interval {{ $.Values.conf.maintenance.sleep_interval }}
+
     cta.disk_reporter.enabled {{ $.Values.conf.runners.disk_reporter.enabled }}
     cta.disk_reporter.batch_size {{ $.Values.conf.runners.disk_reporter.batchSize  }}
     cta.disk_reporter.soft_timeout {{ $.Values.conf.runners.disk_reporter.softTimeout }}

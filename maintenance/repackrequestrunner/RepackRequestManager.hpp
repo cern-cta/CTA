@@ -19,6 +19,7 @@
 
 #include "common/log/LogContext.hpp"
 #include "maintenance/IMaintenanceRunner.hpp"
+#include "scheduler/Scheduler.hpp"
 
 namespace cta::maintenance {
 
@@ -26,13 +27,16 @@ class Scheduler;
 
 class RepackRequestManager : public IMaintenanceRunner {
 public:
-  explicit RepackRequestManager(cta::Scheduler &scheduler, int rmrtte, int timeout) : m_scheduler(scheduler), m_repackMaxRequestsToToExpand(rmrtte), m_reportingSoftTimeout(timeout) {}
+  explicit RepackRequestManager(cta::Scheduler &scheduler, int rmrtte, int timeout) : m_scheduler(scheduler), m_repackMaxRequestsToToExpand(rmrtte), m_softTimeout(timeout) {}
 
   void executeRunner(cta::log::LogContext &lc);
 
 private:
+  template<typename GetBatchFunc>
+  void reportBatch(std::string_view reportingType, GetBatchFunc getBatchFunc, cta::log::LogContext &lc);
+
   cta::Scheduler & m_scheduler;
   int m_repackMaxRequestsToToExpand;
-  int m_reportingSoftTimeout;
+  int m_softTimeout;
 };
 } // namespace cta::maintenance

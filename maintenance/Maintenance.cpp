@@ -16,8 +16,9 @@
  */
 
 #include <signal.h>
-#include <sys/wait.h>
 #include <sys/prctl.h>
+#include <chrono>
+#include <thread>
 
 #include "Maintenance.hpp"
 #include "diskbufferrunners/DiskReportRunner.hpp"
@@ -85,6 +86,8 @@ Maintenance::Maintenance(cta::log::LogContext &lc, const cta::common::Config &co
       throw InvalidConfiguration("Failed to instantiate OpenTelemetry. Exception message: " + ex.getMessage().str());
     }
   }
+
+  m_sleepInterval = config.getOptionValueInt("cta.maintenance.sleep_interval").value_or(10000);
 
   // Before anything, we will check for access to the scheduler's central storage.
   if (!config.getOptionValueStr("cta.objectstore.backendpath").has_value()) throw InvalidConfiguration("Could not find config entry 'cta.objectstore.backendpath' in");
@@ -166,17 +169,10 @@ void Maintenance::run(){
   try {
     do {
       m_lc.log(log::INFO, "In Maintenance::run(): About to do a maintenance pass.");
-
       for(auto & runner : m_maintenanceRunners) {
-        if (!runner) {
-          m_lc.log(log::INFO, "Null runner detected!");
-          continue;
-        }
-
-        m_lc.log(log::INFO, typeid(*runner).name());
-
         runner->executeRunner(m_lc);
       }
+      std::this_thread::sleep_for(std::chrono::milliseconds(std::chrono::milliseconds(m_sleepInterval)));
     } while (true);
     m_lc.log(log::INFO, "In Maintenance::run(): Received shutdown message. Exiting.");
   } catch(cta::exception::Exception & ex) {

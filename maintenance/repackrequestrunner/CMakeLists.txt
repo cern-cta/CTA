@@ -15,12 +15,11 @@
 cmake_minimum_required (VERSION 3.17)
 
 add_library(ctarepackrequestrunner 
-	RepackRequestManager.cpp 
-	RepackReportThread.cpp)
+    RepackRequestManager.cpp)
 
 target_link_libraries(ctarepackrequestrunner
-	ctacommon
-        ctascheduler)
+    ctacommon
+    ctascheduler)
 
 #set_property(TARGET ctarepackrequestrunner PROPERTY SOVERSION "${cta_soversion}")
 #set_property(TARGET ctarepackrequestrunner PROPERTY   VERSION "${cta_libversion}")
