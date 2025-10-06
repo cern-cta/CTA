@@ -47,6 +47,11 @@ if [ ! -z "${error}" ]; then
     exit 1
 fi
 
+if [ -z "${SCI_TOKEN}" ]; then
+    echo -e "ERROR:\n\$SCI_TOKEN env not defined"
+    exit 1
+fi
+
 CLIENT_POD="cta-client-0"
 EOS_MGM_POD="eos-mgm-0"
 
@@ -70,6 +75,10 @@ NB_PROCS=20
 echo
 echo "Setting up environment for tests."
 kubectl -n ${NAMESPACE} exec ${CLIENT_POD} -c client -- bash -c "/root/client_setup.sh -n ${NB_FILES} -s ${FILE_SIZE_KB} -p ${NB_PROCS} -d /eos/ctaeos/preprod -r -c xrd" || exit 1
+
+token_file=$(mktemp)
+echo $SCI_TOKEN >> $token_file
+kubectl -n ${NAMESPACE} cp $token_file ${CLIENT_POD}:/token_file || exit 1
 
 # Test are run under the cta user account which doesn't have a login
 # option so to be able to export the test setup we need to source the file
