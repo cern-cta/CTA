@@ -16,7 +16,6 @@
  */
 
 #include "common/exception/NoSuchObject.hpp"
-#include "RepackReportThread.hpp"
 #include "RepackRequestManager.hpp"
 #include "scheduler/Scheduler.hpp"
 
@@ -60,14 +59,46 @@ void RepackRequestManager::executeRunner(cta::log::LogContext &lc) {
     }
   }
 
+  reportBatch("RetrieveSuccesses", [&](){m_scheduler.getNextSuccessfulRetrieveRepackReportBatch(lc);});
+  reportBatch("ArchiveSuccesses",  [&](){m_scheduler.getNextSuccessfulArchiveRepackReportBatch(lc);});
+  reportBatch("RetrieveFailed",    [&](){m_scheduler.getNextFailedRetrieveRepackReportBatch(lc);});
+  reportBatch("ArchiveFailed",     [&](){m_scheduler.getNextFailedArchiveRepackReportBatch(lc);});
+}
 
-  RetrieveSuccessesRepackReportThread rsrrt(m_scheduler,lc,m_reportingSoftTimeout);
-  rsrrt.run();
-  ArchiveSuccessesRepackReportThread asrrt(m_scheduler,lc,m_reportingSoftTimeout);
-  asrrt.run();
-  RetrieveFailedRepackReportThread rfrrt(m_scheduler,lc,m_reportingSoftTimeout);
-  rfrrt.run();
-  ArchiveFailedRepackReportThread afrrt(m_scheduler,lc,m_reportingSoftTimeout);
-  afrrt.run();
+template <typename GetBatchFunc>
+void RepackRequestManager::reportBatch(std::string_view reportingType, GetBatchFunc getBatchFunc){
+  utils::Timer totalTime;
+  bool moreBatch = true;
+  log::ScopedParamContainer params(lc);
+  params.add("reportingType",reportingType);
+
+  uint64_t numberOfBatchReported = 0;
+
+  while (totalTime.secs() < m_softTimeout && moreBatch) {
+    utils::Timer t;
+    log::TimingList tl;
+
+    cta::Scheduler::RepackReportBatch reportBatch = getBatchFunc(m_scheduler, lc);
+    tl.insertAndReset("getNextRepackReportBatchTime", t);
+
+    if (!reportBatch.empty()) {
+      reportBatch.report(lc);
+      numberOfBatchReported++;
+      tl.insertAndReset("reportingTime", t);
+
+      log::ScopedParamContainer paramsReport(lc);
+      tl.addToLog(paramsReport);
+      lc.log(log::INFO, "In RepackReportThread::run(), reported a batch of reports.");
+    } else {
+      moreBatch = false;
+    }
+  }
+
+  if (numberOfBatchReported > 0) {
+    params.add("numberOfBatchReported", numberOfBatchReported);
+    params.add("totalRunTime", totalTime.secs());
+    params.add("moreBatchToDo", moreBatch);
+    lc.log(log::INFO, "In RepackReportThread::run(), exiting.");
+  }
 }
 } // namespace cta::maintenance
