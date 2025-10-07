@@ -65,15 +65,15 @@ tmp_file=$(mktemp)
 echo "Dummy" > "${tmp_file}"
 
 # Archive files with the sci_token
-curl -L --insecure -H "Accept: application/json" -H "Authorization: Bearer ${SCI_TOKEN}" -X MKCOL "https://${EOS_MGM_HOST}:8443/eos/ctaeos/preprod/test1"
-curl -L --insecure -H "Accept: application/json" -H "Authorization: Bearer ${SCI_TOKEN}" -X MKCOL "https://${EOS_MGM_HOST}:8443/eos/ctaeos/preprod/test2"
-curl -L --insecure -H "Accept: application/json" -H "Authorization: Bearer ${SCI_TOKEN}" -X MKCOL "https://${EOS_MGM_HOST}:8443/eos/ctaeos/preprod/test3"
-curl -L --insecure -H "Accept: application/json" -H "Authorization: Bearer ${SCI_TOKEN}" -X MKCOL "https://${EOS_MGM_HOST}:8443/eos/ctaeos/preprod/test4"
+curl -L --insecure -H "Accept: application/json" -H "Authorization: Bearer ${TOKEN_EOSUSER1}" -X MKCOL "https://${EOS_MGM_HOST}:8443/eos/ctaeos/preprod/test1"
+curl -L --insecure -H "Accept: application/json" -H "Authorization: Bearer ${TOKEN_EOSUSER1}" -X MKCOL "https://${EOS_MGM_HOST}:8443/eos/ctaeos/preprod/test2"
+curl -L --insecure -H "Accept: application/json" -H "Authorization: Bearer ${TOKEN_EOSUSER1}" -X MKCOL "https://${EOS_MGM_HOST}:8443/eos/ctaeos/preprod/test3"
+curl -L --insecure -H "Accept: application/json" -H "Authorization: Bearer ${TOKEN_EOSUSER1}" -X MKCOL "https://${EOS_MGM_HOST}:8443/eos/ctaeos/preprod/test4"
 
-curl -L --insecure -H "Accept: application/json" -H "Authorization: Bearer ${SCI_TOKEN}" "https://${EOS_MGM_HOST}:8443/eos/ctaeos/preprod/test1/file" --upload-file "${tmp_file}"
-curl -L --insecure -H "Accept: application/json" -H "Authorization: Bearer ${SCI_TOKEN}" "https://${EOS_MGM_HOST}:8443/eos/ctaeos/preprod/test2/file" --upload-file "${tmp_file}"
-curl -L --insecure -H "Accept: application/json" -H "Authorization: Bearer ${SCI_TOKEN}" "https://${EOS_MGM_HOST}:8443/eos/ctaeos/preprod/test3/file" --upload-file "${tmp_file}"
-curl -L --insecure -H "Accept: application/json" -H "Authorization: Bearer ${SCI_TOKEN}" "https://${EOS_MGM_HOST}:8443/eos/ctaeos/preprod/test4/file" --upload-file "${tmp_file}"
+curl -L --insecure -H "Accept: application/json" -H "Authorization: Bearer ${TOKEN_EOSUSER1}" "https://${EOS_MGM_HOST}:8443/eos/ctaeos/preprod/test1/file" --upload-file "${tmp_file}"
+curl -L --insecure -H "Accept: application/json" -H "Authorization: Bearer ${TOKEN_EOSUSER1}" "https://${EOS_MGM_HOST}:8443/eos/ctaeos/preprod/test2/file" --upload-file "${tmp_file}"
+curl -L --insecure -H "Accept: application/json" -H "Authorization: Bearer ${TOKEN_EOSUSER1}" "https://${EOS_MGM_HOST}:8443/eos/ctaeos/preprod/test3/file" --upload-file "${tmp_file}"
+curl -L --insecure -H "Accept: application/json" -H "Authorization: Bearer ${TOKEN_EOSUSER1}" "https://${EOS_MGM_HOST}:8443/eos/ctaeos/preprod/test4/file" --upload-file "${tmp_file}"
 
 echo "Waiting for files to be archived..."
 FINAL_COUNT=0
