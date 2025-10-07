@@ -519,21 +519,6 @@ void OStoreDB::fetchMountInfo(SchedulerDatabase::TapeMountDecisionInfo& tmdi,
   }
 }
 
-//------------------------------------------------------------------------------
-// OStoreDB::getMountPoliciesInQueue()
-//------------------------------------------------------------------------------
-std::list<common::dataStructures::MountPolicy>
-OStoreDB::getMountPoliciesInQueue(const std::list<common::dataStructures::MountPolicy>& mountPoliciesInCatalogue,
-                                  const std::map<std::string, uint64_t>& queueMountPolicyMap) {
-  std::list<cta::common::dataStructures::MountPolicy> mountPolicyRet;
-  std::copy_if(mountPoliciesInCatalogue.begin(),
-               mountPoliciesInCatalogue.end(),
-               std::back_inserter(mountPolicyRet),
-               [&queueMountPolicyMap](const cta::common::dataStructures::MountPolicy& mp) {
-                 return queueMountPolicyMap.find(mp.name) != queueMountPolicyMap.end();
-               });
-  return mountPolicyRet;
-}
 
 //------------------------------------------------------------------------------
 // OStoreDB::getMountInfo()
