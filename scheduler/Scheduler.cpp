@@ -1717,6 +1717,137 @@ void Scheduler::checkNeededEnvironmentVariables() {
 
 
 //------------------------------------------------------------------------------
+// Scheduler::getArchiveMountPolicyMaxPriorityMinAge()
+//------------------------------------------------------------------------------
+std::pair<uint64_t, uint64_t>
+Scheduler::getArchiveMountPolicyMaxPriorityMinAge(const std::list<common::dataStructures::MountPolicy>& mountPolicies) {
+  if (mountPolicies.empty()) {
+    throw cta::exception::Exception("In Scheduler::getArchiveMountPolicyMaxPriorityMinAge(), empty mount policy list.");
+  }
+  uint64_t maxPriority = std::numeric_limits<uint64_t>::min();
+  uint64_t minMinRequestAge = std::numeric_limits<uint64_t>::max();
+  for (auto & mountPolicy : mountPolicies) {
+    maxPriority = std::max(maxPriority, mountPolicy.archivePriority);
+    minMinRequestAge = std::min(minMinRequestAge, mountPolicy.archiveMinRequestAge);
+  }
+  return std::pair{maxPriority, minMinRequestAge};
+}
+
+
+//------------------------------------------------------------------------------
+// Scheduler::getRetrieveMountPolicyMaxPriorityMinAge()
+//------------------------------------------------------------------------------
+std::pair<uint64_t, uint64_t>
+Scheduler::getRetrieveMountPolicyMaxPriorityMinAge(const std::list<common::dataStructures::MountPolicy>& mountPolicies) {
+  if (mountPolicies.empty()) {
+    throw cta::exception::Exception("In Scheduler::getRetrieveMountPolicyMaxPriorityMinAge(), empty mount policy list.");
+  }
+  uint64_t maxPriority = std::numeric_limits<uint64_t>::min();
+  uint64_t minMinRequestAge = std::numeric_limits<uint64_t>::max();
+  for (auto & mountPolicy : mountPolicies) {
+    maxPriority = std::max(maxPriority, mountPolicy.retrievePriority);
+    minMinRequestAge = std::min(minMinRequestAge, mountPolicy.retrieveMinRequestAge);
+  }
+  return std::pair{maxPriority, minMinRequestAge};
+}
+
+//------------------------------------------------------------------------------
+// Scheduler::getHighestPriorityArchiveMountPolicyName()
+//------------------------------------------------------------------------------
+std::string Scheduler::getHighestPriorityArchiveMountPolicyName(
+  const std::list<common::dataStructures::MountPolicy>& mountPolicies) const {
+  if (mountPolicies.empty()) {
+    throw cta::exception::Exception(
+      "In Scheduler::getHighestPriorityArchiveMountPolicyName(), empty mount policy list.");
+  }
+  //We need to get the most advantageous mountPolicy
+  //As the Init element of the reduce function is the first element of the list, we start the reduce with the second element (++mountPolicyInQueueList.begin())
+  common::dataStructures::MountPolicy bestMountPolicy = cta::utils::reduce(
+    ++mountPolicies.begin(),
+    mountPolicies.end(),
+    mountPolicies.front(),
+    [](const common::dataStructures::MountPolicy& mp1, const common::dataStructures::MountPolicy& mp2) {
+      if (mp2.archivePriority > mp1.archivePriority) {
+        return mp2;
+      }
+      return mp1;
+    });
+  return bestMountPolicy.name;
+}
+
+//------------------------------------------------------------------------------
+// Scheduler::getLowestRequestAgeArchiveMountPolicyName()
+//------------------------------------------------------------------------------
+std::string Scheduler::getLowestRequestAgeArchiveMountPolicyName(
+  const std::list<common::dataStructures::MountPolicy>& mountPolicies) const {
+  if (mountPolicies.empty()) {
+    throw cta::exception::Exception(
+      "In Scheduler::getLowestRequestAgeArchiveMountPolicyName(), empty mount policy list.");
+  }
+  //We need to get the most advantageous mountPolicy
+  //As the Init element of the reduce function is the first element of the list, we start the reduce with the second element (++mountPolicyInQueueList.begin())
+  common::dataStructures::MountPolicy bestMountPolicy = cta::utils::reduce(
+    ++mountPolicies.begin(),
+    mountPolicies.end(),
+    mountPolicies.front(),
+    [](const common::dataStructures::MountPolicy& mp1, const common::dataStructures::MountPolicy& mp2) {
+      if (mp1.archiveMinRequestAge < mp2.archiveMinRequestAge) {
+        return mp1;
+      }
+      return mp2;
+    });
+  return bestMountPolicy.name;
+}
+
+//------------------------------------------------------------------------------
+// Scheduler::getHighestPriorityRetrieveMountPolicyName()
+//------------------------------------------------------------------------------
+std::string Scheduler::getHighestPriorityRetrieveMountPolicyName(
+  const std::list<common::dataStructures::MountPolicy>& mountPolicies) const {
+  if (mountPolicies.empty()) {
+    throw cta::exception::Exception(
+      "In Scheduler::getHighestPriorityRetrieveMountPolicyName(), empty mount policy list.");
+  }
+  //We need to get the most advantageous mountPolicy
+  //As the Init element of the reduce function is the first element of the list, we start the reduce with the second element (++mountPolicyInQueueList.begin())
+  common::dataStructures::MountPolicy bestMountPolicy = cta::utils::reduce(
+    ++mountPolicies.begin(),
+    mountPolicies.end(),
+    mountPolicies.front(),
+    [](const common::dataStructures::MountPolicy& mp1, const common::dataStructures::MountPolicy& mp2) {
+      if (mp1.retrievePriority > mp2.retrievePriority) {
+        return mp1;
+      }
+      return mp2;
+    });
+  return bestMountPolicy.name;
+}
+
+//------------------------------------------------------------------------------
+// Scheduler::getLowestRequestAgeRetrieveMountPolicyName()
+//------------------------------------------------------------------------------
+std::string Scheduler::getLowestRequestAgeRetrieveMountPolicyName(
+  const std::list<common::dataStructures::MountPolicy>& mountPolicies) const {
+  if (mountPolicies.empty()) {
+    throw cta::exception::Exception(
+      "In Scheduler::getLowestRequestAgeRetrieveMountPolicyName(), empty mount policy list.");
+  }
+  //We need to get the most advantageous mountPolicy
+  //As the Init element of the reduce function is the first element of the list, we start the reduce with the second element (++mountPolicyInQueueList.begin())
+  common::dataStructures::MountPolicy bestMountPolicy = cta::utils::reduce(
+    ++mountPolicies.begin(),
+    mountPolicies.end(),
+    mountPolicies.front(),
+    [](const common::dataStructures::MountPolicy& mp1, const common::dataStructures::MountPolicy& mp2) {
+      if (mp1.retrieveMinRequestAge < mp2.retrieveMinRequestAge) {
+        return mp1;
+      }
+      return mp2;
+    });
+  return bestMountPolicy.name;
+}
+
+//------------------------------------------------------------------------------
 // getMountPoliciesInQueue()
 //------------------------------------------------------------------------------
 std::list<common::dataStructures::MountPolicy>
@@ -1733,9 +1864,9 @@ Scheduler::getMountPoliciesInQueue(const std::list<common::dataStructures::Mount
 }
 
 //------------------------------------------------------------------------------
-// fillMountPolicyForPotentialMounts
+// fillMountPolicyNamesForPotentialMounts
 //------------------------------------------------------------------------------
-void Scheduler::fillMountPolicyForPotentialMounts(SchedulerDatabase::TapeMountDecisionInfo &tmdi,
+void Scheduler::fillMountPolicyNamesForPotentialMounts(SchedulerDatabase::TapeMountDecisionInfo &tmdi,
                                                   log::LogContext &logContext) {
 
   std::list <common::dataStructures::MountPolicy> mountPolicies = m_catalogue.MountPolicy()->getCachedMountPolicies();
@@ -1757,10 +1888,10 @@ void Scheduler::fillMountPolicyForPotentialMounts(SchedulerDatabase::TapeMountDe
                   mountPoliciesInQueueList.end(),
                   std::back_inserter(queueMountPolicyNames),
                   [](const cta::common::dataStructures::MountPolicy &policy) -> std::string { return policy.name; });
-          std::tie(m.priority, m.minRequestAge) = m_db.getRetrieveMountPolicyMaxPriorityMinAge(
+          std::tie(m.priority, m.minRequestAge) = getRetrieveMountPolicyMaxPriorityMinAge(
                   mountPoliciesInQueueList);
-          m.highestPriorityMountPolicyName = m_db.getHighestPriorityRetrieveMountPolicyName(mountPoliciesInQueueList);
-          m.lowestRequestAgeMountPolicyName = m_db.getLowestRequestAgeRetrieveMountPolicyName(mountPoliciesInQueueList);
+          m.highestPriorityMountPolicyName = getHighestPriorityRetrieveMountPolicyName(mountPoliciesInQueueList);
+          m.lowestRequestAgeMountPolicyName = getLowestRequestAgeRetrieveMountPolicyName(mountPoliciesInQueueList);
 
         } else {
           std::transform(
@@ -1768,11 +1899,11 @@ void Scheduler::fillMountPolicyForPotentialMounts(SchedulerDatabase::TapeMountDe
                   mountPoliciesInQueueList.end(),
                   std::back_inserter(queueMountPolicyNames),
                   [](const cta::common::dataStructures::MountPolicy &policy) -> std::string { return policy.name; });
-          std::tie(m.priority, m.minRequestAge) = m_db.getArchiveMountPolicyMaxPriorityMinAge(
+          std::tie(m.priority, m.minRequestAge) = getArchiveMountPolicyMaxPriorityMinAge(
                   mountPoliciesInQueueList);
-          m.highestPriorityMountPolicyName = m_db.getHighestPriorityArchiveMountPolicyName(
+          m.highestPriorityMountPolicyName = getHighestPriorityArchiveMountPolicyName(
                   mountPoliciesInQueueList);
-          m.lowestRequestAgeMountPolicyName = m_db.getLowestRequestAgeArchiveMountPolicyName(
+          m.lowestRequestAgeMountPolicyName = getLowestRequestAgeArchiveMountPolicyName(
                   mountPoliciesInQueueList);
         }
 
@@ -1904,7 +2035,7 @@ bool Scheduler::getNextMountDryRun(const std::string& logicalLibraryName,
   std::unique_ptr<SchedulerDatabase::TapeMountDecisionInfo> mountInfo;
   mountInfo = m_db.getMountInfoNoLock(SchedulerDatabase::PurposeGetMountInfo::GET_NEXT_MOUNT, lc);
   SchedulerDatabase::TapeMountDecisionInfo& tmdi = *mountInfo;
-  fillMountPolicyForPotentialMounts(tmdi, lc);
+  fillMountPolicyNamesForPotentialMounts(tmdi, lc);
   getExistingAndNextMounts(tmdi, lc);
   getMountInfoTime = timer.secs(utils::Timer::resetCounter);
   ExistingMountSummaryPerTapepool existingMountsDistinctTypeSummaryPerTapepool;
@@ -2088,7 +2219,7 @@ std::unique_ptr<TapeMount> Scheduler::getNextMount(const std::string& logicalLib
   mountInfo = m_db.getMountInfo(lc, timeout_us);
 #endif
   SchedulerDatabase::TapeMountDecisionInfo& tmdi = *mountInfo;
-  fillMountPolicyForPotentialMounts(tmdi, lc);
+  fillMountPolicyNamesForPotentialMounts(tmdi, lc);
   getExistingAndNextMounts(tmdi, lc);
   getMountInfoTime = timer.secs(utils::Timer::resetCounter);
   if (mountInfo->queueTrimRequired) {
@@ -2297,6 +2428,9 @@ std::list<common::dataStructures::QueueAndMountSummary> Scheduler::getQueuesAndM
   // Extract relevant information from the object store.
   utils::Timer schedulerDbTimer;
   auto mountDecisionInfo = m_db.getMountInfoNoLock(SchedulerDatabase::PurposeGetMountInfo::SHOW_QUEUES, lc);
+  SchedulerDatabase::TapeMountDecisionInfo& tmdi = *mountDecisionInfo;
+  fillMountPolicyNamesForPotentialMounts(tmdi, lc);
+  getExistingAndNextMounts(tmdi, lc);
   const auto schedulerDbTime = schedulerDbTimer.secs();
   auto& mdi __attribute__((unused)) = *mountDecisionInfo;
 

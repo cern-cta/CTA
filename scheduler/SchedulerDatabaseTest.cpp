@@ -138,7 +138,6 @@ private:
   SchedulerDatabaseTest & operator= (const SchedulerDatabaseTest &);
 
   std::unique_ptr<cta::SchedulerDatabase> m_db;
-
   std::unique_ptr<cta::catalogue::Catalogue> m_catalogue;
 
 }; // class SchedulerDatabaseTest
@@ -298,6 +297,7 @@ TEST_P(SchedulerDatabaseTest, createManyArchiveJobs) {
   // Create mount.
 #ifdef LOOPING_TEST
   auto moutInfo = db.getMountInfo();
+  SchedulerDatabase::TapeMountDecisionInfo& tmdi = *mountInfo;
   cta::catalogue::TapeForWriting tfw;
   tfw.tapePool = "tapePool";
   tfw.vid = "vid";
@@ -337,7 +337,6 @@ TEST_P(SchedulerDatabaseTest, putExistingQueueToSleep) {
   cta::log::LogContext lc(dl);
 
   cta::SchedulerDatabase &db = getDb();
-
    // Create the disk system list
   cta::disk::DiskSystemList diskSystemList;
   cta::common::dataStructures::DiskInstanceSpace diskInstanceSpace{"dis-A", "di-A", "constantFreeSpace:999999999999", 60, 60, 0,
@@ -421,7 +420,8 @@ TEST_P(SchedulerDatabaseTest, createQueueAndPutToSleep) {
                                              "vid", "tapePool", "vo", "mediaType", "vendor", 123456789,
                                              cta::common::dataStructures::Label::Format::CTA,
                                              0, 0, 0, 0, 0, 0, "library", 0.0, false, 0, "", 0, 0,
-                                             std::nullopt, std::nullopt, std::nullopt, mountInfo->potentialMounts.back().mountPolicyCountMap, std::nullopt, std::nullopt};
+                                             std::nullopt, std::nullopt, std::nullopt,
+                                             {}, std::nullopt, std::nullopt};
   auto rm = mountInfo->createRetrieveMount(mount, "drive", "library", "host");
   ASSERT_EQ(0, mountInfo->potentialMounts.size());
   rm->putQueueToSleep(diskSystem.name, diskSystem.sleepTime, lc);
@@ -735,7 +735,6 @@ TEST_P(SchedulerDatabaseTest, popRetrieveRequestsWithBackpressure) {
   cta::log::LogContext lc(dl);
 
   cta::SchedulerDatabase &db = getDb();
-
   // Files are 5 * 1000 byte per disk system. Make sure the batch does not fit.
   // We should then be able to get the queue slept.
   cta::catalogue::Catalogue &catalogue = getCatalogue();
@@ -913,56 +912,6 @@ TEST_P(SchedulerDatabaseTest, popRetrieveRequestsWithDiskSystemNotFetcheable) {
   ASSERT_FALSE(mi->potentialMounts.begin()->sleepingMount);
   // diskSystemSleptFor is set in putQueuesToSleep, as we do not call this function anymore, value is not set
   ASSERT_EQ("", mi->potentialMounts.begin()->diskSystemSleptFor);
-}
-
-TEST_P(SchedulerDatabaseTest, getArchiveMountPolicyMaxPriorityMinAge) {
-  std::list<cta::common::dataStructures::MountPolicy> mountPolicies;
-
-  mountPolicies.emplace_back();
-  mountPolicies.back().archivePriority = 1;
-  mountPolicies.back().archiveMinRequestAge = 1000;
-
-  mountPolicies.emplace_back();
-  mountPolicies.back().archivePriority = 99;
-  mountPolicies.back().archiveMinRequestAge = 2000;
-
-  mountPolicies.emplace_back();
-  mountPolicies.back().archivePriority = 2;
-  mountPolicies.back().archiveMinRequestAge = 50;
-
-  mountPolicies.emplace_back();
-  mountPolicies.back().archivePriority = 3;
-  mountPolicies.back().archiveMinRequestAge = 3000;
-
-  auto [maxPriority, minMinRequestAge] = cta::SchedulerDatabase::getArchiveMountPolicyMaxPriorityMinAge(mountPolicies);
-
-  ASSERT_EQ(99, maxPriority);
-  ASSERT_EQ(50, minMinRequestAge);
-}
-
-TEST_P(SchedulerDatabaseTest, getRetrieveMountPolicyMaxPriorityMinAge) {
-  std::list<cta::common::dataStructures::MountPolicy> mountPolicies;
-
-  mountPolicies.emplace_back();
-  mountPolicies.back().retrievePriority = 1;
-  mountPolicies.back().retrieveMinRequestAge = 1000;
-
-  mountPolicies.emplace_back();
-  mountPolicies.back().retrievePriority = 99;
-  mountPolicies.back().retrieveMinRequestAge = 2000;
-
-  mountPolicies.emplace_back();
-  mountPolicies.back().retrievePriority = 2;
-  mountPolicies.back().retrieveMinRequestAge = 50;
-
-  mountPolicies.emplace_back();
-  mountPolicies.back().retrievePriority = 3;
-  mountPolicies.back().retrieveMinRequestAge = 3000;
-
-  auto [maxPriority, minMinRequestAge] = cta::SchedulerDatabase::getRetrieveMountPolicyMaxPriorityMinAge(mountPolicies);
-
-  ASSERT_EQ(99, maxPriority);
-  ASSERT_EQ(50, minMinRequestAge);
 }
 
 #undef TEST_MOCK_DB

@@ -370,6 +370,61 @@ private:
   void checkNeededEnvironmentVariables();
 
 public:
+
+    /**
+   * Return the name of the archive mount policy with highest priority from the mountPolicies passed in parameter
+   * The aim is to do the same as ArchiveQueue::getJobsSummary() regarding the priority
+   * @param mountPolicies the list of mount policies in order to create the best one.
+   * @return the archive mount policy with highest priority
+   */
+  std::string
+  getHighestPriorityArchiveMountPolicyName(const std::list<common::dataStructures::MountPolicy>& mountPolicies) const;
+
+  /**
+   * Return the name of the archive mount policy with lowest request age from the mountPolicies passed in parameter
+   * The aim is to do the same as ArchiveQueue::getJobsSummary() regarding the request age
+   * @param mountPolicies the list of mount policies in order to create the best one.
+   * @return the archive mount policy with lowest request age
+   */
+  std::string
+  getLowestRequestAgeArchiveMountPolicyName(const std::list<common::dataStructures::MountPolicy>& mountPolicies) const;
+
+  /**
+   * Return the name of the retrieve mount policy with highest priority from the mountPolicies passed in parameter
+   * The aim is to do the same as RetrieveQueue::getJobsSummary() regarding the priority
+   * @param mountPolicies the list of mount policies in order to create the best one.
+   * @return the retrieve mount policy with highest priority
+   */
+  std::string
+  getHighestPriorityRetrieveMountPolicyName(const std::list<common::dataStructures::MountPolicy>& mountPolicies) const;
+
+  /**
+   * Return the name of the retrieve mount policy with lowest request age from the mountPolicies passed in parameter
+   * The aim is to do the same as RetrieveQueue::getJobsSummary() regarding the request age
+   * @param mountPolicies the list of mount policies in order to create the best one.
+   * @return the retrieve mount policy with lowest request age
+   */
+  std::string
+  getLowestRequestAgeRetrieveMountPolicyName(const std::list<common::dataStructures::MountPolicy>& mountPolicies) const;
+
+  /**
+   * Given a list of mount policies, it compares all of them to extract both the maximum archive priority and the minimum
+   * archive age between all entries.
+   * @param mountPolicies the list of mount policies in order to create the best one.
+   * @return a pair with the max retrieve priority and minimum archive age
+   */
+  static std::pair<uint64_t, uint64_t>
+  getArchiveMountPolicyMaxPriorityMinAge(const std::list<common::dataStructures::MountPolicy> &mountPolicies);
+
+  /**
+   * Given a list of mount policies, it compares all of them to extract both the maximum retrieve priority and the minimum
+   * retrieve age between all entries.
+   * @param mountPolicies the list of mount policies in order to create the best one.
+   * @return a pair with the max retrieve priority and minimum retrieve age
+   */
+  static std::pair<uint64_t, uint64_t>
+  getRetrieveMountPolicyMaxPriorityMinAge(const std::list<common::dataStructures::MountPolicy> &mountPolicies);
+
   /**
    * After TapeMountDecisionInfo is received from the Scheduler Database
    * with Potential Mounts we enrich this with information about Existing and Next Mounts
@@ -380,7 +435,7 @@ public:
    * we iterate the Potential Mounts and compare the Mount Polisies with those in the catalogue to
    * select only eligible Mount Policy Names
    */
-  void fillMountPolicyForPotentialMounts(SchedulerDatabase::TapeMountDecisionInfo &tmdi, log::LogContext &logContext);
+  void fillMountPolicyNamesForPotentialMounts(SchedulerDatabase::TapeMountDecisionInfo &tmdi, log::LogContext &logContext);
 
   /**
    * An internal helper function to build a list of mount policies with the map of the
