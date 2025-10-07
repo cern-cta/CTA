@@ -60,3 +60,4 @@ data:
     {{- if $.Values.conf.telemetry.metricsExportFileEndpoint }}
     cta.telemetry.metrics.export.file.endpoint {{ $.Values.conf.telemetry.metricsExportFileEndpoint }}
     {{- end }}
+ 

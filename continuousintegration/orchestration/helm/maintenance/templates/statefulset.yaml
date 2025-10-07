@@ -48,14 +48,13 @@ spec:
         image: {{ include "maintenance.image" . }}
         imagePullPolicy: {{ include "maintenance.imagePullPolicy" . }}
         stdin: true
-        command: ["bash", "/scripts/maintenance.sh"]
+        command: ["/bin/bash", "-c"]
+        args: ["{{- if $.Values.preRun.enabled }}/scripts/pre_run.sh;{{- end }} /scripts/maintenance.sh; {{- if $.Values.postRun.enabled }}/scripts/post_run.sh;{{- end}}"]
         readinessProbe:
           exec:
             command: ["sh", "-c", "pgrep -f /usr/bin/cta-maintenance > /dev/null"]
           initialDelaySeconds: 5
-          periodSeconds: 5
-          timeoutSeconds: 3
-          successThreshold: 1
+          periodSeconds: 2
           failureThreshold: 60
         securityContext:
           allowPrivilegeEscalation: {{ include "common.securityContext.allowPrivilegeEscalation" . }}
@@ -79,8 +78,7 @@ spec:
           value: /etc/cta/cta-maintenance.sss.keytab
         volumeMounts:
         - name: scripts-volume
-          mountPath: /scripts/maintenance.sh
-          subPath: maintenance.sh
+          mountPath: /scripts
         - name: cta-maintenance-config
           mountPath: /etc/cta/cta-maintenance.conf
           subPath: cta-maintenance.conf

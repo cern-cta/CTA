@@ -55,7 +55,7 @@ Maintenance::Maintenance(cta::log::LogContext &lc, const cta::common::Config &co
 
 
   // Instantiate telemetry
-  if (config.getOptionValueBool("cta.experimental.telemetry.enabled").value_or("false")) {
+  if (config.getOptionValueBool("cta.experimental.telemetry.enabled").value_or(false)) {
     try {
       std::string metricsBackend = config.getOptionValueStr("cta.telemetry.metrics.backend").value_or("NOOP");
       if (cta::telemetry::stringToMetricsBackend(metricsBackend) == cta::telemetry::MetricsBackend::STDOUT) {
@@ -78,7 +78,7 @@ Maintenance::Maintenance(cta::log::LogContext &lc, const cta::common::Config &co
           .metricsExportTimeout(std::chrono::milliseconds(config.getOptionValueInt("cta.telemetry.metrics.export.timeout").value_or(3000)))
           .metricsOtlpEndpoint(config.getOptionValueStr("cta.telemetry.metrics.export.otlp.endpoint").value())
           .metricsOtlpBasicAuthString(otlpBasicAuthString)
-          .metricsFileEndpoint(config.getOptionValueStr("cta.telemetry.metrics.export.file.endpoint").value())
+          .metricsFileEndpoint(config.getOptionValueStr("cta.telemetry.metrics.export.file.endpoint").value_or("/var/log/cta/cta-taped-metrics.txt"))
           .build();
       // taped is a special case where we only do initTelemetry after the process name has been set
       cta::telemetry::initTelemetryConfig(telemetryConfig);

@@ -21,7 +21,7 @@ echo "$(date '+%Y-%m-%d %H:%M:%S') [$(basename "${BASH_SOURCE[0]}")] Started"
 # install RPMs
 dnf install -y cta-maintenance
 
-# to get rmcd logs to stdout
+# to get maintenance logs to stdout
 tail -F /var/log/cta/cta-maintenance.log &
 echo "$(date '+%Y-%m-%d %H:%M:%S') [$(basename "${BASH_SOURCE[0]}")] Ready"
 runuser --shell='/bin/bash' --session-command="/usr/bin/cta-maintenance --foreground --log-to-file=/var/log/cta/cta-maintenance.log --log-format json --config /etc/cta/cta-maintenance.conf" cta
