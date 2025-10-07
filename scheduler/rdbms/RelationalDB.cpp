@@ -784,6 +784,10 @@ void RelationalDB::setRetrieveJobBatchReportedToUser(std::list<SchedulerDatabase
   return;
 }
 
+void RelationalDB::trimEmptyQueues(log::LogContext& lc) {
+  throw cta::exception::Exception(std::string(__FUNCTION__) + std::string("Not implemented"));
+}
+
 SchedulerDatabase::JobsFailedSummary RelationalDB::getRetrieveJobsFailedSummary(log::LogContext& logContext) {
   throw cta::exception::Exception(std::string(__FUNCTION__) + std::string("Not implemented"));
 }
@@ -820,10 +824,6 @@ RelationalDB::getMountInfo(std::string_view logicalLibraryName, log::LogContext&
   return ret;
 }
 
-void RelationalDB::trimEmptyQueues(log::LogContext& lc) {
-  throw cta::exception::Exception(std::string(__FUNCTION__) + std::string("Not implemented"));
-}
-
 std::unique_ptr<SchedulerDatabase::TapeMountDecisionInfo>
 RelationalDB::getMountInfoNoLock(PurposeGetMountInfo purpose, log::LogContext& logContext) {
   utils::Timer t;
@@ -836,7 +836,6 @@ RelationalDB::getMountInfoNoLock(PurposeGetMountInfo purpose, log::LogContext& l
   // Get all the tape pools and tapes with queues (potential mounts)
   auto fetchNoLockTime = t.secs(utils::Timer::resetCounter);
   fetchMountInfo(tmdi, purpose, logContext);
-
   auto fetchMountInfoTime = t.secs(utils::Timer::resetCounter);
   std::unique_ptr<SchedulerDatabase::TapeMountDecisionInfo> ret(std::move(privateRet));
   log::ScopedParamContainer params(logContext);
@@ -854,11 +853,6 @@ void RelationalDB::fetchMountInfo(SchedulerDatabase::TapeMountDecisionInfo& tmdi
   // Get a reference to the transaction, which may or may not be holding the scheduler global lock
   const auto& txn = static_cast<const schedulerdb::TapeMountDecisionInfo*>(&tmdi)->m_txn;
 
-  // Map of mount policies. getCachedMountPolicies() should be refactored to return a map instead of a list. In the meantime, copy the values into a local map.
-  std::map<std::string, common::dataStructures::MountPolicy, std::less<>> cachedMountPoliciesMap;
-  for (const auto& mp : m_catalogue.MountPolicy()->getCachedMountPolicies()) {
-    cachedMountPoliciesMap[mp.name] = mp;
-  }
   // Map of (mount type, tapepool/vid) -> PotentialMount to aggregate queue info
   std::map<std::pair<common::dataStructures::MountType, std::string>, SchedulerDatabase::PotentialMount>
     potentialMounts;
@@ -867,7 +861,7 @@ void RelationalDB::fetchMountInfo(SchedulerDatabase::TapeMountDecisionInfo& tmdi
   auto rset = cta::schedulerdb::postgres::ArchiveJobSummaryRow::selectNewJobs(*txn);
   while (rset.next()) {
     cta::schedulerdb::postgres::ArchiveJobSummaryRow ajsr(rset);
-    // Set the queue type
+    // Set the queue type jobsCount
     common::dataStructures::MountType mountType;
     switch (ajsr.status) {
       case schedulerdb::ArchiveJobStatus::AJS_ToTransferForUser:
@@ -880,26 +874,17 @@ void RelationalDB::fetchMountInfo(SchedulerDatabase::TapeMountDecisionInfo& tmdi
         continue;
     }
     // Get statistics for User and Repack archive queues
-    auto& m = potentialMounts[std::make_pair(mountType, ajsr.tapePool)];
+    tmdi.potentialMounts.push_back(SchedulerDatabase::PotentialMount());
+    auto& m = tmdi.potentialMounts.back();
     m.type = mountType;
     m.tapePool = ajsr.tapePool;
     m.bytesQueued += ajsr.jobsTotalSize;
     m.filesQueued += ajsr.jobsCount;
+    m.mountPolicyCountMap[ajsr.mountPolicy] = ajsr.jobsCount;
     m.oldestJobStartTime =
       ajsr.oldestJobStartTime < m.oldestJobStartTime ? ajsr.oldestJobStartTime : m.oldestJobStartTime;
-    // The cached mount policies take priority. If the mount policy has been deleted from the catalogue,
-    // we fall back to the mount policy values cached in the queue.
-    uint64_t priority;
-    time_t minRequestAge;
-    if (auto mpIt = cachedMountPoliciesMap.find(ajsr.mountPolicy); mpIt != cachedMountPoliciesMap.end()) {
-      priority = mpIt->second.archivePriority;
-      minRequestAge = mpIt->second.archiveMinRequestAge;
-    } else {
-      priority = ajsr.archivePriority;
-      minRequestAge = ajsr.archiveMinRequestAge;
-    }
-    m.priority = priority > m.priority ? priority : m.priority;
-    m.minRequestAge = minRequestAge < m.minRequestAge ? minRequestAge : m.minRequestAge;
+    m.minRequestAge = ajsr.archiveMinRequestAge;
+    m.priority = ajsr.archivePriority;
     m.logicalLibrary = "";
   }
   timings.insertAndReset("getScheduledArchiveJobSummariesTime", t);
@@ -912,10 +897,8 @@ void RelationalDB::fetchMountInfo(SchedulerDatabase::TapeMountDecisionInfo& tmdi
   std::optional<std::string> highestPriorityMountPolicyName;
   std::optional<std::string> lowestRequestAgeMountPolicyName;
   std::vector<cta::schedulerdb::postgres::RetrieveJobSummaryRow> rjsr_vector;
-  // Set the queue type
-  common::dataStructures::MountType mountType = common::dataStructures::MountType::Retrieve;
-  // first we find out from all the mount policies in the queues
-  // which one has the highest priority and lowest request age which we need for later
+  // first we find out from all the  mount policies in the queues
+  // with the highest priority and lowest request age which we collect for later
   while (rrset.next()) {
     cnt++;
     rjsr_vector.emplace_back(rrset);
@@ -938,20 +921,10 @@ void RelationalDB::fetchMountInfo(SchedulerDatabase::TapeMountDecisionInfo& tmdi
   // for now we create a mount per summary row (assuming there would not be
   // the same activity twice with 2 mount policies or 2 different VIDs selected)
   for (const auto& rjsr : rjsr_vector) {
-    auto& m = potentialMounts[std::make_pair(mountType, rjsr.vid)];
-    // we check is higher priority and lower request age is not
-    // defined in the catalogue for the same mount policy name, if so we take the catalogue numbers
-    uint64_t priority;
-    time_t minRequestAge;
-    if (auto mpIt = cachedMountPoliciesMap.find(rjsr.mountPolicy); mpIt != cachedMountPoliciesMap.end()) {
-      priority = mpIt->second.archivePriority;
-      minRequestAge = mpIt->second.archiveMinRequestAge;
-    } else {
-      priority = rjsr.priority;
-      minRequestAge = rjsr.minRetrieveRequestAge;
-    }
-    m.priority = priority > m.priority ? priority : m.priority;
-    m.minRequestAge = minRequestAge < m.minRequestAge ? minRequestAge : m.minRequestAge;
+    tmdi.potentialMounts.push_back(SchedulerDatabase::PotentialMount());
+    auto& m = tmdi.potentialMounts.back();
+    m.priority = rjsr.priority;
+    m.minRequestAge = rjsr.minRetrieveRequestAge;
     m.vid = rjsr.vid;
     m.type = cta::common::dataStructures::MountType::Retrieve;
     m.bytesQueued = rjsr.jobsTotalSize;
@@ -967,10 +940,8 @@ void RelationalDB::fetchMountInfo(SchedulerDatabase::TapeMountDecisionInfo& tmdi
     m.vo = "";                     // The vo is not known here, and will be determined by the caller.
     m.capacityInBytes = 0;         // The capacity is not known here, and will be determined by the caller.
     m.labelFormat = std::nullopt;  // The labelFormat is not known here, and may be determined by the caller.
-    /* not sure what mountPolicyNames is for ???
-    * are we mounting with multiple mount policies in the game ?
-    * m.mountPolicyNames = queueMountPolicyNames;
-    * sleepInfo - TO BE REVIEWED BEFORE IMPLEMENTING !
+    m.mountPolicyCountMap[rjsr.mountPolicy] = rjsr.jobsCount;
+    /* sleepInfo - TO BE REVIEWED BEFORE IMPLEMENTING ! (will come implemented with REPACK)
     * We will display the sleep flag only if it is not expired (15 minutes timeout, hardcoded).
     * This allows having a single decision point instead of implementing is at the consumer levels.
     * if (rqSummary.sleepInfo && (::time(nullptr) < (rqSummary.sleepInfo.value().sleepStartTime +
@@ -982,80 +953,7 @@ void RelationalDB::fetchMountInfo(SchedulerDatabase::TapeMountDecisionInfo& tmdi
     * }
     */
   }
-
   timings.insertAndReset("getScheduledRetrieveJobSummariesTime", t);
-
-  // Copy the aggregated Potential Mounts into the TapeMountDecisionInfo
-  for (const auto& [mt, pm] : potentialMounts) {
-    lc.log(log::DEBUG, "In RelationalDB::fetchMountInfo(): pushing back potential mount to the vector.");
-    tmdi.potentialMounts.push_back(pm);
-  }
-
-  // Collect information about existing and next mounts. If a next mount exists the drive "counts double",
-  // but the corresponding drive is either about to mount, or about to replace its current mount.
-  const auto driveStates = m_catalogue.DriveState()->getTapeDrives();
-  timings.insertAndReset("fetchDriveStateTime", t);
-
-  for (const auto& driveState : driveStates) {
-    switch (driveState.driveStatus) {
-      case common::dataStructures::DriveStatus::Starting:
-      case common::dataStructures::DriveStatus::Mounting:
-      case common::dataStructures::DriveStatus::Transferring:
-      case common::dataStructures::DriveStatus::Unloading:
-      case common::dataStructures::DriveStatus::Unmounting:
-      case common::dataStructures::DriveStatus::DrainingToDisk:
-      case common::dataStructures::DriveStatus::CleaningUp: {
-        tmdi.existingOrNextMounts.emplace_back(ExistingMount());
-        auto& existingMount = tmdi.existingOrNextMounts.back();
-        existingMount.type = driveState.mountType;
-        existingMount.tapePool = driveState.currentTapePool ? driveState.currentTapePool.value() : "";
-        existingMount.vo = driveState.currentVo ? driveState.currentVo.value() : "";
-        existingMount.driveName = driveState.driveName;
-        existingMount.vid = driveState.currentVid ? driveState.currentVid.value() : "";
-        existingMount.currentMount = true;
-        existingMount.bytesTransferred =
-          driveState.bytesTransferedInSession ? driveState.bytesTransferedInSession.value() : 0;
-        existingMount.filesTransferred =
-          driveState.filesTransferedInSession ? driveState.filesTransferedInSession.value() : 0;
-        if (driveState.filesTransferedInSession && driveState.sessionElapsedTime &&
-            driveState.sessionElapsedTime.value() > 0) {
-          existingMount.averageBandwidth =
-            driveState.filesTransferedInSession.value() / driveState.sessionElapsedTime.value();
-        } else {
-          existingMount.averageBandwidth = 0.0;
-        }
-        existingMount.activity = driveState.currentActivity ? driveState.currentActivity.value() : "";
-      }
-      default:
-        break;
-    }
-
-    if (driveState.nextMountType == common::dataStructures::MountType::NoMount) {
-      continue;
-    }
-    switch (driveState.nextMountType) {
-      case common::dataStructures::MountType::ArchiveForUser:
-      case common::dataStructures::MountType::ArchiveForRepack:
-      case common::dataStructures::MountType::Retrieve:
-      case common::dataStructures::MountType::Label: {
-        tmdi.existingOrNextMounts.emplace_back(ExistingMount());
-        auto& nextMount = tmdi.existingOrNextMounts.back();
-        nextMount.type = driveState.nextMountType;
-        nextMount.tapePool = driveState.nextTapePool ? driveState.nextTapePool.value() : "";
-        nextMount.vo = driveState.nextVo ? driveState.nextVo.value() : "";
-        nextMount.driveName = driveState.driveName;
-        nextMount.vid = driveState.nextVid ? driveState.nextVid.value() : "";
-        nextMount.currentMount = false;
-        nextMount.bytesTransferred = 0;
-        nextMount.filesTransferred = 0;
-        nextMount.averageBandwidth = 0;
-        nextMount.activity = driveState.nextActivity ? driveState.nextActivity.value() : "";
-      }
-      default:
-        break;
-    }
-  }
-  timings.insertAndReset("getDriveStatesTime", t);
   log::ScopedParamContainer params(lc);
   params.add("totalTime", ttotal.secs());
   timings.addToLog(params);

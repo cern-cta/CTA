@@ -421,7 +421,7 @@ TEST_P(SchedulerDatabaseTest, createQueueAndPutToSleep) {
                                              "vid", "tapePool", "vo", "mediaType", "vendor", 123456789,
                                              cta::common::dataStructures::Label::Format::CTA,
                                              0, 0, 0, 0, 0, 0, "library", 0.0, false, 0, "", 0, 0,
-                                             std::nullopt, std::nullopt, std::nullopt, std::nullopt, std::nullopt};
+                                             std::nullopt, std::nullopt, std::nullopt, mountInfo->potentialMounts.back().mountPolicyCountMap, std::nullopt, std::nullopt};
   auto rm = mountInfo->createRetrieveMount(mount, "drive", "library", "host");
   ASSERT_EQ(0, mountInfo->potentialMounts.size());
   rm->putQueueToSleep(diskSystem.name, diskSystem.sleepTime, lc);

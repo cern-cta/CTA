@@ -371,6 +371,31 @@ private:
 
 public:
   /**
+   * After TapeMountDecisionInfo is received from the Scheduler Database
+   * with Potential Mounts we enrich this with information about Existing and Next Mounts
+   */
+  void getExistingAndNextMounts(SchedulerDatabase::TapeMountDecisionInfo &tmdi, log::LogContext &logContext);
+  /**
+   * After TapeMountDecisionInfo is received from the Scheduler Database
+   * we iterate the Potential Mounts and compare the Mount Polisies with those in the catalogue to
+   * select only eligible Mount Policy Names
+   */
+  void fillMountPolicyForPotentialMounts(SchedulerDatabase::TapeMountDecisionInfo &tmdi, log::LogContext &logContext);
+
+  /**
+   * An internal helper function to build a list of mount policies with the map of the
+   * mount policies coming from the queue JobsSummary object (OStoreDB concept)
+   * The map contains the name of the mount policies, so it is just a conversion from the name to an entire mount policy object
+   * @param mountPoliciesInCatalogue the list of the mountPolicies given by the Catalogue
+   * @param queueMountPolicyMap the map of the <mountPolicyName,counter> coming from the queue JobsSummary object
+   * @return the list of MountPolicies that are in the map
+   */
+
+  std::list <common::dataStructures::MountPolicy>
+  getMountPoliciesInQueue(const std::list <common::dataStructures::MountPolicy> &mountPoliciesInCatalogue,
+                          const std::map <std::string, uint64_t> &queueMountPolicyMap);
+
+  /**
    * Run the mount decision logic lock free, so we have no contention in the
    * most usual case where there is no mount to create.
    * @param logicalLibraryName library for the drive we are scheduling
@@ -547,6 +572,7 @@ private:
   const uint64_t m_minBytesToWarrantAMount;
 
   std::unique_ptr<TapeDrivesCatalogueState> m_tapeDrivesState;
+
 };  // class Scheduler
 
 }  // namespace cta

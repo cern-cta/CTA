@@ -851,6 +851,7 @@ public:
     std::optional<std::string> highestPriorityMountPolicyName;
     std::optional<std::string> lowestRequestAgeMountPolicyName;
 
+    std::map<std::string, uint64_t> mountPolicyCountMap = {};
     std::optional<std::list<std::string>> mountPolicyNames; /**< Names of mount policies for the mount*/
 
     std::optional<std::string> encryptionKeyName;  // The optional name of the encryption key.
@@ -972,9 +973,9 @@ public:
   enum PurposeGetMountInfo { GET_NEXT_MOUNT, SHOW_QUEUES };
 
   /**
-   * A function dumping the relevant mount information for deciding which
-   * tape to mount next. This also starts the mount decision process.
-   */
+- * A function dumping the relevant mount information for deciding which
+- * tape to mount next. This also starts the mount decision process.
+- */
   virtual std::unique_ptr<TapeMountDecisionInfo> getMountInfo(log::LogContext& logContext) = 0;
   virtual std::unique_ptr<TapeMountDecisionInfo> getMountInfo(log::LogContext& logContext, uint64_t timeout_us) = 0;
   // following method is used by RDBMS Scheduler DB type only
