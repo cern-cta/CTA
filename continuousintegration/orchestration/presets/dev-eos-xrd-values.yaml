@@ -53,7 +53,7 @@ mgm:
         [Issuer OSG-Connect]
         issuer = https://dteam-auth.cern.ch/
         base_path = /
-        map_subject = false
+        map_subject = true
         default_user = poweruser1
 
   xrd:
