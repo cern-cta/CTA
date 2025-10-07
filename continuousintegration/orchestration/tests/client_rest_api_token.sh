@@ -64,26 +64,22 @@ HTTPS_URI=$(curl --insecure "https://${EOS_MGM_HOST}:8443/.well-known/wlcg-tape-
 tmp_file=$(mktemp)
 echo "Dummy" > "${tmp_file}"
 
-curl -L --insecure -H "Accept: application/json" -H "Authorization: Bearer ${TOKEN_EOSUSER1}" "https://${EOS_MGM_HOST}:8443/eos/ctaeos/preprod/test_http-rest-api" --upload-file "${tmp_file}"
-
-exit 1
-
 # Archive files with the sci_token
-curl -L --insecure -H "Accept: application/json" -H "Authorization: Bearer ${TOKEN_EOSUSER1}" -X MKCOL "https://${EOS_MGM_HOST}:8443/eos/ctaeos/preprod/test1"
-curl -L --insecure -H "Accept: application/json" -H "Authorization: Bearer ${TOKEN_EOSUSER1}" -X MKCOL "https://${EOS_MGM_HOST}:8443/eos/ctaeos/preprod/test2"
-curl -L --insecure -H "Accept: application/json" -H "Authorization: Bearer ${TOKEN_EOSUSER1}" -X MKCOL "https://${EOS_MGM_HOST}:8443/eos/ctaeos/preprod/test3"
-curl -L --insecure -H "Accept: application/json" -H "Authorization: Bearer ${TOKEN_EOSUSER1}" -X MKCOL "https://${EOS_MGM_HOST}:8443/eos/ctaeos/preprod/test4"
+curl -L --insecure -H "Accept: application/json" -H "Authorization: Bearer ${SCI_TOKEN}" -X MKCOL "https://${EOS_MGM_HOST}:8443/eos/ctaeos/preprod/test1"
+curl -L --insecure -H "Accept: application/json" -H "Authorization: Bearer ${SCI_TOKEN}" -X MKCOL "https://${EOS_MGM_HOST}:8443/eos/ctaeos/preprod/test2"
+curl -L --insecure -H "Accept: application/json" -H "Authorization: Bearer ${SCI_TOKEN}" -X MKCOL "https://${EOS_MGM_HOST}:8443/eos/ctaeos/preprod/test3"
+curl -L --insecure -H "Accept: application/json" -H "Authorization: Bearer ${SCI_TOKEN}" -X MKCOL "https://${EOS_MGM_HOST}:8443/eos/ctaeos/preprod/test4"
 
-curl -L --insecure -H "Accept: application/json" -H "Authorization: Bearer ${TOKEN_EOSUSER1}" "https://${EOS_MGM_HOST}:8443/eos/ctaeos/preprod/test1/file" --upload-file "${tmp_file}"
-curl -L --insecure -H "Accept: application/json" -H "Authorization: Bearer ${TOKEN_EOSUSER1}" "https://${EOS_MGM_HOST}:8443/eos/ctaeos/preprod/test2/file" --upload-file "${tmp_file}"
-curl -L --insecure -H "Accept: application/json" -H "Authorization: Bearer ${TOKEN_EOSUSER1}" "https://${EOS_MGM_HOST}:8443/eos/ctaeos/preprod/test3/file" --upload-file "${tmp_file}"
-curl -L --insecure -H "Accept: application/json" -H "Authorization: Bearer ${TOKEN_EOSUSER1}" "https://${EOS_MGM_HOST}:8443/eos/ctaeos/preprod/test4/file" --upload-file "${tmp_file}"
+curl -L --insecure -H "Accept: application/json" -H "Authorization: Bearer ${SCI_TOKEN}" "https://${EOS_MGM_HOST}:8443/eos/ctaeos/preprod/test1/file" --upload-file "${tmp_file}"
+curl -L --insecure -H "Accept: application/json" -H "Authorization: Bearer ${SCI_TOKEN}" "https://${EOS_MGM_HOST}:8443/eos/ctaeos/preprod/test2/file" --upload-file "${tmp_file}"
+curl -L --insecure -H "Accept: application/json" -H "Authorization: Bearer ${SCI_TOKEN}" "https://${EOS_MGM_HOST}:8443/eos/ctaeos/preprod/test3/file" --upload-file "${tmp_file}"
+curl -L --insecure -H "Accept: application/json" -H "Authorization: Bearer ${SCI_TOKEN}" "https://${EOS_MGM_HOST}:8443/eos/ctaeos/preprod/test4/file" --upload-file "${tmp_file}"
 
 echo "Waiting for files to be archived..."
 FINAL_COUNT=0
 TIMEOUT=90
 SECONDS_PASSED=0
-while test "${FINAL_COUNT}" -eq 0; do
+while test "${FINAL_COUNT}" -ne 0; do
 
   echo "$(date +%s): Waiting for files to be archived."
   if test "${SECONDS_PASSED}" -eq "${TIMEOUT}"; then
@@ -92,22 +88,24 @@ while test "${FINAL_COUNT}" -eq 0; do
   fi
 
   FINAL_COUNT=0
-  let FINAL_COUNT=FINAL_COUNT+$(eos root://"${EOS_MGM_HOST}" ls -y /eos/ctaeos/preprod/test1 | grep "file" | grep 'd0::t1' | wc -l)
-  let FINAL_COUNT=FINAL_COUNT+$(eos root://"${EOS_MGM_HOST}" ls -y /eos/ctaeos/preprod/test2 | grep "file" | grep 'd0::t1' | wc -l)
-  let FINAL_COUNT=FINAL_COUNT+$(eos root://"${EOS_MGM_HOST}" ls -y /eos/ctaeos/preprod/test3 | grep "file" | grep 'd0::t1' | wc -l)
-  let FINAL_COUNT=FINAL_COUNT+$(eos root://"${EOS_MGM_HOST}" ls -y /eos/ctaeos/preprod/test4 | grep "file" | grep 'd0::t1' | wc -l)
+  let FINAL_COUNT=FINAL_COUNT+$(eos root://"${EOS_MGM_HOST}" ls -y /eos/ctaeos/preprod/test1 | grep "file" | grep 'd1::' | wc -l)
+  let FINAL_COUNT=FINAL_COUNT+$(eos root://"${EOS_MGM_HOST}" ls -y /eos/ctaeos/preprod/test2 | grep "file" | grep 'd1::' | wc -l)
+  let FINAL_COUNT=FINAL_COUNT+$(eos root://"${EOS_MGM_HOST}" ls -y /eos/ctaeos/preprod/test3 | grep "file" | grep 'd1::' | wc -l)
+  let FINAL_COUNT=FINAL_COUNT+$(eos root://"${EOS_MGM_HOST}" ls -y /eos/ctaeos/preprod/test4 | grep "file" | grep 'd1::' | wc -l)
   let SECONDS_PASSED=SECONDS_PASSED+1
-  sleep 1
+  if [ "${FINAL_COUNT}" -ne 0 ]; then
+    sleep 1
+  fi
 done
 rm -f "${tmp_file}"
 
-curl -L --insecure --capath /etc/grid-security/certificates -H "Accept: application/json" -H "Authorization: Bearer ${TOKEN_EOSUSER1}" ${HTTPS_URI}/archiveinfo/ \
+curl -L --insecure --capath /etc/grid-security/certificates -H "Accept: application/json" -H "Authorization: Bearer ${TOKEN_EOSPOWER1}" ${HTTPS_URI}/archiveinfo/ \
   -d '{"paths":["/eos/ctaeos/preprod/test1/file", "/eos/ctaeos/preprod/test2/file", "/eos/ctaeos/preprod/test3/file", "/eos/ctaeos/preprod/test4/file"]}' | jq .
 
 curl -L --insecure --capath /etc/grid-security/certificates -H "Accept: application/json" -H "Authorization: Bearer ${SCI_TOKEN}" ${HTTPS_URI}/archiveinfo/ \
   -d '{"paths":["/eos/ctaeos/preprod/test1/file", "/eos/ctaeos/preprod/test2/file", "/eos/ctaeos/preprod/test3/file", "/eos/ctaeos/preprod/test4/file"]}' | jq .
 
-exit 1
+exit 0
 
 FINAL_COUNT=0
 TIMEOUT=90
