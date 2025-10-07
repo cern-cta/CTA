@@ -11,6 +11,7 @@
 #include <algorithm>
 
 #include "cta_frontend.pb.h"
+#include "cta_admin.pb.h"
 
 namespace cta::cmdline {
 
@@ -18,7 +19,8 @@ class ShowQueuesResponseStream : public CtaAdminResponseStream {
 public:
   ShowQueuesResponseStream(cta::catalogue::Catalogue& catalogue,
                            cta::Scheduler& scheduler,
-                           const frontend::AdminCmdStream& requestMsg,
+                           const std::string instanceName,
+                           const admin::AdminCmd& adminCmd,
                            cta::log::LogContext& lc);
 
   bool isDone() override;
@@ -33,9 +35,10 @@ private:
 
 ShowQueuesResponseStream::ShowQueuesResponseStream(cta::catalogue::Catalogue& catalogue,
                                                    cta::Scheduler& scheduler,
-                                                   const frontend::AdminCmdStream& requestMsg,
+                                                   const std::string instanceName,
+                                                   const admin::AdminCmd& adminCmd,
                                                    cta::log::LogContext& lc)
-    : CtaAdminResponseStream(catalogue, scheduler, requestMsg.getInstanceName()),
+    : CtaAdminResponseStream(catalogue, scheduler, instanceName),
       m_lc(lc),
       m_schedulerBackendName(scheduler.getSchedulerBackendName()) {
   if (!m_schedulerBackendName) {

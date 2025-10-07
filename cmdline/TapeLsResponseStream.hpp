@@ -9,6 +9,7 @@
 #include "common/dataStructures/LabelFormatSerDeser.hpp"
 
 #include "cta_frontend.pb.h"
+#include "cta_admin.pb.h"
 
 namespace cta::cmdline {
 
@@ -16,7 +17,8 @@ class TapeLsResponseStream : public CtaAdminResponseStream {
 public:
   TapeLsResponseStream(cta::catalogue::Catalogue& catalogue,
                        cta::Scheduler& scheduler,
-                       const frontend::AdminCmdStream& requestMsg,
+                       const std::string instanceName,
+                       const admin::AdminCmd& adminCmd,
                        uint64_t missingFileCopiesMinAgeSecs);
 
   bool isDone() override;
@@ -32,11 +34,12 @@ private:
 
 TapeLsResponseStream::TapeLsResponseStream(cta::catalogue::Catalogue& catalogue,
                                            cta::Scheduler& scheduler,
-                                           const frontend::AdminCmdStream& requestMsg,
+                                           const std::string instanceName,
+                                           const admin::AdminCmd& adminCmd,
                                            uint64_t missingFileCopiesMinAgeSecs)
-    : CtaAdminResponseStream(catalogue, scheduler, requestMsg.getInstanceName()),
+    : CtaAdminResponseStream(catalogue, scheduler, instanceName),
       m_missingFileCopiesMinAgeSecs(missingFileCopiesMinAgeSecs) {
-  const admin::AdminCmd& admincmd = requestMsg.getAdminCmd();
+  const admin::AdminCmd& admincmd = adminCmd;
   using namespace cta::admin;
 
   cta::frontend::AdminCmdOptions request(admincmd);

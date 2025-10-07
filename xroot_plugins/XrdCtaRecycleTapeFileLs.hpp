@@ -37,7 +37,10 @@ RecycleTapeFileLsStream::RecycleTapeFileLsStream(const frontend::AdminCmdStream&
                                                  cta::Scheduler& scheduler)
     : XrdCtaStream(catalogue,
                    scheduler,
-                   std::make_unique<cta::cmdline::RecycleTapeFileLsResponseStream>(catalogue, scheduler, requestMsg)) {
+                   std::make_unique<cta::cmdline::RecycleTapeFileLsResponseStream>(catalogue,
+                                                                                   scheduler,
+                                                                                   requestMsg.getInstanceName(),
+                                                                                   requestMsg.getAdminCmd())) {
   XrdSsiPb::Log::Msg(XrdSsiPb::Log::DEBUG, LOG_SUFFIX, " constructor");
 }
 

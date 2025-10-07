@@ -39,7 +39,8 @@ TapeLsStream::TapeLsStream(const frontend::AdminCmdStream& requestMsg,
                    scheduler,
                    std::make_unique<cta::cmdline::TapeLsResponseStream>(catalogue,
                                                                         scheduler,
-                                                                        requestMsg,
+                                                                        requestMsg.getInstanceName(),
+                                                                        requestMsg.getAdminCmd(),
                                                                         requestMsg.getMissingFileCopiesMinAgeSecs())) {
   XrdSsiPb::Log::Msg(XrdSsiPb::Log::DEBUG, LOG_SUFFIX, " constructor");
 }
