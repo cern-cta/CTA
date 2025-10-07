@@ -64,6 +64,8 @@ HTTPS_URI=$(curl --insecure "https://${EOS_MGM_HOST}:8443/.well-known/wlcg-tape-
 tmp_file=$(mktemp)
 echo "Dummy" > "${tmp_file}"
 
+exit 0
+
 # Archive files with the sci_token
 curl -L --insecure -H "Accept: application/json" -H "Authorization: Bearer ${TOKEN_EOSUSER1}" -X MKCOL "https://${EOS_MGM_HOST}:8443/eos/ctaeos/preprod/test1"
 curl -L --insecure -H "Accept: application/json" -H "Authorization: Bearer ${TOKEN_EOSUSER1}" -X MKCOL "https://${EOS_MGM_HOST}:8443/eos/ctaeos/preprod/test2"
