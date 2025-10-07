@@ -98,8 +98,8 @@ int main(const int argc, char **const argv) {
   const common::Config config(cmdLineParams->configFileLocation);
 
   // Change user and group
-  const std::string userName = config.getOptionValueStr("cta.daemon_user").value();
-  const std::string groupName = config.getOptionValueStr("cta.daemon_group").value();
+  const std::string userName = config.getOptionValueStr("cta.daemon_user").value_or("cta");
+  const std::string groupName = config.getOptionValueStr("cta.daemon_group").value_or("tape");
 
   try {
     (*logPtr)(log::INFO, "Setting user name and group name of current process",
