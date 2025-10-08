@@ -853,9 +853,6 @@ void RelationalDB::fetchMountInfo(SchedulerDatabase::TapeMountDecisionInfo& tmdi
   // Get a reference to the transaction, which may or may not be holding the scheduler global lock
   const auto& txn = static_cast<const schedulerdb::TapeMountDecisionInfo*>(&tmdi)->m_txn;
 
-  // Map of (mount type, tapepool/vid) -> PotentialMount to aggregate queue info
-  std::map<std::pair<common::dataStructures::MountType, std::string>, SchedulerDatabase::PotentialMount>
-    potentialMounts;
   timings.insertAndReset("fetchMountPolicyCatalogueTime", t);
   // Iterate over all archive queues
   auto rset = cta::schedulerdb::postgres::ArchiveJobSummaryRow::selectNewJobs(*txn);
