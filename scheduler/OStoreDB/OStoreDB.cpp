@@ -327,23 +327,7 @@ void OStoreDB::fetchMountInfo(SchedulerDatabase::TapeMountDecisionInfo& tmdi,
       //By default, we get the mountPolicies from the objectstore's queue counters
       m.priority = aqueueJobsSummary.priority;
       m.minRequestAge = aqueueJobsSummary.minArchiveRequestAge;
-      //If there are mount policies in the Catalogue
-      if (mountPolicies.size()) {
-        //We get all the mount policies that are on the queue from the catalogue list
-        auto mountPoliciesInQueueList = getMountPoliciesInQueue(mountPolicies, aqueueJobsSummary.mountPolicyCountMap);
-        m.mountPolicyNames = std::list<std::string>();
-        //If an operator removed the queue mountPolicies from the catalogue, we will have no results...
-        if (mountPoliciesInQueueList.size()) {
-          std::transform(
-            mountPoliciesInQueueList.begin(),
-            mountPoliciesInQueueList.end(),
-            std::back_inserter(m.mountPolicyNames.value()),
-            [](const cta::common::dataStructures::MountPolicy& policy) -> std::string { return policy.name; });
-          std::tie(m.priority, m.minRequestAge) = getArchiveMountPolicyMaxPriorityMinAge(mountPoliciesInQueueList);
-          m.highestPriorityMountPolicyName = getHighestPriorityArchiveMountPolicyName(mountPoliciesInQueueList);
-          m.lowestRequestAgeMountPolicyName = getLowestRequestAgeArchiveMountPolicyName(mountPoliciesInQueueList);
-        }
-      }
+      m.mountPolicyCountMap = aqueueJobsSummary.mountPolicyCountMap;
       m.logicalLibrary = "";
     } else {
       tmdi.queueTrimRequired = true;
@@ -398,24 +382,7 @@ void OStoreDB::fetchMountInfo(SchedulerDatabase::TapeMountDecisionInfo& tmdi,
       m.youngestJobStartTime = aqueueRepackJobsSummary.youngestJobStartTime;
       m.priority = aqueueRepackJobsSummary.priority;
       m.minRequestAge = aqueueRepackJobsSummary.minArchiveRequestAge;
-      //If there are mount policies in the Catalogue
-      if (mountPolicies.size()) {
-        //We get all the mount policies that are on the queue from the catalogue list
-        auto mountPoliciesInQueueList =
-          getMountPoliciesInQueue(mountPolicies, aqueueRepackJobsSummary.mountPolicyCountMap);
-        m.mountPolicyNames = std::list<std::string>();
-        //If an operator removed the queue mountPolicies from the catalogue, we will have no results...
-        if (mountPoliciesInQueueList.size()) {
-          std::transform(
-            mountPoliciesInQueueList.begin(),
-            mountPoliciesInQueueList.end(),
-            std::back_inserter(m.mountPolicyNames.value()),
-            [](const cta::common::dataStructures::MountPolicy& policy) -> std::string { return policy.name; });
-          std::tie(m.priority, m.minRequestAge) = getArchiveMountPolicyMaxPriorityMinAge(mountPoliciesInQueueList);
-          m.highestPriorityMountPolicyName = getHighestPriorityArchiveMountPolicyName(mountPoliciesInQueueList);
-          m.lowestRequestAgeMountPolicyName = getLowestRequestAgeArchiveMountPolicyName(mountPoliciesInQueueList);
-        }
-      }
+      m.mountPolicyCountMap = aqueueRepackJobsSummary.mountPolicyCountMap;
       m.logicalLibrary = "";
     } else {
       tmdi.queueTrimRequired = true;
@@ -464,23 +431,6 @@ void OStoreDB::fetchMountInfo(SchedulerDatabase::TapeMountDecisionInfo& tmdi,
       //Getting the default mountPolicies parameters from the queue summary
       uint64_t minRetrieveRequestAge = rqSummary.minRetrieveRequestAge;
       uint64_t priority = rqSummary.priority;
-      std::optional<std::string> highestPriorityMountPolicyName;
-      std::optional<std::string> lowestRequestAgeMountPolicyName;
-      std::list<std::string> queueMountPolicyNames;
-      //Try to get the last values of the mountPolicies from the ones in the Catalogue
-      if (mountPolicies.size()) {
-        auto mountPoliciesInQueueList = getMountPoliciesInQueue(mountPolicies, rqSummary.mountPolicyCountMap);
-        if (mountPoliciesInQueueList.size()) {
-          std::transform(
-            mountPoliciesInQueueList.begin(),
-            mountPoliciesInQueueList.end(),
-            std::back_inserter(queueMountPolicyNames),
-            [](const cta::common::dataStructures::MountPolicy& policy) -> std::string { return policy.name; });
-          std::tie(priority, minRetrieveRequestAge) = getRetrieveMountPolicyMaxPriorityMinAge(mountPoliciesInQueueList);
-          highestPriorityMountPolicyName = getHighestPriorityRetrieveMountPolicyName(mountPoliciesInQueueList);
-          lowestRequestAgeMountPolicyName = getLowestRequestAgeRetrieveMountPolicyName(mountPoliciesInQueueList);
-        }
-      }
       // Check if we have activities and if all the jobs are covered by one or not (possible mixed case).
       bool jobsWithoutActivity = true;
       if (rqSummary.activityCounts.size()) {
@@ -499,8 +449,6 @@ void OStoreDB::fetchMountInfo(SchedulerDatabase::TapeMountDecisionInfo& tmdi,
           m.youngestJobStartTime = rqueue.getJobsSummary().youngestJobStartTime;
           m.priority = priority;
           m.minRequestAge = minRetrieveRequestAge;
-          m.highestPriorityMountPolicyName = highestPriorityMountPolicyName;
-          m.lowestRequestAgeMountPolicyName = lowestRequestAgeMountPolicyName;
           m.logicalLibrary = "";         // The logical library is not known here, and will be determined by the caller.
           m.tapePool = "";               // The tape pool is not know and will be determined by the caller.
           m.vendor = "";                 // The vendor is not known here, and will be determined by the caller.
@@ -509,7 +457,7 @@ void OStoreDB::fetchMountInfo(SchedulerDatabase::TapeMountDecisionInfo& tmdi,
           m.capacityInBytes = 0;         // The capacity is not known here, and will be determined by the caller.
           m.labelFormat = std::nullopt;  // The labelFormat is not known here, and may be determined by the caller.
           m.activity = ac.activity;
-          m.mountPolicyNames = queueMountPolicyNames;
+          m.mountPolicyCountMap = rqSummary.mountPolicyCountMap;
           // We will display the sleep flag only if it is not expired (15 minutes timeout, hardcoded).
           // This allows having a single decision point instead of implementing is at the consumer levels.
           if (rqSummary.sleepInfo && (::time(nullptr) < (rqSummary.sleepInfo.value().sleepStartTime +
@@ -532,8 +480,6 @@ void OStoreDB::fetchMountInfo(SchedulerDatabase::TapeMountDecisionInfo& tmdi,
         m.youngestJobStartTime = rqSummary.youngestJobStartTime;
         m.priority = priority;
         m.minRequestAge = minRetrieveRequestAge;
-        m.highestPriorityMountPolicyName = highestPriorityMountPolicyName;
-        m.lowestRequestAgeMountPolicyName = lowestRequestAgeMountPolicyName;
         m.logicalLibrary = "";         // The logical library is not known here, and will be determined by the caller.
         m.tapePool = "";               // The tape pool is not know and will be determined by the caller.
         m.vendor = "";                 // The vendor is not known here, and will be determined by the caller.
@@ -541,7 +487,7 @@ void OStoreDB::fetchMountInfo(SchedulerDatabase::TapeMountDecisionInfo& tmdi,
         m.vo = "";                     // The vo is not known here, and will be determined by the caller.
         m.capacityInBytes = 0;         // The capacity is not known here, and will be determined by the caller.
         m.labelFormat = std::nullopt;  // The labelFormat is not known here, and may be determined by the caller.
-        m.mountPolicyNames = queueMountPolicyNames;
+        m.mountPolicyCountMap = rqSummary.mountPolicyCountMap;
         // We will display the sleep flag only if it is not expired (15 minutes timeout, hardcoded).
         // This allows having a single decision point instead of implementing is at the consumer levels.
         if (rqSummary.sleepInfo && (::time(nullptr) < (rqSummary.sleepInfo.value().sleepStartTime +
@@ -571,112 +517,8 @@ void OStoreDB::fetchMountInfo(SchedulerDatabase::TapeMountDecisionInfo& tmdi,
              "and that lasted more than 1 second.");
     }
   }
-  // Collect information about the existing and next mounts
-  // If a next mount exists the drive "counts double", but the corresponding drive
-  // is either about to mount, or about to replace its current mount.
-  double registerFetchTime = 0;
-  const auto driveStates = m_catalogue.DriveState()->getTapeDrives();
-  registerFetchTime = t.secs(utils::Timer::resetCounter);
-  using common::dataStructures::DriveStatus;
-
-  std::set<int> activeDriveStatuses = {(int) cta::common::dataStructures::DriveStatus::Starting,
-                                       (int) cta::common::dataStructures::DriveStatus::Mounting,
-                                       (int) cta::common::dataStructures::DriveStatus::Transferring,
-                                       (int) cta::common::dataStructures::DriveStatus::Unloading,
-                                       (int) cta::common::dataStructures::DriveStatus::Unmounting,
-                                       (int) cta::common::dataStructures::DriveStatus::DrainingToDisk};
-  std::set<int> activeMountTypes = {(int) cta::common::dataStructures::MountType::ArchiveForUser,
-                                    (int) cta::common::dataStructures::MountType::ArchiveForRepack,
-                                    (int) cta::common::dataStructures::MountType::Retrieve,
-                                    (int) cta::common::dataStructures::MountType::Label};
-  std::unordered_map<std::string, std::string> tapeDrivetoSchedulerBackendNameMap;
-
-  for (const auto & config : m_catalogue.DriveConfig()->getTapeDriveConfigs()) {
-    if (config.keyName == SCHEDULER_NAME_CONFIG_KEY) {
-      tapeDrivetoSchedulerBackendNameMap.emplace(config.tapeDriveName, config.value);
-    }
-  }
-
-  for (const auto& driveState : driveStates) {
-    std::optional<std::string> driveSchedulerBackendName;
-    try {
-      driveSchedulerBackendName = tapeDrivetoSchedulerBackendNameMap.at(driveState.driveName);
-    } catch (std::out_of_range &) {
-      log::ScopedParamContainer(logContext)
-        .add("driveName", driveState.driveName)
-        .log(log::ERR, "In OStoreDB::fetchMountInfo(): drive is missing SchedulerBackendName configuration.");
-    }
-    if (activeDriveStatuses.count(static_cast<int>(driveState.driveStatus))) {
-      if (driveState.mountType == common::dataStructures::MountType::NoMount) {
-        log::ScopedParamContainer(logContext)
-          .add("driveName", driveState.driveName)
-          .add("mountType", common::dataStructures::toCamelCaseString(driveState.mountType))
-          .add("driveStatus", common::dataStructures::toString(driveState.driveStatus))
-          .log(log::WARNING, "In OStoreDB::fetchMountInfo(): the drive has an active status but no mount.");
-        continue;
-      }
-      tmdi.existingOrNextMounts.push_back(ExistingMount());
-      tmdi.existingOrNextMounts.back().type = driveState.mountType;
-      tmdi.existingOrNextMounts.back().tapePool = driveState.currentTapePool.value_or("");
-      tmdi.existingOrNextMounts.back().vo = driveState.currentVo.value_or("");
-      tmdi.existingOrNextMounts.back().driveName = driveState.driveName;
-      tmdi.existingOrNextMounts.back().vid = driveState.currentVid.value_or("");
-      tmdi.existingOrNextMounts.back().currentMount = true;
-      tmdi.existingOrNextMounts.back().bytesTransferred = driveState.bytesTransferedInSession.value_or(0);
-      tmdi.existingOrNextMounts.back().filesTransferred = driveState.filesTransferedInSession.value_or(0);
-      if (driveState.filesTransferedInSession && driveState.sessionElapsedTime &&
-          driveState.sessionElapsedTime.value() > 0) {
-        tmdi.existingOrNextMounts.back().averageBandwidth =
-          driveState.bytesTransferedInSession.value() / driveState.sessionElapsedTime.value();
-      } else {
-        tmdi.existingOrNextMounts.back().averageBandwidth = 0.0;
-      }
-      tmdi.existingOrNextMounts.back().activity = driveState.currentActivity.value_or("");
-      tmdi.existingOrNextMounts.back().schedulerBackendName = driveSchedulerBackendName;
-    }
-    if (driveState.nextMountType == common::dataStructures::MountType::NoMount) {
-      continue;
-    }
-    if (activeMountTypes.count(static_cast<int>(driveState.nextMountType))) {
-      tmdi.existingOrNextMounts.push_back(ExistingMount());
-      tmdi.existingOrNextMounts.back().type = driveState.nextMountType;
-      tmdi.existingOrNextMounts.back().tapePool = driveState.nextTapePool.value_or("");
-      tmdi.existingOrNextMounts.back().vo = driveState.nextVo.value_or("");
-      tmdi.existingOrNextMounts.back().driveName = driveState.driveName;
-      tmdi.existingOrNextMounts.back().vid = driveState.nextVid.value_or("");
-      tmdi.existingOrNextMounts.back().currentMount = false;
-      tmdi.existingOrNextMounts.back().bytesTransferred = 0;
-      tmdi.existingOrNextMounts.back().filesTransferred = 0;
-      tmdi.existingOrNextMounts.back().averageBandwidth = 0;
-      tmdi.existingOrNextMounts.back().activity = driveState.nextActivity.value_or("");
-      tmdi.existingOrNextMounts.back().schedulerBackendName = driveSchedulerBackendName;
-    }
-  }
-
-  auto registerProcessingTime = t.secs(utils::Timer::resetCounter);
-  if ((registerFetchTime > 1) || (registerProcessingTime > 1)) {
-    log::ScopedParamContainer(logContext)
-      .add("queueFetchTime", registerFetchTime)
-      .add("processingTime", registerProcessingTime)
-      .log(log::INFO, "In OStoreDB::fetchMountInfo(): fetched the drive register.");
-  }
 }
 
-//------------------------------------------------------------------------------
-// OStoreDB::getMountPoliciesInQueue()
-//------------------------------------------------------------------------------
-std::list<common::dataStructures::MountPolicy>
-OStoreDB::getMountPoliciesInQueue(const std::list<common::dataStructures::MountPolicy>& mountPoliciesInCatalogue,
-                                  const std::map<std::string, uint64_t>& queueMountPolicyMap) {
-  std::list<cta::common::dataStructures::MountPolicy> mountPolicyRet;
-  std::copy_if(mountPoliciesInCatalogue.begin(),
-               mountPoliciesInCatalogue.end(),
-               std::back_inserter(mountPolicyRet),
-               [&queueMountPolicyMap](const cta::common::dataStructures::MountPolicy& mp) {
-                 return queueMountPolicyMap.find(mp.name) != queueMountPolicyMap.end();
-               });
-  return mountPolicyRet;
-}
 
 //------------------------------------------------------------------------------
 // OStoreDB::getMountInfo()
@@ -684,6 +526,7 @@ OStoreDB::getMountPoliciesInQueue(const std::list<common::dataStructures::MountP
 std::unique_ptr<SchedulerDatabase::TapeMountDecisionInfo> OStoreDB::getMountInfo(log::LogContext& logContext) {
   return OStoreDB::getMountInfo(logContext, 0);
 }
+
 
 //------------------------------------------------------------------------------
 // OStoreDB::getMountInfo()
@@ -723,7 +566,6 @@ std::unique_ptr<SchedulerDatabase::TapeMountDecisionInfo> OStoreDB::getMountInfo
     .add("fetchSchedGlobalTime", fetchSchedGlobalTime)
     .add("status", "SUCCESS")
     .log(log::INFO, "In OStoreDB::getMountInfo(): global lock acquisition.");
-
   fetchMountInfo(tmdi, re, SchedulerDatabase::PurposeGetMountInfo::GET_NEXT_MOUNT, logContext);
   auto fetchMountInfoTime = t.secs(utils::Timer::resetCounter);
   std::unique_ptr<SchedulerDatabase::TapeMountDecisionInfo> ret(std::move(privateRet));

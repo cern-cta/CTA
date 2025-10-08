@@ -625,6 +625,9 @@ TEST_P(SchedulerTest, archive_report_and_retrieve_new_file_no_report) {
     mount->setDriveStatus(cta::common::dataStructures::DriveStatus::Starting);
     auto & osdb=getSchedulerDB();
     auto mi=osdb.getMountInfo(lc);
+    SchedulerDatabase::TapeMountDecisionInfo& tmdi = *mi;
+    scheduler.fillMountPolicyNamesForPotentialMounts(tmdi, lc);
+    scheduler.getExistingAndNextMounts(tmdi, lc);
     ASSERT_EQ(1, mi->existingOrNextMounts.size());
     ASSERT_EQ(s_tapePoolName_default, mi->existingOrNextMounts.front().tapePool);
     ASSERT_EQ(s_vid, mi->existingOrNextMounts.front().vid);
@@ -847,6 +850,9 @@ TEST_P(SchedulerTest, archive_report_and_retrieve_new_file_with_report) {
     mount->setDriveStatus(cta::common::dataStructures::DriveStatus::Starting);
     auto & osdb=getSchedulerDB();
     auto mi=osdb.getMountInfo(lc);
+    SchedulerDatabase::TapeMountDecisionInfo& tmdi = *mi;
+    scheduler.fillMountPolicyNamesForPotentialMounts(tmdi, lc);
+    scheduler.getExistingAndNextMounts(tmdi, lc);
     ASSERT_EQ(1, mi->existingOrNextMounts.size());
     ASSERT_EQ(s_tapePoolName_default, mi->existingOrNextMounts.front().tapePool);
     ASSERT_EQ(s_vid, mi->existingOrNextMounts.front().vid);
@@ -1069,6 +1075,9 @@ TEST_P(SchedulerTest, archive_report_and_retrieve_new_file_with_specific_mount_p
     mount->setDriveStatus(cta::common::dataStructures::DriveStatus::Starting);
     auto & osdb=getSchedulerDB();
     auto mi=osdb.getMountInfo(lc);
+    SchedulerDatabase::TapeMountDecisionInfo& tmdi = *mi;
+    scheduler.fillMountPolicyNamesForPotentialMounts(tmdi, lc);
+    scheduler.getExistingAndNextMounts(tmdi, lc);
     ASSERT_EQ(1, mi->existingOrNextMounts.size());
     ASSERT_EQ(s_tapePoolName_default, mi->existingOrNextMounts.front().tapePool);
     ASSERT_EQ(s_vid, mi->existingOrNextMounts.front().vid);
@@ -1193,6 +1202,57 @@ TEST_P(SchedulerTest, archive_report_and_retrieve_new_file_with_specific_mount_p
     jobBatch = retrieveMount->getNextJobBatch(1,1,lc);
     ASSERT_EQ(0, jobBatch.size());
   }
+}
+
+
+TEST_P(SchedulerTest, getArchiveMountPolicyMaxPriorityMinAge) {
+  std::list<cta::common::dataStructures::MountPolicy> mountPolicies;
+
+  mountPolicies.emplace_back();
+  mountPolicies.back().archivePriority = 1;
+  mountPolicies.back().archiveMinRequestAge = 1000;
+
+  mountPolicies.emplace_back();
+  mountPolicies.back().archivePriority = 99;
+  mountPolicies.back().archiveMinRequestAge = 2000;
+
+  mountPolicies.emplace_back();
+  mountPolicies.back().archivePriority = 2;
+  mountPolicies.back().archiveMinRequestAge = 50;
+
+  mountPolicies.emplace_back();
+  mountPolicies.back().archivePriority = 3;
+  mountPolicies.back().archiveMinRequestAge = 3000;
+
+  auto [maxPriority, minMinRequestAge] = cta::Scheduler::getArchiveMountPolicyMaxPriorityMinAge(mountPolicies);
+
+  ASSERT_EQ(99, maxPriority);
+  ASSERT_EQ(50, minMinRequestAge);
+}
+
+TEST_P(SchedulerTest, getRetrieveMountPolicyMaxPriorityMinAge) {
+  std::list<cta::common::dataStructures::MountPolicy> mountPolicies;
+
+  mountPolicies.emplace_back();
+  mountPolicies.back().retrievePriority = 1;
+  mountPolicies.back().retrieveMinRequestAge = 1000;
+
+  mountPolicies.emplace_back();
+  mountPolicies.back().retrievePriority = 99;
+  mountPolicies.back().retrieveMinRequestAge = 2000;
+
+  mountPolicies.emplace_back();
+  mountPolicies.back().retrievePriority = 2;
+  mountPolicies.back().retrieveMinRequestAge = 50;
+
+  mountPolicies.emplace_back();
+  mountPolicies.back().retrievePriority = 3;
+  mountPolicies.back().retrieveMinRequestAge = 3000;
+
+  auto [maxPriority, minMinRequestAge] = cta::Scheduler::getRetrieveMountPolicyMaxPriorityMinAge(mountPolicies);
+
+  ASSERT_EQ(99, maxPriority);
+  ASSERT_EQ(50, minMinRequestAge);
 }
 
 TEST_P(SchedulerTest, archive_report_and_retrieve_new_dual_copy_file) {
@@ -1413,6 +1473,9 @@ TEST_P(SchedulerTest, archive_report_and_retrieve_new_dual_copy_file) {
     mount->setDriveStatus(cta::common::dataStructures::DriveStatus::Starting);
     auto & osdb=getSchedulerDB();
     auto mi=osdb.getMountInfo(lc);
+    SchedulerDatabase::TapeMountDecisionInfo& tmdi = *mi;
+    scheduler.fillMountPolicyNamesForPotentialMounts(tmdi, lc);
+    scheduler.getExistingAndNextMounts(tmdi, lc);
     ASSERT_EQ(1, mi->existingOrNextMounts.size());
     ASSERT_EQ(tapePool1Name, mi->existingOrNextMounts.front().tapePool);
     ASSERT_EQ(copy1TapeVid, mi->existingOrNextMounts.front().vid);
@@ -1485,6 +1548,9 @@ TEST_P(SchedulerTest, archive_report_and_retrieve_new_dual_copy_file) {
     mount->setDriveStatus(cta::common::dataStructures::DriveStatus::Starting);
     auto & osdb=getSchedulerDB();
     auto mi=osdb.getMountInfo(lc);
+    SchedulerDatabase::TapeMountDecisionInfo& tmdi = *mi;
+    scheduler.fillMountPolicyNamesForPotentialMounts(tmdi, lc);
+    scheduler.getExistingAndNextMounts(tmdi, lc);
     ASSERT_EQ(1, mi->existingOrNextMounts.size());
     ASSERT_EQ(tapePool2Name, mi->existingOrNextMounts.front().tapePool);
     ASSERT_EQ(copy2TapeVid, mi->existingOrNextMounts.front().vid);
@@ -1720,6 +1786,9 @@ TEST_P(SchedulerTest, archive_and_retrieve_failure) {
     mount->setDriveStatus(cta::common::dataStructures::DriveStatus::Starting);
     auto & osdb=getSchedulerDB();
     auto mi=osdb.getMountInfo(lc);
+    SchedulerDatabase::TapeMountDecisionInfo& tmdi = *mi;
+    scheduler.fillMountPolicyNamesForPotentialMounts(tmdi, lc);
+    scheduler.getExistingAndNextMounts(tmdi, lc);
     ASSERT_EQ(1, mi->existingOrNextMounts.size());
     ASSERT_EQ(s_tapePoolName_default, mi->existingOrNextMounts.front().tapePool);
     ASSERT_EQ(s_vid, mi->existingOrNextMounts.front().vid);
@@ -1973,6 +2042,9 @@ TEST_P(SchedulerTest, archive_and_retrieve_report_failure) {
     mount->setDriveStatus(cta::common::dataStructures::DriveStatus::Starting);
     auto & osdb=getSchedulerDB();
     auto mi=osdb.getMountInfo(lc);
+    SchedulerDatabase::TapeMountDecisionInfo& tmdi = *mi;
+    scheduler.fillMountPolicyNamesForPotentialMounts(tmdi, lc);
+    scheduler.getExistingAndNextMounts(tmdi, lc);
     ASSERT_EQ(1, mi->existingOrNextMounts.size());
     ASSERT_EQ(s_tapePoolName_default, mi->existingOrNextMounts.front().tapePool);
     ASSERT_EQ(s_vid, mi->existingOrNextMounts.front().vid);
@@ -4582,6 +4654,9 @@ TEST_P(SchedulerTest, DISABLED_archiveReportMultipleAndQueueRetrievesWithActivit
       ASSERT_EQ(cta::common::dataStructures::MountType::ArchiveForUser, mount.get()->getMountType());
       auto & osdb=getSchedulerDB();
       auto mi=osdb.getMountInfo(lc);
+      SchedulerDatabase::TapeMountDecisionInfo& tmdi = *mi;
+      scheduler.fillMountPolicyNamesForPotentialMounts(tmdi, lc);
+      scheduler.getExistingAndNextMounts(tmdi, lc);
       ASSERT_EQ(1, mi->existingOrNextMounts.size());
       ASSERT_EQ(s_tapePoolName_default, mi->existingOrNextMounts.front().tapePool);
       std::unique_ptr<cta::ArchiveMount> archiveMount;

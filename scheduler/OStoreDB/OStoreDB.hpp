@@ -185,18 +185,6 @@ private:
                       SchedulerDatabase::PurposeGetMountInfo purpose,
                       log::LogContext& logContext);
 
-  /**
-   * An internal helper function to build a list of mount policies with the map of the
-   * mount policies coming from the queue JobsSummary object
-   * The map contains the name of the mount policies, so it is just a conversion from the name to an entire mount policy object
-   * @param mountPoliciesInCatalogue the list of the mountPolicies given by the Catalogue
-   * @param queueMountPolicyMap the map of the <mountPolicyName,counter> coming from the queue JobsSummary object
-   * @return the list of MountPolicies that are in the map
-   */
-  std::list<common::dataStructures::MountPolicy>
-  getMountPoliciesInQueue(const std::list<common::dataStructures::MountPolicy>& mountPoliciesInCatalogue,
-                          const std::map<std::string, uint64_t>& queueMountPolicyMap);
-
 public:
   std::unique_ptr<SchedulerDatabase::TapeMountDecisionInfo> getMountInfo(log::LogContext& logContext) override;
   std::unique_ptr<SchedulerDatabase::TapeMountDecisionInfo> getMountInfo(log::LogContext& logContext,

@@ -1715,6 +1715,299 @@ void Scheduler::checkNeededEnvironmentVariables() {
   }
 }
 
+
+//------------------------------------------------------------------------------
+// Scheduler::getArchiveMountPolicyMaxPriorityMinAge()
+//------------------------------------------------------------------------------
+std::pair<uint64_t, uint64_t>
+Scheduler::getArchiveMountPolicyMaxPriorityMinAge(const std::list<common::dataStructures::MountPolicy>& mountPolicies) {
+  if (mountPolicies.empty()) {
+    throw cta::exception::Exception("In Scheduler::getArchiveMountPolicyMaxPriorityMinAge(), empty mount policy list.");
+  }
+  uint64_t maxPriority = std::numeric_limits<uint64_t>::min();
+  uint64_t minMinRequestAge = std::numeric_limits<uint64_t>::max();
+  for (auto & mountPolicy : mountPolicies) {
+    maxPriority = std::max(maxPriority, mountPolicy.archivePriority);
+    minMinRequestAge = std::min(minMinRequestAge, mountPolicy.archiveMinRequestAge);
+  }
+  return std::pair{maxPriority, minMinRequestAge};
+}
+
+
+//------------------------------------------------------------------------------
+// Scheduler::getRetrieveMountPolicyMaxPriorityMinAge()
+//------------------------------------------------------------------------------
+std::pair<uint64_t, uint64_t>
+Scheduler::getRetrieveMountPolicyMaxPriorityMinAge(const std::list<common::dataStructures::MountPolicy>& mountPolicies) {
+  if (mountPolicies.empty()) {
+    throw cta::exception::Exception("In Scheduler::getRetrieveMountPolicyMaxPriorityMinAge(), empty mount policy list.");
+  }
+  uint64_t maxPriority = std::numeric_limits<uint64_t>::min();
+  uint64_t minMinRequestAge = std::numeric_limits<uint64_t>::max();
+  for (auto & mountPolicy : mountPolicies) {
+    maxPriority = std::max(maxPriority, mountPolicy.retrievePriority);
+    minMinRequestAge = std::min(minMinRequestAge, mountPolicy.retrieveMinRequestAge);
+  }
+  return std::pair{maxPriority, minMinRequestAge};
+}
+
+//------------------------------------------------------------------------------
+// Scheduler::getHighestPriorityArchiveMountPolicyName()
+//------------------------------------------------------------------------------
+std::string Scheduler::getHighestPriorityArchiveMountPolicyName(
+  const std::list<common::dataStructures::MountPolicy>& mountPolicies) const {
+  if (mountPolicies.empty()) {
+    throw cta::exception::Exception(
+      "In Scheduler::getHighestPriorityArchiveMountPolicyName(), empty mount policy list.");
+  }
+  //We need to get the most advantageous mountPolicy
+  //As the Init element of the reduce function is the first element of the list, we start the reduce with the second element (++mountPolicyInQueueList.begin())
+  common::dataStructures::MountPolicy bestMountPolicy = cta::utils::reduce(
+    ++mountPolicies.begin(),
+    mountPolicies.end(),
+    mountPolicies.front(),
+    [](const common::dataStructures::MountPolicy& mp1, const common::dataStructures::MountPolicy& mp2) {
+      if (mp2.archivePriority > mp1.archivePriority) {
+        return mp2;
+      }
+      return mp1;
+    });
+  return bestMountPolicy.name;
+}
+
+//------------------------------------------------------------------------------
+// Scheduler::getLowestRequestAgeArchiveMountPolicyName()
+//------------------------------------------------------------------------------
+std::string Scheduler::getLowestRequestAgeArchiveMountPolicyName(
+  const std::list<common::dataStructures::MountPolicy>& mountPolicies) const {
+  if (mountPolicies.empty()) {
+    throw cta::exception::Exception(
+      "In Scheduler::getLowestRequestAgeArchiveMountPolicyName(), empty mount policy list.");
+  }
+  //We need to get the most advantageous mountPolicy
+  //As the Init element of the reduce function is the first element of the list, we start the reduce with the second element (++mountPolicyInQueueList.begin())
+  common::dataStructures::MountPolicy bestMountPolicy = cta::utils::reduce(
+    ++mountPolicies.begin(),
+    mountPolicies.end(),
+    mountPolicies.front(),
+    [](const common::dataStructures::MountPolicy& mp1, const common::dataStructures::MountPolicy& mp2) {
+      if (mp1.archiveMinRequestAge < mp2.archiveMinRequestAge) {
+        return mp1;
+      }
+      return mp2;
+    });
+  return bestMountPolicy.name;
+}
+
+//------------------------------------------------------------------------------
+// Scheduler::getHighestPriorityRetrieveMountPolicyName()
+//------------------------------------------------------------------------------
+std::string Scheduler::getHighestPriorityRetrieveMountPolicyName(
+  const std::list<common::dataStructures::MountPolicy>& mountPolicies) const {
+  if (mountPolicies.empty()) {
+    throw cta::exception::Exception(
+      "In Scheduler::getHighestPriorityRetrieveMountPolicyName(), empty mount policy list.");
+  }
+  //We need to get the most advantageous mountPolicy
+  //As the Init element of the reduce function is the first element of the list, we start the reduce with the second element (++mountPolicyInQueueList.begin())
+  common::dataStructures::MountPolicy bestMountPolicy = cta::utils::reduce(
+    ++mountPolicies.begin(),
+    mountPolicies.end(),
+    mountPolicies.front(),
+    [](const common::dataStructures::MountPolicy& mp1, const common::dataStructures::MountPolicy& mp2) {
+      if (mp1.retrievePriority > mp2.retrievePriority) {
+        return mp1;
+      }
+      return mp2;
+    });
+  return bestMountPolicy.name;
+}
+
+//------------------------------------------------------------------------------
+// Scheduler::getLowestRequestAgeRetrieveMountPolicyName()
+//------------------------------------------------------------------------------
+std::string Scheduler::getLowestRequestAgeRetrieveMountPolicyName(
+  const std::list<common::dataStructures::MountPolicy>& mountPolicies) const {
+  if (mountPolicies.empty()) {
+    throw cta::exception::Exception(
+      "In Scheduler::getLowestRequestAgeRetrieveMountPolicyName(), empty mount policy list.");
+  }
+  //We need to get the most advantageous mountPolicy
+  //As the Init element of the reduce function is the first element of the list, we start the reduce with the second element (++mountPolicyInQueueList.begin())
+  common::dataStructures::MountPolicy bestMountPolicy = cta::utils::reduce(
+    ++mountPolicies.begin(),
+    mountPolicies.end(),
+    mountPolicies.front(),
+    [](const common::dataStructures::MountPolicy& mp1, const common::dataStructures::MountPolicy& mp2) {
+      if (mp1.retrieveMinRequestAge < mp2.retrieveMinRequestAge) {
+        return mp1;
+      }
+      return mp2;
+    });
+  return bestMountPolicy.name;
+}
+
+//------------------------------------------------------------------------------
+// getMountPoliciesInQueue()
+//------------------------------------------------------------------------------
+std::list<common::dataStructures::MountPolicy>
+Scheduler::getMountPoliciesInQueue(const std::list<common::dataStructures::MountPolicy>& mountPoliciesInCatalogue,
+                                  const std::map<std::string, uint64_t>& queueMountPolicyMap) {
+  std::list<cta::common::dataStructures::MountPolicy> mountPolicyRet;
+  std::copy_if(mountPoliciesInCatalogue.begin(),
+               mountPoliciesInCatalogue.end(),
+               std::back_inserter(mountPolicyRet),
+               [&queueMountPolicyMap](const cta::common::dataStructures::MountPolicy& mp) {
+                 return queueMountPolicyMap.find(mp.name) != queueMountPolicyMap.end();
+               });
+  return mountPolicyRet;
+}
+
+//------------------------------------------------------------------------------
+// fillMountPolicyNamesForPotentialMounts
+//------------------------------------------------------------------------------
+void Scheduler::fillMountPolicyNamesForPotentialMounts(SchedulerDatabase::TapeMountDecisionInfo &tmdi,
+                                                  log::LogContext &logContext) {
+
+  std::list <common::dataStructures::MountPolicy> mountPolicies = m_catalogue.MountPolicy()->getCachedMountPolicies();
+
+  // Walk the all PotentialMounts and check Mount Policies agains the catalogue
+  for (auto &m: tmdi.potentialMounts) {
+    // !!! add this to potential mount
+    // m.mountPolicyCountMap = aqueueJobsSummary.mountPolicyCountMap
+    //If there are mount policies in the Catalogue
+    if (mountPolicies.size()) {
+      //We get all the mount policies that are on the queue from the catalogue list
+      auto mountPoliciesInQueueList = getMountPoliciesInQueue(mountPolicies, m.mountPolicyCountMap);
+      std::list <std::string> queueMountPolicyNames;
+      //If an operator removed the queue mountPolicies from the catalogue, we will have no results...
+      if (mountPoliciesInQueueList.size()) {
+        if (m.type == cta::common::dataStructures::MountType::Retrieve) {
+          std::transform(
+                  mountPoliciesInQueueList.begin(),
+                  mountPoliciesInQueueList.end(),
+                  std::back_inserter(queueMountPolicyNames),
+                  [](const cta::common::dataStructures::MountPolicy &policy) -> std::string { return policy.name; });
+          std::tie(m.priority, m.minRequestAge) = getRetrieveMountPolicyMaxPriorityMinAge(
+                  mountPoliciesInQueueList);
+          m.highestPriorityMountPolicyName = getHighestPriorityRetrieveMountPolicyName(mountPoliciesInQueueList);
+          m.lowestRequestAgeMountPolicyName = getLowestRequestAgeRetrieveMountPolicyName(mountPoliciesInQueueList);
+
+        } else {
+          std::transform(
+                  mountPoliciesInQueueList.begin(),
+                  mountPoliciesInQueueList.end(),
+                  std::back_inserter(queueMountPolicyNames),
+                  [](const cta::common::dataStructures::MountPolicy &policy) -> std::string { return policy.name; });
+          std::tie(m.priority, m.minRequestAge) = getArchiveMountPolicyMaxPriorityMinAge(
+                  mountPoliciesInQueueList);
+          m.highestPriorityMountPolicyName = getHighestPriorityArchiveMountPolicyName(
+                  mountPoliciesInQueueList);
+          m.lowestRequestAgeMountPolicyName = getLowestRequestAgeArchiveMountPolicyName(
+                  mountPoliciesInQueueList);
+        }
+
+      }
+      m.mountPolicyNames = queueMountPolicyNames;
+    }
+  }
+}
+
+
+void Scheduler::getExistingAndNextMounts(SchedulerDatabase::TapeMountDecisionInfo& tmdi, log::LogContext& logContext){
+
+  // Collect information about the existing and next mounts
+  // If a next mount exists the drive "counts double", but the corresponding drive
+  // is either about to mount, or about to replace its current mount.
+  utils::Timer t;
+  double registerFetchTime = 0;
+  const auto driveStates = m_catalogue.DriveState()->getTapeDrives();
+  registerFetchTime = t.secs(utils::Timer::resetCounter);
+  using common::dataStructures::DriveStatus;
+
+  std::set<int> activeDriveStatuses = {(int) cta::common::dataStructures::DriveStatus::Starting,
+                                       (int) cta::common::dataStructures::DriveStatus::Mounting,
+                                       (int) cta::common::dataStructures::DriveStatus::Transferring,
+                                       (int) cta::common::dataStructures::DriveStatus::Unloading,
+                                       (int) cta::common::dataStructures::DriveStatus::Unmounting,
+                                       (int) cta::common::dataStructures::DriveStatus::DrainingToDisk};
+  std::set<int> activeMountTypes = {(int) cta::common::dataStructures::MountType::ArchiveForUser,
+                                    (int) cta::common::dataStructures::MountType::ArchiveForRepack,
+                                    (int) cta::common::dataStructures::MountType::Retrieve,
+                                    (int) cta::common::dataStructures::MountType::Label};
+  std::unordered_map<std::string, std::string> tapeDrivetoSchedulerBackendNameMap;
+
+  for (const auto & config : m_catalogue.DriveConfig()->getTapeDriveConfigs()) {
+    if (config.keyName == SCHEDULER_NAME_CONFIG_KEY) {
+      tapeDrivetoSchedulerBackendNameMap.emplace(config.tapeDriveName, config.value);
+    }
+  }
+
+  for (const auto& driveState : driveStates) {
+    std::optional<std::string> driveSchedulerBackendName;
+    try {
+      driveSchedulerBackendName = tapeDrivetoSchedulerBackendNameMap.at(driveState.driveName);
+    } catch (std::out_of_range &) {
+      log::ScopedParamContainer(logContext)
+        .add("driveName", driveState.driveName)
+        .log(log::ERR, "In OStoreDB::fetchMountInfo(): drive is missing SchedulerBackendName configuration.");
+    }
+    if (activeDriveStatuses.count(static_cast<int>(driveState.driveStatus))) {
+      if (driveState.mountType == common::dataStructures::MountType::NoMount) {
+        log::ScopedParamContainer(logContext)
+          .add("driveName", driveState.driveName)
+          .add("mountType", common::dataStructures::toCamelCaseString(driveState.mountType))
+          .add("driveStatus", common::dataStructures::toString(driveState.driveStatus))
+          .log(log::WARNING, "In OStoreDB::fetchMountInfo(): the drive has an active status but no mount.");
+        continue;
+      }
+      tmdi.existingOrNextMounts.push_back(SchedulerDatabase::ExistingMount());
+      tmdi.existingOrNextMounts.back().type = driveState.mountType;
+      tmdi.existingOrNextMounts.back().tapePool = driveState.currentTapePool.value_or("");
+      tmdi.existingOrNextMounts.back().vo = driveState.currentVo.value_or("");
+      tmdi.existingOrNextMounts.back().driveName = driveState.driveName;
+      tmdi.existingOrNextMounts.back().vid = driveState.currentVid.value_or("");
+      tmdi.existingOrNextMounts.back().currentMount = true;
+      tmdi.existingOrNextMounts.back().bytesTransferred = driveState.bytesTransferedInSession.value_or(0);
+      tmdi.existingOrNextMounts.back().filesTransferred = driveState.filesTransferedInSession.value_or(0);
+      if (driveState.filesTransferedInSession && driveState.sessionElapsedTime &&
+          driveState.sessionElapsedTime.value() > 0) {
+        tmdi.existingOrNextMounts.back().averageBandwidth =
+          driveState.bytesTransferedInSession.value() / driveState.sessionElapsedTime.value();
+      } else {
+        tmdi.existingOrNextMounts.back().averageBandwidth = 0.0;
+      }
+      tmdi.existingOrNextMounts.back().activity = driveState.currentActivity.value_or("");
+      tmdi.existingOrNextMounts.back().schedulerBackendName = driveSchedulerBackendName;
+    }
+    if (driveState.nextMountType == common::dataStructures::MountType::NoMount) {
+      continue;
+    }
+    if (activeMountTypes.count(static_cast<int>(driveState.nextMountType))) {
+      tmdi.existingOrNextMounts.push_back(SchedulerDatabase::ExistingMount());
+      tmdi.existingOrNextMounts.back().type = driveState.nextMountType;
+      tmdi.existingOrNextMounts.back().tapePool = driveState.nextTapePool.value_or("");
+      tmdi.existingOrNextMounts.back().vo = driveState.nextVo.value_or("");
+      tmdi.existingOrNextMounts.back().driveName = driveState.driveName;
+      tmdi.existingOrNextMounts.back().vid = driveState.nextVid.value_or("");
+      tmdi.existingOrNextMounts.back().currentMount = false;
+      tmdi.existingOrNextMounts.back().bytesTransferred = 0;
+      tmdi.existingOrNextMounts.back().filesTransferred = 0;
+      tmdi.existingOrNextMounts.back().averageBandwidth = 0;
+      tmdi.existingOrNextMounts.back().activity = driveState.nextActivity.value_or("");
+      tmdi.existingOrNextMounts.back().schedulerBackendName = driveSchedulerBackendName;
+    }
+  }
+
+  auto registerProcessingTime = t.secs(utils::Timer::resetCounter);
+  if ((registerFetchTime > 1) || (registerProcessingTime > 1)) {
+    log::ScopedParamContainer(logContext)
+      .add("queueFetchTime", registerFetchTime)
+      .add("processingTime", registerProcessingTime)
+      .log(log::INFO, "In Scheduler::getExistingAndNextMounts(): fetched the drive register.");
+  }
+}
+
 //------------------------------------------------------------------------------
 // getNextMountDryRun
 //------------------------------------------------------------------------------
@@ -1741,6 +2034,9 @@ bool Scheduler::getNextMountDryRun(const std::string& logicalLibraryName,
 
   std::unique_ptr<SchedulerDatabase::TapeMountDecisionInfo> mountInfo;
   mountInfo = m_db.getMountInfoNoLock(SchedulerDatabase::PurposeGetMountInfo::GET_NEXT_MOUNT, lc);
+  SchedulerDatabase::TapeMountDecisionInfo& tmdi = *mountInfo;
+  fillMountPolicyNamesForPotentialMounts(tmdi, lc);
+  getExistingAndNextMounts(tmdi, lc);
   getMountInfoTime = timer.secs(utils::Timer::resetCounter);
   ExistingMountSummaryPerTapepool existingMountsDistinctTypeSummaryPerTapepool;
   ExistingMountSummaryPerVo existingMountBasicTypeSummaryPerVo;
@@ -1922,6 +2218,9 @@ std::unique_ptr<TapeMount> Scheduler::getNextMount(const std::string& logicalLib
 #else
   mountInfo = m_db.getMountInfo(lc, timeout_us);
 #endif
+  SchedulerDatabase::TapeMountDecisionInfo& tmdi = *mountInfo;
+  fillMountPolicyNamesForPotentialMounts(tmdi, lc);
+  getExistingAndNextMounts(tmdi, lc);
   getMountInfoTime = timer.secs(utils::Timer::resetCounter);
   if (mountInfo->queueTrimRequired) {
     m_db.trimEmptyQueues(lc);
@@ -2129,6 +2428,9 @@ std::list<common::dataStructures::QueueAndMountSummary> Scheduler::getQueuesAndM
   // Extract relevant information from the object store.
   utils::Timer schedulerDbTimer;
   auto mountDecisionInfo = m_db.getMountInfoNoLock(SchedulerDatabase::PurposeGetMountInfo::SHOW_QUEUES, lc);
+  SchedulerDatabase::TapeMountDecisionInfo& tmdi = *mountDecisionInfo;
+  fillMountPolicyNamesForPotentialMounts(tmdi, lc);
+  getExistingAndNextMounts(tmdi, lc);
   const auto schedulerDbTime = schedulerDbTimer.secs();
   auto& mdi __attribute__((unused)) = *mountDecisionInfo;
 

@@ -188,61 +188,6 @@ public:
     common::dataStructures::EntryLog m_creationLog;
   };
 
-  /*============ Generic Scheduler DB methods ===============*/
-  /**
-   * Return the name of the archive mount policy with highest priority from the mountPolicies passed in parameter
-   * The aim is to do the same as ArchiveQueue::getJobsSummary() regarding the priority
-   * @param mountPolicies the list of mount policies in order to create the best one.
-   * @return the archive mount policy with highest priority
-   */
-  std::string
-  getHighestPriorityArchiveMountPolicyName(const std::list<common::dataStructures::MountPolicy>& mountPolicies) const;
-
-  /**
-   * Return the name of the archive mount policy with lowest request age from the mountPolicies passed in parameter
-   * The aim is to do the same as ArchiveQueue::getJobsSummary() regarding the request age
-   * @param mountPolicies the list of mount policies in order to create the best one.
-   * @return the archive mount policy with lowest request age
-   */
-  std::string
-  getLowestRequestAgeArchiveMountPolicyName(const std::list<common::dataStructures::MountPolicy>& mountPolicies) const;
-
-  /**
-   * Return the name of the retrieve mount policy with highest priority from the mountPolicies passed in parameter
-   * The aim is to do the same as RetrieveQueue::getJobsSummary() regarding the priority
-   * @param mountPolicies the list of mount policies in order to create the best one.
-   * @return the retrieve mount policy with highest priority
-   */
-  std::string
-  getHighestPriorityRetrieveMountPolicyName(const std::list<common::dataStructures::MountPolicy>& mountPolicies) const;
-
-  /**
-   * Return the name of the retrieve mount policy with lowest request age from the mountPolicies passed in parameter
-   * The aim is to do the same as RetrieveQueue::getJobsSummary() regarding the request age
-   * @param mountPolicies the list of mount policies in order to create the best one.
-   * @return the retrieve mount policy with lowest request age
-   */
-  std::string
-  getLowestRequestAgeRetrieveMountPolicyName(const std::list<common::dataStructures::MountPolicy>& mountPolicies) const;
-
-  /**
-   * Given a list of mount policies, it compares all of them to extract both the maximum archive priority and the minimum
-   * archive age between all entries.
-   * @param mountPolicies the list of mount policies in order to create the best one.
-   * @return a pair with the max retrieve priority and minimum archive age
-   */
-  static std::pair<uint64_t, uint64_t>
-  getArchiveMountPolicyMaxPriorityMinAge(const std::list<common::dataStructures::MountPolicy> &mountPolicies);
-
-  /**
-   * Given a list of mount policies, it compares all of them to extract both the maximum retrieve priority and the minimum
-   * retrieve age between all entries.
-   * @param mountPolicies the list of mount policies in order to create the best one.
-   * @return a pair with the max retrieve priority and minimum retrieve age
-   */
-  static std::pair<uint64_t, uint64_t>
-  getRetrieveMountPolicyMaxPriorityMinAge(const std::list<common::dataStructures::MountPolicy> &mountPolicies);
-
   /*============ Archive management: tape server side =======================*/
   /**
    * The class used by the scheduler database to track the archive mounts
@@ -851,6 +796,7 @@ public:
     std::optional<std::string> highestPriorityMountPolicyName;
     std::optional<std::string> lowestRequestAgeMountPolicyName;
 
+    std::map<std::string, uint64_t> mountPolicyCountMap = {};
     std::optional<std::list<std::string>> mountPolicyNames; /**< Names of mount policies for the mount*/
 
     std::optional<std::string> encryptionKeyName;  // The optional name of the encryption key.
@@ -972,9 +918,9 @@ public:
   enum PurposeGetMountInfo { GET_NEXT_MOUNT, SHOW_QUEUES };
 
   /**
-   * A function dumping the relevant mount information for deciding which
-   * tape to mount next. This also starts the mount decision process.
-   */
+- * A function dumping the relevant mount information for deciding which
+- * tape to mount next. This also starts the mount decision process.
+- */
   virtual std::unique_ptr<TapeMountDecisionInfo> getMountInfo(log::LogContext& logContext) = 0;
   virtual std::unique_ptr<TapeMountDecisionInfo> getMountInfo(log::LogContext& logContext, uint64_t timeout_us) = 0;
   // following method is used by RDBMS Scheduler DB type only
