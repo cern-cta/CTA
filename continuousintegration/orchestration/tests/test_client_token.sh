@@ -78,7 +78,8 @@ kubectl -n ${NAMESPACE} exec ${CLIENT_POD} -c client -- bash -c "/root/client_se
 
 token_file=$(mktemp)
 echo $SCI_TOKEN >> $token_file
-kubectl -n ${NAMESPACE} cp $token_file ${CLIENT_POD}:/token_file || exit 1
+kubectl -n ${NAMESPACE} exec {CLIENT_POD} -- sh -c "rm -rf ${token_file}"
+kubectl -n ${NAMESPACE} cp $token_file ${CLIENT_POD}:/token_file
 
 # Test are run under the cta user account which doesn't have a login
 # option so to be able to export the test setup we need to source the file
