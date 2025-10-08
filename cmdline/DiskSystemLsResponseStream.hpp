@@ -22,7 +22,7 @@ public:
   cta::xrd::Data next() override;
 
 private:
-  std::list<cta::disk::DiskSystem> m_diskSystems;
+  cta::disk::DiskSystemList m_diskSystems;
 };
 
 DiskSystemLsResponseStream::DiskSystemLsResponseStream(cta::catalogue::Catalogue& catalogue,
