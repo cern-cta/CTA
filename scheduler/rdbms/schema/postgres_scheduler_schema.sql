@@ -18,7 +18,7 @@ CREATE TYPE RETRIEVE_JOB_STATUS AS ENUM (
   'RJS_Complete',
   'RJS_ToReportToRepackForSuccess',
   'RJS_ToReportToRepackForFailure',
-  'ReadyForDeletion'
+  'ReadyForDeletion',
   'Cancelled');
 CREATE TYPE REPACK_REQ_STATUS AS ENUM (
   'RRS_Pending',
