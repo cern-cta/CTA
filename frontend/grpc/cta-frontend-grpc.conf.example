@@ -22,7 +22,8 @@ cta.experimental.telemetry.enabled false
 # WARNING: Setting this to true disables security checks - use only for testing/development
 # cta.experimental.grpc.bypass_admin_auth_check.enabled false
 
-# Disable admin commands completely
+# The gRPC admin command implementation is experimental and enabling this option allows the gRPC frontend to serve admin commands.
+# If the option is disabled, all cta-admin calls made with grpc will fail with error "CTA admin commands are disabled by configuration flag"
 # cta.experimental.grpc.cta_admin_commands.enabled false
 
 ####################################
