@@ -1,7 +1,6 @@
 #!/usr/bin/python3
 
 # SPDX-FileCopyrightText: 2020 CERN
-#
 # SPDX-License-Identifier: GPL-3.0-or-later
 
 #
