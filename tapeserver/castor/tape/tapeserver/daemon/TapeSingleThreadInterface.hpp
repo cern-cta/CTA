@@ -7,7 +7,6 @@
  *
  * Created on March 18, 2014, 4:28 PM
  */
-
 #pragma once
 
 #include <opentelemetry/context/runtime_context.h>

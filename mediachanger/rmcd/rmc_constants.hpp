@@ -2,7 +2,6 @@
  * SPDX-FileCopyrightText: 2001 CERN
  * SPDX-License-Identifier: GPL-3.0-or-later
  */
-
 #pragma once
 
 #define RMC_CHECKI   5  //!< max interval to check for work to be done

@@ -2,7 +2,6 @@
  * SPDX-FileCopyrightText: 1990 CERN
  * SPDX-License-Identifier: GPL-3.0-or-later
  */
-
 #pragma once
 
 #include <memory.h>

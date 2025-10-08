@@ -2,7 +2,6 @@
  * SPDX-FileCopyrightText: 2021 CERN
  * SPDX-License-Identifier: GPL-3.0-or-later
  */
-
 #pragma once
 
 // This file should be included before the relevant c++ headers. It will introduce proper helgrind annotations

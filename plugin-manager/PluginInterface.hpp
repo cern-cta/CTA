@@ -3,7 +3,6 @@
  * SPDX-FileCopyrightText: 2024 DESY
  * SPDX-License-Identifier: GPL-3.0-or-later
  */
-
 #pragma once
 
 #include <stdexcept>

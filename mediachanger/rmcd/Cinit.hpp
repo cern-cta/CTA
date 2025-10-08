@@ -2,7 +2,6 @@
  * SPDX-FileCopyrightText: 2000 CERN
  * SPDX-License-Identifier: GPL-3.0-or-later
  */
-
 #pragma once
 
 // structure to be used with Cinitdaemon()/Cinitservice()

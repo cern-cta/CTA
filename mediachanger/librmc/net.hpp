@@ -2,7 +2,6 @@
  * SPDX-FileCopyrightText: 2003 CERN
  * SPDX-License-Identifier: GPL-3.0-or-later
  */
-
 #pragma once
 
 int netread(int, char*, int);                     //!< Network receive function

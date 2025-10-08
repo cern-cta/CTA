@@ -8,7 +8,6 @@
  *
  * Created on December 10, 2019, 10:58 AM
  */
-
 #pragma once
 
 #include "rdbms/ConnPool.hpp"

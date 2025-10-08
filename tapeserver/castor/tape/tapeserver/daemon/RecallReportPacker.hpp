@@ -2,7 +2,6 @@
  * SPDX-FileCopyrightText: 2021 CERN
  * SPDX-License-Identifier: GPL-3.0-or-later
  */
-
 #pragma once
 
 #include "tapeserver/castor/tape/tapeserver/daemon/ReportPackerInterface.hpp"
