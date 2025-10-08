@@ -104,7 +104,7 @@ variables:
 
   SKIP_UNIT_TESTS:
     description: "Skips the CTA unit tests. Should only be disabled if there is a very good reason to do so."
-    value: "TRUE"
+    value: "FALSE"
     options:
       - "TRUE"
       - "FALSE"
