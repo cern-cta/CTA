@@ -1,18 +1,6 @@
 /*
- * @project      The CERN Tape Archive (CTA)
- * @copyright    Copyright © 2021-2022 CERN
- * @license      This program is free software, distributed under the terms of the GNU General Public
- *               Licence version 3 (GPL Version 3), copied verbatim in the file "COPYING". You can
- *               redistribute it and/or modify it under the terms of the GPL Version 3, or (at your
- *               option) any later version.
- *
- *               This program is distributed in the hope that it will be useful, but WITHOUT ANY
- *               WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A
- *               PARTICULAR PURPOSE. See the GNU General Public License for more details.
- *
- *               In applying this licence, CERN does not waive the privileges and immunities
- *               granted to it by virtue of its status as an Intergovernmental Organization or
- *               submit itself to any jurisdiction.
+ * SPDX-FileCopyrightText: 2021 CERN
+ * SPDX-License-Identifier: GPL-3.0-or-later
  */
 
 #include "SchedulerGlobalLock.hpp"
@@ -50,7 +38,7 @@ void SchedulerGlobalLock::garbageCollect(const std::string &presumedOwner, Agent
     return;
   // If the owner is still the agent, we have 2 possibilities:
   // 1) The register is referenced by the root entry. We just need to officialise
-  // the ownership on the scheduler lock(if not, we will either get the NotAllocated 
+  // the ownership on the scheduler lock(if not, we will either get the NotAllocated
   // exception) or the address will be different.
   {
     RootEntry re(m_objectStore);
@@ -92,7 +80,7 @@ bool SchedulerGlobalLock::isEmpty() {
   return true;
 }
 
-std::string SchedulerGlobalLock::dump() {  
+std::string SchedulerGlobalLock::dump() {
   checkPayloadReadable();
   google::protobuf::util::JsonPrintOptions options;
   options.add_whitespace = true;
@@ -101,5 +89,5 @@ std::string SchedulerGlobalLock::dump() {
   google::protobuf::util::MessageToJsonString(m_payload, &headerDump, options);
   return headerDump;
 }
-  
+
 } // namespace cta::objectstore

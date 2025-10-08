@@ -1,18 +1,6 @@
 /*
- * @project      The CERN Tape Archive (CTA)
- * @copyright    Copyright © 2022 CERN
- * @license      This program is free software, distributed under the terms of the GNU General Public
- *               Licence version 3 (GPL Version 3), copied verbatim in the file "COPYING". You can
- *               redistribute it and/or modify it under the terms of the GPL Version 3, or (at your
- *               option) any later version.
- *
- *               This program is distributed in the hope that it will be useful, but WITHOUT ANY
- *               WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A
- *               PARTICULAR PURPOSE. See the GNU General Public License for more details.
- *
- *               In applying this licence, CERN does not waive the privileges and immunities
- *               granted to it by virtue of its status as an Intergovernmental Organization or
- *               submit itself to any jurisdiction.
+ * SPDX-FileCopyrightText: 2022 CERN
+ * SPDX-License-Identifier: GPL-3.0-or-later
  */
 
 #include <memory>
@@ -110,15 +98,15 @@ void RdbmsLogicalLibraryCatalogue::createLogicalLibrary(const common::dataStruct
 
 void RdbmsLogicalLibraryCatalogue::deleteLogicalLibrary(const std::string &name) {
   const char* const sql = R"SQL(
-    DELETE FROM LOGICAL_LIBRARY 
-    WHERE 
-      LOGICAL_LIBRARY_NAME = :LOGICAL_LIBRARY_NAME AND 
+    DELETE FROM LOGICAL_LIBRARY
+    WHERE
+      LOGICAL_LIBRARY_NAME = :LOGICAL_LIBRARY_NAME AND
       NOT EXISTS (
-        SELECT 
-          TAPE.LOGICAL_LIBRARY_ID 
-        FROM 
-          TAPE 
-        WHERE 
+        SELECT
+          TAPE.LOGICAL_LIBRARY_ID
+        FROM
+          TAPE
+        WHERE
           TAPE.LOGICAL_LIBRARY_ID = LOGICAL_LIBRARY.LOGICAL_LIBRARY_ID)
   )SQL";
   auto conn = m_connPool->getConn();
@@ -142,7 +130,7 @@ void RdbmsLogicalLibraryCatalogue::deleteLogicalLibrary(const std::string &name)
 std::list<common::dataStructures::LogicalLibrary> RdbmsLogicalLibraryCatalogue::getLogicalLibraries() const {
   std::list<common::dataStructures::LogicalLibrary> libs;
   const char* const sql = R"SQL(
-    SELECT 
+    SELECT
       LOGICAL_LIBRARY_NAME AS LOGICAL_LIBRARY_NAME,
       LOGICAL_LIBRARY.IS_DISABLED AS IS_DISABLED,
 
@@ -156,12 +144,12 @@ std::list<common::dataStructures::LogicalLibrary> RdbmsLogicalLibraryCatalogue::
 
       LOGICAL_LIBRARY.LAST_UPDATE_USER_NAME AS LAST_UPDATE_USER_NAME,
       LOGICAL_LIBRARY.LAST_UPDATE_HOST_NAME AS LAST_UPDATE_HOST_NAME,
-      LOGICAL_LIBRARY.LAST_UPDATE_TIME AS LAST_UPDATE_TIME 
-    FROM 
-      LOGICAL_LIBRARY 
-    LEFT JOIN PHYSICAL_LIBRARY ON 
-      LOGICAL_LIBRARY.PHYSICAL_LIBRARY_ID = PHYSICAL_LIBRARY.PHYSICAL_LIBRARY_ID 
-    ORDER BY 
+      LOGICAL_LIBRARY.LAST_UPDATE_TIME AS LAST_UPDATE_TIME
+    FROM
+      LOGICAL_LIBRARY
+    LEFT JOIN PHYSICAL_LIBRARY ON
+      LOGICAL_LIBRARY.PHYSICAL_LIBRARY_ID = PHYSICAL_LIBRARY.PHYSICAL_LIBRARY_ID
+    ORDER BY
       LOGICAL_LIBRARY_NAME
   )SQL";
   auto conn = m_connPool->getConn();
@@ -202,12 +190,12 @@ void RdbmsLogicalLibraryCatalogue::modifyLogicalLibraryName(const common::dataSt
 
   const time_t now = time(nullptr);
   const char* const sql = R"SQL(
-    UPDATE LOGICAL_LIBRARY SET 
+    UPDATE LOGICAL_LIBRARY SET
       LOGICAL_LIBRARY_NAME = :NEW_LOGICAL_LIBRARY_NAME,
       LAST_UPDATE_USER_NAME = :LAST_UPDATE_USER_NAME,
       LAST_UPDATE_HOST_NAME = :LAST_UPDATE_HOST_NAME,
-      LAST_UPDATE_TIME = :LAST_UPDATE_TIME 
-    WHERE 
+      LAST_UPDATE_TIME = :LAST_UPDATE_TIME
+    WHERE
       LOGICAL_LIBRARY_NAME = :CURRENT_LOGICAL_LIBRARY_NAME
   )SQL";
   auto conn = m_connPool->getConn();
@@ -230,12 +218,12 @@ void RdbmsLogicalLibraryCatalogue::modifyLogicalLibraryComment(const common::dat
   const auto trimmedComment = RdbmsCatalogueUtils::checkCommentOrReasonMaxLength(comment, &m_log);
   const time_t now = time(nullptr);
   const char* const sql = R"SQL(
-    UPDATE LOGICAL_LIBRARY SET 
+    UPDATE LOGICAL_LIBRARY SET
       USER_COMMENT = :USER_COMMENT,
       LAST_UPDATE_USER_NAME = :LAST_UPDATE_USER_NAME,
       LAST_UPDATE_HOST_NAME = :LAST_UPDATE_HOST_NAME,
-      LAST_UPDATE_TIME = :LAST_UPDATE_TIME 
-    WHERE 
+      LAST_UPDATE_TIME = :LAST_UPDATE_TIME
+    WHERE
       LOGICAL_LIBRARY_NAME = :LOGICAL_LIBRARY_NAME
   )SQL";
   auto conn = m_connPool->getConn();
@@ -268,12 +256,12 @@ void RdbmsLogicalLibraryCatalogue::modifyLogicalLibraryPhysicalLibrary(const com
   }
   const time_t now = time(nullptr);
   const char* const sql = R"SQL(
-    UPDATE LOGICAL_LIBRARY SET 
+    UPDATE LOGICAL_LIBRARY SET
       PHYSICAL_LIBRARY_ID = :PHYSICAL_LIBRARY_ID,
       LAST_UPDATE_USER_NAME = :LAST_UPDATE_USER_NAME,
       LAST_UPDATE_HOST_NAME = :LAST_UPDATE_HOST_NAME,
-      LAST_UPDATE_TIME = :LAST_UPDATE_TIME 
-    WHERE 
+      LAST_UPDATE_TIME = :LAST_UPDATE_TIME
+    WHERE
       LOGICAL_LIBRARY_NAME = :LOGICAL_LIBRARY_NAME
   )SQL";
   auto stmt = conn.createStmt(sql);
@@ -294,12 +282,12 @@ void RdbmsLogicalLibraryCatalogue::modifyLogicalLibraryDisabledReason(
   const auto trimmedReason = RdbmsCatalogueUtils::checkCommentOrReasonMaxLength(disabledReason, &m_log);
   const time_t now = time(nullptr);
   const char* const sql = R"SQL(
-    UPDATE LOGICAL_LIBRARY SET 
+    UPDATE LOGICAL_LIBRARY SET
       DISABLED_REASON = :DISABLED_REASON,
       LAST_UPDATE_USER_NAME = :LAST_UPDATE_USER_NAME,
       LAST_UPDATE_HOST_NAME = :LAST_UPDATE_HOST_NAME,
-      LAST_UPDATE_TIME = :LAST_UPDATE_TIME 
-    WHERE 
+      LAST_UPDATE_TIME = :LAST_UPDATE_TIME
+    WHERE
       LOGICAL_LIBRARY_NAME = :LOGICAL_LIBRARY_NAME
   )SQL";
   auto conn = m_connPool->getConn();
@@ -320,12 +308,12 @@ void RdbmsLogicalLibraryCatalogue::setLogicalLibraryDisabled(const common::dataS
   const std::string &name, const bool disabledValue) {
   const time_t now = time(nullptr);
   const char* const sql = R"SQL(
-    UPDATE LOGICAL_LIBRARY SET 
+    UPDATE LOGICAL_LIBRARY SET
       IS_DISABLED = :IS_DISABLED,
       LAST_UPDATE_USER_NAME = :LAST_UPDATE_USER_NAME,
       LAST_UPDATE_HOST_NAME = :LAST_UPDATE_HOST_NAME,
-      LAST_UPDATE_TIME = :LAST_UPDATE_TIME 
-    WHERE 
+      LAST_UPDATE_TIME = :LAST_UPDATE_TIME
+    WHERE
       LOGICAL_LIBRARY_NAME = :LOGICAL_LIBRARY_NAME
   )SQL";
   auto conn = m_connPool->getConn();
@@ -345,11 +333,11 @@ void RdbmsLogicalLibraryCatalogue::setLogicalLibraryDisabled(const common::dataS
 std::optional<uint64_t> RdbmsLogicalLibraryCatalogue::getLogicalLibraryId(rdbms::Conn &conn,
   const std::string &name) const {
   const char* const sql = R"SQL(
-    SELECT 
-      LOGICAL_LIBRARY_ID AS LOGICAL_LIBRARY_ID 
-    FROM 
-      LOGICAL_LIBRARY 
-    WHERE 
+    SELECT
+      LOGICAL_LIBRARY_ID AS LOGICAL_LIBRARY_ID
+    FROM
+      LOGICAL_LIBRARY
+    WHERE
       LOGICAL_LIBRARY.LOGICAL_LIBRARY_NAME = :LOGICAL_LIBRARY_NAME
   )SQL";
   auto stmt = conn.createStmt(sql);

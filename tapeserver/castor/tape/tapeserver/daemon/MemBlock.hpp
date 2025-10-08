@@ -1,18 +1,6 @@
 /*
- * @project      The CERN Tape Archive (CTA)
- * @copyright    Copyright © 2021-2022 CERN
- * @license      This program is free software, distributed under the terms of the GNU General Public
- *               Licence version 3 (GPL Version 3), copied verbatim in the file "COPYING". You can
- *               redistribute it and/or modify it under the terms of the GPL Version 3, or (at your
- *               option) any later version.
- *
- *               This program is distributed in the hope that it will be useful, but WITHOUT ANY
- *               WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A
- *               PARTICULAR PURPOSE. See the GNU General Public License for more details.
- *
- *               In applying this licence, CERN does not waive the privileges and immunities
- *               granted to it by virtue of its status as an Intergovernmental Organization or
- *               submit itself to any jurisdiction.
+ * SPDX-FileCopyrightText: 2021 CERN
+ * SPDX-License-Identifier: GPL-3.0-or-later
  */
 
 #pragma once
@@ -28,13 +16,13 @@ namespace castor::tape::tapeserver::daemon {
  * Individual memory block with metadata
  */
 class MemBlock {
-  
+
   struct AlterationContext {
 
     /** Flag indicating to the receiver that the file read failed */
     bool m_failed;
-    
-    /** Flag indicating that the transfer was cancelled, usually due to a 
+
+    /** Flag indicating that the transfer was cancelled, usually due to a
      previous failure. */
     bool m_cancelled;
 
@@ -43,7 +31,7 @@ class MemBlock {
     bool m_verifyOnly;
 
     /**
-     * in case of error, the error message 
+     * in case of error, the error message
      */
     std::string m_errorMsg;
 
@@ -63,20 +51,20 @@ class MemBlock {
     AlterationContext(const bool failed, const bool cancelled, const bool verifyOnly, const std::string &msg):
                       m_failed(failed), m_cancelled(cancelled), m_verifyOnly(verifyOnly), m_errorMsg(msg) {};
   };
-  
+
   std::optional<AlterationContext> m_context;
 public:
   /**
-   * Constructor 
+   * Constructor
    * @param id the block ID for its whole life
-   * @param capacity the capacity (in byte) of the embed payload 
+   * @param capacity the capacity (in byte) of the embed payload
    */
   MemBlock(const uint32_t id, const uint32_t capacity) : m_memoryBlockId(id), m_payload(capacity) { reset(); }
 
   /**
-   * Get the error message from the context, 
+   * Get the error message from the context,
    * Throw an exception if there is no context
-   * @return 
+   * @return
    */
   std::string errorMsg() const {
     if (m_context) {
@@ -88,31 +76,31 @@ public:
   }
 
   /**
-   * Return true if the block has been marked as failed 
-   * @return 
+   * Return true if the block has been marked as failed
+   * @return
    */
   bool isFailed() const {
     return m_context.has_value() && m_context->m_failed;
   }
-  
+
   /**
-   * Return true if the block has been marked as canceled 
-   * @return 
+   * Return true if the block has been marked as canceled
+   * @return
    */
   bool isCanceled() const {
     return m_context.has_value() && m_context->m_cancelled;
   }
-    
+
   /**
    * Return true if the block has been marked as verify only
-   * @return 
+   * @return
    */
   bool isVerifyOnly() const {
     return m_context.has_value() && m_context->m_verifyOnly;
   }
-    
+
   /**
-   * Mark this block as failed ie 
+   * Mark this block as failed ie
    * m_failed is true, m_fileBlock and m_tapeFileBlock are set at -1
    * Other members do not change
    */
@@ -150,32 +138,32 @@ public:
     m_fSeq.reset();
     m_tapeFileBlock.reset();
     m_payload.reset();
-    
-    //delete the previous m_context (if allocated) 
+
+    //delete the previous m_context (if allocated)
     //and set the new one to nullptr
     m_context.reset();
   }
   /** Unique memory block id */
   const uint32_t m_memoryBlockId;
-  
+
   /** handle to the raw data to be migrated/recalled */
   Payload m_payload;
-  
+
   /** CASTOR NsFileId file concerned */
   std::optional<uint64_t> m_fileid;
 
   /** number of the memory-chunk of the current file we are manipulating */
   std::optional<uint64_t> m_fileBlock;
-  
+
   /** order of file on the tape */
   std::optional<uint64_t> m_fSeq;
-  
+
   /** Sequence number of the first tape block file in this memory block */
   std::optional<size_t> m_tapeFileBlock;
-  
+
   /** Size of the tape blocks, allowing sanity checks on the disk write side in recalls */
   std::optional<size_t> m_tapeBlockSize;
-  
+
 };
 
 } // namespace castor::tape::tapeserver::daemon

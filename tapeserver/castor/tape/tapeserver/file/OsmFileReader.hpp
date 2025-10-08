@@ -1,18 +1,6 @@
 /*
- * @project      The CERN Tape Archive (CTA)
- * @copyright    Copyright © 2022 CERN
- * @license      This program is free software, distributed under the terms of the GNU General Public
- *               Licence version 3 (GPL Version 3), copied verbatim in the file "COPYING". You can
- *               redistribute it and/or modify it under the terms of the GPL Version 3, or (at your
- *               option) any later version.
- *
- *               This program is distributed in the hope that it will be useful, but WITHOUT ANY
- *               WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A
- *               PARTICULAR PURPOSE. See the GNU General Public License for more details.
- *
- *               In applying this licence, CERN does not waive the privileges and immunities
- *               granted to it by virtue of its status as an Intergovernmental Organization or
- *               submit itself to any jurisdiction.
+ * SPDX-FileCopyrightText: 2022 CERN
+ * SPDX-License-Identifier: GPL-3.0-or-later
  */
 
 #pragma once
@@ -36,7 +24,7 @@ public:
   ~OsmFileReader() override = default;
 
   size_t readNextDataBlock(void *data, const size_t size) override;
-  
+
   const CPIO& getCPIOHeader() const {
     return m_cpioHeader;
   }
@@ -53,10 +41,10 @@ private:
   CPIO m_cpioHeader;
   uint64_t m_ui64CPIODataSize = 0;
 
-  
+
   void positionByFseq(const cta::RetrieveJob &fileToRecall) override;
   void positionByBlockID(const cta::RetrieveJob &fileToRecall) override;
-  
+
   void moveToFirstFile();
   void moveReaderByFSeqDelta(const int64_t fSeq_delta);
   void useBlockID(const cta::RetrieveJob &fileToRecall);

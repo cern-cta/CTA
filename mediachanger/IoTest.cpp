@@ -1,18 +1,6 @@
 /*
- * @project      The CERN Tape Archive (CTA)
- * @copyright    Copyright © 2021-2022 CERN
- * @license      This program is free software, distributed under the terms of the GNU General Public
- *               Licence version 3 (GPL Version 3), copied verbatim in the file "COPYING". You can
- *               redistribute it and/or modify it under the terms of the GPL Version 3, or (at your
- *               option) any later version.
- *
- *               This program is distributed in the hope that it will be useful, but WITHOUT ANY
- *               WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A
- *               PARTICULAR PURPOSE. See the GNU General Public License for more details.
- *
- *               In applying this licence, CERN does not waive the privileges and immunities
- *               granted to it by virtue of its status as an Intergovernmental Organization or
- *               submit itself to any jurisdiction.
+ * SPDX-FileCopyrightText: 2021 CERN
+ * SPDX-License-Identifier: GPL-3.0-or-later
  */
 
 #include <fcntl.h>
@@ -182,9 +170,9 @@ TEST_F(cta_mediachanger_IoTest, marshalUint8) {
   const uint8_t v = 0x87;
   char buf[1];
   char *ptr = buf;
-    
+
   memset(buf, '\0', sizeof(buf));
-    
+
   ASSERT_NO_THROW(cta::mediachanger::marshalUint8(v, ptr));
   ASSERT_EQ(buf+1, ptr);
   ASSERT_EQ(0x87 & 0xFF, buf[0] & 0xFF);
@@ -265,9 +253,9 @@ TEST_F(cta_mediachanger_IoTest, marshalUint64) {
   const uint64_t v = 0x8877665544332211LL;
   char buf[8];
   char *ptr = buf;
-    
+
   memset(buf, '\0', sizeof(buf));
-    
+
   ASSERT_NO_THROW(cta::mediachanger::marshalUint64(v, ptr));
   ASSERT_EQ(buf+8, ptr);
   check64BitsWereMarshalledBigEndian(buf);

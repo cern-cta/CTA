@@ -1,18 +1,6 @@
 /*
- * @project      The CERN Tape Archive (CTA)
- * @copyright    Copyright © 2021-2022 CERN
- * @license      This program is free software, distributed under the terms of the GNU General Public
- *               Licence version 3 (GPL Version 3), copied verbatim in the file "COPYING". You can
- *               redistribute it and/or modify it under the terms of the GPL Version 3, or (at your
- *               option) any later version.
- *
- *               This program is distributed in the hope that it will be useful, but WITHOUT ANY
- *               WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A
- *               PARTICULAR PURPOSE. See the GNU General Public License for more details.
- *
- *               In applying this licence, CERN does not waive the privileges and immunities
- *               granted to it by virtue of its status as an Intergovernmental Organization or
- *               submit itself to any jurisdiction.
+ * SPDX-FileCopyrightText: 2021 CERN
+ * SPDX-License-Identifier: GPL-3.0-or-later
  */
 
 #pragma once
@@ -33,7 +21,7 @@ struct TapeItemWritten {
    * Sets the value of all integer member-variables to zero.
    */
   TapeItemWritten() = default;
-  
+
   /**
    * Default virtual destructor to make the object polymorphic
    */
@@ -65,17 +53,17 @@ struct TapeItemWritten {
    * The volume identifier of the tape on which the file has been written.
    */
   std::string vid;
-  
+
   /**
    * The position of the item on tape in the form of its file sequence number.
    */
   uint64_t fSeq = 0;
-  
+
   /**
    * The name of the tape drive that wrote the item.
    */
   std::string tapeDrive;
-  
+
 }; // struct TapeFileWritten
 
 /**

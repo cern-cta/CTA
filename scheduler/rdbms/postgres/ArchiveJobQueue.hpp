@@ -1,18 +1,6 @@
 /**
- * @project        The CERN Tape Archive (CTA)
- * @copyright      Copyright © 2021-2022 CERN
- * @license        This program is free software: you can redistribute it and/or modify
- *                 it under the terms of the GNU General Public License as published by
- *                 the Free Software Foundation, either version 3 of the License, or
- *                 (at your option) any later version.
- *
- *                 This program is distributed in the hope that it will be useful,
- *                 but WITHOUT ANY WARRANTY; without even the implied warranty of
- *                 MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- *                 GNU General Public License for more details.
- *
- *                 You should have received a copy of the GNU General Public License
- *                 along with this program.  If not, see <http://www.gnu.org/licenses/>.
+ * SPDX-FileCopyrightText: 2021 CERN
+ * SPDX-License-Identifier: GPL-3.0-or-later
  */
 
 #pragma once
@@ -372,7 +360,7 @@ public:
       sqlpart.pop_back();
     }
     std::string sql = R"SQL(
-      SELECT 
+      SELECT
         JOB_ID AS JOB_ID,
         ARCHIVE_REQUEST_ID AS ARCHIVE_REQUEST_ID,
         REQUEST_JOB_COUNT AS REQUEST_JOB_COUNT,
@@ -415,7 +403,7 @@ public:
         MOUNT_TYPE AS MOUNT_TYPE,
         LOGICAL_LIBRARY AS LOGICAL_LIBRARY
       FROM ARCHIVE_ACTIVE_QUEUE
-      WHERE 
+      WHERE
         JOB_ID IN (
     )SQL" + sqlpart + R"SQL(
       ) ORDER BY PRIORITY DESC, JOB_ID

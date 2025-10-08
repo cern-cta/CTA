@@ -1,20 +1,8 @@
 /*
- * @project      The CERN Tape Archive (CTA)
- * @copyright    Copyright © 2021-2023 CERN
- * @license      This program is free software, distributed under the terms of the GNU General Public
- *               Licence version 3 (GPL Version 3), copied verbatim in the file "COPYING". You can
- *               redistribute it and/or modify it under the terms of the GPL Version 3, or (at your
- *               option) any later version.
- *
- *               This program is distributed in the hope that it will be useful, but WITHOUT ANY
- *               WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A
- *               PARTICULAR PURPOSE. See the GNU General Public License for more details.
- *
- *               In applying this licence, CERN does not waive the privileges and immunities
- *               granted to it by virtue of its status as an Intergovernmental Organization or
- *               submit itself to any jurisdiction.
+ * SPDX-FileCopyrightText: 2021 CERN
+ * SPDX-License-Identifier: GPL-3.0-or-later
  */
- 
+
 #pragma once
 
 #include "IHandler.hpp"
@@ -40,13 +28,13 @@ public:
                             const std::string& strKeytab,
                             const std::string& strService);
   ~NegotiationRequestHandler() override;
-  
+
   void init() override; // can thorw
   bool next(const bool bOk) override; // can thorw
 
 private:
   const unsigned int CHUNK_SIZE = 4 * 1024;
-  
+
   enum class StreamState : unsigned int {
     NEW = 1,
     PROCESSING,
@@ -55,7 +43,7 @@ private:
     ERROR,
     FINISH
   };
-  
+
   cta::log::Logger& m_log;
   cta::frontend::grpc::request::Tag m_tag;
   AsyncServer& m_asyncServer;
@@ -65,14 +53,14 @@ private:
   StreamState m_streamState;
   gss_ctx_id_t m_gssCtx;
   gss_cred_id_t m_serverCreds = {GSS_C_NO_CREDENTIAL};
-  /* 
+  /*
    * Context for the rpc, allowing to tweak aspects of it such as the use
    * of compression, authentication, as well as to send metadata back to the
    * client.
    */
   ::grpc::ServerContext m_ctx;
-  
-  
+
+
   // Request from the client
   cta::xrd::KerberosAuthenticationRequest m_request;
   // Response send back to the client

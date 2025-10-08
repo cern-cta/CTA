@@ -1,18 +1,6 @@
 /*
- * @project      The CERN Tape Archive (CTA)
- * @copyright    Copyright © 2022 CERN
- * @license      This program is free software, distributed under the terms of the GNU General Public
- *               Licence version 3 (GPL Version 3), copied verbatim in the file "COPYING". You can
- *               redistribute it and/or modify it under the terms of the GPL Version 3, or (at your
- *               option) any later version.
- *
- *               This program is distributed in the hope that it will be useful, but WITHOUT ANY
- *               WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A
- *               PARTICULAR PURPOSE. See the GNU General Public License for more details.
- *
- *               In applying this licence, CERN does not waive the privileges and immunities
- *               granted to it by virtue of its status as an Intergovernmental Organization or
- *               submit itself to any jurisdiction.
+ * SPDX-FileCopyrightText: 2022 CERN
+ * SPDX-License-Identifier: GPL-3.0-or-later
  */
 
 #include <list>
@@ -112,7 +100,7 @@ void RdbmsTapePoolCatalogue::createTapePool(const common::dataStructures::Securi
       LAST_UPDATE_USER_NAME,
       LAST_UPDATE_HOST_NAME,
       LAST_UPDATE_TIME)
-    SELECT 
+    SELECT
       :TAPE_POOL_ID,
       :TAPE_POOL_NAME,
       VIRTUAL_ORGANIZATION_ID,
@@ -129,10 +117,10 @@ void RdbmsTapePoolCatalogue::createTapePool(const common::dataStructures::Securi
 
       :LAST_UPDATE_USER_NAME,
       :LAST_UPDATE_HOST_NAME,
-      :LAST_UPDATE_TIME 
-    FROM 
-      VIRTUAL_ORGANIZATION 
-    WHERE 
+      :LAST_UPDATE_TIME
+    FROM
+      VIRTUAL_ORGANIZATION
+    WHERE
       VIRTUAL_ORGANIZATION_NAME = :VO
   )SQL";
   auto stmt = conn.createStmt(sql);
@@ -277,7 +265,7 @@ std::list<TapePool> RdbmsTapePoolCatalogue::getTapePools(rdbms::Conn &conn,
 
   std::list<TapePool> pools;
   std::string sql = R"SQL(
-    SELECT 
+    SELECT
       TAPE_POOL.TAPE_POOL_NAME AS TAPE_POOL_NAME,
       VIRTUAL_ORGANIZATION.VIRTUAL_ORGANIZATION_NAME AS VO,
       TAPE_POOL.NB_PARTIAL_TAPES AS NB_PARTIAL_TAPES,
@@ -302,14 +290,14 @@ std::list<TapePool> RdbmsTapePoolCatalogue::getTapePools(rdbms::Conn &conn,
 
       TAPE_POOL.LAST_UPDATE_USER_NAME AS LAST_UPDATE_USER_NAME,
       TAPE_POOL.LAST_UPDATE_HOST_NAME AS LAST_UPDATE_HOST_NAME,
-      TAPE_POOL.LAST_UPDATE_TIME AS LAST_UPDATE_TIME 
-    FROM 
-      TAPE_POOL 
-    INNER JOIN VIRTUAL_ORGANIZATION ON 
-      TAPE_POOL.VIRTUAL_ORGANIZATION_ID = VIRTUAL_ORGANIZATION.VIRTUAL_ORGANIZATION_ID 
-    LEFT OUTER JOIN TAPE ON 
-      TAPE_POOL.TAPE_POOL_ID = TAPE.TAPE_POOL_ID 
-    LEFT OUTER JOIN MEDIA_TYPE ON 
+      TAPE_POOL.LAST_UPDATE_TIME AS LAST_UPDATE_TIME
+    FROM
+      TAPE_POOL
+    INNER JOIN VIRTUAL_ORGANIZATION ON
+      TAPE_POOL.VIRTUAL_ORGANIZATION_ID = VIRTUAL_ORGANIZATION.VIRTUAL_ORGANIZATION_ID
+    LEFT OUTER JOIN TAPE ON
+      TAPE_POOL.TAPE_POOL_ID = TAPE.TAPE_POOL_ID
+    LEFT OUTER JOIN MEDIA_TYPE ON
       TAPE.MEDIA_TYPE_ID = MEDIA_TYPE.MEDIA_TYPE_ID
   )SQL";
 
@@ -362,7 +350,7 @@ std::list<TapePool> RdbmsTapePoolCatalogue::getTapePools(rdbms::Conn &conn,
   }
 
   sql += R"SQL(
-    GROUP BY 
+    GROUP BY
       TAPE_POOL.TAPE_POOL_NAME,
       VIRTUAL_ORGANIZATION.VIRTUAL_ORGANIZATION_NAME,
       TAPE_POOL.NB_PARTIAL_TAPES,
@@ -375,8 +363,8 @@ std::list<TapePool> RdbmsTapePoolCatalogue::getTapePools(rdbms::Conn &conn,
       TAPE_POOL.CREATION_LOG_TIME,
       TAPE_POOL.LAST_UPDATE_USER_NAME,
       TAPE_POOL.LAST_UPDATE_HOST_NAME,
-      TAPE_POOL.LAST_UPDATE_TIME 
-    ORDER BY 
+      TAPE_POOL.LAST_UPDATE_TIME
+    ORDER BY
       TAPE_POOL_NAME
   )SQL";
 
@@ -447,7 +435,7 @@ std::list<TapePool> RdbmsTapePoolCatalogue::getTapePools(rdbms::Conn &conn,
 
 std::optional<TapePool> RdbmsTapePoolCatalogue::getTapePool(const std::string &tapePoolName) const {
   const char* const sql = R"SQL(
-    SELECT 
+    SELECT
       TAPE_POOL.TAPE_POOL_NAME AS TAPE_POOL_NAME,
       VIRTUAL_ORGANIZATION.VIRTUAL_ORGANIZATION_NAME AS VO,
       TAPE_POOL.NB_PARTIAL_TAPES AS NB_PARTIAL_TAPES,
@@ -472,16 +460,16 @@ std::optional<TapePool> RdbmsTapePoolCatalogue::getTapePool(const std::string &t
 
       TAPE_POOL.LAST_UPDATE_USER_NAME AS LAST_UPDATE_USER_NAME,
       TAPE_POOL.LAST_UPDATE_HOST_NAME AS LAST_UPDATE_HOST_NAME,
-      TAPE_POOL.LAST_UPDATE_TIME AS LAST_UPDATE_TIME 
-    FROM 
-      TAPE_POOL 
-    INNER JOIN VIRTUAL_ORGANIZATION ON 
-      TAPE_POOL.VIRTUAL_ORGANIZATION_ID = VIRTUAL_ORGANIZATION.VIRTUAL_ORGANIZATION_ID 
-    LEFT OUTER JOIN TAPE ON 
-      TAPE_POOL.TAPE_POOL_ID = TAPE.TAPE_POOL_ID 
-    LEFT OUTER JOIN MEDIA_TYPE ON 
-      TAPE.MEDIA_TYPE_ID = MEDIA_TYPE.MEDIA_TYPE_ID 
-    GROUP BY 
+      TAPE_POOL.LAST_UPDATE_TIME AS LAST_UPDATE_TIME
+    FROM
+      TAPE_POOL
+    INNER JOIN VIRTUAL_ORGANIZATION ON
+      TAPE_POOL.VIRTUAL_ORGANIZATION_ID = VIRTUAL_ORGANIZATION.VIRTUAL_ORGANIZATION_ID
+    LEFT OUTER JOIN TAPE ON
+      TAPE_POOL.TAPE_POOL_ID = TAPE.TAPE_POOL_ID
+    LEFT OUTER JOIN MEDIA_TYPE ON
+      TAPE.MEDIA_TYPE_ID = MEDIA_TYPE.MEDIA_TYPE_ID
+    GROUP BY
       TAPE_POOL.TAPE_POOL_NAME,
       VIRTUAL_ORGANIZATION.VIRTUAL_ORGANIZATION_NAME,
       TAPE_POOL.NB_PARTIAL_TAPES,
@@ -494,10 +482,10 @@ std::optional<TapePool> RdbmsTapePoolCatalogue::getTapePool(const std::string &t
       TAPE_POOL.CREATION_LOG_TIME,
       TAPE_POOL.LAST_UPDATE_USER_NAME,
       TAPE_POOL.LAST_UPDATE_HOST_NAME,
-      TAPE_POOL.LAST_UPDATE_TIME 
-    HAVING 
-      TAPE_POOL.TAPE_POOL_NAME = :TAPE_POOL_NAME 
-    ORDER BY 
+      TAPE_POOL.LAST_UPDATE_TIME
+    HAVING
+      TAPE_POOL.TAPE_POOL_NAME = :TAPE_POOL_NAME
+    ORDER BY
       TAPE_POOL_NAME
   )SQL";
 
@@ -559,12 +547,12 @@ void RdbmsTapePoolCatalogue::modifyTapePoolVo(const common::dataStructures::Secu
 
   const time_t now = time(nullptr);
   const char* const sql = R"SQL(
-    UPDATE TAPE_POOL SET 
+    UPDATE TAPE_POOL SET
       VIRTUAL_ORGANIZATION_ID = (SELECT VIRTUAL_ORGANIZATION_ID FROM VIRTUAL_ORGANIZATION WHERE VIRTUAL_ORGANIZATION_NAME=:VO),
       LAST_UPDATE_USER_NAME = :LAST_UPDATE_USER_NAME,
       LAST_UPDATE_HOST_NAME = :LAST_UPDATE_HOST_NAME,
-      LAST_UPDATE_TIME = :LAST_UPDATE_TIME 
-    WHERE 
+      LAST_UPDATE_TIME = :LAST_UPDATE_TIME
+    WHERE
       TAPE_POOL_NAME = :TAPE_POOL_NAME
   )SQL";
   auto conn = m_connPool->getConn();
@@ -597,12 +585,12 @@ void RdbmsTapePoolCatalogue::modifyTapePoolNbPartialTapes(const common::dataStru
 
   const time_t now = time(nullptr);
   const char* const sql = R"SQL(
-    UPDATE TAPE_POOL SET 
+    UPDATE TAPE_POOL SET
       NB_PARTIAL_TAPES = :NB_PARTIAL_TAPES,
       LAST_UPDATE_USER_NAME = :LAST_UPDATE_USER_NAME,
       LAST_UPDATE_HOST_NAME = :LAST_UPDATE_HOST_NAME,
-      LAST_UPDATE_TIME = :LAST_UPDATE_TIME 
-    WHERE 
+      LAST_UPDATE_TIME = :LAST_UPDATE_TIME
+    WHERE
       TAPE_POOL_NAME = :TAPE_POOL_NAME
   )SQL";
   auto conn = m_connPool->getConn();
@@ -633,12 +621,12 @@ void RdbmsTapePoolCatalogue::modifyTapePoolComment(const common::dataStructures:
 
   const time_t now = time(nullptr);
   const char* const sql = R"SQL(
-    UPDATE TAPE_POOL SET 
+    UPDATE TAPE_POOL SET
       USER_COMMENT = :USER_COMMENT,
       LAST_UPDATE_USER_NAME = :LAST_UPDATE_USER_NAME,
       LAST_UPDATE_HOST_NAME = :LAST_UPDATE_HOST_NAME,
-      LAST_UPDATE_TIME = :LAST_UPDATE_TIME 
-    WHERE 
+      LAST_UPDATE_TIME = :LAST_UPDATE_TIME
+    WHERE
       TAPE_POOL_NAME = :TAPE_POOL_NAME
   )SQL";
   auto conn = m_connPool->getConn();
@@ -669,8 +657,8 @@ void RdbmsTapePoolCatalogue::setTapePoolEncryption(const common::dataStructures:
       IS_ENCRYPTED = :IS_ENCRYPTED,
       LAST_UPDATE_USER_NAME = :LAST_UPDATE_USER_NAME,
       LAST_UPDATE_HOST_NAME = :LAST_UPDATE_HOST_NAME,
-      LAST_UPDATE_TIME = :LAST_UPDATE_TIME 
-    WHERE 
+      LAST_UPDATE_TIME = :LAST_UPDATE_TIME
+    WHERE
       TAPE_POOL_NAME = :TAPE_POOL_NAME
   )SQL";
 
@@ -742,12 +730,12 @@ void RdbmsTapePoolCatalogue::modifyTapePoolSupply(const common::dataStructures::
 
   const time_t now = time(nullptr);
   const char* const sql = R"SQL(
-    UPDATE TAPE_POOL SET 
+    UPDATE TAPE_POOL SET
       SUPPLY = :SUPPLY,
       LAST_UPDATE_USER_NAME = :LAST_UPDATE_USER_NAME,
       LAST_UPDATE_HOST_NAME = :LAST_UPDATE_HOST_NAME,
-      LAST_UPDATE_TIME = :LAST_UPDATE_TIME 
-    WHERE 
+      LAST_UPDATE_TIME = :LAST_UPDATE_TIME
+    WHERE
       TAPE_POOL_NAME = :TAPE_POOL_NAME
   )SQL";
   auto stmt = conn.createStmt(sql);
@@ -778,12 +766,12 @@ void RdbmsTapePoolCatalogue::modifyTapePoolName(const common::dataStructures::Se
 
   const time_t now = time(nullptr);
   const char* const sql = R"SQL(
-    UPDATE TAPE_POOL SET 
+    UPDATE TAPE_POOL SET
       TAPE_POOL_NAME = :NEW_TAPE_POOL_NAME,
       LAST_UPDATE_USER_NAME = :LAST_UPDATE_USER_NAME,
       LAST_UPDATE_HOST_NAME = :LAST_UPDATE_HOST_NAME,
-      LAST_UPDATE_TIME = :LAST_UPDATE_TIME 
-    WHERE 
+      LAST_UPDATE_TIME = :LAST_UPDATE_TIME
+    WHERE
       TAPE_POOL_NAME = :CURRENT_TAPE_POOL_NAME
   )SQL";
   auto conn = m_connPool->getConn();
@@ -804,13 +792,13 @@ void RdbmsTapePoolCatalogue::modifyTapePoolName(const common::dataStructures::Se
 
 bool RdbmsTapePoolCatalogue::tapePoolUsedInAnArchiveRoute(rdbms::Conn &conn, const std::string &tapePoolName) const {
   const char* const sql = R"SQL(
-    SELECT 
-      TAPE_POOL_NAME AS TAPE_POOL_NAME 
-    FROM 
-      TAPE_POOL 
-    INNER JOIN ARCHIVE_ROUTE ON 
-      TAPE_POOL.TAPE_POOL_ID = ARCHIVE_ROUTE.TAPE_POOL_ID 
-    WHERE 
+    SELECT
+      TAPE_POOL_NAME AS TAPE_POOL_NAME
+    FROM
+      TAPE_POOL
+    INNER JOIN ARCHIVE_ROUTE ON
+      TAPE_POOL.TAPE_POOL_ID = ARCHIVE_ROUTE.TAPE_POOL_ID
+    WHERE
       TAPE_POOL_NAME = :TAPE_POOL_NAME
   )SQL";
   auto stmt = conn.createStmt(sql);
@@ -821,13 +809,13 @@ bool RdbmsTapePoolCatalogue::tapePoolUsedInAnArchiveRoute(rdbms::Conn &conn, con
 
 uint64_t RdbmsTapePoolCatalogue::getNbTapesInPool(rdbms::Conn &conn, const std::string &name) const {
   const char* const sql = R"SQL(
-    SELECT 
-      COUNT(*) AS NB_TAPES 
-    FROM 
-      TAPE 
-    INNER JOIN TAPE_POOL ON 
-      TAPE.TAPE_POOL_ID = TAPE_POOL.TAPE_POOL_ID 
-    WHERE 
+    SELECT
+      COUNT(*) AS NB_TAPES
+    FROM
+      TAPE
+    INNER JOIN TAPE_POOL ON
+      TAPE.TAPE_POOL_ID = TAPE_POOL.TAPE_POOL_ID
+    WHERE
       TAPE_POOL.TAPE_POOL_NAME = :TAPE_POOL_NAME
   )SQL";
   auto stmt = conn.createStmt(sql);
@@ -850,10 +838,10 @@ RdbmsTapePoolCatalogue::getTapePoolIdMap(rdbms::Conn &conn, const std::vector<st
   sql_oss << R"SQL(
     SELECT
       TAPE_POOL_NAME AS TAPE_POOL_NAME,
-      TAPE_POOL_ID AS TAPE_POOL_ID 
-    FROM 
-      TAPE_POOL 
-    WHERE 
+      TAPE_POOL_ID AS TAPE_POOL_ID
+    FROM
+      TAPE_POOL
+    WHERE
       TAPE_POOL.TAPE_POOL_NAME IN (
   )SQL";
   bool is_first = true;

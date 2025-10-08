@@ -1,18 +1,6 @@
 /*
- * @project      The CERN Tape Archive (CTA)
- * @copyright    Copyright © 2021-2022 CERN
- * @license      This program is free software, distributed under the terms of the GNU General Public
- *               Licence version 3 (GPL Version 3), copied verbatim in the file "COPYING". You can
- *               redistribute it and/or modify it under the terms of the GPL Version 3, or (at your
- *               option) any later version.
- *
- *               This program is distributed in the hope that it will be useful, but WITHOUT ANY
- *               WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A
- *               PARTICULAR PURPOSE. See the GNU General Public License for more details.
- *
- *               In applying this licence, CERN does not waive the privileges and immunities
- *               granted to it by virtue of its status as an Intergovernmental Organization or
- *               submit itself to any jurisdiction.
+ * SPDX-FileCopyrightText: 2021 CERN
+ * SPDX-License-Identifier: GPL-3.0-or-later
  */
 
 #pragma once
@@ -30,7 +18,7 @@ namespace cta::threading {
   class ChildProcess {
   public:
     /**
-     * Helper functor for child to clean up unneeded parent resources 
+     * Helper functor for child to clean up unneeded parent resources
      * after forking.
      */
     class Cleanup {
@@ -46,19 +34,19 @@ namespace cta::threading {
       explicit ProcessStillRunning(const std::string& what = "Process still running"):
       cta::exception::Exception::Exception(what) {}
     };
-    
+
     class ProcessNeverStarted : public exception::Exception {
     public:
       explicit ProcessNeverStarted(const std::string& what = "Process never started"):
       cta::exception::Exception::Exception(what) {}
     };
-    
+
     class ProcessWasKilled : public exception::Exception {
     public:
       explicit ProcessWasKilled(const std::string& what = "Process was killed"):
       cta::exception::Exception::Exception(what) {}
     };
-    
+
     ChildProcess() : m_started(false), m_finished(false), m_exited(false), m_wasKilled(false), m_exitCode(0) {}
     /* Clean up leftover child processes (hopefully not useful) */
     virtual ~ChildProcess() {
@@ -93,5 +81,5 @@ namespace cta::threading {
     virtual int run() = 0;
     void parseStatus(int status);
   };
-  
+
 } // namespace cta::threading

@@ -1,18 +1,6 @@
 /*
- * @project      The CERN Tape Archive (CTA)
- * @copyright    Copyright © 2021-2022 CERN
- * @license      This program is free software, distributed under the terms of the GNU General Public
- *               Licence version 3 (GPL Version 3), copied verbatim in the file "COPYING". You can
- *               redistribute it and/or modify it under the terms of the GPL Version 3, or (at your
- *               option) any later version.
- *
- *               This program is distributed in the hope that it will be useful, but WITHOUT ANY
- *               WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A
- *               PARTICULAR PURPOSE. See the GNU General Public License for more details.
- *
- *               In applying this licence, CERN does not waive the privileges and immunities
- *               granted to it by virtue of its status as an Intergovernmental Organization or
- *               submit itself to any jurisdiction.
+ * SPDX-FileCopyrightText: 2021 CERN
+ * SPDX-License-Identifier: GPL-3.0-or-later
  */
 
 #include "RetrieveActivityCountMap.hpp"
@@ -36,12 +24,12 @@ RetrieveActivityCountMap::RetrieveActivityCountMap(
 //------------------------------------------------------------------------------
 void RetrieveActivityCountMap::incCount(const std::string& activity) {
   // Find the entry for this value (might fail)
-  auto counter = std::find_if(m_activityCountMap.begin(), m_activityCountMap.end(), 
+  auto counter = std::find_if(m_activityCountMap.begin(), m_activityCountMap.end(),
     [&activity](serializers::RetrieveActivityCountPair pair) {return pair.activity() == activity;});
   if (counter != m_activityCountMap.end()) {
     if (counter->count() < 1) {
       std::stringstream err;
-      err << "In ValueCountMap::incCount: unexpected count value=" << activity 
+      err << "In ValueCountMap::incCount: unexpected count value=" << activity
           << " count=" << counter->count();
       throw  cta::exception::Exception(err.str());
     } else {
@@ -60,7 +48,7 @@ void RetrieveActivityCountMap::incCount(const std::string& activity) {
 //------------------------------------------------------------------------------
 void RetrieveActivityCountMap::decCount(const std::string& activity) {
   // Find the entry for this value. Failing is an error.
-  auto counter = std::find_if(m_activityCountMap.begin(), m_activityCountMap.end(), 
+  auto counter = std::find_if(m_activityCountMap.begin(), m_activityCountMap.end(),
     [&activity](serializers::RetrieveActivityCountPair pair) {return pair.activity() == activity;});
   if (counter == m_activityCountMap.end()) {
     std::stringstream err;
@@ -85,7 +73,7 @@ void RetrieveActivityCountMap::decCount(const std::string& activity) {
       throw  cta::exception::Exception(err.str());
     }
     // Cross check we cannot find the value.
-    auto counter2 = std::find_if(m_activityCountMap.begin(), m_activityCountMap.end(), 
+    auto counter2 = std::find_if(m_activityCountMap.begin(), m_activityCountMap.end(),
       [&activity](serializers::RetrieveActivityCountPair pair) {return pair.activity() == activity;});
   if (m_activityCountMap.end() != counter2) {
       std::stringstream err;

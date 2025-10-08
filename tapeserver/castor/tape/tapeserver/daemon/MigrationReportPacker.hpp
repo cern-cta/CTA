@@ -1,18 +1,6 @@
 /*
- * @project      The CERN Tape Archive (CTA)
- * @copyright    Copyright © 2021-2022 CERN
- * @license      This program is free software, distributed under the terms of the GNU General Public
- *               Licence version 3 (GPL Version 3), copied verbatim in the file "COPYING". You can
- *               redistribute it and/or modify it under the terms of the GPL Version 3, or (at your
- *               option) any later version.
- *
- *               This program is distributed in the hope that it will be useful, but WITHOUT ANY
- *               WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A
- *               PARTICULAR PURPOSE. See the GNU General Public License for more details.
- *
- *               In applying this licence, CERN does not waive the privileges and immunities
- *               granted to it by virtue of its status as an Intergovernmental Organization or
- *               submit itself to any jurisdiction.
+ * SPDX-FileCopyrightText: 2021 CERN
+ * SPDX-License-Identifier: GPL-3.0-or-later
  */
 
 #pragma once
@@ -33,7 +21,7 @@ namespace castor::tape::tapeserver::daemon {
 class MigrationReportPacker : public ReportPackerInterface<detail::Migration> {
 public:
   /**
-   * @param tg The client who is asking for a migration of his files 
+   * @param tg The client who is asking for a migration of his files
    * and to whom we have to report to the status of the operations.
    */
   MigrationReportPacker(cta::ArchiveMount* archiveMount, const cta::log::LogContext& lc);
@@ -119,7 +107,7 @@ public:
 
   /**
    * Create into the MigrationReportPacker a report for an erroneous end of session
-   * @param msg The error message 
+   * @param msg The error message
    * @param isTapeFull True if the drive returned ENOSPC code (end of space)
    * @param lc log context provided by the calling thread.
    */
@@ -195,7 +183,7 @@ private:
   public:
     /* We only can compute the compressed size once we have flushed on the drive
      * We can get from the drive the number of byte it really wrote to tape
-     * @param nbByte the number of byte it really wrote to tape between 
+     * @param nbByte the number of byte it really wrote to tape between
      * this flush and the previous one
      *  */
     explicit ReportFlush(drive::compressionStats compressStats) : m_compressStats(compressStats) {}
@@ -267,20 +255,20 @@ private:
     void run() override;
   } m_workerThread;
 
-  /** 
+  /**
    * m_fifo is holding all the report waiting to be processed
    */
   cta::threading::BlockingQueue<std::unique_ptr<Report>> m_fifo;
 
   cta::threading::Mutex m_producterProtection;
 
-  /** 
-   * Sanity check variable to register if an error has happened 
+  /**
+   * Sanity check variable to register if an error has happened
    * Is set at true as soon as a ReportError has been processed.
    */
   bool m_errorHappened = false;
 
-  /* bool to keep the inner thread running. Is set at false 
+  /* bool to keep the inner thread running. Is set at false
    * when an end of session (with error) is called
    */
   bool m_continue = true;

@@ -1,18 +1,6 @@
 /*
- * @project      The CERN Tape Archive (CTA)
- * @copyright    Copyright © 2021-2022 CERN
- * @license      This program is free software, distributed under the terms of the GNU General Public
- *               Licence version 3 (GPL Version 3), copied verbatim in the file "COPYING". You can
- *               redistribute it and/or modify it under the terms of the GPL Version 3, or (at your
- *               option) any later version.
- *
- *               This program is distributed in the hope that it will be useful, but WITHOUT ANY
- *               WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A
- *               PARTICULAR PURPOSE. See the GNU General Public License for more details.
- *
- *               In applying this licence, CERN does not waive the privileges and immunities
- *               granted to it by virtue of its status as an Intergovernmental Organization or
- *               submit itself to any jurisdiction.
+ * SPDX-FileCopyrightText: 2021 CERN
+ * SPDX-License-Identifier: GPL-3.0-or-later
  */
 
 #include <gmock/gmock.h>
@@ -187,7 +175,7 @@ protected:
   cta::tape::daemon::common::TapedConfiguration m_tapedConfig;
   cta::tape::daemon::DriveConfigEntry m_driveConfig{"drive0", "lib0", "/dev/tape0", "smc0"};
 
-  
+
 };
 
 TEST_F(DriveHandlerTests, getInitialStatus) {
@@ -442,7 +430,7 @@ TEST_F(DriveHandlerTests, runChildAndFailSchedulerMethods) {
     Return(false)).WillRepeatedly(Return(true));
   ASSERT_EQ(m_driveHandler->runChild(), EndOfSessionAction::MARK_DRIVE_AS_DOWN);
   checkReport();
-  
+
   // It cannot create the drive status because the drive doesn't exist in the catalogue
   // This is not a critical error, so it should continue with the session
   m_logger.clearLog();
@@ -495,7 +483,7 @@ TEST_F(DriveHandlerTests, runChildAndFailSchedulerMethods) {
   ASSERT_NE(std::string::npos, logToCheck.find("MSG=\"In DriveHandler::runChild(): "
                                                "failed to set drive down"));
   ASSERT_NE(std::string::npos, logToCheck.find("Message=\"Failed to report drive config\""));
-  
+
   // After all the problems with scheduler, we should be able to run a good session
   ASSERT_EQ(m_driveHandler->runChild(), EndOfSessionAction::MARK_DRIVE_AS_UP);
 }
@@ -504,7 +492,7 @@ TEST_F(DriveHandlerTests, runChildAfterCrashedSessionWhenRunning) {
   using EndOfSessionAction = castor::tape::tapeserver::daemon::Session::EndOfSessionAction;
 
   std::string logToCheck;
-  
+
   EXPECT_CALL(*m_scheduler, reportDriveStatus(_, _, _, _)).WillOnce(Invoke(
       [this](const cta::common::dataStructures::DriveInfo&, const cta::common::dataStructures::MountType& type,
         const cta::common::dataStructures::DriveStatus& status, cta::log::LogContext&) {

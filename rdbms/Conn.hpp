@@ -1,18 +1,6 @@
 /*
- * @project      The CERN Tape Archive (CTA)
- * @copyright    Copyright © 2021-2022 CERN
- * @license      This program is free software, distributed under the terms of the GNU General Public
- *               Licence version 3 (GPL Version 3), copied verbatim in the file "COPYING". You can
- *               redistribute it and/or modify it under the terms of the GPL Version 3, or (at your
- *               option) any later version.
- *
- *               This program is distributed in the hope that it will be useful, but WITHOUT ANY
- *               WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A
- *               PARTICULAR PURPOSE. See the GNU General Public License for more details.
- *
- *               In applying this licence, CERN does not waive the privileges and immunities
- *               granted to it by virtue of its status as an Intergovernmental Organization or
- *               submit itself to any jurisdiction.
+ * SPDX-FileCopyrightText: 2021 CERN
+ * SPDX-License-Identifier: GPL-3.0-or-later
  */
 
 #pragma once
@@ -140,7 +128,7 @@ public:
   void rollback();
 
   /**
-   * Returns the names of all the column and their type as a map for the given 
+   * Returns the names of all the column and their type as a map for the given
    * table in the database schema.
    *
    * @param tableName The table name to get the columns.
@@ -156,7 +144,7 @@ public:
    * order.
    */
   std::list<std::string> getTableNames() const;
-  
+
   /**
    * Returns the names of all the indices  in the database schema in alphabetical
    * order.
@@ -190,7 +178,7 @@ public:
    * alphabetical order.
    */
   std::list<std::string> getSequenceNames();
-  
+
     /**
    * Returns the names of all the triggers in the database schema in
    * alphabetical order.
@@ -206,21 +194,21 @@ public:
   /**
    * Returns the names of all the tables that have been set as PARALLEL
    * in alphabetical order.
-   * 
+   *
    * If the underlying database technologies does not support PARALLEL
    * them this method simply returns an empty list.
-   * 
+   *
    * @return the names of all the tables that have been set as PARALLEL
-   * in alphabetical order. 
-   */  
+   * in alphabetical order.
+   */
   std::list<std::string> getParallelTableNames();
-  
+
   /**
    * Returns the Constraint names of a given table in the database schema
-   * 
+   *
    * If the underlying database technologies does not support constraints informations
    * this method simply returns an empty list.
-   * 
+   *
    * @param tableName the table name to get the constraint names from
    * @return the list of the names of the constraints that the given table has.
    */
@@ -228,30 +216,30 @@ public:
 
   /**
    * Returns the stored procedure names of the database
-   * 
+   *
    * If the underlying database technologies does not support stored procedures informations
    * this method simply returns an empty list.
-   * 
+   *
    * @return the list of the names of the stored procedures in the database
    */
   std::list<std::string> getStoredProcedureNames();
-  
+
   /**
    * Returns the synonym names of the database
-   * 
+   *
    * If the underlying database technologies does not support synonym informations
    * this method simply returns an empty list.
-   * 
+   *
    * @return the list of the names of the synonyms in the database
    */
   std::list<std::string> getSynonymNames();
-  
+
   /**
    * Returns the type names of the database
-   * 
+   *
    * If the underlying database technologies does not support type informations
    * this method simply returns an empty list.
-   * 
+   *
    * @return the list of the names of the types in the database
    */
   std::list<std::string> getTypeNames();
@@ -265,7 +253,7 @@ public:
    * @return the list of the names of the views in the database
    */
   std::list<std::string> getViewNames();
-  
+
   /**
    * Get a pointer to the connection wrapper implementation
    *

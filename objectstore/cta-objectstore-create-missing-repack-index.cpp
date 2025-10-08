@@ -1,22 +1,10 @@
 /*
- * @project      The CERN Tape Archive (CTA)
- * @copyright    Copyright © 2021-2022 CERN
- * @license      This program is free software, distributed under the terms of the GNU General Public
- *               Licence version 3 (GPL Version 3), copied verbatim in the file "COPYING". You can
- *               redistribute it and/or modify it under the terms of the GPL Version 3, or (at your
- *               option) any later version.
- *
- *               This program is distributed in the hope that it will be useful, but WITHOUT ANY
- *               WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A
- *               PARTICULAR PURPOSE. See the GNU General Public License for more details.
- *
- *               In applying this licence, CERN does not waive the privileges and immunities
- *               granted to it by virtue of its status as an Intergovernmental Organization or
- *               submit itself to any jurisdiction.
+ * SPDX-FileCopyrightText: 2021 CERN
+ * SPDX-License-Identifier: GPL-3.0-or-later
  */
 
 /**
- * This program will make sure every queue listed in the root entry does exist and 
+ * This program will make sure every queue listed in the root entry does exist and
  * will remove reference for the ones that do not. This utility was created to quickly
  * unblock tape servers after changing the ArchiveQueue schema during development.
  */
@@ -75,7 +63,7 @@ int main(int argc, char ** argv) {
         std::cout << "Trying to insert repack index" << std::endl;
         std::string repackIndexAddress = re.addOrGetRepackIndexAndCommit(agr);
         std::cout << "Repack index created. Address = " << repackIndexAddress << std::endl;
-        
+
       } catch (const cta::objectstore::RootEntry::DriveRegisterNotEmpty &ex ) {
         std::cout << "Could not remove the already existing repack index, errorMsg = " << ex.getMessageValue();
         return 1;

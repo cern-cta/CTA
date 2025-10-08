@@ -1,18 +1,6 @@
 /*
- * @project      The CERN Tape Archive (CTA)
- * @copyright    Copyright © 2021-2022 CERN
- * @license      This program is free software, distributed under the terms of the GNU General Public
- *               Licence version 3 (GPL Version 3), copied verbatim in the file "COPYING". You can
- *               redistribute it and/or modify it under the terms of the GPL Version 3, or (at your
- *               option) any later version.
- *
- *               This program is distributed in the hope that it will be useful, but WITHOUT ANY
- *               WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A
- *               PARTICULAR PURPOSE. See the GNU General Public License for more details.
- *
- *               In applying this licence, CERN does not waive the privileges and immunities
- *               granted to it by virtue of its status as an Intergovernmental Organization or
- *               submit itself to any jurisdiction.
+ * SPDX-FileCopyrightText: 2021 CERN
+ * SPDX-License-Identifier: GPL-3.0-or-later
  */
 
 #include "RetrieveRequest.hpp"
@@ -259,7 +247,7 @@ queueForFailure:;
     std::list<common::dataStructures::RetrieveJobToAdd> jta;
     jta.emplace_back(activeCopyNb, activeFseq, getAddressIfSet(), m_payload.archivefile().filesize(),
       mp, (signed)m_payload.schedulerrequest().entrylog().time(), m_payload.has_activity() ? std::optional<std::string>{m_payload.activity()} : std::nullopt, std::nullopt);
-    
+
     rq.addJobsIfNecessaryAndCommit(jta, agentReference, lc);
     auto queueUpdateTime = t.secs(utils::Timer::resetCounter);
     // We can now make the transition official.
@@ -543,7 +531,7 @@ cta::common::dataStructures::RetrieveRequest RetrieveRequest::getSchedulerReques
   el.deserialize(m_payload.schedulerrequest().entrylog());
   ret.creationLog = el;
   ret.dstURL = m_payload.schedulerrequest().dsturl();
-  ret.retrieveReportURL = m_payload.schedulerrequest().retrievereporturl(); 
+  ret.retrieveReportURL = m_payload.schedulerrequest().retrievereporturl();
   ret.errorReportURL = m_payload.schedulerrequest().retrieveerrorreporturl();
   ret.isVerifyOnly = m_payload.schedulerrequest().isverifyonly();
   objectstore::DiskFileInfoSerDeser dfisd;
@@ -1261,7 +1249,7 @@ std::string RetrieveRequest::asyncJobSucceedReporterCallback(const std::string& 
 //------------------------------------------------------------------------------
 RetrieveRequest::AsyncJobSucceedReporter* RetrieveRequest::asyncReportSucceed(uint32_t ui32CopyNb) {
   auto ret = std::make_unique<AsyncJobSucceedReporter>();
- 
+
   ret->m_updaterCallback = std::bind(&RetrieveRequest::asyncJobSucceedReporterCallback,
       this, std::placeholders::_1, std::ref(*ret), ui32CopyNb);
 
@@ -1315,14 +1303,14 @@ std::string RetrieveRequest::asyncReportSucceedForRepackCallback(const std::stri
   }
   ret.m_MountPolicy.deserialize(payload.mountpolicy());
   throw cta::exception::Exception("In RetrieveRequest::asyncReportSucceedForRepackCallback: copyNb not found");
-} 
+}
 
 //------------------------------------------------------------------------------
 // RetrieveRequest::asyncReportSucceedForRepack()
 //------------------------------------------------------------------------------
 RetrieveRequest::AsyncJobSucceedForRepackReporter* RetrieveRequest::asyncReportSucceedForRepack(uint32_t ui32CopyNb) {
   auto ret = std::make_unique<AsyncJobSucceedForRepackReporter>();
- 
+
   ret->m_updaterCallback = std::bind(&RetrieveRequest::asyncReportSucceedForRepackCallback,
       this, std::placeholders::_1, std::ref(*ret), ui32CopyNb);
 
@@ -1443,7 +1431,7 @@ std::string RetrieveRequest::asyncTransformToArchiveRequestCallback(const std::s
 
   return oh.SerializeAsString();
 }
- 
+
 //------------------------------------------------------------------------------
 // RetrieveRequest::asyncTransformToArchiveRequest()
 //------------------------------------------------------------------------------
@@ -1451,7 +1439,7 @@ RetrieveRequest::AsyncRetrieveToArchiveTransformer* RetrieveRequest::asyncTransf
 
   auto ret = std::make_unique<AsyncRetrieveToArchiveTransformer>();
   std::string strProcessAgentAddress = processAgent.getAgentAddress();
- 
+
   ret->m_updaterCallback = std::bind(&RetrieveRequest::asyncTransformToArchiveRequestCallback,
       this, std::placeholders::_1, std::ref(*ret), strProcessAgentAddress);
 

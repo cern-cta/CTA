@@ -1,18 +1,6 @@
 /*
- * @project      The CERN Tape Archive (CTA)
- * @copyright    Copyright © 2021-2022 CERN
- * @license      This program is free software, distributed under the terms of the GNU General Public
- *               Licence version 3 (GPL Version 3), copied verbatim in the file "COPYING". You can
- *               redistribute it and/or modify it under the terms of the GPL Version 3, or (at your
- *               option) any later version.
- *
- *               This program is distributed in the hope that it will be useful, but WITHOUT ANY
- *               WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A
- *               PARTICULAR PURPOSE. See the GNU General Public License for more details.
- *
- *               In applying this licence, CERN does not waive the privileges and immunities
- *               granted to it by virtue of its status as an Intergovernmental Organization or
- *               submit itself to any jurisdiction.
+ * SPDX-FileCopyrightText: 2021 CERN
+ * SPDX-License-Identifier: GPL-3.0-or-later
  */
 
 #pragma once
@@ -80,7 +68,7 @@ public:
     //(because one mem block can hold several tape blocks
     uint64_t fileBlock = 0;
     size_t tapeBlock = 0;
-    // This out-of-try-catch variables allows us to record the stage of the 
+    // This out-of-try-catch variables allows us to record the stage of the
     // process we're in, and to count the error if it occurs.
     // We will not record errors for an empty string. This will allow us to
     // prevent counting where error happened upstream.
@@ -197,7 +185,7 @@ public:
         watchdog.addToErrorCount(currentErrorToCount);
       }
       // This is an error case. Log and signal to the disk write task
-      { 
+      {
         cta::log::LogContext::ScopedParam sp0(lc, Param("fileBlock", fileBlock));
         cta::log::LogContext::ScopedParam sp1(lc, Param("ErrorMessage", ex.getMessageValue()));
         lc.log(cta::log::ERR, "Error reading a file in TapeReadFileTask");

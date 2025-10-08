@@ -1,18 +1,6 @@
 /*
- * @project      The CERN Tape Archive (CTA)
- * @copyright    Copyright © 2021-2022 CERN
- * @license      This program is free software, distributed under the terms of the GNU General Public
- *               Licence version 3 (GPL Version 3), copied verbatim in the file "COPYING". You can
- *               redistribute it and/or modify it under the terms of the GPL Version 3, or (at your
- *               option) any later version.
- *
- *               This program is distributed in the hope that it will be useful, but WITHOUT ANY
- *               WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A
- *               PARTICULAR PURPOSE. See the GNU General Public License for more details.
- *
- *               In applying this licence, CERN does not waive the privileges and immunities
- *               granted to it by virtue of its status as an Intergovernmental Organization or
- *               submit itself to any jurisdiction.
+ * SPDX-FileCopyrightText: 2021 CERN
+ * SPDX-License-Identifier: GPL-3.0-or-later
  */
 
 #pragma once
@@ -36,19 +24,19 @@ public:
   InterpolationFilePositionEstimator(const std::vector<drive::endOfWrapPosition> & endOfWrapPositions, const cta::catalogue::MediaType & mediaType);
   FilePositionInfos getFilePosition(const cta::RetrieveJob& job) const override;
   virtual ~InterpolationFilePositionEstimator() = default;
-  
+
   static const uint64_t c_blockSize = 256 * 1024;
 
 private:
   std::vector<drive::endOfWrapPosition> m_endOfWrapPositions;
   cta::catalogue::MediaType m_mediaType;
-  
+
   /**
    * In order for this position estimator to work, we need to check that the mediatype given in the constructor contains
    * the information we need.
    */
   void checkMediaTypeConsistency();
-  
+
   /**
    * Determine the physical position of the blockId passed in parameter
    * @param blockId the blockId to determine its physical position
@@ -60,7 +48,7 @@ private:
    */
   uint64_t determineWrapNb(const uint64_t blockId) const;
   /**
-   * This method determine the longitudinal position (LPos) of the blockId 
+   * This method determine the longitudinal position (LPos) of the blockId
    * passed in parameter
    * @param blockId the blockId to determine its longitudinal position
    * @param wrapNumber the wrapNumber where the blockId is located

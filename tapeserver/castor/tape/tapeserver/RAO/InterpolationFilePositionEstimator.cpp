@@ -1,18 +1,6 @@
 /*
- * @project      The CERN Tape Archive (CTA)
- * @copyright    Copyright © 2021-2022 CERN
- * @license      This program is free software, distributed under the terms of the GNU General Public
- *               Licence version 3 (GPL Version 3), copied verbatim in the file "COPYING". You can
- *               redistribute it and/or modify it under the terms of the GPL Version 3, or (at your
- *               option) any later version.
- *
- *               This program is distributed in the hope that it will be useful, but WITHOUT ANY
- *               WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A
- *               PARTICULAR PURPOSE. See the GNU General Public License for more details.
- *
- *               In applying this licence, CERN does not waive the privileges and immunities
- *               granted to it by virtue of its status as an Intergovernmental Organization or
- *               submit itself to any jurisdiction.
+ * SPDX-FileCopyrightText: 2021 CERN
+ * SPDX-License-Identifier: GPL-3.0-or-later
  */
 
 #include "InterpolationFilePositionEstimator.hpp"
@@ -20,7 +8,7 @@
 
 namespace castor::tape::tapeserver::rao {
 
-InterpolationFilePositionEstimator::InterpolationFilePositionEstimator(const std::vector<drive::endOfWrapPosition> & endOfWrapPositions, 
+InterpolationFilePositionEstimator::InterpolationFilePositionEstimator(const std::vector<drive::endOfWrapPosition> & endOfWrapPositions,
   const cta::catalogue::MediaType & mediaType): m_endOfWrapPositions(endOfWrapPositions), m_mediaType(mediaType) {
   checkMediaTypeConsistency();
 }
@@ -67,7 +55,7 @@ uint64_t InterpolationFilePositionEstimator::determineWrapNb(const uint64_t bloc
   }
   if(eowpItor == m_endOfWrapPositions.end()){
     eowpItor--;
-    std::string errorMsg = "In InterpolationFilePositionEstimator::determineWrapNb(), the blockId " + std::to_string(blockId) + " is greater than the last wrap EOWP blockId ("+std::to_string(eowpItor->blockId)+")"; 
+    std::string errorMsg = "In InterpolationFilePositionEstimator::determineWrapNb(), the blockId " + std::to_string(blockId) + " is greater than the last wrap EOWP blockId ("+std::to_string(eowpItor->blockId)+")";
     throw cta::exception::Exception(errorMsg);
   }
   return eowpItor->wrapNumber;
@@ -80,7 +68,7 @@ uint64_t InterpolationFilePositionEstimator::determineLPos(const uint64_t blockI
   uint64_t maxLpos = m_mediaType.maxLPos.value();
   uint64_t b_max = m_endOfWrapPositions.at(wrapNumber).blockId;
   if(wrapNumber > 0){
-    drive::endOfWrapPosition previousWrapPositionInfos = m_endOfWrapPositions.at(wrapNumber-1); 
+    drive::endOfWrapPosition previousWrapPositionInfos = m_endOfWrapPositions.at(wrapNumber-1);
     b_max -= previousWrapPositionInfos.blockId;
     fileBlockId -= previousWrapPositionInfos.blockId;
   }
@@ -93,7 +81,7 @@ uint64_t InterpolationFilePositionEstimator::determineLPos(const uint64_t blockI
 }
 
 uint64_t InterpolationFilePositionEstimator::determineEndBlockId(const cta::common::dataStructures::TapeFile& file) const {
-  return file.blockId + (file.fileSize / c_blockSize) + 1; 
+  return file.blockId + (file.fileSize / c_blockSize) + 1;
 }
 
 

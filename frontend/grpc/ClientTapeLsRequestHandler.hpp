@@ -1,20 +1,8 @@
 /*
- * @project      The CERN Tape Archive (CTA)
- * @copyright    Copyright © 2021-2023 CERN
- * @license      This program is free software, distributed under the terms of the GNU General Public
- *               Licence version 3 (GPL Version 3), copied verbatim in the file "COPYING". You can
- *               redistribute it and/or modify it under the terms of the GPL Version 3, or (at your
- *               option) any later version.
- *
- *               This program is distributed in the hope that it will be useful, but WITHOUT ANY
- *               WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A
- *               PARTICULAR PURPOSE. See the GNU General Public License for more details.
- *
- *               In applying this licence, CERN does not waive the privileges and immunities
- *               granted to it by virtue of its status as an Intergovernmental Organization or
- *               submit itself to any jurisdiction.
+ * SPDX-FileCopyrightText: 2021 CERN
+ * SPDX-License-Identifier: GPL-3.0-or-later
  */
- 
+
 #pragma once
 
 #include "IHandler.hpp"
@@ -37,7 +25,7 @@ public:
                        cta::admin::TextFormatter& textFormatter,
                        cta::xrd::Request& request);
   ~TapeLsRequestHandler() override = default;
-  
+
   void init() override {}; //  Nothnig todo
   bool next(const bool bOk) override; // can thorw
 
@@ -49,7 +37,7 @@ private:
     READ,
     FINISH
   };
-  
+
   cta::log::Logger& m_log;
   cta::xrd::CtaRpcStream::Stub& m_stub;
   ::grpc::CompletionQueue&  m_completionQueue;
@@ -57,9 +45,9 @@ private:
   // Request from the client
   cta::xrd::Request& m_request;
   cta::frontend::grpc::request::Tag m_tag;
-  
+
   StreamState m_streamState;
-  
+
   // Context for the rpc, allowing to tweak aspects of it such as the use
   // of compression, authentication, as well as to send metadata back to the
   // client.

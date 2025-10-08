@@ -1,18 +1,6 @@
 /*
- * @project      The CERN Tape Archive (CTA)
- * @copyright    Copyright © 2021-2022 CERN
- * @license      This program is free software, distributed under the terms of the GNU General Public
- *               Licence version 3 (GPL Version 3), copied verbatim in the file "COPYING". You can
- *               redistribute it and/or modify it under the terms of the GPL Version 3, or (at your
- *               option) any later version.
- *
- *               This program is distributed in the hope that it will be useful, but WITHOUT ANY
- *               WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A
- *               PARTICULAR PURPOSE. See the GNU General Public License for more details.
- *
- *               In applying this licence, CERN does not waive the privileges and immunities
- *               granted to it by virtue of its status as an Intergovernmental Organization or
- *               submit itself to any jurisdiction.
+ * SPDX-FileCopyrightText: 2021 CERN
+ * SPDX-License-Identifier: GPL-3.0-or-later
  */
 
 #include "catalogue/CatalogueSchema.hpp"
@@ -41,7 +29,7 @@ std::map<std::string, std::string, std::less<>> CatalogueSchema::getSchemaColumn
   std::map<std::string, std::string, std::less<>> schemaColumnNames;
   std::string::size_type searchPos = 0;
   std::string::size_type findResult = std::string::npos;
-  const std::string columnTypes = 
+  const std::string columnTypes =
     "NUMERIC|"
     "INTEGER|"
     "CHAR|"
@@ -51,7 +39,7 @@ std::map<std::string, std::string, std::less<>> CatalogueSchema::getSchemaColumn
     "BYTEA|"
     "VARBINARY|"
     "RAW";
-  
+
   try {
     while(std::string::npos != (findResult = sql.find(';', searchPos))) {
       // Calculate the length of the current statement without the trailing ';'
@@ -101,7 +89,7 @@ std::map<std::string, std::string, std::less<>> CatalogueSchema::getSchemaColumn
 //------------------------------------------------------------------------------
 // getSchemaTableNames
 //------------------------------------------------------------------------------
-std::list<std::string> CatalogueSchema::getSchemaTableNames() const {  
+std::list<std::string> CatalogueSchema::getSchemaTableNames() const {
   std::list<std::string> schemaTables;
   std::string::size_type searchPos = 0;
   std::string::size_type findResult = std::string::npos;
@@ -129,7 +117,7 @@ std::list<std::string> CatalogueSchema::getSchemaTableNames() const {
 //------------------------------------------------------------------------------
 // getSchemaIndexNames
 //------------------------------------------------------------------------------
-std::list<std::string> CatalogueSchema::getSchemaIndexNames() const {  
+std::list<std::string> CatalogueSchema::getSchemaIndexNames() const {
   std::list<std::string> schemaIndices;
   std::string::size_type searchPos = 0;
   std::string::size_type findResult = std::string::npos;
@@ -157,7 +145,7 @@ std::list<std::string> CatalogueSchema::getSchemaIndexNames() const {
 //------------------------------------------------------------------------------
 // getSchemaSequenceNames
 //------------------------------------------------------------------------------
-std::list<std::string> CatalogueSchema::getSchemaSequenceNames() const {  
+std::list<std::string> CatalogueSchema::getSchemaSequenceNames() const {
   std::list<std::string> schemaSequences;
   std::string::size_type searchPos = 0;
   std::string::size_type findResult = std::string::npos;
@@ -202,7 +190,7 @@ std::map<std::string, uint64_t, std::less<>> CatalogueSchema::getSchemaVersion()
     } else {
       exception::Exception ex;
       ex.getMessage() << "Could not find SCHEMA_VERSION";
-      throw ex; 
+      throw ex;
     }
     return schemaVersion;
   } catch(exception::Exception &ex) {

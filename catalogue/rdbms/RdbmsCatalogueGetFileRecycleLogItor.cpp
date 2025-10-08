@@ -1,18 +1,6 @@
 /*
- * @project      The CERN Tape Archive (CTA)
- * @copyright    Copyright © 2021-2022 CERN
- * @license      This program is free software, distributed under the terms of the GNU General Public
- *               Licence version 3 (GPL Version 3), copied verbatim in the file "COPYING". You can
- *               redistribute it and/or modify it under the terms of the GPL Version 3, or (at your
- *               option) any later version.
- *
- *               This program is distributed in the hope that it will be useful, but WITHOUT ANY
- *               WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A
- *               PARTICULAR PURPOSE. See the GNU General Public License for more details.
- *
- *               In applying this licence, CERN does not waive the privileges and immunities
- *               granted to it by virtue of its status as an Intergovernmental Organization or
- *               submit itself to any jurisdiction.
+ * SPDX-FileCopyrightText: 2021 CERN
+ * SPDX-License-Identifier: GPL-3.0-or-later
  */
 
 #include "catalogue/CatalogueItor.hpp"
@@ -35,7 +23,7 @@ RdbmsCatalogueGetFileRecycleLogItor::RdbmsCatalogueGetFileRecycleLogItor(
   m_conn(std::move(conn)),
   m_searchCriteria(searchCriteria) {
   std::string sql = R"SQL(
-    SELECT 
+    SELECT
       FILE_RECYCLE_LOG.VID AS VID,
       FILE_RECYCLE_LOG.FSEQ AS FSEQ,
       FILE_RECYCLE_LOG.BLOCK_ID AS BLOCK_ID,
@@ -57,12 +45,12 @@ RdbmsCatalogueGetFileRecycleLogItor::RdbmsCatalogueGetFileRecycleLogItor(
       FILE_RECYCLE_LOG.COLLOCATION_HINT AS COLLOCATION_HINT,
       FILE_RECYCLE_LOG.DISK_FILE_PATH AS DISK_FILE_PATH,
       FILE_RECYCLE_LOG.REASON_LOG AS REASON_LOG,
-      FILE_RECYCLE_LOG.RECYCLE_LOG_TIME AS RECYCLE_LOG_TIME 
-    FROM 
-      FILE_RECYCLE_LOG 
-    JOIN 
-      STORAGE_CLASS ON STORAGE_CLASS.STORAGE_CLASS_ID = FILE_RECYCLE_LOG.STORAGE_CLASS_ID 
-    JOIN 
+      FILE_RECYCLE_LOG.RECYCLE_LOG_TIME AS RECYCLE_LOG_TIME
+    FROM
+      FILE_RECYCLE_LOG
+    JOIN
+      STORAGE_CLASS ON STORAGE_CLASS.STORAGE_CLASS_ID = FILE_RECYCLE_LOG.STORAGE_CLASS_ID
+    JOIN
       VIRTUAL_ORGANIZATION ON VIRTUAL_ORGANIZATION.VIRTUAL_ORGANIZATION_ID = STORAGE_CLASS.VIRTUAL_ORGANIZATION_ID
   )SQL";
 
@@ -79,9 +67,9 @@ RdbmsCatalogueGetFileRecycleLogItor::RdbmsCatalogueGetFileRecycleLogItor(
   if(thereIsAtLeastOneSearchCriteria) {
     sql += R"SQL( WHERE )SQL";
   }
-  
+
   bool addedAWhereConstraint = false;
-  
+
   if(searchCriteria.vid) {
     sql += R"SQL(
       FILE_RECYCLE_LOG.VID = :VID
@@ -98,7 +86,7 @@ RdbmsCatalogueGetFileRecycleLogItor::RdbmsCatalogueGetFileRecycleLogItor(
     )SQL";
     addedAWhereConstraint = true;
   }
-  
+
   if(searchCriteria.diskFileIds) {
     if (addedAWhereConstraint) {
       sql += R"SQL( AND )SQL";
@@ -155,7 +143,7 @@ RdbmsCatalogueGetFileRecycleLogItor::RdbmsCatalogueGetFileRecycleLogItor(
       VIRTUAL_ORGANIZATION.VIRTUAL_ORGANIZATION_NAME = :VIRTUAL_ORGANIZATION_NAME
     )SQL";
   }
-  
+
   // Order by FSEQ if we are listing the contents of a tape, else order by archive file ID
   if(searchCriteria.vid) {
     sql += R"SQL(
@@ -166,9 +154,9 @@ RdbmsCatalogueGetFileRecycleLogItor::RdbmsCatalogueGetFileRecycleLogItor(
       ORDER BY FILE_RECYCLE_LOG.ARCHIVE_FILE_ID, FILE_RECYCLE_LOG.COPY_NB
     )SQL";
   }
-  
+
   m_stmt = m_conn.createStmt(sql);
-  
+
   if(searchCriteria.vid){
     m_stmt.bindString(":VID", searchCriteria.vid.value());
   }
@@ -240,11 +228,11 @@ common::dataStructures::FileRecycleLog RdbmsCatalogueGetFileRecycleLogItor::next
     throw exception::Exception("hasMore() must be called before next()");
   }
   m_hasMoreHasBeenCalled = false;
-  
+
   auto fileRecycleLog = populateFileRecycleLog();
   m_rsetIsEmpty = !m_rset.next();
   if(m_rsetIsEmpty) releaseDbResources();
-  
+
   return fileRecycleLog;
 }
 

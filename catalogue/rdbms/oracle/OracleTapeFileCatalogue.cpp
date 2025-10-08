@@ -1,18 +1,6 @@
 /*
- * @project      The CERN Tape Archive (CTA)
- * @copyright    Copyright © 2022 CERN
- * @license      This program is free software, distributed under the terms of the GNU General Public
- *               Licence version 3 (GPL Version 3), copied verbatim in the file "COPYING". You can
- *               redistribute it and/or modify it under the terms of the GPL Version 3, or (at your
- *               option) any later version.
- *
- *               This program is distributed in the hope that it will be useful, but WITHOUT ANY
- *               WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A
- *               PARTICULAR PURPOSE. See the GNU General Public License for more details.
- *
- *               In applying this licence, CERN does not waive the privileges and immunities
- *               granted to it by virtue of its status as an Intergovernmental Organization or
- *               submit itself to any jurisdiction.
+ * SPDX-FileCopyrightText: 2022 CERN
+ * SPDX-License-Identifier: GPL-3.0-or-later
  */
 
 #include <algorithm>
@@ -267,7 +255,7 @@ void OracleTapeFileCatalogue::filesWrittenToTape(const std::set<TapeItemWrittenP
         LOGICAL_SIZE_IN_BYTES,
         COPY_NB,
         CREATION_TIME,
-        ARCHIVE_FILE_ID) 
+        ARCHIVE_FILE_ID)
       VALUES(
         :VID,
         :FSEQ,
@@ -351,9 +339,9 @@ void OracleTapeFileCatalogue::filesWrittenToTape(const std::set<TapeItemWrittenP
 
   {
     const char* const sql = R"SQL(
-      INSERT INTO TAPE_FILE (VID, FSEQ, BLOCK_ID, LOGICAL_SIZE_IN_BYTES, 
-        COPY_NB, CREATION_TIME, ARCHIVE_FILE_ID) 
-      SELECT VID, FSEQ, BLOCK_ID, LOGICAL_SIZE_IN_BYTES, 
+      INSERT INTO TAPE_FILE (VID, FSEQ, BLOCK_ID, LOGICAL_SIZE_IN_BYTES,
+        COPY_NB, CREATION_TIME, ARCHIVE_FILE_ID)
+      SELECT VID, FSEQ, BLOCK_ID, LOGICAL_SIZE_IN_BYTES,
         COPY_NB, CREATION_TIME, ARCHIVE_FILE_ID FROM TEMP_TAPE_FILE_INSERTION_BATCH
     )SQL";
     auto stmt = conn.createStmt(sql);
@@ -362,9 +350,9 @@ void OracleTapeFileCatalogue::filesWrittenToTape(const std::set<TapeItemWrittenP
 
   for(auto & recycledFile: recycledFiles){
     const char* const sql = R"SQL(
-      DELETE FROM 
-        TAPE_FILE 
-      WHERE 
+      DELETE FROM
+        TAPE_FILE
+      WHERE
         TAPE_FILE.VID = :VID AND TAPE_FILE.FSEQ = :FSEQ
     )SQL";
 
@@ -381,12 +369,12 @@ void OracleTapeFileCatalogue::filesWrittenToTape(const std::set<TapeItemWrittenP
 uint64_t OracleTapeFileCatalogue::selectTapeForUpdateAndGetLastFSeq(rdbms::Conn &conn,
   const std::string &vid) {
   const char* const sql = R"SQL(
-    SELECT 
-      LAST_FSEQ AS LAST_FSEQ 
-    FROM 
-      TAPE 
-    WHERE 
-      VID = :VID 
+    SELECT
+      LAST_FSEQ AS LAST_FSEQ
+    FROM
+      TAPE
+    WHERE
+      VID = :VID
     FOR UPDATE
   )SQL";
   auto stmt = conn.createStmt(sql);
@@ -461,7 +449,7 @@ void OracleTapeFileCatalogue::idempotentBatchInsertArchiveFiles(rdbms::Conn &con
       STORAGE_CLASS_ID,
       CREATION_TIME,
       RECONCILIATION_TIME)
-    SELECT 
+    SELECT
       :ARCHIVE_FILE_ID,
       :DISK_INSTANCE_NAME,
       :DISK_FILE_ID,
@@ -472,10 +460,10 @@ void OracleTapeFileCatalogue::idempotentBatchInsertArchiveFiles(rdbms::Conn &con
       :CHECKSUM_ADLER32,
       STORAGE_CLASS_ID,
       :CREATION_TIME,
-      :RECONCILIATION_TIME 
-    FROM 
-      STORAGE_CLASS 
-    WHERE 
+      :RECONCILIATION_TIME
+    FROM
+      STORAGE_CLASS
+    WHERE
       STORAGE_CLASS_NAME = :STORAGE_CLASS_NAME
   )SQL";
   auto stmt = conn.createStmt(sql);
@@ -550,20 +538,20 @@ std::list<cta::catalogue::InsertFileRecycleLog> OracleTapeFileCatalogue::insertO
   std::list<cta::catalogue::InsertFileRecycleLog> fileRecycleLogsToInsert;
   //Get the TAPE_FILE entry to put on the file recycle log
   const char* const sql = R"SQL(
-    SELECT 
+    SELECT
       TAPE_FILE.VID AS VID,
       TAPE_FILE.FSEQ AS FSEQ,
       TAPE_FILE.BLOCK_ID AS BLOCK_ID,
       TAPE_FILE.COPY_NB AS COPY_NB,
       TAPE_FILE.CREATION_TIME AS TAPE_FILE_CREATION_TIME,
-      TAPE_FILE.ARCHIVE_FILE_ID AS ARCHIVE_FILE_ID 
-    FROM 
-      TAPE_FILE 
-    JOIN 
-      TEMP_TAPE_FILE_INSERTION_BATCH 
-    ON 
-      TEMP_TAPE_FILE_INSERTION_BATCH.ARCHIVE_FILE_ID = TAPE_FILE.ARCHIVE_FILE_ID AND TEMP_TAPE_FILE_INSERTION_BATCH.COPY_NB = TAPE_FILE.COPY_NB 
-    WHERE 
+      TAPE_FILE.ARCHIVE_FILE_ID AS ARCHIVE_FILE_ID
+    FROM
+      TAPE_FILE
+    JOIN
+      TEMP_TAPE_FILE_INSERTION_BATCH
+    ON
+      TEMP_TAPE_FILE_INSERTION_BATCH.ARCHIVE_FILE_ID = TAPE_FILE.ARCHIVE_FILE_ID AND TEMP_TAPE_FILE_INSERTION_BATCH.COPY_NB = TAPE_FILE.COPY_NB
+    WHERE
       TAPE_FILE.VID != TEMP_TAPE_FILE_INSERTION_BATCH.VID OR TAPE_FILE.FSEQ != TEMP_TAPE_FILE_INSERTION_BATCH.FSEQ
   )SQL";
   auto stmt = conn.createStmt(sql);

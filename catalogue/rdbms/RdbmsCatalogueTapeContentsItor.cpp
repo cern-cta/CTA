@@ -1,18 +1,6 @@
 /*
- * @project      The CERN Tape Archive (CTA)
- * @copyright    Copyright © 2021-2022 CERN
- * @license      This program is free software, distributed under the terms of the GNU General Public
- *               Licence version 3 (GPL Version 3), copied verbatim in the file "COPYING". You can
- *               redistribute it and/or modify it under the terms of the GPL Version 3, or (at your
- *               option) any later version.
- *
- *               This program is distributed in the hope that it will be useful, but WITHOUT ANY
- *               WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A
- *               PARTICULAR PURPOSE. See the GNU General Public License for more details.
- *
- *               In applying this licence, CERN does not waive the privileges and immunities
- *               granted to it by virtue of its status as an Intergovernmental Organization or
- *               submit itself to any jurisdiction.
+ * SPDX-FileCopyrightText: 2021 CERN
+ * SPDX-License-Identifier: GPL-3.0-or-later
  */
 
 #include "catalogue/CatalogueItor.hpp"
@@ -74,7 +62,7 @@ RdbmsCatalogueTapeContentsItor::RdbmsCatalogueTapeContentsItor(
   if (vid.empty()) throw exception::Exception("vid is an empty string");
 
   std::string sql = R"SQL(
-    SELECT /*+ INDEX (TAPE_FILE TAPE_FILE_VID_IDX) */ 
+    SELECT /*+ INDEX (TAPE_FILE TAPE_FILE_VID_IDX) */
       ARCHIVE_FILE.ARCHIVE_FILE_ID AS ARCHIVE_FILE_ID,
       ARCHIVE_FILE.DISK_INSTANCE_NAME AS DISK_INSTANCE_NAME,
       ARCHIVE_FILE.DISK_FILE_ID AS DISK_FILE_ID,
@@ -92,23 +80,23 @@ RdbmsCatalogueTapeContentsItor::RdbmsCatalogueTapeContentsItor(
       TAPE_FILE.LOGICAL_SIZE_IN_BYTES AS LOGICAL_SIZE_IN_BYTES,
       TAPE_FILE.COPY_NB AS COPY_NB,
       TAPE_FILE.CREATION_TIME AS TAPE_FILE_CREATION_TIME,
-      TAPE_POOL.TAPE_POOL_NAME AS TAPE_POOL_NAME 
-    FROM 
-      ARCHIVE_FILE 
-    INNER JOIN STORAGE_CLASS ON 
-      ARCHIVE_FILE.STORAGE_CLASS_ID = STORAGE_CLASS.STORAGE_CLASS_ID 
-    INNER JOIN TAPE_FILE ON 
-      ARCHIVE_FILE.ARCHIVE_FILE_ID = TAPE_FILE.ARCHIVE_FILE_ID 
-    INNER JOIN TAPE ON 
-      TAPE_FILE.VID = TAPE.VID 
-    INNER JOIN TAPE_POOL ON 
-      TAPE.TAPE_POOL_ID = TAPE_POOL.TAPE_POOL_ID 
-    WHERE 
-      TAPE_FILE.VID = :VID 
+      TAPE_POOL.TAPE_POOL_NAME AS TAPE_POOL_NAME
+    FROM
+      ARCHIVE_FILE
+    INNER JOIN STORAGE_CLASS ON
+      ARCHIVE_FILE.STORAGE_CLASS_ID = STORAGE_CLASS.STORAGE_CLASS_ID
+    INNER JOIN TAPE_FILE ON
+      ARCHIVE_FILE.ARCHIVE_FILE_ID = TAPE_FILE.ARCHIVE_FILE_ID
+    INNER JOIN TAPE ON
+      TAPE_FILE.VID = TAPE.VID
+    INNER JOIN TAPE_POOL ON
+      TAPE.TAPE_POOL_ID = TAPE_POOL.TAPE_POOL_ID
+    WHERE
+      TAPE_FILE.VID = :VID
   )SQL";
 
   sql += R"SQL(
-    ORDER BY FSEQ 
+    ORDER BY FSEQ
   )SQL";
 
   m_conn = connPool.getConn();

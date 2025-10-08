@@ -1,18 +1,6 @@
 /*
- * @project      The CERN Tape Archive (CTA)
- * @copyright    Copyright © 2021-2022 CERN
- * @license      This program is free software, distributed under the terms of the GNU General Public
- *               Licence version 3 (GPL Version 3), copied verbatim in the file "COPYING". You can
- *               redistribute it and/or modify it under the terms of the GPL Version 3, or (at your
- *               option) any later version.
- *
- *               This program is distributed in the hope that it will be useful, but WITHOUT ANY
- *               WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A
- *               PARTICULAR PURPOSE. See the GNU General Public License for more details.
- *
- *               In applying this licence, CERN does not waive the privileges and immunities
- *               granted to it by virtue of its status as an Intergovernmental Organization or
- *               submit itself to any jurisdiction.
+ * SPDX-FileCopyrightText: 2021 CERN
+ * SPDX-License-Identifier: GPL-3.0-or-later
  */
 
 #include <algorithm>
@@ -63,7 +51,7 @@ SchemaVersion DatabaseMetadataGetter::getCatalogueVersion(){
   const char* const sql = R"SQL(
     SELECT
       CTA_CATALOGUE.SCHEMA_VERSION_MAJOR AS SCHEMA_VERSION_MAJOR,
-      CTA_CATALOGUE.SCHEMA_VERSION_MINOR AS SCHEMA_VERSION_MINOR 
+      CTA_CATALOGUE.SCHEMA_VERSION_MINOR AS SCHEMA_VERSION_MINOR
     FROM
       CTA_CATALOGUE
   )SQL";
@@ -84,7 +72,7 @@ SchemaVersion DatabaseMetadataGetter::getCatalogueVersion(){
       SELECT
         CTA_CATALOGUE.NEXT_SCHEMA_VERSION_MAJOR AS NEXT_SCHEMA_VERSION_MAJOR,
         CTA_CATALOGUE.NEXT_SCHEMA_VERSION_MINOR AS NEXT_SCHEMA_VERSION_MINOR,
-        CTA_CATALOGUE.STATUS AS STATUS 
+        CTA_CATALOGUE.STATUS AS STATUS
       FROM
         CTA_CATALOGUE
     )SQL";
@@ -200,14 +188,14 @@ std::list<std::string> OracleDatabaseMetadataGetter::getTableNames(){
 std::set<std::string,std::less<>> OracleDatabaseMetadataGetter::getMissingIndexes() {
   // For definition of constraint types, see https://docs.oracle.com/en/database/oracle/oracle-database/12.2/refrn/USER_CONSTRAINTS.html
   const char* const sql = R"SQL(
-    SELECT 
-      A.TABLE_NAME || '.' || A.COLUMN_NAME AS FQ_COL_NAME 
+    SELECT
+      A.TABLE_NAME || '.' || A.COLUMN_NAME AS FQ_COL_NAME
     FROM
       USER_CONS_COLUMNS A,
       USER_CONSTRAINTS B
-    WHERE 
+    WHERE
       A.CONSTRAINT_NAME = B.CONSTRAINT_NAME AND
-      B.CONSTRAINT_TYPE = 'R' AND /* R = Referential Integrity */ 
+      B.CONSTRAINT_TYPE = 'R' AND /* R = Referential Integrity */
       (A.TABLE_NAME || '.' || A.COLUMN_NAME) NOT IN
         (SELECT TABLE_NAME || '.' || COLUMN_NAME FROM USER_IND_COLUMNS)
   )SQL";
@@ -231,34 +219,34 @@ cta::rdbms::Login::DbType PostgresDatabaseMetadataGetter::getDbType(){
 std::set<std::string,std::less<>> PostgresDatabaseMetadataGetter::getMissingIndexes() {
   // Adapted from https://www.cybertec-postgresql.com/en/index-your-foreign-key/
   const char* const sql = R"SQL(
-    SELECT 
-        T.RELNAME || '.' || A.ATTNAME AS FQ_COL_NAME 
-      FROM 
-        PG_CLASS T, 
-        PG_CATALOG.PG_CONSTRAINT C 
+    SELECT
+        T.RELNAME || '.' || A.ATTNAME AS FQ_COL_NAME
+      FROM
+        PG_CLASS T,
+        PG_CATALOG.PG_CONSTRAINT C
       /* enumerated key column numbers per foreign key */
-      CROSS JOIN LATERAL 
-        unnest(C.CONKEY) WITH ORDINALITY AS X(ATTNUM, n) 
+      CROSS JOIN LATERAL
+        unnest(C.CONKEY) WITH ORDINALITY AS X(ATTNUM, n)
       /* name for each key column */
-      JOIN 
-        PG_CATALOG.PG_ATTRIBUTE A ON A.ATTNUM = X.ATTNUM AND A.ATTRELID = C.CONRELID 
-      WHERE 
-        T.OID = C.CONRELID AND 
-        C.CONTYPE = 'f' AND 
+      JOIN
+        PG_CATALOG.PG_ATTRIBUTE A ON A.ATTNUM = X.ATTNUM AND A.ATTRELID = C.CONRELID
+      WHERE
+        T.OID = C.CONRELID AND
+        C.CONTYPE = 'f' AND
         NOT EXISTS (
-          SELECT 1 
-          FROM PG_INDEX 
-          WHERE 
-            INDRELID = C.CONRELID AND 
-            (SELECT ARRAY( 
-              SELECT CONKEY[i] 
-              FROM generate_series(array_lower(CONKEY, 1), array_upper(CONKEY, 1)) i 
+          SELECT 1
+          FROM PG_INDEX
+          WHERE
+            INDRELID = C.CONRELID AND
+            (SELECT ARRAY(
+              SELECT CONKEY[i]
+              FROM generate_series(array_lower(CONKEY, 1), array_upper(CONKEY, 1)) i
               ORDER BY 1))
-             = 
-            (SELECT ARRAY( 
-              SELECT INDKEY[i] 
-                FROM generate_series(array_lower(INDKEY, 1), array_upper(INDKEY, 1)) i 
-              ORDER BY 1)) 
+             =
+            (SELECT ARRAY(
+              SELECT INDKEY[i]
+                FROM generate_series(array_lower(INDKEY, 1), array_upper(INDKEY, 1)) i
+              ORDER BY 1))
         )
   )SQL";
 

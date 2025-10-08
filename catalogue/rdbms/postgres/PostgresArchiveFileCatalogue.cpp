@@ -1,18 +1,6 @@
 /*
- * @project      The CERN Tape Archive (CTA)
- * @copyright    Copyright © 2022 CERN
- * @license      This program is free software, distributed under the terms of the GNU General Public
- *               Licence version 3 (GPL Version 3), copied verbatim in the file "COPYING". You can
- *               redistribute it and/or modify it under the terms of the GPL Version 3, or (at your
- *               option) any later version.
- *
- *               This program is distributed in the hope that it will be useful, but WITHOUT ANY
- *               WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A
- *               PARTICULAR PURPOSE. See the GNU General Public License for more details.
- *
- *               In applying this licence, CERN does not waive the privileges and immunities
- *               granted to it by virtue of its status as an Intergovernmental Organization or
- *               submit itself to any jurisdiction.
+ * SPDX-FileCopyrightText: 2022 CERN
+ * SPDX-License-Identifier: GPL-3.0-or-later
  */
 
 #include "catalogue/rdbms/postgres/PostgresArchiveFileCatalogue.hpp"
@@ -40,7 +28,7 @@ PostgresArchiveFileCatalogue::PostgresArchiveFileCatalogue(log::Logger &log, std
 void PostgresArchiveFileCatalogue::DO_NOT_USE_deleteArchiveFile_DO_NOT_USE(const std::string &diskInstanceName,
   const uint64_t archiveFileId, log::LogContext &lc) {
   const char* selectSql = R"SQL(
-    SELECT 
+    SELECT
       ARCHIVE_FILE.ARCHIVE_FILE_ID AS ARCHIVE_FILE_ID,
       ARCHIVE_FILE.DISK_INSTANCE_NAME AS DISK_INSTANCE_NAME,
       ARCHIVE_FILE.DISK_FILE_ID AS DISK_FILE_ID,
@@ -57,15 +45,15 @@ void PostgresArchiveFileCatalogue::DO_NOT_USE_deleteArchiveFile_DO_NOT_USE(const
       TAPE_FILE.BLOCK_ID AS BLOCK_ID,
       TAPE_FILE.LOGICAL_SIZE_IN_BYTES AS LOGICAL_SIZE_IN_BYTES,
       TAPE_FILE.COPY_NB AS COPY_NB,
-      TAPE_FILE.CREATION_TIME AS TAPE_FILE_CREATION_TIME 
-    FROM 
-      ARCHIVE_FILE 
-    INNER JOIN STORAGE_CLASS ON 
-      ARCHIVE_FILE.STORAGE_CLASS_ID = STORAGE_CLASS.STORAGE_CLASS_ID 
-    INNER JOIN TAPE_FILE ON 
-      ARCHIVE_FILE.ARCHIVE_FILE_ID = TAPE_FILE.ARCHIVE_FILE_ID 
-    WHERE 
-      ARCHIVE_FILE.ARCHIVE_FILE_ID = :ARCHIVE_FILE_ID 
+      TAPE_FILE.CREATION_TIME AS TAPE_FILE_CREATION_TIME
+    FROM
+      ARCHIVE_FILE
+    INNER JOIN STORAGE_CLASS ON
+      ARCHIVE_FILE.STORAGE_CLASS_ID = STORAGE_CLASS.STORAGE_CLASS_ID
+    INNER JOIN TAPE_FILE ON
+      ARCHIVE_FILE.ARCHIVE_FILE_ID = TAPE_FILE.ARCHIVE_FILE_ID
+    WHERE
+      ARCHIVE_FILE.ARCHIVE_FILE_ID = :ARCHIVE_FILE_ID
     FOR UPDATE OF ARCHIVE_FILE
   )SQL";
   utils::Timer t;
@@ -271,14 +259,14 @@ std::map<uint64_t, PostgresArchiveFileCatalogue::FileSizeAndChecksum>
   }
 
   const char* const sql = R"SQL(
-    SELECT 
+    SELECT
       ARCHIVE_FILE.ARCHIVE_FILE_ID AS ARCHIVE_FILE_ID,
       ARCHIVE_FILE.SIZE_IN_BYTES AS SIZE_IN_BYTES,
       ARCHIVE_FILE.CHECKSUM_BLOB AS CHECKSUM_BLOB,
-      ARCHIVE_FILE.CHECKSUM_ADLER32 AS CHECKSUM_ADLER32 
-    FROM 
-      ARCHIVE_FILE 
-    INNER JOIN TEMP_TAPE_FILE_BATCH ON 
+      ARCHIVE_FILE.CHECKSUM_ADLER32 AS CHECKSUM_ADLER32
+    FROM
+      ARCHIVE_FILE
+    INNER JOIN TEMP_TAPE_FILE_BATCH ON
       ARCHIVE_FILE.ARCHIVE_FILE_ID = TEMP_TAPE_FILE_BATCH.ARCHIVE_FILE_ID
   )SQL";
   auto stmt = conn.createStmt(sql);

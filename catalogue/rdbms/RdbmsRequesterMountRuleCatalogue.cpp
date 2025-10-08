@@ -1,18 +1,6 @@
 /*
- * @project      The CERN Tape Archive (CTA)
- * @copyright    Copyright © 2022 CERN
- * @license      This program is free software, distributed under the terms of the GNU General Public
- *               Licence version 3 (GPL Version 3), copied verbatim in the file "COPYING". You can
- *               redistribute it and/or modify it under the terms of the GPL Version 3, or (at your
- *               option) any later version.
- *
- *               This program is distributed in the hope that it will be useful, but WITHOUT ANY
- *               WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A
- *               PARTICULAR PURPOSE. See the GNU General Public License for more details.
- *
- *               In applying this licence, CERN does not waive the privileges and immunities
- *               granted to it by virtue of its status as an Intergovernmental Organization or
- *               submit itself to any jurisdiction.
+ * SPDX-FileCopyrightText: 2022 CERN
+ * SPDX-License-Identifier: GPL-3.0-or-later
  */
 
 #include <string>
@@ -38,13 +26,13 @@ void RdbmsRequesterMountRuleCatalogue::modifyRequesterMountRulePolicy(
   const std::string &requesterName, const std::string &mountPolicy) {
   const time_t now = time(nullptr);
   const char* const sql = R"SQL(
-    UPDATE REQUESTER_MOUNT_RULE SET 
+    UPDATE REQUESTER_MOUNT_RULE SET
       MOUNT_POLICY_NAME = :MOUNT_POLICY_NAME,
       LAST_UPDATE_USER_NAME = :LAST_UPDATE_USER_NAME,
       LAST_UPDATE_HOST_NAME = :LAST_UPDATE_HOST_NAME,
-      LAST_UPDATE_TIME = :LAST_UPDATE_TIME 
-    WHERE 
-      DISK_INSTANCE_NAME = :DISK_INSTANCE_NAME AND 
+      LAST_UPDATE_TIME = :LAST_UPDATE_TIME
+    WHERE
+      DISK_INSTANCE_NAME = :DISK_INSTANCE_NAME AND
       REQUESTER_NAME = :REQUESTER_NAME
   )SQL";
   auto conn = m_connPool->getConn();
@@ -69,13 +57,13 @@ void RdbmsRequesterMountRuleCatalogue::modifyRequesteMountRuleComment(
   const auto trimmedComment = RdbmsCatalogueUtils::checkCommentOrReasonMaxLength(comment, &m_log);
   const time_t now = time(nullptr);
   const char* const sql = R"SQL(
-    UPDATE REQUESTER_MOUNT_RULE SET 
+    UPDATE REQUESTER_MOUNT_RULE SET
       USER_COMMENT = :USER_COMMENT,
       LAST_UPDATE_USER_NAME = :LAST_UPDATE_USER_NAME,
       LAST_UPDATE_HOST_NAME = :LAST_UPDATE_HOST_NAME,
-      LAST_UPDATE_TIME = :LAST_UPDATE_TIME 
-    WHERE 
-      DISK_INSTANCE_NAME = :DISK_INSTANCE_NAME AND 
+      LAST_UPDATE_TIME = :LAST_UPDATE_TIME
+    WHERE
+      DISK_INSTANCE_NAME = :DISK_INSTANCE_NAME AND
       REQUESTER_NAME = :REQUESTER_NAME
   )SQL";
   auto conn = m_connPool->getConn();
@@ -101,7 +89,7 @@ void RdbmsRequesterMountRuleCatalogue::createRequesterMountRule(const common::da
   const auto user = User(diskInstanceName, requesterName);
   auto conn = m_connPool->getConn();
   const auto mountPolicyCatalogue = static_cast<RdbmsMountPolicyCatalogue*>(m_rdbmsCatalogue->MountPolicy().get());
-  
+
   if(const auto mountPolicy = mountPolicyCatalogue->getRequesterMountPolicy(conn, user); mountPolicy) {
     throw exception::UserError(std::string("Cannot create rule to assign mount-policy ") + mountPolicyName +
       " to requester " + diskInstanceName + ":" + requesterName +
@@ -173,7 +161,7 @@ void RdbmsRequesterMountRuleCatalogue::createRequesterMountRule(const common::da
 std::list<common::dataStructures::RequesterMountRule> RdbmsRequesterMountRuleCatalogue::getRequesterMountRules() const {
   std::list<common::dataStructures::RequesterMountRule> rules;
   const char* const sql = R"SQL(
-    SELECT 
+    SELECT
       DISK_INSTANCE_NAME AS DISK_INSTANCE_NAME,
       REQUESTER_NAME AS REQUESTER_NAME,
       MOUNT_POLICY_NAME AS MOUNT_POLICY_NAME,
@@ -186,10 +174,10 @@ std::list<common::dataStructures::RequesterMountRule> RdbmsRequesterMountRuleCat
 
       LAST_UPDATE_USER_NAME AS LAST_UPDATE_USER_NAME,
       LAST_UPDATE_HOST_NAME AS LAST_UPDATE_HOST_NAME,
-      LAST_UPDATE_TIME AS LAST_UPDATE_TIME 
-    FROM 
-      REQUESTER_MOUNT_RULE 
-    ORDER BY 
+      LAST_UPDATE_TIME AS LAST_UPDATE_TIME
+    FROM
+      REQUESTER_MOUNT_RULE
+    ORDER BY
       DISK_INSTANCE_NAME, REQUESTER_NAME, MOUNT_POLICY_NAME
   )SQL";
   auto conn = m_connPool->getConn();
@@ -218,10 +206,10 @@ std::list<common::dataStructures::RequesterMountRule> RdbmsRequesterMountRuleCat
 void RdbmsRequesterMountRuleCatalogue::deleteRequesterMountRule(const std::string &diskInstanceName,
   const std::string &requesterName) {
   const char* const sql = R"SQL(
-    DELETE FROM 
-      REQUESTER_MOUNT_RULE 
-    WHERE 
-      DISK_INSTANCE_NAME = :DISK_INSTANCE_NAME AND 
+    DELETE FROM
+      REQUESTER_MOUNT_RULE
+    WHERE
+      DISK_INSTANCE_NAME = :DISK_INSTANCE_NAME AND
       REQUESTER_NAME = :REQUESTER_NAME
   )SQL";
   auto conn = m_connPool->getConn();

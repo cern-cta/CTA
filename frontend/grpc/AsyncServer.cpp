@@ -1,21 +1,9 @@
 /*
- * @project      The CERN Tape Archive (CTA)
- * @copyright    Copyright © 2021-2023 CERN
- * @license      This program is free software, distributed under the terms of the GNU General Public
- *               Licence version 3 (GPL Version 3), copied verbatim in the file "COPYING". You can
- *               redistribute it and/or modify it under the terms of the GPL Version 3, or (at your
- *               option) any later version.
- *
- *               This program is distributed in the hope that it will be useful, but WITHOUT ANY
- *               WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A
- *               PARTICULAR PURPOSE. See the GNU General Public License for more details.
- *
- *               In applying this licence, CERN does not waive the privileges and immunities
- *               granted to it by virtue of its status as an Intergovernmental Organization or
- *               submit itself to any jurisdiction.
+ * SPDX-FileCopyrightText: 2021 CERN
+ * SPDX-License-Identifier: GPL-3.0-or-later
  */
- 
- 
+
+
 #include "AsyncServer.hpp"
 
 #include "common/log/LogContext.hpp"
@@ -36,7 +24,7 @@ cta::frontend::grpc::server::AsyncServer::AsyncServer(cta::log::Logger& log,
                                                                   m_uiPort(uiPort),
                                                                   m_uiNoThreads(uiNoThreads),
                                                                   m_upServerBuilder(std::make_unique<::grpc::ServerBuilder>()) {
-                                                                  
+
 }
 
 cta::frontend::grpc::server::AsyncServer::~AsyncServer() {
@@ -71,7 +59,7 @@ cta::frontend::grpc::request::IHandler& cta::frontend::grpc::server::AsyncServer
 
 void cta::frontend::grpc::server::AsyncServer::releaseHandler(const cta::frontend::grpc::request::Tag tag) {
   std::lock_guard<std::mutex> lck(m_mtxLockHandler);
-  
+
   {
     log::LogContext lc(m_log);
     log::ScopedParamContainer params(lc);
@@ -93,7 +81,7 @@ void cta::frontend::grpc::server::AsyncServer::releaseHandler(const cta::fronten
 void cta::frontend::grpc::server::AsyncServer::run(const std::shared_ptr<::grpc::ServerCredentials>& spServerCredentials, const std::shared_ptr<::grpc::AuthMetadataProcessor>& spAuthProcessor) {
   log::LogContext lc(m_log);
   m_upCompletionQueue = m_upServerBuilder->AddCompletionQueue();
-  // 
+  //
   if(!spServerCredentials) {
     throw cta::exception::Exception("In grpc::AsyncServer::run(): Incorrect server credentials.");
   }
@@ -116,7 +104,7 @@ void cta::frontend::grpc::server::AsyncServer::run(const std::shared_ptr<::grpc:
    * Enlists an endpoint addr (port with an optional IP address) to bind the grpc::Server object to be created to.
    * It can be invoked multiple times.
    * strAddress: Valid values include dns:///localhost:1234, 192.168.1.1:31416, dns:///[::1]:27182, etc.
-   * spServerCredentials: The credentials associated with the server. 
+   * spServerCredentials: The credentials associated with the server.
    */
   m_upServerBuilder->AddListeningPort(strAddress, spServerCredentials);
   m_upServer = m_upServerBuilder->BuildAndStart();
@@ -125,7 +113,7 @@ void cta::frontend::grpc::server::AsyncServer::run(const std::shared_ptr<::grpc:
     const std::unique_ptr<cta::frontend::grpc::request::IHandler>& upIHandler = item.second;
     upIHandler.get()->next(true);
     //TODO: Log names of initialised handlers;
-  } 
+  }
   // Proceed to the server's main loop.
   m_vThreads.resize(m_uiNoThreads);
   unsigned int uiThreadId = 0;
@@ -143,7 +131,7 @@ void cta::frontend::grpc::server::AsyncServer::run(const std::shared_ptr<::grpc:
   for (std::thread& worker : m_vThreads) {
     worker.join();
   }
-  
+
 }
 
 void cta::frontend::grpc::server::AsyncServer::process(unsigned int uiId) {

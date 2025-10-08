@@ -1,18 +1,6 @@
 /*
- * @project      The CERN Tape Archive (CTA)
- * @copyright    Copyright © 2021-2022 CERN
- * @license      This program is free software, distributed under the terms of the GNU General Public
- *               Licence version 3 (GPL Version 3), copied verbatim in the file "COPYING". You can
- *               redistribute it and/or modify it under the terms of the GPL Version 3, or (at your
- *               option) any later version.
- *
- *               This program is distributed in the hope that it will be useful, but WITHOUT ANY
- *               WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A
- *               PARTICULAR PURPOSE. See the GNU General Public License for more details.
- *
- *               In applying this licence, CERN does not waive the privileges and immunities
- *               granted to it by virtue of its status as an Intergovernmental Organization or
- *               submit itself to any jurisdiction.
+ * SPDX-FileCopyrightText: 2021 CERN
+ * SPDX-License-Identifier: GPL-3.0-or-later
  */
 
 #pragma once
@@ -40,7 +28,7 @@ namespace castor::tape::System {
     /** Reset the read/write pointers at open. This ensures coherent behavior on multiple access */
     virtual void reset() = 0;
   };
-  
+
   /**
    * Class representing real files
    */
@@ -69,7 +57,7 @@ namespace castor::tape::System {
   protected:
     struct mtget m_mtStat;
     struct mtop m_mtCmd;
-    uint32_t blockID;  
+    uint32_t blockID;
     bool clearCompressionStats;
     unsigned char m_LBPInfoMethod;
     unsigned char m_LBPInfoLength;
@@ -77,10 +65,10 @@ namespace castor::tape::System {
     unsigned char m_LBPInfo_W;
     /**
      * This function handles READ_POSITION CDB and prepares the reply.
-     * 
-     * @param sgio_h  The pointer to the sg_io_hdr_t structure with 
+     *
+     * @param sgio_h  The pointer to the sg_io_hdr_t structure with
      *                ioctl call data
-     * @return        Returns 0 in success and 
+     * @return        Returns 0 in success and
      *                -1 with appropriate  errno if an error occurred.
      */
     virtual int ioctlReadPosition(sg_io_hdr_t * sgio_h);
@@ -96,67 +84,67 @@ namespace castor::tape::System {
     virtual int ioctlRequestSense(sg_io_hdr_t * sgio_h);
 
     /**
-     * This function handles LOG_SELECT CDB and only checks the CDB for the 
+     * This function handles LOG_SELECT CDB and only checks the CDB for the
      * correct values and sets internal trigger for 0 compression as true.
-     * 
-     * @param sgio_h  The pointer to the sg_io_hdr_t structure with 
+     *
+     * @param sgio_h  The pointer to the sg_io_hdr_t structure with
      *                ioctl call data
-     * @return        Returns 0 in success and 
+     * @return        Returns 0 in success and
      *                -1 with appropriate  errno if an error occurred.
      */
     virtual int ioctlLogSelect(sg_io_hdr_t * sgio_h);
-    
+
     /**
-     * This function handles LOCATE_10 CDB and only checks the CDB for the 
+     * This function handles LOCATE_10 CDB and only checks the CDB for the
      * correct values and sets internal blockID variable (logical seek).
-     * 
-     * @param sgio_h  The pointer to the sg_io_hdr_t structure with 
+     *
+     * @param sgio_h  The pointer to the sg_io_hdr_t structure with
      *                ioctl call data
-     * @return        Returns 0 in success and 
+     * @return        Returns 0 in success and
      *                -1 with appropriate  errno if an error occurred.
      */
     virtual int ioctlLocate10(sg_io_hdr_t * sgio_h);
-    
+
     /**
      * This function handles LOG_SENSE CDB and prepares the replay with
      * compression data.
-     * 
-     * @param sgio_h  The pointer to the sg_io_hdr_t structure with 
+     *
+     * @param sgio_h  The pointer to the sg_io_hdr_t structure with
      *                ioctl call data
-     * @return        Returns 0 in success and 
+     * @return        Returns 0 in success and
      *                -1 with appropriate  errno if an error occurred.
      */
     virtual int ioctlLogSense(sg_io_hdr_t * sgio_h);
-    
+
     /**
      * This function handles MODE_SENSE_6 CDB and prepares the replay with
      * random data.
-     * 
-     * @param sgio_h  The pointer to the sg_io_hdr_t structure with 
+     *
+     * @param sgio_h  The pointer to the sg_io_hdr_t structure with
      *                ioctl call data
-     * @return        Returns 0 in success and 
+     * @return        Returns 0 in success and
      *                -1 with appropriate  errno if an error occurred.
      */
     virtual int ioctlModSense6(sg_io_hdr_t * sgio_h);
-    
+
     /**
      * This function handles MODE_SELECT_6 CDB and only checks the CDB for the
      * correct values.
-     * 
-     * @param sgio_h  The pointer to the sg_io_hdr_t structure with 
+     *
+     * @param sgio_h  The pointer to the sg_io_hdr_t structure with
      *                ioctl call data
-     * @return        Returns 0 in success and 
+     * @return        Returns 0 in success and
      *                -1 with appropriate  errno if an error occurred.
      */
     virtual int ioctlModSelect6(sg_io_hdr_t * sgio_h);
-    
+
     /**
      * This function handles INQUIRY CDB and prepares the standard inquiry
      * replay or the unit serial number vital product data replay.
-     * 
-     * @param sgio_h  The pointer to the sg_io_hdr_t structure with 
+     *
+     * @param sgio_h  The pointer to the sg_io_hdr_t structure with
      *                ioctl call data
-     * @return        Returns 0 in success and 
+     * @return        Returns 0 in success and
      *                -1 with appropriate  errno if an error occurred.
      */
     virtual int ioctlInquiry(sg_io_hdr_t * sgio_h) = 0;
@@ -186,37 +174,37 @@ namespace castor::tape::System {
     virtual int logSenseNonMediumErrorsPage(sg_io_hdr_t * sgio_h) = 0;
 
     /**
-     * This function prepares the replay with compression statistics for 
-     * LOG SENSE CDB with log page Sequential Access Device Page. We use this 
+     * This function prepares the replay with compression statistics for
+     * LOG SENSE CDB with log page Sequential Access Device Page. We use this
      * log page for T10000 drives.
-     * 
-     * @param sgio_h  The pointer to the sg_io_hdr_t structure with 
+     *
+     * @param sgio_h  The pointer to the sg_io_hdr_t structure with
      *                ioctl call data
-     * @return        Returns 0 in success and 
+     * @return        Returns 0 in success and
      *                -1 with appropriate  errno if an error occurred.
      */
     virtual int logSenseSequentialAccessDevicePage(sg_io_hdr_t * sgio_h);
-    
+
     /**
-     * This function prepares the replay with compression statistics for 
-     * LOG SENSE CDB with log page Data Compression (32h). We use this 
+     * This function prepares the replay with compression statistics for
+     * LOG SENSE CDB with log page Data Compression (32h). We use this
      * log page for LTO drives.
-     * 
-     * @param sgio_h  The pointer to the sg_io_hdr_t structure with 
+     *
+     * @param sgio_h  The pointer to the sg_io_hdr_t structure with
      *                ioctl call data
-     * @return        Returns 0 in success and 
+     * @return        Returns 0 in success and
      *                -1 with appropriate  errno if an error occurred.
      */
     virtual int logSenseDataCompression32h(sg_io_hdr_t * sgio_h);
-    
+
     /**
-     * This function prepares the replay with compression statistics for 
-     * LOG SENSE CDB with log page Block Bytes Transferred. We use this 
+     * This function prepares the replay with compression statistics for
+     * LOG SENSE CDB with log page Block Bytes Transferred. We use this
      * log page for IBM drives.
-     * 
-     * @param sgio_h  The pointer to the sg_io_hdr_t structure with 
+     *
+     * @param sgio_h  The pointer to the sg_io_hdr_t structure with
      *                ioctl call data
-     * @return        Returns 0 in success and 
+     * @return        Returns 0 in success and
      *                -1 with appropriate  errno if an error occurred.
      */
     virtual int logSenseBlockBytesTransferred(sg_io_hdr_t * sgio_h);
@@ -225,24 +213,24 @@ namespace castor::tape::System {
      * This function replies with a pre-cooked error record. As with the real devices,
      * many parameter codes get reported with a flag set to 0, and a few will
      * show up with the flag set.
-     * @param sgio_h  The pointer to the sg_io_hdr_t structure with 
+     * @param sgio_h  The pointer to the sg_io_hdr_t structure with
      *                ioctl call data
-     * @return        Returns 0 in success and 
+     * @return        Returns 0 in success and
      *                -1 with appropriate  errno if an error occurred.
      */
     int logSenseTapeAlerts(sg_io_hdr_t * sgio_h);
-    
+
     /**
      * This function only checks the corectness of the parameters in sg_io_hdr_t
      * sturcture and returns random data.
-     * 
-     * @param sgio_h  The pointer to the sg_io_hdr_t structure with 
+     *
+     * @param sgio_h  The pointer to the sg_io_hdr_t structure with
      *                ioctl call data
-     * @return        Returns 0 in success and 
+     * @return        Returns 0 in success and
      *                -1 with appropriate  errno if an error occurred.
      */
     int modeSenseDeviceConfiguration(sg_io_hdr_t * sgio_h);
-    
+
     /**
      * This function checks the corectness of the parameters in sg_io_hdr_t and
      * returns filled filds:
@@ -251,28 +239,28 @@ namespace castor::tape::System {
      *   controlDataProtection.modePage.LBP_R
      *   controlDataProtection.modePage.LBP_W
      * All other filds in SCSI replay are random.
-     * 
-     * @param sgio_h  The pointer to the sg_io_hdr_t structure with 
+     *
+     * @param sgio_h  The pointer to the sg_io_hdr_t structure with
      *                ioctl call data
-     * @return        Returns 0 in success and 
+     * @return        Returns 0 in success and
      *                -1 with appropriate  errno if an error occurred.
      */
     int modeSenseControlDataProtection(sg_io_hdr_t * sgio_h);
      /**
      * This function only checks the corectness of the parameters in sg_io_hdr_t
-     * 
-     * @param sgio_h  The pointer to the sg_io_hdr_t structure with 
+     *
+     * @param sgio_h  The pointer to the sg_io_hdr_t structure with
      *                ioctl call data
-     * @return        Returns 0 in success and 
+     * @return        Returns 0 in success and
      *                -1 with appropriate  errno if an error occurred.
      */
     int modeSelectDeviceConfiguration(sg_io_hdr_t * sgio_h);
     /**
      * This function only checks the corectness of the parameters in sg_io_hdr_t
-     * 
-     * @param sgio_h  The pointer to the sg_io_hdr_t structure with 
+     *
+     * @param sgio_h  The pointer to the sg_io_hdr_t structure with
      *                ioctl call data
-     * @return        Returns 0 in success and 
+     * @return        Returns 0 in success and
      *                -1 with appropriate  errno if an error occurred.
      */
     int modeSelectControlDataProtection(sg_io_hdr_t * sgio_h);

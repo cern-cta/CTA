@@ -1,20 +1,8 @@
 /*
- * @project      The CERN Tape Archive (CTA)
- * @copyright    Copyright © 2021-2023 CERN
- * @license      This program is free software, distributed under the terms of the GNU General Public
- *               Licence version 3 (GPL Version 3), copied verbatim in the file "COPYING". You can
- *               redistribute it and/or modify it under the terms of the GPL Version 3, or (at your
- *               option) any later version.
- *
- *               This program is distributed in the hope that it will be useful, but WITHOUT ANY
- *               WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A
- *               PARTICULAR PURPOSE. See the GNU General Public License for more details.
- *
- *               In applying this licence, CERN does not waive the privileges and immunities
- *               granted to it by virtue of its status as an Intergovernmental Organization or
- *               submit itself to any jurisdiction.
+ * SPDX-FileCopyrightText: 2021 CERN
+ * SPDX-License-Identifier: GPL-3.0-or-later
  */
- 
+
 #pragma once
 
 #include "cta_frontend.pb.h"
@@ -38,18 +26,18 @@ template <class STUB>
 class AsyncClient {
 
 public:
-  
+
   AsyncClient() = delete;
   AsyncClient(cta::log::Logger& log, const std::shared_ptr<::grpc::Channel>& spChannel) :
                                                                     m_log(log),
                                                                     m_upStub(STUB::NewStub(spChannel))
                                                                   {
                                                                   }
-                                                                  
+
   ~AsyncClient() {
     m_completionQueue.Shutdown();
   }
-  
+
   // Delete default construcotrs
   AsyncClient(const AsyncClient&)            = delete;
   AsyncClient& operator=(const AsyncClient&) = delete;
@@ -65,12 +53,12 @@ public:
     upHandler->init();// can throw
     // Initilization
     upHandler->next(true);
-    
+
     void* pTag = nullptr;
     bool bOk = false;
-    
+
     log::LogContext lc(m_log);
-       
+
     // Process
     while(true) {
       if(!m_completionQueue.Next(&pTag, &bOk)) {
@@ -89,13 +77,13 @@ public:
         upHandler.reset();
         throw cta::exception::Exception("In grpc::AsyncClient::exe(): Invalid tag delivered by notification queue.");
       }
-      
+
       if(!upHandler->next(bOk)) {
         break;
       }
-      
+
     } // End while(true)
-  
+
     {
       log::ScopedParamContainer params(lc);
       params.add("tag", pTag);
@@ -103,9 +91,9 @@ public:
     }
     // unique_ptr cannot be cast so, release->cast->create;
     std::unique_ptr<HANDLER> upReturnHandler(reinterpret_cast<HANDLER*>(upHandler.release()));
-    
+
     return upReturnHandler; // applies std::move
-    
+
   }
 
 private:

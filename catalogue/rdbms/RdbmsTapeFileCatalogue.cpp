@@ -1,18 +1,6 @@
 /*
- * @project      The CERN Tape Archive (CTA)
- * @copyright    Copyright © 2022 CERN
- * @license      This program is free software, distributed under the terms of the GNU General Public
- *               Licence version 3 (GPL Version 3), copied verbatim in the file "COPYING". You can
- *               redistribute it and/or modify it under the terms of the GPL Version 3, or (at your
- *               option) any later version.
- *
- *               This program is distributed in the hope that it will be useful, but WITHOUT ANY
- *               WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A
- *               PARTICULAR PURPOSE. See the GNU General Public License for more details.
- *
- *               In applying this licence, CERN does not waive the privileges and immunities
- *               granted to it by virtue of its status as an Intergovernmental Organization or
- *               submit itself to any jurisdiction.
+ * SPDX-FileCopyrightText: 2022 CERN
+ * SPDX-License-Identifier: GPL-3.0-or-later
  */
 
 #include <algorithm>
@@ -148,10 +136,10 @@ void RdbmsTapeFileCatalogue::insertTapeFile(rdbms::Conn &conn, const common::dat
 
   for(auto& fileRecycleLog: insertedFilesRecycleLog){
     const char* const sql2 = R"SQL(
-      DELETE FROM 
-        TAPE_FILE 
-      WHERE 
-        VID=:VID AND 
+      DELETE FROM
+        TAPE_FILE
+      WHERE
+        VID=:VID AND
         FSEQ=:FSEQ
     )SQL";
     auto stmt2 = conn.createStmt(sql2);
@@ -165,8 +153,8 @@ void RdbmsTapeFileCatalogue::deleteTapeFiles(rdbms::Conn & conn,
   const common::dataStructures::DeleteArchiveRequest& request) const {
   //Delete the tape files after.
   const char* const deleteTapeFilesSql = R"SQL(
-    DELETE FROM 
-      TAPE_FILE 
+    DELETE FROM
+      TAPE_FILE
     WHERE TAPE_FILE.ARCHIVE_FILE_ID = :ARCHIVE_FILE_ID
   )SQL";
 
@@ -181,10 +169,10 @@ void RdbmsTapeFileCatalogue::deleteTapeFiles(rdbms::Conn & conn,
 
     //Delete the tape file.
     const char* const deleteTapeFilesSql = R"SQL(
-      DELETE FROM 
-        TAPE_FILE 
-      WHERE 
-        TAPE_FILE.VID = :VID AND 
+      DELETE FROM
+        TAPE_FILE
+      WHERE
+        TAPE_FILE.VID = :VID AND
         TAPE_FILE.FSEQ = :FSEQ
     )SQL";
 

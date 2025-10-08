@@ -1,18 +1,6 @@
 /*
- * @project      The CERN Tape Archive (CTA)
- * @copyright    Copyright © 2021-2022 CERN
- * @license      This program is free software, distributed under the terms of the GNU General Public
- *               Licence version 3 (GPL Version 3), copied verbatim in the file "COPYING". You can
- *               redistribute it and/or modify it under the terms of the GPL Version 3, or (at your
- *               option) any later version.
- *
- *               This program is distributed in the hope that it will be useful, but WITHOUT ANY
- *               WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A
- *               PARTICULAR PURPOSE. See the GNU General Public License for more details.
- *
- *               In applying this licence, CERN does not waive the privileges and immunities
- *               granted to it by virtue of its status as an Intergovernmental Organization or
- *               submit itself to any jurisdiction.
+ * SPDX-FileCopyrightText: 2021 CERN
+ * SPDX-License-Identifier: GPL-3.0-or-later
  */
 
 #pragma once
@@ -26,7 +14,7 @@ namespace cta::utils::json::object {
  * This class allows to build the inherited object or to generate the
  * JSON output of the inherited object by using the JSON-C library
  * https://github.com/json-c/json-c/wiki
- * 
+ *
  * The same json_object pointer is used to read from a JSON string
  * and to create a JSON string. Hence this pointer is reinitialized at each call
  * to buildFromJSON() and getJSON()
@@ -56,10 +44,10 @@ public:
   virtual ~JSONCObject();
 protected:
   json_object * m_jsonObject = nullptr;
-  
+
   /**
    * Initialize the JSON representation of this object
-   * 
+   *
    */
   void initializeJSONCObject();
   /**
@@ -85,7 +73,7 @@ protected:
    */
   template<typename T>
   T jsonGetValue(const std::string & key);
-  
+
   /**
    * This method allows to create or set an object on this JSON-C object representation
    * @param key the key to create
@@ -94,14 +82,14 @@ protected:
    */
   template<typename T>
   void jsonSetValue(const std::string & key, const T & value);
-  
+
   /**
    * Returns a pointer to the JSON-C representation of the object associated to the key passed in parameter
    * @param key the key to return the JSON-C representation of the object associated to it
    * @return the JSON-C representation of the object associated to the key passed in parameter
    */
   json_object * getJSONObject(const std::string & key);
-  
+
 };
 
 } // namespace cta::utils::json::object

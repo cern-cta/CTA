@@ -1,18 +1,6 @@
 /*
- * @project      The CERN Tape Archive (CTA)
- * @copyright    Copyright © 2021-2022 CERN
- * @license      This program is free software, distributed under the terms of the GNU General Public
- *               Licence version 3 (GPL Version 3), copied verbatim in the file "COPYING". You can
- *               redistribute it and/or modify it under the terms of the GPL Version 3, or (at your
- *               option) any later version.
- *
- *               This program is distributed in the hope that it will be useful, but WITHOUT ANY
- *               WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A
- *               PARTICULAR PURPOSE. See the GNU General Public License for more details.
- *
- *               In applying this licence, CERN does not waive the privileges and immunities
- *               granted to it by virtue of its status as an Intergovernmental Organization or
- *               submit itself to any jurisdiction.
+ * SPDX-FileCopyrightText: 2021 CERN
+ * SPDX-License-Identifier: GPL-3.0-or-later
  */
 
 #include "catalogue/CatalogueItor.hpp"
@@ -67,7 +55,7 @@ namespace {
 // constructor
 //------------------------------------------------------------------------------
 RdbmsCatalogueGetArchiveFilesForRepackItor::RdbmsCatalogueGetArchiveFilesForRepackItor(
-  log::Logger &log,  
+  log::Logger &log,
   rdbms::ConnPool &connPool,
   const std::string &vid,
   const uint64_t startFSeq):
@@ -75,7 +63,7 @@ RdbmsCatalogueGetArchiveFilesForRepackItor::RdbmsCatalogueGetArchiveFilesForRepa
   m_conn(connPool.getConn()),
   m_archiveFileBuilder(log) {
   const char* const sql = R"SQL(
-    SELECT 
+    SELECT
       ARCHIVE_FILE.ARCHIVE_FILE_ID AS ARCHIVE_FILE_ID,
       ARCHIVE_FILE.DISK_INSTANCE_NAME AS DISK_INSTANCE_NAME,
       ARCHIVE_FILE.DISK_FILE_ID AS DISK_FILE_ID,
@@ -92,24 +80,24 @@ RdbmsCatalogueGetArchiveFilesForRepackItor::RdbmsCatalogueGetArchiveFilesForRepa
       TAPE_COPY.BLOCK_ID AS BLOCK_ID,
       TAPE_COPY.LOGICAL_SIZE_IN_BYTES AS LOGICAL_SIZE_IN_BYTES,
       TAPE_COPY.COPY_NB AS COPY_NB,
-      TAPE_COPY.CREATION_TIME AS TAPE_FILE_CREATION_TIME, 
-      TAPE_POOL.TAPE_POOL_NAME AS TAPE_POOL_NAME 
-    FROM 
-      TAPE_FILE REPACK_TAPE 
-    INNER JOIN TAPE_FILE TAPE_COPY ON 
-      REPACK_TAPE.ARCHIVE_FILE_ID = TAPE_COPY.ARCHIVE_FILE_ID 
-    INNER JOIN ARCHIVE_FILE ON 
-      REPACK_TAPE.ARCHIVE_FILE_ID = ARCHIVE_FILE.ARCHIVE_FILE_ID 
-    INNER JOIN STORAGE_CLASS ON 
-      ARCHIVE_FILE.STORAGE_CLASS_ID = STORAGE_CLASS.STORAGE_CLASS_ID 
-    INNER JOIN TAPE ON 
-      TAPE_COPY.VID = TAPE.VID 
-    INNER JOIN TAPE_POOL ON 
-      TAPE.TAPE_POOL_ID = TAPE_POOL.TAPE_POOL_ID 
-    WHERE 
-      REPACK_TAPE.VID = :VID 
-    AND 
-      REPACK_TAPE.FSEQ >= :START_FSEQ 
+      TAPE_COPY.CREATION_TIME AS TAPE_FILE_CREATION_TIME,
+      TAPE_POOL.TAPE_POOL_NAME AS TAPE_POOL_NAME
+    FROM
+      TAPE_FILE REPACK_TAPE
+    INNER JOIN TAPE_FILE TAPE_COPY ON
+      REPACK_TAPE.ARCHIVE_FILE_ID = TAPE_COPY.ARCHIVE_FILE_ID
+    INNER JOIN ARCHIVE_FILE ON
+      REPACK_TAPE.ARCHIVE_FILE_ID = ARCHIVE_FILE.ARCHIVE_FILE_ID
+    INNER JOIN STORAGE_CLASS ON
+      ARCHIVE_FILE.STORAGE_CLASS_ID = STORAGE_CLASS.STORAGE_CLASS_ID
+    INNER JOIN TAPE ON
+      TAPE_COPY.VID = TAPE.VID
+    INNER JOIN TAPE_POOL ON
+      TAPE.TAPE_POOL_ID = TAPE_POOL.TAPE_POOL_ID
+    WHERE
+      REPACK_TAPE.VID = :VID
+    AND
+      REPACK_TAPE.FSEQ >= :START_FSEQ
     ORDER BY REPACK_TAPE.FSEQ
   )SQL";
 

@@ -1,18 +1,6 @@
 /*
- * @project      The CERN Tape Archive (CTA)
- * @copyright    Copyright © 2021-2022 CERN
- * @license      This program is free software, distributed under the terms of the GNU General Public
- *               Licence version 3 (GPL Version 3), copied verbatim in the file "COPYING". You can
- *               redistribute it and/or modify it under the terms of the GPL Version 3, or (at your
- *               option) any later version.
- *
- *               This program is distributed in the hope that it will be useful, but WITHOUT ANY
- *               WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A
- *               PARTICULAR PURPOSE. See the GNU General Public License for more details.
- *
- *               In applying this licence, CERN does not waive the privileges and immunities
- *               granted to it by virtue of its status as an Intergovernmental Organization or
- *               submit itself to any jurisdiction.
+ * SPDX-FileCopyrightText: 2021 CERN
+ * SPDX-License-Identifier: GPL-3.0-or-later
  */
 
 #include <gtest/gtest.h>
@@ -160,7 +148,7 @@ TEST(castor_tape_SCSI_DeviceList, FindBySymlink) {
   castor::tape::System::mockWrapper sysWrapper;
   sysWrapper.delegateToFake();
   sysWrapper.fake.setupForVirtualDriveSLC6();
-  
+
   /* We expect the following calls: */
   EXPECT_CALL(sysWrapper, opendir(_)).Times(AtLeast(3));
   EXPECT_CALL(sysWrapper, readdir(_)).Times(AtLeast(30));
@@ -172,12 +160,12 @@ TEST(castor_tape_SCSI_DeviceList, FindBySymlink) {
   EXPECT_CALL(sysWrapper, close(_)).Times(AtLeast(19));
   EXPECT_CALL(sysWrapper, readlink(_, _, _)).Times(AtLeast(3));
   EXPECT_CALL(sysWrapper, stat(_,_)).Times(AtLeast(7));
-  
+
   castor::tape::SCSI::DeviceVector dl(sysWrapper);
   ASSERT_NO_THROW(dl.findBySymlink("/dev/tape_T10D6116"));
-  ASSERT_THROW(dl.findBySymlink("NoSuchPath"), 
+  ASSERT_THROW(dl.findBySymlink("NoSuchPath"),
       cta::exception::Errnum);
-  ASSERT_THROW(dl.findBySymlink("/dev/noSuchTape"), 
+  ASSERT_THROW(dl.findBySymlink("/dev/noSuchTape"),
       castor::tape::SCSI::DeviceVector::NotFound);
   castor::tape::SCSI::DeviceInfo & di = dl.findBySymlink("/dev/tape_T10D6116");
   // The symlink is supposed to point to nst0 which is 9,128 (maj,min)

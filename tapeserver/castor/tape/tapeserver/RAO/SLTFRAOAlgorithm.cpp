@@ -1,18 +1,6 @@
 /*
- * @project      The CERN Tape Archive (CTA)
- * @copyright    Copyright © 2021-2022 CERN
- * @license      This program is free software, distributed under the terms of the GNU General Public
- *               Licence version 3 (GPL Version 3), copied verbatim in the file "COPYING". You can
- *               redistribute it and/or modify it under the terms of the GPL Version 3, or (at your
- *               option) any later version.
- *
- *               This program is distributed in the hope that it will be useful, but WITHOUT ANY
- *               WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A
- *               PARTICULAR PURPOSE. See the GNU General Public License for more details.
- *
- *               In applying this licence, CERN does not waive the privileges and immunities
- *               granted to it by virtue of its status as an Intergovernmental Organization or
- *               submit itself to any jurisdiction.
+ * SPDX-FileCopyrightText: 2021 CERN
+ * SPDX-License-Identifier: GPL-3.0-or-later
  */
 
 #include "SLTFRAOAlgorithm.hpp"
@@ -56,7 +44,7 @@ void SLTFRAOAlgorithm::Builder::initializeFilePositionEstimator() {
       if(m_catalogue != nullptr && m_drive != nullptr) {
         m_algorithm->m_filePositionEstimator = FilePositionEstimatorFactory::createInterpolationFilePositionEstimator(m_raoParams.getMountedVid(),m_catalogue,m_drive,m_algorithm->m_raoTimings);
       } else {
-        //If the catalogue or the drive is not set, we don't have any way to give the InterpolationFilePositionEstimator the end of wrap position 
+        //If the catalogue or the drive is not set, we don't have any way to give the InterpolationFilePositionEstimator the end of wrap position
         //infos and the media type. Throw an exception
         throw cta::exception::Exception("In SLTFRAOAlgorithm::Builder::initializeFilePositionEstimator(), the drive and the catalogue are needed to build the InterpolationFilePositionEstimator.");
       }

@@ -1,18 +1,6 @@
 /*
- * @project      The CERN Tape Archive (CTA)
- * @copyright    Copyright © 2021-2022 CERN
- * @license      This program is free software, distributed under the terms of the GNU General Public
- *               Licence version 3 (GPL Version 3), copied verbatim in the file "COPYING". You can
- *               redistribute it and/or modify it under the terms of the GPL Version 3, or (at your
- *               option) any later version.
- *
- *               This program is distributed in the hope that it will be useful, but WITHOUT ANY
- *               WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A
- *               PARTICULAR PURPOSE. See the GNU General Public License for more details.
- *
- *               In applying this licence, CERN does not waive the privileges and immunities
- *               granted to it by virtue of its status as an Intergovernmental Organization or
- *               submit itself to any jurisdiction.
+ * SPDX-FileCopyrightText: 2021 CERN
+ * SPDX-License-Identifier: GPL-3.0-or-later
  */
 
 #pragma once
@@ -52,7 +40,7 @@ struct TapeFileWritten: public TapeItemWritten {
    * The instance name of the source disk system.
    */
   std::string diskInstance;
-  
+
   /**
    * The identifier of the source disk file which is unique within it's host
    * disk system.  Two files from different disk systems may have the same
@@ -60,7 +48,7 @@ struct TapeFileWritten: public TapeItemWritten {
    * globally unique, in other words unique within the CTA catalogue.
    */
   std::string diskFileId;
-  
+
   /**
    * The path of the source disk file within its host disk system.
    */

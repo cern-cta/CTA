@@ -1,18 +1,6 @@
 /*
- * @project      The CERN Tape Archive (CTA)
- * @copyright    Copyright © 2021-2022 CERN
- * @license      This program is free software, distributed under the terms of the GNU General Public
- *               Licence version 3 (GPL Version 3), copied verbatim in the file "COPYING". You can
- *               redistribute it and/or modify it under the terms of the GPL Version 3, or (at your
- *               option) any later version.
- *
- *               This program is distributed in the hope that it will be useful, but WITHOUT ANY
- *               WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A
- *               PARTICULAR PURPOSE. See the GNU General Public License for more details.
- *
- *               In applying this licence, CERN does not waive the privileges and immunities
- *               granted to it by virtue of its status as an Intergovernmental Organization or
- *               submit itself to any jurisdiction.
+ * SPDX-FileCopyrightText: 2021 CERN
+ * SPDX-License-Identifier: GPL-3.0-or-later
  */
 
 #pragma once
@@ -48,7 +36,7 @@ namespace castor::tape::SCSI {
    * Structures as defined in the SCSI specifications, and helper functions for them.
    * SPC-4 (SCSI primary commands) can be found at:
    * http://hackipedia.org/Hardware/SCSI/Primary%20Commands/SCSI%20Primary%20Commands%20-%204.pdf
-   * 
+   *
    * and SSC-3 (SCSI stream commands, i.e. tape drives) at:
    * http://hackipedia.org/Hardware/SCSI/Stream%20Commands/SCSI%20Stream%20Commands%20-%203.pdf
    */
@@ -69,7 +57,7 @@ namespace castor::tape::SCSI {
     void zeroStruct(C * s) {
       memset (s, 0, sizeof(C));
     }
-    
+
     /**
      * Class wrapping around Linux' SG_IO struct, providing
      * zeroing and automatic filling up for the mandatory structures
@@ -82,16 +70,16 @@ namespace castor::tape::SCSI {
       LinuxSGIO_t() { zeroStruct(this); interface_id = 'S'; timeout = defaultTimeout; }
       template <typename T>
       void setCDB(T * cdb) { cmdp = (unsigned char *)cdb; cmd_len = sizeof(T); }
-      
+
       template <typename T>
-      void setSenseBuffer(T * senseBuff)  
-      { 
+      void setSenseBuffer(T * senseBuff)
+      {
         if (sizeof(T) > UCHAR_MAX)
           throw cta::exception::Exception("sense structure too big in LinuxSGIO_t::setSense");
         mx_sb_len = (unsigned char) sizeof(T);
         sbp = (unsigned char *)senseBuff;
       }
-      
+
       template <typename T>
       void setDataBuffer(T * dataBuff) { dxferp = dataBuff; dxfer_len = sizeof (T); }
 
@@ -106,17 +94,17 @@ namespace castor::tape::SCSI {
 
       sg_io_hdr_t * operator & () { return (sg_io_hdr_t *) this; }
     };
-    
+
     /**
      * Helper function to deal with endianness.
      * @param t byte array in SCSI order representing a 64 bits number
-     * @return 
+     * @return
      */
     inline uint64_t toU64(const unsigned char(& t)[8])
     {
       /* Like network, SCSI is BigEndian */
       return (uint64_t) ntohl ( (*(uint64_t *) t << 32) >> 32)  << 32 | ntohl(*(uint64_t *) t >>32);
-    }  
+    }
 
     /**
      * Helper function to deal with endianness: 6-byte version
@@ -137,7 +125,7 @@ namespace castor::tape::SCSI {
     /**
      * Helper function to deal with endianness.
      * @param t byte array in SCSI order representing a 32 bits number
-     * @return 
+     * @return
      */
     inline uint32_t toU32(const unsigned char(& t)[4])
     {
@@ -147,9 +135,9 @@ namespace castor::tape::SCSI {
 
      /**
      * Helper function to deal with endianness.
-     * for 3 bytes! fields in SCSI replies 
+     * for 3 bytes! fields in SCSI replies
      * @param t byte array in SCSI order representing a 32 bits number
-     * @return 
+     * @return
      */
     inline uint32_t toU32(const unsigned char(& t)[3])
     {
@@ -158,34 +146,34 @@ namespace castor::tape::SCSI {
 	uint32_t val;
       } u;
       u.tmp[0]=0;u.tmp[1]=t[0];u.tmp[2]=t[1];u.tmp[3]=t[2];
-      
+
       /* Like network, SCSI is BigEndian */
       return ntohl (u.val);
     }
-    
+
      /**
      * Helper function to deal with endianness.
      * for signed values
      * @param t byte array in SCSI order representing a 32 bits number
-     * @return 
+     * @return
      */
     inline int32_t toS32(const unsigned char(& t)[4])
     {
       /* Like network, SCSI is BigEndian */
       return (int32_t)(ntohl (*((uint32_t *) t)));
     }
-    
+
     /**
      * Helper function to deal with endianness.
      * @param t byte array in SCSI order representing a 16 bits number
-     * @return 
+     * @return
      */
     inline uint16_t toU16(const unsigned char(& t)[2])
     {
       /* Like network, SCSI is BigEndian */
       return ntohs (*((uint16_t *) t));
     }
-    
+
     /**
      * Helper function setting in place a 32 bits SCSI number from a value
      * expressed in the local endianness.
@@ -195,7 +183,7 @@ namespace castor::tape::SCSI {
     inline void setU32(unsigned char(& t)[4], uint32_t val) {
       *((uint32_t *) t) = htonl(val);
     }
-    
+
     /**
      * Helper function setting in place a 16 bits SCSI number from a value
      * expressed in the local endianness.
@@ -215,7 +203,7 @@ namespace castor::tape::SCSI {
     inline void setU64(unsigned char(& t)[8], uint64_t val) {
         *((uint64_t *) t) = htobe64(val);
     }
-    
+
     /**
      * Inquiry CDB as described in SPC-4.
      */
@@ -223,17 +211,17 @@ namespace castor::tape::SCSI {
     public:
       inquiryCDB_t() { zeroStruct(this); opCode = SCSI::Commands::INQUIRY; }
       unsigned char opCode;
-      
+
       unsigned char EVPD : 1;
       unsigned char : 7;
-      
+
       unsigned char pageCode;
-      
+
       unsigned char allocationLength[2];
-      
+
       unsigned char control;
     };
-    
+
     /**
      * Inquiry data as described in SPC-4.
      */
@@ -293,7 +281,7 @@ namespace castor::tape::SCSI {
       unsigned char reserved2[22];
       unsigned char vendorSpecific2[1];
     };
-   
+
    /**
     * Oracle T10K Inquiry data
     */
@@ -355,7 +343,7 @@ namespace castor::tape::SCSI {
 
       unsigned char versionDescriptor[8][2];
     };
- 
+
    /**
      * Inquiry unit serial number vital product data as described in SPC-4.
      */
@@ -364,21 +352,21 @@ namespace castor::tape::SCSI {
       inquiryUnitSerialNumberData_t() { zeroStruct(this); }
       // byte 0
       unsigned char peripheralDeviceType: 5; // (000b) connected to this LUN
-      unsigned char peripheralQualifier : 3; // (01h) tape drive  
-      
+      unsigned char peripheralQualifier : 3; // (01h) tape drive
+
       // byte 1
       unsigned char pageCode;                // (80h) Vital Product Data page for serial
-      
+
       // byte 2
       unsigned char :8;                      // Reserved
-      
+
       // byte 3
       unsigned char pageLength;              // n-3
-      
+
       // bytes 4-n
       char productSerialNumber[12];          // 12 bytes for T10000&IBM, 10 for LTO
     };
-    
+
     /**
      * LOCATE(10) CDB as described in SSC-3.
      */
@@ -386,33 +374,33 @@ namespace castor::tape::SCSI {
     public:
       locate10CDB_t() {
         zeroStruct(this);
-        opCode = SCSI::Commands::LOCATE_10; 
+        opCode = SCSI::Commands::LOCATE_10;
       }
       // byte 0
       unsigned char opCode;                // OPERATION CODE (2Bh)
-      
+
       // byte 1
-      unsigned char IMMED : 1;             // Immediate 
+      unsigned char IMMED : 1;             // Immediate
       unsigned char CP    : 1;             // Change Partition
       unsigned char BT    : 1;             // Block address Type
       unsigned char       : 5;             // Reserved
-      
+
       // byte 2
       unsigned char       : 8;             // Reserved
-      
+
       // bytes 3-6
       unsigned char logicalObjectID[4] ;   // Logical object identifier or block address
-            
+
       // byte 7
       unsigned char        :8;             // Reserved
-      
+
       // byte 8
       unsigned char partition;             // Partition
-            
+
       // byte 9
       unsigned char control;               // Control byte
     };
-    
+
     /**
      * READ POSITION CDB as described in SSC-3.
      */
@@ -420,26 +408,26 @@ namespace castor::tape::SCSI {
     public:
       readPositionCDB_t() {
         zeroStruct(this);
-        opCode = SCSI::Commands::READ_POSITION; 
+        opCode = SCSI::Commands::READ_POSITION;
       }
       // byte 0
       unsigned char opCode;                // OPERATION CODE (34h)
-      
-      // byte 1 
+
+      // byte 1
       // *note* for T10000 we have BT:1, LONG:1, TCLP:1, Reserved:5
       unsigned char serviceAction: 5;      // Service action to choice FORM
       unsigned char              : 3;      // Reserved
-      
+
       // bytes 2-6
       unsigned char reserved[5];           // Reserved
-      
-      // bytes 7-8 
+
+      // bytes 7-8
       unsigned char allocationLength[2] ;  // used for EXTENDENT FORM
-            
+
       // byte 9
       unsigned char control;               // Control byte
     };
-    
+
     /**
      * READ POSITION  data format, short form as described in SSC-3.
      */
@@ -449,35 +437,35 @@ namespace castor::tape::SCSI {
       // byte 0
       unsigned char BPEW :1;                // Beyond Programmable Early Warning
       unsigned char PERR :1;                // Position ERroR
-      unsigned char LOLU :1;                // Logical Object Location Unknown or Block Position Unknown(BPU) for T10000 
+      unsigned char LOLU :1;                // Logical Object Location Unknown or Block Position Unknown(BPU) for T10000
       unsigned char      :1;                // Reserved
-      unsigned char BYCU :1;                // BYte Count Unknown 
-      unsigned char LOCU :1;                // Logical Object Count Unknown or Block Count Unknown(BCU) for T10000 
+      unsigned char BYCU :1;                // BYte Count Unknown
+      unsigned char LOCU :1;                // Logical Object Count Unknown or Block Count Unknown(BCU) for T10000
       unsigned char EOP  :1;                // End Of Partition
       unsigned char BOP  :1;                // Beginning of Partition
-      
-      // byte 1 
+
+      // byte 1
       unsigned char partitionNumber;        // Service action to choice FORM
-      
+
       // bytes 2-3
       unsigned char reserved[2];            // Reserved
-      
-      // bytes 4-7 
+
+      // bytes 4-7
       unsigned char firstBlockLocation[4];  // First Logical object location in SSC3,IBM,LTO
-      
+
       // bytes 8-11
-      unsigned char lastBlockLocation[4];   // Last Logical object location in SSC3,IBM,LTO 
-      
+      unsigned char lastBlockLocation[4];   // Last Logical object location in SSC3,IBM,LTO
+
       // byte 12
       unsigned char    :8;                  // Reserved
-      
+
       // bytes 13-15
-      unsigned char blocksInBuffer[3];      // Number of logical objects in object buffer 
-      
+      unsigned char blocksInBuffer[3];      // Number of logical objects in object buffer
+
       // bytes 16-19
       unsigned char bytesInBuffer[4];       // Number if bytes in object buffer
     };
-    
+
     /**
      * LOG SELECT CDB as described in SPC-4.
      */
@@ -485,100 +473,100 @@ namespace castor::tape::SCSI {
     public:
       logSelectCDB_t() {
         zeroStruct(this);
-        opCode = SCSI::Commands::LOG_SELECT; 
+        opCode = SCSI::Commands::LOG_SELECT;
       }
       // byte 0
       unsigned char opCode;                // OPERATION CODE (4Ch)
-      
+
       // byte 1
       unsigned char SP : 1;                // the Save Parameters
       unsigned char PCR: 1;                // the Parameter Code Reset
-      unsigned char    : 6;                // Reserved 
-      
+      unsigned char    : 6;                // Reserved
+
       // byte 2
       unsigned char pageCode: 6;           // PAGE CODE
       unsigned char PC: 2;                 // the Page Control
-      
+
       // byte 3
       unsigned char subPageCode;           // SUBPAGE CODE (Reserved for T10000)
-      
+
       // bytes 4-6
       unsigned char reserved[3];           // Reserved
-      
+
       // bytes 7-8
       unsigned char parameterListLength[2];// PARAMETER LIST LENGTH
-      
+
       // byte 9
       unsigned char control;               // CONTROL
     };
 
     /**
-     * Log sense CDB as described in SPC-4, 
+     * Log sense CDB as described in SPC-4,
      */
     class logSenseCDB_t {
     public:
       logSenseCDB_t() { zeroStruct(this); opCode = SCSI::Commands::LOG_SENSE; }
       unsigned char opCode;
-      
+
       unsigned char SP : 1;
       unsigned char PPC: 1;
       unsigned char :6;
-      
+
       unsigned char pageCode : 6;
       unsigned char PC : 2;
-      
+
       unsigned char subPageCode;
-      
+
       unsigned char reserved;
-      
+
       unsigned char parameterPointer[2];
-      
+
       unsigned char allocationLength[2];
-      
+
       unsigned char control;
     };
 
     /**
-     * Log sense Log Page Parameter Format as described in SPC-4, 
+     * Log sense Log Page Parameter Format as described in SPC-4,
      */
     class logSenseParameterHeader_t  {
     public:
       // bytes 0-1
       unsigned char parameterCode [2];
-      
+
       // byte 2
       unsigned char formatAndLinking : 2; // reserved and List Parameter bits
       unsigned char TMC : 2;              // Threshold Met Criteria
       unsigned char ETC : 1;              // Enable Threshold Comparison
       unsigned char TSD : 1;              // Target Save Disable
       unsigned char : 1;                  // DS Disable Save for T10000
-      unsigned char DU : 1;               // Disable Update 
-      
+      unsigned char DU : 1;               // Disable Update
+
       // byte 3
-      unsigned char parameterLength;      // n-3          
+      unsigned char parameterLength;      // n-3
     };
-    
+
     class logSenseParameter_t {
     public:
       // bytes 0-3
       logSenseParameterHeader_t header;
-           
+
       // bytes 4-n
-      unsigned char parameterValue[8];     // parameters have variable length 
+      unsigned char parameterValue[8];     // parameters have variable length
 
       /**
        * Gets the parameter value
-       * 
+       *
        * @return The value  of the log sense parameter as uint64_t.
        *         If we have a parameter length more than 8 bytes the returning
-       *         value is not determined. 
+       *         value is not determined.
        */
       inline uint64_t getU64Value()  {
         union {
           unsigned char tmp[8];
           uint64_t val64;
         } u;
-        
+
         u.tmp[0]=(header.parameterLength>0)?parameterValue[0]:0;
         u.tmp[1]=(header.parameterLength>1)?parameterValue[1]:0;
         u.tmp[2]=(header.parameterLength>2)?parameterValue[2]:0;
@@ -589,10 +577,10 @@ namespace castor::tape::SCSI {
         u.tmp[7]=(header.parameterLength>7)?parameterValue[7]:0;
 
         u.val64 = be64toh(u.val64);
-     
-        return u.val64>>(64-(header.parameterLength<<3));     
+
+        return u.val64>>(64-(header.parameterLength<<3));
       }
-      
+
       /**
        * Gets the parameter value
        *
@@ -622,7 +610,7 @@ namespace castor::tape::SCSI {
     };
 
     /**
-     * Log sense Log Page Format as described in SPC-4, 
+     * Log sense Log Page Format as described in SPC-4,
      */
     class logSenseLogPageHeader_t {
     public:
@@ -630,25 +618,25 @@ namespace castor::tape::SCSI {
       unsigned char pageCode : 6;
       unsigned char SPF: 1;          // the Subpage format
       unsigned char DS: 1;           // the Disable Slave bit
-      
+
       // byte 1
       unsigned char subPageCode;
-      
+
       // bytes 2-3
-      unsigned char pageLength[2];   // n-3 number of bytes without header   
+      unsigned char pageLength[2];   // n-3 number of bytes without header
     };
     /**
-     * Log sense Log Page Format as described in SPC-4, 
+     * Log sense Log Page Format as described in SPC-4,
      */
     class logSenseLogPage_t {
     public:
       // bytes 0-3
       logSenseLogPageHeader_t header;
-      
-      // bytes 4-n      
+
+      // bytes 4-n
       logSenseParameter_t parameters [1]; // parameters have variable length
     };
-    
+
     /**
      * MODE SENSE(6) CDB as described in SPC-4.
      */
@@ -656,26 +644,26 @@ namespace castor::tape::SCSI {
     public:
       modeSense6CDB_t() {
         zeroStruct(this);
-        opCode = SCSI::Commands::MODE_SENSE_6; 
+        opCode = SCSI::Commands::MODE_SENSE_6;
       }
       // byte 0
       unsigned char opCode;           // OPERATION CODE (1Ah)
-      
-      // byte 1 
+
+      // byte 1
       unsigned char     : 3;          // Reserved
       unsigned char DBD : 1;          // Disable Block Descriptors
-      unsigned char     : 4;          // Reserved  
-      
+      unsigned char     : 4;          // Reserved
+
       // byte 2
       unsigned char pageCode : 6;     // Page code
       unsigned char PC       : 2;     // Page Control
-            
-      // byte3  
+
+      // byte3
       unsigned char subPageCode ;     // Subpage code
-      
-      // byte4  
+
+      // byte4
       unsigned char allocationLength; // The maximum number of bytes to be transferred
-            
+
       // byte 5
       unsigned char control;          // Control byte
     };
@@ -686,11 +674,11 @@ namespace castor::tape::SCSI {
     class modeParameterHeader6_t {
     public:
       // byte 0
-      unsigned char modeDataLength;   // The mode data length does not include itself 
-      
-      // byte 1 
+      unsigned char modeDataLength;   // The mode data length does not include itself
+
+      // byte 1
       unsigned char mediumType;       // The medium type in the drive
-      
+
       // byte 2
       /* in SPC-4 we have device-specific parameter byte here
        * but from all drive specifications the fields are the same
@@ -699,11 +687,11 @@ namespace castor::tape::SCSI {
       unsigned char speed        : 4; // Read/write speed
       unsigned char bufferedMode : 3; // Returns after data is in the buffer or on the medium
       unsigned char WP           : 1; // Write Protect
-            
-      // byte3  
+
+      // byte3
       unsigned char blockDescriptorLength ; //  (08h) or (00h)
     };
-    
+
     /**
      * MODE SENSE(6,10) and MODE SELECT(6,10) block descriptor as described in SPC-4.
      */
@@ -711,21 +699,21 @@ namespace castor::tape::SCSI {
     public:
       // byte 0
       unsigned char densityCode;       // Density code
-      
-      // bytes 1-3 
+
+      // bytes 1-3
       unsigned char numberOfBlocks[3]; // Number of block or block count
-      
+
       // byte 4
       unsigned char : 8;               // Reserved
-                 
-      // bytes 5-7 
+
+      // bytes 5-7
       unsigned char blockLength[3] ;   //  Block length
     };
-    
+
     /**
      * MODE SENSE(6) or MODE SENSE(10) mode page 10h: Device Configuration.
      * There is no description in SPC-4 or SSC-3.
-     * We use descriptions from: 
+     * We use descriptions from:
      * IBM System Storage Tape Drive 3592 SCSI Reference,
      * Sun StorageTekTM T10000 Tape Drive Fibre Channel Interface Reference Manual,
      * IBM TotalStorage LTO Ultrium Tape Drive SCSI Reference.
@@ -736,28 +724,28 @@ namespace castor::tape::SCSI {
       unsigned char pageCode :6;          // Page code (10h)
       unsigned char SPF      :1;          // SubPage Format (0b)
       unsigned char PS       :1;          // Parameters Savable
-      
-      // byte 1 
+
+      // byte 1
       unsigned char pageLength;           // (0Eh)
-      
+
       // byte 2
       unsigned char activeFormat : 5;     // Active Format
-      unsigned char CAF          : 1;     // Change Active Format 
-      unsigned char CAP          : 1;     // Change Active Partition 
+      unsigned char CAF          : 1;     // Change Active Format
+      unsigned char CAP          : 1;     // Change Active Partition
       unsigned char              : 1;     // Reserved
-                 
+
       // byte 3
       unsigned char activePartition ;     //  Active Partition
-      
+
       // byte 4
       unsigned char writeBufferFullRatio; // Write object buffer full ratio
-      
+
       // byte 5
       unsigned char readBufferEmptyRatio; // Read object buffer empty ratio
-      
+
       // bytes 6-7
       unsigned char writeDelayTime[2];    // Write delay time in 100ms for IBM, LTO and in sec for T1000
-      
+
       // byte 8
       unsigned char REW : 1;  // Report Early Warning
       unsigned char RBO : 1;  // Recover Buffer Order
@@ -766,24 +754,24 @@ namespace castor::tape::SCSI {
       unsigned char RSMK : 1; // Report SetMarKs (obsolete for IBM,LTO)
       unsigned char LOIS : 1; // Logical Object ID Supported or Block IDs Supported for T10000
       unsigned char OBR  : 1; // Object Buffer Recovery or Data Buffer Recovery for T10000
-      
+
       // byte 9
       unsigned char gapSize;  // Obsolete for IBM, LTO
-      
+
       // byte 10
       unsigned char BAM : 1;  // Block Address Mode or reserved for T10000
       unsigned char BAML: 1;  // Block Address Mode Lock or reserved for T10000
       unsigned char SWP : 1;  // Soft Write Protect
-      unsigned char SEW : 1;  // Synchronize at Early Warning 
+      unsigned char SEW : 1;  // Synchronize at Early Warning
       unsigned char EEG : 1;  // EOD Enabled Generation
       unsigned char eodDefined :3; // End Of Data
-      
+
       // bytes 11-13
       unsigned char bufSizeAtEarlyWarning[3]; // Object buffer size at early warning
-      
+
       // byte 14
       unsigned char selectDataComprAlgorithm; // Select data compression algorithm
-      
+
       // byte 15
       unsigned char PRMWP  : 1;        // PeRManent Write Protect
       unsigned char PERSWP : 1;        // PERSistent Write Protect
@@ -792,7 +780,7 @@ namespace castor::tape::SCSI {
       unsigned char OIR  : 1;          // Only If Reserved  or reserved for T10000
       unsigned char WTRE : 2;          // WORM Tamper Read Enable
     };
-    
+
     class modeSenseDeviceConfiguration_t {
     public:
       modeSenseDeviceConfiguration_t() { zeroStruct(this); }
@@ -800,7 +788,7 @@ namespace castor::tape::SCSI {
       modeParameterBlockDecriptor_t blockDescriptor;
       modePageDeviceConfiguration_t modePage;
     };
-    
+
     /**
      * MODE SENSE(6) or MODE SENSE(10) mode page 0Ah: Control Data Protection.
      * as described in SSC-5.
@@ -810,39 +798,39 @@ namespace castor::tape::SCSI {
       // byte 0
       unsigned char pageCode :6;       // Page code (0Ah)
       unsigned char SPF      :1;       // SubPage Format (1b)
-      unsigned char PS       :1;       // Parameters Savable 
+      unsigned char PS       :1;       // Parameters Savable
                                        // 0b required for MODE SELECT IBM,LTO
                                        // 1b returned in MODE SENSE IBM, LTO
                                        // 0b Not supported for T10000
-      
-      // byte 1 
-      unsigned char subpageCode;       // SubPage code (F0h)  
-      
+
+      // byte 1
+      unsigned char subpageCode;       // SubPage code (F0h)
+
       // bytes 2-3
       unsigned char pageLength[2];     // Page length (n - 3) 1Ch for IBM,LTO
-      
+
       // byte 4
       unsigned char LBPMethod;         // LBP method
-      
+
       // byte 5
-      unsigned char LBPInformationLength : 6; // LBP information length 
+      unsigned char LBPInformationLength : 6; // LBP information length
       unsigned char                      : 2; // Reserved
-      
+
       // byte 6
       unsigned char : 5;               // Reserved
       unsigned char RBDP : 1;          // Recover Buffered Data Protected
       unsigned char LBP_R : 1;         // Logical blocks protected during read
       unsigned char LBP_W : 1;         // Logical blocks protected during write
-      
+
       // byte 7
       unsigned char : 4;               // Reserved
       unsigned char T10PIexponent : 4; // T1000 only for T10 PI mode
-      
+
       // bytes 8-31
-      unsigned char reserved[24];      // Reserved. Added for IBM, LTO and do  
+      unsigned char reserved[24];      // Reserved. Added for IBM, LTO and do
                                        // not used by T10000
     };
-  
+
     /**
      * MODE SENSE(6) structure for mode page 0Ah: Control Data Protection.
      * as described in SSC-5.
@@ -853,8 +841,8 @@ namespace castor::tape::SCSI {
       modeParameterHeader6_t header;
       modeParameterBlockDecriptor_t blockDescriptor;
       modePageControlDataProtection_t modePage;
-    };    
-    
+    };
+
      /**
      * MODE SELECT(6) CDB as described in SPC-4.
      */
@@ -862,27 +850,27 @@ namespace castor::tape::SCSI {
     public:
       modeSelect6CDB_t() {
         zeroStruct(this);
-        opCode = SCSI::Commands::MODE_SELECT_6; 
+        opCode = SCSI::Commands::MODE_SELECT_6;
       }
       // byte 0
       unsigned char opCode;          // OPERATION CODE (15h)
-      
-      // byte 1 
+
+      // byte 1
       unsigned char SP : 1;          // Save Parameters
       unsigned char    : 3;          // Reserved
       unsigned char PF : 1;          // Page Format
       unsigned char    : 3;          // Reserved
-      
+
       // bytes 2-3
       unsigned char reserved[2];     // Reserved
-                  
+
       // byte 4
       unsigned char paramListLength; // Parameter list length
-            
+
       // byte 5
       unsigned char control;         // Control byte
     };
-    
+
     /**
      * TEST UNIT READY as described in SPC-4.
      */
@@ -890,25 +878,25 @@ namespace castor::tape::SCSI {
     public:
       testUnitReadyCDB_t() {
         zeroStruct(this);
-        opCode = SCSI::Commands::TEST_UNIT_READY; 
+        opCode = SCSI::Commands::TEST_UNIT_READY;
       }
       // byte 0
       unsigned char opCode;       // OPERATION CODE (00h)
-      
-      // byte 1 
+
+      // byte 1
       unsigned char      : 8;     // Reserved
-            
+
       // byte 2
       unsigned char EDCC : 1;     // Enable Deferred CHECK CONDITION (IBM only)
       unsigned char      : 7;     // Reserved
-            
-      // byte 3-4  
+
+      // byte 3-4
       unsigned char reserverd[2]; // Reserved
-            
+
       // byte 5
       unsigned char control;      // Control byte
     };
-    
+
     /**
      * Part of a tape alert log page.
      * This structure does not need to be initialized, as the containing structure
@@ -917,20 +905,20 @@ namespace castor::tape::SCSI {
     class tapeAlertLogParameter_t {
     public:
       unsigned char parameterCode [2];
-      
+
       unsigned char formatAndLinking : 2;
       unsigned char TMC : 2;
       unsigned char ETC : 1;
       unsigned char TSD : 1;
       unsigned char : 1;
       unsigned char DU : 1;
-      
+
       unsigned char parameterLength;
-      
+
       unsigned char flag : 1;
       unsigned char : 7;
     };
-    
+
     /**
      * Tape alert log page, returned by LOG SENSE. Defined in SSC-3, section 8.2.3 TapeAler log page.
      */
@@ -940,13 +928,13 @@ namespace castor::tape::SCSI {
       tapeAlertLogPage_t() { zeroStruct(this); }
       unsigned char pageCode : 6;
       unsigned char : 2;
-      
+
       unsigned char subPageCode;
-      
+
       unsigned char pageLength[2];
-      
+
       tapeAlertLogParameter_t parameters [n];
-      
+
       /**
        * Utility function computing the number of parameters. This converts a
        * length in bytes (as found in the struct) in a parameter count.
@@ -957,10 +945,10 @@ namespace castor::tape::SCSI {
         return numFromLength;
       }
     };
-    
+
     /**
-     * Sense buffer as defined in SPC-4, 
-     * section 4.5.2 Descriptor format sense data and 
+     * Sense buffer as defined in SPC-4,
+     * section 4.5.2 Descriptor format sense data and
      * section 4.5.3 Fixed format sense data
      * The sense buffer size is stored in the form of
      * a single byte. Therefore, the constructor forbids
@@ -977,7 +965,7 @@ namespace castor::tape::SCSI {
     public:
       senseData_t() {
         if (sizeof(*this) > 255)
-          throw cta::exception::Exception("In SCSI::Structures::senseData_t::senseData_t(): size too big (> 255>");      
+          throw cta::exception::Exception("In SCSI::Structures::senseData_t::senseData_t(): size too big (> 255>");
         zeroStruct(this);
       }
       // byte 0
@@ -1036,11 +1024,11 @@ namespace castor::tape::SCSI {
       bool isFixedFormat() {
         return responseCode == 0x70 || responseCode == 0x71;
       }
-      
+
       bool isDescriptorFormat() {
         return responseCode == 0x72 || responseCode == 0x73;
       }
-      
+
       bool isCurrent() {
         return responseCode == 0x70 || responseCode == 0x72;
       }
@@ -1099,11 +1087,11 @@ namespace castor::tape::SCSI {
         } else {
           std::stringstream err;
           err << "In senseData_t::getSenseKeyString: no Sense Key with this "
-            "value ("<< std::hex << std::showbase 
+            "value ("<< std::hex << std::showbase
             << (int)getSenseKey() << ")";
           throw cta::exception::Exception(err.str());
         }
-      }      
+      }
       /**
        * Function turning the ACS/ACSQ contents into a string.
        * This function is taken from the Linux kernel sources.
@@ -1206,7 +1194,7 @@ namespace castor::tape::SCSI {
         unsigned char reserved[2];                   // Reserved
         unsigned char logicalObjectIdentifier[6];    // The logical object identifier of the object at the end of the above wrap
       } wrapDescriptor[maxLTOTapeWraps];             // Array of wrap descriptiors
-      
+
       uint16_t getNbWrapsReturned(){
         return ((SCSI::Structures::toU16(responseDataLength) - sizeof(reserved)) / sizeof(WrapDescriptor));
       }
@@ -1456,7 +1444,7 @@ namespace castor::tape::SCSI {
     }
 
     namespace RAO {
-        
+
        /**
         * Receive RAO Command Descriptor Block (CDB)
         */
@@ -1580,7 +1568,7 @@ namespace castor::tape::SCSI {
          unsigned char udsListLength[4];
          udsDescriptor_t udsDescriptors[1];
        };
-       
+
        /**
         * Block Limits
         */
@@ -1594,7 +1582,7 @@ namespace castor::tape::SCSI {
          uint64_t end;
        };
     }
- 
+
     template <size_t n>
     /**
      * Extract a string from a fixed size array. This function
@@ -1610,9 +1598,9 @@ namespace castor::tape::SCSI {
       r.write(t, std::find(t, t + n, '\0') - t);
       return r.str();
     }
-    
+
     std::string toString(const inquiryData_t &);
-    
+
     template <size_t n>
     std::string hexDump(const unsigned char(& d)[n]) {
       std::stringstream hex;

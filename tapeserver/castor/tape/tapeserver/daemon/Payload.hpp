@@ -1,18 +1,6 @@
 /*
- * @project      The CERN Tape Archive (CTA)
- * @copyright    Copyright © 2021-2022 CERN
- * @license      This program is free software, distributed under the terms of the GNU General Public
- *               Licence version 3 (GPL Version 3), copied verbatim in the file "COPYING". You can
- *               redistribute it and/or modify it under the terms of the GPL Version 3, or (at your
- *               option) any later version.
- *
- *               This program is distributed in the hope that it will be useful, but WITHOUT ANY
- *               WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A
- *               PARTICULAR PURPOSE. See the GNU General Public License for more details.
- *
- *               In applying this licence, CERN does not waive the privileges and immunities
- *               granted to it by virtue of its status as an Intergovernmental Organization or
- *               submit itself to any jurisdiction.
+ * SPDX-FileCopyrightText: 2021 CERN
+ * SPDX-License-Identifier: GPL-3.0-or-later
  */
 
 #include <zlib.h>
@@ -47,39 +35,39 @@ public:
   ~Payload(){
     delete[] m_data;
   }
-  
+
   /** Amount of data present in the payload buffer */
   size_t size() const {
     return m_size;
   }
-  
+
   /** Reset the internal counters of the payload */
   void reset() {
     m_size = 0;
   }
-  
+
   /** Remaining free space in the payload buffer */
   size_t remainingFreeSpace() const {
     return m_totalCapacity - m_size;
   }
-  
+
   /** Total size of the payload block */
   size_t totalCapacity() const {
     return m_totalCapacity;
   }
-    
+
   /** Returns a pointer to the beginning of the payload block */
   unsigned char* get(){
     return m_data;
   }
-  
+
   /** Returns a pointer to the beginning of the payload block (readonly version) */
   unsigned char const*  get() const {
     return m_data;
   }
-  
-  /** 
-   * Reads all the buffer in one go from a diskFile::ReadFile object 
+
+  /**
+   * Reads all the buffer in one go from a diskFile::ReadFile object
    * @param from reference to the diskFile::ReadFile
    */
   size_t read(cta::disk::ReadFile& from){
@@ -98,7 +86,7 @@ public:
       std::stringstream err;
       err << "Trying to read a tape file block with too little space left: BlockSize="
        << from.getBlockSize() << " remainingFreeSpace=" << remainingFreeSpace()
-              << " (totalSize=" << m_totalCapacity << ")"; 
+              << " (totalSize=" << m_totalCapacity << ")";
       throw cta::exception::MemException(err.str());
     }
     size_t readSize;
@@ -110,7 +98,7 @@ public:
     m_size += readSize;
     return  from.getBlockSize() <= remainingFreeSpace();
   }
-  
+
   /**
    * Write the complete buffer to a diskFile::WriteFile
    * @param to reference to the diskFile::WriteFile
@@ -118,7 +106,7 @@ public:
   void write(cta::disk::WriteFile& to){
     to.write(m_data,m_size);
   }
-  
+
   /**
    * Write the complete buffer to a tapeFile::FileWriter, tape block by
    * tape block
@@ -137,7 +125,7 @@ public:
       to.write(m_data + writePosition, m_size - writePosition);
     }
   }
-  
+
   /*
    Example for the Adler32
    * unsigned long chck = Pyaload::zeroAdler32();
@@ -146,8 +134,8 @@ public:
    *   chck = payload.adler32(chck);
    * }
    */
-  
-  
+
+
    /**
     * Compute adler32 checksum on the current data hold.
     * @param previous The previous adler32 checksum from all previous datablock
@@ -156,7 +144,7 @@ public:
   unsigned long  adler32(unsigned long previous){
     return ::adler32(previous,m_data,m_size);
   }
-  
+
   /**
    * Return the initial value for computing Adler32 checksum
    */

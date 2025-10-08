@@ -1,18 +1,6 @@
 /*
- * @project      The CERN Tape Archive (CTA)
- * @copyright    Copyright © 2021-2022 CERN
- * @license      This program is free software, distributed under the terms of the GNU General Public
- *               Licence version 3 (GPL Version 3), copied verbatim in the file "COPYING". You can
- *               redistribute it and/or modify it under the terms of the GPL Version 3, or (at your
- *               option) any later version.
- *
- *               This program is distributed in the hope that it will be useful, but WITHOUT ANY
- *               WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A
- *               PARTICULAR PURPOSE. See the GNU General Public License for more details.
- *
- *               In applying this licence, CERN does not waive the privileges and immunities
- *               granted to it by virtue of its status as an Intergovernmental Organization or
- *               submit itself to any jurisdiction.
+ * SPDX-FileCopyrightText: 2021 CERN
+ * SPDX-License-Identifier: GPL-3.0-or-later
  */
 
 #include "tapeserver/tapelabel/TapeLabelCmdLineArgs.hpp"
@@ -43,7 +31,7 @@ TapeLabelCmdLineArgs::TapeLabelCmdLineArgs(const int argc, char *const *const ar
     {"help", no_argument, nullptr, 'h'},
     {nullptr,          0, nullptr,   0}
   };
- 
+
   // Prevent getopt() from printing an error message if it does not recognize
   // an option character
   opterr = 0;
@@ -162,7 +150,7 @@ void TapeLabelCmdLineArgs::printUsage(std::ostream &os) {
     "  -u, --drive         The unit name of the drive used (if absent, the first drive configuration file found is used)" << std::endl <<
     "  -h, --help          Print this help message and exit" << std::endl <<
     "  -d, --debug         Print more logs for label operations" << std::endl <<
-    "  -f, --force         Force labeling for not-blank tapes for testing purpose and without label checks. Must only be used manually." << std::endl;  
+    "  -f, --force         Force labeling for not-blank tapes for testing purpose and without label checks. Must only be used manually." << std::endl;
 }
 
 } // namespace cta::tapeserver::tapelabel

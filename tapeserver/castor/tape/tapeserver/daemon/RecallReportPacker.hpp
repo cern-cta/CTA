@@ -1,18 +1,6 @@
 /*
- * @project      The CERN Tape Archive (CTA)
- * @copyright    Copyright © 2021-2022 CERN
- * @license      This program is free software, distributed under the terms of the GNU General Public
- *               Licence version 3 (GPL Version 3), copied verbatim in the file "COPYING". You can
- *               redistribute it and/or modify it under the terms of the GPL Version 3, or (at your
- *               option) any later version.
- *
- *               This program is distributed in the hope that it will be useful, but WITHOUT ANY
- *               WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A
- *               PARTICULAR PURPOSE. See the GNU General Public License for more details.
- *
- *               In applying this licence, CERN does not waive the privileges and immunities
- *               granted to it by virtue of its status as an Intergovernmental Organization or
- *               submit itself to any jurisdiction.
+ * SPDX-FileCopyrightText: 2021 CERN
+ * SPDX-License-Identifier: GPL-3.0-or-later
  */
 
 #pragma once
@@ -51,7 +39,7 @@ public:
   /**
    * Create into the RecallReportPacker a report for the failed migration
    * of migratedFile
-   * @param migratedFile the file which failed 
+   * @param migratedFile the file which failed
    * @param ex the reason for the failure
    * @param lc log context provided by the calling thread.
    */
@@ -65,7 +53,7 @@ public:
 
   /**
    * Create into the RecallReportPacker a report for an erroneous end of session
-   * @param msg The error message 
+   * @param msg The error message
    * @param error_code The error code given by the drive
    * @param lc log context provided by the calling thread.
    */
@@ -119,7 +107,7 @@ public:
   bool errorHappened();
 
 private:
-  //inner classes use to store content while receiving a report 
+  //inner classes use to store content while receiving a report
   class Report {
   public:
     virtual ~Report() = default;
@@ -195,15 +183,15 @@ private:
 
   cta::threading::Mutex m_producterProtection;
 
-  /** 
+  /**
    * m_fifo is holding all the report waiting to be processed
    */
   cta::threading::BlockingQueue<Report *> m_fifo;
 
   /**
    * Is set as true as soon as we process a reportFailedJob
-   * That we can do a sanity check to make sure we always call 
-   * the right end of the session  
+   * That we can do a sanity check to make sure we always call
+   * the right end of the session
    */
   bool m_errorHappened;
 

@@ -1,18 +1,6 @@
 /*
- * @project      The CERN Tape Archive (CTA)
- * @copyright    Copyright © 2021-2022 CERN
- * @license      This program is free software, distributed under the terms of the GNU General Public
- *               Licence version 3 (GPL Version 3), copied verbatim in the file "COPYING". You can
- *               redistribute it and/or modify it under the terms of the GPL Version 3, or (at your
- *               option) any later version.
- *
- *               This program is distributed in the hope that it will be useful, but WITHOUT ANY
- *               WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A
- *               PARTICULAR PURPOSE. See the GNU General Public License for more details.
- *
- *               In applying this licence, CERN does not waive the privileges and immunities
- *               granted to it by virtue of its status as an Intergovernmental Organization or
- *               submit itself to any jurisdiction.
+ * SPDX-FileCopyrightText: 2021 CERN
+ * SPDX-License-Identifier: GPL-3.0-or-later
  */
 
 #pragma once
@@ -36,7 +24,7 @@ namespace castor::tape::tapeserver::daemon {
 /**
  * @brief Used when an error happens during a migration that should not result in unmounting the tape,
  * but rather just in skipping the file migration
- * 
+ *
  */
 CTA_GENERATE_EXCEPTION_CLASS(RecoverableMigrationErrorException);
 
@@ -115,7 +103,7 @@ public:
 
   /**
    * Return the task stats. Should only be called after execute
-   * @return 
+   * @return
    */
   const TapeSessionStats getTaskStats() const;
 
@@ -142,7 +130,7 @@ private:
   void logWithStats(int level, const std::string& msg, cta::log::LogContext& lc) const;
 
   /**
-   * This function will check the consistency of the mem block and 
+   * This function will check the consistency of the mem block and
    * throw exception is something goes wrong
    * @param mb The mem block to check
    * @param memBlockId The block id the mem block should be at
@@ -166,7 +154,7 @@ private:
   std::unique_ptr<cta::ArchiveJob> m_archiveJob;
 
   /**
-   * reference to the memory manager in use   
+   * reference to the memory manager in use
    */
   MigrationMemoryManager& m_memManager;
 
@@ -187,7 +175,7 @@ private:
 
   /**
    * A shared flag among the the tasks and the task injector, set as true as soon
-   * as task failed to do its job 
+   * as task failed to do its job
    */
   cta::threading::AtomicFlag& m_errorFlag;
 

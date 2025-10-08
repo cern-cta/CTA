@@ -1,18 +1,6 @@
 /*
- * @project      The CERN Tape Archive (CTA)
- * @copyright    Copyright © 2021-2022 CERN
- * @license      This program is free software, distributed under the terms of the GNU General Public
- *               Licence version 3 (GPL Version 3), copied verbatim in the file "COPYING". You can
- *               redistribute it and/or modify it under the terms of the GPL Version 3, or (at your
- *               option) any later version.
- *
- *               This program is distributed in the hope that it will be useful, but WITHOUT ANY
- *               WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A
- *               PARTICULAR PURPOSE. See the GNU General Public License for more details.
- *
- *               In applying this licence, CERN does not waive the privileges and immunities
- *               granted to it by virtue of its status as an Intergovernmental Organization or
- *               submit itself to any jurisdiction.
+ * SPDX-FileCopyrightText: 2021 CERN
+ * SPDX-License-Identifier: GPL-3.0-or-later
  */
 
 #include "common/log/LogContext.hpp"
@@ -30,7 +18,7 @@ m_log(logger) {}
 
 void LogContext::pushOrReplace(const Param& param) noexcept {
   ParamNameMatcher match(param.getName());
-  std::list<Param>::iterator i = 
+  std::list<Param>::iterator i =
       std::find_if(m_params.begin(), m_params.end(), match);
   if (i != m_params.end()) {
     i->setValue(param.getValueVariant());
@@ -41,9 +29,9 @@ void LogContext::pushOrReplace(const Param& param) noexcept {
 
 void LogContext::moveToTheEndIfPresent(const std::string& paramName) noexcept {
   ParamNameMatcher match(paramName);
-  std::list<Param>::iterator i = 
+  std::list<Param>::iterator i =
       std::find_if(m_params.begin(), m_params.end(), match);
-  if (i != m_params.end()) {    
+  if (i != m_params.end()) {
     const Param param(paramName, i->getValueVariant());
     m_params.erase(i);
     m_params.push_back(param);
@@ -73,7 +61,7 @@ void LogContext::logBacktrace(const int priority, std::string_view backtrace) no
   while(stillGoing) {
     size_t next = backtrace.find_first_of("\n", position);
     std::string line;
-    if(next != std::string::npos) { 
+    if(next != std::string::npos) {
       line = backtrace.substr(position, next - position);
       // If our position is out of range, substr would throw an exception
       // so we check here if we would get out of range.
@@ -93,8 +81,8 @@ void LogContext::logBacktrace(const int priority, std::string_view backtrace) no
 }
 
 LogContext::ScopedParam::ScopedParam(
-    LogContext& context, 
-    const Param& param) noexcept: 
+    LogContext& context,
+    const Param& param) noexcept:
     m_context(context), m_name(param.getName()) {
   m_context.pushOrReplace(param);
 }
@@ -103,10 +91,10 @@ LogContext::ScopedParam::~ScopedParam() noexcept {
    m_context.erase({m_name});
 }
 
-std::ostream & operator << (std::ostream & os, 
+std::ostream & operator << (std::ostream & os,
     const LogContext & lc) {
   bool first=true;
-  for (std::list<Param>::const_iterator p = lc.m_params.begin(); 
+  for (std::list<Param>::const_iterator p = lc.m_params.begin();
       p != lc.m_params.end(); ++p) {
     if (!first) {
       os << " ";

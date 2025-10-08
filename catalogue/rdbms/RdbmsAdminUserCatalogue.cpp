@@ -1,18 +1,6 @@
 /*
- * @project      The CERN Tape Archive (CTA)
- * @copyright    Copyright © 2022 CERN
- * @license      This program is free software, distributed under the terms of the GNU General Public
- *               Licence version 3 (GPL Version 3), copied verbatim in the file "COPYING". You can
- *               redistribute it and/or modify it under the terms of the GPL Version 3, or (at your
- *               option) any later version.
- *
- *               This program is distributed in the hope that it will be useful, but WITHOUT ANY
- *               WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A
- *               PARTICULAR PURPOSE. See the GNU General Public License for more details.
- *
- *               In applying this licence, CERN does not waive the privileges and immunities
- *               granted to it by virtue of its status as an Intergovernmental Organization or
- *               submit itself to any jurisdiction.
+ * SPDX-FileCopyrightText: 2022 CERN
+ * SPDX-License-Identifier: GPL-3.0-or-later
  */
 
 #include <string>
@@ -98,11 +86,11 @@ void RdbmsAdminUserCatalogue::createAdminUser(
 
 bool RdbmsAdminUserCatalogue::adminUserExists(rdbms::Conn &conn, const std::string& adminUsername) const {
   const char* const sql = R"SQL(
-    SELECT 
-      ADMIN_USER_NAME AS ADMIN_USER_NAME 
-    FROM 
-      ADMIN_USER 
-    WHERE 
+    SELECT
+      ADMIN_USER_NAME AS ADMIN_USER_NAME
+    FROM
+      ADMIN_USER
+    WHERE
       ADMIN_USER_NAME = :ADMIN_USER_NAME
   )SQL";
   auto stmt = conn.createStmt(sql);
@@ -128,7 +116,7 @@ void RdbmsAdminUserCatalogue::deleteAdminUser(const std::string &username) {
 std::list<common::dataStructures::AdminUser> RdbmsAdminUserCatalogue::getAdminUsers() const {
   std::list<common::dataStructures::AdminUser> admins;
   const char* const sql = R"SQL(
-    SELECT 
+    SELECT
       ADMIN_USER_NAME AS ADMIN_USER_NAME,
 
       USER_COMMENT AS USER_COMMENT,
@@ -139,10 +127,10 @@ std::list<common::dataStructures::AdminUser> RdbmsAdminUserCatalogue::getAdminUs
 
       LAST_UPDATE_USER_NAME AS LAST_UPDATE_USER_NAME,
       LAST_UPDATE_HOST_NAME AS LAST_UPDATE_HOST_NAME,
-      LAST_UPDATE_TIME AS LAST_UPDATE_TIME 
-    FROM 
-      ADMIN_USER 
-    ORDER BY 
+      LAST_UPDATE_TIME AS LAST_UPDATE_TIME
+    FROM
+      ADMIN_USER
+    ORDER BY
       ADMIN_USER_NAME
   )SQL";
   auto conn = m_connPool->getConn();
@@ -179,12 +167,12 @@ void RdbmsAdminUserCatalogue::modifyAdminUserComment(const common::dataStructure
 
   const time_t now = time(nullptr);
   const char* const sql = R"SQL(
-    UPDATE ADMIN_USER SET 
+    UPDATE ADMIN_USER SET
       USER_COMMENT = :USER_COMMENT,
       LAST_UPDATE_USER_NAME = :LAST_UPDATE_USER_NAME,
       LAST_UPDATE_HOST_NAME = :LAST_UPDATE_HOST_NAME,
-      LAST_UPDATE_TIME = :LAST_UPDATE_TIME 
-    WHERE 
+      LAST_UPDATE_TIME = :LAST_UPDATE_TIME
+    WHERE
       ADMIN_USER_NAME = :ADMIN_USER_NAME
   )SQL";
   auto conn = m_connPool->getConn();
@@ -206,11 +194,11 @@ void RdbmsAdminUserCatalogue::modifyAdminUserComment(const common::dataStructure
 //------------------------------------------------------------------------------
 bool RdbmsAdminUserCatalogue::isNonCachedAdmin(const common::dataStructures::SecurityIdentity &admin) const {
   const char* const sql = R"SQL(
-    SELECT 
-      ADMIN_USER_NAME AS ADMIN_USER_NAME 
-    FROM 
-      ADMIN_USER 
-    WHERE 
+    SELECT
+      ADMIN_USER_NAME AS ADMIN_USER_NAME
+    FROM
+      ADMIN_USER
+    WHERE
       ADMIN_USER_NAME = :ADMIN_USER_NAME
   )SQL";
   auto conn = m_connPool->getConn();

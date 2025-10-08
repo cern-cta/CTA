@@ -1,18 +1,6 @@
 /*
- * @project      The CERN Tape Archive (CTA)
- * @copyright    Copyright © 2021-2022 CERN
- * @license      This program is free software, distributed under the terms of the GNU General Public
- *               Licence version 3 (GPL Version 3), copied verbatim in the file "COPYING". You can
- *               redistribute it and/or modify it under the terms of the GPL Version 3, or (at your
- *               option) any later version.
- *
- *               This program is distributed in the hope that it will be useful, but WITHOUT ANY
- *               WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A
- *               PARTICULAR PURPOSE. See the GNU General Public License for more details.
- *
- *               In applying this licence, CERN does not waive the privileges and immunities
- *               granted to it by virtue of its status as an Intergovernmental Organization or
- *               submit itself to any jurisdiction.
+ * SPDX-FileCopyrightText: 2021 CERN
+ * SPDX-License-Identifier: GPL-3.0-or-later
  */
 
 #pragma once
@@ -29,10 +17,10 @@ namespace cta::disk {
     /**
      * Namespace managing the reading and writing of files to and from disk.
      */
-      
+
       //Forward declarations
       class XRootdDiskFileRemover;
-      
+
       //==============================================================================
       // LOCAL FILES
       //==============================================================================
@@ -45,7 +33,7 @@ namespace cta::disk {
       private:
         int m_fd;
       };
-     
+
       class LocalWriteFile: public WriteFile {
       public:
         explicit LocalWriteFile(const std::string& path);
@@ -57,10 +45,10 @@ namespace cta::disk {
         int m_fd;
         bool m_closeTried;
       };
-      
+
       //==============================================================================
       // XROOT FILES
-      //==============================================================================  
+      //==============================================================================
       class XrootBaseReadFile: public ReadFile {
       public:
         explicit XrootBaseReadFile(uint16_t timeout) : m_timeout(timeout) {}
@@ -75,28 +63,28 @@ namespace cta::disk {
         mutable uint64_t m_readPosition;
         const uint16_t m_timeout;
       };
-      
+
       class XrootReadFile: public XrootBaseReadFile {
       public:
         XrootReadFile(const std::string &xrootUrl, uint16_t timeout = 0);
       };
-      
+
       class XrootBaseWriteFile: public WriteFile {
       public:
         explicit XrootBaseWriteFile(uint16_t timeout) : m_writePosition(0), m_timeout(timeout), m_closeTried(false) {}
         virtual void write(const void *data, const size_t size);
         virtual void setChecksum(uint32_t checksum);
         virtual void close();
-        virtual ~XrootBaseWriteFile() noexcept;        
+        virtual ~XrootBaseWriteFile() noexcept;
       protected:
         // Access to parent's protected member...
         void setURL(const std::string & v) { m_URL = v; }
         XrdCl::File m_xrootFile;
         uint64_t m_writePosition;
         const uint16_t m_timeout;
-        bool m_closeTried;      
+        bool m_closeTried;
       };
-      
+
       class XrootWriteFile: public XrootBaseWriteFile {
       public:
         XrootWriteFile(const std::string &xrootUrl, uint16_t timeout = 0);
@@ -121,7 +109,7 @@ namespace cta::disk {
         std::string m_osd;
         mutable size_t m_readPosition;
       };
-      
+
       class RadosStriperWriteFile: public WriteFile {
       public:
         RadosStriperWriteFile(const std::string &fullURL,
@@ -136,11 +124,11 @@ namespace cta::disk {
         std::string m_osd;
         size_t m_writePosition;
       };
-      
+
       //==============================================================================
       // LocalDisk Removers
       //==============================================================================
-      
+
       /**
        * This class allows to delete a file from a local disk
        */
@@ -229,10 +217,10 @@ namespace cta::disk {
 	void mkdir() override;
 	bool exist() override;
 	std::set<std::string> getFilesName() override;
-	void rmdir() override; 
-      private: 
+	void rmdir() override;
+      private:
 	XrdCl::FileSystem m_xrootFileSystem;
 	std::string m_truncatedDirectoryURL; // root://.../ part of the path is removed
-	const uint16_t c_xrootTimeout = 15; 
+	const uint16_t c_xrootTimeout = 15;
       };
 } // namespace cta::disk

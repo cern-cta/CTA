@@ -1,18 +1,6 @@
 /*
- * @project      The CERN Tape Archive (CTA)
- * @copyright    Copyright © 2021-2022 CERN
- * @license      This program is free software, distributed under the terms of the GNU General Public
- *               Licence version 3 (GPL Version 3), copied verbatim in the file "COPYING". You can
- *               redistribute it and/or modify it under the terms of the GPL Version 3, or (at your
- *               option) any later version.
- *
- *               This program is distributed in the hope that it will be useful, but WITHOUT ANY
- *               WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A
- *               PARTICULAR PURPOSE. See the GNU General Public License for more details.
- *
- *               In applying this licence, CERN does not waive the privileges and immunities
- *               granted to it by virtue of its status as an Intergovernmental Organization or
- *               submit itself to any jurisdiction.
+ * SPDX-FileCopyrightText: 2021 CERN
+ * SPDX-License-Identifier: GPL-3.0-or-later
  */
 
 #include "Constants.hpp"
@@ -28,11 +16,11 @@ std::string castor::tape::SCSI::tapeAlertToString(uint16_t parameterCode)
   } else if (parameterCode >= 0x28 && parameterCode <= 0x2e) {
     ret << "Obsolete tapeAlert code: " << parameterCode;
     return ret.str();
-  }  
+  }
   switch(parameterCode) {
-    /* This is generated with the following small perl and a copy-paste from SSC-3: 
+    /* This is generated with the following small perl and a copy-paste from SSC-3:
        * #!/usr/bin/perl -w
-       * 
+       *
        * my $step=0;
        * while (<>) {
        *         chomp;
@@ -150,7 +138,7 @@ std::string castor::tape::SCSI::tapeAlertToString(uint16_t parameterCode)
     case 0x3B:
       return "WORM volume - integrity check failed";
     case 0x3C:
-      return "WORM volume - overwrite attempted";      
+      return "WORM volume - overwrite attempted";
     default:
       ret << "Reserved tapeAlert code: " << parameterCode;
       return ret.str();
@@ -168,7 +156,7 @@ std::string castor::tape::SCSI::tapeAlertToCompactString(uint16_t parameterCode)
   } else if (parameterCode >= 0x28 && parameterCode <= 0x2e) {
     ret << "Obsolete" << parameterCode;
     return ret.str();
-  }  
+  }
   switch(parameterCode) {
     /* This list is hand compacted from the one in castor::tape::SCSI::tapeAlertToString
        */
@@ -277,7 +265,7 @@ std::string castor::tape::SCSI::tapeAlertToCompactString(uint16_t parameterCode)
     case 0x3B:
       return "tapeAlertWORMVolumeIntegrityCheckFailed";
     case 0x3C:
-      return "tapeAlertWORMVolumeOverwriteAttempted";      
+      return "tapeAlertWORMVolumeOverwriteAttempted";
     default:
       ret << "ReservedCode" << parameterCode;
       return ret.str();
@@ -299,7 +287,7 @@ bool castor::tape::SCSI::isTapeAlertCriticalForWrite(const uint16_t code) {
 /**
  * Turn a SCSI status code into a string
  * @param status
- * @return 
+ * @return
  */
 std::string castor::tape::SCSI::statusToString(unsigned char status)
 {
@@ -443,7 +431,7 @@ std::string castor::tape::SCSI::senseConstants::getASCString(uint8_t asc, uint8_
   return std::string(buff);
 }
 
-const castor::tape::SCSI::senseConstants::error_info castor::tape::SCSI::senseConstants::ascStrings[] = 
+const castor::tape::SCSI::senseConstants::error_info castor::tape::SCSI::senseConstants::ascStrings[] =
 {
 	{0x0000, "No additional sense information"},
 	{0x0001, "Filemark detected"},
@@ -1221,7 +1209,7 @@ const char * const castor::tape::SCSI::senseKeys::senseKeysText[] = {
   "Volume Overflow",  /* D: Medium full with still data to be written */
   "Miscompare"        /* E: Source data and data on the medium
                             do not agree */
-}; 
+};
 
 
 //------------------------------------------------------------------------------

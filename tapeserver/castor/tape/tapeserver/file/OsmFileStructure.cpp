@@ -1,18 +1,6 @@
 /*
- * @project      The CERN Tape Archive (CTA)
- * @copyright    Copyright © 2021-2022 CERN
- * @license      This program is free software, distributed under the terms of the GNU General Public
- *               Licence version 3 (GPL Version 3), copied verbatim in the file "COPYING". You can
- *               redistribute it and/or modify it under the terms of the GPL Version 3, or (at your
- *               option) any later version.
- *
- *               This program is distributed in the hope that it will be useful, but WITHOUT ANY
- *               WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A
- *               PARTICULAR PURPOSE. See the GNU General Public License for more details.
- *
- *               In applying this licence, CERN does not waive the privileges and immunities
- *               granted to it by virtue of its status as an Intergovernmental Organization or
- *               submit itself to any jurisdiction.
+ * SPDX-FileCopyrightText: 2021 CERN
+ * SPDX-License-Identifier: GPL-3.0-or-later
  */
 
 #include "castor/tape/tapeserver/file/OsmFileStructure.hpp"
@@ -31,7 +19,7 @@ castor::tape::tapeFile::osm::LABEL::LABEL() {
   memset(m_tcName, 0x20, sizeof(m_tcName));
   memset(m_tcOwner, 0x20, sizeof(m_tcOwner));
   m_ulCreateTime = 0;
-  m_ulExpireTime = 0; 
+  m_ulExpireTime = 0;
   m_ulRecSize = 0;
   m_ulVolId = 0;
 }
@@ -40,7 +28,7 @@ void castor::tape::tapeFile::osm::LABEL::decode() {
   xdr::Record record;
   xdr::VolLabel volLabel, *pVolLabel;
   XDR xdr;// xdr handle;
-  
+
   xdrmem_create(&xdr, rawLabel(), LIMITS::MAXMRECSIZE, XDR_DECODE);
   if(!record.decode(&xdr)) {
     throw cta::exception::Exception(std::string("XDR error getting record"));
@@ -48,10 +36,10 @@ void castor::tape::tapeFile::osm::LABEL::decode() {
   if(record.m_RChunk.m_pChunk == nullptr) {
     throw cta::exception::Exception(std::string("Invalid label format - no record chunk"));
   }
-  
+
   pVolLabel = reinterpret_cast<xdr::VolLabel*>(record.m_RChunk.m_pChunk->m_data.m_pcDataVal);
   xdr_destroy(&xdr);
-  
+
   if(pVolLabel == nullptr) {
     throw cta::exception::Exception(std::string("Invalid label format - no label chunk"));
   }
@@ -78,7 +66,7 @@ void castor::tape::tapeFile::osm::LABEL::decode() {
   m_ulExpireTime = volLabel.m_ulExpireTime;
   m_ulRecSize = volLabel.m_ulRecSize;
   m_ulVolId = volLabel.m_ulVolId;
-  
+
   memcpy(m_tcOwner, rawLabel() + LIMITS::MAXMRECSIZE, LIMITS::CIDLEN);
   memcpy(m_tcVersion, rawLabel() + LIMITS::MAXMRECSIZE + LIMITS::CIDLEN, LIMITS::LABELVERSIONLEN);
 }

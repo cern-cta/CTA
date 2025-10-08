@@ -1,18 +1,6 @@
 /*
- * @project      The CERN Tape Archive (CTA)
- * @copyright    Copyright © 2021-2022 CERN
- * @license      This program is free software, distributed under the terms of the GNU General Public
- *               Licence version 3 (GPL Version 3), copied verbatim in the file "COPYING". You can
- *               redistribute it and/or modify it under the terms of the GPL Version 3, or (at your
- *               option) any later version.
- *
- *               This program is distributed in the hope that it will be useful, but WITHOUT ANY
- *               WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A
- *               PARTICULAR PURPOSE. See the GNU General Public License for more details.
- *
- *               In applying this licence, CERN does not waive the privileges and immunities
- *               granted to it by virtue of its status as an Intergovernmental Organization or
- *               submit itself to any jurisdiction.
+ * SPDX-FileCopyrightText: 2021 CERN
+ * SPDX-License-Identifier: GPL-3.0-or-later
  */
 
 #include "Wrapper.hpp"
@@ -70,7 +58,7 @@ int System::fakeWrapper::readlink(const char* path, char* buf, size_t len) {
     return -1;
   }
   const std::string & link = m_links[std::string(path)];
-  /* Copy the link without the training \0 as it is the behavior 
+  /* Copy the link without the training \0 as it is the behavior
    of the real readlink */
   size_t lenToCopy = link.size();
   if (lenToCopy > len) lenToCopy = len;
@@ -91,7 +79,7 @@ char * System::fakeWrapper::realpath(const char* name, char* resolved) {
 }
 
 int System::fakeWrapper::open(const char* file, int oflag) {
-  /* 
+  /*
    * Mimic open. See man 2 open.
    * We only allow read for the moment.
    */
@@ -185,7 +173,7 @@ int System::fakeWrapper::stat(const char* path, struct stat* buf) {
   return 0;
 }
 
-castor::tape::tapeserver::drive::DriveInterface * 
+castor::tape::tapeserver::drive::DriveInterface *
   System::fakeWrapper::getDriveByPath(const std::string & path) {
   std::map<std::string, castor::tape::tapeserver::drive::DriveInterface *>::iterator drive =
     m_pathToDrive.find(path);
@@ -201,7 +189,7 @@ castor::tape::tapeserver::drive::DriveInterface *
 
 /**
  * Function merging all types of files into a single pointer
- * based map. This allows usage of polymorphic 
+ * based map. This allows usage of polymorphic
  */
 void System::fakeWrapper::referenceFiles() {
   for (std::map<std::string, regularFile>::iterator i = m_regularFiles.begin();
@@ -209,7 +197,7 @@ void System::fakeWrapper::referenceFiles() {
     m_files[i->first] = &m_regularFiles[i->first];
   for (std::map<std::string, stDeviceFile *>::iterator i = m_stFiles.begin();
           i != m_stFiles.end(); ++i)
-    m_files[i->first] = m_stFiles[i->first]; 
+    m_files[i->first] = m_stFiles[i->first];
 }
 /**
  * Destructor: delete leftover drive and device objects
@@ -241,11 +229,11 @@ void System::mockWrapper::delegateToFake() {
   ON_CALL(*this, write(_, _, _)).WillByDefault(Invoke(&fake, &fakeWrapper::write));
   /* We have an overloaded function. Have to use a static_cast trick to indicate
    the pointer to which function we want.*/
-  ON_CALL(*this, ioctl(_, _, A<struct mtop *>())).WillByDefault(Invoke(&fake, 
+  ON_CALL(*this, ioctl(_, _, A<struct mtop *>())).WillByDefault(Invoke(&fake,
         static_cast<int(fakeWrapper::*)(int , unsigned long int , mtop*)>(&fakeWrapper::ioctl)));
-  ON_CALL(*this, ioctl(_, _, A<struct mtget *>())).WillByDefault(Invoke(&fake, 
+  ON_CALL(*this, ioctl(_, _, A<struct mtget *>())).WillByDefault(Invoke(&fake,
         static_cast<int(fakeWrapper::*)(int , unsigned long int , mtget*)>(&fakeWrapper::ioctl)));
-  ON_CALL(*this, ioctl(_, _, A<struct sg_io_hdr *>())).WillByDefault(Invoke(&fake, 
+  ON_CALL(*this, ioctl(_, _, A<struct sg_io_hdr *>())).WillByDefault(Invoke(&fake,
         static_cast<int(fakeWrapper::*)(int , unsigned long int , sg_io_hdr_t*)>(&fakeWrapper::ioctl)));
   ON_CALL(*this, close(_)).WillByDefault(Invoke(&fake, &fakeWrapper::close));
   ON_CALL(*this, stat(_, _)).WillByDefault(Invoke(&fake, &fakeWrapper::stat));
@@ -587,7 +575,7 @@ void System::fakeWrapper::setupSLC6() {
   m_directories["/sys/bus/scsi/devices"].push_back("6:0:0:0"); /* mediumx */
   m_directories["/sys/bus/scsi/devices"].push_back("6:0:1:0"); /* tape */
   m_directories["/sys/bus/scsi/devices"].push_back("6:0:2:0"); /* tape */
-  
+
   m_directories["/sys/bus/scsi/devices"].push_back("host0");
   m_directories["/sys/bus/scsi/devices"].push_back("host1");
   m_directories["/sys/bus/scsi/devices"].push_back("host2");
@@ -599,7 +587,7 @@ void System::fakeWrapper::setupSLC6() {
   m_directories["/sys/bus/scsi/devices"].push_back("target6:0:0");
   m_directories["/sys/bus/scsi/devices"].push_back("target6:0:1");
   m_directories["/sys/bus/scsi/devices"].push_back("target6:0:2");
-  
+
   m_realpathes["/sys/bus/scsi/devices/0:0:0:0"]
           = "/sys/devices/pci0000:00/0000:00:1f.2/host0/target0:0:0/0:0:0:0";
   m_realpathes["/sys/bus/scsi/devices/6:0:0:0"]
@@ -646,8 +634,8 @@ void System::fakeWrapper::setupSLC6() {
   m_regularFiles["/sys/devices/pseudo_0/adapter0/host6/target6:0:0/6:0:0:0/rev"] = "0104\n";
   m_regularFiles["/sys/devices/pseudo_0/adapter0/host6/target6:0:1/6:0:1:0/rev"] = "0104\n";
   m_regularFiles["/sys/devices/pseudo_0/adapter0/host6/target6:0:2/6:0:2:0/rev"] = "0104\n";
-  
-  
+
+
   m_links["/sys/devices/pci0000:00/0000:00:1f.2/host0/target0:0:0/0:0:0:0/generic"]
           = "scsi_generic/sg0";
   m_links["/sys/devices/pseudo_0/adapter0/host6/target6:0:0/6:0:0:0/generic"]
@@ -656,7 +644,7 @@ void System::fakeWrapper::setupSLC6() {
           = "scsi_generic/sg1";
     m_links["/sys/devices/pseudo_0/adapter0/host6/target6:0:2/6:0:2:0/generic"]
           = "scsi_generic/sg2";
-    
+
   m_stats["/dev/sg0"].st_rdev = makedev(21, 0);
   m_stats["/dev/sg0"].st_mode = S_IFCHR;
   m_stats["/dev/sg1"].st_rdev = makedev(21, 1);
@@ -723,7 +711,7 @@ void System::fakeWrapper::setupSLC6() {
   m_stats["/dev/st0"].st_mode = S_IFCHR;
   m_stats["/dev/nst0"].st_rdev = makedev(9, 128);
   m_stats["/dev/nst0"].st_mode = S_IFCHR;
-  
+
   m_directories["/sys/devices/pseudo_0/adapter0/host6/target6:0:2/6:0:2:0"].push_back(".");
   m_directories["/sys/devices/pseudo_0/adapter0/host6/target6:0:2/6:0:2:0"].push_back("..");
   m_directories["/sys/devices/pseudo_0/adapter0/host6/target6:0:2/6:0:2:0"].push_back("bsg");

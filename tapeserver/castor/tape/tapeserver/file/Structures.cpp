@@ -1,18 +1,6 @@
 /*
- * @project      The CERN Tape Archive (CTA)
- * @copyright    Copyright © 2021-2022 CERN
- * @license      This program is free software, distributed under the terms of the GNU General Public
- *               Licence version 3 (GPL Version 3), copied verbatim in the file "COPYING". You can
- *               redistribute it and/or modify it under the terms of the GPL Version 3, or (at your
- *               option) any later version.
- *
- *               This program is distributed in the hope that it will be useful, but WITHOUT ANY
- *               WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A
- *               PARTICULAR PURPOSE. See the GNU General Public License for more details.
- *
- *               In applying this licence, CERN does not waive the privileges and immunities
- *               granted to it by virtue of its status as an Intergovernmental Organization or
- *               submit itself to any jurisdiction.
+ * SPDX-FileCopyrightText: 2021 CERN
+ * SPDX-License-Identifier: GPL-3.0-or-later
  */
 
 #include <time.h>
@@ -209,7 +197,7 @@ void tapeFile::HDR2EOF2::fillCommon(int blockLength, bool driveHasCompression) {
   setString(m_aulId, "00");
 }
 
-void tapeFile::HDR2EOF2::verifyCommon(const char *const formatCharacter) 
+void tapeFile::HDR2EOF2::verifyCommon(const char *const formatCharacter)
   const  {
   if (cmpString(m_recordFormat, formatCharacter)) {
     throw cta::exception::Exception(
@@ -238,7 +226,7 @@ void tapeFile::HDR2EOF2::verifyCommon(const char *const formatCharacter)
 
 void tapeFile::HDR2::fill(int blockLength, bool driveHasCompression) {
   setString(m_label, "HDR2");
-  
+
   fillCommon(blockLength, driveHasCompression);
 }
 void tapeFile::HDR2::verify(const char *const formatCharacter) const  {
@@ -279,8 +267,8 @@ void tapeFile::UHL1UTL1::fillCommon(int fSeq,
   setString(m_serialNumber, deviceInfo.serialNumber);
 }
 
-void tapeFile::UHL1UTL1::verifyCommon() 
-  const {  
+void tapeFile::UHL1UTL1::verifyCommon()
+  const {
   if (!cmpString(m_actualfSeq, ""))
     throw cta::exception::Exception(
           std::string("Failed verify for the actualfSeq: ") +
@@ -320,7 +308,7 @@ void tapeFile::UHL1::fill(int fSeq,
   std::string siteName,
   std::string hostName,
   tapeserver::drive::deviceInfo deviceInfo) {
-    
+
   setString(m_label, "UHL1");
 
   fillCommon(fSeq, blockSize, siteName, hostName, deviceInfo);
@@ -339,7 +327,7 @@ void tapeFile::UTL1::fill(int fSeq,
   std::string siteName,
   std::string hostName,
   tapeserver::drive::deviceInfo deviceInfo) {
-    
+
   setString(m_label, "UTL1");
 
   fillCommon(fSeq, blockSize, siteName, hostName, deviceInfo);

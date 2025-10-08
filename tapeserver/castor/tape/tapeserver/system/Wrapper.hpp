@@ -1,18 +1,6 @@
 /*
- * @project      The CERN Tape Archive (CTA)
- * @copyright    Copyright © 2021-2022 CERN
- * @license      This program is free software, distributed under the terms of the GNU General Public
- *               Licence version 3 (GPL Version 3), copied verbatim in the file "COPYING". You can
- *               redistribute it and/or modify it under the terms of the GPL Version 3, or (at your
- *               option) any later version.
- *
- *               This program is distributed in the hope that it will be useful, but WITHOUT ANY
- *               WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A
- *               PARTICULAR PURPOSE. See the GNU General Public License for more details.
- *
- *               In applying this licence, CERN does not waive the privileges and immunities
- *               granted to it by virtue of its status as an Intergovernmental Organization or
- *               submit itself to any jurisdiction.
+ * SPDX-FileCopyrightText: 2021 CERN
+ * SPDX-License-Identifier: GPL-3.0-or-later
  */
 
 #pragma once
@@ -34,7 +22,7 @@
 
 namespace castor::tape {
 
-/** 
+/**
  * Forward declaration for pointer type in virutalWrapper.
  */
 namespace tapeserver::drive {
@@ -47,7 +35,7 @@ namespace System {
    * Interface class definition, allowing common ancestor between
    * realWrapper, mockWrapper and fakeWrapper
    */
-  
+
   class virtualWrapper {
   public:
     virtual DIR* opendir(const char *name) = 0;
@@ -72,7 +60,7 @@ namespace System {
       getDriveByPath(const std::string & path) = 0;
   };
 
-  
+
   /**
    * Wrapper class the all system calls used, allowing writing of test harnesses
    * for unit testing. For simplicity, the members are virtual functions, and
@@ -102,14 +90,14 @@ namespace System {
     virtual ssize_t write(int fd, const void *buf, size_t nbytes) { return ::write(fd, buf, nbytes); }
     virtual int close(int fd) { return ::close(fd); }
     virtual int stat(const char * path, struct stat *buf) { return ::stat(path, buf); }
-    virtual castor::tape::tapeserver::drive::DriveInterface * 
+    virtual castor::tape::tapeserver::drive::DriveInterface *
       getDriveByPath(const std::string &) { return nullptr; }
   };
-  
+
   /**
    * Fake class for system wrapper. Allows recording of pre-cooked filesystem elements,
    * once for each call separately.
-   * Each test can then delegate (from mock) and configure 
+   * Each test can then delegate (from mock) and configure
    */
   class fakeWrapper : public virtualWrapper {
   public:
@@ -129,7 +117,7 @@ namespace System {
     virtual ssize_t write(int fd, const void *buf, size_t nbytes);
     virtual int close(int fd);
     virtual int stat(const char * path, struct stat *buf);
-    virtual castor::tape::tapeserver::drive::DriveInterface * 
+    virtual castor::tape::tapeserver::drive::DriveInterface *
       getDriveByPath(const std::string & path);
     std::map<std::string, std::vector<std::string> > m_directories;
     std::map<std::string, std::string> m_links;

@@ -1,18 +1,6 @@
 /*
- * @project      The CERN Tape Archive (CTA)
- * @copyright    Copyright © 2021-2022 CERN
- * @license      This program is free software, distributed under the terms of the GNU General Public
- *               Licence version 3 (GPL Version 3), copied verbatim in the file "COPYING". You can
- *               redistribute it and/or modify it under the terms of the GPL Version 3, or (at your
- *               option) any later version.
- *
- *               This program is distributed in the hope that it will be useful, but WITHOUT ANY
- *               WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A
- *               PARTICULAR PURPOSE. See the GNU General Public License for more details.
- *
- *               In applying this licence, CERN does not waive the privileges and immunities
- *               granted to it by virtue of its status as an Intergovernmental Organization or
- *               submit itself to any jurisdiction.
+ * SPDX-FileCopyrightText: 2021 CERN
+ * SPDX-License-Identifier: GPL-3.0-or-later
  */
 
 #include "castor/tape/tapeserver/daemon/TapeSessionReporter.hpp"
@@ -49,7 +37,7 @@ void TapeSessionReporter::finish() {
 
 //------------------------------------------------------------------------------
 //startThreads
-//------------------------------------------------------------------------------   
+//------------------------------------------------------------------------------
 void TapeSessionReporter::startThreads() {
   start();
   m_threadRunning = true;
@@ -57,7 +45,7 @@ void TapeSessionReporter::startThreads() {
 
 //------------------------------------------------------------------------------
 //waitThreads
-//------------------------------------------------------------------------------     
+//------------------------------------------------------------------------------
 void TapeSessionReporter::waitThreads() {
   try {
     wait();
@@ -73,7 +61,7 @@ void TapeSessionReporter::waitThreads() {
 
 //------------------------------------------------------------------------------
 //reportState
-//------------------------------------------------------------------------------  
+//------------------------------------------------------------------------------
 void TapeSessionReporter::reportState(cta::tape::session::SessionState state,
                                      cta::tape::session::SessionType type) {
   m_fifo.push(new ReportStateChange(state, type));
@@ -81,7 +69,7 @@ void TapeSessionReporter::reportState(cta::tape::session::SessionState state,
 
 //------------------------------------------------------------------------------
 //run
-//------------------------------------------------------------------------------  
+//------------------------------------------------------------------------------
 void TapeSessionReporter::run() {
   while (true) {
     std::unique_ptr<Report> currentReport(m_fifo.pop());
@@ -116,7 +104,7 @@ TapeSessionReporter::ReportStateChange::ReportStateChange(cta::tape::session::Se
 
 //------------------------------------------------------------------------------
 // ReportStateChange::execute())
-//------------------------------------------------------------------------------  
+//------------------------------------------------------------------------------
 void TapeSessionReporter::ReportStateChange::execute(TapeSessionReporter & parent) {
   parent.m_tapeserverProxy.reportState(m_state, m_type, parent.m_volume.vid);
 }

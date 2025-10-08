@@ -1,18 +1,6 @@
 /*
- * @project      The CERN Tape Archive (CTA)
- * @copyright    Copyright © 2022 CERN
- * @license      This program is free software, distributed under the terms of the GNU General Public
- *               Licence version 3 (GPL Version 3), copied verbatim in the file "COPYING". You can
- *               redistribute it and/or modify it under the terms of the GPL Version 3, or (at your
- *               option) any later version.
- *
- *               This program is distributed in the hope that it will be useful, but WITHOUT ANY
- *               WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A
- *               PARTICULAR PURPOSE. See the GNU General Public License for more details.
- *
- *               In applying this licence, CERN does not waive the privileges and immunities
- *               granted to it by virtue of its status as an Intergovernmental Organization or
- *               submit itself to any jurisdiction.
+ * SPDX-FileCopyrightText: 2022 CERN
+ * SPDX-License-Identifier: GPL-3.0-or-later
  */
 
 #include <limits>
@@ -47,7 +35,7 @@ void OsmFileReader::positionByFseq(const cta::RetrieveJob &fileToRecall) {
 
   const int64_t fSeq_delta = static_cast<int64_t>(fileToRecall.selectedTapeFile().fSeq)
                            - static_cast<int64_t>(m_session.getCurrentFseq());
-  if(fileToRecall.selectedTapeFile().fSeq == 1) { 
+  if(fileToRecall.selectedTapeFile().fSeq == 1) {
     moveToFirstFile();
   } else {
     moveReaderByFSeqDelta(fSeq_delta);
@@ -106,8 +94,8 @@ void OsmFileReader::moveReaderByFSeqDelta(const int64_t fSeq_delta) {
 }
 
 void OsmFileReader::useBlockID(const cta::RetrieveJob &fileToRecall) {
-  // if we want the first file on tape (fileInfo.blockId < 2) we need to skip 2 blocks of OSM header 
-  const uint32_t destination_block = fileToRecall.selectedTapeFile().blockId > 2 ? 
+  // if we want the first file on tape (fileInfo.blockId < 2) we need to skip 2 blocks of OSM header
+  const uint32_t destination_block = fileToRecall.selectedTapeFile().blockId > 2 ?
     fileToRecall.selectedTapeFile().blockId : 3;
 
   /*
@@ -152,7 +140,7 @@ size_t OsmFileReader::readNextDataBlock(void *data, const size_t size) {
     uint8_t* pucTmpData = new uint8_t[size];
 
     uiBytesRead = m_session.m_drive.readBlock(pucTmpData, size);
-    // Special case - checking whether the data format contains CRC32 
+    // Special case - checking whether the data format contains CRC32
     if (cta::verifyCrc32cForMemoryBlockWithCrc32c(
           SCSI::logicBlockProtectionMethod::CRC32CSeed, uiBytesRead, static_cast<const uint8_t*>(pucTmpData))) {
       m_bDataWithCRC32 = true;

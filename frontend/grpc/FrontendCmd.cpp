@@ -1,18 +1,6 @@
 /*
- * @project      The CERN Tape Archive (CTA)
- * @copyright    Copyright © 2021-2023 CERN
- * @license      This program is free software, distributed under the terms of the GNU General Public
- *               Licence version 3 (GPL Version 3), copied verbatim in the file "COPYING". You can
- *               redistribute it and/or modify it under the terms of the GPL Version 3, or (at your
- *               option) any later version.
- *
- *               This program is distributed in the hope that it will be useful, but WITHOUT ANY
- *               WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A
- *               PARTICULAR PURPOSE. See the GNU General Public License for more details.
- *
- *               In applying this licence, CERN does not waive the privileges and immunities
- *               granted to it by virtue of its status as an Intergovernmental Organization or
- *               submit itself to any jurisdiction.
+ * SPDX-FileCopyrightText: 2021 CERN
+ * SPDX-License-Identifier: GPL-3.0-or-later
  */
 
 #include "FrontendCmd.hpp"
@@ -57,7 +45,7 @@ cta::frontend::grpc::server::FrontendCmd::FrontendCmd(std::istream &inStream,
 int cta::frontend::grpc::server::FrontendCmd::main(const int argc, char** argv) {
 
   m_strExecName = argv[0];
-  
+
   const int ARGNO = 1;
   const std::string HOST_NAME = cta::utils::getShortHostname();
   const std::string FRONTEND_NAME = "cta-frontend-async-grpc";
@@ -81,7 +69,7 @@ int cta::frontend::grpc::server::FrontendCmd::main(const int argc, char** argv) 
     printUsage(m_out);
     return EXIT_FAILURE;
   }
-  
+
   static struct option longOpt[] = {
     { "config",        required_argument, nullptr, 'c' },
     { "keytab",        required_argument, nullptr, 'k' },
@@ -154,7 +142,7 @@ int cta::frontend::grpc::server::FrontendCmd::main(const int argc, char** argv) 
         return EXIT_FAILURE;
     }
   }
-  
+
   switch (argc - optind) {
     case ARGNO:
       // while (optind < argc) {
@@ -175,7 +163,7 @@ int cta::frontend::grpc::server::FrontendCmd::main(const int argc, char** argv) 
             << "Try '" << m_strExecName << " -h' for more information." << std::endl;
       return EXIT_FAILURE;
   }
-  
+
   // Now only StdoutLogger
   std::unique_ptr<cta::log::Logger> upLog = std::make_unique<cta::log::StdoutLogger>(HOST_NAME, FRONTEND_NAME, bShortHeader);
   cta::log::LogContext lc(*upLog);
@@ -208,7 +196,7 @@ int cta::frontend::grpc::server::FrontendCmd::main(const int argc, char** argv) 
       return EXIT_FAILURE;
     }
   }
-  
+
   /*
    * Configuration reading is done.
    * Next -> init & startup.
@@ -222,7 +210,7 @@ int cta::frontend::grpc::server::FrontendCmd::main(const int argc, char** argv) 
                                                             catalogueLogin,
                                                             10,
                                                             uiArchiveFileListingConns);
-  
+
   std::unique_ptr<cta::catalogue::Catalogue> upCatalogue = upCatalogueFactory->create();
   try {
     upCatalogue->Schema()->ping();
@@ -262,9 +250,9 @@ int cta::frontend::grpc::server::FrontendCmd::main(const int argc, char** argv) 
     spServerCredentials = ::grpc::SslServerCredentials(sslOpt);
     // std::shared_ptr<::grpc::ServerCredentials> spServerCredentials = ::grpc::InsecureServerCredentials();
     // std::shared_ptr<::grpc::ServerCredentials> spServerCredentials = ::grpc::experimental::LocalServerCredentials(grpc_local_connect_type::LOCAL_TCP);
-    
+
     std::shared_ptr<ServiceKerberosAuthProcessor> spAuthProcessor = std::make_shared<ServiceKerberosAuthProcessor>(tokenStorage);
-    
+
     server.run(spServerCredentials, spAuthProcessor);
   } catch(const cta::exception::Exception& e) {
     log::ScopedParamContainer params(lc);
@@ -277,7 +265,7 @@ int cta::frontend::grpc::server::FrontendCmd::main(const int argc, char** argv) 
     lc.log(cta::log::CRIT, "In cta::frontend::grpc::server::FrontendCmd::main(): Got an exception.");
     return EXIT_FAILURE;
   }
-  
+
   return EXIT_SUCCESS;
 }
 
@@ -299,7 +287,7 @@ void cta::frontend::grpc::server::FrontendCmd::printUsage(std::ostream &osHelp) 
 int main(const int argc, char **argv) {
 
   cta::frontend::grpc::server::FrontendCmd cmd(std::cin, std::cout, std::cerr);
-  
+
   return cmd.main(argc, argv);
-  
+
 }

@@ -1,3 +1,8 @@
+/*
+ * SPDX-FileCopyrightText: 2025 CERN
+ * SPDX-License-Identifier: GPL-3.0-or-later
+ */
+
 #include <gtest/gtest.h>
 
 #include <list>
@@ -574,7 +579,7 @@ TEST_P(cta_catalogue_ArchiveFileTest, getArchiveFileQueueCriteria_requester_moun
   std::string mountPolicyName = mountPolicyToAdd.name;
   m_catalogue->MountPolicy()->createMountPolicy(m_admin,mountPolicyToAdd);
   m_catalogue->DiskInstance()->createDiskInstance(m_admin, m_diskInstance.name, m_diskInstance.comment);
-  
+
   const std::string comment = "Create mount rule for requester";
   const std::string diskInstanceName = m_diskInstance.name;
   const std::string requesterName = "requester_name";

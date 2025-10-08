@@ -1,18 +1,6 @@
 /*
- * @project      The CERN Tape Archive (CTA)
- * @copyright    Copyright © 2022 CERN
- * @license      This program is free software, distributed under the terms of the GNU General Public
- *               Licence version 3 (GPL Version 3), copied verbatim in the file "COPYING". You can
- *               redistribute it and/or modify it under the terms of the GPL Version 3, or (at your
- *               option) any later version.
- *
- *               This program is distributed in the hope that it will be useful, but WITHOUT ANY
- *               WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A
- *               PARTICULAR PURPOSE. See the GNU General Public License for more details.
- *
- *               In applying this licence, CERN does not waive the privileges and immunities
- *               granted to it by virtue of its status as an Intergovernmental Organization or
- *               submit itself to any jurisdiction.
+ * SPDX-FileCopyrightText: 2022 CERN
+ * SPDX-License-Identifier: GPL-3.0-or-later
  */
 
 #include <string>
@@ -125,10 +113,10 @@ void RdbmsDiskSystemCatalogue::createDiskSystem(const common::dataStructures::Se
 
 void RdbmsDiskSystemCatalogue::deleteDiskSystem(const std::string &name) {
   const char* const delete_sql = R"SQL(
-    DELETE 
-    FROM 
-      DISK_SYSTEM 
-    WHERE 
+    DELETE
+    FROM
+      DISK_SYSTEM
+    WHERE
       DISK_SYSTEM_NAME = :DISK_SYSTEM_NAME
   )SQL";
   auto conn = m_connPool->getConn();
@@ -150,7 +138,7 @@ void RdbmsDiskSystemCatalogue::deleteDiskSystem(const std::string &name) {
 disk::DiskSystemList RdbmsDiskSystemCatalogue::getAllDiskSystems() const {
   disk::DiskSystemList diskSystemList;
   const char* const sql = R"SQL(
-    SELECT 
+    SELECT
       DISK_SYSTEM.DISK_SYSTEM_NAME AS DISK_SYSTEM_NAME,
       DISK_SYSTEM.DISK_INSTANCE_NAME AS DISK_INSTANCE_NAME,
       DISK_SYSTEM.DISK_INSTANCE_SPACE_NAME AS DISK_INSTANCE_SPACE_NAME,
@@ -171,12 +159,12 @@ disk::DiskSystemList RdbmsDiskSystemCatalogue::getAllDiskSystems() const {
       DISK_INSTANCE_SPACE.FREE_SPACE_QUERY_URL AS FREE_SPACE_QUERY_URL,
       DISK_INSTANCE_SPACE.REFRESH_INTERVAL AS REFRESH_INTERVAL,
       DISK_INSTANCE_SPACE.LAST_REFRESH_TIME AS LAST_REFRESH_TIME,
-      DISK_INSTANCE_SPACE.FREE_SPACE AS FREE_SPACE 
-    FROM 
-      DISK_SYSTEM 
-    INNER JOIN DISK_INSTANCE_SPACE ON 
-      DISK_SYSTEM.DISK_INSTANCE_NAME = DISK_INSTANCE_SPACE.DISK_INSTANCE_NAME 
-    AND 
+      DISK_INSTANCE_SPACE.FREE_SPACE AS FREE_SPACE
+    FROM
+      DISK_SYSTEM
+    INNER JOIN DISK_INSTANCE_SPACE ON
+      DISK_SYSTEM.DISK_INSTANCE_NAME = DISK_INSTANCE_SPACE.DISK_INSTANCE_NAME
+    AND
       DISK_SYSTEM.DISK_INSTANCE_SPACE_NAME = DISK_INSTANCE_SPACE.DISK_INSTANCE_SPACE_NAME
   )SQL";
 
@@ -221,12 +209,12 @@ void RdbmsDiskSystemCatalogue::modifyDiskSystemFileRegexp(const common::dataStru
 
   const time_t now = time(nullptr);
   const char* const sql = R"SQL(
-    UPDATE DISK_SYSTEM SET 
+    UPDATE DISK_SYSTEM SET
       FILE_REGEXP = :FILE_REGEXP,
       LAST_UPDATE_USER_NAME = :LAST_UPDATE_USER_NAME,
       LAST_UPDATE_HOST_NAME = :LAST_UPDATE_HOST_NAME,
-      LAST_UPDATE_TIME = :LAST_UPDATE_TIME 
-    WHERE 
+      LAST_UPDATE_TIME = :LAST_UPDATE_TIME
+    WHERE
       DISK_SYSTEM_NAME = :DISK_SYSTEM_NAME
   )SQL";
   auto conn = m_connPool->getConn();
@@ -256,12 +244,12 @@ void RdbmsDiskSystemCatalogue::modifyDiskSystemTargetedFreeSpace(const common::d
 
   const time_t now = time(nullptr);
   const char* const sql = R"SQL(
-    UPDATE DISK_SYSTEM SET 
+    UPDATE DISK_SYSTEM SET
       TARGETED_FREE_SPACE = :TARGETED_FREE_SPACE,
       LAST_UPDATE_USER_NAME = :LAST_UPDATE_USER_NAME,
       LAST_UPDATE_HOST_NAME = :LAST_UPDATE_HOST_NAME,
-      LAST_UPDATE_TIME = :LAST_UPDATE_TIME 
-    WHERE 
+      LAST_UPDATE_TIME = :LAST_UPDATE_TIME
+    WHERE
       DISK_SYSTEM_NAME = :DISK_SYSTEM_NAME
   )SQL";
   auto conn = m_connPool->getConn();
@@ -292,12 +280,12 @@ void RdbmsDiskSystemCatalogue::modifyDiskSystemComment(const common::dataStructu
 
   const time_t now = time(nullptr);
   const char* const sql = R"SQL(
-    UPDATE DISK_SYSTEM SET 
+    UPDATE DISK_SYSTEM SET
       USER_COMMENT = :USER_COMMENT,
       LAST_UPDATE_USER_NAME = :LAST_UPDATE_USER_NAME,
       LAST_UPDATE_HOST_NAME = :LAST_UPDATE_HOST_NAME,
-      LAST_UPDATE_TIME = :LAST_UPDATE_TIME 
-    WHERE 
+      LAST_UPDATE_TIME = :LAST_UPDATE_TIME
+    WHERE
       DISK_SYSTEM_NAME = :DISK_SYSTEM_NAME
   )SQL";
   auto conn = m_connPool->getConn();
@@ -327,12 +315,12 @@ void RdbmsDiskSystemCatalogue::modifyDiskSystemSleepTime(const common::dataStruc
 
   const time_t now = time(nullptr);
   const char* const sql = R"SQL(
-    UPDATE DISK_SYSTEM SET 
+    UPDATE DISK_SYSTEM SET
       SLEEP_TIME = :SLEEP_TIME,
       LAST_UPDATE_USER_NAME = :LAST_UPDATE_USER_NAME,
       LAST_UPDATE_HOST_NAME = :LAST_UPDATE_HOST_NAME,
-      LAST_UPDATE_TIME = :LAST_UPDATE_TIME 
-    WHERE 
+      LAST_UPDATE_TIME = :LAST_UPDATE_TIME
+    WHERE
       DISK_SYSTEM_NAME = :DISK_SYSTEM_NAME
   )SQL";
   auto conn = m_connPool->getConn();
@@ -362,12 +350,12 @@ void RdbmsDiskSystemCatalogue::modifyDiskSystemDiskInstanceName(const common::da
 
   const time_t now = time(nullptr);
   const char* const sql = R"SQL(
-    UPDATE DISK_SYSTEM SET 
+    UPDATE DISK_SYSTEM SET
       DISK_INSTANCE_NAME = :DISK_INSTANCE_NAME,
       LAST_UPDATE_USER_NAME = :LAST_UPDATE_USER_NAME,
       LAST_UPDATE_HOST_NAME = :LAST_UPDATE_HOST_NAME,
-      LAST_UPDATE_TIME = :LAST_UPDATE_TIME 
-    WHERE 
+      LAST_UPDATE_TIME = :LAST_UPDATE_TIME
+    WHERE
       DISK_SYSTEM_NAME = :DISK_SYSTEM_NAME
   )SQL";
   auto conn = m_connPool->getConn();
@@ -398,12 +386,12 @@ void RdbmsDiskSystemCatalogue::modifyDiskSystemDiskInstanceSpaceName(
 
   const time_t now = time(nullptr);
   const char* const sql = R"SQL(
-    UPDATE DISK_SYSTEM SET 
+    UPDATE DISK_SYSTEM SET
       DISK_INSTANCE_SPACE_NAME = :DISK_INSTANCE_SPACE_NAME,
       LAST_UPDATE_USER_NAME = :LAST_UPDATE_USER_NAME,
       LAST_UPDATE_HOST_NAME = :LAST_UPDATE_HOST_NAME,
-      LAST_UPDATE_TIME = :LAST_UPDATE_TIME 
-    WHERE 
+      LAST_UPDATE_TIME = :LAST_UPDATE_TIME
+    WHERE
       DISK_SYSTEM_NAME = :DISK_SYSTEM_NAME
   )SQL";
   auto conn = m_connPool->getConn();

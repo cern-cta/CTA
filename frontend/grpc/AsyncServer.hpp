@@ -1,20 +1,8 @@
 /*
- * @project      The CERN Tape Archive (CTA)
- * @copyright    Copyright © 2021-2023 CERN
- * @license      This program is free software, distributed under the terms of the GNU General Public
- *               Licence version 3 (GPL Version 3), copied verbatim in the file "COPYING". You can
- *               redistribute it and/or modify it under the terms of the GPL Version 3, or (at your
- *               option) any later version.
- *
- *               This program is distributed in the hope that it will be useful, but WITHOUT ANY
- *               WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A
- *               PARTICULAR PURPOSE. See the GNU General Public License for more details.
- *
- *               In applying this licence, CERN does not waive the privileges and immunities
- *               granted to it by virtue of its status as an Intergovernmental Organization or
- *               submit itself to any jurisdiction.
+ * SPDX-FileCopyrightText: 2021 CERN
+ * SPDX-License-Identifier: GPL-3.0-or-later
  */
- 
+
 #pragma once
 
 #include "cta_frontend.pb.h"
@@ -39,7 +27,7 @@ namespace cta::frontend::grpc::server {
 class AsyncServer {
 
 public:
-  
+
   AsyncServer() = delete;
   AsyncServer(cta::log::Logger& log, cta::catalogue::Catalogue& catalogue, TokenStorage& tokenStorage, const unsigned int uiPort, const unsigned int uiNoThreads = 1) ;
   ~AsyncServer();
@@ -53,7 +41,7 @@ public:
    */
   template<class SERVICE, class... ARGS> void registerService(ARGS... args) {
     std::lock_guard<std::mutex> lck(m_mtxLockService);
-   
+
     std::unique_ptr<::grpc::Service> upService; // Empty
     upService = std::make_unique<SERVICE>(std::move(args)...);
     /*
@@ -119,7 +107,7 @@ public:
   TokenStorage& tokenStorage() {
     return m_tokenStorage;
   }
-  
+
   cta::frontend::grpc::request::IHandler& getHandler(const cta::frontend::grpc::request::Tag tag);
   void releaseHandler(const cta::frontend::grpc::request::Tag tag);
   void run(const std::shared_ptr<::grpc::ServerCredentials>& spServerCredentials, const std::shared_ptr<::grpc::AuthMetadataProcessor>& spAuthProcessor);
@@ -131,7 +119,7 @@ private:
   std::unique_ptr<::grpc::ServerCompletionQueue> m_upCompletionQueue;
   std::unique_ptr<::grpc::Server>                m_upServer;
   unsigned int                                   m_uiPort;
-  const unsigned int                             m_uiNoThreads = 1; 
+  const unsigned int                             m_uiNoThreads = 1;
   std::unordered_map<cta::frontend::grpc::request::Tag, std::unique_ptr<cta::frontend::grpc::request::IHandler>> m_umapHandlers;
   std::vector<std::unique_ptr<::grpc::Service>>  m_vServices;
   std::mutex m_mtxLockHandler;

@@ -1,18 +1,6 @@
 /*
- * @project      The CERN Tape Archive (CTA)
- * @copyright    Copyright © 2021-2022 CERN
- * @license      This program is free software, distributed under the terms of the GNU General Public
- *               Licence version 3 (GPL Version 3), copied verbatim in the file "COPYING". You can
- *               redistribute it and/or modify it under the terms of the GPL Version 3, or (at your
- *               option) any later version.
- *
- *               This program is distributed in the hope that it will be useful, but WITHOUT ANY
- *               WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A
- *               PARTICULAR PURPOSE. See the GNU General Public License for more details.
- *
- *               In applying this licence, CERN does not waive the privileges and immunities
- *               granted to it by virtue of its status as an Intergovernmental Organization or
- *               submit itself to any jurisdiction.
+ * SPDX-FileCopyrightText: 2021 CERN
+ * SPDX-License-Identifier: GPL-3.0-or-later
  */
 
 #include "common/CRC.hpp"
@@ -20,11 +8,11 @@
 #include <stdint.h>
 
 namespace cta {
-  
+
 //-----------------------------------------------------------------------------
 // crcRS_sw
 //-----------------------------------------------------------------------------
-uint32_t crcRS_sw (const uint32_t crcInit, 
+uint32_t crcRS_sw (const uint32_t crcInit,
   const uint32_t cnt, const void *const start) {
   static const uint32_t crcTable[256] = {
     0x00000000, 0x38CF3801, 0x70837002, 0x484C4803, 0xE01BE004, 0xD8D4D805,
@@ -85,7 +73,7 @@ uint32_t crcRS_sw (const uint32_t crcInit,
 //-----------------------------------------------------------------------------
 // crc32c_sw
 //-----------------------------------------------------------------------------
-uint32_t crc32c_sw (const uint32_t crcInit, 
+uint32_t crc32c_sw (const uint32_t crcInit,
   const uint32_t cnt, const void *const start)
 {
   static const uint32_t crcTable[256] = {
@@ -132,7 +120,7 @@ uint32_t crc32c_sw (const uint32_t crcInit,
   0xF36E6F75,0x0105EC76,0x12551F82,0xE03E9C81,0x34F4F86A,0xC69F7B69,
   0xD5CF889D,0x27A40B9E,0x79B737BA,0x8BDCB4B9,0x988C474D,0x6AE7C44E,
   0xBE2DA0A5,0x4C4623A6,0x5F16D052,0xAD7D5351 };
- 
+
   uint32_t crc = crcInit;
   const uint8_t *d = (const uint8_t *) start;
   for (uint32_t i=0; i<cnt; i++ )
@@ -144,9 +132,9 @@ uint32_t crc32c_sw (const uint32_t crcInit,
 }
 
 //-----------------------------------------------------------------------------
-// Helper function crc32c_intel_le_hw_8b 
+// Helper function crc32c_intel_le_hw_8b
 //-----------------------------------------------------------------------------
-uint32_t crc32c_intel_le_hw_8b(const uint32_t crcInit, 
+uint32_t crc32c_intel_le_hw_8b(const uint32_t crcInit,
   const uint8_t *const data, uint32_t length) {
   uint32_t crc = crcInit;
   const uint8_t *ptr = data;
@@ -165,12 +153,12 @@ uint32_t crc32c_intel_le_hw_8b(const uint32_t crcInit,
 //-----------------------------------------------------------------------------
 // Helper function crc32c_intel_le_hw_64b
 //-----------------------------------------------------------------------------
-uint32_t crc32c_intel_le_hw_64b(const uint32_t crcInit, 
+uint32_t crc32c_intel_le_hw_64b(const uint32_t crcInit,
   const uint64_t *const data, uint32_t length) {
   uint32_t crc = crcInit;
   const uint64_t *ptr = data;
-  
-  
+
+
   #if defined(__x86_64__)
     #define REX_PRE "0x48, "
   #else
@@ -192,7 +180,7 @@ uint32_t crc32c_intel_le_hw_64b(const uint32_t crcInit,
 //-----------------------------------------------------------------------------
 // crc32c_hw
 //-----------------------------------------------------------------------------
-uint32_t crc32c_hw (const uint32_t crcInit, 
+uint32_t crc32c_hw (const uint32_t crcInit,
   const uint32_t cnt, const void *const start) {
 
   /* Do CPU 64 instruction */

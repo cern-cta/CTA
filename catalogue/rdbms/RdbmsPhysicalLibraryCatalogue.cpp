@@ -1,18 +1,6 @@
 /*
- * @project      The CERN Tape Archive (CTA)
- * @copyright    Copyright © 2022 CERN
- * @license      This program is free software, distributed under the terms of the GNU General Public
- *               Licence version 3 (GPL Version 3), copied verbatim in the file "COPYING". You can
- *               redistribute it and/or modify it under the terms of the GPL Version 3, or (at your
- *               option) any later version.
- *
- *               This program is distributed in the hope that it will be useful, but WITHOUT ANY
- *               WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A
- *               PARTICULAR PURPOSE. See the GNU General Public License for more details.
- *
- *               In applying this licence, CERN does not waive the privileges and immunities
- *               granted to it by virtue of its status as an Intergovernmental Organization or
- *               submit itself to any jurisdiction.
+ * SPDX-FileCopyrightText: 2022 CERN
+ * SPDX-License-Identifier: GPL-3.0-or-later
  */
 
 #include <memory>
@@ -66,9 +54,9 @@ void RdbmsPhysicalLibraryCatalogue::createPhysicalLibrary(const common::dataStru
 
       LAST_UPDATE_USER_NAME,
       LAST_UPDATE_HOST_NAME,
-      LAST_UPDATE_TIME, 
+      LAST_UPDATE_TIME,
 
-      USER_COMMENT) 
+      USER_COMMENT)
     VALUES(
       :PHYSICAL_LIBRARY_ID,
       :PHYSICAL_LIBRARY_NAME,
@@ -137,8 +125,8 @@ void RdbmsPhysicalLibraryCatalogue::createPhysicalLibrary(const common::dataStru
 
 void RdbmsPhysicalLibraryCatalogue::deletePhysicalLibrary(const std::string& name) {
   const char* const sql = R"SQL(
-    DELETE FROM PHYSICAL_LIBRARY 
-    WHERE 
+    DELETE FROM PHYSICAL_LIBRARY
+    WHERE
       PHYSICAL_LIBRARY_NAME = :PHYSICAL_LIBRARY_NAME
   )SQL";
   auto conn = m_connPool->getConn();
@@ -168,7 +156,7 @@ std::list<common::dataStructures::PhysicalLibrary> RdbmsPhysicalLibraryCatalogue
 
   std::list<common::dataStructures::PhysicalLibrary> libs;
   const char* const sql = R"SQL(
-    SELECT 
+    SELECT
       PHYSICAL_LIBRARY_NAME AS PHYSICAL_LIBRARY_NAME,
       PHYSICAL_LIBRARY_MANUFACTURER AS PHYSICAL_LIBRARY_MANUFACTURER,
       PHYSICAL_LIBRARY_MODEL AS PHYSICAL_LIBRARY_MODEL,
@@ -187,14 +175,14 @@ std::list<common::dataStructures::PhysicalLibrary> RdbmsPhysicalLibraryCatalogue
 
       LAST_UPDATE_USER_NAME AS LAST_UPDATE_USER_NAME,
       LAST_UPDATE_HOST_NAME AS LAST_UPDATE_HOST_NAME,
-      LAST_UPDATE_TIME AS LAST_UPDATE_TIME, 
+      LAST_UPDATE_TIME AS LAST_UPDATE_TIME,
 
       USER_COMMENT AS USER_COMMENT,
       IS_DISABLED AS IS_DISABLED,
-      DISABLED_REASON AS DISABLED_REASON 
-    FROM 
-      PHYSICAL_LIBRARY 
-    ORDER BY 
+      DISABLED_REASON AS DISABLED_REASON
+    FROM
+      PHYSICAL_LIBRARY
+    ORDER BY
       PHYSICAL_LIBRARY_NAME
   )SQL";
   auto conn = m_connPool->getConn();
@@ -265,11 +253,11 @@ void RdbmsPhysicalLibraryCatalogue::modifyPhysicalLibrary(const common::dataStru
 std::optional<uint64_t> RdbmsPhysicalLibraryCatalogue::getPhysicalLibraryId(rdbms::Conn &conn,
   const std::string &name) const {
   const char* const sql = R"SQL(
-    SELECT 
-      PHYSICAL_LIBRARY_ID AS PHYSICAL_LIBRARY_ID 
-    FROM 
-      PHYSICAL_LIBRARY 
-    WHERE 
+    SELECT
+      PHYSICAL_LIBRARY_ID AS PHYSICAL_LIBRARY_ID
+    FROM
+      PHYSICAL_LIBRARY
+    WHERE
       PHYSICAL_LIBRARY.PHYSICAL_LIBRARY_NAME = :PHYSICAL_LIBRARY_NAME
   )SQL";
   auto stmt = conn.createStmt(sql);
@@ -315,7 +303,7 @@ std::string RdbmsPhysicalLibraryCatalogue::buildUpdateStmtStr(const common::data
   }
 
   if (pl.isDisabled && pl.isDisabled.value() && !pl.disabledReason) {
-    throw exception::UserError(std::string("Cannot disable physical library ") + pl.name + " because the reason has not been provided"); 
+    throw exception::UserError(std::string("Cannot disable physical library ") + pl.name + " because the reason has not been provided");
   }
 
   if(setClause.empty()) {
@@ -329,7 +317,7 @@ std::string RdbmsPhysicalLibraryCatalogue::buildUpdateStmtStr(const common::data
   sql += R"SQL(
     LAST_UPDATE_USER_NAME = :LAST_UPDATE_USER_NAME,
     LAST_UPDATE_HOST_NAME = :LAST_UPDATE_HOST_NAME,
-    LAST_UPDATE_TIME = :LAST_UPDATE_TIME 
+    LAST_UPDATE_TIME = :LAST_UPDATE_TIME
   )SQL";
   sql += R"SQL(
     WHERE PHYSICAL_LIBRARY_NAME = :PHYSICAL_LIBRARY_NAME

@@ -1,18 +1,6 @@
 /*
- * @project      The CERN Tape Archive (CTA)
- * @copyright    Copyright © 2021-2022 CERN
- * @license      This program is free software, distributed under the terms of the GNU General Public
- *               Licence version 3 (GPL Version 3), copied verbatim in the file "COPYING". You can
- *               redistribute it and/or modify it under the terms of the GPL Version 3, or (at your
- *               option) any later version.
- *
- *               This program is distributed in the hope that it will be useful, but WITHOUT ANY
- *               WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A
- *               PARTICULAR PURPOSE. See the GNU General Public License for more details.
- *
- *               In applying this licence, CERN does not waive the privileges and immunities
- *               granted to it by virtue of its status as an Intergovernmental Organization or
- *               submit itself to any jurisdiction.
+ * SPDX-FileCopyrightText: 2021 CERN
+ * SPDX-License-Identifier: GPL-3.0-or-later
  */
 
 #include "SignalHandler.hpp"
@@ -34,7 +22,7 @@ SubprocessHandler("signalHandler"), m_processManager(pm) {
   // Block the signals we want to handle.
   ::sigset_t sigMask;
   ::sigemptyset(&sigMask);
-  std::list<int> sigLis = { SIGHUP, SIGINT,SIGQUIT, SIGPIPE, SIGTERM, SIGUSR1, 
+  std::list<int> sigLis = { SIGHUP, SIGINT,SIGQUIT, SIGPIPE, SIGTERM, SIGUSR1,
     SIGUSR2, SIGCHLD, SIGTSTP, SIGTTIN, SIGTTOU, SIGPOLL, SIGURG, SIGVTALRM };
   for (auto sig: sigLis) ::sigaddset(&sigMask, sig);
   cta::exception::Errnum::throwOnNonZero(::sigprocmask(SIG_BLOCK, &sigMask, nullptr),
@@ -42,7 +30,7 @@ SubprocessHandler("signalHandler"), m_processManager(pm) {
   // Create the signalfd. We will poll so we should never read uselessly => NONBLOCK will prevent
   // being blocked in case of issue.
   m_sigFd = ::signalfd(-1 ,&sigMask, SFD_NONBLOCK);
-  cta::exception::Errnum::throwOnMinusOne(m_sigFd, 
+  cta::exception::Errnum::throwOnMinusOne(m_sigFd,
       "In SignalHandler::SignalHandler(): signalfd() failed");
   // We can already register the file descriptor
   m_processManager.addFile(m_sigFd, this);
@@ -78,7 +66,7 @@ SubprocessHandler::ProcessingStatus SignalHandler::processEvent() {
   // We have a signal
   struct ::signalfd_siginfo sigInf;
   int rc=::read(m_sigFd, &sigInf, sizeof(sigInf));
-  // We should always get something here. As we set the NONBLOCK option, lack 
+  // We should always get something here. As we set the NONBLOCK option, lack
   // of signal here will lead to EAGAIN, which is also an error.
   cta::exception::Errnum::throwOnMinusOne(rc);
   // We should get exactly sizeof(sigInf) bytes.
@@ -110,7 +98,7 @@ SubprocessHandler::ProcessingStatus SignalHandler::processEvent() {
   case SIGURG:
   case SIGVTALRM:
   {
-    
+
     m_processManager.logContext().log(log::INFO, "In signal handler, ignoring signal");
     break;
   }

@@ -1,18 +1,6 @@
 /*
- * @project      The CERN Tape Archive (CTA)
- * @copyright    Copyright © 2021-2022 CERN
- * @license      This program is free software, distributed under the terms of the GNU General Public
- *               Licence version 3 (GPL Version 3), copied verbatim in the file "COPYING". You can
- *               redistribute it and/or modify it under the terms of the GPL Version 3, or (at your
- *               option) any later version.
- *
- *               This program is distributed in the hope that it will be useful, but WITHOUT ANY
- *               WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A
- *               PARTICULAR PURPOSE. See the GNU General Public License for more details.
- *
- *               In applying this licence, CERN does not waive the privileges and immunities
- *               granted to it by virtue of its status as an Intergovernmental Organization or
- *               submit itself to any jurisdiction.
+ * SPDX-FileCopyrightText: 2021 CERN
+ * SPDX-License-Identifier: GPL-3.0-or-later
  */
 
 #pragma once
@@ -23,7 +11,7 @@
 
 namespace castor {
 namespace exception {
-class Exception;    
+class Exception;
 }
 
 namespace tape::tapeserver::daemon {
@@ -43,41 +31,41 @@ public:
    * @param blockSize       size of each block
    */
   RecallMemoryManager(size_t numberOfBlocks, size_t blockSize, cta::log::LogContext& lc);
-  
+
   /**
    * Are all sheep back to the farm?
-   * @return 
+   * @return
    */
   bool areBlocksAllBack() noexcept;
-  
+
   /**
    * Takes back a block which has been released by one of the clients
    * @param mb: the pointer to the block
    */
   void releaseBlock(MemBlock *mb);
-  
+
   /**
    * Pop a free block from the free block queue of the memory manager
    * @return pointer to a free block
    */
   MemBlock* getFreeBlock();
-  
+
   /**
    * Destructor
    */
   ~RecallMemoryManager();
-  
+
 private:
   /**
    * Total number of allocated memory blocks
    */
   size_t m_totalNumberOfBlocks;
-  
+
   /**
    * Container for the free blocks
    */
   cta::threading::BlockingQueue<MemBlock*> m_freeBlocks;
-  
+
   /**
    * Logging. The class is not threaded, so it can be shared with its parent
    */

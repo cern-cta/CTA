@@ -1,18 +1,6 @@
 /*
- * @project      The CERN Tape Archive (CTA)
- * @copyright    Copyright © 2021-2022 CERN
- * @license      This program is free software, distributed under the terms of the GNU General Public
- *               Licence version 3 (GPL Version 3), copied verbatim in the file "COPYING". You can
- *               redistribute it and/or modify it under the terms of the GPL Version 3, or (at your
- *               option) any later version.
- *
- *               This program is distributed in the hope that it will be useful, but WITHOUT ANY
- *               WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A
- *               PARTICULAR PURPOSE. See the GNU General Public License for more details.
- *
- *               In applying this licence, CERN does not waive the privileges and immunities
- *               granted to it by virtue of its status as an Intergovernmental Organization or
- *               submit itself to any jurisdiction.
+ * SPDX-FileCopyrightText: 2021 CERN
+ * SPDX-License-Identifier: GPL-3.0-or-later
  */
 
 #include "catalogue/CatalogueItor.hpp"
@@ -78,7 +66,7 @@ RdbmsCatalogueGetArchiveFilesItor::RdbmsCatalogueGetArchiveFilesItor(
   m_archiveFileBuilder(log)
 {
   std::string sql = R"SQL(
-    SELECT 
+    SELECT
       ARCHIVE_FILE.ARCHIVE_FILE_ID AS ARCHIVE_FILE_ID,
       ARCHIVE_FILE.DISK_INSTANCE_NAME AS DISK_INSTANCE_NAME,
       ARCHIVE_FILE.DISK_FILE_ID AS DISK_FILE_ID,
@@ -95,17 +83,17 @@ RdbmsCatalogueGetArchiveFilesItor::RdbmsCatalogueGetArchiveFilesItor(
       TAPE_FILE.BLOCK_ID AS BLOCK_ID,
       TAPE_FILE.LOGICAL_SIZE_IN_BYTES AS LOGICAL_SIZE_IN_BYTES,
       TAPE_FILE.COPY_NB AS COPY_NB,
-      TAPE_FILE.CREATION_TIME AS TAPE_FILE_CREATION_TIME, 
-      TAPE_POOL.TAPE_POOL_NAME AS TAPE_POOL_NAME 
-    FROM 
-      ARCHIVE_FILE 
-    INNER JOIN STORAGE_CLASS ON 
-      ARCHIVE_FILE.STORAGE_CLASS_ID = STORAGE_CLASS.STORAGE_CLASS_ID 
-    INNER JOIN TAPE_FILE ON 
-      ARCHIVE_FILE.ARCHIVE_FILE_ID = TAPE_FILE.ARCHIVE_FILE_ID 
-    INNER JOIN TAPE ON 
-      TAPE_FILE.VID = TAPE.VID 
-    INNER JOIN TAPE_POOL ON 
+      TAPE_FILE.CREATION_TIME AS TAPE_FILE_CREATION_TIME,
+      TAPE_POOL.TAPE_POOL_NAME AS TAPE_POOL_NAME
+    FROM
+      ARCHIVE_FILE
+    INNER JOIN STORAGE_CLASS ON
+      ARCHIVE_FILE.STORAGE_CLASS_ID = STORAGE_CLASS.STORAGE_CLASS_ID
+    INNER JOIN TAPE_FILE ON
+      ARCHIVE_FILE.ARCHIVE_FILE_ID = TAPE_FILE.ARCHIVE_FILE_ID
+    INNER JOIN TAPE ON
+      TAPE_FILE.VID = TAPE.VID
+    INNER JOIN TAPE_POOL ON
       TAPE.TAPE_POOL_ID = TAPE_POOL.TAPE_POOL_ID
   )SQL";
 
@@ -162,11 +150,11 @@ RdbmsCatalogueGetArchiveFilesItor::RdbmsCatalogueGetArchiveFilesItor(
     sql += "ARCHIVE_FILE.DISK_FILE_ID IN (SELECT DISK_FILE_ID FROM " + tempDiskFxidsTableName + ")";
   }
 
-  // Order by FSEQ if we are listing the contents of a tape, 
-  // by DISK_FILE_ID if listing the contents of a DISK_INSTANCE 
+  // Order by FSEQ if we are listing the contents of a tape,
+  // by DISK_FILE_ID if listing the contents of a DISK_INSTANCE
   // else order by archive file ID
   if(searchCriteria.vid) {
-    sql += R"SQL( 
+    sql += R"SQL(
       ORDER BY FSEQ
     )SQL";
   } else if (searchCriteria.diskInstance) {
@@ -193,7 +181,7 @@ RdbmsCatalogueGetArchiveFilesItor::RdbmsCatalogueGetArchiveFilesItor(
   if(searchCriteria.fSeq) {
     m_stmt.bindUint64(":FSEQ", searchCriteria.fSeq.value());
   }
-  
+
   m_rset = m_stmt.executeQuery();
   {
     log::LogContext lc(m_log);

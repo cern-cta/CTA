@@ -1,18 +1,6 @@
 /*
- * @project      The CERN Tape Archive (CTA)
- * @copyright    Copyright © 2021-2022 CERN
- * @license      This program is free software, distributed under the terms of the GNU General Public
- *               Licence version 3 (GPL Version 3), copied verbatim in the file "COPYING". You can
- *               redistribute it and/or modify it under the terms of the GPL Version 3, or (at your
- *               option) any later version.
- *
- *               This program is distributed in the hope that it will be useful, but WITHOUT ANY
- *               WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A
- *               PARTICULAR PURPOSE. See the GNU General Public License for more details.
- *
- *               In applying this licence, CERN does not waive the privileges and immunities
- *               granted to it by virtue of its status as an Intergovernmental Organization or
- *               submit itself to any jurisdiction.
+ * SPDX-FileCopyrightText: 2021 CERN
+ * SPDX-License-Identifier: GPL-3.0-or-later
  */
 
 #pragma once
@@ -38,12 +26,12 @@ namespace cta::disk {
     /**
      * Namespace managing the reading and writing of files to and from disk.
      */
-      
+
       class ReadFile;
       class WriteFile;
       class DiskFileRemover;
       class Directory;
-      
+
       /**
        * Factory class deciding on the type of read/write file type
        * based on the url passed
@@ -62,15 +50,15 @@ namespace cta::disk {
         const uint16_t m_xrootTimeout;
         cta::disk::RadosStriperPool & m_striperPool;
       };
-      
+
       class ReadFile {
       public:
         /**
          * Return the size of the file in byte. Can throw
-         * @return 
+         * @return
          */
         virtual size_t size() const = 0;
-        
+
         /**
          * Reads data from the file.
          * @param data: pointer to the data buffer
@@ -78,24 +66,24 @@ namespace cta::disk {
          * @return The amount of data actually copied. Zero at end of file.
          */
         virtual size_t read(void *data, const size_t size) const = 0;
-        
+
         /**
          * Destructor of the ReadFile class. It closes the corresponding file descriptor.
          */
         virtual ~ReadFile() = default;
-        
+
         /**
          * File protocol and path for logging
          */
         virtual std::string URL() const { return m_URL; }
-        
+
       protected:
         /**
          * Storage for the URL
          */
         std::string m_URL;
       };
-      
+
       class WriteFile {
       public:
         /**
@@ -104,34 +92,34 @@ namespace cta::disk {
          * @param size: size of the buffer
          */
         virtual void write(const void *data, const size_t size) = 0;
-        
+
         /**
          * Set the checksum as an extended attribute (only needed for Ceph storage).
          */
         virtual void setChecksum(uint32_t checksum) = 0;
-        
+
         /**
          * Closes the corresponding file descriptor, which may throw an exception.
          */
         virtual void close() = 0;
-        
+
         /**
          * Destructor of the WriteFile class.
          */
         virtual ~WriteFile() = default;
-        
+
         /**
          * File protocol and path for logging
          */
         virtual std::string URL() const { return m_URL; }
-        
+
       protected:
         /**
          * Storage for the URL
          */
         std::string m_URL;
       };
-      
+
       /**
        * This class is the base class to asynchronously delete
        * Disk Files
@@ -144,7 +132,7 @@ namespace cta::disk {
 	virtual void wait() = 0;
 	virtual ~AsyncDiskFileRemover() = default;
       };
-      
+
       /**
        * Factory class deciding which async disk file remover
        * to instanciate regarding the format of the path of the disk file
@@ -158,7 +146,7 @@ namespace cta::disk {
 	Regex m_URLLocalFile;
         Regex m_URLXrootdFile;
       };
-      
+
       class DiskFileRemover{
       public:
 	virtual void remove() = 0;
@@ -166,7 +154,7 @@ namespace cta::disk {
       protected:
 	std::string m_URL;
       };
-      
+
       /**
        * Factory class deciding what type of Directory subclass
        * to instanciate based on the URL passed
@@ -175,7 +163,7 @@ namespace cta::disk {
 	typedef cta::utils::Regex Regex;
       public:
 	DirectoryFactory();
-	
+
 	/**
 	 * Returns the correct directory subclass regarding the path passed in parameter
 	 * @param path the path of the directory to manage
@@ -184,13 +172,13 @@ namespace cta::disk {
 	 * Directory will be instanciated.
 	 */
 	Directory * createDirectory(const std::string &path);
-	
+
       private:
 	Regex m_URLLocalDirectory;
         Regex m_URLXrootDirectory;
       };
-      
-      
+
+
   class Directory {
   public:
     /**
@@ -205,15 +193,15 @@ namespace cta::disk {
     virtual bool exist() = 0;
     /**
      * Return all the names of the files present in the directory
-     * @return 
+     * @return
      */
     virtual std::set<std::string> getFilesName() = 0;
 
     /**
-     * Remove the directory located at this->m_URL 
+     * Remove the directory located at this->m_URL
      */
     virtual void rmdir() = 0;
-    
+
     std::string getURL() {
       return m_URL;
     }
@@ -227,4 +215,4 @@ namespace cta::disk {
     std::string m_URL;
   };
 
-} // namespace cta::disk  
+} // namespace cta::disk

@@ -1,18 +1,6 @@
 /*
- * @project      The CERN Tape Archive (CTA)
- * @copyright    Copyright © 2021-2022 CERN
- * @license      This program is free software, distributed under the terms of the GNU General Public
- *               Licence version 3 (GPL Version 3), copied verbatim in the file "COPYING". You can
- *               redistribute it and/or modify it under the terms of the GPL Version 3, or (at your
- *               option) any later version.
- *
- *               This program is distributed in the hope that it will be useful, but WITHOUT ANY
- *               WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A
- *               PARTICULAR PURPOSE. See the GNU General Public License for more details.
- *
- *               In applying this licence, CERN does not waive the privileges and immunities
- *               granted to it by virtue of its status as an Intergovernmental Organization or
- *               submit itself to any jurisdiction.
+ * SPDX-FileCopyrightText: 2021 CERN
+ * SPDX-License-Identifier: GPL-3.0-or-later
  */
 
 #pragma once
@@ -47,18 +35,18 @@ public:
 private:
   // Validates all summaries are in accordance with each other.
   bool checkMapsAndShardsCoherency();
-  
+
   // Rebuild from shards if something goes wrong.
   void rebuild();
 public:
-  
+
   void garbageCollect(const std::string &presumedOwner, AgentReference & agentReference, log::LogContext & lc,
     cta::catalogue::Catalogue & catalogue) override;
   bool isEmpty();
   CTA_GENERATE_EXCEPTION_CLASS(NotEmpty);
   void removeIfEmpty(log::LogContext & lc);
   std::string dump();
-  
+
   // Retrieve jobs management ==================================================
   void addJobsAndCommit(std::list<common::dataStructures::RetrieveJobToAdd> & jobsToAdd, AgentReference & agentReference, log::LogContext & lc);
   // This version will check for existence of the job in the queue before
@@ -130,14 +118,14 @@ public:
   // which still should be removed from the queue. They will be disregarded from  listing.
   CandidateJobList getCandidateList(uint64_t maxBytes, uint64_t maxFiles, const std::set<std::string> & retrieveRequestsToSkip,
     const std::set<std::string> & diskSystemsToSkip, log::LogContext & lc);
- 
+
 
   //! Return a summary of the number of jobs and number of bytes in the queue
   CandidateJobList getCandidateSummary();
 
   //! Return the mount policy names for the queue object
   std::list<std::string> getMountPolicyNames();
-  
+
   void removeJobsAndCommit(const std::list<std::string> & jobsToRemove, log::LogContext & lc);
 
   bool getQueueCleanupDoCleanup();
@@ -152,12 +140,12 @@ public:
 
   // -- Generic parameters
   std::string getVid();
-  
+
   // Support for sleep waiting free space (back pressure).
   // This data is queried through getJobsSummary().
   void setSleepForFreeSpaceStartTimeAndName(time_t time, const std::string & diskSystemName, uint64_t sleepTime);
   void resetSleepForFreeSpaceStartTime();
-  
+
 private:
   struct ShardForAddition {
     bool newShard=false;
@@ -174,16 +162,16 @@ private:
     std::list<common::dataStructures::RetrieveJobToAdd> jobsToAdd;
     size_t shardIndex = std::numeric_limits<size_t>::max();
   };
-  
+
   void updateShardLimits(uint64_t fSeq, ShardForAddition & sfa);
-  
-  void addJobToShardAndMaybeSplit(common::dataStructures::RetrieveJobToAdd & jobToAdd, 
+
+  void addJobToShardAndMaybeSplit(common::dataStructures::RetrieveJobToAdd & jobToAdd,
     std::list<ShardForAddition>::iterator & shardForAddition, std::list<ShardForAddition> & shardList);
-  
+
 public:
   /** Helper function for unit tests: use smaller shard size to validate ordered insertion */
   void setShardSize(uint64_t shardSize);
-  
+
   /** Helper function for unit tests: validate that we have the expected shards */
   std::list<std::string> getShardAddresses();
 private:
@@ -193,7 +181,7 @@ private:
   // (meaning the queue object updates start to take too much time).
   // with this current value of 25k, the performance should be roughly flat until 25k^2=625M.
   static const uint64_t c_defaultMaxShardSize = 25000;
-  
+
   uint64_t m_maxShardSize = c_defaultMaxShardSize;
 };
 

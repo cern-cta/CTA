@@ -1,20 +1,8 @@
 /*
- * @project      The CERN Tape Archive (CTA)
- * @copyright    Copyright © 2021-2023 CERN
- * @license      This program is free software, distributed under the terms of the GNU General Public
- *               Licence version 3 (GPL Version 3), copied verbatim in the file "COPYING". You can
- *               redistribute it and/or modify it under the terms of the GPL Version 3, or (at your
- *               option) any later version.
- *
- *               This program is distributed in the hope that it will be useful, but WITHOUT ANY
- *               WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A
- *               PARTICULAR PURPOSE. See the GNU General Public License for more details.
- *
- *               In applying this licence, CERN does not waive the privileges and immunities
- *               granted to it by virtue of its status as an Intergovernmental Organization or
- *               submit itself to any jurisdiction.
+ * SPDX-FileCopyrightText: 2021 CERN
+ * SPDX-License-Identifier: GPL-3.0-or-later
  */
- 
+
 #include "ServerTapeLsRequestHandler.hpp"
 #include "AsyncServer.hpp"
 #include "RequestMessage.hpp"
@@ -41,7 +29,7 @@ cta::frontend::grpc::server::TapeLsRequestHandler::TapeLsRequestHandler(
 bool cta::frontend::grpc::server::TapeLsRequestHandler::next(const bool bOk) {
   bool bNext = false;
   log::LogContext lc(m_log);
-  
+
   // Check the state and report an error
   if(!bOk) {
     switch (m_streamState) {
@@ -64,7 +52,7 @@ bool cta::frontend::grpc::server::TapeLsRequestHandler::next(const bool bOk) {
   }
   // else everything is OK
   bNext = true;
-  
+
   switch (m_streamState) {
     case StreamState::NEW:
       m_ctaRpcStreamSvc.RequestTapeLs(&m_ctx, &m_request, &m_writer, &m_asyncServer.completionQueue(), &m_asyncServer.completionQueue(), m_tag);
@@ -192,7 +180,7 @@ bool cta::frontend::grpc::server::TapeLsRequestHandler::next(const bool bOk) {
         pLastModificationLog->set_host(tape.lastModificationLog.host);
         pLastModificationLog->set_time(tape.lastModificationLog.time);
         pTapeLsItem->set_comment(tape.comment);
-        
+
         pTapeLsItem->set_state(tape.getStateStr());
         pTapeLsItem->set_state_reason(tape.stateReason ? tape.stateReason.value() : "");
         pTapeLsItem->set_state_update_time(tape.stateUpdateTime);
@@ -200,10 +188,10 @@ bool cta::frontend::grpc::server::TapeLsRequestHandler::next(const bool bOk) {
         if (tape.verificationStatus) {
           pTapeLsItem->set_verification_status(tape.verificationStatus.value());
         }
-        
+
         m_writer.Write(m_response, ::grpc::WriteOptions().set_buffer_hint(), m_tag);
       }// end for
-      
+
       if(m_tapeList.empty()) {
         m_streamState = StreamState::FINISH;
         m_writer.Finish(::grpc::Status::OK, m_tag);
@@ -220,6 +208,6 @@ bool cta::frontend::grpc::server::TapeLsRequestHandler::next(const bool bOk) {
       // no default
       break;
   }
-  
+
   return bNext;
 }

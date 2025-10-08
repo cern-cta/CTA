@@ -1,23 +1,11 @@
 /*
- * @project      The CERN Tape Archive (CTA)
- * @copyright    Copyright © 2021-2022 CERN
- * @license      This program is free software, distributed under the terms of the GNU General Public
- *               Licence version 3 (GPL Version 3), copied verbatim in the file "COPYING". You can
- *               redistribute it and/or modify it under the terms of the GPL Version 3, or (at your
- *               option) any later version.
- *
- *               This program is distributed in the hope that it will be useful, but WITHOUT ANY
- *               WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A
- *               PARTICULAR PURPOSE. See the GNU General Public License for more details.
- *
- *               In applying this licence, CERN does not waive the privileges and immunities
- *               granted to it by virtue of its status as an Intergovernmental Organization or
- *               submit itself to any jurisdiction.
+ * SPDX-FileCopyrightText: 2021 CERN
+ * SPDX-License-Identifier: GPL-3.0-or-later
  */
 
 #include <errno.h>
 #include <stddef.h>
-#include <stdexcept> 
+#include <stdexcept>
 #include <sys/mtio.h>
 
 #include "FileWrappers.hpp"
@@ -95,9 +83,9 @@ System::stDeviceFile::stDeviceFile()
   m_mtStat.mt_dsreg = (((256 * 0x400) & MT_ST_BLKSIZE_MASK) << MT_ST_BLKSIZE_SHIFT)
       | ((1 & MT_ST_DENSITY_MASK) << MT_ST_DENSITY_SHIFT);
   m_mtStat.mt_gstat = GMT_EOT(~0) | GMT_BOT(~0);
-  
-  blockID = 0xFFFFFFFF; // Logical Object ID - position on tape 
-  
+
+  blockID = 0xFFFFFFFF; // Logical Object ID - position on tape
+
   clearCompressionStats = false;
   m_LBPInfoMethod = 0xFA;
   m_LBPInfoLength = 0xBC;
@@ -146,7 +134,7 @@ int System::stDeviceFile::ioctl(unsigned long int request, sg_io_hdr_t * sgio_h)
         case SCSI::Commands::LOCATE_10:
           return ioctlLocate10(sgio_h);
         case SCSI::Commands::LOG_SENSE:
-          return ioctlLogSense(sgio_h);       
+          return ioctlLogSense(sgio_h);
         case SCSI::Commands::MODE_SENSE_6:
           return ioctlModSense6(sgio_h);
         case SCSI::Commands::MODE_SELECT_6:
@@ -197,7 +185,7 @@ int System::stDeviceFile::ioctlReadPosition(sg_io_hdr_t* sgio_h) {
   } else { // we did seek on tape so we have real values
     /* we need this field to make the replay valid*/
     positionData.PERR = 0;
-    /* fill with internal values 
+    /* fill with internal values
      * lastBlockLocation=firstBlockLocation as soon as Buffer is empty.
      */
     SCSI::Structures::setU32(positionData.firstBlockLocation, blockID);
@@ -492,21 +480,21 @@ int System::stIBM3592DeviceFile::logSenseVolumeStatisticsPage(sg_io_hdr_t * sgio
 
 int System::stOracleT10000Device::logSenseVendorUniqueDriveStatisticsPage(sg_io_hdr_t * sgio_h) {
   unsigned char output[] = {
-    0x3d, 0x00, 0x0c, 0x08, 0x01, 0x00, 0x74, 0x04, 0x00, 0x00, 0x00, 0x00, 0x01, 0x01, 0x74, 0x04,  // 0x00 
-    0x00, 0x00, 0x00, 0x00, 0x01, 0x02, 0x74, 0x04, 0x00, 0x00, 0x00, 0x00, 0x01, 0x03, 0x74, 0x04,  // 0x10 
+    0x3d, 0x00, 0x0c, 0x08, 0x01, 0x00, 0x74, 0x04, 0x00, 0x00, 0x00, 0x00, 0x01, 0x01, 0x74, 0x04,  // 0x00
+    0x00, 0x00, 0x00, 0x00, 0x01, 0x02, 0x74, 0x04, 0x00, 0x00, 0x00, 0x00, 0x01, 0x03, 0x74, 0x04,  // 0x10
     0x00, 0x00, 0x00, 0x00, 0x01, 0x04, 0x74, 0x04, 0x01, 0x02, 0x03, 0x04, 0x01, 0x05, 0x74, 0x04,  // 0x20
     0x00, 0x01, 0x01, 0x02, 0x01, 0x06, 0x74, 0x04, 0x01, 0x01, 0x02, 0x02, 0x01, 0x07, 0x74, 0x04,  // 0x30
     0x00, 0x00, 0x02, 0x13, 0x01, 0x08, 0x74, 0x04, 0x00, 0x02, 0x1a, 0x0f, 0x01, 0x09, 0x74, 0x04,  // 0x40
-    0x00, 0x00, 0x00, 0x00, 0x01, 0x0a, 0x74, 0x04, 0x00, 0x00, 0x00, 0x00, 0x01, 0x0b, 0x74, 0x04,  // 0x50 
-    0x00, 0x00, 0x00, 0x00, 0x01, 0x0c, 0x74, 0x04, 0x00, 0x00, 0x00, 0x00, 0x01, 0x0d, 0x74, 0x04,  // 0x60 
-    0x00, 0x00, 0x00, 0x00, 0x01, 0x0e, 0x74, 0x04, 0x00, 0x00, 0x01, 0x9a, 0x01, 0x10, 0x74, 0x04,  // 0x70 
-    0x00, 0x00, 0x00, 0x00, 0x01, 0x11, 0x74, 0x04, 0x00, 0x00, 0x00, 0x00, 0x01, 0x12, 0x74, 0x04,  // 0x80 
+    0x00, 0x00, 0x00, 0x00, 0x01, 0x0a, 0x74, 0x04, 0x00, 0x00, 0x00, 0x00, 0x01, 0x0b, 0x74, 0x04,  // 0x50
+    0x00, 0x00, 0x00, 0x00, 0x01, 0x0c, 0x74, 0x04, 0x00, 0x00, 0x00, 0x00, 0x01, 0x0d, 0x74, 0x04,  // 0x60
+    0x00, 0x00, 0x00, 0x00, 0x01, 0x0e, 0x74, 0x04, 0x00, 0x00, 0x01, 0x9a, 0x01, 0x10, 0x74, 0x04,  // 0x70
+    0x00, 0x00, 0x00, 0x00, 0x01, 0x11, 0x74, 0x04, 0x00, 0x00, 0x00, 0x00, 0x01, 0x12, 0x74, 0x04,  // 0x80
     0x00, 0x00, 0xff, 0xff, 0x01, 0x14, 0x74, 0x04, 0x00, 0x00, 0x00, 0x00, 0x01, 0x15, 0x74, 0x04,  // 0x90
-    0x00, 0x00, 0x00, 0x00, 0x01, 0x16, 0x74, 0x04, 0x00, 0x00, 0x00, 0x65, 0x01, 0x17, 0x74, 0x04,  // 0xa0 
-    0x00, 0x00, 0x00, 0x01, 0x01, 0x18, 0x74, 0x04, 0x00, 0x00, 0x00, 0x00, 0x01, 0x20, 0x74, 0x04,  // 0xb0 
-    0x00, 0x00, 0x00, 0x00, 0x01, 0x21, 0x74, 0x04, 0x00, 0x00, 0x00, 0x00, 0x01, 0x22, 0x74, 0x04,  // 0xc0 
-    0x00, 0x00, 0x00, 0x00, 0x02, 0x00, 0x74, 0x04, 0x00, 0x00, 0x00, 0x00, 0x02, 0x01, 0x74, 0x04,  // 0xd0 
-    0x00, 0x00, 0x00, 0x00, 0x02, 0x02, 0x74, 0x04, 0x00, 0x00, 0x00, 0x00, 0x02, 0x03, 0x74, 0x04,  // 0xe0 
+    0x00, 0x00, 0x00, 0x00, 0x01, 0x16, 0x74, 0x04, 0x00, 0x00, 0x00, 0x65, 0x01, 0x17, 0x74, 0x04,  // 0xa0
+    0x00, 0x00, 0x00, 0x01, 0x01, 0x18, 0x74, 0x04, 0x00, 0x00, 0x00, 0x00, 0x01, 0x20, 0x74, 0x04,  // 0xb0
+    0x00, 0x00, 0x00, 0x00, 0x01, 0x21, 0x74, 0x04, 0x00, 0x00, 0x00, 0x00, 0x01, 0x22, 0x74, 0x04,  // 0xc0
+    0x00, 0x00, 0x00, 0x00, 0x02, 0x00, 0x74, 0x04, 0x00, 0x00, 0x00, 0x00, 0x02, 0x01, 0x74, 0x04,  // 0xd0
+    0x00, 0x00, 0x00, 0x00, 0x02, 0x02, 0x74, 0x04, 0x00, 0x00, 0x00, 0x00, 0x02, 0x03, 0x74, 0x04,  // 0xe0
     0x01, 0x00, 0x00, 0x01, 0x02, 0x04, 0x74, 0x04, 0x00, 0x00, 0x00, 0x00, 0x03, 0x00, 0x74, 0x08,  // 0xf0
     0x00, 0x00, 0x00, 0x00, 0x0f, 0xa8, 0x03, 0x70, 0x03, 0x01, 0x74, 0x08, 0x00, 0x00, 0x00, 0x00,  // 0x100
     0x0f, 0xb0, 0x54, 0x58, 0x03, 0x02, 0x74, 0x08, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,  // 0x110
@@ -805,8 +793,8 @@ int System::stIBM3592DeviceFile::logSensePerformanceCharacteristicsPage(sg_io_hd
 
 int System::stDeviceFile::logSenseSequentialAccessDevicePage(sg_io_hdr_t * sgio_h) {
   /**
-   * This is a real reply from the enterprise T10000C STK drive. 
-   * We only fill the testing values in the corresponding fields for the 
+   * This is a real reply from the enterprise T10000C STK drive.
+   * We only fill the testing values in the corresponding fields for the
    * compression statistics. The replay1 is the replay with not empty
    * data and the replay2 is the replay with zero statistics.
    */
@@ -814,15 +802,15 @@ int System::stDeviceFile::logSenseSequentialAccessDevicePage(sg_io_hdr_t * sgio_
     0x0c, 0x00, 0x00, 0x40, 0x00, 0x00, 0x74, 0x08, 0xab, 0xcd, 0xef, 0x11, 0x22, 0x33, 0x44, 0x55, // 0x00
     0x00, 0x01, 0x74, 0x08, 0x11, 0x22, 0x33, 0x44, 0x55, 0x66, 0x77, 0x88, 0x00, 0x02, 0x74, 0x08, // 0x10
     0x99, 0xaa, 0xbb, 0xcc, 0xdd, 0xee, 0xff, 0x11, 0x00, 0x03, 0x74, 0x08, 0x22, 0x33, 0x44, 0x55, // 0x20
-    0x66, 0x77, 0x88, 0x99, 0x01, 0x00, 0x74, 0x04, 0x00, 0x00, 0x00, 0x00, 0x80, 0x00, 0x74, 0x04, // 0x30 
-    0x00, 0x00, 0x00, 0x00 // 0x40 
+    0x66, 0x77, 0x88, 0x99, 0x01, 0x00, 0x74, 0x04, 0x00, 0x00, 0x00, 0x00, 0x80, 0x00, 0x74, 0x04, // 0x30
+    0x00, 0x00, 0x00, 0x00 // 0x40
   };
   unsigned char replay2[] = {
     0x0c, 0x00, 0x00, 0x40, 0x00, 0x00, 0x74, 0x08, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, // 0x00
     0x00, 0x01, 0x74, 0x08, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x02, 0x74, 0x08, // 0x10
     0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x03, 0x74, 0x08, 0x00, 0x00, 0x00, 0x00, // 0x20
-    0x00, 0x00, 0x00, 0x00, 0x01, 0x00, 0x74, 0x04, 0x00, 0x00, 0x00, 0x00, 0x80, 0x00, 0x74, 0x04, // 0x30 
-    0x00, 0x00, 0x00, 0x00 // 0x40 
+    0x00, 0x00, 0x00, 0x00, 0x01, 0x00, 0x74, 0x04, 0x00, 0x00, 0x00, 0x00, 0x80, 0x00, 0x74, 0x04, // 0x30
+    0x00, 0x00, 0x00, 0x00 // 0x40
   };
 
   if (sizeof (replay1) > sgio_h->dxfer_len) {
@@ -839,8 +827,8 @@ int System::stDeviceFile::logSenseSequentialAccessDevicePage(sg_io_hdr_t * sgio_
 
 int System::stDeviceFile::logSenseDataCompression32h(sg_io_hdr_t * sgio_h) {
   /**
-   * This is a real reply from the IBM ULTRIUM-TD5 LTO5 drive. 
-   * We only fill the testing values in the corresponding fields for the 
+   * This is a real reply from the IBM ULTRIUM-TD5 LTO5 drive.
+   * We only fill the testing values in the corresponding fields for the
    * compression statistics. The replay1 is the replay with not empty
    * data and the replay2 is the replay with zero statistics.
    */
@@ -873,8 +861,8 @@ int System::stDeviceFile::logSenseDataCompression32h(sg_io_hdr_t * sgio_h) {
 
 int System::stDeviceFile::logSenseBlockBytesTransferred(sg_io_hdr_t * sgio_h) {
   /**
-   * This is a real reply from the enterprise IBM 03592E06 drive. 
-   * We only fill the testing values in the corresponding fields for the 
+   * This is a real reply from the enterprise IBM 03592E06 drive.
+   * We only fill the testing values in the corresponding fields for the
    * compression statistics. The replay1 is the replay with not empty
    * data and the replay2 is the replay with zero statistics.
    */
@@ -928,12 +916,12 @@ int System::stDeviceFile::logSenseTapeAlerts(sg_io_hdr_t* sgio_h) {
   data += 4; remaining -= 4;
   /* This array was extracted from p/x in gdb of the tape alert log page from
    * mhvtl, then processed through:
-   * cat mhvtlAlerts.txt  | tr -d "\n" | perl -p -e 's/\},/}\n/g' |  grep parameterCode | 
+   * cat mhvtlAlerts.txt  | tr -d "\n" | perl -p -e 's/\},/}\n/g' |  grep parameterCode |
    * perl -e 'while (<>) { if ( /\{\s*(0x[[:xdigit:]]+),\s*(0x[[:xdigit:]]+)\}/ ) { print (hex($1) * 256 + hex($2)); print ", " } }'*/
   /* We also add an out-of-range 65 */
-  uint16_t parameterCodes[] = { 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 
-  15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 
-  34, 35, 36, 37, 38, 39, 40, 41, 42, 43, 44, 45, 46, 47, 48, 49, 50, 51, 52, 
+  uint16_t parameterCodes[] = { 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14,
+  15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31, 32, 33,
+  34, 35, 36, 37, 38, 39, 40, 41, 42, 43, 44, 45, 46, 47, 48, 49, 50, 51, 52,
   53, 54, 55, 56, 57, 58, 59, 60, 61, 62, 63, 64, 65 };
   size_t i = 0;
   while (remaining > 5 && i < 65) {
@@ -963,7 +951,7 @@ int System::stDeviceFile::ioctlModSense6(sg_io_hdr_t * sgio_h) {
   }
   SCSI::Structures::modeSense6CDB_t & cdb =
           *(SCSI::Structures::modeSense6CDB_t *) sgio_h->cmdp;
-    
+
   switch (cdb.pageCode) {
     case SCSI::modeSensePages::deviceConfiguration:
       return modeSenseDeviceConfiguration(sgio_h);
@@ -991,7 +979,7 @@ int System::stDeviceFile::modeSenseDeviceConfiguration(sg_io_hdr_t * sgio_h) {
   /* fill the replay with random data */
   srandom(SCSI::Commands::MODE_SENSE_6);
   memset(sgio_h->dxferp, random(), sizeof (devConfig));
-  
+
   /* sets fileds to be used*/
   devConfig.modePage.pageCode = SCSI::modeSensePages::deviceConfiguration;
   return 0;
@@ -1003,13 +991,13 @@ int System::stDeviceFile::modeSenseControlDataProtection(sg_io_hdr_t * sgio_h) {
   if (SCSI::modeSensePages::controlDataProtection != cdb.pageCode) {
     errno = EINVAL;
     return -1;
-  }  
- 
+  }
+
   if (cdb.subPageCode != SCSI::modePageControlDataProtection::subpageCode) {
     errno = EINVAL;
     return -1;
-  }        
-  
+  }
+
   SCSI::Structures::modeSenseControlDataProtection_t & controlDataProtection =
     *(SCSI::Structures::modeSenseControlDataProtection_t *) sgio_h->dxferp;
 
@@ -1020,7 +1008,7 @@ int System::stDeviceFile::modeSenseControlDataProtection(sg_io_hdr_t * sgio_h) {
   /* fill the replay with random data */
   srandom(SCSI::Commands::MODE_SENSE_6);
   memset(sgio_h->dxferp, random(), sizeof (controlDataProtection));
-  
+
   /* fils only used fields */
   controlDataProtection.modePage.LBPMethod = m_LBPInfoMethod;
   controlDataProtection.modePage.LBPInformationLength = m_LBPInfoLength;
@@ -1039,13 +1027,13 @@ int System::stDeviceFile::ioctlModSelect6(sg_io_hdr_t * sgio_h) {
     return -1;
   }
   unsigned char * data = (unsigned char *) sgio_h->dxferp;
-  
-  SCSI::Structures::modeParameterHeader6_t & header =
-    *(SCSI::Structures::modeParameterHeader6_t *) sgio_h->dxferp;  
 
-  SCSI::Structures::modeParameterBlockDecriptor_t & blockDescriptor = 
+  SCSI::Structures::modeParameterHeader6_t & header =
+    *(SCSI::Structures::modeParameterHeader6_t *) sgio_h->dxferp;
+
+  SCSI::Structures::modeParameterBlockDecriptor_t & blockDescriptor =
     *(SCSI::Structures::modeParameterBlockDecriptor_t *) (data+sizeof(header));
-  
+
   unsigned char * modeSelectBlock = data+sizeof(header)+sizeof(blockDescriptor);
 
   switch (modeSelectBlock[0]&0x3F) {  // only 6bits are the page code
@@ -1064,12 +1052,12 @@ int System::stDeviceFile::modeSelectDeviceConfiguration(sg_io_hdr_t * sgio_h) {
 
   SCSI::Structures::modeSenseDeviceConfiguration_t & devConfig =
     *(SCSI::Structures::modeSenseDeviceConfiguration_t *) sgio_h->dxferp;
-  
+
   if (devConfig.modePage.pageCode != SCSI::modeSensePages::deviceConfiguration) {
     errno = 5;
     return -1;
   }
-  
+
   if (sizeof (devConfig) > sgio_h->dxfer_len) {
     errno = 6;
     return -1;
@@ -1095,12 +1083,12 @@ int System::stDeviceFile::modeSelectControlDataProtection(sg_io_hdr_t * sgio_h) 
 
   SCSI::Structures::modeSenseControlDataProtection_t & controlData =
     *(SCSI::Structures::modeSenseControlDataProtection_t *) sgio_h->dxferp;
-  
+
   if (controlData.modePage.pageCode != SCSI::modeSensePages::controlDataProtection) {
     errno = EINVAL;
     return -1;
   }
-  
+
   if (sizeof (controlData) > sgio_h->dxfer_len) {
     errno = EINVAL;
     return -1;
@@ -1111,7 +1099,7 @@ int System::stDeviceFile::modeSelectControlDataProtection(sg_io_hdr_t * sgio_h) 
     errno = EINVAL;
     return -1;
   }
-  
+
   m_LBPInfoMethod =  controlData.modePage.LBPMethod;
   m_LBPInfoLength = controlData.modePage.LBPInformationLength;
   m_LBPInfo_R = controlData.modePage.LBP_R;

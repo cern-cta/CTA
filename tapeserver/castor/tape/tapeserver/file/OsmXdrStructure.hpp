@@ -1,18 +1,6 @@
 /*
- * @project      The CERN Tape Archive (CTA)
- * @copyright    Copyright © 2022 CERN
- * @license      This program is free software, distributed under the terms of the GNU General Public
- *               Licence version 3 (GPL Version 3), copied verbatim in the file "COPYING". You can
- *               redistribute it and/or modify it under the terms of the GPL Version 3, or (at your
- *               option) any later version.
- *
- *               This program is distributed in the hope that it will be useful, but WITHOUT ANY
- *               WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A
- *               PARTICULAR PURPOSE. See the GNU General Public License for more details.
- *
- *               In applying this licence, CERN does not waive the privileges and immunities
- *               granted to it by virtue of its status as an Intergovernmental Organization or
- *               submit itself to any jurisdiction.
+ * SPDX-FileCopyrightText: 2022 CERN
+ * SPDX-License-Identifier: GPL-3.0-or-later
  */
 
 #pragma once
@@ -29,7 +17,7 @@ public:
     uint32_t m_uiDataLen;
     char *m_pcDataVal = nullptr;
   } m_data;
-  
+
   static bool_t xdr_chunk(XDR *xdrs, Chunk *objp) {
     if (!xdr_u_long(xdrs, &objp->m_ulSsid)) {
       return (FALSE);
@@ -56,19 +44,19 @@ public:
     uint32_t m_ulChunkLen;
     Chunk *m_pChunk = nullptr;
   } m_RChunk;
-  
+
   ~Record() {
     bFree = true;
     xdr_free((xdrproc_t) Record::_decode, reinterpret_cast<char*>(this));
   }
-  
+
   bool_t decode(XDR *xdrs) {
     return _decode(xdrs, this);
   }
-  
+
 private:
   bool bFree = false;
-  
+
   static bool_t _decode(XDR *xdrs, Record *objp) {
     // #define MHNDLEN 128
     if(!xdr_opaque(xdrs, objp->m_tcHandler, 128)) {
@@ -103,19 +91,19 @@ public:
   uint64_t m_ulRecSize;
   uint64_t m_ulVolId;
   char *m_pcVolName = nullptr;
-  
+
   ~VolLabel() {
     bFree = true;
     xdr_free((xdrproc_t) VolLabel::_decode, reinterpret_cast<char*>(this));
   }
-  
+
   bool_t decode(XDR *xdrs) {
     return _decode(xdrs, this);
   }
 
   private:
   bool bFree = false;
-                 
+
   static bool_t _decode(XDR *xdrs, VolLabel *objp) {
     if(!xdr_u_long(xdrs, &objp->m_ulMagic)) {
       return (FALSE);

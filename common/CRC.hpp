@@ -1,18 +1,6 @@
 /*
- * @project      The CERN Tape Archive (CTA)
- * @copyright    Copyright © 2021-2022 CERN
- * @license      This program is free software, distributed under the terms of the GNU General Public
- *               Licence version 3 (GPL Version 3), copied verbatim in the file "COPYING". You can
- *               redistribute it and/or modify it under the terms of the GPL Version 3, or (at your
- *               option) any later version.
- *
- *               This program is distributed in the hope that it will be useful, but WITHOUT ANY
- *               WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A
- *               PARTICULAR PURPOSE. See the GNU General Public License for more details.
- *
- *               In applying this licence, CERN does not waive the privileges and immunities
- *               granted to it by virtue of its status as an Intergovernmental Organization or
- *               submit itself to any jurisdiction.
+ * SPDX-FileCopyrightText: 2021 CERN
+ * SPDX-License-Identifier: GPL-3.0-or-later
  */
 
 #pragma once
@@ -23,8 +11,8 @@ namespace cta {
 
 /**
  * Set of CRC functions.
- */ 
-  
+ */
+
 /**
  * Compute by software Reed Solomon CRC for the given block.
  *
@@ -34,18 +22,18 @@ namespace cta {
  * @return The computed CRC in big endian (MSB is first byte).
  */
 
-uint32_t crcRS_sw (const uint32_t crcInit, const uint32_t cnt, 
+uint32_t crcRS_sw (const uint32_t crcInit, const uint32_t cnt,
   const void *const start);
-  
+
 /**
  * Compute by software CRC32C (iSCSI) for the given block.
  *
  * @param crcInit  The initial crc (0xFFFFFFFF for fresh) (i.e., seed).
  * @param cnt      The number of data bytes to compute CRC for.
  * @param start    The starting address of the data bytes (e.g., data buffer).
- * @return The computed CRC in big endian (MSB is first byte). 
+ * @return The computed CRC in big endian (MSB is first byte).
  */
-uint32_t crc32c_sw (const uint32_t crcInit, const uint32_t cnt, 
+uint32_t crc32c_sw (const uint32_t crcInit, const uint32_t cnt,
   const void *const start);
 
 /**
@@ -59,9 +47,9 @@ uint32_t crc32c_sw (const uint32_t crcInit, const uint32_t cnt,
  * @param crcInit  The initial crc (0xFFFFFFFF for fresh) (i.e., seed).
  * @param cnt      The number of data bytes to compute CRC for.
  * @param start    The starting address of the data bytes (e.g., data buffer).
- * @return The computed CRC in big endian (MSB is first byte). 
+ * @return The computed CRC in big endian (MSB is first byte).
  */
-uint32_t crc32c_hw (const uint32_t crcInit, const uint32_t cnt, 
+uint32_t crc32c_hw (const uint32_t crcInit, const uint32_t cnt,
   const void *const start);
 
 /**
@@ -69,7 +57,7 @@ uint32_t crc32c_hw (const uint32_t crcInit, const uint32_t cnt,
  * introduced in November, 2008.  This does not check for the existence of the
  * cpuid instruction itself, which was introduced on the 486SL in 1992, so this
  * will fail on earlier x86 processors.  cpuid works on all Pentium and later
- * processors. 
+ * processors.
  */
 #define SSE42(have) \
   do { \
@@ -89,9 +77,9 @@ uint32_t crc32c_hw (const uint32_t crcInit, const uint32_t cnt,
  * @param crcInit  The initial crc (0xFFFFFFFF for fresh) (i.e., seed).
  * @param cnt      The number of data bytes to compute CRC for.
  * @param start    The starting address of the data bytes (e.g., data buffer).
- * @return The computed CRC in big endian (MSB is first byte). 
+ * @return The computed CRC in big endian (MSB is first byte).
  */
-uint32_t crc32c(const uint32_t crcInit, const uint32_t cnt, 
+uint32_t crc32c(const uint32_t crcInit, const uint32_t cnt,
   const void *const start);
 
 /**

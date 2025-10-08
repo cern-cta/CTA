@@ -1,18 +1,6 @@
 /*
- * @project      The CERN Tape Archive (CTA)
- * @copyright    Copyright © 2021-2022 CERN
- * @license      This program is free software, distributed under the terms of the GNU General Public
- *               Licence version 3 (GPL Version 3), copied verbatim in the file "COPYING". You can
- *               redistribute it and/or modify it under the terms of the GPL Version 3, or (at your
- *               option) any later version.
- *
- *               This program is distributed in the hope that it will be useful, but WITHOUT ANY
- *               WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A
- *               PARTICULAR PURPOSE. See the GNU General Public License for more details.
- *
- *               In applying this licence, CERN does not waive the privileges and immunities
- *               granted to it by virtue of its status as an Intergovernmental Organization or
- *               submit itself to any jurisdiction.
+ * SPDX-FileCopyrightText: 2021 CERN
+ * SPDX-License-Identifier: GPL-3.0-or-later
  */
 
 #include "tapeserver/readtp/ReadtpCmdLineArgs.hpp"
@@ -44,9 +32,9 @@ ReadtpCmdLineArgs::ReadtpCmdLineArgs(const int argc, char *const *const argv) :
   }
   m_vid = std::string(argv[1]);
   utils::toUpper(m_vid);
-  
+
   m_fSeqRangeList = TapeFileSequenceParser::parse(argv[2]);
-  
+
   static struct option longopts[] = {
     {"destination_files",      required_argument, nullptr, 'f'},
     {"drive",                  required_argument, nullptr, 'u'},
@@ -98,7 +86,7 @@ ReadtpCmdLineArgs::ReadtpCmdLineArgs(const int argc, char *const *const argv) :
 
   if (m_destinationFileListURL.empty()) {
     m_destinationFileListURL = "/dev/null"; // Equivalent to an empty file
-  }         
+  }
 }
 
 
@@ -121,7 +109,7 @@ void ReadtpCmdLineArgs::printUsage(std::ostream &os) {
     "  -f, --destination_files <FILE URL>      URL to file containing a list of destination files."  << std::endl <<
     "                                          If not set, all data read is written to file:///dev/null" << std::endl <<
     "                                          If there are less destination files than read files, the remaining" << std::endl <<
-    "                                          files read will be written to file:///dev/null." << std::endl;  
+    "                                          files read will be written to file:///dev/null." << std::endl;
 }
 
 } // namespace cta::tapeserver::readtp

@@ -1,18 +1,6 @@
 /*
- * @project      The CERN Tape Archive (CTA)
- * @copyright    Copyright © 2021-2022 CERN
- * @license      This program is free software, distributed under the terms of the GNU General Public
- *               Licence version 3 (GPL Version 3), copied verbatim in the file "COPYING". You can
- *               redistribute it and/or modify it under the terms of the GPL Version 3, or (at your
- *               option) any later version.
- *
- *               This program is distributed in the hope that it will be useful, but WITHOUT ANY
- *               WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A
- *               PARTICULAR PURPOSE. See the GNU General Public License for more details.
- *
- *               In applying this licence, CERN does not waive the privileges and immunities
- *               granted to it by virtue of its status as an Intergovernmental Organization or
- *               submit itself to any jurisdiction.
+ * SPDX-FileCopyrightText: 2021 CERN
+ * SPDX-License-Identifier: GPL-3.0-or-later
  */
 
 #include "Structures.hpp"
@@ -35,15 +23,15 @@ std::string castor::tape::SCSI::Structures::toString(const inquiryData_t& inq) {
           << "inq.threePC="        << (int) inq.threePC << std::endl
           << "inq.TPGS="           << (int) inq.TPGS << std::endl
           << "inq.ACC="            << (int) inq.ACC << std::endl
-          << "inq.SCCS="           << (int) inq.SCCS << std::endl         
-          << "inq.addr16="         << (int) inq.addr16 << std::endl       
+          << "inq.SCCS="           << (int) inq.SCCS << std::endl
+          << "inq.addr16="         << (int) inq.addr16 << std::endl
           << "inq.multiP="         << (int) inq.multiP << std::endl
           << "inq.VS1="            << (int) inq.VS1 << std::endl
           << "inq.encServ="        << (int) inq.encServ << std::endl
           << "inq.VS2="            << (int) inq.VS2 << std::endl
           << "inq.cmdQue="         << (int) inq.cmdQue << std::endl
           << "inq.sync="           << (int) inq.sync << std::endl
-          << "inq.wbus16="         << (int) inq.wbus16  << std::endl 
+          << "inq.wbus16="         << (int) inq.wbus16  << std::endl
           << "inq.T10Vendor="      << SCSI::Structures::toString(inq.T10Vendor) << std::endl
           << "inq.prodId="         << SCSI::Structures::toString(inq.prodId) << std::endl
           << "inq.prodRevLv="      << SCSI::Structures::toString(inq.prodRevLvl) << std::endl

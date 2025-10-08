@@ -1,19 +1,7 @@
 /*
- * @project      The CERN Tape Archive (CTA)
- * @copyright    Copyright © 2024 CERN
- * @copyright    Copyright © 2024 DESY
- * @license      This program is free software, distributed under the terms of the GNU General Public
- *               Licence version 3 (GPL Version 3), copied verbatim in the file "COPYING". You can
- *               redistribute it and/or modify it under the terms of the GPL Version 3, or (at your
- *               option) any later version.
- *
- *               This program is distributed in the hope that it will be useful, but WITHOUT ANY
- *               WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A
- *               PARTICULAR PURPOSE. See the GNU General Public License for more details.
- *
- *               In applying this licence, CERN does not waive the privileges and immunities
- *               granted to it by virtue of its status as an Intergovernmental Organization or
- *               submit itself to any jurisdiction.
+ * SPDX-FileCopyrightText: 2024 CERN
+ * SPDX-FileCopyrightText: 2024 DESY
+ * SPDX-License-Identifier: GPL-3.0-or-later
  */
 
 #pragma once
@@ -60,12 +48,12 @@ public:
   template<typename TYPE>
   Interface& CLASS(const std::string& strClassName) {
     static_assert(std::is_base_of<BASE_TYPE, TYPE>::value, "Plugin type not supported.");
-       
+
     m_umapFactories.emplace(strClassName, [](const std::variant<IARGS...>& varaintPluginArgs) -> std::unique_ptr<TYPE> {
       try {
         std::unique_ptr<TYPE> upType = std::visit([](auto&& tuplePluginArgs) ->
           std::unique_ptr<TYPE> {
-          // unpack parameter pack (IARGS...) 
+          // unpack parameter pack (IARGS...)
           return std::apply([](auto&&... unpackedPluginArgs) -> std::unique_ptr<TYPE> {
                    return make<TYPE>(unpackedPluginArgs...);
                  }, tuplePluginArgs);
@@ -107,7 +95,7 @@ private:
   }
   /**
    * A static partial specialized template for instantiating a class
-   * to be captured by the lambda function if a class cannot be constructible 
+   * to be captured by the lambda function if a class cannot be constructible
    */
   template<typename TYPE, typename... ARGS>
   static std::enable_if_t<!std::is_constructible_v<TYPE, ARGS&&...>, std::unique_ptr<TYPE>> make(ARGS&&... ) {
@@ -115,5 +103,5 @@ private:
   }
 
 };
- 
+
 } // namespace cta::plugin

@@ -1,18 +1,6 @@
 /*
- * @project      The CERN Tape Archive (CTA)
- * @copyright    Copyright © 2021-2022 CERN
- * @license      This program is free software, distributed under the terms of the GNU General Public
- *               Licence version 3 (GPL Version 3), copied verbatim in the file "COPYING". You can
- *               redistribute it and/or modify it under the terms of the GPL Version 3, or (at your
- *               option) any later version.
- *
- *               This program is distributed in the hope that it will be useful, but WITHOUT ANY
- *               WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A
- *               PARTICULAR PURPOSE. See the GNU General Public License for more details.
- *
- *               In applying this licence, CERN does not waive the privileges and immunities
- *               granted to it by virtue of its status as an Intergovernmental Organization or
- *               submit itself to any jurisdiction.
+ * SPDX-FileCopyrightText: 2021 CERN
+ * SPDX-License-Identifier: GPL-3.0-or-later
  */
 
 #pragma once
@@ -306,7 +294,7 @@ public:
   void setActiveCopyNumber(uint32_t activeCopyNb);
   uint32_t getActiveCopyNumber();
   void setIsVerifyOnly(bool isVerifyOnly) { m_payload.set_isverifyonly(isVerifyOnly); }
-  
+
   /**
    * Sets the job as failed. Failed jobs are moved to the failed requests and cannot be deleted from the scheduler.
    */
@@ -317,7 +305,7 @@ public:
   std::string dump();
 
 private:
-  std::string asyncUpdateJobOwnerCallback(const std::string& strIn, AsyncJobOwnerUpdater& ret, uint32_t ui32CopyNb, const std::string& strOwner, const std::string& strPreviousOwner); 
+  std::string asyncUpdateJobOwnerCallback(const std::string& strIn, AsyncJobOwnerUpdater& ret, uint32_t ui32CopyNb, const std::string& strOwner, const std::string& strPreviousOwner);
   std::string asyncJobSucceedReporterCallback(const std::string& strIn, AsyncJobSucceedReporter& ret, uint32_t ui32CopyNb);
   std::string asyncReportSucceedForRepackCallback(const std::string& strIn, AsyncJobSucceedForRepackReporter& ret, uint32_t ui32CopyNb);
   std::string asyncTransformToArchiveRequestCallback(const std::string& strIn, AsyncRetrieveToArchiveTransformer& ret, const std::string& strProcessAgentAddress);

@@ -1,18 +1,6 @@
 /*
- * @project      The CERN Tape Archive (CTA)
- * @copyright    Copyright © 2021-2022 CERN
- * @license      This program is free software, distributed under the terms of the GNU General Public
- *               Licence version 3 (GPL Version 3), copied verbatim in the file "COPYING". You can
- *               redistribute it and/or modify it under the terms of the GPL Version 3, or (at your
- *               option) any later version.
- *
- *               This program is distributed in the hope that it will be useful, but WITHOUT ANY
- *               WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A
- *               PARTICULAR PURPOSE. See the GNU General Public License for more details.
- *
- *               In applying this licence, CERN does not waive the privileges and immunities
- *               granted to it by virtue of its status as an Intergovernmental Organization or
- *               submit itself to any jurisdiction.
+ * SPDX-FileCopyrightText: 2021 CERN
+ * SPDX-License-Identifier: GPL-3.0-or-later
  */
 
 #pragma once
@@ -169,7 +157,7 @@ private:
    *
    * @param drive Object representing the drive hardware.
    * @param timeoutSecond The number of seconds to wait for the tape to be
-   * loaded into the tape drive. 
+   * loaded into the tape drive.
    */
   void waitUntilTapeLoaded(castor::tape::tapeserver::drive::DriveInterface &drive,
     const int timeoutSecond);
@@ -198,14 +186,14 @@ private:
    * @param drive The tape drive.
    */
   void unloadTape(const std::string &vid, castor::tape::tapeserver::drive::DriveInterface &drive);
-  
+
   /**
    * Dismounts the specified tape.
    *
    * @param vid The volume identifier of the tape to be dismounted.
    */
   void dismountTape(const std::string &vid);
-  
+
   /**
    * Rewinds the specified tape drive.
    *
@@ -230,7 +218,7 @@ private:
    *Dummy logger for the catalogue
    */
   cta::log::DummyLogger &m_dummyLog;
-  
+
   /**
    * Hard coded path for the catalogue login configuration.
    */
@@ -240,32 +228,32 @@ private:
    * Unique pointer to the catalogue interface;
    */
   std::unique_ptr<cta::catalogue::Catalogue> m_catalogue;
-  
+
   /**
    * The system wrapper used to find the device and instantiate the drive object.
    */
   castor::tape::System::realWrapper m_sysWrapper;
-  
+
   /**
    * The filename of the device file of the tape drive.
    */
   std::string m_devFilename;
-  
+
   /**
    * The slot in the tape library that contains the tape drive (string encoded).
    */
   std::string m_rawLibrarySlot;
-  
+
   /**
    * The logical library of the tape drive.
    */
   std::string m_logicalLibrary;
-  
+
   /**
    * The unit name of the tape drive.
    */
   std::string m_unitName;
-  
+
   /**
    * The name of the user running the command-line tool.
    */
@@ -275,7 +263,7 @@ private:
    * The tape VID to read.
    */
   std::string m_vid;
-  
+
   /**
    * The iterator of destination urls the data read is sent to
    */
@@ -317,7 +305,7 @@ private:
   uint64_t m_nbFailedReads = 0;
 
   /**
-  * Encryption helper object 
+  * Encryption helper object
   */
   std::unique_ptr<castor::tape::tapeserver::daemon::EncryptionControl> m_encryptionControl;
 

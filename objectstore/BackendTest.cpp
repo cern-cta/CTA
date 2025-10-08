@@ -1,18 +1,6 @@
 /*
- * @project      The CERN Tape Archive (CTA)
- * @copyright    Copyright © 2021-2022 CERN
- * @license      This program is free software, distributed under the terms of the GNU General Public
- *               Licence version 3 (GPL Version 3), copied verbatim in the file "COPYING". You can
- *               redistribute it and/or modify it under the terms of the GPL Version 3, or (at your
- *               option) any later version.
- *
- *               This program is distributed in the hope that it will be useful, but WITHOUT ANY
- *               WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A
- *               PARTICULAR PURPOSE. See the GNU General Public License for more details.
- *
- *               In applying this licence, CERN does not waive the privileges and immunities
- *               granted to it by virtue of its status as an Intergovernmental Organization or
- *               submit itself to any jurisdiction.
+ * SPDX-FileCopyrightText: 2021 CERN
+ * SPDX-License-Identifier: GPL-3.0-or-later
  */
 
 #include "BackendTest.hpp"
@@ -68,17 +56,17 @@ TEST_P(BackendAbstractTest, LockingInterface) {
   {
     // If we don't scope the object, the release will blow up after
     // removal of the file.
-    std::unique_ptr<cta::objectstore::Backend::ScopedLock> lock( 
+    std::unique_ptr<cta::objectstore::Backend::ScopedLock> lock(
       m_os->lockExclusive(testObjectName));
   }
   {
-    std::unique_ptr<cta::objectstore::Backend::ScopedLock> lock( 
+    std::unique_ptr<cta::objectstore::Backend::ScopedLock> lock(
       m_os->lockExclusive(testObjectName));
     lock->release();
   }
   // We should also tolerate releasing a lock taken on an object deleted
   // in the mean time
-  std::unique_ptr<cta::objectstore::Backend::ScopedLock> lock( 
+  std::unique_ptr<cta::objectstore::Backend::ScopedLock> lock(
       m_os->lockExclusive(testObjectName));
   m_os->remove(testObjectName);
   ASSERT_NO_THROW(lock->release());

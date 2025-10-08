@@ -1,18 +1,6 @@
 /*
- * @project      The CERN Tape Archive (CTA)
- * @copyright    Copyright © 2022 CERN
- * @license      This program is free software, distributed under the terms of the GNU General Public
- *               Licence version 3 (GPL Version 3), copied verbatim in the file "COPYING". You can
- *               redistribute it and/or modify it under the terms of the GPL Version 3, or (at your
- *               option) any later version.
- *
- *               This program is distributed in the hope that it will be useful, but WITHOUT ANY
- *               WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A
- *               PARTICULAR PURPOSE. See the GNU General Public License for more details.
- *
- *               In applying this licence, CERN does not waive the privileges and immunities
- *               granted to it by virtue of its status as an Intergovernmental Organization or
- *               submit itself to any jurisdiction.
+ * SPDX-FileCopyrightText: 2022 CERN
+ * SPDX-License-Identifier: GPL-3.0-or-later
  */
 
 #include <string>
@@ -94,10 +82,10 @@ void RdbmsDiskInstanceCatalogue::createDiskInstance(const common::dataStructures
 
 void RdbmsDiskInstanceCatalogue::deleteDiskInstance(const std::string &name) {
   const char* const delete_sql = R"SQL(
-    DELETE 
-    FROM 
-      DISK_INSTANCE 
-    WHERE 
+    DELETE
+    FROM
+      DISK_INSTANCE
+    WHERE
       DISK_INSTANCE_NAME = :DISK_INSTANCE_NAME
   )SQL";
   auto conn = m_connPool->getConn();
@@ -130,12 +118,12 @@ void RdbmsDiskInstanceCatalogue::modifyDiskInstanceComment(const common::dataStr
 
   const time_t now = time(nullptr);
   const char* const sql = R"SQL(
-    UPDATE DISK_INSTANCE SET 
+    UPDATE DISK_INSTANCE SET
       USER_COMMENT = :USER_COMMENT,
       LAST_UPDATE_USER_NAME = :LAST_UPDATE_USER_NAME,
       LAST_UPDATE_HOST_NAME = :LAST_UPDATE_HOST_NAME,
-      LAST_UPDATE_TIME = :LAST_UPDATE_TIME 
-    WHERE 
+      LAST_UPDATE_TIME = :LAST_UPDATE_TIME
+    WHERE
       DISK_INSTANCE_NAME = :DISK_INSTANCE_NAME
   )SQL";
   auto conn = m_connPool->getConn();
@@ -155,7 +143,7 @@ void RdbmsDiskInstanceCatalogue::modifyDiskInstanceComment(const common::dataStr
 std::list<common::dataStructures::DiskInstance> RdbmsDiskInstanceCatalogue::getAllDiskInstances() const {
   std::list<common::dataStructures::DiskInstance> diskInstanceList;
   const char* const sql = R"SQL(
-    SELECT 
+    SELECT
       DISK_INSTANCE.DISK_INSTANCE_NAME AS DISK_INSTANCE_NAME,
 
       DISK_INSTANCE.USER_COMMENT AS USER_COMMENT,
@@ -166,8 +154,8 @@ std::list<common::dataStructures::DiskInstance> RdbmsDiskInstanceCatalogue::getA
 
       DISK_INSTANCE.LAST_UPDATE_USER_NAME AS LAST_UPDATE_USER_NAME,
       DISK_INSTANCE.LAST_UPDATE_HOST_NAME AS LAST_UPDATE_HOST_NAME,
-      DISK_INSTANCE.LAST_UPDATE_TIME AS LAST_UPDATE_TIME 
-    FROM 
+      DISK_INSTANCE.LAST_UPDATE_TIME AS LAST_UPDATE_TIME
+    FROM
       DISK_INSTANCE
   )SQL";
 

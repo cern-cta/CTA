@@ -1,18 +1,6 @@
 /*
- * @project      The CERN Tape Archive (CTA)
- * @copyright    Copyright © 2021-2022 CERN
- * @license      This program is free software, distributed under the terms of the GNU General Public
- *               Licence version 3 (GPL Version 3), copied verbatim in the file "COPYING". You can
- *               redistribute it and/or modify it under the terms of the GPL Version 3, or (at your
- *               option) any later version.
- *
- *               This program is distributed in the hope that it will be useful, but WITHOUT ANY
- *               WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A
- *               PARTICULAR PURPOSE. See the GNU General Public License for more details.
- *
- *               In applying this licence, CERN does not waive the privileges and immunities
- *               granted to it by virtue of its status as an Intergovernmental Organization or
- *               submit itself to any jurisdiction.
+ * SPDX-FileCopyrightText: 2021 CERN
+ * SPDX-License-Identifier: GPL-3.0-or-later
  */
 
 #pragma once
@@ -39,7 +27,7 @@ public:
    * @param tapeserverProxy
    * @param driveConfig The configuration of the tape drive we are using.
    * @param hostname The host name of the computer
-   * @param lc 
+   * @param lc
    */
   TapeSessionReporter(cta::tape::daemon::TapedProxy& tapeserverProxy, const cta::tape::daemon::DriveConfigEntry& driveConfig,
     std::string_view hostname, const cta::log::LogContext& lc);
@@ -74,9 +62,9 @@ private:
   bool m_threadRunning;
 
   /*
-  This internal mechanism could (should ?) be easily changed to a queue 
+  This internal mechanism could (should ?) be easily changed to a queue
    * of {std/boost}::function coupled with bind. For instance, tapeMountedForWrite
-   * should look like 
+   * should look like
    *   m_fifo.push(bind(m_tapeserverProxy,&tapeMountedForWrite,args...))
    * and execute
    *  while(1)
@@ -104,18 +92,18 @@ private:
   };
 
   /**
-   * Inherited from Thread, it will do the job : pop a request, execute it 
+   * Inherited from Thread, it will do the job : pop a request, execute it
    * and delete it
    */
   void run() override;
 
-  /** 
+  /**
    * m_fifo is holding all the report waiting to be processed
    */
   cta::threading::BlockingQueue<Report *> m_fifo;
 
   /**
-   A bunch of references to proxies to send messages to the 
+   A bunch of references to proxies to send messages to the
    * outside world when we have to
    */
   cta::tape::daemon::TapedProxy& m_tapeserverProxy;

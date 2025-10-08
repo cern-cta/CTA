@@ -1,18 +1,6 @@
 /*
- * @project      The CERN Tape Archive (CTA)
- * @copyright    Copyright © 2022 CERN
- * @license      This program is free software, distributed under the terms of the GNU General Public
- *               Licence version 3 (GPL Version 3), copied verbatim in the file "COPYING". You can
- *               redistribute it and/or modify it under the terms of the GPL Version 3, or (at your
- *               option) any later version.
- *
- *               This program is distributed in the hope that it will be useful, but WITHOUT ANY
- *               WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A
- *               PARTICULAR PURPOSE. See the GNU General Public License for more details.
- *
- *               In applying this licence, CERN does not waive the privileges and immunities
- *               granted to it by virtue of its status as an Intergovernmental Organization or
- *               submit itself to any jurisdiction.
+ * SPDX-FileCopyrightText: 2022 CERN
+ * SPDX-License-Identifier: GPL-3.0-or-later
  */
 
 #include <algorithm>
@@ -282,7 +270,7 @@ void PostgresTapeFileCatalogue::filesWrittenToTape(const std::set<TapeItemWritte
   }
 
   const char* const sql = R"SQL(
-    CREATE TEMPORARY TABLE TEMP_TAPE_FILE_INSERTION_BATCH (LIKE TAPE_FILE) 
+    CREATE TEMPORARY TABLE TEMP_TAPE_FILE_INSERTION_BATCH (LIKE TAPE_FILE)
     ON COMMIT DROP;
     COPY TEMP_TAPE_FILE_INSERTION_BATCH(
       VID,
@@ -291,7 +279,7 @@ void PostgresTapeFileCatalogue::filesWrittenToTape(const std::set<TapeItemWritte
       LOGICAL_SIZE_IN_BYTES,
       COPY_NB,
       CREATION_TIME,
-      ARCHIVE_FILE_ID) 
+      ARCHIVE_FILE_ID)
     FROM STDIN
     /* :VID,
        :FSEQ,
@@ -319,11 +307,11 @@ void PostgresTapeFileCatalogue::filesWrittenToTape(const std::set<TapeItemWritte
   //Insert the tapefiles from the TEMP_TAPE_FILE_INSERTION_BATCH
   const char* const insertTapeFileSql = R"SQL(
     INSERT INTO TAPE_FILE (
-      VID, FSEQ, BLOCK_ID, LOGICAL_SIZE_IN_BYTES, 
-      COPY_NB, CREATION_TIME, ARCHIVE_FILE_ID) 
-    SELECT  
-      VID, FSEQ, BLOCK_ID, LOGICAL_SIZE_IN_BYTES, COPY_NB, CREATION_TIME, ARCHIVE_FILE_ID 
-    FROM 
+      VID, FSEQ, BLOCK_ID, LOGICAL_SIZE_IN_BYTES,
+      COPY_NB, CREATION_TIME, ARCHIVE_FILE_ID)
+    SELECT
+      VID, FSEQ, BLOCK_ID, LOGICAL_SIZE_IN_BYTES, COPY_NB, CREATION_TIME, ARCHIVE_FILE_ID
+    FROM
       TEMP_TAPE_FILE_INSERTION_BATCH
   )SQL";
   conn.executeNonQuery(insertTapeFileSql);
@@ -347,20 +335,20 @@ std::list<cta::catalogue::InsertFileRecycleLog> PostgresTapeFileCatalogue::inser
   std::list<cta::catalogue::InsertFileRecycleLog> fileRecycleLogsToInsert;
   //Get the TAPE_FILE entry to put on the file recycle log
   const char* const sql = R"SQL(
-    SELECT 
+    SELECT
       TAPE_FILE.VID AS VID,
       TAPE_FILE.FSEQ AS FSEQ,
       TAPE_FILE.BLOCK_ID AS BLOCK_ID,
       TAPE_FILE.COPY_NB AS COPY_NB,
       TAPE_FILE.CREATION_TIME AS TAPE_FILE_CREATION_TIME,
-      TAPE_FILE.ARCHIVE_FILE_ID AS ARCHIVE_FILE_ID 
-    FROM 
-      TAPE_FILE 
-    JOIN 
-      TEMP_TAPE_FILE_INSERTION_BATCH 
-    ON 
-      TEMP_TAPE_FILE_INSERTION_BATCH.ARCHIVE_FILE_ID = TAPE_FILE.ARCHIVE_FILE_ID AND TEMP_TAPE_FILE_INSERTION_BATCH.COPY_NB = TAPE_FILE.COPY_NB 
-    WHERE 
+      TAPE_FILE.ARCHIVE_FILE_ID AS ARCHIVE_FILE_ID
+    FROM
+      TAPE_FILE
+    JOIN
+      TEMP_TAPE_FILE_INSERTION_BATCH
+    ON
+      TEMP_TAPE_FILE_INSERTION_BATCH.ARCHIVE_FILE_ID = TAPE_FILE.ARCHIVE_FILE_ID AND TEMP_TAPE_FILE_INSERTION_BATCH.COPY_NB = TAPE_FILE.COPY_NB
+    WHERE
       TAPE_FILE.VID != TEMP_TAPE_FILE_INSERTION_BATCH.VID OR TAPE_FILE.FSEQ != TEMP_TAPE_FILE_INSERTION_BATCH.FSEQ
   )SQL";
   auto stmt = conn.createStmt(sql);
@@ -388,12 +376,12 @@ std::list<cta::catalogue::InsertFileRecycleLog> PostgresTapeFileCatalogue::inser
 
 uint64_t PostgresTapeFileCatalogue::selectTapeForUpdateAndGetLastFSeq(rdbms::Conn &conn, const std::string &vid) const {
   const char* const sql = R"SQL(
-    SELECT 
-      LAST_FSEQ AS LAST_FSEQ 
-    FROM 
-      TAPE 
-    WHERE 
-      VID = :VID 
+    SELECT
+      LAST_FSEQ AS LAST_FSEQ
+    FROM
+      TAPE
+    WHERE
+      VID = :VID
     FOR UPDATE
   )SQL";
   auto stmt = conn.createStmt(sql);
@@ -468,7 +456,7 @@ void PostgresTapeFileCatalogue::idempotentBatchInsertArchiveFiles(rdbms::Conn &c
       CHECKSUM_ADLER32,
       STORAGE_CLASS_NAME,
       CREATION_TIME,
-      RECONCILIATION_TIME) 
+      RECONCILIATION_TIME)
     FROM STDIN /*
       :ARCHIVE_FILE_ID,
       :DISK_INSTANCE_NAME,
@@ -512,8 +500,8 @@ void PostgresTapeFileCatalogue::idempotentBatchInsertArchiveFiles(rdbms::Conn &c
       CHECKSUM_ADLER32,
       STORAGE_CLASS_ID,
       CREATION_TIME,
-      RECONCILIATION_TIME) 
-    SELECT 
+      RECONCILIATION_TIME)
+    SELECT
       A.ARCHIVE_FILE_ID,
       A.DISK_INSTANCE_NAME,
       A.DISK_FILE_ID,
@@ -524,10 +512,10 @@ void PostgresTapeFileCatalogue::idempotentBatchInsertArchiveFiles(rdbms::Conn &c
       A.CHECKSUM_ADLER32,
       S.STORAGE_CLASS_ID,
       A.CREATION_TIME,
-      A.RECONCILIATION_TIME 
-    FROM TEMP_ARCHIVE_FILE_BATCH AS A, STORAGE_CLASS AS S 
-    WHERE A.STORAGE_CLASS_NAME = S.STORAGE_CLASS_NAME 
-    ORDER BY A.ARCHIVE_FILE_ID 
+      A.RECONCILIATION_TIME
+    FROM TEMP_ARCHIVE_FILE_BATCH AS A, STORAGE_CLASS AS S
+    WHERE A.STORAGE_CLASS_NAME = S.STORAGE_CLASS_NAME
+    ORDER BY A.ARCHIVE_FILE_ID
     ON CONFLICT (ARCHIVE_FILE_ID) DO NOTHING
   )SQL";
 
@@ -552,7 +540,7 @@ void PostgresTapeFileCatalogue::insertTapeFileBatchIntoTempTable(rdbms::Conn &co
 
   const char* const sql = R"SQL(
     COPY TEMP_TAPE_FILE_BATCH(
-      ARCHIVE_FILE_ID) 
+      ARCHIVE_FILE_ID)
     FROM STDIN
       /* :ARCHIVE_FILE_ID */
   )SQL";

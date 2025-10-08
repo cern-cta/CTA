@@ -1,18 +1,6 @@
 /*
- * @project      The CERN Tape Archive (CTA)
- * @copyright    Copyright © 2022 CERN
- * @license      This program is free software, distributed under the terms of the GNU General Public
- *               Licence version 3 (GPL Version 3), copied verbatim in the file "COPYING". You can
- *               redistribute it and/or modify it under the terms of the GPL Version 3, or (at your
- *               option) any later version.
- *
- *               This program is distributed in the hope that it will be useful, but WITHOUT ANY
- *               WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A
- *               PARTICULAR PURPOSE. See the GNU General Public License for more details.
- *
- *               In applying this licence, CERN does not waive the privileges and immunities
- *               granted to it by virtue of its status as an Intergovernmental Organization or
- *               submit itself to any jurisdiction.
+ * SPDX-FileCopyrightText: 2022 CERN
+ * SPDX-License-Identifier: GPL-3.0-or-later
  */
 
 #include <string>
@@ -76,7 +64,7 @@ uint64_t RdbmsArchiveFileCatalogue::checkAndGetNextArchiveFileId(const std::stri
       throw ue;
     }
 
-    
+
     // Only consider the requester's group if there is no user mount policy
     if(const auto userMountPolicyAndCacheInfo = getCachedRequesterMountPolicy(User(diskInstanceName, user.name));
       !userMountPolicyAndCacheInfo.value) {
@@ -86,7 +74,7 @@ uint64_t RdbmsArchiveFileCatalogue::checkAndGetNextArchiveFileId(const std::stri
       if(!groupMountPolicy) {
 
         const auto defaultUserMountPolicyAndCacheInfo = getCachedRequesterMountPolicy(User(diskInstanceName, "default"));
-        
+
 
         if(!defaultUserMountPolicyAndCacheInfo.value) {
           exception::UserErrorWithCacheInfo ue(userMountPolicyAndCacheInfo.cacheInfo);
@@ -260,7 +248,7 @@ common::dataStructures::ArchiveFile RdbmsArchiveFileCatalogue::getArchiveFileCop
 std::list<common::dataStructures::ArchiveFile> RdbmsArchiveFileCatalogue::getFilesForRepack(const std::string &vid,
   const uint64_t startFSeq, const uint64_t maxNbFiles) const {
   const char* const sql = R"SQL(
-    SELECT 
+    SELECT
       ARCHIVE_FILE.ARCHIVE_FILE_ID AS ARCHIVE_FILE_ID,
       ARCHIVE_FILE.DISK_INSTANCE_NAME AS DISK_INSTANCE_NAME,
       ARCHIVE_FILE.DISK_FILE_ID AS DISK_FILE_ID,
@@ -278,20 +266,20 @@ std::list<common::dataStructures::ArchiveFile> RdbmsArchiveFileCatalogue::getFil
       TAPE_FILE.LOGICAL_SIZE_IN_BYTES AS LOGICAL_SIZE_IN_BYTES,
       TAPE_FILE.COPY_NB AS COPY_NB,
       TAPE_FILE.CREATION_TIME AS TAPE_FILE_CREATION_TIME,
-      TAPE_POOL.TAPE_POOL_NAME AS TAPE_POOL_NAME 
-    FROM 
-      ARCHIVE_FILE 
-    INNER JOIN STORAGE_CLASS ON 
-      ARCHIVE_FILE.STORAGE_CLASS_ID = STORAGE_CLASS.STORAGE_CLASS_ID 
-    INNER JOIN TAPE_FILE ON 
-      ARCHIVE_FILE.ARCHIVE_FILE_ID = TAPE_FILE.ARCHIVE_FILE_ID 
-    INNER JOIN TAPE ON 
-      TAPE_FILE.VID = TAPE.VID 
-    INNER JOIN TAPE_POOL ON 
-      TAPE.TAPE_POOL_ID = TAPE_POOL.TAPE_POOL_ID 
-    WHERE 
-      TAPE_FILE.VID = :VID AND 
-      TAPE_FILE.FSEQ >= :START_FSEQ 
+      TAPE_POOL.TAPE_POOL_NAME AS TAPE_POOL_NAME
+    FROM
+      ARCHIVE_FILE
+    INNER JOIN STORAGE_CLASS ON
+      ARCHIVE_FILE.STORAGE_CLASS_ID = STORAGE_CLASS.STORAGE_CLASS_ID
+    INNER JOIN TAPE_FILE ON
+      ARCHIVE_FILE.ARCHIVE_FILE_ID = TAPE_FILE.ARCHIVE_FILE_ID
+    INNER JOIN TAPE ON
+      TAPE_FILE.VID = TAPE.VID
+    INNER JOIN TAPE_POOL ON
+      TAPE.TAPE_POOL_ID = TAPE_POOL.TAPE_POOL_ID
+    WHERE
+      TAPE_FILE.VID = :VID AND
+      TAPE_FILE.FSEQ >= :START_FSEQ
     ORDER BY FSEQ
   )SQL";
 
@@ -347,18 +335,18 @@ common::dataStructures::ArchiveFileSummary RdbmsArchiveFileCatalogue::getTapeFil
   auto conn = m_connPool->getConn();
 
   std::string sql = R"SQL(
-    SELECT 
+    SELECT
       COALESCE(SUM(ARCHIVE_FILE.SIZE_IN_BYTES), 0) AS TOTAL_BYTES,
-      COUNT(ARCHIVE_FILE.ARCHIVE_FILE_ID) AS TOTAL_FILES 
-    FROM 
-      ARCHIVE_FILE 
-    INNER JOIN STORAGE_CLASS ON 
-      ARCHIVE_FILE.STORAGE_CLASS_ID = STORAGE_CLASS.STORAGE_CLASS_ID 
-    INNER JOIN TAPE_FILE ON 
-      ARCHIVE_FILE.ARCHIVE_FILE_ID = TAPE_FILE.ARCHIVE_FILE_ID 
-    INNER JOIN TAPE ON 
-      TAPE_FILE.VID = TAPE.VID 
-    INNER JOIN TAPE_POOL ON 
+      COUNT(ARCHIVE_FILE.ARCHIVE_FILE_ID) AS TOTAL_FILES
+    FROM
+      ARCHIVE_FILE
+    INNER JOIN STORAGE_CLASS ON
+      ARCHIVE_FILE.STORAGE_CLASS_ID = STORAGE_CLASS.STORAGE_CLASS_ID
+    INNER JOIN TAPE_FILE ON
+      ARCHIVE_FILE.ARCHIVE_FILE_ID = TAPE_FILE.ARCHIVE_FILE_ID
+    INNER JOIN TAPE ON
+      TAPE_FILE.VID = TAPE.VID
+    INNER JOIN TAPE_POOL ON
       TAPE.TAPE_POOL_ID = TAPE_POOL.TAPE_POOL_ID
   )SQL";
 
@@ -447,7 +435,7 @@ common::dataStructures::ArchiveFile RdbmsArchiveFileCatalogue::getArchiveFileByI
 std::unique_ptr<common::dataStructures::ArchiveFile> RdbmsArchiveFileCatalogue::getArchiveFileById(rdbms::Conn &conn,
   const uint64_t id) const {
   const char* const sql = R"SQL(
-    SELECT 
+    SELECT
       ARCHIVE_FILE.ARCHIVE_FILE_ID AS ARCHIVE_FILE_ID,
       ARCHIVE_FILE.DISK_INSTANCE_NAME AS DISK_INSTANCE_NAME,
       ARCHIVE_FILE.DISK_FILE_ID AS DISK_FILE_ID,
@@ -464,16 +452,16 @@ std::unique_ptr<common::dataStructures::ArchiveFile> RdbmsArchiveFileCatalogue::
       TAPE_FILE.BLOCK_ID AS BLOCK_ID,
       TAPE_FILE.LOGICAL_SIZE_IN_BYTES AS LOGICAL_SIZE_IN_BYTES,
       TAPE_FILE.COPY_NB AS COPY_NB,
-      TAPE_FILE.CREATION_TIME AS TAPE_FILE_CREATION_TIME 
-    FROM 
-      ARCHIVE_FILE 
-    INNER JOIN STORAGE_CLASS ON 
-      ARCHIVE_FILE.STORAGE_CLASS_ID = STORAGE_CLASS.STORAGE_CLASS_ID 
-    INNER JOIN TAPE_FILE ON 
-      ARCHIVE_FILE.ARCHIVE_FILE_ID = TAPE_FILE.ARCHIVE_FILE_ID 
-    WHERE 
-      ARCHIVE_FILE.ARCHIVE_FILE_ID = :ARCHIVE_FILE_ID 
-    ORDER BY 
+      TAPE_FILE.CREATION_TIME AS TAPE_FILE_CREATION_TIME
+    FROM
+      ARCHIVE_FILE
+    INNER JOIN STORAGE_CLASS ON
+      ARCHIVE_FILE.STORAGE_CLASS_ID = STORAGE_CLASS.STORAGE_CLASS_ID
+    INNER JOIN TAPE_FILE ON
+      ARCHIVE_FILE.ARCHIVE_FILE_ID = TAPE_FILE.ARCHIVE_FILE_ID
+    WHERE
+      ARCHIVE_FILE.ARCHIVE_FILE_ID = :ARCHIVE_FILE_ID
+    ORDER BY
       TAPE_FILE.CREATION_TIME ASC
   )SQL";
   auto stmt = conn.createStmt(sql);
@@ -614,17 +602,17 @@ common::dataStructures::TapeCopyToPoolMap RdbmsArchiveFileCatalogue::getTapeCopy
   const catalogue::StorageClass &storageClass, bool useRepackArchiveRoute) const {
   common::dataStructures::TapeCopyToPoolMap copyToPoolMap;
   std::string sql = R"SQL(
-    SELECT 
+    SELECT
       ARCHIVE_ROUTE.COPY_NB AS COPY_NB,
       ARCHIVE_ROUTE.ARCHIVE_ROUTE_TYPE AS ARCHIVE_ROUTE_TYPE,
-      TAPE_POOL.TAPE_POOL_NAME AS TAPE_POOL_NAME 
-    FROM 
-      ARCHIVE_ROUTE 
-    INNER JOIN STORAGE_CLASS ON 
-      ARCHIVE_ROUTE.STORAGE_CLASS_ID = STORAGE_CLASS.STORAGE_CLASS_ID 
-    INNER JOIN TAPE_POOL ON 
-      ARCHIVE_ROUTE.TAPE_POOL_ID = TAPE_POOL.TAPE_POOL_ID 
-    WHERE 
+      TAPE_POOL.TAPE_POOL_NAME AS TAPE_POOL_NAME
+    FROM
+      ARCHIVE_ROUTE
+    INNER JOIN STORAGE_CLASS ON
+      ARCHIVE_ROUTE.STORAGE_CLASS_ID = STORAGE_CLASS.STORAGE_CLASS_ID
+    INNER JOIN TAPE_POOL ON
+      ARCHIVE_ROUTE.TAPE_POOL_ID = TAPE_POOL.TAPE_POOL_ID
+    WHERE
       STORAGE_CLASS.STORAGE_CLASS_NAME = :STORAGE_CLASS_NAME
   )SQL";
   if (!useRepackArchiveRoute) {
@@ -690,11 +678,11 @@ void RdbmsArchiveFileCatalogue::modifyArchiveFileStorageClassId(const uint64_t a
   }
 
   const char* const sql = R"SQL(
-    UPDATE ARCHIVE_FILE   
+    UPDATE ARCHIVE_FILE
     SET STORAGE_CLASS_ID = (
-      SELECT STORAGE_CLASS_ID FROM STORAGE_CLASS WHERE STORAGE_CLASS_NAME = :STORAGE_CLASS_NAME 
-    ) 
-    WHERE 
+      SELECT STORAGE_CLASS_ID FROM STORAGE_CLASS WHERE STORAGE_CLASS_NAME = :STORAGE_CLASS_NAME
+    )
+    WHERE
       ARCHIVE_FILE.ARCHIVE_FILE_ID = :ARCHIVE_FILE_ID
   )SQL";
 
@@ -707,10 +695,10 @@ void RdbmsArchiveFileCatalogue::modifyArchiveFileStorageClassId(const uint64_t a
 void RdbmsArchiveFileCatalogue::modifyArchiveFileFxIdAndDiskInstance(const uint64_t archiveId, const std::string& fxId,
   const std::string &diskInstance) const {
   const char* const sql = R"SQL(
-    UPDATE ARCHIVE_FILE SET 
+    UPDATE ARCHIVE_FILE SET
       DISK_FILE_ID = :FXID,
-      DISK_INSTANCE_NAME = :DISK_INSTANCE_NAME 
-    WHERE 
+      DISK_INSTANCE_NAME = :DISK_INSTANCE_NAME
+    WHERE
       ARCHIVE_FILE.ARCHIVE_FILE_ID = :ARCHIVE_FILE_ID
   )SQL";
 
@@ -853,8 +841,8 @@ void RdbmsArchiveFileCatalogue::checkDeleteRequestConsistency(
 void RdbmsArchiveFileCatalogue::deleteArchiveFile(rdbms::Conn& conn,
   const common::dataStructures::DeleteArchiveRequest& request) const {
   const char* const deleteArchiveFileSql = R"SQL(
-    DELETE FROM 
-      ARCHIVE_FILE 
+    DELETE FROM
+      ARCHIVE_FILE
     WHERE ARCHIVE_FILE.ARCHIVE_FILE_ID = :ARCHIVE_FILE_ID
   )SQL";
 
@@ -883,7 +871,7 @@ void RdbmsArchiveFileCatalogue::insertArchiveFile(rdbms::Conn &conn, const Archi
       STORAGE_CLASS_ID,
       CREATION_TIME,
       RECONCILIATION_TIME)
-    SELECT 
+    SELECT
       :ARCHIVE_FILE_ID,
       :DISK_INSTANCE_NAME,
       :DISK_FILE_ID,
@@ -894,10 +882,10 @@ void RdbmsArchiveFileCatalogue::insertArchiveFile(rdbms::Conn &conn, const Archi
       :CHECKSUM_ADLER32,
       STORAGE_CLASS_ID,
       :CREATION_TIME,
-      :RECONCILIATION_TIME 
-    FROM 
-      STORAGE_CLASS 
-    WHERE 
+      :RECONCILIATION_TIME
+    FROM
+      STORAGE_CLASS
+    WHERE
       STORAGE_CLASS_NAME = :STORAGE_CLASS_NAME
   )SQL";
   auto stmt = conn.createStmt(sql);
@@ -931,23 +919,23 @@ void RdbmsArchiveFileCatalogue::insertArchiveFile(rdbms::Conn &conn, const Archi
 std::unique_ptr<ArchiveFileRow> RdbmsArchiveFileCatalogue::getArchiveFileRowById(rdbms::Conn &conn,
   const uint64_t id) const {
   const char* const sql = R"SQL(
-    SELECT 
-      ARCHIVE_FILE.ARCHIVE_FILE_ID AS ARCHIVE_FILE_ID, 
-      ARCHIVE_FILE.DISK_INSTANCE_NAME AS DISK_INSTANCE_NAME, 
-      ARCHIVE_FILE.DISK_FILE_ID AS DISK_FILE_ID, 
-      ARCHIVE_FILE.DISK_FILE_UID AS DISK_FILE_UID, 
-      ARCHIVE_FILE.DISK_FILE_GID AS DISK_FILE_GID, 
-      ARCHIVE_FILE.SIZE_IN_BYTES AS SIZE_IN_BYTES, 
-      ARCHIVE_FILE.CHECKSUM_BLOB AS CHECKSUM_BLOB, 
-      ARCHIVE_FILE.CHECKSUM_ADLER32 AS CHECKSUM_ADLER32, 
-      STORAGE_CLASS.STORAGE_CLASS_NAME AS STORAGE_CLASS_NAME, 
-      ARCHIVE_FILE.CREATION_TIME AS ARCHIVE_FILE_CREATION_TIME, 
-      ARCHIVE_FILE.RECONCILIATION_TIME AS RECONCILIATION_TIME 
-    FROM 
-      ARCHIVE_FILE 
-    INNER JOIN STORAGE_CLASS ON 
-      ARCHIVE_FILE.STORAGE_CLASS_ID = STORAGE_CLASS.STORAGE_CLASS_ID 
-    WHERE 
+    SELECT
+      ARCHIVE_FILE.ARCHIVE_FILE_ID AS ARCHIVE_FILE_ID,
+      ARCHIVE_FILE.DISK_INSTANCE_NAME AS DISK_INSTANCE_NAME,
+      ARCHIVE_FILE.DISK_FILE_ID AS DISK_FILE_ID,
+      ARCHIVE_FILE.DISK_FILE_UID AS DISK_FILE_UID,
+      ARCHIVE_FILE.DISK_FILE_GID AS DISK_FILE_GID,
+      ARCHIVE_FILE.SIZE_IN_BYTES AS SIZE_IN_BYTES,
+      ARCHIVE_FILE.CHECKSUM_BLOB AS CHECKSUM_BLOB,
+      ARCHIVE_FILE.CHECKSUM_ADLER32 AS CHECKSUM_ADLER32,
+      STORAGE_CLASS.STORAGE_CLASS_NAME AS STORAGE_CLASS_NAME,
+      ARCHIVE_FILE.CREATION_TIME AS ARCHIVE_FILE_CREATION_TIME,
+      ARCHIVE_FILE.RECONCILIATION_TIME AS RECONCILIATION_TIME
+    FROM
+      ARCHIVE_FILE
+    INNER JOIN STORAGE_CLASS ON
+      ARCHIVE_FILE.STORAGE_CLASS_ID = STORAGE_CLASS.STORAGE_CLASS_ID
+    WHERE
       ARCHIVE_FILE.ARCHIVE_FILE_ID = :ARCHIVE_FILE_ID
   )SQL";
   auto stmt = conn.createStmt(sql);
@@ -981,10 +969,10 @@ std::unique_ptr<ArchiveFileRow> RdbmsArchiveFileCatalogue::getArchiveFileRowById
 void RdbmsArchiveFileCatalogue::updateDiskFileId(const uint64_t archiveFileId, const std::string &diskInstance,
   const std::string &diskFileId) {
   const char* const sql = R"SQL(
-    UPDATE ARCHIVE_FILE SET 
-      DISK_INSTANCE_NAME = :DISK_INSTANCE_NAME, 
-      DISK_FILE_ID = :DISK_FILE_ID 
-    WHERE 
+    UPDATE ARCHIVE_FILE SET
+      DISK_INSTANCE_NAME = :DISK_INSTANCE_NAME,
+      DISK_FILE_ID = :DISK_FILE_ID
+    WHERE
       ARCHIVE_FILE_ID = :ARCHIVE_FILE_ID
   )SQL";
   auto conn = m_connPool->getConn();
@@ -1008,7 +996,7 @@ void RdbmsArchiveFileCatalogue::updateDiskFileId(const uint64_t archiveFileId, c
 std::unique_ptr<common::dataStructures::ArchiveFile> RdbmsArchiveFileCatalogue::getArchiveFileToRetrieveByArchiveFileId(
   rdbms::Conn &conn, const uint64_t archiveFileId) const {
   const char* const sql = R"SQL(
-    SELECT 
+    SELECT
       ARCHIVE_FILE.ARCHIVE_FILE_ID AS ARCHIVE_FILE_ID,
       ARCHIVE_FILE.DISK_INSTANCE_NAME AS DISK_INSTANCE_NAME,
       ARCHIVE_FILE.DISK_FILE_ID AS DISK_FILE_ID,
@@ -1025,19 +1013,19 @@ std::unique_ptr<common::dataStructures::ArchiveFile> RdbmsArchiveFileCatalogue::
       TAPE_FILE.BLOCK_ID AS BLOCK_ID,
       TAPE_FILE.LOGICAL_SIZE_IN_BYTES AS LOGICAL_SIZE_IN_BYTES,
       TAPE_FILE.COPY_NB AS COPY_NB,
-      TAPE_FILE.CREATION_TIME AS TAPE_FILE_CREATION_TIME 
-    FROM 
-      ARCHIVE_FILE 
-    INNER JOIN STORAGE_CLASS ON 
-      ARCHIVE_FILE.STORAGE_CLASS_ID = STORAGE_CLASS.STORAGE_CLASS_ID 
-    INNER JOIN TAPE_FILE ON 
-      ARCHIVE_FILE.ARCHIVE_FILE_ID = TAPE_FILE.ARCHIVE_FILE_ID 
-    INNER JOIN TAPE ON 
-      TAPE_FILE.VID = TAPE.VID 
-    WHERE 
-      ARCHIVE_FILE.ARCHIVE_FILE_ID = :ARCHIVE_FILE_ID AND 
-      TAPE.TAPE_STATE IN ('ACTIVE', 'DISABLED') 
-    ORDER BY 
+      TAPE_FILE.CREATION_TIME AS TAPE_FILE_CREATION_TIME
+    FROM
+      ARCHIVE_FILE
+    INNER JOIN STORAGE_CLASS ON
+      ARCHIVE_FILE.STORAGE_CLASS_ID = STORAGE_CLASS.STORAGE_CLASS_ID
+    INNER JOIN TAPE_FILE ON
+      ARCHIVE_FILE.ARCHIVE_FILE_ID = TAPE_FILE.ARCHIVE_FILE_ID
+    INNER JOIN TAPE ON
+      TAPE_FILE.VID = TAPE.VID
+    WHERE
+      ARCHIVE_FILE.ARCHIVE_FILE_ID = :ARCHIVE_FILE_ID AND
+      TAPE.TAPE_STATE IN ('ACTIVE', 'DISABLED')
+    ORDER BY
       TAPE_FILE.CREATION_TIME ASC
   )SQL";
   auto stmt = conn.createStmt(sql);
@@ -1091,17 +1079,17 @@ std::unique_ptr<common::dataStructures::ArchiveFile> RdbmsArchiveFileCatalogue::
 std::list<std::pair<std::string, std::string>> RdbmsArchiveFileCatalogue::getTapeFileStateListForArchiveFileId(
   rdbms::Conn &conn, const uint64_t archiveFileId) const {
   const char* const sql = R"SQL(
-    SELECT 
+    SELECT
       TAPE_FILE.VID AS VID,
-      TAPE.TAPE_STATE AS STATE 
-    FROM 
-      ARCHIVE_FILE 
-    INNER JOIN TAPE_FILE ON 
-      ARCHIVE_FILE.ARCHIVE_FILE_ID = TAPE_FILE.ARCHIVE_FILE_ID 
-    INNER JOIN TAPE ON 
-      TAPE_FILE.VID = TAPE.VID 
-    WHERE 
-      ARCHIVE_FILE.ARCHIVE_FILE_ID = :ARCHIVE_FILE_ID 
+      TAPE.TAPE_STATE AS STATE
+    FROM
+      ARCHIVE_FILE
+    INNER JOIN TAPE_FILE ON
+      ARCHIVE_FILE.ARCHIVE_FILE_ID = TAPE_FILE.ARCHIVE_FILE_ID
+    INNER JOIN TAPE ON
+      TAPE_FILE.VID = TAPE.VID
+    WHERE
+      ARCHIVE_FILE.ARCHIVE_FILE_ID = :ARCHIVE_FILE_ID
   )SQL";
 
   auto stmt = conn.createStmt(sql);

@@ -1,18 +1,6 @@
 /*
- * @project      The CERN Tape Archive (CTA)
- * @copyright    Copyright © 2021-2022 CERN
- * @license      This program is free software, distributed under the terms of the GNU General Public
- *               Licence version 3 (GPL Version 3), copied verbatim in the file "COPYING". You can
- *               redistribute it and/or modify it under the terms of the GPL Version 3, or (at your
- *               option) any later version.
- *
- *               This program is distributed in the hope that it will be useful, but WITHOUT ANY
- *               WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A
- *               PARTICULAR PURPOSE. See the GNU General Public License for more details.
- *
- *               In applying this licence, CERN does not waive the privileges and immunities
- *               granted to it by virtue of its status as an Intergovernmental Organization or
- *               submit itself to any jurisdiction.
+ * SPDX-FileCopyrightText: 2021 CERN
+ * SPDX-License-Identifier: GPL-3.0-or-later
  */
 
 #pragma once
@@ -35,10 +23,10 @@ public:
    * @param file the file we are migrating. We acquire the ownership of the pointer
    * @param numberOfBlock number of memory block we need read the whole file
    */
-  DiskReadTask(DataConsumer & destination, 
+  DiskReadTask(DataConsumer & destination,
           cta::ArchiveJob *archiveJob,size_t numberOfBlock,
           cta::threading::AtomicFlag& errorFlag);
-  
+
   void execute(cta::log::LogContext& lc, cta::disk::DiskFileFactory& fileFactory,
     MigrationWatchDog& watchdog, int threadID);
 
@@ -50,12 +38,12 @@ public:
   const DiskStats getTaskStats() const;
 
 private:
-  
+
   /**
    * Stats to measue how long it takes to write on disk
    */
   DiskStats m_stats;
-  
+
   /**
    * Throws an exception if m_errorFlag is set
    */
@@ -65,12 +53,12 @@ private:
       throw  castor::tape::tapeserver::daemon::ErrorFlag();
     }
   }
-  
+
   /**
    * log into lc all m_stats parameters with the given message at the given level
    */
   void logWithStat(int level, std::string_view msg, cta::log::LogContext& lc) ;
-  
+
   /**
    * Circulate the remaining free blocks after an error
    * @param fromBlockId the number of already processed
@@ -81,27 +69,27 @@ private:
    * The task (a TapeWriteTask) that will handle the read blocks
    */
   DataConsumer & m_nextTask;
-  
+
   /**
    * All we need to know about the file we are migrating
    */
   cta::ArchiveJob *m_archiveJob;
-  
+
   /**
    * Information about the archive job we will cache as it is needed
-   * after the archive job is going to be potentially deleted by the 
+   * after the archive job is going to be potentially deleted by the
    * writer
    */
   struct {
     std::string remotePath;
     uint64_t fileId;
   } m_archiveJobCachedInfo;
-  
+
   /**
    * The number of memory block we will need to read the whole file
    */
   size_t m_numberOfBlock;
-  
+
   cta::threading::AtomicFlag& m_errorFlag;
 };
 

@@ -1,18 +1,6 @@
 /*
- * @project      The CERN Tape Archive (CTA)
- * @copyright    Copyright © 2021-2022 CERN
- * @license      This program is free software, distributed under the terms of the GNU General Public
- *               Licence version 3 (GPL Version 3), copied verbatim in the file "COPYING". You can
- *               redistribute it and/or modify it under the terms of the GPL Version 3, or (at your
- *               option) any later version.
- *
- *               This program is distributed in the hope that it will be useful, but WITHOUT ANY
- *               WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A
- *               PARTICULAR PURPOSE. See the GNU General Public License for more details.
- *
- *               In applying this licence, CERN does not waive the privileges and immunities
- *               granted to it by virtue of its status as an Intergovernmental Organization or
- *               submit itself to any jurisdiction.
+ * SPDX-FileCopyrightText: 2021 CERN
+ * SPDX-License-Identifier: GPL-3.0-or-later
  */
 
 #pragma once
@@ -22,7 +10,7 @@
 
 namespace castor::tape::SCSI {
 
-  /* Extracted from linux kernel's include/scsi/scsi.h. System-level include 
+  /* Extracted from linux kernel's include/scsi/scsi.h. System-level include
    is less complete */
   class Types {
   public:
@@ -45,7 +33,7 @@ namespace castor::tape::SCSI {
       noLun = 0x7f
     };
   };
-  
+
   class Commands {
   public:
 
@@ -77,12 +65,12 @@ namespace castor::tape::SCSI {
       COPY                                          = 0x18,
       ERASE                                         = 0x19,
       MODE_SENSE                                    = 0x1a,
-      MODE_SENSE_6                                  = 0x1a, 
+      MODE_SENSE_6                                  = 0x1a,
       START_STOP                                    = 0x1b,
       RECEIVE_DIAGNOSTIC                            = 0x1c,
       SEND_DIAGNOSTIC                               = 0x1d,
       ALLOW_MEDIUM_REMOVAL                          = 0x1e,
-      
+
       READ_FORMAT_CAPACITIES                        = 0x23,
       SET_WINDOW                                    = 0x24,
       READ_CAPACITY                                 = 0x25,
@@ -192,18 +180,18 @@ namespace castor::tape::SCSI {
       VERIFY_32                                     = 0x0a,
       WRITE_32                                      = 0x0b,
       WRITE_SAME_32                                 = 0x0d,
-      
+
       /* Values for T10/04-262r7 */
       ATA_16		                            = 0x85,	/* 16-byte pass-thru */
       ATA_12		                            = 0xa1	/* 12-byte pass-thru */
     };
   }; // class OtherConstans
-  
+
   /**
    * Helper function turning tape alerts to strings.
    */
   std::string tapeAlertToString(uint16_t parameterCode);
-  
+
   /**
    * Helper function turning tape alerts to mixed case compact strings.
    */
@@ -215,7 +203,7 @@ namespace castor::tape::SCSI {
    * @return True if it is critical for the writing session or true otherwise.
    */
   bool isTapeAlertCriticalForWrite(const uint16_t code);
-  
+
   class Status {
   public:
     enum {
@@ -229,7 +217,7 @@ namespace castor::tape::SCSI {
       TASK_ABORTED = 0x40
     } Status_t;
   };
- 
+
   class HostStatus {
   public:
     enum {
@@ -457,7 +445,7 @@ namespace castor::tape::SCSI {
       sequentialAccessDevicePage = 0x0C,
       volumeStatistics           = 0x17, // IBM specific page
       tapeAlert                  = 0x2e,
-      dataCompression32h         = 0x32, // for LTO, SDLT. We have Data Compression 1Bh for LTO5,6 and DataComppression 0Fh in SSC-3 
+      dataCompression32h         = 0x32, // for LTO, SDLT. We have Data Compression 1Bh for LTO5,6 and DataComppression 0Fh in SSC-3
       driveWriteErrors           = 0x32, // IBM specific page
       driveWriteErrorsLTO        = 0x33, // LTO SCSI specific page
       driveReadForwardErrors     = 0x34, // IBM and LTO specific page
@@ -467,7 +455,7 @@ namespace castor::tape::SCSI {
       blockBytesTransferred      = 0x38  // parameters in this page are reset when a cartridge is loaded
     };
   };
-  
+
   /**
    * Constants for used MODE SENSE/SELECT pages
    */
@@ -478,7 +466,7 @@ namespace castor::tape::SCSI {
       deviceConfiguration   = 0x10
     };
   };
-  
+
   /**
    * The value for subpage code for the Control Data Protection  MODE PAGE
    */
@@ -488,14 +476,14 @@ namespace castor::tape::SCSI {
       subpageCode = 0xF0
     };
   };
-  
+
   class inquiryVPDPages {
   public:
     enum {
-      unitSerialNumber = 0x80 
+      unitSerialNumber = 0x80
     };
   };
- 
+
   class writeErrorsDevicePage {
   public:
     enum {
@@ -656,10 +644,10 @@ namespace castor::tape::SCSI {
       bytesWrittenToTape         = 0x0009  // a signed number and may be negative
     };
   };
- 
+
   class senseConstants {
   public:
-    /* Structures from the Linux Kernel. It holds ASC/ASCQ to string 
+    /* Structures from the Linux Kernel. It holds ASC/ASCQ to string
      * translations (from http://www.t10.org/lists/asc-num.txt) */
     struct error_info {
       uint16_t code12; /* 0x0302 looks better than 0x03,0x02 */
@@ -675,19 +663,19 @@ namespace castor::tape::SCSI {
 
   private:
     static const struct error_info ascStrings[];
-    static const struct error_range_info ascRangesStrings[];    
+    static const struct error_range_info ascRangesStrings[];
   };
 
   class senseKeys {
   public:
     enum {
       noSense        = 0x0,
-      recoveredError = 0x1, 
+      recoveredError = 0x1,
       notReady       = 0x2,
       mediumError    = 0x3,
       hardwareError  = 0x4,
       illegalRequest = 0x5,
-      unitAttention  = 0x6, 
+      unitAttention  = 0x6,
       dataProtect    = 0x7,
       blankCheck     = 0x8,
       vendorSpecific = 0x9,
@@ -698,20 +686,20 @@ namespace castor::tape::SCSI {
       miscompare     = 0xE,
       lastWithText   = 0xE
     };
-    static const char * const senseKeysText[];      
-  }; 
- 
+    static const char * const senseKeysText[];
+  };
+
   /**
-   * Logic block protection as defined in SSC-5 (latest drafts) 
+   * Logic block protection as defined in SSC-5 (latest drafts)
    * 8.4.9 Control Data Protection mode page
    */
-  
+
   class logicBlockProtectionMethod {
   public:
     enum {
       DoNotUse    = 0x00, // do not use logical block protection
       ReedSolomon = 0x01, // Reed-Solomon CRC as specified in ECMA-319
-      CRC32C      = 0x02  // CRC32C polynomial as specified for iSCSI 
+      CRC32C      = 0x02  // CRC32C polynomial as specified for iSCSI
     };
     enum {
       ReedSolomonLength = 4, // Reed-Solomon CRC length in bytes
@@ -721,18 +709,18 @@ namespace castor::tape::SCSI {
       ReedSolomonSeed = 0x0,        // The default seed for Read-Solomon CRC
       CRC32CSeed      = 0xFFFFFFFF  // The default seed for CRC32C
     };
-  };    
+  };
   /**
    * Turn a LBP method code into a string
    * @param LBPmethod  The integer presentation of Logical Block Protection method
-   * @return           The string presentation for LBP method or Unknown if method 
+   * @return           The string presentation for LBP method or Unknown if method
    *                   unknown.
    */
-  std::string LBPMethodToString(const unsigned char LBPMethod);  
-  
+  std::string LBPMethodToString(const unsigned char LBPMethod);
+
   /**
    * Addition for the mode page Length for the Control Data Protection Mode Page
    */
-  const unsigned char controlDataProtectionModePageLengthAddition = 4; 
-  
+  const unsigned char controlDataProtectionModePageLengthAddition = 4;
+
 } // namespace castor::tape::SCSI

@@ -1,18 +1,6 @@
 /*
- * @project      The CERN Tape Archive (CTA)
- * @copyright    Copyright © 2021-2022 CERN
- * @license      This program is free software, distributed under the terms of the GNU General Public
- *               Licence version 3 (GPL Version 3), copied verbatim in the file "COPYING". You can
- *               redistribute it and/or modify it under the terms of the GPL Version 3, or (at your
- *               option) any later version.
- *
- *               This program is distributed in the hope that it will be useful, but WITHOUT ANY
- *               WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A
- *               PARTICULAR PURPOSE. See the GNU General Public License for more details.
- *
- *               In applying this licence, CERN does not waive the privileges and immunities
- *               granted to it by virtue of its status as an Intergovernmental Organization or
- *               submit itself to any jurisdiction.
+ * SPDX-FileCopyrightText: 2021 CERN
+ * SPDX-License-Identifier: GPL-3.0-or-later
  */
 
 #pragma once
@@ -40,16 +28,16 @@ public:
     const cta::daemon::CommandLineParams & commandLine,
     cta::log::Logger &log,
     const common::TapedConfiguration &globalConfig);
-  
+
   virtual ~TapeDaemon();
 
   /** The main entry function of the daemon.
    * @return The return code of the process. */
   int main();
-  
+
 private:
   bool isMaintenanceProcessDisabled() const;
-  
+
 protected:
 
   /** Enumeration of the possible tape-daemon states. */
@@ -144,7 +132,7 @@ protected:
    * Creates the handler to handle messages from forked sessions.
    */
   void createAndRegisterTapeMessageHandler();
-  
+
   /**
    * The main event loop of the daemon.
    */
@@ -216,7 +204,7 @@ protected:
    * @param waitpidStat The status information given by a call to waitpid().
    */
   void logChildProcessTerminated(const pid_t pid, const int waitpidStat) noexcept;
-  
+
   /** The tape server's configuration */
   const common::TapedConfiguration& m_globalConfiguration;
 
