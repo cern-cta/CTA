@@ -2509,16 +2509,17 @@ TEST_P(DataTransferSessionTest, DataTransferSessionWrongChecksumMigration) {
     // Create the files and schedule the archivals
 
     //First a file with wrong checksum
-    for (uint64_t fileId=1; fileId <= 10 ; fileId ++) {
+    for (uint64_t fileId = 1; fileId <= 10; fileId++) {
       // Create a source file.
       sourceFiles.emplace_back(std::make_unique<unitTests::TempFile>());
       sourceFiles.back()->randomFill(1000);
       remoteFilePaths.push_back(sourceFiles.back()->path());
       // Schedule the archival of the file
       cta::common::dataStructures::ArchiveRequest ar;
-      ar.checksumBlob.insert(cta::checksum::ADLER32, (fileId != problematicFileId) ?
-                                                       sourceFiles.back()->adler32() :      // Correct reported checksum
-                                                       sourceFiles.back()->adler32() + 1);  // Wrong reported checksum
+      ar.checksumBlob.insert(cta::checksum::ADLER32,
+                             (fileId != problematicFileId) ?
+                               sourceFiles.back()->adler32() :      // Correct reported checksum
+                               sourceFiles.back()->adler32() + 1);  // Wrong reported checksum
 
       ar.storageClass=s_storageClassName;
       ar.srcURL=std::string("file://") + sourceFiles.back()->path();
@@ -2577,14 +2578,14 @@ TEST_P(DataTransferSessionTest, DataTransferSessionWrongChecksumMigration) {
   std::vector<uint64_t> queuedArchiveFileIds;
   auto jobsMap = scheduler.getPendingArchiveJobs(logContext);
   for (const auto& [key, jobList] : jobsMap) {
-      for (const auto& job : jobList) {
-          queuedArchiveFileIds.push_back(job.archiveFileID);
-      }
+    for (const auto& job : jobList) {
+      queuedArchiveFileIds.push_back(job.archiveFileID);
+    }
   }
 
   // Everything up to the wrong checksum in the queue should be transferred correctly
   // Everything afterwards will be requeued (to be picked up later again)
-  for (const auto & fileNumber : queuedArchiveFileIds) {
+  for (const auto& fileNumber : queuedArchiveFileIds) {
     if (fileNumber < problematicFileId) {
       // Files queued without the wrong checksum made it to the catalogue
       auto afs = catalogue.ArchiveFile()->getArchiveFileById(fileNumber);
