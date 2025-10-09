@@ -28,6 +28,7 @@
 #include "BackendVFS.hpp"
 #include "common/config/Config.hpp"
 #include "common/log/StdoutLogger.hpp"
+#include "common/log/DummyLogger.hpp"
 #include "common/log/LogContext.hpp"
 #include "common/utils/utils.hpp"
 #include "RootEntry.hpp"

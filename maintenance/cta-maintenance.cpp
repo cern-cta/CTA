@@ -34,6 +34,56 @@
 
 namespace cta::maintenance {
 
+/*
+static void reloadConfig() {
+  // Check what has changed. We have to keep into account that the CmdLineParams we
+  // recevived intially will override any changes in the config file despite the
+  // config reload, we should notify with a WARN if this config value has changed but
+  // there is a variable overriding it. 
+
+  // User and group
+  setUserAndGroup();
+    
+  // Logging system
+  configureLoggingSystem(); 
+}
+ */
+static int setUserAndGroup(const std::string &userName, const std::string &groupName, cta::log::Logger& logger) {
+   try {
+    logger(log::INFO, "Setting user name and group name of current process",
+                  {{"userName", userName}, {"groupName", groupName}});
+    cta::System::setUserAndGroup(userName, groupName);
+  } catch (exception::Exception& ex) {
+    std::list<log::Param> params = {
+      log::Param("exceptionMessage", ex.getMessage().str())};
+    logger(log::ERR, "Caught an unexpected CTA, exiting cta-maintenance", params);
+    return EXIT_FAILURE;
+  }
+
+   return 0;
+}
+/*
+static void configureLoggingSystem(std::string_view instanceName, std::string_view schedBackendName, std::string_view logLevel, cta::common::CmdLineParams cmdLineParams) {
+   // Set specific static headers for tape daemon
+  std::map<std::string, std::string> staticParamMap;
+  staticParamMap["instance"] = instanceName;
+  staticParamMap["sched_backend"] = schedBackendName;
+  log.setStaticParams(staticParamMap);
+
+  // If the log format was not specified in the call to the program we can
+  // change it. 
+  if (cmdLineParams.logFormat.emtpy()) {
+    log.setLogFormat(cmdLineParams.logFormat); 
+  }
+  
+  // Adjust log mask to the log level potentionally set in the configuration file
+  log.setLogMask(logLevel);
+  {
+    std::list<cta::log::Param> params = {cta::log::Param("logMask", logLevel)};
+    log(log::INFO, "Set log mask", params);
+  }
+}
+*/  
 //------------------------------------------------------------------------------
 // exceptionThrowingMain
 //
@@ -44,34 +94,27 @@ namespace cta::maintenance {
 // @param argv The command-line arguments.
 // @param log The logging system.
 //------------------------------------------------------------------------------
-static int exceptionThrowingMain(const common::Config config, cta::log::Logger& log) {
+static int exceptionThrowingMain(common::Config config, cta::log::Logger& log) {
   cta::log::LogContext lc(log);
-
   {
     std::list<cta::log::Param> params = {cta::log::Param("version", CTA_VERSION)};
     log(cta::log::INFO, "Starting cta-maintenance", params);
   }
 
-  // Set specific static headers for tape daemon
-  std::map<std::string, std::string> staticParamMap;
-  staticParamMap["instance"] = config.getOptionValueStr("cta.instance_name").value();
-  staticParamMap["sched_backend"] = config.getOptionValueStr("cta.scheduler_backend_name").value();
-  log.setStaticParams(staticParamMap);
-
-  // Adjust log mask to the log level potentionally set in the configuration file
-  log.setLogMask(config.getOptionValueStr("cta.log.level").value());
-  {
-    std::list<cta::log::Param> params = {cta::log::Param("logMask", config.getOptionValueStr("cta.log.level").value())};
-    log(log::INFO, "Set log mask", params);
-  }
-
-  // Create the maintenance object
-  cta::maintenance::Maintenance daemon(lc, config);
-
   // Start loop
-  daemon.run();
-
-  return 0;
+  while(true) {
+    // Create the maintenance object
+    cta::maintenance::Maintenance daemon(lc, config);
+      
+    uint32_t rc = daemon.run();
+    switch (rc) {
+      case SIGTERM: return 0;
+      case SIGHUP:
+          log(cta::log::INFO, "Reloading config for Maintenance process. Process user and group, and log format will not be reloaded.");
+          config.parse(log);
+          break;
+    }
+  }
 }
 
 } // namespace cta::maintenance
@@ -94,23 +137,16 @@ int main(const int argc, char **const argv) {
   std::unique_ptr<log::Logger> logPtr;
   logPtr.reset(new log::StdoutLogger(shortHostName, "cta-maintenance"));
 
-
-  const common::Config config(cmdLineParams->configFileLocation);
+  common::Config config(cmdLineParams->configFileLocation, &(*logPtr));
 
   // Change user and group
-  const std::string userName = config.getOptionValueStr("cta.daemon_user").value_or("cta");
-  const std::string groupName = config.getOptionValueStr("cta.daemon_group").value_or("tape");
+  int rc = cta::maintenance::setUserAndGroup(
+      config.getOptionValueStr("cta.daemon_user").value_or("cta"),
+      config.getOptionValueStr("cta.daemon_group").value_or("tape"),
+      *logPtr
+  );
 
-  try {
-    (*logPtr)(log::INFO, "Setting user name and group name of current process",
-                  {{"userName", userName}, {"groupName", groupName}});
-    cta::System::setUserAndGroup(userName, groupName);
-  } catch (exception::Exception& ex) {
-    std::list<log::Param> params = {
-      log::Param("exceptionMessage", ex.getMessage().str())};
-    (*logPtr)(log::ERR, "Caught an unexpected CTA, cta-taped cannot start", params);
-    return EXIT_FAILURE;
-  }
+  if (rc) return rc;
 
   // Try to instantiate the logging system API
   try {
@@ -123,7 +159,7 @@ int main(const int argc, char **const argv) {
       logPtr->setLogFormat(cmdLineParams->logFormat);
     }
   } catch (exception::Exception& ex) {
-    std::cerr << "Failed to instantiate object representing CTA logging system: " << ex.getMessage().str() << std::endl;
+    std::cerr << "Failed to instantiate object representing the CTA logging system: " << ex.getMessage().str() << std::endl;
     return EXIT_FAILURE;
   }
 
@@ -136,7 +172,7 @@ int main(const int argc, char **const argv) {
     programRc = maintenance::exceptionThrowingMain(config, log);
   }  catch(exception::Exception &ex) {
     std::list<cta::log::Param> params = {
-      cta::log::Param("exceptionMessage", ex.getMessage().str())};
+      log::Param("exceptionMessage", ex.getMessage().str())};
     log(log::ERR, "Caught an unexpected CTA exception, cta-maintenance cannot start", params);
     sleep(1);
   } catch(std::exception &se) {

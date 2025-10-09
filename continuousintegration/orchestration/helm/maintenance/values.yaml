@@ -11,7 +11,7 @@ conf:
     level: "INFO"
   maintenance:
     catalogueConfigPath: "/etc/cta/cta-catalogue.conf"
-    sleep_interval: 10000
+    sleep_interval: 1000
     tapeCacheMaxAgeSecs: 600
     retrieveQueueCacheMaxAgeSecs: 10
   runners:

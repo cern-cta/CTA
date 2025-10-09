@@ -122,6 +122,7 @@ set (COMMON_LIB_SRC_FILES
   priorities/DriveQuota.cpp
   priorities/MountCriteria.cpp
   priorities/UserGroup.cpp
+  process/SignalHandler.cpp
   process/ProcessCap.cpp
   remoteFS/RemoteFileStatus.cpp
   remoteFS/RemotePath.cpp

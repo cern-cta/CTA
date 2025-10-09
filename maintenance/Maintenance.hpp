@@ -20,6 +20,7 @@
 #include "IMaintenanceRunner.hpp"
 #include "common/config/Config.hpp"
 #include "common/exception/Exception.hpp"
+#include "common/process/SignalHandler.hpp"
 #include "common/log/LogContext.hpp"
 #include "scheduler/Scheduler.hpp"
 #include "catalogue/Catalogue.hpp"
@@ -40,13 +41,11 @@ CTA_GENERATE_EXCEPTION_CLASS(InvalidConfiguration);
  */
 class Maintenance {
 public:
-  Maintenance(
-    cta::log::LogContext &lc,
-    const cta::common::Config &config);
+  Maintenance(cta::log::LogContext& lc, const cta::common::Config& config);
 
   ~Maintenance() = default;
 
-  void run();
+  uint32_t run();
 
 private:
   std::list<std::unique_ptr<IMaintenanceRunner>> m_maintenanceRunners;
@@ -57,8 +56,9 @@ private:
   std::unique_ptr<cta::catalogue::Catalogue> m_catalogue;
   std::unique_ptr<cta::SchedulerDB_t> m_scheddb;
 
+  std::unique_ptr<cta::SignalHandler> m_signalHandler;
+
   int m_sleepInterval;
-  //std::atomic<std::shared_ptr<cta::processSignals>> s_processSignals;
 };
 
-} // namespace cta::maintenance
+}  // namespace cta::maintenance

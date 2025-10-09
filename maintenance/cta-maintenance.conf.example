@@ -71,7 +71,7 @@ cta.schedulerdb.tape_cache_max_age_secs 600
 cta.schedulerdb.retrieve_queue_cache_max_age_secs 10
 
 # The sleep interval for the main maintenance loop (ms)
-cta.maintenance.sleep_interval 10000
+cta.maintenance.sleep_interval 1000
 
 #
 # MAINTENANCE PROCESS RUNNER CONFIGURATION OPTIONS
