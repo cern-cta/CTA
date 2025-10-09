@@ -2499,7 +2499,7 @@ TEST_P(DataTransferSessionTest, DataTransferSessionWrongChecksumMigration) {
   // Tempfiles are in this scope so they are kept alive
   std::list<std::unique_ptr<unitTests::TempFile>> sourceFiles;
   std::list<uint64_t> archiveFileIds;
-  const uint64_t problematicFseq = 5;
+  const uint64_t problematicFileId = 5;
   {
     // Label the tape
     castor::tape::tapeFile::LabelSession::label(mockSys.fake.m_pathToDrive["/dev/nst0"], s_vid, false);
@@ -2509,23 +2509,24 @@ TEST_P(DataTransferSessionTest, DataTransferSessionWrongChecksumMigration) {
     // Create the files and schedule the archivals
 
     //First a file with wrong checksum
-    for (uint64_t fseq=1; fseq <= 10 ; fseq ++) {
+    for (uint64_t fileId = 1; fileId <= 10; fileId++) {
       // Create a source file.
       sourceFiles.emplace_back(std::make_unique<unitTests::TempFile>());
       sourceFiles.back()->randomFill(1000);
       remoteFilePaths.push_back(sourceFiles.back()->path());
       // Schedule the archival of the file
       cta::common::dataStructures::ArchiveRequest ar;
-      ar.checksumBlob.insert(cta::checksum::ADLER32, (fseq != problematicFseq) ?
-                                                       sourceFiles.back()->adler32() :      // Correct reported checksum
-                                                       sourceFiles.back()->adler32() + 1);  // Wrong reported checksum
+      ar.checksumBlob.insert(cta::checksum::ADLER32,
+                             (fileId != problematicFileId) ?
+                               sourceFiles.back()->adler32() :      // Correct reported checksum
+                               sourceFiles.back()->adler32() + 1);  // Wrong reported checksum
 
       ar.storageClass=s_storageClassName;
       ar.srcURL=std::string("file://") + sourceFiles.back()->path();
       ar.requester.name = requester.username;
       ar.requester.group = "group";
       ar.fileSize = 1000;
-      ar.diskFileID = std::to_string(fseq);
+      ar.diskFileID = std::to_string(fileId);
       ar.diskFileInfo.path = "y";
       ar.diskFileInfo.owner_uid = DISK_FILE_OWNER_UID;
       ar.diskFileInfo.gid = DISK_FILE_GID;
@@ -2570,8 +2571,22 @@ TEST_P(DataTransferSessionTest, DataTransferSessionWrongChecksumMigration) {
   logToCheck += "";
   ASSERT_EQ(s_vid, sess.getVid());
 
-  for (const auto & fileNumber : archiveFileIds) {
-    if (fileNumber < problematicFseq) {
+  // We don't have any guarantee that the order the files were enqueued in
+  // is the same as the order in which the data transfer session picks up the jobs.
+  // Therefore we must rely on the order of the jobs in the actual queue
+  // and not the order in which we enqueued them
+  std::vector<uint64_t> queuedArchiveFileIds;
+  auto jobsMap = scheduler.getPendingArchiveJobs(logContext);
+  for (const auto& [key, jobList] : jobsMap) {
+    for (const auto& job : jobList) {
+      queuedArchiveFileIds.push_back(job.archiveFileID);
+    }
+  }
+
+  // Everything up to the wrong checksum in the queue should be transferred correctly
+  // Everything afterwards will be requeued (to be picked up later again)
+  for (const auto& fileNumber : queuedArchiveFileIds) {
+    if (fileNumber < problematicFileId) {
       // Files queued without the wrong checksum made it to the catalogue
       auto afs = catalogue.ArchiveFile()->getArchiveFileById(fileNumber);
     } else {
