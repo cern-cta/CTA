@@ -1,8 +1,5 @@
-{{- /*
-SPDX-FileCopyrightText: 2025 CERN
-SPDX-License-Identifier: GPL-3.0-or-later
-*/ -}}
-
+# SPDX-FileCopyrightText: 2025 CERN
+# SPDX-License-Identifier: GPL-3.0-or-later
 apiVersion: v2
 name: common
 description: A library chart that contains some common functionality useful for the different charts.
