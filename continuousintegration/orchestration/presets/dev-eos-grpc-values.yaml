@@ -314,3 +314,8 @@ qdb:
 
   probes:
     liveness: false
+
+client:
+  conf:
+    cta:
+      endpoint: cta-frontend-grpc:10956
