@@ -49,6 +49,15 @@ spec:
         image: {{ include "client.image" . }}
         imagePullPolicy: {{ include "client.imagePullPolicy" . }}
         stdin: true
+        {{- if .Values.useGrpc }}
+        command: ["/bin/bash", "/scripts/client-grpc.sh"]
+        readinessProbe:
+          exec:
+            command: ["sh", "-c", "rpm -q cta-admin-grpc cta-immutable-file-test xrootd-client eos-client"]
+          initialDelaySeconds: 5
+          periodSeconds: 2
+          failureThreshold: 60
+        {{- else }}
         command: ["/bin/bash", "/scripts/client.sh"]
         readinessProbe:
           exec:
@@ -56,6 +65,7 @@ spec:
           initialDelaySeconds: 5
           periodSeconds: 2
           failureThreshold: 60
+        {{- end }}
         securityContext:
           allowPrivilegeEscalation: {{ include "common.securityContext.allowPrivilegeEscalation" . }}
           privileged: {{ include "common.securityContext.privileged" . }}
@@ -95,9 +105,15 @@ spec:
         {{ include "common.extraVolumeMounts" . | nindent 8 }}
       volumes:
       - name: scripts-volume
+        {{- if .Values.useGrpc }}
         configMap:
-          name: scripts-client
+          name: scripts-client-grpc
           defaultMode: 0777
+        {{- else }}
+        configMap:
+          name: scripts-client-xrootd
+          defaultMode: 0777
+        {{- end }}
       - name: etc-cta-client
         configMap:
           name: etc-cta-client
