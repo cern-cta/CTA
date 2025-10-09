@@ -16,6 +16,7 @@
  */
 
 #include <memory>
+#include <source_location>
 #include <string>
 
 #include "castor/tape/tapeserver/file/Exceptions.hpp"
@@ -41,7 +42,7 @@ ReadSession(drive, volInfo, useLbp) {
   size_t blockSize = 256 * 1024;
   auto data = std::make_unique<char[]>(blockSize + 1);
   if (size_t bytes_read = m_drive.readBlock(data.get(), blockSize); bytes_read < sizeof(vol1)) {
-    throw cta::exception::Exception(std::string(__FUNCTION__) + " failed: Too few bytes read from label");
+    throw cta::exception::Exception(std::string(std::source_location::current().function_name()) + " failed: Too few bytes read from label");
   }
   memcpy(&vol1, data.get(), sizeof(vol1));
 
@@ -57,7 +58,7 @@ ReadSession(drive, volInfo, useLbp) {
   }
   HeaderChecker::checkVOL1(vol1, volInfo.vid);
   // after which we are at the end of VOL1 header (e.g. beginning of first file)
-  m_drive.readFileMark(std::string(__FUNCTION__) + " failed: Reading filemark");
+  m_drive.readFileMark(std::string(std::source_location::current().function_name()) + " failed: Reading filemark");
 }
 
 }  // namespace castor::tape::tapeFile

@@ -16,6 +16,7 @@
  */
 
 #include <memory>
+#include <source_location>
 #include <string>
 
 #include "castor/tape/tapeserver/file/Exceptions.hpp"
@@ -40,7 +41,7 @@ EnstoreReadSession::EnstoreReadSession(tapeserver::drive::DriveInterface &drive,
   auto data = std::make_unique<char[]>(blockSize + 1);
 
   if (size_t bytes_read = m_drive.readBlock(data.get(), blockSize); bytes_read < sizeof(vol1)) {
-    throw cta::exception::Exception(std::string(__FUNCTION__) + " failed: Too few bytes read from label");
+    throw cta::exception::Exception(std::string(std::source_location::current().function_name()) + " failed: Too few bytes read from label");
   }
   memcpy(&vol1, data.get(), sizeof(vol1));
 
