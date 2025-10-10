@@ -153,7 +153,6 @@ CERN Tape Archive:
 %attr(0755,root,root) %{_bindir}/cta-maintenance
 %attr(0644,root,root) %config(noreplace) %{_sysconfdir}/cta/cta-maintenance.conf.example
 %attr(0644,root,root) %doc /usr/share/man/man1/cta-maintenance.1cta.gz
-%attr(0644,root,root) %config(noreplace) /etc/sysconfig/cta-maintenance
 %attr(0644,root,root) %config(noreplace) /etc/systemd/system/cta-maintenance.service
 
 

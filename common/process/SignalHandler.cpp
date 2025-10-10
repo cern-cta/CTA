@@ -85,7 +85,7 @@ std::set<uint32_t> cta::SignalHandler::processAndGetSignals(log::LogContext& lc)
       throw exception::Exception(err.str());
     }
 
-    // Prepare logging the signal
+    // Add signal information to the logs
     log::ScopedParamContainer params(lc);
     if (char* signalName = ::strsignal(sigInf.ssi_signo)) {
       params.add("signal", signalName);

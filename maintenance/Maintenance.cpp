@@ -83,7 +83,6 @@ Maintenance::Maintenance(cta::log::LogContext& lc, const cta::common::Config& co
 
   m_sleepInterval = config.getOptionValueInt("cta.maintenance.sleep_interval").value_or(1000);
 
-  // Before anything, we will check for access to the scheduler's central storage.
   if (!config.getOptionValueStr("cta.objectstore.backendpath").has_value()) {
     throw InvalidConfiguration("Could not find config entry 'cta.objectstore.backendpath' in");
   }
@@ -168,38 +167,37 @@ Maintenance::Maintenance(cta::log::LogContext& lc, const cta::common::Config& co
 }
 
 uint32_t Maintenance::run() {
+  // Before anything, we will check for access to the scheduler's central storage.
+  
   try {
     do {
       std::set<uint32_t> sigSet;
       m_lc.log(log::INFO, "In Maintenance::run(): About to do a maintenance pass.");
       for (auto& runner : m_maintenanceRunners) {
         runner->executeRunner(m_lc);
-        // Exit the loop if we have received
-        // any signal that requires handling.
+
         sigSet = m_signalHandler->processAndGetSignals(m_lc);
         if (!sigSet.empty()) {
-          break;
+          // We need to terminate the process
+          if (sigSet.contains(SIGTERM)) {
+            m_lc.log(log::INFO, "In Maintenance::run(): received signal to shutdown, exiting the process.");
+            return SIGTERM;
+          }
+
+          // We neeed to refresh the logs
+          if (sigSet.contains(SIGUSR1)) {
+            m_lc.log(log::INFO, "In Maintenance::run(): recevied signal to refresh the log file descriptor");
+            m_lc.logger().refresh();
+            m_lc.log(log::INFO, "In Maintenance::run(): refreshed log file descriptor");
+          }
+          // We need to reload the config
+          if (sigSet.contains(SIGHUP)) {
+             m_lc.log(log::INFO, "In Maintenance::run(): received signal to refresh the config file");
+            return SIGHUP;
+          }
         }
-        std::this_thread::sleep_for(std::chrono::milliseconds(std::chrono::milliseconds(m_sleepInterval)));
       }
-
-      // We need to terminate the process
-      if (sigSet.contains(SIGTERM)) {
-        m_lc.log(log::INFO, "In Maintenance::run(): received signal to shutdown, exiting the process.");
-        return SIGTERM;
-      }
-
-      // We neeed to refresh the logs
-      if (sigSet.contains(SIGUSR1)) {
-        m_lc.log(log::INFO, "In Maintenance::run(): recevied signal to refresh the log file descriptor");
-        m_lc.logger().refresh();
-        m_lc.log(log::INFO, "In Maintenance::run(): refreshed log file descriptor");
-      }
-      // We need to reload the config
-      if (sigSet.contains(SIGHUP)) {
-        m_lc.log(log::INFO, "In Maintenance::run(): received signal to refresh the config file");
-        return SIGHUP;
-      }
+      std::this_thread::sleep_for(std::chrono::milliseconds(std::chrono::milliseconds(m_sleepInterval)));
     } while (true);
   } catch (cta::exception::Exception& ex) {
     log::ScopedParamContainer exParams(m_lc);

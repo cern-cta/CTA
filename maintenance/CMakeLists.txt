@@ -40,7 +40,6 @@ add_manpage (cta-maintenance)
 install (TARGETS cta-maintenance DESTINATION usr/bin)
 install (FILES ${CMAKE_CURRENT_BINARY_DIR}/cta-maintenance.1cta DESTINATION /usr/share/man/man1)
 install (FILES cta-maintenance.logrotate DESTINATION /etc/logrotate.d RENAME cta-maintenance)
-install (FILES cta-maintenance.sysconfig DESTINATION /etc/sysconfig RENAME cta-maintenance)
 install (FILES cta-maintenance.service DESTINATION /etc/systemd/system)
 install (FILES cta-maintenance.conf.example 
   DESTINATION ${CMAKE_INSTALL_SYSCONFDIR}/cta

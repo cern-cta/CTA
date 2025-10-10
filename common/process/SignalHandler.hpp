@@ -25,7 +25,6 @@ class SignalHandler {
 public:
   /**
    * Constructor
-   * @param logContext The log context used to
    */
   SignalHandler();
 
@@ -36,12 +35,15 @@ public:
 
   /**
    * Read, if any, all blocked signals and return them as a set.
+   *
+   * @param lc the log context for logging
+   * @return a std::set containing the blocked signals 
    */
   std::set<uint32_t> processAndGetSignals(log::LogContext& lc);
 
 private:
   /**
-    * File descriptor to read signals from the blocked signals.
+    * File descriptor to read the blocked signals from.
     */
   int m_sigFd;
 };

@@ -14,14 +14,6 @@
   {{ include "common.images.pullSecrets" (dict "imageRoot" .Values.image "global" .Values.global.image) }}
 {{- end }}
 
-{{- define "maintenance.volumes" -}}
-  {{ include "common.volumeMounts" . }}
-{{- end -}}}}
-
-{{- define "maintenance.volumeMounts" -}}
-  {{ include "common.volumeMounts" . }}
-{{- end -}}
-
 {{- define "scheduler.config" -}}
   {{- $schedulerConfig := .Values.global.configuration.scheduler }}
   {{- if ne (typeOf $schedulerConfig) "string" -}}
