@@ -28,7 +28,7 @@ namespace cta::maintenance {
 class DiskReportRunner : public IMaintenanceRunner {
 public:
   explicit DiskReportRunner(cta::Scheduler& scheduler, int batchSize, int softTimeout) : m_scheduler(scheduler), m_batchSize(batchSize), m_softTimeout(softTimeout) {}
-  void executeRunner(cta::log::LogContext& lc);
+  void executeRunner(cta::log::LogContext& lc) final;
   
 private:
   cta::Scheduler& m_scheduler;

@@ -56,7 +56,7 @@ private:
   std::unique_ptr<cta::catalogue::Catalogue> m_catalogue;
   std::unique_ptr<cta::SchedulerDB_t> m_scheddb;
 
-  std::unique_ptr<cta::SignalHandler> m_signalHandler;
+  std::unique_ptr<cta::SignalHandler> m_signalHandler = std::make_unique<cta::SignalHandler>();
 
   int m_sleepInterval;
 };

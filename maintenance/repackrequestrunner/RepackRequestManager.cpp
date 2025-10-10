@@ -59,14 +59,14 @@ void RepackRequestManager::executeRunner(cta::log::LogContext &lc) {
     }
   }
 
-  reportBatch("RetrieveSuccesses", [&](){ return m_scheduler.getNextSuccessfulRetrieveRepackReportBatch(lc);}, lc);
-  reportBatch("ArchiveSuccesses", [&](){ return m_scheduler.getNextSuccessfulArchiveRepackReportBatch(lc);}, lc);
-  reportBatch("RetrieveFailed", [&](){ return m_scheduler.getNextFailedRetrieveRepackReportBatch(lc);}, lc);
-  reportBatch("ArchiveFailed", [&](){ return m_scheduler.getNextFailedArchiveRepackReportBatch(lc);}, lc);
+  reportBatch("RetrieveSuccesses", [this, &lc] { return m_scheduler.getNextSuccessfulRetrieveRepackReportBatch(lc);}, lc);
+  reportBatch("ArchiveSuccesses", [this, &lc] { return m_scheduler.getNextSuccessfulArchiveRepackReportBatch(lc);}, lc);
+  reportBatch("RetrieveFailed", [this, &lc] { return m_scheduler.getNextFailedRetrieveRepackReportBatch(lc);}, lc);
+  reportBatch("ArchiveFailed", [this, &lc] { return m_scheduler.getNextFailedArchiveRepackReportBatch(lc);}, lc);
 }
 
 template <typename GetBatchFunc>
-void RepackRequestManager::reportBatch(std::string_view reportingType, GetBatchFunc getBatchFunc, cta::log::LogContext &lc){
+void RepackRequestManager::reportBatch(std::string_view reportingType, GetBatchFunc getBatchFunc, cta::log::LogContext &lc) const {
   utils::Timer totalTime;
   bool moreBatch = true;
   log::ScopedParamContainer params(lc);

@@ -23,7 +23,7 @@
 
 namespace cta::common {
 
-CmdLineParams::CmdLineParams(int argc, char** argv, const std::string procName) {
+CmdLineParams::CmdLineParams(int argc, char** argv, const std::string &procName) {
 
 //------------------------------------------------------------------------------
 // The help string

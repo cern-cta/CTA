@@ -39,13 +39,13 @@ public:
    * @param lc the log context for logging
    * @return a std::set containing the blocked signals 
    */
-  std::set<uint32_t> processAndGetSignals(log::LogContext& lc);
+  std::set<uint32_t> processAndGetSignals(log::LogContext& lc) const;
 
 private:
   /**
     * File descriptor to read the blocked signals from.
     */
-  int m_sigFd;
+  int m_sigFd = -1;
 };
 
 }  // namespace cta

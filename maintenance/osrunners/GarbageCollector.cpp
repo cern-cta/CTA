@@ -64,9 +64,7 @@ void GarbageCollector::trimGoneTargets(log::LogContext & lc) {
   std::list<std::string> agentList = m_agentRegister.getAgents();
   // Find the agents we knew about and are not listed anymore.
   // We will just stop looking for them.
-  for (std::map<std::string, objectstore::AgentWatchdog * >::iterator wa
-        = m_watchedAgents.begin();
-      wa != m_watchedAgents.end();) {
+  for (auto wa = m_watchedAgents.begin(); wa != m_watchedAgents.end();) {
     if (agentList.end() == std::find(agentList.begin(), agentList.end(), wa->first)) {
       delete wa->second;
       log::ScopedParamContainer params(lc);
@@ -130,7 +128,7 @@ void GarbageCollector::acquireTargets(log::LogContext & lc) {
 void GarbageCollector::checkHeartbeats(log::LogContext & lc) {
   // Check the heartbeats of the watched agents
   // We can still fail on many steps
-  for (std::map<std::string, objectstore::AgentWatchdog * >::iterator wa = m_watchedAgents.begin();
+  for (auto wa = m_watchedAgents.begin();
       wa != m_watchedAgents.end();) {
     // Get the heartbeat. Clean dead agents and remove references to them
     try {
@@ -209,7 +207,7 @@ void GarbageCollector::cleanupDeadAgent(const std::string & address, const std::
 }
 
 void GarbageCollector::OwnedObjectSorter::fetchOwnedObjects(objectstore::Agent& agent, std::list<std::shared_ptr<objectstore::GenericObject> >& fetchedObjects,
-    objectstore::Backend & objectStore, log::LogContext & lc) {
+     objectstore::Backend & objectStore, log::LogContext & lc) const {
   const auto ownedObjectAddresses = agent.getOwnershipList();
   // Parallel fetch (lock free) all the objects to assess their status (check ownership,
   // type and decide to which queue they will go.
@@ -308,7 +306,7 @@ void GarbageCollector::OwnedObjectSorter::sortFetchedObjects(objectstore::Agent&
         // Decision is simple: if the job is owned and active, it needs to be requeued
         // in its destination archive queue.
         // Get hold of an (unlocked) archive request:
-        std::shared_ptr<objectstore::ArchiveRequest> ar(new objectstore::ArchiveRequest(*obj));
+        std::shared_ptr<objectstore::ArchiveRequest> ar = std::make_shared<objectstore::ArchiveRequest>(*obj);
         obj.reset();
         bool jobRequeued=false;
         for (auto &j: ar->dumpJobs()) {
@@ -349,7 +347,7 @@ void GarbageCollector::OwnedObjectSorter::sortFetchedObjects(objectstore::Agent&
       case objectstore::serializers::RetrieveRequest_t:
       {
         // We need here to re-determine the best tape (and queue) for the retrieve request.
-        std::shared_ptr<objectstore::RetrieveRequest> rr(new objectstore::RetrieveRequest(*obj));
+        std::shared_ptr<objectstore::RetrieveRequest> rr = std::make_shared<objectstore::RetrieveRequest>(*obj);
         obj.reset();
         // Get the list of vids for non failed tape files.
         std::set<std::string, std::less<>> candidateVids;
@@ -389,7 +387,7 @@ void GarbageCollector::OwnedObjectSorter::sortFetchedObjects(objectstore::Agent&
         std::string vid;
         try {
           vid=objectstore::Helpers::selectBestRetrieveQueue(candidateVids, catalogue, objectStore, lc, isRepack);
-        } catch (objectstore::Helpers::NoTapeAvailableForRetrieve & ex) {
+        } catch (objectstore::Helpers::NoTapeAvailableForRetrieve &) {
           log::ScopedParamContainer params3(lc);
           params3.add("fileId", rr->getArchiveFile().archiveFileID);
           lc.log(log::INFO, "In GarbageCollector::OwnedObjectSorter::sortFetchedObjects(): No available tape found. Marking request for normal GC (and probably deletion).");
@@ -424,11 +422,11 @@ void GarbageCollector::OwnedObjectSorter::sortFetchedObjects(objectstore::Agent&
 }
 
 template<typename ArchiveSpecificQueue>
-void GarbageCollector::OwnedObjectSorter::executeArchiveAlgorithm(std::list<std::shared_ptr<objectstore::ArchiveRequest>> &jobs,std::string &queueAddress, const std::string& containerIdentifier, const std::string& tapepool,
-        std::set<std::string> & jobsIndividuallyGCed, objectstore::Agent& agent, objectstore::AgentReference& agentReference,
+void GarbageCollector::OwnedObjectSorter::executeArchiveAlgorithm(const std::list<std::shared_ptr<objectstore::ArchiveRequest>> &jobs,std::string &queueAddress, const std::string& containerIdentifier, const std::string& tapepool,
+        std::set<std::string, std::less<>> & jobsIndividuallyGCed, objectstore::Agent& agent, objectstore::AgentReference& agentReference,
         objectstore::Backend &objectStore, log::LogContext& lc)
 {
-  typedef objectstore::ContainerAlgorithms<objectstore::ArchiveQueue,ArchiveSpecificQueue> AqAlgos;
+  using AqAlgos = objectstore::ContainerAlgorithms<objectstore::ArchiveQueue,ArchiveSpecificQueue>;
   AqAlgos aqcl(objectStore, agentReference);
   typename decltype(aqcl)::InsertedElement::list jobsToAdd;
   for (auto & ar: jobs) {
@@ -499,7 +497,7 @@ void GarbageCollector::OwnedObjectSorter::executeArchiveAlgorithm(std::list<std:
 
 std::string GarbageCollector::OwnedObjectSorter::dispatchArchiveAlgorithms(std::list<std::shared_ptr<objectstore::ArchiveRequest>> &jobs,
   const common::dataStructures::JobQueueType& jobQueueType, const std::string& containerIdentifier,
-  const std::string& tapepool, std::set<std::string> & jobsIndividuallyGCed,
+  const std::string& tapepool, std::set<std::string, std::less<>> & jobsIndividuallyGCed,
   objectstore::Agent& agent, objectstore::AgentReference& agentReference, objectstore::Backend & objectstore, log::LogContext &lc) {
   std::string queueAddress;
   switch(jobQueueType){
@@ -550,7 +548,7 @@ void GarbageCollector::OwnedObjectSorter::lockFetchAndUpdateArchiveJobs(objectst
         currentJobBatch.emplace_back(std::move(requestsList.front()));
         requestsList.pop_front();
       }
-      std::set<std::string> jobsIndividuallyGCed;
+      std::set<std::string, std::less<>> jobsIndividuallyGCed;
       utils::Timer t;
       //Dispatch the archive algorithms
       dispatchArchiveAlgorithms(currentJobBatch,queueType,containerIdentifier,tapepool,jobsIndividuallyGCed,agent,agentReference,objectStore,lc);
@@ -773,7 +771,7 @@ void GarbageCollector::OwnedObjectSorter::lockFetchAndUpdateRetrieveJobs(objects
 }
 
 void GarbageCollector::OwnedObjectSorter::lockFetchAndUpdateOtherObjects(objectstore::Agent& agent, objectstore::AgentReference& agentReference,
-    objectstore::Backend & objectStore, cta::catalogue::Catalogue & catalogue, log::LogContext & lc) {
+    objectstore::Backend & objectStore, cta::catalogue::Catalogue & catalogue, log::LogContext & lc) const {
   // 3) are done with the objects requiring mutualized queueing, and hence special treatement.
   // The rest will be garbage collected on a object-by-object basis.
   for (auto & go : otherObjects) {

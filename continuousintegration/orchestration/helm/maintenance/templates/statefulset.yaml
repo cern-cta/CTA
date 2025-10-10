@@ -49,7 +49,7 @@ spec:
         imagePullPolicy: {{ include "maintenance.imagePullPolicy" . }}
         stdin: true
         command: ["/bin/bash", "-c"]
-        args: ["{{- if $.Values.preRun.enabled }}/scripts/pre_run.sh;{{- end }} /scripts/maintenance.sh; {{- if $.Values.postRun.enabled }}/scripts/post_run.sh;{{- end}}"]
+        args: ["{{- if $.Values.preRun.enabled }}/scripts/pre_run.sh;{{- end }} /scripts/maintenance.sh; {{- if $.Values.postRun.enabled }}/scripts/post_run.sh;{{- end }}"]
         readinessProbe:
           exec:
             command: ["sh", "-c", "pgrep -f /usr/bin/cta-maintenance > /dev/null"]

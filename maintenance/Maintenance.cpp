@@ -40,7 +40,7 @@ namespace cta::maintenance {
 //------------------------------------------------------------------------------
 // constructor
 //------------------------------------------------------------------------------
-Maintenance::Maintenance(cta::log::LogContext& lc, const cta::common::Config& config) : m_lc(lc), m_signalHandler(std::make_unique<cta::SignalHandler>()) {
+Maintenance::Maintenance(cta::log::LogContext& lc, const cta::common::Config& config) : m_lc(lc) {
   // Instantiate telemetry
   if (config.getOptionValueBool("cta.experimental.telemetry.enabled").value_or(false)) {
     try {
@@ -100,8 +100,8 @@ Maintenance::Maintenance(cta::log::LogContext& lc, const cta::common::Config& co
   auto catalogueFactory =
     cta::catalogue::CatalogueFactoryFactory::create(m_lc.logger(), catalogueLogin, nbConns, nbArchiveFileListingConns);
 
-  m_catalogue = std::move(catalogueFactory->create());
-  m_scheddb = std::move(m_schedDbInit->getSchedDB(*m_catalogue, m_lc.logger()));
+  m_catalogue = catalogueFactory->create();
+  m_scheddb = m_schedDbInit->getSchedDB(*m_catalogue, m_lc.logger());
 
   // Set Scheduler DB cache timeouts
   SchedulerDatabase::StatisticsCacheConfig statisticsCacheConfig;
@@ -132,16 +132,16 @@ Maintenance::Maintenance(cta::log::LogContext& lc, const cta::common::Config& co
 
   // Add Garbage Collector
   if (config.getOptionValueBool("cta.garbage_collector.enabled").value_or(true)) {
-    m_maintenanceRunners.push_back(std::move(m_schedDbInit->getGarbageCollector(*m_catalogue)));
+    m_maintenanceRunners.push_back(m_schedDbInit->getGarbageCollector(*m_catalogue));
     m_lc.log(cta::log::INFO, "Created Garbage Collector Runner");
   }
 
   // Add Queue Cleanup
   if (config.getOptionValueBool("cta.queue_cleanup.enabled").value_or(true)) {
-    m_maintenanceRunners.push_back(std::move(
+    m_maintenanceRunners.push_back(
       m_schedDbInit->getQueueCleanupRunner(*m_catalogue,
                                            *m_scheddb,
-                                           config.getOptionValueInt("cta.queue_cleanup.batch_size").value_or(500))));
+                                          config.getOptionValueInt("cta.queue_cleanup.batch_size").value_or(500)));
     log::ScopedParamContainer params(m_lc);
     params.add("batchSize", config.getOptionValueInt("cta.queue_cleanup.batch_size").value_or(500));
     m_lc.log(cta::log::INFO, "Created Queue Cleanup Runner");
@@ -173,31 +173,34 @@ uint32_t Maintenance::run() {
     do {
       std::set<uint32_t> sigSet;
       m_lc.log(log::INFO, "In Maintenance::run(): About to do a maintenance pass.");
-      for (auto& runner : m_maintenanceRunners) {
+      for (const auto& runner : m_maintenanceRunners) {
         runner->executeRunner(m_lc);
 
         sigSet = m_signalHandler->processAndGetSignals(m_lc);
         if (!sigSet.empty()) {
-          // We need to terminate the process
-          if (sigSet.contains(SIGTERM)) {
-            m_lc.log(log::INFO, "In Maintenance::run(): received signal to shutdown, exiting the process.");
-            return SIGTERM;
-          }
-
-          // We neeed to refresh the logs
-          if (sigSet.contains(SIGUSR1)) {
-            m_lc.log(log::INFO, "In Maintenance::run(): recevied signal to refresh the log file descriptor");
-            m_lc.logger().refresh();
-            m_lc.log(log::INFO, "In Maintenance::run(): refreshed log file descriptor");
-          }
-          // We need to reload the config
-          if (sigSet.contains(SIGHUP)) {
-             m_lc.log(log::INFO, "In Maintenance::run(): received signal to refresh the config file");
-            return SIGHUP;
-          }
+          break;
         }
       }
-      std::this_thread::sleep_for(std::chrono::milliseconds(std::chrono::milliseconds(m_sleepInterval)));
+
+      // We need to terminate the process
+      if (sigSet.contains(SIGTERM)) {
+        m_lc.log(log::INFO, "In Maintenance::run(): received signal to shutdown, exiting the process.");
+        return SIGTERM;
+      }
+
+      // We neeed to refresh the logs
+      if (sigSet.contains(SIGUSR1)) {
+        m_lc.log(log::INFO, "In Maintenance::run(): recevied signal to refresh the log file descriptor");
+        m_lc.logger().refresh();
+        m_lc.log(log::INFO, "In Maintenance::run(): refreshed log file descriptor");
+      }
+      
+      // We need to reload the config
+      if (sigSet.contains(SIGHUP)) {
+        m_lc.log(log::INFO, "In Maintenance::run(): received signal to refresh the config file");
+        return SIGHUP;
+      }
+       std::this_thread::sleep_for(std::chrono::milliseconds(std::chrono::milliseconds(m_sleepInterval)));
     } while (true);
   } catch (cta::exception::Exception& ex) {
     log::ScopedParamContainer exParams(m_lc);

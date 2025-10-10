@@ -25,7 +25,7 @@
 //------------------------------------------------------------------------------
 // Constructor
 //------------------------------------------------------------------------------
-cta::SignalHandler::SignalHandler() : m_sigFd(-1) {
+cta::SignalHandler::SignalHandler() {
   // We will ignore non handled singals in the main logic.
   ::sigset_t sigMask;
   ::sigemptyset(&sigMask);
@@ -65,13 +65,13 @@ cta::SignalHandler::~SignalHandler() noexcept {
 //------------------------------------------------------------------------------
 // SignalHandler::processSignals
 //------------------------------------------------------------------------------
-std::set<uint32_t> cta::SignalHandler::processAndGetSignals(log::LogContext& lc) {
+std::set<uint32_t> cta::SignalHandler::processAndGetSignals(log::LogContext& lc) const {
   std::set<uint32_t> signalSet {};
 
   struct ::signalfd_siginfo sigInf;
   int rc = 0;
   while(true){
-    rc = ::read(m_sigFd, &sigInf, sizeof(sigInf));
+    rc = static_cast<int>(::read(m_sigFd, &sigInf, sizeof(sigInf)));
 
     // Exit the loop if there is no signal to be processed
     if (rc == -1 && errno == EAGAIN) break;

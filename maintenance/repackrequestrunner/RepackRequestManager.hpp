@@ -29,11 +29,11 @@ class RepackRequestManager : public IMaintenanceRunner {
 public:
   explicit RepackRequestManager(cta::Scheduler &scheduler, int rmrtte, int timeout) : m_scheduler(scheduler), m_repackMaxRequestsToToExpand(rmrtte), m_softTimeout(timeout) {}
 
-  void executeRunner(cta::log::LogContext &lc);
+  void executeRunner(cta::log::LogContext &lc) final;
 
 private:
   template<typename GetBatchFunc>
-  void reportBatch(std::string_view reportingType, GetBatchFunc getBatchFunc, cta::log::LogContext &lc);
+  void reportBatch(std::string_view reportingType, GetBatchFunc getBatchFunc, cta::log::LogContext &lc) const;
 
   cta::Scheduler & m_scheduler;
   int m_repackMaxRequestsToToExpand;

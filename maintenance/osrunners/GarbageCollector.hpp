@@ -40,8 +40,8 @@ namespace cta::maintenance {
 class GarbageCollector : public IMaintenanceRunner {
 public:
   GarbageCollector(cta::objectstore::Backend & os, cta::objectstore::AgentReference & agentReference, cta::catalogue::Catalogue & catalogue);
-  ~GarbageCollector();
-  void executeRunner(cta::log::LogContext & lc);
+  ~GarbageCollector() final;
+  void executeRunner(cta::log::LogContext & lc) final;
 
   void acquireTargets(cta::log::LogContext & lc);
 
@@ -61,7 +61,7 @@ public:
     std::list<std::shared_ptr<cta::objectstore::GenericObject>> otherObjects;
     /// Fill up the fetchedObjects with objects of interest.
     void fetchOwnedObjects(cta::objectstore::Agent & agent, std::list<std::shared_ptr<cta::objectstore::GenericObject>> & fetchedObjects, cta::objectstore::Backend & objectStore,
-        cta::log::LogContext & lc);
+        cta::log::LogContext & lc) const;
     /// Fill up the sorter with the fetched objects
     void sortFetchedObjects(cta::objectstore::Agent & agent, std::list<std::shared_ptr<cta::objectstore::GenericObject>> & fetchedObjects, cta::objectstore::Backend & objectStore,
         cta::catalogue::Catalogue & catalogue, cta::log::LogContext & lc);
@@ -71,16 +71,16 @@ public:
     void lockFetchAndUpdateRetrieveJobs(cta::objectstore::Agent & agent, cta::objectstore::AgentReference & agentReference, cta::objectstore::Backend & objectStore, cta::log::LogContext & lc);
     // Lock, fetch and update other objects
     void lockFetchAndUpdateOtherObjects(cta::objectstore::Agent & agent, cta::objectstore::AgentReference & agentReference, cta::objectstore::Backend & objectStore,
-        cta::catalogue::Catalogue & catalogue, cta::log::LogContext & lc);
+        cta::catalogue::Catalogue & catalogue, cta::log::LogContext & lc) const;
 
   private:
     std::string dispatchArchiveAlgorithms(std::list<std::shared_ptr<cta::objectstore::ArchiveRequest>> &jobs,const cta::common::dataStructures::JobQueueType& jobQueueType, const std::string& containerIdentifier,
-        const std::string& tapepool,std::set<std::string> & jobsIndividuallyGCed,
+        const std::string& tapepool,std::set<std::string, std::less<>> & jobsIndividuallyGCed,
         cta::objectstore::Agent& agent, cta::objectstore::AgentReference& agentReference, cta::objectstore::Backend & objectstore, cta::log::LogContext &lc);
 
     template<typename ArchiveSpecificQueue>
-    void executeArchiveAlgorithm(std::list<std::shared_ptr<cta::objectstore::ArchiveRequest>> &jobs,std::string &queueAddress, const std::string& containerIdentifier, const std::string& tapepool,
-        std::set<std::string> & jobsIndividuallyGCed, cta::objectstore::Agent& agent, cta::objectstore::AgentReference& agentReference,
+    void executeArchiveAlgorithm(const std::list<std::shared_ptr<cta::objectstore::ArchiveRequest>> &jobs,std::string &queueAddress, const std::string& containerIdentifier, const std::string& tapepool,
+        std::set<std::string, std::less<>> & jobsIndividuallyGCed, cta::objectstore::Agent& agent, cta::objectstore::AgentReference& agentReference,
         cta::objectstore::Backend &objectStore, cta::log::LogContext& lc);
   };
 
@@ -89,7 +89,7 @@ private:
   cta::catalogue::Catalogue & m_catalogue;
   cta::objectstore::AgentReference & m_ourAgentReference;
   cta::objectstore::AgentRegister m_agentRegister;
-  std::map<std::string, cta::objectstore::AgentWatchdog * > m_watchedAgents;
+  std::map<std::string, cta::objectstore::AgentWatchdog *, std::less<>> m_watchedAgents;
 };
 
 } // namespace cta::maintenance

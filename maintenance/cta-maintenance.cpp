@@ -34,20 +34,6 @@
 
 namespace cta::maintenance {
 
-/*
-static void reloadConfig() {
-  // Check what has changed. We have to keep into account that the CmdLineParams we
-  // recevived intially will override any changes in the config file despite the
-  // config reload, we should notify with a WARN if this config value has changed but
-  // there is a variable overriding it. 
-
-  // User and group
-  setUserAndGroup();
-    
-  // Logging system
-  configureLoggingSystem(); 
-}
- */
 static int setUserAndGroup(const std::string &userName, const std::string &groupName, cta::log::Logger& logger) {
    try {
     logger(log::INFO, "Setting user name and group name of current process",
@@ -62,28 +48,7 @@ static int setUserAndGroup(const std::string &userName, const std::string &group
 
    return 0;
 }
-/*
-static void configureLoggingSystem(std::string_view instanceName, std::string_view schedBackendName, std::string_view logLevel, cta::common::CmdLineParams cmdLineParams) {
-   // Set specific static headers for tape daemon
-  std::map<std::string, std::string> staticParamMap;
-  staticParamMap["instance"] = instanceName;
-  staticParamMap["sched_backend"] = schedBackendName;
-  log.setStaticParams(staticParamMap);
 
-  // If the log format was not specified in the call to the program we can
-  // change it. 
-  if (cmdLineParams.logFormat.emtpy()) {
-    log.setLogFormat(cmdLineParams.logFormat); 
-  }
-  
-  // Adjust log mask to the log level potentionally set in the configuration file
-  log.setLogMask(logLevel);
-  {
-    std::list<cta::log::Param> params = {cta::log::Param("logMask", logLevel)};
-    log(log::INFO, "Set log mask", params);
-  }
-}
-*/  
 //------------------------------------------------------------------------------
 // exceptionThrowingMain
 //
@@ -113,6 +78,9 @@ static int exceptionThrowingMain(common::Config config, cta::log::Logger& log) {
           log(cta::log::INFO, "Reloading config for Maintenance process. Process user and group, and log format will not be reloaded.");
           config.parse(log);
           break;
+      default:
+          log(cta::log::CRIT, "Received unexpected signal. Exiting");
+          return EXIT_FAILURE;
     }
   }
 }
@@ -147,7 +115,7 @@ int main(const int argc, char **const argv) {
   );
 
   if (rc) return rc;
-
+  
   // Try to instantiate the logging system API
   try {
     if(cmdLineParams->logToFile) {
@@ -170,17 +138,17 @@ int main(const int argc, char **const argv) {
   int programRc = EXIT_FAILURE;
   try {
     programRc = maintenance::exceptionThrowingMain(config, log);
-  }  catch(exception::Exception &ex) {
+  } catch(exception::Exception &ex) {
     std::list<cta::log::Param> params = {
       log::Param("exceptionMessage", ex.getMessage().str())};
-    log(log::ERR, "Caught an unexpected CTA exception, cta-maintenance cannot start", params);
+    log(log::ERR, "Caught an unexpected CTA exception.", params);
     sleep(1);
   } catch(std::exception &se) {
     std::list<cta::log::Param> params = {cta::log::Param("what", se.what())};
-    log(log::ERR, "Caught an unexpected standard exception, cta-maintenance cannot start", params);
+    log(log::ERR, "Caught an unexpected standard exception.", params);
     sleep(1);
   } catch(...) {
-    log(log::ERR, "Caught an unexpected and unknown exception, cta-maintenance cannot start");
+    log(log::ERR, "Caught an unexpected and unknown exception.");
     sleep(1);
   }
 

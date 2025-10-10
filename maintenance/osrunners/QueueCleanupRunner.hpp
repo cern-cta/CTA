@@ -44,7 +44,7 @@ public:
 
   ~QueueCleanupRunner() = default;
 
-  void executeRunner(cta::log::LogContext &lc);
+  void executeRunner(cta::log::LogContext &lc) final;
 
 private:
   catalogue::Catalogue &m_catalogue;
