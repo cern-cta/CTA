@@ -125,8 +125,8 @@ void EnstoreLargeFileReader::moveReaderByFSeqDelta(const int64_t fSeq_delta) {
     // (trailer, payload, header) + 1 to go on the BOT (beginning of tape) side
     // of the file mark before the header of the file we want to read
     m_session.m_drive.spaceFileMarksBackwards(static_cast<uint32_t>(std::abs(fSeq_delta)) * 3 + 1);
-  m_session.m_drive.readFileMark(std::string(std::source_location::current().function_name()) + ": " +
-                   "Reading file mark right before the header of the file we want to read");
+    m_session.m_drive.readFileMark(std::string(std::source_location::current().function_name()) + ": " 
+                                   + "Reading file mark right before the header of the file we want to read");
   }
   return;
 }
