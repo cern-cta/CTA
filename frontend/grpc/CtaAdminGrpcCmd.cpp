@@ -30,7 +30,7 @@
 #include "utils.hpp"
 #include "common/log/Logger.hpp"
 #include "common/log/LogContext.hpp"
-#include "common/log/StdoutLogger.hpp"
+#include "common/log/FileLogger.hpp"
 #include "common/utils/Base64.hpp"
 
 static std::string file2string(std::string filename){
@@ -89,9 +89,9 @@ void CtaAdminGrpcCmd::send(const CtaAdminParsedCmd& parsedCmd, cta::common::Conf
   std::string strToken {""};
   // Encoded token to be send as part of metadata
   std::string strEncodedToken {""};
-  // Create a channel to the KRB-GSI negotiation service 
+  // Create a channel to the KRB-GSI negotiation service
   std::shared_ptr<::grpc::Channel> spChannelNegotiation {::grpc::CreateChannel(GRPC_SERVER, credentials)};
-  cta::log::StdoutLogger log(GRPC_SERVER, "cta-admin-grpc");
+  cta::log::FileLogger log(GRPC_SERVER, "cta-admin-grpc", "/var/log/cta-admin-grpc.log", cta::log::DEBUG);
   cta::log::LogContext lc(log);
   cta::frontend::grpc::client::AsyncClient<cta::xrd::Negotiation> clientNeg(log, spChannelNegotiation);
   try {
