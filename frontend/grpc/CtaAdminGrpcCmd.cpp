@@ -31,6 +31,7 @@
 #include "common/log/Logger.hpp"
 #include "common/log/LogContext.hpp"
 #include "common/log/StdoutLogger.hpp"
+#include "common/utils/Base64.hpp"
 
 static std::string file2string(std::string filename){
     std::ifstream as_stream(filename);
@@ -102,7 +103,7 @@ void CtaAdminGrpcCmd::send(const CtaAdminParsedCmd& parsedCmd, cta::common::Conf
      *        or KerberosAuthenticator
      *       ???
      */
-    cta::frontend::grpc::utils::encode(strToken, strEncodedToken);
+    strEncodedToken = cta::utils::base64encode(strToken);
 
   } catch(const cta::exception::Exception& e) {
     /*
