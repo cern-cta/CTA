@@ -33,8 +33,8 @@ ArchiveRdbJob::ArchiveRdbJob(rdbms::ConnPool& connPool)
   reset();
 };
 
-void ArchiveRdbJob::initialize(const rdbms::Rset& rset, bool rowIsRepack) {
-  isRepack = rowIsRepack;
+void ArchiveRdbJob::initialize(const rdbms::Rset& rset, bool jobIsRepack) {
+  isRepack = jobIsRepack;
   m_jobRow = rset;
   // Reset or update other member variables as necessary
   m_jobOwned = (m_jobRow.mountId.value_or(0) != 0);
@@ -128,51 +128,27 @@ void ArchiveRdbJob::handleExceedTotalRetries(cta::schedulerdb::Transaction& txn,
   }
 }
 
-void ArchiveRdbJob::requeueToNewMount(cta::schedulerdb::Transaction& txn,
+void ArchiveRdbJob::requeueJobToMount(cta::schedulerdb::Transaction& txn,
                                       log::LogContext& lc,
-                                      const std::string& reason) {
+                                      const std::string& reason, bool keepMountId) {
+  std::string log_msg = "In ArchiveRdbJob::requeueJobToMount(): requeueFailedJob() to same mount";
+  if (!keepMountId) {
+    m_jobRow.retriesWithinMount = 0;
+    log_msg = "In ArchiveRdbJob::requeueJobToMount(): requeueFailedJob() to new mount";
+  }
   try {
     // requeue by changing status, reset the mount_id to NULL and updating all other stat fields
-    m_jobRow.retriesWithinMount = 0;
     uint64_t nrows = 0;
-    if (isRepack) {
-      nrows = m_jobRow.requeueFailedJob(txn, ArchiveJobStatus::AJS_ToTransferForUser, true, false);
-
-    } else {
-      nrows = m_jobRow.requeueFailedJob(txn, ArchiveJobStatus::AJS_ToTransferForRepack, true, true);
-
-    }
+    auto status = isRepack ? ArchiveJobStatus::AJS_ToTransferForRepack : ArchiveJobStatus::AJS_ToTransferForUser;
+    nrows = m_jobRow.requeueFailedJob(txn, status, keepMountId, isRepack);
     txn.commit();
     if (nrows != 1) {
-      lc.log(log::WARNING,
-             "ArchiveRdbJob::requeueToNewMount(): requeueFailedJob (new mount) failed; job not found in DB.");
+      lc.log(log::WARNING, log_msg + std::string(" failed. Job not found in DB."));
     }
     // since requeueing, we do not report and we do not
     // set reportType to a particular value here
   } catch (const exception::Exception& ex) {
-    lc.log(log::WARNING,
-           "ArchiveRdbJob::requeueToNewMount(): Failed to requeue to new mount. Aborting txn: " + ex.getMessageValue());
-    txn.abort();
-  }
-}
-
-void ArchiveRdbJob::requeueToSameMount(cta::schedulerdb::Transaction& txn, log::LogContext& lc, const std::string& reason) {
-  try {
-    // requeue to the same mount simply by moving it to PENDING QUEUE and updating all other stat fields
-    uint64_t nrows = 0;
-    if (isRepack) {
-      nrows = m_jobRow.requeueFailedJob(txn, ArchiveJobStatus::AJS_ToTransferForUser, true, false);
-
-    } else {
-      nrows = m_jobRow.requeueFailedJob(txn, ArchiveJobStatus::AJS_ToTransferForRepack, true, true);
-
-    }
-    txn.commit();
-    if (nrows != 1) {
-      lc.log(log::WARNING, "ArchiveRdbJob::requeueFailedJob(): (same mount) failed; job not found.");
-    }
-  } catch (const exception::Exception& ex) {
-    lc.log(log::WARNING, "ArchiveRdbJob::requeueFailedJob(): Failed to requeue to same mount. Aborting txn: " + ex.getMessageValue());
+    lc.log(log::ERR, log_msg + std::string(" failed. Aborting txn: ") + ex.getMessageValue());
     txn.abort();
   }
 }
@@ -214,9 +190,9 @@ void ArchiveRdbJob::failTransfer(const std::string& failureReason, log::LogConte
   const bool failedTaskQueue =
     failureReason.find("In TapeWriteSingleThread::run(): cleaning failed task queue") != std::string::npos;
   if (m_jobRow.retriesWithinMount >= m_jobRow.maxRetriesWithinMount || failedTaskQueue) {
-    requeueToNewMount(txn, lc, failureReason);
+    requeueJobToMount(txn, lc, failureReason, false);
   } else {
-    requeueToSameMount(txn, lc, failureReason);
+    requeueJobToMount(txn, lc, failureReason, true);
   }
 }
 

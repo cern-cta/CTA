@@ -25,6 +25,7 @@
 #include <tuple>
 #include <vector>
 #include <unordered_map>
+#include <unordered_set>
 #include <mutex>
 
 #include "catalogue/TapeDrivesCatalogueState.hpp"
@@ -270,7 +271,7 @@ public:
 
   /*
    * for retrieve queue sleep mechanism (filter out disk systems which do not have space)
-   * we put in place DiskSleepEntry, m_diskSystemSleepCacheMap and diskSystemSleepCacheMutex
+   * we put in place DiskSleepEntry
    */
   struct DiskSleepEntry {
     uint64_t sleepTime;
@@ -279,7 +280,6 @@ public:
     DiskSleepEntry(uint64_t st, uint64_t ts) : sleepTime(st), timestamp(ts) {}
   };
 
-  //std::unordered_map <std::string, DiskSleepEntry> m_diskSystemSleepCacheMap;
   cta::threading::Mutex m_diskSystemSleepMutex;
   /*
    * Get list of diskSystemNames for which the system should
@@ -311,6 +311,7 @@ private:
   void fetchMountInfo(SchedulerDatabase::TapeMountDecisionInfo& tmdi,
                       SchedulerDatabase::PurposeGetMountInfo purpose,
                       log::LogContext& lc);
+  bool deleteDiskFiles(std::unordered_set<std::string>& jobSrcUrls, log::LogContext& lc);
   std::list<common::dataStructures::RepackInfo> fetchRepackInfo(const std::string& vid);
   std::string m_ownerId;
   rdbms::ConnPool m_connPool;

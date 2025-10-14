@@ -166,7 +166,6 @@ if [ ! -z $BACKPRESSURE_TEST ]; then
     admin_cta di add -n ${EOS_INSTANCE_NAME} -m toto
     admin_cta dis add -n repackDiskInstanceSpace --di ${EOS_INSTANCE_NAME} -u "eosSpace:default" -i 5 -m toto
     admin_cta ds add -n repackBuffer --di ${EOS_INSTANCE_NAME} --dis repackDiskInstanceSpace -r "root://${EOS_MGM_HOST}/${REPACK_BUFFER_BASEDIR}" -f 111222333444555 -s 20 -m toto
-    #admin_cta ds add -n repackBuffer --di ${EOS_INSTANCE_NAME} --dis repackDiskInstanceSpace -r ".*/${REPACK_BUFFER_BASEDIR}/.*" -f 111222333444555 -s 20 -m toto
   else
     echo "Disk system repackBuffer already defined. Ensuring too high free space requirements."
     admin_cta ds ch -n repackBuffer -f 111222333444555
@@ -193,6 +192,7 @@ fi
 
 # Record number of files already in the recycle table
 amountRecyleTapeFilesPrev=$(admin_cta --json recycletf ls --vid ${VID_TO_REPACK} | jq "length")
+
 echo "admin_cta repack add --mountpolicy ${MOUNT_POLICY_NAME} --vid ${VID_TO_REPACK} ${REPACK_OPTION} --bufferurl ${FULL_REPACK_BUFFER_URL} ${NO_RECALL_FLAG} ${MAX_FILES_TO_SELECT_ARG}"
 admin_cta repack add --mountpolicy ${MOUNT_POLICY_NAME} --vid ${VID_TO_REPACK} ${REPACK_OPTION} --bufferurl ${FULL_REPACK_BUFFER_URL} ${NO_RECALL_FLAG} ${MAX_FILES_TO_SELECT_ARG} || exit 1
 
@@ -283,11 +283,13 @@ echo "Repack ls --vid ${VID_TO_REPACK}"
 admin_cta --json repack ls --vid ${VID_TO_REPACK} | jq
 
 amountArchivedFiles=$(admin_cta --json repack ls --vid ${VID_TO_REPACK} | jq -r ". [0] | .archivedFiles")
+amountFilesToRetrieve=$(admin_cta --json repack ls --vid ${VID_TO_REPACK} | jq -r ". [0] | .totalFilesToRetrieve")
 amountRecyleTapeFilesNew=$(admin_cta --json recycletf ls --vid ${VID_TO_REPACK} | jq "length")
 amountRecyleTapeFiles=$((amountRecyleTapeFilesNew-$amountRecyleTapeFilesPrev))
 filesLeftToRetrieve=$(admin_cta --json repack ls --vid ${VID_TO_REPACK} | jq -r ". [0] | .filesLeftToRetrieve")
 filesLeftToArchive=$(admin_cta --json repack ls --vid ${VID_TO_REPACK} | jq -r ". [0] | .filesLeftToArchive")
 nbDestinationVids=$(admin_cta --json repack ls --vid ${VID_TO_REPACK} | jq -r ". [0] | .destinationInfos | length")
+amountArchivedDestinationFiles=$(admin_cta --json repack ls --vid ${VID_TO_REPACK} | jq -r "[.[0].destinationInfos[].files | tonumber] | add")
 
 echo "Amount of archived files = $amountArchivedFiles (${nbDestinationVids}x$((amountArchivedFiles/nbDestinationVids))"
 echo "Amount of new recycled tape files = $amountRecyleTapeFiles"
@@ -298,11 +300,18 @@ if [[ "$filesLeftToRetrieve" -ne "0" ]] || [[ "$filesLeftToArchive" -ne "0" ]]
 then
   echo "There were remaining files left to retrieve ($filesLeftToRetrieve) or archive ($filesLeftToArchive). Test FAILED"
 fi
-if [[ "$((amountArchivedFiles/nbDestinationVids))" -eq "$amountRecyleTapeFiles" ]]
+if [[ "$amountArchivedDestinationFiles" -eq "amountArchivedFiles" ]]
 then
-  echo "The amount of archived files is equal to the amount of new recycled tape files. Test OK"
+  echo "The amount of archived files written to all tapes is equal to the amount of files reported as repacked. Test OK"
 else
-  echo "The amount of archived files is not equal to the amount of new recycled tape files. Test FAILED"
+  echo "The amount of archived files written to all tapes is not equal to the amount of files reported as repacked. Test FAILED"
+  exit 1
+fi
+if [[ "$amountFilesToRetrieve" -eq "$amountRecyleTapeFiles" ]]
+then
+  echo "The amount of files to be recalled at start is equal to the amount of new recycled tape files. Test OK"
+else
+  echo "The amount of files to be recalled at start is not equal to the amount of new recycled tape files. Test FAILED"
   exit 1
 fi
 
