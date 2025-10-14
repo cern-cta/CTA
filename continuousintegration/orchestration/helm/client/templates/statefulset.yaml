@@ -105,15 +105,9 @@ spec:
         {{ include "common.extraVolumeMounts" . | nindent 8 }}
       volumes:
       - name: scripts-volume
-        {{- if .Values.useGrpc }}
         configMap:
-          name: scripts-client-grpc
+          name: scripts-client
           defaultMode: 0777
-        {{- else }}
-        configMap:
-          name: scripts-client-xrootd
-          defaultMode: 0777
-        {{- end }}
       - name: etc-cta-client
         configMap:
           name: etc-cta-client

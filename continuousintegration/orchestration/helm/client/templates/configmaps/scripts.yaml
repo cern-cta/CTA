@@ -1,7 +1,9 @@
 apiVersion: v1
 kind: ConfigMap
 metadata:
-  name: scripts-client-grpc
+  name: scripts-client
 data:
+  client.sh: |
+    {{ .Files.Get "scripts/client.sh" | nindent 4 }}
   client-grpc.sh: |
     {{ .Files.Get "scripts/client-grpc.sh" | nindent 4 }}
