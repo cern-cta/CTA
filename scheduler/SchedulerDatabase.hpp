@@ -262,7 +262,7 @@ public:
     virtual void failTransfer(const std::string& failureReason, log::LogContext& lc) = 0;
     virtual void failReport(const std::string& failureReason, log::LogContext& lc) = 0;
     virtual void bumpUpTapeFileCount(uint64_t newFileCount) = 0;
-    virtual void initialize(const rdbms::Rset& resultSet, bool rowIsRepack) = 0;
+    virtual void initialize(const rdbms::Rset& resultSet, bool jobIsRepack) = 0;
     virtual bool releaseToPool() = 0;
     virtual ~ArchiveJob() = default;
   };
@@ -569,7 +569,7 @@ public:
     virtual void failTransfer(const std::string& failureReason, log::LogContext& lc) = 0;
     virtual void failReport(const std::string& failureReason, log::LogContext& lc) = 0;
     virtual void abort(const std::string& abortReason, log::LogContext& lc) = 0;
-    virtual void initialize(const rdbms::Rset& resultSet, bool rowIsRepack) = 0;
+    virtual void initialize(const rdbms::Rset& resultSet, bool jobIsRepack) = 0;
     virtual bool releaseToPool() = 0;
     virtual void fail() = 0;
     virtual ~RetrieveJob() = default;

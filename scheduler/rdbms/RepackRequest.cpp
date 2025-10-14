@@ -687,21 +687,6 @@ namespace cta::schedulerdb {
 
     // m_mountPolicy
     m_mountPolicy.name = row.mountPolicyName;
-    //
-    //  std::string_view policyName = row.mountPolicyName;
-    //  uint64_t archivePriority = row.archivePriority;             // needs new DB column
-    //  uint64_t archiveMinRequestAge = row.archiveMinRequestAge;   // needs new DB column
-    //  uint64_t retrievePriority = row.retrievePriority;           // needs new DB column
-    //  uint64_t retrieveMinRequestAge = row.retrieveMinRequestAge; // needs new DB column
-    //
-    //  // Create MountPolicy
-    //  repackInfo.mountPolicyObject = common::dataStructures::MountPolicy(
-    //      policyName,
-    //      archivePriority,
-    //      archiveMinRequestAge,
-    //      retrievePriority,
-    //      retrieveMinRequestAge
-    //  );
 
     m_noRecall = row.isNoRecall;
     common::dataStructures::EntryLog m_creationLog;
