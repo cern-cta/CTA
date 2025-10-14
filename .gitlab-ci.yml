@@ -105,6 +105,13 @@ variables:
       - "TRUE"
       - "FALSE"
 
+  DCACHE_REGRESSION_TESTS:
+    description: "Whether to run the dCache regression tests."
+    value: "FALSE"
+    options:
+      - "TRUE"
+      - "FALSE"
+
   KEEP_STRESS_TEST_NAMESPACE:
     description: "Keep the stress-test namespace alive after it has been created to allow for manual debugging. In this case, the namespace must be manually deleted at some point."
     value: "FALSE"

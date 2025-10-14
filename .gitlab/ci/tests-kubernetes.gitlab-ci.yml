@@ -196,7 +196,10 @@ test-regression-dCache:
   extends:
     - .kubernetes-test
   rules:
-    - !reference [.manual-rules, rules]
+    - when: manual
+      allow_failure: true
+    - if: $DCACHE_REGRESSION_TESTS == "TRUE"
+      when: on_success
   variables:
     TEST_SCRIPT: "tests/test_regression_dCache.sh"
     EXTRA_RUN_ARGS: "--test-timeout 2400 --skip-preflight"
