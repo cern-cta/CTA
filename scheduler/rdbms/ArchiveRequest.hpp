@@ -35,7 +35,7 @@ class ArchiveRequest {
 public:
   ArchiveRequest(rdbms::Conn& conn, log::LogContext& lc) : m_conn(conn), m_lc(lc) {}
 
-  std::vector <postgres::ArchiveJobQueueRow> makeJobRow(const Job &archiveJob) const;
+  postgres::ArchiveJobQueueRow makeJobRow(const postgres::ArchiveQueueJob &archiveJob) const;
   void insert();
   [[noreturn]] void update() const;
 
@@ -197,18 +197,8 @@ private:
   /**
    * Archive Job metadata
    */
-  struct Job {
-    int copyNb;
-    ArchiveJobStatus status;
-    std::string tapepool;
-    int totalRetries;
-    int retriesWithinMount;
-    int lastMountWithFailure;
-    int maxRetriesWithinMount;
-    int maxTotalRetries;
-    int totalReportRetries;
-    int maxReportRetries;
-  };
+  postgres::ArchiveQueueJob Job;
+
 
   // References to external objects
   //rdbms::ConnPool &m_connPool;
@@ -227,7 +217,7 @@ private:
   std::string m_srcURL;
   common::dataStructures::EntryLog m_entryLog;
   common::dataStructures::MountPolicy m_mountPolicy;
-  std::list<Job> m_jobs;
+  std::list<postgres::ArchiveQueueJob> m_jobs;
 };
 
 }  // namespace cta::schedulerdb

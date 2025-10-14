@@ -30,6 +30,19 @@
 
 namespace cta::schedulerdb::postgres {
 
+struct ArchiveQueueJob {
+    int copyNb;
+    ArchiveJobStatus status;
+    std::string tapepool;
+    int totalRetries;
+    int retriesWithinMount;
+    int lastMountWithFailure;
+    int maxRetriesWithinMount;
+    int maxTotalRetries;
+    int totalReportRetries;
+    int maxReportRetries;
+  };
+
 struct ArchiveJobQueueRow {
   uint64_t jobId = 0;
   uint64_t reqId = 0;
