@@ -5,3 +5,5 @@ metadata:
 data:
   client.sh: |
     {{ .Files.Get "scripts/client.sh" | nindent 4 }}
+  client-grpc.sh: |
+    {{ .Files.Get "scripts/client-grpc.sh" | nindent 4 }}

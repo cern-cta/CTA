@@ -358,7 +358,7 @@ CtaRpcImpl::Admin(::grpc::ServerContext* context, const cta::xrd::Request* reque
     response->set_message_txt(ex.getMessageValue());
     return ::grpc::Status(::grpc::StatusCode::FAILED_PRECONDITION, ex.getMessageValue());
   } catch (cta::exception::UserError& ex) {
-    lc.log(cta::log::ERR, ex.getMessageValue());
+    lc.log(cta::log::INFO, ex.getMessageValue());
     response->set_type(cta::xrd::Response::RSP_ERR_USER);
     response->set_message_txt(ex.getMessageValue());
     return ::grpc::Status(::grpc::StatusCode::INVALID_ARGUMENT, ex.getMessageValue());

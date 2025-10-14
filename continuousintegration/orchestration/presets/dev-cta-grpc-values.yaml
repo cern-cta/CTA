@@ -26,3 +26,15 @@ tpsrv:
       #!/usr/bin/bash
       echo "Process crashed. Sleeping..."
       sleep infinity
+
+cli:
+  useGrpc: true
+  conf:
+    cta:
+      endpoint: cta-frontend-grpc:10956
+
+client:
+  useGrpc: true
+  conf:
+    cta:
+      endpoint: cta-frontend-grpc:10956
