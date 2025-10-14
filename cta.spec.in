@@ -217,6 +217,8 @@ Requires: grpc
 Provides: cta-admin = %{version}-%{release}
 Obsoletes: cta-admin < %{version}-%{release}
 %description -n cta-admin-grpc
+CERN Tape Archive:
+The cta-admin command line utility, using gRPC as transport.
 
 %files -n cta-admin-grpc
 %defattr(-,root,root)
