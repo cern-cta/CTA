@@ -25,34 +25,31 @@ namespace cta::schedulerdb {
   throw std::runtime_error("update not implemented.");
 }
 
+postgres::ArchiveJobQueueRow
+ArchiveRequest::makeJobRow(const Job& archiveJob) const {
 
-std::vector<postgres::ArchiveJobQueueRow>
-ArchiveRequest::makeJobRows() const {
-  std::vector<postgres::ArchiveJobQueueRow> rows;
   postgres::ArchiveJobQueueRow ajr;
-  uint32_t areq_job_count = m_jobs.size();
-  // Copy / move ownership-sensitive fields if only one job in the request
-  if (areq_job_count == 1) {
-    ajr.diskFileId           = std::move(m_archiveFile.diskFileId);
-    ajr.diskInstance         = std::move(m_archiveFile.diskInstance);
-    ajr.storageClass         = std::move(m_archiveFile.storageClass);
-    ajr.diskFileInfoPath     = std::move(m_archiveFile.diskFileInfo.path);
-    ajr.checksumBlob         = std::move(m_archiveFile.checksumBlob);
-    ajr.archiveReportURL     = std::move(m_archiveReportURL);
-    ajr.archiveErrorReportURL= std::move(m_archiveErrorReportURL);
-    ajr.srcUrl               = std::move(m_srcURL);
-  } else {
-    ajr.diskFileId           = m_archiveFile.diskFileId;
-    ajr.diskInstance         = m_archiveFile.diskInstance;
-    ajr.storageClass         = m_archiveFile.storageClass;
-    ajr.diskFileInfoPath     = m_archiveFile.diskFileInfo.path;
-    ajr.checksumBlob         = m_archiveFile.checksumBlob;
-    ajr.archiveReportURL     = m_archiveReportURL;
-    ajr.archiveErrorReportURL= m_archiveErrorReportURL;
-    ajr.srcUrl               = m_srcURL;
-  }
+  // Setting common fields
+  if (m_jobs.size() == 1) {
+      ajr.diskFileId           = std::move(m_archiveFile.diskFileId);
+      ajr.diskInstance         = std::move(m_archiveFile.diskInstance);
+      ajr.storageClass         = std::move(m_archiveFile.storageClass);
+      ajr.diskFileInfoPath     = std::move(m_archiveFile.diskFileInfo.path);
+      ajr.checksumBlob         = std::move(m_archiveFile.checksumBlob);
+      ajr.archiveReportURL     = std::move(m_archiveReportURL);
+      ajr.archiveErrorReportURL= std::move(m_archiveErrorReportURL);
+      ajr.srcUrl               = std::move(m_srcURL);
+    } else {
+      ajr.diskFileId           = m_archiveFile.diskFileId;
+      ajr.diskInstance         = m_archiveFile.diskInstance;
+      ajr.storageClass         = m_archiveFile.storageClass;
+      ajr.diskFileInfoPath     = m_archiveFile.diskFileInfo.path;
+      ajr.checksumBlob         = m_archiveFile.checksumBlob;
+      ajr.archiveReportURL     = m_archiveReportURL;
+      ajr.archiveErrorReportURL= m_archiveErrorReportURL;
+      ajr.srcUrl               = m_srcURL;
+    }
 
-  // Common fields
   ajr.reqId          = cta::schedulerdb::postgres::ArchiveJobQueueRow::getNextArchiveRequestID(m_conn);
   ajr.reqJobCount    = areq_job_count;
   ajr.mountPolicy    = m_mountPolicy.name;
@@ -68,30 +65,36 @@ ArchiveRequest::makeJobRows() const {
   ajr.startTime      = time(nullptr);   // Time queued in DB
   ajr.requesterName  = m_requesterIdentity.name;
   ajr.requesterGroup = m_requesterIdentity.group;
+  // Setting values unique for each job from m_jobs
+  ajr.copyNb         = archiveJob.copyNb;
+  ajr.tapePool       = archiveJob.tapepool;
+  ajr.retriesWithinMount   = archiveJob.retriesWithinMount;
+  ajr.maxRetriesWithinMount= archiveJob.maxRetriesWithinMount;
+  ajr.maxReportRetries     = archiveJob.maxReportRetries;
+  ajr.totalRetries         = archiveJob.totalRetries;
+  ajr.lastMountWithFailure = archiveJob.lastMountWithFailure;
+  ajr.maxTotalRetries      = archiveJob.maxTotalRetries;
 
-  for (const auto& aj : m_jobs) {
-    ajr.copyNb         = aj.copyNb;
-    ajr.tapePool       = aj.tapepool;
-    ajr.retriesWithinMount   = aj.retriesWithinMount;
-    ajr.maxRetriesWithinMount= aj.maxRetriesWithinMount;
-    ajr.maxReportRetries     = aj.maxReportRetries;
-    ajr.totalRetries         = aj.totalRetries;
-    ajr.lastMountWithFailure = aj.lastMountWithFailure;
-    ajr.maxTotalRetries      = aj.maxTotalRetries;
-    rows.emplace_back(std::move(ajr));
-  }
-  return rows;
+  return ajr;
 }
-
 
 // Inserts one row into DB
 void ArchiveRequest::insert() {
   try{
-    std::vector<postgres::ArchiveJobQueueRow> rows = makeJobRows();
-    log::ScopedParamContainer params(m_lc);
-    for (auto &row : rows) {
+    if (m_jobs.size() == 1) {
+      const auto& aj = m_jobs.front();
+      postgres::ArchiveJobQueueRow row = makeJobRow(aj);
       row.addParamsToLogContext(params);
       row.insert(m_conn);
+      m_lc.log(log::INFO, "In ArchiveRequest::insert(): added job to queue.");
+    } else {
+      std::vector<postgres::ArchiveJobQueueRow> rows;
+      rows.reserve(m_jobs.size());
+      for (const auto& aj : m_jobs) {
+        rows.emplace_back(makeJobRow(aj));
+      }
+      postgres::ArchiveJobQueueRow::insertBunch(m_conn, rows, false);
+      rows.back().addParamsToLogContext(params);
       m_lc.log(log::INFO, "In ArchiveRequest::insert(): added jobs to queue.");
     }
   } catch (exception::Exception& ex) {

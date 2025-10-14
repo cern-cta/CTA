@@ -35,7 +35,7 @@ class ArchiveRequest {
 public:
   ArchiveRequest(rdbms::Conn& conn, log::LogContext& lc) : m_conn(conn), m_lc(lc) {}
 
-  std::vector<postgres::ArchiveJobQueueRow> makeJobRows() const;
+  std::vector <postgres::ArchiveJobQueueRow> makeJobRow(const Job &archiveJob) const;
   void insert();
   [[noreturn]] void update() const;
 
