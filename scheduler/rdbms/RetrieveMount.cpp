@@ -81,10 +81,6 @@ RetrieveMount::getNextJobBatch(uint64_t filesRequested, uint64_t bytesRequested,
     retVector.reserve(nrows);
     // Fetch job info only in case there were jobs found and updated
     if (!queuedJobs.isEmpty()) {
-      // Construct the return value
-      // Precompute the maximum value before the loop
-      //common::dataStructures::TapeFile tpfile;
-      //auto maxBlockId = std::numeric_limits<decltype(tpfile.blockId)>::max();
       while (queuedJobs.next()) {
         auto job = m_jobPool->acquireJob();
         if (!job) {
@@ -197,7 +193,7 @@ void RetrieveMount::setDriveStatus(common::dataStructures::DriveStatus status,
 }
 
 void RetrieveMount::setTapeSessionStats(const castor::tape::tapeserver::daemon::TapeSessionStats& stats) {
-  // We just report tthe tape session statistics as instructed by the tape thread.
+  // We just report the tape session statistics as instructed by the tape thread.
   // Reset the drive state.
   common::dataStructures::DriveInfo driveInfo;
   driveInfo.driveName = mountInfo.drive;
@@ -306,7 +302,6 @@ void RetrieveMount::putQueueToSleep(const std::string &diskSystemName,
   if (!diskSystemName.empty()) {
     RelationalDB::DiskSleepEntry dse(sleepTime, time(nullptr));
     cta::threading::MutexLocker ml(m_RelationalDB.m_diskSystemSleepMutex);
-    //m_RelationalDB.m_diskSystemSleepCacheMap[diskSystemName] = dse;
     cta::schedulerdb::Transaction txn(m_connPool);
     try {
       m_RelationalDB.insertOrUpdateDiskSleepEntry(txn, diskSystemName, dse);

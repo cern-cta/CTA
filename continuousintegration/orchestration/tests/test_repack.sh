@@ -375,9 +375,8 @@ repackCancellation() {
     lastExpandedFSeq=`kubectl -n ${NAMESPACE} exec ${CTA_CLI_POD} -c cta-cli -- cta-admin --json repack ls --vid ${VID_TO_REPACK} | jq -r ".[0] | .lastExpandedFseq" || 0`
   done
   nbFilesOnQueue=`kubectl -n ${NAMESPACE} exec ${CTA_CLI_POD} -c cta-cli -- cta-admin --json showqueues | jq -r ". [] | select(.vid == \"${VID_TO_REPACK}\") | .queuedFiles"`
-  echo "Expansion finished with the following number of files in the retrieve queue: ${nbFilesOnQueue}."
+  echo "Expansion finished with the following number of files in the retrieve queue: ${nbFilesOnQueue}, for schedulerBackendName = ${schedulerBackendName}"
   schedulerBackendName=`kubectl -n ${NAMESPACE} exec ${CTA_CLI_POD} -c cta-cli -- cta-admin --json version | jq -r '.[] | .schedulerBackendName'`
-  echo "schedulerBackendName = ${schedulerBackendName}"
   if [[ "$schedulerBackendName" == "postgres" ]]; then
     if [[ -z $nbFilesOnQueue || $nbFilesOnQueue -eq  0 ]]
       then

@@ -23,7 +23,9 @@ namespace cta::schedulerdb::postgres {
 
   uint64_t
   RepackRequestTrackingRow::cancelRepack(Transaction &txn, const std::string &vid) {
-    // The request will be cancelled via the packer checking all tracked repack requests
+    // The request will just delete all the rows for which the process has not started yet
+    // Currently this functionality is not used at all in production.
+    // Marking as 'Cancelled' all active jobs and deleting files from disk will be an upgrade implemented in the next MR.
     std::string sql = R"SQL(
     DELETE FROM REPACK_REQUEST_TRACKING
     WHERE
@@ -163,7 +165,7 @@ rdbms::Rset RepackRequestTrackingRow::updateRepackRequestsProgress(
            SET
            STATUS = CASE
              WHEN (trk.ARCHIVED_FILES + agg.ARCHIVED_FILES_INC) = trk.TOTAL_FILES_TO_ARCHIVE
-               THEN :STATUS_COMPLETE::REPACK_REQ_STATUS
+               THEN :STATUS_COMPLETE_1::REPACK_REQ_STATUS
              ELSE :STATUS_RUNNING::REPACK_REQ_STATUS
            END,
            IS_COMPLETE = CASE
@@ -178,11 +180,11 @@ rdbms::Rset RepackRequestTrackingRow::updateRepackRequestsProgress(
            REARCHIVE_COPYNBS = trk.REARCHIVE_COPYNBS + agg.REARCHIVE_COPYNBS_INC,
            REARCHIVE_BYTES = trk.REARCHIVE_BYTES + agg.REARCHIVE_BYTES_INC
            FROM AGG agg
-           WHERE trk.REPACK_REQUEST_ID = agg.REPACK_REQUEST_ID
+           WHERE trk.REPACK_REQUEST_ID = agg.REPACK_REQUEST_ID AND STATUS != :STATUS_COMPLETE_2
            RETURNING trk.VID,
            CASE
              WHEN IS_COMPLETE = CASE
-                    WHEN (trk.ARCHIVED_FILES - agg.ARCHIVED_FILES_INC) = trk.TOTAL_FILES_TO_ARCHIVE
+                    WHEN (trk.ARCHIVED_FILES + agg.ARCHIVED_FILES_INC) = trk.TOTAL_FILES_TO_ARCHIVE
                       THEN TRUE
                     ELSE FALSE
                   END
@@ -211,8 +213,9 @@ rdbms::Rset RepackRequestTrackingRow::updateRepackRequestsProgress(
         stmt.bindUint64(":REARCH_COPY" + idx, u.rearchiveCopyNbs);
         stmt.bindUint64(":REARCH_BYTES" + idx, u.rearchiveBytes);
     }
-    stmt.bindString(":STATUS_COMPLETE", to_string(cta::schedulerdb::RepackJobStatus::RRS_Complete));
+    stmt.bindString(":STATUS_COMPLETE_1", to_string(cta::schedulerdb::RepackJobStatus::RRS_Complete));
     stmt.bindString(":STATUS_RUNNING", to_string(cta::schedulerdb::RepackJobStatus::RRS_Running));
+    stmt.bindString(":STATUS_COMPLETE_2", to_string(cta::schedulerdb::RepackJobStatus::RRS_Complete));
 
     return stmt.executeQuery();
 }

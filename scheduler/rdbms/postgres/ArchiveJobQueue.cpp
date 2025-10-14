@@ -390,7 +390,7 @@ void ArchiveJobQueueRow::updateRetryCounts(uint64_t mountId) {
 };
 
 // requeueFailedJob is used to requeue jobs which were not processed due to finished mount or failed jobs
-// In case of unexpected crashed the job stays in the ARCHIVE_PENDING_QUEUE and needs to be identified
+// In case of unexpected crashes the job stays in the ARCHIVE_PENDING_QUEUE and needs to be identified
 // in some garbage collection process - TO-BE-DONE.
 uint64_t ArchiveJobQueueRow::requeueFailedJob(Transaction& txn,
                                               ArchiveJobStatus newStatus,
@@ -698,18 +698,10 @@ rdbms::Rset ArchiveJobQueueRow::moveFailedRepackJobBatchToFailedQueueTable(Trans
             FOR UPDATE SKIP LOCKED
         )
         RETURNING *
-    ),
-    INSERTED_ROWS AS (
-        INSERT INTO REPACK_ARCHIVE_FAILED_QUEUE
-        SELECT * FROM MOVED_ROWS
-        RETURNING *
     )
-    SELECT
-        REPACK_REQUEST_ID,
-        COUNT(*) AS FILE_COUNT,
-        SUM(SIZE_IN_BYTES) AS FILE_BYTES
-    FROM INSERTED_ROWS
-    GROUP BY REPACK_REQUEST_ID
+    INSERT INTO REPACK_ARCHIVE_FAILED_QUEUE
+        SELECT * FROM MOVED_ROWS
+        RETURNING REPACK_REQUEST_ID, SIZE_IN_BYTES, SRC_URL
   )SQL";
   auto stmt = txn.getConn().createStmt(sql);
   stmt.bindUint64(":LIMIT", limit);
