@@ -26,7 +26,7 @@ namespace cta::schedulerdb {
 }
 
 postgres::ArchiveJobQueueRow
-ArchiveRequest::makeJobRow(const Job& archiveJob) const {
+ArchiveRequest::makeJobRow(const postgres::ArchiveQueueJob& archiveJob) const {
 
   postgres::ArchiveJobQueueRow ajr;
   // Setting common fields
@@ -51,7 +51,7 @@ ArchiveRequest::makeJobRow(const Job& archiveJob) const {
     }
 
   ajr.reqId          = cta::schedulerdb::postgres::ArchiveJobQueueRow::getNextArchiveRequestID(m_conn);
-  ajr.reqJobCount    = areq_job_count;
+  ajr.reqJobCount    = m_jobs.size();
   ajr.mountPolicy    = m_mountPolicy.name;
   ajr.priority       = m_mountPolicy.archivePriority;
   ajr.minArchiveRequestAge = m_mountPolicy.archiveMinRequestAge;
@@ -81,6 +81,7 @@ ArchiveRequest::makeJobRow(const Job& archiveJob) const {
 // Inserts one row into DB
 void ArchiveRequest::insert() {
   try{
+    log::ScopedParamContainer params(m_lc);
     if (m_jobs.size() == 1) {
       const auto& aj = m_jobs.front();
       postgres::ArchiveJobQueueRow row = makeJobRow(aj);
@@ -95,7 +96,7 @@ void ArchiveRequest::insert() {
       }
       postgres::ArchiveJobQueueRow::insertBunch(m_conn, rows, false);
       rows.back().addParamsToLogContext(params);
-      m_lc.log(log::INFO, "In ArchiveRequest::insert(): added jobs to queue.");
+      m_lc.log(log::INFO, "In ArchiveRequest::insert(): added jobs to queue. Logged parameters valid only for last job of inserted bunch !");
     }
   } catch (exception::Exception& ex) {
     log::ScopedParamContainer params(m_lc);
@@ -176,7 +177,7 @@ void ArchiveRequest::addJob(uint8_t copyNumber,
                             uint16_t maxRetriesWithinMount,
                             uint16_t maxTotalRetries,
                             uint16_t maxReportRetries) {
-  Job newJob;
+  postgres::ArchiveQueueJob newJob;
   newJob.copyNb = copyNumber;
   newJob.status = ArchiveJobStatus::AJS_ToTransferForUser;
   newJob.tapepool = tapepool;
