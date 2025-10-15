@@ -22,8 +22,8 @@
 #include "scheduler/rdbms/postgres/Transaction.hpp"
 #include "common/Timer.hpp"
 #include "scheduler/rdbms/RetrieveMount.hpp"
-#include "common/threading/MutexLocker.hpp"
 #include "common/exception/NotImplementedException.hpp"
+#include "common/process/threading/MutexLocker.hpp"
 
 namespace cta::schedulerdb {
 

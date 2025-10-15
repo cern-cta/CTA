@@ -22,7 +22,7 @@
 #include "castor/tape/tapeserver/daemon/DiskStats.hpp"
 #include "castor/tape/tapeserver/daemon/ErrorFlag.hpp"
 #include "castor/tape/tapeserver/daemon/TaskWatchDog.hpp"
-#include "common/threading/AtomicFlag.hpp"
+#include "common/process/threading/AtomicFlag.hpp"
 #include "common/log/LogContext.hpp"
 #include "disk/DiskFile.hpp"
 

@@ -50,7 +50,6 @@
 #include "common/utils/utils.hpp"
 #include "disk/DiskFileImplementations.hpp"
 #include "scheduler/ArchiveMount.hpp"
-#include "scheduler/DiskReportRunner.hpp"
 #include "scheduler/RetrieveMount.hpp"
 #include "scheduler/RetrieveRequestDump.hpp"
 #include "scheduler/Scheduler.hpp"

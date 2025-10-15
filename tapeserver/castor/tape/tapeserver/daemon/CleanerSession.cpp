@@ -22,7 +22,7 @@
 #include "castor/tape/tapeserver/daemon/CleanerSession.hpp"
 #include "castor/tape/tapeserver/file/HeaderChecker.hpp"
 #include "catalogue/Catalogue.hpp"
-#include "common/processCap/ProcessCap.hpp"
+#include "common/process/ProcessCap.hpp"
 
 //------------------------------------------------------------------------------
 // constructor

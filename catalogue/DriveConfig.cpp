@@ -56,9 +56,6 @@ void DriveConfig::setTapedConfiguration(const tape::daemon::common::TapedConfigu
   setConfigToDB(tapedConfiguration.fileCatalogConfigFile, catalogue, tapeDriveName);
   setConfigToDB(tapedConfiguration.authenticationProtocol, catalogue, tapeDriveName);
   setConfigToDB(tapedConfiguration.authenticationSSSKeytab, catalogue, tapeDriveName);
-  setConfigToDB(tapedConfiguration.useRepackManagement, catalogue, tapeDriveName);
-  setConfigToDB(tapedConfiguration.useMaintenanceProcess, catalogue, tapeDriveName);
-  setConfigToDB(tapedConfiguration.repackMaxRequestsToExpand, catalogue, tapeDriveName);
   setConfigToDB(tapedConfiguration.externalFreeDiskSpaceScript, catalogue, tapeDriveName);
   setConfigToDB(tapedConfiguration.tapeLoadTimeout, catalogue, tapeDriveName);
   setConfigToDB(tapedConfiguration.wdGetNextMountMaxSecs, catalogue, tapeDriveName);

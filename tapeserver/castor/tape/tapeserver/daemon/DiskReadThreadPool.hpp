@@ -19,8 +19,8 @@
 
 #include "castor/tape/tapeserver/daemon/DiskReadTask.hpp"
 #include "castor/tape/tapeserver/daemon/TaskWatchDog.hpp"
-#include "common/threading/BlockingQueue.hpp"
-#include "common/threading/Thread.hpp"
+#include "common/process/threading/BlockingQueue.hpp"
+#include "common/process/threading/Thread.hpp"
 #include "common/log/LogContext.hpp"
 #include "common/Timer.hpp"
 #include "common/telemetry/metrics/instruments/TapedInstruments.hpp"

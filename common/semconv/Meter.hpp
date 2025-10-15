@@ -27,5 +27,6 @@ static constexpr const char* kCtaRdbms = "cta.rdbms";
 static constexpr const char* kCtaScheduler = "cta.scheduler";
 static constexpr const char* kCtaObjectstore = "cta.objectstore";
 static constexpr const char* kCtaTaped = "cta.taped";
+static constexpr const char* kCtaMaintenance = "cta.maintenance";
 
 }  // namespace cta::semconv::meter

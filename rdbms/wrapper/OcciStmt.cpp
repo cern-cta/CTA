@@ -17,7 +17,7 @@
 
 #include "common/exception/Exception.hpp"
 #include "common/exception/LostDatabaseConnection.hpp"
-#include "common/threading/MutexLocker.hpp"
+#include "common/process/threading/MutexLocker.hpp"
 #include "common/utils/utils.hpp"
 #include "common/semconv/Attributes.hpp"
 #include "rdbms/CheckConstraintError.hpp"

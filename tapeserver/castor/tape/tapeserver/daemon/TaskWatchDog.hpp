@@ -18,8 +18,8 @@
 #pragma once
 
 
-#include "common/threading/AtomicFlag.hpp"
-#include "common/threading/BlockingQueue.hpp"
+#include "common/process/threading/AtomicFlag.hpp"
+#include "common/process/threading/BlockingQueue.hpp"
 #include "common/log/LogContext.hpp"
 #include "tapeserver/daemon/TapedProxy.hpp"
 #include "castor/tape/tapeserver/daemon/ReportPackerInterface.hpp"

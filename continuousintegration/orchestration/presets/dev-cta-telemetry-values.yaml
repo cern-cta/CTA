@@ -35,3 +35,15 @@ tpsrv:
         exportTimeout: 500
         otlp:
           endpoint: "http://otel-opentelemetry-collector:4318/v1/metrics"
+
+maintenance:
+  conf:
+    telemetry:
+      enabled: true
+      retainInstanceIdOnRestart: false
+      metrics:
+        backend: "OTLP_HTTP"
+        exportInterval: 1000
+        exportTimeout: 500
+        otlp:
+          endpoint: "http://otel-opentelemetry-collector:4318/v1/metrics"

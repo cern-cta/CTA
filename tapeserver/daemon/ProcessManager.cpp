@@ -103,6 +103,7 @@ cta::log::LogContext&  ProcessManager::logContext() {
 ProcessManager::RunPartStatus ProcessManager::runShutdownManagement() {
   // Check the current statuses for shutdown requests
   // If any process requests a shutdown, we will trigger it in all.
+<<<<<<< HEAD
   {
     bool anyAskedShutdown =
             std::count_if(m_subprocessHandlers.cbegin(), m_subprocessHandlers.cend(),
@@ -117,6 +118,11 @@ ProcessManager::RunPartStatus ProcessManager::runShutdownManagement() {
     if (anyAskedShutdown) {
       for (auto &sp: m_subprocessHandlers) {
         sp.status = sp.handler->shutdown();
+=======
+  bool anyAskedShutdown =
+    std::ranges::count_if(m_subprocessHandlers, [this](const SubprocessAndStatus& i) {
+      if(i.status.shutdownRequested) {
+>>>>>>> 4671ec9522 (Split maintenance from Tape daemon[C)
         cta::log::ScopedParamContainer params(m_logContext);
         params.add("SubprocessName", sp.handler->index)
                 .add("ShutdownComplete", sp.status.shutdownComplete);
@@ -139,6 +145,7 @@ ProcessManager::RunPartStatus ProcessManager::runShutdownManagement() {
 
 ProcessManager::RunPartStatus ProcessManager::runKillManagement() {
   // If any process asks for a kill, we kill all sub processes and exit
+<<<<<<< HEAD
   {
     bool anyAskedKill =
             std::count_if(m_subprocessHandlers.cbegin(), m_subprocessHandlers.cend(),
@@ -153,6 +160,11 @@ ProcessManager::RunPartStatus ProcessManager::runKillManagement() {
     if (anyAskedKill) {
       for (auto &sp: m_subprocessHandlers) {
         sp.handler->kill();
+=======
+  bool anyAskedKill =
+    std::ranges::count_if(m_subprocessHandlers, [this](const SubprocessAndStatus& i) {
+      if(i.status.killRequested) {
+>>>>>>> 4671ec9522 (Split maintenance from Tape daemon[C)
         cta::log::ScopedParamContainer params(m_logContext);
         params.add("SubprocessName", sp.handler->index);
         m_logContext.log(log::INFO, "Instructed handler to kill subprocess");

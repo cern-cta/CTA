@@ -20,7 +20,7 @@
 #include "common/exception/Exception.hpp"
 #include "common/exception/TimeoutException.hpp"
 #include "common/exception/NoSuchObject.hpp"
-#include "common/threading/MutexLocker.hpp"
+#include "common/process/threading/MutexLocker.hpp"
 #include "common/Timer.hpp"
 #include "common/utils/Regex.hpp"
 #include "common/utils/utils.hpp"
