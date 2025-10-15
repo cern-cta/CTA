@@ -19,7 +19,7 @@
 
 #include <memory>
 
-#include "common/threading/SocketPair.hpp"
+#include "common/process/threading/SocketPair.hpp"
 #ifdef CTA_PGSCHED
 #include "scheduler/rdbms/RelationalDBInit.hpp"
 #else

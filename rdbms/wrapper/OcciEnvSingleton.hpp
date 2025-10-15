@@ -17,7 +17,7 @@
 
 #pragma once
 
-#include "common/threading/Mutex.hpp"
+#include "common/process/threading/Mutex.hpp"
 #include "rdbms/wrapper/OcciEnv.hpp"
 
 #include <memory>

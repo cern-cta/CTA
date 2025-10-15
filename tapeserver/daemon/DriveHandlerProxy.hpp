@@ -17,7 +17,7 @@
 
 #pragma once
 
-#include "common/threading/SocketPair.hpp"
+#include "common/process/threading/SocketPair.hpp"
 #include "common/log/LogContext.hpp"
 #include "tapeserver/daemon/TapedProxy.hpp"
 

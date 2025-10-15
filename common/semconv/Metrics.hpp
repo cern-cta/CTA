@@ -114,4 +114,6 @@ static constexpr const char* kMetricCtaTapedDriveStatus = "cta.taped.drive.statu
 static constexpr const char* descrCtaTapedDriveStatus = "Number of drives in a given state";
 static constexpr const char* unitCtaTapedDriveStatus = "1";
 
+// -------------------- MAINTENANCE --------------------
+
 }  // namespace cta::semconv::metrics

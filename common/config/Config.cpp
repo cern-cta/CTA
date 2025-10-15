@@ -21,8 +21,12 @@
 #include <map>
 #include <limits>
 #include <algorithm>
+#include <iterator>
+#include <numeric>
 
 #include "common/exception/UserError.hpp"
+#include "common/log/LogContext.hpp"
+#include "common/log/DummyLogger.hpp"
 #include "Config.hpp"
 
 namespace cta::common {
@@ -30,20 +34,15 @@ namespace cta::common {
 //! Configuration option list type
 using optionlist_t = std::vector<std::string>;
 
-Config::Config(const std::string& filename) {
-  // Open the config file for reading
-  std::ifstream file(filename);
-  if (!file) {
-    throw exception::UserError("Failed to open " + filename);
-  }
-  // Parse the config file
-  try {
-    parse(file);
-  } catch (std::exception& ex) {
-    throw exception::UserError("Failed to parse configuration file " + filename + ": " + ex.what());
+Config::Config(const std::string& filename, log::Logger *log): m_configFileName(filename) {
+  if(log == nullptr){
+    cta::log::DummyLogger dl("","");
+    parse(dl);
+  } else {
+    parse(*log);
   }
 }
-
+  
 const optionlist_t& Config::getOptionList(const std::string& key) const {
   auto it = m_configuration.find(key);
   return it == m_configuration.end() ? m_nulloptionlist : it->second;
@@ -90,9 +89,23 @@ std::optional<bool> Config::getOptionValueBool(const std::string& key) const {
   }
 }
 
-void Config::parse(std::ifstream& file) {
-  std::string line;
+void Config::parse(log::Logger &log) {
+  // Reset configuration if we are reparsing
+  if (m_configuration.empty()){
+    log(log::INFO, "Parsing configuration");
+  } else {
+    m_configuration.clear();
+    log(log::INFO, "Re-initializing configuration");
+  }
+  
+  // Open the config file for reading
+  std::ifstream file(m_configFileName);
 
+  if (!file) {
+    throw exception::UserError("Failed to open " + m_configFileName);
+  }
+  
+  std::string line;
   while (std::getline(file, line)) {
     // Strip out comments
     if (auto pos = line.find('#'); pos != std::string::npos) {
@@ -110,6 +123,15 @@ void Config::parse(std::ifstream& file) {
 
       if (!values.empty()) {
         m_configuration[key] = values;
+        std::list<log::Param> params;
+        params.emplace_back("key", key);
+        params.emplace_back("value",
+          std::accumulate(std::next(values.begin()), values.end(), values[0],
+                          [](const std::string& a, const std::string& b){
+                            return a + ", " + b;
+                          })
+        );
+        log(log::INFO, "Configuration entry " + key, params);
       }
     }
   }

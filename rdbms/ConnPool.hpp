@@ -18,8 +18,8 @@
 #pragma once
 
 #include "common/exception/Exception.hpp"
-#include "common/threading/CondVar.hpp"
-#include "common/threading/Mutex.hpp"
+#include "common/process/threading/CondVar.hpp"
+#include "common/process/threading/Mutex.hpp"
 #include "rdbms/ConnAndStmts.hpp"
 #include "rdbms/Conn.hpp"
 #include "rdbms/wrapper/ConnWrapper.hpp"

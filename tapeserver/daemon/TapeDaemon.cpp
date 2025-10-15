@@ -22,12 +22,11 @@
 #include "catalogue/Catalogue.hpp"
 #include "common/exception/Errnum.hpp"
 #include "common/exception/NoSuchObject.hpp"
-#include "common/processCap/ProcessCap.hpp"
+#include "common/process/ProcessCap.hpp"
 #include "common/telemetry/TelemetryInit.hpp"
 #include "common/utils/utils.hpp"
-#include "tapeserver/daemon/CommandLineParams.hpp"
+#include "common/CmdLineParams.hpp"
 #include "tapeserver/daemon/DriveHandler.hpp"
-#include "tapeserver/daemon/MaintenanceHandler.hpp"
 #include "tapeserver/daemon/ProcessManager.hpp"
 #include "tapeserver/daemon/SignalHandler.hpp"
 #include "tapeserver/daemon/TapeDaemon.hpp"
@@ -35,12 +34,11 @@
 
 namespace cta::tape::daemon {
 
-TapeDaemon::TapeDaemon(const cta::daemon::CommandLineParams & commandLine,
+TapeDaemon::TapeDaemon(const cta::common::CmdLineParams & commandLine,
     log::Logger& log,
     const common::TapedConfiguration& globalConfig):
     cta::server::Daemon(log),
-    m_globalConfiguration(globalConfig),
-    m_hostName(getHostName()) {
+    m_globalConfiguration(globalConfig) {
   setCommandLineHasBeenParsed(commandLine.foreground);
 }
 
@@ -65,16 +63,6 @@ int TapeDaemon::mainImpl() {
     return EXIT_FAILURE;
   }
   return EXIT_SUCCESS;
-}
-
-//------------------------------------------------------------------------------
-// getHostName
-//------------------------------------------------------------------------------
-std::string cta::tape::daemon::TapeDaemon::getHostName() const {
-  char nameBuf[HOST_NAME_MAX + 1];
-  if(gethostname(nameBuf, sizeof(nameBuf)))
-    throw cta::exception::Errnum("Failed to get host name");
-  return nameBuf;
 }
 
 //------------------------------------------------------------------------------
@@ -111,13 +99,6 @@ void cta::tape::daemon::TapeDaemon::mainEventLoop() {
                                            pm);
   pm.addHandler(std::move(dh));
 
-  // Create the garbage collector
-  if(!isMaintenanceProcessDisabled()){
-    auto gc = std::make_unique<MaintenanceHandler>(m_globalConfiguration, pm);
-    pm.addHandler(std::move(gc));
-  } else {
-    lc.log(log::INFO,"In TapeDaemon::mainEventLoop, the Maintenance process is disabled from the configuration. Will not run it.");
-  }
   // And run the process manager
   int ret=pm.run();
   {
@@ -143,9 +124,4 @@ void cta::tape::daemon::TapeDaemon::setDumpable() {
     throw ex;
   }
 }
-
-bool cta::tape::daemon::TapeDaemon::isMaintenanceProcessDisabled() const{
-  return m_globalConfiguration.useMaintenanceProcess.value() == "no";
-}
-
 } // namespace cta::tape::daemon

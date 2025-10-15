@@ -23,7 +23,7 @@
 #include <string>
 
 #include "Backend.hpp"
-#include "common/threading/Thread.hpp"
+#include "common/process/threading/Thread.hpp"
 
 namespace cta::objectstore {
 

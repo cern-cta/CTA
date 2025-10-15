@@ -16,7 +16,7 @@
  */
 
 #include "common/exception/Exception.hpp"
-#include "common/threading/MutexLocker.hpp"
+#include "common/process/threading/MutexLocker.hpp"
 #include "rdbms/wrapper/ConnWrapper.hpp"
 #include "rdbms/StmtPool.hpp"
 

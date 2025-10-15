@@ -190,23 +190,6 @@ struct TapedConfiguration {
     "environment", "XrdSecSSSKT"};
 
   //----------------------------------------------------------------------------
-  // Maintenance process configuration
-  //----------------------------------------------------------------------------
-  /// Usage of RepackRequestManager for repack-related operations
-  cta::SourcedParameter<std::string> useRepackManagement {
-    "taped","UseRepackManagement","yes","Compile time default"
-  };
-
-  /// Usage of MaintenanceProcess for repack-related operations, Garbage collection and disk reporting
-  cta::SourcedParameter<std::string> useMaintenanceProcess {
-    "taped","UseMaintenanceProcess","yes","Compile time default"
-  };
-
-  /// Max number of repacks to promote to ToExpand state.
-  cta::SourcedParameter<std::uint64_t> repackMaxRequestsToExpand{
-      "taped", "RepackMaxRequestsToExpand", 2, "Compile time default"};
-
-  //----------------------------------------------------------------------------
   // Tape load actions
   //----------------------------------------------------------------------------
   cta::SourcedParameter<uint32_t> tapeLoadTimeout {

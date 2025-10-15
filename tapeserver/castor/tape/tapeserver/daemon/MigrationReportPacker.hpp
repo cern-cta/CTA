@@ -17,7 +17,7 @@
 
 #pragma once
 
-#include "common/threading/BlockingQueue.hpp"
+#include "common/process/threading/BlockingQueue.hpp"
 #include "tapeserver/castor/tape/tapeserver/daemon/ReportPackerInterface.hpp"
 #include "tapeserver/castor/tape/tapeserver/drive/DriveInterface.hpp"
 #include "scheduler/ArchiveMount.hpp"
@@ -31,7 +31,7 @@ namespace castor::tape::tapeserver::daemon {
 class MigrationReportPacker : public ReportPackerInterface<detail::Migration> {
 public:
   /**
-   * @param tg The client who is asking for a migration of his files 
+   * @param tg The client who is asking for a migration of his files
    * and to whom we have to report to the status of the operations.
    */
   MigrationReportPacker(cta::ArchiveMount* archiveMount, const cta::log::LogContext& lc);
@@ -117,7 +117,7 @@ public:
 
   /**
    * Create into the MigrationReportPacker a report for an erroneous end of session
-   * @param msg The error message 
+   * @param msg The error message
    * @param isTapeFull True if the drive returned ENOSPC code (end of space)
    * @param lc log context provided by the calling thread.
    */
@@ -193,7 +193,7 @@ private:
   public:
     /* We only can compute the compressed size once we have flushed on the drive
      * We can get from the drive the number of byte it really wrote to tape
-     * @param nbByte the number of byte it really wrote to tape between 
+     * @param nbByte the number of byte it really wrote to tape between
      * this flush and the previous one
      *  */
     explicit ReportFlush(drive::compressionStats compressStats) : m_compressStats(compressStats) {}
@@ -265,20 +265,20 @@ private:
     void run() override;
   } m_workerThread;
 
-  /** 
+  /**
    * m_fifo is holding all the report waiting to be processed
    */
   cta::threading::BlockingQueue<std::unique_ptr<Report>> m_fifo;
 
   cta::threading::Mutex m_producterProtection;
 
-  /** 
-   * Sanity check variable to register if an error has happened 
+  /**
+   * Sanity check variable to register if an error has happened
    * Is set at true as soon as a ReportError has been processed.
    */
   bool m_errorHappened = false;
 
-  /* bool to keep the inner thread running. Is set at false 
+  /* bool to keep the inner thread running. Is set at false
    * when an end of session (with error) is called
    */
   bool m_continue = true;

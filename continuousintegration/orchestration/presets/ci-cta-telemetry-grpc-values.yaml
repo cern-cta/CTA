@@ -49,3 +49,19 @@ tpsrv:
             basic:
               username: it_sd_tab_ci
               passwordSecret: monit-it-sd-tab-ci-pwd
+
+maintenance:
+  conf:
+    telemtry:
+      enabled: true
+      retainInstanceIdOnRestart: false
+      metrics:
+        backend: "OTLP_GRPC"
+        exportInterval: 1000
+        exportTimeout: 500
+        otlp:
+          endpoint: "https://monit-otlp.cern.ch:4316"
+          auth:
+            basic:
+              username: it_sd_tab_ci
+              passwordSecret: monit-it-sd-tab-ci-pwd

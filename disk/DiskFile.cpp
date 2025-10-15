@@ -19,7 +19,7 @@
 
 #include "disk/DiskFileImplementations.hpp"
 #include "common/exception/Errnum.hpp"
-#include "common/threading/MutexLocker.hpp"
+#include "common/process/threading/MutexLocker.hpp"
 #include "common/utils/utils.hpp"
 #include <xrootd/XrdCl/XrdClFile.hh>
 #include <uuid/uuid.h>

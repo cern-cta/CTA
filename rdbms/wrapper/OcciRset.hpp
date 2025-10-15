@@ -19,7 +19,7 @@
 
 #include "common/exception/Exception.hpp"
 #include "common/exception/NotImplementedException.hpp"
-#include "common/threading/Mutex.hpp"
+#include "common/process/threading/Mutex.hpp"
 #include "rdbms/wrapper/ColumnNameToIdx.hpp"
 #include "rdbms/wrapper/RsetWrapper.hpp"
 
