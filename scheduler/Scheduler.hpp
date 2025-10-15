@@ -92,8 +92,8 @@ public:
   Scheduler(cta::catalogue::Catalogue& catalogue,
             SchedulerDatabase& db,
             const std::string& schedulerBackendName,
-            const uint64_t minFilesToWarrantAMount,
-            const uint64_t minBytesToWarrantAMount);
+            const uint64_t minFilesToWarrantAMount = 5,
+            const uint64_t minBytesToWarrantAMount = 2000000);
   // TODO: we have out the mount policy parameters here temporarily we will
   // remove them once we know where to put them
 

@@ -19,8 +19,8 @@
 
 #include "Backend.hpp"
 #include "rados/librados.hpp"
-#include "common/threading/Mutex.hpp"
-#include "common/threading/BlockingQueue.hpp"
+#include "common/process/threading/Mutex.hpp"
+#include "common/process/threading/BlockingQueue.hpp"
 #include "common/Timer.hpp"
 #include "common/log/Logger.hpp"
 #include "common/log/LogContext.hpp"

@@ -28,8 +28,8 @@
 #include "castor/tape/tapeserver/daemon/TaskWatchDog.hpp"
 #include "castor/tape/tapeserver/daemon/VolumeInfo.hpp"
 #include "castor/tape/tapeserver/drive/DriveInterface.hpp"
-#include "common/threading/BlockingQueue.hpp"
-#include "common/threading/Thread.hpp"
+#include "common/process/threading/BlockingQueue.hpp"
+#include "common/process/threading/Thread.hpp"
 #include "common/Timer.hpp"
 
 namespace castor::tape::tapeserver::daemon {

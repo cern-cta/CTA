@@ -21,7 +21,7 @@
 #include "rdbms/wrapper/PostgresRset.hpp"
 #include "rdbms/wrapper/PostgresStmt.hpp"
 #include "rdbms/wrapper/PostgresConn.hpp"
-#include "common/threading/RWLockWrLocker.hpp"
+#include "common/process/threading/RWLockWrLocker.hpp"
 #include <cctype>
 
 #include <utility>

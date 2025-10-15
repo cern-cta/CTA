@@ -28,7 +28,7 @@
 #include "common/dataStructures/ArchiveJob.hpp"
 #include "common/dataStructures/JobQueueType.hpp"
 #include "common/log/LogContext.hpp"
-#include "common/threading/Mutex.hpp"
+#include "common/process/threading/Mutex.hpp"
 #include "objectstore/Agent.hpp"
 #include "objectstore/Algorithms.hpp"
 #include "objectstore/ArchiveQueue.hpp"

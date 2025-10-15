@@ -295,7 +295,7 @@ FrontendService::FrontendService(const std::string& configFilename) : m_archiveF
 
   m_scheddb->initConfig(osThreadPoolSize, osThreadStackSize);
   // Initialise the Scheduler
-  m_scheduler = std::make_unique<cta::Scheduler>(*m_catalogue, *m_scheddb, m_schedulerBackendName, 5, 2 * 1000 * 1000);
+  m_scheduler = std::make_unique<cta::Scheduler>(*m_catalogue, *m_scheddb, m_schedulerBackendName);
 
   // Initialise the Frontend
   auto archiveFileMaxSize = config.getOptionValueUInt("cta.archivefile.max_size_gb");

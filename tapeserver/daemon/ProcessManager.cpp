@@ -104,7 +104,7 @@ ProcessManager::RunPartStatus ProcessManager::runShutdownManagement() {
   // Check the current statuses for shutdown requests
   // If any process requests a shutdown, we will trigger it in all.
   bool anyAskedShutdown =
-    std::count_if(m_subprocessHandlers.cbegin(), m_subprocessHandlers.cend(), [this](const SubprocessAndStatus& i) {
+    std::ranges::count_if(m_subprocessHandlers, [this](const SubprocessAndStatus& i) {
       if(i.status.shutdownRequested) {
         cta::log::ScopedParamContainer params(m_logContext);
         params.add("SubprocessName", i.handler->index);
@@ -137,7 +137,7 @@ ProcessManager::RunPartStatus ProcessManager::runShutdownManagement() {
 ProcessManager::RunPartStatus ProcessManager::runKillManagement() {
   // If any process asks for a kill, we kill all sub processes and exit
   bool anyAskedKill =
-    std::count_if(m_subprocessHandlers.cbegin(), m_subprocessHandlers.cend(), [this](const SubprocessAndStatus& i) {
+    std::ranges::count_if(m_subprocessHandlers, [this](const SubprocessAndStatus& i) {
       if(i.status.killRequested) {
         cta::log::ScopedParamContainer params(m_logContext);
         params.add("SubprocessName", i.handler->index);
@@ -207,7 +207,7 @@ ProcessManager::RunPartStatus ProcessManager::runSigChildManagement() {
   // If any process handler received sigChild, we signal it to all processes. Typically, this is
   // done by the signal handler
   bool sigChild =
-    std::count_if(m_subprocessHandlers.cbegin(), m_subprocessHandlers.cend(), [this](const SubprocessAndStatus& i) {
+    std::ranges::count_if(m_subprocessHandlers, [this](const SubprocessAndStatus& i) {
       if(i.status.sigChild) {
         cta::log::ScopedParamContainer params(m_logContext);
         params.add("SubprocessName", i.handler->index);

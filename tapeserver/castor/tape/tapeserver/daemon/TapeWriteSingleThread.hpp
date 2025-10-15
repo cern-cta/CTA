@@ -25,9 +25,9 @@
 #include "castor/tape/tapeserver/file/Exceptions.hpp"
 #include "castor/tape/tapeserver/file/FileWriter.hpp"
 #include "castor/tape/tapeserver/file/WriteSession.hpp"
-#include "common/processCap/ProcessCap.hpp"
-#include "common/threading/BlockingQueue.hpp"
-#include "common/threading/Thread.hpp"
+#include "common/process/ProcessCap.hpp"
+#include "common/process/threading/BlockingQueue.hpp"
+#include "common/process/threading/Thread.hpp"
 #include "common/Timer.hpp"
 
 #include <iostream>

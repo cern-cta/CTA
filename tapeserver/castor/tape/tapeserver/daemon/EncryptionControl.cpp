@@ -19,7 +19,7 @@
 #include <memory>
 
 #include "common/exception/Exception.hpp"
-#include "common/threading/SubProcess.hpp"
+#include "common/process/threading/SubProcess.hpp"
 #include "EncryptionControl.hpp"
 #include "catalogue/TapePool.hpp"
 

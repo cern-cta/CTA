@@ -23,3 +23,11 @@ tpsrv:
       retainInstanceIdOnRestart: true
       metricsBackend: "OTLP_HTTP"
       metricsExportOtlpEndpoint: "http://otel-opentelemetry-collector:4318/v1/metrics"
+
+maintenance:
+  conf:
+    telemetry:
+      enabled: true
+      retainInstanceIdOnRestart: false
+      metricsBackend: "OTLP_HTTP"
+      metricsExportOtlpEndpoint: "http://otel-opentelemetry-collector:4318/v1/metrics"

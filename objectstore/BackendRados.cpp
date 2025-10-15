@@ -29,7 +29,7 @@
 #include "common/exception/NoSuchObject.hpp"
 #include "common/exception/TimeoutException.hpp"
 #include "common/log/LogContext.hpp"
-#include "common/threading/MutexLocker.hpp"
+#include "common/process/threading/MutexLocker.hpp"
 #include "common/Timer.hpp"
 #include "common/utils/utils.hpp"
 

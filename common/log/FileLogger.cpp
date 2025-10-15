@@ -16,7 +16,7 @@
  */
 
 #include "common/log/FileLogger.hpp"
-#include "common/threading/MutexLocker.hpp"
+#include "common/process/threading/MutexLocker.hpp"
 #include "common/exception/Errnum.hpp"
 #include <sys/types.h>
 #include <sys/stat.h>
