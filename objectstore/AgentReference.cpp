@@ -106,7 +106,7 @@ void AgentReference::queueAndExecuteAction(std::shared_ptr<Action> action, objec
     threading::MutexLocker ulQueue(m_currentQueue->mutex);
     m_currentQueue->queue.push_back(action);
     // Get hold of the future before the promise gets a chance to be accessed
-    auto actionFuture=action->promise.get_future();
+    auto actionFuture=action->promise->get_future();
     // Release the locks and wait for action execution
     ulQueue.unlock();
     ulGlobal.unlock();
@@ -191,7 +191,7 @@ void AgentReference::queueAndExecuteAction(std::shared_ptr<Action> action, objec
       // We now pass the exception to all threads
       for (auto a: q->queue) {
         threading::MutexLocker ml(a->mutex);
-        a->promise.set_exception(std::current_exception());
+        a->promise->set_exception(std::current_exception());
       }
       // And to our own caller
       throw;
@@ -201,7 +201,7 @@ void AgentReference::queueAndExecuteAction(std::shared_ptr<Action> action, objec
     // and release the other threads
     for (auto a: q->queue) {
       threading::MutexLocker ml(a->mutex);
-      a->promise.set_value();
+      a->promise->set_value();
     }
   }
 }

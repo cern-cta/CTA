@@ -125,11 +125,12 @@ private:
    */
   struct Action {
     Action(AgentOperation op, const std::string & objectAddress, const std::list<std::string> & objectAddressSet):
-      op(op), objectAddress(objectAddress), objectAddressSet(objectAddressSet) {}
+      op(op), objectAddress(objectAddress), objectAddressSet(objectAddressSet),
+      promise(std::make_shared<std::promise<void>>()) {}
     AgentOperation op;
     const std::string & objectAddress;
     const std::list<std::string> & objectAddressSet;
-    std::promise<void> promise;
+    std::shared_ptr<std::promise<void>> promise;
     /***
      * A mutex ensuring the object will not be released before the promise's result
      * is fully pushed.
