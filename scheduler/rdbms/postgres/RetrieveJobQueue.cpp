@@ -1068,7 +1068,7 @@ uint64_t RetrieveJobQueueRow::moveJobBatchToFailedQueueTable(Transaction& txn, c
         DELETE FROM
   )SQL";
   sql += repack_table_name_prefix + "RETRIEVE_ACTIVE_QUEUE ";
-  sql = R"SQL(
+  sql += R"SQL(
           WHERE JOB_ID IN (
   )SQL";
   sql += sqlpart + ")";
