@@ -65,6 +65,13 @@ template <class Queue, class Request>
 SharedQueueLock<Queue, Request>::~SharedQueueLock() {
   double waitTime = m_timer.secs(utils::Timer::resetCounter);
   bool skipQueuesTrim=false;
+  std::string queueAddress;
+
+  // Save queue address for logging before we destroy it
+  if (m_queue.get()) {
+    queueAddress = m_queue->getAddressIfSet();
+  }
+
   try {
     if(m_lock.get() && m_lock->isLocked()) {
       m_lock->release();
@@ -77,6 +84,15 @@ SharedQueueLock<Queue, Request>::~SharedQueueLock() {
   }
 
   double queueUnlockTime = m_timer.secs(utils::Timer::resetCounter);
+
+  // IMPORTANT: Destroy the queue object BEFORE signaling the successor
+  // This prevents data races where the successor thread starts working on the same
+  // queue in the objectstore while this thread is still destroying its queue object
+  m_queue.reset();
+  m_lock.reset();
+
+  double queueDestructionTime = m_timer.secs(utils::Timer::resetCounter);
+
   // The next update of the queue can now proceed
   if (m_promiseForSuccessor.get()) {
     m_promiseForSuccessor->set_value();
@@ -98,9 +114,10 @@ SharedQueueLock<Queue, Request>::~SharedQueueLock() {
   } catch (std::out_of_range &) {}
   double inMemoryQueuesCleanupTime = m_timer.secs();
   log::ScopedParamContainer params(m_logContext);
-  params.add("objectQueue", m_queue->getAddressIfSet())
+  params.add("objectQueue", queueAddress)
         .add("waitTime", waitTime)
         .add("queueUnlockTime", queueUnlockTime)
+        .add("queueDestructionTime", queueDestructionTime)
         .add("successorUnlockTime", successorUnlockTime)
         .add("inMemoryQueuesCleanupTime", inMemoryQueuesCleanupTime);
   m_logContext.log(log::INFO, "In SharedQueueLock::~SharedQueueLock(): unlocked the archive queue pointer.");
