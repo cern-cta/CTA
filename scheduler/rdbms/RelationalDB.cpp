@@ -22,7 +22,7 @@
 #include "common/exception/Exception.hpp"
 #include "common/log/TimingList.hpp"
 #include "common/utils/utils.hpp"
-#include "common/threading/MutexLocker.hpp"
+#include "common/process/threading/MutexLocker.hpp"
 #include "scheduler/rdbms/postgres/Transaction.hpp"
 #include "scheduler/rdbms/postgres/ArchiveJobSummary.hpp"
 #include "scheduler/rdbms/postgres/RetrieveJobSummary.hpp"

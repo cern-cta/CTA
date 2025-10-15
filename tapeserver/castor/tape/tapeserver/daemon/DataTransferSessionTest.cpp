@@ -54,7 +54,7 @@
 #include "common/dataStructures/RequesterMountRule.hpp"
 #include "common/exception/Exception.hpp"
 #include "common/log/StringLogger.hpp"
-#include "common/threading/Thread.hpp"
+#include "common/process/threading/Thread.hpp"
 #include "common/utils/utils.hpp"
 #include "mediachanger/MediaChangerFacade.hpp"
 #include "scheduler/MountType.hpp"
@@ -169,7 +169,7 @@ public:
     m_catalogue = std::make_unique<catalogue::InMemoryCatalogue>(m_dummyLog, nbConns, nbArchiveFileListingConns);
 #endif
     m_db = param.dbFactory.create(m_catalogue);
-    m_scheduler = std::make_unique<Scheduler>(*m_catalogue, *m_db, "schedulerBackendName", 5, 2 * 1000 * 1000);
+    m_scheduler = std::make_unique<Scheduler>(*m_catalogue, *m_db, "schedulerBackendName");
 
     strncpy(m_tmpDir, "/tmp/DataTransferSessionTestXXXXXX", sizeof(m_tmpDir));
     if (!mkdtemp(m_tmpDir)) {

@@ -28,7 +28,7 @@
 #include "catalogue/CatalogueFactoryFactory.hpp"
 #include "common/exception/Errnum.hpp"
 #include "common/log/LogContext.hpp"
-#include "common/processCap/ProcessCap.hpp"
+#include "common/process/ProcessCap.hpp"
 #include "common/telemetry/TelemetryInit.hpp"
 #include "rdbms/Login.hpp"
 #include "tapeserver/castor/tape/tapeserver/daemon/CleanerSession.hpp"

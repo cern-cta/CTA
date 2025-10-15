@@ -17,7 +17,7 @@
 
 #include "RadosStriperPool.hpp"
 #include "common/exception/Errnum.hpp"
-#include "common/threading/MutexLocker.hpp"
+#include "common/process/threading/MutexLocker.hpp"
 
 #include <stdexcept>
 

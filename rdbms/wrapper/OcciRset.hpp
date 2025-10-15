@@ -18,7 +18,7 @@
 #pragma once
 
 #include "common/exception/Exception.hpp"
-#include "common/threading/Mutex.hpp"
+#include "common/process/threading/Mutex.hpp"
 #include "rdbms/wrapper/ColumnNameToIdx.hpp"
 #include "rdbms/wrapper/RsetWrapper.hpp"
 

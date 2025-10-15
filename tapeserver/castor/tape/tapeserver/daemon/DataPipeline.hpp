@@ -17,7 +17,7 @@
 
 #pragma once
 
-#include "common/threading/BlockingQueue.hpp"
+#include "common/process/threading/BlockingQueue.hpp"
 #include "castor/tape/tapeserver/daemon/MemBlock.hpp"
 #include "common/exception/Exception.hpp"
 

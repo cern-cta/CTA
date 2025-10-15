@@ -17,8 +17,8 @@
 
 #include "common/log/Logger.hpp"
 #include "common/log/LogContext.hpp"
-#include "common/processCap/ProcessCap.hpp"
-#include "common/threading/System.hpp"
+#include "common/process/ProcessCap.hpp"
+#include "common/process/threading/System.hpp"
 #include "castor/tape/tapeserver/daemon/EmptyDriveProbe.hpp"
 #include "castor/tape/tapeserver/daemon/DataTransferSession.hpp"
 #include "castor/tape/tapeserver/daemon/DiskReadThreadPool.hpp"

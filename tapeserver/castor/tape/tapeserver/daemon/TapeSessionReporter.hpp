@@ -19,8 +19,8 @@
 
 #include "VolumeInfo.hpp"
 #include "common/log/LogContext.hpp"
-#include "common/threading/BlockingQueue.hpp"
-#include "common/threading/Thread.hpp"
+#include "common/process/threading/BlockingQueue.hpp"
+#include "common/process/threading/Thread.hpp"
 #include "daemon/TapedProxy.hpp"
 #include "tapeserver/daemon/DriveConfigEntry.hpp"
 #include "tapeserver/session/SessionState.hpp"

@@ -41,7 +41,7 @@
 #include "common/dataStructures/RetrieveRequest.hpp"
 #include "common/dataStructures/SecurityIdentity.hpp"
 #include "common/log/Logger.hpp"
-#include "common/threading/Mutex.hpp"
+#include "common/process/threading/Mutex.hpp"
 #include "common/utils/utils.hpp"
 #include "rdbms/ConnPool.hpp"
 #include "rdbms/Login.hpp"

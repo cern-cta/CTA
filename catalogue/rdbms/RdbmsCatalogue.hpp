@@ -24,7 +24,7 @@
 #include "catalogue/Group.hpp"
 #include "catalogue/TimeBasedCache.hpp"
 #include "catalogue/User.hpp"
-#include "common/threading/Mutex.hpp"
+#include "common/process/threading/Mutex.hpp"
 #include "common/log/Logger.hpp"
 
 #include "common/dataStructures/MountPolicy.hpp"

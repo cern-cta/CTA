@@ -17,7 +17,7 @@
 
 #pragma once
 
-#include "common/threading/Mutex.hpp"
+#include "common/process/threading/Mutex.hpp"
 #include "rdbms/wrapper/ConnWrapper.hpp"
 #include "rdbms/Login.hpp"
 

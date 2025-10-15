@@ -28,3 +28,12 @@ tpsrv:
       metricsBackend: "OTLP_GRPC"
       metricsExportOtlpEndpoint: "https://monit-otlp.cern.ch:4316"
       metricsExportOtlpBasicAuthSecret: monit-collector-auth
+
+maintenance:
+  conf:
+    telemtry:
+      enabled: true
+      retainInstanceIdOnRestart: false
+      matricsBackend: "OTLP_GRPC"
+      metricsExportOtlpEndpoint: "https://monit-otlp.cern.ch:4316"
+      metricsExportOtlpBasicAuthSecret: monit-collector-auth

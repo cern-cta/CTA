@@ -32,9 +32,9 @@
 #include "common/exception/TapeFseqMismatch.hpp"
 #include "common/exception/UserErrorWithCacheInfo.hpp"
 #include "common/log/LogContext.hpp"
-#include "common/threading/Mutex.hpp"
-#include "common/threading/MutexLocker.hpp"
-#include "common/threading/Thread.hpp"
+#include "common/process/threading/Mutex.hpp"
+#include "common/process/threading/MutexLocker.hpp"
+#include "common/process/threading/Thread.hpp"
 
 namespace unitTests {
 

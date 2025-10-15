@@ -29,8 +29,8 @@
 #include "common/dataStructures/JobQueueType.hpp"
 #include "common/dataStructures/RepackQueueType.hpp"
 #include "common/dataStructures/Tape.hpp"
-#include "common/threading/Mutex.hpp"
-#include "common/threading/MutexLocker.hpp"
+#include "common/process/threading/Mutex.hpp"
+#include "common/process/threading/MutexLocker.hpp"
 #include "scheduler/OStoreDB/OStoreDB.hpp"
 #include "scheduler/SchedulerDatabase.hpp"
 
