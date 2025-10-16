@@ -28,14 +28,14 @@
 
 namespace cta::frontend::grpc::server {
 
-class AsyncServer;
+class NegotiationService;
 
 class NegotiationRequestHandler : public request::IHandler {
 
 public:
   NegotiationRequestHandler() = delete;
   NegotiationRequestHandler(cta::log::Logger& log,
-                            AsyncServer& asyncServer,
+                            NegotiationService& negotiationService,
                             cta::xrd::Negotiation::AsyncService& ctaRpcStreamSvc,
                             const std::string& strKeytab,
                             const std::string& strService);
@@ -58,7 +58,7 @@ private:
   
   cta::log::Logger& m_log;
   cta::frontend::grpc::request::Tag m_tag;
-  AsyncServer& m_asyncServer;
+  NegotiationService& m_negotiationService;
   cta::xrd::Negotiation::AsyncService& m_ctaNegotiationSvc;
   std::string m_strKeytab;
   std::string m_strService;

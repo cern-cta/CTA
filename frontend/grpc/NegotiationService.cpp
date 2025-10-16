@@ -14,51 +14,29 @@
  *               granted to it by virtue of its status as an Intergovernmental Organization or
  *               submit itself to any jurisdiction.
  */
- 
- 
-#include "AsyncServer.hpp"
 
+#include "NegotiationService.hpp"
+#include "ServerNegotiationRequestHandler.hpp"
 #include "common/log/LogContext.hpp"
 #include "common/exception/Exception.hpp"
 
-#include <grpcpp/security/server_credentials.h>
+namespace cta::frontend::grpc::server {
 
-#include <stdexcept>      // std::out_of_range
+NegotiationService::NegotiationService(
+    cta::log::LogContext& lc,
+    TokenStorage& tokenStorage,
+    std::unique_ptr<::grpc::ServerCompletionQueue> cq,
+    const std::string& keytab,
+    const std::string& servicePrincipal,
+    unsigned int numThreads)
+    : m_lc(lc),
+      m_tokenStorage(tokenStorage),
+      m_upCompletionQueue(std::move(cq)),
+      m_keytab(keytab),
+      m_servicePrincipal(servicePrincipal),
+      m_numThreads(numThreads) {}
 
-cta::frontend::grpc::server::AsyncServer::AsyncServer(cta::log::Logger& log,
-                                                                  cta::catalogue::Catalogue& catalogue,
-                                                                  TokenStorage& tokenStorage,
-                                                                  unsigned int uiPort,
-                                                                  const unsigned int uiNoThreads) :
-                                                                  m_log(log),
-                                                                  m_lc(log),
-                                                                  m_catalogue(catalogue),
-                                                                  m_tokenStorage(tokenStorage),
-                                                                  m_uiPort(uiPort),
-                                                                  m_uiNoThreads(uiNoThreads),
-                                                                  m_upServerBuilder(std::make_unique<::grpc::ServerBuilder>()) {
-                                                                  
-}
-
-cta::frontend::grpc::server::AsyncServer::AsyncServer(cta::log::LogContext& lc, cta::catalogue::Catalogue& catalogue, TokenStorage& tokenStorage,
-              std::unique_ptr<::grpc::ServerBuilder> builder, std::unique_ptr<::grpc::ServerCompletionQueue> completionQueue,
-              const unsigned int uiPort, const unsigned int uiNoThreads) : 
-              m_log(lc.logger()),
-              m_lc(lc),
-              m_catalogue(catalogue),
-              m_tokenStorage(tokenStorage),
-              m_upCompletionQueue(std::move(completionQueue)),
-              m_uiPort(uiPort),
-              m_uiNoThreads(uiNoThreads),
-              m_upServerBuilder(std::move(builder)) {
-}
-
-
-
-cta::frontend::grpc::server::AsyncServer::~AsyncServer() {
-  if (m_upServer) {
-    m_upServer->Shutdown();
-  }
+NegotiationService::~NegotiationService() {
   // Always shutdown the completion queue after the server.
   if (m_upCompletionQueue) {
     m_upCompletionQueue->Shutdown();
@@ -66,141 +44,96 @@ cta::frontend::grpc::server::AsyncServer::~AsyncServer() {
     void* pTag;
     bool bOk = false;
     while (m_upCompletionQueue->Next(&pTag, &bOk)) {
+      // Discard remaining events
     }
   }
+
   // Join all processing threads
-  for (std::thread& worker : m_vThreads) {
-    if (worker.joinable()) {
-      worker.join();
+  for (auto& thread : m_threads) {
+    if (thread.joinable()) {
+      thread.join();
     }
   }
 }
 
-cta::frontend::grpc::request::IHandler& cta::frontend::grpc::server::AsyncServer::getHandler(const cta::frontend::grpc::request::Tag tag) {
+NegotiationRequestHandler& NegotiationService::getHandler(const cta::frontend::grpc::request::Tag tag) {
   std::lock_guard<std::mutex> lck(m_mtxLockHandler);
   /*
    * Check if the handler is registered;
    */
-  std::unordered_map<cta::frontend::grpc::request::Tag, std::unique_ptr<cta::frontend::grpc::request::IHandler>>::const_iterator itorFind = m_umapHandlers.find(tag);
+  const auto itorFind = m_umapHandlers.find(tag);
   if(itorFind == m_umapHandlers.end()) {
     std::ostringstream osExMsg;
-    osExMsg << "In grpc::AsyncServer::getHandler(): Handler " << tag << " is not registered.";
+    osExMsg << "In NegotiationService::getHandler(): Handler " << tag << " is not registered.";
     throw cta::exception::Exception(osExMsg.str());
   }
-  const std::unique_ptr<cta::frontend::grpc::request::IHandler>& upHandler = itorFind->second;
+  const std::unique_ptr<NegotiationRequestHandler>& upHandler = itorFind->second;
   return *upHandler;
 }
 
-void cta::frontend::grpc::server::AsyncServer::releaseHandler(const cta::frontend::grpc::request::Tag tag) {
+void NegotiationService::releaseHandler(const cta::frontend::grpc::request::Tag tag) {
   std::lock_guard<std::mutex> lck(m_mtxLockHandler);
-  
+
   {
-    log::LogContext lc(m_log);
-    log::ScopedParamContainer params(lc);
+    log::ScopedParamContainer params(m_lc);
     params.add("handler", tag);
-    lc.log(cta::log::DEBUG, "In grpc::AsyncServer::releaseHandler(): Release handler.");
+    m_lc.log(cta::log::DEBUG, "In NegotiationService::releaseHandler(): Release handler.");
   }
   /*
    * Check if the handler is registered;
    */
-  std::unordered_map<cta::frontend::grpc::request::Tag, std::unique_ptr<request::IHandler>>::const_iterator itorFind = m_umapHandlers.find(tag);
+  const auto itorFind = m_umapHandlers.find(tag);
   if(itorFind == m_umapHandlers.end()) {
     std::ostringstream osExMsg;
-    osExMsg << "In grpc::AsyncServer::releaseHandler(): Handler " << tag << " is not registered.";
+    osExMsg << "In NegotiationService::releaseHandler(): Handler " << tag << " is not registered.";
     throw cta::exception::Exception(osExMsg.str());
   }
   m_umapHandlers.erase(itorFind);
 }
 
-void cta::frontend::grpc::server::AsyncServer::run(std::unique_ptr<::grpc::Server> server, const std::shared_ptr<::grpc::AuthMetadataProcessor>& spAuthProcessor) {
+void NegotiationService::startProcessing() {
+  // Register handlers first
+  {
+    log::ScopedParamContainer params(m_lc);
+    params.add("keytab", m_keytab);
+    params.add("servicePrincipal", m_servicePrincipal);
+    m_lc.log(cta::log::INFO, "Initializing Kerberos negotiation handlers");
+
+    // Create initial handler instances
+    // Each handler will spawn a new one when it starts processing
+    for (unsigned int i = 0; i < m_numThreads; ++i) {
+      try {
+        registerHandler();
+      } catch (const cta::exception::Exception& e) {
+        log::ScopedParamContainer errorParams(m_lc);
+        errorParams.add("error", e.getMessageValue());
+        m_lc.log(cta::log::ERR, "Failed to initialize negotiation handler");
+        throw;
+      }
+    }
+  }
+
   // Initialise all registered handlers
-  log::LogContext lc(m_log);
   for(const auto &item : m_umapHandlers) {
-    const std::unique_ptr<cta::frontend::grpc::request::IHandler>& upIHandler = item.second;
+    const std::unique_ptr<NegotiationRequestHandler>& upIHandler = item.second;
     upIHandler.get()->next(true);
     //TODO: Log names of initialised handlers;
-  } 
-  // Proceed to the server's main loop.
-  m_vThreads.resize(m_uiNoThreads);
-  unsigned int uiThreadId = 0;
-  for (std::thread& worker : m_vThreads) {
-    std::thread t(&AsyncServer::process, this, uiThreadId);
-    worker.swap(t);
-    uiThreadId++;
   }
-  {
-    log::ScopedParamContainer params(lc);
-    params.add("threads", m_uiNoThreads);
-    lc.log(cta::log::INFO, "In grpc::AsyncServer::run(): Server is listening.");
+
+  // Start worker threads
+  m_threads.reserve(m_numThreads);
+  for (unsigned int i = 0; i < m_numThreads; ++i) {
+    m_threads.emplace_back(&NegotiationService::process, this, i);
   }
-  for (std::thread& worker : m_vThreads) {
-    worker.join();
-  }
+
+  log::ScopedParamContainer params(m_lc);
+  params.add("threads", m_numThreads);
+  m_lc.log(cta::log::INFO, "Negotiation service processing threads started");
 }
 
-void cta::frontend::grpc::server::AsyncServer::startProcessingThreads(const std::shared_ptr<::grpc::AuthMetadataProcessor>& spAuthProcessor) {
-  // Initialise all registered handlers
-  log::LogContext lc(m_log);
-  for(const auto &item : m_umapHandlers) {
-    const std::unique_ptr<cta::frontend::grpc::request::IHandler>& upIHandler = item.second;
-    upIHandler.get()->next(true);
-    //TODO: Log names of initialised handlers;
-  } 
-  // Start the processing threads (but don't wait for them - let main thread handle server->Wait())
-  m_vThreads.resize(m_uiNoThreads);
-  unsigned int uiThreadId = 0;
-  for (std::thread& worker : m_vThreads) {
-    std::thread t(&AsyncServer::process, this, uiThreadId);
-    worker.swap(t);
-    uiThreadId++;
-  }
-  {
-    log::ScopedParamContainer params(lc);
-    params.add("threads", m_uiNoThreads);
-    lc.log(cta::log::INFO, "In grpc::AsyncServer::startProcessingThreads(): Processing threads started.");
-  }
-  // Note: We don't join the threads here - they will be joined in the destructor
-}
-
-void cta::frontend::grpc::server::AsyncServer::startServerAndRun(const std::shared_ptr<::grpc::ServerCredentials>& spServerCredentials, const std::shared_ptr<::grpc::AuthMetadataProcessor>& spAuthProcessor) {
-  log::LogContext lc(m_log);
-  m_upCompletionQueue = m_upServerBuilder->AddCompletionQueue();
-  // 
-  if(!spServerCredentials) {
-    throw cta::exception::Exception("In grpc::AsyncServer::run(): Incorrect server credentials.");
-  }
-  if(!spAuthProcessor) {
-    std::ostringstream osExMsg;
-    throw cta::exception::Exception("In grpc::AsyncServer::run(): Incorrect authorization processor.");
-  }
-  /*
-   * Set auth prosess
-   */
-  spServerCredentials->SetAuthMetadataProcessor(spAuthProcessor);
-  m_spAuthProcessor = spAuthProcessor;
-  /*
-   * Successful initilization
-   * Let's build the server
-   */
-  std::string strAddress = "0.0.0.0:" + std::to_string(m_uiPort);
-  lc.log(cta::log::INFO, "In grpc::AsyncServer::run(): Server is starting.");
-  /*
-   * Enlists an endpoint addr (port with an optional IP address) to bind the grpc::Server object to be created to.
-   * It can be invoked multiple times.
-   * strAddress: Valid values include dns:///localhost:1234, 192.168.1.1:31416, dns:///[::1]:27182, etc.
-   * spServerCredentials: The credentials associated with the server. 
-   */
-  m_upServerBuilder->AddListeningPort(strAddress, spServerCredentials); // not needed, will be done by main.cpp
-  m_upServer = m_upServerBuilder->BuildAndStart(); // this can be called by the Main.cpp for the grpc frontend
-  
-  run(std::move(m_upServer), m_spAuthProcessor);
-  
-}
-
-void cta::frontend::grpc::server::AsyncServer::process(unsigned int uiId) {
-  //TODO: break condition
-
-  log::LogContext lc(m_log);
+void NegotiationService::process(unsigned int threadId) {
+  log::LogContext lc(m_lc);
+  lc.log(cta::log::INFO, "In NegotiationService::process");
   /*
    *  pTag
    *  Uniquely identifies a request.
@@ -216,29 +149,30 @@ void cta::frontend::grpc::server::AsyncServer::process(unsigned int uiId) {
      */
     if(!m_upCompletionQueue->Next(&pTag, &bOk)) {
       log::ScopedParamContainer params(lc);
-      params.add("thread", uiId);
-      lc.log(cta::log::ERR, "In grpc::AsyncServer::process(): The completion queue has been shutdown.");
+      params.add("thread", threadId);
+      lc.log(cta::log::ERR, "In NegotiationService::process(): The completion queue has been shutdown.");
       break;
     }
     if(!pTag) {
       log::ScopedParamContainer params(lc);
-      params.add("thread", uiId);
-      lc.log(cta::log::ERR, "In grpc::AsyncServer::process(): Invalid tag delivered by notification queue.");
+      params.add("thread", threadId);
+      lc.log(cta::log::ERR, "In NegotiationService::process(): Invalid tag delivered by notification queue.");
       break;
     }
 
     try {
       // Everything is ok the request can be processed
-      cta::frontend::grpc::request::IHandler& handler = getHandler(static_cast<cta::frontend::grpc::request::Tag>(pTag));
+      NegotiationRequestHandler& handler = getHandler(static_cast<cta::frontend::grpc::request::Tag>(pTag));
       if(!handler.next(bOk)) {
         releaseHandler(static_cast<cta::frontend::grpc::request::Tag>(pTag));
       }
     } catch(const cta::exception::Exception& ex) {
       log::ScopedParamContainer params(lc);
-      params.add("thread", uiId);
+      params.add("thread", threadId);
       params.add("exceptionMessage", ex.getMessageValue());
-      lc.log(log::ERR, "grpc::AsyncServer::process(): Got an exception.");
+      lc.log(log::ERR, "NegotiationService::process(): Got an exception.");
     }
   }
-
 }
+
+} // namespace cta::frontend::grpc::server

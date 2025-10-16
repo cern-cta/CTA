@@ -16,19 +16,20 @@
  */
 
 #include "ServerNegotiationRequestHandler.hpp"
-#include "AsyncServer.hpp"
+#include "NegotiationService.hpp"
 #include "RequestMessage.hpp"
 #include "common/log/LogContext.hpp"
+#include "common/exception/Exception.hpp"
 
 cta::frontend::grpc::server::NegotiationRequestHandler::NegotiationRequestHandler(
   cta::log::Logger& log,
-  AsyncServer& asyncServer,
+  NegotiationService& negotiationService,
   cta::xrd::Negotiation::AsyncService& ctaNegotiationSvc,
   const std::string& strKeytab,
   const std::string& strService)
     : m_log(log),
       m_tag(this),
-      m_asyncServer(asyncServer),
+      m_negotiationService(negotiationService),
       m_ctaNegotiationSvc(ctaNegotiationSvc),
       m_strKeytab(strKeytab),
       m_strService(strService),
@@ -180,11 +181,11 @@ bool cta::frontend::grpc::server::NegotiationRequestHandler::next(const bool bOk
 
   switch (m_streamState) {
     case StreamState::NEW:
-      m_ctaNegotiationSvc.RequestNegotiate(&m_ctx, &m_rwNegotiation, &m_asyncServer.completionQueue(), &m_asyncServer.completionQueue(), m_tag);
+      m_ctaNegotiationSvc.RequestNegotiate(&m_ctx, &m_rwNegotiation, &m_negotiationService.completionQueue(), &m_negotiationService.completionQueue(), m_tag);
       m_streamState = StreamState::PROCESSING;
       break;
     case StreamState::PROCESSING:
-      m_asyncServer.registerHandler<cta::frontend::grpc::server::NegotiationRequestHandler>(m_ctaNegotiationSvc, m_strKeytab, m_strService).next(bOk);
+      m_negotiationService.registerHandler().next(bOk);
       m_rwNegotiation.Read(&m_request, m_tag);// read first m_request
       m_streamState = StreamState::WRITE;
       break;
@@ -235,7 +236,7 @@ bool cta::frontend::grpc::server::NegotiationRequestHandler::next(const bool bOk
              * now KRB token is used
              */
             m_response.set_token(std::string(reinterpret_cast<const char*>(gssRecvToken.value), gssRecvToken.length));
-            m_asyncServer.tokenStorage().store(std::string(reinterpret_cast<const char*>(gssRecvToken.value), gssRecvToken.length), m_request.service_principal_name());
+            m_negotiationService.tokenStorage().store(std::string(reinterpret_cast<const char*>(gssRecvToken.value), gssRecvToken.length), m_request.service_principal_name());
             m_rwNegotiation.Write(m_response, m_tag);
             break;
           case GSS_S_DEFECTIVE_TOKEN:

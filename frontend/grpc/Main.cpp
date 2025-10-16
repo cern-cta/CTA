@@ -39,8 +39,7 @@
 #include <grpcpp/ext/proto_server_reflection_plugin.h>
 #include "TokenStorage.hpp" // for Kerberos authentication - we'll wipe the storage periodically
 #include "ServiceKerberosAuthProcessor.hpp"
-#include "AsyncServer.hpp"
-#include "ServerNegotiationRequestHandler.hpp"
+#include "NegotiationService.hpp"
 
 // #include <grpc++/reflection.h>
 #include <thread>
@@ -233,58 +232,23 @@ int main(const int argc, char *const *const argv) {
 
     // Setup TokenStorage for Kerberos authentication
     cta::frontend::grpc::server::TokenStorage tokenStorage;
-    
-    // Get Kerberos configuration from environment or use defaults
-    std::string strKeytab;
-    std::string strService;
 
-    strKeytab = svc.getFrontendService().getKeytab().value_or("");
-    
-    if (strKeytab.empty()) {
-        strKeytab = "/etc/cta/cta-frontend.keytab"; // default path
-    }
+    // Get Kerberos configuration
+    std::string strKeytab = svc.getFrontendService().getKeytab().value_or("/etc/cta/cta-frontend.keytab");
+    std::string strService = svc.getFrontendService().getServicePrincipal().value_or("cta/" + shortHostName);
 
-    strService = svc.getFrontendService().getServicePrincipal().value_or("cta/" + shortHostName);
-    
     lc.log(log::INFO, "Using keytab: " + strKeytab);
     lc.log(log::INFO, "Using service principal: " + strService);
-    
-    // setup a completion queue that will be used only for the Kerberos authentication
-    std::unique_ptr<::grpc::ServerCompletionQueue> cq;
-    cq = builder.AddCompletionQueue();
 
-    // Create AsyncServer with separate builder for internal use, but register services on main builder
-    std::unique_ptr<::grpc::ServerBuilder> separateBuilder = std::make_unique<::grpc::ServerBuilder>();
-    
-    cta::frontend::grpc::server::AsyncServer negotiationServer(lc, svc.getFrontendService().getCatalogue(),
-                                                    tokenStorage, std::move(separateBuilder), std::move(cq));
-    // Register services & run
-    try {
-        // SERVICE: Negotiation - register on main builder for single server
-        negotiationServer.registerServiceOnBuilder<cta::xrd::Negotiation::AsyncService>(builder);
-        try {
-        negotiationServer
-            .registerHandler<cta::frontend::grpc::server::NegotiationRequestHandler, cta::xrd::Negotiation::AsyncService>(
-            strKeytab, strService);
-        } catch(const cta::exception::Exception &ex) {
-        log::ScopedParamContainer params(lc);
-        params.add("handler", "NegotiationRequestHandler");
-        lc.log(cta::log::ERR, "In frontend/grpc/Main.cpp: Error while registering handler.");
-        throw;
-        }
-        // std::shared_ptr<ServiceKerberosAuthProcessor> spAuthProcessor = std::make_shared<ServiceKerberosAuthProcessor>(tokenStorage);
-        // server.startServerAndRun(spServerCredentials, spAuthProcessor);
-    } catch(const cta::exception::Exception& e) {
-        log::ScopedParamContainer params(lc);
-        params.add("exceptionMessage", e.getMessageValue());
-        lc.log(cta::log::CRIT, "In cta::frontend::grpc::server::FrontendCmd::main(): Got an exception.");
-        return 1;
-    } catch(const std::exception& e) {
-        log::ScopedParamContainer params(lc);
-        params.add("exceptionMessage", e.what());
-        lc.log(cta::log::CRIT, "In cta::frontend::grpc::server::FrontendCmd::main(): Got an exception.");
-        return 1;
-    }
+    // Create completion queue that will be used only for the Kerberos negotiation service
+    std::unique_ptr<::grpc::ServerCompletionQueue> negCq = builder.AddCompletionQueue();
+
+    // Create negotiation service
+    auto negotiationService = std::make_unique<cta::frontend::grpc::server::NegotiationService>(
+        lc, tokenStorage, std::move(negCq), strKeytab, strService, 1 /* threads */);
+
+    // Register negotiation service on main builder
+    builder.RegisterService(&negotiationService->getService());
  
     // Setup main service authentication processor
     std::shared_ptr<ServiceKerberosAuthProcessor> kerberosAuthProcessor = 
@@ -306,13 +270,15 @@ int main(const int argc, char *const *const argv) {
                                                svc.getFrontendService().getenableCtaAdminCommands(),
                                                svc.getFrontendService().getLogContext());
     builder.RegisterService(&streamSvc);
+
     // add reflection
     // grpc::reflection::InitProtoReflectionServerBuilderPlugin();
-    std::unique_ptr <Server> server(builder.BuildAndStart());
+    // Build and start server
+    std::unique_ptr<Server> server(builder.BuildAndStart());
 
-    // Start AsyncServer processing threads without taking server ownership
-    negotiationServer.startProcessingThreads(kerberosAuthProcessor);
-    
+    // Start negotiation service processing (after server is built)
+    negotiationService->startProcessing();
+
     lc.log(cta::log::INFO, "Listening on socket address: " + server_address);
     server->Wait();
 
