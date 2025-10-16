@@ -9,5 +9,7 @@ data:
     # solved by kubernetes DNS server so KIS...
     cta.endpoint {{ .Values.conf.cta.endpoint }}
 
+    {{- if .Values.useGrpc }}
     grpc.tls.enabled {{ .Values.conf.cta.grpc.tls.enabled }}
     grpc.tls.chain_cert_path {{ .Values.conf.cta.grpc.tls.chain_cert_path }}
+    {{- end }}

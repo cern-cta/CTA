@@ -32,9 +32,17 @@ cli:
   conf:
     cta:
       endpoint: cta-frontend-grpc:10956
+      grpc:
+        tls:
+          chain_cert_path: /etc/grpc-certs/ca.crt
+          enabled: true
 
 client:
   useGrpc: true
   conf:
     cta:
       endpoint: cta-frontend-grpc:10956
+      grpc:
+        tls:
+          chain_cert_path: /etc/grpc-certs/ca.crt
+          enabled: true
