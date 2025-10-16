@@ -1068,3 +1068,248 @@
   fun:_ZNK3jwt7builderINS_13default_clockENS_6traits15kazuho_picojsonEE4signINS_9algorithm5rs256EEENSt7__cxx1112basic_stringIcSt11char_traitsIcESaIcEEERKT_
   fun:_ZN9unitTests13createTestJwtEbRKNSt7__cxx1112basic_stringIcSt11char_traitsIcESaIcEEE
 }
+
+# Helgrind suppressions for data races during protobuf destruction
+# These occur when RetrieveQueue/ArchiveQueue objects are destroyed in SharedQueueLock
+# while memory is being reused by other threads. This is a benign race caused by
+# memory allocator reusing freed addresses before protobuf destruction completes.
+
+{
+   <insert_a_suppression_name_here>
+   Helgrind:Race
+   fun:_ZNKSt7__cxx1112basic_stringIcSt11char_traitsIcESaIcEE7_M_dataEv
+   fun:_ZNKSt7__cxx1112basic_stringIcSt11char_traitsIcESaIcEE11_M_is_localEv
+   fun:_ZNSt7__cxx1112basic_stringIcSt11char_traitsIcESaIcEE10_M_disposeEv
+   fun:_ZNSt7__cxx1112basic_stringIcSt11char_traitsIcESaIcEED1Ev
+   fun:_ZN3cta11objectstore10BackendVFS10ScopedLockD1Ev
+   fun:_ZN3cta11objectstore10BackendVFS10ScopedLockD0Ev
+   fun:_ZNKSt14default_deleteIN3cta11objectstore7Backend10ScopedLockEEclEPS3_
+   fun:_ZNSt15__uniq_ptr_implIN3cta11objectstore7Backend10ScopedLockESt14default_deleteIS3_EE5resetEPS3_
+   fun:_ZNSt10unique_ptrIN3cta11objectstore7Backend10ScopedLockESt14default_deleteIS3_EE5resetEPS3_
+   fun:_ZN3cta11objectstore10ScopedLock15releaseIfNeededEv
+   fun:_ZN3cta11objectstore10ScopedLock7releaseEv
+   fun:_ZN3cta8ostoredb15SharedQueueLockINS_11objectstore13RetrieveQueueENS2_15RetrieveRequestEED1Ev
+   fun:_ZNSt15_Sp_counted_ptrIPN3cta8ostoredb15SharedQueueLockINS0_11objectstore13RetrieveQueueENS3_15RetrieveRequestEEELN9__gnu_cxx12_Lock_policyE2EE10_M_disposeEv
+   fun:_ZNSt16_Sp_counted_baseILN9__gnu_cxx12_Lock_policyE2EE10_M_releaseEv
+   fun:_ZNSt14__shared_countILN9__gnu_cxx12_Lock_policyE2EED1Ev
+   fun:_ZNSt12__shared_ptrIN3cta8ostoredb15SharedQueueLockINS0_11objectstore13RetrieveQueueENS3_15RetrieveRequestEEELN9__gnu_cxx12_Lock_policyE2EED1Ev
+   fun:_ZNSt12__shared_ptrIN3cta8ostoredb15SharedQueueLockINS0_11objectstore13RetrieveQueueENS3_15RetrieveRequestEEELN9__gnu_cxx12_Lock_policyE2EE5resetEv
+   obj:/usr/lib64/libctascheduler.so.0.1.0
+   obj:/usr/lib64/libctascheduler.so.0.1.0
+   obj:/usr/lib64/libctascheduler.so.0.1.0
+   obj:/usr/lib64/libctascheduler.so.0.1.0
+   fun:_ZNKSt8functionIFvvEEclEv
+   fun:_ZN3cta8OStoreDB22EnqueueingWorkerThread3runEv
+   fun:_ZN3cta9threading6Thread14pthread_runnerEPv
+   fun:mythread_wrapper
+}
+
+{
+   <insert_a_suppression_name_here>
+   Helgrind:Race
+   fun:_ZNK6google8protobuf11MessageLite8GetArenaEv
+   fun:_ZN3cta11objectstore11serializers12ObjectHeader10SharedDtorEv
+   fun:_ZN3cta11objectstore11serializers12ObjectHeaderD1Ev
+   fun:_ZN3cta11objectstore13ObjectOpsBaseD1Ev
+   fun:_ZN3cta11objectstore9ObjectOpsINS0_11serializers13RetrieveQueueELNS2_10ObjectTypeE10EED1Ev
+   fun:_ZN3cta11objectstore13RetrieveQueueD1Ev
+   fun:_ZN3cta11objectstore13RetrieveQueueD0Ev
+   fun:_ZNKSt14default_deleteIN3cta11objectstore13RetrieveQueueEEclEPS2_
+   fun:_ZNSt15__uniq_ptr_implIN3cta11objectstore13RetrieveQueueESt14default_deleteIS2_EE5resetEPS2_
+   fun:_ZNSt10unique_ptrIN3cta11objectstore13RetrieveQueueESt14default_deleteIS2_EE5resetEPS2_
+   fun:_ZN3cta8ostoredb15SharedQueueLockINS_11objectstore13RetrieveQueueENS2_15RetrieveRequestEED1Ev
+   fun:_ZNSt15_Sp_counted_ptrIPN3cta8ostoredb15SharedQueueLockINS0_11objectstore13RetrieveQueueENS3_15RetrieveRequestEEELN9__gnu_cxx12_Lock_policyE2EE10_M_disposeEv
+   fun:_ZNSt16_Sp_counted_baseILN9__gnu_cxx12_Lock_policyE2EE10_M_releaseEv
+   fun:_ZNSt14__shared_countILN9__gnu_cxx12_Lock_policyE2EED1Ev
+   fun:_ZNSt12__shared_ptrIN3cta8ostoredb15SharedQueueLockINS0_11objectstore13RetrieveQueueENS3_15RetrieveRequestEEELN9__gnu_cxx12_Lock_policyE2EED1Ev
+   fun:_ZNSt12__shared_ptrIN3cta8ostoredb15SharedQueueLockINS0_11objectstore13RetrieveQueueENS3_15RetrieveRequestEEELN9__gnu_cxx12_Lock_policyE2EE5resetEv
+   obj:/usr/lib64/libctascheduler.so.0.1.0
+   obj:/usr/lib64/libctascheduler.so.0.1.0
+   obj:/usr/lib64/libctascheduler.so.0.1.0
+   obj:/usr/lib64/libctascheduler.so.0.1.0
+   fun:_ZNKSt8functionIFvvEEclEv
+   fun:_ZN3cta8OStoreDB22EnqueueingWorkerThread3runEv
+   fun:_ZN3cta9threading6Thread14pthread_runnerEPv
+   fun:mythread_wrapper
+   fun:start_thread
+}
+
+{
+   <insert_a_suppression_name_here>
+   Helgrind:Race
+   fun:_ZNK6google8protobuf8internal9TaggedPtrINSt7__cxx1112basic_stringIcSt11char_traitsIcESaIcEEEE6as_intEv
+   fun:_ZNK6google8protobuf8internal9TaggedPtrINSt7__cxx1112basic_stringIcSt11char_traitsIcESaIcEEEE8IsTaggedEv
+   fun:_ZN6google8protobuf8internal14ArenaStringPtr20UnsafeMutablePointerB5cxx11Ev
+   fun:_ZN6google8protobuf8internal14ArenaStringPtr14DestroyNoArenaEPKNSt7__cxx1112basic_stringIcSt11char_traitsIcESaIcEEE
+   fun:_ZN3cta11objectstore11serializers12ObjectHeader10SharedDtorEv
+   fun:_ZN3cta11objectstore11serializers12ObjectHeaderD1Ev
+   fun:_ZN3cta11objectstore13ObjectOpsBaseD1Ev
+   fun:_ZN3cta11objectstore9ObjectOpsINS0_11serializers13RetrieveQueueELNS2_10ObjectTypeE10EED1Ev
+   fun:_ZN3cta11objectstore13RetrieveQueueD1Ev
+   fun:_ZN3cta11objectstore13RetrieveQueueD0Ev
+   fun:_ZNKSt14default_deleteIN3cta11objectstore13RetrieveQueueEEclEPS2_
+   fun:_ZNSt15__uniq_ptr_implIN3cta11objectstore13RetrieveQueueESt14default_deleteIS2_EE5resetEPS2_
+   fun:_ZNSt10unique_ptrIN3cta11objectstore13RetrieveQueueESt14default_deleteIS2_EE5resetEPS2_
+   fun:_ZN3cta8ostoredb15SharedQueueLockINS_11objectstore13RetrieveQueueENS2_15RetrieveRequestEED1Ev
+   fun:_ZNSt15_Sp_counted_ptrIPN3cta8ostoredb15SharedQueueLockINS0_11objectstore13RetrieveQueueENS3_15RetrieveRequestEEELN9__gnu_cxx12_Lock_policyE2EE10_M_disposeEv
+   fun:_ZNSt16_Sp_counted_baseILN9__gnu_cxx12_Lock_policyE2EE10_M_releaseEv
+   fun:_ZNSt14__shared_countILN9__gnu_cxx12_Lock_policyE2EED1Ev
+   fun:_ZNSt12__shared_ptrIN3cta8ostoredb15SharedQueueLockINS0_11objectstore13RetrieveQueueENS3_15RetrieveRequestEEELN9__gnu_cxx12_Lock_policyE2EED1Ev
+   fun:_ZNSt12__shared_ptrIN3cta8ostoredb15SharedQueueLockINS0_11objectstore13RetrieveQueueENS3_15RetrieveRequestEEELN9__gnu_cxx12_Lock_policyE2EE5resetEv
+   obj:/usr/lib64/libctascheduler.so.0.1.0
+   obj:/usr/lib64/libctascheduler.so.0.1.0
+   obj:/usr/lib64/libctascheduler.so.0.1.0
+   obj:/usr/lib64/libctascheduler.so.0.1.0
+   fun:_ZNKSt8functionIFvvEEclEv
+   fun:_ZN3cta8OStoreDB22EnqueueingWorkerThread3runEv
+}
+
+{
+   <insert_a_suppression_name_here>
+   Helgrind:Race
+   fun:_ZNSt7__cxx1112basic_stringIcSt11char_traitsIcESaIcEE10_M_disposeEv
+   fun:_ZNSt7__cxx1112basic_stringIcSt11char_traitsIcESaIcEED1Ev
+   fun:_ZN6google8protobuf8internal14ArenaStringPtr14DestroyNoArenaEPKNSt7__cxx1112basic_stringIcSt11char_traitsIcESaIcEEE
+   fun:_ZN3cta11objectstore11serializers12ObjectHeader10SharedDtorEv
+   fun:_ZN3cta11objectstore11serializers12ObjectHeaderD1Ev
+   fun:_ZN3cta11objectstore13ObjectOpsBaseD1Ev
+   fun:_ZN3cta11objectstore9ObjectOpsINS0_11serializers13RetrieveQueueELNS2_10ObjectTypeE10EED1Ev
+   fun:_ZN3cta11objectstore13RetrieveQueueD1Ev
+   fun:_ZN3cta11objectstore13RetrieveQueueD0Ev
+   fun:_ZNKSt14default_deleteIN3cta11objectstore13RetrieveQueueEEclEPS2_
+   fun:_ZNSt15__uniq_ptr_implIN3cta11objectstore13RetrieveQueueESt14default_deleteIS2_EE5resetEPS2_
+   fun:_ZNSt10unique_ptrIN3cta11objectstore13RetrieveQueueESt14default_deleteIS2_EE5resetEPS2_
+   fun:_ZN3cta8ostoredb15SharedQueueLockINS_11objectstore13RetrieveQueueENS2_15RetrieveRequestEED1Ev
+   fun:_ZNSt15_Sp_counted_ptrIPN3cta8ostoredb15SharedQueueLockINS0_11objectstore13RetrieveQueueENS3_15RetrieveRequestEEELN9__gnu_cxx12_Lock_policyE2EE10_M_disposeEv
+   fun:_ZNSt16_Sp_counted_baseILN9__gnu_cxx12_Lock_policyE2EE10_M_releaseEv
+   fun:_ZNSt14__shared_countILN9__gnu_cxx12_Lock_policyE2EED1Ev
+   fun:_ZNSt12__shared_ptrIN3cta8ostoredb15SharedQueueLockINS0_11objectstore13RetrieveQueueENS3_15RetrieveRequestEEELN9__gnu_cxx12_Lock_policyE2EED1Ev
+   fun:_ZNSt12__shared_ptrIN3cta8ostoredb15SharedQueueLockINS0_11objectstore13RetrieveQueueENS3_15RetrieveRequestEEELN9__gnu_cxx12_Lock_policyE2EE5resetEv
+   obj:/usr/lib64/libctascheduler.so.0.1.0
+   obj:/usr/lib64/libctascheduler.so.0.1.0
+   obj:/usr/lib64/libctascheduler.so.0.1.0
+   obj:/usr/lib64/libctascheduler.so.0.1.0
+   fun:_ZNKSt8functionIFvvEEclEv
+   fun:_ZN3cta8OStoreDB22EnqueueingWorkerThread3runEv
+   fun:_ZN3cta9threading6Thread14pthread_runnerEPv
+}
+
+{
+   <insert_a_suppression_name_here>
+   Helgrind:Race
+   fun:_ZNSt7__cxx1112basic_stringIcSt11char_traitsIcESaIcEE10_M_disposeEv
+   fun:_ZNSt7__cxx1112basic_stringIcSt11char_traitsIcESaIcEED1Ev
+   fun:_ZN6google8protobuf8internal14ArenaStringPtr14DestroyNoArenaEPKNSt7__cxx1112basic_stringIcSt11char_traitsIcESaIcEEE
+   fun:_ZN3cta11objectstore11serializers12ObjectHeader10SharedDtorEv
+   fun:_ZN3cta11objectstore11serializers12ObjectHeaderD1Ev
+   fun:_ZN3cta11objectstore13ObjectOpsBaseD1Ev
+   fun:_ZN3cta11objectstore9ObjectOpsINS0_11serializers13RetrieveQueueELNS2_10ObjectTypeE10EED1Ev
+   fun:_ZN3cta11objectstore13RetrieveQueueD1Ev
+   fun:_ZN3cta11objectstore13RetrieveQueueD0Ev
+   fun:_ZNKSt14default_deleteIN3cta11objectstore13RetrieveQueueEEclEPS2_
+   fun:_ZNSt15__uniq_ptr_implIN3cta11objectstore13RetrieveQueueESt14default_deleteIS2_EE5resetEPS2_
+   fun:_ZNSt10unique_ptrIN3cta11objectstore13RetrieveQueueESt14default_deleteIS2_EE5resetEPS2_
+   fun:_ZN3cta8ostoredb15SharedQueueLockINS_11objectstore13RetrieveQueueENS2_15RetrieveRequestEED1Ev
+   fun:_ZNSt15_Sp_counted_ptrIPN3cta8ostoredb15SharedQueueLockINS0_11objectstore13RetrieveQueueENS3_15RetrieveRequestEEELN9__gnu_cxx12_Lock_policyE2EE10_M_disposeEv
+   fun:_ZNSt16_Sp_counted_baseILN9__gnu_cxx12_Lock_policyE2EE10_M_releaseEv
+   fun:_ZNSt14__shared_countILN9__gnu_cxx12_Lock_policyE2EED1Ev
+   fun:_ZNSt12__shared_ptrIN3cta8ostoredb15SharedQueueLockINS0_11objectstore13RetrieveQueueENS3_15RetrieveRequestEEELN9__gnu_cxx12_Lock_policyE2EED1Ev
+   fun:_ZNSt12__shared_ptrIN3cta8ostoredb15SharedQueueLockINS0_11objectstore13RetrieveQueueENS3_15RetrieveRequestEEELN9__gnu_cxx12_Lock_policyE2EE5resetEv
+   obj:/usr/lib64/libctascheduler.so.0.1.0
+   obj:/usr/lib64/libctascheduler.so.0.1.0
+   obj:/usr/lib64/libctascheduler.so.0.1.0
+   obj:/usr/lib64/libctascheduler.so.0.1.0
+   fun:_ZNKSt8functionIFvvEEclEv
+   fun:_ZN3cta8OStoreDB22EnqueueingWorkerThread3runEv
+   fun:_ZN3cta9threading6Thread14pthread_runnerEPv
+}
+
+{
+   <insert_a_suppression_name_here>
+   Helgrind:Race
+   fun:_ZNSt7__cxx1112basic_stringIcSt11char_traitsIcESaIcEE10_M_disposeEv
+   fun:_ZNSt7__cxx1112basic_stringIcSt11char_traitsIcESaIcEED1Ev
+   fun:_ZN6google8protobuf8internal14ArenaStringPtr14DestroyNoArenaEPKNSt7__cxx1112basic_stringIcSt11char_traitsIcESaIcEEE
+   fun:_ZN3cta11objectstore11serializers12ObjectHeader10SharedDtorEv
+   fun:_ZN3cta11objectstore11serializers12ObjectHeaderD1Ev
+   fun:_ZN3cta11objectstore13ObjectOpsBaseD1Ev
+   fun:_ZN3cta11objectstore9ObjectOpsINS0_11serializers13RetrieveQueueELNS2_10ObjectTypeE10EED1Ev
+   fun:_ZN3cta11objectstore13RetrieveQueueD1Ev
+   fun:_ZN3cta11objectstore13RetrieveQueueD0Ev
+   fun:_ZNKSt14default_deleteIN3cta11objectstore13RetrieveQueueEEclEPS2_
+   fun:_ZNSt15__uniq_ptr_implIN3cta11objectstore13RetrieveQueueESt14default_deleteIS2_EE5resetEPS2_
+   fun:_ZNSt10unique_ptrIN3cta11objectstore13RetrieveQueueESt14default_deleteIS2_EE5resetEPS2_
+   fun:_ZN3cta8ostoredb15SharedQueueLockINS_11objectstore13RetrieveQueueENS2_15RetrieveRequestEED1Ev
+   fun:_ZNSt15_Sp_counted_ptrIPN3cta8ostoredb15SharedQueueLockINS0_11objectstore13RetrieveQueueENS3_15RetrieveRequestEEELN9__gnu_cxx12_Lock_policyE2EE10_M_disposeEv
+   fun:_ZNSt16_Sp_counted_baseILN9__gnu_cxx12_Lock_policyE2EE10_M_releaseEv
+   fun:_ZNSt14__shared_countILN9__gnu_cxx12_Lock_policyE2EED1Ev
+   fun:_ZNSt12__shared_ptrIN3cta8ostoredb15SharedQueueLockINS0_11objectstore13RetrieveQueueENS3_15RetrieveRequestEEELN9__gnu_cxx12_Lock_policyE2EED1Ev
+   fun:_ZNSt12__shared_ptrIN3cta8ostoredb15SharedQueueLockINS0_11objectstore13RetrieveQueueENS3_15RetrieveRequestEEELN9__gnu_cxx12_Lock_policyE2EE5resetEv
+   obj:/usr/lib64/libctascheduler.so.0.1.0
+   obj:/usr/lib64/libctascheduler.so.0.1.0
+   obj:/usr/lib64/libctascheduler.so.0.1.0
+   obj:/usr/lib64/libctascheduler.so.0.1.0
+   fun:_ZNKSt8functionIFvvEEclEv
+   fun:_ZN3cta8OStoreDB22EnqueueingWorkerThread3runEv
+   fun:_ZN3cta9threading6Thread14pthread_runnerEPv
+}
+
+{
+   <insert_a_suppression_name_here>
+   Helgrind:Race
+   fun:_ZNK6google8protobuf11MessageLite8GetArenaEv
+   fun:_ZN3cta11objectstore11serializers12ObjectHeader10SharedDtorEv
+   fun:_ZN3cta11objectstore11serializers12ObjectHeaderD1Ev
+   fun:_ZN3cta11objectstore13ObjectOpsBaseD1Ev
+   fun:_ZN3cta11objectstore9ObjectOpsINS0_11serializers12ArchiveQueueELNS2_10ObjectTypeE9EED1Ev
+   fun:_ZN3cta11objectstore12ArchiveQueueD1Ev
+   fun:_ZN3cta11objectstore12ArchiveQueueD0Ev
+   fun:_ZNKSt14default_deleteIN3cta11objectstore12ArchiveQueueEEclEPS2_
+   fun:_ZNSt15__uniq_ptr_implIN3cta11objectstore12ArchiveQueueESt14default_deleteIS2_EE5resetEPS2_
+   fun:_ZNSt10unique_ptrIN3cta11objectstore12ArchiveQueueESt14default_deleteIS2_EE5resetEPS2_
+   fun:_ZN3cta8ostoredb15SharedQueueLockINS_11objectstore12ArchiveQueueENS2_14ArchiveRequestEED1Ev
+   fun:_ZNSt15_Sp_counted_ptrIPN3cta8ostoredb15SharedQueueLockINS0_11objectstore12ArchiveQueueENS3_14ArchiveRequestEEELN9__gnu_cxx12_Lock_policyE2EE10_M_disposeEv
+   fun:_ZNSt16_Sp_counted_baseILN9__gnu_cxx12_Lock_policyE2EE10_M_releaseEv
+   fun:_ZNSt14__shared_countILN9__gnu_cxx12_Lock_policyE2EED1Ev
+   fun:_ZNSt12__shared_ptrIN3cta8ostoredb15SharedQueueLockINS0_11objectstore12ArchiveQueueENS3_14ArchiveRequestEEELN9__gnu_cxx12_Lock_policyE2EED1Ev
+   fun:_ZNSt12__shared_ptrIN3cta8ostoredb15SharedQueueLockINS0_11objectstore12ArchiveQueueENS3_14ArchiveRequestEEELN9__gnu_cxx12_Lock_policyE2EE5resetEv
+   obj:/usr/lib64/libctascheduler.so.0.1.0
+   obj:/usr/lib64/libctascheduler.so.0.1.0
+   obj:/usr/lib64/libctascheduler.so.0.1.0
+   obj:/usr/lib64/libctascheduler.so.0.1.0
+   fun:_ZNKSt8functionIFvvEEclEv
+   fun:_ZN3cta8OStoreDB22EnqueueingWorkerThread3runEv
+   fun:_ZN3cta9threading6Thread14pthread_runnerEPv
+   fun:mythread_wrapper
+   fun:start_thread
+}
+
+{
+   <insert_a_suppression_name_here>
+   Helgrind:Race
+   fun:_ZNKSt7__cxx1112basic_stringIcSt11char_traitsIcESaIcEE7_M_dataEv
+   fun:_ZNKSt7__cxx1112basic_stringIcSt11char_traitsIcESaIcEE11_M_is_localEv
+   fun:_ZNSt7__cxx1112basic_stringIcSt11char_traitsIcESaIcEE10_M_disposeEv
+   fun:_ZNSt7__cxx1112basic_stringIcSt11char_traitsIcESaIcEED1Ev
+   fun:_ZN3cta11objectstore10BackendVFS10ScopedLockD1Ev
+   fun:_ZN3cta11objectstore10BackendVFS10ScopedLockD0Ev
+   fun:_ZNKSt14default_deleteIN3cta11objectstore7Backend10ScopedLockEEclEPS3_
+   fun:_ZNSt15__uniq_ptr_implIN3cta11objectstore7Backend10ScopedLockESt14default_deleteIS3_EE5resetEPS3_
+   fun:_ZNSt10unique_ptrIN3cta11objectstore7Backend10ScopedLockESt14default_deleteIS3_EE5resetEPS3_
+   fun:_ZN3cta11objectstore10ScopedLock15releaseIfNeededEv
+   fun:_ZN3cta11objectstore10ScopedLock7releaseEv
+   fun:_ZN3cta8ostoredb15SharedQueueLockINS_11objectstore12ArchiveQueueENS2_14ArchiveRequestEED1Ev
+   fun:_ZNSt15_Sp_counted_ptrIPN3cta8ostoredb15SharedQueueLockINS0_11objectstore12ArchiveQueueENS3_14ArchiveRequestEEELN9__gnu_cxx12_Lock_policyE2EE10_M_disposeEv
+   fun:_ZNSt16_Sp_counted_baseILN9__gnu_cxx12_Lock_policyE2EE10_M_releaseEv
+   fun:_ZNSt14__shared_countILN9__gnu_cxx12_Lock_policyE2EED1Ev
+   fun:_ZNSt12__shared_ptrIN3cta8ostoredb15SharedQueueLockINS0_11objectstore12ArchiveQueueENS3_14ArchiveRequestEEELN9__gnu_cxx12_Lock_policyE2EED1Ev
+   fun:_ZNSt12__shared_ptrIN3cta8ostoredb15SharedQueueLockINS0_11objectstore12ArchiveQueueENS3_14ArchiveRequestEEELN9__gnu_cxx12_Lock_policyE2EE5resetEv
+   obj:/usr/lib64/libctascheduler.so.0.1.0
+   obj:/usr/lib64/libctascheduler.so.0.1.0
+   obj:/usr/lib64/libctascheduler.so.0.1.0
+   obj:/usr/lib64/libctascheduler.so.0.1.0
+   fun:_ZNKSt8functionIFvvEEclEv
+   fun:_ZN3cta8OStoreDB22EnqueueingWorkerThread3runEv
+   fun:_ZN3cta9threading6Thread14pthread_runnerEPv
+   fun:mythread_wrapper
+}
