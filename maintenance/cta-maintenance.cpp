@@ -67,6 +67,12 @@ static int exceptionThrowingMain(common::Config config, cta::log::Logger& log) {
     log(cta::log::INFO, "Starting cta-maintenance", params);
   }
 
+  // Set specific static headers for tape daemon
+  std::map<std::string, std::string> staticParamMap;
+  staticParamMap["instance"] = config.getOptionValueStr("cta.instance_name").value();
+  staticParamMap["sched_backend"] = config.getOptionValueStr("cta.scheduler_backen_name").value();
+  log.setStaticParams(staticParamMap);
+  
   // Start loop
   while(true) {
     // Create the maintenance object
