@@ -36,7 +36,7 @@
 #include <getopt.h>
 #include "callback_api/CtaAdminServer.hpp"
 #include <grpcpp/ext/proto_server_reflection_plugin.h>
-#include "TokenStorage.hpp" // for Kerberos authentication - we'll wipe the storage periodically
+#include "TokenStorage.hpp"
 #include "ServiceKerberosAuthProcessor.hpp"
 #include "NegotiationService.hpp"
 #include "common/utils/utils.hpp"
