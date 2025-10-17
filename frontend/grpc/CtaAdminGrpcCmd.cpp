@@ -43,7 +43,7 @@ static std::string file2string(std::string filename){
 namespace cta::admin {
 
 // Implement the send() method here, by wrapping the Admin rpc call
-void CtaAdminGrpcCmd::send(const CtaAdminParsedCmd& parsedCmd, cta::common::Config& config, const std::string& config_file) const {
+void CtaAdminGrpcCmd::send(const CtaAdminParsedCmd& parsedCmd, const cta::common::Config& config, const std::string& config_file) const {
   const auto &request = parsedCmd.getRequest();
   // Validate the Protocol Buffer
   try {
