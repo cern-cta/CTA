@@ -85,6 +85,7 @@ struct RetrieveJobSummaryRow {
         VID,
         MOUNT_POLICY,
         ACTIVITY,
+        DISK_SYSTEM_NAME,
         PRIORITY,
         JOBS_COUNT,
         JOBS_TOTAL_SIZE,
