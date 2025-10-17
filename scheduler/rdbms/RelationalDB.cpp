@@ -396,7 +396,9 @@ RelationalDB::queueRetrieve(cta::common::dataStructures::RetrieveRequest& rqst,
         break;
       }
     }
-    logContext.log(cta::log::INFO, "In schedulerdb::RelationalDB::queueRetrieve(): after bestCopyNb selection. ");
+    log::ScopedParamContainer(logContext)
+      .add("diskSystemName", diskSystemName)
+      .log(cta::log::INFO, "In schedulerdb::RelationalDB::queueRetrieve(): checking disk system name. ");
 
     // In order to queue the job, construct it first in memory.
     schedulerdb::RetrieveRequest rReq(sqlconn, logContext);
@@ -405,10 +407,18 @@ RelationalDB::queueRetrieve(cta::common::dataStructures::RetrieveRequest& rqst,
     rReq.setActivityIfNeeded(rqst, criteria);
     ret.requestId = rReq.getIdStr();
     rReq.setSchedulerRequest(rqst);
+    logContext.log(cta::log::INFO,
+                   "In schedulerdb::RelationalDB::queueRetrieve(): setSchedulerRequest.");
     rReq.fillJobsSetRetrieveFileQueueCriteria(criteria);  // fills also m_jobs
+    logContext.log(cta::log::INFO,
+                   "In schedulerdb::RelationalDB::queueRetrieve(): fillJobsSetRetrieveFileQueueCriteria.");
     rReq.setActiveCopyNumber(bestCopyNb);
     rReq.setIsVerifyOnly(rqst.isVerifyOnly);
+    logContext.log(cta::log::INFO,
+                   "In schedulerdb::RelationalDB::queueRetrieve(): setIsVerifyOnly.");
     rReq.setDiskSystemName(diskSystemName);
+    logContext.log(cta::log::INFO,
+                   "In schedulerdb::RelationalDB::queueRetrieve(): setDiskSystemName.");
     rreqMutex.release();
     rReq.insert();
     log::ScopedParamContainer(logContext)
