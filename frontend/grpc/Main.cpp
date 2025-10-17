@@ -34,12 +34,12 @@
 #endif
 
 #include <getopt.h>
-#include <fstream>
 #include "callback_api/CtaAdminServer.hpp"
 #include <grpcpp/ext/proto_server_reflection_plugin.h>
 #include "TokenStorage.hpp" // for Kerberos authentication - we'll wipe the storage periodically
 #include "ServiceKerberosAuthProcessor.hpp"
 #include "NegotiationService.hpp"
+#include "common/utils/utils.hpp"
 
 // #include <grpc++/reflection.h>
 #include <thread>
@@ -74,13 +74,6 @@ void printHelpAndExit(int rc) {
 void printVersionAndExit() {
     std::cout << "cta-frontend-grpc version: " << CTA_VERSION << std::endl;
     exit(0);
-}
-
-std::string file2string(std::string filename){
-    std::ifstream as_stream(filename);
-    std::ostringstream as_string;
-    as_string << as_stream.rdbuf();
-    return as_string.str();
 }
 
 void JwksCacheRefreshLoop(std::weak_ptr<JwkCache> weakCache,
@@ -194,16 +187,16 @@ int main(const int argc, char *const *const argv) {
         else {
             auto key_file = svc.getFrontendService().getTlsKey().value();
             lc.log(log::INFO, "TLS service key file: " + key_file);
-            cert.private_key = file2string(key_file);
+            cert.private_key = cta::utils::file2string(key_file);
 
             auto cert_file = svc.getFrontendService().getTlsCert().value();
             lc.log(log::INFO, "TLS service certificate file: " + cert_file);
-            cert.cert_chain = file2string(cert_file);
+            cert.cert_chain = cta::utils::file2string(cert_file);
 
             auto ca_chain = svc.getFrontendService().getTlsChain();
             if (ca_chain.has_value()) {
                 lc.log(log::INFO, "TLS CA chain file: " + ca_chain.value());
-                tls_options.pem_root_certs = file2string(ca_chain.value());
+                tls_options.pem_root_certs = cta::utils::file2string(ca_chain.value());
             } else {
                 lc.log(log::INFO, "TLS CA chain file not defined ...");
                 tls_options.pem_root_certs = "";

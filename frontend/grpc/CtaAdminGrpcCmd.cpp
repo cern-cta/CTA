@@ -15,11 +15,6 @@
 *               submit itself to any jurisdiction.
 */
 
-#include <filesystem>
-#include <sstream>
-#include <iostream>
-#include <fstream>
-
 #include "CtaAdminGrpcCmd.hpp"
 #include <cmdline/CtaAdminTextFormatter.hpp>
 #include "tapeserver/daemon/common/TapedConfiguration.hpp"
@@ -32,13 +27,8 @@
 #include "common/log/LogContext.hpp"
 #include "common/log/FileLogger.hpp"
 #include "common/utils/Base64.hpp"
+#include "common/utils/utils.hpp"
 
-static std::string file2string(std::string filename){
-    std::ifstream as_stream(filename);
-    std::ostringstream as_string;
-    as_string << as_stream.rdbuf();
-    return as_string.str();
-}
 
 namespace cta::admin {
 
@@ -69,7 +59,7 @@ void CtaAdminGrpcCmd::send(const CtaAdminParsedCmd& parsedCmd, const cta::common
 
   if (tls) {
     if (caCert) {
-      std::string caCertContents = file2string(caCert.value());
+      std::string caCertContents = cta::utils::file2string(caCert.value());
       ssl_options.pem_root_certs = caCertContents;
     } else {
       ssl_options.pem_root_certs = "";

@@ -31,6 +31,7 @@ add_executable(cta-frontend-grpc Main.cpp FrontendGrpcService.cpp
   ${PROJECT_SOURCE_DIR}/cmdline/CtaAdminTextFormatter.cpp
   ${PROJECT_SOURCE_DIR}/cmdline/CtaAdminCmdParser.cpp
   ${PROJECT_SOURCE_DIR}/common/config/Config.cpp
+  ${PROJECT_SOURCE_DIR}/common/utils/utils.cpp
   callback_api/CtaAdminServerWriteReactor.cpp
   NegotiationService.cpp
   ServerNegotiationRequestHandler.cpp
@@ -72,6 +73,7 @@ add_executable(cta-admin-grpc
   ${PROJECT_SOURCE_DIR}/cmdline/CtaAdminParsedCmd.cpp
   ${PROJECT_SOURCE_DIR}/cmdline/CtaAdminTextFormatter.cpp
   ${PROJECT_SOURCE_DIR}/cmdline/CtaAdminCmdParser.cpp
+  ${PROJECT_SOURCE_DIR}/common/utils/utils.cpp
   ClientNegotiationRequestHandler.cpp
   utils.cpp
 )

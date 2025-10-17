@@ -412,4 +412,6 @@ std::time_t getCurrentEpochTime();
  */
 std::string getProcessName();
 
+std::string file2string(std::string filename);
+
 }  // namespace cta::utils
