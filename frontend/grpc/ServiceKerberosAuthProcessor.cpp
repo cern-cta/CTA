@@ -88,6 +88,7 @@
   if(m_tokenStorage.validate(strAuthMetadataValue)) {
     // If ok consume
     pConsumedAuthMetadata->insert(std::make_pair(TOKEN_AUTH_METADATA_KEY, strAuthMetadataValue));
+    m_tokenStorage.remove(strAuthMetadataValue);
     return ::grpc::Status::OK;
   }
   // else UNAUTHENTICATED

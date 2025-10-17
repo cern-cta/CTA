@@ -34,3 +34,9 @@ bool cta::frontend::grpc::server::TokenStorage::validate(const std::string& strT
   }
   return false;
 }
+
+void cta::frontend::grpc::server::TokenStorage::remove(const std::string& strToken) {
+  std::lock_guard<std::mutex> lck(m_mtxLockStorage);
+  std::string strDecodedToken = cta::utils::base64decode(strToken);
+  m_umapTokens.erase(strDecodedToken);
+}
