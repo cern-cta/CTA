@@ -366,15 +366,16 @@ RelationalDB::queueRetrieve(cta::common::dataStructures::RetrieveRequest& rqst,
   auto rreqMutex = std::make_unique<cta::threading::Mutex>();
   cta::threading::MutexLocker rreqMutexLock(*rreqMutex);
   SchedulerDatabase::RetrieveRequestInfo ret;
+  log::ScopedParamContainer(logContext)
+      .add("diskSystemName", diskSystemName);
   try {
-    logContext.log(cta::log::INFO, "In schedulerdb::RelationalDB::queueRetrieve(): before candidateVids. ");
 
     // Get the best vid from the cache
     std::set<std::string, std::less<>> candidateVids;
     for (auto& tf : criteria.archiveFile.tapeFiles) {
       candidateVids.insert(tf.vid);
     }
-    logContext.log(cta::log::INFO, "In schedulerdb::RelationalDB::queueRetrieve(): before sqlconn selection. ");
+    logContext.log(cta::log::INFO, "In RelationalDB::queueRetrieve(): before sqlconn selection. ");
 
     auto sqlconn = m_connPool.getConn();
     /* The current selectBestVid4Retrieve implementation makes
@@ -383,7 +384,6 @@ RelationalDB::queueRetrieve(cta::common::dataStructures::RetrieveRequest& rqst,
      * to-do options: a) cache, b) query in batches and insert VIDs available in the info
      * about the archive file from the catalogue and decide on the best during the getNextJobBatch phase ! */
     ret.selectedVid = cta::schedulerdb::Helpers::selectBestVid4Retrieve(candidateVids, m_catalogue, sqlconn, false);
-    logContext.log(cta::log::INFO, "In schedulerdb::RelationalDB::queueRetrieve(): after selectBestVid4Retrieve. ");
 
     uint8_t bestCopyNb = 0;
     for (auto& tf : criteria.archiveFile.tapeFiles) {
@@ -396,9 +396,6 @@ RelationalDB::queueRetrieve(cta::common::dataStructures::RetrieveRequest& rqst,
         break;
       }
     }
-    log::ScopedParamContainer(logContext)
-      .add("diskSystemName", diskSystemName)
-      .log(cta::log::INFO, "In schedulerdb::RelationalDB::queueRetrieve(): checking disk system name. ");
 
     // In order to queue the job, construct it first in memory.
     schedulerdb::RetrieveRequest rReq(sqlconn, logContext);
@@ -407,18 +404,10 @@ RelationalDB::queueRetrieve(cta::common::dataStructures::RetrieveRequest& rqst,
     rReq.setActivityIfNeeded(rqst, criteria);
     ret.requestId = rReq.getIdStr();
     rReq.setSchedulerRequest(rqst);
-    logContext.log(cta::log::INFO,
-                   "In schedulerdb::RelationalDB::queueRetrieve(): setSchedulerRequest.");
     rReq.fillJobsSetRetrieveFileQueueCriteria(criteria);  // fills also m_jobs
-    logContext.log(cta::log::INFO,
-                   "In schedulerdb::RelationalDB::queueRetrieve(): fillJobsSetRetrieveFileQueueCriteria.");
     rReq.setActiveCopyNumber(bestCopyNb);
     rReq.setIsVerifyOnly(rqst.isVerifyOnly);
-    logContext.log(cta::log::INFO,
-                   "In schedulerdb::RelationalDB::queueRetrieve(): setIsVerifyOnly.");
     rReq.setDiskSystemName(diskSystemName);
-    logContext.log(cta::log::INFO,
-                   "In schedulerdb::RelationalDB::queueRetrieve(): setDiskSystemName.");
     rreqMutex.release();
     rReq.insert();
     log::ScopedParamContainer(logContext)
