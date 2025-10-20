@@ -26,7 +26,7 @@ add_library(ctamaintenancedaemon
 if(NOT CTA_USE_PGSCHED)
     set(SCHEDRUNNERS ctaosrunners)
 else()
-	set(SCJEDRUNNERS ctardbrunners)
+    set(SCJEDRUNNERS ctardbrunners)
 endif()
 
 target_link_libraries(ctamaintenancedaemon
