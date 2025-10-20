@@ -115,5 +115,24 @@ static constexpr const char* descrCtaTapedDriveStatus = "Number of drives in a g
 static constexpr const char* unitCtaTapedDriveStatus = "1";
 
 // -------------------- MAINTENANCE --------------------
+static constexpr const char* kMetricCtaMaintenanceGarbageCollectorCount = "cta.maintenance.garbagecollector.count";
+static constexpr const char* descrCtaMaintenanceGarbageCollectorCount = "Number of garbage collected objects in one pass";
+static constexpr const char* unitCtaMaintenanceGarbageCollectorCount = "1";
+
+static constexpr const char* kMetricCtaMaintenanceDiskReporterCount = "cta.maintenance.diskreporter.count";
+static constexpr const char* descrCtaMaintenanceDiskReporterCount = "Number of report jobs reported in one pass";  
+static constexpr const char* unitCtaMaintenanceDiskReporterCount = "1";
+
+static constexpr const char* kMetricCtaMaintenanceRepackReportingCount = "cta.maintenance.repackreporting.count";
+static constexpr const char* descrCtaMaintenanceRepackReportingCount = "Number of repack report jobs reported in one pass";  
+static constexpr const char* unitCtaMaintenanceRepackReportingCount = "1";
+
+static constexpr const char* kMetricCtaMaintenanceRepackExpansionCount = "cta.maintenance.repackexpansion.count";
+static constexpr const char* descrCtaMaintenanceRepackExpansionCount = "Number of retrieve requests created by the expasion of repack requests in one pass";
+static constexpr const char* unitCtaMaintenanceRepackExpansionCount = "1";
+
+static constexpr const char* kMetricCtaMaintenanceQueueCleanupCount = "cta.maintenance.queuecleanup.count";
+static constexpr const char* descrCtaMaintenanceQueueCleanupCount = "Number of retrieve requests requeued of failed in one pass.";  
+static constexpr const char* unitCtaMaintenanceQueueCleanupCount = "1";
 
 }  // namespace cta::semconv::metrics
