@@ -21,6 +21,7 @@
 #include <unistd.h>
 #include <signal.h>
 #include <sys/signalfd.h>
+#include <vector>
 
 //------------------------------------------------------------------------------
 // Constructor
@@ -29,7 +30,7 @@ cta::SignalHandler::SignalHandler() {
   // We will ignore non handled singals in the main logic.
   ::sigset_t sigMask;
   ::sigemptyset(&sigMask);
-  const std::list<int> sigList = {SIGHUP,
+  const std::vector<int> sigList = {SIGHUP,
                                       SIGINT,
                                       SIGQUIT,
                                       SIGPIPE,
