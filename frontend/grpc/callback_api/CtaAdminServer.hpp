@@ -285,14 +285,13 @@ CtaRpcStreamImpl::GenericAdminStream(::grpc::CallbackServerContext* context, con
         // Just to return an error status code when the specified command is not implemented
         const std::string errMsg("Admin command pair <" + AdminCmd_Cmd_Name(request->admincmd().cmd()) + ", " +
                                  AdminCmd_SubCmd_Name(request->admincmd().subcmd()) + "> is not implemented.");
-    requestTracker.setErrorType(cta::semconv::attr::ErrorTypeValues::kException);
+        requestTracker.setErrorType(cta::semconv::attr::ErrorTypeValues::kException);
         return new DefaultWriteReactor(errMsg);
     }  // switch
   } catch (const cta::exception::UserError& ex) {
     requestTracker.setErrorType(cta::semconv::attr::ErrorTypeValues::kUserError);
     return new DefaultWriteReactor(ex.getMessageValue());
-  }
-   // try-catch
+  } // try-catch
   // proceed with command execution if no exception was thrown
   return new CtaAdminServerWriteReactor(m_catalogue, m_scheduler, m_instanceName, std::move(stream), headerType);
 }
