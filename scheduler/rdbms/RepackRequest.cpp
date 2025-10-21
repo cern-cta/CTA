@@ -111,8 +111,8 @@ namespace cta::schedulerdb {
     auto subReqItor = repackSubrequests.begin();
     while (subReqItor != repackSubrequests.end()) {
       uint64_t nbSubReqProcessed = 0;
-      std::vector <cta::schedulerdb::postgres::RetrieveJobQueueRow> rrRowBunchToTransfer;
-      std::vector <cta::schedulerdb::postgres::RetrieveJobQueueRow> rrRowBunchNoRecall;
+      std::vector <cta::schedulerdb::postgres::RetrieveJobQueueRow> rrRowBatchToTransfer;
+      std::vector <cta::schedulerdb::postgres::RetrieveJobQueueRow> rrRowBatchNoRecall;
       while (subReqItor != repackSubrequests.end() && nbSubReqProcessed < 500) {
         auto &rsr = *subReqItor;
 
@@ -267,18 +267,18 @@ namespace cta::schedulerdb {
                      "In RepackRequest::addSubrequestsAndUpdateStats(): about to emplace the row to vector.");
             if (rsr.hasUserProvidedFile) {
               rr.setJobStatus(activeCopyNumber, RetrieveJobStatus::RJS_ToReportToRepackForSuccess);
-              rrRowBunchNoRecall.emplace_back(rr.makeJobRow());
+              rrRowBatchNoRecall.emplace_back(rr.makeJobRow());
               log::ScopedParamContainer(m_lc)
-                      .add("rearchiveCopyNbs", rrRowBunchNoRecall.back().rearchiveCopyNbs)
+                      .add("rearchiveCopyNbs", rrRowBatchNoRecall.back().rearchiveCopyNbs)
                       .log(log::DEBUG,
-                     "In RepackRequest::addSubrequestsAndUpdateStats(): rrRowBunchNoRecall.back().rearchiveCopyNbs.");
+                     "In RepackRequest::addSubrequestsAndUpdateStats(): rrRowBatchNoRecall.back().rearchiveCopyNbs.");
             } else {
               rr.setJobStatus(activeCopyNumber, RetrieveJobStatus::RJS_ToTransfer);
-              rrRowBunchToTransfer.emplace_back(rr.makeJobRow());
+              rrRowBatchToTransfer.emplace_back(rr.makeJobRow());
               log::ScopedParamContainer(m_lc)
-                      .add("rearchiveCopyNbs back", rrRowBunchToTransfer.back().rearchiveCopyNbs)
+                      .add("rearchiveCopyNbs back", rrRowBatchToTransfer.back().rearchiveCopyNbs)
                       .log(log::DEBUG,
-                     "In RepackRequest::addSubrequestsAndUpdateStats(): rrRowBunchToTransfer.back().rearchiveCopyNbs.");
+                     "In RepackRequest::addSubrequestsAndUpdateStats(): rrRowBatchToTransfer.back().rearchiveCopyNbs.");
             }
           } catch (exception::Exception &ex) {
             failedCreationStats.files++;
@@ -293,13 +293,13 @@ namespace cta::schedulerdb {
       m_lc.log(log::DEBUG, "In RepackRequest::addSubrequestsAndUpdateStats(): about to insert bunch to the DB.");
 
       // --- Insert ToTransfer jobs ---
-      if (!rrRowBunchToTransfer.empty()) {
+      if (!rrRowBatchToTransfer.empty()) {
         log::ScopedParamContainer params(m_lc);
-        params.add("nrows", rrRowBunchToTransfer.size());
+        params.add("nrows", rrRowBatchToTransfer.size());
         auto conn = m_connPool.getConn();
         try {
-          cta::schedulerdb::postgres::RetrieveJobQueueRow::insertBunch(conn, rrRowBunchToTransfer, true);
-          nbRetrieveSubrequestsCreated += rrRowBunchToTransfer.size();
+          cta::schedulerdb::postgres::RetrieveJobQueueRow::insertBatch(conn, rrRowBatchToTransfer, true);
+          nbRetrieveSubrequestsCreated += rrRowBatchToTransfer.size();
           m_lc.log(log::INFO,
                    "In RepackRequest::addSubrequestsAndUpdateStats(): inserted bunch of 'ToTransfer' retrieve jobs.");
         } catch (exception::Exception &ex) {
@@ -308,7 +308,7 @@ namespace cta::schedulerdb {
                    "In RepackRequest::addSubrequestsAndUpdateStats(): failed to insert 'ToTransfer' retrieve jobs.");
           conn.rollback();
           // all these failed rows should be counted as not created
-          for (auto &row: rrRowBunchToTransfer) {
+          for (auto &row: rrRowBatchToTransfer) {
             failedCreationStats.files++;
             failedCreationStats.bytes += row.fileSize;
             failedArchiveReq += srmap[row.fSeq]->archiveCopyNbsSet.size();
@@ -317,13 +317,13 @@ namespace cta::schedulerdb {
       }
 
       // --- Insert NoRecall jobs ---
-      if (!rrRowBunchNoRecall.empty()) {
+      if (!rrRowBatchNoRecall.empty()) {
         log::ScopedParamContainer params(m_lc);
-        params.add("nrows", rrRowBunchNoRecall.size());
+        params.add("nrows", rrRowBatchNoRecall.size());
         auto conn = m_connPool.getConn();
         try {
-          cta::schedulerdb::postgres::RetrieveJobQueueRow::insertBunch(conn, rrRowBunchNoRecall, true);
-          nbRetrieveSubrequestsCreated += rrRowBunchNoRecall.size();
+          cta::schedulerdb::postgres::RetrieveJobQueueRow::insertBatch(conn, rrRowBatchNoRecall, true);
+          nbRetrieveSubrequestsCreated += rrRowBatchNoRecall.size();
           m_lc.log(log::INFO,
                    "In RepackRequest::addSubrequestsAndUpdateStats(): inserted bunch of 'NoRecall' retrieve jobs.");
         } catch (exception::Exception &ex) {
@@ -331,7 +331,7 @@ namespace cta::schedulerdb {
           m_lc.log(log::ERR,
                    "In RepackRequest::addSubrequestsAndUpdateStats(): failed to insert 'NoRecall' retrieve jobs.");
           conn.rollback();
-          for (auto &row: rrRowBunchNoRecall) {
+          for (auto &row: rrRowBatchNoRecall) {
             failedCreationStats.files++;
             failedCreationStats.bytes += row.fileSize;
             failedArchiveReq += srmap[row.fSeq]->archiveCopyNbsSet.size();
@@ -379,7 +379,7 @@ namespace cta::schedulerdb {
     try {
       repackInfo.status = common::dataStructures::RepackInfo::Status::Failed;
       uint64_t nrows =
-                postgres::RepackRequestTrackingRow::updateStatusAndFinishTime(
+                postgres::RepackRequestTrackingRow::updateRepackRequestStatusAndFinishTime(
                         txn,
                         repackInfo.repackReqId,
                         repackInfo.isExpandFinished,
@@ -427,10 +427,10 @@ namespace cta::schedulerdb {
         log::ScopedParamContainer(m_lc)
                 .add("newStatus", to_string(mapRepackInfoStatusToJobStatus(newStatus))).log(
                 log::DEBUG,
-                "RepackRequest::setExpandStartedAndChangeStatus(): updateStatusAndFinishTime() before update");
+                "RepackRequest::setExpandStartedAndChangeStatus(): updateRepackRequestStatusAndFinishTime() before update");
 
         uint64_t nrows =
-                postgres::RepackRequestTrackingRow::updateStatusAndFinishTime(
+                postgres::RepackRequestTrackingRow::updateRepackRequestStatusAndFinishTime(
                         txn,
                         repackInfo.repackReqId,
                         repackInfo.isExpandFinished,
@@ -440,10 +440,10 @@ namespace cta::schedulerdb {
         log::ScopedParamContainer(m_lc).add("nrows", nrows)
                 .add("newStatus", to_string(mapRepackInfoStatusToJobStatus(newStatus))).log(
                 log::INFO,
-                "updateStatusAndFinishTime finished");
+                "updateRepackRequestStatusAndFinishTime finished");
       } else {
         uint64_t nrows =
-                postgres::RepackRequestTrackingRow::updateStatus(
+                postgres::RepackRequestTrackingRow::updateRepackRequestStatus(
                         txn,
                         repackInfo.repackReqId,
                         repackInfo.isExpandFinished,
@@ -451,7 +451,7 @@ namespace cta::schedulerdb {
 
         log::ScopedParamContainer(m_lc).add("nrows", nrows).log(
                 log::INFO,
-                "updateStatus finished");
+                "updateRepackRequestStatus finished");
       }
       txn.commit();
     } catch (cta::exception::Exception &e) {
