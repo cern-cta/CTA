@@ -20,6 +20,8 @@
 #include "scheduler/ArchiveJob.hpp"
 #include "scheduler/RetrieveJob.hpp"
 #include "common/log/TimingList.hpp"
+#include "common/semconv/Attributes.hpp"
+#include "common/telemetry/metrics/instruments/MaintenanceInstruments.hpp"
 
 namespace cta::maintenance {
 
@@ -34,6 +36,7 @@ void DiskReportRunner::executeRunner(cta::log::LogContext& lc) {
     auto archiveJobsToReport = m_scheduler.getNextArchiveJobsToReportBatch(m_batchSize, lc);
     is_done = archiveJobsToReport.empty();
     if (!is_done) {
+      const auto reportJobCount = archiveJobsToReport.size();
       timings.insertAndReset("getArchiveJobsToReportTime", t2);
       log::ScopedParamContainer params(lc);
       params.add("archiveJobsReported", archiveJobsToReport.size());
@@ -42,6 +45,7 @@ void DiskReportRunner::executeRunner(cta::log::LogContext& lc) {
       timings.insertAndReset("reportArchiveJobsTime", t3);
       timings.addToLog(params);
       lc.log(cta::log::INFO, "In DiskReportRunner::executeRunner(): did one round of archive reports.");
+      cta::telemetry::metrics::ctaMaintenanceDiskReporterCount->Add(reportJobCount);
     } else {
       lc.log(cta::log::DEBUG, "In DiskReportRunner::executeRunner(): archiveJobsToReport is empty.");
     }
@@ -49,6 +53,7 @@ void DiskReportRunner::executeRunner(cta::log::LogContext& lc) {
     auto retrieveJobsToReport = m_scheduler.getNextRetrieveJobsToReportBatch(m_batchSize, lc);
     is_done = is_done && retrieveJobsToReport.empty();
     if (!retrieveJobsToReport.empty()) {
+      const auto reportJobCount =  retrieveJobsToReport.size();
       timings.insertAndReset("getRetrieveJobsToReportTime", t4);
       log::ScopedParamContainer params(lc);
       params.add("retrieveJobsReported", retrieveJobsToReport.size());
@@ -57,6 +62,7 @@ void DiskReportRunner::executeRunner(cta::log::LogContext& lc) {
       timings.insertAndReset("reportRetrieveJobsTime", t5);
       timings.addToLog(params);
       lc.log(cta::log::INFO, "In DiskReportRunner::executeRunner(): did one round of retrieve reports.");
+      cta::telemetry::metrics::ctaMaintenanceDiskReporterCount->Add(reportJobCount);
     } else {
       lc.log(cta::log::DEBUG, "In DiskReportRunner::executeRunner(): retrieveJobsToReport is empty.");
     }

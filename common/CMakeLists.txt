@@ -122,6 +122,7 @@ set (COMMON_LIB_SRC_FILES
   telemetry/metrics/instruments/RdbmsInstruments.cpp
   telemetry/metrics/instruments/SchedulerInstruments.cpp
   telemetry/metrics/instruments/TapedInstruments.cpp
+  telemetry/metrics/instruments/MaintenanceInstruments.cpp
   SourcedParameter.cpp
   process/threading/ChildProcess.cpp
   process/threading/CondVar.cpp
