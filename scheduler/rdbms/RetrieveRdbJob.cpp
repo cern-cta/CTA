@@ -229,9 +229,9 @@ void RetrieveRdbJob::failTransfer(const std::string& failureReason, log::LogCont
   }
   // Decide if we want the job to have a chance to come back to this mount (requeue) or not.
   if (m_jobRow.retriesWithinMount >= m_jobRow.maxRetriesWithinMount) {
-    requeueJobToMount(txn, lc, failureReason, false);
+    requeueJobToMount(txn, lc, failureReason, false /* keepMountId */);
   } else {
-    requeueJobToMount(txn, lc, failureReason, true);
+    requeueJobToMount(txn, lc, failureReason, true /* keepMountId */);
   }
 }
 

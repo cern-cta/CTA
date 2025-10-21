@@ -458,7 +458,7 @@ namespace cta::schedulerdb::postgres {
    * @param newStatus The new job status to set.
    * @return The number of affected rows (should be 1 if successful).
    */
-    static uint64_t updateStatus(
+    static uint64_t updateRepackRequestStatus(
             Transaction &txn,
             const uint64_t &reqId,
             const bool isExpandFinished,
@@ -474,7 +474,7 @@ namespace cta::schedulerdb::postgres {
      * @param finishTime The finish time (epoch or timestamp value) to set.
      * @return The number of affected rows (should be 1 if successful).
      */
-    static uint64_t updateStatusAndFinishTime(
+    static uint64_t updateRepackRequestStatusAndFinishTime(
             Transaction &txn,
             const uint64_t &reqId,
             const bool isExpandFinished,

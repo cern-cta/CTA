@@ -190,9 +190,9 @@ void ArchiveRdbJob::failTransfer(const std::string& failureReason, log::LogConte
   const bool failedTaskQueue =
     failureReason.find("In TapeWriteSingleThread::run(): cleaning failed task queue") != std::string::npos;
   if (m_jobRow.retriesWithinMount >= m_jobRow.maxRetriesWithinMount || failedTaskQueue) {
-    requeueJobToMount(txn, lc, failureReason, false);
+    requeueJobToMount(txn, lc, failureReason, false /* keepMountId */);
   } else {
-    requeueJobToMount(txn, lc, failureReason, true);
+    requeueJobToMount(txn, lc, failureReason, true /* keepMountId */);
   }
 }
 

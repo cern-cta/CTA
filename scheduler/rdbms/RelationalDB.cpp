@@ -717,7 +717,7 @@ void RelationalDB::populateRepackRequestsStatistics(SchedulerDatabase::RepackReq
 auto RelationalDB::getRepackStatisticsNoLock()
     -> std::unique_ptr<SchedulerDatabase::RepackRequestStatistics> {
   log::LogContext lc(m_logger);
-  lc.log(log::WARNING,
+  lc.log(log::INFO,
          "RelationalDB::getRepackStatisticsNoLock(): calling populateRepackRequestsStatistics() select call to the DB.");
 
   //auto typedRet = std::make_unique<RelationalDB::RepackRequestPromotionStatisticsNoLock>();
@@ -1543,8 +1543,8 @@ std::unordered_map<std::string, RelationalDB::DiskSleepEntry> RelationalDB::getD
   return sleepEntries;
 }
 
-uint64_t RelationalDB::removeDiskSystemSleepEntry(schedulerdb::Transaction &txn,
-                                                  const std::vector <std::string> &expiredDiskSystemNames) {
+uint64_t RelationalDB::removeDiskSystemSleepEntries(schedulerdb::Transaction &txn,
+                                                    const std::vector <std::string> &expiredDiskSystemNames) {
   if (expiredDiskSystemNames.empty()) {
     return 0;
   }
@@ -1603,7 +1603,7 @@ std::unordered_map<std::string, RelationalDB::DiskSleepEntry> RelationalDB::getA
   if(!expiredDiskSystems.empty()){
     schedulerdb::Transaction txn(m_connPool);
     try{
-      uint64_t nrows = removeDiskSystemSleepEntry(txn, expiredDiskSystems);
+      uint64_t nrows = removeDiskSystemSleepEntries(txn, expiredDiskSystems);
       txn.commit();
       cta::log::ScopedParamContainer(logContext)
               .add("nrows", nrows)
