@@ -56,6 +56,7 @@ usage() {
   echo "      --cta-config <file>:            Values file to use for the CTA chart. Defaults to presets/dev-cta-xrd-values.yaml."
   echo "      --local-telemetry:              Spawns an OpenTelemetry and Collector and Prometheus scraper. Changes the default cta-config to presets/dev-cta-telemetry-values.yaml"
   echo "      --publish-telemetry:            Publishes telemetry to a pre-configured central observability backend. See presets/ci-cta-telemetry-http-values.yaml"
+  echo "      --extra-cta-values:            Extra verbatim values for the CTA chart. These will override any previous values from files."
   exit 1
 }
 
@@ -184,6 +185,9 @@ create_instance() {
       --cta-config)
         cta_config="$2"
         test -f "${cta_config}" || die "CTA config file ${cta_config} does not exist"
+        shift ;;
+      --extra-cta-values)
+        extra_cta_values="$2"
         shift ;;
       --publish-telemetry) publish_telemetry=true ;;
       *)
@@ -391,7 +395,11 @@ create_instance() {
   if [[ "$publish_telemetry" == "true" ]]; then
     extra_cta_chart_flags+="--values presets/ci-cta-telemetry-http-values.yaml"
   fi
+  if [ "$extra_cta_values" ]; then
+    extra_cta_chart_flags+=" ${extra_cta_values} "
+  fi
 
+  
   echo "Installing CTA chart..."
   log_run helm ${helm_command} cta helm/cta \
                                 --namespace "${namespace}" \
