@@ -90,8 +90,7 @@ WorkflowEvent::WorkflowEvent(const frontend::FrontendService& frontendService,
 }
 
 xrd::Response WorkflowEvent::process() {
-  cta::frontend::RequestTracker requestTracker(Workflow_EventType_Name(m_event.wf().event()),
-                                               m_cliIdentity.username);
+  cta::frontend::RequestTracker requestTracker(Workflow_EventType_Name(m_event.wf().event()), m_cliIdentity.username);
   xrd::Response response;
   utils::Timer timer;
 
