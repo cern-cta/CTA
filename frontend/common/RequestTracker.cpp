@@ -23,7 +23,7 @@
 
 namespace cta::frontend {
 
-RequestTracker::RequestTracker(const std::string& eventName, const std::string& requesterName)
+RequestTracker::RequestTracker(std::string_view eventName, std::string_view requesterName)
     : m_eventName(eventName),
       m_requesterName(requesterName) {
   cta::telemetry::metrics::ctaFrontendActiveRequests->Add(

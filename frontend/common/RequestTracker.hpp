@@ -26,7 +26,7 @@ namespace cta::frontend {
 // Used to track ctaFrontendActiveRequests
 class RequestTracker {
 public:
-  RequestTracker(const std::string& eventName, const std::string& requesterName);
+  RequestTracker(std::string_view eventName, std::string_view requesterName);
   ~RequestTracker();
   void setErrorType(std::string_view errorType);
 
