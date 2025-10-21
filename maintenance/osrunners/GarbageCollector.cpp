@@ -21,6 +21,8 @@
 #include "GarbageCollector.hpp"
 #include "common/dataStructures/RetrieveJobToAdd.cpp"
 #include "common/exception/NoSuchObject.hpp"
+#include "common/semconv/Attributes.hpp"
+#include "common/telemetry/metrics/instruments/MaintenanceInstruments.hpp"
 #include "objectstore/ArchiveQueueAlgorithms.hpp"
 #include "objectstore/Agent.hpp"
 #include "objectstore/AgentReference.hpp"
@@ -580,6 +582,8 @@ void GarbageCollector::OwnedObjectSorter::lockFetchAndUpdateArchiveJobs(objectst
         agent.resetOwnership(agentOwnership);
         agent.commit();
       }
+      
+      cta::telemetry::metrics::ctaMaintenanceGarbageCollectorCount->Add(currentJobBatch.size());
       currentJobBatch.clear();
       // Sleep a bit if we have oher rounds to go not to hog the queue
       if (archiveQueueIdAndReqs.second.size()) sleep (5);
@@ -763,6 +767,8 @@ void GarbageCollector::OwnedObjectSorter::lockFetchAndUpdateRetrieveJobs(objects
         }
       }
       if (ownershipUpdated) agent.commit();
+      
+      cta::telemetry::metrics::ctaMaintenanceGarbageCollectorCount->Add(currentJobBatch.size());
       currentJobBatch.clear();
       // Sleep a bit if we have oher rounds to go not to hog the queue
       if (retriveQueueIdAndReqs.second.size()) sleep (5);
@@ -774,6 +780,7 @@ void GarbageCollector::OwnedObjectSorter::lockFetchAndUpdateOtherObjects(objects
     objectstore::Backend & objectStore, cta::catalogue::Catalogue & catalogue, log::LogContext & lc) const {
   // 3) are done with the objects requiring mutualized queueing, and hence special treatement.
   // The rest will be garbage collected on a object-by-object basis.
+  int garbageCollectedOtherObjects = 0;
   for (auto & go : otherObjects) {
    // Find the object
    log::ScopedParamContainer params2(lc);
@@ -786,6 +793,7 @@ void GarbageCollector::OwnedObjectSorter::lockFetchAndUpdateOtherObjects(objects
      // delegate to the object type's garbage collector.
      go->garbageCollectDispatcher(goLock, agent.getAddressIfSet(), agentReference, lc, catalogue);
      lc.log(log::INFO, "In GarbageCollector::OwnedObjectSorter::lockFetchAndUpdateOtherObjects(): garbage collected owned object.");
+     ++garbageCollectedOtherObjects;
    } else {
      lc.log(log::INFO, "In GarbageCollector::OwnedObjectSorter::lockFetchAndUpdateOtherObjects(): "
          "skipping garbage collection of now gone object.");
@@ -794,6 +802,7 @@ void GarbageCollector::OwnedObjectSorter::lockFetchAndUpdateOtherObjects(objects
    agent.removeFromOwnership(go->getAddressIfSet());
    agent.commit();
   }
+  cta::telemetry::metrics::ctaMaintenanceGarbageCollectorCount->Add(garbageCollectedOtherObjects);
   // We now processed all the owned objects. We can delete the agent's entry
   agent.removeAndUnregisterSelf(lc);
   lc.log(log::INFO, "In GarbageCollector::OwnedObjectSorter::lockFetchAndUpdateOtherObjects(): agent entry removed.");

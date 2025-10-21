@@ -16,6 +16,8 @@
  */
 
 #include "QueueCleanupRunner.hpp"
+#include "common/semconv/Attributes.hpp"
+#include "common/telemetry/metrics/instruments/MaintenanceInstruments.hpp"
 
 namespace cta::maintenance {
 
@@ -134,6 +136,7 @@ void QueueCleanupRunner::executeRunner(cta::log::LogContext &logContext) {
 
       double jobMovingTime = tLoop.secs(utils::Timer::resetCounter);
 
+      cta::telemetry::metrics::ctaMaintenanceQueueCleanupCount->Add(dbRet.size());
       paramsLoopMsg.add("numberOfJobsMoved", dbRet.size())
                    .add("getQueueTime", getQueueTime)
                    .add("jobMovingTime", jobMovingTime)

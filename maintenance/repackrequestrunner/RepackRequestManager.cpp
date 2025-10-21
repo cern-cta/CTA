@@ -18,6 +18,7 @@
 #include "common/exception/NoSuchObject.hpp"
 #include "RepackRequestManager.hpp"
 #include "scheduler/Scheduler.hpp"
+#include "common/semconv/Attributes.hpp"
 
 namespace cta::maintenance {
 
@@ -85,7 +86,7 @@ void RepackRequestManager::reportBatch(std::string_view reportingType, GetBatchF
       reportBatch.report(lc);
       numberOfBatchReported++;
       tl.insertAndReset("reportingTime", t);
-
+      
       log::ScopedParamContainer paramsReport(lc);
       tl.addToLog(paramsReport);
       lc.log(log::INFO, "In RepackReportThread::run(), reported a batch of reports.");
