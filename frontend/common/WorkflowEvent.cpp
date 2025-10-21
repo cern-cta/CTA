@@ -23,6 +23,7 @@
 #include "common/checksum/ChecksumBlobSerDeser.hpp"
 #include "common/telemetry/metrics/instruments/FrontendInstruments.hpp"
 #include "common/semconv/Attributes.hpp"
+#include "frontend/common/RequestTracker.hpp"
 #include "PbException.hpp"
 
 namespace cta::frontend {
@@ -89,47 +90,47 @@ WorkflowEvent::WorkflowEvent(const frontend::FrontendService& frontendService,
 }
 
 xrd::Response WorkflowEvent::process() {
+  cta::frontend::RequestTracker requestTracker(Workflow_EventType_Name(m_event.wf().event()),
+                                               m_cliIdentity.username);
   xrd::Response response;
   utils::Timer timer;
 
-  switch(m_event.wf().event()) {
-    using namespace cta::eos;
+  try {
+    switch (m_event.wf().event()) {
+      using namespace cta::eos;
 
-    case Workflow::OPENW:
-      processOPENW(response);
-      break;
-    case Workflow::CREATE:
-      processCREATE(response);
-      break;
-    case Workflow::CLOSEW:
-      processCLOSEW(response);
-      break;
-    case Workflow::PREPARE:
-      processPREPARE(response);
-      break;
-    case Workflow::ABORT_PREPARE:
-      processABORT_PREPARE(response);
-      break;
-    case Workflow::DELETE:
-      processDELETE(response);
-      break;
-    case Workflow::UPDATE_FID:
-      processUPDATE_FID(response);
-      break;
-    default:
-      throw exception::PbException("Workflow event " + Workflow_EventType_Name(m_event.wf().event()) +
-        " is not implemented.");
+      case Workflow::OPENW:
+        processOPENW(response);
+        break;
+      case Workflow::CREATE:
+        processCREATE(response);
+        break;
+      case Workflow::CLOSEW:
+        processCLOSEW(response);
+        break;
+      case Workflow::PREPARE:
+        processPREPARE(response);
+        break;
+      case Workflow::ABORT_PREPARE:
+        processABORT_PREPARE(response);
+        break;
+      case Workflow::DELETE:
+        processDELETE(response);
+        break;
+      case Workflow::UPDATE_FID:
+        processUPDATE_FID(response);
+        break;
+      default:
+        throw exception::PbException("Workflow event " + Workflow_EventType_Name(m_event.wf().event()) +
+                                     " is not implemented.");
+    }
+  } catch (exception::UserError& ex) {
+    requestTracker.setErrorType(cta::semconv::attr::ErrorTypeValues::kUserError);
+    throw ex;
+  } catch (...) {
+    requestTracker.setErrorType(cta::semconv::attr::ErrorTypeValues::kException);
+    throw;
   }
-
-  // Record request duration
-  // Note that m_cliIdentity.username should be low cardinality here as it corresponds to the disk instance name
-  cta::telemetry::metrics::ctaFrontendRequestDuration->Record(
-    timer.msecs(),
-    {
-      {cta::semconv::attr::kEventName,             Workflow_EventType_Name(m_event.wf().event())},
-      {cta::semconv::attr::kFrontendRequesterName, m_cliIdentity.username                       }
-  },
-    opentelemetry::context::RuntimeContext::GetCurrent());
 
   return response;
 }
