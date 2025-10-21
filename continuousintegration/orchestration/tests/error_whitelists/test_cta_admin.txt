@@ -1,2 +1,3 @@
 In Scheduler::getDesiredDriveState(): no such drive
 In OStoreDB::RepackArchiveReportBatch::report(): async job update failed.
+In Scheduler::expandRepackRequest(): errors while doing some checks on the repack buffer. ExceptionMsg = In XRootdDirectory::mkdir() : failed to create directory at root://ctaeos//eos/ctaeos/cta/V00101/ [ERROR] Server responded with an error: [3010] Unable to access(XW) parent directory /eos/ctaeos/cta/; Operation not permitted\n code:400 errNo:3010 status:1
