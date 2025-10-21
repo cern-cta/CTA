@@ -541,7 +541,7 @@ public:
     //params.add("isFailed", isFailed);
   }
 
-static void insertBunch(rdbms::Conn &conn,
+static void insertBatch(rdbms::Conn &conn,
                        const std::vector<RetrieveJobQueueRow> &rows,
                        bool isRepack) {
   if (rows.empty()) return;

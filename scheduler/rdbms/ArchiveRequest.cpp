@@ -94,7 +94,7 @@ void ArchiveRequest::insert() {
       for (const auto& aj : m_jobs) {
         rows.emplace_back(makeJobRow(aj));
       }
-      postgres::ArchiveJobQueueRow::insertBunch(m_conn, rows, false);
+      postgres::ArchiveJobQueueRow::insertBatch(m_conn, rows, false);
       rows.back().addParamsToLogContext(params);
       m_lc.log(log::INFO, "In ArchiveRequest::insert(): added jobs to queue. Parameters logged only for last job of the bunch inserted !");
     }

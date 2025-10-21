@@ -337,7 +337,7 @@ public:
   }
 
 
-  static void insertBunch(rdbms::Conn &conn,
+  static void insertBatch(rdbms::Conn &conn,
                               const std::vector<ArchiveJobQueueRow> &rows,
                               bool isRepack) {
   if (rows.empty()) return;

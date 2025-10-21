@@ -23,8 +23,11 @@ namespace cta::schedulerdb::postgres {
 
   uint64_t
   RepackRequestTrackingRow::cancelRepack(Transaction &txn, const std::string &vid) {
-    // The request will just delete all the rows for which the process has not started yet
-    // Currently this functionality is not used at all in production.
+    // Cancelling repack has never been used with objectstore. Whenever repack wound need to be cancelled,
+    // the entire objectstore had to be wiped. This is going towards enabling this functionality for the first time.
+    // It will need a bit more logic to be implemented to clean-up properly all the tables. For the moment, this does
+    // work only for repack which has not started yet. The cancelRepack() call will just delete all the rows for which
+    // the process has not started yet. Curently this functionality is not used at all in production.
     // Marking as 'Cancelled' all active jobs and deleting files from disk will be an upgrade implemented in the next MR.
     std::string sql = R"SQL(
     DELETE FROM REPACK_REQUEST_TRACKING
@@ -338,7 +341,7 @@ rdbms::Rset RepackRequestTrackingRow::updateRepackRequestsProgress(
   }
 
 
-  uint64_t RepackRequestTrackingRow::updateStatusAndFinishTime(
+  uint64_t RepackRequestTrackingRow::updateRepackRequestStatusAndFinishTime(
     Transaction &txn,
     const uint64_t &reqId,
     const bool isExpandFinished,
@@ -364,7 +367,7 @@ rdbms::Rset RepackRequestTrackingRow::updateRepackRequestsProgress(
   return stmt.getNbAffectedRows();
 }
 
- uint64_t RepackRequestTrackingRow::updateStatus(
+ uint64_t RepackRequestTrackingRow::updateRepackRequestStatus(
     Transaction &txn,
     const uint64_t &reqId,
     const bool isExpandFinished,

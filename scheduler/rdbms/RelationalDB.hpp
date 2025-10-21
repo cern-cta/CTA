@@ -294,8 +294,8 @@ public:
           const std::string &diskSystemName,
           const DiskSleepEntry &entry);
 
-  uint64_t removeDiskSystemSleepEntry(schedulerdb::Transaction &txn,
-                                      const std::vector <std::string> &expiredDiskSystemNames);
+  uint64_t removeDiskSystemSleepEntries(schedulerdb::Transaction &txn,
+                                        const std::vector <std::string> &expiredDiskSystemNames);
 
   std::unordered_map <std::string, DiskSleepEntry> getDiskSystemSleepStatus(rdbms::Conn &conn);
 
