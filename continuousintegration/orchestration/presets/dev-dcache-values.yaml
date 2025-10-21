@@ -12,3 +12,6 @@ dcache:
 
   hsm:
     enabled: true
+
+kafka:
+  enabled: false

@@ -1,7 +1,8 @@
 #!/bin/bash
 
 # @project      The CERN Tape Archive (CTA)
-# @copyright    Copyright © 2024 CERN
+# @copyright    Copyright © 2024 - 2025 CERN
+# @copyright    Copyright © 2025 DESY
 # @license      This program is free software, distributed under the terms of the GNU General Public
 #               Licence version 3 (GPL Version 3), copied verbatim in the file "COPYING". You can
 #               redistribute it and/or modify it under the terms of the GPL Version 3, or (at your
@@ -93,22 +94,17 @@ deploy() {
     helm_flags+=" --values ${dcache_config}"
   fi
 
-  helm repo add bitnami https://charts.bitnami.com/bitnami
   helm repo add dcache https://gitlab.desy.de/api/v4/projects/7648/packages/helm/test
   helm repo update
-  log_run helm install -n ${namespace} chimera bitnami/postgresql \
+  log_run helm install -n ${namespace} chimera oci://registry-1.docker.io/cloudpirates/postgres \
                                        --replace --wait --timeout 10m0s \
                                        --set auth.username=dcache \
                                        --set auth.password=let-me-in \
-                                       --set auth.database=chimera \
-                                       --version 12.12.10
-  log_run helm install -n ${namespace} cells bitnami/zookeeper \
+                                       --set auth.database=chimera
+
+  log_run helm install -n ${namespace} cells oci://registry-1.docker.io/cloudpirates/zookeeper \
                                        --replace --wait --timeout 10m0s
-  log_run helm install -n ${namespace} billing bitnami/kafka \
-                                       --replace --wait --timeout 10m0s \
-                                       --set externalZookeeper.servers=cells-zookeeper \
-                                       --set kraft.enabled=false \
-                                       --version 23.0.7
+
   log_run helm install -n ${namespace} store dcache/dcache --version ${dcache_chart_version} \
                                        --replace --wait --timeout 10m0s \
                                        --set dcache.hsm.enabled=true \
