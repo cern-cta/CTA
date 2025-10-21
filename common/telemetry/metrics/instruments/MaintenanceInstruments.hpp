@@ -22,11 +22,6 @@
 namespace cta::telemetry::metrics {
 
 /**
- * Amount of work done by a pass of the garbage collector runner.
- */
-extern std::unique_ptr<opentelemetry::metrics::Counter<uint64_t>> ctaMaintenanceGarbageCollectorCount;
-
-/**
  * Amount of work done by a pass of the disk report runner.
  */
 extern std::unique_ptr<opentelemetry::metrics::Counter<uint64_t>> ctaMaintenanceDiskReporterCount;
@@ -36,6 +31,10 @@ extern std::unique_ptr<opentelemetry::metrics::Counter<uint64_t>> ctaMaintenance
  */
 extern std::unique_ptr<opentelemetry::metrics::Counter<uint64_t>> ctaMaintenanceQueueCleanupCount;
 
+/**
+ * Amount of work done by a pass of the garbage collector runner.
+ */
+extern std::unique_ptr<opentelemetry::metrics::Counter<uint64_t>> ctaMaintenanceGarbageCollectorCount;
 /**
  * Amount of work reported by the repack request runner in one pass.
  */
