@@ -47,6 +47,7 @@ static constexpr const char* kSchedulerOperationName = "cta.scheduler.operation.
 static constexpr const char* kThreadPoolName = "cta.taped.thread_pool.name";
 static constexpr const char* kFrontendRequesterName = "cta.frontend.requester.name";
 static constexpr const char* kCtaTransferDirection = "cta.transfer.direction";  // similar to disk.io.direction
+static constexpr const char* kCtaTransferMedium = "cta.transfer.medium";
 
 // -------------------- Attribute Values --------------------
 
@@ -56,8 +57,13 @@ static constexpr const char* kCtaTaped = "cta.taped";
 }  // namespace ServiceNameValues
 
 namespace CtaTransferDirectionValues {
-static constexpr const char* kArchive = "archive";
-static constexpr const char* kRetrieve = "retrieve";
+static constexpr const char* kRead = "read";
+static constexpr const char* kWrite = "write";
+}  // namespace CtaTransferDirectionValues
+
+namespace CtaTransferMediumValues {
+static constexpr const char* kTape = "tape";
+static constexpr const char* kDisk = "disk";
 }  // namespace CtaTransferDirectionValues
 
 namespace ErrorTypeValues {
@@ -69,11 +75,6 @@ namespace StateValues {
 static constexpr const char* kIdle = "idle";
 static constexpr const char* kUsed = "used";
 }  // namespace StateValues
-
-namespace ThreadPoolNameValues {
-static constexpr const char* kDisk = "disk";
-static constexpr const char* kTape = "tape";
-}  // namespace ThreadPoolNameValues
 
 namespace LockTypeValues {
 static constexpr const char* kScopedShared = "shared";

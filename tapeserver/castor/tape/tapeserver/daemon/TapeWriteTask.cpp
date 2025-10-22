@@ -176,15 +176,17 @@ void TapeWriteTask::execute(const std::unique_ptr<castor::tape::tapeFile::WriteS
     m_taskStats.totalTime = localTime.secs();
     // Log the successful transfer
     logWithStats(cta::log::INFO, "File successfully transmitted to drive", lc);
-    cta::telemetry::metrics::ctaTapedTransferCount->Add(
-      1,
+    cta::telemetry::metrics::ctaTransferFiles->Add(
+      m_taskStats.filesCount,
       {
-        {cta::semconv::attr::kCtaTransferDirection, cta::semconv::attr::CtaTransferDirectionValues::kArchive}
+        {cta::semconv::attr::kCtaTransferDirection, cta::semconv::attr::CtaTransferDirectionValues::kWrite},
+        {cta::semconv::attr::kCtaTransferMedium, cta::semconv::attr::CtaTransferMediumValues::kTape}
     });
-    cta::telemetry::metrics::ctaTapedTransferIO->Add(
+    cta::telemetry::metrics::ctaTransferBytes->Add(
       m_taskStats.dataVolume,
       {
-        {cta::semconv::attr::kCtaTransferDirection, cta::semconv::attr::CtaTransferDirectionValues::kArchive}
+        {cta::semconv::attr::kCtaTransferDirection, cta::semconv::attr::CtaTransferDirectionValues::kWrite},
+        {cta::semconv::attr::kCtaTransferMedium, cta::semconv::attr::CtaTransferMediumValues::kTape}
     });
   } catch (const castor::tape::tapeserver::daemon::ErrorFlag&) {
     // We end up there because another task has failed
@@ -235,14 +237,6 @@ void TapeWriteTask::execute(const std::unique_ptr<castor::tape::tapeFile::WriteS
     // We failed to open the FileWriter
     // We received a bad block or a block written failed
     // close failed
-
-    cta::telemetry::metrics::ctaTapedTransferCount->Add(
-      1,
-      {
-        {cta::semconv::attr::kCtaTransferDirection, cta::semconv::attr::CtaTransferDirectionValues::kArchive},
-        {cta::semconv::attr::kErrorType,            cta::semconv::attr::ErrorTypeValues::kException         }
-    });
-
     // First set the error flag: we can't proceed any further with writes.
     m_errorFlag.set();
 

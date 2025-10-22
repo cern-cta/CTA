@@ -24,12 +24,12 @@ namespace cta::telemetry::metrics {
 /**
  * Number of files transferred to/from tape.
  */
-extern std::unique_ptr<opentelemetry::metrics::Counter<uint64_t>> ctaTapedTransferCount;
+extern std::unique_ptr<opentelemetry::metrics::Counter<uint64_t>> ctaTransferFiles;
 
 /**
- * Bytes transferred to/from tape.
+ * Bytes transferred to a given destination with a given direction.
  */
-extern std::unique_ptr<opentelemetry::metrics::Counter<uint64_t>> ctaTapedTransferIO;
+extern std::unique_ptr<opentelemetry::metrics::Counter<uint64_t>> ctaTransferBytes;
 
 /**
  * Duration to mount a tape.

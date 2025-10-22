@@ -77,13 +77,13 @@ static constexpr const char* unitCtaObjectstoreLockAcquireDuration = "ms";
 
 // -------------------- TAPED --------------------
 
-static constexpr const char* kMetricCtaTapedTransferCount = "cta.taped.transfer.count";
-static constexpr const char* descrCtaTapedTransferCount = "Number of files transferred to/from tape";
-static constexpr const char* unitCtaTapedTransferCount = "1";
+static constexpr const char* kMetricCtaTransferFiles = "cta.transfer.files";
+static constexpr const char* descrCtaTransferFiles = "Number of files transferred to the destination type in the given direction";
+static constexpr const char* unitCtaTransferFiles = "1";
 
-static constexpr const char* kMetricCtaTapedTransferIO = "cta.taped.transfer.io";
-static constexpr const char* descrCtaTapedTransferIO = "Bytes transferred to/from tape";
-static constexpr const char* unitCtaTapedTransferIO = "by";
+static constexpr const char* kMetricCtaTransferBytes = "cta.transfer.bytes";
+static constexpr const char* descrCtaTransferBytes = "Bytes transferred to the destination type in the given direction";
+static constexpr const char* unitCtaTransferBytes = "by";
 
 static constexpr const char* kMetricCtaTapedMountDuration = "cta.taped.mount.duration";
 static constexpr const char* descrCtaTapedMountDuration = "Duration to mount a tape";

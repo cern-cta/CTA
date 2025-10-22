@@ -80,7 +80,7 @@ public:
     //(because one mem block can hold several tape blocks
     uint64_t fileBlock = 0;
     size_t tapeBlock = 0;
-    // This out-of-try-catch variables allows us to record the stage of the 
+    // This out-of-try-catch variables allows us to record the stage of the
     // process we're in, and to count the error if it occurs.
     // We will not record errors for an empty string. This will allow us to
     // prevent counting where error happened upstream.
@@ -186,6 +186,18 @@ public:
       lc.log(cta::log::INFO, "File successfully read from tape");
       // Add the local counts to the session's
       stats.add(localStats);
+      cta::telemetry::metrics::ctaTransferFiles->Add(
+        localStats.filesCount,
+        {
+          {cta::semconv::attr::kCtaTransferDirection, cta::semconv::attr::CtaTransferDirectionValues::kRead},
+          {cta::semconv::attr::kCtaTransferMedium, cta::semconv::attr::CtaTransferMediumValues::kTape}
+      });
+      cta::telemetry::metrics::ctaTransferBytes->Add(
+        localStats.dataVolume,
+        {
+          {cta::semconv::attr::kCtaTransferDirection, cta::semconv::attr::CtaTransferDirectionValues::kRead},
+          {cta::semconv::attr::kCtaTransferMedium, cta::semconv::attr::CtaTransferMediumValues::kTape}
+      });
     } //end of try
     catch (const cta::exception::Exception & ex) {
       // We end up here because:
@@ -197,7 +209,7 @@ public:
         watchdog.addToErrorCount(currentErrorToCount);
       }
       // This is an error case. Log and signal to the disk write task
-      { 
+      {
         cta::log::LogContext::ScopedParam sp0(lc, Param("fileBlock", fileBlock));
         cta::log::LogContext::ScopedParam sp1(lc, Param("ErrorMessage", ex.getMessageValue()));
         lc.log(cta::log::ERR, "Error reading a file in TapeReadFileTask");
