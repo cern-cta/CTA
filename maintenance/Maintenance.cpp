@@ -41,41 +41,6 @@ namespace cta::maintenance {
 // constructor
 //------------------------------------------------------------------------------
 Maintenance::Maintenance(cta::log::LogContext& lc, const cta::common::Config& config) : m_lc(lc) {
-  // Instantiate telemetry
-  if (config.getOptionValueBool("cta.experimental.telemetry.enabled").value_or(false)) {
-    try {
-      std::string metricsBackend = config.getOptionValueStr("cta.telemetry.metrics.backend").value_or("NOOP");
-
-      std::string otlpBasicAuthFile =
-        config.getOptionValueStr("cta.telemetry.metrics.export.otlp.basic_auth_file").value();
-      std::string otlpBasicAuthString =
-        otlpBasicAuthFile.empty() ? "" : cta::telemetry::authStringFromFile(otlpBasicAuthFile);
-      cta::telemetry::TelemetryConfig telemetryConfig =
-        cta::telemetry::TelemetryConfigBuilder()
-          .serviceName(cta::semconv::attr::ServiceNameValues::kCtaMaintenance)
-          .serviceNamespace(config.getOptionValueStr("cta.instance_name").value())
-          .serviceVersion(CTA_VERSION)
-          .retainInstanceIdOnRestart(
-            config.getOptionValueBool("cta.telemetry.retain_instance_id_on_restart").value_or(false))
-          .resourceAttribute(cta::semconv::attr::kSchedulerNamespace,
-                             config.getOptionValueStr("cta.scheduler_backend_name").value())
-          .metricsBackend(metricsBackend)
-          .metricsExportInterval(std::chrono::milliseconds(
-            config.getOptionValueInt("cta.telemetry.metrics.export.interval").value_or(15000)))
-          .metricsExportTimeout(
-            std::chrono::milliseconds(config.getOptionValueInt("cta.telemetry.metrics.export.timeout").value_or(3000)))
-          .metricsOtlpEndpoint(config.getOptionValueStr("cta.telemetry.metrics.export.otlp.endpoint").value())
-          .metricsOtlpBasicAuthString(otlpBasicAuthString)
-          .metricsFileEndpoint(config.getOptionValueStr("cta.telemetry.metrics.export.file.endpoint")
-                                 .value_or("/var/log/cta/cta-maintenance-metrics.txt"))
-          .build();
-      // taped is a special case where we only do initTelemetry after the process name has been set
-      cta::telemetry::initTelemetryConfig(telemetryConfig);
-    } catch (exception::Exception& ex) {
-      throw InvalidConfiguration("Failed to instantiate OpenTelemetry. Exception message: " + ex.getMessage().str());
-    }
-  }
-
   m_sleepInterval = config.getOptionValueInt("cta.maintenance.sleep_interval").value_or(1000);
 
   if (!config.getOptionValueStr("cta.objectstore.backendpath").has_value()) {

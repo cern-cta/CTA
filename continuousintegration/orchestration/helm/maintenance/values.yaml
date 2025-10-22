@@ -29,9 +29,9 @@ conf:
       maxToToExpand: 2
       softTimeout: 30
   telemetry:
-    enabled: true
+    enabled: false
     retainInstanceIdOnRestart: false
-    metricsBackend: "STDOUT"
+    metricsBackend: "NOOP"
 
 # SSS keytab to communicate to the disk buffer
 keytab:
