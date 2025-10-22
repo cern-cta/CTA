@@ -29,61 +29,29 @@
 #include "common/utils/Base64.hpp"
 #include "common/utils/utils.hpp"
 
+#include <cstdlib> // for getenv
+
 namespace cta::admin {
 
-// Implement the send() method here, by wrapping the Admin rpc call
-void CtaAdminGrpcCmd::send(const CtaAdminParsedCmd& parsedCmd,
-                           const cta::common::Config& config,
-                           const std::string& config_file) const {
-  const auto& request = parsedCmd.getRequest();
-  // Validate the Protocol Buffer
-  try {
-    validateCmd(request.admincmd());
-  } catch (std::runtime_error& ex) {
-    parsedCmd.throwUsage(ex.what());
-  }
+void CtaAdminGrpcCmd::setupJwtAuthenticatedAdminCall(grpc::ClientContext &context, const std::string& token_path) {
+  // read the token from the path
+  std::string token_contents = cta::utils::file2string(token_path);
 
-  // now construct the Admin call
-  // get a client stub in order to make it
-  grpc::ClientContext context;
-  grpc::Status status;
-  std::shared_ptr<grpc::ChannelCredentials> credentials;
-  grpc::SslCredentialsOptions ssl_options;
+  context.AddMetadata("authorization", "Bearer " + token_contents);
+}
 
-  auto endpoint = config.getOptionValueStr("cta.endpoint");
-  if (!endpoint.has_value()) {
-    std::cout << "Configuration error: cta.endpoint missing from " + config_file << std::endl;
-    throw std::runtime_error("Configuration error: cta.endpoint missing from " + config_file);
-  }
-  auto tls = config.getOptionValueBool("grpc.tls.enabled").value_or(false);
-  auto caCert = config.getOptionValueStr("grpc.tls.chain_cert_path");
-
-  if (tls) {
-    if (caCert) {
-      std::string caCertContents = cta::utils::file2string(caCert.value());
-      ssl_options.pem_root_certs = caCertContents;
-    } else {
-      ssl_options.pem_root_certs = "";
-    }
-    credentials = grpc::SslCredentials(ssl_options);
-  } else {
-    credentials = grpc::InsecureChannelCredentials();
-  }
-
+std::shared_ptr<::grpc::Channel>
+CtaAdminGrpcCmd::setupKrb5AuthenticatedAdminCall(std::shared_ptr<grpc::Channel> spChannelNegotiation,
+                                                 grpc::ClientContext& context,
+                                                 const std::string& GRPC_SERVER,
+                                                 const std::string& GSS_SPN,
+                                                 std::shared_ptr<grpc::ChannelCredentials> credentials,
+                                                 cta::log::FileLogger& log) {
   // first do a negotiation call to obtain a kerberos token, which will be attached to the call metadata
-  // gRPC stream server
-  std::string strGrpcHost = "cta-frontend-grpc";
-  const std::string GRPC_SERVER = endpoint.value();
-  // Service name
-  const std::string GSS_SPN = "cta/" + strGrpcHost;
   // Storage for the KRB token
   std::string strToken {""};
   // Encoded token to be send as part of metadata
   std::string strEncodedToken {""};
-  // Create a channel to the KRB-GSI negotiation service
-  std::shared_ptr<::grpc::Channel> spChannelNegotiation {::grpc::CreateChannel(GRPC_SERVER, credentials)};
-  cta::log::FileLogger log(GRPC_SERVER, "cta-admin-grpc", "/var/log/cta-admin-grpc.log", cta::log::DEBUG);
-  cta::log::LogContext lc(log);
   cta::frontend::grpc::client::AsyncClient<cta::xrd::Negotiation> clientNeg(log, spChannelNegotiation);
   try {
     strToken = clientNeg.exe<cta::frontend::grpc::client::NegotiationRequestHandler>(GSS_SPN)->token();
@@ -101,6 +69,7 @@ void CtaAdminGrpcCmd::send(const CtaAdminParsedCmd& parsedCmd,
      * In case of any problems with the negotiation service,
      * log and stop the execution
      */
+    cta::log::LogContext lc(log);
     lc.log(cta::log::CRIT,
            "In cta::frontend::grpc::client::CtaAdminGrpcCmdDeprecated::exe(): Problem with the negotiation service.");
     throw;  // rethrow
@@ -137,7 +106,74 @@ void CtaAdminGrpcCmd::send(const CtaAdminParsedCmd& parsedCmd,
   std::shared_ptr<::grpc::ChannelCredentials> spCompositeCredentials =
     ::grpc::CompositeChannelCredentials(credentials, spCallCredentials);
   std::shared_ptr<::grpc::Channel> spChannel {::grpc::CreateChannel(GRPC_SERVER, spCompositeCredentials)};
-  // Execute the TapeLs command
+  return spChannel;
+}
+
+// Implement the send() method here, by wrapping the Admin rpc call
+void CtaAdminGrpcCmd::send(const CtaAdminParsedCmd& parsedCmd,
+                           const cta::common::Config& config,
+                           const std::string& config_file) {
+  const auto& request = parsedCmd.getRequest();
+  // Validate the Protocol Buffer
+  try {
+    validateCmd(request.admincmd());
+  } catch (std::runtime_error& ex) {
+    parsedCmd.throwUsage(ex.what());
+  }
+
+  // now construct the Admin call
+  // get a client stub in order to make it
+  grpc::ClientContext context;
+  grpc::Status status;
+  std::shared_ptr<grpc::ChannelCredentials> credentials;
+  grpc::SslCredentialsOptions ssl_options;
+
+  auto endpoint = config.getOptionValueStr("cta.endpoint");
+  if (!endpoint.has_value()) {
+    std::cout << "Configuration error: cta.endpoint missing from " + config_file << std::endl;
+    throw std::runtime_error("Configuration error: cta.endpoint missing from " + config_file);
+  }
+  auto tls = config.getOptionValueBool("grpc.tls.enabled").value_or(false);
+  auto caCert = config.getOptionValueStr("grpc.tls.chain_cert_path");
+
+  if (tls) {
+    if (caCert) {
+      std::string caCertContents = cta::utils::file2string(caCert.value());
+      ssl_options.pem_root_certs = caCertContents;
+    } else {
+      ssl_options.pem_root_certs = "";
+    }
+    credentials = grpc::SslCredentials(ssl_options);
+  } else {
+    credentials = grpc::InsecureChannelCredentials();
+  }
+
+  // gRPC stream server
+  std::string strGrpcHost = "cta-frontend-grpc";
+  const std::string GRPC_SERVER = endpoint.value();
+  // Service name
+  const std::string GSS_SPN = "cta/" + strGrpcHost;
+  // Create a channel to the KRB-GSI negotiation service
+  std::shared_ptr<::grpc::Channel> spChannelNegotiation {::grpc::CreateChannel(GRPC_SERVER, credentials)};
+  cta::log::FileLogger log(GRPC_SERVER, "cta-admin-grpc", "/var/log/cta-admin-grpc.log", cta::log::DEBUG);
+  cta::log::LogContext lc(log);
+  std::shared_ptr<::grpc::Channel> spChannel;
+
+  // read from the env variable which auth method should be used
+  const char* auth_method = std::getenv("CTA_ADMIN_GRPC_AUTH_METHOD");
+  if (strcmp("jwt", auth_method) == 0) {
+    // TODO read token path from config
+    // for now, hard-coded
+    std::string token_path = "/etc/grid-security/jwt-token-grpc";
+    std::cout << "using token authentication" << std::endl;
+    setupJwtAuthenticatedAdminCall(context, token_path);
+    spChannel = spChannelNegotiation;
+  } else if (strcmp("krb5", auth_method) == 0) {
+    std::cout << "using kerberos authentication";
+    spChannel = setupKrb5AuthenticatedAdminCall(spChannelNegotiation, context, GRPC_SERVER, GSS_SPN, credentials, log);
+  } else {
+    // WARN that we are falling back to Kerberos
+  }
 
   if (!isStreamCmd(request.admincmd())) {
     cta::xrd::Response response;
