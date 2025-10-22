@@ -52,7 +52,7 @@ tpsrv:
 
 maintenance:
   conf:
-    telemtry:
+    telemetry:
       enabled: true
       retainInstanceIdOnRestart: false
       metrics:
