@@ -193,15 +193,6 @@ taped externalFreeDiskSpaceScript /usr/bin/cta-eosdf.sh
 #
 # ##### WARNING #####
 
-# Enable RepackRequestManager for repack-related operations.
-# taped UseRepackManagement yes
-#
-# Enable MaintenanceProcess for repack-related operations, garbage collection and disk reporting.
-# taped UseMaintenanceProcess yes
-#
-# Set the maximum number of simultaneous repacks to be promoted to ToExpand
-# taped repackMaxToToExpand 2
-
 #
 # TIMEOUT OPTIONS
 #

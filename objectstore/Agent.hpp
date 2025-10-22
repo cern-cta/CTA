@@ -40,7 +40,6 @@ class Sorter;
 
 class Agent: public ObjectOps<serializers::Agent, serializers::Agent_t> {
   friend class AgentReference;
-  friend class GarbageCollector;
   friend class AgentWrapper;
   friend class Sorter;
 public:

@@ -21,14 +21,3 @@ target_link_libraries(ctadiskbufferrunner
 	ctadisk
 	ctascheduler)
 
-#set_property(TARGET ctadiskbufferrunner PROPERTY SOVERSION "${cta_soversion}")
-#set_property(TARGET ctadiskbufferrunner PROPERTY   VERSION "${cta_libversion}")
-#install(TARGETS ctadiskbufferrunner DESTINATION usr/${CMAKE_INSTALL_LIBDIR})
-
-#add_library(ctadiskbufferrunnerunittests SHARED
-#	DiskReportRunnerTests.cpp
-#)
-
-#set_property(TARGET ctadiskbufferrunnerunittests PROPERTY SOVERSION "${cta_soversion}")
-#set_property(TARGET ctadiskbufferrunnerunittests PROPERTY   VERSION "${cta_libversion}")
-#install(TARGETS ctadiskbufferrunnerunittests DESTINATION usr/${CMAKE_INSTALL_LIBDIR})
