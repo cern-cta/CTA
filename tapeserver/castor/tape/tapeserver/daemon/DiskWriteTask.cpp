@@ -138,15 +138,17 @@ bool DiskWriteTask::execute(RecallReportPacker& reporter, cta::log::LogContext& 
     m_stats.totalTime = totalTime.secs();
     logWithStat(cta::log::INFO, isVerifyOnly ? "File successfully verified" : "File successfully transfered to disk", lc);
     watchdog.deleteParameter("stillOpenFileForThread" + std::to_string((long long)threadID));
-    cta::telemetry::metrics::ctaTapedTransferCount->Add(
-      1,
+    cta::telemetry::metrics::ctaTransferFiles->Add(
+      m_stats.filesCount,
       {
-        {cta::semconv::attr::kCtaTransferDirection, cta::semconv::attr::CtaTransferDirectionValues::kRetrieve}
+        {cta::semconv::attr::kCtaTransferDirection, cta::semconv::attr::CtaTransferDirectionValues::kWrite},
+        {cta::semconv::attr::kCtaTransferMedium, cta::semconv::attr::CtaTransferMediumValues::kDisk}
     });
-    cta::telemetry::metrics::ctaTapedTransferIO->Add(
+    cta::telemetry::metrics::ctaTransferBytes->Add(
       m_stats.dataVolume,
       {
-        {cta::semconv::attr::kCtaTransferDirection, cta::semconv::attr::CtaTransferDirectionValues::kRetrieve}
+        {cta::semconv::attr::kCtaTransferDirection, cta::semconv::attr::CtaTransferDirectionValues::kWrite},
+        {cta::semconv::attr::kCtaTransferMedium, cta::semconv::attr::CtaTransferMediumValues::kDisk}
     });
     //everything went well, return true
     return true;
@@ -159,13 +161,6 @@ bool DiskWriteTask::execute(RecallReportPacker& reporter, cta::log::LogContext& 
      * -- An error in tape read
      * -- An error while writing the file
      */
-
-    cta::telemetry::metrics::ctaTapedTransferCount->Add(
-      1,
-      {
-        {cta::semconv::attr::kCtaTransferDirection, cta::semconv::attr::CtaTransferDirectionValues::kRetrieve},
-        {cta::semconv::attr::kErrorType,            cta::semconv::attr::ErrorTypeValues::kException          }
-    });
 
     //there might still be some blocks into m_fifo
     // We need to empty it
