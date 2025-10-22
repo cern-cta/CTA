@@ -45,11 +45,6 @@ Maintenance::Maintenance(cta::log::LogContext& lc, const cta::common::Config& co
   if (config.getOptionValueBool("cta.experimental.telemetry.enabled").value_or(false)) {
     try {
       std::string metricsBackend = config.getOptionValueStr("cta.telemetry.metrics.backend").value_or("NOOP");
-      if (cta::telemetry::stringToMetricsBackend(metricsBackend) == cta::telemetry::MetricsBackend::STDOUT) {
-        m_lc.log(log::WARNING,
-                 "OpenTelemetry backend STDOUT is not supported for cta-taped. Using NOOP backend instead...");
-        metricsBackend = cta::telemetry::metricsBackendToString(cta::telemetry::MetricsBackend::NOOP);
-      }
 
       std::string otlpBasicAuthFile =
         config.getOptionValueStr("cta.telemetry.metrics.export.otlp.basic_auth_file").value();
