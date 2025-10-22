@@ -18,12 +18,12 @@
 
 #include <gtest/gtest.h>
 
-#include "Agent.hpp"
-#include "AgentReference.hpp"
-#include "AgentRegister.hpp"
-#include "ArchiveQueue.hpp"
-#include "ArchiveRequest.hpp"
-#include "BackendVFS.hpp"
+#include "objectstore/Agent.hpp"
+#include "objectstore/AgentReference.hpp"
+#include "objectstore/AgentRegister.hpp"
+#include "objectstore/ArchiveQueue.hpp"
+#include "objectstore/ArchiveRequest.hpp"
+#include "objectstore/BackendVFS.hpp"
 #include "catalogue/dummy/DummyCatalogue.hpp"
 #include "catalogue/dummy/DummyTapeCatalogue.hpp"
 #include "common/dataStructures/ArchiveFile.hpp"
@@ -34,15 +34,15 @@
 #include "common/log/StdoutLogger.hpp"
 #endif
 #include "common/log/StringLogger.hpp"
-#include "DriveRegister.hpp"
-#include "EntryLogSerDeser.hpp"
+#include "objectstore/DriveRegister.hpp"
+#include "objectstore/EntryLogSerDeser.hpp"
 #include "GarbageCollector.hpp"
-#include "RetrieveQueue.hpp"
-#include "RetrieveRequest.hpp"
-#include "RootEntry.hpp"
+#include "objectstore/RetrieveQueue.hpp"
+#include "objectstore/RetrieveRequest.hpp"
+#include "objectstore/RootEntry.hpp"
 #include "tests/TestsCompileTimeSwitches.hpp"
 
-#include "ObjectStoreFixture.hpp"
+#include "objectstore/ObjectStoreFixture.hpp"
 
 namespace unitTests {
 
@@ -88,7 +88,7 @@ TEST_F(ObjectStore, GarbageCollectorBasicFuctionnality) {
   gcAgent.setTimeout_us(0);
   gcAgent.insertAndRegisterSelf(lc);
   {
-    cta::objectstore::GarbageCollector gc(be, gcAgentRef, catalogue);
+    cta::maintenance::GarbageCollector gc(be, gcAgentRef, catalogue);
     gc.executeRunner(lc);
     gc.executeRunner(lc);
   }
@@ -150,7 +150,7 @@ TEST_F(ObjectStore, GarbageCollectorRegister) {
   gcAgent.setTimeout_us(0);
   gcAgent.insertAndRegisterSelf(lc);
   {
-    cta::objectstore::GarbageCollector gc(be, gcAgentRef, catalogue);
+    cta::maintenance::GarbageCollector gc(be, gcAgentRef, catalogue);
     gc.executeRunner(lc);
     gc.executeRunner(lc);
   }
@@ -214,7 +214,7 @@ TEST_F(ObjectStore, GarbageCollectorArchiveQueue) {
   gcAgent.setTimeout_us(0);
   gcAgent.insertAndRegisterSelf(lc);
   {
-    cta::objectstore::GarbageCollector gc(be, gcAgentRef, catalogue);
+    cta::maintenance::GarbageCollector gc(be, gcAgentRef, catalogue);
     gc.executeRunner(lc);
     gc.executeRunner(lc);
   }
@@ -278,7 +278,7 @@ TEST_F(ObjectStore, GarbageCollectorDriveRegister) {
   gcAgent.setTimeout_us(0);
   gcAgent.insertAndRegisterSelf(lc);
   {
-    cta::objectstore::GarbageCollector gc(be, gcAgentRef, catalogue);
+    cta::maintenance::GarbageCollector gc(be, gcAgentRef, catalogue);
     gc.executeRunner(lc);
     gc.executeRunner(lc);
   }
@@ -435,7 +435,7 @@ TEST_F(ObjectStore, GarbageCollectorArchiveRequest) {
   gcAgent.setTimeout_us(0);
   gcAgent.insertAndRegisterSelf(lc);
   {
-    cta::objectstore::GarbageCollector gc(be, gcAgentRef, catalogue);
+    cta::maintenance::GarbageCollector gc(be, gcAgentRef, catalogue);
     gc.executeRunner(lc);
     gc.executeRunner(lc);
   }
@@ -629,7 +629,7 @@ TEST_F(ObjectStore, GarbageCollectorRetrieveRequest) {
   gcAgent.setTimeout_us(0);
   gcAgent.insertAndRegisterSelf(lc);
   {
-    cta::objectstore::GarbageCollector gc(be, gcAgentRef, catalogue);
+    cta::maintenance::GarbageCollector gc(be, gcAgentRef, catalogue);
     gc.executeRunner(lc);
     gc.executeRunner(lc);
   }
@@ -737,7 +737,7 @@ TEST_F(ObjectStore, GarbageCollectorRepackRequestPending) {
     gcAgent.setTimeout_us(0);
     gcAgent.insertAndRegisterSelf(lc);
     {
-      cta::objectstore::GarbageCollector gc(be, gcAgentRef, catalogue);
+      cta::maintenance::GarbageCollector gc(be, gcAgentRef, catalogue);
       gc.executeRunner(lc);
     }
   }
@@ -819,7 +819,7 @@ TEST_F(ObjectStore, GarbageCollectorRepackRequestToExpand) {
     gcAgent.setTimeout_us(0);
     gcAgent.insertAndRegisterSelf(lc);
     {
-      cta::objectstore::GarbageCollector gc(be, gcAgentRef, catalogue);
+      cta::maintenance::GarbageCollector gc(be, gcAgentRef, catalogue);
       gc.executeRunner(lc);
     }
   }
@@ -901,7 +901,7 @@ TEST_F(ObjectStore, GarbageCollectorRepackRequestRunningExpandNotFinished) {
     gcAgent.setTimeout_us(0);
     gcAgent.insertAndRegisterSelf(lc);
     {
-      cta::objectstore::GarbageCollector gc(be, gcAgentRef, catalogue);
+      cta::maintenance::GarbageCollector gc(be, gcAgentRef, catalogue);
       gc.executeRunner(lc);
     }
   }
@@ -989,7 +989,7 @@ TEST_F(ObjectStore, GarbageCollectorRepackRequestRunningExpandFinished) {
     gcAgent.setTimeout_us(0);
     gcAgent.insertAndRegisterSelf(lc2);
     {
-      cta::objectstore::GarbageCollector gc(be, gcAgentRef, catalogue);
+      cta::maintenance::GarbageCollector gc(be, gcAgentRef, catalogue);
       gc.executeRunner(lc2);
     }
   }
@@ -1095,7 +1095,7 @@ TEST_F(ObjectStore, GarbageCollectorRepackRequestStarting) {
     gcAgent.setTimeout_us(0);
     gcAgent.insertAndRegisterSelf(lc2);
     {
-      cta::objectstore::GarbageCollector gc(be, gcAgentRef, catalogue);
+      cta::maintenance::GarbageCollector gc(be, gcAgentRef, catalogue);
       gc.executeRunner(lc2);
     }
   }
@@ -1192,7 +1192,7 @@ TEST_F(ObjectStore, GarbageCollectorRetrieveAllStatusesAndQueues) {
   gcAgent.setTimeout_us(0);
   gcAgent.insertAndRegisterSelf(lc);
 
-  cta::objectstore::GarbageCollector gc(be, gcAgentRef, catalogue);
+  cta::maintenance::GarbageCollector gc(be, gcAgentRef, catalogue);
   gc.executeRunner(lc);
 
   {
@@ -1671,7 +1671,7 @@ TEST_F(ObjectStore, GarbageCollectorRetrieveRequestRepackRepackingTape) {
 
   static_cast<cta::catalogue::DummyTapeCatalogue*>(catalogue.Tape().get())->addRepackingTape("Tape0");
 
-  cta::objectstore::GarbageCollector gc(be, gcAgentRef, catalogue);
+  cta::maintenance::GarbageCollector gc(be, gcAgentRef, catalogue);
   gc.executeRunner(lc);
 
   {
@@ -1808,7 +1808,7 @@ TEST_F(ObjectStore, GarbageCollectorArchiveAllStatusesAndQueues) {
   gcAgent.setTimeout_us(0);
   gcAgent.insertAndRegisterSelf(lc);
 
-  cta::objectstore::GarbageCollector gc(be, gcAgentRef, catalogue);
+  cta::maintenance::GarbageCollector gc(be, gcAgentRef, catalogue);
   gc.executeRunner(lc);
 
   {

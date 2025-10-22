@@ -99,7 +99,7 @@ static int exceptionThrowingMain(common::Config config, cta::log::Logger& log) {
             config.getOptionValueInt("cta.telemetry.metrics.export.interval").value_or(15000)))
           .metricsExportTimeout(
             std::chrono::milliseconds(config.getOptionValueInt("cta.telemetry.metrics.export.timeout").value_or(3000)))
-          .metricsOtlpEndpoint(config.getOptionValueStr("cta.telemetry.metrics.export.otlp.endpoint").value())
+          .metricsOtlpEndpoint(config.getOptionValueStr("cta.telemetry.metrics.export.otlp.endpoint").value_or(""))
           .metricsOtlpBasicAuthString(otlpBasicAuthString)
           .metricsFileEndpoint(config.getOptionValueStr("cta.telemetry.metrics.export.file.endpoint")
                                  .value_or("/var/log/cta/cta-maintenance-metrics.txt"))
