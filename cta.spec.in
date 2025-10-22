@@ -430,6 +430,7 @@ Unit tests and integration tests with virtual tape drives
 %{_libdir}/libctainmemorystmtunittests.so*
 %if "%{usingObjectstore}" != "0"
 %{_libdir}/libctaobjectstoreunittests.so*
+%{_libdir}/libctaosdbrunnersunittests.so*
 %endif
 %{_libdir}/libctardbmsunittests.so*
 %{_libdir}/libctardbmswrapperunittests.so*
@@ -446,7 +447,6 @@ Unit tests and integration tests with virtual tape drives
 %{_libdir}/libctafrontendvalidatetokenunittests.so*
 %{_bindir}/cta-integrationTests
 %{_libdir}/libctadaemonunittests-multiprocess.so*
-%{_libdir}/libctaosdbrunnerunittests.so*
 %attr(0644,root,root) %{_datadir}/%{name}-%{ctaVersion}/unittest/*.suppr
 %attr(0644,root,root) %{_datadir}/%{name}-%{ctaVersion}/unittest/parallelTestsMakefile
 

@@ -8,7 +8,6 @@ EnvironmentFile=-/etc/sysconfig/cta-maintenance
 ExecStart=/usr/bin/cta-maintenance ${CTA_MAINTENANCE_OPTIONS}
 LimitCORE=infinity
 OOMScoreAdjust=-1000
-Type=forking
 Restart=no
 TimeoutSec=60
 

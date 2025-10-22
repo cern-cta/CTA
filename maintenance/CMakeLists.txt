@@ -24,9 +24,9 @@ add_library(ctamaintenancedaemon
 )
 
 if(NOT CTA_USE_PGSCHED)
-    set(SCHEDRUNNERS ctaosrunners)
+    set(SCHEDRUNNERS ctaosdbrunners)
 else()
-    set(SCJEDRUNNERS ctardbrunners)
+    set(SCHEDRUNNERS ctardbrunners)
 endif()
 
 target_link_libraries(ctamaintenancedaemon
@@ -51,14 +51,3 @@ install (FILES cta-maintenance.conf.example
   DESTINATION ${CMAKE_INSTALL_SYSCONFDIR}/cta
   PERMISSIONS OWNER_READ OWNER_WRITE GROUP_READ WORLD_READ)
 
-# CTA's cta-taped integration tests.
-#add_library(cta-maintenanceIntegrationTests SHARED
-#  cta-maintenanceIntegrationTests.cpp)
-#set_property(TARGET cta-maintenanceIntegrationTests PROPERTY SOVERSION "${CTA_SOVERSION}")
-#set_property(TARGET cta-maintenanceIntegrationTests PROPERTY   VERSION "${CTA_LIBVERSION}")
-
-#target_link_libraries(cta-maintenanceIntegrationTests
-#  unitTestHelper
-#  ctacommon)
-
-#install(TARGETS cta-maintenanceIntegrationTests DESTINATION usr/${CMAKE_INSTALL_LIBDIR})

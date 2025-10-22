@@ -14,26 +14,30 @@
 #               submit itself to any jurisdiction.
 cmake_minimum_required (VERSION 3.17)
 
-add_library(ctaosrunners
+add_library(ctaosdbrunners
 	QueueCleanupRunner.cpp
 	GarbageCollector.cpp
 )
 
-target_link_libraries(ctaosrunners
+target_link_libraries(ctaosdbrunners
 	ctaobjectstore
 	ctacatalogue
 )
 
-#set_property(TARGET ctaosdbrunner PROPERTY SOVERSION "${cta_soversion}")
-#set_property(TARGET ctaosdbrunner PROPERTY   VERSION "${cta_libversion}")
-#install(TARGETS ctaosdbrunner DESTINATION usr/${CMAKE_INSTALL_LIBDIR})
+set_property(TARGET ctaosdbrunners PROPERTY SOVERSION "${CTA_SOVERSION}")
+set_property(TARGET ctaosdbrunners PROPERTY   VERSION "${CTA_LIBVERSION}")
+install(TARGETS ctaosdbrunners DESTINATION usr/${CMAKE_INSTALL_LIBDIR})
 
-add_library(ctaosdbrunnerunittests SHARED
+add_library(ctaosdbrunnersunittests SHARED
+        GarbageCollectorTest.cpp
         QueueCleanupRunnerTestUtils.cpp
         QueueCleanupRunnerTest.cpp
         QueueCleanupRunnerConcurrentTest.cpp
 )
 
-set_property(TARGET ctaosdbrunnerunittests PROPERTY SOVERSION "${cta_soversion}")
-set_property(TARGET ctaosdbrunnerunittests PROPERTY   VERSION "${cta_libversion}")
-install(TARGETS ctaosdbrunnerunittests DESTINATION usr/${CMAKE_INSTALL_LIBDIR})
+set_property(TARGET ctaosdbrunnersunittests PROPERTY SOVERSION "${CTA_SOVERSION}")
+set_property(TARGET ctaosdbrunnersunittests PROPERTY   VERSION "${CTA_LIBVERSION}")
+target_link_libraries(ctaosdbrunnersunittests ctaosdbrunners)
+
+install(TARGETS ctaosdbrunnersunittests DESTINATION usr/${CMAKE_INSTALL_LIBDIR})
+

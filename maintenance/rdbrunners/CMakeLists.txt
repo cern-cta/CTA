@@ -24,7 +24,4 @@ target_link_libraries(ctardbrunner
 	ctacatalogue
 )
 
-#set_property(TARGET ctaosdbrunner PROPERTY SOVERSION "${cta_soversion}")
-#set_property(TARGET ctaosdbrunner PROPERTY   VERSION "${cta_libversion}")
-#install(TARGETS ctaosdbrunner DESTINATION usr/${CMAKE_INSTALL_LIBDIR})
 

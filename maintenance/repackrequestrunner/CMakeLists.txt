@@ -21,14 +21,3 @@ target_link_libraries(ctarepackrequestrunner
     ctacommon
     ctascheduler)
 
-#set_property(TARGET ctarepackrequestrunner PROPERTY SOVERSION "${cta_soversion}")
-#set_property(TARGET ctarepackrequestrunner PROPERTY   VERSION "${cta_libversion}")
-#install(TARGETS ctarepackrequestrunner DESTINATION usr/${CMAKE_INSTALL_LIBDIR})
-
-#add_library(ctarepackreportrunnerunittests SHARED
-#	DiskReportRunnerTests.cpp
-#)
-
-#set_property(TARGET ctarepackreport PROPERTY SOVERSION "${cta_soversion}")
-#set_property(TARGET ctarepackreport PROPERTY   VERSION "${cta_libversion}")
-#install(TARGETS ctarepackreportunittests DESTINATION usr/${CMAKE_INSTALL_LIBDIR})

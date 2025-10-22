@@ -92,17 +92,17 @@ std::optional<bool> Config::getOptionValueBool(const std::string& key) const {
 void Config::parse(log::Logger &log) {
   // Reset configuration if we are reparsing
   if (m_configuration.empty()){
-    log(log::INFO, "Parsing configuration");
+    log(log::INFO, "Parsing configuration file " + m_configFileName);
   } else {
     m_configuration.clear();
-    log(log::INFO, "Re-initializing configuration");
+    log(log::INFO, "Re-initializing configuration " + m_configFileName);
   }
   
   // Open the config file for reading
   std::ifstream file(m_configFileName);
 
   if (!file) {
-    throw exception::UserError("Failed to open " + m_configFileName);
+    throw exception::UserError("In Config::parse(): Failed to open " + m_configFileName);
   }
   
   std::string line;
