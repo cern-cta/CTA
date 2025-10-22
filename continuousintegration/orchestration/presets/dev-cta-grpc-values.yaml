@@ -33,9 +33,50 @@ cli:
     cta:
       endpoint: cta-frontend-grpc:10956
       grpc:
+        cta_admin_auth_method: krb5
+        jwt_token_path: /etc/grid-security/jwt-token-grpc
         tls:
           chain_cert_path: /etc/grpc-certs/ca.crt
           enabled: true
+
+  initContainer:
+    enabled: true
+    script: |
+      #!/usr/bin/bash
+
+      # Install jq for JSON parsing
+      dnf install -y jq
+
+      # Obtain an access token with the diskInstanceName set in the "sub" claim
+      response=$(curl -X POST http://auth-keycloak:8080/realms/master/protocol/openid-connect/token \
+        -H "Content-Type: application/x-www-form-urlencoded" \
+        -d "grant_type=password" \
+        -d "client_id=grpc-client" \
+        -d "username=ctaadmin1" \
+        -d "password=ctaadmin1" \
+        -s)
+
+      grpc_access_token=$(echo ${response} | jq -r .access_token)
+
+      printf "$grpc_access_token" > /etc/grid-security/jwt-token-grpc
+    volumeMounts:
+    - name: grid-security
+      mountPath: /etc/grid-security
+
+  extraVolumes:
+    volumeMounts:
+    - name: grid-security
+      mountPath: /etc/grid-security
+      readOnly: true
+    - name: grpc-certs
+      mountPath: /etc/grpc-certs
+      readOnly: true
+    volumes:
+    - name: grid-security
+      emptyDir: {}
+    - name: grpc-certs
+      secret:
+        secretName: ca-crt
 
 client:
   useGrpc: true
@@ -43,6 +84,47 @@ client:
     cta:
       endpoint: cta-frontend-grpc:10956
       grpc:
+        cta_admin_auth_method: krb5
+        jwt_token_path: /etc/grid-security/jwt-token-grpc
         tls:
           chain_cert_path: /etc/grpc-certs/ca.crt
           enabled: true
+
+  initContainer:
+    enabled: true
+    script: |
+      #!/usr/bin/bash
+
+      # Install jq for JSON parsing
+      dnf install -y jq
+
+      # Obtain an access token with the diskInstanceName set in the "sub" claim
+      response=$(curl -X POST http://auth-keycloak:8080/realms/master/protocol/openid-connect/token \
+        -H "Content-Type: application/x-www-form-urlencoded" \
+        -d "grant_type=password" \
+        -d "client_id=grpc-client" \
+        -d "username=ctaadmin1" \
+        -d "password=ctaadmin1" \
+        -s)
+
+      grpc_access_token=$(echo ${response} | jq -r .access_token)
+
+      printf "$grpc_access_token" > /etc/grid-security/jwt-token-grpc
+    volumeMounts:
+    - name: grid-security
+      mountPath: /etc/grid-security
+
+  extraVolumes:
+    volumeMounts:
+    - name: grid-security
+      mountPath: /etc/grid-security
+      readOnly: true
+    - name: grpc-certs
+      mountPath: /etc/grpc-certs
+      readOnly: true
+    volumes:
+    - name: grid-security
+      emptyDir: {}
+    - name: grpc-certs
+      secret:
+        secretName: ca-crt

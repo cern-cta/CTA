@@ -71,16 +71,37 @@ spec:
               ## enable unmanaged attributes - this is required to allow us to set a custom diskInstanceName attribute that will override the sub claim
               ##  through a protocol mapper
               /opt/keycloak/bin/kcadm.sh update users/profile -r master -s unmanagedAttributePolicy=ENABLED
-              # Set diskInstanceName attribute on admin user
+
+              # Set diskInstanceName attribute on admin user (for workflow event tokens with sub='ctaeos')
               ADMIN_USER_ID=$(/opt/keycloak/bin/kcadm.sh get users -r master -q username="${KEYCLOAK_ADMIN}" --fields id | grep '"id"' | head -1 | sed 's/.*"id" : "\([^"]*\)".*/\1/')
               if [[ -n "$ADMIN_USER_ID" ]]; then
                 echo "Setting diskInstanceName attribute for admin user (ID: $ADMIN_USER_ID)..."
                 /opt/keycloak/bin/kcadm.sh update users/$ADMIN_USER_ID \
                   -r master \
                   -s 'attributes.diskInstanceName=["ctaeos"]'
-                echo "Set diskInstanceName attribute."
+                echo "Set diskInstanceName=ctaeos for admin user."
               else
                 echo "Admin user not found."
+              fi
+
+              # Create or update ctaadmin1 user (for admin command tokens with sub='ctaadmin1')
+              CTAADMIN_USER_ID=$(/opt/keycloak/bin/kcadm.sh get users -r master -q username="ctaadmin1" --fields id 2>/dev/null | grep '"id"' | head -1 | sed 's/.*"id" : "\([^"]*\)".*/\1/')
+              if [ -z "$CTAADMIN_USER_ID" ]; then
+                echo "Creating ctaadmin1 user..."
+                /opt/keycloak/bin/kcadm.sh create users -r master \
+                  -s username="ctaadmin1" \
+                  -s enabled=true \
+                  -s 'attributes.diskInstanceName=["ctaadmin1"]'
+                # Set password for ctaadmin1
+                CTAADMIN_USER_ID=$(/opt/keycloak/bin/kcadm.sh get users -r master -q username="ctaadmin1" --fields id | grep '"id"' | head -1 | sed 's/.*"id" : "\([^"]*\)".*/\1/')
+                /opt/keycloak/bin/kcadm.sh set-password -r master --username ctaadmin1 --new-password ctaadmin1
+                echo "Created ctaadmin1 user with diskInstanceName=ctaadmin1 and password=ctaadmin1."
+              else
+                echo "ctaadmin1 user already exists (ID: $CTAADMIN_USER_ID). Updating diskInstanceName..."
+                /opt/keycloak/bin/kcadm.sh update users/$CTAADMIN_USER_ID \
+                  -r master \
+                  -s 'attributes.diskInstanceName=["ctaadmin1"]'
+                echo "Set diskInstanceName=ctaadmin1 for ctaadmin1 user."
               fi
 
               CUSTOM_SCOPE=$(/opt/keycloak/bin/kcadm.sh create client-scopes -r master \
@@ -115,6 +136,34 @@ spec:
                     "userinfo.token":"false",
                     "multivalued":"false"
                   }'
+
+              # Assign the custom scope to grpc-client as a default scope
+              echo "Assigning custom scope to grpc-client..."
+              /opt/keycloak/bin/kcadm.sh update clients/$GRPC_CLIENT_ID/default-client-scopes/$CUSTOM_SCOPE_ID -r master
+              echo "Custom scope assigned to grpc-client."
+
+              echo ""
+              echo "============================================"
+              echo "Keycloak configuration complete!"
+              echo "============================================"
+              echo ""
+              echo "Two token types are available:"
+              echo ""
+              echo "1. Workflow Event Tokens (sub='ctaeos'):"
+              echo "   curl -X POST http://auth-keycloak:8080/realms/master/protocol/openid-connect/token \\"
+              echo "     -d 'grant_type=password' \\"
+              echo "     -d 'client_id=grpc-client' \\"
+              echo "     -d 'username=admin' \\"
+              echo "     -d 'password=admin'"
+              echo ""
+              echo "2. Admin Command Tokens (sub='ctaadmin1'):"
+              echo "   curl -X POST http://auth-keycloak:8080/realms/master/protocol/openid-connect/token \\"
+              echo "     -d 'grant_type=password' \\"
+              echo "     -d 'client_id=grpc-client' \\"
+              echo "     -d 'username=ctaadmin1' \\"
+              echo "     -d 'password=ctaadmin1'"
+              echo ""
+              echo "============================================"
 
 
           env:

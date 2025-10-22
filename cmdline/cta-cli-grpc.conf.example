@@ -1,0 +1,27 @@
+#
+# CTA gRPC client options
+#
+
+# CTA Frontend hostname (FQDN) and TCP port for gRPC connections
+cta.endpoint ctafrontend.cern.ch:17017
+
+#
+# gRPC-specific options
+#
+
+# Enable TLS for gRPC connections. Set to true to use SSL/TLS, false for insecure connections. Defaults to true
+# grpc.tls.enabled true
+
+# Path to the CA certificate chain file for TLS connections. Required when grpc.tls.enabled is true.
+# Note that if left blank, grpc will try to load the default root certificates.
+# It can also be overriden by setting grpc's environment variable GRPC_DEFAULT_SSL_ROOTS_FILE_PATH   
+# grpc.tls.chain_cert_path /etc/grid-security/certificates/ca-chain.pem
+
+# Authentication method for cta-admin-grpc. Must be either "jwt" or "krb5".
+# Can be overridden by setting the CTA_ADMIN_GRPC_AUTH_METHOD environment variable.
+# Default: krb5
+# grpc.cta_admin_auth_method krb5
+
+# Path to the JWT token file for JWT-based authentication. Only used when authentication method is "jwt".
+# Default: /etc/grid-security/jwt-token-grpc
+# grpc.jwt_token_path /etc/grid-security/jwt-token-grpc

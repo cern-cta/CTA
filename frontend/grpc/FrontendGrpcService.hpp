@@ -16,6 +16,7 @@
 #include "frontend/common/FrontendService.hpp"
 #include "common/JwkCache.hpp"
 #include "frontend/common/AdminCmd.hpp"
+#include "TokenStorage.hpp"
 
 using cta::Scheduler;
 using cta::catalogue::Catalogue;
@@ -32,17 +33,15 @@ namespace cta::frontend::grpc {
 class CtaRpcImpl : public CtaRpc::Service {
 
 private:
-  std::unique_ptr<cta::frontend::FrontendService> m_frontendService;
+  std::shared_ptr<cta::frontend::FrontendService> m_frontendService;
   ::grpc::HealthCheckServiceInterface* m_healthCheckService = nullptr;
-  CurlJwksFetcher m_jwksFetcher;
   std::shared_ptr<JwkCache> m_pubkeyCache;
+  server::TokenStorage& m_tokenStorage; // required for the Admin rpc for Kerberos token validation
 
 public:
-  explicit CtaRpcImpl(const std::string& config);
+  CtaRpcImpl(std::shared_ptr<cta::frontend::FrontendService> frontendService, std::shared_ptr<JwkCache> pubkeyCache, server::TokenStorage& tokenStorage);
 
   FrontendService& getFrontendService() const { return *m_frontendService; }
-
-  std::shared_ptr<JwkCache> getPubkeyCache() const { return m_pubkeyCache; }
   // Archive/Retrieve interface
   Status Create(::grpc::ServerContext* context, const cta::xrd::Request* request, cta::xrd::Response* response) final;
   Status Archive(::grpc::ServerContext* context, const cta::xrd::Request* request, cta::xrd::Response* response) final;
@@ -53,8 +52,12 @@ public:
   Status Admin(::grpc::ServerContext* context, const cta::xrd::Request* request, cta::xrd::Response* response) final;
 
 private:
-  Status processGrpcRequest(const cta::xrd::Request* request, cta::xrd::Response* response, cta::log::LogContext &lc, const cta::common::dataStructures::SecurityIdentity& clientIdentity) const;
-  std::pair<Status, std::optional<cta::common::dataStructures::SecurityIdentity>>
-  extractAuthHeaderAndValidate(const ::grpc::ServerContext* context, const cta::xrd::Request* request) const;
+  std::pair<::grpc::Status, std::optional<cta::common::dataStructures::SecurityIdentity>>
+  checkGrpcRequestAuthMetadata(::grpc::ServerContext* context, const cta::xrd::Request* request, cta::log::LogContext& lc);
+
+  Status processGrpcRequest(const cta::xrd::Request* request,
+                            cta::xrd::Response* response,
+                            cta::log::LogContext& lc,
+                            const cta::common::dataStructures::SecurityIdentity& clientIdentity) const;
 };
 } // namespace cta::frontend::grpc

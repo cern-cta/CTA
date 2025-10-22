@@ -225,6 +225,7 @@ The cta-admin command line utility, using gRPC as transport.
 %files -n cta-admin-grpc
 %defattr(-,root,root)
 %attr(0755,root,root) %{_bindir}/cta-admin-grpc
+%attr(0644,root,root) %config(noreplace) %{_sysconfdir}/cta/cta-cli-grpc.conf.example
 
 
 %package -n cta-cli

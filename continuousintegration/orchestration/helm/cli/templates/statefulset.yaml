@@ -39,6 +39,26 @@ spec:
           subPath: krb5.conf
         - name: "{{ .Values.krb5PrincName }}-keytab"
           mountPath: /root/{{ .Values.krb5PrincName }}_keytab/output
+      {{- if and .Values.initContainer .Values.initContainer.enabled }}
+      - name: init2-get-jwt-token
+        image: {{ include "ctacli.image" . }}
+        imagePullPolicy: {{ include "ctacli.imagePullPolicy" . }}
+        securityContext:
+          allowPrivilegeEscalation: {{ include "common.securityContext.allowPrivilegeEscalation" . }}
+        command: ["/bin/bash", "-c"]
+        args:
+        - |
+{{ .Values.initContainer.script | indent 10 }}
+        {{- if .Values.initContainer.volumeMounts }}
+        volumeMounts:
+{{ toYaml .Values.initContainer.volumeMounts | indent 8 }}
+        {{- end }}
+        {{- if .Values.initContainer.spec }}
+        {{- with .Values.initContainer.spec }}
+{{ toYaml . | nindent 8 }}
+        {{- end }}
+        {{- end }}
+      {{- end }}
       containers:
       - name: cta-cli
         # need to update this with an if-else for grpc frontend

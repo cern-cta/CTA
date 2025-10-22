@@ -16,7 +16,6 @@
  */
 
 #include "FrontendCmd.hpp"
-#include "ServiceKerberosAuthProcessor.hpp"
 #include "AsyncServer.hpp"
 #include "ServerNegotiationRequestHandler.hpp"
 #include "ServerTapeLsRequestHandler.hpp"
