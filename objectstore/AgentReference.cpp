@@ -106,7 +106,7 @@ void AgentReference::queueAndExecuteAction(std::shared_ptr<Action> action, objec
     threading::MutexLocker ulQueue(m_currentQueue->mutex);
     m_currentQueue->queue.push_back(action);
     // Get hold of the future before the promise gets a chance to be accessed
-    auto actionFuture=action->promise->get_future();
+    auto actionFuture = action->promise->get_future();
     // Release the locks and wait for action execution
     ulQueue.unlock();
     ulGlobal.unlock();

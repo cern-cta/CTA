@@ -115,11 +115,11 @@ SharedQueueLock<Queue, Request>::~SharedQueueLock() {
   double inMemoryQueuesCleanupTime = m_timer.secs();
   log::ScopedParamContainer params(m_logContext);
   params.add("objectQueue", queueAddress)
-        .add("waitTime", waitTime)
-        .add("queueUnlockTime", queueUnlockTime)
-        .add("queueDestructionTime", queueDestructionTime)
-        .add("successorUnlockTime", successorUnlockTime)
-        .add("inMemoryQueuesCleanupTime", inMemoryQueuesCleanupTime);
+    .add("waitTime", waitTime)
+    .add("queueUnlockTime", queueUnlockTime)
+    .add("queueDestructionTime", queueDestructionTime)
+    .add("successorUnlockTime", successorUnlockTime)
+    .add("inMemoryQueuesCleanupTime", inMemoryQueuesCleanupTime);
   m_logContext.log(log::INFO, "In SharedQueueLock::~SharedQueueLock(): unlocked the archive queue pointer.");
 }
 
@@ -128,9 +128,11 @@ class MemQueueRequest {
   template <class, class>
   friend class MemQueue;
 public:
-  MemQueueRequest(typename Request::JobDump & job,
-    Request & archiveRequest): m_job(job), m_request(archiveRequest),
-    m_promise(std::make_shared<std::promise<void>>()), m_tid(::syscall(SYS_gettid)) {}
+  MemQueueRequest(typename Request::JobDump& job, Request& archiveRequest)
+      : m_job(job),
+        m_request(archiveRequest),
+        m_promise(std::make_shared<std::promise<void>>()),
+        m_tid(::syscall(SYS_gettid)) {}
   virtual ~MemQueueRequest() {
     threading::MutexLocker ml(m_mutex);
   }

@@ -124,9 +124,11 @@ private:
    * An operation with its parameter and promise
    */
   struct Action {
-    Action(AgentOperation op, const std::string & objectAddress, const std::list<std::string> & objectAddressSet):
-      op(op), objectAddress(objectAddress), objectAddressSet(objectAddressSet),
-      promise(std::make_shared<std::promise<void>>()) {}
+    Action(AgentOperation op, const std::string& objectAddress, const std::list<std::string>& objectAddressSet)
+        : op(op),
+          objectAddress(objectAddress),
+          objectAddressSet(objectAddressSet),
+          promise(std::make_shared<std::promise<void>>()) {}
     AgentOperation op;
     const std::string & objectAddress;
     const std::list<std::string> & objectAddressSet;
