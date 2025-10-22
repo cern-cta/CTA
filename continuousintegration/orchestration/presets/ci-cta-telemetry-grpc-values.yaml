@@ -31,7 +31,7 @@ tpsrv:
 
 maintenance:
   conf:
-    telemtry:
+    telemetry:
       enabled: true
       retainInstanceIdOnRestart: false
       matricsBackend: "OTLP_GRPC"
