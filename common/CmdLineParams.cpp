@@ -77,7 +77,7 @@ std::string gHelpString =
       break;
     case 'h':
       std::cout << gHelpString << std::endl;
-      std::exit(EXIT_SUCCESS);
+      std::exit(EXIT_FAILURE);
     case 'l':
       logFilePath = optarg;
       logToFile = true;
@@ -92,12 +92,12 @@ std::string gHelpString =
 
   const std::string errPrefix = "Failed to interpret the command line parameters: In CmdLineParams::CmdLineParams(): ";
   if (logToStdout && !foreground) {
-    std::cerr << "cannot log to stdout without running in the foreground";
+    std::cerr << errPrefix << "cannot log to stdout without running in the foreground";
     std::exit(EXIT_FAILURE);
   }
   if (logToFile && logToStdout) {
-    std::cerr << "cannot log to both stdout and file";
-    std::exit(EXIT_SUCCESS);
+    std::cerr << errPrefix << "cannot log to both stdout and file";
+    std::exit(EXIT_FAILURE);
   }
 }
 
