@@ -29,12 +29,13 @@
 #include "common/utils/Base64.hpp"
 #include "common/utils/utils.hpp"
 
-
 namespace cta::admin {
 
 // Implement the send() method here, by wrapping the Admin rpc call
-void CtaAdminGrpcCmd::send(const CtaAdminParsedCmd& parsedCmd, const cta::common::Config& config, const std::string& config_file) const {
-  const auto &request = parsedCmd.getRequest();
+void CtaAdminGrpcCmd::send(const CtaAdminParsedCmd& parsedCmd,
+                           const cta::common::Config& config,
+                           const std::string& config_file) const {
+  const auto& request = parsedCmd.getRequest();
   // Validate the Protocol Buffer
   try {
     validateCmd(request.admincmd());
@@ -95,13 +96,14 @@ void CtaAdminGrpcCmd::send(const CtaAdminParsedCmd& parsedCmd, const cta::common
      */
     strEncodedToken = cta::utils::base64encode(strToken);
 
-  } catch(const cta::exception::Exception& e) {
+  } catch (const cta::exception::Exception& e) {
     /*
      * In case of any problems with the negotiation service,
      * log and stop the execution
      */
-    lc.log(cta::log::CRIT, "In cta::frontend::grpc::client::CtaAdminGrpcCmdDeprecated::exe(): Problem with the negotiation service.");
-    throw; // rethrow
+    lc.log(cta::log::CRIT,
+           "In cta::frontend::grpc::client::CtaAdminGrpcCmdDeprecated::exe(): Problem with the negotiation service.");
+    throw;  // rethrow
   }
   /*
     * Channel arguments can be overriden e.g: 
@@ -117,7 +119,7 @@ void CtaAdminGrpcCmd::send(const CtaAdminParsedCmd& parsedCmd, const cta::common
     * CompositeChannelCredentials associates a ChannelCredentials and a CallCredentials
     * to create a new ChannelCredentials
     */
-    /*
+  /*
     * Individual CallCredentials can also be composed using CompositeCallCredentials.
     * The resulting CallCredentials when used in a call will trigger the sending of
     * the authentication data associated with the two CallCredentials.
@@ -131,11 +133,11 @@ void CtaAdminGrpcCmd::send(const CtaAdminParsedCmd& parsedCmd, const cta::common
     */
   std::shared_ptr<::grpc::CallCredentials> spCallCredentials =
     ::grpc::MetadataCredentialsFromPlugin(std::unique_ptr<::grpc::MetadataCredentialsPlugin>(
-    new cta::frontend::grpc::client::KerberosAuthenticator(strEncodedToken)));
-  std::shared_ptr<::grpc::ChannelCredentials> spCompositeCredentials = ::grpc::CompositeChannelCredentials(credentials, spCallCredentials);
+      new cta::frontend::grpc::client::KerberosAuthenticator(strEncodedToken)));
+  std::shared_ptr<::grpc::ChannelCredentials> spCompositeCredentials =
+    ::grpc::CompositeChannelCredentials(credentials, spCallCredentials);
   std::shared_ptr<::grpc::Channel> spChannel {::grpc::CreateChannel(GRPC_SERVER, spCompositeCredentials)};
   // Execute the TapeLs command
-
 
   if (!isStreamCmd(request.admincmd())) {
     cta::xrd::Response response;
@@ -157,8 +159,7 @@ void CtaAdminGrpcCmd::send(const CtaAdminParsedCmd& parsedCmd, const cta::common
           throw std::runtime_error(status.error_message());
       }
     }
-  }
-  else {
+  } else {
     // insecure channel credentials won't work anymore, need TLS
     std::unique_ptr<cta::xrd::CtaRpcStream::Stub> client_stub = cta::xrd::CtaRpcStream::NewStub(spChannel);
     // Also create a ClientReadReactor instance to handle the command
@@ -166,13 +167,15 @@ void CtaAdminGrpcCmd::send(const CtaAdminParsedCmd& parsedCmd, const cta::common
       auto client_reactor = CtaAdminClientReadReactor(client_stub.get(), parsedCmd);
       status = client_reactor.Await();
       if (!status.ok()) {
-        std::cout << "gRPC call failed. Error code: " + std::to_string(status.error_code()) + " Error message: " + status.error_message() << std::endl;
+        std::cout << "gRPC call failed. Error code: " + std::to_string(status.error_code()) +
+                       " Error message: " + status.error_message()
+                  << std::endl;
       }
       // close the json delimiter, open is done inside command execution
       if (parsedCmd.isJson()) {
         std::cout << CtaAdminParsedCmd::jsonCloseDelim();
       }
-    } catch (std::exception &ex) {
+    } catch (std::exception& ex) {
       // what to do in catch? Maybe print an error?
       std::cout << "An exception was thrown in CtaAdminClientReactor: " << ex.what() << std::endl;
     }

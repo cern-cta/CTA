@@ -29,8 +29,9 @@ namespace cta::admin {
 
 class CtaAdminGrpcCmd {
 public:
-   //! Send the protocol buffer across the gRPC transport
-   void send(const CtaAdminParsedCmd& parsedCmd, const cta::common::Config& config, const std::string& config_file) const;
+  //! Send the protocol buffer across the gRPC transport
+  void
+  send(const CtaAdminParsedCmd& parsedCmd, const cta::common::Config& config, const std::string& config_file) const;
 };
 
 }  // namespace cta::admin

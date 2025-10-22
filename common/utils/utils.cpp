@@ -705,11 +705,11 @@ std::string getProcessName() {
   return std::string(name);
 }
 
-std::string file2string(std::string filename){
-    std::ifstream as_stream(filename);
-    std::ostringstream as_string;
-    as_string << as_stream.rdbuf();
-    return as_string.str();
+std::string file2string(std::string filename) {
+  std::ifstream as_stream(filename);
+  std::ostringstream as_string;
+  as_string << as_stream.rdbuf();
+  return as_string.str();
 }
 
 }  // namespace cta::utils

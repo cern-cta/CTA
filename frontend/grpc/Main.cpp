@@ -237,15 +237,19 @@ int main(const int argc, char *const *const argv) {
     std::unique_ptr<::grpc::ServerCompletionQueue> negCq = builder.AddCompletionQueue();
 
     // Create negotiation service
-    auto negotiationService = std::make_unique<cta::frontend::grpc::server::NegotiationService>(
-        lc, tokenStorage, std::move(negCq), strKeytab, strService, 1 /* threads */);
+    auto negotiationService = std::make_unique<cta::frontend::grpc::server::NegotiationService>(lc,
+                                                                                                tokenStorage,
+                                                                                                std::move(negCq),
+                                                                                                strKeytab,
+                                                                                                strService,
+                                                                                                1 /* threads */);
 
     // Register negotiation service on main builder
     builder.RegisterService(&negotiationService->getService());
- 
+
     // Setup main service authentication processor
-    std::shared_ptr<ServiceKerberosAuthProcessor> kerberosAuthProcessor = 
-        std::make_shared<ServiceKerberosAuthProcessor>(tokenStorage);
+    std::shared_ptr<ServiceKerberosAuthProcessor> kerberosAuthProcessor =
+      std::make_shared<ServiceKerberosAuthProcessor>(tokenStorage);
     creds->SetAuthMetadataProcessor(kerberosAuthProcessor);
     // Kerberos authenticates all admin commands - non-streaming commands that are made through the Admin rpc
     // and streaming commands made through GenericAdminStream
@@ -253,7 +257,7 @@ int main(const int argc, char *const *const argv) {
     // Register "service" as the instance through which we'll communicate with
     // clients. In this case it corresponds to an *synchronous* service.
     builder.RegisterService(&svc);
-    
+
     frontend::grpc::CtaRpcStreamImpl streamSvc(svc.getFrontendService().getCatalogue(),
                                                svc.getFrontendService().getScheduler(),
                                                svc.getFrontendService().getSchedDb(),

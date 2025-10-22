@@ -88,7 +88,7 @@ public:
     std::unique_ptr<NegotiationRequestHandler> upHandler =
       std::make_unique<NegotiationRequestHandler>(m_lc.logger(), *this, m_service, m_keytab, m_servicePrincipal);
     // Handler initialisation
-    upHandler->init();// can throw
+    upHandler->init();  // can throw
     // Store address
     uintptr_t tag = reinterpret_cast<std::uintptr_t>(upHandler.get());
     // Move ownership & store under the Tag
@@ -96,16 +96,12 @@ public:
     return *m_umapHandlers[reinterpret_cast<cta::frontend::grpc::request::Tag>(tag)];
   }
 
-  ::grpc::ServerCompletionQueue& completionQueue() {
-    return *m_upCompletionQueue;
-  }
+  ::grpc::ServerCompletionQueue& completionQueue() { return *m_upCompletionQueue; }
 
   /**
    * Get token storage (for handler access)
    */
-  TokenStorage& tokenStorage() {
-    return m_tokenStorage;
-  }
+  TokenStorage& tokenStorage() { return m_tokenStorage; }
 
   /**
    * Get the underlying gRPC async service for registration with ServerBuilder
@@ -132,4 +128,4 @@ private:
   std::mutex m_mtxLockHandler;
 };
 
-} // namespace cta::frontend::grpc::server
+}  // namespace cta::frontend::grpc::server

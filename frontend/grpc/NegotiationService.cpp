@@ -22,13 +22,12 @@
 
 namespace cta::frontend::grpc::server {
 
-NegotiationService::NegotiationService(
-    cta::log::LogContext& lc,
-    TokenStorage& tokenStorage,
-    std::unique_ptr<::grpc::ServerCompletionQueue> cq,
-    const std::string& keytab,
-    const std::string& servicePrincipal,
-    unsigned int numThreads)
+NegotiationService::NegotiationService(cta::log::LogContext& lc,
+                                       TokenStorage& tokenStorage,
+                                       std::unique_ptr<::grpc::ServerCompletionQueue> cq,
+                                       const std::string& keytab,
+                                       const std::string& servicePrincipal,
+                                       unsigned int numThreads)
     : m_lc(lc),
       m_tokenStorage(tokenStorage),
       m_upCompletionQueue(std::move(cq)),
@@ -62,7 +61,7 @@ NegotiationRequestHandler& NegotiationService::getHandler(const cta::frontend::g
    * Check if the handler is registered;
    */
   const auto itorFind = m_umapHandlers.find(tag);
-  if(itorFind == m_umapHandlers.end()) {
+  if (itorFind == m_umapHandlers.end()) {
     std::ostringstream osExMsg;
     osExMsg << "In NegotiationService::getHandler(): Handler " << tag << " is not registered.";
     throw cta::exception::Exception(osExMsg.str());
@@ -83,7 +82,7 @@ void NegotiationService::releaseHandler(const cta::frontend::grpc::request::Tag 
    * Check if the handler is registered;
    */
   const auto itorFind = m_umapHandlers.find(tag);
-  if(itorFind == m_umapHandlers.end()) {
+  if (itorFind == m_umapHandlers.end()) {
     std::ostringstream osExMsg;
     osExMsg << "In NegotiationService::releaseHandler(): Handler " << tag << " is not registered.";
     throw cta::exception::Exception(osExMsg.str());
@@ -114,7 +113,7 @@ void NegotiationService::startProcessing() {
   }
 
   // Initialise all registered handlers
-  for(const auto &item : m_umapHandlers) {
+  for (const auto& item : m_umapHandlers) {
     const std::unique_ptr<NegotiationRequestHandler>& upIHandler = item.second;
     upIHandler.get()->next(true);
     //TODO: Log names of initialised handlers;
@@ -141,19 +140,19 @@ void NegotiationService::process(unsigned int threadId) {
    */
   void* pTag = nullptr;
   bool bOk = false;
-  while(true) {
+  while (true) {
     /*
      * Block waiting to read the next event from the completion queue.
      * The return value of Next should always be checked.
      * It tells whether there is any kind of event or m_upCompletionQueue is shutting down.
      */
-    if(!m_upCompletionQueue->Next(&pTag, &bOk)) {
+    if (!m_upCompletionQueue->Next(&pTag, &bOk)) {
       log::ScopedParamContainer params(lc);
       params.add("thread", threadId);
       lc.log(cta::log::ERR, "In NegotiationService::process(): The completion queue has been shutdown.");
       break;
     }
-    if(!pTag) {
+    if (!pTag) {
       log::ScopedParamContainer params(lc);
       params.add("thread", threadId);
       lc.log(cta::log::ERR, "In NegotiationService::process(): Invalid tag delivered by notification queue.");
@@ -163,10 +162,10 @@ void NegotiationService::process(unsigned int threadId) {
     try {
       // Everything is ok the request can be processed
       NegotiationRequestHandler& handler = getHandler(static_cast<cta::frontend::grpc::request::Tag>(pTag));
-      if(!handler.next(bOk)) {
+      if (!handler.next(bOk)) {
         releaseHandler(static_cast<cta::frontend::grpc::request::Tag>(pTag));
       }
-    } catch(const cta::exception::Exception& ex) {
+    } catch (const cta::exception::Exception& ex) {
       log::ScopedParamContainer params(lc);
       params.add("thread", threadId);
       params.add("exceptionMessage", ex.getMessageValue());
@@ -175,4 +174,4 @@ void NegotiationService::process(unsigned int threadId) {
   }
 }
 
-} // namespace cta::frontend::grpc::server
+}  // namespace cta::frontend::grpc::server
