@@ -332,6 +332,14 @@ CtaRpcImpl::Admin(::grpc::ServerContext* context, const cta::xrd::Request* reque
     return ::grpc::Status(::grpc::StatusCode::UNIMPLEMENTED, CTA_ADMIN_COMMANDS_DISABLED_ERROR);
   }
 
+  // we'll get here if auth method specified was token instead of Kerberos
+  auto [status, clientIdentity] = extractAuthHeaderAndValidate(context, request);
+  if (!status.ok()) {
+    response->set_type(cta::xrd::Response::RSP_ERR_USER);
+    response->set_message_txt(status.error_message());
+    return status;
+  }
+
   cta::log::LogContext lc(m_frontendService->getLogContext());
   cta::log::ScopedParamContainer sp(lc);
 
