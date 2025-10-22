@@ -241,6 +241,8 @@ void BackendVFS::ScopedLock::release() {
     std::cout << "Warning: fd=-1!" << std::endl;
   }
 #endif
+  // Annotate that the flock provides synchronization
+  ANNOTATE_HAPPENS_BEFORE(&m_fd);
   ::flock(m_fd, LOCK_UN);
   ::close(m_fd);
   m_fdSet = false;
@@ -297,6 +299,8 @@ BackendVFS::ScopedLock * BackendVFS::lockHelper(const std::string& name, int typ
         throw exception::TimeoutException("In BackendVFS::lockHelper(): timeout while locking");
       }
     }
+    // Annotate that the flock provides synchronization
+    ANNOTATE_HAPPENS_AFTER(&ret->m_fd);
   } else {
     if(::flock(ret->m_fd, type)) {
       const std::string errnoStr = utils::errnoToString(errno);
@@ -305,6 +309,8 @@ BackendVFS::ScopedLock * BackendVFS::lockHelper(const std::string& name, int typ
         ": " << errnoStr;
       throw ex;
     }
+    // Annotate that the flock provides synchronization
+    ANNOTATE_HAPPENS_AFTER(&ret->m_fd);
   }
 
   #ifdef LOW_LEVEL_TRACING

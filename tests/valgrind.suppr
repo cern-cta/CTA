@@ -684,3 +684,143 @@
    fun:_ZN9unitTests15OSMTapeFileTest5SetUpEv
    ...
 }
+
+{
+   <insert_a_suppression_name_here>
+   Memcheck:Leak
+   match-leak-kinds: possible
+   fun:malloc
+   fun:strdup
+   fun:__trans_list_add
+   obj:/usr/lib64/libnl-route-3.so.200.26.0
+   fun:call_init
+   fun:call_init
+   fun:_dl_init
+   obj:/usr/lib64/ld-linux-x86-64.so.2
+   obj:*
+   obj:*
+   obj:*
+}
+
+{
+   <insert_a_suppression_name_here>
+   Memcheck:Leak
+   match-leak-kinds: possible
+   fun:malloc
+   fun:strdup
+   fun:__trans_list_add
+   obj:/usr/lib64/libnl-route-3.so.200.26.0
+   fun:call_init
+   fun:call_init
+   fun:_dl_init
+   obj:/usr/lib64/ld-linux-x86-64.so.2
+   obj:*
+   obj:*
+   obj:*
+}
+
+{
+   <insert_a_suppression_name_here>
+   Memcheck:Leak
+   match-leak-kinds: possible
+   fun:malloc
+   obj:/usr/lib64/libsqlite3.so.0.8.6
+   obj:/usr/lib64/libsqlite3.so.0.8.6
+   obj:/usr/lib64/libsqlite3.so.0.8.6
+   obj:/usr/lib64/libsqlite3.so.0.8.6
+   obj:/usr/lib64/libsqlite3.so.0.8.6
+   obj:/usr/lib64/libsqlite3.so.0.8.6
+   fun:sqlite3_step
+   fun:_ZN3cta5rdbms7wrapper10SqliteStmt15executeNonQueryEv
+   fun:_ZN3cta5rdbms7wrapper10SqliteConn15executeNonQueryERKNSt7__cxx1112basic_stringIcSt11char_traitsIcESaIcEEE
+   fun:_ZN3cta5rdbms4Conn15executeNonQueryERKNSt7__cxx1112basic_stringIcSt11char_traitsIcESaIcEEE
+   fun:_ZNK3cta9catalogue29SchemaCreatingSqliteCatalogue17executeNonQueriesERNS_5rdbms4ConnERKNSt7__cxx1112basic_stringIcSt11char_traitsIcESaIcEEE
+}
+
+{
+   <insert_a_suppression_name_here>
+   Memcheck:Leak
+   match-leak-kinds: possible
+   fun:malloc
+   obj:/usr/lib64/libsqlite3.so.0.8.6
+   obj:/usr/lib64/libsqlite3.so.0.8.6
+   obj:/usr/lib64/libsqlite3.so.0.8.6
+   obj:/usr/lib64/libsqlite3.so.0.8.6
+   obj:/usr/lib64/libsqlite3.so.0.8.6
+   obj:/usr/lib64/libsqlite3.so.0.8.6
+   obj:/usr/lib64/libsqlite3.so.0.8.6
+   obj:/usr/lib64/libsqlite3.so.0.8.6
+   obj:/usr/lib64/libsqlite3.so.0.8.6
+   obj:/usr/lib64/libsqlite3.so.0.8.6
+   fun:sqlite3_step
+}
+
+{
+   <insert_a_suppression_name_here>
+   Memcheck:Leak
+   match-leak-kinds: possible
+   fun:malloc
+   obj:/usr/lib64/libsqlite3.so.0.8.6
+   obj:/usr/lib64/libsqlite3.so.0.8.6
+   obj:/usr/lib64/libsqlite3.so.0.8.6
+   obj:/usr/lib64/libsqlite3.so.0.8.6
+   obj:/usr/lib64/libsqlite3.so.0.8.6
+   obj:/usr/lib64/libsqlite3.so.0.8.6
+   obj:/usr/lib64/libsqlite3.so.0.8.6
+   obj:/usr/lib64/libsqlite3.so.0.8.6
+   obj:/usr/lib64/libsqlite3.so.0.8.6
+   fun:sqlite3_step
+   fun:_ZN3cta5rdbms7wrapper10SqliteStmt15executeNonQueryEv
+}
+
+{
+   <insert_a_suppression_name_here>
+   Memcheck:Leak
+   match-leak-kinds: possible
+   fun:malloc
+   obj:/usr/lib64/libsqlite3.so.0.8.6
+   obj:/usr/lib64/libsqlite3.so.0.8.6
+   obj:/usr/lib64/libsqlite3.so.0.8.6
+   obj:/usr/lib64/libsqlite3.so.0.8.6
+   obj:/usr/lib64/libsqlite3.so.0.8.6
+   obj:/usr/lib64/libsqlite3.so.0.8.6
+   fun:sqlite3_step
+   fun:_ZN3cta5rdbms7wrapper10SqliteStmt15executeNonQueryEv
+   fun:_ZN3cta5rdbms7wrapper10SqliteConn15executeNonQueryERKNSt7__cxx1112basic_stringIcSt11char_traitsIcESaIcEEE
+   fun:_ZN3cta5rdbms4Conn15executeNonQueryERKNSt7__cxx1112basic_stringIcSt11char_traitsIcESaIcEEE
+   fun:_ZNK3cta9catalogue29SchemaCreatingSqliteCatalogue17executeNonQueriesERNS_5rdbms4ConnERKNSt7__cxx1112basic_stringIcSt11char_traitsIcESaIcEEE
+}
+
+{
+   <insert_a_suppression_name_here>
+   Memcheck:Leak
+   match-leak-kinds: possible
+   fun:malloc
+   obj:/usr/lib64/libsqlite3.so.0.8.6
+   obj:/usr/lib64/libsqlite3.so.0.8.6
+   obj:/usr/lib64/libsqlite3.so.0.8.6
+   obj:/usr/lib64/libsqlite3.so.0.8.6
+   obj:/usr/lib64/libsqlite3.so.0.8.6
+   obj:/usr/lib64/libsqlite3.so.0.8.6
+   obj:/usr/lib64/libsqlite3.so.0.8.6
+   obj:/usr/lib64/libsqlite3.so.0.8.6
+   obj:/usr/lib64/libsqlite3.so.0.8.6
+   obj:/usr/lib64/libsqlite3.so.0.8.6
+   obj:/usr/lib64/libsqlite3.so.0.8.6
+}
+
+{
+   <insert_a_suppression_name_here>
+   Memcheck:Leak
+   match-leak-kinds: possible
+   fun:calloc
+   fun:__trans_list_add
+   obj:/usr/lib64/libnl-route-3.so.200.26.0
+   fun:call_init
+   fun:call_init
+   fun:_dl_init
+   obj:/usr/lib64/ld-linux-x86-64.so.2
+   obj:*
+   obj:*
+   obj:*
+}
