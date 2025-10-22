@@ -36,9 +36,12 @@ public:
    * Token validation & decoding
    */
   bool validate(const std::string& strToken) const;
-  
-  // TODO: removing a token
-  
+
+  /*
+   * Remove a token from storage (tokens are not needed beyond the duration of a single call)
+   */
+  void remove(const std::string& strToken);
+
 private:
   std::unordered_map<std::string, std::string> m_umapTokens;
   mutable std::mutex m_mtxLockStorage;

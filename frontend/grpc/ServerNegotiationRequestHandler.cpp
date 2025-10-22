@@ -16,19 +16,20 @@
  */
 
 #include "ServerNegotiationRequestHandler.hpp"
-#include "AsyncServer.hpp"
+#include "NegotiationService.hpp"
 #include "RequestMessage.hpp"
 #include "common/log/LogContext.hpp"
+#include "common/exception/Exception.hpp"
 
 cta::frontend::grpc::server::NegotiationRequestHandler::NegotiationRequestHandler(
   cta::log::Logger& log,
-  AsyncServer& asyncServer,
+  NegotiationService& negotiationService,
   cta::xrd::Negotiation::AsyncService& ctaNegotiationSvc,
   const std::string& strKeytab,
   const std::string& strService)
     : m_log(log),
       m_tag(this),
-      m_asyncServer(asyncServer),
+      m_negotiationService(negotiationService),
       m_ctaNegotiationSvc(ctaNegotiationSvc),
       m_strKeytab(strKeytab),
       m_strService(strService),
@@ -109,13 +110,27 @@ void cta::frontend::grpc::server::NegotiationRequestHandler::acquireCreds(const 
   gss_OID_set gssMechs = GSS_C_NO_OID_SET;
 
   gssNameBuf.value = const_cast<char*>(strService.c_str());
-  gssNameBuf.length = strService.size() + 1;
-  gssMajStat = gss_import_name(&gssMinStat, &gssNameBuf,
-                             (gss_OID) gss_nt_service_name, &gssServerName);
+  gssNameBuf.length = strlen(strService.c_str());  // strService.size() + 1;
+
+// Prefer to import as a krb5 principal if available
+// GSS_KRB5_NT_PRINCIPAL_NAME is defined in gssapi_krb5.h on many installs.
+// If it's not available at compile time, fall back to hostbased service only if necessary.
+#if defined(GSS_KRB5_NT_PRINCIPAL_NAME)
+  gssMajStat = gss_import_name(&gssMinStat, &gssNameBuf, (gss_OID) GSS_KRB5_NT_PRINCIPAL_NAME, &gssServerName);
+#else
+    // Fallback: try exact user-style name first (GSS_C_NT_USER_NAME)
+  gssMajStat = gss_import_name(&gssMinStat, &gssNameBuf, (gss_OID) GSS_C_NT_USER_NAME, &gssServerName);
+  if (gssMajStat != GSS_S_COMPLETE) {
+    // If user name import fails, try hostbased service (old behavior)
+    gssMajStat = gss_import_name(&gssMinStat, &gssNameBuf, (gss_OID) gss_nt_service_name, &gssServerName);
+  }
+#endif
+
   if (gssMajStat != GSS_S_COMPLETE) {
     logGSSErrors("In grpc::server::NegotiationRequestHandler::acquireCreds(): gss_import_name() major status.", gssMajStat, GSS_C_GSS_CODE);
     logGSSErrors("In grpc::server::NegotiationRequestHandler::acquireCreds(): gss_import_name() minor status.", gssMinStat, GSS_C_MECH_CODE);
-    throw cta::exception::Exception("In grpc::server::NegotiationRequestHandler::acquireCreds(): Failed to get Kerberos credentials");
+    throw cta::exception::Exception(
+      "In grpc::server::NegotiationRequestHandler::acquireCreds(): Failed to import service principal: " + strService);
   }
 
   if (gssMech != GSS_C_NO_OID) {
@@ -164,11 +179,15 @@ bool cta::frontend::grpc::server::NegotiationRequestHandler::next(const bool bOk
 
   switch (m_streamState) {
     case StreamState::NEW:
-      m_ctaNegotiationSvc.RequestNegotiate(&m_ctx, &m_rwNegotiation, &m_asyncServer.completionQueue(), &m_asyncServer.completionQueue(), m_tag);
+      m_ctaNegotiationSvc.RequestNegotiate(&m_ctx,
+                                           &m_rwNegotiation,
+                                           &m_negotiationService.completionQueue(),
+                                           &m_negotiationService.completionQueue(),
+                                           m_tag);
       m_streamState = StreamState::PROCESSING;
       break;
     case StreamState::PROCESSING:
-      m_asyncServer.registerHandler<cta::frontend::grpc::server::NegotiationRequestHandler>(m_ctaNegotiationSvc, m_strKeytab, m_strService).next(bOk);
+      m_negotiationService.registerHandler().next(bOk);
       m_rwNegotiation.Read(&m_request, m_tag);// read first m_request
       m_streamState = StreamState::WRITE;
       break;
@@ -219,7 +238,9 @@ bool cta::frontend::grpc::server::NegotiationRequestHandler::next(const bool bOk
              * now KRB token is used
              */
             m_response.set_token(std::string(reinterpret_cast<const char*>(gssRecvToken.value), gssRecvToken.length));
-            m_asyncServer.tokenStorage().store(std::string(reinterpret_cast<const char*>(gssRecvToken.value), gssRecvToken.length), m_request.service_principal_name());
+            m_negotiationService.tokenStorage().store(
+              std::string(reinterpret_cast<const char*>(gssRecvToken.value), gssRecvToken.length),
+              m_request.service_principal_name());
             m_rwNegotiation.Write(m_response, m_tag);
             break;
           case GSS_S_DEFECTIVE_TOKEN:

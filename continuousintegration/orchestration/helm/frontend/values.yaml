@@ -31,7 +31,7 @@ grpc:
       logFormat: json
 
     tls:
-      enabled: false
+      enabled: true
       serverKey: /etc/grpc-certs/key/server.key
       serverCert: /etc/grpc-certs/cert/server.crt
       caCert: ""
@@ -50,6 +50,11 @@ grpc:
       enabled: false
       retainInstanceIdOnRestart: false
       metricsBackend: "NOOP"
+  
+  # Kerberos authentication
+  keytab: /etc/cta/cta-frontend.krb5.keytab
+  service_principal: "cta/cta-frontend-grpc@TEST.CTA"  # Will use default cta/<pod-name>@realm format if empty
+
 xrd:
   enabled: true
   port: 10955

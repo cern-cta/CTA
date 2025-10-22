@@ -31,17 +31,23 @@ add_executable(cta-frontend-grpc Main.cpp FrontendGrpcService.cpp
   ${PROJECT_SOURCE_DIR}/cmdline/CtaAdminTextFormatter.cpp
   ${PROJECT_SOURCE_DIR}/cmdline/CtaAdminCmdParser.cpp
   ${PROJECT_SOURCE_DIR}/common/config/Config.cpp
-  callback_api/CtaAdminServerWriteReactor.cpp) # This is needed for the Impl Class that serves the streaming commands
+  ${PROJECT_SOURCE_DIR}/common/utils/utils.cpp
+  callback_api/CtaAdminServerWriteReactor.cpp
+  NegotiationService.cpp
+  ServerNegotiationRequestHandler.cpp
+  ServiceKerberosAuthProcessor.cpp
+  TokenStorage.cpp
+  utils.cpp)
 # target_link_libraries(cta-frontend-grpc ProtoCtaFrontend)
 
 if(CTA_USE_PGSCHED)
   target_link_libraries(cta-frontend-grpc
     ${GRPC_GRPC++_REFLECTION_LIBRARY}
-    ctascheduler ctacommon ctacatalogue ctagrpc JwkCache)
+    ctascheduler ctacommon ctacatalogue ctagrpc JwkCache gssapi_krb5)
 else()
   target_link_libraries(cta-frontend-grpc
     ${GRPC_GRPC++_REFLECTION_LIBRARY}
-    ctascheduler ctacommon ctaobjectstore ctacatalogue ctagrpc JwkCache)
+    ctascheduler ctacommon ctaobjectstore ctacatalogue ctagrpc JwkCache gssapi_krb5)
 endif()
 
 add_manpage(cta-frontend-grpc)
@@ -67,10 +73,13 @@ add_executable(cta-admin-grpc
   ${PROJECT_SOURCE_DIR}/cmdline/CtaAdminParsedCmd.cpp
   ${PROJECT_SOURCE_DIR}/cmdline/CtaAdminTextFormatter.cpp
   ${PROJECT_SOURCE_DIR}/cmdline/CtaAdminCmdParser.cpp
+  ${PROJECT_SOURCE_DIR}/common/utils/utils.cpp
+  ClientNegotiationRequestHandler.cpp
+  utils.cpp
 )
 
 target_link_libraries(cta-admin-grpc
-  ctacommon stdc++fs ctatapedaemoncommon ctascheduler ctaobjectstore ctacatalogue ctagrpc
+  ctacommon stdc++fs ctatapedaemoncommon ctascheduler ctaobjectstore ctacatalogue ctagrpc gssapi_krb5
 )
 
 set_property (TARGET cta-admin-grpc APPEND PROPERTY INSTALL_RPATH ${PROTOBUF3_RPATH})
@@ -80,23 +89,23 @@ install(TARGETS cta-admin-grpc DESTINATION usr/bin)
 ## cta-frontend-grpc-stream-server
 ##
 
-add_executable(cta-frontend-async-grpc
-  FrontendCmd.cpp
-  AsyncServer.cpp
-  TokenStorage.cpp
-  ServiceKerberosAuthProcessor.cpp
-  ServerTapeLsRequestHandler.cpp
-  ServerNegotiationRequestHandler.cpp
-  RequestMessage.cpp
-  ${PROJECT_SOURCE_DIR}/frontend/common/AdminCmdOptions.cpp
-  utils.cpp
-  ${PROJECT_SOURCE_DIR}/cmdline/CtaAdminCmdParser.cpp
-)
+# add_executable(cta-frontend-async-grpc
+#   FrontendCmd.cpp
+#   AsyncServer.cpp
+#   TokenStorage.cpp
+#   ServiceKerberosAuthProcessor.cpp
+#   ServerTapeLsRequestHandler.cpp
+#   ServerNegotiationRequestHandler.cpp
+#   RequestMessage.cpp
+#   ${PROJECT_SOURCE_DIR}/frontend/common/AdminCmdOptions.cpp
+#   utils.cpp
+#   ${PROJECT_SOURCE_DIR}/cmdline/CtaAdminCmdParser.cpp
+# )
 
-if(CTA_USE_PGSCHED)
-  target_link_libraries(cta-frontend-async-grpc
-          ctascheduler ctacommon ctatapedaemoncommon ctacatalogue gssapi_krb5 ctagrpc)
-else()
-  target_link_libraries(cta-frontend-async-grpc
-          ctascheduler ctacommon ctatapedaemoncommon ctaobjectstore ctacatalogue gssapi_krb5 ctagrpc)
-endif()
+# if(CTA_USE_PGSCHED)
+#   target_link_libraries(cta-frontend-async-grpc
+#           ctascheduler ctacommon ctatapedaemoncommon ctacatalogue gssapi_krb5 ctagrpc)
+# else()
+#   target_link_libraries(cta-frontend-async-grpc
+#           ctascheduler ctacommon ctatapedaemoncommon ctaobjectstore ctacatalogue gssapi_krb5 ctagrpc)
+# endif()

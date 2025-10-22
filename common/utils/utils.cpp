@@ -36,6 +36,8 @@
 #include <sys/prctl.h>
 #include <iomanip>
 
+#include <fstream>
+
 using cta::exception::Exception;
 
 //------------------------------------------------------------------------------
@@ -701,6 +703,13 @@ std::string getProcessName() {
   char name[16] = {0};
   prctl(PR_GET_NAME, name, 0, 0, 0);
   return std::string(name);
+}
+
+std::string file2string(std::string filename) {
+  std::ifstream as_stream(filename);
+  std::ostringstream as_string;
+  as_string << as_stream.rdbuf();
+  return as_string.str();
 }
 
 }  // namespace cta::utils

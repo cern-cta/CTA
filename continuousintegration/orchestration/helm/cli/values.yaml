@@ -16,4 +16,10 @@ extraEnv:
 
 extraVolumes:
   volumes:
+    - name: grpc-certs
+      secret:
+        secretName: ca-crt
   volumeMounts:
+    - name: grpc-certs
+      mountPath: /etc/grpc-certs
+      readOnly: true

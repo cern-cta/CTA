@@ -141,6 +141,16 @@ public:
   const std::optional<std::string> getPort() const { return m_port; }
 
   /*
+   * Get the gRPC server keytab
+   */
+  const std::optional<std::string> getKeytab() const { return m_keytab; }
+
+  /*
+   * Get the gRPC server service principal
+   */
+  const std::optional<std::string> getServicePrincipal() const { return m_servicePrincipal; }
+
+  /*
    * Get the number of threads
    */
   const std::optional<int> getThreads() const { return m_threads; }
@@ -209,6 +219,8 @@ private:
   std::optional<uint64_t>                       m_repackMaxFilesToSelect;       //!< The max number of files to expand during a repack
   std::string                                   m_verificationMountPolicy;      //!< The mount policy for verification requests
   std::optional<std::string>                    m_port;                         //!< The port for the gRPC server
+  std::optional<std::string>                    m_keytab;                       //!< The keytab file to be used for Kerberos authentication by the gRPC server
+  std::optional<std::string>                    m_servicePrincipal;             //!< The service principal to be used for Kerberos authentication by the gRPC server
   std::optional<int>                            m_threads;                      //!< The number of threads used by the gRPC server
   bool                                          m_tls;                          //!< Use TLS encryption for gRPC
   std::optional<std::string>                    m_tlsKey;                       //!< The TLS service key file

@@ -34,9 +34,12 @@
 #endif
 
 #include <getopt.h>
-#include <fstream>
 #include "callback_api/CtaAdminServer.hpp"
 #include <grpcpp/ext/proto_server_reflection_plugin.h>
+#include "TokenStorage.hpp"
+#include "ServiceKerberosAuthProcessor.hpp"
+#include "NegotiationService.hpp"
+#include "common/utils/utils.hpp"
 
 // #include <grpc++/reflection.h>
 #include <thread>
@@ -44,7 +47,8 @@
 
 using namespace cta;
 using namespace cta::common;
-// using namespace cta::frontend::grpc;
+using namespace cta::frontend::grpc;
+using cta::frontend::grpc::server::ServiceKerberosAuthProcessor;
 
 std::string help =
     "Usage: cta-frontend-grpc [options]\n"
@@ -70,13 +74,6 @@ void printHelpAndExit(int rc) {
 void printVersionAndExit() {
     std::cout << "cta-frontend-grpc version: " << CTA_VERSION << std::endl;
     exit(0);
-}
-
-std::string file2string(std::string filename){
-    std::ifstream as_stream(filename);
-    std::ostringstream as_string;
-    as_string << as_stream.rdbuf();
-    return as_string.str();
 }
 
 void JwksCacheRefreshLoop(std::weak_ptr<JwkCache> weakCache,
@@ -190,16 +187,16 @@ int main(const int argc, char *const *const argv) {
         else {
             auto key_file = svc.getFrontendService().getTlsKey().value();
             lc.log(log::INFO, "TLS service key file: " + key_file);
-            cert.private_key = file2string(key_file);
+            cert.private_key = cta::utils::file2string(key_file);
 
             auto cert_file = svc.getFrontendService().getTlsCert().value();
             lc.log(log::INFO, "TLS service certificate file: " + cert_file);
-            cert.cert_chain = file2string(cert_file);
+            cert.cert_chain = cta::utils::file2string(cert_file);
 
             auto ca_chain = svc.getFrontendService().getTlsChain();
             if (ca_chain.has_value()) {
                 lc.log(log::INFO, "TLS CA chain file: " + ca_chain.value());
-                tls_options.pem_root_certs = file2string(ca_chain.value());
+                tls_options.pem_root_certs = cta::utils::file2string(ca_chain.value());
             } else {
                 lc.log(log::INFO, "TLS CA chain file not defined ...");
                 tls_options.pem_root_certs = "";
@@ -226,9 +223,41 @@ int main(const int argc, char *const *const argv) {
     lc.log(log::INFO, "Using " + std::to_string(threads) + " request processing threads");
     builder.SetResourceQuota(quota);
 
+    // Setup TokenStorage for Kerberos authentication
+    cta::frontend::grpc::server::TokenStorage tokenStorage;
+
+    // Get Kerberos configuration
+    std::string strKeytab = svc.getFrontendService().getKeytab().value_or("/etc/cta/cta-frontend.keytab");
+    std::string strService = svc.getFrontendService().getServicePrincipal().value_or("cta/" + shortHostName);
+
+    lc.log(log::INFO, "Using keytab: " + strKeytab);
+    lc.log(log::INFO, "Using service principal: " + strService);
+
+    // Create completion queue that will be used only for the Kerberos negotiation service
+    std::unique_ptr<::grpc::ServerCompletionQueue> negCq = builder.AddCompletionQueue();
+
+    // Create negotiation service
+    auto negotiationService = std::make_unique<cta::frontend::grpc::server::NegotiationService>(lc,
+                                                                                                tokenStorage,
+                                                                                                std::move(negCq),
+                                                                                                strKeytab,
+                                                                                                strService,
+                                                                                                1 /* threads */);
+
+    // Register negotiation service on main builder
+    builder.RegisterService(&negotiationService->getService());
+
+    // Setup main service authentication processor
+    std::shared_ptr<ServiceKerberosAuthProcessor> kerberosAuthProcessor =
+      std::make_shared<ServiceKerberosAuthProcessor>(tokenStorage);
+    creds->SetAuthMetadataProcessor(kerberosAuthProcessor);
+    // Kerberos authenticates all admin commands - non-streaming commands that are made through the Admin rpc
+    // and streaming commands made through GenericAdminStream
+
     // Register "service" as the instance through which we'll communicate with
     // clients. In this case it corresponds to an *synchronous* service.
     builder.RegisterService(&svc);
+
     frontend::grpc::CtaRpcStreamImpl streamSvc(svc.getFrontendService().getCatalogue(),
                                                svc.getFrontendService().getScheduler(),
                                                svc.getFrontendService().getSchedDb(),
@@ -238,9 +267,14 @@ int main(const int argc, char *const *const argv) {
                                                svc.getFrontendService().getenableCtaAdminCommands(),
                                                svc.getFrontendService().getLogContext());
     builder.RegisterService(&streamSvc);
+
     // add reflection
     // grpc::reflection::InitProtoReflectionServerBuilderPlugin();
-    std::unique_ptr <Server> server(builder.BuildAndStart());
+    // Build and start server
+    std::unique_ptr<Server> server(builder.BuildAndStart());
+
+    // Start negotiation service processing (after server is built)
+    negotiationService->startProcessing();
 
     lc.log(cta::log::INFO, "Listening on socket address: " + server_address);
     server->Wait();
