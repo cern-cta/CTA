@@ -26,6 +26,7 @@
 #include "common/dataStructures/PhysicalLibrary.hpp"
 #include "common/telemetry/metrics/instruments/FrontendInstruments.hpp"
 #include "common/semconv/Attributes.hpp"
+#include "frontend/common/RequestTracker.hpp"
 #include "PbException.hpp"
 
 namespace cta::frontend {
@@ -54,6 +55,7 @@ AdminCmd::AdminCmd(const frontend::FrontendService& frontendService,
 }
 
 xrd::Response AdminCmd::process() {
+  cta::frontend::RequestTracker requestTracker("ADMIN", "admin");
   xrd::Response response;
 
   utils::Timer t;
@@ -251,15 +253,19 @@ xrd::Response AdminCmd::process() {
     logAdminCmd(__FUNCTION__, AdminCmdStatus::SUCCESS, "", t);
   } catch(exception::PbException& ex) {
     logAdminCmd(__FUNCTION__, AdminCmdStatus::EXCEPTION, ex.what(), t);
+    requestTracker.setErrorType(cta::semconv::attr::ErrorTypeValues::kException);
     throw ex;
   } catch(exception::UserError& ex) {
     logAdminCmd(__FUNCTION__, AdminCmdStatus::USER_ERROR, ex.getMessageValue(), t);
+    requestTracker.setErrorType(cta::semconv::attr::ErrorTypeValues::kUserError);
     throw ex;
   } catch(exception::Exception& ex) {
     logAdminCmd(__FUNCTION__, AdminCmdStatus::EXCEPTION, ex.what(), t);
+    requestTracker.setErrorType(cta::semconv::attr::ErrorTypeValues::kException);
     throw ex;
   } catch(std::runtime_error& ex) {
     logAdminCmd(__FUNCTION__, AdminCmdStatus::EXCEPTION, ex.what(), t);
+    requestTracker.setErrorType(cta::semconv::attr::ErrorTypeValues::kException);
     throw ex;
   }
   return response;
@@ -274,38 +280,14 @@ void AdminCmd::logAdminCmd(const std::string& function,
   switch (status) {
     case AdminCmdStatus::SUCCESS: {
       statusStr = "success";
-      cta::telemetry::metrics::ctaFrontendRequestDuration->Record(
-        t.msecs(),
-        {
-          {cta::semconv::attr::kEventName,             "ADMIN"},
-          {cta::semconv::attr::kFrontendRequesterName, "admin"}
-      },
-        opentelemetry::context::RuntimeContext::GetCurrent());
       break;
     }
     case AdminCmdStatus::USER_ERROR: {
       statusStr = "user_error";
-      cta::telemetry::metrics::ctaFrontendRequestDuration->Record(
-        t.msecs(),
-        {
-          {cta::semconv::attr::kEventName,             "ADMIN"                                        },
-          {cta::semconv::attr::kFrontendRequesterName, "admin"                                        },
-          {cta::semconv::attr::kErrorType,             cta::semconv::attr::ErrorTypeValues::kUserError}
-      },
-        opentelemetry::context::RuntimeContext::GetCurrent());
-
       break;
     }
     case AdminCmdStatus::EXCEPTION: {
       statusStr = "failure";
-      cta::telemetry::metrics::ctaFrontendRequestDuration->Record(
-        t.msecs(),
-        {
-          {cta::semconv::attr::kEventName,             "ADMIN"                                        },
-          {cta::semconv::attr::kFrontendRequesterName, "admin"                                        },
-          {cta::semconv::attr::kErrorType,             cta::semconv::attr::ErrorTypeValues::kException}
-      },
-        opentelemetry::context::RuntimeContext::GetCurrent());
       break;
     }
   }

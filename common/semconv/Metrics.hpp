@@ -44,6 +44,11 @@ static constexpr const char* kMetricCtaFrontendRequestDuration = "cta.frontend.r
 static constexpr const char* descrCtaFrontendRequestDuration = "Duration the frontend takes to process a request.";
 static constexpr const char* unitCtaFrontendRequestDuration = "ms";
 
+// Loosely based on https://opentelemetry.io/docs/specs/semconv/http/http-metrics/#metric-httpserveractive_requests
+static constexpr const char* kMetricCtaFrontendActiveRequests = "cta.frontend.active_requests";
+static constexpr const char* descrCtaFrontendActiveRequests = "Number of active CTA Frontend requests.";
+static constexpr const char* unitCtaFrontendActiveRequests = "1";
+
 // -------------------- RDBMS --------------------
 
 // See https://opentelemetry.io/docs/specs/semconv/database/database-metrics/#metric-dbclientoperationduration

@@ -48,6 +48,7 @@
 #include "frontend/common/PbException.hpp"
 // #include "frontend/common/GrpcEndpoint.hpp"
 #include "frontend/common/AdminCmd.hpp"
+#include "frontend/common/RequestTracker.hpp"
 
 namespace cta::frontend {
 
@@ -62,6 +63,7 @@ AdminCmdStream::AdminCmdStream(const frontend::FrontendService& frontendService,
       m_instanceName(frontendService.getInstanceName()) {}
 
 xrd::Response AdminCmdStream::process() {
+  cta::frontend::RequestTracker requestTracker("ADMIN_STREAMING", "admin");
   xrd::Response response;
 
   utils::Timer t;
@@ -149,15 +151,19 @@ xrd::Response AdminCmdStream::process() {
     logAdminCmd(__FUNCTION__, AdminCmdStatus::SUCCESS, "", t);
   } catch (exception::PbException& ex) {
     logAdminCmd(__FUNCTION__, AdminCmdStatus::EXCEPTION, ex.what(), t);
+    requestTracker.setErrorType(cta::semconv::attr::ErrorTypeValues::kException);
     throw ex;
   } catch (exception::UserError& ex) {
     logAdminCmd(__FUNCTION__, AdminCmdStatus::USER_ERROR, ex.getMessageValue(), t);
+    requestTracker.setErrorType(cta::semconv::attr::ErrorTypeValues::kUserError);
     throw ex;
   } catch (exception::Exception& ex) {
     logAdminCmd(__FUNCTION__, AdminCmdStatus::EXCEPTION, ex.what(), t);
+    requestTracker.setErrorType(cta::semconv::attr::ErrorTypeValues::kException);
     throw ex;
   } catch (std::runtime_error& ex) {
     logAdminCmd(__FUNCTION__, AdminCmdStatus::EXCEPTION, ex.what(), t);
+    requestTracker.setErrorType(cta::semconv::attr::ErrorTypeValues::kException);
     throw ex;
   }
   return response;

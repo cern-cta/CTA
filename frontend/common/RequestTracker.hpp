@@ -14,20 +14,27 @@
  *               granted to it by virtue of its status as an Intergovernmental Organization or
  *               submit itself to any jurisdiction.
  */
+
 #pragma once
 
-#include <opentelemetry/metrics/meter.h>
-#include <opentelemetry/metrics/provider.h>
+#include <string>
+#include <optional>
+#include "common/Timer.hpp"
 
-namespace cta::telemetry::metrics {
+namespace cta::frontend {
 
-/**
- * Duration the frontend takes to process a request.
- */
-extern std::unique_ptr<opentelemetry::metrics::Histogram<uint64_t>> ctaFrontendRequestDuration;
-/**
- * Number of active requests in the CTA frontend.
- */
-extern std::unique_ptr<opentelemetry::metrics::UpDownCounter<int64_t>> ctaFrontendActiveRequests;
+// Used to track ctaFrontendActiveRequests
+class RequestTracker {
+public:
+  RequestTracker(std::string_view eventName, std::string_view requesterName);
+  ~RequestTracker();
+  void setErrorType(std::string_view errorType);
 
-}  // namespace cta::telemetry::metrics
+private:
+  utils::Timer m_timer;
+  std::string m_eventName;
+  std::string m_requesterName;
+  std::optional<std::string> m_errorType;
+};
+
+}  // namespace cta::frontend
