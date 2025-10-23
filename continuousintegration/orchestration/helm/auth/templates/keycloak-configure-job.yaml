@@ -77,7 +77,7 @@ spec:
                 echo "Setting diskInstanceName attribute for admin user (ID: $ADMIN_USER_ID)..."
                 /opt/keycloak/bin/kcadm.sh update users/$ADMIN_USER_ID \
                   -r master \
-                  -s 'attributes.diskInstanceName=["ctaeos"]'
+                  -s 'attributes.diskInstanceName=["ctaadmin1"]'
                 echo "Set diskInstanceName attribute."
               else
                 echo "Admin user not found."
