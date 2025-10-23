@@ -69,6 +69,19 @@
   if (allowed.contains(strAuthMetadataValue)) {
     return ::grpc::Status::OK;
   }
+
+  /*
+   * Skip Kerberos authentication if JWT token is present in the authorization header.
+   * JWT authentication will be handled separately in the RPC implementation.
+   */
+  auto authHeaderIter = authMetadata.find("authorization");
+  if (authHeaderIter != authMetadata.end()) {
+    std::string authHeaderValue(authHeaderIter->second.data(), authHeaderIter->second.length());
+    // Check if this is a Bearer token (JWT)
+    if (authHeaderValue.find("Bearer ") == 0) {
+      return ::grpc::Status::OK;
+    }
+  }
   /*
    * Checking the presence of the token.
    */

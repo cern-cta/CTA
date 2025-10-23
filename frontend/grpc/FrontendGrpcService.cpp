@@ -350,13 +350,8 @@ CtaRpcImpl::Admin(::grpc::ServerContext* context, const cta::xrd::Request* reque
   // process the admin command
   // create a securityIdentity cli_Identity
   try {
-    // for this one here we need to fill in the admin username, otherwise we'll get an SQL error
-    // cta::common::dataStructures::SecurityIdentity clientIdentity(getUsername(), getHostname()); /* username, hostname */
-    cta::common::dataStructures::SecurityIdentity clientIdentity(
-      getUsername(),
-      cta::utils::getShortHostname()); /* username, hostname */
     cta::frontend::AdminCmd adminCmd(*m_frontendService,
-                                     clientIdentity,
+                                     clientIdentity.value(),
                                      request->admincmd(),
                                      m_frontendService->getexperimentalGrpcBypassAdminAuthCheck());
     *response = adminCmd.process();  // success response code will be set in here if processing goes well
