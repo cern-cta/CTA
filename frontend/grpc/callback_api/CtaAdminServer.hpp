@@ -22,6 +22,7 @@
 #include "common/log/Logger.hpp"
 #include "common/log/LogContext.hpp"
 #include "common/exception/Exception.hpp"
+#include "common/semconv/Attributes.hpp"
 #include "frontend/common/RequestTracker.hpp"
 #include "cmdline/TapeLsResponseStream.hpp"
 #include "cmdline/StorageClassLsResponseStream.hpp"
