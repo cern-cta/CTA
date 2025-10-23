@@ -42,7 +42,7 @@ grpc:
 
     experimental:
         bypassAdminAuthCheck:
-          enabled: true
+          enabled: false
         ctaAdminCommands:
           enabled: true
 
