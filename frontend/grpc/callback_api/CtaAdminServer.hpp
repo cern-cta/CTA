@@ -114,7 +114,7 @@ private:
   uint64_t m_missingFileCopiesMinAgeSecs;  //!< Provided by the frontendService
   bool m_enableCtaAdminCommands;           //!< Feature flag to disable CTA admin commands
   bool m_jwtAuthEnabled;                   //!< Whether JWT authentication is enabled
-  std::shared_ptr<JwkCache> m_pubkeyCache; //!< Shared JWK cache for token validation
+  std::shared_ptr<JwkCache> m_pubkeyCache;  //!< Shared JWK cache for token validation
 };
 
 // request object will be filled in by the Parser of the command on the client-side.
@@ -128,13 +128,12 @@ CtaRpcStreamImpl::GenericAdminStream(::grpc::CallbackServerContext* context, con
   cta::log::LogContext lc(m_lc);
   // get the client metadata for authentication
   auto client_metadata = context->client_metadata();
-  auto [status, clientIdentity] = cta::frontend::grpc::common::extractAuthHeaderAndValidate(
-    client_metadata,
-    m_jwtAuthEnabled,
-    m_pubkeyCache,
-    m_instanceName,
-    context->peer(),
-    lc);
+  auto [status, clientIdentity] = cta::frontend::grpc::common::extractAuthHeaderAndValidate(client_metadata,
+                                                                                            m_jwtAuthEnabled,
+                                                                                            m_pubkeyCache,
+                                                                                            m_instanceName,
+                                                                                            context->peer(),
+                                                                                            lc);
   if (!status.ok()) {
     return new DefaultWriteReactor(status.error_message(), status.error_code());
   }
