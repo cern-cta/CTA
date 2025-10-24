@@ -1162,7 +1162,7 @@ TEST_P(cta_catalogue_DriveStateTest, updateTapeDriveStatusCleaningUp) {
   }
   const auto storedTapeDrive = m_catalogue->DriveState()->getTapeDrive(tapeDrive.driveName);
   ASSERT_TRUE(static_cast<bool>(storedTapeDrive));
-  ASSERT_EQ(storedTapeDrive.value().sessionId.value(), inputs.mountSessionId);
+  ASSERT_FALSE(static_cast<bool>(storedTapeDrive.value().sessionId));
   ASSERT_FALSE(static_cast<bool>(storedTapeDrive.value().bytesTransferedInSession));
   ASSERT_FALSE(static_cast<bool>(storedTapeDrive.value().filesTransferedInSession));
   ASSERT_FALSE(static_cast<bool>(storedTapeDrive.value().sessionStartTime));

@@ -84,9 +84,9 @@ public:
   void reportDriveStatus(const common::dataStructures::DriveInfo& driveInfo,
     cta::common::dataStructures::MountType mountType, common::dataStructures::DriveStatus status,
     time_t reportTime, log::LogContext & lc,
-    uint64_t mountSessionId = std::numeric_limits<uint64_t>::max(),
-    uint64_t byteTransferred = std::numeric_limits<uint64_t>::max(),
-    uint64_t filesTransferred = std::numeric_limits<uint64_t>::max(),
+    uint64_t mountSessionId = 0,
+    uint64_t byteTransferred = 0,
+    uint64_t filesTransferred = 0,
     std::string_view vid = "",
     std::string_view tapepool = "",
     std::string_view vo = "");

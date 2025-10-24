@@ -427,7 +427,7 @@ void TapeDrivesCatalogueState::setDriveCleaningUp(common::dataStructures::TapeDr
   const ReportDriveStatusInputs & inputs) const {
   // If we are changing state, then all should be reset. We are not supposed to
   // know the direction yet.
-  driveState.sessionId = inputs.mountSessionId;
+  driveState.sessionId = std::nullopt;
   driveState.bytesTransferedInSession = std::nullopt;
   driveState.filesTransferedInSession = std::nullopt;
   driveState.sessionStartTime = std::nullopt;
