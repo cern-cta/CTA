@@ -101,6 +101,6 @@ static constexpr const char* unitCtaTapedBufferLimit = "by";
 
 static constexpr const char* kMetricCtaTapedMountDuration = "cta.taped.mount.duration";
 static constexpr const char* descrCtaTapedMountDuration = "Duration to mount a tape";
-static constexpr const char* unitCtaTapedMountDuration = "ms";
+static constexpr const char* unitCtaTapedMountDuration = "s";
 
 }  // namespace cta::semconv::metrics
