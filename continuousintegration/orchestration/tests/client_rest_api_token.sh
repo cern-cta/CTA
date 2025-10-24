@@ -102,11 +102,24 @@ while test "${FINAL_COUNT}" -ne 4; do
 done
 rm -f "${tmp_file}"
 
+# Full demo
+EOS_MGM_HOST="ctaeos"
+
+HTTPS_URI=$(curl -sk "https://ctaeos:8443/.well-known/wlcg-tape-rest-api" | jq -r '.endpoints[] | select(.version == "v1") | .uri')
+curl -sk -H "Authorization: Bearer ${SCI_TOKEN}" ${HTTPS_URI}/archiveinfo/ -d '{"paths":["/eos/ctaeos/preprod/test1/file", "/eos/ctaeos/preprod/test2/file"]}' | jq .
+curl -sk -H "Authorization: Bearer ${SCI_TOKEN}" https://ctaeos:8443/archiveinfo/ -d '{"paths":["/eos/ctaeos/preprod/test1/file", "/eos/ctaeos/preprod/test2/file"]}' | jq .
+
+curl -sk -H "Authorization: Bearer ${SCI_TOKEN}" ${HTTPS_URI}/stage/ -d '{"files":[{"path":"/eos/ctaeos/preprod/test1/file"}, {"path":"/eos/ctaeos/preprod/test2/file"}]}' | jq .
+REQ_ID=$(curl -sk -H "Authorization: Bearer ${SCI_TOKEN}" ${HTTPS_URI}/stage/ -d '{"files":[{"path":"/eos/ctaeos/preprod/test1/file"}, {"path":"/eos/ctaeos/preprod/test2/file"}]}' | jq -r .requestId)
+echo ${REQ_ID}
+
+curl -sk -H "Authorization: Bearer ${SCI_TOKEN}" "${HTTPS_URI}/stage/${REQ_ID}" | jq .
+
 echo "$(date +%s): Showing archiveinfo..."
 curl -L --insecure --capath /etc/grid-security/certificates -H "Accept: application/json" -H "Authorization: Bearer ${SCI_TOKEN}" ${HTTPS_URI}/archiveinfo/ \
   -d "${REQ_BODY}" | jq .
 
-exit 0
+/bin/bash
 
 # Stage
 # Request that tape-stored files are made available with disk latency.
