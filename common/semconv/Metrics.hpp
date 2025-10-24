@@ -85,10 +85,9 @@ static constexpr const char* kMetricCtaTapedTransferFileSize = "cta.taped.transf
 static constexpr const char* descrCtaTapedTransferFileSize = "Bytes transferred using the io medium in the given io direction";
 static constexpr const char* unitCtaTapedTransferFileSize = "by";
 
-
-static constexpr const char* kMetricCtaTapedTransferFileSize = "cta.taped.active_threads";
-static constexpr const char* descrCtaTapedTransferFileSize = "Number of active threads transferring files using the io medium in the given io direction";
-static constexpr const char* unitCtaTapedTransferFileSize = "1";
+static constexpr const char* kMetricCtaTapedTransferActive = "cta.taped.transfer.active";
+static constexpr const char* descrCtaTapedTransferActive = "Number of active transfers using the io medium in the given io direction";
+static constexpr const char* unitCtaTapedTransferActive = "1";
 
 // Based on https://opentelemetry.io/docs/specs/semconv/system/system-metrics/#metric-systemmemoryusage
 static constexpr const char* kMetricCtaTapedBufferUsage = "cta.taped.buffer.usage";

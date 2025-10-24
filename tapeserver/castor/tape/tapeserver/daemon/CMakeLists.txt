@@ -42,7 +42,8 @@ set(CTATAPESERVERDAEMON_LIBRARY_SRCS
   Session.cpp
   TapeReadSingleThread.cpp
   TapeWriteSingleThread.cpp
-  TapeWriteTask.cpp)
+  TapeWriteTask.cpp
+  TransferTaskTracker.cpp)
 
 add_library(ctaTapeServerDaemon
   ${CTATAPESERVERDAEMON_LIBRARY_SRCS})

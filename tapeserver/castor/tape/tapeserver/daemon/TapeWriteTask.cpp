@@ -30,6 +30,7 @@
 #include "common/exception/Exception.hpp"
 #include "common/semconv/Attributes.hpp"
 #include "common/telemetry/metrics/instruments/TapedInstruments.hpp"
+#include "TransferTaskTracker.hpp"
 
 #include <memory>
 #include <string>
@@ -73,6 +74,8 @@ void TapeWriteTask::execute(const std::unique_ptr<castor::tape::tapeFile::WriteS
                             MigrationWatchDog& watchdog,
                             cta::log::LogContext& lc,
                             cta::utils::Timer& timer) {
+  TransferTaskTracker transferTaskTracer(cta::semconv::attr::CtaIoDirectionValues::kWrite,
+                                         cta::semconv::attr::CtaIoMediumValues::kTape);
   using cta::log::LogContext;
   using cta::log::Param;
   using cta::log::ScopedParamContainer;
@@ -176,13 +179,13 @@ void TapeWriteTask::execute(const std::unique_ptr<castor::tape::tapeFile::WriteS
     m_taskStats.totalTime = localTime.secs();
     // Log the successful transfer
     logWithStats(cta::log::INFO, "File successfully transmitted to drive", lc);
-    cta::telemetry::metrics::ctaTapedTransferFiles->Add(
+    cta::telemetry::metrics::ctaTapedTransferFileCount->Add(
       1,
       {
         {cta::semconv::attr::kCtaIoDirection, cta::semconv::attr::CtaIoDirectionValues::kWrite},
         {cta::semconv::attr::kCtaIoMedium, cta::semconv::attr::CtaIoMediumValues::kTape}
     });
-    cta::telemetry::metrics::ctaTapedTransferBytes->Add(
+    cta::telemetry::metrics::ctaTapedTransferFileSize->Add(
       m_taskStats.dataVolume,
       {
         {cta::semconv::attr::kCtaIoDirection, cta::semconv::attr::CtaIoDirectionValues::kWrite},
@@ -239,12 +242,12 @@ void TapeWriteTask::execute(const std::unique_ptr<castor::tape::tapeFile::WriteS
     // close failed
     // First set the error flag: we can't proceed any further with writes.
 
-    cta::telemetry::metrics::ctaTapedTransferFiles->Add(
+    cta::telemetry::metrics::ctaTapedTransferFileCount->Add(
       1,
       {
         {cta::semconv::attr::kCtaIoDirection, cta::semconv::attr::CtaIoDirectionValues::kWrite},
         {cta::semconv::attr::kCtaIoMedium, cta::semconv::attr::CtaIoMediumValues::kTape},
-          {cta::semconv::attr::kErrorType, cta::semconv::attr::ErrorTypeValues::kException}
+        {cta::semconv::attr::kErrorType, cta::semconv::attr::ErrorTypeValues::kException}
     });
     m_errorFlag.set();
 
