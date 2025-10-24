@@ -29,13 +29,13 @@ public:
 
    // Static methods to format streaming responses
    static bool isJson() { return is_json; }
-   static char jsonDelim() {
-      char c = split_by_newline ? '\n' : (is_first_record ? '[' : ',');
+   static std::string jsonDelim() {
+      std::string c = split_by_newline ? (is_first_record ? "" : "\n") : (is_first_record ? "[" : ",");
       is_first_record = false;
       return c;
    }
    static std::string jsonCloseDelim() {
-      return is_first_record ? "[]\n" : "]\n";
+      return split_by_newline ? "\n" : (is_first_record ? "[]\n" : "]\n");
    }
 
    //! Throw an exception with usage help
