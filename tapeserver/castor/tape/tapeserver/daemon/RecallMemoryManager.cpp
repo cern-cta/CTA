@@ -68,7 +68,7 @@ RecallMemoryManager::RecallMemoryManager(size_t numberOfBlocks, size_t blockSize
         .add("totalSize", numberOfBlocks*blockSize);
   m_lc.log(cta::log::INFO, "RecallMemoryManager: all blocks have been created");
   cta::telemetry::metrics::ctaTapedBufferUsage->AddCallback(ObserveRecallMemoryUsage, this);
-  cta::telemetry::metrics::ctaTapedBufferUsage->AddCallback(ObserveRecallMemoryLimit, this);
+  cta::telemetry::metrics::ctaTapedBufferLimit->AddCallback(ObserveRecallMemoryLimit, this);
 }
 
 //------------------------------------------------------------------------------
@@ -89,7 +89,7 @@ RecallMemoryManager::~RecallMemoryManager() {
 
   m_lc.log(cta::log::INFO, "RecallMemoryManager destruction : all memory blocks have been deleted");
   cta::telemetry::metrics::ctaTapedBufferUsage->AddCallback(ObserveRecallMemoryUsage, this);
-  cta::telemetry::metrics::ctaTapedBufferUsage->AddCallback(ObserveRecallMemoryLimit, this);
+  cta::telemetry::metrics::ctaTapedBufferLimit->AddCallback(ObserveRecallMemoryLimit, this);
 }
 
 //------------------------------------------------------------------------------

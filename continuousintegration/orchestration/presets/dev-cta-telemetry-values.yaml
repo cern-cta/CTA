@@ -7,6 +7,8 @@ frontend:
         retainInstanceIdOnRestart: false
         metricsBackend: "OTLP_HTTP"
         metricsExportOtlpEndpoint: "http://otel-opentelemetry-collector:4318/v1/metrics"
+        metricsExportInterval: 1000
+        metricsExportTimeout: 500
 
   grpc:
     conf:
@@ -15,6 +17,8 @@ frontend:
         retainInstanceIdOnRestart: false
         metricsBackend: "OTLP_HTTP"
         metricsExportOtlpEndpoint: "http://otel-opentelemetry-collector:4318/v1/metrics"
+        metricsExportInterval: 1000
+        metricsExportTimeout: 500
 
 tpsrv:
   conf:
@@ -23,3 +27,5 @@ tpsrv:
       retainInstanceIdOnRestart: true
       metricsBackend: "OTLP_HTTP"
       metricsExportOtlpEndpoint: "http://otel-opentelemetry-collector:4318/v1/metrics"
+      metricsExportInterval: 1000
+      metricsExportTimeout: 500

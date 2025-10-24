@@ -67,7 +67,7 @@ m_totalNumberOfBlocks(0), m_totalMemoryAllocated(0), m_blocksProvided(0), m_bloc
   }
   m_lc.log(cta::log::INFO, "MigrationMemoryManager: all blocks have been created");
   cta::telemetry::metrics::ctaTapedBufferUsage->AddCallback(ObserveMigrationMemoryUsage, this);
-  cta::telemetry::metrics::ctaTapedBufferUsage->AddCallback(ObserveMigrationMemoryLimit, this);
+  cta::telemetry::metrics::ctaTapedBufferLimit->AddCallback(ObserveMigrationMemoryLimit, this);
 }
 
 //------------------------------------------------------------------------------
@@ -87,7 +87,7 @@ MigrationMemoryManager::~MigrationMemoryManager() noexcept {
 
   m_lc.log(cta::log::INFO, "MigrationMemoryManager destruction : all memory blocks have been deleted");
   cta::telemetry::metrics::ctaTapedBufferUsage->RemoveCallback(ObserveMigrationMemoryUsage, this);
-  cta::telemetry::metrics::ctaTapedBufferUsage->RemoveCallback(ObserveMigrationMemoryLimit, this);
+  cta::telemetry::metrics::ctaTapedBufferLimit->RemoveCallback(ObserveMigrationMemoryLimit, this);
 }
 
 //------------------------------------------------------------------------------

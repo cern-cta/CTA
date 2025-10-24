@@ -30,7 +30,7 @@ TransferTaskTracker::TransferTaskTracker(std::string_view ioDirection, std::stri
     1,
     {
       {cta::semconv::attr::kCtaIoDirection, m_ioDirection},
-      {cta::semconv::attr::kCtaIoDirection, m_ioMedium}
+      {cta::semconv::attr::kCtaIoMedium, m_ioMedium}
   });
 }
 
@@ -39,7 +39,7 @@ TransferTaskTracker::~TransferTaskTracker() {
     -1,
     {
       {cta::semconv::attr::kCtaIoDirection, m_ioDirection},
-      {cta::semconv::attr::kCtaIoDirection, m_ioMedium}
+      {cta::semconv::attr::kCtaIoMedium, m_ioMedium}
   });
 }
 
