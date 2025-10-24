@@ -128,17 +128,17 @@ void DiskReadTask::execute(cta::log::LogContext& lc, cta::disk::DiskFileFactory&
     // transferring equals total time.
     m_stats.transferTime = m_stats.totalTime;
     logWithStat(cta::log::INFO, "File successfully read from disk", lc);
-    cta::telemetry::metrics::ctaTransferFiles->Add(
-      m_stats.filesCount,
+    cta::telemetry::metrics::ctaTapedTransferFiles->Add(
+      1,
       {
-        {cta::semconv::attr::kCtaTransferDirection, cta::semconv::attr::CtaTransferDirectionValues::kRead},
-        {cta::semconv::attr::kCtaTransferMedium, cta::semconv::attr::CtaTransferMediumValues::kDisk}
+        {cta::semconv::attr::kCtaIoDirection, cta::semconv::attr::CtaIoDirectionValues::kRead},
+        {cta::semconv::attr::kCtaIoMedium, cta::semconv::attr::CtaIoMediumValues::kDisk}
     });
-    cta::telemetry::metrics::ctaTransferBytes->Add(
+    cta::telemetry::metrics::ctaTapedTransferBytes->Add(
       m_stats.dataVolume,
       {
-        {cta::semconv::attr::kCtaTransferDirection, cta::semconv::attr::CtaTransferDirectionValues::kRead},
-        {cta::semconv::attr::kCtaTransferMedium, cta::semconv::attr::CtaTransferMediumValues::kDisk}
+        {cta::semconv::attr::kCtaIoDirection, cta::semconv::attr::CtaIoDirectionValues::kRead},
+        {cta::semconv::attr::kCtaIoMedium, cta::semconv::attr::CtaIoMediumValues::kDisk}
     });
   }
   catch(const castor::tape::tapeserver::daemon::ErrorFlag&){
@@ -148,6 +148,13 @@ void DiskReadTask::execute(cta::log::LogContext& lc, cta::disk::DiskFileFactory&
     circulateAllBlocks(blockId,mb);
   }
   catch(const cta::exception::Exception& e){
+    cta::telemetry::metrics::ctaTapedTransferFiles->Add(
+      1,
+      {
+        {cta::semconv::attr::kCtaIoDirection, cta::semconv::attr::CtaIoDirectionValues::kRead},
+        {cta::semconv::attr::kCtaIoMedium, cta::semconv::attr::CtaIoMediumValues::kDisk},
+        {cta::semconv::attr::kErrorType, cta::semconv::attr::ErrorTypeValues::kException}
+    });
 
     // Send the error for counting to the watchdog
     if (currentErrorToCount.size()) {

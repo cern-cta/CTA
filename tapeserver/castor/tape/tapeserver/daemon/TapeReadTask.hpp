@@ -186,17 +186,17 @@ public:
       lc.log(cta::log::INFO, "File successfully read from tape");
       // Add the local counts to the session's
       stats.add(localStats);
-      cta::telemetry::metrics::ctaTransferFiles->Add(
-        localStats.filesCount,
+      cta::telemetry::metrics::ctaTapedTransferFiles->Add(
+        1,
         {
-          {cta::semconv::attr::kCtaTransferDirection, cta::semconv::attr::CtaTransferDirectionValues::kRead},
-          {cta::semconv::attr::kCtaTransferMedium, cta::semconv::attr::CtaTransferMediumValues::kTape}
+          {cta::semconv::attr::kCtaIoDirection, cta::semconv::attr::CtaIoDirectionValues::kRead},
+          {cta::semconv::attr::kCtaIoMedium, cta::semconv::attr::CtaIoMediumValues::kTape}
       });
-      cta::telemetry::metrics::ctaTransferBytes->Add(
+      cta::telemetry::metrics::ctaTapedTransferBytes->Add(
         localStats.dataVolume,
         {
-          {cta::semconv::attr::kCtaTransferDirection, cta::semconv::attr::CtaTransferDirectionValues::kRead},
-          {cta::semconv::attr::kCtaTransferMedium, cta::semconv::attr::CtaTransferMediumValues::kTape}
+          {cta::semconv::attr::kCtaIoDirection, cta::semconv::attr::CtaIoDirectionValues::kRead},
+          {cta::semconv::attr::kCtaIoMedium, cta::semconv::attr::CtaIoMediumValues::kTape}
       });
     } //end of try
     catch (const cta::exception::Exception & ex) {
@@ -205,6 +205,13 @@ public:
       //-- m_payload.append brought us here (error while reading the file)
       //-- checksum validation failed (after reading the last block from tape)
       // Record the error in the watchdog
+      cta::telemetry::metrics::ctaTapedTransferFiles->Add(
+        1,
+        {
+          {cta::semconv::attr::kCtaIoDirection, cta::semconv::attr::CtaIoDirectionValues::kRead},
+          {cta::semconv::attr::kCtaIoMedium, cta::semconv::attr::CtaIoMediumValues::kTape},
+          {cta::semconv::attr::kErrorType, cta::semconv::attr::ErrorTypeValues::kException}
+      });
       if (currentErrorToCount.size()) {
         watchdog.addToErrorCount(currentErrorToCount);
       }

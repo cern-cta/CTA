@@ -77,13 +77,28 @@ static constexpr const char* unitCtaObjectstoreLockAcquireDuration = "ms";
 
 // -------------------- TAPED --------------------
 
-static constexpr const char* kMetricCtaTransferFiles = "cta.transfer.files";
-static constexpr const char* descrCtaTransferFiles = "Number of files transferred to the destination type in the given direction";
-static constexpr const char* unitCtaTransferFiles = "1";
+static constexpr const char* kMetricCtaTapedTransferFileCount = "cta.taped.transfer.file.count";
+static constexpr const char* descrCtaTapedTransferFileCount = "Number of files transferred using the io medium in the given io direction";
+static constexpr const char* unitCtaTapedTransferFileCount = "1";
 
-static constexpr const char* kMetricCtaTransferBytes = "cta.transfer.bytes";
-static constexpr const char* descrCtaTransferBytes = "Bytes transferred to the destination type in the given direction";
-static constexpr const char* unitCtaTransferBytes = "by";
+static constexpr const char* kMetricCtaTapedTransferFileSize = "cta.taped.transfer.file.size";
+static constexpr const char* descrCtaTapedTransferFileSize = "Bytes transferred using the io medium in the given io direction";
+static constexpr const char* unitCtaTapedTransferFileSize = "by";
+
+
+static constexpr const char* kMetricCtaTapedTransferFileSize = "cta.taped.active_threads";
+static constexpr const char* descrCtaTapedTransferFileSize = "Number of active threads transferring files using the io medium in the given io direction";
+static constexpr const char* unitCtaTapedTransferFileSize = "1";
+
+// Based on https://opentelemetry.io/docs/specs/semconv/system/system-metrics/#metric-systemmemoryusage
+static constexpr const char* kMetricCtaTapedBufferUsage = "cta.taped.buffer.usage";
+static constexpr const char* descrCtaTapedBufferUsage = "Bytes in use by the memory buffer in cta-taped";
+static constexpr const char* unitCtaTapedBufferUsage = "by";
+
+// https://opentelemetry.io/docs/specs/semconv/system/system-metrics/#metric-systemmemorylimit
+static constexpr const char* kMetricCtaTapedBufferLimit = "cta.taped.buffer.limit";
+static constexpr const char* descrCtaTapedBufferLimit = "Total bytes available for the memory buffer in cta-taped";
+static constexpr const char* unitCtaTapedBufferLimit = "by";
 
 static constexpr const char* kMetricCtaTapedMountDuration = "cta.taped.mount.duration";
 static constexpr const char* descrCtaTapedMountDuration = "Duration to mount a tape";
