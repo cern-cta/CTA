@@ -72,7 +72,7 @@ static constexpr const char* unitCtaSchedulerOperationDuration = "ms";
 // -------------------- OBJECTSTORE --------------------
 
 static constexpr const char* kMetricCtaObjectstoreLockAcquireDuration = "cta.objectstore.lock.acquire.duration";
-static constexpr const char* descrCtaObjectstoreLockAcquireDuration = "Duration taken to acquire an objectstore lock";
+static constexpr const char* descrCtaObjectstoreLockAcquireDuration = "Duration to acquire an objectstore lock";
 static constexpr const char* unitCtaObjectstoreLockAcquireDuration = "ms";
 
 // -------------------- TAPED --------------------
@@ -86,7 +86,7 @@ static constexpr const char* descrCtaTapedTransferFileSize = "Bytes transferred 
 static constexpr const char* unitCtaTapedTransferFileSize = "by";
 
 static constexpr const char* kMetricCtaTapedTransferActive = "cta.taped.transfer.active";
-static constexpr const char* descrCtaTapedTransferActive = "Number of active transfers using the io medium in the given io direction";
+static constexpr const char* descrCtaTapedTransferActive = "Number of threads actively transferring using the io medium in the given io direction";
 static constexpr const char* unitCtaTapedTransferActive = "1";
 
 // Based on https://opentelemetry.io/docs/specs/semconv/system/system-metrics/#metric-systemmemoryusage
