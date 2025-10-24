@@ -346,8 +346,8 @@ TEST_P(QueueCleanupRunnerConcurrentTest, CleanupRunnerParameterizedTest) {
 
   // Execute cleanup runner
   {
-    cta::maintenance::QueueCleanupRunner qCleanupRunnerBroken(agentForCleanupRef, brokenOStore, catalogue, GetParam().cleanupTimeout);
-    cta::maintenance::QueueCleanupRunner qCleanupRunnerOk(agentForCleanupRef, oKOStore, catalogue, GetParam().cleanupTimeout);
+    cta::maintenance::QueueCleanupRunner qCleanupRunnerBroken(agentForCleanupRef, brokenOStore, catalogue, 500);
+    cta::maintenance::QueueCleanupRunner qCleanupRunnerOk(agentForCleanupRef, oKOStore, catalogue, 500);
 
     // We now run the GarbageCollector to clear the CleanupInfo
     cta::objectstore::GarbageCollector gc(be, agentForCleanupRef, catalogue);
