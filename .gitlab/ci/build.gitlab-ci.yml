@@ -1,5 +1,4 @@
 .build-cta:
-  retry: 0
   rules:
     - if: $PIPELINE_TYPE == "SYSTEM_TEST_ONLY"
       when: never
