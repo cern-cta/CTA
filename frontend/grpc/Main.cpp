@@ -123,22 +123,35 @@ int main(const int argc, char *const *const argv) {
         }
     }
 
-    // Initialize catalogue, scheduler, logContext
-    frontend::grpc::CtaRpcImpl svc(config_file);
+    // Initialize frontend service first to get configuration
+    auto frontendService = std::make_shared<cta::frontend::FrontendService>(config_file);
+
     // get the log context
-    log::LogContext lc = svc.getFrontendService().getLogContext();
-    auto jwkCache = svc.getPubkeyCache();
+    log::LogContext lc = frontendService->getLogContext();
+
+    // Build the shared JWK cache here if JWT auth is enabled
+    CurlJwksFetcher jwksFetcher;
+    std::shared_ptr<JwkCache> jwkCache = frontendService->getJwtAuth() ?
+                      std::make_shared<JwkCache>(
+                        jwksFetcher,
+                        frontendService->getJwksUri().value_or(""),
+                        frontendService->getPubkeyTimeout().value(),  // only empty if jwtAuth is not enabled
+                        frontendService->getLogContext()) :
+                      nullptr;
+
+    // Initialize RPC service with shared frontend service and cache
+    frontend::grpc::CtaRpcImpl svc(frontendService, jwkCache);
     std::weak_ptr<JwkCache> weakCache = jwkCache;
     std::promise<void> shouldStopThreadPromise;
     std::future<void> shouldStopThreadFuture = shouldStopThreadPromise.get_future();
     std::thread cacheRefreshThread;
     // if token authentication is specified, then also start the refresh thread, otherwise no point in doing this
-    if (svc.getFrontendService().getJwtAuth()) {
+    if (frontendService->getJwtAuth()) {
         lc.log(log::INFO, "Starting the cache refresh thread for JWKS cache");
         cacheRefreshThread = std::thread(JwksCacheRefreshLoop,
                                          weakCache,
                                          std::move(shouldStopThreadFuture),
-                                         svc.getFrontendService().getCacheRefreshInterval().value_or(600),
+                                         frontendService->getCacheRefreshInterval().value_or(600),
                                          std::cref(lc));
     }
 
@@ -148,8 +161,8 @@ int main(const int argc, char *const *const argv) {
     lc.log(log::INFO, "Starting cta-frontend-grpc- " + std::string(CTA_VERSION));
 
     // try to update port from config
-    if (svc.getFrontendService().getPort().has_value())
-        port = svc.getFrontendService().getPort().value();
+    if (frontendService->getPort().has_value())
+        port = frontendService->getPort().value();
     else
     {
         port = "17017";
@@ -165,10 +178,10 @@ int main(const int argc, char *const *const argv) {
     std::shared_ptr<grpc::ServerCredentials> creds;
 
     // read TLS value from config
-    useTLS = svc.getFrontendService().getTls();
+    useTLS = frontendService->getTls();
 
     // get number of threads
-    int threads = svc.getFrontendService().getThreads().value_or(8 * std::thread::hardware_concurrency());
+    int threads = frontendService->getThreads().value_or(8 * std::thread::hardware_concurrency());
     
 
     if (useTLS) {
@@ -176,24 +189,24 @@ int main(const int argc, char *const *const argv) {
         grpc::SslServerCredentialsOptions tls_options(GRPC_SSL_DONT_REQUEST_CLIENT_CERTIFICATE);
         grpc::SslServerCredentialsOptions::PemKeyCertPair cert;
 
-        if (!svc.getFrontendService().getTlsKey().has_value()) {
+        if (!frontendService->getTlsKey().has_value()) {
             lc.log(log::WARNING, "TLS specified but TLS key is not defined. Using gRPC over plaintext socket instead");
             creds = grpc::InsecureServerCredentials();
         }
-        else if (!svc.getFrontendService().getTlsCert().has_value()) {
+        else if (!frontendService->getTlsCert().has_value()) {
             lc.log(log::WARNING, "TLS specified but TLS key is not defined. Using gRPC over plaintext socket instead");
             creds = grpc::InsecureServerCredentials();
         }
         else {
-            auto key_file = svc.getFrontendService().getTlsKey().value();
+            auto key_file = frontendService->getTlsKey().value();
             lc.log(log::INFO, "TLS service key file: " + key_file);
             cert.private_key = cta::utils::file2string(key_file);
 
-            auto cert_file = svc.getFrontendService().getTlsCert().value();
+            auto cert_file = frontendService->getTlsCert().value();
             lc.log(log::INFO, "TLS service certificate file: " + cert_file);
             cert.cert_chain = cta::utils::file2string(cert_file);
 
-            auto ca_chain = svc.getFrontendService().getTlsChain();
+            auto ca_chain = frontendService->getTlsChain();
             if (ca_chain.has_value()) {
                 lc.log(log::INFO, "TLS CA chain file: " + ca_chain.value());
                 tls_options.pem_root_certs = cta::utils::file2string(ca_chain.value());
@@ -227,8 +240,8 @@ int main(const int argc, char *const *const argv) {
     cta::frontend::grpc::server::TokenStorage tokenStorage;
 
     // Get Kerberos configuration
-    std::string strKeytab = svc.getFrontendService().getKeytab().value_or("/etc/cta/cta-frontend.keytab");
-    std::string strService = svc.getFrontendService().getServicePrincipal().value_or("cta/" + shortHostName);
+    std::string strKeytab = frontendService->getKeytab().value_or("/etc/cta/cta-frontend.keytab");
+    std::string strService = frontendService->getServicePrincipal().value_or("cta/" + shortHostName);
 
     lc.log(log::INFO, "Using keytab: " + strKeytab);
     lc.log(log::INFO, "Using service principal: " + strService);
@@ -258,14 +271,16 @@ int main(const int argc, char *const *const argv) {
     // clients. In this case it corresponds to an *synchronous* service.
     builder.RegisterService(&svc);
 
-    frontend::grpc::CtaRpcStreamImpl streamSvc(svc.getFrontendService().getCatalogue(),
-                                               svc.getFrontendService().getScheduler(),
-                                               svc.getFrontendService().getSchedDb(),
-                                               svc.getFrontendService().getInstanceName(),
-                                               svc.getFrontendService().getCatalogueConnString(),
-                                               svc.getFrontendService().getMissingFileCopiesMinAgeSecs(),
-                                               svc.getFrontendService().getenableCtaAdminCommands(),
-                                               svc.getFrontendService().getLogContext());
+    frontend::grpc::CtaRpcStreamImpl streamSvc(frontendService->getCatalogue(),
+                                               frontendService->getScheduler(),
+                                               frontendService->getSchedDb(),
+                                               frontendService->getInstanceName(),
+                                               frontendService->getCatalogueConnString(),
+                                               frontendService->getMissingFileCopiesMinAgeSecs(),
+                                               frontendService->getenableCtaAdminCommands(),
+                                               frontendService->getLogContext(),
+                                               frontendService->getJwtAuth(),
+                                               jwkCache);
     builder.RegisterService(&streamSvc);
 
     // add reflection

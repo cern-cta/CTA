@@ -200,7 +200,7 @@ void CtaAdminGrpcCmd::send(const CtaAdminParsedCmd& parsedCmd,
     std::unique_ptr<cta::xrd::CtaRpcStream::Stub> client_stub = cta::xrd::CtaRpcStream::NewStub(spChannel);
     // Also create a ClientReadReactor instance to handle the command
     try {
-      auto client_reactor = CtaAdminClientReadReactor(client_stub.get(), parsedCmd);
+      auto client_reactor = CtaAdminClientReadReactor(context, client_stub.get(), parsedCmd);
       status = client_reactor.Await();
       if (!status.ok()) {
         std::cout << "gRPC call failed. Error code: " + std::to_string(status.error_code()) +

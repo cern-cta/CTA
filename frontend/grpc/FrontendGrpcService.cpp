@@ -24,6 +24,7 @@
 #include "frontend/common/FrontendService.hpp"
 #include "frontend/common/WorkflowEvent.hpp"
 #include "frontend/common/ValidateToken.hpp"
+#include "frontend/grpc/common/GrpcAuthUtils.hpp"
 
 #include "jwt-cpp/jwt.h"
 #include <optional>
@@ -49,47 +50,6 @@ constexpr const char* CTA_ADMIN_COMMANDS_DISABLED_ERROR =
 
 namespace cta::frontend::grpc {
 
-std::pair<Status, std::optional<cta::common::dataStructures::SecurityIdentity>>
-CtaRpcImpl::extractAuthHeaderAndValidate(const ::grpc::ServerContext* context, const cta::xrd::Request* request) const {
-  cta::log::LogContext lc(m_frontendService->getLogContext());
-  cta::log::ScopedParamContainer sp(lc);
-  // skip any metadata checks in case JWT Auth is disabled
-  if (auto jwtAuth = m_frontendService->getJwtAuth(); !jwtAuth) {
-    lc.log(cta::log::INFO, "Skipping token validation step as token authentication is disabled");
-    cta::common::dataStructures::SecurityIdentity clientIdentity(request->notification().wf().instance().name(), context->peer());
-    return {::grpc::Status::OK, clientIdentity};
-  }
-  // Retrieve metadata from the incoming request
-  auto metadata = context->client_metadata();
-  std::string token;
-
-  // Search for the authorization token in the metadata
-  if (auto it = metadata.find("authorization"); it != metadata.end()) {
-    // convert from grpc structure to string
-    const ::grpc::string_ref& r = it->second;
-    auto auth_header = std::string(r.data(), r.size());  // "Bearer <token>"
-    token = auth_header.substr(
-      7);  // Extract the token part, use substr(7) because that is the length of "Bearer" plus a space character
-    lc.log(cta::log::DEBUG, std::string("Received token: ") + token);
-    if (token.empty()) {
-      lc.log(cta::log::WARNING, "Authorization token missing");
-      return {::grpc::Status(::grpc::StatusCode::UNAUTHENTICATED, "Missing Authorization token"), std::nullopt};
-    }
-  } else {
-    lc.log(cta::log::WARNING, "Authorization header missing");
-    return {::grpc::Status(::grpc::StatusCode::UNAUTHENTICATED, "Missing Authorization header"), std::nullopt};
-  }
-  auto validationResult = validateToken(token, m_pubkeyCache, lc);
-  if (validationResult.isValid) {
-    cta::common::dataStructures::SecurityIdentity clientIdentity(validationResult.subjectClaim.value(), context->peer());
-    return {::grpc::Status::OK, clientIdentity};
-  } else {
-    lc.log(cta::log::WARNING, "JWT authorization process error. Token validation failed.");
-    return {
-      ::grpc::Status(::grpc::StatusCode::UNAUTHENTICATED, "JWT authorization process error. Token validation failed."),
-      std::nullopt};
-  }
-}
 
 Status CtaRpcImpl::processGrpcRequest(const cta::xrd::Request* request,
                                       cta::xrd::Response* response,
@@ -134,7 +94,16 @@ CtaRpcImpl::Create(::grpc::ServerContext* context, const cta::xrd::Request* requ
   cta::log::LogContext lc(m_frontendService->getLogContext());
   cta::log::ScopedParamContainer sp(lc);
 
-  auto [status, clientIdentity] = extractAuthHeaderAndValidate(context, request);
+  // Retrieve metadata from the incoming request
+  auto metadata = context->client_metadata();
+
+  auto [status, clientIdentity] = cta::frontend::grpc::common::extractAuthHeaderAndValidate(
+    metadata,
+    m_frontendService->getJwtAuth(),
+    m_pubkeyCache,
+    request->notification().wf().instance().name(),
+    context->peer(),
+    lc);
   if (!status.ok()) {
     response->set_type(cta::xrd::Response::RSP_ERR_USER);
     response->set_message_txt(status.error_message());
@@ -159,7 +128,18 @@ Status
 CtaRpcImpl::Archive(::grpc::ServerContext* context, const cta::xrd::Request* request, cta::xrd::Response* response) {
   cta::log::LogContext lc(m_frontendService->getLogContext());
   cta::log::ScopedParamContainer sp(lc);
-  auto [status, clientIdentity] = extractAuthHeaderAndValidate(context, request);
+
+  // Retrieve metadata from the incoming request
+  auto metadata = context->client_metadata();
+
+  auto [status, clientIdentity] = cta::frontend::grpc::common::extractAuthHeaderAndValidate(
+    metadata,
+    m_frontendService->getJwtAuth(),
+    m_pubkeyCache,
+    request->notification().wf().instance().name(),
+    context->peer(),
+    lc);
+
   if (!status.ok()) {
     response->set_type(cta::xrd::Response::RSP_ERR_USER);
     response->set_message_txt(status.error_message());
@@ -190,15 +170,25 @@ CtaRpcImpl::Archive(::grpc::ServerContext* context, const cta::xrd::Request* req
 
 Status
 CtaRpcImpl::Delete(::grpc::ServerContext* context, const cta::xrd::Request* request, cta::xrd::Response* response) {
-  auto [status, clientIdentity] = extractAuthHeaderAndValidate(context, request);
+  cta::log::LogContext lc(m_frontendService->getLogContext());
+  cta::log::ScopedParamContainer sp(lc);
+
+  // Retrieve metadata from the incoming request
+  auto metadata = context->client_metadata();
+
+  auto [status, clientIdentity] = cta::frontend::grpc::common::extractAuthHeaderAndValidate(
+    metadata,
+    m_frontendService->getJwtAuth(),
+    m_pubkeyCache,
+    request->notification().wf().instance().name(),
+    context->peer(),
+    lc);
+
   if (!status.ok()) {
     response->set_type(cta::xrd::Response::RSP_ERR_USER);
     response->set_message_txt(status.error_message());
     return status;
   }
-
-  cta::log::LogContext lc(m_frontendService->getLogContext());
-  cta::log::ScopedParamContainer sp(lc);
 
   sp.add("remoteHost", context->peer());
   sp.add("request", "delete");
@@ -226,15 +216,24 @@ CtaRpcImpl::Delete(::grpc::ServerContext* context, const cta::xrd::Request* requ
 
 Status
 CtaRpcImpl::Retrieve(::grpc::ServerContext* context, const cta::xrd::Request* request, cta::xrd::Response* response) {
-  auto [status, clientIdentity] = extractAuthHeaderAndValidate(context, request);
+  cta::log::LogContext lc(m_frontendService->getLogContext());
+  cta::log::ScopedParamContainer sp(lc);
+
+  // Retrieve metadata from the incoming request
+  auto metadata = context->client_metadata();
+
+  auto [status, clientIdentity] = cta::frontend::grpc::common::extractAuthHeaderAndValidate(
+    metadata,
+    m_frontendService->getJwtAuth(),
+    m_pubkeyCache,
+    request->notification().wf().instance().name(),
+    context->peer(),
+    lc);
   if (!status.ok()) {
     response->set_type(cta::xrd::Response::RSP_ERR_USER);
     response->set_message_txt(status.error_message());
     return status;
   }
-
-  cta::log::LogContext lc(m_frontendService->getLogContext());
-  cta::log::ScopedParamContainer sp(lc);
 
   sp.add("remoteHost", context->peer());
   sp.add("request", "retrieve");
@@ -278,15 +277,24 @@ CtaRpcImpl::Retrieve(::grpc::ServerContext* context, const cta::xrd::Request* re
 Status CtaRpcImpl::CancelRetrieve(::grpc::ServerContext* context,
                                   const cta::xrd::Request* request,
                                   cta::xrd::Response* response) {
-  auto [status, clientIdentity] = extractAuthHeaderAndValidate(context, request);
+  cta::log::LogContext lc(m_frontendService->getLogContext());
+  cta::log::ScopedParamContainer sp(lc);
+
+  // Retrieve metadata from the incoming request
+  auto metadata = context->client_metadata();
+
+  auto [status, clientIdentity] = cta::frontend::grpc::common::extractAuthHeaderAndValidate(
+    metadata,
+    m_frontendService->getJwtAuth(),
+    m_pubkeyCache,
+    request->notification().wf().instance().name(),
+    context->peer(),
+    lc);
   if (!status.ok()) {
     response->set_type(cta::xrd::Response::RSP_ERR_USER);
     response->set_message_txt(status.error_message());
     return status;
   }
-
-  cta::log::LogContext lc(m_frontendService->getLogContext());
-  cta::log::ScopedParamContainer sp(lc);
 
   sp.add("remoteHost", context->peer());
 
@@ -333,15 +341,24 @@ CtaRpcImpl::Admin(::grpc::ServerContext* context, const cta::xrd::Request* reque
   }
 
   // we'll get here if auth method specified was token instead of Kerberos
-  auto [status, clientIdentity] = extractAuthHeaderAndValidate(context, request);
+  cta::log::LogContext lc(m_frontendService->getLogContext());
+  cta::log::ScopedParamContainer sp(lc);
+
+  // Retrieve metadata from the incoming request
+  auto metadata = context->client_metadata();
+
+  auto [status, clientIdentity] = cta::frontend::grpc::common::extractAuthHeaderAndValidate(
+    metadata,
+    m_frontendService->getJwtAuth(),
+    m_pubkeyCache,
+    request->notification().wf().instance().name(),
+    context->peer(),
+    lc);
   if (!status.ok()) {
     response->set_type(cta::xrd::Response::RSP_ERR_USER);
     response->set_message_txt(status.error_message());
     return status;
   }
-
-  cta::log::LogContext lc(m_frontendService->getLogContext());
-  cta::log::ScopedParamContainer sp(lc);
 
   sp.add("remoteHost", context->peer());
 
@@ -387,13 +404,7 @@ CtaRpcImpl::Admin(::grpc::ServerContext* context, const cta::xrd::Request* reque
  * this iniitalizes the catalogue, scheduler, logger
  * and makes the rpc calls available through this class
  */
-CtaRpcImpl::CtaRpcImpl(const std::string& config)
-    : m_frontendService(std::make_unique<cta::frontend::FrontendService>(config)),
-      m_pubkeyCache(m_frontendService->getJwtAuth() ?
-                      std::make_shared<JwkCache>(
-                        m_jwksFetcher,
-                        m_frontendService->getJwksUri().value_or(""),
-                        m_frontendService->getPubkeyTimeout().value(),  // only empty if jwtAuth is not enabled
-                        m_frontendService->getLogContext()) :
-                      nullptr) {}
+CtaRpcImpl::CtaRpcImpl(std::shared_ptr<cta::frontend::FrontendService> frontendService, std::shared_ptr<JwkCache> pubkeyCache)
+    : m_frontendService(frontendService),
+      m_pubkeyCache(pubkeyCache) {}
 }  // namespace cta::frontend::grpc

@@ -242,7 +242,7 @@ public:
     }  // if (ok)
   }
 
-  CtaAdminClientReadReactor(cta::xrd::CtaRpcStream::Stub* client_stub, const cta::admin::CtaAdminParsedCmd& parsedCmd) {
+  CtaAdminClientReadReactor(::grpc::ClientContext &context, cta::xrd::CtaRpcStream::Stub* client_stub, const cta::admin::CtaAdminParsedCmd& parsedCmd) : m_context(context) {
     const auto request = parsedCmd.getRequest();
     client_stub->async()->GenericAdminStream(&m_context, &request, this);
     m_isJson = parsedCmd.isJson();
@@ -251,7 +251,7 @@ public:
   }
 
 private:
-  ::grpc::ClientContext m_context;
+  ::grpc::ClientContext& m_context;
   cta::xrd::StreamResponse m_response;
   std::mutex mu_;
   std::condition_variable cv_;
