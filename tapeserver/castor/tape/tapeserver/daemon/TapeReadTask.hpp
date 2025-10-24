@@ -29,6 +29,9 @@
 #include "castor/tape/tapeserver/file/FileReaderFactory.hpp"
 #include "common/Timer.hpp"
 #include "common/exception/Exception.hpp"
+#include "common/semconv/Attributes.hpp"
+#include "common/telemetry/metrics/instruments/TapedInstruments.hpp"
+#include "TransferTaskTracker.hpp"
 
 namespace castor::tape::tapeserver::daemon {
 
@@ -53,6 +56,8 @@ public:
      */
   void execute(tapeFile::ReadSession& rs, cta::log::LogContext& lc,
     RecallWatchDog& watchdog, TapeSessionStats& stats, cta::utils::Timer& timer) {
+    TransferTaskTracker transferTaskTracer(cta::semconv::attr::CtaIoDirectionValues::kRead,
+                                           cta::semconv::attr::CtaIoMediumValues::kTape);
 
     using cta::log::Param;
 
@@ -186,13 +191,13 @@ public:
       lc.log(cta::log::INFO, "File successfully read from tape");
       // Add the local counts to the session's
       stats.add(localStats);
-      cta::telemetry::metrics::ctaTapedTransferFiles->Add(
+      cta::telemetry::metrics::ctaTapedTransferFileCount->Add(
         1,
         {
           {cta::semconv::attr::kCtaIoDirection, cta::semconv::attr::CtaIoDirectionValues::kRead},
           {cta::semconv::attr::kCtaIoMedium, cta::semconv::attr::CtaIoMediumValues::kTape}
       });
-      cta::telemetry::metrics::ctaTapedTransferBytes->Add(
+      cta::telemetry::metrics::ctaTapedTransferFileSize->Add(
         localStats.dataVolume,
         {
           {cta::semconv::attr::kCtaIoDirection, cta::semconv::attr::CtaIoDirectionValues::kRead},
@@ -205,7 +210,7 @@ public:
       //-- m_payload.append brought us here (error while reading the file)
       //-- checksum validation failed (after reading the last block from tape)
       // Record the error in the watchdog
-      cta::telemetry::metrics::ctaTapedTransferFiles->Add(
+      cta::telemetry::metrics::ctaTapedTransferFileCount->Add(
         1,
         {
           {cta::semconv::attr::kCtaIoDirection, cta::semconv::attr::CtaIoDirectionValues::kRead},

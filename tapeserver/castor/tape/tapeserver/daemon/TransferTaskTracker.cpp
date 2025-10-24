@@ -14,18 +14,33 @@
  *               granted to it by virtue of its status as an Intergovernmental Organization or
  *               submit itself to any jurisdiction.
  */
-#pragma once
 
-#include <opentelemetry/metrics/meter.h>
-#include <opentelemetry/metrics/provider.h>
+#include <opentelemetry/context/runtime_context.h>
 
-namespace cta::telemetry::metrics {
+#include "TransferTaskTracker.hpp"
+#include "common/semconv/Attributes.hpp"
+#include "common/telemetry/metrics/instruments/TapedInstruments.hpp"
 
-extern std::unique_ptr<opentelemetry::metrics::Counter<uint64_t>> ctaTapedTransferFileCount;
-extern std::unique_ptr<opentelemetry::metrics::Counter<uint64_t>> ctaTapedTransferFileSize;
-extern std::unique_ptr<opentelemetry::metrics::UpDownCounter<int64_t>> ctaTapedTransferActive;
-extern std::unique_ptr<opentelemetry::metrics::UpDownCounter<int64_t>> ctaTapedBufferUsage;
-extern std::shared_ptr<opentelemetry::metrics::ObservableInstrument> ctaTapedBufferLimit;
-extern std::unique_ptr<opentelemetry::metrics::Histogram<uint64_t>> ctaTapedMountDuration;
+namespace castor::tape::tapeserver::daemon {
 
-}  // namespace cta::telemetry::metrics
+TransferTaskTracker::TransferTaskTracker(std::string_view ioDirection, std::string_view ioMedium)
+    : m_ioDirection(ioDirection),
+      m_ioMedium(ioMedium) {
+  cta::telemetry::metrics::ctaTapedTransferActive->Add(
+    1,
+    {
+      {cta::semconv::attr::kCtaIoDirection, m_ioDirection},
+      {cta::semconv::attr::kCtaIoDirection, m_ioMedium}
+  });
+}
+
+TransferTaskTracker::~TransferTaskTracker() {
+  cta::telemetry::metrics::ctaTapedTransferActive->Add(
+    -1,
+    {
+      {cta::semconv::attr::kCtaIoDirection, m_ioDirection},
+      {cta::semconv::attr::kCtaIoDirection, m_ioMedium}
+  });
+}
+
+}  // namespace castor::tape::tapeserver::daemon

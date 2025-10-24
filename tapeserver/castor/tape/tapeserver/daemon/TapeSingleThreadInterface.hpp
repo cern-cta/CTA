@@ -100,7 +100,7 @@ protected:
       const std::string modeAsString = "R";
       scoped.add("MCMountTime", timer.secs()).add("mode", modeAsString);
       cta::telemetry::metrics::ctaTapedMountDuration->Record(
-        timer.msecs(),
+        timer.secs(),
         {
           {cta::semconv::attr::kCtaIoDirection, cta::semconv::attr::CtaIoDirectionValues::kRead}
       },
@@ -126,7 +126,7 @@ protected:
       const std::string modeAsString = "RW";
       scoped.add("MCMountTime", timer.secs()).add("mode", modeAsString);
       cta::telemetry::metrics::ctaTapedMountDuration->Record(
-        timer.msecs(),
+        timer.secs(),
         {
           {cta::semconv::attr::kCtaIoDirection, cta::semconv::attr::CtaIoDirectionValues::kWrite}
       },

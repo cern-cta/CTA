@@ -18,6 +18,9 @@
 #include "common/log/LogContext.hpp"
 #include "castor/tape/tapeserver/daemon/DiskReadTask.hpp"
 #include "common/Timer.hpp"
+#include "common/semconv/Attributes.hpp"
+#include "common/telemetry/metrics/instruments/TapedInstruments.hpp"
+#include "TransferTaskTracker.hpp"
 
 namespace castor::tape::tapeserver::daemon {
 
@@ -39,6 +42,8 @@ m_nextTask(destination),m_archiveJob(archiveJob),
 //------------------------------------------------------------------------------
 void DiskReadTask::execute(cta::log::LogContext& lc, cta::disk::DiskFileFactory& fileFactory,
     MigrationWatchDog& watchdog, const int threadID) {
+  TransferTaskTracker transferTaskTracer(cta::semconv::attr::CtaIoDirectionValues::kRead,
+                                         cta::semconv::attr::CtaIoMediumValues::kDisk);
   using cta::log::LogContext;
   using cta::log::Param;
 
@@ -128,13 +133,13 @@ void DiskReadTask::execute(cta::log::LogContext& lc, cta::disk::DiskFileFactory&
     // transferring equals total time.
     m_stats.transferTime = m_stats.totalTime;
     logWithStat(cta::log::INFO, "File successfully read from disk", lc);
-    cta::telemetry::metrics::ctaTapedTransferFiles->Add(
+    cta::telemetry::metrics::ctaTapedTransferFileCount->Add(
       1,
       {
         {cta::semconv::attr::kCtaIoDirection, cta::semconv::attr::CtaIoDirectionValues::kRead},
         {cta::semconv::attr::kCtaIoMedium, cta::semconv::attr::CtaIoMediumValues::kDisk}
     });
-    cta::telemetry::metrics::ctaTapedTransferBytes->Add(
+    cta::telemetry::metrics::ctaTapedTransferFileSize->Add(
       m_stats.dataVolume,
       {
         {cta::semconv::attr::kCtaIoDirection, cta::semconv::attr::CtaIoDirectionValues::kRead},
@@ -148,7 +153,7 @@ void DiskReadTask::execute(cta::log::LogContext& lc, cta::disk::DiskFileFactory&
     circulateAllBlocks(blockId,mb);
   }
   catch(const cta::exception::Exception& e){
-    cta::telemetry::metrics::ctaTapedTransferFiles->Add(
+    cta::telemetry::metrics::ctaTapedTransferFileCount->Add(
       1,
       {
         {cta::semconv::attr::kCtaIoDirection, cta::semconv::attr::CtaIoDirectionValues::kRead},
