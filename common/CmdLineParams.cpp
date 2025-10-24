@@ -36,15 +36,15 @@ std::string gHelpString =
 
   if (procName == "cta-taped") {
     gHelpString +=
-      "\t--foreground             or -f         \tRemain in the Foreground\n";
+    "\t-f, --foreground            \tRemain in the Foreground\n";
   }
 
   gHelpString +=
-    "\t--stdout                 or -s         \tPrint logs to standard output. Requires --foreground. Logging to stdout is the default, but this option is kept for compatibility reasons\n"
-    "\t--log-to-file <log-file> or -l         \tLogs to a given file (instead of default stdout)\n"
-    "\t--log-format <format>    or -o         \tOutput format for log messages (default or json)\n"
-    "\t--config <config-file>   or -c         \tConfiguration file\n"
-    "\t--help                   or -h         \tPrint this help and exit\n";
+    "\t-s, --stdout                \tPrint logs to standard output. Requires --foreground. Logging to stdout is the default, but this option is kept for compatibility reasons\n"
+    "\t-l --log-to-file <log-file> \tLogs to a given file (instead of default stdout)\n"
+    "\t-o, --log-format <format>   \tOutput format for log messages (default or json)\n"
+    "\t-c, --config <config-file>  \tConfiguration file\n"
+    "\t-h, --help                  \tPrint this help and exit\n";
 
 
   struct ::option longopts[] = {
@@ -77,7 +77,7 @@ std::string gHelpString =
       break;
     case 'h':
       std::cout << gHelpString << std::endl;
-      std::exit(EXIT_FAILURE);
+      std::exit(EXIT_SUCCESS);
     case 'l':
       logFilePath = optarg;
       logToFile = true;
