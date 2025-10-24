@@ -105,7 +105,7 @@ static int exceptionThrowingMain(common::Config config, cta::log::Logger& log) {
                                  .value_or("/var/log/cta/cta-maintenance-metrics.txt"))
           .build();
       // taped is a special case where we only do initTelemetry after the process name has been set
-      cta::telemetry::initTelemetryConfig(telemetryConfig);
+      cta::telemetry::initTelemetry(telemetryConfig, lc);
     } catch (exception::Exception& ex) {
       throw InvalidConfiguration("Failed to instantiate OpenTelemetry. Exception message: " + ex.getMessage().str());
     }
