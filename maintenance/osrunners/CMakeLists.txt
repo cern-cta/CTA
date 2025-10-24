@@ -35,9 +35,9 @@ add_library(ctaosdbrunnersunittests SHARED
         QueueCleanupRunnerConcurrentTest.cpp
 )
 
+target_link_libraries(ctaosdbrunnersunittests ctaosdbrunners)
 set_property(TARGET ctaosdbrunnersunittests PROPERTY SOVERSION "${CTA_SOVERSION}")
 set_property(TARGET ctaosdbrunnersunittests PROPERTY   VERSION "${CTA_LIBVERSION}")
-target_link_libraries(ctaosdbrunnersunittests ctaosdbrunners)
 
 install(TARGETS ctaosdbrunnersunittests DESTINATION usr/${CMAKE_INSTALL_LIBDIR})
 
