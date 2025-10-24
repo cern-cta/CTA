@@ -24,7 +24,7 @@ namespace cta::telemetry::metrics {
 extern std::unique_ptr<opentelemetry::metrics::Counter<uint64_t>> ctaTapedTransferFileCount;
 extern std::unique_ptr<opentelemetry::metrics::Counter<uint64_t>> ctaTapedTransferFileSize;
 extern std::unique_ptr<opentelemetry::metrics::UpDownCounter<int64_t>> ctaTapedTransferActive;
-extern std::unique_ptr<opentelemetry::metrics::UpDownCounter<int64_t>> ctaTapedBufferUsage;
+extern std::shared_ptr<opentelemetry::metrics::ObservableInstrument> ctaTapedBufferUsage;
 extern std::shared_ptr<opentelemetry::metrics::ObservableInstrument> ctaTapedBufferLimit;
 extern std::unique_ptr<opentelemetry::metrics::Histogram<uint64_t>> ctaTapedMountDuration;
 

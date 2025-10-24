@@ -23,7 +23,7 @@
 
 namespace castor {
 namespace exception {
-class Exception;    
+class Exception;
 }
 
 namespace tape::tapeserver::daemon {
@@ -43,41 +43,63 @@ public:
    * @param blockSize       size of each block
    */
   RecallMemoryManager(size_t numberOfBlocks, size_t blockSize, cta::log::LogContext& lc);
-  
+
+  /**
+   * Destructor
+   */
+  ~RecallMemoryManager();
+
   /**
    * Are all sheep back to the farm?
-   * @return 
+   * @return
    */
   bool areBlocksAllBack() noexcept;
-  
+
   /**
    * Takes back a block which has been released by one of the clients
    * @param mb: the pointer to the block
    */
   void releaseBlock(MemBlock *mb);
-  
+
   /**
    * Pop a free block from the free block queue of the memory manager
    * @return pointer to a free block
    */
   MemBlock* getFreeBlock();
-  
+
   /**
-   * Destructor
+   * Get the total number of bytes allocated.
+   * @return the total number of bytes allocated.
    */
-  ~RecallMemoryManager();
-  
+  size_t getTotalMemoryAllocated() const;
+
+  /**
+   * Finds the number of bytes in use by looking how many blocks are in use.
+   * @return the number of bytes in use
+   */
+  size_t getTotalMemoryUsed() const;
+
 private:
+  /**
+   * Number of bytes allocated per block
+   */
+  const size_t m_blockCapacity;
+
   /**
    * Total number of allocated memory blocks
    */
   size_t m_totalNumberOfBlocks;
-  
+
+  /**
+   * Total amount of memory allocated
+   */
+  size_t m_totalMemoryAllocated;
+
   /**
    * Container for the free blocks
    */
   cta::threading::BlockingQueue<MemBlock*> m_freeBlocks;
-  
+
   /**
    * Logging. The class is not threaded, so it can be shared with its parent
    */
