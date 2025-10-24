@@ -30,12 +30,12 @@ public:
    // Static methods to format streaming responses
    static bool isJson() { return is_json; }
    static char jsonDelim() {
-      char c = is_first_record ? '[' : ',';
+      char c = split_by_newline ? '\n' : (is_first_record ? '[' : ',');
       is_first_record = false;
       return c;
    }
    static std::string jsonCloseDelim() {
-      return is_first_record ? "[]" : "]";
+      return is_first_record ? "[]\n" : "]\n";
    }
 
    //! Throw an exception with usage help
@@ -66,6 +66,7 @@ private:
       XROOTD_SSI_PROTOBUF_INTERFACE_VERSION;
    
    static std::atomic<bool> is_json;                                  //!< Display results in JSON format
+   static std::atomic<bool> split_by_newline;                          //!< Display results in JSON format, one JSON per entry/line
    static std::atomic<bool> is_first_record;                          //!< Delimiter for JSON records
 
    std::optional<std::string> m_config;                               //!< User defined config file
