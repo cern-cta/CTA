@@ -53,16 +53,17 @@ static int setUserAndGroup(const std::string &userName, const std::string &group
    return 0;
 }
 
-//------------------------------------------------------------------------------
-// exceptionThrowingMain
-//
-// The main() function delegates the bulk of its implementation to this
-// exception throwing version.
-//
-// @param argc The number of command-line arguments.
-// @param argv The command-line arguments.
-// @param log The logging system.
-//------------------------------------------------------------------------------
+
+/**
+ * exceptionThrowingMain
+ *
+ * The main function delegates the bulk of its implementation to this
+ * exception throwing version.
+ *
+ * @param config The parsed config file
+ * @param log The logging system
+ * @return integer representing the exit code. Only used if we are gracefully shutting down.
+ */
 static int exceptionThrowingMain(common::Config config, cta::log::Logger& log) {
   cta::log::LogContext lc(log);
   {
