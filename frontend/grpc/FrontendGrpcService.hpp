@@ -32,17 +32,14 @@ namespace cta::frontend::grpc {
 class CtaRpcImpl : public CtaRpc::Service {
 
 private:
-  std::unique_ptr<cta::frontend::FrontendService> m_frontendService;
+  std::shared_ptr<cta::frontend::FrontendService> m_frontendService;
   ::grpc::HealthCheckServiceInterface* m_healthCheckService = nullptr;
-  CurlJwksFetcher m_jwksFetcher;
   std::shared_ptr<JwkCache> m_pubkeyCache;
 
 public:
-  CtaRpcImpl(const std::string& config);
+  CtaRpcImpl(std::shared_ptr<cta::frontend::FrontendService> frontendService, std::shared_ptr<JwkCache> pubkeyCache);
 
   FrontendService& getFrontendService() const { return *m_frontendService; }
-
-  std::shared_ptr<JwkCache> getPubkeyCache() const { return m_pubkeyCache; }
   // Archive/Retrieve interface
   Status Create(::grpc::ServerContext* context, const cta::xrd::Request* request, cta::xrd::Response* response);
   Status Archive(::grpc::ServerContext* context, const cta::xrd::Request* request, cta::xrd::Response* response);
@@ -54,7 +51,5 @@ public:
 
 private:
   Status processGrpcRequest(const cta::xrd::Request* request, cta::xrd::Response* response, cta::log::LogContext &lc, const cta::common::dataStructures::SecurityIdentity& clientIdentity) const;
-  std::pair<Status, std::optional<cta::common::dataStructures::SecurityIdentity>>
-  extractAuthHeaderAndValidate(const ::grpc::ServerContext* context, const cta::xrd::Request* request) const;
 };
 } // namespace cta::frontend::grpc
