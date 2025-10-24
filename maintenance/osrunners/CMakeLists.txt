@@ -14,7 +14,7 @@
 #               submit itself to any jurisdiction.
 cmake_minimum_required (VERSION 3.17)
 
-add_library(ctaosdbrunners
+add_library(ctaosdbrunners SHARED
 	QueueCleanupRunner.cpp
 	GarbageCollector.cpp
 )
