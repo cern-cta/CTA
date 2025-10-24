@@ -102,7 +102,7 @@ protected:
       cta::telemetry::metrics::ctaTapedMountDuration->Record(
         timer.msecs(),
         {
-          {cta::semconv::attr::kCtaTransferDirection, cta::semconv::attr::CtaTransferDirectionValues::kRead}
+          {cta::semconv::attr::kCtaIoDirection, cta::semconv::attr::CtaIoDirectionValues::kRead}
       },
         opentelemetry::context::RuntimeContext::GetCurrent());
       m_logContext.log(cta::log::INFO, "Tape mounted for read-only access");
@@ -128,7 +128,7 @@ protected:
       cta::telemetry::metrics::ctaTapedMountDuration->Record(
         timer.msecs(),
         {
-          {cta::semconv::attr::kCtaTransferDirection, cta::semconv::attr::CtaTransferDirectionValues::kWrite}
+          {cta::semconv::attr::kCtaIoDirection, cta::semconv::attr::CtaIoDirectionValues::kWrite}
       },
         opentelemetry::context::RuntimeContext::GetCurrent());
       m_logContext.log(cta::log::INFO, "Tape mounted for read/write access");
