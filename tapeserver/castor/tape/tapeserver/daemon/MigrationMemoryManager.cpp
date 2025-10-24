@@ -18,8 +18,39 @@
 #include "castor/tape/tapeserver/daemon/MigrationMemoryManager.hpp"
 #include "castor/tape/tapeserver/daemon/MemBlock.hpp"
 #include "castor/tape/tapeserver/daemon/DataPipeline.hpp"
+#include "common/telemetry/metrics/instruments/TapedInstruments.hpp"
 
 namespace castor::tape::tapeserver::daemon {
+
+//------------------------------------------------------------------------------
+// Callbacks for observing metrics
+//------------------------------------------------------------------------------
+
+static void ObserveMigrationMemoryUsage(opentelemetry::metrics::ObserverResult observer_result, void* state) noexcept {
+  // Recover the object pointer
+  auto* memoryManager = static_cast<MigrationMemoryManager*>(state);
+  if (!memoryManager) {
+    return;
+  }
+
+  if (std::holds_alternative<std::shared_ptr<opentelemetry::metrics::ObserverResultT<int64_t>>>(observer_result)) {
+    auto typed_observer = std::get<std::shared_ptr<opentelemetry::metrics::ObserverResultT<int64_t>>>(observer_result);
+    typed_observer->Observe(memoryManager->getTotalMemoryUsed());
+  }
+}
+
+static void ObserveMigrationMemoryLimit(opentelemetry::metrics::ObserverResult observer_result, void* state) noexcept {
+  // Recover the object pointer
+  auto* memoryManager = static_cast<MigrationMemoryManager*>(state);
+  if (!memoryManager) {
+    return;
+  }
+
+  if (std::holds_alternative<std::shared_ptr<opentelemetry::metrics::ObserverResultT<int64_t>>>(observer_result)) {
+    auto typed_observer = std::get<std::shared_ptr<opentelemetry::metrics::ObserverResultT<int64_t>>>(observer_result);
+    typed_observer->Observe(memoryManager->getTotalMemoryAllocated());
+  }
+}
 
 //------------------------------------------------------------------------------
 // Constructor
@@ -35,6 +66,8 @@ m_totalNumberOfBlocks(0), m_totalMemoryAllocated(0), m_blocksProvided(0), m_bloc
     m_totalMemoryAllocated += blockSize;
   }
   m_lc.log(cta::log::INFO, "MigrationMemoryManager: all blocks have been created");
+  cta::telemetry::metrics::ctaTapedBufferUsage->AddCallback(ObserveMigrationMemoryUsage, this);
+  cta::telemetry::metrics::ctaTapedBufferUsage->AddCallback(ObserveMigrationMemoryLimit, this);
 }
 
 //------------------------------------------------------------------------------
@@ -53,6 +86,8 @@ MigrationMemoryManager::~MigrationMemoryManager() noexcept {
   } while (ret.remaining > 0);
 
   m_lc.log(cta::log::INFO, "MigrationMemoryManager destruction : all memory blocks have been deleted");
+  cta::telemetry::metrics::ctaTapedBufferUsage->RemoveCallback(ObserveMigrationMemoryUsage, this);
+  cta::telemetry::metrics::ctaTapedBufferUsage->RemoveCallback(ObserveMigrationMemoryLimit, this);
 }
 
 //------------------------------------------------------------------------------
@@ -111,6 +146,20 @@ void MigrationMemoryManager::releaseBlock(MemBlock* mb)
     cta::threading::MutexLocker ml(m_countersMutex);
     m_blocksReturned++;
   }
+}
+
+//------------------------------------------------------------------------------
+// MigrationMemoryManager::getTotalMemoryAllocated
+//------------------------------------------------------------------------------
+size_t MigrationMemoryManager::getTotalMemoryAllocated() const {
+  return m_totalMemoryAllocated;
+}
+
+//------------------------------------------------------------------------------
+// MigrationMemoryManager::getTotalMemoryUsed
+//------------------------------------------------------------------------------
+size_t MigrationMemoryManager::getTotalMemoryUsed() const {
+  return m_totalMemoryAllocated - (m_freeBlocks.size() * m_blockCapacity);
 }
 
 //------------------------------------------------------------------------------

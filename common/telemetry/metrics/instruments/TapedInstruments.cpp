@@ -29,8 +29,8 @@ namespace cta::telemetry::metrics {
 std::unique_ptr<opentelemetry::metrics::Counter<uint64_t>> ctaTapedTransferFileCount;
 std::unique_ptr<opentelemetry::metrics::Counter<uint64_t>> ctaTapedTransferFileSize;
 std::unique_ptr<opentelemetry::metrics::UpDownCounter<int64_t>> ctaTapedTransferActive;
-std::unique_ptr<opentelemetry::metrics::UpDownCounter<int64_t>> ctaTapedBufferUsage;
-std::unique_ptr<opentelemetry::metrics::ObservableInstrument> ctaTapedBufferLimit;
+std::shared_ptr<opentelemetry::metrics::ObservableInstrument> ctaTapedBufferUsage;
+std::shared_ptr<opentelemetry::metrics::ObservableInstrument> ctaTapedBufferLimit;
 std::unique_ptr<opentelemetry::metrics::Histogram<uint64_t>> ctaTapedMountDuration;
 
 }  // namespace cta::telemetry::metrics
@@ -55,14 +55,14 @@ void initInstruments() {
                                     cta::semconv::metrics::unitCtaTapedTransferActive);
 
   cta::telemetry::metrics::ctaTapedBufferUsage =
-    meter->CreateInt64UpDownCounter(cta::semconv::metrics::kMetricCtaTapedBufferUsage,
-                                    cta::semconv::metrics::descrCtaTapedBufferUsage,
-                                    cta::semconv::metrics::unitCtaTapedBufferUsage);
+    meter->CreateInt64ObservableGauge(cta::semconv::metrics::kMetricCtaTapedBufferUsage,
+                                      cta::semconv::metrics::descrCtaTapedBufferUsage,
+                                      cta::semconv::metrics::unitCtaTapedBufferUsage);
 
   cta::telemetry::metrics::ctaTapedBufferLimit =
     meter->CreateInt64ObservableGauge(cta::semconv::metrics::kMetricCtaTapedBufferLimit,
-                                    cta::semconv::metrics::descrCtaTapedBufferLimit,
-                                    cta::semconv::metrics::unitCtaTapedBufferLimit);
+                                      cta::semconv::metrics::descrCtaTapedBufferLimit,
+                                      cta::semconv::metrics::unitCtaTapedBufferLimit);
 
   cta::telemetry::metrics::ctaTapedMountDuration =
     meter->CreateUInt64Histogram(cta::semconv::metrics::kMetricCtaTapedMountDuration,
