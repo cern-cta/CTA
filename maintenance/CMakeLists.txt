@@ -51,17 +51,3 @@ install (FILES cta-maintenance.conf.example
   DESTINATION ${CMAKE_INSTALL_SYSCONFDIR}/cta
   PERMISSIONS OWNER_READ OWNER_WRITE GROUP_READ WORLD_READ)
 
-
-add_library(ctaosdbrunnersunittests SHARED
-        osrunners/GarbageCollectorTest.cpp
-        osrunners/QueueCleanupRunnerTestUtils.cpp
-        osrunners/QueueCleanupRunnerTest.cpp
-        osrunners/QueueCleanupRunnerConcurrentTest.cpp
-)
-
-target_link_libraries(ctaosdbrunnersunittests ctaosdbrunners)
-set_property(TARGET ctaosdbrunnersunittests PROPERTY SOVERSION "${CTA_SOVERSION}")
-set_property(TARGET ctaosdbrunnersunittests PROPERTY   VERSION "${CTA_LIBVERSION}")
-
-install(TARGETS ctaosdbrunnersunittests DESTINATION usr/${CMAKE_INSTALL_LIBDIR})
-
