@@ -44,7 +44,7 @@
 
 #include "QueueCleanupRunnerTestUtils.hpp"
 
-//#define STDOUT_LOGGING
+#define STDOUT_LOGGING
 
 namespace unitTests {
 
