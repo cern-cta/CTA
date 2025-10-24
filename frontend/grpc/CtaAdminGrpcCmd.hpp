@@ -31,18 +31,19 @@ namespace cta::admin {
 class CtaAdminGrpcCmd {
 public:
   //! Send the protocol buffer across the gRPC transport
-  void
-  send(const CtaAdminParsedCmd& parsedCmd, const cta::common::Config& config, const std::string& config_file);
+  void send(const CtaAdminParsedCmd& parsedCmd, const cta::common::Config& config, const std::string& config_file);
+
 private:
-  std::shared_ptr<::grpc::Channel> setupKrb5AuthenticatedAdminCall(std::shared_ptr<grpc::Channel> spChannelNegotiation,
-                                                 grpc::ClientContext& context,
-                                                 const std::string& GRPC_SERVER,
-                                                 const std::string& GSS_SPN,
-                                                 std::shared_ptr<grpc::ChannelCredentials> credentials,
-                                                 cta::log::FileLogger& log);
+  std::shared_ptr<::grpc::Channel>
+  setupKrb5AuthenticatedAdminCall(std::shared_ptr<grpc::Channel> spChannelNegotiation,
+                                  grpc::ClientContext& context,
+                                  const std::string& GRPC_SERVER,
+                                  const std::string& GSS_SPN,
+                                  std::shared_ptr<grpc::ChannelCredentials> credentials,
+                                  cta::log::FileLogger& log);
   // credentials are already setup in the main function - send
   // all this function does is attach the token to the call metadata
-  void setupJwtAuthenticatedAdminCall(grpc::ClientContext &context, const std::string& token_path);
+  void setupJwtAuthenticatedAdminCall(grpc::ClientContext& context, const std::string& token_path);
 };
 
 }  // namespace cta::admin
