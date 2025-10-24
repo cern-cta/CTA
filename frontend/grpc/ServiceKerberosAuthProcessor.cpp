@@ -78,7 +78,7 @@
   if (authHeaderIter != authMetadata.end()) {
     std::string authHeaderValue(authHeaderIter->second.data(), authHeaderIter->second.length());
     // Check if this is a Bearer token (JWT)
-    if (authHeaderValue.find("Bearer ") == 0) {
+    if (authHeaderValue.starts_with("Bearer ")) {
       return ::grpc::Status::OK;
     }
   }

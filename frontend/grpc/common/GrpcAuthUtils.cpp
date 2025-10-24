@@ -68,4 +68,4 @@ extractAuthHeaderAndValidate(const std::multimap<::grpc::string_ref, ::grpc::str
   }
 }
 
-} // namespace cta::frontend::grpc::common
+}  // namespace cta::frontend::grpc::common

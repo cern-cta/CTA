@@ -45,4 +45,4 @@ extractAuthHeaderAndValidate(const std::multimap<::grpc::string_ref, ::grpc::str
                              const std::string& peer,
                              cta::log::LogContext& lc);
 
-} // namespace cta::frontend::grpc::common
+}  // namespace cta::frontend::grpc::common

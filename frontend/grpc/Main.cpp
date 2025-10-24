@@ -131,13 +131,13 @@ int main(const int argc, char *const *const argv) {
 
     // Build the shared JWK cache here if JWT auth is enabled
     CurlJwksFetcher jwksFetcher;
-    std::shared_ptr<JwkCache> jwkCache = frontendService->getJwtAuth() ?
-                      std::make_shared<JwkCache>(
-                        jwksFetcher,
-                        frontendService->getJwksUri().value_or(""),
-                        frontendService->getPubkeyTimeout().value(),  // only empty if jwtAuth is not enabled
-                        frontendService->getLogContext()) :
-                      nullptr;
+    std::shared_ptr<JwkCache> jwkCache =
+      frontendService->getJwtAuth() ?
+        std::make_shared<JwkCache>(jwksFetcher,
+                                   frontendService->getJwksUri().value_or(""),
+                                   frontendService->getPubkeyTimeout().value(),  // only empty if jwtAuth is not enabled
+                                   frontendService->getLogContext()) :
+        nullptr;
 
     // Initialize RPC service with shared frontend service and cache
     frontend::grpc::CtaRpcImpl svc(frontendService, jwkCache);
@@ -147,12 +147,12 @@ int main(const int argc, char *const *const argv) {
     std::thread cacheRefreshThread;
     // if token authentication is specified, then also start the refresh thread, otherwise no point in doing this
     if (frontendService->getJwtAuth()) {
-        lc.log(log::INFO, "Starting the cache refresh thread for JWKS cache");
-        cacheRefreshThread = std::thread(JwksCacheRefreshLoop,
-                                         weakCache,
-                                         std::move(shouldStopThreadFuture),
-                                         frontendService->getCacheRefreshInterval().value_or(600),
-                                         std::cref(lc));
+      lc.log(log::INFO, "Starting the cache refresh thread for JWKS cache");
+      cacheRefreshThread = std::thread(JwksCacheRefreshLoop,
+                                       weakCache,
+                                       std::move(shouldStopThreadFuture),
+                                       frontendService->getCacheRefreshInterval().value_or(600),
+                                       std::cref(lc));
     }
 
     // use castor config to avoid dependency on xroot-ssi
@@ -161,12 +161,11 @@ int main(const int argc, char *const *const argv) {
     lc.log(log::INFO, "Starting cta-frontend-grpc- " + std::string(CTA_VERSION));
 
     // try to update port from config
-    if (frontendService->getPort().has_value())
-        port = frontendService->getPort().value();
-    else
-    {
-        port = "17017";
-        // also set the member value
+    if (frontendService->getPort().has_value()) {
+      port = frontendService->getPort().value();
+    } else {
+      port = "17017";
+      // also set the member value
     }
 
     std::string server_address("0.0.0.0:" + port);
@@ -182,7 +181,6 @@ int main(const int argc, char *const *const argv) {
 
     // get number of threads
     int threads = frontendService->getThreads().value_or(8 * std::thread::hardware_concurrency());
-    
 
     if (useTLS) {
         lc.log(log::INFO, "Using gRPC over TLS");
@@ -190,33 +188,31 @@ int main(const int argc, char *const *const argv) {
         grpc::SslServerCredentialsOptions::PemKeyCertPair cert;
 
         if (!frontendService->getTlsKey().has_value()) {
-            lc.log(log::WARNING, "TLS specified but TLS key is not defined. Using gRPC over plaintext socket instead");
-            creds = grpc::InsecureServerCredentials();
-        }
-        else if (!frontendService->getTlsCert().has_value()) {
-            lc.log(log::WARNING, "TLS specified but TLS key is not defined. Using gRPC over plaintext socket instead");
-            creds = grpc::InsecureServerCredentials();
-        }
-        else {
-            auto key_file = frontendService->getTlsKey().value();
-            lc.log(log::INFO, "TLS service key file: " + key_file);
-            cert.private_key = cta::utils::file2string(key_file);
+          lc.log(log::WARNING, "TLS specified but TLS key is not defined. Using gRPC over plaintext socket instead");
+          creds = grpc::InsecureServerCredentials();
+        } else if (!frontendService->getTlsCert().has_value()) {
+          lc.log(log::WARNING, "TLS specified but TLS key is not defined. Using gRPC over plaintext socket instead");
+          creds = grpc::InsecureServerCredentials();
+        } else {
+          auto key_file = frontendService->getTlsKey().value();
+          lc.log(log::INFO, "TLS service key file: " + key_file);
+          cert.private_key = cta::utils::file2string(key_file);
 
-            auto cert_file = frontendService->getTlsCert().value();
-            lc.log(log::INFO, "TLS service certificate file: " + cert_file);
-            cert.cert_chain = cta::utils::file2string(cert_file);
+          auto cert_file = frontendService->getTlsCert().value();
+          lc.log(log::INFO, "TLS service certificate file: " + cert_file);
+          cert.cert_chain = cta::utils::file2string(cert_file);
 
-            auto ca_chain = frontendService->getTlsChain();
-            if (ca_chain.has_value()) {
-                lc.log(log::INFO, "TLS CA chain file: " + ca_chain.value());
-                tls_options.pem_root_certs = cta::utils::file2string(ca_chain.value());
-            } else {
-                lc.log(log::INFO, "TLS CA chain file not defined ...");
-                tls_options.pem_root_certs = "";
-            }
-            tls_options.pem_key_cert_pairs.emplace_back(std::move(cert));
+          auto ca_chain = frontendService->getTlsChain();
+          if (ca_chain.has_value()) {
+            lc.log(log::INFO, "TLS CA chain file: " + ca_chain.value());
+            tls_options.pem_root_certs = cta::utils::file2string(ca_chain.value());
+          } else {
+            lc.log(log::INFO, "TLS CA chain file not defined ...");
+            tls_options.pem_root_certs = "";
+          }
+          tls_options.pem_key_cert_pairs.emplace_back(std::move(cert));
 
-            creds = grpc::SslServerCredentials(tls_options);
+          creds = grpc::SslServerCredentials(tls_options);
         }
     } else {
         lc.log(log::INFO, "Using gRPC over plaintext socket");

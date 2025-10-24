@@ -50,6 +50,9 @@ public:
   Status Admin(::grpc::ServerContext* context, const cta::xrd::Request* request, cta::xrd::Response* response);
 
 private:
-  Status processGrpcRequest(const cta::xrd::Request* request, cta::xrd::Response* response, cta::log::LogContext &lc, const cta::common::dataStructures::SecurityIdentity& clientIdentity) const;
+  Status processGrpcRequest(const cta::xrd::Request* request,
+                            cta::xrd::Response* response,
+                            cta::log::LogContext& lc,
+                            const cta::common::dataStructures::SecurityIdentity& clientIdentity) const;
 };
 } // namespace cta::frontend::grpc
