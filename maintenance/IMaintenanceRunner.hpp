@@ -25,7 +25,19 @@ class IMaintenanceRunner {
 public:
   virtual ~IMaintenanceRunner() = default;
 
+  /**
+   * Execute the main logic of a runner.
+   *
+   * Different runners can freely implement the work logic and looping (if necessary).
+   * The only compromise from this interface is that the total amount of work
+   * carried out by an execution of the runner should be completed within a fixed
+   * amount of time dictated by the contents of the cta-maintenance service file.
+   * This allows for a graceful termination when SIGTERM is received.
+   *
+   * If a new timeout is put in place that is bigger than any other runner's
+   * timeout, the service file should be updated with the new value.
+   */
   virtual void executeRunner(cta::log::LogContext& lc) = 0;
 };
 
-}
+}  // namespace cta::maintenance
