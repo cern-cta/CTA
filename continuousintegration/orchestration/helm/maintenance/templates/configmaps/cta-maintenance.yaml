@@ -9,7 +9,7 @@ metadata:
 data:
   cta-maintenance.conf: |-
     # General
-    cta.instance_name {{ $.Release.namespace }}
+    cta.instance_name {{ $.Release.Namespace }}
     cta.scheduler_backend_name {{ $schedulerConfig.backend }}
     cta.daemon_user {{ $.Values.conf.general.user }}
     cta.daemon_group {{ $.Values.conf.general.group }}
