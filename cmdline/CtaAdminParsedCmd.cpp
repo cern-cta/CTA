@@ -59,17 +59,17 @@ CtaAdminParsedCmd::CtaAdminParsedCmd(int argc, const char* const* const argv) : 
     throwUsage();
   }
 
-  if (std::string(argv[argno]) == "--json") {
+  if (argc > argno && std::string(argv[argno]) == "--json") {
     is_json = true;
     ++argno;
   }
 
-  if (std::string(argv[argno]) == "-n") {
+  if (argc > argno && std::string(argv[argno]) == "-n") {
     split_by_newline = true;
     ++argno;
   }
 
-  if (std::string(argv[argno]) == "--config") {
+  if (argc > argno && std::string(argv[argno]) == "--config") {
     m_config = argv[++argno];
     ++argno;
   }
