@@ -42,7 +42,7 @@ m_nextTask(destination),m_archiveJob(archiveJob),
 //------------------------------------------------------------------------------
 void DiskReadTask::execute(cta::log::LogContext& lc, cta::disk::DiskFileFactory& fileFactory,
     MigrationWatchDog& watchdog, const int threadID) {
-  TransferTaskTracker transferTaskTracer(cta::semconv::attr::CtaIoDirectionValues::kRead,
+  TransferTaskTracker transferTaskTracker(cta::semconv::attr::CtaIoDirectionValues::kRead,
                                          cta::semconv::attr::CtaIoMediumValues::kDisk);
   using cta::log::LogContext;
   using cta::log::Param;
