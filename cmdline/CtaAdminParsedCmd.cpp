@@ -291,7 +291,7 @@ void CtaAdminParsedCmd::throwUsage(const std::string& error_txt) const {
         << "Usage: " << m_execname << " [--json [-n]] [--config <configpath>] <command> [<subcommand> [<option>...]]" << std::endl
         << "       " << m_execname << " <command> help" << std::endl << std::endl
         << "By default, the output is in tabular format. If the --json option is supplied, the output is a JSON array." << std::endl
-        << "If, in addition to --json, -n is supplied, the output will be a series of JSON objects, one per line." << std::endl
+        << "If, in addition to --json, -n is supplied, the output is a series of JSON objects, one per line." << std::endl
         << "Commands have a long and short version. Subcommands (add/ch/ls/rm/etc.) do not have short versions. For" << std::endl
         << "detailed help on the options of each subcommand, type: " << m_execname << " <command> help" << std::endl << std::endl;
     //clang-format off
