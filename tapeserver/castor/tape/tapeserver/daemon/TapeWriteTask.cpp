@@ -183,13 +183,13 @@ void TapeWriteTask::execute(const std::unique_ptr<castor::tape::tapeFile::WriteS
       1,
       {
         {cta::semconv::attr::kCtaIoDirection, cta::semconv::attr::CtaIoDirectionValues::kWrite},
-        {cta::semconv::attr::kCtaIoMedium, cta::semconv::attr::CtaIoMediumValues::kTape}
+        {cta::semconv::attr::kCtaIoMedium,    cta::semconv::attr::CtaIoMediumValues::kTape    }
     });
     cta::telemetry::metrics::ctaTapedTransferFileSize->Add(
       m_taskStats.dataVolume,
       {
         {cta::semconv::attr::kCtaIoDirection, cta::semconv::attr::CtaIoDirectionValues::kWrite},
-        {cta::semconv::attr::kCtaIoMedium, cta::semconv::attr::CtaIoMediumValues::kTape}
+        {cta::semconv::attr::kCtaIoMedium,    cta::semconv::attr::CtaIoMediumValues::kTape    }
     });
   } catch (const castor::tape::tapeserver::daemon::ErrorFlag&) {
     // We end up there because another task has failed
@@ -246,8 +246,8 @@ void TapeWriteTask::execute(const std::unique_ptr<castor::tape::tapeFile::WriteS
       1,
       {
         {cta::semconv::attr::kCtaIoDirection, cta::semconv::attr::CtaIoDirectionValues::kWrite},
-        {cta::semconv::attr::kCtaIoMedium, cta::semconv::attr::CtaIoMediumValues::kTape},
-        {cta::semconv::attr::kErrorType, cta::semconv::attr::ErrorTypeValues::kException}
+        {cta::semconv::attr::kCtaIoMedium,    cta::semconv::attr::CtaIoMediumValues::kTape    },
+        {cta::semconv::attr::kErrorType,      cta::semconv::attr::ErrorTypeValues::kException }
     });
     m_errorFlag.set();
 

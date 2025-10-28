@@ -195,13 +195,13 @@ public:
         1,
         {
           {cta::semconv::attr::kCtaIoDirection, cta::semconv::attr::CtaIoDirectionValues::kRead},
-          {cta::semconv::attr::kCtaIoMedium, cta::semconv::attr::CtaIoMediumValues::kTape}
+          {cta::semconv::attr::kCtaIoMedium,    cta::semconv::attr::CtaIoMediumValues::kTape   }
       });
       cta::telemetry::metrics::ctaTapedTransferFileSize->Add(
         localStats.dataVolume,
         {
           {cta::semconv::attr::kCtaIoDirection, cta::semconv::attr::CtaIoDirectionValues::kRead},
-          {cta::semconv::attr::kCtaIoMedium, cta::semconv::attr::CtaIoMediumValues::kTape}
+          {cta::semconv::attr::kCtaIoMedium,    cta::semconv::attr::CtaIoMediumValues::kTape   }
       });
     } //end of try
     catch (const cta::exception::Exception & ex) {
@@ -214,8 +214,8 @@ public:
         1,
         {
           {cta::semconv::attr::kCtaIoDirection, cta::semconv::attr::CtaIoDirectionValues::kRead},
-          {cta::semconv::attr::kCtaIoMedium, cta::semconv::attr::CtaIoMediumValues::kTape},
-          {cta::semconv::attr::kErrorType, cta::semconv::attr::ErrorTypeValues::kException}
+          {cta::semconv::attr::kCtaIoMedium,    cta::semconv::attr::CtaIoMediumValues::kTape   },
+          {cta::semconv::attr::kErrorType,      cta::semconv::attr::ErrorTypeValues::kException}
       });
       if (currentErrorToCount.size()) {
         watchdog.addToErrorCount(currentErrorToCount);

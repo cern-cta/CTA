@@ -27,12 +27,14 @@ namespace castor::tape::tapeserver::daemon {
 //------------------------------------------------------------------------------
 // constructor
 //------------------------------------------------------------------------------
-DiskReadTask::DiskReadTask(DataConsumer & destination,
-        cta::ArchiveJob *archiveJob,
-        size_t numberOfBlock,cta::threading::AtomicFlag& errorFlag):
-m_nextTask(destination),m_archiveJob(archiveJob),
-        m_numberOfBlock(numberOfBlock),m_errorFlag(errorFlag)
-{
+DiskReadTask::DiskReadTask(DataConsumer& destination,
+                           cta::ArchiveJob* archiveJob,
+                           size_t numberOfBlock,
+                           cta::threading::AtomicFlag& errorFlag)
+    : m_nextTask(destination),
+      m_archiveJob(archiveJob),
+      m_numberOfBlock(numberOfBlock),
+      m_errorFlag(errorFlag) {
   m_archiveJobCachedInfo.remotePath = m_archiveJob->srcURL;
   m_archiveJobCachedInfo.fileId = m_archiveJob->archiveFile.archiveFileID;
 }
@@ -43,7 +45,7 @@ m_nextTask(destination),m_archiveJob(archiveJob),
 void DiskReadTask::execute(cta::log::LogContext& lc, cta::disk::DiskFileFactory& fileFactory,
     MigrationWatchDog& watchdog, const int threadID) {
   TransferTaskTracker transferTaskTracker(cta::semconv::attr::CtaIoDirectionValues::kRead,
-                                         cta::semconv::attr::CtaIoMediumValues::kDisk);
+                                          cta::semconv::attr::CtaIoMediumValues::kDisk);
   using cta::log::LogContext;
   using cta::log::Param;
 
@@ -137,17 +139,16 @@ void DiskReadTask::execute(cta::log::LogContext& lc, cta::disk::DiskFileFactory&
       1,
       {
         {cta::semconv::attr::kCtaIoDirection, cta::semconv::attr::CtaIoDirectionValues::kRead},
-        {cta::semconv::attr::kCtaIoMedium, cta::semconv::attr::CtaIoMediumValues::kDisk}
+        {cta::semconv::attr::kCtaIoMedium,    cta::semconv::attr::CtaIoMediumValues::kDisk   }
     });
     cta::telemetry::metrics::ctaTapedTransferFileSize->Add(
       m_stats.dataVolume,
       {
         {cta::semconv::attr::kCtaIoDirection, cta::semconv::attr::CtaIoDirectionValues::kRead},
-        {cta::semconv::attr::kCtaIoMedium, cta::semconv::attr::CtaIoMediumValues::kDisk}
+        {cta::semconv::attr::kCtaIoMedium,    cta::semconv::attr::CtaIoMediumValues::kDisk   }
     });
   }
   catch(const castor::tape::tapeserver::daemon::ErrorFlag&){
-
     lc.log(cta::log::DEBUG,"DiskReadTask: a previous file has failed for migration "
     "Do nothing except circulating blocks");
     circulateAllBlocks(blockId,mb);
@@ -157,8 +158,8 @@ void DiskReadTask::execute(cta::log::LogContext& lc, cta::disk::DiskFileFactory&
       1,
       {
         {cta::semconv::attr::kCtaIoDirection, cta::semconv::attr::CtaIoDirectionValues::kRead},
-        {cta::semconv::attr::kCtaIoMedium, cta::semconv::attr::CtaIoMediumValues::kDisk},
-        {cta::semconv::attr::kErrorType, cta::semconv::attr::ErrorTypeValues::kException}
+        {cta::semconv::attr::kCtaIoMedium,    cta::semconv::attr::CtaIoMediumValues::kDisk   },
+        {cta::semconv::attr::kErrorType,      cta::semconv::attr::ErrorTypeValues::kException}
     });
 
     // Send the error for counting to the watchdog
@@ -217,25 +218,27 @@ void DiskReadTask::circulateAllBlocks(size_t fromBlockId, MemBlock * mb){
 //------------------------------------------------------------------------------
 void DiskReadTask::logWithStat(int level, std::string_view msg, cta::log::LogContext& lc) {
   cta::log::ScopedParamContainer params(lc);
-     params.add("readWriteTime", m_stats.readWriteTime)
-           .add("checksumingTime",m_stats.checksumingTime)
-           .add("waitFreeMemoryTime",m_stats.waitFreeMemoryTime)
-           .add("waitDataTime",m_stats.waitDataTime)
-           .add("waitReportingTime",m_stats.waitReportingTime)
-           .add("checkingErrorTime",m_stats.checkingErrorTime)
-           .add("openingTime",m_stats.openingTime)
-           .add("transferTime", m_stats.transferTime)
-           .add("totalTime", m_stats.totalTime)
-           .add("dataVolume", m_stats.dataVolume)
-           .add("globalPayloadTransferSpeedMBps",
-              m_stats.totalTime?1.0*m_stats.dataVolume/1000/1000/m_stats.totalTime:0)
-           .add("diskPerformanceMBps",
-              m_stats.transferTime?1.0*m_stats.dataVolume/1000/1000/m_stats.transferTime:0)
-           .add("openRWCloseToTransferTimeRatio",
-              m_stats.transferTime?(m_stats.openingTime+m_stats.readWriteTime+m_stats.closingTime)/m_stats.transferTime:0.0)
-           .add("fileId",m_archiveJobCachedInfo.fileId)
-           .add("path",m_archiveJobCachedInfo.remotePath);
-    lc.log(level, msg);
+  params.add("readWriteTime", m_stats.readWriteTime)
+    .add("checksumingTime", m_stats.checksumingTime)
+    .add("waitFreeMemoryTime", m_stats.waitFreeMemoryTime)
+    .add("waitDataTime", m_stats.waitDataTime)
+    .add("waitReportingTime", m_stats.waitReportingTime)
+    .add("checkingErrorTime", m_stats.checkingErrorTime)
+    .add("openingTime", m_stats.openingTime)
+    .add("transferTime", m_stats.transferTime)
+    .add("totalTime", m_stats.totalTime)
+    .add("dataVolume", m_stats.dataVolume)
+    .add("globalPayloadTransferSpeedMBps",
+         m_stats.totalTime ? 1.0 * m_stats.dataVolume / 1000 / 1000 / m_stats.totalTime : 0)
+    .add("diskPerformanceMBps",
+         m_stats.transferTime ? 1.0 * m_stats.dataVolume / 1000 / 1000 / m_stats.transferTime : 0)
+    .add("openRWCloseToTransferTimeRatio",
+         m_stats.transferTime ?
+           (m_stats.openingTime + m_stats.readWriteTime + m_stats.closingTime) / m_stats.transferTime :
+           0.0)
+    .add("fileId", m_archiveJobCachedInfo.fileId)
+    .add("path", m_archiveJobCachedInfo.remotePath);
+  lc.log(level, msg);
 }
 
 const DiskStats DiskReadTask::getTaskStats() const{

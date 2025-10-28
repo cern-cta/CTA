@@ -145,13 +145,13 @@ bool DiskWriteTask::execute(RecallReportPacker& reporter, cta::log::LogContext& 
       1,
       {
         {cta::semconv::attr::kCtaIoDirection, cta::semconv::attr::CtaIoDirectionValues::kWrite},
-        {cta::semconv::attr::kCtaIoMedium, cta::semconv::attr::CtaIoMediumValues::kDisk}
+        {cta::semconv::attr::kCtaIoMedium,    cta::semconv::attr::CtaIoMediumValues::kDisk    }
     });
     cta::telemetry::metrics::ctaTapedTransferFileSize->Add(
       m_stats.dataVolume,
       {
         {cta::semconv::attr::kCtaIoDirection, cta::semconv::attr::CtaIoDirectionValues::kWrite},
-        {cta::semconv::attr::kCtaIoMedium, cta::semconv::attr::CtaIoMediumValues::kDisk}
+        {cta::semconv::attr::kCtaIoMedium,    cta::semconv::attr::CtaIoMediumValues::kDisk    }
     });
     //everything went well, return true
     return true;
@@ -168,8 +168,8 @@ bool DiskWriteTask::execute(RecallReportPacker& reporter, cta::log::LogContext& 
       1,
       {
         {cta::semconv::attr::kCtaIoDirection, cta::semconv::attr::CtaIoDirectionValues::kWrite},
-        {cta::semconv::attr::kCtaIoMedium, cta::semconv::attr::CtaIoMediumValues::kDisk},
-        {cta::semconv::attr::kErrorType, cta::semconv::attr::ErrorTypeValues::kException}
+        {cta::semconv::attr::kCtaIoMedium,    cta::semconv::attr::CtaIoMediumValues::kDisk    },
+        {cta::semconv::attr::kErrorType,      cta::semconv::attr::ErrorTypeValues::kException }
     });
 
     //there might still be some blocks into m_fifo

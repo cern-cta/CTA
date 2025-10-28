@@ -39,7 +39,6 @@ class DataPipeline;
  */
 class MigrationMemoryManager: private cta::threading::Thread {
 public:
-
   /**
    * Constructor
    * @param numberOfBlocks: number of blocks to allocate
@@ -156,7 +155,6 @@ private:
    * Thread routine: pops a client and provides him blocks until he is happy!
    */
   void run() override;
-
 };
 
 }} // namespace castor::tape::tapeserver::daemon

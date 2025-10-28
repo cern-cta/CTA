@@ -26,20 +26,18 @@ namespace castor::tape::tapeserver::daemon {
 TransferTaskTracker::TransferTaskTracker(std::string_view ioDirection, std::string_view ioMedium)
     : m_ioDirection(ioDirection),
       m_ioMedium(ioMedium) {
-  cta::telemetry::metrics::ctaTapedTransferActive->Add(
-    1,
-    {
-      {cta::semconv::attr::kCtaIoDirection, m_ioDirection},
-      {cta::semconv::attr::kCtaIoMedium, m_ioMedium}
+  cta::telemetry::metrics::ctaTapedTransferActive->Add(1,
+                                                       {
+                                                         {cta::semconv::attr::kCtaIoDirection, m_ioDirection},
+                                                         {cta::semconv::attr::kCtaIoMedium,    m_ioMedium   }
   });
 }
 
 TransferTaskTracker::~TransferTaskTracker() {
-  cta::telemetry::metrics::ctaTapedTransferActive->Add(
-    -1,
-    {
-      {cta::semconv::attr::kCtaIoDirection, m_ioDirection},
-      {cta::semconv::attr::kCtaIoMedium, m_ioMedium}
+  cta::telemetry::metrics::ctaTapedTransferActive->Add(-1,
+                                                       {
+                                                         {cta::semconv::attr::kCtaIoDirection, m_ioDirection},
+                                                         {cta::semconv::attr::kCtaIoMedium,    m_ioMedium   }
   });
 }
 
