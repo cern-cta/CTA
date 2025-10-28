@@ -22,6 +22,7 @@
 #include "common/Timer.hpp"
 #include "common/semconv/Attributes.hpp"
 #include "common/telemetry/metrics/instruments/TapedInstruments.hpp"
+#include "TransferTaskTracker.hpp"
 
 namespace castor::tape::tapeserver::daemon {
 
@@ -37,6 +38,8 @@ DiskWriteTask::DiskWriteTask(cta::RetrieveJob* retrieveJob, RecallMemoryManager&
 //------------------------------------------------------------------------------
 bool DiskWriteTask::execute(RecallReportPacker& reporter, cta::log::LogContext& lc,
   cta::disk::DiskFileFactory& fileFactory, RecallWatchDog& watchdog, int threadID) {
+  TransferTaskTracker transferTaskTracer(cta::semconv::attr::CtaIoDirectionValues::kWrite,
+                                         cta::semconv::attr::CtaIoMediumValues::kDisk);
   using cta::log::LogContext;
   using cta::log::Param;
   cta::utils::Timer localTime;
@@ -138,15 +141,17 @@ bool DiskWriteTask::execute(RecallReportPacker& reporter, cta::log::LogContext& 
     m_stats.totalTime = totalTime.secs();
     logWithStat(cta::log::INFO, isVerifyOnly ? "File successfully verified" : "File successfully transfered to disk", lc);
     watchdog.deleteParameter("stillOpenFileForThread" + std::to_string((long long)threadID));
-    cta::telemetry::metrics::ctaTapedTransferCount->Add(
+    cta::telemetry::metrics::ctaTapedTransferFileCount->Add(
       1,
       {
-        {cta::semconv::attr::kCtaTransferDirection, cta::semconv::attr::CtaTransferDirectionValues::kRetrieve}
+        {cta::semconv::attr::kCtaIoDirection, cta::semconv::attr::CtaIoDirectionValues::kWrite},
+        {cta::semconv::attr::kCtaIoMedium,    cta::semconv::attr::CtaIoMediumValues::kDisk    }
     });
-    cta::telemetry::metrics::ctaTapedTransferIO->Add(
+    cta::telemetry::metrics::ctaTapedTransferFileSize->Add(
       m_stats.dataVolume,
       {
-        {cta::semconv::attr::kCtaTransferDirection, cta::semconv::attr::CtaTransferDirectionValues::kRetrieve}
+        {cta::semconv::attr::kCtaIoDirection, cta::semconv::attr::CtaIoDirectionValues::kWrite},
+        {cta::semconv::attr::kCtaIoMedium,    cta::semconv::attr::CtaIoMediumValues::kDisk    }
     });
     //everything went well, return true
     return true;
@@ -159,12 +164,12 @@ bool DiskWriteTask::execute(RecallReportPacker& reporter, cta::log::LogContext& 
      * -- An error in tape read
      * -- An error while writing the file
      */
-
-    cta::telemetry::metrics::ctaTapedTransferCount->Add(
+    cta::telemetry::metrics::ctaTapedTransferFileCount->Add(
       1,
       {
-        {cta::semconv::attr::kCtaTransferDirection, cta::semconv::attr::CtaTransferDirectionValues::kRetrieve},
-        {cta::semconv::attr::kErrorType,            cta::semconv::attr::ErrorTypeValues::kException          }
+        {cta::semconv::attr::kCtaIoDirection, cta::semconv::attr::CtaIoDirectionValues::kWrite},
+        {cta::semconv::attr::kCtaIoMedium,    cta::semconv::attr::CtaIoMediumValues::kDisk    },
+        {cta::semconv::attr::kErrorType,      cta::semconv::attr::ErrorTypeValues::kException }
     });
 
     //there might still be some blocks into m_fifo

@@ -26,8 +26,11 @@
 
 namespace cta::telemetry::metrics {
 
-std::unique_ptr<opentelemetry::metrics::Counter<uint64_t>> ctaTapedTransferCount;
-std::unique_ptr<opentelemetry::metrics::Counter<uint64_t>> ctaTapedTransferIO;
+std::unique_ptr<opentelemetry::metrics::Counter<uint64_t>> ctaTapedTransferFileCount;
+std::unique_ptr<opentelemetry::metrics::Counter<uint64_t>> ctaTapedTransferFileSize;
+std::unique_ptr<opentelemetry::metrics::UpDownCounter<int64_t>> ctaTapedTransferActive;
+std::shared_ptr<opentelemetry::metrics::ObservableInstrument> ctaTapedBufferUsage;
+std::shared_ptr<opentelemetry::metrics::ObservableInstrument> ctaTapedBufferLimit;
 std::unique_ptr<opentelemetry::metrics::Histogram<uint64_t>> ctaTapedMountDuration;
 
 }  // namespace cta::telemetry::metrics
@@ -36,15 +39,30 @@ namespace {
 void initInstruments() {
   auto meter = cta::telemetry::metrics::getMeter(cta::semconv::meter::kCtaTaped, CTA_VERSION);
 
-  cta::telemetry::metrics::ctaTapedTransferCount =
-    meter->CreateUInt64Counter(cta::semconv::metrics::kMetricCtaTapedTransferCount,
-                               cta::semconv::metrics::descrCtaTapedTransferCount,
-                               cta::semconv::metrics::unitCtaTapedTransferCount);
+  cta::telemetry::metrics::ctaTapedTransferFileCount =
+    meter->CreateUInt64Counter(cta::semconv::metrics::kMetricCtaTapedTransferFileCount,
+                               cta::semconv::metrics::descrCtaTapedTransferFileCount,
+                               cta::semconv::metrics::unitCtaTapedTransferFileCount);
 
-  cta::telemetry::metrics::ctaTapedTransferIO =
-    meter->CreateUInt64Counter(cta::semconv::metrics::kMetricCtaTapedTransferIO,
-                               cta::semconv::metrics::descrCtaTapedTransferIO,
-                               cta::semconv::metrics::unitCtaTapedTransferIO);
+  cta::telemetry::metrics::ctaTapedTransferFileSize =
+    meter->CreateUInt64Counter(cta::semconv::metrics::kMetricCtaTapedTransferFileSize,
+                               cta::semconv::metrics::descrCtaTapedTransferFileSize,
+                               cta::semconv::metrics::unitCtaTapedTransferFileSize);
+
+  cta::telemetry::metrics::ctaTapedTransferActive =
+    meter->CreateInt64UpDownCounter(cta::semconv::metrics::kMetricCtaTapedTransferActive,
+                                    cta::semconv::metrics::descrCtaTapedTransferActive,
+                                    cta::semconv::metrics::unitCtaTapedTransferActive);
+
+  cta::telemetry::metrics::ctaTapedBufferUsage =
+    meter->CreateInt64ObservableGauge(cta::semconv::metrics::kMetricCtaTapedBufferUsage,
+                                      cta::semconv::metrics::descrCtaTapedBufferUsage,
+                                      cta::semconv::metrics::unitCtaTapedBufferUsage);
+
+  cta::telemetry::metrics::ctaTapedBufferLimit =
+    meter->CreateInt64ObservableGauge(cta::semconv::metrics::kMetricCtaTapedBufferLimit,
+                                      cta::semconv::metrics::descrCtaTapedBufferLimit,
+                                      cta::semconv::metrics::unitCtaTapedBufferLimit);
 
   cta::telemetry::metrics::ctaTapedMountDuration =
     meter->CreateUInt64Histogram(cta::semconv::metrics::kMetricCtaTapedMountDuration,

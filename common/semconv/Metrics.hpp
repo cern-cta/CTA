@@ -72,21 +72,38 @@ static constexpr const char* unitCtaSchedulerOperationDuration = "ms";
 // -------------------- OBJECTSTORE --------------------
 
 static constexpr const char* kMetricCtaObjectstoreLockAcquireDuration = "cta.objectstore.lock.acquire.duration";
-static constexpr const char* descrCtaObjectstoreLockAcquireDuration = "Duration taken to acquire an objectstore lock";
+static constexpr const char* descrCtaObjectstoreLockAcquireDuration = "Duration to acquire an objectstore lock";
 static constexpr const char* unitCtaObjectstoreLockAcquireDuration = "ms";
 
 // -------------------- TAPED --------------------
 
-static constexpr const char* kMetricCtaTapedTransferCount = "cta.taped.transfer.count";
-static constexpr const char* descrCtaTapedTransferCount = "Number of files transferred to/from tape";
-static constexpr const char* unitCtaTapedTransferCount = "1";
+static constexpr const char* kMetricCtaTapedTransferFileCount = "cta.taped.transfer.file.count";
+static constexpr const char* descrCtaTapedTransferFileCount =
+  "Number of files transferred using the io medium in the given io direction";
+static constexpr const char* unitCtaTapedTransferFileCount = "1";
 
-static constexpr const char* kMetricCtaTapedTransferIO = "cta.taped.transfer.io";
-static constexpr const char* descrCtaTapedTransferIO = "Bytes transferred to/from tape";
-static constexpr const char* unitCtaTapedTransferIO = "by";
+static constexpr const char* kMetricCtaTapedTransferFileSize = "cta.taped.transfer.file.size";
+static constexpr const char* descrCtaTapedTransferFileSize =
+  "Bytes transferred using the io medium in the given io direction";
+static constexpr const char* unitCtaTapedTransferFileSize = "by";
+
+static constexpr const char* kMetricCtaTapedTransferActive = "cta.taped.transfer.active";
+static constexpr const char* descrCtaTapedTransferActive =
+  "Number of threads actively transferring using the io medium in the given io direction";
+static constexpr const char* unitCtaTapedTransferActive = "1";
+
+// Based on https://opentelemetry.io/docs/specs/semconv/system/system-metrics/#metric-systemmemoryusage
+static constexpr const char* kMetricCtaTapedBufferUsage = "cta.taped.buffer.usage";
+static constexpr const char* descrCtaTapedBufferUsage = "Bytes in use by the memory buffer in cta-taped";
+static constexpr const char* unitCtaTapedBufferUsage = "by";
+
+// https://opentelemetry.io/docs/specs/semconv/system/system-metrics/#metric-systemmemorylimit
+static constexpr const char* kMetricCtaTapedBufferLimit = "cta.taped.buffer.limit";
+static constexpr const char* descrCtaTapedBufferLimit = "Total bytes available for the memory buffer in cta-taped";
+static constexpr const char* unitCtaTapedBufferLimit = "by";
 
 static constexpr const char* kMetricCtaTapedMountDuration = "cta.taped.mount.duration";
 static constexpr const char* descrCtaTapedMountDuration = "Duration to mount a tape";
-static constexpr const char* unitCtaTapedMountDuration = "ms";
+static constexpr const char* unitCtaTapedMountDuration = "s";
 
 }  // namespace cta::semconv::metrics

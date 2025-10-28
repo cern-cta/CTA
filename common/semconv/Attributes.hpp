@@ -44,9 +44,9 @@ static constexpr const char* kDbNamespace = "db.namespace";
 // Non-standard -- CTA-specific
 static constexpr const char* kSchedulerNamespace = "cta.scheduler.namespace";  // schedulerBackendName but better
 static constexpr const char* kSchedulerOperationName = "cta.scheduler.operation.name";
-static constexpr const char* kThreadPoolName = "cta.taped.thread_pool.name";
 static constexpr const char* kFrontendRequesterName = "cta.frontend.requester.name";
-static constexpr const char* kCtaTransferDirection = "cta.transfer.direction";  // similar to disk.io.direction
+static constexpr const char* kCtaIoDirection = "cta.io.direction";  // similar to disk.io.direction
+static constexpr const char* kCtaIoMedium = "cta.io.medium";
 
 // -------------------- Attribute Values --------------------
 
@@ -55,10 +55,15 @@ static constexpr const char* kCtaFrontend = "cta.frontend";
 static constexpr const char* kCtaTaped = "cta.taped";
 }  // namespace ServiceNameValues
 
-namespace CtaTransferDirectionValues {
-static constexpr const char* kArchive = "archive";
-static constexpr const char* kRetrieve = "retrieve";
-}  // namespace CtaTransferDirectionValues
+namespace CtaIoDirectionValues {
+static constexpr const char* kRead = "read";
+static constexpr const char* kWrite = "write";
+}  // namespace CtaIoDirectionValues
+
+namespace CtaIoMediumValues {
+static constexpr const char* kTape = "tape";
+static constexpr const char* kDisk = "disk";
+}  // namespace CtaIoMediumValues
 
 namespace ErrorTypeValues {
 static constexpr const char* kUserError = "user_error";
@@ -69,11 +74,6 @@ namespace StateValues {
 static constexpr const char* kIdle = "idle";
 static constexpr const char* kUsed = "used";
 }  // namespace StateValues
-
-namespace ThreadPoolNameValues {
-static constexpr const char* kDisk = "disk";
-static constexpr const char* kTape = "tape";
-}  // namespace ThreadPoolNameValues
 
 namespace LockTypeValues {
 static constexpr const char* kScopedShared = "shared";
