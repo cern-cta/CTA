@@ -24,7 +24,7 @@ int toSyslogLevel(opentelemetry::sdk::common::internal_log::LogLevel level) noex
   switch (level) {
     using enum opentelemetry::sdk::common::internal_log::LogLevel;
     case Error:
-      return cta::log::ERR;
+      return cta::log::WARNING; // Telemetry errors do not affect the service, so we emit them as warnings
     case Warning:
       return cta::log::WARNING;
     case Info:
