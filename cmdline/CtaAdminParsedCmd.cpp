@@ -284,7 +284,7 @@ void CtaAdminParsedCmd::readListFromFile(cta::admin::OptionStrList& str_list, co
 
 void CtaAdminParsedCmd::throwUsage(const std::string& error_txt) const {
   std::stringstream help;
-  const auto& admincmd = m_request.admincmd().cmd();git
+  const auto& admincmd = m_request.admincmd().cmd();
 
   if (error_txt != "") {
     help << error_txt << std::endl;
