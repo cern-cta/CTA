@@ -33,6 +33,8 @@ cli:
     cta:
       endpoint: cta-frontend-grpc:10956
       grpc:
+        cta_admin_auth_method: jwt
+        jwt_token_path: /etc/grid-security/jwt-token-grpc
         tls:
           chain_cert_path: /etc/grpc-certs/ca.crt
           enabled: true
@@ -82,6 +84,8 @@ client:
     cta:
       endpoint: cta-frontend-grpc:10956
       grpc:
+        cta_admin_auth_method: jwt
+        jwt_token_path: /etc/grid-security/jwt-token-grpc
         tls:
           chain_cert_path: /etc/grpc-certs/ca.crt
           enabled: true

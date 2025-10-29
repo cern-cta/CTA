@@ -159,32 +159,40 @@ void CtaAdminGrpcCmd::send(const CtaAdminParsedCmd& parsedCmd,
   cta::log::LogContext lc(log);
   std::shared_ptr<::grpc::Channel> spChannel;
 
-  // read from the env variable which auth method should be used
-  const char* auth_method = std::getenv("CTA_ADMIN_GRPC_AUTH_METHOD");
-  if (auth_method == NULL) {
-    lc.log(cta::log::WARNING,
-           "Environment variable CTA_ADMIN_GRPC_AUTH_METHOD not set, using Kerberos to authenticate!");
-    std::cout << "using kerberos authentication";
+  // Determine authentication method: env variable overrides config, default to krb5
+  std::string auth_method;
+  const char* auth_method_env = std::getenv("CTA_ADMIN_GRPC_AUTH_METHOD");
+  if (auth_method_env != NULL) {
+    // Environment variable takes precedence
+    auth_method = auth_method_env;
+  } else {
+    // Check config file, default to krb5 if not specified
+    auth_method = config.getOptionValueStr("grpc.cta_admin_auth_method").value_or("");
+    if (auth_method.empty()) {
+      lc.log(cta::log::WARNING,
+             "Authentication method not specified either in config or with environment variable "
+             "CTA_ADMIN_GRPC_AUTH_METHOD, using Kerberos to authenticate!");
+      std::cout << "using kerberos authentication";
+      auth_method = "krb5";
+    }
+  }
+
+  // Validate and process the authentication method
+  if (auth_method == "jwt") {
+    // Read JWT token path from config, with default fallback
+    std::string token_path = config.getOptionValueStr("grpc.jwt_token_path").value_or("");
+    if (token_path.empty()) {
+      lc.log(cta::log::WARNING, "jwt authentication specified but no token provided");
+    }
+    setupJwtAuthenticatedAdminCall(context, token_path);
+    spChannel = spChannelNegotiation;
+  } else if (auth_method == "krb5") {
     spChannel = setupKrb5AuthenticatedAdminCall(spChannelNegotiation, context, GRPC_SERVER, GSS_SPN, credentials, log);
   } else {
-    if (strcmp("jwt", auth_method) == 0) {
-      // TODO read token path from config
-      // for now, hard-coded
-      std::string token_path = "/etc/grid-security/jwt-token-grpc";
-      // std::cout << "using token authentication" << std::endl;
-      setupJwtAuthenticatedAdminCall(context, token_path);
-      spChannel = spChannelNegotiation;
-    } else if (strcmp("krb5", auth_method) == 0) {
-      // std::cout << "using kerberos authentication";
-      spChannel =
-        setupKrb5AuthenticatedAdminCall(spChannelNegotiation, context, GRPC_SERVER, GSS_SPN, credentials, log);
-    } else {
-      // WARN that we are falling back to Kerberos
-      lc.log(cta::log::WARNING,
-             "Unrecognized authentication method set in CTA_ADMIN_GRPC_AUTH_METHOD, using Kerberos!");
-      spChannel =
-        setupKrb5AuthenticatedAdminCall(spChannelNegotiation, context, GRPC_SERVER, GSS_SPN, credentials, log);
-    }
+    // Unrecognized authentication method, fall back to Kerberos
+    lc.log(cta::log::WARNING,
+           "Unrecognized authentication method '" + auth_method + "', using Kerberos!");
+    spChannel = setupKrb5AuthenticatedAdminCall(spChannelNegotiation, context, GRPC_SERVER, GSS_SPN, credentials, log);
   }
 
   if (!isStreamCmd(request.admincmd())) {
