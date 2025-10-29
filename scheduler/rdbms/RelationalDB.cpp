@@ -121,7 +121,7 @@ std::string RelationalDB::queueArchive(const std::string& instanceName,
   aReq.setSrcURL(request.srcURL);
   aReq.setEntryLog(request.creationLog);
   params.add("timeSetters", timeSetters.secs());
-
+  auto archiveRequestId = cta::schedulerdb::postgres::ArchiveJobQueueRow::getNextArchiveRequestID(sqlconn);
   int count_jobs = 0;
   for (auto& [key, value] : criteria.copyToPoolMap) {
     count_jobs++;
@@ -129,7 +129,8 @@ std::string RelationalDB::queueArchive(const std::string& instanceName,
                 value,
                 schedulerdb::ArchiveRequest::RETRIES_WITHIN_MOUNT,
                 schedulerdb::ArchiveRequest::TOTAL_RETRIES,
-                schedulerdb::ArchiveRequest::REPORT_RETRIES);
+                schedulerdb::ArchiveRequest::REPORT_RETRIES,
+                archiveRequestId);
   }
 
   if (count_jobs == 0) {

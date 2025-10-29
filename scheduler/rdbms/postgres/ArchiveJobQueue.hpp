@@ -41,6 +41,7 @@ struct ArchiveQueueJob {
     int maxTotalRetries;
     int totalReportRetries;
     int maxReportRetries;
+    int archiveRequestId;
   };
 
 struct ArchiveJobQueueRow {
@@ -338,7 +339,7 @@ public:
 
 
   static void insertBatch(rdbms::Conn &conn,
-                              const std::vector<ArchiveJobQueueRow> &rows,
+                              const std::vector<std::unique_ptr<ArchiveJobQueueRow>> &rows,
                               bool isRepack) {
   if (rows.empty()) return;
 
@@ -420,7 +421,7 @@ public:
 
   // Bind values for each row with distinct names
   for (size_t i = 0; i < rows.size(); ++i) {
-    const auto &row = rows[i];
+    const auto &row = *rows[i];
     std::string idx = std::to_string(i);
 
     stmt.bindUint64(":ARCHIVE_REQUEST_ID" + idx, row.reqId);

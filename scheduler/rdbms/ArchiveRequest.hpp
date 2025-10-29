@@ -35,7 +35,7 @@ class ArchiveRequest {
 public:
   ArchiveRequest(rdbms::Conn& conn, log::LogContext& lc) : m_conn(conn), m_lc(lc) {}
 
-  postgres::ArchiveJobQueueRow makeJobRow(const postgres::ArchiveQueueJob &archiveJob) const;
+  std::unique_ptr<postgres::ArchiveJobQueueRow> makeJobRow(const postgres::ArchiveQueueJob &archiveJob) const;
   void insert();
   [[noreturn]] void update() const;
 
@@ -55,7 +55,8 @@ public:
               std::string_view tapepool,
               uint16_t maxRetriesWithinMount,
               uint16_t maxTotalRetries,
-              uint16_t maxReportRetries);
+              uint16_t maxReportRetries,
+              uint64_t archiveRequestId);
 
   /*
    * Set the archive file of this archive request to the file object provided

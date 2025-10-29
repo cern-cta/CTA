@@ -67,7 +67,7 @@ public:
   void setIsVerifyOnly(bool isVerifyOnly);
   void setFailed() const;
 
-  cta::schedulerdb::postgres::RetrieveJobQueueRow makeJobRow() const;
+  std::unique_ptr<postgres::RetrieveJobQueueRow> makeJobRow() const;
   /* OStoreDB compatibility function returning a request ID as string
    *
    * 'bogus' string is returned by getIdStr() and passed to EOS as Archive Request ID

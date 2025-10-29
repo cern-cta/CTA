@@ -19,73 +19,72 @@
 
 namespace cta::schedulerdb {
 
-
-cta::schedulerdb::postgres::RetrieveJobQueueRow
+std::unique_ptr<postgres::RetrieveJobQueueRow>
 RetrieveRequest::makeJobRow() const {
-  cta::schedulerdb::postgres::RetrieveJobQueueRow rjr;
-  rjr.retrieveRequestId = cta::schedulerdb::postgres::RetrieveJobQueueRow::getNextRetrieveRequestID(m_conn);
-  rjr.repackRequestId = m_repackInfo.repackRequestId;
-  rjr.reqJobCount = m_jobs.size();
+  auto rjr = std::make_unique<postgres::RetrieveJobQueueRow>();
+  rjr->retrieveRequestId = cta::schedulerdb::postgres::RetrieveJobQueueRow::getNextRetrieveRequestID(m_conn);
+  rjr->repackRequestId = m_repackInfo.repackRequestId;
+  rjr->reqJobCount = m_jobs.size();
 
   // rdbms request members
-  rjr.diskSystemName = m_diskSystemName;
-  rjr.requesterName = m_schedRetrieveReq.requester.name;
-  rjr.requesterGroup = m_schedRetrieveReq.requester.group;
-  rjr.dstURL = m_schedRetrieveReq.dstURL;
-  rjr.retrieveReportURL = m_schedRetrieveReq.retrieveReportURL;
-  rjr.retrieveErrorReportURL = m_schedRetrieveReq.errorReportURL;
-  rjr.isVerifyOnly = m_isVerifyOnly;
-  rjr.srrUsername = m_schedRetrieveReq.creationLog.username;
-  rjr.srrHost = m_schedRetrieveReq.creationLog.host;
-  rjr.srrTime = m_schedRetrieveReq.creationLog.time;
-  rjr.lifecycleTimings_creation_time = m_schedRetrieveReq.lifecycleTimings.creation_time;
-  rjr.lifecycleTimings_first_selected_time = m_schedRetrieveReq.lifecycleTimings.first_selected_time;
-  rjr.lifecycleTimings_completed_time = m_schedRetrieveReq.lifecycleTimings.completed_time;
-  rjr.activity = m_activity;
+  rjr->diskSystemName = m_diskSystemName;
+  rjr->requesterName = m_schedRetrieveReq.requester.name;
+  rjr->requesterGroup = m_schedRetrieveReq.requester.group;
+  rjr->dstURL = m_schedRetrieveReq.dstURL;
+  rjr->retrieveReportURL = m_schedRetrieveReq.retrieveReportURL;
+  rjr->retrieveErrorReportURL = m_schedRetrieveReq.errorReportURL;
+  rjr->isVerifyOnly = m_isVerifyOnly;
+  rjr->srrUsername = m_schedRetrieveReq.creationLog.username;
+  rjr->srrHost = m_schedRetrieveReq.creationLog.host;
+  rjr->srrTime = m_schedRetrieveReq.creationLog.time;
+  rjr->lifecycleTimings_creation_time = m_schedRetrieveReq.lifecycleTimings.creation_time;
+  rjr->lifecycleTimings_first_selected_time = m_schedRetrieveReq.lifecycleTimings.first_selected_time;
+  rjr->lifecycleTimings_completed_time = m_schedRetrieveReq.lifecycleTimings.completed_time;
+  rjr->activity = m_activity;
 
-  rjr.copyNb = m_actCopyNb;
-  rjr.status = RetrieveJobStatus::RJS_ToTransfer;
-  rjr.vid = m_vid;
-  rjr.fSeq = m_fSeq;
-  rjr.blockId = m_blockId;
-  rjr.mountPolicy = m_mountPolicyName;
-  rjr.priority = m_priority;
-  rjr.minRetrieveRequestAge = m_retrieveMinReqAge;
+  rjr->copyNb = m_actCopyNb;
+  rjr->status = RetrieveJobStatus::RJS_ToTransfer;
+  rjr->vid = m_vid;
+  rjr->fSeq = m_fSeq;
+  rjr->blockId = m_blockId;
+  rjr->mountPolicy = m_mountPolicyName;
+  rjr->priority = m_priority;
+  rjr->minRetrieveRequestAge = m_retrieveMinReqAge;
 
-  rjr.archiveFileID = m_archiveFile.archiveFileID;
-  rjr.diskFileId = m_archiveFile.diskFileId;
-  rjr.diskInstance = m_archiveFile.diskInstance;
-  rjr.fileSize = m_archiveFile.fileSize;
-  rjr.storageClass = m_archiveFile.storageClass;
-  rjr.diskFileInfoPath = m_archiveFile.diskFileInfo.path;
-  rjr.diskFileInfoOwnerUid = m_archiveFile.diskFileInfo.owner_uid;
-  rjr.diskFileInfoGid = m_archiveFile.diskFileInfo.gid;
-  rjr.checksumBlob = m_archiveFile.checksumBlob;
-  rjr.startTime = time(nullptr);
+  rjr->archiveFileID = m_archiveFile.archiveFileID;
+  rjr->diskFileId = m_archiveFile.diskFileId;
+  rjr->diskInstance = m_archiveFile.diskInstance;
+  rjr->fileSize = m_archiveFile.fileSize;
+  rjr->storageClass = m_archiveFile.storageClass;
+  rjr->diskFileInfoPath = m_archiveFile.diskFileInfo.path;
+  rjr->diskFileInfoOwnerUid = m_archiveFile.diskFileInfo.owner_uid;
+  rjr->diskFileInfoGid = m_archiveFile.diskFileInfo.gid;
+  rjr->checksumBlob = m_archiveFile.checksumBlob;
+  rjr->startTime = time(nullptr);
 
   // Populate alternates from jobs
   int i = 0;
   for (const auto &rj : m_jobs) {
-    rjr.alternateVids     += rj.vid + ",";
-    rjr.alternateCopyNbs  += std::to_string(rj.copyNb) + ",";
-    rjr.alternateFSeq     += std::to_string(rj.fSeq) + ",";
-    rjr.alternateBlockId  += std::to_string(rj.blockId) + ",";
+    rjr->alternateVids     += rj.vid + ",";
+    rjr->alternateCopyNbs  += std::to_string(rj.copyNb) + ",";
+    rjr->alternateFSeq     += std::to_string(rj.fSeq) + ",";
+    rjr->alternateBlockId  += std::to_string(rj.blockId) + ",";
 
     if (i++ == 0) {
-      rjr.retriesWithinMount   = rj.retriesWithinMount;
-      rjr.maxRetriesWithinMount = rj.maxRetriesWithinMount;
-      rjr.maxReportRetries     = rj.maxReportRetries;
-      rjr.totalRetries         = rj.totalRetries;
-      rjr.totalReportRetries   = rj.totalReportRetries;
-      rjr.lastMountWithFailure = rj.lastMountWithFailure;
-      rjr.maxTotalRetries      = rj.maxTotalRetries;
+      rjr->retriesWithinMount   = rj.retriesWithinMount;
+      rjr->maxRetriesWithinMount = rj.maxRetriesWithinMount;
+      rjr->maxReportRetries     = rj.maxReportRetries;
+      rjr->totalRetries         = rj.totalRetries;
+      rjr->totalReportRetries   = rj.totalReportRetries;
+      rjr->lastMountWithFailure = rj.lastMountWithFailure;
+      rjr->maxTotalRetries      = rj.maxTotalRetries;
     }
   }
 
-  if (!rjr.alternateVids.empty())        rjr.alternateVids.pop_back();
-  if (!rjr.alternateCopyNbs.empty())     rjr.alternateCopyNbs.pop_back();
-  if (!rjr.alternateFSeq.empty())        rjr.alternateFSeq.pop_back();
-  if (!rjr.alternateBlockId.empty())     rjr.alternateBlockId.pop_back();
+  if (!rjr->alternateVids.empty())        rjr->alternateVids.pop_back();
+  if (!rjr->alternateCopyNbs.empty())     rjr->alternateCopyNbs.pop_back();
+  if (!rjr->alternateFSeq.empty())        rjr->alternateFSeq.pop_back();
+  if (!rjr->alternateBlockId.empty())     rjr->alternateBlockId.pop_back();
 
   // For any additional copies that will need to be archive for repack,
   // we need to record the additional requested copyNbs
@@ -105,13 +104,13 @@ RetrieveRequest::makeJobRow() const {
       .add("tapePoolsForReparchiveCopyNbsString", tapePoolsForReparchiveCopyNbsString)
       .log(log::DEBUG, "In RetrieveRequest::insert(): copyNbsToRearchiveString check.");
   if (!copyNbsToRearchiveString.empty()){
-    rjr.rearchiveCopyNbs = copyNbsToRearchiveString;
+    rjr->rearchiveCopyNbs = copyNbsToRearchiveString;
   }
   if (!tapePoolsForReparchiveCopyNbsString.empty()){
-    rjr.rearchiveTapePools = tapePoolsForReparchiveCopyNbsString;
+    rjr->rearchiveTapePools = tapePoolsForReparchiveCopyNbsString;
   }
-  rjr.srrMountPolicy = "?";
-  rjr.srrActivity    = m_schedRetrieveReq.activity.value_or("?");
+  rjr->srrMountPolicy = "?";
+  rjr->srrActivity    = m_schedRetrieveReq.activity.value_or("?");
 
   return rjr;
 }
@@ -119,10 +118,10 @@ RetrieveRequest::makeJobRow() const {
 // Inserts one row into DB
 void RetrieveRequest::insert() {
   try{
-    cta::schedulerdb::postgres::RetrieveJobQueueRow row = makeJobRow();
+    auto row = makeJobRow();
     log::ScopedParamContainer params(m_lc);
-    row.addParamsToLogContext(params);
-    row.insert(m_conn);
+    row->addParamsToLogContext(params);
+    row->insert(m_conn);
     m_lc.log(log::INFO, "In RetrieveRequest::insert(): added jobs to queue.");
   } catch (exception::Exception& ex) {
     log::ScopedParamContainer params(m_lc);

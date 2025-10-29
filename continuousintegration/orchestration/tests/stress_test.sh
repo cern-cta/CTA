@@ -101,6 +101,7 @@ echo " Archiving ${NB_FILES} files of ${FILE_SIZE_KB}kB each"
 echo " Archiving files: xrdcp as user1"
 echo " Retrieving them as poweruser1"
 kubectl -n ${NAMESPACE} cp client_stress_ar.sh ${CLIENT_POD}:/root/client_stress_ar.sh -c client
+kubectl -n ${NAMESPACE} cp client_stress_repack.sh ${CLIENT_POD}:/root/client_stress_repack.sh -c client
 
 EXTRA_TEST_OPTIONS=""
 if [[ $PREQUEUE == 1 ]]; then
@@ -112,5 +113,11 @@ kubectl -n ${NAMESPACE} exec ${CLIENT_POD} -c client -- bash /root/client_stress
 #kubectl -n ${NAMESPACE} exec client -- bash /root/client_stress_ar.sh -A -N ${NB_DIRS} -n ${NB_FILES} -s ${FILE_SIZE_KB} -p ${NB_PROCS} -e ctaeos -d /eos/ctaeos/preprod -v || exit 1
 
 #kubectl -n ${NAMESPACE} exec ${EOS_MGM_POD} -c eos-mgm -- bash /root/grep_xrdlog_mgm_for_error.sh || exit 1
+
+# test repack for postgres scheduler only
+if [[ $PREQUEUE == 1 ]]; then
+  kubectl -n ${NAMESPACE} exec ${CLIENT_POD} -c client -- bash /root/client_stress_repack.sh -f ${NAMESPACE} -N ${NB_DIRS} -n ${NB_FILES} -s ${FILE_SIZE_KB} -p ${NB_PROCS} -e ctaeos -d /eos/ctaeos/preprod ${EXTRA_TEST_OPTIONS} || exit 1
+fi
+
 
 exit 0

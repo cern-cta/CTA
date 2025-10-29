@@ -111,8 +111,8 @@ namespace cta::schedulerdb {
     auto subReqItor = repackSubrequests.begin();
     while (subReqItor != repackSubrequests.end()) {
       uint64_t nbSubReqProcessed = 0;
-      std::vector <cta::schedulerdb::postgres::RetrieveJobQueueRow> rrRowBatchToTransfer;
-      std::vector <cta::schedulerdb::postgres::RetrieveJobQueueRow> rrRowBatchNoRecall;
+      std::vector <std::unique_ptr<postgres::RetrieveJobQueueRow>> rrRowBatchToTransfer;
+      std::vector <std::unique_ptr<postgres::RetrieveJobQueueRow>> rrRowBatchNoRecall;
       while (subReqItor != repackSubrequests.end() && nbSubReqProcessed < 500) {
         auto &rsr = *subReqItor;
 
@@ -269,16 +269,16 @@ namespace cta::schedulerdb {
               rr.setJobStatus(activeCopyNumber, RetrieveJobStatus::RJS_ToReportToRepackForSuccess);
               rrRowBatchNoRecall.emplace_back(rr.makeJobRow());
               log::ScopedParamContainer(m_lc)
-                      .add("rearchiveCopyNbs", rrRowBatchNoRecall.back().rearchiveCopyNbs)
+                      .add("rearchiveCopyNbs", rrRowBatchNoRecall.back()->rearchiveCopyNbs)
                       .log(log::DEBUG,
                      "In RepackRequest::addSubrequestsAndUpdateStats(): rrRowBatchNoRecall.back().rearchiveCopyNbs.");
             } else {
               rr.setJobStatus(activeCopyNumber, RetrieveJobStatus::RJS_ToTransfer);
               rrRowBatchToTransfer.emplace_back(rr.makeJobRow());
               log::ScopedParamContainer(m_lc)
-                      .add("rearchiveCopyNbs back", rrRowBatchToTransfer.back().rearchiveCopyNbs)
+                      .add("rearchiveCopyNbs back", rrRowBatchToTransfer.back()->rearchiveCopyNbs)
                       .log(log::DEBUG,
-                     "In RepackRequest::addSubrequestsAndUpdateStats(): rrRowBatchToTransfer.back().rearchiveCopyNbs.");
+                     "In RepackRequest::addSubrequestsAndUpdateStats(): rrRowBatchToTransfer->back().rearchiveCopyNbs.");
             }
           } catch (exception::Exception &ex) {
             failedCreationStats.files++;
@@ -310,8 +310,8 @@ namespace cta::schedulerdb {
           // all these failed rows should be counted as not created
           for (auto &row: rrRowBatchToTransfer) {
             failedCreationStats.files++;
-            failedCreationStats.bytes += row.fileSize;
-            failedArchiveReq += srmap[row.fSeq]->archiveCopyNbsSet.size();
+            failedCreationStats.bytes += row->fileSize;
+            failedArchiveReq += srmap[row->fSeq]->archiveCopyNbsSet.size();
           }
         }
       }
@@ -333,8 +333,8 @@ namespace cta::schedulerdb {
           conn.rollback();
           for (auto &row: rrRowBatchNoRecall) {
             failedCreationStats.files++;
-            failedCreationStats.bytes += row.fileSize;
-            failedArchiveReq += srmap[row.fSeq]->archiveCopyNbsSet.size();
+            failedCreationStats.bytes += row->fileSize;
+            failedArchiveReq += srmap[row->fSeq]->archiveCopyNbsSet.size();
           }
         }
       }
