@@ -542,7 +542,7 @@ public:
   }
 
 static void insertBatch(rdbms::Conn &conn,
-                       const std::vector<RetrieveJobQueueRow> &rows,
+                       const std::vector<std::unique_ptr<RetrieveJobQueueRow>> &rows,
                        bool isRepack) {
   if (rows.empty()) return;
 
@@ -551,9 +551,9 @@ static void insertBatch(rdbms::Conn &conn,
   bool hasActivity = false;
   bool hasSrrActivity = false;
   for (const auto &row : rows) {
-    if (row.diskSystemName.has_value()) hasDiskSystemName = true;
-    if (row.activity.has_value()) hasActivity = true;
-    if (!row.srrActivity.empty()) hasSrrActivity = true;
+    if (row->diskSystemName.has_value()) hasDiskSystemName = true;
+    if (row->activity.has_value()) hasActivity = true;
+    if (!row->srrActivity.empty()) hasSrrActivity = true;
   }
 
   std::string prefix = isRepack ? "REPACK_" : "";
@@ -678,7 +678,7 @@ static void insertBatch(rdbms::Conn &conn,
 
   // Bind values for each row with distinct names
   for (size_t i = 0; i < rows.size(); ++i) {
-    const auto &row = rows[i];
+    const auto &row = *rows[i];
     stmt.bindUint64(":RETRIEVE_REQUEST_ID" + std::to_string(i), row.retrieveRequestId);
     stmt.bindUint64(":REPACK_REQUEST_ID" + std::to_string(i), row.repackRequestId);
     stmt.bindUint32(":REQUEST_JOB_COUNT" + std::to_string(i), row.reqJobCount);
