@@ -28,14 +28,14 @@ public:
    CtaAdminParsedCmd(int argc, const char *const *const argv);
 
    // Static methods to format streaming responses
-   static bool isJson() { return is_json; }
+   static bool isJson() { return is_json || is_json_lines ; }
    static std::string jsonDelim() {
-      std::string c = split_by_newline ? (is_first_record ? "" : "\n") : (is_first_record ? "[" : ",");
+      std::string c = is_json_lines ? (is_first_record ? "" : "\n") : (is_first_record ? "[" : ",");
       is_first_record = false;
       return c;
    }
    static std::string jsonCloseDelim() {
-      return split_by_newline ? "\n" : (is_first_record ? "[]\n" : "]\n");
+      return is_json_lines ? (is_first_record ? "" : "\n") : (is_first_record ? "[]\n" : "]\n");
    }
 
    //! Throw an exception with usage help
@@ -66,7 +66,7 @@ private:
       XROOTD_SSI_PROTOBUF_INTERFACE_VERSION;
    
    static std::atomic<bool> is_json;                                  //!< Display results in JSON format
-   static std::atomic<bool> split_by_newline;                          //!< Display results in JSON format, one JSON per entry/line
+   static std::atomic<bool> is_json_lines;                            //!< Display results in JSON Lines format
    static std::atomic<bool> is_first_record;                          //!< Delimiter for JSON records
 
    std::optional<std::string> m_config;                               //!< User defined config file

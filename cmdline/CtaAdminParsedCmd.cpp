@@ -31,7 +31,7 @@ const std::filesystem::path DEFAULT_CLI_CONFIG = "/etc/cta/cta-cli.conf";
 namespace cta::admin {
 
 std::atomic<bool> CtaAdminParsedCmd::is_json(false);
-std::atomic<bool> CtaAdminParsedCmd::split_by_newline(false);
+std::atomic<bool> CtaAdminParsedCmd::is_json_lines(false);
 std::atomic<bool> CtaAdminParsedCmd::is_first_record(true);
 
 CtaAdminParsedCmd::CtaAdminParsedCmd(int argc, const char* const* const argv) : m_execname(argv[0]) {
@@ -64,9 +64,14 @@ CtaAdminParsedCmd::CtaAdminParsedCmd(int argc, const char* const* const argv) : 
     ++argno;
   }
 
-  if (argc > argno && std::string(argv[argno]) == "-n") {
-    split_by_newline = true;
+  if (argc > argno && std::string(argv[argno]) == "--jsonl") {
+    is_json_lines = true;
     ++argno;
+  }
+
+  if (is_json && is_json_lines) {
+    // Only allow one of these
+    throwUsage();
   }
 
   if (argc > argno && std::string(argv[argno]) == "--config") {
@@ -279,7 +284,7 @@ void CtaAdminParsedCmd::readListFromFile(cta::admin::OptionStrList& str_list, co
 
 void CtaAdminParsedCmd::throwUsage(const std::string& error_txt) const {
   std::stringstream help;
-  const auto& admincmd = m_request.admincmd().cmd();
+  const auto& admincmd = m_request.admincmd().cmd();git
 
   if (error_txt != "") {
     help << error_txt << std::endl;
@@ -288,10 +293,11 @@ void CtaAdminParsedCmd::throwUsage(const std::string& error_txt) const {
   if (admincmd == AdminCmd::CMD_NONE) {  // clang-format off
    // Command has not been set: show generic help
    help << "CTA Administration Tool" << std::endl << std::endl
-        << "Usage: " << m_execname << " [--json [-n]] [--config <configpath>] <command> [<subcommand> [<option>...]]" << std::endl
+        << "Usage: " << m_execname << " [--json|--jsonl] [--config <configpath>] <command> [<subcommand> [<option>...]]" << std::endl
         << "       " << m_execname << " <command> help" << std::endl << std::endl
-        << "By default, the output is in tabular format. If the --json option is supplied, the output is a JSON array." << std::endl
-        << "If, in addition to --json, -n is supplied, the output is a series of JSON objects, one per line." << std::endl
+        << "By default, the output is in tabular format." << std::endl
+        << "If the --json option is used, the output is a JSON array." << std::endl
+        << "If, instead, the --jsonl option is used, the output is in JSON Lines format." << std::endl << std::endl
         << "Commands have a long and short version. Subcommands (add/ch/ls/rm/etc.) do not have short versions. For" << std::endl
         << "detailed help on the options of each subcommand, type: " << m_execname << " <command> help" << std::endl << std::endl;
     //clang-format off
