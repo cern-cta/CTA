@@ -20,6 +20,7 @@ EOS_MGM_HOST="ctaeos"
 EOS_INSTANCE_NAME="ctaeos"
 #default Repack timeout
 WAIT_FOR_REPACK_TIMEOUT=300
+DEBUG=0
 
 REPORT_DIRECTORY=/var/log
 
@@ -30,7 +31,7 @@ die() {
 }
 
 usage() { cat <<EOF 1>&2
-Usage: $0 -v <vid> -b <bufferURL> -n <mountPolicyName> [-e <eosMgmHost>] [-t <timeout>] [-r <reportDirectory>] [-a] [-m]
+Usage: $0 -v <vid> -b <bufferURL> -n <mountPolicyName> [-e <eosMgmHost>] [-t <timeout>] [-r <reportDirectory>] [-a] [-m] [-d]
 (bufferURL example : /eos/ctaeos/repack)
 mountPolicyName: the name of the mountPolicy to be applied to the repack request (example: ctasystest)
 eosMgmHost : the name of the ctaeos instance to be used (default : $EOS_MGM_HOST)
@@ -38,6 +39,7 @@ timeout : the timeout in seconds to wait for the repack to be done
 reportDirectory : the directory to generate the report of the repack test (default : $REPORT_DIRECTORY)
 -a : Launch a repack just add copies workflow
 -m : Launch a repack just move workflow
+-d : enable debug info
 -p : enable backpressure test
 -u : recall only option flag
 EOF
@@ -62,7 +64,7 @@ then
   usage
 fi;
 
-while getopts "v:f:e:b:t:r:n:ampu" o; do
+while getopts "v:f:e:b:t:r:n:ampud" o; do
   case "${o}" in
     v)
       VID_TO_REPACK=${OPTARG}
@@ -96,6 +98,9 @@ while getopts "v:f:e:b:t:r:n:ampu" o; do
       ;;
     u)
       NO_RECALL=1
+      ;;
+    d)
+      DEBUG=1
       ;;
     *)
       usage
@@ -141,17 +146,19 @@ admin_klist > /dev/null 2>&1 || die "Cannot get kerberos credentials for user ${
 FULL_REPACK_BUFFER_URL=root://${EOS_MGM_HOST}/${REPACK_BUFFER_BASEDIR}
 testRepackBufferURL
 
-echo "---------------------------------------"
-echo "Pre-test debug info:"
-echo "cta-admin tape ls"
-admin_cta --json ta ls --all | jq
-echo "cta-admin tp ls"
-admin_cta --json tp ls | jq
-echo "cta-admin re ls"
-admin_cta --json re ls | jq
-echo "cta-admin sq"
-admin_cta --json sq | jq
-echo "---------------------------------------"
+if [[ $DEBUG -eq 1 ]]; then
+  echo "---------------------------------------"
+  echo "Pre-test debug info:"
+  echo "cta-admin tape ls"
+  admin_cta --json ta ls --all | jq
+  echo "cta-admin tp ls"
+  admin_cta --json tp ls | jq
+  echo "cta-admin re ls"
+  admin_cta --json re ls | jq
+  echo "cta-admin sq"
+  admin_cta --json sq | jq
+  echo "---------------------------------------"
+fi
 
 echo "Deleting existing repack request for VID ${VID_TO_REPACK}"
 admin_cta repack rm --vid ${VID_TO_REPACK}
@@ -319,16 +326,18 @@ echo
 echo "Repack request on VID ${VID_TO_REPACK} succeeded."
 echo
 
-echo "---------------------------------------"
-echo "Post-test debug info:"
-echo "cta-admin tape ls"
-admin_cta --json ta ls --all | jq
-echo "cta-admin tp ls"
-admin_cta --json tp ls | jq
-echo "cta-admin re ls"
-admin_cta --json re ls | jq
-echo "cta-admin sq"
-admin_cta --json sq | jq
-echo "---------------------------------------"
+if [[ $DEBUG -eq 1 ]]; then
+  echo "---------------------------------------"
+  echo "Post-test debug info:"
+  echo "cta-admin tape ls"
+  admin_cta --json ta ls --all | jq
+  echo "cta-admin tp ls"
+  admin_cta --json tp ls | jq
+  echo "cta-admin re ls"
+  admin_cta --json re ls | jq
+  echo "cta-admin sq"
+  admin_cta --json sq | jq
+  echo "---------------------------------------"
+fi
 
 exit 0
