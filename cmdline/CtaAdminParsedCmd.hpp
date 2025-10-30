@@ -28,14 +28,15 @@ public:
    CtaAdminParsedCmd(int argc, const char *const *const argv);
 
    // Static methods to format streaming responses
-   static bool isJson() { return is_json || is_json_lines ; }
+   static bool isJson() { return is_json || is_json_lines; }
+
    static std::string jsonDelim() {
-      std::string c = is_json_lines ? (is_first_record ? "" : "\n") : (is_first_record ? "[" : ",");
-      is_first_record = false;
-      return c;
+     std::string c = is_json_lines ? (is_first_record ? "" : "\n") : (is_first_record ? "[" : ",");
+     is_first_record = false;
+     return c;
    }
    static std::string jsonCloseDelim() {
-      return is_json_lines ? (is_first_record ? "" : "\n") : (is_first_record ? "[]\n" : "]\n");
+     return is_json_lines ? (is_first_record ? "" : "\n") : (is_first_record ? "[]\n" : "]\n");
    }
 
    //! Throw an exception with usage help
