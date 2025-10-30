@@ -111,8 +111,8 @@ CtaAdminGrpcCmd::setupKrb5AuthenticatedAdminCall(std::shared_ptr<grpc::Channel> 
 
 // Implement the send() method here, by wrapping the Admin rpc call
 void CtaAdminGrpcCmd::send(const CtaAdminParsedCmd& parsedCmd,
-                           const cta::common::Config& config,
                            const std::string& config_file) {
+  cta::common::Config config(config_file);
   const auto& request = parsedCmd.getRequest();
   // Validate the Protocol Buffer
   try {
@@ -172,7 +172,6 @@ void CtaAdminGrpcCmd::send(const CtaAdminParsedCmd& parsedCmd,
       lc.log(cta::log::WARNING,
              "Authentication method not specified either in config or with environment variable "
              "CTA_ADMIN_GRPC_AUTH_METHOD, using Kerberos to authenticate!");
-      std::cout << "using kerberos authentication";
       auth_method = "krb5";
     }
   }
@@ -255,11 +254,10 @@ int main(int argc, const char** argv) {
     CtaAdminParsedCmd parsedCmd(argc, argv);
     // get the grpc endpoint from the config? but for now, use
     std::string config_file = parsedCmd.getConfigFilePath();
-    cta::common::Config config(config_file);
 
     CtaAdminGrpcCmd cmd;
     // Send the protocol buffer
-    cmd.send(parsedCmd, config, config_file);
+    cmd.send(parsedCmd, config_file);
 
     // Delete all global objects allocated by libprotobuf
     google::protobuf::ShutdownProtobufLibrary();
