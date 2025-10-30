@@ -80,9 +80,13 @@ add_executable(cta-admin-grpc
   utils.cpp
 )
 
-target_link_libraries(cta-admin-grpc
-  ctacommon stdc++fs ctatapedaemoncommon ctascheduler ctaobjectstore ctacatalogue ctagrpc gssapi_krb5
-)
+if (CTA_USE_PGSCHED)
+  target_link_libraries(cta-admin-grpc
+    ctacommon stdc++fs ctatapedaemoncommon ctascheduler ctacatalogue ctagrpc gssapi_krb5)
+else()
+  target_link_libraries(cta-admin-grpc
+    ctacommon stdc++fs ctatapedaemoncommon ctascheduler ctaobjectstore ctacatalogue ctagrpc gssapi_krb5)
+endif()
 
 set_property (TARGET cta-admin-grpc APPEND PROPERTY INSTALL_RPATH ${PROTOBUF3_RPATH})
 install(TARGETS cta-admin-grpc DESTINATION usr/bin)
