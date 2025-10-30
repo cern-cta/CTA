@@ -31,6 +31,7 @@ const std::filesystem::path DEFAULT_CLI_CONFIG = "/etc/cta/cta-cli.conf";
 namespace cta::admin {
 
 std::atomic<bool> CtaAdminParsedCmd::is_json(false);
+std::atomic<bool> CtaAdminParsedCmd::is_json_lines(false);
 std::atomic<bool> CtaAdminParsedCmd::is_first_record(true);
 
 CtaAdminParsedCmd::CtaAdminParsedCmd(int argc, const char* const* const argv) : m_execname(argv[0]) {
@@ -58,12 +59,22 @@ CtaAdminParsedCmd::CtaAdminParsedCmd(int argc, const char* const* const argv) : 
     throwUsage();
   }
 
-  if (std::string(argv[argno]) == "--json") {
+  if (argc > argno && std::string(argv[argno]) == "--json") {
     is_json = true;
     ++argno;
   }
 
-  if (std::string(argv[argno]) == "--config") {
+  if (argc > argno && std::string(argv[argno]) == "--jsonl") {
+    is_json_lines = true;
+    ++argno;
+  }
+
+  if (is_json && is_json_lines) {
+    // Only allow one of these
+    throwUsage();
+  }
+
+  if (argc > argno && std::string(argv[argno]) == "--config") {
     m_config = argv[++argno];
     ++argno;
   }
@@ -282,9 +293,11 @@ void CtaAdminParsedCmd::throwUsage(const std::string& error_txt) const {
   if (admincmd == AdminCmd::CMD_NONE) {  // clang-format off
    // Command has not been set: show generic help
    help << "CTA Administration Tool" << std::endl << std::endl
-        << "Usage: " << m_execname << " [--json] [--config <configpath>] <command> [<subcommand> [<option>...]]" << std::endl
+        << "Usage: " << m_execname << " [--json|--jsonl] [--config <configpath>] <command> [<subcommand> [<option>...]]" << std::endl
         << "       " << m_execname << " <command> help" << std::endl << std::endl
-        << "By default, the output is in tabular format. If the --json option is supplied, the output is a JSON array." << std::endl
+        << "By default, the output is in tabular format." << std::endl
+        << "If the --json option is used, the output is a JSON array." << std::endl
+        << "If, instead, the --jsonl option is used, the output is in JSON Lines format." << std::endl << std::endl
         << "Commands have a long and short version. Subcommands (add/ch/ls/rm/etc.) do not have short versions. For" << std::endl
         << "detailed help on the options of each subcommand, type: " << m_execname << " <command> help" << std::endl << std::endl;
     //clang-format off
