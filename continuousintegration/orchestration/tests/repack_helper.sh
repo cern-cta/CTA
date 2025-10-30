@@ -56,6 +56,14 @@ getFirstVidContainingFiles() {
   echo $vidToRepack
 }
 
+getVidsContainingFiles() {
+  local limit=${1:-1}  # Default to 1 if no argument passed
+  kubectl -n "${NAMESPACE}" exec "${CTA_CLI_POD}" -c cta-cli -- \
+    cta-admin --json ta ls --all \
+    | jq -r '.[] | select(.occupancy != "0") | select(.lastFseq != "0") | .vid' \
+    | head -n "${limit}"
+}
+
 getNumberOfFilesOnTape() {
   numberOfFiles=$(kubectl -n ${NAMESPACE} exec ${CTA_CLI_POD} -c cta-cli -- cta-admin --json tf ls --vid $1 | jq -r '. | length')
   echo $numberOfFiles
