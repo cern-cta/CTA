@@ -50,6 +50,8 @@ using namespace cta::common;
 using namespace cta::frontend::grpc;
 using cta::frontend::grpc::server::ServiceKerberosAuthProcessor;
 
+constexpr std::string_view defaultPort = "17017";
+
 std::string help =
     "Usage: cta-frontend-grpc [options]\n"
     "\n"
@@ -164,8 +166,7 @@ int main(const int argc, char *const *const argv) {
     if (frontendService->getPort().has_value()) {
       port = frontendService->getPort().value();
     } else {
-      port = "17017";
-      // also set the member value
+      port = defaultPort;
     }
 
     std::string server_address("0.0.0.0:" + port);

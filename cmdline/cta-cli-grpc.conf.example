@@ -9,8 +9,8 @@ cta.endpoint ctafrontend.cern.ch:17017
 # gRPC-specific options
 #
 
-# Enable TLS for gRPC connections. Set to true to use SSL/TLS, false for insecure connections.
-# grpc.tls.enabled false
+# Enable TLS for gRPC connections. Set to true to use SSL/TLS, false for insecure connections. Defaults to true
+# grpc.tls.enabled true
 
 # Path to the CA certificate chain file for TLS connections. Required when grpc.tls.enabled is true.
 # grpc.tls.chain_cert_path /etc/grid-security/certificates/ca-chain.pem

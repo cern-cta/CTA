@@ -133,7 +133,7 @@ void CtaAdminGrpcCmd::send(const CtaAdminParsedCmd& parsedCmd,
     std::cout << "Configuration error: cta.endpoint missing from " + config_file << std::endl;
     throw std::runtime_error("Configuration error: cta.endpoint missing from " + config_file);
   }
-  auto tls = config.getOptionValueBool("grpc.tls.enabled").value_or(false);
+  auto tls = config.getOptionValueBool("grpc.tls.enabled").value_or(true);
   auto caCert = config.getOptionValueStr("grpc.tls.chain_cert_path");
 
   if (tls) {
@@ -155,21 +155,21 @@ void CtaAdminGrpcCmd::send(const CtaAdminParsedCmd& parsedCmd,
   const std::string GSS_SPN = "cta/" + strGrpcHost;
   // Create a channel to the KRB-GSI negotiation service
   std::shared_ptr<::grpc::Channel> spChannelNegotiation {::grpc::CreateChannel(GRPC_SERVER, credentials)};
-  cta::log::FileLogger log(GRPC_SERVER, "cta-admin-grpc", "/var/log/cta-admin-grpc.log", cta::log::DEBUG);
+  cta::log::FileLogger log(GRPC_SERVER, "cta-admin-grpc", "/var/log/cta-admin-grpc.log", cta::log::INFO);
   cta::log::LogContext lc(log);
   std::shared_ptr<::grpc::Channel> spChannel;
 
   // Determine authentication method: env variable overrides config, default to krb5
   std::string auth_method;
   const char* auth_method_env = std::getenv("CTA_ADMIN_GRPC_AUTH_METHOD");
-  if (auth_method_env != NULL) {
+  if (auth_method_env != nullptr) {
     // Environment variable takes precedence
     auth_method = auth_method_env;
   } else {
     // Check config file, default to krb5 if not specified
     auth_method = config.getOptionValueStr("grpc.cta_admin_auth_method").value_or("");
     if (auth_method.empty()) {
-      lc.log(cta::log::WARNING,
+      lc.log(cta::log::DEBUG,
              "Authentication method not specified either in config or with environment variable "
              "CTA_ADMIN_GRPC_AUTH_METHOD, using Kerberos to authenticate!");
       auth_method = "krb5";
@@ -188,10 +188,7 @@ void CtaAdminGrpcCmd::send(const CtaAdminParsedCmd& parsedCmd,
   } else if (auth_method == "krb5") {
     spChannel = setupKrb5AuthenticatedAdminCall(spChannelNegotiation, context, GRPC_SERVER, GSS_SPN, credentials, log);
   } else {
-    // Unrecognized authentication method, fall back to Kerberos
-    lc.log(cta::log::WARNING,
-           "Unrecognized authentication method '" + auth_method + "', using Kerberos!");
-    spChannel = setupKrb5AuthenticatedAdminCall(spChannelNegotiation, context, GRPC_SERVER, GSS_SPN, credentials, log);
+    throw cta::exception::UserError("Unrecognized authentication method '" + auth_method + "' specified");
   }
 
   if (!isStreamCmd(request.admincmd())) {

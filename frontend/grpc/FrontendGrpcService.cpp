@@ -329,8 +329,7 @@ Status CtaRpcImpl::CancelRetrieve(::grpc::ServerContext* context,
   return processGrpcRequest(request, response, lc, clientIdentity.value());
 }
 
-// Admin command should be implemented here
-// this function can throw, maybe it shouldn't??
+
 Status
 CtaRpcImpl::Admin(::grpc::ServerContext* context, const cta::xrd::Request* request, cta::xrd::Response* response) {
   if (!m_frontendService->getenableCtaAdminCommands()) {
