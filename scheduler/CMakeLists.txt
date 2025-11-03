@@ -50,6 +50,7 @@ set (CTA_SCHEDULER_PG_SRC_FILES ${CTA_SCHEDULER_SRC_FILES}
   rdbms/RepackRequest.cpp
   rdbms/RepackReportBatch.cpp
   rdbms/TapeMountDecisionInfo.cpp
+  rdbms/TemporaryPostgresInstance.cpp
   rdbms/postgres/ArchiveJobQueue.cpp
   rdbms/postgres/RetrieveJobQueue.cpp
   rdbms/postgres/RepackRequestTracker.cpp

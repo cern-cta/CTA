@@ -8,6 +8,10 @@
 #include <gtest/gtest.h>
 #include <sqlite3.h>
 
+#ifdef CTA_PGSCHED
+#include "scheduler/rdbms/TemporaryPostgresInstance.hpp"
+#endif
+
 int main(int argc, char** argv) {
   // The unit tests use SQLite it must be initialized before they are run
   if (SQLITE_OK != sqlite3_initialize()) {
@@ -18,6 +22,13 @@ int main(int argc, char** argv) {
   // The following line must be executed to initialize Google Mock
   // (and Google Test) before running the tests.
   ::testing::InitGoogleMock(&argc, argv);
+
+#ifdef CTA_PGSCHED
+  // When using PostgreSQL scheduler, set up a temporary Postgres instance for tests
+  cta::schedulerdb::g_tempPostgresEnv = new cta::schedulerdb::TemporaryPostgresEnvironment();
+  ::testing::AddGlobalTestEnvironment(cta::schedulerdb::g_tempPostgresEnv);
+#endif
+
   const int ret = RUN_ALL_TESTS();
 
   // Close standard in, out and error so that valgrind can be used with the
