@@ -1,3 +1,24 @@
+## 5.11.13.0-1
+
+### New Features
+
+- [taped] Add additional metrics for monitoring cta-taped data transfers (cta/CTA!1068)
+- [frontend] Add OpenTelemetry metric for in-flight frontend requests (cta/CTA!1067)
+- [Tools] Allow cta-admin to print a separate JSON object per record (cta/CTA!1072)
+- [Tools] Add Kerberos support for cta-admin commands (cta/CTA!1047)
+- [Tools] Implement all the cta-admin commands with gRPC (cta/CTA!890)
+
+
+### Changes
+
+- [Misc] Bump OTLP Error log levels down to warnings (cta/CTA!1074)
+
+### Bug Fixes
+
+- [taped] Preserve session ID value during CleaningUp drive status update (cta/CTA!1071)
+- [scheduler] Move generic parts of fetchMountInfo logic to the Scheduler (cta/CTA!1053)
+- [Tools] Do not link cta-admin-grpc with objectstore when using pgsched (cta/CTA!1076)
+
 ## 5.11.12.1-1
 
 ### New Features
