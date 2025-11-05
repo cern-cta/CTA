@@ -1,6 +1,6 @@
 /*
  * @project      The CERN Tape Archive (CTA)
- * @copyright    Copyright © 2021-2022 CERN
+ * @copyright    Copyright © 2021-2025 CERN
  * @license      This program is free software, distributed under the terms of the GNU General Public
  *               Licence version 3 (GPL Version 3), copied verbatim in the file "COPYING". You can
  *               redistribute it and/or modify it under the terms of the GPL Version 3, or (at your
@@ -17,25 +17,17 @@
 
 #pragma once
 
+#include "common/config/Config.hpp"
 #include "common/log/LogContext.hpp"
-#include "disk/DiskReporterFactory.hpp"
-#include "maintenance/IMaintenanceRunner.hpp"
-#include "scheduler/Scheduler.hpp"
 
 namespace cta::maintenance {
 
-
-class DiskReportRunner : public IMaintenanceRunner {
+/**
+ * Responsible for create a RoutineRunner with a specific set of registered routines based on the provided config.
+ */
+class RoutineRunnerFactory {
 public:
-  explicit DiskReportRunner(cta::Scheduler& scheduler, int batchSize, int softTimeout) : m_scheduler(scheduler), m_batchSize(batchSize), m_softTimeout(softTimeout) {}
-  void executeRunner(cta::log::LogContext& lc) final;
-  
-private:
-  cta::Scheduler& m_scheduler;
-  cta::disk::DiskReporterFactory m_reporterFactory;
-
-  int m_batchSize = 500;
-  int m_softTimeout = 30;
+  static std::unique_ptr<RoutineRunner> create(cta::log::LogContext& lc, const cta::common::Config& config);
 };
 
-} // namespace cta::maintenance
+}  // namespace cta::maintenance

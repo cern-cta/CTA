@@ -36,8 +36,8 @@
 #include "catalogue/dummy/DummyTapeCatalogue.hpp"
 #include "common/log/StdoutLogger.hpp"
 #include "objectstore/BackendVFS.hpp"
-#include "QueueCleanupRunner.hpp"
-#include "QueueCleanupRunnerTestUtils.hpp"
+#include "QueueCleanupRoutine.hpp"
+#include "QueueCleanupRoutineTestUtils.hpp"
 #include "scheduler/OStoreDB/OStoreDBFactory.hpp"
 #include "scheduler/Scheduler.hpp"
 
@@ -81,12 +81,12 @@ struct RetrieveRequestSetup {
 /**
  * This structure is used to parameterize OStore database tests.
  */
-struct QueueCleanupRunnerTestParams {
+struct QueueCleanupRoutineTestParams {
   cta::SchedulerDatabaseFactory &dbFactory;
   std::list<RetrieveRequestSetup> &retrieveRequestSetupList;
   std::list<TapeQueueTransition> &tapeQueueTransitionList;
 
-  explicit QueueCleanupRunnerTestParams(
+  explicit QueueCleanupRoutineTestParams(
           cta::SchedulerDatabaseFactory *dbFactory,
           std::list<RetrieveRequestSetup> &retrieveRequestSetupList,
           std::list<TapeQueueTransition> &tapeQueueTransitionList) :
@@ -99,11 +99,11 @@ struct QueueCleanupRunnerTestParams {
  * The OStore database test is a parameterized test.  It takes an
  * OStore database factory as a parameter.
  */
-class QueueCleanupRunnerTest: public
-                              ::testing::TestWithParam<QueueCleanupRunnerTestParams> {
+class QueueCleanupRoutineTest: public
+                              ::testing::TestWithParam<QueueCleanupRoutineTestParams> {
 public:
 
-  QueueCleanupRunnerTest() noexcept {
+  QueueCleanupRoutineTest() noexcept {
   }
 
   class FailedToGetDatabase: public std::exception {
@@ -178,17 +178,17 @@ public:
 
 private:
   // Prevent copying
-  QueueCleanupRunnerTest(const QueueCleanupRunnerTest &) = delete;
+  QueueCleanupRoutineTest(const QueueCleanupRoutineTest &) = delete;
 
   // Prevent assignment
-  QueueCleanupRunnerTest & operator= (const QueueCleanupRunnerTest &) = delete;
+  QueueCleanupRoutineTest & operator= (const QueueCleanupRoutineTest &) = delete;
   std::unique_ptr<cta::objectstore::OStoreDBWrapperInterface> m_db;
   std::unique_ptr<cta::catalogue::Catalogue> m_catalogue;
   std::unique_ptr<cta::Scheduler> m_scheduler;
 };
 
 
-TEST_P(QueueCleanupRunnerTest, CleanupRunnerParameterizedTest) {
+TEST_P(QueueCleanupRoutineTest, CleanupRunnerParameterizedTest) {
   using cta::common::dataStructures::JobQueueType;
   // We will need a log object
 #ifdef STDOUT_LOGGING
@@ -313,8 +313,8 @@ TEST_P(QueueCleanupRunnerTest, CleanupRunnerParameterizedTest) {
 
   // Execute cleanup runner
   {
-    cta::maintenance::QueueCleanupRunner qcr(agentForCleanupRef, oStore, catalogue, 500);
-    qcr.executeRunner(lc); // RUNNER
+    cta::maintenance::QueueCleanupRoutine qcr(lc, agentForCleanupRef, oStore, catalogue, 500);
+    qcr.execute();
   }
 
   // Validate final setup of tapes and corresponding queues, after the cleanup runner has been executed
@@ -481,23 +481,23 @@ std::list<TapeQueueTransition> TestC3_tapeQueueTransitionList {
         { "Tape4", { Tape::ACTIVE,  0, 0 }, { Tape::ACTIVE,     0,  0 } }
 };
 
-INSTANTIATE_TEST_CASE_P(OStoreTestVFS, QueueCleanupRunnerTest,
+INSTANTIATE_TEST_CASE_P(OStoreTestVFS, QueueCleanupRoutineTest,
                         ::testing::Values(
-                                QueueCleanupRunnerTestParams(&OStoreDBFactoryVFS, TestA1_retrieveRequestSetupList, TestA1_tapeQueueTransitionList),
-                                QueueCleanupRunnerTestParams(&OStoreDBFactoryVFS, TestA2_retrieveRequestSetupList, TestA2_tapeQueueTransitionList),
-                                QueueCleanupRunnerTestParams(&OStoreDBFactoryVFS, TestA3_retrieveRequestSetupList, TestA3_tapeQueueTransitionList),
-                                QueueCleanupRunnerTestParams(&OStoreDBFactoryVFS, TestA4_retrieveRequestSetupList, TestA4_tapeQueueTransitionList),
-                                QueueCleanupRunnerTestParams(&OStoreDBFactoryVFS, TestA5_retrieveRequestSetupList, TestA5_tapeQueueTransitionList),
-                                QueueCleanupRunnerTestParams(&OStoreDBFactoryVFS, TestA6_retrieveRequestSetupList, TestA6_tapeQueueTransitionList),
+                                QueueCleanupRoutineTestParams(&OStoreDBFactoryVFS, TestA1_retrieveRequestSetupList, TestA1_tapeQueueTransitionList),
+                                QueueCleanupRoutineTestParams(&OStoreDBFactoryVFS, TestA2_retrieveRequestSetupList, TestA2_tapeQueueTransitionList),
+                                QueueCleanupRoutineTestParams(&OStoreDBFactoryVFS, TestA3_retrieveRequestSetupList, TestA3_tapeQueueTransitionList),
+                                QueueCleanupRoutineTestParams(&OStoreDBFactoryVFS, TestA4_retrieveRequestSetupList, TestA4_tapeQueueTransitionList),
+                                QueueCleanupRoutineTestParams(&OStoreDBFactoryVFS, TestA5_retrieveRequestSetupList, TestA5_tapeQueueTransitionList),
+                                QueueCleanupRoutineTestParams(&OStoreDBFactoryVFS, TestA6_retrieveRequestSetupList, TestA6_tapeQueueTransitionList),
 
-                                QueueCleanupRunnerTestParams(&OStoreDBFactoryVFS, TestB1_retrieveRequestSetupList, TestB1_tapeQueueTransitionList),
-                                QueueCleanupRunnerTestParams(&OStoreDBFactoryVFS, TestB2_retrieveRequestSetupList, TestB2_tapeQueueTransitionList),
-                                QueueCleanupRunnerTestParams(&OStoreDBFactoryVFS, TestB3_retrieveRequestSetupList, TestB3_tapeQueueTransitionList),
-                                QueueCleanupRunnerTestParams(&OStoreDBFactoryVFS, TestB4_retrieveRequestSetupList, TestB4_tapeQueueTransitionList),
+                                QueueCleanupRoutineTestParams(&OStoreDBFactoryVFS, TestB1_retrieveRequestSetupList, TestB1_tapeQueueTransitionList),
+                                QueueCleanupRoutineTestParams(&OStoreDBFactoryVFS, TestB2_retrieveRequestSetupList, TestB2_tapeQueueTransitionList),
+                                QueueCleanupRoutineTestParams(&OStoreDBFactoryVFS, TestB3_retrieveRequestSetupList, TestB3_tapeQueueTransitionList),
+                                QueueCleanupRoutineTestParams(&OStoreDBFactoryVFS, TestB4_retrieveRequestSetupList, TestB4_tapeQueueTransitionList),
 
-                                QueueCleanupRunnerTestParams(&OStoreDBFactoryVFS, TestC1_retrieveRequestSetupList, TestC1_tapeQueueTransitionList),
-                                QueueCleanupRunnerTestParams(&OStoreDBFactoryVFS, TestC2_retrieveRequestSetupList, TestC2_tapeQueueTransitionList),
-                                QueueCleanupRunnerTestParams(&OStoreDBFactoryVFS, TestC3_retrieveRequestSetupList, TestC3_tapeQueueTransitionList)
+                                QueueCleanupRoutineTestParams(&OStoreDBFactoryVFS, TestC1_retrieveRequestSetupList, TestC1_tapeQueueTransitionList),
+                                QueueCleanupRoutineTestParams(&OStoreDBFactoryVFS, TestC2_retrieveRequestSetupList, TestC2_tapeQueueTransitionList),
+                                QueueCleanupRoutineTestParams(&OStoreDBFactoryVFS, TestC3_retrieveRequestSetupList, TestC3_tapeQueueTransitionList)
                                 )
                                 );
 }

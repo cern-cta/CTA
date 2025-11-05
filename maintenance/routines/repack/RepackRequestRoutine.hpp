@@ -18,23 +18,24 @@
 #pragma once
 
 #include "common/log/LogContext.hpp"
-#include "maintenance/IMaintenanceRunner.hpp"
+#include "maintenance/IRoutine.hpp"
 #include "scheduler/Scheduler.hpp"
 
 namespace cta::maintenance {
 
 class Scheduler;
 
-class RepackRequestManager : public IMaintenanceRunner {
+class RepackRequestRoutine : public IRoutine {
 public:
-  explicit RepackRequestManager(cta::Scheduler &scheduler, int rmrtte, int timeout) : m_scheduler(scheduler), m_repackMaxRequestsToToExpand(rmrtte), m_softTimeout(timeout) {}
+  RepackRequestRoutine(cta::log::LogContext &lc, cta::Scheduler &scheduler, int rmrtte, int timeout);
 
-  void executeRunner(cta::log::LogContext &lc) final;
+  void execute() final;
 
 private:
   template<typename GetBatchFunc>
-  void reportBatch(std::string_view reportingType, GetBatchFunc getBatchFunc, cta::log::LogContext &lc) const;
+  void reportBatch(std::string_view reportingType, GetBatchFunc getBatchFunc) const;
 
+  cta::log::LogContext& m_lc;
   cta::Scheduler & m_scheduler;
   int m_repackMaxRequestsToToExpand;
   int m_softTimeout;

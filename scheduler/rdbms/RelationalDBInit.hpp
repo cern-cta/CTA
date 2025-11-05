@@ -25,8 +25,6 @@
 #include "common/exception/Exception.hpp"
 #include "common/log/Logger.hpp"
 #include "common/Timer.hpp"
-#include "maintenance/rdbrunners/QueueCleanupRunner.hpp"
-#include "maintenance/rdbrunners/GarbageCollector.hpp"
 
 namespace cta {
 
@@ -47,14 +45,6 @@ public:
   std::unique_ptr<RelationalDB> getSchedDB(catalogue::Catalogue& catalogue, log::Logger& log) {
     const uint64_t nbConns = 20;
     return std::make_unique<RelationalDB>(clientProc, log, catalogue, login, nbConns);
-  }
-
-  std::unique_ptr<maintenance::RelationalDBGC> getGarbageCollector(catalogue::Catalogue& catalogue) {
-    return std::make_unique<maintenance::RelationalDBGC>(nullptr, catalogue);
-  }
-
-  std::unique_ptr<maintenance::RelationalDBQCR> getQueueCleanupRunner(catalogue::Catalogue& catalogue, RelationalDB& pgs, int batchSize) {
-    return std::make_unique<maintenance::RelationalDBQCR>(catalogue, pgs);
   }
 
 private:

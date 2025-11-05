@@ -8,7 +8,7 @@ EnvironmentFile=-/etc/sysconfig/cta-maintenance
 ExecStart=/usr/bin/cta-maintenance ${CTA_MAINTENANCE_OPTIONS}
 LimitCORE=infinity
 OOMScoreAdjust=-1000
-Restart=no
+Restart=yes
 TimeoutSec=60
 
 [Install]

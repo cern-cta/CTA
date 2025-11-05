@@ -14,10 +14,10 @@
 #               submit itself to any jurisdiction.
 cmake_minimum_required (VERSION 3.17)
 
-add_library(ctarepackrequestrunner 
-    RepackRequestManager.cpp)
+add_library(ctadiskroutines DiskReportRoutine.cpp)
 
-target_link_libraries(ctarepackrequestrunner
-    ctacommon
-    ctascheduler)
+target_link_libraries(ctadiskroutines
+	ctacommon
+	ctadisk
+	ctascheduler)
 

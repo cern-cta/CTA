@@ -32,15 +32,15 @@ cta-maintenance --- CTA Maintenance daemon
 
 # DESCRIPTION
 
-**cta-maintenance** is the daemon responsible for performing housekeeping tasks related to the disk buffer and scheduler. It is composed of different runners that 
+**cta-maintenance** is the daemon responsible for performing housekeeping tasks related to the disk buffer and scheduler. It is composed of different routines that periodically execute.
 
-**Disk Report Runner**
+**Disk Report Routine**
 
-**Queue Cleanup Runner**
+**Queue Cleanup Routine**
 
-**Garbage Collector Runner**
+**Garbage Collector Routine**
 
-**Repack Request Runner**
+**Repack Request Routine**
 
 # OPTIONS
 
