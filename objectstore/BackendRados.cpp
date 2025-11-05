@@ -429,7 +429,7 @@ void BackendRados::lockNotify(const std::string& name, uint64_t timeout_us, Lock
     if (-EBUSY != rc) break;
     // The lock is taken. Start a watch on it immediately. Inspired from the algorithm listed her:
     // https://zookeeper.apache.org/doc/r3.1.2/recipes.html#sc_recipes_Locks
-    LockWatcher watcher(radosCtx, name);
+    LockWatcher watcher(radosCtx, name, m_logger);
     // We need to retry the lock after establishing the watch: it could have been released during that time.
     if (lockType==LockType::Shared) {
       throwOnReturnedErrnoOrThrownStdException([&rc, &radosCtx, &name, &clientId, &tv]() {
