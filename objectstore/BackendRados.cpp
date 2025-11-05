@@ -334,8 +334,8 @@ BackendRados::ScopedLock::~ScopedLock() {
   } catch(const exception::Exception&) { }
 }
 
-BackendRados::LockWatcher::LockWatcher(librados::IoCtx& context, const std::string& name):
-  m_context(context) {
+BackendRados::LockWatcher::LockWatcher(librados::IoCtx& context, const std::string& name, log::Logger & logger):
+  m_context(context), m_logger(logger) {
   m_internal.reset(new Internal);
   m_internal->m_name = name;
   m_internal->m_future = m_internal->m_promise.get_future();
@@ -371,7 +371,10 @@ BackendRados::LockWatcher::~LockWatcher() {
     }, "In BackendRados::LockWatcher::~LockWatcher(): failed m_context.aio_unwatch()");
   } catch (cta::exception::Exception & ex) {
     // If we get an exception in a destructor, we are going to exit anyway, so better halt the process early.
-    cta::utils::segfault();
+    log::LogContext lc(m_logger);
+    lc.log(log::CRIT, "In LockWatcher::~LockWatcher(): error deleting LockWatcher (cta::exception::Exception). Backtrace follows.");
+    lc.logBacktrace(log::INFO, ex.backtrace());
+    ::exit(EXIT_FAILURE);
   }
   completion->release();
 }
@@ -426,7 +429,7 @@ void BackendRados::lockNotify(const std::string& name, uint64_t timeout_us, Lock
     if (-EBUSY != rc) break;
     // The lock is taken. Start a watch on it immediately. Inspired from the algorithm listed her:
     // https://zookeeper.apache.org/doc/r3.1.2/recipes.html#sc_recipes_Locks
-    LockWatcher watcher(radosCtx, name);
+    LockWatcher watcher(radosCtx, name, m_logger);
     // We need to retry the lock after establishing the watch: it could have been released during that time.
     if (lockType==LockType::Shared) {
       throwOnReturnedErrnoOrThrownStdException([&rc, &radosCtx, &name, &clientId, &tv]() {
