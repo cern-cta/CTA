@@ -123,7 +123,7 @@ private:
    */
   class LockWatcher {
   public:
-    LockWatcher(librados::IoCtx & context, const std::string & name);
+    LockWatcher(librados::IoCtx & context, const std::string & name, log::Logger & logger);
     virtual ~LockWatcher();
     typedef std::chrono::microseconds durationUs;
     void wait(const durationUs & timeout);
@@ -147,6 +147,7 @@ private:
     std::unique_ptr<Internal> m_internal;
     librados::IoCtx & m_context;
     uint64_t m_watchHandle;
+    log::Logger& m_logger;
   };
 
 private:

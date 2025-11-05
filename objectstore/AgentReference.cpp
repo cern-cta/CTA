@@ -155,8 +155,7 @@ void AgentReference::queueAndExecuteAction(std::shared_ptr<Action> action, objec
       if (ag.isBeingGarbageCollected()) {
         log::ScopedParamContainer params(lc);
         params.add("agentObject", ag.getAddressIfSet());
-        lc.log(log::CRIT, "In AgentReference::queueAndExecuteAction(): agent object being garbage collected. Exiting (segfault).");
-        cta::utils::segfault();
+        lc.log(log::CRIT, "In AgentReference::queueAndExecuteAction(): agent object being garbage collected. Exiting.");
         ::exit(EXIT_FAILURE);
       }
       bool ownershipModification = false;

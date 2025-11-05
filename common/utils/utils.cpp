@@ -590,13 +590,6 @@ int searchAndReplace(std::string& str, const std::string& search, const std::str
 }
 
 //------------------------------------------------------------------------------
-// segfault
-//------------------------------------------------------------------------------
-void segfault() {
-  *((int*) nullptr) = 0;
-}
-
-//------------------------------------------------------------------------------
 // appendParameterXRootFileURL
 //------------------------------------------------------------------------------
 void appendParameterXRootFileURL(std::string& fileURL, const std::string& parameterName, const std::string& value) {

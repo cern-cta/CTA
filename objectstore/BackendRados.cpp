@@ -334,8 +334,8 @@ BackendRados::ScopedLock::~ScopedLock() {
   } catch(const exception::Exception&) { }
 }
 
-BackendRados::LockWatcher::LockWatcher(librados::IoCtx& context, const std::string& name):
-  m_context(context) {
+BackendRados::LockWatcher::LockWatcher(librados::IoCtx& context, const std::string& name, log::Logger & logger):
+  m_context(context), m_logger(logger) {
   m_internal.reset(new Internal);
   m_internal->m_name = name;
   m_internal->m_future = m_internal->m_promise.get_future();
@@ -371,7 +371,10 @@ BackendRados::LockWatcher::~LockWatcher() {
     }, "In BackendRados::LockWatcher::~LockWatcher(): failed m_context.aio_unwatch()");
   } catch (cta::exception::Exception & ex) {
     // If we get an exception in a destructor, we are going to exit anyway, so better halt the process early.
-    cta::utils::segfault();
+    log::LogContext lc(m_logger);
+    lc.log(log::CRIT, "In LockWatcher::~LockWatcher(): error deleting LockWatcher (cta::exception::Exception). Backtrace follows.");
+    lc.logBacktrace(log::INFO, ex.backtrace());
+    ::exit(EXIT_FAILURE);
   }
   completion->release();
 }
