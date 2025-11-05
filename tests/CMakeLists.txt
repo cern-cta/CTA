@@ -5,9 +5,7 @@ cmake_minimum_required (VERSION 3.17)
 set (CTA_UNIT_TEST_SOURCES unit_tests.cpp)
 if(CTA_USE_PGSCHED)
   set (CTA_UNIT_TEST_SOURCES ${CTA_UNIT_TEST_SOURCES}
-    ${PROJECT_SOURCE_DIR}/scheduler/rdbms/TemporaryPostgresInstance.cpp
-    ${CMAKE_BINARY_DIR}/scheduler/rdbms/schema/PostgresSchedulerSchema.cpp
-    ${PROJECT_SOURCE_DIR}/scheduler/rdbms/schema/SchedulerSchema.cpp)
+    ${PROJECT_SOURCE_DIR}/scheduler/rdbms/TemporaryPostgresInstance.cpp)
 endif()
 
 add_executable(cta-unitTests ${CTA_UNIT_TEST_SOURCES})
@@ -17,6 +15,7 @@ add_executable(cta-unitTests ${CTA_UNIT_TEST_SOURCES})
 # link with TemporaryPostgresInstance if the pg scheduler is requested
 if(CTA_USE_PGSCHED)
   set (CTA_UNIT_TEST_LIBS ${CTA_UNIT_TEST_LIBS}
+    ctaschedulerschema
     ctaobjectstore
     ctaobjectstoreunittests)
 endif()
