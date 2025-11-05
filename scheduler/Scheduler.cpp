@@ -872,6 +872,7 @@ void Scheduler::expandRepackRequest(const std::unique_ptr<RepackRequest>& repack
 
   log::ScopedParamContainer params(lc);
   params.add("tapeVid", repackInfo.vid);
+  params.add("nbRetrieveSubrequestsQueued", nbRetrieveSubrequestsQueued);
   timingList.addToLog(params);
 
   if (archiveFilesFromCatalogue.empty() && totalStatsFile.totalFilesToArchive == 0 &&

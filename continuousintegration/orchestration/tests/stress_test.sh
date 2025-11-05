@@ -119,6 +119,27 @@ kubectl -n ${NAMESPACE} cp repack_systemtest.sh ${CLIENT_POD}:/root/repack_syste
 REPACK_BUFFER_URL=/eos/ctaeos/repack
 BASE_REPORT_DIRECTORY=/var/log
 
+modifyTapeState() {
+  reason="${3:-Testing}"
+  kubectl -n ${NAMESPACE} exec ${CTA_CLI_POD} -c cta-cli -- cta-admin tape ch --state $2 --reason "$reason" --vid $1
+}
+
+modifyTapeStateAndWait() {
+  WAIT_FOR_EMPTY_QUEUE_TIMEOUT=60
+  SECONDS_PASSED=0
+  modifyTapeState $1 $2 $3
+  echo "Waiting for tape $1 to complete transitioning to $2"
+  while test 0 == `kubectl -n ${NAMESPACE} exec ${CTA_CLI_POD} -c cta-cli -- cta-admin --json tape ls --state $2 --vid $1  | jq -r ". [] | select(.vid == \"$1\")" | wc -l`; do
+    sleep 1
+    printf "."
+    let SECONDS_PASSED=SECONDS_PASSED+1
+    if test ${SECONDS_PASSED} == ${WAIT_FOR_EMPTY_QUEUE_TIMEOUT}; then
+      echo "Timed out after ${WAIT_FOR_EMPTY_QUEUE_TIMEOUT} seconds waiting for tape $1 to transition to state $2. Test failed."
+      exit 1
+    fi
+  done
+}
+
 repackMoveAndAddCopies() {
   echo
   echo "*******************************************************"
@@ -193,7 +214,7 @@ repackMoveAndAddCopies() {
       kubectl -n ${NAMESPACE} exec ${EOS_MGM_POD} -c eos-mgm -- eos ls -la /eos/ctaeos/repack/${VID_TO_REPACK}
 
       echo "Marking the tape ${VID_TO_REPACK} as REPACKING"
-      modifyTapeStateAndWait ${VID_TO_REPACK} REPACKING
+      modifyTapeStateAndWait ${VID_TO_REPACK} REPACKING "MarkingTapeRepacking"
       echo "Launching the repack \"Move and add copies\" test on VID ${VID_TO_REPACK}"
       kubectl -n ${NAMESPACE} exec ${CLIENT_POD} -c client -- bash /root/repack_systemtest.sh -v ${VID_TO_REPACK} -b ${REPACK_BUFFER_URL} -t 300 -r ${BASE_REPORT_DIRECTORY}/RepackMoveAndAddCopies -n repack_ctasystest  || exit 1
 
