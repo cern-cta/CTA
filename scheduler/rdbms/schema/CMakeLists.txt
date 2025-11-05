@@ -21,17 +21,22 @@ add_custom_command(OUTPUT PostgresSchedulerSchema.cpp
   COMMAND sed -e '/CTA_SQL_SCHEMA/r postgres_scheduler_schema.cpp' ${CMAKE_CURRENT_SOURCE_DIR}/PostgresSchedulerSchema.before_SQL.cpp > PostgresSchedulerSchema.cpp
   DEPENDS ${CMAKE_CURRENT_SOURCE_DIR}/PostgresSchedulerSchema.before_SQL.cpp postgres_scheduler_schema.cpp)
 
+# Create a library for the schema sources so they can be reused
+add_library(ctaschedulerschema
+  PostgresSchedulerSchema.cpp
+  SchedulerSchema.cpp
+)
+target_link_libraries(ctaschedulerschema ctacatalogue)
+
 set (SCHEMA_CREATE_SRC_FILES
   CmdLineTool.cpp
   CreateSchemaCmd.cpp
   CreateSchemaCmdLineArgs.cpp
   CreateSchemaCmdMain.cpp
-  PostgresSchedulerSchema.cpp
-  SchedulerSchema.cpp
 )
 
 add_executable(cta-scheduler-schema-create ${SCHEMA_CREATE_SRC_FILES})
-target_link_libraries (cta-scheduler-schema-create ctacatalogue)
+target_link_libraries (cta-scheduler-schema-create ctaschedulerschema ctacatalogue)
 
 if(CTA_USE_PGSCHED)
   install (TARGETS cta-scheduler-schema-create DESTINATION /usr/bin)
@@ -45,7 +50,7 @@ set (DROP_SCHEMA_CMD
 )
 
 add_executable(cta-scheduler-schema-drop ${DROP_SCHEMA_CMD})
-target_link_libraries (cta-scheduler-schema-drop ctacatalogue)
+target_link_libraries (cta-scheduler-schema-drop ctaschedulerschema ctacatalogue)
 
 if(CTA_USE_PGSCHED)
   install (TARGETS cta-scheduler-schema-drop DESTINATION /usr/bin)
