@@ -329,7 +329,12 @@ private:
   void initializeDatabase() {
     std::cout << "  Initializing database cluster..." << std::endl;
 
-    std::string cmd = m_initdb + " -D " + m_dataDir +
+    // initdb must be run as the postgres user
+    // Change ownership of data directory to postgres user first
+    std::string chownCmd = "chown -R postgres:postgres " + m_dataDir + " 2>/dev/null";
+    system(chownCmd.c_str());
+
+    std::string cmd = "runuser -u postgres -- " + m_initdb + " -D " + m_dataDir +
                       " -U " + m_username +
                       " --no-locale --encoding=UTF8" +
                       " -A trust" +  // Trust authentication for localhost
@@ -381,7 +386,8 @@ private:
   void startPostgres() {
     std::cout << "  Starting PostgreSQL on port " << m_port << "..." << std::endl;
 
-    std::string cmd = m_pgCtl + " -D " + m_dataDir +
+    // PostgreSQL must be started as the postgres user
+    std::string cmd = "runuser -u postgres -- " + m_pgCtl + " -D " + m_dataDir +
                       " -o \"-p " + std::to_string(m_port) + "\"" +
                       " -l " + m_logFile +
                       " start >/dev/null 2>&1";
@@ -407,7 +413,8 @@ private:
 
     const int maxAttempts = 30;
     for (int i = 0; i < maxAttempts; ++i) {
-      std::string checkCmd = m_psql + " -h localhost -p " +
+      // Run psql as postgres user
+      std::string checkCmd = "runuser -u postgres -- " + m_psql + " -h localhost -p " +
                              std::to_string(m_port) +
                              " -U " + m_username +
                              " -d postgres -c 'SELECT 1;' >/dev/null 2>&1";
@@ -436,7 +443,8 @@ private:
    * Create test database
    */
   void createTestDatabase() {
-    std::string cmd = m_psql + " -h localhost -p " +
+    // Run psql as postgres user to create database
+    std::string cmd = "runuser -u postgres -- " + m_psql + " -h localhost -p " +
                       std::to_string(m_port) +
                       " -U " + m_username +
                       " -d postgres -c 'CREATE DATABASE " + m_database + ";' " +
@@ -460,7 +468,8 @@ private:
       return;  // Never started
     }
 
-    std::string cmd = m_pgCtl + " -D " + m_dataDir +
+    // Stop PostgreSQL as the postgres user
+    std::string cmd = "runuser -u postgres -- " + m_pgCtl + " -D " + m_dataDir +
                       " stop -m fast >/dev/null 2>&1";
 
     system(cmd.c_str());
