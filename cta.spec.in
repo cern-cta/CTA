@@ -83,6 +83,12 @@ BuildRoot: %{_builddir}/%{name}-%{version}-root
 
 %{?systemd_requires}
 BuildRequires: systemd
+
+# PostgreSQL server binaries needed for unit tests when using pgsched
+%if "%{schedOpt}" == "-DCTA_USE_PGSCHED:Bool=TRUE"
+BuildRequires: postgresql-server
+%endif
+
 # only build debug info if you're building the whole code
 
 %description
