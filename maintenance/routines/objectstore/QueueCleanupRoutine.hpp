@@ -19,7 +19,7 @@
 
 #include "catalogue/Catalogue.hpp"
 #include "common/Timer.hpp"
-#include "maintenance/IMaintenanceRunner.hpp"
+#include "maintenance/IRoutine.hpp"
 #include "objectstore/Agent.hpp"
 #include "objectstore/AgentRegister.hpp"
 #include "objectstore/AgentWatchdog.hpp"
@@ -27,8 +27,8 @@
 #include "objectstore/Sorter.hpp"
 
 /**
- * Plan => Cleanup runner keeps track of queues that need to be emptied
- * If a queue is signaled for cleanup, the cleanup runner should take ownership of it, and move all the requests
+ * Plan => Cleanup routine keeps track of queues that need to be emptied
+ * If a queue is signaled for cleanup, the cleanup routine should take ownership of it, and move all the requests
  * to other queues.
  * If there is no other queue available, the request should be aborted and reported back to the user.
  */
@@ -37,16 +37,17 @@ namespace cta::maintenance {
 
 class RetrieveRequest;
 
-class QueueCleanupRunner : public IMaintenanceRunner {
+class QueueCleanupRoutine : public IRoutine {
 
 public:
-  QueueCleanupRunner(objectstore::AgentReference &agentReference, SchedulerDatabase & oStoreDb, catalogue::Catalogue &catalogue, int batchSize);
+  QueueCleanupRoutine(cta::log::LogContext& lc, objectstore::AgentReference &agentReference, SchedulerDatabase & oStoreDb, catalogue::Catalogue &catalogue, int batchSize);
 
-  ~QueueCleanupRunner() = default;
+  ~QueueCleanupRoutine() = default;
 
-  void executeRunner(cta::log::LogContext &lc) final;
+  void execute() final;
 
 private:
+  cta::log::LogContext& m_lc;
   catalogue::Catalogue &m_catalogue;
   SchedulerDatabase &m_db;
   cta::utils::Timer m_timer;

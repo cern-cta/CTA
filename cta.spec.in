@@ -430,8 +430,8 @@ Unit tests and integration tests with virtual tape drives
 %{_libdir}/libctainmemorystmtunittests.so*
 %if "%{usingObjectstore}" != "0"
 %{_libdir}/libctaobjectstoreunittests.so*
-%{_libdir}/libctaosdbrunners.so*
-%{_libdir}/libctaosdbrunnersunittests.so*
+%{_libdir}/libctaosdbroutines.so*
+%{_libdir}/libctaosdbroutinesunittests.so*
 %endif
 %{_libdir}/libctardbmsunittests.so*
 %{_libdir}/libctardbmswrapperunittests.so*

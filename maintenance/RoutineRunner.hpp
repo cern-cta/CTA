@@ -17,27 +17,38 @@
 
 #pragma once
 
+#include "IRoutine.hpp"
+#include "common/exception/Exception.hpp"
+#include "common/process/SignalHandler.hpp"
 #include "common/log/LogContext.hpp"
 
 namespace cta::maintenance {
 
-class IMaintenanceRunner {
+CTA_GENERATE_EXCEPTION_CLASS(InvalidConfiguration);
+
+/**
+ * Responsible for periodically executing the various routines.
+ */
+class RoutineRunner {
 public:
-  virtual ~IMaintenanceRunner() = default;
+  RoutineRunner(uint32_t sleepInterval);
+
+  ~RoutineRunner() = default;
+
+  void registerRoutine(std::unique_ptr<IRoutine> routine);
 
   /**
-   * Execute the main logic of a runner.
-   *
-   * Different runners can freely implement the work logic and looping (if necessary).
-   * The only compromise from this interface is that the total amount of work
-   * carried out by an execution of the runner should be completed within a fixed
-   * amount of time dictated by the contents of the cta-maintenance service file.
-   * This allows for a graceful termination when SIGTERM is received.
-   *
-   * If a new timeout is put in place that is bigger than any other runner's
-   * timeout, the service file should be updated with the new value.
+   * Periodically executes all registered routines.
+   * After all routines have been executed, it will check if it has received any signals. If so, it will exit the run method.
    */
-  virtual void executeRunner(cta::log::LogContext& lc) = 0;
+  uint32_t run(cta::log::LogContext& lc);
+
+private:
+  std::list<std::unique_ptr<IRoutine>> m_routines;
+
+  std::unique_ptr<cta::SignalHandler> m_signalHandler = std::make_unique<cta::SignalHandler>();
+
+  uint32_t m_sleepInterval;
 };
 
 }  // namespace cta::maintenance

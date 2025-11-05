@@ -31,7 +31,7 @@ set (CTA_UNIT_TEST_LIBS
   ctardbmsunittests
   ctardbmswrapperunittests
   ctaschedulerunittests
-  ctaosdbrunnersunittests
+  ctaosdbroutinesunittests
   ctatapeserverdaemonunittests
   ctatapeserverdriveunittests
   ctatapeserverfileunittests

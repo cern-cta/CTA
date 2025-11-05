@@ -36,13 +36,10 @@
 #include "catalogue/dummy/DummyTapeCatalogue.hpp"
 #include "common/log/StdoutLogger.hpp"
 #include "objectstore/BackendVFS.hpp"
-#include "QueueCleanupRunner.hpp"
-#include "GarbageCollector.hpp"
+#include "QueueCleanupRoutine.hpp"
+#include "QueueCleanupRoutineTestUtils.hpp"
 #include "scheduler/OStoreDB/OStoreDBFactory.hpp"
-#include "scheduler/OStoreDB/OStoreDBWithAgent.hpp"
 #include "scheduler/Scheduler.hpp"
-
-#include "QueueCleanupRunnerTestUtils.hpp"
 
 //#define STDOUT_LOGGING
 
@@ -54,7 +51,8 @@ using Tape = cta::common::dataStructures::Tape;
  * This structure represents the state and number of jobs of a queue at a certain point.
  * It is used to parameterize the tests.
  */
-struct ConcurrentTapeQueueSetup {
+struct TapeQueueSetup {
+  Tape::State state;
   uint32_t retrieveQueueToTransferJobs;
   uint32_t retrieveQueueToReportJobs;
 };
@@ -63,13 +61,10 @@ struct ConcurrentTapeQueueSetup {
  * This structure represents the initial and final setup of a queue.
  * It is used to parameterize the tests.
  */
-struct ConcurrentTapeQueueTransition {
+struct TapeQueueTransition {
   std::string vid;
-  Tape::State initialState; // Initial tape state
-  Tape::State desiredState; // New desired state (`modifyTapeState`)
-  Tape::State expectedState; // Expected state at the end of test
-  ConcurrentTapeQueueSetup initialSetup;
-  ConcurrentTapeQueueSetup finalSetup;
+  TapeQueueSetup initialSetup;
+  TapeQueueSetup finalSetup;
 };
 
 /**
@@ -82,36 +77,33 @@ struct RetrieveRequestSetup {
   std::list<std::string> replicaCopyVids;
 };
 
+
 /**
  * This structure is used to parameterize OStore database tests.
  */
-struct QueueCleanupRunnerConcurrentTestParams {
+struct QueueCleanupRoutineTestParams {
   cta::SchedulerDatabaseFactory &dbFactory;
   std::list<RetrieveRequestSetup> &retrieveRequestSetupList;
-  std::list<ConcurrentTapeQueueTransition> &tapeQueueTransitionList;
-  double cleanupTimeout;
+  std::list<TapeQueueTransition> &tapeQueueTransitionList;
 
-  QueueCleanupRunnerConcurrentTestParams(
-          cta::SchedulerDatabaseFactory &dbFactory,
+  explicit QueueCleanupRoutineTestParams(
+          cta::SchedulerDatabaseFactory *dbFactory,
           std::list<RetrieveRequestSetup> &retrieveRequestSetupList,
-          std::list<ConcurrentTapeQueueTransition> &tapeQueueTransitionList,
-          double cleanupTimeout) :
-          dbFactory(dbFactory),
+          std::list<TapeQueueTransition> &tapeQueueTransitionList) :
+          dbFactory(*dbFactory),
           retrieveRequestSetupList(retrieveRequestSetupList),
-          tapeQueueTransitionList(tapeQueueTransitionList),
-          cleanupTimeout(cleanupTimeout) {
-  }
+          tapeQueueTransitionList(tapeQueueTransitionList) {}
 };
 
 /**
  * The OStore database test is a parameterized test.  It takes an
  * OStore database factory as a parameter.
  */
-class QueueCleanupRunnerConcurrentTest: public
-                              ::testing::TestWithParam<QueueCleanupRunnerConcurrentTestParams> {
+class QueueCleanupRoutineTest: public
+                              ::testing::TestWithParam<QueueCleanupRoutineTestParams> {
 public:
 
-  QueueCleanupRunnerConcurrentTest() noexcept {
+  QueueCleanupRoutineTest() noexcept {
   }
 
   class FailedToGetDatabase: public std::exception {
@@ -141,11 +133,11 @@ public:
     const auto &factory = GetParam().dbFactory;
     m_catalogue = std::make_unique<cta::catalogue::DummyCatalogue>();
     // Get the OStore DB from the factory.
-    auto osDb = factory.create(m_catalogue);
+    auto osdb = factory.create(m_catalogue);
     // Make sure the type of the SchedulerDatabase is correct (it should be an OStoreDBWrapperInterface).
-    dynamic_cast<cta::objectstore::OStoreDBWrapperInterface *> (osDb.get());
+    dynamic_cast<cta::objectstore::OStoreDBWrapperInterface *> (osdb.get());
     // We know the cast will not fail, so we can safely do it (otherwise we could leak memory).
-    m_db.reset(dynamic_cast<cta::objectstore::OStoreDBWrapperInterface *> (osDb.release()));
+    m_db.reset(dynamic_cast<cta::objectstore::OStoreDBWrapperInterface *> (osdb.release()));
     // Setup scheduler
     m_scheduler = std::make_unique<cta::Scheduler>(*m_catalogue, *m_db, "schedulerBackendName");
   }
@@ -182,36 +174,21 @@ public:
     return *ptr;
   }
 
+  Tape::State m_finalTapeState;
+
 private:
   // Prevent copying
-  QueueCleanupRunnerConcurrentTest(const QueueCleanupRunnerConcurrentTest &) = delete;
+  QueueCleanupRoutineTest(const QueueCleanupRoutineTest &) = delete;
 
   // Prevent assignment
-  QueueCleanupRunnerConcurrentTest & operator= (const QueueCleanupRunnerConcurrentTest &) = delete;
+  QueueCleanupRoutineTest & operator= (const QueueCleanupRoutineTest &) = delete;
   std::unique_ptr<cta::objectstore::OStoreDBWrapperInterface> m_db;
   std::unique_ptr<cta::catalogue::Catalogue> m_catalogue;
   std::unique_ptr<cta::Scheduler> m_scheduler;
 };
 
-class OStoreDBWithAgentBroken : public cta::OStoreDBWithAgent {
 
-public:
-  class TriggeredException: public std::exception {
-  public:
-    const char *what() const noexcept override {
-      return "Triggered exception";
-    }
-  };
-
-  using OStoreDBWithAgent::OStoreDBWithAgent;
-  std::list<std::unique_ptr<SchedulerDatabase::RetrieveJob>> getNextRetrieveJobsToTransferBatch(
-          const std::string & vid, uint64_t filesRequested, cta::log::LogContext &logContext) override {
-    throw TriggeredException();
-  }
-};
-
-
-TEST_P(QueueCleanupRunnerConcurrentTest, CleanupRunnerParameterizedTest) {
+TEST_P(QueueCleanupRoutineTest, CleanupRunnerParameterizedTest) {
   using cta::common::dataStructures::JobQueueType;
   // We will need a log object
 #ifdef STDOUT_LOGGING
@@ -223,9 +200,9 @@ TEST_P(QueueCleanupRunnerConcurrentTest, CleanupRunnerParameterizedTest) {
   // We need a dummy catalogue
   cta::catalogue::DummyCatalogue & catalogue = getCatalogue();
   // Object store
-  cta::objectstore::OStoreDBWrapperInterface & oKOStore = getDb();
+  cta::objectstore::OStoreDBWrapperInterface & oStore = getDb();
   // Backend
-  auto & be = dynamic_cast<cta::objectstore::BackendVFS&>(oKOStore.getBackend());
+  auto & be = dynamic_cast<cta::objectstore::BackendVFS&>(oStore.getBackend());
   // Remove this comment to avoid cleaning the object store files on destruction, useful for debugging
   // be.noDeleteOnExit();
   // Scheduler
@@ -241,18 +218,12 @@ TEST_P(QueueCleanupRunnerConcurrentTest, CleanupRunnerParameterizedTest) {
   cta::objectstore::AgentReference agentForCleanupRef("AgentForCleanup", dl);
   cta::objectstore::Agent agentForCleanup(agentForCleanupRef.getAgentAddress(), be);
 
-  //AgentC for popping (for broken OStoreDB)
-  cta::objectstore::AgentReference agentForCleanupFailRef("AgentForCleanupFail", dl);
-  cta::objectstore::Agent agentForCleanupFail(agentForCleanupFailRef.getAgentAddress(), be);
-
-  // Broken object store, pointing to same as `oKOStore`
-  auto brokenOStore = OStoreDBWithAgentBroken(oKOStore.getBackend(), agentForCleanupFailRef, catalogue, dl);
-
   // Create the root entry
   cta::objectstore::EntryLogSerDeser el("user0", "unittesthost", std::chrono::system_clock::to_time_t(std::chrono::system_clock::now()));
   cta::objectstore::RootEntry re(be);
   cta::objectstore::ScopedExclusiveLock rel(re);
   re.fetch();
+  //re.initialize();
 
   // Create the agent register
   re.addOrGetAgentRegisterPointerAndCommit(agentForSetupRef, el, lc);
@@ -263,25 +234,21 @@ TEST_P(QueueCleanupRunnerConcurrentTest, CleanupRunnerParameterizedTest) {
   agentForSetup.insertAndRegisterSelf(lc);
   agentForCleanup.initialize();
   agentForCleanup.insertAndRegisterSelf(lc);
-  agentForCleanupFail.initialize();
-  agentForCleanupFail.setTimeout_us(0);
-  agentForCleanupFail.insertAndRegisterSelf(lc);
-
 
   // Create retrieve requests and add them to the queues
   // Create queues when they do not exist
-  for (auto & retrieveRequestSetupList : GetParam().retrieveRequestSetupList) {
+  for (auto retrieveRequestSetupList : GetParam().retrieveRequestSetupList) {
 
     // Identify list of vids where copies exist, including active copy
-    std::set<std::string> allVids;
-    allVids.insert(retrieveRequestSetupList.replicaCopyVids.begin(), retrieveRequestSetupList.replicaCopyVids.end());
-    allVids.insert(retrieveRequestSetupList.activeCopyVid);
+    std::set<std::string> allVIds;
+    allVIds.insert(retrieveRequestSetupList.replicaCopyVids.begin(), retrieveRequestSetupList.replicaCopyVids.end());
+    allVIds.insert(retrieveRequestSetupList.activeCopyVid);
     std::string activeVid = retrieveRequestSetupList.activeCopyVid;
 
     // Generate requests
     std::list<std::unique_ptr<cta::objectstore::RetrieveRequest> > requestsPtrs;
     cta::objectstore::ContainerAlgorithms<cta::objectstore::RetrieveQueue, cta::objectstore::RetrieveQueueToTransfer>::InsertedElement::list requests;
-    unitTests::fillRetrieveRequestsForCleanupRunner(requests, retrieveRequestSetupList.numberOfRequests, requestsPtrs, allVids, activeVid, be, agentForSetupRef); //memory leak avoided here with 'requestsPtrs'
+    fillRetrieveRequestsForCleanupRunner(requests, retrieveRequestSetupList.numberOfRequests, requestsPtrs, allVIds, activeVid, be, agentForSetupRef); //memory leak avoided here with 'requestsPtrs'
 
     // Create queue for requests to active copy
     std::string agentForSetupAddr = agentForSetupRef.getAgentAddress();
@@ -298,10 +265,10 @@ TEST_P(QueueCleanupRunnerConcurrentTest, CleanupRunnerParameterizedTest) {
   }
 
   // Setup initial tape states and validate number of requests
-  for (auto & tapeQueueStateTrans : GetParam().tapeQueueTransitionList) {
+  for (auto tapeQueueStateTrans : GetParam().tapeQueueTransitionList) {
 
     std::string vid = tapeQueueStateTrans.vid;
-    auto initialState = tapeQueueStateTrans.initialState;
+    auto initialState = tapeQueueStateTrans.initialSetup.state;
     auto initialRetrieveQueueToTransferJobs = tapeQueueStateTrans.initialSetup.retrieveQueueToTransferJobs;
     auto initialRetrieveQueueToReportJobs = tapeQueueStateTrans.initialSetup.retrieveQueueToReportJobs;
 
@@ -331,60 +298,53 @@ TEST_P(QueueCleanupRunnerConcurrentTest, CleanupRunnerParameterizedTest) {
   }
 
   // Trigger tape state change
-  for (auto & tapeQueueStateTrans : GetParam().tapeQueueTransitionList) {
+  for (auto tapeQueueStateTrans : GetParam().tapeQueueTransitionList) {
 
     std::string vid = tapeQueueStateTrans.vid;
-    auto initialState = tapeQueueStateTrans.initialState;
-    auto desiredState = tapeQueueStateTrans.desiredState;
+    auto initialState = tapeQueueStateTrans.initialSetup.state;
+    auto finalState = tapeQueueStateTrans.finalSetup.state;
 
-    if (initialState == desiredState) {
+    if (initialState == finalState) {
       continue; // No desired tape state change, ignore
     }
 
-    scheduler.triggerTapeStateChange(dummyAdmin, vid, desiredState, "", lc);
+    scheduler.triggerTapeStateChange(dummyAdmin, vid, finalState, "", lc);
   }
 
   // Execute cleanup runner
   {
-    cta::maintenance::QueueCleanupRunner qCleanupRunnerBroken(agentForCleanupRef, brokenOStore, catalogue, 500);
-    cta::maintenance::QueueCleanupRunner qCleanupRunnerOk(agentForCleanupRef, oKOStore, catalogue, 500);
-
-    // We now run the GarbageCollector to clear the CleanupInfo
-    cta::objectstore::GarbageCollector gc(be, agentForCleanupRef, catalogue);
-    ASSERT_NO_THROW(gc.runOnePass(lc));
-
-    // Try to move the requests after agent got garbage collected
-    ASSERT_NO_THROW(qCleanupRunnerOk.executeRunner(lc));
+    cta::maintenance::QueueCleanupRoutine qcr(lc, agentForCleanupRef, oStore, catalogue, 500);
+    qcr.execute();
   }
 
   // Validate final setup of tapes and corresponding queues, after the cleanup runner has been executed
-  for (auto & tapeQueueStateTrans : GetParam().tapeQueueTransitionList) {
+  for (auto tapeQueueStateTrans : GetParam().tapeQueueTransitionList) {
 
     std::string vid = tapeQueueStateTrans.vid;
-    auto expectedState = tapeQueueStateTrans.expectedState;
-    auto expectedRetrieveQueueToTransferJobs = tapeQueueStateTrans.finalSetup.retrieveQueueToTransferJobs;
-    auto expectedRetrieveQueueToReportJobs = tapeQueueStateTrans.finalSetup.retrieveQueueToReportJobs;
+    auto finalDesiredState = tapeQueueStateTrans.finalSetup.state;
+    auto finalRetrieveQueueToTransferJobs = tapeQueueStateTrans.finalSetup.retrieveQueueToTransferJobs;
+    auto finalRetrieveQueueToReportJobs = tapeQueueStateTrans.finalSetup.retrieveQueueToReportJobs;
 
     // Check final tape state
     const auto tapeState = static_cast<cta::catalogue::DummyTapeCatalogue*>(catalogue.Tape().get())->getTapeState(vid);
-    ASSERT_EQ(expectedState, tapeState);
+    ASSERT_EQ(finalDesiredState, tapeState);
 
     // Assert final queue setup
     {
       re.fetchNoLock();
-      if (expectedRetrieveQueueToTransferJobs > 0) {
+      if (finalRetrieveQueueToTransferJobs > 0) {
         auto qAddr = re.getRetrieveQueueAddress(vid, JobQueueType::JobsToTransferForUser);
         cta::objectstore::RetrieveQueue rQueue(qAddr, be);
         rQueue.fetchNoLock();
-        ASSERT_EQ(expectedRetrieveQueueToTransferJobs, rQueue.getJobsSummary().jobs);
+        ASSERT_EQ(finalRetrieveQueueToTransferJobs, rQueue.getJobsSummary().jobs);
       } else {
         ASSERT_THROW(re.getRetrieveQueueAddress(vid, JobQueueType::JobsToTransferForUser), cta::objectstore::RootEntry::NoSuchRetrieveQueue);
       }
-      if (expectedRetrieveQueueToReportJobs > 0) {
+      if (finalRetrieveQueueToReportJobs > 0) {
         auto qAddr = re.getRetrieveQueueAddress(vid, JobQueueType::JobsToReportToUser);
         cta::objectstore::RetrieveQueue rQueue(qAddr, be);
         rQueue.fetchNoLock();
-        ASSERT_EQ(expectedRetrieveQueueToReportJobs, rQueue.getJobsSummary().jobs);
+        ASSERT_EQ(finalRetrieveQueueToReportJobs, rQueue.getJobsSummary().jobs);
       } else {
         ASSERT_THROW(re.getRetrieveQueueAddress(vid, JobQueueType::JobsToReportToUser), cta::objectstore::RootEntry::NoSuchRetrieveQueue);
       }
@@ -394,32 +354,150 @@ TEST_P(QueueCleanupRunnerConcurrentTest, CleanupRunnerParameterizedTest) {
 
 static cta::OStoreDBFactory<cta::objectstore::BackendVFS> OStoreDBFactoryVFS;
 
-static std::list<RetrieveRequestSetup> Test_retrieveRequestSetupList = {
-        { 10, "Tape0", { } },
+// Testing requests without replicas
+
+// Test A1: Requests removed from an ACTIVE to REPACKING queue when no replicas are available
+std::list<RetrieveRequestSetup> TestA1_retrieveRequestSetupList {
+        { 10, "Tape0", { } }
 };
-static std::list<ConcurrentTapeQueueTransition> Test_tapeQueueTransitionList_Completed = {
-        {
-                "Tape0",
-                Tape::ACTIVE, Tape::REPACKING, Tape::REPACKING,
-                {10, 0}, { 0, 10 }
-        },
-};
-static std::list<ConcurrentTapeQueueTransition> Test_tapeQueueTransitionList_Failed = {
-        {
-                "Tape0",
-                Tape::ACTIVE, Tape::REPACKING, Tape::REPACKING_PENDING,
-                { 10, 0 }, { 10, 0 }
-        },
+std::list<TapeQueueTransition> TestA1_tapeQueueTransitionList {
+        { "Tape0", { Tape::ACTIVE, 10, 0 }, { Tape::REPACKING,  0, 10 } },
 };
 
-INSTANTIATE_TEST_CASE_P(OStoreTestVFS, QueueCleanupRunnerConcurrentTest,
+// Test A2: Requests removed from a DISABLED to REPACKING queue when no replicas are available
+std::list<RetrieveRequestSetup> TestA2_retrieveRequestSetupList {
+        { 10, "Tape0", { } }
+};
+std::list<TapeQueueTransition> TestA2_tapeQueueTransitionList {
+        { "Tape0", { Tape::DISABLED, 10, 0 }, { Tape::REPACKING,  0, 10 } },
+};
+
+// Test A3: Requests removed from an ACTIVE to BROKEN queue when no replicas are available
+std::list<RetrieveRequestSetup> TestA3_retrieveRequestSetupList {
+        { 10, "Tape0", { } }
+};
+std::list<TapeQueueTransition> TestA3_tapeQueueTransitionList {
+        { "Tape0", { Tape::ACTIVE, 10, 0 }, { Tape::BROKEN,  0, 10 } },
+};
+
+// Test A4: Requests removed from a DISABLED to BROKEN queue when no replicas are available
+std::list<RetrieveRequestSetup> TestA4_retrieveRequestSetupList {
+        { 10, "Tape0", { } }
+};
+std::list<TapeQueueTransition> TestA4_tapeQueueTransitionList {
+        { "Tape0", { Tape::DISABLED, 10, 0 }, { Tape::BROKEN,  0, 10 } },
+};
+
+// Test A5: No requests removed from an ACTIVE queue
+std::list<RetrieveRequestSetup> TestA5_retrieveRequestSetupList {
+        { 10, "Tape0", { } }
+};
+std::list<TapeQueueTransition> TestA5_tapeQueueTransitionList {
+        { "Tape0", { Tape::ACTIVE, 10, 0 }, { Tape::ACTIVE,  10, 0 } },
+};
+
+// Test A5: No requests removed from an DISABLED queue
+std::list<RetrieveRequestSetup> TestA6_retrieveRequestSetupList {
+        { 10, "Tape0", { } }
+};
+std::list<TapeQueueTransition> TestA6_tapeQueueTransitionList {
+        { "Tape0", { Tape::DISABLED, 10, 0 }, { Tape::DISABLED,  10, 0 } },
+};
+
+// Testing requests with double replicas
+
+// Test B1: Requests moved from a REPACKING queue to an ACTIVE queue
+std::list<RetrieveRequestSetup> TestB1_retrieveRequestSetupList {
+        { 10, "Tape0", { "Tape1" } }
+};
+std::list<TapeQueueTransition> TestB1_tapeQueueTransitionList {
+        { "Tape0", { Tape::ACTIVE, 10, 0 }, { Tape::REPACKING,  0, 0 } },
+        { "Tape1", { Tape::ACTIVE,  0, 0 }, { Tape::ACTIVE,    10, 0 } }
+};
+
+// Test B2: Requests moved from a REPACKING queue to a DISABLED queue
+std::list<RetrieveRequestSetup> TestB2_retrieveRequestSetupList {
+        { 10, "Tape0", { "Tape1" } }
+};
+std::list<TapeQueueTransition> TestB2_tapeQueueTransitionList {
+        { "Tape0", { Tape::ACTIVE,   10, 0 }, { Tape::REPACKING,   0, 0 } },
+        { "Tape1", { Tape::DISABLED,  0, 0 }, { Tape::DISABLED,   10, 0 } }
+};
+
+// Test B3: Requests not moved from a REPACKING queue to an already BROKEN queue
+std::list<RetrieveRequestSetup> TestB3_retrieveRequestSetupList {
+        { 10, "Tape0", { "Tape1" } }
+};
+std::list<TapeQueueTransition> TestB3_tapeQueueTransitionList {
+        { "Tape0", { Tape::ACTIVE, 10, 0 }, { Tape::REPACKING, 0, 10 } },
+        { "Tape1", { Tape::BROKEN,  0, 0 }, { Tape::BROKEN,    0,  0 } }
+};
+
+// Test B4: Requests not moved from a REPACKING queue to an already REPACKING queue
+std::list<RetrieveRequestSetup> TestB4_retrieveRequestSetupList {
+        { 10, "Tape0", { "Tape1" } }
+};
+std::list<TapeQueueTransition> TestB4_tapeQueueTransitionList {
+        { "Tape0", { Tape::ACTIVE,    10, 0 }, { Tape::REPACKING,    0, 10 } },
+        { "Tape1", { Tape::REPACKING,  0, 0 }, { Tape::REPACKING,    0,  0 } }
+};
+
+// Testing requests with multiple replicas
+
+// Test C1: Requests moved from a REPACKING queue to 2 ACTIVE queue
+std::list<RetrieveRequestSetup> TestC1_retrieveRequestSetupList {
+        { 5, "Tape0", { "Tape1" } },
+        { 5, "Tape0", { "Tape2" } }
+};
+std::list<TapeQueueTransition> TestC1_tapeQueueTransitionList {
+        { "Tape0", { Tape::ACTIVE, 10, 0 }, { Tape::REPACKING,  0, 0 } },
+        { "Tape1", { Tape::ACTIVE,  0, 0 }, { Tape::ACTIVE,     5, 0 } },
+        { "Tape2", { Tape::ACTIVE,  0, 0 }, { Tape::ACTIVE,     5, 0 } }
+};
+
+// Test C1: Requests moved from a REPACKING queue to ACTIVE (higher priority comparing to DISABLED)
+std::list<RetrieveRequestSetup> TestC2_retrieveRequestSetupList {
+        { 10, "Tape0", { "Tape1", "Tape2", "Tape3" } }
+};
+std::list<TapeQueueTransition> TestC2_tapeQueueTransitionList {
+        { "Tape0", { Tape::ACTIVE, 10, 0 }, { Tape::REPACKING,  0, 0 } },
+        { "Tape1", { Tape::ACTIVE,  0, 0 }, { Tape::DISABLED,   0, 0 } },
+        { "Tape2", { Tape::ACTIVE,  0, 0 }, { Tape::ACTIVE,    10, 0 } },
+        { "Tape3", { Tape::ACTIVE,  0, 0 }, { Tape::DISABLED,   0, 0 } }
+};
+
+// Test C2: Mix of multiple requests being moved around
+std::list<RetrieveRequestSetup> TestC3_retrieveRequestSetupList {
+        { 10, "Tape0", { "Tape1" } },
+        { 10, "Tape0", { "Tape1", "Tape2" } },
+        { 10, "Tape1", { "Tape2", "Tape3" } },
+        { 10, "Tape2", { "Tape3", "Tape4" } }
+};
+std::list<TapeQueueTransition> TestC3_tapeQueueTransitionList {
+        { "Tape0", { Tape::ACTIVE, 20, 0 }, { Tape::REPACKING,  0, 10 } },
+        { "Tape1", { Tape::ACTIVE, 10, 0 }, { Tape::BROKEN,     0,  0 } },
+        { "Tape2", { Tape::ACTIVE, 10, 0 }, { Tape::DISABLED,  20,  0 } },
+        { "Tape3", { Tape::ACTIVE,  0, 0 }, { Tape::ACTIVE,    10,  0 } },
+        { "Tape4", { Tape::ACTIVE,  0, 0 }, { Tape::ACTIVE,     0,  0 } }
+};
+
+INSTANTIATE_TEST_CASE_P(OStoreTestVFS, QueueCleanupRoutineTest,
                         ::testing::Values(
-                                // With a timeout of 0.0s the 2nd cleanup runner will be able to complete the task after the 1st has failed
-                                QueueCleanupRunnerConcurrentTestParams(
-                                        OStoreDBFactoryVFS,
-                                        Test_retrieveRequestSetupList,
-                                        Test_tapeQueueTransitionList_Completed,
-                                        0.0)
-				)
-			);
+                                QueueCleanupRoutineTestParams(&OStoreDBFactoryVFS, TestA1_retrieveRequestSetupList, TestA1_tapeQueueTransitionList),
+                                QueueCleanupRoutineTestParams(&OStoreDBFactoryVFS, TestA2_retrieveRequestSetupList, TestA2_tapeQueueTransitionList),
+                                QueueCleanupRoutineTestParams(&OStoreDBFactoryVFS, TestA3_retrieveRequestSetupList, TestA3_tapeQueueTransitionList),
+                                QueueCleanupRoutineTestParams(&OStoreDBFactoryVFS, TestA4_retrieveRequestSetupList, TestA4_tapeQueueTransitionList),
+                                QueueCleanupRoutineTestParams(&OStoreDBFactoryVFS, TestA5_retrieveRequestSetupList, TestA5_tapeQueueTransitionList),
+                                QueueCleanupRoutineTestParams(&OStoreDBFactoryVFS, TestA6_retrieveRequestSetupList, TestA6_tapeQueueTransitionList),
+
+                                QueueCleanupRoutineTestParams(&OStoreDBFactoryVFS, TestB1_retrieveRequestSetupList, TestB1_tapeQueueTransitionList),
+                                QueueCleanupRoutineTestParams(&OStoreDBFactoryVFS, TestB2_retrieveRequestSetupList, TestB2_tapeQueueTransitionList),
+                                QueueCleanupRoutineTestParams(&OStoreDBFactoryVFS, TestB3_retrieveRequestSetupList, TestB3_tapeQueueTransitionList),
+                                QueueCleanupRoutineTestParams(&OStoreDBFactoryVFS, TestB4_retrieveRequestSetupList, TestB4_tapeQueueTransitionList),
+
+                                QueueCleanupRoutineTestParams(&OStoreDBFactoryVFS, TestC1_retrieveRequestSetupList, TestC1_tapeQueueTransitionList),
+                                QueueCleanupRoutineTestParams(&OStoreDBFactoryVFS, TestC2_retrieveRequestSetupList, TestC2_tapeQueueTransitionList),
+                                QueueCleanupRoutineTestParams(&OStoreDBFactoryVFS, TestC3_retrieveRequestSetupList, TestC3_tapeQueueTransitionList)
+                                )
+                                );
 }

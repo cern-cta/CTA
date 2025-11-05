@@ -14,28 +14,29 @@
 #               submit itself to any jurisdiction.
 cmake_minimum_required (VERSION 3.17)
 
-add_subdirectory(diskbufferrunners)
-add_subdirectory(osrunners)
-add_subdirectory(rdbrunners)
-add_subdirectory(repackrequestrunner)
+add_subdirectory(routines/disk)
+add_subdirectory(routines/objectstore)
+add_subdirectory(routines/relationaldb)
+add_subdirectory(routines/repack)
 
 add_library(ctamaintenancedaemon
-  Maintenance.cpp
+  RoutineRunner.cpp
+  RoutineRunnerFactory.cpp
 )
 
 if(NOT CTA_USE_PGSCHED)
-    set(SCHEDRUNNERS ctaosdbrunners)
+    set(SCHEDROUTINES ctaosdbroutines)
 else()
-    set(SCHEDRUNNERS ctardbrunners)
+    set(SCHEDROUTINES ctardbroutines)
 endif()
 
 target_link_libraries(ctamaintenancedaemon
 	ctacommon
 	ctacatalogue
 	ctascheduler
-	${SCHEDRUNNERS}
-	ctadiskbufferrunner
-	ctarepackrequestrunner
+	${SCHEDROUTINES}
+	ctadiskroutines
+	ctarepackroutines
 )
 
 add_executable (cta-maintenance cta-maintenance.cpp)
@@ -47,7 +48,7 @@ install (TARGETS cta-maintenance DESTINATION usr/bin)
 install (FILES ${CMAKE_CURRENT_BINARY_DIR}/cta-maintenance.1cta DESTINATION /usr/share/man/man1)
 install (FILES cta-maintenance.logrotate DESTINATION /etc/logrotate.d RENAME cta-maintenance)
 install (FILES cta-maintenance.service DESTINATION /etc/systemd/system)
-install (FILES cta-maintenance.conf.example 
+install (FILES cta-maintenance.conf.example
   DESTINATION ${CMAKE_INSTALL_SYSCONFDIR}/cta
   PERMISSIONS OWNER_READ OWNER_WRITE GROUP_READ WORLD_READ)
 

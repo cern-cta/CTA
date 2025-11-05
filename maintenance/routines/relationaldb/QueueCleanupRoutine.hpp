@@ -19,11 +19,15 @@
 
 #include "catalogue/Catalogue.hpp"
 #include "common/log/LogContext.hpp"
-#include "maintenance/IMaintenanceRunner.hpp"
+#include "maintenance/IRoutine.hpp"
 #include "rdbms/Conn.hpp"
 #include "scheduler/rdbms/RelationalDB.hpp"
 
 namespace cta::maintenance {
+
+// TODO: this should be split properly into separate routines
+// Not one generic "fix all queues"
+// For now I haven't updated the name on this one as this should be changed anyway.
 
 /**
  * The RelationalDBQCR or RelationalDBGC (TO BE DECIDED) should regularly look at the ARCHIVE_PENDING_QUEUE for
@@ -35,12 +39,12 @@ namespace cta::maintenance {
  * if dead then it cleans the task queue
  * and moved the jobs back to ARCHIVE_PENDING_QUEUE so that they can be queued again.
  */
-class RelationalDBQCR : public IMaintenanceRunner {
-  // DatabaseQueueCleanupRunner
+class RelationalDBQCR : public IRoutine {
+  // DatabaseQueueCleanupRoutine
 public:
-  RelationalDBQCR(catalogue::Catalogue& catalogue, RelationalDB& pgs) : m_conn(pgs.getConn()) {}
+  RelationalDBQCR(log::LogContext& lc, catalogue::Catalogue& catalogue, RelationalDB& pgs) : m_conn(pgs.getConn()) {}
 
-  void executeRunner(log::LogContext& lc) {
+  void execute() {
 
     /* cta::utils::Timer timer;
     // DELETE is implicit transaction in postgresql
@@ -52,13 +56,13 @@ public:
     try {
       m_conn.commit();
     } catch (exception::Exception &ex) {
-      lc.log(log::ERR, "In RelationalDBQCR::executeRunner(): failed to delete rows of ARCHIVE_ACTIVE_QUEUE" +
+      lc.log(log::ERR, "In RelationalDBQCR::execute(): failed to delete rows of ARCHIVE_ACTIVE_QUEUE" +
                      ex.getMessageValue());
       m_conn.rollback();
     }
     auto ndelrows = stmt.getNbAffectedRows();
     auto tdelsec = timer.secs(cta::utils::Timer::resetCounter);
-    lc.log(log::INFO, std::string("In RelationalDBQCR::executeRunner(): Deleted ") +
+    lc.log(log::INFO, std::string("In RelationalDBQCR::execute(): Deleted ") +
                       std::to_string(ndelrows) +
                       std::string(" rows from the ARCHIVE_ACTIVE_QUEUE. Operation took ") +
                       std::to_string(tdelsec) + std::string(" seconds."));
@@ -82,4 +86,4 @@ private:
 };
 
 }
-    
+

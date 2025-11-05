@@ -39,7 +39,6 @@
 #include "common/exception/NoSuchObject.hpp"
 #include "common/log/DummyLogger.hpp"
 #include "common/Timer.hpp"
-#include "maintenance/osrunners/GarbageCollector.hpp"
 #include "objectstore/Algorithms.hpp"
 #include "objectstore/BackendRadosTestSwitch.hpp"
 #include "objectstore/RepackIndex.hpp"
@@ -57,6 +56,7 @@
 #include "tests/TempDirectory.hpp"
 #include "tests/TempFile.hpp"
 #include "tests/TestsCompileTimeSwitches.hpp"
+#include "maintenance/routines/objectstore/GarbageCollectRoutine.hpp"
 
 #ifdef STDOUT_LOGGING
 #include "common/log/StdoutLogger.hpp"
@@ -1918,8 +1918,8 @@ TEST_P(SchedulerTest, archive_and_retrieve_failure) {
       gcAgent.initialize();
       gcAgent.insertAndRegisterSelf(lc);
       {
-        cta::maintenance::GarbageCollector gc(getSchedulerDB().getBackend(), gcAgentRef, catalogue);
-        gc.executeRunner(lc);
+        cta::maintenance::GarbageCollectRoutine gc(lc, getSchedulerDB().getBackend(), gcAgentRef, catalogue);
+        gc.execute();
       }
       // Assign a new agent to replace the stale agent reference in the DB
       getSchedulerDB().replaceAgent(new objectstore::AgentReference("OStoreDBFactory2", dl));
@@ -2174,8 +2174,8 @@ TEST_P(SchedulerTest, archive_and_retrieve_report_failure) {
       gcAgent.initialize();
       gcAgent.insertAndRegisterSelf(lc);
       {
-        cta::maintenance::GarbageCollector gc(getSchedulerDB().getBackend(), gcAgentRef, catalogue);
-        gc.executeRunner(lc);
+        cta::maintenance::GarbageCollectRoutine gc(lc, getSchedulerDB().getBackend(), gcAgentRef, catalogue);
+        gc.execute();
       }
       // Assign a new agent to replace the stale agent reference in the DB
       getSchedulerDB().replaceAgent(new objectstore::AgentReference("OStoreDBFactory2", dl));
@@ -7073,8 +7073,8 @@ TEST_P(SchedulerTest, toTransfereRetrieveQueueMissingReservationInfo)
     retrieveQueue1.commit();
   }
   // Garbage collect the first agent
-  cta::maintenance::GarbageCollector gc(backend, agentReference, catalogue);
-  gc.executeRunner(lc);
+  cta::maintenance::GarbageCollectRoutine gc(lc, backend, agentReference, catalogue);
+  gc.execute();
 
   // Check that the queue cleanup information has not been cleared.
   cta::objectstore::ScopedExclusiveLock sel(retrieveQueue1);

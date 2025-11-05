@@ -15,7 +15,7 @@
  *               submit itself to any jurisdiction.
  */
 
-#include "DiskReportRunner.hpp"
+#include "DiskReportRoutine.hpp"
 #include "scheduler/Scheduler.hpp"
 #include "scheduler/ArchiveJob.hpp"
 #include "scheduler/RetrieveJob.hpp"
@@ -25,54 +25,68 @@
 
 namespace cta::maintenance {
 
-void DiskReportRunner::executeRunner(cta::log::LogContext& lc) {
+DiskReportRoutine::DiskReportRoutine(cta::log::LogContext& lc,
+                                     cta::Scheduler& scheduler,
+                                     int batchSize,
+                                     int softTimeout)
+    : m_lc(lc),
+      m_scheduler(scheduler),
+      m_batchSize(batchSize),
+      m_softTimeout(softTimeout) {
+  log::ScopedParamContainer params(m_lc);
+  params.add("softTimeout", softTimeout);
+  params.add("batchSize", batchSize);
+  m_lc.log(cta::log::INFO, "Created DiskReportRoutine");
+}
+
+void DiskReportRoutine::execute() {
   utils::Timer t;
   size_t roundCount = 0;
   for (bool is_done = false; !is_done && t.secs() < m_softTimeout;) {
     roundCount += 1;
     log::TimingList timings;
-    lc.log(cta::log::DEBUG, "In DiskReportRunner::executeRunner(): getting next archive jobs to report from Scheduler DB");
+    m_lc.log(cta::log::DEBUG, "In DiskReportRoutine::execute(): getting next archive jobs to report from Scheduler DB");
     utils::Timer t2;
-    auto archiveJobsToReport = m_scheduler.getNextArchiveJobsToReportBatch(m_batchSize, lc);
+    auto archiveJobsToReport = m_scheduler.getNextArchiveJobsToReportBatch(m_batchSize, m_lc);
     is_done = archiveJobsToReport.empty();
     if (!is_done) {
       const auto reportJobCount = archiveJobsToReport.size();
       timings.insertAndReset("getArchiveJobsToReportTime", t2);
-      log::ScopedParamContainer params(lc);
+      log::ScopedParamContainer params(m_lc);
       params.add("archiveJobsReported", archiveJobsToReport.size());
       utils::Timer t3;
-      m_scheduler.reportArchiveJobsBatch(archiveJobsToReport, m_reporterFactory, timings, t2, lc);
+      m_scheduler.reportArchiveJobsBatch(archiveJobsToReport, m_reporterFactory, timings, t2, m_lc);
       timings.insertAndReset("reportArchiveJobsTime", t3);
       timings.addToLog(params);
-      lc.log(cta::log::INFO, "In DiskReportRunner::executeRunner(): did one round of archive reports.");
+      m_lc.log(cta::log::INFO, "In DiskReportRoutine::execute(): did one round of archive reports.");
       cta::telemetry::metrics::ctaMaintenanceDiskReporterCount->Add(reportJobCount);
     } else {
-      lc.log(cta::log::DEBUG, "In DiskReportRunner::executeRunner(): archiveJobsToReport is empty.");
+      m_lc.log(cta::log::DEBUG, "In DiskReportRoutine::execute(): archiveJobsToReport is empty.");
     }
     utils::Timer t4;
-    auto retrieveJobsToReport = m_scheduler.getNextRetrieveJobsToReportBatch(m_batchSize, lc);
+    auto retrieveJobsToReport = m_scheduler.getNextRetrieveJobsToReportBatch(m_batchSize, m_lc);
     is_done = is_done && retrieveJobsToReport.empty();
     if (!retrieveJobsToReport.empty()) {
-      const auto reportJobCount =  retrieveJobsToReport.size();
+      const auto reportJobCount = retrieveJobsToReport.size();
       timings.insertAndReset("getRetrieveJobsToReportTime", t4);
-      log::ScopedParamContainer params(lc);
+      log::ScopedParamContainer params(m_lc);
       params.add("retrieveJobsReported", retrieveJobsToReport.size());
       utils::Timer t5;
-      m_scheduler.reportRetrieveJobsBatch(retrieveJobsToReport, m_reporterFactory, timings, t4, lc);
+      m_scheduler.reportRetrieveJobsBatch(retrieveJobsToReport, m_reporterFactory, timings, t4, m_lc);
       timings.insertAndReset("reportRetrieveJobsTime", t5);
       timings.addToLog(params);
-      lc.log(cta::log::INFO, "In DiskReportRunner::executeRunner(): did one round of retrieve reports.");
+      m_lc.log(cta::log::INFO, "In DiskReportRoutine::execute(): did one round of retrieve reports.");
       cta::telemetry::metrics::ctaMaintenanceDiskReporterCount->Add(reportJobCount);
     } else {
-      lc.log(cta::log::DEBUG, "In DiskReportRunner::executeRunner(): retrieveJobsToReport is empty.");
+      m_lc.log(cta::log::DEBUG, "In DiskReportRoutine::execute(): retrieveJobsToReport is empty.");
     }
   }
-  log::ScopedParamContainer params(lc);
+  log::ScopedParamContainer params(m_lc);
   auto passTime = t.secs();
   params.add("roundCount", roundCount).add("passTime", passTime);
-  lc.log(log::DEBUG, "In DiskReportRunner::executeRunner(): finished one pass.");
+  m_lc.log(log::DEBUG, "In DiskReportRoutine::execute(): finished one pass.");
   if (passTime > 1) {
-    lc.log(log::INFO, "In DiskReportRunner::executeRunner(): finished one pass.");
+    m_lc.log(log::INFO, "In DiskReportRoutine::execute(): finished one pass.");
   }
 }
 
