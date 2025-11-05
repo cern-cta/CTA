@@ -14,30 +14,13 @@
 #               submit itself to any jurisdiction.
 cmake_minimum_required (VERSION 3.17)
 
-add_library(ctaosdbrunners SHARED
-	QueueCleanupRunner.cpp
-	GarbageCollector.cpp
+add_library(ctardbroutines
+	QueueCleanupRoutine.hpp
 )
 
-target_link_libraries(ctaosdbrunners
-	ctaobjectstore
+target_link_libraries(ctardbroutines
+	ctardbms
 	ctacatalogue
 )
 
-set_property(TARGET ctaosdbrunners PROPERTY SOVERSION "${CTA_SOVERSION}")
-set_property(TARGET ctaosdbrunners PROPERTY   VERSION "${CTA_LIBVERSION}")
-install(TARGETS ctaosdbrunners DESTINATION usr/${CMAKE_INSTALL_LIBDIR})
-
-add_library(ctaosdbrunnersunittests SHARED
-        GarbageCollectorTest.cpp
-        QueueCleanupRunnerTestUtils.cpp
-        QueueCleanupRunnerTest.cpp
-        QueueCleanupRunnerConcurrentTest.cpp
-)
-
-target_link_libraries(ctaosdbrunnersunittests ctaosdbrunners)
-set_property(TARGET ctaosdbrunnersunittests PROPERTY SOVERSION "${CTA_SOVERSION}")
-set_property(TARGET ctaosdbrunnersunittests PROPERTY   VERSION "${CTA_LIBVERSION}")
-
-install(TARGETS ctaosdbrunnersunittests DESTINATION usr/${CMAKE_INSTALL_LIBDIR})
 

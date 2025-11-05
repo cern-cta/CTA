@@ -15,7 +15,6 @@
  *               submit itself to any jurisdiction.
  */
 
-
 #include <getopt.h>
 #include <signal.h>
 #include <string>
@@ -28,31 +27,33 @@
 #include "common/log/StdoutLogger.hpp"
 #include "common/process/threading/System.hpp"
 #include "common/utils/utils.hpp"
-#include "Maintenance.hpp"
+#include "RoutineRunner.hpp"
+#include "RoutineRunnerFactory.hpp"
 #include "rdbms/Login.hpp"
 #include "common/telemetry/TelemetryInit.hpp"
 #include "common/telemetry/config/TelemetryConfig.hpp"
 #include "common/semconv/Attributes.hpp"
-#include <opentelemetry/sdk/common/global_log_handler.h>
 #include "version.h"
 
 namespace cta::maintenance {
 
-static int setUserAndGroup(const std::string &userName, const std::string &groupName, cta::log::Logger& logger) {
-   try {
-    logger(log::INFO, "Setting user name and group name of current process",
-                  {{"userName", userName}, {"groupName", groupName}});
+static int setUserAndGroup(const std::string& userName, const std::string& groupName, cta::log::Logger& logger) {
+  try {
+    logger(log::INFO,
+           "Setting user name and group name of current process",
+           {
+             {"userName",  userName },
+             {"groupName", groupName}
+    });
     cta::System::setUserAndGroup(userName, groupName);
   } catch (exception::Exception& ex) {
-    std::list<log::Param> params = {
-      log::Param("exceptionMessage", ex.getMessage().str())};
+    std::list<log::Param> params = {log::Param("exceptionMessage", ex.getMessage().str())};
     logger(log::ERR, "Caught an unexpected CTA, exiting cta-maintenance", params);
     return EXIT_FAILURE;
   }
 
-   return 0;
+  return 0;
 }
-
 
 /**
  * exceptionThrowingMain
@@ -78,7 +79,7 @@ static int exceptionThrowingMain(common::Config config, cta::log::Logger& log) {
   log.setStaticParams(staticParamMap);
 
   // Instantiate telemetry
-   if (config.getOptionValueBool("cta.experimental.telemetry.enabled").value_or(false)) {
+  if (config.getOptionValueBool("cta.experimental.telemetry.enabled").value_or(false)) {
     try {
       std::string metricsBackend = config.getOptionValueStr("cta.telemetry.metrics.backend").value_or("NOOP");
 
@@ -111,29 +112,32 @@ static int exceptionThrowingMain(common::Config config, cta::log::Logger& log) {
       throw InvalidConfiguration("Failed to instantiate OpenTelemetry. Exception message: " + ex.getMessage().str());
     }
   }
-  
+
   // Start loop
-  while(true) {
-    // Create the maintenance object
-    cta::maintenance::Maintenance daemon(lc, config);
-      
-    uint32_t rc = daemon.run();
+  while (true) {
+    // Create the routine runner
+    auto routineRunner = RoutineRunnerFactory::create(lc, config);
+    // Run it :o
+    uint32_t rc = routineRunner->run(lc);
     switch (rc) {
-      case SIGTERM: return 0;
+      case SIGTERM:
+        return 0;
       case SIGHUP:
-          log(cta::log::INFO, "Reloading config for Maintenance process. Process user and group, and log format will not be reloaded.");
-          config.parse(log);
-          break;
+        log(cta::log::INFO,
+            "Reloading config for Maintenance process. Process user and group, telemetry, and log format will not be "
+            "reloaded.");
+        config.parse(log);
+        break;
       default:
-          log(cta::log::CRIT, "Received unexpected signal. Exiting");
-          return EXIT_FAILURE;
+        log(cta::log::CRIT, "Received unexpected signal. Exiting");
+        return EXIT_FAILURE;
     }
   }
 }
 
-} // namespace cta::maintenance
+}  // namespace cta::maintenance
 
-int main(const int argc, char **const argv) {
+int main(const int argc, char** const argv) {
   using namespace cta;
 
   // Interpret the command line
@@ -143,7 +147,7 @@ int main(const int argc, char **const argv) {
   std::string shortHostName;
   try {
     shortHostName = utils::getShortHostname();
-  } catch (const exception::Errnum &ex) {
+  } catch (const exception::Errnum& ex) {
     std::cerr << "Failed to get short host name." << ex.getMessage().str();
     return EXIT_FAILURE;
   }
@@ -154,26 +158,27 @@ int main(const int argc, char **const argv) {
   common::Config config(cmdLineParams->configFileLocation, &(*logPtr));
 
   // Change user and group
-  int rc = cta::maintenance::setUserAndGroup(
-      config.getOptionValueStr("cta.daemon_user").value_or("cta"),
-      config.getOptionValueStr("cta.daemon_group").value_or("tape"),
-      *logPtr
-  );
+  int rc = cta::maintenance::setUserAndGroup(config.getOptionValueStr("cta.daemon_user").value_or("cta"),
+                                             config.getOptionValueStr("cta.daemon_group").value_or("tape"),
+                                             *logPtr);
 
-  if (rc) return rc;
-  
+  if (rc) {
+    return rc;
+  }
+
   // Try to instantiate the logging system API
   try {
-    if(cmdLineParams->logToFile) {
+    if (cmdLineParams->logToFile) {
       logPtr.reset(new log::FileLogger(shortHostName, "cta-maintenance", cmdLineParams->logFilePath, log::DEBUG));
-    } else if(cmdLineParams->logToStdout) {
+    } else if (cmdLineParams->logToStdout) {
       logPtr.reset(new log::StdoutLogger(shortHostName, "cta-maintenance"));
     }
     if (!cmdLineParams->logFormat.empty()) {
       logPtr->setLogFormat(cmdLineParams->logFormat);
     }
   } catch (exception::Exception& ex) {
-    std::cerr << "Failed to instantiate object representing the CTA logging system: " << ex.getMessage().str() << std::endl;
+    std::cerr << "Failed to instantiate object representing the CTA logging system: " << ex.getMessage().str()
+              << std::endl;
     return EXIT_FAILURE;
   }
 
@@ -184,16 +189,15 @@ int main(const int argc, char **const argv) {
   int programRc = EXIT_FAILURE;
   try {
     programRc = maintenance::exceptionThrowingMain(config, log);
-  } catch(exception::Exception &ex) {
-    std::list<cta::log::Param> params = {
-      log::Param("exceptionMessage", ex.getMessage().str())};
+  } catch (exception::Exception& ex) {
+    std::list<cta::log::Param> params = {log::Param("exceptionMessage", ex.getMessage().str())};
     log(log::ERR, "Caught an unexpected CTA exception.", params);
     sleep(1);
-  } catch(std::exception &se) {
+  } catch (std::exception& se) {
     std::list<cta::log::Param> params = {cta::log::Param("what", se.what())};
     log(log::ERR, "Caught an unexpected standard exception.", params);
     sleep(1);
-  } catch(...) {
+  } catch (...) {
     log(log::ERR, "Caught an unexpected and unknown exception.");
     sleep(1);
   }
