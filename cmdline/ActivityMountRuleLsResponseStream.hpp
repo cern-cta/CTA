@@ -16,7 +16,7 @@ class ActivityMountRuleLsResponseStream : public CtaAdminResponseStream {
 public:
   ActivityMountRuleLsResponseStream(cta::catalogue::Catalogue& catalogue,
                                     cta::Scheduler& scheduler,
-                                    const std::string instanceName,
+                                    const std::string& instanceName,
                                     const admin::AdminCmd& adminCmd);
 
   bool isDone() override;
@@ -28,7 +28,7 @@ private:
 
 ActivityMountRuleLsResponseStream::ActivityMountRuleLsResponseStream(cta::catalogue::Catalogue& catalogue,
                                                                      cta::Scheduler& scheduler,
-                                                                     const std::string instanceName,
+                                                                     const std::string& instanceName,
                                                                      const admin::AdminCmd& adminCmd)
     : CtaAdminResponseStream(catalogue, scheduler, instanceName),
       m_activityMountRules(catalogue.RequesterActivityMountRule()->getRequesterActivityMountRules()) {}
