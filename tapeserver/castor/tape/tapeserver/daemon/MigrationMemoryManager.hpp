@@ -120,21 +120,6 @@ private:
   size_t m_totalMemoryAllocated;
 
   /**
-   * Count of blocks provided
-   */
-  size_t m_blocksProvided;
-
-  /**
-   * Count of blocks returned
-   */
-  size_t m_blocksReturned;
-
-  /**
-   * Mutex protecting the counters
-   */
-  cta::threading::Mutex m_countersMutex;
-
-  /**
    * Container for the free blocks
    */
   cta::threading::BlockingQueue<MemBlock *> m_freeBlocks;

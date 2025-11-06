@@ -39,4 +39,17 @@ enum DriveStatus {
 
 std::string toString(DriveStatus type);
 
+inline constexpr std::array<DriveStatus, 12> AllDriveStatuses = {DriveStatus::Unknown,
+                                                                 DriveStatus::Down,
+                                                                 DriveStatus::Up,
+                                                                 DriveStatus::Probing,
+                                                                 DriveStatus::Starting,
+                                                                 DriveStatus::Mounting,
+                                                                 DriveStatus::Transferring,
+                                                                 DriveStatus::Unloading,
+                                                                 DriveStatus::Unmounting,
+                                                                 DriveStatus::DrainingToDisk,
+                                                                 DriveStatus::CleaningUp,
+                                                                 DriveStatus::Shutdown};
+
 }  // namespace cta::common::dataStructures

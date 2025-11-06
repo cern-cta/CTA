@@ -112,6 +112,8 @@ test-client:
   variables:
     TEST_SCRIPT: "tests/test_client.sh"
     EXTRA_RUN_ARGS: "--test-timeout 2400"
+    # While the telemetry is not actually consumed, we need to ensure enabling it doesn't break anything
+    EXTRA_SPAWN_ARGS: "--local-telemetry"
 
 test-client-gfal2:
   stage: system-test

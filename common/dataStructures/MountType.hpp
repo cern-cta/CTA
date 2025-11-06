@@ -18,10 +18,11 @@
 #pragma once
 
 #include <string>
+#include <array>
 
 namespace cta::common::dataStructures {
 
-enum class MountType: uint32_t {
+enum class MountType : uint32_t {
   ArchiveForUser = 1,
   ArchiveForRepack = 2,
   Retrieve = 3,
@@ -30,6 +31,13 @@ enum class MountType: uint32_t {
   /// A summary type used in scheduling.
   ArchiveAllTypes = 99
 };
+
+inline constexpr std::array<MountType, 6> AllMountTypes = {MountType::ArchiveForUser,
+                                                           MountType::ArchiveForRepack,
+                                                           MountType::Retrieve,
+                                                           MountType::Label,
+                                                           MountType::NoMount,
+                                                           MountType::ArchiveAllTypes};
 
 /**
  * A function summarizing subtypes (currently only Archive) to simplify scheduling.
@@ -51,6 +59,6 @@ std::string toCamelCaseString(cta::common::dataStructures::MountType type);
  */
 MountType strToMountType(const std::string& mountTypeStr);
 
-std::ostream &operator <<(std::ostream& os, const MountType &obj);
+std::ostream& operator<<(std::ostream& os, const MountType& obj);
 
-} // namespace cta::common::dataStructures
+}  // namespace cta::common::dataStructures

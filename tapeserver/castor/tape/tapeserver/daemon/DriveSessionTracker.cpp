@@ -31,40 +31,54 @@ using namespace cta;
 //------------------------------------------------------------------------------
 static void ObserveSessionState(opentelemetry::metrics::ObserverResult observer_result, void* state) noexcept {
   // Recover the object pointer
-  auto* driveSessionTracker = static_cast<DriveSessionTracker*>(state);
+  DriveSessionTracker* driveSessionTracker = static_cast<DriveSessionTracker*>(state);
   if (!driveSessionTracker) {
     return;
   }
 
-  auto optionalTapeDrive = driveSessionTracker->queryTapeDrive();
-  if(!optionalTapeDrive.has_value()) {
+  const auto optionalTapeDrive = driveSessionTracker->queryTapeDrive();
+  if (!optionalTapeDrive.has_value()) {
     return;
   }
-  auto actualDriveStatus = optionalTapeDrive.value().driveStatus;
-  auto actualMountType = optionalTapeDrive.value().mountType;
+  const auto actualDriveStatus = optionalTapeDrive.value().driveStatus;
 
   if (std::holds_alternative<std::shared_ptr<opentelemetry::metrics::ObserverResultT<int64_t>>>(observer_result)) {
     auto typed_observer = std::get<std::shared_ptr<opentelemetry::metrics::ObserverResultT<int64_t>>>(observer_result);
-    if (driveSessionTracker->hasState() && !driveSessionTracker->isSameState(actualDriveStatus, actualMountType)) {
-      // If there was a state before and said state is not the same as the new one, we need to emit a 0 for that old state
-      // and update it to the new state
-      auto oldDriveStatus = driveSessionTracker->getDriveStatus().value();
-      auto oldMountType = driveSessionTracker->getMountType().value();
-      driveSessionTracker->setState(actualDriveStatus, actualMountType);
-      typed_observer->Observe(
-        0,
-        {
-          {semconv::attr::kCtaTapedSessionState, common::dataStructures::toString(oldDriveStatus)},
-          {semconv::attr::kCtaTapedMountType,    common::dataStructures::toString(oldMountType)  }
+    // All drive statuses are emitted at each interval to prevent missing metrics
+    // See https://opentelemetry.io/docs/specs/semconv/system/k8s-metrics/#metric-k8spodphase
+    for (const auto driveStatus : common::dataStructures::AllDriveStatuses) {
+      int64_t observed = (driveStatus == actualDriveStatus ? 1 : 0);
+      typed_observer->Observe(observed,
+                              {
+                                {semconv::attr::kCtaTapedSessionState, common::dataStructures::toString(driveStatus)}
       });
     }
-    // Observe the new state
-    typed_observer->Observe(
-      1,
-      {
-        {semconv::attr::kCtaTapedSessionState, common::dataStructures::toString(actualDriveStatus)},
-        {semconv::attr::kCtaTapedMountType,    common::dataStructures::toString(actualMountType)  }
-    });
+  }
+}
+
+static void ObserveMountType(opentelemetry::metrics::ObserverResult observer_result, void* state) noexcept {
+  // Recover the object pointer
+  DriveSessionTracker* driveSessionTracker = static_cast<DriveSessionTracker*>(state);
+  if (!driveSessionTracker) {
+    return;
+  }
+
+  const auto optionalTapeDrive = driveSessionTracker->queryTapeDrive();
+  if (!optionalTapeDrive.has_value()) {
+    return;
+  }
+  const auto actualMountType = optionalTapeDrive.value().mountType;
+
+  if (std::holds_alternative<std::shared_ptr<opentelemetry::metrics::ObserverResultT<int64_t>>>(observer_result)) {
+    auto typed_observer = std::get<std::shared_ptr<opentelemetry::metrics::ObserverResultT<int64_t>>>(observer_result);
+    // All mount types are emitted at each interval to prevent missing metrics
+    for (const auto mountType : common::dataStructures::AllMountTypes) {
+      int64_t observed = (mountType == actualMountType ? 1 : 0);
+      typed_observer->Observe(observed,
+                              {
+                                {semconv::attr::kCtaTapedMountType, common::dataStructures::toString(mountType)}
+      });
+    }
   }
 }
 
@@ -72,40 +86,16 @@ DriveSessionTracker::DriveSessionTracker(std::shared_ptr<catalogue::Catalogue> c
     : m_catalogue(catalogue),
       m_driveName(driveName) {
   telemetry::metrics::ctaTapedSessionStatus->AddCallback(ObserveSessionState, this);
+  telemetry::metrics::ctaTapedMountType->AddCallback(ObserveMountType, this);
 }
 
 DriveSessionTracker::~DriveSessionTracker() {
   telemetry::metrics::ctaTapedSessionStatus->RemoveCallback(ObserveSessionState, this);
+  telemetry::metrics::ctaTapedMountType->RemoveCallback(ObserveMountType, this);
 }
 
 std::optional<common::dataStructures::TapeDrive> DriveSessionTracker::queryTapeDrive() const {
   return m_catalogue->DriveState()->getTapeDrive(m_driveName);
-}
-
-bool DriveSessionTracker::isSameState(common::dataStructures::DriveStatus driveStatus,
-                                      common::dataStructures::MountType mountType) const {
-  if (!hasState()) {
-    return false;
-  }
-  return driveStatus == m_driveStatus && mountType == m_mountType;
-}
-
-bool DriveSessionTracker::hasState() const {
-  return m_driveStatus.has_value() && m_mountType.has_value();
-}
-
-void DriveSessionTracker::setState(common::dataStructures::DriveStatus driveStatus,
-                                   common::dataStructures::MountType mountType) {
-  m_driveStatus = driveStatus;
-  m_mountType = mountType;
-}
-
-std::optional<common::dataStructures::DriveStatus> DriveSessionTracker::getDriveStatus() const {
-  return m_driveStatus;
-}
-
-std::optional<common::dataStructures::MountType> DriveSessionTracker::getMountType() const {
-  return m_mountType;
 }
 
 }  // namespace castor::tape::tapeserver::daemon

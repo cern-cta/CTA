@@ -40,17 +40,9 @@ public:
 
   std::optional<cta::common::dataStructures::TapeDrive> queryTapeDrive() const;
 
-  bool hasState() const;
-  bool isSameState(cta::common::dataStructures::DriveStatus driveStatus, cta::common::dataStructures::MountType mountType) const;
-  void setState(cta::common::dataStructures::DriveStatus driveStatus, cta::common::dataStructures::MountType mountType);
-  std::optional<cta::common::dataStructures::DriveStatus> getDriveStatus() const;
-  std::optional<cta::common::dataStructures::MountType> getMountType() const;
-
 private:
   std::shared_ptr<cta::catalogue::Catalogue> m_catalogue;
   std::string m_driveName;
-  std::optional<cta::common::dataStructures::DriveStatus> m_driveStatus;
-  std::optional<cta::common::dataStructures::MountType> m_mountType;
 };
 
 }  // namespace castor::tape::tapeserver::daemon

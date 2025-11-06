@@ -27,7 +27,7 @@ namespace castor::tape::tapeserver::daemon {
 
 static void ObserveRecallMemoryUsage(opentelemetry::metrics::ObserverResult observer_result, void* state) noexcept {
   // Recover the object pointer
-  auto* memoryManager = static_cast<RecallMemoryManager*>(state);
+  const RecallMemoryManager* memoryManager = static_cast<RecallMemoryManager*>(state);
   if (!memoryManager) {
     return;
   }
@@ -40,7 +40,7 @@ static void ObserveRecallMemoryUsage(opentelemetry::metrics::ObserverResult obse
 
 static void ObserveRecallMemoryLimit(opentelemetry::metrics::ObserverResult observer_result, void* state) noexcept {
   // Recover the object pointer
-  auto* memoryManager = static_cast<RecallMemoryManager*>(state);
+  const RecallMemoryManager* memoryManager = static_cast<RecallMemoryManager*>(state);
   if (!memoryManager) {
     return;
   }
@@ -60,14 +60,14 @@ RecallMemoryManager::RecallMemoryManager(size_t numberOfBlocks, size_t blockSize
       m_totalMemoryAllocated(0),
       m_lc(lc) {
   for (size_t i = 0; i < numberOfBlocks; i++) {
-    m_freeBlocks.push(new MemBlock(i, blockSize));
+    m_freeBlocks.push(new MemBlock(i, m_blockCapacity));
     m_totalNumberOfBlocks++;
-    m_totalMemoryAllocated += blockSize;
+    m_totalMemoryAllocated += m_blockCapacity;
   }
   cta::log::ScopedParamContainer params(m_lc);
-  params.add("blockCount", numberOfBlocks)
-        .add("blockSize", blockSize)
-        .add("totalSize", numberOfBlocks*blockSize);
+  params.add("blockCount", m_totalNumberOfBlocks)
+        .add("blockSize", m_blockCapacity)
+        .add("totalSize", m_totalMemoryAllocated);
   m_lc.log(cta::log::INFO, "RecallMemoryManager: all blocks have been created");
   cta::telemetry::metrics::ctaTapedBufferUsage->AddCallback(ObserveRecallMemoryUsage, this);
   cta::telemetry::metrics::ctaTapedBufferLimit->AddCallback(ObserveRecallMemoryLimit, this);
@@ -90,19 +90,19 @@ RecallMemoryManager::~RecallMemoryManager() {
   } while (ret.remaining > 0);
 
   m_lc.log(cta::log::INFO, "RecallMemoryManager destruction : all memory blocks have been deleted");
-  cta::telemetry::metrics::ctaTapedBufferUsage->AddCallback(ObserveRecallMemoryUsage, this);
-  cta::telemetry::metrics::ctaTapedBufferLimit->AddCallback(ObserveRecallMemoryLimit, this);
+  cta::telemetry::metrics::ctaTapedBufferUsage->RemoveCallback(ObserveRecallMemoryUsage, this);
+  cta::telemetry::metrics::ctaTapedBufferLimit->RemoveCallback(ObserveRecallMemoryLimit, this);
 }
 
 //------------------------------------------------------------------------------
-// RecallMemoryManager::~RecallMemoryManager
+// RecallMemoryManager::areBlocksAllBack
 //------------------------------------------------------------------------------
 bool RecallMemoryManager::areBlocksAllBack() noexcept {
   return m_totalNumberOfBlocks == m_freeBlocks.size();
 }
 
 //------------------------------------------------------------------------------
-// RecallMemoryManager::~RecallMemoryManager
+// RecallMemoryManager::getFreeBlock
 //------------------------------------------------------------------------------
 MemBlock* RecallMemoryManager::getFreeBlock() {
   MemBlock* ret = m_freeBlocks.pop();
@@ -117,7 +117,7 @@ MemBlock* RecallMemoryManager::getFreeBlock() {
 }
 
 //------------------------------------------------------------------------------
-// RecallMemoryManager::~RecallMemoryManager
+// RecallMemoryManager::releaseBlock
 //------------------------------------------------------------------------------
 void RecallMemoryManager::releaseBlock(MemBlock* mb) {
   //m_lc.pushOrReplace(cta::log::Param("blockId", mb->m_memoryBlockId));
