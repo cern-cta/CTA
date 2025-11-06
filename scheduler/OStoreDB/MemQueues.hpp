@@ -114,13 +114,15 @@ SharedQueueLock<Queue, Request>::~SharedQueueLock() {
   } catch (std::out_of_range &) {}
   double inMemoryQueuesCleanupTime = m_timer.secs();
   log::ScopedParamContainer params(m_logContext);
-  params.add("objectQueue", queueAddress)
-    .add("waitTime", waitTime)
-    .add("queueUnlockTime", queueUnlockTime)
-    .add("queueDestructionTime", queueDestructionTime)
-    .add("successorUnlockTime", successorUnlockTime)
-    .add("inMemoryQueuesCleanupTime", inMemoryQueuesCleanupTime);
-  m_logContext.log(log::INFO, "In SharedQueueLock::~SharedQueueLock(): unlocked the archive queue pointer.");
+  try {
+    params.add("objectQueue", queueAddress)
+      .add("waitTime", waitTime)
+      .add("queueUnlockTime", queueUnlockTime)
+      .add("queueDestructionTime", queueDestructionTime)
+      .add("successorUnlockTime", successorUnlockTime)
+      .add("inMemoryQueuesCleanupTime", inMemoryQueuesCleanupTime);
+    m_logContext.log(log::INFO, "In SharedQueueLock::~SharedQueueLock(): unlocked the archive queue pointer.");
+  } catch (std::exception &) {}
 }
 
 template <class Request, class Queue>
