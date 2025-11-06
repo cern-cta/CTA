@@ -56,8 +56,6 @@ static void ObserveRecallMemoryLimit(opentelemetry::metrics::ObserverResult obse
 //------------------------------------------------------------------------------
 RecallMemoryManager::RecallMemoryManager(size_t numberOfBlocks, size_t blockSize, cta::log::LogContext& lc)
     : m_blockCapacity(blockSize),
-      m_totalNumberOfBlocks(0),
-      m_totalMemoryAllocated(0),
       m_lc(lc) {
   for (size_t i = 0; i < numberOfBlocks; i++) {
     m_freeBlocks.push(new MemBlock(i, m_blockCapacity));
@@ -97,7 +95,7 @@ RecallMemoryManager::~RecallMemoryManager() {
 //------------------------------------------------------------------------------
 // RecallMemoryManager::areBlocksAllBack
 //------------------------------------------------------------------------------
-bool RecallMemoryManager::areBlocksAllBack() noexcept {
+bool RecallMemoryManager::areBlocksAllBack() const noexcept {
   return m_totalNumberOfBlocks == m_freeBlocks.size();
 }
 

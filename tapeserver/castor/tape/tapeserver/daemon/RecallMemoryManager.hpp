@@ -53,7 +53,7 @@ public:
    * Are all sheep back to the farm?
    * @return
    */
-  bool areBlocksAllBack() noexcept;
+  bool areBlocksAllBack() const noexcept;
 
   /**
    * Takes back a block which has been released by one of the clients
@@ -88,12 +88,12 @@ private:
   /**
    * Total number of allocated memory blocks
    */
-  size_t m_totalNumberOfBlocks;
+  size_t m_totalNumberOfBlocks = 0;
 
   /**
    * Total amount of memory allocated
    */
-  size_t m_totalMemoryAllocated;
+  size_t m_totalMemoryAllocated = 0;
 
   /**
    * Container for the free blocks

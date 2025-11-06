@@ -57,8 +57,7 @@ static void ObserveMigrationMemoryLimit(opentelemetry::metrics::ObserverResult o
 //------------------------------------------------------------------------------
 MigrationMemoryManager::MigrationMemoryManager(const uint32_t numberOfBlocks, const uint32_t blockSize,
                                                const cta::log::LogContext& lc) :
-m_blockCapacity(blockSize),
-m_totalNumberOfBlocks(0), m_totalMemoryAllocated(0), m_lc(lc) {
+m_blockCapacity(blockSize), m_lc(lc) {
 
   for (uint32_t i = 0; i < numberOfBlocks; i++) {
     m_freeBlocks.push(new MemBlock(i, m_blockCapacity));
@@ -115,14 +114,14 @@ void MigrationMemoryManager::addClient(DataPipeline* c) {
 //------------------------------------------------------------------------------
 // MigrationMemoryManager::areBlocksAllBack
 //------------------------------------------------------------------------------
-bool MigrationMemoryManager::areBlocksAllBack() noexcept{
+bool MigrationMemoryManager::areBlocksAllBack() const noexcept{
   return m_totalNumberOfBlocks == m_freeBlocks.size();
 }
 
 //------------------------------------------------------------------------------
 // MigrationMemoryManager::blockCapacity
 //------------------------------------------------------------------------------
-size_t MigrationMemoryManager::blockCapacity() {
+size_t MigrationMemoryManager::blockCapacity() const {
   return m_blockCapacity;
 }
 
