@@ -56,8 +56,8 @@ public:
      */
   void execute(tapeFile::ReadSession& rs, cta::log::LogContext& lc,
     RecallWatchDog& watchdog, TapeSessionStats& stats, cta::utils::Timer& timer) {
-    TransferTaskTracker transferTaskTracer(cta::semconv::attr::CtaIoDirectionValues::kRead,
-                                           cta::semconv::attr::CtaIoMediumValues::kTape);
+    [[maybe_unused]] TransferTaskTracker transferTaskTracer(cta::semconv::attr::CtaIoDirectionValues::kRead,
+                                                            cta::semconv::attr::CtaIoMediumValues::kTape);
 
     using cta::log::Param;
 

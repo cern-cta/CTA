@@ -18,6 +18,7 @@
 #pragma once
 
 #include <string>
+#include <array>
 
 namespace cta::common::dataStructures {
 
@@ -37,4 +38,5 @@ enum DriveStatus {
 };
 
 std::string toString(DriveStatus type);
-} // namespace cta::common::dataStructures
+
+}  // namespace cta::common::dataStructures

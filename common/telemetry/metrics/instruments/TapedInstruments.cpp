@@ -32,6 +32,7 @@ std::unique_ptr<opentelemetry::metrics::UpDownCounter<int64_t>> ctaTapedTransfer
 std::shared_ptr<opentelemetry::metrics::ObservableInstrument> ctaTapedBufferUsage;
 std::shared_ptr<opentelemetry::metrics::ObservableInstrument> ctaTapedBufferLimit;
 std::unique_ptr<opentelemetry::metrics::Histogram<uint64_t>> ctaTapedMountDuration;
+std::shared_ptr<opentelemetry::metrics::ObservableInstrument> ctaTapedSessionStatus;
 
 }  // namespace cta::telemetry::metrics
 
@@ -68,6 +69,11 @@ void initInstruments() {
     meter->CreateUInt64Histogram(cta::semconv::metrics::kMetricCtaTapedMountDuration,
                                  cta::semconv::metrics::descrCtaTapedMountDuration,
                                  cta::semconv::metrics::unitCtaTapedMountDuration);
+
+  cta::telemetry::metrics::ctaTapedSessionStatus =
+    meter->CreateInt64ObservableUpDownCounter(cta::semconv::metrics::kMetricCtaTapedSessionStatus,
+                                              cta::semconv::metrics::descrCtaTapedSessionStatus,
+                                              cta::semconv::metrics::unitCtaTapedSessionStatus);
 }
 
 // Register and run this init function at start time

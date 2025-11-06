@@ -47,6 +47,8 @@ static constexpr const char* kSchedulerOperationName = "cta.scheduler.operation.
 static constexpr const char* kFrontendRequesterName = "cta.frontend.requester.name";
 static constexpr const char* kCtaIoDirection = "cta.io.direction";  // similar to disk.io.direction
 static constexpr const char* kCtaIoMedium = "cta.io.medium";
+static constexpr const char* kCtaTapedSessionState = "cta.taped.session.state";
+static constexpr const char* kCtaTapedMountType = "cta.taped.mount.type";
 
 // -------------------- Attribute Values --------------------
 

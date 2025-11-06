@@ -44,8 +44,8 @@ DiskReadTask::DiskReadTask(DataConsumer& destination,
 //------------------------------------------------------------------------------
 void DiskReadTask::execute(cta::log::LogContext& lc, cta::disk::DiskFileFactory& fileFactory,
     MigrationWatchDog& watchdog, const int threadID) {
-  TransferTaskTracker transferTaskTracker(cta::semconv::attr::CtaIoDirectionValues::kRead,
-                                          cta::semconv::attr::CtaIoMediumValues::kDisk);
+  [[maybe_unused]] TransferTaskTracker transferTaskTracker(cta::semconv::attr::CtaIoDirectionValues::kRead,
+                                                           cta::semconv::attr::CtaIoMediumValues::kDisk);
   using cta::log::LogContext;
   using cta::log::Param;
 

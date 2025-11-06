@@ -34,6 +34,7 @@
 #include "tapeserver/castor/tape/tapeserver/daemon/CleanerSession.hpp"
 #include "tapeserver/castor/tape/tapeserver/daemon/DataTransferSession.hpp"
 #include "tapeserver/castor/tape/tapeserver/daemon/Session.hpp"
+#include "tapeserver/castor/tape/tapeserver/daemon/DriveSessionTracker.hpp"
 #include "tapeserver/daemon/DriveConfigEntry.hpp"
 #include "tapeserver/daemon/DriveHandler.hpp"
 #include "tapeserver/daemon/DriveHandlerProxy.hpp"
@@ -640,6 +641,8 @@ int DriveHandler::runChild() {
     sleep(1);
     return castor::tape::tapeserver::daemon::Session::MARK_DRIVE_AS_DOWN;
   }
+  // Needs to be done after the catalogue initialization
+  [[maybe_unused]] castor::tape::tapeserver::daemon::DriveSessionTracker driveSessionTracker(m_catalogue, driveInfo.driveName);
 
   // Before launching the transfer session, we validate that the scheduler is reachable.
   m_lc.log(log::DEBUG, "In DriveHandler::runChild(): will ping scheduler.");
