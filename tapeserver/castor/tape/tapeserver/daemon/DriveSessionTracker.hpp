@@ -28,15 +28,14 @@ namespace castor::tape::tapeserver::daemon {
 
 /**
  * The purpose of this class is to observe the session state of a given drive and emit corresponding metrics about this.
- * The existence of this class solves a few problems:
- * - The callback is removed when the session no longer exists (when this class goes out of scope)
- * - It keeps track of the previous state within the session which is necessary as we not only emit what the current state is,
- *   we also need to emit that the previous state is no longer active.
+ * Using RAII, this class ensures that the callback is removed when this class goes out of scope
  */
 class DriveSessionTracker {
 public:
   DriveSessionTracker(std::shared_ptr<cta::catalogue::Catalogue> catalogue, std::string_view driveName);
   ~DriveSessionTracker();
+  DriveSessionTracker (const DriveSessionTracker&) = delete;
+  DriveSessionTracker& operator= (const DriveSessionTracker&) = delete;
 
   std::optional<cta::common::dataStructures::TapeDrive> queryTapeDrive() const;
 

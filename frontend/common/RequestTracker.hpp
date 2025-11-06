@@ -28,6 +28,9 @@ class RequestTracker {
 public:
   RequestTracker(std::string_view eventName, std::string_view requesterName);
   ~RequestTracker();
+  RequestTracker (const RequestTracker&) = delete;
+  RequestTracker& operator= (const RequestTracker&) = delete;
+
   void setErrorType(std::string_view errorType);
 
 private:
