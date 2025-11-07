@@ -50,7 +50,7 @@ tpsrv:
               username: it_sd_tab_ci
               passwordSecret: monit-it-sd-tab-ci-pwd
 
-maintenance:
+maintd:
   conf:
     telemetry:
       enabled: true

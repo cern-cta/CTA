@@ -57,7 +57,7 @@ static constexpr const char* kTapeLibraryLogicalName = "tape.library.logical.nam
 namespace ServiceNameValues {
 static constexpr const char* kCtaFrontend = "cta.frontend";
 static constexpr const char* kCtaTaped = "cta.taped";
-static constexpr const char* kCtaMaintenance = "cta.maintenance";
+static constexpr const char* kCtaMaintd = "cta.maintd";
 }  // namespace ServiceNameValues
 
 namespace CtaIoDirectionValues {

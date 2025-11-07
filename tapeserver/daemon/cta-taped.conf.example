@@ -56,8 +56,7 @@ ObjectStore BackendPath rados://cta@tapecta:cta
 #
 # DRIVE OPTIONS
 #
-# The name of the drive. Will be included for every line in the logs. This can help identifying
-# a problematic maintenance process of the drive after log agregation.
+# The name of the drive. Will be included for every line in the logs.
 # taped DriveName
 #
 # CTA's logical library the tape drive will be linked to.
@@ -180,18 +179,6 @@ taped externalFreeDiskSpaceScript /usr/bin/cta-eosdf.sh
 #
 # Specify options for the software RAO algorithm.
 # taped RAOLTOAlgorithmOptions cost_heuristic_name:cta
-
-#
-# MAINTENANCE PROCESS CONFIGURATION OPTIONS
-#
-
-# ##### WARNING #####
-#
-# The CTA secheduler is fully distributed. By default, all cta-taped processes will handle reporting
-# jobs and repack requests. These values should only be changed by expert users. Misconfiguration can
-# stop CTA from functioning.
-#
-# ##### WARNING #####
 
 #
 # TIMEOUT OPTIONS

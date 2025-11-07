@@ -1,0 +1,150 @@
+{{- $name := include "ctamaintd.fullname" . }}
+{{- $schedulerConfig := include "scheduler.config" . | fromYaml -}}
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: {{ $name }}
+  namespace: {{ .Release.Namespace | quote }}
+  labels:
+    {{- include "common.labels.standard" $ | nindent 4 }}
+spec:
+  serviceName: {{ $name }}
+  replicas: {{ .Values.replicas }}
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: {{ $name }}
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/name: {{ $name }}
+        {{- include "common.labels.withoutname" $ | nindent 8 }}
+    spec:
+      restartPolicy: Always
+      terminationGracePeriodSeconds: {{ $.Values.terminationGracePeriodSeconds }}
+      imagePullSecrets:
+      {{- include "maintd.imagePullSecrets" $ | nindent 6 }}
+      {{- if .Values.pod.extraSpec }}
+      {{ .Values.pod.extraSpec | toYaml | nindent 6 }}
+      {{- end }}
+      initContainers:
+      - name: init1-fix-sss-keytab-ownership
+        image: {{ include "common.images.busybox" . }}
+        imagePullPolicy: {{ include "common.images.defaultPullPolicy" . }}
+        command: ["sh", "-c"]
+        args:
+        - |
+          cp /root/sss_keytab/input/maintd.keytab /root/sss_keytab/output/cta-maintd.sss.keytab;
+          chmod 400 /root/sss_keytab/output/cta-maintd.sss.keytab;
+          # Make CTA user owner (group 33 is tape)
+          chown -R 1000:33 /root/sss_keytab/output/cta-maintd.sss.keytab
+        volumeMounts:
+          - name: maintd-sss-keytab
+            mountPath: /root/sss_keytab/input/maintd.keytab
+            subPath: {{ $.Values.keytab.subPath }}
+          - name: maintd-sss-keytab-fixedownership
+            mountPath: /root/sss_keytab/output
+      containers:
+      - name: {{ $name }}
+        image: {{ include "maintd.image" . }}
+        imagePullPolicy: {{ include "maintd.imagePullPolicy" . }}
+        stdin: true
+        command: ["/bin/bash", "-c"]
+        args: ["{{- if $.Values.preRun.enabled }}/scripts/pre_run.sh;{{- end }} /scripts/maintd.sh; {{- if $.Values.postRun.enabled }}/scripts/post_run.sh;{{- end }}"]
+        readinessProbe:
+          exec:
+            command: ["sh", "-c", "pgrep -f /usr/bin/cta-maintd > /dev/null"]
+          initialDelaySeconds: 5
+          periodSeconds: 2
+          failureThreshold: 60
+        securityContext:
+          allowPrivilegeEscalation: {{ include "common.securityContext.allowPrivilegeEscalation" . }}
+          privileged: {{ include "common.securityContext.privileged" . }}
+          capabilities:
+            add: ["CAP_SYS_PTRACE"]
+        env:
+        - name: MY_NAME
+          value: {{ $name }}
+        - name: MY_NAMESPACE
+          value: {{ .Release.Namespace | quote }}
+        - name: INSTANCE_NAME
+          value: {{ .Release.Namespace | quote }}
+        - name: TERM
+          value: "xterm"
+        - name: SCHEDULER_BACKEND
+          value: {{ $schedulerConfig.backend | quote }}
+        - name: XrdSecPROTOCOL
+          value: sss
+        - name: XrdSecSSSKT
+          value: /etc/cta/cta-maintd.sss.keytab
+        volumeMounts:
+        - name: scripts-volume
+          mountPath: /scripts
+        - name: cta-maintd-config
+          mountPath: /etc/cta/cta-maintd.conf
+          subPath: cta-maintd.conf
+        - name: catalogue-config
+          mountPath: /etc/cta/cta-catalogue.conf
+          subPath: cta-catalogue.conf
+        - name: maintd-sss-keytab-fixedownership
+          mountPath: /etc/cta/cta-maintd.sss.keytab
+          subPath: cta-maintd.sss.keytab
+        {{- if eq $schedulerConfig.backend "postgres" }}
+        - name: scheduler-config
+          mountPath: /etc/cta/cta-scheduler.conf
+          subPath: cta-scheduler.conf
+        {{- else if eq $schedulerConfig.backend "ceph" }}
+        - name: cta-ceph-volume
+          mountPath: /etc/ceph/ceph.conf
+          subPath: ceph.conf
+        - name: cta-ceph-volume
+          mountPath: /etc/ceph/ceph.client.{{ $schedulerConfig.cephConfig.id }}.keyring
+          subPath: ceph.client.{{ $schedulerConfig.cephConfig.id }}.keyring
+        {{- end }}
+        {{- if $.Values.global.volumeMounts }}
+        {{ $.Values.global.volumeMounts | toYaml | nindent 8 }}
+        {{- end }}
+        {{- if $.Values.conf.telemetry.metricsExportOtlpBasicAuthSecret }}
+        - name: otlp-basic-auth
+          mountPath: /etc/cta/otlp-basic-auth.conf
+          subPath: otlp-basic-auth.conf
+        {{- end }}
+        {{ include "common.extraVolumeMounts" . | nindent 8 }}
+      volumes:
+      - name: scripts-volume
+        configMap:
+          name: scripts-maintd
+          defaultMode: 0777
+      - name: catalogue-config
+        configMap:
+          name: cta-catalogue-conf
+      {{- if eq $schedulerConfig.backend "postgres" }}
+      - name: scheduler-config
+        configMap:
+          name: cta-scheduler-conf
+      {{- else }}
+      - name: scheduler-config
+        configMap:
+          name: cta-objectstore-conf
+      {{- end }}
+      {{- if eq $schedulerConfig.backend "ceph" }}
+      - name: cta-ceph-volume
+        configMap:
+          name: ceph-conf
+      {{- end }}
+      - name: cta-maintd-config
+        configMap:
+          name: cta-maintd-conf
+      - name: maintd-sss-keytab
+        secret:
+          secretName: {{ $.Values.keytab.secretName }}
+      - name: maintd-sss-keytab-fixedownership
+        emptyDir: {}
+      {{- if $.Values.global.volumes }}
+      {{ $.Values.global.volumes | toYaml | nindent 6 }}
+      {{- end }}
+      {{- if $.Values.conf.telemetry.metricsExportOtlpBasicAuthSecret }}
+      - name: otlp-basic-auth
+        secret:
+          secretName: {{ $.Values.conf.telemetry.metricsExportOtlpBasicAuthSecret }}
+      {{- end }}
+      {{ include "common.extraVolumes" . | nindent 6 }}

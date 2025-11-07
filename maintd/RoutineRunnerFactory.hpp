@@ -1,6 +1,6 @@
 /*
  * @project      The CERN Tape Archive (CTA)
- * @copyright    Copyright © 2025 CERN
+ * @copyright    Copyright © 2021-2025 CERN
  * @license      This program is free software, distributed under the terms of the GNU General Public
  *               Licence version 3 (GPL Version 3), copied verbatim in the file "COPYING". You can
  *               redistribute it and/or modify it under the terms of the GPL Version 3, or (at your
@@ -14,19 +14,20 @@
  *               granted to it by virtue of its status as an Intergovernmental Organization or
  *               submit itself to any jurisdiction.
  */
+
 #pragma once
 
-#include <string>
+#include "common/config/Config.hpp"
+#include "common/log/LogContext.hpp"
 
-// At the moment only used for meter names.
-// However, if these values are used in other places in the future, we can make this more generic.
-namespace cta::semconv::meter {
+namespace cta::maintd {
 
-static constexpr const char* kCtaFrontend = "cta.frontend";
-static constexpr const char* kCtaRdbms = "cta.rdbms";
-static constexpr const char* kCtaScheduler = "cta.scheduler";
-static constexpr const char* kCtaObjectstore = "cta.objectstore";
-static constexpr const char* kCtaTaped = "cta.taped";
-static constexpr const char* kCtaMaintd = "cta.maintd";
+/**
+ * Responsible for create a RoutineRunner with a specific set of registered routines based on the provided config.
+ */
+class RoutineRunnerFactory {
+public:
+  static std::unique_ptr<RoutineRunner> create(cta::log::LogContext& lc, const cta::common::Config& config);
+};
 
-}  // namespace cta::semconv::meter
+}  // namespace cta::maintd
