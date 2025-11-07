@@ -31,7 +31,7 @@ using namespace cta;
 //------------------------------------------------------------------------------
 static void ObserveSessionState(opentelemetry::metrics::ObserverResult observer_result, void* state) noexcept {
   // Recover the object pointer
-  DriveSessionTracker* driveSessionTracker = static_cast<DriveSessionTracker*>(state);
+  const auto driveSessionTracker = static_cast<DriveSessionTracker*>(state);
   if (!driveSessionTracker) {
     return;
   }
@@ -58,7 +58,7 @@ static void ObserveSessionState(opentelemetry::metrics::ObserverResult observer_
 
 static void ObserveMountType(opentelemetry::metrics::ObserverResult observer_result, void* state) noexcept {
   // Recover the object pointer
-  DriveSessionTracker* driveSessionTracker = static_cast<DriveSessionTracker*>(state);
+  const auto driveSessionTracker = static_cast<DriveSessionTracker*>(state);
   if (!driveSessionTracker) {
     return;
   }
@@ -72,17 +72,18 @@ static void ObserveMountType(opentelemetry::metrics::ObserverResult observer_res
   if (std::holds_alternative<std::shared_ptr<opentelemetry::metrics::ObserverResultT<int64_t>>>(observer_result)) {
     auto typed_observer = std::get<std::shared_ptr<opentelemetry::metrics::ObserverResultT<int64_t>>>(observer_result);
     // All mount types are emitted at each interval to prevent missing metrics
-    using namespace common::dataStructures;
     // Note that we ignore the Label and ArchiveAllTypes mount types as these are not actively used
-    constexpr std::array<MountType, 4> mountTypes = {MountType::ArchiveForUser,
-                                                     MountType::ArchiveForRepack,
-                                                     MountType::Retrieve,
-                                                     MountType::NoMount};
+    using enum common::dataStructures::MountType;
+    constexpr std::array<common::dataStructures::MountType, 4> mountTypes = {ArchiveForUser,
+                                                                             ArchiveForRepack,
+                                                                             Retrieve,
+                                                                             NoMount};
     for (const auto mountType : mountTypes) {
       int64_t observed = (mountType == actualMountType ? 1 : 0);
-      typed_observer->Observe(observed,
-                              {
-                                {semconv::attr::kCtaTapedMountType, toCamelCaseString(mountType)}
+      typed_observer->Observe(
+        observed,
+        {
+          {semconv::attr::kCtaTapedMountType, common::dataStructures::toCamelCaseString(mountType)}
       });
     }
   }

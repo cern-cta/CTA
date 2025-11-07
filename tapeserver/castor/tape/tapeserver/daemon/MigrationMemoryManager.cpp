@@ -166,7 +166,9 @@ void MigrationMemoryManager::run()  {
     if (!c) return;
     // Spin on the the client. We rely on the fact that he will want
     // at least one block (which is the case currently)
-    while (c->provideBlock(m_freeBlocks.pop())) {}
+    while (c->provideBlock(m_freeBlocks.pop())) {
+      // Nothing to do; just wait to provide the next block
+    }
   }
 }
 
