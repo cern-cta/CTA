@@ -18,7 +18,6 @@
 #pragma once
 
 #include <string>
-#include <array>
 
 namespace cta::common::dataStructures {
 
