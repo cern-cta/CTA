@@ -1,0 +1,10 @@
+/var/log/cta/cta-maintd.log {
+    compress
+    daily
+    missingok
+    rotate 500
+    delaycompress
+    postrotate
+        /bin/pkill -SIGUSR1 cta-maintd 2> /dev/null || true
+    endscript
+}

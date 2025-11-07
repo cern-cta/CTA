@@ -38,7 +38,7 @@
 #include "common/exception/NoSuchObject.hpp"
 #include "common/exception/UserError.hpp"
 #include "common/log/StdoutLogger.hpp"
-#include "common/telemetry/metrics/instruments/MaintenanceInstruments.hpp"
+#include "common/telemetry/metrics/instruments/MaintdInstruments.hpp"
 #include "common/utils/utils.hpp"
 #include "disk/DiskFile.hpp"
 #include "MemQueues.hpp"
@@ -2753,7 +2753,7 @@ void OStoreDB::RepackRetrieveSuccessesReportBatch::report(log::LogContext& lc) {
       sorter.insertArchiveRequest(sts.sorterArchiveRequest, *m_oStoreDb.m_agentReference, lc);
     }
     sorter.flushAll(lc);
-    cta::telemetry::metrics::ctaMaintenanceRepackReportingCount->Add(successfullyTransformedSubrequests.size());
+    cta::telemetry::metrics::ctaMaintdRepackReportingCount->Add(successfullyTransformedSubrequests.size());
   }
   timingList.insertAndReset("archiveRequestsQueueingTime", t);
   log::ScopedParamContainer params(lc);
@@ -2839,7 +2839,7 @@ void OStoreDB::RepackRetrieveFailureReportBatch::report(log::LogContext& lc) {
       }
     }
 
-    cta::telemetry::metrics::ctaMaintenanceRepackReportingCount->Add(retrieveRequestsToUnown.size());
+    cta::telemetry::metrics::ctaMaintdRepackReportingCount->Add(retrieveRequestsToUnown.size());
     timingList.insertAndReset("asyncDeleteRetrieveLaunchTime", t);
     for (auto& adar : asyncDeleterAndReqs) {
       try {
@@ -5028,7 +5028,7 @@ void OStoreDB::RepackArchiveReportBatch::report(log::LogContext& lc) {
     jobsToUnown.emplace_back(sri.subrequest->getAddressIfSet());
   }
   m_oStoreDb.m_agentReference->removeBatchFromOwnership(jobsToUnown, m_oStoreDb.m_objectStore);
-  cta::telemetry::metrics::ctaMaintenanceRepackReportingCount->Add(m_subrequestList.size());
+  cta::telemetry::metrics::ctaMaintdRepackReportingCount->Add(m_subrequestList.size());
   log::ScopedParamContainer params(lc);
   timingList.insertAndReset("ownershipRemovalTime", t);
   timingList.addToLog(params);

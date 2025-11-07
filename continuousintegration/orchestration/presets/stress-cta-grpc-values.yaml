@@ -75,7 +75,8 @@ tpsrv:
       echo "Mounting logs volume ${PV_PATH} in /var/log"
       mount --bind ${PV_PATH} /var/log
 
-maintenance:
+maintd:
+:
   preRun:
     enabled: true
     script: |

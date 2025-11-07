@@ -140,34 +140,34 @@ The tape server daemon
 %systemd_postun cta-taped.service
 %systemdDaemonReload
 
-%package -n cta-maintenance
+%package -n cta-maintd
 Summary: CERN Tape Archive: maintenance daemon
 Group: Application/CTA
 Requires: logrotate
 Requires: cta-common = %{version}-%{release}
 Requires: cta-lib = %{version}-%{release}
 Requires: cta-lib-catalogue = %{version}-%{release}
-%description -n cta-maintenance
+%description -n cta-maintd
 CERN Tape Archive:
-%files -n cta-maintenance
+%files -n cta-maintd
 %defattr(-,root,root)
-%attr(0644,root,root) %config(noreplace) /etc/logrotate.d/cta-maintenance
-%attr(0755,root,root) %{_bindir}/cta-maintenance
-%attr(0644,root,root) %config(noreplace) %{_sysconfdir}/cta/cta-maintenance.conf.example
-%attr(0644,root,root) %doc /usr/share/man/man1/cta-maintenance.1cta.gz
-%attr(0644,root,root) %config(noreplace) /etc/systemd/system/cta-maintenance.service
+%attr(0644,root,root) %config(noreplace) /etc/logrotate.d/cta-maintd
+%attr(0755,root,root) %{_bindir}/cta-maintd
+%attr(0644,root,root) %config(noreplace) %{_sysconfdir}/cta/cta-maintd.conf.example
+%attr(0644,root,root) %doc /usr/share/man/man1/cta-maintd.1cta.gz
+%attr(0644,root,root) %config(noreplace) /etc/systemd/system/cta-maintd.service
 
 
-%post -n cta-maintenance
-%systemd_post cta-maintenance.service
+%post -n cta-maintd
+%systemd_post cta-maintd.service
 %systemdDaemonReload
-%systemdTryRestart cta-maintenance.service
+%systemdTryRestart cta-maintd.service
 
-%preun -n cta-maintenance
-%systemd_preun cta-maintenance.service
+%preun -n cta-maintd
+%systemd_preun cta-maintd.service
 
-%postun -n cta-maintenance
-%systemd_postun cta-maintenance.service
+%postun -n cta-maintd
+%systemd_postun cta-maintd.service
 %systemdDaemonReload
 
 

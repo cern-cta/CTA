@@ -114,25 +114,25 @@ static constexpr const char* kMetricCtaTapedDriveStatus = "cta.taped.drive.statu
 static constexpr const char* descrCtaTapedDriveStatus = "Number of drives in a given state";
 static constexpr const char* unitCtaTapedDriveStatus = "1";
 
-// -------------------- MAINTENANCE --------------------
-static constexpr const char* kMetricCtaMaintenanceGarbageCollectorCount = "cta.maintenance.garbagecollector.count";
-static constexpr const char* descrCtaMaintenanceGarbageCollectorCount = "Number of garbage collected objects in one pass";
-static constexpr const char* unitCtaMaintenanceGarbageCollectorCount = "1";
+// -------------------- MAINTD --------------------
+static constexpr const char* kMetricCtaMaintdGarbageCollectorCount = "cta.maintd.garbagecollector.count";
+static constexpr const char* descrCtaMaintdGarbageCollectorCount = "Number of garbage collected objects in one pass";
+static constexpr const char* unitCtaMaintdGarbageCollectorCount = "1";
 
-static constexpr const char* kMetricCtaMaintenanceDiskReporterCount = "cta.maintenance.diskreporter.count";
-static constexpr const char* descrCtaMaintenanceDiskReporterCount = "Number of report jobs reported in one pass";  
-static constexpr const char* unitCtaMaintenanceDiskReporterCount = "1";
+static constexpr const char* kMetricCtaMaintdDiskReporterCount = "cta.maintd.diskreporter.count";
+static constexpr const char* descrCtaMaintdDiskReporterCount = "Number of report jobs reported in one pass";
+static constexpr const char* unitCtaMaintdDiskReporterCount = "1";
 
-static constexpr const char* kMetricCtaMaintenanceRepackReportingCount = "cta.maintenance.repackreporting.count";
-static constexpr const char* descrCtaMaintenanceRepackReportingCount = "Number of repack report jobs reported in one pass";  
-static constexpr const char* unitCtaMaintenanceRepackReportingCount = "1";
+static constexpr const char* kMetricCtaMaintdRepackReportingCount = "cta.maintd.repackreporting.count";
+static constexpr const char* descrCtaMaintdRepackReportingCount = "Number of repack report jobs reported in one pass";
+static constexpr const char* unitCtaMaintdRepackReportingCount = "1";
 
-static constexpr const char* kMetricCtaMaintenanceRepackExpansionCount = "cta.maintenance.repackexpansion.count";
-static constexpr const char* descrCtaMaintenanceRepackExpansionCount = "Number of retrieve requests created by the expasion of repack requests in one pass";
-static constexpr const char* unitCtaMaintenanceRepackExpansionCount = "1";
+static constexpr const char* kMetricCtaMaintdRepackExpansionCount = "cta.maintd.repackexpansion.count";
+static constexpr const char* descrCtaMaintdRepackExpansionCount = "Number of retrieve requests created by the expasion of repack requests in one pass";
+static constexpr const char* unitCtaMaintdRepackExpansionCount = "1";
 
-static constexpr const char* kMetricCtaMaintenanceQueueCleanupCount = "cta.maintenance.queuecleanup.count";
-static constexpr const char* descrCtaMaintenanceQueueCleanupCount = "Number of retrieve requests requeued of failed in one pass.";  
-static constexpr const char* unitCtaMaintenanceQueueCleanupCount = "1";
+static constexpr const char* kMetricCtaMaintdQueueCleanupCount = "cta.maintd.queuecleanup.count";
+static constexpr const char* descrCtaMaintdQueueCleanupCount = "Number of retrieve requests requeued of failed in one pass.";
+static constexpr const char* unitCtaMaintdQueueCleanupCount = "1";
 
 }  // namespace cta::semconv::metrics

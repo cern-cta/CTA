@@ -84,7 +84,7 @@ update_local_cta_chart_dependencies() {
     "cli"
     "frontend"
     "tpsrv"
-    "maintenance"
+    "maintd"
     "cta"
   )
   for chart in "${charts[@]}"; do
@@ -399,7 +399,7 @@ create_instance() {
     extra_cta_chart_flags+=" ${extra_cta_values} "
   fi
 
-  
+
   echo "Installing CTA chart..."
   log_run helm ${helm_command} cta helm/cta \
                                 --namespace "${namespace}" \

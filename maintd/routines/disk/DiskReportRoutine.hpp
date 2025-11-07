@@ -1,6 +1,6 @@
 /*
  * @project      The CERN Tape Archive (CTA)
- * @copyright    Copyright © 2025 CERN
+ * @copyright    Copyright © 2021-2022 CERN
  * @license      This program is free software, distributed under the terms of the GNU General Public
  *               Licence version 3 (GPL Version 3), copied verbatim in the file "COPYING". You can
  *               redistribute it and/or modify it under the terms of the GPL Version 3, or (at your
@@ -14,19 +14,28 @@
  *               granted to it by virtue of its status as an Intergovernmental Organization or
  *               submit itself to any jurisdiction.
  */
+
 #pragma once
 
-#include <string>
+#include "common/log/LogContext.hpp"
+#include "disk/DiskReporterFactory.hpp"
+#include "maintd/IRoutine.hpp"
+#include "scheduler/Scheduler.hpp"
 
-// At the moment only used for meter names.
-// However, if these values are used in other places in the future, we can make this more generic.
-namespace cta::semconv::meter {
+namespace cta::maintd {
 
-static constexpr const char* kCtaFrontend = "cta.frontend";
-static constexpr const char* kCtaRdbms = "cta.rdbms";
-static constexpr const char* kCtaScheduler = "cta.scheduler";
-static constexpr const char* kCtaObjectstore = "cta.objectstore";
-static constexpr const char* kCtaTaped = "cta.taped";
-static constexpr const char* kCtaMaintd = "cta.maintd";
+class DiskReportRoutine : public IRoutine {
+public:
+  DiskReportRoutine(cta::log::LogContext& lc, cta::Scheduler& scheduler, int batchSize, int softTimeout);
+  void execute() final;
 
-}  // namespace cta::semconv::meter
+private:
+  cta::log::LogContext& m_lc;
+  cta::Scheduler& m_scheduler;
+  cta::disk::DiskReporterFactory m_reporterFactory;
+
+  int m_batchSize = 500;
+  int m_softTimeout = 30;
+};
+
+}  // namespace cta::maintd

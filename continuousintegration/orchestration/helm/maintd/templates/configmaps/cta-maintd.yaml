@@ -1,0 +1,61 @@
+
+{{- $schedulerConfig := include "scheduler.config" . | fromYaml -}}
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: cta-maintd-conf
+  labels:
+    {{-  include "common.labels.standard" $ | nindent 4 }}
+data:
+  cta-maintd.conf: |-
+    # General
+    cta.instance_name {{ $.Release.Namespace }}
+    cta.scheduler_backend_name {{ $schedulerConfig.backend }}
+    cta.daemon_user {{ $.Values.conf.general.user }}
+    cta.daemon_group {{ $.Values.conf.general.group }}
+
+    cta.log.level {{ $.Values.conf.log.level }}
+    cta.log.format {{ $.Values.conf.log.format }}
+
+    cta.catalogue.config_file {{ $.Values.conf.maintd.catalogueConfigPath }}
+    cta.objectstore.backendpath {{ include "global.schedulerUrl" $ }}
+
+    cta.schedulerdb.tape_cache_max_age_secs {{ $.Values.conf.maintd.tapeCacheMaxAgeSecs }}
+    cta.schedulerdb.retrieve_queue_cache_max_age_secs {{ $.Values.conf.maintd.retrieveQueueCacheMaxAgeSecs }}
+
+    cta.routines.sleep_interval {{ $.Values.conf.routines.sleep_interval }}
+
+    cta.routines.disk_report.enabled {{ $.Values.conf.routines.disk_report.enabled }}
+    cta.routines.disk_report.batch_size {{ $.Values.conf.routines.disk_report.batchSize  }}
+    cta.routines.disk_report.soft_timeout {{ $.Values.conf.routines.disk_report.softTimeout }}
+
+    cta.routines.garbage_collect.enabled {{ $.Values.conf.routines.garbage_collector.enabled }}
+
+    cta.routines.queue_cleanup.enabled {{ $.Values.conf.routines.queue_cleanup.enabled }}
+    cta.routines.queue_cleanup.batch_size {{ $.Values.conf.routines.queue_cleanup.batchSize }}
+
+    cta.routines.repack_manager.enabled {{ $.Values.conf.routines.repack_manager.enabled }}
+    cta.routines.repack_manager.max_to_toexpand {{ $.Values.conf.routines.repack_manager.maxToToExpand }}
+    cta.routines.repack_manager.reporter.soft_timeout {{ $.Values.conf.routines.repack_manager.softTimeout }}
+
+    # Telemetry
+    cta.experimental.telemetry.enabled {{ $.Values.conf.telemetry.enabled }}
+
+    cta.telemetry.retain_instance_id_on_restart {{ $.Values.conf.telemetry.retainInstanceIdOnRestart }}
+    cta.telemetry.metrics.backend {{ $.Values.conf.telemetry.metricsBackend }}
+    {{- if $.Values.conf.telemetry.metricsExportInterval }}
+    cta.telemetry.metrics.export.interval {{ $.Values.conf.telemetry.metricsExportInterval }}
+    {{- end }}
+    {{- if $.Values.conf.telemetry.metricsExportTimeout }}
+    cta.telemetry.metrics.export.timeout {{ $.Values.conf.telemetry.metricsExportTimeout }}
+    {{- end }}
+    {{- if $.Values.conf.telemetry.metricsExportOtlpEndpoint }}
+    cta.telemetry.metrics.export.otlp.endpoint {{ $.Values.conf.telemetry.metricsExportOtlpEndpoint }}
+    {{- end }}
+    {{- if $.Values.conf.telemetry.metricsExportOtlpBasicAuthSecret }}
+    cta.telemetry.metrics.export.otlp.basic_auth_file /etc/cta/otlp-basic-auth.conf
+    {{- end }}
+    {{- if $.Values.conf.telemetry.metricsExportFileEndpoint }}
+    cta.telemetry.metrics.export.file.endpoint {{ $.Values.conf.telemetry.metricsExportFileEndpoint }}
+    {{- end }}
+

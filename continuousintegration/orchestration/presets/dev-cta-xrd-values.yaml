@@ -19,7 +19,7 @@ tpsrv:
       echo "Process crashed. Sleeping..."
       sleep infinity
 
-maintenance:
+maintd:
   # Enabled to allow debugging after a crash
   postRun:
     enabled: true
