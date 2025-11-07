@@ -106,4 +106,12 @@ static constexpr const char* kMetricCtaTapedMountDuration = "cta.taped.mount.dur
 static constexpr const char* descrCtaTapedMountDuration = "Duration to mount a tape";
 static constexpr const char* unitCtaTapedMountDuration = "s";
 
+static constexpr const char* kMetricCtaTapedMountType = "cta.taped.mount.type";
+static constexpr const char* descrCtaTapedMountType = "Number of drive sessions with the given mount type";
+static constexpr const char* unitCtaTapedMountType = "1";
+
+static constexpr const char* kMetricCtaTapedDriveStatus = "cta.taped.drive.status";
+static constexpr const char* descrCtaTapedDriveStatus = "Number of drives in a given state";
+static constexpr const char* unitCtaTapedDriveStatus = "1";
+
 }  // namespace cta::semconv::metrics

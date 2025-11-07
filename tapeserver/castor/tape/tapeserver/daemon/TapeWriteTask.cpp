@@ -74,8 +74,8 @@ void TapeWriteTask::execute(const std::unique_ptr<castor::tape::tapeFile::WriteS
                             MigrationWatchDog& watchdog,
                             cta::log::LogContext& lc,
                             cta::utils::Timer& timer) {
-  TransferTaskTracker transferTaskTracer(cta::semconv::attr::CtaIoDirectionValues::kWrite,
-                                         cta::semconv::attr::CtaIoMediumValues::kTape);
+  [[maybe_unused]] TransferTaskTracker transferTaskTracer(cta::semconv::attr::CtaIoDirectionValues::kWrite,
+                                                          cta::semconv::attr::CtaIoMediumValues::kTape);
   using cta::log::LogContext;
   using cta::log::Param;
   using cta::log::ScopedParamContainer;

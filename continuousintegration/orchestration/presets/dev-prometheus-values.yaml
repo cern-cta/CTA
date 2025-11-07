@@ -22,7 +22,7 @@ prometheus-pushgateway:
 
 server:
   global:
-    scrape_interval: 30s
+    scrape_interval: 15s
     scrape_timeout: 3s
 
   persistentVolume:

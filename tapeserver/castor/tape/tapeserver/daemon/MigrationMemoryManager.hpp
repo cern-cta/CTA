@@ -50,13 +50,13 @@ public:
    *
    * @return the nominal capacity of one block
    */
-  size_t blockCapacity();
+  size_t blockCapacity() const;
 
   /**
    * Are all sheep back to the farm?
    * @return
    */
-  bool areBlocksAllBack() noexcept;
+  bool areBlocksAllBack() const noexcept;
 
   /**
    * Start serving clients (in the dedicated thread)
@@ -112,27 +112,12 @@ private:
   /**
    * Total number of allocated memory blocks
    */
-  size_t m_totalNumberOfBlocks;
+  size_t m_totalNumberOfBlocks = 0;
 
   /**
    * Total amount of memory allocated
    */
-  size_t m_totalMemoryAllocated;
-
-  /**
-   * Count of blocks provided
-   */
-  size_t m_blocksProvided;
-
-  /**
-   * Count of blocks returned
-   */
-  size_t m_blocksReturned;
-
-  /**
-   * Mutex protecting the counters
-   */
-  cta::threading::Mutex m_countersMutex;
+  size_t m_totalMemoryAllocated = 0;
 
   /**
    * Container for the free blocks

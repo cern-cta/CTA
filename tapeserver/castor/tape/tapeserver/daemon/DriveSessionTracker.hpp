@@ -19,21 +19,29 @@
 
 #include <string>
 #include <optional>
-#include "common/Timer.hpp"
+#include <memory>
+#include "catalogue/Catalogue.hpp"
+#include "common/dataStructures/DriveStatus.hpp"
+#include "common/dataStructures/MountType.hpp"
 
 namespace castor::tape::tapeserver::daemon {
 
-// Used to track the number of active transfer tasks (e.g. DiskReadTask, TapeReadTask, etc..)
-class TransferTaskTracker {
+/**
+ * The purpose of this class is to observe the session state of a given drive and emit corresponding metrics about this.
+ * Using RAII, this class ensures that the callback is removed when this class goes out of scope
+ */
+class DriveSessionTracker {
 public:
-  TransferTaskTracker(std::string_view ioDirection, std::string_view ioMedium);
-  ~TransferTaskTracker();
-  TransferTaskTracker (const TransferTaskTracker&) = delete;
-  TransferTaskTracker& operator= (const TransferTaskTracker&) = delete;
+  DriveSessionTracker(std::shared_ptr<cta::catalogue::Catalogue> catalogue, std::string_view driveName);
+  ~DriveSessionTracker();
+  DriveSessionTracker (const DriveSessionTracker&) = delete;
+  DriveSessionTracker& operator= (const DriveSessionTracker&) = delete;
+
+  std::optional<cta::common::dataStructures::TapeDrive> queryTapeDrive() const;
 
 private:
-  std::string m_ioDirection;
-  std::string m_ioMedium;
+  std::shared_ptr<cta::catalogue::Catalogue> m_catalogue;
+  std::string m_driveName;
 };
 
 }  // namespace castor::tape::tapeserver::daemon

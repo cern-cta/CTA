@@ -38,8 +38,8 @@ DiskWriteTask::DiskWriteTask(cta::RetrieveJob* retrieveJob, RecallMemoryManager&
 //------------------------------------------------------------------------------
 bool DiskWriteTask::execute(RecallReportPacker& reporter, cta::log::LogContext& lc,
   cta::disk::DiskFileFactory& fileFactory, RecallWatchDog& watchdog, int threadID) {
-  TransferTaskTracker transferTaskTracer(cta::semconv::attr::CtaIoDirectionValues::kWrite,
-                                         cta::semconv::attr::CtaIoMediumValues::kDisk);
+  [[maybe_unused]] TransferTaskTracker transferTaskTracer(cta::semconv::attr::CtaIoDirectionValues::kWrite,
+                                                          cta::semconv::attr::CtaIoMediumValues::kDisk);
   using cta::log::LogContext;
   using cta::log::Param;
   cta::utils::Timer localTime;

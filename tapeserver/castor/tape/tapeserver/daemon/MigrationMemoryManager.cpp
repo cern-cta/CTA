@@ -28,7 +28,7 @@ namespace castor::tape::tapeserver::daemon {
 
 static void ObserveMigrationMemoryUsage(opentelemetry::metrics::ObserverResult observer_result, void* state) noexcept {
   // Recover the object pointer
-  auto* memoryManager = static_cast<MigrationMemoryManager*>(state);
+  const auto memoryManager = static_cast<MigrationMemoryManager*>(state);
   if (!memoryManager) {
     return;
   }
@@ -41,7 +41,7 @@ static void ObserveMigrationMemoryUsage(opentelemetry::metrics::ObserverResult o
 
 static void ObserveMigrationMemoryLimit(opentelemetry::metrics::ObserverResult observer_result, void* state) noexcept {
   // Recover the object pointer
-  auto* memoryManager = static_cast<MigrationMemoryManager*>(state);
+  const auto memoryManager = static_cast<MigrationMemoryManager*>(state);
   if (!memoryManager) {
     return;
   }
@@ -57,13 +57,12 @@ static void ObserveMigrationMemoryLimit(opentelemetry::metrics::ObserverResult o
 //------------------------------------------------------------------------------
 MigrationMemoryManager::MigrationMemoryManager(const uint32_t numberOfBlocks, const uint32_t blockSize,
                                                const cta::log::LogContext& lc) :
-m_blockCapacity(blockSize),
-m_totalNumberOfBlocks(0), m_totalMemoryAllocated(0), m_blocksProvided(0), m_blocksReturned(0), m_lc(lc) {
+m_blockCapacity(blockSize), m_lc(lc) {
 
   for (uint32_t i = 0; i < numberOfBlocks; i++) {
-    m_freeBlocks.push(new MemBlock(i, blockSize));
+    m_freeBlocks.push(new MemBlock(i, m_blockCapacity));
     m_totalNumberOfBlocks++;
-    m_totalMemoryAllocated += blockSize;
+    m_totalMemoryAllocated += m_blockCapacity;
   }
   m_lc.log(cta::log::INFO, "MigrationMemoryManager: all blocks have been created");
   cta::telemetry::metrics::ctaTapedBufferUsage->AddCallback(ObserveMigrationMemoryUsage, this);
@@ -108,22 +107,21 @@ void MigrationMemoryManager::waitThreads()  {
 //------------------------------------------------------------------------------
 // MigrationMemoryManager::addClient
 //------------------------------------------------------------------------------
-void MigrationMemoryManager::addClient(DataPipeline* c)
- {
+void MigrationMemoryManager::addClient(DataPipeline* c) {
   m_clientQueue.push(c);
 }
 
 //------------------------------------------------------------------------------
 // MigrationMemoryManager::areBlocksAllBack
 //------------------------------------------------------------------------------
-bool MigrationMemoryManager::areBlocksAllBack() noexcept{
+bool MigrationMemoryManager::areBlocksAllBack() const noexcept{
   return m_totalNumberOfBlocks == m_freeBlocks.size();
 }
 
 //------------------------------------------------------------------------------
 // MigrationMemoryManager::blockCapacity
 //------------------------------------------------------------------------------
-size_t MigrationMemoryManager::blockCapacity() {
+size_t MigrationMemoryManager::blockCapacity() const {
   return m_blockCapacity;
 }
 
@@ -142,10 +140,6 @@ void MigrationMemoryManager::releaseBlock(MemBlock* mb)
  {
   mb->reset();
   m_freeBlocks.push(mb);
-  {
-    cta::threading::MutexLocker ml(m_countersMutex);
-    m_blocksReturned++;
-  }
 }
 
 //------------------------------------------------------------------------------
@@ -173,8 +167,7 @@ void MigrationMemoryManager::run()  {
     // Spin on the the client. We rely on the fact that he will want
     // at least one block (which is the case currently)
     while (c->provideBlock(m_freeBlocks.pop())) {
-      cta::threading::MutexLocker ml(m_countersMutex);
-      m_blocksProvided++;
+      // Nothing to do; just wait to provide the next block
     }
   }
 }
