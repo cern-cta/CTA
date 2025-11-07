@@ -29,7 +29,7 @@ data:
     cta.routines.disk_report.batch_size {{ $.Values.conf.routines.disk_report.batchSize  }}
     cta.routines.disk_report.soft_timeout {{ $.Values.conf.routines.disk_report.softTimeout }}
 
-    cta.routines.garbage_collect.enabled {{ $.Values.conf.routines.garbage_collector.enabled }}
+    cta.routines.garbage_collect.enabled {{ $.Values.conf.routines.garbage_collect.enabled }}
 
     cta.routines.queue_cleanup.enabled {{ $.Values.conf.routines.queue_cleanup.enabled }}
     cta.routines.queue_cleanup.batch_size {{ $.Values.conf.routines.queue_cleanup.batchSize }}
