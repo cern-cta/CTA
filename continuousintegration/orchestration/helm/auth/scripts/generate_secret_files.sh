@@ -23,13 +23,12 @@ OUTPUT_DIR="/output"
 
 # Generated using:
 #   echo y | xrdsssadmin -k ctaeos+ -u daemon -g daemon add /tmp/eos.keytab
-#   echo y | xrdsssadmin -k ctaeos+ -u ctaeos -g ctaeos add /tmp/cta-frontend.keytab
 # Note that this hardcoded keytab is only for CI/dev purposes
 # The reason that this is hardcoded is that xrdsssadmin requires xrootd-server which takes quite long to install
 # That would slow down the CI startup significantly...
 echo "0 u:daemon g:daemon n:ctaeos+ N:7570028795780923393 c:1762534677 e:0 f:0 k:468153fa4be9a871c7f7e1fa3aefbfeb12d3f0a99ff4a18f9b6ebe3d3abacbc1" > $OUTPUT_DIR/eos.keytab
 # Same as above, but changing the user and group to the eos instance name
-echo "0 u:ctaeos g:ctaeos n:ctaeos+ N:7570030999099146241 c:1762535190 e:0 f:0 k:b97f9aab547f9afefdef4d3cd0894d8080530ecbe0375d9b2e8d7b4a4238fa03" > $OUTPUT_DIR/cta-frontend.keytab
+echo "0 u:ctaeos g:ctaeos n:ctaeos+ N:7570028795780923393 c:1762534677 e:0 f:0 k:468153fa4be9a871c7f7e1fa3aefbfeb12d3f0a99ff4a18f9b6ebe3d3abacbc1" > $OUTPUT_DIR/cta-frontend.keytab
 
 # --- Certificates --- #
 
