@@ -32,13 +32,6 @@ enum class MountType : uint32_t {
   ArchiveAllTypes = 99
 };
 
-inline constexpr std::array<MountType, 6> AllMountTypes = {MountType::ArchiveForUser,
-                                                           MountType::ArchiveForRepack,
-                                                           MountType::Retrieve,
-                                                           MountType::Label,
-                                                           MountType::NoMount,
-                                                           MountType::ArchiveAllTypes};
-
 /**
  * A function summarizing subtypes (currently only Archive) to simplify scheduling.
  */

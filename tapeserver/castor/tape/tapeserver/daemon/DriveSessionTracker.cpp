@@ -72,11 +72,17 @@ static void ObserveMountType(opentelemetry::metrics::ObserverResult observer_res
   if (std::holds_alternative<std::shared_ptr<opentelemetry::metrics::ObserverResultT<int64_t>>>(observer_result)) {
     auto typed_observer = std::get<std::shared_ptr<opentelemetry::metrics::ObserverResultT<int64_t>>>(observer_result);
     // All mount types are emitted at each interval to prevent missing metrics
-    for (const auto mountType : common::dataStructures::AllMountTypes) {
+    using namespace common::dataStructures;
+    // Note that we ignore the Label and ArchiveAllTypes mount types as these are not actively used
+    constexpr std::array<MountType, 4> mountTypes = {MountType::ArchiveForUser,
+                                                     MountType::ArchiveForRepack,
+                                                     MountType::Retrieve,
+                                                     MountType::NoMount};
+    for (const auto mountType : mountTypes) {
       int64_t observed = (mountType == actualMountType ? 1 : 0);
       typed_observer->Observe(observed,
                               {
-                                {semconv::attr::kCtaTapedMountType, common::dataStructures::toString(mountType)}
+                                {semconv::attr::kCtaTapedMountType, toCamelCaseString(mountType)}
       });
     }
   }
