@@ -133,7 +133,8 @@ delete_files_from_eos_and_tapes(){
       test $? -ne 0 && die "Could not launch eos rm"
     fi
     # Now we can start to do something...
-    # deleted files are the ones that made it on tape minus the ones that are still on tapes...
+    # The number of deleted files will be determined using the number of files initaly on tapes INITIALFILESONTAPE
+    # minus the number of files which are still on tapes at any point in time (output of tapefile_ls)...
     echo "Waiting for files to be deleted:"
     SECONDS_PASSED=0
     WAIT_FOR_DELETED_FILE_TIMEOUT=$((5+${NB_FILES}/9))

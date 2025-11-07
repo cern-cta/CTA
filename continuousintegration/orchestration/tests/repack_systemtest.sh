@@ -307,7 +307,7 @@ if [[ "$filesLeftToRetrieve" -ne "0" ]] || [[ "$filesLeftToArchive" -ne "0" ]]
 then
   echo "There were remaining files left to retrieve ($filesLeftToRetrieve) or archive ($filesLeftToArchive). Test FAILED"
 fi
-if [[ "$amountArchivedDestinationFiles" -eq "amountArchivedFiles" ]]
+if [[ "$amountArchivedDestinationFiles" -eq "$amountArchivedFiles" ]]
 then
   echo "The amount of archived files written to all tapes is equal to the amount of files reported as repacked. Test OK"
 else

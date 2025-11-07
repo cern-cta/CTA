@@ -1976,7 +1976,7 @@ void Scheduler::getExistingAndNextMounts(SchedulerDatabase::TapeMountDecisionInf
     } catch (std::out_of_range &) {
       log::ScopedParamContainer(logContext)
         .add("driveName", driveState.driveName)
-        .log(log::ERR, "In OStoreDB::fetchMountInfo(): drive is missing SchedulerBackendName configuration.");
+        .log(log::ERR, "In Scheduler::getExistingAndNextMounts(): drive is missing SchedulerBackendName configuration.");
     }
     if (activeDriveStatuses.count(static_cast<int>(driveState.driveStatus))) {
       if (driveState.mountType == common::dataStructures::MountType::NoMount) {
@@ -1984,7 +1984,7 @@ void Scheduler::getExistingAndNextMounts(SchedulerDatabase::TapeMountDecisionInf
           .add("driveName", driveState.driveName)
           .add("mountType", common::dataStructures::toCamelCaseString(driveState.mountType))
           .add("driveStatus", common::dataStructures::toString(driveState.driveStatus))
-          .log(log::WARNING, "In OStoreDB::fetchMountInfo(): the drive has an active status but no mount.");
+          .log(log::WARNING, "In Scheduler::getExistingAndNextMounts(): the drive has an active status but no mount.");
         continue;
       }
       tmdi.existingOrNextMounts.push_back(SchedulerDatabase::ExistingMount());
