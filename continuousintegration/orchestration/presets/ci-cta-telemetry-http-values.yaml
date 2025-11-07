@@ -29,7 +29,7 @@ tpsrv:
       metricsExportOtlpEndpoint: "https://monit-otlp.cern.ch:4319"
       metricsExportOtlpBasicAuthSecret: monit-collector-auth
 
-maintenance:
+maintd:
   conf:
     telemetry:
       enabled: true

@@ -30,7 +30,8 @@ tpsrv:
       metricsExportInterval: 1000
       metricsExportTimeout: 500
 
-maintenance:
+maintd:
+:
   conf:
     telemetry:
       enabled: true

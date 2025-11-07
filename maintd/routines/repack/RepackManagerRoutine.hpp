@@ -1,6 +1,6 @@
 /*
  * @project      The CERN Tape Archive (CTA)
- * @copyright    Copyright © 2025 CERN
+ * @copyright    Copyright © 2021-2022 CERN
  * @license      This program is free software, distributed under the terms of the GNU General Public
  *               Licence version 3 (GPL Version 3), copied verbatim in the file "COPYING". You can
  *               redistribute it and/or modify it under the terms of the GPL Version 3, or (at your
@@ -14,19 +14,30 @@
  *               granted to it by virtue of its status as an Intergovernmental Organization or
  *               submit itself to any jurisdiction.
  */
+
 #pragma once
 
-#include <string>
+#include "common/log/LogContext.hpp"
+#include "maintd/IRoutine.hpp"
+#include "scheduler/Scheduler.hpp"
 
-// At the moment only used for meter names.
-// However, if these values are used in other places in the future, we can make this more generic.
-namespace cta::semconv::meter {
+namespace cta::maintd {
 
-static constexpr const char* kCtaFrontend = "cta.frontend";
-static constexpr const char* kCtaRdbms = "cta.rdbms";
-static constexpr const char* kCtaScheduler = "cta.scheduler";
-static constexpr const char* kCtaObjectstore = "cta.objectstore";
-static constexpr const char* kCtaTaped = "cta.taped";
-static constexpr const char* kCtaMaintd = "cta.maintd";
+class Scheduler;
 
-}  // namespace cta::semconv::meter
+class RepackManagerRoutine : public IRoutine {
+public:
+  RepackManagerRoutine(cta::log::LogContext &lc, cta::Scheduler &scheduler, int rmrtte, int timeout);
+
+  void execute() final;
+
+private:
+  template<typename GetBatchFunc>
+  void reportBatch(std::string_view reportingType, GetBatchFunc getBatchFunc) const;
+
+  cta::log::LogContext& m_lc;
+  cta::Scheduler & m_scheduler;
+  int m_repackMaxRequestsToToExpand;
+  int m_softTimeout;
+};
+} // namespace cta::maintd
