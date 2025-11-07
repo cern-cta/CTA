@@ -50,7 +50,7 @@ static void ObserveSessionState(opentelemetry::metrics::ObserverResult observer_
       int64_t observed = (driveStatus == actualDriveStatus ? 1 : 0);
       typed_observer->Observe(observed,
                               {
-                                {semconv::attr::kCtaTapedSessionState, common::dataStructures::toString(driveStatus)}
+                                {semconv::attr::kCtaTapedDriveState, common::dataStructures::toString(driveStatus)}
       });
     }
   }
@@ -92,12 +92,12 @@ static void ObserveMountType(opentelemetry::metrics::ObserverResult observer_res
 DriveSessionTracker::DriveSessionTracker(std::shared_ptr<catalogue::Catalogue> catalogue, std::string_view driveName)
     : m_catalogue(catalogue),
       m_driveName(driveName) {
-  telemetry::metrics::ctaTapedSessionStatus->AddCallback(ObserveSessionState, this);
+  telemetry::metrics::CtaTapedDriveStatus->AddCallback(ObserveSessionState, this);
   telemetry::metrics::ctaTapedMountType->AddCallback(ObserveMountType, this);
 }
 
 DriveSessionTracker::~DriveSessionTracker() {
-  telemetry::metrics::ctaTapedSessionStatus->RemoveCallback(ObserveSessionState, this);
+  telemetry::metrics::CtaTapedDriveStatus->RemoveCallback(ObserveSessionState, this);
   telemetry::metrics::ctaTapedMountType->RemoveCallback(ObserveMountType, this);
 }
 

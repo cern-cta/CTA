@@ -27,7 +27,7 @@ namespace castor::tape::tapeserver::daemon {
 
 static void ObserveRecallMemoryUsage(opentelemetry::metrics::ObserverResult observer_result, void* state) noexcept {
   // Recover the object pointer
-  const RecallMemoryManager* memoryManager = static_cast<RecallMemoryManager*>(state);
+  const auto memoryManager = static_cast<RecallMemoryManager*>(state);
   if (!memoryManager) {
     return;
   }
@@ -40,7 +40,7 @@ static void ObserveRecallMemoryUsage(opentelemetry::metrics::ObserverResult obse
 
 static void ObserveRecallMemoryLimit(opentelemetry::metrics::ObserverResult observer_result, void* state) noexcept {
   // Recover the object pointer
-  const RecallMemoryManager* memoryManager = static_cast<RecallMemoryManager*>(state);
+  const auto memoryManager = static_cast<RecallMemoryManager*>(state);
   if (!memoryManager) {
     return;
   }

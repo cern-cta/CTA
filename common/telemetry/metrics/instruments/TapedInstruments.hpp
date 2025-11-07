@@ -28,6 +28,6 @@ extern std::shared_ptr<opentelemetry::metrics::ObservableInstrument> ctaTapedBuf
 extern std::shared_ptr<opentelemetry::metrics::ObservableInstrument> ctaTapedBufferLimit;
 extern std::unique_ptr<opentelemetry::metrics::Histogram<uint64_t>> ctaTapedMountDuration;
 extern std::shared_ptr<opentelemetry::metrics::ObservableInstrument> ctaTapedMountType;
-extern std::shared_ptr<opentelemetry::metrics::ObservableInstrument> ctaTapedSessionStatus;
+extern std::shared_ptr<opentelemetry::metrics::ObservableInstrument> CtaTapedDriveStatus;
 
 }  // namespace cta::telemetry::metrics
