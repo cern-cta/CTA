@@ -17,7 +17,7 @@ class TapeLsResponseStream : public CtaAdminResponseStream {
 public:
   TapeLsResponseStream(cta::catalogue::Catalogue& catalogue,
                        cta::Scheduler& scheduler,
-                       const std::string instanceName,
+                       const std::string& instanceName,
                        const admin::AdminCmd& adminCmd,
                        uint64_t missingFileCopiesMinAgeSecs);
 
@@ -34,7 +34,7 @@ private:
 
 TapeLsResponseStream::TapeLsResponseStream(cta::catalogue::Catalogue& catalogue,
                                            cta::Scheduler& scheduler,
-                                           const std::string instanceName,
+                                           const std::string& instanceName,
                                            const admin::AdminCmd& adminCmd,
                                            uint64_t missingFileCopiesMinAgeSecs)
     : CtaAdminResponseStream(catalogue, scheduler, instanceName),

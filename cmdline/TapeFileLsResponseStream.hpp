@@ -16,7 +16,7 @@ class TapeFileLsResponseStream : public CtaAdminResponseStream {
 public:
   TapeFileLsResponseStream(cta::catalogue::Catalogue& catalogue,
                            cta::Scheduler& scheduler,
-                           const std::string instanceName,
+                           const std::string& instanceName,
                            const admin::AdminCmd& adminCmd);
 
   bool isDone() override;
@@ -36,7 +36,7 @@ private:
 
 TapeFileLsResponseStream::TapeFileLsResponseStream(cta::catalogue::Catalogue& catalogue,
                                                    cta::Scheduler& scheduler,
-                                                   const std::string instanceName,
+                                                   const std::string& instanceName,
                                                    const admin::AdminCmd& adminCmd)
     : CtaAdminResponseStream(catalogue, scheduler, instanceName) {
   using namespace cta::admin;

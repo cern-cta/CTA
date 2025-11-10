@@ -14,7 +14,7 @@ class LogicalLibraryLsResponseStream : public CtaAdminResponseStream {
 public:
   LogicalLibraryLsResponseStream(cta::catalogue::Catalogue& catalogue,
                                  cta::Scheduler& scheduler,
-                                 const std::string instanceName,
+                                 const std::string& instanceName,
                                  const admin::AdminCmd& adminCmd);
 
   bool isDone() override;
@@ -26,7 +26,7 @@ private:
 
 LogicalLibraryLsResponseStream::LogicalLibraryLsResponseStream(cta::catalogue::Catalogue& catalogue,
                                                                cta::Scheduler& scheduler,
-                                                               const std::string instanceName,
+                                                               const std::string& instanceName,
                                                                const admin::AdminCmd& adminCmd)
     : CtaAdminResponseStream(catalogue, scheduler, instanceName) {
   cta::frontend::AdminCmdOptions request(adminCmd);
