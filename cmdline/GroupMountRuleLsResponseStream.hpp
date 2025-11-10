@@ -15,7 +15,7 @@ class GroupMountRuleLsResponseStream : public CtaAdminResponseStream {
 public:
   GroupMountRuleLsResponseStream(cta::catalogue::Catalogue& catalogue,
                                  cta::Scheduler& scheduler,
-                                 const std::string instanceName,
+                                 const std::string& instanceName,
                                  const admin::AdminCmd& adminCmd);
   bool isDone() override;
   cta::xrd::Data next() override;
@@ -26,7 +26,7 @@ private:
 
 GroupMountRuleLsResponseStream::GroupMountRuleLsResponseStream(cta::catalogue::Catalogue& catalogue,
                                                                cta::Scheduler& scheduler,
-                                                               const std::string instanceName,
+                                                               const std::string& instanceName,
                                                                const admin::AdminCmd& adminCmd)
     : CtaAdminResponseStream(catalogue, scheduler, instanceName),
       m_groupMountRules(catalogue.RequesterGroupMountRule()->getRequesterGroupMountRules()) {}

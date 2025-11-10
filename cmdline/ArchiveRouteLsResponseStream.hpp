@@ -16,7 +16,7 @@ class ArchiveRouteLsResponseStream : public CtaAdminResponseStream {
 public:
   ArchiveRouteLsResponseStream(cta::catalogue::Catalogue& catalogue,
                                cta::Scheduler& scheduler,
-                               const std::string instanceName,
+                               const std::string& instanceName,
                                const admin::AdminCmd& adminCmd);
 
   bool isDone() override;
@@ -28,7 +28,7 @@ private:
 
 ArchiveRouteLsResponseStream::ArchiveRouteLsResponseStream(cta::catalogue::Catalogue& catalogue,
                                                            cta::Scheduler& scheduler,
-                                                           const std::string instanceName,
+                                                           const std::string& instanceName,
                                                            const admin::AdminCmd& adminCmd)
     : CtaAdminResponseStream(catalogue, scheduler, instanceName),
       m_archiveRoutes(catalogue.ArchiveRoute()->getArchiveRoutes()) {}

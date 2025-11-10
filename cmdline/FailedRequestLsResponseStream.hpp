@@ -17,7 +17,7 @@ class FailedRequestLsResponseStream : public CtaAdminResponseStream {
 public:
   FailedRequestLsResponseStream(cta::catalogue::Catalogue& catalogue,
                                 cta::Scheduler& scheduler,
-                                const std::string instanceName,
+                                const std::string& instanceName,
                                 const admin::AdminCmd& adminCmd,
                                 SchedulerDatabase& schedDb,
                                 cta::log::LogContext& lc);
@@ -45,7 +45,7 @@ private:
 
 FailedRequestLsResponseStream::FailedRequestLsResponseStream(cta::catalogue::Catalogue& catalogue,
                                                              cta::Scheduler& scheduler,
-                                                             const std::string instanceName,
+                                                             const std::string& instanceName,
                                                              const admin::AdminCmd& adminCmd,
                                                              SchedulerDatabase& schedDb,
                                                              cta::log::LogContext& lc)

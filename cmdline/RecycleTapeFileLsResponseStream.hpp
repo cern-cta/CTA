@@ -16,7 +16,7 @@ class RecycleTapeFileLsResponseStream : public CtaAdminResponseStream {
 public:
   RecycleTapeFileLsResponseStream(cta::catalogue::Catalogue& catalogue,
                                   cta::Scheduler& scheduler,
-                                  const std::string instanceName,
+                                  const std::string& instanceName,
                                   const admin::AdminCmd& adminCmd);
   bool isDone() override;
   cta::xrd::Data next() override;
@@ -27,7 +27,7 @@ private:
 
 RecycleTapeFileLsResponseStream::RecycleTapeFileLsResponseStream(cta::catalogue::Catalogue& catalogue,
                                                                  cta::Scheduler& scheduler,
-                                                                 const std::string instanceName,
+                                                                 const std::string& instanceName,
                                                                  const admin::AdminCmd& adminCmd)
     : CtaAdminResponseStream(catalogue, scheduler, instanceName) {
   using namespace cta::admin;

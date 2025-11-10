@@ -15,7 +15,7 @@ class AdminLsResponseStream : public CtaAdminResponseStream {
 public:
   AdminLsResponseStream(cta::catalogue::Catalogue& catalogue,
                         cta::Scheduler& scheduler,
-                        const std::string instanceName,
+                        const std::string& instanceName,
                         const admin::AdminCmd& adminCmd);
 
   bool isDone() override;
@@ -27,7 +27,7 @@ private:
 
 AdminLsResponseStream::AdminLsResponseStream(cta::catalogue::Catalogue& catalogue,
                                              cta::Scheduler& scheduler,
-                                             const std::string instanceName,
+                                             const std::string& instanceName,
                                              const admin::AdminCmd& adminCmd)
     : CtaAdminResponseStream(catalogue, scheduler, instanceName),
       m_adminUsers(catalogue.AdminUser()->getAdminUsers()) {}

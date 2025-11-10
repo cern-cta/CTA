@@ -13,7 +13,7 @@ class DiskInstanceLsResponseStream : public CtaAdminResponseStream {
 public:
   DiskInstanceLsResponseStream(cta::catalogue::Catalogue& catalogue,
                                cta::Scheduler& scheduler,
-                               const std::string instanceName,
+                               const std::string& instanceName,
                                const admin::AdminCmd& adminCmd);
 
   bool isDone() override;
@@ -25,7 +25,7 @@ private:
 
 DiskInstanceLsResponseStream::DiskInstanceLsResponseStream(cta::catalogue::Catalogue& catalogue,
                                                            cta::Scheduler& scheduler,
-                                                           const std::string instanceName,
+                                                           const std::string& instanceName,
                                                            const admin::AdminCmd& adminCmd)
     : CtaAdminResponseStream(catalogue, scheduler, instanceName),
       m_diskInstances(catalogue.DiskInstance()->getAllDiskInstances()) {}
