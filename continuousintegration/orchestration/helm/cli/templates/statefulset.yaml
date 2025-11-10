@@ -61,7 +61,7 @@ spec:
           initialDelaySeconds: 5
           periodSeconds: 2
           failureThreshold: 60
-        {{- end}}
+        {{- end }}
         securityContext:
           allowPrivilegeEscalation: {{ include "common.securityContext.allowPrivilegeEscalation" . }}
           privileged: {{ include "common.securityContext.privileged" . }}
