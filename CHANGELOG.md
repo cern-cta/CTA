@@ -1,3 +1,15 @@
+## 5.11.13.1-1
+
+### New Features
+
+- [taped] Add metrics to track drive status and mount type (cta/CTA!1082)
+
+### Bug Fixes
+
+- [scheduler] Remove explicit core dumping in the scheduler code (cta/CTA!1081)
+- [taped] Fix segmentation fault on archive job report URL function (cta/CTA!1080)
+- [Misc] Handle log exception in SharedQueueLock destructor (cta/CTA!1084)
+
 ## 5.11.13.0-1
 
 ### New Features
