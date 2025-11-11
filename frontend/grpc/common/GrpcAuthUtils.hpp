@@ -23,6 +23,7 @@
 #include "common/dataStructures/SecurityIdentity.hpp"
 #include "common/log/LogContext.hpp"
 #include "common/JwkCache.hpp"
+#include "../TokenStorage.hpp"
 
 namespace cta::frontend::grpc::common {
 
@@ -41,8 +42,11 @@ std::pair<::grpc::Status, std::optional<cta::common::dataStructures::SecurityIde
 extractAuthHeaderAndValidate(const std::multimap<::grpc::string_ref, ::grpc::string_ref>& client_metadata,
                              bool jwtAuthEnabled,
                              std::shared_ptr<JwkCache> pubkeyCache,
+                             server::TokenStorage& tokenStorage,
                              const std::string& instanceName,
                              const std::string& peer,
                              cta::log::LogContext& lc);
+
+std::pair<::grpc::Status, std::string> validateKrb5Token(const std::string& token, server::TokenStorage& tokenStorage, cta::log::LogContext& lc);
 
 }  // namespace cta::frontend::grpc::common

@@ -37,7 +37,6 @@ add_executable(cta-frontend-grpc Main.cpp FrontendGrpcService.cpp
   callback_api/CtaAdminServerWriteReactor.cpp
   NegotiationService.cpp
   ServerNegotiationRequestHandler.cpp
-  ServiceKerberosAuthProcessor.cpp
   TokenStorage.cpp
   utils.cpp)
 # target_link_libraries(cta-frontend-grpc ProtoCtaFrontend)

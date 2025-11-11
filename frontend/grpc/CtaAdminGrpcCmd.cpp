@@ -20,7 +20,6 @@
 #include "tapeserver/daemon/common/TapedConfiguration.hpp"
 #include "callback_api/CtaAdminClientReadReactor.hpp"
 #include "AsyncClient.hpp"
-#include "KerberosAuthenticator.hpp"
 #include "ClientNegotiationRequestHandler.hpp"
 #include "utils.hpp"
 #include "common/log/Logger.hpp"
@@ -40,14 +39,12 @@ void CtaAdminGrpcCmd::setupJwtAuthenticatedAdminCall(grpc::ClientContext& contex
   context.AddMetadata("authorization", "Bearer " + token_contents);
 }
 
-std::shared_ptr<::grpc::Channel>
+void
 CtaAdminGrpcCmd::setupKrb5AuthenticatedAdminCall(std::shared_ptr<grpc::Channel> spChannelNegotiation,
                                                  grpc::ClientContext& context,
-                                                 const std::string& GRPC_SERVER,
                                                  const std::string& GSS_SPN,
-                                                 std::shared_ptr<grpc::ChannelCredentials> credentials,
                                                  cta::log::FileLogger& log) {
-  // first do a negotiation call to obtain a kerberos token, which will be attached to the call metadata
+  // First do a negotiation call to obtain a kerberos token, which will be attached to the call metadata
   // Storage for the KRB token
   std::string strToken {""};
   // Encoded token to be send as part of metadata
@@ -74,39 +71,10 @@ CtaAdminGrpcCmd::setupKrb5AuthenticatedAdminCall(std::shared_ptr<grpc::Channel> 
            "In cta::frontend::grpc::client::CtaAdminGrpcCmdDeprecated::exe(): Problem with the negotiation service.");
     throw;  // rethrow
   }
-  /*
-    * Channel arguments can be overriden e.g: 
-    * ::grpc::ChannelArguments channelArgs;ClientContext
-    * channelArgs.SetString(GRPC_SSL_TARGET_NAME_OVERRIDE_ARG, "ok.org");
-    * std::shared_ptr<::grpc::Channel> spChannel {::grpc::CreateCustomChannel("0.0.0.0:17017", spCredentials, channelArgs)};
-    */
-  //--- ref: https://grpc.io/docs/guides/auth/#credential-types
-  /*
-    * Credentials can be of two types:
-    * - Channel credentials, which are attached to a Channel, such as SSL credentials.
-    * - Call credentials, which are attached to a call (or ClientContext in C++).
-    * CompositeChannelCredentials associates a ChannelCredentials and a CallCredentials
-    * to create a new ChannelCredentials
-    */
-  /*
-    * Individual CallCredentials can also be composed using CompositeCallCredentials.
-    * The resulting CallCredentials when used in a call will trigger the sending of
-    * the authentication data associated with the two CallCredentials.
-    * !!! It dose not work with InsecureChannelCredentials !!!
-    */
-  //---
-  /*
-    * Call credentails can be set manually in a client's conspCallCredentialstext
-    * e.g.:
-    *   m_ctx.set_credentials(spCallCredentials);
-    */
-  std::shared_ptr<::grpc::CallCredentials> spCallCredentials =
-    ::grpc::MetadataCredentialsFromPlugin(std::unique_ptr<::grpc::MetadataCredentialsPlugin>(
-      new cta::frontend::grpc::client::KerberosAuthenticator(strEncodedToken)));
-  std::shared_ptr<::grpc::ChannelCredentials> spCompositeCredentials =
-    ::grpc::CompositeChannelCredentials(credentials, spCallCredentials);
-  std::shared_ptr<::grpc::Channel> spChannel {::grpc::CreateChannel(GRPC_SERVER, spCompositeCredentials)};
-  return spChannel;
+
+  // Attach the Kerberos token directly to the ClientContext as per-call metadata
+  // This is similar to how JWT authentication works, but uses a different metadata key
+  context.AddMetadata("authorization", "Negotiate " + strEncodedToken);
 }
 
 // Implement the send() method here, by wrapping the Admin rpc call
@@ -154,10 +122,9 @@ void CtaAdminGrpcCmd::send(const CtaAdminParsedCmd& parsedCmd,
   // Service name
   const std::string GSS_SPN = "cta/" + strGrpcHost;
   // Create a channel to the KRB-GSI negotiation service
-  std::shared_ptr<::grpc::Channel> spChannelNegotiation {::grpc::CreateChannel(GRPC_SERVER, credentials)};
+  std::shared_ptr<::grpc::Channel> spChannel {::grpc::CreateChannel(GRPC_SERVER, credentials)};
   cta::log::FileLogger log(GRPC_SERVER, "cta-admin-grpc", "/var/log/cta-admin-grpc.log", cta::log::INFO);
   cta::log::LogContext lc(log);
-  std::shared_ptr<::grpc::Channel> spChannel;
 
   // Determine authentication method: env variable overrides config, default to krb5
   std::string auth_method;
@@ -184,9 +151,8 @@ void CtaAdminGrpcCmd::send(const CtaAdminParsedCmd& parsedCmd,
       lc.log(cta::log::WARNING, "jwt authentication specified but no token provided");
     }
     setupJwtAuthenticatedAdminCall(context, token_path);
-    spChannel = spChannelNegotiation;
   } else if (auth_method == "krb5") {
-    spChannel = setupKrb5AuthenticatedAdminCall(spChannelNegotiation, context, GRPC_SERVER, GSS_SPN, credentials, log);
+    setupKrb5AuthenticatedAdminCall(spChannel, context, GSS_SPN, log);
   } else {
     throw cta::exception::UserError("Unrecognized authentication method '" + auth_method + "' specified");
   }

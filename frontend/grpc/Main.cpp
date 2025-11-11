@@ -37,7 +37,6 @@
 #include "callback_api/CtaAdminServer.hpp"
 #include <grpcpp/ext/proto_server_reflection_plugin.h>
 #include "TokenStorage.hpp"
-#include "ServiceKerberosAuthProcessor.hpp"
 #include "NegotiationService.hpp"
 #include "common/utils/utils.hpp"
 
@@ -48,7 +47,6 @@
 using namespace cta;
 using namespace cta::common;
 using namespace cta::frontend::grpc;
-using cta::frontend::grpc::server::ServiceKerberosAuthProcessor;
 
 constexpr std::string_view defaultPort = "17017";
 
@@ -141,8 +139,11 @@ int main(const int argc, char *const *const argv) {
                                    frontendService->getLogContext()) :
         nullptr;
 
+    // Setup TokenStorage for Kerberos authentication
+    cta::frontend::grpc::server::TokenStorage tokenStorage;
+
     // Initialize RPC service with shared frontend service and cache
-    frontend::grpc::CtaRpcImpl svc(frontendService, jwkCache);
+    frontend::grpc::CtaRpcImpl svc(frontendService, jwkCache, tokenStorage);
     std::weak_ptr<JwkCache> weakCache = jwkCache;
     std::promise<void> shouldStopThreadPromise;
     std::future<void> shouldStopThreadFuture = shouldStopThreadPromise.get_future();
@@ -233,9 +234,6 @@ int main(const int argc, char *const *const argv) {
     lc.log(log::INFO, "Using " + std::to_string(threads) + " request processing threads");
     builder.SetResourceQuota(quota);
 
-    // Setup TokenStorage for Kerberos authentication
-    cta::frontend::grpc::server::TokenStorage tokenStorage;
-
     // Get Kerberos configuration
     std::string strKeytab = frontendService->getKeytab().value_or("/etc/cta/cta-frontend.keytab");
     std::string strService = frontendService->getServicePrincipal().value_or("cta/" + shortHostName);
@@ -257,12 +255,6 @@ int main(const int argc, char *const *const argv) {
     // Register negotiation service on main builder
     builder.RegisterService(&negotiationService->getService());
 
-    // Setup main service authentication processor
-    std::shared_ptr<ServiceKerberosAuthProcessor> kerberosAuthProcessor =
-      std::make_shared<ServiceKerberosAuthProcessor>(tokenStorage);
-    creds->SetAuthMetadataProcessor(kerberosAuthProcessor);
-    // Kerberos authenticates all admin commands - non-streaming commands that are made through the Admin rpc
-    // and streaming commands made through GenericAdminStream
 
     // Register "service" as the instance through which we'll communicate with
     // clients. In this case it corresponds to an *synchronous* service.
@@ -277,7 +269,8 @@ int main(const int argc, char *const *const argv) {
                                                frontendService->getenableCtaAdminCommands(),
                                                frontendService->getLogContext(),
                                                frontendService->getJwtAuth(),
-                                               jwkCache);
+                                               jwkCache,
+                                               tokenStorage);
     builder.RegisterService(&streamSvc);
 
     // add reflection

@@ -34,16 +34,15 @@ public:
   void send(const CtaAdminParsedCmd& parsedCmd, const std::string& config_file);
 
 private:
-  std::shared_ptr<::grpc::Channel>
+  void
   setupKrb5AuthenticatedAdminCall(std::shared_ptr<grpc::Channel> spChannelNegotiation,
                                   grpc::ClientContext& context,
-                                  const std::string& GRPC_SERVER,
                                   const std::string& GSS_SPN,
-                                  std::shared_ptr<grpc::ChannelCredentials> credentials,
                                   cta::log::FileLogger& log);
-  // credentials are already setup in the main function - send
-  // all this function does is attach the token to the call metadata
+  // Attaches the Kerberos token to the call metadata (per-call credentials)
+
   void setupJwtAuthenticatedAdminCall(grpc::ClientContext& context, const std::string& token_path);
+  // Attaches the JWT token to the call metadata (per-call credentials)
 };
 
 }  // namespace cta::admin

@@ -16,6 +16,7 @@
 #include "frontend/common/FrontendService.hpp"
 #include "common/JwkCache.hpp"
 #include "frontend/common/AdminCmd.hpp"
+#include "TokenStorage.hpp"
 
 using cta::Scheduler;
 using cta::catalogue::Catalogue;
@@ -35,9 +36,10 @@ private:
   std::shared_ptr<cta::frontend::FrontendService> m_frontendService;
   ::grpc::HealthCheckServiceInterface* m_healthCheckService = nullptr;
   std::shared_ptr<JwkCache> m_pubkeyCache;
+  server::TokenStorage& m_tokenStorage; // required for the Admin rpc for Kerberos token validation
 
 public:
-  CtaRpcImpl(std::shared_ptr<cta::frontend::FrontendService> frontendService, std::shared_ptr<JwkCache> pubkeyCache);
+  CtaRpcImpl(std::shared_ptr<cta::frontend::FrontendService> frontendService, std::shared_ptr<JwkCache> pubkeyCache, server::TokenStorage& tokenStorage);
 
   FrontendService& getFrontendService() const { return *m_frontendService; }
   // Archive/Retrieve interface

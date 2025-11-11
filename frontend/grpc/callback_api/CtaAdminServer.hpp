@@ -88,7 +88,8 @@ public:
                    bool enableCtaAdminCommands,
                    cta::log::LogContext logContext,
                    bool jwtAuthEnabled,
-                   std::shared_ptr<JwkCache> pubkeyCache)
+                   std::shared_ptr<JwkCache> pubkeyCache,
+                   server::TokenStorage& tokenStorage)
       : m_lc(logContext),
         m_catalogue(catalogue),
         m_scheduler(scheduler),
@@ -98,7 +99,8 @@ public:
         m_missingFileCopiesMinAgeSecs(missingFileCopiesMinAgeSecs),
         m_enableCtaAdminCommands(enableCtaAdminCommands),
         m_jwtAuthEnabled(jwtAuthEnabled),
-        m_pubkeyCache(pubkeyCache) {}
+        m_pubkeyCache(pubkeyCache),
+        m_tokenStorage(tokenStorage) {}
 
   /* gRPC expects the return type of an RPC implemented using the callback API to be a pointer to ::grpc::ServerWriteReactor */
   ::grpc::ServerWriteReactor<cta::xrd::StreamResponse>* GenericAdminStream(::grpc::CallbackServerContext* context,
@@ -115,6 +117,7 @@ private:
   bool m_enableCtaAdminCommands;           //!< Feature flag to disable CTA admin commands
   bool m_jwtAuthEnabled;                   //!< Whether JWT authentication is enabled
   std::shared_ptr<JwkCache> m_pubkeyCache;  //!< Shared JWK cache for token validation
+  server::TokenStorage& m_tokenStorage;    //!< Required for Kerberos token validation
 };
 
 // request object will be filled in by the Parser of the command on the client-side.
@@ -131,6 +134,7 @@ CtaRpcStreamImpl::GenericAdminStream(::grpc::CallbackServerContext* context, con
   auto [status, clientIdentity] = cta::frontend::grpc::common::extractAuthHeaderAndValidate(client_metadata,
                                                                                             m_jwtAuthEnabled,
                                                                                             m_pubkeyCache,
+                                                                                            m_tokenStorage,
                                                                                             m_instanceName,
                                                                                             context->peer(),
                                                                                             lc);

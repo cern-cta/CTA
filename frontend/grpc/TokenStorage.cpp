@@ -20,9 +20,14 @@
 #include "utils.hpp"
 #include "common/utils/Base64.hpp"
 
-void cta::frontend::grpc::server::TokenStorage::store(const std::string& strToken, const std::string& strSpn) {
+void cta::frontend::grpc::server::TokenStorage::store(const std::string& strToken,
+                                                       const std::string& strClientPrincipal,
+                                                       const std::string& strServicePrincipal) {
   std::lock_guard<std::mutex> lck(m_mtxLockStorage);
-  m_umapTokens[strToken] = strSpn;
+  TokenInfo info;
+  info.clientPrincipal = strClientPrincipal;
+  info.servicePrincipal = strServicePrincipal;
+  m_umapTokens[strToken] = info;
 }
 
 bool cta::frontend::grpc::server::TokenStorage::validate(const std::string& strToken) const {
@@ -33,6 +38,17 @@ bool cta::frontend::grpc::server::TokenStorage::validate(const std::string& strT
     return true;
   }
   return false;
+}
+
+std::string cta::frontend::grpc::server::TokenStorage::getClientPrincipal(const std::string& strToken) const {
+  std::lock_guard<std::mutex> lck(m_mtxLockStorage);
+  std::string strDecodedToken = cta::utils::base64decode(strToken);
+
+  auto it = m_umapTokens.find(strDecodedToken);
+  if (it != m_umapTokens.end()) {
+    return it->second.clientPrincipal;
+  }
+  return "";
 }
 
 void cta::frontend::grpc::server::TokenStorage::remove(const std::string& strToken) {
