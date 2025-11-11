@@ -1058,7 +1058,7 @@ RelationalDB::getNextSuccessfulArchiveRepackReportBatch(log::LogContext& lc) {
       } catch (const cta::exception::Exception& ex) {
         log::ScopedParamContainer(lc)
           .add("bufferURL", bufferURL)
-          .log(log::ERR,
+          .log(log::WARNING,
                "In RelationalDB::getNextSuccessfulArchiveRepackReportBatch(): failed to remove the repack buffer directory");
       }
   }
