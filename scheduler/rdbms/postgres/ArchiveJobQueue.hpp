@@ -187,7 +187,9 @@ public:
 
   ArchiveJobQueueRow& operator=(const rdbms::Rset& rset) {
     jobId = rset.columnUint64NoOpt("JOB_ID");
-    repackRequestId = rset.columnUint64NoOpt("REPACK_REQUEST_ID");
+    if (rset.columnExists("REPACK_REQUEST_ID")){
+      repackRequestId = rset.columnUint64NoOpt("REPACK_REQUEST_ID");
+    }
     reqId = rset.columnUint64NoOpt("ARCHIVE_REQUEST_ID");
     reqJobCount = rset.columnUint32NoOpt("REQUEST_JOB_COUNT");
     mountId = rset.columnOptionalUint64("MOUNT_ID");
@@ -236,7 +238,6 @@ public:
     const char* const sql = R"SQL(
       INSERT INTO ARCHIVE_PENDING_QUEUE(
         ARCHIVE_REQUEST_ID,
-        REPACK_REQUEST_ID,
         REQUEST_JOB_COUNT,
         STATUS,
         TAPE_POOL,
@@ -268,7 +269,6 @@ public:
         TOTAL_REPORT_RETRIES,
         MAX_REPORT_RETRIES) VALUES (
         :ARCHIVE_REQUEST_ID,
-        :REPACK_REQUEST_ID,
         :REQUEST_JOB_COUNT,
         :STATUS,
         :TAPE_POOL,
@@ -303,7 +303,6 @@ public:
 
     auto stmt = conn.createStmt(sql);
     stmt.bindUint64(":ARCHIVE_REQUEST_ID", reqId);
-    stmt.bindUint64(":REPACK_REQUEST_ID", repackRequestId);
     stmt.bindUint32(":REQUEST_JOB_COUNT", reqJobCount);
     stmt.bindString(":STATUS", to_string(status));
     stmt.bindString(":TAPE_POOL", tapePool);
@@ -344,9 +343,10 @@ public:
   if (rows.empty()) return;
 
   std::string prefix = isRepack ? "REPACK_" : "";
-  std::string sql = "INSERT INTO " + prefix + R"SQL(ARCHIVE_PENDING_QUEUE (
+  std::string sql = "INSERT INTO " + prefix + "ARCHIVE_PENDING_QUEUE ( "
+  if (isRepack) sql += "REPACK_REQUEST_ID,";
+  sql +=  R"SQL(
       ARCHIVE_REQUEST_ID,
-      REPACK_REQUEST_ID,
       REQUEST_JOB_COUNT,
       STATUS,
       TAPE_POOL,
@@ -381,9 +381,9 @@ public:
   // Generate VALUES placeholders for each row
   for (size_t i = 0; i < rows.size(); ++i) {
     std::string idx = std::to_string(i);
-    sql += "("
-           ":ARCHIVE_REQUEST_ID"      + idx + ","
-           ":REPACK_REQUEST_ID"       + idx + ","
+    sql += "(";
+    if (isRepack) sql += ":REPACK_REQUEST_ID" + idx + ",";
+    sql += ":ARCHIVE_REQUEST_ID"      + idx + ","
            ":REQUEST_JOB_COUNT"       + idx + ","
            ":STATUS"                  + idx + ","
            ":TAPE_POOL"               + idx + ","
@@ -423,9 +423,10 @@ public:
   for (size_t i = 0; i < rows.size(); ++i) {
     const auto &row = *rows[i];
     std::string idx = std::to_string(i);
-
+    if (isRepack) {
+        stmt.bindUint64(":REPACK_REQUEST_ID" + idx, row.repackRequestId);
+    }
     stmt.bindUint64(":ARCHIVE_REQUEST_ID" + idx, row.reqId);
-    stmt.bindUint64(":REPACK_REQUEST_ID" + idx, row.repackRequestId);
     stmt.bindUint32(":REQUEST_JOB_COUNT" + idx, row.reqJobCount);
     stmt.bindString(":STATUS" + idx, to_string(row.status));
     stmt.bindString(":TAPE_POOL" + idx, row.tapePool);
@@ -495,79 +496,6 @@ public:
     params.add("lastMountWithFailure", lastMountWithFailure);
     params.add("maxTotalRetries", maxTotalRetries);
     params.add("maxReportRetries", maxReportRetries);
-  }
-
-  /**
-   * Select any jobs from the queue by job ID
-   *
-   * @param conn       Connection to the DB backend
-   * @param jobIDs     List of jobID strings to select
-   * @return  result set
-   */
-  static rdbms::Rset selectJobsByJobID(rdbms::Conn& conn, const std::list<std::string>& jobIDs) {
-    if (jobIDs.empty()) {
-      rdbms::Rset ret;
-      return ret;
-    }
-    std::string sqlpart;
-    for (const auto& piece : jobIDs) {
-      sqlpart += piece + ",";
-    }
-    if (!sqlpart.empty()) {
-      sqlpart.pop_back();
-    }
-    std::string sql = R"SQL(
-      SELECT 
-        JOB_ID AS JOB_ID,
-        ARCHIVE_REQUEST_ID AS ARCHIVE_REQUEST_ID,
-        REPACK_REQUEST_ID AS REPACK_REQUEST_ID,
-        REQUEST_JOB_COUNT AS REQUEST_JOB_COUNT,
-        MOUNT_ID AS MOUNT_ID,
-        VID AS VID,
-        STATUS AS STATUS,
-        TAPE_POOL AS TAPE_POOL,
-        MOUNT_POLICY AS MOUNT_POLICY,
-        PRIORITY AS PRIORITY,
-        MIN_ARCHIVE_REQUEST_AGE AS MIN_ARCHIVE_REQUEST_AGE,
-        ARCHIVE_FILE_ID AS ARCHIVE_FILE_ID,
-        SIZE_IN_BYTES AS SIZE_IN_BYTES,
-        COPY_NB AS COPY_NB,
-        START_TIME AS START_TIME,
-        CHECKSUMBLOB AS CHECKSUMBLOB,
-        CREATION_TIME AS CREATION_TIME,
-        DISK_INSTANCE AS DISK_INSTANCE,
-        DISK_FILE_ID AS DISK_FILE_ID,
-        DISK_FILE_OWNER_UID AS DISK_FILE_OWNER_UID,
-        DISK_FILE_GID AS DISK_FILE_GID,
-        DISK_FILE_PATH AS DISK_FILE_PATH,
-        ARCHIVE_REPORT_URL AS ARCHIVE_REPORT_URL,
-        ARCHIVE_ERROR_REPORT_URL AS ARCHIVE_ERROR_REPORT_URL,
-        REQUESTER_NAME AS REQUESTER_NAME,
-        REQUESTER_GROUP AS REQUESTER_GROUP,
-        SRC_URL AS SRC_URL,
-        STORAGE_CLASS AS STORAGE_CLASS,
-        RETRIES_WITHIN_MOUNT AS RETRIES_WITHIN_MOUNT,
-        MAX_RETRIES_WITHIN_MOUNT AS MAX_RETRIES_WITHIN_MOUNT,
-        TOTAL_RETRIES AS TOTAL_RETRIES,
-        TOTAL_REPORT_RETRIES AS TOTAL_REPORT_RETRIES,
-        FAILURE_LOG AS FAILURE_LOG,
-        REPORT_FAILURE_LOG AS REPORT_FAILURE_LOG,
-        LAST_MOUNT_WITH_FAILURE  AS LAST_MOUNT_WITH_FAILURE,
-        MAX_TOTAL_RETRIES AS MAX_TOTAL_RETRIES,
-        MAX_REPORT_RETRIES AS MAX_REPORT_RETRIES,
-        IS_REPORTING AS IS_REPORTING,
-        DRIVE AS DRIVE,
-        HOST AS HOST,
-        MOUNT_TYPE AS MOUNT_TYPE,
-        LOGICAL_LIBRARY AS LOGICAL_LIBRARY
-      FROM ARCHIVE_ACTIVE_QUEUE
-      WHERE 
-        JOB_ID IN (
-    )SQL" + sqlpart + R"SQL(
-      ) ORDER BY PRIORITY DESC, JOB_ID
-    )SQL";
-    auto stmt = conn.createStmt(sql);
-    return stmt.executeQuery();
   }
 
   /**

@@ -154,6 +154,7 @@ public:
   uint16_t columnUint16NoOpt(const std::string& colName) const;
   uint32_t columnUint32NoOpt(const std::string& colName) const;
   uint64_t columnUint64NoOpt(const std::string& colName) const;
+  bool columnExists(const std::string& colName) const;
   std::string columnStringNoOpt(const std::string& colName) const;
   double columnDoubleNoOpt(const std::string& colName) const;
   bool columnBoolNoOpt(const std::string& colName) const;

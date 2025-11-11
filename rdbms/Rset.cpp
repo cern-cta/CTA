@@ -399,4 +399,11 @@ std::optional<double> Rset::columnOptionalDouble(const std::string& colName) con
   return delegateToImpl<&wrapper::RsetWrapper::columnOptionalDouble>(m_impl, colName);
 }
 
+//------------------------------------------------------------------------------
+// columnExists
+//------------------------------------------------------------------------------
+bool Rset::columnExists(const std::string& colName) const {
+  return delegateToImpl<&wrapper::RsetWrapper::columnExists>(m_impl, colName);
+}
+
 }  // namespace cta::rdbms

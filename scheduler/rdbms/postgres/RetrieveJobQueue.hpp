@@ -204,7 +204,15 @@ public:
   RetrieveJobQueueRow& operator=(const rdbms::Rset& rset) {
     jobId = rset.columnUint64NoOpt("JOB_ID");
     retrieveRequestId = rset.columnUint64NoOpt("RETRIEVE_REQUEST_ID");
-    repackRequestId = rset.columnUint64NoOpt("REPACK_REQUEST_ID");
+    if (rset.columnExists("REPACK_REQUEST_ID")){
+      repackRequestId = rset.columnUint64NoOpt("REPACK_REQUEST_ID");
+    }
+    if (rset.columnExists("REPACK_REARCHIVE_COPY_NBS")){
+      rearchiveCopyNbs = rset.columnOptionalString("REPACK_REARCHIVE_COPY_NBS");
+    }
+    if (rset.columnExists("REPACK_REARCHIVE_TAPE_POOLS")){
+      rearchiveTapePools = rset.columnOptionalString("REPACK_REARCHIVE_TAPE_POOLS");
+    }
     reqJobCount = rset.columnUint32NoOpt("REQUEST_JOB_COUNT");
     mountId = rset.columnOptionalUint64("MOUNT_ID");
     status = from_string<RetrieveJobStatus>(rset.columnStringNoOpt("STATUS"));
@@ -244,8 +252,6 @@ public:
     vid = rset.columnStringNoOpt("VID");
     alternateVids = rset.columnStringNoOpt("ALTERNATE_VIDS");
     alternateCopyNbs = rset.columnStringNoOpt("ALTERNATE_COPY_NBS");
-    rearchiveCopyNbs = rset.columnOptionalString("REPACK_REARCHIVE_COPY_NBS");
-    rearchiveTapePools = rset.columnOptionalString("REPACK_REARCHIVE_TAPE_POOLS");
     drive = rset.columnStringNoOpt("DRIVE");
     host = rset.columnStringNoOpt("HOST");
     logical_library = rset.columnStringNoOpt("LOGICAL_LIBRARY");
@@ -283,11 +289,10 @@ public:
   }
 
   void insert(rdbms::Conn &conn) const {
-    //std::string insert_table_name_prefix = isRepack ? "REPACK_" : "";
+    // used only for queueRetrieve(), repack uses insertBatch()
     std::string sql = R"(INSERT INTO
        RETRIEVE_PENDING_QUEUE (
            RETRIEVE_REQUEST_ID,
-           REPACK_REQUEST_ID,
            REQUEST_JOB_COUNT,
            STATUS,
            CREATION_TIME,
@@ -309,8 +314,6 @@ public:
            MIN_RETRIEVE_REQUEST_AGE,
            COPY_NB,
            ALTERNATE_COPY_NBS,
-           REPACK_REARCHIVE_COPY_NBS,
-           REPACK_REARCHIVE_TAPE_POOLS,
            ALTERNATE_FSEQS,
            ALTERNATE_BLOCK_IDS,
            START_TIME,
@@ -348,7 +351,6 @@ public:
     sql += R"(
        ) VALUES (
            :RETRIEVE_REQUEST_ID,
-           :REPACK_REQUEST_ID,
            :REQUEST_JOB_COUNT,
            :STATUS,
            :CREATION_TIME,
@@ -370,8 +372,6 @@ public:
            :MIN_RETRIEVE_REQUEST_AGE,
            :COPY_NB,
            :ALTERNATE_COPY_NBS,
-           :REPACK_REARCHIVE_COPY_NBS,
-           :REPACK_REARCHIVE_TAPE_POOLS,
            :ALTERNATE_FSEQS,
            :ALTERNATE_BLOCK_IDS,
            :START_TIME,
@@ -410,7 +410,6 @@ public:
 
     auto stmt = conn.createStmt(sql);
     stmt.bindUint64(":RETRIEVE_REQUEST_ID", retrieveRequestId);
-    stmt.bindUint64(":REPACK_REQUEST_ID", repackRequestId);
     stmt.bindUint32(":REQUEST_JOB_COUNT", reqJobCount);
     stmt.bindString(":STATUS", to_string(status));
     stmt.bindUint64(":CREATION_TIME", creationTime);
@@ -430,8 +429,6 @@ public:
     stmt.bindUint32(":MIN_RETRIEVE_REQUEST_AGE", minRetrieveRequestAge);
     stmt.bindUint8(":COPY_NB", copyNb);
     stmt.bindString(":ALTERNATE_COPY_NBS", alternateCopyNbs);
-    stmt.bindString(":REPACK_REARCHIVE_COPY_NBS", rearchiveCopyNbs);
-    stmt.bindString(":REPACK_REARCHIVE_TAPE_POOLS", rearchiveTapePools);
     stmt.bindString(":ALTERNATE_FSEQS", alternateFSeq);
     stmt.bindString(":ALTERNATE_BLOCK_IDS", alternateBlockId);
     stmt.bindUint64(":START_TIME", startTime);
@@ -557,10 +554,14 @@ static void insertBatch(rdbms::Conn &conn,
   }
 
   std::string prefix = isRepack ? "REPACK_" : "";
-  std::string sql = "INSERT INTO " + prefix;
-  sql += R"SQL(RETRIEVE_PENDING_QUEUE (
+  std::string sql = "INSERT INTO " + prefix + "RETRIEVE_PENDING_QUEUE ( ";
+  if(isRepack) {
+    sql += " REPACK_REQUEST_ID,";
+    sql += " REPACK_REARCHIVE_COPY_NBS,";
+    sql += " REPACK_REARCHIVE_TAPE_POOLS,";
+  }
+  sql += R"SQL(
       RETRIEVE_REQUEST_ID,
-      REPACK_REQUEST_ID,
       REQUEST_JOB_COUNT,
       STATUS,
       CREATION_TIME,
@@ -570,16 +571,16 @@ static void insertBatch(rdbms::Conn &conn,
       CHECKSUMBLOB,
       FSEQ,
       BLOCK_ID,
-      DISK_INSTANCE,)SQL";
-      sql += " DISK_FILE_PATH,";
-      sql += "RETRIEVE_ERROR_REPORT_URL,";
-      sql += "REQUESTER_NAME,";
-      sql += "REQUESTER_GROUP,";
-      sql += "SRR_USERNAME,";
-      sql += "SRR_HOST,";
-      sql += "SRR_TIME,";
-      sql += "SRR_MOUNT_POLICY,";
-  sql += R"SQL(DISK_FILE_ID,
+      DISK_INSTANCE,
+      DISK_FILE_PATH,
+      RETRIEVE_ERROR_REPORT_URL,
+      REQUESTER_NAME,
+      REQUESTER_GROUP,
+      SRR_USERNAME,
+      SRR_HOST,
+      SRR_TIME,
+      SRR_MOUNT_POLICY,
+      DISK_FILE_ID,
       DISK_FILE_GID,
       DISK_FILE_OWNER_UID,
       MOUNT_POLICY,
@@ -589,8 +590,6 @@ static void insertBatch(rdbms::Conn &conn,
       MIN_RETRIEVE_REQUEST_AGE,
       COPY_NB,
       ALTERNATE_COPY_NBS,
-      REPACK_REARCHIVE_COPY_NBS,
-      REPACK_REARCHIVE_TAPE_POOLS,
       ALTERNATE_FSEQS,
       ALTERNATE_BLOCK_IDS,
       START_TIME,
@@ -618,8 +617,12 @@ static void insertBatch(rdbms::Conn &conn,
   // Generate VALUES placeholders for each row
   for (size_t i = 0; i < rows.size(); ++i) {
     sql += "(";
+    if(isRepack){
+      sql += ":REPACK_REQUEST_ID"        + std::to_string(i) + ",";
+      sql += ":REPACK_REARCHIVE_COPY_NBS" + std::to_string(i) + ",";
+      sql += ":REPACK_REARCHIVE_TAPE_POOLS" + std::to_string(i) + ",";
+    }
     sql += ":RETRIEVE_REQUEST_ID"      + std::to_string(i) + ",";
-    sql += ":REPACK_REQUEST_ID"        + std::to_string(i) + ",";
     sql += ":REQUEST_JOB_COUNT"        + std::to_string(i) + ",";
     sql += ":STATUS"                   + std::to_string(i) + ",";
     sql += ":CREATION_TIME"            + std::to_string(i) + ",";
@@ -648,8 +651,6 @@ static void insertBatch(rdbms::Conn &conn,
     sql += ":MIN_RETRIEVE_REQUEST_AGE" + std::to_string(i) + ",";
     sql += ":COPY_NB"                  + std::to_string(i) + ",";
     sql += ":ALTERNATE_COPY_NBS"       + std::to_string(i) + ",";
-    sql += ":REPACK_REARCHIVE_COPY_NBS" + std::to_string(i) + ",";
-    sql += ":REPACK_REARCHIVE_TAPE_POOLS" + std::to_string(i) + ",";
     sql += ":ALTERNATE_FSEQS"          + std::to_string(i) + ",";
     sql += ":ALTERNATE_BLOCK_IDS"      + std::to_string(i) + ",";
     sql += ":START_TIME"               + std::to_string(i) + ",";
@@ -679,8 +680,12 @@ static void insertBatch(rdbms::Conn &conn,
   // Bind values for each row with distinct names
   for (size_t i = 0; i < rows.size(); ++i) {
     const auto &row = *rows[i];
+    if(isRepack){
+      stmt.bindUint64(":REPACK_REQUEST_ID" + std::to_string(i), row.repackRequestId);
+      stmt.bindString(":REPACK_REARCHIVE_COPY_NBS" + std::to_string(i), row.rearchiveCopyNbs);
+      stmt.bindString(":REPACK_REARCHIVE_TAPE_POOLS" + std::to_string(i), row.rearchiveTapePools);
+    }
     stmt.bindUint64(":RETRIEVE_REQUEST_ID" + std::to_string(i), row.retrieveRequestId);
-    stmt.bindUint64(":REPACK_REQUEST_ID" + std::to_string(i), row.repackRequestId);
     stmt.bindUint32(":REQUEST_JOB_COUNT" + std::to_string(i), row.reqJobCount);
     stmt.bindString(":STATUS" + std::to_string(i), to_string(row.status));
     stmt.bindUint64(":CREATION_TIME" + std::to_string(i), row.creationTime);
@@ -720,8 +725,6 @@ static void insertBatch(rdbms::Conn &conn,
     stmt.bindUint32(":MIN_RETRIEVE_REQUEST_AGE" + std::to_string(i), row.minRetrieveRequestAge);
     stmt.bindUint8(":COPY_NB" + std::to_string(i), row.copyNb);
     stmt.bindString(":ALTERNATE_COPY_NBS" + std::to_string(i), row.alternateCopyNbs);
-    stmt.bindString(":REPACK_REARCHIVE_COPY_NBS" + std::to_string(i), row.rearchiveCopyNbs);
-    stmt.bindString(":REPACK_REARCHIVE_TAPE_POOLS" + std::to_string(i), row.rearchiveTapePools);
     stmt.bindString(":ALTERNATE_FSEQS" + std::to_string(i), row.alternateFSeq);
     stmt.bindString(":ALTERNATE_BLOCK_IDS" + std::to_string(i), row.alternateBlockId);
     stmt.bindUint64(":START_TIME" + std::to_string(i), row.startTime);

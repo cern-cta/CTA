@@ -205,6 +205,14 @@ public:
   uint64_t columnUint64NoOpt(const std::string& colName) const override;
 
   /**
+   * Returns the true if the column exists in the result set.
+   *
+   * @param colName
+   * @return true if the column is in the result set, false otherwise
+   */
+  bool columnExists(const std::string& colName) const override;
+
+  /**
    * Returns the value of the specified column as an double.
    *
    * @param colName

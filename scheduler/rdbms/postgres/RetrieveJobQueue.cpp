@@ -90,11 +90,15 @@ RetrieveJobQueueRow::moveJobsToDbActiveQueue(Transaction& txn,
         RETURNING RIQ.*
     )
     INSERT INTO )SQL";
-  sql += repack_table_name_prefix + "RETRIEVE_ACTIVE_QUEUE";
-  sql += R"SQL( (
+  sql += repack_table_name_prefix + "RETRIEVE_ACTIVE_QUEUE ( ";
+  if(isRepack) {
+    sql += " REPACK_REQUEST_ID,";
+    sql += " REPACK_REARCHIVE_COPY_NBS,";
+    sql += " REPACK_REARCHIVE_TAPE_POOLS,";
+  }
+  sql += R"SQL(
         JOB_ID,
         RETRIEVE_REQUEST_ID,
-        REPACK_REQUEST_ID,
         REQUEST_JOB_COUNT,
         STATUS,
         TAPE_POOL,
@@ -105,8 +109,6 @@ RetrieveJobQueueRow::moveJobsToDbActiveQueue(Transaction& txn,
         SIZE_IN_BYTES,
         COPY_NB,
         ALTERNATE_COPY_NBS,
-        REPACK_REARCHIVE_COPY_NBS,
-        REPACK_REARCHIVE_TAPE_POOLS,
         ALTERNATE_FSEQS,
         ALTERNATE_BLOCK_IDS,
         START_TIME,
@@ -150,9 +152,15 @@ RetrieveJobQueueRow::moveJobsToDbActiveQueue(Transaction& txn,
         DISK_SYSTEM_NAME
     )
     SELECT
+    )SQL";
+    if(isRepack) {
+      sql += " M.REPACK_REQUEST_ID,";
+      sql += " M.REPACK_REARCHIVE_COPY_NBS,";
+      sql += " M.REPACK_REARCHIVE_TAPE_POOLS,";
+    }
+    sql += R"SQL(
         M.JOB_ID,
         M.RETRIEVE_REQUEST_ID,
-        M.REPACK_REQUEST_ID,
         M.REQUEST_JOB_COUNT,
         M.STATUS,
         :TAPE_POOL AS TAPE_POOL,
@@ -163,8 +171,6 @@ RetrieveJobQueueRow::moveJobsToDbActiveQueue(Transaction& txn,
         M.SIZE_IN_BYTES,
         M.COPY_NB,
         M.ALTERNATE_COPY_NBS,
-        M.REPACK_REARCHIVE_COPY_NBS,
-        M.REPACK_REARCHIVE_TAPE_POOLS,
         M.ALTERNATE_FSEQS,
         M.ALTERNATE_BLOCK_IDS,
         M.START_TIME,
@@ -376,11 +382,15 @@ uint64_t RetrieveJobQueueRow::requeueFailedJob(Transaction& txn,
     )
     INSERT INTO
   )SQL";
-  sql += repack_table_name_prefix + "RETRIEVE_PENDING_QUEUE ";
-  sql += R"SQL( (
+  sql += repack_table_name_prefix + "RETRIEVE_PENDING_QUEUE (";
+  if (isRepack) {
+    sql += " REPACK_REQUEST_ID,";
+    sql += " REPACK_REARCHIVE_COPY_NBS,";
+    sql += " REPACK_REARCHIVE_TAPE_POOLS,";
+  }
+  sql += R"SQL(
       JOB_ID,
       RETRIEVE_REQUEST_ID,
-      REPACK_REQUEST_ID,
       REQUEST_JOB_COUNT,
       TAPE_POOL,
       MOUNT_POLICY,
@@ -414,8 +424,6 @@ uint64_t RetrieveJobQueueRow::requeueFailedJob(Transaction& txn,
       ALTERNATE_BLOCK_IDS,
       ALTERNATE_VIDS,
       ALTERNATE_COPY_NBS,
-      REPACK_REARCHIVE_COPY_NBS,
-      REPACK_REARCHIVE_TAPE_POOLS,
       DRIVE,
       HOST,
       LOGICAL_LIBRARY,
@@ -437,9 +445,15 @@ uint64_t RetrieveJobQueueRow::requeueFailedJob(Transaction& txn,
       MOUNT_ID
     )
     SELECT
+   )SQL";
+   if (isRepack) {
+     sql += " M.REPACK_REQUEST_ID,";
+     sql += " M.REPACK_REARCHIVE_COPY_NBS,";
+     sql += " M.REPACK_REARCHIVE_TAPE_POOLS,";
+   }
+   sql += R"SQL(
       M.JOB_ID,
       M.RETRIEVE_REQUEST_ID,
-      M.REPACK_REQUEST_ID,
       M.REQUEST_JOB_COUNT,
       M.TAPE_POOL,
       M.MOUNT_POLICY,
@@ -473,8 +487,6 @@ uint64_t RetrieveJobQueueRow::requeueFailedJob(Transaction& txn,
       M.ALTERNATE_BLOCK_IDS,
       M.ALTERNATE_VIDS,
       M.ALTERNATE_COPY_NBS,
-      M.REPACK_REARCHIVE_COPY_NBS,
-      M.REPACK_REARCHIVE_TAPE_POOLS,
       M.DRIVE,
       M.HOST,
       M.LOGICAL_LIBRARY,
@@ -546,12 +558,15 @@ RetrieveJobQueueRow::requeueJobBatch(Transaction& txn, RetrieveJobStatus newStat
     )
     INSERT INTO
   )SQL";
-  sql += repack_table_name_prefix + "RETRIEVE_PENDING_QUEUE ";
+  sql += repack_table_name_prefix + "RETRIEVE_PENDING_QUEUE (";
+  if (isRepack) {
+    sql += " REPACK_REQUEST_ID,";
+    sql += " REPACK_REARCHIVE_COPY_NBS,";
+    sql += " REPACK_REARCHIVE_TAPE_POOLS,";
+  }
   sql += R"SQL(
-     (
       JOB_ID,
       RETRIEVE_REQUEST_ID,
-      REPACK_REQUEST_ID,
       REQUEST_JOB_COUNT,
       TAPE_POOL,
       MOUNT_POLICY,
@@ -585,8 +600,6 @@ RetrieveJobQueueRow::requeueJobBatch(Transaction& txn, RetrieveJobStatus newStat
       ALTERNATE_BLOCK_IDS,
       ALTERNATE_VIDS,
       ALTERNATE_COPY_NBS,
-      REPACK_REARCHIVE_COPY_NBS,
-      REPACK_REARCHIVE_TAPE_POOLS,
       DRIVE,
       HOST,
       LOGICAL_LIBRARY,
@@ -608,9 +621,15 @@ RetrieveJobQueueRow::requeueJobBatch(Transaction& txn, RetrieveJobStatus newStat
       MOUNT_ID
     )
     SELECT
+    )SQL";
+    if (isRepack) {
+      sql += " M.REPACK_REQUEST_ID,";
+      sql += " M.REPACK_REARCHIVE_COPY_NBS,";
+      sql += " M.REPACK_REARCHIVE_TAPE_POOLS,";
+    }
+    sql += R"SQL(
       M.JOB_ID,
       M.RETRIEVE_REQUEST_ID,
-      M.REPACK_REQUEST_ID,
       M.REQUEST_JOB_COUNT,
       M.TAPE_POOL,
       M.MOUNT_POLICY,
@@ -644,8 +663,6 @@ RetrieveJobQueueRow::requeueJobBatch(Transaction& txn, RetrieveJobStatus newStat
       M.ALTERNATE_BLOCK_IDS,
       M.ALTERNATE_VIDS,
       M.ALTERNATE_COPY_NBS,
-      M.REPACK_REARCHIVE_COPY_NBS,
-      M.REPACK_REARCHIVE_TAPE_POOLS,
       M.DRIVE,
       M.HOST,
       M.LOGICAL_LIBRARY,
@@ -908,7 +925,6 @@ uint64_t RetrieveJobQueueRow::handlePendingRetrieveJobsAfterTapeStateChange(Tran
     INSERT INTO RETRIEVE_ACTIVE_QUEUE (
       JOB_ID,
       RETRIEVE_REQUEST_ID,
-      REPACK_REQUEST_ID,
       REQUEST_JOB_COUNT,
       TAPE_POOL,
       MOUNT_POLICY,
@@ -942,8 +958,6 @@ uint64_t RetrieveJobQueueRow::handlePendingRetrieveJobsAfterTapeStateChange(Tran
       ALTERNATE_BLOCK_IDS,
       ALTERNATE_VIDS,
       ALTERNATE_COPY_NBS,
-      REPACK_REARCHIVE_COPY_NBS,
-      REPACK_REARCHIVE_TAPE_POOLS,
       DRIVE,
       HOST,
       LOGICAL_LIBRARY,
@@ -967,7 +981,6 @@ uint64_t RetrieveJobQueueRow::handlePendingRetrieveJobsAfterTapeStateChange(Tran
     SELECT
       M.JOB_ID,
       M.RETRIEVE_REQUEST_ID,
-      M.REPACK_REQUEST_ID,
       M.REQUEST_JOB_COUNT,
       :TAPE_POOL AS TAPE_POOL,
       M.MOUNT_POLICY,
@@ -1001,8 +1014,6 @@ uint64_t RetrieveJobQueueRow::handlePendingRetrieveJobsAfterTapeStateChange(Tran
       M.ALTERNATE_BLOCK_IDS,
       M.ALTERNATE_VIDS,
       M.ALTERNATE_COPY_NBS,
-      M.REPACK_REARCHIVE_COPY_NBS,
-      M.REPACK_REARCHIVE_TAPE_POOLS,
       :DRIVE AS DRIVE,
       :HOST AS HOST,
       :LOGICAL_LIBRARY AS LOGICAL_LIBRARY,

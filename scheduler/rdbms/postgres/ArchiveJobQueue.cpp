@@ -71,11 +71,11 @@ ArchiveJobQueueRow::moveJobsToDbActiveQueue(Transaction &txn,
     )
     INSERT INTO
     )SQL";
-  sql += prefix + "ARCHIVE_ACTIVE_QUEUE ";
-  sql += R"SQL( (
+  sql += prefix + "ARCHIVE_ACTIVE_QUEUE (";
+  if (isRepack) sql += " REPACK_REQUEST_ID,";
+  sql += R"SQL(
         JOB_ID,
         ARCHIVE_REQUEST_ID,
-        REPACK_REQUEST_ID,
         REQUEST_JOB_COUNT,
         STATUS,
         TAPE_POOL,
@@ -113,9 +113,10 @@ ArchiveJobQueueRow::moveJobsToDbActiveQueue(Transaction &txn,
         MOUNT_TYPE,
         LOGICAL_LIBRARY)
             SELECT
-                M.JOB_ID,
+  )SQL";
+  if (isRepack) sql += " M.REPACK_REQUEST_ID,";
+  sql += R"SQL( M.JOB_ID,
                 M.ARCHIVE_REQUEST_ID,
-                M.REPACK_REQUEST_ID,
                 M.REQUEST_JOB_COUNT,
                 M.STATUS,
                 M.TAPE_POOL,
@@ -154,7 +155,7 @@ ArchiveJobQueueRow::moveJobsToDbActiveQueue(Transaction &txn,
                 :LOGICAL_LIBRARY AS LOGICAL_LIBRARY
             FROM MOVED_ROWS M
     RETURNING *;
-    )SQL";
+  )SQL";
 
   auto stmt = txn.getConn().createStmt(sql);
   stmt.bindString(":TAPE_POOL", mountInfo.tapePool);
@@ -423,11 +424,11 @@ uint64_t ArchiveJobQueueRow::requeueFailedJob(Transaction& txn,
     )
     INSERT INTO
     )SQL";
-  sql += repack_table_name_prefix + "ARCHIVE_PENDING_QUEUE ";
-  sql += R"SQL(  (
+  sql += repack_table_name_prefix + "ARCHIVE_PENDING_QUEUE ( ";
+  if (isRepack) sql += "REPACK_REQUEST_ID,";
+  sql += R"SQL(
     JOB_ID,
     ARCHIVE_REQUEST_ID,
-    REPACK_REQUEST_ID,
     REQUEST_JOB_COUNT,
     TAPE_POOL,
     MOUNT_POLICY,
@@ -467,9 +468,11 @@ uint64_t ArchiveJobQueueRow::requeueFailedJob(Transaction& txn,
     FAILURE_LOG,
     MOUNT_ID)
         SELECT
+)SQL";
+if (isRepack) sql += "M.REPACK_REQUEST_ID,";
+sql += R"SQL(
             M.JOB_ID,
             M.ARCHIVE_REQUEST_ID,
-            M.REPACK_REQUEST_ID,
             M.REQUEST_JOB_COUNT,
             M.TAPE_POOL,
             M.MOUNT_POLICY,
@@ -555,11 +558,11 @@ ArchiveJobQueueRow::requeueJobBatch(Transaction& txn, ArchiveJobStatus newStatus
     )
     INSERT INTO
   )SQL";
-  sql += repack_table_name_prefix + "ARCHIVE_PENDING_QUEUE ";
-  sql += R"SQL( (
+  sql += repack_table_name_prefix + "ARCHIVE_PENDING_QUEUE ( ";
+  if (isRepack) sql += "REPACK_REQUEST_ID,";
+  sql += R"SQL(
     JOB_ID,
     ARCHIVE_REQUEST_ID,
-    REPACK_REQUEST_ID,
     REQUEST_JOB_COUNT,
     TAPE_POOL,
     MOUNT_POLICY,
@@ -598,9 +601,11 @@ ArchiveJobQueueRow::requeueJobBatch(Transaction& txn, ArchiveJobStatus newStatus
     MOUNT_ID,
     FAILURE_LOG)
         SELECT
+  )SQL";
+  if (isRepack) sql += " M.REPACK_REQUEST_ID,";
+  sql += R"SQL(
             M.JOB_ID,
             M.ARCHIVE_REQUEST_ID,
-            M.REPACK_REQUEST_ID,
             M.REQUEST_JOB_COUNT,
             M.TAPE_POOL,
             M.MOUNT_POLICY,
