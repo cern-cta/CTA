@@ -555,7 +555,7 @@ static void insertBatch(rdbms::Conn &conn,
 
   std::string prefix = isRepack ? "REPACK_" : "";
   std::string sql = "INSERT INTO " + prefix + "RETRIEVE_PENDING_QUEUE ( ";
-  if(isRepack) {
+  if (isRepack) {
     sql += " REPACK_REQUEST_ID,";
     sql += " REPACK_REARCHIVE_COPY_NBS,";
     sql += " REPACK_REARCHIVE_TAPE_POOLS,";
@@ -617,7 +617,7 @@ static void insertBatch(rdbms::Conn &conn,
   // Generate VALUES placeholders for each row
   for (size_t i = 0; i < rows.size(); ++i) {
     sql += "(";
-    if(isRepack){
+    if (isRepack){
       sql += ":REPACK_REQUEST_ID"        + std::to_string(i) + ",";
       sql += ":REPACK_REARCHIVE_COPY_NBS" + std::to_string(i) + ",";
       sql += ":REPACK_REARCHIVE_TAPE_POOLS" + std::to_string(i) + ",";
@@ -680,7 +680,7 @@ static void insertBatch(rdbms::Conn &conn,
   // Bind values for each row with distinct names
   for (size_t i = 0; i < rows.size(); ++i) {
     const auto &row = *rows[i];
-    if(isRepack){
+    if (isRepack) {
       stmt.bindUint64(":REPACK_REQUEST_ID" + std::to_string(i), row.repackRequestId);
       stmt.bindString(":REPACK_REARCHIVE_COPY_NBS" + std::to_string(i), row.rearchiveCopyNbs);
       stmt.bindString(":REPACK_REARCHIVE_TAPE_POOLS" + std::to_string(i), row.rearchiveTapePools);

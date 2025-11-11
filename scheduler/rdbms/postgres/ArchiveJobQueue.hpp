@@ -343,7 +343,7 @@ public:
   if (rows.empty()) return;
 
   std::string prefix = isRepack ? "REPACK_" : "";
-  std::string sql = "INSERT INTO " + prefix + "ARCHIVE_PENDING_QUEUE ( "
+  std::string sql = "INSERT INTO " + prefix + "ARCHIVE_PENDING_QUEUE ( ";
   if (isRepack) sql += "REPACK_REQUEST_ID,";
   sql +=  R"SQL(
       ARCHIVE_REQUEST_ID,
