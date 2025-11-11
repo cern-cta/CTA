@@ -469,7 +469,7 @@ ARCHIVING=${TO_BE_ARCHIVED}
 ARCHIVED=0
 echo "$(date +%s): Waiting for files to be on tape:"
 SECONDS_PASSED=0
-WAIT_FOR_ARCHIVED_FILE_TIMEOUT=$((40+${NB_FILES}/10))
+WAIT_FOR_ARCHIVED_FILE_TIMEOUT=$((5400+${NB_FILES}/10))
 START_TIME=$(date +%s)
 END_TIME=$(date +%s)
 while test 0 != ${ARCHIVING}; do
@@ -659,7 +659,7 @@ RETRIEVED=0
 echo "$(date +%s): Waiting for files to be back on disk:"
 SECONDS_PASSED=0
 START_TIME=$(date +%s)
-WAIT_FOR_RETRIEVED_FILE_TIMEOUT=$((40+${NB_FILES}/10))
+WAIT_FOR_RETRIEVED_FILE_TIMEOUT=$((5400+${NB_FILES}/10))
 while test 0 -lt ${RETRIEVING}; do
   NOW=$(date +%s)
   SECONDS_PASSED=$((NOW - START_TIME))
