@@ -851,11 +851,15 @@ RelationalDB::getNextSuccessfulRetrieveRepackReportBatch(log::LogContext& lc) {
       params.add("retrievedBytes", update.retrievedBytes);
       params.add("rearchiveCopyNbs", update.rearchiveCopyNbs);
       params.add("rearchiveBytes", update.rearchiveBytes);
+      params.add("totalToBeArchivedFiles", update.retrievedFiles + update.rearchiveCopyNbs);
+      params.add("totalToBeArchivedBytes", update.retrievedBytes + update.rearchiveBytes);
       lc.log(cta::log::INFO, "In RelationalDB::getNextSuccessfulRetrieveRepackReportBatch(): Successfully transformed repack retrieve rows to archive queue table.");
       statUpdates.emplace_back(update);
     }
     txn.commit();
     timings.insertAndReset("movedRetrieveRepackJobs", t);
+    log::ScopedParamContainer params(lc);
+    timings.addToLog(params);
   } catch (exception::Exception& ex) {
     lc.log(cta::log::ERR,
                    "In RelationalDB::getNextSuccessfulRetrieveRepackReportBatch(): failed to transform retrieve jobs to archive jobs: " +
