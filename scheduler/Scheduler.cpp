@@ -882,7 +882,7 @@ void Scheduler::expandRepackRequest(const std::unique_ptr<RepackRequest>& repack
     deleteRepackBuffer(std::move(dir), lc);
   }
   repackRequest->m_dbReq->expandDone();
-  lc.log(log::INFO, "In Scheduler::expandRepackRequest(), repack request expanded");
+  lc.log(log::INFO, "In Scheduler::expandRepackRequest(), repack request expanded.");
 }
 
 //------------------------------------------------------------------------------

@@ -700,7 +700,6 @@ RetrieveJobQueueRow::transformJobBatchToArchive(Transaction& txn, const size_t l
   ),
   BASE_INSERT AS (
       INSERT INTO REPACK_ARCHIVE_PENDING_QUEUE (
-        JOB_ID,
         ARCHIVE_REQUEST_ID,
         REPACK_REQUEST_ID,
         REQUEST_JOB_COUNT,
@@ -736,7 +735,6 @@ RetrieveJobQueueRow::transformJobBatchToArchive(Transaction& txn, const size_t l
         MOUNT_ID
       )
       SELECT
-        M.JOB_ID,
         M.RETRIEVE_REQUEST_ID,
         M.REPACK_REQUEST_ID,
         M.REQUEST_JOB_NEW_COUNT AS REQUEST_JOB_COUNT,

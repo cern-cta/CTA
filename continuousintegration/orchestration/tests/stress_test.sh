@@ -211,6 +211,9 @@ repackMoveAndAddCopies() {
   pids=()  # Store background process IDs
   for VID_TO_REPACK in ${VID_LIST}; do
     (
+      echo "Creating the repack buffer directory for VID (${REPACK_BUFFER_URL}/${VID_TO_REPACK})"
+      kubectl -n ${NAMESPACE} exec ${EOS_MGM_POD} -c eos-mgm -- eos mkdir ${REPACK_BUFFER_URL}/${VID_TO_REPACK}
+      kubectl -n ${NAMESPACE} exec ${EOS_MGM_POD} -c eos-mgm -- eos chmod 1777 ${REPACK_BUFFER_URL}/${VID_TO_REPACK}
       kubectl -n ${NAMESPACE} exec ${EOS_MGM_POD} -c eos-mgm -- eos ls -la /eos/ctaeos/repack/${VID_TO_REPACK}
 
       echo "Marking the tape ${VID_TO_REPACK} as REPACKING"

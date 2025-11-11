@@ -658,6 +658,7 @@ RETRIEVED=0
 # Wait for the copy to appear on disk
 echo "$(date +%s): Waiting for files to be back on disk:"
 SECONDS_PASSED=0
+START_TIME=$(date +%s)
 WAIT_FOR_RETRIEVED_FILE_TIMEOUT=$((40+${NB_FILES}/10))
 while test 0 -lt ${RETRIEVING}; do
   NOW=$(date +%s)
