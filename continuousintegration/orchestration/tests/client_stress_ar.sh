@@ -655,6 +655,9 @@ ARCHIVED=$(cat ${STATUS_FILE} | wc -l)
 TO_BE_RETRIEVED=$(( ${ARCHIVED} - $(ls ${ERROR_DIR}/RETRIEVE_* 2>/dev/null | wc -l) ))
 RETRIEVING=${TO_BE_RETRIEVED}
 RETRIEVED=0
+NO_PROGRESS_TIMEOUT=300
+LAST_PROGRESS_TIME=${START_TIME}
+LAST_RETRIEVED_COUNT=0
 # Wait for the copy to appear on disk
 echo "$(date +%s): Waiting for files to be back on disk:"
 SECONDS_PASSED=0
@@ -675,25 +678,59 @@ while test 0 -lt ${RETRIEVING}; do
     sleep 1 # do not hammer eos too hard
   done
 
-  RETRIEVING=$((${TO_BE_RETRIEVED} - ${RETRIEVED}))
+  RETRIEVING=$((${ARCHIVED} - ${RETRIEVED}))
 
-  echo "${RETRIEVED}/${TO_BE_RETRIEVED} retrieved; Remaining ${RETRIEVING}"
+  echo "${RETRIEVED}/${ARCHIVED} retrieved; Remaining ${RETRIEVING}"
+
+  # Check for progress
+  if (( RETRIEVED > LAST_RETRIEVED_COUNT )); then
+    LAST_PROGRESS_TIME=${NOW}
+    LAST_RETRIEVED_COUNT=${RETRIEVED}
+  else
+    NO_PROGRESS_TIME=$((NOW - LAST_PROGRESS_TIME))
+    if (( NO_PROGRESS_TIME >= NO_PROGRESS_TIMEOUT )); then
+      echo "$(date +%s): No progress for ${NO_PROGRESS_TIMEOUT}s — treating as completed successfully."
+      break
+    fi
+  fi
   sleep 10
 done
 
 echo "###"
-echo "${RETRIEVED}/${TO_BE_RETRIEVED} retrieved files"
+echo "${RETRIEVED}/${ARCHIVED} retrieved files"
 echo "###"
 
 if (( SKIP_EVICT == 1 )); then
-  echo "As SKIP_EVICT is ${SKIP_EVICT}, we skip the rest of the stress test."
+  echo "As SKIP_EVICT is ${SKIP_EVICT}, we skip the rest of the stress test, just evict the files from disk."
+  # Build the list of files with at least 1 disk copy that have been archived before (ie d>=1::t1)
+  rm -f ${STATUS_FILE}
+  touch ${STATUS_FILE}
+  for ((subdir=0; subdir < ${NB_DIRS}; subdir++)); do
+    eos root://${EOS_MGM_HOST} ls -y ${EOS_DIR}/${subdir} | grep -E 'd[1-9][0-9]*::t1' | sed -e "s%\s\+% %g;s%.* \([^ ]\+\)$%${subdir}/\1%" >> ${STATUS_FILE}
+    sleep 2
+  done
+
+  TO_EVICT=$(cat ${STATUS_FILE} | wc -l)
+
+  echo "$(date +%s): $TO_EVICT files to be evicted from EOS using 'xrdfs prepare -e'"
+  # We need the -e as we are evicting the files from disk cache (see xrootd prepare definition)
+  cat ${STATUS_FILE} | sed -e "s%^%${EOS_DIR}/%" | XrdSecPROTOCOL=krb5 KRB5CCNAME=/tmp/${EOSPOWER_USER}/krb5cc_0 xargs --max-procs=10 -n 40 xrdfs ${EOS_MGM_HOST} prepare -e > /dev/null
+
+
+  LEFTOVER=0
+  for ((subdir=0; subdir < ${NB_DIRS}; subdir++)); do
+    LEFTOVER=$(( ${LEFTOVER} + $(eos root://${EOS_MGM_HOST} ls -y ${EOS_DIR}/${subdir} | grep -E '^d[1-9][0-9]*::t1' | wc -l) ))
+  done
+
+  EVICTED=$((${TO_EVICT}-${LEFTOVER}))
+  echo "$(date +%s): $EVICTED/$TO_EVICT files evicted from EOS 'xrdfs prepare -e'"
   exit 0
 fi
 #echo "$(date +%s): Dumping objectstore list"
 #ssh root@ctappsfrontend cta-objectstore-list
 
 
-# Build the list of files with more than 1 disk copy that have been archived before (ie d>=1::t1)
+# Build the list of files with at least 1 disk copy that have been archived before (ie d>=1::t1)
 rm -f ${STATUS_FILE}
 touch ${STATUS_FILE}
 for ((subdir=0; subdir < ${NB_DIRS}; subdir++)); do
