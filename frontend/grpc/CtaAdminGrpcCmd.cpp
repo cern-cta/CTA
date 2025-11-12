@@ -148,7 +148,7 @@ void CtaAdminGrpcCmd::send(const CtaAdminParsedCmd& parsedCmd,
     // Read JWT token path from config, with default fallback
     std::string token_path = config.getOptionValueStr("grpc.jwt_token_path").value_or("");
     if (token_path.empty()) {
-      lc.log(cta::log::WARNING, "jwt authentication specified but no token provided");
+      throw cta::exception::UserError("jwt authentication specified but no token provided");
     }
     setupJwtAuthenticatedAdminCall(context, token_path);
   } else if (auth_method == "krb5") {
