@@ -535,6 +535,9 @@ public:
     if (!m_existingObject)
       throw NewObject("In ObjectOps::commit: trying to update a new object");
     // Serialise the payload into the header
+    if(!m_locksCount)
+      throw NotLocked("In ObjectOps::commit(): object not locked");
+
     try {
       m_header.set_payload(m_payload.SerializeAsString());
     } catch (std::exception & stdex) {
