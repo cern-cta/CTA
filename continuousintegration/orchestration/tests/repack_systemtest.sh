@@ -235,7 +235,15 @@ while test 0 = $(admin_cta --json repack ls --vid ${VID_TO_REPACK} | jq -r '.[0]
       header="DestinationVID\tNbFiles\ttotalSize\n"
       { echo -e $header; echo $destinationInfos | jq -r ".[] | [(.vid),(.files),(.bytes)] | @tsv"; } | column -t
     fi
-    exit 1
+    echo "Number of files in ${VID_TO_REPACK}"
+    nr_files_in_tape=$(admin_cta --json tapefile ls --vid ${VID_TO_REPACK} | jq -r 'length')
+    echo ${nr_files_in_tape}
+
+    if test 0 = ${nr_files_in_tape} && test 0 = $(admin_cta --json showqueues | jq -r 'length'); then
+        echo "WARN: ${VID_TO_REPACK} contains no files and \"show queues\" is empty. Repack probably completed successfully but did not update the object."
+    else
+        exit 1
+    fi
   fi
 done
 if test 1 = $(admin_cta --json repack ls --vid ${VID_TO_REPACK} | jq -r '[.[0] | select (.status == "Failed")] | length'); then
