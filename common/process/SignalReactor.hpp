@@ -17,36 +17,35 @@
 
 #pragma once
 
-#include "common/config/Config.hpp"
+#include "SignalReader.hpp"
 #include "common/log/LogContext.hpp"
+#include <unordered_map>
+#include <functional>
 
-#include "catalogue/Catalogue.hpp"
-#include "scheduler/Scheduler.hpp"
+namespace cta {
 
-#ifdef CTA_PGSCHED
-#include "scheduler/rdbms/RelationalDBInit.hpp"
-#else
-#include "scheduler/OStoreDB/OStoreDBInit.hpp"
-#endif
-
-namespace cta::maintd {
-
-/**
- * Responsible for create a RoutineRunner with a specific set of registered routines based on the provided config.
- */
-class RoutineRunnerFactory {
+class SignalReactor {
 public:
-  RoutineRunnerFactory(const cta::common::Config& config, cta::log::LogContext& lc);
-  std::unique_ptr<RoutineRunner> create();
+  SignalReactor(cta::log::LogContext& lc, uint32_t sleepInterval = 1000);
+
+  ~SignalReactor() = default;
+
+  void registerSignalFunction(uint32_t signal, std::function<void()> func);
+
+  /**
+   * Periodically checks for signals and executes the functions registered with said signal (if any)
+   */
+  void run();
+
+  void stop();
 
 private:
-  const cta::common::Config& m_config;
   cta::log::LogContext& m_lc;
+  uint32_t m_sleepInterval;
 
-  std::unique_ptr<cta::catalogue::Catalogue> m_catalogue;
-  std::unique_ptr<cta::SchedulerDBInit_t> m_schedDbInit;
-  std::unique_ptr<cta::SchedulerDB_t> m_schedDb;
-  std::unique_ptr<cta::Scheduler> m_scheduler;
+  std::unordered_map<uint32_t, std::function<void()>> m_signalFunctions;
+  std::unique_ptr<cta::SignalReader> m_signalReader = std::make_unique<cta::SignalReader>();
+  std::atomic<bool> m_stopRequested;
 };
 
-}  // namespace cta::maintd
+}  // namespace cta

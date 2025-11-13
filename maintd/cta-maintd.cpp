@@ -19,6 +19,8 @@
 #include <signal.h>
 #include <string>
 #include <iostream>
+#include <thread>
+#include <memory>
 
 #include "common/exception/Errnum.hpp"
 #include "common/CmdLineParams.hpp"
@@ -26,13 +28,12 @@
 #include "common/log/FileLogger.hpp"
 #include "common/log/StdoutLogger.hpp"
 #include "common/process/threading/System.hpp"
+#include "common/process/SignalReactor.hpp"
 #include "common/utils/utils.hpp"
-#include "RoutineRunner.hpp"
-#include "RoutineRunnerFactory.hpp"
-#include "rdbms/Login.hpp"
 #include "common/telemetry/TelemetryInit.hpp"
 #include "common/telemetry/config/TelemetryConfig.hpp"
 #include "common/semconv/Attributes.hpp"
+#include "MaintenanceDaemon.hpp"
 #include "version.h"
 
 namespace cta::maintd {
@@ -67,16 +68,6 @@ static int setUserAndGroup(const std::string& userName, const std::string& group
  */
 static int exceptionThrowingMain(common::Config config, cta::log::Logger& log) {
   cta::log::LogContext lc(log);
-  {
-    std::list<cta::log::Param> params = {cta::log::Param("version", CTA_VERSION)};
-    log(cta::log::INFO, "Starting cta-maintd", params);
-  }
-
-  // Set specific static headers for tape daemon
-  std::map<std::string, std::string> staticParamMap;
-  staticParamMap["instance"] = config.getOptionValueStr("cta.instance_name").value();
-  staticParamMap["sched_backend"] = config.getOptionValueStr("cta.scheduler_backend_name").value();
-  log.setStaticParams(staticParamMap);
 
   // Instantiate telemetry
   if (config.getOptionValueBool("cta.experimental.telemetry.enabled").value_or(false)) {
@@ -106,33 +97,35 @@ static int exceptionThrowingMain(common::Config config, cta::log::Logger& log) {
           .metricsFileEndpoint(config.getOptionValueStr("cta.telemetry.metrics.export.file.endpoint")
                                  .value_or("/var/log/cta/cta-maintd-metrics.txt"))
           .build();
-      // taped is a special case where we only do initTelemetry after the process name has been set
       cta::telemetry::initTelemetry(telemetryConfig, lc);
     } catch (exception::Exception& ex) {
-      throw InvalidConfiguration("Failed to instantiate OpenTelemetry. Exception message: " + ex.getMessage().str());
+      throw exception::Exception("Failed to instantiate OpenTelemetry. Exception message: " + ex.getMessage().str());
     }
   }
 
-  // Start loop
-  while (true) {
-    // Create the routine runner
-    auto routineRunner = RoutineRunnerFactory::create(lc, config);
-    // Run it :o
-    uint32_t rc = routineRunner->run(lc);
-    switch (rc) {
-      case SIGTERM:
-        return 0;
-      case SIGHUP:
-        log(cta::log::INFO,
-            "Reloading config for maintd process. Process user and group, telemetry, and log format will not be "
-            "reloaded.");
-        config.parse(log);
-        break;
-      default:
-        log(cta::log::CRIT, "Received unexpected signal. Exiting");
-        return EXIT_FAILURE;
-    }
+  MaintenanceDaemon maintenanceDaemon(config, lc);
+
+  // Set up the signal reactor
+  SignalReactor signalReactor(lc);
+  signalReactor.registerSignalFunction(SIGHUP, [&maintenanceDaemon]() { maintenanceDaemon.reload(); });
+  signalReactor.registerSignalFunction(SIGTERM, [&maintenanceDaemon]() { maintenanceDaemon.stop(); });
+
+  // Run the signal reactor on a separate thread
+  std::thread signalThread([&signalReactor]() { signalReactor.run(); });
+  // Run the maintenance daemon
+  try {
+    maintenanceDaemon.run();
+  } catch (...) {
+    // In the case of an exception we still want to enforce graceful shutdown on the signal reactor
+    signalReactor.stop();
+    signalThread.join();
+    throw;
   }
+
+  // Graceful shutdown; stop the signal reactor
+  signalReactor.stop();
+  signalThread.join();
+  return 0;
 }
 
 }  // namespace cta::maintd
@@ -141,8 +134,7 @@ int main(const int argc, char** const argv) {
   using namespace cta;
 
   // Interpret the command line
-  std::unique_ptr<common::CmdLineParams> cmdLineParams;
-  cmdLineParams.reset(new common::CmdLineParams(argc, argv, "cta-maintd"));
+  common::CmdLineParams cmdLineParams(argc, argv, "cta-maintd");
 
   std::string shortHostName;
   try {
@@ -152,42 +144,63 @@ int main(const int argc, char** const argv) {
     return EXIT_FAILURE;
   }
 
+  // We need a logger before parsing the config file
+  std::string defaultLogFormat = "json";
   std::unique_ptr<log::Logger> logPtr;
-  logPtr.reset(new log::StdoutLogger(shortHostName, "cta-maintd"));
+  try {
+    if (cmdLineParams.logToFile) {
+      logPtr = std::make_unique<log::FileLogger>(shortHostName, "cta-maintd", cmdLineParams.logFilePath, log::DEBUG);
+    } else if (cmdLineParams.logToStdout) {
+      logPtr = std::make_unique<log::StdoutLogger>(shortHostName, "cta-maintd");
+    } else {
+      // Default to stdout logger
+      logPtr = std::make_unique<log::StdoutLogger>(shortHostName, "cta-maintd");
+    }
+    if (!cmdLineParams.logFormat.empty()) {
+      logPtr->setLogFormat(cmdLineParams.logFormat);
+    } else {
+      logPtr->setLogFormat(defaultLogFormat);
+    }
+  } catch (exception::Exception& ex) {
+    std::cerr << "Failed to instantiate object representing CTA logging system: " << ex.getMessage().str() << std::endl;
+    return EXIT_FAILURE;
+  }
+  log::Logger& log = *logPtr;
 
-  common::Config config(cmdLineParams->configFileLocation, &(*logPtr));
+  // Read the config file
+  common::Config config(cmdLineParams.configFileLocation, &(*logPtr));
+
+  // Some logger configuration is only available after we get the config file, so update the logger here
+  if (!cmdLineParams.logFormat.empty()) {
+    log.setLogFormat(config.getOptionValueStr("cta.log.format").value_or(defaultLogFormat));
+  }
+  log.setLogMask(config.getOptionValueStr("cta.log.level").value_or("INFO"));
+  if (!config.getOptionValueStr("cta.instance_name").has_value()) {
+    log(log::CRIT, "cta.instance_name is not set in configuration file " + cmdLineParams.configFileLocation);
+    return EXIT_FAILURE;
+  }
+  if (!config.getOptionValueStr("cta.scheduler_backend_name").has_value()) {
+    log(log::CRIT, "cta.scheduler_backend_name is not set in configuration file " + cmdLineParams.configFileLocation);
+    return EXIT_FAILURE;
+  }
+  std::map<std::string, std::string> staticParamMap;
+  staticParamMap["instance"] = config.getOptionValueStr("cta.instance_name").value();
+  staticParamMap["sched_backend"] = config.getOptionValueStr("cta.scheduler_backend_name").value();
+  log.setStaticParams(staticParamMap);
 
   // Change user and group
   int rc = cta::maintd::setUserAndGroup(config.getOptionValueStr("cta.daemon_user").value_or("cta"),
-                                             config.getOptionValueStr("cta.daemon_group").value_or("tape"),
-                                             *logPtr);
+                                        config.getOptionValueStr("cta.daemon_group").value_or("tape"),
+                                        log);
 
   if (rc) {
     return rc;
   }
 
-  // Try to instantiate the logging system API
-  try {
-    if (cmdLineParams->logToFile) {
-      logPtr.reset(new log::FileLogger(shortHostName, "cta-maintd", cmdLineParams->logFilePath, log::DEBUG));
-    } else if (cmdLineParams->logToStdout) {
-      logPtr.reset(new log::StdoutLogger(shortHostName, "cta-maintd"));
-    }
-    if (!cmdLineParams->logFormat.empty()) {
-      logPtr->setLogFormat(cmdLineParams->logFormat);
-    }
-  } catch (exception::Exception& ex) {
-    std::cerr << "Failed to instantiate object representing the CTA logging system: " << ex.getMessage().str()
-              << std::endl;
-    return EXIT_FAILURE;
-  }
-
-  log::Logger& log = *logPtr;
-
-  log(log::INFO, "Launching cta-maintd", cmdLineParams->toLogParams());
-
+  // Start
   int programRc = EXIT_FAILURE;
   try {
+    log(log::INFO, "Launching cta-maintd", cmdLineParams.toLogParams());
     programRc = maintd::exceptionThrowingMain(config, log);
   } catch (exception::Exception& ex) {
     std::list<cta::log::Param> params = {log::Param("exceptionMessage", ex.getMessage().str())};
@@ -204,4 +217,3 @@ int main(const int argc, char** const argv) {
 
   return programRc;
 }
-

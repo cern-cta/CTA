@@ -17,36 +17,35 @@
 
 #pragma once
 
+#include <atomic>
+#include <memory>
+#include "RoutineRunner.hpp"
 #include "common/config/Config.hpp"
-#include "common/log/LogContext.hpp"
-
-#include "catalogue/Catalogue.hpp"
-#include "scheduler/Scheduler.hpp"
-
-#ifdef CTA_PGSCHED
-#include "scheduler/rdbms/RelationalDBInit.hpp"
-#else
-#include "scheduler/OStoreDB/OStoreDBInit.hpp"
-#endif
 
 namespace cta::maintd {
 
 /**
- * Responsible for create a RoutineRunner with a specific set of registered routines based on the provided config.
+ * This class is essentially a wrapper around a RoutineRunner.
+ * It allows for reloading of the config.
  */
-class RoutineRunnerFactory {
+class MaintenanceDaemon {
 public:
-  RoutineRunnerFactory(const cta::common::Config& config, cta::log::LogContext& lc);
-  std::unique_ptr<RoutineRunner> create();
+  MaintenanceDaemon(cta::common::Config& config, cta::log::LogContext& lc);
+
+  ~MaintenanceDaemon() = default;
+
+  void run();
+
+  void stop();
+
+  void reload();
 
 private:
-  const cta::common::Config& m_config;
+  cta::common::Config& m_config;
   cta::log::LogContext& m_lc;
+  std::unique_ptr<RoutineRunner> m_routineRunner;
 
-  std::unique_ptr<cta::catalogue::Catalogue> m_catalogue;
-  std::unique_ptr<cta::SchedulerDBInit_t> m_schedDbInit;
-  std::unique_ptr<cta::SchedulerDB_t> m_schedDb;
-  std::unique_ptr<cta::Scheduler> m_scheduler;
+  std::atomic<bool> m_stopRequested;
 };
 
 }  // namespace cta::maintd

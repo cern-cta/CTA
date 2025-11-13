@@ -26,8 +26,8 @@
 //------------------------------------------------------------------------------
 // Constructor
 //------------------------------------------------------------------------------
-cta::SignalHandler::SignalHandler() {
-  // We will ignore non handled singals in the main logic.
+cta::SignalReader::SignalReader() {
+  // We will ignore non handled signals in the main logic.
   ::sigset_t sigMask;
   ::sigemptyset(&sigMask);
   const std::vector<int> sigList = {SIGHUP,
@@ -57,7 +57,7 @@ cta::SignalHandler::SignalHandler() {
 //------------------------------------------------------------------------------
 // Destructor
 //------------------------------------------------------------------------------
-cta::SignalHandler::~SignalHandler() noexcept {
+cta::SignalReader::~SignalReader() noexcept {
   if (m_sigFd != -1) {
     ::close(m_sigFd);
   }
@@ -66,7 +66,7 @@ cta::SignalHandler::~SignalHandler() noexcept {
 //------------------------------------------------------------------------------
 // SignalHandler::processSignals
 //------------------------------------------------------------------------------
-std::set<uint32_t> cta::SignalHandler::processAndGetSignals(log::LogContext& lc) const {
+std::set<uint32_t> cta::SignalReader::processAndGetSignals(log::LogContext& lc) const {
   std::set<uint32_t> signalSet {};
 
   struct ::signalfd_siginfo sigInf;
@@ -76,7 +76,7 @@ std::set<uint32_t> cta::SignalHandler::processAndGetSignals(log::LogContext& lc)
 
     // Exit the loop if there is no signal to be processed
     if (rc == -1 && errno == EAGAIN) break;
-    
+
     // We should get exactly sizeof(sigInf) bytes.
     if (rc != sizeof(sigInf)) {
       std::stringstream err;

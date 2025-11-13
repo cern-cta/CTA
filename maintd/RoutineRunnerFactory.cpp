@@ -34,105 +34,111 @@
 #include "rdbms/Login.hpp"
 
 #include "common/exception/Exception.hpp"
-#include "scheduler/Scheduler.hpp"
-#include "catalogue/Catalogue.hpp"
 
 #include "IRoutine.hpp"
 
-#ifdef CTA_PGSCHED
-#include "scheduler/rdbms/RelationalDBInit.hpp"
-#else
-#include "scheduler/OStoreDB/OStoreDBInit.hpp"
-#endif
-
 namespace cta::maintd {
 
-std::unique_ptr<RoutineRunner> RoutineRunnerFactory::create(cta::log::LogContext& lc,
-                                                            const cta::common::Config& config) {
-  if (!config.getOptionValueStr("cta.objectstore.backendpath").has_value()) {
-    throw InvalidConfiguration("Could not find config entry 'cta.objectstore.backendpath' in");
+//------------------------------------------------------------------------------
+// Constructor
+//------------------------------------------------------------------------------
+RoutineRunnerFactory::RoutineRunnerFactory(const cta::common::Config& config, cta::log::LogContext& lc)
+    : m_config(config),
+      m_lc(lc) {
+  if (!m_config.getOptionValueStr("cta.catalogue.config_file").has_value()) {
+    throw exception::UserError("Could not find config entry 'cta.catalogue.config_file'");
   }
-  auto schedDbInit =
-    std::make_unique<SchedulerDBInit_t>("Maintd",
-                                        config.getOptionValueStr("cta.objectstore.backendpath").value(),
-                                        lc.logger());
 
-  if (!config.getOptionValueStr("cta.catalogue.config_file").has_value()) {
-    throw InvalidConfiguration("Could not find config entry 'cta.catalogue.config_file'");
-  }
+  m_lc.log(log::DEBUG, "In RoutineRunnerFactory::RoutineRunnerFactory(): Initialising Catalogue");
   const rdbms::Login catalogueLogin =
-    rdbms::Login::parseFile(config.getOptionValueStr("cta.catalogue.config_file").value());
+    rdbms::Login::parseFile(m_config.getOptionValueStr("cta.catalogue.config_file").value());
   const uint64_t nbConns = 1;
   const uint64_t nbArchiveFileListingConns = 1;
-  auto catalogueFactory =
-    cta::catalogue::CatalogueFactoryFactory::create(lc.logger(), catalogueLogin, nbConns, nbArchiveFileListingConns);
+  auto catalogueFactory = cta::catalogue::CatalogueFactoryFactory::create(m_lc.logger(),
+                                                                            catalogueLogin,
+                                                                            nbConns,
+                                                                            nbArchiveFileListingConns);
 
-  auto catalogue = catalogueFactory->create();
-  auto scheddb = schedDbInit->getSchedDB(*catalogue, lc.logger());
+  m_catalogue = catalogueFactory->create();
 
+
+  m_lc.log(log::DEBUG, "In RoutineRunnerFactory::RoutineRunnerFactory(): Initialising Scheduler");
+  if (!m_config.getOptionValueStr("cta.objectstore.backendpath").has_value()) {
+    throw exception::UserError("Could not find config entry 'cta.objectstore.backendpath' in");
+  }
+  m_schedDbInit = std::make_unique<SchedulerDBInit_t>("Maintd",
+                                                      m_config.getOptionValueStr("cta.objectstore.backendpath").value(),
+                                                      m_lc.logger());
+  m_schedDb = m_schedDbInit->getSchedDB(*m_catalogue, m_lc.logger());
   // Set Scheduler DB cache timeouts
   SchedulerDatabase::StatisticsCacheConfig statisticsCacheConfig;
   statisticsCacheConfig.tapeCacheMaxAgeSecs =
-    config.getOptionValueInt("cta.schedulerdb.tape_cache_max_age_secs").value_or(600);
+    m_config.getOptionValueInt("cta.schedulerdb.tape_cache_max_age_secs").value_or(600);
   statisticsCacheConfig.retrieveQueueCacheMaxAgeSecs =
-    config.getOptionValueInt("cta.schedulerdb.retrieve_queue_cache_max_age_secs").value_or(10);
-  scheddb->setStatisticsCacheConfig(statisticsCacheConfig);
+    m_config.getOptionValueInt("cta.schedulerdb.retrieve_queue_cache_max_age_secs").value_or(10);
+  m_schedDb->setStatisticsCacheConfig(statisticsCacheConfig);
 
-  if (!config.getOptionValueStr("cta.scheduler_backend_name").has_value()) {
-    throw InvalidConfiguration("Could not find config entry 'cta.scheduler_backend_name'");
+  if (!m_config.getOptionValueStr("cta.scheduler_backend_name").has_value()) {
+    throw exception::UserError("Could not find config entry 'cta.scheduler_backend_name'");
   }
-  auto scheduler = std::make_unique<cta::Scheduler>(*catalogue,
-                                                    *scheddb,
-                                                    config.getOptionValueStr("cta.scheduler_backend_name").value());
+  m_scheduler = std::make_unique<cta::Scheduler>(*m_catalogue,
+                                                 *m_schedDb,
+                                                 m_config.getOptionValueStr("cta.scheduler_backend_name").value());
+  m_lc.log(log::DEBUG, "In RoutineRunnerFactory::RoutineRunnerFactory(): Scheduler and Catalogue initialised");
+}
 
-  uint32_t sleepInterval = config.getOptionValueUInt("cta.routines.sleep_interval").value_or(1000);
+//------------------------------------------------------------------------------
+// RoutineRunnerFactory::create
+//------------------------------------------------------------------------------
+std::unique_ptr<RoutineRunner> RoutineRunnerFactory::create() {
+  m_lc.log(log::DEBUG, "In RoutineRunnerFactory::create(): Creating RoutineRunner");
+
+  uint32_t sleepInterval = m_config.getOptionValueUInt("cta.routines.sleep_interval").value_or(1000);
   std::unique_ptr<RoutineRunner> routineRunner = std::make_unique<RoutineRunner>(sleepInterval);
 
   // Register all of the different routines
 
   // Add Disk Reporter
-  if (config.getOptionValueBool("cta.routines.disk_report.enabled").value_or(true)) {
-    routineRunner->registerRoutine(
-      std::make_unique<DiskReportRoutine>(lc,
-                                          *scheduler,
-                                          config.getOptionValueInt("cta.routines.disk_report.batch_size").value_or(500),
-                                          config.getOptionValueInt("cta.routines.disk_report.soft_timeout").value_or(30)));
+  if (m_config.getOptionValueBool("cta.routines.disk_report.enabled").value_or(true)) {
+    routineRunner->registerRoutine(std::make_unique<DiskReportRoutine>(
+      m_lc,
+      *m_scheduler,
+      m_config.getOptionValueInt("cta.routines.disk_report.batch_size").value_or(500),
+      m_config.getOptionValueInt("cta.routines.disk_report.soft_timeout").value_or(30)));
   }
 
   // Add Garbage Collector
-  if (config.getOptionValueBool("cta.routines.garbage_collect.enabled").value_or(true)) {
+  if (m_config.getOptionValueBool("cta.routines.garbage_collect.enabled").value_or(true)) {
 #ifndef CTA_PGSCHED
-    routineRunner->registerRoutine(
-      std::make_unique<maintd::GarbageCollectRoutine>(lc,
-                                                           schedDbInit->getBackend(),
-                                                           schedDbInit->getAgentReference(),
-                                                           *catalogue));
+    routineRunner->registerRoutine(std::make_unique<maintd::GarbageCollectRoutine>(m_lc,
+                                                                                   m_schedDbInit->getBackend(),
+                                                                                   m_schedDbInit->getAgentReference(),
+                                                                                   *m_catalogue));
 #endif
   }
 
   // Add Queue Cleanup
-  if (config.getOptionValueBool("cta.routines.queue_cleanup.enabled").value_or(true)) {
+  if (m_config.getOptionValueBool("cta.routines.queue_cleanup.enabled").value_or(true)) {
 #ifndef CTA_PGSCHED
     routineRunner->registerRoutine(std::make_unique<maintd::QueueCleanupRoutine>(
-      lc,
-      schedDbInit->getAgentReference(),
-      *scheddb,
-      *catalogue,
-      config.getOptionValueInt("cta.routines.queue_cleanup.batch_size").value_or(500)));
-#else
-    routineRunner->registerRoutine(std::make_unique<maintd::RelationalDBQCR>(*catalogue, *scheddb));
+      m_lc,
+      m_schedDbInit->getAgentReference(),
+      *m_schedDb,
+      *m_catalogue,
+      m_config.getOptionValueInt("cta.routines.queue_cleanup.batch_size").value_or(500)));
 #endif
   }
 
   // Add Repack request manager
-  if (config.getOptionValueBool("cta.routines.repack_manager.enabled").value_or(true)) {
+  if (m_config.getOptionValueBool("cta.routines.repack_manager.enabled").value_or(true)) {
     routineRunner->registerRoutine(std::make_unique<RepackManagerRoutine>(
-      lc,
-      *scheduler,
-      config.getOptionValueInt("cta.routines.repack_manager.max_to_toexpand").value_or(2),
-      config.getOptionValueInt("cta.routines.repack_manager.reporter.soft_timeout").value_or(30)));
+      m_lc,
+      *m_scheduler,
+      m_config.getOptionValueInt("cta.routines.repack_manager.max_to_toexpand").value_or(2),
+      m_config.getOptionValueInt("cta.routines.repack_manager.reporter.soft_timeout").value_or(30)));
   }
 
+  m_lc.log(log::DEBUG, "In RoutineRunnerFactory::create(): RoutineRunner created");
   return routineRunner;
 }
 

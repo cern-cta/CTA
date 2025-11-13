@@ -21,23 +21,24 @@
 
 namespace cta {
 
-class SignalHandler {
+// Note that only a single instance of signal reader should exist per process
+class SignalReader {
 public:
   /**
    * Constructor
    */
-  SignalHandler();
+  SignalReader();
 
   /**
    * Destructor
    */
-  ~SignalHandler() noexcept;
+  ~SignalReader() noexcept;
 
   /**
    * Read, if any, all blocked signals and return them as a set.
    *
    * @param lc the log context for logging
-   * @return a std::set containing the blocked signals 
+   * @return a std::set containing the blocked signals
    */
   std::set<uint32_t> processAndGetSignals(log::LogContext& lc) const;
 
