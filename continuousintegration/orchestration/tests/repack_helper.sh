@@ -93,6 +93,7 @@ executeRepack() {
           echo "WARN: $1 contains no files and \"show queues\" is empty. Repack probably completed successfully but did not update the object."
           echo "Removing repack."
           kubectl -n ${NAMESPACE} exec ${CTA_CLI_POD} -c cta-cli -- cta-admin re rm -v $1
+          break
         else
           echo "Repack failed for tape $1"
           exit 1

@@ -243,6 +243,7 @@ while test 0 = $(admin_cta --json repack ls --vid ${VID_TO_REPACK} | jq -r '.[0]
         echo "WARN: ${VID_TO_REPACK} contains no files and \"show queues\" is empty. Repack probably completed successfully but did not update the object."
         echo "Removing repack."
         admin_cta repack rm --vid ${VID_TO_REPACK}
+        break
     else
         exit 1
     fi
