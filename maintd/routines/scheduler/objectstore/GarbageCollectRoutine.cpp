@@ -177,7 +177,7 @@ void GarbageCollectRoutine::cleanupDeadAgent(const std::string& address, const s
     log::ScopedParamContainer params(m_lc);
     params.add("agentAddress", agent.getAddressIfSet()).add("gcAgentAddress", m_ourAgentReference.getAgentAddress());
     m_lc.log(
-      log::INFO,
+      log::DEBUG,
       "In GarbageCollectRoutine::cleanupDeadAgent(): agent already deleted when trying to lock it. Skipping it.");
     return;
   }
@@ -187,7 +187,7 @@ void GarbageCollectRoutine::cleanupDeadAgent(const std::string& address, const s
   if (agent.getOwner() != m_agentRegister.getAddressIfSet()) {
     params.add("agentOwner", agent.getOwner());
     m_lc.log(
-      log::INFO,
+      log::DEBUG,
       "In GarbageCollectRoutine::cleanupDeadAgent(): skipping agent which is not owned by agent register anymore.");
     // The agent will be removed from our ownership by the calling function: we're done.
     return;
@@ -208,7 +208,7 @@ void GarbageCollectRoutine::cleanupDeadAgent(const std::string& address, const s
     for (auto p : agentDetails) {
       params2.add(p.getName(), p.getValueVariant());
     }
-    m_lc.log(log::INFO, "In GarbageCollectRoutine::cleanupDeadAgent(): will cleanup dead agent.");
+    m_lc.log(log::DEBUG, "In GarbageCollectRoutine::cleanupDeadAgent(): will cleanup dead agent.");
   }
   // Return all objects owned by the agent to their respective backup owners
 

@@ -14,7 +14,7 @@
  *               granted to it by virtue of its status as an Intergovernmental Organization or
  *               submit itself to any jurisdiction.
  */
-#include "SignalHandler.hpp"
+#include "SignalReactor.hpp"
 #include "common/exception/Errnum.hpp"
 #include "common/log/LogContext.hpp"
 
