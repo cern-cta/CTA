@@ -76,7 +76,6 @@ tpsrv:
       mount --bind ${PV_PATH} /var/log
 
 maintd:
-:
   preRun:
     enabled: true
     script: |
