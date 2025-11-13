@@ -208,9 +208,7 @@ repackMoveAndAddCopies() {
   echo "OK"
 
   VID_LIST=$(getVidsContainingFiles 5)
-  pids=()  # Store background process IDs
   for VID_TO_REPACK in ${VID_LIST}; do
-    (
       echo "Creating the repack buffer directory for VID (${REPACK_BUFFER_URL}/${VID_TO_REPACK})"
       kubectl -n ${NAMESPACE} exec ${EOS_MGM_POD} -c eos-mgm -- eos mkdir ${REPACK_BUFFER_URL}/${VID_TO_REPACK}
       kubectl -n ${NAMESPACE} exec ${EOS_MGM_POD} -c eos-mgm -- eos chmod 1777 ${REPACK_BUFFER_URL}/${VID_TO_REPACK}
@@ -273,34 +271,8 @@ repackMoveAndAddCopies() {
       kubectl -n ${NAMESPACE} exec ${CTA_CLI_POD} -c cta-cli -- cta-admin tape reclaim --vid ${VID_TO_REPACK}
       kubectl -n ${NAMESPACE} exec ${EOS_MGM_POD} -c eos-mgm -- eos ls -la /eos/ctaeos/repack/${VID_TO_REPACK}
       echo "Testing Repack \"Move and Add copies\" workflow TEST OK for ${VID_TO_REPACK}"
-    ) &  # <-- the whole subshell is backgrounded
-    # Store the background process ID
-    pids+=($!)
-  done
-  # Wait for all background jobs to complete
-  # --- Progress loop ---
-  while :; do
-    running=0
-    for pid in "${pids[@]}"; do
-      if kill -0 "$pid" 2>/dev/null; then
-        ((running++))
-      fi
-    done
-
-    echo -ne "\r⏳ Still running: ${running}/${#pids[@]} repacks..."
-    ((running == 0)) && break
-    sleep 5
   done
 
-  # Now collect exit statuses
-  echo
-  echo "Collecting results..."
-  for pid in "${pids[@]}"; do
-    wait "$pid" || {
-      echo "❌ One of the repacks (PID $pid) failed!"
-      exit 1
-    }
-  done
   echo
   echo "***************************************************************"
   echo " Testing Repack \"Move and Add copies\" workflow TEST OK       "
