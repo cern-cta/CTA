@@ -8,7 +8,7 @@ conf:
     group: "tape"
   log:
     format: "json"
-    level: "INFO"
+    level: "DEBUG"
   maintd:
     catalogueConfigPath: "/etc/cta/cta-catalogue.conf"
     tapeCacheMaxAgeSecs: 600

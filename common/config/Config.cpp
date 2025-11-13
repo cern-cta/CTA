@@ -130,7 +130,7 @@ void Config::parse(log::Logger& log) {
                                             values.end(),
                                             values[0],
                                             [](const std::string& a, const std::string& b) { return a + ", " + b; }));
-        log(log::INFO, "Configuration entry " + key, params);
+        log(log::INFO, "Configuration entry", params);
       }
     }
   }
