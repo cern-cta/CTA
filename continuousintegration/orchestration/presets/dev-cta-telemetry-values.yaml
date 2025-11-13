@@ -37,7 +37,6 @@ tpsrv:
           endpoint: "http://otel-opentelemetry-collector:4318/v1/metrics"
 
 maintd:
-:
   conf:
     telemetry:
       enabled: true
