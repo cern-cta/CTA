@@ -232,7 +232,7 @@ trimContainerIfNeeded(Container& cont, ScopedExclusiveLock & contLock,
     params.add("tapepool", cId)
           .add("queueObject", cont.getAddressIfSet());
     tl.addToLog(params);
-    lc.log(log::INFO, "In ContainerTraits<ArchiveQueue_t,ArchiveQueue>::trimContainerIfNeeded(): deleted empty queue");
+    lc.log(log::DEBUG, "In ContainerTraits<ArchiveQueue_t,ArchiveQueue>::trimContainerIfNeeded(): deleted empty queue");
   } catch (cta::exception::Exception &ex) {
     log::ScopedParamContainer params(lc);
     params.add("tapepool", cId)

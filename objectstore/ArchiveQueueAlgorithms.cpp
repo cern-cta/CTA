@@ -247,7 +247,7 @@ void ContainerTraits<ArchiveQueue>::trimContainerIfNeeded(Container& cont, Scope
       log::ScopedParamContainer params(lc);
       params.add("tapePool", cId)
             .add("queueObject", cont.getAddressIfSet());
-      lc.log(log::INFO, "In ContainerTraits<ArchiveQueue>::trimContainerIfNeeded(): deleted empty queue");
+      lc.log(log::DEBUG, "In ContainerTraits<ArchiveQueue>::trimContainerIfNeeded(): deleted empty queue");
     } catch (cta::exception::Exception &ex) {
       log::ScopedParamContainer params(lc);
       params.add("tapePool", cId)
