@@ -89,8 +89,10 @@ executeRepack() {
 
       if test ${SECONDS_PASSED} == ${WAIT_FOR_REPACK_FILE_TIMEOUT}; then
         echo "Timed out after ${WAIT_FOR_REPACK_FILE_TIMEOUT} seconds waiting for tape $1 to be repacked"
-        if test 0 = $(admin_cta --json tapefile ls --vid $1 | jq -r 'length') && test 0 = $(admin_cta --json showqueues | jq -r 'length'); then
+        if test 0 = $(kubectl -n ${NAMESPACE} exec ${CTA_CLI_POD} -c cta-cli -- cta-admin --json tapefile ls --vid $1 | jq -r 'length') && test 0 = $(kubectl -n ${NAMESPACE} exec ${CTA_CLI_POD} -c cta-cli -- cta-admin --json showqueues | jq -r 'length'); then
           echo "WARN: $1 contains no files and \"show queues\" is empty. Repack probably completed successfully but did not update the object."
+          echo "Removing repack."
+          kubectl -n ${NAMESPACE} exec ${CTA_CLI_POD} -c cta-cli -- cta-admin re rm -v $1
         else
           echo "Repack failed for tape $1"
           exit 1

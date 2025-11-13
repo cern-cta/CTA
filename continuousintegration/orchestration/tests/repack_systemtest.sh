@@ -241,6 +241,8 @@ while test 0 = $(admin_cta --json repack ls --vid ${VID_TO_REPACK} | jq -r '.[0]
 
     if test 0 = ${nr_files_in_tape} && test 0 = $(admin_cta --json showqueues | jq -r 'length'); then
         echo "WARN: ${VID_TO_REPACK} contains no files and \"show queues\" is empty. Repack probably completed successfully but did not update the object."
+        echo "Removing repack."
+        admin_cta repack rm --vid ${VID_TO_REPACK}
     else
         exit 1
     fi
