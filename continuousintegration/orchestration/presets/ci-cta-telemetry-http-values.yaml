@@ -10,6 +10,8 @@ frontend:
         metricsBackend: "OTLP_HTTP"
         metricsExportOtlpEndpoint: "https://monit-otlp.cern.ch:4319"
         metricsExportOtlpBasicAuthSecret: monit-collector-auth
+        metricsExportInterval: 2000
+        metricsExportTimeout: 500
 
   grpc:
     conf:
@@ -19,6 +21,8 @@ frontend:
         metricsBackend: "OTLP_HTTP"
         metricsExportOtlpEndpoint: "https://monit-otlp.cern.ch:4319"
         metricsExportOtlpBasicAuthSecret: monit-collector-auth
+        metricsExportInterval: 2000
+        metricsExportTimeout: 500
 
 tpsrv:
   conf:
@@ -28,6 +32,8 @@ tpsrv:
       metricsBackend: "OTLP_HTTP"
       metricsExportOtlpEndpoint: "https://monit-otlp.cern.ch:4319"
       metricsExportOtlpBasicAuthSecret: monit-collector-auth
+      metricsExportInterval: 2000
+      metricsExportTimeout: 500
 
 maintd:
   conf:
@@ -37,3 +43,5 @@ maintd:
       metricsBackend: "OTLP_HTTP"
       metricsExportOtlpEndpoint: "https://monit-otlp.cern.ch:4319"
       metricsExportOtlpBasicAuthSecret: monit-collector-auth
+      metricsExportInterval: 2000
+      metricsExportTimeout: 500

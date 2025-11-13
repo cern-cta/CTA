@@ -31,7 +31,6 @@ tpsrv:
       metricsExportTimeout: 500
 
 maintd:
-:
   conf:
     telemetry:
       enabled: true
