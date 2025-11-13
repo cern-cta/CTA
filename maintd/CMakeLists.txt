@@ -20,6 +20,7 @@ add_subdirectory(routines/scheduler/objectstore)
 add_subdirectory(routines/scheduler/rdbms)
 
 add_library(ctamaintd
+  MaintenanceDaemon.cpp
   RoutineRunner.cpp
   RoutineRunnerFactory.cpp
 )

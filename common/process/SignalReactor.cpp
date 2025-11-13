@@ -20,72 +20,70 @@
 #include <chrono>
 #include <thread>
 
-#include "RoutineRunner.hpp"
+#include "SignalReactor.hpp"
 
-#include "catalogue/CatalogueFactory.hpp"
-#include "catalogue/CatalogueFactoryFactory.hpp"
 #include "common/exception/Errnum.hpp"
-#include "common/exception/UserError.hpp"
 #include "common/semconv/Attributes.hpp"
-#include "rdbms/Login.hpp"
 
-namespace cta::maintd {
+namespace cta {
 
 //------------------------------------------------------------------------------
 // constructor
 //------------------------------------------------------------------------------
-RoutineRunner::RoutineRunner(uint32_t sleepInterval) : m_sleepInterval(sleepInterval) {}
+SignalReactor::SignalReactor(cta::log::LogContext& lc, uint32_t sleepInterval)
+    : m_lc(lc),
+      m_sleepInterval(sleepInterval) {}
 
 //------------------------------------------------------------------------------
-// RoutineRunner::registerRoutine
+// SignalReactor::registerSignalFunction
 //------------------------------------------------------------------------------
-void RoutineRunner::registerRoutine(std::unique_ptr<IRoutine> routine) {
-  m_routines.emplace_back(std::move(routine));
+void SignalReactor::registerSignalFunction(uint32_t signal, std::function<void()> func) {
+  if (m_signalFunctions.count(signal) > 0) {
+    m_lc.log(log::ERR, "Function is already registered for signal " + std::to_string(signal));
+    return;
+  }
+  m_signalFunctions[signal] = func;
 }
 
 //------------------------------------------------------------------------------
-// RoutineRunner::stop
+// SignalReactor::stop
 //------------------------------------------------------------------------------
-void RoutineRunner::stop() {
+void SignalReactor::stop() {
   m_stopRequested = true;
 }
 
 //------------------------------------------------------------------------------
-// RoutineRunner::run
+// SignalReactor::run
 //------------------------------------------------------------------------------
-void RoutineRunner::run(cta::log::LogContext& lc) {
-  // At least one routine should be enabled.
-  if (m_routines.empty()) {
-    throw cta::exception::UserError("In RoutineRunner::run(): No routines enabled.");
-  }
+void SignalReactor::run() {
   m_stopRequested = false;
   try {
     while (!m_stopRequested) {
-      lc.log(log::DEBUG, "In RoutineRunner::run(): Executing all routines.");
-      for (const auto& routine : m_routines) {
-        routine->execute();
-        if (m_stopRequested) {
-          return;
+      std::set<uint32_t> sigSet = m_signalReader->processAndGetSignals(m_lc);
+      for (uint32_t signal : sigSet) {
+        if (m_signalFunctions.count(signal) == 0) {
+          m_lc.log(log::INFO, "In SignalReactor::run(): nothing to do for signal");
+          continue;
         }
+        m_signalFunctions[signal]();
       }
       std::this_thread::sleep_for(std::chrono::milliseconds(std::chrono::milliseconds(m_sleepInterval)));
-    }
-    lc.log(log::DEBUG, "In RoutineRunner::run(): Stop requested.");
-  } catch (cta::exception::Exception& ex) {
-    log::ScopedParamContainer exParams(lc);
+    };
+  } catch (exception::Exception& ex) {
+    log::ScopedParamContainer exParams(m_lc);
     exParams.add("exceptionMessage", ex.getMessageValue());
-    lc.log(log::ERR, "In RoutineRunner::run(): received an exception. Backtrace follows.");
-    lc.logBacktrace(log::INFO, ex.backtrace());
+    m_lc.log(log::ERR, "In SignalReactor::run(): received an exception. Backtrace follows.");
+    m_lc.logBacktrace(log::INFO, ex.backtrace());
     throw ex;
   } catch (std::exception& ex) {
-    log::ScopedParamContainer exParams(lc);
+    log::ScopedParamContainer exParams(m_lc);
     exParams.add("exceptionMessage", ex.what());
-    lc.log(log::ERR, "In RoutineRunner::run(): received a std::exception.");
+    m_lc.log(log::ERR, "In SignalReactor::run(): received a std::exception.");
     throw ex;
   } catch (...) {
-    lc.log(log::ERR, "In RoutineRunner::run(): received an unknown exception.");
+    m_lc.log(log::ERR, "In SignalReactor::run(): received an unknown exception.");
     throw;
   }
 }
 
-}  // namespace cta::maintd
+}  // namespace cta

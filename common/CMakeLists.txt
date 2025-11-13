@@ -107,8 +107,21 @@ set (COMMON_LIB_SRC_FILES
   priorities/DriveQuota.cpp
   priorities/MountCriteria.cpp
   priorities/UserGroup.cpp
-  process/SignalHandler.cpp
+  process/SignalReactor.cpp
+  process/SignalReader.cpp
   process/ProcessCap.cpp
+  process/threading/ChildProcess.cpp
+  process/threading/CondVar.cpp
+  process/threading/Daemon.cpp
+  process/threading/Mutex.cpp
+  process/threading/RWLock.cpp
+  process/threading/RWLockRdLocker.cpp
+  process/threading/RWLockWrLocker.cpp
+  process/threading/Semaphores.cpp
+  process/threading/SocketPair.cpp
+  process/threading/SubProcess.cpp
+  process/threading/System.cpp
+  process/threading/Thread.cpp
   remoteFS/RemoteFileStatus.cpp
   remoteFS/RemotePath.cpp
   remoteFS/RemotePathAndStatus.cpp
@@ -124,18 +137,6 @@ set (COMMON_LIB_SRC_FILES
   telemetry/metrics/instruments/TapedInstruments.cpp
   telemetry/metrics/instruments/MaintdInstruments.cpp
   SourcedParameter.cpp
-  process/threading/ChildProcess.cpp
-  process/threading/CondVar.cpp
-  process/threading/Daemon.cpp
-  process/threading/Mutex.cpp
-  process/threading/RWLock.cpp
-  process/threading/RWLockRdLocker.cpp
-  process/threading/RWLockWrLocker.cpp
-  process/threading/Semaphores.cpp
-  process/threading/SocketPair.cpp
-  process/threading/SubProcess.cpp
-  process/threading/System.cpp
-  process/threading/Thread.cpp
   Timer.cpp
   utils/Base64.cpp
   utils/GetOptThreadSafe.cpp

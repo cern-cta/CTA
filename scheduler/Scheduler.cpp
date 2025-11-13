@@ -3034,14 +3034,14 @@ void Scheduler::reportArchiveJobsBatch(std::list<std::unique_ptr<ArchiveJob>>& a
   for (auto& j : reportedJobs) {
     log::ScopedParamContainer params(lc);
     params.add("fileId", j->archiveFile.archiveFileID).add("reportType", j->reportType());
-    lc.log(log::INFO, "In Scheduler::reportArchiveJobsBatch(): report successful.");
+    lc.log(log::DEBUG, "In Scheduler::reportArchiveJobsBatch(): report successful.");
   }
   log::ScopedParamContainer params(lc);
   params.add("totalReports", archiveJobsBatch.size())
     .add("failedReports", archiveJobsBatch.size() - reportedJobs.size())
     .add("successfulReports", reportedJobs.size());
   timingList.addToLog(params);
-  lc.log(log::INFO, "In Scheduler::reportArchiveJobsBatch(): reported a batch of archive jobs.");
+  lc.log(log::DEBUG, "In Scheduler::reportArchiveJobsBatch(): reported a batch of archive jobs.");
 }
 
 //------------------------------------------------------------------------------

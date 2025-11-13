@@ -50,12 +50,18 @@ spec:
         stdin: true
         command: ["/bin/bash", "-c"]
         args: ["{{- if $.Values.preRun.enabled }}/scripts/pre_run.sh;{{- end }} /scripts/maintd.sh; {{- if $.Values.postRun.enabled }}/scripts/post_run.sh;{{- end }}"]
+        startupProbe:
+          exec:
+            command: ["rpm", "-q", "cta-maintd"]
+          initialDelaySeconds: 0
+          periodSeconds: 5
+          failureThreshold: 60
         readinessProbe:
           exec:
-            command: ["sh", "-c", "pgrep -f /usr/bin/cta-maintd > /dev/null"]
-          initialDelaySeconds: 5
-          periodSeconds: 2
-          failureThreshold: 60
+            command: ["pgrep", "-f", "/usr/bin/cta-maintd"]
+          initialDelaySeconds: 1
+          periodSeconds: 5
+          failureThreshold: 2
         securityContext:
           allowPrivilegeEscalation: {{ include "common.securityContext.allowPrivilegeEscalation" . }}
           privileged: {{ include "common.securityContext.privileged" . }}

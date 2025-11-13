@@ -18,16 +18,16 @@
 #pragma once
 
 #include "IRoutine.hpp"
-#include "common/exception/Exception.hpp"
-#include "common/process/SignalHandler.hpp"
 #include "common/log/LogContext.hpp"
+#include <vector>
 
 namespace cta::maintd {
 
-CTA_GENERATE_EXCEPTION_CLASS(InvalidConfiguration);
-
 /**
- * Responsible for periodically executing the various routines.
+ * Responsible for running routines. It does so as follows:
+ * 1. for all registered routines, execute the routine (synchronously)
+ * 2. sleep
+ * 3. Go to 1.
  */
 class RoutineRunner {
 public:
@@ -37,16 +37,16 @@ public:
 
   void registerRoutine(std::unique_ptr<IRoutine> routine);
 
+  void stop();
+
   /**
    * Periodically executes all registered routines.
-   * After all routines have been executed, it will check if it has received any signals. If so, it will exit the run method.
    */
-  uint32_t run(cta::log::LogContext& lc);
+  void run(cta::log::LogContext& lc);
 
 private:
-  std::list<std::unique_ptr<IRoutine>> m_routines;
-
-  std::unique_ptr<cta::SignalHandler> m_signalHandler = std::make_unique<cta::SignalHandler>();
+  std::vector<std::unique_ptr<IRoutine>> m_routines;
+  std::atomic<bool> m_stopRequested;
 
   uint32_t m_sleepInterval;
 };
