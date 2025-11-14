@@ -5,7 +5,7 @@ frontend:
   xrd:
     conf:
       telemetry:
-        enabled: true
+        enabled: false
         retainInstanceIdOnRestart: false
         metricsBackend: "OTLP_GRPC"
         metricsExportOtlpEndpoint: "https://monit-otlp.cern.ch:4316"
@@ -14,7 +14,7 @@ frontend:
   grpc:
     conf:
       telemetry:
-        enabled: true
+        enabled: false
         retainInstanceIdOnRestart: false
         metricsBackend: "OTLP_GRPC"
         metricsExportOtlpEndpoint: "https://monit-otlp.cern.ch:4316"
@@ -23,7 +23,7 @@ frontend:
 tpsrv:
   conf:
     telemetry:
-      enabled: true
+      enabled: false
       retainInstanceIdOnRestart: true
       metricsBackend: "OTLP_GRPC"
       metricsExportOtlpEndpoint: "https://monit-otlp.cern.ch:4316"
