@@ -6,9 +6,9 @@ from itertools import cycle
 # Script copying
 #####################################################################################################################
 
-def test_copy_scripts_to_client(env):
-    for client in env.client:
-        client.copyTo("tests/remote_scripts/client/", "/test/", permissions="+x")
+# def test_copy_scripts_to_client(env):
+#     for client in env.client:
+#         client.copyTo("tests/remote_scripts/client/", "/test/", permissions="+x")
 
 def test_copy_scripts_to_ctacli(env):
     for ctacli in env.ctacli:
@@ -33,7 +33,6 @@ def test_verify_catalogue(env):
 
 def test_add_admins(env):
     env.ctafrontend[0].exec("cta-catalogue-admin-user-create /etc/cta/cta-catalogue.conf --username ctaadmin1 --comment ctaadmin1")
-
     print("Adding user ctaadmin2 as CTA admin")
     # TODO: we should explicitly specify the user
     env.ctacli[0].exec("cta-admin admin add --username ctaadmin2 --comment ctaadmin2")
