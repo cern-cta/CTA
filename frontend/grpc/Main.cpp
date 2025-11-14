@@ -264,6 +264,7 @@ int main(const int argc, char *const *const argv) {
                                                svc.getFrontendService().getInstanceName(),
                                                svc.getFrontendService().getCatalogueConnString(),
                                                svc.getFrontendService().getMissingFileCopiesMinAgeSecs(),
+                                               svc.getFrontendService().getVerificationMountPolicy(),
                                                svc.getFrontendService().getenableCtaAdminCommands(),
                                                svc.getFrontendService().getLogContext());
     builder.RegisterService(&streamSvc);

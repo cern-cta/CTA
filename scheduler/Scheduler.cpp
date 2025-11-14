@@ -2626,6 +2626,7 @@ std::list<common::dataStructures::QueueAndMountSummary> Scheduler::getQueuesAndM
           isRepacking ? repackVo : m_catalogue.VO()->getCachedVirtualOrganizationOfTapepool(tapePool->name);
         catalogueGetVoTotalTime += catalogueGetVoTimer.secs();
         mountOrQueue.vo = vo.name;
+        mountOrQueue.isRepacking = isRepacking;
         mountOrQueue.readMaxDrives = vo.readMaxDrives;
         mountOrQueue.writeMaxDrives = vo.writeMaxDrives;
         mountOrQueue.tapesCapacity = tapePool->capacityBytes;
@@ -2644,6 +2645,7 @@ std::list<common::dataStructures::QueueAndMountSummary> Scheduler::getQueuesAndM
       const auto vo = isRepacking ? repackVo : m_catalogue.VO()->getCachedVirtualOrganizationOfTapepool(t.tapePoolName);
       catalogueGetVoTotalTime += catalogueGetVoTimer.secs();
       mountOrQueue.vo = vo.name;
+      mountOrQueue.isRepacking = isRepacking;
       mountOrQueue.readMaxDrives = vo.readMaxDrives;
       mountOrQueue.writeMaxDrives = vo.writeMaxDrives;
       mountOrQueue.tapesCapacity += t.capacityInBytes;

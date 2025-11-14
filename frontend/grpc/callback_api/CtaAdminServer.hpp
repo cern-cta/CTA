@@ -83,6 +83,7 @@ public:
                    const std::string& instanceName,
                    const std::string& connstr,
                    uint64_t missingFileCopiesMinAgeSecs,
+                   const std::string& verificationMountPolicyName,
                    bool enableCtaAdminCommands,
                    cta::log::LogContext logContext)
       : m_lc(logContext),
@@ -92,6 +93,7 @@ public:
         m_schedDb(schedDB),
         m_catalogueConnString(connstr),
         m_missingFileCopiesMinAgeSecs(missingFileCopiesMinAgeSecs),
+        m_verificationMountPolicyName(verificationMountPolicyName),
         m_enableCtaAdminCommands(enableCtaAdminCommands) {}
 
   /* gRPC expects the return type of an RPC implemented using the callback API to be a pointer to ::grpc::ServerWriteReactor */
@@ -99,14 +101,15 @@ public:
                                                                            const cta::xrd::Request* request);
 
 private:
-  cta::log::LogContext m_lc;               // <! Provided by the frontendService
-  cta::catalogue::Catalogue& m_catalogue;  //!< Reference to CTA Catalogue
-  cta::Scheduler& m_scheduler;             //!< Reference to CTA Scheduler
-  std::string m_instanceName;              //!< Instance name
-  cta::SchedulerDB_t& m_schedDb;           //!< Reference to CTA SchedulerDB
-  std::string m_catalogueConnString;       //!< Provided by frontendService
-  uint64_t m_missingFileCopiesMinAgeSecs;  //!< Provided by the frontendService
-  bool m_enableCtaAdminCommands;           //!< Feature flag to disable CTA admin commands
+  cta::log::LogContext m_lc;                 //!< Provided by the frontendService
+  cta::catalogue::Catalogue& m_catalogue;    //!< Reference to CTA Catalogue
+  cta::Scheduler& m_scheduler;               //!< Reference to CTA Scheduler
+  std::string m_instanceName;                //!< Instance name
+  cta::SchedulerDB_t& m_schedDb;             //!< Reference to CTA SchedulerDB
+  std::string m_catalogueConnString;         //!< Provided by frontendService
+  uint64_t m_missingFileCopiesMinAgeSecs;    //!< Provided by the frontendService
+  std::string m_verificationMountPolicyName; //!< Provided by the frontendService
+  bool m_enableCtaAdminCommands;             //!< Feature flag to disable CTA admin commands
 };
 
 // request object will be filled in by the Parser of the command on the client-side.
@@ -249,6 +252,7 @@ CtaRpcStreamImpl::GenericAdminStream(::grpc::CallbackServerContext* context, con
                                                                           m_scheduler,
                                                                           m_instanceName,
                                                                           request->admincmd(),
+                                                                          m_verificationMountPolicyName,
                                                                           m_lc);
         headerType = HeaderType::SHOWQUEUES;
         break;

@@ -21,6 +21,7 @@ public:
                            cta::Scheduler& scheduler,
                            const std::string instanceName,
                            const admin::AdminCmd& adminCmd,
+                           const std::string& verificationMountPolicyName,
                            cta::log::LogContext& lc);
 
   bool isDone() override;
@@ -31,16 +32,19 @@ private:
 
   std::list<cta::common::dataStructures::QueueAndMountSummary> m_queuesAndMountsList;
   std::optional<std::string> m_schedulerBackendName;
+  std::string m_verificationMountPolicyName;
 };
 
 ShowQueuesResponseStream::ShowQueuesResponseStream(cta::catalogue::Catalogue& catalogue,
                                                    cta::Scheduler& scheduler,
                                                    const std::string instanceName,
                                                    const admin::AdminCmd& adminCmd,
+                                                   const std::string& verificationMountPolicyName,
                                                    cta::log::LogContext& lc)
     : CtaAdminResponseStream(catalogue, scheduler, instanceName),
       m_lc(lc),
-      m_schedulerBackendName(scheduler.getSchedulerBackendName()) {
+      m_schedulerBackendName(scheduler.getSchedulerBackendName()),
+      m_verificationMountPolicyName(verificationMountPolicyName) {
   if (!m_schedulerBackendName) {
     m_lc.log(cta::log::ERR,
              "ShowQueuesStream constructor, the cta.scheduler_backend_name is not set in the frontend configuration.");
@@ -106,11 +110,17 @@ cta::xrd::Data ShowQueuesResponseStream::next() {
   } else {
     sq_item->set_sleeping_for_space(false);
   }
+  sq_item->set_includes_verify_requests(false);
   for (auto& policyName : sq.mountPolicies) {
     sq_item->add_mount_policies(policyName);
+    if (policyName == m_verificationMountPolicyName) {
+      sq_item->set_includes_verify_requests(true);
+    }
   }
   sq_item->set_highest_priority_mount_policy(sq.highestPriorityMountPolicy);
   sq_item->set_lowest_request_age_mount_policy(sq.lowestRequestAgeMountPolicy);
+
+  sq_item->set_includes_repack_requests(sq.isRepacking);
 
   return data;
 }
