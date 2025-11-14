@@ -48,6 +48,12 @@ def make_tests_look_pretty(request):
     yield
     terminal_writer.write(f"\n\n{separator}", cyan=True)
 
+# Mutable whitelist that individual test cases can add errors to
+@pytest.fixture(scope="session")
+def error_whitelist(request):
+    whitelist = set() # mutable whitelist shared between all tests
+    return whitelist
+
 
 @pytest.fixture()
 def krb5_realm(request):
