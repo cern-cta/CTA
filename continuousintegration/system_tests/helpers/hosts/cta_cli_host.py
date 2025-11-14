@@ -3,10 +3,10 @@ import time
 
 from .remote_host import RemoteHost
 
+
 class CtaCliHost(RemoteHost):
     def __init__(self, conn):
         super().__init__(conn)
-
 
     def get_drive_status(self, drive_name: str) -> str:
         output = self.execWithOutput(f"cta-admin --json drive ls {drive_name}")
@@ -46,4 +46,3 @@ class CtaCliHost(RemoteHost):
 
     def set_all_drives_down(self, wait: bool = True):
         self.set_drive_down(".*", wait=wait)
-
