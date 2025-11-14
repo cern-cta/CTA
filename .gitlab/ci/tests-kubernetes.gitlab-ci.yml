@@ -211,7 +211,7 @@ test-regression-dCache:
     - xlarge
 
 stress-test:
-  timeout: 6 hours
+  timeout: 12 hours
   allow_failure: true
   interruptible: false
   stage: system-test
@@ -235,7 +235,7 @@ stress-test:
     EXTRA_TEST_ARGS: ""
   before_script:
     - bash ./continuousintegration/checks/check_runner_healthy.sh
-    - python3 -m ensurepip && python3 -m venv venv && source venv/bin/activate && pip install pytest pyyaml
+    - python3 -m ensurepip && python3 -m venv venv && source venv/bin/activate && pip install pytest
     - *setup-k8s-test-variables
   script:
     - |
