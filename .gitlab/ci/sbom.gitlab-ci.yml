@@ -1,0 +1,127 @@
+# SPDX-FileCopyrightText: 2025 CERN
+# SPDX-License-Identifier: GPL-3.0-or-later
+
+prepare-rootfs:
+  stage: sbom
+  image: gitlab-registry.cern.ch/linuxsupport/alma9-base:latest
+  needs:
+    - job: build-cta-rpm
+  rules:
+    - if: $GENERATE_SBOM == "TRUE"
+      when: on_success
+    - when: never
+  variables:
+    ROOTFS: '/tmp/installroot'
+    CTA_RPMS_PATH: "build_rpm/RPM/RPMS"
+    CTA_REPO_DIR: /opt/repo
+  script:
+    - dnf -y install dnf-plugins-core createrepo
+    - rm -rf "$ROOTFS" && mkdir -p "$ROOTFS"
+    - mkdir -p "${CTA_REPO_DIR}/RPMS/x86_64"
+    - cp -r ${CTA_RPMS_PATH} ${CTA_REPO_DIR}/RPMS/x86_64
+    - createrepo "${CTA_REPO_DIR}"
+    - |
+      cat >/etc/yum.repos.d/cta.repo <<EOF
+      [cta]
+      name=CTA RPM repo
+      baseurl=file://${CTA_REPO_DIR}
+      enabled=1
+      gpgcheck=0
+      EOF
+    - dnf install -y
+          --releasever=9
+          --setopt=install_weak_deps=False
+          --setopt=tsflags=nodocs
+          cta-release epel-release
+    - cta-versionlock apply
+    - dnf install -y --installroot="${ROOTFS}"
+          --releasever=9
+          --setopt=install_weak_deps=False
+          --setopt=tsflags=nodocs
+          "cta-*"
+    - rm -rf "${ROOTFS}"/var/cache/dnf/* || true
+    - tar -C "${ROOTFS}" -czf installroot.tar.gz .
+  artifacts:
+    # Don't keep this artifact too long as it is quite large
+    expire_in: 3 hours
+    paths:
+      - installroot.tar.gz
+
+generate-sbom-trivy:
+  stage: sbom
+  image: registry.cern.ch/docker.io/aquasec/trivy:canary
+  needs:
+    - job: prepare-rootfs
+  rules:
+    - if: $GENERATE_SBOM == "TRUE"
+      when: on_success
+    - when: never
+  variables:
+    SBOM_OUT_PATH: sboms/sbom-trivy.json
+    ROOTFS: '/tmp/installroot'
+  before_script:
+    - mkdir -p sboms
+    - mkdir -p "$ROOTFS"
+    - tar -C "$ROOTFS" -xzf installroot.tar.gz
+  script:
+    - trivy rootfs --pkg-types os
+                   --format cyclonedx
+                   --disable-telemetry
+                   --scanners vuln
+                   --output "${SBOM_OUT_PATH}"
+                   "${ROOTFS}"
+  artifacts:
+    expire_in: 30 days
+    paths:
+      - ${SBOM_OUT_PATH}
+
+enrich-sbom-cern-info:
+  stage: sbom
+  image: registry.cern.ch/code-scanners/sbom-helper:latest
+  needs:
+    - job: generate-sbom-trivy
+  rules:
+    - if: $GENERATE_SBOM == "TRUE"
+      when: on_success
+    - when: never
+  variables:
+    SBOM_IN_FILE: sboms/sbom-trivy.json
+    SBOM_OUT_FILE: sboms/cta.cdx.json
+    APP_RPM_PREFIX: "cta-"
+  script:
+    - |
+      export APP_NAME="$CI_PROJECT_NAME"
+      export SERVICE_ELEMENT="CTA for Physics"
+      export UNIT="IT-SD-TAB"
+      export CONTACT="$GITLAB_USER_EMAIL"
+      export ANNOTATOR="$GITLAB_USER_NAME"
+      export URL="$CI_PROJECT_URL"
+    - python /app/src/sbom-helper/main.py --env -i $SBOM_IN_FILE
+    - python continuousintegration/sbom/replace_root_deps.py --in sboms-output/$SBOM_IN_FILE
+                                                             --out sboms-output/tmp.json
+                                                             --prefix "$APP_RPM_PREFIX"
+    - python continuousintegration/sbom/prune_sbom.py --in sboms-output/tmp.json
+                                                      --out $SBOM_OUT_FILE
+  artifacts:
+    expire_in: 30 days
+    paths:
+      - $SBOM_OUT_FILE
+
+score-sbom:
+  stage: sbom
+  image: registry.cern.ch/ghcr.io/interlynk-io/sbomqs
+  needs:
+    - job: enrich-sbom-cern-info
+  rules:
+    - if: $GENERATE_SBOM == "TRUE"
+      when: on_success
+    - when: never
+  variables:
+    # Can be used for e.g. --detailed
+    EXTRA_FLAGS: ""
+  script:
+    - /app/sbomqs score sboms/cta.cdx.json $EXTRA_FLAGS
+  artifacts:
+    reports:
+      cyclonedx:
+        - sboms/cta.cdx.json
