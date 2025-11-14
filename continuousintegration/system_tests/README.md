@@ -4,10 +4,16 @@ This directory contains the Python system tests for CTA.
 
 ## Prerequisites
 
-Install `pytest` and `pyyaml`:
+Set up a virtual environment (recommended):
 
 ```sh
-pip install -r requirements.txt
+python3 -m venv venv
+```
+
+Install the project to get all necessary dependencies:
+
+```sh
+pip install pytest
 ```
 
 ## Useful commands:
@@ -48,6 +54,12 @@ Rerun the failed tests first and then run the rest of the tests (`--ff, --failed
 pytest tests/test_stress.py --namespace dev --ff
 ```
 
+See additional available options (in particular `Custom options`):
+
+```sh
+pytest --help
+```
+
 See [pytest docs](https://docs.pytest.org/en/stable/how-to/cache.html) for other useful commands.
 
 ## Note on Test Execution Order
@@ -72,7 +84,6 @@ system_tests/
 │ └── test_<test_suiteN>.py
 ├── conftest.py                 # Test fixture for the test environment and logic for adding custom commandline options to pytest
 ├── pytest.ini                  # Generic pytest configuration options
-└── requirements.txt            # Dependencies to install
 ```
 
 ## Writing system tests
