@@ -3,6 +3,7 @@ from typing import List, Tuple
 from functools import cached_property
 import re
 
+
 class CtaRmcdHost(RemoteHost):
     def __init__(self, conn):
         super().__init__(conn)
@@ -24,7 +25,7 @@ class CtaRmcdHost(RemoteHost):
         # Extract tape VIDs
         for line in output:
             if "Storage Element" in line and "Full" in line:
-                match = re.search(r'VolumeTag *= *(\S{6})', line)
+                match = re.search(r"VolumeTag *= *(\S{6})", line)
                 if match:
                     volume_tags.add(match.group(1))
         return volume_tags
@@ -35,7 +36,7 @@ class CtaRmcdHost(RemoteHost):
         loaded_drives = []
 
         for line in status_output:
-            match = re.search(r'Data Transfer Element (\d+):Full \(Storage Element (\d+) Loaded\)', line)
+            match = re.search(r"Data Transfer Element (\d+):Full \(Storage Element (\d+) Loaded\)", line)
             if match:
                 drive = int(match.group(1))
                 slot = int(match.group(2))
@@ -50,7 +51,6 @@ class CtaRmcdHost(RemoteHost):
         for drive, slot in loaded_drives:
             self.exec(f"mtx -f {library_device} unload {slot} {drive}")
 
-
     @staticmethod
     def list_all_tapes_in_libraries(ctarmcd_hosts) -> list[str]:
         """Lists unique volume tags from multiple tape libraries."""
@@ -59,4 +59,3 @@ class CtaRmcdHost(RemoteHost):
             for tape in rmcd.list_tapes_in_library():
                 volume_tags.add(tape)
         return sorted(volume_tags)
-

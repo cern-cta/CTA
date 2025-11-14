@@ -1,4 +1,3 @@
-import yaml
 import json
 from typing import Any, List
 import subprocess
@@ -13,15 +12,17 @@ from .connections.remote_connection import RemoteConnection
 from .connections.k8s_connection import K8sConnection
 from .connections.ssh_connection import SSHConnection
 
+
 class TestEnv:
-    def __init__(self,
-                 client_conns: list[RemoteConnection],
-                 cta_cli_conns: list[RemoteConnection],
-                 cta_frontend_conns: list[RemoteConnection],
-                 cta_rmcd_conns: list[RemoteConnection],
-                 cta_taped_conns: list[RemoteConnection],
-                 eos_mgm_conns: list[RemoteConnection],
-                 ):
+    def __init__(
+        self,
+        client_conns: list[RemoteConnection],
+        cta_cli_conns: list[RemoteConnection],
+        cta_frontend_conns: list[RemoteConnection],
+        cta_rmcd_conns: list[RemoteConnection],
+        cta_taped_conns: list[RemoteConnection],
+        eos_mgm_conns: list[RemoteConnection],
+    ):
         self.client = [ClientHost(conn) for conn in client_conns]
         self.ctacli = [CtaCliHost(conn) for conn in cta_cli_conns]
         self.ctafrontend = [CtaFrontendHost(conn) for conn in cta_frontend_conns]
@@ -29,16 +30,16 @@ class TestEnv:
         self.ctataped = [CtaTapedHost(conn) for conn in cta_taped_conns]
         self.eosmgm = [EosMgmHost(conn) for conn in eos_mgm_conns]
 
-
     # Mostly a convenience function that is arguably not very clean, but that is for later
     @staticmethod
-    def execLocal(command: str, capture_output = False, throw_on_failure = True):
-        full_command = f"bash -c \"{command}\""
+    def execLocal(command: str, capture_output=False, throw_on_failure=True):
+        full_command = f'bash -c "{command}"'
         result = subprocess.run(full_command, shell=True, capture_output=capture_output)
         if throw_on_failure and result.returncode != 0:
-            raise RuntimeError(f"local exec of {full_command} failed with exit code {result.returncode}: {result.stderr}")
+            raise RuntimeError(
+                f"local exec of {full_command} failed with exit code {result.returncode}: {result.stderr}"
+            )
         return result
-
 
     @staticmethod
     def get_k8s_connections_by_label(namespace: str, label_key: str, label_value: str, container_value: str = ""):
@@ -68,15 +69,20 @@ class TestEnv:
 
         return connections
 
-
     @staticmethod
     def fromNamespace(namespace: str):
         return TestEnv(
             client_conns=TestEnv.get_k8s_connections_by_label(namespace, "app.kubernetes.io/name", "cta-client"),
             cta_cli_conns=TestEnv.get_k8s_connections_by_label(namespace, "app.kubernetes.io/name", "cta-cli"),
-            cta_frontend_conns=TestEnv.get_k8s_connections_by_label(namespace, "app.kubernetes.io/name", "cta-frontend"),
-            cta_rmcd_conns=TestEnv.get_k8s_connections_by_label(namespace, "app.kubernetes.io/name", "cta-tpsrv", "cta-rmcd"),
-            cta_taped_conns=TestEnv.get_k8s_connections_by_label(namespace, "app.kubernetes.io/name", "cta-tpsrv", "cta-taped"),
+            cta_frontend_conns=TestEnv.get_k8s_connections_by_label(
+                namespace, "app.kubernetes.io/name", "cta-frontend"
+            ),
+            cta_rmcd_conns=TestEnv.get_k8s_connections_by_label(
+                namespace, "app.kubernetes.io/name", "cta-tpsrv", "cta-rmcd"
+            ),
+            cta_taped_conns=TestEnv.get_k8s_connections_by_label(
+                namespace, "app.kubernetes.io/name", "cta-tpsrv", "cta-taped"
+            ),
             eos_mgm_conns=TestEnv.get_k8s_connections_by_label(namespace, "app.kubernetes.io/name", "mgm", "mgm"),
         )
 
@@ -95,6 +101,10 @@ class TestEnv:
               user: root
               host: ctapreproductionfrontend
         """
+        try:
+            import yaml
+        except ImportError:
+            raise RuntimeError("Install pyyaml to use TestEnv.fromConfig()")
         with open(path, "r") as f:
             config = yaml.safe_load(f)
 
@@ -107,7 +117,9 @@ class TestEnv:
             for connection in config[host]:  # Iterate over the list of connection configurations
                 if "k8s" in connection:
                     k8s = connection["k8s"]
-                    connections.append(K8sConnection(namespace=k8s["namespace"], pod=k8s["pod"], container=k8s["container"]))
+                    connections.append(
+                        K8sConnection(namespace=k8s["namespace"], pod=k8s["pod"], container=k8s["container"])
+                    )
                 elif "ssh" in connection:
                     ssh = connection["ssh"]
                     connections.append(SSHConnection(user=ssh["user"], host=ssh["host"]))

@@ -10,13 +10,16 @@ from itertools import cycle
 #     for client in env.client:
 #         client.copyTo("tests/remote_scripts/client/", "/test/", permissions="+x")
 
+
 def test_copy_scripts_to_ctacli(env):
     for ctacli in env.ctacli:
         ctacli.copyTo("tests/remote_scripts/ctacli/", "/test/", permissions="+x")
 
+
 #####################################################################################################################
 # Kerberos
 #####################################################################################################################
+
 
 def test_kinit_clients(env, krb5_realm):
     # TODO: do we want to init the rest of the users here as well?
@@ -28,23 +31,30 @@ def test_kinit_clients(env, krb5_realm):
 # Catalogue initialization
 #####################################################################################################################
 
+
 def test_verify_catalogue(env):
     env.ctafrontend[0].exec("cta-catalogue-schema-verify /etc/cta/cta-catalogue.conf")
 
+
 def test_add_admins(env):
-    env.ctafrontend[0].exec("cta-catalogue-admin-user-create /etc/cta/cta-catalogue.conf --username ctaadmin1 --comment ctaadmin1")
+    env.ctafrontend[0].exec(
+        "cta-catalogue-admin-user-create /etc/cta/cta-catalogue.conf --username ctaadmin1 --comment ctaadmin1"
+    )
     print("Adding user ctaadmin2 as CTA admin")
     # TODO: we should explicitly specify the user
     env.ctacli[0].exec("cta-admin admin add --username ctaadmin2 --comment ctaadmin2")
+
 
 def test_version_info(env):
     print("Versions:")
     env.ctacli[0].exec("cta-admin --json version | jq")
     env.eosmgm[0].exec("eos version")
 
+
 def test_populate_catalogue(env, disk_instance):
     print("Populating catalogue")
     env.ctacli[0].exec(f"./test/populate_catalogue.sh {disk_instance}")
+
 
 def test_populate_catalogue_tapes(env):
     tape_drives_in_use: list[str] = [taped.drive_name for taped in env.ctataped]
@@ -59,9 +69,11 @@ def test_populate_catalogue_tapes(env):
 
     for drive in tape_drives_in_use:
         # Each drive will have its own logical library. This has to do with how the scheduler works
-        add_ll_cmd: str = f"cta-admin logicallibrary add \
+        add_ll_cmd: str = (
+            f'cta-admin logicallibrary add \
                                 --name {drive} \
-                                --comment \"ctasystest library mapped to drive {drive}\""
+                                --comment "ctasystest library mapped to drive {drive}"'
+        )
         env.ctacli[0].exec(add_ll_cmd)
 
     tapes: list[str] = CtaRmcdHost.list_all_tapes_in_libraries(env.ctarmcd)
@@ -73,7 +85,8 @@ def test_populate_catalogue_tapes(env):
         # The logical libraries correspond to the tape drive names by design.
         # For reference, look at how the drives are registered in the catalogue
         logical_library: str = tape_drives_in_use[idx % len(tape_drives_in_use)]
-        add_tape_cmd: str = f"cta-admin tape add \
+        add_tape_cmd: str = (
+            f"cta-admin tape add \
                                 --mediatype LTO8 \
                                 --purchaseorder order \
                                 --vendor vendor \
@@ -83,19 +96,24 @@ def test_populate_catalogue_tapes(env):
                                 --vid {tape} \
                                 --full false \
                                 --comment ctasystest"
+        )
         env.ctacli[0].exec(add_tape_cmd)
+
 
 #####################################################################################################################
 # Tape infrastructure initialisation
 #####################################################################################################################
 
+
 def test_reset_tapes(env):
     for ctarmcd in env.ctarmcd:
         ctarmcd.unload_tapes()
 
+
 def test_reset_drive_devices(env):
     for ctataped in env.ctataped:
         ctataped.exec(f"sg_turs {ctataped.drive_device} 2>&1 > /dev/null || true")
+
 
 def test_label_tapes(env):
     tapes: list[str] = CtaRmcdHost.list_all_tapes_in_libraries(env.ctarmcd)
@@ -110,6 +128,7 @@ def test_label_tapes(env):
         # force errors to surface
         for f in futures:
             f.result()
+
 
 def test_set_all_drives_up(env):
     env.ctacli[0].set_all_drives_up()

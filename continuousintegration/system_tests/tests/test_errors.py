@@ -1,13 +1,14 @@
 import json
 
+
 def test_no_coredumps(env):
     hosts = env.client + env.ctacli + env.ctafrontend + env.ctataped + env.ctarmcd
-    total_core_dumps_found=0
+    total_core_dumps_found = 0
     for host in hosts:
-        core_dump_files=host.execWithOutput("find /var/log/tmp/ -type f -name '*.core' 2>/dev/null").splitlines()
-        num_core_dumps=len(core_dump_files)
-        if (num_core_dumps > 0):
-            total_core_dumps_found+=num_core_dumps
+        core_dump_files = host.execWithOutput("find /var/log/tmp/ -type f -name '*.core' 2>/dev/null").splitlines()
+        num_core_dumps = len(core_dump_files)
+        if num_core_dumps > 0:
+            total_core_dumps_found += num_core_dumps
             print(f"Found {num_core_dumps} core dumps in {host.description}.")
     assert total_core_dumps_found == 0, "core dumps were found"
 
@@ -37,7 +38,7 @@ def test_no_uncaught_exceptions(env):
 
             msg = entry.get("message", "")
             if not msg:
-                raise RuntimeError(f"Found error message with \"message\" field in {host.name}")
+                raise RuntimeError(f'Found error message with "message" field in {host.name}')
 
             all_errors.append(msg)
 
@@ -58,8 +59,6 @@ def test_no_uncaught_exceptions(env):
         print("\nSummary of logged error messages:")
         for msg, count in sorted(error_counts.items(), key=lambda x: -x[1]):
             tag = "(whitelisted)" if msg in whitelist else "             "
-            print(f"{tag} Count: {count}, Message: \"{msg}\"")
+            print(f'{tag} Count: {count}, Message: "{msg}"')
 
-    assert total_non_whitelisted_errors == 0, (
-        f"Found {total_non_whitelisted_errors} non-whitelisted logged errors"
-    )
+    assert total_non_whitelisted_errors == 0, f"Found {total_non_whitelisted_errors} non-whitelisted logged errors"

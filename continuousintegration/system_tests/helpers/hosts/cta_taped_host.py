@@ -1,6 +1,7 @@
 from .remote_host import RemoteHost
 from functools import cached_property
 
+
 class CtaTapedHost(RemoteHost):
     def __init__(self, conn):
         super().__init__(conn)
@@ -26,7 +27,6 @@ class CtaTapedHost(RemoteHost):
         if not device.startswith("/dev/"):
             device = "/dev/" + device
         return device
-
 
     def label_tape(self, tape: str) -> None:
         self.exec(f"cta-tape-label --vid {tape} --force")
