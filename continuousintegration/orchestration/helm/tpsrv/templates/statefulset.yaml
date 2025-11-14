@@ -61,12 +61,18 @@ spec:
         stdin: true
         command: ["bash", "/scripts/rmcd.sh"]
         args: []
-        readinessProbe:
+        startupProbe:
           exec:
-            command: ["sh", "-c", "pgrep -f /usr/bin/cta-rmcd > /dev/null"]
-          initialDelaySeconds: 5
+            command: ["rpm", "-q", "cta-rmcd"]
+          initialDelaySeconds: 0
           periodSeconds: 2
           failureThreshold: 60
+        readinessProbe:
+          exec:
+            command: ["pgrep", "-f", "/usr/bin/cta-rmcd"]
+          initialDelaySeconds: 2
+          periodSeconds: 5
+          failureThreshold: 10
         env:
         - name: MY_NAME
           value: {{ $tpsrvName }}
@@ -100,12 +106,18 @@ spec:
               - SYS_RAWIO
         command: ["/bin/bash", "-c"]
         args: ["{{- if $.Values.preRun.enabled }}/scripts/pre_run.sh;{{- end }} /scripts/taped.sh; {{- if $.Values.postRun.enabled }}/scripts/post_run.sh;{{- end }}"]
-        readinessProbe:
+        startupProbe:
           exec:
-            command: ["sh", "-c", "pgrep -f /usr/bin/cta-taped > /dev/null"]
-          initialDelaySeconds: 5
+            command: ["rpm", "-q", "cta-taped"]
+          initialDelaySeconds: 0
           periodSeconds: 2
           failureThreshold: 60
+        readinessProbe:
+          exec:
+            command: ["pgrep", "-f", "/usr/bin/cta-taped"]
+          initialDelaySeconds: 2
+          periodSeconds: 5
+          failureThreshold: 10
         stdin: true
         env:
         - name: MY_NAME
