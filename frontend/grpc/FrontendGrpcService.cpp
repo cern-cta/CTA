@@ -50,6 +50,28 @@ constexpr const char* CTA_ADMIN_COMMANDS_DISABLED_ERROR =
 
 namespace cta::frontend::grpc {
 
+std::pair<::grpc::Status, std::optional<cta::common::dataStructures::SecurityIdentity>>
+CtaRpcImpl::checkGrpcRequestAuthMetadata(::grpc::ServerContext* context, const cta::xrd::Request* request, cta::log::LogContext& lc){
+  // Retrieve metadata from the incoming request
+  auto metadata = context->client_metadata();
+
+  // skip any metadata checks in case JWT Auth is disabled
+  if (bool jwtAuthEnabled = m_frontendService->getJwtAuth(); !jwtAuthEnabled) {
+    lc.log(cta::log::INFO, "Skipping token validation step as token authentication is disabled");
+    cta::common::dataStructures::SecurityIdentity clientIdentity(request->notification().wf().instance().name(), context->peer());
+    return {::grpc::Status::OK, clientIdentity};
+  } else {
+    auto [status, clientIdentity] = cta::frontend::grpc::common::extractAuthHeaderAndValidate(metadata,
+                                                              m_frontendService->getJwtAuth(),
+                                                              m_pubkeyCache,
+                                                              m_tokenStorage,
+                                                              request->notification().wf().instance().name(),
+                                                              context->peer(),
+                                                              lc);
+    return std::make_pair(status, clientIdentity);
+  } 
+}
+
 Status CtaRpcImpl::processGrpcRequest(const cta::xrd::Request* request,
                                       cta::xrd::Response* response,
                                       cta::log::LogContext& lc,
@@ -93,17 +115,7 @@ CtaRpcImpl::Create(::grpc::ServerContext* context, const cta::xrd::Request* requ
   cta::log::LogContext lc(m_frontendService->getLogContext());
   cta::log::ScopedParamContainer sp(lc);
 
-  // Retrieve metadata from the incoming request
-  auto metadata = context->client_metadata();
-
-  auto [status, clientIdentity] =
-    cta::frontend::grpc::common::extractAuthHeaderAndValidate(metadata,
-                                                              m_frontendService->getJwtAuth(),
-                                                              m_pubkeyCache,
-                                                              m_tokenStorage,
-                                                              request->notification().wf().instance().name(),
-                                                              context->peer(),
-                                                              lc);
+  auto [status, clientIdentity] = checkGrpcRequestAuthMetadata(context, request, lc);
   if (!status.ok()) {
     response->set_type(cta::xrd::Response::RSP_ERR_USER);
     response->set_message_txt(status.error_message());
@@ -129,17 +141,7 @@ CtaRpcImpl::Archive(::grpc::ServerContext* context, const cta::xrd::Request* req
   cta::log::LogContext lc(m_frontendService->getLogContext());
   cta::log::ScopedParamContainer sp(lc);
 
-  // Retrieve metadata from the incoming request
-  auto metadata = context->client_metadata();
-
-  auto [status, clientIdentity] =
-    cta::frontend::grpc::common::extractAuthHeaderAndValidate(metadata,
-                                                              m_frontendService->getJwtAuth(),
-                                                              m_pubkeyCache,
-                                                              m_tokenStorage,
-                                                              request->notification().wf().instance().name(),
-                                                              context->peer(),
-                                                              lc);
+  auto [status, clientIdentity] = checkGrpcRequestAuthMetadata(context, request, lc);
 
   if (!status.ok()) {
     response->set_type(cta::xrd::Response::RSP_ERR_USER);
@@ -174,17 +176,7 @@ CtaRpcImpl::Delete(::grpc::ServerContext* context, const cta::xrd::Request* requ
   cta::log::LogContext lc(m_frontendService->getLogContext());
   cta::log::ScopedParamContainer sp(lc);
 
-  // Retrieve metadata from the incoming request
-  auto metadata = context->client_metadata();
-
-  auto [status, clientIdentity] =
-    cta::frontend::grpc::common::extractAuthHeaderAndValidate(metadata,
-                                                              m_frontendService->getJwtAuth(),
-                                                              m_pubkeyCache,
-                                                              m_tokenStorage,
-                                                              request->notification().wf().instance().name(),
-                                                              context->peer(),
-                                                              lc);
+  auto [status, clientIdentity] = checkGrpcRequestAuthMetadata(context, request, lc);
 
   if (!status.ok()) {
     response->set_type(cta::xrd::Response::RSP_ERR_USER);
@@ -221,17 +213,8 @@ CtaRpcImpl::Retrieve(::grpc::ServerContext* context, const cta::xrd::Request* re
   cta::log::LogContext lc(m_frontendService->getLogContext());
   cta::log::ScopedParamContainer sp(lc);
 
-  // Retrieve metadata from the incoming request
-  auto metadata = context->client_metadata();
+  auto [status, clientIdentity] = checkGrpcRequestAuthMetadata(context, request, lc);
 
-  auto [status, clientIdentity] =
-    cta::frontend::grpc::common::extractAuthHeaderAndValidate(metadata,
-                                                              m_frontendService->getJwtAuth(),
-                                                              m_pubkeyCache,
-                                                              m_tokenStorage,
-                                                              request->notification().wf().instance().name(),
-                                                              context->peer(),
-                                                              lc);
   if (!status.ok()) {
     response->set_type(cta::xrd::Response::RSP_ERR_USER);
     response->set_message_txt(status.error_message());
@@ -283,17 +266,8 @@ Status CtaRpcImpl::CancelRetrieve(::grpc::ServerContext* context,
   cta::log::LogContext lc(m_frontendService->getLogContext());
   cta::log::ScopedParamContainer sp(lc);
 
-  // Retrieve metadata from the incoming request
-  auto metadata = context->client_metadata();
+  auto [status, clientIdentity] = checkGrpcRequestAuthMetadata(context, request, lc);
 
-  auto [status, clientIdentity] =
-    cta::frontend::grpc::common::extractAuthHeaderAndValidate(metadata,
-                                                              m_frontendService->getJwtAuth(),
-                                                              m_pubkeyCache,
-                                                              m_tokenStorage,
-                                                              request->notification().wf().instance().name(),
-                                                              context->peer(),
-                                                              lc);
   if (!status.ok()) {
     response->set_type(cta::xrd::Response::RSP_ERR_USER);
     response->set_message_txt(status.error_message());

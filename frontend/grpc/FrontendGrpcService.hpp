@@ -52,6 +52,9 @@ public:
   Status Admin(::grpc::ServerContext* context, const cta::xrd::Request* request, cta::xrd::Response* response);
 
 private:
+  std::pair<::grpc::Status, std::optional<cta::common::dataStructures::SecurityIdentity>>
+  checkGrpcRequestAuthMetadata(::grpc::ServerContext* context, const cta::xrd::Request* request, cta::log::LogContext& lc);
+
   Status processGrpcRequest(const cta::xrd::Request* request,
                             cta::xrd::Response* response,
                             cta::log::LogContext& lc,

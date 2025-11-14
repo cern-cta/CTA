@@ -46,13 +46,6 @@ extractAuthHeaderAndValidate(const std::multimap<::grpc::string_ref, ::grpc::str
                              cta::log::LogContext& lc) {
   cta::log::ScopedParamContainer sp(lc);
 
-  // skip any metadata checks in case JWT Auth is disabled
-  if (!jwtAuthEnabled) {
-    lc.log(cta::log::INFO, "Skipping token validation step as token authentication is disabled");
-    cta::common::dataStructures::SecurityIdentity clientIdentity(instanceName, peer);
-    return {::grpc::Status::OK, clientIdentity};
-  }
-
   std::string token;
 
   // Search for the authorization token in the metadata
