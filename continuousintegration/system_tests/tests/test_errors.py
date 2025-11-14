@@ -46,17 +46,15 @@ def test_no_uncaught_exceptions(env):
         error_counts[msg] = error_counts.get(msg, 0) + 1
 
     # Evaluate whitelist and collect violations
+    # TODO: idea: the tests should probably populate the whitelist dynamically instead of us hardcoding this?
     total_non_whitelisted_errors = 0
     for msg, count in error_counts.items():
         # TODO: the whitelist should support regex
         if msg not in whitelist:
             total_non_whitelisted_errors += count
 
-    # Summary printing (pytest will show this in the output)
-    print("\nSummary of logged error messages:")
-    if not error_counts:
-        print("No logged errors found.")
-    else:
+    if error_counts:
+        print("\nSummary of logged error messages:")
         for msg, count in sorted(error_counts.items(), key=lambda x: -x[1]):
             tag = "(whitelisted)" if msg in whitelist else "             "
             print(f"{tag} Count: {count}, Message: \"{msg}\"")

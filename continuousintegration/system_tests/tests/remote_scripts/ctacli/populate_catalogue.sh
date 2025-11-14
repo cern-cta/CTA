@@ -88,7 +88,6 @@ cta-admin archiveroute add \
     --comment "ctasystest"
 
 # Setup mount policies
-
 cta-admin mountpolicy add \
     --name ctasystest \
     --archivepriority 1 \

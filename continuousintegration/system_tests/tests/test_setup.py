@@ -2,7 +2,9 @@ from ..helpers.hosts.cta_rmcd_host import CtaRmcdHost
 from concurrent.futures import ThreadPoolExecutor
 from itertools import cycle
 
+#####################################################################################################################
 # Script copying
+#####################################################################################################################
 
 def test_copy_scripts_to_client(env):
     for client in env.client:
@@ -12,34 +14,38 @@ def test_copy_scripts_to_ctacli(env):
     for ctacli in env.ctacli:
         ctacli.copyTo("tests/remote_scripts/ctacli/", "/test/", permissions="+x")
 
+#####################################################################################################################
 # Kerberos
+#####################################################################################################################
 
-def test_kinit_clients(env):
-    # TODO: this together with other options should go into a config file somewhere
-    krb5_realm="TEST.CTA"
+def test_kinit_clients(env, krb5_realm):
+    # TODO: do we want to init the rest of the users here as well?
     env.ctacli[0].exec(f"kinit -kt /root/ctaadmin1.keytab ctaadmin1@{krb5_realm}")
     env.client[0].exec(f"kinit -kt /root/user1.keytab user1@{krb5_realm}")
 
 
+#####################################################################################################################
 # Catalogue initialization
+#####################################################################################################################
 
-def test_check_catalogue(env):
+def test_verify_catalogue(env):
     env.ctafrontend[0].exec("cta-catalogue-schema-verify /etc/cta/cta-catalogue.conf")
 
 def test_add_admins(env):
     env.ctafrontend[0].exec("cta-catalogue-admin-user-create /etc/cta/cta-catalogue.conf --username ctaadmin1 --comment ctaadmin1")
 
     print("Adding user ctaadmin2 as CTA admin")
+    # TODO: we should explicitly specify the user
     env.ctacli[0].exec("cta-admin admin add --username ctaadmin2 --comment ctaadmin2")
 
 def test_version_info(env):
     print("Versions:")
-    env.ctacli[0].exec("cta-admin version")
+    env.ctacli[0].exec("cta-admin --json version | jq")
     env.eosmgm[0].exec("eos version")
 
-def test_populate_catalogue(env):
+def test_populate_catalogue(env, disk_instance):
     print("Populating catalogue")
-    env.ctacli[0].exec(f"./test/populate_catalogue.sh ctaeos")
+    env.ctacli[0].exec(f"./test/populate_catalogue.sh {disk_instance}")
 
 def test_populate_catalogue_tapes(env):
     tape_drives_in_use: list[str] = [taped.drive_name for taped in env.ctataped]
@@ -80,7 +86,9 @@ def test_populate_catalogue_tapes(env):
                                 --comment ctasystest"
         env.ctacli[0].exec(add_tape_cmd)
 
+#####################################################################################################################
 # Tape infrastructure initialisation
+#####################################################################################################################
 
 def test_reset_tapes(env):
     for ctarmcd in env.ctarmcd:

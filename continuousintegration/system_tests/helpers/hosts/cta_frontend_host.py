@@ -10,4 +10,4 @@ class CtaFrontendHost(RemoteHost):
         return f"/var/log/cta/cta-frontend.log"
 
     def get_schema_version(self) -> str:
-        return self.execWithOutput(r"cta-catalogue-schema-verify /etc/cta/cta-catalogue.conf | grep -o -E '[0-9]+\.[0-9]")
+        return self.execWithOutput(r"cta-catalogue-schema-verify /etc/cta/cta-catalogue.conf | grep -o -E '[0-9]+\.[0-9]'")

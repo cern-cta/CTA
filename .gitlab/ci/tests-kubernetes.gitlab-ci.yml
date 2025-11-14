@@ -240,8 +240,6 @@ stress-test:
   variables:
     BASH_LOGGING_ENABLED: 1
     NAMESPACE: stress-${CI_JOB_ID}
-    # Passed to the create_instance.sh script verbatim
-    EXTRA_ARGS: ""
     EXTRA_SPAWN_ARGS: ""
     EXTRA_TEST_ARGS: ""
   before_script:
@@ -282,6 +280,7 @@ stress-test:
     - cd ../system_tests
     - pytest tests/test_stress.py --namespace ${NAMESPACE}
                                   --no-teardown
+                                  --color=yes
                                   ${EXTRA_TEST_ARGS}
   after_script:
     - |
