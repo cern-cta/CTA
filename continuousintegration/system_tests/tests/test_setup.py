@@ -41,7 +41,7 @@ def test_add_admins(env):
         "cta-catalogue-admin-user-create /etc/cta/cta-catalogue.conf --username ctaadmin1 --comment ctaadmin1"
     )
     print("Adding user ctaadmin2 as CTA admin")
-    # TODO: we should explicitly specify the user
+    # TODO: we should explicitly specify the user we are executing admin commands (should we?)
     env.ctacli[0].exec("cta-admin admin add --username ctaadmin2 --comment ctaadmin2")
 
 
