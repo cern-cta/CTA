@@ -48,6 +48,8 @@ static std::string getUsername() {
 constexpr const char* CTA_ADMIN_COMMANDS_DISABLED_ERROR =
   "CTA admin commands are disabled by configuration flag cta.experimental.grpc.cta_admin_commands.enabled";
 
+constexpr const char* CLIENT_IDENTITY_NOT_SET_ERROR = "clientIdentity not set in gRPC authentication";
+
 namespace cta::frontend::grpc {
 
 std::pair<::grpc::Status, std::optional<cta::common::dataStructures::SecurityIdentity>>
@@ -122,6 +124,10 @@ CtaRpcImpl::Create(::grpc::ServerContext* context, const cta::xrd::Request* requ
     return status;
   }
 
+  if (!clientIdentity.has_value()) {
+    return ::grpc::Status(::grpc::StatusCode::UNAUTHENTICATED, CLIENT_IDENTITY_NOT_SET_ERROR);
+  }
+
   sp.add("remoteHost", context->peer());
   sp.add("request", "create");
   // check that the workflow is set appropriately for the create event
@@ -147,6 +153,10 @@ CtaRpcImpl::Archive(::grpc::ServerContext* context, const cta::xrd::Request* req
     response->set_type(cta::xrd::Response::RSP_ERR_USER);
     response->set_message_txt(status.error_message());
     return status;
+  }
+
+  if (!clientIdentity.has_value()) {
+    return ::grpc::Status(::grpc::StatusCode::UNAUTHENTICATED, CLIENT_IDENTITY_NOT_SET_ERROR);
   }
 
   sp.add("remoteHost", context->peer());
@@ -184,6 +194,10 @@ CtaRpcImpl::Delete(::grpc::ServerContext* context, const cta::xrd::Request* requ
     return status;
   }
 
+  if (!clientIdentity.has_value()) {
+    return ::grpc::Status(::grpc::StatusCode::UNAUTHENTICATED, CLIENT_IDENTITY_NOT_SET_ERROR);
+  }
+
   sp.add("remoteHost", context->peer());
   sp.add("request", "delete");
 
@@ -219,6 +233,10 @@ CtaRpcImpl::Retrieve(::grpc::ServerContext* context, const cta::xrd::Request* re
     response->set_type(cta::xrd::Response::RSP_ERR_USER);
     response->set_message_txt(status.error_message());
     return status;
+  }
+
+  if (!clientIdentity.has_value()) {
+    return ::grpc::Status(::grpc::StatusCode::UNAUTHENTICATED, CLIENT_IDENTITY_NOT_SET_ERROR);
   }
 
   sp.add("remoteHost", context->peer());
@@ -272,6 +290,10 @@ Status CtaRpcImpl::CancelRetrieve(::grpc::ServerContext* context,
     response->set_type(cta::xrd::Response::RSP_ERR_USER);
     response->set_message_txt(status.error_message());
     return status;
+  }
+
+  if (!clientIdentity.has_value()) {
+    return ::grpc::Status(::grpc::StatusCode::UNAUTHENTICATED, CLIENT_IDENTITY_NOT_SET_ERROR);
   }
 
   sp.add("remoteHost", context->peer());
@@ -336,6 +358,9 @@ CtaRpcImpl::Admin(::grpc::ServerContext* context, const cta::xrd::Request* reque
     response->set_type(cta::xrd::Response::RSP_ERR_USER);
     response->set_message_txt(status.error_message());
     return status;
+  }
+  if (!clientIdentity.has_value()) {
+    return ::grpc::Status(::grpc::StatusCode::UNAUTHENTICATED, CLIENT_IDENTITY_NOT_SET_ERROR);
   }
 
   sp.add("remoteHost", context->peer());
