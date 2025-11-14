@@ -267,7 +267,7 @@ stress-test:
                            --eos-config ${STRESS_EOS_VALUES_FILE}
                            --catalogue-config ${CATALOGUE_CONFIG}
                            --scheduler-config ${SCHEDULER_CONFIG}
-                           "${EXTRA_SPAWN_ARGS}"
+                           ${EXTRA_SPAWN_ARGS}
     # Set up monitoring
     - git clone https://gitlab+deploy-token-3624:${CI_CTA_DEPLOY_TOKEN_READONLY}@gitlab.cern.ch/cta/sandbox/ci_monitoring.git
     - helm install ci-monitoring ci_monitoring/ci-monitoring

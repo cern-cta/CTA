@@ -14,7 +14,8 @@ def test_no_coredumps(env):
 
 # Perhaps this should be done after each test
 # That gives us more insight into where exactly the error messages were produced
-# something for the future...
+# Only if this can be executed fast enough...
+# Something to test at some point
 def test_no_uncaught_exceptions(env):
     # This whitelist should be loaded dynamically at some point depending on the test case
     whitelist = []

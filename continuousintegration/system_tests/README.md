@@ -80,6 +80,8 @@ system_tests/
 - Each test case should be small test one thing
 - Each test case should be able to run in any order and be fully idempotent
     - This is not always doable. E.g. when testing the full archive-retrieve workflow, it would be horrible for the test runtime to start from scratch in each test. In this case, a limited set of assumptions on the state of the system can be made
+- Test cases should ideally be self-contained and not interfere with other tests
+    - E.g. if a test needs to be done on some object in the catalogue, create a new object specific to the test (and tear it down after). Don't use an existing object (if possible).
 - IF a test case does make assumptions on the state of the system, test those assumptions first before
     - The exception to this is the initial catalogue state
 - Each test case should clean up after itself if this is not too expensive
