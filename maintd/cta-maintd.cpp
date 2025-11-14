@@ -74,10 +74,10 @@ static int exceptionThrowingMain(common::Config config, cta::log::Logger& log) {
     try {
       std::string metricsBackend = config.getOptionValueStr("cta.telemetry.metrics.backend").value_or("NOOP");
 
-      std::string otlpBasicAuthFile =
-        config.getOptionValueStr("cta.telemetry.metrics.export.otlp.basic_auth_file").value();
+      std::optional<std::string> otlpBasicAuthFile =
+        config.getOptionValueStr("cta.telemetry.metrics.export.otlp.basic_auth_file");
       std::string otlpBasicAuthString =
-        otlpBasicAuthFile.empty() ? "" : cta::telemetry::authStringFromFile(otlpBasicAuthFile);
+        otlpBasicAuthFile.has_value() ? cta::telemetry::authStringFromFile(otlpBasicAuthFile.value()) : "";
       cta::telemetry::TelemetryConfig telemetryConfig =
         cta::telemetry::TelemetryConfigBuilder()
           .serviceName(cta::semconv::attr::ServiceNameValues::kCtaMaintd)

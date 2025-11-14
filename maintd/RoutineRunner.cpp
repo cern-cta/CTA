@@ -60,6 +60,7 @@ void RoutineRunner::run(cta::log::LogContext& lc) {
   }
   m_stopRequested = false;
   try {
+    lc.log(log::DEBUG, "In RoutineRunner::run(): New run started.");
     while (!m_stopRequested) {
       lc.log(log::DEBUG, "In RoutineRunner::run(): Executing all routines.");
       for (const auto& routine : m_routines) {
