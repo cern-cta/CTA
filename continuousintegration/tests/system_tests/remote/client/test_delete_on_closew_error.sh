@@ -1,0 +1,98 @@
+#!/bin/bash
+
+# @project      The CERN Tape Archive (CTA)
+# @copyright    Copyright © 2022 CERN
+# @license      This program is free software, distributed under the terms of the GNU General Public
+#               Licence version 3 (GPL Version 3), copied verbatim in the file "COPYING". You can
+#               redistribute it and/or modify it under the terms of the GPL Version 3, or (at your
+#               option) any later version.
+#
+#               This program is distributed in the hope that it will be useful, but WITHOUT ANY
+#               WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A
+#               PARTICULAR PURPOSE. See the GNU General Public License for more details.
+#
+#               In applying this licence, CERN does not waive the privileges and immunities
+#               granted to it by virtue of its status as an Intergovernmental Organization or
+#               submit itself to any jurisdiction.
+
+set -e
+
+################################################################################
+# DESCRIPTION
+#
+#   - This script checks the delete-on-close event, triggered if archiving fails
+#   before the archive request is queued.
+#   - After this event there should be no replicas of the file to be found, and
+#   the namespace entry should not exist.
+#   - Since this happens before the CLOSEW event, the file should be deleted
+#   without any archive request being queued.
+#
+################################################################################
+
+
+EOS_MGM_HOST="ctaeos"
+CTA_TEST_DIR=/eos/ctaeos/cta
+
+cleanup()
+{
+  echo "Deleting ${CTA_TEST_DIR}/fail_on_closew_test"
+  eosadmin_eos root://${EOS_MGM_HOST} rm -rf ${CTA_TEST_DIR}/fail_on_closew_test
+}
+
+error()
+{
+  echo "ERROR: $*" >&2
+  cleanup
+  exit 1
+}
+
+# get Krb5 credentials
+. /root/client_helper.sh
+eosadmin_kdestroy &>/dev/null || true
+eosadmin_kinit
+
+
+################################################################################
+# Testing failing CLOSEW - fail_on_closew_test
+################################################################################
+
+# The storage class 'fail_on_closew_test' attribute causes the 'delete-on-close'
+#   event to be automatically triggered when a file is written to that directory.
+# This can be used to test the 'delete-on-close' event.
+
+TEST_FILE_NAME=$(uuidgen)
+
+# Create a subdirectory with a different storage class for the delete on CLOSEW test
+
+echo "Creating ${CTA_TEST_DIR}/fail_on_closew_test event"
+eosadmin_eos root://${EOS_MGM_HOST} mkdir ${CTA_TEST_DIR}/fail_on_closew_test
+eosadmin_eos root://${EOS_MGM_HOST} attr set sys.archive.storage_class=fail_on_closew_test ${CTA_TEST_DIR}/fail_on_closew_test
+
+echo "xrdcp /etc/group root://${EOS_MGM_HOST}/${CTA_TEST_DIR}/fail_on_closew_test/${TEST_FILE_NAME}"
+
+if xrdcp /etc/group root://${EOS_MGM_HOST}/${CTA_TEST_DIR}/fail_on_closew_test/${TEST_FILE_NAME}; then
+  error "xrdcp command succeeded where it should have failed"
+else
+  echo "xrdcp command failed as expected"
+fi
+
+# Since CTA Frontend will fail on CLOSEW, EOS should delete the file
+
+# Check that the EOS namespace entry has been removed
+# This means all replicas are deleted from tape and disks
+
+if eos root://${EOS_MGM_HOST} fileinfo ${CTA_TEST_DIR}/fail_on_closew_test/${TEST_FILE_NAME}; then
+  error "EOS namespace entry is still present"
+else
+  echo "Success: EOS namespace entry was removed"
+fi
+
+
+################################################################################
+# Cleanup and finalize
+################################################################################
+
+echo
+cleanup
+echo "OK: all tests passed"
+exit 0
