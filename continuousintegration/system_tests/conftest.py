@@ -1,9 +1,13 @@
 import pytest
 from pathlib import Path
 from .helpers.test_env import TestEnv
+import shutil
 
-# In case we ever want to support ssh, simply add another option and do some parsing here
-# Return a different environment in that case
+#####################################################################################################################
+# General/common fixtures
+#####################################################################################################################
+
+# This is how all the tests get access to the different hosts (cli, frontend, taped, etc)
 @pytest.fixture(scope="session", autouse=True)
 def env(request):
     namespace = request.config.getoption("--namespace", default=None)
@@ -21,12 +25,53 @@ def env(request):
     else:
         return TestEnv.fromConfig(connection_config)
 
+# The only purpose of this fixture is to make the test output easier to read
+# in particular by more clearly visually separating different test cases
+@pytest.fixture(autouse=True)
+def make_tests_look_pretty(request):
+    terminal_writer = request.config.get_terminal_writer()
+    terminal_width = shutil.get_terminal_size().columns
+
+    # construct the magic separators
+    test_name = request.node.name
+    test_title = f" {test_name} " # leave 2 spaces around the name
+    side = (terminal_width - len(test_title)) // 2
+    line = "=" * side + test_title + "=" * (terminal_width - side - len(test_title))
+    separator: str = "—" * terminal_width
+
+    terminal_writer.write("\n" + line + "\n\n", cyan=True, bold=True)
+    yield
+    terminal_writer.write(f"\n\n{separator}", cyan=True)
+
+@pytest.fixture()
+def krb5_realm(request):
+    return request.config.getoption("--krb5-realm")
+
+@pytest.fixture()
+def disk_instance(request):
+    return request.config.getoption("--disk-instance")
+
+#####################################################################################################################
+# Commandline options
+#####################################################################################################################
+
 def pytest_addoption(parser):
     parser.addoption("--namespace", action="store", help="Namespace for tests")
     parser.addoption("--connection-config", action="store", help="A yaml connection file specifying how to connect to each host")
     parser.addoption("--no-setup", action="store_true", help="Skip the execution of test_setup")
     parser.addoption("--no-teardown", action="store_true", help="Skip the execution of test_teardown")
     parser.addoption("--clean-start", action="store_true", help="Run the teardown before starting the tests to ensure a clean start")
+
+    # Test specific options
+    parser.addoption("--krb5-realm", type=str, default="TEST.CTA", help="Kerberos realm to use for cta-admin/eos commands")
+    parser.addoption("--disk-instance", type=str, default="ctaeos", help="Name of the disk instance")
+    parser.addoption("--stress-num-files", type=int, default=1000, help="Number of files to use for the stress test")
+    parser.addoption("--stress-file-size", type=int, default=100, help="Size of the files in bytes to use for the stress test")
+
+
+#####################################################################################################################
+# Do some magic to automatically add setup and teardown to the test suite
+#####################################################################################################################
 
 def is_test_in_items(test_path: str, items):
     resolved_test_path = Path(test_path).resolve()

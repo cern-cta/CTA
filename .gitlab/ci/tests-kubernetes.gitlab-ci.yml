@@ -231,12 +231,11 @@ stress-test:
       allow_failure: true # Otherwise this blocks the pipeline
   variables:
     NAMESPACE: stress-${CI_JOB_ID}
-    # Passed to the create_instance.sh script verbatim
-    EXTRA_ARGS: ""
     EXTRA_SPAWN_ARGS: ""
     EXTRA_TEST_ARGS: ""
   before_script:
     - bash ./continuousintegration/checks/check_runner_healthy.sh
+    - python3 -m ensurepip && python3 -m venv venv && source venv/bin/activate && pip install pytest pyyaml
     - *setup-k8s-test-variables
   script:
     - |
@@ -269,6 +268,7 @@ stress-test:
     - cd ../system_tests
     - pytest tests/test_stress.py --namespace ${NAMESPACE}
                                   --no-teardown
+                                  --color=yes
                                   ${EXTRA_TEST_ARGS}
   after_script:
     - |
