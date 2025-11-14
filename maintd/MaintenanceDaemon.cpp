@@ -56,6 +56,7 @@ void MaintenanceDaemon::run() {
     // This run routine blocks until we explicitly tell the routine runner to stop
     m_routineRunner->run(m_lc);
   }
+  m_lc.log(cta::log::INFO, "In MaintenanceDaemon::run: Maintenance daemon stopped");
 }
 
 void MaintenanceDaemon::reload() {
@@ -72,19 +73,8 @@ void MaintenanceDaemon::reload() {
   // Reload the config
   m_config.parse(logger);
 
-  // Update logging information
+  // Update log mask
   logger.setLogMask(m_config.getOptionValueStr("cta.log.level").value_or("INFO"));
-  if (m_config.getOptionValueStr("cta.instance_name").has_value() &&
-      m_config.getOptionValueStr("cta.scheduler_backend_name").has_value()) {
-    std::map<std::string, std::string> staticParamMap;
-    staticParamMap["instance"] = m_config.getOptionValueStr("cta.instance_name").value();
-    staticParamMap["sched_backend"] = m_config.getOptionValueStr("cta.scheduler_backend_name").value();
-    logger.setStaticParams(staticParamMap);
-  } else {
-    m_lc.log(log::ERR,
-             "Either cta.instance_name or cta.scheduler_backend_name is not set in configuration file. Log parameters "
-             "will not be updated.");
-  }
 
   // Stopping the routineRunner will restart the loop in run() and therefore recreate the routines with the new config
   m_routineRunner->stop();
