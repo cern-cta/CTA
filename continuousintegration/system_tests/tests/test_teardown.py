@@ -1,7 +1,8 @@
-def test_cleanup_eos(env):
+def test_cleanup_eos_directories(env):
+    # Right now the teardown is part of the tests, but the creation should probably also be part of the tests eventually...
+    # The goal I guess should be to have no more setup/ directory
     env.eosmgm[0].exec("eos rm -rF --no-confirmation /eos/ctaeos/cta/* 2>/dev/null || true")
     env.eosmgm[0].exec("eos rm -rF --no-confirmation /eos/ctaeos/preprod/* 2>/dev/null || true")
-    env.eosmgm[0].exec("rm -rf /test/ 2>/dev/null || true")
 
 def test_cleanup_catalogue(env):
     schema_version = env.ctafrontend[0].get_schema_version()
@@ -15,3 +16,10 @@ def test_restart_cta_taped(env):
         host.restart()
     for host in hosts:
         host.wait_for_host_up()
+
+def test_delete_test_scripts(env):
+    # Don't need to do this for taped as these already restarted
+    env.client[0].exec("rm -rf /test/ 2>/dev/null || true")
+    env.ctacli[0].exec("rm -rf /test/ 2>/dev/null || true")
+    env.ctafrontend[0].exec("rm -rf /test/ 2>/dev/null || true")
+    env.eosmgm[0].exec("rm -rf /test/ 2>/dev/null || true")
