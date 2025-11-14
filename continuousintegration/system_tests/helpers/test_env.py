@@ -1,5 +1,6 @@
 import yaml
-from typing import Any
+import json
+from typing import Any, List
 import subprocess
 
 from .hosts.client_host import ClientHost
@@ -14,7 +15,6 @@ from .connections.ssh_connection import SSHConnection
 
 class TestEnv:
     def __init__(self,
-                 namespace: str,
                  client_conns: list[RemoteConnection],
                  cta_cli_conns: list[RemoteConnection],
                  cta_frontend_conns: list[RemoteConnection],
@@ -28,43 +28,73 @@ class TestEnv:
         self.ctarmcd = [CtaRmcdHost(conn) for conn in cta_rmcd_conns]
         self.ctataped = [CtaTapedHost(conn) for conn in cta_taped_conns]
         self.eosmgm = [EosMgmHost(conn) for conn in eos_mgm_conns]
-         # This is necessary until we have migrated all the current scripts
-         # Of course it doesn't make sense to have a single namespace when in theory pods can reside in different ones
-        self.namespace = namespace
-        # TODO: this should eventually be defined elsewhere
-        self.disk_instance_name="ctaeos"
-        self.eos_base_dir="/eos/ctaeos"
-        self.eos_preprod_dir=f"{self.eos_base_dir}/preprod"
-        self.eos_cta_test_dir=f"{self.eos_base_dir}/cta"
+
+
+    # Mostly a convenience function that is arguably not very clean, but that is for later
+    @staticmethod
+    def execLocal(command: str, capture_output = False, throw_on_failure = True):
+        full_command = f"bash -c \"{command}\""
+        result = subprocess.run(full_command, shell=True, capture_output=capture_output)
+        if throw_on_failure and result.returncode != 0:
+            raise RuntimeError(f"local exec of {full_command} failed with exit code {result.returncode}: {result.stderr}")
+        return result
+
+
+    @staticmethod
+    def get_k8s_connections_by_label(namespace: str, label_key: str, label_value: str, container_value: str = ""):
+        """
+        Returns a list of K8sConnection objects.
+        label_value and container_value can be exact matches or partial matches.
+        """
+        list_pods_command = f"kubectl get pods -n {namespace} -o json"
+        pods_json_raw = TestEnv.execLocal(list_pods_command, True)
+
+        pods = json.loads(pods_json_raw.stdout.decode("utf-8"))
+        connections: List[K8sConnection] = []
+
+        for pod in pods.get("items", []):
+            labels = pod.get("metadata", {}).get("labels", {})
+            v = labels.get(label_key)
+
+            if not v or label_value not in v:
+                continue
+
+            containers = pod.get("spec", {}).get("containers", [])
+            for c in containers:
+                cname = c.get("name", "")
+                if container_value in cname or not container_value:
+                    pod_name = pod["metadata"]["name"]
+                    connections.append(K8sConnection(namespace, pod_name, cname))
+
+        return connections
+
 
     @staticmethod
     def fromNamespace(namespace: str):
-        # Hardcoded for now, at some point we can make this nicely discover how many replicas there are of each
         return TestEnv(
-            namespace=namespace,
-            client_conns=[K8sConnection(namespace, "client-0", "client")],
-            cta_cli_conns=[K8sConnection(namespace, "cta-cli-0", "cta-cli")],
-            cta_frontend_conns=[K8sConnection(namespace, "cta-frontend-0", "cta-frontend")],
-            cta_rmcd_conns=[K8sConnection(namespace, "cta-tpsrv01-0", "rmcd"),
-                            K8sConnection(namespace, "cta-tpsrv02-0", "rmcd")],
-            cta_taped_conns=[K8sConnection(namespace, "cta-tpsrv01-0", "taped-0"),
-                             K8sConnection(namespace, "cta-tpsrv02-0", "taped-0")],
-            eos_mgm_conns=[K8sConnection(namespace, "eos-mgm-0", "eos-mgm")],
+            client_conns=TestEnv.get_k8s_connections_by_label(namespace, "app.kubernetes.io/name", "cta-client"),
+            cta_cli_conns=TestEnv.get_k8s_connections_by_label(namespace, "app.kubernetes.io/name", "cta-cli"),
+            cta_frontend_conns=TestEnv.get_k8s_connections_by_label(namespace, "app.kubernetes.io/name", "cta-frontend"),
+            cta_rmcd_conns=TestEnv.get_k8s_connections_by_label(namespace, "app.kubernetes.io/name", "cta-tpsrv", "cta-rmcd"),
+            cta_taped_conns=TestEnv.get_k8s_connections_by_label(namespace, "app.kubernetes.io/name", "cta-tpsrv", "cta-taped"),
+            eos_mgm_conns=TestEnv.get_k8s_connections_by_label(namespace, "app.kubernetes.io/name", "mgm", "mgm"),
         )
 
     @staticmethod
     def fromConfig(path: str):
-        # Expects a path to a yaml file containing for each host how to connect
-        # E.g.
-        # client:
-        #   - k8s:
-        #       namespace: dev
-        #       pod: client-0
-        #       container: client
-        # ctafrontend:
-        #   - ssh:
-        #       user: root
-        #       host: ctapreproductionfrontend
+        """
+        Expects a path to a yaml file containing for each host how to connect. For example:
+
+        client:
+          - k8s:
+              namespace: dev
+              pod: client-0
+              container: client
+        ctafrontend:
+          - ssh:
+              user: root
+              host: ctapreproductionfrontend
+        """
         with open(path, "r") as f:
             config = yaml.safe_load(f)
 
@@ -87,7 +117,6 @@ class TestEnv:
             return connections
 
         return TestEnv(
-            namespace="not-supported",
             client_conn=create_connections(config, "client"),
             cta_cli_conn=create_connections(config, "ctacli"),
             cta_frontend_conn=create_connections(config, "ctafrontend"),
@@ -95,11 +124,3 @@ class TestEnv:
             cta_taped_conn=create_connections(config, "ctataped"),
             eos_mgm_conn=create_connections(config, "eosmgm"),
         )
-
-    # Mostly a convenience function that is arguably not very clean, but that is for later
-    def execLocal(self, command: str, capture_output = False, throw_on_failure = True):
-        full_command = f"bash -c \"{command}\""
-        result = subprocess.run(full_command, shell=True, capture_output=capture_output)
-        if throw_on_failure and result.returncode != 0:
-            raise RuntimeError(f"local exec of {full_command} failed with exit code {result.returncode}: {result.stderr}")
-        return result
