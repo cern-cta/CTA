@@ -68,12 +68,11 @@ cta-admin mediatype add \
     --cartridge "LTO-8" \
     --comment "LTO-8 cartridge formated at 12 TB"
 
-# Setup default tapepool and storage class
+# Setup default tapepool, storage class and archive route
 cta-admin tapepool add \
     --name ctasystest \
     --vo vo \
     --partialtapesnumber 5 \
-    --encrypted false \
     --comment "ctasystest"
 
 cta-admin storageclass add \
@@ -81,79 +80,14 @@ cta-admin storageclass add \
     --numberofcopies 1 \
     --vo vo \
     --comment "ctasystest"
+
 cta-admin archiveroute add \
     --storageclass ctaStorageClass \
     --copynb 1 \
     --tapepool ctasystest \
     --comment "ctasystest"
 
-# Setup tapepools and storage classes for multiple tape copies
-cta-admin tapepool add \
-    --name ctasystest_A \
-    --vo vo \
-    --partialtapesnumber 5 \
-    --encrypted false \
-    --comment "ctasystest_A"
-cta-admin tapepool add \
-    --name ctasystest_B \
-    --vo vo \
-    --partialtapesnumber 5 \
-    --encrypted false \
-    --comment "ctasystest_B"
-cta-admin tapepool add \
-    --name ctasystest_C \
-    --vo vo \
-    --partialtapesnumber 5 \
-    --encrypted false \
-    --comment "ctasystest_C"
-
-cta-admin storageclass add \
-    --name ctaStorageClass_1_copy \
-    --numberofcopies 1 \
-    --vo vo \
-    --comment "ctasystest"
-cta-admin archiveroute add \
-    --storageclass ctaStorageClass_1_copy \
-    --copynb 1 \
-    --tapepool ctasystest_A \
-    --comment "ctasystest"
-
-cta-admin storageclass add \
-    --name ctaStorageClass_2_copy \
-    --numberofcopies 2 \
-    --vo vo \
-    --comment "ctasystest"
-cta-admin archiveroute add \
-    --storageclass ctaStorageClass_2_copy \
-    --copynb 1 \
-    --tapepool ctasystest_A \
-    --comment "ctasystest"
-cta-admin archiveroute add \
-    --storageclass ctaStorageClass_2_copy \
-    --copynb 2 \
-    --tapepool ctasystest_B \
-    --comment "ctasystest"
-
-cta-admin storageclass add \
-    --name ctaStorageClass_3_copy \
-    --numberofcopies 1 \
-    --vo vo \
-    --comment "ctasystest"
-cta-admin archiveroute add \
-    --storageclass ctaStorageClass_3_copy \
-    --copynb 1 \
-    --tapepool ctasystest_A \
-    --comment "ctasystest"
-cta-admin archiveroute add \
-    --storageclass ctaStorageClass_3_copy \
-    --copynb 2 \
-    --tapepool ctasystest_B \
-    --comment "ctasystest"
-cta-admin archiveroute add \
-    --storageclass ctaStorageClass_3_copy \
-    --copynb 3 \
-    --tapepool ctasystest_C \
-    --comment "ctasystest"
+# Setup mount policies
 
 cta-admin mountpolicy add \
     --name ctasystest \
@@ -168,19 +102,19 @@ cta-admin requestermountrule add \
     --name adm \
     --mountpolicy ctasystest --comment "ctasystest"
 
-###
+
 # This rule exists to allow users from eosusers group to migrate files to tapes
 cta-admin groupmountrule add \
     --instance "${DISK_INSTANCE_NAME}" \
     --name eosusers \
     --mountpolicy ctasystest --comment "ctasystest"
-###
+
 # This rule exists to allow users from powerusers group to recall files from tapes
 cta-admin groupmountrule add \
     --instance "${DISK_INSTANCE_NAME}" \
     --name powerusers \
     --mountpolicy ctasystest --comment "ctasystest"
-###
+
 # This mount policy is for repack: IT MUST CONTAIN THE `repack` STRING IN IT TO ALLOW MOUNTING DISABLED TAPES
 cta-admin mountpolicy add \
     --name repack_ctasystest \
@@ -190,7 +124,6 @@ cta-admin mountpolicy add \
     --minretrieverequestage 1 \
     --comment "repack mountpolicy for ctasystest"
 
-###
 # This rule if for retrieves, and matches the retrieve activity used in the tests only
 cta-admin activitymountrule add \
     --instance "${DISK_INSTANCE_NAME}" \

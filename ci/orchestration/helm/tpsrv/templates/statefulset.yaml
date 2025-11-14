@@ -74,10 +74,16 @@ spec:
           failureThreshold: 60
         readinessProbe:
           exec:
-            command: ["sh", "-c", "pgrep -f /usr/bin/cta-rmcd > /dev/null"]
-          initialDelaySeconds: 5
+            command: ["rpm", "-q", "cta-rmcd"]
+          initialDelaySeconds: 0
           periodSeconds: 2
           failureThreshold: 60
+        readinessProbe:
+          exec:
+            command: ["pgrep", "-f", "/usr/bin/cta-rmcd"]
+          initialDelaySeconds: 2
+          periodSeconds: 5
+          failureThreshold: 10
         env:
         - name: MY_NAME
           value: {{ $tpsrvName }}
@@ -121,10 +127,16 @@ spec:
           failureThreshold: 60
         readinessProbe:
           exec:
-            command: ["sh", "-c", "pgrep -f /usr/bin/cta-taped > /dev/null"]
-          initialDelaySeconds: 5
+            command: ["rpm", "-q", "cta-taped"]
+          initialDelaySeconds: 0
           periodSeconds: 2
           failureThreshold: 60
+        readinessProbe:
+          exec:
+            command: ["pgrep", "-f", "/usr/bin/cta-taped"]
+          initialDelaySeconds: 2
+          periodSeconds: 5
+          failureThreshold: 10
         stdin: true
         env:
         - name: MY_NAME
