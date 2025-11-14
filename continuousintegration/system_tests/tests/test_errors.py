@@ -1,4 +1,5 @@
 import json
+import re
 
 
 def test_no_coredumps(env):
@@ -17,10 +18,7 @@ def test_no_coredumps(env):
 # That gives us more insight into where exactly the error messages were produced
 # Only if this can be executed fast enough...
 # Something to test at some point
-def test_no_uncaught_exceptions(env):
-    # This whitelist should be loaded dynamically at some point depending on the test case
-    whitelist = []
-
+def test_no_uncaught_exceptions(env, error_whitelist):
     hosts = env.ctafrontend + env.ctataped + env.ctarmcd
     all_errors = []  # for summaries
     for host in hosts:
@@ -47,18 +45,17 @@ def test_no_uncaught_exceptions(env):
     for msg in all_errors:
         error_counts[msg] = error_counts.get(msg, 0) + 1
 
-    # Evaluate whitelist and collect violations
-    # TODO: idea: the tests should probably populate the whitelist dynamically instead of us hardcoding this?
+    # Evaluate against whitelist and collect violations
     total_non_whitelisted_errors = 0
     for msg, count in error_counts.items():
-        # TODO: the whitelist should support regex
-        if msg not in whitelist:
+        matched = any(re.search(pattern, msg) for pattern in error_whitelist)
+        if not matched:
             total_non_whitelisted_errors += count
 
     if error_counts:
         print("\nSummary of logged error messages:")
         for msg, count in sorted(error_counts.items(), key=lambda x: -x[1]):
-            tag = "(whitelisted)" if msg in whitelist else "             "
+            tag = "(whitelisted)" if msg in error_whitelist else "             "
             print(f'{tag} Count: {count}, Message: "{msg}"')
 
     assert total_non_whitelisted_errors == 0, f"Found {total_non_whitelisted_errors} non-whitelisted logged errors"
