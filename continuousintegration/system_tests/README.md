@@ -84,10 +84,10 @@ system_tests/
     - The exception to this is the initial catalogue state
 - Each test case should clean up after itself if this is not too expensive
     - If the cleanup is too expensive, ensure the teardown cleans it up
-
 - Use the `env.ctacli` to execute `cta-admin` commands
 - Use `env.client` to execute `eos` commands
     - In exceptional situations, the mgm can be used to execute eos commands
+    - If possible, do not execute `cta-admin` commands on the client. The idea would be to make this an EOS client only (eventually).
 - Favour python logic over bash logic.
     - In general, only execute basic commands using bash
     - Only in cases where performance would take a considerable hit by doing everything in python should you do the logic in bash
@@ -95,3 +95,4 @@ system_tests/
     - For example, labeling a tape is an operation that is specific to the taped host, so this is defined as a separate method in `cta_taped_host.py`
 - Make functions reusable
     - When writing e.g. an `archive()` function, don't hardcode assumptions on the number of files, file size etc into the function. These should be passed as arguments
+- If scripts need to run on the hosts, put them under `tests/remote_scripts/<hostname>/`
