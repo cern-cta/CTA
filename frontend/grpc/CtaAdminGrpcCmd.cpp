@@ -144,18 +144,20 @@ void CtaAdminGrpcCmd::send(const CtaAdminParsedCmd& parsedCmd,
   }
 
   // Validate and process the authentication method
-  if (auth_method == "jwt") {
-    // Read JWT token path from config, with default fallback
-    std::string token_path = config.getOptionValueStr("grpc.jwt_token_path").value_or("");
-    if (token_path.empty()) {
-      throw cta::exception::UserError("jwt authentication specified but no token provided");
+  if (tls) {
+    if (auth_method == "jwt") {
+      // Read JWT token path from config, with default fallback
+      std::string token_path = config.getOptionValueStr("grpc.jwt_token_path").value_or("");
+      if (token_path.empty()) {
+        throw cta::exception::UserError("jwt authentication specified but no token provided");
+      }
+      setupJwtAuthenticatedAdminCall(context, token_path);
+    } else if (auth_method == "krb5") {
+      setupKrb5AuthenticatedAdminCall(spChannel, context, GSS_SPN, log);
+    } else {
+      throw cta::exception::UserError("Unrecognized authentication method '" + auth_method + "' specified");
     }
-    setupJwtAuthenticatedAdminCall(context, token_path);
-  } else if (auth_method == "krb5") {
-    setupKrb5AuthenticatedAdminCall(spChannel, context, GSS_SPN, log);
-  } else {
-    throw cta::exception::UserError("Unrecognized authentication method '" + auth_method + "' specified");
-  }
+  } // do not attach call credentials if using unencrypted connection
 
   if (!isStreamCmd(request.admincmd())) {
     cta::xrd::Response response;
