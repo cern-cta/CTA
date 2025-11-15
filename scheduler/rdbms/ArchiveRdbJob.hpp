@@ -40,7 +40,7 @@ class ArchiveRdbJob final : public SchedulerDatabase::ArchiveJob {
 
 public:
   // Constructor to convert ArchiveJobQueueRow to ArchiveRdbJob
-  explicit ArchiveRdbJob(rdbms::ConnPool& connPool, const rdbms::Rset& rset);
+  explicit ArchiveRdbJob(rdbms::ConnPool& connPool, const rdbms::Rset& rset, bool rowFromRepack);
 
   // Constructor to create empty ArchiveJob object with a reference to the connection pool
   explicit ArchiveRdbJob(rdbms::ConnPool& connPool);
@@ -77,7 +77,7 @@ public:
   * @param connPool
   * @param rset
   */
-  void initialize(const rdbms::Rset& rset) final;
+  void initialize(const rdbms::Rset& rset, bool jobIsRepack) final;
 
  /**
   * @brief Returns the job instance back to its originating JobPool.
@@ -124,23 +124,16 @@ public:
   void handleExceedTotalRetries(cta::schedulerdb::Transaction& txn, log::LogContext& lc, const std::string& reason);
 
  /**
-  * Requeues the job to a new mount after a failure. Resets mount-related retry counters and updates the job in the DB.
+  * Requeues the job to a same/new (keepMountId) mount after a failure.
+  * Resets mount-related retry counters and updates the job in the DB.
   *
   * @param txn The transaction context for database operations.
   * @param lc The logging context for structured logging.
   * @param reason The textual explanation for the failure.
+  * @param keepMountId If false, the job will be requeues with NULL Mount ID, otherwise same Mount ID will be used
   */
-  void requeueToNewMount(cta::schedulerdb::Transaction& txn, log::LogContext& lc, const std::string& reason);
+  void requeueJobToMount(cta::schedulerdb::Transaction& txn, log::LogContext& lc, const std::string& reason, bool keepMountId);
 
- /**
-  * Requeues the job to the same mount after a recoverable failure.
-  * Keeps the mount context but marks it for retry, updating the job in the DB.
-  *
-  * @param txn The transaction context for database operations.
-  * @param lc The logging context for structured logging.
-  * @param reason The textual explanation for the failure.
-  */
-  void requeueToSameMount(cta::schedulerdb::Transaction& txn, log::LogContext& lc, const std::string& reason);
 
   postgres::ArchiveJobQueueRow m_jobRow;  // Job data is encapsulated in this member
   bool m_jobOwned = false;

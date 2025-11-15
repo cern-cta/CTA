@@ -20,6 +20,7 @@
 #include "rdbms/ConnPool.hpp"
 #include "scheduler/rdbms/postgres/Enums.hpp"
 #include "scheduler/rdbms/postgres/Transaction.hpp"
+#include "scheduler/rdbms/postgres/ArchiveJobQueue.hpp"
 
 #include "common/dataStructures/ArchiveFile.hpp"
 #include "common/dataStructures/EntryLog.hpp"
@@ -34,6 +35,7 @@ class ArchiveRequest {
 public:
   ArchiveRequest(rdbms::Conn& conn, log::LogContext& lc) : m_conn(conn), m_lc(lc) {}
 
+  std::unique_ptr<postgres::ArchiveJobQueueRow> makeJobRow(const postgres::ArchiveQueueJob &archiveJob) const;
   void insert();
   [[noreturn]] void update() const;
 
@@ -53,7 +55,8 @@ public:
               std::string_view tapepool,
               uint16_t maxRetriesWithinMount,
               uint16_t maxTotalRetries,
-              uint16_t maxReportRetries);
+              uint16_t maxReportRetries,
+              uint64_t archiveRequestId);
 
   /*
    * Set the archive file of this archive request to the file object provided
@@ -195,18 +198,8 @@ private:
   /**
    * Archive Job metadata
    */
-  struct Job {
-    int copyNb;
-    ArchiveJobStatus status;
-    std::string tapepool;
-    int totalRetries;
-    int retriesWithinMount;
-    int lastMountWithFailure;
-    int maxRetriesWithinMount;
-    int maxTotalRetries;
-    int totalReportRetries;
-    int maxReportRetries;
-  };
+  postgres::ArchiveQueueJob Job;
+
 
   // References to external objects
   //rdbms::ConnPool &m_connPool;
@@ -225,7 +218,7 @@ private:
   std::string m_srcURL;
   common::dataStructures::EntryLog m_entryLog;
   common::dataStructures::MountPolicy m_mountPolicy;
-  std::list<Job> m_jobs;
+  std::list<postgres::ArchiveQueueJob> m_jobs;
 };
 
 }  // namespace cta::schedulerdb

@@ -34,6 +34,7 @@ struct RetrieveJobSummaryRow {
   //schedulerdb::RetrieveJobStatus status;
   std::string mountPolicy;
   uint64_t minRetrieveRequestAge;
+  std::optional<std::string> diskSystemName;
 
   RetrieveJobSummaryRow() = default;
 
@@ -48,6 +49,7 @@ struct RetrieveJobSummaryRow {
     vid = rset.columnString("VID");
     //status = from_string<schedulerdb::RetrieveJobStatus>(rset.columnString("STATUS"));
     activity = rset.columnOptionalString("ACTIVITY");
+    diskSystemName = rset.columnOptionalString("DISK_SYSTEM_NAME");
     jobsCount = rset.columnUint64("JOBS_COUNT");
     jobsTotalSize = rset.columnUint64("JOBS_TOTAL_SIZE");
     priority = rset.columnUint64("PRIORITY");
@@ -83,6 +85,7 @@ struct RetrieveJobSummaryRow {
         VID,
         MOUNT_POLICY,
         ACTIVITY,
+        DISK_SYSTEM_NAME,
         PRIORITY,
         JOBS_COUNT,
         JOBS_TOTAL_SIZE,
@@ -136,6 +139,7 @@ struct RetrieveJobSummaryRow {
         VID,
         MOUNT_POLICY,
         ACTIVITY,
+        DISK_SYSTEM_NAME,
         PRIORITY,
         JOBS_COUNT,
         JOBS_TOTAL_SIZE,
@@ -145,6 +149,34 @@ struct RetrieveJobSummaryRow {
         LAST_JOB_UPDATE_TIME
       FROM
         RETRIEVE_QUEUE_SUMMARY
+    )SQL";
+
+    auto stmt = txn.getConn().createStmt(sql);
+    return stmt.executeQuery();
+  }
+
+  /**
+   * Select jobs which do not belong to any drive yet.
+   * This is used for deciding if a new mount shall be created
+   * @param txn        Transaction to use for this query
+   * @return result set containing all rows in the table
+   */
+  static rdbms::Rset selectNewRepackJobs(Transaction& txn) {
+    const char* const sql = R"SQL(
+      SELECT
+        VID,
+        MOUNT_POLICY,
+        ACTIVITY,
+        DISK_SYSTEM_NAME,
+        PRIORITY,
+        JOBS_COUNT,
+        JOBS_TOTAL_SIZE,
+        OLDEST_JOB_START_TIME,
+        YOUNGEST_JOB_START_TIME,
+        RETRIEVE_MIN_REQUEST_AGE,
+        LAST_JOB_UPDATE_TIME
+      FROM
+        REPACK_RETRIEVE_QUEUE_SUMMARY
     )SQL";
 
     auto stmt = txn.getConn().createStmt(sql);

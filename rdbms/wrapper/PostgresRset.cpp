@@ -208,6 +208,22 @@ uint32_t PostgresRset::columnUint32NoOpt(const std::string& colName) const {
 }
 
 //------------------------------------------------------------------------------
+// Returns true if the column exist in the rset
+//------------------------------------------------------------------------------
+bool PostgresRset::columnExists(const std::string& colName) const {
+  if (nullptr == m_resItr->get()) {
+    return false;
+  }
+  if (auto it = m_columnPQindexCache.find(colName); it != m_columnPQindexCache.end()) {
+    return true;
+  }
+  int idx = PQfnumber(m_resItr->get(), colName.c_str());
+  if (idx < 0) {
+    return false;
+  }
+  return true;
+}
+//------------------------------------------------------------------------------
 // Get uint64_t value from a column with error handling
 //------------------------------------------------------------------------------
 uint64_t PostgresRset::columnUint64NoOpt(const std::string& colName) const {

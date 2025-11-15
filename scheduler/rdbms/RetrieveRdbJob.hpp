@@ -42,7 +42,7 @@ public:
 
   // Constructor to create empty RetrieveJob object with a reference to the connection pool
   explicit RetrieveRdbJob(rdbms::ConnPool& connPool);
-  explicit RetrieveRdbJob(rdbms::ConnPool& connPool, const rdbms::Rset& rset);
+  explicit RetrieveRdbJob(rdbms::ConnPool& connPool, const rdbms::Rset& rset, bool rowFromRepack);
 
   /*
    * Sets the status of the job as failed in the Scheduler DB
@@ -71,7 +71,7 @@ public:
    * @param connPool
    * @param rset
    */
-  void initialize(const rdbms::Rset& rset) final;
+  void initialize(const rdbms::Rset& rset, bool jobIsRepack) final;
 
   /**
    * @brief Returns this job instance back to its originating pool.
@@ -113,23 +113,16 @@ public:
   void handleExceedTotalRetries(cta::schedulerdb::Transaction& txn, log::LogContext& lc, const std::string& reason);
 
   /**
-   * Requeues the job to a new mount after a failure. Resets mount-related retry counters and updates the job in the DB.
+   * Requeues the job to a new/same (keepMountId) mount after a failure.
+   * Resets mount-related retry counters and updates the job in the DB.
    *
    * @param txn The transaction context for database operations.
    * @param lc The logging context for structured logging.
    * @param reason The textual explanation for the failure.
+   * @param keepMountId If false, job will be requeued with NULL as Mount ID, otherwise same Mount ID will be kept
    */
-  void requeueToNewMount(cta::schedulerdb::Transaction& txn, log::LogContext& lc, const std::string& reason);
+  void requeueJobToMount(cta::schedulerdb::Transaction& txn, log::LogContext& lc, const std::string& reason, bool keepMountId);
 
-  /**
-   * Requeues the job to the same mount after a recoverable failure.
-   * Keeps the mount context but marks it for retry, updating the job in the DB.
-   *
-   * @param txn The transaction context for database operations.
-   * @param lc The logging context for structured logging.
-   * @param reason The textual explanation for the failure.
-   */
-  void requeueToSameMount(cta::schedulerdb::Transaction& txn, log::LogContext& lc, const std::string& reason);
 
   postgres::RetrieveJobQueueRow m_jobRow;  // Job data is encapsulated in this member
   bool m_jobOwned = false;

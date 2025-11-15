@@ -16,6 +16,7 @@
  */
 
 #include "scheduler/rdbms/postgres/RetrieveJobQueue.hpp"
+#include "scheduler/rdbms/postgres/ArchiveJobQueue.hpp"
 #include "rdbms/wrapper/PostgresColumn.hpp"
 #include "rdbms/wrapper/PostgresStmt.hpp"
 
@@ -27,7 +28,8 @@ RetrieveJobQueueRow::moveJobsToDbActiveQueue(Transaction& txn,
                                              const SchedulerDatabase::RetrieveMount::MountInfo& mountInfo,
                                              std::vector<std::string>& noSpaceDiskSystemNames,
                                              uint64_t maxBytesRequested,
-                                             uint64_t limit) {
+                                             uint64_t limit,
+                                             bool isRepack) {
   // we first check if there are any disk systems
   // we should avoid querying jobs for
   std::string sql_dsn_exclusion_part = "";
@@ -44,6 +46,9 @@ RetrieveJobQueueRow::moveJobsToDbActiveQueue(Transaction& txn,
     }
     sql_dsn_exclusion_part += R"SQL( ]) )SQL";
   }
+
+  std::string repack_table_name_prefix = isRepack ? "REPACK_" : "";
+
   /* using write row lock FOR UPDATE for the select statement
    * since it is the same lock used for UPDATE
    * we first apply the LIMIT on the selection to limit
@@ -52,7 +57,9 @@ RetrieveJobQueueRow::moveJobsToDbActiveQueue(Transaction& txn,
   std::string sql = R"SQL(
     WITH SET_SELECTION AS (
       SELECT JOB_ID, PRIORITY, SIZE_IN_BYTES
-      FROM RETRIEVE_PENDING_QUEUE
+      FROM )SQL";
+  sql += repack_table_name_prefix + "RETRIEVE_PENDING_QUEUE";
+  sql += R"SQL(
       WHERE VID = :VID
       AND STATUS = :STATUS
       AND (MOUNT_ID IS NULL OR MOUNT_ID = :SAME_MOUNT_ID)
@@ -74,12 +81,22 @@ RetrieveJobQueueRow::moveJobsToDbActiveQueue(Transaction& txn,
         WHERE CUMULATIVE_SIZE <= :BYTES_REQUESTED
     ),
     MOVED_ROWS AS (
-        DELETE FROM RETRIEVE_PENDING_QUEUE RIQ
+        DELETE FROM
+    )SQL";
+  sql += repack_table_name_prefix + "RETRIEVE_PENDING_QUEUE";
+  sql += R"SQL( RIQ
         USING CUMULATIVE_SELECTION CSEL
         WHERE RIQ.JOB_ID = CSEL.JOB_ID
         RETURNING RIQ.*
     )
-    INSERT INTO RETRIEVE_ACTIVE_QUEUE (
+    INSERT INTO )SQL";
+  sql += repack_table_name_prefix + "RETRIEVE_ACTIVE_QUEUE ( ";
+  if(isRepack) {
+    sql += " REPACK_REQUEST_ID,";
+    sql += " REPACK_REARCHIVE_COPY_NBS,";
+    sql += " REPACK_REARCHIVE_TAPE_POOLS,";
+  }
+  sql += R"SQL(
         JOB_ID,
         RETRIEVE_REQUEST_ID,
         REQUEST_JOB_COUNT,
@@ -135,6 +152,13 @@ RetrieveJobQueueRow::moveJobsToDbActiveQueue(Transaction& txn,
         DISK_SYSTEM_NAME
     )
     SELECT
+    )SQL";
+    if(isRepack) {
+      sql += " M.REPACK_REQUEST_ID,";
+      sql += " M.REPACK_REARCHIVE_COPY_NBS,";
+      sql += " M.REPACK_REARCHIVE_TAPE_POOLS,";
+    }
+    sql += R"SQL(
         M.JOB_ID,
         M.RETRIEVE_REQUEST_ID,
         M.REQUEST_JOB_COUNT,
@@ -214,9 +238,10 @@ RetrieveJobQueueRow::moveJobsToDbActiveQueue(Transaction& txn,
   return std::make_pair(std::move(result), nrows);
 }
 
+
 uint64_t RetrieveJobQueueRow::updateJobStatus(Transaction& txn,
                                               RetrieveJobStatus newStatus,
-                                              const std::vector<std::string>& jobIDs) {
+                                              const std::vector<std::string>& jobIDs, bool isRepack) {
   if (jobIDs.empty()) {
     return 0;
   }
@@ -227,14 +252,20 @@ uint64_t RetrieveJobQueueRow::updateJobStatus(Transaction& txn,
   if (!sqlpart.empty()) {
     sqlpart.pop_back();
   }
+
+  std::string repack_table_name_prefix = isRepack ? "REPACK_" : "";
+
   // DISABLE DELETION FOR DEBUGGING
   if (newStatus == RetrieveJobStatus::RJS_Complete || newStatus == RetrieveJobStatus::RJS_Failed ||
       newStatus == RetrieveJobStatus::ReadyForDeletion) {
     if (newStatus == RetrieveJobStatus::RJS_Failed) {
-      return RetrieveJobQueueRow::moveJobBatchToFailedQueueTable(txn, jobIDs);
+      return RetrieveJobQueueRow::moveJobBatchToFailedQueueTable(txn, jobIDs, isRepack);
     } else {
       std::string sql = R"SQL(
-        DELETE FROM RETRIEVE_ACTIVE_QUEUE
+        DELETE FROM
+      )SQL";
+      sql += repack_table_name_prefix + "RETRIEVE_ACTIVE_QUEUE ";
+      sql += R"SQL(
         WHERE
           JOB_ID IN (
         )SQL";
@@ -252,16 +283,27 @@ uint64_t RetrieveJobQueueRow::updateJobStatus(Transaction& txn,
   //   status = RetrieveJobStatus::ReadyForDeletion;
   //   RetrieveJobQueueRow::copyToFailedJobTable(txn, jobIDs);
   // }
-  std::string sql = "UPDATE RETRIEVE_ACTIVE_QUEUE SET STATUS = :STATUS WHERE JOB_ID IN (" + sqlpart + ")";
+  std::string sql = "UPDATE ";
+  sql += repack_table_name_prefix + "RETRIEVE_ACTIVE_QUEUE ";
+  sql += " SET STATUS = :STATUS WHERE JOB_ID IN (" + sqlpart + ")";
   auto stmt1 = txn.getConn().createStmt(sql);
   stmt1.bindString(":STATUS", to_string(newStatus));
   stmt1.executeNonQuery();
   return stmt1.getNbAffectedRows();
 };
 
-uint64_t RetrieveJobQueueRow::updateFailedJobStatus(Transaction& txn, RetrieveJobStatus newStatus) {
+uint64_t RetrieveJobQueueRow::updateFailedJobStatus(Transaction& txn, bool isRepack) {
+  RetrieveJobStatus newStatus;
+  std::string repack_table_name_prefix = "";
+  if(isRepack){
+    repack_table_name_prefix = "REPACK_";
+    newStatus = RetrieveJobStatus::RJS_ToReportToRepackForFailure;
+  } else {
+   newStatus = RetrieveJobStatus::RJS_ToReportToUserForFailure;
+  }
   std::string sql = R"SQL(
-      UPDATE RETRIEVE_ACTIVE_QUEUE SET
+      UPDATE )SQL";
+  sql += repack_table_name_prefix + R"SQL(RETRIEVE_ACTIVE_QUEUE SET
         STATUS = :STATUS,
         TOTAL_RETRIES = :TOTAL_RETRIES,
         RETRIES_WITHIN_MOUNT = :RETRIES_WITHIN_MOUNT,
@@ -310,11 +352,15 @@ void RetrieveJobQueueRow::updateRetryCounts(uint64_t mountId) {
 uint64_t RetrieveJobQueueRow::requeueFailedJob(Transaction& txn,
                                                RetrieveJobStatus newStatus,
                                                bool keepMountId,
-                                               std::optional<std::list<std::string>> jobIDs) {
+                                               bool isRepack,
+                                               std::optional<std::list<std::string>> jobIDs
+                                               ) {
+  std::string repack_table_name_prefix = isRepack ? "REPACK_" : "";
   std::string sql = R"SQL(
     WITH MOVED_ROWS AS (
-        DELETE FROM RETRIEVE_ACTIVE_QUEUE
+        DELETE FROM
   )SQL";
+  sql += repack_table_name_prefix + "RETRIEVE_ACTIVE_QUEUE ";
   bool userowjid = true;
   if (jobIDs.has_value() && !jobIDs.value().empty()) {
     userowjid = false;
@@ -334,7 +380,15 @@ uint64_t RetrieveJobQueueRow::requeueFailedJob(Transaction& txn,
   sql += R"SQL(
         RETURNING *
     )
-    INSERT INTO RETRIEVE_PENDING_QUEUE (
+    INSERT INTO
+  )SQL";
+  sql += repack_table_name_prefix + "RETRIEVE_PENDING_QUEUE (";
+  if (isRepack) {
+    sql += " REPACK_REQUEST_ID,";
+    sql += " REPACK_REARCHIVE_COPY_NBS,";
+    sql += " REPACK_REARCHIVE_TAPE_POOLS,";
+  }
+  sql += R"SQL(
       JOB_ID,
       RETRIEVE_REQUEST_ID,
       REQUEST_JOB_COUNT,
@@ -391,6 +445,13 @@ uint64_t RetrieveJobQueueRow::requeueFailedJob(Transaction& txn,
       MOUNT_ID
     )
     SELECT
+   )SQL";
+   if (isRepack) {
+     sql += " M.REPACK_REQUEST_ID,";
+     sql += " M.REPACK_REARCHIVE_COPY_NBS,";
+     sql += " M.REPACK_REARCHIVE_TAPE_POOLS,";
+   }
+   sql += R"SQL(
       M.JOB_ID,
       M.RETRIEVE_REQUEST_ID,
       M.REQUEST_JOB_COUNT,
@@ -473,11 +534,13 @@ uint64_t RetrieveJobQueueRow::requeueFailedJob(Transaction& txn,
 };
 
 uint64_t
-RetrieveJobQueueRow::requeueJobBatch(Transaction& txn, RetrieveJobStatus newStatus, const std::list<std::string>& jobIDs) {
+RetrieveJobQueueRow::requeueJobBatch(Transaction& txn, RetrieveJobStatus newStatus, const std::list<std::string>& jobIDs, bool isRepack) {
+  std::string repack_table_name_prefix = isRepack ? "REPACK_" : "";
   std::string sql = R"SQL(
     WITH MOVED_ROWS AS (
-        DELETE FROM RETRIEVE_ACTIVE_QUEUE
+        DELETE FROM
   )SQL";
+  sql += repack_table_name_prefix + "RETRIEVE_ACTIVE_QUEUE ";
   if (!jobIDs.empty()) {
     std::string sqlpart;
     for (const auto& jid : jobIDs) {
@@ -493,7 +556,15 @@ RetrieveJobQueueRow::requeueJobBatch(Transaction& txn, RetrieveJobStatus newStat
   sql += R"SQL(
         RETURNING *
     )
-    INSERT INTO RETRIEVE_PENDING_QUEUE (
+    INSERT INTO
+  )SQL";
+  sql += repack_table_name_prefix + "RETRIEVE_PENDING_QUEUE (";
+  if (isRepack) {
+    sql += " REPACK_REQUEST_ID,";
+    sql += " REPACK_REARCHIVE_COPY_NBS,";
+    sql += " REPACK_REARCHIVE_TAPE_POOLS,";
+  }
+  sql += R"SQL(
       JOB_ID,
       RETRIEVE_REQUEST_ID,
       REQUEST_JOB_COUNT,
@@ -550,6 +621,13 @@ RetrieveJobQueueRow::requeueJobBatch(Transaction& txn, RetrieveJobStatus newStat
       MOUNT_ID
     )
     SELECT
+    )SQL";
+    if (isRepack) {
+      sql += " M.REPACK_REQUEST_ID,";
+      sql += " M.REPACK_REARCHIVE_COPY_NBS,";
+      sql += " M.REPACK_REARCHIVE_TAPE_POOLS,";
+    }
+    sql += R"SQL(
       M.JOB_ID,
       M.RETRIEVE_REQUEST_ID,
       M.REQUEST_JOB_COUNT,
@@ -612,6 +690,224 @@ RetrieveJobQueueRow::requeueJobBatch(Transaction& txn, RetrieveJobStatus newStat
   stmt.bindString(":FAILURE_LOG", "UNPROCESSED_TASK_QUEUE_JOB_REQUEUED");
   stmt.executeNonQuery();
   return stmt.getNbAffectedRows();
+}
+
+rdbms::Rset
+RetrieveJobQueueRow::transformJobBatchToArchive(Transaction& txn, const size_t limit) {
+  // Notes for dev process: we assume the DST_URL becomes SRC_URL, the ARCHIVE_REPORT_URL
+  // and ARCHIVE_ERROR_REPORT_URL should not need to be used - must be checked
+  // we assume these should be poiniting to the same disk URL as for retrieve
+  // MIN_ARCHIVE_REQUEST_AGE ? - to be checked if could be used same as for the
+  // BASE_INSERT - the original copy NB from the retrieve
+  // ALTERNATE_INSERT - the alternative COPY_NB to re-archive if any
+  std::string sql = R"SQL(
+  WITH MOVED_ROWS AS (
+    DELETE FROM REPACK_RETRIEVE_ACTIVE_QUEUE rraq
+    WHERE rraq.JOB_ID IN (
+        SELECT JOB_ID
+        FROM REPACK_RETRIEVE_ACTIVE_QUEUE
+        WHERE STATUS = :RETRIEVESTATUS
+        ORDER BY JOB_ID
+        LIMIT :LIMIT
+    )
+    RETURNING rraq.*,
+              COALESCE(
+                NULLIF(CARDINALITY(string_to_array(rraq.REPACK_REARCHIVE_COPY_NBS, ',')), 0),
+              0) AS REQUEST_JOB_NEW_COUNT
+  ),
+  BASE_INSERT AS (
+      INSERT INTO REPACK_ARCHIVE_PENDING_QUEUE (
+        ARCHIVE_REQUEST_ID,
+        REPACK_REQUEST_ID,
+        REQUEST_JOB_COUNT,
+        TAPE_POOL,
+        MOUNT_POLICY,
+        PRIORITY,
+        MIN_ARCHIVE_REQUEST_AGE,
+        ARCHIVE_FILE_ID,
+        SIZE_IN_BYTES,
+        COPY_NB,
+        START_TIME,
+        CHECKSUMBLOB,
+        CREATION_TIME,
+        DISK_INSTANCE,
+        DISK_FILE_ID,
+        DISK_FILE_OWNER_UID,
+        DISK_FILE_GID,
+        DISK_FILE_PATH,
+        ARCHIVE_REPORT_URL,
+        ARCHIVE_ERROR_REPORT_URL,
+        REQUESTER_NAME,
+        REQUESTER_GROUP,
+        SRC_URL,
+        STORAGE_CLASS,
+        MAX_TOTAL_RETRIES,
+        MAX_RETRIES_WITHIN_MOUNT,
+        TOTAL_REPORT_RETRIES,
+        MAX_REPORT_RETRIES,
+        RETRIES_WITHIN_MOUNT,
+        TOTAL_RETRIES,
+        LAST_MOUNT_WITH_FAILURE,
+        STATUS,
+        MOUNT_ID
+      )
+      SELECT
+        M.RETRIEVE_REQUEST_ID,
+        M.REPACK_REQUEST_ID,
+        M.REQUEST_JOB_NEW_COUNT AS REQUEST_JOB_COUNT,
+        M.TAPE_POOL,
+        M.MOUNT_POLICY,
+        M.PRIORITY,
+        M.MIN_RETRIEVE_REQUEST_AGE,
+        M.ARCHIVE_FILE_ID,
+        M.SIZE_IN_BYTES,
+        M.COPY_NB,
+        M.START_TIME,
+        M.CHECKSUMBLOB,
+        M.CREATION_TIME,
+        M.DISK_INSTANCE,
+        M.DISK_FILE_ID,
+        M.DISK_FILE_OWNER_UID,
+        M.DISK_FILE_GID,
+        M.DISK_FILE_PATH,
+        M.RETRIEVE_REPORT_URL,
+        M.RETRIEVE_ERROR_REPORT_URL,
+        M.REQUESTER_NAME,
+        M.REQUESTER_GROUP,
+        M.DST_URL,
+        M.STORAGE_CLASS,
+        M.MAX_TOTAL_RETRIES,
+        M.MAX_RETRIES_WITHIN_MOUNT,
+        M.TOTAL_REPORT_RETRIES,
+        M.MAX_REPORT_RETRIES,
+        :RETRIES_WITHIN_MOUNT_BASE AS RETRIES_WITHIN_MOUNT,
+        :TOTAL_RETRIES_BASE AS TOTAL_RETRIES,
+        M.LAST_MOUNT_WITH_FAILURE,
+        :STATUS_BASE AS STATUS,
+        NULL AS MOUNT_ID
+      FROM MOVED_ROWS M
+      RETURNING REPACK_REQUEST_ID, SIZE_IN_BYTES
+  ),
+  ALTERNATE_INSERT AS (
+      INSERT INTO REPACK_ARCHIVE_PENDING_QUEUE (
+        ARCHIVE_REQUEST_ID,
+        REPACK_REQUEST_ID,
+        REQUEST_JOB_COUNT,
+        TAPE_POOL,
+        MOUNT_POLICY,
+        PRIORITY,
+        MIN_ARCHIVE_REQUEST_AGE,
+        ARCHIVE_FILE_ID,
+        SIZE_IN_BYTES,
+        COPY_NB,
+        START_TIME,
+        CHECKSUMBLOB,
+        CREATION_TIME,
+        DISK_INSTANCE,
+        DISK_FILE_ID,
+        DISK_FILE_OWNER_UID,
+        DISK_FILE_GID,
+        DISK_FILE_PATH,
+        ARCHIVE_REPORT_URL,
+        ARCHIVE_ERROR_REPORT_URL,
+        REQUESTER_NAME,
+        REQUESTER_GROUP,
+        SRC_URL,
+        STORAGE_CLASS,
+        MAX_TOTAL_RETRIES,
+        MAX_RETRIES_WITHIN_MOUNT,
+        TOTAL_REPORT_RETRIES,
+        MAX_REPORT_RETRIES,
+        RETRIES_WITHIN_MOUNT,
+        TOTAL_RETRIES,
+        LAST_MOUNT_WITH_FAILURE,
+        STATUS,
+        MOUNT_ID
+      )
+      SELECT
+        M.RETRIEVE_REQUEST_ID,
+        M.REPACK_REQUEST_ID,
+        M.REQUEST_JOB_NEW_COUNT AS REQUEST_JOB_COUNT,
+        REARCHIVE_POOL.REARCHIVE_TAPE_POOL_VAL AS TAPE_POOL,
+        M.MOUNT_POLICY,
+        M.PRIORITY,
+        M.MIN_RETRIEVE_REQUEST_AGE,
+        M.ARCHIVE_FILE_ID,
+        M.SIZE_IN_BYTES,
+        REARCHIVE_COPY.REARCHIVE_COPY_VAL AS COPY_NB,
+        M.START_TIME,
+        M.CHECKSUMBLOB,
+        M.CREATION_TIME,
+        M.DISK_INSTANCE,
+        M.DISK_FILE_ID,
+        M.DISK_FILE_OWNER_UID,
+        M.DISK_FILE_GID,
+        M.DISK_FILE_PATH,
+        M.RETRIEVE_REPORT_URL,
+        M.RETRIEVE_ERROR_REPORT_URL,
+        M.REQUESTER_NAME,
+        M.REQUESTER_GROUP,
+        M.DST_URL,
+        M.STORAGE_CLASS,
+        M.MAX_TOTAL_RETRIES,
+        M.MAX_RETRIES_WITHIN_MOUNT,
+        M.TOTAL_REPORT_RETRIES,
+        M.MAX_REPORT_RETRIES,
+        :RETRIES_WITHIN_MOUNT_ALTERNATE AS RETRIES_WITHIN_MOUNT,
+        :TOTAL_RETRIES_ALTERNATE AS TOTAL_RETRIES,
+        M.LAST_MOUNT_WITH_FAILURE,
+        :STATUS_ALTERNATE AS STATUS,
+        NULL AS MOUNT_ID
+      FROM MOVED_ROWS M
+      CROSS JOIN LATERAL (
+        SELECT CAST(trim(VAL) AS BIGINT) AS REARCHIVE_COPY_VAL, ORD
+        FROM unnest(string_to_array(M.REPACK_REARCHIVE_COPY_NBS, ',')) WITH ORDINALITY AS t(VAL, ORD) )
+        AS REARCHIVE_COPY
+      CROSS JOIN LATERAL (
+        SELECT trim(VAL) AS REARCHIVE_TAPE_POOL_VAL, ORD
+        FROM unnest(string_to_array(M.REPACK_REARCHIVE_TAPE_POOLS, ',')) WITH ORDINALITY AS t(VAL, ORD) )
+        AS REARCHIVE_POOL
+      WHERE REARCHIVE_COPY.ORD = REARCHIVE_POOL.ORD
+            AND REARCHIVE_POOL.REARCHIVE_TAPE_POOL_VAL IS NOT NULL
+            AND REARCHIVE_COPY.REARCHIVE_COPY_VAL IS NOT NULL
+            AND REARCHIVE_COPY.REARCHIVE_COPY_VAL <> M.COPY_NB
+            AND REARCHIVE_COPY.REARCHIVE_COPY_VAL <> 0
+      RETURNING REPACK_REQUEST_ID, SIZE_IN_BYTES
+  )
+  SELECT
+      COALESCE(b.REPACK_REQUEST_ID, a.REPACK_REQUEST_ID) AS REPACK_REQUEST_ID,
+      COALESCE(b.BASE_INSERTED_COUNT, 0) AS BASE_INSERTED_COUNT,
+      COALESCE(b.BASE_INSERTED_BYTES, 0) AS BASE_INSERTED_BYTES,
+      COALESCE(a.ALTERNATE_INSERTED_COUNT, 0) AS ALTERNATE_INSERTED_COUNT,
+      COALESCE(a.ALTERNATE_INSERTED_BYTES, 0) AS ALTERNATE_INSERTED_BYTES
+  FROM (
+      SELECT REPACK_REQUEST_ID,
+             COUNT(*) AS ALTERNATE_INSERTED_COUNT,
+             SUM(SIZE_IN_BYTES) AS ALTERNATE_INSERTED_BYTES
+      FROM ALTERNATE_INSERT
+      GROUP BY REPACK_REQUEST_ID
+  ) a
+  FULL OUTER JOIN (
+      SELECT REPACK_REQUEST_ID,
+             COUNT(*) AS BASE_INSERTED_COUNT,
+             SUM(SIZE_IN_BYTES) AS BASE_INSERTED_BYTES
+      FROM BASE_INSERT
+      GROUP BY REPACK_REQUEST_ID
+  ) b
+  ON a.REPACK_REQUEST_ID = b.REPACK_REQUEST_ID
+  )SQL";
+  //  WHERE MOVED_ROWS.ALTERNATE_COPY_NBS LIKE '%,%';
+
+  auto stmt = txn.getConn().createStmt(sql);
+  stmt.bindString(":RETRIEVESTATUS", to_string(RetrieveJobStatus::RJS_ToReportToRepackForSuccess));
+  stmt.bindString(":STATUS_BASE", to_string(ArchiveJobStatus::AJS_ToTransferForRepack));
+  stmt.bindString(":STATUS_ALTERNATE", to_string(ArchiveJobStatus::AJS_ToTransferForRepack));
+  stmt.bindUint32(":TOTAL_RETRIES_BASE", 0);
+  stmt.bindUint32(":TOTAL_RETRIES_ALTERNATE", 0);
+  stmt.bindUint32(":RETRIES_WITHIN_MOUNT_BASE", 0);
+  stmt.bindUint32(":RETRIES_WITHIN_MOUNT_ALTERNATE", 0);
+  stmt.bindUint32(":LIMIT", limit);
+  return stmt.executeQuery();
 }
 
 uint64_t RetrieveJobQueueRow::handlePendingRetrieveJobsAfterTapeStateChange(Transaction& txn, std::string vid) {
@@ -767,7 +1063,7 @@ uint64_t RetrieveJobQueueRow::moveJobToFailedQueueTable(Transaction& txn) {
   return stmt.getNbAffectedRows();
 }
 
-uint64_t RetrieveJobQueueRow::moveJobBatchToFailedQueueTable(Transaction& txn, const std::vector<std::string>& jobIDs) {
+uint64_t RetrieveJobQueueRow::moveJobBatchToFailedQueueTable(Transaction& txn, const std::vector<std::string>& jobIDs, bool isRepack) {
   std::string sqlpart;
   for (const auto& piece : jobIDs) {
     sqlpart += piece + ",";
@@ -775,19 +1071,60 @@ uint64_t RetrieveJobQueueRow::moveJobBatchToFailedQueueTable(Transaction& txn, c
   if (!sqlpart.empty()) {
     sqlpart.pop_back();
   }
+  std::string repack_table_name_prefix = isRepack ? "REPACK_" : "";
   std::string sql = R"SQL(
     WITH MOVED_ROWS AS (
-        DELETE FROM RETRIEVE_ACTIVE_QUEUE
+        DELETE FROM
+  )SQL";
+  sql += repack_table_name_prefix + "RETRIEVE_ACTIVE_QUEUE ";
+  sql += R"SQL(
           WHERE JOB_ID IN (
   )SQL";
   sql += sqlpart + ")";
   sql += R"SQL(
         RETURNING *
-    ) INSERT INTO RETRIEVE_FAILED_QUEUE SELECT * FROM MOVED_ROWS;
+    ) INSERT INTO
+  )SQL";
+  sql += repack_table_name_prefix + "RETRIEVE_FAILED_QUEUE ";
+  sql += R"SQL(
+  SELECT * FROM MOVED_ROWS;
   )SQL";
   auto stmt = txn.getConn().createStmt(sql);
   stmt.executeNonQuery();
   return stmt.getNbAffectedRows();
+}
+
+
+rdbms::Rset RetrieveJobQueueRow::moveFailedRepackJobBatchToFailedQueueTable(Transaction& txn, uint64_t limit) {
+  std::string sql = R"SQL(
+    WITH MOVED_ROWS AS (
+        DELETE FROM REPACK_RETRIEVE_ACTIVE_QUEUE
+        WHERE JOB_ID IN (
+            SELECT JOB_ID
+            FROM REPACK_RETRIEVE_ACTIVE_QUEUE
+            WHERE STATUS = 'RJS_ToReportToRepackForFailure'
+            ORDER BY JOB_ID
+            LIMIT :LIMIT
+            FOR UPDATE SKIP LOCKED
+        )
+        RETURNING *
+    ),
+    INSERTED_ROWS AS (
+        INSERT INTO REPACK_RETRIEVE_FAILED_QUEUE
+        SELECT * FROM MOVED_ROWS
+        RETURNING *
+    )
+    SELECT
+        REPACK_REQUEST_ID,
+        COUNT(*) AS FILE_COUNT,
+        SUM(SIZE_IN_BYTES) AS FILE_BYTES
+    FROM INSERTED_ROWS
+    GROUP BY REPACK_REQUEST_ID
+  )SQL";
+  auto stmt = txn.getConn().createStmt(sql);
+  stmt.bindUint64(":LIMIT", limit);
+  auto rset = stmt.executeQuery();
+  return rset;
 }
 
 uint64_t RetrieveJobQueueRow::updateJobStatusForFailedReport(Transaction& txn, RetrieveJobStatus newStatus) {

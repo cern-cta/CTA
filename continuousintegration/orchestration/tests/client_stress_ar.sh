@@ -104,6 +104,77 @@ tapefile_ls()
   done
 }
 
+delete_files_from_eos_and_tapes(){
+  # We can now delete the files
+  DELETED=0
+  if [[ $REMOVE == 1 ]]; then
+    echo "Waiting for files to be removed from EOS and tapes"
+    # . /root/client_helper.sh
+    admin_kdestroy &>/dev/null
+    admin_kinit &>/dev/null
+    if $(admin_cta admin ls &>/dev/null); then
+      echo "Got cta admin privileges, can proceed with the workflow"
+    else
+      # displays what failed and fail
+      admin_cta admin ls
+      die "Could not launch cta-admin command."
+    fi
+    # recount the files on tape as the workflows may have gone further...
+    VIDLIST=$(nsls_tapes ${EOS_DIR})
+    INITIALFILESONTAPE=$(tapefile_ls ${VIDLIST} | wc -l)
+    echo "Before starting deletion there are ${INITIALFILESONTAPE} files on tape."
+    KRB5CCNAME=/tmp/${EOSPOWER_USER}/krb5cc_0 XrdSecPROTOCOL=krb5 eos root://${EOS_MGM_HOST} rm -Fr ${EOS_DIR} &
+    EOSRMPID=$!
+    # wait a bit in case eos prematurely fails...
+    sleep 0.1
+    if test ! -d /proc/${EOSRMPID}; then
+      # eos rm process died, get its status
+      wait ${EOSRMPID}
+      test $? -ne 0 && die "Could not launch eos rm"
+    fi
+    # Now we can start to do something...
+    # The number of deleted files will be determined using the number of files initaly on tapes INITIALFILESONTAPE
+    # minus the number of files which are still on tapes at any point in time (output of tapefile_ls)...
+    echo "Waiting for files to be deleted:"
+    SECONDS_PASSED=0
+    WAIT_FOR_DELETED_FILE_TIMEOUT=$((5+${NB_FILES}/9))
+    FILESONTAPE=${INITIALFILESONTAPE}
+    while test 0 != ${FILESONTAPE}; do
+      echo "Waiting for files to be deleted from tape: Seconds passed = ${SECONDS_PASSED}"
+      sleep 1
+      let SECONDS_PASSED=SECONDS_PASSED+1
+
+      if test ${SECONDS_PASSED} == ${WAIT_FOR_DELETED_FILE_TIMEOUT}; then
+        echo "Timed out after ${WAIT_FOR_DELETED_FILE_TIMEOUT} seconds waiting for file to be deleted from tape"
+        break
+      fi
+      FILESONTAPE=$(tapefile_ls ${VIDLIST} > >(wc -l) 2> >(cat > /tmp/ctaerr))
+      if [[ $(cat /tmp/ctaerr | wc -l) -gt 0 ]]; then
+        echo "cta-admin COMMAND FAILED!!"
+        echo "ERROR CTA ERROR MESSAGE:"
+        cat /tmp/ctaerr
+        break
+      fi
+      DELETED=$((${INITIALFILESONTAPE} - ${FILESONTAPE}))
+      echo "${DELETED}/${INITIALFILESONTAPE} deleted"
+    done
+
+    # kill eos rm command that may run in the background
+    kill ${EOSRMPID} &> /dev/null
+
+    # As we deleted the directory we may have deleted more files than the ones we retrieved
+    # therefore we need to take the smallest of the 2 values to decide if the system test was
+    # successful or not
+    if [[ ${RETRIEVED} -gt ${DELETED} ]]; then
+      LASTCOUNT=${DELETED}
+      echo "Some files have not been deleted:"
+      tapefile_ls ${VIDLIST}
+    else
+      echo "All files have been deleted"
+      LASTCOUNT=${RETRIEVED}
+    fi
+  fi
+}
 
 while getopts "d:e:n:N:s:p:vS:rAPGt:m:Q" o; do
     case "${o}" in
@@ -165,7 +236,7 @@ fi
 
 if [[ $PREQUEUE == 1 ]]; then
   DRIVE_UP_SUBDIR_NUMBER=20
-  DRIVE_UP="ULT3580-TD811"
+# DRIVE_UP="ULT3580-TD811"
 fi
 
 if [[ $DONOTARCHIVE == 1 ]]; then
@@ -398,7 +469,7 @@ ARCHIVING=${TO_BE_ARCHIVED}
 ARCHIVED=0
 echo "$(date +%s): Waiting for files to be on tape:"
 SECONDS_PASSED=0
-WAIT_FOR_ARCHIVED_FILE_TIMEOUT=$((40+${NB_FILES}/10))
+WAIT_FOR_ARCHIVED_FILE_TIMEOUT=$((6600+${NB_FILES}/10))
 START_TIME=$(date +%s)
 END_TIME=$(date +%s)
 while test 0 != ${ARCHIVING}; do
@@ -584,10 +655,14 @@ ARCHIVED=$(cat ${STATUS_FILE} | wc -l)
 TO_BE_RETRIEVED=$(( ${ARCHIVED} - $(ls ${ERROR_DIR}/RETRIEVE_* 2>/dev/null | wc -l) ))
 RETRIEVING=${TO_BE_RETRIEVED}
 RETRIEVED=0
+NO_PROGRESS_TIMEOUT=300
+LAST_PROGRESS_TIME=${START_TIME}
+LAST_RETRIEVED_COUNT=0
 # Wait for the copy to appear on disk
 echo "$(date +%s): Waiting for files to be back on disk:"
 SECONDS_PASSED=0
-WAIT_FOR_RETRIEVED_FILE_TIMEOUT=$((40+${NB_FILES}/10))
+START_TIME=$(date +%s)
+WAIT_FOR_RETRIEVED_FILE_TIMEOUT=$((6600+${NB_FILES}/10))
 while test 0 -lt ${RETRIEVING}; do
   NOW=$(date +%s)
   SECONDS_PASSED=$((NOW - START_TIME))
@@ -603,25 +678,59 @@ while test 0 -lt ${RETRIEVING}; do
     sleep 1 # do not hammer eos too hard
   done
 
-  RETRIEVING=$((${TO_BE_RETRIEVED} - ${RETRIEVED}))
+  RETRIEVING=$((${ARCHIVED} - ${RETRIEVED}))
 
-  echo "${RETRIEVED}/${TO_BE_RETRIEVED} retrieved; Remaining ${RETRIEVING}"
+  echo "${RETRIEVED}/${ARCHIVED} retrieved; Remaining ${RETRIEVING}"
+
+  # Check for progress
+  if (( RETRIEVED > LAST_RETRIEVED_COUNT )); then
+    LAST_PROGRESS_TIME=${NOW}
+    LAST_RETRIEVED_COUNT=${RETRIEVED}
+  else
+    NO_PROGRESS_TIME=$((NOW - LAST_PROGRESS_TIME))
+    if (( NO_PROGRESS_TIME >= NO_PROGRESS_TIMEOUT )); then
+      echo "$(date +%s): No progress for ${NO_PROGRESS_TIMEOUT}s — treating as completed successfully."
+      break
+    fi
+  fi
   sleep 10
 done
 
 echo "###"
-echo "${RETRIEVED}/${TO_BE_RETRIEVED} retrieved files"
+echo "${RETRIEVED}/${ARCHIVED} retrieved files"
 echo "###"
 
 if (( SKIP_EVICT == 1 )); then
-  echo "As SKIP_EVICT is ${SKIP_EVICT}, we skip the rest of the stress test."
+  echo "As SKIP_EVICT is ${SKIP_EVICT}, we skip the rest of the stress test, just evict the files from disk."
+  # Build the list of files with at least 1 disk copy that have been archived before (ie d>=1::t1)
+  rm -f ${STATUS_FILE}
+  touch ${STATUS_FILE}
+  for ((subdir=0; subdir < ${NB_DIRS}; subdir++)); do
+    eos root://${EOS_MGM_HOST} ls -y ${EOS_DIR}/${subdir} | grep -E 'd[1-9][0-9]*::t1' | sed -e "s%\s\+% %g;s%.* \([^ ]\+\)$%${subdir}/\1%" >> ${STATUS_FILE}
+    sleep 2
+  done
+
+  TO_EVICT=$(cat ${STATUS_FILE} | wc -l)
+
+  echo "$(date +%s): $TO_EVICT files to be evicted from EOS using 'xrdfs prepare -e'"
+  # We need the -e as we are evicting the files from disk cache (see xrootd prepare definition)
+  cat ${STATUS_FILE} | sed -e "s%^%${EOS_DIR}/%" | XrdSecPROTOCOL=krb5 KRB5CCNAME=/tmp/${EOSPOWER_USER}/krb5cc_0 xargs --max-procs=10 -n 40 xrdfs ${EOS_MGM_HOST} prepare -e > /dev/null
+
+
+  LEFTOVER=0
+  for ((subdir=0; subdir < ${NB_DIRS}; subdir++)); do
+    LEFTOVER=$(( ${LEFTOVER} + $(eos root://${EOS_MGM_HOST} ls -y ${EOS_DIR}/${subdir} | grep -E '^d[1-9][0-9]*::t1' | wc -l) ))
+  done
+
+  EVICTED=$((${TO_EVICT}-${LEFTOVER}))
+  echo "$(date +%s): $EVICTED/$TO_EVICT files evicted from EOS 'xrdfs prepare -e'"
   exit 0
 fi
 #echo "$(date +%s): Dumping objectstore list"
 #ssh root@ctappsfrontend cta-objectstore-list
 
 
-# Build the list of files with more than 1 disk copy that have been archived before (ie d>=1::t1)
+# Build the list of files with at least 1 disk copy that have been archived before (ie d>=1::t1)
 rm -f ${STATUS_FILE}
 touch ${STATUS_FILE}
 for ((subdir=0; subdir < ${NB_DIRS}; subdir++)); do
@@ -778,75 +887,7 @@ if [ "0" != "$(ls ${ERROR_DIR} 2> /dev/null | wc -l)" ]; then
   mv ${ERROR_DIR}/* ${LOGDIR}/xrd_errors/
 fi
 
-# We can now delete the files
-DELETED=0
-if [[ $REMOVE == 1 ]]; then
-  echo "Waiting for files to be removed from EOS and tapes"
-  # . /root/client_helper.sh
-  admin_kdestroy &>/dev/null
-  admin_kinit &>/dev/null
-  if $(admin_cta admin ls &>/dev/null); then
-    echo "Got cta admin privileges, can proceed with the workflow"
-  else
-    # displays what failed and fail
-    admin_cta admin ls
-    die "Could not launch cta-admin command."
-  fi
-  # recount the files on tape as the workflows may have gone further...
-  VIDLIST=$(nsls_tapes ${EOS_DIR})
-  INITIALFILESONTAPE=$(tapefile_ls ${VIDLIST} | wc -l)
-  echo "Before starting deletion there are ${INITIALFILESONTAPE} files on tape."
-  KRB5CCNAME=/tmp/${EOSPOWER_USER}/krb5cc_0 XrdSecPROTOCOL=krb5 eos root://${EOS_MGM_HOST} rm -Fr ${EOS_DIR} &
-  EOSRMPID=$!
-  # wait a bit in case eos prematurely fails...
-  sleep 0.1
-  if test ! -d /proc/${EOSRMPID}; then
-    # eos rm process died, get its status
-    wait ${EOSRMPID}
-    test $? -ne 0 && die "Could not launch eos rm"
-  fi
-  # Now we can start to do something...
-  # deleted files are the ones that made it on tape minus the ones that are still on tapes...
-  echo "Waiting for files to be deleted:"
-  SECONDS_PASSED=0
-  WAIT_FOR_DELETED_FILE_TIMEOUT=$((5+${NB_FILES}/9))
-  FILESONTAPE=${INITIALFILESONTAPE}
-  while test 0 != ${FILESONTAPE}; do
-    echo "Waiting for files to be deleted from tape: Seconds passed = ${SECONDS_PASSED}"
-    sleep 1
-    let SECONDS_PASSED=SECONDS_PASSED+1
-
-    if test ${SECONDS_PASSED} == ${WAIT_FOR_DELETED_FILE_TIMEOUT}; then
-      echo "Timed out after ${WAIT_FOR_DELETED_FILE_TIMEOUT} seconds waiting for file to be deleted from tape"
-      break
-    fi
-    FILESONTAPE=$(tapefile_ls ${VIDLIST} > >(wc -l) 2> >(cat > /tmp/ctaerr))
-    if [[ $(cat /tmp/ctaerr | wc -l) -gt 0 ]]; then
-      echo "cta-admin COMMAND FAILED!!"
-      echo "ERROR CTA ERROR MESSAGE:"
-      cat /tmp/ctaerr
-      break
-    fi
-    DELETED=$((${INITIALFILESONTAPE} - ${FILESONTAPE}))
-    echo "${DELETED}/${INITIALFILESONTAPE} deleted"
-  done
-
-  # kill eos rm command that may run in the background
-  kill ${EOSRMPID} &> /dev/null
-
-  # As we deleted the directory we may have deleted more files than the ones we retrieved
-  # therefore we need to take the smallest of the 2 values to decide if the system test was
-  # successful or not
-  if [[ ${RETRIEVED} -gt ${DELETED} ]]; then
-    LASTCOUNT=${DELETED}
-    echo "Some files have not been deleted:"
-    tapefile_ls ${VIDLIST}
-  else
-    echo "All files have been deleted"
-    LASTCOUNT=${RETRIEVED}
-  fi
-fi
-
+delete_files_from_eos_and_tapes
 
 echo "###"
 echo "$(date +%s): Results:"

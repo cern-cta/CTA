@@ -30,9 +30,24 @@
 
 namespace cta::schedulerdb::postgres {
 
+struct ArchiveQueueJob {
+    int copyNb;
+    ArchiveJobStatus status;
+    std::string tapepool;
+    int totalRetries;
+    int retriesWithinMount;
+    int lastMountWithFailure;
+    int maxRetriesWithinMount;
+    int maxTotalRetries;
+    int totalReportRetries;
+    int maxReportRetries;
+    int archiveRequestId;
+  };
+
 struct ArchiveJobQueueRow {
   uint64_t jobId = 0;
   uint64_t reqId = 0;
+  uint64_t repackRequestId = 0;
   uint32_t reqJobCount = 1;
   std::optional<std::uint64_t> mountId = std::nullopt;
   ArchiveJobStatus status = ArchiveJobStatus::AJS_ToTransferForUser;
@@ -122,6 +137,7 @@ public:
   void reset() {
     jobId = 0;
     reqId = 0;
+    repackRequestId = 0;
     reqJobCount = 1;
     mountId.reset();  // Resetting optional value
     status = ArchiveJobStatus::AJS_ToTransferForUser;
@@ -171,6 +187,9 @@ public:
 
   ArchiveJobQueueRow& operator=(const rdbms::Rset& rset) {
     jobId = rset.columnUint64NoOpt("JOB_ID");
+    if (rset.columnExists("REPACK_REQUEST_ID")){
+      repackRequestId = rset.columnUint64NoOpt("REPACK_REQUEST_ID");
+    }
     reqId = rset.columnUint64NoOpt("ARCHIVE_REQUEST_ID");
     reqJobCount = rset.columnUint32NoOpt("REQUEST_JOB_COUNT");
     mountId = rset.columnOptionalUint64("MOUNT_ID");
@@ -317,11 +336,138 @@ public:
     stmt.executeNonQuery();
   }
 
+
+  static void insertBatch(rdbms::Conn &conn,
+                              const std::vector<std::unique_ptr<ArchiveJobQueueRow>> &rows,
+                              bool isRepack) {
+  if (rows.empty()) return;
+
+  std::string prefix = isRepack ? "REPACK_" : "";
+  std::string sql = "INSERT INTO " + prefix + "ARCHIVE_PENDING_QUEUE ( ";
+  if (isRepack) sql += "REPACK_REQUEST_ID,";
+  sql +=  R"SQL(
+      ARCHIVE_REQUEST_ID,
+      REQUEST_JOB_COUNT,
+      STATUS,
+      TAPE_POOL,
+      MOUNT_POLICY,
+      PRIORITY,
+      MIN_ARCHIVE_REQUEST_AGE,
+      ARCHIVE_FILE_ID,
+      SIZE_IN_BYTES,
+      COPY_NB,
+      START_TIME,
+      CHECKSUMBLOB,
+      CREATION_TIME,
+      DISK_INSTANCE,
+      DISK_FILE_ID,
+      DISK_FILE_OWNER_UID,
+      DISK_FILE_GID,
+      DISK_FILE_PATH,
+      ARCHIVE_REPORT_URL,
+      ARCHIVE_ERROR_REPORT_URL,
+      REQUESTER_NAME,
+      REQUESTER_GROUP,
+      SRC_URL,
+      STORAGE_CLASS,
+      RETRIES_WITHIN_MOUNT,
+      MAX_RETRIES_WITHIN_MOUNT,
+      TOTAL_RETRIES,
+      LAST_MOUNT_WITH_FAILURE,
+      MAX_TOTAL_RETRIES,
+      TOTAL_REPORT_RETRIES,
+      MAX_REPORT_RETRIES) VALUES )SQL";
+
+  // Generate VALUES placeholders for each row
+  for (size_t i = 0; i < rows.size(); ++i) {
+    std::string idx = std::to_string(i);
+    sql += "(";
+    if (isRepack) sql += ":REPACK_REQUEST_ID" + idx + ",";
+    sql += ":ARCHIVE_REQUEST_ID"      + idx + ","
+           ":REQUEST_JOB_COUNT"       + idx + ","
+           ":STATUS"                  + idx + ","
+           ":TAPE_POOL"               + idx + ","
+           ":MOUNT_POLICY"            + idx + ","
+           ":PRIORITY"                + idx + ","
+           ":MIN_ARCHIVE_REQUEST_AGE" + idx + ","
+           ":ARCHIVE_FILE_ID"         + idx + ","
+           ":SIZE_IN_BYTES"           + idx + ","
+           ":COPY_NB"                 + idx + ","
+           ":START_TIME"              + idx + ","
+           ":CHECKSUMBLOB"            + idx + ","
+           ":CREATION_TIME"           + idx + ","
+           ":DISK_INSTANCE"           + idx + ","
+           ":DISK_FILE_ID"            + idx + ","
+           ":DISK_FILE_OWNER_UID"     + idx + ","
+           ":DISK_FILE_GID"           + idx + ","
+           ":DISK_FILE_PATH"          + idx + ","
+           ":ARCHIVE_REPORT_URL"      + idx + ","
+           ":ARCHIVE_ERROR_REPORT_URL"+ idx + ","
+           ":REQUESTER_NAME"          + idx + ","
+           ":REQUESTER_GROUP"         + idx + ","
+           ":SRC_URL"                 + idx + ","
+           ":STORAGE_CLASS"           + idx + ","
+           ":RETRIES_WITHIN_MOUNT"    + idx + ","
+           ":MAX_RETRIES_WITHIN_MOUNT"+ idx + ","
+           ":TOTAL_RETRIES"           + idx + ","
+           ":LAST_MOUNT_WITH_FAILURE" + idx + ","
+           ":MAX_TOTAL_RETRIES"       + idx + ","
+           ":TOTAL_REPORT_RETRIES"    + idx + ","
+           ":MAX_REPORT_RETRIES"      + idx + ")";
+    if (i < rows.size() - 1) sql += ",";
+  }
+
+  auto stmt = conn.createStmt(sql);
+
+  // Bind values for each row with distinct names
+  for (size_t i = 0; i < rows.size(); ++i) {
+    const auto &row = *rows[i];
+    std::string idx = std::to_string(i);
+    if (isRepack) {
+        stmt.bindUint64(":REPACK_REQUEST_ID" + idx, row.repackRequestId);
+    }
+    stmt.bindUint64(":ARCHIVE_REQUEST_ID" + idx, row.reqId);
+    stmt.bindUint32(":REQUEST_JOB_COUNT" + idx, row.reqJobCount);
+    stmt.bindString(":STATUS" + idx, to_string(row.status));
+    stmt.bindString(":TAPE_POOL" + idx, row.tapePool);
+    stmt.bindString(":MOUNT_POLICY" + idx, row.mountPolicy);
+    stmt.bindUint16(":PRIORITY" + idx, row.priority);
+    stmt.bindUint32(":MIN_ARCHIVE_REQUEST_AGE" + idx, row.minArchiveRequestAge);
+    stmt.bindUint64(":ARCHIVE_FILE_ID" + idx, row.archiveFileID);
+    stmt.bindUint64(":SIZE_IN_BYTES" + idx, row.fileSize);
+    stmt.bindUint16(":COPY_NB" + idx, row.copyNb);
+    stmt.bindUint64(":START_TIME" + idx, row.startTime);
+    stmt.bindBlob(":CHECKSUMBLOB" + idx, row.checksumBlob.serialize());
+    stmt.bindUint64(":CREATION_TIME" + idx, row.creationTime);
+    stmt.bindString(":DISK_INSTANCE" + idx, row.diskInstance);
+    stmt.bindString(":DISK_FILE_ID" + idx, row.diskFileId);
+    stmt.bindUint32(":DISK_FILE_OWNER_UID" + idx, row.diskFileInfoOwnerUid);
+    stmt.bindUint32(":DISK_FILE_GID" + idx, row.diskFileInfoGid);
+    stmt.bindString(":DISK_FILE_PATH" + idx, row.diskFileInfoPath);
+    stmt.bindString(":ARCHIVE_REPORT_URL" + idx, row.archiveReportURL);
+    stmt.bindString(":ARCHIVE_ERROR_REPORT_URL" + idx, row.archiveErrorReportURL);
+    stmt.bindString(":REQUESTER_NAME" + idx, row.requesterName);
+    stmt.bindString(":REQUESTER_GROUP" + idx, row.requesterGroup);
+    stmt.bindString(":SRC_URL" + idx, row.srcUrl);
+    stmt.bindString(":STORAGE_CLASS" + idx, row.storageClass);
+    stmt.bindUint16(":RETRIES_WITHIN_MOUNT" + idx, row.retriesWithinMount);
+    stmt.bindUint16(":MAX_RETRIES_WITHIN_MOUNT" + idx, row.maxRetriesWithinMount);
+    stmt.bindUint16(":TOTAL_RETRIES" + idx, row.totalRetries);
+    stmt.bindUint32(":LAST_MOUNT_WITH_FAILURE" + idx, row.lastMountWithFailure);
+    stmt.bindUint16(":MAX_TOTAL_RETRIES" + idx, row.maxTotalRetries);
+    stmt.bindUint16(":TOTAL_REPORT_RETRIES" + idx, row.totalReportRetries);
+    stmt.bindUint16(":MAX_REPORT_RETRIES" + idx, row.maxReportRetries);
+  }
+
+  stmt.executeNonQuery();
+}
+
   void addParamsToLogContext(log::ScopedParamContainer& params) const {
     // does not set jobId
     params.add("mountId", mountId.has_value() ? std::to_string(mountId.value()) : "no value");
     params.add("jobID", std::to_string(jobId));
     params.add("reqId", std::to_string(reqId));
+    params.add("repackRequestId", std::to_string(repackRequestId));
     params.add("reqJobCount", std::to_string(reqJobCount));
     params.add("status", to_string(status));
     params.add("tapePool", tapePool);
@@ -350,78 +496,6 @@ public:
     params.add("lastMountWithFailure", lastMountWithFailure);
     params.add("maxTotalRetries", maxTotalRetries);
     params.add("maxReportRetries", maxReportRetries);
-  }
-
-  /**
-   * Select any jobs from the queue by job ID
-   *
-   * @param conn       Connection to the DB backend
-   * @param jobIDs     List of jobID strings to select
-   * @return  result set
-   */
-  static rdbms::Rset selectJobsByJobID(rdbms::Conn& conn, const std::list<std::string>& jobIDs) {
-    if (jobIDs.empty()) {
-      rdbms::Rset ret;
-      return ret;
-    }
-    std::string sqlpart;
-    for (const auto& piece : jobIDs) {
-      sqlpart += piece + ",";
-    }
-    if (!sqlpart.empty()) {
-      sqlpart.pop_back();
-    }
-    std::string sql = R"SQL(
-      SELECT 
-        JOB_ID AS JOB_ID,
-        ARCHIVE_REQUEST_ID AS ARCHIVE_REQUEST_ID,
-        REQUEST_JOB_COUNT AS REQUEST_JOB_COUNT,
-        MOUNT_ID AS MOUNT_ID,
-        VID AS VID,
-        STATUS AS STATUS,
-        TAPE_POOL AS TAPE_POOL,
-        MOUNT_POLICY AS MOUNT_POLICY,
-        PRIORITY AS PRIORITY,
-        MIN_ARCHIVE_REQUEST_AGE AS MIN_ARCHIVE_REQUEST_AGE,
-        ARCHIVE_FILE_ID AS ARCHIVE_FILE_ID,
-        SIZE_IN_BYTES AS SIZE_IN_BYTES,
-        COPY_NB AS COPY_NB,
-        START_TIME AS START_TIME,
-        CHECKSUMBLOB AS CHECKSUMBLOB,
-        CREATION_TIME AS CREATION_TIME,
-        DISK_INSTANCE AS DISK_INSTANCE,
-        DISK_FILE_ID AS DISK_FILE_ID,
-        DISK_FILE_OWNER_UID AS DISK_FILE_OWNER_UID,
-        DISK_FILE_GID AS DISK_FILE_GID,
-        DISK_FILE_PATH AS DISK_FILE_PATH,
-        ARCHIVE_REPORT_URL AS ARCHIVE_REPORT_URL,
-        ARCHIVE_ERROR_REPORT_URL AS ARCHIVE_ERROR_REPORT_URL,
-        REQUESTER_NAME AS REQUESTER_NAME,
-        REQUESTER_GROUP AS REQUESTER_GROUP,
-        SRC_URL AS SRC_URL,
-        STORAGE_CLASS AS STORAGE_CLASS,
-        RETRIES_WITHIN_MOUNT AS RETRIES_WITHIN_MOUNT,
-        MAX_RETRIES_WITHIN_MOUNT AS MAX_RETRIES_WITHIN_MOUNT,
-        TOTAL_RETRIES AS TOTAL_RETRIES,
-        TOTAL_REPORT_RETRIES AS TOTAL_REPORT_RETRIES,
-        FAILURE_LOG AS FAILURE_LOG,
-        REPORT_FAILURE_LOG AS REPORT_FAILURE_LOG,
-        LAST_MOUNT_WITH_FAILURE  AS LAST_MOUNT_WITH_FAILURE,
-        MAX_TOTAL_RETRIES AS MAX_TOTAL_RETRIES,
-        MAX_REPORT_RETRIES AS MAX_REPORT_RETRIES,
-        IS_REPORTING AS IS_REPORTING,
-        DRIVE AS DRIVE,
-        HOST AS HOST,
-        MOUNT_TYPE AS MOUNT_TYPE,
-        LOGICAL_LIBRARY AS LOGICAL_LIBRARY
-      FROM ARCHIVE_ACTIVE_QUEUE
-      WHERE 
-        JOB_ID IN (
-    )SQL" + sqlpart + R"SQL(
-      ) ORDER BY PRIORITY DESC, JOB_ID
-    )SQL";
-    auto stmt = conn.createStmt(sql);
-    return stmt.executeQuery();
   }
 
   /**
@@ -470,7 +544,7 @@ public:
                           ArchiveJobStatus newStatus,
                           const SchedulerDatabase::ArchiveMount::MountInfo& mountInfo,
                           uint64_t maxBytesRequested,
-                          uint64_t limit);
+                          uint64_t limit, bool isRepack);
 
   /**
    * Update job status
@@ -480,7 +554,7 @@ public:
    * @param jobIDs     List of jobID strings to select
    * @return           Number of updated rows
    */
-  static uint64_t updateJobStatus(Transaction& txn, ArchiveJobStatus newStatus, const std::vector<std::string>& jobIDs);
+  static uint64_t updateJobStatus(Transaction& txn, ArchiveJobStatus newStatus, bool isRepack, const std::vector<std::string>& jobIDs);
 
   /**
    * Update failed job status
@@ -489,7 +563,7 @@ public:
    * @param newStatus            Archive Job Status to select on
    * @return                     Number of updated rows
    */
-  uint64_t updateFailedJobStatus(Transaction& txn, ArchiveJobStatus newStatus);
+  uint64_t updateFailedJobStatus(Transaction& txn, bool isRepack);
 
   /**
    * Move a failed job from ARCHIVE_ACTIVE_QUEUE
@@ -504,7 +578,7 @@ public:
    */
   uint64_t requeueFailedJob(Transaction& txn,
                             ArchiveJobStatus newStatus,
-                            bool keepMountId,
+                            bool keepMountId, bool isRepack,
                             std::optional<std::list<std::string>> jobIDs = std::nullopt);
 
   /**
@@ -521,6 +595,7 @@ public:
    */
   static uint64_t requeueJobBatch(Transaction& txn,
                                   ArchiveJobStatus newStatus,
+                                  bool isRepack,
                                   const std::list<std::string>& jobIDs);
 
   /**
@@ -547,7 +622,7 @@ public:
    * @return nrows               The number of rows moved.
    */
   static uint64_t moveJobBatchToFailedQueueTable(Transaction& txn, const std::vector<std::string>& jobIDs);
-
+  static rdbms::Rset moveFailedRepackJobBatchToFailedQueueTable(Transaction& txn, uint64_t limit);
   /**
    * Increment Archive Request ID and return the new value
    *
@@ -570,5 +645,10 @@ public:
    * Increments the number of retries and updates the last failed mount accordingly.
    */
   void updateRetryCounts(uint64_t mountId);
+
+  static rdbms::Rset getNextSuccessfulArchiveRepackReportBatch(Transaction &txn,
+                                                               const size_t limit);
+  static rdbms::Rset deleteSuccessfulRepackArchiveJobBatch(Transaction &txn,
+                                                           std::vector<std::string>& jobIDs);
 };
 };  // namespace cta::schedulerdb::postgres

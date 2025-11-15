@@ -113,4 +113,178 @@ kubectl -n ${NAMESPACE} exec ${CLIENT_POD} -c client -- bash /root/client_stress
 
 #kubectl -n ${NAMESPACE} exec ${EOS_MGM_POD} -c eos-mgm -- bash /root/grep_xrdlog_mgm_for_error.sh || exit 1
 
+# REPACK TEST for postgres scheduler only
+source ./repack_helper.sh
+kubectl -n ${NAMESPACE} cp repack_systemtest.sh ${CLIENT_POD}:/root/repack_systemtest.sh -c client
+REPACK_BUFFER_URL=/eos/ctaeos/repack
+BASE_REPORT_DIRECTORY=/var/log
+
+modifyTapeState() {
+  reason="${3:-Testing}"
+  kubectl -n ${NAMESPACE} exec ${CTA_CLI_POD} -c cta-cli -- cta-admin tape ch --state $2 --reason "$reason" --vid $1
+}
+
+modifyTapeStateAndWait() {
+  WAIT_FOR_EMPTY_QUEUE_TIMEOUT=60
+  SECONDS_PASSED=0
+  modifyTapeState $1 $2 $3
+  echo "Waiting for tape $1 to complete transitioning to $2"
+  while test 0 == `kubectl -n ${NAMESPACE} exec ${CTA_CLI_POD} -c cta-cli -- cta-admin --json tape ls --state $2 --vid $1  | jq -r ". [] | select(.vid == \"$1\")" | wc -l`; do
+    sleep 1
+    printf "."
+    let SECONDS_PASSED=SECONDS_PASSED+1
+    if test ${SECONDS_PASSED} == ${WAIT_FOR_EMPTY_QUEUE_TIMEOUT}; then
+      echo "Timed out after ${WAIT_FOR_EMPTY_QUEUE_TIMEOUT} seconds waiting for tape $1 to transition to state $2. Test failed."
+      exit 1
+    fi
+  done
+}
+
+repackMoveAndAddCopies() {
+  echo
+  echo "*******************************************************"
+  echo " Testing Repack \"Move and Add copies\" workflow       "
+  echo "*******************************************************"
+
+  defaultTapepool="ctasystest"
+  tapepoolDestination1_default="systest2_default"
+  tapepoolDestination2_default="systest3_default"
+  tapepoolDestination2_repack="systest3_repack"
+
+  echo "Creating 2 destination tapepools : $tapepoolDestination1_default and $tapepoolDestination2_default"
+  kubectl -n ${NAMESPACE} exec ${CTA_CLI_POD} -c cta-cli -- cta-admin tapepool add --name $tapepoolDestination1_default --vo vo --partialtapesnumber 2 --comment "$tapepoolDestination1_default tapepool"
+  kubectl -n ${NAMESPACE} exec ${CTA_CLI_POD} -c cta-cli -- cta-admin tapepool add --name $tapepoolDestination2_default --vo vo --partialtapesnumber 2 --comment "$tapepoolDestination2_default tapepool"
+  echo "OK"
+
+  echo "Creating 1 destination tapepool for repack : $tapepoolDestination2_repack (will override $tapepoolDestination2_default)"
+  kubectl -n ${NAMESPACE} exec ${CTA_CLI_POD} -c cta-cli -- cta-admin tapepool add --name $tapepoolDestination2_repack --vo vo --partialtapesnumber 2 --comment "$tapepoolDestination2_repack tapepool"
+  echo "OK"
+
+  echo "Creating archive routes for adding two copies of the file"
+  kubectl -n ${NAMESPACE} exec ${CTA_CLI_POD} -c cta-cli -- cta-admin archiveroute add --storageclass ctaStorageClass --copynb 2 --tapepool $tapepoolDestination1_default --comment "ArchiveRoute2_default"
+  kubectl -n ${NAMESPACE} exec ${CTA_CLI_POD} -c cta-cli -- cta-admin archiveroute add --storageclass ctaStorageClass --copynb 3 --archiveroutetype DEFAULT --tapepool $tapepoolDestination2_default --comment "ArchiveRoute3_default"
+  kubectl -n ${NAMESPACE} exec ${CTA_CLI_POD} -c cta-cli -- cta-admin archiveroute add --storageclass ctaStorageClass --copynb 3 --archiveroutetype REPACK --tapepool $tapepoolDestination2_repack --comment "ArchiveRoute3_repack"
+  echo "OK"
+
+  echo "Will change the tapepool of the tapes"
+
+  allVID=`kubectl -n ${NAMESPACE}  exec ${CTA_CLI_POD} -c cta-cli -- cta-admin --json tape ls --all | jq -r ". [] | .vid"`
+  allVIDTable=($allVID)
+
+  nbVid=${#allVIDTable[@]}
+
+  allTapepool=`kubectl -n ${NAMESPACE} exec ${CTA_CLI_POD} -c cta-cli -- cta-admin --json tapepool ls | jq -r ". [] .name"`
+  allTapepoolTable=($allTapepool)
+
+  nbTapepool=${#allTapepoolTable[@]}
+  nbTapePerTapepool=$(($nbVid / $nbTapepool))
+
+  countChanging=0
+  tapepoolIndice=1 #We only change the vid of the remaining other tapes
+  if [[ $nbTapepool -eq 0 ]]; then
+    echo "No tapepools found for repack — aborting."
+    exit 1
+  fi
+  for ((i=$(($nbTapePerTapepool+$(($nbVid%$nbTapepool)))); i<$nbVid; i++));
+  do
+    echo "kubectl -n ${NAMESPACE} exec ${CTA_CLI_POD} -c cta-cli -- cta-admin tape ch --vid ${allVIDTable[$i]} --tapepool ${allTapepoolTable[$tapepoolIndice]}"
+    kubectl -n ${NAMESPACE} exec ${CTA_CLI_POD} -c cta-cli -- cta-admin tape ch --vid ${allVIDTable[$i]} --tapepool ${allTapepoolTable[$tapepoolIndice]}
+    countChanging=$((countChanging + 1))
+    if [[ $countChanging -ne 0 && $((countChanging % nbTapePerTapepool)) -eq 0 ]]; then
+      tapepoolIndice=$((tapepoolIndice + 1))
+    fi
+  done
+
+  echo "OK"
+
+  storageClassName=`kubectl -n ${NAMESPACE} exec ${CTA_CLI_POD} -c cta-cli -- cta-admin --json storageclass ls | jq -r ". [0] | .name"`
+
+  echo "Changing the storage class $storageClassName nb copies"
+  kubectl -n ${NAMESPACE} exec ${CTA_CLI_POD} -c cta-cli -- cta-admin storageclass ch --name $storageClassName --numberofcopies 3
+  echo "OK"
+
+  echo "Putting all drives up"
+  kubectl -n ${NAMESPACE} exec ${CTA_CLI_POD} -c cta-cli -- cta-admin dr up '.*'
+  echo "OK"
+
+  VID_LIST=$(getVidsContainingFiles 5)
+  for VID_TO_REPACK in ${VID_LIST}; do
+      echo "Creating the repack buffer directory for VID (${REPACK_BUFFER_URL}/${VID_TO_REPACK})"
+      kubectl -n ${NAMESPACE} exec ${EOS_MGM_POD} -c eos-mgm -- eos mkdir ${REPACK_BUFFER_URL}/${VID_TO_REPACK}
+      kubectl -n ${NAMESPACE} exec ${EOS_MGM_POD} -c eos-mgm -- eos chmod 1777 ${REPACK_BUFFER_URL}/${VID_TO_REPACK}
+      kubectl -n ${NAMESPACE} exec ${EOS_MGM_POD} -c eos-mgm -- eos ls -la /eos/ctaeos/repack/${VID_TO_REPACK}
+
+      echo "Marking the tape ${VID_TO_REPACK} as REPACKING"
+      modifyTapeStateAndWait ${VID_TO_REPACK} REPACKING "MarkingTapeRepacking"
+      echo "Launching the repack \"Move and add copies\" test on VID ${VID_TO_REPACK}"
+      kubectl -n ${NAMESPACE} exec ${CLIENT_POD} -c client -- bash /root/repack_systemtest.sh -v ${VID_TO_REPACK} -b ${REPACK_BUFFER_URL} -t 300 -r ${BASE_REPORT_DIRECTORY}/RepackMoveAndAddCopies -n repack_ctasystest  || exit 1
+
+      repackLsResult=`kubectl -n ${NAMESPACE} exec ${CTA_CLI_POD} -c cta-cli -- cta-admin --json repack ls --vid ${VID_TO_REPACK} | jq ". [0]"`
+      totalFilesToRetrieve=`echo $repackLsResult | jq -r ".totalFilesToRetrieve"`
+      totalFilesToArchive=`echo $repackLsResult | jq -r ".totalFilesToArchive"`
+      retrievedFiles=`echo $repackLsResult | jq -r ".retrievedFiles"`
+      archivedFiles=`echo $repackLsResult | jq -r ".archivedFiles"`
+
+      if [[ $retrievedFiles != $totalFilesToRetrieve ]]
+      then
+        echo "RetrievedFiles ($retrievedFiles) != totalFilesToRetrieve ($totalFilesToRetrieve), test FAILED"
+        exit 1
+      else
+        echo "RetrievedFiles ($retrievedFiles) = totalFilesToRetrieve ($totalFilesToRetrieve), OK"
+      fi
+
+      if [[ $archivedFiles != $totalFilesToArchive ]]
+      then
+        echo "ArchivedFiles ($archivedFiles) != totalFilesToArchive ($totalFilesToArchive), test FAILED"
+        exit 1
+      else
+         echo "ArchivedFiles ($archivedFiles) == totalFilesToArchive ($totalFilesToArchive), OK"
+      fi
+      # Check that 2 copies were written to default tapepool (archive route 1 and 2) and 1 copy to repack tapepool (archive route 3)
+      TAPEPOOL_LIST=$(kubectl -n ${NAMESPACE} exec ${CTA_CLI_POD} -- cta-admin --json repack ls --vid ${VID_TO_REPACK} | jq ".[] | .destinationInfos[] | .vid" | xargs -I{} kubectl -n ${NAMESPACE} exec ${CTA_CLI_POD} -c cta-cli -- cta-admin --json tape ls --vid {} | jq -r '.[] .tapepool')
+
+      if [[ $TAPEPOOL_LIST != *"$defaultTapepool"* ]]; then
+        echo "Did not find $defaultTapepool in repack archive destination pools. Archive route failed."
+        exit 1
+      else
+        echo "Found $defaultTapepool in repack archive destination pools."
+      fi
+      if [[ $TAPEPOOL_LIST != *"$tapepoolDestination1_default"* ]]; then
+        echo "Did not find $tapepoolDestination1_default in repack archive destination pools. Archive route failed."
+        exit 1
+      else
+        echo "Found $tapepoolDestination1_default in repack archive destination pools."
+      fi
+      if [[ $TAPEPOOL_LIST != *"$tapepoolDestination2_repack"* ]]; then
+        echo "Did not find $tapepoolDestination2_repack in repack archive destination pools. Archive route failed."
+        exit 1
+      else
+        echo "Found $tapepoolDestination2_repack in repack archive destination pools."
+      fi
+
+      kubectl -n ${NAMESPACE} exec ${EOS_MGM_POD} -c eos-mgm -- eos ls -la /eos/ctaeos/repack/${VID_TO_REPACK}
+      echo "----"
+      removeRepackRequest ${VID_TO_REPACK}
+      echo "Setting the tape ${VID_TO_REPACK} back to ACTIVE"
+      modifyTapeState ${VID_TO_REPACK} ACTIVE
+      echo "Reclaiming tape ${VID_TO_REPACK}"
+      kubectl -n ${NAMESPACE} exec ${CTA_CLI_POD} -c cta-cli -- cta-admin tape reclaim --vid ${VID_TO_REPACK}
+      kubectl -n ${NAMESPACE} exec ${EOS_MGM_POD} -c eos-mgm -- eos ls -la /eos/ctaeos/repack/${VID_TO_REPACK}
+      echo "Testing Repack \"Move and Add copies\" workflow TEST OK for ${VID_TO_REPACK}"
+  done
+
+  echo
+  echo "***************************************************************"
+  echo " Testing Repack \"Move and Add copies\" workflow TEST OK       "
+  echo "***************************************************************"
+}
+
+if [[ $PREQUEUE == 1 ]]; then
+  echo "Creating the repack buffer URL directory (${REPACK_BUFFER_URL})"
+  kubectl -n ${NAMESPACE} exec ${EOS_MGM_POD} -c eos-mgm -- eos mkdir ${REPACK_BUFFER_URL}
+  kubectl -n ${NAMESPACE} exec ${EOS_MGM_POD} -c eos-mgm -- eos chmod 1777 ${REPACK_BUFFER_URL}
+  repackMoveAndAddCopies
+fi
+
+
 exit 0

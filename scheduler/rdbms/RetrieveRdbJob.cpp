@@ -37,9 +37,7 @@ RetrieveRdbJob::RetrieveRdbJob(rdbms::ConnPool& connPool)
   reset();
 };
 
-void RetrieveRdbJob::initialize(const rdbms::Rset& rset) {
-  //cta::log::TimingList timings;
-  //cta::utils::Timer t;
+void RetrieveRdbJob::initialize(const rdbms::Rset& rset, bool jobIsRepack) {
   // we can safely move the values from m_jobRow since any further DB
   // operations are based on jobID if performed directly on this job/row itself
   m_jobRow = rset;
@@ -83,7 +81,7 @@ void RetrieveRdbJob::initialize(const rdbms::Rset& rset) {
                                      std::move(m_jobRow.checksumBlob));
   errorReportURL = std::move(m_jobRow.retrieveErrorReportURL);
   selectedCopyNb = m_jobRow.copyNb;
-  isRepack = false;  // for the moment hardcoded as repqck is not implemented
+  isRepack = jobIsRepack;
 
   if (m_jobRow.activity) {
     retrieveRequest.activity = m_jobRow.activity.value();
@@ -95,7 +93,7 @@ void RetrieveRdbJob::initialize(const rdbms::Rset& rset) {
   // Re-initialize report type
   if (m_jobRow.status == RetrieveJobStatus::RJS_ToReportToUserForSuccess) {
     reportType = ReportType::CompletionReport;
-  } else if (m_jobRow.status == RetrieveJobStatus::RJS_ToReportToUserForFailure) {
+  } else if (m_jobRow.status == RetrieveJobStatus::RJS_ToReportToUserForFailure || m_jobRow.status == RetrieveJobStatus::RJS_ToReportToRepackForFailure) {
     reportType = ReportType::FailureReport;
   } else {
     reportType = ReportType::NoReportRequired;
@@ -103,8 +101,8 @@ void RetrieveRdbJob::initialize(const rdbms::Rset& rset) {
 }
 
 // contructor to get next job batch to report
-RetrieveRdbJob::RetrieveRdbJob(rdbms::ConnPool& connPool, const rdbms::Rset& rset) : RetrieveRdbJob(connPool) {
-  initialize(rset);
+RetrieveRdbJob::RetrieveRdbJob(rdbms::ConnPool& connPool, const rdbms::Rset& rset, bool rowFromRepack) : RetrieveRdbJob(connPool) {
+  initialize(rset, rowFromRepack);
 };
 
 void RetrieveRdbJob::reset() {
@@ -163,7 +161,7 @@ void RetrieveRdbJob::handleExceedTotalRetries(cta::schedulerdb::Transaction& txn
   }
 
   try {
-    uint64_t nrows = m_jobRow.updateFailedJobStatus(txn, RetrieveJobStatus::RJS_ToReportToUserForFailure);
+    uint64_t nrows = m_jobRow.updateFailedJobStatus(txn, isRepack);
     txn.commit();
     if (nrows != 1) {
       lc.log(log::WARNING,
@@ -178,10 +176,12 @@ void RetrieveRdbJob::handleExceedTotalRetries(cta::schedulerdb::Transaction& txn
   }
 }
 
-void RetrieveRdbJob::requeueToNewMount(cta::schedulerdb::Transaction& txn,
+void RetrieveRdbJob::requeueJobToMount(cta::schedulerdb::Transaction& txn,
                                        log::LogContext& lc,
-                                       const std::string& reason) {
-  try {
+                                       const std::string& reason, bool keepMountId) {
+  std::string log_msg = "In RetrieveRdbJob::requeueJobToMount(): requeueFailedJob() to same mount";
+  if (!keepMountId) {
+    log_msg = "In RetrieveRdbJob::requeueJobToMount(): requeueFailedJob() to new mount";
     // requeue by changing status, reset the mount_id to NULL and updating all other stat fields
     // change VID if alternate exists trying to fetch the file from another tape !
     m_jobRow.retriesWithinMount = 0;
@@ -193,32 +193,19 @@ void RetrieveRdbJob::requeueToNewMount(cta::schedulerdb::Transaction& txn,
     m_jobRow.fSeq = static_cast<uint64_t>(std::stoi(alternateFSeqVec[index]));
     m_jobRow.blockId = static_cast<uint64_t>(std::stoi(alternateBlockIdVec[index]));
     m_jobRow.vid = newVid;
-    uint64_t nrows = m_jobRow.requeueFailedJob(txn, RetrieveJobStatus::RJS_ToTransfer, false);
+  }
+  try {
+    // requeue to the same mount simply by moving it to PENDING QUEUE and updating all other stat fields
+    uint64_t nrows = m_jobRow.requeueFailedJob(txn, RetrieveJobStatus::RJS_ToTransfer, keepMountId, isRepack);
     txn.commit();
     if (nrows != 1) {
-      lc.log(log::WARNING,
-             "RetrieveRdbJob::requeueToNewMount(): requeueFailedJob (new mount) failed; job not found in DB.");
+      lc.log(log::ERR, log_msg + std::string(" failed. Job not found in DB."));
     }
     // since requeueing, we do not report and we do not
     // set reportType to a particular value here
   } catch (const exception::Exception& ex) {
-    lc.log(log::WARNING,
-           "RetrieveRdbJob::requeueToNewMount(): Failed to requeue to new mount. Aborting txn: " +
-             ex.getMessageValue());
-    txn.abort();
-  }
-}
-
-void RetrieveRdbJob::requeueToSameMount(cta::schedulerdb::Transaction& txn, log::LogContext& lc, const std::string& reason) {
-  try {
-    // requeue to the same mount simply by moving it to PENDING QUEUE and updating all other stat fields
-    uint64_t nrows = m_jobRow.requeueFailedJob(txn, RetrieveJobStatus::RJS_ToTransfer, true);
-    txn.commit();
-    if (nrows != 1) {
-      lc.log(log::WARNING, "RetrieveRdbJob::requeueFailedJob(): (same mount) failed; job not found.");
-    }
-  } catch (const exception::Exception& ex) {
-    lc.log(log::WARNING, "RetrieveRdbJob::requeueFailedJob(): Failed to requeue to same mount. Aborting txn: " + ex.getMessageValue());
+    lc.log(log::ERR, log_msg + std::string(" failed. Aborting txn: " +
+                                             ex.getMessageValue()));
     txn.abort();
   }
 }
@@ -242,9 +229,9 @@ void RetrieveRdbJob::failTransfer(const std::string& failureReason, log::LogCont
   }
   // Decide if we want the job to have a chance to come back to this mount (requeue) or not.
   if (m_jobRow.retriesWithinMount >= m_jobRow.maxRetriesWithinMount) {
-    requeueToNewMount(txn, lc, failureReason);
+    requeueJobToMount(txn, lc, failureReason, false /* keepMountId */);
   } else {
-    requeueToSameMount(txn, lc, failureReason);
+    requeueJobToMount(txn, lc, failureReason, true /* keepMountId */);
   }
 }
 

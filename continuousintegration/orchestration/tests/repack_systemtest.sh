@@ -20,6 +20,7 @@ EOS_MGM_HOST="ctaeos"
 EOS_INSTANCE_NAME="ctaeos"
 #default Repack timeout
 WAIT_FOR_REPACK_TIMEOUT=300
+DEBUG=0
 
 REPORT_DIRECTORY=/var/log
 
@@ -30,7 +31,7 @@ die() {
 }
 
 usage() { cat <<EOF 1>&2
-Usage: $0 -v <vid> -b <bufferURL> -n <mountPolicyName> [-e <eosMgmHost>] [-t <timeout>] [-r <reportDirectory>] [-a] [-m]
+Usage: $0 -v <vid> -b <bufferURL> -n <mountPolicyName> [-e <eosMgmHost>] [-t <timeout>] [-r <reportDirectory>] [-a] [-m] [-d]
 (bufferURL example : /eos/ctaeos/repack)
 mountPolicyName: the name of the mountPolicy to be applied to the repack request (example: ctasystest)
 eosMgmHost : the name of the ctaeos instance to be used (default : $EOS_MGM_HOST)
@@ -38,6 +39,7 @@ timeout : the timeout in seconds to wait for the repack to be done
 reportDirectory : the directory to generate the report of the repack test (default : $REPORT_DIRECTORY)
 -a : Launch a repack just add copies workflow
 -m : Launch a repack just move workflow
+-d : enable debug info
 -p : enable backpressure test
 -u : recall only option flag
 EOF
@@ -62,7 +64,7 @@ then
   usage
 fi;
 
-while getopts "v:f:e:b:t:r:n:ampu" o; do
+while getopts "v:f:e:b:t:r:n:ampud" o; do
   case "${o}" in
     v)
       VID_TO_REPACK=${OPTARG}
@@ -96,6 +98,9 @@ while getopts "v:f:e:b:t:r:n:ampu" o; do
       ;;
     u)
       NO_RECALL=1
+      ;;
+    d)
+      DEBUG=1
       ;;
     *)
       usage
@@ -141,17 +146,19 @@ admin_klist > /dev/null 2>&1 || die "Cannot get kerberos credentials for user ${
 FULL_REPACK_BUFFER_URL=root://${EOS_MGM_HOST}/${REPACK_BUFFER_BASEDIR}
 testRepackBufferURL
 
-echo "---------------------------------------"
-echo "Pre-test debug info:"
-echo "cta-admin tape ls"
-admin_cta --json ta ls --all | jq
-echo "cta-admin tp ls"
-admin_cta --json tp ls | jq
-echo "cta-admin re ls"
-admin_cta --json re ls | jq
-echo "cta-admin sq"
-admin_cta --json sq | jq
-echo "---------------------------------------"
+if [[ $DEBUG -eq 1 ]]; then
+  echo "---------------------------------------"
+  echo "Pre-test debug info:"
+  echo "cta-admin tape ls"
+  admin_cta --json ta ls --all | jq
+  echo "cta-admin tp ls"
+  admin_cta --json tp ls | jq
+  echo "cta-admin re ls"
+  admin_cta --json re ls | jq
+  echo "cta-admin sq"
+  admin_cta --json sq | jq
+  echo "---------------------------------------"
+fi
 
 echo "Deleting existing repack request for VID ${VID_TO_REPACK}"
 admin_cta repack rm --vid ${VID_TO_REPACK}
@@ -167,7 +174,7 @@ if [ ! -z $BACKPRESSURE_TEST ]; then
     admin_cta dis add -n repackDiskInstanceSpace --di ${EOS_INSTANCE_NAME} -u "eosSpace:default" -i 5 -m toto
     admin_cta ds add -n repackBuffer --di ${EOS_INSTANCE_NAME} --dis repackDiskInstanceSpace -r "root://${EOS_MGM_HOST}/${REPACK_BUFFER_BASEDIR}" -f 111222333444555 -s 20 -m toto
   else
-    echo "Disk system repackBuffer alread defined. Ensuring too high free space requirements."
+    echo "Disk system repackBuffer already defined. Ensuring too high free space requirements."
     admin_cta ds ch -n repackBuffer -f 111222333444555
   fi
   admin_cta ds ls
@@ -193,6 +200,7 @@ fi
 # Record number of files already in the recycle table
 amountRecyleTapeFilesPrev=$(admin_cta --json recycletf ls --vid ${VID_TO_REPACK} | jq "length")
 
+echo "admin_cta repack add --mountpolicy ${MOUNT_POLICY_NAME} --vid ${VID_TO_REPACK} ${REPACK_OPTION} --bufferurl ${FULL_REPACK_BUFFER_URL} ${NO_RECALL_FLAG} ${MAX_FILES_TO_SELECT_ARG}"
 admin_cta repack add --mountpolicy ${MOUNT_POLICY_NAME} --vid ${VID_TO_REPACK} ${REPACK_OPTION} --bufferurl ${FULL_REPACK_BUFFER_URL} ${NO_RECALL_FLAG} ${MAX_FILES_TO_SELECT_ARG} || exit 1
 
 if [ ! -z $BACKPRESSURE_TEST ]; then
@@ -282,11 +290,13 @@ echo "Repack ls --vid ${VID_TO_REPACK}"
 admin_cta --json repack ls --vid ${VID_TO_REPACK} | jq
 
 amountArchivedFiles=$(admin_cta --json repack ls --vid ${VID_TO_REPACK} | jq -r ". [0] | .archivedFiles")
+amountFilesToRetrieve=$(admin_cta --json repack ls --vid ${VID_TO_REPACK} | jq -r ". [0] | .totalFilesToRetrieve")
 amountRecyleTapeFilesNew=$(admin_cta --json recycletf ls --vid ${VID_TO_REPACK} | jq "length")
 amountRecyleTapeFiles=$((amountRecyleTapeFilesNew-$amountRecyleTapeFilesPrev))
 filesLeftToRetrieve=$(admin_cta --json repack ls --vid ${VID_TO_REPACK} | jq -r ". [0] | .filesLeftToRetrieve")
 filesLeftToArchive=$(admin_cta --json repack ls --vid ${VID_TO_REPACK} | jq -r ". [0] | .filesLeftToArchive")
 nbDestinationVids=$(admin_cta --json repack ls --vid ${VID_TO_REPACK} | jq -r ". [0] | .destinationInfos | length")
+amountArchivedDestinationFiles=$(admin_cta --json repack ls --vid ${VID_TO_REPACK} | jq -r "[.[0].destinationInfos[].files | tonumber] | add")
 
 echo "Amount of archived files = $amountArchivedFiles (${nbDestinationVids}x$((amountArchivedFiles/nbDestinationVids))"
 echo "Amount of new recycled tape files = $amountRecyleTapeFiles"
@@ -297,11 +307,18 @@ if [[ "$filesLeftToRetrieve" -ne "0" ]] || [[ "$filesLeftToArchive" -ne "0" ]]
 then
   echo "There were remaining files left to retrieve ($filesLeftToRetrieve) or archive ($filesLeftToArchive). Test FAILED"
 fi
-if [[ "$((amountArchivedFiles/nbDestinationVids))" -eq "$amountRecyleTapeFiles" ]]
+if [[ "$amountArchivedDestinationFiles" -eq "$amountArchivedFiles" ]]
 then
-  echo "The amount of archived files is equal to the amount of new recycled tape files. Test OK"
+  echo "The amount of archived files written to all tapes is equal to the amount of files reported as repacked. Test OK"
 else
-  echo "The amount of archived files is not equal to the amount of new recycled tape files. Test FAILED"
+  echo "The amount of archived files written to all tapes is not equal to the amount of files reported as repacked. Test FAILED"
+  exit 1
+fi
+if [[ "$amountFilesToRetrieve" -eq "$amountRecyleTapeFiles" ]]
+then
+  echo "The amount of files to be recalled at start is equal to the amount of new recycled tape files. Test OK"
+else
+  echo "The amount of files to be recalled at start is not equal to the amount of new recycled tape files. Test FAILED"
   exit 1
 fi
 
@@ -309,16 +326,18 @@ echo
 echo "Repack request on VID ${VID_TO_REPACK} succeeded."
 echo
 
-echo "---------------------------------------"
-echo "Post-test debug info:"
-echo "cta-admin tape ls"
-admin_cta --json ta ls --all | jq
-echo "cta-admin tp ls"
-admin_cta --json tp ls | jq
-echo "cta-admin re ls"
-admin_cta --json re ls | jq
-echo "cta-admin sq"
-admin_cta --json sq | jq
-echo "---------------------------------------"
+if [[ $DEBUG -eq 1 ]]; then
+  echo "---------------------------------------"
+  echo "Post-test debug info:"
+  echo "cta-admin tape ls"
+  admin_cta --json ta ls --all | jq
+  echo "cta-admin tp ls"
+  admin_cta --json tp ls | jq
+  echo "cta-admin re ls"
+  admin_cta --json re ls | jq
+  echo "cta-admin sq"
+  admin_cta --json sq | jq
+  echo "---------------------------------------"
+fi
 
 exit 0

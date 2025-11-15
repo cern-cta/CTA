@@ -43,8 +43,8 @@ public:
   explicit RetrieveMount(RelationalDB& rdb_instance) : m_RelationalDB(rdb_instance), m_connPool(rdb_instance.m_connPool) {
     m_jobPool = std::make_shared<schedulerdb::JobPool<schedulerdb::RetrieveRdbJob>>(m_connPool);
   }
-
   const MountInfo& getMountInfo() override;
+  void setIsRepack(std::string_view defaultRepackVO, log::LogContext& logContext);
 
   std::list<std::unique_ptr<SchedulerDatabase::RetrieveJob>>
   getNextJobBatch(uint64_t filesRequested, uint64_t bytesRequested, log::LogContext& logContext) override;
@@ -96,6 +96,7 @@ private:
   std::shared_ptr<schedulerdb::JobPool<schedulerdb::RetrieveRdbJob>> m_jobPool;
   void recycleTransferredJobs(std::list<std::unique_ptr<SchedulerDatabase::RetrieveJob>>& jobsBatch,
                               log::LogContext& lc);
+  bool m_isRepack = false;
 };
 
 }  // namespace cta::schedulerdb
