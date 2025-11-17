@@ -631,7 +631,8 @@ void GarbageCollector::OwnedObjectSorter::lockFetchAndUpdateRetrieveJobs(Agent& 
         for (auto &tf: rr->getArchiveFile().tapeFiles) {
             if (tf.vid == vid) {
             jta.emplace_back(tf.copyNb, tf.fSeq, rr->getAddressIfSet(), rr->getArchiveFile().fileSize,
-                rr->getRetrieveFileQueueCriteria().mountPolicy, rr->getEntryLog().time, rr->getActivity(), rr->getDiskSystemName());
+                rr->getRetrieveFileQueueCriteria().mountPolicy, rr->getEntryLog().time, rr->getActivity(),
+                rr->getDiskSystemName(), rr->getIsRepack(), rr->getIsVerify());
           }
         }
       }

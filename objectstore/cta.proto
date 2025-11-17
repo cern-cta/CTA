@@ -528,6 +528,8 @@ message RetrieveJobPointer {
   optional string disk_instance_name = 3109;
   optional string activity = 3110;
   optional string destination_disk_system_name = 3111;
+  optional bool isrepack = 3113;
+  optional bool isverify = 3114;
 }
 
 message RetrieveQueueShardPointer {
@@ -572,6 +574,9 @@ message RetrieveQueue {
   optional uint64 sleep_time = 10200;
   optional uint64 youngestjobcreationtime = 10210 [default = 0];
   optional RetrieveQueueCleanupInfo cleanupInfo = 10220;
+  // Extra counters for repack and verification jobs only
+  optional uint64 repackjobscount = 10230;
+  optional uint64 verifyjobscount = 10240;
 }
 
 // ------------- Repack data strcutures ----------------------------------------

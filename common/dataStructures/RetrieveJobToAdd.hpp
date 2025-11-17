@@ -33,9 +33,11 @@ namespace cta::common::dataStructures {
 		     MountPolicy p,
 		     time_t st,
 		     std::optional<std::string> a,
-		     std::optional<std::string> dsn) :
+		     std::optional<std::string> dsn,
+		     bool isRepack,
+		     bool isVerify) :
 	 copyNb(cNb), fSeq(fS), retrieveRequestAddress(rra),
-	 fileSize(filesize), policy(p), startTime(st), activity(a), diskSystemName(dsn) {}
+	 fileSize(filesize), policy(p), startTime(st), activity(a), diskSystemName(dsn), isRepackJob(isRepack), isVerifyJob(isVerify) {}
     	  
     bool operator==(const RetrieveJobToAdd &rhs) const;
     bool operator!=(const RetrieveJobToAdd &rhs) const;
@@ -48,6 +50,8 @@ namespace cta::common::dataStructures {
     time_t startTime;
     std::optional<std::string> activity;
     std::optional<std::string> diskSystemName;
+    bool isRepackJob;
+    bool isVerifyJob;
     };
 
 std::ostream &operator<<(std::ostream &os, const RetrieveJobToAdd &obj);

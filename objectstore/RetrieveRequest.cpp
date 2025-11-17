@@ -257,8 +257,17 @@ queueForFailure:;
     // Enqueue the job
     objectstore::MountPolicySerDeser mp;
     std::list<common::dataStructures::RetrieveJobToAdd> jta;
-    jta.emplace_back(activeCopyNb, activeFseq, getAddressIfSet(), m_payload.archivefile().filesize(),
-      mp, (signed)m_payload.schedulerrequest().entrylog().time(), m_payload.has_activity() ? std::optional<std::string>{m_payload.activity()} : std::nullopt, std::nullopt);
+    jta.emplace_back(
+      activeCopyNb,
+      activeFseq,
+      getAddressIfSet(),
+      m_payload.archivefile().filesize(),
+      mp,
+      (signed)m_payload.schedulerrequest().entrylog().time(),
+      m_payload.has_activity() ? std::optional<std::string>{m_payload.activity()} : std::nullopt,
+      std::nullopt,
+      m_payload.isrepack(),
+      m_payload.isverifyonly());
     
     rq.addJobsIfNecessaryAndCommit(jta, agentReference, lc);
     auto queueUpdateTime = t.secs(utils::Timer::resetCounter);
@@ -318,8 +327,10 @@ queueForTransfer:;
     objectstore::MountPolicySerDeser mp;
     mp.deserialize(m_payload.mountpolicy());
     std::list<common::dataStructures::RetrieveJobToAdd> jta;
-    jta.emplace_back(bestTapeFile->copynb(), bestTapeFile->fseq(), getAddressIfSet(), m_payload.archivefile().filesize(),
-      mp, (signed)m_payload.schedulerrequest().entrylog().time(), getActivity(), getDiskSystemName());
+    jta.emplace_back(
+      bestTapeFile->copynb(), bestTapeFile->fseq(), getAddressIfSet(), m_payload.archivefile().filesize(),
+      mp, (signed)m_payload.schedulerrequest().entrylog().time(), getActivity(), getDiskSystemName(),
+      m_payload.isrepack(), m_payload.isverifyonly());
     if (m_payload.has_activity()) {
       jta.back().activity = m_payload.activity();
     }
@@ -634,6 +645,22 @@ std::optional<std::string> RetrieveRequest::getDiskSystemName() {
   if (m_payload.has_disk_system_name())
     ret = m_payload.disk_system_name();
   return ret;
+}
+
+//------------------------------------------------------------------------------
+// RetrieveRequest::getIsRepack()
+//------------------------------------------------------------------------------
+bool RetrieveRequest::getIsRepack() {
+  checkPayloadReadable();
+  return m_payload.isrepack();
+}
+
+//------------------------------------------------------------------------------
+// RetrieveRequest::getIsVerify()
+//------------------------------------------------------------------------------
+bool RetrieveRequest::getIsVerify() {
+  checkPayloadReadable();
+  return m_payload.isverifyonly();
 }
 
 //------------------------------------------------------------------------------
@@ -1562,7 +1589,9 @@ common::dataStructures::RetrieveJobToAdd RetrieveRequest::getJobToAdd() {
     mp,
     (signed) m_payload.schedulerrequest().entrylog().time(),
     m_payload.has_activity() ? std::optional<std::string>{m_payload.activity()} : std::nullopt,
-    std::nullopt
+    std::nullopt,
+    m_payload.isrepack(),
+    m_payload.isverifyonly()
   );
 }
 

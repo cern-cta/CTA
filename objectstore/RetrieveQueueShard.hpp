@@ -55,6 +55,8 @@ public:
     std::string mountPolicyName;
     std::optional<std::string> activity;
     std::optional<std::string> diskSystemName;
+    bool isRepackJob;
+    bool isVerifyJob;
   };
   std::list<JobInfo> dumpJobs();
   
@@ -104,6 +106,10 @@ public:
     uint64_t jobsAfter = 0;
     uint64_t bytesRemoved = 0;
     uint64_t bytesAfter = 0;
+    uint64_t repackJobsRemoved = 0;
+    uint64_t repackJobsAfter = 0;
+    uint64_t verifyJobsRemoved = 0;
+    uint64_t verifyJobsAfter = 0;
     std::list<JobInfo> removedJobs;
   };
   /**

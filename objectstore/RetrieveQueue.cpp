@@ -55,6 +55,8 @@ void RetrieveQueue::initialize(const std::string &vid) {
   m_payload.set_maxshardsize(m_maxShardSize);
   m_payload.mutable_cleanupinfo()->set_docleanup(false);
   m_payload.mutable_cleanupinfo()->set_heartbeat(0);
+  m_payload.set_repackjobscount(0);
+  m_payload.set_verifyjobscount(0);
   m_payloadInterpreted = true;
 }
 
@@ -112,6 +114,8 @@ void RetrieveQueue::rebuild() {
   auto sf = shardsFetchers.begin();
   uint64_t totalJobs=0;
   uint64_t totalBytes=0;
+  uint64_t totalRepackJobs=0;
+  uint64_t totalVerifyJobs=0;
   time_t oldestJobCreationTime=std::numeric_limits<time_t>::max();
   time_t youngestJobCreationTime=std::numeric_limits<time_t>::min();
   
@@ -139,11 +143,15 @@ void RetrieveQueue::rebuild() {
       // The shard is still around, let's compute its summaries.
       uint64_t jobs = 0;
       uint64_t size = 0;
+      uint64_t repackJobs = 0;
+      uint64_t verifyJobs = 0;
       uint64_t minFseq = std::numeric_limits<uint64_t>::max();
       uint64_t maxFseq = std::numeric_limits<uint64_t>::min();
       for (auto & j: s->dumpJobs()) {
         jobs++;
         size += j.size;
+        if (j.isRepackJob) repackJobs++;
+        if (j.isVerifyJob) verifyJobs++;
         priorityMap.incCount(j.priority);
         minRetrieveRequestAgeMap.incCount(j.minRetrieveRequestAge);
         mountPolicyNameMap.incCount(j.mountPolicyName);
@@ -155,6 +163,8 @@ void RetrieveQueue::rebuild() {
       // Add the summary to total.
       totalJobs+=jobs;
       totalBytes+=size;
+      totalRepackJobs+=repackJobs;
+      totalVerifyJobs+=verifyJobs;
       // And store the value in the shard pointers.
       auto mrqs = m_payload.mutable_retrievequeueshards();
       for (auto & rqsp: *mrqs) {
@@ -187,6 +197,8 @@ void RetrieveQueue::rebuild() {
   }
   m_payload.set_retrievejobscount(totalJobs);
   m_payload.set_retrievejobstotalsize(totalBytes);
+  m_payload.set_repackjobscount(totalRepackJobs);
+  m_payload.set_verifyjobscount(totalVerifyJobs);
   m_payload.set_oldestjobcreationtime(oldestJobCreationTime);
   m_payload.set_youngestjobcreationtime(youngestJobCreationTime);
   // We went through all the shard, re-updated the summaries, removed references to
@@ -413,6 +425,7 @@ void RetrieveQueue::addJobsAndCommit(std::list<common::dataStructures::RetrieveJ
   // we just go iteratively.
   for (auto & shard: shardsForAddition) {
     uint64_t addedJobs = 0, addedBytes = 0, transferedInSplitJobs = 0, transferedInSplitBytes = 0;
+    uint64_t repackJobs = 0, verifyJobs = 0, transferedInSplitRepackJobs = 0, transferedInSplitVerifyJobs = 0;
     // Variables which will allow the shard/pointer updates in all cases.
     cta::objectstore::serializers::RetrieveQueueShardPointer * shardPointer = nullptr, * splitFromShardPointer = nullptr;
     RetrieveQueueShard rqs(m_objectStore), rqsSplitFrom(m_objectStore);
@@ -454,6 +467,12 @@ void RetrieveQueue::addJobsAndCommit(std::list<common::dataStructures::RetrieveJ
             jtas.insert(j);
             addedJobs++;
             addedBytes+=j.fileSize;
+            if (j.isRepackJob) {
+              repackJobs++;
+            }
+            if (j.isVerifyJob) {
+              verifyJobs++;
+            }
             jobsToTransferAddresses.emplace_back(j.retrieveRequestAddress);
           }
           rqs.addJobsBatch(jtas);
@@ -461,6 +480,8 @@ void RetrieveQueue::addJobsAndCommit(std::list<common::dataStructures::RetrieveJ
         auto removalResult = rqsSplitFrom.removeJobs(jobsToTransferAddresses);
         transferedInSplitBytes += removalResult.bytesRemoved;
         transferedInSplitJobs += removalResult.jobsRemoved;
+        transferedInSplitRepackJobs += removalResult.repackJobsRemoved;
+        transferedInSplitVerifyJobs += removalResult.verifyJobsRemoved;
         // We update the shard pointer with fseqs to allow validations, but the actual
         //values will be updated as the shard itself is populated.
         shardPointer->set_maxfseq(shard.maxFseq);
@@ -488,6 +509,12 @@ void RetrieveQueue::addJobsAndCommit(std::list<common::dataStructures::RetrieveJ
       jtas.insert(j);
       addedJobs++;
       addedBytes+=j.fileSize;
+      if (j.isRepackJob) {
+        repackJobs++;
+      }
+      if (j.isVerifyJob) {
+        verifyJobs++;
+      }
       priorityMap.incCount(j.policy.retrievePriority);
       minRetrieveRequestAgeMap.incCount(j.policy.retrieveMinRequestAge);
       mountPolicyNameMap.incCount(j.policy.name);
@@ -521,6 +548,8 @@ void RetrieveQueue::addJobsAndCommit(std::list<common::dataStructures::RetrieveJ
     // Update global summaries
     m_payload.set_retrievejobscount(m_payload.retrievejobscount() + addedJobs - transferedInSplitJobs);
     m_payload.set_retrievejobstotalsize(m_payload.retrievejobstotalsize() + addedBytes - transferedInSplitBytes);
+    m_payload.set_repackjobscount(m_payload.repackjobscount() + repackJobs);
+    m_payload.set_verifyjobscount(m_payload.verifyjobscount() + verifyJobs);
 
     // We will now commit this shard (and the queue) before moving to the next.
     // Commit in the right order:
@@ -771,6 +800,8 @@ void RetrieveQueue::removeJobsAndCommit(const std::list<std::string>& jobsToRemo
     // In all cases, we should update the global statistics.
     m_payload.set_retrievejobscount(m_payload.retrievejobscount() - removalResult.jobsRemoved);
     m_payload.set_retrievejobstotalsize(m_payload.retrievejobstotalsize() - removalResult.bytesRemoved);
+    m_payload.set_repackjobscount(m_payload.repackjobscount() - removalResult.repackJobsRemoved);
+    m_payload.set_verifyjobscount(m_payload.verifyjobscount() - removalResult.verifyJobsRemoved);
     // If the shard is still around, we shall update its pointer's stats too.
     if (removalResult.jobsAfter) {
       // Also update the shard pointers's stats. In case of mismatch, we will trigger a rebuild.

@@ -53,8 +53,10 @@ void MemQueue<objectstore::RetrieveRequest, objectstore::RetrieveQueue>::special
     for (auto & j: request.getArchiveFile().tapeFiles) {
       if (j.copyNb == job.copyNb) {
         auto criteria = request.getRetrieveFileQueueCriteria();
-        jtal.emplace_back(j.copyNb, j.fSeq, request.getAddressIfSet(), criteria.archiveFile.fileSize,
-            criteria.mountPolicy, request.getEntryLog().time, request.getActivity(), request.getDiskSystemName());
+        jtal.emplace_back(
+          j.copyNb, j.fSeq, request.getAddressIfSet(), criteria.archiveFile.fileSize,
+          criteria.mountPolicy, request.getEntryLog().time, request.getActivity(), request.getDiskSystemName(),
+          request.getIsRepack(), request.getIsVerify());
         request.setActiveCopyNumber(j.copyNb);
         request.setOwner(queueAddress);
         goto jobAdded;

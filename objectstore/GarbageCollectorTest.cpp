@@ -606,7 +606,7 @@ TEST_F(ObjectStore, GarbageCollectorRetrieveRequest) {
       rq.fetch();
       std::list <cta::common::dataStructures::RetrieveJobToAdd> jta;
       jta.push_back({1,rqc.archiveFile.tapeFiles.front().fSeq, rr.getAddressIfSet(), rqc.archiveFile.fileSize, rqc.mountPolicy,
-          sReq.creationLog.time, std::nullopt, std::nullopt});
+          sReq.creationLog.time, std::nullopt, std::nullopt, rr.getIsRepack(), rr.getIsVerify()});
       rq.addJobsAndCommit(jta, agentRef, lc);
     }
     if (pass < 5) { pass++; continue; }

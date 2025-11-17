@@ -293,6 +293,8 @@ public:
   std::optional<std::string> getActivity();
   void setDiskSystemName(const std::string& diskSystemName);
   std::optional<std::string> getDiskSystemName();
+  bool getIsRepack();
+  bool getIsVerify();
   cta::common::dataStructures::RetrieveFileQueueCriteria getRetrieveFileQueueCriteria();
   cta::common::dataStructures::ArchiveFile getArchiveFile();
   cta::common::dataStructures::EntryLog getEntryLog();

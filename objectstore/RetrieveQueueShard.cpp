@@ -117,6 +117,10 @@ auto RetrieveQueueShard::removeJobs(const std::list<std::string>& jobsToRemove) 
           ret.bytesRemoved += j.size();
           totalSize -= j.size();
           ret.jobsRemoved++;
+          if (j.isrepack())
+            ret.repackJobsRemoved++;
+          if (j.isverify())
+            ret.verifyJobsRemoved++;
           m_payload.set_retrievejobstotalsize(m_payload.retrievejobstotalsize() - j.size());
           while (i+1 < (size_t)jl->size()) {
             jl->SwapElements(i, i+1);
@@ -147,8 +151,21 @@ auto RetrieveQueueShard::dumpJobs() -> std::list<JobInfo> {
   checkPayloadReadable();
   std::list<JobInfo> ret;
   for (auto &j: m_payload.retrievejobs()) {
-    ret.emplace_back(JobInfo{j.size(), j.address(), (uint16_t)j.copynb(), j.priority(), 
-        j.minretrieverequestage(), (time_t)j.starttime(), j.fseq(), j.mountpolicyname(), std::nullopt, std::nullopt});
+    ret.emplace_back(
+      JobInfo{
+        j.size(),
+        j.address(),
+        (uint16_t)j.copynb(),
+        j.priority(),
+        j.minretrieverequestage(),
+        (time_t)j.starttime(),
+        j.fseq(),
+        j.mountpolicyname(),
+        std::nullopt,
+        std::nullopt,
+        j.isrepack(),
+        j.isverify()
+      });
     if (j.has_activity()) {
       ret.back().activity = j.activity();
     }
@@ -172,7 +189,9 @@ std::list<common::dataStructures::RetrieveJobToAdd> RetrieveQueueShard::dumpJobs
                                           j.priority(), j.minretrieverequestage()),
       j.starttime(),
       j.has_activity() ? std::optional<std::string>{j.activity()} : std::nullopt,
-      j.has_destination_disk_system_name() ? std::optional<std::string>{j.destination_disk_system_name()} : std::nullopt
+      j.has_destination_disk_system_name() ? std::optional<std::string>{j.destination_disk_system_name()} : std::nullopt,
+      j.isrepack(),
+      j.isverify()
     );
   }
   return ret;
