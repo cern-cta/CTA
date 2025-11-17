@@ -801,5 +801,15 @@ repackTapeRepair 5
 repackJustAddCopies 6
 repackCancellation 7
 repackTapeRepairNoRecall 8
+
+# EDIT:
+#   - The `repackMoveAndAddCopies` test has been problematic (frequent CI failures) due to a difficult-to-debug bug in the object store scheduler:
+#     - Despite the repack completing successfully (original tape is empty and all files have been moved to the new tapes),
+#       CTA fails to update the `repack` object, which causes the test to fail.
+#     - This should be fixed once we deprecate the object store backend and move to the new scheduler.
+#   - For more info check:
+#     - https://gitlab.cern.ch/cta/CTA/-/issues/990
+#     - https://gitlab.cern.ch/cta/CTA/-/issues/1114#note_9462287
+
 # Keep this test for last - it adds new tapepools and archive routes
-repackMoveAndAddCopies 9
+# repackMoveAndAddCopies 9
