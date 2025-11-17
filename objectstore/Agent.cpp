@@ -119,7 +119,7 @@ void cta::objectstore::Agent::removeAndUnregisterSelf(log::LogContext & lc) {
   remove();
   log::ScopedParamContainer params(lc);
   params.add("agentObject", getAddressIfSet());
-  lc.log(log::DEBUG, "In Agent::removeAndUnregisterSelf(): Removed agent object.");
+  lc.log(log::INFO, "In Agent::removeAndUnregisterSelf(): Removed agent object.");
   // Then we remove the dangling pointer about ourselves in the agent register.
   // We need to get hold of the agent register, which we suppose is available
   RootEntry re(m_objectStore);

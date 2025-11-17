@@ -443,7 +443,7 @@ trimContainerIfNeeded(Container &cont, ScopedExclusiveLock &contLock,
     log::ScopedParamContainer params(lc);
     params.add("tapeVid", cId)
           .add("queueObject", cont.getAddressIfSet());
-    lc.log(log::DEBUG, "In ContainerTraits<RetrieveQueue,C>::trimContainerIfNeeded(): deleted empty queue");
+    lc.log(log::INFO, "In ContainerTraits<RetrieveQueue,C>::trimContainerIfNeeded(): deleted empty queue");
   } catch(cta::exception::Exception &ex) {
     log::ScopedParamContainer params(lc);
     params.add("tapeVid", cId)

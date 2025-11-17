@@ -1081,7 +1081,7 @@ void OStoreDB::setArchiveJobBatchReported(std::list<cta::SchedulerDatabase::Arch
         log::ScopedParamContainer(lc)
           .add("fileId", j->archiveFile.archiveFileID)
           .add("objectAddress", j->m_archiveRequest.getAddressIfSet())
-          .log(log::DEBUG,
+          .log(log::INFO,
                "In OStoreDB::setArchiveJobBatchReported(): deleted ArchiveRequest "
                "after completion and reporting.");
         // We remove the job from ownership.
