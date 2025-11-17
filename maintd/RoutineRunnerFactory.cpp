@@ -22,8 +22,10 @@
 
 #include "RoutineRunner.hpp"
 #include "RoutineRunnerFactory.hpp"
-#include "routines/disk/DiskReportRoutine.hpp"
-#include "routines/repack/RepackManagerRoutine.hpp"
+#include "routines/disk/DiskReportArchiveRoutine.hpp"
+#include "routines/disk/DiskReportRetrieveRoutine.hpp"
+#include "routines/repack/RepackExpandRoutine.hpp"
+#include "routines/repack/RepackReportRoutine.hpp"
 #include "routines/scheduler/objectstore/QueueCleanupRoutine.hpp"
 #include "routines/scheduler/objectstore/GarbageCollectRoutine.hpp"
 
@@ -54,13 +56,10 @@ RoutineRunnerFactory::RoutineRunnerFactory(const cta::common::Config& config, ct
     rdbms::Login::parseFile(m_config.getOptionValueStr("cta.catalogue.config_file").value());
   const uint64_t nbConns = 1;
   const uint64_t nbArchiveFileListingConns = 1;
-  auto catalogueFactory = cta::catalogue::CatalogueFactoryFactory::create(m_lc.logger(),
-                                                                            catalogueLogin,
-                                                                            nbConns,
-                                                                            nbArchiveFileListingConns);
+  auto catalogueFactory =
+    cta::catalogue::CatalogueFactoryFactory::create(m_lc.logger(), catalogueLogin, nbConns, nbArchiveFileListingConns);
 
   m_catalogue = catalogueFactory->create();
-
 
   m_lc.log(log::DEBUG, "In RoutineRunnerFactory::RoutineRunnerFactory(): Initialising Scheduler");
   if (!m_config.getOptionValueStr("cta.objectstore.backendpath").has_value()) {
@@ -98,13 +97,22 @@ std::unique_ptr<RoutineRunner> RoutineRunnerFactory::create() {
 
   // Register all of the different routines
 
-  // Add Disk Reporter
-  if (m_config.getOptionValueBool("cta.routines.disk_report.enabled").value_or(true)) {
-    routineRunner->registerRoutine(std::make_unique<DiskReportRoutine>(
+  // Add Disk Reporter for Archive
+  if (m_config.getOptionValueBool("cta.routines.disk_report_archive.enabled").value_or(true)) {
+    routineRunner->registerRoutine(std::make_unique<DiskReportArchiveRoutine>(
       m_lc,
       *m_scheduler,
-      m_config.getOptionValueInt("cta.routines.disk_report.batch_size").value_or(500),
-      m_config.getOptionValueInt("cta.routines.disk_report.soft_timeout").value_or(30)));
+      m_config.getOptionValueInt("cta.routines.disk_report_archive.batch_size").value_or(500),
+      m_config.getOptionValueInt("cta.routines.disk_report_archive.soft_timeout").value_or(30)));
+  }
+
+  // Add Disk Reporter for Retrieve
+  if (m_config.getOptionValueBool("cta.routines.disk_report_retrieve.enabled").value_or(true)) {
+    routineRunner->registerRoutine(std::make_unique<DiskReportRetrieveRoutine>(
+      m_lc,
+      *m_scheduler,
+      m_config.getOptionValueInt("cta.routines.disk_report_retrieve.batch_size").value_or(500),
+      m_config.getOptionValueInt("cta.routines.disk_report_retrieve.soft_timeout").value_or(30)));
   }
 
   // Add Garbage Collector
@@ -129,13 +137,20 @@ std::unique_ptr<RoutineRunner> RoutineRunnerFactory::create() {
 #endif
   }
 
-  // Add Repack request manager
-  if (m_config.getOptionValueBool("cta.routines.repack_manager.enabled").value_or(true)) {
-    routineRunner->registerRoutine(std::make_unique<RepackManagerRoutine>(
+  // Add Repack Expansion
+  if (m_config.getOptionValueBool("cta.routines.repack_expand.enabled").value_or(true)) {
+    routineRunner->registerRoutine(std::make_unique<RepackExpandRoutine>(
       m_lc,
       *m_scheduler,
-      m_config.getOptionValueInt("cta.routines.repack_manager.max_to_toexpand").value_or(2),
-      m_config.getOptionValueInt("cta.routines.repack_manager.reporter.soft_timeout").value_or(30)));
+      m_config.getOptionValueInt("cta.routines.repack_expand.max_to_toexpand").value_or(2)));
+  }
+
+  // Add Repack Reporting
+  if (m_config.getOptionValueBool("cta.routines.repack_report.enabled").value_or(true)) {
+    routineRunner->registerRoutine(std::make_unique<RepackReportRoutine>(
+      m_lc,
+      *m_scheduler,
+      m_config.getOptionValueInt("cta.routines.repack_report.soft_timeout").value_or(30)));
   }
 
   m_lc.log(log::DEBUG, "In RoutineRunnerFactory::create(): RoutineRunner created");

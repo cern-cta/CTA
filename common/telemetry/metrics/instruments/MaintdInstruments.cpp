@@ -25,44 +25,20 @@
 #include "common/semconv/Metrics.hpp"
 
 namespace cta::telemetry::metrics {
-  std::unique_ptr<opentelemetry::metrics::Counter<uint64_t>> ctaMaintdGarbageCollectorCount;
-  std::unique_ptr<opentelemetry::metrics::Counter<uint64_t>> ctaMaintdDiskReporterCount;
-  std::unique_ptr<opentelemetry::metrics::Counter<uint64_t>> ctaMaintdQueueCleanupCount;
-  std::unique_ptr<opentelemetry::metrics::Counter<uint64_t>> ctaMaintdRepackReportingCount;
-  std::unique_ptr<opentelemetry::metrics::Counter<uint64_t>> ctaMaintdRepackExpansionCount;
+std::unique_ptr<opentelemetry::metrics::Histogram<uint64_t>> ctaMaintdRoutineDuration;
 }  // namespace cta::telemetry::metrics
 
 namespace {
 void initInstruments() {
   auto meter = cta::telemetry::metrics::getMeter(cta::semconv::meter::kCtaMaintd, CTA_VERSION);
 
-  cta::telemetry::metrics::ctaMaintdGarbageCollectorCount =
-    meter->CreateUInt64Counter(cta::semconv::metrics::kMetricCtaMaintdGarbageCollectorCount,
-                               cta::semconv::metrics::descrCtaMaintdGarbageCollectorCount,
-                               cta::semconv::metrics::unitCtaMaintdGarbageCollectorCount);
-
-  cta::telemetry::metrics::ctaMaintdDiskReporterCount =
-    meter->CreateUInt64Counter(cta::semconv::metrics::kMetricCtaMaintdDiskReporterCount,
-                               cta::semconv::metrics::descrCtaMaintdDiskReporterCount,
-                               cta::semconv::metrics::unitCtaMaintdDiskReporterCount);
-
-  cta::telemetry::metrics::ctaMaintdQueueCleanupCount =
-    meter->CreateUInt64Counter(cta::semconv::metrics::kMetricCtaMaintdRepackReportingCount,
-                               cta::semconv::metrics::descrCtaMaintdRepackReportingCount,
-                               cta::semconv::metrics::unitCtaMaintdRepackReportingCount);
-
-  cta::telemetry::metrics::ctaMaintdRepackReportingCount =
-    meter->CreateUInt64Counter(cta::semconv::metrics::kMetricCtaMaintdRepackExpansionCount,
-                               cta::semconv::metrics::descrCtaMaintdRepackExpansionCount,
-                               cta::semconv::metrics::unitCtaMaintdRepackExpansionCount);
-
-  cta::telemetry::metrics::ctaMaintdRepackExpansionCount =
-    meter->CreateUInt64Counter(cta::semconv::metrics::kMetricCtaMaintdQueueCleanupCount,
-                               cta::semconv::metrics::descrCtaMaintdQueueCleanupCount,
-                               cta::semconv::metrics::unitCtaMaintdQueueCleanupCount);
+  cta::telemetry::metrics::ctaMaintdRoutineDuration =
+    meter->CreateUInt64Histogram(cta::semconv::metrics::kMetricCtaMaintdRoutineDuration,
+                                 cta::semconv::metrics::descrCtaMaintdRoutineDuration,
+                                 cta::semconv::metrics::unitCtaMaintdRoutineDuration);
 }
 
 // Register and run this init function at start time
 const auto _ = cta::telemetry::metrics::InstrumentRegistrar(initInstruments);
 
-} // namespace
+}  // namespace

@@ -35,18 +35,26 @@ The routines are defined in `routines/`. Which routines are run depend on whethe
 
 ### Objectstore
 
-- `DiskReportRoutine`
-  - Looks at all archive jobs that have been completed but not yet reported and reports these to the disk instance.
-- `RepackManagerRoutine`
-  - Expands repack requests and handles reporting of repack requests.
+- `DiskReportArchiveRoutine`
+  - Reports the state (fail or success) of archive jobs to the disk instance.
+- `DiskReportRetrieveRoutine`
+  - Reports the state (fail or success) of retrieve jobs to the disk instance.
+- `RepackExpandRoutine`
+  - Expands repack requests into separate archive/retrieve jobs.
+- `RepackExpandRoutine`
+  - Takes care of the repack reporting.
 - `GarbageCollectRoutine`
-  - Performs garbage collection on agents in the objectstore.
+  - Performs garbage collection on agents and their objects in the objectstore.
 - `QueueCleanupRoutine`
-  - Finds queues marked for cleanup, takes ownership of these queues and move the requests to other queues.
+  - Finds queues marked for cleanup, takes ownership of these queues and moves the requests to other queues.
 
 ### Postgres
 
-- `DiskReportRoutine`
-  - Looks at all archive jobs that have been completed but not yet reported and reports these to the disk instance.
-- `RepackManagerRoutine`
-  - Expands repack requests and handles reporting of repack requests.
+- `DiskReportArchiveRoutine`
+  - Reports the state (fail or success) of archive jobs to the disk instance.
+- `DiskReportRetrieveRoutine`
+  - Reports the state (fail or success) of retrieve jobs to the disk instance.
+- `RepackExpandRoutine`
+  - Expands repack requests into separate archive/retrieve jobs.
+- `RepackExpandRoutine`
+  - Takes care of the repack reporting.

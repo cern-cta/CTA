@@ -19,6 +19,7 @@
 #include <sys/prctl.h>
 #include <chrono>
 #include <thread>
+#include <opentelemetry/context/runtime_context.h>
 
 #include "RoutineRunner.hpp"
 
@@ -27,6 +28,8 @@
 #include "common/exception/Errnum.hpp"
 #include "common/exception/UserError.hpp"
 #include "common/semconv/Attributes.hpp"
+#include "common/telemetry/metrics/instruments/MaintdInstruments.hpp"
+#include "common/Timer.hpp"
 #include "rdbms/Login.hpp"
 
 namespace cta::maintd {
@@ -64,7 +67,11 @@ void RoutineRunner::run(cta::log::LogContext& lc) {
     while (!m_stopRequested) {
       lc.log(log::DEBUG, "In RoutineRunner::run(): Executing all routines.");
       for (const auto& routine : m_routines) {
+        cta::utils::Timer t;
         routine->execute();
+        cta::telemetry::metrics::ctaMaintdRoutineDuration->Record(t.msecs(),
+                                                                  {{cta::semconv::attr::kCtaRoutine, routine->getName()}},
+                                                                  opentelemetry::context::RuntimeContext::GetCurrent());
         if (m_stopRequested) {
           return;
         }

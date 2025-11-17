@@ -859,7 +859,7 @@ void Scheduler::expandRepackRequest(const std::unique_ptr<RepackRequest>& repack
                                                                                        diskSystemList,
                                                                                        lc);
     lc.log(log::DEBUG, "In Scheduler::expandRepackRequest(): after addSubrequestsAndUpdateStats().");
-    cta::telemetry::metrics::ctaMaintdRepackExpansionCount->Add(nbRetrieveSubrequestsQueued);
+    cta::telemetry::metrics::ctaSchedulerRepackExpandCount->Add(nbRetrieveSubrequestsQueued);
   } catch (const cta::ExpandRepackRequestException&) {
     deleteRepackBuffer(std::move(dir), lc);
     throw;

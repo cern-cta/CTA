@@ -47,8 +47,6 @@ void MaintenanceDaemon::run() {
     // Instead, the RoutineRunnerFactory is the owner of these resources and must live as long as the routines themselves.
     // There does not seem to be a cleaner way to do this without making various changes to the objectstore implementation.
     // Ideally each routine owns its own resources, but that means multiplying the number of agents by the number of routines.
-    // Basically, this can be done cleaner when:
-    // (1) we decide that each routine can have its own resources, or (2) get rid of the objectstore.
 
     RoutineRunnerFactory routineRunnerFactory(m_config, m_lc);
     // Create the routine runner

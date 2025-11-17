@@ -57,9 +57,8 @@ void QueueCleanupRoutine::execute() {
     } catch (const exception::UserError& ex) {
       log::ScopedParamContainer params(m_lc);
       params.add("exceptionMessage", ex.getMessageValue());
-      m_lc.log(
-        log::ERR,
-        "In QueueCleanupRoutine::execute(): failed to read set of tapes from the database. Aborting cleanup.");
+      m_lc.log(log::ERR,
+               "In QueueCleanupRoutine::execute(): failed to read set of tapes from the database. Aborting cleanup.");
       return;  // Unable to proceed from here...
     }
 
@@ -145,13 +144,14 @@ void QueueCleanupRoutine::execute() {
 
       double jobMovingTime = tLoop.secs(utils::Timer::resetCounter);
 
-      cta::telemetry::metrics::ctaMaintdQueueCleanupCount->Add(dbRet.size());
+      cta::telemetry::metrics::ctaObjectstoreCleanupFileCount->Add(dbRet.size());
       paramsLoopMsg.add("numberOfJobsMoved", dbRet.size())
         .add("getQueueTime", getQueueTime)
         .add("jobMovingTime", jobMovingTime)
         .add("tapeVid", queueVid);
       m_lc.log(cta::log::INFO, "In QueueCleanupRoutine::execute(): Queue jobs moved.");
     }
+    cta::telemetry::metrics::ctaObjectstoreCleanupQueueCount->Add(1);
 
     // If we managed to requeue all the jobs to a differen VID remove the ToReport queue
     // If not, remove the CleanUp flag from the ToReport queue so that the Disk reporter
@@ -240,6 +240,10 @@ void QueueCleanupRoutine::execute() {
       }
     }
   }
+}
+
+std::string QueueCleanupRoutine::getName() const {
+  return "QueueCleanupRoutine";
 }
 
 }  // namespace cta::maintd
