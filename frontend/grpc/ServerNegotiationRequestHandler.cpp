@@ -109,8 +109,11 @@ void cta::frontend::grpc::server::NegotiationRequestHandler::acquireCreds(const 
   gss_OID_set_desc gssMechlist;
   gss_OID_set gssMechs = GSS_C_NO_OID_SET;
 
-  gssNameBuf.value = const_cast<char*>(strService.c_str());
-  gssNameBuf.length = strService.length();  // strService.size() + 1;
+  auto strServiceArr = std::unique_ptr<char[]>(new char[strService.size()]);
+  strncpy(strServiceArr.get(), strService.c_str(), strService.size());
+
+  gssNameBuf.value = strServiceArr.get();
+  gssNameBuf.length = strService.size();
 
 // Prefer to import as a krb5 principal if available
 // GSS_KRB5_NT_PRINCIPAL_NAME is defined in gssapi_krb5.h on many installs.
