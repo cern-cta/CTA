@@ -455,7 +455,7 @@ public:
       contSummaryAfter.addDeltaToLog(contSummaryBefore, params);
       localTimingList.addToLog(params);
       if (ret.elements.size())
-        lc.log(log::DEBUG, "In Algorithms::popNextBatch(): did one round of elements retrieval.");
+        lc.log(log::INFO, "In Algorithms::popNextBatch(): did one round of elements retrieval.");
       timingList+=localTimingList;
     }
   logAndReturn:
@@ -468,7 +468,7 @@ public:
       params.add("schedulerDbTime", totalTime.secs());
       params.add("iterationCount", iterationCount);
       if (ret.elements.size())
-        lc.log(log::DEBUG, "In Algorithms::popNextBatch(): elements retrieval complete.");
+        lc.log(log::INFO, "In Algorithms::popNextBatch(): elements retrieval complete.");
     }
     return ret;
   }

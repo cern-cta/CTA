@@ -294,7 +294,7 @@ void RootEntry::removeArchiveQueueAndCommit(const std::string& tapePool, common:
     {
       log::ScopedParamContainer params(lc);
       params.add("archiveQueueObject", aq.getAddressIfSet());
-      lc.log(log::DEBUG, "In RootEntry::removeArchiveQueueAndCommit(): removed archive queue.");
+      lc.log(log::INFO, "In RootEntry::removeArchiveQueueAndCommit(): removed archive queue.");
     }
   deleteFromRootEntry:
     // ... and remove it from our entry
@@ -305,7 +305,7 @@ void RootEntry::removeArchiveQueueAndCommit(const std::string& tapePool, common:
       log::ScopedParamContainer params(lc);
       params.add("tapePool", tapePool)
             .add("queueType", toString(queueType));
-      lc.log(log::DEBUG, "In RootEntry::removeArchiveQueueAndCommit(): removed archive queue reference.");
+      lc.log(log::INFO, "In RootEntry::removeArchiveQueueAndCommit(): removed archive queue reference.");
     }
   } catch (serializers::NotFound &) {
     // No such tape pool. Nothing to to.
