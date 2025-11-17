@@ -25,6 +25,8 @@ class IRoutine {
 public:
   virtual ~IRoutine() = default;
 
+  virtual std::string getName() const = 0;
+
   /**
    * Execute the main logic of a routine.
    *

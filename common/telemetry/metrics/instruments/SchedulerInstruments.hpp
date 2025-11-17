@@ -26,4 +26,19 @@ namespace cta::telemetry::metrics {
  */
 extern std::unique_ptr<opentelemetry::metrics::Histogram<uint64_t>> ctaSchedulerOperationDuration;
 
+/**
+ * Number of files of the given type reported to disk.
+ */
+extern std::unique_ptr<opentelemetry::metrics::Counter<uint64_t>> ctaSchedulerDiskReportCount;
+
+/**
+ * Number of files of the given type reported for repack.
+ */
+extern std::unique_ptr<opentelemetry::metrics::Counter<uint64_t>> ctaSchedulerRepackReportCount;
+
+/**
+ * Number of repack requests expanded.
+ */
+extern std::unique_ptr<opentelemetry::metrics::Counter<uint64_t>> ctaSchedulerRepackExpandCount;
+
 }  // namespace cta::telemetry::metrics

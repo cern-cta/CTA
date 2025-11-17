@@ -218,6 +218,7 @@ void GarbageCollectRoutine::cleanupDeadAgent(const std::string& address, const s
   ownedObjectSorter.lockFetchAndUpdateArchiveJobs(agent, m_ourAgentReference, m_objectStore, m_lc);
   ownedObjectSorter.lockFetchAndUpdateRetrieveJobs(agent, m_ourAgentReference, m_objectStore, m_lc);
   ownedObjectSorter.lockFetchAndUpdateOtherObjects(agent, m_ourAgentReference, m_objectStore, m_catalogue, m_lc);
+  cta::telemetry::metrics::ctaObjectstoreGcAgentCount->Add(1);
 }
 
 void GarbageCollectRoutine::OwnedObjectSorter::fetchOwnedObjects(
@@ -713,7 +714,7 @@ void GarbageCollectRoutine::OwnedObjectSorter::lockFetchAndUpdateArchiveJobs(
         agent.commit();
       }
 
-      cta::telemetry::metrics::ctaMaintdGarbageCollectorCount->Add(currentJobBatch.size());
+      cta::telemetry::metrics::ctaObjectstoreGcObjectCount->Add(currentJobBatch.size());
       currentJobBatch.clear();
       // Sleep a bit if we have oher rounds to go not to hog the queue
       if (archiveQueueIdAndReqs.second.size()) {
@@ -926,7 +927,7 @@ agentCleanupForRetrieve:
         agent.commit();
       }
 
-      cta::telemetry::metrics::ctaMaintdGarbageCollectorCount->Add(currentJobBatch.size());
+      cta::telemetry::metrics::ctaObjectstoreGcObjectCount->Add(currentJobBatch.size());
       currentJobBatch.clear();
       // Sleep a bit if we have oher rounds to go not to hog the queue
       if (retriveQueueIdAndReqs.second.size()) {
@@ -969,13 +970,17 @@ void GarbageCollectRoutine::OwnedObjectSorter::lockFetchAndUpdateOtherObjects(
     agent.removeFromOwnership(go->getAddressIfSet());
     agent.commit();
   }
-  cta::telemetry::metrics::ctaMaintdGarbageCollectorCount->Add(garbageCollectedOtherObjects);
+  cta::telemetry::metrics::ctaObjectstoreGcObjectCount->Add(garbageCollectedOtherObjects);
   // We now processed all the owned objects. We can delete the agent's entry
   agent.removeAndUnregisterSelf(lc);
   lc.log(log::INFO,
            "In GarbageCollectRoutine::OwnedObjectSorter::lockFetchAndUpdateOtherObjects(): agent entry removed.");
   // We can remove the agent from our own ownership.
   agentReference.removeFromOwnership(agent.getAddressIfSet(), objectStore);
+}
+
+std::string GarbageCollectRoutine::getName() const {
+  return "GarbageCollectRoutine";
 }
 
 }  // namespace cta::maintd

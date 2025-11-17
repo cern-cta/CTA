@@ -8,14 +8,18 @@ conf:
     group: "tape"
   log:
     format: "json"
-    level: "DEBUG"
+    level: "INFO"
   maintd:
     catalogueConfigPath: "/etc/cta/cta-catalogue.conf"
     tapeCacheMaxAgeSecs: 600
     retrieveQueueCacheMaxAgeSecs: 10
   routines:
     sleep_interval: 1000
-    disk_report:
+    disk_report_archive:
+      enabled: "true"
+      batchSize: 500
+      softTimeout: 30
+    disk_report_retrieve:
       enabled: "true"
       batchSize: 500
       softTimeout: 30
@@ -24,9 +28,11 @@ conf:
     queue_cleanup:
       enabled: "true"
       batchSize: 500
-    repack_manager:
+    repack_expand:
       enabled: "true"
       maxToToExpand: 2
+    repack_report:
+      enabled: "true"
       softTimeout: 30
   telemetry:
     enabled: false

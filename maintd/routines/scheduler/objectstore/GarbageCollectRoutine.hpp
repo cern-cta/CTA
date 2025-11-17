@@ -29,7 +29,7 @@
 /**
  * Plan => Garbage collect routine keeps track of the agents.
  * If an agent is declared dead => take ownership of owned objects
- * Using the backup owner, re-post the objet to the container.
+ * Using the backup owner, re-post the object to the container.
  * All containers will have a "repost" method, which is more thorough
  * (and expensive) than the usual one. It can for example prevent double posting.
  */
@@ -115,6 +115,8 @@ public:
                                  cta::objectstore::Backend& objectStore,
                                  cta::log::LogContext& lc);
   };
+
+  std::string getName() const override final;
 
 private:
   cta::log::LogContext& m_lc;

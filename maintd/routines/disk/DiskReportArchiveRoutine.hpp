@@ -18,26 +18,25 @@
 #pragma once
 
 #include "common/log/LogContext.hpp"
+#include "disk/DiskReporterFactory.hpp"
 #include "maintd/IRoutine.hpp"
 #include "scheduler/Scheduler.hpp"
 
 namespace cta::maintd {
 
-class Scheduler;
-
-class RepackManagerRoutine : public IRoutine {
+class DiskReportArchiveRoutine : public IRoutine {
 public:
-  RepackManagerRoutine(cta::log::LogContext &lc, cta::Scheduler &scheduler, int rmrtte, int timeout);
-
-  void execute() final;
+  DiskReportArchiveRoutine(cta::log::LogContext& lc, cta::Scheduler& scheduler, int batchSize, int softTimeout);
+  void execute() override final;
+  std::string getName() const override final;
 
 private:
-  template<typename GetBatchFunc>
-  void reportBatch(std::string_view reportingType, GetBatchFunc getBatchFunc) const;
-
   cta::log::LogContext& m_lc;
-  cta::Scheduler & m_scheduler;
-  int m_repackMaxRequestsToToExpand;
-  int m_softTimeout;
+  cta::Scheduler& m_scheduler;
+  cta::disk::DiskReporterFactory m_reporterFactory;
+
+  int m_batchSize = 500;
+  int m_softTimeout = 30;
 };
-} // namespace cta::maintd
+
+}  // namespace cta::maintd

@@ -76,22 +76,31 @@ cta.maintd.sleep_interval 1000
 #
 # MAINTD ROUTINE CONFIGURATION OPTIONS
 #
-# Run the Disk Reporter to report the state (fail or success) of transfer jobs.
-cta.routines.disk_report.enabled true
-cta.routines.disk_report.batch_size 500
-cta.routines.disk_report.soft_timeout 30
 
-# Run the Garbage Collector for garbage collection of objectstore's dead agents
+# Enable Disk Reporting to report the state (fail or success) of archive jobs.
+cta.routines.disk_report_archive.enabled true
+cta.routines.disk_report_archive.batch_size 500
+cta.routines.disk_report_archive.soft_timeout 30
+
+# Enable Disk Reporting to report the state (fail or success) of retrieve jobs.
+cta.routines.disk_report_retrieve.enabled true
+cta.routines.disk_report_retrieve.batch_size 500
+cta.routines.disk_report_retrieve.soft_timeout 30
+
+# Run the Garbage Collector for garbage collection of the objectstore's dead agents
 cta.routines.garbage_collect.enabled true
 
-# Run the Queue Cleanup to remove retrieve queues that .
+# Run the Queue Cleanup to remove queues marked for cleanup
 cta.routines.queue_cleanup.enabled true
 cta.routines.queue_cleanup.batch_size 500
 
-# Run the Repack Request Manager for repack expansion and reporting.
-cta.routines.repack_manager.enabled true
-cta.routines.repack_manager.max_to_toexpand 2
-cta.routines.repack_manager.reporter.soft_timeout 30
+# Enable Repack Expansion
+cta.routines.repack_expand.enabled true
+cta.routines.repack_expand.max_to_toexpand 2
+
+# Enable Repack Reporting
+cta.routines.repack_report.enabled true
+cta.routines.repack_report.soft_timeout 30
 
 
 ####################################

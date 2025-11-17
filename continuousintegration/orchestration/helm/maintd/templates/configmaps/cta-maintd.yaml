@@ -25,18 +25,24 @@ data:
 
     cta.routines.sleep_interval {{ $.Values.conf.routines.sleep_interval }}
 
-    cta.routines.disk_report.enabled {{ $.Values.conf.routines.disk_report.enabled }}
-    cta.routines.disk_report.batch_size {{ $.Values.conf.routines.disk_report.batchSize  }}
-    cta.routines.disk_report.soft_timeout {{ $.Values.conf.routines.disk_report.softTimeout }}
+    cta.routines.disk_report_archive.enabled {{ $.Values.conf.routines.disk_report_archive.enabled }}
+    cta.routines.disk_report_archive.batch_size {{ $.Values.conf.routines.disk_report_archive.batchSize  }}
+    cta.routines.disk_report_archive.soft_timeout {{ $.Values.conf.routines.disk_report_archive.softTimeout }}
+
+    cta.routines.disk_report_retrieve.enabled {{ $.Values.conf.routines.disk_report_retrieve.enabled }}
+    cta.routines.disk_report_retrieve.batch_size {{ $.Values.conf.routines.disk_report_retrieve.batchSize  }}
+    cta.routines.disk_report_retrieve.soft_timeout {{ $.Values.conf.routines.disk_report_retrieve.softTimeout }}
 
     cta.routines.garbage_collect.enabled {{ $.Values.conf.routines.garbage_collect.enabled }}
 
     cta.routines.queue_cleanup.enabled {{ $.Values.conf.routines.queue_cleanup.enabled }}
     cta.routines.queue_cleanup.batch_size {{ $.Values.conf.routines.queue_cleanup.batchSize }}
 
-    cta.routines.repack_manager.enabled {{ $.Values.conf.routines.repack_manager.enabled }}
-    cta.routines.repack_manager.max_to_toexpand {{ $.Values.conf.routines.repack_manager.maxToToExpand }}
-    cta.routines.repack_manager.reporter.soft_timeout {{ $.Values.conf.routines.repack_manager.softTimeout }}
+    cta.routines.repack_expand.enabled {{ $.Values.conf.routines.repack_expand.enabled }}
+    cta.routines.repack_expand.max_to_toexpand {{ $.Values.conf.routines.repack_expand.maxToToExpand }}
+
+    cta.routines.repack_report.enabled {{ $.Values.conf.routines.repack_report.enabled }}
+    cta.routines.repack_report.soft_timeout {{ $.Values.conf.routines.repack_report.softTimeout }}
 
     # Telemetry
     cta.experimental.telemetry.enabled {{ $.Values.conf.telemetry.enabled }}
