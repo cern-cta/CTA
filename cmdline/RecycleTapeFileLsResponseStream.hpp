@@ -22,7 +22,7 @@ public:
   cta::xrd::Data next() override;
 
 private:
-  std::list<common::dataStructures::FileRecycleLog> m_fileRecycleLogs;
+  catalogue::FileRecycleLogItor m_fileRecycleLogItor;
 };
 
 RecycleTapeFileLsResponseStream::RecycleTapeFileLsResponseStream(cta::catalogue::Catalogue& catalogue,
@@ -64,16 +64,11 @@ RecycleTapeFileLsResponseStream::RecycleTapeFileLsResponseStream(cta::catalogue:
   }
 
   // Get all matching file recycle logs
-  auto fileRecycleLogItor = m_catalogue.FileRecycleLog()->getFileRecycleLogItor(searchCriteria);
-
-  // Convert iterator to list
-  while (fileRecycleLogItor.hasMore()) {
-    m_fileRecycleLogs.emplace_back(fileRecycleLogItor.next());
-  }
+  m_fileRecycleLogItor = m_catalogue.FileRecycleLog()->getFileRecycleLogItor(searchCriteria);
 }
 
 bool RecycleTapeFileLsResponseStream::isDone() {
-  return m_fileRecycleLogs.empty();
+  return !m_fileRecycleLogItor.hasMore();
 }
 
 cta::xrd::Data RecycleTapeFileLsResponseStream::next() {
@@ -81,8 +76,7 @@ cta::xrd::Data RecycleTapeFileLsResponseStream::next() {
     throw std::runtime_error("Stream is exhausted");
   }
 
-  const auto fileRecycleLog = m_fileRecycleLogs.front();
-  m_fileRecycleLogs.pop_front();
+  const auto fileRecycleLog = m_fileRecycleLogItor.next();
 
   cta::xrd::Data data;
   auto recycleLogToReturn = data.mutable_rtfls_item();
