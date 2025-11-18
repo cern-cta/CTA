@@ -15,6 +15,8 @@
  *               submit itself to any jurisdiction.
  */
 
+#include "QueueCleanupTestUtils.hpp"
+
 #include "scheduler/SchedulerDatabaseFactory.hpp"
 #include "common/dataStructures/SecurityIdentity.hpp"
 #include "catalogue/InMemoryCatalogue.hpp"

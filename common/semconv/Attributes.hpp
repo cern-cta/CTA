@@ -52,7 +52,7 @@ static constexpr const char* kCtaTapedDriveState = "cta.taped.drive.state";
 static constexpr const char* kCtaTapedMountType = "cta.taped.mount.type";
 static constexpr const char* kTapeDriveName = "tape.drive.name";
 static constexpr const char* kTapeLibraryLogicalName = "tape.library.logical.name";
-static constexpr const char* kCtaRoutine = "cta.routine";
+static constexpr const char* kCtaRoutineName = "cta.routine.name";
 
 // -------------------- Attribute Values --------------------
 

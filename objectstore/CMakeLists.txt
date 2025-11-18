@@ -84,6 +84,8 @@ add_library (ctaobjectstore SHARED
   RepackQueue.cpp
   RepackQueuePendingAlgorithms.cpp
   RepackQueueToExpandAlgorithms.cpp
+  GarbageCollector.cpp
+  QueueCleanup.cpp
   BackendVFS.cpp
   BackendRados.cpp
   BackendPopulator.cpp
@@ -106,6 +108,10 @@ endif()
 set(ObjectStoreUnitTests
   ObjectStoreFixture.cpp
   BackendTest.cpp
+  GarbageCollectorTest.cpp
+  QueueCleanupTestUtils.cpp
+  QueueCleanupTest.cpp
+  QueueCleanupConcurrentTest.cpp
   RootEntryTest.cpp
   RetrieveQueueTest.cpp
   AlgorithmsTest.cpp

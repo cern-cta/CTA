@@ -70,7 +70,7 @@ void RoutineRunner::run(cta::log::LogContext& lc) {
         cta::utils::Timer t;
         routine->execute();
         cta::telemetry::metrics::ctaMaintdRoutineDuration->Record(t.msecs(),
-                                                                  {{cta::semconv::attr::kCtaRoutine, routine->getName()}},
+                                                                  {{cta::semconv::attr::kCtaRoutineName, routine->getName()}},
                                                                   opentelemetry::context::RuntimeContext::GetCurrent());
         if (m_stopRequested) {
           return;
