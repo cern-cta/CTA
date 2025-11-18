@@ -129,10 +129,10 @@ class TestEnv:
             return connections
 
         return TestEnv(
-            client_conn=create_connections(config, "client"),
-            cta_cli_conn=create_connections(config, "ctacli"),
-            cta_frontend_conn=create_connections(config, "ctafrontend"),
-            cta_rmcd_conn=create_connections(config, "ctarmcd"),
-            cta_taped_conn=create_connections(config, "ctataped"),
-            eos_mgm_conn=create_connections(config, "eosmgm"),
+            client_conns=create_connections(config, "client"),
+            cta_cli_conns=create_connections(config, "ctacli"),
+            cta_frontend_conns=create_connections(config, "ctafrontend"),
+            cta_rmcd_conns=create_connections(config, "ctarmcd"),
+            cta_taped_conns=create_connections(config, "ctataped"),
+            eos_mgm_conns=create_connections(config, "eosmgm"),
         )

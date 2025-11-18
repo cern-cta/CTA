@@ -130,7 +130,7 @@ def pytest_collection_modifyitems(config, items):
     if not is_test_in_items(setup_script, items) and not config.getoption("--no-setup"):
         add_test_into_existing_collection(setup_script, items, prepend=True)
 
-    # Always do a teardown of CTA after the tests finnish (unless skipped)
+    # Always do a teardown of CTA after the tests finish (unless skipped)
     if not is_test_in_items(teardown_script, items) and not config.getoption("--no-teardown"):
         add_test_into_existing_collection(teardown_script, items, prepend=False)
 
