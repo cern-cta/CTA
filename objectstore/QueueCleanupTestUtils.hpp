@@ -17,37 +17,26 @@
 
 #pragma once
 
-#include "catalogue/Catalogue.hpp"
-#include "common/Timer.hpp"
-#include "maintd/IRoutine.hpp"
-#include "scheduler/Scheduler.hpp"
-#include "objectstore/QueueCleanup.hpp"
+#include "objectstore/Sorter.hpp"
+#include "objectstore/BackendVFS.hpp"
+
 
 /**
- * Plan => Cleanup routine keeps track of queues that need to be emptied
- * If a queue is signaled for cleanup, the cleanup routine should take ownership of it, and move all the requests
+ * Plan => Cleanup runner keeps track of queues that need to be emptied
+ * If a queue is signaled for cleanup, the cleanup runner should take ownership of it, and move all the requests
  * to other queues.
  * If there is no other queue available, the request should be aborted and reported back to the user.
  */
 
-namespace cta::maintd {
+namespace unitTests {
 
-class RetrieveRequest;
+void fillRetrieveRequestsForCleanupRunner(
+        typename cta::objectstore::ContainerAlgorithms<cta::objectstore::RetrieveQueue, cta::objectstore::RetrieveQueueToTransfer>::InsertedElement::list &requests,
+        uint32_t requestNr,
+        std::list<std::unique_ptr<cta::objectstore::RetrieveRequest> > &requestPtrs, //List to avoid memory leak on ArchiveQueueAlgorithms test
+        std::set<std::string> & tapeNames, // List of tapes that will contain a replica
+        std::string & activeCopyTape,
+        cta::objectstore::BackendVFS &be,
+        cta::objectstore::AgentReference &agentRef, uint64_t startFseq = 0);
 
-class QueueCleanupRoutine : public IRoutine {
-
-public:
-  QueueCleanupRoutine(cta::log::LogContext& lc, SchedulerDatabase & oStoreDb, catalogue::Catalogue &catalogue, int batchSize);
-
-  ~QueueCleanupRoutine() = default;
-
-  std::string getName() const override final;
-
-  void execute() override final;
-
-private:
-  cta::log::LogContext& m_lc;
-  cta::objectstore::QueueCleanup m_queueCleanup;
-};
-
-} // namespace cta::maintd
+}

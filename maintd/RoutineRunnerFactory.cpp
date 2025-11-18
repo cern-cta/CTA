@@ -130,7 +130,6 @@ std::unique_ptr<RoutineRunner> RoutineRunnerFactory::create() {
 #ifndef CTA_PGSCHED
     routineRunner->registerRoutine(std::make_unique<maintd::QueueCleanupRoutine>(
       m_lc,
-      m_schedDbInit->getAgentReference(),
       *m_schedDb,
       *m_catalogue,
       m_config.getOptionValueInt("cta.routines.queue_cleanup.batch_size").value_or(500)));

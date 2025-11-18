@@ -38,7 +38,6 @@
 #include "common/exception/NoSuchObject.hpp"
 #include "common/exception/UserError.hpp"
 #include "common/log/StdoutLogger.hpp"
-#include "common/telemetry/metrics/instruments/MaintdInstruments.hpp"
 #include "common/utils/utils.hpp"
 #include "disk/DiskFile.hpp"
 #include "MemQueues.hpp"

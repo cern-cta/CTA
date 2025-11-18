@@ -936,7 +936,7 @@ public:
   virtual void trimEmptyQueues(log::LogContext& lc) = 0;
 
   /* Attempt to trim a ToReport queue. This is a dedicated function called by the
-   * QueueCleanupRoutine to delete the ToReportQueue in case we did not fail any requests.
+   * QueueCleanup to delete the ToReportQueue in case we did not fail any requests.
    */
   virtual bool trimEmptyToReportQueue(const std::string& queueName, log::LogContext& lc) = 0;
 

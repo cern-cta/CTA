@@ -27,17 +27,3 @@ target_link_libraries(ctaosdbroutines
 set_property(TARGET ctaosdbroutines PROPERTY SOVERSION "${CTA_SOVERSION}")
 set_property(TARGET ctaosdbroutines PROPERTY   VERSION "${CTA_LIBVERSION}")
 install(TARGETS ctaosdbroutines DESTINATION usr/${CMAKE_INSTALL_LIBDIR})
-
-add_library(ctaosdbroutinesunittests SHARED
-        GarbageCollectRoutineTest.cpp
-        QueueCleanupRoutineTestUtils.cpp
-        QueueCleanupRoutineTest.cpp
-        QueueCleanupRoutineConcurrentTest.cpp
-)
-
-target_link_libraries(ctaosdbroutinesunittests ctaosdbroutines)
-set_property(TARGET ctaosdbroutinesunittests PROPERTY SOVERSION "${CTA_SOVERSION}")
-set_property(TARGET ctaosdbroutinesunittests PROPERTY   VERSION "${CTA_LIBVERSION}")
-
-install(TARGETS ctaosdbroutinesunittests DESTINATION usr/${CMAKE_INSTALL_LIBDIR})
-

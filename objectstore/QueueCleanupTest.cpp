@@ -36,8 +36,8 @@
 #include "catalogue/dummy/DummyTapeCatalogue.hpp"
 #include "common/log/StdoutLogger.hpp"
 #include "objectstore/BackendVFS.hpp"
-#include "QueueCleanupRoutine.hpp"
-#include "QueueCleanupRoutineTestUtils.hpp"
+#include "QueueCleanup.hpp"
+#include "QueueCleanupTestUtils.hpp"
 #include "scheduler/OStoreDB/OStoreDBFactory.hpp"
 #include "scheduler/Scheduler.hpp"
 
@@ -313,8 +313,8 @@ TEST_P(QueueCleanupRoutineTest, CleanupRunnerParameterizedTest) {
 
   // Execute cleanup runner
   {
-    cta::maintd::QueueCleanupRoutine qcr(lc, agentForCleanupRef, oStore, catalogue, 500);
-    qcr.execute();
+    cta::objectstore::QueueCleanup qcr(lc, oStore, catalogue, 500);
+    qcr.cleanupQueues();
   }
 
   // Validate final setup of tapes and corresponding queues, after the cleanup runner has been executed

@@ -46,7 +46,6 @@
 #include "common/exception/UserError.hpp"
 #include "common/semconv/Attributes.hpp"
 #include "common/telemetry/metrics/instruments/SchedulerInstruments.hpp"
-#include "common/telemetry/metrics/instruments/MaintdInstruments.hpp"
 #include "common/Timer.hpp"
 #include "common/utils/utils.hpp"
 #include "disk/DiskFileImplementations.hpp"

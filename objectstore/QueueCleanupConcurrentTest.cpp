@@ -36,13 +36,13 @@
 #include "catalogue/dummy/DummyTapeCatalogue.hpp"
 #include "common/log/StdoutLogger.hpp"
 #include "objectstore/BackendVFS.hpp"
-#include "QueueCleanupRoutine.hpp"
-#include "GarbageCollectRoutine.hpp"
+#include "QueueCleanup.hpp"
+#include "GarbageCollector.hpp"
 #include "scheduler/OStoreDB/OStoreDBFactory.hpp"
 #include "scheduler/OStoreDB/OStoreDBWithAgent.hpp"
 #include "scheduler/Scheduler.hpp"
 
-#include "QueueCleanupRoutineTestUtils.hpp"
+#include "QueueCleanupTestUtils.hpp"
 
 //#define STDOUT_LOGGING
 
@@ -85,13 +85,13 @@ struct RetrieveRequestSetup {
 /**
  * This structure is used to parameterize OStore database tests.
  */
-struct QueueCleanupRoutineConcurrentTestParams {
+struct QueueCleanupConcurrentTestParams {
   cta::SchedulerDatabaseFactory &dbFactory;
   std::list<RetrieveRequestSetup> &retrieveRequestSetupList;
   std::list<ConcurrentTapeQueueTransition> &tapeQueueTransitionList;
   double cleanupTimeout;
 
-  QueueCleanupRoutineConcurrentTestParams(
+  QueueCleanupConcurrentTestParams(
           cta::SchedulerDatabaseFactory &dbFactory,
           std::list<RetrieveRequestSetup> &retrieveRequestSetupList,
           std::list<ConcurrentTapeQueueTransition> &tapeQueueTransitionList,
@@ -107,11 +107,11 @@ struct QueueCleanupRoutineConcurrentTestParams {
  * The OStore database test is a parameterized test.  It takes an
  * OStore database factory as a parameter.
  */
-class QueueCleanupRoutineConcurrentTest: public
-                              ::testing::TestWithParam<QueueCleanupRoutineConcurrentTestParams> {
+class QueueCleanupConcurrentTest: public
+                              ::testing::TestWithParam<QueueCleanupConcurrentTestParams> {
 public:
 
-  QueueCleanupRoutineConcurrentTest() noexcept {
+  QueueCleanupConcurrentTest() noexcept {
   }
 
   class FailedToGetDatabase: public std::exception {
@@ -184,10 +184,10 @@ public:
 
 private:
   // Prevent copying
-  QueueCleanupRoutineConcurrentTest(const QueueCleanupRoutineConcurrentTest &) = delete;
+  QueueCleanupConcurrentTest(const QueueCleanupConcurrentTest &) = delete;
 
   // Prevent assignment
-  QueueCleanupRoutineConcurrentTest & operator= (const QueueCleanupRoutineConcurrentTest &) = delete;
+  QueueCleanupConcurrentTest & operator= (const QueueCleanupConcurrentTest &) = delete;
   std::unique_ptr<cta::objectstore::OStoreDBWrapperInterface> m_db;
   std::unique_ptr<cta::catalogue::Catalogue> m_catalogue;
   std::unique_ptr<cta::Scheduler> m_scheduler;
@@ -211,7 +211,7 @@ public:
 };
 
 
-TEST_P(QueueCleanupRoutineConcurrentTest, CleanupRunnerParameterizedTest) {
+TEST_P(QueueCleanupConcurrentTest, CleanupRunnerParameterizedTest) {
   using cta::common::dataStructures::JobQueueType;
   // We will need a log object
 #ifdef STDOUT_LOGGING
@@ -346,15 +346,15 @@ TEST_P(QueueCleanupRoutineConcurrentTest, CleanupRunnerParameterizedTest) {
 
   // Execute cleanup routine
   {
-    cta::maintd::QueueCleanupRoutine qCleanupRunnerBroken(lc, agentForCleanupRef, brokenOStore, catalogue, 500);
-    cta::maintd::QueueCleanupRoutine qCleanupRunnerOk(lc, agentForCleanupRef, oKOStore, catalogue, 500);
+    cta::objectstore::QueueCleanup qCleanupRunnerBroken(lc, brokenOStore, catalogue, 500);
+    cta::objectstore::QueueCleanup qCleanupRunnerOk(lc, oKOStore, catalogue, 500);
 
     // We now run the GarbageCollector to clear the CleanupInfo
-    cta::maintd::GarbageCollectRoutine gc(lc, be, agentForCleanupRef, catalogue);
-    ASSERT_NO_THROW(gc.execute());
+    cta::objectstore::GarbageCollector gc(lc, be, agentForCleanupRef, catalogue);
+    ASSERT_NO_THROW(gc.runOnePass());
 
     // Try to move the requests after agent got garbage collected
-    ASSERT_NO_THROW(qCleanupRunnerOk.execute());
+    ASSERT_NO_THROW(qCleanupRunnerOk.cleanupQueues());
   }
 
   // Validate final setup of tapes and corresponding queues, after the cleanup routine has been executed
@@ -412,10 +412,10 @@ static std::list<ConcurrentTapeQueueTransition> Test_tapeQueueTransitionList_Fai
         },
 };
 
-INSTANTIATE_TEST_CASE_P(OStoreTestVFS, QueueCleanupRoutineConcurrentTest,
+INSTANTIATE_TEST_CASE_P(OStoreTestVFS, QueueCleanupConcurrentTest,
                         ::testing::Values(
                                 // With a timeout of 0.0s the 2nd cleanup runner will be able to complete the task after the 1st has failed
-                                QueueCleanupRoutineConcurrentTestParams(
+                                QueueCleanupConcurrentTestParams(
                                         OStoreDBFactoryVFS,
                                         Test_retrieveRequestSetupList,
                                         Test_tapeQueueTransitionList_Completed,
