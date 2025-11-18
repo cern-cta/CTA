@@ -30,8 +30,10 @@ class RemoteHost:
     def copyFrom(self, src_path: str, dst_path: str, throw_on_failure=True) -> None:
         return self.conn.copyFrom(src_path, dst_path, throw_on_failure=throw_on_failure)
 
-    def restart(self, throw_on_failure=True) -> None:
-        return self.conn.restart(throw_on_failure)
+    def restart(self, wait_for_restart=True, throw_on_failure=True) -> None:
+        self.conn.restart(throw_on_failure)
+        if wait_for_restart:
+            self.wait_for_host_up()
 
     def is_host_up(self) -> None:
         return self.conn.is_up()
