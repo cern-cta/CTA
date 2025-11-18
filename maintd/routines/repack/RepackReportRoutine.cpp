@@ -32,10 +32,14 @@ RepackReportRoutine::RepackReportRoutine(cta::log::LogContext& lc, cta::Schedule
 }
 
 void RepackReportRoutine::execute() {
-  reportBatch("RetrieveSuccesses", [this] { return m_scheduler.getNextSuccessfulRetrieveRepackReportBatch(m_lc); });
-  reportBatch("ArchiveSuccesses", [this] { return m_scheduler.getNextSuccessfulArchiveRepackReportBatch(m_lc); });
-  reportBatch("RetrieveFailed", [this] { return m_scheduler.getNextFailedRetrieveRepackReportBatch(m_lc); });
-  reportBatch("ArchiveFailed", [this] { return m_scheduler.getNextFailedArchiveRepackReportBatch(m_lc); });
+  reportBatch(cta::semconv::attr::CtaRepackReportTypeValues::kRetrieveSuccess,
+              [this] { return m_scheduler.getNextSuccessfulRetrieveRepackReportBatch(m_lc); });
+  reportBatch(cta::semconv::attr::CtaRepackReportTypeValues::kArchiveSuccess,
+              [this] { return m_scheduler.getNextSuccessfulArchiveRepackReportBatch(m_lc); });
+  reportBatch(cta::semconv::attr::CtaRepackReportTypeValues::kRetrieveFailed,
+              [this] { return m_scheduler.getNextFailedRetrieveRepackReportBatch(m_lc); });
+  reportBatch(cta::semconv::attr::CtaRepackReportTypeValues::kArchiveFailed,
+              [this] { return m_scheduler.getNextFailedArchiveRepackReportBatch(m_lc); });
 }
 
 template<typename GetBatchFunc>
@@ -43,7 +47,7 @@ void RepackReportRoutine::reportBatch(std::string_view reportingType, GetBatchFu
   utils::Timer totalTime;
   bool moreBatch = true;
   log::ScopedParamContainer params(m_lc);
-  params.add("reportingType", reportingType);
+  params.add("repackReportType", reportingType);
 
   uint64_t numberOfBatchReported = 0;
 
@@ -72,7 +76,7 @@ void RepackReportRoutine::reportBatch(std::string_view reportingType, GetBatchFu
     params.add("numberOfBatchReported", numberOfBatchReported);
     params.add("totalRunTime", totalTime.secs());
     params.add("moreBatchToDo", moreBatch);
-    m_lc.log(log::INFO, "In RepackReportThread::run(), exiting.");
+    m_lc.log(log::INFO, "In RepackReportRoutine::reportBatch(), exiting.");
   }
 }
 
