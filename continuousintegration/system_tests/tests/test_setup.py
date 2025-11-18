@@ -92,7 +92,6 @@ def test_populate_catalogue_tapes(env):
                                 --vendor vendor \
                                 --logicallibrary {logical_library} \
                                 --tapepool ctasystest \
-                                --comment ctasystest \
                                 --vid {tape} \
                                 --full false \
                                 --comment ctasystest"

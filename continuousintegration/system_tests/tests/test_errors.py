@@ -1,5 +1,6 @@
 import json
 import re
+from collections import Counter
 
 
 def test_no_coredumps(env):
@@ -20,7 +21,7 @@ def test_no_coredumps(env):
 # Something to test at some point
 def test_no_uncaught_exceptions(env, error_whitelist):
     hosts = env.ctafrontend + env.ctataped + env.ctarmcd
-    all_errors = []  # for summaries
+    error_messages = []  # for summaries
     for host in hosts:
         # collect logs
         cmd = f"cat {host.log_file_location} | grep -a -E '(ERROR|CRITICAL)' || true"
@@ -36,26 +37,26 @@ def test_no_uncaught_exceptions(env, error_whitelist):
 
             msg = entry.get("message", "")
             if not msg:
-                raise RuntimeError(f'Found error message with "message" field in {host.name}')
+                raise RuntimeError(f'Found error message with missing "message" field in {host.name}')
 
-            all_errors.append(msg)
+            error_messages.append(msg)
 
-    # Count occurrences
-    error_counts: dict[str, int] = {}
-    for msg in all_errors:
-        error_counts[msg] = error_counts.get(msg, 0) + 1
+    # No errors found :D
+    if not error_messages:
+        return
+
+    # For each message, how often did it occur
+    error_counts: dict[str, int] = Counter(error_messages)
 
     # Evaluate against whitelist and collect violations
     total_non_whitelisted_errors = 0
-    for msg, count in error_counts.items():
-        matched = any(re.search(pattern, msg) for pattern in error_whitelist)
-        if not matched:
+    print("\nSummary of logged error messages:")
+    for msg, count in sorted(error_counts.items(), key=lambda x: -x[1]):
+        whitelist_prefix = "(whitelisted)"
+        prefix = " " * len(whitelist_prefix)
+        if any(re.search(pattern, msg) for pattern in error_whitelist):
             total_non_whitelisted_errors += count
-
-    if error_counts:
-        print("\nSummary of logged error messages:")
-        for msg, count in sorted(error_counts.items(), key=lambda x: -x[1]):
-            tag = "(whitelisted)" if msg in error_whitelist else "             "
-            print(f'{tag} Count: {count}, Message: "{msg}"')
+            prefix = whitelist_prefix
+        print(f'{prefix} Count: {count}, Message: "{msg}"')
 
     assert total_non_whitelisted_errors == 0, f"Found {total_non_whitelisted_errors} non-whitelisted logged errors"
