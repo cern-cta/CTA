@@ -18,7 +18,7 @@
 #pragma once
 
 #include "XrdCtaStream.hpp"
-#include "cmdline/DriveLsResponseStream.hpp"
+#include "frontend/common/DriveLsResponseStream.hpp"
 
 namespace cta::xrd {
 
@@ -33,17 +33,17 @@ private:
   static constexpr const char* const LOG_SUFFIX = "DriveLsStream";
 };
 
-DriveLsStream::DriveLsStream(const frontend::AdminCmdStream& requestMsg,
-                             cta::catalogue::Catalogue& catalogue,
-                             cta::Scheduler& scheduler,
-                             cta::log::LogContext& lc)
+inline DriveLsStream::DriveLsStream(const frontend::AdminCmdStream& requestMsg,
+                                    cta::catalogue::Catalogue& catalogue,
+                                    cta::Scheduler& scheduler,
+                                    cta::log::LogContext& lc)
     : XrdCtaStream(catalogue,
                    scheduler,
-                   std::make_unique<cta::cmdline::DriveLsResponseStream>(catalogue,
-                                                                         scheduler,
-                                                                         requestMsg.getInstanceName(),
-                                                                         requestMsg.getAdminCmd(),
-                                                                         lc)) {
+                   std::make_unique<cta::frontend::DriveLsResponseStream>(catalogue,
+                                                                          scheduler,
+                                                                          requestMsg.getInstanceName(),
+                                                                          requestMsg.getAdminCmd(),
+                                                                          lc)) {
   XrdSsiPb::Log::Msg(XrdSsiPb::Log::DEBUG, LOG_SUFFIX, " constructor");
 }
 

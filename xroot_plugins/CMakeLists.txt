@@ -42,7 +42,30 @@ add_library(XrdSsiCta MODULE XrdSsiCtaServiceProvider.cpp XrdSsiCtaRequestProc.c
                              ../frontend/common/WorkflowEvent.cpp
                              ../frontend/common/AdminCmd.cpp
                              ../frontend/common/RequestTracker.cpp
-                             ../frontend/common/AdminCmdOptions.cpp)
+                             ../frontend/common/AdminCmdOptions.cpp
+                             ../frontend/common/ActivityMountRuleLsResponseStream.cpp
+                             ../frontend/common/AdminLsResponseStream.cpp
+                             ../frontend/common/ArchiveRouteLsResponseStream.cpp
+                             ../frontend/common/DiskInstanceLsResponseStream.cpp
+                             ../frontend/common/DiskInstanceSpaceLsResponseStream.cpp
+                             ../frontend/common/DiskSystemLsResponseStream.cpp
+                             ../frontend/common/DriveLsResponseStream.cpp
+                             ../frontend/common/FailedRequestLsResponseStream.cpp
+                             ../frontend/common/GroupMountRuleLsResponseStream.cpp
+                             ../frontend/common/LogicalLibraryLsResponseStream.cpp
+                             ../frontend/common/MediaTypeLsResponseStream.cpp
+                             ../frontend/common/MountPolicyLsResponseStream.cpp
+                             ../frontend/common/PhysicalLibraryLsResponseStream.cpp
+                             ../frontend/common/RecycleTapeFileLsResponseStream.cpp
+                             ../frontend/common/RepackLsResponseStream.cpp
+                             ../frontend/common/RequesterMountRuleLsResponseStream.cpp
+                             ../frontend/common/ShowQueuesResponseStream.cpp
+                             ../frontend/common/StorageClassLsResponseStream.cpp
+                             ../frontend/common/TapeFileLsResponseStream.cpp
+                             ../frontend/common/TapeLsResponseStream.cpp
+                             ../frontend/common/TapePoolLsResponseStream.cpp
+                             ../frontend/common/VirtualOrganizationLsResponseStream.cpp
+)
 if(CTA_USE_PGSCHED)
   target_link_libraries(XrdSsiCta ${XROOTD_XRDSSI_LIB} XrdSsiLib ctascheduler ctacommon ctacatalogue)
 else()

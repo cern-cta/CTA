@@ -24,28 +24,28 @@
 #include "common/exception/Exception.hpp"
 #include "common/semconv/Attributes.hpp"
 #include "frontend/common/RequestTracker.hpp"
-#include "cmdline/TapeLsResponseStream.hpp"
-#include "cmdline/StorageClassLsResponseStream.hpp"
-#include "cmdline/TapePoolLsResponseStream.hpp"
-#include "cmdline/VirtualOrganizationLsResponseStream.hpp"
-#include "cmdline/DiskInstanceLsResponseStream.hpp"
-#include "cmdline/DriveLsResponseStream.hpp"
-#include "cmdline/AdminLsResponseStream.hpp"
-#include "cmdline/ArchiveRouteLsResponseStream.hpp"
-#include "cmdline/GroupMountRuleLsResponseStream.hpp"
-#include "cmdline/MediaTypeLsResponseStream.hpp"
-#include "cmdline/RequesterMountRuleLsResponseStream.hpp"
-#include "cmdline/PhysicalLibraryLsResponseStream.hpp"
-#include "cmdline/MountPolicyLsResponseStream.hpp"
-#include "cmdline/DiskSystemLsResponseStream.hpp"
-#include "cmdline/DiskInstanceSpaceLsResponseStream.hpp"
-#include "cmdline/TapeFileLsResponseStream.hpp"
-#include "cmdline/ActivityMountRuleLsResponseStream.hpp"
-#include "cmdline/ShowQueuesResponseStream.hpp"
-#include "cmdline/RepackLsResponseStream.hpp"
-#include "cmdline/RecycleTapeFileLsResponseStream.hpp"
-#include "cmdline/LogicalLibraryLsResponseStream.hpp"
-#include "cmdline/FailedRequestLsResponseStream.hpp"
+#include "frontend/common/TapeLsResponseStream.hpp"
+#include "frontend/common/StorageClassLsResponseStream.hpp"
+#include "frontend/common/TapePoolLsResponseStream.hpp"
+#include "frontend/common/VirtualOrganizationLsResponseStream.hpp"
+#include "frontend/common/DiskInstanceLsResponseStream.hpp"
+#include "frontend/common/DriveLsResponseStream.hpp"
+#include "frontend/common/AdminLsResponseStream.hpp"
+#include "frontend/common/ArchiveRouteLsResponseStream.hpp"
+#include "frontend/common/GroupMountRuleLsResponseStream.hpp"
+#include "frontend/common/MediaTypeLsResponseStream.hpp"
+#include "frontend/common/RequesterMountRuleLsResponseStream.hpp"
+#include "frontend/common/PhysicalLibraryLsResponseStream.hpp"
+#include "frontend/common/MountPolicyLsResponseStream.hpp"
+#include "frontend/common/DiskSystemLsResponseStream.hpp"
+#include "frontend/common/DiskInstanceSpaceLsResponseStream.hpp"
+#include "frontend/common/TapeFileLsResponseStream.hpp"
+#include "frontend/common/ActivityMountRuleLsResponseStream.hpp"
+#include "frontend/common/ShowQueuesResponseStream.hpp"
+#include "frontend/common/RepackLsResponseStream.hpp"
+#include "frontend/common/RecycleTapeFileLsResponseStream.hpp"
+#include "frontend/common/LogicalLibraryLsResponseStream.hpp"
+#include "frontend/common/FailedRequestLsResponseStream.hpp"
 #include "ServerVersion.hpp"
 #include "ServerDefaultReactor.hpp"
 
@@ -115,171 +115,147 @@ CtaRpcStreamImpl::GenericAdminStream(::grpc::CallbackServerContext* context, con
   if (!m_enableCtaAdminCommands) {
     return new DefaultWriteReactor(CTA_ADMIN_COMMANDS_DISABLED_ERROR, ::grpc::StatusCode::UNIMPLEMENTED);
   }
-  cta::frontend::RequestTracker requestTracker("ADMIN_STREAMING", "admin");
-  std::unique_ptr<cta::cmdline::CtaAdminResponseStream> stream;
+  RequestTracker requestTracker("ADMIN_STREAMING", "admin");
+  std::unique_ptr<CtaAdminResponseStream> stream;
   cta::admin::HeaderType headerType;
   try {
     switch (cmd_pair(request->admincmd().cmd(), request->admincmd().subcmd())) {
       using namespace cta::admin;
       case cmd_pair(cta::admin::AdminCmd::CMD_TAPE, cta::admin::AdminCmd::SUBCMD_LS):
-        stream = std::make_unique<cta::cmdline::TapeLsResponseStream>(m_catalogue,
-                                                                      m_scheduler,
-                                                                      m_instanceName,
-                                                                      request->admincmd(),
-                                                                      m_missingFileCopiesMinAgeSecs);
+        stream = std::make_unique<TapeLsResponseStream>(m_catalogue,
+                                                        m_scheduler,
+                                                        m_instanceName,
+                                                        request->admincmd(),
+                                                        m_missingFileCopiesMinAgeSecs);
         headerType = cta::admin::HeaderType::TAPE_LS;
         break;
       case cmd_pair(cta::admin::AdminCmd::CMD_STORAGECLASS, cta::admin::AdminCmd::SUBCMD_LS):
-        stream = std::make_unique<cta::cmdline::StorageClassLsResponseStream>(m_catalogue,
-                                                                              m_scheduler,
-                                                                              m_instanceName,
-                                                                              request->admincmd());
+        stream =
+          std::make_unique<StorageClassLsResponseStream>(m_catalogue, m_scheduler, m_instanceName, request->admincmd());
         headerType = HeaderType::STORAGECLASS_LS;
         break;
       case cmd_pair(cta::admin::AdminCmd::CMD_TAPEPOOL, cta::admin::AdminCmd::SUBCMD_LS):
-        stream = std::make_unique<cta::cmdline::TapePoolLsResponseStream>(m_catalogue,
-                                                                          m_scheduler,
-                                                                          m_instanceName,
-                                                                          request->admincmd());
+        stream =
+          std::make_unique<TapePoolLsResponseStream>(m_catalogue, m_scheduler, m_instanceName, request->admincmd());
         headerType = HeaderType::TAPEPOOL_LS;
         break;
       case cmd_pair(cta::admin::AdminCmd::CMD_VIRTUALORGANIZATION, cta::admin::AdminCmd::SUBCMD_LS):
-        stream = std::make_unique<cta::cmdline::VirtualOrganizationLsResponseStream>(m_catalogue,
-                                                                                     m_scheduler,
-                                                                                     m_instanceName,
-                                                                                     request->admincmd());
-        headerType = HeaderType::VIRTUALORGANIZATION_LS;
-        break;
-      case cmd_pair(cta::admin::AdminCmd::CMD_DISKINSTANCE, cta::admin::AdminCmd::SUBCMD_LS):
-        stream = std::make_unique<cta::cmdline::DiskInstanceLsResponseStream>(m_catalogue,
-                                                                              m_scheduler,
-                                                                              m_instanceName,
-                                                                              request->admincmd());
-        headerType = HeaderType::DISKINSTANCE_LS;
-        break;
-      case cmd_pair(cta::admin::AdminCmd::CMD_DRIVE, cta::admin::AdminCmd::SUBCMD_LS):
-        stream = std::make_unique<cta::cmdline::DriveLsResponseStream>(m_catalogue,
-                                                                       m_scheduler,
-                                                                       m_instanceName,
-                                                                       request->admincmd(),
-                                                                       m_lc);
-        headerType = HeaderType::DRIVE_LS;
-        break;
-      case cmd_pair(cta::admin::AdminCmd::CMD_ADMIN, cta::admin::AdminCmd::SUBCMD_LS):
-        stream = std::make_unique<cta::cmdline::AdminLsResponseStream>(m_catalogue,
+        stream = std::make_unique<VirtualOrganizationLsResponseStream>(m_catalogue,
                                                                        m_scheduler,
                                                                        m_instanceName,
                                                                        request->admincmd());
+        headerType = HeaderType::VIRTUALORGANIZATION_LS;
+        break;
+      case cmd_pair(cta::admin::AdminCmd::CMD_DISKINSTANCE, cta::admin::AdminCmd::SUBCMD_LS):
+        stream =
+          std::make_unique<DiskInstanceLsResponseStream>(m_catalogue, m_scheduler, m_instanceName, request->admincmd());
+        headerType = HeaderType::DISKINSTANCE_LS;
+        break;
+      case cmd_pair(cta::admin::AdminCmd::CMD_DRIVE, cta::admin::AdminCmd::SUBCMD_LS):
+        stream =
+          std::make_unique<DriveLsResponseStream>(m_catalogue, m_scheduler, m_instanceName, request->admincmd(), m_lc);
+        headerType = HeaderType::DRIVE_LS;
+        break;
+      case cmd_pair(cta::admin::AdminCmd::CMD_ADMIN, cta::admin::AdminCmd::SUBCMD_LS):
+        stream = std::make_unique<AdminLsResponseStream>(m_catalogue, m_scheduler, m_instanceName, request->admincmd());
         headerType = HeaderType::ADMIN_LS;
         break;
       case cmd_pair(cta::admin::AdminCmd::CMD_VERSION, cta::admin::AdminCmd::SUBCMD_NONE):
         return new VersionWriteReactor(m_catalogue, m_scheduler, m_instanceName, m_catalogueConnString, request);
       case cmd_pair(cta::admin::AdminCmd::CMD_ARCHIVEROUTE, cta::admin::AdminCmd::SUBCMD_LS):
-        stream = std::make_unique<cta::cmdline::ArchiveRouteLsResponseStream>(m_catalogue,
-                                                                              m_scheduler,
-                                                                              m_instanceName,
-                                                                              request->admincmd());
+        stream =
+          std::make_unique<ArchiveRouteLsResponseStream>(m_catalogue, m_scheduler, m_instanceName, request->admincmd());
         headerType = HeaderType::ARCHIVEROUTE_LS;
         break;
       case cmd_pair(cta::admin::AdminCmd::CMD_GROUPMOUNTRULE, cta::admin::AdminCmd::SUBCMD_LS):
-        stream = std::make_unique<cta::cmdline::GroupMountRuleLsResponseStream>(m_catalogue,
-                                                                                m_scheduler,
-                                                                                m_instanceName,
-                                                                                request->admincmd());
+        stream = std::make_unique<GroupMountRuleLsResponseStream>(m_catalogue,
+                                                                  m_scheduler,
+                                                                  m_instanceName,
+                                                                  request->admincmd());
         headerType = HeaderType::GROUPMOUNTRULE_LS;
         break;
       case cmd_pair(cta::admin::AdminCmd::CMD_MEDIATYPE, cta::admin::AdminCmd::SUBCMD_LS):
-        stream = std::make_unique<cta::cmdline::MediaTypeLsResponseStream>(m_catalogue,
-                                                                           m_scheduler,
-                                                                           m_instanceName,
-                                                                           request->admincmd());
+        stream =
+          std::make_unique<MediaTypeLsResponseStream>(m_catalogue, m_scheduler, m_instanceName, request->admincmd());
         headerType = HeaderType::MEDIATYPE_LS;
         break;
       case cmd_pair(cta::admin::AdminCmd::CMD_REQUESTERMOUNTRULE, cta::admin::AdminCmd::SUBCMD_LS):
-        stream = std::make_unique<cta::cmdline::RequesterMountRuleLsResponseStream>(m_catalogue,
-                                                                                    m_scheduler,
-                                                                                    m_instanceName,
-                                                                                    request->admincmd());
+        stream = std::make_unique<RequesterMountRuleLsResponseStream>(m_catalogue,
+                                                                      m_scheduler,
+                                                                      m_instanceName,
+                                                                      request->admincmd());
         headerType = HeaderType::REQUESTERMOUNTRULE_LS;
         break;
       case cmd_pair(cta::admin::AdminCmd::CMD_PHYSICALLIBRARY, cta::admin::AdminCmd::SUBCMD_LS):
-        stream = std::make_unique<cta::cmdline::PhysicalLibraryLsResponseStream>(m_catalogue,
-                                                                                 m_scheduler,
-                                                                                 m_instanceName,
-                                                                                 request->admincmd());
+        stream = std::make_unique<PhysicalLibraryLsResponseStream>(m_catalogue,
+                                                                   m_scheduler,
+                                                                   m_instanceName,
+                                                                   request->admincmd());
         headerType = HeaderType::PHYSICALLIBRARY_LS;
         break;
       case cmd_pair(cta::admin::AdminCmd::CMD_MOUNTPOLICY, cta::admin::AdminCmd::SUBCMD_LS):
-        stream = std::make_unique<cta::cmdline::MountPolicyLsResponseStream>(m_catalogue,
-                                                                             m_scheduler,
-                                                                             m_instanceName,
-                                                                             request->admincmd());
+        stream =
+          std::make_unique<MountPolicyLsResponseStream>(m_catalogue, m_scheduler, m_instanceName, request->admincmd());
         headerType = HeaderType::MOUNTPOLICY_LS;
         break;
       case cmd_pair(cta::admin::AdminCmd::CMD_DISKSYSTEM, cta::admin::AdminCmd::SUBCMD_LS):
-        stream = std::make_unique<cta::cmdline::DiskSystemLsResponseStream>(m_catalogue,
-                                                                            m_scheduler,
-                                                                            m_instanceName,
-                                                                            request->admincmd());
+        stream =
+          std::make_unique<DiskSystemLsResponseStream>(m_catalogue, m_scheduler, m_instanceName, request->admincmd());
         headerType = HeaderType::DISKSYSTEM_LS;
         break;
       case cmd_pair(cta::admin::AdminCmd::CMD_DISKINSTANCESPACE, cta::admin::AdminCmd::SUBCMD_LS):
-        stream = std::make_unique<cta::cmdline::DiskInstanceSpaceLsResponseStream>(m_catalogue,
-                                                                                   m_scheduler,
-                                                                                   m_instanceName,
-                                                                                   request->admincmd());
+        stream = std::make_unique<DiskInstanceSpaceLsResponseStream>(m_catalogue,
+                                                                     m_scheduler,
+                                                                     m_instanceName,
+                                                                     request->admincmd());
         headerType = HeaderType::DISKINSTANCESPACE_LS;
         break;
       case cmd_pair(cta::admin::AdminCmd::CMD_TAPEFILE, cta::admin::AdminCmd::SUBCMD_LS):
-        stream = std::make_unique<cta::cmdline::TapeFileLsResponseStream>(m_catalogue,
-                                                                          m_scheduler,
-                                                                          m_instanceName,
-                                                                          request->admincmd());
+        stream =
+          std::make_unique<TapeFileLsResponseStream>(m_catalogue, m_scheduler, m_instanceName, request->admincmd());
         headerType = HeaderType::TAPEFILE_LS;
         break;
       case cmd_pair(cta::admin::AdminCmd::CMD_ACTIVITYMOUNTRULE, cta::admin::AdminCmd::SUBCMD_LS):
-        stream = std::make_unique<cta::cmdline::ActivityMountRuleLsResponseStream>(m_catalogue,
-                                                                                   m_scheduler,
-                                                                                   m_instanceName,
-                                                                                   request->admincmd());
+        stream = std::make_unique<ActivityMountRuleLsResponseStream>(m_catalogue,
+                                                                     m_scheduler,
+                                                                     m_instanceName,
+                                                                     request->admincmd());
         headerType = HeaderType::ACTIVITYMOUNTRULE_LS;
         break;
       case cmd_pair(cta::admin::AdminCmd::CMD_SHOWQUEUES, cta::admin::AdminCmd::SUBCMD_NONE):
-        stream = std::make_unique<cta::cmdline::ShowQueuesResponseStream>(m_catalogue,
-                                                                          m_scheduler,
-                                                                          m_instanceName,
-                                                                          request->admincmd(),
-                                                                          m_lc);
+        stream = std::make_unique<ShowQueuesResponseStream>(m_catalogue,
+                                                            m_scheduler,
+                                                            m_instanceName,
+                                                            request->admincmd(),
+                                                            m_lc);
         headerType = HeaderType::SHOWQUEUES;
         break;
       case cmd_pair(cta::admin::AdminCmd::CMD_REPACK, cta::admin::AdminCmd::SUBCMD_LS):
-        stream = std::make_unique<cta::cmdline::RepackLsResponseStream>(m_catalogue,
-                                                                        m_scheduler,
-                                                                        m_instanceName,
-                                                                        request->admincmd());
+        stream =
+          std::make_unique<RepackLsResponseStream>(m_catalogue, m_scheduler, m_instanceName, request->admincmd());
         headerType = HeaderType::REPACK_LS;
         break;
       case cmd_pair(cta::admin::AdminCmd::CMD_RECYCLETAPEFILE, cta::admin::AdminCmd::SUBCMD_LS):
-        stream = std::make_unique<cta::cmdline::RecycleTapeFileLsResponseStream>(m_catalogue,
-                                                                                 m_scheduler,
-                                                                                 m_instanceName,
-                                                                                 request->admincmd());
+        stream = std::make_unique<RecycleTapeFileLsResponseStream>(m_catalogue,
+                                                                   m_scheduler,
+                                                                   m_instanceName,
+                                                                   request->admincmd());
         headerType = HeaderType::RECYLETAPEFILE_LS;
         break;
       case cmd_pair(cta::admin::AdminCmd::CMD_LOGICALLIBRARY, cta::admin::AdminCmd::SUBCMD_LS):
-        stream = std::make_unique<cta::cmdline::LogicalLibraryLsResponseStream>(m_catalogue,
-                                                                                m_scheduler,
-                                                                                m_instanceName,
-                                                                                request->admincmd());
+        stream = std::make_unique<LogicalLibraryLsResponseStream>(m_catalogue,
+                                                                  m_scheduler,
+                                                                  m_instanceName,
+                                                                  request->admincmd());
         headerType = HeaderType::LOGICALLIBRARY_LS;
         break;
       case cmd_pair(cta::admin::AdminCmd::CMD_FAILEDREQUEST, cta::admin::AdminCmd::SUBCMD_LS):
-        stream = std::make_unique<cta::cmdline::FailedRequestLsResponseStream>(m_catalogue,
-                                                                               m_scheduler,
-                                                                               m_instanceName,
-                                                                               request->admincmd(),
-                                                                               m_schedDb,
-                                                                               m_lc);
+        stream = std::make_unique<FailedRequestLsResponseStream>(m_catalogue,
+                                                                 m_scheduler,
+                                                                 m_instanceName,
+                                                                 request->admincmd(),
+                                                                 m_schedDb,
+                                                                 m_lc);
         headerType = HeaderType::FAILEDREQUEST_LS;
         break;
       default:

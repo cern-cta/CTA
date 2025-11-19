@@ -18,7 +18,7 @@
 #pragma once
 
 #include "XrdCtaStream.hpp"
-#include "cmdline/MountPolicyLsResponseStream.hpp"
+#include "frontend/common/MountPolicyLsResponseStream.hpp"
 
 namespace cta::xrd {
 
@@ -32,15 +32,15 @@ private:
   static constexpr const char* const LOG_SUFFIX = "MountPolicyLsStream";
 };
 
-MountPolicyLsStream::MountPolicyLsStream(const frontend::AdminCmdStream& requestMsg,
-                                         cta::catalogue::Catalogue& catalogue,
-                                         cta::Scheduler& scheduler)
+inline MountPolicyLsStream::MountPolicyLsStream(const frontend::AdminCmdStream& requestMsg,
+                                                cta::catalogue::Catalogue& catalogue,
+                                                cta::Scheduler& scheduler)
     : XrdCtaStream(catalogue,
                    scheduler,
-                   std::make_unique<cta::cmdline::MountPolicyLsResponseStream>(catalogue,
-                                                                               scheduler,
-                                                                               requestMsg.getInstanceName(),
-                                                                               requestMsg.getAdminCmd())) {
+                   std::make_unique<cta::frontend::MountPolicyLsResponseStream>(catalogue,
+                                                                                scheduler,
+                                                                                requestMsg.getInstanceName(),
+                                                                                requestMsg.getAdminCmd())) {
   XrdSsiPb::Log::Msg(XrdSsiPb::Log::DEBUG, LOG_SUFFIX, " constructor");
 }
 

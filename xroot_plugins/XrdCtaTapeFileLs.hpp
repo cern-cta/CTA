@@ -18,7 +18,7 @@
 #pragma once
 
 #include "XrdCtaStream.hpp"
-#include "cmdline/TapeFileLsResponseStream.hpp"
+#include "frontend/common/TapeFileLsResponseStream.hpp"
 
 namespace cta::xrd {
 
@@ -33,15 +33,15 @@ private:
   static constexpr const char* const LOG_SUFFIX = "TapeFileLsStream";  //!< Identifier for log messages
 };
 
-TapeFileLsStream::TapeFileLsStream(const frontend::AdminCmdStream& requestMsg,
-                                   cta::catalogue::Catalogue& catalogue,
-                                   cta::Scheduler& scheduler)
+inline TapeFileLsStream::TapeFileLsStream(const frontend::AdminCmdStream& requestMsg,
+                                          cta::catalogue::Catalogue& catalogue,
+                                          cta::Scheduler& scheduler)
     : XrdCtaStream(catalogue,
                    scheduler,
-                   std::make_unique<cta::cmdline::TapeFileLsResponseStream>(catalogue,
-                                                                            scheduler,
-                                                                            requestMsg.getInstanceName(),
-                                                                            requestMsg.getAdminCmd())) {
+                   std::make_unique<cta::frontend::TapeFileLsResponseStream>(catalogue,
+                                                                             scheduler,
+                                                                             requestMsg.getInstanceName(),
+                                                                             requestMsg.getAdminCmd())) {
   XrdSsiPb::Log::Msg(XrdSsiPb::Log::DEBUG, LOG_SUFFIX, " constructor");
 }
 

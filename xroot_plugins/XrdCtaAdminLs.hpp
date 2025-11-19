@@ -18,7 +18,7 @@
 #pragma once
 
 #include "XrdCtaStream.hpp"
-#include "cmdline/AdminLsResponseStream.hpp"
+#include "frontend/common/AdminLsResponseStream.hpp"
 
 namespace cta::xrd {
 
@@ -32,15 +32,15 @@ private:
   static constexpr const char* const LOG_SUFFIX = "AdminLsStream";
 };
 
-AdminLsStream::AdminLsStream(const frontend::AdminCmdStream& requestMsg,
-                             cta::catalogue::Catalogue& catalogue,
-                             cta::Scheduler& scheduler)
+inline AdminLsStream::AdminLsStream(const frontend::AdminCmdStream& requestMsg,
+                                    cta::catalogue::Catalogue& catalogue,
+                                    cta::Scheduler& scheduler)
     : XrdCtaStream(catalogue,
                    scheduler,
-                   std::make_unique<cta::cmdline::AdminLsResponseStream>(catalogue,
-                                                                         scheduler,
-                                                                         requestMsg.getInstanceName(),
-                                                                         requestMsg.getAdminCmd())) {
+                   std::make_unique<cta::frontend::AdminLsResponseStream>(catalogue,
+                                                                          scheduler,
+                                                                          requestMsg.getInstanceName(),
+                                                                          requestMsg.getAdminCmd())) {
   XrdSsiPb::Log::Msg(XrdSsiPb::Log::DEBUG, LOG_SUFFIX, " constructor");
 }
 

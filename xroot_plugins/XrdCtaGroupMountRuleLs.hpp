@@ -18,7 +18,7 @@
 #pragma once
 
 #include "XrdCtaStream.hpp"
-#include "cmdline/GroupMountRuleLsResponseStream.hpp"
+#include "frontend/common/GroupMountRuleLsResponseStream.hpp"
 
 namespace cta::xrd {
 
@@ -32,15 +32,15 @@ private:
   static constexpr const char* const LOG_SUFFIX = "GroupMountRuleLsStream";
 };
 
-GroupMountRuleLsStream::GroupMountRuleLsStream(const frontend::AdminCmdStream& requestMsg,
-                                               cta::catalogue::Catalogue& catalogue,
-                                               cta::Scheduler& scheduler)
+inline GroupMountRuleLsStream::GroupMountRuleLsStream(const frontend::AdminCmdStream& requestMsg,
+                                                      cta::catalogue::Catalogue& catalogue,
+                                                      cta::Scheduler& scheduler)
     : XrdCtaStream(catalogue,
                    scheduler,
-                   std::make_unique<cta::cmdline::GroupMountRuleLsResponseStream>(catalogue,
-                                                                                  scheduler,
-                                                                                  requestMsg.getInstanceName(),
-                                                                                  requestMsg.getAdminCmd())) {
+                   std::make_unique<cta::frontend::GroupMountRuleLsResponseStream>(catalogue,
+                                                                                   scheduler,
+                                                                                   requestMsg.getInstanceName(),
+                                                                                   requestMsg.getAdminCmd())) {
   XrdSsiPb::Log::Msg(XrdSsiPb::Log::DEBUG, LOG_SUFFIX, " constructor");
 }
 

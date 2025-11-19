@@ -29,6 +29,28 @@ add_executable(cta-frontend-grpc Main.cpp FrontendGrpcService.cpp
   ${PROJECT_SOURCE_DIR}/frontend/common/AdminCmd.cpp
   ${PROJECT_SOURCE_DIR}/frontend/common/RequestTracker.cpp
   ${PROJECT_SOURCE_DIR}/frontend/common/AdminCmdOptions.cpp
+  ${PROJECT_SOURCE_DIR}/frontend/common/ActivityMountRuleLsResponseStream.cpp
+  ${PROJECT_SOURCE_DIR}/frontend/common/AdminLsResponseStream.cpp
+  ${PROJECT_SOURCE_DIR}/frontend/common/ArchiveRouteLsResponseStream.cpp
+  ${PROJECT_SOURCE_DIR}/frontend/common/DiskInstanceLsResponseStream.cpp
+  ${PROJECT_SOURCE_DIR}/frontend/common/DiskInstanceSpaceLsResponseStream.cpp
+  ${PROJECT_SOURCE_DIR}/frontend/common/DiskSystemLsResponseStream.cpp
+  ${PROJECT_SOURCE_DIR}/frontend/common/DriveLsResponseStream.cpp
+  ${PROJECT_SOURCE_DIR}/frontend/common/FailedRequestLsResponseStream.cpp
+  ${PROJECT_SOURCE_DIR}/frontend/common/GroupMountRuleLsResponseStream.cpp
+  ${PROJECT_SOURCE_DIR}/frontend/common/LogicalLibraryLsResponseStream.cpp
+  ${PROJECT_SOURCE_DIR}/frontend/common/MediaTypeLsResponseStream.cpp
+  ${PROJECT_SOURCE_DIR}/frontend/common/MountPolicyLsResponseStream.cpp
+  ${PROJECT_SOURCE_DIR}/frontend/common/PhysicalLibraryLsResponseStream.cpp
+  ${PROJECT_SOURCE_DIR}/frontend/common/RecycleTapeFileLsResponseStream.cpp
+  ${PROJECT_SOURCE_DIR}/frontend/common/RepackLsResponseStream.cpp
+  ${PROJECT_SOURCE_DIR}/frontend/common/RequesterMountRuleLsResponseStream.cpp
+  ${PROJECT_SOURCE_DIR}/frontend/common/ShowQueuesResponseStream.cpp
+  ${PROJECT_SOURCE_DIR}/frontend/common/StorageClassLsResponseStream.cpp
+  ${PROJECT_SOURCE_DIR}/frontend/common/TapeFileLsResponseStream.cpp
+  ${PROJECT_SOURCE_DIR}/frontend/common/TapeLsResponseStream.cpp
+  ${PROJECT_SOURCE_DIR}/frontend/common/TapePoolLsResponseStream.cpp
+  ${PROJECT_SOURCE_DIR}/frontend/common/VirtualOrganizationLsResponseStream.cpp
   ${PROJECT_SOURCE_DIR}/cmdline/CtaAdminTextFormatter.cpp
   ${PROJECT_SOURCE_DIR}/cmdline/CtaAdminCmdParser.cpp
   ${PROJECT_SOURCE_DIR}/common/config/Config.cpp

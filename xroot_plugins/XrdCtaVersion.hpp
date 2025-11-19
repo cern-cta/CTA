@@ -65,10 +65,10 @@ private:
   virtual bool isDone() const { return m_is_done; }
 };
 
-VersionStream::VersionStream(const frontend::AdminCmdStream& requestMsg,
-                             cta::catalogue::Catalogue& catalogue,
-                             cta::Scheduler& scheduler,
-                             const std::string& catalogueConnString)
+inline VersionStream::VersionStream(const frontend::AdminCmdStream& requestMsg,
+                                    cta::catalogue::Catalogue& catalogue,
+                                    cta::Scheduler& scheduler,
+                                    const std::string& catalogueConnString)
     : XrdCtaStream(catalogue, scheduler),
       m_client_versions(requestMsg.getClientVersion()),
       m_catalogue_conn_string(catalogueConnString),
@@ -88,7 +88,7 @@ VersionStream::VersionStream(const frontend::AdminCmdStream& requestMsg,
   }
 }
 
-int VersionStream::fillBuffer(XrdSsiPb::OStreamBuffer<Data>* streambuf) {
+inline int VersionStream::fillBuffer(XrdSsiPb::OStreamBuffer<Data>* streambuf) {
   m_is_done = true;
   Data record;
   auto version = record.mutable_version_item();

@@ -18,7 +18,7 @@
 #pragma once
 
 #include "xroot_plugins/XrdCtaStream.hpp"
-#include "cmdline/ShowQueuesResponseStream.hpp"
+#include "frontend/common/ShowQueuesResponseStream.hpp"
 
 namespace cta::xrd {
 
@@ -41,17 +41,17 @@ private:
   static constexpr const char* const LOG_SUFFIX  = "ShowQueuesStream";                   //!< Identifier for log messages
 };
 
-ShowQueuesStream::ShowQueuesStream(const frontend::AdminCmdStream& requestMsg,
-                                   cta::catalogue::Catalogue& catalogue,
-                                   cta::Scheduler& scheduler,
-                                   log::LogContext& lc)
+inline ShowQueuesStream::ShowQueuesStream(const frontend::AdminCmdStream& requestMsg,
+                                          cta::catalogue::Catalogue& catalogue,
+                                          cta::Scheduler& scheduler,
+                                          log::LogContext& lc)
     : XrdCtaStream(catalogue,
                    scheduler,
-                   std::make_unique<cta::cmdline::ShowQueuesResponseStream>(catalogue,
-                                                                            scheduler,
-                                                                            requestMsg.getInstanceName(),
-                                                                            requestMsg.getAdminCmd(),
-                                                                            lc)) {
+                   std::make_unique<cta::frontend::ShowQueuesResponseStream>(catalogue,
+                                                                             scheduler,
+                                                                             requestMsg.getInstanceName(),
+                                                                             requestMsg.getAdminCmd(),
+                                                                             lc)) {
   XrdSsiPb::Log::Msg(XrdSsiPb::Log::DEBUG, LOG_SUFFIX, " constructor");
 }
 

@@ -18,7 +18,7 @@
 #pragma once
 
 #include "XrdCtaStream.hpp"
-#include "cmdline/TapeLsResponseStream.hpp"
+#include "frontend/common/TapeLsResponseStream.hpp"
 
 namespace cta::xrd {
 
@@ -32,16 +32,16 @@ private:
   static constexpr const char* const LOG_SUFFIX = "TapeLsStream";
 };
 
-TapeLsStream::TapeLsStream(const frontend::AdminCmdStream& requestMsg,
-                           cta::catalogue::Catalogue& catalogue,
-                           cta::Scheduler& scheduler)
+inline TapeLsStream::TapeLsStream(const frontend::AdminCmdStream& requestMsg,
+                                  cta::catalogue::Catalogue& catalogue,
+                                  cta::Scheduler& scheduler)
     : XrdCtaStream(catalogue,
                    scheduler,
-                   std::make_unique<cta::cmdline::TapeLsResponseStream>(catalogue,
-                                                                        scheduler,
-                                                                        requestMsg.getInstanceName(),
-                                                                        requestMsg.getAdminCmd(),
-                                                                        requestMsg.getMissingFileCopiesMinAgeSecs())) {
+                   std::make_unique<cta::frontend::TapeLsResponseStream>(catalogue,
+                                                                         scheduler,
+                                                                         requestMsg.getInstanceName(),
+                                                                         requestMsg.getAdminCmd(),
+                                                                         requestMsg.getMissingFileCopiesMinAgeSecs())) {
   XrdSsiPb::Log::Msg(XrdSsiPb::Log::DEBUG, LOG_SUFFIX, " constructor");
 }
 

@@ -20,8 +20,7 @@
 #include <XrdSsiPbOStreamBuffer.hpp>
 #include <catalogue/Catalogue.hpp>
 #include <scheduler/Scheduler.hpp>
-#include "cmdline/CtaAdminResponseStream.hpp"
-#include "AdminCmdStream.hpp"
+#include "frontend/common/CtaAdminResponseStream.hpp"
 
 namespace cta::xrd {
 
@@ -33,7 +32,7 @@ class XrdCtaStream : public XrdSsiStream
 public:
   XrdCtaStream(cta::catalogue::Catalogue& catalogue,
                cta::Scheduler& scheduler,
-               std::unique_ptr<cta::cmdline::CtaAdminResponseStream> stream = nullptr)
+               std::unique_ptr<cta::frontend::CtaAdminResponseStream> stream = nullptr)
       : XrdSsiStream(XrdSsiStream::isActive),
         m_catalogue(catalogue),
         m_scheduler(scheduler),
@@ -129,7 +128,7 @@ private:
 protected:
   cta::catalogue::Catalogue &m_catalogue;    //!< Reference to CTA Catalogue
   cta::Scheduler            &m_scheduler;    //!< Reference to CTA Scheduler
-  std::unique_ptr<cta::cmdline::CtaAdminResponseStream> m_stream;  //!< Response stream
+  std::unique_ptr<cta::frontend::CtaAdminResponseStream> m_stream;  //!< Response stream
 
 private:
   static constexpr const char* const LOG_SUFFIX  = "XrdCtaStream";    //!< Identifier for log messages

@@ -50,7 +50,7 @@ void CtaAdminServerWriteReactor::NextWrite() {
 CtaAdminServerWriteReactor::CtaAdminServerWriteReactor(cta::catalogue::Catalogue& catalogue,
                                                        cta::Scheduler& scheduler,
                                                        const std::string& instanceName,
-                                                       std::unique_ptr<cta::cmdline::CtaAdminResponseStream> stream,
+                                                       std::unique_ptr<CtaAdminResponseStream> stream,
                                                        cta::admin::HeaderType headerType)
     : m_isHeaderSent(false),
       m_schedulerBackendName(scheduler.getSchedulerBackendName()),

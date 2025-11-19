@@ -24,7 +24,7 @@ namespace cta::admin {
 
 using LabelFormat = cta::common::dataStructures::Label::Format;
 
-LabelFormat ProtobufToLabelFormat(TapeLsItem::LabelFormat labelFormat) {
+inline LabelFormat ProtobufToLabelFormat(TapeLsItem::LabelFormat labelFormat) {
   using namespace common::dataStructures;
 
   switch (labelFormat) {
@@ -37,7 +37,7 @@ LabelFormat ProtobufToLabelFormat(TapeLsItem::LabelFormat labelFormat) {
   }
 }
 
-TapeLsItem::LabelFormat LabelFormatToProtobuf(LabelFormat labelFormat) {
+inline TapeLsItem::LabelFormat LabelFormatToProtobuf(LabelFormat labelFormat) {
   using namespace common::dataStructures;
 
   switch (labelFormat) {

@@ -18,7 +18,7 @@
 #pragma once
 
 #include "XrdCtaStream.hpp"
-#include "cmdline/VirtualOrganizationLsResponseStream.hpp"
+#include "frontend/common/VirtualOrganizationLsResponseStream.hpp"
 
 namespace cta::xrd {
 
@@ -32,15 +32,15 @@ private:
   static constexpr const char* const LOG_SUFFIX = "VirtualOrganizationLsStream";
 };
 
-VirtualOrganizationLsStream::VirtualOrganizationLsStream(const frontend::AdminCmdStream& requestMsg,
-                                                         cta::catalogue::Catalogue& catalogue,
-                                                         cta::Scheduler& scheduler)
+inline VirtualOrganizationLsStream::VirtualOrganizationLsStream(const frontend::AdminCmdStream& requestMsg,
+                                                                cta::catalogue::Catalogue& catalogue,
+                                                                cta::Scheduler& scheduler)
     : XrdCtaStream(catalogue,
                    scheduler,
-                   std::make_unique<cta::cmdline::VirtualOrganizationLsResponseStream>(catalogue,
-                                                                                       scheduler,
-                                                                                       requestMsg.getInstanceName(),
-                                                                                       requestMsg.getAdminCmd())) {
+                   std::make_unique<cta::frontend::VirtualOrganizationLsResponseStream>(catalogue,
+                                                                                        scheduler,
+                                                                                        requestMsg.getInstanceName(),
+                                                                                        requestMsg.getAdminCmd())) {
   XrdSsiPb::Log::Msg(XrdSsiPb::Log::DEBUG, LOG_SUFFIX, " constructor");
 }
 

@@ -18,7 +18,7 @@
 #pragma once
 
 #include "XrdCtaStream.hpp"
-#include "cmdline/DiskInstanceLsResponseStream.hpp"
+#include "frontend/common/DiskInstanceLsResponseStream.hpp"
 
 namespace cta::xrd {
 
@@ -32,15 +32,15 @@ private:
   static constexpr const char* const LOG_SUFFIX = "DiskInstanceLsStream";
 };
 
-DiskInstanceLsStream::DiskInstanceLsStream(const frontend::AdminCmdStream& requestMsg,
-                                           cta::catalogue::Catalogue& catalogue,
-                                           cta::Scheduler& scheduler)
+inline DiskInstanceLsStream::DiskInstanceLsStream(const frontend::AdminCmdStream& requestMsg,
+                                                  cta::catalogue::Catalogue& catalogue,
+                                                  cta::Scheduler& scheduler)
     : XrdCtaStream(catalogue,
                    scheduler,
-                   std::make_unique<cta::cmdline::DiskInstanceLsResponseStream>(catalogue,
-                                                                                scheduler,
-                                                                                requestMsg.getInstanceName(),
-                                                                                requestMsg.getAdminCmd())) {
+                   std::make_unique<cta::frontend::DiskInstanceLsResponseStream>(catalogue,
+                                                                                 scheduler,
+                                                                                 requestMsg.getInstanceName(),
+                                                                                 requestMsg.getAdminCmd())) {
   XrdSsiPb::Log::Msg(XrdSsiPb::Log::DEBUG, LOG_SUFFIX, " constructor");
 }
 

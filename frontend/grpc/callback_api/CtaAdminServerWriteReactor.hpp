@@ -5,7 +5,7 @@
 #include "cta_frontend.grpc.pb.h"
 #include <grpcpp/grpcpp.h>
 #include "../RequestMessage.hpp"
-#include "cmdline/CtaAdminResponseStream.hpp"
+#include "../../common/CtaAdminResponseStream.hpp"
 
 #pragma once
 
@@ -19,7 +19,7 @@ public:
   CtaAdminServerWriteReactor(cta::catalogue::Catalogue& catalogue,
                              cta::Scheduler& scheduler,
                              const std::string& instanceName,
-                             std::unique_ptr<cta::cmdline::CtaAdminResponseStream> stream,
+                             std::unique_ptr<CtaAdminResponseStream> stream,
                              cta::admin::HeaderType headerType);
   void OnWriteDone(bool ok) override;
   void OnDone() override;
@@ -29,7 +29,7 @@ protected:                   // so that the child classes can access those as if
   cta::xrd::StreamResponse m_response;
   std::optional<std::string> m_schedulerBackendName;
   std::string m_instanceName;
-  std::unique_ptr<cta::cmdline::CtaAdminResponseStream> m_stream;
+  std::unique_ptr<CtaAdminResponseStream> m_stream;
   cta::admin::HeaderType m_headerType;
 };
 }  // namespace cta::frontend::grpc

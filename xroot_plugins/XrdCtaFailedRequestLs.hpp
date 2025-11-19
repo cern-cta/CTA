@@ -18,7 +18,7 @@
 #pragma once
 
 #include "XrdCtaStream.hpp"
-#include "cmdline/FailedRequestLsResponseStream.hpp"
+#include "frontend/common/FailedRequestLsResponseStream.hpp"
 
 namespace cta::xrd {
 
@@ -34,19 +34,19 @@ private:
   static constexpr const char* const LOG_SUFFIX = "FailedRequestLsStream";
 };
 
-FailedRequestLsStream::FailedRequestLsStream(const frontend::AdminCmdStream& requestMsg,
-                                             cta::catalogue::Catalogue& catalogue,
-                                             cta::Scheduler& scheduler,
-                                             SchedulerDatabase& schedDb,
-                                             cta::log::LogContext& lc)
+inline FailedRequestLsStream::FailedRequestLsStream(const frontend::AdminCmdStream& requestMsg,
+                                                    cta::catalogue::Catalogue& catalogue,
+                                                    cta::Scheduler& scheduler,
+                                                    SchedulerDatabase& schedDb,
+                                                    cta::log::LogContext& lc)
     : XrdCtaStream(catalogue,
                    scheduler,
-                   std::make_unique<cta::cmdline::FailedRequestLsResponseStream>(catalogue,
-                                                                                 scheduler,
-                                                                                 requestMsg.getInstanceName(),
-                                                                                 requestMsg.getAdminCmd(),
-                                                                                 schedDb,
-                                                                                 lc)) {
+                   std::make_unique<cta::frontend::FailedRequestLsResponseStream>(catalogue,
+                                                                                  scheduler,
+                                                                                  requestMsg.getInstanceName(),
+                                                                                  requestMsg.getAdminCmd(),
+                                                                                  schedDb,
+                                                                                  lc)) {
   XrdSsiPb::Log::Msg(XrdSsiPb::Log::DEBUG, LOG_SUFFIX, " constructor");
 }
 
