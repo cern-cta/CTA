@@ -48,10 +48,11 @@ def make_tests_look_pretty(request):
     yield
     terminal_writer.write(f"\n\n{separator}", cyan=True)
 
+
 # Mutable whitelist that individual test cases can add errors to
 @pytest.fixture(scope="session")
 def error_whitelist(request):
-    whitelist = set() # mutable whitelist shared between all tests
+    whitelist = set()  # mutable whitelist shared between all tests
     return whitelist
 
 
@@ -86,9 +87,15 @@ def pytest_addoption(parser):
         "--krb5-realm", type=str, default="TEST.CTA", help="Kerberos realm to use for cta-admin/eos commands"
     )
     parser.addoption("--disk-instance", type=str, default="ctaeos", help="Name of the disk instance")
-    parser.addoption("--stress-num-files", type=int, default=1000, help="Number of files to use for the stress test")
+    parser.addoption("--stress-num-dirs", type=int, default=10, help="Number of directories to use for the stress test")
     parser.addoption(
-        "--stress-file-size", type=int, default=100, help="Size of the files in bytes to use for the stress test"
+        "--stress-num-files-per-dir",
+        type=int,
+        default=1000,
+        help="Number of files to put in each directory for the stress test",
+    )
+    parser.addoption(
+        "--stress-file-size", type=int, default=512, help="Size of the files in bytes to use for the stress test"
     )
 
 
@@ -105,6 +112,8 @@ def is_test_in_items(test_path: str, items):
 
 
 def add_test_into_existing_collection(test_path: str, items, prepend: bool = False, allow_duplicate: bool = False):
+    if not items:
+        raise RuntimeError(f"No tests found")
     resolved_test_path = Path(test_path).resolve()
     if not resolved_test_path.exists():
         raise FileNotFoundError(f"Required test suite '{resolved_test_path}' not found!")
