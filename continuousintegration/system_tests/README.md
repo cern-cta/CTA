@@ -109,3 +109,4 @@ system_tests/
 - Make functions reusable
     - When writing e.g. an `archive()` function, don't hardcode assumptions on the number of files, file size etc into the function. These should be passed as arguments
 - If scripts need to run on the hosts, put them under `tests/remote_scripts/<hostname>/`
+- Any files directly under `tests/` MUST be a test file. Anything else goes into a separate (sub)directory.

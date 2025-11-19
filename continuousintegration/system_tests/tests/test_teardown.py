@@ -13,7 +13,7 @@ def test_cleanup_catalogue(env):
 
 def test_restart_cta_taped(env):
     # As the drives need to register themselves in the catalogue, they cannot survive a catalogue wipe without a restart
-    hosts = env.ctataped + env.ctarmcd
+    hosts = env.ctataped
     for host in hosts:
         host.restart(wait_for_restart=False)
     for host in hosts:
