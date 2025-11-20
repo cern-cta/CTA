@@ -88,6 +88,9 @@ kubectl -n ${NAMESPACE} exec ${CLIENT_POD} -c client -- bash -c "/root/client_se
 TEST_PRERUN=". /root/client_env "
 TEST_POSTRUN=""
 
+# We launch this in test_client for now as this is the one with opentelemetry enabled (meaning the config file has more options to check)
+echo "Checking drive config correctness..."
+python3 compare_taped_config_to_dr_ls.py --namespace ${NAMESPACE}
 
 echo "Setting up client pod for HTTPs REST API test"
 echo " Copying CA certificates to client pod from ${EOS_MGM_POD} pod."
