@@ -115,14 +115,14 @@ build-cta-rpm:
                                                  --platform ${PLATFORM}
                                                  ${BUILD_OPTIONS}
 
+
+# This is not (and ideally should not) be used further down the pipeline; this is just a compilation check
 build-cta-srpm-pgsched:
   extends:
     - build-cta-srpm
-  rules:
-    - if: $SCHEDULER_TYPE == "pgsched"
-      when: never
-    - !reference [build-cta-srpm, rules]
   variables:
+    # We don't have a way of separating what the user entered and what the actual value is,
+    # so this will always run, even if the pipeline type was already postgres
     SCHEDULER_TYPE: "pgsched"
 
 build-cta-rpm-pgsched:
@@ -134,10 +134,6 @@ build-cta-rpm-pgsched:
     - job: modify-project-json
       optional: true
       artifacts: true
-  rules:
-    - if: $SCHEDULER_TYPE == "pgsched"
-      when: never
-    - !reference [build-cta-rpm, rules]
   variables:
     SCHEDULER_TYPE: "pgsched"
 
