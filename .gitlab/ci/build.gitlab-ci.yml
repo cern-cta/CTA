@@ -115,6 +115,30 @@ build-cta-rpm:
                                                  --platform ${PLATFORM}
                                                  ${BUILD_OPTIONS}
 
+build-cta-srpm-pgsched:
+  extends: .build-cta-srpm
+  rules:
+    - if: SCHEDULER_TYPE="pgsched"
+      when: never
+    - !reference [.build-cta-srpm, rules]
+  variables:
+    - SCHEDULER_TYPE="pgsched"
+
+build-cta-rpm-pgesched:
+  extends: .build-cta-rpm
+  needs:
+    - job: validate-pipeline-variables
+    - job: build-cta-srpm-pgsched
+    - job: modify-project-json
+      optional: true
+      artifacts: true
+  rules:
+    - if: SCHEDULER_TYPE="pgsched"
+      when: never
+    - !reference [.build-cta-rpm, rules]
+  variables:
+    - SCHEDULER_TYPE="pgsched"
+
 # Documentation export
 export-docs:
   needs: []
