@@ -25,7 +25,33 @@ namespace cta::rdbms::wrapper {
 PostgresConn::PostgresConn(const rdbms::Login& login) : m_dbNamespace(login.dbNamespace) {
   // establish the connection and create the PGconn data structure
 
-  m_pgsqlConn = PQconnectdb(login.database.c_str());
+  // Build connection string from Login fields
+  // If hostname is set, construct a libpq connection string from individual fields
+  // Otherwise, use login.database as-is (for backward compatibility with parsed connection strings)
+  std::string connectionString;
+  if (!login.hostname.empty()) {
+    // Construct connection string from individual fields
+    std::ostringstream connStr;
+    connStr << "host=" << login.hostname;
+    if (login.port > 0) {
+      connStr << " port=" << login.port;
+    }
+    if (!login.database.empty()) {
+      connStr << " dbname=" << login.database;
+    }
+    if (!login.username.empty()) {
+      connStr << " user=" << login.username;
+    }
+    if (!login.password.empty()) {
+      connStr << " password=" << login.password;
+    }
+    connectionString = connStr.str();
+  } else {
+    // Use login.database as connection string (for backward compatibility)
+    connectionString = login.database;
+  }
+
+  m_pgsqlConn = PQconnectdb(connectionString.c_str());
 
   if (PQstatus(m_pgsqlConn) != CONNECTION_OK) {
     const std::string pqmsgstr = PQerrorMessage(m_pgsqlConn);

@@ -78,6 +78,8 @@ void TemporaryPostgresEnvironment::executeNonQueries(rdbms::Conn& conn, const st
   std::string::size_type searchPos = 0;
   std::string::size_type findResult = std::string::npos;
 
+  std::cout << "In TemporaryPostgresEnvironment::executeNonQueries" << std::endl;
+
   while (std::string::npos != (findResult = sqlStmts.find(';', searchPos))) {
     const std::string sqlStmt = sqlStmts.substr(searchPos, findResult - searchPos);
 
