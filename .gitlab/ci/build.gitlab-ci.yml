@@ -117,7 +117,7 @@ build-cta-rpm:
 
 build-cta-srpm-pgsched:
   extends:
-    - .build-cta-srpm
+    - build-cta-srpm
   rules:
     - if: SCHEDULER_TYPE="pgsched"
       when: never
@@ -127,7 +127,7 @@ build-cta-srpm-pgsched:
 
 build-cta-rpm-pgesched:
   extends:
-    - .build-cta-rpm
+    - build-cta-rpm
   needs:
     - job: validate-pipeline-variables
     - job: build-cta-srpm-pgsched
