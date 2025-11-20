@@ -15,6 +15,8 @@
 
 cmake_minimum_required (VERSION 3.17)
 
+find_package(Protobuf3 REQUIRED)
+
 include_directories(${CMAKE_BINARY_DIR}/eos_cta ${PROTOBUF3_INCLUDE_DIRS})
 
 include_directories(${CMAKE_SOURCE_DIR}/common/jwt-cpp/include/)
@@ -22,39 +24,10 @@ include_directories(${CMAKE_SOURCE_DIR}/common/jwt-cpp/include/)
 include_directories(${CMAKE_SOURCE_DIR}/common/jwt-cpp/include/)
 
 # include stuff from the callback api here because we need to serve the streaming commands by registering their service class impl
-add_executable(cta-frontend-grpc Main.cpp FrontendGrpcService.cpp
-  ${PROJECT_SOURCE_DIR}/frontend/common/WorkflowEvent.cpp
-  ${PROJECT_SOURCE_DIR}/frontend/common/FrontendService.cpp
-  ${PROJECT_SOURCE_DIR}/frontend/common/ValidateToken.cpp
-  ${PROJECT_SOURCE_DIR}/frontend/common/AdminCmd.cpp
-  ${PROJECT_SOURCE_DIR}/frontend/common/RequestTracker.cpp
-  ${PROJECT_SOURCE_DIR}/frontend/common/AdminCmdOptions.cpp
-  ${PROJECT_SOURCE_DIR}/frontend/common/ActivityMountRuleLsResponseStream.cpp
-  ${PROJECT_SOURCE_DIR}/frontend/common/AdminLsResponseStream.cpp
-  ${PROJECT_SOURCE_DIR}/frontend/common/ArchiveRouteLsResponseStream.cpp
-  ${PROJECT_SOURCE_DIR}/frontend/common/DiskInstanceLsResponseStream.cpp
-  ${PROJECT_SOURCE_DIR}/frontend/common/DiskInstanceSpaceLsResponseStream.cpp
-  ${PROJECT_SOURCE_DIR}/frontend/common/DiskSystemLsResponseStream.cpp
-  ${PROJECT_SOURCE_DIR}/frontend/common/DriveLsResponseStream.cpp
-  ${PROJECT_SOURCE_DIR}/frontend/common/FailedRequestLsResponseStream.cpp
-  ${PROJECT_SOURCE_DIR}/frontend/common/GroupMountRuleLsResponseStream.cpp
-  ${PROJECT_SOURCE_DIR}/frontend/common/LogicalLibraryLsResponseStream.cpp
-  ${PROJECT_SOURCE_DIR}/frontend/common/MediaTypeLsResponseStream.cpp
-  ${PROJECT_SOURCE_DIR}/frontend/common/MountPolicyLsResponseStream.cpp
-  ${PROJECT_SOURCE_DIR}/frontend/common/PhysicalLibraryLsResponseStream.cpp
-  ${PROJECT_SOURCE_DIR}/frontend/common/RecycleTapeFileLsResponseStream.cpp
-  ${PROJECT_SOURCE_DIR}/frontend/common/RepackLsResponseStream.cpp
-  ${PROJECT_SOURCE_DIR}/frontend/common/RequesterMountRuleLsResponseStream.cpp
-  ${PROJECT_SOURCE_DIR}/frontend/common/ShowQueuesResponseStream.cpp
-  ${PROJECT_SOURCE_DIR}/frontend/common/StorageClassLsResponseStream.cpp
-  ${PROJECT_SOURCE_DIR}/frontend/common/TapeFileLsResponseStream.cpp
-  ${PROJECT_SOURCE_DIR}/frontend/common/TapeLsResponseStream.cpp
-  ${PROJECT_SOURCE_DIR}/frontend/common/TapePoolLsResponseStream.cpp
-  ${PROJECT_SOURCE_DIR}/frontend/common/VirtualOrganizationLsResponseStream.cpp
-  ${PROJECT_SOURCE_DIR}/cmdline/CtaAdminTextFormatter.cpp
+add_executable(cta-frontend-grpc
+  Main.cpp
   ${PROJECT_SOURCE_DIR}/cmdline/CtaAdminCmdParser.cpp
-  ${PROJECT_SOURCE_DIR}/common/config/Config.cpp
-  ${PROJECT_SOURCE_DIR}/common/utils/utils.cpp
+  FrontendGrpcService.cpp
   callback_api/CtaAdminServerWriteReactor.cpp
   NegotiationService.cpp
   ServerNegotiationRequestHandler.cpp
@@ -66,11 +39,11 @@ add_executable(cta-frontend-grpc Main.cpp FrontendGrpcService.cpp
 if(CTA_USE_PGSCHED)
   target_link_libraries(cta-frontend-grpc
     ${GRPC_GRPC++_REFLECTION_LIBRARY}
-    ctascheduler ctacommon ctacatalogue ctagrpc JwkCache gssapi_krb5)
+    ctafrontendcommon ctascheduler ctacommon ctacatalogue ctagrpc JwkCache gssapi_krb5)
 else()
   target_link_libraries(cta-frontend-grpc
     ${GRPC_GRPC++_REFLECTION_LIBRARY}
-    ctascheduler ctacommon ctaobjectstore ctacatalogue ctagrpc JwkCache gssapi_krb5)
+    ctafrontendcommon ctascheduler ctacommon ctaobjectstore ctacatalogue ctagrpc JwkCache gssapi_krb5)
 endif()
 
 add_manpage(cta-frontend-grpc)
@@ -97,7 +70,6 @@ add_executable(cta-admin-grpc
   ${PROJECT_SOURCE_DIR}/cmdline/CtaAdminParsedCmd.cpp
   ${PROJECT_SOURCE_DIR}/cmdline/CtaAdminTextFormatter.cpp
   ${PROJECT_SOURCE_DIR}/cmdline/CtaAdminCmdParser.cpp
-  ${PROJECT_SOURCE_DIR}/common/utils/utils.cpp
   ClientNegotiationRequestHandler.cpp
   utils.cpp
 )
@@ -112,28 +84,3 @@ endif()
 
 set_property (TARGET cta-admin-grpc APPEND PROPERTY INSTALL_RPATH ${PROTOBUF3_RPATH})
 install(TARGETS cta-admin-grpc DESTINATION usr/bin)
-
-##
-## cta-frontend-grpc-stream-server
-##
-
-# add_executable(cta-frontend-async-grpc
-#   FrontendCmd.cpp
-#   AsyncServer.cpp
-#   TokenStorage.cpp
-#   ServiceKerberosAuthProcessor.cpp
-#   ServerTapeLsRequestHandler.cpp
-#   ServerNegotiationRequestHandler.cpp
-#   RequestMessage.cpp
-#   ${PROJECT_SOURCE_DIR}/frontend/common/AdminCmdOptions.cpp
-#   utils.cpp
-#   ${PROJECT_SOURCE_DIR}/cmdline/CtaAdminCmdParser.cpp
-# )
-
-# if(CTA_USE_PGSCHED)
-#   target_link_libraries(cta-frontend-async-grpc
-#           ctascheduler ctacommon ctatapedaemoncommon ctacatalogue gssapi_krb5 ctagrpc)
-# else()
-#   target_link_libraries(cta-frontend-async-grpc
-#           ctascheduler ctacommon ctatapedaemoncommon ctaobjectstore ctacatalogue gssapi_krb5 ctagrpc)
-# endif()
