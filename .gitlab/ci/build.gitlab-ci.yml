@@ -119,9 +119,9 @@ build-cta-srpm-pgsched:
   extends:
     - build-cta-srpm
   rules:
-    - !reference [build-cta-srpm, rules]
     - if: $SCHEDULER_TYPE == "pgsched"
       when: never
+    - !reference [build-cta-srpm, rules]
   variables:
     SCHEDULER_TYPE: "pgsched"
 
@@ -135,9 +135,9 @@ build-cta-rpm-pgsched:
       optional: true
       artifacts: true
   rules:
-    - !reference [build-cta-rpm, rules]
     - if: $SCHEDULER_TYPE == "pgsched"
       when: never
+    - !reference [build-cta-rpm, rules]
   variables:
     SCHEDULER_TYPE: "pgsched"
 
