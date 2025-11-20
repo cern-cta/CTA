@@ -95,6 +95,13 @@ Status CtaRpcImpl::processGrpcRequest(const cta::xrd::Request* request,
                                       cta::xrd::Response* response,
                                       cta::log::LogContext& lc,
                                       const cta::common::dataStructures::SecurityIdentity& clientIdentity) const {
+
+  if(!m_frontendService->getUserRequestsAllowed()){
+    constexpr const char* USER_REQUESTS_DISABLED_ERROR = "User requests are disabled.";
+    response->set_message_txt(USER_REQUESTS_DISABLED_ERROR);
+    response->set_type(xrd::Response::RSP_ERR_USER);
+    return ::grpc::Status(::grpc::StatusCode::ABORTED, USER_REQUESTS_DISABLED_ERROR);
+  }
   try {
     cta::frontend::WorkflowEvent wfe(*m_frontendService, clientIdentity, request->notification());
     *response = wfe.process();
@@ -330,6 +337,16 @@ CtaRpcImpl::Admin(::grpc::ServerContext* context, const cta::xrd::Request* reque
     response->set_type(cta::xrd::Response::RSP_ERR_USER);
     response->set_message_txt(CTA_ADMIN_COMMANDS_DISABLED_ERROR);
     return ::grpc::Status(::grpc::StatusCode::UNIMPLEMENTED, CTA_ADMIN_COMMANDS_DISABLED_ERROR);
+  }
+
+  // Check if repack requests are blocked
+  if(!m_frontendService->getRepackRequestsAllowed() &&
+        request->admincmd().subcmd() != admin::AdminCmd::SUBCMD_LS &&
+        request->admincmd().cmd() == admin::AdminCmd::CMD_REPACK){
+    constexpr const char* REPACK_REQUESTS_DISABLED_ERROR = "Repack requests are disabled.";
+    response->set_message_txt(REPACK_REQUESTS_DISABLED_ERROR);
+    response->set_type(xrd::Response::RSP_ERR_USER);
+    return ::grpc::Status(::grpc::StatusCode::INVALID_ARGUMENT, REPACK_REQUESTS_DISABLED_ERROR);
   }
 
   cta::log::LogContext lc(m_frontendService->getLogContext());
