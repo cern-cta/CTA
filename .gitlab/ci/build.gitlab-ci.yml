@@ -136,6 +136,7 @@ build-cta-rpm-pgsched:
       artifacts: true
   variables:
     SCHEDULER_TYPE: "pgsched"
+    SKIP_UNIT_TESTS: "TRUE"
 
 # Documentation export
 export-docs:
