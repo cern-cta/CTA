@@ -101,7 +101,7 @@ cpp-format-report:
     - .format-report
   variables:
     FORMAT_DIFF: artifacts/clang-format.diff
-  bfore_script:
+  before_script:
     - TARGET_BRANCH=${CI_MERGE_REQUEST_TARGET_BRANCH_NAME:-$CI_DEFAULT_BRANCH}
     - git fetch --no-tags origin $TARGET_BRANCH:$TARGET_BRANCH
     - echo "Running clang-format for changes compared to branch $TARGET_BRANCH"
@@ -112,7 +112,7 @@ python-format-report:
     - .format-report
   variables:
     FORMAT_DIFF: artifacts/black.diff
-  bfore_script:
+  before_script:
     - echo "Running black on all Python files"
     - black . --line-length=120 --diff > $FORMAT_DIFF
 
