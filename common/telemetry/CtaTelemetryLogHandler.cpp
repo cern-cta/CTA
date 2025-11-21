@@ -46,8 +46,13 @@ void CtaTelemetryLogHandler::Handle(opentelemetry::sdk::common::internal_log::Lo
                                     int line,
                                     const char* msg,
                                     const opentelemetry::sdk::common::AttributeMap& attributes) noexcept {
-  // We ignore the file, line numbers and attributes as they just add unnecessary noise
-  m_log(toSyslogLevel(level), msg);
+  cta::log::LogContext lc(m_log);
+  cta::log::ScopedParamContainer params(lc);
+  lc.add("otlpMessage", msg);
+  for(const auto [key, val] : attributes) {
+    lc.add(key, val);
+  }
+  lc.log(toSyslogLevel(level), "OTLP " + opentelemetry::sdk::common::internal_log::LevelToString(level));
 }
 
 }  // namespace cta::telemetry
