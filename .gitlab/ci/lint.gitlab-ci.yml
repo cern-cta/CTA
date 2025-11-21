@@ -68,7 +68,7 @@ trigger-sonarcloud:
     - when: always
   image: $IMAGE_LINT
   variables:
-    FORMAT_DIFF: ""
+    FORMAT_DIFF:
   before_script:
     - exit 1 # The jobs that extend this job should override this
   script:
@@ -96,31 +96,33 @@ trigger-sonarcloud:
       - $FORMAT_DIFF
 
 
-cpp-format-report:
+format-report-cpp:
   extends:
     - .format-report
   variables:
     FORMAT_DIFF: artifacts/clang-format.diff
   before_script:
+    - mkdir -p artifacts
     - TARGET_BRANCH=${CI_MERGE_REQUEST_TARGET_BRANCH_NAME:-$CI_DEFAULT_BRANCH}
     - git fetch --no-tags origin $TARGET_BRANCH:$TARGET_BRANCH
     - echo "Running clang-format for changes compared to branch $TARGET_BRANCH"
     - git-clang-format $TARGET_BRANCH HEAD --diff > $FORMAT_DIFF || true
 
-python-format-report:
+format-report-python:
   extends:
     - .format-report
   variables:
     FORMAT_DIFF: artifacts/black.diff
   before_script:
+    - mkdir -p artifacts
     - echo "Running black on all Python files"
     - black . --line-length=120 --diff > $FORMAT_DIFF
 
 format-apply:
   stage: lint
   needs:
-    - cpp-format-report
-    - python-format-report
+    - format-report-cpp
+    - format-report-python
   allow_failure: true
   rules:
     - if: $CI_PIPELINE_SOURCE == "merge_request_event"
