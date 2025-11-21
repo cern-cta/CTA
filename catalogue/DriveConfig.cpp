@@ -141,8 +141,11 @@ void DriveConfig::setConfigToDB(const SourcedParameter<bool>& sourcedParameter,
                                 catalogue::Catalogue* catalogue,
                                 const std::string& tapeDriveName) {
   checkConfigInDB(catalogue, tapeDriveName, sourcedParameter.key());
-  catalogue->DriveConfig()->createTapeDriveConfig(tapeDriveName, sourcedParameter.category(), sourcedParameter.key(),
-                                                  std::to_string(sourcedParameter.value()), sourcedParameter.source());
+  catalogue->DriveConfig()->createTapeDriveConfig(tapeDriveName,
+                                                  sourcedParameter.category(),
+                                                  sourcedParameter.key(),
+                                                  std::to_string(sourcedParameter.value()),
+                                                  sourcedParameter.source());
 }
 
 }  // namespace cta
