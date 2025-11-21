@@ -9,10 +9,9 @@ CTA_CLI_POD = "cta-cli-0"
 
 KEY_SKIP_LIST = ["MountCriteria"]
 
+
 def run(cmd):
-    p = subprocess.run(
-        cmd, shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True
-    )
+    p = subprocess.run(cmd, shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True)
     if p.returncode != 0:
         raise RuntimeError(f"cmd failed: {cmd}\n{p.stderr}")
     return p.stdout
@@ -26,24 +25,14 @@ def main():
     ns = args.namespace
 
     taped_config = run(
-        f"kubectl -n {ns} exec {CTA_TPSRV_POD} -c cta-taped-0 -- "
-        "bash -c 'cat /etc/cta/cta-taped*.conf'"
+        f"kubectl -n {ns} exec {CTA_TPSRV_POD} -c cta-taped-0 -- " "bash -c 'cat /etc/cta/cta-taped*.conf'"
     )
 
-    drive_name = run(
-        f"kubectl -n {ns} exec {CTA_TPSRV_POD} -c cta-taped-0 -- printenv DRIVE_NAME"
-    ).strip()
+    drive_name = run(f"kubectl -n {ns} exec {CTA_TPSRV_POD} -c cta-taped-0 -- printenv DRIVE_NAME").strip()
 
-    drive_json = run(
-        f"kubectl -n {ns} exec {CTA_CLI_POD} -c cta-cli -- "
-        "cta-admin --json dr ls"
-    )
+    drive_json = run(f"kubectl -n {ns} exec {CTA_CLI_POD} -c cta-cli -- " "cta-admin --json dr ls")
 
-    entries = [
-        e
-        for e in json.loads(drive_json)
-        if e.get("driveName") == drive_name
-    ]
+    entries = [e for e in json.loads(drive_json) if e.get("driveName") == drive_name]
 
     if not entries:
         print("Drive not found")
@@ -54,10 +43,7 @@ def main():
         print("driveConfig missing")
         sys.exit(1)
 
-    indexed = {
-        (e["category"], e["key"], e["value"])
-        for e in config_json
-    }
+    indexed = {(e["category"], e["key"], e["value"]) for e in config_json}
 
     for line in taped_config.splitlines():
         line = line.strip()
@@ -67,7 +53,7 @@ def main():
         if len(parts) < 3:
             continue
         cat, key, val = parts[0], parts[1], parts[2]
-        # Because our config files are crap, these options (for various reasons) end up differently in the catalogue
+        # Because our config files are badly structured, some options end up differently in the catalogue
         # For now just skip them
         if key in KEY_SKIP_LIST:
             continue
