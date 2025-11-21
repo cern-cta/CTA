@@ -57,6 +57,9 @@ class DriveConfig {
   static void setConfigToDB(const cta::SourcedParameter<std::time_t>& sourcedParameter,
                             catalogue::Catalogue* catalogue,
                             const std::string& tapeDriveName);
+  static void setConfigToDB(const cta::SourcedParameter<bool>& sourcedParameter,
+                            catalogue::Catalogue* catalogue,
+                            const std::string& tapeDriveName);
 };  // class DriveConfig
 
 } // namespace cta
