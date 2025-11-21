@@ -29,8 +29,10 @@ namespace cta {
 void DriveConfig::setTapedConfiguration(const tape::daemon::common::TapedConfiguration& tapedConfiguration,
                                         catalogue::Catalogue* catalogue,
                                         const std::string& tapeDriveName) {
-  setConfigToDB(tapedConfiguration.daemonUserName, catalogue, tapeDriveName);
-  setConfigToDB(tapedConfiguration.daemonGroupName, catalogue, tapeDriveName);
+  setConfigToDB(tapedConfiguration.driveName, catalogue, tapeDriveName);
+  setConfigToDB(tapedConfiguration.driveLogicalLibrary, catalogue, tapeDriveName);
+  setConfigToDB(tapedConfiguration.driveDevice, catalogue, tapeDriveName);
+  setConfigToDB(tapedConfiguration.driveControlPath, catalogue, tapeDriveName);
   setConfigToDB(tapedConfiguration.daemonUserName, catalogue, tapeDriveName);
   setConfigToDB(tapedConfiguration.daemonGroupName, catalogue, tapeDriveName);
   setConfigToDB(tapedConfiguration.logMask, catalogue, tapeDriveName);
@@ -61,13 +63,9 @@ void DriveConfig::setTapedConfiguration(const tape::daemon::common::TapedConfigu
   setConfigToDB(tapedConfiguration.tapeLoadTimeout, catalogue, tapeDriveName);
   setConfigToDB(tapedConfiguration.wdGetNextMountMaxSecs, catalogue, tapeDriveName);
   setConfigToDB(tapedConfiguration.schedulerBackendName, catalogue, tapeDriveName);
-  setConfigToDB(tapedConfiguration.driveName, catalogue, tapeDriveName);
-  setConfigToDB(tapedConfiguration.driveLogicalLibrary, catalogue, tapeDriveName);
-  setConfigToDB(tapedConfiguration.driveDevice, catalogue, tapeDriveName);
-  setConfigToDB(tapedConfiguration.driveControlPath, catalogue, tapeDriveName);
+  setConfigToDB(tapedConfiguration.instanceName, catalogue, tapeDriveName);
   setConfigToDB(tapedConfiguration.tapeCacheMaxAgeSecs, catalogue, tapeDriveName);
   setConfigToDB(tapedConfiguration.retrieveQueueCacheMaxAgeSecs, catalogue, tapeDriveName);
-  setConfigToDB(tapedConfiguration.instanceName, catalogue, tapeDriveName);
   setConfigToDB(tapedConfiguration.telemetryEnabled, catalogue, tapeDriveName);
   setConfigToDB(tapedConfiguration.metricsBackend, catalogue, tapeDriveName);
   setConfigToDB(tapedConfiguration.metricsExportFileEndpoint, catalogue, tapeDriveName);
@@ -75,7 +73,6 @@ void DriveConfig::setTapedConfiguration(const tape::daemon::common::TapedConfigu
   setConfigToDB(tapedConfiguration.metricsExportOtlpBasicAuthFile, catalogue, tapeDriveName);
   setConfigToDB(tapedConfiguration.metricsExportOtlpEndpoint, catalogue, tapeDriveName);
   setConfigToDB(tapedConfiguration.metricsExportTimeout, catalogue, tapeDriveName);
-
 }
 
 void DriveConfig::checkConfigInDB(catalogue::Catalogue* catalogue, const std::string& tapeDriveName,

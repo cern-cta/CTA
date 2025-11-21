@@ -51,8 +51,6 @@ if [ $? -ne 0 ]; then
 fi
 
 CLIENT_POD="cta-client-0"
-CTA_TPSRV_POD="cta-tpsrv01-0"
-CTA_CLI_POD="cta-cli-0"
 echo
 echo "Copying test scripts to pods..."
 kubectl -n "${NAMESPACE}" cp . ${CLIENT_POD}:/root/ -c client || exit 1
