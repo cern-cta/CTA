@@ -15,8 +15,13 @@
  *               submit itself to any jurisdiction.
  */
 
+#include <variant>
+#include <opentelemetry/sdk/common/attribute_utils.h>
+
 #include "CtaTelemetryLogHandler.hpp"
 #include "common/log/Constants.hpp"
+#include "common/log/Logger.hpp"
+#include "common/log/LogContext.hpp"
 
 namespace cta::telemetry {
 
@@ -24,7 +29,7 @@ int toSyslogLevel(opentelemetry::sdk::common::internal_log::LogLevel level) noex
   switch (level) {
     using enum opentelemetry::sdk::common::internal_log::LogLevel;
     case Error:
-      return cta::log::WARNING; // Telemetry errors do not affect the service, so we emit them as warnings
+      return cta::log::WARNING;  // Telemetry errors do not affect the service, so we emit them as warnings
     case Warning:
       return cta::log::WARNING;
     case Info:
@@ -35,6 +40,30 @@ int toSyslogLevel(opentelemetry::sdk::common::internal_log::LogLevel level) noex
     default:
       return cta::log::INFO;
   }
+}
+
+// Copied from https://github.com/open-telemetry/opentelemetry-cpp/blob/main/exporters/prometheus/src/exporter_utils.cc#L743
+// For some reason this functionality is not defined in a common place
+std::string AttributeValueToString(const opentelemetry::sdk::common::OwnedAttributeValue& value) {
+  std::string result;
+  if (std::holds_alternative<bool>(value)) {
+    result = std::get<bool>(value) ? "true" : "false";
+  } else if (std::holds_alternative<int>(value)) {
+    result = std::to_string(std::get<int>(value));
+  } else if (std::holds_alternative<int64_t>(value)) {
+    result = std::to_string(std::get<int64_t>(value));
+  } else if (std::holds_alternative<unsigned int>(value)) {
+    result = std::to_string(std::get<unsigned int>(value));
+  } else if (std::holds_alternative<uint64_t>(value)) {
+    result = std::to_string(std::get<uint64_t>(value));
+  } else if (std::holds_alternative<double>(value)) {
+    result = std::to_string(std::get<double>(value));
+  } else if (std::holds_alternative<std::string>(value)) {
+    result = std::get<std::string>(value);
+  } else {
+    return "<unsupported nested value>";
+  }
+  return result;
 }
 
 CtaTelemetryLogHandler::CtaTelemetryLogHandler(log::Logger& log) : m_log(log) {}
@@ -48,9 +77,10 @@ void CtaTelemetryLogHandler::Handle(opentelemetry::sdk::common::internal_log::Lo
                                     const opentelemetry::sdk::common::AttributeMap& attributes) noexcept {
   cta::log::LogContext lc(m_log);
   cta::log::ScopedParamContainer params(lc);
-  lc.add("otlpMessage", msg);
-  for(const auto [key, val] : attributes) {
-    lc.add(key, val);
+  params.add("otlpMessage", msg);
+  const auto& attrs = attributes.GetAttributes();
+  for (const auto& [key, val] : attrs) {
+    params.add(key, AttributeValueToString(val));
   }
   lc.log(toSyslogLevel(level), "OTLP " + opentelemetry::sdk::common::internal_log::LevelToString(level));
 }
