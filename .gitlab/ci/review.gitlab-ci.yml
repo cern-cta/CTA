@@ -36,7 +36,7 @@ danger-review-gate:
       optional: true
     - job: test-cta-admin
       optional: true
-    - job: clang-format-report
+    - job: format-report
       optional: true
     - job: cppcheck
       optional: true
