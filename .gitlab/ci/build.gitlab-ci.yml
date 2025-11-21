@@ -115,6 +115,29 @@ build-cta-rpm:
                                                  --platform ${PLATFORM}
                                                  ${BUILD_OPTIONS}
 
+
+# This is not (and ideally should not) be used further down the pipeline; this is just a compilation check
+build-cta-srpm-pgsched:
+  extends:
+    - build-cta-srpm
+  variables:
+    # We don't have a way of separating what the user entered and what the actual value is,
+    # so this will always run, even if the pipeline type was already postgres
+    SCHEDULER_TYPE: "pgsched"
+
+build-cta-rpm-pgsched:
+  extends:
+    - build-cta-rpm
+  needs:
+    - job: validate-pipeline-variables
+    - job: build-cta-srpm-pgsched
+    - job: modify-project-json
+      optional: true
+      artifacts: true
+  variables:
+    SCHEDULER_TYPE: "pgsched"
+    SKIP_UNIT_TESTS: "TRUE"
+
 # Documentation export
 export-docs:
   needs: []
