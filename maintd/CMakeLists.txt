@@ -24,10 +24,10 @@ add_library(ctamaintd
 )
 
 if(NOT CTA_USE_PGSCHED)
-add_subdirectory(routines/scheduler/objectstore)
+    add_subdirectory(routines/scheduler/objectstore)
     set(SCHEDROUTINES ctaosdbroutines)
 else()
-add_subdirectory(routines/scheduler/rdbms)
+    add_subdirectory(routines/scheduler/rdbms)
     set(SCHEDROUTINES ctardbroutines)
 endif()
 
