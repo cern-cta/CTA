@@ -247,6 +247,8 @@ int main(const int argc, char **const argv) {
           .serviceVersion(CTA_VERSION)
           .retainInstanceIdOnRestart(globalConfig.retainInstanceIdOnRestart.value())
           .resourceAttribute(cta::semconv::attr::kSchedulerNamespace, globalConfig.schedulerBackendName.value())
+          .resourceAttribute(cta::semconv::attr::kTapeDriveName, globalConfig.driveName.value())
+          .resourceAttribute(cta::semconv::attr::kTapeLibraryLogicalName, globalConfig.driveLogicalLibrary.value())
           .metricsBackend(metricsBackend)
           .metricsExportInterval(std::chrono::milliseconds(globalConfig.metricsExportInterval.value()))
           .metricsExportTimeout(std::chrono::milliseconds(globalConfig.metricsExportTimeout.value()))

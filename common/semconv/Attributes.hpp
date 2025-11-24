@@ -49,6 +49,8 @@ static constexpr const char* kCtaIoDirection = "cta.io.direction";  // similar t
 static constexpr const char* kCtaIoMedium = "cta.io.medium";
 static constexpr const char* kCtaTapedDriveState = "cta.taped.drive.state";
 static constexpr const char* kCtaTapedMountType = "cta.taped.mount.type";
+static constexpr const char* kTapeDriveName = "tape.drive.name";
+static constexpr const char* kTapeLibraryLogicalName = "tape.library.logical.name";
 
 // -------------------- Attribute Values --------------------
 
