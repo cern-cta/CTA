@@ -96,7 +96,7 @@ create_instance() {
   # Argument defaults
   # Not that some arguments below intentionally use false and not 0/1 as they are directly passed as a helm option
   # Note that it is fine for not all of these secrets to exist; eventually the reg-* format will be how the minikube_cta_ci setup inits things
-  secrets="ctaregsecret reg-eoscta-operations reg-ctageneric monit-collector-auth" # Secrets to be copied to the namespace (space separated)
+  secrets="ctaregsecret reg-eoscta-operations reg-ctageneric monit-it-sd-tab-ci-pwd" # Secrets to be copied to the namespace (space separated)
   catalogue_config=presets/dev-catalogue-postgres-values.yaml
   scheduler_config=presets/dev-scheduler-vfs-values.yaml
   cta_config="presets/dev-cta-xrd-values.yaml"

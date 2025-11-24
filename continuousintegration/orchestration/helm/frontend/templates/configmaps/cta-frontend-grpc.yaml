@@ -74,7 +74,7 @@ data:
     grpc.tls.server_cert_path {{ .Values.grpc.conf.tls.serverCert }}
     grpc.jwks.uri {{ .Values.grpc.conf.jwtAuth.jwksUri }}
     grpc.jwt.enabled {{ .Values.grpc.conf.jwtAuth.enabled }}
-    
+
     # for the admin commands
     cta.experimental.grpc.bypass_admin_auth_check.enabled {{ .Values.grpc.conf.experimental.bypassAdminAuthCheck.enabled }}
     cta.experimental.grpc.cta_admin_commands.enabled {{ .Values.grpc.conf.experimental.ctaAdminCommands.enabled }}
@@ -83,24 +83,25 @@ data:
     cta.experimental.telemetry.enabled {{ .Values.grpc.conf.telemetry.enabled }}
 
     cta.telemetry.retain_instance_id_on_restart {{ .Values.grpc.conf.telemetry.retainInstanceIdOnRestart }}
-    cta.telemetry.metrics.backend {{ .Values.grpc.conf.telemetry.metricsBackend }}
-    {{- if .Values.grpc.conf.telemetry.metricsExportInterval }}
-    cta.telemetry.metrics.export.interval {{ .Values.grpc.conf.telemetry.metricsExportInterval }}
+    cta.telemetry.metrics.backend {{ .Values.grpc.conf.telemetry.metrics.backend }}
+    {{- if .Values.grpc.conf.telemetry.metrics.exportInterval }}
+    cta.telemetry.metrics.export.interval {{ .Values.grpc.conf.telemetry.metrics.exportInterval }}
     {{- end }}
-    {{- if .Values.grpc.conf.telemetry.metricsExportTimeout }}
-    cta.telemetry.metrics.export.timeout {{ .Values.grpc.conf.telemetry.metricsExportTimeout }}
+    {{- if .Values.grpc.conf.telemetry.metrics.exportTimeout }}
+    cta.telemetry.metrics.export.timeout {{ .Values.grpc.conf.telemetry.metrics.exportTimeout }}
     {{- end }}
-    {{- if .Values.grpc.conf.telemetry.metricsExportOtlpEndpoint }}
-    cta.telemetry.metrics.export.otlp.endpoint {{ .Values.grpc.conf.telemetry.metricsExportOtlpEndpoint }}
+    {{- if .Values.grpc.conf.telemetry.metrics.otlp.endpoint }}
+    cta.telemetry.metrics.otlp.endpoint {{ .Values.grpc.conf.telemetry.metrics.otlp.endpoint }}
     {{- end }}
-    {{- if .Values.grpc.conf.telemetry.metricsExportOtlpBasicAuthSecret }}
-    cta.telemetry.metrics.export.otlp.basic_auth_file /etc/cta/otlp-basic-auth.conf
+    {{- if .Values.grpc.conf.telemetry.metrics.otlp.auth.basic.username }}
+    cta.telemetry.metrics.otlp.auth.basic.username {{ $.Values.grpc.conf.telemetry.metrics.otlp.auth.basic.username }}
     {{- end }}
-    {{- if .Values.grpc.conf.telemetry.metricsExportFileEndpoint }}
-    cta.telemetry.metrics.export.file.endpoint {{ .Values.grpc.conf.telemetry.metricsExportFileEndpoint }}
+    {{- if .Values.grpc.conf.telemetry.metrics.otlp.auth.basic.passwordSecret }}
+    cta.telemetry.metrics.otlp.auth.basic.password_file /etc/cta/otlp-basic-auth-pwd.conf
     {{- end }}
-
-
+    {{- if .Values.grpc.conf.telemetry.metrics.file.endpoint }}
+    cta.telemetry.metrics.file.endpoint {{ .Values.grpc.conf.telemetry.metrics.file.endpoint }}
+    {{- end }}
 
     # Kerberos authentication
     grpc.keytab {{ .Values.grpc.keytab }}

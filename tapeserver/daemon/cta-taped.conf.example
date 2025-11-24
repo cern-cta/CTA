@@ -271,11 +271,13 @@ taped externalFreeDiskSpaceScript /usr/bin/cta-eosdf.sh
 # telemetry metricsExportTimeout 3000
 #
 # Service location of the OTLP collector in case the OTLP backend is used
-# telemetry metricsExportOtlpEndpoint endpoint:port
+# telemetry metricsOtlpEndpoint endpoint:port
 #
-# File location containing "username:password" (not base64 encoded) to set up basic auth for push metrics over HTTP
-# Adds the header "authorization: Basic <base64(username:password)>"
-# telemetry metricsExportOtlpBasicAuthFile /path/to/base64/encoded/username/password
+# Basic authentication: configured both username and passwordFile Adds the header "authorization: Basic <base64(username:password)>"
+# Username to use for setting up basic auth for push metrics over HTTP
+# telemetry metricsOtlpAuthBasicUsername username
+# File location containing the password (not base64 encoded) to set up basic auth for push metrics over HTTP
+# telemetry metricsOtlpAuthBasicPasswordFile /path/to/password/file
 #
 # File location to write to in case the FILE backend is used
-# telemetry metricsExportFileEndpoint path
+# telemetry metricsFileEndpoint path

@@ -49,8 +49,19 @@ grpc:
     telemetry:
       enabled: false
       retainInstanceIdOnRestart: false
-      metricsBackend: "NOOP"
-  
+      metrics:
+        backend: "NOOP"
+        exportInterval: 1000
+        exportTimeout: 500
+        otlp:
+          endpoint: ""
+          auth:
+            basic:
+              username: ""
+              passwordSecret: ""
+        file:
+          endpoint: ""
+
   # Kerberos authentication
   keytab: /etc/cta/cta-frontend.krb5.keytab
   service_principal: "cta/cta-frontend-grpc@TEST.CTA"  # Will use default cta/<pod-name>@realm format if empty
@@ -83,7 +94,18 @@ xrd:
     telemetry:
       enabled: false
       retainInstanceIdOnRestart: false
-      metricsBackend: "NOOP"
+      metrics:
+        backend: "NOOP"
+        exportInterval: 1000
+        exportTimeout: 500
+        otlp:
+          endpoint: ""
+          auth:
+            basic:
+              username: ""
+              passwordSecret: ""
+        file:
+          endpoint: ""
 
   keytab:
     secretName: cta-frontend-keytab
