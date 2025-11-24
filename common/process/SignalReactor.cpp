@@ -32,14 +32,7 @@ namespace cta {
 //------------------------------------------------------------------------------
 SignalReactor::SignalReactor(cta::log::LogContext& lc,
                              sigset_t sigset,
-                             std::unordered_map<int, std::function<void()>> signalFunctions)
-    : m_lc(lc),
-      m_sigset(sigset),
-      m_signalFunctions(signalFunctions) {}
-
-SignalReactor::SignalReactor(cta::log::LogContext& lc,
-                             sigset_t sigset,
-                             std::unordered_map<int, std::function<void()>>&& signalFunctions)
+                             const std::unordered_map<int, std::function<void()>>& signalFunctions)
     : m_lc(lc),
       m_sigset(sigset),
       m_signalFunctions(signalFunctions) {}
