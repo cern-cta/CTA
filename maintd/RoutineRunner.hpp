@@ -31,7 +31,7 @@ namespace cta::maintd {
  */
 class RoutineRunner {
 public:
-  RoutineRunner(uint32_t sleepInterval);
+  explicit RoutineRunner(uint32_t sleepInterval);
 
   ~RoutineRunner() = default;
 

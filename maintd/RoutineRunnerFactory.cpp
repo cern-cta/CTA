@@ -93,7 +93,7 @@ std::unique_ptr<RoutineRunner> RoutineRunnerFactory::create() {
   m_lc.log(log::INFO, "In RoutineRunnerFactory::create(): Creating RoutineRunner");
 
   uint32_t sleepInterval = m_config.getOptionValueUInt("cta.routines.sleep_interval").value_or(1000);
-  std::unique_ptr<RoutineRunner> routineRunner = std::make_unique<RoutineRunner>(sleepInterval);
+  auto routineRunner = std::make_unique<RoutineRunner>(sleepInterval);
 
   // Register all of the different routines
 

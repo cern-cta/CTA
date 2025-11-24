@@ -27,8 +27,8 @@ namespace cta::maintd {
 class DiskReportArchiveRoutine : public IRoutine {
 public:
   DiskReportArchiveRoutine(cta::log::LogContext& lc, cta::Scheduler& scheduler, int batchSize, int softTimeout);
-  void execute() override final;
-  std::string getName() const override final;
+  void execute() final;
+  std::string getName() const final;
 
 private:
   cta::log::LogContext& m_lc;

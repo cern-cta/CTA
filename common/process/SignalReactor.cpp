@@ -31,7 +31,7 @@ namespace cta {
 // constructor
 //------------------------------------------------------------------------------
 SignalReactor::SignalReactor(cta::log::LogContext& lc,
-                             sigset_t sigset,
+                             const sigset_t& sigset,
                              const std::unordered_map<int, std::function<void()>>& signalFunctions)
     : m_lc(lc),
       m_sigset(sigset),
@@ -50,8 +50,8 @@ SignalReactor::~SignalReactor() {
 //------------------------------------------------------------------------------
 void SignalReactor::start() {
   // Block signals everywhere to ensure we can properly consume them.
-  pthread_sigmask(SIG_BLOCK, &m_sigset, NULL);
-  m_thread = std::thread(&SignalReactor::run, this);
+  ::pthread_sigmask(SIG_BLOCK, &m_sigset, nullptr);
+  m_thread = std::jthread(&SignalReactor::run, this);
 }
 
 //------------------------------------------------------------------------------
@@ -91,7 +91,7 @@ void SignalReactor::run() {
       }
 
       // Check whether we have something to do for this signal
-      if (m_signalFunctions.count(signal) == 0) {
+      if (!m_signalFunctions.contains(signal)) {
         log::ScopedParamContainer params(m_lc);
         params.add("signal", std::to_string(signal));
         m_lc.log(log::INFO, "In SignalReactor::run(): no action for signal");

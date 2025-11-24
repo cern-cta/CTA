@@ -41,9 +41,9 @@ public:
 
   ~QueueCleanupRoutine() = default;
 
-  std::string getName() const override final;
+  std::string getName() const final;
 
-  void execute() override final;
+  void execute() final;
 
 private:
   cta::log::LogContext& m_lc;

@@ -31,8 +31,8 @@ SignalReactorBuilder::SignalReactorBuilder(cta::log::LogContext& lc) : m_lc(lc) 
 //------------------------------------------------------------------------------
 // SignalReactorBuilder::addSignalFunction
 //------------------------------------------------------------------------------
-SignalReactorBuilder& SignalReactorBuilder::addSignalFunction(int signal, std::function<void()> func) {
-  if (m_signalFunctions.count(signal) > 0) {
+SignalReactorBuilder& SignalReactorBuilder::addSignalFunction(int signal, const std::function<void()>& func) {
+  if (!m_signalFunctions.contains(signal)) {
     m_lc.log(log::WARNING,
              "In SignalReactorBuilder::addSignalFunction(): Function already registered for signal " +
                std::to_string(signal));
@@ -46,7 +46,7 @@ SignalReactorBuilder& SignalReactorBuilder::addSignalFunction(int signal, std::f
 //------------------------------------------------------------------------------
 // SignalReactorBuilder::build
 //------------------------------------------------------------------------------
-SignalReactor SignalReactorBuilder::build() const {
+SignalReactor SignalReactorBuilder::build() {
   return SignalReactor(m_lc, m_sigset, std::move(m_signalFunctions));
 }
 

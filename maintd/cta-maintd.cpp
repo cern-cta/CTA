@@ -57,9 +57,8 @@ static int setUserAndGroup(const std::string& userName, const std::string& group
   return 0;
 }
 
-void initTelemetry(common::Config config, cta::log::LogContext& lc) {
-  bool experimentalTelemetryEnabled = config.getOptionValueBool("cta.experimental.telemetry.enabled").value_or(false);
-  if (!experimentalTelemetryEnabled) {
+void initTelemetry(const common::Config& config, cta::log::LogContext& lc) {
+  if (!config.getOptionValueBool("cta.experimental.telemetry.enabled").value_or(false)) {
     return;
   }
   try {
@@ -184,11 +183,9 @@ int main(const int argc, char** const argv) {
   log.setStaticParams(staticParamMap);
 
   // Change user and group
-  int rc = cta::maintd::setUserAndGroup(config.getOptionValueStr("cta.daemon_user").value_or("cta"),
-                                        config.getOptionValueStr("cta.daemon_group").value_or("tape"),
-                                        log);
-
-  if (rc) {
+  if (int rc = cta::maintd::setUserAndGroup(config.getOptionValueStr("cta.daemon_user").value_or("cta"),
+                                            config.getOptionValueStr("cta.daemon_group").value_or("tape"),
+                                            log)) {
     return rc;
   }
 

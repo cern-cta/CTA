@@ -84,7 +84,7 @@ public:
   // Since I don't want to change this file further, I just put it here.
   // We should be more specific in the name of this routine though
   // Generic "queuecleanuproutine" is not great; better to have small focused routines
-  std::string getName() const override final { return "RelationalDBQCR"; };
+  std::string getName() const final { return "RelationalDBQCR"; };
 
 private:
   rdbms::Conn m_conn;
