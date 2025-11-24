@@ -34,7 +34,7 @@ public:
 
 private:
   template<typename GetBatchFunc>
-  void reportBatch(std::string_view reportingType, GetBatchFunc getBatchFunc) const;
+  void reportBatch(const std::string& reportingType, GetBatchFunc getBatchFunc) const;
 
   cta::log::LogContext& m_lc;
   cta::Scheduler & m_scheduler;

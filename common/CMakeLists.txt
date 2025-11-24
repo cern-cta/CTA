@@ -108,7 +108,7 @@ set (COMMON_LIB_SRC_FILES
   priorities/MountCriteria.cpp
   priorities/UserGroup.cpp
   process/SignalReactor.cpp
-  process/SignalReader.cpp
+  process/SignalReactorBuilder.cpp
   process/ProcessCap.cpp
   process/threading/ChildProcess.cpp
   process/threading/CondVar.cpp

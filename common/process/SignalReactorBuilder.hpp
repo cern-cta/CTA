@@ -1,6 +1,6 @@
 /*
  * @project      The CERN Tape Archive (CTA)
- * @copyright    Copyright © 2025 CERN
+ * @copyright    Copyright © 2021-2025 CERN
  * @license      This program is free software, distributed under the terms of the GNU General Public
  *               Licence version 3 (GPL Version 3), copied verbatim in the file "COPYING". You can
  *               redistribute it and/or modify it under the terms of the GPL Version 3, or (at your
@@ -17,36 +17,29 @@
 
 #pragma once
 
+#include "SignalReactor.hpp"
 #include "common/log/LogContext.hpp"
+
+#include <unordered_map>
+#include <functional>
 
 namespace cta {
 
-// Note that only a single instance of signal reader should exist per process
-class SignalReader {
+/**
+ * This builder allows for the construction of an immutable SignalReactor object
+ */
+class SignalReactorBuilder {
 public:
-  /**
-   * Constructor
-   */
-  SignalReader();
+  SignalReactorBuilder(cta::log::LogContext& lc);
 
-  /**
-   * Destructor
-   */
-  ~SignalReader() noexcept;
+  SignalReactorBuilder& addSignalFunction(int signal, std::function<void()> func);
 
-  /**
-   * Read, if any, all blocked signals and return them as a set.
-   *
-   * @param lc the log context for logging
-   * @return a std::set containing the blocked signals
-   */
-  std::set<uint32_t> processAndGetSignals(log::LogContext& lc) const;
+  SignalReactor build() const;
 
 private:
-  /**
-    * File descriptor to read the blocked signals from.
-    */
-  int m_sigFd = -1;
+  cta::log::LogContext& m_lc;
+  std::unordered_map<int, std::function<void()>> m_signalFunctions;
+  sigset_t m_sigset;
 };
 
 }  // namespace cta

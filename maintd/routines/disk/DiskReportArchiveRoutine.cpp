@@ -41,10 +41,9 @@ DiskReportArchiveRoutine::DiskReportArchiveRoutine(cta::log::LogContext& lc,
 
 void DiskReportArchiveRoutine::execute() {
   utils::Timer totalTime;
-  size_t roundCount = 0;
+  uint64_t numberOfBatchReported = 0;
 
   while (totalTime.secs() < m_softTimeout) {
-    roundCount += 1;
     log::TimingList timings;
     m_lc.log(cta::log::DEBUG,
              "In DiskReportArchiveRoutine::execute(): getting next archive jobs to report from Scheduler DB");
@@ -62,9 +61,10 @@ void DiskReportArchiveRoutine::execute() {
     params.add("archiveJobsReported", archiveJobsToReport.size());
     utils::Timer t2;
     m_scheduler.reportArchiveJobsBatch(archiveJobsToReport, m_reporterFactory, timings, t1, m_lc);
+    numberOfBatchReported += archiveJobsToReport.size();
     timings.insertAndReset("reportArchiveJobsTime", t2);
     timings.addToLog(params);
-    m_lc.log(cta::log::INFO, "In DiskReportArchiveRoutine::execute(): did one round of archive reports.");
+    m_lc.log(cta::log::DEBUG, "In DiskReportArchiveRoutine::execute(): did one round of archive reports.");
     cta::telemetry::metrics::ctaSchedulerDiskReportCount->Add(
       reportJobCount,
       {
@@ -72,10 +72,12 @@ void DiskReportArchiveRoutine::execute() {
     });
   }
 
-  log::ScopedParamContainer params(m_lc);
-  auto passTime = totalTime.secs();
-  params.add("roundCount", roundCount).add("passTime", passTime);
-  m_lc.log(log::INFO, "In DiskReportArchiveRoutine::execute(): finished one pass.");
+  if (numberOfBatchReported > 0) {
+    log::ScopedParamContainer params(m_lc);
+    params.add("batchesReported", numberOfBatchReported);
+    params.add("duration", totalTime.secs());
+    m_lc.log(log::INFO, "In DiskReportArchiveRoutine::execute(): finished one pass.");
+  }
 }
 
 std::string DiskReportArchiveRoutine::getName() const {

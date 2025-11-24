@@ -17,35 +17,52 @@
 
 #pragma once
 
-#include "SignalReader.hpp"
 #include "common/log/LogContext.hpp"
 #include <unordered_map>
 #include <functional>
+#include <thread>
 
 namespace cta {
 
+/**
+ * Responsible for responding to a certain set of signals.
+ * It is important for the SignalReactor to start() before any other threads start,
+ * as it needs to correctly block the signals on all threads.
+ * It cannot do this if threads are already running.
+ */
 class SignalReactor {
 public:
-  SignalReactor(cta::log::LogContext& lc, uint32_t sleepInterval = 1000);
+  SignalReactor(cta::log::LogContext& lc,
+                sigset_t sigset,
+                std::unordered_map<int, std::function<void()>> signalFunctions);
 
-  ~SignalReactor() = default;
-
-  void registerSignalFunction(uint32_t signal, std::function<void()> func);
+  ~SignalReactor();
 
   /**
-   * Periodically checks for signals and executes the functions registered with said signal (if any)
+   * Starts the SignalReactor on a separate thread
+   */
+  void start();
+
+  /**
+   * Waits for incoming signals and executes the functions registered with said signal (if any)
    */
   void run();
 
+  /**
+   * Stop the SignalReactor (both the thread and the waiting for signal)
+   */
   void stop();
 
 private:
   cta::log::LogContext& m_lc;
-  uint32_t m_sleepInterval;
+  sigset_t m_sigset;
+  std::unordered_map<int, std::function<void()>> m_signalFunctions;
 
-  std::unordered_map<uint32_t, std::function<void()>> m_signalFunctions;
-  std::unique_ptr<cta::SignalReader> m_signalReader = std::make_unique<cta::SignalReader>();
+  // The thread the signalReactor will run on when start() is called
+  std::thread m_thread;
   std::atomic<bool> m_stopRequested;
+
+  uint32_t m_waitTimeoutSec = 1;
 };
 
 }  // namespace cta
