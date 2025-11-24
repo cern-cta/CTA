@@ -1,5 +1,4 @@
-<!-- Use the following title for this issue and corresponding MR: -->
-<!-- "[Misc] Apply SonarCloud rule <rule_code>" -->
+<!-- Title format: `[Misc] Apply SonarCloud rule <rule_code>` -->
 
 ### SonarCloud rule fix
 
@@ -11,6 +10,12 @@
 
 <!-- Add any other relevant comments, if needed. -->
 
+<!-- For all supported quick-actions check: https://docs.gitlab.com/user/project/quick_actions/ -->
+
 /label ~"code quality: sonarcloud"
 /label ~type::maintenance
 /label ~priority::medium
+
+/assign me
+/epic &16
+/title [Misc] Apply SonarCloud rule <add_rule_code>
