@@ -41,10 +41,9 @@ DiskReportRetrieveRoutine::DiskReportRetrieveRoutine(cta::log::LogContext& lc,
 
 void DiskReportRetrieveRoutine::execute() {
   utils::Timer totalTime;
-  size_t roundCount = 0;
+  uint64_t numberOfBatchReported = 0;
 
   while (totalTime.secs() < m_softTimeout) {
-    roundCount += 1;
     log::TimingList timings;
     m_lc.log(cta::log::DEBUG,
              "In DiskReportRetrieveRoutine::execute(): getting next retrieve jobs to report from Scheduler DB");
@@ -62,9 +61,10 @@ void DiskReportRetrieveRoutine::execute() {
     params.add("retrieveJobsReported", retrieveJobsToReport.size());
     utils::Timer t2;
     m_scheduler.reportRetrieveJobsBatch(retrieveJobsToReport, m_reporterFactory, timings, t1, m_lc);
+    numberOfBatchReported += retrieveJobsToReport.size();
     timings.insertAndReset("reportRetrieveJobsTime", t2);
     timings.addToLog(params);
-    m_lc.log(cta::log::INFO, "In DiskReportRetrieveRoutine::execute(): did one round of retrieve reports.");
+    m_lc.log(cta::log::DEBUG, "In DiskReportRetrieveRoutine::execute(): did one round of retrieve reports.");
     cta::telemetry::metrics::ctaSchedulerDiskReportCount->Add(
       reportJobCount,
       {
@@ -72,10 +72,12 @@ void DiskReportRetrieveRoutine::execute() {
     });
   }
 
-  log::ScopedParamContainer params(m_lc);
-  auto passTime = totalTime.secs();
-  params.add("roundCount", roundCount).add("passTime", passTime);
-  m_lc.log(log::INFO, "In DiskReportRetrieveRoutine::execute(): finished one pass.");
+  if (numberOfBatchReported > 0) {
+    log::ScopedParamContainer params(m_lc);
+    params.add("batchesReported", numberOfBatchReported);
+    params.add("duration", totalTime.secs());
+    m_lc.log(log::INFO, "In DiskReportRetrieveRoutine::execute(): finished one pass.");
+  }
 }
 
 std::string DiskReportRetrieveRoutine::getName() const {

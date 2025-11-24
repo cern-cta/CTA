@@ -43,15 +43,14 @@ void RepackReportRoutine::execute() {
 }
 
 template<typename GetBatchFunc>
-void RepackReportRoutine::reportBatch(std::string_view reportingType, GetBatchFunc getBatchFunc) const {
+void RepackReportRoutine::reportBatch(const std::string& reportingType, GetBatchFunc getBatchFunc) const {
   utils::Timer totalTime;
-  bool moreBatch = true;
   log::ScopedParamContainer params(m_lc);
   params.add("repackReportType", reportingType);
 
   uint64_t numberOfBatchReported = 0;
 
-  while (totalTime.secs() < m_softTimeout && moreBatch) {
+  while (totalTime.secs() < m_softTimeout) {
     utils::Timer t;
     log::TimingList tl;
 
@@ -60,7 +59,7 @@ void RepackReportRoutine::reportBatch(std::string_view reportingType, GetBatchFu
 
     if (reportBatch.empty()) {
       // Nothing to do
-      moreBatch = false;
+      break;
     }
 
     reportBatch.report(m_lc);
@@ -69,14 +68,13 @@ void RepackReportRoutine::reportBatch(std::string_view reportingType, GetBatchFu
 
     log::ScopedParamContainer paramsReport(m_lc);
     tl.addToLog(paramsReport);
-    m_lc.log(log::INFO, "In RepackReportRoutine::reportBatch(), reported a batch of reports.");
+    m_lc.log(log::DEBUG, "In RepackReportRoutine::reportBatch(), reported a batch of reports.");
   }
 
   if (numberOfBatchReported > 0) {
-    params.add("numberOfBatchReported", numberOfBatchReported);
-    params.add("totalRunTime", totalTime.secs());
-    params.add("moreBatchToDo", moreBatch);
-    m_lc.log(log::INFO, "In RepackReportRoutine::reportBatch(), exiting.");
+    params.add("batchesReported", numberOfBatchReported);
+    params.add("duration", totalTime.secs());
+    m_lc.log(log::INFO, "In RepackReportRoutine::reportBatch(): finished one pass for " + reportingType + ".");
   }
 }
 

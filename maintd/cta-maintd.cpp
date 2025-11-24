@@ -29,6 +29,7 @@
 #include "common/log/StdoutLogger.hpp"
 #include "common/process/threading/System.hpp"
 #include "common/process/SignalReactor.hpp"
+#include "common/process/SignalReactorBuilder.hpp"
 #include "common/utils/utils.hpp"
 #include "common/telemetry/TelemetryInit.hpp"
 #include "common/telemetry/config/TelemetryConfig.hpp"
@@ -56,6 +57,43 @@ static int setUserAndGroup(const std::string& userName, const std::string& group
   return 0;
 }
 
+void initTelemetry(common::Config config, cta::log::LogContext& lc) {
+  bool experimentalTelemetryEnabled = config.getOptionValueBool("cta.experimental.telemetry.enabled").value_or(false);
+  if (!experimentalTelemetryEnabled) {
+    return;
+  }
+  try {
+    std::string metricsBackend = config.getOptionValueStr("cta.telemetry.metrics.backend").value_or("NOOP");
+
+    std::optional<std::string> otlpBasicAuthFile =
+      config.getOptionValueStr("cta.telemetry.metrics.export.otlp.basic_auth_file");
+    std::string otlpBasicAuthString =
+      otlpBasicAuthFile.has_value() ? cta::telemetry::authStringFromFile(otlpBasicAuthFile.value()) : "";
+    cta::telemetry::TelemetryConfig telemetryConfig =
+      cta::telemetry::TelemetryConfigBuilder()
+        .serviceName(cta::semconv::attr::ServiceNameValues::kCtaMaintd)
+        .serviceNamespace(config.getOptionValueStr("cta.instance_name").value())
+        .serviceVersion(CTA_VERSION)
+        .retainInstanceIdOnRestart(
+          config.getOptionValueBool("cta.telemetry.retain_instance_id_on_restart").value_or(false))
+        .resourceAttribute(cta::semconv::attr::kSchedulerNamespace,
+                           config.getOptionValueStr("cta.scheduler_backend_name").value())
+        .metricsBackend(metricsBackend)
+        .metricsExportInterval(
+          std::chrono::milliseconds(config.getOptionValueInt("cta.telemetry.metrics.export.interval").value_or(15000)))
+        .metricsExportTimeout(
+          std::chrono::milliseconds(config.getOptionValueInt("cta.telemetry.metrics.export.timeout").value_or(3000)))
+        .metricsOtlpEndpoint(config.getOptionValueStr("cta.telemetry.metrics.export.otlp.endpoint").value_or(""))
+        .metricsOtlpBasicAuthString(otlpBasicAuthString)
+        .metricsFileEndpoint(config.getOptionValueStr("cta.telemetry.metrics.export.file.endpoint")
+                               .value_or("/var/log/cta/cta-maintd-metrics.txt"))
+        .build();
+    cta::telemetry::initTelemetry(telemetryConfig, lc);
+  } catch (exception::Exception& ex) {
+    throw exception::Exception("Failed to instantiate OpenTelemetry. Exception message: " + ex.getMessage().str());
+  }
+}
+
 /**
  * exceptionThrowingMain
  *
@@ -68,63 +106,20 @@ static int setUserAndGroup(const std::string& userName, const std::string& group
  */
 static int exceptionThrowingMain(common::Config config, cta::log::Logger& log) {
   cta::log::LogContext lc(log);
-
-  // Instantiate telemetry
-  if (config.getOptionValueBool("cta.experimental.telemetry.enabled").value_or(false)) {
-    try {
-      std::string metricsBackend = config.getOptionValueStr("cta.telemetry.metrics.backend").value_or("NOOP");
-
-      std::optional<std::string> otlpBasicAuthFile =
-        config.getOptionValueStr("cta.telemetry.metrics.export.otlp.basic_auth_file");
-      std::string otlpBasicAuthString =
-        otlpBasicAuthFile.has_value() ? cta::telemetry::authStringFromFile(otlpBasicAuthFile.value()) : "";
-      cta::telemetry::TelemetryConfig telemetryConfig =
-        cta::telemetry::TelemetryConfigBuilder()
-          .serviceName(cta::semconv::attr::ServiceNameValues::kCtaMaintd)
-          .serviceNamespace(config.getOptionValueStr("cta.instance_name").value())
-          .serviceVersion(CTA_VERSION)
-          .retainInstanceIdOnRestart(
-            config.getOptionValueBool("cta.telemetry.retain_instance_id_on_restart").value_or(false))
-          .resourceAttribute(cta::semconv::attr::kSchedulerNamespace,
-                             config.getOptionValueStr("cta.scheduler_backend_name").value())
-          .metricsBackend(metricsBackend)
-          .metricsExportInterval(std::chrono::milliseconds(
-            config.getOptionValueInt("cta.telemetry.metrics.export.interval").value_or(15000)))
-          .metricsExportTimeout(
-            std::chrono::milliseconds(config.getOptionValueInt("cta.telemetry.metrics.export.timeout").value_or(3000)))
-          .metricsOtlpEndpoint(config.getOptionValueStr("cta.telemetry.metrics.export.otlp.endpoint").value_or(""))
-          .metricsOtlpBasicAuthString(otlpBasicAuthString)
-          .metricsFileEndpoint(config.getOptionValueStr("cta.telemetry.metrics.export.file.endpoint")
-                                 .value_or("/var/log/cta/cta-maintd-metrics.txt"))
-          .build();
-      cta::telemetry::initTelemetry(telemetryConfig, lc);
-    } catch (exception::Exception& ex) {
-      throw exception::Exception("Failed to instantiate OpenTelemetry. Exception message: " + ex.getMessage().str());
-    }
-  }
-
   MaintenanceDaemon maintenanceDaemon(config, lc);
 
   // Set up the signal reactor
-  SignalReactor signalReactor(lc);
-  signalReactor.registerSignalFunction(SIGHUP, [&maintenanceDaemon]() { maintenanceDaemon.reload(); });
-  signalReactor.registerSignalFunction(SIGTERM, [&maintenanceDaemon]() { maintenanceDaemon.stop(); });
+  SignalReactor signalReactor = SignalReactorBuilder(lc)
+                                  .addSignalFunction(SIGHUP, [&maintenanceDaemon]() { maintenanceDaemon.reload(); })
+                                  .addSignalFunction(SIGTERM, [&maintenanceDaemon]() { maintenanceDaemon.stop(); })
+                                  .build();
+  signalReactor.start();
 
-  // Run the signal reactor on a separate thread
-  std::thread signalThread([&signalReactor]() { signalReactor.run(); });
+  // Telemetry spawns some threads, so the SignalReactor must have started before this to correctly block signals.
+  initTelemetry(config, lc);
+
   // Run the maintenance daemon
-  try {
-    maintenanceDaemon.run();
-  } catch (...) {
-    // In the case of an exception we still want to enforce graceful shutdown on the signal reactor
-    signalReactor.stop();
-    signalThread.join();
-    throw;
-  }
-
-  // Graceful shutdown; stop the signal reactor
-  signalReactor.stop();
-  signalThread.join();
+  maintenanceDaemon.run();
   return 0;
 }
 

@@ -51,7 +51,7 @@ RoutineRunnerFactory::RoutineRunnerFactory(const cta::common::Config& config, ct
     throw exception::UserError("Could not find config entry 'cta.catalogue.config_file'");
   }
 
-  m_lc.log(log::DEBUG, "In RoutineRunnerFactory::RoutineRunnerFactory(): Initialising Catalogue");
+  m_lc.log(log::INFO, "In RoutineRunnerFactory::RoutineRunnerFactory(): Initialising Catalogue");
   const rdbms::Login catalogueLogin =
     rdbms::Login::parseFile(m_config.getOptionValueStr("cta.catalogue.config_file").value());
   const uint64_t nbConns = 1;
@@ -61,7 +61,7 @@ RoutineRunnerFactory::RoutineRunnerFactory(const cta::common::Config& config, ct
 
   m_catalogue = catalogueFactory->create();
 
-  m_lc.log(log::DEBUG, "In RoutineRunnerFactory::RoutineRunnerFactory(): Initialising Scheduler");
+  m_lc.log(log::INFO, "In RoutineRunnerFactory::RoutineRunnerFactory(): Initialising Scheduler");
   if (!m_config.getOptionValueStr("cta.objectstore.backendpath").has_value()) {
     throw exception::UserError("Could not find config entry 'cta.objectstore.backendpath' in");
   }
@@ -83,14 +83,14 @@ RoutineRunnerFactory::RoutineRunnerFactory(const cta::common::Config& config, ct
   m_scheduler = std::make_unique<cta::Scheduler>(*m_catalogue,
                                                  *m_schedDb,
                                                  m_config.getOptionValueStr("cta.scheduler_backend_name").value());
-  m_lc.log(log::DEBUG, "In RoutineRunnerFactory::RoutineRunnerFactory(): Scheduler and Catalogue initialised");
+  m_lc.log(log::INFO, "In RoutineRunnerFactory::RoutineRunnerFactory(): Scheduler and Catalogue initialised");
 }
 
 //------------------------------------------------------------------------------
 // RoutineRunnerFactory::create
 //------------------------------------------------------------------------------
 std::unique_ptr<RoutineRunner> RoutineRunnerFactory::create() {
-  m_lc.log(log::DEBUG, "In RoutineRunnerFactory::create(): Creating RoutineRunner");
+  m_lc.log(log::INFO, "In RoutineRunnerFactory::create(): Creating RoutineRunner");
 
   uint32_t sleepInterval = m_config.getOptionValueUInt("cta.routines.sleep_interval").value_or(1000);
   std::unique_ptr<RoutineRunner> routineRunner = std::make_unique<RoutineRunner>(sleepInterval);
@@ -152,7 +152,7 @@ std::unique_ptr<RoutineRunner> RoutineRunnerFactory::create() {
       m_config.getOptionValueInt("cta.routines.repack_report.soft_timeout").value_or(30)));
   }
 
-  m_lc.log(log::DEBUG, "In RoutineRunnerFactory::create(): RoutineRunner created");
+  m_lc.log(log::INFO, "In RoutineRunnerFactory::create(): RoutineRunner created");
   return routineRunner;
 }
 
