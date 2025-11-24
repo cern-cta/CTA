@@ -1,4 +1,5 @@
-<!-- Use the following title for this issue and corresponding MR: "[Misc] Apply SonarCloud rule <rule_code>" -->
+<!-- Use the following title for this issue and corresponding MR: -->
+<!-- "[Misc] Apply SonarCloud rule <rule_code>" -->
 
 ### SonarCloud rule fix
 
