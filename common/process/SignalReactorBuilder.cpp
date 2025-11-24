@@ -47,7 +47,7 @@ SignalReactorBuilder& SignalReactorBuilder::addSignalFunction(int signal, std::f
 // SignalReactorBuilder::build
 //------------------------------------------------------------------------------
 SignalReactor SignalReactorBuilder::build() const {
-  return SignalReactor(m_lc, m_sigset, m_signalFunctions);
+  return SignalReactor(m_lc, m_sigset, std::move(m_signalFunctions));
 }
 
 }  // namespace cta
