@@ -1,3 +1,5 @@
+<!-- Use the following title for this issue and corresponding MR: "Apply SonarCloud rule <rule_code>" -->
+
 ### SonarCloud rule fix
 
 - **Rule name:** <!-- Copy-paste rule name -->
