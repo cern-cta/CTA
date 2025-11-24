@@ -37,24 +37,21 @@ data:
     experimental telemetryEnabled {{ $.Values.conf.telemetry.enabled }}
 
     telemetry retainInstanceIdOnRestart {{ $.Values.conf.telemetry.retainInstanceIdOnRestart }}
-    telemetry metricsBackend {{ $.Values.conf.telemetry.metrics.backend }}
-    {{- if $.Values.conf.telemetry.metrics.exportInterval }}
-    telemetry metricsExportInterval {{ $.Values.conf.telemetry.metrics.exportInterval }}
+    telemetry metricsBackend {{ $.Values.conf.telemetry.metricsBackend }}
+    {{- if $.Values.conf.telemetry.metricsExportInterval }}
+    telemetry metricsExportInterval {{ $.Values.conf.telemetry.metricsExportInterval }}
     {{- end }}
-    {{- if $.Values.conf.telemetry.metrics.exportTimeout }}
-    telemetry metricsExportTimeout {{ $.Values.conf.telemetry.metrics.exportTimeout }}
+    {{- if $.Values.conf.telemetry.metricsExportTimeout }}
+    telemetry metricsExportTimeout {{ $.Values.conf.telemetry.metricsExportTimeout }}
     {{- end }}
-    {{- if $.Values.conf.telemetry.metrics.otlp.endpoint }}
-    telemetry metricsOtlpEndpoint {{ $.Values.conf.telemetry.metrics.otlp.endpoint }}
+    {{- if $.Values.conf.telemetry.metricsExportOtlpEndpoint }}
+    telemetry metricsExportOtlpEndpoint {{ $.Values.conf.telemetry.metricsExportOtlpEndpoint }}
     {{- end }}
-    {{- if $.Values.conf.telemetry.metrics.otlp.auth.basic.username }}
-    telemetry metricsOtlpAuthBasicUsername {{ $.Values.conf.telemetry.metrics.otlp.auth.basic.username }}
+    {{- if $.Values.conf.telemetry.metricsExportOtlpBasicAuthSecret }}
+    telemetry metricsExportOtlpBasicAuthFile /etc/cta/otlp-basic-auth.conf
     {{- end }}
-    {{- if $.Values.conf.telemetry.metrics.otlp.auth.basic.passwordSecret }}
-    telemetry metricsOtlpAuthBasicPasswordFile /etc/cta/otlp-basic-auth-pwd.conf
-    {{- end }}
-    {{- if $.Values.conf.telemetry.metrics.file.endpoint }}
-    telemetry metricsFileEndpoint {{ $.Values.conf.telemetry.metrics.file.endpoint }}
+    {{- if $.Values.conf.telemetry.metricsExportFileEndpoint }}
+    telemetry metricsExportFileEndpoint {{ $.Values.conf.telemetry.metricsExportFileEndpoint }}
     {{- end }}
 
 

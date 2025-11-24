@@ -237,10 +237,9 @@ int main(const int argc, char **const argv) {
         metricsBackend = cta::telemetry::metricsBackendToString(cta::telemetry::MetricsBackend::NOOP);
       }
 
-      std::string otlpBasicAuthPasswordFile = globalConfig.metricsOtlpAuthBasicPasswordFile.value();
-      std::string otlpBasicAuthPassword =
-        otlpBasicAuthPasswordFile.empty() ? "" : cta::telemetry::stringFromFile(otlpBasicAuthPasswordFile);
-      std::string otlpBasicAuthUsername = globalConfig.metricsOtlpAuthBasicUsername.value();
+      std::string otlpBasicAuthFile = globalConfig.metricsExportOtlpBasicAuthFile.value();
+      std::string otlpBasicAuthString =
+        otlpBasicAuthFile.empty() ? "" : cta::telemetry::authStringFromFile(otlpBasicAuthFile);
       cta::telemetry::TelemetryConfig telemetryConfig =
         cta::telemetry::TelemetryConfigBuilder()
           .serviceName(cta::semconv::attr::ServiceNameValues::kCtaTaped)
@@ -253,16 +252,16 @@ int main(const int argc, char **const argv) {
           .metricsBackend(metricsBackend)
           .metricsExportInterval(std::chrono::milliseconds(globalConfig.metricsExportInterval.value()))
           .metricsExportTimeout(std::chrono::milliseconds(globalConfig.metricsExportTimeout.value()))
-          .metricsOtlpEndpoint(globalConfig.metricsOtlpEndpoint.value())
-          .metricsOtlpBasicAuth(otlpBasicAuthUsername, otlpBasicAuthPassword)
-          .metricsFileEndpoint(globalConfig.metricsFileEndpoint.value())
+          .metricsOtlpEndpoint(globalConfig.metricsExportOtlpEndpoint.value())
+          .metricsOtlpBasicAuthString(otlpBasicAuthString)
+          .metricsFileEndpoint(globalConfig.metricsExportFileEndpoint.value())
           .build();
       // taped is a special case where we only do initTelemetry after the process name has been set
       cta::telemetry::initTelemetryConfig(telemetryConfig);
     } catch (exception::Exception& ex) {
       std::list<cta::log::Param> params = {cta::log::Param("exceptionMessage", ex.getMessage().str())};
       log(log::ERR, "Failed to instantiate OpenTelemetry", params);
-      throw ex;
+      return EXIT_FAILURE;
     }
   }
 

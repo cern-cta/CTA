@@ -232,10 +232,9 @@ TapedConfiguration TapedConfiguration::createFromConfigPath(
   // Telemetry options
   ret.retainInstanceIdOnRestart.setFromConfigurationFile(cf, driveTapedConfigPath);
   ret.metricsBackend.setFromConfigurationFile(cf, driveTapedConfigPath);
-  ret.metricsOtlpEndpoint.setFromConfigurationFile(cf, driveTapedConfigPath);
-  ret.metricsOtlpAuthBasicUsername.setFromConfigurationFile(cf, driveTapedConfigPath);
-  ret.metricsOtlpAuthBasicPasswordFile.setFromConfigurationFile(cf, driveTapedConfigPath);
-  ret.metricsFileEndpoint.setFromConfigurationFile(cf, driveTapedConfigPath);
+  ret.metricsExportOtlpEndpoint.setFromConfigurationFile(cf, driveTapedConfigPath);
+  ret.metricsExportOtlpBasicAuthFile.setFromConfigurationFile(cf, driveTapedConfigPath);
+  ret.metricsExportFileEndpoint.setFromConfigurationFile(cf, driveTapedConfigPath);
   ret.metricsExportInterval.setFromConfigurationFile(cf, driveTapedConfigPath);
   ret.metricsExportTimeout.setFromConfigurationFile(cf, driveTapedConfigPath);
 
@@ -288,16 +287,6 @@ TapedConfiguration TapedConfiguration::createFromConfigPath(
 
   ret.tapeCacheMaxAgeSecs.log(log);
   ret.retrieveQueueCacheMaxAgeSecs.log(log);
-
-  // Telemetry options
-  ret.retainInstanceIdOnRestart.log(log);
-  ret.metricsBackend.log(log);
-  ret.metricsOtlpEndpoint.log(log);
-  ret.metricsOtlpAuthBasicUsername.log(log);
-  ret.metricsOtlpAuthBasicPasswordFile.log(log);
-  ret.metricsFileEndpoint.log(log);
-  ret.metricsExportInterval.log(log);
-  ret.metricsExportTimeout.log(log);
 
   return ret;
 }

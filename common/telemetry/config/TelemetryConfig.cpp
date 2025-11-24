@@ -61,10 +61,10 @@ std::string metricsBackendToString(MetricsBackend backend) {
   throw cta::exception::InvalidArgument("Provided MetricsBackend cannot be converted to string");
 }
 
-std::string stringFromFile(const std::string& filePath) {
+std::string authStringFromFile(const std::string& filePath) {
   std::ifstream file(filePath);
   if (!file.is_open()) {
-    throw cta::exception::Exception("Failed to open file: " + filePath);
+    throw cta::exception::Exception("Failed to open auth file: " + filePath);
   }
 
   std::string line;
@@ -74,7 +74,7 @@ std::string stringFromFile(const std::string& filePath) {
       return line;
     }
   }
-  throw cta::exception::Exception("No valid string found in file: " + filePath);
+  throw cta::exception::Exception("No valid auth string found in file: " + filePath);
 }
 
 TelemetryConfigBuilder& TelemetryConfigBuilder::serviceName(std::string serviceName) {
@@ -122,12 +122,12 @@ TelemetryConfigBuilder& TelemetryConfigBuilder::metricsOtlpEndpoint(std::string 
   return *this;
 }
 
-TelemetryConfigBuilder& TelemetryConfigBuilder::metricsOtlpBasicAuth(const std::string& username, const std::string& password) {
-  if (username.empty() || password.empty()) {
+TelemetryConfigBuilder& TelemetryConfigBuilder::metricsOtlpBasicAuthString(const std::string& authString) {
+  if (authString.empty()) {
     // Ensure we don't add any headers if not configured
     return *this;
   }
-  std::string authStringBase64 = cta::utils::base64encode(username + ":" + password);
+  std::string authStringBase64 = cta::utils::base64encode(authString);
   m_config.metrics.otlpHeaders["Authorization"] = "Basic " + authStringBase64;
   return *this;
 }

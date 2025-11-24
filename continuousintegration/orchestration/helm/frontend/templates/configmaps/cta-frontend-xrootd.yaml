@@ -102,24 +102,21 @@ data:
     cta.experimental.telemetry.enabled {{ .Values.xrd.conf.telemetry.enabled }}
 
     cta.telemetry.retain_instance_id_on_restart {{ .Values.xrd.conf.telemetry.retainInstanceIdOnRestart }}
-    cta.telemetry.metrics.backend {{ .Values.xrd.conf.telemetry.metrics.backend }}
-    {{- if .Values.xrd.conf.telemetry.metrics.exportInterval }}
-    cta.telemetry.metrics.export.interval {{ .Values.xrd.conf.telemetry.metrics.exportInterval }}
+    cta.telemetry.metrics.backend {{ .Values.xrd.conf.telemetry.metricsBackend }}
+    {{- if .Values.xrd.conf.telemetry.metricsExportInterval }}
+    cta.telemetry.metrics.export.interval {{ .Values.xrd.conf.telemetry.metricsExportInterval }}
     {{- end }}
-    {{- if .Values.xrd.conf.telemetry.metrics.exportTimeout }}
-    cta.telemetry.metrics.export.timeout {{ .Values.xrd.conf.telemetry.metrics.exportTimeout }}
+    {{- if .Values.xrd.conf.telemetry.metricsExportTimeout }}
+    cta.telemetry.metrics.export.timeout {{ .Values.xrd.conf.telemetry.metricsExportTimeout }}
     {{- end }}
-    {{- if .Values.xrd.conf.telemetry.metrics.otlp.endpoint }}
-    cta.telemetry.metrics.otlp.endpoint {{ .Values.xrd.conf.telemetry.metrics.otlp.endpoint }}
+    {{- if .Values.xrd.conf.telemetry.metricsExportOtlpEndpoint }}
+    cta.telemetry.metrics.export.otlp.endpoint {{ .Values.xrd.conf.telemetry.metricsExportOtlpEndpoint }}
     {{- end }}
-    {{- if .Values.xrd.conf.telemetry.metrics.otlp.auth.basic.username }}
-    cta.telemetry.metrics.otlp.auth.basic.username {{ $.Values.xrd.conf.telemetry.metrics.otlp.auth.basic.username }}
+    {{- if .Values.xrd.conf.telemetry.metricsExportOtlpBasicAuthSecret }}
+    cta.telemetry.metrics.export.otlp.basic_auth_file /etc/cta/otlp-basic-auth.conf
     {{- end }}
-    {{- if .Values.xrd.conf.telemetry.metrics.otlp.auth.basic.passwordSecret }}
-    cta.telemetry.metrics.otlp.auth.basic.password_file /etc/cta/otlp-basic-auth-pwd.conf
-    {{- end }}
-    {{- if .Values.xrd.conf.telemetry.metrics.file.endpoint }}
-    cta.telemetry.metrics.file.endpoint {{ .Values.xrd.conf.telemetry.metrics.file.endpoint }}
+    {{- if .Values.xrd.conf.telemetry.metricsExportFileEndpoint }}
+    cta.telemetry.metrics.export.file.endpoint {{ .Values.xrd.conf.telemetry.metricsExportFileEndpoint }}
     {{- end }}
 
 {{- end }}

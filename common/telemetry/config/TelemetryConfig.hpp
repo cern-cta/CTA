@@ -29,9 +29,10 @@ MetricsBackend stringToMetricsBackend(const std::string& string);
 std::string metricsBackendToString(MetricsBackend backend);
 
 /**
- * Reads the first line from a given file (that is not empty and not a comment) and returns it as a string.
+ * Reads the authentication string from a given file.
+ * The auth string is the first line not starting with a # (to allow for comments).
  */
-std::string stringFromFile(const std::string& filePath);
+std::string authStringFromFile(const std::string& filePath);
 
 /**
  * Holds all telemetry-related configuration
@@ -142,10 +143,9 @@ public:
 
   /**
    * If the metrics backend is "OTLP_HTTP" or "OTLP_GRPC", setting this option will add the header "authorization: Basic <base64(username:password)>"
-   * @param authString The raw username string.
-   * @param authString The raw password string.
+   * @param authString The raw string "username:password" (not base64 encoded).
    */
-  TelemetryConfigBuilder& metricsOtlpBasicAuth(const std::string& username, const std::string& password);
+  TelemetryConfigBuilder& metricsOtlpBasicAuthString(const std::string& authString);
 
   /**
    * If the metrics backend is "FILE", this endpoint tells the telemetry SDK which file to write the metrics to.

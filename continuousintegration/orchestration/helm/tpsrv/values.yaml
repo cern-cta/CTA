@@ -13,19 +13,7 @@ conf:
   telemetry:
     enabled: false
     retainInstanceIdOnRestart: false
-    metrics:
-      backend: "NOOP"
-      exportInterval: 1000
-      exportTimeout: 500
-      otlp:
-        endpoint: ""
-        auth:
-          basic:
-            username: ""
-            passwordSecret: ""
-      file:
-        endpoint: ""
-
+    metricsBackend: "NOOP"
 
 # SSS keytab to communicate to the disk buffer
 keytab:

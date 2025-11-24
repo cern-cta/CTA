@@ -295,25 +295,20 @@ struct TapedConfiguration {
 
   cta::SourcedParameter<std::string> metricsBackend {"telemetry", "metricsBackend", "NOOP", "Compile time default"};
 
-  cta::SourcedParameter<std::string> metricsOtlpEndpoint {"telemetry",
-                                                          "metricsOtlpEndpoint",
-                                                          "",
-                                                          "Compile time default"};
+  cta::SourcedParameter<std::string> metricsExportOtlpEndpoint {"telemetry",
+                                                                "metricsExportOtlpEndpoint",
+                                                                "",
+                                                                "Compile time default"};
 
-  cta::SourcedParameter<std::string> metricsOtlpAuthBasicPasswordFile {"telemetry",
-                                                                       "metricsOtlpAuthBasicPasswordFile",
-                                                                       "",
-                                                                       "Compile time default"};
+  cta::SourcedParameter<std::string> metricsExportOtlpBasicAuthFile {"telemetry",
+                                                                     "metricsExportOtlpBasicAuthFile",
+                                                                     "",
+                                                                     "Compile time default"};
 
-  cta::SourcedParameter<std::string> metricsOtlpAuthBasicUsername {"telemetry",
-                                                                   "metricsOtlpAuthBasicUsername",
-                                                                   "",
-                                                                   "Compile time default"};
-
-  cta::SourcedParameter<std::string> metricsFileEndpoint {"telemetry",
-                                                          "metricsFileEndpoint",
-                                                          "/var/log/cta/cta-taped-metrics.txt",
-                                                          "Compile time default"};
+  cta::SourcedParameter<std::string> metricsExportFileEndpoint {"telemetry",
+                                                                "metricsExportFileEndpoint",
+                                                                "/var/log/cta/cta-taped-metrics.txt",
+                                                                "Compile time default"};
 
   cta::SourcedParameter<uint32_t> metricsExportInterval {"telemetry",
                                                          "metricsExportInterval",
