@@ -176,8 +176,10 @@ FrontendService::FrontendService(const std::string& configFilename) : m_archiveF
       cta::log::LogContext lc(log);  // temporary log context
       cta::telemetry::initTelemetry(telemetryConfig, lc);
     } catch (exception::Exception& ex) {
-      std::string ex_str("Failed to instantiate OpenTelemetry: ");
-      throw exception::Exception(ex_str + ex.getMessage().str());
+      std::list<cta::log::Param> params = {cta::log::Param("exceptionMessage", ex.getMessage().str())};
+      log(log::ERR, "Failed to instantiate OpenTelemetry", params);
+      cta::log::LogContext lc(log);
+      cta::telemetry::shutdownTelemetry(lc);
     }
   }
 
