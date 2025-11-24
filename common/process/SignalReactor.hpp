@@ -34,10 +34,7 @@ class SignalReactor {
 public:
   SignalReactor(cta::log::LogContext& lc,
                 sigset_t sigset,
-                std::unordered_map<int, std::function<void()>> signalFunctions);
-  SignalReactor(cta::log::LogContext& lc,
-                sigset_t sigset,
-                std::unordered_map<int, std::function<void()>>&& signalFunctions);
+                const std::unordered_map<int, std::function<void()>>& signalFunctions);
 
   ~SignalReactor();
 
