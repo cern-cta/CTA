@@ -12,3 +12,4 @@
 
 /label ~"code quality: sonarcloud"
 /label ~type::maintenance
+/label ~priority::medium
