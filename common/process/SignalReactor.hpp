@@ -33,7 +33,7 @@ namespace cta {
 class SignalReactor {
 public:
   SignalReactor(cta::log::LogContext& lc,
-                sigset_t sigset,
+                const sigset_t& sigset,
                 const std::unordered_map<int, std::function<void()>>& signalFunctions);
 
   ~SignalReactor();
@@ -59,7 +59,7 @@ private:
   std::unordered_map<int, std::function<void()>> m_signalFunctions;
 
   // The thread the signalReactor will run on when start() is called
-  std::thread m_thread;
+  std::jthread m_thread;
   std::atomic<bool> m_stopRequested;
 
   uint32_t m_waitTimeoutSec = 1;

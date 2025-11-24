@@ -29,8 +29,8 @@ class RepackExpandRoutine : public IRoutine {
 public:
   RepackExpandRoutine(cta::log::LogContext &lc, cta::Scheduler &scheduler, int maxRequestsToToExpand);
 
-  void execute() override final;
-  std::string getName() const override final;
+  void execute() final;
+  std::string getName() const final;
 
 private:
   cta::log::LogContext& m_lc;

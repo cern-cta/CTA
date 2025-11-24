@@ -30,11 +30,11 @@ namespace cta {
  */
 class SignalReactorBuilder {
 public:
-  SignalReactorBuilder(cta::log::LogContext& lc);
+  explicit SignalReactorBuilder(cta::log::LogContext& lc);
 
-  SignalReactorBuilder& addSignalFunction(int signal, std::function<void()> func);
+  SignalReactorBuilder& addSignalFunction(int signal, const std::function<void()>& func);
 
-  SignalReactor build() const;
+  SignalReactor build();
 
 private:
   cta::log::LogContext& m_lc;

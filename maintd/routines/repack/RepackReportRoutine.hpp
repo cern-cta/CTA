@@ -29,8 +29,8 @@ class RepackReportRoutine : public IRoutine {
 public:
   RepackReportRoutine(cta::log::LogContext &lc, cta::Scheduler &scheduler, int timeout);
 
-  void execute() override final;
-  std::string getName() const override final;
+  void execute() final;
+  std::string getName() const final;
 
 private:
   template<typename GetBatchFunc>

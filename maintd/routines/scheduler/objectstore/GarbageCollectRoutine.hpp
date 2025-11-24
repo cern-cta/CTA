@@ -35,7 +35,7 @@ public:
                         cta::catalogue::Catalogue& catalogue);
   void execute() final;
 
-  std::string getName() const override final;
+  std::string getName() const final;
 
 private:
   cta::log::LogContext& m_lc;
