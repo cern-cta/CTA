@@ -14,7 +14,7 @@
  *               granted to it by virtue of its status as an Intergovernmental Organization or
  *               submit itself to any jurisdiction.
  */
- 
+
 #pragma once
 
 #include "IHandler.hpp"
@@ -40,13 +40,13 @@ public:
                             const std::string& strKeytab,
                             const std::string& strService);
   ~NegotiationRequestHandler() override;
-  
+
   void init() override; // can thorw
   bool next(const bool bOk) override; // can thorw
 
 private:
   const unsigned int CHUNK_SIZE = 4 * 1024;
-  
+
   enum class StreamState : unsigned int {
     NEW = 1,
     PROCESSING,
@@ -55,24 +55,24 @@ private:
     ERROR,
     FINISH
   };
-  
+
   cta::log::Logger& m_log;
   cta::frontend::grpc::request::Tag m_tag;
   NegotiationService& m_negotiationService;
   cta::xrd::Negotiation::AsyncService& m_ctaNegotiationSvc;
   std::string m_strKeytab;
-  std::string m_strService;
+  const std::string m_strService;
   StreamState m_streamState;
   gss_ctx_id_t m_gssCtx;
   gss_cred_id_t m_serverCreds = {GSS_C_NO_CREDENTIAL};
-  /* 
+  /*
    * Context for the rpc, allowing to tweak aspects of it such as the use
    * of compression, authentication, as well as to send metadata back to the
    * client.
    */
   ::grpc::ServerContext m_ctx;
-  
-  
+
+
   // Request from the client
   cta::xrd::KerberosAuthenticationRequest m_request;
   // Response send back to the client
