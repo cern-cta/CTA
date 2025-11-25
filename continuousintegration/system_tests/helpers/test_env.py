@@ -2,12 +2,12 @@ import json
 from typing import Any, List
 import subprocess
 
-from .hosts.client_host import ClientHost
-from .hosts.cta_cli_host import CtaCliHost
-from .hosts.cta_frontend_host import CtaFrontendHost
-from .hosts.cta_rmcd_host import CtaRmcdHost
-from .hosts.cta_taped_host import CtaTapedHost
-from .hosts.eos_mgm_host import EosMgmHost
+from .hosts.cta.cta_cli_host import CtaCliHost
+from .hosts.cta.cta_frontend_host import CtaFrontendHost
+from .hosts.cta.cta_rmcd_host import CtaRmcdHost
+from .hosts.cta.cta_taped_host import CtaTapedHost
+from .hosts.disk.eos_client_host import EosClientHost
+from .hosts.disk.eos_mgm_host import EosMgmHost
 from .connections.remote_connection import RemoteConnection
 from .connections.k8s_connection import K8sConnection
 from .connections.ssh_connection import SSHConnection
@@ -16,19 +16,22 @@ from .connections.ssh_connection import SSHConnection
 class TestEnv:
     def __init__(
         self,
-        client_conns: list[RemoteConnection],
-        cta_cli_conns: list[RemoteConnection],
-        cta_frontend_conns: list[RemoteConnection],
-        cta_rmcd_conns: list[RemoteConnection],
-        cta_taped_conns: list[RemoteConnection],
-        eos_mgm_conns: list[RemoteConnection],
+        cta_cli_conns: list[RemoteConnection] = [],
+        cta_frontend_conns: list[RemoteConnection] = [],
+        cta_rmcd_conns: list[RemoteConnection] = [],
+        cta_taped_conns: list[RemoteConnection] = [],
+        eos_client_conns: list[RemoteConnection] = [],
+        eos_mgm_conns: list[RemoteConnection] = [],
     ):
-        self.client = [ClientHost(conn) for conn in client_conns]
         self.ctacli = [CtaCliHost(conn) for conn in cta_cli_conns]
         self.ctafrontend = [CtaFrontendHost(conn) for conn in cta_frontend_conns]
         self.ctarmcd = [CtaRmcdHost(conn) for conn in cta_rmcd_conns]
         self.ctataped = [CtaTapedHost(conn) for conn in cta_taped_conns]
         self.eosmgm = [EosMgmHost(conn) for conn in eos_mgm_conns]
+        self.eos_client = [EosClientHost(conn) for conn in eos_client_conns]
+        # These should all fall under DiskInstanceHost and DiskClientHost
+        self.disk_instance = self.eosmgm # + self.dcache
+        self.disk_client = self.eos_client # + self.dcache_client
 
     # Mostly a convenience function that is arguably not very clean, but that is for later
     @staticmethod
@@ -72,7 +75,9 @@ class TestEnv:
     @staticmethod
     def fromNamespace(namespace: str):
         return TestEnv(
-            client_conns=TestEnv.get_k8s_connections_by_label(namespace, "app.kubernetes.io/name", "cta-client"),
+            # Our "cta-client" should actually be an eos-client. However, the current test suite mixes these concepts
+            # Something to be changed once we move them over....
+            eos_client_conns=TestEnv.get_k8s_connections_by_label(namespace, "app.kubernetes.io/name", "cta-client"),
             cta_cli_conns=TestEnv.get_k8s_connections_by_label(namespace, "app.kubernetes.io/name", "cta-cli"),
             cta_frontend_conns=TestEnv.get_k8s_connections_by_label(
                 namespace, "app.kubernetes.io/name", "cta-frontend"
@@ -91,7 +96,7 @@ class TestEnv:
         """
         Expects a path to a yaml file containing for each host how to connect. For example:
 
-        client:
+        eosclient:
           - k8s:
               namespace: dev
               pod: client-0
@@ -129,10 +134,10 @@ class TestEnv:
             return connections
 
         return TestEnv(
-            client_conns=create_connections(config, "client"),
             cta_cli_conns=create_connections(config, "ctacli"),
             cta_frontend_conns=create_connections(config, "ctafrontend"),
             cta_rmcd_conns=create_connections(config, "ctarmcd"),
             cta_taped_conns=create_connections(config, "ctataped"),
+            eos_client_conns=create_connections(config, "eosclient"),
             eos_mgm_conns=create_connections(config, "eosmgm"),
         )

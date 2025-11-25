@@ -1,0 +1,26 @@
+from ..remote_host import RemoteHost
+from .disk_instance_host import DiskInstanceHost
+from typing import Protocol
+from functools import cached_property
+
+
+class EosMgmHost(RemoteHost, DiskInstanceHost, Protocol):
+    def __init__(self, conn):
+        super().__init__(conn)
+
+    @cached_property
+    def instance_name(self) -> str:
+        return self.execWithOutput("eos --json version | jq -r '.version[0].EOS_INSTANCE'")
+
+    def force_remove_directory(self, directory: str) -> str:
+        self.exec(f"eos rm -rF --no-confirmation {directory} 2>/dev/null || true")
+
+    def num_files_in_directory(self, directory: str) -> str:
+        # Note that for now this also counts subdirectories
+        return self.execWithOutput(f"eos ls {directory} | wc -l")
+
+    def num_files_on_tape_only(self, directory: str) -> str:
+        return self.execWithOutput(f'eos ls {directory} -y | grep "d0::t1" | wc -l')
+
+    def num_files_on_disk_only(self, directory: str) -> str:
+        return self.execWithOutput(f'eos ls {directory} -y | grep "d1::t0" | wc -l')

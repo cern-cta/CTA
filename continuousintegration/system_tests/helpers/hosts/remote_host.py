@@ -8,7 +8,6 @@ import time
 class RemoteHost:
     def __init__(self, conn: RemoteConnection):
         self.conn = conn
-        # print("Initialising remote host: " + self.description)
 
     @cached_property
     def name(self) -> str:
