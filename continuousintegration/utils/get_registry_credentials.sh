@@ -16,7 +16,7 @@
 #               submit itself to any jurisdiction.
 
 secret_is_dockerconfigjson() {
-  test $(kubectl get secret $1 -o jsonpath='{.type}') == "kubernetes.io/dockerconfigjson"
+  [[ $(kubectl get secret "$1" -o jsonpath='{.type}' 2>/dev/null) = "kubernetes.io/dockerconfigjson" ]]
 }
 
 get_credentials() {
@@ -29,35 +29,50 @@ get_credentials() {
   #   }
   # }
 
-  local check_mode=false
+  local check_only=false
   while [[ "$#" -gt 0 ]]; do
       case "$1" in
-          --check) check_mode=true ;;
+          --check) check_only=true ;;
           *) echo "Unknown option: $1" ;;
       esac
       shift
   done
 
-  local secret_name="ctaregsecret"
+  local secrets=(ctaregsecret reg-ctageneric)
+
   local registry_name="cta/ctageneric"
   local gitlab_server="gitlab.cern.ch"
 
-  # These variable are capatalised to match the variable in gitlabregistry.txt
   local DOCKER_REGISTRY=""
   local DOCKER_LOGIN_USERNAME=""
   local DOCKER_LOGIN_PASSWORD=""
-  if secret_is_dockerconfigjson $secret_name ; then
-    local auth_json=$(kubectl get secret $secret_name -o jsonpath='{.data.\.dockerconfigjson}' | base64 --decode | jq -r '.auths')
 
-    DOCKER_REGISTRY=$(echo $auth_json | jq -r 'keys[0]')
-    DOCKER_LOGIN_USERNAME=$(echo $auth_json | jq -r '.[].auth' | base64 --decode | cut -d: -f1)
-    DOCKER_LOGIN_PASSWORD=$(echo $auth_json | jq -r '.[].auth' | base64 --decode | cut -d: -f2)
-  else
+  local found=false
+
+  for secret_name in "${secrets[@]}"; do
+    if secret_is_dockerconfigjson "$secret_name"; then
+      local auth_json=$(kubectl get secret "$secret_name" \
+        -o jsonpath='{.data.\.dockerconfigjson}' | \
+        base64 --decode | jq -r '.auths')
+
+      DOCKER_REGISTRY=$(echo "$auth_json" | jq -r 'keys[0]')
+      local auth=$(echo "$auth_json" | jq -r '.[].auth' | base64 --decode)
+
+      DOCKER_LOGIN_USERNAME="${auth%%:*}"
+      DOCKER_LOGIN_PASSWORD="${auth#*:}"
+
+      found=true
+      break
+    fi
+  done
+
+  if [[ $found == false ]]; then
     if [[ $check_only == true ]]; then
-      echo "No secret with name $secret_name of type \"kubernetes.io/dockerconfigjson\" was found. Falling back to /etc/gitlab/gitlabregistry.txt..."
+      echo "No usable dockerconfigjson secret found. Falling back to /etc/gitlab/gitlabregistry.txt..."
     fi
     source /etc/gitlab/gitlabregistry.txt
   fi
+
 
   if [[ -z "$DOCKER_REGISTRY" ]]; then
     echo "Error: Missing required variable: DOCKER_REGISTRY"
