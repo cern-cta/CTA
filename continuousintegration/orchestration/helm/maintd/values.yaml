@@ -1,6 +1,8 @@
 # If required, the user can specify a custom image here
 isPrivileged: true
 
+replicas: 1
+
 conf:
   general:
     instanceName: "CI"
@@ -37,7 +39,18 @@ conf:
   telemetry:
     enabled: false
     retainInstanceIdOnRestart: false
-    metricsBackend: "NOOP"
+    metrics:
+      backend: "NOOP"
+      exportInterval: 1000
+      exportTimeout: 500
+      otlp:
+        endpoint: ""
+        auth:
+          basic:
+            username: ""
+            passwordSecret: ""
+      file:
+        endpoint: ""
 
 # SSS keytab to communicate to the disk buffer
 keytab:
