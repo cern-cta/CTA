@@ -95,7 +95,7 @@ format-report-python:
   before_script:
     - mkdir -p artifacts
     - echo "Running black on all Python files"
-    - (cd "$CI_PROJECT_DIR" && black . --diff --line-length=120) > $FORMAT_DIFF
+    - black "$CI_PROJECT_DIR" --line-length=120 --diff > $FORMAT_DIFF
 
 format-apply:
   stage: lint
