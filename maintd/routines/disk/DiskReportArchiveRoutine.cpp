@@ -20,8 +20,6 @@
 #include "scheduler/ArchiveJob.hpp"
 #include "scheduler/RetrieveJob.hpp"
 #include "common/log/TimingList.hpp"
-#include "common/semconv/Attributes.hpp"
-#include "common/telemetry/metrics/instruments/SchedulerInstruments.hpp"
 
 namespace cta::maintd {
 
@@ -65,11 +63,6 @@ void DiskReportArchiveRoutine::execute() {
     timings.insertAndReset("reportArchiveJobsTime", t2);
     timings.addToLog(params);
     m_lc.log(cta::log::DEBUG, "In DiskReportArchiveRoutine::execute(): did one round of archive reports.");
-    cta::telemetry::metrics::ctaSchedulerDiskReportCount->Add(
-      reportJobCount,
-      {
-        {cta::semconv::attr::kCtaTransferDirection, cta::semconv::attr::CtaTransferDirectionValues::kArchive}
-    });
   }
 
   if (numberOfBatchReported > 0) {
