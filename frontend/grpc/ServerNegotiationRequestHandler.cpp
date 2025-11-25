@@ -109,10 +109,10 @@ void cta::frontend::grpc::server::NegotiationRequestHandler::acquireCreds(const 
   gss_OID_set_desc gssMechlist;
   gss_OID_set gssMechs = GSS_C_NO_OID_SET;
 
-  auto strServiceArr = std::unique_ptr<char[]>(new char[strService.size()]);
-  strncpy(strServiceArr.get(), strService.c_str(), strService.size());
-
-  gssNameBuf.value = strServiceArr.get();
+  // gss_buffer_desc is not const correct by the looks of it, so instead of casting away the const
+  // we just copy the string
+  std::string strServiceBuf = strService;
+  gssNameBuf.value = strServiceBuf.data();
   gssNameBuf.length = strService.size();
 
 // Prefer to import as a krb5 principal if available
