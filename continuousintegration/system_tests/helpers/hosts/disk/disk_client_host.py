@@ -1,6 +1,6 @@
-from typing import Protocol
+from ..remote_host import RemoteHost
 
 
-class DiskClientHost(Protocol):
+class DiskClientHost(RemoteHost):
     # Eventually we specify the client specific code here
     ...
