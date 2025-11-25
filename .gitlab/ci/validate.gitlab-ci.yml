@@ -1,6 +1,6 @@
 validate-catalogue-schema-version:
   stage: validate
-  dependencies: [] # Ensure no artifacts are downloaded
+  needs: [] # Ensure no artifacts are downloaded
   rules:
     - if: $PIPELINE_TYPE != "DEFAULT"
       when: never
@@ -32,6 +32,7 @@ validate-catalogue-schema-version:
 
 validate-pipeline-variables:
   stage: validate
+  needs: [] # Ensure no artifacts are downloaded
   rules:
     - when: on_success
   script:
@@ -46,6 +47,7 @@ validate-pipeline-variables:
 
 validate-project-json:
   stage: validate
+  needs: [] # Ensure no artifacts are downloaded
   rules:
     - when: on_success
   script:
