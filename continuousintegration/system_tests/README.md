@@ -21,37 +21,37 @@ pip install pytest
 Run a particular test suite:
 
 ```sh
-pytest tests/test_stress.py --namespace dev
+pytest tests/stress_test.py --namespace dev
 ```
 
 To skip the setup (e.g. initialization of the catalogue), add the `--no-setup` flag:
 
 ```sh
-pytest tests/test_stress.py --namespace dev --no-setup
+pytest tests/stress_test.py --namespace dev --no-setup
 ```
 
 To skip the teardown (e.g. cleaning of EOS, wiping catalogue -> not necessary if the namespace is deleted anyway), add the `--no-teardown` flag:
 
 ```sh
-pytest tests/test_stress.py --namespace dev --no-teardown
+pytest tests/stress_test.py --namespace dev --no-teardown
 ```
 
 To do the teardown at the start (to ensure you can rerun tests without redeploying everything), add the `--clean-start` flag:
 
 ```sh
-pytest tests/test_stress.py --namespace dev --clean-start
+pytest tests/stress_test.py --namespace dev --clean-start
 ```
 
 Rerun only the failed tests (`--lf, --last-failed`):
 
 ```sh
-pytest tests/test_stress.py --namespace dev --lf
+pytest tests/stress_test.py --namespace dev --lf
 ```
 
 Rerun the failed tests first and then run the rest of the tests (`--ff, --failed-first`):
 
 ```sh
-pytest tests/test_stress.py --namespace dev --ff
+pytest tests/stress_test.py --namespace dev --ff
 ```
 
 See additional available options (in particular `Custom options`):
@@ -78,10 +78,10 @@ system_tests/
 │ └──test_env.py                # Contains the definition of the test environment. A test environment is just a collection of remote hosts.
 ├── tests/
 │ ├── remote_scripts/           # Scripts meant to be executed on the hosts themselves (taped, frontend, etc)
-│ ├── test_<test_suite1>.py
-│ ├── test_<test_suite2>.py
+│ ├── <test_suite1>_test.py
+│ ├── <test_suite2>_test.py
 │ ├── ...
-│ └── test_<test_suiteN>.py
+│ └── <test_suiteN>_test.py
 ├── conftest.py                 # Test fixture for the test environment and logic for adding custom commandline options to pytest
 ├── pytest.ini                  # Generic pytest configuration options
 ```
@@ -98,7 +98,7 @@ system_tests/
 - Each test case should clean up after itself if this is not too expensive
     - If the cleanup is too expensive, ensure the teardown cleans it up
 - Use the `env.ctacli` to execute `cta-admin` commands
-- Use `env.client` to execute `eos` commands
+- Use `env.eos_client` to execute `eos` commands
     - In exceptional situations, the mgm can be used to execute eos commands
     - If possible, do not execute `cta-admin` commands on the client. The idea would be to make this an EOS client only (eventually).
 - Favour python logic over bash logic.

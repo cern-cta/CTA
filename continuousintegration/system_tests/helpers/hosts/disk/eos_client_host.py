@@ -1,8 +1,6 @@
-from ..remote_host import RemoteHost
-from .client_host import ClientHost
-from typing import Protocol
+from .disk_client_host import DiskClientHost
 
 
-class EosClientHost(RemoteHost, ClientHost, Protocol):
+class EosClientHost(DiskClientHost):
     def __init__(self, conn):
         super().__init__(conn)

@@ -22,7 +22,7 @@ def test_restart_cta_taped(env):
 
 def test_delete_test_scripts(env):
     # Don't need to do this for taped as these already restarted
-    env.client[0].exec("rm -rf /test/ 2>/dev/null || true")
+    env.eos_client[0].exec("rm -rf /test/ 2>/dev/null || true")
     env.ctacli[0].exec("rm -rf /test/ 2>/dev/null || true")
     env.ctafrontend[0].exec("rm -rf /test/ 2>/dev/null || true")
     env.eosmgm[0].exec("rm -rf /test/ 2>/dev/null || true")

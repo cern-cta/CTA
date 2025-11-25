@@ -8,6 +8,8 @@ from .hosts.cta.cta_rmcd_host import CtaRmcdHost
 from .hosts.cta.cta_taped_host import CtaTapedHost
 from .hosts.disk.eos_client_host import EosClientHost
 from .hosts.disk.eos_mgm_host import EosMgmHost
+from .hosts.disk.disk_instance_host import DiskInstanceHost
+from .hosts.disk.disk_client_host import DiskClientHost
 from .connections.remote_connection import RemoteConnection
 from .connections.k8s_connection import K8sConnection
 from .connections.ssh_connection import SSHConnection
@@ -23,15 +25,15 @@ class TestEnv:
         eos_client_conns: list[RemoteConnection] = [],
         eos_mgm_conns: list[RemoteConnection] = [],
     ):
-        self.ctacli = [CtaCliHost(conn) for conn in cta_cli_conns]
-        self.ctafrontend = [CtaFrontendHost(conn) for conn in cta_frontend_conns]
-        self.ctarmcd = [CtaRmcdHost(conn) for conn in cta_rmcd_conns]
-        self.ctataped = [CtaTapedHost(conn) for conn in cta_taped_conns]
-        self.eosmgm = [EosMgmHost(conn) for conn in eos_mgm_conns]
-        self.eos_client = [EosClientHost(conn) for conn in eos_client_conns]
+        self.ctacli: list[CtaCliHost] = [CtaCliHost(conn) for conn in cta_cli_conns]
+        self.ctafrontend: list[CtaFrontendHost] = [CtaFrontendHost(conn) for conn in cta_frontend_conns]
+        self.ctarmcd: list[CtaRmcdHost] = [CtaRmcdHost(conn) for conn in cta_rmcd_conns]
+        self.ctataped: list[CtaTapedHost] = [CtaTapedHost(conn) for conn in cta_taped_conns]
+        self.eosmgm: list[EosMgmHost] = [EosMgmHost(conn) for conn in eos_mgm_conns]
+        self.eos_client: list[EosClientHost] = [EosClientHost(conn) for conn in eos_client_conns]
         # These should all fall under DiskInstanceHost and DiskClientHost
-        self.disk_instance = self.eosmgm # + self.dcache
-        self.disk_client = self.eos_client # + self.dcache_client
+        self.disk_instance: list[DiskInstanceHost] = self.eosmgm  # + self.dcache
+        self.disk_client: list[DiskClientHost] = self.eos_client  # + self.dcache_client
 
     # Mostly a convenience function that is arguably not very clean, but that is for later
     @staticmethod

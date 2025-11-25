@@ -1,4 +1,4 @@
-from ..helpers.hosts.cta_rmcd_host import CtaRmcdHost
+from ..helpers.hosts.cta.cta_rmcd_host import CtaRmcdHost
 from concurrent.futures import ThreadPoolExecutor
 from itertools import cycle
 
@@ -6,9 +6,9 @@ from itertools import cycle
 # Script copying
 #####################################################################################################################
 
-# def test_copy_scripts_to_client(env):
-#     for client in env.client:
-#         client.copyTo("tests/remote_scripts/client/", "/test/", permissions="+x")
+# def test_copy_scripts_to_eos_client(env):
+#     for client in env.eos_client:
+#         client.copyTo("tests/remote_scripts/eos_client/", "/test/", permissions="+x")
 
 
 def test_copy_scripts_to_ctacli(env):
@@ -24,7 +24,7 @@ def test_copy_scripts_to_ctacli(env):
 def test_kinit_clients(env, krb5_realm):
     # TODO: do we want to init the rest of the users here as well?
     env.ctacli[0].exec(f"kinit -kt /root/ctaadmin1.keytab ctaadmin1@{krb5_realm}")
-    env.client[0].exec(f"kinit -kt /root/user1.keytab user1@{krb5_realm}")
+    env.eos_client[0].exec(f"kinit -kt /root/user1.keytab user1@{krb5_realm}")
 
 
 #####################################################################################################################

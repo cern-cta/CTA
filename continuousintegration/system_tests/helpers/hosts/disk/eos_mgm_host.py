@@ -1,10 +1,8 @@
-from ..remote_host import RemoteHost
 from .disk_instance_host import DiskInstanceHost
-from typing import Protocol
 from functools import cached_property
 
 
-class EosMgmHost(RemoteHost, DiskInstanceHost, Protocol):
+class EosMgmHost(DiskInstanceHost):
     def __init__(self, conn):
         super().__init__(conn)
 
@@ -15,12 +13,16 @@ class EosMgmHost(RemoteHost, DiskInstanceHost, Protocol):
     def force_remove_directory(self, directory: str) -> str:
         self.exec(f"eos rm -rF --no-confirmation {directory} 2>/dev/null || true")
 
-    def num_files_in_directory(self, directory: str) -> str:
+    def list_files_in_directory(self, directory: str) -> list[str]:
         # Note that for now this also counts subdirectories
-        return self.execWithOutput(f"eos ls {directory} | wc -l")
+        return self.execWithOutput(f"eos ls {directory}").splitlines()
 
-    def num_files_on_tape_only(self, directory: str) -> str:
-        return self.execWithOutput(f'eos ls {directory} -y | grep "d0::t1" | wc -l')
+    def num_files_in_directory(self, directory: str) -> int:
+        # Note that for now this also counts subdirectories
+        return int(self.execWithOutput(f"eos ls {directory} | wc -l"))
 
-    def num_files_on_disk_only(self, directory: str) -> str:
-        return self.execWithOutput(f'eos ls {directory} -y | grep "d1::t0" | wc -l')
+    def num_files_on_tape_only(self, directory: str) -> int:
+        return int(self.execWithOutput(f'eos ls {directory} -y | grep "d0::t1" | wc -l'))
+
+    def num_files_on_disk_only(self, directory: str) -> int:
+        return int(self.execWithOutput(f'eos ls {directory} -y | grep "d1::t0" | wc -l'))
