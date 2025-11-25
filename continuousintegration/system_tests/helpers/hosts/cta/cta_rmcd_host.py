@@ -1,4 +1,4 @@
-from .remote_host import RemoteHost
+from ..remote_host import RemoteHost
 from typing import List, Tuple
 from functools import cached_property
 import re
