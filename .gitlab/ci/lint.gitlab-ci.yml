@@ -9,7 +9,7 @@ cppcheck:
     - if: $PIPELINE_TYPE != "DEFAULT"
       when: never
     - when: always
-  dependencies: [] # Ensure no artifacts are downloaded
+  needs: [] # Ensure no artifacts are downloaded
   script:
     - cppcheck --xml
                --force
@@ -32,9 +32,12 @@ cppcheck:
     reports:
       codequality: cppcheck.json
 
-clang-format-report:
+# Generic format check job template
+# The idea is to extend this, fill in the FORMAT_DIFF variable
+# And then add a before_script: section that populates this FORMAT_DIFF file
+.format-report:
   stage: lint
-  dependencies: [] # Ensure no artifacts are downloaded
+  needs: [] # Ensure no artifacts are downloaded
   allow_failure: true
   rules:
     - if: $CI_COMMIT_TAG
@@ -43,33 +46,62 @@ clang-format-report:
       when: never
     - when: always
   image: $IMAGE_LINT
+  variables:
+    FORMAT_DIFF:
+  before_script:
+    - exit 1 # The jobs that extend this job should override this
   script:
-    - TARGET_BRANCH=${CI_MERGE_REQUEST_TARGET_BRANCH_NAME:-$CI_DEFAULT_BRANCH}
-    - git fetch --no-tags origin $TARGET_BRANCH:$TARGET_BRANCH
-    - echo "Running clang-format for changes compared to branch $TARGET_BRANCH"
-    - git-clang-format $TARGET_BRANCH HEAD --diff > clang-format.diff || true
     - |
-      if [ $(wc -l < clang-format.diff) -le 1 ]; then
-        echo "No clang-format issues found"
+      if [ ! -f "$FORMAT_DIFF" ]; then
+        echo "FORMAT_DIFF file not found: $FORMAT_DIFF"
+        exit 1
+      fi
+    - |
+      if [ $(wc -l < $FORMAT_DIFF) -le 1 ]; then
+        echo "No formatting issues found"
         exit 0
       fi
     - |
-      if [ $(wc -l < clang-format.diff) -le 1000 ]; then
-        bat --style=plain --color=always clang-format.diff
+      if [ $(wc -l < $FORMAT_DIFF) -le 1000 ]; then
+        bat --style=plain --color=always $FORMAT_DIFF
       else
-        echo "Clang-format output too large. Please check job artifacts"
+        echo "Format diff too large. Please check job artifacts"
       fi
-    - exit 1 # clang-format failed, so the job should fail
+    - exit 1 # format checks failed, so the job should fail
   artifacts:
     when: on_failure
     expire_in: 7 days
     paths:
-      - clang-format.diff
+      - $FORMAT_DIFF
 
-clang-format-apply:
+
+format-report-cpp:
+  extends:
+    - .format-report
+  variables:
+    FORMAT_DIFF: artifacts/clang-format.diff
+  before_script:
+    - mkdir -p artifacts
+    - TARGET_BRANCH=${CI_MERGE_REQUEST_TARGET_BRANCH_NAME:-$CI_DEFAULT_BRANCH}
+    - git fetch --no-tags origin $TARGET_BRANCH:$TARGET_BRANCH
+    - echo "Running clang-format for changes compared to branch $TARGET_BRANCH"
+    - git-clang-format $TARGET_BRANCH HEAD --diff > $FORMAT_DIFF || true
+
+format-report-python:
+  extends:
+    - .format-report
+  variables:
+    FORMAT_DIFF: artifacts/black.diff
+  before_script:
+    - mkdir -p artifacts
+    - echo "Running black on all Python files"
+    - black . --line-length=120 --diff | sed "s|$CI_PROJECT_DIR|$CI_PROJECT_NAME|" > $FORMAT_DIFF
+
+format-apply:
   stage: lint
   needs:
-    - clang-format-report
+    - format-report-cpp
+    - format-report-python
   allow_failure: true
   rules:
     - if: $CI_PIPELINE_SOURCE == "merge_request_event"
@@ -77,19 +109,23 @@ clang-format-apply:
   image: $IMAGE_LINT
   variables:
     REPO_REMOTE: https://gitlab-ci-token:${CI_PUSH_TOKEN}@${CI_SERVER_HOST}/${CI_PROJECT_PATH}.git
-    CLANG_FORMAT_REPORT: clang-format.diff
+    DIFF_DIRECTORY: artifacts
   before_script:
     - git config user.email $GITLAB_USER_EMAIL
     - git config user.name $GITLAB_USER_LOGIN
   script:
     - |
-      if [ $(wc -l < "$CLANG_FORMAT_REPORT") -le 1 ]; then
-        cat $CLANG_FORMAT_REPORT;
+      if [ $(ls $DIFF_DIRECTORY | wc -l) -lt 1 ]; then
+        echo "No formatting diffs found to apply"
         exit 0;
       fi
-    - cat $CLANG_FORMAT_REPORT | patch -p1
-    - git commit -am "Applied clang format to changed lines"
+    - |
+      for diff_file in $DIFF_DIRECTORY/*; do
+        cat "$diff_file" | patch -p1
+      done
+    - git commit -am "Applied all formatting diffs"
     - git push $REPO_REMOTE HEAD:$CI_COMMIT_REF_NAME
+
 
 trigger-sonarcloud:
   stage: lint
