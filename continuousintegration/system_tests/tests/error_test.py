@@ -4,7 +4,7 @@ from collections import Counter
 
 
 def test_no_coredumps(env):
-    hosts = env.client + env.ctacli + env.ctafrontend + env.ctataped + env.ctarmcd
+    hosts = env.eos_client + env.ctacli + env.ctafrontend + env.ctataped + env.ctarmcd
     total_core_dumps_found = 0
     for host in hosts:
         core_dump_files = host.execWithOutput("find /var/log/tmp/ -type f -name '*.core' 2>/dev/null").splitlines()

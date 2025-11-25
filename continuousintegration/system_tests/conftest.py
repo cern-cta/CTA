@@ -76,8 +76,8 @@ def pytest_addoption(parser):
     parser.addoption(
         "--connection-config", action="store", help="A yaml connection file specifying how to connect to each host"
     )
-    parser.addoption("--no-setup", action="store_true", help="Skip the execution of test_setup")
-    parser.addoption("--no-teardown", action="store_true", help="Skip the execution of test_teardown")
+    parser.addoption("--no-setup", action="store_true", help="Skip the execution of setup_test")
+    parser.addoption("--no-teardown", action="store_true", help="Skip the execution of teardown_test")
     parser.addoption(
         "--clean-start", action="store_true", help="Run the teardown before starting the tests to ensure a clean start"
     )
@@ -128,9 +128,9 @@ def add_test_into_existing_collection(test_path: str, items, prepend: bool = Fal
 
 def pytest_collection_modifyitems(config, items):
     """Automatically include some tests every time pytest runs. These tests can be skipped"""
-    setup_script: str = "tests/test_setup.py"
-    error_script: str = "tests/test_errors.py"
-    teardown_script: str = "tests/test_teardown.py"
+    setup_script: str = "tests/setup_test.py"
+    error_script: str = "tests/error_test.py"
+    teardown_script: str = "tests/teardown_test.py"
 
     # Always check for errors after the run
     add_test_into_existing_collection(error_script, items, prepend=False)
