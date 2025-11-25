@@ -261,7 +261,8 @@ int main(const int argc, char **const argv) {
     } catch (exception::Exception& ex) {
       std::list<cta::log::Param> params = {cta::log::Param("exceptionMessage", ex.getMessage().str())};
       log(log::ERR, "Failed to instantiate OpenTelemetry", params);
-      return EXIT_FAILURE;
+      cta::log::LogContext lc(log);
+      cta::telemetry::shutdownTelemetry(lc);
     }
   }
 
