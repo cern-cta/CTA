@@ -53,7 +53,6 @@ void DiskReportRetrieveRoutine::execute() {
       break;
     }
 
-    const auto reportJobCount = retrieveJobsToReport.size();
     timings.insertAndReset("getRetrieveJobsToReportTime", t1);
     log::ScopedParamContainer params(m_lc);
     params.add("retrieveJobsReported", retrieveJobsToReport.size());
