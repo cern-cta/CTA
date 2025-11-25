@@ -18,7 +18,6 @@
 #include "common/exception/NoSuchObject.hpp"
 #include "RepackExpandRoutine.hpp"
 #include "scheduler/Scheduler.hpp"
-#include "common/semconv/Attributes.hpp"
 
 namespace cta::maintd {
 
@@ -51,6 +50,7 @@ void RepackExpandRoutine::execute() {
   try {
     try {
       m_scheduler.expandRepackRequest(repackRequest, timingList, t, m_lc);
+      m_lc.log(log::INFO, "In RepackExpandRoutine::execute(): finished expanding a repack request.");
     } catch (const ExpandRepackRequestException& ex) {
       log::ScopedParamContainer spc(m_lc);
       spc.add("vid", repackRequest->getRepackInfo().vid);
