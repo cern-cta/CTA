@@ -131,8 +131,7 @@ void NegotiationService::startProcessing() {
 }
 
 void NegotiationService::process(unsigned int threadId) {
-  log::LogContext lc(m_lc);
-  lc.log(cta::log::INFO, "In NegotiationService::process");
+  m_lc.log(cta::log::INFO, "In NegotiationService::process");
   /*
    *  pTag
    *  Uniquely identifies a request.
@@ -147,15 +146,15 @@ void NegotiationService::process(unsigned int threadId) {
      * It tells whether there is any kind of event or m_upCompletionQueue is shutting down.
      */
     if (!m_upCompletionQueue->Next(&pTag, &bOk)) {
-      log::ScopedParamContainer params(lc);
+      log::ScopedParamContainer params(m_lc);
       params.add("thread", threadId);
-      lc.log(cta::log::ERR, "In NegotiationService::process(): The completion queue has been shutdown.");
+      m_lc.log(cta::log::ERR, "In NegotiationService::process(): The completion queue has been shutdown.");
       break;
     }
     if (!pTag) {
-      log::ScopedParamContainer params(lc);
+      log::ScopedParamContainer params(m_lc);
       params.add("thread", threadId);
-      lc.log(cta::log::ERR, "In NegotiationService::process(): Invalid tag delivered by notification queue.");
+      m_lc.log(cta::log::ERR, "In NegotiationService::process(): Invalid tag delivered by notification queue.");
       break;
     }
 
@@ -166,10 +165,10 @@ void NegotiationService::process(unsigned int threadId) {
         releaseHandler(static_cast<cta::frontend::grpc::request::Tag>(pTag));
       }
     } catch (const cta::exception::Exception& ex) {
-      log::ScopedParamContainer params(lc);
+      log::ScopedParamContainer params(m_lc);
       params.add("thread", threadId);
       params.add("exceptionMessage", ex.getMessageValue());
-      lc.log(log::ERR, "NegotiationService::process(): Got an exception.");
+      m_lc.log(log::ERR, "NegotiationService::process(): Got an exception.");
     }
   }
 }
