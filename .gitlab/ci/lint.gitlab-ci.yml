@@ -57,7 +57,7 @@ cppcheck:
         exit 1
       fi
     - |
-      if [ $(wc -l < $FORMAT_DIFF) -lt 1 ]; then
+      if [ $(wc -l < $FORMAT_DIFF) -le 1 ]; then
         echo "No formatting issues found"
         exit 0
       fi
