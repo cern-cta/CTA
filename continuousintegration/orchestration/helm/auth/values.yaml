@@ -10,7 +10,7 @@ image:
   - reg-ctageneric
 
 keycloak:
-  image: quay.io/keycloak/keycloak:26.1
+  image: registry.cern.ch/quay.io/keycloak/keycloak:26.1
   adminUsername: admin
   adminPassword: admin
   realm: master
