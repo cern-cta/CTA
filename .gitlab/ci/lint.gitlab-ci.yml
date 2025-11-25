@@ -32,27 +32,6 @@ cppcheck:
     reports:
       codequality: cppcheck.json
 
-trigger-sonarcloud:
-  stage: lint
-  needs: []
-  allow_failure: true
-  rules:
-    - if: $CI_PIPELINE_SOURCE == "merge_request_event"
-      when: manual
-  image: $IMAGE_LINT
-  variables:
-    TARGET_URL: https://api.github.com/repos/cern-cta/CTA/actions/workflows/sonar-source.yml/dispatches
-    BRANCH_NAME: $CI_MERGE_REQUEST_SOURCE_BRANCH_NAME
-  script:
-    - |
-      curl -X POST \
-        -H "Accept: application/vnd.github+json" \
-        -H "Authorization: Bearer $GITHUB_API_TOKEN" \
-        $TARGET_URL \
-        -d "{\"ref\":\"${BRANCH_NAME}\"}"
-    - echo "Please visit https://github.com/cern-cta/CTA/actions to see the progress of the analysis"
-
-
 # Generic format check job template
 # The idea is to extend this, fill in the FORMAT_DIFF variable
 # And then add a before_script: section that populates this FORMAT_DIFF file
@@ -146,3 +125,24 @@ format-apply:
       done
     - git commit -am "Applied all formatting diffs"
     - git push $REPO_REMOTE HEAD:$CI_COMMIT_REF_NAME
+
+
+trigger-sonarcloud:
+  stage: lint
+  needs: []
+  allow_failure: true
+  rules:
+    - if: $CI_PIPELINE_SOURCE == "merge_request_event"
+      when: manual
+  image: $IMAGE_LINT
+  variables:
+    TARGET_URL: https://api.github.com/repos/cern-cta/CTA/actions/workflows/sonar-source.yml/dispatches
+    BRANCH_NAME: $CI_MERGE_REQUEST_SOURCE_BRANCH_NAME
+  script:
+    - |
+      curl -X POST \
+        -H "Accept: application/vnd.github+json" \
+        -H "Authorization: Bearer $GITHUB_API_TOKEN" \
+        $TARGET_URL \
+        -d "{\"ref\":\"${BRANCH_NAME}\"}"
+    - echo "Please visit https://github.com/cern-cta/CTA/actions to see the progress of the analysis"
