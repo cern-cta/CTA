@@ -20,6 +20,7 @@ import json
 import sys
 import jsonschema
 
+
 def validate_schema(project_json, schema_json):
     print(f"Validating project.json using schema.json schema...")
 
@@ -36,7 +37,8 @@ def validate_schema(project_json, schema_json):
         print(f"  * Schema rule: {e.schema}")
         sys.exit(1)
 
-if __name__ == '__main__':
+
+if __name__ == "__main__":
     project_json_path = Path(__file__).resolve().parents[2] / "project.json"
     with open(project_json_path, "r") as f:
         project_json = json.load(f)

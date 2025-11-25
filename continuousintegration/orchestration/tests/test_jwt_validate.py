@@ -3,12 +3,13 @@ import jwt
 import requests
 import sys
 import argparse
+
 # on client pod
 # dnf install python3-pip
 
 parser = argparse.ArgumentParser()
-parser.add_argument('--jwkUri', help='the URI to query for fetching the JWKS')
-parser.add_argument('--token', help='the token to validate')
+parser.add_argument("--jwkUri", help="the URI to query for fetching the JWKS")
+parser.add_argument("--token", help="the token to validate")
 args = parser.parse_args()
 
 token = args.token
@@ -30,7 +31,7 @@ if key_data is None:
     raise ValueError(f"No key found with kid: {kid}")
 
 key = jwk.JWK(**key_data)
-pubkey = (key.export_to_pem(private_key=False).decode())
+pubkey = key.export_to_pem(private_key=False).decode()
 print(pubkey)
 
 ## Validate the token using the public key..?
