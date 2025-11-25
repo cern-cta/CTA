@@ -64,12 +64,20 @@ class GitLabAPI:
         return self.__api_request(endpoint, "GET", params)
 
     def post(
-        self, endpoint: str, params: Optional[dict[str, str]] = None, data: Optional[Any] = None, json: Optional[Any] = None
+        self,
+        endpoint: str,
+        params: Optional[dict[str, str]] = None,
+        data: Optional[Any] = None,
+        json: Optional[Any] = None,
     ) -> Optional[Any]:
         return self.__api_request(endpoint, "POST", params, data=data, json=json)
 
     def put(
-        self, endpoint: str, params: Optional[dict[str, str]] = None, data: Optional[Any] = None, json: Optional[Any] = None
+        self,
+        endpoint: str,
+        params: Optional[dict[str, str]] = None,
+        data: Optional[Any] = None,
+        json: Optional[Any] = None,
     ) -> Optional[Any]:
         return self.__api_request(endpoint, "PUT", params, data=data, json=json)
 

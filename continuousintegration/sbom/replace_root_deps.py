@@ -6,6 +6,7 @@ import json
 import sys
 import argparse
 
+
 def get_root_component(sbom):
     meta_comp = (sbom.get("metadata") or {}).get("component") or {}
     project_ref = meta_comp.get("bom-ref")
@@ -13,6 +14,7 @@ def get_root_component(sbom):
         print("ERROR: metadata.component.bom-ref not found", file=sys.stderr)
         sys.exit(1)
     return project_ref
+
 
 def replace_root_dependencies(sbom, prefix) -> None:
     components = sbom.get("components") or []
@@ -39,11 +41,16 @@ def replace_root_dependencies(sbom, prefix) -> None:
     dependencies.insert(0, {"ref": project_ref, "dependsOn": sorted(set(selected))})
     sbom["dependencies"] = dependencies
 
+
 def main():
-    ap = argparse.ArgumentParser(description="Update the dependencies of the root component to contain all dependencies of the OS component starting with a given prefix")
+    ap = argparse.ArgumentParser(
+        description="Update the dependencies of the root component to contain all dependencies of the OS component starting with a given prefix"
+    )
     ap.add_argument("--in", dest="sbom_in", required=True, help="Input CycloneDX JSON")
     ap.add_argument("--out", dest="sbom_out", required=True, help="Output CycloneDX JSON")
-    ap.add_argument("--prefix", dest="prefix", required=True, help="Keep only OS deps with names starting with this prefix")
+    ap.add_argument(
+        "--prefix", dest="prefix", required=True, help="Keep only OS deps with names starting with this prefix"
+    )
     args = ap.parse_args()
 
     with open(args.sbom_in, "r", encoding="utf-8") as f:
@@ -54,6 +61,7 @@ def main():
     with open(args.sbom_out, "w", encoding="utf-8") as f:
         json.dump(sbom, f, indent=2)
         f.write("\n")
+
 
 if __name__ == "__main__":
     main()

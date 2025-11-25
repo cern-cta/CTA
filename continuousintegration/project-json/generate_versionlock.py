@@ -25,7 +25,7 @@ with open(project_json_path, "r") as f:
     project_json = json.load(f)
 
 parser = argparse.ArgumentParser()
-parser.add_argument('--platform', default=project_json["dev"]["defaultPlatform"])
+parser.add_argument("--platform", default=project_json["dev"]["defaultPlatform"])
 args = parser.parse_args()
 
 platform = args.platform

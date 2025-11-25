@@ -237,16 +237,18 @@ if __name__ == "__main__":
         print(f"Failed to read description file: {args.description_file}")
         sys.exit(1)
 
-    mr_description = "\n".join([
-        "### Description",
-        "",
-        description_body.strip(),
-        "",
-        "### Checklist",
-        "",
-        "- [x] Documentation reflects the changes made.",
-        "- [x] Merge Request title is clear, concise, and suitable as a changelog entry.",
-    ])
+    mr_description = "\n".join(
+        [
+            "### Description",
+            "",
+            description_body.strip(),
+            "",
+            "### Checklist",
+            "",
+            "- [x] Documentation reflects the changes made.",
+            "- [x] Merge Request title is clear, concise, and suitable as a changelog entry.",
+        ]
+    )
 
     # Create new branch
     success: bool = create_new_branch(api, branch=branch_name, source_branch=args.source_branch)

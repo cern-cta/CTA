@@ -8,6 +8,7 @@ import argparse
 from collections import deque
 from typing import Any
 
+
 def get_root_component(sbom) -> str:
     meta_comp = (sbom.get("metadata") or {}).get("component") or {}
     project_ref = meta_comp.get("bom-ref")
@@ -15,6 +16,7 @@ def get_root_component(sbom) -> str:
         print("ERROR: metadata.component.bom-ref not found", file=sys.stderr)
         sys.exit(1)
     return project_ref
+
 
 def find_reachable_components(root_component: str, ref2deps: dict[str, list[str]]) -> set[str]:
     reachable_refs: set[str] = set([root_component])
@@ -27,12 +29,15 @@ def find_reachable_components(root_component: str, ref2deps: dict[str, list[str]
                 q.append(dep)
     return reachable_refs
 
+
 def prune_unreachable(sbom: dict[str, Any]):
     components = sbom.get("components") or []
     dependencies = sbom.get("dependencies") or []
 
     project_ref: str = get_root_component(sbom)
-    ref2deps: dict[str, list[str]] = {d.get("ref"): list(d.get("dependsOn") or []) for d in dependencies if d.get("ref")}
+    ref2deps: dict[str, list[str]] = {
+        d.get("ref"): list(d.get("dependsOn") or []) for d in dependencies if d.get("ref")
+    }
 
     # Find all reachable components
     reachable_refs: set[str] = find_reachable_components(project_ref, ref2deps)
@@ -52,7 +57,9 @@ def prune_unreachable(sbom: dict[str, Any]):
 
 
 def main():
-    ap = argparse.ArgumentParser(description="Prune any components and dependencies unreachable from the main component")
+    ap = argparse.ArgumentParser(
+        description="Prune any components and dependencies unreachable from the main component"
+    )
     ap.add_argument("--in", dest="sbom_in", required=True, help="Input CycloneDX JSON")
     ap.add_argument("--out", dest="sbom_out", required=True, help="Output CycloneDX JSON")
     args = ap.parse_args()
@@ -65,6 +72,7 @@ def main():
     with open(args.sbom_out, "w", encoding="utf-8") as f:
         json.dump(sbom, f, indent=2)
         f.write("\n")
+
 
 if __name__ == "__main__":
     main()
