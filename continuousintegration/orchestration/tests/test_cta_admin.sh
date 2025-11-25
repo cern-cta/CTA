@@ -145,22 +145,4 @@ kubectl -n "${NAMESPACE}" exec ${CLIENT_POD} -- bash +x /root/cta_admin.sh  || e
 kubectl -n "${NAMESPACE}" cp ${CLIENT_POD}:/root/log -c client ../../../pod_logs/"${NAMESPACE}"/cta-admin_xrd.log
 
 
-# TODO: Create grpc cta frontend
-
-#echo
-#echo "Launching cta_admin.sh on grpc frontend pod..."
-#kubectl -n "${NAMESPACE}" exec ctafrontgrpc -- bash /root/cta_admin.sh || exit 1
-
-# Wait for script to generate message file to corrupt the data on disk.
-
-#echo ""
-#echo "Collecting test results..."
-#kubectl -n "${NAMESPACE}" cp ctafrontend:root/out.txt frontout.txt || exit 1
-#kubectl -n "${NAMESPACE}" cp ctafrontgrpc:root/out.txt grpcfrontout.txt || exit 1
-
-
-#echo "Comparing tests results..."
-#cmp frontout.txt grpcfrontout.txt
-# TODO: Implement
-
 echo "cta-admin test completed successfully"
