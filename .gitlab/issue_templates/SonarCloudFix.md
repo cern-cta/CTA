@@ -18,4 +18,4 @@
 
 /assign me
 /epic &16
-/title [Misc] Apply SonarCloud rule <add_rule_code>
+/title [Misc] Apply SonarCloud rule <rule_code>
