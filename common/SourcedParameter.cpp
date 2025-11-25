@@ -129,7 +129,7 @@ void SourcedParameter<std::string>::addLogParamForValue(log::LogContext & lc) {
 
 template<>
 void SourcedParameter<bool>::addLogParamForValue(log::LogContext & lc) {
-  lc.pushOrReplace({"value", m_value ? "true" : "false"});
+  lc.pushOrReplace({"value", m_value});
 }
 
 } // namespace cta
