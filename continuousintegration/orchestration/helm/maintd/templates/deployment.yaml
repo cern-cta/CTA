@@ -6,7 +6,7 @@ metadata:
   name: {{ $name }}
   namespace: {{ .Release.Namespace | quote }}
   labels:
-    {{- include "common.labels.standard" $ | nindent 4 }}
+    {{- include "common.labels.standard" . | nindent 4 }}
 spec:
   replicas: {{ .Values.replicas }}
   selector:
@@ -16,12 +16,12 @@ spec:
     metadata:
       labels:
         app.kubernetes.io/name: {{ $name }}
-        {{- include "common.labels.withoutname" $ | nindent 8 }}
+        {{- include "common.labels.withoutname" . | nindent 8 }}
     spec:
       restartPolicy: Always
-      terminationGracePeriodSeconds: {{ $.Values.terminationGracePeriodSeconds }}
+      terminationGracePeriodSeconds: {{ .Values.terminationGracePeriodSeconds }}
       imagePullSecrets:
-      {{- include "maintd.imagePullSecrets" $ | nindent 6 }}
+      {{- include "maintd.imagePullSecrets" . | nindent 6 }}
       {{- if .Values.pod.extraSpec }}
       {{ .Values.pod.extraSpec | toYaml | nindent 6 }}
       {{- end }}
@@ -39,7 +39,7 @@ spec:
         volumeMounts:
           - name: maintd-sss-keytab
             mountPath: /root/sss_keytab/input/maintd.keytab
-            subPath: {{ $.Values.keytab.subPath }}
+            subPath: {{ .Values.keytab.subPath }}
           - name: maintd-sss-keytab-fixedownership
             mountPath: /root/sss_keytab/output
       containers:
@@ -48,7 +48,7 @@ spec:
         imagePullPolicy: {{ include "maintd.imagePullPolicy" . }}
         stdin: true
         command: ["/bin/bash", "-c"]
-        args: ["{{- if $.Values.preRun.enabled }}/scripts/pre_run.sh;{{- end }} /scripts/maintd.sh; {{- if $.Values.postRun.enabled }}/scripts/post_run.sh;{{- end }}"]
+        args: ["{{- if .Values.preRun.enabled }}/scripts/pre_run.sh;{{- end }} /scripts/maintd.sh; {{- if .Values.postRun.enabled }}/scripts/post_run.sh;{{- end }}"]
         startupProbe:
           exec:
             command: ["rpm", "-q", "cta-maintd"]
@@ -105,13 +105,13 @@ spec:
           mountPath: /etc/ceph/ceph.client.{{ $schedulerConfig.cephConfig.id }}.keyring
           subPath: ceph.client.{{ $schedulerConfig.cephConfig.id }}.keyring
         {{- end }}
-        {{- if $.Values.global.volumeMounts }}
-        {{ $.Values.global.volumeMounts | toYaml | nindent 8 }}
+        {{- if .Values.global.volumeMounts }}
+        {{ .Values.global.volumeMounts | toYaml | nindent 8 }}
         {{- end }}
-        {{- if $.Values.conf.telemetry.metricsExportOtlpBasicAuthSecret }}
-        - name: otlp-basic-auth
-          mountPath: /etc/cta/otlp-basic-auth.conf
-          subPath: otlp-basic-auth.conf
+        {{- if .Values.conf.telemetry.metrics.otlp.auth.basic.passwordSecret }}
+        - name: otlp-basic-auth-pwd
+          mountPath: /etc/cta/otlp-basic-auth-pwd.conf
+          subPath: otlp-basic-auth-pwd.conf
         {{- end }}
         {{ include "common.extraVolumeMounts" . | nindent 8 }}
       volumes:
@@ -141,15 +141,15 @@ spec:
           name: cta-maintd-conf
       - name: maintd-sss-keytab
         secret:
-          secretName: {{ $.Values.keytab.secretName }}
+          secretName: {{ .Values.keytab.secretName }}
       - name: maintd-sss-keytab-fixedownership
         emptyDir: {}
-      {{- if $.Values.global.volumes }}
-      {{ $.Values.global.volumes | toYaml | nindent 6 }}
+      {{- if .Values.global.volumes }}
+      {{ .Values.global.volumes | toYaml | nindent 6 }}
       {{- end }}
-      {{- if $.Values.conf.telemetry.metricsExportOtlpBasicAuthSecret }}
-      - name: otlp-basic-auth
+      {{- if .Values.conf.telemetry.metrics.otlp.auth.basic.passwordSecret }}
+      - name: otlp-basic-auth-pwd
         secret:
-          secretName: {{ $.Values.conf.telemetry.metricsExportOtlpBasicAuthSecret }}
+          secretName: {{ .Values.conf.telemetry.metrics.otlp.auth.basic.passwordSecret }}
       {{- end }}
       {{ include "common.extraVolumes" . | nindent 6 }}

@@ -62,34 +62,46 @@ void initTelemetry(const common::Config& config, cta::log::LogContext& lc) {
     return;
   }
   try {
-    std::string metricsBackend = config.getOptionValueStr("cta.telemetry.metrics.backend").value_or("NOOP");
+    auto retainInstanceIdOnRestart =
+      config.getOptionValueBool("cta.telemetry.retain_instance_id_on_restart").value_or(false);
+    auto metricsBackend = config.getOptionValueStr("cta.telemetry.metrics.backend").value_or("NOOP");
+    auto metricsExportInterval = config.getOptionValueUInt("cta.telemetry.metrics.export.interval").value_or(15000);
+    auto metricsExportTimeout = config.getOptionValueUInt("cta.telemetry.metrics.export.timeout").value_or(3000);
+    auto metricsOtlpEndpoint = config.getOptionValueStr("cta.telemetry.metrics.otlp.endpoint").value_or("");
+    auto metricsOtlpBasicAuthPasswordFile =
+      config.getOptionValueStr("cta.telemetry.metrics.otlp.auth.basic.password_file");
+    std::string metricsOtlpBasicAuthPassword = "";
+    if (metricsOtlpBasicAuthPasswordFile.has_value()) {
+      metricsOtlpBasicAuthPassword = cta::telemetry::stringFromFile(metricsOtlpBasicAuthPasswordFile.value());
+    }
+    auto metricsOtlpBasicAuthUsername =
+      config.getOptionValueStr("cta.telemetry.metrics.otlp.auth.basic.username").value_or("");
+    auto metricsFileEndpoint =
+      config.getOptionValueStr("cta.telemetry.metrics.file.endpoint").value_or("/var/log/cta/cta-frontend-metrics.txt");
 
-    std::optional<std::string> otlpBasicAuthFile =
-      config.getOptionValueStr("cta.telemetry.metrics.export.otlp.basic_auth_file");
-    std::string otlpBasicAuthString =
-      otlpBasicAuthFile.has_value() ? cta::telemetry::authStringFromFile(otlpBasicAuthFile.value()) : "";
+    auto instanceName = config.getOptionValueStr("cta.instance_name").value();
+    auto schedulerBackendName = config.getOptionValueStr("cta.scheduler_backend_name").value();
+
     cta::telemetry::TelemetryConfig telemetryConfig =
       cta::telemetry::TelemetryConfigBuilder()
         .serviceName(cta::semconv::attr::ServiceNameValues::kCtaMaintd)
-        .serviceNamespace(config.getOptionValueStr("cta.instance_name").value())
+        .serviceNamespace(instanceName)
         .serviceVersion(CTA_VERSION)
-        .retainInstanceIdOnRestart(
-          config.getOptionValueBool("cta.telemetry.retain_instance_id_on_restart").value_or(false))
-        .resourceAttribute(cta::semconv::attr::kSchedulerNamespace,
-                           config.getOptionValueStr("cta.scheduler_backend_name").value())
+        .retainInstanceIdOnRestart(retainInstanceIdOnRestart)
+        .resourceAttribute(cta::semconv::attr::kSchedulerNamespace, schedulerBackendName)
         .metricsBackend(metricsBackend)
-        .metricsExportInterval(
-          std::chrono::milliseconds(config.getOptionValueInt("cta.telemetry.metrics.export.interval").value_or(15000)))
-        .metricsExportTimeout(
-          std::chrono::milliseconds(config.getOptionValueInt("cta.telemetry.metrics.export.timeout").value_or(3000)))
-        .metricsOtlpEndpoint(config.getOptionValueStr("cta.telemetry.metrics.export.otlp.endpoint").value_or(""))
-        .metricsOtlpBasicAuthString(otlpBasicAuthString)
-        .metricsFileEndpoint(config.getOptionValueStr("cta.telemetry.metrics.export.file.endpoint")
-                               .value_or("/var/log/cta/cta-maintd-metrics.txt"))
+        .metricsExportInterval(std::chrono::milliseconds(metricsExportInterval))
+        .metricsExportTimeout(std::chrono::milliseconds(metricsExportTimeout))
+        .metricsOtlpEndpoint(metricsOtlpEndpoint)
+        .metricsOtlpBasicAuth(metricsOtlpBasicAuthUsername, metricsOtlpBasicAuthPassword)
+        .metricsFileEndpoint(metricsFileEndpoint)
         .build();
     cta::telemetry::initTelemetry(telemetryConfig, lc);
   } catch (exception::Exception& ex) {
-    throw exception::Exception("Failed to instantiate OpenTelemetry. Exception message: " + ex.getMessage().str());
+    cta::log::ScopedParamContainer params(lc);
+    params.add("exceptionMessage", ex.getMessage().str());
+    lc.log(log::ERR, "Failed to instantiate OpenTelemetry");
+    cta::telemetry::shutdownTelemetry(lc);
   }
 }
 
