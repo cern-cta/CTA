@@ -68,11 +68,12 @@ void DriveConfig::setTapedConfiguration(const tape::daemon::common::TapedConfigu
   setConfigToDB(tapedConfiguration.retrieveQueueCacheMaxAgeSecs, catalogue, tapeDriveName);
   setConfigToDB(tapedConfiguration.telemetryEnabled, catalogue, tapeDriveName);
   setConfigToDB(tapedConfiguration.metricsBackend, catalogue, tapeDriveName);
-  setConfigToDB(tapedConfiguration.metricsExportFileEndpoint, catalogue, tapeDriveName);
+  setConfigToDB(tapedConfiguration.metricsFileEndpoint, catalogue, tapeDriveName);
   setConfigToDB(tapedConfiguration.metricsExportInterval, catalogue, tapeDriveName);
-  setConfigToDB(tapedConfiguration.metricsExportOtlpBasicAuthFile, catalogue, tapeDriveName);
-  setConfigToDB(tapedConfiguration.metricsExportOtlpEndpoint, catalogue, tapeDriveName);
   setConfigToDB(tapedConfiguration.metricsExportTimeout, catalogue, tapeDriveName);
+  setConfigToDB(tapedConfiguration.metricsOtlpAuthBasicUsername, catalogue, tapeDriveName);
+  setConfigToDB(tapedConfiguration.metricsOtlpAuthBasicPasswordFile, catalogue, tapeDriveName);
+  setConfigToDB(tapedConfiguration.metricsOtlpEndpoint, catalogue, tapeDriveName);
 }
 
 void DriveConfig::checkConfigInDB(catalogue::Catalogue* catalogue, const std::string& tapeDriveName,
