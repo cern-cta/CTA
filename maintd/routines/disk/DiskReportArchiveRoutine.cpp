@@ -53,7 +53,6 @@ void DiskReportArchiveRoutine::execute() {
       break;
     }
 
-    const auto reportJobCount = archiveJobsToReport.size();
     timings.insertAndReset("getArchiveJobsToReportTime", t1);
     log::ScopedParamContainer params(m_lc);
     params.add("archiveJobsReported", archiveJobsToReport.size());
