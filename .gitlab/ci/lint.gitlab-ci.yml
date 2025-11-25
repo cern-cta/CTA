@@ -57,7 +57,7 @@ cppcheck:
         exit 1
       fi
     - |
-      if [ $(wc -l < $FORMAT_DIFF) -le 1 ]; then
+      if [ $(wc -l < $FORMAT_DIFF) -lt 1 ]; then
         echo "No formatting issues found"
         exit 0
       fi
@@ -114,9 +114,8 @@ format-apply:
     - git config user.email $GITLAB_USER_EMAIL
     - git config user.name $GITLAB_USER_LOGIN
   script:
-    - ls $DIFF_DIRECTORY
     - |
-      if [ $(ls $DIFF_DIRECTORY | wc -l) -le 1 ]; then
+      if [ $(ls $DIFF_DIRECTORY | wc -l) -lt 1 ]; then
         echo "No formatting diffs found to apply"
         exit 0;
       fi
