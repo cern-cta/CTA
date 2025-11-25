@@ -169,14 +169,16 @@ cta.telemetry.metrics.export.interval 15000
 cta.telemetry.metrics.export.timeout 3000
 
 # Service location of the OTLP collector in case the OTLP backend is used
-# cta.telemetry.metrics.export.otlp.endpoint endpoint:port
+# cta.telemetry.metrics.otlp.endpoint endpoint:port
 
-# File location containing "username:password" (not base64 encoded) to set up basic auth for push metrics over HTTP
-# Adds the header "authorization: Basic <base64(username:password)>"
-# cta.telemetry.metrics.export.otlp.basic_auth_file /path/to/base64/encoded/username/password
+# Basic authentication: configured both username and passwordFile Adds the header "authorization: Basic <base64(username:password)>"
+# Username to use for setting up basic auth for push metrics over HTTP
+# cta.telemetry.metrics.otlp.auth.basic.username username
+# File location containing the password (not base64 encoded) to set up basic auth for push metrics over HTTP
+# cta.telemetry.metrics.otlp.auth.basic.password_file /path/to/password/file
 
 # File location to write to in case the FILE backend is used
-# cta.telemetry.metrics.export.file.endpoint path
+# cta.telemetry.metrics.file.endpoint path
 
 # service principal (if not specified, defaults to cta/<hostname>)
 #grpc.service_principal ctaeos+

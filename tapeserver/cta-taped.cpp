@@ -237,9 +237,10 @@ int main(const int argc, char **const argv) {
         metricsBackend = cta::telemetry::metricsBackendToString(cta::telemetry::MetricsBackend::NOOP);
       }
 
-      std::string otlpBasicAuthFile = globalConfig.metricsExportOtlpBasicAuthFile.value();
-      std::string otlpBasicAuthString =
-        otlpBasicAuthFile.empty() ? "" : cta::telemetry::authStringFromFile(otlpBasicAuthFile);
+      std::string otlpBasicAuthPasswordFile = globalConfig.metricsOtlpAuthBasicPasswordFile.value();
+      std::string otlpBasicAuthPassword =
+        otlpBasicAuthPasswordFile.empty() ? "" : cta::telemetry::stringFromFile(otlpBasicAuthPasswordFile);
+      std::string otlpBasicAuthUsername = globalConfig.metricsOtlpAuthBasicUsername.value();
       cta::telemetry::TelemetryConfig telemetryConfig =
         cta::telemetry::TelemetryConfigBuilder()
           .serviceName(cta::semconv::attr::ServiceNameValues::kCtaTaped)
@@ -252,9 +253,9 @@ int main(const int argc, char **const argv) {
           .metricsBackend(metricsBackend)
           .metricsExportInterval(std::chrono::milliseconds(globalConfig.metricsExportInterval.value()))
           .metricsExportTimeout(std::chrono::milliseconds(globalConfig.metricsExportTimeout.value()))
-          .metricsOtlpEndpoint(globalConfig.metricsExportOtlpEndpoint.value())
-          .metricsOtlpBasicAuthString(otlpBasicAuthString)
-          .metricsFileEndpoint(globalConfig.metricsExportFileEndpoint.value())
+          .metricsOtlpEndpoint(globalConfig.metricsOtlpEndpoint.value())
+          .metricsOtlpBasicAuth(otlpBasicAuthUsername, otlpBasicAuthPassword)
+          .metricsFileEndpoint(globalConfig.metricsFileEndpoint.value())
           .build();
       // taped is a special case where we only do initTelemetry after the process name has been set
       cta::telemetry::initTelemetryConfig(telemetryConfig);
