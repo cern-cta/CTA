@@ -95,7 +95,7 @@ format-report-python:
   before_script:
     - mkdir -p artifacts
     - echo "Running black on all Python files"
-    - black . --line-length=120 --diff | sed "s|$CI_PROJECT_DIR/||" > $FORMAT_DIFF
+    - black . --line-length=120 --diff | sed "s|$CI_PROJECT_DIR|$CI_PROJECT_NAME|" > $FORMAT_DIFF
 
 format-apply:
   stage: lint
