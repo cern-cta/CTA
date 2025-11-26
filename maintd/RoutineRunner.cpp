@@ -53,6 +53,34 @@ void RoutineRunner::stop() {
   m_stopRequested = true;
 }
 
+void RoutineRunner::safeRunRoutine(IRoutine& routine, cta::log::LogContext& lc) {
+  try {
+    cta::utils::Timer t;
+    routine.execute();
+    cta::telemetry::metrics::ctaMaintdRoutineDuration->Record(
+      t.msecs(),
+      {
+        {cta::semconv::attr::kCtaRoutineName, routine.getName()}
+    },
+      opentelemetry::context::RuntimeContext::GetCurrent());
+  } catch (cta::exception::Exception& ex) {
+    log::ScopedParamContainer exParams(lc);
+    exParams.add("routine", routine.getName());
+    exParams.add("exceptionMessage", ex.getMessageValue());
+    lc.log(log::ERR, "In RoutineRunner::safeRunRoutine(): received an exception. Backtrace follows.");
+    lc.logBacktrace(log::INFO, ex.backtrace());
+  } catch (std::exception& ex) {
+    log::ScopedParamContainer exParams(lc);
+    exParams.add("routine", routine.getName());
+    exParams.add("exceptionMessage", ex.what());
+    lc.log(log::ERR, "In RoutineRunner::safeRunRoutine(): received a std::exception.");
+  } catch (...) {
+    log::ScopedParamContainer exParams(lc);
+    exParams.add("routine", routine.getName());
+    lc.log(log::ERR, "In RoutineRunner::safeRunRoutine(): received an unknown exception.");
+  }
+}
+
 //------------------------------------------------------------------------------
 // RoutineRunner::run
 //------------------------------------------------------------------------------
@@ -62,38 +90,19 @@ void RoutineRunner::run(cta::log::LogContext& lc) {
     throw cta::exception::UserError("In RoutineRunner::run(): No routines enabled.");
   }
   m_stopRequested = false;
-  try {
-    lc.log(log::DEBUG, "In RoutineRunner::run(): New run started.");
-    while (!m_stopRequested) {
-      lc.log(log::DEBUG, "In RoutineRunner::run(): Executing all routines.");
-      for (const auto& routine : m_routines) {
-        cta::utils::Timer t;
-        routine->execute();
-        cta::telemetry::metrics::ctaMaintdRoutineDuration->Record(t.msecs(),
-                                                                  {{cta::semconv::attr::kCtaRoutineName, routine->getName()}},
-                                                                  opentelemetry::context::RuntimeContext::GetCurrent());
-        if (m_stopRequested) {
-          return;
-        }
+  lc.log(log::DEBUG, "In RoutineRunner::run(): New run started.");
+  while (!m_stopRequested) {
+    lc.log(log::DEBUG, "In RoutineRunner::run(): Executing all routines.");
+    for (const auto& routine : m_routines) {
+      safeRunRoutine(*routine, lc);
+      if (m_stopRequested) {
+        lc.log(log::DEBUG, "In RoutineRunner::run(): Stop requested.");
+        return;
       }
-      std::this_thread::sleep_for(std::chrono::milliseconds(std::chrono::milliseconds(m_sleepInterval)));
     }
-    lc.log(log::DEBUG, "In RoutineRunner::run(): Stop requested.");
-  } catch (cta::exception::Exception& ex) {
-    log::ScopedParamContainer exParams(lc);
-    exParams.add("exceptionMessage", ex.getMessageValue());
-    lc.log(log::ERR, "In RoutineRunner::run(): received an exception. Backtrace follows.");
-    lc.logBacktrace(log::INFO, ex.backtrace());
-    throw ex;
-  } catch (std::exception& ex) {
-    log::ScopedParamContainer exParams(lc);
-    exParams.add("exceptionMessage", ex.what());
-    lc.log(log::ERR, "In RoutineRunner::run(): received a std::exception.");
-    throw ex;
-  } catch (...) {
-    lc.log(log::ERR, "In RoutineRunner::run(): received an unknown exception.");
-    throw;
+    std::this_thread::sleep_for(std::chrono::milliseconds(std::chrono::milliseconds(m_sleepInterval)));
   }
+  lc.log(log::DEBUG, "In RoutineRunner::run(): Stop requested.");
 }
 
 }  // namespace cta::maintd
