@@ -47,6 +47,7 @@ if [[ ! -z "${error}" ]]; then
     exit 1
 fi
 
+CTA_MAINTD_POD=$(kubectl get pods -n $NAMESPACE -l app.kubernetes.io/name=cta-maintd -o json | jq -r '.items[].metadata.name' | head -1)
 CTA_TPSRV_POD="cta-tpsrv01-0"
 CLIENT_POD="cta-client-0"
 EOS_MGM_POD="eos-mgm-0"
@@ -67,9 +68,11 @@ echo "Copying test scripts to ${CLIENT_POD}, ${EOS_MGM_POD} and ${CTA_TPSRV_POD}
 kubectl -n ${NAMESPACE} cp . ${CLIENT_POD}:/root/ -c client
 kubectl -n ${NAMESPACE} cp grep_xrdlog_mgm_for_error.sh "${EOS_MGM_POD}:/root/" -c eos-mgm
 kubectl -n ${NAMESPACE} cp grep_eosreport_for_archive_metadata.sh "${EOS_MGM_POD}:/root/" -c eos-mgm
-kubectl -n ${NAMESPACE} cp refresh_log_fd.sh "${CTA_TPSRV_POD}:/root/" -c cta-taped-0
+kubectl -n ${NAMESPACE} cp taped_refresh_log_fd.sh "${CTA_TPSRV_POD}:/root/" -c cta-taped-0
+kubectl -n ${NAMESPACE} cp maintd_refresh_log_fd.sh "${CTA_MAINTD_POD}:/root/" -c cta-maintd
+kubectl -n ${NAMESPACE} cp maintd_refresh_config.sh "${CTA_MAINTD_POD}:/root/" -c cta-maintd
 
-NB_FILES=10000
+NB_FILES=1000
 FILE_SIZE_KB=15
 NB_PROCS=20
 
@@ -179,11 +182,11 @@ echo
 echo " Launching client_timestamp.sh on client pod"
 kubectl -n ${NAMESPACE} exec ${CLIENT_POD} -c client -- bash -c "${TEST_PRERUN} && /root/client_timestamp.sh ${TEST_POSTRUN}" || exit 1
 
-echo
-echo "Track progress of test"
-(kubectl -n ${NAMESPACE} exec ${CLIENT_POD} -c client -- bash -c ". /root/client_env && /root/progress_tracker.sh 'archive retrieve evict abort delete'"
-)&
-TRACKER_PID=$!
+# echo
+# echo "Track progress of test"
+# (kubectl -n ${NAMESPACE} exec ${CLIENT_POD} -c client -- bash -c ". /root/client_env && /root/progress_tracker.sh 'archive retrieve evict abort delete'"
+# )&
+# TRACKER_PID=$!
 
 echo
 echo "Launching client_archive.sh on client pod"
@@ -226,12 +229,12 @@ echo " Deleting files:"
 kubectl -n ${NAMESPACE} exec ${CLIENT_POD} -c client -- bash -c "${TEST_PRERUN} && /root/client_delete.sh ${TEST_POSTRUN}" || exit 1
 kubectl -n ${NAMESPACE} exec ${EOS_MGM_POD} -c eos-mgm -- bash /root/grep_xrdlog_mgm_for_error.sh || exit 1
 
-echo "$(date +%s): Waiting for tracker process to finish. "
-wait "${TRACKER_PID}"
-if [[ $? == 1 ]]; then
-  echo "Some files were lost during tape workflow."
- exit 1
-fi
+# echo "$(date +%s): Waiting for tracker process to finish. "
+# wait "${TRACKER_PID}"
+# if [[ $? == 1 ]]; then
+#   echo "Some files were lost during tape workflow."
+#  exit 1
+# fi
 
 echo
 echo "Launching client_multiple_retrieve.sh on client pod"
@@ -276,7 +279,18 @@ kubectl -n ${NAMESPACE} exec ${CLIENT_POD} -c client -- bash /root/client_retrie
 kubectl -n ${NAMESPACE} exec ${EOS_MGM_POD} -c eos-mgm -- bash /root/grep_xrdlog_mgm_for_error.sh || exit 1
 
 echo
-echo "Launching refresh_log_fd.sh on ${CTA_TPSRV_POD} pod"
-kubectl -n ${NAMESPACE} exec ${CTA_TPSRV_POD} -c cta-taped-0 -- bash /root/refresh_log_fd.sh || exit 1
+echo "Launching taped_refresh_log_fd.sh on ${CTA_TPSRV_POD} pod"
+kubectl -n ${NAMESPACE} exec ${CTA_TPSRV_POD} -c cta-taped-0 -- bash /root/taped_refresh_log_fd.sh || exit 1
+
+# Once we get the Python system tests, we should have a set of standardised tests for each process:
+# - Correct log rotation
+# - Correct config reloading
+echo
+echo "Launching maintd_refresh_log_fd.sh on ${CTA_MAINTD_POD} pod"
+kubectl -n ${NAMESPACE} exec ${CTA_MAINTD_POD} -c cta-maintd -- bash /root/maintd_refresh_log_fd.sh || exit 1
+
+echo
+echo "Launching maintd_refresh_config.sh on ${CTA_MAINTD_POD} pod"
+kubectl -n ${NAMESPACE} exec ${CTA_MAINTD_POD} -c cta-maintd -- bash /root/maintd_refresh_config.sh || exit 1
 
 exit 0

@@ -1,6 +1,6 @@
 /*
  * @project      The CERN Tape Archive (CTA)
- * @copyright    Copyright © 2021-2025 CERN
+ * @copyright    Copyright © 2025 CERN
  * @license      This program is free software, distributed under the terms of the GNU General Public
  *               Licence version 3 (GPL Version 3), copied verbatim in the file "COPYING". You can
  *               redistribute it and/or modify it under the terms of the GPL Version 3, or (at your
@@ -21,8 +21,9 @@
 #include <unordered_map>
 #include <functional>
 #include <thread>
+#include <poll.h>
 
-namespace cta {
+namespace cta::process {
 
 /**
  * Responsible for responding to a certain set of signals.
@@ -39,7 +40,8 @@ public:
   ~SignalReactor();
 
   /**
-   * Starts the SignalReactor on a separate thread
+   * Starts the SignalReactor on a separate thread. Note that this will block all registered signals on all threads when this is called.
+   * As such, for this to work correctly, the SignalReactor must be started before any other threads start
    */
   void start();
 
@@ -62,7 +64,7 @@ private:
   std::jthread m_thread;
   std::atomic<bool> m_stopRequested;
 
-  uint32_t m_waitTimeoutSec = 1;
+  uint32_t m_waitTimeoutSecs = 1;
 };
 
-}  // namespace cta
+}  // namespace cta::process

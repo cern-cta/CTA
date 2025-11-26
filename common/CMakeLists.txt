@@ -107,8 +107,9 @@ set (COMMON_LIB_SRC_FILES
   priorities/DriveQuota.cpp
   priorities/MountCriteria.cpp
   priorities/UserGroup.cpp
-  process/SignalReactor.cpp
-  process/SignalReactorBuilder.cpp
+  process/signals/SignalReactor.cpp
+  process/signals/SignalReactorBuilder.cpp
+  process/signals/SignalUtils.cpp
   process/ProcessCap.cpp
   process/threading/ChildProcess.cpp
   process/threading/CondVar.cpp
