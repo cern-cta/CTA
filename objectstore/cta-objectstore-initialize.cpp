@@ -71,7 +71,9 @@ int main(int argc, char ** argv) {
       ag.removeAndUnregisterSelf(lc);
     }
     rel.release();
-    std::cout << "New object store path: " << be->getParams()->toURL() << std::endl;
+    auto params = be->getParams();
+    [[maybe_unused]] std::unique_ptr<cta::objectstore::Backend::Parameters> paramsCleanupPtr(params); // Ensures the params pointer is always cleaned up correctly
+    std::cout << "New object store path: " << params->toURL() << std::endl;
     return EXIT_SUCCESS;
   } catch (std::exception & e) {
     std::cerr << "Failed to initialise the root entry in a new " << ((be != nullptr) ? be->typeName() : "no-backend") << " objectstore"

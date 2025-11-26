@@ -16,7 +16,7 @@
  */
 
 /**
- * This program will make sure every queue listed in the root entry does exist and 
+ * This program will make sure every queue listed in the root entry does exist and
  * will remove reference for the ones that do not. This utility was created to quickly
  * unblock tape servers after changing the ArchiveQueue schema during development.
  */
@@ -55,7 +55,9 @@ int main(int argc, char ** argv) {
     try {
       dynamic_cast<cta::objectstore::BackendVFS &>(*be).noDeleteOnExit();
     } catch (std::bad_cast &){}
-    std::cout << "Object store path: " << be->getParams()->toURL() << std::endl;
+    auto params = be->getParams();
+    [[maybe_unused]] std::unique_ptr<cta::objectstore::Backend::Parameters> paramsCleanupPtr(params); // Ensures the params pointer is always cleaned up correctly
+    std::cout << "Object store path: " << params->toURL() << std::endl;
     // Open the root entry RW
     std::cout << "Creating AgentReference for the creation of the repack index" << std::endl;
     cta::objectstore::AgentReference agr("cta-objectstore-create-missing-repack-index", logger);
@@ -75,7 +77,7 @@ int main(int argc, char ** argv) {
         std::cout << "Trying to insert repack index" << std::endl;
         std::string repackIndexAddress = re.addOrGetRepackIndexAndCommit(agr);
         std::cout << "Repack index created. Address = " << repackIndexAddress << std::endl;
-        
+
       } catch (const cta::objectstore::RootEntry::DriveRegisterNotEmpty &ex ) {
         std::cout << "Could not remove the already existing repack index, errorMsg = " << ex.getMessageValue();
         return 1;
