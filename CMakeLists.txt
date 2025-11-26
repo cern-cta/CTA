@@ -57,6 +57,15 @@ if (NOT CMAKE_BUILD_TYPE)
   set(CMAKE_BUILD_TYPE "${PROJECT_DEFAULT_BUILD_TYPE}" CACHE STRING "" FORCE)
 endif()
 
+if (ENABLE_ADDRESS_SANITIZER)
+  message(STATUS "Enabling Address Sanitizer")
+  add_compile_options(-fsanitize=address -fno-omit-frame-pointer)
+  add_link_options(-fsanitize=address -fno-omit-frame-pointer)
+  set(RPM_ADDRESS_SANITIZER_OPT "-DENABLE_ADDRESS_SANITIZER:Bool=TRUE" CACHE STRING "" FORCE)
+else ()
+  set(RPM_ADDRESS_SANITIZER_OPT "-DENABLE_ADDRESS_SANITIZER:Bool=FALSE" CACHE STRING "" FORCE)
+endif()
+
 # To enable logging for testing purposes set -DENABLE_STDOUT_LOGGING=1
 if (ENABLE_STDOUT_LOGGING)
   add_definitions (-DSTDOUT_LOGGING)

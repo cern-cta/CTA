@@ -9,6 +9,7 @@
 %define usingObjectstore @RPM_USINGOBJECTSTORE@
 %define occiSupport @RPM_USING_ORACLE@
 %define schedOpt @RPM_SCHEDOPT@
+%define asanOptions @RPM_ADDRESS_SANITIZER_OPT@
 %define oracleOpt @RPM_ORACLE@
 %define buildGenerator @CMAKE_GENERATOR@
 
@@ -87,7 +88,7 @@ The CTA project is the CERN Tape Archive system.
 mkdir -p build
 cd build
 # ccacheFlags will be empty if ccache is not enabled
-CTA_VERSION=%{ctaVersion} cmake3 -G "%{buildGenerator}" .. %{ccacheFlags} -DCOMPILE_PACKAGING:STRING=0 -DVCS_VERSION=%{ctaRelease} %{schedOpt} %{oracleOpt}
+CTA_VERSION=%{ctaVersion} cmake3 -G "%{buildGenerator}" .. %{ccacheFlags} -DCOMPILE_PACKAGING:STRING=0 -DVCS_VERSION=%{ctaRelease} %{schedOpt} %{oracleOpt} %{asanOptions}
 cmake --build . -j@JOBS_COUNT@
 
 %install

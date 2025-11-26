@@ -40,6 +40,7 @@ usage() {
   echo "      --cmake-build-type <type>:        Specifies the build type for cmake. Must be one of [Release, Debug, RelWithDebInfo, or MinSizeRel]."
   echo "      --disable-oracle-support:         Disables support for oracle."
   echo "      --disable-ccache:                 Disables ccache for the building of the rpms."
+  echo "      --address-sanitizer:              Compile with address sanitizer enabled."
   echo "      --force-install:                  Adds the --install-srpm flag to the build_rpm step, regardless of whether the container was reset or not."
   echo "      --skip-build:                     Skips the build step."
   echo "      --skip-deploy:                    Skips the deploy step."
@@ -112,6 +113,7 @@ build_deploy() {
   local use_internal_repos=true
   local eos_enabled=true
   local dcache_enabled=false
+  local enable_address_sanitizer=false
 
 
   # Parse command line arguments
@@ -141,6 +143,7 @@ build_deploy() {
     --use-public-repos) use_internal_repos=false ;;
     --local-telemetry) local_telemetry=true ;;
     --publish-telemetry) publish_telemetry=true ;;
+    --enable-address-sanitizer) enable_address_sanitizer=true ;;
     --eos-image-tag)
       if [[ $# -gt 1 ]]; then
         eos_image_tag="$2"
@@ -363,6 +366,10 @@ build_deploy() {
 
     if [[ ${use_internal_repos} = true ]]; then
       build_rpm_flags+=" --use-internal-repos"
+    fi
+
+    if [[ ${enable_address_sanitizer} = true ]]; then
+      build_rpm_flags+=" --address-sanitizer"
     fi
 
     print_header "BUILDING RPMS"
