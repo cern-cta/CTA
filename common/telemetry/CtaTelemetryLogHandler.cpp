@@ -42,29 +42,10 @@ int toSyslogLevel(opentelemetry::sdk::common::internal_log::LogLevel level) noex
   }
 }
 
-// Copied from https://github.com/open-telemetry/opentelemetry-cpp/blob/main/exporters/prometheus/src/exporter_utils.cc#L743
-// For some reason this functionality is not defined in a common place
-std::string AttributeValueToString(const opentelemetry::sdk::common::OwnedAttributeValue& value) {
-  std::string result;
-  if (std::holds_alternative<bool>(value)) {
-    result = std::get<bool>(value) ? "true" : "false";
-  } else if (std::holds_alternative<int>(value)) {
-    result = std::to_string(std::get<int>(value));
-  } else if (std::holds_alternative<int64_t>(value)) {
-    result = std::to_string(std::get<int64_t>(value));
-  } else if (std::holds_alternative<unsigned int>(value)) {
-    result = std::to_string(std::get<unsigned int>(value));
-  } else if (std::holds_alternative<uint64_t>(value)) {
-    result = std::to_string(std::get<uint64_t>(value));
-  } else if (std::holds_alternative<double>(value)) {
-    result = std::to_string(std::get<double>(value));
-  } else if (std::holds_alternative<std::string>(value)) {
-    result = std::get<std::string>(value);
-  } else {
-    return "<unsupported nested value>";
-  }
-  return result;
-}
+template<typename T>
+constexpr bool is_supported_scalar_v =
+  std::is_same_v<T, bool> || std::is_same_v<T, int32_t> || std::is_same_v<T, uint32_t> || std::is_same_v<T, int64_t> ||
+  std::is_same_v<T, double> || std::is_same_v<T, std::string>;
 
 CtaTelemetryLogHandler::CtaTelemetryLogHandler(log::Logger& log) : m_log(log) {}
 
@@ -79,8 +60,16 @@ void CtaTelemetryLogHandler::Handle(opentelemetry::sdk::common::internal_log::Lo
   cta::log::ScopedParamContainer params(lc);
   params.add("otlpMessage", msg);
   const auto& attrs = attributes.GetAttributes();
-  for (const auto& [key, val] : attrs) {
-    params.add(key, AttributeValueToString(val));
+  for (const auto& [key, ownedAttribute] : attrs) {
+    std::visit(
+      [&](const auto& val) {
+        if constexpr (is_supported_scalar_v<std::decay_t<decltype(val)>>) {
+          params.add(key, val);
+        } else {
+          params.add(key, "<unsupported nested value>");
+        }
+      },
+      ownedAttribute);
   }
   lc.log(toSyslogLevel(level), "OTLP " + opentelemetry::sdk::common::internal_log::LevelToString(level));
 }
