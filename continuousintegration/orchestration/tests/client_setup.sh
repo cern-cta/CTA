@@ -201,6 +201,12 @@ echo "$(date +%s): ERROR_DIR=${ERROR_DIR}"
 # get some common useful helpers for krb5
 . /root/client_helper.sh
 
+# If using GRPC with JWT authentication, obtain JWT token
+if [ -f "/etc/cta/cta-cli.conf" ] && grep -q "grpc" /etc/cta/cta-cli.conf; then
+  echo "$(date +%s): Detected GRPC, obtaining JWT..."
+  /root/grpc_obtain_jwt.sh || die "Failed to obtain JWT token for GRPC authentication"
+fi
+
 # Get kerberos credentials for user1
 user_kinit
 klist -s || die "Cannot get kerberos credentials for user ${USER}"

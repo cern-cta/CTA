@@ -33,41 +33,22 @@ cli:
     cta:
       endpoint: cta-frontend-grpc:10956
       grpc:
-        cta_admin_auth_method: krb5
+        cta_admin_auth_method: jwt
         jwt_token_path: /etc/grid-security/jwt-token-grpc
         tls:
           chain_cert_path: /etc/grpc-certs/ca.crt
           enabled: true
 
+  # JWT token fetching moved to main container startup script (ctacli-grpc.sh)
+  # This eliminates the need for an init container
   initContainer:
-    enabled: true
-    script: |
-      #!/usr/bin/bash
-
-      # Install jq for JSON parsing
-      dnf install -y jq
-
-      # Obtain an access token with the diskInstanceName set in the "sub" claim
-      response=$(curl -X POST http://auth-keycloak:8080/realms/master/protocol/openid-connect/token \
-        -H "Content-Type: application/x-www-form-urlencoded" \
-        -d "grant_type=password" \
-        -d "client_id=grpc-client" \
-        -d "username=ctaadmin1" \
-        -d "password=ctaadmin1" \
-        -s)
-
-      grpc_access_token=$(echo ${response} | jq -r .access_token)
-
-      printf "$grpc_access_token" > /etc/grid-security/jwt-token-grpc
-    volumeMounts:
-    - name: grid-security
-      mountPath: /etc/grid-security
+    enabled: false
 
   extraVolumes:
     volumeMounts:
     - name: grid-security
       mountPath: /etc/grid-security
-      readOnly: true
+      readOnly: false # will place the token there so cannot be readOnly
     - name: grpc-certs
       mountPath: /etc/grpc-certs
       readOnly: true
@@ -84,41 +65,22 @@ client:
     cta:
       endpoint: cta-frontend-grpc:10956
       grpc:
-        cta_admin_auth_method: krb5
+        cta_admin_auth_method: jwt
         jwt_token_path: /etc/grid-security/jwt-token-grpc
         tls:
           chain_cert_path: /etc/grpc-certs/ca.crt
           enabled: true
 
+  # JWT token fetching moved to main container startup script (ctacli-grpc.sh)
+  # This eliminates the need for an init container and allows token refresh
   initContainer:
-    enabled: true
-    script: |
-      #!/usr/bin/bash
-
-      # Install jq for JSON parsing
-      dnf install -y jq
-
-      # Obtain an access token with the diskInstanceName set in the "sub" claim
-      response=$(curl -X POST http://auth-keycloak:8080/realms/master/protocol/openid-connect/token \
-        -H "Content-Type: application/x-www-form-urlencoded" \
-        -d "grant_type=password" \
-        -d "client_id=grpc-client" \
-        -d "username=ctaadmin1" \
-        -d "password=ctaadmin1" \
-        -s)
-
-      grpc_access_token=$(echo ${response} | jq -r .access_token)
-
-      printf "$grpc_access_token" > /etc/grid-security/jwt-token-grpc
-    volumeMounts:
-    - name: grid-security
-      mountPath: /etc/grid-security
+    enabled: false
 
   extraVolumes:
     volumeMounts:
     - name: grid-security
       mountPath: /etc/grid-security
-      readOnly: true
+      readOnly: false
     - name: grpc-certs
       mountPath: /etc/grpc-certs
       readOnly: true

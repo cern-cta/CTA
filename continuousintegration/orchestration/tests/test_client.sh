@@ -51,7 +51,16 @@ CTA_TPSRV_POD="cta-tpsrv01-0"
 CLIENT_POD="cta-client-0"
 EOS_MGM_POD="eos-mgm-0"
 EOS_MGM_HOST="ctaeos"
+CTA_CLI_POD="cta-cli-0"
 
+echo
+echo "Copying test scripts to ${CLIENT_POD}, ${EOS_MGM_POD} and ${CTA_TPSRV_POD} pods."
+kubectl -n ${NAMESPACE} cp . "${CLIENT_POD}:/root/" -c client
+kubectl -n ${NAMESPACE} cp grep_xrdlog_mgm_for_error.sh "${EOS_MGM_POD}:/root/" -c eos-mgm
+kubectl -n ${NAMESPACE} cp grep_eosreport_for_archive_metadata.sh "${EOS_MGM_POD}:/root/" -c eos-mgm
+kubectl -n ${NAMESPACE} cp refresh_log_fd.sh "${CTA_TPSRV_POD}:/root/" -c cta-taped-0
+kubectl -n "${NAMESPACE}" cp grpc_obtain_jwt.sh ${CTA_CLI_POD}:/root/ -c cta-cli || exit 1
+kubectl -n "${NAMESPACE}" cp grpc_obtain_jwt.sh ${CLIENT_POD}:/root/ -c client || exit 1
 
 if [[ ${PREPARE} -eq 1 ]]; then
   echo "Preparing namespace for the tests"
@@ -61,13 +70,6 @@ if [[ ${PREPARE} -eq 1 ]]; then
     exit 1
   fi
 fi
-
-echo
-echo "Copying test scripts to ${CLIENT_POD}, ${EOS_MGM_POD} and ${CTA_TPSRV_POD} pods."
-kubectl -n ${NAMESPACE} cp . ${CLIENT_POD}:/root/ -c client
-kubectl -n ${NAMESPACE} cp grep_xrdlog_mgm_for_error.sh "${EOS_MGM_POD}:/root/" -c eos-mgm
-kubectl -n ${NAMESPACE} cp grep_eosreport_for_archive_metadata.sh "${EOS_MGM_POD}:/root/" -c eos-mgm
-kubectl -n ${NAMESPACE} cp refresh_log_fd.sh "${CTA_TPSRV_POD}:/root/" -c cta-taped-0
 
 NB_FILES=10000
 FILE_SIZE_KB=15

@@ -43,15 +43,9 @@ if [[ ! -z "${error}" ]]; then
     exit 1
 fi
 
-echo "Preparing namespace for the tests"
-  . prepare_tests.sh -n ${NAMESPACE}
-if [[ $? -ne 0 ]]; then
-  echo "ERROR: failed to prepare namespace for the tests"
-  exit 1
-fi
-
 CLIENT_POD="cta-client-0"
 EOS_MGM_POD="eos-mgm-0"
+CTA_CLI_POD="cta-cli-0"
 
 echo "Installing gfal2 utility"
 kubectl -n ${NAMESPACE} exec ${CLIENT_POD} -c client -- bash -c "dnf install -y python3-gfal2-util" || exit 1
@@ -60,6 +54,15 @@ echo
 echo "Copying test scripts to client pod"
 kubectl -n ${NAMESPACE} cp . ${CLIENT_POD}:/root/ -c client
 kubectl -n ${NAMESPACE} cp grep_xrdlog_mgm_for_error.sh ${EOS_MGM_POD}:/root/ -c eos-mgm
+kubectl -n "${NAMESPACE}" cp grpc_obtain_jwt.sh ${CTA_CLI_POD}:/root/ -c cta-cli || exit 1
+kubectl -n "${NAMESPACE}" cp grpc_obtain_jwt.sh ${CLIENT_POD}:/root/ -c client || exit 1
+
+echo "Preparing namespace for the tests"
+  . prepare_tests.sh -n ${NAMESPACE}
+if [ $? -ne 0 ]; then
+  echo "ERROR: failed to prepare namespace for the tests"
+  exit 1
+fi
 
 kubectl -n ${NAMESPACE} exec ${CLIENT_POD} -c client -- bash -c ". /root/client_helper.sh && admin_kinit"
 
