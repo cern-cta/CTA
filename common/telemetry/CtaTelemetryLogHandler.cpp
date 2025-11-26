@@ -42,10 +42,12 @@ int toSyslogLevel(opentelemetry::sdk::common::internal_log::LogLevel level) noex
   }
 }
 
+// All scalar types of OwnedAttributeValue
+// See: https://github.com/open-telemetry/opentelemetry-cpp/blob/main/sdk/include/opentelemetry/sdk/common/attribute_utils.h#L36
 template<typename T>
 constexpr bool is_supported_scalar_v =
   std::is_same_v<T, bool> || std::is_same_v<T, int32_t> || std::is_same_v<T, uint32_t> || std::is_same_v<T, int64_t> ||
-  std::is_same_v<T, double> || std::is_same_v<T, std::string>;
+  std::is_same_v<T, uint64_t> || std::is_same_v<T, double> || std::is_same_v<T, std::string>;
 
 CtaTelemetryLogHandler::CtaTelemetryLogHandler(log::Logger& log) : m_log(log) {}
 
@@ -62,7 +64,7 @@ void CtaTelemetryLogHandler::Handle(opentelemetry::sdk::common::internal_log::Lo
   const auto& attrs = attributes.GetAttributes();
   for (const auto& [key, ownedAttribute] : attrs) {
     std::visit(
-      [&](const auto& val) {
+      [&](auto&& val) {
         if constexpr (is_supported_scalar_v<std::decay_t<decltype(val)>>) {
           params.add(key, val);
         } else {
