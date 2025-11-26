@@ -33,7 +33,7 @@ public:
            const admin::AdminCmd& adminCmd,
            const bool bypassAdminCheck = false);
 
-  ~AdminCmd() final = default;
+  ~AdminCmd() override = default;
 
   /*!
    * Process the admin command

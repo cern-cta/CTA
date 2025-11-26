@@ -19,7 +19,6 @@
 
 #include "castor/tape/tapeserver/daemon/DiskReadTask.hpp"
 #include "castor/tape/tapeserver/daemon/TaskWatchDog.hpp"
-#include "disk/RadosStriperPool.hpp"
 #include "common/threading/BlockingQueue.hpp"
 #include "common/threading/Thread.hpp"
 #include "common/log/LogContext.hpp"
@@ -183,11 +182,6 @@ private:
    * Parameter: xroot timeout
    */
   uint16_t m_xrootTimeout;
-
-  /**
-   * A pool of rados striper connections, to be shared by all threads
-   */
-  cta::disk::RadosStriperPool m_striperPool;
 
   /**
    * Reference to the watchdog, for error reporting.
