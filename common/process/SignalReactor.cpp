@@ -57,9 +57,17 @@ void SignalReactor::start() {
 //------------------------------------------------------------------------------
 // SignalReactor::stop
 //------------------------------------------------------------------------------
-void SignalReactor::stop() {
+void SignalReactor::stop() noexcept {
   m_stopRequested = true;
-  m_thread.join();
+  if (m_thread.joinable()) {
+    try {
+      m_thread.join();
+    } catch (std::system_error e) {
+      log::ScopedParamContainer params(m_lc);
+      params.add("exceptionMessage", e.what());
+      m_lc.log(log::ERR, "In SignalReactor::stop(): failed to join thread");
+    }
+  }
 }
 
 //------------------------------------------------------------------------------

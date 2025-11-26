@@ -51,7 +51,7 @@ public:
   /**
    * Stop the SignalReactor (both the thread and the waiting for signal)
    */
-  void stop();
+  void stop() noexcept;
 
 private:
   cta::log::LogContext& m_lc;
