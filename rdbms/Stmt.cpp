@@ -75,22 +75,9 @@ void Stmt::reset() noexcept {
 //-----------------------------------------------------------------------------
 // operator=
 //-----------------------------------------------------------------------------
-Stmt &Stmt::operator=(Stmt &&rhs) {
-  // If the cached statement is not already owned
-  if(rhs.m_stmt != m_stmt) {
-    // If this smart cached statement already points to cached statement, then
-    // return it back to its pool
-    if(nullptr != m_stmt && nullptr != m_stmtPool) {
-      m_stmtPool->returnStmt(std::move(m_stmt));
-    }
-
-    // Take ownership of the new cached statement
-    m_stmt = std::move(rhs.m_stmt);
-    m_stmtPool = rhs.m_stmtPool;
-
-    rhs.m_stmtPool = nullptr;
-  }
-
+Stmt &Stmt::operator=(Stmt &&rhs) noexcept {
+  std::swap(m_stmt, rhs.m_stmt);
+  std::swap(m_stmtPool, rhs.m_stmtPool);
   return *this;
 }
 

@@ -85,6 +85,9 @@ protected:
   explicit ObjectOpsBase(Backend& os): m_nameSet(false), m_objectStore(os) { }
   virtual ~ObjectOpsBase();
 public:
+  ObjectOpsBase(const ObjectOpsBase&) = default;
+  ObjectOpsBase(ObjectOpsBase&&) noexcept = default;
+
   CTA_GENERATE_EXCEPTION_CLASS(AddressNotSet);
   CTA_GENERATE_EXCEPTION_CLASS(NotLocked);
   CTA_GENERATE_EXCEPTION_CLASS(WrongType);
@@ -451,6 +454,9 @@ protected:
   ~ObjectOps() override = default;
 
 public:
+  ObjectOps(const ObjectOps&) = default;
+  ObjectOps(ObjectOps&&) noexcept = default;
+
   void fetch() {
     // Check that the object is locked, one way or another
     if(!m_locksCount)

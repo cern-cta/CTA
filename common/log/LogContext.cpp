@@ -29,9 +29,7 @@ LogContext::LogContext(Logger& logger) noexcept:
 m_log(logger) {}
 
 void LogContext::pushOrReplace(const Param& param) noexcept {
-  ParamNameMatcher match(param.getName());
-  std::list<Param>::iterator i = 
-      std::find_if(m_params.begin(), m_params.end(), match);
+  auto i = std::ranges::find_if(m_params, [&param](const Param& p) { return p.getName() == param.getName(); } );
   if (i != m_params.end()) {
     i->setValue(param.getValueVariant());
   } else {
@@ -40,10 +38,8 @@ void LogContext::pushOrReplace(const Param& param) noexcept {
 }
 
 void LogContext::moveToTheEndIfPresent(const std::string& paramName) noexcept {
-  ParamNameMatcher match(paramName);
-  std::list<Param>::iterator i = 
-      std::find_if(m_params.begin(), m_params.end(), match);
-  if (i != m_params.end()) {    
+  auto i = std::ranges::find_if(m_params, [&paramName](const Param& p) { return p.getName() == paramName; } );
+  if (i != m_params.end()) {
     const Param param(paramName, i->getValueVariant());
     m_params.erase(i);
     m_params.push_back(param);
@@ -51,8 +47,8 @@ void LogContext::moveToTheEndIfPresent(const std::string& paramName) noexcept {
 }
 
 void LogContext::erase(const std::set<std::string>& paramNamesSet) noexcept {
-  ParamNameMatcher match(paramNamesSet);
-  m_params.erase(std::remove_if(m_params.begin(), m_params.end(), match), m_params.end());
+  auto toEraseRange = std::ranges::remove_if(m_params, [&paramNamesSet](const Param& p) { return paramNamesSet.contains(p.getName()); });
+  m_params.erase(toEraseRange.begin(), toEraseRange.end());
 }
 
 void LogContext::clear() {

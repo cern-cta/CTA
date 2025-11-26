@@ -46,8 +46,6 @@ struct PhysicalLibrary {
   std::optional<std::string> comment;
   bool isDisabled;
   std::optional<std::string> disabledReason;
-
-  PhysicalLibrary() = default;
 }; // struct PhysicalLibrary
 
 struct UpdatePhysicalLibrary {

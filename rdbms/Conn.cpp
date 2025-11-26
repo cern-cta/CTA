@@ -72,20 +72,9 @@ void Conn::reset() noexcept {
 //------------------------------------------------------------------------------
 // operator=
 //------------------------------------------------------------------------------
-Conn &Conn::operator=(Conn &&rhs) {
-  // If the database connection is not the one already owned
-  if(rhs.m_connAndStmts != m_connAndStmts) {
-    // If this smart database connection currently points to a database connection then return it back to its pool
-    if(nullptr != m_pool && nullptr != m_connAndStmts && nullptr != m_connAndStmts->conn) {
-      m_pool->returnConn(std::move(m_connAndStmts));
-    }
-
-    // Take ownership of the new database connection
-    m_connAndStmts = std::move(rhs.m_connAndStmts);
-    m_pool = rhs.m_pool;
-
-    rhs.m_pool = nullptr;
-  }
+Conn &Conn::operator=(Conn &&rhs) noexcept {
+  std::swap(m_connAndStmts, rhs.m_connAndStmts);
+  std::swap(m_pool, rhs.m_pool);
   return *this;
 }
 

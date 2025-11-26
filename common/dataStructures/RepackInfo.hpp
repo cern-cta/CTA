@@ -77,7 +77,7 @@ struct RepackInfo {
   bool isExpandFinished;
   bool isExpandStarted;
   bool noRecall;
-  common::dataStructures::EntryLog creationLog;
+  EntryLog creationLog;
   time_t repackFinishedTime = 0;
   RepackDestinationInfo::List destinationInfos;
   std::string mountPolicy;

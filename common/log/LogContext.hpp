@@ -105,19 +105,6 @@ public:
    * @return size
    */
   size_t size() const { return m_params.size(); }
-
-  /**
-   * Helper class to find parameters by name
-   */
-  class ParamNameMatcher {
-  public:
-    template <typename T, std::enable_if_t<std::is_same_v<std::decay_t<T>, std::set<std::string>>, int> = 0>
-    explicit ParamNameMatcher(T&& names) noexcept : m_names(std::forward<T>(names)) {}
-    explicit ParamNameMatcher(const std::string& name) noexcept : m_names({name}) {}
-    bool operator() (const Param& p) const noexcept { return m_names.find(p.getName()) != m_names.end(); }
-  private:
-    const std::set<std::string> m_names;
-  };
   
   /**
    * Scoped parameter addition to the context. Constructor adds the parameter,

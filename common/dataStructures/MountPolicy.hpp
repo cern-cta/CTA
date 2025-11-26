@@ -32,9 +32,6 @@ namespace cta::common::dataStructures {
 struct MountPolicy {
   MountPolicy() = default;
 
-  MountPolicy(const MountPolicy& other) = default;
-  MountPolicy& operator=(const MountPolicy& other) = default;
-
   bool operator==(const MountPolicy &rhs) const;
   bool operator!=(const MountPolicy &rhs) const;
 

@@ -92,7 +92,7 @@ public:
    * @param rhs The object on the right-hand side of the operator.
    * @return This object.
    */
-  Stmt &operator=(Stmt &&rhs);
+  Stmt &operator=(Stmt &&rhs) noexcept;
 
   /**
    * Returns the SQL statement.

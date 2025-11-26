@@ -30,10 +30,8 @@ namespace cta::common::dataStructures {
  */
 struct EntryLog {
   EntryLog();
-  EntryLog(const EntryLog& other) = default;
   EntryLog(const std::string& username, const std::string& host, const time_t time);
 
-  EntryLog& operator=(const EntryLog& other) = default;
   bool operator==(const EntryLog& rhs) const;
   bool operator!=(const EntryLog& rhs) const;
 

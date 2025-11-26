@@ -46,11 +46,21 @@ public:
   Exception(const Exception& rhs);
 
   /**
-   * Assignment constructor
+   * Default move constructor
+   */
+  Exception(Exception&& rhs) noexcept = default;
+
+  /**
+   * Assignment operator
    *
-   * Default assignment constructor is implicitly deleted as it it would be ill-defined
+   * Default assignment constructor is implicitly deleted as it would be ill-defined
    */
   Exception& operator=(const Exception& rhs);
+
+  /**
+   * Default move assignment operator
+   */
+  Exception& operator=(Exception&& rhs) noexcept = default;
 
   /**
    * Empty Destructor
