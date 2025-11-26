@@ -22,7 +22,6 @@
 #include <chrono>
 #include <thread>
 
-#include "SignalFd.hpp"
 #include "common/exception/Errnum.hpp"
 #include "common/semconv/Attributes.hpp"
 #include "SignalUtils.hpp"
