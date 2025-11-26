@@ -35,7 +35,6 @@
 #include "common/exception/Exception.hpp"
 #include "disk/DiskFile.hpp"
 #include "disk/DiskFileImplementations.hpp"
-#include "disk/RadosStriperPool.hpp"
 #include "scheduler/ArchiveJob.hpp"
 #include "scheduler/RetrieveJob.hpp"
 #include "tests/TempFile.hpp"
@@ -257,8 +256,7 @@ TEST(castorTapeDiskFile, canWriteAndReadDisk) {
   const uint32_t block_size = 1024;
   char *data1 = new char[block_size];
   char *data2 = new char[block_size];
-  cta::disk::RadosStriperPool striperPool;
-  cta::disk::DiskFileFactory fileFactory(0, striperPool);
+  cta::disk::DiskFileFactory fileFactory(0);
   TempFile sourceFile;
   sourceFile.randomFill(1000);
   TempFile destinationFile(sourceFile.path() + "_dst");

@@ -19,7 +19,6 @@
 #include "castor/tape/tapeserver/daemon/MigrationMemoryManager.hpp"
 #include "castor/tape/tapeserver/daemon/MigrationReportPacker.hpp"
 #include "castor/tape/tapeserver/daemon/MemBlock.hpp"
-#include "disk/RadosStriperPool.hpp"
 #include "common/log/LogContext.hpp"
 #include "common/log/StringLogger.hpp"
 #include "castor/tape/tapeserver/daemon/TapeserverProxyMock.hpp"
@@ -131,8 +130,7 @@ namespace unitTests{
     FakeTapeWriteTask ftwt;
     ftwt.pushDataBlock(new MemBlock(1,blockSize));
     castor::tape::tapeserver::daemon::DiskReadTask drt(ftwt,&file,blockNeeded,flag);
-    cta::disk::RadosStriperPool striperPool;
-    DiskFileFactory fileFactory(0, striperPool);
+    DiskFileFactory fileFactory(0);
 
     ::testing::NiceMock<cta::tape::daemon::TapeserverProxyMock> tspd;
     cta::TapeMountDummy tmd;

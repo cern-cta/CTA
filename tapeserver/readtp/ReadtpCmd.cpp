@@ -25,7 +25,6 @@
 #include "common/exception/EncryptionException.hpp"
 #include "common/log/DummyLogger.hpp"
 #include "disk/DiskFile.hpp"
-#include "disk/RadosStriperPool.hpp"
 #include "mediachanger/LibrarySlotParser.hpp"
 #include "rdbms/Login.hpp"
 #include "scheduler/RetrieveJob.hpp"
@@ -328,8 +327,7 @@ std::string ReadtpCmd::getNextDestinationUrl() {
 //------------------------------------------------------------------------------
 void ReadtpCmd::readTapeFiles(
   castor::tape::tapeserver::drive::DriveInterface &drive) {
-    cta::disk::RadosStriperPool striperPool;
-    cta::disk::DiskFileFactory fileFactory(0, striperPool);
+    cta::disk::DiskFileFactory fileFactory(0);
 
     catalogue::TapeSearchCriteria searchCriteria;
     searchCriteria.vid = m_vid;
