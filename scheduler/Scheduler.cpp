@@ -49,7 +49,6 @@
 #include "common/Timer.hpp"
 #include "common/utils/utils.hpp"
 #include "disk/DiskFileImplementations.hpp"
-#include "disk/RadosStriperPool.hpp"
 #include "scheduler/ArchiveMount.hpp"
 #include "scheduler/DiskReportRunner.hpp"
 #include "scheduler/RetrieveMount.hpp"
