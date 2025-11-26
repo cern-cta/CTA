@@ -28,8 +28,8 @@
 #include "common/log/FileLogger.hpp"
 #include "common/log/StdoutLogger.hpp"
 #include "common/process/threading/System.hpp"
-#include "common/process/SignalReactor.hpp"
-#include "common/process/SignalReactorBuilder.hpp"
+#include "common/process/signals/SignalReactor.hpp"
+#include "common/process/signals/SignalReactorBuilder.hpp"
 #include "common/utils/utils.hpp"
 #include "common/telemetry/TelemetryInit.hpp"
 #include "common/telemetry/config/TelemetryConfig.hpp"
@@ -117,16 +117,19 @@ void initTelemetry(const common::Config& config, cta::log::LogContext& lc) {
  */
 static int exceptionThrowingMain(common::Config config, cta::log::Logger& log) {
   cta::log::LogContext lc(log);
+
   MaintenanceDaemon maintenanceDaemon(config, lc);
 
   // Set up the signal reactor
-  SignalReactor signalReactor = SignalReactorBuilder(lc)
-                                  .addSignalFunction(SIGHUP, [&maintenanceDaemon]() { maintenanceDaemon.reload(); })
-                                  .addSignalFunction(SIGTERM, [&maintenanceDaemon]() { maintenanceDaemon.stop(); })
-                                  .build();
+  process::SignalReactor signalReactor =
+    process::SignalReactorBuilder(lc)
+      .addSignalFunction(SIGHUP, [&maintenanceDaemon]() { maintenanceDaemon.reload(); })
+      .addSignalFunction(SIGTERM, [&maintenanceDaemon]() { maintenanceDaemon.stop(); })
+      .addSignalFunction(SIGUSR1, [&log]() { log.refresh(); })
+      .build();
   signalReactor.start();
 
-  // Telemetry spawns some threads, so the SignalReactor must have started before this to correctly block signals.
+  // Telemetry spawns some threads, so the SignalReactor must have started before this to correctly block signals
   initTelemetry(config, lc);
 
   // Run the maintenance daemon
@@ -218,6 +221,6 @@ int main(const int argc, char** const argv) {
     log(log::ERR, "Caught an unexpected and unknown exception.");
     sleep(1);
   }
-
+  log(log::INFO, "Exiting cta-maintd");
   return programRc;
 }
