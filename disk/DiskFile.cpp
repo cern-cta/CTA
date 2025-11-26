@@ -18,24 +18,20 @@
 #include <sys/stat.h>
 
 #include "disk/DiskFileImplementations.hpp"
-#include "disk/RadosStriperPool.hpp"
 #include "common/exception/Errnum.hpp"
 #include "common/threading/MutexLocker.hpp"
 #include "common/utils/utils.hpp"
-#include <rados/buffer.h>
 #include <xrootd/XrdCl/XrdClFile.hh>
 #include <uuid/uuid.h>
 #include <algorithm>
 
 namespace cta::disk {
 
-DiskFileFactory::DiskFileFactory(uint16_t xrootTimeout, cta::disk::RadosStriperPool& striperPool)
+DiskFileFactory::DiskFileFactory(uint16_t xrootTimeout)
     : m_NoURLLocalFile("^(localhost:|)(/.*)$"),
       m_URLLocalFile("^file://(.*)$"),
       m_URLXrootFile("^(root://.*)$"),
-      m_URLCephFile("^radosstriper:///([^:]+@[^:]+):(.*)$"),
-      m_xrootTimeout(xrootTimeout),
-      m_striperPool(striperPool) {}
+      m_xrootTimeout(xrootTimeout) {}
 
 ReadFile* DiskFileFactory::createReadFile(const std::string& path) {
   std::vector<std::string> regexResult;
@@ -49,11 +45,6 @@ ReadFile* DiskFileFactory::createReadFile(const std::string& path) {
   regexResult = m_URLXrootFile.exec(path);
   if (regexResult.size()) {
      return new XrootReadFile(regexResult[1], m_xrootTimeout);
-  }
-  // radosStriper URL?
-  regexResult = m_URLCephFile.exec(path);
-  if (regexResult.size()) {
-    return new RadosStriperReadFile(regexResult[0], m_striperPool.throwingGetStriper(regexResult[1]), regexResult[2]);
   }
   // No URL path parsing
   // Do we have a local file?
@@ -76,11 +67,6 @@ WriteFile* DiskFileFactory::createWriteFile(const std::string& path) {
   regexResult = m_URLXrootFile.exec(path);
   if (regexResult.size()) {
     return new XrootWriteFile(regexResult[1], m_xrootTimeout);
-  }
-  // radosStriper URL?
-  regexResult = m_URLCephFile.exec(path);
-  if (regexResult.size()) {
-    return new RadosStriperWriteFile(regexResult[0], m_striperPool.throwingGetStriper(regexResult[1]), regexResult[2]);
   }
   // No URL path parsing
   // Do we have a local file?
@@ -137,10 +123,6 @@ LocalWriteFile::LocalWriteFile(const std::string& path) : m_closeTried(false) {
 
 void LocalWriteFile::write(const void* data, const size_t size) {
   ::write(m_fd, (void*) data, size);
-}
-
-void LocalWriteFile::setChecksum(uint32_t checksum) {
-  // Noop: this is only implemented for rados striper
 }
 
 void LocalWriteFile::close() {
@@ -219,10 +201,6 @@ void XrootBaseWriteFile::write(const void* data, const size_t size) {
   m_writePosition += size;
 }
 
-void XrootBaseWriteFile::setChecksum(uint32_t checksum) {
-  // Noop: this is only implemented for rados striper
-}
-
 void XrootBaseWriteFile::close() {
   // Multiple close protection
   if (m_closeTried) {
@@ -239,97 +217,6 @@ XrootBaseWriteFile::~XrootBaseWriteFile() noexcept {
   if (!m_closeTried && !m_xrootFile.Close(m_timeout).IsOK()) {
     // Ignore the error
   }
-}
-
-//==============================================================================
-// RADOS STRIPER READ FILE
-//==============================================================================
-RadosStriperReadFile::RadosStriperReadFile(const std::string& fullURL,
-                                           libradosstriper::RadosStriper* striper,
-                                           const std::string& osd)
-    : m_striper(striper),
-      m_osd(osd),
-      m_readPosition(0) {
-  m_URL = fullURL;
-}
-
-size_t RadosStriperReadFile::read(void* data, const size_t size) const {
-  ::ceph::bufferlist bl;
-  int rc = m_striper->read(m_osd, &bl, size, m_readPosition);
-  if (rc < 0) {
-    throw cta::exception::Errnum(-rc, "In RadosStriperReadFile::read(): failed to striper->read: ");
-  }
-  bl.begin().copy(rc, (char*) data);
-  m_readPosition += rc;
-  return rc;
-}
-
-size_t RadosStriperReadFile::size() const {
-  uint64_t size;
-  time_t time;
-  cta::exception::Errnum::throwOnReturnedErrno(-m_striper->stat(m_osd, &size, &time),
-                                               "In RadosStriperReadFile::size(): failed to striper->stat(): ");
-  return size;
-}
-
-//==============================================================================
-// RADOS STRIPER WRITE FILE
-//==============================================================================
-RadosStriperWriteFile::RadosStriperWriteFile(const std::string& fullURL,
-                                             libradosstriper::RadosStriper* striper,
-                                             const std::string& osd)
-    : m_striper(striper),
-      m_osd(osd),
-      m_writePosition(0) {
-  m_URL = fullURL;
-  // Truncate the possibly existing file. If the file does not exist, it's fine.
-  int rc = m_striper->trunc(m_osd, 0);
-  if (rc < 0 && rc != -ENOENT) {
-    throw cta::exception::Errnum(-rc,
-                                 "In RadosStriperWriteFile::RadosStriperWriteFile(): "
-                                 "failed to striper->trunc(): ");
-  }
-}
-
-void RadosStriperWriteFile::write(const void* data, const size_t size) {
-  ::ceph::bufferlist bl;
-  bl.append((char*) data, size);
-  int rc = m_striper->write(m_osd, bl, size, m_writePosition);
-  if (rc) {
-    throw cta::exception::Errnum(-rc,
-                                 "In RadosStriperWriteFile::write(): "
-                                 "failed to striper->write(): ");
-  }
-  m_writePosition += size;
-}
-
-void RadosStriperWriteFile::setChecksum(uint32_t checksum) {
-  // Set the checksum type (hardcoded)
-  int rc;
-  std::string checksumType("ADLER32");
-  ::ceph::bufferlist blType;
-  blType.append(checksumType.c_str(), checksumType.size());
-  rc = m_striper->setxattr(m_osd, "user.castor.checksum.type", blType);
-  if (rc) {
-    throw cta::exception::Errnum(-rc,
-                                 "In RadosStriperWriteFile::setChecksum(): "
-                                 "failed to striper->setxattr(user.castor.checksum.type): ");
-  }
-  // Turn the numeric checksum into a string and set it as checksum value
-  std::stringstream checksumStr;
-  checksumStr << std::hex << std::nouppercase << checksum;
-  ::ceph::bufferlist blChecksum;
-  blChecksum.append(checksumStr.str().c_str(), checksumStr.str().size());
-  rc = m_striper->setxattr(m_osd, "user.castor.checksum.value", blChecksum);
-  if (rc) {
-    throw cta::exception::Errnum(-rc,
-                                 "In RadosStriperWriteFile::setChecksum(): "
-                                 "failed to striper->setxattr(user.castor.checksum.value): ");
-  }
-}
-
-void RadosStriperWriteFile::close() {
-  // Nothing to do as writes are synchronous
 }
 
 //==============================================================================

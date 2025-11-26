@@ -40,7 +40,7 @@ public:
   /**
    * Destructor
    */
-  ~FileLogger();
+  ~FileLogger() final;
 
   /**
    * Prepares the logger object for a call to fork().

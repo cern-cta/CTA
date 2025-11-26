@@ -40,20 +40,21 @@ public:
    * @param json the json to build the object from
    * @throws JSONObjectException if the json provided does not allow to build this object
    */
-  virtual void buildFromJSON(const std::string & json);
+  void buildFromJSON(const std::string & json) override;
   /**
    * Return the inherited object expected JSON structure allowing to set its attributes
    * via the buildFromJSON() method
    * @return an example of JSON allowing to build the object e.g {"freeSpace",42}
    */
-  virtual std::string getExpectedJSONToBuildObject() const;
+  std::string getExpectedJSONToBuildObject() const override;
   /**
    * Returns the json representation of the inherited object
    * or null if the json cannot be generated from the inherited object attributes
    */
-  virtual std::string getJSON();
+  std::string getJSON() override;
   virtual std::string getJSONPretty();
-  virtual ~JSONCObject();
+  ~JSONCObject() override;
+
 protected:
   json_object * m_jsonObject = nullptr;
   

@@ -15,7 +15,6 @@
 
 cmake_minimum_required (VERSION 3.17)
 
-find_package (librados2 REQUIRED)
 find_package (xrootd REQUIRED)
 find_package (xrootdclient REQUIRED)
 
@@ -26,14 +25,13 @@ add_library(ctadisk SHARED
   DiskReporterFactory.cpp
   EOSReporter.cpp
   DiskFile.cpp
-  RadosStriperPool.cpp
   DiskSystem.cpp
   JSONDiskSystem.cpp
   JSONFreeSpace.cpp
   XrdClException.cpp
 )
 
-target_link_libraries (ctadisk XrdCl radosstriper)
+target_link_libraries (ctadisk XrdCl)
 
 set_property(TARGET ctadisk PROPERTY SOVERSION "${CTA_SOVERSION}")
 set_property(TARGET ctadisk PROPERTY   VERSION "${CTA_LIBVERSION}")

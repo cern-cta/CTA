@@ -23,7 +23,6 @@
 #include "common/exception/Exception.hpp"
 #include "XrdClException.hpp"
 #include <xrootd/XrdCl/XrdClFile.hh>
-#include <radosstriper/libradosstriper.hpp>
 
 namespace cta::disk {
     /**
@@ -39,9 +38,9 @@ namespace cta::disk {
       class LocalReadFile: public ReadFile {
       public:
         explicit LocalReadFile(const std::string& path);
-        virtual size_t size() const;
-        virtual size_t read(void *data, const size_t size) const;
-        virtual ~LocalReadFile() noexcept;
+        size_t size() const final;
+        size_t read(void *data, const size_t size) const final;
+        ~LocalReadFile() noexcept final;
       private:
         int m_fd;
       };
@@ -49,10 +48,9 @@ namespace cta::disk {
       class LocalWriteFile: public WriteFile {
       public:
         explicit LocalWriteFile(const std::string& path);
-        virtual void write(const void *data, const size_t size);
-        virtual void setChecksum(uint32_t checksum);
-        virtual void close();
-        virtual ~LocalWriteFile() noexcept;
+        void write(const void *data, const size_t size) final;
+        void close() final;
+        ~LocalWriteFile() noexcept final;
       private:
         int m_fd;
         bool m_closeTried;
@@ -64,9 +62,9 @@ namespace cta::disk {
       class XrootBaseReadFile: public ReadFile {
       public:
         explicit XrootBaseReadFile(uint16_t timeout) : m_timeout(timeout) {}
-        virtual size_t size() const;
-        virtual size_t read(void *data, const size_t size) const;
-        virtual ~XrootBaseReadFile() noexcept;
+        size_t size() const final;
+        size_t read(void *data, const size_t size) const final;
+        ~XrootBaseReadFile() noexcept override;
       protected:
         // Access to parent's protected member...
         void setURL(const std::string & v) { m_URL = v; }
@@ -84,10 +82,9 @@ namespace cta::disk {
       class XrootBaseWriteFile: public WriteFile {
       public:
         explicit XrootBaseWriteFile(uint16_t timeout) : m_writePosition(0), m_timeout(timeout), m_closeTried(false) {}
-        virtual void write(const void *data, const size_t size);
-        virtual void setChecksum(uint32_t checksum);
-        virtual void close();
-        virtual ~XrootBaseWriteFile() noexcept;        
+        void write(const void *data, const size_t size) final;
+        void close() final;
+        ~XrootBaseWriteFile() noexcept override;
       protected:
         // Access to parent's protected member...
         void setURL(const std::string & v) { m_URL = v; }
@@ -102,41 +99,6 @@ namespace cta::disk {
         XrootWriteFile(const std::string &xrootUrl, uint16_t timeout = 0);
       };
 
-      //==============================================================================
-      // RADOS STRIPER FILES
-      //==============================================================================
-      // The Rados striper URLs in CASTOR are in the form:
-      // radosstriper:///user@pool:filePath
-      // We will not expect the
-      class RadosStriperReadFile: public ReadFile {
-      public:
-        RadosStriperReadFile(const std::string &fullURL,
-          libradosstriper::RadosStriper * striper,
-          const std::string &osd);
-        virtual size_t size() const;
-        virtual size_t read(void *data, const size_t size) const;
-        ~RadosStriperReadFile() final = default;
-      private:
-        libradosstriper::RadosStriper * m_striper;
-        std::string m_osd;
-        mutable size_t m_readPosition;
-      };
-      
-      class RadosStriperWriteFile: public WriteFile {
-      public:
-        RadosStriperWriteFile(const std::string &fullURL,
-          libradosstriper::RadosStriper * striper,
-          const std::string &osd);
-        virtual void write(const void *data, const size_t size);
-        virtual void setChecksum(uint32_t checksum);
-        virtual void close();
-        ~RadosStriperWriteFile() final = default;
-      private:
-        libradosstriper::RadosStriper * m_striper;
-        std::string m_osd;
-        size_t m_writePosition;
-      };
-      
       //==============================================================================
       // LocalDisk Removers
       //==============================================================================

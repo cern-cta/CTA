@@ -44,13 +44,13 @@ public:
 
   std::shared_ptr<JwkCache> getPubkeyCache() const { return m_pubkeyCache; }
   // Archive/Retrieve interface
-  Status Create(::grpc::ServerContext* context, const cta::xrd::Request* request, cta::xrd::Response* response);
-  Status Archive(::grpc::ServerContext* context, const cta::xrd::Request* request, cta::xrd::Response* response);
-  Status Retrieve(::grpc::ServerContext* context, const cta::xrd::Request* request, cta::xrd::Response* response);
-  Status CancelRetrieve(::grpc::ServerContext* context, const cta::xrd::Request* request, cta::xrd::Response* response);
-  Status Delete(::grpc::ServerContext* context, const cta::xrd::Request* request, cta::xrd::Response* response);
+  Status Create(::grpc::ServerContext* context, const cta::xrd::Request* request, cta::xrd::Response* response) final;
+  Status Archive(::grpc::ServerContext* context, const cta::xrd::Request* request, cta::xrd::Response* response) final;
+  Status Retrieve(::grpc::ServerContext* context, const cta::xrd::Request* request, cta::xrd::Response* response) final;
+  Status CancelRetrieve(::grpc::ServerContext* context, const cta::xrd::Request* request, cta::xrd::Response* response) final;
+  Status Delete(::grpc::ServerContext* context, const cta::xrd::Request* request, cta::xrd::Response* response) final;
   // Non-streaming cta-admin commands interface
-  Status Admin(::grpc::ServerContext* context, const cta::xrd::Request* request, cta::xrd::Response* response);
+  Status Admin(::grpc::ServerContext* context, const cta::xrd::Request* request, cta::xrd::Response* response) final;
 
 private:
   Status processGrpcRequest(const cta::xrd::Request* request, cta::xrd::Response* response, cta::log::LogContext &lc, const cta::common::dataStructures::SecurityIdentity& clientIdentity) const;

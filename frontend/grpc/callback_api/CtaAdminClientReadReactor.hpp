@@ -55,7 +55,7 @@ static std::string DumpProtobuf(const google::protobuf::Message* message) {
 // This is a virtual (maybe not all of its methods) class, each command implementation will inherit from this
 class CtaAdminClientReadReactor : public grpc::ClientReadReactor<cta::xrd::StreamResponse> {
 public:
-  void OnDone(const ::grpc::Status& s) override {
+  void OnDone(const ::grpc::Status& s) final {
     std::unique_lock<std::mutex> l(mu_);
     status_ = s;
     done_ = true;
@@ -68,7 +68,7 @@ public:
     return std::move(status_);
   }
 
-  virtual void OnReadDone(bool ok) override {
+  void OnReadDone(bool ok) final {
     if (ok) {
       if (m_response.has_header() && !m_isJson) {
         switch (m_response.header().type()) {

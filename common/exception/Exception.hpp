@@ -104,7 +104,7 @@ public:
    *
    * @return pointer to m_what's contents
    */
-  virtual const char* what() const noexcept;
+  const char* what() const noexcept override;
 
 private:
   /**

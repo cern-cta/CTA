@@ -25,7 +25,7 @@ class Errnum : public Exception {
 public:
   explicit Errnum(std::string_view what = "");
   Errnum(int err, std::string_view what = "");
-  virtual ~Errnum() = default;
+  ~Errnum() final = default;
 
   int errorNumber() const { return m_errnum; }
 

@@ -40,7 +40,7 @@ public:
    * Get the json string representation of the inherited DiskSystem object
    */
   std::string getJSON() override;
-  virtual ~JSONDiskSystem() = default;
+  ~JSONDiskSystem() final = default;
 };
 
 } // namespace cta::disk
