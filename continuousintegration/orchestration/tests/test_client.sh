@@ -72,7 +72,7 @@ kubectl -n ${NAMESPACE} cp taped_refresh_log_fd.sh "${CTA_TPSRV_POD}:/root/" -c 
 kubectl -n ${NAMESPACE} cp maintd_refresh_log_fd.sh "${CTA_MAINTD_POD}:/root/" -c cta-maintd
 kubectl -n ${NAMESPACE} cp maintd_refresh_config.sh "${CTA_MAINTD_POD}:/root/" -c cta-maintd
 
-NB_FILES=1000
+NB_FILES=10000
 FILE_SIZE_KB=15
 NB_PROCS=20
 
@@ -182,11 +182,11 @@ echo
 echo " Launching client_timestamp.sh on client pod"
 kubectl -n ${NAMESPACE} exec ${CLIENT_POD} -c client -- bash -c "${TEST_PRERUN} && /root/client_timestamp.sh ${TEST_POSTRUN}" || exit 1
 
-# echo
-# echo "Track progress of test"
-# (kubectl -n ${NAMESPACE} exec ${CLIENT_POD} -c client -- bash -c ". /root/client_env && /root/progress_tracker.sh 'archive retrieve evict abort delete'"
-# )&
-# TRACKER_PID=$!
+echo
+echo "Track progress of test"
+(kubectl -n ${NAMESPACE} exec ${CLIENT_POD} -c client -- bash -c ". /root/client_env && /root/progress_tracker.sh 'archive retrieve evict abort delete'"
+)&
+TRACKER_PID=$!
 
 echo
 echo "Launching client_archive.sh on client pod"
@@ -229,12 +229,12 @@ echo " Deleting files:"
 kubectl -n ${NAMESPACE} exec ${CLIENT_POD} -c client -- bash -c "${TEST_PRERUN} && /root/client_delete.sh ${TEST_POSTRUN}" || exit 1
 kubectl -n ${NAMESPACE} exec ${EOS_MGM_POD} -c eos-mgm -- bash /root/grep_xrdlog_mgm_for_error.sh || exit 1
 
-# echo "$(date +%s): Waiting for tracker process to finish. "
-# wait "${TRACKER_PID}"
-# if [[ $? == 1 ]]; then
-#   echo "Some files were lost during tape workflow."
-#  exit 1
-# fi
+echo "$(date +%s): Waiting for tracker process to finish. "
+wait "${TRACKER_PID}"
+if [[ $? == 1 ]]; then
+  echo "Some files were lost during tape workflow."
+ exit 1
+fi
 
 echo
 echo "Launching client_multiple_retrieve.sh on client pod"
