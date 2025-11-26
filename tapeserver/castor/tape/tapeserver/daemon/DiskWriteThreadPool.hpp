@@ -102,7 +102,7 @@ private:
       m_threadID(manager.m_nbActiveThread++),
       m_parentThreadPool(manager),
       m_lc(m_parentThreadPool.m_lc),
-      m_diskFileFactory(manager.m_xrootTimeout, manager.m_striperPool) {
+      m_diskFileFactory(manager.m_xrootTimeout) {
       // This thread id will remain for the rest of the thread's lifetime
       // (and also context's lifetime), so no need for a scoper
       m_lc.pushOrReplace(cta::log::Param("threadID", m_threadID));

@@ -134,7 +134,7 @@ private:
   class DiskReadWorkerThread: private cta::threading::Thread {
   public:
     explicit DiskReadWorkerThread(DiskReadThreadPool& parent) :
-      m_parent(parent),m_threadID(parent.m_nbActiveThread++),m_lc(parent.m_lc), m_diskFileFactory(parent.m_xrootTimeout, parent.m_striperPool) {
+      m_parent(parent),m_threadID(parent.m_nbActiveThread++),m_lc(parent.m_lc), m_diskFileFactory(parent.m_xrootTimeout) {
       cta::log::LogContext::ScopedParam param(m_lc, cta::log::Param("threadID", m_threadID));
       m_lc.log(cta::log::INFO, "DiskReadThread created");
     }

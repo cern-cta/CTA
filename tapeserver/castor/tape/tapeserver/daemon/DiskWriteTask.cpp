@@ -119,9 +119,6 @@ bool DiskWriteTask::execute(RecallReportPacker& reporter, cta::log::LogContext& 
         //A close is done  in WriteFile's destructor, but it may lead to some
         //silent data loss
         currentErrorToCount = "Error_diskCloseAfterWrite";
-        // Set the checksum on the server (actually needed only for Rados striper
-        // noop in other cases).
-        writeFile->setChecksum(checksum);
         writeFile->close();
         m_stats.closingTime +=localTime.secs(cta::utils::Timer::resetCounter);
         m_stats.filesCount++;
