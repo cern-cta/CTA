@@ -63,28 +63,28 @@ static int vmatch(const char* const pattern, const char* const vid) {
 
   for (p = pattern, v = vid; *p; p++, v++) {
     if (*v == 0 && *p != '*') {
-      return (1);
+      return 1;
     }
     switch (*p) {
-      case '?': /* match any single character */
+      case '?': // match any single character
         continue;
       case '*':
         if (*(++p) == 0) {
-          return (0); /* trailing * matches the rest */
+          return 0; // trailing * matches the rest
         }
         while (vmatch(p, v)) {
           if (*(++v) == 0) {
-            return (1);
+            return 1;
           }
         }
-        return (0);
+        return 0;
       default:
         if (*p != *v) {
-          return (1);
+          return 1;
         }
     }
   }
-  return (*v != 0);
+  return *v != 0;
 }
 
 static int get_element_size(const int fd, const char* const rbtdev, const int type) {
@@ -122,9 +122,9 @@ static int get_element_size(const int fd, const char* const rbtdev, const int ty
 
   if (rc < 0) {
     save_error(rc, nb_sense_ret, sense, msgaddr);
-    return (-1);
+    return -1;
   }
-  return (buf[10] * 256 + buf[11]);
+  return buf[10]*256 + buf[11];
 }
 
 static int get_element_info(const char opcode,
@@ -155,30 +155,30 @@ static int get_element_info(const char opcode,
   if (type != 0) {
     element_size = get_element_size(fd, rbtdev, type);
     if (element_size < 0) {
-      return (-1);
+      return -1;
     }
   } else {
     element_size = get_element_size(fd, rbtdev, 1); /* transport */
     if (element_size < 0) {
-      return (-1);
+      return -1;
     }
     i = get_element_size(fd, rbtdev, 2); /* slot */
     if (i < 0) {
-      return (-1);
+      return -1;
     }
     if (i > element_size) {
       element_size = i;
     }
     i = get_element_size(fd, rbtdev, 3); /* port */
     if (i < 0) {
-      return (-1);
+      return -1;
     }
     if (i > element_size) {
       element_size = i;
     }
     i = get_element_size(fd, rbtdev, 4); /* device */
     if (i < 0) {
-      return (-1);
+      return -1;
     }
     if (i > element_size) {
       element_size = i;
@@ -224,7 +224,7 @@ static int get_element_info(const char opcode,
   if (rc < 0) {
     save_error(rc, nb_sense_ret, sense, msgaddr);
     free(data);
-    return (-1);
+    return -1;
   }
   avail_elem = *(data + 2) * 256 + *(data + 3);
   nbReportBytesRemaining = *(data + 5) * 256 * 256 + *(data + 6) * 256 + *(data + 7);
@@ -263,7 +263,7 @@ static int get_element_info(const char opcode,
     }
   }
   free(data);
-  return (nbElementsInReport);
+  return nbElementsInReport;
 }
 
 int smc_get_geometry(const int fd, const char* const rbtdev, struct robot_info* const robot_info) {
@@ -298,7 +298,7 @@ int smc_get_geometry(const int fd, const char* const rbtdev, struct robot_info* 
 
   if (rc < 0) {
     save_error(rc, nb_sense_ret, sense, msgaddr);
-    return (-1);
+    return -1;
   }
   memcpy(robot_info->inquiry, buf + 8, 28);
   robot_info->inquiry[28] = '\0';
@@ -328,7 +328,7 @@ int smc_get_geometry(const int fd, const char* const rbtdev, struct robot_info* 
 
   if (rc < 0) {
     save_error(rc, nb_sense_ret, sense, msgaddr);
-    return (-1);
+    return -1;
   }
   robot_info->transport_start = buf[6] * 256 + buf[7];
   robot_info->transport_count = buf[8] * 256 + buf[9];
@@ -338,7 +338,7 @@ int smc_get_geometry(const int fd, const char* const rbtdev, struct robot_info* 
   robot_info->port_count = buf[16] * 256 + buf[17];
   robot_info->device_start = buf[18] * 256 + buf[19];
   robot_info->device_count = buf[20] * 256 + buf[21];
-  return (0);
+  return 0;
 }
 
 int smc_read_elem_status(const int fd,
@@ -373,11 +373,11 @@ int smc_find_cartridgeWithoutSendVolumeTag(const int fd,
 
   tot_nbelem = robot_info.transport_count + robot_info.slot_count + robot_info.port_count + robot_info.device_count;
 
-  if ((inventory_info = (struct smc_element_info*) malloc(tot_nbelem * sizeof(struct smc_element_info))) == NULL) {
+  if ((inventory_info = (struct smc_element_info*) malloc(tot_nbelem * sizeof(struct smc_element_info))) == nullptr) {
     serrno = errno;
     snprintf(err_msgbuf, ERR_MSG_BUFSZ, "malloc error: %s", strerror(errno));
     msgaddr = err_msgbuf;
-    save_error(-1, 0, NULL, msgaddr);
+    save_error(-1, 0, nullptr, msgaddr);
     return -1;
   }
 
@@ -465,10 +465,10 @@ int smc_find_cartridge(const int fd,
     if (rc == -4 && nb_sense_ret >= 14 && (sense[2] & 0xF) == 5) {
       rc = smc_find_cartridgeWithoutSendVolumeTag(fd, rbtdev, find_template, type, start, nbelem, element_info);
       if (rc >= 0) {
-        return (rc);
+        return rc;
       }
     }
-    return (-1);
+    return -1;
   }
   return get_element_info('\xb5', fd, rbtdev, type, start, nbelem, element_info);
 }
@@ -552,10 +552,10 @@ int smc_lasterror(struct smc_status* const smc_stat, const char** const msgaddr)
   smc_stat->skvalid = smc_status.skvalid;
   *msgaddr = smc_msgaddr;
   if ((smc_status.rc == -1 || smc_status.rc == -2) && smc_status.save_errno == EBUSY) {
-    return (EBUSY);
+    return EBUSY;
   }
   if (!smc_status.skvalid) {
-    return (RBT_NORETRY);
+    return RBT_NORETRY;
   }
   smc_stat->sensekey = smc_status.sensekey;
   smc_stat->asc = smc_status.asc;
@@ -571,13 +571,13 @@ int smc_lasterror(struct smc_status* const smc_stat, const char** const msgaddr)
                 " action_str=%s\n",
                 action_str);
 
-      return (scsierr_acttbl[i].action);
+      return scsierr_acttbl[i].action;
     }
   }
 
   rmc_logit(func, "No matching entry in scsierr_acttbl\n");
 
-  return (RBT_NORETRY);
+  return RBT_NORETRY;
 }
 
 int smc_move_medium(const int fd, const char* const rbtdev, const int from, const int to, const int invert) {
@@ -598,7 +598,7 @@ int smc_move_medium(const int fd, const char* const rbtdev, const int from, cons
   cdb[10] = invert;
 
   while (pause_mode) {
-    rc = rmc_send_scsi_cmd(fd, rbtdev, 0, cdb, 12, NULL, 0, sense, 38, SCSI_NONE, &nb_sense_ret, &msgaddr);
+    rc = rmc_send_scsi_cmd(fd, rbtdev, 0, cdb, 12, nullptr, 0, sense, 38, SCSI_NONE, &nb_sense_ret, &msgaddr);
     if (rc < 0) {
       if (rc == -4 && nb_sense_ret >= 14 && (sense[12] == 0x04) && (sense[13] == -0X7B)) {
         sleep(60);
@@ -614,9 +614,9 @@ int smc_move_medium(const int fd, const char* const rbtdev, const int from, cons
 
   if (rc < 0) {
     save_error(rc, nb_sense_ret, sense, msgaddr);
-    return (-1);
+    return -1;
   }
-  return (0);
+  return 0;
 }
 
 static int rmc_usrmsg(const int rpfd, const char* func, const char* const msg, ...) {
@@ -641,7 +641,7 @@ static int rmc_usrmsg(const int rpfd, const char* func, const char* const msg, .
   rmc_sendrep(rpfd, MSG_ERR, "%s", prtbuf);
   va_end(args);
   errno = save_errno;
-  return (0);
+  return 0;
 }
 
 int smc_dismount(const int rpfd,
@@ -670,11 +670,11 @@ int smc_dismount(const int rpfd,
     if (0 > smc_read_elem_status(fd, loader, 4, robot_info->device_start + drvord, 1, &drive_element_info)) {
       const int smc_error = smc_lasterror(&smc_status, &msgaddr);
       rmc_usrmsg(rpfd, func, SR020, "read_elem_status", msgaddr);
-      return (smc_error);
+      return smc_error;
     }
     if (0 == (drive_element_info.state & 0x1)) {
       rmc_usrmsg(rpfd, func, SR018, "demount", vid, drvord, "Medium Not Present");
-      return (RBT_OK);
+      return RBT_OK;
     }
 
     drive_not_unloaded = (0 == (drive_element_info.state & 0x8));
@@ -690,12 +690,12 @@ int smc_dismount(const int rpfd,
   }
   if (drive_not_unloaded) {
     rmc_usrmsg(rpfd, func, SR018, "demount", vid, drvord, "Drive Not Unloaded");
-    return (RBT_UNLD_DMNT);
+    return RBT_UNLD_DMNT;
   }
 
   if (*vid && strcmp(drive_element_info.name, vid)) {
     rmc_usrmsg(rpfd, func, SR009, vid, drive_element_info.name);
-    return (RBT_NORETRY);
+    return RBT_NORETRY;
   }
   if (0 > smc_move_medium(fd,
                           loader,
@@ -704,7 +704,7 @@ int smc_dismount(const int rpfd,
                           (drive_element_info.flags & 0x40) ? 1 : 0)) {
     const int smc_error = smc_lasterror(&smc_status, &msgaddr);
     rmc_usrmsg(rpfd, func, SR018, "demount", vid, drvord, msgaddr);
-    return (smc_error);
+    return smc_error;
   }
   /* check that the vid is in a slot before returning */
   while (1) {
@@ -712,7 +712,7 @@ int smc_dismount(const int rpfd,
     if (0 > smc_find_cartridge(fd, loader, drive_element_info.name, 0, 0, 1, &vol_element_info, robot_info)) {
       const int smc_error = smc_lasterror(&smc_status, &msgaddr);
       rmc_usrmsg(rpfd, func, SR017, "find_cartridge", drive_element_info.name, msgaddr);
-      return (smc_error);
+      return smc_error;
     }
 
     /* vid is in a storage slot */
@@ -723,7 +723,7 @@ int smc_dismount(const int rpfd,
     sleep(2);
   }
 
-  return (0);
+  return 0;
 }
 
 int smc_export(const int rpfd,
@@ -734,7 +734,7 @@ int smc_export(const int rpfd,
   struct smc_element_info element_info;
   int i = 0;
   struct smc_element_info* impexp_info;
-  const char* msgaddr = NULL;
+  const char* msgaddr = nullptr;
   int nbelem = 0;
   struct smc_status smc_status;
   const char* const func = "smc_export";
@@ -744,23 +744,23 @@ int smc_export(const int rpfd,
     if (0 > smc_find_cartridge_rc) {
       const int smc_lasterror_rc = smc_lasterror(&smc_status, &msgaddr);
       rmc_usrmsg(rpfd, func, SR017, "find_cartridge", vid, msgaddr);
-      return (smc_lasterror_rc);
+      return smc_lasterror_rc;
     }
     if (0 == smc_find_cartridge_rc) {
       rmc_usrmsg(rpfd, func, SR017, "export", vid, "volume not in library");
-      return (RBT_NORETRY);
+      return RBT_NORETRY;
     }
   }
   if (element_info.element_type != 2) {
     rmc_usrmsg(rpfd, func, SR017, "export", vid, "volume in use");
-    return (RBT_SLOW_RETRY);
+    return RBT_SLOW_RETRY;
   }
   /* look for a free export slot */
 
   nbelem = robot_info->port_count;
-  if ((impexp_info = (struct smc_element_info*) malloc(nbelem * sizeof(struct smc_element_info))) == NULL) {
+  if ((impexp_info = (struct smc_element_info*) malloc(nbelem * sizeof(struct smc_element_info))) == nullptr) {
     rmc_usrmsg(rpfd, func, SR012);
-    return (RBT_NORETRY);
+    return RBT_NORETRY;
   }
 
   {
@@ -770,7 +770,7 @@ int smc_export(const int rpfd,
       const int smc_lasterror_rc = smc_lasterror(&smc_status, &msgaddr);
       rmc_usrmsg(rpfd, func, SR020, "read_elem_status", msgaddr);
       free(impexp_info);
-      return (smc_lasterror_rc);
+      return smc_lasterror_rc;
     }
     for (i = 0; i < nbElementsInReport; i++) {
       if (((impexp_info + i)->state & 0x1) == 0) {
@@ -781,7 +781,7 @@ int smc_export(const int rpfd,
     if (!foundAFreeExportSlot) {
       rmc_usrmsg(rpfd, func, SR013);
       free(impexp_info);
-      return (RBT_NORETRY);
+      return RBT_NORETRY;
     }
   }
 
@@ -792,12 +792,12 @@ int smc_export(const int rpfd,
       const int smc_lasterror_rc = smc_lasterror(&smc_status, &msgaddr);
       rmc_usrmsg(rpfd, func, SR017, "export", vid, msgaddr);
       free(impexp_info);
-      return (smc_lasterror_rc);
+      return smc_lasterror_rc;
     }
   }
 
   free(impexp_info);
-  return (0);
+  return 0;
 }
 
 int smc_import(const int rpfd,
@@ -817,9 +817,9 @@ int smc_import(const int rpfd,
   const char* const func = "smc_import";
 
   nbelem = robot_info->transport_count + robot_info->slot_count + robot_info->port_count + robot_info->device_count;
-  if ((element_info = (struct smc_element_info*) malloc(nbelem * sizeof(struct smc_element_info))) == NULL) {
+  if ((element_info = (struct smc_element_info*) malloc(nbelem * sizeof(struct smc_element_info))) == nullptr) {
     rmc_usrmsg(rpfd, func, SR012);
-    return (RBT_NORETRY);
+    return RBT_NORETRY;
   }
 
   /* get inventory */
@@ -828,7 +828,7 @@ int smc_import(const int rpfd,
     c = smc_lasterror(&smc_status, &msgaddr);
     rmc_usrmsg(rpfd, func, SR020, "read_elem_status", msgaddr);
     free(element_info);
-    return (c);
+    return c;
   }
   for (i = 0; i < c; i++) {
     if ((element_info + i)->element_type == 2) {
@@ -880,7 +880,7 @@ int smc_import(const int rpfd,
       if (j >= slot_start + robot_info->slot_count) {
         rmc_usrmsg(rpfd, func, SR015);
         free(element_info);
-        return (RBT_NORETRY);
+        return RBT_NORETRY;
       }
 
       if ((c =
@@ -889,7 +889,7 @@ int smc_import(const int rpfd,
         c = smc_lasterror(&smc_status, &msgaddr);
         rmc_usrmsg(rpfd, func, SR017, "import", (element_info + i)->name, msgaddr);
         free(element_info);
-        return (c);
+        return c;
       }
       if (*vid || c) {
         break;
@@ -898,7 +898,7 @@ int smc_import(const int rpfd,
     }
   }
   free(element_info);
-  return (c);
+  return c;
 }
 
 int smc_mount(const int rpfd,
@@ -917,11 +917,11 @@ int smc_mount(const int rpfd,
   if ((c = smc_find_cartridge(fd, loader, vid, 0, 0, 1, &element_info, robot_info)) < 0) {
     c = smc_lasterror(&smc_status, &msgaddr);
     rmc_usrmsg(rpfd, func, SR017, "find_cartridge", vid, msgaddr);
-    return (c);
+    return c;
   }
   if (c == 0) {
     rmc_usrmsg(rpfd, func, SR018, "mount", vid, drvord, "volume not in library");
-    return (RBT_NORETRY);
+    return RBT_NORETRY;
   }
   if (element_info.element_type != 2) {
     /* compare requested and replied vid   */
@@ -946,12 +946,12 @@ int smc_mount(const int rpfd,
     }
 
     rmc_usrmsg(rpfd, func, SR018, "mount", vid, drvord, "volume in use");
-    return (RBT_SLOW_RETRY);
+    return RBT_SLOW_RETRY;
   }
   if ((c = smc_move_medium(fd, loader, element_info.element_address, robot_info->device_start + drvord, invert)) < 0) {
     c = smc_lasterror(&smc_status, &msgaddr);
     rmc_usrmsg(rpfd, func, SR018, "mount", vid, drvord, msgaddr);
-    return (c);
+    return c;
   }
-  return (0);
+  return 0;
 }

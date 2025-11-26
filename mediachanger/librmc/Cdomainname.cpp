@@ -43,9 +43,9 @@ int Cdomainname(char* name, int namelen) {
 	 * calls to gethostbyname, and therefore DNS lookups. This helps
 	 * those on dialup systems.
 	 */
-  if ((fd = fopen("/etc/resolv.conf", "r")) != NULL) {
+  if ((fd = fopen("/etc/resolv.conf", "r")) != nullptr) {
     char line[300];
-    while (fgets(line, sizeof(line), fd) != NULL) {
+    while (fgets(line, sizeof(line), fd) != nullptr) {
       if ((strncmp(line, "domain", 6) == 0 || strncmp(line, "search", 6) == 0) && line[6] == ' ') {
         fclose(fd);
         p = line + 6;
@@ -71,7 +71,7 @@ int Cdomainname(char* name, int namelen) {
 
   gethostname(hostname, CA_MAXHOSTNAMELEN + 1);
 
-  if ((hp = Cgethostbyname(hostname)) != NULL) {
+  if ((hp = Cgethostbyname(hostname)) != nullptr) {
     struct in_addr* haddrarray;
     struct in_addr** haddrlist;
     struct hostent* hp2;
@@ -85,9 +85,9 @@ int Cdomainname(char* name, int namelen) {
       naddr++;
       haddrlist++;
     }
-    if ((haddrarray = (struct in_addr*) malloc(naddr * sizeof(struct in_addr))) == NULL) {
+    if ((haddrarray = (struct in_addr*) malloc(naddr * sizeof(struct in_addr))) == nullptr) {
       serrno = ENOMEM;
-      return (-1);
+      return -1;
     }
     haddrlist = (struct in_addr**) hp->h_addr_list;
     for (i = 0; i < naddr; i++) {
@@ -96,9 +96,9 @@ int Cdomainname(char* name, int namelen) {
     }
 
     for (i = 0; i < naddr; i++) {
-      if ((hp2 = Cgethostbyaddr(haddrarray + i, sizeof(struct in_addr), AF_INET)) != NULL) {
+      if ((hp2 = Cgethostbyaddr(haddrarray + i, sizeof(struct in_addr), AF_INET)) != nullptr) {
         char** hal;
-        if ((p = strchr(hp2->h_name, '.')) != NULL) {
+        if ((p = strchr(hp2->h_name, '.')) != nullptr) {
           free(haddrarray);
           p++;
           name[namelen] = '\0';
@@ -114,7 +114,7 @@ int Cdomainname(char* name, int namelen) {
 
         hal = hp2->h_aliases;
         while (*hal) {
-          if ((p = strchr(*hal, '.')) != NULL) {
+          if ((p = strchr(*hal, '.')) != nullptr) {
             free(haddrarray);
             p++;
             name[namelen - 1] = '\0';
@@ -132,5 +132,5 @@ int Cdomainname(char* name, int namelen) {
     free(haddrarray);
   }
   serrno = SEINTERNAL;
-  return (-1);
+  return -1;
 }

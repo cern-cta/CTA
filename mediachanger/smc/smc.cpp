@@ -39,7 +39,7 @@
 extern char* optarg;
 
 static void smc_str_upper(char* const s) {
-  char* c = NULL;
+  char* c = nullptr;
 
   for (c = s; *c; c++) {
     *c = toupper(*c);
@@ -142,13 +142,13 @@ static int smc_qdrive(const char* const rmchost,
   } else {
     nbelem = 1;
   }
-  if ((element_info = reinterpret_cast<smc_element_info*>(malloc(nbelem * sizeof(struct smc_element_info)))) == NULL) {
+  if ((element_info = reinterpret_cast<smc_element_info*>(malloc(nbelem * sizeof(struct smc_element_info)))) == nullptr) {
     fprintf(stderr, SR012);
-    return (USERR);
+    return USERR;
   }
   if ((c = rmc_read_elem_status(rmchost, 4, robot_info->device_start + drvord, nbelem, element_info)) < 0) {
     free(element_info);
-    return (c);
+    return c;
   }
   if (is_library_spectra_like(robot_info)) {
     useSpectraLib = 1;
@@ -159,7 +159,7 @@ static int smc_qdrive(const char* const rmchost,
     smc_qdrive_humanPrint(robot_info, element_info, c, useSpectraLib);
   }
   free(element_info);
-  return (0);
+  return 0;
 }
 
 void smc_qlib_humanPrint(const struct robot_info* const robot_info) {
@@ -195,7 +195,7 @@ static int smc_qlib(const struct robot_info* const robot_info, const int isJsonE
   } else {
     smc_qlib_humanPrint(robot_info);
   }
-  return (0);
+  return 0;
 }
 
 void smc_qport_humanPrint(const struct smc_element_info* const element_info, const int numberOfElements) {
@@ -246,14 +246,14 @@ smc_qport(const char* const rmchost, const int fd, const struct robot_info* cons
   int nbelem;
 
   nbelem = robot_info->port_count;
-  if ((element_info = reinterpret_cast<smc_element_info*>(malloc(nbelem * sizeof(struct smc_element_info)))) == NULL) {
+  if ((element_info = reinterpret_cast<smc_element_info*>(malloc(nbelem * sizeof(struct smc_element_info)))) == nullptr) {
     fprintf(stderr, SR012);
-    return (USERR);
+    return USERR;
   }
 
   if ((c = rmc_read_elem_status(rmchost, 3, robot_info->port_start, nbelem, element_info)) < 0) {
     free(element_info);
-    return (serrno - ERMCRBTERR);
+    return serrno-ERMCRBTERR;
   }
   if (isJsonEnabled) {
     smc_qport_jsonPrint(element_info, c);
@@ -261,7 +261,7 @@ smc_qport(const char* const rmchost, const int fd, const struct robot_info* cons
     smc_qport_humanPrint(element_info, c);
   }
   free(element_info);
-  return (0);
+  return 0;
 }
 
 void smc_qslot_humanPrint(const struct smc_element_info* element_info, const int numberOfElements) {
@@ -306,14 +306,14 @@ static int smc_qslot(const char* const rmchost,
   if (slotaddr < 0) {
     slotaddr = 0;
   }
-  if ((element_info = reinterpret_cast<smc_element_info*>(malloc(nbelem * sizeof(struct smc_element_info)))) == NULL) {
+  if ((element_info = reinterpret_cast<smc_element_info*>(malloc(nbelem * sizeof(struct smc_element_info)))) == nullptr) {
     fprintf(stderr, SR012);
-    return (USERR);
+    return USERR;
   }
 
   if ((c = rmc_read_elem_status(rmchost, 2, slotaddr, nbelem, element_info)) < 0) {
     free(element_info);
-    return (serrno - ERMCRBTERR);
+    return serrno-ERMCRBTERR;
   }
   if (isJsonEnabled) {
     smc_qslot_jsonPrint(element_info, c);
@@ -321,7 +321,7 @@ static int smc_qslot(const char* const rmchost,
     smc_qslot_humanPrint(element_info, c);
   }
   free(element_info);
-  return (0);
+  return 0;
 }
 
 void smc_qvid_humanPrint(const struct smc_element_info* const element_info, const int numberOfElements) {
@@ -391,14 +391,14 @@ static int smc_qvid(const char* const rmchost,
       nbelem = 1;
     }
   }
-  if ((element_info = reinterpret_cast<smc_element_info*>(malloc(nbelem * sizeof(struct smc_element_info)))) == NULL) {
+  if ((element_info = reinterpret_cast<smc_element_info*>(malloc(nbelem * sizeof(struct smc_element_info)))) == nullptr) {
     fprintf(stderr, SR012);
-    return (USERR);
+    return USERR;
   }
 
   if ((c = rmc_find_cartridge(rmchost, vid, 0, 0, nbelem, element_info)) < 0) {
     free(element_info);
-    return (serrno - ERMCRBTERR);
+    return serrno-ERMCRBTERR;
   }
   if (isJsonEnabled) {
     smc_qvid_jsonPrint(element_info, c);
@@ -406,7 +406,7 @@ static int smc_qvid(const char* const rmchost,
     smc_qvid_humanPrint(element_info, c);
   }
   free(element_info);
-  return (0);
+  return 0;
 }
 
 int main(const int argc, char** argv) {
@@ -427,20 +427,20 @@ int main(const int argc, char** argv) {
 
   /* parse and check command options */
   struct option longopts[] = {
-    {"drive",    required_argument, NULL, 'D'},
-    {"dismount", no_argument,       NULL, 'd'},
-    {"export",   no_argument,       NULL, 'e'},
-    {"import",   no_argument,       NULL, 'i'},
-    {"mount",    no_argument,       NULL, 'm'},
-    {"nbelem",   required_argument, NULL, 'N'},
-    {"query",    required_argument, NULL, 'q'},
-    {"slot",     required_argument, NULL, 'S'},
-    {"vid",      required_argument, NULL, 'V'},
-    {"json",     no_argument,       NULL, 'j'},
-    {NULL,       0,                 NULL, 0  }
+    {"drive",    required_argument, nullptr, 'D'},
+    {"dismount", no_argument,       nullptr, 'd'},
+    {"export",   no_argument,       nullptr, 'e'},
+    {"import",   no_argument,       nullptr, 'i'},
+    {"mount",    no_argument,       nullptr, 'm'},
+    {"nbelem",   required_argument, nullptr, 'N'},
+    {"query",    required_argument, nullptr, 'q'},
+    {"slot",     required_argument, nullptr, 'S'},
+    {"vid",      required_argument, nullptr, 'V'},
+    {"json",     no_argument,       nullptr, 'j'},
+    {nullptr,    0,                 nullptr, 0  }
   };
   memset(vid, '\0', sizeof(vid));
-  while ((c = getopt_long(argc, argv, "D:deimN:q:S:V:j", longopts, NULL)) != EOF) {
+  while ((c = getopt_long(argc, argv, "D:deimN:q:S:V:j", longopts, nullptr)) != EOF) {
     switch (c) {
       case 'D': /* drive ordinal */
         drvord = strtol(optarg, &dp, 10);

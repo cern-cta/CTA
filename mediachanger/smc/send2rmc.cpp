@@ -67,17 +67,17 @@ int send2rmc(const char* const host,
     gethostname(rmchost, CA_MAXHOSTNAMELEN + 1);
     serrno = 0;
   }
-  if ((hp = Cgethostbyname(rmchost)) == NULL) {
+  if ((hp = Cgethostbyname(rmchost)) == nullptr) {
     rmc_errmsg(func, RMC09, "Host unknown:", rmchost);
     serrno = ERMCUNREC;
-    return (-1);
+    return -1;
   }
   sin.sin_addr.s_addr = ((struct in_addr*) (hp->h_addr))->s_addr;
 
   if ((s = socket(AF_INET, SOCK_STREAM, 0)) < 0) {
     rmc_errmsg(func, RMC02, "socket", neterror());
     serrno = SECOMERR;
-    return (-1);
+    return -1;
   }
 
   if (connect(s, (struct sockaddr*) &sin, sizeof(sin)) < 0) {
@@ -85,12 +85,12 @@ int send2rmc(const char* const host,
       rmc_errmsg(func, RMC00, rmchost);
       (void) close(s);
       serrno = ERMCNACT;
-      return (-1);
+      return -1;
     } else {
       rmc_errmsg(func, RMC02, "connect", neterror());
       (void) close(s);
       serrno = SECOMERR;
-      return (-1);
+      return -1;
     }
   }
 
@@ -104,12 +104,12 @@ int send2rmc(const char* const host,
     }
     (void) close(s);
     serrno = SECOMERR;
-    return (-1);
+    return -1;
   }
 
-  if (user_repbuf == NULL) { /* does not want a reply */
+  if (user_repbuf == nullptr) { /* does not want a reply */
     (void) close(s);
-    return (0);
+    return 0;
   }
 
   /* get reply */
@@ -123,7 +123,7 @@ int send2rmc(const char* const host,
       }
       (void) close(s);
       serrno = SECOMERR;
-      return (-1);
+      return -1;
     }
     p = repbuf;
     unmarshall_LONG(p, magic);
@@ -145,12 +145,12 @@ int send2rmc(const char* const host,
       }
       (void) close(s);
       serrno = SECOMERR;
-      return (-1);
+      return -1;
     }
     p = repbuf;
     if (rep_type == MSG_ERR) {
       unmarshall_STRING(p, prtbuf);
-      rmc_errmsg(NULL, "%s", prtbuf);
+      rmc_errmsg(nullptr, "%s", prtbuf);
     } else {
       if (actual_replen + c <= user_repbuf_len) {
         n = c;
@@ -163,5 +163,5 @@ int send2rmc(const char* const host,
       }
     }
   }
-  return (c);
+  return c;
 }

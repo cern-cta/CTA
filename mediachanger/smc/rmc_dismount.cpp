@@ -62,5 +62,5 @@ int rmc_dismount(const char* const server, const char* const vid, const int drvo
   while ((c = send2rmc(server, sendbuf, msglen, repbuf, sizeof(repbuf))) && serrno == ERMCNACT) {
     sleep(RMC_RETRYI);
   }
-  return (c);
+  return c;
 }
