@@ -7,3 +7,4 @@ In RetrieveRequest::garbageCollect() [queue cleanup]: No VID available to requeu
 End of recall session with error(s)
 In RetrieveMount::releaseDiskSpace(): reservation release request failed, driveName, diskSystem and mountId do not match.
 In OStoreDB::RepackArchiveReportBatch::report(): async job update failed.
+In Agent::deleteAndUnregisterSelf: agent still owns objects. Here is a part of the list.
