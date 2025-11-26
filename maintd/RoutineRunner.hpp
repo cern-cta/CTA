@@ -45,6 +45,8 @@ public:
   void run(cta::log::LogContext& lc);
 
 private:
+  void safeRunRoutine(IRoutine& routine, cta::log::LogContext& lc);
+
   std::vector<std::unique_ptr<IRoutine>> m_routines;
   std::atomic<bool> m_stopRequested;
 
