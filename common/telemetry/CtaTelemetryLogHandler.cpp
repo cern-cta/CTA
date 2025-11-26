@@ -15,8 +15,13 @@
  *               submit itself to any jurisdiction.
  */
 
+#include <variant>
+#include <opentelemetry/sdk/common/attribute_utils.h>
+
 #include "CtaTelemetryLogHandler.hpp"
 #include "common/log/Constants.hpp"
+#include "common/log/Logger.hpp"
+#include "common/log/LogContext.hpp"
 
 namespace cta::telemetry {
 
@@ -24,7 +29,7 @@ int toSyslogLevel(opentelemetry::sdk::common::internal_log::LogLevel level) noex
   switch (level) {
     using enum opentelemetry::sdk::common::internal_log::LogLevel;
     case Error:
-      return cta::log::WARNING; // Telemetry errors do not affect the service, so we emit them as warnings
+      return cta::log::WARNING;  // Telemetry errors do not affect the service, so we emit them as warnings
     case Warning:
       return cta::log::WARNING;
     case Info:
@@ -37,6 +42,13 @@ int toSyslogLevel(opentelemetry::sdk::common::internal_log::LogLevel level) noex
   }
 }
 
+// All scalar types of OwnedAttributeValue
+// See: https://github.com/open-telemetry/opentelemetry-cpp/blob/main/sdk/include/opentelemetry/sdk/common/attribute_utils.h#L36
+template<typename T>
+constexpr bool is_supported_scalar_v =
+  std::is_same_v<T, bool> || std::is_same_v<T, int32_t> || std::is_same_v<T, uint32_t> || std::is_same_v<T, int64_t> ||
+  std::is_same_v<T, uint64_t> || std::is_same_v<T, double> || std::is_same_v<T, std::string>;
+
 CtaTelemetryLogHandler::CtaTelemetryLogHandler(log::Logger& log) : m_log(log) {}
 
 CtaTelemetryLogHandler::~CtaTelemetryLogHandler() = default;
@@ -46,8 +58,22 @@ void CtaTelemetryLogHandler::Handle(opentelemetry::sdk::common::internal_log::Lo
                                     int line,
                                     const char* msg,
                                     const opentelemetry::sdk::common::AttributeMap& attributes) noexcept {
-  // We ignore the file, line numbers and attributes as they just add unnecessary noise
-  m_log(toSyslogLevel(level), msg);
+  cta::log::LogContext lc(m_log);
+  cta::log::ScopedParamContainer params(lc);
+  params.add("otlpMessage", msg);
+  const auto& attrs = attributes.GetAttributes();
+  for (const auto& [key, ownedAttribute] : attrs) {
+    std::visit(
+      [&](auto&& val) {
+        if constexpr (is_supported_scalar_v<std::decay_t<decltype(val)>>) {
+          params.add(key, val);
+        } else {
+          params.add(key, "<unsupported nested value>");
+        }
+      },
+      ownedAttribute);
+  }
+  lc.log(toSyslogLevel(level), "OTLP " + opentelemetry::sdk::common::internal_log::LevelToString(level));
 }
 
 }  // namespace cta::telemetry
