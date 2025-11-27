@@ -741,10 +741,10 @@ TEST_P(SchedulerTest, archive_report_and_retrieve_new_file_no_report) {
   }
 
   {
-    /* 
+    /*
      * Emulate the reporter process: if request.retrieveReportURL is not set
      * the number of reporting jobs shuld be eq 0
-     */ 
+     */
     auto jobsToReport = scheduler.getNextRetrieveJobsToReportBatch(10, lc);
     ASSERT_EQ(0, jobsToReport.size());
     disk::DiskReporterFactory factory;
@@ -2385,8 +2385,8 @@ TEST_P(SchedulerTest, repack) {
   log::DummyLogger dl("", "");
   log::LogContext lc(dl);
 
-  typedef cta::common::dataStructures::RepackInfo RepackInfo;
-  typedef cta::common::dataStructures::RepackInfo::Status Status;
+  using RepackInfo = cta::common::dataStructures::RepackInfo;
+  using Status = cta::common::dataStructures::RepackInfo::Status;
 
    // Create the environment for the migration to happen (library + tape)
   const std::string libraryComment = "Library comment";
@@ -7021,7 +7021,7 @@ TEST_P(SchedulerTest, toTransfereRetrieveQueueMissingReservationInfo)
 
   auto &schedulerDB = getSchedulerDB();
   auto &catalogue = getCatalogue();
-  
+
   Backend &backend = schedulerDB.getBackend();
   //Create a RetrieveQueue with the vid s_vid
   cta::objectstore::AgentReference agentReference("ttrqMissingReservationInfo", dl);
@@ -7475,7 +7475,7 @@ TEST_P(SchedulerTest, getNextMountWithArchiveForUserAndArchiveForRepackShouldRet
   ASSERT_FALSE(scheduler.getNextMountDryRun(s_libraryName,drive2,lc));
 }
 
-// Next two tests were added after the Issue 470, https://gitlab.cern.ch/cta/CTA/-/issues/470 
+// Next two tests were added after the Issue 470, https://gitlab.cern.ch/cta/CTA/-/issues/470
 TEST_P(SchedulerTest, testCleaningUpKeepingTapePoolName) {
   using namespace cta;
 
@@ -7524,7 +7524,7 @@ TEST_P(SchedulerTest, testCleaningUpKeepingTapePoolName) {
   ASSERT_NO_THROW(scheduler.getNextMount(s_libraryName, driveName, lc));
 }
 
-// Issue 470, https://gitlab.cern.ch/cta/CTA/-/issues/470 
+// Issue 470, https://gitlab.cern.ch/cta/CTA/-/issues/470
 TEST_P(SchedulerTest, testCleaningUpWithoutTapePoolName) {
   using namespace cta;
 
@@ -7563,11 +7563,11 @@ TEST_P(SchedulerTest, testCleaningUpWithoutTapePoolName) {
   const std::string driveName = "tape_drive";
   catalogue.Tape()->tapeLabelled(s_vid, driveName);
 
-  // Now it doesn't throw an exception, ISSUE 494 Workaround for scheduler crashing 
+  // Now it doesn't throw an exception, ISSUE 494 Workaround for scheduler crashing
   ASSERT_NO_THROW(scheduler.getNextMount(s_libraryName, driveName, lc));
 }
 
-// Next two tests were added after the Issue 470, https://gitlab.cern.ch/cta/CTA/-/issues/470 
+// Next two tests were added after the Issue 470, https://gitlab.cern.ch/cta/CTA/-/issues/470
 TEST_P(SchedulerTest, testShutdownKeepingTapePoolName) {
   using namespace cta;
 
@@ -7673,7 +7673,7 @@ TEST_P(SchedulerTestTriggerTapeStateChangeBehaviour, triggerTapeStateChangeValid
    cta::objectstore::Agent auxAgent(ar.getAgentAddress(), getSchedulerDB().getBackend());
    auxAgent.initialize();
    auxAgent.insertAndRegisterSelf(lc);
- 
+
   cta::objectstore::Helpers::getLockedAndFetchedJobQueue(rq, rql, ar, tape.vid, common::dataStructures::JobQueueType::JobsToTransferForUser, lc);
   ASSERT_EQ(rq.getQueueCleanupDoCleanup(), triggerTapeStateChangeBehaviour.cleanupFlagActivated);
 }

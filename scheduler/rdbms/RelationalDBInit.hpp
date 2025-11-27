@@ -127,7 +127,7 @@ private:
   rdbms::Login login;
 };
 
-typedef RelationalDBInit SchedulerDBInit_t;
-typedef RelationalDB SchedulerDB_t;
+using SchedulerDBInit_t = RelationalDBInit;
+using SchedulerDB_t = RelationalDB;
 
 }  // namespace cta

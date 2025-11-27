@@ -45,10 +45,10 @@ struct ContainerTraits<RetrieveQueue,C>
     cta::common::dataStructures::MountPolicy policy;
     std::optional<std::string> activity;
     std::optional<std::string> diskSystemName;
-    typedef std::list<InsertedElement> list;
+    using list = std::list<InsertedElement>;
   };
 
-  typedef RetrieveRequest::JobDump ElementDescriptor;
+  using ElementDescriptor = RetrieveRequest::JobDump;
 
   struct PoppedElement {
     std::unique_ptr<RetrieveRequest> retrieveRequest;
@@ -97,14 +97,14 @@ struct ContainerTraits<RetrieveQueue,C>
     void addToLog(log::ScopedParamContainer&) const;
   };
 
-  typedef RetrieveQueue                               Container;
-  typedef std::string                                 ContainerAddress;
-  typedef std::string                                 ElementAddress;
-  typedef std::string                                 ContainerIdentifier;
-  typedef std::list<std::unique_ptr<InsertedElement>> ElementMemoryContainer;
-  typedef std::list<ElementDescriptor>                ElementDescriptorContainer;
-  typedef std::set<ElementAddress>                    ElementsToSkipSet;
-  typedef serializers::RetrieveJobStatus              ElementStatus;
+  using Container = RetrieveQueue;
+  using ContainerAddress = std::string;
+  using ElementAddress = std::string;
+  using ContainerIdentifier = std::string;
+  using ElementMemoryContainer = std::list<std::unique_ptr<InsertedElement;
+  using ElementDescriptorContainer = std::list<ElementDescriptor>;
+  using ElementsToSkipSet = std::set<ElementAddress>;
+  using ElementStatus = serializers::RetrieveJobStatus;
 
   CTA_GENERATE_EXCEPTION_CLASS(NoSuchContainer);
 
@@ -112,7 +112,7 @@ struct ContainerTraits<RetrieveQueue,C>
   struct OpFailure {
     Element *element = nullptr;
     std::exception_ptr failure;
-    typedef std::list<OpFailure> list;
+    using list = std::list<OpFailure>;
 
     OpFailure() = default;
     OpFailure(Element *e, const std::exception_ptr &f) : element(e), failure(f) {}

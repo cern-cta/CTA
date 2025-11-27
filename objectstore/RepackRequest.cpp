@@ -105,7 +105,7 @@ void RepackRequest::setVid(const std::string& vid) {
 //------------------------------------------------------------------------------
 void RepackRequest::setType(common::dataStructures::RepackInfo::Type repackType) {
   checkPayloadWritable();
-  typedef common::dataStructures::RepackInfo::Type RepackType;
+  using RepackType = common::dataStructures::RepackInfo::Type;
   switch (repackType) {
   case RepackType::MoveAndAddCopies:
     // Nothing to do, this is the default case.
@@ -139,7 +139,7 @@ void RepackRequest::setStatus(common::dataStructures::RepackInfo::Status repackS
 //------------------------------------------------------------------------------
 common::dataStructures::RepackInfo RepackRequest::getInfo() {
   checkPayloadReadable();
-  typedef common::dataStructures::RepackInfo RepackInfo;
+  using RepackInfo = common::dataStructures::RepackInfo;
   RepackInfo ret;
   ret.vid = m_payload.vid();
   ret.status = (RepackInfo::Status) m_payload.status();
@@ -819,7 +819,7 @@ RepackRequest::AsyncOwnerAndStatusUpdater* RepackRequest::asyncUpdateOwnerAndSta
       }
       // We only need to modify the pay load if there is a status change.
       if (newStatus) payload.set_status(newStatus.value());
-      typedef common::dataStructures::RepackInfo RepackInfo;
+      using RepackInfo = common::dataStructures::RepackInfo;
       retRef.m_repackInfo.status = (RepackInfo::Status) payload.status();
       retRef.m_repackInfo.vid = payload.vid();
       retRef.m_repackInfo.repackBufferBaseURL = payload.buffer_url();

@@ -30,7 +30,7 @@
 #include "serrno.hpp"
 
 /* Signal handler - Simplify the POSIX sigaction calls */
-typedef void Sigfunc(int);
+using Sigfunc = void(int);
 
 int _net_readable(int, int);
 int _net_writable(int, int);

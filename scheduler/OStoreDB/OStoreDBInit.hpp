@@ -77,7 +77,7 @@ private:
       aht->stopAndWaitThread();
     }
   };
-  typedef std::unique_ptr<objectstore::AgentHeartbeatThread, AgentHeartbeatThreadDeleter> UniquePtrAgentHeartbeatThread;
+  using UniquePtrAgentHeartbeatThread = std::unique_ptr<objectstore::AgentHeartbeatThread, AgentHeartbeatThreadDeleter>;
 
   // Member variables
 
@@ -86,7 +86,7 @@ private:
   UniquePtrAgentHeartbeatThread                  m_agentHeartbeat;      //!< Agent heartbeat thread
 };
 
-typedef OStoreDBInit      SchedulerDBInit_t;
-typedef OStoreDBWithAgent SchedulerDB_t;
+using SchedulerDBInit_t = OStoreDBInit;
+using SchedulerDB_t = OStoreDBWithAgent;
 
 } // namespace cta

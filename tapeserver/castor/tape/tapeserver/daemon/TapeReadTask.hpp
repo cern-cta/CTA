@@ -277,7 +277,7 @@ private:
   std::unique_ptr<tapeFile::FileReader>
   openFileReader(tapeFile::ReadSession& session, cta::log::LogContext& lc) {
     using cta::log::Param;
-    typedef cta::log::LogContext::ScopedParam ScopedParam;
+    using ScopedParam = cta::log::LogContext::ScopedParam;
 
     std::unique_ptr<castor::tape::tapeFile::FileReader> reader;
     try {

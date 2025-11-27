@@ -46,7 +46,7 @@ void RequestCallback<cta::xrd::Alert>::operator()(const cta::xrd::Alert &alert)
 } // namespace XrdSsiPb
 
 // Attribute map type
-typedef std::map<std::string, std::string> AttrMap;
+using AttrMap = std::map<std::string, std::string>;
 
 // Usage exception
 const std::runtime_error Usage("Usage: eos --json fileinfo /eos/path | cta-send-event CLOSEW|PREPARE "

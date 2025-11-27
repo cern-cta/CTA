@@ -267,7 +267,7 @@ std::string ImmutableFileTest::openFlagsToString(XrdCl::OpenFlags::Flags flags) 
     return "None";
   }
 
-  typedef std::pair<XrdCl::OpenFlags::Flags, std::string> FlagAndName;
+  using FlagAndName = std::pair<XrdCl::OpenFlags::Flags, std::string>;
   std::list<FlagAndName> allFlags;
   allFlags.emplace_back(XrdCl::OpenFlags::Compress, "Compress");
   allFlags.emplace_back(XrdCl::OpenFlags::Delete, "Delete");
@@ -319,7 +319,7 @@ std::string ImmutableFileTest::openModeToString(XrdCl::Access::Mode mode) {
     return "None";
   }
 
-  typedef std::pair<XrdCl::Access::Mode, std::string> ModeAndName;
+  using ModeAndName = std::pair<XrdCl::Access::Mode, std::string>;
   std::list<ModeAndName> allModes;
   allModes.emplace_back(XrdCl::Access::UR, "UR");
   allModes.emplace_back(XrdCl::Access::UW, "UW");

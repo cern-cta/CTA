@@ -518,7 +518,7 @@ namespace cta::schedulerdb {
   }
 
   void RepackRequest::setType(common::dataStructures::RepackInfo::Type repackType) {
-    typedef common::dataStructures::RepackInfo::Type RepackType;
+    using RepackType = common::dataStructures::RepackInfo::Type;
     switch (repackType) {
       case RepackType::MoveAndAddCopies:
         // Nothing to do, this is the default case.

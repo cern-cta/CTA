@@ -435,7 +435,7 @@ void MemQueue<Request, Queue>::add(std::shared_ptr<MemQueueRequest<Request, Queu
   m_requests.emplace_back(request);
 }
 
-typedef MemQueue<objectstore::ArchiveRequest, objectstore::ArchiveQueue> MemArchiveQueue;
-typedef MemQueue<objectstore::RetrieveRequest, objectstore::RetrieveQueue> MemRetrieveQueue;
+using MemArchiveQueue = MemQueue<objectstore::ArchiveRequest, objectstore::ArchiveQueue>;
+using MemRetrieveQueue = MemQueue<objectstore::RetrieveRequest, objectstore::RetrieveQueue>;
 
 }} // namespace cta::ostoredb

@@ -77,7 +77,7 @@ private:
   std::unique_ptr<FilePositionEstimator> m_filePositionEstimator;
   std::unique_ptr<CostHeuristic> m_costHeuristic;
 
-  typedef std::map<uint64_t,RAOFile> RAOFilesContainer;
+  using RAOFilesContainer = std::map<uint64_t,RAOFile>;
 
   RAOFilesContainer computeAllFilesPosition(const std::vector<std::unique_ptr<cta::RetrieveJob> > & jobs) const;
   void computeCostBetweenFileAndOthers(RAOFile & file, const RAOFilesContainer & files) const;

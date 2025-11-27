@@ -35,7 +35,7 @@ Sorter::Sorter(AgentReference& agentReference, Backend& objectstore, catalogue::
 template <typename SpecificQueue>
 void Sorter::executeArchiveAlgorithm(const std::string& tapePool, std::string& queueAddress,
   std::list<std::shared_ptr<ArchiveJobQueueInfo>>& jobs, log::LogContext& lc) {
-  typedef ContainerAlgorithms<ArchiveQueue, SpecificQueue> Algo;
+  using Algo = ContainerAlgorithms<ArchiveQueue, SpecificQueue>;
   Algo algo(m_objectstore, m_agentReference);
   typename Algo::InsertedElement::list jobsToAdd;
   std::map<uint64_t, std::shared_ptr<ArchiveJobQueueInfo>> succeededJobs;
@@ -161,7 +161,7 @@ void Sorter::queueArchiveRequests(const std::string& tapePool, const common::dat
 template <typename SpecificQueue>
 void Sorter::executeRetrieveAlgorithm(const std::string& vid, std::string& queueAddress,
   std::list<std::shared_ptr<RetrieveJobQueueInfo>>& jobs, log::LogContext& lc) {
-  typedef ContainerAlgorithms<RetrieveQueue,SpecificQueue> Algo;
+  using Algo = ContainerAlgorithms<RetrieveQueue,SpecificQueue>;
   Algo algo(m_objectstore,m_agentReference);
   typename Algo::InsertedElement::list jobsToAdd;
   std::map<uint64_t, std::shared_ptr<RetrieveJobQueueInfo>> succeededJobs;
@@ -265,7 +265,7 @@ void Sorter::insertRetrieveRequest(RetrieveRequestInfosAccessorInterface& access
     }
 
     const auto& tapeFileList = accessor.getArchiveFile().tapeFiles;
-    if(auto vid_it = std::find_if(begin(tapeFileList), end(tapeFileList), 
+    if(auto vid_it = std::find_if(begin(tapeFileList), end(tapeFileList),
       [&bestVid](const common::dataStructures::TapeFile& tf) { return tf.vid == bestVid; });
       vid_it == std::end(tapeFileList)) {
       std::stringstream err;

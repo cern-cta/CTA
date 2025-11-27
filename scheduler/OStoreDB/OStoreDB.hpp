@@ -76,7 +76,7 @@ public:
   CTA_GENERATE_EXCEPTION_CLASS(NotImplemented);
   /*============ Thread pool for queueing bottom halfs ======================*/
 private:
-  typedef std::function<void()> EnqueueingTask;
+  using EnqueueingTask = std::function<void()>;
   cta::threading::BlockingQueue<EnqueueingTask*> m_enqueueingTasksQueue;
 
   class EnqueueingWorkerThread : private cta::threading::Thread {
@@ -485,7 +485,7 @@ public:
 
   std::map<std::string, std::list<common::dataStructures::RetrieveJob>, std::less<>> getRetrieveJobs() const override;
 
-  // typedef QueueItor<objectstore::RootEntry::RetrieveQueueDump, objectstore::RetrieveQueue> RetrieveQueueItor_t;
+  // using RetrieveQueueItor_t = QueueItor<objectstore::RootEntry::RetrieveQueueDump, objectstore::RetrieveQueue>;
 
   class RetrieveJobQueueItor : public IRetrieveJobQueueItor {
   public:
@@ -660,7 +660,7 @@ public:
       std::shared_ptr<SR> subrequest;
       common::dataStructures::ArchiveFile archiveFile;
       typename SR::RepackInfo repackInfo;
-      typedef std::list<SubrequestInfo> List;
+      using List = std::list<SubrequestInfo>;
     };
   };
 
@@ -674,7 +674,7 @@ public:
     void report(log::LogContext& lc) override;
 
   private:
-    typedef RepackReportBatch::SubrequestInfo<objectstore::RetrieveRequest> SubrequestInfo;
+    using SubrequestInfo = RepackReportBatch::SubrequestInfo<objectstore::RetrieveRequest>;
     SubrequestInfo::List m_subrequestList;
   };
 
@@ -688,7 +688,7 @@ public:
     void report(log::LogContext& lc) override;
 
   private:
-    typedef RepackReportBatch::SubrequestInfo<objectstore::RetrieveRequest> SubrequestInfo;
+    using SubrequestInfo = RepackReportBatch::SubrequestInfo<objectstore::RetrieveRequest>;
     SubrequestInfo::List m_subrequestList;
   };
 
@@ -700,7 +700,7 @@ public:
     friend class OStoreDB;
 
   protected:
-    typedef RepackReportBatch::SubrequestInfo<objectstore::ArchiveRequest> SubrequestInfo;
+    using SubrequestInfo = RepackReportBatch::SubrequestInfo<objectstore::ArchiveRequest>;
     SubrequestInfo::List m_subrequestList;
 
   public:

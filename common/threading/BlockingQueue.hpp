@@ -33,10 +33,10 @@ namespace cta::threading {
 template<class C>
 class BlockingQueue {
 public:
-  typedef typename std::queue<C>::value_type value_type;
-  typedef typename std::queue<C>::reference reference;
-  typedef typename std::queue<C>::const_reference const_reference;
-  typedef struct valueRemainingPair {C value; size_t remaining;} valueRemainingPair;
+  using value_type = typename std::queue<C>::value_type;
+  using reference = typename std::queue<C>::reference;
+  using const_reference = typename std::queue<C>::const_reference;
+  using valueRemainingPair = struct valueRemainingPair {C value; size_t remaining;};
 
   BlockingQueue() = default;
   ~BlockingQueue() = default;

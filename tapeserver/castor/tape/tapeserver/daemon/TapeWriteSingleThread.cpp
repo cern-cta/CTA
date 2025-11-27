@@ -299,7 +299,7 @@ void castor::tape::tapeserver::daemon::TapeWriteSingleThread::run() {
 
   try {
     // Report the parameters of the session to the main thread
-    typedef cta::log::Param Param;
+    using Param = cta::log::Param;
     m_watchdog.addParameter(Param("tapeVid", m_volInfo.vid));
     m_watchdog.addParameter(Param("mountType", toCamelCaseString(m_volInfo.mountType)));
     m_watchdog.addParameter(Param("mountId", m_volInfo.mountId));

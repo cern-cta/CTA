@@ -42,13 +42,13 @@ struct ContainerTraits<ArchiveQueue,C>
     cta::common::dataStructures::ArchiveFile archiveFile;
     std::optional<cta::common::dataStructures::MountPolicy> mountPolicy;
     std::optional<serializers::ArchiveJobStatus> newStatus;
-    typedef std::list<InsertedElement> list;
+    using list = std::list<InsertedElement>;
     bool operator==(InsertedElement & other){
       return archiveRequest->getAddressIfSet() == other.archiveRequest->getAddressIfSet() && copyNb == other.copyNb;
     }
   };
 
-  typedef ArchiveRequest::JobDump ElementDescriptor;
+  using ElementDescriptor = ArchiveRequest::JobDump;
 
   struct PoppedElement {
     std::unique_ptr<ArchiveRequest> archiveRequest;
@@ -95,14 +95,14 @@ struct ContainerTraits<ArchiveQueue,C>
     void addToLog(log::ScopedParamContainer&);
   };
 
-  typedef ArchiveQueue                                Container;
-  typedef std::string                                 ContainerAddress;
-  typedef std::string                                 ElementAddress;
-  typedef std::string                                 ContainerIdentifier;
-  typedef std::list<std::unique_ptr<InsertedElement>> ElementMemoryContainer;
-  typedef std::list<ElementDescriptor>                ElementDescriptorContainer;
-  typedef std::set<ElementAddress>                    ElementsToSkipSet;
-  typedef serializers::ArchiveJobStatus               ElementStatus;
+  using Container = ArchiveQueue;
+  using ContainerAddress = std::string;
+  using ElementAddress = std::string;
+  using ContainerIdentifier = std::string;
+  using ElementMemoryContainer = std::list<std::unique_ptr<InsertedElement;
+  using ElementDescriptorContainer = std::list<ElementDescriptor>;
+  using ElementsToSkipSet = std::set<ElementAddress>;
+  using ElementStatus = serializers::ArchiveJobStatus;
 
   CTA_GENERATE_EXCEPTION_CLASS(NoSuchContainer);
 
@@ -110,7 +110,7 @@ struct ContainerTraits<ArchiveQueue,C>
   struct OpFailure {
     Element *element = nullptr;
     std::exception_ptr failure;
-    typedef std::list<OpFailure> list;
+    using list = std::list<OpFailure>;
 
     OpFailure() = default;
     OpFailure(Element *e, const std::exception_ptr &f) : element(e), failure(f) {}

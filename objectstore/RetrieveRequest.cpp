@@ -259,7 +259,7 @@ queueForFailure:;
     std::list<common::dataStructures::RetrieveJobToAdd> jta;
     jta.emplace_back(activeCopyNb, activeFseq, getAddressIfSet(), m_payload.archivefile().filesize(),
       mp, (signed)m_payload.schedulerrequest().entrylog().time(), m_payload.has_activity() ? std::optional<std::string>{m_payload.activity()} : std::nullopt, std::nullopt);
-    
+
     rq.addJobsIfNecessaryAndCommit(jta, agentReference, lc);
     auto queueUpdateTime = t.secs(utils::Timer::resetCounter);
     // We can now make the transition official.
@@ -543,7 +543,7 @@ cta::common::dataStructures::RetrieveRequest RetrieveRequest::getSchedulerReques
   el.deserialize(m_payload.schedulerrequest().entrylog());
   ret.creationLog = el;
   ret.dstURL = m_payload.schedulerrequest().dsturl();
-  ret.retrieveReportURL = m_payload.schedulerrequest().retrievereporturl(); 
+  ret.retrieveReportURL = m_payload.schedulerrequest().retrievereporturl();
   ret.errorReportURL = m_payload.schedulerrequest().retrieveerrorreporturl();
   ret.isVerifyOnly = m_payload.schedulerrequest().isverifyonly();
   objectstore::DiskFileInfoSerDeser dfisd;
@@ -944,7 +944,7 @@ serializers::RetrieveJobStatus RetrieveRequest::getJobStatus(uint32_t copyNumber
 // RetrieveRequest::updateLifecycleTiming()
 //------------------------------------------------------------------------------
 void RetrieveRequest::updateLifecycleTiming(serializers::RetrieveRequest& payload, const cta::objectstore::serializers::RetrieveJob& retrieveJob){
-  typedef ::cta::objectstore::serializers::RetrieveJobStatus RetrieveJobStatus;
+  using RetrieveJobStatus = ::cta::objectstore::serializers::RetrieveJobStatus;
   LifecycleTimingsSerDeser lifeCycleSerDeser;
   lifeCycleSerDeser.deserialize(payload.lifecycle_timings());
   switch(retrieveJob.status()){
@@ -1261,7 +1261,7 @@ std::string RetrieveRequest::asyncJobSucceedReporterCallback(const std::string& 
 //------------------------------------------------------------------------------
 RetrieveRequest::AsyncJobSucceedReporter* RetrieveRequest::asyncReportSucceed(uint32_t ui32CopyNb) {
   auto ret = std::make_unique<AsyncJobSucceedReporter>();
- 
+
   ret->m_updaterCallback = std::bind(&RetrieveRequest::asyncJobSucceedReporterCallback,
       this, std::placeholders::_1, std::ref(*ret), ui32CopyNb);
 
@@ -1315,14 +1315,14 @@ std::string RetrieveRequest::asyncReportSucceedForRepackCallback(const std::stri
   }
   ret.m_MountPolicy.deserialize(payload.mountpolicy());
   throw cta::exception::Exception("In RetrieveRequest::asyncReportSucceedForRepackCallback: copyNb not found");
-} 
+}
 
 //------------------------------------------------------------------------------
 // RetrieveRequest::asyncReportSucceedForRepack()
 //------------------------------------------------------------------------------
 RetrieveRequest::AsyncJobSucceedForRepackReporter* RetrieveRequest::asyncReportSucceedForRepack(uint32_t ui32CopyNb) {
   auto ret = std::make_unique<AsyncJobSucceedForRepackReporter>();
- 
+
   ret->m_updaterCallback = std::bind(&RetrieveRequest::asyncReportSucceedForRepackCallback,
       this, std::placeholders::_1, std::ref(*ret), ui32CopyNb);
 
@@ -1443,7 +1443,7 @@ std::string RetrieveRequest::asyncTransformToArchiveRequestCallback(const std::s
 
   return oh.SerializeAsString();
 }
- 
+
 //------------------------------------------------------------------------------
 // RetrieveRequest::asyncTransformToArchiveRequest()
 //------------------------------------------------------------------------------
@@ -1451,7 +1451,7 @@ RetrieveRequest::AsyncRetrieveToArchiveTransformer* RetrieveRequest::asyncTransf
 
   auto ret = std::make_unique<AsyncRetrieveToArchiveTransformer>();
   std::string strProcessAgentAddress = processAgent.getAgentAddress();
- 
+
   ret->m_updaterCallback = std::bind(&RetrieveRequest::asyncTransformToArchiveRequestCallback,
       this, std::placeholders::_1, std::ref(*ret), strProcessAgentAddress);
 

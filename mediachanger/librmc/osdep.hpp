@@ -30,23 +30,23 @@
 #define HYPERSIZE  8
 #define TIME_TSIZE HYPERSIZE
 
-typedef unsigned char U_BYTE;
-typedef unsigned short U_SHORT;
-typedef unsigned int U_LONG;
-typedef char BYTE;
-typedef short WORD;
-typedef int LONG;
+using U_BYTE = unsigned char;
+using U_SHORT = unsigned short;
+using U_LONG = unsigned int;
+using BYTE = char;
+using WORD = short;
+using LONG = int;
 
 #define BYTEADDR(x) (((char*) &(x)) + sizeof(BYTE) - BYTESIZE)
 #define WORDADDR(x) (((char*) &(x)) + sizeof(WORD) - WORDSIZE)
 #define LONGADDR(x) (((char*) &(x)) + sizeof(LONG) - LONGSIZE)
 
-typedef long long signed64;
-typedef unsigned long long u_signed64;
+using signed64 = long long;
+using u_signed64 = unsigned long long;
 
-typedef signed64 HYPER;
-typedef u_signed64 U_HYPER;
-typedef U_HYPER TIME_T;
+using HYPER = signed64;
+using U_HYPER = u_signed64;
+using TIME_T = U_HYPER;
 
 #define ONE_KIB 0x400
 #define ONE_MIB 0x100000

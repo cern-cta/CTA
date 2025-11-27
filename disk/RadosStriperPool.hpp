@@ -65,7 +65,7 @@ private:
 
   // We use a map of pointers instead of maps of unique_ptr who do not work in
   // gcc 4.4 (in SLC 6)
-  typedef std::map<std::string, libradosstriper::RadosStriper *> StriperDict;
+  using StriperDict = std::map<std::string, libradosstriper::RadosStriper *>;
   /// striper pool
   std::vector<StriperDict> m_stripers;
   /// mutex protecting the striper pool

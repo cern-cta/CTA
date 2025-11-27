@@ -38,11 +38,11 @@ public:
   ContainerAlgorithms(Backend & backend, AgentReference & agentReference):
     m_backend(backend), m_agentReference(agentReference) {}
 
-  typedef typename ContainerTraits<Q,C>::InsertedElement InsertedElement;
-  typedef typename ContainerTraits<Q,C>::PopCriteria PopCriteria;
-  typedef typename ContainerTraits<Q,C>::OwnershipSwitchFailure OwnershipSwitchFailure;
-  typedef typename ContainerTraits<Q,C>::PoppedElementsBatch PoppedElementsBatch;
-  typedef typename ContainerTraits<Q,C>::QueueType JobQueueType;
+  using InsertedElement = typename ContainerTraits<Q,C>::InsertedElement;
+  using PopCriteria = typename ContainerTraits<Q,C>::PopCriteria;
+  using OwnershipSwitchFailure = typename ContainerTraits<Q,C>::OwnershipSwitchFailure;
+  using PoppedElementsBatch = typename ContainerTraits<Q,C>::PoppedElementsBatch;
+  using JobQueueType = typename ContainerTraits<Q,C>::QueueType;
 
   /**
    * Reference objects in the container and then switch their ownership. Objects

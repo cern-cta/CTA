@@ -125,7 +125,7 @@ private:
   public:
     LockWatcher(librados::IoCtx & context, const std::string & name, log::Logger & logger);
     virtual ~LockWatcher();
-    typedef std::chrono::microseconds durationUs;
+    using durationUs = std::chrono::microseconds;
     void wait(const durationUs & timeout);
   private:
     /** An internal class containing the internals exposed to the callback of Rados.

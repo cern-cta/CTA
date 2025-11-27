@@ -33,7 +33,7 @@ namespace cta::statistics {
  */
 class Statistics {
  public:
-  typedef std::map<std::string, FileStatistics> StatisticsPerVo;
+  using StatisticsPerVo = std::map<std::string, FileStatistics>;
 
   Statistics() = default;
 

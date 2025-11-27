@@ -154,7 +154,7 @@ uint64_t ValueCountMap<Type, Key>::total() {
   return ret;
 }
 
-typedef ValueCountMap<google::protobuf::RepeatedPtrField<serializers::ValueCountPair>, uint64_t> ValueCountMapUint64;
-typedef ValueCountMap<google::protobuf::RepeatedPtrField<serializers::StringCountPair>, std::string> ValueCountMapString;
+using ValueCountMapUint64 = ValueCountMap<google::protobuf::RepeatedPtrField<serializers::ValueCountPair>, uint64_t>;
+using ValueCountMapString = ValueCountMap<google::protobuf::RepeatedPtrField<serializers::StringCountPair>, std::string>;
 
 } // namespace cta::objectstore

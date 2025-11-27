@@ -33,6 +33,6 @@ std::cerr << "Created namespace endpoint " << endpoint << " with token " << toke
   std::string token;
 };
 
-typedef std::map<std::string, Namespace> NamespaceMap_t;
+using NamespaceMap_t = std::map<std::string, Namespace>;
 
 } // namespace eos::client
