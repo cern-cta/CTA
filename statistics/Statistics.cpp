@@ -84,7 +84,7 @@ std::unique_ptr<Statistics> Statistics::Builder::build(cta::rdbms::Rset* rset) {
 std::ostream & operator <<(std::ostream& stream, const Statistics& stats) {
   stream << "{"
          << "\"statisticsPerVo\": [";
-  auto allVoStatistics = stats.getAllVOStatistics();
+  const auto& allVoStatistics = stats.getAllVOStatistics();
   uint64_t nbElementsVoStatistics = allVoStatistics.size();
   uint64_t i = 0;
   for (auto & stat : allVoStatistics) {

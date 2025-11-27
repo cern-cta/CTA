@@ -2793,7 +2793,7 @@ void Scheduler::triggerTapeStateChange(const common::dataStructures::SecurityIde
   // Validate tape state change based on previous state
   auto tape_meta_data = m_catalogue.Tape()->getTapesByVid(vid)[vid];
   auto prev_state = tape_meta_data.state;
-  auto prev_reason = tape_meta_data.stateReason;
+  const auto& prev_reason = tape_meta_data.stateReason;
   // User is not allowed to select explicitly a temporary state
   if (new_state == Tape::BROKEN_PENDING || new_state == Tape::EXPORTED_PENDING ||
       new_state == Tape::REPACKING_PENDING) {

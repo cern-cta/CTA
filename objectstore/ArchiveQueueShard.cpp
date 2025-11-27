@@ -41,7 +41,7 @@ ArchiveQueueShard::ArchiveQueueShard(GenericObject& go):
 void ArchiveQueueShard::rebuild() {
   checkPayloadWritable();
   uint64_t totalSize=0;
-  for (auto j: m_payload.archivejobs()) {
+  for (const auto& j : m_payload.archivejobs()) {
     totalSize += j.size();
   }
   m_payload.set_archivejobstotalsize(totalSize);

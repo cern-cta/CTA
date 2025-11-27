@@ -114,7 +114,7 @@ void RepackLsResponseStream::collectRepacks(const std::optional<std::string>& vi
     repackRequestItem->set_last_expanded_fseq(repackRequest.lastExpandedFseq != 0 ? repackRequest.lastExpandedFseq - 1 :
                                                                                     0);
     repackRequestItem->mutable_destination_infos()->Clear();
-    for (auto destinationInfo : repackRequest.destinationInfos) {
+    for (const auto& destinationInfo : repackRequest.destinationInfos) {
       auto* destinationInfoToInsert = repackRequestItem->mutable_destination_infos()->Add();
       destinationInfoToInsert->set_vid(destinationInfo.vid);
       destinationInfoToInsert->set_files(destinationInfo.files);

@@ -285,7 +285,7 @@ bool cta::RetrieveMount::checkOrReserveFreeDiskSpaceForRequest(const cta::DiskSp
     uint64_t previousDrivesReservationTotal = 0;
     auto diskSystem = diskSystemFreeSpace.getDiskSystemList().at(ds);
     // Compute previous drives reservation for the physical space of the current disk system.
-    for (auto previousDriveReservation : previousDrivesReservations) {
+    for (const auto& previousDriveReservation : previousDrivesReservations) {
       //avoid empty string when no disk space reservation exists for drive
       if (previousDriveReservation.second != 0) {
         auto previousDiskSystem = diskSystemFreeSpace.getDiskSystemList().at(previousDriveReservation.first);
