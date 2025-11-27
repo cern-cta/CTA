@@ -94,9 +94,11 @@ public:
         m_missingFileCopiesMinAgeSecs(missingFileCopiesMinAgeSecs),
         m_enableCtaAdminCommands(enableCtaAdminCommands) {}
 
-  /* gRPC expects the return type of an RPC implemented using the callback API to be a pointer to ::grpc::ServerWriteReactor */
+  /* gRPC expects the return type of an RPC implemented using the callback API to be
+   * a pointer to ::grpc::ServerWriteReactor
+   */
   ::grpc::ServerWriteReactor<cta::xrd::StreamResponse>* GenericAdminStream(::grpc::CallbackServerContext* context,
-                                                                           const cta::xrd::Request* request);
+    const cta::xrd::Request* request) final;
 
 private:
   cta::log::LogContext m_lc;               // <! Provided by the frontendService

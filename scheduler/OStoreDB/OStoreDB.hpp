@@ -63,7 +63,7 @@ class OStoreDB : public SchedulerDatabase {
 
 public:
   OStoreDB(objectstore::Backend& be, catalogue::Catalogue& catalogue, log::Logger& logger);
-  virtual ~OStoreDB() noexcept;
+  virtual ~OStoreDB() noexcept override;
 
   /* === Object store and agent handling ==================================== */
   void setAgentReference(objectstore::AgentReference* agentReference);
@@ -477,9 +477,9 @@ public:
    * @param address, the address of the ArchiveRequest
    * @param archiveFileID the archiveFileID of the file to delete.
    */
-  virtual void cancelArchive(const common::dataStructures::DeleteArchiveRequest& request, log::LogContext& lc) override;
+  void cancelArchive(const common::dataStructures::DeleteArchiveRequest& request, log::LogContext& lc) override;
 
-  virtual void deleteFailed(const std::string& objectId, log::LogContext& lc) override;
+  void deleteFailed(const std::string& objectId, log::LogContext& lc) override;
 
   std::list<cta::common::dataStructures::RetrieveJob> getRetrieveJobs(const std::string& vid) const override;
 
@@ -584,7 +584,7 @@ public:
 
   public:
     PromotionToToExpandResult promotePendingRequestsForExpansion(size_t requestCount, log::LogContext& lc) override;
-    virtual ~RepackRequestPromotionStatistics() = default;
+    ~RepackRequestPromotionStatistics() final = default;
 
   private:
     RepackRequestPromotionStatistics(objectstore::Backend& backend, objectstore::AgentReference& agentReference);
@@ -602,7 +602,7 @@ public:
       throw SchedulingLockNotHeld("In RepackRequestPromotionStatisticsNoLock::promotePendingRequestsForExpansion");
     }
 
-    virtual ~RepackRequestPromotionStatisticsNoLock() = default;
+    virtual ~RepackRequestPromotionStatisticsNoLock() final = default;
   };
 
 private:
@@ -707,7 +707,7 @@ public:
     RepackArchiveReportBatch(objectstore::Backend& backend, OStoreDB& oStoreDb)
         : RepackReportBatch(backend, oStoreDb) {}
 
-    void report(log::LogContext& lc);
+    void report(log::LogContext& lc) override;
 
   private:
     objectstore::RepackRequest::SubrequestStatistics::List prepareReport();
@@ -756,10 +756,10 @@ public:
 
   std::list<std::unique_ptr<SchedulerDatabase::RepackReportBatch>> getRepackReportBatches(log::LogContext& lc) override;
 
-  std::unique_ptr<SchedulerDatabase::RepackReportBatch> getNextSuccessfulRetrieveRepackReportBatch(log::LogContext& lc);
-  std::unique_ptr<SchedulerDatabase::RepackReportBatch> getNextFailedRetrieveRepackReportBatch(log::LogContext& lc);
-  std::unique_ptr<SchedulerDatabase::RepackReportBatch> getNextSuccessfulArchiveRepackReportBatch(log::LogContext& lc);
-  std::unique_ptr<SchedulerDatabase::RepackReportBatch> getNextFailedArchiveRepackReportBatch(log::LogContext& lc);
+  std::unique_ptr<SchedulerDatabase::RepackReportBatch> getNextSuccessfulRetrieveRepackReportBatch(log::LogContext& lc) final;
+  std::unique_ptr<SchedulerDatabase::RepackReportBatch> getNextFailedRetrieveRepackReportBatch(log::LogContext& lc) final;
+  std::unique_ptr<SchedulerDatabase::RepackReportBatch> getNextSuccessfulArchiveRepackReportBatch(log::LogContext& lc) final;
+  std::unique_ptr<SchedulerDatabase::RepackReportBatch> getNextFailedArchiveRepackReportBatch(log::LogContext& lc) final;
 
 private:
   const size_t c_repackArchiveReportBatchSize = 10000;

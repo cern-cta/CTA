@@ -352,11 +352,11 @@ public:
     lock(oo);
   }
 
-  void setObjectLocked(ObjectOpsBase* objectOps) override final {
+  void setObjectLocked(ObjectOpsBase* objectOps) final {
     objectOps->m_locksCount++;
   }
 
-  void setObjectUnlocked(ObjectOpsBase* objectOps) override final {
+  void setObjectUnlocked(ObjectOpsBase* objectOps) final {
     objectOps->m_locksCount--;
   }
 

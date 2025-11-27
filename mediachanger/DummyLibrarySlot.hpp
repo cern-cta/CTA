@@ -46,14 +46,14 @@ public:
   /**
    * Destructor
    */
-  ~DummyLibrarySlot() = default;
+  ~DummyLibrarySlot() final = default;
 
   /**
    * Creates a clone of this object.
    *
    * @return The clone.
    */
-  LibrarySlot *clone();
+  LibrarySlot* clone() final;
 };
 
 } // namespace cta::mediachanger

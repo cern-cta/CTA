@@ -45,14 +45,14 @@ public:
   /**
    * Destructor
    */
-  ~ScsiLibrarySlot() = default;
+  ~ScsiLibrarySlot() final = default;
 
   /**
    * Creates a clone of this object.
    *
    * @return The clone.
    */
-  LibrarySlot *clone();
+  LibrarySlot *clone() final;
 
   /**
    * Gets the drive ordinal.
