@@ -39,7 +39,7 @@
 
 #define bitsof(t) sizeof(t) * BITSOFBYTE  //!< number of bits in a type
 
-typedef char* bitvct;  //!< bit vector type definition
+using bitvct = char*;  //!< bit vector type definition
 
 /*
  * Allocate enough memory for a 'bitvct' type variable containing

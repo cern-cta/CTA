@@ -28,8 +28,8 @@
 namespace cta::common::dataStructures {
 
 /**
- * The archive route specifies which tape pool will be used as a destination of 
- * a specific copy of a storage class 
+ * The archive route specifies which tape pool will be used as a destination of
+ * a specific copy of a storage class
  */
 struct ArchiveRoute {
 
@@ -59,9 +59,9 @@ struct ArchiveRoute {
   EntryLog creationLog;
   EntryLog lastModificationLog;
   std::string comment;
-  
-  typedef std::map<uint32_t, ArchiveRoute> StorageClassMap;
-  typedef std::map<std::string /*storage class*/, StorageClassMap> FullMap;
+
+  using StorageClassMap = std::map<uint32_t, ArchiveRoute>;
+  using FullMap = std::map<std::string /*storage class*/, StorageClassMap>;
 
 }; // struct ArchiveRoute
 

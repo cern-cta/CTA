@@ -41,10 +41,10 @@ struct ContainerTraits<RepackQueue,C>
   struct InsertedElement {
     std::unique_ptr<RepackRequest> repackRequest;
     std::optional<serializers::RepackRequestStatus> newStatus;
-    typedef std::list<InsertedElement> list;
+    using list = std::list<InsertedElement>;
   };
 
-  typedef std::string ElementDescriptor;
+  using ElementDescriptor = std::string;
 
   struct PoppedElement {
     std::unique_ptr<RepackRequest> repackRequest;
@@ -82,14 +82,14 @@ struct ContainerTraits<RepackQueue,C>
     void addToLog(log::ScopedParamContainer&);
   };
 
-  typedef RepackQueue                                 Container;
-  typedef std::string                                 ContainerAddress;
-  typedef std::string                                 ElementAddress;
-  typedef std::nullopt_t                              ContainerIdentifier;
-  typedef std::list<std::unique_ptr<InsertedElement>> ElementMemoryContainer;
-  typedef std::list<ElementDescriptor>                ElementDescriptorContainer;
-  typedef std::set<ElementAddress>                    ElementsToSkipSet;
-  typedef serializers::RepackRequestStatus            ElementStatus;
+  using Container = RepackQueue;
+  using ContainerAddress = std::string;
+  using ElementAddress = std::string;
+  using ContainerIdentifier = std::nullopt_t;
+  using ElementMemoryContainer = std::list<std::unique_ptr<InsertedElement>>;
+  using ElementDescriptorContainer = std::list<ElementDescriptor>;
+  using ElementsToSkipSet = std::set<ElementAddress>;
+  using ElementStatus = serializers::RepackRequestStatus;
 
   CTA_GENERATE_EXCEPTION_CLASS(NoSuchContainer);
 
@@ -97,7 +97,7 @@ struct ContainerTraits<RepackQueue,C>
   struct OpFailure {
     Element *element = nullptr;
     std::exception_ptr failure;
-    typedef std::list<OpFailure> list;
+    using list = std::list<OpFailure>;
 
     OpFailure() = default;
     OpFailure(Element *e, const std::exception_ptr &f) : element(e), failure(f) {}

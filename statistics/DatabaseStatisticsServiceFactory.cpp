@@ -22,7 +22,7 @@ namespace cta::statistics {
 
 std::unique_ptr<DatabaseStatisticsService> DatabaseStatisticsServiceFactory::create(cta::rdbms::Conn* databaseConnection,
   cta::rdbms::Login::DbType dbType) {
-  typedef cta::rdbms::Login::DbType DbType;
+  using DbType = cta::rdbms::Login::DbType;
   std::unique_ptr<DatabaseStatisticsService> ret;
   switch (dbType) {
     case DbType::DBTYPE_IN_MEMORY:

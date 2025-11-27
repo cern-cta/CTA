@@ -29,8 +29,8 @@ namespace cta::statistics {
  */
 class JsonStatisticsService : public StatisticsService {
 public:
-  typedef std::ostream OutputStream;
-  typedef std::istream InputStream;
+  using OutputStream = std::ostream;
+  using InputStream = std::istream;
 
   /**
    * Constructor of the service with a OutputStream object

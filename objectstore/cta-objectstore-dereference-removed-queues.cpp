@@ -39,7 +39,7 @@
 /**
  * A queue to delete should be defined by its vid/tapepool + its type
  */
-typedef std::pair<std::string, cta::common::dataStructures::JobQueueType> QueueIdQueueType;
+using QueueIdQueueType = std::pair<std::string, cta::common::dataStructures::JobQueueType>;
 
 /**
  * Get the missing Retrieve queues from the RootEntry

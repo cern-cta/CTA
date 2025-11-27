@@ -25,7 +25,7 @@ namespace cta {
 cta::SchedulerDatabase::~SchedulerDatabase() = default;
 
 SchedulerDatabase::RepackRequestStatistics::RepackRequestStatistics() {
-  typedef common::dataStructures::RepackInfo::Status Status;
+  using Status = common::dataStructures::RepackInfo::Status;
   for (auto& s :
        {Status::Complete, Status::Failed, Status::Pending, Status::Running, Status::Starting, Status::ToExpand}) {
     operator[](s) = 0;

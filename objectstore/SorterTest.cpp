@@ -302,7 +302,7 @@ TEST_F(ObjectStore,SorterInsertRetrieveRequest){
 
     allFutures.clear();
 
-    typedef ContainerAlgorithms<RetrieveQueue,RetrieveQueueToTransfer> Algo;
+    using Algo = ContainerAlgorithms<RetrieveQueue,RetrieveQueueToTransfer>;
     Algo algo(be,agentRef);
 
     typename Algo::PopCriteria criteria;
@@ -353,7 +353,7 @@ TEST_F(ObjectStore,SorterInsertRetrieveRequest){
     }
 
     ASSERT_EQ(sorter.getAllRetrieve().size(),0);
-    typedef ContainerAlgorithms<RetrieveQueue,RetrieveQueueToTransfer> Algo;
+    using Algo = ContainerAlgorithms<RetrieveQueue,RetrieveQueueToTransfer>;
     Algo algo(be,agentRef);
 
     typename Algo::PopCriteria criteria;
@@ -641,7 +641,7 @@ TEST_F(ObjectStore,SorterInsertDifferentTypesOfRequests){
 
   {
     //Test the Retrieve Jobs
-    typedef ContainerAlgorithms<RetrieveQueue,RetrieveQueueToTransfer> Algo;
+    using Algo = ContainerAlgorithms<RetrieveQueue,RetrieveQueueToTransfer>;
     Algo algo(be,agentRef);
     typename Algo::PopCriteria criteria;
     criteria.files = 2;
@@ -663,7 +663,7 @@ TEST_F(ObjectStore,SorterInsertDifferentTypesOfRequests){
   }
   {
     //Test the Archive Jobs
-    typedef ContainerAlgorithms<ArchiveQueue, ArchiveQueueToTransferForUser> Algo;
+    using Algo = ContainerAlgorithms<ArchiveQueue, ArchiveQueueToTransferForUser>;
     Algo algo(be,agentRef);
     typename Algo::PopCriteria criteria;
     criteria.files = 2;
@@ -683,7 +683,7 @@ TEST_F(ObjectStore,SorterInsertDifferentTypesOfRequests){
   }
   {
     //Test ArchiveJobToTransferForRepack
-    typedef ContainerAlgorithms<ArchiveQueue,ArchiveQueueToReportToRepackForSuccess> Algo;
+    using Algo = ContainerAlgorithms<ArchiveQueue,ArchiveQueueToReportToRepackForSuccess>;
     Algo algo(be,agentRef);
     typename Algo::PopCriteria criteria;
     criteria.files = 1;
@@ -813,7 +813,7 @@ TEST_F(ObjectStore,SorterInsertArchiveRequestNotFetched){
 
   {
     //Test the Archive Jobs
-    typedef ContainerAlgorithms<ArchiveQueue, ArchiveQueueToTransferForUser> Algo;
+    using Algo = ContainerAlgorithms<ArchiveQueue, ArchiveQueueToTransferForUser>;
     Algo algo(be,agentRef);
     typename Algo::PopCriteria criteria;
     criteria.files = 2;
@@ -956,7 +956,7 @@ TEST_F(ObjectStore,SorterInsertRetrieveRequestNotFetched){
 
   {
     //Test the Retrieve Jobs
-    typedef ContainerAlgorithms<RetrieveQueue,RetrieveQueueToTransfer> Algo;
+    using Algo = ContainerAlgorithms<RetrieveQueue,RetrieveQueueToTransfer>;
     Algo algo(be,agentRef);
     typename Algo::PopCriteria criteria;
     criteria.files = 2;

@@ -29,7 +29,7 @@ namespace unitTests {
   };
 
   TEST(castor_tape_AULFile, VOL1) {
-    typedef castor::tape::SCSI::logicBlockProtectionMethod LBPM;
+    using LBPM = castor::tape::SCSI::logicBlockProtectionMethod;
     testVOL1 vol1Label;
     /**
      * Make sure this struct is a POD (plain old data without virtual table)
@@ -77,7 +77,7 @@ namespace unitTests {
   };
 
   TEST(castor_tape_AULFile, VOL1WithCRC) {
-    typedef castor::tape::SCSI::logicBlockProtectionMethod LBPM;
+    using LBPM = castor::tape::SCSI::logicBlockProtectionMethod;
     testVOL1withCRC vol1LabelWithCRC;
     /**
      * Make sure this struct is a POD (plain old data without virtual table)

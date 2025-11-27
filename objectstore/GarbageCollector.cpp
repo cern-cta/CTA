@@ -425,7 +425,7 @@ void GarbageCollector::OwnedObjectSorter::executeArchiveAlgorithm(std::list<std:
         std::set<std::string> & jobsIndividuallyGCed, Agent& agent, AgentReference& agentReference,
         Backend &objectStore, log::LogContext& lc)
 {
-  typedef ContainerAlgorithms<ArchiveQueue,ArchiveSpecificQueue> AqAlgos;
+  using AqAlgos = ContainerAlgorithms<ArchiveQueue,ArchiveSpecificQueue>;
   AqAlgos aqcl(objectStore, agentReference);
   typename decltype(aqcl)::InsertedElement::list jobsToAdd;
   for (auto & ar: jobs) {
@@ -456,7 +456,7 @@ void GarbageCollector::OwnedObjectSorter::executeArchiveAlgorithm(std::list<std:
                 .add("copyNb", arup.copyNb)
                 .add("fileId", arup.archiveRequest->getArchiveFile().archiveFileID)
                 .add("exceptionType", debugType);
-          lc.log(log::INFO, 
+          lc.log(log::INFO,
               "In GarbageCollector::OwnedObjectSorter::executeArchiveAlgorithm(): "
               "failed to requeue gone/not owned archive job. Removed from queue.");
         } else {

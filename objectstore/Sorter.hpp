@@ -63,8 +63,8 @@ public:
   ~Sorter() = default;
 
   // std::string = containerIdentifier
-  typedef std::map<std::tuple<std::string, common::dataStructures::JobQueueType>, std::list<std::shared_ptr<ArchiveJobQueueInfo>>> MapArchive;
-  typedef std::map<std::tuple<std::string, common::dataStructures::JobQueueType>, std::list<std::shared_ptr<RetrieveJobQueueInfo>>> MapRetrieve;
+  using MapArchive = std::map<std::tuple<std::string, common::dataStructures::JobQueueType>, std::list<std::shared_ptr<ArchiveJobQueueInfo>>>;
+  using MapRetrieve = std::map<std::tuple<std::string, common::dataStructures::JobQueueType>, std::list<std::shared_ptr<RetrieveJobQueueInfo>>>;
 
   /* Archive-related methods */
   /**

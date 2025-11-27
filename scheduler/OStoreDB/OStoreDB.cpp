@@ -1101,7 +1101,7 @@ void OStoreDB::setArchiveJobBatchReported(std::list<cta::SchedulerDatabase::Arch
   }
   for (auto& queue : failedQueues) {
     // Put the jobs in the failed queue
-    typedef objectstore::ContainerAlgorithms<ArchiveQueue, ArchiveQueueFailed> CaAQF;
+    using CaAQF = objectstore::ContainerAlgorithms<ArchiveQueue, ArchiveQueueFailed>;
     CaAQF caAQF(m_objectStore, *m_agentReference);
     // TODOTODO: also switch status in one step.
     CaAQF::InsertedElement::list insertedElements;
@@ -1765,7 +1765,7 @@ std::string OStoreDB::queueRepack(const SchedulerDatabase::QueueRepackRequest& r
   std::string repackRequestAddress = rr->getAddressIfSet();
 
   // If latency needs to the improved, the next steps could be deferred like they are for archive and retrieve requests.
-  typedef objectstore::ContainerAlgorithms<RepackQueue, RepackQueuePending> RQPAlgo;
+  using RQPAlgo = objectstore::ContainerAlgorithms<RepackQueue, RepackQueuePending>;
   {
     RQPAlgo::InsertedElement::list elements;
     elements.push_back(RQPAlgo::InsertedElement());
@@ -2039,10 +2039,10 @@ auto OStoreDB::RepackRequestPromotionStatistics::promotePendingRequestsForExpans
   }
   // We have a write lock on the repack queue. We will pop the requested amount of requests.
   PromotionToToExpandResult ret;
-  typedef common::dataStructures::RepackInfo::Status Status;
+  using Status = common::dataStructures::RepackInfo::Status;
   ret.pendingBefore = at(Status::Pending);
   ret.toExpandBefore = at(Status::ToExpand);
-  typedef objectstore::ContainerAlgorithms<RepackQueue, RepackQueuePending> RQPAlgo;
+  using RQPAlgo = objectstore::ContainerAlgorithms<RepackQueue, RepackQueuePending>;
   RQPAlgo::PoppedElementsBatch poppedElements;
   {
     RQPAlgo rqpAlgo(m_backend, m_agentReference);
@@ -2058,7 +2058,7 @@ auto OStoreDB::RepackRequestPromotionStatistics::promotePendingRequestsForExpans
     // the previous call.
   }
   // And we will push the requests to the TeExpand queue.
-  typedef objectstore::ContainerAlgorithms<RepackQueue, RepackQueueToExpand> RQTEAlgo;
+  using RQTEAlgo = objectstore::ContainerAlgorithms<RepackQueue, RepackQueueToExpand>;
   {
     RQTEAlgo rqteAlgo(m_backend, m_agentReference);
     RQTEAlgo::InsertedElement::list insertedElements;
@@ -2092,7 +2092,7 @@ void OStoreDB::populateRepackRequestsStatistics(RootEntry& re, SchedulerDatabase
     fetchers.emplace_back(requests.back().asyncLockfreeFetch());
   }
   // Ensure existence of stats for important statuses
-  typedef common::dataStructures::RepackInfo::Status Status;
+  using Status = common::dataStructures::RepackInfo::Status;
   for (auto s : {Status::Pending, Status::ToExpand, Status::Starting, Status::Running}) {
     stats[s] = 0;
   }
@@ -2258,7 +2258,7 @@ void OStoreDB::setRetrieveQueueCleanupFlag(const std::string& vid, bool val, log
 // OStoreDB::getNextRepackJobToExpand()
 //------------------------------------------------------------------------------
 std::unique_ptr<SchedulerDatabase::RepackRequest> OStoreDB::getNextRepackJobToExpand() {
-  typedef objectstore::ContainerAlgorithms<RepackQueue, RepackQueueToExpand> RQTEAlgo;
+  using RQTEAlgo = objectstore::ContainerAlgorithms<RepackQueue, RepackQueueToExpand>;
   RQTEAlgo rqteAlgo(m_objectStore, *m_agentReference);
   log::LogContext lc(m_logger);
 
@@ -2328,7 +2328,7 @@ std::list<std::unique_ptr<SchedulerDatabase::RepackReportBatch>> OStoreDB::getRe
 //------------------------------------------------------------------------------
 std::unique_ptr<SchedulerDatabase::RepackReportBatch>
 OStoreDB::getNextSuccessfulRetrieveRepackReportBatch(log::LogContext& lc) {
-  typedef objectstore::ContainerAlgorithms<RetrieveQueue, RetrieveQueueToReportToRepackForSuccess> Carqtrtrfs;
+  using Carqtrtrfs = objectstore::ContainerAlgorithms<RetrieveQueue, RetrieveQueueToReportToRepackForSuccess>;
   Carqtrtrfs algo(this->m_objectStore, *m_agentReference);
   // Decide from which queue we are going to pop.
   RootEntry re(m_objectStore);
@@ -2380,7 +2380,7 @@ OStoreDB::getNextSuccessfulRetrieveRepackReportBatch(log::LogContext& lc) {
 //------------------------------------------------------------------------------
 std::unique_ptr<SchedulerDatabase::RepackReportBatch>
 OStoreDB::getNextFailedRetrieveRepackReportBatch(log::LogContext& lc) {
-  typedef objectstore::ContainerAlgorithms<RetrieveQueue, RetrieveQueueToReportToRepackForFailure> CaRqtrtrff;
+  using CaRqtrtrff = objectstore::ContainerAlgorithms<RetrieveQueue, RetrieveQueueToReportToRepackForFailure>;
   CaRqtrtrff algo(this->m_objectStore, *m_agentReference);
   // Decide from which queue we are going to pop.
   RootEntry re(m_objectStore);
@@ -2431,7 +2431,7 @@ OStoreDB::getNextFailedRetrieveRepackReportBatch(log::LogContext& lc) {
 //------------------------------------------------------------------------------
 std::unique_ptr<SchedulerDatabase::RepackReportBatch>
 OStoreDB::getNextSuccessfulArchiveRepackReportBatch(log::LogContext& lc) {
-  typedef objectstore::ContainerAlgorithms<ArchiveQueue, ArchiveQueueToReportToRepackForSuccess> Caaqtrtrfs;
+  using Caaqtrtrfs = objectstore::ContainerAlgorithms<ArchiveQueue, ArchiveQueueToReportToRepackForSuccess>;
   Caaqtrtrfs algo(this->m_objectStore, *m_agentReference);
   // Decide from which queue we are going to pop.
   RootEntry re(m_objectStore);
@@ -2481,7 +2481,7 @@ OStoreDB::getNextSuccessfulArchiveRepackReportBatch(log::LogContext& lc) {
 
 std::unique_ptr<SchedulerDatabase::RepackReportBatch>
 OStoreDB::getNextFailedArchiveRepackReportBatch(log::LogContext& lc) {
-  typedef objectstore::ContainerAlgorithms<ArchiveQueue, ArchiveQueueToReportToRepackForFailure> Caaqtrtrff;
+  using Caaqtrtrff = objectstore::ContainerAlgorithms<ArchiveQueue, ArchiveQueueToReportToRepackForFailure>;
   Caaqtrtrff algo(this->m_objectStore, *m_agentReference);
   // Decide from which queue we are going to pop.
   RootEntry re(m_objectStore);
@@ -3262,7 +3262,7 @@ void OStoreDB::RepackRequest::requeueInToExpandQueue(log::LogContext& lc) {
   rrl.release();
   std::unique_ptr<cta::objectstore::RepackRequest> rr(
     new cta::objectstore::RepackRequest(m_repackRequest.getAddressIfSet(), m_oStoreDB.m_objectStore));
-  typedef objectstore::ContainerAlgorithms<RepackQueue, RepackQueueToExpand> RQTEAlgo;
+  using RQTEAlgo = objectstore::ContainerAlgorithms<RepackQueue, RepackQueueToExpand>;
   RQTEAlgo rqteAlgo(m_oStoreDB.m_objectStore, *m_oStoreDB.m_agentReference);
   RQTEAlgo::InsertedElement::list insertedElements;
   insertedElements.push_back(RQTEAlgo::InsertedElement());
@@ -3726,7 +3726,7 @@ std::list<std::unique_ptr<SchedulerDatabase::RetrieveJob>>
 OStoreDB::RetrieveMount::getNextJobBatch(uint64_t filesRequested,
                                          uint64_t bytesRequested,
                                          log::LogContext& logContext) {
-  typedef objectstore::ContainerAlgorithms<RetrieveQueue, RetrieveQueueToTransfer> RQAlgos;
+  using RQAlgos = objectstore::ContainerAlgorithms<RetrieveQueue, RetrieveQueueToTransfer>;
   RQAlgos rqAlgos(m_oStoreDB.m_objectStore, *m_oStoreDB.m_agentReference);
   RQAlgos::PoppedElementsBatch jobs;
   RQAlgos::PopCriteria popCriteria(filesRequested, bytesRequested);
@@ -4025,7 +4025,7 @@ void OStoreDB::RetrieveMount::flushAsyncSuccessReports(std::list<cta::SchedulerD
                                                               lc);
   // 2) Queue the retrieve requests for repack.
   for (auto& repackRequestQueue : jobsToRequeueForRepackMap) {
-    typedef objectstore::ContainerAlgorithms<RetrieveQueue, RetrieveQueueToReportToRepackForSuccess> RQTRTRFSAlgo;
+    using RQTRTRFSAlgo = objectstore::ContainerAlgorithms<RetrieveQueue, RetrieveQueueToReportToRepackForSuccess>;
     RQTRTRFSAlgo::InsertedElement::list insertedRequests;
     // Keep a map of objectstore request -> sDBJob to handle errors.
     std::map<objectstore::RetrieveRequest*, OStoreDB::RetrieveJob*> requestToJobMap;
@@ -4274,8 +4274,7 @@ void OStoreDB::ArchiveMount::setJobBatchTransferred(
   }
   timingList.insertAndReset("asyncSucceedCompletionTime", t);
   if (jobsToQueueForReportingToUser.size()) {
-    typedef objectstore::ContainerAlgorithms<objectstore::ArchiveQueue, objectstore::ArchiveQueueToReportForUser>
-      AqtrCa;
+    using AqtrCa = objectstore::ContainerAlgorithms<objectstore::ArchiveQueue, objectstore::ArchiveQueueToReportForUser>;
     AqtrCa aqtrCa(m_oStoreDB.m_objectStore, *m_oStoreDB.m_agentReference);
     std::map<std::string, AqtrCa::InsertedElement::list> insertedElementsLists;
     for (auto& j : jobsToQueueForReportingToUser) {
@@ -4312,9 +4311,8 @@ void OStoreDB::ArchiveMount::setJobBatchTransferred(
     timingList.insertAndReset("queueingToReportToUserTime", t);
   }
   if (jobsToQueueForReportingToRepack.size()) {
-    typedef objectstore::ContainerAlgorithms<objectstore::ArchiveQueue,
-                                             objectstore::ArchiveQueueToReportToRepackForSuccess>
-      AqtrtrCa;
+    using AqtrtrCa = objectstore::ContainerAlgorithms<objectstore::ArchiveQueue,
+                                             objectstore::ArchiveQueueToReportToRepackForSuccess>;
     AqtrtrCa aqtrtrCa(m_oStoreDB.m_objectStore, *m_oStoreDB.m_agentReference);
     std::map<std::string, AqtrtrCa::InsertedElement::list> insertedElementsLists;
     for (auto& j : jobsToQueueForReportingToRepack) {
@@ -4367,9 +4365,8 @@ retry:
           .log(log::WARNING,
                "In OStoreDB::ArchiveMount::setJobBatchTransferred(): unable to queue some elements "
                "because of an ownership switch failure, retrying another time");
-        typedef objectstore::ContainerTraits<ArchiveQueue, ArchiveQueueToReportToRepackForSuccess>::OpFailure<
-          AqtrtrCa::InsertedElement>
-          OpFailure;
+        using OpFailure = objectstore::ContainerTraits<ArchiveQueue, ArchiveQueueToReportToRepackForSuccess>::OpFailure<
+          AqtrtrCa::InsertedElement>;
         list.second.remove_if([&ex](const AqtrtrCa::InsertedElement& elt) {
           //Remove the elements that are NOT in the failed elements list so that we only retry the failed elements
           return std::find_if(ex.failedElements.begin(),
@@ -4426,8 +4423,8 @@ void OStoreDB::ArchiveJob::failTransfer(const std::string& failureReason, log::L
   objectstore::ScopedExclusiveLock arl(m_archiveRequest);
   m_archiveRequest.fetch();
   // Add a job failure. We will know what to do next..
-  typedef objectstore::ArchiveRequest::EnqueueingNextStep EnqueueingNextStep;
-  typedef EnqueueingNextStep::NextStep NextStep;
+  using EnqueueingNextStep = objectstore::ArchiveRequest::EnqueueingNextStep;
+  using NextStep = EnqueueingNextStep::NextStep;
   EnqueueingNextStep enQueueingNextStep =
     m_archiveRequest.addTransferFailure(tapeFile.copyNb, m_mountId, failureLog, lc);
   // First set the job status
@@ -4473,7 +4470,7 @@ void OStoreDB::ArchiveJob::failTransfer(const std::string& failureReason, log::L
       auto retryStatus = m_archiveRequest.getRetryStatus(tapeFile.copyNb);
       // Algorithms suppose the objects are not locked.
       arl.release();
-      typedef objectstore::ContainerAlgorithms<ArchiveQueue, ArchiveQueueToReportForUser> CaAqtr;
+      using CaAqtr = objectstore::ContainerAlgorithms<ArchiveQueue, ArchiveQueueToReportForUser>;
       CaAqtr caAqtr(m_oStoreDB.m_objectStore, *m_oStoreDB.m_agentReference);
       CaAqtr::InsertedElement::list insertedElements;
       insertedElements.push_back(
@@ -4497,7 +4494,7 @@ void OStoreDB::ArchiveJob::failTransfer(const std::string& failureReason, log::L
       std::string repackRequestAddress = m_archiveRequest.getRepackInfo().repackRequestAddress;
       // Algorithms suppose the objects are not locked.
       arl.release();
-      typedef objectstore::ContainerAlgorithms<ArchiveQueue, ArchiveQueueToReportToRepackForFailure> CaAqtrtrff;
+      using CaAqtrtrff = objectstore::ContainerAlgorithms<ArchiveQueue, ArchiveQueueToReportToRepackForFailure>;
       CaAqtrtrff caAqtrtrff(m_oStoreDB.m_objectStore, *m_oStoreDB.m_agentReference);
       CaAqtrtrff::InsertedElement::list insertedElements;
       insertedElements.push_back(
@@ -4522,7 +4519,7 @@ void OStoreDB::ArchiveJob::failTransfer(const std::string& failureReason, log::L
       auto mountPolicy = m_archiveRequest.getMountPolicy();
       // Algorithms suppose the objects are not locked.
       arl.release();
-      typedef objectstore::ContainerAlgorithms<ArchiveQueue, ArchiveQueueToTransferForUser> CaAqtr;
+      using CaAqtr = objectstore::ContainerAlgorithms<ArchiveQueue, ArchiveQueueToTransferForUser>;
       CaAqtr caAqtr(m_oStoreDB.m_objectStore, *m_oStoreDB.m_agentReference);
       CaAqtr::InsertedElement::list insertedElements;
       insertedElements.push_back(
@@ -4547,7 +4544,7 @@ void OStoreDB::ArchiveJob::failTransfer(const std::string& failureReason, log::L
       auto mountPolicy = m_archiveRequest.getMountPolicy();
       // Algorithms suppose the objects are not locked.
       arl.release();
-      typedef objectstore::ContainerAlgorithms<ArchiveQueue, ArchiveQueueToTransferForRepack> CaAqtr;
+      using CaAqtr = objectstore::ContainerAlgorithms<ArchiveQueue, ArchiveQueueToTransferForRepack>;
       CaAqtr caAqtr(m_oStoreDB.m_objectStore, *m_oStoreDB.m_agentReference);
       CaAqtr::InsertedElement::list insertedElements;
       insertedElements.push_back(
@@ -4572,7 +4569,7 @@ void OStoreDB::ArchiveJob::failTransfer(const std::string& failureReason, log::L
       auto retryStatus = m_archiveRequest.getRetryStatus(tapeFile.copyNb);
       // Algorithms suppose the objects are not locked.
       arl.release();
-      typedef objectstore::ContainerAlgorithms<ArchiveQueue, ArchiveQueueFailed> CaAqtr;
+      using CaAqtr = objectstore::ContainerAlgorithms<ArchiveQueue, ArchiveQueueFailed>;
       CaAqtr caAqtr(m_oStoreDB.m_objectStore, *m_oStoreDB.m_agentReference);
       CaAqtr::InsertedElement::list insertedElements;
       insertedElements.push_back(
@@ -4606,8 +4603,8 @@ void OStoreDB::ArchiveJob::failReport(const std::string& failureReason, log::Log
   objectstore::ScopedExclusiveLock arl(m_archiveRequest);
   m_archiveRequest.fetch();
   // Add a job failure. We will know what to do next..
-  typedef objectstore::ArchiveRequest::EnqueueingNextStep EnqueueingNextStep;
-  typedef EnqueueingNextStep::NextStep NextStep;
+  using EnqueueingNextStep = objectstore::ArchiveRequest::EnqueueingNextStep;
+  using NextStep = EnqueueingNextStep::NextStep;
   EnqueueingNextStep enQueueingNextStep = m_archiveRequest.addReportFailure(tapeFile.copyNb, m_mountId, failureLog, lc);
   // Don't re-queue the job if reportType is set to NoReportRequired. This can happen if a previous
   // attempt to report failed due to an exception, for example if the file was deleted on close.
@@ -4627,7 +4624,7 @@ void OStoreDB::ArchiveJob::failReport(const std::string& failureReason, log::Log
       auto retryStatus = m_archiveRequest.getRetryStatus(tapeFile.copyNb);
       // Algorithms suppose the objects are not locked.
       arl.release();
-      typedef objectstore::ContainerAlgorithms<ArchiveQueue, ArchiveQueueToReportForUser> CaAqtr;
+      using CaAqtr = objectstore::ContainerAlgorithms<ArchiveQueue, ArchiveQueueToReportForUser>;
       CaAqtr caAqtr(m_oStoreDB.m_objectStore, *m_oStoreDB.m_agentReference);
       CaAqtr::InsertedElement::list insertedElements;
       insertedElements.push_back(
@@ -4650,7 +4647,7 @@ void OStoreDB::ArchiveJob::failReport(const std::string& failureReason, log::Log
       auto retryStatus = m_archiveRequest.getRetryStatus(tapeFile.copyNb);
       // Algorithms suppose the objects are not locked.
       arl.release();
-      typedef objectstore::ContainerAlgorithms<ArchiveQueue, ArchiveQueueFailed> CaAqtr;
+      using CaAqtr = objectstore::ContainerAlgorithms<ArchiveQueue, ArchiveQueueFailed>;
       CaAqtr caAqtr(m_oStoreDB.m_objectStore, *m_oStoreDB.m_agentReference);
       CaAqtr::InsertedElement::list insertedElements;
       insertedElements.push_back(
@@ -4844,13 +4841,13 @@ void OStoreDB::RepackArchiveReportBatch::report(log::LogContext& lc) {
   struct Deleters {
     std::unique_ptr<objectstore::ArchiveRequest::AsyncRequestDeleter> deleter;
     RepackReportBatch::SubrequestInfo<objectstore::ArchiveRequest>& subrequestInfo;
-    typedef std::list<Deleters> List;
+    using List = std::list<Deleters>;
   };
 
   struct JobOwnerUpdaters {
     std::unique_ptr<objectstore::ArchiveRequest::AsyncJobOwnerUpdater> jobOwnerUpdater;
     RepackReportBatch::SubrequestInfo<objectstore::ArchiveRequest>& subrequestInfo;
-    typedef std::list<JobOwnerUpdaters> List;
+    using List = std::list<JobOwnerUpdaters>;
   };
 
   Deleters::List deletersList;
@@ -4938,7 +4935,7 @@ void OStoreDB::RepackArchiveReportBatch::report(log::LogContext& lc) {
   struct DiskFileRemovers {
     std::unique_ptr<cta::disk::AsyncDiskFileRemover> asyncRemover;
     RepackReportBatch::SubrequestInfo<objectstore::ArchiveRequest>& subrequestInfo;
-    typedef std::list<DiskFileRemovers> List;
+    using List = std::list<DiskFileRemovers>;
   };
 
   DiskFileRemovers::List diskFileRemoverList;
@@ -5116,8 +5113,8 @@ OStoreDB::ArchiveJob::~ArchiveJob() {
 // OStoreDB::RetrieveJob::failTransfer()
 //------------------------------------------------------------------------------
 void OStoreDB::RetrieveJob::failTransfer(const std::string& failureReason, log::LogContext& lc) {
-  typedef objectstore::RetrieveRequest::EnqueueingNextStep EnqueueingNextStep;
-  typedef EnqueueingNextStep::NextStep NextStep;
+  using EnqueueingNextStep = objectstore::RetrieveRequest::EnqueueingNextStep;
+  using NextStep = EnqueueingNextStep::NextStep;
 
   if (!m_jobOwned) {
     throw JobNotOwned("In OStoreDB::RetrieveJob::failTransfer(): cannot fail a job not owned");
@@ -5182,7 +5179,7 @@ void OStoreDB::RetrieveJob::failTransfer(const std::string& failureReason, log::
     }
 
     case NextStep::EnqueueForReportForUser: {
-      typedef objectstore::ContainerAlgorithms<RetrieveQueue, RetrieveQueueToReportForUser> CaRqtr;
+      using CaRqtr = objectstore::ContainerAlgorithms<RetrieveQueue, RetrieveQueueToReportForUser>;
 
       // Algorithms suppose the objects are not locked
       auto retryStatus = m_retrieveRequest.getRetryStatus(selectedCopyNb);
@@ -5253,7 +5250,7 @@ void OStoreDB::RetrieveJob::failTransfer(const std::string& failureReason, log::
     }
 
     case NextStep::EnqueueForTransferForUser: {
-      typedef objectstore::ContainerAlgorithms<RetrieveQueue, RetrieveQueueToTransfer> CaRqtr;
+      using CaRqtr = objectstore::ContainerAlgorithms<RetrieveQueue, RetrieveQueueToTransfer>;
 
       // Algorithms suppose the objects are not locked
       auto retryStatus = m_retrieveRequest.getRetryStatus(selectedCopyNb);
@@ -5325,8 +5322,8 @@ void OStoreDB::RetrieveJob::failTransfer(const std::string& failureReason, log::
 // OStoreDB::RetrieveJob::failReport()
 //------------------------------------------------------------------------------
 void OStoreDB::RetrieveJob::failReport(const std::string& failureReason, log::LogContext& lc) {
-  typedef objectstore::RetrieveRequest::EnqueueingNextStep EnqueueingNextStep;
-  typedef EnqueueingNextStep::NextStep NextStep;
+  using EnqueueingNextStep = objectstore::RetrieveRequest::EnqueueingNextStep;
+  using NextStep = EnqueueingNextStep::NextStep;
 
   if (!m_jobOwned) {
     throw JobNotOwned("In OStoreDB::RetrieveJob::failReport(): cannot fail a job not owned");
@@ -5355,7 +5352,7 @@ void OStoreDB::RetrieveJob::failReport(const std::string& failureReason, log::Lo
         auto retryStatus = m_retrieveRequest.getRetryStatus(tf.copyNb);
         // Algorithms suppose the objects are not locked
         rrl.release();
-        typedef objectstore::ContainerAlgorithms<RetrieveQueue, RetrieveQueueToReportForUser> CaRqtr;
+        using CaRqtr = objectstore::ContainerAlgorithms<RetrieveQueue, RetrieveQueueToReportForUser>;
         CaRqtr caRqtr(m_oStoreDB.m_objectStore, *m_oStoreDB.m_agentReference);
         CaRqtr::InsertedElement::list insertedElements;
         insertedElements.push_back(CaRqtr::InsertedElement {&m_retrieveRequest,
@@ -5382,7 +5379,7 @@ void OStoreDB::RetrieveJob::failReport(const std::string& failureReason, log::Lo
         auto retryStatus = m_retrieveRequest.getRetryStatus(tf.copyNb);
         // Algorithms suppose the objects are not locked
         rrl.release();
-        typedef objectstore::ContainerAlgorithms<RetrieveQueue, RetrieveQueueFailed> CaRqtr;
+        using CaRqtr = objectstore::ContainerAlgorithms<RetrieveQueue, RetrieveQueueFailed>;
         CaRqtr caRqtr(m_oStoreDB.m_objectStore, *m_oStoreDB.m_agentReference);
         CaRqtr::InsertedElement::list insertedElements;
         insertedElements.push_back(CaRqtr::InsertedElement {&m_retrieveRequest,
@@ -5418,8 +5415,8 @@ void OStoreDB::RetrieveJob::failReport(const std::string& failureReason, log::Lo
 //  - If the retrieve job is from a Repack Retrieve Request, it will be queued in the RetrieveQueueToReportToRepackForFailure
 //------------------------------------------------------------------------------
 void OStoreDB::RetrieveJob::abort(const std::string& abortReason, log::LogContext& lc) {
-  typedef objectstore::RetrieveRequest::EnqueueingNextStep EnqueueingNextStep;
-  typedef EnqueueingNextStep::NextStep NextStep;
+  using EnqueueingNextStep = objectstore::RetrieveRequest::EnqueueingNextStep;
+  using NextStep = EnqueueingNextStep::NextStep;
 
   if (!m_jobOwned) {
     throw JobNotOwned("In OStoreDB::RetrieveJob::abort(): cannot abort a job not owned");

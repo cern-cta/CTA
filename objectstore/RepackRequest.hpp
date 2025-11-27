@@ -76,7 +76,7 @@ public:
     std::string address;
     uint64_t fSeq;
     bool subrequestDeleted;  ///< A boolean set to true before deleting a request. Covers the race between request creation recording and request
-    typedef std::set<SubrequestInfo> set;
+    using set = std::set<SubrequestInfo>;
     bool operator< (const SubrequestInfo & o) const { return fSeq < o.fSeq; }
   };
   /**
@@ -102,7 +102,7 @@ private:
     bool retrieveAccounted;
     std::set<uint32_t> archiveCopyNbsAccounted;
     bool subrequestDeleted;
-    typedef std::map<uint64_t, RepackSubRequestPointer> Map;
+    using Map = std::map<uint64_t, RepackSubRequestPointer>;
     void serialize (serializers::RepackSubRequestPointer & rsrp);
     void deserialize (const serializers::RepackSubRequestPointer & rsrp);
   };
@@ -130,7 +130,7 @@ public:
     bool subrequestDeleted = false;
     bool hasUserProvidedFile = false;
     std::string destinationVid;
-    typedef std::list<SubrequestStatistics> List;
+    using List = std::list<SubrequestStatistics>;
     bool operator< (const SubrequestStatistics & o) const { return fSeq < o.fSeq; }
   };
   void reportRetriveSuccesses (SubrequestStatistics::List & retrieveSuccesses);

@@ -897,7 +897,7 @@ bool RelationalDB::deleteDiskFiles(std::unordered_set<std::string>& jobSrcUrls, 
   struct DiskFileRemovers {
     std::unique_ptr<cta::disk::AsyncDiskFileRemover> asyncRemover;
     std::string jobUrl;
-    typedef std::list<DiskFileRemovers> List;
+    using List = std::list<DiskFileRemovers>;
   };
   DiskFileRemovers::List deletersList;
   for (const auto &jobUrl: jobSrcUrls) {

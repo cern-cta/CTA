@@ -31,7 +31,7 @@ namespace cta {
 template<typename JobQueuesQueue, typename JobQueue>
 class QueueItor {
 public:
-  typedef typename std::list<typename JobQueue::JobDump> jobQueue_t;
+  using jobQueue_t = typename std::list<typename JobQueue::JobDump>;
 
   /*!
    * Default constructor

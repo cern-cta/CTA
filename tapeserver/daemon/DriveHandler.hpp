@@ -111,7 +111,7 @@ private:
   // The current state we report to process manager
   ProcessingStatus m_processingStatus;
   // Convenience type
-  typedef std::chrono::milliseconds Timeout;
+  using Timeout = std::chrono::milliseconds;
   // Values for the state change timeouts where applicable
   static std::map<session::SessionState, Timeout> m_stateChangeTimeouts;
   // Values for the heartbeat timeouts, where applicable

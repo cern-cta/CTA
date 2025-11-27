@@ -35,7 +35,7 @@ struct RepackInfo {
     std::string vid;
     uint64_t files = 0;
     uint64_t bytes = 0;
-    typedef std::list<RepackDestinationInfo> List;
+    using List = std::list<RepackDestinationInfo>;
   };
   uint64_t repackReqId = 0;
   std::string vid;

@@ -1925,8 +1925,8 @@ TEST_P(SchedulerTest, repack) {
   log::DummyLogger dl("", "");
   log::LogContext lc(dl);
 
-  typedef cta::common::dataStructures::RepackInfo RepackInfo;
-  typedef cta::common::dataStructures::RepackInfo::Status Status;
+  using RepackInfo = cta::common::dataStructures::RepackInfo;
+  using Status = cta::common::dataStructures::RepackInfo::Status;
 
    // Create the environment for the migration to happen (library + tape)
   const std::string libraryComment = "Library comment";

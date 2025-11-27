@@ -82,8 +82,7 @@ getQueueJobs(const jobQueue_t &jobQueueChunk)
 {
   using namespace objectstore;
 
-  typedef std::pair<ArchiveRequest,
-                    std::unique_ptr<ArchiveRequest::AsyncLockfreeFetcher>> archiveJob_t;
+  using archiveJob_t = std::pair<ArchiveRequest, std::unique_ptr<ArchiveRequest::AsyncLockfreeFetcher>>;
 
   std::list<archiveJob_t> requests;
 
@@ -187,8 +186,8 @@ getQueueJobs(const jobQueue_t &jobQueueChunk)
 {
   using namespace objectstore;
 
-  typedef std::pair<RetrieveRequest,
-                    std::unique_ptr<RetrieveRequest::AsyncLockfreeFetcher>> retrieveJob_t;
+  using retrieveJob_t = std::pair<RetrieveRequest,
+                    std::unique_ptr<RetrieveRequest::AsyncLockfreeFetcher>>;
 
   std::list<retrieveJob_t> requests;
 

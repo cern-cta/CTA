@@ -27,6 +27,6 @@ namespace cta::common::dataStructures {
 /**
  * Map from tape volume identifier to tape.
  */
-typedef std::map<std::string, Tape> VidToTapeMap;
+using VidToTapeMap = std::map<std::string, Tape>;
 
 } // namespace cta::common::dataStructures

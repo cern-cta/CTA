@@ -29,9 +29,9 @@ namespace unitTests {
 class EchoSubprocess: public cta::tape::daemon::SubprocessHandler {
 public:
   /// Constructor
-  EchoSubprocess(const std::string & name, cta::tape::daemon::ProcessManager & pm): 
+  EchoSubprocess(const std::string & name, cta::tape::daemon::ProcessManager & pm):
     cta::tape::daemon::SubprocessHandler(name), m_processManager(pm) {}
-    
+
   /// Get status: initial status: we want to fork the subprocess
   SubprocessHandler::ProcessingStatus getInitialStatus() override {
     m_processingStatus.forkRequested = true;
@@ -41,7 +41,7 @@ public:
   SubprocessHandler::ProcessingStatus fork() override {
     m_childProcess = ::fork();
     m_processingStatus.forkRequested = false;
-    cta::exception::Errnum::throwOnMinusOne(m_childProcess, 
+    cta::exception::Errnum::throwOnMinusOne(m_childProcess,
         "In EchoSubprocess::fork(): failed to fork(): ");
     if (!m_childProcess) { // We are on the child side
       // We can close the parent's socket side.
@@ -68,7 +68,7 @@ public:
     m_processingStatus.forkState = SubprocessHandler::ForkState::parent;
     return m_processingStatus;
   }
-  
+
   void postForkCleanup() override {
     // We are in another subprocesses child processes. We can close our socketpair here without
     // removing it from poll. The side to close is the parent side.
@@ -96,10 +96,10 @@ public:
     m_socketPair.send(echoString);
     return EXIT_SUCCESS;
   }
-  
+
   SubprocessHandler::ProcessingStatus processSigChild() override {
     // Check out child process's status. If the child process is still around,
-    // waitpid will return 0. Non zero if process completed (and status needs to 
+    // waitpid will return 0. Non zero if process completed (and status needs to
     // be picked up) and -1 if the process is entirely gone.
     if (!m_subprocessComplete && ::waitpid(m_childProcess, nullptr, WNOHANG)) {
       m_subprocessComplete = true;
@@ -156,20 +156,20 @@ public:
     m_processingStatus.shutdownComplete = m_subprocessComplete;
     return m_processingStatus;
   }
-  
+
   SubprocessHandler::ProcessingStatus processTimeout() override {
     throw cta::exception::Exception("In EchoSubprocess::processTimeout(): timeout!");
   }
-  
+
   SubprocessHandler::ProcessingStatus shutdown() override {
     // Nothing to do as the sub process will exit on its own.
     ::waitpid(m_childProcess, nullptr, 0);
     m_processingStatus.shutdownComplete = true;
     return m_processingStatus;
   }
-  
+
 private:
-  typedef cta::tape::daemon::SubprocessHandler SubprocessHandler;
+  using SubprocessHandler = cta::tape::daemon::SubprocessHandler;
   cta::server::SocketPair m_socketPair;
   bool m_socketPairRegistered=false;
   cta::tape::daemon::ProcessManager & m_processManager;
@@ -183,14 +183,14 @@ private:
     uint32_t magic = 0xdeadbeef;
     uint32_t counter = 0;
   };
-  
+
   void unregisterSocketpair() {
     if (m_socketPairRegistered) {
       m_processManager.removeFile(m_socketPair.getFdForAccess(cta::server::SocketPair::Side::child));
       m_socketPairRegistered=false;
     }
   }
-  
+
   bool m_crashingChild=false;
   bool m_echoReceived=false;
 public:
@@ -203,18 +203,18 @@ class ProbeSubprocess: public cta::tape::daemon::SubprocessHandler {
 public:
   ProbeSubprocess(): cta::tape::daemon::SubprocessHandler("ProbeProcessHandler") {}
   virtual ~ProbeSubprocess() = default;
-  
+
   SubprocessHandler::ProcessingStatus getInitialStatus() override {
     m_processingStatus.shutdownComplete = m_shutdownAsked && m_honorShutdown;
     return m_processingStatus;
   }
-  
+
   void postForkCleanup() override { }
-  
+
   SubprocessHandler::ProcessingStatus fork() override {
     throw cta::exception::Exception("In ProbeSubprocess::fork(): should not have been called");
   }
-  
+
   SubprocessHandler::ProcessingStatus shutdown() override {
     m_shutdownAsked=true;
     m_processingStatus.shutdownComplete=m_honorShutdown;
@@ -224,7 +224,7 @@ public:
   void kill() override {
     m_killAsked = true;
   }
-  
+
   SubprocessHandler::ProcessingStatus processSigChild() override {
     m_sigChildReceived = true;
     m_processingStatus.shutdownComplete = m_shutdownAsked && m_honorShutdown;
@@ -240,11 +240,11 @@ public:
   ProcessingStatus refreshLogger() override {
     throw cta::exception::Exception("In ProbeSubprocess::refreshLogger(): should not have been called");
   }
-  
+
   SubprocessHandler::ProcessingStatus processEvent() override {
     throw cta::exception::Exception("In ProbeSubprocess::processEvent(): should not have been called");
   }
-  
+
   SubprocessHandler::ProcessingStatus processTimeout() override {
     throw cta::exception::Exception("In ProbeSubprocess::processTimeout(): should not have been called");
   }
@@ -252,15 +252,15 @@ public:
   int runChild() override {
     throw cta::exception::Exception("In ProbeSubprocess::runChild(): should not have been called");
   }
-  
+
   bool sawShutdown() { return m_shutdownAsked; }
-  
+
   bool sawKill() { return m_killAsked; }
-  
+
   bool sawSigChild() { return m_sigChildReceived; }
-  
+
   void setHonorShutdown(bool doHonor) { m_honorShutdown = doHonor; }
-  
+
 private:
   bool m_shutdownAsked=false;
   bool m_killAsked=false;
