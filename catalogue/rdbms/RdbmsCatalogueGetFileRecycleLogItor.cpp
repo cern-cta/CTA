@@ -73,7 +73,7 @@ RdbmsCatalogueGetFileRecycleLogItor::RdbmsCatalogueGetFileRecycleLogItor(
       searchCriteria.diskInstance.has_value() ||
       searchCriteria.recycleLogTimeMin.has_value() ||
       searchCriteria.recycleLogTimeMax.has_value() ||
-      searchCriteria.vo.has_value();) {
+      searchCriteria.vo.has_value()) {
     sql += R"SQL( WHERE )SQL";
   }
 

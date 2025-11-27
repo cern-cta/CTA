@@ -113,7 +113,7 @@ RdbmsCatalogueGetArchiveFilesItor::RdbmsCatalogueGetArchiveFilesItor(
      searchCriteria.diskInstance.has_value()   ||
      searchCriteria.vid.has_value()            ||
      searchCriteria.diskFileIds.has_value()    ||
-     searchCriteria.fSeq.has_value();) {
+     searchCriteria.fSeq.has_value()) {
     sql += R"SQL( WHERE )SQL";
   }
 
