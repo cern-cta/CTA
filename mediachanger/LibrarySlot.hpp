@@ -19,6 +19,7 @@
 
 #include "mediachanger/TapeLibraryType.hpp"
 
+#include <memory>
 #include <string>
 
 namespace cta::mediachanger {
@@ -47,7 +48,7 @@ public:
    *
    * @return The clone.
    */
-  virtual LibrarySlot *clone() = 0;
+  virtual std::unique_ptr<LibrarySlot> clone() = 0;
 
   /**
    * Gets the string representation of this tape library slot.

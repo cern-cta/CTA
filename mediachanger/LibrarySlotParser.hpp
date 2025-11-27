@@ -41,7 +41,7 @@ public:
    *
    * @param str The string representation of the library slot.
    */
-  static LibrarySlot *parse(const std::string &str);
+  static std::unique_ptr<LibrarySlot> parse(const std::string &str);
 
 private:
 
@@ -86,7 +86,7 @@ private:
    * @param str The string representation of the tape library slot.
    * @return The newly created library slot.
    */
-  static cta::mediachanger::LibrarySlot *parse(
+  static std::unique_ptr<cta::mediachanger::LibrarySlot> parse(
     const cta::mediachanger::TapeLibraryType libraryType,
     const std::string &str);
 
@@ -95,7 +95,7 @@ private:
    *
    * @param str The string representation of the tape library slot.
    */
-  static cta::mediachanger::DummyLibrarySlot * parseDummyLibrarySlot(
+  static std::unique_ptr<cta::mediachanger::DummyLibrarySlot> parseDummyLibrarySlot(
     const std::string &str);
 
   /**
@@ -103,7 +103,7 @@ private:
    *
    * @param str The string representation of the tape library slot.
    */
-  static cta::mediachanger::ScsiLibrarySlot *parseScsiLibrarySlot(
+  static std::unique_ptr<cta::mediachanger::ScsiLibrarySlot> parseScsiLibrarySlot(
     const std::string &str);
 
 }; // class LibrarySlot

@@ -27,7 +27,7 @@
 //------------------------------------------------------------------------------
 // parse
 //------------------------------------------------------------------------------
-cta::mediachanger::LibrarySlot *cta::mediachanger::LibrarySlotParser::
+std::unique_ptr<cta::mediachanger::LibrarySlot> cta::mediachanger::LibrarySlotParser::
   parse(const std::string &str) {
   try {
     // Parse the string representation in two steps, first parsing the beginning
@@ -76,7 +76,7 @@ bool cta::mediachanger::LibrarySlotParser::isScsi(const std::string &str)
 //------------------------------------------------------------------------------
 // parse
 //------------------------------------------------------------------------------
-cta::mediachanger::LibrarySlot *cta::mediachanger::LibrarySlotParser::
+std::unique_ptr<cta::mediachanger::LibrarySlot> cta::mediachanger::LibrarySlotParser::
   parse(const TapeLibraryType libraryType, const std::string &str) {
 
   switch(libraryType) {
@@ -96,16 +96,16 @@ cta::mediachanger::LibrarySlot *cta::mediachanger::LibrarySlotParser::
 //------------------------------------------------------------------------------
 // parseDummyLibrarySlot
 //------------------------------------------------------------------------------
-cta::mediachanger::DummyLibrarySlot *cta::mediachanger::
+std::unique_ptr<cta::mediachanger::DummyLibrarySlot> cta::mediachanger::
   LibrarySlotParser::parseDummyLibrarySlot(const std::string &str) {
-  return new DummyLibrarySlot(str);
+  return std::make_unique<DummyLibrarySlot>(str);
 }
 
 
 //------------------------------------------------------------------------------
 // parseScsiLibrarySlot
 //------------------------------------------------------------------------------
-cta::mediachanger::ScsiLibrarySlot *cta::mediachanger::
+std::unique_ptr<cta::mediachanger::ScsiLibrarySlot> cta::mediachanger::
   LibrarySlotParser::parseScsiLibrarySlot(const std::string &str) {
   if(str.find("smc") == std::string::npos) {
     cta::exception::Exception ex;
@@ -129,5 +129,5 @@ cta::mediachanger::ScsiLibrarySlot *cta::mediachanger::
   }
 
   const uint16_t drvOrd = atoi(drvOrdStr.c_str());
-  return new ScsiLibrarySlot(drvOrd);
+  return std::make_unique<ScsiLibrarySlot>(drvOrd);
 }
