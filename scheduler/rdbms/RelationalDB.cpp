@@ -1362,7 +1362,7 @@ void RelationalDB::fetchMountInfo(SchedulerDatabase::TapeMountDecisionInfo& tmdi
         continue;
     }
     // Get statistics for User and Repack archive queues
-    tmdi.potentialMounts.push_back(SchedulerDatabase::PotentialMount());
+    tmdi.potentialMounts.emplace_back();
     auto& m = tmdi.potentialMounts.back();
     m.type = mountType;
     m.tapePool = ajsr.tapePool;
@@ -1431,7 +1431,7 @@ void RelationalDB::fetchMountInfo(SchedulerDatabase::TapeMountDecisionInfo& tmdi
   // for now we create a mount per summary row (assuming there would not be
   // the same activity twice with 2 mount policies or 2 different VIDs selected)
   for (const auto& rjsr : rjsr_vector) {
-    tmdi.potentialMounts.push_back(SchedulerDatabase::PotentialMount());
+    tmdi.potentialMounts.emplace_back();
     auto& m = tmdi.potentialMounts.back();
     m.priority = rjsr.priority;
     m.minRequestAge = rjsr.minRetrieveRequestAge;

@@ -67,7 +67,7 @@ std::optional<std::string> castor::tape::tapeserver::daemon::EmptyDriveProbe::ge
 bool castor::tape::tapeserver::daemon::EmptyDriveProbe::
   exceptionThrowingDriveIsEmpty() {
   std::list<cta::log::Param> params;
-  params.push_back(cta::log::Param("tapeDrive", m_driveConfig.unitName));
+  params.emplace_back("tapeDrive", m_driveConfig.unitName);
 
   std::unique_ptr<drive::DriveInterface> drivePtr = createDrive();
   drive::DriveInterface &drive = *drivePtr.get();
@@ -88,7 +88,7 @@ std::unique_ptr<castor::tape::tapeserver::drive::DriveInterface>
   castor::tape::tapeserver::daemon::EmptyDriveProbe::createDrive() {
   SCSI::DeviceVector dv(m_sysWrapper);
   SCSI::DeviceInfo driveInfo = dv.findBySymlink(m_driveConfig.devFilename);
-  
+
   // Instantiate the drive object
   std::unique_ptr<castor::tape::tapeserver::drive::DriveInterface>
     drive(drive::createDrive(driveInfo, m_sysWrapper));
@@ -97,7 +97,7 @@ std::unique_ptr<castor::tape::tapeserver::drive::DriveInterface>
     cta::exception::Exception ex;
     ex.getMessage() << "Failed to instantiate drive object";
     throw ex;
-  } 
-    
+  }
+
   return drive;
 }

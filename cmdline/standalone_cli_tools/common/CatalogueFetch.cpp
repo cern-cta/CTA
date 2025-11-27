@@ -106,7 +106,7 @@ namespace cta::cliTool {
 std::tuple<std::string,std::string> CatalogueFetch::getInstanceAndFid(const std::string& archiveFileId, std::unique_ptr<XrdSsiPbServiceType> &serviceProviderPtr, cta::log::StdoutLogger &log) {
   {
     std::list<cta::log::Param> params;
-    params.push_back(cta::log::Param("archiveFileId", archiveFileId));
+    params.emplace_back("archiveFileId", archiveFileId);
     log(cta::log::DEBUG, "getInstanceAndFidFromCTA() ", params);
   }
 
@@ -130,8 +130,8 @@ std::tuple<std::string,std::string> CatalogueFetch::getInstanceAndFid(const std:
   g_listedTapeFiles.clear();
   {
     std::list<cta::log::Param> params;
-    params.push_back(cta::log::Param("diskInstance", listedTapeFile.first));
-    params.push_back(cta::log::Param("diskFileId", listedTapeFile.second));
+    params.emplace_back("diskInstance", listedTapeFile.first);
+    params.emplace_back("diskFileId", listedTapeFile.second);
     log(cta::log::DEBUG, "Obtained file metadata from CTA", params);
   }
   return listedTapeFile;

@@ -102,7 +102,7 @@ std::list<RepackIndex::RepackRequestAddress> RepackIndex::getRepackRequestsAddre
   checkHeaderReadable();
   std::list<RepackRequestAddress> ret;
   for (auto &rt: m_payload.repackrequestpointers()) {
-    ret.push_back(RepackRequestAddress());
+    ret.emplace_back();
     ret.back().repackRequestAddress = rt.address();
     ret.back().vid = rt.vid();
   }
@@ -135,14 +135,14 @@ void RepackIndex::removeRepackRequest(const std::string& vid) {
   if (!found) {
     std::stringstream err;
     err << "In RepackIndex::removeRepackRequest(): vid not found: " << vid;
-    throw cta::exception::Exception(err.str()); 
+    throw cta::exception::Exception(err.str());
   }
 }
 
 //------------------------------------------------------------------------------
 // DriveRegister::addRepackRequestAddress()
 //------------------------------------------------------------------------------
-void RepackIndex::addRepackRequestAddress(const std::string& vid, 
+void RepackIndex::addRepackRequestAddress(const std::string& vid,
     const std::string& repackRequestAddress) {
   checkPayloadWritable();
   for (int i=0; i< m_payload.mutable_repackrequestpointers()->size(); i++) {

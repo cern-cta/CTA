@@ -56,11 +56,11 @@ public:
   std::list<log::Param> getDeadAgentDetails() {
     std::list<log::Param> ret;
     auto gcData = readGCData();
-    ret.push_back(log::Param("currentHeartbeat", gcData.heartbeat));
-    ret.push_back(log::Param("GCRequested", gcData.needsGC?"true":"false"));
-    ret.push_back(log::Param("timeout", m_timeout));
-    ret.push_back(log::Param("timer", m_timer.secs()));
-    ret.push_back(log::Param("heartbeatAtTimerStart", m_heartbeatCounter));
+    ret.emplace_back("currentHeartbeat", gcData.heartbeat);
+    ret.emplace_back("GCRequested", gcData.needsGC?"true":"false");
+    ret.emplace_back("timeout", m_timeout);
+    ret.emplace_back("timer", m_timer.secs());
+    ret.emplace_back("heartbeatAtTimerStart", m_heartbeatCounter);
     return ret;
   }
 

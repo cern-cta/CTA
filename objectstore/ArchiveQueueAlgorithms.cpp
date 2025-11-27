@@ -81,7 +81,7 @@ auto ContainerTraits<ArchiveQueue>::getContainerSummary(Container& cont) -> Cont
 }
 
 auto ContainerTraits<ArchiveQueue>::switchElementsOwnership(InsertedElement::list& elemMemCont, const ContainerAddress& contAddress,
-    const ContainerAddress& previousOwnerAddress, log::TimingList& timingList, utils::Timer & t, log::LogContext& lc) 
+    const ContainerAddress& previousOwnerAddress, log::TimingList& timingList, utils::Timer & t, log::LogContext& lc)
 ->  OpFailure<InsertedElement>::list {
   std::list<std::unique_ptr<ArchiveRequest::AsyncJobOwnerUpdater>> updaters;
   for (auto & e: elemMemCont) {
@@ -97,7 +97,7 @@ auto ContainerTraits<ArchiveQueue>::switchElementsOwnership(InsertedElement::lis
     try {
       u->get()->wait();
     } catch (...) {
-      ret.push_back(OpFailure<InsertedElement>());
+      ret.emplace_back();
       ret.back().element = &(*e);
       ret.back().failure = std::current_exception();
     }
@@ -206,7 +206,7 @@ auto ContainerTraits<ArchiveQueue>::PopCriteria::operator-=(const PoppedElements
 
 auto ContainerTraits<ArchiveQueue>::switchElementsOwnership(PoppedElementsBatch & popedElementBatch,
     const ContainerAddress & contAddress, const ContainerAddress & previousOwnerAddress, log::TimingList& timingList, utils::Timer & t,
-    log::LogContext & lc) 
+    log::LogContext & lc)
 -> OpFailure<PoppedElement>::list {
   std::list<std::unique_ptr<ArchiveRequest::AsyncJobOwnerUpdater>> updaters;
   for (auto & e: popedElementBatch.elements) {
@@ -222,7 +222,7 @@ auto ContainerTraits<ArchiveQueue>::switchElementsOwnership(PoppedElementsBatch 
     try {
       u->get()->wait();
     } catch (...) {
-      ret.push_back(OpFailure<PoppedElement>());
+      ret.emplace_back();
       ret.back().element = &(*e);
       ret.back().failure = std::current_exception();
     }

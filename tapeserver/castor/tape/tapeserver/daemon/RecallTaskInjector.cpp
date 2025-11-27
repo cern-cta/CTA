@@ -175,7 +175,7 @@ bool RecallTaskInjector::reserveSpaceForNextJobBatch(std::list<std::unique_ptr<c
 
   if (ret == false) {
     for (auto &jobptr : nextJobBatch) {
-      m_jobs.push_back(std::unique_ptr<cta::RetrieveJob>(jobptr.release()));
+      m_jobs.emplace_back(jobptr.release());
     }
     m_retrieveMount.requeueJobBatch(m_jobs, m_lc);
     m_files = 0;
@@ -238,7 +238,7 @@ void RecallTaskInjector::injectBulkRecalls() {
     uint64_t index = useRAO ? raoOrder.at(i) : i;
     cta::RetrieveJob *job = m_jobs.at(index).release();
     job->positioningMethod=cta::PositioningMethod::ByBlock;
-    retrieveJobsBatch.push_back(std::unique_ptr<cta::RetrieveJob>(job));
+    retrieveJobsBatch.emplace_back(job);
     nFiles++;
     nBytes += job->archiveFile.fileSize;
     m_files--;

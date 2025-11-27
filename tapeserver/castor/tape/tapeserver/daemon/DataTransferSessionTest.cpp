@@ -1118,7 +1118,7 @@ TEST_P(DataTransferSessionTest, DataTransferSessionRAORecall) {
     castor::tape::SCSI::Structures::zeroStruct(&data);
 
     for (int fseq = 1; fseq <= MAX_RECALLS; fseq++) {
-      expectedRAOFseqOrder[fseq / MAX_BULK_RECALLS].push_back(std::to_string(fseq));
+      expectedRAOFseqOrder[fseq / MAX_BULK_RECALLS].emplace_back(fseq);
       // Create a path to a remote destination file
       std::ostringstream remoteFilePath;
       remoteFilePath << "file://" << m_tmpDir << "/test" << fseq;
@@ -1310,7 +1310,7 @@ TEST_P(DataTransferSessionTest, DataTransferSessionRAORecallLinearAlgorithm) {
     // For the RAO orders we will have two rao calls : first with 30 files,
     // the second with 20 files
     for (int fseq = 1; fseq <= MAX_RECALLS; fseq++) {
-      expectedRAOOrder[fseq / MAX_BULK_RECALLS].push_back(std::to_string(fseq));
+      expectedRAOOrder[fseq / MAX_BULK_RECALLS].emplace_back(fseq);
       // Create a path to a remote destination file
       std::ostringstream remoteFilePath;
       remoteFilePath << "file://" << m_tmpDir << "/test" << fseq;
@@ -1498,7 +1498,7 @@ TEST_P(DataTransferSessionTest, DataTransferSessionRAORecallRAOAlgoDoesNotExistS
     // For the RAO orders we will have two rao calls : first with 30 files,
     // the second with 20 files
     for (int fseq = 1; fseq <= MAX_RECALLS; fseq++) {
-      expectedRAOOrder[fseq / MAX_BULK_RECALLS].push_back(std::to_string(fseq));
+      expectedRAOOrder[fseq / MAX_BULK_RECALLS].emplace_back(fseq);
       // Create a path to a remote destination file
       std::ostringstream remoteFilePath;
       remoteFilePath << "file://" << m_tmpDir << "/test" << fseq;
@@ -1690,7 +1690,7 @@ TEST_P(DataTransferSessionTest, DataTransferSessionRAORecallSLTFRAOAlgorithm) {
     // For the RAO orders we will have two rao calls : first with 30 files,
     // the second with 20 files
     for (int fseq = 1; fseq <= MAX_RECALLS; fseq++) {
-      expectedRAOOrder[fseq / MAX_BULK_RECALLS].push_back(std::to_string(fseq));
+      expectedRAOOrder[fseq / MAX_BULK_RECALLS].emplace_back(fseq);
       // Create a path to a remote destination file
       std::ostringstream remoteFilePath;
       remoteFilePath << "file://" << m_tmpDir << "/test" << fseq;

@@ -210,7 +210,7 @@ int main(int argc, char *argv[]) {
             auto readSession = castor::tape::tapeFile::ReadSessionFactory::create(*drive, m_volInfo, true);
             BasicRetrieveJob fileToRecall;
             fileToRecall.selectedCopyNb = 1;
-            fileToRecall.archiveFile.tapeFiles.push_back(cta::common::dataStructures::TapeFile());
+            fileToRecall.archiveFile.tapeFiles.emplace_back();
             fileToRecall.selectedTapeFile().blockId = 110;  // here should be the block ID of HDR1
             fileToRecall.selectedTapeFile().fSeq = 2;
             fileToRecall.retrieveRequest.archiveFileID = 2;

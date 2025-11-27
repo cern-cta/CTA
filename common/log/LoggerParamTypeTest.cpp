@@ -145,11 +145,11 @@ TEST_F(LoggerParamTypeTest, TestParams_nullopt) {
   // All of these will be stored as `std::nullopt_t`
   // Keep a list of params and expected results
   std::list<Param> params;
-  params.push_back(Param("std::optional<int64_t>"     , std::optional<int64_t>()));
-  params.push_back(Param("std::optional<double>"      , std::optional<double>()));
-  params.push_back(Param("std::optional<bool>"        , std::optional<bool>()));
-  params.push_back(Param("std::optional<std::string>" , std::optional<std::string>()));
-  params.push_back(Param("std::nullopt"               , std::nullopt));
+  params.emplace_back("std::optional<int64_t>"     , std::optional<int64_t>());
+  params.emplace_back("std::optional<double>"      , std::optional<double>());
+  params.emplace_back("std::optional<bool>"        , std::optional<bool>());
+  params.emplace_back("std::optional<std::string>" , std::optional<std::string>());
+  params.emplace_back("std::nullopt"               , std::nullopt);
 
   for (auto & param : params) {
     ASSERT_FALSE(param.getValueVariant().has_value()) << "Failed testing Param type of empty '" << param.getName() << "'";

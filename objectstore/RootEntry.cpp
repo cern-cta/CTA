@@ -332,7 +332,7 @@ auto RootEntry::dumpArchiveQueues(common::dataStructures::JobQueueType queueType
   std::list<ArchiveQueueDump> ret;
   auto & tpl = archiveQueuePointers(queueType);
   for (auto i = tpl.begin(); i != tpl.end(); i++) {
-    ret.push_back(ArchiveQueueDump());
+    ret.emplace_back();
     ret.back().address = i->address();
     ret.back().tapePool = i->name();
   }
@@ -484,7 +484,7 @@ auto RootEntry::dumpRetrieveQueues(common::dataStructures::JobQueueType queueTyp
   std::list<RetrieveQueueDump> ret;
   auto & tpl = retrieveQueuePointers(queueType);
   for (auto i = tpl.begin(); i != tpl.end(); i++) {
-    ret.push_back(RetrieveQueueDump());
+    ret.emplace_back();
     ret.back().address = i->address();
     ret.back().vid = i->vid();
   }

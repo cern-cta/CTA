@@ -603,7 +603,7 @@ std::list<SchedulerDatabase::RetrieveQueueStatistics> Helpers::getRetrieveQueueS
     try {
       std::string rqAddr = re.getRetrieveQueueAddress(tf.vid, common::dataStructures::JobQueueType::JobsToTransferForUser);
     } catch (cta::exception::Exception &) {
-      ret.push_back(SchedulerDatabase::RetrieveQueueStatistics());
+      ret.emplace_back();
       ret.back().vid=tf.vid;
       ret.back().bytesQueued=0;
       ret.back().currentPriority=0;
@@ -616,7 +616,7 @@ std::list<SchedulerDatabase::RetrieveQueueStatistics> Helpers::getRetrieveQueueS
     rql.release();
     if (rq.getVid() != tf.vid)
       throw cta::exception::Exception("In OStoreDB::getRetrieveQueueStatistics(): unexpected vid for retrieve queue");
-    ret.push_back(SchedulerDatabase::RetrieveQueueStatistics());
+    ret.emplace_back();
     ret.back().vid=rq.getVid();
     ret.back().currentPriority=rq.getJobsSummary().priority;
     ret.back().bytesQueued=rq.getJobsSummary().bytes;

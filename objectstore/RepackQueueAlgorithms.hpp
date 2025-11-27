@@ -350,7 +350,7 @@ switchElementsOwnership(typename InsertedElement::list& elemMemCont, const Conta
     try {
       u->get()->wait();
     } catch (...) {
-      ret.push_back(OpFailure<InsertedElement>());
+      ret.emplace_back();
       ret.back().element = &(*e);
       ret.back().failure = std::current_exception();
     }
@@ -385,7 +385,7 @@ auto ContainerTraits<RepackQueue,C>::switchElementsOwnership(PoppedElementsBatch
 	element.repackInfo = updater.get()->getInfo();
       } catch(...)
       {
-	 ret.push_back(OpFailure<PoppedElement>(&element, std::current_exception()));
+	 ret.emplace_back(&element, std::current_exception());
       }
     }
     timingList.insertAndReset("asyncUpdateCompletionTime", t);
@@ -413,7 +413,7 @@ switchElementsOwnershipAndStatus(PoppedElementsBatch &poppedElementBatch, const 
       u->get()->wait();
       e->repackInfo = u->get()->getInfo();
     } catch (...) {
-      ret.push_back(OpFailure<PoppedElement>());
+      ret.emplace_back();
       ret.back().element = &(*e);
       ret.back().failure = std::current_exception();
     }

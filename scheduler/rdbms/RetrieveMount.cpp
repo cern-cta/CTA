@@ -146,7 +146,7 @@ void RetrieveMount::requeueJobBatch(std::list<std::unique_ptr<SchedulerDatabase:
                                     cta::log::LogContext& logContext) {
   std::list<std::string> jobIDsList;
   for (const auto& job : jobBatch) {
-    jobIDsList.push_back(std::to_string(job->jobID));
+    jobIDsList.emplace_back(job->jobID);
   }
   uint64_t njobs = RetrieveMount::requeueJobBatch(jobIDsList, logContext);
   if (njobs != jobIDsList.size()) {
@@ -263,13 +263,13 @@ void RetrieveMount::setJobBatchTransferred(std::list<std::unique_ptr<SchedulerDa
     if (m_isRepack) {
       // If the job is from a repack subrequest, we change its status (to report
       // for repack success).
-      jobIDs_repackSuccess.push_back(std::to_string(rdbJob->jobID));
+      jobIDs_repackSuccess.emplace_back(rdbJob->jobID);
     } else if (rdbJob->retrieveRequest.retrieveReportURL.empty()) {
       // Set the user transfer request as successful (delete it).
-      jobIDs_success.push_back(std::to_string(rdbJob->jobID));
+      jobIDs_success.emplace_back(rdbJob->jobID);
     } else {
       // else we change its status (to report for transfer success).
-      jobIDs_reportToUser.push_back(std::to_string(rdbJob->jobID));
+      jobIDs_reportToUser.emplace_back(rdbJob->jobID);
     }
   }
   this->m_RelationalDB.m_catalogue.DriveState()->releaseDiskSpace(mountInfo.drive,
