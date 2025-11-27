@@ -138,7 +138,7 @@ private:
    */
   template<typename T>
   static void buildVector(std::vector<std::string>& line, const T& item) {
-    line.push_back(item);
+    line.push_back(std::to_string(item));
   }
 
   //! Convert double to string with one decimal place precision and a suffix
