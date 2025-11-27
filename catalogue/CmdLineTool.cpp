@@ -67,7 +67,7 @@ std::string CmdLineTool::getHostname() {
 //------------------------------------------------------------------------------
 // main
 //------------------------------------------------------------------------------
-int CmdLineTool::main(const int argc, char *const *const argv) {
+int CmdLineTool::mainImpl(const int argc, char *const *const argv) {
   bool cmdLineNotParsed = false;
   std::string errorMessage;
 

@@ -45,7 +45,7 @@ public:
 
   /** The main entry function of the daemon.
    * @return The return code of the process. */
-  int main();
+  int mainImpl();
   
 private:
   bool isMaintenanceProcessDisabled() const;

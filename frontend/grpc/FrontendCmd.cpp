@@ -54,7 +54,7 @@ cta::frontend::grpc::server::FrontendCmd::FrontendCmd(std::istream &inStream,
                                                       m_err(errStream) {
 }
 
-int cta::frontend::grpc::server::FrontendCmd::main(const int argc, char** argv) {
+int cta::frontend::grpc::server::FrontendCmd::mainImpl(const int argc, char** argv) {
 
   m_strExecName = argv[0];
   
@@ -228,11 +228,11 @@ int cta::frontend::grpc::server::FrontendCmd::main(const int argc, char** argv) 
     upCatalogue->Schema()->ping();
     log::ScopedParamContainer params(lc);
     params.add("SchemaVersion", upCatalogue->Schema()->getSchemaVersion().getSchemaVersion<std::string>());
-    lc.log(cta::log::INFO, "In cta::frontend::grpc::server::FrontendCmd::main(): Connected to catalog.");
+    lc.log(cta::log::INFO, "In cta::frontend::grpc::server::FrontendCmd::mainImpl(): Connected to catalog.");
   } catch (cta::exception::Exception &ex) {
     log::ScopedParamContainer params(lc);
     params.add("exceptionMessage", ex.getMessageValue());
-    lc.log(cta::log::CRIT, "In cta::frontend::grpc::server::FrontendCmd::main(): Got an exception.");
+    lc.log(cta::log::CRIT, "In cta::frontend::grpc::server::FrontendCmd::mainImpl(): Got an exception.");
     return EXIT_FAILURE;
   }
   // Token storage
@@ -250,7 +250,7 @@ int cta::frontend::grpc::server::FrontendCmd::main(const int argc, char** argv) 
     } catch(const cta::exception::Exception &ex) {
       log::ScopedParamContainer params(lc);
       params.add("handler", "NegotiationRequestHandler");
-      lc.log(cta::log::ERR, "In cta::frontend::grpc::server::FrontendCmd::main(): Error while registering handler.");
+      lc.log(cta::log::ERR, "In cta::frontend::grpc::server::FrontendCmd::mainImpl(): Error while registering handler.");
       throw;
     }
     // SERVICE: CtaRpcStream
@@ -269,12 +269,12 @@ int cta::frontend::grpc::server::FrontendCmd::main(const int argc, char** argv) 
   } catch(const cta::exception::Exception& e) {
     log::ScopedParamContainer params(lc);
     params.add("exceptionMessage", e.getMessageValue());
-    lc.log(cta::log::CRIT, "In cta::frontend::grpc::server::FrontendCmd::main(): Got an exception.");
+    lc.log(cta::log::CRIT, "In cta::frontend::grpc::server::FrontendCmd::mainImpl(): Got an exception.");
     return EXIT_FAILURE;
   } catch(const std::exception& e) {
     log::ScopedParamContainer params(lc);
     params.add("exceptionMessage", e.what());
-    lc.log(cta::log::CRIT, "In cta::frontend::grpc::server::FrontendCmd::main(): Got an exception.");
+    lc.log(cta::log::CRIT, "In cta::frontend::grpc::server::FrontendCmd::mainImpl(): Got an exception.");
     return EXIT_FAILURE;
   }
   
@@ -300,6 +300,6 @@ int main(const int argc, char **argv) {
 
   cta::frontend::grpc::server::FrontendCmd cmd(std::cin, std::cout, std::cerr);
   
-  return cmd.main(argc, argv);
+  return cmd.mainImpl(argc, argv);
   
 }

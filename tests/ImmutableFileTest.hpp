@@ -45,7 +45,7 @@ public:
    * @param argv The command-line arguments.
    * @return The exit value of the program.
    */
-  int main(const int argc, char *const *const argv);
+  int mainImpl(const int argc, char *const *const argv);
 
 private:
 

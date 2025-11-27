@@ -51,7 +51,7 @@ TapeDaemon::~TapeDaemon() {
 //------------------------------------------------------------------------------
 // main
 //------------------------------------------------------------------------------
-int TapeDaemon::main() {
+int TapeDaemon::mainImpl() {
   try {
     exceptionThrowingMain();
   } catch (cta::exception::NoSuchObject &ex) {
