@@ -253,13 +253,9 @@ void TapeLabelCmd::checkTapeLabel(
 //------------------------------------------------------------------------------
 // dismountTape
 //------------------------------------------------------------------------------
-void TapeLabelCmd::dismountTape(
-  const std::string &vid) {
-  std::unique_ptr<cta::mediachanger::LibrarySlot> librarySlotPtr;
-  librarySlotPtr.reset(
-    cta::mediachanger::LibrarySlotParser::parse(m_rawLibrarySlot));
-  const cta::mediachanger::LibrarySlot &librarySlot = *librarySlotPtr.get();
-  
+void TapeLabelCmd::dismountTape(const std::string &vid) {
+  const auto librarySlotPtr = cta::mediachanger::LibrarySlotParser::parse(m_rawLibrarySlot);
+
   std::list<cta::log::Param> params;
   params.push_back(cta::log::Param("userName", m_userName));
   params.push_back(cta::log::Param("tapeVid", m_vid));
@@ -268,12 +264,12 @@ void TapeLabelCmd::dismountTape(
   params.push_back(cta::log::Param("logicalLibrary", m_logicalLibrary));
   params.push_back(cta::log::Param("useLbp",boolToStr(m_useLbp)));
   params.push_back(cta::log::Param("driveSupportLbp",boolToStr(m_driveSupportLbp)));
-  params.push_back(cta::log::Param("librarySlot", librarySlot.str()));
+  params.push_back(cta::log::Param("librarySlot", librarySlotPtr->str()));
   params.push_back(cta::log::Param("force", boolToStr(m_force)));
 
   try {
     m_log(cta::log::INFO, "Label session dismounting tape", params);
-    m_mc->dismountTape(vid, librarySlot);
+    m_mc->dismountTape(vid, *librarySlotPtr);
     m_log(cta::log::INFO, "Label session dismounted tape", params);
   } catch(cta::exception::Exception &ne) {
     cta::exception::Exception ex;
@@ -333,10 +329,7 @@ void TapeLabelCmd::writeLabelToTape(
 // unloadTape
 //------------------------------------------------------------------------------
 void TapeLabelCmd::unloadTape(const std::string &vid, castor::tape::tapeserver::drive::DriveInterface &drive) {
-  std::unique_ptr<cta::mediachanger::LibrarySlot> librarySlotPtr;
-  librarySlotPtr.reset(
-    cta::mediachanger::LibrarySlotParser::parse(m_rawLibrarySlot));
-  const cta::mediachanger::LibrarySlot &librarySlot = *librarySlotPtr;
+  const auto librarySlotPtr = cta::mediachanger::LibrarySlotParser::parse(m_rawLibrarySlot);
 
   std::list<cta::log::Param> params;
   params.push_back(cta::log::Param("userName", m_userName));
@@ -346,7 +339,7 @@ void TapeLabelCmd::unloadTape(const std::string &vid, castor::tape::tapeserver::
   params.push_back(cta::log::Param("logicalLibrary", m_logicalLibrary));
   params.push_back(cta::log::Param("useLbp",boolToStr(m_useLbp)));
   params.push_back(cta::log::Param("driveSupportLbp",boolToStr(m_driveSupportLbp)));
-  params.push_back(cta::log::Param("librarySlot", librarySlot.str()));
+  params.push_back(cta::log::Param("librarySlot", librarySlotPtr->str()));
   params.push_back(cta::log::Param("force", boolToStr(m_force)));
 
   try {
@@ -438,11 +431,8 @@ void TapeLabelCmd::readAndSetConfiguration(const std::string &userName,
 // mountTape
 //------------------------------------------------------------------------------
 void TapeLabelCmd::mountTape(const std::string &vid) {
-  std::unique_ptr<cta::mediachanger::LibrarySlot> librarySlotPtr;
-  librarySlotPtr.reset(
-    cta::mediachanger::LibrarySlotParser::parse(m_rawLibrarySlot));
-  const cta::mediachanger::LibrarySlot &librarySlot = *librarySlotPtr.get();
-    
+  const auto librarySlotPtr = cta::mediachanger::LibrarySlotParser::parse(m_rawLibrarySlot);
+
   std::list<cta::log::Param> params;
   params.push_back(cta::log::Param("userName", m_userName));
   params.push_back(cta::log::Param("tapeVid", vid));
@@ -451,11 +441,11 @@ void TapeLabelCmd::mountTape(const std::string &vid) {
   params.push_back(cta::log::Param("logicalLibrary", m_logicalLibrary));
   params.push_back(cta::log::Param("useLbp", boolToStr(m_useLbp)));
   params.push_back(cta::log::Param("driveSupportLbp",boolToStr(m_driveSupportLbp)));
-  params.push_back(cta::log::Param("librarySlot", librarySlot.str()));
+  params.push_back(cta::log::Param("librarySlot", librarySlotPtr->str()));
   params.push_back(cta::log::Param("force", boolToStr(m_force)));
 
   m_log(cta::log::INFO, "Label session mounting tape", params);
-  m_mc->mountTapeReadWrite(vid, librarySlot);
+  m_mc->mountTapeReadWrite(vid, *librarySlotPtr);
   m_log(cta::log::INFO, "Label session mounted tape", params);
 }
 

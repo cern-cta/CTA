@@ -47,7 +47,7 @@ public:
    *
    * @param impl The object actually implementing this iterator.
    */
-  explicit CatalogueItor(Impl *const impl) : m_impl(impl) {
+  explicit CatalogueItor(std::unique_ptr<Impl> impl) : m_impl(std::move(impl)) {
     if (nullptr == impl) {
       throw exception::Exception(std::string(__FUNCTION__) + " failed: Pointer to implementation object is null");
     }

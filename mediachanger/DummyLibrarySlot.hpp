@@ -53,7 +53,7 @@ public:
    *
    * @return The clone.
    */
-  LibrarySlot *clone();
+  std::unique_ptr<LibrarySlot> clone() override;
 };
 
 } // namespace cta::mediachanger

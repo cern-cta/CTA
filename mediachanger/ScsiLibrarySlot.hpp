@@ -52,7 +52,7 @@ public:
    *
    * @return The clone.
    */
-  LibrarySlot *clone();
+  std::unique_ptr<LibrarySlot> clone() override;
 
   /**
    * Gets the drive ordinal.

@@ -52,8 +52,8 @@ namespace cta::disk {
         typedef cta::utils::Regex Regex;
       public:
         DiskFileFactory(uint16_t xrootTimeout, cta::disk::RadosStriperPool& striperPool);
-        ReadFile * createReadFile(const std::string & path);
-        WriteFile * createWriteFile(const std::string & path);
+        std::unique_ptr<ReadFile> createReadFile(const std::string & path);
+        std::unique_ptr<WriteFile> createWriteFile(const std::string & path);
       private:
         Regex m_NoURLLocalFile;
         Regex m_URLLocalFile;
@@ -153,7 +153,7 @@ namespace cta::disk {
 	typedef cta::utils::Regex Regex;
       public:
 	AsyncDiskFileRemoverFactory();
-	AsyncDiskFileRemover * createAsyncDiskFileRemover(const std::string &path);
+	std::unique_ptr<AsyncDiskFileRemover> createAsyncDiskFileRemover(const std::string &path);
       private:
 	Regex m_URLLocalFile;
         Regex m_URLXrootdFile;
@@ -183,7 +183,7 @@ namespace cta::disk {
 	 * @throws cta::exception if the path provided does not allow to determine which instance of
 	 * Directory will be instanciated.
 	 */
-	Directory * createDirectory(const std::string &path);
+	std::unique_ptr<Directory> createDirectory(const std::string &path);
 	
       private:
 	Regex m_URLLocalDirectory;

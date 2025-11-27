@@ -1053,7 +1053,7 @@ RelationalDB::getNextSuccessfulArchiveRepackReportBatch(log::LogContext& lc) {
       // std::string directoryPath = cta::utils::getEnclosingPath(bufferURL);
       std::unique_ptr<cta::disk::Directory> directory;
       try {
-        directory.reset(directoryFactory.createDirectory(bufferURL));
+        directory = directoryFactory.createDirectory(bufferURL);
         directory->rmdir();
         log::ScopedParamContainer(lc)
           .add("bufferURL", bufferURL)

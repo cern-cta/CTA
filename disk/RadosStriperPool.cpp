@@ -73,7 +73,7 @@ libradosstriper::RadosStriper* RadosStriperPool::throwingGetStriper(const std::s
   cta::threading::MutexLocker locker{m_mutex};
   unsigned int striperIdx = getStriperIdxAndIncrease();
   try {
-    return m_stripers[striperIdx].at(userAtPool);
+    return m_stripers[striperIdx].at(userAtPool).get();
   } catch (std::out_of_range &) {
     // we need to create a new radosStriper, as the requested one is not there yet.
     // First find the user id (if any given) in the pool string
@@ -116,8 +116,8 @@ libradosstriper::RadosStriper* RadosStriperPool::throwingGetStriper(const std::s
     newStriper->set_object_layout_stripe_unit(32 * 1024 * 1024); // 32 MB
     newStriper->set_object_layout_object_size(32 * 1024 * 1024); // 32 MB
     // insert into cache and return value
-    m_stripers[striperIdx][userAtPool] = newStriper.release();
-    return  m_stripers[striperIdx][userAtPool];
+    m_stripers[striperIdx][userAtPool] = std::move(newStriper);
+    return  m_stripers[striperIdx][userAtPool].get();
   }
 }
 
@@ -144,12 +144,6 @@ RadosStriperPool::~RadosStriperPool() {
 //------------------------------------------------------------------------------
 void RadosStriperPool::disconnectAll() {
   cta::threading::MutexLocker locker{m_mutex};
-  for (auto v = m_stripers.begin(); v != m_stripers.end(); v++) {
-    for (auto i = v->begin(); i != v->end(); i++) {
-      delete i->second;
-    }
-    v->clear();
-  }
   m_stripers.clear();
 }
 

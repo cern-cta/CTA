@@ -28,7 +28,7 @@ namespace cta::disk {
 
 class DiskReporterFactory {
  public:
-  DiskReporter * createDiskReporter(const std::string& URL);
+  std::unique_ptr<DiskReporter> createDiskReporter(const std::string& URL);
  private:
   // The typical call to give report to EOS will be:
   // xrdfs localhost query opaquefile "/eos/wfe/passwd?mgm.pcmd=event&mgm.fid=112&mgm.logid=cta&mgm.event=migrated&mgm.workflow=default&mgm.path=/eos/wfe/passwd&mgm.ruid=0&mgm.rgid=0"

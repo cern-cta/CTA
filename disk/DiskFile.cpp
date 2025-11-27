@@ -37,56 +37,56 @@ DiskFileFactory::DiskFileFactory(uint16_t xrootTimeout, cta::disk::RadosStriperP
       m_xrootTimeout(xrootTimeout),
       m_striperPool(striperPool) {}
 
-ReadFile* DiskFileFactory::createReadFile(const std::string& path) {
+std::unique_ptr<ReadFile> DiskFileFactory::createReadFile(const std::string& path) {
   std::vector<std::string> regexResult;
   // URL path parsing
   // local file URL?
   regexResult = m_URLLocalFile.exec(path);
   if (regexResult.size()) {
-    return new LocalReadFile(regexResult[1]);
+    return std::make_unique<LocalReadFile>(regexResult[1]);
   }
   // Xroot URL?
   regexResult = m_URLXrootFile.exec(path);
   if (regexResult.size()) {
-     return new XrootReadFile(regexResult[1], m_xrootTimeout);
+     return std::make_unique<XrootReadFile>(regexResult[1], m_xrootTimeout);
   }
   // radosStriper URL?
   regexResult = m_URLCephFile.exec(path);
   if (regexResult.size()) {
-    return new RadosStriperReadFile(regexResult[0], m_striperPool.throwingGetStriper(regexResult[1]), regexResult[2]);
+    return std::make_unique<RadosStriperReadFile>(regexResult[0], m_striperPool.throwingGetStriper(regexResult[1]), regexResult[2]);
   }
   // No URL path parsing
   // Do we have a local file?
   regexResult = m_NoURLLocalFile.exec(path);
   if (regexResult.size()) {
-    return new LocalReadFile(regexResult[2]);
+    return std::make_unique<LocalReadFile>(regexResult[2]);
   }
   throw cta::exception::Exception(std::string("In DiskFileFactory::createReadFile failed to parse URL: ") + path);
 }
 
-WriteFile* DiskFileFactory::createWriteFile(const std::string& path) {
+std::unique_ptr<WriteFile> DiskFileFactory::createWriteFile(const std::string& path) {
   std::vector<std::string> regexResult;
   // URL path parsing
   // local file URL?
   regexResult = m_URLLocalFile.exec(path);
   if (regexResult.size()) {
-    return new LocalWriteFile(regexResult[1]);
+    return std::make_unique<LocalWriteFile>(regexResult[1]);
   }
   // Xroot URL?
   regexResult = m_URLXrootFile.exec(path);
   if (regexResult.size()) {
-    return new XrootWriteFile(regexResult[1], m_xrootTimeout);
+    return std::make_unique<XrootWriteFile>(regexResult[1], m_xrootTimeout);
   }
   // radosStriper URL?
   regexResult = m_URLCephFile.exec(path);
   if (regexResult.size()) {
-    return new RadosStriperWriteFile(regexResult[0], m_striperPool.throwingGetStriper(regexResult[1]), regexResult[2]);
+    return std::make_unique<RadosStriperWriteFile>(regexResult[0], m_striperPool.throwingGetStriper(regexResult[1]), regexResult[2]);
   }
   // No URL path parsing
   // Do we have a local file?
   regexResult = m_NoURLLocalFile.exec(path);
   if (regexResult.size()) {
-    return new LocalWriteFile(regexResult[2]);
+    return std::make_unique<LocalWriteFile>(regexResult[2]);
   }
   throw cta::exception::Exception(std::string("In DiskFileFactory::createWriteFile failed to parse URL: ") + path);
 }
@@ -184,12 +184,9 @@ size_t XrootBaseReadFile::read(void* data, const size_t size) const {
 size_t XrootBaseReadFile::size() const {
   const bool forceStat = false;
   XrdCl::StatInfo* statInfo(nullptr);
-  size_t ret;
   exception::XrdClException::throwOnError(m_xrootFile.Stat(forceStat, statInfo, m_timeout),
-                          std::string("In XrootReadFile::size failed XrdCl::File::Stat() on ") + m_URL);
-  ret = statInfo->GetSize();
-  delete statInfo;
-  return ret;
+                                          std::string("In XrootReadFile::size failed XrdCl::File::Stat() on ") + m_URL);
+  return std::unique_ptr<XrdCl::StatInfo>(statInfo)->GetSize();
 }
 
 XrootBaseReadFile::~XrootBaseReadFile() noexcept {
@@ -341,17 +338,17 @@ AsyncDiskFileRemoverFactory::AsyncDiskFileRemoverFactory()
     : m_URLLocalFile("^file://(.*)$"),
       m_URLXrootdFile("^(root://.*)$") {}
 
-AsyncDiskFileRemover* AsyncDiskFileRemoverFactory::createAsyncDiskFileRemover(const std::string& path) {
+std::unique_ptr<AsyncDiskFileRemover> AsyncDiskFileRemoverFactory::createAsyncDiskFileRemover(const std::string& path) {
   // URL path parsing
   std::vector<std::string> regexResult;
   //local file URL?
   regexResult = m_URLLocalFile.exec(path);
   if (regexResult.size()) {
-    return new AsyncLocalDiskFileRemover(regexResult[1]);
+    return std::make_unique<AsyncLocalDiskFileRemover>(regexResult[1]);
   }
   regexResult = m_URLXrootdFile.exec(path);
   if (regexResult.size()) {
-    return new AsyncXRootdDiskFileRemover(path);
+    return std::make_unique<AsyncXRootdDiskFileRemover>(path);
   }
   throw cta::exception::Exception("In DiskFileRemoverFactory::createDiskFileRemover: unknown type of URL");
 }
@@ -436,18 +433,18 @@ void AsyncLocalDiskFileRemover::wait() {
 //==============================================================================
 DirectoryFactory::DirectoryFactory() : m_URLLocalDirectory("^file://(.*)$"), m_URLXrootDirectory("^(root://.*)$") {}
 
-Directory* DirectoryFactory::createDirectory(const std::string& path) {
+std::unique_ptr<Directory> DirectoryFactory::createDirectory(const std::string& path) {
   // URL path parsing
   std::vector<std::string> regexResult;
   // local file URL?
   regexResult = m_URLLocalDirectory.exec(path);
   if (regexResult.size()) {
-    return new LocalDirectory(regexResult[1]);
+    return std::make_unique<LocalDirectory>(regexResult[1]);
   }
   // Xroot URL?
   regexResult = m_URLXrootDirectory.exec(path);
   if (regexResult.size()) {
-    return new XRootdDirectory(path);
+    return std::make_unique<XRootdDirectory>(path);
   }
   throw cta::exception::Exception("In DirectoryFactory::createDirectory: unknown type of URL");
 }
