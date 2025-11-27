@@ -29,7 +29,7 @@ bool cta::frontend::grpc::server::TokenStorage::validate(const std::string& strT
   std::lock_guard<std::mutex> lck(m_mtxLockStorage);
   std::string strDecodedToken = cta::utils::base64decode(strToken);
 
-  if (m_umapTokens.find(strDecodedToken) != m_umapTokens.end()) {
+  if (m_umapTokens.contains(strDecodedToken)) {
     return true;
   }
   return false;

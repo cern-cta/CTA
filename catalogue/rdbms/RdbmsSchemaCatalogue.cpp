@@ -69,8 +69,8 @@ SchemaVersion RdbmsSchemaCatalogue::getSchemaVersion() const {
 void RdbmsSchemaCatalogue::verifySchemaVersion() {
   const std::set<int> supported_versions{SUPPORTED_CTA_CATALOGUE_SCHEMA_VERSIONS_ARRAY.begin(), SUPPORTED_CTA_CATALOGUE_SCHEMA_VERSIONS_ARRAY.end()};
   SchemaVersion schemaVersion = getSchemaVersion();
-  if(const auto [major, minor] = schemaVersion.getSchemaVersion<SchemaVersion::MajorMinor>();
-    supported_versions.count(static_cast<int>(major)) == 0){
+  if (const auto [major, minor] = schemaVersion.getSchemaVersion<SchemaVersion::MajorMinor>();
+      !supported_versions.contains(static_cast<int>(major))) {
     std::ostringstream exceptionMsg;
     std::ostringstream supported_versions_os;
     std::copy(supported_versions.begin(), supported_versions.end(), std::ostream_iterator<int>(supported_versions_os, ", "));

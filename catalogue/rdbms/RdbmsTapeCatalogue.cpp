@@ -120,7 +120,7 @@ void RdbmsTapeCatalogue::createTape(const common::dataStructures::SecurityIdenti
   }
   const auto tapePoolCatalogue = static_cast<RdbmsTapePoolCatalogue*>(m_rdbmsCatalogue->TapePool().get());
   const auto tapePoolIdMap = tapePoolCatalogue->getTapePoolIdMap(conn, {tapePoolName});
-  if(!tapePoolIdMap.count(tapePoolName)) {
+  if (!tapePoolIdMap.contains(tapePoolName)) {
     throw exception::UserError(std::string("Cannot create tape ") + vid + " because tape pool " +
     tapePoolName + " does not exist");
   }
@@ -1517,7 +1517,9 @@ std::list<common::dataStructures::Tape> RdbmsTapeCatalogue::getTapes(rdbms::Conn
     auto rset = stmt.executeQuery();
     while (rset.next()) {
       auto vid = rset.columnString("VID");
-      if(vidsInList.count(vid) == 1) continue;
+      if (vidsInList.contains(vid)) {
+        continue;
+      }
       vidsInList.insert(vid);
 
       common::dataStructures::Tape tape;

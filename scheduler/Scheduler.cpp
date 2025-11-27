@@ -790,7 +790,7 @@ void Scheduler::expandRepackRequest(const std::unique_ptr<RepackRequest>& repack
         }
         for (auto archiveFileRoutesItor = archiveFileRoutes.begin(); archiveFileRoutesItor != archiveFileRoutes.end();
              ++archiveFileRoutesItor) {
-          if (copyNbsAlreadyInCTA.find(archiveFileRoutesItor->first) == copyNbsAlreadyInCTA.end()) {
+          if (!copyNbsAlreadyInCTA.contains(archiveFileRoutesItor->first)) {
             //We need to archive the missing copy
             retrieveSubRequest.copyNbsToRearchive.insert(archiveFileRoutesItor->first);
           }
@@ -1240,7 +1240,7 @@ void Scheduler::sortAndGetTapesForMountInfo(
                              v.end(),
                              [&eligibleTapeMap](const SchedulerDatabase::PotentialMount& pm) {
                                return (pm.type == common::dataStructures::MountType::Retrieve &&
-                                       eligibleTapeMap.count(pm.vid) == 0);
+                                       !eligibleTapeMap.contains(pm.vid));
                              }),
               v.end());
     }
@@ -1376,7 +1376,7 @@ void Scheduler::sortAndGetTapesForMountInfo(
       if (em.type == common::dataStructures::MountType::ArchiveForRepack) {
         isRepackingMount = true;
       } else if (em.type == common::dataStructures::MountType::Retrieve) {
-        isRepackingMount = (repackingTapeVids.find(em.vid) != repackingTapeVids.end());
+        isRepackingMount = repackingTapeVids.contains(em.vid);
       }
       if (isRepackingMount && !defaultRepackVo.has_value()) {
         log::ScopedParamContainer params(lc);
@@ -1418,7 +1418,7 @@ void Scheduler::sortAndGetTapesForMountInfo(
     if (m->type == common::dataStructures::MountType::ArchiveForRepack) {
       isRepackingMount = true;
     } else if (m->type == common::dataStructures::MountType::Retrieve) {
-      isRepackingMount = (repackingTapeVids.find(m->vid) != repackingTapeVids.end());
+      isRepackingMount = repackingTapeVids.contains(m->vid);
     }
     if (isRepackingMount) {
       if (defaultRepackVo.has_value()) {
@@ -1457,7 +1457,7 @@ void Scheduler::sortAndGetTapesForMountInfo(
     tmpPm.swap(v);
     v.reserve(tmpPm.size());
     for (auto it = tmpPm.begin(); it != tmpPm.end(); ++it) {
-      if (toFilterRepSet.count(it) == 0) {
+      if (!toFilterRepSet.contains(it)) {
         v.push_back(std::move(*it));
       }
     }
@@ -1523,7 +1523,7 @@ void Scheduler::sortAndGetTapesForMountInfo(
       params.add("vo", voOfThisPotentialMount.name);
       if (m->type == common::dataStructures::MountType::Retrieve) {
         params.add("tapeVid", m->vid);
-        params.add("tapeRepacking", repackingTapeVids.find(m->vid) != repackingTapeVids.end());
+        params.add("tapeRepacking", repackingTapeVids.contains(m->vid));
       }
       params.add("mountType", common::dataStructures::toCamelCaseString(m->type))
         .add("existingMountsDistinctTypesForThisTapepool", existingMountsDistinctTypesForThisTapepool)
@@ -1585,7 +1585,7 @@ void Scheduler::sortAndGetTapesForMountInfo(
     tmpPm.swap(v);
     v.reserve(tmpPm.size());
     for (auto it = tmpPm.begin(); it != tmpPm.end(); ++it) {
-      if (toFilterSet.count(it) == 0) {
+      if (!toFilterSet.contains(it)) {
         v.push_back(std::move(*it));
       }
     }
@@ -1882,7 +1882,7 @@ Scheduler::getMountPoliciesInQueue(const std::list<common::dataStructures::Mount
                mountPoliciesInCatalogue.end(),
                std::back_inserter(mountPolicyRet),
                [&queueMountPolicyMap](const cta::common::dataStructures::MountPolicy& mp) {
-                 return queueMountPolicyMap.find(mp.name) != queueMountPolicyMap.end();
+                 return queueMountPolicyMap.contains(mp.name);
                });
   return mountPolicyRet;
 }

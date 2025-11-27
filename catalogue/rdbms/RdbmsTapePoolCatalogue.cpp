@@ -72,7 +72,7 @@ void RdbmsTapePoolCatalogue::createTapePool(const common::dataStructures::Securi
   tp_check_list.insert(tp_check_list.end(), supply_list.begin(), supply_list.end());
   auto tapePoolToIdMap = getTapePoolIdMap(conn, tp_check_list);
 
-  if(tapePoolToIdMap.count(name)) {
+  if (tapePoolToIdMap.contains(name)) {
     throw exception::UserError(std::string("Cannot create tape pool '") + name +
       "' because a tape pool with the same name already exists");
   }
@@ -81,7 +81,7 @@ void RdbmsTapePoolCatalogue::createTapePool(const common::dataStructures::Securi
       "' because vo '" + vo + "' does not exist.");
   }
   for (auto& supply_tp_name: supply_list) {
-    if (!tapePoolToIdMap.count(supply_tp_name)) {
+    if (!tapePoolToIdMap.contains(supply_tp_name)) {
       throw exception::UserError(std::string("Cannot create tape pool '") + name +
                                  "' because the supply tape pool '" + supply_tp_name + "' does not exist");
     }
@@ -727,7 +727,7 @@ void RdbmsTapePoolCatalogue::modifyTapePoolSupply(const common::dataStructures::
   std::vector<std::string> tp_check_list{supply_list.begin(), supply_list.end()};
   auto tapePoolToIdMap = getTapePoolIdMap(conn, tp_check_list);
   for (auto& supply_tp_name: supply_list) {
-    if (!tapePoolToIdMap.count(supply_tp_name)) {
+    if (!tapePoolToIdMap.contains(supply_tp_name)) {
       throw exception::UserError(std::string("Cannot modify tape pool '") + name +
                                  "' because the supply tape pool '" + supply_tp_name + "' does not exist");
     }

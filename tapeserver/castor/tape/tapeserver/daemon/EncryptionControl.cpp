@@ -165,11 +165,7 @@ EncryptionControl::EncryptionStatus EncryptionControl::parse_json_script_output(
 
   std::map<std::string, std::string> stdout_map = flatten_json_object_to_map("", jobj.get());
 
-  if (
-    stdout_map.find("key_name") == stdout_map.end() ||
-    stdout_map.find("encryption_key") == stdout_map.end() ||
-    stdout_map.find("message") == stdout_map.end()
-    ) {
+  if (!stdout_map.contains("key_name") || !stdout_map.contains("encryption_key") || !stdout_map.contains("message")) {
     throw cta::exception::Exception("In EncryptionControl::parse_json_script_output: invalid json interface.");
   }
 

@@ -51,7 +51,7 @@ public:
 
   template<plugin::DATA D>
   const std::string& GET() const {
-    if (m_umapData.find(D) == m_umapData.end()) {
+    if (!m_umapData.contains(D)) {
       throw std::logic_error("Invalid access to the plugin data.");
     }
     return m_umapData.at(D);
@@ -84,7 +84,7 @@ public:
   template<typename... ARGS>
   constexpr
   std::unique_ptr<BASE_TYPE> make(const std::string& strClassName, ARGS&&... args) const {
-    if (m_umapFactories.find(strClassName) == m_umapFactories.end()) {
+    if (!m_umapFactories.contains(strClassName)) {
       throw std::logic_error("The "
                               + GET<plugin::DATA::PLUGIN_NAME>()
                               + " plugin does not provide a class called: "

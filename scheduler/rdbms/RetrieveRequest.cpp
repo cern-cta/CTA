@@ -174,8 +174,7 @@ void RetrieveRequest::fillJobsSetRetrieveFileQueueCriteria(
 
   // create jobs for each tapefile in the archiveFile;
   for (const auto& tf : m_archiveFile.tapeFiles) {
-    if(!m_repackInfo.isRepack ||
-            (m_repackInfo.isRepack && m_repackInfo.copyNbsToRearchive.find(tf.copyNb) != m_repackInfo.copyNbsToRearchive.end())){
+    if (!m_repackInfo.isRepack || (m_repackInfo.isRepack && m_repackInfo.copyNbsToRearchive.contains(tf.copyNb))) {
       m_jobs.emplace_back();
       m_jobs.back().copyNb = tf.copyNb;
       m_jobs.back().vid = tf.vid;

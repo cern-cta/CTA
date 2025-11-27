@@ -107,9 +107,7 @@ public:
     unloadAll();
   }
 
-  bool isRegistered(const std::string& strPluginName) const {
-    return m_umapPlugins.find(strPluginName) != m_umapPlugins.end();
-  }
+  bool isRegistered(const std::string& strPluginName) const { return m_umapPlugins.contains(strPluginName); }
 
   void onRegisterPlugin(std::function<void (const plugin::Interface<BASE_TYPE, IARGS...>& )>&& callBackOnRegisterPlugin) {
     m_callBackOnRegisterPlugin = callBackOnRegisterPlugin;
@@ -144,7 +142,7 @@ public:
 
   Manager& load(const std::string& strFile) {
     m_strActiveLoader = strFile;
-    if (m_umapLoaders.find(m_strActiveLoader) == m_umapLoaders.end()) {
+    if (!m_umapLoaders.contains(m_strActiveLoader)) {
       m_umapLoaders.emplace(m_strActiveLoader, Loader {});
       m_umapLoaders.at(m_strActiveLoader).load(strFile);
     }

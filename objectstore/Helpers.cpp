@@ -454,7 +454,7 @@ std::string Helpers::selectBestRetrieveQueue(const std::set<std::string, std::le
       std::promise<void> updatePromise;
       g_retrieveQueueStatistics[v].updateFuture = updatePromise.get_future();
       // Get the cached tape status value before releasing the lock
-      if(g_tapeStatuses.find(v) == g_tapeStatuses.end()) {
+      if (!g_tapeStatuses.contains(v)) {
         // Handle corner case where there are two candidate vids and the second candidate was evicted because it is stale
         auto tapeStatuses = catalogue.Tape()->getTapesByVid(v);
         if(tapeStatuses.size() != 1) {

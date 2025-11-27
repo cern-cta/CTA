@@ -462,7 +462,7 @@ TEST_P(SchedulerTest, archive_to_new_file) {
       remoteFiles.insert(rqstItor->request.diskFileInfo.path);
     }
     ASSERT_EQ(1, remoteFiles.size());
-    ASSERT_FALSE(remoteFiles.find(request.diskFileInfo.path) == remoteFiles.end());
+    ASSERT_TRUE(remoteFiles.contains(request.diskFileInfo.path));
   }
 }
 

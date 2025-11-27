@@ -92,7 +92,7 @@ namespace cta::schedulerdb {
     // Add new subrequests if needed
     for (auto &r: repackSubrequests) {
       lc.log(log::DEBUG, "In RepackRequest::addSubrequestsAndUpdateStats(): repackSubrequests ");
-      if (srmap.find(r.fSeq) == srmap.end()) {
+      if (!srmap.contains(r.fSeq)) {
         m_subreqp.emplace_back();
         auto &newSub = m_subreqp.back();
         newSub.archiveCopyNbsSet = r.copyNbsToRearchive;
