@@ -31,6 +31,6 @@ cta::mediachanger::DummyLibrarySlot::DummyLibrarySlot(const std::string& str) : 
 //------------------------------------------------------------------------------
 // clone
 //------------------------------------------------------------------------------
-cta::mediachanger::LibrarySlot* cta::mediachanger::DummyLibrarySlot::clone() {
-  return new DummyLibrarySlot(*this);
+std::unique_ptr<cta::mediachanger::LibrarySlot> cta::mediachanger::DummyLibrarySlot::clone() {
+  return std::make_unique<DummyLibrarySlot>(*this);
 }

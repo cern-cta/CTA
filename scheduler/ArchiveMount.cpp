@@ -109,7 +109,7 @@ cta::common::dataStructures::Label::Format cta::ArchiveMount::getLabelFormat() c
 //------------------------------------------------------------------------------
 // createDiskReporter
 //------------------------------------------------------------------------------
-cta::disk::DiskReporter* cta::ArchiveMount::createDiskReporter(std::string& URL) {
+std::unique_ptr<cta::disk::DiskReporter> cta::ArchiveMount::createDiskReporter(std::string& URL) {
   return m_reporterFactory.createDiskReporter(URL);
 }
 

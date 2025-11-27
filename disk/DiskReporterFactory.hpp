@@ -16,7 +16,7 @@ namespace cta::disk {
 
 class DiskReporterFactory {
 public:
-  DiskReporter* createDiskReporter(const std::string& URL);
+  std::unique_ptr<DiskReporter> createDiskReporter(const std::string& URL);
 
 private:
   // The typical call to give report to EOS will be:

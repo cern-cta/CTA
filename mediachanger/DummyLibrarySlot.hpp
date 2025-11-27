@@ -41,7 +41,7 @@ public:
    *
    * @return The clone.
    */
-  LibrarySlot* clone() final;
+  std::unique_ptr<LibrarySlot> clone() final;
 };
 
 }  // namespace cta::mediachanger

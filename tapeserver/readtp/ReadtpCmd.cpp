@@ -245,8 +245,7 @@ void ReadtpCmd::setLbpMode(castor::tape::tapeserver::drive::DriveInterface& driv
 // mountTape
 //------------------------------------------------------------------------------
 void ReadtpCmd::mountTape(const std::string& vid) {
-  std::unique_ptr<cta::mediachanger::LibrarySlot> librarySlotPtr;
-  librarySlotPtr.reset(cta::mediachanger::LibrarySlotParser::parse(m_rawLibrarySlot));
+  std::unique_ptr<cta::mediachanger::LibrarySlot> librarySlotPtr = cta::mediachanger::LibrarySlotParser::parse(m_rawLibrarySlot);
   const cta::mediachanger::LibrarySlot& librarySlot = *librarySlotPtr.get();
 
   std::vector<cta::log::Param> params;
@@ -254,7 +253,7 @@ void ReadtpCmd::mountTape(const std::string& vid) {
   params.emplace_back("tapeVid", vid);
   params.emplace_back("tapeDrive", m_unitName);
   params.emplace_back("logicalLibrary", m_logicalLibrary);
-  params.emplace_back("librarySlot", librarySlot.str());
+  params.emplace_back("librarySlot", librarySlotPtr->str());
   params.emplace_back("useLbp", boolToStr(m_useLbp));
   params.emplace_back("driveSupportLbp", boolToStr(m_driveSupportLbp));
 
@@ -362,10 +361,8 @@ void ReadtpCmd::readTapeFiles(castor::tape::tapeserver::drive::DriveInterface& d
       if (fSeq > tape.lastFSeq) {
         break;  //reached end of tape
       }
-      std::unique_ptr<cta::disk::WriteFile> wfptr;
-      wfptr.reset(fileFactory.createWriteFile(destinationFile));
-      cta::disk::WriteFile& wf = *wfptr.get();
-      readTapeFile(drive, fSeq, wf, volInfo);
+      auto wfptr = fileFactory.createWriteFile(destinationFile);
+        readTapeFile(drive, fSeq, *wfptr, volInfo);
       m_nbSuccessReads++;  // if readTapeFile returns, file was read successfully
       destinationFile = getNextDestinationUrl();
     } catch (tapeserver::readtp::NoSuchFSeqException&) {
@@ -478,8 +475,7 @@ void ReadtpCmd::readTapeFile(castor::tape::tapeserver::drive::DriveInterface& dr
 //------------------------------------------------------------------------------
 void ReadtpCmd::unloadTape([[maybe_unused]] const std::string& vid,
                            castor::tape::tapeserver::drive::DriveInterface& drive) {
-  std::unique_ptr<cta::mediachanger::LibrarySlot> librarySlotPtr;
-  librarySlotPtr.reset(cta::mediachanger::LibrarySlotParser::parse(m_rawLibrarySlot));
+  std::unique_ptr<cta::mediachanger::LibrarySlot> librarySlotPtr = cta::mediachanger::LibrarySlotParser::parse(m_rawLibrarySlot);
   const cta::mediachanger::LibrarySlot& librarySlot = *librarySlotPtr.get();
 
   std::vector<cta::log::Param> params;
@@ -506,8 +502,7 @@ void ReadtpCmd::unloadTape([[maybe_unused]] const std::string& vid,
 // dismountTape
 //------------------------------------------------------------------------------
 void ReadtpCmd::dismountTape(const std::string& vid) {
-  std::unique_ptr<cta::mediachanger::LibrarySlot> librarySlotPtr;
-  librarySlotPtr.reset(cta::mediachanger::LibrarySlotParser::parse(m_rawLibrarySlot));
+  std::unique_ptr<cta::mediachanger::LibrarySlot> librarySlotPtr = cta::mediachanger::LibrarySlotParser::parse(m_rawLibrarySlot);
   const cta::mediachanger::LibrarySlot& librarySlot = *librarySlotPtr.get();
 
   std::vector<cta::log::Param> params;

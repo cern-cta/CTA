@@ -82,7 +82,7 @@ bool DiskWriteTask::execute(RecallReportPacker& reporter,
           // Synchronise the counter with the open time counter.
           currentErrorToCount = "Error_diskOpenForWrite";
           transferTime = localTime;
-          writeFile.reset(fileFactory.createWriteFile(m_retrieveJob->retrieveRequest.dstURL));
+          writeFile = fileFactory.createWriteFile(m_retrieveJob->retrieveRequest.dstURL);
           URLcontext.add("actualURL", writeFile->URL());
           lc.log(cta::log::INFO, "Opened disk file for writing");
           m_stats.openingTime += localTime.secs(cta::utils::Timer::resetCounter);

@@ -36,8 +36,8 @@ cta::mediachanger::ScsiLibrarySlot::ScsiLibrarySlot(const uint16_t drvOrd)
 //------------------------------------------------------------------------------
 // clone
 //------------------------------------------------------------------------------
-cta::mediachanger::LibrarySlot* cta::mediachanger::ScsiLibrarySlot::clone() {
-  return new ScsiLibrarySlot(*this);
+std::unique_ptr<cta::mediachanger::LibrarySlot> cta::mediachanger::ScsiLibrarySlot::clone() {
+  return std::make_unique<ScsiLibrarySlot>(*this);
 }
 
 //------------------------------------------------------------------------------

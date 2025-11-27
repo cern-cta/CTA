@@ -5012,7 +5012,7 @@ void OStoreDB::RepackArchiveReportBatch::report(log::LogContext& lc) {
       std::string directoryPath = cta::utils::getEnclosingPath(bufferURL);
       std::unique_ptr<cta::disk::Directory> directory;
       try {
-        directory.reset(directoryFactory.createDirectory(directoryPath));
+        directory = directoryFactory.createDirectory(directoryPath);
         directory->rmdir();
         log::ScopedParamContainer(lc)
           .add("repackRequestAddress", m_repackRequest.getAddressIfSet())

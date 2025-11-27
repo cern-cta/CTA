@@ -12,15 +12,15 @@
 
 namespace cta::disk {
 
-DiskReporter* DiskReporterFactory::createDiskReporter(const std::string& URL) {
+std::unique_ptr<DiskReporter> DiskReporterFactory::createDiskReporter(const std::string& URL) {
   threading::MutexLocker ml(m_mutex);
   auto regexResult = m_EosUrlRegex.exec(URL);
   if (regexResult.size()) {
-    return new EOSReporter(regexResult[1], regexResult[2]);
+    return std::make_unique<EOSReporter>(regexResult[1], regexResult[2]);
   }
   regexResult = m_NullRegex.exec(URL);
   if (regexResult.size()) {
-    return new NullReporter();
+    return std::make_unique<NullReporter>();
   }
   throw cta::exception::Exception(std::string("In DiskReporterFactory::createDiskReporter failed to parse URL: ")
                                   + URL);

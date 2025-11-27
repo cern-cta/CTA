@@ -68,7 +68,7 @@ DriveConfigEntry& DriveConfigEntry::operator=(const DriveConfigEntry& o) {
   logicalLibrary = o.logicalLibrary;
   devFilename = o.devFilename;
   rawLibrarySlot = o.rawLibrarySlot;
-  m_librarySlot.reset(mediachanger::LibrarySlotParser::parse(rawLibrarySlot));
+  m_librarySlot = mediachanger::LibrarySlotParser::parse(rawLibrarySlot);
   return *this;
 }
 

@@ -33,10 +33,10 @@ void CtaAdminServerWriteReactor::NextWrite() {
   m_response.Clear();
 
   if (!m_isHeaderSent) {
-    cta::xrd::Response* header = new cta::xrd::Response();
+    auto header = std::make_unique<cta::xrd::Response>();
     header->set_type(cta::xrd::Response::RSP_SUCCESS);
     header->set_show_header(m_headerType);
-    m_response.set_allocated_header(header);
+    m_response.set_allocated_header(header.release());
 
     m_isHeaderSent = true;
     StartWrite(&m_response);
@@ -44,10 +44,10 @@ void CtaAdminServerWriteReactor::NextWrite() {
   }
 
   if (!m_stream->isDone()) {
-    cta::xrd::Data* data = new cta::xrd::Data();
+    auto data = std::make_unique<cta::xrd::Data>();
     *data = m_stream->next();
 
-    m_response.set_allocated_data(data);
+    m_response.set_allocated_data(data.release());
     StartWrite(&m_response);
   } else {
     Finish(::grpc::Status::OK);

@@ -26,10 +26,12 @@ void EOSReporter::asyncReport() {
 //------------------------------------------------------------------------------
 //EOSReporter::AsyncQueryHandler::HandleResponse
 //------------------------------------------------------------------------------
-void EOSReporter::HandleResponse(XrdCl::XRootDStatus* status, XrdCl::AnyObject* response) {
+void EOSReporter::(XrdCl::XRootDStatus* status, XrdCl::AnyObject* response) {
+  auto statusPtr = std::unique_ptr<XrdCl::XRootDStatus>(status);
+  auto responsePtr = std::unique_ptr<XrdCl::AnyObject>(response);
   try {
     exception::XrdClException::throwOnError(
-      *status,
+      *statusPtr,
       "In EOSReporter::AsyncQueryHandler::HandleResponse(): failed to XrdCl::FileSystem::Query()");
     m_promise.set_value();
   } catch (...) {
@@ -40,7 +42,6 @@ void EOSReporter::HandleResponse(XrdCl::XRootDStatus* status, XrdCl::AnyObject* 
       // set_exception() may throw too
     }
   }
-  delete response;
-  delete status;
 }
+
 }  // namespace cta::disk

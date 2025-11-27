@@ -37,7 +37,7 @@ TEST_F(cta_mediachanger_ScsiLibrarySlotTest, clone) {
   ASSERT_EQ(std::string("smc2"), slot1->str());
 
   std::unique_ptr<ScsiLibrarySlot> slot2;
-  ASSERT_NO_THROW(slot2.reset((ScsiLibrarySlot*) slot1->clone()));
+  ASSERT_NO_THROW(slot2.reset((ScsiLibrarySlot*) slot1->clone().release()));
   ASSERT_EQ(TAPE_LIBRARY_TYPE_SCSI, slot2->getLibraryType());
   ASSERT_EQ(std::string("smc2"), slot2->str());
 }

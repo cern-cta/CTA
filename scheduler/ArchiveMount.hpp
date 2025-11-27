@@ -208,7 +208,7 @@ public:
    * @param reporterState void promise to be set when the report is done asynchronously.
    * @return pointer to the reporter created.
    */
-  disk::DiskReporter* createDiskReporter(std::string& URL);
+  std::unique_ptr<disk::DiskReporter> createDiskReporter(std::string& URL);
 
   /**
    * Update the catalog with a set of TapeFileWritten events.

@@ -252,8 +252,8 @@ TEST(castorTapeDiskFile, canWriteAndReadDisk) {
   // host part of file location
   std::string lh = "localhost:";
   {
-    std::unique_ptr<cta::disk::ReadFile> rf(fileFactory.createReadFile(lh + sourceFile.path()));
-    std::unique_ptr<cta::disk::WriteFile> wf(fileFactory.createWriteFile(lh + destinationFile.path()));
+    auto rf = fileFactory.createReadFile(lh + sourceFile.path());
+    auto wf = fileFactory.createWriteFile(lh + destinationFile.path());
     size_t res = 0;
     do {
       res = rf->read(data1, block_size);
@@ -261,8 +261,8 @@ TEST(castorTapeDiskFile, canWriteAndReadDisk) {
     } while (res);
     wf->close();
   }
-  std::unique_ptr<cta::disk::ReadFile> src(fileFactory.createReadFile(sourceFile.path()));
-  std::unique_ptr<cta::disk::ReadFile> dst(fileFactory.createReadFile(destinationFile.path()));
+  auto src = fileFactory.createReadFile(sourceFile.path());
+  auto dst = fileFactory.createReadFile(destinationFile.path());
   size_t res1 = 0;
   size_t res2 = 0;
   do {

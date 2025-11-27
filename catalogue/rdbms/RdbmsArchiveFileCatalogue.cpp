@@ -164,8 +164,8 @@ ArchiveFileItor RdbmsArchiveFileCatalogue::getArchiveFilesItor(const TapeFileSea
   const auto tempDiskFxidsTableName =
     m_rdbmsCatalogue->createAndPopulateTempTableFxid(conn, searchCriteria.diskFileIds);
   // Pass ownership of the connection to the Iterator object
-  auto impl = new RdbmsCatalogueGetArchiveFilesItor(m_log, std::move(conn), searchCriteria, tempDiskFxidsTableName);
-  return ArchiveFileItor(impl);
+  auto impl = std::make_unique<RdbmsCatalogueGetArchiveFilesItor>(m_log, std::move(conn), searchCriteria, tempDiskFxidsTableName);
+  return ArchiveFileItor(std::move(impl));
 }
 
 common::dataStructures::ArchiveFile
@@ -338,7 +338,7 @@ ArchiveFileItor RdbmsArchiveFileCatalogue::getArchiveFilesForRepackItor(const st
                                                                  *(m_rdbmsCatalogue->m_archiveFileListingConnPool),
                                                                  vid,
                                                                  startFSeq);
-  return ArchiveFileItor(impl.release());
+  return ArchiveFileItor(std::move(impl));
 }
 
 common::dataStructures::ArchiveFileSummary
@@ -569,7 +569,7 @@ ArchiveFileItor RdbmsArchiveFileCatalogue::getArchiveFilesItor(rdbms::Conn& conn
                                                                   std::move(archiveListingConn),
                                                                   searchCriteria,
                                                                   tempDiskFxidsTableName);
-  return ArchiveFileItor(impl.release());
+  return ArchiveFileItor(std::move(impl));
 }
 
 void RdbmsArchiveFileCatalogue::checkTapeFileSearchCriteria(const TapeFileSearchCriteria& searchCriteria) const {
@@ -601,7 +601,7 @@ void RdbmsArchiveFileCatalogue::checkTapeFileSearchCriteria(rdbms::Conn& conn,
 ArchiveFileItor RdbmsArchiveFileCatalogue::getTapeContentsItor(const std::string& vid) const {
   // Create a connection to populate the temporary table (specialised by database type)
   auto impl = std::make_unique<RdbmsCatalogueTapeContentsItor>(m_log, *m_connPool, vid);
-  return ArchiveFileItor(impl.release());
+  return ArchiveFileItor(std::move(impl));
 }
 
 common::dataStructures::TapeCopyToPoolMap

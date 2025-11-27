@@ -250,7 +250,7 @@ public:
     * @param URL: report address
     * @return pointer to the reporter created.
     */
-  disk::DiskReporter* createDiskReporter(std::string& URL);
+  std::unique_ptr<disk::DiskReporter> createDiskReporter(std::string& URL);
 
   void setExternalFreeDiskSpaceScript(const std::string& name);
 

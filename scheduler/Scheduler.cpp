@@ -595,7 +595,7 @@ void Scheduler::expandRepackRequest(const std::unique_ptr<RepackRequest>& repack
   if (archiveFilesForCatalogue.hasMore()) {
     //We only create the folder if there are some files to Repack
     cta::disk::DirectoryFactory dirFactory;
-    dir.reset(dirFactory.createDirectory(dirBufferURL.str()));
+    dir = dirFactory.createDirectory(dirBufferURL.str());
     try {
       if (dir->exist()) {
         //Repack tape repair workflow
@@ -802,7 +802,7 @@ void Scheduler::expandRepackRequest(const std::unique_ptr<RepackRequest>& repack
     bool createArchiveSubrequest = false;
     if (filesInDirectory.count(fileName.str())) {
       cta::disk::DiskFileFactory fileFactory(0);
-      cta::disk::ReadFile* fileReader = fileFactory.createReadFile(dirBufferURL.str() + fileName.str());
+      auto fileReader = fileFactory.createReadFile(dirBufferURL.str() + fileName.str());
       if (fileReader->size() == archiveFile.fileSize) {
         createArchiveSubrequest = true;
       }
@@ -2962,7 +2962,7 @@ void Scheduler::reportArchiveJobsBatch(std::list<std::unique_ptr<ArchiveJob>>& a
     auto& current = pendingReports.back();
     // We could fail to create the disk reporter or to get the report URL. This should not impact the other jobs.
     try {
-      current.reporter.reset(reporterFactory.createDiskReporter(j->exceptionThrowingReportURL()));
+      current.reporter = reporterFactory.createDiskReporter(j->exceptionThrowingReportURL());
       current.reporter->asyncReport();
       current.archiveJob = j.get();
     } catch (cta::exception::Exception& ex) {
@@ -3065,7 +3065,7 @@ void Scheduler::reportRetrieveJobsBatch(std::list<std::unique_ptr<RetrieveJob>>&
     auto& current = pendingReports.back();
     // We could fail to create the disk reporter or to get the report URL. This should not impact the other jobs.
     try {
-      current.reporter.reset(reporterFactory.createDiskReporter(j->exceptionThrowingReportURL()));
+      current.reporter = reporterFactory.createDiskReporter(j->exceptionThrowingReportURL());
       current.reporter->asyncReport();
       current.retrieveJob = j.get();
     } catch (cta::exception::Exception& ex) {

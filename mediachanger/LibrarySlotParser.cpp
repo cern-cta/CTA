@@ -16,7 +16,8 @@
 //------------------------------------------------------------------------------
 // parse
 //------------------------------------------------------------------------------
-cta::mediachanger::LibrarySlot* cta::mediachanger::LibrarySlotParser::parse(const std::string& str) {
+std::unique_ptr<cta::mediachanger::LibrarySlot> cta::mediachanger::LibrarySlotParser::
+  parse(const std::string &str) {
   try {
     // Parse the string representation in two steps, first parsing the beginning
     // to get the library type and then the rst to get the details.  This two
@@ -66,14 +67,14 @@ bool cta::mediachanger::LibrarySlotParser::isScsi(const std::string& str) {
 //------------------------------------------------------------------------------
 // parse
 //------------------------------------------------------------------------------
-cta::mediachanger::LibrarySlot* cta::mediachanger::LibrarySlotParser::parse(const TapeLibraryType libraryType,
-                                                                            const std::string& str) {
-  switch (libraryType) {
-    case TAPE_LIBRARY_TYPE_DUMMY:
-      return parseDummyLibrarySlot(str);
-    case TAPE_LIBRARY_TYPE_SCSI:
-      return parseScsiLibrarySlot(str);
-    default: {
+std::unique_ptr<cta::mediachanger::LibrarySlot> cta::mediachanger::LibrarySlotParser::
+  parse(const TapeLibraryType libraryType, const std::string &str) {
+
+  switch(libraryType) {
+  case TAPE_LIBRARY_TYPE_DUMMY:  return parseDummyLibrarySlot(str);
+  case TAPE_LIBRARY_TYPE_SCSI:   return parseScsiLibrarySlot(str);
+  default:
+    {
       // Should never get here
       cta::exception::Exception ex;
       ex.getMessage() << "Unknown tape library type: libraryType=" << libraryType;
@@ -85,16 +86,17 @@ cta::mediachanger::LibrarySlot* cta::mediachanger::LibrarySlotParser::parse(cons
 //------------------------------------------------------------------------------
 // parseDummyLibrarySlot
 //------------------------------------------------------------------------------
-cta::mediachanger::DummyLibrarySlot*
-cta::mediachanger::LibrarySlotParser::parseDummyLibrarySlot(const std::string& str) {
-  return new DummyLibrarySlot(str);
+std::unique_ptr<cta::mediachanger::DummyLibrarySlot> cta::mediachanger::
+  LibrarySlotParser::parseDummyLibrarySlot(const std::string &str) {
+  return std::make_unique<DummyLibrarySlot>(str);
 }
 
 //------------------------------------------------------------------------------
 // parseScsiLibrarySlot
 //------------------------------------------------------------------------------
-cta::mediachanger::ScsiLibrarySlot* cta::mediachanger::LibrarySlotParser::parseScsiLibrarySlot(const std::string& str) {
-  if (str.find("smc") == std::string::npos) {
+std::unique_ptr<cta::mediachanger::ScsiLibrarySlot> cta::mediachanger::
+  LibrarySlotParser::parseScsiLibrarySlot(const std::string &str) {
+  if(str.find("smc") == std::string::npos) {
     cta::exception::Exception ex;
     ex.getMessage() << "Failed to construct ScsiLibrarySlot: Library slot must start with smc: slot=" << str;
     throw ex;
@@ -116,5 +118,5 @@ cta::mediachanger::ScsiLibrarySlot* cta::mediachanger::LibrarySlotParser::parseS
   }
 
   const uint16_t drvOrd = atoi(drvOrdStr.c_str());
-  return new ScsiLibrarySlot(drvOrd);
+  return std::make_unique<ScsiLibrarySlot>(drvOrd);
 }

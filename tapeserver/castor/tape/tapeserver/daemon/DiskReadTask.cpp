@@ -56,7 +56,7 @@ void DiskReadTask::execute(cta::log::LogContext& lc,
     //so dont do the same mistake twice !
     checkMigrationFailing();
     currentErrorToCount = "Error_diskOpenForRead";
-    std::unique_ptr<cta::disk::ReadFile> sourceFile(fileFactory.createReadFile(m_archiveJob->srcURL));
+    auto sourceFile = fileFactory.createReadFile(m_archiveJob->srcURL);
     cta::log::ScopedParamContainer URLcontext(lc);
     URLcontext.add("path", m_archiveJob->srcURL).add("actualURL", sourceFile->URL());
     currentErrorToCount = "Error_diskFileToReadSizeMismatch";

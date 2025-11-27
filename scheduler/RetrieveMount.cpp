@@ -444,7 +444,7 @@ void cta::RetrieveMount::setJobBatchTransferred(std::queue<std::unique_ptr<cta::
 //------------------------------------------------------------------------------
 // createDiskReporter()
 //------------------------------------------------------------------------------
-cta::disk::DiskReporter* cta::RetrieveMount::createDiskReporter(std::string& URL) {
+std::unique_ptr<cta::disk::DiskReporter> cta::RetrieveMount::createDiskReporter(std::string& URL) {
   return m_reporterFactory.createDiskReporter(URL);
 }
 

@@ -59,17 +59,16 @@ void VersionWriteReactor::NextWrite() {
   m_response.Clear();
   // is this the first item? Then write the header
   if (!m_isHeaderSent) {
-    cta::xrd::Response* header = new cta::xrd::Response();
+    auto header = std::make_unique<cta::xrd::Response>();
     header->set_type(cta::xrd::Response::RSP_SUCCESS);
     header->set_show_header(cta::admin::HeaderType::VERSION_CMD);
-    m_response.set_allocated_header(
-      header);  // now the message takes ownership of the allocated object, we don't need to free header
+    m_response.set_allocated_header(header.release());
 
     m_isHeaderSent = true;
     StartWrite(&m_response);  // this will trigger the OnWriteDone method
     return;                   // because we'll be called in a loop by OnWriteDone
   } else if (!m_isVersionSent) {
-    cta::xrd::Data* data = new cta::xrd::Data();
+    auto data = std::make_unique<cta::xrd::Data>();
     cta::admin::VersionItem* version = data->mutable_version_item();
 
     auto client_version = version->mutable_client_version();
@@ -86,7 +85,7 @@ void VersionWriteReactor::NextWrite() {
 
     m_isVersionSent = true;
 
-    m_response.set_allocated_data(data);
+    m_response.set_allocated_data(data.release());
     StartWrite(&m_response);
   } else {
     // Finish the call
