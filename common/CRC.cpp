@@ -258,6 +258,6 @@ bool verifyCrc32cForMemoryBlockWithCrc32c(
     }
   }
   return true;
-}å
+}
 
 }  // namespace cta
