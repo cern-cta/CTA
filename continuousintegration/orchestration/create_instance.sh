@@ -194,24 +194,24 @@ create_instance() {
   done
 
   # Argument checks
-  if [ -z "${namespace}" ]; then
+  if [[ -z "${namespace}" ]]; then
     echo "Missing mandatory argument: -n | --namespace"
     usage
   fi
-  if [ -z "${cta_image_tag}" ]; then
+  if [[ -z "${cta_image_tag}" ]]; then
     echo "Missing mandatory argument: -i | --cta-image-tag"
     usage
   fi
-  if [ -z "${catalogue_schema_version}" ]; then
+  if [[ -z "${catalogue_schema_version}" ]]; then
     echo "No catalogue schema version provided: using project.json value"
     catalogue_schema_version=$(jq .catalogueVersion ${project_json_path})
   fi
 
-  if [ "$local_telemetry" == "true" ] && [ "$publish_telemetry" == "true" ]; then
+  if [[ "$local_telemetry" == "true" ]] && [[ "$publish_telemetry" == "true" ]]; then
     die "--local-telemetry and --publish-telemetry cannot be active at the same time"
   fi
 
-  if [ $dry_run == 1 ]; then
+  if [[ $dry_run == 1 ]]; then
     helm_command="template --debug"
   else
     helm_command="install"
@@ -223,7 +223,7 @@ create_instance() {
     echo "Catalogue content will be kept"
   fi
 
-  if [ "$reset_scheduler" == "true" ]; then
+  if [[ "$reset_scheduler" == "true" ]]; then
     echo "scheduler data store content will be reset"
   else
     echo "scheduler data store content will be kept"
@@ -234,12 +234,12 @@ create_instance() {
   devices_all=$(./../utils/tape/list_all_libraries.sh)
   devices_in_use=$(kubectl get all --all-namespaces -l cta/library-device -o jsonpath='{.items[*].metadata.labels.cta/library-device}' | tr ' ' '\n' | sort | uniq)
   unused_devices=$(comm -23 <(echo "$devices_all") <(echo "$devices_in_use"))
-  if [ -z "$unused_devices" ]; then
+  if [[ -z "$unused_devices" ]]; then
     die "No unused library devices available. All the following libraries are in use: $devices_in_use"
   fi
 
   # Determine the library config to use
-  if [ -z "${tapeservers_config}" ]; then
+  if [[ -z "${tapeservers_config}" ]]; then
     echo "Library configuration not provided. Auto-generating..."
     # This file is cleaned up again by delete_instance.sh
     tapeservers_config=$(mktemp "/tmp/${namespace}-tapeservers-XXXXXX-values.yaml")
@@ -262,7 +262,7 @@ create_instance() {
   cat "$tapeservers_config"
   echo "---"
 
-  if [ "$scheduler_config" == "presets/dev-scheduler-vfs-values.yaml" ]; then
+  if [[ "$scheduler_config" == "presets/dev-scheduler-vfs-values.yaml" ]]; then
     if kubectl get pods -n local-path-storage -l app=local-path-provisioner 2>/dev/null | grep -q Running; then
       echo "Local path provisioning is enabled. Using VFS scheduler is okay."
     else
@@ -384,10 +384,10 @@ create_instance() {
   wait $scheduler_pid || exit 1
 
   extra_cta_chart_flags=""
-  if [ "$local_telemetry" == "true" ]; then
+  if [[ "$local_telemetry" == "true" ]]; then
     extra_cta_chart_flags+="--values presets/dev-cta-telemetry-values.yaml"
   fi
-  if [ "$publish_telemetry" == "true" ]; then
+  if [[ "$publish_telemetry" == "true" ]]; then
     extra_cta_chart_flags+="--values presets/ci-cta-telemetry-http-values.yaml"
   fi
 
@@ -408,7 +408,7 @@ create_instance() {
   if [ $dcache_enabled == "true" ] ; then
     wait $dcache_pid || exit 1
   fi
-  if [ $dry_run == 1 ]; then
+  if [[ $dry_run == 1 ]]; then
     exit 0
   fi
 }

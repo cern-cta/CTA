@@ -141,7 +141,7 @@ if [[ -n ${GFAL2_PROTOCOL} ]]; then
     fi
 fi
 
-if [ ! -z "${error}" ]; then
+if [[ ! -z "${error}" ]]; then
     echo -e "ERROR:\n${error}"
     exit 1
 fi
@@ -159,7 +159,7 @@ case "${CLI_TARGET}" in
     exit 1
 esac
 
-if [ "x${COMMENT}" = "x" ]; then
+if [[ "x${COMMENT}" = "x" ]]; then
     echo "No annotation will be pushed to Influxdb"
 fi
 

@@ -230,7 +230,7 @@ while getopts "d:e:n:N:s:p:vS:rAPGt:m:Q" o; do
 done
 shift $((OPTIND-1))
 
-if [ "x${COMMENT}" = "x" ]; then
+if [[ "x${COMMENT}" = "x" ]]; then
     echo "No annotation will be pushed to Influxdb"
 fi
 
@@ -364,7 +364,7 @@ for ((subdir=0; subdir < ${NB_DIRS}; subdir++)); do
   eos root://${EOS_MGM_HOST} mkdir -p ${EOS_DIR}/${subdir}
   eos_exit_status=$?
   echo "eos mkdir exit status: ${eos_exit_status}"
-  if [ $eos_exit_status -ne 0 ]; then
+  if [[ $eos_exit_status -ne 0 ]]; then
     die "Cannot create directory ${EOS_DIR}/${subdir} in eos instance ${EOS_MGM_HOST}."
   fi
   TEST_FILE_NAME_WITH_SUBDIR="${TEST_FILE_NAME_BASE}${TEST_SUBDIRS[${subdir}]}" # this is the target filename of xrdcp processes just need to add the filenumber in each directory
@@ -445,7 +445,7 @@ done
 #done
 
 
-if [ "0" != "$(ls ${LOGDIR}/xrd_errors/ 2> /dev/null | wc -l)" ]; then
+if [[ "0" != "$(ls ${LOGDIR}/xrd_errors/ 2> /dev/null | wc -l)" ]]; then
   # there were some xrdcp errors
   echo "Several xrdcp errors occured during archival!"
   echo "Please check client pod logs in artifacts"
@@ -644,7 +644,7 @@ for ((subdir=0; subdir < ${NB_DIRS}; subdir++)); do
     mv -f "$TMP_FILE" "$ERROR_LOG"
   fi
 done
-if [ "0" != "$(ls ${ERROR_DIR} 2> /dev/null | wc -l)" ]; then
+if [[ "0" != "$(ls ${ERROR_DIR} 2> /dev/null | wc -l)" ]]; then
    # there were some prepare errors
   echo "Several prepare errors occured during retrieval!"
   echo "Please check client pod logs in artifacts"
@@ -813,7 +813,7 @@ for ((subdir=0; subdir < ${NB_DIRS}; subdir++)); do
   cat ${STATUS_FILE} | grep ^${subdir}/ | cut -d/ -f2 | xargs --max-procs=${NB_PROCS} -iTEST_FILE_NAME bash -c "XRD_LOGLEVEL=Dump KRB5CCNAME=/tmp/${EOSPOWER_USER}/krb5cc_0 XrdSecPROTOCOL=krb5 xrdfs ${EOS_MGM_HOST} xattr ${EOS_DIR}/${subdir}/TEST_FILE_NAME get sys.retrieve.req_id 2>${ERROR_DIR}/XATTRGET_TEST_FILE_NAME && rm ${ERROR_DIR}/XATTRGET_TEST_FILE_NAME || echo ERROR with xrootd xattr get for file TEST_FILE_NAME, full logs in ${ERROR_DIR}/XATTRGET_TEST_FILE_NAME" | tee ${LOGDIR}/prepare2_sys.retrieve.req_id_${subdir}.log | grep ^ERROR
   echo Done.
 done
-if [ "0" != "$(ls ${ERROR_DIR} 2> /dev/null | wc -l)" ]; then
+if [[ "0" != "$(ls ${ERROR_DIR} 2> /dev/null | wc -l)" ]]; then
   # there were some prepare errors
   echo "Several prepare errors occured during retrieval!"
   echo "Please check client pod logs in artifacts"
@@ -824,7 +824,7 @@ fi
 requestsTotal=$(admin_cta --json sq | jq 'map(select (.mountType == "RETRIEVE") | .queuedFiles | tonumber) | add')
 echo "Retrieve requests count: ${requestsTotal}"
 filesCount=$(cat ${STATUS_FILE} | wc -l)
-if [ ${requestsTotal} -ne ${filesCount} ]; then
+if [[ ${requestsTotal} -ne ${filesCount} ]]; then
   echo "ERROR: Retrieve queue(s) size mismatch: ${requestsTotal} requests queued for ${filesCount} files."
 fi
 
@@ -853,7 +853,7 @@ WAIT_FOR_RETRIEVE_QUEUES_CLEAR_TIMEOUT=$((60))
 REMAINING_REQUESTS=$(admin_cta --json sq | jq -r 'map(select (.mountType == "RETRIEVE") | .queuedFiles | tonumber) | add')
 echo "${REMAINING_REQUESTS} requests remaining."
 # Prevent the result from being empty
-if [ -z "$REMAINING_REQUESTS" ]; then REMAINING_REQUESTS='0'; fi
+if [[ -z "$REMAINING_REQUESTS" ]]; then REMAINING_REQUESTS='0'; fi
 while [[ ${REMAINING_REQUESTS} -gt 0 ]]; do
   echo "$(date +%s): Waiting for retrieve queues to be cleared: Seconds passed = ${SECONDS_PASSED}"
   sleep 1
@@ -866,7 +866,7 @@ while [[ ${REMAINING_REQUESTS} -gt 0 ]]; do
 
   REMAINING_REQUESTS=$(admin_cta --json sq | jq -r 'map(select (.mountType == "RETRIEVE") | .queuedFiles | tonumber) | add');
   # Prevent the result from being empty
-  if [ -z "$REMAINING_REQUEST" ]; then REMAINING_REQUESTS='0'; fi
+  if [[ -z "$REMAINING_REQUEST" ]]; then REMAINING_REQUESTS='0'; fi
   echo "${REMAINING_REQUESTS} requests remaining."
 done
 
@@ -880,7 +880,7 @@ for ((subdir=0; subdir < ${NB_DIRS}; subdir++)); do
 done
 echo "Total restaged files found: ${RESTAGEDFILES}"
 
-if [ "0" != "$(ls ${ERROR_DIR} 2> /dev/null | wc -l)" ]; then
+if [[ "0" != "$(ls ${ERROR_DIR} 2> /dev/null | wc -l)" ]]; then
   # there were some prepare errors
   echo "Several errors occured during prepare cancel test!"
   echo "Please check client pod logs in artifacts"
@@ -906,20 +906,20 @@ test -z ${COMMENT} || annotate "test ${TESTID} FINISHED" "Summary:</br>NB_FILES:
 test -z $TAILPID || kill ${TAILPID} &> /dev/null
 
 RC=0
-if [ ${LASTCOUNT} -ne $((${NB_FILES} * ${NB_DIRS})) ]; then
+if [[ ${LASTCOUNT} -ne $((${NB_FILES} * ${NB_DIRS})) ]]; then
   ((RC++))
   echo "ERROR there were some lost files during the archive/retrieve test with ${NB_FILES} files (first 10):"
   grep -v retrieved ${STATUS_FILE} | sed -e "s;^;${EOS_DIR}/;" | head -10
 fi
 
-if [ $(cat ${LOGDIR}/prepare_sys.retrieve.req_id_*.log | grep -v value= | wc -l) -ne 0 ]; then
+if [[ $(cat ${LOGDIR}/prepare_sys.retrieve.req_id_*.log | grep -v value= | wc -l) -ne 0 ]]; then
   # THIS IS NOT YET AN ERROR: UNCOMMENT THE FOLLOWING LINE WHEN https://gitlab.cern.ch/cta/CTA/issues/606 is fixed
   # ((RC++))
   echo "ERROR $(cat ${LOGDIR}/prepare_sys.retrieve.req_id_*.log | grep -v value= | wc -l) files out of $(cat ${LOGDIR}/prepare_sys.retrieve.req_id_*.log | wc -l) prepared files have no sys.retrieve.req_id extended attribute set"
 fi
 
 
-if [ ${RESTAGEDFILES} -ne "0" ]; then
+if [[ ${RESTAGEDFILES} -ne "0" ]]; then
   ((RC++))
   echo "ERROR some files were retrieved in spite of retrieve cancellation."
 fi
@@ -927,9 +927,9 @@ fi
 # This one does not change the return code
 # WARNING if everything else was OK
 # ERROR otherwise as these xrootd failures could be the reason of the failure
-if [ $(ls ${LOGDIR}/xrd_errors | wc -l) -ne 0 ]; then
+if [[ $(ls ${LOGDIR}/xrd_errors | wc -l) -ne 0 ]]; then
   # ((RC++)) # do not change RC
-  if [ ${RC} -eq 0 ]; then
+  if [[ ${RC} -eq 0 ]]; then
     echo "WARNING several xrootd failures occured during this run, please check client dumps in ${LOGDIR}/xrd_errors."
   else
     echo "ERROR several xrootd failures occured during this run, please check client dumps in ${LOGDIR}/xrd_errors."

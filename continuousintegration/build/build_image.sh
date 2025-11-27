@@ -59,7 +59,7 @@ buildImage() {
     -h | --help) usage ;;
     -c | --container-runtime)
       if [[ $# -gt 1 ]]; then
-        if [ "$2" != "docker" ] && [ "$2" != "podman" ]; then
+        if [[ "$2" != "docker" ]] && [[ "$2" != "podman" ]]; then
           echo "-c | --container-runtime is \"$2\" but must be one of [docker, podman]."
           exit 1
         fi
@@ -129,17 +129,17 @@ buildImage() {
     shift
   done
 
-  if [ -z "${image_tag}" ]; then
+  if [[ -z "${image_tag}" ]]; then
     echo "Failure: Missing mandatory argument -t | --tag"
     usage
   fi
 
-  if [ -z "${rpm_src}" ]; then
+  if [[ -z "${rpm_src}" ]]; then
     echo "Failure: Missing mandatory argument -s | --rpm-src"
     usage
   fi
 
-  if [ -z "${rpm_version}" ]; then
+  if [[ -z "${rpm_version}" ]]; then
     echo "Failure: Missing mandatory argument --rpm-version"
     usage
   fi
@@ -167,7 +167,7 @@ buildImage() {
   # Clean up again
   rm -rf "${rpm_default_src}"
 
-  if [ "$load_into_minikube" == "true" ]; then
+  if [[ "$load_into_minikube" == "true" ]]; then
     # This step is necessary because atm the container runtime and minikube don't share the same docker runtime and local registry
     tmpfile=$(mktemp) && trap 'rm -f $tmpfile' EXIT
     ${container_runtime} save -o $tmpfile localhost/${image_name}:${image_tag} >/dev/null 2>&1

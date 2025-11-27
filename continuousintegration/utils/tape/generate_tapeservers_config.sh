@@ -56,11 +56,11 @@ generate_tpsrvs_config_for_library() {
 
   # Find the line in lsscsi output corresponding to the current library device
   local line=$(echo "$lsscsi_g" | grep "mediumx" | grep "${library_device}")
-  if [ -z "$line" ]; then
+  if [[ -z "$line" ]]; then
     echo "Library device $library_device does not exist. Skipping..." 1>&2
     return
   fi
-  if [ $(echo "$line" | wc -l) -gt 1 ]; then
+  if [[ $(echo "$line" | wc -l) -gt 1 ]]; then
     echo "Too many lines matching library device \"$library_device\" found. Ensure you passed the correct library device. Skipping..." 1>&2
     return
   fi
@@ -101,7 +101,7 @@ done)
 EOF
 
     ((tpsrv_counter++))
-    if [ "$tpsrv_counter" -gt "$max_tape_servers" ]; then
+    if [[ "$tpsrv_counter" -gt "$max_tape_servers" ]]; then
       return
     fi
   done

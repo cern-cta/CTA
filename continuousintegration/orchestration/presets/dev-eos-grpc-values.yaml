@@ -114,7 +114,7 @@ mgm:
         -H "Authorization: Bearer $admin_access_token" \
         http://auth-keycloak:8080/admin/realms/master/clients/${CLIENT_ID}/default-client-scopes | jq -r '.[] | select(.name == "grpc-custom-sub") | .id')
 
-      if [ -z "$EXISTING_SCOPE" ]; then
+      if [[ -z "$EXISTING_SCOPE" ]]; then
         echo "Scope not found on client, adding it..."
 
         CUSTOM_SCOPE_ID=$(curl -s \
@@ -238,7 +238,7 @@ fst:
         -H "Authorization: Bearer $admin_access_token" \
         http://auth-keycloak:8080/admin/realms/master/clients/${CLIENT_ID}/default-client-scopes | jq -r '.[] | select(.name == "grpc-custom-sub") | .id')
 
-      if [ -z "$EXISTING_SCOPE" ]; then
+      if [[ -z "$EXISTING_SCOPE" ]]; then
         echo "Scope not found on client, adding it..."
 
         CUSTOM_SCOPE_ID=$(curl -s \

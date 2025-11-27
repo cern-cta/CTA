@@ -37,7 +37,7 @@ while getopts "n:" o; do
 done
 shift $((OPTIND - 1))
 
-if [ -z "${NAMESPACE}" ]; then
+if [[ -z "${NAMESPACE}" ]]; then
   usage
 fi
 

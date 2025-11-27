@@ -41,7 +41,7 @@ while getopts "n:w:q" o; do
 done
 shift $((OPTIND-1))
 
-if [ -z "${NAMESPACE}" ]; then
+if [[ -z "${NAMESPACE}" ]]; then
     usage
 fi
 
@@ -66,7 +66,7 @@ for pod in $(echo "${pods}" | jq -r '.metadata.name'); do
   fi
 
   pod_status=$(echo "${pods}" | jq -r "select(.metadata.name==\"${pod}\") | .status.phase")
-  if [ "${pod_status}" != "Succeeded" ] && [ "${pod_status}" != "Running" ]; then
+  if [[ "${pod_status}" != "Succeeded" ]] && [[ "${pod_status}" != "Running" ]]; then
     echo "Error: ${pod} is in state ${pod_status}"
     general_errors=$((general_errors + 1))
     continue
@@ -81,7 +81,7 @@ for pod in $(echo "${pods}" | jq -r '.metadata.name'); do
                       bash -c "find /var/log/tmp/ -type f -name '*.core' 2>/dev/null \
                                | grep -v -E 'client-0-[0-9]+-xrdcp-.*\.core$' \
                                || true")
-    if [ -n "${coredumpfiles}" ]; then
+    if [[ -n "${coredumpfiles}" ]]; then
       num_files=$(wc -l <<< "${coredumpfiles}")
       echo "Found ${num_files} core dump files in pod ${pod} - container ${container}"
       core_dump_counter=$((core_dump_counter + num_files))
@@ -95,7 +95,7 @@ for pod in $(echo "${pods}" | jq -r '.metadata.name'); do
                            | grep -a -E '\"log_level\":\"(ERROR|CRITICAL)\"' \
                            | grep -v -E 'Cannot update status for drive [A-Za-z0-9_-]+. Drive not found' \
                            || true")
-    if [ -n "${logged_error_messages}" ]; then
+    if [[ -n "${logged_error_messages}" ]]; then
       num_errors=$(wc -l <<< "${logged_error_messages}")
       all_logged_error_messages+="$logged_error_messages"$'\n'
       echo "Found ${num_errors} logged errors in pod ${pod} - container ${container}"
@@ -106,7 +106,7 @@ done
 echo ""
 echo "Summary of logged error messages:"
 non_whitelisted_errors=0
-if [ -n "${all_logged_error_messages}" ]; then
+if [[ -n "${all_logged_error_messages}" ]]; then
   while read -r count message; do
     if grep -Fxq "${message}" "${WHITELIST_FILE}"; then
       echo "(whitelisted) Count: ${count}, Message: \"${message}\""
@@ -129,7 +129,7 @@ echo "Found ${general_errors} general pod errors."
 echo "Found ${core_dump_counter} core dumps."
 echo "Found ${non_whitelisted_errors} logged errors not in the whitelist."
 
-if [ "${core_dump_counter}" -gt 0 ] || [ "${non_whitelisted_errors}" -gt 0 ] || [ "${general_errors}" -gt 0 ]; then
+if [[ "${core_dump_counter}" -gt 0 ]] || [[ "${non_whitelisted_errors}" -gt 0 ]] || [[ "${general_errors}" -gt 0 ]]; then
   echo "Failing due to non-whitelisted errors or core dumps or general errors."
   exit 1
 fi

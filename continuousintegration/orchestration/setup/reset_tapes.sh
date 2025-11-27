@@ -45,7 +45,7 @@ while [[ "$#" -gt 0 ]]; do
   shift
 done
 
-if [ -z "$namespace" ]; then
+if [[ -z "$namespace" ]]; then
   echo "Missing mandatory argument: -n | --namespace" 1>&2
   exit 1
 fi

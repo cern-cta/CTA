@@ -27,11 +27,11 @@ die() {
 echo "Using scheduler backend: $SCHEDULER_BACKEND"
 
 # Clean up scheduler
-if [ "$SCHEDULER_BACKEND" == "vfs" ] || [ "$SCHEDULER_BACKEND" == "vfsDeprecated" ]; then
+if [[ "$SCHEDULER_BACKEND" == "vfs" ]] || [[ "$SCHEDULER_BACKEND" == "vfsDeprecated" ]]; then
   echo "Installing the cta-objectstore-tools"
   dnf install -y cta-objectstore-tools
   echo "Wiping objectstore"
-  if [ "$SCHEDULER_BACKEND" == "vfsDeprecated" ]; then
+  if [[ "$SCHEDULER_BACKEND" == "vfsDeprecated" ]]; then
     rm -fr $SCHEDULER_URL
     mkdir -p $SCHEDULER_URL
   else
@@ -39,7 +39,7 @@ if [ "$SCHEDULER_BACKEND" == "vfs" ] || [ "$SCHEDULER_BACKEND" == "vfsDeprecated
   fi
   cta-objectstore-initialize $SCHEDULER_URL || die "ERROR: Could not wipe the objectstore. cta-objectstore-initialize $SCHEDULER_URL FAILED"
   chmod -R 777 $SCHEDULER_URL
-elif [ "$SCHEDULER_BACKEND" == "postgres" ]; then
+elif [[ "$SCHEDULER_BACKEND" == "postgres" ]]; then
   echo "Installing the cta-scheduler-utils"
   dnf install -y cta-scheduler-utils
   echo "Postgres scheduler config file content: "
@@ -48,7 +48,7 @@ elif [ "$SCHEDULER_BACKEND" == "postgres" ]; then
   echo "yes" | cta-scheduler-schema-drop /etc/cta/cta-scheduler.conf || die "ERROR: Could not drop scheduler schema. cta-scheduler-schema-drop /etc/cta/cta-scheduler.conf FAILED"
   echo "Creating the scheduler DB schema"
   cta-scheduler-schema-create /etc/cta/cta-scheduler.conf || die "ERROR: Could not create scheduler schema. cta-scheduler-schema-create /etc/cta/cta-scheduler.conf FAILED"
-elif [ "$SCHEDULER_BACKEND" == "ceph" ]; then
+elif [[ "$SCHEDULER_BACKEND" == "ceph" ]]; then
   echo "Installing the cta-objectstore-tools"
   dnf config-manager --enable ceph
   dnf install -y cta-objectstore-tools ceph-common

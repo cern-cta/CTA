@@ -41,7 +41,7 @@ frontend:
       #!/bin/bash
       LOGMOUNT=/mnt/logs
       PV_PATH=""
-      if [ "-${MY_CONTAINER}-" != "--" ]; then
+      if [[ "-${MY_CONTAINER}-" != "--" ]]; then
         PV_PATH="${LOGMOUNT}/${MY_NAME}/${MY_CONTAINER}"
       else
         PV_PATH="${LOGMOUNT}/${MY_NAME}"
@@ -61,7 +61,7 @@ tpsrv:
       #!/bin/bash
       LOGMOUNT=/mnt/logs
       PV_PATH=""
-      if [ "-${MY_CONTAINER}-" != "--" ]; then
+      if [[ "-${MY_CONTAINER}-" != "--" ]]; then
         PV_PATH="${LOGMOUNT}/${MY_NAME}/${MY_CONTAINER}"
       else
         PV_PATH="${LOGMOUNT}/${MY_NAME}"

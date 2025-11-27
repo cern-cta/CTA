@@ -109,28 +109,28 @@ while getopts "v:f:e:b:t:r:n:ampud" o; do
 done
 shift $((OPTIND -1))
 
-if [ "x${REPACK_BUFFER_BASEDIR}" = "x" ]; then
+if [[ "x${REPACK_BUFFER_BASEDIR}" = "x" ]]; then
   usage
   die "No repack buffer URL provided."
 fi
 
-if [ "x${VID_TO_REPACK}" = "x" ]; then
+if [[ "x${VID_TO_REPACK}" = "x" ]]; then
   usage
   die "No vid to repack provided."
 fi
 
-if [ "x${MOUNT_POLICY_NAME}" = "x" ]; then
+if [[ "x${MOUNT_POLICY_NAME}" = "x" ]]; then
   usage
   die "No mount policy name provided."
 fi
 
-if [ ! -z $MAX_FILES_TO_SELECT ]; then
+if [[ ! -z $MAX_FILES_TO_SELECT ]]; then
   MAX_FILES_TO_SELECT_ARG="--maxfilestoselect ${MAX_FILES_TO_SELECT}"
 fi
 
 REPACK_OPTION=""
 
-if [ "x${ADD_COPIES_ONLY}" != "x" ] && [ "x${MOVE_ONLY}" != "x" ]; then
+if [[ "x${ADD_COPIES_ONLY}" != "x" ]] && [[ "x${MOVE_ONLY}" != "x" ]]; then
   die "-a and -m options are mutually exclusive"
 fi
 
@@ -166,7 +166,7 @@ admin_cta repack rm --vid ${VID_TO_REPACK}
 echo "Marking the tape ${VID_TO_REPACK} as full before Repacking it"
 admin_cta tape ch --vid ${VID_TO_REPACK} --full true
 
-if [ ! -z $BACKPRESSURE_TEST ]; then
+if [[ ! -z $BACKPRESSURE_TEST ]]; then
   echo "Backpressure test: setting too high free space requirements"
   # This should be idempotent as we will be called several times
   if [[ $( admin_cta --json ds ls | jq '.[] | select(.name=="repackBuffer") | .name') != '"repackBuffer"' ]]; then
@@ -183,14 +183,14 @@ fi
 echo "Launching repack request for VID ${VID_TO_REPACK}, bufferURL = ${FULL_REPACK_BUFFER_URL}"
 
 NO_RECALL_FLAG=""
-if [ ! -z $NO_RECALL ]; then
+if [[ ! -z $NO_RECALL ]]; then
   NO_RECALL_FLAG="--nr"
 fi
 
 # Check if not all files will be repacked
-if [ ! -z $MAX_FILES_TO_SELECT ]; then
+if [[ ! -z $MAX_FILES_TO_SELECT ]]; then
   TOTAL_FILES_IN_TAPE=$(admin_cta --json tf ls --vid ${VID_TO_REPACK} | jq -r '. | length')
-  if [ "$TOTAL_FILES_IN_TAPE" -gt "$MAX_FILES_TO_SELECT" ]; then
+  if [[ "$TOTAL_FILES_IN_TAPE" -gt "$MAX_FILES_TO_SELECT" ]]; then
     echo "Partial repack covering only ${MAX_FILES_TO_SELECT}/${TOTAL_FILES_IN_TAPE} files from tape ${VID_TO_REPACK}"
   else
     echo "Partial repack covering all ${TOTAL_FILES_IN_TAPE} files from tape ${VID_TO_REPACK}"
@@ -203,7 +203,7 @@ amountRecyleTapeFilesPrev=$(admin_cta --json recycletf ls --vid ${VID_TO_REPACK}
 echo "admin_cta repack add --mountpolicy ${MOUNT_POLICY_NAME} --vid ${VID_TO_REPACK} ${REPACK_OPTION} --bufferurl ${FULL_REPACK_BUFFER_URL} ${NO_RECALL_FLAG} ${MAX_FILES_TO_SELECT_ARG}"
 admin_cta repack add --mountpolicy ${MOUNT_POLICY_NAME} --vid ${VID_TO_REPACK} ${REPACK_OPTION} --bufferurl ${FULL_REPACK_BUFFER_URL} ${NO_RECALL_FLAG} ${MAX_FILES_TO_SELECT_ARG} || exit 1
 
-if [ ! -z $BACKPRESSURE_TEST ]; then
+if [[ ! -z $BACKPRESSURE_TEST ]]; then
   echo "Backpressure test: waiting to see a report of sleeping retrieve queue."
   SECONDS_PASSED=0
   while test 0 = $(admin_cta --json sq | jq -r ".[] | select(.vid == \"${VID_TO_REPACK}\" and .sleepingForSpace == true) | .vid" | wc -l); do
@@ -259,9 +259,9 @@ if test 1 = $(admin_cta --json repack ls --vid ${VID_TO_REPACK} | jq -r '[.[0] |
 fi
 
 # If not all files were repacked, confirm this as true
-if [ ! -z $MAX_FILES_TO_SELECT ]; then
+if [[ ! -z $MAX_FILES_TO_SELECT ]]; then
   TOTAL_FILES_IN_TAPE=$(admin_cta --json tf ls --vid ${VID_TO_REPACK} | jq -r '. | length')
-  if [ "$TOTAL_FILES_IN_TAPE" -gt "$MAX_FILES_TO_SELECT" ]; then
+  if [[ "$TOTAL_FILES_IN_TAPE" -gt "$MAX_FILES_TO_SELECT" ]]; then
     if test 1 = $(admin_cta --json repack ls --vid ${VID_TO_REPACK} | jq -r '[.[0] | select (.allFilesSelectedAtStart == false)] | length') && test 0 != $(admin_cta --json tf ls --vid ${VID_TO_REPACK} | jq -r '. | length'); then
       echo "Partial repack selected a subset of files, as expected"
     else

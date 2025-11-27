@@ -86,7 +86,7 @@ build_rpm() {
       ;;
     --platform)
       if [[ $# -gt 1 ]]; then
-        if [ "$(jq --arg platform "$2" '.platforms | has($platform)' "$project_root/project.json")" != "true" ]; then
+        if [[ "$(jq --arg platform "$2" '.platforms | has($platform)' "$project_root/project.json")" != "true" ]]; then
             echo "Error: platform $2 not supported. Please check the project.json for supported platforms."
         fi
         platform="$2"
@@ -98,7 +98,7 @@ build_rpm() {
       ;;
     --build-generator)
       if [[ $# -gt 1 ]]; then
-        if [ "$2" != "Ninja" ] && [ "$2" != "Unix Makefiles" ]; then
+        if [[ "$2" != "Ninja" ]] && [[ "$2" != "Unix Makefiles" ]]; then
           echo "Warning: build generator $2 is not officially supported. Compilation might not be successful."
         fi
         build_generator="$2"
@@ -122,7 +122,7 @@ build_rpm() {
       ;;
     --scheduler-type)
       if [[ $# -gt 1 ]]; then
-        if [ "$2" != "objectstore" ] && [ "$2" != "pgsched" ]; then
+        if [[ "$2" != "objectstore" ]] && [[ "$2" != "pgsched" ]]; then
           echo "Error: scheduler type $2 is not one of [objectstore, pgsched]."
           exit 1
         fi
@@ -177,7 +177,7 @@ build_rpm() {
     --skip-unit-tests) skip_unit_tests=true ;;
     --oracle-support)
       if [[ $# -gt 1 ]]; then
-        if [ "$2" = "FALSE" ]; then
+        if [[ "$2" = "FALSE" ]]; then
           oracle_support=false
         fi
         shift
@@ -188,7 +188,7 @@ build_rpm() {
       ;;
     --cmake-build-type)
       if [[ $# -gt 1 ]]; then
-        if [ "$2" != "Release" ] && [ "$2" != "Debug" ] && [ "$2" != "RelWithDebInfo" ] && [ "$2" != "MinSizeRel" ]; then
+        if [[ "$2" != "Release" ]] && [[ "$2" != "Debug" ]] && [[ "$2" != "RelWithDebInfo" ]] && [[ "$2" != "MinSizeRel" ]]; then
           echo "--cmake-build-type is \"$2\" but must be one of [Release, Debug, RelWithDebInfo, or MinSizeRel]."
           exit 1
         fi
@@ -207,42 +207,42 @@ build_rpm() {
     shift
   done
 
-  if [ -z "${build_dir}" ]; then
+  if [[ -z "${build_dir}" ]]; then
     echo "Failure: Missing mandatory argument --build-dir"
     usage
   fi
 
-  if [ -z "${scheduler_type}" ]; then
+  if [[ -z "${scheduler_type}" ]]; then
     echo "Failure: Missing mandatory argument --scheduler-type"
     usage
   fi
 
-  if [ -z "${srpm_dir}" ]; then
+  if [[ -z "${srpm_dir}" ]]; then
     echo "Failure: Missing mandatory argument --srpm-dir"
     usage
   fi
 
-  if [ -z "${vcs_version}" ]; then
+  if [[ -z "${vcs_version}" ]]; then
     echo "Failure: Missing mandatory argument --vcs-version"
     usage
   fi
 
-  if [ -z "${build_generator}" ]; then
+  if [[ -z "${build_generator}" ]]; then
     echo "Failure: Missing mandatory argument --build-generator"
     usage
   fi
 
-  if [ -z "${xrootd_ssi_version}" ]; then
+  if [[ -z "${xrootd_ssi_version}" ]]; then
     echo "Failure: Missing mandatory argument --xrootd-ssi-version"
     usage
   fi
 
-  if [ -z "${cmake_build_type}" ]; then
+  if [[ -z "${cmake_build_type}" ]]; then
     echo "Failure: Missing mandatory argument --cmake-build-type"
     usage
   fi
 
-  if [ -z "${platform}" ]; then
+  if [[ -z "${platform}" ]]; then
     echo "Failure: Missing mandatory argument --platform"
     usage
   fi
@@ -257,17 +257,17 @@ build_rpm() {
 
   if [[ ${create_build_dir} = true ]]; then
     mkdir -p "${build_dir}"
-  elif [ ! -d "${build_dir}" ]; then
+  elif [[ ! -d "${build_dir}" ]]; then
     echo "Build directory ${build_dir} does not exist. Please create it and execute the script again, or run the script with the --create-build-dir option.."
     exit 1
   fi
 
-  if [ -d "${build_dir}" ] && [ "$(ls -A "${build_dir}")" ]; then
+  if [[ -d "${build_dir}" ]] && [[ "$(ls -A "${build_dir}")" ]]; then
     echo "WARNING: build directory ${build_dir} is not empty"
   fi
 
   # Setup
-  if [ "${install_srpms}" = true ]; then
+  if [[ "${install_srpms}" = true ]]; then
     ./continuousintegration/project-json/generate_versionlock.py --platform ${platform} >/etc/yum/pluginconf.d/versionlock.list
     cp -f continuousintegration/docker/${platform}/etc/yum.repos.d-public/*.repo /etc/yum.repos.d/
     if [[ ${use_internal_repos} = true ]]; then
@@ -280,7 +280,7 @@ build_rpm() {
   # Cmake
   export CTA_VERSION=${cta_version}
 
-  if [ "${skip_cmake}" = false ]; then
+  if [[ "${skip_cmake}" = false ]]; then
     # Needs to be exported as cmake gets it from the environment
     export XROOTD_SSI_PROTOBUF_INTERFACE_VERSION=${xrootd_ssi_version}
 
@@ -345,7 +345,7 @@ build_rpm() {
     )
   else
     echo "Skipping cmake..."
-    if [ ! -d "${build_dir}" ]; then
+    if [[ ! -d "${build_dir}" ]]; then
       echo "${build_dir}/ directory does not exist. Ensure to run this script without skipping cmake first."
     fi
     cd "${build_dir}"

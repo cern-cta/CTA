@@ -33,7 +33,7 @@ if ! (echo yes | cta-catalogue-schema-drop /etc/cta/cta-catalogue.conf); then
   echo yes | cta-catalogue-schema-drop /etc/cta/cta-catalogue.conf || die "ERROR: Could not wipe database. cta-catalogue-schema-drop /etc/cta/cta-catalogue.conf FAILED"
 fi
 
-if [ "$CATALOGUE_BACKEND" == "oracle" ]; then
+if [[ "$CATALOGUE_BACKEND" == "oracle" ]]; then
   # dnf install -y oracle-instantclient-sqlplus
   # echo "Purging Oracle recycle bin"
   # ORACLE_SQLPLUS="/usr/bin/sqlplus64"

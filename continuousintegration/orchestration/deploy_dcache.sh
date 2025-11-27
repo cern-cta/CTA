@@ -76,7 +76,7 @@ deploy() {
   done
 
   # Argument checks
-  if [ -z "${namespace}" ]; then
+  if [[ -z "${namespace}" ]]; then
     echo "Missing mandatory argument: -n | --namespace"
     usage
   fi
@@ -86,10 +86,10 @@ deploy() {
 
 
   helm_flags=""
-  if [ -n "$dcache_image_tag" ]; then
+  if [[ -n "$dcache_image_tag" ]]; then
     helm_flags+=" --set image.tag=${dcache_image_tag}"
   fi
-  if [ -n "$dcache_config" ]; then
+  if [[ -n "$dcache_config" ]]; then
     helm_flags+=" --values ${dcache_config}"
   fi
 

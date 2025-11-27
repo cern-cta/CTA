@@ -75,7 +75,7 @@ build-cta-rpm:
     XRD_SSI_PATH: "xrootd-ssi-protobuf-interface"
   script:
     - |
-      if [ -z "${CI_COMMIT_TAG}" ]; then
+      if [[ -z "${CI_COMMIT_TAG}" ]]; then
         export VCS_VERSION=$CTA_BUILD_ID
         export CTA_VERSION=$BUILD_CTA_VERSION
       else
@@ -85,18 +85,18 @@ build-cta-rpm:
       fi
     - export XRD_SSI_VERSION=$(git --git-dir=$XRD_SSI_PATH/.git --work-tree=$XRD_SSI_PATH describe --tags --abbrev=0)
     - |
-      if [ -z "$XRD_SSI_VERSION" ]; then
+      if [[ -z "$XRD_SSI_VERSION" ]]; then
         echo "Error: failed to find tag for submodule $XRD_SSI_PATH"
         exit 1
       fi
     - BUILD_OPTIONS=""
     # For now we automatically skip the unit tests for the postgres scheduler.
     - |
-      if [ "${SKIP_UNIT_TESTS}" == "TRUE" ]; then
+      if [[ "${SKIP_UNIT_TESTS}" == "TRUE" ]]; then
         BUILD_OPTIONS+=" --skip-unit-tests"
       fi
     - |
-      if [ "$USE_INTERNAL_REPOS" == "TRUE" ]; then
+      if [[ "$USE_INTERNAL_REPOS" == "TRUE" ]]; then
         BUILD_OPTIONS+=" --use-internal-repos"
       fi
     - ./continuousintegration/build/build_rpm.sh --build-dir build_rpm

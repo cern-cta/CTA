@@ -18,14 +18,14 @@ changelog-preview:
     RELEASE_VERSION: ""
   before_script:
     - |
-      if [ -z "${RELEASE_VERSION}" ]; then
+      if [[ -z "${RELEASE_VERSION}" ]]; then
         echo "Release version cannot be empty. Please set the RELEASE_VERSION variable manually in the CI."
         exit 1
       fi
   script:
     # If no from reference (commit hash or tag) is provided, grab the latest tag before the current commit
     - |
-      if [ -z "${FROM_REF}" ]; then
+      if [[ -z "${FROM_REF}" ]]; then
         FROM_REF=$(git describe --tags --abbrev=0 ${TO_COMMIT})
       fi
     - python3 continuousintegration/release/preview_changelog.py --api-url ${CI_SERVER_URL}
@@ -67,7 +67,7 @@ changelog-update:
     - FROM_REF=${ENV_FROM_REF}
     - RELEASE_VERSION=${ENV_RELEASE_VERSION}
     - |
-      if [ -z "${SOURCE_BRANCH}" ]; then
+      if [[ -z "${SOURCE_BRANCH}" ]]; then
         echo "No source branch provided. Using default branch: ${CI_DEFAULT_BRANCH}"
         SOURCE_BRANCH=${CI_DEFAULT_BRANCH}
       fi

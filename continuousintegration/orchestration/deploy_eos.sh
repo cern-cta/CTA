@@ -80,7 +80,7 @@ deploy() {
   done
 
   # Argument checks
-  if [ -z "${namespace}" ]; then
+  if [[ -z "${namespace}" ]]; then
     echo "Missing mandatory argument: -n | --namespace"
     usage
   fi
@@ -90,13 +90,13 @@ deploy() {
 
 
   helm_flags=""
-  if [ -n "$eos_image_repository" ]; then
+  if [[ -n "$eos_image_repository" ]]; then
     helm_flags+=" --set global.repository=${eos_image_repository}"
   fi
-  if [ -n "$eos_image_tag" ]; then
+  if [[ -n "$eos_image_tag" ]]; then
     helm_flags+=" --set global.tag=${eos_image_tag}"
   fi
-  if [ -n "$eos_image_tag" ]; then
+  if [[ -n "$eos_image_tag" ]]; then
     helm_flags+=" --values ${eos_config}"
   fi
 

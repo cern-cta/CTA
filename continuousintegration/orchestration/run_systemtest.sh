@@ -71,13 +71,13 @@ execute_cmd_with_log() {
   echo "================================================================================"
   echo "Waiting for process took ${elapsed_time} seconds"
 
-  if [ "${execute_log_rc}" == "" ]; then
+  if [[ "${execute_log_rc}" == "" ]]; then
     echo "TIMEOUTING COMMAND, setting exit status to 1" 1>&2
     kill -9 -${execute_log_pid}
     execute_log_rc=1
   fi
 
-  if [ "${execute_log_rc}" != "0" ]; then
+  if [[ "${execute_log_rc}" != "0" ]]; then
     echo "Process exited with exit code: ${execute_log_rc}." 1>&2
     if [ $keepnamespace == 0 ] ; then
       echo "Cleaning up environment"
@@ -163,43 +163,43 @@ run_systemtest() {
   done
 
   # Argument checks
-  if [ -z "${namespace}" ]; then
+  if [[ -z "${namespace}" ]]; then
     echo "Missing mandatory argument: -n | --namespace"
     usage
   fi
-  if [ -z "${systemtest_script}" ]; then
+  if [[ -z "${systemtest_script}" ]]; then
     echo "Missing mandatory argument: -s | --test-script"
     usage
   fi
-  if [ -z "${cta_image_tag}" ]; then
+  if [[ -z "${cta_image_tag}" ]]; then
     echo "Missing mandatory argument: -i | --cta-image-tag"
     usage
   fi
-  if [ -z "${scheduler_config}" ]; then
+  if [[ -z "${scheduler_config}" ]]; then
     echo "Missing mandatory argument: -o | --scheduler-config"
     usage
   fi
-  if [ -z "${catalogue_config}" ]; then
+  if [[ -z "${catalogue_config}" ]]; then
     echo "Missing mandatory argument: -d | --catalogue-config"
     usage
   fi
 
   log_dir="${orchestration_dir}/../../pod_logs/${namespace}"
   mkdir -p "${log_dir}"
-  if [ -d "${log_dir}" ]; then
+  if [[ -d "${log_dir}" ]]; then
     # Delete log contents of previous runs if they exist
     rm -rf "${log_dir:?}/"*
   fi
 
   old_namespaces=$(kubectl get namespace -o json | jq -r '.items[].metadata.name | select(. != "default" and (test("^kube-") | not))')
-  if [ $cleanup_namespaces == 1 ]; then
+  if [[ $cleanup_namespaces == 1 ]]; then
     echo "Cleaning up old namespaces"
     echo $old_namespaces
     echo $old_namespaces | xargs -itoto ./delete_instance.sh -n toto -D
     echo "Cleanup complete"
   elif kubectl get namespace ${namespace} > /dev/null 2>&1; then
     die "Namespace ${namespace} already exists"
-  elif [ -n "$old_namespaces" ]; then
+  elif [[ -n "$old_namespaces" ]]; then
     echo "Error: Other namespaces exist: $old_namespaces"
     exit 1
   fi
@@ -209,7 +209,7 @@ run_systemtest() {
   execute_cmd_with_log "./create_instance.sh -n ${namespace} ${spawn_options} ${extra_spawn_options}" "${log_dir}/create_instance.log" ${create_instance_timeout}
 
   # Launch preflight_checks and timeout after ${preflight_checks_timeout} seconds
-  if [ -n "$preflight_checks_script" ] && [ -x "$preflight_checks_script" ]; then
+  if [[ -n "$preflight_checks_script" ]] && [[ -x "$preflight_checks_script" ]]; then
     cd $(dirname "${preflight_checks_script}")
     echo "Launching preflight checks: ${preflight_checks_script}"
     execute_cmd_with_log "./$(basename ${preflight_checks_script}) -n ${namespace}" \

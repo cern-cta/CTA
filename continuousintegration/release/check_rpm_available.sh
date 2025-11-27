@@ -70,15 +70,15 @@ check_package_available() {
     shift
   done
 
-  if [ -z "${repository}" ]; then
+  if [[ -z "${repository}" ]]; then
     echo "Failure: Missing mandatory argument --repository-url"
     usage
   fi
-  if [ -z "${package}" ]; then
+  if [[ -z "${package}" ]]; then
     echo "Failure: Missing mandatory argument --package"
     usage
   fi
-  if [ -z "${version}" ]; then
+  if [[ -z "${version}" ]]; then
     echo "Failure: Missing mandatory argument --version"
     usage
   fi

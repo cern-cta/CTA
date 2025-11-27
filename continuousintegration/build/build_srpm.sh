@@ -68,7 +68,7 @@ build_srpm() {
       ;;
     --build-generator)
       if [[ $# -gt 1 ]]; then
-        if [ "$2" != "Ninja" ] && [ "$2" != "Unix Makefiles" ]; then
+        if [[ "$2" != "Ninja" ]] && [[ "$2" != "Unix Makefiles" ]]; then
           echo "Warning: build generator $2 is not officially supported. Compilation might not be successful."
         fi
         build_generator="$2"
@@ -91,7 +91,7 @@ build_srpm() {
       ;;
     --scheduler-type)
       if [[ $# -gt 1 ]]; then
-        if [ "$2" != "objectstore" ] && [ "$2" != "pgsched" ]; then
+        if [[ "$2" != "objectstore" ]] && [[ "$2" != "pgsched" ]]; then
           echo "Error: scheduler type $2 is not one of [objectstore, pgsched]."
           exit 1
         fi
@@ -122,7 +122,7 @@ build_srpm() {
       ;;
     --oracle-support)
       if [[ $# -gt 1 ]]; then
-        if [ "$2" = "FALSE" ]; then
+        if [[ "$2" = "FALSE" ]]; then
           oracle_support=false
         fi
         shift
@@ -130,7 +130,7 @@ build_srpm() {
       ;;
     --cmake-build-type)
       if [[ $# -gt 1 ]]; then
-        if [ "$2" != "Release" ] && [ "$2" != "Debug" ] && [ "$2" != "RelWithDebInfo" ] && [ "$2" != "MinSizeRel" ]; then
+        if [[ "$2" != "Release" ]] && [[ "$2" != "Debug" ]] && [[ "$2" != "RelWithDebInfo" ]] && [[ "$2" != "MinSizeRel" ]]; then
           echo "--cmake-build-type is \"$2\" but must be one of [Release, Debug, RelWithDebInfo, or MinSizeRel]."
           exit 1
         fi
@@ -149,27 +149,27 @@ build_srpm() {
     shift
   done
 
-  if [ -z "${build_dir}" ]; then
+  if [[ -z "${build_dir}" ]]; then
     echo "Failure: Missing mandatory argument --build-dir"
     usage
   fi
 
-  if [ -z "${scheduler_type}" ]; then
+  if [[ -z "${scheduler_type}" ]]; then
     echo "Failure: Missing mandatory argument --scheduler-type"
     usage
   fi
 
-  if [ -z "${vcs_version}" ]; then
+  if [[ -z "${vcs_version}" ]]; then
     echo "Failure: Missing mandatory argument --vcs-version"
     usage
   fi
 
-  if [ -z "${build_generator}" ]; then
+  if [[ -z "${build_generator}" ]]; then
     echo "Failure: Missing mandatory argument --build-generator"
     usage
   fi
 
-  if [ -z "${cmake_build_type}" ]; then
+  if [[ -z "${cmake_build_type}" ]]; then
     echo "Failure: Missing mandatory argument --cmake-build-type"
     usage
   fi
@@ -184,12 +184,12 @@ build_srpm() {
 
   if [[ ${create_build_dir} = true ]]; then
     mkdir -p "${build_dir}"
-  elif [ ! -d "${build_dir}" ]; then
+  elif [[ ! -d "${build_dir}" ]]; then
     echo "Build directory ${build_dir} does not exist. Please create it and execute the script again, or run the script with the --create-build-dir option.."
     exit 1
   fi
 
-  if [ -d "${build_dir}" ] && [ "$(ls -A "${build_dir}")" ]; then
+  if [[ -d "${build_dir}" ]] && [[ "$(ls -A "${build_dir}")" ]]; then
     echo "WARNING: build directory ${build_dir} is not empty"
   fi
 

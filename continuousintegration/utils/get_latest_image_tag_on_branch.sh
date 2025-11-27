@@ -48,7 +48,7 @@ while [[ "$#" -gt 0 ]]; do
   shift
 done
 
-if [ -z "$branch" ]; then
+if [[ -z "$branch" ]]; then
   die "Please provide a branch to find the latest image tag for"
 fi
 
@@ -67,7 +67,7 @@ commit_id=$(curl --silent --url "https://gitlab.cern.ch/api/v4/projects/139306/r
 imagetag=$(./list_images.sh 2>/dev/null | grep ${commit_id} | tail -n1)
 
 # Validate if image tag was found
-if [ -z "${imagetag}" ]; then
+if [[ -z "${imagetag}" ]]; then
   die "ERROR: Commit ${commit_id} has no Docker image available in the GitLab registry. Please check the pipeline status and available images."
 fi
 

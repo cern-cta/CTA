@@ -55,7 +55,7 @@ for ((subdir=0; subdir < ${NB_DIRS}; subdir++)); do
 done
 start=$(date +%s)
 echo "Timestamp after all files copied ${start}"
-if [ "0" != "$(ls ${ERROR_DIR} 2> /dev/null | wc -l)" ]; then
+if [[ "0" != "$(ls ${ERROR_DIR} 2> /dev/null | wc -l)" ]]; then
   # there were some xrdcp errors
   echo "Several xrdcp errors occured during archival!"
   echo "Please check client pod logs in artifacts"

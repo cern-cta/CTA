@@ -99,7 +99,7 @@ build_local() {
         ;;
       --cmake-build-type)
         if [[ $# -gt 1 ]]; then
-          if [ "$2" != "Release" ] && [ "$2" != "Debug" ] && [ "$2" != "RelWithDebInfo" ] && [ "$2" != "MinSizeRel" ]; then
+          if [[ "$2" != "Release" ]] && [[ "$2" != "Debug" ]] && [[ "$2" != "RelWithDebInfo" ]] && [[ "$2" != "MinSizeRel" ]]; then
             echo "--cmake-build-type is \"$2\" but must be one of [Release, Debug, RelWithDebInfo, or MinSizeRel]."
             exit 1
           fi
@@ -130,14 +130,14 @@ build_local() {
   # Navigate to repo root
   cd "${project_root}"
 
-  if [ ${skip_srpms} = false ]; then
+  if [[ ${skip_srpms} = false ]]; then
     echo "Building SRPMs..."
     local build_srpm_flags=""
     if [[ ${clean_build_dirs} = true ]]; then
       build_srpm_flags+=" --clean-build-dir"
     fi
     if [[ ${install} = true ]]; then
-      if [ ${install_platform} == "el9" ]; then
+      if [[ ${install_platform} == "el9" ]]; then
         dnf install -y epel-release almalinux-release-devel git python3-dnf-plugin-versionlock
         dnf install -y gcc gcc-c++ cmake3 rpm-build dnf-utils pandoc which make ninja-build ccache systemd-devel
       else
@@ -161,10 +161,10 @@ build_local() {
 
   local build_rpm_flags="--jobs ${num_jobs}"
 
-  if [ ${skip_cmake} = true ]; then
+  if [[ ${skip_cmake} = true ]]; then
     build_rpm_flags+=" --skip-cmake"
   fi
-  if [ ${skip_unit_tests} = true ]; then
+  if [[ ${skip_unit_tests} = true ]]; then
     build_rpm_flags+=" --skip-unit-tests"
   fi
   if [[ ! ${cmake_build_type} = "" ]]; then

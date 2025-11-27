@@ -33,11 +33,11 @@ while getopts "n:" o; do
 done
 shift $((OPTIND-1))
 
-if [ -z "${NAMESPACE}" ]; then
+if [[ -z "${NAMESPACE}" ]]; then
     usage
 fi
 
-if [ ! -z "${error}" ]; then
+if [[ ! -z "${error}" ]]; then
     echo -e "ERROR:\n${error}"
     exit 1
 fi

@@ -44,7 +44,7 @@ while getopts "e:f:" o; do
 done
 shift $((OPTIND-1))
 
-if [ "x${FILES_LOCATION}" = "x" ]; then
+if [[ "x${FILES_LOCATION}" = "x" ]]; then
     die "Files location in a list should be provided"
 fi
 

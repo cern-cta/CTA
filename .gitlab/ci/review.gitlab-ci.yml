@@ -46,7 +46,7 @@ danger-review-gate:
     - when: never
   script:
     - status=$(cat danger_status.txt)
-    - if [ "$status" -ne 0 ]; then
+    - if [[ "$status" -ne 0 ]]; then
         echo "Danger review failed. Please check the merge request comment.";
         exit 1;
       fi

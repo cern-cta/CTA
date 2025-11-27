@@ -243,7 +243,7 @@ test_tape_state_queueing_priority() {
 
   for i in ${!TAPE_LIST_3[@]}; do
     echo "Checking tape ${TAPE_LIST_3[$i]}..."
-    if [ $i -eq $EXPECTED_SELECTED_QUEUE ]; then
+    if [[ $i -eq $EXPECTED_SELECTED_QUEUE ]]; then
       assert_number_of_files_in_queue "${TAPE_LIST_3[$i]}" 1 2
       echo "Request found on ${TAPE_STATE_LIST[$i]} queue ${TAPE_LIST_3[$i]}, as expected."
     else

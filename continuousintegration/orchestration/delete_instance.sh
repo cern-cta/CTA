@@ -103,7 +103,7 @@ save_logs() {
   rm -rf "${tmpdir}/varlogs"
 
   # Save artifacts if running in CI
-  if [ -n "${CI_PIPELINE_ID}" ]; then
+  if [[ -n "${CI_PIPELINE_ID}" ]]; then
     echo "Saving logs as artifacts"
     # Note that this directory must be in the repository so that they can be properly saved as artifacts
     mkdir -p "../../pod_logs/${namespace}"
@@ -125,13 +125,13 @@ reclaim_released_pvs() {
     echo "Processing PV: $pv"
 
     path=$(kubectl get pv "$pv" -o jsonpath='{.spec.local.path}')
-    if [ -z "$path" ]; then
+    if [[ -z "$path" ]]; then
       echo "  Skipping: no local path found (not a local volume?)"
       continue
     fi
     echo "  Found path: $path"
 
-    if [ -d "$path" ]; then
+    if [[ -d "$path" ]]; then
       echo "  Wiping contents of $path"
       # We need sudo here as files in the mount path can be owned by root
       # Note that this requires explicit permission in the sudoers file to ensure the user executing this
@@ -181,7 +181,7 @@ delete_instance() {
   done
 
   # Argument checks
-  if [ -z "${namespace}" ]; then
+  if [[ -z "${namespace}" ]]; then
     echo "Missing mandatory argument: -n | --namespace"
     usage
   fi
@@ -194,7 +194,7 @@ delete_instance() {
   kubectl get pods --namespace ${namespace}
 
   # Optional log collection
-  if [ "$collect_logs" = true ]; then
+  if [[ "$collect_logs" = true ]]; then
     save_logs $namespace $log_dir
   else
     echo "Discarding logs for the current run"
@@ -210,7 +210,7 @@ delete_instance() {
   echo "Deletion finished"
 
   # Reclaim any PVs
-  if [ "$wipe_pvs" = true ]; then
+  if [[ "$wipe_pvs" = true ]]; then
     reclaim_released_pvs $namespace
   else
     echo "Skipping reclaiming of released Persistent Volumes"

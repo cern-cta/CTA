@@ -35,11 +35,11 @@ while getopts "n:" o; do
 done
 shift $((OPTIND-1))
 
-if [ -z "${NAMESPACE}" ]; then
+if [[ -z "${NAMESPACE}" ]]; then
     usage
 fi
 
-if [ ! -z "${error}" ]; then
+if [[ ! -z "${error}" ]]; then
     echo -e "ERROR:\n${error}"
     exit 1
 fi
@@ -261,7 +261,7 @@ repackJustMoveWithMaxFiles() {
   modifyTapeState ${VID_TO_REPACK} ACTIVE
   echo "Reclaiming tape ${VID_TO_REPACK}, should fail because tape should still have files"
   kubectl -n ${NAMESPACE} exec ${CTA_CLI_POD} -c cta-cli -- cta-admin tape reclaim --vid ${VID_TO_REPACK}
-  if [ $? -eq 0 ]; then
+  if [[ $? -eq 0 ]]; then
     echo "Reclaim should have failed"
     exit 1
   else
@@ -280,7 +280,7 @@ repackJustMoveWithMaxFiles() {
   modifyTapeState ${VID_TO_REPACK} ACTIVE
   echo "Reclaiming tape ${VID_TO_REPACK}, should succeed because tape no longer has files"
   kubectl -n ${NAMESPACE} exec ${CTA_CLI_POD} -c cta-cli -- cta-admin tape reclaim --vid ${VID_TO_REPACK}
-  if [ $? -eq 0 ]; then
+  if [[ $? -eq 0 ]]; then
     echo "Reclaim succeeded as expected"
   else
     echo "Reclaim should have succeeded"

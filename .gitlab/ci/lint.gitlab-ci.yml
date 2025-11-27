@@ -52,17 +52,17 @@ cppcheck:
     - exit 1 # The jobs that extend this job should override this
   script:
     - |
-      if [ ! -f "$FORMAT_DIFF" ]; then
+      if [[ ! -f "$FORMAT_DIFF" ]]; then
         echo "FORMAT_DIFF file not found: $FORMAT_DIFF"
         exit 1
       fi
     - |
-      if [ $(wc -l < $FORMAT_DIFF) -le 1 ]; then
+      if [[ $(wc -l < $FORMAT_DIFF) -le 1 ]]; then
         echo "No formatting issues found"
         exit 0
       fi
     - |
-      if [ $(wc -l < $FORMAT_DIFF) -le 1000 ]; then
+      if [[ $(wc -l < $FORMAT_DIFF) -le 1000 ]]; then
         bat --style=plain --color=always $FORMAT_DIFF
       else
         echo "Format diff too large. Please check job artifacts"
@@ -115,7 +115,7 @@ format-apply:
     - git config user.name $GITLAB_USER_LOGIN
   script:
     - |
-      if [ $(ls $DIFF_DIRECTORY | wc -l) -lt 1 ]; then
+      if [[ $(ls $DIFF_DIRECTORY | wc -l) -le 1 ]]; then
         echo "No formatting diffs found to apply"
         exit 0;
       fi

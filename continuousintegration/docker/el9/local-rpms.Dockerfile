@@ -55,6 +55,6 @@ priority=2" > /etc/yum.repos.d/cta-local-testing.repo && \
 
 # Overwrite with internal repos if configured
 ARG USE_INTERNAL_REPOS=FALSE
-RUN if [ "${USE_INTERNAL_REPOS}" = "TRUE" ]; then \
+RUN if [[ "${USE_INTERNAL_REPOS}" = "TRUE" ]]; then \
       cp -f /etc/yum.repos.d-internal/* /etc/yum.repos.d/; \
     fi

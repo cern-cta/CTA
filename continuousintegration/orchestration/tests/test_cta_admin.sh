@@ -34,18 +34,18 @@ while getopts "n:" o; do
 done
 shift $((OPTIND-1))
 
-if [ -z "${NAMESPACE}" ]; then
+if [[ -z "${NAMESPACE}" ]]; then
     usage
 fi
 
-if [ -n "${error}" ]; then
+if [[ -n "${error}" ]]; then
     echo -e "ERROR:\n${error}"
     exit 1
 fi
 
 echo "Preparing namespace for the tests"
   . prepare_tests.sh -n "${NAMESPACE}"
-if [ $? -ne 0 ]; then
+if [[ $? -ne 0 ]]; then
   echo "ERROR: failed to prepare namespace for the tests"
   exit 1
 fi
@@ -60,7 +60,7 @@ kubectl -n "${NAMESPACE}" cp . ${CLIENT_POD}:/root/ -c client || exit 1
 # (
 # TIMEOUT=360
 # SECS=0
-# while [ -z "${MESSAGE}" ]; do
+# while [[ -z "${MESSAGE}" ]]; do
 #   if test ${SECS} -eq ${TIMEOUT}; then
 #     echo "ERROR. Timedout waiting for client to remove drive."
 #     exit 1
@@ -94,7 +94,7 @@ kubectl -n "${NAMESPACE}" cp . ${CLIENT_POD}:/root/ -c client || exit 1
 #(
 #TIMEOUT=360
 #SECONDS_PASSED=0
-#while [ -z "${MESSAGE}" ]; do
+#while [[ -z "${MESSAGE}" ]]; do
 #  if test ${SECONDS_PASSED} -eq ${TIMEOUT}; then
 #   echo "ERROR. Timedout waiting for ctafrontendpod to generate file."
 #   exit 1
@@ -120,7 +120,7 @@ kubectl -n "${NAMESPACE}" cp . ${CLIENT_POD}:/root/ -c client || exit 1
 
 # Restore tape
 #SECONDS_PASSED=0
-#while [ -z "${TEST_DONE}" ]; do
+#while [[ -z "${TEST_DONE}" ]]; do
 #  if test ${SECONDS_PASSED} -eq ${TIMEOUT}; then
 #    echo "ERROR. Timed out while waiting for client pod to get fail request."
 #    exit 1

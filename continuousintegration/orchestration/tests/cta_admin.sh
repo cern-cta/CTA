@@ -554,7 +554,7 @@ echo
 # Wait for file corruption.
 #TIMEOUT=30
 #SECONDS_PASSED=0
-#while [ -z "${RESPONSE}" ]; do
+#while [[ -z "${RESPONSE}" ]]; do
 #  log_message "Waiting for tape to be corrupted (${SECONDS_PASSED}s)..."
 #  if test ${SECONDS_PASSED} -eq ${TIMEOUT}; then
 #    log_message "Error. Timed out while waiting for tape to be corrupted."
