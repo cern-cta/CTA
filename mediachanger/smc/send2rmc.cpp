@@ -54,7 +54,12 @@ int send2rmc(const char* const host,
   const char* const func = "send2rmc";
 
   sin.sin_family = AF_INET;
-  if ((p = getenv("RMC_PORT")) || (p = getconfent_fromfile(PATH_CONF, "RMC", "PORT", 0))) {
+  p = getenv("RMC_PORT");
+  if (!p) {
+    p = getconfent_fromfile(PATH_CONF, "RMC", "PORT", 0);
+  }
+
+  if (p) {
     sin.sin_port = htons((unsigned short) atoi(p));
   } else {
     sin.sin_port = htons((unsigned short) RMC_PORT);

@@ -49,8 +49,6 @@ CtaAdminParsedCmd::CtaAdminParsedCmd(int argc, const char* const* const argv) : 
 
   // Parse the command
 
-  cmdLookup_t::const_iterator cmd_it;
-
   // Client-side only options
 
   int argno = 1;
@@ -81,7 +79,11 @@ CtaAdminParsedCmd::CtaAdminParsedCmd(int argc, const char* const* const argv) : 
 
   // Commands, subcommands and server-side options
 
-  if (argc <= argno || (cmd_it = cmdLookup.find(argv[argno++])) == cmdLookup.end()) {
+  if (argc <= argno) {
+    throwUsage();
+  }
+
+  if (const auto cmd_it = cmdLookup.find(argv[argno++]); cmd_it == cmdLookup.end()) {
     throwUsage();
   } else {
     admincmd.set_cmd(cmd_it->second);

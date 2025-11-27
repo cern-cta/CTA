@@ -92,7 +92,11 @@ void fillNotification(cta::eos::Notification &notification, int argc, const char
    {
       const std::string argstr(argv[arg]);
 
-      if(argstr.substr(0,2) != "--" || argc == ++arg) throw std::runtime_error("Arguments must be provided as --key value pairs");
+      if(argstr.substr(0,2) == "--") {
+        if (argc == ++arg) {
+          throw std::runtime_error("Arguments must be provided as --key value pairs");
+        }
+      }
 
       const std::string argval(argv[arg]);
 
