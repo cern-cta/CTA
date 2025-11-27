@@ -86,7 +86,7 @@ struct ContainerTraits<RepackQueue,C>
   using ContainerAddress = std::string;
   using ElementAddress = std::string;
   using ContainerIdentifier = std::nullopt_t;
-  using ElementMemoryContainer = std::list<std::unique_ptr<InsertedElement>;
+  using ElementMemoryContainer = std::list<std::unique_ptr<InsertedElement>>;
   using ElementDescriptorContainer = std::list<ElementDescriptor>;
   using ElementsToSkipSet = std::set<ElementAddress>;
   using ElementStatus = serializers::RepackRequestStatus;

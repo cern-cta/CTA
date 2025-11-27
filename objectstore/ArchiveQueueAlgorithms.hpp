@@ -99,7 +99,7 @@ struct ContainerTraits<ArchiveQueue,C>
   using ContainerAddress = std::string;
   using ElementAddress = std::string;
   using ContainerIdentifier = std::string;
-  using ElementMemoryContainer = std::list<std::unique_ptr<InsertedElement>;
+  using ElementMemoryContainer = std::list<std::unique_ptr<InsertedElement>>;
   using ElementDescriptorContainer = std::list<ElementDescriptor>;
   using ElementsToSkipSet = std::set<ElementAddress>;
   using ElementStatus = serializers::ArchiveJobStatus;
