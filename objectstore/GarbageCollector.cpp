@@ -309,7 +309,7 @@ void GarbageCollector::OwnedObjectSorter::sortFetchedObjects(Agent& agent, std::
         obj.reset();
         bool jobRequeued=false;
         for (auto &j: ar->dumpJobs()) {
-          if ((j.owner == agent.getAddressIfSet() && ar->c_statusesImplyingQueueing.count(j.status))) {
+          if (j.owner == agent.getAddressIfSet() && ar->c_statusesImplyingQueueing.count(j.status)) {
             std::string containerIdentifier;
             try {
               if(ar->c_statusesImplyingQueueingByRepackRequestAddress.count(j.status)){
