@@ -38,8 +38,8 @@ public:
                             ::grpc::CompletionQueue& completionQueue,
                             const std::string& strSpn);
   ~NegotiationRequestHandler() override = default;
-  
-  void init() override {}; //  Nothnig todo
+
+  void init() override { /* Nothing todo */ };
   bool next(const bool bOk) override;  // can thorw
 
   inline const std::string& token() { return m_strToken; }

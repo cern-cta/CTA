@@ -1425,7 +1425,7 @@ drive::compressionStats drive::DriveT10000::getCompressionStats() {
   return driveCompressionStats;
 }
 
-void drive::DriveMHVTL::disableLogicalBlockProtection() {}
+void drive::DriveMHVTL::disableLogicalBlockProtection() { /* empty because mhvtl does not support LBP */ }
 
 void drive::DriveMHVTL::enableCRC32CLogicalBlockProtectionReadOnly() {
   throw cta::exception::Exception("In DriveMHVTL::enableCRC32CLogicalBlockProtectionReadOnly(): not supported");

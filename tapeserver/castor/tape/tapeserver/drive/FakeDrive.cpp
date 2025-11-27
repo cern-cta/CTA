@@ -176,7 +176,9 @@ void castor::tape::tapeserver::drive::FakeDrive::spaceFileMarksForward(size_t co
   }
   m_currentPosition = i;  // EOT side of the filemark
 }
-void castor::tape::tapeserver::drive::FakeDrive::unloadTape(void)  {
+
+void castor::tape::tapeserver::drive::FakeDrive::unloadTape(void) {
+  // Nothing to do from a fake drive
 }
 void castor::tape::tapeserver::drive::FakeDrive::flush(void)  {
   if (m_failureMoment == OnFlush && m_tapeOverflow) {
