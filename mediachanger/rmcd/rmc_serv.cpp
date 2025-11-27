@@ -328,28 +328,30 @@ static int rmc_getreq(const int s, int* const req_type, char* const req_data, ch
       rmc_logit(func, RMC02, "getpeername", neterror());
       return ERMCUNREC;
     }
-    if (struct hostent hbuf;
-        struct hostent* hp = nullptr;
-        char buffer[1024];
-        char client_ip[INET6_ADDRSTRLEN];
-        int h_err;
-        gethostbyaddr_r((void*) (&from.sin_addr),
-                        sizeof(struct in_addr),
-                        from.sin_family,
-                        &hbuf,
-                        buffer,
-                        sizeof(buffer),
-                        &hp,
-                        &h_err) != 0 ||
-        hp == nullptr) {
-      if (inet_ntop(AF_INET, &from.sin_addr, client_ip, sizeof(client_ip)) == nullptr) {
-        perror("inet_ntop");
-        return ERMCUNREC;
+    {
+      struct hostent hbuf;
+      struct hostent *hp = nullptr;
+      char buffer[1024];
+      char client_ip[INET6_ADDRSTRLEN];
+      int h_err;
+      if (gethostbyaddr_r((void *) (&from.sin_addr),
+                          sizeof(struct in_addr),
+                          from.sin_family,
+                          &hbuf,
+                          buffer,
+                          sizeof(buffer),
+                          &hp,
+                          &h_err) != 0 ||
+          hp == nullptr) {
+        if (inet_ntop(AF_INET, &from.sin_addr, client_ip, sizeof(client_ip)) == nullptr) {
+          perror("inet_ntop");
+          return ERMCUNREC;
+        }
+        // Duplicate the strings to prevent undefined behaviour after exiting function
+        *clienthost = strdup(client_ip);
+      } else {
+        *clienthost = strdup(hp->h_name);
       }
-      // Duplicate the strings to prevent undefined behaviour after exiting function
-      *clienthost = strdup(client_ip);
-    } else {
-      *clienthost = strdup(hp->h_name);
     }
     return 0;
   } else {
