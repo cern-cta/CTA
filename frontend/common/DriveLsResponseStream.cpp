@@ -159,8 +159,8 @@ cta::xrd::Data DriveLsResponseStream::next() {
   driveItem->set_vid(dr.currentVid.value_or(""));
   driveItem->set_tapepool(dr.currentTapePool.value_or(""));
   driveItem->set_vo(dr.currentVo.value_or(""));
-  driveItem->set_files_transferred_in_session(ddr.filesTransferedInSession.value_or(0));
-  driveItem->set_bytes_transferred_in_session(ddr.bytesTransferedInSession.value_or(0));
+  driveItem->set_files_transferred_in_session(dr.filesTransferedInSession.value_or(0));
+  driveItem->set_bytes_transferred_in_session(dr.bytesTransferedInSession.value_or(0));
   driveItem->set_session_id(dr.sessionId.value_or(0));
   const auto lastUpdateTime = dr.lastModificationLog.has_value() ? dr.lastModificationLog.value().time : time(nullptr);
   driveItem->set_time_since_last_update(time(nullptr) - lastUpdateTime);
