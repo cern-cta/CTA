@@ -152,7 +152,7 @@ build_deploy() {
       ;;
     --platform)
       if [[ $# -gt 1 ]]; then
-        if [ "$(jq --arg platform "$2" '.platforms | has($platform)' "$project_root/project.json")" != "true" ]; then
+        if [[ "$(jq --arg platform "$2" '.platforms | has($platform)' "$project_root/project.json")" != "true" ]]; then
             echo "Error: platform $2 not supported. Please check the project.json for supported platforms."
         fi
         platform="$2"
@@ -173,7 +173,7 @@ build_deploy() {
       ;;
     --cmake-build-type)
       if [[ $# -gt 1 ]]; then
-        if [ "$2" != "Release" ] && [ "$2" != "Debug" ] && [ "$2" != "RelWithDebInfo" ] && [ "$2" != "MinSizeRel" ]; then
+        if [[ "$2" != "Release" ]] && [[ "$2" != "Debug" ]] && [[ "$2" != "RelWithDebInfo" ]] && [[ "$2" != "MinSizeRel" ]]; then
           echo "--cmake-build-type is \"$2\" but must be one of [Release, Debug, RelWithDebInfo, or MinSizeRel]."
           exit 1
         fi
@@ -186,7 +186,7 @@ build_deploy() {
       ;;
     -c | --container-runtime)
       if [[ $# -gt 1 ]]; then
-        if [ "$2" != "docker" ] && [ "$2" != "podman" ]; then
+        if [[ "$2" != "docker" ]] && [[ "$2" != "podman" ]]; then
           echo "-c | --container-runtime is \"$2\" but must be one of [docker, podman]."
           exit 1
         fi
@@ -292,10 +292,10 @@ build_deploy() {
   #####################################################################################################################
   # Build binaries/RPMs
   #####################################################################################################################
-  if [ "${skip_build}" = false ]; then
+  if [[ "${skip_build}" = false ]]; then
     build_image_name="cta-build-image-${platform}"
     # Stop and remove existing container if reset is requested
-    if [ "${reset}" = true ]; then
+    if [[ "${reset}" = true ]]; then
       echo "Shutting down existing build container..."
       ${container_runtime} rm -f "${build_container_name}" >/dev/null 2>&1 || true
       podman rmi ${build_image_name} > /dev/null 2>&1 || true
@@ -339,14 +339,14 @@ build_deploy() {
 
     local build_rpm_flags=""
 
-    if [ ${restarted} = true ] || [ ${force_install} = true ]; then
+    if [[ ${restarted} = true ]] || [[ ${force_install} = true ]]; then
       # Only install srpms if it is the first time running this or if the install is forced
       build_rpm_flags+=" --install-srpms"
-    elif [ ${skip_cmake} = true ]; then
+    elif [[ ${skip_cmake} = true ]]; then
       # It should only be possible to skip cmake if the pod was not restarted
       build_rpm_flags+=" --skip-cmake"
     fi
-    if [ ${skip_unit_tests} = true ]; then
+    if [[ ${skip_unit_tests} = true ]]; then
       build_rpm_flags+=" --skip-unit-tests"
     fi
     if [[ ${clean_build_dir} = true || ${clean_build_dirs} = true ]]; then
@@ -390,23 +390,23 @@ build_deploy() {
   # Build image
   #####################################################################################################################
   build_iteration_file=/tmp/.build_iteration
-  if [ "$skip_image_reload" == "false" ]; then
+  if [[ "$skip_image_reload" == "false" ]]; then
     print_header "BUILDING CONTAINER IMAGE"
-    if [ "$upgrade_cta" == "false" ]; then
+    if [[ "$upgrade_cta" == "false" ]]; then
       # Start with the tag dev-0
       local current_build_id=0
       image_tag="dev-$current_build_id"
       touch $build_iteration_file
       echo $current_build_id >$build_iteration_file
 
-      if [ ${image_cleanup} = true ]; then
+      if [[ ${image_cleanup} = true ]]; then
         # When deploying an entirely new instance, this is a nice time to clean up old images
         echo "Cleaning up unused ctageneric images..."
         minikube image ls | grep "localhost/ctageneric:dev" | xargs -r minikube image rm >/dev/null 2>&1
       fi
     else
       # This continuoully increments the image tag from previous upgrades
-      if [ ! -f "$build_iteration_file" ]; then
+      if [[ ! -f "$build_iteration_file" ]]; then
         echo "Failed to find $build_iteration_file to retrieve build iteration."
         exit 1
       fi
@@ -427,13 +427,13 @@ build_deploy() {
       --container-runtime "${container_runtime}" \
       --load-into-minikube \
       ${extra_image_build_options}
-    if [ ${image_cleanup} = true ]; then
+    if [[ ${image_cleanup} = true ]]; then
       # Pruning of unused images is done after image building to ensure we maintain caching
       podman image ls | grep ctageneric | grep -v "${image_tag}" | awk '{ print "localhost/ctageneric:" $2 }' | xargs -r podman rmi || true
       podman image prune -f >/dev/null
     fi
   else
-    if [ ! -f "$build_iteration_file" ]; then
+    if [[ ! -f "$build_iteration_file" ]]; then
       echo "Failed to find $build_iteration_file to retrieve build iteration. Unable to identify which image to spawn/upgrade the instance with."
       exit 1
     fi
@@ -444,16 +444,16 @@ build_deploy() {
   #####################################################################################################################
   # Deploy CTA instance
   #####################################################################################################################
-  if [ ${skip_deploy} = false ]; then
-    if [ "$upgrade_cta" = true ]; then
+  if [[ ${skip_deploy} = false ]]; then
+    if [[ "$upgrade_cta" = true ]]; then
       print_header "UPGRADING CTA INSTANCE"
       cd continuousintegration/orchestration
       upgrade_options=""
-      if [ "$skip_image_reload" == "false" ]; then
+      if [[ "$skip_image_reload" == "false" ]]; then
         upgrade_options+=" --cta-image-repository localhost/ctageneric --cta-image-tag ${image_tag}"
       fi
       ./upgrade_cta_instance.sh --namespace ${deploy_namespace} ${upgrade_options} ${extra_spawn_options}
-    elif [ "$upgrade_eos" = true ]; then
+    elif [[ "$upgrade_eos" = true ]]; then
       print_header "UPGRADING EOS INSTANCE"
       cd continuousintegration/orchestration
       ./deploy_eos_instance.sh --namespace ${deploy_namespace} --eos-image-tag ${eos_image_tag}
@@ -463,30 +463,30 @@ build_deploy() {
       # and polutes the dev machine
       ./continuousintegration/orchestration/delete_instance.sh -n ${deploy_namespace} --discard-logs
       print_header "DEPLOYING CTA INSTANCE"
-      if [ -n "${tapeservers_config}" ]; then
+      if [[ -n "${tapeservers_config}" ]]; then
         extra_spawn_options+=" --tapeservers-config ${tapeservers_config}"
       fi
 
-      if [ -n "${eos_image_tag}" ]; then
+      if [[ -n "${eos_image_tag}" ]]; then
         extra_spawn_options+=" --eos-image-tag ${eos_image_tag}"
       fi
 
-      if [ -n "${eos_config}" ]; then
+      if [[ -n "${eos_config}" ]]; then
         extra_spawn_options+=" --eos-config ${eos_config}"
       fi
 
-      if [ -n "${cta_config}" ]; then
+      if [[ -n "${cta_config}" ]]; then
         extra_spawn_options+=" --cta-config ${cta_config}"
       fi
-      if [ "$local_telemetry" = true ]; then
+      if [[ "$local_telemetry" = true ]]; then
         extra_spawn_options+=" --local-telemetry"
       fi
-      if [ "$publish_telemetry" = true ]; then
+      if [[ "$publish_telemetry" = true ]]; then
         extra_spawn_options+=" --publish-telemetry"
       fi
 
-      if [ -z "${scheduler_config}" ]; then
-        if [ "${scheduler_type}" == "pgsched" ]; then
+      if [[ -z "${scheduler_config}" ]]; then
+        if [[ "${scheduler_type}" == "pgsched" ]]; then
           scheduler_config="presets/dev-scheduler-postgres-values.yaml"
         else
           scheduler_config="presets/dev-scheduler-vfs-values.yaml"

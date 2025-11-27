@@ -28,7 +28,7 @@ while getopts "p:v:" o; do
 done
 shift $((OPTIND-1))
 
-if [ -z "$1" ]; then
+if [[ -z "$1" ]]; then
     usage
 fi
 

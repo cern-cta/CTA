@@ -35,11 +35,11 @@ while getopts "f:" o; do
 done
 shift $((OPTIND-1))
 
-if [ -z "${TEST_FILE_NAME}" ]; then
+if [[ -z "${TEST_FILE_NAME}" ]]; then
   usage
 fi
 
-if [ ! -z "${error}" ]; then
+if [[ ! -z "${error}" ]]; then
   echo -e "ERROR:\n${error}"
   exit 1
 fi

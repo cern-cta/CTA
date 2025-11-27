@@ -72,7 +72,7 @@ DISK_FSID=$(KRB5CCNAME=/tmp/${EOSPOWER_USER}/krb5cc_0 XrdSecPROTOCOL=krb5 eos --
 # 3.1. Check that evict fails when there is no tape replica
 echo "Testing 'eos root://${EOS_MGM_HOST} evict ${TEMP_FILE}'..."
 KRB5CCNAME=/tmp/${EOSPOWER_USER}/krb5cc_0 XrdSecPROTOCOL=krb5 eos root://${EOS_MGM_HOST} evict ${TEMP_FILE}
-if [ $? -eq 0 ]; then
+if [[ $? -eq 0 ]]; then
   error "'eos evict' command succeeded where it should have failed"
 else
   echo "'eos evict' command failed as expected"
@@ -81,7 +81,7 @@ fi
 # 3.2. Check that evict --ignore-evict-counter --fsid <fsid> fails when there is no tape replica
 echo "Testing 'eos root://${EOS_MGM_HOST} evict --ignore-evict-counter --fsid ${DISK_FSID} ${TEMP_FILE}'..."
 KRB5CCNAME=/tmp/${EOSPOWER_USER}/krb5cc_0 XrdSecPROTOCOL=krb5 eos root://${EOS_MGM_HOST} evict --ignore-evict-counter --fsid ${DISK_FSID} ${TEMP_FILE}
-if [ $? -eq 0 ]; then
+if [[ $? -eq 0 ]]; then
   error "'eos evict' command succeeded where it should have failed"
 else
   echo "'eos evict' command failed as expected"
@@ -183,7 +183,7 @@ fi
 # 14. Test removing tape replica, should fail
 echo "Trying to remove tape replica with fsid ${FSID_TAPE}..."
 KRB5CCNAME=/tmp/${EOSPOWER_USER}/krb5cc_0 XrdSecPROTOCOL=krb5 eos root://${EOS_MGM_HOST} evict --ignore-evict-counter --fsid ${FSID_TAPE} ${TEMP_FILE}
-if [ $? -eq 0 ]; then
+if [[ $? -eq 0 ]]; then
   error "'eos evict --ignore-evict-counter --fsid ${FSID_TAPE}' command succeeded where it should have failed"
 else
   echo "'eos evict --ignore-evict-counter --fsid ${FSID_TAPE}' command failed as expected"
@@ -197,7 +197,7 @@ fi
 # 15. Test removing non-existing replica, should fail
 echo "Trying to remove tape replica with non existing fsid ${FSID_NOT_SET_VALUE}..."
 KRB5CCNAME=/tmp/${EOSPOWER_USER}/krb5cc_0 XrdSecPROTOCOL=krb5 eos root://${EOS_MGM_HOST} evict --ignore-evict-counter --fsid ${FSID_NOT_SET_VALUE} ${TEMP_FILE}
-if [ $? -eq 0 ]; then
+if [[ $? -eq 0 ]]; then
   error "'eos evict --ignore-evict-counter --fsid ${FSID_NOT_SET_VALUE}' command succeeded where it should have failed"
 else
   echo "'eos evict --ignore-evict-counter --fsid ${FSID_NOT_SET_VALUE}' command failed as expected"
@@ -211,7 +211,7 @@ fi
 # 16. Test removing existing replica, should fail when --ignore-evict-counter is not used
 echo "Testing 'eos root://${EOS_MGM_HOST} evict --fsid ${FSID_DUMMY_1_VALUE} ${TEMP_FILE}'... without '--ignore-evict-counter'"
 KRB5CCNAME=/tmp/${EOSPOWER_USER}/krb5cc_0 XrdSecPROTOCOL=krb5 eos root://${EOS_MGM_HOST} evict --fsid ${FSID_DUMMY_1_VALUE} ${TEMP_FILE}
-if [ $? -eq 0 ]; then
+if [[ $? -eq 0 ]]; then
   error "'eos evict' command succeeded where it should have failed"
 else
   echo "'eos evict' command failed as expected"
@@ -220,7 +220,7 @@ fi
 # 17.1. Test removing existing replica with --ignore-removal-on-fst, should fail when --fsid is not used
 echo "Testing 'eos root://${EOS_MGM_HOST} evict --ignore-removal-on-fst ${TEMP_FILE}'... without '--fsid'"
 KRB5CCNAME=/tmp/${EOSPOWER_USER}/krb5cc_0 XrdSecPROTOCOL=krb5 eos root://${EOS_MGM_HOST} evict --ignore-removal-on-fst ${TEMP_FILE}
-if [ $? -eq 0 ]; then
+if [[ $? -eq 0 ]]; then
   error "'eos evict' command succeeded where it should have failed"
 else
   echo "'eos evict' command failed as expected"
@@ -229,7 +229,7 @@ fi
 # 17.2. Test removing existing replica with --ignore-removal-on-fst, should fail when --ignore-evict-counter is not used
 echo "Testing 'eos root://${EOS_MGM_HOST} evict --ignore-removal-on-fst --fsid ${FSID_DUMMY_1_VALUE} ${TEMP_FILE}'... without '--ignore-evict-counter'"
 KRB5CCNAME=/tmp/${EOSPOWER_USER}/krb5cc_0 XrdSecPROTOCOL=krb5 eos root://${EOS_MGM_HOST} evict --ignore-removal-on-fst --fsid ${FSID_DUMMY_1_VALUE} ${TEMP_FILE}
-if [ $? -eq 0 ]; then
+if [[ $? -eq 0 ]]; then
   error "'eos evict' command succeeded where it should have failed"
 else
   echo "'eos evict' command failed as expected"
@@ -238,7 +238,7 @@ fi
 # 18. Test removing one existing replica, should succeed and keep remaining replicas intact
 echo "Trying to remove a replica with existing fsid ${FSID_DUMMY_1_VALUE} ${TEMP_FILE} and --ignore-evict-counter..."
 KRB5CCNAME=/tmp/${EOSPOWER_USER}/krb5cc_0 XrdSecPROTOCOL=krb5 eos root://${EOS_MGM_HOST} evict --ignore-evict-counter --fsid ${FSID_DUMMY_1_VALUE} ${TEMP_FILE}
-if [ $? -ne 0 ]; then
+if [[ $? -ne 0 ]]; then
   error "'eos evict --ignore-evict-counter --fsid ${FSID_DUMMY_1_VALUE}' command failed where it should have succeeded"
 else
   echo "'eos evict --ignore-evict-counter --fsid ${FSID_DUMMY_1_VALUE}' command succeeded as expected"
@@ -252,7 +252,7 @@ fi
 # 19. Test removing one existing replica, should succeed and keep remaining replicas intact
 echo "Trying to remove a replica with existing fsid ${FSID_DUMMY_2_VALUE} ${TEMP_FILE}, --ignore-removal-on-fst and  --ignore-evict-counter..."
 KRB5CCNAME=/tmp/${EOSPOWER_USER}/krb5cc_0 XrdSecPROTOCOL=krb5 eos root://${EOS_MGM_HOST} evict --ignore-removal-on-fst --ignore-evict-counter --fsid ${FSID_DUMMY_2_VALUE} ${TEMP_FILE}
-if [ $? -ne 0 ]; then
+if [[ $? -ne 0 ]]; then
   error "'eos evict --ignore-removal-on-fst --ignore-evict-counter --fsid ${FSID_DUMMY_2_VALUE}' command failed where it should have succeeded"
 else
   echo "'eos evict --ignore-removal-on-fst --ignore-evict-counter --fsid ${FSID_DUMMY_2_VALUE}' command succeeded as expected"
@@ -266,7 +266,7 @@ fi
 # 20. Test removing all remaining replicas
 echo "Trying to remove all disk replicas..."
 KRB5CCNAME=/tmp/${EOSPOWER_USER}/krb5cc_0 XrdSecPROTOCOL=krb5 eos root://${EOS_MGM_HOST} evict --ignore-evict-counter ${TEMP_FILE}
-if [ $? -ne 0 ]; then
+if [[ $? -ne 0 ]]; then
   error "'eos evict' command failed where it should have succeeded"
 else
   echo "'eos evict' command succeeded as expected"

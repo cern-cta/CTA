@@ -10,7 +10,7 @@ modify-project-json:
     # Replace XRootD
     - trimmed_xrootd_version=$(echo "$CUSTOM_XROOTD_VERSION" | xargs)
     - |
-      if [ -n "$trimmed_xrootd_version" ]; then
+      if [[ -n "$trimmed_xrootd_version" ]]; then
         echo "Updating XRootD version to: $trimmed_xrootd_version."
         tmp_file=$(mktemp)
         jq --arg new_xrd_version "$trimmed_xrootd_version" \
@@ -23,7 +23,7 @@ modify-project-json:
     # Replace EOS versionlock
     - trimmed_eos_version=$(echo "$CUSTOM_EOS_VERSION" | xargs)
     - |
-      if [ -n "$trimmed_eos_version" ]; then
+      if [[ -n "$trimmed_eos_version" ]]; then
         eos_image_tag="${trimmed_eos_version}"
         echo "Updating EOS version to: $trimmed_eos_version."
         tmp_file=$(mktemp)
@@ -39,12 +39,12 @@ modify-project-json:
     - trimmed_eos_image_tag=$(echo "$CUSTOM_EOS_IMAGE_TAG" | xargs)
     # If not explicitly provided, extract it from the EOS version by removing the packaging number and appending the platform
     - |
-      if [ -z "$trimmed_eos_image_tag" ] && [ -n "$trimmed_eos_version" ]; then
+      if [[ -z "$trimmed_eos_image_tag" ]] && [[ -n "$trimmed_eos_version" ]]; then
         base_eos_version="${trimmed_eos_version%-*}"
         trimmed_eos_image_tag="${base_eos_version}.${PLATFORM}"
       fi
     - |
-      if [ -n "$trimmed_eos_image_tag" ]; then
+      if [[ -n "$trimmed_eos_image_tag" ]]; then
         echo "Updating EOS image tag to: $trimmed_eos_image_tag."
         tmp_file=$(mktemp)
         jq --arg new_eos_image_tag "$trimmed_eos_image_tag" \

@@ -139,7 +139,7 @@ deploy() {
     shift
   done
 
-  if [ -z "${cta_image_tag}" ]; then
+  if [[ -z "${cta_image_tag}" ]]; then
     echo "Missing mandatory argument: --cta-image-tag"
     usage
   fi
@@ -153,23 +153,23 @@ deploy() {
   # and polutes the dev machine
   ./continuousintegration/orchestration/delete_instance.sh -n ${deploy_namespace} --discard-logs
   print_header "DEPLOYING CTA INSTANCE"
-  if [ -n "${tapeservers_config}" ]; then
+  if [[ -n "${tapeservers_config}" ]]; then
     extra_spawn_options+=" --tapeservers-config ${tapeservers_config}"
   fi
 
-  if [ -n "${eos_image_tag}" ]; then
+  if [[ -n "${eos_image_tag}" ]]; then
     extra_spawn_options+=" --eos-image-tag ${eos_image_tag}"
   fi
 
-  if [ -n "${eos_config}" ]; then
+  if [[ -n "${eos_config}" ]]; then
     extra_spawn_options+=" --eos-config ${eos_config}"
   fi
 
-  if [ -n "${cta_config}" ]; then
+  if [[ -n "${cta_config}" ]]; then
     extra_spawn_options+=" --cta-config ${cta_config}"
   fi
 
-  if [ "$local_telemetry" = true ]; then
+  if [[ "$local_telemetry" = true ]]; then
     extra_spawn_options+=" --local-telemetry"
   fi
 

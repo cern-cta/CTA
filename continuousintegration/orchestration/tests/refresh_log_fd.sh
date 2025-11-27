@@ -18,7 +18,7 @@
 log_dir="/var/log/cta/"
 STRACE_SLEEP_SECS=2
 
-if [ "$(find ${log_dir} -type f | wc -l)" -ne 1 ]; then
+if [[ "$(find ${log_dir} -type f | wc -l)" -ne 1 ]]; then
   echo "ERROR: More than one log file found at ${log_dir}."
   exit 1
 fi
@@ -33,15 +33,15 @@ tpd_parent_pid=$(pgrep "parent" -u cta)
 tpd_maint_pid=$(pgrep "maint" -u cta)
 tpd_drv_pid=$(pgrep "drive" -u cta)
 
-if [ -z "${tpd_parent_pid}" ]; then
+if [[ -z "${tpd_parent_pid}" ]]; then
     echo "ERROR: No '$DRIVE_NAME-parent' process found."
     exit 1
 fi
-if [ -z "${tpd_maint_pid}" ]; then
+if [[ -z "${tpd_maint_pid}" ]]; then
     echo "ERROR: No '$DRIVE_NAME-maint' process found."
     exit 1
 fi
-if [ -z "${tpd_drv_pid}" ]; then
+if [[ -z "${tpd_drv_pid}" ]]; then
     echo "ERROR: No '$DRIVE_NAME-drive' process found."
     exit 1
 fi
@@ -52,7 +52,7 @@ echo "Found '$DRIVE_NAME-drive' process PID: ${tpd_drv_pid}"
 
 # Get number of file descriptor used to open the log file
 log_file_fd=$(lsof -p "${tpd_parent_pid}" | grep "${log_file}" | awk '{print $4}' | awk -F'[^0-9]' '{print $1}')
-if [ -z "${log_file_fd}" ]; then
+if [[ -z "${log_file_fd}" ]]; then
   echo "ERROR: No file descriptor found for log file ${log_file}."
   exit 1
 else
@@ -95,19 +95,19 @@ sleep 1
 
 # Confirm that the file descriptor was reopened in all processes
 echo "Checking '$DRIVE_NAME-parent' file descriptor reopening..."
-if [ "$(grep -c "close(${log_file_fd})" "${tpd_parent_tmp_file}")" -eq 0 ]; then
+if [[ "$(grep -c "close(${log_file_fd})" "${tpd_parent_tmp_file}")" -eq 0 ]]; then
   echo "ERROR: File descriptor #${log_file_fd} not closed in '$DRIVE_NAME-parent'."
   exit 1
-elif [ "$(grep -c "close(${log_file_fd})" "${tpd_parent_tmp_file}")" -gt 1 ]; then
+elif [[ "$(grep -c "close(${log_file_fd})" "${tpd_parent_tmp_file}")" -gt 1 ]]; then
   echo "ERROR: File descriptor #${log_file_fd} closed more than once in '$DRIVE_NAME-parent'."
   exit 1
 else
   echo "OK: File descriptor #${log_file_fd} closed once in '$DRIVE_NAME-parent'."
 fi
-if [ "$(grep "open" "${tpd_parent_tmp_file}" | grep -c "${log_file}")" -eq 0 ]; then
+if [[ "$(grep "open" "${tpd_parent_tmp_file}" | grep -c "${log_file}")" -eq 0 ]]; then
   echo "ERROR: File descriptor for ${log_file} not reopened in '$DRIVE_NAME-parent'."
   exit 1
-elif [ "$(grep "open" "${tpd_parent_tmp_file}" | grep -c "${log_file}")" -gt 1 ]; then
+elif [[ "$(grep "open" "${tpd_parent_tmp_file}" | grep -c "${log_file}")" -gt 1 ]]; then
   echo "ERROR: File descriptor for ${log_file} reopened more than once in '$DRIVE_NAME-parent'."
   exit 1
 else
@@ -115,19 +115,19 @@ else
 fi
 
 echo "Checking '$DRIVE_NAME-maint' file descriptor reopening..."
-if [ "$(grep -c "close(${log_file_fd})" "${tpd_maint_tmp_file}")" -eq 0 ]; then
+if [[ "$(grep -c "close(${log_file_fd})" "${tpd_maint_tmp_file}")" -eq 0 ]]; then
   echo "ERROR: File descriptor #${log_file_fd} not closed in '$DRIVE_NAME-maint'."
   exit 1
-elif [ "$(grep -c "close(${log_file_fd})" "${tpd_maint_tmp_file}")" -gt 1 ]; then
+elif [[ "$(grep -c "close(${log_file_fd})" "${tpd_maint_tmp_file}")" -gt 1 ]]; then
   echo "ERROR: File descriptor #${log_file_fd} closed more than once in '$DRIVE_NAME-maint'."
   exit 1
 else
   echo "OK: File descriptor #${log_file_fd} closed once in '$DRIVE_NAME-maint'."
 fi
-if [ "$(grep "open" "${tpd_maint_tmp_file}" | grep -c "${log_file}")" -eq 0 ]; then
+if [[ "$(grep "open" "${tpd_maint_tmp_file}" | grep -c "${log_file}")" -eq 0 ]]; then
   echo "ERROR: File descriptor for ${log_file} not reopened in '$DRIVE_NAME-maint'."
   exit 1
-elif [ "$(grep "open" "${tpd_maint_tmp_file}" | grep -c "${log_file}")" -gt 1 ]; then
+elif [[ "$(grep "open" "${tpd_maint_tmp_file}" | grep -c "${log_file}")" -gt 1 ]]; then
   echo "ERROR: File descriptor for ${log_file} reopened more than once in '$DRIVE_NAME-maint'."
   exit 1
 else
@@ -135,19 +135,19 @@ else
 fi
 
 echo "Checking '$DRIVE_NAME-drive' drive handler file descriptor reopening..."
-if [ "$(grep -c "close(${log_file_fd})" "${tpm_srv_tmp_file}")" -eq 0 ]; then
+if [[ "$(grep -c "close(${log_file_fd})" "${tpm_srv_tmp_file}")" -eq 0 ]]; then
   echo "ERROR: File descriptor #${log_file_fd} not closed in '$DRIVE_NAME-drive' drive handler ."
   exit 1
-elif [ "$(grep -c "close(${log_file_fd})" "${tpm_srv_tmp_file}")" -gt 1 ]; then
+elif [[ "$(grep -c "close(${log_file_fd})" "${tpm_srv_tmp_file}")" -gt 1 ]]; then
   echo "ERROR: File descriptor #${log_file_fd} closed more than once in '$DRIVE_NAME-drive' drive handler."
   exit 1
 else
   echo "OK: File descriptor #${log_file_fd} closed once in '$DRIVE_NAME-drive' drive handler ."
 fi
-if [ "$(grep "open" "${tpm_srv_tmp_file}" | grep -c "${log_file}")" -eq 0 ]; then
+if [[ "$(grep "open" "${tpm_srv_tmp_file}" | grep -c "${log_file}")" -eq 0 ]]; then
   echo "ERROR: File descriptor for ${log_file} not reopened in '$DRIVE_NAME-drive' drive handler ."
   exit 1
-elif [ "$(grep "open" "${tpm_srv_tmp_file}" | grep -c "${log_file}")" -gt 1 ]; then
+elif [[ "$(grep "open" "${tpm_srv_tmp_file}" | grep -c "${log_file}")" -gt 1 ]]; then
   echo "ERROR: File descriptor for ${log_file} reopened more than once in '$DRIVE_NAME-drive' drive handler ."
   exit 1
 else

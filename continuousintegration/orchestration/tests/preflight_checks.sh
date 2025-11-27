@@ -35,11 +35,11 @@ while getopts "n:" o; do
 done
 shift $((OPTIND-1))
 
-if [ -z "${NAMESPACE}" ]; then
+if [[ -z "${NAMESPACE}" ]]; then
     usage
 fi
 
-if [ ! -z "${error}" ]; then
+if [[ ! -z "${error}" ]]; then
     echo -e "ERROR:\n${error}"
     exit 1
 fi
@@ -108,7 +108,7 @@ kubectl -n ${NAMESPACE} exec ${EOS_MGM_POD} -c eos-mgm -- xrdfs root://localhost
 INPUT_FILE_LIST="$(cat ${TMPDIR}/xrootd_API_src.json | jq -r '. | map(.path) | join(" ")')"
 OUTPUT_FILE_LIST="$(cat ${TMPDIR}/xrootd_API_query_prepare_result.json | jq -r '.responses| map(.path) | join(" ")')"
 
-if [ "-${INPUT_FILE_LIST}-" == "-${OUTPUT_FILE_LIST}-" ]; then
+if [[ "-${INPUT_FILE_LIST}-" == "-${OUTPUT_FILE_LIST}-" ]]; then
   echo "xrootd_API capabilities: SUCCESS"
 else
   echo "xrootd_API capabilities: FAILED"
@@ -128,7 +128,7 @@ echo "-${OUTPUT_FILE_LIST}-"
 
 FLIGHTTEST_RC=$((${FLIGHTTEST_TPC_RC}+${FLIGHTTEST_XROOTD_API_RC}))
 echo
-if [ ${FLIGHTTEST_RC} -eq 0 ]; then
+if [[ ${FLIGHTTEST_RC} -eq 0 ]]; then
   echo "PREFLIGHT test: SUCCESS"
 else
   echo "PREFLIGHT test: FAILED"

@@ -56,7 +56,7 @@ for ((subdir=0; subdir < ${NB_DIRS}; subdir++)); do
   seq -w 0 $((${NB_FILES}-1)) | xargs --max-procs=${NB_PROCS} -iTEST_FILE_NAME bash -c "$command_str" | tee ${LOGDIR}/prepare_sys.retrieve.req_id_${subdir}.log | grep ^ERROR
 done
 
-if [ "0" != "$(ls ${ERROR_DIR} 2> /dev/null | wc -l)" ]; then
+if [[ "0" != "$(ls ${ERROR_DIR} 2> /dev/null | wc -l)" ]]; then
   # there were some prepare errors
   echo "Several prepare errors occured during retrieval!"
   echo "Please check client pod logs in artifacts"

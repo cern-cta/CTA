@@ -84,7 +84,7 @@ else
 fi
 
 echo
-if [ "${errors}" -gt 0 ]; then
+if [[ "${errors}" -gt 0 ]]; then
   echo "FAILURE: not all conditions were satisfied. The runner is not configured correctly"
   exit 1
 fi

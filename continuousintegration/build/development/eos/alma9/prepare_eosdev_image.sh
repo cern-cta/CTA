@@ -16,7 +16,7 @@
 #               submit itself to any jurisdiction.
 
 image_tag="dev"
-if [ -n "$1" ]; then
+if [[ -n "$1" ]]; then
     version_arg="--build-arg EOS_VERSION=$1"
     image_tag="${image_tag}-$1"
 fi

@@ -86,7 +86,7 @@ sleep 1
 requestsTotal=$(admin_cta --json sq | jq 'map(select (.mountType == "RETRIEVE") | .queuedFiles | tonumber) | add')
 echo "Retrieve requests count: ${requestsTotal}"
 filesCount=${NB_FILES}
-if [ ${requestsTotal} -ne ${filesCount} ]; then
+if [[ ${requestsTotal} -ne ${filesCount} ]]; then
     echo "ERROR: Retrieve queue(s) size mismatch: ${requestsTotal} requests queued for ${filesCount} files."
   fi
 
@@ -132,7 +132,7 @@ while [[ ${REMAINING_REQUESTS} -gt 0 ]]; do
 
   REMAINING_REQUESTS=$(admin_cta --json sq | jq -r 'map(select (.mountType == "RETRIEVE") | .queuedFiles | tonumber) | add // 0');
   # Prevent the result from being empty
-  if [ -z "$REMAINING_REQUEST" ]; then REMAINING_REQUESTS='0'; fi
+  if [[ -z "$REMAINING_REQUEST" ]]; then REMAINING_REQUESTS='0'; fi
   echo "${REMAINING_REQUESTS} requests remaining."
 done
 
@@ -146,14 +146,14 @@ for ((subdir=0; subdir < ${NB_DIRS}; subdir++)); do
 done
 echo "Total restaged files found: ${RESTAGEDFILES}"
 
-if [ "0" != "$(ls ${ERROR_DIR} 2> /dev/null | wc -l)" ]; then
+if [[ "0" != "$(ls ${ERROR_DIR} 2> /dev/null | wc -l)" ]]; then
   # there were some prepare errors
   echo "Several errors occured during prepare cancel test!"
   echo "Please check client pod logs in artifacts"
   mv ${ERROR_DIR}/* ${LOGDIR}/xrd_errors/
 fi
 
-if [ ${RESTAGEDFILES} -ne "0" ]; then
+if [[ ${RESTAGEDFILES} -ne "0" ]]; then
   echo "ERROR some files were retrieved in spite of retrieve cancellation."
   exit 1
 fi

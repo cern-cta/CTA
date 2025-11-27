@@ -23,7 +23,7 @@ usage() {
   exit 1
 }
 
-if [ -z "$1" ]; then
+if [[ -z "$1" ]]; then
   usage
 fi
 

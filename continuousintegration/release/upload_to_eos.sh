@@ -128,79 +128,79 @@ upload_to_eos() {
     shift
   done
 
-  if [ -z "${eos_account_username}" ]; then
+  if [[ -z "${eos_account_username}" ]]; then
     echo "Failure: Missing mandatory argument --eos-username"
     usage
   fi
 
-  if [ -z "${eos_account_password}" ]; then
+  if [[ -z "${eos_account_password}" ]]; then
     echo "Failure: Missing mandatory argument --eos-password"
     usage
   fi
 
-  if [ -z "${eos_target_dir}" ]; then
+  if [[ -z "${eos_target_dir}" ]]; then
     echo "Failure: Missing mandatory argument --eos-target-dir"
     usage
   fi
 
-  if [ -z "${local_source_dir}" ] && [ -z "${eos_source_dir}" ]; then
+  if [[ -z "${local_source_dir}" ]] && [[ -z "${eos_source_dir}" ]]; then
     echo "Failure: Missing mandatory argument --local-source-dir or --eos-source-dir"
     usage
   fi
 
-  if [ -n "${local_source_dir}" ] && [ -n "${eos_source_dir}" ]; then
+  if [[ -n "${local_source_dir}" ]] && [[ -n "${eos_source_dir}" ]]; then
     echo "Failure: Do not use both arguments --local-source-dir and --eos-source-dir"
     usage
   fi
 
   # Check the source directory exists
-  if [ -n "${local_source_dir}" ] && [ ! -d "${local_source_dir}" ]; then
+  if [[ -n "${local_source_dir}" ]] && [[ ! -d "${local_source_dir}" ]]; then
     echo "ERROR: Source directory ${local_source_dir} doesn't exist"
     exit 1
   fi
 
   # Check the cta_version argument was received
-  if [ -n "${eos_source_dir}" ] && [ -z "${cta_version}" ]; then
+  if [[ -n "${eos_source_dir}" ]] && [[ -z "${cta_version}" ]]; then
     echo "ERROR: Argument --eos-source-dir should be used with --cta-version"
     exit 1
   fi
 
   # Get credentials
   echo "$eos_account_password" | kinit $eos_account_username@CERN.CH 2>&1 >/dev/null
-  if [ $? -ne 0 ]; then
+  if [[ $? -ne 0 ]]; then
     echo "ERROR: Failed to get Krb5 credentials for $eos_account_username"
     exit 1
   fi
 
-  if [ -n "${local_source_dir}" ]; then
+  if [[ -n "${local_source_dir}" ]]; then
     # Rely on xrootd to do the copy of files to EOS
     xrdcp --force --recursive "${local_source_dir}"/ root://eoshome.cern.ch/"${eos_target_dir}"/ 2>&1 >/dev/null
-    if [ $? -ne 0 ]; then
+    if [[ $? -ne 0 ]]; then
       echo "ERROR: Failed to copy files to ${eos_target_dir} via xrdcp"
       exit 1
     fi
   fi
 
-  if [ -n "${eos_source_dir}" ]; then
+  if [[ -n "${eos_source_dir}" ]]; then
     # Rely on xrootd to copy the files, inside EOS, with the provided cta-version
     xrdfs root://eoshome.cern.ch/ ls -R "${eos_source_dir}" \
       | grep "${cta_version}" \
       | sed "s|^${eos_source_dir}||" \
       | xargs -I {} xrdcp --force --recursive root://eoshome.cern.ch/"${eos_source_dir}"/{} root://eoshome.cern.ch/"${eos_target_dir}"/{} 2>&1 >/dev/null
-    if [ $? -ne 0 ]; then
+    if [[ $? -ne 0 ]]; then
       echo "ERROR: Failed to copy release ${cta_version} files from ${eos_source_dir} to ${eos_target_dir} via xrdcp"
       exit 1
     fi
   fi
 
   # Run the provided hook on lxplus
-  if [ -n "${hook}" ]; then
+  if [[ -n "${hook}" ]]; then
     ssh -o StrictHostKeyChecking=no \
         -o GSSAPIAuthentication=yes \
         -o GSSAPITrustDNS=yes \
         -o GSSAPIDelegateCredentials=yes \
         $eos_account_username@lxplus.cern.ch $hook 2>&1
-    if [ $? -ne 0 ]; then
+    if [[ $? -ne 0 ]]; then
       echo "ERROR: Something went wrong while running hook $hook on lxplus"
       exit 1
     fi
@@ -209,7 +209,7 @@ upload_to_eos() {
 
   # Destroy credentials
   kdestroy
-  if [ $? -ne 0 ]; then
+  if [[ $? -ne 0 ]]; then
     echo "WARNING: Krb5 credentials for $eos_account_username have not been cleared up"
   fi
 }

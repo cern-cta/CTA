@@ -51,7 +51,7 @@ spec:
 
               # Create or get grpc-client
               GRPC_CLIENT_ID=$(/opt/keycloak/bin/kcadm.sh get clients -r master -q clientId=grpc-client --fields id 2>/dev/null | grep '"id"' | head -1 | sed 's/.*"id" : "\([^"]*\)".*/\1/')
-              if [ -z "$GRPC_CLIENT_ID" ]; then
+              if [[ -z "$GRPC_CLIENT_ID" ]]; then
                 echo "Creating grpc-client..."
                 /opt/keycloak/bin/kcadm.sh create clients \
                   -r master \
@@ -73,7 +73,7 @@ spec:
               /opt/keycloak/bin/kcadm.sh update users/profile -r master -s unmanagedAttributePolicy=ENABLED
               # Set diskInstanceName attribute on admin user
               ADMIN_USER_ID=$(/opt/keycloak/bin/kcadm.sh get users -r master -q username="${KEYCLOAK_ADMIN}" --fields id | grep '"id"' | head -1 | sed 's/.*"id" : "\([^"]*\)".*/\1/')
-              if [ -n "$ADMIN_USER_ID" ]; then
+              if [[ -n "$ADMIN_USER_ID" ]]; then
                 echo "Setting diskInstanceName attribute for admin user (ID: $ADMIN_USER_ID)..."
                 /opt/keycloak/bin/kcadm.sh update users/$ADMIN_USER_ID \
                   -r master \

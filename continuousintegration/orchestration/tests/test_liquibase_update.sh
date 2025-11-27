@@ -36,7 +36,7 @@ check_schema_version() {
     | grep -o -E '[0-9]+\.[0-9]')
 
   # Check if the current schema version is the same as the previous one
-  if [ ${CURRENT_SCHEMA_VERSION} ==  ${DESIRED_SCHEMA_VERSION} ]; then
+  if [[ ${CURRENT_SCHEMA_VERSION} ==  ${DESIRED_SCHEMA_VERSION} ]]; then
     echo "The current Catalogue Schema Version is: ${CURRENT_SCHEMA_VERSION}"
   else
     echo "Error. Unexpected Catalogue Schema Version: ${CURRENT_SCHEMA_VERSION}, it should be: ${DESIRED_SCHEMA_VERSION}"
@@ -56,7 +56,7 @@ while getopts "n:" o; do
 done
 shift $((OPTIND-1))
 
-if [ -z "${NAMESPACE}" ]; then
+if [[ -z "${NAMESPACE}" ]]; then
   usage
 fi
 

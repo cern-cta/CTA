@@ -38,11 +38,11 @@ while getopts "n:q" o; do
 done
 shift $((OPTIND-1))
 
-if [ -z "${NAMESPACE}" ]; then
+if [[ -z "${NAMESPACE}" ]]; then
     usage
 fi
 
-if [ ! -z "${error}" ]; then
+if [[ ! -z "${error}" ]]; then
     echo -e "ERROR:\n${error}"
     exit 1
 fi
@@ -56,7 +56,7 @@ EOS_MGM_HOST="ctaeos"
 if [[ ${PREPARE} -eq 1 ]]; then
   echo "Preparing namespace for the tests"
     . prepare_tests.sh -n ${NAMESPACE}
-  if [ $? -ne 0 ]; then
+  if [[ $? -ne 0 ]]; then
     echo "ERROR: failed to prepare namespace for the tests"
     exit 1
   fi

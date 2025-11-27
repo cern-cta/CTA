@@ -117,7 +117,7 @@ upgrade_instance() {
   done
 
   # Argument checks
-  if [ -z "${namespace}" ]; then
+  if [[ -z "${namespace}" ]]; then
     echo "Missing mandatory argument: -n | --namespace"
     usage
   fi
@@ -127,22 +127,22 @@ upgrade_instance() {
 
 
   helm_flags=""
-  if [ $force == 1 ]; then
+  if [[ $force == 1 ]]; then
     helm_flags+=" --force"
   fi
-  if [ -n "$cta_image_repository" ]; then
+  if [[ -n "$cta_image_repository" ]]; then
     helm_flags+=" --set global.image.repository=${cta_image_repository}"
   fi
-  if [ -n "$cta_image_tag" ]; then
+  if [[ -n "$cta_image_tag" ]]; then
     helm_flags+=" --set global.image.tag=${cta_image_tag}"
   fi
-  if [ -n "$catalogue_schema_version" ]; then
+  if [[ -n "$catalogue_schema_version" ]]; then
     helm_flags+=" --set global.catalogueSchemaVersion=${catalogue_schema_version}"
   fi
-  if [ -n "$scheduler_config" ]; then
+  if [[ -n "$scheduler_config" ]]; then
     helm_flags+=" --set-file global.configuration.scheduler=${scheduler_config}"
   fi
-  if [ -n "$tapeservers_config" ]; then
+  if [[ -n "$tapeservers_config" ]]; then
     devices_in_use=$(kubectl get all --all-namespaces -l cta/library-device -o jsonpath='{.items[*].metadata.labels.cta/library-device}' | tr ' ' '\n' | sort | uniq)
     # Check that all devices in the provided config are already in use
     for library_device in $(awk '/libraryDevice:/ {gsub("\"","",$2); print $2}' "$tapeservers_config"); do

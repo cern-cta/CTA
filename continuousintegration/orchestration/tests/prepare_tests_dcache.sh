@@ -33,7 +33,7 @@ while getopts "n:" o; do
 done
 shift $((OPTIND-1))
 
-if [ -z "${NAMESPACE}" ]; then
+if [[ -z "${NAMESPACE}" ]]; then
     usage
 fi
 
@@ -221,7 +221,7 @@ for VID in "${TAPES[@]}"; do
   # The external tape format test leaves data inside of the tape, then the tapes for labeling are not empty between
   # tests. That's why we need to force cta-tape-label, but only for CI testing.
   kubectl --namespace ${NAMESPACE} exec ${CTA_TPSRV_POD} -c cta-taped-0  -- cta-tape-label --vid ${VID} --force
-  if [ $? -ne 0 ]; then
+  if [[ $? -ne 0 ]]; then
     echo "ERROR: failed to label the tape ${VID}"
     exit 1
   fi
