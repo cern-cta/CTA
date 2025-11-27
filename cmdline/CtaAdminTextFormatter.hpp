@@ -130,7 +130,7 @@ private:
   static void buildVector(std::vector<std::string>& line, const char* item) { line.emplace_back(item); }
 
   //! Base case method to add one item to the log, overloaded for bool
-  static void buildVector(std::vector<std::string>& line, bool item) { line.push_back(item ? "true" : "false"); }
+  static void buildVector(std::vector<std::string>& line, bool item) { line.emplace_back(item ? "true" : "false"); }
 
   /*!
    * Base case method to add one item to the log, with partial specialisation
@@ -138,7 +138,7 @@ private:
    */
   template<typename T>
   static void buildVector(std::vector<std::string>& line, const T& item) {
-    line.emplace_back(item);
+    line.push_back(item);
   }
 
   //! Convert double to string with one decimal place precision and a suffix
