@@ -144,9 +144,19 @@ void ChangeStorageClass::handleArguments(const CmdLineArgs &cmdLineArgs) {
       throw exception::UserError("Missing required option when not providing a path to an input file: storage.class.name");
     }
 
-    if ((!cmdLineArgs.m_archiveFileId || !cmdLineArgs.m_fids || !cmdLineArgs.m_diskInstance)) {
+    if (!cmdLineArgs.m_archiveFileId) {
       cmdLineArgs.printUsage(std::cout);
-      throw exception::UserError("Archive id, eos file id and disk instance must be provided must be provided");
+      throw exception::UserError("Archive ID must be provided.");
+    }
+
+    if (!cmdLineArgs.m_fids) {
+      cmdLineArgs.printUsage(std::cout);
+      throw exception::UserError("EOS file ID must be provided.");
+    }
+
+    if (!cmdLineArgs.m_diskInstance) {
+      cmdLineArgs.printUsage(std::cout);
+      throw exception::UserError("Disk instance must be provided.");
     }
 
     m_storageClassName = cmdLineArgs.m_storageClassName.value();
