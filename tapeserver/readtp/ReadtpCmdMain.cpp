@@ -36,5 +36,5 @@ int main(const int argc, char *const *const argv) {
   cta::log::DummyLogger dummyLog("dummy", "dummy");
 
   cta::tapeserver::readtp::ReadtpCmd cmd(std::cin, std::cout, std::cerr, log, dummyLog);
-  return cmd.main(argc, argv);
+  return cmd.mainImpl(argc, argv);
 }

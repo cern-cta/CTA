@@ -45,7 +45,7 @@ ImmutableFileTest::ImmutableFileTest(
 //------------------------------------------------------------------------------
 // main
 //------------------------------------------------------------------------------
-int ImmutableFileTest::main(const int argc, char *const *const argv) {
+int ImmutableFileTest::mainImpl(const int argc, char *const *const argv) {
   bool cmdLineNotParsed = false;
   std::string errorMessage;
 

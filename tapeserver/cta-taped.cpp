@@ -115,7 +115,7 @@ static int exceptionThrowingMain(const cta::daemon::CommandLineParams& commandLi
     globalConfig);
 
   // Run the tapeserverd daemon
-  return daemon.main();
+  return daemon.mainImpl();
 }
 
 //------------------------------------------------------------------------------
