@@ -26,7 +26,6 @@
 #include "castor/tape/tapeserver/daemon/DiskWriteTask.hpp"
 #include "castor/tape/tapeserver/daemon/DiskStats.hpp"
 #include "castor/tape/tapeserver/daemon/TaskWatchDog.hpp"
-#include "disk/RadosStriperPool.hpp"
 #include "common/Timer.hpp"
 #include <vector>
 
@@ -103,7 +102,7 @@ private:
       m_threadID(manager.m_nbActiveThread++),
       m_parentThreadPool(manager),
       m_lc(m_parentThreadPool.m_lc),
-      m_diskFileFactory(manager.m_xrootTimeout, manager.m_striperPool) {
+      m_diskFileFactory(manager.m_xrootTimeout) {
       // This thread id will remain for the rest of the thread's lifetime
       // (and also context's lifetime), so no need for a scoper
       m_lc.pushOrReplace(cta::log::Param("threadID", m_threadID));
@@ -141,7 +140,7 @@ private:
      */
     cta::disk::DiskFileFactory m_diskFileFactory;
 
-    virtual void run();
+    void run() final;
   };
 
   /**
@@ -178,11 +177,6 @@ protected:
    * Parameter: xroot timeout
    */
   uint16_t m_xrootTimeout;
-
-  /**
-   * A pool of rados striper connections, to be shared by all threads
-   */
-  cta::disk::RadosStriperPool m_striperPool;
 
 private:
   /**

@@ -103,9 +103,9 @@ public:
       return *this;
     }
 
-    const unsigned char* data() const { return m_data; }
+    const unsigned char* data() const final { return m_data; }
 
-    std::size_t size() const { return m_size; }
+    std::size_t size() const final { return m_size; }
 
   private:
     const unsigned char* m_data;

@@ -29,7 +29,7 @@ namespace cta::frontend::grpc::request {
 class RequestMessage : public cta::frontend::AdminCmdOptions {
 public:
   explicit RequestMessage(const cta::xrd::Request& request);
-  ~RequestMessage() = default;
+  ~RequestMessage() final = default;
   
   /*!
    * Get a required option

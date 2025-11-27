@@ -171,7 +171,7 @@ private:
   class RadosWorkerThreadAndContext: private cta::threading::Thread {
   public:
     RadosWorkerThreadAndContext(BackendRados & parentBackend, int threadID, log::Logger & logger);
-    virtual ~RadosWorkerThreadAndContext();
+    ~RadosWorkerThreadAndContext() final;
     void start() { cta::threading::Thread::start(); }
     void wait() { cta::threading::Thread::wait(); }
   private:

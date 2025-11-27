@@ -117,7 +117,7 @@ public:
     *
     * @return The tape pool of the tape to be mounted.
     */
-  virtual std::string getPoolName() const;
+  virtual std::string getPoolName() const final;
 
   /**
     * Returns the mount transaction id.

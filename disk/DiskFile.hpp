@@ -32,9 +32,6 @@
 
 namespace cta::disk {
 
-  // Forward declaration of RadosStriperPool
-  class RadosStriperPool;
-
     /**
      * Namespace managing the reading and writing of files to and from disk.
      */
@@ -51,16 +48,14 @@ namespace cta::disk {
       class DiskFileFactory {
         using Regex = cta::utils::Regex;
       public:
-        DiskFileFactory(uint16_t xrootTimeout, cta::disk::RadosStriperPool& striperPool);
+        DiskFileFactory(uint16_t xrootTimeout);
         ReadFile * createReadFile(const std::string & path);
         WriteFile * createWriteFile(const std::string & path);
       private:
         Regex m_NoURLLocalFile;
         Regex m_URLLocalFile;
         Regex m_URLXrootFile;
-        Regex m_URLCephFile;
         const uint16_t m_xrootTimeout;
-        cta::disk::RadosStriperPool & m_striperPool;
       };
 
       class ReadFile {
@@ -104,11 +99,6 @@ namespace cta::disk {
          * @param size: size of the buffer
          */
         virtual void write(const void *data, const size_t size) = 0;
-
-        /**
-         * Set the checksum as an extended attribute (only needed for Ceph storage).
-         */
-        virtual void setChecksum(uint32_t checksum) = 0;
 
         /**
          * Closes the corresponding file descriptor, which may throw an exception.

@@ -31,7 +31,7 @@ namespace cta::tape::daemon {
 class MaintenanceHandler: public SubprocessHandler {
 public:
   MaintenanceHandler(const common::TapedConfiguration & tapedConfig, ProcessManager & pm);
-  virtual ~MaintenanceHandler();
+  ~MaintenanceHandler() final;
   ProcessingStatus getInitialStatus() override;
   ProcessingStatus fork() override;
   void postForkCleanup() override;

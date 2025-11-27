@@ -46,7 +46,7 @@ public:
   /**
    * Destructor
    */
-  ~DebugBuf() = default;
+  ~DebugBuf() final = default;
 
   /**
    * Set the debug mode to be on (true) or off (false).
@@ -60,7 +60,7 @@ protected:
   /**
    * Sends the specified character to the output channnel.
    */
-  int_type overflow (const int_type c);
+  int_type overflow (const int_type c) final;
 
   /**
    * Writes the standard preamble to the output stream.

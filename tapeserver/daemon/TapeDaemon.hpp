@@ -41,7 +41,7 @@ public:
     cta::log::Logger &log,
     const common::TapedConfiguration &globalConfig);
   
-  virtual ~TapeDaemon();
+  ~TapeDaemon() final;
 
   /** The main entry function of the daemon.
    * @return The return code of the process. */

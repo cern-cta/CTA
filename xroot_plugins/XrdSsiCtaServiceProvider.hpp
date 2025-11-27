@@ -46,7 +46,7 @@ public:
     XrdSsiPb::Log::Msg(XrdSsiPb::Log::DEBUG, LOG_SUFFIX, "XrdSsiCtaServiceProvider() constructor");
   }
 
-  virtual ~XrdSsiCtaServiceProvider() {
+  ~XrdSsiCtaServiceProvider() final {
     XrdSsiPb::Log::Msg(XrdSsiPb::Log::DEBUG, LOG_SUFFIX, "~XrdSsiCtaServiceProvider() destructor");
   }
 

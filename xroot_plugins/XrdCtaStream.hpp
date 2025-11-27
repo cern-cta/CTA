@@ -40,7 +40,7 @@ public:
     XrdSsiPb::Log::Msg(XrdSsiPb::Log::DEBUG, LOG_SUFFIX, "XrdCtaStream() constructor");
   }
 
-  virtual ~XrdCtaStream() {
+  ~XrdCtaStream() override {
     XrdSsiPb::Log::Msg(XrdSsiPb::Log::DEBUG, LOG_SUFFIX, "~XrdCtaStream() destructor");
   }
 
@@ -63,7 +63,7 @@ public:
    *                 last = true:  No more data remains.
    *                 last = false: A fatal error occurred, eRef has the reason.
    */
-  virtual Buffer *GetBuff(XrdSsiErrInfo &eInfo, int &dlen, bool &last) override {
+  Buffer *GetBuff(XrdSsiErrInfo &eInfo, int &dlen, bool &last) override {
     XrdSsiPb::Log::Msg(XrdSsiPb::Log::DEBUG, LOG_SUFFIX, "GetBuff(): XrdSsi buffer fill request (", dlen, " bytes)");
 
     std::unique_ptr<XrdSsiPb::OStreamBuffer<Data>> streambuf;

@@ -57,12 +57,12 @@ private:
   /*!
    * Fill the buffer
    */
-  virtual int fillBuffer(XrdSsiPb::OStreamBuffer<Data>* streambuf);
+  int fillBuffer(XrdSsiPb::OStreamBuffer<Data>* streambuf) final;
 
   /*!
    * Only one item is sent so isDone = true
    */
-  virtual bool isDone() const { return m_is_done; }
+  bool isDone() const final { return m_is_done; }
 };
 
 inline VersionStream::VersionStream(const frontend::AdminCmdStream& requestMsg,

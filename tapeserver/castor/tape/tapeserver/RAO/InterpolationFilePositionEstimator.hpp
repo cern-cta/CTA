@@ -35,7 +35,7 @@ class InterpolationFilePositionEstimator : public FilePositionEstimator{
 public:
   InterpolationFilePositionEstimator(const std::vector<drive::endOfWrapPosition> & endOfWrapPositions, const cta::catalogue::MediaType & mediaType);
   FilePositionInfos getFilePosition(const cta::RetrieveJob& job) const override;
-  virtual ~InterpolationFilePositionEstimator() = default;
+  ~InterpolationFilePositionEstimator() final = default;
   
   static const uint64_t c_blockSize = 256 * 1024;
 

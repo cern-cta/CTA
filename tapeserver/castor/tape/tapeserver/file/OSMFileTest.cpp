@@ -21,7 +21,6 @@
 #include "common/exception/Exception.hpp"
 #include "disk/DiskFile.hpp"
 #include "disk/DiskFileImplementations.hpp"
-#include "disk/RadosStriperPool.hpp"
 #include "scheduler/ArchiveJob.hpp"
 #include "scheduler/RetrieveJob.hpp"
 

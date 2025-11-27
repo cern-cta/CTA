@@ -135,8 +135,7 @@ namespace unitTests{
     TestingRetrieveMount trm(*catalogue, std::move(dbrm));
     MockRecallReportPacker report(&trm,lc);
     RecallMemoryManager mm(10,100,lc);
-    cta::disk::RadosStriperPool striperPool;
-    DiskFileFactory fileFactory(0, striperPool);
+    DiskFileFactory fileFactory(0);
 
     cta::MockRetrieveMount mrm(*catalogue);
     std::unique_ptr<TestingRetrieveJob> fileToRecall(new TestingRetrieveJob(mrm));

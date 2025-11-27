@@ -34,7 +34,7 @@ public:
                  const admin::AdminCmd& adminCmd,
                  XrdSsiStream*& stream);
 
-  ~AdminCmdStream() = default;
+  ~AdminCmdStream() final = default;
 
   /*!
    * Process the admin command

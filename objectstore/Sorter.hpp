@@ -265,14 +265,14 @@ class RetrieveRequestInfosAccessorInterface{
 class OStoreRetrieveRequestAccessor: public RetrieveRequestInfosAccessorInterface{
  public:
   explicit OStoreRetrieveRequestAccessor(std::shared_ptr<RetrieveRequest> retrieveRequest);
-  ~OStoreRetrieveRequestAccessor() = default;
-  std::list<RetrieveRequest::JobDump> getJobs();
-  common::dataStructures::ArchiveFile getArchiveFile();
+  ~OStoreRetrieveRequestAccessor() final = default;
+  std::list<RetrieveRequest::JobDump> getJobs() final;
+  common::dataStructures::ArchiveFile getArchiveFile() final;
   Sorter::RetrieveJob createRetrieveJob(const cta::common::dataStructures::ArchiveFile& archiveFile,
-      const uint32_t copyNb, const uint64_t fSeq, AgentReferenceInterface* previousOwner);
-  serializers::RetrieveJobStatus getJobStatus(const uint32_t copyNb);
-  std::string getRepackAddress();
-  bool getIsRepack();
+      const uint32_t copyNb, const uint64_t fSeq, AgentReferenceInterface* previousOwner) final;
+  serializers::RetrieveJobStatus getJobStatus(const uint32_t copyNb) final;
+  std::string getRepackAddress() final;
+  bool getIsRepack() final;
  private:
   std::shared_ptr<RetrieveRequest> m_retrieveRequest;
 };
@@ -280,14 +280,14 @@ class OStoreRetrieveRequestAccessor: public RetrieveRequestInfosAccessorInterfac
 class SorterRetrieveRequestAccessor: public RetrieveRequestInfosAccessorInterface{
  public:
   explicit SorterRetrieveRequestAccessor(Sorter::SorterRetrieveRequest& request);
-  ~SorterRetrieveRequestAccessor() = default;
-  std::list<RetrieveRequest::JobDump> getJobs();
-  common::dataStructures::ArchiveFile getArchiveFile();
+  ~SorterRetrieveRequestAccessor() final = default;
+  std::list<RetrieveRequest::JobDump> getJobs() final;
+  common::dataStructures::ArchiveFile getArchiveFile() final;
   Sorter::RetrieveJob createRetrieveJob(const cta::common::dataStructures::ArchiveFile& archiveFile,
-      const uint32_t copyNb, const uint64_t fSeq, AgentReferenceInterface* previousOwner);
-  serializers::RetrieveJobStatus getJobStatus(const uint32_t copyNb);
-  std::string getRepackAddress();
-  bool getIsRepack();
+      const uint32_t copyNb, const uint64_t fSeq, AgentReferenceInterface* previousOwner) final;
+  serializers::RetrieveJobStatus getJobStatus(const uint32_t copyNb) final;
+  std::string getRepackAddress() final;
+  bool getIsRepack() final;
  private:
   Sorter::SorterRetrieveRequest& m_retrieveRequest;
 };

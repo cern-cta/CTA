@@ -28,7 +28,7 @@ namespace cta::exception {
 class XrdClException : public Exception {
 public:
   XrdClException(const XrdCl::XRootDStatus& status, std::string_view context);
-  virtual ~XrdClException() = default;
+  ~XrdClException() final = default;
   const XrdCl::XRootDStatus& xRootDStatus() const { return m_status; }
   static void throwOnError(const XrdCl::XRootDStatus& status, std::string_view context = "");
 
