@@ -87,7 +87,7 @@ done
 #WAIT_FOR_RETRIEVED_FILE_TIMEOUT=50
 #while [[ $fileRetrieved != 1 ]]
 #do
-#  fileRetrieved=`eos root://${EOS_MGM_HOST} ls -y ${FILE_LOCATION} | egrep '^d[1-9][0-9]*::t1' | wc -l`
+#  fileRetrieved=$(eos root://${EOS_MGM_HOST} ls -y ${FILE_LOCATION} | egrep '^d[1-9][0-9]*::t1' | wc -l)
 #  sleep 1
 #  let SECONDS_PASSED=SECONDS_PASSED+1
 #  echo "Waiting for file to be retrieved. Seconds passed = $SECONDS_PASSED"

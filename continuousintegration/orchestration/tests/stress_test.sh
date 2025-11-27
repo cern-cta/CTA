@@ -168,12 +168,12 @@ repackMoveAndAddCopies() {
 
   echo "Will change the tapepool of the tapes"
 
-  allVID=`kubectl -n ${NAMESPACE}  exec ${CTA_CLI_POD} -c cta-cli -- cta-admin --json tape ls --all | jq -r ". [] | .vid"`
+  allVID=$(kubectl -n ${NAMESPACE}  exec ${CTA_CLI_POD} -c cta-cli -- cta-admin --json tape ls --all | jq -r ". [] | .vid")
   allVIDTable=($allVID)
 
   nbVid=${#allVIDTable[@]}
 
-  allTapepool=`kubectl -n ${NAMESPACE} exec ${CTA_CLI_POD} -c cta-cli -- cta-admin --json tapepool ls | jq -r ". [] .name"`
+  allTapepool=$(kubectl -n ${NAMESPACE} exec ${CTA_CLI_POD} -c cta-cli -- cta-admin --json tapepool ls | jq -r ". [] .name")
   allTapepoolTable=($allTapepool)
 
   nbTapepool=${#allTapepoolTable[@]}
@@ -197,7 +197,7 @@ repackMoveAndAddCopies() {
 
   echo "OK"
 
-  storageClassName=`kubectl -n ${NAMESPACE} exec ${CTA_CLI_POD} -c cta-cli -- cta-admin --json storageclass ls | jq -r ". [0] | .name"`
+  storageClassName=$(kubectl -n ${NAMESPACE} exec ${CTA_CLI_POD} -c cta-cli -- cta-admin --json storageclass ls | jq -r ". [0] | .name")
 
   echo "Changing the storage class $storageClassName nb copies"
   kubectl -n ${NAMESPACE} exec ${CTA_CLI_POD} -c cta-cli -- cta-admin storageclass ch --name $storageClassName --numberofcopies 3
@@ -219,11 +219,11 @@ repackMoveAndAddCopies() {
       echo "Launching the repack \"Move and add copies\" test on VID ${VID_TO_REPACK}"
       kubectl -n ${NAMESPACE} exec ${CLIENT_POD} -c client -- bash /root/repack_systemtest.sh -v ${VID_TO_REPACK} -b ${REPACK_BUFFER_URL} -t 300 -r ${BASE_REPORT_DIRECTORY}/RepackMoveAndAddCopies -n repack_ctasystest  || exit 1
 
-      repackLsResult=`kubectl -n ${NAMESPACE} exec ${CTA_CLI_POD} -c cta-cli -- cta-admin --json repack ls --vid ${VID_TO_REPACK} | jq ". [0]"`
-      totalFilesToRetrieve=`echo $repackLsResult | jq -r ".totalFilesToRetrieve"`
-      totalFilesToArchive=`echo $repackLsResult | jq -r ".totalFilesToArchive"`
-      retrievedFiles=`echo $repackLsResult | jq -r ".retrievedFiles"`
-      archivedFiles=`echo $repackLsResult | jq -r ".archivedFiles"`
+      repackLsResult=$(kubectl -n ${NAMESPACE} exec ${CTA_CLI_POD} -c cta-cli -- cta-admin --json repack ls --vid ${VID_TO_REPACK} | jq ". [0]")
+      totalFilesToRetrieve=$(echo $repackLsResult | jq -r ".totalFilesToRetrieve")
+      totalFilesToArchive=$(echo $repackLsResult | jq -r ".totalFilesToArchive")
+      retrievedFiles=$(echo $repackLsResult | jq -r ".retrievedFiles")
+      archivedFiles=$(echo $repackLsResult | jq -r ".archivedFiles")
 
       if [[ $retrievedFiles != $totalFilesToRetrieve ]]
       then

@@ -51,7 +51,7 @@ finalFilePath="../AllCatalogueSchema.hpp"
 
 trap "rm -f $buffFile" EXIT
 
-schemaVersionsDirectories=`find . -type d -regex '^./[0-9]+\.[0-9]+$' | sort`
+schemaVersionsDirectories=$(find . -type d -regex '^./[0-9]+\.[0-9]+$' | sort)
 
 mapSchemaCode='
 {
@@ -66,8 +66,8 @@ do
   for databaseType in ${databaseTypes[@]}
   do
     schemaSqlFilePath="$schemaVersionDir/$databaseType$schemaPostfix"
-    notTranslatedSchemaSQL=`cat $schemaSqlFilePath` || die "Unable to open file $schemaSqlFilePath"
-    schemaSql=`cat $schemaVersionDir/$databaseType$schemaPostfix | sed 's/^/\ \ \"/' | sed 's/$/\"/'`
+    notTranslatedSchemaSQL=$(cat $schemaSqlFilePath) || die "Unable to open file $schemaSqlFilePath"
+    schemaSql=$(cat $schemaVersionDir/$databaseType$schemaPostfix | sed 's/^/\ \ \"/' | sed 's/$/\"/')
     mapSchemaCode+="  {\"$databaseType\",$schemaSql
       },
 "

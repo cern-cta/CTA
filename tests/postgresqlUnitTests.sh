@@ -49,7 +49,7 @@ runuser -u postgres -- ${POSTGRES_BIN}/pg_ctl start -w -t 10 -D ${POSTGRESQL_DAT
 runuser -u postgres -- ${POSTGRES_BIN}/createdb cta
 runuser -u postgres -- ${POSTGRES_BIN}/createuser -E cta
 )
-CTA_CATALOGUE_CONF=`mktemp`
+CTA_CATALOGUE_CONF=$(mktemp)
 echo CTA_CATALOGUE_CONF=${CTA_CATALOGUE_CONF}
 echo 'postgresql:postgresql://cta@localhost/cta' > ${CTA_CATALOGUE_CONF}
 ./catalogue/cta-catalogue-schema-create ${CTA_CATALOGUE_CONF}
