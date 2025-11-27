@@ -94,10 +94,8 @@ public:
     }
 
     bool badconn = false;
-    if (nullptr != conn) {
-      if (CONNECTION_OK != PQstatus(conn)) {
-        badconn = true;
-      }
+    if (nullptr != conn && PQstatus(conn) != CONNECTION_OK) {
+      badconn = true;
     }
 
     cta::utils::toUpper(violatedConstraint);

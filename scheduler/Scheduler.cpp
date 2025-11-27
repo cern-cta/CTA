@@ -775,19 +775,17 @@ void Scheduler::expandRepackRequest(const std::unique_ptr<RepackRequest>& repack
         std::set<uint64_t> copyNbsAlreadyInCTA;
         for (auto& tc : archiveFile.tapeFiles) {
           copyNbsAlreadyInCTA.insert(tc.copyNb);
-          if (tc.vid == repackInfo.vid) {
+          if (tc.vid == repackInfo.vid && repackInfo.type == RepackType::AddCopiesOnly) {
             // We make the (reasonable) assumption that the archive file only has one copy on this tape.
             // If not, we will ensure the subrequest is filed under the lowest fSeq existing on this tape.
             // This will prevent double subrequest creation (we already have such a mechanism in case of crash and
             // restart of expansion.
             //We found the copy of the file we want to retrieve and archive
             //retrieveSubRequest.fSeq = tc.fSeq;
-            if (repackInfo.type == RepackType::AddCopiesOnly) {
-              retrieveSubRequest.fSeq =
-                (retrieveSubRequest.fSeq == std::numeric_limits<decltype(retrieveSubRequest.fSeq)>::max()) ?
-                  tc.fSeq :
-                  std::max(tc.fSeq, retrieveSubRequest.fSeq);
-            }
+            retrieveSubRequest.fSeq =
+              (retrieveSubRequest.fSeq == std::numeric_limits<decltype(retrieveSubRequest.fSeq)>::max()) ?
+                tc.fSeq :
+                std::max(tc.fSeq, retrieveSubRequest.fSeq);
           }
         }
         for (auto archiveFileRoutesItor = archiveFileRoutes.begin(); archiveFileRoutesItor != archiveFileRoutes.end();

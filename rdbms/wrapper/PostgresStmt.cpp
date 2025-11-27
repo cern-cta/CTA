@@ -289,11 +289,9 @@ void PostgresStmt::executeCopyInsert(const size_t rows) {
     // check first result
     resItr.next();
     doConnectionCheck();
-    if (!err) {
-      if (PGRES_COMMAND_OK != resItr.rcode()) {
-        pqmsgstr = PQerrorMessage(m_conn.get());
-        err = true;
-      }
+    if (!err && resItr.rcode() != PGRES_COMMAND_OK) {
+      pqmsgstr = PQerrorMessage(m_conn.get());
+      err = true;
     }
     if (err) {
       throw exception::Exception(pqmsgstr);

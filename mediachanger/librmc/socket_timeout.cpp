@@ -321,12 +321,10 @@ int _net_isclosed(int fd) {
   pollit.events = POLLIN;
   pollit.revents = 0;
 
-  /* Will return > 0 if the descriptor is closed */
-  if (poll(&pollit, 1, 0) > 0) {
-    if (recv(fd, buf, sizeof(buf), MSG_PEEK | MSG_DONTWAIT) == 0) {
-      serrno = SECONNDROP;
-      return 1;
-    }
+  /* poll will return > 0 if the descriptor is closed */
+  if ((poll(&pollit, 1, 0) > 0) && recv(fd, buf, sizeof(buf), MSG_PEEK | MSG_DONTWAIT) == 0) {
+    serrno = SECONNDROP;
+    return 1;
   }
   return 0;
 }

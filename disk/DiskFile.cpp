@@ -234,12 +234,10 @@ void XrootBaseWriteFile::close() {
 }
 
 XrootBaseWriteFile::~XrootBaseWriteFile() noexcept {
-  if (!m_closeTried) {
-    // Use the result of Close() to avoid gcc >= 7 generating an unused-result
-    // warning (casting the result to void is not good enough for gcc >= 7)
-    if (!m_xrootFile.Close(m_timeout).IsOK()) {
-      // Ignore the error
-    }
+  // Use the result of Close() to avoid gcc >= 7 generating an unused-result
+  // warning (casting the result to void is not good enough for gcc >= 7)
+  if (!m_closeTried && !m_xrootFile.Close(m_timeout).IsOK()) {
+    // Ignore the error
   }
 }
 

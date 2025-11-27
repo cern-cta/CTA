@@ -64,17 +64,13 @@ std::string cta::System::getHostName()
       }
       hostname = hostnameLonger;
       memset(hostname, 0, len);
-      if (gethostname(hostname, len) < 0) {
-        // Test whether error is due to a name too long
-        // The errno depends on the glibc version
-        if (EINVAL != errno &&
-            ENAMETOOLONG != errno) {
-          free(hostname);
-          cta::exception::Errnum e(errno);
-          e.getMessage() << "Could not get hostname"
-                         <<  strerror(errno);
-          throw e;
-        }
+      // Test whether error is due to a name too long
+      // The errno depends on the glibc version
+      if ((gethostname(hostname, len) < 0) && (EINVAL != errno) && (ENAMETOOLONG != errno)) {
+        free(hostname);
+        cta::exception::Errnum e(errno);
+        e.getMessage() << "Could not get hostname" << strerror(errno);
+        throw e;
       }
     }
   }
