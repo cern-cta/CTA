@@ -35,7 +35,7 @@ void Thread::start()
     pthread_attr_init(&attr),
       "Error from pthread_attr_init in cta::threading::Thread::start()");
 
-  if (m_stackSize) {
+  if (m_stackSize.has_value()) {
     cta::exception::Errnum::throwOnReturnedErrno(
       pthread_attr_setstacksize(&attr, m_stackSize.value()),
         "Error from pthread_attr_setstacksize in cta::threading::Thread::start()");

@@ -167,54 +167,48 @@ void RdbmsDriveStateCatalogue::createTapeDrive(const common::dataStructures::Tap
   spc.add("driveName", tapeDrive.driveName)
     .add("host", tapeDrive.host)
     .add("logicalLibrary", tapeDrive.logicalLibrary)
-    .add("sessionId", tapeDrive.sessionId ? tapeDrive.sessionId.value() : 0)
+    .add("sessionId", tapeDrive.sessionId.value_or(0))
 
-    .add("bytesTransferedInSession", tapeDrive.bytesTransferedInSession
-      ? tapeDrive.bytesTransferedInSession.value() : 0)
-    .add("filesTransferedInSession", tapeDrive.filesTransferedInSession
-      ? tapeDrive.filesTransferedInSession.value() : 0)
+    .add("bytesTransferedInSession", tapeDrive.bytesTransferedInSession.value_or(0))
+    .add("filesTransferedInSession", tapeDrive.filesTransferedInSession.value_or(0))
 
-    .add("sessionStartTime", tapeDrive.sessionStartTime ? tapeDrive.sessionStartTime.value() : 0)
-    .add("sessionElapsedTime", tapeDrive.sessionElapsedTime ? tapeDrive.sessionElapsedTime.value() : 0)
-    .add("mountStartTime", tapeDrive.mountStartTime ? tapeDrive.mountStartTime.value() : 0)
-    .add("transferStartTime", tapeDrive.transferStartTime
-      ? tapeDrive.transferStartTime.value() : 0)
-    .add("unloadStartTime", tapeDrive.unloadStartTime ? tapeDrive.unloadStartTime.value() : 0)
-    .add("unmountStartTime", tapeDrive.unmountStartTime ? tapeDrive.unmountStartTime.value() : 0)
-    .add("drainingStartTime", tapeDrive.drainingStartTime
-      ? tapeDrive.drainingStartTime.value() : 0)
-    .add("downOrUpStartTime", tapeDrive.downOrUpStartTime
-      ? tapeDrive.downOrUpStartTime.value() : 0)
-    .add("probeStartTime", tapeDrive.probeStartTime ? tapeDrive.probeStartTime.value() : 0)
-    .add("cleanupStartTime", tapeDrive.cleanupStartTime ? tapeDrive.cleanupStartTime.value() : 0)
-    .add("startStartTime", tapeDrive.startStartTime ? tapeDrive.startStartTime.value() : 0)
-    .add("shutdownTime", tapeDrive.shutdownTime ? tapeDrive.shutdownTime.value() : 0)
+    .add("sessionStartTime", tapeDrive.sessionStartTime.value_or(0))
+    .add("sessionElapsedTime", tapeDrive.sessionElapsedTime.value_or(0))
+    .add("mountStartTime", tapeDrive.mountStartTime.value_or(0))
+    .add("transferStartTime", tapeDrive.transferStartTime.value_or(0))
+    .add("unloadStartTime", tapeDrive.unloadStartTime.value_or(0))
+    .add("unmountStartTime", tapeDrive.unmountStartTime.value_or(0))
+    .add("drainingStartTime", tapeDrive.drainingStartTime.value_or(0))
+    .add("downOrUpStartTime", tapeDrive.downOrUpStartTime.value_or(0))
+    .add("probeStartTime", tapeDrive.probeStartTime.value_or(0))
+    .add("cleanupStartTime", tapeDrive.cleanupStartTime.value_or(0))
+    .add("startStartTime", tapeDrive.startStartTime.value_or(0))
+    .add("shutdownTime", tapeDrive.shutdownTime.value_or(0))
 
     .add("mountType", common::dataStructures::toString(tapeDrive.mountType))
     .add("driveStatus", common::dataStructures::TapeDrive::stateToString(tapeDrive.driveStatus))
 
     .add("desiredUp", tapeDrive.desiredUp ? 1 : 0)
     .add("desiredForceDown", tapeDrive.desiredForceDown ? 1 : 0)
-    .add("reasonUpDown", tapeDrive.reasonUpDown ? tapeDrive.reasonUpDown.value() : "")
+    .add("reasonUpDown", tapeDrive.reasonUpDown.value_or(""))
 
-    .add("currentVo", tapeDrive.currentVo ? tapeDrive.currentVo.value() : "")
-    .add("nextVo", tapeDrive.nextVo ? tapeDrive.nextVo.value() : "")
-    .add("userComment", tapeDrive.userComment ? tapeDrive.userComment.value() : "")
+    .add("currentVo", tapeDrive.currentVo.value_or(""))
+    .add("nextVo", tapeDrive.nextVo.value_or(""))
+    .add("userComment", tapeDrive.userComment.value_or(""))
 
-    .add("creationLog_username", tapeDrive.creationLog
-      ? tapeDrive.creationLog.value().username : "")
-    .add("creationLog_host", tapeDrive.creationLog ? tapeDrive.creationLog.value().host : "")
-    .add("creationLog_time", tapeDrive.creationLog ? tapeDrive.creationLog.value().time : 0)
-    .add("lastModificationLog_username", tapeDrive.lastModificationLog
+    .add("creationLog_username", tapeDrive.creationLog.has_value() ? tapeDrive.creationLog.value().username : "")
+    .add("creationLog_host", tapeDrive.creationLog.has_value() ? tapeDrive.creationLog.value().host : "")
+    .add("creationLog_time", tapeDrive.creationLog.has_value() ? tapeDrive.creationLog.value().time : 0)
+    .add("lastModificationLog_username", tapeDrive.lastModificationLog.has_value()
       ? tapeDrive.lastModificationLog.value().username : "")
-    .add("lastModificationLog_username", tapeDrive.lastModificationLog
+    .add("lastModificationLog_username", tapeDrive.lastModificationLog.has_value()
       ? tapeDrive.lastModificationLog.value().host : "")
-    .add("lastModificationLog_username", tapeDrive.lastModificationLog
+    .add("lastModificationLog_username", tapeDrive.lastModificationLog.has_value()
       ? tapeDrive.lastModificationLog.value().time : 0)
 
-    .add("diskSystemName", tapeDrive.diskSystemName ? tapeDrive.diskSystemName.value() : "")
-    .add("reservedBytes", tapeDrive.reservedBytes ? tapeDrive.reservedBytes.value() : 0)
-    .add("reservationSessionId", tapeDrive.reservationSessionId ? tapeDrive.reservationSessionId.value() : 0);
+    .add("diskSystemName", tapeDrive.diskSystemName.value_or(""))
+    .add("reservedBytes", tapeDrive.reservedBytes.value_or(0))
+    .add("reservationSessionId", tapeDrive.reservationSessionId.value_or(0));
 
   lc.log(log::INFO, "Catalogue - created tape drive");
 }
@@ -229,7 +223,7 @@ void RdbmsDriveStateCatalogue::settingSqlTapeDriveValues(cta::rdbms::Stmt *stmt,
     }
   };
   auto setOptionalTime = [&stmt](const std::string &sqlField, const std::optional<time_t>& optionalField) {
-    if (optionalField) {
+    if (optionalField.has_value()) {
       stmt->bindUint64(sqlField, optionalField.value());
     } else {
       stmt->bindUint64(sqlField, std::nullopt);
@@ -310,9 +304,9 @@ void RdbmsDriveStateCatalogue::settingSqlTapeDriveValues(cta::rdbms::Stmt *stmt,
 
 void RdbmsDriveStateCatalogue::deleteTapeDrive(const std::string &tapeDriveName) {
   const char* const delete_sql = R"SQL(
-    DELETE FROM 
-      DRIVE_STATE 
-    WHERE 
+    DELETE FROM
+      DRIVE_STATE
+    WHERE
       DRIVE_NAME = :DELETE_DRIVE_NAME
   )SQL";
   auto conn = m_connPool->getConn();
@@ -324,10 +318,10 @@ void RdbmsDriveStateCatalogue::deleteTapeDrive(const std::string &tapeDriveName)
 std::list<std::string> RdbmsDriveStateCatalogue::getTapeDriveNames() const {
   std::list<std::string> tapeDriveNames;
   const char* const sql = R"SQL(
-    SELECT 
-      DRIVE_NAME AS DRIVE_NAME 
-    FROM 
-      DRIVE_STATE 
+    SELECT
+      DRIVE_NAME AS DRIVE_NAME
+    FROM
+      DRIVE_STATE
   )SQL";
 
   auto conn = m_connPool->getConn();
@@ -344,7 +338,7 @@ std::list<std::string> RdbmsDriveStateCatalogue::getTapeDriveNames() const {
 common::dataStructures::TapeDrive RdbmsDriveStateCatalogue::gettingSqlTapeDriveValues(cta::rdbms::Rset* rset) const {
   common::dataStructures::TapeDrive tapeDrive;
   auto getOptionalTime = [](const std::optional<uint64_t> &time) -> std::optional<time_t> {
-    if (!time) return std::nullopt;
+    if (!time.has_value()) return std::nullopt;
     return time.value();
   };
   tapeDrive.driveName = rset->columnString("DRIVE_NAME");
@@ -417,7 +411,7 @@ common::dataStructures::TapeDrive RdbmsDriveStateCatalogue::gettingSqlTapeDriveV
     "LAST_UPDATE_TIME");
 
   // Log warning for operators that tape drive logical library does not exist (cta/CTA#1163)
-  if (!rset->columnOptionalBool("LOGICAL_IS_DISABLED")) {
+  if (!rset->columnOptionalBool("LOGICAL_IS_DISABLED").has_value()) {
     log::LogContext lc(m_log);
     log::ScopedParamContainer spc(lc);
     spc.add("driveName", tapeDrive.driveName)
@@ -430,7 +424,7 @@ common::dataStructures::TapeDrive RdbmsDriveStateCatalogue::gettingSqlTapeDriveV
 std::list<common::dataStructures::TapeDrive> RdbmsDriveStateCatalogue::getTapeDrives() const {
   std::list<common::dataStructures::TapeDrive> tapeDrives;
   const char* const sql = R"SQL(
-    SELECT 
+    SELECT
       DRIVE_STATE.DRIVE_NAME AS DRIVE_NAME,
       DRIVE_STATE.HOST AS HOST,
       DRIVE_STATE.LOGICAL_LIBRARY AS LOGICAL_LIBRARY,
@@ -488,18 +482,18 @@ std::list<common::dataStructures::TapeDrive> RdbmsDriveStateCatalogue::getTapeDr
       DRIVE_STATE.RESERVATION_SESSION_ID AS RESERVATION_SESSION_ID,
       LOGICAL_LIBRARY.IS_DISABLED AS LOGICAL_IS_DISABLED,
       PHYSICAL_LIBRARY.PHYSICAL_LIBRARY_NAME AS PHYSICAL_LIBRARY_NAME,
-      PHYSICAL_LIBRARY.IS_DISABLED AS PHYSICAL_IS_DISABLED 
-    FROM 
-      DRIVE_STATE 
-    LEFT JOIN 
-      LOGICAL_LIBRARY 
-    ON 
-      LOGICAL_LIBRARY.LOGICAL_LIBRARY_NAME = DRIVE_STATE.LOGICAL_LIBRARY 
-    LEFT JOIN 
-      PHYSICAL_LIBRARY 
-    ON 
-      PHYSICAL_LIBRARY.PHYSICAL_LIBRARY_ID = LOGICAL_LIBRARY.PHYSICAL_LIBRARY_ID 
-    ORDER BY 
+      PHYSICAL_LIBRARY.IS_DISABLED AS PHYSICAL_IS_DISABLED
+    FROM
+      DRIVE_STATE
+    LEFT JOIN
+      LOGICAL_LIBRARY
+    ON
+      LOGICAL_LIBRARY.LOGICAL_LIBRARY_NAME = DRIVE_STATE.LOGICAL_LIBRARY
+    LEFT JOIN
+      PHYSICAL_LIBRARY
+    ON
+      PHYSICAL_LIBRARY.PHYSICAL_LIBRARY_ID = LOGICAL_LIBRARY.PHYSICAL_LIBRARY_ID
+    ORDER BY
       DRIVE_NAME
   )SQL";
   auto conn = m_connPool->getConn();
@@ -516,7 +510,7 @@ std::list<common::dataStructures::TapeDrive> RdbmsDriveStateCatalogue::getTapeDr
 std::optional<common::dataStructures::TapeDrive> RdbmsDriveStateCatalogue::getTapeDrive(
   const std::string &tapeDriveName) const {
   const char* const sql = R"SQL(
-    SELECT 
+    SELECT
       DRIVE_STATE.DRIVE_NAME AS DRIVE_NAME,
       DRIVE_STATE.HOST AS HOST,
       DRIVE_STATE.LOGICAL_LIBRARY AS LOGICAL_LIBRARY,
@@ -574,18 +568,18 @@ std::optional<common::dataStructures::TapeDrive> RdbmsDriveStateCatalogue::getTa
       DRIVE_STATE.RESERVATION_SESSION_ID AS RESERVATION_SESSION_ID,
       LOGICAL_LIBRARY.IS_DISABLED AS LOGICAL_IS_DISABLED,
       PHYSICAL_LIBRARY.PHYSICAL_LIBRARY_NAME AS PHYSICAL_LIBRARY_NAME,
-      PHYSICAL_LIBRARY.IS_DISABLED AS PHYSICAL_IS_DISABLED 
-    FROM 
-      DRIVE_STATE 
-    LEFT JOIN 
-      LOGICAL_LIBRARY 
-    ON 
-      LOGICAL_LIBRARY.LOGICAL_LIBRARY_NAME = DRIVE_STATE.LOGICAL_LIBRARY 
-    LEFT JOIN 
-      PHYSICAL_LIBRARY 
-    ON 
-      PHYSICAL_LIBRARY.PHYSICAL_LIBRARY_ID = LOGICAL_LIBRARY.PHYSICAL_LIBRARY_ID 
-    WHERE 
+      PHYSICAL_LIBRARY.IS_DISABLED AS PHYSICAL_IS_DISABLED
+    FROM
+      DRIVE_STATE
+    LEFT JOIN
+      LOGICAL_LIBRARY
+    ON
+      LOGICAL_LIBRARY.LOGICAL_LIBRARY_NAME = DRIVE_STATE.LOGICAL_LIBRARY
+    LEFT JOIN
+      PHYSICAL_LIBRARY
+    ON
+      PHYSICAL_LIBRARY.PHYSICAL_LIBRARY_ID = LOGICAL_LIBRARY.PHYSICAL_LIBRARY_ID
+    WHERE
       DRIVE_NAME = :DRIVE_NAME
   )SQL";
   auto conn = m_connPool->getConn();
@@ -603,7 +597,7 @@ void RdbmsDriveStateCatalogue::setDesiredTapeDriveState(const std::string& tapeD
   const common::dataStructures::DesiredDriveState &desiredState) {
   const auto trimmedReason = RdbmsCatalogueUtils::checkCommentOrReasonMaxLength(desiredState.reason, &m_log);
   std::string sql = R"SQL(
-    UPDATE DRIVE_STATE SET 
+    UPDATE DRIVE_STATE SET
       DESIRED_UP = :DESIRED_UP,
       DESIRED_FORCE_DOWN = :DESIRED_FORCE_DOWN,
   )SQL";
@@ -638,10 +632,10 @@ void RdbmsDriveStateCatalogue::setDesiredTapeDriveState(const std::string& tapeD
 void RdbmsDriveStateCatalogue::setDesiredTapeDriveStateComment(const std::string& tapeDriveName,
   const std::string &comment) {
   const char* const sql = R"SQL(
-    UPDATE DRIVE_STATE 
-    SET 
-      USER_COMMENT = :USER_COMMENT 
-    WHERE 
+    UPDATE DRIVE_STATE
+    SET
+      USER_COMMENT = :USER_COMMENT
+    WHERE
       DRIVE_NAME = :DRIVE_NAME
   )SQL";
 
@@ -674,8 +668,8 @@ void RdbmsDriveStateCatalogue::updateTapeDriveStatistics(const std::string& tape
   const std::string& host, const std::string& logicalLibrary,
   const common::dataStructures::TapeDriveStatistics& statistics) {
   const char* const sql = R"SQL(
-    UPDATE DRIVE_STATE 
-    SET 
+    UPDATE DRIVE_STATE
+    SET
       HOST = :HOST,
       LOGICAL_LIBRARY = :LOGICAL_LIBRARY,
       BYTES_TRANSFERED_IN_SESSION = :BYTES_TRANSFERED_IN_SESSION,
@@ -683,8 +677,8 @@ void RdbmsDriveStateCatalogue::updateTapeDriveStatistics(const std::string& tape
       SESSION_ELAPSED_TIME = :REPORT_TIME-SESSION_START_TIME,
       LAST_UPDATE_USER_NAME = :LAST_UPDATE_USER_NAME,
       LAST_UPDATE_HOST_NAME = :LAST_UPDATE_HOST_NAME,
-      LAST_UPDATE_TIME = :LAST_UPDATE_TIME 
-    WHERE 
+      LAST_UPDATE_TIME = :LAST_UPDATE_TIME
+    WHERE
       DRIVE_NAME = :DRIVE_NAME AND DRIVE_STATUS = 'TRANSFERING'
   )SQL";
 
@@ -714,7 +708,7 @@ void RdbmsDriveStateCatalogue::updateTapeDriveStatus(const common::dataStructure
 
   // Case 1 : Drive status stays the same
   std::string sql = R"SQL(
-    UPDATE DRIVE_STATE SET 
+    UPDATE DRIVE_STATE SET
       HOST = :HOST,
       LOGICAL_LIBRARY = :LOGICAL_LIBRARY,
   )SQL";
@@ -729,8 +723,8 @@ void RdbmsDriveStateCatalogue::updateTapeDriveStatus(const common::dataStructure
   sql += R"SQL(
       LAST_UPDATE_USER_NAME = :LAST_UPDATE_USER_NAME,
       LAST_UPDATE_HOST_NAME = :LAST_UPDATE_HOST_NAME,
-      LAST_UPDATE_TIME = :LAST_UPDATE_TIME 
-    WHERE 
+      LAST_UPDATE_TIME = :LAST_UPDATE_TIME
+    WHERE
       DRIVE_NAME = :DRIVE_NAME AND DRIVE_STATUS = :DRIVE_STATUS
   )SQL";
 
@@ -757,7 +751,7 @@ void RdbmsDriveStateCatalogue::updateTapeDriveStatus(const common::dataStructure
 
   // Case 2 : Drive status is changing
   sql = R"SQL(
-    UPDATE DRIVE_STATE SET 
+    UPDATE DRIVE_STATE SET
       HOST = :HOST,
       LOGICAL_LIBRARY = :LOGICAL_LIBRARY,
       SESSION_ID = :SESSION_ID,
@@ -951,12 +945,12 @@ void RdbmsDriveStateCatalogue::reserveDiskSpace(const std::string& driveName, co
   // The disk system name is allowed to be updated when RESERVED_BYTES is zero (initial disk reservation, or previous
   // disk reservations have been released). Otherwise, to update RESERVED_BYTES, the disk system name has to match.
   const char* const sql = R"SQL(
-    UPDATE DRIVE_STATE SET 
-      RESERVED_BYTES = RESERVED_BYTES + :BYTES_TO_ADD 
-    WHERE 
-      DRIVE_NAME = :DRIVE_NAME 
-      AND DISK_SYSTEM_NAME = :DISK_SYSTEM_NAME 
-      AND RESERVATION_SESSION_ID = :RESERVATION_SESSION_ID 
+    UPDATE DRIVE_STATE SET
+      RESERVED_BYTES = RESERVED_BYTES + :BYTES_TO_ADD
+    WHERE
+      DRIVE_NAME = :DRIVE_NAME
+      AND DISK_SYSTEM_NAME = :DISK_SYSTEM_NAME
+      AND RESERVATION_SESSION_ID = :RESERVATION_SESSION_ID
   )SQL";
 
   auto conn = m_connPool->getConn();
@@ -979,11 +973,11 @@ void RdbmsDriveStateCatalogue::reserveDiskSpace(const std::string& driveName, co
       lc.log(log::INFO, "In RetrieveMount::releaseDiskSpace(): creating reservation for new mount");
     }
     const char* const sql_reset = R"SQL(
-      UPDATE DRIVE_STATE SET 
+      UPDATE DRIVE_STATE SET
         DISK_SYSTEM_NAME = :DISK_SYSTEM_NAME,
         RESERVED_BYTES = :BYTES_TO_ADD,
-        RESERVATION_SESSION_ID = :RESERVATION_SESSION_ID 
-      WHERE 
+        RESERVATION_SESSION_ID = :RESERVATION_SESSION_ID
+      WHERE
         DRIVE_NAME = :DRIVE_NAME
     )SQL";
     stmt.reset();
@@ -1021,11 +1015,11 @@ void RdbmsDriveStateCatalogue::releaseDiskSpace(const std::string& driveName, co
 
   // If the amount being released exceeds the amount of the reservation, set the reservation to zero
   const char* const sql = R"SQL(
-    UPDATE DRIVE_STATE SET 
-      RESERVED_BYTES = CASE WHEN RESERVED_BYTES > :BYTES_TO_SUBTRACT1 THEN RESERVED_BYTES-:BYTES_TO_SUBTRACT2 ELSE 0 END 
-    WHERE 
-      DRIVE_NAME = :DRIVE_NAME 
-      AND DISK_SYSTEM_NAME = :DISK_SYSTEM_NAME 
+    UPDATE DRIVE_STATE SET
+      RESERVED_BYTES = CASE WHEN RESERVED_BYTES > :BYTES_TO_SUBTRACT1 THEN RESERVED_BYTES-:BYTES_TO_SUBTRACT2 ELSE 0 END
+    WHERE
+      DRIVE_NAME = :DRIVE_NAME
+      AND DISK_SYSTEM_NAME = :DISK_SYSTEM_NAME
       AND RESERVATION_SESSION_ID = :RESERVATION_SESSION_ID
   )SQL";
 

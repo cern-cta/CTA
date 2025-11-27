@@ -68,7 +68,7 @@ PostgresStmt::~PostgresStmt() {
 void PostgresStmt::bindString(const std::string& paramName, const std::optional<std::string>& paramValue) {
   threading::RWLockWrLocker locker(m_lock);
   try {
-    if (paramValue && paramValue.value().empty()) {
+    if (paramValue.has_value() && paramValue.value().empty()) {
       throw exception::Exception(
         std::string("Optional string parameter ") + paramName +
         " is an empty string. "
@@ -83,7 +83,7 @@ void PostgresStmt::bindString(const std::string& paramName, const std::optional<
 
     const unsigned int idx = paramIdx - 1;
 
-    if (paramValue) {
+    if (paramValue.has_value()) {
       // we must not cause the vector m_paramValues to resize, otherwise the c-pointers can be invalidated
       m_paramValues[idx] = paramValue.value();
       m_paramValuesPtrs[idx] = m_paramValues[idx].c_str();
@@ -182,7 +182,7 @@ void PostgresStmt::bindDouble(const std::string& paramName, const std::optional<
     }
 
     const unsigned int idx = paramIdx - 1;
-    if (paramValue) {
+    if (paramValue.has_value()) {
       // we must not cause the vector m_paramValues to resize, otherwise the c-pointers can be invalidated
       m_paramValues[idx] = std::to_string(paramValue.value());
       m_paramValuesPtrs[idx] = m_paramValues[idx].c_str();

@@ -153,7 +153,7 @@ void SqliteStmt::bindUint8(const std::string &paramName, const std::optional<uin
   try {
     const unsigned int paramIdx = getParamIdx(paramName);
     int bindRc = 0;
-    if(paramValue) {
+    if(paramValue.has_value()) {
       bindRc = sqlite3_bind_int(m_stmt, paramIdx, paramValue.value());
     } else {
       bindRc = sqlite3_bind_null(m_stmt, paramIdx);
@@ -174,7 +174,7 @@ void SqliteStmt::bindUint16(const std::string &paramName, const std::optional<ui
   try {
     const unsigned int paramIdx = getParamIdx(paramName);
     int bindRc = 0;
-    if(paramValue) {
+    if(paramValue.has_value()) {
       bindRc = sqlite3_bind_int(m_stmt, paramIdx, paramValue.value());
     } else {
       bindRc = sqlite3_bind_null(m_stmt, paramIdx);
@@ -195,7 +195,7 @@ void SqliteStmt::bindUint32(const std::string &paramName, const std::optional<ui
   try {
     const unsigned int paramIdx = getParamIdx(paramName);
     int bindRc = 0;
-    if(paramValue) {
+    if(paramValue.has_value()) {
       bindRc = sqlite3_bind_int(m_stmt, paramIdx, paramValue.value());
     } else {
       bindRc = sqlite3_bind_null(m_stmt, paramIdx);
@@ -216,7 +216,7 @@ void SqliteStmt::bindUint64(const std::string &paramName, const std::optional<ui
   try {
     const unsigned int paramIdx = getParamIdx(paramName);
     int bindRc = 0;
-    if(paramValue) {
+    if(paramValue.has_value()) {
       bindRc = sqlite3_bind_int64(m_stmt, paramIdx, (sqlite3_int64) paramValue.value());
     } else {
       bindRc = sqlite3_bind_null(m_stmt, paramIdx);
@@ -237,7 +237,7 @@ void SqliteStmt::bindDouble(const std::string &paramName, const std::optional<do
   try {
     const unsigned int paramIdx = getParamIdx(paramName);
     int bindRc = 0;
-    if(paramValue) {
+    if(paramValue.has_value()) {
       bindRc = sqlite3_bind_double(m_stmt, paramIdx, paramValue.value());
     } else {
       bindRc = sqlite3_bind_null(m_stmt, paramIdx);
@@ -274,13 +274,13 @@ void SqliteStmt::bindBlob(const std::string &paramName, const std::string &param
 //------------------------------------------------------------------------------
 void SqliteStmt::bindString(const std::string &paramName, const std::optional<std::string> &paramValue) {
   try {
-    if(paramValue && paramValue.value().empty()) {
+    if(paramValue.has_value() && paramValue.value().empty()) {
       throw exception::Exception(std::string("Optional string parameter ") + paramName + " is an empty string. "
         " An optional string parameter should either have a non-empty string value or no value at all.");
     }
     const unsigned int paramIdx = getParamIdx(paramName);
     int bindRc = 0;
-    if(paramValue) {
+    if(paramValue.has_value()) {
       bindRc = sqlite3_bind_text(m_stmt, paramIdx, paramValue.value().c_str(), -1, SQLITE_TRANSIENT);
     } else {
       bindRc = sqlite3_bind_null(m_stmt, paramIdx);

@@ -78,7 +78,7 @@ RdbmsCatalogueGetArchiveFilesItor::RdbmsCatalogueGetArchiveFilesItor(
   m_archiveFileBuilder(log)
 {
   std::string sql = R"SQL(
-    SELECT 
+    SELECT
       ARCHIVE_FILE.ARCHIVE_FILE_ID AS ARCHIVE_FILE_ID,
       ARCHIVE_FILE.DISK_INSTANCE_NAME AS DISK_INSTANCE_NAME,
       ARCHIVE_FILE.DISK_FILE_ID AS DISK_FILE_ID,
@@ -95,26 +95,26 @@ RdbmsCatalogueGetArchiveFilesItor::RdbmsCatalogueGetArchiveFilesItor(
       TAPE_FILE.BLOCK_ID AS BLOCK_ID,
       TAPE_FILE.LOGICAL_SIZE_IN_BYTES AS LOGICAL_SIZE_IN_BYTES,
       TAPE_FILE.COPY_NB AS COPY_NB,
-      TAPE_FILE.CREATION_TIME AS TAPE_FILE_CREATION_TIME, 
-      TAPE_POOL.TAPE_POOL_NAME AS TAPE_POOL_NAME 
-    FROM 
-      ARCHIVE_FILE 
-    INNER JOIN STORAGE_CLASS ON 
-      ARCHIVE_FILE.STORAGE_CLASS_ID = STORAGE_CLASS.STORAGE_CLASS_ID 
-    INNER JOIN TAPE_FILE ON 
-      ARCHIVE_FILE.ARCHIVE_FILE_ID = TAPE_FILE.ARCHIVE_FILE_ID 
-    INNER JOIN TAPE ON 
-      TAPE_FILE.VID = TAPE.VID 
-    INNER JOIN TAPE_POOL ON 
+      TAPE_FILE.CREATION_TIME AS TAPE_FILE_CREATION_TIME,
+      TAPE_POOL.TAPE_POOL_NAME AS TAPE_POOL_NAME
+    FROM
+      ARCHIVE_FILE
+    INNER JOIN STORAGE_CLASS ON
+      ARCHIVE_FILE.STORAGE_CLASS_ID = STORAGE_CLASS.STORAGE_CLASS_ID
+    INNER JOIN TAPE_FILE ON
+      ARCHIVE_FILE.ARCHIVE_FILE_ID = TAPE_FILE.ARCHIVE_FILE_ID
+    INNER JOIN TAPE ON
+      TAPE_FILE.VID = TAPE.VID
+    INNER JOIN TAPE_POOL ON
       TAPE.TAPE_POOL_ID = TAPE_POOL.TAPE_POOL_ID
   )SQL";
 
   const bool thereIsAtLeastOneSearchCriteria =
-    searchCriteria.archiveFileId  ||
-    searchCriteria.diskInstance   ||
-    searchCriteria.vid            ||
-    searchCriteria.diskFileIds    ||
-    searchCriteria.fSeq;
+    searchCriteria.archiveFileId.has_value()  ||
+    searchCriteria.diskInstance.has_value()   ||
+    searchCriteria.vid.has_value()            ||
+    searchCriteria.diskFileIds.has_value()    ||
+    searchCriteria.fSeq.has_value();
 
   if(thereIsAtLeastOneSearchCriteria) {
     sql += R"SQL( WHERE )SQL";
@@ -122,13 +122,13 @@ RdbmsCatalogueGetArchiveFilesItor::RdbmsCatalogueGetArchiveFilesItor(
 
   bool addedAWhereConstraint = false;
 
-  if(searchCriteria.archiveFileId) {
+  if(searchCriteria.archiveFileId.has_value()) {
     sql += R"SQL(
       ARCHIVE_FILE.ARCHIVE_FILE_ID = :ARCHIVE_FILE_ID
     )SQL";
     addedAWhereConstraint = true;
   }
-  if(searchCriteria.diskInstance) {
+  if(searchCriteria.diskInstance.has_value()) {
     if (addedAWhereConstraint) {
       sql += R"SQL( AND )SQL";
     }
@@ -137,7 +137,7 @@ RdbmsCatalogueGetArchiveFilesItor::RdbmsCatalogueGetArchiveFilesItor(
     )SQL";
     addedAWhereConstraint = true;
   }
-  if(searchCriteria.vid) {
+  if(searchCriteria.vid.has_value()) {
     if (addedAWhereConstraint) {
       sql += R"SQL( AND )SQL";
     }
@@ -146,7 +146,7 @@ RdbmsCatalogueGetArchiveFilesItor::RdbmsCatalogueGetArchiveFilesItor(
     )SQL";
     addedAWhereConstraint = true;
   }
-  if (searchCriteria.fSeq) {
+  if (searchCriteria.fSeq.has_value()) {
     if (addedAWhereConstraint) {
       sql += R"SQL( AND )SQL";
     }
@@ -155,18 +155,18 @@ RdbmsCatalogueGetArchiveFilesItor::RdbmsCatalogueGetArchiveFilesItor(
     )SQL";
     addedAWhereConstraint = true;
   }
-  if(searchCriteria.diskFileIds) {
+  if(searchCriteria.diskFileIds.has_value()) {
     if (addedAWhereConstraint) {
       sql += R"SQL( AND )SQL";
     }
     sql += "ARCHIVE_FILE.DISK_FILE_ID IN (SELECT DISK_FILE_ID FROM " + tempDiskFxidsTableName + ")";
   }
 
-  // Order by FSEQ if we are listing the contents of a tape, 
-  // by DISK_FILE_ID if listing the contents of a DISK_INSTANCE 
+  // Order by FSEQ if we are listing the contents of a tape,
+  // by DISK_FILE_ID if listing the contents of a DISK_INSTANCE
   // else order by archive file ID
-  if(searchCriteria.vid) {
-    sql += R"SQL( 
+  if(searchCriteria.vid.has_value()) {
+    sql += R"SQL(
       ORDER BY FSEQ
     )SQL";
   } else if (searchCriteria.diskInstance) {
@@ -180,20 +180,20 @@ RdbmsCatalogueGetArchiveFilesItor::RdbmsCatalogueGetArchiveFilesItor(
   }
 
   m_stmt = m_conn.createStmt(sql);
-  if(searchCriteria.archiveFileId) {
+  if(searchCriteria.archiveFileId.has_value()) {
     m_stmt.bindUint64(":ARCHIVE_FILE_ID", searchCriteria.archiveFileId.value());
   }
-  if(searchCriteria.diskInstance) {
+  if(searchCriteria.diskInstance.has_value()) {
     m_stmt.bindString(":DISK_INSTANCE_NAME", searchCriteria.diskInstance.value());
   }
-  if(searchCriteria.vid) {
+  if(searchCriteria.vid.has_value()) {
     m_stmt.bindString(":VID", searchCriteria.vid.value());
   }
 
-  if(searchCriteria.fSeq) {
+  if(searchCriteria.fSeq.has_value()) {
     m_stmt.bindUint64(":FSEQ", searchCriteria.fSeq.value());
   }
-  
+
   m_rset = m_stmt.executeQuery();
   {
     log::LogContext lc(m_log);

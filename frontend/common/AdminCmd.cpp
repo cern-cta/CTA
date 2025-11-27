@@ -629,7 +629,7 @@ void AdminCmd::processLogicalLibrary_Ch(xrd::Response& response) {
   auto  disabledReason   = getOptional(OptionString::DISABLED_REASON);
   auto  physicalLibrary  = getOptional(OptionString::PHYSICAL_LIBRARY);
 
-  if(disabled) {
+  if(disabled.has_value()) {
     if (disabled.value() && !disabledReason) {
       throw exception::UserError(std::string("Cannot disable logical library ") + name +
                                  " because the reason has not been provided");
@@ -640,13 +640,13 @@ void AdminCmd::processLogicalLibrary_Ch(xrd::Response& response) {
       m_catalogue.LogicalLibrary()->modifyLogicalLibraryDisabledReason(m_cliIdentity, name, "");
     }
   }
-  if(comment) {
+  if(comment.has_value()) {
     m_catalogue.LogicalLibrary()->modifyLogicalLibraryComment(m_cliIdentity, name, comment.value());
   }
-  if(disabledReason) {
+  if(disabledReason.has_value()) {
     m_catalogue.LogicalLibrary()->modifyLogicalLibraryDisabledReason(m_cliIdentity, name, disabledReason.value());
   }
-  if(physicalLibrary) {
+  if(physicalLibrary.has_value()) {
     m_catalogue.LogicalLibrary()->modifyLogicalLibraryPhysicalLibrary(m_cliIdentity, name, physicalLibrary.value());
   }
 
@@ -670,19 +670,19 @@ void AdminCmd::processMediaType_Add(xrd::Response& response) {
   const auto nbWraps = getOptional(OptionUInt64::NUMBER_OF_WRAPS);
   const auto primaryDensityCode = getOptional(OptionUInt64::PRIMARY_DENSITY_CODE);
   const auto secondaryDensityCode = getOptional(OptionUInt64::SECONDARY_DENSITY_CODE);
-  if(nbWraps && nbWraps.value() > std::numeric_limits<uint32_t>::max()) {
+  if(nbWraps.has_value() && nbWraps.value() > std::numeric_limits<uint32_t>::max()) {
     exception::UserError ex;
     ex.getMessage() << "Number of wraps cannot be larger than " << std::numeric_limits<uint32_t>::max() << ": value="
                     << nbWraps.value();
     throw ex;
   }
-  if(primaryDensityCode && primaryDensityCode.value() > std::numeric_limits<uint8_t>::max()) {
+  if(primaryDensityCode.has_value() && primaryDensityCode.value() > std::numeric_limits<uint8_t>::max()) {
     exception::UserError ex;
     ex.getMessage() << "Primary density code cannot be larger than " << (uint16_t)(std::numeric_limits<uint8_t>::max())
                     << ": value=" << primaryDensityCode.value();
     throw ex;
   }
-  if(secondaryDensityCode && secondaryDensityCode.value() > std::numeric_limits<uint8_t>::max()) {
+  if(secondaryDensityCode.has_value() && secondaryDensityCode.value() > std::numeric_limits<uint8_t>::max()) {
     exception::UserError ex;
     ex.getMessage() << "Secondary density code cannot be larger than " << (uint16_t)(std::numeric_limits<uint8_t>::max())
                     << ": value=" << secondaryDensityCode.value();
@@ -693,9 +693,9 @@ void AdminCmd::processMediaType_Add(xrd::Response& response) {
   mediaType.name                 = getRequired(OptionString::MEDIA_TYPE);
   mediaType.cartridge            = getRequired(OptionString::CARTRIDGE);
   mediaType.capacityInBytes      = getRequired(OptionUInt64::CAPACITY);
-  if(primaryDensityCode) mediaType.primaryDensityCode = primaryDensityCode.value();
-  if(secondaryDensityCode) mediaType.secondaryDensityCode = secondaryDensityCode.value();
-  if(nbWraps) mediaType.nbWraps = nbWraps.value();
+  if(primaryDensityCode.has_value()) mediaType.primaryDensityCode = primaryDensityCode.value();
+  if(secondaryDensityCode.has_value()) mediaType.secondaryDensityCode = secondaryDensityCode.value();
+  if(nbWraps.has_value()) mediaType.nbWraps = nbWraps.value();
   mediaType.minLPos              = getOptional(OptionUInt64::MIN_LPOS);
   mediaType.maxLPos              = getOptional(OptionUInt64::MAX_LPOS);
   mediaType.comment              = getRequired(OptionString::COMMENT);
@@ -717,45 +717,45 @@ void AdminCmd::processMediaType_Ch(xrd::Response& response) {
   auto comment = getOptional(OptionString::COMMENT);
 
   // Bounds check unsigned integer options less than 64-bits in width
-  if(nbWraps && nbWraps.value() > std::numeric_limits<uint32_t>::max()) {
+  if(nbWraps.has_value() && nbWraps.value() > std::numeric_limits<uint32_t>::max()) {
     exception::UserError ex;
     ex.getMessage() << "Number of wraps cannot be larger than " << std::numeric_limits<uint32_t>::max() << ": value="
       << nbWraps.value();
     throw ex;
   }
-  if(primaryDensityCode && primaryDensityCode.value() > std::numeric_limits<uint8_t>::max()) {
+  if(primaryDensityCode.has_value() && primaryDensityCode.value() > std::numeric_limits<uint8_t>::max()) {
     exception::UserError ex;
     ex.getMessage() << "Primary density code cannot be larger than " << (uint16_t)(std::numeric_limits<uint8_t>::max())
       << ": value=" << primaryDensityCode.value();
     throw ex;
   }
-  if(secondaryDensityCode && secondaryDensityCode.value() > std::numeric_limits<uint8_t>::max()) {
+  if(secondaryDensityCode.has_value() && secondaryDensityCode.value() > std::numeric_limits<uint8_t>::max()) {
     exception::UserError ex;
     ex.getMessage() << "Secondary density code cannot be larger than " << (uint16_t)(std::numeric_limits<uint8_t>::max())
       << ": value=" << secondaryDensityCode.value();
     throw ex;
   }
 
-  if(cartridge) {
+  if(cartridge.has_value()) {
     m_catalogue.MediaType()->modifyMediaTypeCartridge(m_cliIdentity,mediaTypeName,cartridge.value());
   }
-  if(primaryDensityCode) {
+  if(primaryDensityCode.has_value()) {
     m_catalogue.MediaType()->modifyMediaTypePrimaryDensityCode(m_cliIdentity,mediaTypeName,static_cast<uint8_t>(primaryDensityCode.value()));
   }
-  if(secondaryDensityCode) {
+  if(secondaryDensityCode.has_value()) {
     m_catalogue.MediaType()->modifyMediaTypeSecondaryDensityCode(m_cliIdentity,mediaTypeName,static_cast<uint8_t>(secondaryDensityCode.value()));
   }
-  if(nbWraps) {
+  if(nbWraps.has_value()) {
     std::optional<uint32_t> newNbWraps = nbWraps.value();
     m_catalogue.MediaType()->modifyMediaTypeNbWraps(m_cliIdentity,mediaTypeName,newNbWraps);
   }
-  if(minlpos) {
+  if(minlpos.has_value()) {
     m_catalogue.MediaType()->modifyMediaTypeMinLPos(m_cliIdentity, mediaTypeName, minlpos);
   }
-  if(maxlpos) {
+  if(maxlpos.has_value()) {
     m_catalogue.MediaType()->modifyMediaTypeMaxLPos(m_cliIdentity,mediaTypeName,maxlpos);
   }
-  if(comment) {
+  if(comment.has_value()) {
     m_catalogue.MediaType()->modifyMediaTypeComment(m_cliIdentity,mediaTypeName,comment.value());
   }
   response.set_type(xrd::Response::RSP_SUCCESS);
@@ -804,19 +804,19 @@ void AdminCmd::processMountPolicy_Ch(xrd::Response& response) {
   auto  minretrieverequestage = getOptional(OptionUInt64::MIN_RETRIEVE_REQUEST_AGE);
   auto  comment               = getOptional(OptionString::COMMENT);
 
-  if(archivepriority) {
+  if(archivepriority.has_value()) {
     m_catalogue.MountPolicy()->modifyMountPolicyArchivePriority(m_cliIdentity, group, archivepriority.value());
   }
-  if(minarchiverequestage) {
+  if(minarchiverequestage.has_value()) {
     m_catalogue.MountPolicy()->modifyMountPolicyArchiveMinRequestAge(m_cliIdentity, group, minarchiverequestage.value());
   }
-  if(retrievepriority) {
+  if(retrievepriority.has_value()) {
     m_catalogue.MountPolicy()->modifyMountPolicyRetrievePriority(m_cliIdentity, group, retrievepriority.value());
   }
-  if(minretrieverequestage) {
+  if(minretrieverequestage.has_value()) {
     m_catalogue.MountPolicy()->modifyMountPolicyRetrieveMinRequestAge(m_cliIdentity, group, minretrieverequestage.value());
   }
-  if(comment) {
+  if(comment.has_value()) {
     m_catalogue.MountPolicy()->modifyMountPolicyComment(m_cliIdentity, group, comment.value());
   }
 
@@ -840,9 +840,9 @@ void AdminCmd::processRepack_Add(xrd::Response& response) {
   std::vector<std::string> vid_list;
   std::string bufferURL;
 
-  if(const auto vidl = getOptional(OptionStrList::VID); vidl)
+  if(const auto vidl = getOptional(OptionStrList::VID); vidl.has_value())
     vid_list = vidl.value();
-  if(const auto vid = getOptional(OptionString::VID); vid)
+  if(const auto vid = getOptional(OptionString::VID); vid.has_value())
     vid_list.push_back(vid.value());
 
   if(vid_list.empty()) {
@@ -871,12 +871,12 @@ void AdminCmd::processRepack_Add(xrd::Response& response) {
     throw exception::UserError("The mount policy name provided does not match any existing mount policy.");
   }
 
-  if(const auto buff = getOptional(OptionString::BUFFERURL); buff) {
+  if(const auto buff = getOptional(OptionString::BUFFERURL); buff.has_value()) {
     //The buffer is provided by the user
     bufferURL = buff.value();
   } else {
     //Buffer is not provided by the user, try to get the one from the configuration file
-    if(m_repackBufferURL) {
+    if(m_repackBufferURL.has_value()) {
       bufferURL = m_repackBufferURL.value();
     } else {
       //Buffer is neither provided by the user, neither provided by the frontend configuration file, exception
@@ -951,10 +951,10 @@ void AdminCmd::processRequesterMountRule_Ch(xrd::Response& response) {
   auto  comment     = getOptional(OptionString::COMMENT);
   auto  mountpolicy = getOptional(OptionString::MOUNT_POLICY);
 
-  if(comment) {
+  if(comment.has_value()) {
     m_catalogue.RequesterMountRule()->modifyRequesteMountRuleComment(m_cliIdentity, in, name, comment.value());
   }
-  if(mountpolicy) {
+  if(mountpolicy.has_value()) {
     m_catalogue.RequesterMountRule()->modifyRequesterMountRulePolicy(m_cliIdentity, in, name, mountpolicy.value());
   }
 
@@ -996,11 +996,11 @@ void AdminCmd::processActivityMountRule_Ch(xrd::Response& response) {
   auto  comment       = getOptional(OptionString::COMMENT);
   auto  mountpolicy   = getOptional(OptionString::MOUNT_POLICY);
 
-  if(comment) {
+  if(comment.has_value()) {
     m_catalogue.RequesterActivityMountRule()->modifyRequesterActivityMountRuleComment(m_cliIdentity, in, name,
       activityRegex, comment.value());
   }
-  if(mountpolicy) {
+  if(mountpolicy.has_value()) {
     m_catalogue.RequesterActivityMountRule()->modifyRequesterActivityMountRulePolicy(m_cliIdentity, in, name,
       activityRegex, mountpolicy.value());
   }
@@ -1043,13 +1043,13 @@ void AdminCmd::processStorageClass_Ch(xrd::Response& response) {
   auto  cn      = getOptional(OptionUInt64::COPY_NUMBER);
   auto vo       = getOptional(OptionString::VO);
 
-  if(comment) {
+  if(comment.has_value()) {
     m_catalogue.StorageClass()->modifyStorageClassComment(m_cliIdentity, scn, comment.value());
   }
-  if(cn) {
+  if(cn.has_value()) {
     m_catalogue.StorageClass()->modifyStorageClassNbCopies(m_cliIdentity, scn, cn.value());
   }
-  if(vo) {
+  if(vo.has_value()) {
     m_catalogue.StorageClass()->modifyStorageClassVo(m_cliIdentity,scn,vo.value());
   }
 
@@ -1089,7 +1089,7 @@ void AdminCmd::processTape_Add(xrd::Response& response) {
   tape.full = full;
   tape.purchaseOrder = purchaseOrder;
   tape.comment = comment.value_or("");
-  if(!state) {
+  if(!state.has_value()) {
     // By default, the state of the tape will be ACTIVE
     tape.state = common::dataStructures::Tape::ACTIVE;
   } else {
@@ -1119,46 +1119,46 @@ void AdminCmd::processTape_Ch(xrd::Response& response) {
   auto  dirty              = getOptional(OptionBoolean::DIRTY_BIT);
   auto  verificationStatus = getOptional(OptionString::VERIFICATION_STATUS);
 
-  if(mediaType) {
+  if(mediaType.has_value()) {
     if(m_catalogue.Tape()->getNbFilesOnTape(vid) != 0) {
       response.set_type(xrd::Response::RSP_ERR_CTA);
       return;
     }
     m_catalogue.Tape()->modifyTapeMediaType(m_cliIdentity, vid, mediaType.value());
   }
-  if(vendor) {
+  if(vendor.has_value()) {
     m_catalogue.Tape()->modifyTapeVendor(m_cliIdentity, vid, vendor.value());
   }
-  if(logicallibrary) {
+  if(logicallibrary.has_value()) {
     m_catalogue.Tape()->modifyTapeLogicalLibraryName(m_cliIdentity, vid, logicallibrary.value());
   }
-  if(tapepool) {
+  if(tapepool.has_value()) {
     m_catalogue.Tape()->modifyTapeTapePoolName(m_cliIdentity, vid, tapepool.value());
   }
-  if(comment) {
+  if(comment.has_value()) {
     if(comment.value().empty()) {
       // If the comment is an empty string, the user meant to delete it
       comment = std::nullopt;
     }
     m_catalogue.Tape()->modifyTapeComment(m_cliIdentity, vid, comment);
   }
-  if(encryptionkeyName) {
+  if(encryptionkeyName.has_value()) {
     m_catalogue.Tape()->modifyTapeEncryptionKeyName(m_cliIdentity, vid, encryptionkeyName.value());
   }
-  if(purchaseOrder) {
+  if(purchaseOrder.has_value()) {
     m_catalogue.Tape()->modifyPurchaseOrder(m_cliIdentity, vid, purchaseOrder.value());
   }
-  if(full) {
+  if(full.has_value()) {
     m_catalogue.Tape()->setTapeFull(m_cliIdentity, vid, full.value());
   }
-  if(state) {
+  if(state.has_value()) {
     auto stateEnumValue = common::dataStructures::Tape::stringToState(state.value(), true);
     m_scheduler.triggerTapeStateChange(m_cliIdentity,vid,stateEnumValue,stateReason, m_lc);
   }
-  if(dirty) {
+  if(dirty.has_value()) {
     m_catalogue.Tape()->setTapeDirty(m_cliIdentity, vid, dirty.value());
   }
-  if(verificationStatus) {
+  if(verificationStatus.has_value()) {
     m_catalogue.Tape()->modifyTapeVerificationStatus(m_cliIdentity, vid, verificationStatus.value());
   }
 
@@ -1199,16 +1199,16 @@ void AdminCmd::processTapeFile_Rm(xrd::Response& response) {
   catalogue::TapeFileSearchCriteria searchCriteria;
   searchCriteria.vid = vid;
 
-  if(archiveFileId) {
+  if(archiveFileId.has_value()) {
     searchCriteria.archiveFileId = archiveFileId.value();
   }
 
-  if(diskFileIdStr) {
+  if(diskFileIdStr.has_value()) {
     searchCriteria.diskFileIds = std::vector<std::string>();
     searchCriteria.diskFileIds.value().push_back(diskFileIdStr.value());
   }
 
-  if(instance) {
+  if(instance.has_value()) {
     searchCriteria.diskInstance = instance.value();
   }
 
@@ -1234,11 +1234,11 @@ void AdminCmd::processTapePool_Add(xrd::Response& response) {
   }
 
   std::list<std::string> supply_list;
-  if (supply) {
+  if (supply.has_value()) {
     supply_list = cta::utils::commaSeparatedStringToList(supply.value());
   }
 
-  if (encryptionKeyName && encryptionKeyName.value().empty()) {
+  if (encryptionKeyName.has_value() && encryptionKeyName.value().empty()) {
     encryptionKeyName = std::nullopt;
   }
   m_catalogue.TapePool()->createTapePool(m_cliIdentity, name, vo, ptn, encryptionKeyName, supply_list, comment);
@@ -1257,22 +1257,22 @@ void AdminCmd::processTapePool_Ch(xrd::Response& response) {
   auto  encryptionKeyName = getOptional(OptionString::ENCRYPTION_KEY_NAME);
   auto  supply            = getOptional(OptionString::SUPPLY);
 
-  if(encrypted) {
+  if(encrypted.has_value()) {
     throw exception::UserError("The parameter '--encrypted' has been deprecated. Use '--encryptionkeyname'.");
   }
-  if(comment) {
+  if(comment.has_value()) {
     m_catalogue.TapePool()->modifyTapePoolComment(m_cliIdentity, name, comment.value());
   }
-  if(vo) {
+  if(vo.has_value()) {
     m_catalogue.TapePool()->modifyTapePoolVo(m_cliIdentity, name, vo.value());
   }
-  if(ptn) {
+  if(ptn.has_value()) {
     m_catalogue.TapePool()->modifyTapePoolNbPartialTapes(m_cliIdentity, name, ptn.value());
   }
-  if(encryptionKeyName) {
+  if(encryptionKeyName.has_value()) {
     m_catalogue.TapePool()->setTapePoolEncryption(m_cliIdentity, name, encryptionKeyName.value());
   }
-  if(supply) {
+  if(supply.has_value()) {
     m_catalogue.TapePool()->modifyTapePoolSupply(m_cliIdentity, name,
                                                  cta::utils::commaSeparatedStringToList(supply.value()));
   }
@@ -1318,22 +1318,22 @@ void AdminCmd::processDiskSystem_Ch(xrd::Response& response) {
   const auto  diskInstanceName      = getOptional(OptionString::DISK_INSTANCE);
   const auto  diskInstanceSpaceName = getOptional(OptionString::DISK_INSTANCE_SPACE);
 
-  if(comment) {
+  if(comment.has_value()) {
     m_catalogue.DiskSystem()->modifyDiskSystemComment(m_cliIdentity, name, comment.value());
   }
-  if(fileRegexp) {
+  if(fileRegexp.has_value()) {
     m_catalogue.DiskSystem()->modifyDiskSystemFileRegexp(m_cliIdentity, name, fileRegexp.value());
   }
-  if(sleepTime) {
+  if(sleepTime.has_value()) {
     m_catalogue.DiskSystem()->modifyDiskSystemSleepTime(m_cliIdentity, name, sleepTime.value());
   }
-  if(targetedFreeSpace) {
+  if(targetedFreeSpace.has_value()) {
     m_catalogue.DiskSystem()->modifyDiskSystemTargetedFreeSpace(m_cliIdentity, name, targetedFreeSpace.value());
   }
-  if(diskInstanceName) {
+  if(diskInstanceName.has_value()) {
     m_catalogue.DiskSystem()->modifyDiskSystemDiskInstanceName(m_cliIdentity, name, diskInstanceName.value());
   }
-  if(diskInstanceSpaceName) {
+  if(diskInstanceSpaceName.has_value()) {
     m_catalogue.DiskSystem()->modifyDiskSystemDiskInstanceSpaceName(m_cliIdentity, name, diskInstanceSpaceName.value());
   }
 
@@ -1366,7 +1366,7 @@ void AdminCmd::processDiskInstance_Ch(xrd::Response& response) {
 
   const auto& name = getRequired(OptionString::DISK_INSTANCE);
 
-  if(const auto comment = getOptional(OptionString::COMMENT); comment) {
+  if(const auto comment = getOptional(OptionString::COMMENT); comment.has_value()) {
     m_catalogue.DiskInstance()->modifyDiskInstanceComment(m_cliIdentity, name, comment.value());
   }
 
@@ -1407,15 +1407,15 @@ void AdminCmd::processDiskInstanceSpace_Ch(xrd::Response& response) {
   const auto& freeSpaceQueryURL = getOptional(OptionString::FREE_SPACE_QUERY_URL);
   const auto refreshInterval    = getOptional(OptionUInt64::REFRESH_INTERVAL);
 
-  if(comment) {
+  if(comment.has_value()) {
     m_catalogue.DiskInstanceSpace()->modifyDiskInstanceSpaceComment(m_cliIdentity, name, diskInstance,
       comment.value());
   }
-  if(freeSpaceQueryURL) {
+  if(freeSpaceQueryURL.has_value()) {
     m_catalogue.DiskInstanceSpace()->modifyDiskInstanceSpaceQueryURL(m_cliIdentity, name, diskInstance,
       freeSpaceQueryURL.value());
   }
-  if(refreshInterval) {
+  if(refreshInterval.has_value()) {
     m_catalogue.DiskInstanceSpace()->modifyDiskInstanceSpaceRefreshInterval(m_cliIdentity, name, diskInstance,
       refreshInterval.value());
   }
@@ -1471,22 +1471,22 @@ void AdminCmd::processVirtualOrganization_Ch(xrd::Response& response) {
   const auto diskInstanceName = getOptional(OptionString::DISK_INSTANCE);
   const auto isRepackVo = getOptional(OptionBoolean::IS_REPACK_VO);
 
-  if(comment)
+  if(comment.has_value())
     m_catalogue.VO()->modifyVirtualOrganizationComment(m_cliIdentity,name,comment.value());
 
-  if(readMaxDrives)
+  if(readMaxDrives.has_value())
     m_catalogue.VO()->modifyVirtualOrganizationReadMaxDrives(m_cliIdentity,name,readMaxDrives.value());
 
-  if(writeMaxDrives)
+  if(writeMaxDrives.has_value())
     m_catalogue.VO()->modifyVirtualOrganizationWriteMaxDrives(m_cliIdentity,name,writeMaxDrives.value());
 
-  if(maxFileSize)
+  if(maxFileSize.has_value())
     m_catalogue.VO()->modifyVirtualOrganizationMaxFileSize(m_cliIdentity,name,maxFileSize.value());
 
-  if(diskInstanceName)
+  if(diskInstanceName.has_value())
     m_catalogue.VO()->modifyVirtualOrganizationDiskInstanceName(m_cliIdentity, name, diskInstanceName.value());
 
-  if(isRepackVo) {
+  if(isRepackVo.has_value()) {
     // Don't allow unsetting repackvo while repacks are ongoing.
     if (m_scheduler.repackExists() && !isRepackVo.value()) {
       throw exception::UserError("Cannot remove default virtual organization "

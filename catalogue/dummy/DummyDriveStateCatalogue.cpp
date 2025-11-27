@@ -122,7 +122,7 @@ void DummyDriveStateCatalogue::reserveDiskSpace(const std::string& driveName, co
   lc.log(log::DEBUG, "In RetrieveMount::reserveDiskSpace(): reservation request.");
 
   auto tdStatus = getTapeDrive(driveName);
-  if (!tdStatus) return;
+  if (!tdStatus.has_value()) return;
 
   if (!tdStatus.value().reservationSessionId) {
     tdStatus.value().reservationSessionId = mountId;
@@ -152,7 +152,7 @@ void DummyDriveStateCatalogue::releaseDiskSpace(const std::string& driveName, co
 
   auto tdStatus = getTapeDrive(driveName);
 
-  if (!tdStatus) return;
+  if (!tdStatus.has_value()) return;
   if (!tdStatus.value().reservationSessionId) {
     return;
   }

@@ -37,7 +37,7 @@ std::list<cta::catalogue::TapePool> TapePoolLsResponseStream::buildTapePoolList(
   searchCriteria.encrypted = request.getOptional(cta::admin::OptionBoolean::ENCRYPTED);
   searchCriteria.encryptionKeyName = request.getOptional(cta::admin::OptionString::ENCRYPTION_KEY_NAME);
 
-  if (searchCriteria.encrypted && searchCriteria.encryptionKeyName) {
+  if (searchCriteria.encrypted.has_value() && searchCriteria.encryptionKeyName.has_value()) {
     throw cta::exception::UserError("Do not request both '--encrypted' and '--encryptionkeyname' at same time.");
   }
 
@@ -69,7 +69,7 @@ cta::xrd::Data TapePoolLsResponseStream::next() {
   tp_item->set_data_bytes(tp.dataBytes);
   tp_item->set_encrypt(tp.encryption);
   tp_item->set_encryption_key_name(tp.encryptionKeyName.value_or(""));
-  tp_item->set_supply(tp.supply ? tp.supply.value() : "");
+  tp_item->set_supply(tp.supply.value_or(""));
   tp_item->mutable_created()->set_username(tp.creationLog.username);
   tp_item->mutable_created()->set_host(tp.creationLog.host);
   tp_item->mutable_created()->set_time(tp.creationLog.time);

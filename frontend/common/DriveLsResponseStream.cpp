@@ -147,36 +147,36 @@ cta::xrd::Data DriveLsResponseStream::next() {
 
   // fillDriveItem(dr, driveItem, m_instanceName, driveSchedulerBackendName, driveConfigs);
   driveItem->set_instance_name(m_instanceName);
-  driveItem->set_cta_version(dr.ctaVersion ? dr.ctaVersion.value() : "");
+  driveItem->set_cta_version(dr.ctaVersion.value_or(""));
   driveItem->set_logical_library(dr.logicalLibrary);
   driveItem->set_drive_name(dr.driveName);
   driveItem->set_scheduler_backend_name(driveSchedulerBackendName);
   driveItem->set_host(dr.host);
-  driveItem->set_logical_library_disabled(dr.logicalLibraryDisabled ? dr.logicalLibraryDisabled.value() : false);
-  driveItem->set_desired_drive_state(dr.desiredUp ? cta::admin::DriveLsItem::UP : cta::admin::DriveLsItem::DOWN);
+  driveItem->set_logical_library_disabled(dr.logicalLibraryDisabled.value_or(false));
+  driveItem->set_desired_drive_state(dr.desiredUp.has_value() ? cta::admin::DriveLsItem::UP : cta::admin::DriveLsItem::DOWN);
   driveItem->set_mount_type(cta::admin::MountTypeToProtobuf(dr.mountType));
   driveItem->set_drive_status(cta::admin::DriveStatusToProtobuf(dr.driveStatus));
-  driveItem->set_vid(dr.currentVid ? dr.currentVid.value() : "");
-  driveItem->set_tapepool(dr.currentTapePool ? dr.currentTapePool.value() : "");
-  driveItem->set_vo(dr.currentVo ? dr.currentVo.value() : "");
-  driveItem->set_files_transferred_in_session(dr.filesTransferedInSession ? dr.filesTransferedInSession.value() : 0);
-  driveItem->set_bytes_transferred_in_session(dr.bytesTransferedInSession ? dr.bytesTransferedInSession.value() : 0);
-  driveItem->set_session_id(dr.sessionId ? dr.sessionId.value() : 0);
-  const auto lastUpdateTime = dr.lastModificationLog ? dr.lastModificationLog.value().time : time(nullptr);
+  driveItem->set_vid(dr.currentVid.value_or(""));
+  driveItem->set_tapepool(dr.currentTapePool.value_or(""));
+  driveItem->set_vo(dr.currentVo.value_or(""));
+  driveItem->set_files_transferred_in_session(ddr.filesTransferedInSession.value_or(0));
+  driveItem->set_bytes_transferred_in_session(ddr.bytesTransferedInSession.value_or(0));
+  driveItem->set_session_id(dr.sessionId.value_or(0));
+  const auto lastUpdateTime = dr.lastModificationLog.has_value() ? dr.lastModificationLog.value().time : time(nullptr);
   driveItem->set_time_since_last_update(time(nullptr) - lastUpdateTime);
-  driveItem->set_current_priority(dr.currentPriority ? dr.currentPriority.value() : 0);
-  driveItem->set_current_activity(dr.currentActivity ? dr.currentActivity.value() : "");
-  driveItem->set_dev_file_name(dr.devFileName ? dr.devFileName.value() : "");
-  driveItem->set_raw_library_slot(dr.rawLibrarySlot ? dr.rawLibrarySlot.value() : "");
-  driveItem->set_comment(dr.userComment ? dr.userComment.value() : "");
-  driveItem->set_reason(dr.reasonUpDown ? dr.reasonUpDown.value() : "");
-  driveItem->set_physical_library(dr.physicalLibraryName ? dr.physicalLibraryName.value() : "");
-  driveItem->set_physical_library_disabled(dr.physicalLibraryDisabled ? dr.physicalLibraryDisabled.value() : false);
+  driveItem->set_current_priority(dr.currentPriority.value_or());
+  driveItem->set_current_activity(dr.currentActivity.value_or(""));
+  driveItem->set_dev_file_name(dr.devFileName.value_or(""));
+  driveItem->set_raw_library_slot(dr.rawLibrarySlot.value_or(""));
+  driveItem->set_comment(dr.userComment.value_or(""));
+  driveItem->set_reason(dr.reasonUpDown.value_or(""));
+  driveItem->set_physical_library(dr.physicalLibraryName.value_or(""));
+  driveItem->set_physical_library_disabled(dr.physicalLibraryDisabled.value_or(false));
   if (dr.mountType == cta::common::dataStructures::MountType::Retrieve) {
-    driveItem->set_disk_system_name(dr.diskSystemName ? dr.diskSystemName.value() : "");
-    driveItem->set_reserved_bytes(dr.reservedBytes ? dr.reservedBytes.value() : 0);
+    driveItem->set_disk_system_name(dr.diskSystemName.value_or(""));
+    driveItem->set_reserved_bytes(dr.reservedBytes.value_or(0));
   }
-  driveItem->set_session_elapsed_time(dr.sessionElapsedTime ? dr.sessionElapsedTime.value() : 0);
+  driveItem->set_session_elapsed_time(dr.sessionElapsedTime.value_or(0));
 
   auto driveConfig = driveItem->mutable_drive_config();
 

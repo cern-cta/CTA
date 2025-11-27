@@ -156,7 +156,7 @@ void OcciStmt::bindBlob(const std::string &paramName, const std::string &paramVa
 void OcciStmt::bindDouble(const std::string &paramName, const std::optional<double> &paramValue) {
   try {
     const unsigned paramIdx = getParamIdx(paramName);
-    if(paramValue) {
+    if(paramValue.has_value()) {
       // Bind integer as a string in order to support 64-bit integers
       m_stmt->setDouble(paramIdx, paramValue.value());
     } else {
@@ -176,13 +176,13 @@ void OcciStmt::bindDouble(const std::string &paramName, const std::optional<doub
 //------------------------------------------------------------------------------
 void OcciStmt::bindString(const std::string &paramName, const std::optional<std::string> &paramValue) {
   try {
-    if(paramValue && paramValue.value().empty()) {
+    if(paramValue.has_value() && paramValue.value().empty()) {
       throw exception::Exception(std::string("Optional string parameter ") + paramName + " is an empty string. "
         " An optional string parameter should either have a non-empty string value or no value at all.");
     }
 
     const unsigned paramIdx = getParamIdx(paramName);
-    if(paramValue) {
+    if(paramValue.has_value()) {
       m_stmt->setString(paramIdx, paramValue.value());
     } else {
       m_stmt->setNull(paramIdx, oracle::occi::OCCISTRING);

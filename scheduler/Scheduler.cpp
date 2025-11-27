@@ -1013,8 +1013,8 @@ void Scheduler::setDesiredDriveState(const common::dataStructures::SecurityIdent
   spc.add("drive", driveName)
     .add("up", desiredState.up ? "up" : "down")
     .add("force", desiredState.forceDown ? "yes" : "no")
-    .add("reason", desiredState.reason ? desiredState.reason.value() : "")
-    .add("comment", desiredState.comment ? desiredState.comment.value() : "")
+    .add("reason", desiredState.reason.value_or(""))
+    .add("comment", desiredState.comment.value_or(""))
     .add("schedulerDbTime", schedulerDbTime);
   lc.log(log::INFO, "In Scheduler::setDesiredDriveState(): success.");
 }
@@ -1996,7 +1996,7 @@ void Scheduler::getExistingAndNextMounts(SchedulerDatabase::TapeMountDecisionInf
       tmdi.existingOrNextMounts.back().currentMount = true;
       tmdi.existingOrNextMounts.back().bytesTransferred = driveState.bytesTransferedInSession.value_or(0);
       tmdi.existingOrNextMounts.back().filesTransferred = driveState.filesTransferedInSession.value_or(0);
-      if (driveState.filesTransferedInSession && driveState.sessionElapsedTime &&
+      if (driveState.filesTransferedInSession.has_value() && driveState.sessionElapsedTime.has_value() &&
           driveState.sessionElapsedTime.value() > 0) {
         tmdi.existingOrNextMounts.back().averageBandwidth =
           driveState.bytesTransferedInSession.value() / driveState.sessionElapsedTime.value();

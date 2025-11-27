@@ -30,7 +30,7 @@ LogicalLibraryLsResponseStream::LogicalLibraryLsResponseStream(cta::catalogue::C
   std::optional<bool> disabled = request.getOptional(cta::admin::OptionBoolean::DISABLED);
   m_logicalLibraries = m_catalogue.LogicalLibrary()->getLogicalLibraries();
 
-  if (disabled) {
+  if (disabled.has_value()) {
     std::list<cta::common::dataStructures::LogicalLibrary>::iterator next_ll = m_logicalLibraries.begin();
     while (next_ll != m_logicalLibraries.end()) {
       if (disabled.value() != (*next_ll).isDisabled) {

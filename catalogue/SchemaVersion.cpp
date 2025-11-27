@@ -33,7 +33,7 @@ SchemaVersion::MajorMinor SchemaVersion::getSchemaVersion() const {
 template<>
 std::string SchemaVersion::getSchemaVersionNext() const {
   std::string schemaVersionNext;
-  if(m_nextSchemaVersionMajor && m_nextSchemaVersionMinor){
+  if(m_nextSchemaVersionMajor.has_value() && m_nextSchemaVersionMinor.has_value()){
     schemaVersionNext = std::to_string(m_nextSchemaVersionMajor.value())+"."+std::to_string(m_nextSchemaVersionMinor.value());
   }
   return schemaVersionNext;
@@ -106,10 +106,10 @@ void SchemaVersion::Builder::validate() const {
   if(!m_schemaVersionMajorSet || !m_schemaVersionMinorSet){
     throw cta::exception::Exception("In SchemaVersion::Builder::validate(), schemaVersionMajor or schemaVersionMinor have not been set.");
   }
-  if(m_schemaVersion.m_nextSchemaVersionMajor && m_schemaVersion.m_nextSchemaVersionMinor && m_schemaVersion.m_status == SchemaVersion::Status::PRODUCTION){
+  if(m_schemaVersion.m_nextSchemaVersionMajor.has_value() && m_schemaVersion.m_nextSchemaVersionMinor.has_value() && m_schemaVersion.m_status == SchemaVersion::Status::PRODUCTION){
     throw cta::exception::Exception("In SchemaVersion::Builder::validate(), status is "+m_schemaVersion.getStatus<std::string>()+" but nextSchemaVersionMajor and nextSchemaVersionMinor are defined");
   }
-  if(!m_schemaVersion.m_nextSchemaVersionMajor && !m_schemaVersion.m_nextSchemaVersionMinor && m_schemaVersion.m_status == SchemaVersion::Status::UPGRADING){
+  if(!m_schemaVersion.m_nextSchemaVersionMajor.has_value() && !m_schemaVersion.m_nextSchemaVersionMinor.has_value() && m_schemaVersion.m_status == SchemaVersion::Status::UPGRADING){
     throw cta::exception::Exception("In SchemaVersion::Builder::validate(), status is "+m_schemaVersion.getStatus<std::string>()+" but nextSchemaVersionMajor and nextSchemaVersionMinor are NOT defined.");
   }
 }
