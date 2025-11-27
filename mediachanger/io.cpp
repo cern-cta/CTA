@@ -507,8 +507,6 @@ void getSockIpHostnamePort(
 
   {
     char serviceName[SERVICENAMEBUFLEN];
-    const int rc = getnameinfo((const struct sockaddr*)&address, addressLen,
-      hostName, hostNameLen, serviceName, sizeof(serviceName), 0);
 
     if (const int rc = getnameinfo((const struct sockaddr *) &address, addressLen,
                                    hostName, hostNameLen, serviceName, sizeof(serviceName), 0);
