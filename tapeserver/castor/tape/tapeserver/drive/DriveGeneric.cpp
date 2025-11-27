@@ -1168,25 +1168,22 @@ void drive::DriveGeneric::writeImmediateFileMarks(size_t count)  {
 void drive::DriveGeneric::writeBlock(const void* data, size_t count) {
   switch (m_lbpToUse) {
     case lbpToUse::crc32cReadWrite: {
-      uint8_t* dataWithCrc32c = (new (std::nothrow) uint8_t[count + SCSI::logicBlockProtectionMethod::CRC32CLength]);
+      const std::unique_ptr<uint8_t[]> dataWithCrc32c(new (std::nothrow) uint8_t[count + SCSI::logicBlockProtectionMethod::CRC32CLength]);
       if (nullptr == dataWithCrc32c) {
         throw cta::exception::MemException("Failed to allocate memory "
                                            " for a new MemBlock in DriveGeneric::writeBlock!");
       }
-      memcpy(dataWithCrc32c, data, count);
+      memcpy(dataWithCrc32c.get(), data, count);
       const size_t countWithCrc32c =
-        cta::addCrc32cToMemoryBlock(SCSI::logicBlockProtectionMethod::CRC32CSeed, count, dataWithCrc32c);
+        cta::addCrc32cToMemoryBlock(SCSI::logicBlockProtectionMethod::CRC32CSeed, count, dataWithCrc32c.get());
       if (countWithCrc32c != count + SCSI::logicBlockProtectionMethod::CRC32CLength) {
-        delete[] dataWithCrc32c;
         cta::exception::Errnum::throwOnMinusOne(-1,
                                                 "Failed in DriveGeneric::writeBlock: incorrect length for block"
                                                 " with crc32c");
       }
-      if (-1 == m_sysWrapper.write(m_tapeFD, dataWithCrc32c, countWithCrc32c)) {
-        delete[] dataWithCrc32c;
+      if (-1 == m_sysWrapper.write(m_tapeFD, dataWithCrc32c.get(), countWithCrc32c)) {
         cta::exception::Errnum::throwOnMinusOne(-1, "Failed ST write with crc32c in DriveGeneric::writeBlock");
       }
-      delete[] dataWithCrc32c;
       break;
     }
     case lbpToUse::crc32cReadOnly:
@@ -1213,34 +1210,27 @@ ssize_t drive::DriveGeneric::readBlock(void* data, size_t count) {
   switch (m_lbpToUse) {
     case lbpToUse::crc32cReadWrite:
     case lbpToUse::crc32cReadOnly: {
-      uint8_t* dataWithCrc32c = (new (std::nothrow) uint8_t[count + SCSI::logicBlockProtectionMethod::CRC32CLength]);
+      const std::unique_ptr<uint8_t[]> dataWithCrc32c(new (std::nothrow) uint8_t[count + SCSI::logicBlockProtectionMethod::CRC32CLength]);
       if (nullptr == dataWithCrc32c) {
         throw cta::exception::MemException("In DriveGeneric::readBlock: Failed to allocate memory");
       }
       const ssize_t res =
-        m_sysWrapper.read(m_tapeFD, dataWithCrc32c, count + SCSI::logicBlockProtectionMethod::CRC32CLength);
+        m_sysWrapper.read(m_tapeFD, dataWithCrc32c.get(), count + SCSI::logicBlockProtectionMethod::CRC32CLength);
       if (-1 == res) {
-        delete[] dataWithCrc32c;
         cta::exception::Errnum::throwOnMinusOne(res, "In DriveGeneric::readBlock: Failed ST read (with checksum)");
       }
       if (0 == res) {
-        delete[] dataWithCrc32c;
         return 0;
       }
-      const size_t dataLenWithoutCrc32c = res - SCSI::logicBlockProtectionMethod::CRC32CLength;
+      const ssize_t dataLenWithoutCrc32c = res - SCSI::logicBlockProtectionMethod::CRC32CLength;
       if (0 >= dataLenWithoutCrc32c) {
-        delete[] dataWithCrc32c;
         throw cta::exception::Exception("In DriveGeneric::readBlock: wrong data block size, checksum cannot fit");
       }
-      if (cta::verifyCrc32cForMemoryBlockWithCrc32c(SCSI::logicBlockProtectionMethod::CRC32CSeed,
-                                                    res,
-                                                    dataWithCrc32c)) {
+      if (cta::verifyCrc32cForMemoryBlockWithCrc32c(SCSI::logicBlockProtectionMethod::CRC32CSeed, res, dataWithCrc32c.get())) {
         // everything is fine here do mem copy
-        memcpy(data, dataWithCrc32c, dataLenWithoutCrc32c);
-        delete[] dataWithCrc32c;
+        memcpy(data, dataWithCrc32c.get(), dataLenWithoutCrc32c);
         return dataLenWithoutCrc32c;
       } else {
-        delete[] dataWithCrc32c;
         throw cta::exception::Exception("In DriveGeneric::readBlock: Failed checksum verification");
       }
     }
@@ -1264,46 +1254,40 @@ void drive::DriveGeneric::readExactBlock(void* data, size_t count, const std::st
   switch (m_lbpToUse) {
     case lbpToUse::crc32cReadWrite:
     case lbpToUse::crc32cReadOnly: {
-      uint8_t* dataWithCrc32c = (new (std::nothrow) uint8_t[count + SCSI::logicBlockProtectionMethod::CRC32CLength]);
+      const std::unique_ptr<uint8_t[]> dataWithCrc32c(new (std::nothrow) uint8_t[count + SCSI::logicBlockProtectionMethod::CRC32CLength]);
       if (nullptr == dataWithCrc32c) {
         throw cta::exception::MemException("Failed to allocate memory "
                                            " for a new MemBlock in DriveGeneric::readBlock!");
       }
       const ssize_t res =
-        m_sysWrapper.read(m_tapeFD, dataWithCrc32c, count + SCSI::logicBlockProtectionMethod::CRC32CLength);
+        m_sysWrapper.read(m_tapeFD, dataWithCrc32c.get(), count + SCSI::logicBlockProtectionMethod::CRC32CLength);
 
       // First handle block too big
       if (-1 == res && ENOSPC == errno) {
-        delete[] dataWithCrc32c;
         throw UnexpectedSize(context);
       }
       // ENOMEM may be returned if the tape block size is larger than 'count'
       if (-1 == res && ENOMEM == errno) {
-        delete[] dataWithCrc32c;
         throw cta::exception::Errnum(errno,
                                      context + ": Failed ST read in DriveGeneric::readExactBlock. Tape volume label "
                                                "size not be in the CTA/CASTOR format.");
       }
       // Generic handling of other errors
       if (-1 == res) {
-        delete[] dataWithCrc32c;
         cta::exception::Errnum::throwOnMinusOne(res,
                                                 context +
                                                   ": Failed ST read with crc32c in DriveGeneric::readExactBlock");
       }
       // Handle mismatch
       if ((size_t) (res - SCSI::logicBlockProtectionMethod::CRC32CLength) != count) {
-        delete[] dataWithCrc32c;
         throw UnexpectedSize(context);
       }
       if (cta::verifyCrc32cForMemoryBlockWithCrc32c(SCSI::logicBlockProtectionMethod::CRC32CSeed,
                                                     res,
-                                                    dataWithCrc32c)) {
+                                                    dataWithCrc32c.get())) {
         // everything is fine here do mem copy
-        memcpy(data, dataWithCrc32c, count);
-        delete[] dataWithCrc32c;
+        memcpy(data, dataWithCrc32c.get(), count);
       } else {
-        delete[] dataWithCrc32c;
         throw cta::exception::Exception(context + " Failed checksum verification for ST read"
                                                   " in DriveGeneric::readBlock.");
       }
