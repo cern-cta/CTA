@@ -286,8 +286,8 @@ bool Login::postgresqlHasPassword(const std::string& connectionDetails) {
   if (result.size() < 2) {
     throw exception::Exception(std::string("Invalid connection string: Correct format is ") + s_fileFormat);
   }
-  std::string usernamePassword = result[1];
-  if (usernamePassword.find(":") == std::string::npos) {
+  if (std::string usernamePassword = result[1];
+      usernamePassword.find(":") == std::string::npos) {
     // No password provided, no need to hide it
     return false;
   }

@@ -86,8 +86,8 @@ std::string SCSI::DeviceVector::readfile(const std::string& path) {
 
 SCSI::DeviceInfo::DeviceFile SCSI::DeviceVector::readDeviceFile(const std::string& path) {
   DeviceInfo::DeviceFile ret;
-  std::string file = readfile(path);
-  if (!::sscanf(file.c_str(), "%u:%u\n", &ret.major, &ret.minor))
+  if (std::string file = readfile(path);
+      !::sscanf(file.c_str(), "%u:%u\n", &ret.major, &ret.minor))
     throw cta::exception::Exception(std::string("Could not parse file: ") + path);
   return ret;
 }
@@ -240,8 +240,8 @@ SCSI::DeviceInfo SCSI::DeviceVector::getDeviceInfo(const char * path) {
   /* Get the major and minor number of the device file */
   ret.sg = readDeviceFile(ret.sysfs_entry + "/generic/dev");
   /* Check that we have an agreement with the actual device file */
-  DeviceInfo::DeviceFile realFile = statDeviceFile(ret.sg_dev);
-  if (ret.sg != realFile) {
+  if (DeviceInfo::DeviceFile realFile = statDeviceFile(ret.sg_dev);
+      ret.sg != realFile) {
     std::stringstream err;
     err << "Mismatch between sysfs info and actual device file: "
         << ret.sysfs_entry + "/generic/dev" << " indicates "

@@ -26,8 +26,7 @@ Regex::Regex(const std::string & re_str) : m_reStr(re_str), m_set(false) {
     std::string error("Could not compile regular expression: \"");
     error += m_reStr;
     error += "\"";
-    char re_err[1024];
-    if (::regerror(rc, &m_re, re_err, sizeof (re_err))) {
+    if (char re_err[1024]; ::regerror(rc, &m_re, re_err, sizeof (re_err))) {
       error += ": ";
       error += re_err;
     }
@@ -44,8 +43,7 @@ Regex::~Regex() {
 }
 
 std::vector<std::string> Regex::exec(const std::string &s) const {
-  regmatch_t matches[100];
-  if (REG_NOMATCH != ::regexec(&m_re, s.c_str(), 100, matches, 0)) {
+  if (regmatch_t matches[100]; REG_NOMATCH != ::regexec(&m_re, s.c_str(), 100, matches, 0)) {
     std::vector<std::string> ret;
     for (int i = 0; i < 100; i++) {
       if (matches[i].rm_so != -1) {

@@ -377,13 +377,11 @@ void RestoreFilesCmd::restoreDeletedFileCopyCta(const cta::admin::RecycleTapeFil
 // addContainerEos
 //------------------------------------------------------------------------------
 uint64_t RestoreFilesCmd::addContainerEos(const std::string &diskInstance, const std::string &path, const std::string &sc) const {
-  auto c_id = containerExistsEos(diskInstance, path);
-  if (c_id) {
+  if (auto c_id = containerExistsEos(diskInstance, path); c_id) {
     return c_id;
   }
   auto enclosingPath = cta::utils::getEnclosingPath(path);
-  auto parent_id = containerExistsEos(diskInstance, enclosingPath);
-  if (!parent_id) {
+  if (auto parent_id = containerExistsEos(diskInstance, enclosingPath); !parent_id) {
     //parent does not exist, need to add it as well
     parent_id = addContainerEos(diskInstance, enclosingPath, sc);
   }
@@ -576,8 +574,7 @@ uint64_t RestoreFilesCmd::restoreDeletedFileEos(const cta::admin::RecycleTapeFil
   m_log(cta::log::INFO, "Restoring file in the EOS namespace", params);
 
   getCurrentEosIds(rtfls_item.disk_instance());
-  uint64_t file_id = getFileIdEos(rtfls_item.disk_instance(), rtfls_item.disk_file_path());
-  if (file_id) {
+  if (uint64_t file_id = getFileIdEos(rtfls_item.disk_instance(), rtfls_item.disk_file_path()); file_id) {
     return file_id; // EOS disk file id was changed since the file was deleted, just return the new file id
   }
 

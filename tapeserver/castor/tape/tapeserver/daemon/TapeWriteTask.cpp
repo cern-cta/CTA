@@ -257,8 +257,8 @@ void TapeWriteTask::execute(const std::unique_ptr<castor::tape::tapeFile::WriteS
       // If it's not the error we're looking for, we will go about our business
       // in the catch section. dynamic cast will throw, and we'll do ourselves
       // if the error code is not the one we want.
-      const auto& en = dynamic_cast<const cta::exception::Errnum&>(e);
-      if (en.errorNumber() != ENOSPC) {
+      if (const auto& en = dynamic_cast<const cta::exception::Errnum&>(e);
+          en.errorNumber() != ENOSPC) {
         throw;
       } else {
         doReportJobError = false;

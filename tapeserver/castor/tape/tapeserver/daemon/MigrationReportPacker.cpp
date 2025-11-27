@@ -560,8 +560,8 @@ void MigrationReportPacker::WorkerThread::run() {
   // Drain the FIFO if necessary. We know that m_continue will be
   // set by ReportEndofSessionWithErrors or ReportEndofSession
   // TODO devise a more generic mechanism
-  uint64_t leftOverReportCount = m_parent.m_fifo.size();
-  if (leftOverReportCount != 0) {
+  if (uint64_t leftOverReportCount = m_parent.m_fifo.size();
+      leftOverReportCount != 0) {
     cta::log::ScopedParamContainer params(lc);
     params.add("leftOverReportCount", leftOverReportCount);
     params.add("MigrationReportPacker.m_continue", m_parent.m_continue);

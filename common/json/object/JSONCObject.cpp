@@ -60,8 +60,7 @@ void JSONCObject::reinitializeJSONCObject() {
 }
 
 json_type JSONCObject::getJSONObjectType(const std::string& key){
-  json_object * objectRet;
-  if(json_object_object_get_ex(m_jsonObject,key.c_str(),&objectRet)){
+  if(json_object * objectRet; json_object_object_get_ex(m_jsonObject,key.c_str(),&objectRet)){
     return json_object_get_type(objectRet);
   }
   std::string errMsg = "In JSONCObject::getJSONObjectType(), the provided json does not contain any key named \""+key+"\".";
@@ -69,8 +68,7 @@ json_type JSONCObject::getJSONObjectType(const std::string& key){
 }
 
 json_object * JSONCObject::getJSONObject(const std::string& key){
-  json_object * objectRet;
-  if(json_object_object_get_ex(m_jsonObject,key.c_str(),&objectRet)){
+  if(json_object * objectRet; json_object_object_get_ex(m_jsonObject,key.c_str(),&objectRet)){
     return objectRet;
   }
   std::string errMsg = "In JSONCObject::getJSONObject(), the provided json does not contain any key named \""+key+"\".";

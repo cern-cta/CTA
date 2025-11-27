@@ -211,8 +211,7 @@ std::string trimSlashes(const std::string& s) {
 
   // Find last non slash chararacter
   std::string::const_iterator it2;
-  size_t endpos = s.find_last_not_of("/");
-  if (std::string::npos != endpos) {
+  if (size_t endpos = s.find_last_not_of("/"); std::string::npos != endpos) {
     it2 = endpos + 1 + s.begin();
   } else {
     it2 = s.end();
@@ -227,8 +226,7 @@ std::string trimSlashes(const std::string& s) {
 std::string trimFinalSlashes(const std::string& s) {
   // Find last non slash chararacter
   std::string::const_iterator it2;
-  size_t endpos = s.find_last_not_of("/");
-  if (std::string::npos != endpos) {
+  if (size_t endpos = s.find_last_not_of("/"); std::string::npos != endpos) {
     it2 = endpos + 1 + s.begin();
   } else {
     it2 = s.end();

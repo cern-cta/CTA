@@ -42,8 +42,7 @@ CtaAdminParsedCmd::CtaAdminParsedCmd(int argc, const char* const* const argv) : 
 
   // Strip path from execname
 
-  size_t p = m_execname.find_last_of('/');
-  if (p != std::string::npos) {
+  if (size_t p = m_execname.find_last_of('/'); p != std::string::npos) {
     m_execname.erase(0, p + 1);
   }
 
@@ -152,10 +151,12 @@ void CtaAdminParsedCmd::parseOptions(int start, int argc, const char* const* con
         // Check if the value is '--all'
         if (std::string(argv[i]) == "--all" || std::string(argv[i]) == "-a") {
           // Find the OPT_FLAG type --all option explicitly
-          auto flag_it = std::find_if(options.begin(), options.end(), [](const Option& opt) {
-            return opt.get_type() == Option::OPT_FLAG && (opt == opt_all);
-          });
-          if (flag_it != options.end()) {
+          if (auto flag_it = std::find_if(
+                  options.begin(), options.end(),
+                  [](const Option& opt) {
+                      return opt.get_type() == Option::OPT_FLAG && (opt == opt_all);
+                  });
+              flag_it != options.end()) {
             addOption(*flag_it, "");  // Add --all as a flag option
             continue;                 // Move to the next argument
           }
@@ -251,8 +252,7 @@ void CtaAdminParsedCmd::readListFromFile(cta::admin::OptionStrList& str_list, co
 
   while (std::getline(file, line)) {
     // Strip out comments
-    auto pos = line.find('#');
-    if (pos != std::string::npos) {
+    if (auto pos = line.find('#'); pos != std::string::npos) {
       line.resize(pos);
     }
 

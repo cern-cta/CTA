@@ -33,14 +33,13 @@ int Cdomainname(char* name, int namelen) {
   struct hostent* hp;
   char* p;
 
-  FILE* fd;
   /*
 	 * try looking in /etc/resolv.conf
 	 * putting this here and assuming that it is correct, eliminates
 	 * calls to gethostbyname, and therefore DNS lookups. This helps
 	 * those on dialup systems.
 	 */
-  if ((fd = fopen("/etc/resolv.conf", "r")) != nullptr) {
+  if (FILE* fd; (fd = fopen("/etc/resolv.conf", "r")) != nullptr) {
     char line[300];
     while (fgets(line, sizeof(line), fd) != nullptr) {
       if ((strncmp(line, "domain", 6) == 0 || strncmp(line, "search", 6) == 0) && line[6] == ' ') {

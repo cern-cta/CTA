@@ -45,8 +45,7 @@ PostgresConn::PostgresConn(const rdbms::Login& login) : m_dbNamespace(login.dbNa
     m_pgsqlConn = nullptr;
     throw exception::Exception("Connection failed: " + pqmsgstr);
   }
-  const int sVer = PQserverVersion(m_pgsqlConn);
-  if (sVer < 90500) {
+  if (const int sVer = PQserverVersion(m_pgsqlConn); sVer < 90500) {
     PQfinish(m_pgsqlConn);
     m_pgsqlConn = nullptr;
     const int maj = (sVer / 10000) % 100;
@@ -168,8 +167,7 @@ std::list<std::string> PostgresConn::getSequenceNames() {
 
   throwDBIfNotStatus(res.get(), PGRES_TUPLES_OK, "Listing Sequences in the DB");
 
-  const int num_fields = PQnfields(res.get());
-  if (1 != num_fields) {
+  if (const int num_fields = PQnfields(res.get()); 1 != num_fields) {
     throw exception::Exception("number fields wrong during list sequences: Got " + std::to_string(num_fields));
   }
 
@@ -248,8 +246,7 @@ std::list<std::string> PostgresConn::getTableNames() {
 
   throwDBIfNotStatus(res.get(), PGRES_TUPLES_OK, "Listing table names in the DB");
 
-  const int num_fields = PQnfields(res.get());
-  if (1 != num_fields) {
+  if (const int num_fields = PQnfields(res.get()); 1 != num_fields) {
     throw exception::Exception("number fields wrong during list tables: Got " + std::to_string(num_fields));
   }
 

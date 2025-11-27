@@ -79,8 +79,7 @@ int createListenerSock(
 
   struct in_addr networkAddress;
 
-  const int rc = inet_pton(AF_INET, addr.c_str(), &networkAddress);
-  if(0 >= rc) {
+  if(const int rc = inet_pton(AF_INET, addr.c_str(), &networkAddress); 0 >= rc) {
     cta::exception::Exception ex;
     ex.getMessage() << "Failed to create listener socket:"
       " Failed to convert string to network address: value=" << addr;
@@ -222,8 +221,7 @@ int createLocalhostListenerSock(const unsigned short port) {
 
   const char *addr = "127.0.0.1";
   struct in_addr networkAddress;
-  const int rc = inet_pton(AF_INET, addr, &networkAddress);
-  if(0 >= rc) {
+  if(const int rc = inet_pton(AF_INET, addr, &networkAddress); 0 >= rc) {
     cta::exception::Exception ex;
     ex.getMessage() << "Failed to create listener socket:"
       " Failed to convert string to network address: value=" << addr;
@@ -394,9 +392,8 @@ mediachanger::IpAndPort getSockIpPort(const int socketFd)  {
 
   struct sockaddr_in address;
   memset(&address, '\0', sizeof(address));
-  socklen_t addressLen = sizeof(address);
 
-  if(getsockname(socketFd, (struct sockaddr*)&address, &addressLen) < 0) {
+  if(socklen_t addressLen = sizeof(address); getsockname(socketFd, (struct sockaddr*)&address, &addressLen) < 0) {
     cta::exception::Exception ex;
     ex.getMessage() << "Failed to get socket name: socketFd=" << socketFd <<
       ": " << cta::utils::errnoToString(errno);
@@ -422,9 +419,8 @@ mediachanger::IpAndPort getPeerIpPort(const int socketFd)  {
 
   struct sockaddr_in address;
   memset(&address, '\0', sizeof(address));
-  socklen_t addressLen = sizeof(address);
 
-  if(getpeername(socketFd, (struct sockaddr*)&address, &addressLen) < 0) {
+  if(socklen_t addressLen = sizeof(address); getpeername(socketFd, (struct sockaddr*)&address, &addressLen) < 0) {
     cta::exception::Exception ex;
     ex.getMessage() << ": Failed to get peer name: socketFd=" << socketFd <<
       ": " << cta::utils::errnoToString(errno);
@@ -460,10 +456,10 @@ std::string getSockHostName(const int socketFd) {
 
   char hostName[HOSTNAMEBUFLEN];
   char serviceName[SERVICENAMEBUFLEN];
-  const int error = getnameinfo((const struct sockaddr*)&address, addressLen,
-    hostName, sizeof(hostName), serviceName, sizeof(serviceName), 0);
 
-  if(error != 0) {
+    if (const int error = getnameinfo((const struct sockaddr *) &address, addressLen,
+                                      hostName, sizeof(hostName), serviceName, sizeof(serviceName), 0);
+        error != 0) {
     cta::exception::Exception ex;
     ex.getMessage() <<
       ": Failed to get host information by address"
@@ -514,7 +510,9 @@ void getSockIpHostnamePort(
     const int rc = getnameinfo((const struct sockaddr*)&address, addressLen,
       hostName, hostNameLen, serviceName, sizeof(serviceName), 0);
 
-    if(rc != 0) {
+    if (const int rc = getnameinfo((const struct sockaddr *) &address, addressLen,
+                                   hostName, hostNameLen, serviceName, sizeof(serviceName), 0);
+        rc != 0) {
       cta::exception::Exception ex;
       ex.getMessage() <<
         ": Failed to get host information by address"

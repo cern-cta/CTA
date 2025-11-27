@@ -35,8 +35,7 @@ namespace cta::disk {
 // DiskSystemList::at()
 //------------------------------------------------------------------------------
 const DiskSystem& DiskSystemList::at(const std::string& name) const {
-  auto dsi = std::find_if(begin(), end(), [&name](const DiskSystem& ds){ return ds.name == name; });
-  if (dsi != end()) return *dsi;
+  if (auto dsi = std::find_if(begin(), end(), [&name](const DiskSystem& ds){ return ds.name == name; }); dsi != end()) return *dsi;
   throw std::out_of_range("In DiskSystemList::at(): name " + name + " not found.");
 }
 
@@ -51,9 +50,8 @@ std::string DiskSystemList::getDSName(const std::string& fileURL) const {
     }
   }
   // Try and find the fileURL
-  auto pri = std::find_if(m_pointersAndRegexes.begin(), m_pointersAndRegexes.end(),
-    [&fileURL](const PointerAndRegex& pr){ return !pr.regex.exec(fileURL).empty(); });
-  if (pri != m_pointersAndRegexes.end()) {
+  if (auto pri = std::find_if(m_pointersAndRegexes.begin(), m_pointersAndRegexes.end(),
+      [&fileURL](const PointerAndRegex& pr){ return !pr.regex.exec(fileURL).empty(); }); pri != m_pointersAndRegexes.end()) {
     // We found a match. Let's move the pointer and regex to the front so next file will be faster (most likely).
     if (pri != m_pointersAndRegexes.begin())
       m_pointersAndRegexes.splice(m_pointersAndRegexes.begin(), m_pointersAndRegexes, pri);
@@ -119,12 +117,16 @@ void DiskSystemFreeSpaceList::fetchDiskSystemFreeSpace(const std::set<std::strin
     auto &diskInstanceSpace = diskSystem.diskInstanceSpace;
     try {
       std::vector<std::string> regexResult;
-      const auto currentTime = static_cast<uint64_t>(std::chrono::system_clock::to_time_t(std::chrono::system_clock::now()));
-      if (diskInstanceSpace.lastRefreshTime + diskInstanceSpace.refreshInterval >= currentTime) {
-        // use the value in the catalogue, it is still fresh
-        freeSpace = diskSystem.diskInstanceSpace.freeSpace;
-        updateFreeSpaceEntry(ds, freeSpace, catalogue, updateCatalogue);
-        continue;
+      {
+        const auto currentTime = static_cast<uint64_t>(std::chrono::system_clock::to_time_t(
+                std::chrono::system_clock::now()));
+
+        if (diskInstanceSpace.lastRefreshTime + diskInstanceSpace.refreshInterval >= currentTime) {
+          // use the value in the catalogue, it is still fresh
+          freeSpace = diskSystem.diskInstanceSpace.freeSpace;
+          updateFreeSpaceEntry(ds, freeSpace, catalogue, updateCatalogue);
+          continue;
+        }
       }
       updateCatalogue = true;
       const auto &freeSpaceQueryUrl = getDiskSystemFreeSpaceQueryURL(diskSystem);

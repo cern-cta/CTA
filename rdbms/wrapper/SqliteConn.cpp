@@ -84,8 +84,8 @@ void SqliteConn::close() {
   threading::MutexLocker locker(m_mutex);
 
   if(nullptr != m_sqliteConn) {
-    const int closeRc = sqlite3_close(m_sqliteConn);
-    if(SQLITE_OK != closeRc) {
+    if(const int closeRc = sqlite3_close(m_sqliteConn);
+       SQLITE_OK != closeRc) {
       exception::Exception ex;
       ex.getMessage() << "Failed to close SQLite connection: " << Sqlite::rcToStr(closeRc);
       throw ex;
@@ -239,8 +239,7 @@ std::map<std::string, std::string, std::less<>> SqliteConn::getColumns(const std
 
   auto stmt = createStmt(sql);
   stmt->bindString(":TABLE_NAME", tableName);
-  auto rset = stmt->executeQuery();
-  if (rset->next()) {
+  if (auto rset = stmt->executeQuery(); rset->next()) {
     auto tableSql = rset->columnOptionalString("SQL").value();
     tableSql += std::string(","); // hack for parsing
     std::string::size_type searchPosComma = 0;
@@ -369,8 +368,7 @@ std::list<std::string> SqliteConn::getConstraintNames(const std::string &tableNa
   )SQL";
   auto stmt = createStmt(sql);
   stmt->bindString(":TABLE_NAME", tableName);
-  auto rset = stmt->executeQuery();
-  if (rset->next()) {
+  if (auto rset = stmt->executeQuery(); rset->next()) {
     auto tableSql = rset->columnOptionalString("SQL").value();
     tableSql += std::string(","); // hack for parsing
     std::string::size_type searchPosComma = 0;

@@ -118,9 +118,8 @@ cta::exception::Backtrace::Backtrace(bool fake) {
   void * array[200];
   g_lock.lock();
   size_t depth = ::backtrace(array, sizeof(array)/sizeof(void*));
-  char ** strings = ::backtrace_symbols(array, depth);
 
-  if (!strings)
+  if (char ** strings = ::backtrace_symbols(array, depth); !strings)
     m_trace = "";
   else {
     for (size_t i=0; i<depth; i++) {

@@ -76,10 +76,8 @@ StatisticsUpdateCmdLineArgs::StatisticsUpdateCmdLineArgs(const int argc, char *c
   }
 
   // Calculate the number of non-option ARGV-elements
-  const int nbArgs = argc - optind;
-
   // Check the number of arguments
-  if (nbArgs != 1) {
+  if (const int nbArgs = argc - optind; nbArgs != 1) {
     exception::CommandLineNotParsed ex;
     ex.getMessage() << "Wrong number of command-line arguments: expected=1 actual=" << nbArgs;
     throw ex;

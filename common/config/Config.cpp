@@ -95,8 +95,7 @@ void Config::parse(std::ifstream& file) {
 
   while (std::getline(file, line)) {
     // Strip out comments
-    auto pos = line.find('#');
-    if (pos != std::string::npos) {
+    if (auto pos = line.find('#'); pos != std::string::npos) {
       line.resize(pos);
     }
 

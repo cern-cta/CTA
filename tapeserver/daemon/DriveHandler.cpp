@@ -300,8 +300,8 @@ SubprocessHandler::ProcessingStatus DriveHandler::processEvent() {
   // Read from the socket pair
   try {
     serializers::WatchdogMessage message;
-    auto datagram = m_socketPair->receive(server::SocketPair::Side::child);
-    if (!message.ParseFromString(datagram)) {
+    if (auto datagram = m_socketPair->receive(server::SocketPair::Side::child);
+        !message.ParseFromString(datagram)) {
       // Use the tolerant parser to assess the situation.
       message.ParsePartialFromString(datagram);
       throw cta::exception::Exception(std::string("In SubprocessHandler::ProcessingStatus(): could not parse message: ") +
@@ -661,10 +661,10 @@ int DriveHandler::runChild() {
 
   // 2) If the previous session crashed, we might want to run a cleaner session, depending
   // on the previous state
-  const std::set<SessionState> statesRequiringCleaner = {
-    SessionState::Mounting, SessionState::Running, SessionState::Unmounting
-  };
-  if (m_previousSession == PreviousSession::Crashed && statesRequiringCleaner.count(m_previousState)) {
+  if (const std::set<SessionState> statesRequiringCleaner = {
+      SessionState::Mounting, SessionState::Running, SessionState::Unmounting
+      };
+      m_previousSession == PreviousSession::Crashed && statesRequiringCleaner.count(m_previousState)) {
     // Set session type to cleanup
     m_sessionType = SessionType::Cleanup;
     if (m_previousVid.empty()) {
@@ -826,9 +826,9 @@ SubprocessHandler::ProcessingStatus DriveHandler::shutdown() {
     return exitShutdown();
   }
 
-  std::set<SessionState> statesRequiringCleaner = { SessionState::Mounting,
-    SessionState::Running, SessionState::Unmounting };
-  if (statesRequiringCleaner.count(m_previousState)) {
+  if (const std::set<SessionState> statesRequiringCleaner = { SessionState::Mounting,
+      SessionState::Running, SessionState::Unmounting };
+      statesRequiringCleaner.count(m_previousState)) {
     if (m_sessionVid.empty()) {
       m_lc.log(log::ERR, "In DriveHandler::shutdown(): Should run cleaner but VID is missing. Do nothing.");
     }

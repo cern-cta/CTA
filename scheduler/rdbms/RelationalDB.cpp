@@ -972,8 +972,7 @@ RelationalDB::getNextSuccessfulArchiveRepackReportBatch(log::LogContext& lc) {
   // ------------------------------------------
   // calling the deletion for the jobSrcUrls
   // ------------------------------------------
-  bool deletionOk = deleteDiskFiles(jobSrcUrls, lc);
-  if (!deletionOk){
+  if (!deleteDiskFiles(jobSrcUrls, lc)){
     txn.abort();
     return ret;
   }
@@ -1148,8 +1147,7 @@ RelationalDB::getNextFailedArchiveRepackReportBatch(log::LogContext& lc) {
   // ------------------------------------------
   // calling the deletion for the jobSrcUrls
   // ------------------------------------------
-  bool deletionOk = deleteDiskFiles(jobSrcUrls, lc);
-  if (!deletionOk){
+  if (!deleteDiskFiles(jobSrcUrls, lc)){
     lc.log(cta::log::WARNING,
            "In RelationalDB::getNextFailedArchiveRepackReportBatch(): Failed to delete files from disk.");
   }

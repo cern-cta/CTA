@@ -288,8 +288,8 @@ void WorkflowEvent::processCLOSEW(xrd::Response& response) {
       m_lc.log(log::INFO, logMessage);
       throw exception::PbException("CLOSEW: Failed to find the extended attribute named sys.archive.file_id");
     }
-    const std::string archiveFileIdStr = archiveFileIdItor->second;
-    if ((archiveFileId = strtoul(archiveFileIdStr.c_str(), nullptr, 10)) == 0) {
+    if (const std::string archiveFileIdStr = archiveFileIdItor->second;
+        (archiveFileId = strtoul(archiveFileIdStr.c_str(), nullptr, 10)) == 0) {
       params.add("sys.archive.file_id", archiveFileIdStr);
       logMessage += "sys.archive.file_id is not a positive integer";
       m_lc.log(log::INFO, logMessage);
@@ -352,8 +352,7 @@ void WorkflowEvent::processPREPARE(xrd::Response& response) {
     request.vid = m_event.wf().vid();
   }
 
-  auto archiveFileId = m_event.file().archive_file_id();
-  if (archiveFileId) {
+  if (auto archiveFileId = m_event.file().archive_file_id(); archiveFileId) {
     request.archiveFileID = archiveFileId;
   }
   else {
@@ -412,8 +411,7 @@ void WorkflowEvent::processABORT_PREPARE(xrd::Response& response) {
   request.requester.name   = m_event.cli().user().username();
   request.requester.group  = m_event.cli().user().groupname();
 
-  auto archiveFileId = m_event.file().archive_file_id();
-  if (archiveFileId) {
+  if (auto archiveFileId = m_event.file().archive_file_id(); archiveFileId) {
     request.archiveFileID = archiveFileId;
   }
   else {
@@ -434,8 +432,7 @@ void WorkflowEvent::processABORT_PREPARE(xrd::Response& response) {
   }
 
   // first check if there is a first-class request Id set, if not, fallback to checking xattrs
-  std::string retrieveRequestId = m_event.file().request_objectstore_id();
-  if (!retrieveRequestId.empty()) {
+  if (std::string retrieveRequestId = m_event.file().request_objectstore_id(); !retrieveRequestId.empty()) {
     request.retrieveRequestId = retrieveRequestId;
   }
   else {

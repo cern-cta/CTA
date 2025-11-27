@@ -240,8 +240,7 @@ eos::rpc::MDResponse GrpcClient::GetMD(eos::rpc::TYPE type, uint64_t id, const s
   while(true) {
     void *got_tag;
     bool ok = false;
-    bool ret = cq.Next(&got_tag, &ok);
-    if(!ret || !ok || got_tag != tag) break;
+    if(bool ret = cq.Next(&got_tag, &ok); !ret || !ok || got_tag != tag) break;
     rpc->Read(&response, tag);
   }
   if(showJson) {

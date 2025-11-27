@@ -101,8 +101,7 @@ std::optional<std::string> RdbmsCatalogueUtils::defaultVirtualOrganizationForRep
       IS_REPACK_VO = '1'
   )SQL";
   auto stmt = conn.createStmt(sql);
-  auto rset = stmt.executeQuery();
-  if (rset.next()) {
+  if (auto rset = stmt.executeQuery(); rset.next()) {
     return rset.columnString("VIRTUAL_ORGANIZATION_NAME");
   } else {
     return std::nullopt;

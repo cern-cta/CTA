@@ -183,8 +183,7 @@ bool DropSchemaCmd::isProductionSet(cta::rdbms::Conn& conn) {
     SELECT CTA_SCHEDULER.IS_PRODUCTION AS IS_PRODUCTION FROM CTA_SCHEDULER
   )SQL";
   auto stmt = conn.createStmt(sql);
-  auto rset = stmt.executeQuery();
-  if (rset.next()) {
+  if (auto rset = stmt.executeQuery(); rset.next()) {
     return rset.columnBool("IS_PRODUCTION");
   } else {
     return false;  // The table is empty

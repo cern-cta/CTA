@@ -222,10 +222,11 @@ public:
       timingList.insertAndReset("ownershipAdditionTime", t);
       m_agentReference.addBatchToOwnership(candidateElementsAddresses, m_backend);
       // We can now attempt to switch ownership of elements
-      auto failedOwnershipSwitchElements = ContainerTraits<Q,C>::switchElementsOwnershipAndStatus(candidateElements,
-          m_agentReference.getAgentAddress(),
-          cont.getAddressIfSet(), timingList, t, lc, newStatus);
-      if (failedOwnershipSwitchElements.empty()) {
+      if (auto failedOwnershipSwitchElements = ContainerTraits<Q, C>::switchElementsOwnershipAndStatus(
+                candidateElements,
+                m_agentReference.getAgentAddress(),
+                cont.getAddressIfSet(), timingList, t, lc, newStatus);
+          failedOwnershipSwitchElements.empty()) {
         timingList.insertAndReset("updateResultProcessingTime", t);
         // This is the easy case (and most common case). Everything went through fine.
         ContainerTraits<Q,C>::removeReferencesAndCommit(cont, candidateElementsAddresses, lc);
@@ -362,9 +363,11 @@ public:
       localTimingList.insertAndReset("ownershipAdditionTime", t);
       m_agentReference.addBatchToOwnership(candidateElementsAddresses, m_backend);
       // We can now attempt to switch ownership of elements
-      auto failedOwnershipSwitchElements = ContainerTraits<Q,C>::switchElementsOwnership(candidateElements, m_agentReference.getAgentAddress(),
-          cont.getAddressIfSet(), localTimingList, t, lc);
-      if (failedOwnershipSwitchElements.empty()) {
+      if (auto failedOwnershipSwitchElements = ContainerTraits<Q, C>::switchElementsOwnership(candidateElements,
+                                                                                              m_agentReference.getAgentAddress(),
+                                                                                              cont.getAddressIfSet(),
+                                                                                              localTimingList, t, lc);
+          failedOwnershipSwitchElements.empty()) {
         localTimingList.insertAndReset("updateResultProcessingTime", t);
         // This is the easy case (and most common case). Everything went through fine.
         ContainerTraits<Q,C>::removeReferencesAndCommit(cont, candidateElementsAddresses, lc);

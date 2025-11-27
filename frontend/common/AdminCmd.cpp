@@ -857,10 +857,12 @@ void AdminCmd::processRepack_Add(xrd::Response& response) {
   common::dataStructures::MountPolicy mountPolicy;
   using MountPolicyList = std::list<common::dataStructures::MountPolicy>;
   MountPolicyList mountPolicies = m_catalogue.MountPolicy()->getMountPolicies();
-  MountPolicyList::const_iterator repackMountPolicyItor = std::find_if(mountPolicies.begin(),mountPolicies.end(),[&mountPolicyProvidedByUser](const common::dataStructures::MountPolicy& mp) {
-    return mp.name == mountPolicyProvidedByUser;
-  });
-  if(repackMountPolicyItor != mountPolicies.end()) {
+  if(MountPolicyList::const_iterator repackMountPolicyItor = std::find_if(
+        mountPolicies.begin(),
+        mountPolicies.end(),
+        [&mountPolicyProvidedByUser](const common::dataStructures::MountPolicy& mp) {
+            return mp.name == mountPolicyProvidedByUser;
+        }); repackMountPolicyItor != mountPolicies.end()) {
     //The mount policy exists
     mountPolicy = *repackMountPolicyItor;
   } else {

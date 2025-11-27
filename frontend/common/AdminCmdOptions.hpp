@@ -103,8 +103,7 @@ public:
    * @retval    false     The flag is either not present or is present and set to false
    */
   bool has_flag(admin::OptionBoolean::Key option, bool* has_option = nullptr) const {
-    auto opt_it = m_option_bool.find(option);
-    if (opt_it != m_option_bool.end()) {
+    if (auto opt_it = m_option_bool.find(option); opt_it != m_option_bool.end()) {
       if (has_option != nullptr) {
         *has_option = true;
       }

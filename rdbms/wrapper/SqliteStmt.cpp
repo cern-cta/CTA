@@ -98,8 +98,8 @@ void SqliteStmt::clear() {
     threading::MutexLocker locker(m_mutex);
 
     if(nullptr != m_stmt) {
-      const int resetRc = sqlite3_reset(m_stmt);
-      if(SQLITE_OK != resetRc) {
+      if(const int resetRc = sqlite3_reset(m_stmt);
+         SQLITE_OK != resetRc) {
         exception::Exception ex;
         ex.getMessage() <<"sqlite3_reset failed: " << Sqlite::rcToStr(resetRc);
       }
@@ -122,8 +122,8 @@ void SqliteStmt::close() {
     threading::MutexLocker locker(m_mutex);
 
     if (nullptr != m_stmt) {
-      const int finalizeRc = sqlite3_finalize(m_stmt);
-      if (SQLITE_OK != finalizeRc) {
+      if (const int finalizeRc = sqlite3_finalize(m_stmt);
+          SQLITE_OK != finalizeRc) {
         exception::Exception ex;
         ex.getMessage() <<"sqlite3_finalize failed: " << Sqlite::rcToStr(finalizeRc);
       }

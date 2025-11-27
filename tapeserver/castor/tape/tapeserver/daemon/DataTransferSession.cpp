@@ -145,8 +145,8 @@ castor::tape::tapeserver::daemon::DataTransferSession::execute() {
       lc.log(cta::log::INFO, "Transition from down to up detected. Will check if a tape is in the drive.");
       if (!emptyDriveProbe.driveIsEmpty()) {
         std::string errorMsg = "A tape was detected in the drive. Putting the drive down.";
-        std::optional<std::string> probeErrorMsg = emptyDriveProbe.getProbeErrorMsg();
-        if (probeErrorMsg) {
+        if (std::optional<std::string> probeErrorMsg = emptyDriveProbe.getProbeErrorMsg();
+            probeErrorMsg) {
           errorMsg = probeErrorMsg.value();
         }
         putDriveDown(errorMsg, nullptr, lc);
