@@ -115,7 +115,7 @@ format-apply:
     - git config user.name $GITLAB_USER_LOGIN
   script:
     - |
-      if [[ $(ls $DIFF_DIRECTORY | wc -l) -le 1 ]]; then
+      if [[ $(ls $DIFF_DIRECTORY | wc -l) -lt 1 ]]; then
         echo "No formatting diffs found to apply"
         exit 0;
       fi
