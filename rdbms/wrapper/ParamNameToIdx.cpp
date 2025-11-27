@@ -59,8 +59,7 @@ ParamNameToIdx::ParamNameToIdx(const std::string &sql) {
 uint32_t ParamNameToIdx::getIdx(const std::string &paramName) const {
   auto itor = m_nameToIdx.find(paramName);
   if(itor == m_nameToIdx.end()) {
-    throw exception::Exception(std::string(__FUNCTION__) + " failed: The SQL parameter " + paramName +
-      " does not exist");
+    throw exception::Exception("SQL parameter " + paramName + " does not exist");
   }
   return itor->second;
 }

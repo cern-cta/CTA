@@ -64,21 +64,16 @@ void PostgresColumn::setFieldByteA(rdbms::Conn &conn, const size_t index, const 
 // getValue
 //------------------------------------------------------------------------------
 const char *PostgresColumn::getValue(size_t index) const {
-  try {
-    if(index >= m_nbRows) {
-      exception::Exception ex;
-      ex.getMessage() << "Field index is outside the available rows:"
-        " index=" << index << " m_nbRows=" << m_nbRows;
-      throw ex;
-    }
-    if (m_fieldValues[index].first) {
-      return m_fieldValues[index].second.c_str();
-    } else {
-      return nullptr;
-    }
-  } catch(exception::Exception &ex) {
-    throw exception::Exception(std::string(__FUNCTION__) + " failed: colName=" + m_colName + ": " +
-      ex.getMessage().str());
+  if(index >= m_nbRows) {
+    exception::Exception ex;
+    ex.getMessage() << "Field index is outside the available rows:"
+      " index=" << index << " m_nbRows=" << m_nbRows << "colName=" + m_colName;
+    throw ex;
+  }
+  if (m_fieldValues[index].first) {
+    return m_fieldValues[index].second.c_str();
+  } else {
+    return nullptr;
   }
 }
 
@@ -86,19 +81,14 @@ const char *PostgresColumn::getValue(size_t index) const {
 // copyStrIntoField
 //------------------------------------------------------------------------------
 void PostgresColumn::copyStrIntoField(const size_t index, const std::string &str) {
-  try {
-    if(index >= m_nbRows) {
-      exception::Exception ex;
-      ex.getMessage() << "Field index is outside the available rows:"
-        " index=" << index << " m_nbRows=" << m_nbRows;
-      throw ex;
-    }
-    m_fieldValues[index].first = true;
-    m_fieldValues[index].second = str;
-  } catch(exception::Exception &ex) {
-    throw exception::Exception(std::string(__FUNCTION__) + " failed: colName=" + m_colName + ": " +
-      ex.getMessage().str());
+  if(index >= m_nbRows) {
+    exception::Exception ex;
+    ex.getMessage() << "Field index is outside the available rows:"
+      " index=" << index << " m_nbRows=" << m_nbRows << "colName=" + m_colName;
+    throw ex;
   }
+  m_fieldValues[index].first = true;
+  m_fieldValues[index].second = str;
 }
 
 } // namespace cta::rdbms::wrapper

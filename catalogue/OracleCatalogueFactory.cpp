@@ -42,10 +42,7 @@ OracleCatalogueFactory::OracleCatalogueFactory(
   m_nbArchiveFileListingConns(nbArchiveFileListingConns),
   m_maxTriesToConnect(maxTriesToConnect) {
   if (rdbms::Login::DBTYPE_ORACLE != login.dbType) {
-    exception::Exception ex;
-    ex.getMessage() << __FUNCTION__ << "failed: Incorrect database type: expected=DBTYPE_ORACLE actual=" <<
-      rdbms::Login::dbTypeToString(login.dbType);
-    throw ex;
+    throw exception::Exception("Incorrect database type: expected=DBTYPE_ORACLE actual=" + rdbms::Login::dbTypeToString(login.dbType));
   }
 }
 
@@ -53,12 +50,8 @@ OracleCatalogueFactory::OracleCatalogueFactory(
 // create
 //------------------------------------------------------------------------------
 std::unique_ptr<Catalogue> OracleCatalogueFactory::create() {
-  try {
-    auto c = std::make_unique<OracleCatalogue>(m_log, m_login, m_nbConns, m_nbArchiveFileListingConns);
-    return std::make_unique<CatalogueRetryWrapper>(m_log, std::move(c), m_maxTriesToConnect);
-  } catch(exception::Exception &ex) {
-    throw exception::Exception(std::string(__FUNCTION__) + " failed: " + ex.getMessage().str());
-  }
+  auto c = std::make_unique<OracleCatalogue>(m_log, m_login, m_nbConns, m_nbArchiveFileListingConns);
+  return std::make_unique<CatalogueRetryWrapper>(m_log, std::move(c), m_maxTriesToConnect);
 }
 
 } // namespace cta::catalogue

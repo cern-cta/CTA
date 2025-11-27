@@ -148,7 +148,7 @@ void WorkflowEvent::processCREATE(xrd::Response& response) {
   checkIsNotEmptyString(m_event.cli().user().username(),  "m_event.cli.user.username");
   checkIsNotEmptyString(m_event.cli().user().groupname(), "m_event.cli.user.groupname");
   if(m_event.file().owner().uid() == 0) {
-    throw exception::PbException(std::string(__FUNCTION__) + ": file owner uid must be non-zero (archive files cannot be owned by root)");
+    throw exception::PbException("CREATE: file owner uid must be non-zero (archive files cannot be owned by root)");
   }
 
   // Unpack message
@@ -176,14 +176,12 @@ void WorkflowEvent::processCREATE(xrd::Response& response) {
       // Fall back to old xattr format
       storageClassItor = m_event.file().xattr().find("CTA_StorageClass");
       if (m_event.file().xattr().end() == storageClassItor) {
-        throw exception::PbException(std::string(__FUNCTION__) +
-                                     ": sys.archive.storage_class extended attribute is not set");
+        throw exception::PbException("CREATE: sys.archive.storage_class extended attribute is not set");
       }
     }
     const std::string storageClass = storageClassItor->second;
     if (storageClass.empty()) {
-      throw exception::PbException(std::string(__FUNCTION__) +
-                                   ": sys.archive.storage_class extended attribute is set to an empty string");
+      throw exception::PbException("CREATE: sys.archive.storage_class extended attribute is set to an empty string");
     }
     // For testing, this storage class will always fail on CLOSEW. Allow it to pass CREATE and don't allocate an archive Id from the pool.
     if (storageClassItor->second == "fail_on_closew_test") {
@@ -231,8 +229,7 @@ void WorkflowEvent::processCLOSEW(xrd::Response& response) {
     // Unpack message
     const auto storageClassItor = m_event.file().xattr().find("sys.archive.storage_class");
     if (m_event.file().xattr().end() == storageClassItor) {
-      throw exception::PbException(std::string(__FUNCTION__) +
-                                   ": Failed to find the extended attribute named sys.archive.storage_class");
+      throw exception::PbException("CLOSEW: Failed to find the extended attribute named sys.archive.storage_class");
     }
     storageClassStr = storageClassItor->second;
   }
@@ -289,8 +286,7 @@ void WorkflowEvent::processCLOSEW(xrd::Response& response) {
     if (m_event.file().xattr().end() == archiveFileIdItor) {
       logMessage += "sys.archive.file_id is not present in extended attributes";
       m_lc.log(log::INFO, logMessage);
-      throw exception::PbException(std::string(__FUNCTION__) +
-                                   ": Failed to find the extended attribute named sys.archive.file_id");
+      throw exception::PbException("CLOSEW: Failed to find the extended attribute named sys.archive.file_id");
     }
     const std::string archiveFileIdStr = archiveFileIdItor->second;
     if ((archiveFileId = strtoul(archiveFileIdStr.c_str(), nullptr, 10)) == 0) {
@@ -368,8 +364,7 @@ void WorkflowEvent::processPREPARE(xrd::Response& response) {
       // Fall back to the old xattr format
       archiveFileIdItor = m_event.file().xattr().find("CTA_ArchiveFileId");
       if (m_event.file().xattr().end() == archiveFileIdItor) {
-        throw exception::PbException(std::string(__FUNCTION__) +
-                                     ": Failed to find the extended attribute named sys.archive.file_id");
+        throw exception::PbException("PREPARE: Failed to find the extended attribute named sys.archive.file_id");
       }
     }
 
@@ -429,8 +424,7 @@ void WorkflowEvent::processABORT_PREPARE(xrd::Response& response) {
       // Fall back to the old xattr format
       archiveFileIdItor = m_event.file().xattr().find("CTA_ArchiveFileId");
       if (m_event.file().xattr().end() == archiveFileIdItor) {
-        throw exception::PbException(std::string(__FUNCTION__) +
-                                     ": Failed to find the extended attribute named sys.archive.file_id");
+        throw exception::PbException("ABORT_PREPARE: Failed to find the extended attribute named sys.archive.file_id");
       }
     }
     if (const std::string archiveFileIdStr = archiveFileIdItor->second;
@@ -448,8 +442,7 @@ void WorkflowEvent::processABORT_PREPARE(xrd::Response& response) {
     // The request Id should be stored as an extended attribute
     const auto retrieveRequestIdItor = m_event.file().xattr().find("sys.cta.objectstore.id");
     if (m_event.file().xattr().end() == retrieveRequestIdItor) {
-      throw exception::PbException(std::string(__FUNCTION__) +
-                                   ": Failed to find the extended attribute named sys.cta.objectstore.id");
+      throw exception::PbException("ABORT_PREPARE: Failed to find the extended attribute named sys.cta.objectstore.id");
     }
     retrieveRequestId = retrieveRequestIdItor->second;
     request.retrieveRequestId = retrieveRequestId;
@@ -511,8 +504,7 @@ void WorkflowEvent::processDELETE(xrd::Response& response) {
     if(m_event.file().xattr().end() == archiveFileIdItor) {
       archiveFileIdItor = m_event.file().xattr().find("CTA_ArchiveFileId");
       if (m_event.file().xattr().end() == archiveFileIdItor) {
-        throw exception::PbException(std::string(__FUNCTION__) +
-                                     ": Failed to find the extended attribute named sys.archive.file_id");
+        throw exception::PbException("DELETE: Failed to find the extended attribute named sys.archive.file_id");
       }
     }
     if (const std::string archiveFileIdStr = archiveFileIdItor->second;
@@ -580,7 +572,7 @@ void WorkflowEvent::processUPDATE_FID(xrd::Response& response) {
     // Fall back to the old xattr format
     archiveFileIdItor = m_event.file().xattr().find("CTA_ArchiveFileId");
     if(m_event.file().xattr().end() == archiveFileIdItor) {
-      throw exception::PbException(std::string(__FUNCTION__) + ": Failed to find the extended attribute named sys.archive.file_id");
+      throw exception::PbException("DELETE: Failed to find the extended attribute named sys.archive.file_id");
     }
   }
   const std::string archiveFileIdStr = archiveFileIdItor->second;

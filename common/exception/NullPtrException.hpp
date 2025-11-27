@@ -15,12 +15,22 @@
  *               submit itself to any jurisdiction.
  */
 
-#include <errno.h>
-#include "common/exception/NoEntry.hpp"
+#pragma once
 
-// -----------------------------------------------------------------------
-// Constructor
-// -----------------------------------------------------------------------
-cta::exception::NoEntry::NoEntry() :
-  // No backtrace for this exception
-  cta::exception::Exception("", false) {}
+// Include Files
+#include "common/exception/Exception.hpp"
+
+namespace cta::exception {
+
+/**
+ * Null pointer exception
+ */
+class NullPtrException : public cta::exception::Exception {
+public:
+  /**
+   * default constructor
+   */
+  NullPtrException(const std::string& context = "") : cta::exception::Exception(context) {}
+};
+
+}  // namespace cta::exception

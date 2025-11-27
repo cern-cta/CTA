@@ -21,18 +21,16 @@
 
 namespace cta::exception {
 
-    /**
-     * Missing operand.
-     */
-    class MissingOperand : public cta::exception::Exception {
-      
-    public:
-      
-      /**
-       * Constructor
-       */
-      MissingOperand();
+/**
+ * Missing operand.
+ */
+class MissingOperand : public cta::exception::Exception {
+public:
+  /**
+   * Constructor
+   */
+  MissingOperand() : cta::exception::Exception() {}
 
-    }; // class MissingOperand
+};  // class MissingOperand
 
-} // namespace cta::exception
+}  // namespace cta::exception

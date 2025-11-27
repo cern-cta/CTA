@@ -28,12 +28,10 @@ RWLockWrLocker::RWLockWrLocker(RWLock &lock): m_lock(lock) {
   try {
     m_lock.wrlock();
   } catch(exception::Exception &ne) {
-    exception::Exception ex;
-    ex.getMessage() << __FUNCTION__ << " failed to take write lock: " << ne.getMessage().str();
-    throw ex;
+    throw exception::Exception(" Failed to take write lock: " + ne.getMessage().str());
   }
 }
-  
+
 //------------------------------------------------------------------------------
 // destructor
 //------------------------------------------------------------------------------

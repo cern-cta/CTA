@@ -16,6 +16,7 @@
  */
 
 #include "common/exception/Exception.hpp"
+#include "common/exception/NullPtrException.hpp"
 #include "common/exception/Errnum.hpp"
 #include "common/utils/Regex.hpp"
 #include "common/utils/utils.hpp"
@@ -523,17 +524,13 @@ std::string hexDump(const void* mem, unsigned int n) {
 //-----------------------------------------------------------------------------
 void copyString(char* const dst, const size_t dstSize, const std::string& src) {
   if (dst == nullptr) {
-    cta::exception::Exception ex;
-
-    ex.getMessage() << __FUNCTION__ << ": Pointer to destination string is nullptr";
-
-    throw ex;
+    throw cta::exception::NullPtrException();
   }
 
   if (src.length() >= dstSize) {
     cta::exception::Exception ex;
 
-    ex.getMessage() << __FUNCTION__ << ": Source string is longer than destination.  Source length: " << src.length()
+    ex.getMessage() << "Source string is longer than destination.  Source length: " << src.length()
                     << " Max destination length: " << (dstSize - 1);
 
     throw ex;

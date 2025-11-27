@@ -82,17 +82,17 @@ public:
       XrdSsiPb::Log::Msg(XrdSsiPb::Log::DEBUG, LOG_SUFFIX, "GetBuff(): Returning buffer with ", dlen, " bytes of data.");
     } catch(cta::exception::Exception &ex) {
       std::ostringstream errMsg;
-      errMsg << __FUNCTION__ << " failed: Caught CTA exception: " << ex.what();
+      errMsg << "In GetBuff(): Caught CTA exception: " << ex.what();
       eInfo.Set(errMsg.str().c_str(), ECANCELED);
       return nullptr;
     } catch(std::exception &ex) {
       std::ostringstream errMsg;
-      errMsg << __FUNCTION__ << " failed: " << ex.what();
+      errMsg << "In GetBuff(): Failed: " << ex.what();
       eInfo.Set(errMsg.str().c_str(), ECANCELED);
       return nullptr;
     } catch(...) {
       std::ostringstream errMsg;
-      errMsg << __FUNCTION__ << " failed: Caught an unknown exception";
+      errMsg << "In GetBuff(): Caught an unknown exception";
       eInfo.Set(errMsg.str().c_str(), ECANCELED);
       return nullptr;
     }

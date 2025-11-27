@@ -43,7 +43,7 @@ ReadSession(drive, volInfo, useLbp) {
   size_t bytes_read = m_drive.readBlock(data, blockSize);
   if (bytes_read < sizeof(vol1)) {
     delete[] data;
-    throw cta::exception::Exception(std::string(__FUNCTION__) + " failed: Too few bytes read from label");
+    throw cta::exception::Exception("Too few bytes read from label");
   }
   memcpy(&vol1, data, sizeof(vol1));
   delete[] data;
@@ -60,7 +60,7 @@ ReadSession(drive, volInfo, useLbp) {
   };
   HeaderChecker::checkVOL1(vol1, volInfo.vid);
   // after which we are at the end of VOL1 header (e.g. beginning of first file)
-  m_drive.readFileMark(std::string(__FUNCTION__) + " failed: Reading filemark");
+  m_drive.readFileMark("Reading filemark");
 }
 
 }  // namespace castor::tape::tapeFile

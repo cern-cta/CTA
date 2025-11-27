@@ -15,6 +15,7 @@
  *               submit itself to any jurisdiction.
  */
 
+#include "common/exception/NotImplementedException.hpp"
 #include "common/exception/Exception.hpp"
 #include "common/utils/utils.hpp"
 #include "rdbms/NullDbValue.hpp"
@@ -39,7 +40,7 @@ OcciRset::OcciRset(OcciStmt &stmt, oracle::occi::ResultSet *const rset):
     }
     populateColNameToIdxMap();
   } catch(exception::Exception &ne) {
-    throw exception::Exception(std::string(__FUNCTION__) + " failed for SQL statement " + m_stmt.getSql() + ": " +
+    throw exception::Exception("Failed SQL statement " + m_stmt.getSql() + ": " +
       ne.getMessage().str());
   }
 }
@@ -50,18 +51,12 @@ OcciRset::OcciRset(OcciStmt &stmt, oracle::occi::ResultSet *const rset):
 void OcciRset::populateColNameToIdxMap() {
   using namespace oracle;
 
-  try {
-    const auto columns = m_rset->getColumnListMetaData();
-    for (unsigned int i = 0; i < columns.size(); i++) {
-      // Column indices start at 1
-      const unsigned int colIdx = i + 1;
-      const std::string name = columns[i].getString(occi::MetaData::ATTR_NAME);
-      m_colNameToIdx.add(name, colIdx);
-    }
-  } catch(exception::Exception &ne) {
-    throw exception::Exception(std::string(__FUNCTION__) + " failed: " + ne.getMessage().str());
-  } catch(std::exception &se) {
-    throw exception::Exception(std::string(__FUNCTION__) + " failed: " + se.what());
+  const auto columns = m_rset->getColumnListMetaData();
+  for (unsigned int i = 0; i < columns.size(); i++) {
+    // Column indices start at 1
+    const unsigned int colIdx = i + 1;
+    const std::string name = columns[i].getString(occi::MetaData::ATTR_NAME);
+    m_colNameToIdx.add(name, colIdx);
   }
 }
 
@@ -93,8 +88,7 @@ bool OcciRset::next() {
     const occi::ResultSet::Status status = m_rset->next();
     return occi::ResultSet::DATA_AVAILABLE == status;
   } catch(std::exception &se) {
-    throw exception::Exception(std::string(__FUNCTION__) + " failed for SQL statement " + m_stmt.getSql() + ": " +
-      se.what());
+    throw exception::Exception("Failed SQL statement " + m_stmt.getSql() + ": " + se.what());
   }
 }
 
@@ -102,14 +96,8 @@ bool OcciRset::next() {
 // columnIsNull
 //------------------------------------------------------------------------------
 bool OcciRset::columnIsNull(const std::string &colName) const {
-  try {
-    const int colIdx = m_colNameToIdx.getIdx(colName);
-    return m_rset->isNull(colIdx);
-  } catch(exception::Exception &ne) {
-    throw exception::Exception(std::string(__FUNCTION__) + " failed: " + ne.getMessage().str());
-  } catch(std::exception &se) {
-    throw exception::Exception(std::string(__FUNCTION__) + " failed: " + se.what());
-  }
+  const int colIdx = m_colNameToIdx.getIdx(colName);
+  return m_rset->isNull(colIdx);
 }
 
 //------------------------------------------------------------------------------
@@ -135,11 +123,9 @@ std::string OcciRset::columnBlob(const std::string &colName) const {
     raw.getBytes(bytearray.get(), raw.length());
     return std::string(reinterpret_cast<char*>(bytearray.get()), raw.length());
   } catch(exception::Exception &ne) {
-    throw exception::Exception(std::string(__FUNCTION__) + " failed for SQL statement " + m_stmt.getSql() + ": " +
-      ne.getMessage().str());
+    throw exception::Exception("Failed SQL statement " + m_stmt.getSql() + ": " + ne.getMessage().str());
   } catch(std::exception &se) {
-    throw exception::Exception(std::string(__FUNCTION__) + " failed for SQL statement " + m_stmt.getSql() + ": " +
-      se.what());
+    throw exception::Exception("Failed SQL statement " + m_stmt.getSql() + ": " + se.what());
   }
 }
 
@@ -147,9 +133,8 @@ std::string OcciRset::columnBlob(const std::string &colName) const {
 // columnBlobView
 //------------------------------------------------------------------------------
 std::unique_ptr<rdbms::wrapper::IBlobView> OcciRset::columnBlobView(const std::string& colName) const {
-  throw exception::Exception(std::string(__FUNCTION__) +
-                             "This method is Not implemented for Oracle DB, since there is no way to gain access to "
-                             "the raw data buffer without making a copy first.");
+  throw exception::NotImplementedException("This method is Not implemented for Oracle DB, since there is no way to gain access to "
+                                           "the raw data buffer without making a copy first.");
 }
 
 //------------------------------------------------------------------------------
@@ -164,11 +149,9 @@ std::optional<std::string> OcciRset::columnOptionalString(const std::string &col
     }
     return stringValue;
   } catch(exception::Exception &ne) {
-    throw exception::Exception(std::string(__FUNCTION__) + " failed for SQL statement " + m_stmt.getSql() + ": " +
-      ne.getMessage().str());
+    throw exception::Exception("Failed SQL statement " + m_stmt.getSql() + ": " + ne.getMessage().str());
   } catch(std::exception &se) {
-    throw exception::Exception(std::string(__FUNCTION__) + " failed for SQL statement " + m_stmt.getSql() + ": " +
-      se.what());
+    throw exception::Exception("Failed SQL statement " + m_stmt.getSql() + ": " + se.what());
   }
 }
 
@@ -190,11 +173,9 @@ std::optional<uint8_t> OcciRset::columnOptionalUint8(const std::string &colName)
     }
     return utils::toUint8(stringValue);
   } catch(exception::Exception &ne) {
-    throw exception::Exception(std::string(__FUNCTION__) + " failed for SQL statement " + m_stmt.getSql() + ": " +
-                               ne.getMessage().str());
+    throw exception::Exception("Failed SQL statement " + m_stmt.getSql() + ": " + ne.getMessage().str());
   } catch(std::exception &se) {
-    throw exception::Exception(std::string(__FUNCTION__) + " failed for SQL statement " + m_stmt.getSql() + ": " +
-                               se.what());
+    throw exception::Exception("Failed SQL statement " + m_stmt.getSql() + ": " + se.what());
   }
 }
 
@@ -216,11 +197,9 @@ std::optional<uint16_t> OcciRset::columnOptionalUint16(const std::string &colNam
     }
     return utils::toUint16(stringValue);
   } catch(exception::Exception &ne) {
-    throw exception::Exception(std::string(__FUNCTION__) + " failed for SQL statement " + m_stmt.getSql() + ": " +
-                               ne.getMessage().str());
+    throw exception::Exception("Failed SQL statement " + m_stmt.getSql() + ": " + ne.getMessage().str());
   } catch(std::exception &se) {
-    throw exception::Exception(std::string(__FUNCTION__) + " failed for SQL statement " + m_stmt.getSql() + ": " +
-                               se.what());
+    throw exception::Exception("Failed SQL statement " + m_stmt.getSql() + ": " + se.what());
   }
 }
 
@@ -242,11 +221,9 @@ std::optional<uint32_t> OcciRset::columnOptionalUint32(const std::string &colNam
     }
     return utils::toUint32(stringValue);
   } catch(exception::Exception &ne) {
-    throw exception::Exception(std::string(__FUNCTION__) + " failed for SQL statement " + m_stmt.getSql() + ": " +
-                               ne.getMessage().str());
+    throw exception::Exception("Failed SQL statement " + m_stmt.getSql() + ": " + ne.getMessage().str());
   } catch(std::exception &se) {
-    throw exception::Exception(std::string(__FUNCTION__) + " failed for SQL statement " + m_stmt.getSql() + ": " +
-                               se.what());
+    throw exception::Exception("Failed SQL statement " + m_stmt.getSql() + ": " + se.what());
   }
 }
 
@@ -268,11 +245,9 @@ std::optional<uint64_t> OcciRset::columnOptionalUint64(const std::string &colNam
     }
     return utils::toUint64(stringValue);
   } catch(exception::Exception &ne) {
-    throw exception::Exception(std::string(__FUNCTION__) + " failed for SQL statement " + m_stmt.getSql() + ": " +
-      ne.getMessage().str());
+    throw exception::Exception("Failed SQL statement " + m_stmt.getSql() + ": " + ne.getMessage().str());
   } catch(std::exception &se) {
-    throw exception::Exception(std::string(__FUNCTION__) + " failed for SQL statement " + m_stmt.getSql() + ": " +
-      se.what());
+    throw exception::Exception("Failed SQL statement " + m_stmt.getSql() + ": " + se.what());
   }
 }
 
@@ -290,11 +265,9 @@ std::optional<double> OcciRset::columnOptionalDouble(const std::string &colName)
       return m_rset->getDouble(colIdx);
     }
   } catch(exception::Exception &ne) {
-    throw exception::Exception(std::string(__FUNCTION__) + " failed for SQL statement " + m_stmt.getSql() + ": " +
-      ne.getMessage().str());
+    throw exception::Exception("Failed SQL statement " + m_stmt.getSql() + ": " + ne.getMessage().str());
   } catch(std::exception &se) {
-    throw exception::Exception(std::string(__FUNCTION__) + " failed for SQL statement " + m_stmt.getSql() + ": " +
-      se.what());
+    throw exception::Exception("Failed SQL statement " + m_stmt.getSql() + ": " + se.what());
   }
 }
 

@@ -167,7 +167,7 @@ void OracleTapeFileCatalogue::filesWrittenToTape(const std::set<TapeItemWrittenP
 
   auto firstEventItor = events.begin();
   const auto &firstEvent = *(*firstEventItor);
-  checkTapeItemWrittenFieldsAreSet(__FUNCTION__, firstEvent);
+  checkTapeItemWrittenFieldsAreSet(firstEvent);
   const time_t now = std::chrono::system_clock::to_time_t(std::chrono::system_clock::now());
   threading::MutexLocker locker(m_rdbmsCatalogue->m_mutex);
   auto conn = m_connPool->getConn();
@@ -192,7 +192,7 @@ void OracleTapeFileCatalogue::filesWrittenToTape(const std::set<TapeItemWrittenP
   for (const auto &eventP: events) {
     // Check for all item types.
     const auto &event = *eventP;
-    checkTapeItemWrittenFieldsAreSet(__FUNCTION__, event);
+    checkTapeItemWrittenFieldsAreSet(event);
 
     if (event.vid != firstEvent.vid) {
       throw exception::Exception(std::string("VID mismatch: expected=") + firstEvent.vid + " actual=" + event.vid);
@@ -210,7 +210,7 @@ void OracleTapeFileCatalogue::filesWrittenToTape(const std::set<TapeItemWrittenP
       // If this is a file (as opposed to a placeholder), do the full processing.
       const auto &fileEvent=dynamic_cast<const TapeFileWritten &>(event);
 
-      checkTapeFileWrittenFieldsAreSet(__FUNCTION__, fileEvent);
+      checkTapeFileWrittenFieldsAreSet(fileEvent);
 
       totalLogicalBytesWritten += fileEvent.size;
 
@@ -290,7 +290,7 @@ void OracleTapeFileCatalogue::filesWrittenToTape(const std::set<TapeItemWrittenP
       occiStmt->executeArrayUpdate(tapeFileBatch.nbRows);
     } catch(oracle::occi::SQLException &ex) {
       std::ostringstream msg;
-      msg << std::string(__FUNCTION__) << " failed for SQL statement " << rdbms::getSqlForException(sql) << ": " <<
+      msg << "Failed SQL statement " << rdbms::getSqlForException(sql) << ": " <<
         ex.what();
 
       if(rdbms::wrapper::OcciStmt::connShouldBeClosed(ex)) {
@@ -308,11 +308,7 @@ void OracleTapeFileCatalogue::filesWrittenToTape(const std::set<TapeItemWrittenP
       }
       throw exception::Exception(msg.str());
     } catch(std::exception &se) {
-      std::ostringstream msg;
-      msg << std::string(__FUNCTION__) << " failed for SQL statement " << rdbms::getSqlForException(sql) << ": " <<
-        se.what();
-
-      throw exception::Exception(msg.str());
+      throw exception::Exception("Failed SQL statement " + rdbms::getSqlForException(sql) + ": " + se.what());
     }
   }
 
@@ -329,16 +325,14 @@ void OracleTapeFileCatalogue::filesWrittenToTape(const std::set<TapeItemWrittenP
 
     // This should never happen
     if(fileSizesAndChecksums.end() == fileSizeAndChecksumItor) {
-      exception::Exception ex;
-      ex.getMessage() << __FUNCTION__ << ": Failed to find archive file entry in the catalogue: " << fileContext.str();
-      throw ex;
+      throw exception::Exception("Failed to find archive file entry in the catalogue: " + fileContext.str());
     }
 
     const auto &fileSizeAndChecksum = fileSizeAndChecksumItor->second;
 
     if(fileSizeAndChecksum.fileSize != event.size) {
       catalogue::FileSizeMismatch ex;
-      ex.getMessage() << __FUNCTION__ << ": File size mismatch: expected=" << fileSizeAndChecksum.fileSize <<
+      ex.getMessage() << "File size mismatch: expected=" << fileSizeAndChecksum.fileSize <<
         ", actual=" << event.size << ": " << fileContext.str();
       m_log(log::ALERT, ex.getMessage().str());
       throw ex;
@@ -517,8 +511,7 @@ void OracleTapeFileCatalogue::idempotentBatchInsertArchiveFiles(rdbms::Conn &con
     }
   } catch(oracle::occi::SQLException &ex) {
     std::ostringstream msg;
-    msg << std::string(__FUNCTION__) << " failed for SQL statement " << rdbms::getSqlForException(sql) << ": " <<
-      ex.what();
+    msg << "Failed for SQL statement " << rdbms::getSqlForException(sql) << ": " << ex.what();
 
     if(rdbms::wrapper::OcciStmt::connShouldBeClosed(ex)) {
       // Close the statement first and then the connection
@@ -536,8 +529,7 @@ void OracleTapeFileCatalogue::idempotentBatchInsertArchiveFiles(rdbms::Conn &con
     throw exception::Exception(msg.str());
   } catch(std::exception &se) {
     std::ostringstream msg;
-    msg << std::string(__FUNCTION__) << " failed for SQL statement " << rdbms::getSqlForException(sql) << ": " <<
-      se.what();
+    msg << "Failed for SQL statement " << rdbms::getSqlForException(sql) << ": " << se.what();
 
     throw exception::Exception(msg.str());
   }

@@ -20,25 +20,17 @@
 // Include Files
 #include "common/exception/Exception.hpp"
 
-namespace cta {
+namespace cta::exception {
 
-  namespace exception {
+/**
+ * Invalid argument exception
+ */
+class TimeOut : public cta::exception::Exception {
+public:
+  /**
+   * default constructor
+   */
+  TimeOut() : cta::exception::Exception() {}
+};
 
-    /**
-     * Invalid argument exception
-     */
-    class TimeOut : public cta::exception::Exception {
-      
-    public:
-      
-      /**
-       * default constructor
-       */
-      TimeOut();
-
-    };
-      
-  } // end of namespace exception
-
-} // end of namespace cta
-
+}  // namespace cta::exception

@@ -74,18 +74,14 @@ void MediaChangerFacade::dismountTape(const std::string &vid, const LibrarySlot 
 // getProxy
 //------------------------------------------------------------------------------
 MediaChangerProxy &MediaChangerFacade::getProxy(const TapeLibraryType libraryType) {
-  try {
-    switch(libraryType) {
-    case TAPE_LIBRARY_TYPE_DUMMY:
-      return m_dmcProxy;
-    case TAPE_LIBRARY_TYPE_SCSI:
-      return m_rmcProxy;
-    default:
-      // Should never get here
-      throw exception::Exception("Library slot has an unexpected library type");
-    }
-  } catch(cta::exception::Exception &ex) {
-    throw exception::Exception(std::string(__FUNCTION__) + " failed: " + ex.getMessage().str());
+  switch(libraryType) {
+  case TAPE_LIBRARY_TYPE_DUMMY:
+    return m_dmcProxy;
+  case TAPE_LIBRARY_TYPE_SCSI:
+    return m_rmcProxy;
+  default:
+    // Should never get here
+    throw exception::Exception("Library slot has an unexpected library type");
   }
 }
 

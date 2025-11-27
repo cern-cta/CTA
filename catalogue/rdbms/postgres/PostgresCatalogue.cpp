@@ -56,26 +56,21 @@ std::string PostgresCatalogue::createAndPopulateTempTableFxid(rdbms::Conn &conn,
   const std::string tempTableName = "TEMP_DISK_FXIDS";
 
   if(diskFileIds) {
+    std::string sql = "CREATE TEMPORARY TABLE " + tempTableName + "(DISK_FILE_ID VARCHAR(100))";
     try {
-      std::string sql = "CREATE TEMPORARY TABLE " + tempTableName + "(DISK_FILE_ID VARCHAR(100))";
-      try {
-        conn.executeNonQuery(sql);
-      } catch(exception::Exception &ex) {
-        // Postgres does not drop temporary tables until the end of the session; trying to create another
-        // temporary table in the same unit test will fail. If this happens, truncate the table and carry on.
-        std::string sql2 = "TRUNCATE TABLE " + tempTableName;
-        conn.executeNonQuery(sql2);
-      }
-
-      std::string sql3 = "INSERT INTO " + tempTableName + " VALUES(:DISK_FILE_ID)";
-      auto stmt = conn.createStmt(sql3);
-      for(auto &diskFileId : diskFileIds.value()) {
-        stmt.bindString(":DISK_FILE_ID", diskFileId);
-        stmt.executeNonQuery();
-      }
+      conn.executeNonQuery(sql);
     } catch(exception::Exception &ex) {
-      ex.getMessage().str(std::string(__FUNCTION__) + ": " + ex.getMessage().str());
-      throw;
+      // Postgres does not drop temporary tables until the end of the session; trying to create another
+      // temporary table in the same unit test will fail. If this happens, truncate the table and carry on.
+      std::string sql2 = "TRUNCATE TABLE " + tempTableName;
+      conn.executeNonQuery(sql2);
+    }
+
+    std::string sql3 = "INSERT INTO " + tempTableName + " VALUES(:DISK_FILE_ID)";
+    auto stmt = conn.createStmt(sql3);
+    for(auto &diskFileId : diskFileIds.value()) {
+      stmt.bindString(":DISK_FILE_ID", diskFileId);
+      stmt.executeNonQuery();
     }
   }
   return tempTableName;

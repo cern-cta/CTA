@@ -21,20 +21,16 @@
 #include <fstream>
 #include <algorithm>
 
-namespace cta { 
-  
+namespace cta {
+
 ConfigurationFile::ConfigurationFile(const std::string& path) {
   // Try to open the configuration file, throwing an exception if there is a
   // failure
   std::ifstream file(path);
   if (file.fail()) {
-    cta::exception::Exception ex;
-    ex.getMessage() << __FUNCTION__ << " failed"
-      ": Failed to open configuration file"
-      ": m_fileName=" << path;
-    throw ex;
+    throw exception::Exception("Failed to open configuration file: m_fileName=" + path);
   }
-  
+
   std::string line;
   size_t lineNumber=0;
   while(++lineNumber, std::getline(file, line)) {

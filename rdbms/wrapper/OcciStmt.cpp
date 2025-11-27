@@ -80,11 +80,9 @@ void OcciStmt::close() {
       m_stmt = nullptr;
     }
   } catch(exception::Exception &ex) {
-    throw exception::Exception(std::string(__FUNCTION__) + " failed for SQL statement " +
-      getSqlForException() + ": " + ex.getMessage().str());
+    throw exception::Exception("Failed for SQL statement " + getSqlForException() + ": " + ex.getMessage().str());
   } catch(std::exception &se) {
-    throw exception::Exception(std::string(__FUNCTION__) + " failed for SQL statement " +
-      getSqlForException() + ": " + se.what());
+    throw exception::Exception("Failed for SQL statement " + getSqlForException() + ": " + se.what());
   }
 }
 
@@ -92,63 +90,39 @@ void OcciStmt::close() {
 // bindUint8
 //------------------------------------------------------------------------------
 void OcciStmt::bindUint8(const std::string &paramName, const std::optional<uint8_t> &paramValue) {
-  try {
-    return bindInteger<uint8_t>(paramName, paramValue);
-  } catch(exception::Exception &ex) {
-    ex.getMessage().str(std::string(__FUNCTION__) + " failed: " + ex.getMessage().str());
-    throw;
-  }
+  return bindInteger<uint8_t>(paramName, paramValue);
 }
 
 //------------------------------------------------------------------------------
 // bindUint16
 //------------------------------------------------------------------------------
 void OcciStmt::bindUint16(const std::string &paramName, const std::optional<uint16_t> &paramValue) {
-  try {
-    return bindInteger<uint16_t>(paramName, paramValue);
-  } catch(exception::Exception &ex) {
-    ex.getMessage().str(std::string(__FUNCTION__) + " failed: " + ex.getMessage().str());
-    throw;
-  }
+  return bindInteger<uint16_t>(paramName, paramValue);
 }
 
 //------------------------------------------------------------------------------
 // bindUint32
 //------------------------------------------------------------------------------
 void OcciStmt::bindUint32(const std::string &paramName, const std::optional<uint32_t> &paramValue) {
-  try {
-    return bindInteger<uint32_t>(paramName, paramValue);
-  } catch(exception::Exception &ex) {
-    ex.getMessage().str(std::string(__FUNCTION__) + " failed: " + ex.getMessage().str());
-    throw;
-  }
+  return bindInteger<uint32_t>(paramName, paramValue);
 }
 
 //------------------------------------------------------------------------------
 // bindUint64
 //------------------------------------------------------------------------------
 void OcciStmt::bindUint64(const std::string &paramName, const std::optional<uint64_t> &paramValue) {
-  try {
-    return bindInteger<uint64_t>(paramName, paramValue);
-  } catch(exception::Exception &ex) {
-    ex.getMessage().str(std::string(__FUNCTION__) + " failed: " + ex.getMessage().str());
-    throw;
-  }
+  return bindInteger<uint64_t>(paramName, paramValue);
 }
 
 //------------------------------------------------------------------------------
 // bindBlob
 //------------------------------------------------------------------------------
 void OcciStmt::bindBlob(const std::string &paramName, const std::string &paramValue) {
-  try {
-    const unsigned paramIdx = getParamIdx(paramName);
-    std::unique_ptr<unsigned char> buffer = std::unique_ptr<unsigned char>(new unsigned char[paramValue.size()]);
-    memcpy(buffer.get(), paramValue.c_str(), paramValue.length());
-    oracle::occi::Bytes paramBytes(buffer.get(), paramValue.length(), 0);
-    m_stmt->setBytes(paramIdx, paramBytes);
-  } catch(exception::Exception &ex) {
-    throw exception::Exception(std::string(__FUNCTION__) + " failed: " + ex.getMessage().str());
-  }
+  const unsigned paramIdx = getParamIdx(paramName);
+  std::unique_ptr<unsigned char> buffer = std::unique_ptr<unsigned char>(new unsigned char[paramValue.size()]);
+  memcpy(buffer.get(), paramValue.c_str(), paramValue.length());
+  oracle::occi::Bytes paramBytes(buffer.get(), paramValue.length(), 0);
+  m_stmt->setBytes(paramIdx, paramBytes);
 }
 
 //------------------------------------------------------------------------------
@@ -164,11 +138,9 @@ void OcciStmt::bindDouble(const std::string &paramName, const std::optional<doub
       m_stmt->setNull(paramIdx, oracle::occi::OCCIDOUBLE);
     }
   } catch(exception::Exception &ex) {
-    throw exception::Exception(std::string(__FUNCTION__) + " failed for SQL statement " +
-      getSqlForException() + ": " + ex.getMessage().str());
+    throw exception::Exception("Failed for SQL statement " + getSqlForException() + ": " + ex.getMessage().str());
   } catch(std::exception &se) {
-    throw exception::Exception(std::string(__FUNCTION__) + " failed for SQL statement " +
-      getSqlForException() + ": " + se.what());
+    throw exception::Exception("Failed for SQL statement " + getSqlForException() + ": " + se.what());
   }
 }
 
@@ -189,11 +161,9 @@ void OcciStmt::bindString(const std::string &paramName, const std::optional<std:
       m_stmt->setNull(paramIdx, oracle::occi::OCCISTRING);
     }
   } catch(exception::Exception &ex) {
-    throw exception::Exception(std::string(__FUNCTION__) + " failed for SQL statement " +
-      getSqlForException() + ": " + ex.getMessage().str());
+    throw exception::Exception("Failed for SQL statement " + getSqlForException() + ": " + ex.getMessage().str());
   } catch(std::exception &se) {
-    throw exception::Exception(std::string(__FUNCTION__) + " failed for SQL statement " +
-      getSqlForException() + ": " + se.what());
+    throw exception::Exception("Failed for SQL statement " + getSqlForException() + ": " + se.what());
   }
 }
 
@@ -220,7 +190,7 @@ std::unique_ptr<RsetWrapper> OcciStmt::executeQuery() {
     return std::make_unique<OcciRset>(*this, m_stmt->executeQuery());
   } catch(occi::SQLException &ex) {
     std::ostringstream msg;
-    msg << std::string(__FUNCTION__) << " failed for SQL statement " << getSqlForException() << ": " << ex.what();
+    msg << "Failed for SQL statement " << getSqlForException() << ": " << ex.what();
 
     if(connShouldBeClosed(ex)) {
       // Close the statement first and then the connection
@@ -262,7 +232,7 @@ void OcciStmt::executeNonQuery() {
     m_stmt->executeUpdate();
   } catch(occi::SQLException &ex) {
     std::ostringstream msg;
-    msg << std::string(__FUNCTION__) << " failed for SQL statement " << getSqlForException() << ": " << ex.what();
+    msg << "Failed for SQL statement " << getSqlForException() << ": " << ex.what();
 
     if(connShouldBeClosed(ex)) {
       // Close the statement first and then the connection

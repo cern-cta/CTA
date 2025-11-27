@@ -49,8 +49,7 @@ void EnstoreLargeFileReader::positionByFseq(const cta::RetrieveJob& fileToRecall
 
   if (fileToRecall.selectedTapeFile().fSeq < 1) {
     std::ostringstream err;
-    err << std::string(__FUNCTION__) << ": "
-        << "Unexpected fileId. fSeq expected >=1, got: " << fileToRecall.selectedTapeFile().fSeq << ")";
+    err << "Unexpected fileId. fSeq expected >=1, got: " << fileToRecall.selectedTapeFile().fSeq << ")";
     throw cta::exception::InvalidArgument(err.str());
   }
 
@@ -69,8 +68,7 @@ void EnstoreLargeFileReader::setBlockSize(const UHL1& uhl1) {  // Could inherit
   m_currentBlockSize = static_cast<size_t>(atol(uhl1.getBlockSize().c_str()));
   if (m_currentBlockSize < 1) {
     std::ostringstream ex_str;
-    ex_str << std::string(__FUNCTION__) << ": "
-           << "Invalid block size in uhl1 detected";
+    ex_str << "Invalid block size in uhl1 detected";
     throw TapeFormatError(ex_str.str());
   }
 }
@@ -80,8 +78,7 @@ void EnstoreLargeFileReader::setTargetFileSize(const UHL2& uhl2) {  // Could inh
   bytes_to_read = static_cast<size_t>(atol(uhl2.getTargetFileSize().c_str()));
   if (bytes_to_read < 1) {
     std::ostringstream ex_str;
-    ex_str << std::string(__FUNCTION__) << ": "
-           << "Invalid file size in uhl2 detected";
+    ex_str << "Invalid file size in uhl2 detected";
     throw TapeFormatError(ex_str.str());
   }
 }
@@ -124,8 +121,7 @@ void EnstoreLargeFileReader::moveReaderByFSeqDelta(const int64_t fSeq_delta) {
     // (trailer, payload, header) + 1 to go on the BOT (beginning of tape) side
     // of the file mark before the header of the file we want to read
     m_session.m_drive.spaceFileMarksBackwards(static_cast<uint32_t>(std::abs(fSeq_delta)) * 3 + 1);
-    m_session.m_drive.readFileMark(std::string(__FUNCTION__) + ": " +
-                                   "Reading file mark right before the header of the file we want to read");
+    m_session.m_drive.readFileMark("Reading file mark right before the header of the file we want to read");
   }
 }
 
@@ -143,15 +139,14 @@ void EnstoreLargeFileReader::checkTrailers() {
   UTL1 utl1;
 
   if (bytes_read < sizeof(eof1) + sizeof(eof2) + sizeof(utl1)) {
-    throw cta::exception::Exception(std::string(__FUNCTION__) +
-                                    " failed: Too few bytes read for headers:" + std::to_string(bytes_read));
+    throw cta::exception::Exception("Too few bytes read for headers:" + std::to_string(bytes_read));
   }
   memcpy(&eof1, data, sizeof(eof1));
   memcpy(&eof2, data + sizeof(eof1), sizeof(eof2));
   memcpy(&utl1, data + sizeof(eof1) + sizeof(eof2), sizeof(utl1));
   delete[] data;
 
-  m_session.m_drive.readFileMark(std::string(__FUNCTION__) + ": " + "Reading file mark at the end of file header");
+  m_session.m_drive.readFileMark("Reading file mark at the end of file header");
 
   m_session.setCurrentFseq(m_session.getCurrentFseq() + 1);  // moving on to the header of the next file
   m_session.setCurrentFilePart(PartOfFile::Header);
@@ -159,7 +154,7 @@ void EnstoreLargeFileReader::checkTrailers() {
   // the size of the headers is fine, now let's check each header
   try {
     eof1.verify(true);  // Skip certain field where enstore and CTA don't match
-    eof2.verify("D");  
+    eof2.verify("D");
     utl1.verify();
   }
   catch (std::exception& e) {
@@ -181,8 +176,7 @@ void EnstoreLargeFileReader::checkHeaders(const cta::RetrieveJob& fileToRecall) 
   UHL2 uhl2;
 
   if (bytes_read < sizeof(hdr1) + sizeof(hdr2) + sizeof(uhl1)) {
-    throw cta::exception::Exception(std::string(__FUNCTION__) +
-                                    " failed: Too few bytes read for headers:" + std::to_string(bytes_read));
+    throw cta::exception::Exception("Too few bytes read for headers:" + std::to_string(bytes_read));
   }
   memcpy(&hdr1, data, sizeof(hdr1));
   memcpy(&hdr2, data + sizeof(hdr1), sizeof(hdr1));
@@ -190,7 +184,7 @@ void EnstoreLargeFileReader::checkHeaders(const cta::RetrieveJob& fileToRecall) 
   memcpy(&uhl2, data + sizeof(hdr1) + sizeof(hdr2) + sizeof(uhl1), sizeof(uhl2));
   delete[] data;
 
-  m_session.m_drive.readFileMark(std::string(__FUNCTION__) + ": " + "Reading file mark at the end of file header");
+  m_session.m_drive.readFileMark("Reading file mark at the end of file header");
   // after this we should be where we want, i.e. at the beginning of the file
   m_session.setCurrentFilePart(PartOfFile::Payload);
 
@@ -198,7 +192,7 @@ void EnstoreLargeFileReader::checkHeaders(const cta::RetrieveJob& fileToRecall) 
   // Extend these with skipped things for Fermilab tapes
   try {
     hdr1.verify(true);  // Skip certain field where enstore and CTA don't match
-    hdr2.verify("D");  
+    hdr2.verify("D");
     uhl1.verify();
     uhl2.verify();
   }

@@ -1972,22 +1972,17 @@ TEST_P(cta_catalogue_ArchiveFileTest, filesWrittenToTape_many_archive_files) {
 TEST_P(cta_catalogue_ArchiveFileTest, DISABLED_concurrent_filesWrittenToTape_many_archive_files) {
   std::unique_ptr<cta::catalogue::Catalogue> catalogue2;
 
-  try {
-    cta::catalogue::CatalogueFactory *const *const catalogueFactoryPtrPtr = GetParam();
+  cta::catalogue::CatalogueFactory *const *const catalogueFactoryPtrPtr = GetParam();
 
-    if(nullptr == catalogueFactoryPtrPtr) {
-      throw cta::exception::Exception("Global pointer to the catalogue factory pointer for unit-tests in null");
-    }
-
-    if(nullptr == (*catalogueFactoryPtrPtr)) {
-      throw cta::exception::Exception("Global pointer to the catalogue factoryfor unit-tests in null");
-    }
-
-    catalogue2 = (*catalogueFactoryPtrPtr)->create();
-
-  } catch(cta::exception::Exception &ex) {
-    throw cta::exception::Exception(std::string(__FUNCTION__) + " failed: " + ex.getMessage().str());
+  if(nullptr == catalogueFactoryPtrPtr) {
+    throw cta::exception::Exception("Global pointer to the catalogue factory pointer for unit-tests in null");
   }
+
+  if(nullptr == (*catalogueFactoryPtrPtr)) {
+    throw cta::exception::Exception("Global pointer to the catalogue factoryfor unit-tests in null");
+  }
+
+  catalogue2 = (*catalogueFactoryPtrPtr)->create();
 
   class Barrier {
   public:

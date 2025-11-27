@@ -95,21 +95,16 @@ bool DropSchemaCmd::userConfirmsDropOfSchema(const rdbms::Login &dbLogin) {
 // dropCatalogueSchema
 //------------------------------------------------------------------------------
 void DropSchemaCmd::dropCatalogueSchema(const rdbms::Login::DbType &dbType, rdbms::Conn &conn) {
-  try {
-    switch (dbType) {
-    case rdbms::Login::DBTYPE_IN_MEMORY:
-      throw exception::Exception("Dropping the schema of an in_memory database is not supported");
-    case rdbms::Login::DBTYPE_SQLITE:
-      throw exception::Exception("Dropping the schema of an sqlite database is not supported");
-    case rdbms::Login::DBTYPE_NONE:
-      throw exception::Exception("Cannot delete the schema of catalogue database without a database type");
-    default:
-      dropDatabaseSequences(conn);
-      dropDatabaseTables(conn);
-    }
-  } catch(exception::Exception &ex) {
-    ex.getMessage().str(std::string(__FUNCTION__) + " failed: " + ex.getMessage().str());
-    throw;
+  switch (dbType) {
+  case rdbms::Login::DBTYPE_IN_MEMORY:
+    throw exception::Exception("Dropping the schema of an in_memory database is not supported");
+  case rdbms::Login::DBTYPE_SQLITE:
+    throw exception::Exception("Dropping the schema of an sqlite database is not supported");
+  case rdbms::Login::DBTYPE_NONE:
+    throw exception::Exception("Cannot delete the schema of catalogue database without a database type");
+  default:
+    dropDatabaseSequences(conn);
+    dropDatabaseTables(conn);
   }
 }
 
@@ -131,31 +126,26 @@ bool DropSchemaCmd::dropSingleTable(rdbms::Conn& conn, const std::string& tableN
 // dropDatabaseTables
 //------------------------------------------------------------------------------
 void DropSchemaCmd::dropDatabaseTables(rdbms::Conn &conn) {
-  try {
-    bool droppedAtLeastOneTable = true;
-    while (droppedAtLeastOneTable) {
-      droppedAtLeastOneTable = false;
-      auto tables = conn.getTableNames();
-      tables.remove("CTA_CATALOGUE");  // Remove CTA_CATALOGUE to drop it at the end
-      for (const auto& table : tables) {
-        droppedAtLeastOneTable |= dropSingleTable(conn, table);
-      }
-    }
-
-    // Drop CTA_CATALOGUE table
+  bool droppedAtLeastOneTable = true;
+  while (droppedAtLeastOneTable) {
+    droppedAtLeastOneTable = false;
     auto tables = conn.getTableNames();
-    if (tables.size() > 1) {
-      throw exception::Exception("Failed to delete all tables, except CTA_CATALOGUE.");
+    tables.remove("CTA_CATALOGUE");  // Remove CTA_CATALOGUE to drop it at the end
+    for (const auto& table : tables) {
+      droppedAtLeastOneTable |= dropSingleTable(conn, table);
     }
-    dropSingleTable(conn, "CTA_CATALOGUE");
+  }
 
-    tables = conn.getTableNames();
-    if (!tables.empty()) {
-      throw exception::Exception("Failed to delete all tables.  Maybe there is a circular dependency.");
-    }
-  } catch(exception::Exception &ex) {
-    ex.getMessage().str(std::string(__FUNCTION__) + " failed: " + ex.getMessage().str());
-    throw;
+  // Drop CTA_CATALOGUE table
+  auto tables = conn.getTableNames();
+  if (tables.size() > 1) {
+    throw exception::Exception("Failed to delete all tables, except CTA_CATALOGUE.");
+  }
+  dropSingleTable(conn, "CTA_CATALOGUE");
+
+  tables = conn.getTableNames();
+  if (!tables.empty()) {
+    throw exception::Exception("Failed to delete all tables.  Maybe there is a circular dependency.");
   }
 }
 
@@ -163,15 +153,10 @@ void DropSchemaCmd::dropDatabaseTables(rdbms::Conn &conn) {
 // dropDatabaseSequences
 //------------------------------------------------------------------------------
 void DropSchemaCmd::dropDatabaseSequences(rdbms::Conn &conn) {
-  try {
-    std::list<std::string> sequences = conn.getSequenceNames();
-    for(const auto& sequence : sequences) {
-      conn.executeNonQuery(std::string("DROP SEQUENCE ") + sequence);
-      m_out << "Dropped sequence " << sequence << std::endl;
-    }
-  } catch(exception::Exception &ex) {
-    ex.getMessage().str(std::string(__FUNCTION__) + " failed: " + ex.getMessage().str());
-    throw;
+  std::list<std::string> sequences = conn.getSequenceNames();
+  for(const auto& sequence : sequences) {
+    conn.executeNonQuery(std::string("DROP SEQUENCE ") + sequence);
+    m_out << "Dropped sequence " << sequence << std::endl;
   }
 }
 
@@ -188,17 +173,12 @@ bool DropSchemaCmd::isProductionSet(cta::rdbms::Conn & conn){
   const char* const sql = R"SQL(
     SELECT CTA_CATALOGUE.IS_PRODUCTION AS IS_PRODUCTION FROM CTA_CATALOGUE
   )SQL";
-  try {
-    auto stmt = conn.createStmt(sql);
-    auto rset = stmt.executeQuery();
-    if(rset.next()){
-      return rset.columnBool("IS_PRODUCTION");
-    } else {
-      return false;  // The table is empty
-    }
-  } catch(exception::Exception & ex) {
-    ex.getMessage().str(std::string(__FUNCTION__) + " failed: " + ex.getMessage().str());
-    throw;
+  auto stmt = conn.createStmt(sql);
+  auto rset = stmt.executeQuery();
+  if(rset.next()){
+    return rset.columnBool("IS_PRODUCTION");
+  } else {
+    return false;  // The table is empty
   }
 }
 

@@ -87,26 +87,11 @@ set (COMMON_LIB_SRC_FILES
   dataStructures/utils.cpp
   dataStructures/VirtualOrganization.cpp
   dataStructures/WriteTestResult.cpp
-  exception/AcceptConnectionInterrupted.cpp
   exception/Backtrace.cpp
-  exception/CommandLineNotParsed.cpp
-  exception/DismountFailed.cpp
   exception/Errnum.cpp
   exception/Exception.cpp
-  exception/GrpcError.cpp
   exception/InvalidConfigEntry.cpp
-  exception/Mismatch.cpp
-  exception/MissingOperand.cpp
-  exception/NoEntry.cpp
-  exception/NonRetryableError.cpp
   exception/NoPortInRange.cpp
-  exception/NoSupportedDB.cpp
-  exception/OutOfMemory.cpp
-  exception/RequestFailed.cpp
-  exception/RetryableError.cpp
-  exception/TimeOut.cpp
-  exception/UserError.cpp
-  exception/EncryptionException.cpp
   json/object/JSONCObject.cpp
   log/FileLogger.cpp
   log/LogContext.cpp

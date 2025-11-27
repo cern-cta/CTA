@@ -250,29 +250,28 @@ xrd::Response AdminCmd::process() {
     }
 
     // Log the admin command
-    logAdminCmd(__FUNCTION__, AdminCmdStatus::SUCCESS, "", t);
+    logAdminCmd(AdminCmdStatus::SUCCESS, "", t);
   } catch(exception::PbException& ex) {
-    logAdminCmd(__FUNCTION__, AdminCmdStatus::EXCEPTION, ex.what(), t);
+    logAdminCmd(AdminCmdStatus::EXCEPTION, ex.what(), t);
     requestTracker.setErrorType(cta::semconv::attr::ErrorTypeValues::kException);
     throw ex;
   } catch(exception::UserError& ex) {
-    logAdminCmd(__FUNCTION__, AdminCmdStatus::USER_ERROR, ex.getMessageValue(), t);
+    logAdminCmd(AdminCmdStatus::USER_ERROR, ex.getMessageValue(), t);
     requestTracker.setErrorType(cta::semconv::attr::ErrorTypeValues::kUserError);
     throw ex;
   } catch(exception::Exception& ex) {
-    logAdminCmd(__FUNCTION__, AdminCmdStatus::EXCEPTION, ex.what(), t);
+    logAdminCmd(AdminCmdStatus::EXCEPTION, ex.what(), t);
     requestTracker.setErrorType(cta::semconv::attr::ErrorTypeValues::kException);
     throw ex;
   } catch(std::runtime_error& ex) {
-    logAdminCmd(__FUNCTION__, AdminCmdStatus::EXCEPTION, ex.what(), t);
+    logAdminCmd(AdminCmdStatus::EXCEPTION, ex.what(), t);
     requestTracker.setErrorType(cta::semconv::attr::ErrorTypeValues::kException);
     throw ex;
   }
   return response;
 }
 
-void AdminCmd::logAdminCmd(const std::string& function,
-                           const AdminCmdStatus status,
+void AdminCmd::logAdminCmd(const AdminCmdStatus status,
                            const std::string& reason,
                            utils::Timer& t) {
   // We do the metric recording here to prevent repetition in the catch statements
@@ -293,8 +292,6 @@ void AdminCmd::logAdminCmd(const std::string& function,
   }
 
   log::ScopedParamContainer params(m_lc);
-
-  std::string log_msg = "In RequestMessage::" + function + "(): Admin command succeeded.";
 
   // Reverse lookup of strings corresponding to <command,subcommand> pair
   for(auto cmd_it = admin::cmdLookup.begin(); cmd_it != admin::cmdLookup.end(); ++cmd_it) {
@@ -372,7 +369,7 @@ void AdminCmd::logAdminCmd(const std::string& function,
   } // end for
   params.add("adminTime", t.secs());
   params.add("user", m_cliIdentity.username + "@" + m_cliIdentity.host);
-  m_lc.log(cta::log::INFO, log_msg);
+  m_lc.log(cta::log::INFO, "Admin command succeeded");
 }
 
 void AdminCmd::processAdmin_Add(xrd::Response& response) {

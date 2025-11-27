@@ -44,8 +44,7 @@ ConnPool::~ConnPool() {
 Conn ConnPool::getConn() {
 
   if (0 == m_maxNbConns) {
-    throw ConnPoolConfiguredWithZeroConns(std::string(__FUNCTION__) +
-                                          " failed: ConnPool is configured with zero connections");
+    throw ConnPoolConfiguredWithZeroConns("ConnPool is configured with zero connections");
   }
   std::unique_ptr<ConnAndStmts> connAndStmts;
 
@@ -78,46 +77,21 @@ Conn ConnPool::getConn() {
 // returnConn
 //------------------------------------------------------------------------------
 void ConnPool::returnConn(std::unique_ptr<ConnAndStmts> connAndStmts) {
-  try {
-    // If the connection is open
-    if (connAndStmts->conn->isOpen()) {
-      // Try to commit the connection and put it back in the pool
+  // If the connection is open
+  if (connAndStmts->conn->isOpen()) {
+    // Try to commit the connection and put it back in the pool
+    try {
+      connAndStmts->conn->commit();
+    } catch (...) {
+      // If the commit failed then destroy any prepare statements and then
+      // close the connection
       try {
-        connAndStmts->conn->commit();
+        connAndStmts->stmtPool->clear();
+        connAndStmts->conn->close();
       } catch (...) {
-        // If the commit failed then destroy any prepare statements and then
-        // close the connection
-        try {
-          connAndStmts->stmtPool->clear();
-          connAndStmts->conn->close();
-        } catch (...) {
-          // Ignore any exceptions
-        }
-
-        // A closed connection is rare and usually means the underlying TCP/IP
-        // connection, if there is one, has been lost.  Delete all the connections
-        // currently in the pool because their underlying TCP/IP connections may
-        // also have been lost.
-        threading::MutexLocker locker(m_connsAndStmtsMutex);
-        while (!m_connsAndStmts.empty()) {
-          m_connsAndStmts.pop_front();
-        }
-        removeNbConnsOnLoan(1);
-        m_connsAndStmtsCv.signal();
-        return;
+        // Ignore any exceptions
       }
 
-      // Sets the autocommit mode of the connection to AUTOCOMMIT_ON because
-      // this is the default value of a newly created connection
-      connAndStmts->conn->setAutocommitMode(AutocommitMode::AUTOCOMMIT_ON);
-
-      threading::MutexLocker locker(m_connsAndStmtsMutex);
-      removeNbConnsOnLoan(1);
-      m_connsAndStmts.emplace_back(std::move(connAndStmts));
-      m_connsAndStmtsCv.signal();
-
-      // Else the connection is closed
-    } else {
       // A closed connection is rare and usually means the underlying TCP/IP
       // connection, if there is one, has been lost.  Delete all the connections
       // currently in the pool because their underlying TCP/IP connections may
@@ -128,9 +102,30 @@ void ConnPool::returnConn(std::unique_ptr<ConnAndStmts> connAndStmts) {
       }
       removeNbConnsOnLoan(1);
       m_connsAndStmtsCv.signal();
+      return;
     }
-  } catch (exception::Exception& ex) {
-    throw exception::Exception(std::string(__FUNCTION__) + " failed: " + ex.getMessage().str());
+
+    // Sets the autocommit mode of the connection to AUTOCOMMIT_ON because
+    // this is the default value of a newly created connection
+    connAndStmts->conn->setAutocommitMode(AutocommitMode::AUTOCOMMIT_ON);
+
+    threading::MutexLocker locker(m_connsAndStmtsMutex);
+    removeNbConnsOnLoan(1);
+    m_connsAndStmts.emplace_back(std::move(connAndStmts));
+    m_connsAndStmtsCv.signal();
+
+    // Else the connection is closed
+  } else {
+    // A closed connection is rare and usually means the underlying TCP/IP
+    // connection, if there is one, has been lost.  Delete all the connections
+    // currently in the pool because their underlying TCP/IP connections may
+    // also have been lost.
+    threading::MutexLocker locker(m_connsAndStmtsMutex);
+    while (!m_connsAndStmts.empty()) {
+      m_connsAndStmts.pop_front();
+    }
+    removeNbConnsOnLoan(1);
+    m_connsAndStmtsCv.signal();
   }
 }
 

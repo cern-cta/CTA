@@ -21,18 +21,16 @@
 
 namespace cta::exception {
 
-    /**
-     * request failed.
-     */
-    class RequestFailed : public cta::exception::Exception {
-      
-    public:
-      
-      /**
-       * Constructor
-       */
-      RequestFailed();
+/**
+ * request failed.
+ */
+class RequestFailed : public cta::exception::Exception {
+public:
+  /**
+   * Constructor
+   */
+  RequestFailed() : cta::exception::Exception() {}
 
-    }; // class RequestFailed
+};  // class RequestFailed
 
-} // namespace cta::exception
+}  // namespace cta::exception

@@ -54,21 +54,17 @@ void cta_catalogue_MediaTypeTest::TearDown() {
 
 std::map<std::string, cta::catalogue::MediaTypeWithLogs> cta_catalogue_MediaTypeTest::mediaTypeWithLogsListToMap(
   const std::list<cta::catalogue::MediaTypeWithLogs> &listOfMediaTypes) {
-  try {
-    std::map<std::string, cta::catalogue::MediaTypeWithLogs> m;
+  std::map<std::string, cta::catalogue::MediaTypeWithLogs> m;
 
-    for(auto &mediaType: listOfMediaTypes) {
-      if(m.end() != m.find(mediaType.name)) {
-        cta::exception::Exception ex;
-        ex.getMessage() << "Media type " << mediaType.name << " is a duplicate";
-        throw ex;
-      }
-      m[mediaType.name] = mediaType;
+  for(auto &mediaType: listOfMediaTypes) {
+    if(m.end() != m.find(mediaType.name)) {
+      cta::exception::Exception ex;
+      ex.getMessage() << "Media type " << mediaType.name << " is a duplicate";
+      throw ex;
     }
-    return m;
-  } catch(cta::exception::Exception &ex) {
-    throw cta::exception::Exception(std::string(__FUNCTION__) + " failed: " + ex.getMessage().str());
+    m[mediaType.name] = mediaType;
   }
+  return m;
 }
 
 TEST_P(cta_catalogue_MediaTypeTest, createMediaType) {

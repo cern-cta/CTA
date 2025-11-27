@@ -58,13 +58,12 @@ protected:
   /*!
    * Log an admin command
    *
-   * @param[in]    function    Calling function
    * @param[in]    status      Status of the executed admin command
    * @param[in]    reason      Reason for this log message (error message)
    * @param[in]    t           Timer
    */
   void
-  logAdminCmd(const std::string& function, const AdminCmdStatus status, const std::string& reason, utils::Timer& t);
+  logAdminCmd(const AdminCmdStatus status, const std::string& reason, utils::Timer& t);
 
   /*!
    * Drive state enum

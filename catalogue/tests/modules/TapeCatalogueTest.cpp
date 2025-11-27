@@ -65,20 +65,16 @@ void cta_catalogue_TapeTest::TearDown() {
 
 std::map<std::string, cta::common::dataStructures::Tape> cta_catalogue_TapeTest::tapeListToMap(
   const std::list<cta::common::dataStructures::Tape> &listOfTapes) {
-  try {
-    std::map<std::string, cta::common::dataStructures::Tape> vidToTape;
+  std::map<std::string, cta::common::dataStructures::Tape> vidToTape;
 
-    for (auto &tape: listOfTapes) {
-      if(vidToTape.end() != vidToTape.find(tape.vid)) {
-        throw cta::exception::Exception(std::string("Duplicate VID: value=") + tape.vid);
-      }
-      vidToTape[tape.vid] = tape;
+  for (auto &tape: listOfTapes) {
+    if(vidToTape.end() != vidToTape.find(tape.vid)) {
+      throw cta::exception::Exception(std::string("Duplicate VID: value=") + tape.vid);
     }
-
-    return vidToTape;
-  } catch(cta::exception::Exception &ex) {
-    throw cta::exception::Exception(std::string(__FUNCTION__) + " failed: " + ex.getMessage().str());
+    vidToTape[tape.vid] = tape;
   }
+
+  return vidToTape;
 }
 
 TEST_P(cta_catalogue_TapeTest, createTape_1_tape_with_write_log_1_tape_without) {

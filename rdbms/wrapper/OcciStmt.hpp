@@ -245,11 +245,9 @@ private:
         m_stmt->setNull(paramIdx, oracle::occi::OCCINUMBER);
       }
     } catch (exception::Exception &ex) {
-      throw exception::Exception(std::string(__FUNCTION__) + " failed for SQL statement " +
-                                 getSqlForException() + ": " + ex.getMessage().str());
+      throw exception::Exception("Failed for SQL statement " + getSqlForException() + ": " + ex.getMessage().str());
     } catch (std::exception &se) {
-      throw exception::Exception(std::string(__FUNCTION__) + " failed for SQL statement " +
-                                 getSqlForException() + ": " + se.what());
+      throw exception::Exception("Failed for SQL statement " + getSqlForException() + ": " + se.what());
     }
   }
 }; // class OcciStmt

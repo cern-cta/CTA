@@ -149,21 +149,21 @@ xrd::Response AdminCmdStream::process() {
     }
 
     // Log the admin command
-    logAdminCmd(__FUNCTION__, AdminCmdStatus::SUCCESS, "", t);
+    logAdminCmd(AdminCmdStatus::SUCCESS, "", t);
   } catch (exception::PbException& ex) {
-    logAdminCmd(__FUNCTION__, AdminCmdStatus::EXCEPTION, ex.what(), t);
+    logAdminCmd(AdminCmdStatus::EXCEPTION, ex.what(), t);
     requestTracker.setErrorType(cta::semconv::attr::ErrorTypeValues::kException);
     throw ex;
   } catch (exception::UserError& ex) {
-    logAdminCmd(__FUNCTION__, AdminCmdStatus::USER_ERROR, ex.getMessageValue(), t);
+    logAdminCmd(AdminCmdStatus::USER_ERROR, ex.getMessageValue(), t);
     requestTracker.setErrorType(cta::semconv::attr::ErrorTypeValues::kUserError);
     throw ex;
   } catch (exception::Exception& ex) {
-    logAdminCmd(__FUNCTION__, AdminCmdStatus::EXCEPTION, ex.what(), t);
+    logAdminCmd(AdminCmdStatus::EXCEPTION, ex.what(), t);
     requestTracker.setErrorType(cta::semconv::attr::ErrorTypeValues::kException);
     throw ex;
   } catch (std::runtime_error& ex) {
-    logAdminCmd(__FUNCTION__, AdminCmdStatus::EXCEPTION, ex.what(), t);
+    logAdminCmd(AdminCmdStatus::EXCEPTION, ex.what(), t);
     requestTracker.setErrorType(cta::semconv::attr::ErrorTypeValues::kException);
     throw ex;
   }

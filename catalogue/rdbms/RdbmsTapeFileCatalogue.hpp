@@ -81,19 +81,17 @@ protected:
    * Throws an exception if one of the fields of the specified event have not
    * been set.
    *
-   * @param callingFunc The name of the calling function.
    * @param event The evnt to be checked.
    */
-  void checkTapeItemWrittenFieldsAreSet(const std::string &callingFunc, const TapeItemWritten &event) const;
+  void checkTapeItemWrittenFieldsAreSet(const TapeItemWritten &event) const;
 
   /**
    * Throws an exception if one of the fields of the specified event have not
    * been set.
    *
-   * @param callingFunc The name of the calling function.
    * @param event The evnt to be checked.
    */
-  void checkTapeFileWrittenFieldsAreSet(const std::string &callingFunc, const TapeFileWritten &event) const;
+  void checkTapeFileWrittenFieldsAreSet(const TapeFileWritten &event) const;
 
   friend class RdbmsFileRecycleLogCatalogue;
   /**

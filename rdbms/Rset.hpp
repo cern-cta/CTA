@@ -92,13 +92,7 @@ public:
     if (impl == nullptr) {
       throw InvalidResultSet("This result set is invalid");
     }
-
-    try {
-      return ((*impl).*MethodPtr)(colName);
-    } catch (exception::Exception& ex) {
-      ex.getMessage().str(std::string(__FUNCTION__) + " failed: " + ex.getMessage().str());
-      throw;
-    }
+    return ((*impl).*MethodPtr)(colName);
   }
 
   /**
