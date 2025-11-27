@@ -16,6 +16,7 @@
  */
 
 #include "common/exception/Exception.hpp"
+#include "common/exception/NullPtrException.hpp"
 #include "common/threading/MutexLocker.hpp"
 #include "common/semconv/Attributes.hpp"
 #include "rdbms/CheckConstraintError.hpp"
@@ -140,8 +141,7 @@ void SqliteStmt::close() {
 //------------------------------------------------------------------------------
 sqlite3_stmt *SqliteStmt::get() const {
   if(nullptr == m_stmt) {
-    throw exception::Exception("Failed for SQL statement " +
-      getSqlForException() + ": nullptr pointer");
+    throw exception::NullPtrException("Failed for SQL statement " + getSqlForException());
   }
   return m_stmt;
 }
