@@ -248,7 +248,7 @@ bool verifyCrc32cForMemoryBlockWithCrc32c(
   if (cnt <= 4)
     return false; //block is too small to be valid, cannot check CRC
   {
-    const uint32_t crccmp = crc32c(crcInit, cnt - 4, start),
+    const uint32_t crccmp = crc32c(crcInit, cnt - 4, start);
     const uint32_t crcblk = (start[cnt - 4] << 0) |
                             (start[cnt - 3] << 8) |
                             (start[cnt - 2] << 16) |
