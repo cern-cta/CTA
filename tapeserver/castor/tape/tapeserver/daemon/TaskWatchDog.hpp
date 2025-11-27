@@ -151,7 +151,7 @@ protected:
    */
   void reportStats() {
     // Shortcut definitions
-    using Param cta::log::Param;
+    using Param = cta::log::Param;
     if (m_statsSet) {
       // Build the statistics to be logged
       std::list<Param> paramList;
@@ -218,7 +218,7 @@ protected:
    */
   void reportParams() {
     // Shortcut definitions
-    using Param cta::log::Param;
+    using Param = cta::log::Param;
 
     // Pop all the params to add and to delete
     // We only need to send the last value updated on each parameter
