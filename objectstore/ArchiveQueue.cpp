@@ -93,14 +93,16 @@ bool ArchiveQueue::checkMapsAndShardsCoherency() {
       totalJobs != jobsExpectedFromShardsPointers)
     return false;
   // Check that we have coherent queue summaries
-  if (ValueCountMapUint64 priorityMap(m_payload.mutable_prioritymap()),
-      ValueCountMapUint64 minArchiveRequestAgeMap(m_payload.mutable_minarchiverequestagemap()),
-      ValueCountMapString mountPolicyNameMap(m_payload.mutable_mountpolicynamemap());
-      priorityMap.total() != m_payload.archivejobscount() ||
-      minArchiveRequestAgeMap.total() != m_payload.archivejobscount() ||
-      mountPolicyNameMap.total() != m_payload.archivejobscount()
-    )
-    return false;
+  {
+    ValueCountMapUint64 priorityMap(m_payload.mutable_prioritymap());
+    ValueCountMapUint64 minArchiveRequestAgeMap(m_payload.mutable_minarchiverequestagemap());
+    ValueCountMapString mountPolicyNameMap(m_payload.mutable_mountpolicynamemap());
+    if (priorityMap.total() != m_payload.archivejobscount() ||
+        minArchiveRequestAgeMap.total() != m_payload.archivejobscount() ||
+        mountPolicyNameMap.total() != m_payload.archivejobscount()
+      )
+      return false;
+  }
   return true;
 }
 

@@ -74,14 +74,16 @@ bool RetrieveQueue::checkMapsAndShardsCoherency() {
       totalJobs != jobsExpectedFromShardsPointers)
     return false;
   // Check that we have coherent queue summaries
-  if (ValueCountMapUint64 priorityMap(m_payload.mutable_prioritymap()),
-      ValueCountMapUint64 minRetrieveRequestAgeMap(m_payload.mutable_minretrieverequestagemap()),
-      ValueCountMapString mountPolicyNameMap(m_payload.mutable_mountpolicynamemap());
-      priorityMap.total() != m_payload.retrievejobscount() ||
-      minRetrieveRequestAgeMap.total() != m_payload.retrievejobscount() ||
-      mountPolicyNameMap.total() != m_payload.retrievejobscount()
-    )
-    return false;
+  {
+    ValueCountMapUint64 priorityMap(m_payload.mutable_prioritymap());
+    ValueCountMapUint64 minRetrieveRequestAgeMap(m_payload.mutable_minretrieverequestagemap());
+    ValueCountMapString mountPolicyNameMap(m_payload.mutable_mountpolicynamemap());
+    if (priorityMap.total() != m_payload.retrievejobscount() ||
+        minRetrieveRequestAgeMap.total() != m_payload.retrievejobscount() ||
+        mountPolicyNameMap.total() != m_payload.retrievejobscount()
+            )
+      return false;
+  }
   return true;
 }
 
