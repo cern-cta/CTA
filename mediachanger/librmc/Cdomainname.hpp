@@ -17,4 +17,7 @@
 
 #pragma once
 
-int Cdomainname(char*, int);
+/**
+ * Get domain name
+ */
+int Cdomainname(char* name, int namelen);

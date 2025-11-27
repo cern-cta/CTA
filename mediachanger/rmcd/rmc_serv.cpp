@@ -33,6 +33,7 @@
 #include <arpa/inet.h>
 
 #include "mediachanger/librmc/smc_struct.hpp"
+#include "mediachanger/librmc/Cnetdb.hpp"
 #include "mediachanger/librmc/Cdomainname.hpp"
 #include "mediachanger/librmc/net.hpp"
 #include "mediachanger/librmc/getconfent.hpp"

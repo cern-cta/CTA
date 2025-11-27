@@ -20,7 +20,6 @@
 #include <string.h>
 #include "Cglobals.hpp"
 #include "serrno.hpp"
-#include "Castor_limits.hpp"
 #include "getconfent.hpp"
 
 #ifndef PATH_CONFIG
@@ -28,6 +27,9 @@
 #endif /* PATH_CONFIG */
 
 #define strtok(X, Y) strtok_r(X, Y, &last)
+
+//! maximum length for a pathname
+constexpr int CA_MAXPATHLEN = 1023;
 
 static char* getconfent_r(const char*, const char*, const char*, int, char*, int);
 

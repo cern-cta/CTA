@@ -25,7 +25,6 @@
 #include <sys/types.h>
 #include <netinet/in.h>
 #include <string.h>
-#include "mediachanger/librmc/Castor_limits.hpp"
 #include "mediachanger/librmc/osdep.hpp"
 #include "mediachanger/librmc/marshall.hpp"
 #include "mediachanger/librmc/serrno.hpp"
