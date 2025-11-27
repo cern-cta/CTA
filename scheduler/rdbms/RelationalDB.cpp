@@ -551,7 +551,7 @@ std::list<common::dataStructures::RepackInfo> RelationalDB::fetchRepackInfo(cons
     auto rset = cta::schedulerdb::postgres::RepackRequestTrackingRow::selectRepackRows(sqlconn, vid);
     while (rset.next()) {
       uint64_t reqId = rset.columnUint64NoOpt("REPACK_REQUEST_ID");
-      if (repackMap.find(reqId) == repackMap.end()) {
+      if (!repackMap.contains(reqId)) {
         cta::schedulerdb::postgres::RepackRequestTrackingRow rrtrackrow(rset);
         auto rr = std::make_unique<cta::schedulerdb::RepackRequest>(m_connPool, m_catalogue, lc, rrtrackrow);
         repackMap[reqId] = std::move(rr->repackInfo);

@@ -235,7 +235,7 @@ protected:
     }
     while (m_toDeleteParamsQueue.size()) {
       auto paramName = m_toDeleteParamsQueue.pop();
-      if (paramsToAdd.find(paramName) != paramsToAdd.end()) {
+      if (paramsToAdd.contains(paramName)) {
         // Remove and ignore if parameter has been added before
         paramsToAdd.erase(paramName);
       } else {

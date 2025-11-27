@@ -54,7 +54,7 @@ void QueueCleanupRunner::runOnePass(log::LogContext &logContext) {
     }
 
     for (const auto &vid: queueVidSet) {
-      if (vidToTapesMap.count(vid) == 0) {
+      if (!vidToTapesMap.contains(vid)) {
         log::ScopedParamContainer params(logContext);
         params.add("tapeVid", vid);
         logContext.log(log::ERR,

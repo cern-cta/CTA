@@ -445,7 +445,7 @@ std::map<std::string, cta::catalogue::TapePool> CatalogueTestUtils::tapePoolList
     std::map<std::string, cta::catalogue::TapePool> m;
 
     for(auto &tapePool: listOfTapePools) {
-      if(m.end() != m.find(tapePool.name)) {
+      if (m.contains(tapePool.name)) {
         exception::Exception ex;
         ex.getMessage() << "Tape pool " << tapePool.name << " is a duplicate";
         throw ex;
@@ -467,7 +467,7 @@ std::map<std::string, cta::common::dataStructures::Tape> CatalogueTestUtils::tap
     std::map<std::string, cta::common::dataStructures::Tape> vidToTape;
 
     for (auto &tape: listOfTapes) {
-      if(vidToTape.end() != vidToTape.find(tape.vid)) {
+      if (vidToTape.contains(tape.vid)) {
         throw exception::Exception(std::string("Duplicate VID: value=") + tape.vid);
       }
       vidToTape[tape.vid] = tape;
@@ -487,7 +487,7 @@ std::map<uint64_t, cta::common::dataStructures::ArchiveFile> CatalogueTestUtils:
     std::map<uint64_t, common::dataStructures::ArchiveFile> m;
     while(itor.hasMore()) {
       const auto archiveFile = itor.next();
-      if(m.end() != m.find(archiveFile.archiveFileID)) {
+      if (m.contains(archiveFile.archiveFileID)) {
         exception::Exception ex;
         ex.getMessage() << "Archive file with ID " << archiveFile.archiveFileID << " is a duplicate";
         throw ex;
@@ -508,7 +508,7 @@ std::map<uint64_t, cta::common::dataStructures::ArchiveFile> CatalogueTestUtils:
     std::map<uint64_t, common::dataStructures::ArchiveFile> archiveIdToArchiveFile;
 
     for (auto &archiveFile: listOfArchiveFiles) {
-      if(archiveIdToArchiveFile.end() != archiveIdToArchiveFile.find(archiveFile.archiveFileID)) {
+      if (archiveIdToArchiveFile.contains(archiveFile.archiveFileID)) {
         throw exception::Exception(std::string("Duplicate archive file ID: value=") + std::to_string(archiveFile.archiveFileID));
       }
       archiveIdToArchiveFile[archiveFile.archiveFileID] = archiveFile;
@@ -528,7 +528,7 @@ std::map<std::string, cta::common::dataStructures::AdminUser> CatalogueTestUtils
     std::map<std::string, common::dataStructures::AdminUser> m;
 
     for(auto &adminUser: listOfAdminUsers) {
-      if(m.end() != m.find(adminUser.name)) {
+      if (m.contains(adminUser.name)) {
         exception::Exception ex;
         ex.getMessage() << "Admin user " << adminUser.name << " is a duplicate";
         throw ex;

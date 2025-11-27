@@ -132,9 +132,9 @@ TEST(castor_tape_tapeserver_daemon, MigrationWatchdog_DoNotReportParamsAddedAndD
     capturedParamsToAdd.pop_front();
     paramsToAddMap.emplace(capturedParamsToAdd.front().getName(), capturedParamsToAdd.front());
     capturedParamsToAdd.pop_front();
-    ASSERT_TRUE(paramsToAddMap.find("param3") != paramsToAddMap.end());
+    ASSERT_TRUE(paramsToAddMap.contains("param3"));
     ASSERT_EQ(std::get<int64_t>(paramsToAddMap.at("param3").getValueVariant().value()), 31);
-    ASSERT_TRUE(paramsToAddMap.find("param4") != paramsToAddMap.end());
+    ASSERT_TRUE(paramsToAddMap.contains("param4"));
     ASSERT_EQ(std::get<int64_t>(paramsToAddMap.at("param4").getValueVariant().value()), 40);
   }
 

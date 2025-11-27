@@ -1626,7 +1626,7 @@ void OStoreDB::deleteFailed(const std::string& objectId, log::LogContext& lc) {
 
   // Validate that all owners of the object are failed queues and therefore it is safe to delete the job
   for (auto& qid : queueIds) {
-    if (failedQueueIds.find(qid) == failedQueueIds.end()) {
+    if (!failedQueueIds.contains(qid)) {
       throw exception::Exception("In OStoreDB::deleteFailed(): Will not delete object " + objectId + "\nwhich is owned by " + qid);
     }
   }

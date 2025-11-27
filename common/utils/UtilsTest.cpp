@@ -190,10 +190,10 @@ TEST_F(cta_UtilsTest, getEnclosedNames) {
     resultSet.insert(*itor);
   }
   ASSERT_EQ(4, resultSet.size());
-  ASSERT_FALSE(resultSet.find(enclosedName1) == resultSet.end());
-  ASSERT_FALSE(resultSet.find(enclosedName2) == resultSet.end());
-  ASSERT_FALSE(resultSet.find(enclosedName3) == resultSet.end());
-  ASSERT_FALSE(resultSet.find(enclosedName4) == resultSet.end());
+  ASSERT_TRUE(resultSet.contains(enclosedName1));
+  ASSERT_TRUE(resultSet.contains(enclosedName2));
+  ASSERT_TRUE(resultSet.contains(enclosedName3));
+  ASSERT_TRUE(resultSet.contains(enclosedName4));
 }
 
 TEST_F(cta_UtilsTest, splitString_goodDay) {

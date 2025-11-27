@@ -291,7 +291,7 @@ std::map<uint64_t, OracleArchiveFileCatalogue::FileSizeAndChecksum>
   while (rset.next()) {
     const uint64_t archiveFileId = rset.columnUint64("ARCHIVE_FILE_ID");
 
-    if (fileSizesAndChecksums.end() != fileSizesAndChecksums.find(archiveFileId)) {
+    if (fileSizesAndChecksums.contains(archiveFileId)) {
       exception::Exception ex;
       ex.getMessage() << __FUNCTION__ << " failed: "
         "Found duplicate archive file identifier in batch of files written to tape: archiveFileId=" << archiveFileId;

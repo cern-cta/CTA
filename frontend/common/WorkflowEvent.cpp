@@ -381,7 +381,7 @@ void WorkflowEvent::processPREPARE(xrd::Response& response) {
   }
 
   // Activity value is a string. The parameter might be present or not.
-  if(m_event.file().xattr().find("activity") != m_event.file().xattr().end()) {
+  if (m_event.file().xattr().contains("activity")) {
     request.activity = m_event.file().xattr().at("activity");
   }
 

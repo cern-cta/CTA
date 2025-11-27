@@ -639,7 +639,7 @@ common::dataStructures::TapeCopyToPoolMap RdbmsArchiveFileCatalogue::getTapeCopy
     const std::string tapePoolName = rset.columnString("TAPE_POOL_NAME");
     auto archiveRouteTypeStr = rset.columnString("ARCHIVE_ROUTE_TYPE");
     auto archiveRouteType = common::dataStructures::strToArchiveRouteType(archiveRouteTypeStr);
-    if (archiveRouteType == common::dataStructures::ArchiveRouteType::DEFAULT && copyToPoolMap.count(copyNb)) {
+    if (archiveRouteType == common::dataStructures::ArchiveRouteType::DEFAULT && copyToPoolMap.contains(copyNb)) {
       // A DEFAULT archive route type should not override a previously found value
       continue;
     }

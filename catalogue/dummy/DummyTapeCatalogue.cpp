@@ -184,7 +184,7 @@ const common::dataStructures::Tape::State & state,
 }
 
 bool DummyTapeCatalogue::tapeExists(const std::string& vid) const {
-  return m_tapeEnabling.find(vid) != m_tapeEnabling.end();
+  return m_tapeEnabling.contains(vid);
 }
 
 common::dataStructures::Tape::State DummyTapeCatalogue::getTapeState(const std::string & vid) const {
