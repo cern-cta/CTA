@@ -88,7 +88,7 @@ public:
    * @param rhs The object on the right-hand side of the operator.
    * @return This object.
    */
-  Conn &operator=(Conn &&rhs);
+  Conn &operator=(Conn &&rhs) noexcept;
 
   /**
    * Thrown when a requested autocommit mode is not supported.

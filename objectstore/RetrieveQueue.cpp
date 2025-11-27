@@ -546,7 +546,7 @@ auto RetrieveQueue::addJobsIfNecessaryAndCommit(std::list<common::dataStructures
   std::list<std::unique_ptr<RetrieveQueueShard::AsyncLockfreeFetcher>> shardsFetchers;
 
   for (auto & sp: m_payload.retrievequeueshards()) {
-    shards.emplace_back(RetrieveQueueShard(sp.address(), m_objectStore));
+    shards.emplace_back(sp.address(), m_objectStore);
     shardsFetchers.emplace_back(shards.back().asyncLockfreeFetch());
   }
   std::list<std::list<JobDump>> shardsDumps;

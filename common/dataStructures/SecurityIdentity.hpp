@@ -43,7 +43,7 @@ struct SecurityIdentity {
 
   // Security protocol used to connect
   enum class Protocol { NONE, SSS, KRB5, GRPC_TOKEN, OTHER };
-  const std::map<std::string, Protocol> m_authProtoMap = {
+  inline static const std::map<std::string, Protocol> m_authProtoMap = {
     { "sss",        Protocol::SSS  },
     { "krb5",       Protocol::KRB5 },
     { "grpc_token", Protocol::GRPC_TOKEN }

@@ -39,9 +39,14 @@ public:
   QueueItor(objectstore::Backend &objectStore, common::dataStructures::JobQueueType queueType, const std::string &queue_id = "");
 
   /*!
-   * No assignment constructor
+   * No copy assignment constructor
    */
-  QueueItor& operator=(QueueItor&) = delete;
+  QueueItor& operator=(const QueueItor&) = delete;
+
+  /*!
+   * No move assignment constructor
+   */
+  QueueItor& operator=(QueueItor&&) = delete;
 
   // Default copy constructor is deleted in favour of move constructor
 
@@ -53,14 +58,14 @@ public:
    * where the queue is empty), it will be invalidated by the move. In this case we need to set it
    * explicitly.
    */
-  QueueItor(QueueItor &&rhs) :
-    m_objectStore(std::move(rhs).m_objectStore),
-    m_onlyThisQueueId(std::move(rhs).m_onlyThisQueueId),
-    m_isEndQueue(std::move(rhs).m_isEndQueue),
-    m_jobQueuesQueue(std::move(rhs).m_jobQueuesQueue),
-    m_jobQueuesQueueIt(std::move(rhs).m_jobQueuesQueueIt),
-    m_jobQueue(std::move(std::move(rhs).m_jobQueue)),
-    m_jobCache(std::move(rhs).m_jobCache)
+  QueueItor(QueueItor &&rhs) noexcept :
+    m_objectStore(rhs.m_objectStore),
+    m_onlyThisQueueId(rhs.m_onlyThisQueueId),
+    m_isEndQueue(rhs.m_isEndQueue),
+    m_jobQueuesQueue(std::move(rhs.m_jobQueuesQueue)),
+    m_jobQueuesQueueIt(std::move(rhs.m_jobQueuesQueueIt)),
+    m_jobQueue(std::move(rhs.m_jobQueue)),
+    m_jobCache(std::move(rhs.m_jobCache))
   {
     if(m_jobQueuesQueueIt == rhs.m_jobQueuesQueue.end()) {
       m_jobQueuesQueueIt = m_jobQueuesQueue.end();

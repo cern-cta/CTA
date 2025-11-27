@@ -70,11 +70,11 @@ public:
   Rset(const Rset&) = delete;
 
   /**
-   * Move constructor.
+   * Default move constructor.
    *
    * @param other The other object to be moved.
    */
-  Rset(Rset&& other) noexcept;
+  Rset(Rset&& other) = default;
 
   /**
    * Deletion of copy assignment.
@@ -82,9 +82,9 @@ public:
   Rset& operator=(const Rset&) = delete;
 
   /**
-   * Move assignment.
+   * Default move assignment.
    */
-  Rset& operator=(Rset&& rhs);
+  Rset& operator=(Rset&& rhs) = default;
 
   // Generic method to handle calls to methods (MethodPtr) of m_impl (ImplPtrT)
   template<auto MethodPtr, typename ImplPtrT>
