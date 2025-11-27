@@ -68,11 +68,13 @@ bool RetrieveQueue::checkMapsAndShardsCoherency() {
     jobsExpectedFromShardsPointers += aqs.shardjobscount();
   }
   // The sum of shards should be equal to the summary
-  if (uint64_t totalBytes = m_payload.retrievejobstotalsize(),
-      uint64_t totalJobs = m_payload.retrievejobscount();
-      totalBytes != bytesFromShardPointers ||
-      totalJobs != jobsExpectedFromShardsPointers)
-    return false;
+  {
+    uint64_t totalBytes = m_payload.retrievejobstotalsize();
+    uint64_t totalJobs = m_payload.retrievejobscount();
+    if (totalBytes != bytesFromShardPointers ||
+        totalJobs != jobsExpectedFromShardsPointers)
+      return false;
+  }
   // Check that we have coherent queue summaries
   {
     ValueCountMapUint64 priorityMap(m_payload.mutable_prioritymap());
