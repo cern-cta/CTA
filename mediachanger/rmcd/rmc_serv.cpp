@@ -47,8 +47,6 @@
 #include "Cinit.hpp"
 #include "rmc_procreq.hpp"
 
-#define PATH_CONF "/etc/cta/cta-rmcd.conf"
-
 /* Forward declaration */
 static int rmc_getreq(const int s, int* const req_type, char* const req_data, char** const clienthost);
 static void rmc_procreq(const int rpfd, const int req_type, char* const req_data, char* const clienthost);
@@ -176,7 +174,7 @@ int rmc_main(const char* const robot) {
     const char* p;
     p = getenv("RMC_PORT");
     if (!p) {
-      p = getconfent_fromfile(PATH_CONF, "RMC", "PORT", 0);
+      p = getconfent_fromfile("RMC", "PORT", 0);
     }
 
     if (p) {

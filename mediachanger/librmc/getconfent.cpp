@@ -22,37 +22,15 @@
 #include "serrno.hpp"
 #include "getconfent.hpp"
 
-#ifndef PATH_CONFIG
-#define PATH_CONFIG "/etc/castor/castor.conf"
-#endif /* PATH_CONFIG */
-
 #define strtok(X, Y) strtok_r(X, Y, &last)
 
-//! maximum length for a pathname
-constexpr int CA_MAXPATHLEN = 1023;
-
-static char* getconfent_r(const char*, const char*, const char*, int, char*, int);
-
 static char*
-getconfent_r(const char* filename, const char* category, const char* name, int flags, char* buffer, int bufsiz) {
+getconfent_r(const char* category, const char* name, int flags, char* buffer, int bufsiz) {
   FILE* fp;
   char *p, *cp;
   int found = 0;
-  char path_config[CA_MAXPATHLEN + 1];
   char* last = nullptr;
-
-  if (filename == nullptr) {
-    /* Use default config file is not in the parameters */
-    filename = PATH_CONFIG;
-    /* But give precedence to $PATH_CONFIG environment variable */
-    if ((p = getenv("PATH_CONFIG")) != nullptr) {
-      filename = p;
-    }
-  }
-
-  strncpy(path_config, filename, CA_MAXPATHLEN + 1);
-  /* Who knows */
-  path_config[CA_MAXPATHLEN] = '\0';
+  constexpr char const* path_config = "/etc/cta/cta-rmcd.conf";
 
   if ((fp = fopen(path_config, "r")) == nullptr) {
     serrno = SENOCONFIG;
@@ -112,7 +90,7 @@ getconfent_r(const char* filename, const char* category, const char* name, int f
 
 static int value_key = -1;
 
-char* getconfent(const char* category, const char* name, int flags) {
+char* getconfent_fromfile(const char* category, const char* name, int flags) {
   char* value = nullptr;
 
   Cglobals_get(&value_key, (void**) &value, BUFSIZ + 1);
@@ -120,16 +98,5 @@ char* getconfent(const char* category, const char* name, int flags) {
     return nullptr;
   }
 
-  return getconfent_r(nullptr, category, name, flags, value, BUFSIZ + 1);
-}
-
-char* getconfent_fromfile(const char* filename, const char* category, const char* name, int flags) {
-  char* value = nullptr;
-
-  Cglobals_get(&value_key, (void**) &value, BUFSIZ + 1);
-  if (value == nullptr) {
-    return nullptr;
-  }
-
-  return getconfent_r(filename, category, name, flags, value, BUFSIZ + 1);
+  return getconfent_r(category, name, flags, value, BUFSIZ + 1);
 }

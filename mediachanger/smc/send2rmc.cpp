@@ -30,8 +30,6 @@
 #include "mediachanger/librmc/marshall.hpp"
 #include "rmc_api.hpp"
 
-#define PATH_CONF "/etc/cta/cta-rmcd.conf"
-
 /* send2tpd - send a request to the SCSI media changer server and wait for the reply */
 
 int send2rmc(const char* const host,
@@ -56,7 +54,7 @@ int send2rmc(const char* const host,
   sin.sin_family = AF_INET;
   p = getenv("RMC_PORT");
   if (!p) {
-    p = getconfent_fromfile(PATH_CONF, "RMC", "PORT", 0);
+    p = getconfent_fromfile("RMC", "PORT", 0);
   }
 
   if (p) {
