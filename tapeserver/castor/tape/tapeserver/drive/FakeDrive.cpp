@@ -179,10 +179,8 @@ void castor::tape::tapeserver::drive::FakeDrive::spaceFileMarksForward(size_t co
 void castor::tape::tapeserver::drive::FakeDrive::unloadTape(void)  {
 }
 void castor::tape::tapeserver::drive::FakeDrive::flush(void)  {
-  if (m_failureMoment == OnFlush) {
-    if (m_tapeOverflow) {
-      throw cta::exception::Errnum(ENOSPC, "Error in castor::tape::tapeserver::drive::FakeDrive::flush");
-    }
+  if (m_failureMoment == OnFlush && m_tapeOverflow) {
+    throw cta::exception::Errnum(ENOSPC, "Error in castor::tape::tapeserver::drive::FakeDrive::flush");
   }
 }
 

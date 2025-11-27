@@ -279,10 +279,8 @@ int main(const int argc, char** argv) {
       exit(USERR);
   }
 
-  if (run_rmcd_in_background(argc, argv)) {
-    if (Cinitdaemon("rmcd", nullptr) < 0) {
-      exit(SYERR);
-    }
+  if (run_rmcd_in_background(argc, argv) && (Cinitdaemon("rmcd", nullptr) < 0)) {
+    exit(SYERR);
   }
   exit(rmc_main(robot));
 }

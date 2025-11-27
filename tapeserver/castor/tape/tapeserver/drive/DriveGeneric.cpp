@@ -988,13 +988,10 @@ bool drive::DriveGeneric::isTapeBlank() {
   struct mtget mtInfo;
 
   if ((0 == m_sysWrapper.ioctl(m_tapeFD, MTIOCTOP, &mtCmd1)) &&
-      (0 != m_sysWrapper.ioctl(m_tapeFD, MTIOCTOP, &mtCmd2))) {
+      (0 != m_sysWrapper.ioctl(m_tapeFD, MTIOCTOP, &mtCmd2)) && m_sysWrapper.ioctl(m_tapeFD, MTIOCGET, &mtInfo) >= 0 &&
+      GMT_EOD(mtInfo.mt_gstat) && GMT_BOT(mtInfo.mt_gstat)) {
     //we are doing it the old CASTOR way (see readlbl.c)
-    if (m_sysWrapper.ioctl(m_tapeFD, MTIOCGET, &mtInfo) >= 0) {
-      if (GMT_EOD(mtInfo.mt_gstat) && GMT_BOT(mtInfo.mt_gstat)) {
-        return true;
-      }
-    }
+    return true;
   }
 
   struct mtop mtCmd3 = {};

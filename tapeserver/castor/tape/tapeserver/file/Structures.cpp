@@ -92,11 +92,8 @@ void tapeFile::HDR1EOF1::verifyCommon(const bool skipFSecCheck)
   if (!cmpString(m_VSN, ""))
     throw cta::exception::Exception(std::string("Failed verify for the VSN: ") +
           tapeFile::toString(m_VSN));
-  if (!skipFSecCheck) {
-    if (cmpString(m_fSec, "0001"))
-      throw cta::exception::Exception(
-            std::string("Failed verify for the fSec: ") +
-            tapeFile::toString(m_fSec));
+  if (!skipFSecCheck && cmpString(m_fSec, "0001")) {
+    throw cta::exception::Exception(std::string("Failed verify for the fSec: ") + tapeFile::toString(m_fSec));
   };
   if (!cmpString(m_fSeq, ""))
     throw cta::exception::Exception(
