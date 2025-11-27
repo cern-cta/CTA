@@ -129,9 +129,9 @@ cta::xrd::Data TapeLsResponseStream::next() {
   tapeItem->set_comment(tape.comment);
 
   tapeItem->set_state(tape.getStateStr());
-  tapeItem->set_state_reason(tape.stateReason ? tape.stateReason.value() : "");
-  tapeItem->set_purchase_order(tape.purchaseOrder ? tape.purchaseOrder.value() : "");
-  tapeItem->set_physical_library(tape.physicalLibraryName ? tape.physicalLibraryName.value() : "");
+  tapeItem->set_state_reason(tape.stateReason.value_or(""));
+  tapeItem->set_purchase_order(tape.purchaseOrder.value_or(""));
+  tapeItem->set_physical_library(tape.physicalLibraryName.value_or(""));
   tapeItem->set_state_update_time(tape.stateUpdateTime);
   tapeItem->set_state_modified_by(tape.stateModifiedBy);
   if (tape.verificationStatus) {

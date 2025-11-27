@@ -28,10 +28,10 @@ std::unique_ptr<RAOAlgorithmFactory> RAOAlgorithmFactoryFactory::createAlgorithm
   std::unique_ptr<RAOAlgorithmFactory> ret;
   auto maxFilesSupported = m_raoManager.getMaxFilesSupported();
   if(m_raoManager.isDriveEnterpriseEnabled()) {
-    if(m_raoManager.hasUDS() && maxFilesSupported){
+    if(m_raoManager.hasUDS() && maxFilesSupported.has_value()){
       //We successfully queried the max limits UDS of the drive, we then return an Enterprise RAO factory
       ret.reset(new EnterpriseRAOAlgorithmFactory(m_raoManager.getDrive(),maxFilesSupported.value()));
-    } 
+    }
   } else {
     RAOParams raoParams = m_raoManager.getRAOParams();
     //We will instanciate a CTA RAO algorithm
@@ -55,7 +55,7 @@ std::unique_ptr<RAOAlgorithmFactory> RAOAlgorithmFactoryFactory::createAlgorithm
         break;
       }
       case RAOParams::RAOAlgorithmType::sltf:
-      { 
+      {
         ConfigurableRAOAlgorithmFactory::Builder builder(raoParams);
         builder.setDriveInterface(m_raoManager.getDrive());
         builder.setCatalogue(m_raoManager.getCatalogue());

@@ -45,19 +45,19 @@ cta::xrd::Data MediaTypeLsResponseStream::next() {
   mt_item->set_instance_name(m_instanceName);
   mt_item->set_cartridge(mt.cartridge);
   mt_item->set_capacity(mt.capacityInBytes);
-  if (mt.primaryDensityCode) {
+  if (mt.primaryDensityCode.has_value()) {
     mt_item->set_primary_density_code(mt.primaryDensityCode.value());
   }
-  if (mt.secondaryDensityCode) {
+  if (mt.secondaryDensityCode.has_value()) {
     mt_item->set_secondary_density_code(mt.secondaryDensityCode.value());
   }
-  if (mt.nbWraps) {
+  if (mt.nbWraps.has_value()) {
     mt_item->set_number_of_wraps(mt.nbWraps.value());
   }
-  if (mt.minLPos) {
+  if (mt.minLPos.has_value()) {
     mt_item->set_min_lpos(mt.minLPos.value());
   }
-  if (mt.maxLPos) {
+  if (mt.maxLPos.has_value()) {
     mt_item->set_max_lpos(mt.maxLPos.value());
   }
   mt_item->set_comment(mt.comment);

@@ -107,7 +107,7 @@ std::string Rset::columnString(const std::string& colName) const {
     }
 
     const std::optional<std::string> col = columnOptionalString(colName);
-    if (col) {
+    if (col.has_value()) {
       return col.value();
     } else {
       throw NullDbValue(std::string("Database column ") + colName + " contains a null value");
@@ -128,7 +128,7 @@ uint8_t Rset::columnUint8(const std::string& colName) const {
     }
 
     const std::optional<uint8_t> col = columnOptionalUint8(colName);
-    if (col) {
+    if (col.has_value()) {
       return col.value();
     } else {
       throw NullDbValue(std::string("Database column ") + colName + " contains a null value");
@@ -170,7 +170,7 @@ uint32_t Rset::columnUint32(const std::string& colName) const {
     }
 
     const std::optional<uint32_t> col = columnOptionalUint32(colName);
-    if (col) {
+    if (col.has_value()) {
       return col.value();
     } else {
       throw NullDbValue(std::string("Database column ") + colName + " contains a null value");
@@ -191,7 +191,7 @@ uint64_t Rset::columnUint64(const std::string& colName) const {
     }
 
     const std::optional<uint64_t> col = columnOptionalUint64(colName);
-    if (col) {
+    if (col.has_value()) {
       return col.value();
     } else {
       throw NullDbValue(std::string("Database column ") + colName + " contains a null value");
@@ -212,7 +212,7 @@ bool Rset::columnBool(const std::string& colName) const {
     }
 
     const std::optional<bool> col = columnOptionalBool(colName);
-    if (col) {
+    if (col.has_value()) {
       return col.value();
     } else {
       throw NullDbValue(std::string("Database column ") + colName + " contains a null value");
@@ -243,7 +243,7 @@ std::optional<bool> Rset::columnOptionalBool(const std::string& colName) const {
 //------------------------------------------------------------------------------
 std::optional<bool> Rset::extractBoolFromOptionalUint64(const std::string& colName) const {
   const auto column = columnOptionalUint64(colName);
-  if (column) {
+  if (column.has_value()) {
     return std::optional<bool>(column.value() != 0);
   } else {
     return std::nullopt;
@@ -255,7 +255,7 @@ std::optional<bool> Rset::extractBoolFromOptionalUint64(const std::string& colNa
 //------------------------------------------------------------------------------
 std::optional<bool> Rset::extractBoolFromOptionalString(const std::string& colName) const {
   const auto column = columnOptionalString(colName);
-  if (column) {
+  if (column.has_value()) {
     const std::string& strValue = column.value();
     if (strValue == "t" || strValue == "true") {
       return std::optional<bool>(true);
@@ -366,7 +366,7 @@ double Rset::columnDouble(const std::string& colName) const {
     }
 
     const std::optional<double> col = columnOptionalDouble(colName);
-    if (col) {
+    if (col.has_value()) {
       return col.value();
     } else {
       throw NullDbValue(std::string("Database column ") + colName + " contains a null value");

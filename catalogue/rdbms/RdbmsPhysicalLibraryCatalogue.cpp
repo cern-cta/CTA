@@ -66,9 +66,9 @@ void RdbmsPhysicalLibraryCatalogue::createPhysicalLibrary(const common::dataStru
 
       LAST_UPDATE_USER_NAME,
       LAST_UPDATE_HOST_NAME,
-      LAST_UPDATE_TIME, 
+      LAST_UPDATE_TIME,
 
-      USER_COMMENT) 
+      USER_COMMENT)
     VALUES(
       :PHYSICAL_LIBRARY_ID,
       :PHYSICAL_LIBRARY_NAME,
@@ -137,8 +137,8 @@ void RdbmsPhysicalLibraryCatalogue::createPhysicalLibrary(const common::dataStru
 
 void RdbmsPhysicalLibraryCatalogue::deletePhysicalLibrary(const std::string& name) {
   const char* const sql = R"SQL(
-    DELETE FROM PHYSICAL_LIBRARY 
-    WHERE 
+    DELETE FROM PHYSICAL_LIBRARY
+    WHERE
       PHYSICAL_LIBRARY_NAME = :PHYSICAL_LIBRARY_NAME
   )SQL";
   auto conn = m_connPool->getConn();
@@ -168,7 +168,7 @@ std::list<common::dataStructures::PhysicalLibrary> RdbmsPhysicalLibraryCatalogue
 
   std::list<common::dataStructures::PhysicalLibrary> libs;
   const char* const sql = R"SQL(
-    SELECT 
+    SELECT
       PHYSICAL_LIBRARY_NAME AS PHYSICAL_LIBRARY_NAME,
       PHYSICAL_LIBRARY_MANUFACTURER AS PHYSICAL_LIBRARY_MANUFACTURER,
       PHYSICAL_LIBRARY_MODEL AS PHYSICAL_LIBRARY_MODEL,
@@ -187,14 +187,14 @@ std::list<common::dataStructures::PhysicalLibrary> RdbmsPhysicalLibraryCatalogue
 
       LAST_UPDATE_USER_NAME AS LAST_UPDATE_USER_NAME,
       LAST_UPDATE_HOST_NAME AS LAST_UPDATE_HOST_NAME,
-      LAST_UPDATE_TIME AS LAST_UPDATE_TIME, 
+      LAST_UPDATE_TIME AS LAST_UPDATE_TIME,
 
       USER_COMMENT AS USER_COMMENT,
       IS_DISABLED AS IS_DISABLED,
-      DISABLED_REASON AS DISABLED_REASON 
-    FROM 
-      PHYSICAL_LIBRARY 
-    ORDER BY 
+      DISABLED_REASON AS DISABLED_REASON
+    FROM
+      PHYSICAL_LIBRARY
+    ORDER BY
       PHYSICAL_LIBRARY_NAME
   )SQL";
   auto conn = m_connPool->getConn();
@@ -265,11 +265,11 @@ void RdbmsPhysicalLibraryCatalogue::modifyPhysicalLibrary(const common::dataStru
 std::optional<uint64_t> RdbmsPhysicalLibraryCatalogue::getPhysicalLibraryId(rdbms::Conn &conn,
   const std::string &name) const {
   const char* const sql = R"SQL(
-    SELECT 
-      PHYSICAL_LIBRARY_ID AS PHYSICAL_LIBRARY_ID 
-    FROM 
-      PHYSICAL_LIBRARY 
-    WHERE 
+    SELECT
+      PHYSICAL_LIBRARY_ID AS PHYSICAL_LIBRARY_ID
+    FROM
+      PHYSICAL_LIBRARY
+    WHERE
       PHYSICAL_LIBRARY.PHYSICAL_LIBRARY_NAME = :PHYSICAL_LIBRARY_NAME
   )SQL";
   auto stmt = conn.createStmt(sql);
@@ -286,36 +286,36 @@ std::optional<uint64_t> RdbmsPhysicalLibraryCatalogue::getPhysicalLibraryId(rdbm
 std::string RdbmsPhysicalLibraryCatalogue::buildUpdateStmtStr(const common::dataStructures::UpdatePhysicalLibrary& pl) const {
   std::string setClause;
 
-  if (pl.guiUrl) {
+  if (pl.guiUrl.has_value()) {
     setClause += R"SQL(GUI_URL = :GUI_URL,)SQL";
   }
-  if (pl.webcamUrl) {
+  if (pl.webcamUrl.has_value()) {
     setClause += R"SQL(WEBCAM_URL = :WEBCAM_URL,)SQL";
   }
-  if (pl.location) {
+  if (pl.location.has_value()) {
     setClause += R"SQL(PHYSICAL_LOCATION = :PHYSICAL_LOCATION,)SQL";
   }
-  if (pl.nbPhysicalCartridgeSlots) {
+  if (pl.nbPhysicalCartridgeSlots.has_value()) {
     setClause += R"SQL(NB_PHYSICAL_CARTRIDGE_SLOTS = :NB_PHYSICAL_CARTRIDGE_SLOTS,)SQL";
   }
-  if (pl.nbAvailableCartridgeSlots) {
+  if (pl.nbAvailableCartridgeSlots.has_value()) {
     setClause += R"SQL(NB_AVAILABLE_CARTRIDGE_SLOTS = :NB_AVAILABLE_CARTRIDGE_SLOTS,)SQL";
   }
-  if (pl.nbPhysicalDriveSlots) {
+  if (pl.nbPhysicalDriveSlots.has_value()) {
     setClause += R"SQL(NB_PHYSICAL_DRIVE_SLOTS = :NB_PHYSICAL_DRIVE_SLOTS,)SQL";
   }
-  if (pl.comment) {
+  if (pl.comment.has_value()) {
     setClause += R"SQL(USER_COMMENT = :USER_COMMENT,)SQL";
   }
-  if (pl.isDisabled) {
+  if (pl.isDisabled.has_value()) {
     setClause += R"SQL(IS_DISABLED = :IS_DISABLED,)SQL";
   }
-  if (pl.disabledReason) {
+  if (pl.disabledReason.has_value()) {
     setClause += R"SQL(DISABLED_REASON = :DISABLED_REASON,)SQL";
   }
 
-  if (pl.isDisabled && pl.isDisabled.value() && !pl.disabledReason) {
-    throw exception::UserError(std::string("Cannot disable physical library ") + pl.name + " because the reason has not been provided"); 
+  if (pl.isDisabled.has_value() && pl.isDisabled.value() && !pl.disabledReason) {
+    throw exception::UserError(std::string("Cannot disable physical library ") + pl.name + " because the reason has not been provided");
   }
 
   if(setClause.empty()) {
@@ -329,7 +329,7 @@ std::string RdbmsPhysicalLibraryCatalogue::buildUpdateStmtStr(const common::data
   sql += R"SQL(
     LAST_UPDATE_USER_NAME = :LAST_UPDATE_USER_NAME,
     LAST_UPDATE_HOST_NAME = :LAST_UPDATE_HOST_NAME,
-    LAST_UPDATE_TIME = :LAST_UPDATE_TIME 
+    LAST_UPDATE_TIME = :LAST_UPDATE_TIME
   )SQL";
   sql += R"SQL(
     WHERE PHYSICAL_LIBRARY_NAME = :PHYSICAL_LIBRARY_NAME
@@ -339,13 +339,13 @@ std::string RdbmsPhysicalLibraryCatalogue::buildUpdateStmtStr(const common::data
 }
 
 void RdbmsPhysicalLibraryCatalogue::bindUpdateParams(cta::rdbms::Stmt& stmt, const common::dataStructures::UpdatePhysicalLibrary& pl, const common::dataStructures::SecurityIdentity& admin, const time_t now) const {
-  if(pl.guiUrl)                    stmt.bindString(":GUI_URL", RdbmsCatalogueUtils::nulloptIfEmptyStr(pl.guiUrl.value()));
-  if(pl.webcamUrl)                 stmt.bindString(":WEBCAM_URL", RdbmsCatalogueUtils::nulloptIfEmptyStr(pl.webcamUrl.value()));
-  if(pl.location)                  stmt.bindString(":PHYSICAL_LOCATION", RdbmsCatalogueUtils::nulloptIfEmptyStr(pl.location.value()));
-  if(pl.nbPhysicalCartridgeSlots)  stmt.bindUint64(":NB_PHYSICAL_CARTRIDGE_SLOTS", pl.nbPhysicalCartridgeSlots.value());
-  if(pl.nbAvailableCartridgeSlots) stmt.bindUint64(":NB_AVAILABLE_CARTRIDGE_SLOTS", pl.nbAvailableCartridgeSlots.value());
-  if(pl.nbPhysicalDriveSlots)      stmt.bindUint64(":NB_PHYSICAL_DRIVE_SLOTS", pl.nbPhysicalDriveSlots.value());
-  if(pl.comment) {
+  if(pl.guiUrl.has_value())                    stmt.bindString(":GUI_URL", RdbmsCatalogueUtils::nulloptIfEmptyStr(pl.guiUrl.value()));
+  if(pl.webcamUrl.has_value())                 stmt.bindString(":WEBCAM_URL", RdbmsCatalogueUtils::nulloptIfEmptyStr(pl.webcamUrl.value()));
+  if(pl.location.has_value())                  stmt.bindString(":PHYSICAL_LOCATION", RdbmsCatalogueUtils::nulloptIfEmptyStr(pl.location.value()));
+  if(pl.nbPhysicalCartridgeSlots.has_value())  stmt.bindUint64(":NB_PHYSICAL_CARTRIDGE_SLOTS", pl.nbPhysicalCartridgeSlots.value());
+  if(pl.nbAvailableCartridgeSlots.has_value()) stmt.bindUint64(":NB_AVAILABLE_CARTRIDGE_SLOTS", pl.nbAvailableCartridgeSlots.value());
+  if(pl.nbPhysicalDriveSlots.has_value())      stmt.bindUint64(":NB_PHYSICAL_DRIVE_SLOTS", pl.nbPhysicalDriveSlots.value());
+  if(pl.comment.has_value()) {
     const auto trimmedComment = RdbmsCatalogueUtils::checkCommentOrReasonMaxLength(pl.comment.value(), &m_log);
     stmt.bindString(":USER_COMMENT", trimmedComment);
   }
@@ -354,7 +354,7 @@ void RdbmsPhysicalLibraryCatalogue::bindUpdateParams(cta::rdbms::Stmt& stmt, con
   stmt.bindString(":LAST_UPDATE_HOST_NAME", admin.host);
   stmt.bindUint64(":LAST_UPDATE_TIME", now);
   stmt.bindString(":PHYSICAL_LIBRARY_NAME", pl.name);
-  if(pl.isDisabled)               stmt.bindBool(":IS_DISABLED", pl.isDisabled.value());
+  if(pl.isDisabled.has_value())               stmt.bindBool(":IS_DISABLED", pl.isDisabled.value());
   if(pl.disabledReason) {
     const auto trimmedReason = RdbmsCatalogueUtils::checkCommentOrReasonMaxLength(pl.disabledReason, &m_log);
     stmt.bindString(":DISABLED_REASON", trimmedReason);

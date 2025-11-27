@@ -294,7 +294,7 @@ FrontendService::FrontendService(const std::string& configFilename) : m_archiveF
     params.push_back(log::Param("category", "cta.archivefile"));
     params.push_back(log::Param("key", "max_size_gb"));
     params.push_back(
-      log::Param("value", std::to_string(archiveFileMaxSize.has_value() ? archiveFileMaxSize.value() : 0)));
+      log::Param("value", std::to_string(archiveFileMaxSize.value_or(0))));
     log(log::INFO, "Configuration entry", params);
   }
 

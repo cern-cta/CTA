@@ -20,7 +20,7 @@
 
 namespace castor::tape::tapeserver::rao {
 
-InterpolationFilePositionEstimator::InterpolationFilePositionEstimator(const std::vector<drive::endOfWrapPosition> & endOfWrapPositions, 
+InterpolationFilePositionEstimator::InterpolationFilePositionEstimator(const std::vector<drive::endOfWrapPosition> & endOfWrapPositions,
   const cta::catalogue::MediaType & mediaType): m_endOfWrapPositions(endOfWrapPositions), m_mediaType(mediaType) {
   checkMediaTypeConsistency();
 }
@@ -67,7 +67,7 @@ uint64_t InterpolationFilePositionEstimator::determineWrapNb(const uint64_t bloc
   }
   if(eowpItor == m_endOfWrapPositions.end()){
     eowpItor--;
-    std::string errorMsg = "In InterpolationFilePositionEstimator::determineWrapNb(), the blockId " + std::to_string(blockId) + " is greater than the last wrap EOWP blockId ("+std::to_string(eowpItor->blockId)+")"; 
+    std::string errorMsg = "In InterpolationFilePositionEstimator::determineWrapNb(), the blockId " + std::to_string(blockId) + " is greater than the last wrap EOWP blockId ("+std::to_string(eowpItor->blockId)+")";
     throw cta::exception::Exception(errorMsg);
   }
   return eowpItor->wrapNumber;
@@ -80,7 +80,7 @@ uint64_t InterpolationFilePositionEstimator::determineLPos(const uint64_t blockI
   uint64_t maxLpos = m_mediaType.maxLPos.value();
   uint64_t b_max = m_endOfWrapPositions.at(wrapNumber).blockId;
   if(wrapNumber > 0){
-    drive::endOfWrapPosition previousWrapPositionInfos = m_endOfWrapPositions.at(wrapNumber-1); 
+    drive::endOfWrapPosition previousWrapPositionInfos = m_endOfWrapPositions.at(wrapNumber-1);
     b_max -= previousWrapPositionInfos.blockId;
     fileBlockId -= previousWrapPositionInfos.blockId;
   }
@@ -93,16 +93,16 @@ uint64_t InterpolationFilePositionEstimator::determineLPos(const uint64_t blockI
 }
 
 uint64_t InterpolationFilePositionEstimator::determineEndBlockId(const cta::common::dataStructures::TapeFile& file) const {
-  return file.blockId + (file.fileSize / c_blockSize) + 1; 
+  return file.blockId + (file.fileSize / c_blockSize) + 1;
 }
 
 
 void InterpolationFilePositionEstimator::checkMediaTypeConsistency(){
-  if(!m_mediaType.minLPos || !m_mediaType.maxLPos){
+  if(!m_mediaType.minLPos.has_value() || !m_mediaType.maxLPos.has_value()){
     std::string errorMsg = "In InterpolationFilePositionEstimator::checkMediaTypeConsistency(), the media type (" + m_mediaType.name + ") associated to the tape does not give informations about the minLPos and maxLPos.";
     throw cta::exception::Exception(errorMsg);
   }
-  if(!m_mediaType.nbWraps){
+  if(!m_mediaType.nbWraps.has_value()){
     std::string errorMsg = "In InterpolationFilePositionEstimator::checkMediaTypeConsistency(), the media type (" + m_mediaType.name + ") associated to the tape mounted does not give informations about the number of wraps the media contains.";
     throw cta::exception::Exception(errorMsg);
   }

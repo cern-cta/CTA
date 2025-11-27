@@ -222,35 +222,35 @@ void RestoreFilesCmd::listDeletedFilesCta() const {
   admincmd.set_cmd(cta::admin::AdminCmd::CMD_RECYCLETAPEFILE);
   admincmd.set_subcmd(cta::admin::AdminCmd::SUBCMD_LS);
 
-  if (m_vid) {
+  if (m_vid.has_value()) {
     params.push_back(cta::log::Param("tapeVid", m_vid.value()));
     auto key = cta::admin::OptionString::VID;
     auto new_opt = admincmd.add_option_str();
     new_opt->set_key(key);
     new_opt->set_value(m_vid.value());
   }
-  if (m_diskInstance) {
+  if (m_diskInstance.has_value()) {
     params.push_back(cta::log::Param("diskInstance", m_diskInstance.value()));
     auto key = cta::admin::OptionString::INSTANCE;
     auto new_opt = admincmd.add_option_str();
     new_opt->set_key(key);
     new_opt->set_value(m_diskInstance.value());
   }
-  if (m_archiveFileId) {
+  if (m_archiveFileId.has_value()) {
     params.push_back(cta::log::Param("archiveFileId", m_archiveFileId.value()));
     auto key = cta::admin::OptionUInt64::ARCHIVE_FILE_ID;
     auto new_opt = admincmd.add_option_uint64();
     new_opt->set_key(key);
     new_opt->set_value(cta::utils::toUint64(m_archiveFileId.value()));
   }
-  if (m_copyNumber) {
+  if (m_copyNumber.has_value()) {
     params.push_back(cta::log::Param("copyNb", m_copyNumber.value()));
     auto key = cta::admin::OptionUInt64::COPY_NUMBER;
     auto new_opt = admincmd.add_option_uint64();
     new_opt->set_key(key);
     new_opt->set_value(m_copyNumber.value());
   }
-  if (m_fids) {
+  if (m_fids.has_value()) {
     std::stringstream ss;
     auto key = cta::admin::OptionStrList::FILE_ID;
     auto new_opt = admincmd.add_option_str_list();

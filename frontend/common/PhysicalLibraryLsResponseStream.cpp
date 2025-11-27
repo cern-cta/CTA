@@ -46,25 +46,25 @@ cta::xrd::Data PhysicalLibraryLsResponseStream::next() {
   pl_item->set_manufacturer(pl.manufacturer);
   pl_item->set_model(pl.model);
 
-  if (pl.type) {
+  if (pl.type.has_value()) {
     pl_item->set_type(pl.type.value());
   }
-  if (pl.guiUrl) {
+  if (pl.guiUrl.has_value()) {
     pl_item->set_gui_url(pl.guiUrl.value());
   }
-  if (pl.webcamUrl) {
+  if (pl.webcamUrl.has_value()) {
     pl_item->set_webcam_url(pl.webcamUrl.value());
   }
-  if (pl.location) {
+  if (pl.location.has_value()) {
     pl_item->set_location(pl.location.value());
   }
-  if (pl.nbAvailableCartridgeSlots) {
+  if (pl.nbAvailableCartridgeSlots.has_value()) {
     pl_item->set_nb_available_cartridge_slots(pl.nbAvailableCartridgeSlots.value());
   }
-  if (pl.comment) {
+  if (pl.comment.has_value()) {
     pl_item->set_comment(pl.comment.value());
   }
-  if (pl.disabledReason) {
+  if (pl.disabledReason.has_value()) {
     pl_item->set_disabled_reason(pl.disabledReason.value());
   }
 

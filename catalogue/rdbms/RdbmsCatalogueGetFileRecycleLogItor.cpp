@@ -35,7 +35,7 @@ RdbmsCatalogueGetFileRecycleLogItor::RdbmsCatalogueGetFileRecycleLogItor(
   m_conn(std::move(conn)),
   m_searchCriteria(searchCriteria) {
   std::string sql = R"SQL(
-    SELECT 
+    SELECT
       FILE_RECYCLE_LOG.VID AS VID,
       FILE_RECYCLE_LOG.FSEQ AS FSEQ,
       FILE_RECYCLE_LOG.BLOCK_ID AS BLOCK_ID,
@@ -57,39 +57,39 @@ RdbmsCatalogueGetFileRecycleLogItor::RdbmsCatalogueGetFileRecycleLogItor(
       FILE_RECYCLE_LOG.COLLOCATION_HINT AS COLLOCATION_HINT,
       FILE_RECYCLE_LOG.DISK_FILE_PATH AS DISK_FILE_PATH,
       FILE_RECYCLE_LOG.REASON_LOG AS REASON_LOG,
-      FILE_RECYCLE_LOG.RECYCLE_LOG_TIME AS RECYCLE_LOG_TIME 
-    FROM 
-      FILE_RECYCLE_LOG 
-    JOIN 
-      STORAGE_CLASS ON STORAGE_CLASS.STORAGE_CLASS_ID = FILE_RECYCLE_LOG.STORAGE_CLASS_ID 
-    JOIN 
+      FILE_RECYCLE_LOG.RECYCLE_LOG_TIME AS RECYCLE_LOG_TIME
+    FROM
+      FILE_RECYCLE_LOG
+    JOIN
+      STORAGE_CLASS ON STORAGE_CLASS.STORAGE_CLASS_ID = FILE_RECYCLE_LOG.STORAGE_CLASS_ID
+    JOIN
       VIRTUAL_ORGANIZATION ON VIRTUAL_ORGANIZATION.VIRTUAL_ORGANIZATION_ID = STORAGE_CLASS.VIRTUAL_ORGANIZATION_ID
   )SQL";
 
   const bool thereIsAtLeastOneSearchCriteria =
-          searchCriteria.vid ||
-          searchCriteria.diskFileIds ||
-          searchCriteria.archiveFileId ||
-          searchCriteria.copynb ||
-          searchCriteria.diskInstance ||
-          searchCriteria.recycleLogTimeMin ||
-          searchCriteria.recycleLogTimeMax ||
-          searchCriteria.vo;
+          searchCriteria.vid.has_value() ||
+          searchCriteria.diskFileIds.has_value() ||
+          searchCriteria.archiveFileId.has_value() ||
+          searchCriteria.copynb.has_value() ||
+          searchCriteria.diskInstance.has_value() ||
+          searchCriteria.recycleLogTimeMin.has_value() ||
+          searchCriteria.recycleLogTimeMax.has_value() ||
+          searchCriteria.vo.has_value();
 
   if(thereIsAtLeastOneSearchCriteria) {
     sql += R"SQL( WHERE )SQL";
   }
-  
+
   bool addedAWhereConstraint = false;
-  
-  if(searchCriteria.vid) {
+
+  if(searchCriteria.vid.has_value()) {
     sql += R"SQL(
       FILE_RECYCLE_LOG.VID = :VID
     )SQL";
     addedAWhereConstraint = true;
   }
 
-  if (searchCriteria.archiveFileId) {
+  if (searchCriteria.archiveFileId.has_value()) {
     if (addedAWhereConstraint) {
       sql += R"SQL( AND )SQL";
     }
@@ -98,8 +98,8 @@ RdbmsCatalogueGetFileRecycleLogItor::RdbmsCatalogueGetFileRecycleLogItor(
     )SQL";
     addedAWhereConstraint = true;
   }
-  
-  if(searchCriteria.diskFileIds) {
+
+  if(searchCriteria.diskFileIds.has_value()) {
     if (addedAWhereConstraint) {
       sql += R"SQL( AND )SQL";
     }
@@ -107,7 +107,7 @@ RdbmsCatalogueGetFileRecycleLogItor::RdbmsCatalogueGetFileRecycleLogItor(
     addedAWhereConstraint = true;
   }
 
-  if (searchCriteria.diskInstance) {
+  if (searchCriteria.diskInstance.has_value()) {
     if (addedAWhereConstraint) {
       sql += R"SQL( AND )SQL";
     }
@@ -117,7 +117,7 @@ RdbmsCatalogueGetFileRecycleLogItor::RdbmsCatalogueGetFileRecycleLogItor(
     addedAWhereConstraint = true;
   }
 
-  if (searchCriteria.copynb) {
+  if (searchCriteria.copynb.has_value()) {
     if (addedAWhereConstraint) {
       sql += R"SQL( AND )SQL";
     }
@@ -127,7 +127,7 @@ RdbmsCatalogueGetFileRecycleLogItor::RdbmsCatalogueGetFileRecycleLogItor(
     addedAWhereConstraint = true;
   }
 
-  if (searchCriteria.recycleLogTimeMin) {
+  if (searchCriteria.recycleLogTimeMin.has_value()) {
     if (addedAWhereConstraint) {
       sql += R"SQL( AND )SQL";
     }
@@ -137,7 +137,7 @@ RdbmsCatalogueGetFileRecycleLogItor::RdbmsCatalogueGetFileRecycleLogItor(
     addedAWhereConstraint = true;
   }
 
-  if (searchCriteria.recycleLogTimeMax) {
+  if (searchCriteria.recycleLogTimeMax.has_value()) {
     if (addedAWhereConstraint) {
       sql += R"SQL( AND )SQL";
     }
@@ -147,7 +147,7 @@ RdbmsCatalogueGetFileRecycleLogItor::RdbmsCatalogueGetFileRecycleLogItor(
     addedAWhereConstraint = true;
   }
 
-  if (searchCriteria.vo) {
+  if (searchCriteria.vo.has_value()) {
     if (addedAWhereConstraint) {
       sql += R"SQL( AND )SQL";
     }
@@ -155,9 +155,9 @@ RdbmsCatalogueGetFileRecycleLogItor::RdbmsCatalogueGetFileRecycleLogItor(
       VIRTUAL_ORGANIZATION.VIRTUAL_ORGANIZATION_NAME = :VIRTUAL_ORGANIZATION_NAME
     )SQL";
   }
-  
+
   // Order by FSEQ if we are listing the contents of a tape, else order by archive file ID
-  if(searchCriteria.vid) {
+  if(searchCriteria.vid.has_value()) {
     sql += R"SQL(
       ORDER BY FILE_RECYCLE_LOG.FSEQ
     )SQL";
@@ -166,34 +166,34 @@ RdbmsCatalogueGetFileRecycleLogItor::RdbmsCatalogueGetFileRecycleLogItor(
       ORDER BY FILE_RECYCLE_LOG.ARCHIVE_FILE_ID, FILE_RECYCLE_LOG.COPY_NB
     )SQL";
   }
-  
+
   m_stmt = m_conn.createStmt(sql);
-  
-  if(searchCriteria.vid){
+
+  if(searchCriteria.vid.has_value()){
     m_stmt.bindString(":VID", searchCriteria.vid.value());
   }
 
-  if (searchCriteria.archiveFileId) {
+  if (searchCriteria.archiveFileId.has_value()) {
     m_stmt.bindUint64(":ARCHIVE_FILE_ID", searchCriteria.archiveFileId.value());
   }
 
-  if (searchCriteria.diskInstance) {
+  if (searchCriteria.diskInstance.has_value()) {
     m_stmt.bindString(":DISK_INSTANCE", searchCriteria.diskInstance.value());
   }
 
-  if (searchCriteria.copynb) {
+  if (searchCriteria.copynb.has_value()) {
     m_stmt.bindUint64(":COPY_NB", searchCriteria.copynb.value());
   }
 
-  if (searchCriteria.recycleLogTimeMin) {
+  if (searchCriteria.recycleLogTimeMin.has_value()) {
     m_stmt.bindUint64(":RECYCLE_LOG_TIME_MIN", searchCriteria.recycleLogTimeMin.value());
   }
 
-  if (searchCriteria.recycleLogTimeMax) {
+  if (searchCriteria.recycleLogTimeMax.has_value()) {
     m_stmt.bindUint64(":RECYCLE_LOG_TIME_MAX", searchCriteria.recycleLogTimeMax.value());
   }
 
-  if (searchCriteria.vo) {
+  if (searchCriteria.vo.has_value()) {
     m_stmt.bindString(":VIRTUAL_ORGANIZATION_NAME", searchCriteria.vo.value());
   }
 
@@ -240,11 +240,11 @@ common::dataStructures::FileRecycleLog RdbmsCatalogueGetFileRecycleLogItor::next
     throw exception::Exception("hasMore() must be called before next()");
   }
   m_hasMoreHasBeenCalled = false;
-  
+
   auto fileRecycleLog = populateFileRecycleLog();
   m_rsetIsEmpty = !m_rset.next();
   if(m_rsetIsEmpty) releaseDbResources();
-  
+
   return fileRecycleLog;
 }
 

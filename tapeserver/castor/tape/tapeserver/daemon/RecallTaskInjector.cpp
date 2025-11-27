@@ -289,7 +289,7 @@ bool RecallTaskInjector::synchronousFetch(bool & noFilesToRecall)
    * oracle::occi::Number which is limited to ~56 bits precision
    */
 
-  uint64_t reqFiles = (m_raoManager.useRAO() && m_raoManager.getMaxFilesSupported()) ? m_raoManager.getMaxFilesSupported().value() : m_maxBatchFiles;
+  uint64_t reqFiles = (m_raoManager.useRAO() && m_raoManager.getMaxFilesSupported().has_value()) ? m_raoManager.getMaxFilesSupported().value() : m_maxBatchFiles;
   if (reqFiles <= m_files) {
     return true; //No need to pop from the queue, injector already  holds enough files, but we return there is still work to be done
   }
