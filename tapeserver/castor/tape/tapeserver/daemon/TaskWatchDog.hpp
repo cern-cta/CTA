@@ -260,7 +260,7 @@ protected:
   /**
    * Thread's loop
    */
-  void run(){
+  void run() override {
     // reset timers as we don't know how long it took before the thread started
     m_reportTimer.reset();
     m_blockMovementReportTimer.reset();

@@ -215,7 +215,7 @@ private:
   class WorkerThread: public cta::threading::Thread {
   public:
     explicit WorkerThread(RecallTaskInjector& rji) : m_parent(rji) {}
-    virtual void run();
+    void run() final;
   private:
     RecallTaskInjector & m_parent;
     void popRecalls();

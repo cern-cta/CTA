@@ -77,7 +77,7 @@ public:
     * @return Returns the type of action to be performed after the session has
     * completed.
     */
-  EndOfSessionAction execute() noexcept;
+  EndOfSessionAction execute() noexcept final;
 
 private:
   /**

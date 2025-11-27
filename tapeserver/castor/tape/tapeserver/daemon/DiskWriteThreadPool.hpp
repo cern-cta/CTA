@@ -140,7 +140,7 @@ private:
      */
     cta::disk::DiskFileFactory m_diskFileFactory;
 
-    virtual void run();
+    void run() final;
   };
 
   /**

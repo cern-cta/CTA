@@ -162,7 +162,7 @@ private:
 
     /** The execution thread: pops and executes tasks (potentially asking for
      more) and calls task injector's finish() on exit of the last thread. */
-    virtual void run();
+    void run() final;
 
     /**
      * A disk file factory, that will create the proper type of file access class,

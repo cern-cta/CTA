@@ -32,7 +32,7 @@ class EnterpriseRAOAlgorithm : public RAOAlgorithm {
 public:
   friend EnterpriseRAOAlgorithmFactory;
   
-  virtual ~EnterpriseRAOAlgorithm() = default;
+  ~EnterpriseRAOAlgorithm() final = default;
 
   /**
    * Asks the Enteprise drive to perform a RAO query in order to get the RAO of the 

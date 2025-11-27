@@ -55,18 +55,18 @@ public:
    * Allows client code to return a reusable memory block. Should not been called
    * @return the pointer to the memory block that can be reused
    */
-  virtual MemBlock *getFreeBlock() ;
+  MemBlock *getFreeBlock() final;
   
   /**
    * Function used to enqueue a new memory block holding data to be written to disk
    * @param mb: corresponding memory block
    */
-  virtual void pushDataBlock(MemBlock *mb);
+  void pushDataBlock(MemBlock* mb) final;
 
   /**
    * Destructor (also waiting for the end of the write operation)
    */
-  virtual ~DiskWriteTask();
+  ~DiskWriteTask() final;
   
   /**
    * Return the stats of the tasks. Should be call after execute 

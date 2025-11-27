@@ -38,7 +38,7 @@ public:
    */
   MigrationReportPacker(cta::ArchiveMount* archiveMount, const cta::log::LogContext& lc);
 
-  ~MigrationReportPacker();
+  ~MigrationReportPacker() override;
 
   /**
    * Create into the MigrationReportPacker a report for the successful migration of migratedFile
