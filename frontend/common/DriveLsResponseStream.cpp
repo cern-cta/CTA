@@ -153,7 +153,7 @@ cta::xrd::Data DriveLsResponseStream::next() {
   driveItem->set_scheduler_backend_name(driveSchedulerBackendName);
   driveItem->set_host(dr.host);
   driveItem->set_logical_library_disabled(dr.logicalLibraryDisabled.value_or(false));
-  driveItem->set_desired_drive_state(dr.desiredUp.has_value() ? cta::admin::DriveLsItem::UP : cta::admin::DriveLsItem::DOWN);
+  driveItem->set_desired_drive_state(dr.desiredUp ? cta::admin::DriveLsItem::UP : cta::admin::DriveLsItem::DOWN);
   driveItem->set_mount_type(cta::admin::MountTypeToProtobuf(dr.mountType));
   driveItem->set_drive_status(cta::admin::DriveStatusToProtobuf(dr.driveStatus));
   driveItem->set_vid(dr.currentVid.value_or(""));
@@ -164,7 +164,7 @@ cta::xrd::Data DriveLsResponseStream::next() {
   driveItem->set_session_id(dr.sessionId.value_or(0));
   const auto lastUpdateTime = dr.lastModificationLog.has_value() ? dr.lastModificationLog.value().time : time(nullptr);
   driveItem->set_time_since_last_update(time(nullptr) - lastUpdateTime);
-  driveItem->set_current_priority(dr.currentPriority.value_or());
+  driveItem->set_current_priority(dr.currentPriority.value_or(0));
   driveItem->set_current_activity(dr.currentActivity.value_or(""));
   driveItem->set_dev_file_name(dr.devFileName.value_or(""));
   driveItem->set_raw_library_slot(dr.rawLibrarySlot.value_or(""));
