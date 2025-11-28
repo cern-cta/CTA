@@ -34,6 +34,7 @@
 #include "common/dataStructures/LabelFormat.hpp"
 #include "common/exception/Exception.hpp"
 #include "common/exception/TimeoutException.hpp"
+#include "common/exception/NotImplementedException.hpp"
 #include "scheduler/RetrieveMount.hpp"
 #include "castor/tape/tapeserver/RAO/RAOParams.hpp"
 #include "TapeSessionReporter.hpp"
@@ -546,7 +547,7 @@ castor::tape::tapeserver::daemon::DataTransferSession::executeWrite(cta::log::Lo
 castor::tape::tapeserver::daemon::Session::EndOfSessionAction
 castor::tape::tapeserver::daemon::DataTransferSession::executeLabel(cta::log::LogContext& logContext,
                                                                     cta::LabelMount *labelMount) {
-  throw cta::exception::Exception("In DataTransferSession::executeLabel(): not implemented");
+  throw cta::exception::NotImplementedException();
   // TODO
 }
 

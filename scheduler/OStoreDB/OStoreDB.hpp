@@ -30,6 +30,7 @@
 #include "common/log/Logger.hpp"
 #include "common/threading/BlockingQueue.hpp"
 #include "common/threading/Thread.hpp"
+#include "common/exception/NotImplementedException.hpp"
 #include "objectstore/Agent.hpp"
 #include "objectstore/AgentReference.hpp"
 #include "objectstore/ArchiveQueue.hpp"
@@ -227,7 +228,7 @@ public:
   public:
     uint64_t requeueJobBatch(const std::list<std::string>& jobIDsList, log::LogContext& logContext) const override {
       // This implementation, serves only PGSCHED implementation
-      throw cta::exception::Exception("Not implemented");
+      throw cta::exception::NotImplementedException();
     }
     void setJobBatchTransferred(std::list<std::unique_ptr<SchedulerDatabase::ArchiveJob>>& jobsBatch,
                                 log::LogContext& lc) override;
@@ -246,7 +247,7 @@ public:
     void failReport(const std::string& failureReason, log::LogContext& lc) override;
     // initialize and releaseToPool methods are here with empty implementation only since it is needed by PGSCHED in the baseclass
     void initialize(const rdbms::Rset& resultSet, bool jobIsRepack) override {};
-    bool releaseToPool() override { throw cta::exception::Exception("In SchedulerDatabase::RetrieveJob::releaseToPool(): Not Implemented for OStoreDB."); };
+    bool releaseToPool() override { throw exception::NotImplementedException(); };
 
   private:
     void asyncSucceedTransfer();
@@ -330,8 +331,7 @@ public:
 
     void setJobBatchTransferred(std::list<std::unique_ptr<cta::SchedulerDatabase::RetrieveJob>>& jobsBatch,
                                 log::LogContext& lc) override {
-      throw cta::exception::Exception("In SchedulerDatabase::RetrieveMount::setJobBatchTransferred(): Not Implemented, "
-                                      "for RelationalDB compatibility only.");
+      throw cta::exception::NotImplementedException("For RelationalDB compatibility only");
     }
   };
   friend class RetrieveMount;
@@ -354,8 +354,7 @@ public:
     void initialize(const rdbms::Rset& resultSet, bool jobIsRepack) override {};
 
     bool releaseToPool() override {
-      throw cta::exception::Exception(
-        "In SchedulerDatabase::RetrieveJob::releaseToPool(): Not Implemented for OStoreDB.");
+      throw cta::exception::NotImplementedException();
     };
 
     void abort(const std::string& abortReason, log::LogContext& lc) override;

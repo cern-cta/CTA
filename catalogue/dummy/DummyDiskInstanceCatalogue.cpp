@@ -22,6 +22,7 @@
 #include "catalogue/dummy/DummyDiskInstanceCatalogue.hpp"
 #include "common/dataStructures/DiskInstance.hpp"
 #include "common/exception/Exception.hpp"
+#include "common/exception/NotImplementedException.hpp"
 
 namespace cta::catalogue {
 
@@ -31,16 +32,16 @@ void DummyDiskInstanceCatalogue::createDiskInstance(const common::dataStructures
 }
 
 void DummyDiskInstanceCatalogue::deleteDiskInstance(const std::string &name) {
-  throw exception::Exception(std::string("In ")+__PRETTY_FUNCTION__+": not implemented");
+  throw exception::NotImplementedException();
 }
 
 void DummyDiskInstanceCatalogue::modifyDiskInstanceComment(const common::dataStructures::SecurityIdentity &admin,
   const std::string &name, const std::string &comment) {
-  throw exception::Exception(std::string("In ")+__PRETTY_FUNCTION__+": not implemented");
+  throw exception::NotImplementedException();
 }
 
 std::list<common::dataStructures::DiskInstance> DummyDiskInstanceCatalogue::getAllDiskInstances() const {
-  throw exception::Exception(std::string("In ")+__PRETTY_FUNCTION__+": not implemented");
+  throw exception::NotImplementedException();
 }
 
 } // namespace cta::catalogue

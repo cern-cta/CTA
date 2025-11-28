@@ -21,16 +21,17 @@
 #include "common/dataStructures/TapeDrive.hpp"
 #include "common/dataStructures/TapeDriveStatistics.hpp"
 #include "common/exception/Exception.hpp"
+#include "common/exception/NotImplementedException.hpp"
 #include "common/log/LogContext.hpp"
 
 namespace cta::catalogue {
 
 void DummyDriveStateCatalogue::createTapeDrive(const common::dataStructures::TapeDrive &tapeDrive) {
-  throw exception::Exception(std::string("In ") + __PRETTY_FUNCTION__ + ": not implemented");
+  throw exception::NotImplementedException();
 }
 
 void DummyDriveStateCatalogue::deleteTapeDrive(const std::string &tapeDriveName) {
-  throw exception::Exception(std::string("In ") + __PRETTY_FUNCTION__ + ": not implemented");
+  throw exception::NotImplementedException();
 }
 
 std::list<std::string> DummyDriveStateCatalogue::getTapeDriveNames() const {

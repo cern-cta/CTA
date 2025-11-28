@@ -26,6 +26,7 @@
 #include "castor/tape/tapeserver/file/HeaderChecker.hpp"
 #include "castor/tape/tapeserver/file/Structures.hpp"
 #include "scheduler/RetrieveJob.hpp"
+#include "common/exception/NotImplementedException.hpp"
 
 namespace castor::tape::tapeFile {
 
@@ -105,7 +106,7 @@ size_t EnstoreLargeFileReader::readNextDataBlock(void* data, const size_t size) 
 }
 
 void EnstoreLargeFileReader::moveToFirstHeaderBlock() {
-  throw NotImplemented("EnstoreLargeFileReader::moveToFirstHeaderBlock() Not implemented.");
+  throw cta::exception::NotImplementedException();
 }
 
 void EnstoreLargeFileReader::moveReaderByFSeqDelta(const int64_t fSeq_delta) {

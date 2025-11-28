@@ -19,6 +19,7 @@
 #include "scheduler/rdbms/schema/CreateSchemaCmdLineArgs.hpp"
 #include "scheduler/rdbms/schema/PostgresSchedulerSchema.hpp"
 #include "common/exception/Exception.hpp"
+#include "common/exception/NotImplementedException.hpp"
 #include "common/utils/utils.hpp"
 #include "rdbms/ConnPool.hpp"
 #include "rdbms/Login.hpp"
@@ -63,7 +64,7 @@ int CreateSchemaCmd::exceptionThrowingMain(const int argc, char* const* const ar
   switch (login.dbType) {
     case rdbms::Login::DBTYPE_POSTGRESQL: {
       if (cmdLineArgs.schedulerdbVersion) {
-        throw exception::Exception("Not implemented: create a schedulerdb of given version");
+        throw exception::NotImplementedException("Create a schedulerdb of given version");
       } else {
         PostgresSchedulerSchema schema;
         executeNonQueries(conn, schema.sql);

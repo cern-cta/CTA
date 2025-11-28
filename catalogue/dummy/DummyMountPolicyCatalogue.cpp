@@ -22,12 +22,13 @@
 #include "catalogue/dummy/DummyMountPolicyCatalogue.hpp"
 #include "common/dataStructures/MountPolicy.hpp"
 #include "common/exception/Exception.hpp"
+#include "common/exception/NotImplementedException.hpp"
 
 namespace cta::catalogue {
 
 void DummyMountPolicyCatalogue::createMountPolicy(const common::dataStructures::SecurityIdentity &admin,
   const CreateMountPolicyAttributes & mountPolicy) {
-  throw exception::Exception(std::string("In ")+__PRETTY_FUNCTION__+": not implemented");
+  throw exception::NotImplementedException();
 }
 
 std::list<common::dataStructures::MountPolicy> DummyMountPolicyCatalogue::getMountPolicies() const {
@@ -52,7 +53,7 @@ std::list<common::dataStructures::MountPolicy> DummyMountPolicyCatalogue::getMou
 
 std::optional<common::dataStructures::MountPolicy> DummyMountPolicyCatalogue::getMountPolicy(
   const std::string &mountPolicyName) const {
-  throw exception::Exception(std::string("In ")+__PRETTY_FUNCTION__+": not implemented");
+  throw exception::NotImplementedException();
 }
 
 std::list<common::dataStructures::MountPolicy> DummyMountPolicyCatalogue::getCachedMountPolicies() const {
@@ -76,33 +77,33 @@ std::list<common::dataStructures::MountPolicy> DummyMountPolicyCatalogue::getCac
 }
 
 void DummyMountPolicyCatalogue::deleteMountPolicy(const std::string &name) {
-  throw exception::Exception(std::string("In ")+__PRETTY_FUNCTION__+": not implemented");
+  throw exception::NotImplementedException();
 }
 
 void DummyMountPolicyCatalogue::modifyMountPolicyArchivePriority(const common::dataStructures::SecurityIdentity &admin,
   const std::string &name, const uint64_t archivePriority) {
-  throw exception::Exception(std::string("In ")+__PRETTY_FUNCTION__+": not implemented");
+  throw exception::NotImplementedException();
 }
 
 void DummyMountPolicyCatalogue::modifyMountPolicyArchiveMinRequestAge(
   const common::dataStructures::SecurityIdentity &admin, const std::string &name, const uint64_t minArchiveRequestAge) {
-  throw exception::Exception(std::string("In ")+__PRETTY_FUNCTION__+": not implemented");
+  throw exception::NotImplementedException();
 }
 
 void DummyMountPolicyCatalogue::modifyMountPolicyRetrievePriority(const common::dataStructures::SecurityIdentity &admin,
   const std::string &name, const uint64_t retrievePriority) {
-  throw exception::Exception(std::string("In ")+__PRETTY_FUNCTION__+": not implemented");
+  throw exception::NotImplementedException();
 }
 
 void DummyMountPolicyCatalogue::modifyMountPolicyRetrieveMinRequestAge(
   const common::dataStructures::SecurityIdentity &admin,
   const std::string &name, const uint64_t minRetrieveRequestAge) {
-  throw exception::Exception(std::string("In ")+__PRETTY_FUNCTION__+": not implemented");
+  throw exception::NotImplementedException();
 }
 
 void DummyMountPolicyCatalogue::modifyMountPolicyComment(const common::dataStructures::SecurityIdentity &admin,
   const std::string &name, const std::string &comment) {
-  throw exception::Exception(std::string("In ")+__PRETTY_FUNCTION__+": not implemented");
+  throw exception::NotImplementedException();
 }
 
 } // namespace cta::catalogue

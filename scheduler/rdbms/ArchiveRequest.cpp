@@ -16,13 +16,14 @@
  */
 
 #include "scheduler/rdbms/ArchiveRequest.hpp"
+#include "common/exception/NotImplementedException.hpp"
 #include "scheduler/rdbms/postgres/ArchiveJobQueue.hpp"
 #include "common/Timer.hpp"
 
 namespace cta::schedulerdb {
 
 [[noreturn]] void ArchiveRequest::update() const {
-  throw std::runtime_error("update not implemented.");
+  throw exception::NotImplementedException();
 }
 
 std::unique_ptr<postgres::ArchiveJobQueueRow>
@@ -185,7 +186,7 @@ common::dataStructures::MountPolicy ArchiveRequest::getMountPolicy() const {
 }
 
 [[noreturn]] std::list<ArchiveRequest::JobDump> ArchiveRequest::dumpJobs() const {
-  throw std::runtime_error("dumpJobs not implemented.");
+  throw exception::NotImplementedException();
 }
 
 }  // namespace cta::schedulerdb

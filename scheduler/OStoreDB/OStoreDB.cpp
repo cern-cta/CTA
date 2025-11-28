@@ -33,6 +33,7 @@
 #include "common/dataStructures/MountPolicy.hpp"
 #include "common/dataStructures/RetrieveJobToAdd.hpp"
 #include "common/exception/Exception.hpp"
+#include "common/exception/NotImplementedException.hpp"
 #include "common/exception/TimeoutException.hpp"
 #include "common/exception/NoSuchObject.hpp"
 #include "common/exception/UserError.hpp"
@@ -1442,21 +1443,21 @@ void OStoreDB::cancelRetrieve(const std::string& instanceName,
 // OStoreDB::getRetrieveRequestsByVid()
 //------------------------------------------------------------------------------
 std::list<RetrieveRequestDump> OStoreDB::getRetrieveRequestsByVid(const std::string& vid) const {
-  throw exception::Exception(std::string("Not implemented: ") + __PRETTY_FUNCTION__);
+  throw exception::NotImplementedException();
 }
 
 //------------------------------------------------------------------------------
 // OStoreDB::getRetrieveRequestsByRequester()
 //------------------------------------------------------------------------------
 std::list<RetrieveRequestDump> OStoreDB::getRetrieveRequestsByRequester(const std::string& vid) const {
-  throw cta::exception::Exception(std::string("Not implemented: ") + __PRETTY_FUNCTION__);
+  throw exception::NotImplementedException();
 }
 
 //------------------------------------------------------------------------------
 // OStoreDB::getRetrieveRequests()
 //------------------------------------------------------------------------------
 std::map<std::string, std::list<RetrieveRequestDump>> OStoreDB::getRetrieveRequests() const {
-  throw cta::exception::Exception(std::string("Not implemented: ") + __PRETTY_FUNCTION__);
+  throw exception::NotImplementedException();
   //  std::map<cta::Tape, std::list<RetrieveRequestDump> > ret;
   //  // Get list of tape pools and then tapes
   //  objectstore::RootEntry re(m_objectStore);
@@ -1499,7 +1500,7 @@ std::map<std::string, std::list<RetrieveRequestDump>> OStoreDB::getRetrieveReque
 //------------------------------------------------------------------------------
 void OStoreDB::deleteRetrieveRequest(const common::dataStructures::SecurityIdentity& requester,
                                      const std::string& remoteFile) {
-  throw exception::Exception("Not Implemented");
+  throw exception::NotImplementedException();
 }
 
 //------------------------------------------------------------------------------
@@ -4678,7 +4679,7 @@ void OStoreDB::ArchiveJob::failReport(const std::string& failureReason, log::Log
 // OStoreDB::ArchiveJob::bumpUpTapeFileCount()
 //------------------------------------------------------------------------------
 void OStoreDB::ArchiveJob::bumpUpTapeFileCount(uint64_t newFileCount) {
-  throw cta::exception::Exception(std::string("Not implemented: ") + __PRETTY_FUNCTION__);
+  throw exception::NotImplementedException();
   //  m_archiveMount.setTapeMaxFileCount(newFileCount);
 }
 
@@ -5313,8 +5314,7 @@ void OStoreDB::RetrieveJob::failTransfer(const std::string& failureReason, log::
     case NextStep::StoreInFailedJobsContainer:
       // For retrieve queues, once the job has been queued for report, we don't retry any more, so we
       // can never arrive at this case
-      throw cta::exception::Exception(
-        "In OStoreDB::RetrieveJob::failTransfer(): case NextStep::StoreInFailedJobsContainer is not implemented");
+      throw exception::NotImplementedException();
   }
 }
 

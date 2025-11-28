@@ -18,19 +18,20 @@
 #include "catalogue/dummy/DummySchemaCatalogue.hpp"
 #include "catalogue/SchemaVersion.hpp"
 #include "common/exception/Exception.hpp"
+#include "common/exception/NotImplementedException.hpp"
 
 namespace cta::catalogue {
 
 SchemaVersion DummySchemaCatalogue::getSchemaVersion() const {
-  throw exception::Exception(std::string("In ") + __PRETTY_FUNCTION__ + ": not implemented");
+  throw exception::NotImplementedException();
 }
 
 void DummySchemaCatalogue::verifySchemaVersion() {
-  throw exception::Exception(std::string("In ")+__PRETTY_FUNCTION__+": not implemented");
+  throw exception::NotImplementedException();
 }
 
 void DummySchemaCatalogue::ping() {
-  throw exception::Exception(std::string("In ")+__PRETTY_FUNCTION__+": not implemented");
+  throw exception::NotImplementedException();
 }
 
 } // namespace cta::catalogue

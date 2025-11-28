@@ -18,6 +18,7 @@
 #pragma once
 
 #include "TapeMount.hpp"
+#include "common/exception/NotImplementedException.hpp"
 
 namespace cta {
 
@@ -29,48 +30,48 @@ namespace cta {
 class TapeMountDummy: public TapeMount {
   void complete() override {};
   std::string getMountTransactionId() const override {
-    throw exception::Exception("In DummyTapeMount::getMountTransactionId() : not implemented");
+    throw exception::NotImplementedException();
   }
   cta::common::dataStructures::MountType getMountType() const override {
-    throw exception::Exception("In DummyTapeMount::getMountType() : not implemented");
+    throw exception::NotImplementedException();
   }
   std::optional<std::string> getActivity() const override {
-    throw exception::Exception("In DummyTapeMount::getActivity() : not implemented");
+    throw exception::NotImplementedException();
   }
   uint32_t getNbFiles() const override {
-    throw exception::Exception("In DummyTapeMount::getNbFiles() : not implemented");
+    throw exception::NotImplementedException();
   }
   std::string getVid() const override {
-    throw exception::Exception("In DummyTapeMount::getNbFiles() : not implemented");
+    throw exception::NotImplementedException();
   }
   std::string getVo() const override{
-      throw exception::Exception("In DummyTapeMount::getVo() : not implemented");
+    throw exception::NotImplementedException();
   }
 
   std::string getMediaType() const override {
-      throw exception::Exception("In DummyTapeMount::getMediaType() : not implemented");
+    throw exception::NotImplementedException();
   }
 
   std::string getVendor() const override{
-      throw exception::Exception("In DummyTapeMount::getVendor() : not implemented");
+    throw exception::NotImplementedException();
   }
 
   std::string getPoolName() const override{
-    throw exception::Exception("In DummyTapeMount::getPoolName() : not implemented");
+    throw exception::NotImplementedException();
   }
 
   uint64_t getCapacityInBytes() const override{
-    throw exception::Exception("In DummyTapeMount::getCapacityInBytes() : not implemented");
+    throw exception::NotImplementedException();
   }
 
   std::optional<std::string> getEncryptionKeyName() const override{
-    throw exception::Exception("In DummyTapeMount::getEncryptionKeyName() : not implemented");
+    throw exception::NotImplementedException();
   }
 
   void setDriveStatus(cta::common::dataStructures::DriveStatus status, const std::optional<std::string> & reason) override {}
 
   cta::common::dataStructures::Label::Format getLabelFormat() const override {
-      throw exception::Exception("In DummyTapeMount::getLabelFormat() : not implemented");
+    throw exception::NotImplementedException();
   }
 
   void setTapeSessionStats(const castor::tape::tapeserver::daemon::TapeSessionStats &stats) override {};

@@ -25,22 +25,23 @@
 #include "common/dataStructures/ArchiveFile.hpp"
 #include "common/dataStructures/RetrieveFileQueueCriteria.hpp"
 #include "common/exception/Exception.hpp"
+#include "common/exception/NotImplementedException.hpp"
 
 namespace cta::catalogue {
 
 void DummyTapeFileCatalogue::filesWrittenToTape(const std::set<TapeItemWrittenPointer> &event) {
-  throw exception::Exception(std::string("In ")+__PRETTY_FUNCTION__+": not implemented");
+  throw exception::NotImplementedException();
 }
 
 void DummyTapeFileCatalogue::deleteTapeFileCopy(common::dataStructures::ArchiveFile &file, const std::string &reason) {
-  throw exception::Exception(std::string("In ")+__PRETTY_FUNCTION__+": not implemented");
+  throw exception::NotImplementedException();
 }
 
 common::dataStructures::RetrieveFileQueueCriteria DummyTapeFileCatalogue::prepareToRetrieveFile(
   const std::string &diskInstanceName, const uint64_t archiveFileId,
   const common::dataStructures::RequesterIdentity &user, const std::optional<std::string> & activity,
   log::LogContext &lc, const std::optional<std::string> &mountPolicyName) {
-  throw exception::Exception(std::string("In ")+__PRETTY_FUNCTION__+": not implemented");
+  throw exception::NotImplementedException();
 }
 
 } // namespace cta::catalogue

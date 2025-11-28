@@ -16,6 +16,7 @@
  */
 
 #include "castor/tape/tapeserver/drive/FakeDrive.hpp"
+#include "common/exception/NotImplementedException.hpp"
 #include "castor/tape/tapeserver/SCSI/Structures.hpp"
 #include "DriveGeneric.hpp"
 
@@ -64,7 +65,7 @@ std::string castor::tape::tapeserver::drive::FakeDrive::getGenericSCSIPath() {
   return "/dev/sg_NoSuchDrive";
 }
 std::string castor::tape::tapeserver::drive::FakeDrive::getSerialNumber()  {
-  throw cta::exception::Exception("FakeDrive::getSerialNumber Not implemented");
+  throw cta::exception::NotImplementedException();
 }
 void castor::tape::tapeserver::drive::FakeDrive::positionToLogicalObject(uint32_t blockId)  {
   if (blockId > m_tape.size() - 1) {
@@ -118,10 +119,10 @@ bool castor::tape::tapeserver::drive::FakeDrive::tapeAlertsCriticalForWrite(
   return false;
 }
 void castor::tape::tapeserver::drive::FakeDrive::setDensityAndCompression(bool compression, unsigned char densityCode)  {
-  throw cta::exception::Exception("FakeDrive::setDensityAndCompression Not implemented");
+  throw cta::exception::NotImplementedException();
 }
 castor::tape::tapeserver::drive::driveStatus castor::tape::tapeserver::drive::FakeDrive::getDriveStatus()  {
-  throw cta::exception::Exception("FakeDrive::getDriveStatus Not implemented");
+  throw cta::exception::NotImplementedException();
 }
 void castor::tape::tapeserver::drive::FakeDrive::enableCRC32CLogicalBlockProtectionReadOnly()  {
   m_lbpToUse = lbpToUse::crc32cReadOnly;
@@ -133,15 +134,15 @@ void  castor::tape::tapeserver::drive::FakeDrive::disableLogicalBlockProtection(
   m_lbpToUse = lbpToUse::disabled;
 }
 castor::tape::tapeserver::drive::LBPInfo  castor::tape::tapeserver::drive::FakeDrive::getLBPInfo()  {
-  throw cta::exception::Exception("FakeDrive::dgetLBPInfo Not implemented");
+  throw cta::exception::NotImplementedException();
 }
 void  castor::tape::tapeserver::drive::FakeDrive::setLogicalBlockProtection(const unsigned char method,
       unsigned char methodLength, const bool enableLPBforRead,
       const bool enableLBBforWrite)  {
-  throw cta::exception::Exception("FakeDrive::setLogicalBlockProtection Not implemented");
+  throw cta::exception::NotImplementedException();
 }
 void castor::tape::tapeserver::drive::FakeDrive::setSTBufferWrite(bool bufWrite)  {
-  throw cta::exception::Exception("FakeDrive::setSTBufferWrite Not implemented");
+  throw cta::exception::NotImplementedException();
 }
 void castor::tape::tapeserver::drive::FakeDrive::fastSpaceToEOM(void)  {
   m_currentPosition = m_tape.size()-1;

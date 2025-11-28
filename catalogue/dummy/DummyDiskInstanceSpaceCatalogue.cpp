@@ -23,6 +23,7 @@
 #include "catalogue/dummy/DummyDiskInstanceSpaceCatalogue.hpp"
 #include "common/dataStructures/DiskInstanceSpace.hpp"
 #include "common/exception/Exception.hpp"
+#include "common/exception/NotImplementedException.hpp"
 
 namespace cta::catalogue {
 
@@ -30,7 +31,7 @@ std::map<std::string, common::dataStructures::DiskInstanceSpace, std::less<>> Du
 
 void DummyDiskInstanceSpaceCatalogue::deleteDiskInstanceSpace(const std::string &name,
   const std::string &diskInstance) {
-  throw exception::Exception(std::string("In ")+__PRETTY_FUNCTION__+": not implemented");
+  throw exception::NotImplementedException();
 }
 
 void DummyDiskInstanceSpaceCatalogue::createDiskInstanceSpace(const common::dataStructures::SecurityIdentity &admin,
@@ -41,19 +42,19 @@ void DummyDiskInstanceSpaceCatalogue::createDiskInstanceSpace(const common::data
 }
 
 std::list<common::dataStructures::DiskInstanceSpace> DummyDiskInstanceSpaceCatalogue::getAllDiskInstanceSpaces() const {
-  throw exception::Exception(std::string("In ")+__PRETTY_FUNCTION__+": not implemented");
+  throw exception::NotImplementedException();
 }
 
 void DummyDiskInstanceSpaceCatalogue::modifyDiskInstanceSpaceComment(
   const common::dataStructures::SecurityIdentity &admin, const std::string &name, const std::string &diskInstance,
   const std::string &comment) {
-  throw exception::Exception(std::string("In ")+__PRETTY_FUNCTION__+": not implemented");
+  throw exception::NotImplementedException();
 }
 
 void DummyDiskInstanceSpaceCatalogue::modifyDiskInstanceSpaceRefreshInterval(
   const common::dataStructures::SecurityIdentity &admin, const std::string &name, const std::string &diskInstance,
   const uint64_t refreshInterval) {
-  throw exception::Exception(std::string("In ")+__PRETTY_FUNCTION__+": not implemented");
+  throw exception::NotImplementedException();
 }
 
 void DummyDiskInstanceSpaceCatalogue::modifyDiskInstanceSpaceFreeSpace(const std::string &name,
@@ -65,7 +66,7 @@ void DummyDiskInstanceSpaceCatalogue::modifyDiskInstanceSpaceFreeSpace(const std
 void DummyDiskInstanceSpaceCatalogue::modifyDiskInstanceSpaceQueryURL(
   const common::dataStructures::SecurityIdentity &admin, const std::string &name, const std::string &diskInstance,
   const std::string &freeSpaceQueryURL) {
-  throw exception::Exception(std::string("In ")+__PRETTY_FUNCTION__+": not implemented");
+  throw exception::NotImplementedException();
 }
 
 } // namespace cta::catalogue

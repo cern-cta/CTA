@@ -23,6 +23,7 @@
 #include "common/Timer.hpp"
 #include "scheduler/rdbms/RetrieveMount.hpp"
 #include "common/threading/MutexLocker.hpp"
+#include "common/exception/NotImplementedException.hpp"
 
 namespace cta::schedulerdb {
 
@@ -293,7 +294,7 @@ void RetrieveMount::setJobBatchTransferred(std::list<std::unique_ptr<SchedulerDa
 
 void RetrieveMount::addDiskSystemToSkip(const DiskSystemToSkip& diskSystemToSkip) {
   // This method is actually not being used anywhere, not even in the OStoreDB code - we should remove it
-  throw cta::exception::Exception("Not implemented");
+  throw cta::exception::NotImplementedException();
 }
 
 void RetrieveMount::putQueueToSleep(const std::string &diskSystemName,

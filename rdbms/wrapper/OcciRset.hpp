@@ -18,6 +18,7 @@
 #pragma once
 
 #include "common/exception/Exception.hpp"
+#include "common/exception/NotImplementedException.hpp"
 #include "common/threading/Mutex.hpp"
 #include "rdbms/wrapper/ColumnNameToIdx.hpp"
 #include "rdbms/wrapper/RsetWrapper.hpp"
@@ -102,21 +103,21 @@ public:
    * @param colName
    * @return
    */
-  uint8_t columnUint8NoOpt(const std::string& colName) const override { throw cta::exception::Exception("Not implemented"); };
+  uint8_t columnUint8NoOpt(const std::string& colName) const override { throw cta::exception::NotImplementedException(); };
 
-  uint16_t columnUint16NoOpt(const std::string& colName) const override { throw cta::exception::Exception("Not implemented"); };
+  uint16_t columnUint16NoOpt(const std::string& colName) const override { throw cta::exception::NotImplementedException(); };
 
-  uint32_t columnUint32NoOpt(const std::string& colName) const override { throw cta::exception::Exception("Not implemented"); };
+  uint32_t columnUint32NoOpt(const std::string& colName) const override { throw cta::exception::NotImplementedException(); };
 
-  uint64_t columnUint64NoOpt(const std::string& colName) const override { throw cta::exception::Exception("Not implemented"); };
+  uint64_t columnUint64NoOpt(const std::string& colName) const override { throw cta::exception::NotImplementedException(); };
 
-  bool columnExists(const std::string& colName) const override { throw cta::exception::Exception("Not implemented"); };
+  bool columnExists(const std::string& colName) const override { throw cta::exception::NotImplementedException(); };
 
-  std::string columnStringNoOpt(const std::string& colName) const override { throw cta::exception::Exception("Not implemented"); };
+  std::string columnStringNoOpt(const std::string& colName) const override { throw cta::exception::NotImplementedException(); };
 
-  double columnDoubleNoOpt(const std::string& colName) const override { throw cta::exception::Exception("Not implemented"); };
+  double columnDoubleNoOpt(const std::string& colName) const override { throw cta::exception::NotImplementedException(); };
 
-  bool columnBoolNoOpt(const std::string& colName) const override { throw cta::exception::Exception("Not implemented"); };
+  bool columnBoolNoOpt(const std::string& colName) const override { throw cta::exception::NotImplementedException(); };
 
   /**
    * Returns true if the specified column contains a null value.

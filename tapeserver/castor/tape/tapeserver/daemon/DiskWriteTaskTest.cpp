@@ -23,6 +23,7 @@
 #include "castor/tape/tapeserver/daemon/RecallReportPacker.hpp"
 #include "castor/tape/tapeserver/daemon/ReportPackerInterface.hpp"
 #include "common/log/LogContext.hpp"
+#include "common/exception/NotImplementedException.hpp"
 #include "catalogue/dummy/DummyCatalogue.hpp"
 #include "common/log/StringLogger.hpp"
 #include "castor/tape/tapeserver/daemon/MigrationMemoryManager.hpp"
@@ -35,31 +36,31 @@
 
 namespace unitTests{
   class TestingDatabaseRetrieveMount: public cta::SchedulerDatabase::RetrieveMount {
-    const MountInfo & getMountInfo() override { throw std::runtime_error("Not implemented"); }
+    const MountInfo & getMountInfo() override { throw cta::exception::NotImplementedException(); }
     std::list<std::unique_ptr<cta::SchedulerDatabase::RetrieveJob> > getNextJobBatch(uint64_t filesRequested, uint64_t bytesRequested,
-      cta::log::LogContext& logContext) override { throw std::runtime_error("Not implemented");}
+      cta::log::LogContext& logContext) override { throw cta::exception::NotImplementedException();}
 
     void
     setDriveStatus(cta::common::dataStructures::DriveStatus status, cta::common::dataStructures::MountType mountType,
                    time_t completionTime, const std::optional<std::string>& reason) override {
-      throw std::runtime_error("Not implemented");
+      throw cta::exception::NotImplementedException();
     }
 
-    void setTapeSessionStats(const castor::tape::tapeserver::daemon::TapeSessionStats &stats) override { throw std::runtime_error("Not implemented"); }
+    void setTapeSessionStats(const castor::tape::tapeserver::daemon::TapeSessionStats &stats) override { throw cta::exception::NotImplementedException(); }
 
     void setJobBatchTransferred(std::list<std::unique_ptr<cta::SchedulerDatabase::RetrieveJob>>& jobsBatch,
                                 cta::log::LogContext& lc) override {
-      throw std::runtime_error("Not implemented");
+      throw cta::exception::NotImplementedException();
     }
 
     void flushAsyncSuccessReports(std::list<cta::SchedulerDatabase::RetrieveJob*>& jobsBatch,
                                   cta::log::LogContext& lc) override {
-      throw std::runtime_error("Not implemented");
+      throw cta::exception::NotImplementedException();
     }
-    void addDiskSystemToSkip(const cta::SchedulerDatabase::RetrieveMount::DiskSystemToSkip &diskSystemToSkip) override { throw std::runtime_error("Not implemented"); }
-    void requeueJobBatch(std::list<std::unique_ptr<cta::SchedulerDatabase::RetrieveJob>>& jobBatch, cta::log::LogContext& logContext) override { throw std::runtime_error("Not implemented"); }
-    uint64_t requeueJobBatch(const std::list<std::string>& jobIDsList, cta::log::LogContext& logContext) const override { throw std::runtime_error("Not implemented"); }
-    void putQueueToSleep(const std::string &diskSystemName, const uint64_t sleepTime, cta::log::LogContext &logContext) override { throw std::runtime_error("Not implemented"); }
+    void addDiskSystemToSkip(const cta::SchedulerDatabase::RetrieveMount::DiskSystemToSkip &diskSystemToSkip) override { throw cta::exception::NotImplementedException(); }
+    void requeueJobBatch(std::list<std::unique_ptr<cta::SchedulerDatabase::RetrieveJob>>& jobBatch, cta::log::LogContext& logContext) override { throw cta::exception::NotImplementedException(); }
+    uint64_t requeueJobBatch(const std::list<std::string>& jobIDsList, cta::log::LogContext& logContext) const override { throw cta::exception::NotImplementedException(); }
+    void putQueueToSleep(const std::string &diskSystemName, const uint64_t sleepTime, cta::log::LogContext &logContext) override { throw cta::exception::NotImplementedException(); }
   };
 
   class TestingRetrieveMount: public cta::RetrieveMount {

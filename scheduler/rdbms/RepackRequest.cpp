@@ -21,6 +21,7 @@
 #include "scheduler/rdbms/RetrieveRequest.hpp"
 #include "scheduler/rdbms/Helpers.hpp"
 #include "common/log/LogContext.hpp"
+#include "common/exception/NotImplementedException.hpp"
 #include "rdbms/UniqueConstraintError.hpp"
 
 namespace cta::schedulerdb {
@@ -402,7 +403,7 @@ namespace cta::schedulerdb {
   }
 
   void RepackRequest::requeueInToExpandQueue(log::LogContext &lc) {
-    throw cta::exception::Exception("Not implemented");
+    throw cta::exception::NotImplementedException();
   }
 
   void RepackRequest::setExpandStartedAndChangeStatus() {
@@ -555,7 +556,7 @@ namespace cta::schedulerdb {
   }
 
 //void RepackRequest::update() const {
-//  throw cta::exception::Exception("Not implemented");
+//  throw cta::exception::NotImplementedException();
 //}
 
   void RepackRequest::insert() {

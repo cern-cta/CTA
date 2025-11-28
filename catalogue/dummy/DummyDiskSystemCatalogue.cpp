@@ -21,6 +21,7 @@
 #include "catalogue/dummy/DummyDiskSystemCatalogue.hpp"
 #include "catalogue/dummy/DummyDiskInstanceSpaceCatalogue.hpp"
 #include "common/exception/Exception.hpp"
+#include "common/exception/NotImplementedException.hpp"
 #include "disk/DiskSystem.hpp"
 
 namespace cta::catalogue {
@@ -34,7 +35,7 @@ void DummyDiskSystemCatalogue::createDiskSystem(const common::dataStructures::Se
 }
 
 void DummyDiskSystemCatalogue::deleteDiskSystem(const std::string &name) {
-  throw exception::Exception(std::string("In ")+__PRETTY_FUNCTION__+": not implemented");
+  throw exception::NotImplementedException();
 }
 
 disk::DiskSystemList DummyDiskSystemCatalogue::getAllDiskSystems() const {
@@ -43,38 +44,38 @@ disk::DiskSystemList DummyDiskSystemCatalogue::getAllDiskSystems() const {
 
 void DummyDiskSystemCatalogue::modifyDiskSystemFileRegexp(const common::dataStructures::SecurityIdentity &admin,
   const std::string &name, const std::string &fileRegexp) {
-  throw exception::Exception(std::string("In ")+__PRETTY_FUNCTION__+": not implemented");
+  throw exception::NotImplementedException();
 }
 
 void DummyDiskSystemCatalogue::modifyDiskSystemTargetedFreeSpace(
   const common::dataStructures::SecurityIdentity &admin, const std::string &name,
   const uint64_t targetedFreeSpace) {
-  throw exception::Exception(std::string("In ")+__PRETTY_FUNCTION__+": not implemented");
+  throw exception::NotImplementedException();
 }
 
 void DummyDiskSystemCatalogue::modifyDiskSystemComment(const common::dataStructures::SecurityIdentity &admin,
   const std::string &name, const std::string &comment) {
-  throw exception::Exception(std::string("In ")+__PRETTY_FUNCTION__+": not implemented");
+  throw exception::NotImplementedException();
 }
 
 void DummyDiskSystemCatalogue::modifyDiskSystemSleepTime(const common::dataStructures::SecurityIdentity& admin,
   const std::string& name, const uint64_t sleepTime) {
-  throw exception::Exception(std::string("In ")+__PRETTY_FUNCTION__+": not implemented");
+  throw exception::NotImplementedException();
 }
 
 void DummyDiskSystemCatalogue::modifyDiskSystemDiskInstanceName(
   const common::dataStructures::SecurityIdentity &admin, const std::string &name, const std::string &diskInstanceName) {
-  throw exception::Exception(std::string("In ")+__PRETTY_FUNCTION__+": not implemented");
+  throw exception::NotImplementedException();
 }
 
 void DummyDiskSystemCatalogue::modifyDiskSystemDiskInstanceSpaceName(
   const common::dataStructures::SecurityIdentity &admin, const std::string &name,
   const std::string &diskInstanceSpaceName) {
-  throw exception::Exception(std::string("In ")+__PRETTY_FUNCTION__+": not implemented");
+  throw exception::NotImplementedException();
 }
 
 bool DummyDiskSystemCatalogue::diskSystemExists(const std::string &name) const {
-  throw exception::Exception(std::string("In ")+__PRETTY_FUNCTION__+": not implemented");
+  throw exception::NotImplementedException();
 }
 
 } // namespace cta::catalogue
