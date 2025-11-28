@@ -36,7 +36,7 @@ public:
    * @param context        optional context string added to the message at initialisation time
    * @param embedBacktrace whether to embed a backtrace of where the exception was thrown
    */
-  Exception(std::string_view context = "", bool embedBacktrace = true);
+  explicit Exception(std::string_view context = "", bool embedBacktrace = true);
 
   /**
    * Copy constructor

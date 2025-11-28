@@ -38,7 +38,7 @@ private:
   std::shared_ptr<JwkCache> m_pubkeyCache;
 
 public:
-  CtaRpcImpl(const std::string& config);
+  explicit CtaRpcImpl(const std::string& config);
 
   FrontendService& getFrontendService() const { return *m_frontendService; }
 

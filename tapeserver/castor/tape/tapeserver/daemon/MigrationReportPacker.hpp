@@ -235,8 +235,8 @@ private:
     const std::string m_failureLog;
 
   public:
-    ReportLastBatchError(std::string& failureLog)
-        : m_failureLog(failureLog) {}
+    explicit ReportLastBatchError(std::string& failureLog) :
+      m_failureLog(failureLog) {}
 
     void execute(MigrationReportPacker& reportPacker) override;
   };

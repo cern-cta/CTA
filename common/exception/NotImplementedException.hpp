@@ -27,10 +27,8 @@ namespace cta::exception {
  */
 class NotImplementedException : public cta::exception::Exception {
 public:
-  /**
-   * default constructor
-   */
-  NotImplementedException(const std::string& what = "") : cta::exception::Exception() {}
+  explicit NotImplementedException(const std::string& what = "") :
+    cta::exception::Exception() {}
 };
 
-}  // namespace cta::exception
+} // namespace cta::exception

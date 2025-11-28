@@ -25,24 +25,21 @@
 namespace cta::rdbms {
 
 /**
- * A database constraint error.
+ * A database constraint error
  */
 class DBException : public cta::exception::Exception {
 public:
 
   /**
-   * Constructor.
+   * Constructor
    *
-   * @param context optional context string added to the message
-   * at initialisation time.
-   * @param embedBacktrace whether to embed a backtrace of where the
-   * exception was throw in the message
+   * @param context optional context string added to the message at initialisation time
+   * @param embedBacktrace whether to embed a backtrace of where the exception was throw in the message
    */
-  DBException(const std::string &context = "", const std::string &dbErrorMessage="", const bool embedBacktrace = true);
+  explicit DBException(const std::string& context = "", const std::string& dbErrorMessage="", const bool embedBacktrace = true);
 
   /**
-   * Empty Destructor, explicitely non-throwing (needed for std::exception
-   * inheritance)
+   * Empty Destructor, explicitely non-throwing (needed for std::exception inheritance)
    */
   ~DBException() noexcept override = default;
 
@@ -53,6 +50,6 @@ public:
 
 private:
   std::string rawDbErrorMessage;
-}; // class DBException
+};
 
 } // namespace cta::rdbms

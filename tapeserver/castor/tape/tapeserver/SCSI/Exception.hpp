@@ -66,7 +66,7 @@ class UnitAttentionException : public castor::tape::SCSI::Exception {
  */
 class HostException : public cta::exception::Exception {
 public:
-  HostException(const unsigned short int host_status, const std::string& context = "");
+  explicit HostException(const unsigned short int host_status, const std::string& context = "");
   ~HostException() final = default;
 };
 

@@ -26,7 +26,7 @@ public:
   CTA_GENERATE_EXCEPTION_CLASS(SQLError);
 
   // Constructors
-  Transaction(std::unique_ptr<cta::rdbms::Conn> conn, bool ownConnection = false);
+  explicit Transaction(std::unique_ptr<cta::rdbms::Conn> conn, bool ownConnection = false);
   explicit Transaction(cta::rdbms::ConnPool& connPool);
 
   // Move constructor

@@ -482,7 +482,7 @@ template<>
 struct ContainerTraits<ArchiveQueue,ArchiveQueueToTransferForUser>::PopCriteria {
   uint64_t files;
   uint64_t bytes;
-  PopCriteria(uint64_t f = 0, uint64_t b = 0) : files(f), bytes(b) {} // cppcheck-suppress uninitMemberVar
+  explicit PopCriteria(uint64_t f = 0, uint64_t b = 0) : files(f), bytes(b) {} // cppcheck-suppress uninitMemberVar
   template<typename PoppedElementsSummary_t>
   PopCriteria& operator-=(const PoppedElementsSummary_t &pes) {
     bytes -= pes.bytes;
@@ -495,7 +495,7 @@ template<>
 struct ContainerTraits<ArchiveQueue,ArchiveQueueToTransferForUser>::PoppedElementsSummary {
   uint64_t files;
   uint64_t bytes;
-  PoppedElementsSummary(uint64_t f = 0, uint64_t b = 0) : files(f), bytes(b) {}
+  explicit PoppedElementsSummary(uint64_t f = 0, uint64_t b = 0) : files(f), bytes(b) {}
   bool operator< (const PopCriteria & pc) {
     // This returns false if bytes or files are equal but the other value is less. Is that the intended behaviour?
     return bytes < pc.bytes && files < pc.files;

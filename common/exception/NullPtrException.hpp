@@ -17,20 +17,14 @@
 
 #pragma once
 
-// Include Files
 #include "common/exception/Exception.hpp"
 
 namespace cta::exception {
 
-/**
- * Null pointer exception
- */
 class NullPtrException : public cta::exception::Exception {
 public:
-  /**
-   * default constructor
-   */
-  NullPtrException(const std::string& context = "") : cta::exception::Exception(context) {}
+  explicit NullPtrException(const std::string& context = "") :
+    cta::exception::Exception(context) {}
 };
 
-}  // namespace cta::exception
+} // namespace cta::exception

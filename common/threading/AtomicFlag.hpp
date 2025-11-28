@@ -28,10 +28,10 @@ struct AtomicFlag {
 
   void set() { m_set = true; }
 
-  operator bool() const { return m_set; }
+  explicit operator bool() const { return m_set; }
 
 private:
   std::atomic<bool> m_set = false;
 };
 
-}  // namespace cta::threading
+} // namespace cta::threading

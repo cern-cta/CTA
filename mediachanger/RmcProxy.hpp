@@ -45,9 +45,7 @@ public:
    * @parm maxRqstAttempts The maximum number of attempts a retriable RMC
    * request should be issued.
    */
-  RmcProxy(
-    const uint16_t rmcPort = RMC_PORT,
-    const uint32_t netTimeout = RMC_NET_TIMEOUT,
+  explicit RmcProxy(const uint16_t rmcPort = RMC_PORT, const uint32_t netTimeout = RMC_NET_TIMEOUT,
     const uint32_t maxRqstAttempts = RMC_MAX_RQST_ATTEMPTS);
 
   /**
