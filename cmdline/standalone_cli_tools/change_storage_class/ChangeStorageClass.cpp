@@ -117,7 +117,7 @@ std::unique_ptr<XrdSsiPbServiceType> ChangeStorageClass::setXrootdConfiguration(
 
   // If the server is down, we want an immediate failure. Set client retry to a single attempt.
   XrdSsiProviderClient->SetTimeout(XrdSsiProvider::connect_N, 1);
-  
+
   return std::make_unique<XrdSsiPbServiceType>(cliConfig);
 }
 
@@ -136,7 +136,7 @@ void ChangeStorageClass::handleArguments(const CmdLineArgs &cmdLineArgs) {
       if(!validateUserInputFileMetadata(jsonFileDataObject.archiveFileId, jsonFileDataObject.fid, jsonFileDataObject.instance)) {
         throw exception::UserError("Archive id does not match with disk file id or disk instance, are you sure the correct file metadata was provided?");
       }
-      m_archiveFileIdsAndStorageClasses.push_back(std::make_pair(jsonFileDataObject.archiveFileId, jsonFileDataObject.storageClass));
+      m_archiveFileIdsAndStorageClasses.emplace_back(jsonFileDataObject.archiveFileId, jsonFileDataObject.storageClass);
     }
   } else {
     if (!cmdLineArgs.m_storageClassName) {
@@ -151,7 +151,7 @@ void ChangeStorageClass::handleArguments(const CmdLineArgs &cmdLineArgs) {
 
     m_storageClassName = cmdLineArgs.m_storageClassName.value();
 
-    m_archiveFileIdsAndStorageClasses.push_back(std::make_pair(cmdLineArgs.m_archiveFileId.value(), cmdLineArgs.m_storageClassName.value()));
+    m_archiveFileIdsAndStorageClasses.emplace_back(cmdLineArgs.m_archiveFileId.value(), cmdLineArgs.m_storageClassName.value());
     if(!validateUserInputFileMetadata(cmdLineArgs.m_archiveFileId.value(), cmdLineArgs.m_fids.value().front(), cmdLineArgs.m_diskInstance.value())) {
       throw exception::UserError("Archive id does not match with disk file id or disk instance, are you sure the correct file metadata was provided?");
     }
@@ -212,7 +212,7 @@ void ChangeStorageClass::storageClassExists(const std::string& storageClass) con
 
   for(const auto &storageClass : g_storageClasses) {
     std::list<cta::log::Param> params;
-    params.push_back(cta::log::Param("storageClass", storageClass));
+    params.emplace_back("storageClass", storageClass);
     m_log(cta::log::INFO, "Storage class found", params);
   }
 

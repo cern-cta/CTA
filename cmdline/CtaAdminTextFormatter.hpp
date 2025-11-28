@@ -127,10 +127,10 @@ private:
   static void buildVector(std::vector<std::string>& line, const std::string& item) { line.push_back(item); }
 
   //! Base case method to add one item to the log, overloaded for char*
-  static void buildVector(std::vector<std::string>& line, const char* item) { line.push_back(std::string(item)); }
+  static void buildVector(std::vector<std::string>& line, const char* item) { line.emplace_back(item); }
 
   //! Base case method to add one item to the log, overloaded for bool
-  static void buildVector(std::vector<std::string>& line, bool item) { line.push_back(item ? "true" : "false"); }
+  static void buildVector(std::vector<std::string>& line, bool item) { line.emplace_back(item ? "true" : "false"); }
 
   /*!
    * Base case method to add one item to the log, with partial specialisation

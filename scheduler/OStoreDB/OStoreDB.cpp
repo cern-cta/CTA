@@ -273,7 +273,7 @@ OStoreDB::getRetrieveQueuesCleanupInfo(log::LogContext& logContext) {
       continue;
     }
 
-    ret.push_back(SchedulerDatabase::RetrieveQueueCleanupInfo());
+    ret.emplace_back();
     ret.back().queueAddress = rqueue.getAddressIfSet();
     ret.back().vid = rqueue.getVid();
     ret.back().doCleanup = rqueue.getQueueCleanupDoCleanup();
@@ -316,7 +316,7 @@ void OStoreDB::fetchMountInfo(SchedulerDatabase::TapeMountDecisionInfo& tmdi,
     // mount candidates list.
     cta::objectstore::ArchiveQueue::JobsSummary aqueueJobsSummary = aqueue.getJobsSummary();
     if (aqueueJobsSummary.jobs) {
-      tmdi.potentialMounts.push_back(SchedulerDatabase::PotentialMount());
+      tmdi.potentialMounts.emplace_back();
       auto& m = tmdi.potentialMounts.back();
       m.tapePool = aqp.tapePool;
       m.type = cta::common::dataStructures::MountType::ArchiveForUser;
@@ -372,7 +372,7 @@ void OStoreDB::fetchMountInfo(SchedulerDatabase::TapeMountDecisionInfo& tmdi,
     // mount candidates list.
     cta::objectstore::ArchiveQueue::JobsSummary aqueueRepackJobsSummary = aqueue.getJobsSummary();
     if (aqueueRepackJobsSummary.jobs) {
-      tmdi.potentialMounts.push_back(SchedulerDatabase::PotentialMount());
+      tmdi.potentialMounts.emplace_back();
       auto& m = tmdi.potentialMounts.back();
       m.tapePool = aqp.tapePool;
       m.type = cta::common::dataStructures::MountType::ArchiveForRepack;
@@ -439,7 +439,7 @@ void OStoreDB::fetchMountInfo(SchedulerDatabase::TapeMountDecisionInfo& tmdi,
         }
         // In all cases, we create one potential mount per activity
         for (auto ac : rqSummary.activityCounts) {
-          tmdi.potentialMounts.push_back(SchedulerDatabase::PotentialMount());
+          tmdi.potentialMounts.emplace_back();
           auto& m = tmdi.potentialMounts.back();
           m.vid = rqp.vid;
           m.type = cta::common::dataStructures::MountType::Retrieve;
@@ -470,7 +470,7 @@ void OStoreDB::fetchMountInfo(SchedulerDatabase::TapeMountDecisionInfo& tmdi,
         }
       }
       if (jobsWithoutActivity) {
-        tmdi.potentialMounts.push_back(SchedulerDatabase::PotentialMount());
+        tmdi.potentialMounts.emplace_back();
         auto& m = tmdi.potentialMounts.back();
         m.vid = rqp.vid;
         m.type = cta::common::dataStructures::MountType::Retrieve;
@@ -747,7 +747,7 @@ std::string OStoreDB::queueArchive(const std::string& instanceName,
                  cta::objectstore::ArchiveRequest::RETRIES_WITHIN_MOUNT,
                  cta::objectstore::ArchiveRequest::TOTAL_RETRIES,
                  cta::objectstore::ArchiveRequest::REPORT_RETRIES);
-    jl.push_back(cta::objectstore::ArchiveRequest::JobDump());
+    jl.emplace_back();
     jl.back().copyNb = copy.first;
     jl.back().tapePool = copy.second;
   }
@@ -1028,7 +1028,7 @@ void OStoreDB::setArchiveJobBatchReported(std::list<cta::SchedulerDatabase::Arch
       case SchedulerDatabase::ArchiveJob::ReportType::FailureReport: {
         ArchiveJob* osdbJob = castFromSchedDBJob(j);
         std::string tapePool = osdbJob->m_tapePool;
-        failedQueues[tapePool].push_back(FailedJobToQueue());
+        failedQueues[tapePool].emplace_back();
         failedQueues[tapePool].back().job = osdbJob;
       } break;
       default: {
@@ -2544,7 +2544,7 @@ void OStoreDB::RepackRetrieveSuccessesReportBatch::report(log::LogContext& lc) {
     // Prepare the report
     objectstore::RepackRequest::SubrequestStatistics::List ssl;
     for (auto& rr : m_subrequestList) {
-      ssl.push_back(objectstore::RepackRequest::SubrequestStatistics());
+      ssl.emplace_back();
       ssl.back().bytes = rr.archiveFile.fileSize;
       ssl.back().files = 1;
       ssl.back().fSeq = rr.repackInfo.fSeq;
@@ -2601,7 +2601,7 @@ void OStoreDB::RepackRetrieveSuccessesReportBatch::report(log::LogContext& lc) {
         // We failed to archive the file (to create the request, in fact). So all the copyNbs
         // can be counted as failed.
         for (auto cnbtr : rr.repackInfo.copyNbsToRearchive) {
-          failedArchiveSSL.push_back(objectstore::RepackRequest::SubrequestStatistics());
+          failedArchiveSSL.emplace_back();
           auto& fassl = failedArchiveSSL.back();
           fassl.bytes = rr.archiveFile.fileSize;
           fassl.files = 1;
@@ -2666,7 +2666,7 @@ void OStoreDB::RepackRetrieveSuccessesReportBatch::report(log::LogContext& lc) {
         // We failed to archive the file (to create the request, in fact). So all the copyNbs
         // can be counted as failed.
         for (auto cnbtr : atar.subrequestInfo.repackInfo.copyNbsToRearchive) {
-          failedArchiveSSL.push_back(objectstore::RepackRequest::SubrequestStatistics());
+          failedArchiveSSL.emplace_back();
           auto& fassl = failedArchiveSSL.back();
           fassl.bytes = atar.subrequestInfo.archiveFile.fileSize;
           fassl.files = 1;
@@ -2810,7 +2810,7 @@ void OStoreDB::RepackRetrieveFailureReportBatch::report(log::LogContext& lc) {
     objectstore::RepackRequest::SubrequestStatistics::List ssl;
     uint64_t failedToCreateArchiveReq = 0;
     for (auto& rr : m_subrequestList) {
-      ssl.push_back(objectstore::RepackRequest::SubrequestStatistics());
+      ssl.emplace_back();
       ssl.back().bytes = rr.archiveFile.fileSize;
       ssl.back().files = 1;
       ssl.back().fSeq = rr.repackInfo.fSeq;
@@ -4799,7 +4799,7 @@ serializers::ArchiveJobStatus OStoreDB::RepackArchiveFailureReportBatch::getNewS
 objectstore::RepackRequest::SubrequestStatistics::List OStoreDB::RepackArchiveReportBatch::prepareReport() {
   objectstore::RepackRequest::SubrequestStatistics::List ssl;
   for (auto& sri : m_subrequestList) {
-    ssl.push_back(objectstore::RepackRequest::SubrequestStatistics());
+    ssl.emplace_back();
     ssl.back().bytes = sri.archiveFile.fileSize;
     ssl.back().files = 1;
     ssl.back().fSeq = sri.repackInfo.fSeq;

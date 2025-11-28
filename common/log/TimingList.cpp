@@ -42,7 +42,7 @@ void TimingList::insertOrIncrement(const std::string& name, double value) {
   try {
     at(name)+=value;
   } catch (std::out_of_range&) {
-    push_back(std::make_tuple(name, value));
+    emplace_back(name, value);
   }
 }
 
@@ -51,7 +51,7 @@ void TimingList::insOrIncAndReset(const std::string& name, utils::Timer& t) {
 }
 
 void TimingList::insertAndReset(const std::string& name, utils::Timer& t) {
-  push_back(std::make_tuple(name, t.secs(utils::Timer::resetCounter)));
+  emplace_back(name, t.secs(utils::Timer::resetCounter));
 }
 
 

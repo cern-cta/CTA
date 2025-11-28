@@ -360,7 +360,7 @@ TEST_P(SchedulerDatabaseTest, putExistingQueueToSleep) {
       rfqc.mountPolicy.lastModificationLog = { "u", "h", time(nullptr)};
       rfqc.mountPolicy.comment = "comment";
       rfqc.archiveFile.fileSize = 1000;
-      rfqc.archiveFile.tapeFiles.push_back(cta::common::dataStructures::TapeFile());
+      rfqc.archiveFile.tapeFiles.emplace_back();
       rfqc.archiveFile.tapeFiles.back().fSeq = 0;
       rfqc.archiveFile.tapeFiles.back().vid = "vid";
       rr.creationLog = { "user", "host", time(nullptr)};
@@ -440,7 +440,7 @@ TEST_P(SchedulerDatabaseTest, createQueueAndPutToSleep) {
       rfqc.mountPolicy.lastModificationLog = { "u", "h", time(nullptr)};
       rfqc.mountPolicy.comment = "comment";
       rfqc.archiveFile.fileSize = 1000;
-      rfqc.archiveFile.tapeFiles.push_back(cta::common::dataStructures::TapeFile());
+      rfqc.archiveFile.tapeFiles.emplace_back();
       rfqc.archiveFile.tapeFiles.back().fSeq = 0;
       rfqc.archiveFile.tapeFiles.back().vid = "vid";
       rr.creationLog = { "user", "host", time(nullptr)};
@@ -589,7 +589,7 @@ TEST_P(SchedulerDatabaseTest, popAndRequeueRetrieveRequests) {
       rfqc.mountPolicy.lastModificationLog = { "u", "h", creationTime};
       rfqc.mountPolicy.comment = "comment";
       rfqc.archiveFile.fileSize = 1000;
-      rfqc.archiveFile.tapeFiles.push_back(cta::common::dataStructures::TapeFile());
+      rfqc.archiveFile.tapeFiles.emplace_back();
       rfqc.archiveFile.tapeFiles.back().fSeq = id;
       rfqc.archiveFile.tapeFiles.back().vid = "vid";
       rr.creationLog = { "user", "host", creationTime};
@@ -677,7 +677,7 @@ TEST_P(SchedulerDatabaseTest, popRetrieveRequestsWithDisksytem) {
       rfqc.mountPolicy.lastModificationLog = { "u", "h", time(nullptr)};
       rfqc.mountPolicy.comment = "comment";
       rfqc.archiveFile.fileSize = 1000;
-      rfqc.archiveFile.tapeFiles.push_back(cta::common::dataStructures::TapeFile());
+      rfqc.archiveFile.tapeFiles.emplace_back();
       rfqc.archiveFile.tapeFiles.back().fSeq = id;
       rfqc.archiveFile.tapeFiles.back().vid = "vid";
       rr.creationLog = { "user", "host", time(nullptr)};
@@ -768,7 +768,7 @@ TEST_P(SchedulerDatabaseTest, popRetrieveRequestsWithBackpressure) {
       rfqc.mountPolicy.lastModificationLog = { "u", "h", time(nullptr)};
       rfqc.mountPolicy.comment = "comment";
       rfqc.archiveFile.fileSize = 1000;
-      rfqc.archiveFile.tapeFiles.push_back(cta::common::dataStructures::TapeFile());
+      rfqc.archiveFile.tapeFiles.emplace_back();
       rfqc.archiveFile.tapeFiles.back().fSeq = id;
       rfqc.archiveFile.tapeFiles.back().vid = "vid";
       rr.creationLog = { "user", "host", time(nullptr)};
@@ -859,7 +859,7 @@ TEST_P(SchedulerDatabaseTest, popRetrieveRequestsWithDiskSystemNotFetcheable) {
       rfqc.mountPolicy.lastModificationLog = { "u", "h", time(nullptr)};
       rfqc.mountPolicy.comment = "comment";
       rfqc.archiveFile.fileSize = 1000;
-      rfqc.archiveFile.tapeFiles.push_back(cta::common::dataStructures::TapeFile());
+      rfqc.archiveFile.tapeFiles.emplace_back();
       rfqc.archiveFile.tapeFiles.back().fSeq = id;
       rfqc.archiveFile.tapeFiles.back().vid = "vid";
       rr.creationLog = { "user", "host", time(nullptr)};

@@ -141,7 +141,7 @@ TEST_F(OsmReaderTest, ReadOsmTape) {
     auto readSession = castor::tape::tapeFile::ReadSessionFactory::create(*m_drive, m_volInfo, false);
     BasicRetrieveJob fileToRecall;
     fileToRecall.selectedCopyNb = 0;
-    fileToRecall.archiveFile.tapeFiles.push_back(cta::common::dataStructures::TapeFile());
+    fileToRecall.archiveFile.tapeFiles.emplace_back();
     fileToRecall.selectedTapeFile().blockId = 1;  // here should be the block ID of HDR1
     fileToRecall.selectedTapeFile().fSeq = 1;
     fileToRecall.retrieveRequest.archiveFileID = 1;

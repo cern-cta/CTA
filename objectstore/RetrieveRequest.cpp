@@ -643,7 +643,7 @@ auto RetrieveRequest::dumpJobs() -> std::list<JobDump> {
   checkPayloadReadable();
   std::list<JobDump> ret;
   for (auto& j : m_payload.jobs()) {
-    ret.push_back(JobDump());
+    ret.emplace_back();
     ret.back().copyNb=j.copynb();
     ret.back().status=j.status();
     // TODO: status
@@ -675,7 +675,7 @@ auto RetrieveRequest::getJobs() -> std::list<JobDump> {
   checkPayloadReadable();
   std::list<JobDump> ret;
   for (auto& j : m_payload.jobs()) {
-    ret.push_back(JobDump());
+    ret.emplace_back();
     ret.back().copyNb=j.copynb();
     ret.back().status=j.status();
   }

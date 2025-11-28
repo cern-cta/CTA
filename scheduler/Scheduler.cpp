@@ -703,7 +703,7 @@ void Scheduler::expandRepackRequest(const std::unique_ptr<RepackRequest>& repack
   uint64_t maxAddedFSeq = 0;
   while (!archiveFilesFromCatalogue.empty()) {
     fSeq++;
-    retrieveSubrequests.push_back(cta::SchedulerDatabase::RepackRequest::Subrequest());
+    retrieveSubrequests.emplace_back();
     auto archiveFile = archiveFilesFromCatalogue.front();
     archiveFilesFromCatalogue.pop_front();
     auto& retrieveSubRequest = retrieveSubrequests.back();
@@ -898,7 +898,7 @@ std::list<Scheduler::RepackReportBatch> Scheduler::getRepackReportBatches(log::L
   for (auto& reportBatch : m_db.getRepackReportBatches(lc)) {
     Scheduler::RepackReportBatch report;
     report.m_DbBatch.reset(reportBatch.release());
-    ret.push_back(std::move(report));
+    ret.emplace_back(std::move(report));
   }
   return ret;
 }
@@ -1983,7 +1983,7 @@ void Scheduler::getExistingAndNextMounts(SchedulerDatabase::TapeMountDecisionInf
           .log(log::WARNING, "In Scheduler::getExistingAndNextMounts(): the drive has an active status but no mount.");
         continue;
       }
-      tmdi.existingOrNextMounts.push_back(SchedulerDatabase::ExistingMount());
+      tmdi.existingOrNextMounts.emplace_back();
       tmdi.existingOrNextMounts.back().type = driveState.mountType;
       tmdi.existingOrNextMounts.back().tapePool = driveState.currentTapePool.value_or("");
       tmdi.existingOrNextMounts.back().vo = driveState.currentVo.value_or("");
@@ -2006,7 +2006,7 @@ void Scheduler::getExistingAndNextMounts(SchedulerDatabase::TapeMountDecisionInf
       continue;
     }
     if (activeMountTypes.count(static_cast<int>(driveState.nextMountType))) {
-      tmdi.existingOrNextMounts.push_back(SchedulerDatabase::ExistingMount());
+      tmdi.existingOrNextMounts.emplace_back();
       tmdi.existingOrNextMounts.back().type = driveState.nextMountType;
       tmdi.existingOrNextMounts.back().tapePool = driveState.nextTapePool.value_or("");
       tmdi.existingOrNextMounts.back().vo = driveState.nextVo.value_or("");

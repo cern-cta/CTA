@@ -406,7 +406,7 @@ switchElementsOwnership(typename InsertedElement::list& elemMemCont, const Conta
     try {
       u->get()->wait();
     } catch (...) {
-      ret.push_back(OpFailure<InsertedElement>());
+      ret.emplace_back();
       ret.back().element = &(*e);
       ret.back().failure = std::current_exception();
     }
@@ -455,7 +455,7 @@ switchElementsOwnership(PoppedElementsBatch &poppedElementBatch, const Container
           break;
       }
     } catch (...) {
-      ret.push_back(OpFailure<PoppedElement>());
+      ret.emplace_back();
       ret.back().element = &(*e);
       ret.back().failure = std::current_exception();
     }

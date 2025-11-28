@@ -206,7 +206,7 @@ void cta::RetrieveMount::requeueJobBatch(std::vector<std::unique_ptr<cta::Retrie
   std::list<std::unique_ptr<SchedulerDatabase::RetrieveJob>> jobBatch;
   for (auto& job : jobs) {
     if (job) {
-      jobBatch.push_back(std::unique_ptr<SchedulerDatabase::RetrieveJob>(job->m_dbJob.release()));
+      jobBatch.emplace_back(job->m_dbJob.release());
     }
   }
   jobs.clear();

@@ -396,7 +396,7 @@ auto ArchiveRequest::dumpJobs() -> std::list<ArchiveRequest::JobDump> {
   std::list<JobDump> ret;
   auto & jl = m_payload.jobs();
   for (auto j=jl.begin(); j!=jl.end(); j++) {
-    ret.push_back(JobDump());
+    ret.emplace_back();
     ret.back().copyNb = j->copynb();
     ret.back().tapePool = j->tapepool();
     ret.back().owner = j->owner();

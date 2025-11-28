@@ -187,15 +187,15 @@ int RestoreFilesCmd::exceptionThrowingMain(const int argc, char *const *const ar
       auto &eosChecksum = eosArchiveFileIdAndChecksum.second;
       auto &ctaChecksum = file.checksum().begin()->value();
       std::list<cta::log::Param> params;
-      params.push_back(cta::log::Param("archiveFileId", file.archive_file_id()));
-      params.push_back(cta::log::Param("diskInstance", diskInstanceAndFxid.first));
-      params.push_back(cta::log::Param("diskFileId", diskInstanceAndFxid.second));
-      params.push_back(cta::log::Param("checksum", ctaChecksum));
+      params.emplace_back("archiveFileId", file.archive_file_id());
+      params.emplace_back("diskInstance", diskInstanceAndFxid.first);
+      params.emplace_back("diskFileId", diskInstanceAndFxid.second);
+      params.emplace_back("checksum", ctaChecksum);
       if(eosArchiveFileId == file.archive_file_id() && eosChecksum == ctaChecksum) {
         m_log(cta::log::INFO, "File metadata in EOS and CTA matches", params);
       } else {
-        params.push_back(cta::log::Param("eosArchiveFileId", eosArchiveFileId));
-        params.push_back(cta::log::Param("eosChecksum", eosChecksum));
+        params.emplace_back("eosArchiveFileId", eosArchiveFileId);
+        params.emplace_back("eosChecksum", eosChecksum);
         m_log(cta::log::INFO, "File metadata in EOS and CTA does not match", params);
         throw std::runtime_error("Sanity check failed.");
       }
@@ -211,7 +211,7 @@ int RestoreFilesCmd::exceptionThrowingMain(const int argc, char *const *const ar
 //------------------------------------------------------------------------------
 void RestoreFilesCmd::listDeletedFilesCta() const {
   std::list<cta::log::Param> params;
-  params.push_back(cta::log::Param("userName", getUsername()));
+  params.emplace_back("userName", getUsername());
 
   cta::xrd::Request request;
 
@@ -223,28 +223,28 @@ void RestoreFilesCmd::listDeletedFilesCta() const {
   admincmd.set_subcmd(cta::admin::AdminCmd::SUBCMD_LS);
 
   if (m_vid.has_value()) {
-    params.push_back(cta::log::Param("tapeVid", m_vid.value()));
+    params.emplace_back("tapeVid", m_vid.value());
     auto key = cta::admin::OptionString::VID;
     auto new_opt = admincmd.add_option_str();
     new_opt->set_key(key);
     new_opt->set_value(m_vid.value());
   }
   if (m_diskInstance.has_value()) {
-    params.push_back(cta::log::Param("diskInstance", m_diskInstance.value()));
+    params.emplace_back("diskInstance", m_diskInstance.value());
     auto key = cta::admin::OptionString::INSTANCE;
     auto new_opt = admincmd.add_option_str();
     new_opt->set_key(key);
     new_opt->set_value(m_diskInstance.value());
   }
   if (m_archiveFileId.has_value()) {
-    params.push_back(cta::log::Param("archiveFileId", m_archiveFileId.value()));
+    params.emplace_back("archiveFileId", m_archiveFileId.value());
     auto key = cta::admin::OptionUInt64::ARCHIVE_FILE_ID;
     auto new_opt = admincmd.add_option_uint64();
     new_opt->set_key(key);
     new_opt->set_value(cta::utils::toUint64(m_archiveFileId.value()));
   }
   if (m_copyNumber.has_value()) {
-    params.push_back(cta::log::Param("copyNb", m_copyNumber.value()));
+    params.emplace_back("copyNb", m_copyNumber.value());
     auto key = cta::admin::OptionUInt64::COPY_NUMBER;
     auto new_opt = admincmd.add_option_uint64();
     new_opt->set_key(key);
@@ -261,7 +261,7 @@ void RestoreFilesCmd::listDeletedFilesCta() const {
     }
     auto fids = ss.str();
     fids.pop_back(); // remove last ","
-    params.push_back(cta::log::Param("diskFileId", fids));
+    params.emplace_back("diskFileId", fids);
   }
 
   m_log(cta::log::INFO, "Listing deleted file in CTA catalogue", params);
@@ -290,7 +290,7 @@ void RestoreFilesCmd::listDeletedFilesCta() const {
   // wait until the data stream has been processed before exiting
   stream_future.wait();
 
-  params.push_back(cta::log::Param("nbFiles", deletedTapeFiles.size()));
+  params.emplace_back("nbFiles", deletedTapeFiles.size());
   m_log(cta::log::INFO, "Listed deleted file in CTA catalogue", params);
 }
 
@@ -300,12 +300,12 @@ void RestoreFilesCmd::listDeletedFilesCta() const {
 void RestoreFilesCmd::restoreDeletedFileCopyCta(const cta::admin::RecycleTapeFileLsItem &file) const {
 
   std::list<cta::log::Param> params;
-  params.push_back(cta::log::Param("userName", getUsername()));
-  params.push_back(cta::log::Param("tapeVid", file.vid()));
-  params.push_back(cta::log::Param("diskInstance", file.disk_instance()));
-  params.push_back(cta::log::Param("archiveFileId", file.archive_file_id()));
-  params.push_back(cta::log::Param("copyNb", file.copy_nb()));
-  params.push_back(cta::log::Param("diskFileId", file.disk_file_id()));
+  params.emplace_back("userName", getUsername());
+  params.emplace_back("tapeVid", file.vid());
+  params.emplace_back("diskInstance", file.disk_instance());
+  params.emplace_back("archiveFileId", file.archive_file_id());
+  params.emplace_back("copyNb", file.copy_nb());
+  params.emplace_back("diskFileId", file.disk_file_id());
 
   cta::xrd::Request request;
 
@@ -389,9 +389,9 @@ uint64_t RestoreFilesCmd::addContainerEos(const std::string &diskInstance, const
   }
 
   std::list<cta::log::Param> params;
-  params.push_back(cta::log::Param("userName", getUsername()));
-  params.push_back(cta::log::Param("diskInstance", diskInstance));
-  params.push_back(cta::log::Param("path", path));
+  params.emplace_back("userName", getUsername());
+  params.emplace_back("diskInstance", diskInstance);
+  params.emplace_back("path", path);
   m_log(cta::log::DEBUG, "Inserting container in EOS namespace", params);
 
   ::eos::rpc::ContainerMdProto dir;
@@ -428,15 +428,15 @@ uint64_t RestoreFilesCmd::addContainerEos(const std::string &diskInstance, const
 //------------------------------------------------------------------------------
 uint64_t RestoreFilesCmd::containerExistsEos(const std::string &diskInstance, const std::string &path) const {
   std::list<cta::log::Param> params;
-  params.push_back(cta::log::Param("userName", getUsername()));
-  params.push_back(cta::log::Param("diskInstance", diskInstance));
-  params.push_back(cta::log::Param("path", path));
+  params.emplace_back("userName", getUsername());
+  params.emplace_back("diskInstance", diskInstance);
+  params.emplace_back("path", path);
 
   m_log(cta::log::DEBUG, "Verifying if the container exists in the EOS namespace", params);
 
   auto md_response = m_endpointMapPtr->getMD(diskInstance, ::eos::rpc::CONTAINER, 0, path, false);
   auto cid = md_response.cmd().id();
-  params.push_back(cta::log::Param("containerId", cid));
+  params.emplace_back("containerId", cid);
   if (cid != 0) {
     m_log(cta::log::DEBUG, "Container exists in the EOS namespace", params);
   } else {
@@ -455,8 +455,8 @@ bool RestoreFilesCmd::fileWasDeletedByRM(const cta::admin::RecycleTapeFileLsItem
 bool RestoreFilesCmd::archiveFileExistsCTA(const uint64_t &archiveFileId) const {
 
   std::list<cta::log::Param> params;
-  params.push_back(cta::log::Param("userName", getUsername()));
-  params.push_back(cta::log::Param("archiveFileId", archiveFileId));
+  params.emplace_back("userName", getUsername());
+  params.emplace_back("archiveFileId", archiveFileId);
 
   m_log(cta::log::DEBUG, "Looking for archive file in the CTA catalogue", params);
 
@@ -508,14 +508,14 @@ bool RestoreFilesCmd::archiveFileExistsCTA(const uint64_t &archiveFileId) const 
 //------------------------------------------------------------------------------
 bool RestoreFilesCmd::fileExistsEos(const std::string &diskInstance, const std::string &diskFileId) const {
   std::list<cta::log::Param> params;
-  params.push_back(cta::log::Param("userName", getUsername()));
-  params.push_back(cta::log::Param("diskInstance", diskInstance));
-  params.push_back(cta::log::Param("diskFileId", diskFileId));
+  params.emplace_back("userName", getUsername());
+  params.emplace_back("diskInstance", diskInstance);
+  params.emplace_back("diskFileId", diskFileId);
 
   m_log(cta::log::DEBUG, "Verifying if EOS fid exists in the EOS namespace", params);
   try {
     auto path = m_endpointMapPtr->getPath(diskInstance, diskFileId);
-    params.push_back(cta::log::Param("diskFilePath", path));
+    params.emplace_back("diskFilePath", path);
     m_log(cta::log::DEBUG, "EOS fid exists in the EOS namespace");
     return true;
   } catch(cta::exception::Exception&) {
@@ -529,14 +529,14 @@ bool RestoreFilesCmd::fileExistsEos(const std::string &diskInstance, const std::
 //------------------------------------------------------------------------------
 uint64_t RestoreFilesCmd::getFileIdEos(const std::string &diskInstance, const std::string &path) const {
   std::list<cta::log::Param> params;
-  params.push_back(cta::log::Param("userName", getUsername()));
-  params.push_back(cta::log::Param("diskInstance", diskInstance));
-  params.push_back(cta::log::Param("path", path));
+  params.emplace_back("userName", getUsername());
+  params.emplace_back("diskInstance", diskInstance);
+  params.emplace_back("path", path);
 
   m_log(cta::log::DEBUG, "Querying for file metadata in the EOS namespace", params);
   auto md_response = m_endpointMapPtr->getMD(diskInstance, ::eos::rpc::FILE, 0, path, false);
   auto fid = md_response.fmd().id();
-  params.push_back(cta::log::Param("diskFileId", fid));
+  params.emplace_back("diskFileId", fid);
   if (fid != 0) {
     m_log(cta::log::DEBUG, "File path exists in the EOS namespace", params);
   } else {
@@ -554,9 +554,9 @@ void RestoreFilesCmd::getCurrentEosIds(const std::string &diskInstance) const {
   m_endpointMapPtr->getCurrentIds(diskInstance, cid, fid);
 
   std::list<cta::log::Param> params;
-  params.push_back(cta::log::Param("diskInstance", diskInstance));
-  params.push_back(cta::log::Param("ContainerId", cid));
-  params.push_back(cta::log::Param("FileId", fid));
+  params.emplace_back("diskInstance", diskInstance);
+  params.emplace_back("ContainerId", cid);
+  params.emplace_back("FileId", fid);
   m_log(cta::log::DEBUG, "Obtained current EOS container and file id", params);
 }
 
@@ -567,11 +567,11 @@ void RestoreFilesCmd::getCurrentEosIds(const std::string &diskInstance) const {
 uint64_t RestoreFilesCmd::restoreDeletedFileEos(const cta::admin::RecycleTapeFileLsItem &rtfls_item) const {
 
   std::list<cta::log::Param> params;
-  params.push_back(cta::log::Param("userName", getUsername()));
-  params.push_back(cta::log::Param("diskInstance", rtfls_item.disk_instance()));
-  params.push_back(cta::log::Param("archiveFileId", rtfls_item.archive_file_id()));
-  params.push_back(cta::log::Param("diskFileId", rtfls_item.disk_file_id()));
-  params.push_back(cta::log::Param("diskFilePath", rtfls_item.disk_file_path()));
+  params.emplace_back("userName", getUsername());
+  params.emplace_back("diskInstance", rtfls_item.disk_instance());
+  params.emplace_back("archiveFileId", rtfls_item.archive_file_id());
+  params.emplace_back("diskFileId", rtfls_item.disk_file_id());
+  params.emplace_back("diskFilePath", rtfls_item.disk_file_path());
 
   m_log(cta::log::INFO, "Restoring file in the EOS namespace", params);
 
@@ -661,7 +661,7 @@ uint64_t RestoreFilesCmd::restoreDeletedFileEos(const cta::admin::RecycleTapeFil
 std::pair<std::string,std::string> RestoreFilesCmd::getInstanceAndFidFromCTA(const cta::admin::RecycleTapeFileLsItem& file) {
   {
     std::list<cta::log::Param> params;
-    params.push_back(cta::log::Param("archiveFileId", file.archive_file_id()));
+    params.emplace_back("archiveFileId", file.archive_file_id());
     m_log(cta::log::DEBUG, "cta-admin tapefile ls", params);
   }
 
@@ -706,8 +706,8 @@ std::pair<std::string,std::string> RestoreFilesCmd::getInstanceAndFidFromCTA(con
   listedTapeFiles.clear();
   {
     std::list<cta::log::Param> params;
-    params.push_back(cta::log::Param("diskInstance", listedTapeFile.first));
-    params.push_back(cta::log::Param("diskFileId", listedTapeFile.second));
+    params.emplace_back("diskInstance", listedTapeFile.first);
+    params.emplace_back("diskFileId", listedTapeFile.second);
     m_log(cta::log::DEBUG, "Obtained file metadata from CTA", params);
   }
   return listedTapeFile;
@@ -724,11 +724,11 @@ std::pair<uint64_t, std::string> RestoreFilesCmd::getArchiveFileIdAndChecksumFro
   }
   {
     std::list<cta::log::Param> params;
-    params.push_back(cta::log::Param("diskInstance", diskInstance));
-    params.push_back(cta::log::Param("fid", fid));
+    params.emplace_back("diskInstance", diskInstance);
+    params.emplace_back("fid", fid);
     std::stringstream ss;
     ss << std::hex << fid;
-    params.push_back(cta::log::Param("fxid", ss.str()));
+    params.emplace_back("fxid", ss.str());
     m_log(cta::log::DEBUG, "Querying EOS namespace for archiveFileId and checksum", params);
   }
   auto md_response = m_endpointMapPtr->getMD(diskInstance, ::eos::rpc::FILE, fid, "", false);
@@ -741,8 +741,8 @@ std::pair<uint64_t, std::string> RestoreFilesCmd::getArchiveFileIdAndChecksumFro
   auto checksumValue = checksum::ChecksumBlob::ByteArrayToHex(std::string(byteArray.rbegin(), byteArray.rend()));
   {
     std::list<cta::log::Param> params;
-    params.push_back(cta::log::Param("archiveFileId", archiveFileId));
-    params.push_back(cta::log::Param("checksumValue", checksumValue));
+    params.emplace_back("archiveFileId", archiveFileId);
+    params.emplace_back("checksumValue", checksumValue);
     m_log(cta::log::DEBUG, "Response from EOS nameserver", params);
   }
 

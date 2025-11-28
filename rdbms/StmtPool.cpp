@@ -73,7 +73,7 @@ void StmtPool::returnStmt(std::unique_ptr<wrapper::StmtWrapper> stmt) {
 
   stmt->clear();
 
-  m_stmts[stmt->getSql()].push_back(std::move(stmt));
+  m_stmts[stmt->getSql()].emplace_back(std::move(stmt));
 }
 
 //------------------------------------------------------------------------------

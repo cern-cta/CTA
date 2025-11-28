@@ -175,38 +175,38 @@ protected:
         //triggered
         wasTapeMounted = false;
       }
-      paramList.push_back(Param("wasTapeMounted",wasTapeMounted));
-      paramList.push_back(Param("mountTime", m_stats.mountTime));
-      paramList.push_back(Param("positionTime", m_stats.positionTime));
-      paramList.push_back(Param("waitInstructionsTime", m_stats.waitInstructionsTime));
-      paramList.push_back(Param("waitFreeMemoryTime", m_stats.waitFreeMemoryTime));
-      paramList.push_back(Param("waitDataTime", m_stats.waitDataTime));
-      paramList.push_back(Param("waitReportingTime", m_stats.waitReportingTime));
-      paramList.push_back(Param("checksumingTime", m_stats.checksumingTime));
-      paramList.push_back(Param("readWriteTime", m_stats.readWriteTime));
-      paramList.push_back(Param("flushTime", m_stats.flushTime));
-      paramList.push_back(Param("unloadTime", m_stats.unloadTime));
-      paramList.push_back(Param("unmountTime", m_stats.unmountTime));
-      paramList.push_back(Param("encryptionControlTime", m_stats.encryptionControlTime));
-      paramList.push_back(Param("transferTime", m_stats.transferTime()));
-      paramList.push_back(Param("totalTime", totalTime));
-      paramList.push_back(Param("deliveryTime", deliveryTime));
-      paramList.push_back(Param("drainingTime", drainingTime));
-      paramList.push_back(Param("dataVolume", m_stats.dataVolume));
-      paramList.push_back(Param("filesCount", m_stats.filesCount));
-      paramList.push_back(Param("headerVolume", m_stats.headerVolume));
+      paramList.emplace_back("wasTapeMounted",wasTapeMounted);
+      paramList.emplace_back("mountTime", m_stats.mountTime);
+      paramList.emplace_back("positionTime", m_stats.positionTime);
+      paramList.emplace_back("waitInstructionsTime", m_stats.waitInstructionsTime);
+      paramList.emplace_back("waitFreeMemoryTime", m_stats.waitFreeMemoryTime);
+      paramList.emplace_back("waitDataTime", m_stats.waitDataTime);
+      paramList.emplace_back("waitReportingTime", m_stats.waitReportingTime);
+      paramList.emplace_back("checksumingTime", m_stats.checksumingTime);
+      paramList.emplace_back("readWriteTime", m_stats.readWriteTime);
+      paramList.emplace_back("flushTime", m_stats.flushTime);
+      paramList.emplace_back("unloadTime", m_stats.unloadTime);
+      paramList.emplace_back("unmountTime", m_stats.unmountTime);
+      paramList.emplace_back("encryptionControlTime", m_stats.encryptionControlTime);
+      paramList.emplace_back("transferTime", m_stats.transferTime());
+      paramList.emplace_back("totalTime", totalTime);
+      paramList.emplace_back("deliveryTime", deliveryTime);
+      paramList.emplace_back("drainingTime", drainingTime);
+      paramList.emplace_back("dataVolume", m_stats.dataVolume);
+      paramList.emplace_back("filesCount", m_stats.filesCount);
+      paramList.emplace_back("headerVolume", m_stats.headerVolume);
       // Compute performance
       paramList.push_back(Param("payloadTransferSpeedMBps", totalTime?1.0*m_stats.dataVolume
                 /1000/1000/totalTime:0.0));
       paramList.push_back(Param("driveTransferSpeedMBps", totalTime?1.0*(m_stats.dataVolume+m_stats.headerVolume)
                 /1000/1000/totalTime:0.0));
       if(m_mount.getMountType() == cta::common::dataStructures::MountType::Retrieve){
-        paramList.push_back(Param("repackFilesCount",m_stats.repackFilesCount));
-        paramList.push_back(Param("userFilesCount",m_stats.userFilesCount));
-        paramList.push_back(Param("verifiedFilesCount",m_stats.verifiedFilesCount));
-        paramList.push_back(Param("repackBytesCount",m_stats.repackBytesCount));
-        paramList.push_back(Param("userBytesCount",m_stats.userBytesCount));
-        paramList.push_back(Param("verifiedBytesCount",m_stats.verifiedBytesCount));
+        paramList.emplace_back("repackFilesCount",m_stats.repackFilesCount);
+        paramList.emplace_back("userFilesCount",m_stats.userFilesCount);
+        paramList.emplace_back("verifiedFilesCount",m_stats.verifiedFilesCount);
+        paramList.emplace_back("repackBytesCount",m_stats.repackBytesCount);
+        paramList.emplace_back("userBytesCount",m_stats.userBytesCount);
+        paramList.emplace_back("verifiedBytesCount",m_stats.verifiedBytesCount);
       }
       // Ship the logs to the initial process
       m_initialProcess.addLogParams(paramList);

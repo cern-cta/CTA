@@ -101,7 +101,7 @@ public:
 
   void
   putQueueToSleep(const std::string& diskSystemName, const uint64_t sleepTime, log::LogContext& logContext) override {
-    m_sleepingQueues.push_back(std::make_pair(diskSystemName, sleepTime));
+    m_sleepingQueues.emplace_back(diskSystemName, sleepTime);
   };
 
   void addDiskSystemToSkip(const cta::SchedulerDatabase::RetrieveMount::DiskSystemToSkip& diskSystem) override {
@@ -116,7 +116,7 @@ private:
 public:
   void createRetrieveJobs(const unsigned int nbJobs) {
     for (unsigned int i = 0; i < nbJobs; i++) {
-      m_jobs.push_back(std::unique_ptr<cta::RetrieveJob>(new MockRetrieveJob(*this)));
+      m_jobs.emplace_back(new MockRetrieveJob(*this));
     }
   }
 

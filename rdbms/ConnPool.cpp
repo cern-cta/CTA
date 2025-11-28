@@ -113,7 +113,7 @@ void ConnPool::returnConn(std::unique_ptr<ConnAndStmts> connAndStmts) {
 
       threading::MutexLocker locker(m_connsAndStmtsMutex);
       removeNbConnsOnLoan(1);
-      m_connsAndStmts.push_back(std::move(connAndStmts));
+      m_connsAndStmts.emplace_back(std::move(connAndStmts));
       m_connsAndStmtsCv.signal();
 
       // Else the connection is closed

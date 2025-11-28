@@ -346,7 +346,7 @@ switchElementsOwnership(typename InsertedElement::list &elemMemCont, const Conta
     try {
       u->get()->wait();
     } catch (...) {
-      ret.push_back(OpFailure<InsertedElement>());
+      ret.emplace_back();
       ret.back().element = &(*e);
       ret.back().failure = std::current_exception();
     }
@@ -406,7 +406,7 @@ switchElementsOwnership(PoppedElementsBatch &poppedElementBatch, const Container
           e.reportType = SchedulerDatabase::RetrieveJob::ReportType::NoReportRequired;
       }
     } catch(...) {
-      ret.push_back(OpFailure<PoppedElement>(&e, std::current_exception()));
+      ret.emplace_back(&e, std::current_exception());
     }
   }
   timingList.insertAndReset("asyncUpdateCompletionTime", t);
