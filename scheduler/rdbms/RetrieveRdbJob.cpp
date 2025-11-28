@@ -16,6 +16,7 @@
  */
 
 #include "common/exception/Exception.hpp"
+#include "common/exception/NotImplementedException.hpp"
 #include "scheduler/rdbms/RetrieveRdbJob.hpp"
 #include "scheduler/rdbms/postgres/RetrieveJobQueue.hpp"
 
@@ -301,7 +302,7 @@ void RetrieveRdbJob::failReport(const std::string& failureReason, log::LogContex
 }
 
 void RetrieveRdbJob::abort(const std::string& abortReason, log::LogContext& lc) {
-  throw cta::exception::Exception("Not implemented");
+  throw cta::exception::NotImplementedException();
 }
 
 void RetrieveRdbJob::asyncSetSuccessful() {
@@ -320,7 +321,7 @@ void RetrieveRdbJob::asyncSetSuccessful() {
 
 void RetrieveRdbJob::fail() {
   // it seems this method was just internal for OStoreDB and not needed here since we cover the use case in failTransfer
-  throw cta::exception::Exception("Not implemented");
+  throw cta::exception::NotImplementedException();
 }
 
 }  // namespace cta::schedulerdb

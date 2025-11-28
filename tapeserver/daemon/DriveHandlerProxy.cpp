@@ -16,6 +16,7 @@
  */
 
 #include "DriveHandlerProxy.hpp"
+#include "common/exception/NotImplementedException.hpp"
 #include "tapeserver/daemon/WatchdogMessage.pb.h"
 
 namespace cta::tape::daemon {
@@ -111,7 +112,7 @@ void DriveHandlerProxy::resetLogParams() {
 
 void DriveHandlerProxy::labelError(const std::string& unitName, const std::string& message) {
   // TODO
-  throw cta::exception::Exception("In DriveHandlerProxy::labelError(): not implemented");
+  throw cta::exception::NotImplementedException();
 }
 
 void DriveHandlerProxy::setRefreshLoggerHandler(std::function<void()> handler) {

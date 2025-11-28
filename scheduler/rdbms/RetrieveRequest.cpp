@@ -16,6 +16,7 @@
  */
 
 #include "scheduler/rdbms/RetrieveRequest.hpp"
+#include "common/exception/NotImplementedException.hpp"
 
 namespace cta::schedulerdb {
 
@@ -133,7 +134,7 @@ void RetrieveRequest::insert() {
 }
 
 void RetrieveRequest::update() const {
-  throw RetrieveRequestException("update not implemented.");
+  throw exception::NotImplementedException();
 }
 
 void RetrieveRequest::commit() {
@@ -141,13 +142,13 @@ void RetrieveRequest::commit() {
 }
 
 [[noreturn]] void RetrieveRequest::setFailureReason([[maybe_unused]] std::string_view reason) const {
-  throw RetrieveRequestException("setFailureReason not implemented.");
+  throw exception::NotImplementedException();
 }
 
 [[noreturn]] bool RetrieveRequest::addJobFailure([[maybe_unused]] uint32_t copyNumber,
                                                  [[maybe_unused]] uint64_t mountId,
                                                  [[maybe_unused]] std::string_view failureReason) const {
-  throw RetrieveRequestException("addJobFailure not implemented.");
+  throw exception::NotImplementedException();
 }
 
 void RetrieveRequest::setRepackInfo(const cta::schedulerdb::RetrieveRequest::RetrieveReqRepackInfo& repackInfo) {
@@ -203,15 +204,15 @@ void RetrieveRequest::setCreationTime(const uint64_t creationTime) {
 }
 
 void RetrieveRequest::setFirstSelectedTime(const uint64_t firstSelectedTime) const {
-  throw RetrieveRequestException("setFirstSelectedTime not implemented.");
+  throw exception::NotImplementedException();
 }
 
 void RetrieveRequest::setCompletedTime(const uint64_t completedTime) const {
-  throw RetrieveRequestException("setCompletedTime not implemented.");
+  throw exception::NotImplementedException();
 }
 
 void RetrieveRequest::setReportedTime(const uint64_t reportedTime) const {
-  throw RetrieveRequestException("setReportedTime not implemented.");
+  throw exception::NotImplementedException();
 }
 
 void RetrieveRequest::setActiveCopyNumber(uint32_t activeCopyNb) {
@@ -264,10 +265,10 @@ void RetrieveRequest::setIsVerifyOnly(bool isVerifyOnly) {
 }
 
 void RetrieveRequest::setFailed() const {
-  throw RetrieveRequestException("setFailed not implemented.");
+  throw exception::NotImplementedException();
 }
 
 std::list<RetrieveRequest::JobDump> RetrieveRequest::dumpJobs() const {
-  throw RetrieveRequestException("dumpJobs not implemented.");
+  throw exception::NotImplementedException();
 }
 }  // namespace cta::schedulerdb

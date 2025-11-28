@@ -17,6 +17,7 @@
 #pragma once
 
 #include "tapeserver/castor/tape/tapeserver/drive/DriveInterface.hpp"
+#include "common/exception/NotImplementedException.hpp"
 
 namespace castor::tape::tapeserver::drive {
 
@@ -190,7 +191,7 @@ public:
    * @return structure containing various booleans, and error conditions.
    */
   driveStatus getDriveStatus() override {
-    throw cta::exception::Exception("Not implemented");
+    throw cta::exception::NotImplementedException();
   }
 
   /**

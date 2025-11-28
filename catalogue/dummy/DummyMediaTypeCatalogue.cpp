@@ -23,69 +23,70 @@
 #include "catalogue/MediaTypeWithLogs.hpp"
 #include "catalogue/dummy/DummyMediaTypeCatalogue.hpp"
 #include "common/exception/Exception.hpp"
+#include "common/exception/NotImplementedException.hpp"
 
 namespace cta::catalogue {
 
 void DummyMediaTypeCatalogue::createMediaType(const common::dataStructures::SecurityIdentity &admin,
   const MediaType &mediaType) {
-  throw exception::Exception(std::string("In ")+__PRETTY_FUNCTION__+": not implemented");
+  throw exception::NotImplementedException();
 }
 
 void DummyMediaTypeCatalogue::deleteMediaType(const std::string &name) {
-  throw exception::Exception(std::string("In ")+__PRETTY_FUNCTION__+": not implemented");
+  throw exception::NotImplementedException();
 }
 
 std::list<MediaTypeWithLogs> DummyMediaTypeCatalogue::getMediaTypes() const {
-  throw exception::Exception(std::string("In ")+__PRETTY_FUNCTION__+": not implemented");
+  throw exception::NotImplementedException();
 }
 
 MediaType DummyMediaTypeCatalogue::getMediaTypeByVid(const std::string & vid) const {
-  throw exception::Exception(std::string("In ")+__PRETTY_FUNCTION__+": not implemented");
+  throw exception::NotImplementedException();
 }
 
 void DummyMediaTypeCatalogue::modifyMediaTypeName(const common::dataStructures::SecurityIdentity &admin,
   const std::string &currentName, const std::string &newName) {
-  throw exception::Exception(std::string("In ")+__PRETTY_FUNCTION__+": not implemented");
+  throw exception::NotImplementedException();
 }
 
 void DummyMediaTypeCatalogue::modifyMediaTypeCartridge(const common::dataStructures::SecurityIdentity &admin,
   const std::string &name, const std::string &cartridge) {
-  throw exception::Exception(std::string("In ")+__PRETTY_FUNCTION__+": not implemented");
+  throw exception::NotImplementedException();
 }
 
 void DummyMediaTypeCatalogue::modifyMediaTypeCapacityInBytes(
   const common::dataStructures::SecurityIdentity &admin, const std::string &name, const uint64_t capacityInBytes) {
-  throw exception::Exception(std::string("In ")+__PRETTY_FUNCTION__+": not implemented");
+  throw exception::NotImplementedException();
 }
 
 void DummyMediaTypeCatalogue::modifyMediaTypePrimaryDensityCode(
   const common::dataStructures::SecurityIdentity &admin, const std::string &name, const uint8_t primaryDensityCode) {
-  throw exception::Exception(std::string("In ")+__PRETTY_FUNCTION__+": not implemented");
+  throw exception::NotImplementedException();
 }
 
 void DummyMediaTypeCatalogue::modifyMediaTypeSecondaryDensityCode(
   const common::dataStructures::SecurityIdentity &admin, const std::string &name, const uint8_t secondaryDensityCode) {
-  throw exception::Exception(std::string("In ")+__PRETTY_FUNCTION__+": not implemented");
+  throw exception::NotImplementedException();
 }
 
 void DummyMediaTypeCatalogue::modifyMediaTypeNbWraps(const common::dataStructures::SecurityIdentity &admin,
   const std::string &name, const std::optional<std::uint32_t> &nbWraps) {
-  throw exception::Exception(std::string("In ")+__PRETTY_FUNCTION__+": not implemented");
+  throw exception::NotImplementedException();
 }
 
 void DummyMediaTypeCatalogue::modifyMediaTypeMinLPos(const common::dataStructures::SecurityIdentity &admin,
   const std::string &name, const std::optional<std::uint64_t> &minLPos) {
-  throw exception::Exception(std::string("In ")+__PRETTY_FUNCTION__+": not implemented");
+  throw exception::NotImplementedException();
 }
 
 void DummyMediaTypeCatalogue::modifyMediaTypeMaxLPos(const common::dataStructures::SecurityIdentity &admin,
   const std::string &name, const std::optional<std::uint64_t> &maxLPos) {
-  throw exception::Exception(std::string("In ")+__PRETTY_FUNCTION__+": not implemented");
+  throw exception::NotImplementedException();
 }
 
 void DummyMediaTypeCatalogue::modifyMediaTypeComment(const common::dataStructures::SecurityIdentity &admin,
   const std::string &name, const std::string &comment) {
-  throw exception::Exception(std::string("In ")+__PRETTY_FUNCTION__+": not implemented");
+  throw exception::NotImplementedException();
 }
 
 } // namespace cta::catalogue

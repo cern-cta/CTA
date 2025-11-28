@@ -21,34 +21,35 @@
 
 #include "catalogue/dummy/DummyRequesterMountRuleCatalogue.hpp"
 #include "common/exception/Exception.hpp"
+#include "common/exception/NotImplementedException.hpp"
 
 namespace cta::catalogue {
 
 void DummyRequesterMountRuleCatalogue::modifyRequesterMountRulePolicy(
   const common::dataStructures::SecurityIdentity &admin, const std::string &instanceName,
   const std::string &requesterName, const std::string &mountPolicy) {
-  throw exception::Exception(std::string("In ")+__PRETTY_FUNCTION__+": not implemented");
+  throw exception::NotImplementedException();
 }
 
 void DummyRequesterMountRuleCatalogue::modifyRequesteMountRuleComment(
   const common::dataStructures::SecurityIdentity &admin, const std::string &instanceName,
   const std::string &requesterName, const std::string &comment) {
-  throw exception::Exception(std::string("In ")+__PRETTY_FUNCTION__+": not implemented");
+  throw exception::NotImplementedException();
 }
 
 void DummyRequesterMountRuleCatalogue::createRequesterMountRule(const common::dataStructures::SecurityIdentity &admin,
   const std::string &mountPolicyName, const std::string &diskInstance, const std::string &requesterName,
   const std::string &comment) {
-  throw exception::Exception(std::string("In ")+__PRETTY_FUNCTION__+": not implemented");
+  throw exception::NotImplementedException();
 }
 
 std::list<common::dataStructures::RequesterMountRule> DummyRequesterMountRuleCatalogue::getRequesterMountRules() const {
-  throw exception::Exception(std::string("In ")+__PRETTY_FUNCTION__+": not implemented");
+  throw exception::NotImplementedException();
 }
 
 void DummyRequesterMountRuleCatalogue::deleteRequesterMountRule(const std::string &diskInstanceName,
   const std::string &requesterName) {
-  throw exception::Exception(std::string("In ")+__PRETTY_FUNCTION__+": not implemented");
+  throw exception::NotImplementedException();
 }
 
 } // namespace cta::catalogue

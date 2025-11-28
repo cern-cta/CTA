@@ -22,70 +22,71 @@
 #include "common/dataStructures/SecurityIdentity.hpp"
 #include "common/dataStructures/VirtualOrganization.hpp"
 #include "common/exception/Exception.hpp"
+#include "common/exception/NotImplementedException.hpp"
 
 namespace cta::catalogue {
 
 void DummyVirtualOrganizationCatalogue::createVirtualOrganization(const common::dataStructures::SecurityIdentity &admin,
   const common::dataStructures::VirtualOrganization &vo) {
-  throw exception::Exception(std::string("In ") + __PRETTY_FUNCTION__ + ": not implemented");
+  throw exception::NotImplementedException();
 }
 
 void DummyVirtualOrganizationCatalogue::deleteVirtualOrganization(const std::string &voName) {
-  throw exception::Exception(std::string("In ") + __PRETTY_FUNCTION__ + ": not implemented");
+  throw exception::NotImplementedException();
 }
 
 std::list<common::dataStructures::VirtualOrganization> DummyVirtualOrganizationCatalogue::getVirtualOrganizations() const {
-  throw exception::Exception(std::string("In ") + __PRETTY_FUNCTION__ + ": not implemented");
+  throw exception::NotImplementedException();
 }
 
 common::dataStructures::VirtualOrganization DummyVirtualOrganizationCatalogue::getVirtualOrganizationOfTapepool(
   const std::string &tapepoolName) const {
-  throw exception::Exception(std::string("In ") + __PRETTY_FUNCTION__ + ": not implemented");
+  throw exception::NotImplementedException();
 }
 
 common::dataStructures::VirtualOrganization DummyVirtualOrganizationCatalogue::getCachedVirtualOrganizationOfTapepool(
   const std::string & tapepoolName) const {
-  throw exception::Exception(std::string("In ") + __PRETTY_FUNCTION__ + ": not implemented");
+  throw exception::NotImplementedException();
 }
 
 std::optional<common::dataStructures::VirtualOrganization> DummyVirtualOrganizationCatalogue::getDefaultVirtualOrganizationForRepack() const {
-  throw exception::Exception(std::string("In ") + __PRETTY_FUNCTION__ + ": not implemented");
+  throw exception::NotImplementedException();
 }
 
 void DummyVirtualOrganizationCatalogue::modifyVirtualOrganizationName(
   const common::dataStructures::SecurityIdentity &admin, const std::string &currentVoName,
   const std::string &newVoName) {
-  throw exception::Exception(std::string("In ") + __PRETTY_FUNCTION__ + ": not implemented");
+  throw exception::NotImplementedException();
 }
 
 void DummyVirtualOrganizationCatalogue::modifyVirtualOrganizationReadMaxDrives(
   const common::dataStructures::SecurityIdentity &admin, const std::string &voName, const uint64_t readMaxDrives) {
-  throw exception::Exception(std::string("In ") + __PRETTY_FUNCTION__ + ": not implemented");
+  throw exception::NotImplementedException();
 }
 
 void DummyVirtualOrganizationCatalogue::modifyVirtualOrganizationWriteMaxDrives(
   const common::dataStructures::SecurityIdentity &admin, const std::string &voName, const uint64_t writeMaxDrives) {
-  throw exception::Exception(std::string("In ") + __PRETTY_FUNCTION__ + ": not implemented");
+  throw exception::NotImplementedException();
 }
 
 void DummyVirtualOrganizationCatalogue::modifyVirtualOrganizationMaxFileSize(
   const common::dataStructures::SecurityIdentity &admin, const std::string &voName, const uint64_t maxFileSize) {
-  throw exception::Exception(std::string("In ") + __PRETTY_FUNCTION__ + ": not implemented");
+  throw exception::NotImplementedException();
 }
 
 void DummyVirtualOrganizationCatalogue::modifyVirtualOrganizationComment(
   const common::dataStructures::SecurityIdentity &admin, const std::string &voName, const std::string &comment) {
-  throw exception::Exception(std::string("In ") + __PRETTY_FUNCTION__ + ": not implemented");
+  throw exception::NotImplementedException();
 }
 
 void DummyVirtualOrganizationCatalogue::modifyVirtualOrganizationDiskInstanceName(
   const common::dataStructures::SecurityIdentity &admin, const std::string &voName, const std::string &diskInstance) {
-  throw exception::Exception(std::string("In ") + __PRETTY_FUNCTION__ + ": not implemented");
+  throw exception::NotImplementedException();
 }
 
 void DummyVirtualOrganizationCatalogue::modifyVirtualOrganizationIsRepackVo(
   const common::dataStructures::SecurityIdentity &admin, const std::string &voName, const bool isRepackVo) {
-  throw exception::Exception(std::string("In ") + __PRETTY_FUNCTION__ + ": not implemented");
+  throw exception::NotImplementedException();
 }
 
 } // namespace cta::catalogue

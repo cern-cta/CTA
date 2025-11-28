@@ -17,6 +17,7 @@
 
 #pragma once
 
+#include "common/exception/NotImplementedException.hpp"
 #include "common/log/LogContext.hpp"
 #include "common/dataStructures/DriveState.hpp"
 #include "common/dataStructures/MountType.hpp"
@@ -82,7 +83,7 @@ public:
   //------------------------------------------------------------------------------
   void flushAsyncSuccessReports(std::list<cta::SchedulerDatabase::RetrieveJob*>& jobsBatch,
                                 cta::log::LogContext& lc) override {
-    throw cta::exception::Exception("Not implemented");
+    throw cta::exception::NotImplementedException();
   };
 
   void addDiskSystemToSkip(const DiskSystemToSkip& diskSystemToSkip) override;

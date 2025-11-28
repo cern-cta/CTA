@@ -16,6 +16,7 @@
  */
 
 #include "JsonStatisticsService.hpp"
+#include "common/exception/NotImplementedException.hpp"
 
 namespace cta::statistics {
 

@@ -19,6 +19,8 @@
 #include <set>
 #include <google/protobuf/util/json_util.h>
 
+#include "common/exception/NotImplementedException.hpp"
+
 #include "RepackQueue.hpp"
 #include "GenericObject.hpp"
 
@@ -88,7 +90,7 @@ void RepackQueue::addRequestsIfNecessaryAndCommit(const std::list<std::string>& 
 //------------------------------------------------------------------------------
 void RepackQueue::garbageCollect(const std::string& presumedOwner, AgentReference& agentReference, log::LogContext& lc,
     cta::catalogue::Catalogue& catalogue) {
-  throw exception::Exception("In RepackQueue::garbageCollect(): not implemented.");
+  throw exception::NotImplementedException();
 }
 
 //------------------------------------------------------------------------------
