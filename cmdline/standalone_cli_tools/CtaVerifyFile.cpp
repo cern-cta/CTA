@@ -164,7 +164,7 @@ int exceptionThrowingMain(int argc, char *const *const argv)
 
   std::vector<std::string> archiveFileIds;
 
-  if((!cmdLineArgs.m_archiveFileId && !cmdLineArgs.m_archiveFileIds)) {
+  if (!cmdLineArgs.m_archiveFileId && !cmdLineArgs.m_archiveFileIds) {
     cmdLineArgs.printUsage(std::cout);
     std::cout << "Missing command-line option: --id or --filename must be provided" << std::endl;
     throw std::runtime_error("");
