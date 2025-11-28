@@ -35,8 +35,7 @@ DiskReadThreadPool::DiskReadThreadPool(int nbThread, uint64_t maxFilesReq, uint6
     m_maxFilesReq(maxFilesReq),
     m_maxBytesReq(maxBytesReq) {
   for(int i=0; i<nbThread; i++) {
-    DiskReadWorkerThread * thr = new DiskReadWorkerThread(*this);
-    m_threads.push_back(thr);
+    m_threads.push_back(std::make_unique<DiskReadWorkerThread>(*this));
     m_lc.pushOrReplace(cta::log::Param("threadID",i));
     m_lc.log(cta::log::DEBUG, "DiskReadWorkerThread created");
   }
@@ -47,7 +46,6 @@ DiskReadThreadPool::DiskReadThreadPool(int nbThread, uint64_t maxFilesReq, uint6
 //------------------------------------------------------------------------------
 DiskReadThreadPool::~DiskReadThreadPool() { 
   while (m_threads.size()) {
-    delete m_threads.back();
     m_threads.pop_back();
   }
   m_lc.log(cta::log::DEBUG, "Deleted threads in DiskReadThreadPool::~DiskReadThreadPool");
@@ -57,8 +55,7 @@ DiskReadThreadPool::~DiskReadThreadPool() {
 // DiskReadThreadPool::startThreads
 //------------------------------------------------------------------------------
 void DiskReadThreadPool::startThreads() {
-  for (std::vector<DiskReadWorkerThread *>::iterator i=m_threads.begin();
-          i != m_threads.end(); ++i) {
+  for (auto i = m_threads.begin(); i != m_threads.end(); ++i) {
     (*i)->start();
   }
   m_lc.log(cta::log::INFO, "All the DiskReadWorkerThreads are started");
@@ -68,8 +65,7 @@ void DiskReadThreadPool::startThreads() {
 // DiskReadThreadPool::waitThreads
 //------------------------------------------------------------------------------
 void DiskReadThreadPool::waitThreads() {
-  for (std::vector<DiskReadWorkerThread *>::iterator i=m_threads.begin();
-          i != m_threads.end(); ++i) {
+  for (auto i = m_threads.begin(); i != m_threads.end(); ++i) {
     (*i)->wait();
   }
 }
@@ -96,8 +92,7 @@ void DiskReadThreadPool::finish() {
 // DiskReadThreadPool::popAndRequestMore
 //------------------------------------------------------------------------------
 DiskReadTask* DiskReadThreadPool::popAndRequestMore(cta::log::LogContext &lc){
-  cta::threading::BlockingQueue<DiskReadTask*>::valueRemainingPair 
-  vrp = m_tasks.popGetSize();
+  auto vrp = m_tasks.popGetSize();
   cta::log::LogContext::ScopedParam sp(lc, cta::log::Param("m_maxFilesReq", m_maxFilesReq));
   cta::log::LogContext::ScopedParam sp0(lc, cta::log::Param("m_maxBytesReq", m_maxBytesReq));
 

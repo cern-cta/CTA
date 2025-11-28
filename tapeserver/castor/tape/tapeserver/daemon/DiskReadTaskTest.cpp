@@ -58,19 +58,19 @@ namespace unitTests{
   };
 
   class FakeTapeWriteTask : public  DataConsumer{
-    cta::threading::BlockingQueue<MemBlock*> fifo;
+    cta::threading::BlockingQueue<std::unique_ptr<MemBlock>> fifo;
     unsigned long m_checksum;
   public:
     FakeTapeWriteTask():m_checksum(Payload::zeroAdler32()){
 
     }
-    virtual MemBlock * getFreeBlock() {
+    virtual std::unique_ptr<MemBlock> getFreeBlock() {
       return fifo.pop();
     }
 
-    virtual void pushDataBlock(MemBlock *mb) {
+    virtual void pushDataBlock(std::unique_ptr<MemBlock> mb) {
       m_checksum = mb->m_payload.adler32(m_checksum);
-      fifo.push(mb);
+      fifo.push(std::move(mb));
     }
     unsigned long getChecksum() {
       return m_checksum;
@@ -129,7 +129,7 @@ namespace unitTests{
     ASSERT_EQ(value,blockNeeded);
 
     FakeTapeWriteTask ftwt;
-    ftwt.pushDataBlock(new MemBlock(1,blockSize));
+    ftwt.pushDataBlock(std::make_unique<MemBlock>(1,blockSize));
     castor::tape::tapeserver::daemon::DiskReadTask drt(ftwt,&file,blockNeeded,flag);
     cta::disk::RadosStriperPool striperPool;
     DiskFileFactory fileFactory(0, striperPool);
@@ -140,6 +140,5 @@ namespace unitTests{
     drt.execute(lc,fileFactory,mmwd, 0);
 
     ASSERT_EQ(original_checksum,ftwt.getChecksum());
-    delete ftwt.getFreeBlock();
   }
 }

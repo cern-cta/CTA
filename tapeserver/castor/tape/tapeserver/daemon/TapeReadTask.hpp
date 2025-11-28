@@ -90,7 +90,7 @@ public:
     // We will not record errors for an empty string. This will allow us to
     // prevent counting where error happened upstream.
     std::string currentErrorToCount = "";
-    MemBlock* mb = nullptr;
+    std::unique_ptr<MemBlock> mb;
     try {
       currentErrorToCount = "Error_tapePositionForRead";
       auto reader = openFileReader(rs, lc);
@@ -146,7 +146,7 @@ public:
           m_retrieveJob->archiveFile.checksumBlob.validate(tapeReadChecksum);
         }
         // Pass the block to the disk write task
-        m_fifo.pushDataBlock(mb);
+        m_fifo.pushDataBlock(std::move(mb));
         mb = nullptr;
         watchdog.notify(blockSize);
         localStats.waitReportingTime += timer.secs(cta::utils::Timer::resetCounter);
@@ -233,7 +233,7 @@ public:
 
       // mb might or might not be allocated at this point, but
       // reportErrorToDiskTask will deal with the allocation if required.
-      reportErrorToDiskTask(ex.getMessageValue(), mb);
+      reportErrorToDiskTask(ex.getMessageValue(), std::move(mb));
     } //end of catch
     watchdog.fileFinished();
   }
@@ -241,12 +241,12 @@ public:
    * Get a valid block and ask to cancel the disk write task
    */
   void reportCancellationToDiskTask(){
-    MemBlock* mb =m_mm.getFreeBlock();
+    auto mb = m_mm.getFreeBlock();
     mb->m_fSeq = m_retrieveJob->selectedTapeFile().fSeq;
     mb->m_fileid = m_retrieveJob->retrieveRequest.archiveFileID;
     //mark the block cancelled and push it (plus signal the end)
      mb->markAsCancelled();
-     m_fifo.pushDataBlock(mb);
+     m_fifo.pushDataBlock(std::move(mb));
   }
 private:
   /**
@@ -254,7 +254,7 @@ private:
    * @param errorMsg The error message we will give to the client
    * @param mb The mem block we will use
    */
-  void reportErrorToDiskTask(const std::string& msg, MemBlock* mb = nullptr) {
+  void reportErrorToDiskTask(const std::string& msg, std::unique_ptr<MemBlock> mb = nullptr) {
     // If we are not provided with a block, allocate it and
     // fill it up
     if (!mb) {
@@ -264,7 +264,7 @@ private:
     }
     // mark the block failed and push it (plus signal the end)
     mb->markAsFailed(msg);
-    m_fifo.pushDataBlock(mb);
+    m_fifo.pushDataBlock(std::move(mb));
     m_fifo.pushDataBlock(nullptr);
   }
 
