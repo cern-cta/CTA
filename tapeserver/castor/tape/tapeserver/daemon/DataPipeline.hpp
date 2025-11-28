@@ -57,7 +57,7 @@ public:
    * @param mb : the memory block to be returned
    * @return true   true if not all the needed blocks has not yet been provided
    */
-  bool provideBlock(MemBlock *mb)  {
+  bool provideBlock(std::unique_ptr<MemBlock> mb)  {
     bool ret;
     cta::threading::MutexLocker ml(m_freeBlockProviderProtection);
     {
@@ -70,7 +70,7 @@ public:
       m_freeBlocksProvided = fbp+1;
       ret = m_freeBlocksProvided < m_blocksNeeded;
     }
-    m_freeBlocks.push(mb);
+    m_freeBlocks.push(std::move(mb));
     return ret;
   }
 
@@ -78,11 +78,11 @@ public:
    * Get a free block
    * @return a free block
    */
-  MemBlock * getFreeBlock() {
-    MemBlock* ret = m_freeBlocks.pop();
+  std::unique_ptr<MemBlock> getFreeBlock() {
+    auto ret = m_freeBlocks.pop();
     // When delivering a fresh block to the user, it should be empty.
     if (ret->m_payload.size()) {
-      m_freeBlocks.push(ret);
+      m_freeBlocks.push(std::move(ret));
       throw cta::exception::Exception(
         "Internal error: DataPipeline::getFreeBlock "
         "popped a non-empty memory block");
@@ -95,13 +95,13 @@ public:
    * tape/disk reading
    * @param mb the block we want to push back
    */
-  void pushDataBlock(MemBlock *mb)  {
+  void pushDataBlock(std::unique_ptr<MemBlock> mb)  {
     {
       cta::threading::MutexLocker ml(m_countersMutex);
       if (m_dataBlocksPushed >= m_blocksNeeded)
         throw cta::exception::MemException("DataFifo overflow on data blocks");
     }
-    m_dataBlocks.push(mb);
+    m_dataBlocks.push(std::move(mb));
     {
         cta::threading::MutexLocker ml(m_countersMutex);
         // m_dataBlocksPushed is volatile: increment with separate read and write operations
@@ -115,8 +115,8 @@ public:
    * tape/disk reading
    * @param mb the block we want to push back
    */
-  MemBlock * popDataBlock() {
-    MemBlock *ret = m_dataBlocks.pop();
+  std::unique_ptr<MemBlock> popDataBlock() {
+    auto ret = m_dataBlocks.pop();
     {
       cta::threading::MutexLocker ml(m_countersMutex);
       // m_dataBlocksPopped is volatile: increment with separate read and write operations
@@ -153,11 +153,11 @@ private:
   ///how many data blocks have been currently taken
   volatile uint64_t m_dataBlocksPopped = 0;
 
-    ///thread sage storage of all free blocks
-  cta::threading::BlockingQueue<MemBlock *> m_freeBlocks;
+  ///thread sage storage of all free blocks
+  cta::threading::BlockingQueue<std::unique_ptr<MemBlock>> m_freeBlocks;
 
   ///thread sage storage of all blocks filled with data
-  cta::threading::BlockingQueue<MemBlock *> m_dataBlocks;
+  cta::threading::BlockingQueue<std::unique_ptr<MemBlock>> m_dataBlocks;
 };
 
 } // namespace castor::tape::tapeserver::daemon
