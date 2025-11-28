@@ -27,7 +27,6 @@ cppcheck:
       fi
     - echo "Done. No errors detected by cppcheck"
   artifacts:
-    when: on_failure
     expire_in: 7 days
     reports:
       codequality: cppcheck.json
@@ -48,9 +47,8 @@ shellcheck:
     - dnf install -y shellcheck
     - all_shell_scripts=( **/*.sh )
     - if [ ${#all_shell_scripts[@]} -eq 0 ]; then echo "No shell scripts"; exit 0; fi
-    - shellcheck "${all_shell_scripts[@]}" --format json | tee shellcheck.json
+    - shellcheck "${all_shell_scripts[@]}" --format json | tee shellcheck.json | jq
   artifacts:
-    when: on_failure
     expire_in: 7 days
     reports:
       codequality: shellcheck.json
