@@ -27,8 +27,6 @@
 
 namespace cta::admin {
 
-using namespace common::dataStructures;
-
 /*!
  * Command line option class
  */
@@ -515,12 +513,13 @@ const Option opt_isrepackvo {Option::OPT_BOOL, "--isrepackvo", "--irvo", R"( <"t
 const Option opt_max_files_to_select {Option::OPT_UINT, "--maxfilestoselect", "--mfts", " <max_files_to_select>"};
 const Option opt_log_unixtime_min {Option::OPT_UINT, "--logunixtimemin", "--ltmin", " <min_recycle_log_unixtime>"};
 const Option opt_log_unixtime_max {Option::OPT_UINT, "--logunixtimemax", "--ltmax", " <max_recycle_log_unixtime>"};
-const Option opt_archive_route_type {Option::OPT_STR,
-                                     "--archiveroutetype",
-                                     "--art",
-                                     std::string(R"( <")") +
-                                       cta::common::dataStructures::toString(ArchiveRouteType::DEFAULT) + R"(" or ")" +
-                                       cta::common::dataStructures::toString(ArchiveRouteType::REPACK) + R"(">)"};
+const Option opt_archive_route_type {
+  Option::OPT_STR,
+  "--archiveroutetype",
+  "--art",
+  std::string(R"( <")") +
+    cta::common::dataStructures::toString(cta::common::dataStructures::ArchiveRouteType::DEFAULT) + R"(" or ")" +
+    cta::common::dataStructures::toString(cta::common::dataStructures::ArchiveRouteType::REPACK) + R"(">)"};
 const Option opt_missingfilecopies {Option::OPT_FLAG, "--missingfilecopies", "--mfc", ""};
 
 /*!
