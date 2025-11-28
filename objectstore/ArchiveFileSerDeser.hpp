@@ -67,7 +67,7 @@ public:
     fileSize=osaf.filesize();
     reconciliationTime=osaf.reconciliationtime();
     storageClass=osaf.storageclass();
-    for (auto tf: osaf.tapefiles()) {
+    for (const auto& tf : osaf.tapefiles()) {
       TapeFileSerDeser tfsd;
       tfsd.deserialize(tf);
       tapeFiles.push_back(tfsd);
