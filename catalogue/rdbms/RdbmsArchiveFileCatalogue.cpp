@@ -195,7 +195,7 @@ common::dataStructures::ArchiveFile RdbmsArchiveFileCatalogue::getArchiveFileCop
           << " or " << common::dataStructures::Tape::stateToString(common::dataStructures::Tape::BROKEN) << " states";
       throw exception::UserError(oss.str());
     }
-  } catch (const TapeNotFound &ex) {
+  } catch (const TapeNotFound&) {
     throw exception::UserError(std::string("Tape ") + vid + " not found");
   }
 

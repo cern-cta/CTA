@@ -414,7 +414,7 @@ BackendVFS::AsyncUpdater::AsyncUpdater(BackendVFS & be, const std::string& name,
       bool updateWithDelete = false;
       try {
         postUpdateData=m_update(preUpdateData);
-      } catch (AsyncUpdateWithDelete & ex) {
+      } catch (AsyncUpdateWithDelete&) {
         updateWithDelete = true;
       } catch (...) {
         // Let user's exceptions go through.

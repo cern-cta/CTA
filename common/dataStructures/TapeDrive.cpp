@@ -146,7 +146,7 @@ std::string TapeDrive::getStateStr() const {
 std::string TapeDrive::stateToString(const DriveStatus & state) {
   try {
     return TapeDrive::STATE_TO_STRING_MAP.at(state);
-  } catch (std::out_of_range &ex){
+  } catch (std::out_of_range&){
     throw cta::exception::Exception(std::string("The state given (") + std::to_string(state) +
       ") does not exist.");
   }
@@ -157,7 +157,7 @@ DriveStatus TapeDrive::stringToState(const std::string& state) {
   cta::utils::toUpper(stateUpperCase);
   try {
     return TapeDrive::STRING_TO_STATE_MAP.at(stateUpperCase);
-  } catch(std::out_of_range &ex){
+  } catch(std::out_of_range&){
     throw cta::exception::Exception(std::string("The state given (") + stateUpperCase +
       ") does not exist. Possible values are " + TapeDrive::getAllPossibleStates());
   }

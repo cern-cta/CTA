@@ -338,7 +338,7 @@ void MigrationReportPacker::ReportFlush::execute(MigrationReportPacker& reportPa
         auto archiveJob = std::move(failedToReportArchiveJobs.front());
         try {
           archiveJob->failTransfer(ex.getMessageValue(), reportPacker.m_lc);
-        } catch (const cta::exception::NoSuchObject& nso_ex) {
+        } catch (const cta::exception::NoSuchObject&) {
           cta::log::ScopedParamContainer params(reportPacker.m_lc);
           params.add("fileId", archiveJob->archiveFile.archiveFileID)
             .add("latestError", archiveJob->latestError)
@@ -346,7 +346,7 @@ void MigrationReportPacker::ReportFlush::execute(MigrationReportPacker& reportPa
           reportPacker.m_lc.log(cta::log::WARNING,
                                 "In MigrationReportPacker::ReportFlush::execute(): failed to failTransfer for the "
                                 "archive job because it does not exist in the objectstore.");
-        } catch (const cta::exception::Exception& cta_ex) {
+        } catch (const cta::exception::Exception&) {
           //If the failTransfer method fails, we can't do anything about it
           cta::log::ScopedParamContainer params(reportPacker.m_lc);
           params.add("fileId", archiveJob->archiveFile.archiveFileID)
@@ -364,7 +364,7 @@ void MigrationReportPacker::ReportFlush::execute(MigrationReportPacker& reportPa
         auto archiveJob = std::move(failedToReportArchiveJobs.front());
         try {
           archiveJob->failReport(ex.getMessageValue(), reportPacker.m_lc);
-        } catch (const cta::exception::NoSuchObject& nso_ex) {
+        } catch (const cta::exception::NoSuchObject&) {
           cta::log::ScopedParamContainer params(reportPacker.m_lc);
           params.add("fileId", archiveJob->archiveFile.archiveFileID)
             .add("latestError", archiveJob->latestError)
@@ -372,7 +372,7 @@ void MigrationReportPacker::ReportFlush::execute(MigrationReportPacker& reportPa
           reportPacker.m_lc.log(cta::log::WARNING,
                                 "In MigrationReportPacker::ReportFlush::execute(): failed to failReport for the "
                                 "archive job because it does not exist in the objectstore.");
-        } catch (const cta::exception::Exception& cta_ex) {
+        } catch (const cta::exception::Exception&) {
           //If the failReport method fails, we can't do anything about it
           cta::log::ScopedParamContainer params(reportPacker.m_lc);
           params.add("fileId", archiveJob->archiveFile.archiveFileID)

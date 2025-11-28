@@ -138,7 +138,7 @@ std::ostream &operator<<(std::ostream &os,
       } else {
         os << "END";
       }
-    } catch(cta::exception::Exception &ex) {
+    } catch(cta::exception::Exception&) {
       os << "ERROR";
     }
   }

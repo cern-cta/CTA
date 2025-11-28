@@ -244,7 +244,7 @@ retry:
     if(contLock.isLocked()) contLock.release();
     contLock.lock(cont);
     cont.fetch();
-  } catch(cta::exception::Exception & ex) {
+  } catch(cta::exception::Exception&) {
     // The queue is now absent. We can remove its reference in the root entry.
     // A new queue could have been added in the meantime, and be non-empty.
     // We will then fail to remove from the RootEntry (non-fatal).
@@ -262,7 +262,7 @@ retry:
             .add("queueObject", cont.getAddressIfSet())
             .add("exceptionMessage", ex.getMessageValue());
       lc.log(log::INFO, "In ContainerTraits<RetrieveQueue,C>::getLockedAndFetchedNoCreate(): could not dereference missing queue from root entry");
-    } catch (RootEntry::NoSuchRetrieveQueue &ex) {
+    } catch (RootEntry::NoSuchRetrieveQueue&) {
       // Somebody removed the queue in the meantime. Barely worth mentioning.
       log::ScopedParamContainer params(lc);
       params.add("tapeVid", cId)

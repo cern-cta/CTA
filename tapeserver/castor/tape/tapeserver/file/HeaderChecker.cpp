@@ -150,7 +150,7 @@ std::string HeaderChecker::checkVolumeLabel(tapeserver::drive::DriveInterface &d
     // But if tapes are recycled from one format to the other, it could be flipped
     try {
       vol1.verify("0");
-    } catch (std::exception& e) {
+    } catch (std::exception&) {
       try {
         vol1.verify("3");
       } catch (std::exception& e) {

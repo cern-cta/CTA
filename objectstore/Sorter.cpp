@@ -52,11 +52,11 @@ void Sorter::executeArchiveAlgorithm(const std::string& tapePool, std::string& q
     for (auto &failedAR : failure.failedElements) {
       try {
         std::rethrow_exception(failedAR.failure);
-      } catch (const cta::exception::NoSuchObject &ex) {
+      } catch (const cta::exception::NoSuchObject&) {
         log::ScopedParamContainer params(lc);
         params.add("fileId", failedAR.element->archiveFile.archiveFileID);
         lc.log(log::WARNING, "In Sorter::executeArchiveAlgorithm(), queueing impossible, job do not exist in the objectstore.");
-      } catch (const cta::exception::Exception &e) {
+      } catch (const cta::exception::Exception&) {
         uint32_t copyNb = failedAR.element->copyNb;
         std::get<1>(succeededJobs[copyNb]->jobToQueue).set_exception(std::current_exception());
         succeededJobs.erase(copyNb);
@@ -178,7 +178,7 @@ void Sorter::executeRetrieveAlgorithm(const std::string& vid, std::string& queue
     for(auto& failedRR: failure.failedElements){
       try {
         std::rethrow_exception(failedRR.failure);
-      } catch (const cta::exception::NoSuchObject &ex) {
+      } catch (const cta::exception::NoSuchObject&) {
         log::ScopedParamContainer params(lc);
         params.add("copyNb",failedRR.element->copyNb)
               .add("fSeq",failedRR.element->fSeq);

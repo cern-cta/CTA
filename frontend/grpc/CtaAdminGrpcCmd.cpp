@@ -96,7 +96,7 @@ void CtaAdminGrpcCmd::send(const CtaAdminParsedCmd& parsedCmd,
      */
     strEncodedToken = cta::utils::base64encode(strToken);
 
-  } catch (const cta::exception::Exception& e) {
+  } catch (const cta::exception::Exception&) {
     /*
      * In case of any problems with the negotiation service,
      * log and stop the execution
@@ -106,7 +106,7 @@ void CtaAdminGrpcCmd::send(const CtaAdminParsedCmd& parsedCmd,
     throw;  // rethrow
   }
   /*
-    * Channel arguments can be overriden e.g: 
+    * Channel arguments can be overriden e.g:
     * ::grpc::ChannelArguments channelArgs;ClientContext
     * channelArgs.SetString(GRPC_SSL_TARGET_NAME_OVERRIDE_ARG, "ok.org");
     * std::shared_ptr<::grpc::Channel> spChannel {::grpc::CreateCustomChannel("0.0.0.0:17017", spCredentials, channelArgs)};

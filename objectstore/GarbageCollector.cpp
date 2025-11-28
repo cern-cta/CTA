@@ -138,7 +138,7 @@ void GarbageCollector::checkHeartbeats(log::LogContext & lc) {
       } else {
         ++wa;
       }
-    } catch (cta::exception::Exception & ex) {
+    } catch (cta::exception::Exception&) {
       if (wa->second->checkExists()) {
         // We really have a problem: we failed to check on an agent, that is still present.
         throw;
@@ -161,7 +161,7 @@ void GarbageCollector::cleanupDeadAgent(const std::string & address, const std::
   try {
     // The agent could be gone while we try to lock it.
     agLock.lock(agent);
-  } catch (cta::exception::NoSuchObject & ex) {
+  } catch (cta::exception::NoSuchObject&) {
     log::ScopedParamContainer params(lc);
     params.add("agentAddress", agent.getAddressIfSet())
           .add("gcAgentAddress", m_ourAgentReference.getAgentAddress());
@@ -248,7 +248,7 @@ void GarbageCollector::OwnedObjectSorter::fetchOwnedObjects(Agent& agent, std::l
     params2.add("objectAddress", obj->getAddressIfSet());
     try {
       ownedObjectsFetchers.at(obj.get())->wait();
-    } catch (cta::exception::NoSuchObject & ex) {
+    } catch (cta::exception::NoSuchObject&) {
       goneObjects.push_back(obj->getAddressIfSet());
       lc.log(log::INFO, "In GarbageCollector::OwnedObjectSorter::fetchOwnedObjects(): skipping garbage collection of now gone object.");
       ownedObjectsFetchers.erase(obj.get());
@@ -386,7 +386,7 @@ void GarbageCollector::OwnedObjectSorter::sortFetchedObjects(Agent& agent, std::
         std::string vid;
         try {
           vid=Helpers::selectBestRetrieveQueue(candidateVids, catalogue, objectStore, lc, isRepack);
-        } catch (Helpers::NoTapeAvailableForRetrieve & ex) {
+        } catch (Helpers::NoTapeAvailableForRetrieve&) {
           log::ScopedParamContainer params3(lc);
           params3.add("fileId", rr->getArchiveFile().archiveFileID);
           lc.log(log::INFO, "In GarbageCollector::OwnedObjectSorter::sortFetchedObjects(): No available tape found. Marking request for normal GC (and probably deletion).");

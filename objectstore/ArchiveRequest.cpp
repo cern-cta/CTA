@@ -482,7 +482,7 @@ void ArchiveRequest::garbageCollect(const std::string &presumedOwner, AgentRefer
               .add("commitUnlockQueueTime", commitUnlockQueueTime)
               .add("sleepTime", sleepTime);
         lc.log(log::INFO, "In ArchiveRequest::garbageCollect(): slept some time to not sit on the queue after GC requeueing.");
-      } catch (JobNotQueueable &ex){
+      } catch (JobNotQueueable&){
         log::ScopedParamContainer params(lc);
         params.add("jobObject", getAddressIfSet())
               .add("queueObject", queueObject)
@@ -548,7 +548,7 @@ ArchiveRequest::AsyncJobOwnerUpdater* ArchiveRequest::asyncUpdateJobOwner(uint32
   // The unique pointer will be std::moved so we need to work with its content (bare pointer or here ref to content).
   auto & retRef = *ret;
   ret->m_updaterCallback=
-      [this, copyNumber, owner, previousOwner, &retRef, newStatus](const std::string &in)->std::string {
+      [copyNumber, owner, previousOwner, &retRef, newStatus](const std::string &in)->std::string {
         // We have a locked and fetched object, so we just need to work on its representation.
         retRef.m_timingReport.lockFetchTime = retRef.m_timer.secs(utils::Timer::resetCounter);
         serializers::ObjectHeader oh;

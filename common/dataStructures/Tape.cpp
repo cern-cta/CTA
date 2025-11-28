@@ -110,7 +110,7 @@ std::string Tape::getStateStr() const {
 std::string Tape::stateToString(const Tape::State & state) {
   try {
     return Tape::STATE_TO_STRING_MAP.at(state);
-  } catch (std::out_of_range &ex){
+  } catch (std::out_of_range&){
     throw cta::exception::Exception(std::string("The state given (") + std::to_string(state) + ") does not exist.");
   }
 }
@@ -120,7 +120,7 @@ Tape::State Tape::stringToState(const std::string& stateStr, bool hidePendingSta
   cta::utils::toUpper(stateUpperCase);
   try {
     return Tape::STRING_TO_STATE_MAP.at(stateUpperCase);
-  } catch(std::out_of_range &ex){
+  } catch(std::out_of_range&){
     throw cta::exception::UserError(std::string("The state given (") + stateUpperCase + ") does not exist. Possible values are " + Tape::getAllPossibleStates(hidePendingStates));
   }
 }
@@ -152,7 +152,7 @@ std::ostream &operator<<(std::ostream &os, const Tape &obj) {
   std::string stateStr = "UNKNOWN";
   try {
     stateStr = Tape::stateToString(obj.state);
-  } catch(const cta::exception::Exception &ex){
+  } catch(const cta::exception::Exception &){
     //Do nothing
   }
   os << "(vid=" << obj.vid

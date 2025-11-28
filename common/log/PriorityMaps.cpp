@@ -34,7 +34,7 @@ namespace cta::log {
     {INFO,"INFO"},
     {DEBUG,"DEBUG"},
   };
-  
+
   const std::map<std::string,int> PriorityMaps::c_configTextToPriorityMap = {
     {"LOG_EMERG",LOG_EMERG},
     {"ALERT",ALERT},
@@ -45,12 +45,12 @@ namespace cta::log {
     {"INFO",INFO},
     {"DEBUG",DEBUG},
   };
-  
+
   std::string PriorityMaps::getPriorityText(const int priority){
     std::string ret = "";
     try {
       ret = c_priorityToTextMap.at(priority);
-    } catch(const std::exception & ex){
+    } catch(const std::exception &){
       //if no corresponding priority, we return an empty string
     }
     return ret;

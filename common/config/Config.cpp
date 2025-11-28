@@ -145,7 +145,7 @@ T Config::stou(const std::string& strVal) const {
     if (static_cast<uint64_t>(lVal) > std::numeric_limits<T>::max()) {
       throw std::out_of_range("Above maximum value");
     }
-  } catch (const std::invalid_argument& ex) {
+  } catch (const std::invalid_argument&) {
     std::ostringstream strErrMsg;
     strErrMsg << "stou(" << strVal << "): Invalid argument";
     throw std::invalid_argument(strErrMsg.str());

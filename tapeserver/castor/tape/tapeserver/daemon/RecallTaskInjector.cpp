@@ -408,7 +408,7 @@ void RecallTaskInjector::WorkerThread::run()
       cta::log::ScopedParamContainer spc(m_parent.m_lc);
       spc.add("exceptionMessage",e.getMessageValue());
       m_parent.m_lc.log(cta::log::INFO, "Error while fetching the limitUDS for RAO enterprise drive. Will run a CTA RAO.");
-    } catch(const castor::tape::tapeserver::drive::DriveDoesNotSupportRAOException &ex){
+    } catch(const castor::tape::tapeserver::drive::DriveDoesNotSupportRAOException&){
       m_parent.m_lc.log(cta::log::INFO, "The drive does not support RAO Enterprise, will run a CTA RAO.");
     }
     std::optional<uint64_t> maxFilesSupportedByRAO = m_parent.m_raoManager.getMaxFilesSupported();

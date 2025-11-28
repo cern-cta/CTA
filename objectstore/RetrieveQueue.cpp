@@ -114,13 +114,13 @@ void RetrieveQueue::rebuild() {
   uint64_t totalBytes=0;
   time_t oldestJobCreationTime=std::numeric_limits<time_t>::max();
   time_t youngestJobCreationTime=std::numeric_limits<time_t>::min();
-  
+
   while (s != shards.end()) {
     // Each shard could be gone or be empty
     bool shardObjectNotFound = false;
     try {
       (*sf)->wait();
-    } catch (cta::exception::NoSuchObject & ex) {
+    } catch (cta::exception::NoSuchObject&) {
       shardObjectNotFound = true;
     }
     if (shardObjectNotFound || s->dumpJobs().empty()) {
@@ -556,7 +556,7 @@ auto RetrieveQueue::addJobsIfNecessaryAndCommit(std::list<common::dataStructures
   while (s!= shards.end()) {
     try {
       (*sf)->wait();
-    } catch (cta::exception::NoSuchObject & ex) {
+    } catch (cta::exception::NoSuchObject&) {
       goto nextShard;
     }
     shardsDumps.emplace_back(std::list<JobDump>());
@@ -637,7 +637,7 @@ auto RetrieveQueue::dumpJobs() -> std::list<JobDump> {
   while (s != shards.end()) {
     try {
       (*sf)->wait();
-    } catch (cta::exception::NoSuchObject & ex) {
+    } catch (cta::exception::NoSuchObject&) {
       // We are possibly in read only mode, so we cannot rebuild.
       // Just skip this shard.
       goto nextShard;

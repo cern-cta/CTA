@@ -139,7 +139,7 @@ void ArchiveQueue::rebuild() {
     bool shardObjectNotFound = false;
     try {
       (*sf)->wait();
-    } catch (cta::exception::NoSuchObject & ex) {
+    } catch (cta::exception::NoSuchObject&) {
       shardObjectNotFound = true;
     }
     if (shardObjectNotFound || s->dumpJobs().empty()) {
@@ -228,7 +228,7 @@ void ArchiveQueue::recomputeOldestAndYoungestJobCreationTime(){
     bool shardObjectNotFound = false;
     try {
       (*sf)->wait();
-    } catch (cta::exception::NoSuchObject & ex) {
+    } catch (cta::exception::NoSuchObject&) {
       shardObjectNotFound = true;
     }
     if (shardObjectNotFound || s->dumpJobs().empty()) {
@@ -348,7 +348,7 @@ void ArchiveQueue::addJobsAndCommit(std::list<JobToAdd> & jobsToAdd, AgentRefere
       m_exclusiveLock->includeSubObject(aqs);
       try {
         aqs.fetch();
-      } catch (cta::exception::NoSuchObject & ex) {
+      } catch (cta::exception::NoSuchObject&) {
         log::ScopedParamContainer params (lc);
         params.add("archiveQueueObject", getAddressIfSet())
               .add("shardNumber", shardCount - 1)
@@ -475,7 +475,7 @@ ArchiveQueue::AdditionSummary ArchiveQueue::addJobsIfNecessaryAndCommit(std::lis
   while (s!= shards.end()) {
     try {
       (*sf)->wait();
-    } catch (cta::exception::NoSuchObject & ex) {
+    } catch (cta::exception::NoSuchObject&) {
       goto nextShard;
     }
     shardsDumps.emplace_back(std::list<JobDump>());
@@ -606,7 +606,7 @@ auto ArchiveQueue::dumpJobs() -> std::list<JobDump> {
   while (s != shards.end()) {
     try {
       (*sf)->wait();
-    } catch (cta::exception::NoSuchObject & ex) {
+    } catch (cta::exception::NoSuchObject&) {
       // We are possibly in read only mode, so we cannot rebuild.
       // Just skip this shard.
       goto nextShard;

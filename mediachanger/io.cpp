@@ -600,7 +600,7 @@ void writeSockDescription(
   IpAndPort localIpAndPort(0, 0);
   try {
     localIpAndPort = getSockIpPort(socketFd);
-  } catch(cta::exception::Exception &e) {
+  } catch(cta::exception::Exception&) {
     localIpAndPort.ip = 0;
     localIpAndPort.port = 0;
   }
@@ -608,7 +608,7 @@ void writeSockDescription(
   IpAndPort peerIpAndPort(0, 0);
   try {
     peerIpAndPort = getPeerIpPort(socketFd);
-  } catch(cta::exception::Exception &e) {
+  } catch(cta::exception::Exception&) {
     peerIpAndPort.ip = 0;
     peerIpAndPort.port = 0;
   }

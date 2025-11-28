@@ -746,7 +746,7 @@ void Scheduler::expandRepackRequest(const std::unique_ptr<RepackRequest>& repack
           //Here, test that the archive route of the copyNb of the tape file is configured
           try {
             archiveFileRoutes.at(tc.copyNb);
-          } catch (const std::out_of_range& ex) {
+          } catch (const std::out_of_range&) {
             deleteRepackBuffer(std::move(dir), lc);
             std::ostringstream oss;
             oss << "In Scheduler::expandRepackRequest(): the file archiveFileID=" << archiveFile.archiveFileID
@@ -2755,7 +2755,7 @@ void Scheduler::updateTapeStateFromPending(const std::string& queueVid, cta::log
           "change it to its corresponding final state.");
       } break;
     }
-  } catch (const catalogue::UserSpecifiedAWrongPrevState& ex) {
+  } catch (const catalogue::UserSpecifiedAWrongPrevState&) {
     auto tapeDataRefreshedUpdated = m_catalogue.Tape()->getTapesByVid(queueVid).at(queueVid);
     log::ScopedParamContainer paramsWarnMsg(logContext);
     paramsWarnMsg.add("tapeVid", queueVid)

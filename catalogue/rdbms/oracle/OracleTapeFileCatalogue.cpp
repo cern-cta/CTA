@@ -406,7 +406,7 @@ void OracleTapeFileCatalogue::idempotentBatchInsertArchiveFiles(rdbms::Conn &con
     try {
       std::string adler32hex = checksum::ChecksumBlob::ByteArrayToHex(event.checksumBlob.at(checksum::ADLER32));
       adler32[i] = strtoul(adler32hex.c_str(), nullptr, 16);
-    } catch(exception::ChecksumTypeMismatch &ex) {
+    } catch(exception::ChecksumTypeMismatch&) {
       // No ADLER32 checksum exists in the checksumBlob
       adler32[i] = 0;
     }
