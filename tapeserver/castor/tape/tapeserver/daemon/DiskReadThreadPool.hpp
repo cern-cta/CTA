@@ -63,7 +63,7 @@ public:
    * with finish() as the task injection is done from a single thread (the task
    * injector)
    */
-  void push(DiskReadTask* task);
+  void push(std::unique_ptr<DiskReadTask> task);
 
   /**
    * Injects as many "end" tasks as there are threads in the thread pool.
@@ -96,7 +96,7 @@ private:
    * it will ask the TaskInjector to get more jobs.
    * @return the next task to execute
    */
-  DiskReadTask* popAndRequestMore(cta::log::LogContext& lc);
+  std::unique_ptr<DiskReadTask> popAndRequestMore(cta::log::LogContext& lc);
 
   /**
    * When a thread finishm it call this function to Add its stats to one one of the
@@ -173,7 +173,7 @@ private:
 
   /** The queue of pointer to tasks to be executed. We own the tasks (they are
    * deleted by the threads after execution) */
-  cta::threading::BlockingQueue<DiskReadTask*> m_tasks;
+  cta::threading::BlockingQueue<std::unique_ptr<DiskReadTask>> m_tasks;
 
   /**
    * Parameter: xroot timeout

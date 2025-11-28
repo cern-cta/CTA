@@ -31,8 +31,8 @@ public:
    * @param file: All we need to know about the file we  are recalling
    * @param mm: memory manager of the session
    */
-  DiskWriteTask(cta::RetrieveJob* retrieveJob, RecallMemoryManager& mm);
-
+  DiskWriteTask(std::shared_ptr<cta::RetrieveJob> retrieveJob, RecallMemoryManager& mm);
+  
   /**
    * Main routine: takes each memory block in the fifo and writes it to disk
    * @return true if the file has been successfully written false otherwise.
@@ -95,8 +95,7 @@ private:
   /**
    * All we need to know about the file we are currently recalling
    */
-  std::unique_ptr<cta::RetrieveJob> m_retrieveJob;
-
+  std::shared_ptr<cta::RetrieveJob> m_retrieveJob;
   /**
    * Reference to the Memory Manager in use
    */

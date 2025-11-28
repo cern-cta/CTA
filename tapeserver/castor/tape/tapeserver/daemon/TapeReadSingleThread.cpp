@@ -202,14 +202,14 @@ castor::tape::tapeserver::daemon::TapeReadSingleThread::TapeCleaning::~TapeClean
 //------------------------------------------------------------------------------
 //TapeReadSingleThread::popAndRequestMoreJobs()
 //------------------------------------------------------------------------------
-castor::tape::tapeserver::daemon::TapeReadTask*
+std::unique_ptr<castor::tape::tapeserver::daemon::TapeReadTask>
 castor::tape::tapeserver::daemon::TapeReadSingleThread::popAndRequestMoreJobs() {
   // Take the next task for the tape thread to execute and check how many left.
   // m_tasks queue gets more tasks when requestInjection() is called.
   // The queue may contain many small files that will be processed quickly
   // or a few big files that take time. We define several thresholds to make injection in time
 
-  cta::threading::BlockingQueue<TapeReadTask*>::valueRemainingPair vrp = m_tasks.popGetSize();
+  auto vrp = m_tasks.popGetSize();
   if (vrp.remaining == 0) {
     // This is a last call: the task injector will make the last attempt to fetch more jobs.
     // In any case, the injector thread will terminate
@@ -229,7 +229,7 @@ castor::tape::tapeserver::daemon::TapeReadSingleThread::popAndRequestMoreJobs() 
     // it's time to request the next batch
     m_taskInjector->requestInjection(false);
   }
-  return vrp.value;
+  return std::move(vrp.value);
 }
 
 //------------------------------------------------------------------------------
@@ -396,17 +396,16 @@ void castor::tape::tapeserver::daemon::TapeReadSingleThread::run() {
       m_taskInjector->waitForFirstTasksInjectedPromise();
       // From now on, the tasks will identify problems when executed.
       currentErrorToCount = "";
-      std::unique_ptr<TapeReadTask> task;
       m_reportPacker.reportDriveStatus(cta::common::dataStructures::DriveStatus::Transferring,
                                        std::nullopt,
                                        m_logContext);
       m_reporter.reportState(cta::tape::session::SessionState::Running, cta::tape::session::SessionType::Retrieve);
       while (true) {
         // get a task
-        task.reset(popAndRequestMoreJobs());
+        auto task = popAndRequestMoreJobs();
         m_stats.waitInstructionsTime += timer.secs(cta::utils::Timer::resetCounter);
         // If we reached the end
-        if (nullptr == task) {
+        if (!task) {
           m_logContext.log(cta::log::DEBUG, "No more files to read from tape");
           break;
         }
@@ -467,12 +466,11 @@ void castor::tape::tapeserver::daemon::TapeReadSingleThread::run() {
     }
     // Flush the remaining tasks to cleanly exit.
     while (true) {
-      TapeReadTask* task = m_tasks.pop();
+      auto task = m_tasks.pop();
       if (!task) {
         break;
       }
       task->reportCancellationToDiskTask();
-      delete task;
     }
 
     // Notify tape thread is finished to gracefully end the session

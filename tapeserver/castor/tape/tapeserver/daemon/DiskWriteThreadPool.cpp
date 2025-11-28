@@ -69,14 +69,14 @@ void DiskWriteThreadPool::waitThreads() {
 //------------------------------------------------------------------------------
 // DiskWriteThreadPool::push
 //------------------------------------------------------------------------------
-void DiskWriteThreadPool::push(DiskWriteTask* t) {
+void DiskWriteThreadPool::push(std::unique_ptr<DiskWriteTask> t) {
   {
     if (nullptr == t) {
       throw cta::exception::Exception("nullptr task should not been directly pushed into DiskWriteThreadPool");
     }
   }
   cta::threading::MutexLocker ml(m_pusherProtection);
-  m_tasks.push(t);
+  m_tasks.push(std::move(t));
 }
 
 //------------------------------------------------------------------------------
@@ -132,14 +132,13 @@ void DiskWriteThreadPool::DiskWriteWorkerThread::run() {
   logParams.add("thread", "DiskWrite").add("threadID", m_threadID);
   m_lc.log(cta::log::INFO, "Starting DiskWriteWorkerThread");
 
-  std::unique_ptr<DiskWriteTask> task;
   cta::utils::Timer localTime;
   cta::utils::Timer totalTime(localTime);
 
   while (true) {
-    task.reset(m_parentThreadPool.m_tasks.pop());
+    auto task = m_parentThreadPool.m_tasks.pop();
     m_threadStat.waitInstructionsTime += localTime.secs(cta::utils::Timer::resetCounter);
-    if (nullptr != task) {
+    if (task) {
       if (false
           == task->execute(m_parentThreadPool.m_reporter,
                            m_lc,
@@ -152,8 +151,7 @@ void DiskWriteThreadPool::DiskWriteWorkerThread::run() {
         m_lc.log(cta::log::ERR, "Task failed: counting another error for this session");
       }
       m_threadStat += task->getTaskStats();
-    }  //end of task!=nullptr
-    else {
+    }  else {
       m_lc.log(cta::log::DEBUG, "DiskWriteWorkerThread exiting: no more work");
       break;
     }

@@ -66,8 +66,8 @@ void DiskReadThreadPool::waitThreads() {
 //------------------------------------------------------------------------------
 // DiskReadThreadPool::push
 //------------------------------------------------------------------------------
-void DiskReadThreadPool::push(DiskReadTask* t) {
-  m_tasks.push(t);
+void DiskReadThreadPool::push(std::unique_ptr<DiskReadTask> t) {
+  m_tasks.push(std::move(t));
   m_lc.log(cta::log::INFO, "Push a task into the DiskReadThreadPool");
 }
 
@@ -84,7 +84,7 @@ void DiskReadThreadPool::finish() {
 //------------------------------------------------------------------------------
 // DiskReadThreadPool::popAndRequestMore
 //------------------------------------------------------------------------------
-DiskReadTask* DiskReadThreadPool::popAndRequestMore(cta::log::LogContext& lc) {
+std::unique_ptr<DiskReadTask> DiskReadThreadPool::popAndRequestMore(cta::log::LogContext& lc) {
   auto vrp = m_tasks.popGetSize();
   cta::log::LogContext::ScopedParam sp(lc, cta::log::Param("m_maxFilesReq", m_maxFilesReq));
   cta::log::LogContext::ScopedParam sp0(lc, cta::log::Param("m_maxBytesReq", m_maxBytesReq));
@@ -96,7 +96,7 @@ DiskReadTask* DiskReadThreadPool::popAndRequestMore(cta::log::LogContext& lc) {
     m_injector->requestInjection(false);
     lc.log(cta::log::DEBUG, "Requested injection from MigrationTaskInjector (without last call)");
   }
-  return vrp.value;
+  return std::move(vrp.value);
 }
 
 //------------------------------------------------------------------------------
@@ -140,14 +140,13 @@ void DiskReadThreadPool::DiskReadWorkerThread::run() {
   logParams.add("thread", "DiskRead").add("threadID", m_threadID);
   m_lc.log(cta::log::DEBUG, "Starting DiskReadWorkerThread");
 
-  std::unique_ptr<DiskReadTask> task;
   cta::utils::Timer localTime;
   cta::utils::Timer totalTime;
 
   while (1) {
-    task.reset(m_parent.popAndRequestMore(m_lc));
+    auto task =m_parent.popAndRequestMore(m_lc);
     m_threadStat.waitInstructionsTime += localTime.secs(cta::utils::Timer::resetCounter);
-    if (nullptr != task.get()) {
+    if (task) {
       task->execute(m_lc, m_diskFileFactory, m_parent.m_watchdog, m_threadID);
       m_threadStat += task->getTaskStats();
     } else {

@@ -31,7 +31,8 @@ public:
    * @param destination the task that will consume the memory blocks
    * @param mm The memory manager to get free block
    */
-  TapeReadTask(cta::RetrieveJob* retrieveJob, DataConsumer& destination, RecallMemoryManager& mm)
+  TapeReadTask(std::shared_ptr<cta::RetrieveJob> retrieveJob,
+    DataConsumer & destination, RecallMemoryManager & mm)
       : m_retrieveJob(retrieveJob),
         m_fifo(destination),
         m_mm(mm) {}
@@ -289,7 +290,7 @@ private:
   /**
    * All we need to know about the file we are recalling
    */
-  cta::RetrieveJob* m_retrieveJob;
+  std::shared_ptr<cta::RetrieveJob> m_retrieveJob;
 
   /**
    * The task (seen as a Y) that will consume all the blocks we read

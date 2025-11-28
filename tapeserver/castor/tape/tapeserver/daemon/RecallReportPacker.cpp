@@ -37,20 +37,19 @@ RecallReportPacker::~RecallReportPacker() {
 //------------------------------------------------------------------------------
 //reportCompletedJob
 //------------------------------------------------------------------------------
-void RecallReportPacker::reportCompletedJob(std::unique_ptr<cta::RetrieveJob> successfulRetrieveJob,
+void RecallReportPacker::reportCompletedJob(std::shared_ptr<cta::RetrieveJob> successfulRetrieveJob,
                                             cta::log::LogContext& lc) {
-  std::unique_ptr<Report> rep(new ReportSuccessful(std::move(successfulRetrieveJob)));
   cta::log::ScopedParamContainer params(lc);
   params.add("type", "ReportSuccessful");
   lc.log(cta::log::DEBUG, "In RecallReportPacker::reportCompletedJob(), pushing a report.");
   cta::threading::MutexLocker ml(m_producterProtection);
-  m_fifo.push(rep.release());
+  m_fifo.push(std::make_unique<ReportSuccessful>(successfulRetrieveJob));
 }
 
 //------------------------------------------------------------------------------
 //reportFailedJob
 //------------------------------------------------------------------------------
-void RecallReportPacker::reportFailedJob(std::unique_ptr<cta::RetrieveJob> failedRetrieveJob,
+void RecallReportPacker::reportFailedJob(std::shared_ptr<cta::RetrieveJob> failedRetrieveJob,
                                          const cta::exception::Exception& ex,
                                          cta::log::LogContext& lc) {
   std::string failureLog =
@@ -60,7 +59,7 @@ void RecallReportPacker::reportFailedJob(std::unique_ptr<cta::RetrieveJob> faile
   params.add("type", "ReportError");
   lc.log(cta::log::DEBUG, "In RecallReportPacker::reportFailedJob(), pushing a report.");
   cta::threading::MutexLocker ml(m_producterProtection);
-  m_fifo.push(rep.release());
+  m_fifo.push(std::make_unique<ReportError>(failedRetrieveJob, failureLog));
 }
 
 //------------------------------------------------------------------------------
@@ -71,8 +70,7 @@ void RecallReportPacker::reportEndOfSession(cta::log::LogContext& lc) {
   params.add("type", "ReportEndofSession");
   lc.log(cta::log::DEBUG, "In RecallReportPacker::reportEndOfSession(), pushing a report.");
   cta::threading::MutexLocker ml(m_producterProtection);
-  std::unique_ptr<Report> rep(new ReportEndofSession());
-  m_fifo.push(rep.release());
+  m_fifo.push(std::make_unique<ReportEndofSession>());
 }
 
 //------------------------------------------------------------------------------
@@ -85,7 +83,7 @@ void RecallReportPacker::reportDriveStatus(cta::common::dataStructures::DriveSta
   params.add("type", "ReportDriveStatus").add("Status", cta::common::dataStructures::toString(status));
   lc.log(cta::log::DEBUG, "In RecallReportPacker::reportDriveStatus(), pushing a report.");
   cta::threading::MutexLocker ml(m_producterProtection);
-  m_fifo.push(new ReportDriveStatus(status, reason));
+  m_fifo.push(std::make_unique<ReportDriveStatus>(status, reason));
 }
 
 //------------------------------------------------------------------------------
@@ -96,7 +94,7 @@ void RecallReportPacker::reportEndOfSessionWithErrors(const std::string& msg, ct
   params.add("type", "ReportEndofSessionWithErrors");
   lc.log(cta::log::DEBUG, "In RecallReportPacker::reportEndOfSessionWithErrors(), pushing a report.");
   cta::threading::MutexLocker ml(m_producterProtection);
-  m_fifo.push(new ReportEndofSessionWithErrors(msg));
+  m_fifo.push(std::make_unique<ReportEndofSessionWithErrors>(msg));
 }
 
 //------------------------------------------------------------------------------
@@ -105,7 +103,7 @@ void RecallReportPacker::reportEndOfSessionWithErrors(const std::string& msg, ct
 void RecallReportPacker::ReportSuccessful::execute(RecallReportPacker& parent) {
   try {
     m_successfulRetrieveJob->asyncSetSuccessful();
-    parent.m_successfulRetrieveJobs.push(std::move(m_successfulRetrieveJob));
+    parent.m_successfulRetrieveJobs.push(m_successfulRetrieveJob);
   } catch (const cta::exception::NoSuchObject& ex) {
     cta::log::ScopedParamContainer params(parent.m_lc);
     params.add("ExceptionMSG", ex.getMessageValue()).add("fileId", m_successfulRetrieveJob->archiveFile.archiveFileID);

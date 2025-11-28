@@ -419,7 +419,7 @@ void castor::tape::tapeserver::daemon::TapeWriteSingleThread::run() {
       m_reporter.reportState(cta::tape::session::SessionState::Running, cta::tape::session::SessionType::Archive);
       while (true) {
         //get a task
-        task.reset(m_tasks.pop());
+        task = m_tasks.pop();
         m_stats.waitInstructionsTime += timer.secs(cta::utils::Timer::resetCounter);
         // If we reached the end
         if (nullptr == task) {

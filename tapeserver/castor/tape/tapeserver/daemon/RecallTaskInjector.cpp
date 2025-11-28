@@ -251,12 +251,12 @@ void RecallTaskInjector::injectBulkRecalls() {
   }
   bool setPromise = (retrieveJobsBatch.size() != 0);
   for (auto& job_ptr : retrieveJobsBatch) {
-    cta::RetrieveJob* job = job_ptr.release();
-    DiskWriteTask* dwt = new DiskWriteTask(job, m_memManager);
-    TapeReadTask* trt = new TapeReadTask(job, *dwt, m_memManager);
+    std::shared_ptr<cta::RetrieveJob> job = std::move(job_ptr);
+    auto dwt = std::make_unique<DiskWriteTask>(job, m_memManager);
+    auto trt = std::make_unique<TapeReadTask>(job, *dwt, m_memManager);
     recallOrderLog << " " << job->selectedTapeFile().fSeq;
-    m_diskWriter.push(dwt);
-    m_tapeReader.push(trt);
+    m_diskWriter.push(std::move(dwt));
+    m_tapeReader.push(std::move(trt));
   }
   if (setPromise) {
     //At least one task has been created, we tell the TapeReadSingleThread that

@@ -40,7 +40,7 @@ class TapeSingleThreadInterface : private cta::threading::Thread {
 private:
 protected:
   ///the queue of tasks
-  cta::threading::BlockingQueue<Task*> m_tasks;
+  cta::threading::BlockingQueue<std::unique_ptr<Task>> m_tasks;
 
   /**
    * An interface to manipulate the drive to manipulate the tape
@@ -231,7 +231,7 @@ public:
    * Push a new task into the internal queue
    * @param t the task to push
    */
-  void push(Task* t) { m_tasks.push(t); }
+  void push(std::unique_ptr<Task> t) { m_tasks.push(std::move(t)); }
 
   /**
    * Start the threads

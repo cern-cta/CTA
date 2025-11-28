@@ -37,12 +37,12 @@ protected:
 };  // class castor_tape_tapeserver_daemonTest
 
 struct MockRecallReportPacker : public RecallReportPacker {
-  void reportCompletedJob(std::unique_ptr<cta::RetrieveJob> successfulRetrieveJob, cta::log::LogContext& lc) override {
+  void reportCompletedJob(std::shared_ptr<cta::RetrieveJob> successfulRetrieveJob, cta::log::LogContext& lc) override {
     cta::threading::MutexLocker ml(m_mutex);
     completeJobs++;
   }
 
-  void reportFailedJob(std::unique_ptr<cta::RetrieveJob> failedRetrieveJob,
+  void reportFailedJob(std::shared_ptr<cta::RetrieveJob> failedRetrieveJob,
                        const cta::exception::Exception& ex,
                        cta::log::LogContext& lc) override {
     cta::threading::MutexLocker ml(m_mutex);
@@ -97,16 +97,16 @@ public:
                            cta::log::LogContext& lc)
       : TapeSingleThreadInterface<TapeReadTask>(drive, mc, tsr, volInfo, lc, false, "", tapeLoadTimeout) {}
 
-  ~FakeSingleTapeReadThread() {
-    const unsigned int size = m_tasks.size();
-    for (unsigned int i = 0; i < size; ++i) {
-      delete m_tasks.pop();
+    ~FakeSingleTapeReadThread(){
+      const unsigned int size= m_tasks.size();
+      for(unsigned int i=0;i<size;++i){
+        m_tasks.pop();
     }
   }
 
   virtual void run() { m_tasks.push(nullptr); }
 
-  virtual void push(TapeReadTask* t) { m_tasks.push(t); }
+  virtual void push(std::unique_ptr<TapeReadTask> t) { m_tasks.push(std::move(t)); }
 
   virtual void countTapeLogError(const std::string& error) {};
 
@@ -215,20 +215,20 @@ TEST_F(castor_tape_tapeserver_daemonTest, RecallTaskInjectorNominal) {
   ASSERT_EQ(nbJobs + 1, diskWrite.m_tasks.size());
   ASSERT_EQ(nbJobs + 1, tapeRead.m_tasks.size());
 
-  for (int i = 0; i < nbJobs; ++i) {
-    delete diskWrite.m_tasks.pop();
-    delete tapeRead.m_tasks.pop();
-  }
+    for(int i=0; i<nbJobs; ++i)
+    {
+      diskWrite.m_tasks.pop();
+      tapeRead.m_tasks.pop();
+    }
 
-  for (int i = 0; i < 1; ++i) {
-    DiskWriteTask* diskWriteTask = diskWrite.m_tasks.pop();
-    TapeReadTask* tapeReadTask = tapeRead.m_tasks.pop();
+    for(int i=0; i<1; ++i)
+    {
+      auto diskWriteTask = diskWrite.m_tasks.pop();
+      auto tapeReadTask = tapeRead.m_tasks.pop();
 
     //static_cast is needed otherwise compilation fails on SL5 with a raw nullptr
-    ASSERT_EQ(static_cast<DiskWriteTask*>(nullptr), diskWriteTask);
-    ASSERT_EQ(static_cast<TapeReadTask*>(nullptr), tapeReadTask);
-    delete diskWriteTask;
-    delete tapeReadTask;
+    ASSERT_EQ(static_cast<DiskWriteTask*>(nullptr), diskWriteTask.get());
+    ASSERT_EQ(static_cast<TapeReadTask*>(nullptr), tapeReadTask.get());
   }
 }
 

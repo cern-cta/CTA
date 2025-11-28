@@ -93,12 +93,12 @@ using namespace castor::tape::tapeserver::client;
 using namespace cta::disk;
 
 struct MockRecallReportPacker : public RecallReportPacker {
-  void reportCompletedJob(std::unique_ptr<cta::RetrieveJob> successfulRetrieveJob, cta::log::LogContext& lc) override {
+  void reportCompletedJob(std::shared_ptr<cta::RetrieveJob> successfulRetrieveJob, cta::log::LogContext& lc) override {
     cta::threading::MutexLocker ml(m_mutex);
     completeJobs++;
   }
 
-  void reportFailedJob(std::unique_ptr<cta::RetrieveJob> failedRetrieveJob,
+  void reportFailedJob(std::shared_ptr<cta::RetrieveJob> failedRetrieveJob,
                        const cta::exception::Exception& ex,
                        cta::log::LogContext& lc) override {
     cta::threading::MutexLocker ml(m_mutex);
@@ -168,7 +168,7 @@ TEST(castor_tape_tapeserver_daemon, DiskWriteTaskFailedBlock) {
   cta::common::dataStructures::TapeFile tf;
   tf.copyNb = 1;
   fileToRecall->archiveFile.tapeFiles.push_back(tf);
-  DiskWriteTask t(fileToRecall.release(), mm);
+  DiskWriteTask t(std::move(fileToRecall), mm);
   for (int i = 0; i < 6; ++i) {
     auto mb = mm.getFreeBlock();
     mb->m_fileid = 0;
