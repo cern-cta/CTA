@@ -1,4 +1,4 @@
-cppcheck:
+lint-cppcheck:
   stage: lint
   image:
     name: $IMAGE_LINT
@@ -31,6 +31,29 @@ cppcheck:
     expire_in: 7 days
     reports:
       codequality: cppcheck.json
+
+lint-shellcheck:
+  allow_failure: true # Until we have fixed the errors, let this fail
+  stage: lint
+  image:
+    name: $IMAGE_LINT
+    entrypoint: ["/usr/bin/env"]
+  rules:
+    - if: $CI_COMMIT_TAG
+      when: never
+    - if: $PIPELINE_TYPE != "DEFAULT"
+      when: never
+    - when: always
+  needs: [] # Ensure no artifacts are downloaded
+  script:
+    - all_shell_scripts=( **/*.sh )
+    - if [ ${#all_shell_scripts[@]} -eq 0 ]; then echo "No shell scripts"; exit 0; fi
+    - shellcheck "${all_shell_scripts[@]}" --format json | tee shellcheck.json | jq
+  artifacts:
+    when: on_failure
+    expire_in: 7 days
+    reports:
+      codequality: shellcheck.json
 
 # Generic format check job template
 # The idea is to extend this, fill in the FORMAT_DIFF variable
