@@ -210,7 +210,7 @@ Rset Stmt::executeQuery() {
     } else {
       throw exception::Exception("Stmt does not contain a cached statement");
     }
-  } catch(...) {
+  } catch(std::exception&) {
     cta::telemetry::metrics::dbClientOperationDuration->Record(
       timer.msecs(),
       {
@@ -241,7 +241,7 @@ void Stmt::executeNonQuery() {
     } else {
       throw exception::Exception("Stmt does not contain a cached statement");
     }
-  } catch(...) {
+  } catch(std::exception&) {
     cta::telemetry::metrics::dbClientOperationDuration->Record(
       timer.msecs(),
       {
