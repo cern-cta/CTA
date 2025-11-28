@@ -75,11 +75,11 @@ namespace unitTests{
   using namespace castor::tape::tapeserver::daemon;
   using namespace castor::tape::tapeserver::client;
   struct MockRecallReportPacker : public RecallReportPacker {
-    void reportCompletedJob(std::unique_ptr<cta::RetrieveJob> successfulRetrieveJob, cta::log::LogContext& lc) override {
+    void reportCompletedJob(std::shared_ptr<cta::RetrieveJob> successfulRetrieveJob, cta::log::LogContext& lc) override {
       cta::threading::MutexLocker ml(m_mutex);
       completeJobs++;
     }
-    void reportFailedJob(std::unique_ptr<cta::RetrieveJob> failedRetrieveJob, const cta::exception::Exception & ex, cta::log::LogContext& lc) override {
+    void reportFailedJob(std::shared_ptr<cta::RetrieveJob> failedRetrieveJob, const cta::exception::Exception & ex, cta::log::LogContext& lc) override {
       cta::threading::MutexLocker ml(m_mutex);
       failedJobs++;
     }
@@ -153,13 +153,13 @@ namespace unitTests{
       tf.copyNb = 1;
       fileToRecall->archiveFile.tapeFiles.push_back(tf);
       fileToRecall->selectedTapeFile().blockId = 1;
-      DiskWriteTask* t=new DiskWriteTask(fileToRecall.release(),mm);
+      auto t = std::make_unique<DiskWriteTask>(std::move(fileToRecall),mm);
       auto mb=mm.getFreeBlock();
       mb->m_fileid=i+1;
       mb->m_fileBlock=0;
       t->pushDataBlock(std::move(mb));
       t->pushDataBlock(nullptr);
-      dwtp.push(t);
+      dwtp.push(std::move(t));
     }
 
     dwtp.finish();

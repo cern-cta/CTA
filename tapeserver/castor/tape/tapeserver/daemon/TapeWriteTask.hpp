@@ -59,7 +59,7 @@ public:
    * @param mm: reference to the memory manager in use
    */
   TapeWriteTask(uint64_t blockCount,
-                cta::ArchiveJob* archiveJob,
+                std::shared_ptr<cta::ArchiveJob> archiveJob,
                 MigrationMemoryManager& mm,
                 cta::threading::AtomicFlag& errorFlag);
 
@@ -163,7 +163,7 @@ private:
   /**
    * All we need to know about the file we are migrating
    */
-  std::unique_ptr<cta::ArchiveJob> m_archiveJob;
+  std::shared_ptr<cta::ArchiveJob> m_archiveJob;
 
   /**
    * reference to the memory manager in use   
