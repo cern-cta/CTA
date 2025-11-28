@@ -64,7 +64,7 @@ void CtaTelemetryLogHandler::Handle(opentelemetry::sdk::common::internal_log::Lo
   const auto& attrs = attributes.GetAttributes();
   for (const auto& [key, ownedAttribute] : attrs) {
     std::visit(
-      [&](auto&& val) {
+      [&](const auto& val) {
         if constexpr (is_supported_scalar_v<std::decay_t<decltype(val)>>) {
           params.add(key, val);
         } else {

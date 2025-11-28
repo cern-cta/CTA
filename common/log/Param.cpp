@@ -42,7 +42,7 @@ const ParamValType &Param::getValueVariant() const noexcept {
 std::string Param::getValueStr() const noexcept {
   std::ostringstream oss;
   if (m_value.has_value()) {
-    std::visit([&oss](auto &&arg) {
+    std::visit([&oss](const auto &arg) {
       using T = std::decay_t<decltype(arg)>;
       if constexpr (std::is_floating_point_v<T>) {
         oss << floatingPointFormatting(arg);
