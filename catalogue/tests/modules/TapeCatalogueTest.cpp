@@ -551,7 +551,7 @@ TEST_P(cta_catalogue_TapeTest, deleteNonEmptyTape) {
   deletedArchiveReq.diskInstance = diskInstance;
   deletedArchiveReq.archiveFileID = archiveFileId;
   deletedArchiveReq.diskFileId = diskFileId;
-  deletedArchiveReq.recycleTime = time(nullptr);
+  deletedArchiveReq.recycleTime = std::chrono::system_clock::to_time_t(std::chrono::system_clock::now());
   deletedArchiveReq.requester = cta::common::dataStructures::RequesterIdentity(m_admin.username,"group");
   deletedArchiveReq.diskFilePath = "/path/";
   m_catalogue->ArchiveFile()->moveArchiveFileToRecycleLog(deletedArchiveReq,dummyLc);

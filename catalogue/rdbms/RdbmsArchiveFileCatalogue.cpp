@@ -869,7 +869,7 @@ void RdbmsArchiveFileCatalogue::insertArchiveFile(rdbms::Conn &conn, const Archi
       " does not exist");
   }
 
-  const time_t now = time(nullptr);
+  const time_t now = std::chrono::system_clock::to_time_t(std::chrono::system_clock::now());
   const char* const sql = R"SQL(
     INSERT INTO ARCHIVE_FILE(
       ARCHIVE_FILE_ID,

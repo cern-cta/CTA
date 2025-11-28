@@ -148,7 +148,7 @@ void SqliteTapeFileCatalogue::fileWrittenToTape(rdbms::Conn &conn, const TapeFil
     throw;
   }
 
-  const time_t now = time(nullptr);
+  const time_t now = std::chrono::system_clock::to_time_t(std::chrono::system_clock::now());
   const auto archiveFileCatalogue = static_cast<RdbmsArchiveFileCatalogue*>(m_rdbmsCatalogue->ArchiveFile().get());
   const auto archiveFileRow = archiveFileCatalogue->getArchiveFileRowById(conn, event.archiveFileId);
 

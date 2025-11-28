@@ -84,7 +84,7 @@ void DiskSystemFreeSpaceList::updateFreeSpaceEntry(const std::string& diskSystem
   auto &diskSystem = m_systemList.at(diskSystemName);
   auto &diskInstanceSpace = diskSystem.diskInstanceSpace;
   entry.freeSpace = freeSpace;
-  entry.fetchTime = ::time(nullptr);
+  entry.fetchTime = std::chrono::system_clock::to_time_t(std::chrono::system_clock::now());
   entry.targetedFreeSpace = diskSystem.targetedFreeSpace;
 
   if (updateCatalogue) {
@@ -119,7 +119,7 @@ void DiskSystemFreeSpaceList::fetchDiskSystemFreeSpace(const std::set<std::strin
     auto &diskInstanceSpace = diskSystem.diskInstanceSpace;
     try {
       std::vector<std::string> regexResult;
-      const auto currentTime = static_cast<uint64_t>(time(nullptr));
+      const auto currentTime = static_cast<uint64_t>(std::chrono::system_clock::to_time_t(std::chrono::system_clock::now()));
       if (diskInstanceSpace.lastRefreshTime + diskInstanceSpace.refreshInterval >= currentTime) {
         // use the value in the catalogue, it is still fresh
         freeSpace = diskSystem.diskInstanceSpace.freeSpace;
@@ -219,11 +219,11 @@ uint64_t DiskSystemFreeSpaceList::fetchFreeDiskSpaceWithScript(const std::string
   std::string stdoutScript = spStdoutIss.str();
   try {
     jsonFreeSpace.buildFromJSON(stdoutScript);
-    std::string logMessage = "In DiskSystemFreeSpaceList::fetchFreeDiskSpaceWithScript(), freeSpace returned from the script is: " + std::to_string(jsonFreeSpace.m_freeSpace); 
+    std::string logMessage = "In DiskSystemFreeSpaceList::fetchFreeDiskSpaceWithScript(), freeSpace returned from the script is: " + std::to_string(jsonFreeSpace.m_freeSpace);
     lc.log(log::DEBUG,logMessage);
     return jsonFreeSpace.m_freeSpace;
   } catch(const cta::exception::JSONObjectException &ex){
-    std::string errMsg = "In DiskSystemFreeSpaceList::fetchFreeDiskSpaceWithScript(): the json received from the script "+ scriptPath + 
+    std::string errMsg = "In DiskSystemFreeSpaceList::fetchFreeDiskSpaceWithScript(): the json received from the script "+ scriptPath +
             " json=" + stdoutScript + " could not be used to get the FreeSpace, the json to receive from the script should have the following format: " +
             jsonFreeSpace.getExpectedJSONToBuildObject() + ".";
     throw cta::disk::FreeDiskSpaceException(errMsg);

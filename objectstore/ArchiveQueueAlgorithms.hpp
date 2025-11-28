@@ -347,7 +347,7 @@ addReferencesAndCommit(Container& cont, typename InsertedElement::list& elemMemC
     else
       mp=cta::common::dataStructures::MountPolicy();
     jobsToAdd.push_back({jd, ar.getAddressIfSet(), e.archiveFile.archiveFileID, e.archiveFile.fileSize,
-        mp, time(nullptr)});
+        mp, std::chrono::system_clock::to_time_t(std::chrono::system_clock::now())});
   }
   cont.addJobsAndCommit(jobsToAdd, agentRef, lc);
 }
@@ -365,7 +365,7 @@ addReferencesIfNecessaryAndCommit(Container& cont, typename InsertedElement::lis
     jd.owner = cont.getAddressIfSet();
     ArchiveRequest & ar = *e.archiveRequest;
     cta::common::dataStructures::MountPolicy mp = e.mountPolicy ? *e.mountPolicy : cta::common::dataStructures::MountPolicy();
-    jobsToAdd.push_back({jd, ar.getAddressIfSet(), e.archiveFile.archiveFileID, e.archiveFile.fileSize, mp, time(nullptr)});
+    jobsToAdd.push_back({jd, ar.getAddressIfSet(), e.archiveFile.archiveFileID, e.archiveFile.fileSize, mp, std::chrono::system_clock::to_time_t(std::chrono::system_clock::now())});
   }
   cont.addJobsIfNecessaryAndCommit(jobsToAdd, agentRef, lc);
 }

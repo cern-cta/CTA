@@ -52,7 +52,7 @@ getPoppingElementsCandidates(Container &cont, PopCriteria &unfulfilledCriteria, 
     // We failed to find any candidates from a non empty queue, from which there are no individual elements to skip.
     // this means the it is time to sleep this queue.
     // We log and return empty. Caller will stop trying to pop after that.
-    cont.setSleepForFreeSpaceStartTimeAndName(::time(nullptr), unfulfilledCriteria.diskSystemsToSkip.begin()->name, unfulfilledCriteria.diskSystemsToSkip.begin()->sleepTime);
+    cont.setSleepForFreeSpaceStartTimeAndName(::std::chrono::system_clock::to_time_t(std::chrono::system_clock::now()), unfulfilledCriteria.diskSystemsToSkip.begin()->name, unfulfilledCriteria.diskSystemsToSkip.begin()->sleepTime);
     cont.commit();
     log::ScopedParamContainer params(lc);
     params.add("tapeVid", cont.getVid())

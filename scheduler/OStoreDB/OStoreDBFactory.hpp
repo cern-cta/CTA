@@ -88,7 +88,7 @@ public:
     re.fetch();
     objectstore::Agent agent(m_agentReferencePtr->getAgentAddress(), *m_backend);
     agent.initialize();
-    objectstore::EntryLogSerDeser cl("user0", "systemhost", time(nullptr));
+    objectstore::EntryLogSerDeser cl("user0", "systemhost", std::chrono::system_clock::to_time_t(std::chrono::system_clock::now()));
     log::LogContext lc(*m_logger);
     re.addOrGetAgentRegisterPointerAndCommit(*m_agentReferencePtr, cl, lc);
     rel.release();
@@ -128,7 +128,7 @@ m_OStoreDB(*m_backend, *m_catalogue, *m_logger),
   re.fetch();
   objectstore::Agent agent(m_agentReferencePtr->getAgentAddress(), *m_backend);
   agent.initialize();
-  objectstore::EntryLogSerDeser cl("user0", "systemhost", time(nullptr));
+  objectstore::EntryLogSerDeser cl("user0", "systemhost", std::chrono::system_clock::to_time_t(std::chrono::system_clock::now()));
   log::LogContext lc(*m_logger);
   re.addOrGetAgentRegisterPointerAndCommit(*m_agentReferencePtr, cl, lc);
   rel.release();

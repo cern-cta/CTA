@@ -74,14 +74,14 @@ std::string raw_jwks = R"({
 class MockJwksFetcherValidateToken : public cta::JwksFetcher {
 private:
   std::string m_jwks;
-  
+
 public:
   MockJwksFetcherValidateToken() : m_jwks(raw_jwks) {}
-  
+
   void setJwks(const std::string& jwks) {
     m_jwks = jwks;
   }
-  
+
   std::string fetchJWKS(const std::string& jwksUrl) override {
     return m_jwks;
   }
@@ -112,11 +112,11 @@ protected:
   ValidateTokenTestFixture()
       : log("dummy", "ValidateTokenTests", cta::log::DEBUG),
         lc(log) {}
-        
+
   std::shared_ptr<cta::JwkCache> createCacheWithMockFetcher() {
     return std::make_shared<cta::JwkCache>(m_mockFetcher, "http://fake-jwks-uri", 1200, lc);
   }
-  
+
   std::shared_ptr<cta::JwkCache> createCacheWithEmptyMockFetcher() {
     auto cache = std::make_shared<cta::JwkCache>(m_mockFetcher, "http://fake-jwks-uri", 1200, lc);
     m_mockFetcher.setJwks("");
@@ -127,9 +127,9 @@ protected:
 TEST_F(ValidateTokenTestFixture, ValidTokenWithCachedKey) {
   auto cache = createCacheWithMockFetcher();
   std::string token = createTestJwt(false /*expired*/, "test-kid");
-  
+
   // First populate cache by calling updateCache
-  cache->updateCache(std::time(nullptr));
+  cache->updateCache(std::chrono::system_clock::to_time_t(std::chrono::system_clock::now()));
 
   auto result = cta::validateToken(token, cache, lc);
   ASSERT_TRUE(result.isValid);
@@ -163,9 +163,9 @@ TEST_F(ValidateTokenTestFixture, ValidTokenWithoutCachedKeyCacheFetchFails) {
 TEST_F(ValidateTokenTestFixture, ExpiredToken) {
   auto cache = createCacheWithMockFetcher();
   std::string token = createTestJwt(true /*expired*/, "test-kid");
-  
+
   // Populate cache by calling updateCache
-  cache->updateCache(std::time(nullptr));
+  cache->updateCache(std::chrono::system_clock::to_time_t(std::chrono::system_clock::now()));
 
   auto result = cta::validateToken(token, cache, lc);
   ASSERT_FALSE(result.isValid);

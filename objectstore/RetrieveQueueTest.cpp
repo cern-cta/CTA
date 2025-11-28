@@ -74,7 +74,7 @@ TEST_F(ObjectStore, RetrieveQueueShardingAndOrderingTest) {
     jta.fileSize = 1000;
     jta.policy.retrieveMinRequestAge = 10;
     jta.policy.retrievePriority = 1;
-    jta.startTime = ::time(nullptr);
+    jta.startTime = std::chrono::system_clock::to_time_t(std::chrono::system_clock::now());
     std::stringstream address;
     address << "someRequest-" << i;
     jta.retrieveRequestAddress = address.str();
@@ -176,7 +176,7 @@ TEST_F(ObjectStore, RetrieveQueueMissingShardingTest) {
     jta.fileSize = 1000;
     jta.policy.retrieveMinRequestAge = 10;
     jta.policy.retrievePriority = 1;
-    jta.startTime = ::time(nullptr);
+    jta.startTime = std::chrono::system_clock::to_time_t(std::chrono::system_clock::now());
     std::stringstream address;
     address << "someRequest-" << i;
     jta.retrieveRequestAddress = address.str();
@@ -272,7 +272,7 @@ TEST_F(ObjectStore, RetrieveQueueActivityCounts) {
     jta.fileSize = 1000;
     jta.policy.retrieveMinRequestAge = 10;
     jta.policy.retrievePriority = 1;
-    jta.startTime = ::time(nullptr);
+    jta.startTime = std::chrono::system_clock::to_time_t(std::chrono::system_clock::now());
     std::stringstream address;
     address << "someRequest-" << i;
     jta.retrieveRequestAddress = address.str();

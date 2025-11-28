@@ -285,7 +285,7 @@ addReferencesAndCommit(Container &cont, typename InsertedElement::list &elemMemC
   std::list<common::dataStructures::RetrieveJobToAdd> jobsToAdd;
   for (auto &e : elemMemCont) {
     RetrieveRequest &rr = *e.retrieveRequest;
-    jobsToAdd.push_back({e.copyNb, e.fSeq, rr.getAddressIfSet(), e.filesize, e.policy, ::time(nullptr), e.activity, e.diskSystemName});
+    jobsToAdd.push_back({e.copyNb, e.fSeq, rr.getAddressIfSet(), e.filesize, e.policy, ::std::chrono::system_clock::to_time_t(std::chrono::system_clock::now()), e.activity, e.diskSystemName});
   }
   cont.addJobsAndCommit(jobsToAdd, agentRef, lc);
 }

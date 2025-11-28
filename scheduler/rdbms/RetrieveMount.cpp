@@ -201,7 +201,7 @@ void RetrieveMount::setTapeSessionStats(const castor::tape::tapeserver::daemon::
   driveInfo.host = mountInfo.host;
 
   ReportDriveStatsInputs inputs;
-  inputs.reportTime = time(nullptr);
+  inputs.reportTime = std::chrono::system_clock::to_time_t(std::chrono::system_clock::now());
   inputs.bytesTransferred = stats.dataVolume;
   inputs.filesTransferred = stats.filesCount;
 
@@ -300,7 +300,7 @@ void RetrieveMount::putQueueToSleep(const std::string &diskSystemName,
                                     const uint64_t sleepTime,
                                     log::LogContext &logContext) {
   if (!diskSystemName.empty()) {
-    RelationalDB::DiskSleepEntry dse(sleepTime, time(nullptr));
+    RelationalDB::DiskSleepEntry dse(sleepTime, std::chrono::system_clock::to_time_t(std::chrono::system_clock::now()));
     cta::threading::MutexLocker ml(m_RelationalDB.m_diskSystemSleepMutex);
     cta::schedulerdb::Transaction txn(m_connPool);
     try {

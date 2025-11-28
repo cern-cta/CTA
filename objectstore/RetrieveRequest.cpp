@@ -951,7 +951,7 @@ void RetrieveRequest::updateLifecycleTiming(serializers::RetrieveRequest& payloa
     case RetrieveJobStatus::RJS_ToTransfer:
       if (retrieveJob.totalretries() == 0) {
         //totalretries = 0 then this is the first selection of the request
-        lifeCycleSerDeser.first_selected_time = time(nullptr);
+        lifeCycleSerDeser.first_selected_time = std::chrono::system_clock::to_time_t(std::chrono::system_clock::now());
       }
       break;
     default:
@@ -1413,7 +1413,7 @@ std::string RetrieveRequest::asyncTransformToArchiveRequestCallback(const std::s
   archiveRequestCL->CopyFrom(retrieveRequestMP.creationlog());
   archiveRequestCL->set_host(cta::utils::getShortHostname());
   //Set the request creation time to now
-  archiveRequestCL->set_time(time(nullptr));
+  archiveRequestCL->set_time(std::chrono::system_clock::to_time_t(std::chrono::system_clock::now()));
   //Create archive jobs for each copyNb ro rearchive
   RetrieveRequest::RepackInfoSerDeser repackInfoSerDeser;
   repackInfoSerDeser.deserialize(retrieveRequestPayload.repack_info());

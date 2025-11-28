@@ -889,7 +889,7 @@ void DriveHandler::setDriveDownForShutdown(const std::string& reason) {
 
   TapeDrivesCatalogueState driveCatalogue(*m_catalogue);
   driveCatalogue.reportDriveStatus(driveInfo, cta::common::dataStructures::MountType::NoMount,
-    cta::common::dataStructures::DriveStatus::Down, time(nullptr), m_lc);
+    cta::common::dataStructures::DriveStatus::Down, std::chrono::system_clock::to_time_t(std::chrono::system_clock::now()), m_lc);
   driveCatalogue.setDesiredDriveState(m_driveConfig.unitName, desiredDriveState, m_lc);
 }
 

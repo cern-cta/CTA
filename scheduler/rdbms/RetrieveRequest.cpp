@@ -60,7 +60,7 @@ RetrieveRequest::makeJobRow() const {
   rjr->diskFileInfoOwnerUid = m_archiveFile.diskFileInfo.owner_uid;
   rjr->diskFileInfoGid = m_archiveFile.diskFileInfo.gid;
   rjr->checksumBlob = m_archiveFile.checksumBlob;
-  rjr->startTime = time(nullptr);
+  rjr->startTime = std::chrono::system_clock::to_time_t(std::chrono::system_clock::now());
 
   // Populate alternates from jobs
   int i = 0;

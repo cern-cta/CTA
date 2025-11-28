@@ -26,6 +26,7 @@
 #include <sys/ioctl.h>
 #include <poll.h>
 #include <string.h>
+#include <chrono>
 #include "net.hpp"
 #include "serrno.hpp"
 
@@ -70,12 +71,12 @@ int netconnect_timeout(int fd, struct sockaddr* addr, size_t addr_size, int time
   }
 
   if (timeout >= 0 && rc != -1) {
-    time_t time_start = time(nullptr);
+    time_t time_start = std::chrono::system_clock::to_time_t(std::chrono::system_clock::now());
     int time_elapsed = 0;
     for (;;) {
       rc = _net_connectable(fd, timeout - time_elapsed);
       if ((rc == -1) && (errno == EINTR)) {
-        time_elapsed = (int) (time(nullptr) - time_start);
+        time_elapsed = (int) (std::chrono::system_clock::to_time_t(std::chrono::system_clock::now()) - time_start);
         if (time_elapsed >= timeout) {
           rc = -1;
           serrno = SETIMEDOUT;
@@ -136,7 +137,7 @@ ssize_t netread_timeout(int fd, void* vptr, ssize_t n, int timeout) {
   nleft = n;
   nread = 0;
 
-  time_start = time(nullptr);
+  time_start = std::chrono::system_clock::to_time_t(std::chrono::system_clock::now());
   time_elapsed = 0;
 
   while (nleft > 0) {
@@ -175,7 +176,7 @@ ssize_t netread_timeout(int fd, void* vptr, ssize_t n, int timeout) {
       ptr += nread;
     }
     if (nleft > 0) {
-      time_elapsed = (int) (time(nullptr) - time_start);
+      time_elapsed = (int) (std::chrono::system_clock::to_time_t(std::chrono::system_clock::now()) - time_start);
       if (time_elapsed >= timeout) {
         /* Timeout */
         serrno = SETIMEDOUT;
@@ -229,7 +230,7 @@ ssize_t netwrite_timeout(int fd, void* vptr, ssize_t n, int timeout) {
   ptr = reinterpret_cast<char*>(vptr);
   nleft = n;
 
-  time_start = time(nullptr);
+  time_start = std::chrono::system_clock::to_time_t(std::chrono::system_clock::now());
   time_elapsed = 0;
 
   while (nleft > 0) {
@@ -265,7 +266,7 @@ ssize_t netwrite_timeout(int fd, void* vptr, ssize_t n, int timeout) {
       ptr += nwritten;
     }
     if (nleft > 0) {
-      time_elapsed = (int) (time(nullptr) - time_start);
+      time_elapsed = (int) (std::chrono::system_clock::to_time_t(std::chrono::system_clock::now()) - time_start);
       if (time_elapsed >= timeout) {
         /* Timeout */
         serrno = SETIMEDOUT;

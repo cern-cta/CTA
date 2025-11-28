@@ -60,7 +60,7 @@ void RdbmsMediaTypeCatalogue::createMediaType(const common::dataStructures::Secu
       " because it already exists");
   }
   const uint64_t mediaTypeId = getNextMediaTypeId(conn);
-  const time_t now = time(nullptr);
+  const time_t now = std::chrono::system_clock::to_time_t(std::chrono::system_clock::now());
   const char* const sql = R"SQL(
     INSERT INTO MEDIA_TYPE(
       MEDIA_TYPE_ID,
@@ -137,9 +137,9 @@ void RdbmsMediaTypeCatalogue::deleteMediaType(const std::string &name) {
   }
 
   const char* const sql = R"SQL(
-    DELETE FROM 
-      MEDIA_TYPE 
-    WHERE 
+    DELETE FROM
+      MEDIA_TYPE
+    WHERE
       MEDIA_TYPE_NAME = :MEDIA_TYPE_NAME
   )SQL";
   auto stmt = conn.createStmt(sql);
@@ -155,7 +155,7 @@ void RdbmsMediaTypeCatalogue::deleteMediaType(const std::string &name) {
 std::list<MediaTypeWithLogs> RdbmsMediaTypeCatalogue::getMediaTypes() const {
   std::list<MediaTypeWithLogs> mediaTypes;
   const char* const sql = R"SQL(
-    SELECT 
+    SELECT
       MEDIA_TYPE_NAME AS MEDIA_TYPE_NAME,
       CARTRIDGE AS CARTRIDGE,
       CAPACITY_IN_BYTES AS CAPACITY_IN_BYTES,
@@ -173,10 +173,10 @@ std::list<MediaTypeWithLogs> RdbmsMediaTypeCatalogue::getMediaTypes() const {
 
       LAST_UPDATE_USER_NAME AS LAST_UPDATE_USER_NAME,
       LAST_UPDATE_HOST_NAME AS LAST_UPDATE_HOST_NAME,
-      LAST_UPDATE_TIME AS LAST_UPDATE_TIME 
-    FROM 
-      MEDIA_TYPE 
-    ORDER BY 
+      LAST_UPDATE_TIME AS LAST_UPDATE_TIME
+    FROM
+      MEDIA_TYPE
+    ORDER BY
       MEDIA_TYPE_NAME
   )SQL";
   auto conn = m_connPool->getConn();
@@ -210,7 +210,7 @@ std::list<MediaTypeWithLogs> RdbmsMediaTypeCatalogue::getMediaTypes() const {
 MediaType RdbmsMediaTypeCatalogue::getMediaTypeByVid(const std::string & vid) const {
   std::list<MediaTypeWithLogs> mediaTypes;
   const char* const sql = R"SQL(
-    SELECT 
+    SELECT
       MEDIA_TYPE_NAME AS MEDIA_TYPE_NAME,
       CARTRIDGE AS CARTRIDGE,
       CAPACITY_IN_BYTES AS CAPACITY_IN_BYTES,
@@ -220,12 +220,12 @@ MediaType RdbmsMediaTypeCatalogue::getMediaTypeByVid(const std::string & vid) co
       MIN_LPOS AS MIN_LPOS,
       MAX_LPOS AS MAX_LPOS,
 
-      MEDIA_TYPE.USER_COMMENT AS USER_COMMENT 
-    FROM 
-      MEDIA_TYPE 
-    INNER JOIN TAPE 
-      ON MEDIA_TYPE.MEDIA_TYPE_ID = TAPE.MEDIA_TYPE_ID 
-    WHERE 
+      MEDIA_TYPE.USER_COMMENT AS USER_COMMENT
+    FROM
+      MEDIA_TYPE
+    INNER JOIN TAPE
+      ON MEDIA_TYPE.MEDIA_TYPE_ID = TAPE.MEDIA_TYPE_ID
+    WHERE
       TAPE.VID = :VID
   )SQL";
   auto conn = m_connPool->getConn();
@@ -253,14 +253,14 @@ MediaType RdbmsMediaTypeCatalogue::getMediaTypeByVid(const std::string & vid) co
 
 void RdbmsMediaTypeCatalogue::modifyMediaTypeName(const common::dataStructures::SecurityIdentity &admin,
   const std::string &currentName, const std::string &newName) {
-  const time_t now = time(nullptr);
+  const time_t now = std::chrono::system_clock::to_time_t(std::chrono::system_clock::now());
   const char* const sql = R"SQL(
-    UPDATE MEDIA_TYPE SET 
+    UPDATE MEDIA_TYPE SET
       MEDIA_TYPE_NAME = :NEW_MEDIA_TYPE_NAME,
       LAST_UPDATE_USER_NAME = :LAST_UPDATE_USER_NAME,
       LAST_UPDATE_HOST_NAME = :LAST_UPDATE_HOST_NAME,
-      LAST_UPDATE_TIME = :LAST_UPDATE_TIME 
-    WHERE 
+      LAST_UPDATE_TIME = :LAST_UPDATE_TIME
+    WHERE
       MEDIA_TYPE_NAME = :CURRENT_MEDIA_TYPE_NAME
   )SQL";
   auto conn = m_connPool->getConn();
@@ -283,14 +283,14 @@ void RdbmsMediaTypeCatalogue::modifyMediaTypeName(const common::dataStructures::
 
 void RdbmsMediaTypeCatalogue::modifyMediaTypeCartridge(const common::dataStructures::SecurityIdentity &admin,
   const std::string &name, const std::string &cartridge) {
-  const time_t now = time(nullptr);
+  const time_t now = std::chrono::system_clock::to_time_t(std::chrono::system_clock::now());
   const char* const sql = R"SQL(
-    UPDATE MEDIA_TYPE SET 
+    UPDATE MEDIA_TYPE SET
       CARTRIDGE = :CARTRIDGE,
       LAST_UPDATE_USER_NAME = :LAST_UPDATE_USER_NAME,
       LAST_UPDATE_HOST_NAME = :LAST_UPDATE_HOST_NAME,
-      LAST_UPDATE_TIME = :LAST_UPDATE_TIME 
-    WHERE 
+      LAST_UPDATE_TIME = :LAST_UPDATE_TIME
+    WHERE
       MEDIA_TYPE_NAME = :MEDIA_TYPE_NAME
   )SQL";
   auto conn = m_connPool->getConn();
@@ -309,14 +309,14 @@ void RdbmsMediaTypeCatalogue::modifyMediaTypeCartridge(const common::dataStructu
 
 void RdbmsMediaTypeCatalogue::modifyMediaTypeCapacityInBytes(const common::dataStructures::SecurityIdentity &admin,
   const std::string &name, const uint64_t capacityInBytes) {
-  const time_t now = time(nullptr);
+  const time_t now = std::chrono::system_clock::to_time_t(std::chrono::system_clock::now());
   const char* const sql = R"SQL(
-    UPDATE MEDIA_TYPE SET 
+    UPDATE MEDIA_TYPE SET
       CAPACITY_IN_BYTES = :CAPACITY_IN_BYTES,
       LAST_UPDATE_USER_NAME = :LAST_UPDATE_USER_NAME,
       LAST_UPDATE_HOST_NAME = :LAST_UPDATE_HOST_NAME,
-      LAST_UPDATE_TIME = :LAST_UPDATE_TIME 
-    WHERE 
+      LAST_UPDATE_TIME = :LAST_UPDATE_TIME
+    WHERE
       MEDIA_TYPE_NAME = :MEDIA_TYPE_NAME
   )SQL";
   auto conn = m_connPool->getConn();
@@ -335,14 +335,14 @@ void RdbmsMediaTypeCatalogue::modifyMediaTypeCapacityInBytes(const common::dataS
 
 void RdbmsMediaTypeCatalogue::modifyMediaTypePrimaryDensityCode(const common::dataStructures::SecurityIdentity &admin,
   const std::string &name, const uint8_t primaryDensityCode) {
-  const time_t now = time(nullptr);
+  const time_t now = std::chrono::system_clock::to_time_t(std::chrono::system_clock::now());
   const char* const sql = R"SQL(
-    UPDATE MEDIA_TYPE SET 
+    UPDATE MEDIA_TYPE SET
       PRIMARY_DENSITY_CODE = :PRIMARY_DENSITY_CODE,
       LAST_UPDATE_USER_NAME = :LAST_UPDATE_USER_NAME,
       LAST_UPDATE_HOST_NAME = :LAST_UPDATE_HOST_NAME,
-      LAST_UPDATE_TIME = :LAST_UPDATE_TIME 
-    WHERE 
+      LAST_UPDATE_TIME = :LAST_UPDATE_TIME
+    WHERE
       MEDIA_TYPE_NAME = :MEDIA_TYPE_NAME
   )SQL";
   auto conn = m_connPool->getConn();
@@ -361,14 +361,14 @@ void RdbmsMediaTypeCatalogue::modifyMediaTypePrimaryDensityCode(const common::da
 
 void RdbmsMediaTypeCatalogue::modifyMediaTypeSecondaryDensityCode(const common::dataStructures::SecurityIdentity &admin,
   const std::string &name, const uint8_t secondaryDensityCode) {
-  const time_t now = time(nullptr);
+  const time_t now = std::chrono::system_clock::to_time_t(std::chrono::system_clock::now());
   const char* const sql = R"SQL(
-    UPDATE MEDIA_TYPE SET 
+    UPDATE MEDIA_TYPE SET
       SECONDARY_DENSITY_CODE = :SECONDARY_DENSITY_CODE,
       LAST_UPDATE_USER_NAME = :LAST_UPDATE_USER_NAME,
       LAST_UPDATE_HOST_NAME = :LAST_UPDATE_HOST_NAME,
-      LAST_UPDATE_TIME = :LAST_UPDATE_TIME 
-    WHERE 
+      LAST_UPDATE_TIME = :LAST_UPDATE_TIME
+    WHERE
       MEDIA_TYPE_NAME = :MEDIA_TYPE_NAME
   )SQL";
   auto conn = m_connPool->getConn();
@@ -387,14 +387,14 @@ void RdbmsMediaTypeCatalogue::modifyMediaTypeSecondaryDensityCode(const common::
 
 void RdbmsMediaTypeCatalogue::modifyMediaTypeNbWraps(const common::dataStructures::SecurityIdentity &admin,
   const std::string &name, const std::optional<std::uint32_t> &nbWraps) {
-  const time_t now = time(nullptr);
+  const time_t now = std::chrono::system_clock::to_time_t(std::chrono::system_clock::now());
   const char* const sql = R"SQL(
-    UPDATE MEDIA_TYPE SET 
+    UPDATE MEDIA_TYPE SET
       NB_WRAPS = :NB_WRAPS,
       LAST_UPDATE_USER_NAME = :LAST_UPDATE_USER_NAME,
       LAST_UPDATE_HOST_NAME = :LAST_UPDATE_HOST_NAME,
-      LAST_UPDATE_TIME = :LAST_UPDATE_TIME 
-    WHERE 
+      LAST_UPDATE_TIME = :LAST_UPDATE_TIME
+    WHERE
       MEDIA_TYPE_NAME = :MEDIA_TYPE_NAME
   )SQL";
   auto conn = m_connPool->getConn();
@@ -413,14 +413,14 @@ void RdbmsMediaTypeCatalogue::modifyMediaTypeNbWraps(const common::dataStructure
 
 void RdbmsMediaTypeCatalogue::modifyMediaTypeMinLPos(const common::dataStructures::SecurityIdentity &admin,
   const std::string &name, const std::optional<std::uint64_t> &minLPos) {
-  const time_t now = time(nullptr);
+  const time_t now = std::chrono::system_clock::to_time_t(std::chrono::system_clock::now());
   const char* const sql = R"SQL(
-    UPDATE MEDIA_TYPE SET 
+    UPDATE MEDIA_TYPE SET
       MIN_LPOS = :MIN_LPOS,
       LAST_UPDATE_USER_NAME = :LAST_UPDATE_USER_NAME,
       LAST_UPDATE_HOST_NAME = :LAST_UPDATE_HOST_NAME,
-      LAST_UPDATE_TIME = :LAST_UPDATE_TIME 
-    WHERE 
+      LAST_UPDATE_TIME = :LAST_UPDATE_TIME
+    WHERE
       MEDIA_TYPE_NAME = :MEDIA_TYPE_NAME
   )SQL";
   auto conn = m_connPool->getConn();
@@ -439,14 +439,14 @@ void RdbmsMediaTypeCatalogue::modifyMediaTypeMinLPos(const common::dataStructure
 
 void RdbmsMediaTypeCatalogue::modifyMediaTypeMaxLPos(const common::dataStructures::SecurityIdentity &admin,
   const std::string &name, const std::optional<std::uint64_t> &maxLPos) {
-  const time_t now = time(nullptr);
+  const time_t now = std::chrono::system_clock::to_time_t(std::chrono::system_clock::now());
   const char* const sql = R"SQL(
-    UPDATE MEDIA_TYPE SET 
+    UPDATE MEDIA_TYPE SET
       MAX_LPOS = :MAX_LPOS,
       LAST_UPDATE_USER_NAME = :LAST_UPDATE_USER_NAME,
       LAST_UPDATE_HOST_NAME = :LAST_UPDATE_HOST_NAME,
-      LAST_UPDATE_TIME = :LAST_UPDATE_TIME 
-    WHERE 
+      LAST_UPDATE_TIME = :LAST_UPDATE_TIME
+    WHERE
       MEDIA_TYPE_NAME = :MEDIA_TYPE_NAME
   )SQL";
   auto conn = m_connPool->getConn();
@@ -466,14 +466,14 @@ void RdbmsMediaTypeCatalogue::modifyMediaTypeMaxLPos(const common::dataStructure
 void RdbmsMediaTypeCatalogue::modifyMediaTypeComment(const common::dataStructures::SecurityIdentity &admin,
   const std::string &name, const std::string &comment) {
   const auto trimmedComment = RdbmsCatalogueUtils::checkCommentOrReasonMaxLength(comment, &m_log);
-  const time_t now = time(nullptr);
+  const time_t now = std::chrono::system_clock::to_time_t(std::chrono::system_clock::now());
   const char* const sql = R"SQL(
-    UPDATE MEDIA_TYPE SET 
+    UPDATE MEDIA_TYPE SET
       USER_COMMENT = :USER_COMMENT,
       LAST_UPDATE_USER_NAME = :LAST_UPDATE_USER_NAME,
       LAST_UPDATE_HOST_NAME = :LAST_UPDATE_HOST_NAME,
-      LAST_UPDATE_TIME = :LAST_UPDATE_TIME 
-    WHERE 
+      LAST_UPDATE_TIME = :LAST_UPDATE_TIME
+    WHERE
       MEDIA_TYPE_NAME = :MEDIA_TYPE_NAME
   )SQL";
   auto conn = m_connPool->getConn();
@@ -492,15 +492,15 @@ void RdbmsMediaTypeCatalogue::modifyMediaTypeComment(const common::dataStructure
 
 bool RdbmsMediaTypeCatalogue::mediaTypeIsUsedByTapes(rdbms::Conn &conn, const std::string &name) const {
   const char* const sql = R"SQL(
-    SELECT 
-      MEDIA_TYPE.MEDIA_TYPE_NAME 
-    FROM 
-      TAPE 
-    INNER JOIN 
-      MEDIA_TYPE 
-    ON 
-      TAPE.MEDIA_TYPE_ID = MEDIA_TYPE.MEDIA_TYPE_ID 
-    WHERE 
+    SELECT
+      MEDIA_TYPE.MEDIA_TYPE_NAME
+    FROM
+      TAPE
+    INNER JOIN
+      MEDIA_TYPE
+    ON
+      TAPE.MEDIA_TYPE_ID = MEDIA_TYPE.MEDIA_TYPE_ID
+    WHERE
       MEDIA_TYPE.MEDIA_TYPE_NAME = :MEDIA_TYPE_NAME
   )SQL";
   auto stmt = conn.createStmt(sql);
@@ -511,11 +511,11 @@ bool RdbmsMediaTypeCatalogue::mediaTypeIsUsedByTapes(rdbms::Conn &conn, const st
 
 std::optional<uint64_t> RdbmsMediaTypeCatalogue::getMediaTypeId(rdbms::Conn &conn, const std::string &name) const {
   const char* const sql = R"SQL(
-    SELECT 
-      MEDIA_TYPE.MEDIA_TYPE_ID AS MEDIA_TYPE_ID 
-    FROM 
-      MEDIA_TYPE 
-    WHERE 
+    SELECT
+      MEDIA_TYPE.MEDIA_TYPE_ID AS MEDIA_TYPE_ID
+    FROM
+      MEDIA_TYPE
+    WHERE
       MEDIA_TYPE.MEDIA_TYPE_NAME = :MEDIA_TYPE_NAME
   )SQL";
   auto stmt = conn.createStmt(sql);

@@ -1455,7 +1455,7 @@ void RelationalDB::fetchMountInfo(SchedulerDatabase::TapeMountDecisionInfo& tmdi
       auto it = diskSystemSleepMap.find(rjsr.diskSystemName.value());
       if (it != diskSystemSleepMap.end()) {
         const auto &entry = it->second;
-        auto now = static_cast<uint64_t>(::time(nullptr));
+        auto now = static_cast<uint64_t>(std::chrono::system_clock::to_time_t(std::chrono::system_clock::now()));
 
         if (now < (entry.timestamp + entry.sleepTime)) {
           m.sleepingMount = true;

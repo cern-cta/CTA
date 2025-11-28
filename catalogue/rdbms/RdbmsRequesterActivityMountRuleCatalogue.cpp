@@ -35,16 +35,16 @@ RdbmsRequesterActivityMountRuleCatalogue::RdbmsRequesterActivityMountRuleCatalog
 void RdbmsRequesterActivityMountRuleCatalogue::modifyRequesterActivityMountRulePolicy(
   const common::dataStructures::SecurityIdentity &admin, const std::string &instanceName,
   const std::string &requesterName, const std::string &activityRegex, const std::string &mountPolicy) {
-  const time_t now = time(nullptr);
+  const time_t now = std::chrono::system_clock::to_time_t(std::chrono::system_clock::now());
   const char* const sql = R"SQL(
-    UPDATE REQUESTER_ACTIVITY_MOUNT_RULE SET 
+    UPDATE REQUESTER_ACTIVITY_MOUNT_RULE SET
       MOUNT_POLICY_NAME = :MOUNT_POLICY_NAME,
       LAST_UPDATE_USER_NAME = :LAST_UPDATE_USER_NAME,
       LAST_UPDATE_HOST_NAME = :LAST_UPDATE_HOST_NAME,
-      LAST_UPDATE_TIME = :LAST_UPDATE_TIME 
-    WHERE 
-      DISK_INSTANCE_NAME = :DISK_INSTANCE_NAME AND 
-      REQUESTER_NAME = :REQUESTER_NAME AND 
+      LAST_UPDATE_TIME = :LAST_UPDATE_TIME
+    WHERE
+      DISK_INSTANCE_NAME = :DISK_INSTANCE_NAME AND
+      REQUESTER_NAME = :REQUESTER_NAME AND
       ACTIVITY_REGEX = :ACTIVITY_REGEX
   )SQL";
   auto conn = m_connPool->getConn();
@@ -68,16 +68,16 @@ void RdbmsRequesterActivityMountRuleCatalogue::modifyRequesterActivityMountRuleC
   const common::dataStructures::SecurityIdentity &admin, const std::string &instanceName,
   const std::string &requesterName, const std::string &activityRegex, const std::string &comment) {
   const auto trimmedComment = RdbmsCatalogueUtils::checkCommentOrReasonMaxLength(comment, &m_log);
-  const time_t now = time(nullptr);
+  const time_t now = std::chrono::system_clock::to_time_t(std::chrono::system_clock::now());
   const char* const sql = R"SQL(
-    UPDATE REQUESTER_ACTIVITY_MOUNT_RULE SET 
+    UPDATE REQUESTER_ACTIVITY_MOUNT_RULE SET
       USER_COMMENT = :USER_COMMENT,
       LAST_UPDATE_USER_NAME = :LAST_UPDATE_USER_NAME,
       LAST_UPDATE_HOST_NAME = :LAST_UPDATE_HOST_NAME,
-      LAST_UPDATE_TIME = :LAST_UPDATE_TIME 
-    WHERE 
-      DISK_INSTANCE_NAME = :DISK_INSTANCE_NAME AND 
-      REQUESTER_NAME = :REQUESTER_NAME AND 
+      LAST_UPDATE_TIME = :LAST_UPDATE_TIME
+    WHERE
+      DISK_INSTANCE_NAME = :DISK_INSTANCE_NAME AND
+      REQUESTER_NAME = :REQUESTER_NAME AND
       ACTIVITY_REGEX = :ACTIVITY_REGEX
   )SQL";
   auto conn = m_connPool->getConn();
@@ -119,7 +119,7 @@ void RdbmsRequesterActivityMountRuleCatalogue::createRequesterActivityMountRule(
       " because disk-instance " + diskInstanceName + " does not exist");
   }
 
-  const uint64_t now = time(nullptr);
+  const uint64_t now = std::chrono::system_clock::to_time_t(std::chrono::system_clock::now());
   const char* const sql = R"SQL(
     INSERT INTO REQUESTER_ACTIVITY_MOUNT_RULE(
       DISK_INSTANCE_NAME,
@@ -178,7 +178,7 @@ std::list<common::dataStructures::RequesterActivityMountRule>
   RdbmsRequesterActivityMountRuleCatalogue::getRequesterActivityMountRules() const {
   std::list<common::dataStructures::RequesterActivityMountRule> rules;
   const char* const sql = R"SQL(
-    SELECT 
+    SELECT
       DISK_INSTANCE_NAME AS DISK_INSTANCE_NAME,
       REQUESTER_NAME AS REQUESTER_NAME,
       MOUNT_POLICY_NAME AS MOUNT_POLICY_NAME,
@@ -192,10 +192,10 @@ std::list<common::dataStructures::RequesterActivityMountRule>
 
       LAST_UPDATE_USER_NAME AS LAST_UPDATE_USER_NAME,
       LAST_UPDATE_HOST_NAME AS LAST_UPDATE_HOST_NAME,
-      LAST_UPDATE_TIME AS LAST_UPDATE_TIME 
-    FROM 
-      REQUESTER_ACTIVITY_MOUNT_RULE 
-    ORDER BY 
+      LAST_UPDATE_TIME AS LAST_UPDATE_TIME
+    FROM
+      REQUESTER_ACTIVITY_MOUNT_RULE
+    ORDER BY
       DISK_INSTANCE_NAME, REQUESTER_NAME, ACTIVITY_REGEX, MOUNT_POLICY_NAME
   )SQL";
   auto conn = m_connPool->getConn();
@@ -225,11 +225,11 @@ std::list<common::dataStructures::RequesterActivityMountRule>
 void RdbmsRequesterActivityMountRuleCatalogue::deleteRequesterActivityMountRule(const std::string &diskInstanceName,
   const std::string &requesterName, const std::string &activityRegex) {
   const char* const sql = R"SQL(
-    DELETE FROM 
-      REQUESTER_ACTIVITY_MOUNT_RULE 
-    WHERE 
-      DISK_INSTANCE_NAME = :DISK_INSTANCE_NAME AND 
-      REQUESTER_NAME = :REQUESTER_NAME AND 
+    DELETE FROM
+      REQUESTER_ACTIVITY_MOUNT_RULE
+    WHERE
+      DISK_INSTANCE_NAME = :DISK_INSTANCE_NAME AND
+      REQUESTER_NAME = :REQUESTER_NAME AND
       ACTIVITY_REGEX = :ACTIVITY_REGEX
   )SQL";
   auto conn = m_connPool->getConn();

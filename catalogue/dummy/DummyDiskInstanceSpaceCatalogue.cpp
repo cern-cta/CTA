@@ -18,6 +18,7 @@
 #include <list>
 #include <map>
 #include <string>
+#include <chrono>
 
 #include "catalogue/dummy/DummyDiskInstanceSpaceCatalogue.hpp"
 #include "common/dataStructures/DiskInstanceSpace.hpp"
@@ -58,7 +59,7 @@ void DummyDiskInstanceSpaceCatalogue::modifyDiskInstanceSpaceRefreshInterval(
 void DummyDiskInstanceSpaceCatalogue::modifyDiskInstanceSpaceFreeSpace(const std::string &name,
   const std::string &diskInstance, const uint64_t freeSpace) {
   m_diskInstanceSpaces[name].freeSpace = freeSpace;
-  m_diskInstanceSpaces[name].lastRefreshTime = time(nullptr);
+  m_diskInstanceSpaces[name].lastRefreshTime = std::chrono::system_clock::to_time_t(std::chrono::system_clock::now());
 }
 
 void DummyDiskInstanceSpaceCatalogue::modifyDiskInstanceSpaceQueryURL(

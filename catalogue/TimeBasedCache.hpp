@@ -21,9 +21,9 @@
 #include "common/threading/Mutex.hpp"
 #include "common/threading/MutexLocker.hpp"
 
+#include <chrono>
 #include <atomic>
 #include <map>
-#include <time.h>
 
 namespace cta::catalogue {
 
@@ -43,7 +43,7 @@ public:
    * This method updates the cache when necessary.
    */
   template<typename Callable> ValueAndTimeBasedCacheInfo<Value> getCachedValue(const Key &key, const Callable &getNonCachedValue) {
-    const time_t now = time(nullptr);
+    const time_t now = std::chrono::system_clock::to_time_t(std::chrono::system_clock::now());
 
     threading::MutexLocker cacheLock(m_mutex);
     const auto cacheItor = m_cache.find(key);
@@ -57,7 +57,7 @@ public:
         return ValueAndTimeBasedCacheInfo<Value>(cachedValue.value, "Fresh value found in cache");
       } else { // Cached value is stale
         cachedValue.value = getNonCachedValue();
-        cachedValue.timestamp = ::time(nullptr);
+        cachedValue.timestamp = std::chrono::system_clock::to_time_t(std::chrono::system_clock::now());
 
         return ValueAndTimeBasedCacheInfo<Value>(cachedValue.value, "Stale value found and replaced in cache");
       }

@@ -423,7 +423,7 @@ void Scheduler::queueRepack(const common::dataStructures::SecurityIdentity& cliI
   // Check request sanity
   SchedulerDatabase::QueueRepackRequest repackRequestToQueue = repackRequest;
   repackRequestToQueue.m_creationLog =
-    common::dataStructures::EntryLog(cliIdentity.username, cliIdentity.host, ::time(nullptr));
+    common::dataStructures::EntryLog(cliIdentity.username, cliIdentity.host, ::std::chrono::system_clock::to_time_t(std::chrono::system_clock::now()));
   std::string vid = repackRequest.m_vid;
   std::string repackBufferURL = repackRequest.m_repackBufferURL;
   if (vid.empty()) {
@@ -1066,7 +1066,7 @@ void Scheduler::reportDriveStatus(const common::dataStructures::DriveInfo& drive
                                   common::dataStructures::DriveStatus status,
                                   log::LogContext& lc) {
   utils::Timer t;
-  m_tapeDrivesState->reportDriveStatus(driveInfo, type, status, time(nullptr), lc);
+  m_tapeDrivesState->reportDriveStatus(driveInfo, type, status, std::chrono::system_clock::to_time_t(std::chrono::system_clock::now()), lc);
   auto schedulerDbTime = t.secs();
   if (schedulerDbTime > 1) {
     log::ScopedParamContainer spc(lc);
@@ -1434,8 +1434,8 @@ void Scheduler::sortAndGetTapesForMountInfo(
           .add("minBytesToWarrantMount", m_minBytesToWarrantAMount)
           .add("filesQueued", m->filesQueued)
           .add("minFilesToWarrantMount", m_minFilesToWarrantAMount)
-          .add("oldestJobAge", time(nullptr) - m->oldestJobStartTime)
-          .add("youngestJobAge", time(nullptr) - m->youngestJobStartTime)
+          .add("oldestJobAge", std::chrono::system_clock::to_time_t(std::chrono::system_clock::now()) - m->oldestJobStartTime)
+          .add("youngestJobAge", std::chrono::system_clock::to_time_t(std::chrono::system_clock::now()) - m->youngestJobStartTime)
           .add("minRequestAge", m->minRequestAge);
         lc.log(log::ERR,
                "In Scheduler::sortAndGetTapesForMountInfo(): potential repack mount not considered due to lack of "
@@ -1503,7 +1503,7 @@ void Scheduler::sortAndGetTapesForMountInfo(
     if (m->filesQueued / (1 + effectiveExistingMountsForThisTapepool) >= minFilesToWarrantAMount) {
       mountPassesACriteria = true;
     }
-    if (!effectiveExistingMountsForThisTapepool && ((time(nullptr) - m->oldestJobStartTime) > m->minRequestAge)) {
+    if (!effectiveExistingMountsForThisTapepool && ((std::chrono::system_clock::to_time_t(std::chrono::system_clock::now()) - m->oldestJobStartTime) > m->minRequestAge)) {
       mountPassesACriteria = true;
     }
     if (m->sleepingMount) {
@@ -1530,8 +1530,8 @@ void Scheduler::sortAndGetTapesForMountInfo(
         .add("minBytesToWarrantMount", minBytesToWarrantAMount)
         .add("filesQueued", m->filesQueued)
         .add("minFilesToWarrantMount", minFilesToWarrantAMount)
-        .add("oldestJobAge", time(nullptr) - m->oldestJobStartTime)
-        .add("youngestJobAge", time(nullptr) - m->youngestJobStartTime)
+        .add("oldestJobAge", std::chrono::system_clock::to_time_t(std::chrono::system_clock::now()) - m->oldestJobStartTime)
+        .add("youngestJobAge", std::chrono::system_clock::to_time_t(std::chrono::system_clock::now()) - m->youngestJobStartTime)
         .add("minRequestAge", m->minRequestAge)
         .add("voReadMaxDrives", voOfThisPotentialMount.readMaxDrives)
         .add("voWriteMaxDrives", voOfThisPotentialMount.writeMaxDrives)
@@ -1565,8 +1565,8 @@ void Scheduler::sortAndGetTapesForMountInfo(
         .add("minBytesToWarrantMount", m_minBytesToWarrantAMount)
         .add("filesQueued", m->filesQueued)
         .add("minFilesToWarrantMount", m_minFilesToWarrantAMount)
-        .add("oldestJobAge", time(nullptr) - m->oldestJobStartTime)
-        .add("youngestJobAge", time(nullptr) - m->youngestJobStartTime)
+        .add("oldestJobAge", std::chrono::system_clock::to_time_t(std::chrono::system_clock::now()) - m->oldestJobStartTime)
+        .add("youngestJobAge", std::chrono::system_clock::to_time_t(std::chrono::system_clock::now()) - m->youngestJobStartTime)
         .add("minArchiveRequestAge", m->minRequestAge)
         .add("maxDrives", maxDrives)
         .add("voReadMaxDrives", voOfThisPotentialMount.readMaxDrives)
@@ -2114,8 +2114,8 @@ bool Scheduler::getNextMountDryRun(const std::string& logicalLibraryName,
             .add("minBytesToWarrantMount", m_minBytesToWarrantAMount)
             .add("filesQueued", m->filesQueued)
             .add("minFilesToWarrantMount", m_minFilesToWarrantAMount)
-            .add("oldestJobAge", time(nullptr) - m->oldestJobStartTime)
-            .add("youngestJobAge", time(nullptr) - m->youngestJobStartTime)
+            .add("oldestJobAge", std::chrono::system_clock::to_time_t(std::chrono::system_clock::now()) - m->oldestJobStartTime)
+            .add("youngestJobAge", std::chrono::system_clock::to_time_t(std::chrono::system_clock::now()) - m->youngestJobStartTime)
             .add("minArchiveRequestAge", m->minRequestAge)
             .add("getMountInfoTime", getMountInfoTime)
             .add("getTapeInfoTime", getTapeInfoTime)
@@ -2163,8 +2163,8 @@ bool Scheduler::getNextMountDryRun(const std::string& logicalLibraryName,
         .add("minBytesToWarrantMount", m_minBytesToWarrantAMount)
         .add("filesQueued", m->filesQueued)
         .add("minFilesToWarrantMount", m_minFilesToWarrantAMount)
-        .add("oldestJobAge", time(nullptr) - m->oldestJobStartTime)
-        .add("youngestJobAge", time(nullptr) - m->youngestJobStartTime)
+        .add("oldestJobAge", std::chrono::system_clock::to_time_t(std::chrono::system_clock::now()) - m->oldestJobStartTime)
+        .add("youngestJobAge", std::chrono::system_clock::to_time_t(std::chrono::system_clock::now()) - m->youngestJobStartTime)
         .add("minArchiveRequestAge", m->minRequestAge)
         .add("getMountInfoTime", getMountInfoTime)
         .add("getTapeInfoTime", getTapeInfoTime)
@@ -2318,8 +2318,8 @@ std::unique_ptr<TapeMount> Scheduler::getNextMount(const std::string& logicalLib
               .add("minBytesToWarrantMount", m_minBytesToWarrantAMount)
               .add("filesQueued", m->filesQueued)
               .add("minFilesToWarrantMount", m_minFilesToWarrantAMount)
-              .add("oldestJobAge", time(nullptr) - m->oldestJobStartTime)
-              .add("youngestJobAge", time(nullptr) - m->youngestJobStartTime)
+              .add("oldestJobAge", std::chrono::system_clock::to_time_t(std::chrono::system_clock::now()) - m->oldestJobStartTime)
+              .add("youngestJobAge", std::chrono::system_clock::to_time_t(std::chrono::system_clock::now()) - m->youngestJobStartTime)
               .add("minArchiveRequestAge", m->minRequestAge)
               .add("getMountInfoTime", getMountInfoTime)
               .add("queueTrimingTime", queueTrimingTime)
@@ -2396,8 +2396,8 @@ std::unique_ptr<TapeMount> Scheduler::getNextMount(const std::string& logicalLib
           .add("minBytesToWarrantMount", m_minBytesToWarrantAMount)
           .add("filesQueued", m->filesQueued)
           .add("minFilesToWarrantMount", m_minFilesToWarrantAMount)
-          .add("oldestJobAge", time(nullptr) - m->oldestJobStartTime)
-          .add("youngestJobAge", time(nullptr) - m->youngestJobStartTime)
+          .add("oldestJobAge", std::chrono::system_clock::to_time_t(std::chrono::system_clock::now()) - m->oldestJobStartTime)
+          .add("youngestJobAge", std::chrono::system_clock::to_time_t(std::chrono::system_clock::now()) - m->youngestJobStartTime)
           .add("minArchiveRequestAge", m->minRequestAge)
           .add("getMountInfoTime", getMountInfoTime)
           .add("queueTrimingTime", queueTrimingTime)
@@ -2529,8 +2529,8 @@ std::list<common::dataStructures::QueueAndMountSummary> Scheduler::getQueuesAndM
         summary->mountPolicy.archiveMinRequestAge = pm.minRequestAge;
         summary->bytesQueued = pm.bytesQueued;
         summary->filesQueued = pm.filesQueued;
-        summary->oldestJobAge = time(nullptr) - pm.oldestJobStartTime;
-        summary->youngestJobAge = time(nullptr) - pm.youngestJobStartTime;
+        summary->oldestJobAge = std::chrono::system_clock::to_time_t(std::chrono::system_clock::now()) - pm.oldestJobStartTime;
+        summary->youngestJobAge = std::chrono::system_clock::to_time_t(std::chrono::system_clock::now()) - pm.youngestJobStartTime;
         if (pm.mountPolicyNames) {
           summary->mountPolicies = pm.mountPolicyNames.value();
         }
@@ -2547,8 +2547,8 @@ std::list<common::dataStructures::QueueAndMountSummary> Scheduler::getQueuesAndM
         summary->mountPolicy.retrievePriority = pm.priority;
         summary->bytesQueued = pm.bytesQueued;
         summary->filesQueued = pm.filesQueued;
-        summary->oldestJobAge = time(nullptr) - pm.oldestJobStartTime;
-        summary->youngestJobAge = time(nullptr) - pm.youngestJobStartTime;
+        summary->oldestJobAge = std::chrono::system_clock::to_time_t(std::chrono::system_clock::now()) - pm.oldestJobStartTime;
+        summary->youngestJobAge = std::chrono::system_clock::to_time_t(std::chrono::system_clock::now()) - pm.youngestJobStartTime;
         if (pm.mountPolicyNames) {
           summary->mountPolicies = pm.mountPolicyNames.value();
         }

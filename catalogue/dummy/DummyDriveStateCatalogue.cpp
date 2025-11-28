@@ -41,7 +41,7 @@ std::optional<common::dataStructures::TapeDrive> DummyDriveStateCatalogue::getTa
   const std::string &tapeDriveName) const {
   if (m_tapeDriveStatus.driveName != "") return m_tapeDriveStatus;
   common::dataStructures::TapeDrive tapeDriveStatus;
-  const time_t reportTime = time(nullptr);
+  const time_t reportTime = std::chrono::system_clock::to_time_t(std::chrono::system_clock::now());
 
   tapeDriveStatus.driveName = tapeDriveName;
   tapeDriveStatus.host = "Dummy_Host";

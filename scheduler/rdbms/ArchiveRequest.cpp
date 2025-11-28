@@ -62,7 +62,7 @@ ArchiveRequest::makeJobRow(const postgres::ArchiveQueueJob &archiveJob) const {
   ajr->diskFileInfoGid      = m_archiveFile.diskFileInfo.gid;
 
   ajr->creationTime   = m_entryLog.time; // Time received by frontend
-  ajr->startTime      = time(nullptr);   // Time queued in DB
+  ajr->startTime      = std::chrono::system_clock::to_time_t(std::chrono::system_clock::now());   // Time queued in DB
   ajr->requesterName  = m_requesterIdentity.name;
   ajr->requesterGroup = m_requesterIdentity.group;
   // Setting values unique for each job from m_jobs

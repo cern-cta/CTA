@@ -100,7 +100,7 @@ void RepackLsResponseStream::collectRepacks(const std::optional<std::string>& vi
     repackRequestItem->set_failed_to_archive_bytes(repackRequest.failedBytesToArchive);
     repackRequestItem->set_total_failed_files(repackRequest.failedFilesToRetrieve + repackRequest.failedFilesToArchive);
     repackRequestItem->set_status(toString(repackRequest.status));
-    uint64_t repackTime = time(nullptr) - repackRequest.creationLog.time;
+    uint64_t repackTime = std::chrono::system_clock::to_time_t(std::chrono::system_clock::now()) - repackRequest.creationLog.time;
     repackRequestItem->set_repack_finished_time(repackRequest.repackFinishedTime);
     if (repackRequest.repackFinishedTime != 0) {
       //repackFinishedTime != 0: repack is finished

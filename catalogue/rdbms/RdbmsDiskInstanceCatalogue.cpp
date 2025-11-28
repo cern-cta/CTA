@@ -48,7 +48,7 @@ void RdbmsDiskInstanceCatalogue::createDiskInstance(const common::dataStructures
       " because a disk instance with the same name identifier already exists");
   }
 
-  const time_t now = time(nullptr);
+  const time_t now = std::chrono::system_clock::to_time_t(std::chrono::system_clock::now());
   const char* const sql = R"SQL(
     INSERT INTO DISK_INSTANCE(
       DISK_INSTANCE_NAME,
@@ -94,10 +94,10 @@ void RdbmsDiskInstanceCatalogue::createDiskInstance(const common::dataStructures
 
 void RdbmsDiskInstanceCatalogue::deleteDiskInstance(const std::string &name) {
   const char* const delete_sql = R"SQL(
-    DELETE 
-    FROM 
-      DISK_INSTANCE 
-    WHERE 
+    DELETE
+    FROM
+      DISK_INSTANCE
+    WHERE
       DISK_INSTANCE_NAME = :DISK_INSTANCE_NAME
   )SQL";
   auto conn = m_connPool->getConn();
@@ -128,14 +128,14 @@ void RdbmsDiskInstanceCatalogue::modifyDiskInstanceComment(const common::dataStr
   }
   const auto trimmedComment = RdbmsCatalogueUtils::checkCommentOrReasonMaxLength(comment, &m_log);
 
-  const time_t now = time(nullptr);
+  const time_t now = std::chrono::system_clock::to_time_t(std::chrono::system_clock::now());
   const char* const sql = R"SQL(
-    UPDATE DISK_INSTANCE SET 
+    UPDATE DISK_INSTANCE SET
       USER_COMMENT = :USER_COMMENT,
       LAST_UPDATE_USER_NAME = :LAST_UPDATE_USER_NAME,
       LAST_UPDATE_HOST_NAME = :LAST_UPDATE_HOST_NAME,
-      LAST_UPDATE_TIME = :LAST_UPDATE_TIME 
-    WHERE 
+      LAST_UPDATE_TIME = :LAST_UPDATE_TIME
+    WHERE
       DISK_INSTANCE_NAME = :DISK_INSTANCE_NAME
   )SQL";
   auto conn = m_connPool->getConn();
@@ -155,7 +155,7 @@ void RdbmsDiskInstanceCatalogue::modifyDiskInstanceComment(const common::dataStr
 std::list<common::dataStructures::DiskInstance> RdbmsDiskInstanceCatalogue::getAllDiskInstances() const {
   std::list<common::dataStructures::DiskInstance> diskInstanceList;
   const char* const sql = R"SQL(
-    SELECT 
+    SELECT
       DISK_INSTANCE.DISK_INSTANCE_NAME AS DISK_INSTANCE_NAME,
 
       DISK_INSTANCE.USER_COMMENT AS USER_COMMENT,
@@ -166,8 +166,8 @@ std::list<common::dataStructures::DiskInstance> RdbmsDiskInstanceCatalogue::getA
 
       DISK_INSTANCE.LAST_UPDATE_USER_NAME AS LAST_UPDATE_USER_NAME,
       DISK_INSTANCE.LAST_UPDATE_HOST_NAME AS LAST_UPDATE_HOST_NAME,
-      DISK_INSTANCE.LAST_UPDATE_TIME AS LAST_UPDATE_TIME 
-    FROM 
+      DISK_INSTANCE.LAST_UPDATE_TIME AS LAST_UPDATE_TIME
+    FROM
       DISK_INSTANCE
   )SQL";
 

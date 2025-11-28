@@ -342,7 +342,7 @@ public:
     tapeDrive.diskSystemName = "dummyDiskSystemName";
     tapeDrive.reservedBytes = 694498291384;
     tapeDrive.reservationSessionId = 0;
-    cta::common::dataStructures::EntryLog log = {"admin", "myHost", time(nullptr)};
+    cta::common::dataStructures::EntryLog log = {"admin", "myHost", std::chrono::system_clock::to_time_t(std::chrono::system_clock::now())};
     tapeDrive.creationLog = log;
     tapeDrive.lastModificationLog = log;
     return tapeDrive;
@@ -5804,7 +5804,7 @@ TEST_P(SchedulerTest, getNextMountEmptyArchiveForRepackIfNbFilesQueuedIsLessThan
     ar->setArchiveErrorReportURL("");
     ar->setRequester(cta::common::dataStructures::RequesterIdentity("user0", "group0"));
     ar->setSrcURL("root://eoseos/myFile");
-    ar->setEntryLog(cta::common::dataStructures::EntryLog("user0", "host0", time(nullptr)));
+    ar->setEntryLog(cta::common::dataStructures::EntryLog("user0", "host0", std::chrono::system_clock::to_time_t(std::chrono::system_clock::now())));
     sorter.insertArchiveRequest(ar, agentReference, lc);
     ar->insert();
   }
@@ -5840,7 +5840,7 @@ TEST_P(SchedulerTest, getNextMountEmptyArchiveForRepackIfNbFilesQueuedIsLessThan
     ar->setArchiveErrorReportURL("");
     ar->setRequester(cta::common::dataStructures::RequesterIdentity("user0", "group0"));
     ar->setSrcURL("root://eoseos/myFile");
-    ar->setEntryLog(cta::common::dataStructures::EntryLog("user0", "host0", time(nullptr)));
+    ar->setEntryLog(cta::common::dataStructures::EntryLog("user0", "host0", std::chrono::system_clock::to_time_t(std::chrono::system_clock::now())));
     sorter.insertArchiveRequest(ar, agentReference, lc);
     ar->insert();
   }
@@ -6897,7 +6897,7 @@ TEST_P(SchedulerTest, retrieveArchiveAllTypesMaxDrivesVoInFlightChangeScheduleMo
     ar->setArchiveErrorReportURL("");
     ar->setRequester(cta::common::dataStructures::RequesterIdentity("user0", "group0"));
     ar->setSrcURL("root://eoseos/myFile");
-    ar->setEntryLog(cta::common::dataStructures::EntryLog("user0", "host0", time(nullptr)));
+    ar->setEntryLog(cta::common::dataStructures::EntryLog("user0", "host0", std::chrono::system_clock::to_time_t(std::chrono::system_clock::now())));
     sorter.insertArchiveRequest(ar, agentReference, lc);
     ar->insert();
   }
@@ -7038,7 +7038,7 @@ TEST_P(SchedulerTest, toTransfereRetrieveQueueMissingReservationInfo)
   retrieveJobToAdd.copyNb = 1;
   retrieveJobToAdd.fSeq = 1;
   retrieveJobToAdd.fileSize = 1;
-  retrieveJobToAdd.startTime = time(nullptr);
+  retrieveJobToAdd.startTime = std::chrono::system_clock::to_time_t(std::chrono::system_clock::now());
   retrieveJobToAdd.retrieveRequestAddress = "";
 
   cta::objectstore::RetrieveQueue retrieveQueue1(retrieveQueueAddress,backend);
@@ -7137,7 +7137,7 @@ TEST_P(SchedulerTest, getQueuesAndMountSummariesTest)
   retrieveJobToAdd.copyNb = 1;
   retrieveJobToAdd.fSeq = 1;
   retrieveJobToAdd.fileSize = 1;
-  retrieveJobToAdd.startTime = time(nullptr);
+  retrieveJobToAdd.startTime = std::chrono::system_clock::to_time_t(std::chrono::system_clock::now());
   retrieveJobToAdd.retrieveRequestAddress = "";
 
   cta::objectstore::RetrieveQueue retrieveQueue1(retrieveQueueAddress,backend);
@@ -7174,7 +7174,7 @@ TEST_P(SchedulerTest, getQueuesAndMountSummariesTest)
   cta::objectstore::ArchiveQueue::JobToAdd archiveJobToAdd;
   archiveJobToAdd.archiveFileId = 1;
   archiveJobToAdd.fileSize = 2;
-  archiveJobToAdd.startTime = time(nullptr);
+  archiveJobToAdd.startTime = std::chrono::system_clock::to_time_t(std::chrono::system_clock::now());
 
   cta::objectstore::ArchiveQueue aq(archiveForUserQueueAddress,backend);
   {
@@ -7196,7 +7196,7 @@ TEST_P(SchedulerTest, getQueuesAndMountSummariesTest)
   cta::objectstore::ArchiveQueue::JobToAdd repackArchiveJob;
   repackArchiveJob.archiveFileId = 2;
   repackArchiveJob.fileSize = 3;
-  repackArchiveJob.startTime = time(nullptr);
+  repackArchiveJob.startTime = std::chrono::system_clock::to_time_t(std::chrono::system_clock::now());
 
   cta::objectstore::ArchiveQueue repackArchiveQueue(archiveForRepackQueueAddress,backend);
   {
@@ -7370,7 +7370,7 @@ TEST_P(SchedulerTest, getNextMountWithArchiveForUserAndArchiveForRepackShouldRet
     ar->setArchiveErrorReportURL("");
     ar->setRequester(cta::common::dataStructures::RequesterIdentity("user0", "group0"));
     ar->setSrcURL("root://eoseos/myFile");
-    ar->setEntryLog(cta::common::dataStructures::EntryLog("user0", "host0", time(nullptr)));
+    ar->setEntryLog(cta::common::dataStructures::EntryLog("user0", "host0", std::chrono::system_clock::to_time_t(std::chrono::system_clock::now())));
     sorter.insertArchiveRequest(ar, agentReference, lc);
     ar->insert();
   }
@@ -7430,7 +7430,7 @@ TEST_P(SchedulerTest, getNextMountWithArchiveForUserAndArchiveForRepackShouldRet
     ar->setArchiveErrorReportURL("");
     ar->setRequester(cta::common::dataStructures::RequesterIdentity("user0", "group0"));
     ar->setSrcURL("root://eoseos/myFile");
-    ar->setEntryLog(cta::common::dataStructures::EntryLog("user0", "host0", time(nullptr)));
+    ar->setEntryLog(cta::common::dataStructures::EntryLog("user0", "host0", std::chrono::system_clock::to_time_t(std::chrono::system_clock::now())));
     sorter.insertArchiveRequest(ar, agentReference, lc);
     ar->insert();
   }
@@ -7503,7 +7503,7 @@ TEST_P(SchedulerTest, testCleaningUpKeepingTapePoolName) {
     TapeDrivesCatalogueState tapeDriveState(catalogue);
     cta::common::dataStructures::DriveInfo driveInfo = { driveName, "myHost", s_libraryName };
     tapeDriveState.reportDriveStatus(driveInfo, cta::common::dataStructures::MountType::NoMount,
-      cta::common::dataStructures::DriveStatus::CleaningUp, time(nullptr), lc);
+      cta::common::dataStructures::DriveStatus::CleaningUp, std::chrono::system_clock::to_time_t(std::chrono::system_clock::now()), lc);
   }
 
   // Create the environment for the migration to happen (library + tape)
@@ -7546,7 +7546,7 @@ TEST_P(SchedulerTest, testCleaningUpWithoutTapePoolName) {
     TapeDrivesCatalogueState tapeDriveState(catalogue);
     cta::common::dataStructures::DriveInfo driveInfo = { "drive0", "myHost", s_libraryName };
     tapeDriveState.reportDriveStatus(driveInfo, cta::common::dataStructures::MountType::NoMount,
-      cta::common::dataStructures::DriveStatus::CleaningUp, time(nullptr), lc);
+      cta::common::dataStructures::DriveStatus::CleaningUp, std::chrono::system_clock::to_time_t(std::chrono::system_clock::now()), lc);
   }
 
   // Create the environment for the migration to happen (library + tape)
@@ -7595,7 +7595,7 @@ TEST_P(SchedulerTest, testShutdownKeepingTapePoolName) {
     TapeDrivesCatalogueState tapeDriveState(catalogue);
     cta::common::dataStructures::DriveInfo driveInfo = { driveName, "myHost", s_libraryName };
     tapeDriveState.reportDriveStatus(driveInfo, cta::common::dataStructures::MountType::NoMount,
-      cta::common::dataStructures::DriveStatus::Shutdown, time(nullptr), lc);
+      cta::common::dataStructures::DriveStatus::Shutdown, std::chrono::system_clock::to_time_t(std::chrono::system_clock::now()), lc);
   }
 
   // Create the environment for the migration to happen (library + tape)

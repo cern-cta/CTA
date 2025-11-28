@@ -272,7 +272,7 @@ void WorkflowEvent::processCLOSEW(xrd::Response& response) {
   request.archiveErrorReportURL  = m_event.transport().error_report_url();
   request.creationLog.host       = m_cliIdentity.host;
   request.creationLog.username   = m_cliIdentity.username;
-  request.creationLog.time       = time(nullptr);
+  request.creationLog.time       = std::chrono::system_clock::to_time_t(std::chrono::system_clock::now());
 
   log::ScopedParamContainer params(m_lc);
   params.add("requesterInstance", m_event.wf().requester_instance());
@@ -345,7 +345,7 @@ void WorkflowEvent::processPREPARE(xrd::Response& response) {
   request.diskFileInfo.path      = m_event.file().lpath();
   request.creationLog.host       = m_cliIdentity.host;
   request.creationLog.username   = m_cliIdentity.username;
-  request.creationLog.time       = time(nullptr);
+  request.creationLog.time       = std::chrono::system_clock::to_time_t(std::chrono::system_clock::now());
   request.isVerifyOnly           = m_event.wf().verify_only();
   if (request.isVerifyOnly) {
      request.mountPolicy = m_verificationMountPolicy;

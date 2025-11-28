@@ -384,7 +384,7 @@ namespace cta::schedulerdb {
                         repackInfo.repackReqId,
                         repackInfo.isExpandFinished,
                         RepackJobStatus::RRS_Failed,
-                        time(nullptr));
+                        std::chrono::system_clock::to_time_t(std::chrono::system_clock::now()));
 
         log::ScopedParamContainer(m_lc).add("nrows", nrows)
                 .add("newStatus", to_string(RepackJobStatus::RRS_Failed))
@@ -423,7 +423,7 @@ namespace cta::schedulerdb {
       if (newStatus == common::dataStructures::RepackInfo::Status::Complete ||
           newStatus == common::dataStructures::RepackInfo::Status::Failed) {
 
-        repackInfo.repackFinishedTime = time(nullptr);
+        repackInfo.repackFinishedTime = std::chrono::system_clock::to_time_t(std::chrono::system_clock::now());
         log::ScopedParamContainer(m_lc)
                 .add("newStatus", to_string(mapRepackInfoStatusToJobStatus(newStatus))).log(
                 log::DEBUG,

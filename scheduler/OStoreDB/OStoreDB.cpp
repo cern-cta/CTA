@@ -460,7 +460,7 @@ void OStoreDB::fetchMountInfo(SchedulerDatabase::TapeMountDecisionInfo& tmdi,
           m.mountPolicyCountMap = rqSummary.mountPolicyCountMap;
           // We will display the sleep flag only if it is not expired (15 minutes timeout, hardcoded).
           // This allows having a single decision point instead of implementing is at the consumer levels.
-          if (rqSummary.sleepInfo && (::time(nullptr) < (rqSummary.sleepInfo.value().sleepStartTime +
+          if (rqSummary.sleepInfo && (::std::chrono::system_clock::to_time_t(std::chrono::system_clock::now()) < (rqSummary.sleepInfo.value().sleepStartTime +
                                                          (int64_t) rqSummary.sleepInfo.value().sleepTime))) {
             m.sleepingMount = true;
             m.sleepStartTime = rqSummary.sleepInfo.value().sleepStartTime;
@@ -490,7 +490,7 @@ void OStoreDB::fetchMountInfo(SchedulerDatabase::TapeMountDecisionInfo& tmdi,
         m.mountPolicyCountMap = rqSummary.mountPolicyCountMap;
         // We will display the sleep flag only if it is not expired (15 minutes timeout, hardcoded).
         // This allows having a single decision point instead of implementing is at the consumer levels.
-        if (rqSummary.sleepInfo && (::time(nullptr) < (rqSummary.sleepInfo.value().sleepStartTime +
+        if (rqSummary.sleepInfo && (::std::chrono::system_clock::to_time_t(std::chrono::system_clock::now()) < (rqSummary.sleepInfo.value().sleepStartTime +
                                                        (int64_t) rqSummary.sleepInfo.value().sleepTime))) {
           m.sleepingMount = true;
           m.sleepStartTime = rqSummary.sleepInfo.value().sleepStartTime;
@@ -3771,7 +3771,7 @@ void OStoreDB::RetrieveMount::putQueueToSleep(const std::string& diskSystemName,
                                                       queueType,
                                                       logContext);
 
-  rq.setSleepForFreeSpaceStartTimeAndName(::time(nullptr), diskSystemName, sleepTime);
+  rq.setSleepForFreeSpaceStartTimeAndName(::std::chrono::system_clock::to_time_t(std::chrono::system_clock::now()), diskSystemName, sleepTime);
   rq.commit();
   lock.release();
 }
@@ -3855,7 +3855,7 @@ void OStoreDB::RetrieveMount::setTapeSessionStats(const castor::tape::tapeserver
   driveInfo.host = mountInfo.host;
 
   ReportDriveStatsInputs inputs;
-  inputs.reportTime = time(nullptr);
+  inputs.reportTime = std::chrono::system_clock::to_time_t(std::chrono::system_clock::now());
   inputs.bytesTransferred = stats.dataVolume;
   inputs.filesTransferred = stats.filesCount;
 
@@ -3933,7 +3933,7 @@ void OStoreDB::RetrieveMount::AsyncJobCaller::operator()(
       .add("mountType", "RetrieveForUser")
       .add("fileId", m_pOsdbJob->archiveFile.archiveFileID)
       .log(cta::log::INFO, "In OStoreDB::RetrieveMount::flushAsyncSuccessReports(), retrieve job successful");
-    m_pOsdbJob->retrieveRequest.lifecycleTimings.completed_time = time(nullptr);
+    m_pOsdbJob->retrieveRequest.lifecycleTimings.completed_time = std::chrono::system_clock::to_time_t(std::chrono::system_clock::now());
     m_rjToUnown.push_back(m_pOsdbJob->m_retrieveRequest.getAddressIfSet());
     cta::common::dataStructures::LifecycleTimings requestTimings = m_pOsdbJob->retrieveRequest.lifecycleTimings;
     log::ScopedParamContainer(m_lc)
@@ -3976,7 +3976,7 @@ void OStoreDB::RetrieveMount::AsyncJobCaller::operator()(
       .add("mountType", "RetrieveForUser")
       .add("fileId", m_pOsdbJob->archiveFile.archiveFileID)
       .log(cta::log::INFO, "In OStoreDB::RetrieveMount::flushAsyncSuccessReports(), retrieve job successful");
-    m_pOsdbJob->retrieveRequest.lifecycleTimings.completed_time = time(nullptr);
+    m_pOsdbJob->retrieveRequest.lifecycleTimings.completed_time = std::chrono::system_clock::to_time_t(std::chrono::system_clock::now());
     m_jobsToRequeueForReportToUser[m_pOsdbJob->m_retrieveRequest.getAddressIfSet()].emplace_back(m_pOsdbJob);
   } catch (const cta::exception::NoSuchObject& ex) {
     log::ScopedParamContainer(m_lc)
@@ -4196,7 +4196,7 @@ void OStoreDB::ArchiveMount::setTapeSessionStats(const castor::tape::tapeserver:
   driveInfo.host = mountInfo.host;
 
   ReportDriveStatsInputs inputs;
-  inputs.reportTime = time(nullptr);
+  inputs.reportTime = std::chrono::system_clock::to_time_t(std::chrono::system_clock::now());
   inputs.bytesTransferred = stats.dataVolume;
   inputs.filesTransferred = stats.filesCount;
 

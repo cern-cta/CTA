@@ -188,13 +188,13 @@ TEST_P(SchedulerDatabaseTest, createManyArchiveJobs) {
       afqc.mountPolicy.archiveMinRequestAge = 0;
       afqc.mountPolicy.retrievePriority = 1;
       afqc.mountPolicy.retrieveMinRequestAge = 0;
-      afqc.mountPolicy.creationLog = { "u", "h", time(nullptr)};
-      afqc.mountPolicy.lastModificationLog = { "u", "h", time(nullptr)};
+      afqc.mountPolicy.creationLog = { "u", "h", std::chrono::system_clock::to_time_t(std::chrono::system_clock::now())};
+      afqc.mountPolicy.lastModificationLog = { "u", "h", std::chrono::system_clock::to_time_t(std::chrono::system_clock::now())};
       afqc.mountPolicy.comment = "comment";
       afqc.fileId = i;
       ar.archiveReportURL="";
       ar.checksumBlob.insert(cta::checksum::NONE, "");
-      ar.creationLog = { "user", "host", time(nullptr)};
+      ar.creationLog = { "user", "host", std::chrono::system_clock::to_time_t(std::chrono::system_clock::now())};
       uuid_t fileUUID;
       uuid_generate(fileUUID);
       char fileUUIDStr[37];
@@ -266,13 +266,13 @@ TEST_P(SchedulerDatabaseTest, createManyArchiveJobs) {
       afqc.mountPolicy.archiveMinRequestAge = 0;
       afqc.mountPolicy.retrievePriority = 1;
       afqc.mountPolicy.retrieveMinRequestAge = 0;
-      afqc.mountPolicy.creationLog = { "u", "h", time(nullptr)};
-      afqc.mountPolicy.lastModificationLog = { "u", "h", time(nullptr)};
+      afqc.mountPolicy.creationLog = { "u", "h", std::chrono::system_clock::to_time_t(std::chrono::system_clock::now())};
+      afqc.mountPolicy.lastModificationLog = { "u", "h", std::chrono::system_clock::to_time_t(std::chrono::system_clock::now())};
       afqc.mountPolicy.comment = "comment";
       afqc.fileId = i;
       ar.archiveReportURL="";
       ar.checksumBlob.insert(cta::checksum::NONE, "");
-      ar.creationLog = { "user", "host", time(nullptr)};
+      ar.creationLog = { "user", "host", std::chrono::system_clock::to_time_t(std::chrono::system_clock::now())};
       uuid_t fileUUID;
       uuid_generate(fileUUID);
       char fileUUIDStr[37];
@@ -356,14 +356,14 @@ TEST_P(SchedulerDatabaseTest, putExistingQueueToSleep) {
       rfqc.mountPolicy.archiveMinRequestAge = 0;
       rfqc.mountPolicy.retrievePriority = 1;
       rfqc.mountPolicy.retrieveMinRequestAge = 0;
-      rfqc.mountPolicy.creationLog = { "u", "h", time(nullptr)};
-      rfqc.mountPolicy.lastModificationLog = { "u", "h", time(nullptr)};
+      rfqc.mountPolicy.creationLog = { "u", "h", std::chrono::system_clock::to_time_t(std::chrono::system_clock::now())};
+      rfqc.mountPolicy.lastModificationLog = { "u", "h", std::chrono::system_clock::to_time_t(std::chrono::system_clock::now())};
       rfqc.mountPolicy.comment = "comment";
       rfqc.archiveFile.fileSize = 1000;
       rfqc.archiveFile.tapeFiles.push_back(cta::common::dataStructures::TapeFile());
       rfqc.archiveFile.tapeFiles.back().fSeq = 0;
       rfqc.archiveFile.tapeFiles.back().vid = "vid";
-      rr.creationLog = { "user", "host", time(nullptr)};
+      rr.creationLog = { "user", "host", std::chrono::system_clock::to_time_t(std::chrono::system_clock::now())};
       uuid_t fileUUID;
       uuid_generate(fileUUID);
       char fileUUIDStr[37];
@@ -436,14 +436,14 @@ TEST_P(SchedulerDatabaseTest, createQueueAndPutToSleep) {
       rfqc.mountPolicy.archiveMinRequestAge = 0;
       rfqc.mountPolicy.retrievePriority = 1;
       rfqc.mountPolicy.retrieveMinRequestAge = 0;
-      rfqc.mountPolicy.creationLog = { "u", "h", time(nullptr)};
-      rfqc.mountPolicy.lastModificationLog = { "u", "h", time(nullptr)};
+      rfqc.mountPolicy.creationLog = { "u", "h", std::chrono::system_clock::to_time_t(std::chrono::system_clock::now())};
+      rfqc.mountPolicy.lastModificationLog = { "u", "h", std::chrono::system_clock::to_time_t(std::chrono::system_clock::now())};
       rfqc.mountPolicy.comment = "comment";
       rfqc.archiveFile.fileSize = 1000;
       rfqc.archiveFile.tapeFiles.push_back(cta::common::dataStructures::TapeFile());
       rfqc.archiveFile.tapeFiles.back().fSeq = 0;
       rfqc.archiveFile.tapeFiles.back().vid = "vid";
-      rr.creationLog = { "user", "host", time(nullptr)};
+      rr.creationLog = { "user", "host", std::chrono::system_clock::to_time_t(std::chrono::system_clock::now())};
       uuid_t fileUUID;
       uuid_generate(fileUUID);
       char fileUUIDStr[37];
@@ -481,7 +481,7 @@ TEST_P(SchedulerDatabaseTest, popAndRequeueArchiveRequests) {
   const size_t filesToDo = 10;
   std::list<std::future<void>> jobInsertions;
   std::list<std::function<void()>> lambdas;
-  auto creationTime =  time(nullptr);
+  auto creationTime =  std::chrono::system_clock::to_time_t(std::chrono::system_clock::now());
   for (size_t id = 0; id < filesToDo; id++) {
     lambdas.emplace_back(
     [id,&db, creationTime, &lc](){
@@ -495,8 +495,8 @@ TEST_P(SchedulerDatabaseTest, popAndRequeueArchiveRequests) {
       afqc.mountPolicy.archiveMinRequestAge = 0;
       afqc.mountPolicy.retrievePriority = 1;
       afqc.mountPolicy.retrieveMinRequestAge = 0;
-      afqc.mountPolicy.creationLog = { "u", "h", time(nullptr)};
-      afqc.mountPolicy.lastModificationLog = { "u", "h", time(nullptr)};
+      afqc.mountPolicy.creationLog = { "u", "h", std::chrono::system_clock::to_time_t(std::chrono::system_clock::now())};
+      afqc.mountPolicy.lastModificationLog = { "u", "h", std::chrono::system_clock::to_time_t(std::chrono::system_clock::now())};
       afqc.mountPolicy.comment = "comment";
       afqc.fileId = id;
       ar.archiveReportURL="";
@@ -573,7 +573,7 @@ TEST_P(SchedulerDatabaseTest, popAndRequeueRetrieveRequests) {
   const size_t filesToDo = 10;
   std::list<std::future<void>> jobInsertions;
   std::list<std::function<void()>> lambdas;
-  auto creationTime =  time(nullptr);
+  auto creationTime =  std::chrono::system_clock::to_time_t(std::chrono::system_clock::now());
   for (size_t id = 0; id < filesToDo; id++) {
     lambdas.emplace_back(
     [id,&db,&lc, creationTime, diskSystemList](){
@@ -673,14 +673,14 @@ TEST_P(SchedulerDatabaseTest, popRetrieveRequestsWithDisksytem) {
       rfqc.mountPolicy.archiveMinRequestAge = 0;
       rfqc.mountPolicy.retrievePriority = 1;
       rfqc.mountPolicy.retrieveMinRequestAge = 0;
-      rfqc.mountPolicy.creationLog = { "u", "h", time(nullptr)};
-      rfqc.mountPolicy.lastModificationLog = { "u", "h", time(nullptr)};
+      rfqc.mountPolicy.creationLog = { "u", "h", std::chrono::system_clock::to_time_t(std::chrono::system_clock::now())};
+      rfqc.mountPolicy.lastModificationLog = { "u", "h", std::chrono::system_clock::to_time_t(std::chrono::system_clock::now())};
       rfqc.mountPolicy.comment = "comment";
       rfqc.archiveFile.fileSize = 1000;
       rfqc.archiveFile.tapeFiles.push_back(cta::common::dataStructures::TapeFile());
       rfqc.archiveFile.tapeFiles.back().fSeq = id;
       rfqc.archiveFile.tapeFiles.back().vid = "vid";
-      rr.creationLog = { "user", "host", time(nullptr)};
+      rr.creationLog = { "user", "host", std::chrono::system_clock::to_time_t(std::chrono::system_clock::now())};
       uuid_t fileUUID;
       uuid_generate(fileUUID);
       char fileUUIDStr[37];
@@ -764,14 +764,14 @@ TEST_P(SchedulerDatabaseTest, popRetrieveRequestsWithBackpressure) {
       rfqc.mountPolicy.archiveMinRequestAge = 0;
       rfqc.mountPolicy.retrievePriority = 1;
       rfqc.mountPolicy.retrieveMinRequestAge = 0;
-      rfqc.mountPolicy.creationLog = { "u", "h", time(nullptr)};
-      rfqc.mountPolicy.lastModificationLog = { "u", "h", time(nullptr)};
+      rfqc.mountPolicy.creationLog = { "u", "h", std::chrono::system_clock::to_time_t(std::chrono::system_clock::now())};
+      rfqc.mountPolicy.lastModificationLog = { "u", "h", std::chrono::system_clock::to_time_t(std::chrono::system_clock::now())};
       rfqc.mountPolicy.comment = "comment";
       rfqc.archiveFile.fileSize = 1000;
       rfqc.archiveFile.tapeFiles.push_back(cta::common::dataStructures::TapeFile());
       rfqc.archiveFile.tapeFiles.back().fSeq = id;
       rfqc.archiveFile.tapeFiles.back().vid = "vid";
-      rr.creationLog = { "user", "host", time(nullptr)};
+      rr.creationLog = { "user", "host", std::chrono::system_clock::to_time_t(std::chrono::system_clock::now())};
       uuid_t fileUUID;
       uuid_generate(fileUUID);
       char fileUUIDStr[37];
@@ -855,14 +855,14 @@ TEST_P(SchedulerDatabaseTest, popRetrieveRequestsWithDiskSystemNotFetcheable) {
       rfqc.mountPolicy.archiveMinRequestAge = 0;
       rfqc.mountPolicy.retrievePriority = 1;
       rfqc.mountPolicy.retrieveMinRequestAge = 0;
-      rfqc.mountPolicy.creationLog = { "u", "h", time(nullptr)};
-      rfqc.mountPolicy.lastModificationLog = { "u", "h", time(nullptr)};
+      rfqc.mountPolicy.creationLog = { "u", "h", std::chrono::system_clock::to_time_t(std::chrono::system_clock::now())};
+      rfqc.mountPolicy.lastModificationLog = { "u", "h", std::chrono::system_clock::to_time_t(std::chrono::system_clock::now())};
       rfqc.mountPolicy.comment = "comment";
       rfqc.archiveFile.fileSize = 1000;
       rfqc.archiveFile.tapeFiles.push_back(cta::common::dataStructures::TapeFile());
       rfqc.archiveFile.tapeFiles.back().fSeq = id;
       rfqc.archiveFile.tapeFiles.back().vid = "vid";
-      rr.creationLog = { "user", "host", time(nullptr)};
+      rr.creationLog = { "user", "host", std::chrono::system_clock::to_time_t(std::chrono::system_clock::now())};
       uuid_t fileUUID;
       uuid_generate(fileUUID);
       char fileUUIDStr[37];

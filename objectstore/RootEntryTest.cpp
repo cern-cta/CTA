@@ -62,7 +62,7 @@ TEST_F(ObjectStore, RootEntryBasicAccess) {
     cta::objectstore::Agent agent(agentRef.getAgentAddress(), be);
     re.fetch();
     cta::objectstore::EntryLogSerDeser el("user0",
-      "unittesthost", time(nullptr));
+      "unittesthost", std::chrono::system_clock::to_time_t(std::chrono::system_clock::now()));
     re.addOrGetAgentRegisterPointerAndCommit(agentRef, el, lc);
     ASSERT_NO_THROW(re.getAgentRegisterAddress());
     re.commit();
@@ -81,7 +81,7 @@ TEST_F(ObjectStore, RootEntryArchiveQueues) {
   using cta::common::dataStructures::JobQueueType;
   cta::objectstore::BackendVFS be;
   cta::objectstore::EntryLogSerDeser el("user0",
-    "unittesthost", time(nullptr));
+    "unittesthost", std::chrono::system_clock::to_time_t(std::chrono::system_clock::now()));
   cta::log::DummyLogger dl("dummy", "dummyLogger");
   cta::log::LogContext lc(dl);
   cta::objectstore::AgentReference agr("UnitTests", dl);
@@ -149,7 +149,7 @@ TEST_F(ObjectStore, RootEntryDriveRegister) {
     re.insert();
   }
   cta::objectstore::EntryLogSerDeser el("user0",
-    "unittesthost", time(nullptr));
+    "unittesthost", std::chrono::system_clock::to_time_t(std::chrono::system_clock::now()));
   cta::log::DummyLogger dl("dummy", "dummyLogger");
   cta::log::LogContext lc(dl);
   cta::objectstore::AgentReference agr("UnitTests", dl);
@@ -205,7 +205,7 @@ TEST_F(ObjectStore, RootEntryAgentRegister) {
     re.insert();
   }
   cta::objectstore::EntryLogSerDeser el("user0",
-    "unittesthost", time(nullptr));
+    "unittesthost", std::chrono::system_clock::to_time_t(std::chrono::system_clock::now()));
   cta::log::DummyLogger dl("dummy", "dummyLogger");
   cta::log::LogContext lc(dl);
   cta::objectstore::AgentReference agr("UnitTests", dl);
@@ -255,7 +255,7 @@ TEST_F(ObjectStore, RootEntrySchedulerGlobalLock) {
     re.insert();
   }
   cta::objectstore::EntryLogSerDeser el("user0",
-    "unittesthost", time(nullptr));
+    "unittesthost", std::chrono::system_clock::to_time_t(std::chrono::system_clock::now()));
   cta::log::DummyLogger dl("dummy", "dummyLogger");
   cta::log::LogContext lc(dl);
   cta::objectstore::AgentReference agr("UnitTests", dl);
@@ -306,7 +306,7 @@ TEST_F(ObjectStore, RetrieveQueueToReportToRepackForSuccessRootEntryTest) {
   using cta::common::dataStructures::JobQueueType;
   cta::objectstore::BackendVFS be;
   cta::objectstore::EntryLogSerDeser el("user0",
-    "unittesthost", time(nullptr));
+    "unittesthost", std::chrono::system_clock::to_time_t(std::chrono::system_clock::now()));
   cta::log::DummyLogger dl("dummy", "dummyLogger");
   cta::log::LogContext lc(dl);
   cta::objectstore::AgentReference agr("UnitTests", dl);
