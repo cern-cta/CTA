@@ -80,7 +80,7 @@ void QueueItor<objectstore::RootEntry::ArchiveQueueDump, objectstore::ArchiveQue
   // Async fetch of the archive jobs from the objectstore
   for (auto& j : jobQueueChunk) {
     requests.emplace_back(ArchiveRequest(j.address, m_objectStore), nullptr);
-    requests.back().second.reset(requests.back().first.asyncLockfreeFetch());
+    requests.back().second = requests.back().first.asyncLockfreeFetch();
   }
 
   // Populate the jobs cache from the archive jobs
@@ -184,7 +184,7 @@ void QueueItor<objectstore::RootEntry::RetrieveQueueDump, objectstore::RetrieveQ
   // Async fetch of the retrieve jobs from the objectstore
   for (auto& j : jobQueueChunk) {
     requests.emplace_back(RetrieveRequest(j.address, m_objectStore), nullptr);
-    requests.back().second.reset(requests.back().first.asyncLockfreeFetch());
+    requests.back().second = requests.back().first.asyncLockfreeFetch();
   }
 
   // Populate the jobs cache from the retrieve jobs

@@ -1116,7 +1116,7 @@ auto RetrieveRequest::asyncUpdateJobOwner(uint32_t ui32CopyNb,
                                      strOwner,
                                      strPreviousOwner);
 
-  ret->m_backendUpdater.reset(m_objectStore.asyncUpdate(getAddressIfSet(), ret->m_updaterCallback));
+  ret->m_backendUpdater = m_objectStore.asyncUpdate(getAddressIfSet(), ret->m_updaterCallback);
   return ret.release();
 }
 
@@ -1263,7 +1263,7 @@ std::string RetrieveRequest::dump() {
 //------------------------------------------------------------------------------
 RetrieveRequest::AsyncJobDeleter* RetrieveRequest::asyncDeleteJob() {
   std::unique_ptr<AsyncJobDeleter> ret(new AsyncJobDeleter);
-  ret->m_backendDeleter.reset(m_objectStore.asyncDelete(getAddressIfSet()));
+  ret->m_backendDeleter = m_objectStore.asyncDelete(getAddressIfSet());
   return ret.release();
 }
 
@@ -1328,7 +1328,7 @@ RetrieveRequest::AsyncJobSucceedReporter* RetrieveRequest::asyncReportSucceed(ui
                                      std::ref(*ret),
                                      ui32CopyNb);
 
-  ret->m_backendUpdater.reset(m_objectStore.asyncUpdate(getAddressIfSet(), ret->m_updaterCallback));
+  ret->m_backendUpdater = m_objectStore.asyncUpdate(getAddressIfSet(), ret->m_updaterCallback);
   return ret.release();
 }
 
@@ -1393,7 +1393,7 @@ RetrieveRequest::AsyncJobSucceedForRepackReporter* RetrieveRequest::asyncReportS
                                      std::ref(*ret),
                                      ui32CopyNb);
 
-  ret->m_backendUpdater.reset(m_objectStore.asyncUpdate(getAddressIfSet(), ret->m_updaterCallback));
+  ret->m_backendUpdater = m_objectStore.asyncUpdate(getAddressIfSet(), ret->m_updaterCallback);
   return ret.release();
 }
 
@@ -1528,7 +1528,7 @@ RetrieveRequest::asyncTransformToArchiveRequest(AgentReference& processAgent) {
                                      std::ref(*ret),
                                      strProcessAgentAddress);
 
-  ret->m_backendUpdater.reset(m_objectStore.asyncUpdate(getAddressIfSet(), ret->m_updaterCallback));
+  ret->m_backendUpdater = m_objectStore.asyncUpdate(getAddressIfSet(), ret->m_updaterCallback);
   return ret.release();
 }
 

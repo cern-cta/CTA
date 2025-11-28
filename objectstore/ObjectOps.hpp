@@ -501,11 +501,10 @@ public:
 
   friend AsyncLockfreeFetcher;
 
-  AsyncLockfreeFetcher* asyncLockfreeFetch() {
-    std::unique_ptr<AsyncLockfreeFetcher> ret;
-    ret.reset(new AsyncLockfreeFetcher(*this));
-    ret->m_asyncLockfreeFetcher.reset(m_objectStore.asyncLockfreeFetch(getAddressIfSet()));
-    return ret.release();
+  std::unique_ptr<AsyncLockfreeFetcher> asyncLockfreeFetch() {
+    auto ret = std::unique_ptr<AsyncLockfreeFetcher>(new AsyncLockfreeFetcher(*this));
+    ret->m_asyncLockfreeFetcher = m_objectStore.asyncLockfreeFetch(getAddressIfSet());
+    return ret;
   }
 
   class AsyncInserter {
@@ -543,7 +542,7 @@ public:
     // We don't require locking here, as the object does not exist
     // yet in the object store (and this is ensured by the )
     m_header.set_payload(m_payload.SerializeAsString());
-    ret->m_asyncCreator.reset(m_objectStore.asyncCreate(getAddressIfSet(), m_header.SerializeAsString()));
+    ret->m_asyncCreator = m_objectStore.asyncCreate(getAddressIfSet(), m_header.SerializeAsString());
     return ret.release();
   }
 

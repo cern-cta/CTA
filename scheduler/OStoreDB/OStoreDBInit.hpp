@@ -35,9 +35,9 @@ public:
     }
 
     // Start the heartbeat thread for the agent object. The thread is guaranteed to have started before we call the unique_ptr deleter
-    auto aht = new objectstore::AgentHeartbeatThread(m_backendPopulator->getAgentReference(), *m_backend, log);
+    auto aht = std::make_unique<objectstore::AgentHeartbeatThread>(m_backendPopulator->getAgentReference(), *m_backend, log);
     aht->startThread();
-    m_agentHeartbeat = std::move(UniquePtrAgentHeartbeatThread(aht));
+    m_agentHeartbeat = UniquePtrAgentHeartbeatThread(aht.release());
   }
 
   std::unique_ptr<OStoreDBWithAgent> getSchedDB(catalogue::Catalogue& catalogue, log::Logger& log) {

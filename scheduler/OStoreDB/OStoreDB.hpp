@@ -66,14 +66,14 @@ public:
   /*============ Thread pool for queueing bottom halfs ======================*/
 private:
   using EnqueueingTask = std::function<void()>;
-  cta::threading::BlockingQueue<EnqueueingTask*> m_enqueueingTasksQueue;
+  cta::threading::BlockingQueue<std::unique_ptr<EnqueueingTask>> m_enqueueingTasksQueue;
 
   class EnqueueingWorkerThread : private cta::threading::Thread {
   public:
-    explicit EnqueueingWorkerThread(cta::threading::BlockingQueue<EnqueueingTask*>& etq)
+    explicit EnqueueingWorkerThread(cta::threading::BlockingQueue<std::unique_ptr<EnqueueingTask>>& etq)
         : m_enqueueingTasksQueue(etq) {}
 
-    EnqueueingWorkerThread(cta::threading::BlockingQueue<EnqueueingTask*>& etq, std::optional<size_t> stackSize)
+    EnqueueingWorkerThread(cta::threading::BlockingQueue<std::unique_ptr<EnqueueingTask>>& etq, std::optional<size_t> stackSize)
         : cta::threading::Thread(stackSize),
           m_enqueueingTasksQueue(etq) {}
 
@@ -83,10 +83,10 @@ private:
 
   private:
     void run() override;
-    cta::threading::BlockingQueue<EnqueueingTask*>& m_enqueueingTasksQueue;
+    cta::threading::BlockingQueue<std::unique_ptr<EnqueueingTask>>& m_enqueueingTasksQueue;
   };
 
-  std::vector<EnqueueingWorkerThread*> m_enqueueingWorkerThreads;
+  std::vector<std::unique_ptr<EnqueueingWorkerThread>> m_enqueueingWorkerThreads;
   std::atomic<uint64_t> m_taskQueueSize =
     0;  // < This counter ensures destruction happens after the last thread completed.
   /// Delay introduced before posting to the task queue when it becomes too long.
@@ -262,7 +262,7 @@ public:
     std::string m_tapePool;
     OStoreDB& m_oStoreDB;
     objectstore::ArchiveRequest m_archiveRequest;
-    std::unique_ptr<objectstore::ArchiveRequest::AsyncTransferSuccessfulUpdater> m_succesfulTransferUpdater;
+    std::unique_ptr<objectstore::ArchiveRequest::AsyncTransferSuccessfulUpdater> m_successfulTransferUpdater;
     std::unique_ptr<objectstore::ArchiveRequest::AsyncRequestDeleter> m_requestDeleter;
   };
 

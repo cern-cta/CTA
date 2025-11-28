@@ -43,14 +43,6 @@ GarbageCollector::GarbageCollector(cta::log::LogContext& lc,
   m_lc.log(cta::log::INFO, "Created GarbageCollector");
 }
 
-GarbageCollector::~GarbageCollector() {
-  //Normally, the Garbage collector is never destroyed in production
-  //this destructor is here to avoid memory leaks on unit tests
-  for (auto& kv : m_watchedAgents) {
-    delete kv.second;
-  }
-}
-
 void GarbageCollector::runOnePass() {
   trimGoneTargets();
   acquireTargets();
@@ -64,7 +56,6 @@ void GarbageCollector::trimGoneTargets() {
   // We will just stop looking for them.
   for (auto wa = m_watchedAgents.begin(); wa != m_watchedAgents.end();) {
     if (agentList.end() == std::find(agentList.begin(), agentList.end(), wa->first)) {
-      delete wa->second;
       log::ScopedParamContainer params(m_lc);
       params.add("agentAddress", wa->first);
       m_watchedAgents.erase(wa++);
@@ -112,7 +103,7 @@ void GarbageCollector::acquireTargets() {
       double timeout = ag.getTimeout();
       // The creation of the watchdog could fail as well (if agent gets deleted in the meantime).
       try {
-        m_watchedAgents[c] = new AgentWatchdog(c, m_objectStore);
+        m_watchedAgents[c] = std::make_unique<AgentWatchdog>(c, m_objectStore);
         m_watchedAgents[c]->setTimeout(timeout);
       } catch (...) {
         if (m_objectStore.exists(c)) {
@@ -133,7 +124,6 @@ void GarbageCollector::checkHeartbeats() {
     try {
       if (!wa->second->checkAlive()) {
         cleanupDeadAgent(wa->first, wa->second->getDeadAgentDetails());
-        delete wa->second;
         m_watchedAgents.erase(wa++);
       } else {
         ++wa;
@@ -228,7 +218,7 @@ void GarbageCollector::OwnedObjectSorter::fetchOwnedObjects(Agent& agent,
     // Fetch generic objects
     ownedObjects.emplace_back(new GenericObject(obj, objectStore));
     try {
-      ownedObjectsFetchers[ownedObjects.back().get()].reset(ownedObjects.back()->asyncLockfreeFetch());
+      ownedObjectsFetchers[ownedObjects.back().get()] = ownedObjects.back()->asyncLockfreeFetch();
     } catch (cta::exception::Exception& ex) {
       // We failed to lauch the fetch. This is unepected (absence of object will come later). We will not be able
       // to garbage collect this object.

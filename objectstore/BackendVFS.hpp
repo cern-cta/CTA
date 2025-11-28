@@ -169,14 +169,14 @@ public:
     void run() override;
   };
 
-  Backend::AsyncCreator* asyncCreate(const std::string& name, const std::string& value) override;
+  std::unique_ptr<Backend::AsyncCreator> asyncCreate(const std::string& name, const std::string& value) override;
 
-  Backend::AsyncUpdater* asyncUpdate(const std::string& name,
+  std::unique_ptr<Backend::AsyncUpdater> asyncUpdate(const std::string& name,
                                      std::function<std::string(const std::string&)>& update) override;
 
-  Backend::AsyncDeleter* asyncDelete(const std::string& name) override;
+  std::unique_ptr<Backend::AsyncDeleter> asyncDelete(const std::string& name) override;
 
-  Backend::AsyncLockfreeFetcher* asyncLockfreeFetch(const std::string& name) override;
+  std::unique_ptr<Backend::AsyncLockfreeFetcher> asyncLockfreeFetch(const std::string& name) override;
 
   class Parameters : public Backend::Parameters {
     friend class BackendVFS;

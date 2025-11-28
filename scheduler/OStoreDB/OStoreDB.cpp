@@ -57,7 +57,7 @@ OStoreDB::OStoreDB(objectstore::Backend& be, catalogue::Catalogue& catalogue, lo
       m_logger(logger) {
   m_tapeDrivesState = std::make_unique<TapeDrivesCatalogueState>(m_catalogue);
   for (size_t i = 0; i < 5; i++) {
-    m_enqueueingWorkerThreads.emplace_back(new EnqueueingWorkerThread(m_enqueueingTasksQueue));
+    m_enqueueingWorkerThreads.emplace_back(std::make_unique<EnqueueingWorkerThread>(m_enqueueingTasksQueue));
     m_enqueueingWorkerThreads.back()->start();
   }
 }
@@ -82,8 +82,6 @@ OStoreDB::~OStoreDB() {
   }
   for (auto& t : m_enqueueingWorkerThreads) {
     t->wait();
-    delete t;
-    t = nullptr;
   }
 }
 
@@ -150,13 +148,11 @@ void OStoreDB::setThreadNumber(uint64_t threadNumber, const std::optional<size_t
   }
   for (auto& t : m_enqueueingWorkerThreads) {
     t->wait();
-    delete t;
-    t = nullptr;
   }
   m_enqueueingWorkerThreads.clear();
   // Create the new ones.
   for (size_t i = 0; i < threadNumber; i++) {
-    m_enqueueingWorkerThreads.emplace_back(new EnqueueingWorkerThread(m_enqueueingTasksQueue, stackSize));
+    m_enqueueingWorkerThreads.emplace_back(std::make_unique<EnqueueingWorkerThread>(m_enqueueingTasksQueue, stackSize));
     m_enqueueingWorkerThreads.back()->start();
   }
 }
@@ -765,7 +761,7 @@ std::string OStoreDB::queueArchive(const std::string& instanceName,
     .add("insertionTime", insertionTime);
   delayIfNecessary(logContext);
   auto* aReqPtr = aReq.release();
-  auto* et = new EnqueueingTask([aReqPtr, mutexForHelgrindAddr, this] {
+  auto et = std::make_unique<EnqueueingTask>([aReqPtr, mutexForHelgrindAddr, this] {
     std::unique_ptr<cta::threading::Mutex> mutexForHelgrind(mutexForHelgrindAddr);
     cta::threading::MutexLocker mlForHelgrind(*mutexForHelgrind);
     std::unique_ptr<cta::objectstore::ArchiveRequest> aReq(aReqPtr);
@@ -858,7 +854,7 @@ std::string OStoreDB::queueArchive(const std::string& instanceName,
       .log(log::INFO, "In OStoreDB::queueArchive(): Finished enqueueing request.");
   });
   mlForHelgrind.unlock();
-  m_enqueueingTasksQueue.push(et);
+  m_enqueueingTasksQueue.push(std::move(et));
   double taskPostingTime = timer.secs(cta::utils::Timer::reset_t::resetCounter);
   params.add("taskPostingTime", taskPostingTime)
     .add("taskQueueSize", taskQueueSize)
@@ -1320,7 +1316,7 @@ jobFound: {
   delayIfNecessary(logContext);
   auto rReqPtr = rReq.release();
   auto* mutexForHelgrindAddr = mutexForHelgrind.release();
-  auto* et = new EnqueueingTask([rReqPtr, job, ret, mutexForHelgrindAddr, this] {
+  auto et = std::make_unique<EnqueueingTask>([rReqPtr, job, ret, mutexForHelgrindAddr, this] {
     std::unique_ptr<cta::threading::Mutex> mutexForHelgrind(mutexForHelgrindAddr);
     std::unique_ptr<objectstore::RetrieveRequest> rReq(rReqPtr);
     cta::threading::MutexLocker mlForHelgrind(*mutexForHelgrind);
@@ -1373,7 +1369,7 @@ jobFound: {
       .log(log::INFO, "In OStoreDB::queueRetrieve(): added job to queue (enqueueing finished).");
   });
   mlForHelgrind.unlock();
-  m_enqueueingTasksQueue.push(et);
+  m_enqueueingTasksQueue.push(std::move(et));
   double taskPostingTime = timer.secs(cta::utils::Timer::reset_t::resetCounter);
   params.add("taskPostingTime", taskPostingTime)
     .add("taskQueueSize", taskQueueSize)
@@ -4689,14 +4685,14 @@ void OStoreDB::ArchiveJob::asyncSucceedTransfer() {
     .log(
       log::DEBUG,
       "In OStoreDB::ArchiveJob::asyncSucceedTransfer(): Will start async update archiveRequest for transfer success");
-  m_succesfulTransferUpdater.reset(m_archiveRequest.asyncUpdateTransferSuccessful(tapeFile.vid, tapeFile.copyNb));
+  m_successfulTransferUpdater.reset(m_archiveRequest.asyncUpdateTransferSuccessful(tapeFile.vid, tapeFile.copyNb));
 }
 
 //------------------------------------------------------------------------------
 // OStoreDB::ArchiveJob::waitAsyncSucceed()
 //------------------------------------------------------------------------------
 void OStoreDB::ArchiveJob::waitAsyncSucceed() {
-  m_succesfulTransferUpdater->wait();
+  m_successfulTransferUpdater->wait();
   log::LogContext lc(m_oStoreDB.m_logger);
   log::ScopedParamContainer(lc)
     .add("requestObject", m_archiveRequest.getAddressIfSet())
@@ -4711,14 +4707,14 @@ void OStoreDB::ArchiveJob::waitAsyncSucceed() {
 // OStoreDB::ArchiveJob::isLastAfterAsyncSuccess()
 //------------------------------------------------------------------------------
 bool OStoreDB::ArchiveJob::isLastAfterAsyncSuccess() {
-  return m_succesfulTransferUpdater->m_doReportTransferSuccess;
+  return m_successfulTransferUpdater->m_doReportTransferSuccess;
 }
 
 //------------------------------------------------------------------------------
 // OStoreDB::ArchiveJob::isLastAfterAsyncSuccess()
 //------------------------------------------------------------------------------
 objectstore::ArchiveRequest::RepackInfo OStoreDB::ArchiveJob::getRepackInfoAfterAsyncSuccess() {
-  return m_succesfulTransferUpdater->m_repackInfo;
+  return m_successfulTransferUpdater->m_repackInfo;
 }
 
 //------------------------------------------------------------------------------
