@@ -15,7 +15,6 @@
  *               submit itself to any jurisdiction.
  */
 
-
 #pragma once
 
 #include "common/threading/MutexLocker.hpp"
@@ -25,18 +24,14 @@ namespace cta::threading {
 
 // A one-way flag: once set, it cannot be reset
 struct AtomicFlag {
-  AtomicFlag() : m_set(false) {};
-  void set() {
-    MutexLocker ml(m_mutex);
-    m_set = true;
-  }
-  operator bool() const {
-    MutexLocker ml(m_mutex);
-    return m_set;
-  }
+  AtomicFlag() = default;
+
+  void set() { m_set = true; }
+
+  operator bool() const { return m_set; }
+
 private:
-  bool m_set;
-  mutable Mutex m_mutex;
+  std::atomic<bool> m_set = false;
 };
 
-} // namespace cta::threading
+}  // namespace cta::threading
