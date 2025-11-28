@@ -69,8 +69,9 @@ void LabelMount::setTapeMounted(log::LogContext &logContext) const {
   // TODO
 }
 
-LabelMount::LabelMount(catalogue::Catalogue& catalogue, std::unique_ptr<cta::SchedulerDatabase::LabelMount> dbMount):
-  m_catalogue(catalogue) {
+LabelMount::LabelMount(catalogue::Catalogue& catalogue,
+                       [[maybe_unused]] std::unique_ptr<cta::SchedulerDatabase::LabelMount> dbMount)
+    : m_catalogue(catalogue) {
   throw 0;
   // TODO;
 }

@@ -106,7 +106,7 @@ void ArchiveRdbJob::reset() {
 
 void ArchiveRdbJob::handleExceedTotalRetries(cta::schedulerdb::Transaction& txn,
                                              log::LogContext& lc,
-                                             const std::string& reason) {
+                                             [[maybe_unused]] const std::string& reason) {
   if (m_jobRow.status != ArchiveJobStatus::AJS_ToTransferForUser) {
     lc.log(log::WARNING,
            std::string("ArchiveRdbJob::handleExceedTotalRetries(): Unexpected status: ") + to_string(m_jobRow.status) +
@@ -131,7 +131,8 @@ void ArchiveRdbJob::handleExceedTotalRetries(cta::schedulerdb::Transaction& txn,
 
 void ArchiveRdbJob::requeueJobToMount(cta::schedulerdb::Transaction& txn,
                                       log::LogContext& lc,
-                                      const std::string& reason, bool keepMountId) {
+                                      [[maybe_unused]] const std::string& reason,
+                                      bool keepMountId) {
   std::string log_msg = "In ArchiveRdbJob::requeueJobToMount(): requeueFailedJob() to same mount";
   if (!keepMountId) {
     m_jobRow.retriesWithinMount = 0;

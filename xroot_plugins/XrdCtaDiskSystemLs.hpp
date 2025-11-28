@@ -39,8 +39,7 @@ inline DiskSystemLsStream::DiskSystemLsStream(const frontend::AdminCmdStream& re
                    scheduler,
                    std::make_unique<cta::frontend::DiskSystemLsResponseStream>(catalogue,
                                                                                scheduler,
-                                                                               requestMsg.getInstanceName(),
-                                                                               requestMsg.getAdminCmd())) {
+                                                                               requestMsg.getInstanceName())) {
   XrdSsiPb::Log::Msg(XrdSsiPb::Log::DEBUG, LOG_SUFFIX, " constructor");
 }
 

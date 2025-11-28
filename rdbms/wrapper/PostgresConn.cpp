@@ -476,7 +476,7 @@ std::string PostgresConn::nextStmtName() {
 //------------------------------------------------------------------------------
 // noticeProcessor
 //------------------------------------------------------------------------------
-void PostgresConn::noticeProcessor(void* arg, const char* message) {
+void PostgresConn::noticeProcessor([[maybe_unused]] void* arg, [[maybe_unused]] const char* message) {
   //fprintf(stderr, "%s", message);
 }
 

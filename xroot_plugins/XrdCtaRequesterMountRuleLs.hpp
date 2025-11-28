@@ -39,8 +39,7 @@ inline RequesterMountRuleLsStream::RequesterMountRuleLsStream(const frontend::Ad
                    scheduler,
                    std::make_unique<cta::frontend::RequesterMountRuleLsResponseStream>(catalogue,
                                                                                        scheduler,
-                                                                                       requestMsg.getInstanceName(),
-                                                                                       requestMsg.getAdminCmd())) {
+                                                                                       requestMsg.getInstanceName())) {
   XrdSsiPb::Log::Msg(XrdSsiPb::Log::DEBUG, LOG_SUFFIX, " constructor");
 }
 

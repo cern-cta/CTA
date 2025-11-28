@@ -128,7 +128,7 @@ void smc_qdrive_jsonPrint(const struct robot_info* const robot_info,
 }
 
 static int smc_qdrive(const char* const rmchost,
-                      const int fd,
+                      [[maybe_unused]] const int fd,
                       const struct robot_info* const robot_info,
                       int drvord,
                       const int isJsonEnabled) {
@@ -240,8 +240,10 @@ void smc_qport_jsonPrint(const struct smc_element_info* const element_info, cons
   printf("]");
 }
 
-static int
-smc_qport(const char* const rmchost, const int fd, const struct robot_info* const robot_info, const int isJsonEnabled) {
+static int smc_qport(const char* const rmchost,
+                     [[maybe_unused]] const int fd,
+                     const struct robot_info* const robot_info,
+                     const int isJsonEnabled) {
   int c;
   struct smc_element_info* element_info;
   int nbelem;

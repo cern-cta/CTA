@@ -36,7 +36,7 @@ VersionWriteReactor::VersionWriteReactor(cta::catalogue::Catalogue& catalogue,
                                          const std::string& instanceName,
                                          const std::string& catalogueConnString,
                                          const cta::xrd::Request* request)
-    : CtaAdminServerWriteReactor(catalogue, scheduler, instanceName, nullptr, cta::admin::HeaderType::VERSION_CMD),
+    : CtaAdminServerWriteReactor(scheduler, instanceName, nullptr, cta::admin::HeaderType::VERSION_CMD),
       m_catalogue_conn_string(catalogueConnString),
       m_catalogue_version(catalogue.Schema()->getSchemaVersion().getSchemaVersion<std::string>()),
       m_is_upgrading(catalogue.Schema()->getSchemaVersion().getStatus<catalogue::SchemaVersion::Status>() ==

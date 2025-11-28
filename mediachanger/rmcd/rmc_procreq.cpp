@@ -449,10 +449,10 @@ int rmc_srv_unmount(const struct rmc_srv_rqst_context* const rqst_context) {
   return c;
 }
 
-int rmc_srv_genericmount(struct rmc_srv_rqst_context* const rqst_context) {
+int rmc_srv_genericmount([[maybe_unused]] struct rmc_srv_rqst_context* const rqst_context) {
   return 0;
 }
 
-int rmc_srv_genericunmount(struct rmc_srv_rqst_context* const rqst_context) {
+int rmc_srv_genericunmount([[maybe_unused]] struct rmc_srv_rqst_context* const rqst_context) {
   return 0;
 }

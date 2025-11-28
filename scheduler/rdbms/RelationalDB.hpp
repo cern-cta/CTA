@@ -309,7 +309,7 @@ private:
    * @param lc       The logging context
    */
   void fetchMountInfo(SchedulerDatabase::TapeMountDecisionInfo& tmdi,
-                      SchedulerDatabase::PurposeGetMountInfo purpose,
+                      [[maybe_unused]] SchedulerDatabase::PurposeGetMountInfo purpose,
                       log::LogContext& lc);
   bool deleteDiskFiles(std::unordered_set<std::string>& jobSrcUrls, log::LogContext& lc);
   std::list<common::dataStructures::RepackInfo> fetchRepackInfo(const std::string& vid);

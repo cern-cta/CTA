@@ -54,7 +54,7 @@ public:
    */
   [[noreturn]] void setFailureReason(std::string_view reason) const;
   [[noreturn]] bool addJobFailure(uint32_t copyNumber, uint64_t mountId, std::string_view failureReason) const;
-  void setJobStatus(uint32_t copyNumber, const cta::schedulerdb::RetrieveJobStatus& status);
+  void setJobStatus([[maybe_unused]] uint32_t copyNumber, const cta::schedulerdb::RetrieveJobStatus& status);
   void setSchedulerRequest(const cta::common::dataStructures::RetrieveRequest& retrieveRequest);
   void setActivityIfNeeded(const cta::common::dataStructures::RetrieveRequest& retrieveRequest,
                            const cta::common::dataStructures::RetrieveFileQueueCriteria& criteria);

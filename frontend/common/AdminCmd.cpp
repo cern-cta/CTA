@@ -534,7 +534,7 @@ void AdminCmd::processDrive_Rm(xrd::Response& response) {
         tapeDrive.driveStatus == common::dataStructures::DriveStatus::Unknown  ||
         has_flag(OptionBoolean::FORCE))
       {
-        m_scheduler.removeDrive(m_cliIdentity, tapeDriveName, m_lc);
+        m_scheduler.removeDrive(tapeDriveName, m_lc);
         cmdlineOutput << "Drive " << tapeDriveName << " removed"
                       << (has_flag(OptionBoolean::FORCE) ? " (forced)." : ".") << std::endl;
       } else {

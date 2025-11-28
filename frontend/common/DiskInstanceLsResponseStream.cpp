@@ -21,8 +21,7 @@ namespace cta::frontend {
 
 DiskInstanceLsResponseStream::DiskInstanceLsResponseStream(cta::catalogue::Catalogue& catalogue,
                                                            cta::Scheduler& scheduler,
-                                                           const std::string& instanceName,
-                                                           const admin::AdminCmd& adminCmd)
+                                                           const std::string& instanceName)
     : CtaAdminResponseStream(catalogue, scheduler, instanceName),
       m_diskInstances(catalogue.DiskInstance()->getAllDiskInstances()) {}
 

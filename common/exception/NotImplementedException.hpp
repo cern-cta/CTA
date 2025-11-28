@@ -28,7 +28,7 @@ namespace cta::exception {
  */
 class NotImplementedException : public cta::exception::Exception {
 public:
-  NotImplementedException(const std::string& what = "",
+  NotImplementedException([[maybe_unused]] const std::string& what = "",
                           const std::source_location loc = std::source_location::current())
       : cta::exception::Exception(makeMessage(what, loc)) {}
 

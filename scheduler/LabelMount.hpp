@@ -49,7 +49,8 @@ protected:
     *
     * @param dbMount The database representation of this mount
     */
-  LabelMount(catalogue::Catalogue & catalogue, std::unique_ptr<cta::SchedulerDatabase::LabelMount> dbMount);
+  LabelMount(catalogue::Catalogue& catalogue,
+             [[maybe_unused]] std::unique_ptr<cta::SchedulerDatabase::LabelMount> dbMount);
 
 public:
   CTA_GENERATE_EXCEPTION_CLASS(WrongMountType);

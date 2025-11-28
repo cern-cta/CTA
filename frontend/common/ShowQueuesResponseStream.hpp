@@ -30,7 +30,6 @@ public:
   ShowQueuesResponseStream(cta::catalogue::Catalogue& catalogue,
                            cta::Scheduler& scheduler,
                            const std::string& instanceName,
-                           const admin::AdminCmd& adminCmd,
                            cta::log::LogContext& lc);
 
   bool isDone() override;

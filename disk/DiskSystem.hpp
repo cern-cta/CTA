@@ -111,7 +111,7 @@ public:
   const DiskSystemList &getDiskSystemList() { return m_systemList; }
 private:
   DiskSystemList &m_systemList;
-  uint64_t fetchConstantFreeSpace(const std::string & instanceAddress, log::LogContext & lc);
+  uint64_t fetchConstantFreeSpace(const std::string& instanceAddress);
   uint64_t fetchFreeDiskSpaceWithScript(const std::string& scriptPath,
                                         const std::string& diskInstanceName,
                                         const std::string& spaceName,

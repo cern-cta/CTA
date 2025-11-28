@@ -21,8 +21,7 @@ namespace cta::frontend {
 
 MediaTypeLsResponseStream::MediaTypeLsResponseStream(cta::catalogue::Catalogue& catalogue,
                                                      cta::Scheduler& scheduler,
-                                                     const std::string& instanceName,
-                                                     const admin::AdminCmd& adminCmd)
+                                                     const std::string& instanceName)
     : CtaAdminResponseStream(catalogue, scheduler, instanceName),
       m_mediaTypes(catalogue.MediaType()->getMediaTypes()) {}
 

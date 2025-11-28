@@ -39,8 +39,7 @@ inline GroupMountRuleLsStream::GroupMountRuleLsStream(const frontend::AdminCmdSt
                    scheduler,
                    std::make_unique<cta::frontend::GroupMountRuleLsResponseStream>(catalogue,
                                                                                    scheduler,
-                                                                                   requestMsg.getInstanceName(),
-                                                                                   requestMsg.getAdminCmd())) {
+                                                                                   requestMsg.getInstanceName())) {
   XrdSsiPb::Log::Msg(XrdSsiPb::Log::DEBUG, LOG_SUFFIX, " constructor");
 }
 

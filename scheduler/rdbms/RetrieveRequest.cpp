@@ -155,7 +155,8 @@ void RetrieveRequest::setRepackInfo(const cta::schedulerdb::RetrieveRequest::Ret
   m_repackInfo = repackInfo;
 }
 
-void RetrieveRequest::setJobStatus(uint32_t copyNumber, const cta::schedulerdb::RetrieveJobStatus& status)  {
+void RetrieveRequest::setJobStatus([[maybe_unused]] uint32_t copyNumber,
+                                   const cta::schedulerdb::RetrieveJobStatus& status) {
   m_status = status;
 }
 

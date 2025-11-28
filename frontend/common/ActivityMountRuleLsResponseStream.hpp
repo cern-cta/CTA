@@ -29,8 +29,7 @@ class ActivityMountRuleLsResponseStream final : public CtaAdminResponseStream {
 public:
   ActivityMountRuleLsResponseStream(cta::catalogue::Catalogue& catalogue,
                                     cta::Scheduler& scheduler,
-                                    const std::string& instanceName,
-                                    const admin::AdminCmd& adminCmd);
+                                    const std::string& instanceName);
 
   bool isDone() override;
   cta::xrd::Data next() override;
