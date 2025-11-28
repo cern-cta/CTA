@@ -35,8 +35,9 @@ public:
    * @param file the file we are migrating. We acquire the ownership of the pointer
    * @param numberOfBlock number of memory block we need read the whole file
    */
-  DiskReadTask(DataConsumer & destination, 
-          cta::ArchiveJob *archiveJob,size_t numberOfBlock,
+  DiskReadTask(DataConsumer & destination,
+          const std::shared_ptr<cta::ArchiveJob> archiveJob,
+          size_t numberOfBlock,
           cta::threading::AtomicFlag& errorFlag);
   
   void execute(cta::log::LogContext& lc, cta::disk::DiskFileFactory& fileFactory,
@@ -85,7 +86,7 @@ private:
   /**
    * All we need to know about the file we are migrating
    */
-  cta::ArchiveJob *m_archiveJob;
+  std::shared_ptr<cta::ArchiveJob> m_archiveJob;
   
   /**
    * Information about the archive job we will cache as it is needed

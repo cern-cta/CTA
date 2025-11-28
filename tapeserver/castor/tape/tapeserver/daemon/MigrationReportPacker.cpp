@@ -62,7 +62,7 @@ MigrationReportPacker::~MigrationReportPacker() {
 //------------------------------------------------------------------------------
 //reportCompletedJob
 //------------------------------------------------------------------------------
-void MigrationReportPacker::reportCompletedJob(std::unique_ptr<cta::ArchiveJob> successfulArchiveJob,
+void MigrationReportPacker::reportCompletedJob(std::shared_ptr<cta::ArchiveJob> successfulArchiveJob,
                                                cta::log::LogContext& lc) {
   std::unique_ptr<Report> rep(new ReportSuccessful(std::move(successfulArchiveJob)));
   cta::log::ScopedParamContainer params(lc);
@@ -75,11 +75,11 @@ void MigrationReportPacker::reportCompletedJob(std::unique_ptr<cta::ArchiveJob> 
 //------------------------------------------------------------------------------
 //reportSkippedJob
 //------------------------------------------------------------------------------
-void MigrationReportPacker::reportSkippedJob(std::unique_ptr<cta::ArchiveJob> skippedArchiveJob,
+void MigrationReportPacker::reportSkippedJob(std::shared_ptr<cta::ArchiveJob> skippedArchiveJob,
                                              const std::string& failure,
                                              cta::log::LogContext& lc) {
   std::string failureLog = cta::utils::getCurrentLocalTime() + " " + cta::utils::getShortHostname() + " " + failure;
-  std::unique_ptr<Report> rep(new ReportSkipped(std::move(skippedArchiveJob), failureLog));
+  std::unique_ptr<Report> rep(new ReportSkipped(skippedArchiveJob, failureLog));
   cta::log::ScopedParamContainer params(lc);
   params.add("type", "ReporSkipped");
   lc.log(cta::log::DEBUG, "In MigrationReportPacker::reportSkippedJob(), pushing a report.");
@@ -90,7 +90,7 @@ void MigrationReportPacker::reportSkippedJob(std::unique_ptr<cta::ArchiveJob> sk
 //------------------------------------------------------------------------------
 //reportFailedJob
 //------------------------------------------------------------------------------
-void MigrationReportPacker::reportFailedJob(std::unique_ptr<cta::ArchiveJob> failedArchiveJob,
+void MigrationReportPacker::reportFailedJob(std::shared_ptr<cta::ArchiveJob> failedArchiveJob,
                                             const cta::exception::Exception& ex,
                                             cta::log::LogContext& lc) {
   std::string failureLog =
@@ -183,7 +183,7 @@ void MigrationReportPacker::reportTestGoingToEnd(cta::log::LogContext& lc) {
 //ReportSuccessful::execute
 //------------------------------------------------------------------------------
 void MigrationReportPacker::ReportSuccessful::execute(MigrationReportPacker& reportPacker) {
-  reportPacker.m_successfulArchiveJobs.push(std::move(m_successfulArchiveJob));
+  reportPacker.m_successfulArchiveJobs.push(m_successfulArchiveJob);
 }
 
 //------------------------------------------------------------------------------
@@ -260,11 +260,10 @@ void MigrationReportPacker::ReportLastBatchError::execute(MigrationReportPacker&
   }
   // We re-queue all the jobs which were left in the m_successfulArchiveJobs
   // after exception was thrown (no flush() could be called for these)
-  std::unique_ptr<cta::ArchiveJob> job;
   std::list<std::string> jobIDsList;
   uint64_t njobstorequeue = reportPacker.m_successfulArchiveJobs.size();
   while (!reportPacker.m_successfulArchiveJobs.empty()) {
-    job = std::move(reportPacker.m_successfulArchiveJobs.front());
+    auto job = reportPacker.m_successfulArchiveJobs.front();
     reportPacker.m_successfulArchiveJobs.pop();
     if (!job) {
       continue;

@@ -44,10 +44,10 @@ namespace unitTests{
   using namespace cta::disk;
 
   struct MockMigrationReportPacker : public MigrationReportPacker {
-    void reportCompletedJob(std::unique_ptr<cta::ArchiveJob> successfulArchiveJob, cta::log::LogContext & lc) override {}
-    void reportSkippedJob(std::unique_ptr<cta::ArchiveJob> skippedArchiveJob, const std::string& failure,
+    void reportCompletedJob(std::shared_ptr<cta::ArchiveJob> successfulArchiveJob, cta::log::LogContext & lc) override {}
+    void reportSkippedJob(std::shared_ptr<cta::ArchiveJob> skippedArchiveJob, const std::string& failure,
         cta::log::LogContext& lc) override {}
-    void reportFailedJob(std::unique_ptr<cta::ArchiveJob> failedArchiveJob,
+    void reportFailedJob(std::shared_ptr<cta::ArchiveJob> failedArchiveJob,
         const cta::exception::Exception& ex, cta::log::LogContext & lc) override {}
     void reportEndOfSession(cta::log::LogContext & lc) override {}
     void reportEndOfSessionWithErrors(const std::string& msg, bool isTapeFull, cta::log::LogContext & lc) override {}
@@ -118,10 +118,10 @@ namespace unitTests{
     const unsigned long original_checksum = mycopy(out,fileSize);
     castor::tape::tapeserver::daemon::MigrationMemoryManager mm(1,blockSize,lc);
 
-    TestingArchiveJob file;
+    auto file = std::make_unique<TestingArchiveJob>();
 
-    file.archiveFile.fileSize = fileSize;
-    file.srcURL = url;
+    file->archiveFile.fileSize = fileSize;
+    file->srcURL = url;
 
     const int blockNeeded=fileSize/mm.blockCapacity()+((fileSize%mm.blockCapacity()==0) ? 0 : 1);
     int value=std::ceil(1024*2000./blockSize);
@@ -129,7 +129,7 @@ namespace unitTests{
 
     FakeTapeWriteTask ftwt;
     ftwt.pushDataBlock(std::make_unique<MemBlock>(1,blockSize));
-    castor::tape::tapeserver::daemon::DiskReadTask drt(ftwt,&file,blockNeeded,flag);
+    castor::tape::tapeserver::daemon::DiskReadTask drt(ftwt,std::move(file),blockNeeded,flag);
     DiskFileFactory fileFactory(0);
 
     ::testing::NiceMock<cta::tape::daemon::TapeserverProxyMock> tspd;

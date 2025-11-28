@@ -79,7 +79,7 @@ public:
    * de-allocate it.
    * @param t pointer to the task
    */
-  void push(DiskWriteTask *t);
+  void push(std::unique_ptr<DiskWriteTask> t);
 
   /**
    * Signals to the thread pool that there will be no more tasks pushed to it,
@@ -171,7 +171,7 @@ private:
   cta::threading::Mutex m_statAddingProtection;
 protected:
   /** The (thread safe) queue of tasks */
-  cta::threading::BlockingQueue<DiskWriteTask *> m_tasks;
+  cta::threading::BlockingQueue<std::unique_ptr<DiskWriteTask>> m_tasks;
 
   /**
    * Parameter: xroot timeout

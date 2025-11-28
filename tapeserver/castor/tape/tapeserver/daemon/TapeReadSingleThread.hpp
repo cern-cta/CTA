@@ -95,7 +95,7 @@ private:
    * ask the task injector for more
    * @return m_tasks.pop();
    */
-  TapeReadTask *popAndRequestMoreJobs();
+  std::unique_ptr<TapeReadTask> popAndRequestMoreJobs();
 
   /**
    * Try to open an tapeFile::ReadSession, if it fails, we got an exception.
