@@ -35,8 +35,6 @@ public:
     }
   }
 
-  ~Payload() { delete[] m_data; }
-
   /** Amount of data present in the payload buffer */
   size_t size() const { return m_size; }
 
@@ -50,17 +48,16 @@ public:
   size_t totalCapacity() const { return m_totalCapacity; }
 
   /** Returns a pointer to the beginning of the payload block */
-  unsigned char* get() { return m_data; }
-
+  unsigned char* get() { return m_data.get(); }
   /** Returns a pointer to the beginning of the payload block (readonly version) */
-  const unsigned char* get() const { return m_data; }
+  const unsigned char* get() const { return m_data.get(); }
 
   /**
    * Reads all the buffer in one go from a diskFile::ReadFile object
    * @param from reference to the diskFile::ReadFile
    */
   size_t read(cta::disk::ReadFile& from) {
-    m_size = from.read(m_data, m_totalCapacity);
+    m_size = from.read(m_data.get(), m_totalCapacity);
     return m_size;
   }
 
@@ -79,7 +76,7 @@ public:
     }
     size_t readSize;
     try {
-      readSize = from.readNextDataBlock(m_data + m_size, from.getBlockSize());
+      readSize = from.readNextDataBlock(m_data.get() + m_size, from.getBlockSize());
     } catch (castor::tape::tapeFile::EndOfFile&) {
       throw cta::exception::EndOfFile("In castor::tape::tapeserver::daemon::Payload::append: reached end of file");
     }
@@ -91,8 +88,7 @@ public:
    * Write the complete buffer to a diskFile::WriteFile
    * @param to reference to the diskFile::WriteFile
    */
-  void write(cta::disk::WriteFile& to) { to.write(m_data, m_size); }
-
+  void write(cta::disk::WriteFile& to) { to.write(m_data.get(), m_size); }
   /**
    * Write the complete buffer to a tapeFile::FileWriter, tape block by
    * tape block
@@ -103,12 +99,12 @@ public:
     size_t writePosition = 0;
     // Write all possible full tape blocks
     while (m_size - writePosition > blockSize) {
-      to.write(m_data + writePosition, blockSize);
+      to.write(m_data.get() + writePosition, blockSize);
       writePosition += blockSize;
     }
     // Write a remainder, if any
     if (m_size - writePosition) {
-      to.write(m_data + writePosition, m_size - writePosition);
+      to.write(m_data.get() + writePosition, m_size - writePosition);
     }
   }
 
@@ -126,15 +122,14 @@ public:
     * @param previous The previous adler32 checksum from all previous datablock
     * @return the updated checksum
     */
-  unsigned long adler32(unsigned long previous) { return ::adler32(previous, m_data, m_size); }
-
+  unsigned long adler32(unsigned long previous) { return ::adler32(previous, m_data.get(), m_size); }
   /**
    * Return the initial value for computing Adler32 checksum
    */
   static unsigned long zeroAdler32() { return ::adler32(0L, Z_NULL, 0); }
 
 private:
-  unsigned char* m_data;
+  std::unique_ptr<unsigned char[]> m_data;
   size_t m_totalCapacity;
   size_t m_size;
 };
