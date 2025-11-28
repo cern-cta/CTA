@@ -311,10 +311,10 @@ repackJustAddCopies() {
     exit 1
   fi
 
-  repackJustAddCopiesResult=`kubectl -n ${NAMESPACE} exec ${CTA_CLI_POD} -c cta-cli -- cta-admin --json re ls | jq -r ". [] | select (.vid == \"${VID_TO_REPACK}\")"`
+  repackJustAddCopiesResult=$(kubectl -n ${NAMESPACE} exec ${CTA_CLI_POD} -c cta-cli -- cta-admin --json re ls | jq -r ". [] | select (.vid == \"${VID_TO_REPACK}\")")
 
-  nbRetrievedFiles=`echo ${repackJustAddCopiesResult} | jq -r ".retrievedFiles"`
-  nbArchivedFiles=`echo ${repackJustAddCopiesResult} | jq -r ".archivedFiles"`
+  nbRetrievedFiles=$(echo ${repackJustAddCopiesResult} | jq -r ".retrievedFiles")
+  nbArchivedFiles=$(echo ${repackJustAddCopiesResult} | jq -r ".archivedFiles")
 
   if [ $nbArchivedFiles == 0 ] && [ $nbRetrievedFiles == 0 ]
   then
@@ -368,15 +368,15 @@ repackCancellation() {
   echo
   echo "Waiting for the expansion of the repack request..."
 
-  lastFSeqTapeToRepack=`kubectl -n ${NAMESPACE} exec ${CTA_CLI_POD} -c cta-cli -- cta-admin --json tape ls --vid ${VID_TO_REPACK} | jq -r ".[0] | .lastFseq"`
+  lastFSeqTapeToRepack=$(kubectl -n ${NAMESPACE} exec ${CTA_CLI_POD} -c cta-cli -- cta-admin --json tape ls --vid ${VID_TO_REPACK} | jq -r ".[0] | .lastFseq")
   lastExpandedFSeq=0
   while [[ $lastExpandedFSeq != $lastFSeqTapeToRepack ]]
   do
-    lastExpandedFSeq=`kubectl -n ${NAMESPACE} exec ${CTA_CLI_POD} -c cta-cli -- cta-admin --json repack ls --vid ${VID_TO_REPACK} | jq -r ".[0] | .lastExpandedFseq" || 0`
+    lastExpandedFSeq=$(kubectl -n ${NAMESPACE} exec ${CTA_CLI_POD} -c cta-cli -- cta-admin --json repack ls --vid ${VID_TO_REPACK} | jq -r ".[0] | .lastExpandedFseq" || 0)
   done
-  nbFilesOnQueue=`kubectl -n ${NAMESPACE} exec ${CTA_CLI_POD} -c cta-cli -- cta-admin --json showqueues | jq -r ". [] | select(.vid == \"${VID_TO_REPACK}\") | .queuedFiles"`
+  nbFilesOnQueue=$(kubectl -n ${NAMESPACE} exec ${CTA_CLI_POD} -c cta-cli -- cta-admin --json showqueues | jq -r ". [] | select(.vid == \"${VID_TO_REPACK}\") | .queuedFiles")
   echo "Expansion finished with the following number of files in the retrieve queue: ${nbFilesOnQueue}, for schedulerBackendName = ${schedulerBackendName}"
-  schedulerBackendName=`kubectl -n ${NAMESPACE} exec ${CTA_CLI_POD} -c cta-cli -- cta-admin --json version | jq -r '.[] | .schedulerBackendName'`
+  schedulerBackendName=$(kubectl -n ${NAMESPACE} exec ${CTA_CLI_POD} -c cta-cli -- cta-admin --json version | jq -r '.[] | .schedulerBackendName')
   if [[ "$schedulerBackendName" == "postgres" ]]; then
     if [[ -z $nbFilesOnQueue || $nbFilesOnQueue -eq  0 ]]
       then
@@ -390,10 +390,10 @@ repackCancellation() {
 
   echo
   echo "Checking if the Retrieve queue of the VID ${VID_TO_REPACK} contains the Retrieve Requests created from the Repack Request expansion"
-  nbFilesOnTapeToRepack=`kubectl -n ${NAMESPACE} exec ${CTA_CLI_POD} -c cta-cli -- cta-admin --json tapefile ls --vid ${VID_TO_REPACK} | jq "length"`
+  nbFilesOnTapeToRepack=$(kubectl -n ${NAMESPACE} exec ${CTA_CLI_POD} -c cta-cli -- cta-admin --json tapefile ls --vid ${VID_TO_REPACK} | jq "length")
   echo "Nb files on tape = $nbFilesOnTapeToRepack"
 
-  nbFilesOnQueue=`kubectl -n ${NAMESPACE} exec ${CTA_CLI_POD} -c cta-cli -- cta-admin --json showqueues | jq -r ". [] | select(.vid == \"${VID_TO_REPACK}\") | .queuedFiles"`
+  nbFilesOnQueue=$(kubectl -n ${NAMESPACE} exec ${CTA_CLI_POD} -c cta-cli -- cta-admin --json showqueues | jq -r ". [] | select(.vid == \"${VID_TO_REPACK}\") | .queuedFiles")
   echo "Nb files on the queue ${VID_TO_REPACK} = $nbFilesOnQueue"
   if [[ "$schedulerBackendName" == "postgres" ]]; then
     echo "Scheduler backend is postgres. Expecting no queued files for retrieval after repack request has been cancelled."
@@ -466,12 +466,12 @@ repackMoveAndAddCopies() {
 
   echo "Will change the tapepool of the tapes"
 
-  allVID=`kubectl -n ${NAMESPACE}  exec ${CTA_CLI_POD} -c cta-cli -- cta-admin --json tape ls --all | jq -r ". [] | .vid"`
+  allVID=$(kubectl -n ${NAMESPACE}  exec ${CTA_CLI_POD} -c cta-cli -- cta-admin --json tape ls --all | jq -r ". [] | .vid")
   allVIDTable=($allVID)
 
   nbVid=${#allVIDTable[@]}
 
-  allTapepool=`kubectl -n ${NAMESPACE} exec ${CTA_CLI_POD} -c cta-cli -- cta-admin --json tapepool ls | jq -r ". [] .name"`
+  allTapepool=$(kubectl -n ${NAMESPACE} exec ${CTA_CLI_POD} -c cta-cli -- cta-admin --json tapepool ls | jq -r ". [] .name")
   allTapepoolTable=($allTapepool)
 
   nbTapepool=${#allTapepoolTable[@]}
@@ -493,7 +493,7 @@ repackMoveAndAddCopies() {
 
   echo "OK"
 
-  storageClassName=`kubectl -n ${NAMESPACE} exec ${CTA_CLI_POD} -c cta-cli -- cta-admin --json storageclass ls | jq -r ". [0] | .name"`
+  storageClassName=$(kubectl -n ${NAMESPACE} exec ${CTA_CLI_POD} -c cta-cli -- cta-admin --json storageclass ls | jq -r ". [0] | .name")
 
   echo "Changing the storage class $storageClassName nb copies"
   kubectl -n ${NAMESPACE} exec ${CTA_CLI_POD} -c cta-cli -- cta-admin storageclass ch --name $storageClassName --numberofcopies 3
@@ -514,11 +514,11 @@ repackMoveAndAddCopies() {
   echo "Launching the repack \"Move and add copies\" test on VID ${VID_TO_REPACK}"
   kubectl -n ${NAMESPACE} exec ${CLIENT_POD} -c client -- bash /root/repack_systemtest.sh -d -v ${VID_TO_REPACK} -b ${REPACK_BUFFER_URL} -r ${BASE_REPORT_DIRECTORY}/Step$1-MoveAndAddCopies -n repack_ctasystest  || exit 1
 
-  repackLsResult=`kubectl -n ${NAMESPACE} exec ${CTA_CLI_POD} -c cta-cli -- cta-admin --json repack ls --vid ${VID_TO_REPACK} | jq ". [0]"`
-  totalFilesToRetrieve=`echo $repackLsResult | jq -r ".totalFilesToRetrieve"`
-  totalFilesToArchive=`echo $repackLsResult | jq -r ".totalFilesToArchive"`
-  retrievedFiles=`echo $repackLsResult | jq -r ".retrievedFiles"`
-  archivedFiles=`echo $repackLsResult | jq -r ".archivedFiles"`
+  repackLsResult=$(kubectl -n ${NAMESPACE} exec ${CTA_CLI_POD} -c cta-cli -- cta-admin --json repack ls --vid ${VID_TO_REPACK} | jq ". [0]")
+  totalFilesToRetrieve=$(echo $repackLsResult | jq -r ".totalFilesToRetrieve")
+  totalFilesToArchive=$(echo $repackLsResult | jq -r ".totalFilesToArchive")
+  retrievedFiles=$(echo $repackLsResult | jq -r ".retrievedFiles")
+  archivedFiles=$(echo $repackLsResult | jq -r ".archivedFiles")
 
   if [[ $retrievedFiles != $totalFilesToRetrieve ]]
   then
@@ -588,7 +588,7 @@ repackTapeRepair() {
 
   echo "Getting files to inject into the repack buffer directory"
 
-  tfls=`kubectl -n ${NAMESPACE} exec ${CTA_CLI_POD} -c cta-cli -- cta-admin --json tapefile ls --vid ${VID_TO_REPACK}`
+  tfls=$(kubectl -n ${NAMESPACE} exec ${CTA_CLI_POD} -c cta-cli -- cta-admin --json tapefile ls --vid ${VID_TO_REPACK})
   nbFileToInject=10
 
   if [[ $nbFileToInject != 0 ]]
@@ -606,9 +606,9 @@ repackTapeRepair() {
 
     for i in $(seq 0 $(( nbFileToInject - 1 )) )
     do
-      diskId=`echo $tfls | jq -r ". [$i] | .df.diskId"` || break
+      diskId=$(echo $tfls | jq -r ". [$i] | .df.diskId") || break
       diskIds[$i]=$diskId
-      pathFileToInject=`kubectl -n ${NAMESPACE} exec ${EOS_MGM_POD} -c eos-mgm -- eos fileinfo fid:$diskId --path | cut -d":" -f2 | tr -d " "`
+      pathFileToInject=$(kubectl -n ${NAMESPACE} exec ${EOS_MGM_POD} -c eos-mgm -- eos fileinfo fid:$diskId --path | cut -d":" -f2 | tr -d " ")
       pathOfFilesToInject[$i]=$pathFileToInject
     done
 
@@ -618,7 +618,7 @@ repackTapeRepair() {
 
     for i in $(seq 0 $(( nbFileToInject - 1)) )
     do
-      fseqFile=`echo $tfls | jq -r ". [] | select(.df.diskId == \"${diskIds[$i]}\") | .tf.fSeq"` || break
+      fseqFile=$(echo $tfls | jq -r ". [] | select(.df.diskId == \"${diskIds[$i]}\") | .tf.fSeq") || break
       kubectl -n ${NAMESPACE} exec ${EOS_MGM_POD} -c eos-mgm -- eos cp ${pathOfFilesToInject[$i]} $bufferDirectory/`printf "%9d\n" $fseqFile | tr ' ' 0`
     done
 
@@ -627,12 +627,12 @@ repackTapeRepair() {
     echo "Launching a repack request on the vid ${VID_TO_REPACK}"
     kubectl -n ${NAMESPACE} exec ${CLIENT_POD} -c client -- bash /root/repack_systemtest.sh -d -v ${VID_TO_REPACK} -b ${REPACK_BUFFER_URL} -m -r ${BASE_REPORT_DIRECTORY}/Step$1-RepackTapeRepair -n repack_ctasystest  ||      exit 1
 
-    repackLsResult=`kubectl -n ${NAMESPACE} exec ${CTA_CLI_POD} -c cta-cli -- cta-admin --json repack ls --vid ${VID_TO_REPACK} | jq -r ". [0]"`
-    userProvidedFiles=`echo $repackLsResult | jq -r ".userProvidedFiles"`
-    archivedFiles=`echo $repackLsResult | jq -r ".archivedFiles"`
-    retrievedFiles=`echo $repackLsResult | jq -r ".retrievedFiles"`
-    totalFilesToRetrieve=`echo $repackLsResult | jq -r ".totalFilesToRetrieve"`
-    totalFilesToArchive=`echo $repackLsResult | jq -r ".totalFilesToArchive"`
+    repackLsResult=$(kubectl -n ${NAMESPACE} exec ${CTA_CLI_POD} -c cta-cli -- cta-admin --json repack ls --vid ${VID_TO_REPACK} | jq -r ". [0]")
+    userProvidedFiles=$(echo $repackLsResult | jq -r ".userProvidedFiles")
+    archivedFiles=$(echo $repackLsResult | jq -r ".archivedFiles")
+    retrievedFiles=$(echo $repackLsResult | jq -r ".retrievedFiles")
+    totalFilesToRetrieve=$(echo $repackLsResult | jq -r ".totalFilesToRetrieve")
+    totalFilesToArchive=$(echo $repackLsResult | jq -r ".totalFilesToArchive")
 
     if [[ $totalFilesToRetrieve != $(( $totalFilesToArchive - $userProvidedFiles )) ]]
     then
@@ -692,8 +692,8 @@ repackTapeRepairNoRecall() {
 
   echo "Getting files to inject into the repack buffer directory"
 
-  tfls=`kubectl -n ${NAMESPACE} exec ${CTA_CLI_POD} -c cta-cli -- cta-admin --json tapefile ls --vid ${VID_TO_REPACK}`
-  nbFilesOnTape=`echo $tfls | jq length`
+  tfls=$(kubectl -n ${NAMESPACE} exec ${CTA_CLI_POD} -c cta-cli -- cta-admin --json tapefile ls --vid ${VID_TO_REPACK})
+  nbFilesOnTape=$(echo $tfls | jq length)
   nbFileToInject=10
 
   if [[ $nbFileToInject != 0 ]]
@@ -717,9 +717,9 @@ repackTapeRepairNoRecall() {
 
     for i in $(seq 0 $(( nbFileToInject - 1 )) )
     do
-      diskId=`echo $tfls | jq -r ". [${filesIndices[$i]}] | .df.diskId"` || break
+      diskId=$(echo $tfls | jq -r ". [${filesIndices[$i]}] | .df.diskId") || break
       diskIds[$i]=$diskId
-      pathFileToInject=`kubectl -n ${NAMESPACE} exec ${EOS_MGM_POD} -c eos-mgm -- eos fileinfo fid:$diskId --path | cut -d":" -f2 | tr -d " "`
+      pathFileToInject=$(kubectl -n ${NAMESPACE} exec ${EOS_MGM_POD} -c eos-mgm -- eos fileinfo fid:$diskId --path | cut -d":" -f2 | tr -d " ")
       pathOfFilesToInject[$i]=$pathFileToInject
     done
 
@@ -729,7 +729,7 @@ repackTapeRepairNoRecall() {
 
     for i in $(seq 0 $(( nbFileToInject - 1)) )
     do
-      fseqFile=`echo $tfls | jq -r ". [] | select(.df.diskId == \"${diskIds[$i]}\") | .tf.fSeq"` || break
+      fseqFile=$(echo $tfls | jq -r ". [] | select(.df.diskId == \"${diskIds[$i]}\") | .tf.fSeq") || break
       kubectl -n ${NAMESPACE} exec ${EOS_MGM_POD} -c eos-mgm -- eos cp ${pathOfFilesToInject[$i]} $bufferDirectory/`printf "%9d\n" $fseqFile | tr ' ' 0`
     done
 
@@ -739,12 +739,12 @@ repackTapeRepairNoRecall() {
     echo "Launching a repack request on the vid ${VID_TO_REPACK}"
     kubectl -n ${NAMESPACE} exec ${CLIENT_POD} -c client -- bash /root/repack_systemtest.sh -d -v ${VID_TO_REPACK} -b ${REPACK_BUFFER_URL} -m -r ${BASE_REPORT_DIRECTORY}/Step$1-RepackTapeRepairNoRecall -n repack_ctasystest -u ||      exit 1
 
-    repackLsResult=`kubectl -n ${NAMESPACE} exec ${CTA_CLI_POD} -c cta-cli -- cta-admin --json repack ls --vid ${VID_TO_REPACK} | jq -r ". [0]"`
-    userProvidedFiles=`echo $repackLsResult | jq -r ".userProvidedFiles"`
-    archivedFiles=`echo $repackLsResult | jq -r ".archivedFiles"`
-    retrievedFiles=`echo $repackLsResult | jq -r ".retrievedFiles"`
-    totalFilesToRetrieve=`echo $repackLsResult | jq -r ".totalFilesToRetrieve"`
-    totalFilesToArchive=`echo $repackLsResult | jq -r ".totalFilesToArchive"`
+    repackLsResult=$(kubectl -n ${NAMESPACE} exec ${CTA_CLI_POD} -c cta-cli -- cta-admin --json repack ls --vid ${VID_TO_REPACK} | jq -r ". [0]")
+    userProvidedFiles=$(echo $repackLsResult | jq -r ".userProvidedFiles")
+    archivedFiles=$(echo $repackLsResult | jq -r ".archivedFiles")
+    retrievedFiles=$(echo $repackLsResult | jq -r ".retrievedFiles")
+    totalFilesToRetrieve=$(echo $repackLsResult | jq -r ".totalFilesToRetrieve")
+    totalFilesToArchive=$(echo $repackLsResult | jq -r ".totalFilesToArchive")
 
     if [[ $totalFilesToRetrieve != $(( $totalFilesToArchive - $userProvidedFiles )) ]]
     then

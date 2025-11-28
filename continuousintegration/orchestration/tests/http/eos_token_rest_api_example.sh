@@ -1,8 +1,8 @@
 #!/bin/bash
 EOS_MGM_HOST="ctaeos"
 PORT=9000
-EXPIRE=`date +%s`; let LATER=$EXPIRE+64000
-token=`eos token --path /eos/ctaeos/tape/ --expires $LATER --tree --owner owner_username --group owner_group_name`
+EXPIRE=$(date +%s); let LATER=$EXPIRE+64000
+token=$(eos token --path /eos/ctaeos/tape/ --expires $LATER --tree --owner owner_username --group owner_group_name)
 curl -k -L -v  https://$EOS_MGM_HOST:$PORT/api/v0/archiveinfo -X POST -H "Authorization: Bearer $token" -H "Content-Type: application/json" -d '{"paths":["/eos/ctaeos/tape/test.txt","/file/does/not/exist"]}' 2> /dev/null | jq
 [
   {
@@ -16,7 +16,7 @@ curl -k -L -v  https://$EOS_MGM_HOST:$PORT/api/v0/archiveinfo -X POST -H "Author
 ]
 
 
-token=`eos token --path /eos/ctaeos/ --expires $LATER`
+token=$(eos token --path /eos/ctaeos/ --expires $LATER)
 curl -k -L -v  https://$EOS_MGM_HOST:$PORT/api/v0/archiveinfo -X POST -H "Authorization: Bearer $token" -H "Content-Type: application/json" -d '{"paths":["/eos/ctaeos/tape/test.txt","/file/does/not/exist"]}' 2> /dev/null | jq
 [
   {
