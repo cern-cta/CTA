@@ -81,7 +81,7 @@ enum Serrno {
  */
 constexpr int ERMBASEOFF = 2200;   //!< RMC error base offset
 
-enum RMCerror {
+enum RMCError {
   ERMCNACT   = ERMBASEOFF + 1,     //!< Remote SCSI media changer server not active or service being drained
   ERMCRBTERR = ERMBASEOFF + 2,     //!< Remote SCSI media changer error
   ERMCUNREC  = ERMCRBTERR + 1,     //!< Remote SCSI media changer unrec. error
