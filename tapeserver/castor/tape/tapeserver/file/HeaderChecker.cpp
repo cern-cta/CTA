@@ -140,7 +140,6 @@ std::string HeaderChecker::checkVolumeLabel(tapeserver::drive::DriveInterface &d
 
     size_t blockSize = 256 * 1024;
     auto data = std::make_unique<char[]>(blockSize + 1);
-    size_t bytes_read = drive.readBlock(data.get(), blockSize);
     if (size_t bytes_read = drive.readBlock(data.get(), blockSize); bytes_read < sizeof(vol1)) {
       throw cta::exception::Exception("Too few bytes read from label");
     }
