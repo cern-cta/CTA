@@ -22,22 +22,20 @@
 namespace cta::exception {
 
 /**
- * An exception class representng a user as opposed to an application error.
+ * An exception class representng a user as opposed to an application error
  */
 class UserError : public exception::Exception {
 public:
   /**
-   * Constructor.
+   * Constructor
    *
-   * @param context optional context string added to the message
-   * at initialisation time.
-   * @param embedBacktrace whether to embed a backtrace of where the
-   * exception was throw in the message
+   * @param context optional context string added to the message at initialisation time
+   * @param embedBacktrace whether to embed a backtrace of where the exception was thrown in the message
    */
-  UserError(const std::string& context = "", const bool embedBacktrace = true) : Exception(context, embedBacktrace) {}
+  explicit UserError(const std::string& context = "", const bool embedBacktrace = true) :
+    Exception(context, embedBacktrace) {}
+};
 
-};  // class UserError
-
-}  // namespace cta::exception
+} // namespace cta::exception
 
 #define CTA_GENERATE_USER_EXCEPTION_CLASS(A) class A: public cta::exception::UserError { using UserError::UserError; }

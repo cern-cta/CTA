@@ -10,7 +10,7 @@ namespace cta::frontend::grpc {
 
 class DefaultWriteReactor : public ::grpc::ServerWriteReactor<cta::xrd::StreamResponse> {
 public:
-  DefaultWriteReactor(const std::string& errMsg, ::grpc::StatusCode errCode = ::grpc::StatusCode::INVALID_ARGUMENT) {
+  explicit DefaultWriteReactor(const std::string& errMsg, ::grpc::StatusCode errCode = ::grpc::StatusCode::INVALID_ARGUMENT) {
     Finish(Status(errCode, errMsg));
   }
 
@@ -21,4 +21,4 @@ void DefaultWriteReactor::OnDone() {
   delete this;
 }
 
-}  // namespace cta::frontend::grpc
+} // namespace cta::frontend::grpc

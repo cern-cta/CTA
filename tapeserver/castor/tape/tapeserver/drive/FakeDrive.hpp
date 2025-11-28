@@ -53,9 +53,8 @@ class FakeDrive : public DriveInterface {
  public:
   std::string contentToString() noexcept;
 
-  FakeDrive(uint64_t capacity = std::numeric_limits<uint64_t>::max(),
-    enum FailureMoment failureMoment = OnWrite,
-    bool failOnMount = false) noexcept;
+  explicit FakeDrive(uint64_t capacity = std::numeric_limits<uint64_t>::max(),
+    enum FailureMoment failureMoment = OnWrite, bool failOnMount = false) noexcept;
   explicit FakeDrive(bool failOnMount) noexcept;
   ~FakeDrive() override = default;
   compressionStats getCompression() final;

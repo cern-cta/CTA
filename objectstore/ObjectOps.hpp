@@ -385,7 +385,7 @@ class ScopedExclusiveLock: public ScopedLock {
 public:
   ScopedExclusiveLock() = default;
 
-  ScopedExclusiveLock(ObjectOpsBase & oo, uint64_t timeout_us = 0) {
+  explicit ScopedExclusiveLock(ObjectOpsBase& oo, uint64_t timeout_us = 0) {
     lock(oo, timeout_us);
   }
 

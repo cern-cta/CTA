@@ -27,20 +27,14 @@ namespace cta::catalogue {
 class FileSizeMismatch: public exception::Exception {
 public:
   /**
-   * Constructor.
+   * Constructor
    *
-   * @param context optional context string added to the message
-   * at initialisation time.
-   * @param embedBacktrace whether to embed a backtrace of where the
-   * exception was throw in the message
+   * @param context optional context string added to the message at initialisation time
+   * @param embedBacktrace whether to embed a backtrace of where the exception was thrown in the message
    */
-  FileSizeMismatch(const std::string &context = "", const bool embedBacktrace = true):
-    cta::exception::Exception(context, embedBacktrace) {
-  }
+  explicit FileSizeMismatch(const std::string &context = "", const bool embedBacktrace = true) :
+    cta::exception::Exception(context, embedBacktrace) {}
 
-  /**
-   * Destructor
-   */
   ~FileSizeMismatch() override = default;
 };
 

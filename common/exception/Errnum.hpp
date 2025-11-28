@@ -24,7 +24,7 @@ namespace cta::exception {
 class Errnum : public Exception {
 public:
   explicit Errnum(std::string_view what = "");
-  Errnum(int err, std::string_view what = "");
+  explicit Errnum(int err, std::string_view what = "");
   ~Errnum() final = default;
 
   int errorNumber() const { return m_errnum; }

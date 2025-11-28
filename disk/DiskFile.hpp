@@ -48,7 +48,7 @@ namespace cta::disk {
       class DiskFileFactory {
         using Regex = cta::utils::Regex;
       public:
-        DiskFileFactory(uint16_t xrootTimeout);
+        explicit DiskFileFactory(uint16_t xrootTimeout);
         ReadFile * createReadFile(const std::string & path);
         WriteFile * createWriteFile(const std::string & path);
       private:

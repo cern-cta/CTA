@@ -76,7 +76,7 @@ namespace cta::disk {
       
       class XrootReadFile: public XrootBaseReadFile {
       public:
-        XrootReadFile(const std::string &xrootUrl, uint16_t timeout = 0);
+        explicit XrootReadFile(const std::string& xrootUrl, uint16_t timeout = 0);
       };
       
       class XrootBaseWriteFile: public WriteFile {
@@ -96,7 +96,7 @@ namespace cta::disk {
       
       class XrootWriteFile: public XrootBaseWriteFile {
       public:
-        XrootWriteFile(const std::string &xrootUrl, uint16_t timeout = 0);
+        explicit XrootWriteFile(const std::string& xrootUrl, uint16_t timeout = 0);
       };
 
       //==============================================================================

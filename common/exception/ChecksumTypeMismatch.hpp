@@ -34,7 +34,7 @@ public:
    * @param embedBacktrace whether to embed a backtrace of where the
    * exception was throw in the message
    */
-  ChecksumTypeMismatch(const std::string &context = "", const bool embedBacktrace = true) :
+  explicit ChecksumTypeMismatch(const std::string &context = "", const bool embedBacktrace = true) :
     Exception(context, embedBacktrace) {}
 
   /**
