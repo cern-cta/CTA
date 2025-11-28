@@ -1175,7 +1175,7 @@ void drive::DriveGeneric::writeBlock(const void* data, size_t count) {
       if (countWithCrc32c != count + SCSI::logicBlockProtectionMethod::CRC32CLength) {
         throw cta::exception::Errnum("In DriveGeneric::writeBlock: Incorrect length for block with crc32c");
       }
-      if (m_sysWrapper.write(m_tapeFD, dataWithCrc32c.get(), countWithCrc32c) == 1) {
+      if (m_sysWrapper.write(m_tapeFD, dataWithCrc32c.get(), countWithCrc32c) == -1) {
         throw cta::exception::Errnum("In DriveGeneric::writeBlock: Failed ST write with crc32c");
       }
       break;
@@ -1284,11 +1284,11 @@ void drive::DriveGeneric::readExactBlock(void* data, size_t count, const std::st
     case lbpToUse::disabled: {
       ssize_t res = m_sysWrapper.read(m_tapeFD, data, count);
       // First handle block too big
-      if (-1 == res && ENOSPC == errno) {
+      if (res == -1 && ENOSPC == errno) {
         throw UnexpectedSize(context);
       }
       // ENOMEM may be returned if the tape block size is larger than 'count'
-      if (-1 == res && ENOMEM == errno) {
+      if (res == -1 && ENOMEM == errno) {
         throw cta::exception::Errnum(errno,
                                      context + ": In DriveGeneric::readExactBlock: Failed ST read. Tape volume label "
                                                "size not be in the CTA/CASTOR format.");
