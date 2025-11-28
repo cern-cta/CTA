@@ -43,22 +43,21 @@ namespace castor::tape::tapeserver::drive {
  */
 class compressionStats {
  public:
-  compressionStats()
-    : fromHost(0), toTape(0), fromTape(0), toHost(0) {}
+  compressionStats() = default;
   // migration stats
 
   // amount of bytes the host sent
-  uint64_t fromHost;
+  uint64_t fromHost = 0;
 
   // amount of bytes really wrote on byte
-  uint64_t toTape;
+  uint64_t toTape = 0;
   //--------------------------------------------------------------------------
   // recall stats : currently filled by the drive but unused elsewhere
   // amount of bytes the drive read on tape
-  uint64_t fromTape;
+  uint64_t fromTape = 0;
 
   // amount of bytes we send to the client
-  uint64_t toHost;
+  uint64_t toHost = 0;
 };
 
 /**

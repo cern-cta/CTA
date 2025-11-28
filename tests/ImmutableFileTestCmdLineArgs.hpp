@@ -30,7 +30,7 @@ struct ImmutableFileTestCmdLineArgs {
   /**
    * True if the usage message should be printed.
    */
-  bool help;
+  bool help = false;
 
   /**
    * The XRootd URL of the file to be modified.

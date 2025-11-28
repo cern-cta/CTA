@@ -24,11 +24,7 @@ namespace cta::common::dataStructures {
 //------------------------------------------------------------------------------
 // constructor
 //------------------------------------------------------------------------------
-ReadTestResult::ReadTestResult():
-  noOfFilesRead(0),
-  totalBytesRead(0),
-  totalFilesRead(0),
-  totalTimeInSeconds(0) {}
+ReadTestResult::ReadTestResult() {}
 
 //------------------------------------------------------------------------------
 // operator==

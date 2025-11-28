@@ -40,7 +40,6 @@ OcciConn::OcciConn(oracle::occi::Environment* const env,
                    const std::string& dbNamespace)
     : m_env(env),
       m_occiConn(conn),
-      m_autocommitMode(AutocommitMode::AUTOCOMMIT_ON),
       m_dbNamespace(dbNamespace) {
   if(nullptr == conn) {
     throw exception::NullPtrException("The OCCI connection is a nullptr pointer");

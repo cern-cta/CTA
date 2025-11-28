@@ -213,7 +213,7 @@ private:
   /**
    * The maximum of all the field lengths.
    */
-  ub2 m_maxFieldLength;
+  ub2 m_maxFieldLength = 0;
 
 }; // OcciColumn
 

@@ -51,7 +51,7 @@ public:
   /**
    * Create into the RecallReportPacker a report for the failed migration
    * of migratedFile
-   * @param migratedFile the file which failed 
+   * @param migratedFile the file which failed
    * @param ex the reason for the failure
    * @param lc log context provided by the calling thread.
    */
@@ -65,7 +65,7 @@ public:
 
   /**
    * Create into the RecallReportPacker a report for an erroneous end of session
-   * @param msg The error message 
+   * @param msg The error message
    * @param error_code The error code given by the drive
    * @param lc log context provided by the calling thread.
    */
@@ -119,7 +119,7 @@ public:
   bool errorHappened();
 
 private:
-  //inner classes use to store content while receiving a report 
+  //inner classes use to store content while receiving a report
   class Report {
   public:
     virtual ~Report() = default;
@@ -195,17 +195,17 @@ private:
 
   cta::threading::Mutex m_producterProtection;
 
-  /** 
+  /**
    * m_fifo is holding all the report waiting to be processed
    */
   cta::threading::BlockingQueue<Report *> m_fifo;
 
   /**
    * Is set as true as soon as we process a reportFailedJob
-   * That we can do a sanity check to make sure we always call 
-   * the right end of the session  
+   * That we can do a sanity check to make sure we always call
+   * the right end of the session
    */
-  bool m_errorHappened;
+  bool m_errorHappened = false;
 
   /**
    * The mount object used to send reports
@@ -221,12 +221,12 @@ private:
   /**
    * Tracking of the tape thread end
    */
-  bool m_tapeThreadComplete;
+  bool m_tapeThreadComplete = false;
 
   /**
    * Tracking of the disk thread end
    */
-  bool m_diskThreadComplete;
+  bool m_diskThreadComplete = false;
 
   cta::threading::Mutex m_mutex;
 

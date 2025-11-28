@@ -20,100 +20,91 @@
 namespace castor::tape::tapeserver::daemon {
 
   /**
-   * Structure holding the timers and stats for the tape session. We use doubles, 
+   * Structure holding the timers and stats for the tape session. We use doubles,
    * for time and all measurements are in seconds or uint64_t for bytes.
    */
   struct TapeSessionStats {
     /** Mounting time, in seconds */
-    double mountTime;
-    
+    double mountTime = 0;
+
     /** Cumulated positioning time, in seconds. */
-    double positionTime;
-    
+    double positionTime = 0;
+
     /** Cumulated time spent computing checksums */
-    double checksumingTime;
-    
+    double checksumingTime = 0;
+
     /** Cumulated time spent reading and writing data with the drive (for both data and headers). */
-    double readWriteTime;
-    
+    double readWriteTime = 0;
+
     /** Cumulated time spent flushing */
-    double flushTime;
-    
+    double flushTime = 0;
+
     /** Unload time, in seconds. */
-    double unloadTime;
-    
+    double unloadTime = 0;
+
     /** Unmount time, in seconds. */
-    double unmountTime;
-   
+    double unmountTime = 0;
+
     /** Time spent running encryption control scripts */
-    double encryptionControlTime;
- 
+    double encryptionControlTime = 0;
+
     /** Cumulated time spent waiting for data blocks. */
-    double waitDataTime;
-    
+    double waitDataTime = 0;
+
     /** Cumulated time spent waiting for free memory. */
-    double waitFreeMemoryTime;
-    
+    double waitFreeMemoryTime = 0;
+
     /** Cumulated time spent by the tape thread waiting for a task. */
-    double waitInstructionsTime;
-    
+    double waitInstructionsTime = 0;
+
     /** Cumulated time spent reporting */
-    double waitReportingTime;
-    
-    /** Time spent during the session, except mounting, positioning and 
+    double waitReportingTime = 0;
+
+    /** Time spent during the session, except mounting, positioning and
      * unloading / unmounting. This a derived value */
     double transferTime() const {
       return checksumingTime + readWriteTime + flushTime + waitDataTime +
               waitFreeMemoryTime + waitInstructionsTime + waitReportingTime;
     }
-    
-    /** Total time of the session, computed in parallel */
-    double totalTime;
 
-    /** Time to delivery data to the client equal disk threads totalTime 
+    /** Total time of the session, computed in parallel */
+    double totalTime = 0;
+
+    /** Time to delivery data to the client equal disk threads totalTime
      * for recall and the tape thread totalTime for migration
      */
-    double deliveryTime;
-    
+    double deliveryTime = 0;
+
     /** Cumulated data volume (actual payload), in bytes. */
-    uint64_t dataVolume;
-    
+    uint64_t dataVolume = 0;
+
     /** Cumulated space used by file headers. */
-    uint64_t headerVolume;
-    
+    uint64_t headerVolume = 0;
+
     /** Count of files actually transfered in the session. */
-    uint64_t filesCount;
-    
+    uint64_t filesCount = 0;
+
     /** Count of files coming from repack retrieve request transfered in the session.*/
-    uint64_t repackFilesCount;
-    
+    uint64_t repackFilesCount = 0;
+
     /** Count of files coming from user retrieve request transfered in the session.*/
-    uint64_t userFilesCount;
-    
+    uint64_t userFilesCount = 0;
+
     /** Count of files coming from verify-only retrieve requests in the session.*/
-    uint64_t verifiedFilesCount;
-    
+    uint64_t verifiedFilesCount = 0;
+
     /** Count of bytes coming from repack retrieve request transfered in the session.*/
-    uint64_t repackBytesCount;
-    
+    uint64_t repackBytesCount = 0;
+
     /** Count of bytes coming from user retrieve request transfered in the session.*/
-    uint64_t userBytesCount;
-    
+    uint64_t userBytesCount = 0;
+
     /** Count of bytes coming from verify-only retrieve requests in the session.*/
-    uint64_t verifiedBytesCount;
-    
+    uint64_t verifiedBytesCount = 0;
+
     static const uint64_t headerVolumePerFile = 3*80;
     static const uint64_t trailerVolumePerFile = 3*80;
-    
-    /** Constructor: all defaults are zero */
-    TapeSessionStats():  mountTime(0.0), positionTime(0.0), checksumingTime(0.0),
-    readWriteTime(0.0), flushTime(0.0), unloadTime(0.0), unmountTime(0.0),
-    encryptionControlTime(0.0), waitDataTime(0.0), waitFreeMemoryTime(0.0),
-    waitInstructionsTime(0.0), waitReportingTime(0.0), totalTime(0.0),
-    deliveryTime(0.0), dataVolume(0), headerVolume(0), filesCount(0), repackFilesCount(0), 
-    userFilesCount(0), verifiedFilesCount(0), repackBytesCount(0), userBytesCount(0),
-    verifiedBytesCount(0) {}
-    
+
     /** Accumulate contents of another stats block */
     void add(const TapeSessionStats& other) {
       mountTime += other.mountTime;
@@ -141,5 +132,5 @@ namespace castor::tape::tapeserver::daemon {
       verifiedBytesCount += other.verifiedBytesCount;
     }
   };
-  
+
 } // namespace castor::tape::tapeserver::daemon

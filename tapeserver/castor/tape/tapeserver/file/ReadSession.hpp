@@ -139,29 +139,29 @@ protected:
   /**
     * set to true in case the destructor of ReadFile finds a missing lock on its session
     */
-  bool m_corrupted;
+  bool m_corrupted = false;
 
   /**
     * Session lock to be sure that a read session is owned by maximum one ReadFile object
     */
-  bool m_locked;
+  bool m_locked = false;
 
   /**
     * Current fSeq, used only for positioning by fseq
     */
-  uint32_t m_fseq;
+  uint32_t m_fseq = 1;
 
   /**
     * Part of the file we are reading
     */
-  PartOfFile m_currentFilePart;
+  PartOfFile m_currentFilePart = PartOfFile::Header;
 
   const tapeserver::daemon::VolumeInfo m_volInfo;
 
   /**
   * The boolean variable indicates that the tape has VOL1 with enabled LBP
   */
-  bool m_detectedLbp;
+  bool m_detectedLbp = false;
 };
 
 }} // namespace castor::tape::tapeFile

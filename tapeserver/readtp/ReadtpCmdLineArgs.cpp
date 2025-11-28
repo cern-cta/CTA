@@ -31,8 +31,7 @@ namespace cta::tapeserver::readtp {
 //------------------------------------------------------------------------------
 // constructor
 //------------------------------------------------------------------------------
-ReadtpCmdLineArgs::ReadtpCmdLineArgs(const int argc, char *const *const argv) :
-  help(false), m_vid(""), m_destinationFileListURL("") {
+ReadtpCmdLineArgs::ReadtpCmdLineArgs(const int argc, char *const *const argv) {
   if (argc < 3) {
     help = true;
     return;
@@ -44,9 +43,9 @@ ReadtpCmdLineArgs::ReadtpCmdLineArgs(const int argc, char *const *const argv) :
   }
   m_vid = std::string(argv[1]);
   utils::toUpper(m_vid);
-  
+
   m_fSeqRangeList = TapeFileSequenceParser::parse(argv[2]);
-  
+
   static struct option longopts[] = {
     {"destination_files",      required_argument, nullptr, 'f'},
     {"drive",                  required_argument, nullptr, 'u'},
@@ -98,7 +97,7 @@ ReadtpCmdLineArgs::ReadtpCmdLineArgs(const int argc, char *const *const argv) :
 
   if (m_destinationFileListURL.empty()) {
     m_destinationFileListURL = "/dev/null"; // Equivalent to an empty file
-  }         
+  }
 }
 
 
@@ -121,7 +120,7 @@ void ReadtpCmdLineArgs::printUsage(std::ostream &os) {
     "  -f, --destination_files <FILE URL>      URL to file containing a list of destination files."  << std::endl <<
     "                                          If not set, all data read is written to file:///dev/null" << std::endl <<
     "                                          If there are less destination files than read files, the remaining" << std::endl <<
-    "                                          files read will be written to file:///dev/null." << std::endl;  
+    "                                          files read will be written to file:///dev/null." << std::endl;
 }
 
 } // namespace cta::tapeserver::readtp

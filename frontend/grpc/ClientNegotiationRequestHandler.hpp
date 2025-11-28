@@ -14,7 +14,7 @@
  *               granted to it by virtue of its status as an Intergovernmental Organization or
  *               submit itself to any jurisdiction.
  */
- 
+
 #pragma once
 
 #include "IHandler.hpp"
@@ -51,16 +51,16 @@ private:
     READ,
     FINISH
   };
-  
+
   cta::log::Logger& m_log;
   cta::xrd::Negotiation::Stub& m_stub;
   ::grpc::CompletionQueue&  m_completionQueue;
   const std::string& m_strSpn;
   cta::frontend::grpc::request::Tag m_tag;
-  
-  StreamState m_streamState;
-  
-  
+
+  StreamState m_streamState = StreamState::NEW;
+
+
   // Context for the rpc, allowing to tweak aspects of it such as the use
   // of compression, authentication, as well as to send metadata back to the
   // client.
@@ -90,7 +90,7 @@ private:
 
   void logGSSErrors(const std::string& strContext, OM_uint32 gssCode, int iType);
   gss_name_t gssSpn(const std::string& strSpn);
-    
+
 };
 
 } // namespace cta::frontend::grpc::client

@@ -31,7 +31,7 @@
 namespace cta::catalogue {
 
 RdbmsAdminUserCatalogue::RdbmsAdminUserCatalogue(log::Logger &log, std::shared_ptr<rdbms::ConnPool> connPool):
-  m_log(log), m_connPool(connPool), m_isAdminCache(10) {}
+  m_log(log), m_connPool(connPool) {}
 
 void RdbmsAdminUserCatalogue::createAdminUser(
   const common::dataStructures::SecurityIdentity &admin,

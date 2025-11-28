@@ -132,21 +132,19 @@ class MemQueueRequest {
 public:
   MemQueueRequest(typename Request::JobDump& job, Request& archiveRequest)
       : m_job(job),
-        m_request(archiveRequest),
-        m_promise(std::make_shared<std::promise<void>>()),
-        m_tid(::syscall(SYS_gettid)) {}
+        m_request(archiveRequest) {}
   virtual ~MemQueueRequest() {
     threading::MutexLocker ml(m_mutex);
   }
 private:
   typename Request::JobDump m_job;
   Request & m_request;
-  std::shared_ptr<std::promise<void>> m_promise;
+  std::shared_ptr<std::promise<void>> m_promise = std::make_shared<std::promise<void>>();
   std::shared_ptr<SharedQueueLock<Queue, Request>> m_returnValue;
   // Mutex protecting users against premature deletion
   threading::Mutex m_mutex;
   // Helper for debugging
-  pid_t m_tid;
+  pid_t m_tid = ::syscall(SYS_gettid);
 };
 
 template <class Request, class Queue>

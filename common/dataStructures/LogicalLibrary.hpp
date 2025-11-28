@@ -45,7 +45,7 @@ struct LogicalLibrary {
   bool operator!=(const LogicalLibrary &rhs) const;
 
   std::string name;
-  bool isDisabled;
+  bool isDisabled = false;
   EntryLog creationLog;
   EntryLog lastModificationLog;
   std::string comment;

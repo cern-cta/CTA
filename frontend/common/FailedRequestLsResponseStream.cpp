@@ -32,9 +32,7 @@ FailedRequestLsResponseStream::FailedRequestLsResponseStream(cta::catalogue::Cat
                                                              cta::log::LogContext& lc)
     : CtaAdminResponseStream(catalogue, scheduler, instanceName),
       m_schedDb(schedDb),
-      m_lc(lc),
-      m_isSummary(false),
-      m_isLogEntries(false) {
+      m_lc(lc) {
   using namespace cta::admin;
 
   cta::frontend::AdminCmdOptions request(adminCmd);

@@ -43,7 +43,7 @@ enum ReportBatching {
 class TaskWatchDog;
 
 /**
- * Utility class that should be inherited privately/protectedly 
+ * Utility class that should be inherited privately/protectedly
  * the type PlaceHolder is either detail::Recall or detail::Migration
  */
 template<class PlaceHolder>
@@ -59,11 +59,10 @@ protected:
   virtual ~ReportPackerInterface() = default;
 
   explicit ReportPackerInterface(const cta::log::LogContext& lc) :
-    m_lc(lc),
-    m_reportBatching(detail::ReportInBulk), m_watchdog(nullptr) {}
+    m_lc(lc) {}
 
   /**
-   * Log a set of files independently of the success/failure 
+   * Log a set of files independently of the success/failure
    * @param c The set of files to log
    * @param msg The message to be append at the end.
    */
@@ -82,7 +81,7 @@ protected:
   }
 
   /**
-   * Log a set of files independently of the success/failure 
+   * Log a set of files independently of the success/failure
    * @param c The set of files to log
    * @param msg The message to be append at the end.
    */
@@ -109,7 +108,7 @@ protected:
   /**
    * Define how we should report to the client (by file/in bulk).
    */
-  enum detail::ReportBatching m_reportBatching;
+  enum detail::ReportBatching m_reportBatching = detail::ReportInBulk;
 public:
 
   /**
@@ -122,7 +121,7 @@ public:
    * Pointer to the watchdog, so we can communicate communication errors
    * and end of session results to the initial process
    */
-  TaskWatchDog *m_watchdog;
+  TaskWatchDog *m_watchdog = nullptr;
 
 };
 

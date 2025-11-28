@@ -22,10 +22,6 @@ namespace cta::mediachanger {
 //------------------------------------------------------------------------------
 // constructor
 //------------------------------------------------------------------------------
-MessageHeader::MessageHeader():
-  magic(0),
-  reqType(0),
-  lenOrStatus(0) {
-}
+MessageHeader::MessageHeader() {}
 
 } // namespace cta::mediachanger

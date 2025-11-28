@@ -113,7 +113,7 @@ namespace cta {
 }
 #endif // COLLECTEXTRABACKTRACEINFOS
 
-cta::exception::Backtrace::Backtrace(bool fake): m_trace() {
+cta::exception::Backtrace::Backtrace(bool fake) {
   if (fake) return;
   void * array[200];
   g_lock.lock();

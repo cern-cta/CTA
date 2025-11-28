@@ -24,8 +24,7 @@ namespace cta::common::dataStructures {
 //------------------------------------------------------------------------------
 // constructor
 //------------------------------------------------------------------------------
-DeleteArchiveRequest::DeleteArchiveRequest():
-  archiveFileID(0) {}
+DeleteArchiveRequest::DeleteArchiveRequest() {}
 
 //------------------------------------------------------------------------------
 // operator==
@@ -48,7 +47,7 @@ bool DeleteArchiveRequest::operator!=(const DeleteArchiveRequest &rhs) const {
 //------------------------------------------------------------------------------
 std::ostream &operator<<(std::ostream &os, const DeleteArchiveRequest &obj) {
   os << "(requester=" << obj.requester
-     << " archiveFileID=" << obj.archiveFileID 
+     << " archiveFileID=" << obj.archiveFileID
      << " diskFileId=" << obj.diskFileId
      << " diskFilePath=" << obj.diskFilePath
      << " recycleTime=" << obj.recycleTime

@@ -212,7 +212,7 @@ private:
   std::optional<uint64_t>                       m_retrieveQueueCacheMaxAgeSecs; //!< Option to override the retrieve queue timeout value in the scheduler DB
   std::string                                   m_catalogue_conn_string;        //!< The catalogue connection string (without the password)
   std::string                                   m_schedulerBackendName;         //!< value of cta.schedulerdb.scheduler_backend_name in the CTA frontend configuration file
-  uint64_t                                      m_archiveFileMaxSize;           //!< Maximum allowed file size for archive requests
+  uint64_t                                      m_archiveFileMaxSize = 0;       //!< Maximum allowed file size for archive requests
   bool                                          m_zeroLengthFilesForbidden;     //!< Flag to explicitly reject the 0-length files by default
   std::vector<std::string>                      m_zeroLengthFilesForbidden_voExceptions; //!< If 0-length files are rejected by default, do not apply check to these VOs
   std::optional<std::string>                    m_repackBufferURL;              //!< The repack buffer URL

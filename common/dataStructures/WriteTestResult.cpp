@@ -24,11 +24,7 @@ namespace cta::common::dataStructures {
 //------------------------------------------------------------------------------
 // constructor
 //------------------------------------------------------------------------------
-WriteTestResult::WriteTestResult():
-  noOfFilesWritten(0),
-  totalBytesWritten(0),
-  totalFilesWritten(0),
-  totalTimeInSeconds(0) {}
+WriteTestResult::WriteTestResult() {}
 
 //------------------------------------------------------------------------------
 // operator==

@@ -92,9 +92,9 @@ struct TapeDrive {
   std::optional<time_t> shutdownTime;
 
   MountType mountType;
-  DriveStatus driveStatus;
-  bool desiredUp;
-  bool desiredForceDown;
+  DriveStatus driveStatus = DriveStatus::Unknown;
+  bool desiredUp = false;
+  bool desiredForceDown = false;
   std::optional<std::string> reasonUpDown;
 
   std::optional<std::string> currentVid;
@@ -102,7 +102,7 @@ struct TapeDrive {
   std::optional<uint64_t> currentPriority;
   std::optional<std::string> currentActivity;
   std::optional<std::string> currentTapePool;
-  MountType nextMountType; // defaults to NO_MOUNT. This can't be optional, as we have a NOT nullptr constraint in the DB.
+  MountType nextMountType = MountType::NoMount; // defaults to NO_MOUNT. This can't be optional, as we have a NOT nullptr constraint in the DB.
   std::optional<std::string> nextVid;
   std::optional<std::string> nextTapePool;
   std::optional<uint64_t> nextPriority;

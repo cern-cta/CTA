@@ -24,11 +24,7 @@ namespace cta::mediachanger {
 //------------------------------------------------------------------------------
 // constructor
 //------------------------------------------------------------------------------
-RmcUnmountMsgBody::RmcUnmountMsgBody():
-  uid(0),
-  gid(0),
-  drvOrd(0),
-  force(0) {
+RmcUnmountMsgBody::RmcUnmountMsgBody() {
   memset(unusedLoader, '\0', sizeof(unusedLoader));
   memset(vid, '\0', sizeof(vid));
 }

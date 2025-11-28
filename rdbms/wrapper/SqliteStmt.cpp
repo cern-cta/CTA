@@ -45,9 +45,7 @@ SqliteStmt::SqliteStmt(
   SqliteConn &conn,
   const std::string &sql):
   StmtWrapper(sql),
-  m_conn(conn),
-  m_nbAffectedRows(0) {
-  m_stmt = nullptr;
+  m_conn(conn) {
   const int nByte = -1; // Read SQL up to first null terminator
 
   const uint maxPrepareRetries = 20; // A worst case scenario of 2 seconds

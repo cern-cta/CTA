@@ -48,12 +48,12 @@ struct ArchiveRoute {
   /**
    * The copy number of the tape file.
    */
-  uint8_t copyNb;
+  uint8_t copyNb = 0;
 
   /**
    * The type of the archive route.
    */
-  ArchiveRouteType type;
+  ArchiveRouteType type = ArchiveRouteType::DEFAULT;
 
   std::string tapePoolName;
   EntryLog creationLog;

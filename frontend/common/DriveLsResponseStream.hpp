@@ -43,7 +43,7 @@ private:
   std::list<common::dataStructures::TapeDrive> m_tapeDrives;
   std::unordered_map<std::string, std::list<cta::catalogue::DriveConfigCatalogue::DriveConfig>>
     m_tapeDriveNameConfigMap;
-  bool m_listAllDrives;
+  bool m_listAllDrives = false;
   std::optional<std::string> m_schedulerBackendName;
 };
 

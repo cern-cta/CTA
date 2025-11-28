@@ -50,13 +50,13 @@ struct RetrieveRequest {
   void appendFileSizeToDstURL(const uint64_t fileSize);
 
   RequesterIdentity requester;
-  uint64_t archiveFileID;
+  uint64_t archiveFileID = 0;
   std::string dstURL;
   std::string retrieveReportURL;
   std::string errorReportURL;
   DiskFileInfo diskFileInfo;
   EntryLog creationLog;
-  bool isVerifyOnly;    // request to retrieve file from tape but do not write a disk copy
+  bool isVerifyOnly = false;    // request to retrieve file from tape but do not write a disk copy
   std::optional<std::string> vid;    // limit retrieve requests to the specified vid (in the case of dual-copy files)
   std::optional<std::string> mountPolicy; // limit retrieve requests to a specified mount policy (only used for verification requests)
   LifecycleTimings lifecycleTimings;

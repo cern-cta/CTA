@@ -87,12 +87,12 @@ private:
    * Flag indicating whether the server should run in foreground or background
    * mode.
    */
-  bool m_foreground;
+  bool m_foreground = false;
 
   /**
    * True if the command-line has been parsed.
    */
-  bool m_commandLineHasBeenParsed;
+  bool m_commandLineHasBeenParsed = false;
 
 }; // class Daemon
 

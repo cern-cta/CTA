@@ -33,8 +33,6 @@ cta::frontend::grpc::server::NegotiationRequestHandler::NegotiationRequestHandle
       m_ctaNegotiationSvc(ctaNegotiationSvc),
       m_strKeytab(strKeytab),
       m_strService(strService),
-      m_streamState(StreamState::NEW),
-      m_gssCtx(GSS_C_NO_CONTEXT),
       m_rwNegotiation(&m_ctx) {}
 
 cta::frontend::grpc::server::NegotiationRequestHandler::~NegotiationRequestHandler() {

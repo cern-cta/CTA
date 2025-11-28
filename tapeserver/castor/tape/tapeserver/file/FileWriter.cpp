@@ -30,8 +30,7 @@ namespace castor::tape::tapeFile {
 
 FileWriter::FileWriter(const std::unique_ptr<WriteSession>&  ws, const cta::ArchiveJob &fileToMigrate,
   const size_t blockSize)
-  : m_currentBlockSize(blockSize), m_session(ws), m_fileToMigrate(fileToMigrate),
-    m_open(false), m_nonzeroFileWritten(false), m_numberOfBlocks(0) {
+  : m_currentBlockSize(blockSize), m_session(ws), m_fileToMigrate(fileToMigrate) {
   // Check the sanity of the parameters. fSeq should be >= 1
   if (0 == m_fileToMigrate.archiveFile.archiveFileID || m_fileToMigrate.tapeFile.fSeq < 1) {
     std::ostringstream err;

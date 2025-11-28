@@ -27,8 +27,7 @@ namespace cta::common::dataStructures {
 //------------------------------------------------------------------------------
 // constructor
 //------------------------------------------------------------------------------
-ArchiveRoute::ArchiveRoute():
-  copyNb(0), type(ArchiveRouteType::DEFAULT) {}
+ArchiveRoute::ArchiveRoute() {}
 
 //------------------------------------------------------------------------------
 // operator==

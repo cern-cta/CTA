@@ -30,18 +30,18 @@ struct TapeLabelCmdLineArgs {
   /**
    * True if the usage message should be printed.
    */
-  bool help;
-  
+  bool help = false;
+
   /**
    * The tape VID to be pre-label.
    */
   std::string m_vid;
-  
+
   /**
    * The old label on tape to be checked when pre-labeling.
    */
   std::string m_oldLabel;
-  
+
   /**
    * The unit name of the drive used to mount the tape.
    */
@@ -49,14 +49,14 @@ struct TapeLabelCmdLineArgs {
 
   /**
    * The boolean variable to enable verbose output in the command line.
-   * By default it prints only ERR and WARNING messages. 
-   */ 
-  bool m_debug;
-  
+   * By default it prints only ERR and WARNING messages.
+   */
+  bool m_debug = false;
+
   /**
-   * The boolean variable to skip label checks on not-blank tapes. 
-   */ 
-  bool m_force;
+   * The boolean variable to skip label checks on not-blank tapes.
+   */
+  bool m_force = false;
 
   /**
    * The timeout to load the tape in the drive slot in seconds

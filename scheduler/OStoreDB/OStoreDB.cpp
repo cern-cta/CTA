@@ -62,9 +62,7 @@ using namespace objectstore;
 // OStoreDB::OStoreDB()
 //------------------------------------------------------------------------------
 OStoreDB::OStoreDB(objectstore::Backend& be, catalogue::Catalogue& catalogue, log::Logger& logger)
-    : m_taskQueueSize(0),
-      m_taskPostingSemaphore(5),
-      m_objectStore(be),
+    : m_objectStore(be),
       m_catalogue(catalogue),
       m_logger(logger) {
   m_tapeDrivesState = std::make_unique<TapeDrivesCatalogueState>(m_catalogue);
@@ -3691,9 +3689,7 @@ OStoreDB::ArchiveMount::getNextJobBatch(uint64_t filesRequested, uint64_t bytesR
 // OStoreDB::ArchiveJob::ArchiveJob()
 //------------------------------------------------------------------------------
 OStoreDB::ArchiveJob::ArchiveJob(const std::string& jobAddress, OStoreDB& oStoreDB)
-    : m_jobOwned(false),
-      m_mountId(0),
-      m_oStoreDB(oStoreDB),
+    : m_oStoreDB(oStoreDB),
       m_archiveRequest(jobAddress, m_oStoreDB.m_objectStore) {}
 
 //------------------------------------------------------------------------------

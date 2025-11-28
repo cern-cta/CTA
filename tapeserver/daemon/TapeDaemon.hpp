@@ -40,16 +40,16 @@ public:
     const cta::daemon::CommandLineParams & commandLine,
     cta::log::Logger &log,
     const common::TapedConfiguration &globalConfig);
-  
+
   ~TapeDaemon() final;
 
   /** The main entry function of the daemon.
    * @return The return code of the process. */
   int mainImpl();
-  
+
 private:
   bool isMaintenanceProcessDisabled() const;
-  
+
 protected:
 
   /** Enumeration of the possible tape-daemon states. */
@@ -81,16 +81,15 @@ protected:
   struct DriveSocketPair {
     /** Bi-directional socket used by the TapeDaemon parent process to send
      * commands to the process forker and receive replies in return. */
-    int tapeDaemon;
+    int tapeDaemon = -1;
 
     /** Bi-directional socket used by the ProcessForker to receive commands
      * from the TapeDaemon parent process and send back replies.  */
-    int driveProcess;
+    int driveProcess = -1;
 
     /** Constructor.
      * Sets members to -1 which represents an invalid file descriptor. */
-    DriveSocketPair(): tapeDaemon(-1), driveProcess(-1) {
-    }
+    DriveSocketPair() {}
     /** Close utility. Closes both sockets */
     void closeBoth();
     /** Close utility. Closes drive's socket */
@@ -144,7 +143,7 @@ protected:
    * Creates the handler to handle messages from forked sessions.
    */
   void createAndRegisterTapeMessageHandler();
-  
+
   /**
    * The main event loop of the daemon.
    */
@@ -216,7 +215,7 @@ protected:
    * @param waitpidStat The status information given by a call to waitpid().
    */
   void logChildProcessTerminated(const pid_t pid, const int waitpidStat) noexcept;
-  
+
   /** The tape server's configuration */
   const common::TapedConfiguration& m_globalConfiguration;
 

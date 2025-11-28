@@ -14,7 +14,7 @@
  *               granted to it by virtue of its status as an Intergovernmental Organization or
  *               submit itself to any jurisdiction.
  */
- 
+
 #include "ClientNegotiationRequestHandler.hpp"
 #include "common/log/LogContext.hpp"
 #include "common/exception/Exception.hpp"
@@ -28,21 +28,20 @@ cta::frontend::grpc::client::NegotiationRequestHandler::NegotiationRequestHandle
       m_stub(stub),
       m_completionQueue(completionQueue),
       m_strSpn(strSpn),
-      m_tag(this),
-      m_streamState(StreamState::NEW) {
+      m_tag(this) {
   // Get KRB5 principal name for the given service
   m_gssNameSpn = gssSpn(m_strSpn);
 }
 
 void cta::frontend::grpc::client::NegotiationRequestHandler::logGSSErrors(const std::string& strContext, OM_uint32 gssCode, int iType) {
-  
+
   log::LogContext lc(m_log);
   log::ScopedParamContainer params(lc);
   std::ostringstream osMsgScopeParam;
   OM_uint32 gssMinStat;
   gss_buffer_desc gssMsg;
   OM_uint32 gssMsgCtx = 0;
-  
+
   params.add("tag", m_tag);
   /*
    * Because gss_display_status() only displays one status code at a time,
@@ -57,7 +56,7 @@ void cta::frontend::grpc::client::NegotiationRequestHandler::logGSSErrors(const 
     osMsgScopeParam.str(""); // reset ostringstream
     gss_release_buffer(&gssMinStat, &gssMsg);
   } while(gssMsgCtx);
-  
+
   lc.log(cta::log::ERR, strContext);
 }
 
@@ -86,9 +85,9 @@ bool cta::frontend::grpc::client::NegotiationRequestHandler::next(const bool bOk
   bool bNext = false;
   log::LogContext lc(m_log);
   std::string strErrorMsg;
-  
+
   const uint8_t* pChallengeData = nullptr;
-  
+
   // Check the state and report an error
   if(!bOk) {
     switch (m_streamState) {
@@ -110,7 +109,7 @@ bool cta::frontend::grpc::client::NegotiationRequestHandler::next(const bool bOk
         {
           log::ScopedParamContainer params(lc);
           params.add("tag", m_tag);
-          lc.log(cta::log::INFO, "In grpc::client::NegotiationRequestHandler::next(): Request processing finished.");        
+          lc.log(cta::log::INFO, "In grpc::client::NegotiationRequestHandler::next(): Request processing finished.");
         }
         break;
       default:
@@ -128,7 +127,7 @@ bool cta::frontend::grpc::client::NegotiationRequestHandler::next(const bool bOk
   }
   // else everything is OK
   bNext = true;
-  
+
   switch (m_streamState) {
     case StreamState::NEW:
       // CMD: prepare Negotiate stream
@@ -152,10 +151,10 @@ bool cta::frontend::grpc::client::NegotiationRequestHandler::next(const bool bOk
             m_streamState = StreamState::FINISH;
             m_uprwNegotiation->WritesDone(m_tag);
         } else {
-          pChallengeData = reinterpret_cast<const uint8_t*>(m_response.challenge().c_str()); 
+          pChallengeData = reinterpret_cast<const uint8_t*>(m_response.challenge().c_str());
           m_gssRecvToken.length = m_response.challenge().size();
           m_gssRecvToken.value = const_cast<void*>(reinterpret_cast<const void*>(pChallengeData));
-          
+
           m_gssMajStat = gss_init_sec_context( //
                         &m_gssMinStat, // minor_status
                         m_gssCred, // claimant_cred_handle
@@ -168,11 +167,11 @@ bool cta::frontend::grpc::client::NegotiationRequestHandler::next(const bool bOk
                         // GSS_C_NO_BUFFER, // input token
                         &m_gssRecvToken, // input token
                         nullptr, // actual_mech_type
-                        &m_gssSendToken, // output token 
+                        &m_gssSendToken, // output token
                         nullptr, // ret_flags
                         nullptr // time_req
                     );
-                    
+
           switch (m_gssMajStat) {
             // https://www.ietf.org/archive/id/draft-perez-krb-wg-gss-preauth-03.html
             case GSS_S_CONTINUE_NEEDED:
@@ -181,7 +180,7 @@ bool cta::frontend::grpc::client::NegotiationRequestHandler::next(const bool bOk
                 m_request.set_service_principal_name(m_strSpn);
                 gss_release_buffer(&m_gssMinStat, &m_gssSendToken);
                 m_uprwNegotiation->Write(m_request, m_tag);
-                
+
               break;
             case GSS_S_COMPLETE:
               m_streamState = StreamState::FINISH;
@@ -225,7 +224,7 @@ bool cta::frontend::grpc::client::NegotiationRequestHandler::next(const bool bOk
       gss_release_cred(&m_gssMinStat, &m_gssCred);
       gss_release_buffer(&m_gssMinStat, &m_gssSendToken);
       gss_release_name(&m_gssMinStat, &m_gssNameSpn);
-      
+
       switch(m_grpcStatus.error_code()) {
         case ::grpc::OK:
             {
@@ -255,7 +254,7 @@ bool cta::frontend::grpc::client::NegotiationRequestHandler::next(const bool bOk
       // no default
       break;
   }
-  
+
   return bNext;
 }
 

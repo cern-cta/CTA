@@ -100,7 +100,7 @@ public:
   std::string getAgentAddress() override;
 private:
   static std::atomic<uint64_t> g_nextAgentId;
-  std::atomic<uint64_t> m_nextId;
+  std::atomic<uint64_t> m_nextId = 0;
   std::string m_agentAddress;
 
   /**
@@ -132,7 +132,7 @@ private:
     AgentOperation op;
     const std::string & objectAddress;
     const std::list<std::string> & objectAddressSet;
-    std::shared_ptr<std::promise<void>> promise;
+    std::shared_ptr<std::promise<void>> promise = std::make_shared<std::promise<void>>();
     /***
      * A mutex ensuring the object will not be released before the promise's result
      * is fully pushed.

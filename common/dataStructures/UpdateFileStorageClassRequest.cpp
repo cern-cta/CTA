@@ -24,8 +24,7 @@ namespace cta::common::dataStructures {
 //------------------------------------------------------------------------------
 // constructor
 //------------------------------------------------------------------------------
-UpdateFileStorageClassRequest::UpdateFileStorageClassRequest():
-  archiveFileID(0) {}
+UpdateFileStorageClassRequest::UpdateFileStorageClassRequest() {}
 
 //------------------------------------------------------------------------------
 // operator==

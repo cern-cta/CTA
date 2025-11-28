@@ -30,7 +30,7 @@
 namespace cta::common::dataStructures {
 
 /**
- * This struct holds all the command line parameters of a CTA archive command 
+ * This struct holds all the command line parameters of a CTA archive command
  */
 struct ArchiveRequest {
 
@@ -44,7 +44,7 @@ struct ArchiveRequest {
   std::string diskFileID;
 
   std::string srcURL;
-  uint64_t fileSize;
+  uint64_t fileSize = 0;
   checksum::ChecksumBlob checksumBlob;
   std::string storageClass;
   DiskFileInfo diskFileInfo;

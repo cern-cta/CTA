@@ -20,9 +20,7 @@
 //------------------------------------------------------------------------------
 // constructor
 //------------------------------------------------------------------------------
-cta::mediachanger::DebugBuf::DebugBuf(std::ostream &os):
-  m_debug(false), m_os(os), m_writePreamble(true) {
-}
+cta::mediachanger::DebugBuf::DebugBuf(std::ostream &os) : m_os(os) {}
 
 //------------------------------------------------------------------------------
 // setDebug

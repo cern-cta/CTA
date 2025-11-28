@@ -30,8 +30,7 @@ WriteSession::WriteSession(tapeserver::drive::DriveInterface &drive,
   const uint32_t last_fSeq, const bool compression,
   const bool useLbp)
   : m_drive(drive), m_vid(volInfo.vid), m_compressionEnabled(compression),
-    m_useLbp(useLbp), m_corrupted(false), m_locked(false),
-    m_volInfo(volInfo), m_detectedLbp(false) {
+    m_useLbp(useLbp), m_volInfo(volInfo) {
   if (!m_vid.compare("")) {
     throw cta::exception::InvalidArgument();
   }

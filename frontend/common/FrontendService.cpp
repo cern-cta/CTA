@@ -37,7 +37,7 @@
 
 namespace cta::frontend {
 
-FrontendService::FrontendService(const std::string& configFilename) : m_archiveFileMaxSize(0) {
+FrontendService::FrontendService(const std::string& configFilename) {
   int logToStdout = 0;
   int logtoFile = 0;
   std::string logFilePath = "";

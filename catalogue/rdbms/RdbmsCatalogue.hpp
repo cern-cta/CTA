@@ -137,24 +137,24 @@ protected:
   /**
    * Cached versions of mount policies for specific user groups.
    */
-  mutable TimeBasedCache<Group, std::optional<common::dataStructures::MountPolicy> > m_groupMountPolicyCache;
+  mutable TimeBasedCache<Group, std::optional<common::dataStructures::MountPolicy> > m_groupMountPolicyCache{10};
 
   /**
    * Cached versions of mount policies for specific users.
    */
-  mutable TimeBasedCache<User, std::optional<common::dataStructures::MountPolicy> > m_userMountPolicyCache;
+  mutable TimeBasedCache<User, std::optional<common::dataStructures::MountPolicy> > m_userMountPolicyCache{10};
 
   /**
    * Cached versions of all mount policies
    */
-  mutable TimeBasedCache<std::string, std::list<common::dataStructures::MountPolicy>> m_allMountPoliciesCache;
+  mutable TimeBasedCache<std::string, std::list<common::dataStructures::MountPolicy>> m_allMountPoliciesCache{60};
 
   friend class RdbmsVirtualOrganizationCatalogue;
   friend class RdbmsTapePoolCatalogue;
   /**
    * Cached versions of virtual organization for specific tapepools
    */
-  mutable TimeBasedCache<std::string, common::dataStructures::VirtualOrganization> m_tapepoolVirtualOrganizationCache;
+  mutable TimeBasedCache<std::string, common::dataStructures::VirtualOrganization> m_tapepoolVirtualOrganizationCache{60};
 
 protected:
   std::unique_ptr<SchemaCatalogue> m_schema;

@@ -27,12 +27,12 @@ namespace cta::mediachanger {
  * The body of an RMC_SCSI_UNMOUNT message
  */
 struct RmcUnmountMsgBody {
-  uint32_t uid;
-  uint32_t gid;
+  uint32_t uid = 0;
+  uint32_t gid = 0;
   char unusedLoader[1]; // Should always be set to the emtpy string
   char vid[CA_MAXVIDLEN+1];
-  uint16_t drvOrd;
-  uint16_t force;
+  uint16_t drvOrd = 0;
+  uint16_t force = 0;
 
   /**
    * Constructor

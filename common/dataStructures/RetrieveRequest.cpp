@@ -25,7 +25,7 @@ namespace cta::common::dataStructures {
 //------------------------------------------------------------------------------
 // constructor
 //------------------------------------------------------------------------------
-RetrieveRequest::RetrieveRequest(): archiveFileID(0), isVerifyOnly(false) {}
+RetrieveRequest::RetrieveRequest() {}
 
 //------------------------------------------------------------------------------
 // operator==

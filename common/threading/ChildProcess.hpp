@@ -30,7 +30,7 @@ namespace cta::threading {
   class ChildProcess {
   public:
     /**
-     * Helper functor for child to clean up unneeded parent resources 
+     * Helper functor for child to clean up unneeded parent resources
      * after forking.
      */
     class Cleanup {
@@ -46,20 +46,20 @@ namespace cta::threading {
       explicit ProcessStillRunning(const std::string& what = "Process still running"):
       cta::exception::Exception::Exception(what) {}
     };
-    
+
     class ProcessNeverStarted : public exception::Exception {
     public:
       explicit ProcessNeverStarted(const std::string& what = "Process never started"):
       cta::exception::Exception::Exception(what) {}
     };
-    
+
     class ProcessWasKilled : public exception::Exception {
     public:
       explicit ProcessWasKilled(const std::string& what = "Process was killed"):
       cta::exception::Exception::Exception(what) {}
     };
-    
-    ChildProcess() : m_started(false), m_finished(false), m_exited(false), m_wasKilled(false), m_exitCode(0) {}
+
+    ChildProcess() = default;
     /* Clean up leftover child processes (hopefully not useful) */
     virtual ~ChildProcess() {
       try {
@@ -80,18 +80,18 @@ namespace cta::threading {
   private:
     pid_t m_pid;
     /** Was the process started? */
-    bool m_started;
+    bool m_started = false;
     /** As the process finished? */
-    bool m_finished;
+    bool m_finished = false;
     /** Did the process exit cleanly? */
-    bool m_exited;
+    bool m_exited = false;
     /** Was the process killed? */
-    bool m_wasKilled;
-    int m_exitCode;
+    bool m_wasKilled= false;
+    int m_exitCode = 0;
     /** The function actually being run in the child process. The value returned
      * by run() will be the exit code of the process (if we get that far) */
     virtual int run() = 0;
     void parseStatus(int status);
   };
-  
+
 } // namespace cta::threading

@@ -24,8 +24,7 @@ namespace cta::common::dataStructures {
 //------------------------------------------------------------------------------
 // constructor
 //------------------------------------------------------------------------------
-LogicalLibrary::LogicalLibrary(): isDisabled(false) {
-}
+LogicalLibrary::LogicalLibrary() {}
 
 //------------------------------------------------------------------------------
 // operator==

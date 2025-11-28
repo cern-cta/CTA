@@ -116,7 +116,7 @@ private:
   /**
    * The number of database connections currently on loan.
    */
-  uint64_t m_nbConnsOnLoan;
+  uint64_t m_nbConnsOnLoan = 0;
 
   /**
    * Mutex used to serialize access to the database connections within the pool.

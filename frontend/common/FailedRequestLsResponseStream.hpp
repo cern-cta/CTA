@@ -41,8 +41,8 @@ private:
   cta::log::LogContext& m_lc;
 
   // Configuration options
-  bool m_isSummary;
-  bool m_isLogEntries;
+  bool m_isSummary = false;
+  bool m_isLogEntries = false;
   std::optional<std::string> m_schedulerBackendName;
 
   // Data storage

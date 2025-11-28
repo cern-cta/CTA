@@ -52,9 +52,9 @@ namespace cta::disk {
         ReadFile * createReadFile(const std::string & path);
         WriteFile * createWriteFile(const std::string & path);
       private:
-        Regex m_NoURLLocalFile;
-        Regex m_URLLocalFile;
-        Regex m_URLXrootFile;
+        Regex m_NoURLLocalFile{"^(localhost:|)(/.*)$"};
+        Regex m_URLLocalFile{"^file://(.*)$"};
+        Regex m_URLXrootFile{"^(root://.*)$"};
         const uint16_t m_xrootTimeout;
       };
 
@@ -145,8 +145,8 @@ namespace cta::disk {
 	AsyncDiskFileRemoverFactory();
 	AsyncDiskFileRemover * createAsyncDiskFileRemover(const std::string &path);
       private:
-	Regex m_URLLocalFile;
-        Regex m_URLXrootdFile;
+	      Regex m_URLLocalFile{"^file://(.*)$"};
+        Regex m_URLXrootdFile{"^(root://.*)$"};
       };
 
       class DiskFileRemover{
@@ -176,8 +176,8 @@ namespace cta::disk {
 	Directory * createDirectory(const std::string &path);
 
       private:
-	Regex m_URLLocalDirectory;
-        Regex m_URLXrootDirectory;
+	      Regex m_URLLocalDirectory{"^file://(.*)$"};
+        Regex m_URLXrootDirectory{"^(root://.*)$"};
       };
 
 

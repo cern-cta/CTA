@@ -44,12 +44,12 @@ struct CmdLineArgs {
   /**
    * True if the usage message should be printed.
    */
-  bool m_help;
+  bool m_help = false;
 
   /**
    * True if debug messages should be printed
    */
-  bool m_debug;
+  bool m_debug = false;
 
   /**
    * Archive file id of the files to restore

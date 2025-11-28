@@ -24,20 +24,19 @@ namespace cta::common::dataStructures {
 //------------------------------------------------------------------------------
 // constructor
 //------------------------------------------------------------------------------
-SecurityIdentity::SecurityIdentity() :
-  authProtocol(Protocol::NONE) {}
+SecurityIdentity::SecurityIdentity() {}
 
 //------------------------------------------------------------------------------
 // constructor
 //------------------------------------------------------------------------------
 SecurityIdentity::SecurityIdentity(const std::string& username, const std::string& host) :
-  username(username), host(host), authProtocol(Protocol::NONE) {}
+  username(username), host(host) {}
 
 //------------------------------------------------------------------------------
 // constructor
 //------------------------------------------------------------------------------
 SecurityIdentity::SecurityIdentity(const std::string& username, const std::string& host, const std::string& clientHost, const std::string& auth) :
-  username(username), host(host), clientHost(clientHost), authProtocol(Protocol::NONE) {
+  username(username), host(host), clientHost(clientHost) {
   if(!auth.empty()) {
     // Map the client protocol string to enum value
     auto proto_it = m_authProtoMap.find(auth);
@@ -81,7 +80,7 @@ bool SecurityIdentity::operator<(const SecurityIdentity &rhs) const {
 //------------------------------------------------------------------------------
 std::ostream &operator<<(std::ostream &os, const SecurityIdentity &obj) {
   os << "(username=" << obj.username
-     << " host=" << obj.host 
+     << " host=" << obj.host
      << " clientHost=" << obj.clientHost << ")";
   return os;
 }

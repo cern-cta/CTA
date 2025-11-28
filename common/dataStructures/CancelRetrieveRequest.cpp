@@ -24,8 +24,7 @@ namespace cta::common::dataStructures {
 //------------------------------------------------------------------------------
 // constructor
 //------------------------------------------------------------------------------
-CancelRetrieveRequest::CancelRetrieveRequest():
-  archiveFileID(0) {}
+CancelRetrieveRequest::CancelRetrieveRequest() {}
 
 //------------------------------------------------------------------------------
 // operator==

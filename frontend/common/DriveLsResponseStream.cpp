@@ -29,8 +29,7 @@ DriveLsResponseStream::DriveLsResponseStream(cta::catalogue::Catalogue& catalogu
                                              const admin::AdminCmd& adminCmd,
                                              cta::log::LogContext& lc)
     : CtaAdminResponseStream(catalogue, scheduler, instanceName),
-      m_lc(lc),
-      m_listAllDrives(false) {
+      m_lc(lc) {
   using namespace cta::admin;
 
   cta::frontend::AdminCmdOptions request(adminCmd);

@@ -146,7 +146,7 @@ private:
    * Cached versions of tape copy to tape tape pool mappings for specific
    * storage classes.
    */
-  mutable TimeBasedCache<catalogue::StorageClass, common::dataStructures::TapeCopyToPoolMap> m_tapeCopyToPoolCache;
+  mutable TimeBasedCache<catalogue::StorageClass, common::dataStructures::TapeCopyToPoolMap> m_tapeCopyToPoolCache{10};
 
   /**
    * Cached versions of the expected number of archive routes for specific
@@ -154,7 +154,7 @@ private:
    * method as opposed to the actual number entered so far using the
    * createArchiveRoute() method.
    */
-  mutable TimeBasedCache<catalogue::StorageClass, uint64_t> m_expectedNbArchiveRoutesCache;
+  mutable TimeBasedCache<catalogue::StorageClass, uint64_t> m_expectedNbArchiveRoutesCache{10};
 
   /**
    * Returns a cached version of the mapping from tape copy to tape pool for the

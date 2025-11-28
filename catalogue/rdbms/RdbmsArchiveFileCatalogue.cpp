@@ -51,9 +51,7 @@ RdbmsArchiveFileCatalogue::RdbmsArchiveFileCatalogue(log::Logger &log, std::shar
   RdbmsCatalogue *rdbmsCatalogue)
   : m_log(log),
     m_connPool(connPool),
-    m_rdbmsCatalogue(rdbmsCatalogue),
-    m_tapeCopyToPoolCache(10),
-    m_expectedNbArchiveRoutesCache(10) {}
+    m_rdbmsCatalogue(rdbmsCatalogue) {}
 
 uint64_t RdbmsArchiveFileCatalogue::checkAndGetNextArchiveFileId(const std::string &diskInstanceName,
   const std::string &storageClassName, const common::dataStructures::RequesterIdentity &user) {

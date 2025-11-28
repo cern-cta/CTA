@@ -26,14 +26,14 @@ const char filemark[] = "";
 
 castor::tape::tapeserver::drive::FakeDrive::FakeDrive(uint64_t capacity,
   FailureMoment failureMoment, bool failToMount) noexcept
-  : m_currentPosition(0), m_tapeCapacity(capacity), m_beginOfCompressStats(0),
-    m_failureMoment(failureMoment), m_tapeOverflow(false),
+  : m_tapeCapacity(capacity),
+    m_failureMoment(failureMoment),
     m_failToMount(failToMount), m_lbpToUse(lbpToUse::disabled) {
   m_tape.reserve(max_fake_drive_record_length);
 }
 
-castor::tape::tapeserver::drive::FakeDrive::FakeDrive(bool failToMount) noexcept : m_currentPosition(0), m_tapeCapacity(std::numeric_limits<uint64_t>::max()), m_beginOfCompressStats(0),
-    m_failureMoment(OnWrite), m_tapeOverflow(false), m_failToMount(failToMount) {
+castor::tape::tapeserver::drive::FakeDrive::FakeDrive(bool failToMount) noexcept : m_tapeCapacity(std::numeric_limits<uint64_t>::max()),
+    m_failureMoment(OnWrite), m_failToMount(failToMount) {
   m_tape.reserve(max_fake_drive_record_length);
 }
 

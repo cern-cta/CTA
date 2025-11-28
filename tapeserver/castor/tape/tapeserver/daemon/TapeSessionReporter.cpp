@@ -29,13 +29,11 @@ namespace castor::tape::tapeserver::daemon {
 //------------------------------------------------------------------------------
 TapeSessionReporter::TapeSessionReporter(cta::tape::daemon::TapedProxy& tapeserverProxy,
   const cta::tape::daemon::DriveConfigEntry& driveConfig, std::string_view hostname, const cta::log::LogContext& lc) :
-  m_threadRunning(false),
   m_tapeserverProxy(tapeserverProxy),
   m_lc(lc),
   m_server(hostname),
   m_unitName(driveConfig.unitName),
-  m_logicalLibrary(driveConfig.logicalLibrary),
-  m_sessionPid(getpid()) {
+  m_logicalLibrary(driveConfig.logicalLibrary) {
   //change the thread's name in the log
   m_lc.pushOrReplace(cta::log::Param("thread", "TapeSessionReporter"));
 }
@@ -49,7 +47,7 @@ void TapeSessionReporter::finish() {
 
 //------------------------------------------------------------------------------
 //startThreads
-//------------------------------------------------------------------------------   
+//------------------------------------------------------------------------------
 void TapeSessionReporter::startThreads() {
   start();
   m_threadRunning = true;
@@ -57,7 +55,7 @@ void TapeSessionReporter::startThreads() {
 
 //------------------------------------------------------------------------------
 //waitThreads
-//------------------------------------------------------------------------------     
+//------------------------------------------------------------------------------
 void TapeSessionReporter::waitThreads() {
   try {
     wait();
@@ -73,7 +71,7 @@ void TapeSessionReporter::waitThreads() {
 
 //------------------------------------------------------------------------------
 //reportState
-//------------------------------------------------------------------------------  
+//------------------------------------------------------------------------------
 void TapeSessionReporter::reportState(cta::tape::session::SessionState state,
                                      cta::tape::session::SessionType type) {
   m_fifo.push(new ReportStateChange(state, type));
@@ -81,7 +79,7 @@ void TapeSessionReporter::reportState(cta::tape::session::SessionState state,
 
 //------------------------------------------------------------------------------
 //run
-//------------------------------------------------------------------------------  
+//------------------------------------------------------------------------------
 void TapeSessionReporter::run() {
   while (true) {
     std::unique_ptr<Report> currentReport(m_fifo.pop());
@@ -116,7 +114,7 @@ TapeSessionReporter::ReportStateChange::ReportStateChange(cta::tape::session::Se
 
 //------------------------------------------------------------------------------
 // ReportStateChange::execute())
-//------------------------------------------------------------------------------  
+//------------------------------------------------------------------------------
 void TapeSessionReporter::ReportStateChange::execute(TapeSessionReporter & parent) {
   parent.m_tapeserverProxy.reportState(m_state, m_type, parent.m_volume.vid);
 }

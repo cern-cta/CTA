@@ -25,8 +25,7 @@ namespace cta::rdbms::wrapper {
 //------------------------------------------------------------------------------
 OcciColumn::OcciColumn(const std::string &colName, const size_t nbRows):
   m_colName(colName),
-  m_nbRows(nbRows),
-  m_maxFieldLength(0) {
+  m_nbRows(nbRows) {
   m_fieldLengths.reset(new ub2[m_nbRows]);
   ub2 *fieldLengths = m_fieldLengths.get();
   if (nullptr == fieldLengths) {

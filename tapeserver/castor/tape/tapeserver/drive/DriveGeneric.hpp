@@ -475,9 +475,9 @@ public:
 
 protected:
   SCSI::DeviceInfo m_SCSIInfo;
-  int m_tapeFD;
+  int m_tapeFD = -1;
   castor::tape::System::virtualWrapper & m_sysWrapper;
-  lbpToUse m_lbpToUse;
+  lbpToUse m_lbpToUse = lbpToUse::disabled;
 
   /**
    * Set the MTFastEOM option of the ST driver. This function is used only internally in

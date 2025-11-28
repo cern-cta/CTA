@@ -601,7 +601,7 @@ Backend::AsyncCreator* BackendRados::asyncCreate(const std::string& name, const 
 }
 
 BackendRados::AsyncCreator::AsyncCreator(BackendRados& be, const std::string& name, const std::string& value):
-m_backend(be), m_name(name), m_value(value), m_job(), m_jobFuture(m_job.get_future()) {
+m_backend(be), m_name(name), m_value(value), m_jobFuture(m_job.get_future()) {
   try {
     librados::ObjectWriteOperation wop;
     const bool createExclusive = true;
@@ -732,7 +732,7 @@ Backend::AsyncUpdater* BackendRados::asyncUpdate(const std::string & name, std::
 }
 
 BackendRados::AsyncUpdater::AsyncUpdater(BackendRados& be, const std::string& name, std::function<std::string(const std::string&)>& update):
-  m_backend(be), m_name(name), m_update(update), m_job(), m_jobFuture(m_job.get_future()) {
+  m_backend(be), m_name(name), m_update(update), m_jobFuture(m_job.get_future()) {
   m_updateJob.setParentUpdater(this);
   // At construction time, we just fire a lock.
   try {
@@ -936,7 +936,7 @@ Backend::AsyncDeleter* BackendRados::asyncDelete(const std::string & name)
 }
 
 BackendRados::AsyncDeleter::AsyncDeleter(BackendRados& be, const std::string& name):
-  m_backend(be), m_name(name), m_job(), m_jobFuture(m_job.get_future()) {
+  m_backend(be), m_name(name), m_jobFuture(m_job.get_future()) {
   // At construction time, we just fire a lock.
   try {
     // Rados does not have aio_lock, so we do it in an async.
@@ -1001,7 +1001,7 @@ void BackendRados::AsyncDeleter::wait() {
 }
 
 BackendRados::AsyncLockfreeFetcher::AsyncLockfreeFetcher(BackendRados& be, const std::string& name):
-  m_backend(be), m_name(name), m_job(), m_jobFuture(m_job.get_future()) {
+  m_backend(be), m_name(name), m_jobFuture(m_job.get_future()) {
   // At construction, just post the aio poster to the thread pool.
   m_aioReadPoster.setParentFatcher(this);
   m_backend.m_jobQueue.push(&m_aioReadPoster);

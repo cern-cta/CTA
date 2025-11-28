@@ -33,8 +33,7 @@ namespace cta::log {
 // constructor
 //------------------------------------------------------------------------------
 Logger::Logger(std::string_view hostName, std::string_view programName, int logMask) :
-  m_hostName(hostName), m_programName(programName), m_logMask(logMask),
-  m_priorityToText(generatePriorityToTextMap()) { }
+  m_hostName(hostName), m_programName(programName), m_logMask(logMask) { }
 
 //------------------------------------------------------------------------------
 // destructor
@@ -98,8 +97,7 @@ std::string Logger::cleanString(std::string_view s, bool replaceUnderscores) {
 //------------------------------------------------------------------------------
 // generatePriorityToTextMap
 //------------------------------------------------------------------------------
-std::map<int, std::string>
-  Logger::generatePriorityToTextMap() {
+std::map<int, std::string> Logger::generatePriorityToTextMap() {
   return PriorityMaps::c_priorityToTextMap;
 }
 

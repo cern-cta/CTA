@@ -28,7 +28,7 @@
 namespace cta::common::dataStructures {
 
 /**
- * This is the request to cancel and ongoing retrieval 
+ * This is the request to cancel and ongoing retrieval
  */
 struct CancelRetrieveRequest {
 
@@ -39,7 +39,7 @@ struct CancelRetrieveRequest {
   bool operator!=(const CancelRetrieveRequest &rhs) const;
 
   RequesterIdentity requester;
-  uint64_t archiveFileID;
+  uint64_t archiveFileID = 0;
   std::string dstURL;
   DiskFileInfo diskFileInfo;
   std::string retrieveRequestId;

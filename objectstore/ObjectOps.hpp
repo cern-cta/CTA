@@ -82,7 +82,7 @@ class ObjectOpsBase {
   friend ContainerTraits<RepackQueue,RepackQueuePending>;
   friend ContainerTraits<RepackQueue,RepackQueueToExpand>;
 protected:
-  explicit ObjectOpsBase(Backend& os): m_nameSet(false), m_objectStore(os) { }
+  explicit ObjectOpsBase(Backend& os): m_objectStore(os) { }
   virtual ~ObjectOpsBase();
 public:
   ObjectOpsBase(const ObjectOpsBase&) = default;
@@ -201,7 +201,7 @@ public:
   }
 
 protected:
-  bool m_nameSet;
+  bool m_nameSet = false;
   std::string m_name;
   Backend & m_objectStore;
   serializers::ObjectHeader m_header;
@@ -308,11 +308,11 @@ public:
   CTA_GENERATE_EXCEPTION_CLASS(MissingAddress);
 
 protected:
-  ScopedLock(): m_objectOps(nullptr), m_locked(false) {}
+  ScopedLock() = default;
   std::unique_ptr<Backend::ScopedLock> m_lock;
-  ObjectOpsBase * m_objectOps;
+  ObjectOpsBase * m_objectOps = nullptr;
   std::list <ObjectOpsBase *> m_subObjectsOps;
-  bool m_locked;
+  bool m_locked = false;
   void checkNotLocked() {
     if (m_locked)
       throw AlreadyLocked("In ScopedLock::checkNotLocked: trying to lock an already locked lock");

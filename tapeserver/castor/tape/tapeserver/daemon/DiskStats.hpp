@@ -20,72 +20,55 @@
 namespace castor::tape::tapeserver::daemon {
 
   /**
-   * Structure holding the timers and stats for the tape session. We use doubles, 
+   * Structure holding the timers and stats for the tape session. We use doubles,
    * for time and all measurements are in seconds or uint64_t for bytes.
    */
   struct DiskStats {
     /** Mounting time, in seconds */
-    double openingTime;
-    
+    double openingTime = 0;
+
     /** Closing time, in seconds */
-    double closingTime;
-    
+    double closingTime = 0;
+
     /** Cumulated time spent computing checksums */
-    double checksumingTime;
-    
+    double checksumingTime = 0;
+
     /** Cumulated time spent calling read/write methods on the disk client */
-    double readWriteTime;
-    
+    double readWriteTime = 0;
+
     /** Cumulated time spent waiting for data blocks. */
-    double waitDataTime;
-    
+    double waitDataTime = 0;
+
     /** Cumulated time spent waiting for free memory. */
-    double waitFreeMemoryTime;
-    
+    double waitFreeMemoryTime = 0;
+
     /** Cumulated time spent by the tape thread waiting for a task. */
-    double waitInstructionsTime;
-    
+    double waitInstructionsTime = 0;
+
     /** Cumulated time spent reporting */
-    double waitReportingTime;
-  
+    double waitReportingTime = 0;
+
     /** Cumulated time spent reporting */
-    double checkingErrorTime;
-    
+    double checkingErrorTime = 0;
+
     /** Time spent between the opening of the file and the completion of the transfer */
-    double transferTime;
-    
+    double transferTime = 0;
+
     /** Total real time spent by the thread/pool. */
-    double totalTime;
-    
+    double totalTime = 0;
+
     /** Cumulated data volume (actual payload), in bytes. */
-    uint64_t dataVolume;
-    
+    uint64_t dataVolume = 0;
+
     /** Count of files actually transfered in the session. */
-    uint64_t filesCount;
-    
+    uint64_t filesCount = 0;
+
     /** Archive file ID of the current file */
-    uint64_t fileId;
+    uint64_t fileId = 0;
 
     /** Destination URL for the current file */
     std::string dstURL;
 
-    /** Constructor: all defaults are zero */
-    DiskStats():  openingTime(0.0), 
-    closingTime(0.0),
-    checksumingTime(0.0),
-    readWriteTime(0.0),
-    waitDataTime(0.0), 
-    waitFreeMemoryTime(0.0),
-    waitInstructionsTime(0.0),
-    waitReportingTime(0.0), 
-    checkingErrorTime(0.0),
-    transferTime(0.0),
-    totalTime(0.0),
-    dataVolume(0),
-    filesCount(0),
-    fileId(0),
-    dstURL("") {}
-    
     /** Accumulate contents of another stats block */
 
     void operator+=(const DiskStats& other) {
@@ -104,6 +87,6 @@ namespace castor::tape::tapeserver::daemon {
       dataVolume += other.dataVolume;
     }
   };
-  
+
 } // namespace castor::tape::tapeserver::daemon
 
