@@ -32,6 +32,29 @@ cppcheck:
     reports:
       codequality: cppcheck.json
 
+shellcheck:
+  stage: lint
+  image:
+    name: $IMAGE_LINT
+    entrypoint: ["/usr/bin/env"]
+  rules:
+    - if: $CI_COMMIT_TAG
+      when: never
+    - if: $PIPELINE_TYPE != "DEFAULT"
+      when: never
+    - when: always
+  needs: [] # Ensure no artifacts are downloaded
+  script:
+    - dnf install shellcheck
+    - all_shell_scripts=( **/*.sh )
+    - if [ ${#all_shell_scripts[@]} -eq 0 ]; then echo "No shell scripts"; exit 0; fi
+    - shellcheck "${all_shell_scripts[@]}" --format json | tee shellcheck.json
+  artifacts:
+    when: on_failure
+    expire_in: 7 days
+    reports:
+      codequality: shellcheck.json
+
 # Generic format check job template
 # The idea is to extend this, fill in the FORMAT_DIFF variable
 # And then add a before_script: section that populates this FORMAT_DIFF file
