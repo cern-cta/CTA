@@ -94,12 +94,14 @@ SchemaVersion DatabaseMetadataGetter::getCatalogueVersion(){
       auto rset2 = stmt2.executeQuery();
       if(rset2.next()){
         auto schemaStatus = rset2.columnString("STATUS");
-        if (auto schemaVersionMajorNext = rset2.columnOptionalUint64("NEXT_SCHEMA_VERSION_MAJOR"),
-             schemaVersionMinorNext = rset2.columnOptionalUint64("NEXT_SCHEMA_VERSION_MINOR");
-             schemaVersionMajorNext.has_value() && schemaVersionMinorNext.has_value()) {
-          schemaVersionBuilder.nextSchemaVersionMajor(schemaVersionMajorNext.value())
-                              .nextSchemaVersionMinor(schemaVersionMinorNext.value())
-                              .status(schemaStatus);
+        {
+          auto schemaVersionMajorNext = rset2.columnOptionalUint64("NEXT_SCHEMA_VERSION_MAJOR");
+          auto schemaVersionMinorNext = rset2.columnOptionalUint64("NEXT_SCHEMA_VERSION_MINOR");
+          if (schemaVersionMajorNext.has_value() && schemaVersionMinorNext.has_value()) {
+            schemaVersionBuilder.nextSchemaVersionMajor(schemaVersionMajorNext.value())
+                    .nextSchemaVersionMinor(schemaVersionMinorNext.value())
+                    .status(schemaStatus);
+          }
         }
       }
     } catch (const cta::exception::Exception&){

@@ -54,11 +54,13 @@ SchemaVersion RdbmsSchemaCatalogue::getSchemaVersion() const {
     schemaVersionBuilder.schemaVersionMajor(rset.columnUint64("SCHEMA_VERSION_MAJOR"))
                         .schemaVersionMinor(rset.columnUint64("SCHEMA_VERSION_MINOR"))
                         .status(rset.columnString("STATUS"));
-    if (auto schemaVersionMajorNext = rset.columnOptionalUint64("NEXT_SCHEMA_VERSION_MAJOR"),
-             schemaVersionMinorNext = rset.columnOptionalUint64("NEXT_SCHEMA_VERSION_MINOR");
-        schemaVersionMajorNext.has_value() && schemaVersionMinorNext.has_value()) {
-      schemaVersionBuilder.nextSchemaVersionMajor(schemaVersionMajorNext.value())
-                          .nextSchemaVersionMinor(schemaVersionMinorNext.value());
+    {
+      auto schemaVersionMajorNext = rset.columnOptionalUint64("NEXT_SCHEMA_VERSION_MAJOR");
+      auto schemaVersionMinorNext = rset.columnOptionalUint64("NEXT_SCHEMA_VERSION_MINOR");
+      if (schemaVersionMajorNext.has_value() && schemaVersionMinorNext.has_value()) {
+        schemaVersionBuilder.nextSchemaVersionMajor(schemaVersionMajorNext.value())
+                .nextSchemaVersionMinor(schemaVersionMinorNext.value());
+      }
     }
     return schemaVersionBuilder.build();
   } else {

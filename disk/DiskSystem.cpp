@@ -35,7 +35,10 @@ namespace cta::disk {
 // DiskSystemList::at()
 //------------------------------------------------------------------------------
 const DiskSystem& DiskSystemList::at(const std::string& name) const {
-  if (auto dsi = std::find_if(begin(), end(), [&name](const DiskSystem& ds){ return ds.name == name; }); dsi != end()) return *dsi;
+  {
+    auto dsi = std::find_if(begin(), end(), [&name](const DiskSystem &ds) { return ds.name == name; });
+    if (dsi != end()) return *dsi;
+  }
   throw std::out_of_range("In DiskSystemList::at(): name " + name + " not found.");
 }
 
@@ -50,12 +53,15 @@ std::string DiskSystemList::getDSName(const std::string& fileURL) const {
     }
   }
   // Try and find the fileURL
-  if (auto pri = std::find_if(m_pointersAndRegexes.begin(), m_pointersAndRegexes.end(),
-      [&fileURL](const PointerAndRegex& pr){ return !pr.regex.exec(fileURL).empty(); }); pri != m_pointersAndRegexes.end()) {
-    // We found a match. Let's move the pointer and regex to the front so next file will be faster (most likely).
-    if (pri != m_pointersAndRegexes.begin())
-      m_pointersAndRegexes.splice(m_pointersAndRegexes.begin(), m_pointersAndRegexes, pri);
-    return pri->ds.name;
+  {
+    auto pri = std::find_if(m_pointersAndRegexes.begin(), m_pointersAndRegexes.end(),
+                            [&fileURL](const PointerAndRegex &pr) { return !pr.regex.exec(fileURL).empty(); });
+    if (pri != m_pointersAndRegexes.end()) {
+      // We found a match. Let's move the pointer and regex to the front so next file will be faster (most likely).
+      if (pri != m_pointersAndRegexes.begin())
+        m_pointersAndRegexes.splice(m_pointersAndRegexes.begin(), m_pointersAndRegexes, pri);
+      return pri->ds.name;
+    }
   }
   throw std::out_of_range("In DiskSystemList::getDSNAme(): not match for fileURL");
 }

@@ -855,21 +855,23 @@ void AdminCmd::processRepack_Add(xrd::Response& response) {
 
   //Get the mountpolicy from the catalogue
   common::dataStructures::MountPolicy mountPolicy;
-  using MountPolicyList = std::list<common::dataStructures::MountPolicy>;
-  MountPolicyList mountPolicies = m_catalogue.MountPolicy()->getMountPolicies();
-  if(MountPolicyList::const_iterator repackMountPolicyItor = std::find_if(
-        mountPolicies.begin(),
-        mountPolicies.end(),
-        [&mountPolicyProvidedByUser](const common::dataStructures::MountPolicy& mp) {
-            return mp.name == mountPolicyProvidedByUser;
-        }); repackMountPolicyItor != mountPolicies.end()) {
-    //The mount policy exists
-    mountPolicy = *repackMountPolicyItor;
-  } else {
-    //The mount policy does not exist, throw a user error
-    throw exception::UserError("The mount policy name provided does not match any existing mount policy.");
+  {
+    using MountPolicyList = std::list<common::dataStructures::MountPolicy>;
+    MountPolicyList mountPolicies = m_catalogue.MountPolicy()->getMountPolicies();
+    MountPolicyList::const_iterator repackMountPolicyItor = std::find_if(
+            mountPolicies.begin(),
+            mountPolicies.end(),
+            [&mountPolicyProvidedByUser](const common::dataStructures::MountPolicy &mp) {
+              return mp.name == mountPolicyProvidedByUser;
+            });
+    if (repackMountPolicyItor != mountPolicies.end()) {
+      //The mount policy exists
+      mountPolicy = *repackMountPolicyItor;
+    } else {
+      //The mount policy does not exist, throw a user error
+      throw exception::UserError("The mount policy name provided does not match any existing mount policy.");
+    }
   }
-
   if(const auto buff = getOptional(OptionString::BUFFERURL); buff.has_value()) {
     //The buffer is provided by the user
     bufferURL = buff.value();

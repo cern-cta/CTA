@@ -151,14 +151,16 @@ void CtaAdminParsedCmd::parseOptions(int start, int argc, const char* const* con
         // Check if the value is '--all'
         if (std::string(argv[i]) == "--all" || std::string(argv[i]) == "-a") {
           // Find the OPT_FLAG type --all option explicitly
-          if (auto flag_it = std::find_if(
-                  options.begin(), options.end(),
-                  [](const Option& opt) {
+          {
+            auto flag_it = std::find_if(
+                    options.begin(), options.end(),
+                    [](const Option &opt) {
                       return opt.get_type() == Option::OPT_FLAG && (opt == opt_all);
-                  });
-              flag_it != options.end()) {
-            addOption(*flag_it, "");  // Add --all as a flag option
-            continue;                 // Move to the next argument
+                    });
+            if (flag_it != options.end()) {
+              addOption(*flag_it, "");  // Add --all as a flag option
+              continue;                 // Move to the next argument
+            }
           }
           throwUsage("Invalid use of '--all'");
         }

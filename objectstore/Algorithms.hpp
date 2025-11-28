@@ -222,71 +222,73 @@ public:
       timingList.insertAndReset("ownershipAdditionTime", t);
       m_agentReference.addBatchToOwnership(candidateElementsAddresses, m_backend);
       // We can now attempt to switch ownership of elements
-      if (auto failedOwnershipSwitchElements = ContainerTraits<Q, C>::switchElementsOwnershipAndStatus(
+      {
+        auto failedOwnershipSwitchElements = ContainerTraits<Q, C>::switchElementsOwnershipAndStatus(
                 candidateElements,
                 m_agentReference.getAgentAddress(),
                 cont.getAddressIfSet(), timingList, t, lc, newStatus);
-          failedOwnershipSwitchElements.empty()) {
-        timingList.insertAndReset("updateResultProcessingTime", t);
-        // This is the easy case (and most common case). Everything went through fine.
-        ContainerTraits<Q,C>::removeReferencesAndCommit(cont, candidateElementsAddresses, lc);
-        timingList.insertAndReset("containerUpdateTime", t);
-        contSummaryAfter = ContainerTraits<Q,C>::getContainerSummary(cont);
-        // We skip the container trimming as we do not have the contId.
-        // trimming might release the lock
-        if (contLock.isLocked()) contLock.release();
-        timingList.insertAndReset("containerUnlockTime", t);
-        // All jobs are validated
-        ret.summary += candidateElements.summary;
-        ret.elements.insertBack(std::move(candidateElements.elements));
-        timingList.insertAndReset("structureProcessingTime", t);
-      } else {
-        // For the failed files, we have to differentiate the not owned or not existing ones from other error cases.
-        // For the not owned, not existing and those successfully switched, we have to de reference them form the container.
-        // For other cases, we will leave the elements referenced in the container, as we cannot ensure de-referencing is safe.
-        std::set<typename ContainerTraits<Q,C>::ElementAddress> elementsNotToDereferenceFromContainer;
-        std::set<typename ContainerTraits<Q,C>::ElementAddress> elementsNotToReport;
-        std::list<typename ContainerTraits<Q,C>::ElementAddress> elementsToDereferenceFromAgent;
-        for (auto &e: failedOwnershipSwitchElements) {
-          try {
-            std::rethrow_exception(e.failure);
-          } catch (cta::exception::NoSuchObject &) {
-            elementsToDereferenceFromAgent.push_back(ContainerTraits<Q,C>::getElementAddress(*e.element));
-            elementsNotToReport.insert(ContainerTraits<Q,C>::getElementAddress(*e.element));
-          } catch (Backend::WrongPreviousOwner &) {
-            elementsToDereferenceFromAgent.push_back(ContainerTraits<Q,C>::getElementAddress(*e.element));
-            elementsNotToReport.insert(ContainerTraits<Q,C>::getElementAddress(*e.element));
-          } catch (Backend::CouldNotUnlock&) {
-            // Do nothing, this element was indeed OK.
+        if (failedOwnershipSwitchElements.empty()) {
+          timingList.insertAndReset("updateResultProcessingTime", t);
+          // This is the easy case (and most common case). Everything went through fine.
+          ContainerTraits<Q, C>::removeReferencesAndCommit(cont, candidateElementsAddresses, lc);
+          timingList.insertAndReset("containerUpdateTime", t);
+          contSummaryAfter = ContainerTraits<Q, C>::getContainerSummary(cont);
+          // We skip the container trimming as we do not have the contId.
+          // trimming might release the lock
+          if (contLock.isLocked()) contLock.release();
+          timingList.insertAndReset("containerUnlockTime", t);
+          // All jobs are validated
+          ret.summary += candidateElements.summary;
+          ret.elements.insertBack(std::move(candidateElements.elements));
+          timingList.insertAndReset("structureProcessingTime", t);
+        } else {
+          // For the failed files, we have to differentiate the not owned or not existing ones from other error cases.
+          // For the not owned, not existing and those successfully switched, we have to de reference them form the container.
+          // For other cases, we will leave the elements referenced in the container, as we cannot ensure de-referencing is safe.
+          std::set<typename ContainerTraits<Q, C>::ElementAddress> elementsNotToDereferenceFromContainer;
+          std::set<typename ContainerTraits<Q, C>::ElementAddress> elementsNotToReport;
+          std::list<typename ContainerTraits<Q, C>::ElementAddress> elementsToDereferenceFromAgent;
+          for (auto &e: failedOwnershipSwitchElements) {
+            try {
+              std::rethrow_exception(e.failure);
+            } catch (cta::exception::NoSuchObject &) {
+              elementsToDereferenceFromAgent.push_back(ContainerTraits<Q, C>::getElementAddress(*e.element));
+              elementsNotToReport.insert(ContainerTraits<Q, C>::getElementAddress(*e.element));
+            } catch (Backend::WrongPreviousOwner &) {
+              elementsToDereferenceFromAgent.push_back(ContainerTraits<Q, C>::getElementAddress(*e.element));
+              elementsNotToReport.insert(ContainerTraits<Q, C>::getElementAddress(*e.element));
+            } catch (Backend::CouldNotUnlock &) {
+              // Do nothing, this element was indeed OK.
+            }
+            catch (...) {
+              // This is a different error, so we will leave the reference to the element in the container
+              elementsNotToDereferenceFromContainer.insert(ContainerTraits<Q, C>::getElementAddress(*e.element));
+              elementsToDereferenceFromAgent.push_back(ContainerTraits<Q, C>::getElementAddress(*e.element));
+              elementsNotToReport.insert(ContainerTraits<Q, C>::getElementAddress(*e.element));
+            }
           }
-          catch (...) {
-            // This is a different error, so we will leave the reference to the element in the container
-            elementsNotToDereferenceFromContainer.insert(ContainerTraits<Q,C>::getElementAddress(*e.element));
-            elementsToDereferenceFromAgent.push_back(ContainerTraits<Q,C>::getElementAddress(*e.element));
-            elementsNotToReport.insert(ContainerTraits<Q,C>::getElementAddress(*e.element));
+          // We are done with the sorting. Apply the decisions...
+          std::list<typename ContainerTraits<Q, C>::ElementAddress> elementsToDereferenceFromContainer;
+          for (auto &e: candidateElements.elements) {
+            if (!elementsNotToDereferenceFromContainer.count(ContainerTraits<Q, C>::getElementAddress(e))) {
+              elementsToDereferenceFromContainer.push_back(ContainerTraits<Q, C>::getElementAddress(e));
+            }
           }
+          timingList.insertAndReset("updateResultProcessingTime", t);
+          ContainerTraits<Q, C>::removeReferencesAndCommit(cont, elementsToDereferenceFromContainer, lc);
+          timingList.insertAndReset("containerUpdateTime", t);
+          contSummaryAfter = ContainerTraits<Q, C>::getContainerSummary(cont);
+          if (contLock.isLocked()) contLock.release();
+          timingList.insertAndReset("containerUnlockTime", t);
+          m_agentReference.removeBatchFromOwnership(elementsToDereferenceFromAgent, m_backend);
+          for (auto &e: candidateElements.elements) {
+            if (!elementsNotToReport.count(ContainerTraits<Q, C>::getElementAddress(e))) {
+              ret.summary += ContainerTraits<Q, C>::getElementSummary(e);
+              ret.elements.insertBack(std::move(e));
+            }
+          }
+          timingList.insertAndReset("structureProcessingTime", t);
         }
-        // We are done with the sorting. Apply the decisions...
-        std::list<typename ContainerTraits<Q,C>::ElementAddress> elementsToDereferenceFromContainer;
-        for (auto & e: candidateElements.elements) {
-          if (!elementsNotToDereferenceFromContainer.count(ContainerTraits<Q,C>::getElementAddress(e))) {
-            elementsToDereferenceFromContainer.push_back(ContainerTraits<Q,C>::getElementAddress(e));
-          }
-        }
-        timingList.insertAndReset("updateResultProcessingTime", t);
-        ContainerTraits<Q,C>::removeReferencesAndCommit(cont, elementsToDereferenceFromContainer, lc);
-        timingList.insertAndReset("containerUpdateTime", t);
-        contSummaryAfter = ContainerTraits<Q,C>::getContainerSummary(cont);
-        if (contLock.isLocked()) contLock.release();
-        timingList.insertAndReset("containerUnlockTime", t);
-        m_agentReference.removeBatchFromOwnership(elementsToDereferenceFromAgent, m_backend);
-        for (auto & e: candidateElements.elements) {
-          if (!elementsNotToReport.count(ContainerTraits<Q,C>::getElementAddress(e))) {
-            ret.summary += ContainerTraits<Q,C>::getElementSummary(e);
-            ret.elements.insertBack(std::move(e));
-          }
-        }
-        timingList.insertAndReset("structureProcessingTime", t);
       }
     }
     {
@@ -363,85 +365,87 @@ public:
       localTimingList.insertAndReset("ownershipAdditionTime", t);
       m_agentReference.addBatchToOwnership(candidateElementsAddresses, m_backend);
       // We can now attempt to switch ownership of elements
-      if (auto failedOwnershipSwitchElements = ContainerTraits<Q, C>::switchElementsOwnership(candidateElements,
-                                                                                              m_agentReference.getAgentAddress(),
-                                                                                              cont.getAddressIfSet(),
-                                                                                              localTimingList, t, lc);
-          failedOwnershipSwitchElements.empty()) {
-        localTimingList.insertAndReset("updateResultProcessingTime", t);
-        // This is the easy case (and most common case). Everything went through fine.
-        ContainerTraits<Q,C>::removeReferencesAndCommit(cont, candidateElementsAddresses, lc);
-        localTimingList.insertAndReset("containerUpdateTime", t);
-        contSummaryAfter = ContainerTraits<Q,C>::getContainerSummary(cont);
-        // If we emptied the container, we have to trim it.
-        didTrim = ContainerTraits<Q,C>::trimContainerIfNeeded(cont, contLock, contId, lc);
-        localTimingList.insertAndReset("containerTrimmingTime", t);
-        // trimming might release the lock
-        if (contLock.isLocked()) contLock.release();
-        localTimingList.insertAndReset("containerUnlockTime", t);
-        // All jobs are validated
-        ret.summary += candidateElements.summary;
-        unfulfilledCriteria -= candidateElements.summary;
-        ret.elements.insertBack(std::move(candidateElements.elements));
-        localTimingList.insertAndReset("structureProcessingTime", t);
-      } else {
-        // For the failed files, we have to differentiate the not owned or not existing ones from other error cases.
-        // For the not owned, not existing and those successfully switched, we have to de reference them form the container.
-        // For other cases, we will leave the elements referenced in the container, as we cannot ensure de-referencing is safe.
-        std::set<typename ContainerTraits<Q,C>::ElementAddress> elementsNotToDereferenceFromContainer;
-        std::set<typename ContainerTraits<Q,C>::ElementAddress> elementsNotToReport;
-        std::list<typename ContainerTraits<Q,C>::ElementAddress> elementsToDereferenceFromAgent;
-        for (auto &e: failedOwnershipSwitchElements) {
-          try {
-            std::rethrow_exception(e.failure);
-          } catch (cta::exception::NoSuchObject &) {
-            elementsToDereferenceFromAgent.push_back(ContainerTraits<Q,C>::getElementAddress(*e.element));
-            elementsNotToReport.insert(ContainerTraits<Q,C>::getElementAddress(*e.element));
-          } catch (Backend::WrongPreviousOwner &) {
-            elementsToDereferenceFromAgent.push_back(ContainerTraits<Q,C>::getElementAddress(*e.element));
-            elementsNotToReport.insert(ContainerTraits<Q,C>::getElementAddress(*e.element));
-          } catch (Backend::CouldNotUnlock&) {
-            // Do nothing, this element was indeed OK.
+      {
+        auto failedOwnershipSwitchElements = ContainerTraits<Q, C>::switchElementsOwnership(candidateElements,
+                                                                                            m_agentReference.getAgentAddress(),
+                                                                                            cont.getAddressIfSet(),
+                                                                                            localTimingList, t, lc);
+        if (failedOwnershipSwitchElements.empty()) {
+          localTimingList.insertAndReset("updateResultProcessingTime", t);
+          // This is the easy case (and most common case). Everything went through fine.
+          ContainerTraits<Q, C>::removeReferencesAndCommit(cont, candidateElementsAddresses, lc);
+          localTimingList.insertAndReset("containerUpdateTime", t);
+          contSummaryAfter = ContainerTraits<Q, C>::getContainerSummary(cont);
+          // If we emptied the container, we have to trim it.
+          didTrim = ContainerTraits<Q, C>::trimContainerIfNeeded(cont, contLock, contId, lc);
+          localTimingList.insertAndReset("containerTrimmingTime", t);
+          // trimming might release the lock
+          if (contLock.isLocked()) contLock.release();
+          localTimingList.insertAndReset("containerUnlockTime", t);
+          // All jobs are validated
+          ret.summary += candidateElements.summary;
+          unfulfilledCriteria -= candidateElements.summary;
+          ret.elements.insertBack(std::move(candidateElements.elements));
+          localTimingList.insertAndReset("structureProcessingTime", t);
+        } else {
+          // For the failed files, we have to differentiate the not owned or not existing ones from other error cases.
+          // For the not owned, not existing and those successfully switched, we have to de reference them form the container.
+          // For other cases, we will leave the elements referenced in the container, as we cannot ensure de-referencing is safe.
+          std::set<typename ContainerTraits<Q, C>::ElementAddress> elementsNotToDereferenceFromContainer;
+          std::set<typename ContainerTraits<Q, C>::ElementAddress> elementsNotToReport;
+          std::list<typename ContainerTraits<Q, C>::ElementAddress> elementsToDereferenceFromAgent;
+          for (auto &e: failedOwnershipSwitchElements) {
+            try {
+              std::rethrow_exception(e.failure);
+            } catch (cta::exception::NoSuchObject &) {
+              elementsToDereferenceFromAgent.push_back(ContainerTraits<Q, C>::getElementAddress(*e.element));
+              elementsNotToReport.insert(ContainerTraits<Q, C>::getElementAddress(*e.element));
+            } catch (Backend::WrongPreviousOwner &) {
+              elementsToDereferenceFromAgent.push_back(ContainerTraits<Q, C>::getElementAddress(*e.element));
+              elementsNotToReport.insert(ContainerTraits<Q, C>::getElementAddress(*e.element));
+            } catch (Backend::CouldNotUnlock &) {
+              // Do nothing, this element was indeed OK.
+            }
+            catch (...) {
+              // This is a different error, so we will leave the reference to the element in the container
+              elementsNotToDereferenceFromContainer.insert(ContainerTraits<Q, C>::getElementAddress(*e.element));
+              elementsToDereferenceFromAgent.push_back(ContainerTraits<Q, C>::getElementAddress(*e.element));
+              elementsNotToReport.insert(ContainerTraits<Q, C>::getElementAddress(*e.element));
+              elementsToSkip.insert(ContainerTraits<Q, C>::getElementAddress(*e.element));
+              // If we get this kind of situation, we do not try to carry on, as it becomes too complex.
+              unexpectedException = true;
+            }
           }
-          catch (...) {
-            // This is a different error, so we will leave the reference to the element in the container
-            elementsNotToDereferenceFromContainer.insert(ContainerTraits<Q,C>::getElementAddress(*e.element));
-            elementsToDereferenceFromAgent.push_back(ContainerTraits<Q,C>::getElementAddress(*e.element));
-            elementsNotToReport.insert(ContainerTraits<Q,C>::getElementAddress(*e.element));
-            elementsToSkip.insert(ContainerTraits<Q,C>::getElementAddress(*e.element));
-            // If we get this kind of situation, we do not try to carry on, as it becomes too complex.
-            unexpectedException = true;
+          // We are done with the sorting. Apply the decisions...
+          std::list<typename ContainerTraits<Q, C>::ElementAddress> elementsToDereferenceFromContainer;
+          for (auto &e: candidateElements.elements) {
+            if (!elementsNotToDereferenceFromContainer.count(ContainerTraits<Q, C>::getElementAddress(e))) {
+              elementsToDereferenceFromContainer.push_back(ContainerTraits<Q, C>::getElementAddress(e));
+            }
           }
+          localTimingList.insertAndReset("updateResultProcessingTime", t);
+          ContainerTraits<Q, C>::removeReferencesAndCommit(cont, elementsToDereferenceFromContainer, lc);
+          localTimingList.insertAndReset("containerUpdateTime", t);
+          contSummaryAfter = ContainerTraits<Q, C>::getContainerSummary(cont);
+          // If we emptied the container, we have to trim it.
+          ContainerTraits<Q, C>::trimContainerIfNeeded(cont, contLock, contId, lc);
+          localTimingList.insertAndReset("containerTrimmingTime", t);
+          // trimming might release the lock
+          if (contLock.isLocked()) contLock.release();
+          localTimingList.insertAndReset("containerUnlockTime", t);
+          m_agentReference.removeBatchFromOwnership(elementsToDereferenceFromAgent, m_backend);
+          typename ContainerTraits<Q, C>::PoppedElementsSummary batchSummary = candidateElements.summary;
+          for (auto &e: candidateElements.elements) {
+            if (!elementsNotToReport.count(ContainerTraits<Q, C>::getElementAddress(e))) {
+              ret.elements.insertBack(std::move(e));
+            } else {
+              batchSummary -= ContainerTraits<Q, C>::getElementSummary(e);
+            }
+          }
+          ret.summary += batchSummary;
+          unfulfilledCriteria -= batchSummary;
+          localTimingList.insertAndReset("structureProcessingTime", t);
         }
-        // We are done with the sorting. Apply the decisions...
-        std::list<typename ContainerTraits<Q,C>::ElementAddress> elementsToDereferenceFromContainer;
-        for (auto & e: candidateElements.elements) {
-          if (!elementsNotToDereferenceFromContainer.count(ContainerTraits<Q,C>::getElementAddress(e))) {
-            elementsToDereferenceFromContainer.push_back(ContainerTraits<Q,C>::getElementAddress(e));
-          }
-        }
-        localTimingList.insertAndReset("updateResultProcessingTime", t);
-        ContainerTraits<Q,C>::removeReferencesAndCommit(cont, elementsToDereferenceFromContainer, lc);
-        localTimingList.insertAndReset("containerUpdateTime", t);
-        contSummaryAfter = ContainerTraits<Q,C>::getContainerSummary(cont);
-        // If we emptied the container, we have to trim it.
-        ContainerTraits<Q,C>::trimContainerIfNeeded(cont, contLock, contId, lc);
-        localTimingList.insertAndReset("containerTrimmingTime", t);
-        // trimming might release the lock
-        if (contLock.isLocked()) contLock.release();
-        localTimingList.insertAndReset("containerUnlockTime", t);
-        m_agentReference.removeBatchFromOwnership(elementsToDereferenceFromAgent, m_backend);
-        typename ContainerTraits<Q,C>::PoppedElementsSummary batchSummary = candidateElements.summary;
-        for (auto & e: candidateElements.elements) {
-          if (!elementsNotToReport.count(ContainerTraits<Q,C>::getElementAddress(e))) {
-            ret.elements.insertBack(std::move(e));
-          } else {
-            batchSummary -= ContainerTraits<Q,C>::getElementSummary(e);
-          }
-        }
-        ret.summary += batchSummary;
-        unfulfilledCriteria -= batchSummary;
-        localTimingList.insertAndReset("structureProcessingTime", t);
       }
       log::ScopedParamContainer params(lc);
       params.add("C", ContainerTraits<Q,C>::c_containerTypeName)
