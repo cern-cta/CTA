@@ -21,11 +21,6 @@ set +e
 # http://stackoverflow.com/questions/6871859/piping-command-output-to-tee-but-also-save-exit-code-of-command
 set -o pipefail
 
-die() {
-  echo "$@" 1>&2
-  exit 1;
-}
-
 usage() {
   echo
   echo "Script to create a Kubernetes instance and run a system test script in this instance."
@@ -50,6 +45,21 @@ usage() {
   echo "      --skip-preflight:               Skips the preflight tests."
   echo
   exit 1
+}
+
+die() {
+  echo "$@" 1>&2
+  exit 1
+}
+
+error_die() {
+  echo "Error: $@" 1>&2
+  exit 1
+}
+
+error_usage() {
+  echo "Error: $@" 1>&2
+  usage
 }
 
 execute_cmd_with_log() {
@@ -113,7 +123,7 @@ run_systemtest() {
       -h | --help) usage ;;
       -s|--test-script)
         systemtest_script="$2"
-        test -f ${systemtest_script} || die "ERROR: systemtest script file ${systemtest_script} does not exist\n"
+        test -f ${systemtest_script} || error_die "systemtest script file ${systemtest_script} does not exist\n"
         shift ;;
       --skip-preflight)
         preflight_checks_script="" ;;
@@ -138,12 +148,12 @@ run_systemtest() {
         shift ;;
       -o|--scheduler-config)
         scheduler_config="$2"
-        test -f "${scheduler_config}" || die "ERROR: Scheduler config file ${scheduler_config} does not exist"
+        test -f "${scheduler_config}" || error_die "scheduler config file ${scheduler_config} does not exist"
         spawn_options+=" --scheduler-config ${scheduler_config}"
         shift ;;
       -d|--catalogue-config)
         catalogue_config="$2"
-        test -f "${catalogue_config}" || die "ERROR: catalogue config file ${catalogue_config} does not exist"
+        test -f "${catalogue_config}" || error_die "catalogue config file ${catalogue_config} does not exist"
         spawn_options+=" --catalogue-config ${catalogue_config}"
         shift ;;
       --spawn-options)
@@ -155,8 +165,7 @@ run_systemtest() {
       -K|--keep-namespace) keepnamespace=1 ;;
       -C|--cleanup-namespaces) cleanup_namespaces=1 ;;
       *)
-        echo "Unsupported argument: $1"
-        usage
+        error_usage "unknown argument: $1"
         ;;
     esac
     shift
@@ -164,24 +173,19 @@ run_systemtest() {
 
   # Argument checks
   if [[ -z "${namespace}" ]]; then
-    echo "Missing mandatory argument: -n | --namespace"
-    usage
+    error_usage "missing mandatory argument: -n | --namespace"
   fi
   if [[ -z "${systemtest_script}" ]]; then
-    echo "Missing mandatory argument: -s | --test-script"
-    usage
+    error_usage "missing mandatory argument: -s | --test-script"
   fi
   if [[ -z "${cta_image_tag}" ]]; then
-    echo "Missing mandatory argument: -i | --cta-image-tag"
-    usage
+    error_usage "missing mandatory argument: -i | --cta-image-tag"
   fi
   if [[ -z "${scheduler_config}" ]]; then
-    echo "Missing mandatory argument: -o | --scheduler-config"
-    usage
+    error_usage "missing mandatory argument: -o | --scheduler-config"
   fi
   if [[ -z "${catalogue_config}" ]]; then
-    echo "Missing mandatory argument: -d | --catalogue-config"
-    usage
+    error_usage "missing mandatory argument: -d | --catalogue-config"
   fi
 
   log_dir="${orchestration_dir}/../../pod_logs/${namespace}"
@@ -198,12 +202,10 @@ run_systemtest() {
     echo $old_namespaces | xargs -itoto ./delete_instance.sh -n toto -D
     echo "Cleanup complete"
   elif kubectl get namespace ${namespace} > /dev/null 2>&1; then
-    die "Namespace ${namespace} already exists"
+    error_die "namespace ${namespace} already exists"
   elif [[ -n "$old_namespaces" ]]; then
-    echo "Error: Other namespaces exist: $old_namespaces"
-    exit 1
+    error_die "other namespaces exist: $old_namespaces"
   fi
-
 
   # create instance timeout after 10 minutes
   execute_cmd_with_log "./create_instance.sh -n ${namespace} ${spawn_options} ${extra_spawn_options}" "${log_dir}/create_instance.log" ${create_instance_timeout}

@@ -55,6 +55,15 @@ MULTICOPY_DIR_1=/eos/ctaeos/preprod/dir_1_copy
 MULTICOPY_DIR_2=/eos/ctaeos/preprod/dir_2_copy
 MULTICOPY_DIR_3=/eos/ctaeos/preprod/dir_3_copy
 
+error() {
+  echo "Error: $@" >&2
+}
+
+error_die() {
+  echo "Error: $@" >&2
+  exit 1
+}
+
 # get some common useful helpers for krb5
 . /root/client_helper.sh
 
@@ -79,16 +88,13 @@ mapfile -t TAPE_LIST_2 < <( for t in "${TAPEPOOL_LIST_2[@]}" ; do admin_cta --js
 mapfile -t TAPE_LIST_3 < <( for t in "${TAPEPOOL_LIST_3[@]}" ; do admin_cta --json tape ls --all | jq -r --arg TAPEPOOL "$t" '.[] | select( .tapepool == $TAPEPOOL) | .vid' ; done )
 
 if [ "${#TAPEPOOL_LIST_1[@]}" -ne "1" ] || [ "${#TAPE_LIST_1[@]}" -ne "1" ]; then
-  echo "ERROR: Tape pool 1 misconfigured"
-  exit 1
+  error_die "Tape pool 1 misconfigured"
 fi
 if [ "${#TAPEPOOL_LIST_2[@]}" -ne "2" ] || [ "${#TAPE_LIST_2[@]}" -ne "2" ]; then
-  echo "ERROR: Tape pool 2 misconfigured"
-  exit 1
+  error_die "Tape pool 2 misconfigured"
 fi
 if [ "${#TAPEPOOL_LIST_3[@]}" -ne "3" ] || [ "${#TAPE_LIST_3[@]}" -ne "3" ]; then
-  echo "ERROR: Tape pool 3 misconfigured"
-  exit 1
+  error_die "Tape pool 3 misconfigured"
 fi
 
 # Save file with 1, 2, 3 replicas
@@ -193,7 +199,7 @@ assert_number_of_files_in_queue() {
 
     count=$((count + 1))
     if [[ $count -ge $retries ]]; then
-      echo "ERROR: Queue for for tape ${tape_vid} contains $actual_file_count files, while $expected_file_count were expected."
+      error "Queue for for tape ${tape_vid} contains $actual_file_count files, while $expected_file_count were expected."
       return 1
     fi
 
@@ -300,8 +306,7 @@ test_tape_state_change_queue_removed() {
     "true" != "${HAS_REQID}"   ||
     "\"\"" != "${ERROR_TEXT}" ]]
   then
-    echo "ERROR: Request for ${FILE_PATH} not configured as expected: ${QUERY_RSP}"
-    exit 1
+    error_die "Request for ${FILE_PATH} not configured as expected: ${QUERY_RSP}"
   fi
 
   assert_number_of_files_in_queue "$TAPE_0" 1 2
@@ -325,8 +330,7 @@ test_tape_state_change_queue_removed() {
     "false" != "${HAS_REQID}"   ||
     "\"\""  == "${ERROR_TEXT}" ]]
   then
-    echo "ERROR: Request for ${FILE_PATH} not removed as expected: ${QUERY_RSP}"
-    exit 1
+    error_die "Request for ${FILE_PATH} not removed as expected: ${QUERY_RSP}"
   fi
 
   assert_number_of_files_in_queue "$TAPE_0" 0 2
@@ -381,8 +385,7 @@ test_tape_state_change_queue_preserved() {
     "true" != "${HAS_REQID}"   ||
     "\"\"" != "${ERROR_TEXT}" ]]
   then
-    echo "ERROR: Request for ${FILE_PATH} not configured as expected: ${QUERY_RSP}"
-    exit 1
+    error_die "Request for ${FILE_PATH} not configured as expected: ${QUERY_RSP}"
   fi
 
   assert_number_of_files_in_queue "$TAPE_0" 1 2
@@ -403,8 +406,7 @@ test_tape_state_change_queue_preserved() {
     "true" != "${HAS_REQID}"   ||
     "\"\"" != "${ERROR_TEXT}" ]]
   then
-    echo "ERROR: Request for ${FILE_PATH} not preserved as expected: ${QUERY_RSP}"
-    exit 1
+    error_die "Request for ${FILE_PATH} not preserved as expected: ${QUERY_RSP}"
   fi
 
   assert_number_of_files_in_queue "$TAPE_0" 1 2
@@ -482,8 +484,7 @@ test_tape_state_change_queue_moved() {
     "true" != "${HAS_REQID}"   ||
     "\"\"" != "${ERROR_TEXT}" ]]
   then
-    echo "ERROR: Request for ${FILE_PATH} not configured as expected: ${QUERY_RSP}"
-    exit 1
+    error_die "Request for ${FILE_PATH} not configured as expected: ${QUERY_RSP}"
   fi
 
   if test "0" == "${EXPECTED_QUEUE_START}"; then
@@ -539,8 +540,7 @@ test_tape_state_change_queue_moved() {
       "false" != "${HAS_REQID}"   ||
       "\"\""  == "${ERROR_TEXT}" ]]
     then
-      echo "ERROR: Request for ${FILE_PATH} not removed as expected: ${QUERY_RSP}"
-      exit 1
+      error_die "Request for ${FILE_PATH} not removed as expected: ${QUERY_RSP}"
     fi
 
     assert_number_of_files_in_queue "$TAPE_0" 0 2

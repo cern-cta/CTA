@@ -38,6 +38,6 @@ EVICTED=$((${TO_EVICT}-${LEFTOVER}))
 echo "$(date +%s): $EVICTED/$TO_EVICT files evicted from EOS ${evict}"
 
 if [[ ${EVICTED} -ne ${TO_EVICT} ]]; then
-  echo "ERROR: some files were not evicted"
+  echo "ERROR: some files were not evicted" 1>&2
   exit 1
 fi

@@ -1,9 +1,14 @@
 #!/bin/bash
 
-usage() { cat <<EOF 1>&2
-Usage: $0 -n <namespace>
-EOF
-exit 1
+usage() {
+  echo "Usage: $0 -n <namespace>"
+  echo
+  exit 1
+}
+
+fail() {
+  echo "FAIL: $@" 1>&2
+  exit 1
 }
 
 while getopts "n:" o; do
@@ -19,12 +24,12 @@ done
 shift $((OPTIND-1))
 
 if [[ -z "${NAMESPACE}" ]]; then
-    usage
+  usage
 fi
 
 if [[ -n "${error}" ]]; then
-    echo -e "ERROR:\n${error}"
-    exit 1
+  echo -e "ERROR:\n${error}" 1>&2
+  exit 1
 fi
 
 CLIENT_POD="cta-client-0"
@@ -101,14 +106,12 @@ CATALOGUE_STORAGE_CLASS_2=$(jq . ${CATALOGUE_METADATA_PATH_AFTER_CHANGE_2} | jq 
 rm -r ${CATALOGUE_METADATA_PATH_AFTER_CHANGE_2}
 
 if test ${CATALOGUE_STORAGE_CLASS_1} != ${NEW_STORAGE_CLASS_NAME}; then
-  echo "ERROR: File ${FILE_1} did not change the storage class in the Catalogue"
-  exit 1
+  fail "File ${FILE_1} did not change the storage class in the Catalogue"
 fi
 
 if test ${CATALOGUE_STORAGE_CLASS_2} != ${NEW_STORAGE_CLASS_NAME}; then
-  echo "ERROR: File ${FILE_2} did not change the storage class in the Catalogue"
-  exit 1
+  fail "File ${FILE_2} did not change the storage class in the Catalogue"
 fi
 
 echo
-echo "All tests passed"
+echo "OK: All tests passed"

@@ -38,6 +38,11 @@ usage() {
   exit 1
 }
 
+error_usage() {
+  echo "Error: $@" >&2
+  usage
+}
+
 build_srpm() {
   project_root="$(realpath "$(dirname "${BASH_SOURCE[0]}")/../..")"
   # Default values for arguments
@@ -62,8 +67,7 @@ build_srpm() {
         build_dir=$(realpath "$2")
         shift
       else
-        echo "Error: --build-dir requires an argument"
-        usage
+        error_usage "--build-dir requires an argument"
       fi
       ;;
     --build-generator)
@@ -74,8 +78,7 @@ build_srpm() {
         build_generator="$2"
         shift
       else
-        echo "Error: --build-generator requires an argument"
-        usage
+        error_usage "--build-generator requires an argument"
       fi
       ;;
     --clean-build-dir) clean_build_dir=true ;;
@@ -85,21 +88,18 @@ build_srpm() {
         cta_version="$2"
         shift
       else
-        echo "Error: --cta-version requires an argument"
-        usage
+        error_usage "--cta-version requires an argument"
       fi
       ;;
     --scheduler-type)
       if [[ $# -gt 1 ]]; then
         if [[ "$2" != "objectstore" ]] && [[ "$2" != "pgsched" ]]; then
-          echo "Error: scheduler type $2 is not one of [objectstore, pgsched]."
-          exit 1
+          error_usage "scheduler type $2 is not one of [objectstore, pgsched]."
         fi
         scheduler_type="$2"
         shift
       else
-        echo "Error: --scheduler-type requires an argument"
-        usage
+        error_usage "--scheduler-type requires an argument"
       fi
       ;;
     --vcs-version)
@@ -107,8 +107,7 @@ build_srpm() {
         vcs_version="$2"
         shift
       else
-        echo "Error: --vcs-version requires an argument"
-        usage
+        error_usage "--vcs-version requires an argument"
       fi
       ;;
     -j | --jobs)
@@ -116,8 +115,7 @@ build_srpm() {
         num_jobs="$2"
         shift
       else
-        echo "Error: --jobs requires an argument"
-        usage
+        error_usage "--jobs requires an argument"
       fi
       ;;
     --oracle-support)
@@ -137,41 +135,34 @@ build_srpm() {
         cmake_build_type="$2"
         shift
       else
-        echo "Error: -j|--jobs requires an argument"
-        usage
+        error_usage "-j|--jobs requires an argument"
       fi
       ;;
     *)
-      echo "Invalid argument: $1"
-      usage
+      error_usage "unknown argument: $1"
       ;;
     esac
     shift
   done
 
   if [[ -z "${build_dir}" ]]; then
-    echo "Failure: Missing mandatory argument --build-dir"
-    usage
+    error_usage "missing mandatory argument --build-dir"
   fi
 
   if [[ -z "${scheduler_type}" ]]; then
-    echo "Failure: Missing mandatory argument --scheduler-type"
-    usage
+    error_usage "missing mandatory argument --scheduler-type"
   fi
 
   if [[ -z "${vcs_version}" ]]; then
-    echo "Failure: Missing mandatory argument --vcs-version"
-    usage
+    error_usage "missing mandatory argument --vcs-version"
   fi
 
   if [[ -z "${build_generator}" ]]; then
-    echo "Failure: Missing mandatory argument --build-generator"
-    usage
+    error_usage "missing mandatory argument --build-generator"
   fi
 
   if [[ -z "${cmake_build_type}" ]]; then
-    echo "Failure: Missing mandatory argument --cmake-build-type"
-    usage
+    error_usage "missing mandatory argument --cmake-build-type"
   fi
 
   cd "${project_root}"
@@ -185,8 +176,7 @@ build_srpm() {
   if [[ ${create_build_dir} = true ]]; then
     mkdir -p "${build_dir}"
   elif [[ ! -d "${build_dir}" ]]; then
-    echo "Build directory ${build_dir} does not exist. Please create it and execute the script again, or run the script with the --create-build-dir option.."
-    exit 1
+    error_usage "Build directory ${build_dir} does not exist. Please create it and execute the script again, or run the script with the --create-build-dir option.."
   fi
 
   if [[ -d "${build_dir}" ]] && [[ "$(ls -A "${build_dir}")" ]]; then

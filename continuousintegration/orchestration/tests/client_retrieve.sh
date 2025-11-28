@@ -94,6 +94,6 @@ echo "${RETRIEVED}/${TO_BE_RETRIEVED} retrieved files"
 echo "###"
 
 if [[ ${RETRIEVED} -ne ${TO_BE_RETRIEVED} ]]; then
-  echo "ERROR: Some files were not retrieved."
+  echo "ERROR: Some files were not retrieved." 1>&2
   exit 1
 fi

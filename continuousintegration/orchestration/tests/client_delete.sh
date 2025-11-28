@@ -65,7 +65,7 @@ kill ${EOSRMPID} &> /dev/null
 # therefore we need to take the smallest of the 2 values to decide if the system test was
 # successful or not
 if [[ ${INITIALFILESONTAPE} -gt ${DELETED} ]]; then
-  echo "ERROR: Some files have not been deleted"
+  echo "ERROR: Some files have not been deleted" 1>&2
   exit 1
 else
   echo "All files have been deleted"

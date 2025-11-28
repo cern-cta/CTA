@@ -38,6 +38,11 @@ usage() {
   exit 1
 }
 
+error_usage() {
+  echo "Error: $@" >&2
+  usage
+}
+
 buildImage() {
   project_root=$(git rev-parse --show-toplevel)
 
@@ -60,14 +65,12 @@ buildImage() {
     -c | --container-runtime)
       if [[ $# -gt 1 ]]; then
         if [[ "$2" != "docker" ]] && [[ "$2" != "podman" ]]; then
-          echo "-c | --container-runtime is \"$2\" but must be one of [docker, podman]."
-          exit 1
+          error_usage "-c | --container-runtime is \"$2\" but must be one of [docker, podman]."
         fi
         container_runtime="$2"
         shift
       else
-        echo "Error: -c | --container-runtime requires an argument"
-        usage
+        error_usage "-c | --container-runtime requires an argument"
       fi
       ;;
     -s | --rpm-src)
@@ -75,8 +78,7 @@ buildImage() {
         rpm_src=$(realpath "$2")
         shift
       else
-        echo "Error: -s|--rpm-src requires an argument"
-        exit 1
+        error_usage "-s|--rpm-src requires an argument"
       fi
       ;;
     --rpm-version)
@@ -84,8 +86,7 @@ buildImage() {
         rpm_version="$2"
         shift
       else
-        echo "Error: --rpm-version requires an argument"
-        exit 1
+        error_usage "--rpm-version requires an argument"
       fi
       ;;
     -t | --tag)
@@ -93,8 +94,7 @@ buildImage() {
         image_tag="$2"
         shift
       else
-        echo "Error: -t|--tag requires an argument"
-        exit 1
+        error_usage "-t|--tag requires an argument"
       fi
       ;;
     -n | --name)
@@ -102,8 +102,7 @@ buildImage() {
         image_name="$2"
         shift
       else
-        echo "Error: -n | --name requires an argument"
-        exit 1
+        error_usage "-n | --name requires an argument"
       fi
       ;;
     -l | --load-into-minikube)
@@ -117,31 +116,26 @@ buildImage() {
         dockerfile="$2"
         shift
       else
-        echo "Error: --dockerfile requires an argument"
-        exit 1
+        error_usage "--dockerfile requires an argument"
       fi
       ;;
     *)
-      echo "Unsupported argument: $1"
-      usage
+      error_usage "unknown argument: $1"
       ;;
     esac
     shift
   done
 
   if [[ -z "${image_tag}" ]]; then
-    echo "Failure: Missing mandatory argument -t | --tag"
-    usage
+    error_usage "missing mandatory argument -t | --tag"
   fi
 
   if [[ -z "${rpm_src}" ]]; then
-    echo "Failure: Missing mandatory argument -s | --rpm-src"
-    usage
+    error_usage "missing mandatory argument -s | --rpm-src"
   fi
 
   if [[ -z "${rpm_version}" ]]; then
-    echo "Failure: Missing mandatory argument --rpm-version"
-    usage
+    error_usage "missing mandatory argument --rpm-version"
   fi
 
   # navigate to root directory

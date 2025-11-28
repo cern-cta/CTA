@@ -32,6 +32,11 @@ usage() {
   exit 1
 }
 
+error_usage() {
+  echo "$@" >&2
+  usage
+}
+
 # Validate pivot schema version
 check_pivot_release=0
 # Validate non-pivot schema version
@@ -62,14 +67,12 @@ fi
 
 cta_repo_dir=$1
 if ! test -d ${cta_repo_dir}; then
-  echo "Error: directory '${cta_repo_dir}' does not exist"
-  usage
+  error_usage "directory '${cta_repo_dir}' does not exist"
 fi
 cta_repo_dir=$(readlink -f $cta_repo_dir)
 
 if [[ "$check_pivot_release" -eq "1" ]] && [[ "$check_non_pivot_release" -eq "1" ]]; then
-  echo "Error: Can't set both '-p' and '-c'"
-  usage
+  error_usage "can't set both '-p' and '-c'"
 fi
 
 # Extract variable directly set on a cmake file
@@ -187,11 +190,11 @@ for PREV_VERSION in $(echo $CTA_PROJECT_PREV_CATALOGUE_VERSIONS); do
   fi
 done
 
-# Fail if there were error...
+# Fail if there were some error...
 if [[ -n "${error}" ]]; then
-  echo -e "Errors:\n${error}"
+  echo -e "Errors:\n${error}" >&2
   exit 1
 fi
 
-echo "Success: All checks succeeded!"
+echo "OK: All checks succeeded!"
 exit 0

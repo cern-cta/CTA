@@ -47,6 +47,16 @@ usage() {
   exit 1
 }
 
+error_usage() {
+  echo "Error: $@" >&2
+  usage
+}
+
+error_die() {
+  echo "Error: $@" >&2
+  exit 1
+}
+
 build_rpm() {
   project_root="$(realpath "$(dirname "${BASH_SOURCE[0]}")/../..")"
   # Default values for arguments
@@ -80,20 +90,18 @@ build_rpm() {
         build_dir=$(realpath "$2")
         shift
       else
-        echo "Error: --build-dir requires an argument"
-        usage
+        error_usage "--build-dir requires an argument"
       fi
       ;;
     --platform)
       if [[ $# -gt 1 ]]; then
         if [[ "$(jq --arg platform "$2" '.platforms | has($platform)' "$project_root/project.json")" != "true" ]]; then
-            echo "Error: platform $2 not supported. Please check the project.json for supported platforms."
+            error_usage "platform $2 not supported. Please check the project.json for supported platforms."
         fi
         platform="$2"
         shift
       else
-        echo "Error: --platform requires an argument"
-        usage
+        error_usage "--platform requires an argument"
       fi
       ;;
     --build-generator)
@@ -104,8 +112,7 @@ build_rpm() {
         build_generator="$2"
         shift
       else
-        echo "Error: --build-generator requires an argument"
-        usage
+        error_usage "--build-generator requires an argument"
       fi
       ;;
     --clean-build-dir) clean_build_dir=true ;;
@@ -116,21 +123,18 @@ build_rpm() {
         cta_version="$2"
         shift
       else
-        echo "Error: --cta-version requires an argument"
-        usage
+        error_usage "--cta-version requires an argument"
       fi
       ;;
     --scheduler-type)
       if [[ $# -gt 1 ]]; then
         if [[ "$2" != "objectstore" ]] && [[ "$2" != "pgsched" ]]; then
-          echo "Error: scheduler type $2 is not one of [objectstore, pgsched]."
-          exit 1
+          error_usage "scheduler type $2 is not one of [objectstore, pgsched]."
         fi
         scheduler_type="$2"
         shift
       else
-        echo "Error: --scheduler-type requires an argument"
-        usage
+        error_usage "--scheduler-type requires an argument"
       fi
       ;;
     --srpm-dir)
@@ -139,8 +143,7 @@ build_rpm() {
         srpm_dir=$(realpath "$2")
         shift
       else
-        echo "Error: --srpm-dir requires an argument"
-        usage
+        error_usage "--srpm-dir requires an argument"
       fi
       ;;
     --vcs-version)
@@ -148,8 +151,7 @@ build_rpm() {
         vcs_version="$2"
         shift
       else
-        echo "Error: --vcs-version requires an argument"
-        usage
+        error_usage "--vcs-version requires an argument"
       fi
       ;;
     --xrootd-ssi-version)
@@ -157,8 +159,7 @@ build_rpm() {
         xrootd_ssi_version="$2"
         shift
       else
-        echo "Error: --xrootd-ssi-version requires an argument"
-        usage
+        error_usage "--xrootd-ssi-version requires an argument"
       fi
       ;;
     --install-srpms) install_srpms=true ;;
@@ -168,8 +169,7 @@ build_rpm() {
         num_jobs="$2"
         shift
       else
-        echo "Error: -j|--jobs requires an argument"
-        usage
+        error_usage "-j|--jobs requires an argument"
       fi
       ;;
     --skip-cmake) skip_cmake=true ;;
@@ -182,69 +182,58 @@ build_rpm() {
         fi
         shift
       else
-        echo "Error: -j|--jobs requires an argument"
-        usage
+        error_usage "-j|--jobs requires an argument"
       fi
       ;;
     --cmake-build-type)
       if [[ $# -gt 1 ]]; then
         if [[ "$2" != "Release" ]] && [[ "$2" != "Debug" ]] && [[ "$2" != "RelWithDebInfo" ]] && [[ "$2" != "MinSizeRel" ]]; then
-          echo "--cmake-build-type is \"$2\" but must be one of [Release, Debug, RelWithDebInfo, or MinSizeRel]."
+          error_usage "--cmake-build-type is \"$2\" but must be one of [Release, Debug, RelWithDebInfo, or MinSizeRel]."
           exit 1
         fi
         cmake_build_type="$2"
         shift
       else
-        echo "Error: -j|--jobs requires an argument"
-        usage
+        error_usage "-j|--jobs requires an argument"
       fi
       ;;
     *)
-      echo "Invalid argument: $1"
-      usage
+      error_usage "unknown argument: $1"
       ;;
     esac
     shift
   done
 
   if [[ -z "${build_dir}" ]]; then
-    echo "Failure: Missing mandatory argument --build-dir"
-    usage
+    error_usage "missing mandatory argument --build-dir"
   fi
 
   if [[ -z "${scheduler_type}" ]]; then
-    echo "Failure: Missing mandatory argument --scheduler-type"
-    usage
+    error_usage "missing mandatory argument --scheduler-type"
   fi
 
   if [[ -z "${srpm_dir}" ]]; then
-    echo "Failure: Missing mandatory argument --srpm-dir"
-    usage
+    error_usage "missing mandatory argument --srpm-dir"
   fi
 
   if [[ -z "${vcs_version}" ]]; then
-    echo "Failure: Missing mandatory argument --vcs-version"
-    usage
+    error_usage "missing mandatory argument --vcs-version"
   fi
 
   if [[ -z "${build_generator}" ]]; then
-    echo "Failure: Missing mandatory argument --build-generator"
-    usage
+    error_usage "missing mandatory argument --build-generator"
   fi
 
   if [[ -z "${xrootd_ssi_version}" ]]; then
-    echo "Failure: Missing mandatory argument --xrootd-ssi-version"
-    usage
+    error_usage "missing mandatory argument --xrootd-ssi-version"
   fi
 
   if [[ -z "${cmake_build_type}" ]]; then
-    echo "Failure: Missing mandatory argument --cmake-build-type"
-    usage
+    error_usage "missing mandatory argument --cmake-build-type"
   fi
 
   if [[ -z "${platform}" ]]; then
-    echo "Failure: Missing mandatory argument --platform"
-    usage
+    error_usage "missing mandatory argument --platform"
   fi
 
   cd "${project_root}"
@@ -258,8 +247,7 @@ build_rpm() {
   if [[ ${create_build_dir} = true ]]; then
     mkdir -p "${build_dir}"
   elif [[ ! -d "${build_dir}" ]]; then
-    echo "Build directory ${build_dir} does not exist. Please create it and execute the script again, or run the script with the --create-build-dir option.."
-    exit 1
+    error_die "Build directory ${build_dir} does not exist. Please create it and execute the script again, or run the script with the --create-build-dir option.."
   fi
 
   if [[ -d "${build_dir}" ]] && [[ "$(ls -A "${build_dir}")" ]]; then

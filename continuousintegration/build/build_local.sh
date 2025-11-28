@@ -43,6 +43,11 @@ usage() {
   exit 1
 }
 
+error_usage() {
+  echo "Error: $@" >&2
+  usage
+}
+
 build_local() {
   project_root="$(realpath "$(dirname "$0")/../..")"
   # Input args
@@ -84,8 +89,7 @@ build_local() {
           install_platform="$2"
           shift
         else
-          echo "Error: --install requires an argument"
-          usage
+          error_usage "--install requires an argument"
         fi
         ;;
       --build-generator)
@@ -93,8 +97,7 @@ build_local() {
           build_generator="$2"
           shift
         else
-          echo "Error: --build-generator requires an argument"
-          usage
+          error_usage "--build-generator requires an argument"
         fi
         ;;
       --cmake-build-type)
@@ -106,8 +109,7 @@ build_local() {
           cmake_build_type="$2"
           shift
         else
-          echo "Error: --cmake-build-type requires an argument"
-          usage
+          error_usage "--cmake-build-type requires an argument"
         fi
         ;;
       --scheduler-type)
@@ -115,13 +117,11 @@ build_local() {
           scheduler_type="$2"
           shift
         else
-          echo "Error: --scheduler-type requires an argument"
-          usage
+          error_usage "--scheduler-type requires an argument"
         fi
         ;;
       *)
-        echo "Unsupported argument: $1"
-        usage
+        error_usage "unknown argument: $1"
         ;;
     esac
     shift
