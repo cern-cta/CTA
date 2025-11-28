@@ -20,15 +20,13 @@
 #include "DiskSystem.hpp"
 #include "common/json/object/JSONCObject.hpp"
 
-using namespace cta::utils::json::object;
-
 namespace cta::disk {
 
 /**
  * This class allows to transform a DiskSystem object into a JSON string
  * and to build a DiskSystem object from a JSON string
  */
-class JSONDiskSystem : public DiskSystem, public JSONCObject {
+class JSONDiskSystem : public DiskSystem, public cta::utils::json::object::JSONCObject {
 public:
   JSONDiskSystem();
   explicit JSONDiskSystem(const DiskSystem& diskSystem);
