@@ -37,7 +37,7 @@ Stmt StmtPool::getStmt(wrapper::ConnWrapper &conn, const std::string &sql) {
   } else {
     auto &stmtList = itor->second;
     if(stmtList.empty()) {
-      throw exception::Exception(std::string(__FUNCTION__) + " failed: Unexpected empty list of cached statements");
+      throw exception::Exception("Unexpected empty list of cached statements");
     }
     auto stmt = std::move(stmtList.front());
     stmtList.pop_front();

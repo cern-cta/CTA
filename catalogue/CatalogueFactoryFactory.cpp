@@ -62,43 +62,39 @@ std::unique_ptr<CatalogueFactory> CatalogueFactoryFactory::create(
       }
     });
 
-  try {
-    switch (login.dbType) {
-    case rdbms::Login::DBTYPE_IN_MEMORY:
-      pm.load("libctacatalogueinmemory.so");
-      if (!pm.isRegistered("ctacatalogueinmemory")) {
-        pm.bootstrap("factory");
-      }
-      return pm.plugin("ctacatalogueinmemory").make("InMemoryCatalogueFactory", log, nbConns, nbArchiveFileListingConns, maxTriesToConnect);
-    case rdbms::Login::DBTYPE_ORACLE:
-#ifdef SUPPORT_OCCI
-      pm.load("libctacatalogueocci.so");
-      if (!pm.isRegistered("ctacatalogueocci")) {
-        pm.bootstrap("factory");
-      }
-      return pm.plugin("ctacatalogueocci").make("OracleCatalogueFactory", log, login, nbConns, nbArchiveFileListingConns, maxTriesToConnect);
-#else
-      throw exception::NoSupportedDB("Oracle Catalogue Schema is not supported. Compile CTA with Oracle support.");
-#endif
-    case rdbms::Login::DBTYPE_POSTGRESQL:
-      pm.load("libctacataloguepostrgres.so");
-      if (!pm.isRegistered("ctacataloguepostgres")) {
-        pm.bootstrap("factory");
-      }
-      return pm.plugin("ctacataloguepostgres").make("PostgresqlCatalogueFactory", log, login, nbConns, nbArchiveFileListingConns, maxTriesToConnect);
-    case rdbms::Login::DBTYPE_SQLITE:
-      throw exception::Exception("Sqlite file based databases are not supported");
-    case rdbms::Login::DBTYPE_NONE:
-      throw exception::Exception("Cannot create a catalogue without a database type");
-    default:
-      {
-        exception::NoSupportedDB ex;
-        ex.getMessage() << "Unknown database type: value=" << login.dbType;
-        throw ex;
-      }
+  switch (login.dbType) {
+  case rdbms::Login::DBTYPE_IN_MEMORY:
+    pm.load("libctacatalogueinmemory.so");
+    if (!pm.isRegistered("ctacatalogueinmemory")) {
+      pm.bootstrap("factory");
     }
-  } catch(exception::Exception &ex) {
-    throw exception::Exception(std::string(__FUNCTION__) + " failed: " + ex.getMessage().str());
+    return pm.plugin("ctacatalogueinmemory").make("InMemoryCatalogueFactory", log, nbConns, nbArchiveFileListingConns, maxTriesToConnect);
+  case rdbms::Login::DBTYPE_ORACLE:
+#ifdef SUPPORT_OCCI
+    pm.load("libctacatalogueocci.so");
+    if (!pm.isRegistered("ctacatalogueocci")) {
+      pm.bootstrap("factory");
+    }
+    return pm.plugin("ctacatalogueocci").make("OracleCatalogueFactory", log, login, nbConns, nbArchiveFileListingConns, maxTriesToConnect);
+#else
+    throw exception::NoSupportedDB("Oracle Catalogue Schema is not supported. Compile CTA with Oracle support.");
+#endif
+  case rdbms::Login::DBTYPE_POSTGRESQL:
+    pm.load("libctacataloguepostrgres.so");
+    if (!pm.isRegistered("ctacataloguepostgres")) {
+      pm.bootstrap("factory");
+    }
+    return pm.plugin("ctacataloguepostgres").make("PostgresqlCatalogueFactory", log, login, nbConns, nbArchiveFileListingConns, maxTriesToConnect);
+  case rdbms::Login::DBTYPE_SQLITE:
+    throw exception::Exception("Sqlite file based databases are not supported");
+  case rdbms::Login::DBTYPE_NONE:
+    throw exception::Exception("Cannot create a catalogue without a database type");
+  default:
+    {
+      exception::NoSupportedDB ex;
+      ex.getMessage() << "Unknown database type: value=" << login.dbType;
+      throw ex;
+    }
   }
 }
 

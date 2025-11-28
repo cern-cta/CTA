@@ -162,7 +162,7 @@ void PostgresTapeFileCatalogue::filesWrittenToTape(const std::set<TapeItemWritte
 
   auto firstEventItor = events.begin();
   const auto &firstEvent = **firstEventItor;
-  checkTapeItemWrittenFieldsAreSet(__FUNCTION__, firstEvent);
+  checkTapeItemWrittenFieldsAreSet(firstEvent);
   const time_t now = std::chrono::system_clock::to_time_t(std::chrono::system_clock::now());
   auto conn = m_connPool->getConn();
   rdbms::AutoRollback autoRollback(conn);
@@ -189,7 +189,7 @@ void PostgresTapeFileCatalogue::filesWrittenToTape(const std::set<TapeItemWritte
   for (const auto &eventP: events) {
     // Check for all item types.
     const auto &event = *eventP;
-    checkTapeItemWrittenFieldsAreSet(__FUNCTION__, event);
+    checkTapeItemWrittenFieldsAreSet(event);
 
     if (event.vid != firstEvent.vid) {
       throw exception::Exception(std::string("VID mismatch: expected=") + firstEvent.vid + " actual=" + event.vid);
@@ -207,7 +207,7 @@ void PostgresTapeFileCatalogue::filesWrittenToTape(const std::set<TapeItemWritte
       // If this is a file (as opposed to a placeholder), do the full processing.
       const auto &fileEvent=dynamic_cast<const TapeFileWritten &>(event);
 
-      checkTapeFileWrittenFieldsAreSet(__FUNCTION__, fileEvent);
+      checkTapeFileWrittenFieldsAreSet(fileEvent);
 
       totalLogicalBytesWritten += fileEvent.size;
 
@@ -250,16 +250,14 @@ void PostgresTapeFileCatalogue::filesWrittenToTape(const std::set<TapeItemWritte
 
     // This should never happen
     if(fileSizesAndChecksums.end() == fileSizeAndChecksumItor) {
-      exception::Exception ex;
-      ex.getMessage() << __FUNCTION__ << ": Failed to find archive file entry in the catalogue: " << fileContext.str();
-      throw ex;
+      throw exception::Exception("Failed to find archive file entry in the catalogue: " + fileContext.str());
     }
 
     const auto &fileSizeAndChecksum = fileSizeAndChecksumItor->second;
 
     if(fileSizeAndChecksum.fileSize != event.size) {
       catalogue::FileSizeMismatch ex;
-      ex.getMessage() << __FUNCTION__ << ": File size mismatch: expected=" << fileSizeAndChecksum.fileSize <<
+      ex.getMessage() << "File size mismatch: expected=" << fileSizeAndChecksum.fileSize <<
         ", actual=" << event.size << ": " << fileContext.str();
       m_log(log::ALERT, ex.getMessage().str());
       throw ex;

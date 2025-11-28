@@ -65,19 +65,15 @@ std::list<std::string> SchemaSqlStatementsReader::getAllStatementsFromSchema(con
   std::list<std::string> statements;
   std::string::size_type searchPos = 0;
   std::string::size_type findResult = std::string::npos;
-  try {
-    while (std::string::npos != (findResult = schema.find(';', searchPos))) {
-      // Calculate the length of the current statement without the trailing ';'
-      const std::string::size_type stmtLen = findResult - searchPos;
-      const std::string sqlStmt = utils::trimString(std::string_view(schema).substr(searchPos, stmtLen));
-      searchPos = findResult + 1;
+  while (std::string::npos != (findResult = schema.find(';', searchPos))) {
+    // Calculate the length of the current statement without the trailing ';'
+    const std::string::size_type stmtLen = findResult - searchPos;
+    const std::string sqlStmt = utils::trimString(std::string_view(schema).substr(searchPos, stmtLen));
+    searchPos = findResult + 1;
 
-      if (0 < sqlStmt.size()) {  // Ignore empty statements
-        statements.push_back(sqlStmt+";");
-      }
+    if (0 < sqlStmt.size()) {  // Ignore empty statements
+      statements.push_back(sqlStmt+";");
     }
-  } catch(exception::Exception &ex) {
-    throw exception::Exception(std::string(__FUNCTION__) + " failed: " + ex.getMessage().str());
   }
   return statements;
 }

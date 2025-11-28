@@ -69,7 +69,7 @@ void SqliteTapeFileCatalogue::filesWrittenToTape(const std::set<TapeItemWrittenP
 
   auto firstEventItor = events.cbegin();
   const auto &firstEvent = **firstEventItor;
-  checkTapeItemWrittenFieldsAreSet(__FUNCTION__, firstEvent);
+  checkTapeItemWrittenFieldsAreSet(firstEvent);
 
   // The SQLite implementation of this method relies on the fact that a tape
   // cannot be physically mounted in two or more drives at the same time
@@ -88,7 +88,7 @@ void SqliteTapeFileCatalogue::filesWrittenToTape(const std::set<TapeItemWrittenP
 
   for(const auto &eventP: events) {
     const auto & event = *eventP;
-    checkTapeItemWrittenFieldsAreSet(__FUNCTION__, event);
+    checkTapeItemWrittenFieldsAreSet(event);
 
     if(event.vid != firstEvent.vid) {
       throw exception::Exception(std::string("VID mismatch: expected=") + firstEvent.vid + " actual=" + event.vid);
@@ -127,7 +127,7 @@ void SqliteTapeFileCatalogue::filesWrittenToTape(const std::set<TapeItemWrittenP
 }
 
 void SqliteTapeFileCatalogue::fileWrittenToTape(rdbms::Conn &conn, const TapeFileWritten &event) {
-  checkTapeFileWrittenFieldsAreSet(__FUNCTION__, event);
+  checkTapeFileWrittenFieldsAreSet(event);
 
   // Try to insert a row into the ARCHIVE_FILE table - it is normal this will
   // fail if another tape copy has already been written to tape

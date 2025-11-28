@@ -45,12 +45,8 @@ InMemoryCatalogueFactory::InMemoryCatalogueFactory(
 // create
 //------------------------------------------------------------------------------
 std::unique_ptr<Catalogue> InMemoryCatalogueFactory::create() {
-  try {
-    auto c = std::make_unique<InMemoryCatalogue>(m_log, m_nbConns, m_nbArchiveFileListingConns);
-    return std::make_unique<CatalogueRetryWrapper>(m_log, std::move(c), m_maxTriesToConnect);
-  } catch(exception::Exception &ex) {
-    throw exception::Exception(std::string(__FUNCTION__) + " failed: " + ex.getMessage().str());
-  }
+  auto c = std::make_unique<InMemoryCatalogue>(m_log, m_nbConns, m_nbArchiveFileListingConns);
+  return std::make_unique<CatalogueRetryWrapper>(m_log, std::move(c), m_maxTriesToConnect);
 }
 
 } // namespace cta::catalogue
@@ -69,7 +65,7 @@ void factory(cta::plugin::Interface<cta::catalogue::CatalogueFactory,
       const u_int64_t,
       const u_int64_t,
       const u_int64_t>>& interface) {
-  
+
   interface.SET<cta::plugin::DATA::PLUGIN_NAME>("ctacatalogueinmemory")
     .SET<cta::plugin::DATA::API_VERSION>(VERSION_API)
     .CLASS<cta::catalogue::InMemoryCatalogueFactory>("InMemoryCatalogueFactory");

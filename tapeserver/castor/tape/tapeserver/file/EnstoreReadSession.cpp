@@ -41,7 +41,7 @@ EnstoreReadSession::EnstoreReadSession(tapeserver::drive::DriveInterface &drive,
   size_t bytes_read = m_drive.readBlock(data, blockSize);
   if (bytes_read < sizeof(vol1)) {
     delete[] data;
-    throw cta::exception::Exception(std::string(__FUNCTION__) + " failed: Too few bytes read from label");
+    throw cta::exception::Exception("Too few bytes read from label");
   }
   memcpy(&vol1, data, sizeof(vol1));
   delete[] data;

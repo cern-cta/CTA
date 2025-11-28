@@ -34,7 +34,7 @@ cta::ArchiveMount::ArchiveMount(catalogue::Catalogue& catalogue,
       m_sessionRunning(false) {
   m_dbMount.reset(dynamic_cast<SchedulerDatabase::ArchiveMount*>(dbMount.release()));
   if (!m_dbMount) {
-    throw WrongMountType(std::string(__FUNCTION__) + ": could not cast mount to SchedulerDatabase::ArchiveMount");
+    throw WrongMountType("Could not cast mount to SchedulerDatabase::ArchiveMount");
   }
 }
 

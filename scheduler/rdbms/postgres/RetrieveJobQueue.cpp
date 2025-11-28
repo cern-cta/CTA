@@ -1201,20 +1201,15 @@ rdbms::Rset RetrieveJobQueueRow::flagReportingJobsByStatus(Transaction& txn,
 }
 
 uint64_t RetrieveJobQueueRow::getNextRetrieveRequestID(rdbms::Conn& conn) {
-  try {
-    const char* const sql = R"SQL(
-          SELECT NEXTVAL('RETRIEVE_REQUEST_ID_SEQ') AS RETRIEVE_REQUEST_ID
-        )SQL";
-    auto stmt = conn.createStmt(sql);
-    auto rset = stmt.executeQuery();
-    if (!rset.next()) {
-      throw exception::Exception("Result set is unexpectedly empty");
-    }
-    return rset.columnUint64("RETRIEVE_REQUEST_ID");
-  } catch (exception::Exception& ex) {
-    ex.getMessage().str(std::string(__FUNCTION__) + ": " + ex.getMessage().str());
-    throw;
+  const char* const sql = R"SQL(
+        SELECT NEXTVAL('RETRIEVE_REQUEST_ID_SEQ') AS RETRIEVE_REQUEST_ID
+      )SQL";
+  auto stmt = conn.createStmt(sql);
+  auto rset = stmt.executeQuery();
+  if (!rset.next()) {
+    throw exception::Exception("Result set is unexpectedly empty");
   }
+  return rset.columnUint64("RETRIEVE_REQUEST_ID");
 }
 
 uint64_t RetrieveJobQueueRow::cancelRetrieveJob(Transaction& txn, uint64_t archiveFileID) {

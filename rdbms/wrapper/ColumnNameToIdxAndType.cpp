@@ -25,7 +25,7 @@ namespace cta::rdbms::wrapper {
 //------------------------------------------------------------------------------
 void ColumnNameToIdxAndType::add(const std::string &name, const IdxAndType &idxAndType) {
   if(m_nameToIdxAndType.end() != m_nameToIdxAndType.find(name)) {
-    throw exception::Exception(std::string(__FUNCTION__) + " failed: " + name + " is a duplicate");
+    throw exception::Exception("Duplicate column name: " + name);
   }
   m_nameToIdxAndType[name] = idxAndType;
 }
@@ -36,7 +36,7 @@ void ColumnNameToIdxAndType::add(const std::string &name, const IdxAndType &idxA
 ColumnNameToIdxAndType::IdxAndType ColumnNameToIdxAndType::getIdxAndType(const std::string &name) const {
   auto it = m_nameToIdxAndType.find(name);
   if(m_nameToIdxAndType.end() == it) {
-    throw exception::Exception(std::string(__FUNCTION__) + " failed: Unknown column name " + name);
+    throw exception::Exception("Unknown column name: " + name);
   }
   return it->second;
 }

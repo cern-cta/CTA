@@ -349,7 +349,7 @@ private:
         m_paramValuesPtrs[idx] = nullptr;
       }
     } catch (exception::Exception& ex) {
-      throw exception::Exception(std::string(__FUNCTION__) + " failed for SQL statement " + getSqlForException() +
+      throw exception::Exception("Failed for SQL statement " + getSqlForException() +
                                  ": " + ex.getMessage().str());
     }
   }

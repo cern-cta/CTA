@@ -28,12 +28,10 @@ RWLockRdLocker::RWLockRdLocker(RWLock &lock): m_lock(lock) {
   try {
     m_lock.rdlock();
   } catch(exception::Exception &ne) {
-    exception::Exception ex;
-    ex.getMessage() << __FUNCTION__ << " failed to take read lock: " << ne.getMessage().str();
-    throw ex;
+    throw exception::Exception("Failed to take read lock: " + ne.getMessage().str());
   }
 }
-  
+
 //------------------------------------------------------------------------------
 // destructor
 //------------------------------------------------------------------------------

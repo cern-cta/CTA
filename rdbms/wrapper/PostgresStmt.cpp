@@ -92,7 +92,7 @@ void PostgresStmt::bindString(const std::string& paramName, const std::optional<
       m_paramValuesPtrs[idx] = nullptr;
     }
   } catch (exception::Exception& ex) {
-    throw exception::Exception(std::string(__FUNCTION__) + " failed for SQL statement " + getSqlForException() + ": " +
+    throw exception::Exception("Failed for SQL statement " + getSqlForException() + ": " +
                                ex.getMessage().str());
   }
 }
@@ -104,7 +104,7 @@ void PostgresStmt::bindUint8(const std::string& paramName, const std::optional<u
   try {
     return bindInteger<uint8_t>(paramName, paramValue);
   } catch (exception::Exception& ex) {
-    ex.getMessage().str(std::string(__FUNCTION__) + " failed for SQL statement " + getSqlForException() + ": " +
+    ex.getMessage().str("Failed for SQL statement " + getSqlForException() + ": " +
                         ex.getMessage().str());
     throw;
   }
@@ -117,7 +117,7 @@ void PostgresStmt::bindUint16(const std::string& paramName, const std::optional<
   try {
     return bindInteger<uint16_t>(paramName, paramValue);
   } catch (exception::Exception& ex) {
-    ex.getMessage().str(std::string(__FUNCTION__) + " failed for SQL statement " + getSqlForException() + ": " +
+    ex.getMessage().str("Failed for SQL statement " + getSqlForException() + ": " +
                         ex.getMessage().str());
     throw;
   }
@@ -130,7 +130,7 @@ void PostgresStmt::bindUint32(const std::string& paramName, const std::optional<
   try {
     return bindInteger<uint32_t>(paramName, paramValue);
   } catch (exception::Exception& ex) {
-    ex.getMessage().str(std::string(__FUNCTION__) + " failed for SQL statement " + getSqlForException() + ": " +
+    ex.getMessage().str("Failed for SQL statement " + getSqlForException() + ": " +
                         ex.getMessage().str());
     throw;
   }
@@ -143,7 +143,7 @@ void PostgresStmt::bindUint64(const std::string& paramName, const std::optional<
   try {
     return bindInteger<uint64_t>(paramName, paramValue);
   } catch (exception::Exception& ex) {
-    ex.getMessage().str(std::string(__FUNCTION__) + " failed for SQL statement " + getSqlForException() + ": " +
+    ex.getMessage().str("Failed for SQL statement " + getSqlForException() + ": " +
                         ex.getMessage().str());
     throw;
   }
@@ -164,7 +164,7 @@ void PostgresStmt::bindBlob(const std::string& paramName, const std::string& par
   try {
     bindString(paramName, escapedParamValue);
   } catch (exception::Exception& ex) {
-    throw exception::Exception(std::string(__FUNCTION__) + " failed: " + ex.getMessage().str());
+    throw exception::Exception("Failed: " + ex.getMessage().str());
   }
 }
 
@@ -191,7 +191,7 @@ void PostgresStmt::bindDouble(const std::string& paramName, const std::optional<
       m_paramValuesPtrs[idx] = nullptr;
     }
   } catch (exception::Exception& ex) {
-    throw exception::Exception(std::string(__FUNCTION__) + " failed for SQL statement " + getSqlForException() + ": " +
+    throw exception::Exception("Failed for SQL statement " + getSqlForException() + ": " +
                                ex.getMessage().str());
   }
 }
@@ -304,10 +304,10 @@ void PostgresStmt::executeCopyInsert(const size_t rows) {
     }
 
   } catch (exception::LostDatabaseConnection& ex) {
-    throw exception::LostDatabaseConnection(std::string(__FUNCTION__) + " detected lost connection for SQL statement " +
+    throw exception::LostDatabaseConnection("Detected lost connection for SQL statement " +
                                             getSqlForException() + ": " + ex.getMessage().str());
   } catch (exception::Exception& ex) {
-    throw exception::Exception(std::string(__FUNCTION__) + " failed for SQL statement " + getSqlForException() + ": " +
+    throw exception::Exception("Failed for SQL statement " + getSqlForException() + ": " +
                                ex.getMessage().str());
   }
 }
@@ -349,10 +349,10 @@ void PostgresStmt::executeNonQuery() {
     }
 
   } catch (exception::LostDatabaseConnection& ex) {
-    throw exception::LostDatabaseConnection(std::string(__FUNCTION__) + " detected lost connection for SQL statement " +
+    throw exception::LostDatabaseConnection("Detected lost connection for SQL statement " +
                                             getSqlForException() + ": " + ex.getMessage().str());
   } catch (exception::Exception& ex) {
-    ex.getMessage().str(std::string(__FUNCTION__) + " failed for SQL statement " + getSqlForException() + ": " +
+    ex.getMessage().str("Failed for SQL statement " + getSqlForException() + ": " +
                         ex.getMessage().str());
     throw;
   }
@@ -397,12 +397,12 @@ std::unique_ptr<RsetWrapper> PostgresStmt::executeQuery() {
   } catch (exception::LostDatabaseConnection& ex) {
     // reset to initial value
     m_conn.setAsyncInProgress(isasync);
-    throw exception::LostDatabaseConnection(std::string(__FUNCTION__) + " detected lost connection for SQL statement " +
+    throw exception::LostDatabaseConnection("Detected lost connection for SQL statement " +
                                             getSqlForException() + ": " + ex.getMessage().str());
   } catch (exception::Exception& ex) {
     // reset to initial value
     m_conn.setAsyncInProgress(isasync);
-    throw exception::Exception(std::string(__FUNCTION__) + " failed for SQL statement " + getSqlForException() + ": " +
+    throw exception::Exception("Failed for SQL statement " + getSqlForException() + ": " +
                                ex.getMessage().str());
   } catch (std::exception&) {
     // reset to initial value
@@ -433,7 +433,7 @@ void PostgresStmt::setColumn(PostgresColumn& col) {
     const unsigned int idx = paramIdx - 1;
     m_columnPtrs[idx] = &col;
   } catch (exception::Exception& ex) {
-    throw exception::Exception(std::string(__FUNCTION__) + " failed for SQL statement " + getSqlForException() + ": " +
+    throw exception::Exception("Failed for SQL statement " + getSqlForException() + ": " +
                                ex.getMessage().str());
   }
 }
@@ -466,7 +466,7 @@ void PostgresStmt::closeAssumeLocked() {
     m_conn.deallocateStmt(stmt);
 
   } catch (exception::Exception& ex) {
-    throw exception::Exception(std::string(__FUNCTION__) + " failed for SQL statement " + getSqlForException() + ": " +
+    throw exception::Exception("Failed for SQL statement " + getSqlForException() + ": " +
                                ex.getMessage().str());
   }
 }

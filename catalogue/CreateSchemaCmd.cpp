@@ -128,23 +128,18 @@ void CreateSchemaCmd::printUsage(std::ostream &os) {
 // executeNonQueries
 //------------------------------------------------------------------------------
 void CreateSchemaCmd::executeNonQueries(rdbms::Conn &conn, const std::string &sqlStmts) const {
-  try {
-    std::string::size_type searchPos = 0;
-    std::string::size_type findResult = std::string::npos;
+  std::string::size_type searchPos = 0;
+  std::string::size_type findResult = std::string::npos;
 
-    while(std::string::npos != (findResult = sqlStmts.find(';', searchPos))) {
-      // Calculate the length of the current statement without the trailing ';'
-      const std::string::size_type stmtLen = findResult - searchPos;
-      const std::string sqlStmt = utils::trimString(std::string_view(sqlStmts).substr(searchPos, stmtLen));
-      searchPos = findResult + 1;
+  while(std::string::npos != (findResult = sqlStmts.find(';', searchPos))) {
+    // Calculate the length of the current statement without the trailing ';'
+    const std::string::size_type stmtLen = findResult - searchPos;
+    const std::string sqlStmt = utils::trimString(std::string_view(sqlStmts).substr(searchPos, stmtLen));
+    searchPos = findResult + 1;
 
-      if(0 < sqlStmt.size()) { // Ignore empty statements
-        conn.executeNonQuery(sqlStmt);
-      }
+    if(0 < sqlStmt.size()) { // Ignore empty statements
+      conn.executeNonQuery(sqlStmt);
     }
-
-  } catch(exception::Exception &ex) {
-    throw exception::Exception(std::string(__FUNCTION__) + " failed: " + ex.getMessage().str());
   }
 }
 

@@ -1,6 +1,6 @@
 /**
  * @project        The CERN Tape Archive (CTA)
- * @description    
+ * @description
  * @copyright      Copyright © 2021-2022 CERN
  * @license        This program is free software: you can redistribute it and/or modify
  *                 it under the terms of the GNU General Public License as published by
@@ -55,23 +55,15 @@ struct MountsRow {
    * @return     Mount ID number
    */
   static uint64_t getNextMountID(Transaction& txn) {
-    try {
-      const char* const sql = R"SQL(
-        SELECT NEXTVAL('MOUNT_ID_SEQ') AS MOUNT_ID
-      )SQL";
-      auto stmt = txn.getConn().createStmt(sql);
-      auto rset = stmt.executeQuery();
-      if (!rset.next()) {
-        throw exception::Exception("Result set is unexpectedly empty");
-      }
-      return rset.columnUint64("MOUNT_ID");
-    } catch (exception::UserError& ex) {
-      ex.getMessage().str(std::string(__FUNCTION__) + ": " + ex.getMessage().str());
-      throw;
-    } catch (exception::Exception& ex) {
-      ex.getMessage().str(std::string(__FUNCTION__) + ": " + ex.getMessage().str());
-      throw;
+    const char* const sql = R"SQL(
+      SELECT NEXTVAL('MOUNT_ID_SEQ') AS MOUNT_ID
+    )SQL";
+    auto stmt = txn.getConn().createStmt(sql);
+    auto rset = stmt.executeQuery();
+    if (!rset.next()) {
+      throw exception::Exception("Result set is unexpectedly empty");
     }
+    return rset.columnUint64("MOUNT_ID");
   };
 };
 

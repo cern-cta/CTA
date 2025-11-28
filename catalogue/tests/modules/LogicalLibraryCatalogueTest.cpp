@@ -54,20 +54,16 @@ void cta_catalogue_LogicalLibraryTest::TearDown() {
 std::map<std::string, cta::common::dataStructures::LogicalLibrary>
   cta_catalogue_LogicalLibraryTest::logicalLibraryListToMap(
   const std::list<cta::common::dataStructures::LogicalLibrary> &listOfLibs) const {
-  try {
-    std::map<std::string, cta::common::dataStructures::LogicalLibrary> nameToLib;
+  std::map<std::string, cta::common::dataStructures::LogicalLibrary> nameToLib;
 
-    for (auto &lib: listOfLibs) {
-      if(nameToLib.end() != nameToLib.find(lib.name)) {
-        throw cta::exception::Exception(std::string("Duplicate logical library: value=") + lib.name);
-      }
-      nameToLib[lib.name] = lib;
+  for (auto &lib: listOfLibs) {
+    if(nameToLib.end() != nameToLib.find(lib.name)) {
+      throw cta::exception::Exception(std::string("Duplicate logical library: value=") + lib.name);
     }
-
-    return nameToLib;
-  } catch(cta::exception::Exception &ex) {
-    throw cta::exception::Exception(std::string(__FUNCTION__) + " failed: " + ex.getMessage().str());
+    nameToLib[lib.name] = lib;
   }
+
+  return nameToLib;
 }
 
 TEST_P(cta_catalogue_LogicalLibraryTest, createLogicalLibrary) {

@@ -16,6 +16,7 @@
  */
 
 #include "common/exception/Exception.hpp"
+#include "common/exception/NullPtrException.hpp"
 #include "common/exception/Errnum.hpp"
 #include "common/exception/LostDatabaseConnection.hpp"
 #include "common/threading/MutexLocker.hpp"
@@ -42,8 +43,7 @@ OcciConn::OcciConn(oracle::occi::Environment* const env,
       m_autocommitMode(AutocommitMode::AUTOCOMMIT_ON),
       m_dbNamespace(dbNamespace) {
   if(nullptr == conn) {
-    throw exception::Exception(std::string(__FUNCTION__) + " failed"
-      ": The OCCI connection is a nullptr pointer");
+    throw exception::NullPtrException("The OCCI connection is a nullptr pointer");
   }
 }
 
@@ -90,12 +90,8 @@ AutocommitMode OcciConn::getAutocommitMode() const noexcept{
 // executeNonQuery
 //------------------------------------------------------------------------------
 void OcciConn::executeNonQuery(const std::string &sql) {
-  try {
-    auto stmt = createStmt(sql);
-    stmt->executeNonQuery();
-  } catch(exception::Exception &ex) {
-    throw exception::Exception(std::string(__FUNCTION__) + " failed: " + ex.getMessage().str());
-  }
+  auto stmt = createStmt(sql);
+  stmt->executeNonQuery();
 }
 
 //------------------------------------------------------------------------------
@@ -111,14 +107,14 @@ std::unique_ptr<StmtWrapper> OcciConn::createStmt(const std::string &sql) {
 
     oracle::occi::Statement *const stmt = m_occiConn->createStatement(sql);
     if (nullptr == stmt) {
-      throw exception::Exception("oracle::occi::createStatement() returned a nullptr pointer");
+      throw exception::NullPtrException("oracle::occi::createStatement() returned a nullptr pointer");
     }
     return std::make_unique<OcciStmt>(sql, *this, stmt);
   } catch(exception::Exception &ex) {
-    throw exception::Exception(std::string(__FUNCTION__) + " failed for SQL statement " + sql + ": " +
+    throw exception::Exception("Failed for SQL statement " + sql + ": " +
       ex.getMessage().str());
   } catch(std::exception &se) {
-    throw exception::Exception(std::string(__FUNCTION__) + " failed for SQL statement " + sql + ": " + se.what());
+    throw exception::Exception("Failed for SQL statement " + sql + ": " + se.what());
   }
 }
 
@@ -126,158 +122,130 @@ std::unique_ptr<StmtWrapper> OcciConn::createStmt(const std::string &sql) {
 // commit
 //------------------------------------------------------------------------------
 void OcciConn::commit() {
-  try {
-    threading::MutexLocker locker(m_mutex);
+  threading::MutexLocker locker(m_mutex);
 
-    if(nullptr == m_occiConn) {
-       throw exception::Exception("Connection is closed");
-    }
-
-    m_occiConn->commit();
-  } catch(exception::Exception &ex) {
-    throw exception::Exception(std::string(__FUNCTION__) + " failed: " + ex.getMessage().str());
-  } catch(std::exception &se) {
-    throw exception::Exception(std::string(__FUNCTION__) + " failed: " + se.what());
+  if(nullptr == m_occiConn) {
+      throw exception::Exception("Connection is closed");
   }
+
+  m_occiConn->commit();
 }
 
 //------------------------------------------------------------------------------
 // rollback
 //------------------------------------------------------------------------------
 void OcciConn::rollback() {
-  try {
-    threading::MutexLocker locker(m_mutex);
+  threading::MutexLocker locker(m_mutex);
 
-    if(nullptr == m_occiConn) {
-       throw exception::Exception("Connection is closed");
-    }
-
-    m_occiConn->rollback();
-  } catch(exception::Exception &ex) {
-    throw exception::Exception(std::string(__FUNCTION__) + " failed: " + ex.getMessage().str());
-  } catch(std::exception &se) {
-    throw exception::Exception(std::string(__FUNCTION__) + " failed: " + se.what());
+  if(nullptr == m_occiConn) {
+      throw exception::Exception("Connection is closed");
   }
+
+  m_occiConn->rollback();
 }
 
 //------------------------------------------------------------------------------
 // getColumns
 //------------------------------------------------------------------------------
 std::map<std::string, std::string, std::less<>> OcciConn::getColumns(const std::string &tableName) {
-  try {
-    std::map<std::string, std::string, std::less<>> columnNamesAndTypes;
-    const char* const sql = R"SQL(
-      SELECT
-        COLUMN_NAME,
-        DATA_TYPE
-      FROM
-        USER_TAB_COLUMNS
-      WHERE
-        TABLE_NAME = :TABLE_NAME
-    )SQL";
+  std::map<std::string, std::string, std::less<>> columnNamesAndTypes;
+  const char* const sql = R"SQL(
+    SELECT
+      COLUMN_NAME,
+      DATA_TYPE
+    FROM
+      USER_TAB_COLUMNS
+    WHERE
+      TABLE_NAME = :TABLE_NAME
+  )SQL";
 
-    auto stmt = createStmt(sql);
-    stmt->bindString(":TABLE_NAME", tableName);
-    auto rset = stmt->executeQuery();
-    while (rset->next()) {
-      auto name = rset->columnOptionalString("COLUMN_NAME");
-      auto type = rset->columnOptionalString("DATA_TYPE");
-      if(name && type) {
-         if ("NUMBER" == type.value()) {
-           type = "NUMERIC";
-         }
-        columnNamesAndTypes.insert(std::make_pair(name.value(), type.value()));
-      }
+  auto stmt = createStmt(sql);
+  stmt->bindString(":TABLE_NAME", tableName);
+  auto rset = stmt->executeQuery();
+  while (rset->next()) {
+    auto name = rset->columnOptionalString("COLUMN_NAME");
+    auto type = rset->columnOptionalString("DATA_TYPE");
+    if(name && type) {
+        if ("NUMBER" == type.value()) {
+          type = "NUMERIC";
+        }
+      columnNamesAndTypes.insert(std::make_pair(name.value(), type.value()));
     }
-    return columnNamesAndTypes;
-  } catch(exception::Exception &ex) {
-    throw exception::Exception(std::string(__FUNCTION__) + " failed: " + ex.getMessage().str());
   }
+  return columnNamesAndTypes;
 }
 
 //------------------------------------------------------------------------------
 // getTableNames
 //------------------------------------------------------------------------------
 std::list<std::string> OcciConn::getTableNames() {
-  try {
-    std::list<std::string> names;
-    const char* const sql = R"SQL(
-      SELECT
-        TABLE_NAME
-      FROM
-        USER_TABLES
-      ORDER BY
-        TABLE_NAME
-    )SQL";
-    auto stmt = createStmt(sql);
-    auto rset = stmt->executeQuery();
-    while (rset->next()) {
-      auto name = rset->columnOptionalString("TABLE_NAME");
-      if(name) {
-        names.push_back(name.value());
-      }
+  std::list<std::string> names;
+  const char* const sql = R"SQL(
+    SELECT
+      TABLE_NAME
+    FROM
+      USER_TABLES
+    ORDER BY
+      TABLE_NAME
+  )SQL";
+  auto stmt = createStmt(sql);
+  auto rset = stmt->executeQuery();
+  while (rset->next()) {
+    auto name = rset->columnOptionalString("TABLE_NAME");
+    if(name) {
+      names.push_back(name.value());
     }
-
-    return names;
-  } catch(exception::Exception &ex) {
-    throw exception::Exception(std::string(__FUNCTION__) + " failed: " + ex.getMessage().str());
   }
+
+  return names;
 }
 
 //------------------------------------------------------------------------------
 // getIndexNames
 //------------------------------------------------------------------------------
 std::list<std::string> OcciConn::getIndexNames() {
-  try {
-    std::list<std::string> names;
-    const char* const sql = R"SQL(
-      SELECT
-        INDEX_NAME
-      FROM
-        USER_INDEXES
-      ORDER BY
-        INDEX_NAME
-    )SQL";
-    auto stmt = createStmt(sql);
-    auto rset = stmt->executeQuery();
-    while (rset->next()) {
-      auto name = rset->columnOptionalString("INDEX_NAME");
-      if(name) {
-        names.push_back(name.value());
-      }
+  std::list<std::string> names;
+  const char* const sql = R"SQL(
+    SELECT
+      INDEX_NAME
+    FROM
+      USER_INDEXES
+    ORDER BY
+      INDEX_NAME
+  )SQL";
+  auto stmt = createStmt(sql);
+  auto rset = stmt->executeQuery();
+  while (rset->next()) {
+    auto name = rset->columnOptionalString("INDEX_NAME");
+    if(name) {
+      names.push_back(name.value());
     }
-
-    return names;
-  } catch(exception::Exception &ex) {
-    throw exception::Exception(std::string(__FUNCTION__) + " failed: " + ex.getMessage().str());
   }
+
+  return names;
 }
 
 //------------------------------------------------------------------------------
 // getSequenceNames
 //------------------------------------------------------------------------------
 std::list<std::string> OcciConn::getSequenceNames() {
-  try {
-    std::list<std::string> names;
-    const char* const sql = R"SQL(
-      SELECT
-        SEQUENCE_NAME
-      FROM
-        USER_SEQUENCES
-      ORDER BY
-        SEQUENCE_NAME
-    )SQL";
-    auto stmt = createStmt(sql);
-    auto rset = stmt->executeQuery();
-    while (rset->next()) {
-      auto name = rset->columnOptionalString("SEQUENCE_NAME");
-      names.push_back(name.value());
-    }
-
-    return names;
-  } catch(exception::Exception &ex) {
-    throw exception::Exception(std::string(__FUNCTION__) + " failed: " + ex.getMessage().str());
+  std::list<std::string> names;
+  const char* const sql = R"SQL(
+    SELECT
+      SEQUENCE_NAME
+    FROM
+      USER_SEQUENCES
+    ORDER BY
+      SEQUENCE_NAME
+  )SQL";
+  auto stmt = createStmt(sql);
+  auto rset = stmt->executeQuery();
+  while (rset->next()) {
+    auto name = rset->columnOptionalString("SEQUENCE_NAME");
+    names.push_back(name.value());
   }
+
+  return names;
 }
 
 //------------------------------------------------------------------------------
@@ -291,128 +259,108 @@ std::list<std::string> OcciConn::getTriggerNames() {
 // getParallelTableNames
 //------------------------------------------------------------------------------
 std::list<std::string> OcciConn::getParallelTableNames() {
-  try {
-    std::list<std::string> names;
-    const char* const sql = R"SQL(
-      SELECT
-        TABLE_NAME
-      FROM
-        USER_TABLES
-      WHERE
-        TRIM(DEGREE) NOT LIKE '1'
-      ORDER BY
-        TABLE_NAME
-    )SQL";
-    auto stmt = createStmt(sql);
-    auto rset = stmt->executeQuery();
-    while (rset->next()) {
-      auto name = rset->columnOptionalString("TABLE_NAME");
-      names.push_back(name.value());
-    }
-
-    return names;
-  } catch(exception::Exception &ex) {
-    throw exception::Exception(std::string(__FUNCTION__) + " failed: " + ex.getMessage().str());
+  std::list<std::string> names;
+  const char* const sql = R"SQL(
+    SELECT
+      TABLE_NAME
+    FROM
+      USER_TABLES
+    WHERE
+      TRIM(DEGREE) NOT LIKE '1'
+    ORDER BY
+      TABLE_NAME
+  )SQL";
+  auto stmt = createStmt(sql);
+  auto rset = stmt->executeQuery();
+  while (rset->next()) {
+    auto name = rset->columnOptionalString("TABLE_NAME");
+    names.push_back(name.value());
   }
+
+  return names;
 }
 
 //------------------------------------------------------------------------------
 // getConstraintNames
 //------------------------------------------------------------------------------
 std::list<std::string> OcciConn::getConstraintNames(const std::string& tableName){
-  try {
-    std::list<std::string> names;
-    const char* const sql = R"SQL(
-      SELECT
-        CONSTRAINT_NAME
-      FROM
-        USER_CONSTRAINTS
-      WHERE
-        TABLE_NAME=:TABLE_NAME
-    )SQL";
-    auto stmt = createStmt(sql);
-    stmt->bindString(":TABLE_NAME",tableName);
-    auto rset = stmt->executeQuery();
-    while (rset->next()) {
-      auto name = rset->columnOptionalString("CONSTRAINT_NAME");
-      names.push_back(name.value());
-    }
-    return names;
-  } catch(exception::Exception &ex) {
-    throw exception::Exception(std::string(__FUNCTION__) + " failed: " + ex.getMessage().str());
+  std::list<std::string> names;
+  const char* const sql = R"SQL(
+    SELECT
+      CONSTRAINT_NAME
+    FROM
+      USER_CONSTRAINTS
+    WHERE
+      TABLE_NAME=:TABLE_NAME
+  )SQL";
+  auto stmt = createStmt(sql);
+  stmt->bindString(":TABLE_NAME",tableName);
+  auto rset = stmt->executeQuery();
+  while (rset->next()) {
+    auto name = rset->columnOptionalString("CONSTRAINT_NAME");
+    names.push_back(name.value());
   }
+  return names;
 }
 
 //------------------------------------------------------------------------------
 // getStoredProcedureNames
 //------------------------------------------------------------------------------
 std::list<std::string> OcciConn::getStoredProcedureNames() {
-  try {
-    std::list<std::string> names;
-    const char* const sql = R"SQL(
-      SELECT
-        OBJECT_NAME
-      FROM
-        USER_PROCEDURES
-    )SQL";
-    auto stmt = createStmt(sql);
-    auto rset = stmt->executeQuery();
-    while (rset->next()) {
-      auto name = rset->columnOptionalString("OBJECT_NAME");
-      names.push_back(name.value());
-    }
-    return names;
-  } catch(exception::Exception &ex) {
-    throw exception::Exception(std::string(__FUNCTION__) + " failed: " + ex.getMessage().str());
+  std::list<std::string> names;
+  const char* const sql = R"SQL(
+    SELECT
+      OBJECT_NAME
+    FROM
+      USER_PROCEDURES
+  )SQL";
+  auto stmt = createStmt(sql);
+  auto rset = stmt->executeQuery();
+  while (rset->next()) {
+    auto name = rset->columnOptionalString("OBJECT_NAME");
+    names.push_back(name.value());
   }
+  return names;
 }
 
 //------------------------------------------------------------------------------
 // getSynonymNames
 //------------------------------------------------------------------------------
 std::list<std::string> OcciConn::getSynonymNames() {
-  try {
-    std::list<std::string> names;
-    const char* const sql = R"SQL(
-      SELECT
-        SYNONYM_NAME
-      FROM
-        USER_SYNONYMS
-    )SQL";
-    auto stmt = createStmt(sql);
-    auto rset = stmt->executeQuery();
-    while (rset->next()) {
-      auto name = rset->columnOptionalString("SYNONYM_NAME");
-      names.push_back(name.value());
-    }
-    return names;
-  } catch(exception::Exception &ex) {
-    throw exception::Exception(std::string(__FUNCTION__) + " failed: " + ex.getMessage().str());
+  std::list<std::string> names;
+  const char* const sql = R"SQL(
+    SELECT
+      SYNONYM_NAME
+    FROM
+      USER_SYNONYMS
+  )SQL";
+  auto stmt = createStmt(sql);
+  auto rset = stmt->executeQuery();
+  while (rset->next()) {
+    auto name = rset->columnOptionalString("SYNONYM_NAME");
+    names.push_back(name.value());
   }
+  return names;
 }
 
 //------------------------------------------------------------------------------
 // getTypeNames
 //------------------------------------------------------------------------------
 std::list<std::string> OcciConn::getTypeNames() {
-  try {
-    std::list<std::string> names;
-    const char* const sql = R"SQL(
-      SELECT
-        TYPE_NAME
-      FROM
-        USER_TYPES
-    )SQL";
-    auto stmt = createStmt(sql);
-    auto rset = stmt->executeQuery();
-    while (rset->next()) {
-      auto name = rset->columnOptionalString("TYPE_NAME");
-      names.push_back(name.value());
-    }
-    return names;
-  } catch(exception::Exception &ex) {
-    throw exception::Exception(std::string(__FUNCTION__) + " failed: " + ex.getMessage().str());
+  std::list<std::string> names;
+  const char* const sql = R"SQL(
+    SELECT
+      TYPE_NAME
+    FROM
+      USER_TYPES
+  )SQL";
+  auto stmt = createStmt(sql);
+  auto rset = stmt->executeQuery();
+  while (rset->next()) {
+    auto name = rset->columnOptionalString("TYPE_NAME");
+    names.push_back(name.value());
   }
+  return names;
 }
 
 //------------------------------------------------------------------------------
@@ -433,23 +381,17 @@ bool OcciConn::isOpen() const {
 // closeStmt
 //------------------------------------------------------------------------------
 void OcciConn::closeStmt(oracle::occi::Statement *const stmt) {
-  try {
-    threading::MutexLocker locker(m_mutex);
+  threading::MutexLocker locker(m_mutex);
 
-    if(nullptr == m_occiConn) {
-       throw exception::Exception("Connection is closed");
-    }
-
-    if(nullptr == stmt) {
-      throw exception::Exception("stmt is a nullptr");
-    }
-
-    m_occiConn->terminateStatement(stmt);
-  } catch(exception::Exception &ex) {
-    throw exception::Exception(std::string(__FUNCTION__) + " failed: " + ex.getMessage().str());
-  } catch(std::exception &se) {
-    throw exception::Exception(std::string(__FUNCTION__) + " failed: " + se.what());
+  if(nullptr == m_occiConn) {
+      throw exception::Exception("Connection is closed");
   }
+
+  if(nullptr == stmt) {
+    throw exception::Exception("stmt is a nullptr");
+  }
+
+  m_occiConn->terminateStatement(stmt);
 }
 
 //------------------------------------------------------------------------------

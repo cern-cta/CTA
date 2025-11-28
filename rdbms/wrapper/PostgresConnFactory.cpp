@@ -34,11 +34,7 @@ PostgresConnFactory::PostgresConnFactory(const rdbms::Login& login) : m_login(lo
 // create
 //------------------------------------------------------------------------------
 std::unique_ptr<ConnWrapper> PostgresConnFactory::create() {
-  try {
-    return std::make_unique<PostgresConn>(m_login);
-  } catch(exception::Exception &ex) {
-    throw exception::Exception(std::string(__FUNCTION__) + " failed: " + ex.getMessage().str());
-  }
+  return std::make_unique<PostgresConn>(m_login);
 }
 
 //------------------------------------------------------------------------------

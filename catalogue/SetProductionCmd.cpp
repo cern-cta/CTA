@@ -42,20 +42,20 @@ int SetProductionCmd::exceptionThrowingMain(const int argc, char *const *const a
     printUsage(m_out);
     return 0;
   }
-  
+
   const rdbms::Login dbLogin = rdbms::Login::parseFile(cmdLineArgs.dbConfigPath);
   const uint64_t maxNbConns = 1;
   rdbms::ConnPool connPool(dbLogin, maxNbConns);
   auto conn = connPool.getConn();
-  
+
   if(!isProductionSettable(dbLogin,conn)){
     throw cta::exception::Exception("Unable to set the catalogue as production because the column IS_PRODUCTION is missing");
   }
-  
+
   m_out << "Setting the IS_PRODUCTION flag..." << std::endl;
   setProductionFlag(conn);
   m_out << "IS_PRODUCTION flag set." << std::endl;
-  
+
   return 0;
 }
 
@@ -84,11 +84,7 @@ void SetProductionCmd::setProductionFlag(cta::rdbms::Conn& conn) const {
   const char* const sql = R"SQL(
     UPDATE CTA_CATALOGUE SET IS_PRODUCTION='1'
   )SQL";
-  try {
-    conn.executeNonQuery(sql);
-  } catch(const exception::Exception & ex) {
-    throw exception::Exception(std::string(__FUNCTION__) + " failed: " + ex.getMessage().str());
-  }
+  conn.executeNonQuery(sql);
 }
 
 

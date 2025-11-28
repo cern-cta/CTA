@@ -28,7 +28,7 @@ namespace cta::threading {
 CondVar::CondVar() {
   const int initRc = pthread_cond_init(&m_cond, nullptr);
   if(0 != initRc) {
-    throw exception::Exception(std::string(__FUNCTION__) + " failed: Failed to initialise condition variable");
+    throw exception::Exception("Failed to initialise condition variable");
   }
 }
 
@@ -44,12 +44,12 @@ CondVar::~CondVar() {
 //------------------------------------------------------------------------------
 void CondVar::wait(MutexLocker &locker) {
   if(!locker.m_locked) {
-    throw exception::Exception(std::string(__FUNCTION__) + " failed: Underlying mutex is not locked.");
+    throw exception::Exception("Underlying mutex is not locked.");
   }
 
   const int waitRc = pthread_cond_wait(&m_cond, &locker.m_mutex.m_mutex);
   if(0 != waitRc) {
-    throw exception::Exception(std::string(__FUNCTION__) + " failed: pthread_cond_wait failed:" +
+    throw exception::Exception("pthread_cond_wait failed:" +
       utils::errnoToString(waitRc));
   }
 }
@@ -60,7 +60,7 @@ void CondVar::wait(MutexLocker &locker) {
 void CondVar::signal() {
   const int signalRc = pthread_cond_signal(&m_cond);
   if(0 != signalRc) {
-    throw exception::Exception(std::string(__FUNCTION__) + " failed: pthread_cond_signal failed:" +
+    throw exception::Exception("pthread_cond_signal failed:" +
       utils::errnoToString(signalRc));
   }
 }
@@ -71,7 +71,7 @@ void CondVar::signal() {
 void CondVar::broadcast() {
   const int broadcastRc = pthread_cond_broadcast(&m_cond);
   if(0 != broadcastRc) {
-    throw exception::Exception(std::string(__FUNCTION__) + " failed: pthread_cond_broadcast failed:" +
+    throw exception::Exception("pthread_cond_broadcast failed:" +
       utils::errnoToString(broadcastRc));
   }
 }

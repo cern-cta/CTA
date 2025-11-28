@@ -40,7 +40,7 @@ PostgresArchiveFileCatalogue::PostgresArchiveFileCatalogue(log::Logger &log, std
 void PostgresArchiveFileCatalogue::DO_NOT_USE_deleteArchiveFile_DO_NOT_USE(const std::string &diskInstanceName,
   const uint64_t archiveFileId, log::LogContext &lc) {
   const char* selectSql = R"SQL(
-    SELECT 
+    SELECT
       ARCHIVE_FILE.ARCHIVE_FILE_ID AS ARCHIVE_FILE_ID,
       ARCHIVE_FILE.DISK_INSTANCE_NAME AS DISK_INSTANCE_NAME,
       ARCHIVE_FILE.DISK_FILE_ID AS DISK_FILE_ID,
@@ -57,15 +57,15 @@ void PostgresArchiveFileCatalogue::DO_NOT_USE_deleteArchiveFile_DO_NOT_USE(const
       TAPE_FILE.BLOCK_ID AS BLOCK_ID,
       TAPE_FILE.LOGICAL_SIZE_IN_BYTES AS LOGICAL_SIZE_IN_BYTES,
       TAPE_FILE.COPY_NB AS COPY_NB,
-      TAPE_FILE.CREATION_TIME AS TAPE_FILE_CREATION_TIME 
-    FROM 
-      ARCHIVE_FILE 
-    INNER JOIN STORAGE_CLASS ON 
-      ARCHIVE_FILE.STORAGE_CLASS_ID = STORAGE_CLASS.STORAGE_CLASS_ID 
-    INNER JOIN TAPE_FILE ON 
-      ARCHIVE_FILE.ARCHIVE_FILE_ID = TAPE_FILE.ARCHIVE_FILE_ID 
-    WHERE 
-      ARCHIVE_FILE.ARCHIVE_FILE_ID = :ARCHIVE_FILE_ID 
+      TAPE_FILE.CREATION_TIME AS TAPE_FILE_CREATION_TIME
+    FROM
+      ARCHIVE_FILE
+    INNER JOIN STORAGE_CLASS ON
+      ARCHIVE_FILE.STORAGE_CLASS_ID = STORAGE_CLASS.STORAGE_CLASS_ID
+    INNER JOIN TAPE_FILE ON
+      ARCHIVE_FILE.ARCHIVE_FILE_ID = TAPE_FILE.ARCHIVE_FILE_ID
+    WHERE
+      ARCHIVE_FILE.ARCHIVE_FILE_ID = :ARCHIVE_FILE_ID
     FOR UPDATE OF ARCHIVE_FILE
   )SQL";
   utils::Timer t;
@@ -271,14 +271,14 @@ std::map<uint64_t, PostgresArchiveFileCatalogue::FileSizeAndChecksum>
   }
 
   const char* const sql = R"SQL(
-    SELECT 
+    SELECT
       ARCHIVE_FILE.ARCHIVE_FILE_ID AS ARCHIVE_FILE_ID,
       ARCHIVE_FILE.SIZE_IN_BYTES AS SIZE_IN_BYTES,
       ARCHIVE_FILE.CHECKSUM_BLOB AS CHECKSUM_BLOB,
-      ARCHIVE_FILE.CHECKSUM_ADLER32 AS CHECKSUM_ADLER32 
-    FROM 
-      ARCHIVE_FILE 
-    INNER JOIN TEMP_TAPE_FILE_BATCH ON 
+      ARCHIVE_FILE.CHECKSUM_ADLER32 AS CHECKSUM_ADLER32
+    FROM
+      ARCHIVE_FILE
+    INNER JOIN TEMP_TAPE_FILE_BATCH ON
       ARCHIVE_FILE.ARCHIVE_FILE_ID = TEMP_TAPE_FILE_BATCH.ARCHIVE_FILE_ID
   )SQL";
   auto stmt = conn.createStmt(sql);
@@ -290,10 +290,7 @@ std::map<uint64_t, PostgresArchiveFileCatalogue::FileSizeAndChecksum>
     const uint64_t archiveFileId = rset.columnUint64("ARCHIVE_FILE_ID");
 
     if (fileSizesAndChecksums.contains(archiveFileId)) {
-      exception::Exception ex;
-      ex.getMessage() << __FUNCTION__ << " failed: "
-        "Found duplicate archive file identifier in batch of files written to tape: archiveFileId=" << archiveFileId;
-      throw ex;
+      throw exception::Exception("Found duplicate archive file identifier in batch of files written to tape: archiveFileId=" + archiveFileId);
     }
 
     FileSizeAndChecksum fileSizeAndChecksum;

@@ -32,11 +32,7 @@ SqliteConnFactory::SqliteConnFactory(const rdbms::Login& login) : m_login(login)
 // create
 //------------------------------------------------------------------------------
 std::unique_ptr<ConnWrapper> SqliteConnFactory::create() {
-  try {
-    return std::make_unique<SqliteConn>(m_login);
-  } catch(exception::Exception &ex) {
-    throw exception::Exception(std::string(__FUNCTION__) + " failed: " + ex.getMessage().str());
-  }
+  return std::make_unique<SqliteConn>(m_login);
 }
 
 //------------------------------------------------------------------------------

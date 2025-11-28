@@ -75,19 +75,17 @@ void RdbmsTapeFileCatalogue::copyTapeFileToFileRecyleLogAndDelete(rdbms::Conn & 
   }
 }
 
-void RdbmsTapeFileCatalogue::checkTapeItemWrittenFieldsAreSet(const std::string& callingFunc,
-  const TapeItemWritten& event) const {
+void RdbmsTapeFileCatalogue::checkTapeItemWrittenFieldsAreSet(const TapeItemWritten& event) const {
   try {
     if(event.vid.empty()) throw exception::Exception("vid is an empty string");
     if(0 == event.fSeq) throw exception::Exception("fSeq is 0");
     if(event.tapeDrive.empty()) throw exception::Exception("tapeDrive is an empty string");
   } catch (exception::Exception &ex) {
-    throw exception::Exception(callingFunc + " failed: TapeItemWrittenEvent is invalid: " + ex.getMessage().str());
+    throw exception::Exception("TapeItemWrittenEvent is invalid: " + ex.getMessage().str());
   }
 }
 
-void RdbmsTapeFileCatalogue::checkTapeFileWrittenFieldsAreSet(const std::string &callingFunc,
-  const TapeFileWritten &event)
+void RdbmsTapeFileCatalogue::checkTapeFileWrittenFieldsAreSet(const TapeFileWritten &event)
   const {
   try {
     if(event.diskInstance.empty()) throw exception::Exception("diskInstance is an empty string");
@@ -102,7 +100,7 @@ void RdbmsTapeFileCatalogue::checkTapeFileWrittenFieldsAreSet(const std::string 
     if(0 == event.copyNb) throw exception::Exception("copyNb is 0");
     if(event.tapeDrive.empty()) throw exception::Exception("tapeDrive is an empty string");
   } catch (exception::Exception &ex) {
-    throw exception::Exception(callingFunc + " failed: TapeFileWrittenEvent is invalid: " + ex.getMessage().str());
+    throw exception::Exception("TapeFileWrittenEvent is invalid: " + ex.getMessage().str());
   }
 }
 

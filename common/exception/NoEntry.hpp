@@ -20,25 +20,19 @@
 // Include Files
 #include "common/exception/Exception.hpp"
 
-namespace cta {
+namespace cta::exception {
 
-  namespace exception {
-
-    /**
-     * Invalid argument exception
-     */
-    class NoEntry : public cta::exception::Exception {
-      
-    public:
-      
-      /**
+/**
+ * Invalid argument exception
+ */
+class NoEntry : public cta::exception::Exception {
+public:
+  /**
        * default constructor
        */
-      NoEntry();
+  NoEntry()
+      :  // No backtrace for this exception
+        cta::exception::Exception("", false) {}
+};
 
-    };
-      
-  } // end of namespace exception
-
-} // end of namespace cta
-
+}  // namespace cta::exception

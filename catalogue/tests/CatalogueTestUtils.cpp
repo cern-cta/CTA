@@ -56,21 +56,16 @@ namespace unitTests {
 
 std::unique_ptr<cta::catalogue::Catalogue> CatalogueTestUtils::createCatalogue(
   cta::catalogue::CatalogueFactory *const *const catalogueFactoryPtrPtr, cta::log::LogContext *lc) {
-  try {
-    if (nullptr == catalogueFactoryPtrPtr) {
-      throw cta::exception::Exception("Global pointer to the catalogue factory pointer for unit-tests in null");
-    }
-    if (nullptr == (*catalogueFactoryPtrPtr)) {
-      throw cta::exception::Exception("Global pointer to the catalogue factoryfor unit-tests in null");
-    }
-
-    auto catalogue = (*catalogueFactoryPtrPtr)->create();
-    CatalogueTestUtils::wipeDatabase(catalogue.get(), lc);
-    return catalogue;
-  } catch(cta::exception::Exception &ex) {
-    ex.getMessage().str(std::string(__FUNCTION__) + " failed: " + ex.getMessage().str());
-    throw;
+  if (nullptr == catalogueFactoryPtrPtr) {
+    throw cta::exception::Exception("Global pointer to the catalogue factory pointer for unit-tests in null");
   }
+  if (nullptr == (*catalogueFactoryPtrPtr)) {
+    throw cta::exception::Exception("Global pointer to the catalogue factoryfor unit-tests in null");
+  }
+
+  auto catalogue = (*catalogueFactoryPtrPtr)->create();
+  CatalogueTestUtils::wipeDatabase(catalogue.get(), lc);
+  return catalogue;
 }
 
 void CatalogueTestUtils::wipeDatabase(cta::catalogue::Catalogue *catalogue, cta::log::LogContext *lc) {
@@ -441,104 +436,84 @@ std::map<std::string, cta::catalogue::TapePool> CatalogueTestUtils::tapePoolList
   const std::list<cta::catalogue::TapePool> &listOfTapePools) {
   using namespace cta;
 
-  try {
-    std::map<std::string, cta::catalogue::TapePool> m;
+  std::map<std::string, cta::catalogue::TapePool> m;
 
-    for(auto &tapePool: listOfTapePools) {
-      if (m.contains(tapePool.name)) {
-        exception::Exception ex;
-        ex.getMessage() << "Tape pool " << tapePool.name << " is a duplicate";
-        throw ex;
-      }
-      m[tapePool.name] = tapePool;
+  for(auto &tapePool: listOfTapePools) {
+    if (m.contains(tapePool.name)) {
+      exception::Exception ex;
+      ex.getMessage() << "Tape pool " << tapePool.name << " is a duplicate";
+      throw ex;
     }
-
-    return m;
-  } catch(exception::Exception &ex) {
-    throw exception::Exception(std::string(__FUNCTION__) + " failed: " + ex.getMessage().str());
+    m[tapePool.name] = tapePool;
   }
+
+  return m;
 }
 
 std::map<std::string, cta::common::dataStructures::Tape> CatalogueTestUtils::tapeListToMap(
   const std::list<cta::common::dataStructures::Tape> &listOfTapes) {
   using namespace cta;
 
-  try {
-    std::map<std::string, cta::common::dataStructures::Tape> vidToTape;
+  std::map<std::string, cta::common::dataStructures::Tape> vidToTape;
 
-    for (auto &tape: listOfTapes) {
-      if (vidToTape.contains(tape.vid)) {
-        throw exception::Exception(std::string("Duplicate VID: value=") + tape.vid);
-      }
-      vidToTape[tape.vid] = tape;
+  for (auto &tape: listOfTapes) {
+    if (vidToTape.contains(tape.vid)) {
+      throw exception::Exception(std::string("Duplicate VID: value=") + tape.vid);
     }
-
-    return vidToTape;
-  } catch(exception::Exception &ex) {
-    throw exception::Exception(std::string(__FUNCTION__) + " failed: " + ex.getMessage().str());
+    vidToTape[tape.vid] = tape;
   }
+
+  return vidToTape;
 }
 
 std::map<uint64_t, cta::common::dataStructures::ArchiveFile> CatalogueTestUtils::archiveFileItorToMap(
   cta::catalogue::ArchiveFileItor &itor) {
   using namespace cta;
 
-  try {
-    std::map<uint64_t, common::dataStructures::ArchiveFile> m;
-    while(itor.hasMore()) {
-      const auto archiveFile = itor.next();
-      if (m.contains(archiveFile.archiveFileID)) {
-        exception::Exception ex;
-        ex.getMessage() << "Archive file with ID " << archiveFile.archiveFileID << " is a duplicate";
-        throw ex;
-      }
-      m[archiveFile.archiveFileID] = archiveFile;
+  std::map<uint64_t, common::dataStructures::ArchiveFile> m;
+  while(itor.hasMore()) {
+    const auto archiveFile = itor.next();
+    if (m.contains(archiveFile.archiveFileID)) {
+      exception::Exception ex;
+      ex.getMessage() << "Archive file with ID " << archiveFile.archiveFileID << " is a duplicate";
+      throw ex;
     }
-    return m;
-  } catch(exception::Exception &ex) {
-    throw exception::Exception(std::string(__FUNCTION__) + " failed: " + ex.getMessage().str());
+    m[archiveFile.archiveFileID] = archiveFile;
   }
+  return m;
 }
 
 std::map<uint64_t, cta::common::dataStructures::ArchiveFile> CatalogueTestUtils::archiveFileListToMap(
   const std::list<cta::common::dataStructures::ArchiveFile> &listOfArchiveFiles) {
   using namespace cta;
 
-  try {
-    std::map<uint64_t, common::dataStructures::ArchiveFile> archiveIdToArchiveFile;
+  std::map<uint64_t, common::dataStructures::ArchiveFile> archiveIdToArchiveFile;
 
-    for (auto &archiveFile: listOfArchiveFiles) {
-      if (archiveIdToArchiveFile.contains(archiveFile.archiveFileID)) {
-        throw exception::Exception(std::string("Duplicate archive file ID: value=") + std::to_string(archiveFile.archiveFileID));
-      }
-      archiveIdToArchiveFile[archiveFile.archiveFileID] = archiveFile;
+  for (auto &archiveFile: listOfArchiveFiles) {
+    if (archiveIdToArchiveFile.contains(archiveFile.archiveFileID)) {
+      throw exception::Exception(std::string("Duplicate archive file ID: value=") + std::to_string(archiveFile.archiveFileID));
     }
-
-    return archiveIdToArchiveFile;
-  } catch(exception::Exception &ex) {
-    throw exception::Exception(std::string(__FUNCTION__) + " failed: " + ex.getMessage().str());
+    archiveIdToArchiveFile[archiveFile.archiveFileID] = archiveFile;
   }
+
+  return archiveIdToArchiveFile;
 }
 
 std::map<std::string, cta::common::dataStructures::AdminUser> CatalogueTestUtils::adminUserListToMap(
   const std::list<cta::common::dataStructures::AdminUser> &listOfAdminUsers) {
   using namespace cta;
 
-  try {
-    std::map<std::string, common::dataStructures::AdminUser> m;
+  std::map<std::string, common::dataStructures::AdminUser> m;
 
-    for(auto &adminUser: listOfAdminUsers) {
-      if (m.contains(adminUser.name)) {
-        exception::Exception ex;
-        ex.getMessage() << "Admin user " << adminUser.name << " is a duplicate";
-        throw ex;
-      }
-      m[adminUser.name] = adminUser;
+  for(auto &adminUser: listOfAdminUsers) {
+    if (m.contains(adminUser.name)) {
+      exception::Exception ex;
+      ex.getMessage() << "Admin user " << adminUser.name << " is a duplicate";
+      throw ex;
     }
-    return m;
-  } catch(exception::Exception &ex) {
-    throw exception::Exception(std::string(__FUNCTION__) + " failed: " + ex.getMessage().str());
+    m[adminUser.name] = adminUser;
   }
+  return m;
 }
 
 }  // namespace unitTests

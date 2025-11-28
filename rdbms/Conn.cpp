@@ -85,7 +85,7 @@ void Conn::setAutocommitMode(const AutocommitMode autocommitMode) {
   if(nullptr != m_connAndStmts && nullptr != m_connAndStmts->conn) {
     m_connAndStmts->conn->setAutocommitMode(autocommitMode);
   } else {
-    throw exception::Exception(std::string(__FUNCTION__) + " failed: Conn does not contain a connection");
+    throw exception::Exception("Conn does not contain a connection");
   }
 }
 
@@ -96,7 +96,7 @@ AutocommitMode Conn::getAutocommitMode() const {
   if(nullptr != m_connAndStmts && nullptr != m_connAndStmts->conn) {
     return m_connAndStmts->conn->getAutocommitMode();
   } else {
-    throw exception::Exception(std::string(__FUNCTION__) + " failed: Conn does not contain a connection");
+    throw exception::Exception("Conn does not contain a connection");
   }
 }
 
@@ -107,7 +107,7 @@ Stmt Conn::createStmt(const std::string &sql) {
   if(nullptr != m_connAndStmts && nullptr != m_connAndStmts->conn) {
     return m_connAndStmts->stmtPool->getStmt(*m_connAndStmts->conn, sql);
   } else {
-    throw exception::Exception(std::string(__FUNCTION__) + " failed: Conn does not contain a connection");
+    throw exception::Exception("Conn does not contain a connection");
   }
 }
 
@@ -123,7 +123,7 @@ void Conn::executeNonQuery(const std::string &sql) {
 //  }
     m_connAndStmts->conn->executeNonQuery(sql);
   } else {
-    throw exception::Exception(std::string(__FUNCTION__) + " failed: Conn does not contain a connection");
+    throw exception::Exception("Conn does not contain a connection");
   }
 }
 
@@ -134,7 +134,7 @@ void Conn::commit() {
   if(nullptr != m_connAndStmts && nullptr != m_connAndStmts->conn) {
     m_connAndStmts->conn->commit();
   } else {
-    throw exception::Exception(std::string(__FUNCTION__) + " failed: Conn does not contain a connection");
+    throw exception::Exception("Conn does not contain a connection");
   }
 }
 
@@ -145,9 +145,9 @@ void Conn::rollback() {
   if(nullptr != m_connAndStmts && nullptr != m_connAndStmts->conn) {
     m_connAndStmts->conn->rollback();
   } else {
-    throw exception::Exception(std::string(__FUNCTION__) + " failed: Conn does not contain a connection");
+    throw exception::Exception("Conn does not contain a connection");
   }
-} 
+}
 
 //------------------------------------------------------------------------------
 // getSchemaColumns
@@ -156,10 +156,10 @@ std::map<std::string, std::string, std::less<>> Conn::getColumns(const std::stri
   if(nullptr != m_connAndStmts && nullptr != m_connAndStmts->conn) {
     return m_connAndStmts->conn->getColumns(tableName);
   } else {
-    throw exception::Exception(std::string(__FUNCTION__) + " failed: Conn does not contain a connection");
+    throw exception::Exception("Conn does not contain a connection");
   }
 }
-  
+
 //------------------------------------------------------------------------------
 // getTableNames
 //------------------------------------------------------------------------------
@@ -167,7 +167,7 @@ std::list<std::string> Conn::getTableNames() const {
   if(nullptr != m_connAndStmts && nullptr != m_connAndStmts->conn) {
     return m_connAndStmts->conn->getTableNames();
   } else {
-    throw exception::Exception(std::string(__FUNCTION__) + " failed: Conn does not contain a connection");
+    throw exception::Exception("Conn does not contain a connection");
   }
 }
 
@@ -178,7 +178,7 @@ std::list<std::string> Conn::getIndexNames() const {
   if(nullptr != m_connAndStmts && nullptr != m_connAndStmts->conn) {
     return m_connAndStmts->conn->getIndexNames();
   } else {
-    throw exception::Exception(std::string(__FUNCTION__) + " failed: Conn does not contain a connection");
+    throw exception::Exception("Conn does not contain a connection");
   }
 }
 
@@ -190,7 +190,7 @@ void Conn::closeUnderlyingStmtsAndConn() {
     m_connAndStmts->stmtPool->clear();
     m_connAndStmts->conn->close();
   } else {
-    throw exception::Exception(std::string(__FUNCTION__) + " failed: Conn does not contain a connection");
+    throw exception::Exception("Conn does not contain a connection");
   }
 }
 
@@ -201,7 +201,7 @@ bool Conn::isOpen() const {
   if(nullptr != m_connAndStmts && nullptr != m_connAndStmts->conn) {
     return m_connAndStmts->conn->isOpen();
   } else {
-    throw exception::Exception(std::string(__FUNCTION__) + " failed: Conn does not contain a connection");
+    throw exception::Exception("Conn does not contain a connection");
   }
 }
 
@@ -212,7 +212,7 @@ std::list<std::string> Conn::getSequenceNames() {
   if(nullptr != m_connAndStmts && nullptr != m_connAndStmts->conn) {
     return m_connAndStmts->conn->getSequenceNames();
   } else {
-    throw exception::Exception(std::string(__FUNCTION__) + " failed: Conn does not contain a connection");
+    throw exception::Exception("Conn does not contain a connection");
   }
 }
 
@@ -223,7 +223,7 @@ std::list<std::string> Conn::getTriggerNames() {
   if(nullptr != m_connAndStmts && nullptr != m_connAndStmts->conn) {
     return m_connAndStmts->conn->getTriggerNames();
   } else {
-    throw exception::Exception(std::string(__FUNCTION__) + " failed: Conn does not contain a connection");
+    throw exception::Exception("Conn does not contain a connection");
   }
 }
 
@@ -234,7 +234,7 @@ std::list<std::string> Conn::getParallelTableNames(){
   if(nullptr != m_connAndStmts && nullptr != m_connAndStmts->conn) {
     return m_connAndStmts->conn->getParallelTableNames();
   } else {
-    throw exception::Exception(std::string(__FUNCTION__) + " failed: Conn does not contain a connection");
+    throw exception::Exception("Conn does not contain a connection");
   }
 }
 
@@ -245,7 +245,7 @@ std::list<std::string> Conn::getConstraintNames(const std::string &tableName) {
   if(nullptr != m_connAndStmts && nullptr != m_connAndStmts->conn) {
     return m_connAndStmts->conn->getConstraintNames(tableName);
   } else {
-    throw exception::Exception(std::string(__FUNCTION__) + " failed: Conn does not contain a connection");
+    throw exception::Exception("Conn does not contain a connection");
   }
 }
 
@@ -256,7 +256,7 @@ std::list<std::string> Conn::getStoredProcedureNames(){
   if(nullptr != m_connAndStmts && nullptr != m_connAndStmts->conn) {
     return m_connAndStmts->conn->getStoredProcedureNames();
   } else {
-    throw exception::Exception(std::string(__FUNCTION__) + " failed: Conn does not contain a connection");
+    throw exception::Exception("Conn does not contain a connection");
   }
 }
 
@@ -267,7 +267,7 @@ std::list<std::string> Conn::getSynonymNames(){
   if(nullptr != m_connAndStmts && nullptr != m_connAndStmts->conn) {
     return m_connAndStmts->conn->getSynonymNames();
   } else {
-    throw exception::Exception(std::string(__FUNCTION__) + " failed: Conn does not contain a connection");
+    throw exception::Exception("Conn does not contain a connection");
   }
 }
 
@@ -278,7 +278,7 @@ std::list<std::string> Conn::getTypeNames() {
   if(nullptr != m_connAndStmts && nullptr != m_connAndStmts->conn) {
     return m_connAndStmts->conn->getTypeNames();
   } else {
-    throw exception::Exception(std::string(__FUNCTION__) + " failed: Conn does not contain a connection");
+    throw exception::Exception("Conn does not contain a connection");
   }
 }
 
@@ -289,7 +289,7 @@ std::list<std::string> Conn::getViewNames() {
   if(nullptr != m_connAndStmts && nullptr != m_connAndStmts->conn) {
     return m_connAndStmts->conn->getViewNames();
   } else {
-    throw exception::Exception(std::string(__FUNCTION__) + " failed: Conn does not contain a connection");
+    throw exception::Exception("Conn does not contain a connection");
   }
 }
 

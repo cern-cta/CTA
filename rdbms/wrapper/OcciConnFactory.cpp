@@ -32,11 +32,7 @@ OcciConnFactory::OcciConnFactory(const rdbms::Login& login) : m_login(login) {}
 // create
 //------------------------------------------------------------------------------
 std::unique_ptr<ConnWrapper> OcciConnFactory::create() {
-  try {
-    return OcciEnvSingleton::instance().createConn(m_login);
-  } catch(exception::Exception &ex) {
-    throw exception::Exception(std::string(__FUNCTION__) + " failed: " + ex.getMessage().str());
-  }
+  return OcciEnvSingleton::instance().createConn(m_login);
 }
 
 //------------------------------------------------------------------------------

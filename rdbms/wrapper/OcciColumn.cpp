@@ -31,8 +31,7 @@ OcciColumn::OcciColumn(const std::string &colName, const size_t nbRows):
   ub2 *fieldLengths = m_fieldLengths.get();
   if (nullptr == fieldLengths) {
     exception::Exception ex;
-    ex.getMessage() << __FUNCTION__ << " failed: colName=" << m_colName << ": Failed to allocate array of field"
-      " lengths for database column: nbRows=" << nbRows;
+    ex.getMessage() << "Failed to allocate array of field lengths for database column: colName=" << m_colName << " nbRows=" << nbRows;
     throw ex;
   }
   for(size_t i = 0; i < m_nbRows; i++) {
@@ -58,26 +57,21 @@ size_t OcciColumn::getNbRows() const {
 // setFieldLen
 //------------------------------------------------------------------------------
 void OcciColumn::setFieldLen(const size_t index, const ub2 length) {
-  try {
-    if (nullptr != m_buffer.get()) {
-      exception::Exception ex;
-      ex.getMessage() << "Failed to set length at index " << index << " to value " << length << ": "
-        "A field length cannot be set after the column buffer has been allocated";
-      throw ex;
-    }
-    if (index > m_nbRows - 1) {
-      exception::Exception ex;
-      ex.getMessage() << "Failed to set length at index " << index << " to value " << length << ": "
-        "Index is greater than permitted maximum of " << (m_nbRows - 1);
-      throw ex;
-    }
-    m_fieldLengths[index] = length;
-    if (length > m_maxFieldLength) {
-      m_maxFieldLength = length;
-    }
-  } catch(exception::Exception &ex) {
-    throw exception::Exception(std::string(__FUNCTION__) + " failed: colName=" + m_colName + ": " +
-      ex.getMessage().str());
+  if (nullptr != m_buffer.get()) {
+    exception::Exception ex;
+    ex.getMessage() << "Failed to set length at index " << index << " to value " << length << ": "
+      "A field length cannot be set after the column buffer has been allocated" << " colName=" << m_colName;
+    throw ex;
+  }
+  if (index > m_nbRows - 1) {
+    exception::Exception ex;
+    ex.getMessage() << "Failed to set length at index " << index << " to value " << length << ": "
+      "Index is greater than permitted maximum of " << (m_nbRows - 1) << " colName=" << m_colName;
+    throw ex;
+  }
+  m_fieldLengths[index] = length;
+  if (length > m_maxFieldLength) {
+    m_maxFieldLength = length;
   }
 }
 
@@ -92,30 +86,25 @@ ub2 *OcciColumn::getFieldLengths() {
 // getBuffer
 //------------------------------------------------------------------------------
 char *OcciColumn::getBuffer() {
-  try {
-    if (nullptr == m_buffer.get()) {
-      const size_t bufSize = m_nbRows * m_maxFieldLength;
+  if (nullptr == m_buffer.get()) {
+    const size_t bufSize = m_nbRows * m_maxFieldLength;
 
-      if (0 == bufSize) {
-        exception::Exception ex;
-        ex.getMessage() << __FUNCTION__ << " failed: Failed to allocate buffer for database column:"
-          " The size of the buffer to be allocated is zero which is invalid";
-        throw ex;
-      }
-
-      m_buffer.reset(new char[bufSize]);
-      if (nullptr == m_buffer.get()) {
-          exception::Exception ex;
-        ex.getMessage() << __FUNCTION__ << " failed: Failed to allocate buffer for database column:"
-          " bufSize=" << bufSize;
-        throw ex;
-      }
+    if (0 == bufSize) {
+      exception::Exception ex;
+      ex.getMessage() << "Failed to allocate buffer for database column:"
+        " The size of the buffer to be allocated is zero which is invalid" << " colName=" << m_colName;
+      throw ex;
     }
-    return m_buffer.get();
-  } catch(exception::Exception &ex) {
-    throw exception::Exception(std::string(__FUNCTION__) + " failed: colName=" + m_colName + ": " +
-      ex.getMessage().str());
+
+    m_buffer.reset(new char[bufSize]);
+    if (nullptr == m_buffer.get()) {
+        exception::Exception ex;
+      ex.getMessage() << "Failed to allocate buffer for database column:"
+        " bufSize=" << bufSize << " colName=" << m_colName;
+      throw ex;
+    }
   }
+  return m_buffer.get();
 }
 
 //------------------------------------------------------------------------------
@@ -129,20 +118,16 @@ ub2 OcciColumn::getMaxFieldLength() const {
 // copyStrIntoField
 //------------------------------------------------------------------------------
 void OcciColumn::copyStrIntoField(const size_t index, const std::string& str) {
-  try {
-    char* const buf = getBuffer();
-    char* const element = buf + index * m_maxFieldLength;
+  char* const buf = getBuffer();
+  char* const element = buf + index * m_maxFieldLength;
 
-    element[m_maxFieldLength-1] = '\0';
-    strncpy(element, str.c_str(), m_maxFieldLength);
-    if(element[m_maxFieldLength-1] != '\0') {
-      exception::Exception ex;
-      ex.getMessage() << "String length including the null terminator is greater than the maximum field length: strLenIncludingNull="
-                      << str.length()+1 << " maxFieldLength=" << m_maxFieldLength;
-      throw ex;
-    }
-  } catch(exception::Exception& ex) {
-    throw exception::Exception(std::string(__FUNCTION__) + " failed: colName=" + m_colName + ": " + ex.getMessage().str());
+  element[m_maxFieldLength-1] = '\0';
+  strncpy(element, str.c_str(), m_maxFieldLength);
+  if(element[m_maxFieldLength-1] != '\0') {
+    exception::Exception ex;
+    ex.getMessage() << "String length including the null terminator is greater than the maximum field length: strLenIncludingNull="
+                    << str.length()+1 << " maxFieldLength=" << m_maxFieldLength << " colName=" << m_colName;
+    throw ex;
   }
 }
 
@@ -150,20 +135,16 @@ void OcciColumn::copyStrIntoField(const size_t index, const std::string& str) {
 // setFieldValueToRaw
 //------------------------------------------------------------------------------
 void OcciColumn::setFieldValueToRaw(size_t index, const std::string &blob) {
-  try {
     size_t maxlen = m_maxFieldLength < 2000 ? m_maxFieldLength : 2000;
     if(blob.length() + 2 > maxlen) {
       throw exception::Exception("Blob length=" + std::to_string(blob.length()) +
-        " exceeds maximum field length (" + std::to_string(maxlen-2) + ") bytes)");
+        " exceeds maximum field length (" + std::to_string(maxlen-2) + ") bytes" + " colName=" + m_colName);
     }
     uint16_t len = blob.length();
     char *const buf = getBuffer();
     char *const element = buf + index * m_maxFieldLength;
     memcpy(element, &len, 2);
     memcpy(element + 2, blob.c_str(), len);
-  } catch(exception::Exception &ex) {
-    throw exception::Exception(std::string(__FUNCTION__) + " failed: colName=" + m_colName + ": " + ex.getMessage().str());
-  }
 }
 
 } // namespace cta::rdbms::wrapper

@@ -31,8 +31,7 @@ public:
   /**
    * Constructor
    */
-  explicit NoSupportedDB(const std::string& what = "");
+  explicit NoSupportedDB(const std::string& what = "") : Exception(what) {}
 };  // class NoSupportedDB
 
-} // namespace cta::exception
-
+}  // namespace cta::exception

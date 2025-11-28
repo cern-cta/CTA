@@ -1,4 +1,3 @@
-
 /*
  * @project      The CERN Tape Archive (CTA)
  * @copyright    Copyright © 2021-2022 CERN
@@ -16,12 +15,22 @@
  *               submit itself to any jurisdiction.
  */
 
-#include "Mismatch.hpp"
+#pragma once
 
+// Include Files
+#include "common/exception/Exception.hpp"
 
-// -----------------------------------------------------------------------------
-// Constructor
-// -----------------------------------------------------------------------------
-cta::exception::Mismatch::Mismatch():
-  cta::exception::Exception() {
-}
+namespace cta::exception {
+
+/**
+ * Not implemented pointer exception
+ */
+class NotImplementedException : public cta::exception::Exception {
+public:
+  /**
+   * default constructor
+   */
+  NotImplementedException(const std::string& what = "") : cta::exception::Exception() {}
+};
+
+}  // namespace cta::exception

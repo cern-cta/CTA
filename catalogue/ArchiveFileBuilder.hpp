@@ -121,10 +121,7 @@ std::unique_ptr<T> ArchiveFileBuilder<T>::append(
 
     // If the tape file exists then it must be alone
     if(tapeFile.tapeFiles.size() != 1) {
-      exception::Exception ex;
-      ex.getMessage() << __FUNCTION__ << " failed: Expected exactly one tape file to be appended at a time: actual=" <<
-        tapeFile.tapeFiles.size();
-      throw ex;
+      throw exception::Exception("Expected exactly one tape file to be appended at a time: actual=" + std::to_string(tapeFile.tapeFiles.size()));
     }
 
     // Start constructing one
@@ -150,10 +147,8 @@ std::unique_ptr<T> ArchiveFileBuilder<T>::append(
 
     // The tape file must exist and must be alone
     if(tapeFile.tapeFiles.size() != 1) {
-      exception::Exception ex;
-      ex.getMessage() << __FUNCTION__ << " failed: Expected exactly one tape file to be appended at a time: actual=" <<
-        tapeFile.tapeFiles.size() << " archiveFileID=" << tapeFile.archiveFileID;
-      throw ex;
+      throw exception::Exception("Expected exactly one tape file to be appended at a time: actual=" +
+                                 std::to_string(tapeFile.tapeFiles.size()) + " archiveFileID=" + std::to_string(tapeFile.archiveFileID));
     }
 
     // Append the tape file

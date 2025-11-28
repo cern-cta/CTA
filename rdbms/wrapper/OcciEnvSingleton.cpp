@@ -35,18 +35,12 @@ std::unique_ptr<OcciEnvSingleton> OcciEnvSingleton::s_instance;
 // instance
 //------------------------------------------------------------------------------
 OcciEnvSingleton &OcciEnvSingleton::instance() {
-  try {
-    threading::MutexLocker locker(s_mutex);
+  threading::MutexLocker locker(s_mutex);
 
-    if(nullptr == s_instance.get()) {
-      s_instance.reset(new OcciEnvSingleton());
-    }
-    return *s_instance;
-  } catch(exception::Exception &ex) {
-    throw exception::Exception(std::string(__FUNCTION__) + " failed: " + ex.getMessage().str());
-  } catch(std::exception &se) {
-    throw exception::Exception(std::string(__FUNCTION__) + " failed: " + se.what());
+  if(nullptr == s_instance.get()) {
+    s_instance.reset(new OcciEnvSingleton());
   }
+  return *s_instance;
 }
 
 } // namespace cta::rdbms::wrapper

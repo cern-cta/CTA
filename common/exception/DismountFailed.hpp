@@ -21,18 +21,16 @@
 
 namespace cta::exception {
 
-    /**
-     * Failed to dismount volume.
-     */
-    class DismountFailed : public cta::exception::Exception {
-      
-    public:
-      
-      /**
-       * Constructor
-       */
-      DismountFailed();
+/**
+ * Failed to dismount volume.
+ */
+class DismountFailed : public cta::exception::Exception {
+public:
+  /**
+   * Constructor
+   */
+  DismountFailed() : cta::exception::Exception() {}
 
-    }; // class DismountFailed
+};  // class DismountFailed
 
-} // namespace cta::exception
+}  // namespace cta::exception

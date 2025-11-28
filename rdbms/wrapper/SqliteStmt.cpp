@@ -16,6 +16,7 @@
  */
 
 #include "common/exception/Exception.hpp"
+#include "common/exception/NullPtrException.hpp"
 #include "common/threading/MutexLocker.hpp"
 #include "common/semconv/Attributes.hpp"
 #include "rdbms/CheckConstraintError.hpp"
@@ -68,14 +69,14 @@ SqliteStmt::SqliteStmt(
         // Try to prepare the statement again
         continue;
       } else {
-        throw exception::Exception(std::string(__FUNCTION__) + " failed for SQL statement " + getSqlForException() +
+        throw exception::Exception("Failed for SQL statement " + getSqlForException() +
           ": sqlite3_prepare_v2 returned SQLITE_LOCKED the maximum number of " + std::to_string(i) + " times");
       }
     }
 
     const std::string msg = sqlite3_errmsg(m_conn.m_sqliteConn);
     sqlite3_finalize(m_stmt);
-    throw exception::Exception(std::string(__FUNCTION__) + " failed for SQL statement " + getSqlForException() +
+    throw exception::Exception("Failed for SQL statement " + getSqlForException() +
       ": sqlite3_prepare_v2 failed: " + msg);
   }
 }
@@ -111,7 +112,7 @@ void SqliteStmt::clear() {
       }
     }
   } catch(exception::Exception &ex) {
-    throw exception::Exception(std::string(__FUNCTION__) + " failed: " + ex.getMessage().str());
+    throw exception::Exception("Failed: " + ex.getMessage().str());
   }
 }
 
@@ -131,7 +132,7 @@ void SqliteStmt::close() {
       m_stmt = nullptr;
     }
   } catch(exception::Exception &ex) {
-    throw exception::Exception(std::string(__FUNCTION__) + " failed: " + ex.getMessage().str());
+    throw exception::Exception("Failed: " + ex.getMessage().str());
   }
 }
 
@@ -140,8 +141,7 @@ void SqliteStmt::close() {
 //------------------------------------------------------------------------------
 sqlite3_stmt *SqliteStmt::get() const {
   if(nullptr == m_stmt) {
-    throw exception::Exception(std::string(__FUNCTION__) + " failed for SQL statement " +
-      getSqlForException() + ": nullptr pointer");
+    throw exception::NullPtrException("Failed for SQL statement " + getSqlForException());
   }
   return m_stmt;
 }
@@ -162,7 +162,7 @@ void SqliteStmt::bindUint8(const std::string &paramName, const std::optional<uin
       throw exception::Exception(Sqlite::rcToStr(bindRc));
     }
   } catch(exception::Exception &ex) {
-    throw exception::Exception(std::string(__FUNCTION__) + " failed for SQL statement " +
+    throw exception::Exception("Failed for SQL statement " +
                                getSqlForException() + ": " + ex.getMessage().str());
   }
 }
@@ -183,7 +183,7 @@ void SqliteStmt::bindUint16(const std::string &paramName, const std::optional<ui
       throw exception::Exception(Sqlite::rcToStr(bindRc));
     }
   } catch(exception::Exception &ex) {
-    throw exception::Exception(std::string(__FUNCTION__) + " failed for SQL statement " +
+    throw exception::Exception("Failed for SQL statement " +
                                getSqlForException() + ": " + ex.getMessage().str());
   }
 }
@@ -204,7 +204,7 @@ void SqliteStmt::bindUint32(const std::string &paramName, const std::optional<ui
       throw exception::Exception(Sqlite::rcToStr(bindRc));
     }
   } catch(exception::Exception &ex) {
-    throw exception::Exception(std::string(__FUNCTION__) + " failed for SQL statement " +
+    throw exception::Exception("Failed for SQL statement " +
                                getSqlForException() + ": " + ex.getMessage().str());
   }
 }
@@ -225,7 +225,7 @@ void SqliteStmt::bindUint64(const std::string &paramName, const std::optional<ui
       throw exception::Exception(Sqlite::rcToStr(bindRc));
     }
   } catch(exception::Exception &ex) {
-    throw exception::Exception(std::string(__FUNCTION__) + " failed for SQL statement " +
+    throw exception::Exception("Failed for SQL statement " +
       getSqlForException() + ": " + ex.getMessage().str());
   }
 }
@@ -246,7 +246,7 @@ void SqliteStmt::bindDouble(const std::string &paramName, const std::optional<do
       throw exception::Exception(Sqlite::rcToStr(bindRc));
     }
   } catch(exception::Exception &ex) {
-    throw exception::Exception(std::string(__FUNCTION__) + " failed for SQL statement " +
+    throw exception::Exception("Failed for SQL statement " +
       getSqlForException() + ": " + ex.getMessage().str());
   }
 }
@@ -264,7 +264,7 @@ void SqliteStmt::bindBlob(const std::string &paramName, const std::string &param
       throw ex;
     }
   } catch(exception::Exception &ex) {
-    throw exception::Exception(std::string(__FUNCTION__) + " failed for SQL statement " +
+    throw exception::Exception("Failed for SQL statement " +
       getSqlForException() + ": " + ex.getMessage().str());
   }
 }
@@ -289,7 +289,7 @@ void SqliteStmt::bindString(const std::string &paramName, const std::optional<st
       throw exception::Exception(Sqlite::rcToStr(bindRc));
     }
   } catch(exception::Exception &ex) {
-    throw exception::Exception(std::string(__FUNCTION__) + " failed for SQL statement " +
+    throw exception::Exception("Failed for SQL statement " +
       getSqlForException() + ": " + ex.getMessage().str());
   }
 }
@@ -314,7 +314,7 @@ void SqliteStmt::executeNonQuery() {
   // Throw an exception if the call to sqlite3_step() failed
   if(SQLITE_DONE != stepRc && SQLITE_ROW != stepRc) {
     std::ostringstream msg;
-    msg << __FUNCTION__ << " failed for SQL statement " << getSqlForException() + ": " << Sqlite::rcToStr(stepRc);
+    msg << "Failed for SQL statement " << getSqlForException() + ": " << Sqlite::rcToStr(stepRc);
 
     switch(stepRc) {
     case SQLITE_CONSTRAINT:
@@ -337,7 +337,7 @@ void SqliteStmt::executeNonQuery() {
 
   // Throw an exception if the SQL statement returned a result set
   if(SQLITE_ROW == stepRc) {
-    throw exception::Exception(std::string(__FUNCTION__) + " failed for SQL statement " +
+    throw exception::Exception("Failed for SQL statement " +
       getSqlForException() + ": The SQL statment returned a result set");
   }
 }

@@ -88,8 +88,7 @@ bool cta::RemotePath::empty() const {
 //------------------------------------------------------------------------------
 const std::string &cta::RemotePath::getRaw() const {
   if(empty()) {
-    throw exception::Exception(std::string(__FUNCTION__) +
-      ": Empty remote path");
+    throw exception::Exception("Empty remote path");
   }
 
   return m_raw;
@@ -100,8 +99,7 @@ const std::string &cta::RemotePath::getRaw() const {
 //------------------------------------------------------------------------------
 const std::string &cta::RemotePath::getScheme() const {
   if(empty()) {
-    throw exception::Exception(std::string(__FUNCTION__) +
-      ": Empty remote path");
+    throw exception::Exception("Empty remote path");
   }
 
   return m_scheme;
@@ -112,8 +110,7 @@ const std::string &cta::RemotePath::getScheme() const {
 //------------------------------------------------------------------------------
 const std::string &cta::RemotePath::getAfterScheme() const {
   if(empty()) {
-    throw exception::Exception(std::string(__FUNCTION__) +
-      ": Empty remote path");
+    throw exception::Exception("Empty remote path");
   }
 
   return m_afterScheme;

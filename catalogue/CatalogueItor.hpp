@@ -20,7 +20,7 @@
 #include <memory>
 
 #include "catalogue/CatalogueItorImpl.hpp"
-#include "common/exception/Exception.hpp"
+#include "common/exception/NullPtrException.hpp"
 
 namespace cta::catalogue {
 
@@ -49,7 +49,7 @@ public:
    */
   explicit CatalogueItor(Impl *const impl) : m_impl(impl) {
     if (nullptr == impl) {
-      throw exception::Exception(std::string(__FUNCTION__) + " failed: Pointer to implementation object is null");
+      throw exception::NullPtrException();
     }
   }
 
@@ -77,7 +77,7 @@ public:
    */
   bool hasMore() const {
     if(nullptr == m_impl) {
-      throw exception::Exception(std::string(__FUNCTION__) + " failed: This iterator is invalid");
+      throw exception::NullPtrException();
     }
     return m_impl->hasMore();
   }
@@ -87,7 +87,7 @@ public:
    */
   Item next() {
     if(nullptr == m_impl) {
-      throw exception::Exception(std::string(__FUNCTION__) + " failed: This iterator is invalid");
+      throw exception::NullPtrException();
     }
     return m_impl->next();
   }
