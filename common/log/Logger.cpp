@@ -276,7 +276,7 @@ std::string Logger::createMsgBody(std::string_view logLevel, std::string_view ms
            << "\"" << stringFormattingJSON(param.getName()) << "\":";
         if (param.getValueVariant().has_value()) {
           std::visit(
-            [&os](auto&& arg) {
+            [&os](const auto& arg) {
               using T = std::decay_t<decltype(arg)>;
               if constexpr (std::is_same_v<T, bool>) {
                 os << (arg ? "true" : "false");

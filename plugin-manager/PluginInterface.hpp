@@ -60,16 +60,16 @@ public:
   template<typename TYPE>
   Interface& CLASS(const std::string& strClassName) {
     static_assert(std::is_base_of<BASE_TYPE, TYPE>::value, "Plugin type not supported.");
-       
-    m_umapFactories.emplace(strClassName, [](const std::variant<IARGS...>& varaintPluginArgs) -> std::unique_ptr<TYPE> {
+
+    m_umapFactories.emplace(strClassName, [](const std::variant<IARGS...>& variantPluginArgs) -> std::unique_ptr<TYPE> {
       try {
         std::unique_ptr<TYPE> upType = std::visit([](auto&& tuplePluginArgs) ->
           std::unique_ptr<TYPE> {
-          // unpack parameter pack (IARGS...) 
+          // unpack parameter pack (IARGS...)
           return std::apply([](auto&&... unpackedPluginArgs) -> std::unique_ptr<TYPE> {
-                   return make<TYPE>(unpackedPluginArgs...);
-                 }, tuplePluginArgs);
-        }, varaintPluginArgs);
+                   return make<TYPE>(std::forward<decltype(unpackedPluginArgs)>(unpackedPluginArgs)...);
+                 }, std::forward<decltype(tuplePluginArgs)>(tuplePluginArgs));
+        }, variantPluginArgs);
 
         return upType;
 
@@ -107,7 +107,7 @@ private:
   }
   /**
    * A static partial specialized template for instantiating a class
-   * to be captured by the lambda function if a class cannot be constructible 
+   * to be captured by the lambda function if a class cannot be constructible
    */
   template<typename TYPE, typename... ARGS>
   static std::enable_if_t<!std::is_constructible_v<TYPE, ARGS&&...>, std::unique_ptr<TYPE>> make(ARGS&&... ) {
@@ -115,5 +115,5 @@ private:
   }
 
 };
- 
+
 } // namespace cta::plugin
