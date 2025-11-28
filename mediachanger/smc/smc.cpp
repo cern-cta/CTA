@@ -22,21 +22,22 @@
 #include <string.h>
 #include <unistd.h>
 #include <getopt.h>
+#include <ctype.h>
 #include "mediachanger/librmc/spectra_like_libs.hpp"
 #include "mediachanger/librmc/serrno.hpp"
-//#include "rbtsubr_constants.hpp"
-//#include "smc_constants.hpp"
-//#include "getconfent.hpp"
+#include "mediachanger/rmcd/rmc_constants.hpp"
+#include "mediachanger/rmcd/rbtsubr_constants.hpp"
+#include "mediachanger/rmcd/smc_constants.hpp"
 #include "rmc_api.hpp"
 
-#include <ctype.h>
-/* exit codes */
-
-#define USERR       1
-#define TEXT_RED    "\x1b[31;1m"
-#define TEXT_NORMAL "\x1b[0m"
-
 extern char* optarg;
+
+void printf_red(const char* str) {
+  constexpr const char* TEXT_RED    = "\x1b[31;1m";
+  constexpr const char* TEXT_NORMAL = "\x1b[0m";
+
+  printf("%s%s%s\n", TEXT_RED, str, TEXT_NORMAL);
+}
 
 static void smc_str_upper(char* const s) {
   char* c = nullptr;
@@ -75,7 +76,7 @@ void smc_qdrive_humanPrint(const struct robot_info* const robot_info,
                            const int useSpectraLib) {
   const char* pstatus;
   int i;
-  printf(TEXT_RED "Drive Ordinal\tElement Addr.\t  Status     Vid" TEXT_NORMAL "\n");
+  printf_red("Drive Ordinal\tElement Addr.\t  Status     Vid");
   for (i = 0; i < numberOfElements; i++) {
     if (((element_info + i)->state & 0x1) == 0) {
       pstatus = "free";
@@ -201,7 +202,7 @@ static int smc_qlib(const struct robot_info* const robot_info, const int isJsonE
 void smc_qport_humanPrint(const struct smc_element_info* const element_info, const int numberOfElements) {
   const char* pstatus;
   int i;
-  printf(TEXT_RED "Element Addr.\tVid\tImpExp" TEXT_NORMAL "\n");
+  printf_red("Element Addr.\tVid\tImpExp");
   for (i = 0; i < numberOfElements; i++) {
     if (((element_info + i)->state & 0x1) == 0) {
       pstatus = "";
@@ -266,7 +267,7 @@ smc_qport(const char* const rmchost, const int fd, const struct robot_info* cons
 
 void smc_qslot_humanPrint(const struct smc_element_info* element_info, const int numberOfElements) {
   int i;
-  printf(TEXT_RED "Element Addr.\tVid" TEXT_NORMAL "\n");
+  printf_red("Element Addr.\tVid");
   for (i = 0; i < numberOfElements; i++) {
     printf("    %4d\t%s\n", element_info[i].element_address, element_info[i].name);
   }
@@ -328,7 +329,7 @@ void smc_qvid_humanPrint(const struct smc_element_info* const element_info, cons
   int i;
   const char* ptype;
   char ptypes[5][6] = {"", "hand", "slot", "port", "drive"};
-  printf(TEXT_RED "Vid\tElement Addr.\tElement Type" TEXT_NORMAL "\n");
+  printf_red("Vid\tElement Addr.\tElement Type");
   for (i = 0; i < numberOfElements; i++) {
     ptype = ptypes[(element_info + i)->element_type];
     if ((element_info + i)->element_type == 3) {
