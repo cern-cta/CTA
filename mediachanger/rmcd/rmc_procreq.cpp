@@ -25,7 +25,6 @@
 #include <sys/types.h>
 #include <netinet/in.h>
 #include <string.h>
-#include "mediachanger/librmc/osdep.hpp"
 #include "mediachanger/librmc/marshall.hpp"
 #include "mediachanger/librmc/serrno.hpp"
 #include "mediachanger/librmc/smc_struct.hpp"
@@ -295,8 +294,8 @@ int rmc_srv_mount(const struct rmc_srv_rqst_context* const rqst_context) {
     rmc_logit(func, "returns %d\n", ERMCUNREC);
     return ERMCUNREC;
   }
-  unmarshall_WORD(rbp, invert);
-  unmarshall_WORD(rbp, drvord);
+  unmarshall_SHORT(rbp, invert);
+  unmarshall_SHORT(rbp, drvord);
   snprintf(logbuf, CA_MAXVIDLEN + 64, "mount %s/%d on drive %d", vid, invert, drvord);
   rmc_logreq(func, logbuf);
 
@@ -432,8 +431,8 @@ int rmc_srv_unmount(const struct rmc_srv_rqst_context* const rqst_context) {
     rmc_logit(func, "returns %d\n", ERMCUNREC);
     return ERMCUNREC;
   }
-  unmarshall_WORD(rbp, drvord);
-  unmarshall_WORD(rbp, force);
+  unmarshall_SHORT(rbp, drvord);
+  unmarshall_SHORT(rbp, force);
   snprintf(logbuf, CA_MAXVIDLEN + 64, "unmount %s %d %d", vid, drvord, force);
   rmc_logreq(func, logbuf);
 

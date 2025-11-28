@@ -19,23 +19,30 @@
 
 #include <memory.h>
 #include <arpa/inet.h>
-#include "osdep.hpp"
 
-#define SHORT     WORD
-#define SHORTSIZE WORDSIZE
-#define SHORTADDR WORDADDR
+enum DataRepresentation {
+  BYTESIZE   = 1,
+  SHORTSIZE  = 2,
+  LONGSIZE   = 4,
+  QUADSIZE   = 8,
+  HYPERSIZE  = 8,
+  TIME_TSIZE = HYPERSIZE
+};
 
-#define marshall_WORD   marshall_SHORT
-#define unmarshall_WORD unmarshall_SHORT
+using BYTE  = char;
+using SHORT = short;
+using LONG  = int;
 
+#define BYTEADDR(x) (((char*) &(x)) + sizeof(BYTE) - BYTESIZE)
+#define SHORTADDR(x) (((char*) &(x)) + sizeof(SHORT) - SHORTSIZE)
+#define LONGADDR(x) (((char*) &(x)) + sizeof(LONG) - LONGSIZE)
 #define INC_PTR(ptr, n)     (ptr) = (char*) (ptr) + (n)
-#define DIFF_PTR(ptr, base) (char*) (ptr) - (char*) (base)
 
 /*
  * BIT manipulation
  */
 
-#define BITSOFBYTE 8  //!< number of bits in a byte
+constexpr int BITSOFBYTE = 8;    //!< number of bits in a byte
 
 #define bitsof(t) sizeof(t) * BITSOFBYTE  //!< number of bits in a type
 

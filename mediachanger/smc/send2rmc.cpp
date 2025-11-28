@@ -101,7 +101,7 @@ int send2rmc(const char* const host,
 
   if ((n = netwrite(s, reqp, reql)) <= 0) {
     if (n == 0) {
-      rmc_errmsg(func, RMC02, "send", sys_serrlist[SERRNO]);
+      rmc_errmsg(func, RMC02, "send", sys_serrlist[serrno-SEBASEOFF]);
     } else {
       rmc_errmsg(func, RMC02, "send", neterror());
     }
@@ -120,7 +120,7 @@ int send2rmc(const char* const host,
   while (1) {
     if ((n = netread(s, repbuf, 3 * LONGSIZE)) <= 0) {
       if (n == 0) {
-        rmc_errmsg(func, RMC02, "recv", sys_serrlist[SERRNO]);
+        rmc_errmsg(func, RMC02, "recv", sys_serrlist[serrno-SEBASEOFF]);
       } else {
         rmc_errmsg(func, RMC02, "recv", neterror());
       }
@@ -142,7 +142,7 @@ int send2rmc(const char* const host,
     }
     if ((n = netread(s, repbuf, c)) <= 0) {
       if (n == 0) {
-        rmc_errmsg(func, RMC02, "recv", sys_serrlist[SERRNO]);
+        rmc_errmsg(func, RMC02, "recv", sys_serrlist[serrno-SEBASEOFF]);
       } else {
         rmc_errmsg(func, RMC02, "recv", neterror());
       }

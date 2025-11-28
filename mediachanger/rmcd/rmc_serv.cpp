@@ -39,7 +39,6 @@
 #include "mediachanger/librmc/getconfent.hpp"
 #include "mediachanger/librmc/marshall.hpp"
 #include "mediachanger/librmc/serrno.hpp"
-#include "mediachanger/librmc/osdep.hpp"
 #include "rmc_logit.hpp"
 #include "rmc_constants.hpp"
 #include "rmc_smcsubr.hpp"

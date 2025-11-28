@@ -17,7 +17,6 @@
 
 #pragma once
 
-#include "osdep.hpp"
 #include <netdb.h>
 
 //! Maximum length for a hostname

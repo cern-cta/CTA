@@ -73,13 +73,13 @@ int rmc_read_elem_status(const char* const server,
     rbp = repbuf;
     unmarshall_LONG(rbp, c);
     for (i = 0, elemp = element_info; i < c; i++, elemp++) {
-      unmarshall_WORD(rbp, elemp->element_address);
+      unmarshall_SHORT(rbp, elemp->element_address);
       unmarshall_BYTE(rbp, elemp->element_type);
       unmarshall_BYTE(rbp, elemp->state);
       unmarshall_BYTE(rbp, elemp->asc);
       unmarshall_BYTE(rbp, elemp->ascq);
       unmarshall_BYTE(rbp, elemp->flags);
-      unmarshall_WORD(rbp, elemp->source_address);
+      unmarshall_SHORT(rbp, elemp->source_address);
       unmarshall_STRING(rbp, elemp->name);
     }
   }
