@@ -34,8 +34,8 @@
 #include "smc_constants.hpp"
 #include "rmc_smcsubr.hpp"
 
-#define RBT_XTRA_PROC 10
-#define ERR_MSG_BUFSZ 132
+constexpr int RBT_XTRA_PROC = 10;
+constexpr int ERR_MSG_BUFSZ = 132;
 
 static struct smc_status smc_status;
 static const char* smc_msgaddr;
